@@ -17,22 +17,22 @@ public sealed partial class FileNameTemplate
     /// <returns>生成されたファイル名</returns>
     public static string Generate(string template, int currentNumber)
     {
+        // 数値プレースホルダを先に処理（{date}/{time} の数字が誤認識されるのを防止）
+        var result = IncrementRightmostNumber(template, currentNumber);
+
         var now = DateTime.Now;
-        var result = template
+        result = result
             .Replace("{date}", now.ToString("yyyyMMdd"))
             .Replace("{time}", now.ToString("HHmmss"));
-
-        // 右端の数値の塊を検出して置換
-        result = IncrementRightmostNumber(result, currentNumber);
 
         return result;
     }
 
     /// <summary>
-    /// テンプレート内の右端の数値の塊を検出して指定された数値で置換する。
+    /// テンプレート内の右端の数値の塊を指定された数値で置換する。
     /// 数値の塊の桁数を維持する（例：テンプレートが "01" なら結果も "01"）。
     /// </summary>
-    private static string IncrementRightmostNumber(string text, int number)
+    public static string IncrementRightmostNumber(string text, int number)
     {
         var matches = NumberPattern().Matches(text);
         if (matches.Count == 0)

@@ -8,6 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
     <StartupObject>app.Program</StartupObject>
+    <NoWarn>$(NoWarn);CA2101;SYSLIB1054</NoWarn>
     </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -20,7 +21,6 @@
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishReadyToRun>true</PublishReadyToRun>
-    <TrimMode>link</TrimMode>
   </PropertyGroup>
 
   <ItemGroup>

@@ -25,7 +25,7 @@ public partial class HotkeyForm : Form
     private void UpdateDisplay()
     {
         _lblSelectScreenHotkey.Text = _settings.SelectScreenHotKey.ToString();
-        _lblActiveWindowHotkey.Text = _settings.ActiveWindowHotKey.ToString();
+        _lblWindowSelectHotkey.Text = _settings.WindowSelectHotKey.ToString();
         _lblAreaSelectHotkey.Text = _settings.AreaSelectHotKey.ToString();
     }
 
@@ -34,9 +34,9 @@ public partial class HotkeyForm : Form
         StartCapturing(_btnSetSelectScreen, _lblSelectScreenHotkey);
     }
 
-    private void BtnSetActiveWindow_Click(object? sender, EventArgs e)
+    private void BtnSetWindowSelect_Click(object? sender, EventArgs e)
     {
-        StartCapturing(_btnSetActiveWindow, _lblActiveWindowHotkey);
+        StartCapturing(_btnSetWindowSelect, _lblWindowSelectHotkey);
     }
 
     private void BtnSetAreaSelect_Click(object? sender, EventArgs e)
@@ -64,7 +64,6 @@ public partial class HotkeyForm : Form
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        // 修飾キーのみの場合は無視
         if (keyData is Keys.ControlKey or Keys.ShiftKey or Keys.Menu or Keys.LWin or Keys.RWin)
         {
             return true;
@@ -76,7 +75,6 @@ public partial class HotkeyForm : Form
         if (keyData.HasFlag(Keys.Shift)) modifiers |= HotKeyModifiers.Shift;
         if (keyData.HasFlag(Keys.LWin) || keyData.HasFlag(Keys.RWin)) modifiers |= HotKeyModifiers.Windows;
 
-        // 修飾キーなしは許可しない
         if (modifiers == HotKeyModifiers.None)
         {
             return true;
@@ -85,14 +83,13 @@ public partial class HotkeyForm : Form
         var key = keyData & Keys.KeyCode;
         var setting = new HotKeySetting { Modifiers = modifiers, Key = key };
 
-        // どの設定を更新するか判定
         if (_currentCapturingButton == _btnSetSelectScreen)
         {
             _settings.SelectScreenHotKey = setting;
         }
-        else if (_currentCapturingButton == _btnSetActiveWindow)
+        else if (_currentCapturingButton == _btnSetWindowSelect)
         {
-            _settings.ActiveWindowHotKey = setting;
+            _settings.WindowSelectHotKey = setting;
         }
         else if (_currentCapturingButton == _btnSetAreaSelect)
         {

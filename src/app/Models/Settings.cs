@@ -15,8 +15,8 @@ public sealed class Settings
     /// <summary>選択スクリーンキャプチャのホットキー</summary>
     public HotKeySetting SelectScreenHotKey { get; set; } = new() { Modifiers = HotKeyModifiers.Control | HotKeyModifiers.Shift, Key = Keys.Q };
 
-    /// <summary>アクティブウィンドウキャプチャのホットキー</summary>
-    public HotKeySetting ActiveWindowHotKey { get; set; } = new() { Modifiers = HotKeyModifiers.Control | HotKeyModifiers.Shift, Key = Keys.W };
+    /// <summary>ウィンドウ選択キャプチャのホットキー</summary>
+    public HotKeySetting WindowSelectHotKey { get; set; } = new() { Modifiers = HotKeyModifiers.Control | HotKeyModifiers.Shift, Key = Keys.W };
 
     /// <summary>範囲選択キャプチャのホットキー</summary>
     public HotKeySetting AreaSelectHotKey { get; set; } = new() { Modifiers = HotKeyModifiers.Control | HotKeyModifiers.Shift, Key = Keys.E };
@@ -26,6 +26,21 @@ public sealed class Settings
 
     /// <summary>保存先フォルダパス</summary>
     public string SaveFolderPath { get; set; } = string.Empty;
+
+    /// <summary>FolderViewForm の表示モードインデックス</summary>
+    public int FolderViewModeIndex { get; set; } = 1;
+
+    /// <summary>FolderViewForm のソート昇順フラグ</summary>
+    public bool FolderSortAscending { get; set; } = true;
+
+    /// <summary>MainForm のウィンドウ位置・サイズ</summary>
+    public Rectangle? MainFormBounds { get; set; }
+
+    /// <summary>MainForm のウィンドウ状態</summary>
+    public FormWindowState MainFormWindowState { get; set; } = FormWindowState.Normal;
+
+    /// <summary>FolderViewForm のウィンドウ位置・サイズ</summary>
+    public Rectangle? FolderViewFormBounds { get; set; }
 
     private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 

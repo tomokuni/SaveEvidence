@@ -9,9 +9,9 @@ partial class HotkeyForm
     private Label _lblSelectScreenCaption;
     private Button _btnSetSelectScreen;
     private Label _lblSelectScreenHotkey;
-    private Label _lblActiveWindowCaption;
-    private Button _btnSetActiveWindow;
-    private Label _lblActiveWindowHotkey;
+    private Label _lblWindowSelectCaption;
+    private Button _btnSetWindowSelect;
+    private Label _lblWindowSelectHotkey;
     private Label _lblAreaSelectCaption;
     private Button _btnSetAreaSelect;
     private Label _lblAreaSelectHotkey;
@@ -32,9 +32,9 @@ partial class HotkeyForm
         _lblSelectScreenCaption = new Label();
         _btnSetSelectScreen = new Button();
         _lblSelectScreenHotkey = new Label();
-        _lblActiveWindowCaption = new Label();
-        _btnSetActiveWindow = new Button();
-        _lblActiveWindowHotkey = new Label();
+        _lblWindowSelectCaption = new Label();
+        _btnSetWindowSelect = new Button();
+        _lblWindowSelectHotkey = new Label();
         _lblAreaSelectCaption = new Label();
         _btnSetAreaSelect = new Button();
         _lblAreaSelectHotkey = new Label();
@@ -51,9 +51,9 @@ partial class HotkeyForm
         _tlpMain.Controls.Add(_lblSelectScreenCaption, 0, 0);
         _tlpMain.Controls.Add(_btnSetSelectScreen, 1, 0);
         _tlpMain.Controls.Add(_lblSelectScreenHotkey, 2, 0);
-        _tlpMain.Controls.Add(_lblActiveWindowCaption, 0, 1);
-        _tlpMain.Controls.Add(_btnSetActiveWindow, 1, 1);
-        _tlpMain.Controls.Add(_lblActiveWindowHotkey, 2, 1);
+        _tlpMain.Controls.Add(_lblWindowSelectCaption, 0, 1);
+        _tlpMain.Controls.Add(_btnSetWindowSelect, 1, 1);
+        _tlpMain.Controls.Add(_lblWindowSelectHotkey, 2, 1);
         _tlpMain.Controls.Add(_lblAreaSelectCaption, 0, 2);
         _tlpMain.Controls.Add(_btnSetAreaSelect, 1, 2);
         _tlpMain.Controls.Add(_lblAreaSelectHotkey, 2, 2);
@@ -87,23 +87,23 @@ partial class HotkeyForm
         _lblSelectScreenHotkey.AutoSize = true;
         _lblSelectScreenHotkey.TextAlign = ContentAlignment.MiddleLeft;
 
-        // _lblActiveWindowCaption
-        _lblActiveWindowCaption.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-        _lblActiveWindowCaption.AutoSize = true;
-        _lblActiveWindowCaption.Text = "アクティブウィンドウ キャプチャ:";
-        _lblActiveWindowCaption.TextAlign = ContentAlignment.MiddleLeft;
+        // _lblWindowSelectCaption
+        _lblWindowSelectCaption.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblWindowSelectCaption.AutoSize = true;
+        _lblWindowSelectCaption.Text = "ウィンドウ選択 キャプチャ:";
+        _lblWindowSelectCaption.TextAlign = ContentAlignment.MiddleLeft;
 
-        // _btnSetActiveWindow
-        _btnSetActiveWindow.AutoSize = true;
-        _btnSetActiveWindow.Margin = new Padding(10, 3, 10, 3);
-        _btnSetActiveWindow.Text = "設定";
-        _btnSetActiveWindow.UseVisualStyleBackColor = true;
-        _btnSetActiveWindow.Click += BtnSetActiveWindow_Click;
+        // _btnSetWindowSelect
+        _btnSetWindowSelect.AutoSize = true;
+        _btnSetWindowSelect.Margin = new Padding(10, 3, 10, 3);
+        _btnSetWindowSelect.Text = "設定";
+        _btnSetWindowSelect.UseVisualStyleBackColor = true;
+        _btnSetWindowSelect.Click += BtnSetWindowSelect_Click;
 
-        // _lblActiveWindowHotkey
-        _lblActiveWindowHotkey.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-        _lblActiveWindowHotkey.AutoSize = true;
-        _lblActiveWindowHotkey.TextAlign = ContentAlignment.MiddleLeft;
+        // _lblWindowSelectHotkey
+        _lblWindowSelectHotkey.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblWindowSelectHotkey.AutoSize = true;
+        _lblWindowSelectHotkey.TextAlign = ContentAlignment.MiddleLeft;
 
         // _lblAreaSelectCaption
         _lblAreaSelectCaption.Anchor = AnchorStyles.Left | AnchorStyles.Right;

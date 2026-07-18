@@ -84,7 +84,7 @@ public sealed partial class HotKeyManager(IntPtr hWnd) : IDisposable
     {
         UnregisterAll();
         Register(settings.SelectScreenHotKey, CaptureType.SelectScreen);
-        Register(settings.ActiveWindowHotKey, CaptureType.ActiveWindow);
+        Register(settings.WindowSelectHotKey, CaptureType.WindowSelect);
         Register(settings.AreaSelectHotKey, CaptureType.AreaSelect);
     }
 
@@ -112,8 +112,8 @@ public enum CaptureType
     /// <summary>スクリーン選択</summary>
     SelectScreen,
 
-    /// <summary>アクティブウィンドウ</summary>
-    ActiveWindow,
+    /// <summary>ウィンドウ選択</summary>
+    WindowSelect,
 
     /// <summary>範囲選択</summary>
     AreaSelect

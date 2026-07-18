@@ -15,7 +15,7 @@ partial class MainForm
     // ツールバー
     private FlowLayoutPanel _flowToolBar;
     private Button _btnSelectScreen;
-    private Button _btnActiveWindow;
+    private Button _btnWindowSelect;
     private Button _btnAreaSelect;
     private Button _btnAutoCrop;
     private Button _btnCopy;
@@ -45,7 +45,7 @@ partial class MainForm
 
         _flowToolBar = new FlowLayoutPanel();
         _btnSelectScreen = new Button();
-        _btnActiveWindow = new Button();
+        _btnWindowSelect = new Button();
         _btnAreaSelect = new Button();
         _btnAutoCrop = new Button();
         _btnCopy = new Button();
@@ -96,7 +96,7 @@ partial class MainForm
         // _flowToolBar
         _flowToolBar.AutoSize = true;
         _flowToolBar.Controls.Add(_btnSelectScreen);
-        _flowToolBar.Controls.Add(_btnActiveWindow);
+        _flowToolBar.Controls.Add(_btnWindowSelect);
         _flowToolBar.Controls.Add(_btnAreaSelect);
         _flowToolBar.Controls.Add(_btnAutoCrop);
         _flowToolBar.Controls.Add(_btnCopy);
@@ -118,12 +118,12 @@ partial class MainForm
         _btnSelectScreen.UseVisualStyleBackColor = true;
         _btnSelectScreen.Click += BtnSelectScreen_Click;
 
-        // _btnActiveWindow
-        _btnActiveWindow.AutoSize = true;
-        _btnActiveWindow.Margin = new Padding(3, 3, 3, 3);
-        _btnActiveWindow.Text = "アクティブウィンドウ";
-        _btnActiveWindow.UseVisualStyleBackColor = true;
-        _btnActiveWindow.Click += BtnActiveWindow_Click;
+        // _btnWindowSelect
+        _btnWindowSelect.AutoSize = true;
+        _btnWindowSelect.Margin = new Padding(3, 3, 3, 3);
+        _btnWindowSelect.Text = "ウィンドウ選択";
+        _btnWindowSelect.UseVisualStyleBackColor = true;
+        _btnWindowSelect.Click += BtnWindowSelect_Click;
 
         // _btnAreaSelect
         _btnAreaSelect.AutoSize = true;

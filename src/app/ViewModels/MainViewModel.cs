@@ -15,6 +15,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private int _currentNumber;
     private string _saveFolderPath = string.Empty;
     private string _saveFolderDisplayName = string.Empty;
+    private bool _isSaved;
 
     /// <summary>
     /// MainViewModel を初期化する
@@ -47,8 +48,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 _previewImage?.Dispose();
                 _previewImage = value;
+                IsSaved = false; // 画像変更で保存済み解除
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasPreviewImage));
+                OnPropertyChanged(nameof(CanCopy));
+                OnPropertyChanged(nameof(CanSave));
                 OnPropertyChanged(nameof(StatusText));
             }
         }
@@ -58,6 +62,34 @@ public sealed class MainViewModel : INotifyPropertyChanged
     /// プレビュー画像が存在するかどうか
     /// </summary>
     public bool HasPreviewImage => _previewImage is not null;
+
+    /// <summary>
+    /// 画像が保存済みかどうか
+    /// </summary>
+    public bool IsSaved
+    {
+        get => _isSaved;
+        private set
+        {
+            if (_isSaved != value)
+            {
+                _isSaved = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CanSave));
+                OnPropertyChanged(nameof(StatusText));
+            }
+        }
+    }
+
+    /// <summary>
+    /// クリップボードにコピー可能かどうか
+    /// </summary>
+    public bool CanCopy => _previewImage is not null;
+
+    /// <summary>
+    /// 保存可能かどうか（画像があり、かつ未保存の場合のみ保存可能）
+    /// </summary>
+    public bool CanSave => _previewImage is not null && !_isSaved;
 
     /// <summary>
     /// ファイル名テンプレート
@@ -137,7 +169,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             var imageStatus = HasPreviewImage ? "画像あり" : "画像なし";
             var preview = FileNameTemplate.Generate(_fileNameTemplate, _currentNumber);
-            return $"{imageStatus} | 保存ファイル名: {preview}";
+            var saved = IsSaved ? " | 保存済み" : "";
+            return $"{imageStatus}{saved} | 保存ファイル名: {preview}";
         }
     }
 
@@ -158,14 +191,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>
     /// アクティブウィンドウキャプチャを実行する
     /// </summary>
-    public void CaptureActiveWindow()
-    {
-        var bitmap = CaptureManager.CaptureActiveWindow();
-        if (bitmap is not null)
-        {
-            PreviewImage = bitmap;
-        }
-    }
+
+
+    /// <summary>
+    /// ウィンドウ選択キャプチャを実行する（フォームを非表示にして選択モードに）
+    /// </summary>
+    public Action<CaptureType>? StartSelectionMode { get; set; }
 
     /// <summary>
     /// 指定された画像をプレビューとして設定する
@@ -184,6 +215,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             Clipboard.SetImage(_previewImage);
         }
+    }
+
+    /// <summary>
+    /// クリップボードから画像を貼り付ける
+    /// </summary>
+    /// <returns>貼り付けに成功したかどうか</returns>
+    public bool PasteFromClipboard()
+    {
+        if (!Clipboard.ContainsImage())
+        {
+            return false;
+        }
+
+        var image = Clipboard.GetImage();
+        if (image is not null)
+        {
+            PreviewImage = image;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -231,6 +283,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var fileName = FileNameTemplate.Generate(_fileNameTemplate, _currentNumber);
             var filePath = Path.Combine(_saveFolderPath, fileName);
 
+            // 同名ファイルが存在する場合は上書き確認
+            if (File.Exists(filePath))
+            {
+                var result = MessageBox.Show(
+                    $"ファイル「{fileName}」は既に存在します。上書きしますか？",
+                    "上書き確認",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (result != DialogResult.Yes)
+                {
+                    return false;
+                }
+            }
+
             var directory = Path.GetDirectoryName(filePath);
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
@@ -249,10 +316,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             _previewImage.Save(filePath, format);
 
-            // 保存後にインクリメント
+            // 保存後に数値をインクリメントし、テンプレートを更新
             _currentNumber++;
+            _fileNameTemplate = FileNameTemplate.IncrementRightmostNumber(_fileNameTemplate, _currentNumber);
+            _settings.FileNameTemplate = _fileNameTemplate;
+            _settings.Save();
+
+            OnPropertyChanged(nameof(FileNameTemplateText));
             OnPropertyChanged(nameof(CurrentFileNamePreview));
             OnPropertyChanged(nameof(StatusText));
+
+            IsSaved = true;
 
             return true;
         }

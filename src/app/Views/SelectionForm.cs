@@ -1,12 +1,12 @@
-using app;
+using System.Runtime.InteropServices;
 using app.Models;
 
 namespace app.Views;
 
 /// <summary>
-/// 画面選択フォーム。範囲選択モードと選択スクリーンモードをサポートする。
-/// 選択スクリーンモードでは、事前にキャプチャした全画面ビットマップを表示して
-/// 選択させる方式をとる（透明オーバーレイを使わないため座標問題が発生しない）。
+/// 画面選択フォーム。3種の選択モードをサポートする（SelectScreen/WindowSelect/AreaSelect）。
+/// どのモードも事前キャプチャしたビットマップを表示し、非選択領域を暗転、
+/// 選択領域を明るく表示する。選択領域の境界には白黒の破線を描画する。
 /// </summary>
 public sealed partial class SelectionForm : Form
 {
@@ -18,6 +18,11 @@ public sealed partial class SelectionForm : Form
     private bool _isDragging;
     private Rectangle _currentSelection;
     private int _highlightedScreenIndex = -1;
+    private IntPtr _highlightedWindow;
+    private Rectangle _highlightedWindowRect;
+    private string _highlightedWindowTitle = "";
+    private readonly System.Windows.Forms.Timer _hoverTimer = new() { Interval = 150 };
+    private readonly Point _virtualOrigin;
 
     /// <summary>
     /// 選択が完了した時に発生するイベント（引数はスクリーン座標の矩形）
@@ -30,84 +35,77 @@ public sealed partial class SelectionForm : Form
     public event EventHandler? Cancelled;
 
     /// <summary>
-    /// 選択スクリーンモード用コンストラクタ
-    /// </summary>
-    /// <param name="captureType">キャプチャの種類（SelectScreen）</param>
-    /// <param name="preCapturedImage">事前にキャプチャした全画面ビットマップ</param>
-    public SelectionForm(CaptureType captureType, Bitmap preCapturedImage)
-        : this(captureType)
-    {
-        _screenCapture = preCapturedImage;
-
-        // 透明オーバーレイは使わない（レイヤードウィンドウの位置問題を回避）
-        Opacity = 1.0;
-        BackColor = Color.Black;
-
-        // キャプチャ画像に合わせてフォームサイズと位置を設定
-        var virtualBounds = SystemInformation.VirtualScreen;
-        ClientSize = virtualBounds.Size;
-        Location = virtualBounds.Location;
-
-        Cursor = Cursors.Default;
-    }
-
-    /// <summary>
-    /// 範囲選択（AreaSelect）モード用コンストラクタ
+    /// 選択スクリーン／ウィンドウ選択／領域選択 モード用コンストラクタ
     /// </summary>
     /// <param name="captureType">キャプチャの種類</param>
-    public SelectionForm(CaptureType captureType)
+    /// <param name="preCapturedImage">事前にキャプチャした全画面ビットマップ</param>
+    public SelectionForm(CaptureType captureType, Bitmap preCapturedImage)
     {
         _captureType = captureType;
+        _screenCapture = preCapturedImage;
         _screens = CaptureManager.GetAllScreenBounds();
 
-        // すべてのスクリーンを囲む物理ピクセル矩形を計算
-        var totalBounds = Rectangle.Empty;
-        foreach (var screen in Screen.AllScreens)
-        {
-            totalBounds = Rectangle.Union(totalBounds, screen.Bounds);
-        }
+        var virtualBounds = SystemInformation.VirtualScreen;
+        _virtualOrigin = virtualBounds.Location;
 
         FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.Manual;
-        Bounds = totalBounds;
+        Bounds = virtualBounds;
         TopMost = true;
         ShowInTaskbar = false;
-        Cursor = captureType == CaptureType.SelectScreen ? Cursors.Default : Cursors.Cross;
+        Cursor = captureType == CaptureType.AreaSelect ? Cursors.Cross : Cursors.Default;
         BackColor = Color.Black;
-        Opacity = 0.3;
         DoubleBuffered = true;
-        AutoScaleMode = AutoScaleMode.None; // スケーリングによる座標ずれを防止
+        AutoScaleMode = AutoScaleMode.None;
 
-        Paint += SelectionForm_Paint!;
-        MouseDown += SelectionForm_MouseDown!;
-        MouseMove += SelectionForm_MouseMove!;
-        MouseUp += SelectionForm_MouseUp!;
-        KeyDown += SelectionForm_KeyDown!;
+        _hoverTimer.Tick += HoverTimer_Tick;
+
+        Paint += SelectionForm_Paint;
+        MouseDown += SelectionForm_MouseDown;
+        MouseMove += SelectionForm_MouseMove;
+        MouseUp += SelectionForm_MouseUp;
+        KeyDown += SelectionForm_KeyDown;
+        Shown += SelectionForm_Shown;
     }
 
-    private void SelectionForm_Paint(object sender, PaintEventArgs e)
+    /// <summary>
+    /// フォーム表示時にウィンドウ選択の初回検出を実行する
+    /// </summary>
+    private void SelectionForm_Shown(object? sender, EventArgs e)
+    {
+        if (_captureType == CaptureType.WindowSelect)
+        {
+            DetectWindowUnderCursor();
+            Invalidate();
+        }
+    }
+
+    /// <summary>
+    /// フォーム描画処理。モードに応じて適切な描画メソッドを呼び出す
+    /// </summary>
+    private void SelectionForm_Paint(object? sender, PaintEventArgs e)
     {
         try
         {
-            if (_captureType == CaptureType.SelectScreen && _screenCapture is not null)
+            if (_screenCapture is null)
             {
-                // キャプチャ画像を描画
-                e.Graphics.DrawImage(_screenCapture, Point.Empty);
-
-                // 半透明の暗転オーバーレイ
-                using var dimBrush = new SolidBrush(Color.FromArgb(80, 0, 0, 0));
-                e.Graphics.FillRectangle(dimBrush, ClientRectangle);
-
-                // 各スクリーンの境界線と番号を描画
-                DrawScreenBoundaries(e.Graphics);
+                return;
             }
-            else if (_captureType == CaptureType.AreaSelect && _isDragging)
-            {
-                using var pen = new Pen(Color.Red, 2);
-                e.Graphics.DrawRectangle(pen, _currentSelection);
 
-                using var brush = new SolidBrush(Color.FromArgb(80, 255, 0, 0));
-                e.Graphics.FillRectangle(brush, _currentSelection);
+            e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            e.Graphics.DrawImage(_screenCapture, Point.Empty);
+
+            switch (_captureType)
+            {
+                case CaptureType.SelectScreen:
+                    PaintScreenSelect(e);
+                    break;
+                case CaptureType.WindowSelect:
+                    PaintWindowSelect(e);
+                    break;
+                case CaptureType.AreaSelect:
+                    PaintAreaSelect(e);
+                    break;
             }
         }
         catch (Exception ex)
@@ -117,64 +115,177 @@ public sealed partial class SelectionForm : Form
     }
 
     /// <summary>
-    /// 各スクリーンの境界線と番号を描画する。
-    /// スクリーン座標系と画像の座標系は一致しているので単純な座標変換でよい。
+    /// 白黒の破線ペンを作成する（一番細い線）
     /// </summary>
-    private void DrawScreenBoundaries(Graphics g)
+    private static Pen CreateDashedBorderPen()
     {
-        // キャプチャ画像の左上座標＝仮想スクリーンの左上座標
-        var virtualOrigin = SystemInformation.VirtualScreen.Location;
+        var pen = new Pen(Color.White, 0)
+        {
+            DashStyle = System.Drawing.Drawing2D.DashStyle.Dash,
+            DashPattern = [8, 4]
+        };
+        return pen;
+    }
 
+    /// <summary>
+    /// 暗転用ブラシ（非選択領域）
+    /// </summary>
+    private static SolidBrush DimBrush()
+    {
+        return new SolidBrush(Color.FromArgb(140, 0, 0, 0));
+    }
+
+    /// <summary>
+    /// オーバーレイ用フォント（Segoe UI 14pt Bold）
+    /// </summary>
+    private static Font OverlayFont()
+    {
+        return new Font("Segoe UI", 14, FontStyle.Regular);
+    }
+
+    /// <summary>
+    /// オーバーレイ用文字色（白）
+    /// </summary>
+    private static SolidBrush OverlayTextBrush()
+    {
+        return new SolidBrush(Color.White);
+    }
+
+    /// <summary>
+    /// オーバーレイ用背景ブラシ（半透明黒、Alpha=160）
+    /// </summary>
+    private static SolidBrush OverlayBgBrush()
+    {
+        return new SolidBrush(Color.FromArgb(160, 0, 0, 0));
+    }
+
+    /// <summary>
+    /// 指定位置にオーバーレイテキストを描画する
+    /// </summary>
+    private static void DrawOverlayText(Graphics g, string text, RectangleF rect)
+    {
+        using var font = OverlayFont();
+        using var textBrush = OverlayTextBrush();
+        using var bgBrush = OverlayBgBrush();
+        var textSize = g.MeasureString(text, font);
+        var cx = rect.X + rect.Width / 2f;
+        var cy = rect.Y + rect.Height / 2f;
+        var labelX = cx - textSize.Width / 2f;
+        var labelY = cy - textSize.Height / 2f;
+        g.FillRectangle(bgBrush, labelX - 10, labelY - 10, textSize.Width + 20, textSize.Height + 20);
+        g.DrawString(text, font, textBrush, labelX, labelY);
+    }
+
+    /// <summary>
+    /// スクリーン選択の描画。選択中のスクリーンは明るく、非選択は暗く表示する。
+    /// </summary>
+    private void PaintScreenSelect(PaintEventArgs e)
+    {
+        var g = e.Graphics;
         foreach (var (index, bounds, _) in _screens)
         {
-            // 仮想スクリーン座標 → 画像内座標
-            var screenRect = new Rectangle(
-                bounds.X - virtualOrigin.X,
-                bounds.Y - virtualOrigin.Y,
-                bounds.Width,
-                bounds.Height);
-
-            // ハイライト表示
-            if (index == _highlightedScreenIndex)
+            var screenRect = ScreenToClient(bounds);
+            if (index != _highlightedScreenIndex)
             {
-                using var highlightBrush = new SolidBrush(Color.FromArgb(80, 0, 120, 255));
-                g.FillRectangle(highlightBrush, screenRect);
+                g.FillRectangle(DimBrush(), screenRect);
             }
-
-            // 境界線
-            using var pen = new Pen(index == _highlightedScreenIndex ? Color.Cyan : Color.White, 3);
-            g.DrawRectangle(pen, screenRect);
-
-            // ラベル
-            var labelText = $"スクリーン {index + 1}";
-            using var font = new Font("Segoe UI", 24, FontStyle.Bold);
-            using var textBrush = new SolidBrush(index == _highlightedScreenIndex ? Color.Cyan : Color.White);
-            using var bgBrush = new SolidBrush(Color.FromArgb(128, 0, 0, 0));
-
-            var textSize = g.MeasureString(labelText, font);
-            var labelX = screenRect.X + (screenRect.Width - textSize.Width) / 2;
-            var labelY = screenRect.Y + (screenRect.Height - textSize.Height) / 2;
-
-            var labelRect = new Rectangle(
-                (int)labelX - 10, (int)labelY - 10,
-                (int)textSize.Width + 20, (int)textSize.Height + 20);
-
-            g.FillRectangle(bgBrush, labelRect);
-            g.DrawString(labelText, font, textBrush, labelX, labelY);
+            else
+            {
+                using var border = CreateDashedBorderPen();
+                g.DrawRectangle(border, screenRect);
+            }
+            // スクリーン番号を中央にオーバーレイ表示
+            DrawOverlayText(g, $"スクリーン {index + 1}", screenRect);
         }
     }
 
     /// <summary>
-    /// 指定されたクライアント座標のスクリーンインデックスを取得する。
-    /// キャプチャ画像とスクリーン座標系は一致しているため、
-    /// 画像内座標 + 仮想スクリーン原点 = スクリーン座標 となる。
+    /// ウィンドウ選択の描画。ハイライト中のウィンドウ領域は明るく、それ以外は暗く表示する。
+    /// </summary>
+    private void PaintWindowSelect(PaintEventArgs e)
+    {
+        var g = e.Graphics;
+        if (_highlightedWindow != IntPtr.Zero && _highlightedWindowRect != Rectangle.Empty)
+        {
+            var highlightClient = ScreenToClient(_highlightedWindowRect);
+
+            using (var region = new Region(ClientRectangle))
+            {
+                region.Exclude(highlightClient);
+                g.Clip = region;
+                g.FillRectangle(DimBrush(), ClientRectangle);
+                g.ResetClip();
+            }
+
+            using (var border = CreateDashedBorderPen())
+            {
+                g.DrawRectangle(border, highlightClient);
+            }
+
+            // ウィンドウ名を中央にオーバーレイ表示
+            if (!string.IsNullOrEmpty(_highlightedWindowTitle))
+            {
+                DrawOverlayText(g, _highlightedWindowTitle, highlightClient);
+            }
+        }
+        else
+        {
+            g.FillRectangle(DimBrush(), ClientRectangle);
+        }
+    }
+
+    /// <summary>
+    /// 領域選択の描画。ドラッグ中の選択領域は明るく、それ以外は暗く表示する。
+    /// 選択範囲の中央に座標とサイズを表示する。
+    /// </summary>
+    private void PaintAreaSelect(PaintEventArgs e)
+    {
+        var g = e.Graphics;
+        if (_isDragging && _currentSelection.Width > 0 && _currentSelection.Height > 0)
+        {
+            using (var region = new Region(ClientRectangle))
+            {
+                region.Exclude(_currentSelection);
+                g.Clip = region;
+                g.FillRectangle(DimBrush(), ClientRectangle);
+                g.ResetClip();
+            }
+
+            using (var border = CreateDashedBorderPen())
+            {
+                g.DrawRectangle(border, _currentSelection);
+            }
+
+            // 選択範囲の中央に座標・サイズ情報をオーバーレイ表示
+            var x1 = _currentSelection.X + _virtualOrigin.X;
+            var y1 = _currentSelection.Y + _virtualOrigin.Y;
+            var x2 = x1 + _currentSelection.Width;
+            var y2 = y1 + _currentSelection.Height;
+            var infoText = $"座標: ({x1}, {y1})-({x2}, {y2})\nサイズ: ({_currentSelection.Width}, {_currentSelection.Height})";
+            DrawOverlayText(g, infoText, _currentSelection);
+        }
+    }
+
+    /// <summary>
+    /// スクリーン座標をクライアント座標に変換する
+    /// </summary>
+    private Rectangle ScreenToClient(Rectangle screenRect)
+    {
+        return new Rectangle(
+            screenRect.X - _virtualOrigin.X,
+            screenRect.Y - _virtualOrigin.Y,
+            screenRect.Width,
+            screenRect.Height);
+    }
+
+    /// <summary>
+    /// クライアント座標からスクリーンインデックスを取得する
     /// </summary>
     private int GetScreenIndexAtPoint(Point clientPoint)
     {
-        var virtualOrigin = SystemInformation.VirtualScreen.Location;
         var screenPoint = new Point(
-            clientPoint.X + virtualOrigin.X,
-            clientPoint.Y + virtualOrigin.Y);
+            clientPoint.X + _virtualOrigin.X,
+            clientPoint.Y + _virtualOrigin.Y);
 
         for (var i = 0; i < _screens.Length; i++)
         {
@@ -183,7 +294,6 @@ public sealed partial class SelectionForm : Form
                 return i;
             }
         }
-
         return -1;
     }
 
@@ -203,6 +313,19 @@ public sealed partial class SelectionForm : Form
                 {
                     Hide();
                     SelectionCompleted?.Invoke(this, _screens[screenIndex].Bounds);
+                }
+            }
+            else if (_captureType == CaptureType.WindowSelect)
+            {
+                _hoverTimer.Stop();
+                if (_highlightedWindow == IntPtr.Zero)
+                {
+                    DetectWindowUnderCursor();
+                }
+                Hide();
+                if (_highlightedWindow != IntPtr.Zero && _highlightedWindowRect != Rectangle.Empty)
+                {
+                    SelectionCompleted?.Invoke(this, _highlightedWindowRect);
                 }
             }
         }
@@ -235,6 +358,15 @@ public sealed partial class SelectionForm : Form
                     Invalidate();
                 }
             }
+            else if (_captureType == CaptureType.WindowSelect)
+            {
+                var old = _highlightedWindow;
+                DetectWindowUnderCursor();
+                if (_highlightedWindow != old)
+                {
+                    Invalidate();
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -255,13 +387,12 @@ public sealed partial class SelectionForm : Form
 
                 if (_currentSelection.Width > 5 && _currentSelection.Height > 5)
                 {
-                    // クライアント座標をスクリーン座標に変換
-                    var primaryOrigin = Screen.PrimaryScreen!.Bounds.Location;
                     var screenSelection = new Rectangle(
-                        _currentSelection.X + primaryOrigin.X,
-                        _currentSelection.Y + primaryOrigin.Y,
+                        _currentSelection.X + _virtualOrigin.X,
+                        _currentSelection.Y + _virtualOrigin.Y,
                         _currentSelection.Width,
                         _currentSelection.Height);
+
                     Hide();
                     SelectionCompleted?.Invoke(this, screenSelection);
                 }
@@ -293,10 +424,81 @@ public sealed partial class SelectionForm : Form
         }
     }
 
+    /// <summary>
+    /// マウスカーソル下のウィンドウを検出する。
+    /// EnumWindows で全トップレベルウィンドウを列挙し、カーソル位置を含む最初の可視ウィンドウを検出する。
+    /// 画像ベース方式（全画面キャプチャ表示）では WindowFromPoint が自身を返すため、EnumWindows を使用する。
+    /// </summary>
+    private void DetectWindowUnderCursor()
+    {
+        try
+        {
+            var cursorPos = Cursor.Position;
+            IntPtr found = IntPtr.Zero;
+            string foundTitle = "";
+
+            EnumWindows((hWnd, _) =>
+            {
+                try
+                {
+                    if (hWnd == Handle) return true;
+                    var root = GetAncestor(hWnd, GA_ROOT);
+                    if (root == Handle || root == IntPtr.Zero) return true;
+                    if (!IsWindowVisible(root)) return true;
+
+                    var rect = CaptureManager.GetWindowRect(root);
+                    if (rect != Rectangle.Empty && rect.Contains(cursorPos))
+                    {
+                        found = root;
+                        foundTitle = GetWindowTextFromHandle(root);
+                        return false;
+                    }
+                }
+                catch
+                {
+                }
+                return true;
+            }, IntPtr.Zero);
+
+            _highlightedWindow = found;
+            _highlightedWindowTitle = foundTitle;
+            if (found != IntPtr.Zero)
+            {
+                _highlightedWindowRect = CaptureManager.GetWindowVisibleRect(found);
+            }
+        }
+        catch (Exception ex)
+        {
+            Program.LogException(ex);
+        }
+    }
+
+    /// <summary>
+    /// ホバータイマーのTick処理。画像ベース方式では不要だが互換性のために残す
+    /// </summary>
+    private void HoverTimer_Tick(object? sender, EventArgs e)
+    {
+        _hoverTimer.Stop();
+    }
+
+    /// <summary>
+    /// ウィンドウハンドルからウィンドウタイトルを取得する
+    /// </summary>
+    private static string GetWindowTextFromHandle(IntPtr hWnd)
+    {
+        var sb = new System.Text.StringBuilder(256);
+        _ = GetWindowTextNative(hWnd, sb, sb.Capacity);
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// キャプチャをキャンセルする
+    /// </summary>
     private void CancelCapture()
     {
         try
         {
+            _hoverTimer.Stop();
             Cancelled?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
@@ -309,7 +511,6 @@ public sealed partial class SelectionForm : Form
             {
                 Hide();
             }
-
             if (!IsDisposed)
             {
                 Close();
@@ -340,7 +541,6 @@ public sealed partial class SelectionForm : Form
         {
             Program.LogException(ex);
         }
-
         return base.ProcessCmdKey(ref msg, keyData);
     }
 
@@ -348,13 +548,33 @@ public sealed partial class SelectionForm : Form
     {
         if (disposing)
         {
-            Paint -= SelectionForm_Paint!;
-            MouseDown -= SelectionForm_MouseDown!;
-            MouseMove -= SelectionForm_MouseMove!;
-            MouseUp -= SelectionForm_MouseUp!;
-            KeyDown -= SelectionForm_KeyDown!;
+            _hoverTimer.Stop();
+            _hoverTimer.Dispose();
+            Paint -= SelectionForm_Paint;
+            MouseDown -= SelectionForm_MouseDown;
+            MouseMove -= SelectionForm_MouseMove;
+            MouseUp -= SelectionForm_MouseUp;
+            KeyDown -= SelectionForm_KeyDown;
+            Shown -= SelectionForm_Shown;
         }
-
         base.Dispose(disposing);
     }
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowText", CharSet = CharSet.Auto)]
+    private static extern int GetWindowTextNative(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetAncestor(IntPtr hWnd, uint gaFlags);
+
+    private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+    private const uint GA_ROOT = 2;
 }

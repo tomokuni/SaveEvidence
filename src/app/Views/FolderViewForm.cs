@@ -1,0 +1,452 @@
+using System.Runtime.InteropServices;
+using app.Models;
+
+namespace app.Views;
+
+internal sealed class ViewOption
+{
+    public string Text { get; init; } = "";
+    public View View { get; init; }
+}
+
+/// <summary>
+/// 保存先フォルダの内容を表示するモードレスダイアログ。
+/// 画像ファイルは実際のサムネイルを表示し、ダブルクリックで規定のアプリで開く。
+/// 表示モードとソート順は設定ファイルに保存され、次回起動時に復元される。
+/// </summary>
+public sealed partial class FolderViewForm : Form
+{
+    private readonly string _folderPath;
+    private readonly Settings _settings;
+    private bool _sortAscending = true;
+    private readonly List<ListViewItem> _items = [];
+
+    private readonly ImageList _largeIconList = null!;   // 320x320 (特大アイコン用)
+    private readonly ImageList _tileIconList = null!;     // 240x240 (大アイコン用)
+    private readonly ImageList _mediumIconList = null!;   // 160x160 (中アイコン用)
+    private readonly ImageList _smallIconList = null!;    // 16x16 (一覧/詳細用)
+
+    private static readonly HashSet<string> s_imageExtensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif", ".webp"];
+
+    /// <summary>
+    /// FolderViewForm を初期化する
+    /// </summary>
+    public FolderViewForm(string folderPath, Settings? settings)
+    {
+        _folderPath = folderPath;
+        _settings = settings ?? new Settings();
+        InitializeComponent();
+
+        // 設定からウィンドウ位置・サイズを復元
+        RestoreFormBounds();
+
+        _largeIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(320, 320) };
+        _tileIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(240, 240) };
+        _mediumIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(160, 160) };
+        _smallIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(16, 16) };
+        _listView.LargeImageList = _tileIconList;
+        _listView.SmallImageList = _smallIconList;
+
+        _cmbView.Items.AddRange([
+            new ViewOption { Text = "特大", View = View.LargeIcon },
+            new ViewOption { Text = "大", View = View.LargeIcon },
+            new ViewOption { Text = "中", View = View.LargeIcon },
+            new ViewOption { Text = "一覧", View = View.List },
+            new ViewOption { Text = "詳細", View = View.Details }
+        ]);
+        _cmbView.DisplayMember = nameof(ViewOption.Text);
+        _cmbView.ValueMember = nameof(ViewOption.View);
+
+        if (_settings.FolderViewModeIndex >= 0 && _settings.FolderViewModeIndex < _cmbView.Items.Count)
+        {
+            _cmbView.SelectedIndex = _settings.FolderViewModeIndex;
+        }
+        else
+        {
+            _cmbView.SelectedIndex = 1;
+        }
+
+        _sortAscending = _settings.FolderSortAscending;
+        _btnSort.Text = _sortAscending ? "名前 ↑" : "名前 ↓";
+
+        if (Directory.Exists(_folderPath))
+        {
+            LoadFolderContents();
+        }
+
+        Text = $"保存先フォルダの内容 - {_folderPath}";
+
+        // リンクラベルの初期化
+        InitializeFolderLink();
+    }
+
+    private void InitializeFolderLink()
+    {
+        _linkFolderName = new LinkLabel
+        {
+            AutoSize = true,
+            Margin = new Padding(20, 6, 3, 3),
+            TabIndex = 10,
+            Text = Path.GetFileName(_folderPath) ?? _folderPath
+        };
+        _linkFolderName.LinkClicked += LinkFolderName_LinkClicked;
+
+        _toolTip = new ToolTip();
+        _toolTip.SetToolTip(_linkFolderName, _folderPath);
+
+        // 閉じるボタンの右側に追加
+        _flowToolBar.Controls.Add(_linkFolderName);
+    }
+
+    private void LinkFolderName_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
+    {
+        try
+        {
+            if (Directory.Exists(_folderPath))
+            {
+                System.Diagnostics.Process.Start("explorer.exe", _folderPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"フォルダを開けませんでした: {ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void LoadFolderContents()
+    {
+        _listView.BeginUpdate();
+        _listView.Items.Clear();
+        _items.Clear();
+        _listView.LabelWrap = false;
+
+
+        try
+        {
+            _largeIconList.Images.Clear();
+            _tileIconList.Images.Clear();
+            _mediumIconList.Images.Clear();
+            _smallIconList.Images.Clear();
+
+            var iconCache = new Dictionary<string, (int Large, int Tile, int Medium, int Small)>();
+
+            try
+            {
+                foreach (var dir in Directory.GetDirectories(_folderPath))
+                {
+                    var dirName = Path.GetFileName(dir);
+                    var icons = GetIconIndex(dir, true, iconCache).Medium;
+                    var item = new ListViewItem(dirName, icons) { Tag = dir };
+                    item.SubItems.Add("");
+                    item.SubItems.Add(new DirectoryInfo(dir).LastWriteTime.ToString("yyyy/MM/dd HH:mm"));
+                    _items.Add(item);
+                }
+            }
+            catch (UnauthorizedAccessException) { }
+
+            try
+            {
+                foreach (var file in Directory.GetFiles(_folderPath))
+                {
+                    var fileName = Path.GetFileName(file);
+                    var ext = Path.GetExtension(file).ToLowerInvariant();
+                    var fileInfo = new FileInfo(file);
+
+                    var icons = s_imageExtensions.Contains(ext)
+                        ? AddThumbnail(file).Medium
+                        : GetIconIndex(file, false, iconCache).Medium;
+
+                    var item = new ListViewItem(fileName, icons) { Tag = file };
+                    item.SubItems.Add(FormatFileSize(fileInfo.Length));
+                    item.SubItems.Add(fileInfo.LastWriteTime.ToString("yyyy/MM/dd HH:mm"));
+                    _items.Add(item);
+                }
+            }
+            catch (UnauthorizedAccessException) { }
+
+            SortAndAddItems();
+        }
+        finally
+        {
+            _listView.EndUpdate();
+        }
+
+        UpdateStatusBar();
+    }
+
+    private (int Large, int Tile, int Medium, int Small) AddThumbnail(string filePath)
+    {
+        try
+        {
+            using var original = Image.FromFile(filePath);
+
+            var large = ResizeImage(original, 512, 512);
+            _largeIconList.Images.Add(large);
+            var largeIdx = _largeIconList.Images.Count - 1;
+
+            var tile = ResizeImage(original, 256, 256);
+            _tileIconList.Images.Add(tile);
+            var tileIdx = _tileIconList.Images.Count - 1;
+
+            var medium = ResizeImage(original, 128, 128);
+            _mediumIconList.Images.Add(medium);
+            var mediumIdx = _mediumIconList.Images.Count - 1;
+
+            var small = ResizeImage(original, 16, 16);
+            _smallIconList.Images.Add(small);
+            var smallIdx = _smallIconList.Images.Count - 1;
+
+            return (largeIdx, tileIdx, mediumIdx, smallIdx);
+        }
+        catch
+        {
+            return (-1, -1, -1, -1);
+        }
+    }
+
+    private static Bitmap ResizeImage(Image original, int maxWidth, int maxHeight)
+    {
+        var ratio = Math.Min((double)maxWidth / original.Width, (double)maxHeight / original.Height);
+        var newWidth = Math.Max(1, (int)(original.Width * ratio));
+        var newHeight = Math.Max(1, (int)(original.Height * ratio));
+
+        // 正方形のキャンバスを作成し、アスペクト比を維持して中央に描画
+        var thumb = new Bitmap(maxWidth, maxHeight);
+        using var g = Graphics.FromImage(thumb);
+        g.Clear(Color.Transparent);
+        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+        var offsetX = (maxWidth - newWidth) / 2;
+        var offsetY = (maxHeight - newHeight) / 2;
+        g.DrawImage(original, offsetX, offsetY, newWidth, newHeight);
+        return thumb;
+    }
+
+    private void SortAndAddItems()
+    {
+        var sorted = (_sortAscending
+            ? _items.OrderBy(i => i.Text, StringComparer.CurrentCultureIgnoreCase)
+            : _items.OrderByDescending(i => i.Text, StringComparer.CurrentCultureIgnoreCase)).ToList();
+
+        _listView.Items.Clear();
+        _listView.Items.AddRange([.. sorted]);
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024.0 * 1024):F1} MB";
+        return $"{bytes / (1024.0 * 1024 * 1024):F2} GB";
+    }
+
+    private (int Large, int Tile, int Medium, int Small) GetIconIndex(string path, bool isFolder, Dictionary<string, (int Large, int Tile, int Medium, int Small)> cache)
+    {
+        var key = isFolder ? "FOLDER" : Path.GetExtension(path).ToLowerInvariant();
+
+        if (cache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var attr = isFolder ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
+
+        var largeIdx = -1;
+        var tileIdx = -1;
+        var mediumIdx = -1;
+        var smallIdx = -1;
+
+        var largeShfi = new SHFILEINFO();
+        SHGetFileInfo(path, attr, ref largeShfi, Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_LARGEICON | SHGFI_USEFILEATTRIBUTES);
+        if (largeShfi.hIcon != IntPtr.Zero)
+        {
+            using var icon = Icon.FromHandle(largeShfi.hIcon);
+            largeIdx = AddResizedIcon(icon, _largeIconList, 512, 512);
+            DestroyIcon(largeShfi.hIcon);
+        }
+
+        var tileShfi = new SHFILEINFO();
+        SHGetFileInfo(path, attr, ref tileShfi, Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_LARGEICON | SHGFI_USEFILEATTRIBUTES);
+        if (tileShfi.hIcon != IntPtr.Zero)
+        {
+            using var icon = Icon.FromHandle(tileShfi.hIcon);
+            tileIdx = AddResizedIcon(icon, _tileIconList, 256, 256);
+            DestroyIcon(tileShfi.hIcon);
+        }
+
+        var mediumShfi = new SHFILEINFO();
+        SHGetFileInfo(path, attr, ref mediumShfi, Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_LARGEICON | SHGFI_USEFILEATTRIBUTES);
+        if (mediumShfi.hIcon != IntPtr.Zero)
+        {
+            using var icon = Icon.FromHandle(mediumShfi.hIcon);
+            mediumIdx = AddResizedIcon(icon, _mediumIconList, 128, 128);
+            DestroyIcon(mediumShfi.hIcon);
+        }
+
+        var smallShfi = new SHFILEINFO();
+        SHGetFileInfo(path, attr, ref smallShfi, Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
+        if (smallShfi.hIcon != IntPtr.Zero)
+        {
+            _smallIconList.Images.Add(Icon.FromHandle(smallShfi.hIcon));
+            DestroyIcon(smallShfi.hIcon);
+            smallIdx = _smallIconList.Images.Count - 1;
+        }
+
+        var result = (largeIdx, tileIdx, mediumIdx, smallIdx);
+        cache[key] = result;
+        return result;
+    }
+
+    private static int AddResizedIcon(Icon icon, ImageList imageList, int width, int height)
+    {
+        using var bmp = icon.ToBitmap();
+        if (bmp.Width <= width && bmp.Height <= height)
+        {
+            imageList.Images.Add(bmp);
+        }
+        else
+        {
+            using var resized = ResizeImage(bmp, width, height);
+            imageList.Images.Add(resized);
+        }
+        return imageList.Images.Count - 1;
+    }
+
+    private void OpenSelectedItem()
+    {
+        if (_listView.SelectedItems.Count == 0) return;
+
+        var item = _listView.SelectedItems[0];
+        if (item.Tag is string path && File.Exists(path))
+        {
+            try
+            {
+                using var process = new System.Diagnostics.Process();
+                process.StartInfo.FileName = path;
+                process.StartInfo.UseShellExecute = true;
+                process.Start();
+            }
+            catch (Exception ex)
+            {
+                Program.LogException(ex);
+            }
+        }
+    }
+
+    private void UpdateStatusBar()
+    {
+        _lblStatus.Text = $"{_items.Count} 個のアイテム | {_listView.View}";
+    }
+
+    private void CmbView_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_cmbView.SelectedItem is ViewOption option)
+        {
+            if (option.View == View.LargeIcon)
+            {
+                // インデックス: 0=特大(320x320), 1=大(240x240), 2=中(160x160)
+                var idx = _cmbView.SelectedIndex;
+                _listView.LargeImageList = idx switch
+                {
+                    0 => _largeIconList,
+                    1 => _tileIconList,
+                    _ => _mediumIconList
+                };
+            }
+
+            _listView.View = option.View;
+
+            if (option.View == View.Details)
+            {
+                _listView.Columns.Clear();
+                _listView.Columns.Add("名前", 250);
+                _listView.Columns.Add("サイズ", 100);
+                _listView.Columns.Add("更新日時", 150);
+            }
+            else
+            {
+                _listView.Columns.Clear();
+            }
+
+            _settings.FolderViewModeIndex = _cmbView.SelectedIndex;
+            _settings.Save();
+
+            UpdateStatusBar();
+        }
+    }
+
+    private void ListView_ItemActivate(object? sender, EventArgs e)
+    {
+        OpenSelectedItem();
+    }
+
+    private void BtnSort_Click(object? sender, EventArgs e)
+    {
+        _sortAscending = !_sortAscending;
+        _btnSort.Text = _sortAscending ? "名前 ↑" : "名前 ↓";
+        _listView.BeginUpdate();
+        SortAndAddItems();
+        _listView.EndUpdate();
+
+        _settings.FolderSortAscending = _sortAscending;
+        _settings.Save();
+    }
+
+    private void BtnClose_Click(object? sender, EventArgs e)
+    {
+        Close();
+    }
+
+    /// <summary>
+    /// 設定からウィンドウ位置・サイズを復元する
+    /// </summary>
+    private void RestoreFormBounds()
+    {
+        var bounds = _settings.FolderViewFormBounds;
+        if (bounds.HasValue && bounds.Value.Width > 0 && bounds.Value.Height > 0)
+        {
+            StartPosition = FormStartPosition.Manual;
+            DesktopBounds = bounds.Value;
+        }
+    }
+
+    protected override void OnFormClosing(FormClosingEventArgs e)
+    {
+        if (WindowState == FormWindowState.Normal)
+        {
+            _settings.FolderViewFormBounds = DesktopBounds;
+        }
+        else
+        {
+            _settings.FolderViewFormBounds = RestoreBounds;
+        }
+
+        _settings.Save();
+        base.OnFormClosing(e);
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+    private static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, int cbFileInfo, uint uFlags);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool DestroyIcon(IntPtr hIcon);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct SHFILEINFO
+    {
+        public IntPtr hIcon;
+        public int iIcon;
+        public uint dwAttributes;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string szDisplayName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+        public string szTypeName;
+    }
+
+    private const uint SHGFI_ICON = 0x000000100;
+    private const uint SHGFI_LARGEICON = 0x000000000;
+    private const uint SHGFI_SMALLICON = 0x000000001;
+    private const uint SHGFI_USEFILEATTRIBUTES = 0x000000010;
+    private const uint FILE_ATTRIBUTE_NORMAL = 0x00000080;
+    private const uint FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
+}
