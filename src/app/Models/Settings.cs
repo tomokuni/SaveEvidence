@@ -42,6 +42,24 @@ public sealed class Settings
     /// <summary>FolderViewForm のウィンドウ位置・サイズ</summary>
     public Rectangle? FolderViewFormBounds { get; set; }
 
+    /// <summary>中央寄せ（true）／左上寄せ（false）</summary>
+    public bool CenterAlign { get; set; } = true;
+
+    /// <summary>キャプチャ時（SelectionForm）の境界線色</summary>
+    public string CaptureBorderColor { get; set; } = "White";
+
+    /// <summary>プレビュー範囲選択（MainForm crop）の境界線色</summary>
+    public string CropBorderColor { get; set; } = "White";
+
+    /// <summary>虫眼鏡十字線の色</summary>
+    public string LoupeCrossColor { get; set; } = "Red";
+
+    /// <summary>虫眼鏡外枠の色</summary>
+    public string LoupeFrameColor { get; set; } = "Black";
+
+    /// <summary>虫眼鏡外枠の太さ</summary>
+    public int LoupeFrameWidth { get; set; } = 2;
+
     private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 
     /// <summary>

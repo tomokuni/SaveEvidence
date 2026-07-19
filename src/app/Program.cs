@@ -8,43 +8,74 @@ namespace app;
 /// </summary>
 internal static class Program
 {
-    /// <summary>
-    ///  The main entry point for the application.
-    /// </summary>
+    private static readonly string s_logPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "SaveEvidence", "debug.log");
+
     [STAThread]
     static void Main()
     {
-        // グローバル例外ハンドラの設定
-        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+        // 強制ログ：ファイルが生成されること自体を確認
+        try
+        {
+            var dir = Path.GetDirectoryName(s_logPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+            File.WriteAllText(s_logPath,
+                $"=== SaveEvidence Debug Log v2 started at {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===\n" +
+                $"Exe path: {Environment.ProcessPath}\n" +
+                $"Command line: {Environment.CommandLine}\n");
+        }
+        catch (Exception ex)
+        {
+            // ファイルが書けない場合でもデバッグ出力には残す
+            Debug.WriteLine($"FAILED to write log file: {ex}");
+        }
 
-        // 高DPI設定を明示的に指定
+        LogDebug("Application started - main entry point reached");
+
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
-        Application.ThreadException += (sender, e) =>
-        {
-            LogException(e.Exception);
-        };
-
+        Application.ThreadException += (sender, e) => LogException(e.Exception);
         AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
         {
-            var exception = e.ExceptionObject as Exception;
-            LogException(exception ?? new Exception("不明なエラーが発生しました"));
+            var ex = e.ExceptionObject as Exception;
+            LogException(ex ?? new Exception("不明なエラー"));
         };
 
-        // To customize application configuration such as set high DPI settings or default font,
-        // see https://aka.ms/applicationconfiguration.
         ApplicationConfiguration.Initialize();
         Application.SetColorMode(SystemColorMode.System);
+        LogDebug("Calling Application.Run...");
         Application.Run(new MainForm());
+        LogDebug("Application exited.");
     }
 
-    /// <summary>
-    /// 例外情報をコンソールとデバッグ出力に記録する
-    /// </summary>
     internal static void LogException(Exception ex)
     {
-        var message = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 例外が発生しました: {ex}";
-        Console.Error.WriteLine(message);
-        Debug.WriteLine(message);
+        var msg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] 例外: {ex}";
+        Console.Error.WriteLine(msg);
+        Debug.WriteLine(msg);
+        AppendLog(msg);
+    }
+
+    internal static void LogDebug(string message)
+    {
+        var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}";
+        Debug.WriteLine(line);
+        AppendLog(line);
+    }
+
+    private static readonly object s_logLock = new();
+    private static void AppendLog(string line)
+    {
+        try
+        {
+            lock (s_logLock)
+            {
+                File.AppendAllText(s_logPath, line + "\n");
+            }
+        }
+        catch { /* ログ書き込み失敗は無視 */ }
     }
 }

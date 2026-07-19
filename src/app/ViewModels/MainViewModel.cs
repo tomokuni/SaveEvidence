@@ -16,6 +16,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _saveFolderPath = string.Empty;
     private string _saveFolderDisplayName = string.Empty;
     private bool _isSaved;
+    private string _lastSavedFileName = "";
 
     /// <summary>
     /// MainViewModel を初期化する
@@ -49,6 +50,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 _previewImage?.Dispose();
                 _previewImage = value;
                 IsSaved = false; // 画像変更で保存済み解除
+                _lastSavedFileName = "";
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasPreviewImage));
                 OnPropertyChanged(nameof(CanCopy));
@@ -167,10 +169,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         get
         {
-            var imageStatus = HasPreviewImage ? "画像あり" : "画像なし";
-            var preview = FileNameTemplate.Generate(_fileNameTemplate, _currentNumber);
-            var saved = IsSaved ? " | 保存済み" : "";
-            return $"{imageStatus}{saved} | 保存ファイル名: {preview}";
+            if (IsSaved && !string.IsNullOrEmpty(_lastSavedFileName))
+                return $"保存済み {_lastSavedFileName}";
+            return "";
         }
     }
 
@@ -239,7 +240,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// プレビュー画像から指定領域を切り出して表示する
+    /// 指定された範囲でプレビュー画像を切り出す
     /// </summary>
     public void CropPreview(Rectangle bounds)
     {
@@ -326,6 +327,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CurrentFileNamePreview));
             OnPropertyChanged(nameof(StatusText));
 
+            _lastSavedFileName = fileName;
             IsSaved = true;
 
             return true;

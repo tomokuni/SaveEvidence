@@ -8,9 +8,6 @@ public static class ImageProcessor
     /// <summary>
     /// 画像から指定された領域を切り出す
     /// </summary>
-    /// <param name="source">元画像</param>
-    /// <param name="bounds">切り出す領域</param>
-    /// <returns>切り出された画像</returns>
     public static Bitmap Crop(Image source, Rectangle bounds)
     {
         var cropped = new Bitmap(bounds.Width, bounds.Height);
@@ -22,15 +19,13 @@ public static class ImageProcessor
 
     /// <summary>
     /// 画像内のウィンドウ領域を自動判定して切り出す。
-    /// 画像の四辺から背景色（端のピクセル色）が続いている領域を除去し、
-    /// 内部の矩形領域を検出する。
+    /// 四隅の色と同じ色が続く領域を除去する方式。
     /// </summary>
-    /// <param name="image">解析する画像</param>
-    /// <returns>検出されたウィンドウ領域。検出できない場合は元の画像の全領域。</returns>
     public static Bitmap DetectAndCropWindow(Image image)
     {
         using var bitmap = new Bitmap(image);
         var bounds = DetectWindowBounds(bitmap);
+
         if (bounds == Rectangle.Empty || bounds == new Rectangle(0, 0, image.Width, image.Height))
         {
             return new Bitmap(image);
@@ -39,63 +34,24 @@ public static class ImageProcessor
         return Crop(image, bounds);
     }
 
-    /// <summary>
-    /// 画像内のウィンドウ領域の矩形を検出する。
-    /// 四辺から走査し、背景色と異なるピクセルが現れる境界を探す。
-    /// </summary>
     private static Rectangle DetectWindowBounds(Bitmap bitmap)
     {
         var width = bitmap.Width;
         var height = bitmap.Height;
 
-        // 四隅の色をサンプリングして背景色を推定
-        var bgColor = bitmap.GetPixel(0, 0);
-
-        // 上端から走査：背景色と異なる最初の行を探す
-        var top = 0;
-        for (var y = 0; y < height; y++)
+        var corners = new[]
         {
-            if (!IsRowBackgroundColor(bitmap, y, bgColor, width))
-            {
-                top = y;
-                break;
-            }
-        }
+            bitmap.GetPixel(0, 0), bitmap.GetPixel(width - 1, 0),
+            bitmap.GetPixel(0, height - 1), bitmap.GetPixel(width - 1, height - 1)
+        };
+        var bgColor = corners.GroupBy(c => ColorToArgbKey(c))
+                             .MaxBy(g => g.Count())!.First();
 
-        // 下端から走査
-        var bottom = height - 1;
-        for (var y = height - 1; y >= top; y--)
-        {
-            if (!IsRowBackgroundColor(bitmap, y, bgColor, width))
-            {
-                bottom = y;
-                break;
-            }
-        }
+        var top = ScanTopBg(bitmap, bgColor, width, height);
+        var bottom = ScanBottomBg(bitmap, bgColor, width, height, top);
+        var left = ScanLeftBg(bitmap, bgColor, width, top, bottom);
+        var right = ScanRightBg(bitmap, bgColor, width, height, left, top, bottom);
 
-        // 左端から走査
-        var left = 0;
-        for (var x = 0; x < width; x++)
-        {
-            if (!IsColumnBackgroundColor(bitmap, x, bgColor, top, bottom))
-            {
-                left = x;
-                break;
-            }
-        }
-
-        // 右端から走査
-        var right = width - 1;
-        for (var x = width - 1; x >= left; x--)
-        {
-            if (!IsColumnBackgroundColor(bitmap, x, bgColor, top, bottom))
-            {
-                right = x;
-                break;
-            }
-        }
-
-        // 検出結果が極端に小さい、または元画像とほぼ同じ場合は空を返す
         var detectedWidth = right - left + 1;
         var detectedHeight = bottom - top + 1;
 
@@ -108,38 +64,49 @@ public static class ImageProcessor
         return new Rectangle(left, top, detectedWidth, detectedHeight);
     }
 
-    /// <summary>
-    /// 指定された行が背景色かどうかを判定する
-    /// </summary>
-    private static bool IsRowBackgroundColor(Bitmap bitmap, int y, Color bgColor, int width)
-    {
-        // 10ピクセル間隔でサンプリング（パフォーマンス向上）
-        var step = Math.Max(1, width / 20);
-        for (var x = 0; x < width; x += step)
-        {
-            if (!IsColorSimilar(bitmap.GetPixel(x, y), bgColor))
-            {
-                return false;
-            }
-        }
+    private static int ColorToArgbKey(Color c) => (c.R << 16) | (c.G << 8) | c.B;
 
+    private static int ScanTopBg(Bitmap bmp, Color bg, int w, int h)
+    {
+        for (var y = 0; y < h; y++)
+            if (!IsRowColor(bmp, y, bg, w)) return y;
+        return 0;
+    }
+
+    private static int ScanBottomBg(Bitmap bmp, Color bg, int w, int h, int top)
+    {
+        for (var y = h - 1; y >= top; y--)
+            if (!IsRowColor(bmp, y, bg, w)) return y;
+        return h - 1;
+    }
+
+    private static int ScanLeftBg(Bitmap bmp, Color bg, int w, int top, int bottom)
+    {
+        for (var x = 0; x < w; x++)
+            if (!IsColColor(bmp, x, bg, top, bottom)) return x;
+        return 0;
+    }
+
+    private static int ScanRightBg(Bitmap bmp, Color bg, int w, int h, int left, int top, int bottom)
+    {
+        for (var x = w - 1; x >= left; x--)
+            if (!IsColColor(bmp, x, bg, top, bottom)) return x;
+        return w - 1;
+    }
+
+    private static bool IsRowColor(Bitmap bmp, int y, Color c, int w)
+    {
+        var step = Math.Max(1, w / 20);
+        for (var x = 0; x < w; x += step)
+            if (!IsColorSimilar(bmp.GetPixel(x, y), c)) return false;
         return true;
     }
 
-    /// <summary>
-    /// 指定された列が背景色かどうかを判定する
-    /// </summary>
-    private static bool IsColumnBackgroundColor(Bitmap bitmap, int x, Color bgColor, int top, int bottom)
+    private static bool IsColColor(Bitmap bmp, int x, Color c, int top, int bottom)
     {
         var step = Math.Max(1, (bottom - top) / 20);
         for (var y = top; y <= bottom; y += step)
-        {
-            if (!IsColorSimilar(bitmap.GetPixel(x, y), bgColor))
-            {
-                return false;
-            }
-        }
-
+            if (!IsColorSimilar(bmp.GetPixel(x, y), c)) return false;
         return true;
     }
 

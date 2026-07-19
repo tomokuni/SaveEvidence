@@ -23,6 +23,7 @@ public sealed partial class SelectionForm : Form
     private string _highlightedWindowTitle = "";
     private readonly System.Windows.Forms.Timer _hoverTimer = new() { Interval = 150 };
     private readonly Point _virtualOrigin;
+    private readonly Color _borderColor;
 
     /// <summary>
     /// 選択が完了した時に発生するイベント（引数はスクリーン座標の矩形）
@@ -39,11 +40,12 @@ public sealed partial class SelectionForm : Form
     /// </summary>
     /// <param name="captureType">キャプチャの種類</param>
     /// <param name="preCapturedImage">事前にキャプチャした全画面ビットマップ</param>
-    public SelectionForm(CaptureType captureType, Bitmap preCapturedImage)
+    public SelectionForm(CaptureType captureType, Bitmap preCapturedImage, string borderColorName = "White")
     {
         _captureType = captureType;
         _screenCapture = preCapturedImage;
         _screens = CaptureManager.GetAllScreenBounds();
+        _borderColor = Color.FromName(borderColorName);
 
         var virtualBounds = SystemInformation.VirtualScreen;
         _virtualOrigin = virtualBounds.Location;
@@ -117,12 +119,12 @@ public sealed partial class SelectionForm : Form
     /// <summary>
     /// 白黒の破線ペンを作成する（一番細い線）
     /// </summary>
-    private static Pen CreateDashedBorderPen()
+    private Pen CreateDashedBorderPen()
     {
-        var pen = new Pen(Color.White, 0)
+        var pen = new Pen(_borderColor, 1)
         {
-            DashStyle = System.Drawing.Drawing2D.DashStyle.Dash,
-            DashPattern = [8, 4]
+            DashStyle = System.Drawing.Drawing2D.DashStyle.Custom,
+            DashPattern = [1f, 3f]
         };
         return pen;
     }
@@ -263,6 +265,23 @@ public sealed partial class SelectionForm : Form
             var y2 = y1 + _currentSelection.Height;
             var infoText = $"座標: ({x1}, {y1})-({x2}, {y2})\nサイズ: ({_currentSelection.Width}, {_currentSelection.Height})";
             DrawOverlayText(g, infoText, _currentSelection);
+        }
+        else if (!_isDragging)
+        {
+            // ドラッグ開始前は全面暗転＋各スクリーンに「領域選択」と表示（スクリーン選択と同じ書式）
+            using var dimBrush = new SolidBrush(Color.FromArgb(100, 0, 0, 0));
+            g.FillRectangle(dimBrush, ClientRectangle);
+
+            foreach (var (_, bounds, _) in _screens)
+            {
+                var screenRect = new Rectangle(
+                    bounds.X - _virtualOrigin.X,
+                    bounds.Y - _virtualOrigin.Y,
+                    bounds.Width,
+                    bounds.Height);
+
+                DrawOverlayText(g, "領域選択", screenRect);
+            }
         }
     }
 
