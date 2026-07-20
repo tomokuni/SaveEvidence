@@ -28,4 +28,22 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
   </ItemGroup>
 
+  <!-- デザイナーファイルの従属関係を明示 -->
+  <ItemGroup>
+    <Compile Update="Views\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Views\FolderViewForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Views\FolderViewForm.Designer.cs">
+      <DependentUpon>FolderViewForm.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Views\SettingsForm.Designer.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Views\HotkeyForm.Designer.cs">
+      <DependentUpon>HotkeyForm.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>

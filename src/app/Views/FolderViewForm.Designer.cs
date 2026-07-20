@@ -11,9 +11,24 @@ partial class FolderViewForm
     private Button _btnClose;
     private StatusStrip _statusStrip;
     private ToolStripStatusLabel _lblStatus;
+    private ToolStripStatusLabel _lblViewMode;
+    private ToolStripStatusLabel _lblSortStatus;
+    private ToolStripStatusLabel _lblSpacer;
+    private ToolStripStatusLabel _lblFolderPath;
+    private ToolStripStatusLabel _lblDummy;
     private FlowLayoutPanel _flowToolBar;
     private LinkLabel _linkFolderName;
+    private Button _btnOpenExplorer;
     private ToolTip _toolTip;
+    private ContextMenuStrip _contextMenuView;
+    private ContextMenuStrip _contextMenuSort;
+    private ToolStripMenuItem _ctxViewExtraLarge;
+    private ToolStripMenuItem _ctxViewLarge;
+    private ToolStripMenuItem _ctxViewMedium;
+    private ToolStripMenuItem _ctxViewList;
+    private ToolStripMenuItem _ctxViewDetails;
+    private ToolStripMenuItem _ctxSortAscending;
+    private ToolStripMenuItem _ctxSortDescending;
 
     protected override void Dispose(bool disposing)
     {
