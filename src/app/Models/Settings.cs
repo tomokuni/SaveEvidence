@@ -60,6 +60,9 @@ public sealed class Settings
     /// <summary>虫眼鏡外枠の太さ</summary>
     public int LoupeFrameWidth { get; set; } = 2;
 
+    /// <summary>拡大鏡を表示するかどうか</summary>
+    public bool ShowLoupe { get; set; } = false;
+
     private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 
     /// <summary>

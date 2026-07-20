@@ -1,5 +1,6 @@
 using app.Models;
 using app.ViewModels;
+using System.Diagnostics;
 
 namespace app.Views;
 
@@ -18,12 +19,20 @@ public partial class MainForm : Form
 
     // 拡大率管理（0 = 自動）
     private int _zoomPercent;
-    private static readonly int[] s_zoomValues = [0, 25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400, 500, 670, 800, 1000];
+    private static readonly int[] s_zoomValues = [0, 25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400, 500];
     private int _zoomIndex;
 
     // スクロール管理
     private Point _picBaseLocation;
     private int _scrollX, _scrollY;
+
+    // アンドゥ管理（最大5回）
+    private const int MaxUndoCount = 5;
+    private readonly List<Image> _undoStack = new(MaxUndoCount);
+    private bool _isUndoing;
+
+    // リンク右クリックフラグ（LinkClicked とコンテキストメニューの競合対策）
+    private bool _linkRightClicked;
 
     public MainForm()
     {
@@ -44,7 +53,7 @@ public partial class MainForm : Form
         _picPreview.MouseDown += PicPreview_CropMouseDown;
         _picPreview.MouseMove += PicPreview_CropMouseMove;
         _picPreview.MouseUp += PicPreview_CropMouseUp;
-        _pnlPreview.MouseDown += PicPreview_CropMouseDown;
+        _pnlPreview.MouseDown += PnlPreview_MouseDown;
         _pnlPreview.MouseMove += PicPreview_CropMouseMove;
         _pnlPreview.MouseUp += PicPreview_CropMouseUp;
         _picLoupe.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -59,6 +68,22 @@ public partial class MainForm : Form
         _pnlPreview.Resize += (_, _) => UpdateScrollBars();
         Resize += (_, _) => { };
         UpdateStatusBar();
+        UpdateMenuStates();
+        _menuEditShowLoupe.Checked = _viewModel.Settings.ShowLoupe;
+        _ctxShowLoupe.Checked = _viewModel.Settings.ShowLoupe;
+        UpdateLoupeVisibleFromSetting();
+
+        // コンテキストメニュー表示前に状態を更新
+        _contextMenuPreview.Opening += (_, _) => UpdateMenuStates();
+        _contextMenuLink.Opening += (_, _) => UpdateMenuStates();
+
+        // メニュードロップダウン表示前に状態を更新
+        _menuFile.DropDownOpening += (_, _) => UpdateMenuStates();
+        _menuEdit.DropDownOpening += (_, _) => UpdateMenuStates();
+
+        // リンクラベルの右クリック対策（LinkClicked が右クリックでも発火するため）
+        _linkSaveFolder.MouseDown += LinkSaveFolder_MouseDown;
+
         Program.LogDebug("MainForm.ctor completed - crop events always subscribed");
     }
 
@@ -86,6 +111,7 @@ public partial class MainForm : Form
         _zoomPercent = s_zoomValues[_zoomIndex];
         UpdatePictureBoxZoom();
         UpdateStatusBar();
+        UpdateMenuStates();
     }
 
     /// <summary>
@@ -224,6 +250,7 @@ public partial class MainForm : Form
         // マウス座標を初期化して拡大鏡を表示
         _cropMouseClientPos = new Point(_picPreview.ClientSize.Width / 2, _picPreview.ClientSize.Height / 2);
         UpdateLoupePosition();
+        UpdateMenuStates();
     }
 
     private void PicPreview_Paint(object? sender, PaintEventArgs e)
@@ -233,12 +260,16 @@ public partial class MainForm : Form
 
     private void UpdateStatusBar()
     {
-        var status = _viewModel.PreviewImage is not null
-            ? $" {GetActualZoomPercent()}%"
-            : "";
-        var extra = _viewModel.StatusText;
-        if (!string.IsNullOrEmpty(extra))
-            status += $" | {extra}";
+        var img = _viewModel.PreviewImage;
+        var zoomText = img is not null ? $"{GetActualZoomPercent()}%" : "-%";
+        var alignText = _viewModel.Settings.CenterAlign ? "中央寄せ" : "左上寄せ";
+        var loupeText = _viewModel.Settings.ShowLoupe ? "on" : "off";
+        var sizeText = img is not null ? $"({img.Width}, {img.Height})" : "(-, -)";
+        var savedText = _viewModel.StatusText;
+
+        var status = $"拡大率 {zoomText} ｜ {alignText} ｜ 拡大鏡表示: {loupeText} ｜ イメージサイズ {sizeText}";
+        if (!string.IsNullOrEmpty(savedText))
+            status += $" ｜ {savedText}";
         _lblStatus.Text = status;
     }
 
@@ -272,6 +303,7 @@ public partial class MainForm : Form
             UpdatePictureBoxZoom();
             UpdateStatusBar();
         }
+        UpdateMenuStates();
     }
 
     // ─── マウスホイール ─────────────────────────────
@@ -479,6 +511,7 @@ public partial class MainForm : Form
         if (rect.Width < 5 || rect.Height < 5) return;
         try
         {
+            PushUndo();
             var cropped = ImageProcessor.Crop(_viewModel.PreviewImage!, rect);
             Program.LogDebug($"  cropped={cropped.Width}x{cropped.Height}");
             _viewModel.SetPreviewImage(cropped);
@@ -497,6 +530,7 @@ public partial class MainForm : Form
         _pnlPreview.Cursor = Cursors.Default;
         _picLoupe.Visible = false;
         _picPreview.Invalidate();
+        UpdateMenuStates();
     }
 
     // ─── Crop モード ────────────────────────────────
@@ -570,6 +604,19 @@ public partial class MainForm : Form
         if (sender == _pnlPreview)
             return PanelToImage(clientPt);
         return ClientToImage(clientPt);
+    }
+
+    /// <summary>
+    /// パネルのマウスダウン処理。右クリック時にメニュー状態を更新し、左クリック時に切出し処理へ委譲する。
+    /// </summary>
+    private void PnlPreview_MouseDown(object? sender, MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Right)
+        {
+            UpdateMenuStates();
+            return;
+        }
+        PicPreview_CropMouseDown(sender, e);
     }
 
     private void PicPreview_CropMouseDown(object? sender, MouseEventArgs e)
@@ -655,6 +702,7 @@ public partial class MainForm : Form
 
         _picPreview.Invalidate();
         _pnlPreview.Invalidate();
+        UpdateMenuStates();
     }
 
     /// <summary>
@@ -670,6 +718,11 @@ public partial class MainForm : Form
 
     private void PicLoupe_MouseDown(object? sender, MouseEventArgs e)
     {
+        if (e.Button == MouseButtons.Right)
+        {
+            UpdateMenuStates();
+            return;
+        }
         var screenPt = _picLoupe.PointToScreen(e.Location);
         var pnlPt = _pnlPreview.PointToClient(screenPt);
         var args = new MouseEventArgs(e.Button, 0, pnlPt.X, pnlPt.Y, 0);
@@ -763,8 +816,8 @@ public partial class MainForm : Form
     // ルーペ位置更新（MouseMove から呼ぶ）
     private void UpdateLoupePosition()
     {
-        // 範囲選択がある切出しモード時のみ表示
-        if (!_isCropMode || !_cropSelection.SelectionRect.HasValue || _viewModel.PreviewImage is null)
+        // 範囲選択がある切出しモード時のみ表示。設定でオフの場合は非表示
+        if (!_isCropMode || !_cropSelection.SelectionRect.HasValue || _viewModel.PreviewImage is null || !_viewModel.Settings.ShowLoupe)
         {
             _picLoupe.Visible = false;
             return;
@@ -860,9 +913,9 @@ public partial class MainForm : Form
             }
         }
 
-        // 十字線
+        // 十字線（拡大率と同じ太さ＝論理1pixel）
         var crossColor = Color.FromName(_viewModel.Settings.LoupeCrossColor);
-        using var cp = new Pen(Color.FromArgb(120, crossColor.R, crossColor.G, crossColor.B), 1f);
+        using var cp = new Pen(Color.FromArgb(120, crossColor.R, crossColor.G, crossColor.B), (float)loupeZoom);
         g.DrawLine(cp, loupeSize / 2, 0, loupeSize / 2, loupeSize);
         g.DrawLine(cp, 0, loupeSize / 2, loupeSize, loupeSize / 2);
 
@@ -909,6 +962,9 @@ public partial class MainForm : Form
 
     private void LinkSaveFolder_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
     {
+        // 右クリック時はコンテキストメニューを優先
+        if (_linkRightClicked) return;
+
         if (!string.IsNullOrEmpty(_viewModel.SaveFolderPath))
         {
             var dialog = new FolderViewForm(_viewModel.SaveFolderPath, _viewModel.Settings);
@@ -916,9 +972,218 @@ public partial class MainForm : Form
         }
     }
 
+    private void LinkSaveFolder_MouseDown(object? sender, MouseEventArgs e)
+    {
+        _linkRightClicked = e.Button == MouseButtons.Right;
+    }
+
     private void TxtFileNameTemplate_TextChanged(object? sender, EventArgs e)
     {
         _viewModel.FileNameTemplateText = _txtFileNameTemplate.Text;
+    }
+
+    // ─── アンドゥ ──────────────────────────────────
+
+    /// <summary>
+    /// 現在のプレビュー画像をアンドゥスタックに退避する。
+    /// </summary>
+    private void PushUndo()
+    {
+        if (_viewModel.PreviewImage is null) return;
+        if (_isUndoing) return;
+
+        var copy = new Bitmap(_viewModel.PreviewImage);
+        _undoStack.Add(copy);
+        if (_undoStack.Count > MaxUndoCount)
+        {
+            _undoStack[0].Dispose();
+            _undoStack.RemoveAt(0);
+        }
+        UpdateMenuStates();
+    }
+
+    // ─── メニューイベント ───────────────────────────
+
+    private void MenuFileSave_Click(object? sender, EventArgs e)
+    {
+        BtnSave_Click(sender, e);
+    }
+
+    private void MenuFileSaveFolder_Click(object? sender, EventArgs e)
+    {
+        BtnSaveFolder_Click(sender, e);
+    }
+
+    private void MenuFileDisplaySettings_Click(object? sender, EventArgs e)
+    {
+        using var dialog = new SettingsForm(_viewModel.Settings);
+        if (dialog.ShowDialog(this) == DialogResult.OK)
+        {
+            UpdatePictureBoxZoom();
+            _picPreview.Invalidate();
+            _pnlPreview.Invalidate();
+        }
+    }
+
+    private void MenuEditUndo_Click(object? sender, EventArgs e)
+    {
+        if (_undoStack.Count == 0 || _viewModel.PreviewImage is null) return;
+
+        _isUndoing = true;
+        var prev = _undoStack[^1];
+        _undoStack.RemoveAt(_undoStack.Count - 1);
+
+        _viewModel.SetPreviewImage(prev);
+        _picPreview.Image?.Dispose();
+        _picPreview.Image = new Bitmap(prev);
+        UpdatePictureBoxZoom();
+        _picPreview.Invalidate();
+
+        _isUndoing = false;
+        UpdateMenuStates();
+    }
+
+    private void MenuEditZoomIn_Click(object? sender, EventArgs e)
+    {
+        ZoomIn();
+    }
+
+    private void MenuEditZoomOut_Click(object? sender, EventArgs e)
+    {
+        ZoomOut();
+    }
+
+    private void MenuEditCrop_Click(object? sender, EventArgs e)
+    {
+        BtnCropApply_Click(sender, e);
+    }
+
+    private void MenuEditAutoCrop_Click(object? sender, EventArgs e)
+    {
+        BtnAutoCrop_Click(sender, e);
+    }
+
+    private void MenuEditCopy_Click(object? sender, EventArgs e)
+    {
+        _viewModel.CopyToClipboard();
+    }
+
+    private void MenuEditPaste_Click(object? sender, EventArgs e)
+    {
+        PushUndo();
+        if (_viewModel.PasteFromClipboard())
+        {
+            UpdateMenuStates();
+        }
+    }
+
+    private void CtxLinkFolderView_Click(object? sender, EventArgs e)
+    {
+        if (!string.IsNullOrEmpty(_viewModel.SaveFolderPath))
+        {
+            var dialog = new FolderViewForm(_viewModel.SaveFolderPath, _viewModel.Settings);
+            dialog.Show(this);
+        }
+    }
+
+    /// <summary>
+    /// エクスプローラでフォルダを開く（リンク右クリックメニューから）
+    /// </summary>
+    private void CtxLinkOpenExplorer_Click(object? sender, EventArgs e)
+    {
+        if (!string.IsNullOrEmpty(_viewModel.SaveFolderPath) && Directory.Exists(_viewModel.SaveFolderPath))
+        {
+            Process.Start("explorer.exe", _viewModel.SaveFolderPath);
+        }
+    }
+
+    private void MenuEditAlignLeft_Click(object? sender, EventArgs e)
+    {
+        _viewModel.Settings.CenterAlign = false;
+        _viewModel.Settings.Save();
+        UpdatePictureBoxZoom();
+        UpdateMenuStates();
+    }
+
+    private void MenuEditAlignCenter_Click(object? sender, EventArgs e)
+    {
+        _viewModel.Settings.CenterAlign = true;
+        _viewModel.Settings.Save();
+        UpdatePictureBoxZoom();
+        UpdateMenuStates();
+    }
+
+    private void MenuEditShowLoupe_Click(object? sender, EventArgs e)
+    {
+        var item = (ToolStripMenuItem)sender!;
+        var show = item.Checked;
+        _viewModel.Settings.ShowLoupe = show;
+        _viewModel.Settings.Save();
+        _menuEditShowLoupe.Checked = show;
+        _ctxShowLoupe.Checked = show;
+        UpdateLoupeVisibleFromSetting();
+    }
+
+    /// <summary>
+    /// 設定に基づいて拡大鏡の表示状態を更新する
+    /// </summary>
+    private void UpdateLoupeVisibleFromSetting()
+    {
+        if (_viewModel.Settings.ShowLoupe && _viewModel.PreviewImage is not null)
+        {
+            _picLoupe.Visible = true;
+            UpdateLoupePosition();
+        }
+        else
+        {
+            _picLoupe.Visible = false;
+        }
+    }
+
+    /// <summary>
+    /// メニュー項目の有効/無効状態を現在の状態に合わせて更新する
+    /// </summary>
+    private void UpdateMenuStates()
+    {
+        var hasImage = _viewModel.PreviewImage is not null;
+        var hasSelection = _cropSelection.SelectionRect.HasValue;
+        var hasUndo = _undoStack.Count > 0;
+
+        // 実際の拡大率（自動フィット時の倍率も含む）から拡大/縮小の可否を判定
+        var canZoomOut = false;
+        var canZoomIn = false;
+        if (hasImage)
+        {
+            var currentPercent = GetActualZoomPercent();
+            for (var i = 0; i < s_zoomValues.Length; i++)
+            {
+                if (s_zoomValues[i] > currentPercent) canZoomIn = true;
+                if (s_zoomValues[i] != 0 && s_zoomValues[i] < currentPercent) canZoomOut = true;
+            }
+        }
+
+        _menuFileSave.Enabled = hasImage;
+        _menuEditUndo.Enabled = hasUndo;
+        _menuEditCrop.Enabled = hasImage && hasSelection;
+        _menuEditAutoCrop.Enabled = hasImage && !hasSelection;
+        _menuEditCopy.Enabled = hasImage;
+        _menuEditPaste.Enabled = Clipboard.ContainsImage();
+        _menuEditZoomIn.Enabled = canZoomIn;
+        _menuEditZoomOut.Enabled = canZoomOut;
+        _menuEditAlignLeft.Enabled = _viewModel.Settings.CenterAlign;
+        _menuEditAlignCenter.Enabled = !_viewModel.Settings.CenterAlign;
+        _menuEditShowLoupe.Enabled = hasSelection;
+
+        // コンテキストメニュー（プレビュー）
+        _ctxCrop.Enabled = hasImage && hasSelection;
+        _ctxAutoCrop.Enabled = hasImage && !hasSelection;
+        _ctxZoomIn.Enabled = canZoomIn;
+        _ctxZoomOut.Enabled = canZoomOut;
+        _ctxAlignLeft.Enabled = _viewModel.Settings.CenterAlign;
+        _ctxAlignCenter.Enabled = !_viewModel.Settings.CenterAlign;
+        _ctxShowLoupe.Enabled = hasSelection;
+        _menuEditShowLoupe.Checked = _viewModel.Settings.ShowLoupe;
+        _ctxShowLoupe.Checked = _viewModel.Settings.ShowLoupe;
     }
 
     private void MenuHotKeySettings_Click(object? sender, EventArgs e)
