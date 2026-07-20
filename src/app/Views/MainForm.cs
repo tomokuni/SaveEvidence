@@ -267,10 +267,11 @@ public partial class MainForm : Form
         var sizeText = img is not null ? $"({img.Width}, {img.Height})" : "(-, -)";
         var savedText = _viewModel.StatusText;
 
-        var status = $"拡大率 {zoomText} ｜ {alignText} ｜ 拡大鏡表示: {loupeText} ｜ イメージサイズ {sizeText}";
-        if (!string.IsNullOrEmpty(savedText))
-            status += $" ｜ {savedText}";
-        _lblStatus.Text = status;
+        _lblZoom.Text = $"拡大率 {zoomText}";
+        _lblAlign.Text = alignText;
+        _lblLoupe.Text = $"拡大鏡表示: {loupeText}";
+        _lblImageSize.Text = $"イメージサイズ {sizeText}";
+        _lblSavedStatus.Text = string.IsNullOrEmpty(savedText) ? "未保存" : savedText;
     }
 
     // ─── ズーム共通 ─────────────────────────────
