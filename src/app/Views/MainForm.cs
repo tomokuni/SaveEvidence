@@ -1,6 +1,7 @@
-using app.Models;
-using app.ViewModels;
 using System.Diagnostics;
+using app.Models;
+using app.Services;
+using app.ViewModels;
 
 namespace app.Views;
 
@@ -10,12 +11,13 @@ namespace app.Views;
 public partial class MainForm : Form
 {
     private readonly MainViewModel _viewModel;
-    private readonly HotKeyManager _hotKeyManager;
+    private readonly HotKeyManager? _hotKeyManager;
+    private readonly ISettingsService _settingsService;
     private bool _isExecutingCapture;
     private bool _isCropMode;
-    private readonly CropSelection _cropSelection = new();
+    private readonly CropSelection _cropSelection;
     private Point _cropMouseClientPos = new(-1, -1);
-    private bool _isCropHandleActive;
+    private bool _menuStateDirty = true;
 
     // 拡大率管理（0 = 自動）
     private int _zoomPercent;
@@ -34,9 +36,11 @@ public partial class MainForm : Form
     // リンク右クリックフラグ（LinkClicked とコンテキストメニューの競合対策）
     private bool _linkRightClicked;
 
-    public MainForm()
+    public MainForm(ISettingsService settingsService)
     {
-        _viewModel = new MainViewModel();
+        _settingsService = settingsService;
+        _viewModel = new MainViewModel(settingsService);
+        _cropSelection = new CropSelection();
 
         if (System.ComponentModel.LicenseManager.UsageMode != System.ComponentModel.LicenseUsageMode.Designtime)
         {
@@ -58,33 +62,36 @@ public partial class MainForm : Form
         _picLoupe.SizeMode = PictureBoxSizeMode.StretchImage;
         _picLoupe.Enabled = true;
         _picLoupe.TabStop = false;
+        _picLoupe.Size = new Size(_viewModel.Settings.LoupeSize, _viewModel.Settings.LoupeSize);
         _picLoupe.MouseMove += PicLoupe_MouseMove;
         _picLoupe.MouseDown += PicLoupe_MouseDown;
         _picLoupe.MouseUp += PicLoupe_MouseUp;
         _picPreview.Paint += PicPreview_CropPaint;
         _picPreview.MouseWheel += PicPreview_MouseWheel;
         _pnlPreview.MouseWheel += PicPreview_MouseWheel;
+        _picPreview.BackColor = Color.Transparent;
+        _pnlPreview.Paint += PnlPreview_Paint;
+        // パネルのダブルバッファリングを有効化（チラつき防止）
+        typeof(Panel).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.SetValue(_pnlPreview, true);
         _pnlPreview.Resize += (_, _) => { UpdatePictureBoxZoom(); UpdateStatusBar(); UpdateMenuStates(); UpdateScrollBars(); };
         Resize += (_, _) => { if (_zoomPercent == 0) { UpdatePictureBoxZoom(); UpdateStatusBar(); UpdateMenuStates(); } };
         UpdateStatusBar();
         UpdateMenuStates();
-        _menuEditShowLoupe.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Show;
-        _ctxShowLoupe.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Show;
+        UpdateScrollBars();
         ApplyLoupeModeFromSetting();
 
         // コンテキストメニュー表示前に状態を更新
-        _contextMenuPreview.Opening += (_, _) => UpdateMenuStates();
-        _contextMenuLink.Opening += (_, _) => UpdateMenuStates();
+        _contextMenuPreview.Opening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
+        _contextMenuLink.Opening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
 
         // メニュードロップダウン表示前に状態を更新
-        _menuFile.DropDownOpening += (_, _) => UpdateMenuStates();
-        _menuEdit.DropDownOpening += (_, _) => UpdateMenuStates();
-        _menuView.DropDownOpening += (_, _) => UpdateMenuStates();
+        _menuFile.DropDownOpening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
+        _menuEdit.DropDownOpening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
+        _menuView.DropDownOpening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
 
         // リンクラベルの右クリック対策（LinkClicked が右クリックでも発火するため）
         _linkSaveFolder.MouseDown += LinkSaveFolder_MouseDown;
-
-        Program.LogDebug("MainForm.ctor completed - crop events always subscribed");
     }
 
     private void ResetZoomToAuto()
@@ -122,8 +129,8 @@ public partial class MainForm : Form
         var zoom = GetActualZoom();
         var panelW = _pnlPreview.ClientSize.Width;
         var panelH = _pnlPreview.ClientSize.Height;
-        var imgW = (int)(img.Width * zoom);
-        var imgH = (int)(img.Height * zoom);
+        var imgW = (int)Math.Round(img.Width * zoom);
+        var imgH = (int)Math.Round(img.Height * zoom);
         var centerAlign = _viewModel.Settings.CenterAlign;
 
         if (_zoomPercent > 0 || !centerAlign)
@@ -147,8 +154,8 @@ public partial class MainForm : Form
         if (centerAlign && (_zoomPercent > 0 || _picPreview.SizeMode == PictureBoxSizeMode.StretchImage))
         {
             _picBaseLocation = new Point(
-                Math.Max(0, (panelW - imgW) / 2),
-                Math.Max(0, (panelH - imgH) / 2));
+                Math.Max(0, (int)Math.Round((panelW - imgW) / 2.0)),
+                Math.Max(0, (int)Math.Round((panelH - imgH) / 2.0)));
         }
         else
         {
@@ -173,6 +180,18 @@ public partial class MainForm : Form
 
         _hScroll.Visible = true;
         _vScroll.Visible = true;
+
+        // 画像がない場合は無効状態で表示
+        if (_viewModel.PreviewImage is null)
+        {
+            _hScroll.Enabled = false;
+            _vScroll.Enabled = false;
+            _hScroll.Minimum = 0;
+            _hScroll.Maximum = 0;
+            _vScroll.Minimum = 0;
+            _vScroll.Maximum = 0;
+            return;
+        }
 
         // スクロール不要な場合は無効状態で表示
         _hScroll.Enabled = _picPreview.Width + _picBaseLocation.X > pw;
@@ -227,10 +246,10 @@ public partial class MainForm : Form
 
         _picPreview.Paint += PicPreview_Paint!;
 
-        // マウス座標を初期化して拡大鏡を表示
+        // マウス座標を初期化してルーペを表示
         _cropMouseClientPos = new Point(_picPreview.ClientSize.Width / 2, _picPreview.ClientSize.Height / 2);
         UpdateLoupePosition();
-        UpdateMenuStates();
+        NotifyMenuStateChanged();
     }
 
     private void PicPreview_Paint(object? sender, PaintEventArgs e)
@@ -245,9 +264,9 @@ public partial class MainForm : Form
         var alignText = _viewModel.Settings.CenterAlign ? "中央寄せ" : "左上寄せ";
         var loupeText = _viewModel.Settings.LoupeModeValue switch
         {
-            LoupeMode.Show => "拡大鏡:常時表示",
-            LoupeMode.Auto => "拡大鏡:範囲選択中のみ",
-            _ => "拡大鏡:非表示",
+            LoupeMode.Show => "ルーペ:常時表示",
+            LoupeMode.Auto => "ルーペ:範囲選択中のみ",
+            _ => "ルーペ:非表示",
         };
         var sizeText = img is not null ? $"({img.Width}, {img.Height})" : "(-, -)";
         var savedText = _viewModel.StatusText;
@@ -255,7 +274,7 @@ public partial class MainForm : Form
         _lblZoom.Text = $"拡大率 {zoomText}";
         _lblAlign.Text = alignText;
         _lblLoupe.Text = loupeText;
-        _lblImageSize.Text = $"イメージサイズ {sizeText}";
+        _lblImageSize.Text = $"サイズ {sizeText}";
         _lblSavedStatus.Text = string.IsNullOrEmpty(savedText) ? "未保存" : savedText;
     }
 
@@ -288,7 +307,7 @@ public partial class MainForm : Form
             UpdatePictureBoxZoom();
             UpdateStatusBar();
         }
-        UpdateMenuStates();
+        NotifyMenuStateChanged();
     }
 
     // ─── マウスホイール ─────────────────────────────
@@ -343,51 +362,75 @@ public partial class MainForm : Form
 
     private void InitializeViewModel()
     {
+        // ─── MainViewModel の変更通知を DataBindings と PropertyChanged で処理 ──
+
+        // DataBindings（シンプルな 1:1 バインディングは自動反映）
+        _btnCopy.DataBindings.Add("Enabled", _viewModel, nameof(MainViewModel.CanCopy));
+        _btnSave.DataBindings.Add("Enabled", _viewModel, nameof(MainViewModel.CanSave));
+        _linkSaveFolder.DataBindings.Add("Text", _viewModel, nameof(MainViewModel.SaveFolderDisplayName));
+        _txtFileNameTemplate.DataBindings.Add("Text", _viewModel, nameof(MainViewModel.FileNameTemplateText),
+            false, DataSourceUpdateMode.OnPropertyChanged);
+
+        // ToolTip は DataBindings 非対応のため、PropertyChanged で処理
         _viewModel.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(MainViewModel.PreviewImage) && _viewModel.PreviewImage is not null)
+            switch (e.PropertyName)
             {
-                ExitCropMode();
-                UpdatePreviewImage(_viewModel.PreviewImage);
-                ResetZoomToAuto();
-                UpdateStatusBar();
+                case nameof(MainViewModel.PreviewImage):
+                    if (_viewModel.PreviewImage is not null)
+                    {
+                        ExitCropMode();
+                        UpdatePreviewImage(_viewModel.PreviewImage);
+                        ResetZoomToAuto();
+                    }
+                    UpdateStatusBar();
+                    UpdateMenuStates();
+                    break;
+
+                case nameof(MainViewModel.SaveFolderPath):
+                    _toolTip.SetToolTip(_btnSaveFolder, _viewModel.SaveFolderPath);
+                    _toolTip.SetToolTip(_linkSaveFolder, _viewModel.SaveFolderPath);
+                    break;
+
+                case nameof(MainViewModel.CurrentFileNamePreview):
+                    UpdateStatusBar();
+                    break;
+
+                case nameof(MainViewModel.IsSaved):
+                    _picPreview.Invalidate();
+                    UpdateStatusBar();
+                    break;
             }
+        };
 
-            if (e.PropertyName == nameof(MainViewModel.SaveFolderDisplayName))
+        // ─── Settings の変更通知 ──────────────────────────
+        _viewModel.Settings.PropertyChanged += (s, e) =>
+        {
+            switch (e.PropertyName)
             {
-                _linkSaveFolder.Text = _viewModel.SaveFolderDisplayName;
-                _toolTip.SetToolTip(_btnSaveFolder, _viewModel.SaveFolderPath);
-                _toolTip.SetToolTip(_linkSaveFolder, _viewModel.SaveFolderPath);
-            }
+                case nameof(Settings.LoupeModeValue):
+                    ApplyLoupeModeFromSetting();
+                    UpdateStatusBar();
+                    break;
 
-            if (e.PropertyName == nameof(MainViewModel.CurrentFileNamePreview))
-                UpdateStatusBar();
+                case nameof(Settings.LoupeSize):
+                case nameof(Settings.LoupeZoomLevel):
+                    ApplyLoupeSettings();
+                    break;
 
-            if (e.PropertyName == nameof(MainViewModel.FileNameTemplateText))
-                _txtFileNameTemplate.Text = _viewModel.FileNameTemplateText;
-
-            if (e.PropertyName == nameof(MainViewModel.IsSaved))
-            {
-                _picPreview.Invalidate();
-                UpdateStatusBar();
-            }
-
-            if (e.PropertyName is nameof(MainViewModel.CanCopy) or nameof(MainViewModel.CanSave) or nameof(MainViewModel.HasPreviewImage) or nameof(MainViewModel.IsSaved))
-            {
-                _btnCopy.Enabled = _viewModel.CanCopy;
-                _btnSave.Enabled = _viewModel.CanSave;
-                UpdateStatusBar();
+                case nameof(Settings.CenterAlign):
+                case nameof(Settings.CaptureMode):
+                    UpdateStatusBar();
+                    UpdateMenuStates();
+                    break;
             }
         };
 
         _viewModel.StartSelectionMode = StartSelectionMode;
 
-        _linkSaveFolder.Text = _viewModel.SaveFolderDisplayName;
+        // 初回表示設定
         _toolTip.SetToolTip(_btnSaveFolder, _viewModel.SaveFolderPath);
         _toolTip.SetToolTip(_linkSaveFolder, _viewModel.SaveFolderPath);
-        _txtFileNameTemplate.Text = _viewModel.FileNameTemplateText;
-        _btnCopy.Enabled = _viewModel.CanCopy;
-        _btnSave.Enabled = _viewModel.CanSave;
         UpdateStatusBar();
     }
 
@@ -427,11 +470,11 @@ public partial class MainForm : Form
                 {
                     using var fullCapture = CaptureManager.CaptureArea(SystemInformation.VirtualScreen);
                     using var selectionForm = new SelectionForm(CaptureType.SelectScreen, fullCapture, _viewModel.Settings.CaptureBorderColor);
-                    selectionForm.SelectionCompleted += (s, rect) => { try { _viewModel.CaptureScreenArea(rect); } catch (Exception ex) { Program.LogException(ex); } };
+                    selectionForm.SelectionCompleted += (s, rect) => { try { _viewModel.CaptureScreenArea(rect); } catch (Exception) { } };
                     selectionForm.Cancelled += (s, e) => { };
                     selectionForm.ShowDialog();
                 }
-                catch (Exception ex) { Program.LogException(ex); }
+                catch (Exception) { }
                 finally { _isExecutingCapture = false; EnsureVisible(); }
             });
         });
@@ -450,13 +493,26 @@ public partial class MainForm : Form
                     using var selectionForm = new SelectionForm(captureType, fullCapture, _viewModel.Settings.CaptureBorderColor);
                     selectionForm.SelectionCompleted += (s, rect) =>
                     {
-                        try { _viewModel.SetPreviewImage(CaptureManager.CaptureArea(rect)); }
-                        catch (Exception ex) { Program.LogException(ex); }
+                        try
+                        {
+                            if (captureType == CaptureType.WindowSelect
+                                && s is SelectionForm sf
+                                && sf.SelectedWindowHandle != IntPtr.Zero)
+                            {
+                                _viewModel.SetPreviewImage(
+                                    CaptureManager.CaptureWindow(sf.SelectedWindowHandle, _viewModel.Settings.CaptureMode));
+                            }
+                            else
+                            {
+                                _viewModel.SetPreviewImage(CaptureManager.CaptureArea(rect));
+                            }
+                        }
+                        catch (Exception) { }
                     };
                     selectionForm.Cancelled += (s, e) => { };
                     selectionForm.ShowDialog();
                 }
-                catch (Exception ex) { Program.LogException(ex); }
+                catch (Exception) { }
                 finally { _isExecutingCapture = false; EnsureVisible(); }
             });
         });
@@ -484,27 +540,22 @@ public partial class MainForm : Form
             _viewModel.SetPreviewImage(cropped);
             ExitCropMode();
         }
-        catch (Exception ex) { Program.LogException(ex); }
+        catch (Exception) { }
     }
 
     private void BtnCropApply_Click(object? sender, EventArgs e)
     {
-        Program.LogDebug($"BtnCropApply_Click: hasSel={_cropSelection.SelectionRect.HasValue}");
         if (!_cropSelection.SelectionRect.HasValue) return;
         var rect = _cropSelection.SelectionRect.Value;
-        Program.LogDebug($"  rect={rect} w={rect.Width} h={rect.Height}");
         if (rect.Width < 5 || rect.Height < 5) return;
         try
         {
             PushUndo();
             var cropped = ImageProcessor.Crop(_viewModel.PreviewImage!, rect);
-            Program.LogDebug($"  cropped={cropped.Width}x{cropped.Height}");
             _viewModel.SetPreviewImage(cropped);
-            Program.LogDebug("  SetPreviewImage done");
             ExitCropMode();
-            Program.LogDebug("  ExitCropMode done");
         }
-        catch (Exception ex) { Program.LogException(ex); }
+        catch (Exception) { }
     }
 
     private void ExitCropMode()
@@ -515,20 +566,18 @@ public partial class MainForm : Form
         _pnlPreview.Cursor = Cursors.Default;
         _picLoupe.Visible = false;
         _picPreview.Invalidate();
-        UpdateMenuStates();
+        NotifyMenuStateChanged();
     }
 
     // ─── Crop モード ────────────────────────────────
 
     private void BtnCropMode_Click(object? sender, EventArgs e)
     {
-        Program.LogDebug($"BtnCropMode_Click: _isCropMode={_isCropMode} hasImage={_viewModel.PreviewImage is not null}");
 
-        if (_viewModel.PreviewImage is null) { Program.LogDebug("  → PreviewImage is null, return"); return; }
+        if (_viewModel.PreviewImage is null) { return; }
 
         _isCropMode = !_isCropMode;
         _btnCropMode.Text = _isCropMode ? "切出し終了" : "切出し範囲";
-        Program.LogDebug($"  → _isCropMode={_isCropMode}");
 
         if (_isCropMode)
         {
@@ -543,7 +592,6 @@ public partial class MainForm : Form
             _picPreview.Invalidate();
             UpdateLoupePosition();
         }
-        Program.LogDebug($"  → 切出しモード: {(_isCropMode ? "ON" : "OFF")}");
     }
 
     private Point ClientToImage(Point clientPoint)
@@ -555,24 +603,19 @@ public partial class MainForm : Form
         var iw = img.Width;
         var ih = img.Height;
 
-        if (_zoomPercent > 0)
+        // UpdateLoupePosition と同じオフセット計算（浮動小数点）
+        double offsetX = 0, offsetY = 0;
+        if (_zoomPercent == 0)
         {
-            // 手動ズーム：PictureBox の左上からの相対座標を画像座標に変換
-            return new Point(
-                Math.Clamp((int)(clientPoint.X / zoom), 0, iw - 1),
-                Math.Clamp((int)(clientPoint.Y / zoom), 0, ih - 1));
+            var pw = _picPreview.ClientSize.Width;
+            var ph = _picPreview.ClientSize.Height;
+            offsetX = (pw - iw * zoom) / 2.0;
+            offsetY = (ph - ih * zoom) / 2.0;
         }
-        else
-        {
-            // 自動ズーム：中央寄せを考慮
-            var cw = _picPreview.ClientSize.Width;
-            var ch = _picPreview.ClientSize.Height;
-            var offsetX = (cw - (int)(iw * zoom)) / 2;
-            var offsetY = (ch - (int)(ih * zoom)) / 2;
-            return new Point(
-                Math.Clamp((int)((clientPoint.X - offsetX) / zoom), 0, iw - 1),
-                Math.Clamp((int)((clientPoint.Y - offsetY) / zoom), 0, ih - 1));
-        }
+
+        return new Point(
+            Math.Clamp((int)Math.Round((clientPoint.X - offsetX) / zoom), 0, iw - 1),
+            Math.Clamp((int)Math.Round((clientPoint.Y - offsetY) / zoom), 0, ih - 1));
     }
 
     /// <summary>
@@ -606,9 +649,8 @@ public partial class MainForm : Form
 
     private void PicPreview_CropMouseDown(object? sender, MouseEventArgs e)
     {
-        Program.LogDebug($"MouseDown: sender={(sender == _pnlPreview ? "Panel" : sender == _picPreview ? "PicBox" : "other")} loc=({e.Location.X},{e.Location.Y}) btn={e.Button}");
         if (e.Button != MouseButtons.Left) return;
-        if (_viewModel.PreviewImage is null) { Program.LogDebug("  → PreviewImage is null, skip"); return; }
+        if (_viewModel.PreviewImage is null) { return; }
 
         // 自動で切出しモード開始
         _isCropMode = true;
@@ -619,7 +661,6 @@ public partial class MainForm : Form
             : e.Location;
         var imgPt = EventToImage(sender, e.Location);
         _cropSelection.MouseDown(imgPt, _viewModel.PreviewImage.Size);
-        _isCropHandleActive = _cropSelection.IsHandleActive;
         _picPreview.Refresh();
         _pnlPreview.Invalidate();
     }
@@ -632,8 +673,6 @@ public partial class MainForm : Form
             : e.Location;
         var imgPt = EventToImage(sender, e.Location);
         _cropSelection.MouseMove(imgPt, _viewModel.PreviewImage.Size);
-        Program.LogDebug($"MouseMove: loc=({e.Location.X},{e.Location.Y}) imgPt=({imgPt.X},{imgPt.Y}) selRect={_cropSelection.SelectionRect?.ToString() ?? "null"}");
-        _picPreview.Invalidate();
         _pnlPreview.Invalidate();
 
         var zoom = GetActualZoom();
@@ -677,9 +716,8 @@ public partial class MainForm : Form
             ? _picPreview.PointToClient(_pnlPreview.PointToScreen(e.Location))
             : e.Location;
         _cropSelection.MouseUp();
-        _isCropHandleActive = _cropSelection.IsHandleActive;
 
-        // 選択がキャンセルされたら（ドラッグ後5px未満）切出しモードを終了
+        // 選択がキャンセルされたら
         if (!_cropSelection.SelectionRect.HasValue && !_cropSelection.IsDragging)
         {
             ExitCropMode();
@@ -687,7 +725,7 @@ public partial class MainForm : Form
 
         _picPreview.Invalidate();
         _pnlPreview.Invalidate();
-        UpdateMenuStates();
+        NotifyMenuStateChanged();
     }
 
     /// <summary>
@@ -724,7 +762,6 @@ public partial class MainForm : Form
 
     private void PicPreview_CropPaint(object? sender, PaintEventArgs e)
     {
-        Program.LogDebug($"PicPreview_CropPaint called: _isCropMode={_isCropMode}, hasImage={_viewModel.PreviewImage is not null}, hasSel={_cropSelection.SelectionRect.HasValue}");
         if (!_isCropMode || _viewModel.PreviewImage is null) return;
 
         var img = _viewModel.PreviewImage;
@@ -735,20 +772,20 @@ public partial class MainForm : Form
         double offsetX = 0, offsetY = 0;
         if (_zoomPercent == 0)
         {
-            offsetX = (pw - img.Width * zoom) / 2;
-            offsetY = (ph - img.Height * zoom) / 2;
+            offsetX = (pw - img.Width * zoom) / 2.0;
+            offsetY = (ph - img.Height * zoom) / 2.0;
         }
 
-        e.Graphics.SetClip(new Rectangle((int)offsetX, (int)offsetY,
-            (int)(img.Width * zoom), (int)(img.Height * zoom)));
+        e.Graphics.SetClip(new Rectangle((int)Math.Round(offsetX), (int)Math.Round(offsetY),
+            (int)Math.Round(img.Width * zoom), (int)Math.Round(img.Height * zoom)));
 
         if (_cropSelection.SelectionRect.HasValue)
         {
             var sel = _cropSelection.SelectionRect.Value;
-            var csX = (int)(sel.X * zoom + offsetX);
-            var csY = (int)(sel.Y * zoom + offsetY);
-            var csW = (int)(sel.Width * zoom);
-            var csH = (int)(sel.Height * zoom);
+            var csX = (int)Math.Round(sel.X * zoom + offsetX);
+            var csY = (int)Math.Round(sel.Y * zoom + offsetY);
+            var csW = (int)Math.Round(sel.Width * zoom);
+            var csH = (int)Math.Round(sel.Height * zoom);
 
             var clipR = e.Graphics.ClipBounds;
             var clipX = (int)clipR.X;
@@ -814,16 +851,8 @@ public partial class MainForm : Form
             return;
         }
 
-        // 常時表示モードの場合は crop モード/範囲選択がなくても表示
-        if (mode == LoupeMode.Show && (_isCropMode && _cropSelection.SelectionRect.HasValue))
-        {
-            // 画像中央を拡大
-        }
-        else if (mode == LoupeMode.Show)
-        {
-            // 画像中央を拡大表示
-        }
-        else if (!_isCropMode || !_cropSelection.SelectionRect.HasValue)
+        // Auto モードでは切出しモード＋選択範囲があるときのみ表示
+        if (mode == LoupeMode.Auto && (!_isCropMode || !_cropSelection.SelectionRect.HasValue))
         {
             _picLoupe.Visible = false;
             return;
@@ -832,8 +861,8 @@ public partial class MainForm : Form
         var img = _viewModel.PreviewImage;
         var zoom = GetActualZoom();
 
-        var loupeSize = _picLoupe.Width;
-        var loupeZoom = 8.0;
+        var loupeSize = _viewModel.Settings.LoupeSize;
+        var loupeZoom = (double)_viewModel.Settings.LoupeZoomLevel;
         var cx = _cropMouseClientPos.X;
         var cy = _cropMouseClientPos.Y;
 
@@ -844,20 +873,20 @@ public partial class MainForm : Form
         if (ly < 4) ly = 4;
         _picLoupe.Location = new Point(lx, ly);
 
-        // マウス位置を PictureBox 座標 → 画像座標に変換
+        // マウス位置を PictureBox 座標 → 画像座標に変換（四捨五入でピクセル中心に合わせる）
         var pw = _picPreview.ClientSize.Width;
         var ph = _picPreview.ClientSize.Height;
         double offsetX = 0, offsetY = 0;
         if (_zoomPercent == 0)
         {
-            offsetX = (pw - img.Width * zoom) / 2;
-            offsetY = (ph - img.Height * zoom) / 2;
+            offsetX = (pw - img.Width * zoom) / 2.0;
+            offsetY = (ph - img.Height * zoom) / 2.0;
         }
 
-        var imgCx = (int)((cx - offsetX) / zoom);
-        var imgCy = (int)((cy - offsetY) / zoom);
+        var imgCx = (int)Math.Round((cx - offsetX) / zoom);
+        var imgCy = (int)Math.Round((cy - offsetY) / zoom);
 
-        // マウスが画像の外にあるときは拡大鏡を非表示
+        // マウスが画像の外にあるときはルーペを非表示
         if (imgCx < 0 || imgCy < 0 || imgCx >= img.Width || imgCy >= img.Height)
         {
             _picLoupe.Visible = false;
@@ -873,55 +902,77 @@ public partial class MainForm : Form
     }
 
     /// <summary>
-    /// 拡大鏡の画像を生成して _picLoupe に設定する
+    /// ルーペの画像を生成して _picLoupe に設定する。
     /// </summary>
+    /// <remarks>
+    /// ルーペ中心にマウスカーソル下の画像ピクセルが来るよう、
+    /// 画像端では切り詰めたソース領域をルーペ上の正しい位置に描画する。<br/>
+    /// 画像領域外は拡大率の半分のセルサイズの市松模様（薄いグレー／濃いグレー）で表示される。<br/>
+    /// 各画像ピクセルは <c>blockSize = (int)loupeZoom</c> の正方形ブロックで描画される。<br/>
+    /// 中心ピクセルのブロック中心がルーペ中心と一致するため、十字線とのずれが生じない。<br/>
+    /// </remarks>
     private void GenerateLoupeImage(Image img, int loupeSize, double loupeZoom, int imgCx, int imgCy)
     {
-        // 浮動小数点で正確な中心計算（整数切り捨てによるずれ防止）
-        var halfSrc = loupeSize / loupeZoom / 2.0;
-        var srcX = (float)Math.Max(0, imgCx - halfSrc);
-        var srcY = (float)Math.Max(0, imgCy - halfSrc);
-        var srcW = (float)Math.Min(halfSrc * 2, img.Width - srcX);
-        var srcH = (float)Math.Min(halfSrc * 2, img.Height - srcY);
+        var blockSize = (int)loupeZoom; // 8
 
-        if (srcW <= 0 || srcH <= 0)
-        {
-            _picLoupe.Visible = false;
-            return;
-        }
+        // 中心ピクセルのブロックがルーペの中央に来る開始座標
+        var centerStartX = (loupeSize - blockSize) / 2; // = 81
+        var centerStartY = (loupeSize - blockSize) / 2;
+
+        // 中心から左右・上下に何ピクセル分表示できるか
+        var maxPixels = (loupeSize / blockSize - 1) / 2; // = 10
 
         var oldImage = _picLoupe.Image;
         var bmp = new Bitmap(loupeSize, loupeSize);
         using var g = Graphics.FromImage(bmp);
         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
 
-        // 背景塗りつぶし
-        g.FillRectangle(Brushes.Black, 0, 0, loupeSize, loupeSize);
+        // 全面を市松模様で初期化（セルサイズ = 拡大率の半分、キャッシュ済み TextureBrush）
+        var cellSize = Math.Max(1, blockSize / 2);
+        using var tb = new TextureBrush(GetOrCreateCheckerPattern(cellSize), System.Drawing.Drawing2D.WrapMode.Tile);
+        g.FillRectangle(tb, 0, 0, loupeSize, loupeSize);
 
-        // 拡大描画（浮動小数点ソース領域で中心を正確に維持）
-        g.DrawImage(img, new Rectangle(0, 0, loupeSize, loupeSize), new RectangleF(srcX, srcY, srcW, srcH), GraphicsUnit.Pixel);
+        // 中心ピクセルから上下左右にブロックを敷き詰める
+        // パフォーマンスのため、GetPixel は 1 回、FillRectangle で高速描画
+        var bmpData = (Bitmap)img;
+        for (var dy = -maxPixels; dy <= maxPixels; dy++)
+        {
+            var srcY = imgCy + dy;
+            if (srcY < 0 || srcY >= img.Height) continue;
+
+            for (var dx = -maxPixels; dx <= maxPixels; dx++)
+            {
+                var srcX = imgCx + dx;
+                if (srcX < 0 || srcX >= img.Width) continue;
+
+                var c = bmpData.GetPixel(srcX, srcY);
+                var destX = centerStartX + dx * blockSize;
+                var destY = centerStartY + dy * blockSize;
+
+                using var brush = new SolidBrush(c);
+                g.FillRectangle(brush, destX, destY, blockSize, blockSize);
+            }
+        }
 
         // 選択範囲の表示（ルーペ内）
         if (_cropSelection.SelectionRect.HasValue)
         {
             var sel = _cropSelection.SelectionRect.Value;
-            var bL = (int)((sel.X - imgCx + halfSrc) * loupeZoom);
-            var bT = (int)((sel.Y - imgCy + halfSrc) * loupeZoom);
-            var bR = (int)((sel.Right - imgCx + halfSrc) * loupeZoom);
-            var bB = (int)((sel.Bottom - imgCy + halfSrc) * loupeZoom);
-            if (bL >= 0 && bT >= 0 && bR <= loupeSize && bB <= loupeSize)
+            var bL = centerStartX + (sel.Left - imgCx) * blockSize;
+            var bT = centerStartY + (sel.Top - imgCy) * blockSize;
+            var bR = centerStartX + (sel.Right - imgCx) * blockSize;
+            var bB = centerStartY + (sel.Bottom - imgCy) * blockSize;
+            using var bp = new Pen(Color.FromArgb(180, Color.FromName(_viewModel.Settings.LoupeFrameColor)), 1f)
             {
-                var selectionColor = Color.FromName(_viewModel.Settings.LoupeFrameColor);
-                using var bp = new Pen(Color.FromArgb(180, selectionColor.R, selectionColor.G, selectionColor.B), 1f);
-                bp.DashStyle = System.Drawing.Drawing2D.DashStyle.Custom;
-                bp.DashPattern = [1f, 3f];
-                g.DrawRectangle(bp, bL, bT, bR - bL, bB - bT);
-            }
+                DashStyle = System.Drawing.Drawing2D.DashStyle.Custom,
+                DashPattern = [1f, 3f]
+            };
+            g.DrawRectangle(bp, bL, bT, bR - bL, bB - bT);
         }
 
-        // 十字線（拡大率と同じ太さ＝論理1pixel）
+        // 十字線（ルーペ中心を通る = 中心ピクセルのブロック中心と一致）
         var crossColor = Color.FromName(_viewModel.Settings.LoupeCrossColor);
-        using var cp = new Pen(Color.FromArgb(120, crossColor.R, crossColor.G, crossColor.B), (float)loupeZoom);
+        using var cp = new Pen(Color.FromArgb(120, crossColor.R, crossColor.G, crossColor.B), blockSize);
         g.DrawLine(cp, loupeSize / 2, 0, loupeSize / 2, loupeSize);
         g.DrawLine(cp, 0, loupeSize / 2, loupeSize, loupeSize / 2);
 
@@ -936,6 +987,62 @@ public partial class MainForm : Form
     }
 
     private double GetPreviewZoom() => GetActualZoom();
+
+    private int _lastCheckerCellSize;
+    private Bitmap? _checkerPattern;
+    private TextureBrush? _checkerBrush;
+
+    /// <summary>指定されたセルサイズの市松模様ビットマップを取得する（キャッシュ済みの場合は再利用）。</summary>
+    private Bitmap GetOrCreateCheckerPattern(int cellSize)
+    {
+        if (_checkerPattern is not null && cellSize == _lastCheckerCellSize)
+            return _checkerPattern;
+
+        _checkerPattern?.Dispose();
+        _checkerBrush?.Dispose();
+        _checkerBrush = null;
+        _checkerPattern = CreateCheckerPattern(cellSize);
+        _lastCheckerCellSize = cellSize;
+        return _checkerPattern;
+    }
+
+    /// <summary>指定されたセルサイズの市松模様テクスチャブラシを取得する（キャッシュ済みの場合は再利用）。</summary>
+    private TextureBrush GetOrCreateCheckerBrush(int cellSize)
+    {
+        if (_checkerBrush is not null && cellSize == _lastCheckerCellSize)
+            return _checkerBrush;
+
+        _checkerBrush?.Dispose();
+        _checkerPattern?.Dispose();
+        _checkerPattern = CreateCheckerPattern(cellSize);
+        _checkerBrush = new TextureBrush(_checkerPattern, System.Drawing.Drawing2D.WrapMode.Tile);
+        _lastCheckerCellSize = cellSize;
+        return _checkerBrush;
+    }
+
+    /// <summary>プレビューパネルの背景に市松模様を描画する（画像外の領域であることを明示）。</summary>
+    private void PnlPreview_Paint(object? sender, PaintEventArgs e)
+    {
+        var cellSize = Math.Max(1, _viewModel.Settings.LoupeZoomLevel / 2);
+        var brush = GetOrCreateCheckerBrush(cellSize);
+        e.Graphics.FillRectangle(brush, e.ClipRectangle);
+    }
+
+    /// <summary>2×2 セル分の市松模様ビットマップを作成する。</summary>
+    private static Bitmap CreateCheckerPattern(int cellSize)
+    {
+        var bmp = new Bitmap(cellSize * 2, cellSize * 2);
+        using var g = Graphics.FromImage(bmp);
+        var light = Color.FromArgb(200, 200, 200);
+        var dark = Color.FromArgb(160, 160, 160);
+        using var lightBrush = new SolidBrush(light);
+        using var darkBrush = new SolidBrush(dark);
+        g.FillRectangle(lightBrush, 0, 0, cellSize, cellSize);
+        g.FillRectangle(darkBrush, cellSize, 0, cellSize, cellSize);
+        g.FillRectangle(darkBrush, 0, cellSize, cellSize, cellSize);
+        g.FillRectangle(lightBrush, cellSize, cellSize, cellSize, cellSize);
+        return bmp;
+    }
 
     // ─── クリップボード ─────────────────────────────
 
@@ -973,7 +1080,7 @@ public partial class MainForm : Form
 
         if (!string.IsNullOrEmpty(_viewModel.SaveFolderPath))
         {
-            var dialog = new FolderViewForm(_viewModel.SaveFolderPath, _viewModel.Settings);
+            var dialog = new FolderViewForm(_viewModel.SaveFolderPath, _settingsService);
             dialog.Show(this);
         }
     }
@@ -1005,10 +1112,10 @@ public partial class MainForm : Form
             _undoStack[0].Dispose();
             _undoStack.RemoveAt(0);
         }
-        UpdateMenuStates();
+        NotifyMenuStateChanged();
     }
 
-    // ─── メニューイベント ───────────────────────────
+    // ─── メニューイベント
 
     private void MenuFileSave_Click(object? sender, EventArgs e)
     {
@@ -1018,17 +1125,6 @@ public partial class MainForm : Form
     private void MenuFileSaveFolder_Click(object? sender, EventArgs e)
     {
         BtnSaveFolder_Click(sender, e);
-    }
-
-    private void MenuFileDisplaySettings_Click(object? sender, EventArgs e)
-    {
-        using var dialog = new SettingsForm(_viewModel.Settings);
-        if (dialog.ShowDialog(this) == DialogResult.OK)
-        {
-            UpdatePictureBoxZoom();
-            _picPreview.Invalidate();
-            _pnlPreview.Invalidate();
-        }
     }
 
     private void MenuEditUndo_Click(object? sender, EventArgs e)
@@ -1046,7 +1142,7 @@ public partial class MainForm : Form
         _picPreview.Invalidate();
 
         _isUndoing = false;
-        UpdateMenuStates();
+        NotifyMenuStateChanged();
     }
 
     private void MenuEditZoomIn_Click(object? sender, EventArgs e)
@@ -1079,7 +1175,7 @@ public partial class MainForm : Form
         PushUndo();
         if (_viewModel.PasteFromClipboard())
         {
-            UpdateMenuStates();
+            NotifyMenuStateChanged();
         }
     }
 
@@ -1087,7 +1183,7 @@ public partial class MainForm : Form
     {
         if (!string.IsNullOrEmpty(_viewModel.SaveFolderPath))
         {
-            var dialog = new FolderViewForm(_viewModel.SaveFolderPath, _viewModel.Settings);
+            var dialog = new FolderViewForm(_viewModel.SaveFolderPath, _settingsService);
             dialog.Show(this);
         }
     }
@@ -1116,47 +1212,37 @@ public partial class MainForm : Form
     private void MenuEditAlignLeft_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.CenterAlign = false;
-        _viewModel.Settings.Save();
+        _settingsService.Save();
         UpdatePictureBoxZoom();
-        UpdateStatusBar();
-        UpdateMenuStates();
     }
 
     private void MenuEditAlignCenter_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.CenterAlign = true;
-        _viewModel.Settings.Save();
+        _settingsService.Save();
         UpdatePictureBoxZoom();
-        UpdateStatusBar();
-        UpdateMenuStates();
     }
 
     private void MenuEditShowLoupe_Click(object? sender, EventArgs e)
     {
-        var item = (ToolStripMenuItem)sender!;
         _viewModel.Settings.LoupeModeValue = LoupeMode.Show;
-        _viewModel.Settings.Save();
-        ApplyLoupeModeFromSetting();
+        _settingsService.Save();
     }
 
     private void MenuViewLoupeHide_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.LoupeModeValue = LoupeMode.Hide;
-        _viewModel.Settings.Save();
-        UpdateStatusBar();
-        ApplyLoupeModeFromSetting();
+        _settingsService.Save();
     }
 
     private void MenuViewLoupeAuto_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.LoupeModeValue = LoupeMode.Auto;
-        _viewModel.Settings.Save();
-        UpdateStatusBar();
-        ApplyLoupeModeFromSetting();
+        _settingsService.Save();
     }
 
     /// <summary>
-    /// 設定の LoupeMode に基づいて拡大鏡の表示状態を更新する
+    /// 設定の LoupeMode に基づいてルーペの表示状態を更新する
     /// </summary>
     private void ApplyLoupeModeFromSetting()
     {
@@ -1174,11 +1260,26 @@ public partial class MainForm : Form
         UpdateMenuStates();
     }
 
+    /// <summary>設定の LoupeSize / LoupeZoomLevel 変更をルーペに反映する。</summary>
+    private void ApplyLoupeSettings()
+    {
+        var size = _viewModel.Settings.LoupeSize;
+        _picLoupe.Size = new Size(size, size);
+        if (_picLoupe.Visible) UpdateLoupePosition();
+    }
+
+    /// <summary>メニュー状態が変更されたことを通知し、次回メニュー表示時に更新する。</summary>
+    private void NotifyMenuStateChanged()
+    {
+        _menuStateDirty = true;
+    }
+
     /// <summary>
     /// メニュー項目の有効/無効状態を現在の状態に合わせて更新する
     /// </summary>
     private void UpdateMenuStates()
     {
+        _menuStateDirty = false;
         var hasImage = _viewModel.PreviewImage is not null;
         var hasSelection = _cropSelection.SelectionRect.HasValue;
         var hasUndo = _undoStack.Count > 0;
@@ -1282,7 +1383,7 @@ public partial class MainForm : Form
                 _zoomPercent = percent;
                 UpdatePictureBoxZoom();
                 UpdateStatusBar();
-                UpdateMenuStates();
+                NotifyMenuStateChanged();
                 return;
             }
         }
@@ -1294,7 +1395,7 @@ public partial class MainForm : Form
         _zoomPercent = 0;
         UpdatePictureBoxZoom();
         UpdateStatusBar();
-        UpdateMenuStates();
+        NotifyMenuStateChanged();
     }
 
     private void CtxZoom25_Click(object? sender, EventArgs e) { SetZoomFromContext(25); }
@@ -1317,9 +1418,9 @@ public partial class MainForm : Form
 
     private void MenuHotKeySettings_Click(object? sender, EventArgs e)
     {
-        using var dialog = new HotkeyForm(_viewModel.Settings);
+        using var dialog = new HotkeyForm(_viewModel.Settings, () => _settingsService.Save());
         if (dialog.ShowDialog(this) == DialogResult.OK)
-            _hotKeyManager.RegisterAll(_viewModel.Settings);
+            _hotKeyManager?.RegisterAll(_viewModel.Settings);
     }
 
     private void MenuSaveFolder_Click(object? sender, EventArgs e)
@@ -1332,6 +1433,7 @@ public partial class MainForm : Form
         using var dialog = new SettingsForm(_viewModel.Settings);
         if (dialog.ShowDialog(this) == DialogResult.OK)
         {
+            _settingsService.Save();
             UpdatePictureBoxZoom();
             _picPreview.Invalidate();
             _pnlPreview.Invalidate();
@@ -1380,7 +1482,7 @@ public partial class MainForm : Form
         const int WM_HOTKEY = 0x0312;
         if (m.Msg == WM_HOTKEY)
         {
-            var captureType = _hotKeyManager.ProcessHotKeyMessage(m);
+            var captureType = _hotKeyManager?.ProcessHotKeyMessage(m);
             if (captureType.HasValue)
             {
                 BeginInvoke(() => ExecuteCapture(captureType.Value));
@@ -1411,14 +1513,18 @@ public partial class MainForm : Form
             _viewModel.Settings.MainFormBounds = RestoreBounds;
 
         _viewModel.Settings.MainFormWindowState = WindowState == FormWindowState.Minimized ? FormWindowState.Normal : WindowState;
-        _viewModel.Settings.Save();
+        _settingsService.Save();
         base.OnFormClosing(e);
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
             _hotKeyManager?.Dispose();
+            _checkerPattern?.Dispose();
+            _checkerBrush?.Dispose();
+        }
         base.Dispose(disposing);
     }
 }

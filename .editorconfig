@@ -34,7 +34,3 @@ indent_size = 2
 [*.csproj]
 indent_style = space
 indent_size = 2
-
-# Suppress folder/namespace mismatch warning for test project
-[test/**/*.cs]
-dotnet_diagnostic.IDE0130.severity = none

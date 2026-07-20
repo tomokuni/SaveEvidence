@@ -22,6 +22,13 @@ partial class SettingsForm
     private Label _lblLoupeWidth;
     private Button _btnOk;
     private Button _btnCancel;
+    private ComboBox _cmbCaptureMode;
+    private Label _lblCaptureModeDesc;
+    private ComboBox _cmbLoupeZoom;
+    private NumericUpDown _numLoupeSize;
+    private NumericUpDown _numFolderExtraLarge;
+    private NumericUpDown _numFolderLarge;
+    private NumericUpDown _numFolderMedium;
     private TableLayoutPanel _tlp;
 
     protected override void Dispose(bool disposing)
@@ -67,15 +74,31 @@ partial class SettingsForm
         _tlp.Location = new Point(0, 0);
         _tlp.Name = "_tlp";
         _tlp.Padding = new Padding(10);
-        _tlp.RowCount = 8;
+        _tlp.RowCount = 14;
 
-        for (var i = 0; i < 8; i++)
-            _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _tlp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         // 行0: 表示位置
-        _tlp.Controls.Add(new Label { Text = "表示位置:", Anchor = AnchorStyles.Left, AutoSize = true }, 0, 0);
+        var lblAlign = new Label();
+        lblAlign.Text = "表示位置:";
+        lblAlign.Anchor = AnchorStyles.Left;
+        lblAlign.AutoSize = true;
+        _tlp.Controls.Add(lblAlign, 0, 0);
         _cmbAlign.DropDownStyle = ComboBoxStyle.DropDownList;
-        _cmbAlign.Items.AddRange(["中央寄せ", "左上寄せ"]);
+        _cmbAlign.Items.AddRange(new object[] { "中央寄せ", "左上寄せ" });
         _cmbAlign.Anchor = AnchorStyles.Left | AnchorStyles.Right;
         _cmbAlign.Margin = new Padding(3, 3, 3, 3);
         _tlp.Controls.Add(_cmbAlign, 1, 0);
@@ -138,8 +161,95 @@ partial class SettingsForm
         _numLoupeWidth.Anchor = AnchorStyles.Left;
         _tlp.Controls.Add(_numLoupeWidth, 1, 5);
 
-        // 行6: OK/Cancel
-        var flowButtons = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
+        // 行6: ルーペの拡大率
+        var lblLoupeZoom = new Label();
+        lblLoupeZoom.Text = "ルーペの拡大率:";
+        lblLoupeZoom.Anchor = AnchorStyles.Left;
+        lblLoupeZoom.AutoSize = true;
+        _tlp.Controls.Add(lblLoupeZoom, 0, 6);
+        _cmbLoupeZoom = new ComboBox();
+        _cmbLoupeZoom.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbLoupeZoom.Items.AddRange(new object[] { "4", "6", "8", "10", "12", "16", "20", "24", "32" });
+        _cmbLoupeZoom.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _tlp.Controls.Add(_cmbLoupeZoom, 1, 6);
+
+        // 行7: ルーペのサイズ
+        var lblLoupeSize = new Label();
+        lblLoupeSize.Text = "ルーペのサイズ:";
+        lblLoupeSize.Anchor = AnchorStyles.Left;
+        lblLoupeSize.AutoSize = true;
+        _tlp.Controls.Add(lblLoupeSize, 0, 7);
+        _numLoupeSize = new NumericUpDown();
+        _numLoupeSize.Minimum = 64;
+        _numLoupeSize.Maximum = 512;
+        _numLoupeSize.Increment = 8;
+        _numLoupeSize.Anchor = AnchorStyles.Left;
+        _tlp.Controls.Add(_numLoupeSize, 1, 7);
+
+        // 行8: FolderView 特大アイコン
+        var lblExtraLarge = new Label();
+        lblExtraLarge.Text = "特大アイコンサイズ:";
+        lblExtraLarge.Anchor = AnchorStyles.Left;
+        lblExtraLarge.AutoSize = true;
+        _tlp.Controls.Add(lblExtraLarge, 0, 8);
+        _numFolderExtraLarge = new NumericUpDown();
+        _numFolderExtraLarge.Minimum = 64;
+        _numFolderExtraLarge.Maximum = 1024;
+        _numFolderExtraLarge.Increment = 16;
+        _numFolderExtraLarge.Anchor = AnchorStyles.Left;
+        _tlp.Controls.Add(_numFolderExtraLarge, 1, 8);
+
+        // 行9: FolderView 大アイコン
+        var lblLarge = new Label();
+        lblLarge.Text = "大アイコンサイズ:";
+        lblLarge.Anchor = AnchorStyles.Left;
+        lblLarge.AutoSize = true;
+        _tlp.Controls.Add(lblLarge, 0, 9);
+        _numFolderLarge = new NumericUpDown();
+        _numFolderLarge.Minimum = 48;
+        _numFolderLarge.Maximum = 768;
+        _numFolderLarge.Increment = 16;
+        _numFolderLarge.Anchor = AnchorStyles.Left;
+        _tlp.Controls.Add(_numFolderLarge, 1, 9);
+
+        // 行10: FolderView 中アイコン
+        var lblMedium = new Label();
+        lblMedium.Text = "中アイコンサイズ:";
+        lblMedium.Anchor = AnchorStyles.Left;
+        lblMedium.AutoSize = true;
+        _tlp.Controls.Add(lblMedium, 0, 10);
+        _numFolderMedium = new NumericUpDown();
+        _numFolderMedium.Minimum = 32;
+        _numFolderMedium.Maximum = 512;
+        _numFolderMedium.Increment = 16;
+        _numFolderMedium.Anchor = AnchorStyles.Left;
+        _tlp.Controls.Add(_numFolderMedium, 1, 10);
+
+        // 行11: キャプチャ方式
+        var lblCaptureMode = new Label();
+        lblCaptureMode.Text = "キャプチャ方式:";
+        lblCaptureMode.Anchor = AnchorStyles.Left;
+        lblCaptureMode.AutoSize = true;
+        _tlp.Controls.Add(lblCaptureMode, 0, 11);
+        _cmbCaptureMode = new ComboBox();
+        _cmbCaptureMode.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbCaptureMode.Items.AddRange(new object[] { "PrintWindow 方式", "CopyFromScreen 方式" });
+        _cmbCaptureMode.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _tlp.Controls.Add(_cmbCaptureMode, 1, 11);
+        _cmbCaptureMode.SelectedIndexChanged += CmbCaptureMode_SelectedIndexChanged;
+
+        // 行12: キャプチャ方式の説明
+        _lblCaptureModeDesc = new Label();
+        _lblCaptureModeDesc.AutoSize = true;
+        _lblCaptureModeDesc.Anchor = AnchorStyles.Left;
+        _lblCaptureModeDesc.MaximumSize = new Size(460, 0);
+        _tlp.SetColumnSpan(_lblCaptureModeDesc, 3);
+        _tlp.Controls.Add(_lblCaptureModeDesc, 0, 12);
+
+        // 行13: OK/Cancel
+        var flowButtons = new FlowLayoutPanel();
+        flowButtons.Dock = DockStyle.Fill;
+        flowButtons.FlowDirection = FlowDirection.RightToLeft;
         _btnOk.AutoSize = true;
         _btnOk.Text = "OK";
         _btnOk.Click += BtnOk_Click;
@@ -149,19 +259,19 @@ partial class SettingsForm
         _btnCancel.Click += BtnCancel_Click;
         flowButtons.Controls.Add(_btnCancel);
         _tlp.SetColumnSpan(flowButtons, 3);
-        _tlp.Controls.Add(flowButtons, 0, 6);
+        _tlp.Controls.Add(flowButtons, 0, 13);
 
         // SettingsForm
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(500, 300);
+        ClientSize = new Size(500, 560);
         Controls.Add(_tlp);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
         Name = "SettingsForm";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "表示設定";
+        Text = "動作設定";
 
         _tlp.ResumeLayout(false);
         _tlp.PerformLayout();

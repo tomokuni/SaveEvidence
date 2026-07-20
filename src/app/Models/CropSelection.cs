@@ -2,8 +2,14 @@ namespace app.Models;
 
 /// <summary>
 /// プレビュー画像上の手動切り出し選択状態を管理するクラス。
-/// ドラッグによる範囲選択、ハンドルによるリサイズ、領域移動をサポートする。
+/// ドラッグによる範囲選択、8方向ハンドルによるリサイズ、領域内ドラッグによる移動をサポートする。
 /// </summary>
+/// <remarks>
+/// ログ出力は <see cref="ILogService"/> を介して行う。設定されていない場合は
+/// <c>System.Diagnostics.Debug.WriteLine</c> にフォールバックする。<br/>
+/// 選択領域は画像座標（ピクセル単位）で管理され、UIの拡大率とは独立している。<br/>
+/// マウスイベントは画像座標に変換されてから本クラスに渡される。<br/>
+/// </remarks>
 public sealed class CropSelection
 {
     private const int HandleSize = 24;
@@ -25,23 +31,22 @@ public sealed class CropSelection
     private Rectangle _moveStartRect;
 
     /// <summary>
-    /// 現在の選択領域（画像上の座標）。未選択の場合は null。
+    /// CropSelection の新しいインスタンスを初期化する。
     /// </summary>
+    public CropSelection()
+    {
+    }
+
+    /// <summary>現在の選択領域（画像座標ピクセル単位）。未選択の場合は null。</summary>
     public Rectangle? SelectionRect { get; private set; }
 
-    /// <summary>
-    /// ハンドル（リサイズ）がアクティブかどうか
-    /// </summary>
+    /// <summary>ハンドル（リサイズ用グリップ）がアクティブかどうか。</summary>
     public bool IsHandleActive => _activeHandle != HandleType.None;
 
-    /// <summary>
-    /// ドラッグ中かどうか（新規選択 or 移動）
-    /// </summary>
+    /// <summary>ドラッグ中かどうか（新規選択 or 移動）。</summary>
     public bool IsDragging => _isDragging || _isMoving;
 
-    /// <summary>
-    /// 選択状態をリセットする
-    /// </summary>
+    /// <summary>選択状態を全てリセットし、未選択状態に戻す。</summary>
     public void Reset()
     {
         SelectionRect = null;
@@ -50,9 +55,8 @@ public sealed class CropSelection
         _isMoving = false;
     }
 
-    /// <summary>
-    /// 外部から選択領域を設定する（自動検出結果の適用など）
-    /// </summary>
+    /// <summary>外部から選択領域を設定する（自動検出結果の適用など）。</summary>
+    /// <param name="rect">画像座標の矩形領域</param>
     public void SetSelection(Rectangle rect)
     {
         SelectionRect = rect;
@@ -61,9 +65,8 @@ public sealed class CropSelection
     /// <summary>
     /// マウスダウン処理（画像座標ベース）
     /// </summary>
-    public void MouseDown(Point imgPoint, Size imageSize)
+    public void MouseDown(Point imgPoint, Size _)
     {
-        Program.LogDebug($"CropSelection.MouseDown: imgPt=({imgPoint.X},{imgPoint.Y}) imgSize=({imageSize.Width},{imageSize.Height}) hasSelection={SelectionRect.HasValue}");
 
         if (SelectionRect.HasValue)
         {
@@ -72,7 +75,6 @@ public sealed class CropSelection
             var handle = HitTestHandle(imgPoint, sel);
             if (handle != HandleType.None)
             {
-                Program.LogDebug($"  → ハンドル上: {handle} → リサイズ");
                 _activeHandle = handle;
                 _resizeStartRect = sel;
                 _resizeStartPoint = imgPoint;
@@ -81,21 +83,18 @@ public sealed class CropSelection
 
             if (IsInsideSelection(imgPoint, sel))
             {
-                Program.LogDebug($"  → 領域内 → 移動");
                 _isMoving = true;
                 _moveStartPoint = imgPoint;
                 _moveStartRect = sel;
                 return;
             }
 
-            Program.LogDebug($"  → 領域外 → 選択解除して新規ドラッグ");
             SelectionRect = null;
         }
 
         _dragStart = imgPoint;
         _isDragging = true;
         SelectionRect = new Rectangle(imgPoint.X, imgPoint.Y, 1, 1);
-        Program.LogDebug($"  → 新規ドラッグ開始: start=({imgPoint.X},{imgPoint.Y}) _isDragging={_isDragging}");
     }
 
     /// <summary>
@@ -118,8 +117,8 @@ public sealed class CropSelection
             var iw = imageSize.Width;
             var ih = imageSize.Height;
             SelectionRect = new Rectangle(
-                Math.Clamp(_moveStartRect.X + dx, 0, iw - _moveStartRect.Width),
-                Math.Clamp(_moveStartRect.Y + dy, 0, ih - _moveStartRect.Height),
+                Math.Clamp(_moveStartRect.X + dx, 0, iw - _moveStartRect.Width + 1),
+                Math.Clamp(_moveStartRect.Y + dy, 0, ih - _moveStartRect.Height + 1),
                 _moveStartRect.Width,
                 _moveStartRect.Height);
             return;
@@ -134,7 +133,6 @@ public sealed class CropSelection
 
     public void MouseUp()
     {
-        Program.LogDebug($"CropSelection.MouseUp: activeHandle={_activeHandle} isMoving={_isMoving} isDragging={_isDragging} hasRect={SelectionRect.HasValue}");
 
         if (_activeHandle != HandleType.None)
         {
@@ -153,13 +151,7 @@ public sealed class CropSelection
             _isDragging = false;
             if (SelectionRect.HasValue && (SelectionRect.Value.Width < 5 || SelectionRect.Value.Height < 5))
             {
-                Program.LogDebug($"  → 選択解除: rect={SelectionRect.Value.Width}x{SelectionRect.Value.Height} < 5px");
                 SelectionRect = null;
-            }
-            else
-            {
-                if (SelectionRect.HasValue)
-                    Program.LogDebug($"  → 選択確定: rect={SelectionRect.Value}");
             }
             return;
         }
@@ -328,16 +320,17 @@ public sealed class CropSelection
 
         l = Math.Clamp(l, 0, imgW - 1);
         t = Math.Clamp(t, 0, imgH - 1);
-        r = Math.Clamp(r, l + 5, imgW - 1);
-        b = Math.Clamp(b, t + 5, imgH - 1);
+        r = Math.Clamp(r, l + 4, imgW - 1);
+        b = Math.Clamp(b, t + 4, imgH - 1);
 
-        return new Rectangle(l, t, r - l, b - t);
+        return new Rectangle(l, t, r - l + 1, b - t + 1);
     }
 
+    /// <summary>2点を正規化し、両方の点を含むインクルーシブな矩形を返す。</summary>
     private static Rectangle NormalizeRect(Point p1, Point p2)
     {
         var x = Math.Min(p1.X, p2.X);
         var y = Math.Min(p1.Y, p2.Y);
-        return new Rectangle(x, y, Math.Abs(p1.X - p2.X), Math.Abs(p1.Y - p2.Y));
+        return new Rectangle(x, y, Math.Abs(p1.X - p2.X) + 1, Math.Abs(p1.Y - p2.Y) + 1);
     }
 }

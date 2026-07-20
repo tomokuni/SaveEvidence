@@ -13,6 +13,11 @@
 
 ## C# Coding Style
 - if や for などのコードブロックの前には改行を入れる。
+- C#14機能をフル活用してください。
+- 処理内容をよりシンプルにできるのであればシンプルにする。
+- コードコメント、ドキュメントコメント を網羅し、必要ならそれぞれを充実させてください。
+- ドキュメントコメントは最低限 summary、param、returns、value を記載し、必要なら remarks、exception を記載する。
+- 空のcatchを記載する場合は、その理由を記載してください。
 
 
 
@@ -81,5 +86,33 @@
 ### その他
 - テストケースでのドキュメントコメントは不要
 - ソースコードは修正しない。
+
+
+
+## 理想のコード構造
+
+### 『大前提の心構えとしての原則』
+- 原則 1. 単一責任の原則 (Single Responsibility Principle - SRP)
+- 原則 2. DRY原則 (重複を避ける) (Don't Repeat Yourself)
+- 原則 3. KISS原則 (シンプルに保つ) (Keep It Simple, Stupid)
+- 原則 4. 疎結合と高凝集 (Loose Coupling & High Cohesion)
+- 原則 5. カプセル化 (Encapsulation)
+
+### SORID原則
+- S：単一責任の原則 (役割を1つに) (Single Responsibility Principle - SRP)
+- O：開放閉鎖の原則 (修正せずに追加) (Open-Closed Principle - OCP)
+- L：リスコフの置換原則 (期待を裏切らない) (Liskov Substitution Principle - LSP)
+- I：インターフェース分離の原則 (窓口を最小に) (Interface Segregation Principle - ISP)
+- D：依存性逆転の原則 (抽象に頼る) (Dependency Inversion Principle - DIP)
+
+### それぞれの関連
+【常に意識する心構え】
+  DRY / KISS
+      ↓
+【目指す理想のコード構造】
+  責責の分離 ───> 疎結合・高凝集 / カプセル化
+      ↓ (オブジェクト指向で具体化すると...)
+【SOLID原則】
+
 
 

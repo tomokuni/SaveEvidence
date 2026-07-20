@@ -4,10 +4,18 @@ using app.Models;
 namespace app.Views;
 
 /// <summary>
-/// 画面選択フォーム。3種の選択モードをサポートする（SelectScreen/WindowSelect/AreaSelect）。
-/// どのモードも事前キャプチャしたビットマップを表示し、非選択領域を暗転、
-/// 選択領域を明るく表示する。選択領域の境界には白黒の破線を描画する。
+/// 画面キャプチャ時の領域選択用モーダルフォーム。3種の選択モードをサポートする。
 /// </summary>
+/// <remarks>
+/// サポートする選択モード:<br/>
+/// - <see cref="CaptureType.SelectScreen"/>: マルチスクリーン環境でのスクリーン選択<br/>
+/// - <see cref="CaptureType.WindowSelect"/>: マウスカーソル下のウィンドウ自動検出<br/>
+/// - <see cref="CaptureType.AreaSelect"/>: マウスドラッグによる自由領域選択<br/>
+/// <br/>
+/// 全面に事前キャプチャ画像を表示し、非選択領域を暗転、選択領域を明るく表示する。<br/>
+/// 選択領域の境界には白黒の破線を描画する。<br/>
+/// 選択完了時は <see cref="SelectionCompleted"/> イベント、キャンセル時は <see cref="Cancelled"/> イベントが発生する。<br/>
+/// </remarks>
 public sealed partial class SelectionForm : Form
 {
     private readonly CaptureType _captureType;
@@ -34,6 +42,14 @@ public sealed partial class SelectionForm : Form
     /// キャプチャがキャンセルされた時に発生するイベント
     /// </summary>
     public event EventHandler? Cancelled;
+
+    /// <summary>ウィンドウ選択モードで最後に検出・確定されたウィンドウハンドル。</summary>
+    /// <remarks>
+    /// ウィンドウ選択（<see cref="CaptureType.WindowSelect"/>）でマウスクリックにより
+    /// 確定された時点のハイライトウィンドウハンドルを保持する。<br/>
+    /// <see cref="SelectionCompleted"/> イベントの sender から取得できる。<br/>
+    /// </remarks>
+    public IntPtr SelectedWindowHandle { get; private set; }
 
     /// <summary>
     /// 選択スクリーン／ウィンドウ選択／領域選択 モード用コンストラクタ
@@ -110,11 +126,16 @@ public sealed partial class SelectionForm : Form
                     break;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Program.LogException(ex);
         }
     }
+
+    // ─── 静的描画リソース（キャッシュして再利用） ────────────────
+    private static readonly SolidBrush s_dimBrush = new(Color.FromArgb(140, 0, 0, 0));
+    private static readonly Font s_overlayFont = new("Segoe UI", 14, FontStyle.Regular);
+    private static readonly SolidBrush s_overlayTextBrush = new(Color.White);
+    private static readonly SolidBrush s_overlayBgBrush = new(Color.FromArgb(160, 0, 0, 0));
 
     /// <summary>
     /// 白黒の破線ペンを作成する（一番細い線）
@@ -130,52 +151,17 @@ public sealed partial class SelectionForm : Form
     }
 
     /// <summary>
-    /// 暗転用ブラシ（非選択領域）
-    /// </summary>
-    private static SolidBrush DimBrush()
-    {
-        return new SolidBrush(Color.FromArgb(140, 0, 0, 0));
-    }
-
-    /// <summary>
-    /// オーバーレイ用フォント（Segoe UI 14pt Bold）
-    /// </summary>
-    private static Font OverlayFont()
-    {
-        return new Font("Segoe UI", 14, FontStyle.Regular);
-    }
-
-    /// <summary>
-    /// オーバーレイ用文字色（白）
-    /// </summary>
-    private static SolidBrush OverlayTextBrush()
-    {
-        return new SolidBrush(Color.White);
-    }
-
-    /// <summary>
-    /// オーバーレイ用背景ブラシ（半透明黒、Alpha=160）
-    /// </summary>
-    private static SolidBrush OverlayBgBrush()
-    {
-        return new SolidBrush(Color.FromArgb(160, 0, 0, 0));
-    }
-
-    /// <summary>
     /// 指定位置にオーバーレイテキストを描画する
     /// </summary>
     private static void DrawOverlayText(Graphics g, string text, RectangleF rect)
     {
-        using var font = OverlayFont();
-        using var textBrush = OverlayTextBrush();
-        using var bgBrush = OverlayBgBrush();
-        var textSize = g.MeasureString(text, font);
+        var textSize = g.MeasureString(text, s_overlayFont);
         var cx = rect.X + rect.Width / 2f;
         var cy = rect.Y + rect.Height / 2f;
         var labelX = cx - textSize.Width / 2f;
         var labelY = cy - textSize.Height / 2f;
-        g.FillRectangle(bgBrush, labelX - 10, labelY - 10, textSize.Width + 20, textSize.Height + 20);
-        g.DrawString(text, font, textBrush, labelX, labelY);
+        g.FillRectangle(s_overlayBgBrush, labelX - 10, labelY - 10, textSize.Width + 20, textSize.Height + 20);
+        g.DrawString(text, s_overlayFont, s_overlayTextBrush, labelX, labelY);
     }
 
     /// <summary>
@@ -189,7 +175,7 @@ public sealed partial class SelectionForm : Form
             var screenRect = ScreenToClient(bounds);
             if (index != _highlightedScreenIndex)
             {
-                g.FillRectangle(DimBrush(), screenRect);
+                g.FillRectangle(s_dimBrush, screenRect);
             }
             else
             {
@@ -215,7 +201,7 @@ public sealed partial class SelectionForm : Form
             {
                 region.Exclude(highlightClient);
                 g.Clip = region;
-                g.FillRectangle(DimBrush(), ClientRectangle);
+                g.FillRectangle(s_dimBrush, ClientRectangle);
                 g.ResetClip();
             }
 
@@ -232,7 +218,7 @@ public sealed partial class SelectionForm : Form
         }
         else
         {
-            g.FillRectangle(DimBrush(), ClientRectangle);
+            g.FillRectangle(s_dimBrush, ClientRectangle);
         }
     }
 
@@ -249,7 +235,7 @@ public sealed partial class SelectionForm : Form
             {
                 region.Exclude(_currentSelection);
                 g.Clip = region;
-                g.FillRectangle(DimBrush(), ClientRectangle);
+                g.FillRectangle(s_dimBrush, ClientRectangle);
                 g.ResetClip();
             }
 
@@ -341,6 +327,7 @@ public sealed partial class SelectionForm : Form
                 {
                     DetectWindowUnderCursor();
                 }
+                SelectedWindowHandle = _highlightedWindow;
                 Hide();
                 if (_highlightedWindow != IntPtr.Zero && _highlightedWindowRect != Rectangle.Empty)
                 {
@@ -348,9 +335,8 @@ public sealed partial class SelectionForm : Form
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Program.LogException(ex);
             CancelCapture();
         }
     }
@@ -387,9 +373,8 @@ public sealed partial class SelectionForm : Form
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Program.LogException(ex);
             CancelCapture();
         }
     }
@@ -421,9 +406,8 @@ public sealed partial class SelectionForm : Form
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Program.LogException(ex);
             CancelCapture();
         }
     }
@@ -437,9 +421,8 @@ public sealed partial class SelectionForm : Form
                 CancelCapture();
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Program.LogException(ex);
         }
     }
 
@@ -486,14 +469,13 @@ public sealed partial class SelectionForm : Form
                 _highlightedWindowRect = CaptureManager.GetWindowVisibleRect(found);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Program.LogException(ex);
         }
     }
 
     /// <summary>
-    /// ホバータイマーのTick処理。画像ベース方式では不要だが互換性のために残す
+    /// ホバータイマーのTick処理。
     /// </summary>
     private void HoverTimer_Tick(object? sender, EventArgs e)
     {
@@ -520,9 +502,8 @@ public sealed partial class SelectionForm : Form
             _hoverTimer.Stop();
             Cancelled?.Invoke(this, EventArgs.Empty);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Program.LogException(ex);
         }
         finally
         {
@@ -556,9 +537,8 @@ public sealed partial class SelectionForm : Form
                 return true;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Program.LogException(ex);
         }
         return base.ProcessCmdKey(ref msg, keyData);
     }

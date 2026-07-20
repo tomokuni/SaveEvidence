@@ -3,12 +3,20 @@ using app.Models;
 namespace app.Views;
 
 /// <summary>
-/// 表示設定を行うモーダルダイアログ
+/// 動作設定（色・配置・ルーペ・キャプチャ方式・アイコンサイズ）を変更するモーダルダイアログ。
 /// </summary>
+/// <remarks>
+/// 設定オブジェクトを直接編集するため、OK ボタン押下後に呼び出し元で
+/// <see cref="Services.ISettingsService.Save"/> を呼び出す必要がある。<br/>
+/// </remarks>
 public sealed partial class SettingsForm : Form
 {
     private readonly Settings _settings;
 
+    /// <summary>
+    /// <see cref="SettingsForm"/> の新しいインスタンスを初期化する。
+    /// </summary>
+    /// <param name="settings">編集対象の設定オブジェクト</param>
     public SettingsForm(Settings settings)
     {
         _settings = settings;
@@ -24,6 +32,17 @@ public sealed partial class SettingsForm : Form
         _txtLoupeCross.Text = _settings.LoupeCrossColor;
         _txtLoupeFrame.Text = _settings.LoupeFrameColor;
         _numLoupeWidth.Value = _settings.LoupeFrameWidth;
+        _cmbCaptureMode.SelectedIndex = (int)_settings.CaptureMode;
+        UpdateCaptureModeDescription();
+
+        // ルーペ設定
+        _cmbLoupeZoom.SelectedItem = _settings.LoupeZoomLevel.ToString();
+        _numLoupeSize.Value = _settings.LoupeSize;
+
+        // FolderView アイコンサイズ
+        _numFolderExtraLarge.Value = _settings.FolderExtraLargeIconSize;
+        _numFolderLarge.Value = _settings.FolderLargeIconSize;
+        _numFolderMedium.Value = _settings.FolderMediumIconSize;
     }
 
     private void BtnOk_Click(object? sender, EventArgs e)
@@ -34,9 +53,29 @@ public sealed partial class SettingsForm : Form
         _settings.LoupeCrossColor = _txtLoupeCross.Text;
         _settings.LoupeFrameColor = _txtLoupeFrame.Text;
         _settings.LoupeFrameWidth = (int)_numLoupeWidth.Value;
-        _settings.Save();
+        _settings.CaptureMode = (WindowCaptureMode)_cmbCaptureMode.SelectedIndex;
+        _settings.LoupeZoomLevel = int.Parse((string)_cmbLoupeZoom.SelectedItem!);
+        _settings.LoupeSize = (int)_numLoupeSize.Value;
+        _settings.FolderExtraLargeIconSize = (int)_numFolderExtraLarge.Value;
+        _settings.FolderLargeIconSize = (int)_numFolderLarge.Value;
+        _settings.FolderMediumIconSize = (int)_numFolderMedium.Value;
         DialogResult = DialogResult.OK;
         Close();
+    }
+
+    private void CmbCaptureMode_SelectedIndexChanged(object? sender, EventArgs e) => UpdateCaptureModeDescription();
+
+    private void UpdateCaptureModeDescription()
+    {
+        _lblCaptureModeDesc.Text = _cmbCaptureMode.SelectedIndex switch
+        {
+            0 => "DWM（Desktop Window Manager）からウィンドウの正しい描画内容を直接取得できるため、1px枠線の写り込みが原理的に発生しません。 " +
+                 "この方式は1px枠線の写り込みを防止できる代わりに、枠の色がクラシック風になります。 " +
+                 "DirectX / ハードウェアアクセラレーション が有効なコンテンツ（動画、3D、一部のモダンUWPアプリ）を正しくキャプチャできない場合があります。",
+            _ => "選択されたエリア内の見た目通りにイメージが取得されます。 " +
+                 "Windows がウィンドウに付与する1pxの透明リサイズ境界も含めてキャプチャしてしまうため、その1px部分には背景のデスクトップや背後のウィンドウが映り込みます。 " +
+                 "前面に他のウィンドウが重なっている場合には、重なっているウィンドウ部分も映り込みますが、DirectX/GPU描画コンテンツも含めて確実にキャプチャできます。",
+        };
     }
 
     private void BtnCancel_Click(object? sender, EventArgs e)
@@ -50,7 +89,7 @@ public sealed partial class SettingsForm : Form
     private void BtnCrossColor_Click(object? sender, EventArgs e) => PickColor(_txtLoupeCross);
     private void BtnFrameColor_Click(object? sender, EventArgs e) => PickColor(_txtLoupeFrame);
 
-    private void PickColor(TextBox tb)
+    private static void PickColor(TextBox tb)
     {
         using var dlg = new ColorDialog();
         dlg.Color = Color.FromName(tb.Text);

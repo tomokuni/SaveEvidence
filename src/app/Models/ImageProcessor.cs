@@ -1,13 +1,21 @@
 namespace app.Models;
 
 /// <summary>
-/// 画像処理を提供するクラス（切り出し、ウィンドウ領域検出）
+/// 画像の切り出し処理と、背景色を自動判別したウィンドウ領域検出を提供する静的ユーティリティクラス。
 /// </summary>
+/// <remarks>
+/// ウィンドウ領域検出は、画像四隅の背景色を基準に、同じ色が連続する領域を除去する方式を採用する。<br/>
+/// 色の類似判定は RGB 各成分の差分合計が 30 未満を「類似」とみなす。<br/>
+/// 全メソッドが静的であり、インスタンス化は不要。<br/>
+/// </remarks>
 public static class ImageProcessor
 {
     /// <summary>
-    /// 画像から指定された領域を切り出す
+    /// 画像から指定された矩形領域を切り出す。
     /// </summary>
+    /// <param name="source">元画像</param>
+    /// <param name="bounds">切り出す矩形領域（画像座標ピクセル単位）</param>
+    /// <returns>切り出された新しいビットマップ</returns>
     public static Bitmap Crop(Image source, Rectangle bounds)
     {
         var cropped = new Bitmap(bounds.Width, bounds.Height);
@@ -19,8 +27,13 @@ public static class ImageProcessor
 
     /// <summary>
     /// 画像内のウィンドウ領域を自動判定して切り出す。
-    /// 四隅の色と同じ色が続く領域を除去する方式。
     /// </summary>
+    /// <param name="image">処理対象画像</param>
+    /// <returns>検出されたウィンドウ領域を切り出した新しいビットマップ。検出できない場合は元画像のコピー。</returns>
+    /// <remarks>
+    /// 四隅の色と同じ色が続く領域を背景とみなして除去する方式。<br/>
+    /// 検出結果が 10x10 ピクセル未満の場合は、検出失敗として元画像のコピーを返す。<br/>
+    /// </remarks>
     public static Bitmap DetectAndCropWindow(Image image)
     {
         using var bitmap = new Bitmap(image);
@@ -50,7 +63,7 @@ public static class ImageProcessor
         var top = ScanTopBg(bitmap, bgColor, width, height);
         var bottom = ScanBottomBg(bitmap, bgColor, width, height, top);
         var left = ScanLeftBg(bitmap, bgColor, width, top, bottom);
-        var right = ScanRightBg(bitmap, bgColor, width, height, left, top, bottom);
+        var right = ScanRightBg(bitmap, bgColor, width, left, top, bottom);
 
         var detectedWidth = right - left + 1;
         var detectedHeight = bottom - top + 1;
@@ -87,7 +100,7 @@ public static class ImageProcessor
         return 0;
     }
 
-    private static int ScanRightBg(Bitmap bmp, Color bg, int w, int h, int left, int top, int bottom)
+    private static int ScanRightBg(Bitmap bmp, Color bg, int w, int left, int top, int bottom)
     {
         for (var x = w - 1; x >= left; x--)
             if (!IsColColor(bmp, x, bg, top, bottom)) return x;

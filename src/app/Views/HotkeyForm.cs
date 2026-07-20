@@ -1,13 +1,21 @@
 using app.Models;
+using app.Services;
 
 namespace app.Views;
 
 /// <summary>
-/// グローバルホットキー設定ダイアログ
+/// グローバルホットキーを設定するモーダルダイアログ。
 /// </summary>
+/// <remarks>
+/// 各キャプチャ種別（スクリーン選択 / ウィンドウ選択 / 範囲選択）に対応する
+/// ホットキーを、実際のキーボード入力から対話的に設定できる。<br/>
+/// ホットキーは設定が変更されるたびに <c>saveAction</c> コールバックを介して永続化される。<br/>
+/// 修飾キー（Ctrl/Alt/Shift/Win）＋キーの組合せで設定する。<br/>
+/// </remarks>
 public partial class HotkeyForm : Form
 {
     private readonly Settings _settings;
+    private readonly Action _saveAction;
     private Button? _currentCapturingButton;
     private Label? _currentCapturingLabel;
     private bool _isCapturing;
@@ -15,9 +23,12 @@ public partial class HotkeyForm : Form
     /// <summary>
     /// HotkeyForm を初期化する
     /// </summary>
-    public HotkeyForm(Settings settings)
+    /// <param name="settings">編集する設定オブジェクト</param>
+    /// <param name="saveAction">設定を永続化するためのコールバック</param>
+    public HotkeyForm(Settings settings, Action saveAction)
     {
         _settings = settings;
+        _saveAction = saveAction;
         InitializeComponent();
         UpdateDisplay();
     }
@@ -96,7 +107,7 @@ public partial class HotkeyForm : Form
             _settings.AreaSelectHotKey = setting;
         }
 
-        _settings.Save();
+        _saveAction();
 
         _currentCapturingButton.Text = "設定";
         _currentCapturingLabel.Text = setting.ToString();

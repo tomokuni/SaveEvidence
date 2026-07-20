@@ -3,8 +3,14 @@ using System.Text.RegularExpressions;
 namespace app.Models;
 
 /// <summary>
-/// ファイル名テンプレートを解析し、実際のファイル名を生成するクラス
+/// ファイル名テンプレート文字列を解析し、実際の保存ファイル名を生成するユーティリティクラス。
 /// </summary>
+/// <remarks>
+/// テンプレート内の <c>{date}</c> は <c>yyyyMMdd</c>、<c>{time}</c> は <c>HHmmss</c> に置換される。<br/>
+/// テンプレートに含まれる右端の数値連続は、画像保存時に自動インクリメントされる通番として扱われる。<br/>
+/// 例: <c>"screenshot_{date}_{time}_01.png"</c> → <c>"screenshot_20250101_120000_01.png"</c><br/>
+/// ソースジェネレーターにより正規表現が最適化される（partial + GeneratedRegex）。<br/>
+/// </remarks>
 public sealed partial class FileNameTemplate
 {
     /// <summary>
@@ -29,9 +35,12 @@ public sealed partial class FileNameTemplate
     }
 
     /// <summary>
-    /// テンプレート内の右端の数値の塊を指定された数値で置換する。
-    /// 数値の塊の桁数を維持する（例：テンプレートが "01" なら結果も "01"）。
+    /// テンプレート内の右端の数値連続を指定された数値で置換し、桁数を維持する。
     /// </summary>
+    /// <param name="text">置換対象の文字列</param>
+    /// <param name="number">埋め込む数値</param>
+    /// <returns>置換後の文字列。数値が見つからない場合は元の文字列をそのまま返す。</returns>
+    /// <example>"screenshot_01.png" に 5 を指定 → "screenshot_05.png"</example>
     public static string IncrementRightmostNumber(string text, int number)
     {
         var matches = NumberPattern().Matches(text);
@@ -53,9 +62,10 @@ public sealed partial class FileNameTemplate
     }
 
     /// <summary>
-    /// テンプレート文字列から現在の数値を抽出する。
-    /// 最後の数値の塊の値を整数として返す。数値がない場合は 1 を返す。
+    /// テンプレート文字列から右端の数値連続の値を整数として抽出する。
     /// </summary>
+    /// <param name="template">テンプレート文字列</param>
+    /// <returns>抽出された数値。数値が見つからない場合は 1。</returns>
     public static int ExtractCurrentNumber(string template)
     {
         var matches = NumberPattern().Matches(template);

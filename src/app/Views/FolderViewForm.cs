@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using app.Models;
+using app.Services;
 
 namespace app.Views;
 
@@ -11,19 +12,25 @@ internal sealed class ViewOption
 
 /// <summary>
 /// 保存先フォルダの内容を表示するモードレスダイアログ。
-/// 画像ファイルは実際のサムネイルを表示し、ダブルクリックで規定のアプリで開く。
-/// 表示モードとソート順は設定ファイルに保存され、次回起動時に復元される。
 /// </summary>
+/// <remarks>
+/// 画像ファイルは実際のサムネイルを非同期的に生成して表示する。<br/>
+/// ダブルクリックで既定のアプリケーションでファイルを開く。<br/>
+/// 表示モード（特大/大/中/一覧/詳細）とソート順は <see cref="ISettingsService"/> を介して
+/// 設定ファイルに保存・復元される。<br/>
+/// シェルアイコンとサムネイルの2段階表示により、大量ファイル時でも素早く一覧を表示する。<br/>
+/// </remarks>
 public sealed partial class FolderViewForm : Form
 {
     private readonly string _folderPath;
     private readonly Settings _settings;
+    private readonly ISettingsService _settingsService;
     private bool _sortAscending = true;
     private readonly List<ListViewItem> _items = [];
 
-    private readonly ImageList _largeIconList = null!;   // 320x320 (特大アイコン用)
-    private readonly ImageList _tileIconList = null!;     // 240x240 (大アイコン用)
-    private readonly ImageList _mediumIconList = null!;   // 160x160 (中アイコン用)
+    private readonly ImageList _largeIconList = null!;   // 特大アイコン用（サイズは設定から）
+    private readonly ImageList _tileIconList = null!;     // 大アイコン用（サイズは設定から）
+    private readonly ImageList _mediumIconList = null!;   // 中アイコン用（サイズは設定から）
     private readonly ImageList _smallIconList = null!;    // 16x16 (一覧/詳細用)
 
     private static readonly HashSet<string> s_imageExtensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif", ".webp"];
@@ -33,18 +40,21 @@ public sealed partial class FolderViewForm : Form
     /// <summary>
     /// FolderViewForm を初期化する
     /// </summary>
-    public FolderViewForm(string folderPath, Settings? settings)
+    /// <param name="folderPath">表示するフォルダパス</param>
+    /// <param name="settingsService">設定サービス</param>
+    public FolderViewForm(string folderPath, ISettingsService settingsService)
     {
         _folderPath = folderPath;
-        _settings = settings ?? new Settings();
+        _settingsService = settingsService;
+        _settings = settingsService.Current;
         InitializeComponent();
 
         // 設定からウィンドウ位置・サイズを復元
         RestoreFormBounds();
 
-        _largeIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(320, 320) };
-        _tileIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(240, 240) };
-        _mediumIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(160, 160) };
+        _largeIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(_settings.FolderExtraLargeIconSize, _settings.FolderExtraLargeIconSize) };
+        _tileIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(_settings.FolderLargeIconSize, _settings.FolderLargeIconSize) };
+        _mediumIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(_settings.FolderMediumIconSize, _settings.FolderMediumIconSize) };
         _smallIconList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(16, 16) };
         _listView.LargeImageList = _tileIconList;
         _listView.SmallImageList = _smallIconList;
@@ -193,9 +203,14 @@ public sealed partial class FolderViewForm : Form
         UpdateStatusBar();
 
         // 非同期で画像サムネイルを読み込む
+        // ソート順に従い、左上に表示されているものから優先的に処理する
         if (imageFiles.Count > 0)
         {
-            Task.Run(() => LoadThumbnailsAsync(imageFiles, ct), ct);
+            // ListView の表示順に imageFiles を並び替え
+            var sortedFiles = imageFiles
+                .OrderBy(f => _listView.Items.IndexOf(f.Item))
+                .ToList();
+            Task.Run(() => LoadThumbnailsAsync(sortedFiles, ct), ct);
         }
     }
 
@@ -208,10 +223,14 @@ public sealed partial class FolderViewForm : Form
             try
             {
                 // バックグラウンドでサムネイルを生成
+                // ソースサイズは表示サイズ×2（高品質ダウンスケール用）
                 using var original = await Task.Run(() => Image.FromFile(filePath), ct);
-                var large = ResizeImage(original, 512, 512);
-                var tile = ResizeImage(original, 256, 256);
-                var medium = ResizeImage(original, 128, 128);
+                var largeSrc = Math.Max(_settings.FolderExtraLargeIconSize * 2, 256);
+                var tileSrc = Math.Max(_settings.FolderLargeIconSize * 2, 192);
+                var mediumSrc = Math.Max(_settings.FolderMediumIconSize * 2, 128);
+                var large = ResizeImage(original, largeSrc, largeSrc);
+                var tile = ResizeImage(original, tileSrc, tileSrc);
+                var medium = ResizeImage(original, mediumSrc, mediumSrc);
                 var small = ResizeImage(original, 16, 16);
 
                 // UIスレッドに戻してアイコンを差し替え
@@ -305,7 +324,7 @@ public sealed partial class FolderViewForm : Form
         if (largeShfi.hIcon != IntPtr.Zero)
         {
             using var icon = Icon.FromHandle(largeShfi.hIcon);
-            largeIdx = AddResizedIcon(icon, _largeIconList, 512, 512);
+            largeIdx = AddResizedIcon(icon, _largeIconList, Math.Max(_settings.FolderExtraLargeIconSize * 2, 256), Math.Max(_settings.FolderExtraLargeIconSize * 2, 256));
             DestroyIcon(largeShfi.hIcon);
         }
 
@@ -314,7 +333,7 @@ public sealed partial class FolderViewForm : Form
         if (tileShfi.hIcon != IntPtr.Zero)
         {
             using var icon = Icon.FromHandle(tileShfi.hIcon);
-            tileIdx = AddResizedIcon(icon, _tileIconList, 256, 256);
+            tileIdx = AddResizedIcon(icon, _tileIconList, Math.Max(_settings.FolderLargeIconSize * 2, 192), Math.Max(_settings.FolderLargeIconSize * 2, 192));
             DestroyIcon(tileShfi.hIcon);
         }
 
@@ -323,7 +342,7 @@ public sealed partial class FolderViewForm : Form
         if (mediumShfi.hIcon != IntPtr.Zero)
         {
             using var icon = Icon.FromHandle(mediumShfi.hIcon);
-            mediumIdx = AddResizedIcon(icon, _mediumIconList, 128, 128);
+            mediumIdx = AddResizedIcon(icon, _mediumIconList, Math.Max(_settings.FolderMediumIconSize * 2, 128), Math.Max(_settings.FolderMediumIconSize * 2, 128));
             DestroyIcon(mediumShfi.hIcon);
         }
 
@@ -370,9 +389,8 @@ public sealed partial class FolderViewForm : Form
                 process.StartInfo.UseShellExecute = true;
                 process.Start();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Program.LogException(ex);
             }
         }
     }
@@ -388,7 +406,7 @@ public sealed partial class FolderViewForm : Form
         {
             if (option.View == View.LargeIcon)
             {
-                // インデックス: 0=特大(320x320), 1=大(240x240), 2=中(160x160)
+                // インデックス: 0=特大, 1=大, 2=中
                 var idx = _cmbView.SelectedIndex;
                 _listView.LargeImageList = idx switch
                 {
@@ -413,7 +431,7 @@ public sealed partial class FolderViewForm : Form
             }
 
             _settings.FolderViewModeIndex = _cmbView.SelectedIndex;
-            _settings.Save();
+            _settingsService.Save();
 
             UpdateStatusBar();
         }
@@ -433,7 +451,7 @@ public sealed partial class FolderViewForm : Form
         _listView.EndUpdate();
 
         _settings.FolderSortAscending = _sortAscending;
-        _settings.Save();
+        _settingsService.Save();
     }
 
     private void BtnClose_Click(object? sender, EventArgs e)
@@ -467,7 +485,7 @@ public sealed partial class FolderViewForm : Form
             _settings.FolderViewFormBounds = RestoreBounds;
         }
 
-        _settings.Save();
+        _settingsService.Save();
         base.OnFormClosing(e);
     }
 

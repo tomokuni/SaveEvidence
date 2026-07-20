@@ -8,8 +8,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
     <StartupObject>app.Program</StartupObject>
-    <NoWarn>$(NoWarn);CA2101;SYSLIB1054</NoWarn>
-    </PropertyGroup>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <NoWarn>$(NoWarn);CA2101;SYSLIB1054;MVVMTK0042</NoWarn>
+  </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <IsPublishable>True</IsPublishable>

@@ -3,8 +3,13 @@ using System.Runtime.InteropServices;
 namespace app.Models;
 
 /// <summary>
-/// グローバルホットキーを管理するクラス
+/// グローバルホットキーの登録・解除・管理を行うクラス。
 /// </summary>
+/// <remarks>
+/// RegisterHotKey / UnregisterHotKey Win32 API を使用する。<br/>
+/// ホットキーメッセージ（WM_HOTKEY）の処理もこのクラスが担当する。<br/>
+/// 破棄時に全てのホットキーを自動解除するため、<see cref="IDisposable"/> を実装する。<br/>
+/// </remarks>
 public sealed partial class HotKeyManager(IntPtr hWnd) : IDisposable
 {
     private readonly IntPtr _hWnd = hWnd;
@@ -78,8 +83,9 @@ public sealed partial class HotKeyManager(IntPtr hWnd) : IDisposable
     }
 
     /// <summary>
-    /// 設定に基づいて全てのホットキーを再登録する
+    /// 設定オブジェクトの内容に基づいて、3種類のキャプチャ用ホットキーを全て再登録する。
     /// </summary>
+    /// <param name="settings">ホットキー設定を含む設定オブジェクト</param>
     public void RegisterAll(Settings settings)
     {
         UnregisterAll();
@@ -105,7 +111,7 @@ public sealed partial class HotKeyManager(IntPtr hWnd) : IDisposable
 }
 
 /// <summary>
-/// キャプチャの種類
+/// 画面キャプチャの取得方法を指定する列挙型。
 /// </summary>
 public enum CaptureType
 {
