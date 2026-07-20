@@ -11,7 +11,6 @@ partial class MainForm
     private ToolStripMenuItem _menuFile;
     private ToolStripMenuItem _menuFileSave;
     private ToolStripMenuItem _menuFileSaveFolder;
-    private ToolStripMenuItem _menuFileDisplaySettings;
     private ToolStripMenuItem _menuEdit;
     private ToolStripMenuItem _menuEditUndo;
     private ToolStripMenuItem _menuEditCrop;
@@ -23,9 +22,9 @@ partial class MainForm
     private ToolStripMenuItem _menuEditAlignLeft;
     private ToolStripMenuItem _menuEditAlignCenter;
     private ToolStripMenuItem _menuEditShowLoupe;
-    private ToolStripMenuItem _menuSettings;
-    private ToolStripMenuItem _menuSaveFolder;
-    private ToolStripMenuItem _menuHotKeySettings;
+    private ToolStripMenuItem _menuView;
+    private ToolStripMenuItem _menuViewLoupeHide;
+    private ToolStripMenuItem _menuViewLoupeAuto;
     private ToolStripMenuItem _menuDisplaySettings;
 
     // ツールバー
@@ -41,9 +40,6 @@ partial class MainForm
     private TextBox _txtFileNameTemplate;
     private Button _btnSaveFolder;
     private LinkLabel _linkSaveFolder;
-
-    // 拡大率
-    private ComboBox _cmbZoom;
 
     // プレビュー（Panel でラップ）
     private Panel _pnlPreview;
@@ -69,14 +65,44 @@ partial class MainForm
     private ContextMenuStrip _contextMenuPreview;
     private ToolStripMenuItem _ctxCrop;
     private ToolStripMenuItem _ctxAutoCrop;
+    private ToolStripMenuItem _ctxCopy;
+    private ToolStripMenuItem _ctxPaste;
     private ToolStripSeparator _ctxSep0;
+    private ToolStripMenuItem _ctxPZoomIn;
+    private ToolStripMenuItem _ctxPZoomOut;
+    private ToolStripMenuItem _ctxPZoomAuto;
     private ToolStripMenuItem _ctxZoomIn;
     private ToolStripMenuItem _ctxZoomOut;
     private ToolStripSeparator _ctxSep1;
+    // コンテキストメニュー（拡大率）
+    private ContextMenuStrip _contextMenuZoom;
+    private ToolStripMenuItem _ctxZoomAuto;
+    private ToolStripMenuItem _ctxZoom25;
+    private ToolStripMenuItem _ctxZoom33;
+    private ToolStripMenuItem _ctxZoom50;
+    private ToolStripMenuItem _ctxZoom67;
+    private ToolStripMenuItem _ctxZoom75;
+    private ToolStripMenuItem _ctxZoom80;
+    private ToolStripMenuItem _ctxZoom90;
+    private ToolStripMenuItem _ctxZoom100;
+    private ToolStripMenuItem _ctxZoom110;
+    private ToolStripMenuItem _ctxZoom125;
+    private ToolStripMenuItem _ctxZoom150;
+    private ToolStripMenuItem _ctxZoom175;
+    private ToolStripMenuItem _ctxZoom200;
+    private ToolStripMenuItem _ctxZoom250;
+    private ToolStripMenuItem _ctxZoom300;
+    private ToolStripMenuItem _ctxZoom400;
+    private ToolStripMenuItem _ctxZoom500;
+    // コンテキストメニュー（配置）
+    private ContextMenuStrip _contextMenuAlign;
     private ToolStripMenuItem _ctxAlignLeft;
     private ToolStripMenuItem _ctxAlignCenter;
-    private ToolStripSeparator _ctxSep2;
+    // コンテキストメニュー（拡大鏡）
+    private ContextMenuStrip _contextMenuLoupe;
+    private ToolStripMenuItem _ctxLoupeHide;
     private ToolStripMenuItem _ctxShowLoupe;
+    private ToolStripMenuItem _ctxLoupeAuto;
     private ContextMenuStrip _contextMenuLink;
     private ToolStripMenuItem _ctxLinkSaveFolder;
     private ToolStripMenuItem _ctxLinkFolderView;
@@ -89,27 +115,28 @@ partial class MainForm
         _menuFile = new ToolStripMenuItem();
         _menuFileSave = new ToolStripMenuItem();
         _menuFileSaveFolder = new ToolStripMenuItem();
-        _menuFileDisplaySettings = new ToolStripMenuItem();
         _menuEdit = new ToolStripMenuItem();
         _menuEditUndo = new ToolStripMenuItem();
         _menuEditCrop = new ToolStripMenuItem();
         _menuEditAutoCrop = new ToolStripMenuItem();
         _menuEditCopy = new ToolStripMenuItem();
         _menuEditPaste = new ToolStripMenuItem();
+        _menuView = new ToolStripMenuItem();
         _menuEditZoomIn = new ToolStripMenuItem();
         _menuEditZoomOut = new ToolStripMenuItem();
+        toolStripSeparator1 = new ToolStripSeparator();
         _menuEditAlignLeft = new ToolStripMenuItem();
         _menuEditAlignCenter = new ToolStripMenuItem();
+        toolStripSeparator2 = new ToolStripSeparator();
+        _menuViewLoupeHide = new ToolStripMenuItem();
         _menuEditShowLoupe = new ToolStripMenuItem();
-        _menuSettings = new ToolStripMenuItem();
-        _menuSaveFolder = new ToolStripMenuItem();
-        _menuHotKeySettings = new ToolStripMenuItem();
+        _menuViewLoupeAuto = new ToolStripMenuItem();
+        toolStripSeparator3 = new ToolStripSeparator();
         _menuDisplaySettings = new ToolStripMenuItem();
         _flowToolBar = new FlowLayoutPanel();
         _btnSelectScreen = new Button();
         _btnWindowSelect = new Button();
         _btnAreaSelect = new Button();
-        _cmbZoom = new ComboBox();
         _btnSave = new Button();
         _txtFileNameTemplate = new TextBox();
         _linkSaveFolder = new LinkLabel();
@@ -128,25 +155,59 @@ partial class MainForm
         _lblZoom = new ToolStripStatusLabel();
         _lblImageSize = new ToolStripStatusLabel();
         _lblSavedStatus = new ToolStripStatusLabel();
+        _lblSpacer = new ToolStripStatusLabel();
         _lblAlign = new ToolStripStatusLabel();
         _lblLoupe = new ToolStripStatusLabel();
-        _lblSpacer = new ToolStripStatusLabel();
         _lblDummy = new ToolStripStatusLabel();
         _toolTip = new ToolTip(components);
         _contextMenuPreview = new ContextMenuStrip(components);
         _ctxCrop = new ToolStripMenuItem();
         _ctxAutoCrop = new ToolStripMenuItem();
+        _ctxCopy = new ToolStripMenuItem();
+        _ctxPaste = new ToolStripMenuItem();
         _ctxSep0 = new ToolStripSeparator();
+        _ctxPZoomAuto = new ToolStripMenuItem();
+        _ctxPZoomIn = new ToolStripMenuItem();
+        _ctxPZoomOut = new ToolStripMenuItem();
         _ctxZoomIn = new ToolStripMenuItem();
         _ctxZoomOut = new ToolStripMenuItem();
-        _ctxSep1 = new ToolStripSeparator();
+        _contextMenuZoom = new ContextMenuStrip(components);
+        _ctxZoomAuto = new ToolStripMenuItem();
+        _ctxZoom25 = new ToolStripMenuItem();
+        _ctxZoom33 = new ToolStripMenuItem();
+        _ctxZoom50 = new ToolStripMenuItem();
+        _ctxZoom67 = new ToolStripMenuItem();
+        _ctxZoom75 = new ToolStripMenuItem();
+        _ctxZoom80 = new ToolStripMenuItem();
+        _ctxZoom90 = new ToolStripMenuItem();
+        _ctxZoom100 = new ToolStripMenuItem();
+        _ctxZoom110 = new ToolStripMenuItem();
+        _ctxZoom125 = new ToolStripMenuItem();
+        _ctxZoom150 = new ToolStripMenuItem();
+        _ctxZoom175 = new ToolStripMenuItem();
+        _ctxZoom200 = new ToolStripMenuItem();
+        _ctxZoom250 = new ToolStripMenuItem();
+        _ctxZoom300 = new ToolStripMenuItem();
+        _ctxZoom400 = new ToolStripMenuItem();
+        _ctxZoom500 = new ToolStripMenuItem();
+        _contextMenuAlign = new ContextMenuStrip(components);
         _ctxAlignLeft = new ToolStripMenuItem();
         _ctxAlignCenter = new ToolStripMenuItem();
-        _ctxSep2 = new ToolStripSeparator();
+        _contextMenuLoupe = new ContextMenuStrip(components);
+        _ctxLoupeHide = new ToolStripMenuItem();
         _ctxShowLoupe = new ToolStripMenuItem();
+        _ctxLoupeAuto = new ToolStripMenuItem();
         _pnlPreview = new Panel();
         _vScroll = new VScrollBar();
         _hScroll = new HScrollBar();
+        toolStripSeparator4 = new ToolStripSeparator();
+        toolStripSeparator5 = new ToolStripSeparator();
+        toolStripSeparator6 = new ToolStripSeparator();
+        toolStripSeparator7 = new ToolStripSeparator();
+        toolStripSeparator8 = new ToolStripSeparator();
+        toolStripSeparator9 = new ToolStripSeparator();
+        _menuFolderView = new ToolStripMenuItem();
+        _menuOpenExplorer = new ToolStripMenuItem();
         _menuStrip.SuspendLayout();
         _flowToolBar.SuspendLayout();
         _contextMenuLink.SuspendLayout();
@@ -154,13 +215,16 @@ partial class MainForm
         ((System.ComponentModel.ISupportInitialize)_picLoupe).BeginInit();
         _statusStrip.SuspendLayout();
         _contextMenuPreview.SuspendLayout();
+        _contextMenuZoom.SuspendLayout();
+        _contextMenuAlign.SuspendLayout();
+        _contextMenuLoupe.SuspendLayout();
         _pnlPreview.SuspendLayout();
         SuspendLayout();
         // 
         // _menuStrip
         // 
         _menuStrip.ImageScalingSize = new Size(20, 20);
-        _menuStrip.Items.AddRange(new ToolStripItem[] { _menuFile, _menuEdit });
+        _menuStrip.Items.AddRange(new ToolStripItem[] { _menuFile, _menuEdit, _menuView });
         _menuStrip.Location = new Point(0, 0);
         _menuStrip.Name = "_menuStrip";
         _menuStrip.Size = new Size(1000, 28);
@@ -169,7 +233,7 @@ partial class MainForm
         // 
         // _menuFile
         // 
-        _menuFile.DropDownItems.AddRange(new ToolStripItem[] { _menuFileSave, _menuFileSaveFolder, _menuFileDisplaySettings });
+        _menuFile.DropDownItems.AddRange(new ToolStripItem[] { _menuFileSave, toolStripSeparator6, _menuFileSaveFolder, toolStripSeparator9, _menuFolderView, _menuOpenExplorer });
         _menuFile.Name = "_menuFile";
         _menuFile.Size = new Size(82, 24);
         _menuFile.Text = "ファイル(&F)";
@@ -178,27 +242,20 @@ partial class MainForm
         // 
         _menuFileSave.Name = "_menuFileSave";
         _menuFileSave.ShortcutKeys = Keys.Control | Keys.S;
-        _menuFileSave.Size = new Size(205, 26);
+        _menuFileSave.Size = new Size(193, 26);
         _menuFileSave.Text = "保存(&S)";
         _menuFileSave.Click += MenuFileSave_Click;
         // 
         // _menuFileSaveFolder
         // 
         _menuFileSaveFolder.Name = "_menuFileSaveFolder";
-        _menuFileSaveFolder.Size = new Size(205, 26);
+        _menuFileSaveFolder.Size = new Size(193, 26);
         _menuFileSaveFolder.Text = "保存先設定(&F)...";
         _menuFileSaveFolder.Click += MenuFileSaveFolder_Click;
         // 
-        // _menuFileDisplaySettings
-        // 
-        _menuFileDisplaySettings.Name = "_menuFileDisplaySettings";
-        _menuFileDisplaySettings.Size = new Size(205, 26);
-        _menuFileDisplaySettings.Text = "描画プロパティ(&D)...";
-        _menuFileDisplaySettings.Click += MenuFileDisplaySettings_Click;
-        // 
         // _menuEdit
         // 
-        _menuEdit.DropDownItems.AddRange(new ToolStripItem[] { _menuEditUndo, _menuEditCrop, _menuEditAutoCrop, _menuEditCopy, _menuEditPaste, _menuEditZoomIn, _menuEditZoomOut, _menuEditAlignLeft, _menuEditAlignCenter, _menuEditShowLoupe });
+        _menuEdit.DropDownItems.AddRange(new ToolStripItem[] { _menuEditUndo, toolStripSeparator4, _menuEditAutoCrop, _menuEditCrop, toolStripSeparator5, _menuEditCopy, _menuEditPaste });
         _menuEdit.Name = "_menuEdit";
         _menuEdit.Size = new Size(71, 24);
         _menuEdit.Text = "編集(&E)";
@@ -242,11 +299,18 @@ partial class MainForm
         _menuEditPaste.Text = "クリップボードから貼り付け(&P)";
         _menuEditPaste.Click += MenuEditPaste_Click;
         // 
+        // _menuView
+        // 
+        _menuView.DropDownItems.AddRange(new ToolStripItem[] { _menuEditZoomIn, _menuEditZoomOut, toolStripSeparator1, _menuEditAlignLeft, _menuEditAlignCenter, toolStripSeparator2, _menuViewLoupeHide, _menuEditShowLoupe, _menuViewLoupeAuto, toolStripSeparator3, _menuDisplaySettings });
+        _menuView.Name = "_menuView";
+        _menuView.Size = new Size(72, 24);
+        _menuView.Text = "表示(&V)";
+        // 
         // _menuEditZoomIn
         // 
         _menuEditZoomIn.Name = "_menuEditZoomIn";
         _menuEditZoomIn.ShortcutKeys = Keys.Control | Keys.Oemplus;
-        _menuEditZoomIn.Size = new Size(312, 26);
+        _menuEditZoomIn.Size = new Size(240, 26);
         _menuEditZoomIn.Text = "拡大";
         _menuEditZoomIn.Click += MenuEditZoomIn_Click;
         // 
@@ -254,51 +318,66 @@ partial class MainForm
         // 
         _menuEditZoomOut.Name = "_menuEditZoomOut";
         _menuEditZoomOut.ShortcutKeys = Keys.Control | Keys.OemMinus;
-        _menuEditZoomOut.Size = new Size(312, 26);
+        _menuEditZoomOut.Size = new Size(240, 26);
         _menuEditZoomOut.Text = "縮小";
         _menuEditZoomOut.Click += MenuEditZoomOut_Click;
+        // 
+        // toolStripSeparator1
+        // 
+        toolStripSeparator1.Name = "toolStripSeparator1";
+        toolStripSeparator1.Size = new Size(237, 6);
         // 
         // _menuEditAlignLeft
         // 
         _menuEditAlignLeft.Name = "_menuEditAlignLeft";
-        _menuEditAlignLeft.Size = new Size(312, 26);
+        _menuEditAlignLeft.Size = new Size(240, 26);
         _menuEditAlignLeft.Text = "左上寄せ";
         _menuEditAlignLeft.Click += MenuEditAlignLeft_Click;
         // 
         // _menuEditAlignCenter
         // 
         _menuEditAlignCenter.Name = "_menuEditAlignCenter";
-        _menuEditAlignCenter.Size = new Size(312, 26);
+        _menuEditAlignCenter.Size = new Size(240, 26);
         _menuEditAlignCenter.Text = "中央寄せ";
         _menuEditAlignCenter.Click += MenuEditAlignCenter_Click;
         // 
+        // toolStripSeparator2
+        // 
+        toolStripSeparator2.Name = "toolStripSeparator2";
+        toolStripSeparator2.Size = new Size(237, 6);
+        // 
+        // _menuViewLoupeHide
+        // 
+        _menuViewLoupeHide.Name = "_menuViewLoupeHide";
+        _menuViewLoupeHide.Size = new Size(240, 26);
+        _menuViewLoupeHide.Text = "拡大鏡:非表示";
+        _menuViewLoupeHide.Click += MenuViewLoupeHide_Click;
+        // 
         // _menuEditShowLoupe
         // 
-        _menuEditShowLoupe.CheckOnClick = true;
         _menuEditShowLoupe.Name = "_menuEditShowLoupe";
-        _menuEditShowLoupe.Size = new Size(312, 26);
-        _menuEditShowLoupe.Text = "拡大鏡表示";
+        _menuEditShowLoupe.Size = new Size(240, 26);
+        _menuEditShowLoupe.Text = "拡大鏡:常時表示";
         _menuEditShowLoupe.Click += MenuEditShowLoupe_Click;
         // 
-        // _menuSettings
+        // _menuViewLoupeAuto
         // 
-        _menuSettings.Name = "_menuSettings";
-        _menuSettings.Size = new Size(32, 19);
+        _menuViewLoupeAuto.Name = "_menuViewLoupeAuto";
+        _menuViewLoupeAuto.Size = new Size(240, 26);
+        _menuViewLoupeAuto.Text = "拡大鏡:範囲選択中のみ";
+        _menuViewLoupeAuto.Click += MenuViewLoupeAuto_Click;
         // 
-        // _menuSaveFolder
+        // toolStripSeparator3
         // 
-        _menuSaveFolder.Name = "_menuSaveFolder";
-        _menuSaveFolder.Size = new Size(32, 19);
-        // 
-        // _menuHotKeySettings
-        // 
-        _menuHotKeySettings.Name = "_menuHotKeySettings";
-        _menuHotKeySettings.Size = new Size(32, 19);
+        toolStripSeparator3.Name = "toolStripSeparator3";
+        toolStripSeparator3.Size = new Size(237, 6);
         // 
         // _menuDisplaySettings
         // 
         _menuDisplaySettings.Name = "_menuDisplaySettings";
-        _menuDisplaySettings.Size = new Size(32, 19);
+        _menuDisplaySettings.Size = new Size(240, 26);
+        _menuDisplaySettings.Text = "描画プロパティ(&D)...";
+        _menuDisplaySettings.Click += MenuDisplaySettings_Click;
         // 
         // _flowToolBar
         // 
@@ -306,7 +385,6 @@ partial class MainForm
         _flowToolBar.Controls.Add(_btnSelectScreen);
         _flowToolBar.Controls.Add(_btnWindowSelect);
         _flowToolBar.Controls.Add(_btnAreaSelect);
-        _flowToolBar.Controls.Add(_cmbZoom);
         _flowToolBar.Controls.Add(_btnSave);
         _flowToolBar.Controls.Add(_txtFileNameTemplate);
         _flowToolBar.Controls.Add(_linkSaveFolder);
@@ -359,20 +437,10 @@ partial class MainForm
         _btnAreaSelect.UseVisualStyleBackColor = true;
         _btnAreaSelect.Click += BtnAreaSelect_Click;
         // 
-        // _cmbZoom
-        // 
-        _cmbZoom.DropDownStyle = ComboBoxStyle.DropDownList;
-        _cmbZoom.Location = new Point(251, 8);
-        _cmbZoom.Margin = new Padding(3, 3, 10, 3);
-        _cmbZoom.Name = "_cmbZoom";
-        _cmbZoom.Size = new Size(80, 28);
-        _cmbZoom.TabIndex = 0;
-        _cmbZoom.SelectedIndexChanged += CmbZoom_SelectedIndexChanged;
-        // 
         // _btnSave
         // 
         _btnSave.AutoSize = true;
-        _btnSave.Location = new Point(344, 8);
+        _btnSave.Location = new Point(251, 8);
         _btnSave.Name = "_btnSave";
         _btnSave.Size = new Size(75, 30);
         _btnSave.TabIndex = 7;
@@ -382,7 +450,7 @@ partial class MainForm
         // 
         // _txtFileNameTemplate
         // 
-        _txtFileNameTemplate.Location = new Point(425, 8);
+        _txtFileNameTemplate.Location = new Point(332, 8);
         _txtFileNameTemplate.Name = "_txtFileNameTemplate";
         _txtFileNameTemplate.Size = new Size(250, 27);
         _txtFileNameTemplate.TabIndex = 0;
@@ -394,7 +462,7 @@ partial class MainForm
         _linkSaveFolder.AutoSize = true;
         _linkSaveFolder.ContextMenuStrip = _contextMenuLink;
         _linkSaveFolder.LinkBehavior = LinkBehavior.HoverUnderline;
-        _linkSaveFolder.Location = new Point(681, 8);
+        _linkSaveFolder.Location = new Point(588, 8);
         _linkSaveFolder.Margin = new Padding(3);
         _linkSaveFolder.Name = "_linkSaveFolder";
         _linkSaveFolder.Size = new Size(99, 20);
@@ -406,7 +474,7 @@ partial class MainForm
         // _contextMenuLink
         // 
         _contextMenuLink.ImageScalingSize = new Size(20, 20);
-        _contextMenuLink.Items.AddRange(new ToolStripItem[] { _ctxLinkSaveFolder, _ctxLinkFolderView, _ctxLinkOpenExplorer });
+        _contextMenuLink.Items.AddRange(new ToolStripItem[] { _ctxLinkSaveFolder, new ToolStripSeparator(), _ctxLinkFolderView, _ctxLinkOpenExplorer });
         _contextMenuLink.Name = "_contextMenuLink";
         _contextMenuLink.Size = new Size(244, 76);
         // 
@@ -430,6 +498,25 @@ partial class MainForm
         _ctxLinkOpenExplorer.Size = new Size(243, 24);
         _ctxLinkOpenExplorer.Text = "エクスプローラでフォルダを開く";
         _ctxLinkOpenExplorer.Click += CtxLinkOpenExplorer_Click;
+        // 
+        // toolStripSeparator9
+        // 
+        toolStripSeparator9.Name = "toolStripSeparator9";
+        toolStripSeparator9.Size = new Size(190, 6);
+        // 
+        // _menuFolderView
+        // 
+        _menuFolderView.Name = "_menuFolderView";
+        _menuFolderView.Size = new Size(200, 26);
+        _menuFolderView.Text = "フォルダビューの表示";
+        _menuFolderView.Click += MenuFolderView_Click;
+        // 
+        // _menuOpenExplorer
+        // 
+        _menuOpenExplorer.Name = "_menuOpenExplorer";
+        _menuOpenExplorer.Size = new Size(200, 26);
+        _menuOpenExplorer.Text = "エクスプローラでフォルダを開く";
+        _menuOpenExplorer.Click += MenuOpenExplorer_Click;
         // 
         // _btnAutoCrop
         // 
@@ -521,42 +608,49 @@ partial class MainForm
         // 
         _lblZoom.BorderSides = ToolStripStatusLabelBorderSides.Right;
         _lblZoom.Name = "_lblZoom";
+        _lblZoom.Size = new Size(4, 18);
         _lblZoom.TextAlign = ContentAlignment.MiddleLeft;
+        _lblZoom.MouseDown += LblZoom_MouseDown;
         // 
         // _lblImageSize
         // 
         _lblImageSize.BorderSides = ToolStripStatusLabelBorderSides.Right;
         _lblImageSize.Name = "_lblImageSize";
+        _lblImageSize.Size = new Size(4, 18);
         _lblImageSize.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // _lblSavedStatus
         // 
-        _lblSavedStatus.BorderSides = ToolStripStatusLabelBorderSides.None;
         _lblSavedStatus.Name = "_lblSavedStatus";
+        _lblSavedStatus.Size = new Size(0, 18);
         _lblSavedStatus.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // _lblSpacer
         // 
         _lblSpacer.Name = "_lblSpacer";
+        _lblSpacer.Size = new Size(968, 18);
         _lblSpacer.Spring = true;
         // 
         // _lblAlign
         // 
         _lblAlign.BorderSides = ToolStripStatusLabelBorderSides.Left;
         _lblAlign.Name = "_lblAlign";
+        _lblAlign.Size = new Size(4, 18);
         _lblAlign.TextAlign = ContentAlignment.MiddleRight;
+        _lblAlign.MouseDown += LblAlign_MouseDown;
         // 
         // _lblLoupe
         // 
         _lblLoupe.BorderSides = ToolStripStatusLabelBorderSides.Left;
         _lblLoupe.Name = "_lblLoupe";
-        _lblLoupe.AutoSize = true;
+        _lblLoupe.Size = new Size(4, 18);
         _lblLoupe.TextAlign = ContentAlignment.MiddleRight;
+        _lblLoupe.MouseDown += LblLoupe_MouseDown;
         // 
         // _lblDummy
         // 
-        _lblDummy.Name = "_lblDummy";
         _lblDummy.AutoSize = false;
+        _lblDummy.Name = "_lblDummy";
         _lblDummy.Size = new Size(1, 18);
         // 
         // _toolTip
@@ -569,35 +663,74 @@ partial class MainForm
         // _contextMenuPreview
         // 
         _contextMenuPreview.ImageScalingSize = new Size(20, 20);
-        _contextMenuPreview.Items.AddRange(new ToolStripItem[] { _ctxCrop, _ctxAutoCrop, _ctxSep0, _ctxZoomIn, _ctxZoomOut, _ctxSep1, _ctxAlignLeft, _ctxAlignCenter, _ctxSep2, _ctxShowLoupe });
+        _contextMenuPreview.Items.AddRange(new ToolStripItem[] { _ctxAutoCrop, _ctxCrop, toolStripSeparator8, _ctxCopy, _ctxPaste, _ctxSep0, _ctxPZoomAuto, _ctxPZoomIn, _ctxPZoomOut });
         _contextMenuPreview.Name = "_contextMenuPreview";
-        _contextMenuPreview.Size = new Size(251, 190);
+        _contextMenuPreview.Size = new Size(281, 184);
         // 
         // _ctxCrop
         // 
         _ctxCrop.Name = "_ctxCrop";
         _ctxCrop.ShortcutKeys = Keys.Control | Keys.X;
-        _ctxCrop.Size = new Size(250, 24);
+        _ctxCrop.Size = new Size(280, 24);
         _ctxCrop.Text = "選択範囲を切り出し";
         _ctxCrop.Click += MenuEditCrop_Click;
         // 
         // _ctxAutoCrop
         // 
         _ctxAutoCrop.Name = "_ctxAutoCrop";
-        _ctxAutoCrop.Size = new Size(250, 24);
+        _ctxAutoCrop.Size = new Size(280, 24);
         _ctxAutoCrop.Text = "自動切り出し";
         _ctxAutoCrop.Click += MenuEditAutoCrop_Click;
+        // 
+        // _ctxCopy
+        // 
+        _ctxCopy.Name = "_ctxCopy";
+        _ctxCopy.ShortcutKeys = Keys.Control | Keys.C;
+        _ctxCopy.Size = new Size(280, 24);
+        _ctxCopy.Text = "クリップボードにコピー";
+        _ctxCopy.Click += MenuEditCopy_Click;
+        // 
+        // _ctxPaste
+        // 
+        _ctxPaste.Name = "_ctxPaste";
+        _ctxPaste.ShortcutKeys = Keys.Control | Keys.V;
+        _ctxPaste.Size = new Size(280, 24);
+        _ctxPaste.Text = "クリップボードから貼り付け";
+        _ctxPaste.Click += MenuEditPaste_Click;
         // 
         // _ctxSep0
         // 
         _ctxSep0.Name = "_ctxSep0";
-        _ctxSep0.Size = new Size(247, 6);
+        _ctxSep0.Size = new Size(277, 6);
+        // 
+        // _ctxPZoomAuto
+        // 
+        _ctxPZoomAuto.Name = "_ctxPZoomAuto";
+        _ctxPZoomAuto.Size = new Size(280, 24);
+        _ctxPZoomAuto.Text = "自動";
+        _ctxPZoomAuto.Click += CtxZoomAuto_Click;
+        // 
+        // _ctxPZoomIn
+        // 
+        _ctxPZoomIn.Name = "_ctxPZoomIn";
+        _ctxPZoomIn.ShortcutKeys = Keys.Control | Keys.Oemplus;
+        _ctxPZoomIn.Size = new Size(280, 24);
+        _ctxPZoomIn.Text = "拡大";
+        _ctxPZoomIn.Click += MenuEditZoomIn_Click;
+        // 
+        // _ctxPZoomOut
+        // 
+        _ctxPZoomOut.Name = "_ctxPZoomOut";
+        _ctxPZoomOut.ShortcutKeys = Keys.Control | Keys.OemMinus;
+        _ctxPZoomOut.Size = new Size(280, 24);
+        _ctxPZoomOut.Text = "縮小";
+        _ctxPZoomOut.Click += MenuEditZoomOut_Click;
         // 
         // _ctxZoomIn
         // 
         _ctxZoomIn.Name = "_ctxZoomIn";
         _ctxZoomIn.ShortcutKeys = Keys.Control | Keys.Oemplus;
-        _ctxZoomIn.Size = new Size(250, 24);
+        _ctxZoomIn.Size = new Size(221, 24);
         _ctxZoomIn.Text = "拡大";
         _ctxZoomIn.Click += MenuEditZoomIn_Click;
         // 
@@ -605,41 +738,191 @@ partial class MainForm
         // 
         _ctxZoomOut.Name = "_ctxZoomOut";
         _ctxZoomOut.ShortcutKeys = Keys.Control | Keys.OemMinus;
-        _ctxZoomOut.Size = new Size(250, 24);
+        _ctxZoomOut.Size = new Size(221, 24);
         _ctxZoomOut.Text = "縮小";
         _ctxZoomOut.Click += MenuEditZoomOut_Click;
         // 
-        // _ctxSep1
+        // _contextMenuZoom
         // 
-        _ctxSep1.Name = "_ctxSep1";
-        _ctxSep1.Size = new Size(247, 6);
+        _contextMenuZoom.ImageScalingSize = new Size(20, 20);
+        _contextMenuZoom.Items.AddRange(new ToolStripItem[] { _ctxZoomIn, _ctxZoomOut, toolStripSeparator7, _ctxZoomAuto, _ctxZoom25, _ctxZoom33, _ctxZoom50, _ctxZoom67, _ctxZoom75, _ctxZoom80, _ctxZoom90, _ctxZoom100, _ctxZoom110, _ctxZoom125, _ctxZoom150, _ctxZoom175, _ctxZoom200, _ctxZoom250, _ctxZoom300, _ctxZoom400, _ctxZoom500 });
+        _contextMenuZoom.Name = "_contextMenuZoom";
+        _contextMenuZoom.Size = new Size(222, 490);
+        // 
+        // _ctxZoomAuto
+        // 
+        _ctxZoomAuto.Name = "_ctxZoomAuto";
+        _ctxZoomAuto.Size = new Size(221, 24);
+        _ctxZoomAuto.Text = "自動";
+        _ctxZoomAuto.Click += CtxZoomAuto_Click;
+        // 
+        // _ctxZoom25
+        // 
+        _ctxZoom25.Name = "_ctxZoom25";
+        _ctxZoom25.Size = new Size(221, 24);
+        _ctxZoom25.Text = "25%";
+        _ctxZoom25.Click += CtxZoom25_Click;
+        // 
+        // _ctxZoom33
+        // 
+        _ctxZoom33.Name = "_ctxZoom33";
+        _ctxZoom33.Size = new Size(221, 24);
+        _ctxZoom33.Text = "33%";
+        _ctxZoom33.Click += CtxZoom33_Click;
+        // 
+        // _ctxZoom50
+        // 
+        _ctxZoom50.Name = "_ctxZoom50";
+        _ctxZoom50.Size = new Size(221, 24);
+        _ctxZoom50.Text = "50%";
+        _ctxZoom50.Click += CtxZoom50_Click;
+        // 
+        // _ctxZoom67
+        // 
+        _ctxZoom67.Name = "_ctxZoom67";
+        _ctxZoom67.Size = new Size(221, 24);
+        _ctxZoom67.Text = "67%";
+        _ctxZoom67.Click += CtxZoom67_Click;
+        // 
+        // _ctxZoom75
+        // 
+        _ctxZoom75.Name = "_ctxZoom75";
+        _ctxZoom75.Size = new Size(221, 24);
+        _ctxZoom75.Text = "75%";
+        _ctxZoom75.Click += CtxZoom75_Click;
+        // 
+        // _ctxZoom80
+        // 
+        _ctxZoom80.Name = "_ctxZoom80";
+        _ctxZoom80.Size = new Size(221, 24);
+        _ctxZoom80.Text = "80%";
+        _ctxZoom80.Click += CtxZoom80_Click;
+        // 
+        // _ctxZoom90
+        // 
+        _ctxZoom90.Name = "_ctxZoom90";
+        _ctxZoom90.Size = new Size(221, 24);
+        _ctxZoom90.Text = "90%";
+        _ctxZoom90.Click += CtxZoom90_Click;
+        // 
+        // _ctxZoom100
+        // 
+        _ctxZoom100.Name = "_ctxZoom100";
+        _ctxZoom100.Size = new Size(221, 24);
+        _ctxZoom100.Text = "100%";
+        _ctxZoom100.Click += CtxZoom100_Click;
+        // 
+        // _ctxZoom110
+        // 
+        _ctxZoom110.Name = "_ctxZoom110";
+        _ctxZoom110.Size = new Size(221, 24);
+        _ctxZoom110.Text = "110%";
+        _ctxZoom110.Click += CtxZoom110_Click;
+        // 
+        // _ctxZoom125
+        // 
+        _ctxZoom125.Name = "_ctxZoom125";
+        _ctxZoom125.Size = new Size(221, 24);
+        _ctxZoom125.Text = "125%";
+        _ctxZoom125.Click += CtxZoom125_Click;
+        // 
+        // _ctxZoom150
+        // 
+        _ctxZoom150.Name = "_ctxZoom150";
+        _ctxZoom150.Size = new Size(221, 24);
+        _ctxZoom150.Text = "150%";
+        _ctxZoom150.Click += CtxZoom150_Click;
+        // 
+        // _ctxZoom175
+        // 
+        _ctxZoom175.Name = "_ctxZoom175";
+        _ctxZoom175.Size = new Size(221, 24);
+        _ctxZoom175.Text = "175%";
+        _ctxZoom175.Click += CtxZoom175_Click;
+        // 
+        // _ctxZoom200
+        // 
+        _ctxZoom200.Name = "_ctxZoom200";
+        _ctxZoom200.Size = new Size(221, 24);
+        _ctxZoom200.Text = "200%";
+        _ctxZoom200.Click += CtxZoom200_Click;
+        // 
+        // _ctxZoom250
+        // 
+        _ctxZoom250.Name = "_ctxZoom250";
+        _ctxZoom250.Size = new Size(221, 24);
+        _ctxZoom250.Text = "250%";
+        _ctxZoom250.Click += CtxZoom250_Click;
+        // 
+        // _ctxZoom300
+        // 
+        _ctxZoom300.Name = "_ctxZoom300";
+        _ctxZoom300.Size = new Size(221, 24);
+        _ctxZoom300.Text = "300%";
+        _ctxZoom300.Click += CtxZoom300_Click;
+        // 
+        // _ctxZoom400
+        // 
+        _ctxZoom400.Name = "_ctxZoom400";
+        _ctxZoom400.Size = new Size(221, 24);
+        _ctxZoom400.Text = "400%";
+        _ctxZoom400.Click += CtxZoom400_Click;
+        // 
+        // _ctxZoom500
+        // 
+        _ctxZoom500.Name = "_ctxZoom500";
+        _ctxZoom500.Size = new Size(221, 24);
+        _ctxZoom500.Text = "500%";
+        _ctxZoom500.Click += CtxZoom500_Click;
+        // 
+        // _contextMenuAlign
+        // 
+        _contextMenuAlign.ImageScalingSize = new Size(20, 20);
+        _contextMenuAlign.Items.AddRange(new ToolStripItem[] { _ctxAlignLeft, _ctxAlignCenter });
+        _contextMenuAlign.Name = "_contextMenuAlign";
+        _contextMenuAlign.Size = new Size(137, 52);
         // 
         // _ctxAlignLeft
         // 
         _ctxAlignLeft.Name = "_ctxAlignLeft";
-        _ctxAlignLeft.Size = new Size(250, 24);
+        _ctxAlignLeft.Size = new Size(136, 24);
         _ctxAlignLeft.Text = "左上寄せ";
         _ctxAlignLeft.Click += MenuEditAlignLeft_Click;
         // 
         // _ctxAlignCenter
         // 
         _ctxAlignCenter.Name = "_ctxAlignCenter";
-        _ctxAlignCenter.Size = new Size(250, 24);
+        _ctxAlignCenter.Size = new Size(136, 24);
         _ctxAlignCenter.Text = "中央寄せ";
         _ctxAlignCenter.Click += MenuEditAlignCenter_Click;
         // 
-        // _ctxSep2
+        // _contextMenuLoupe
         // 
-        _ctxSep2.Name = "_ctxSep2";
-        _ctxSep2.Size = new Size(247, 6);
+        _contextMenuLoupe.ImageScalingSize = new Size(20, 20);
+        _contextMenuLoupe.Items.AddRange(new ToolStripItem[] { _ctxLoupeHide, _ctxShowLoupe, _ctxLoupeAuto });
+        _contextMenuLoupe.Name = "_contextMenuLoupe";
+        _contextMenuLoupe.Size = new Size(179, 76);
+        // 
+        // _ctxLoupeHide
+        // 
+        _ctxLoupeHide.Name = "_ctxLoupeHide";
+        _ctxLoupeHide.Size = new Size(178, 24);
+        _ctxLoupeHide.Text = "非表示";
+        _ctxLoupeHide.Click += MenuViewLoupeHide_Click;
         // 
         // _ctxShowLoupe
         // 
-        _ctxShowLoupe.CheckOnClick = true;
         _ctxShowLoupe.Name = "_ctxShowLoupe";
-        _ctxShowLoupe.Size = new Size(250, 24);
-        _ctxShowLoupe.Text = "拡大鏡表示";
+        _ctxShowLoupe.Size = new Size(178, 24);
+        _ctxShowLoupe.Text = "常時表示";
         _ctxShowLoupe.Click += MenuEditShowLoupe_Click;
+        // 
+        // _ctxLoupeAuto
+        // 
+        _ctxLoupeAuto.Name = "_ctxLoupeAuto";
+        _ctxLoupeAuto.Size = new Size(178, 24);
+        _ctxLoupeAuto.Text = "範囲選択中のみ";
+        _ctxLoupeAuto.Click += MenuViewLoupeAuto_Click;
         // 
         // _pnlPreview
         // 
@@ -672,6 +955,31 @@ partial class MainForm
         _hScroll.TabIndex = 4;
         _hScroll.Scroll += HScroll_Scroll;
         // 
+        // toolStripSeparator4
+        // 
+        toolStripSeparator4.Name = "toolStripSeparator4";
+        toolStripSeparator4.Size = new Size(309, 6);
+        // 
+        // toolStripSeparator5
+        // 
+        toolStripSeparator5.Name = "toolStripSeparator5";
+        toolStripSeparator5.Size = new Size(309, 6);
+        // 
+        // toolStripSeparator6
+        // 
+        toolStripSeparator6.Name = "toolStripSeparator6";
+        toolStripSeparator6.Size = new Size(190, 6);
+        // 
+        // toolStripSeparator7
+        // 
+        toolStripSeparator7.Name = "toolStripSeparator7";
+        toolStripSeparator7.Size = new Size(218, 6);
+        // 
+        // toolStripSeparator8
+        // 
+        toolStripSeparator8.Name = "toolStripSeparator8";
+        toolStripSeparator8.Size = new Size(277, 6);
+        // 
         // MainForm
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
@@ -697,8 +1005,23 @@ partial class MainForm
         _statusStrip.ResumeLayout(false);
         _statusStrip.PerformLayout();
         _contextMenuPreview.ResumeLayout(false);
+        _contextMenuZoom.ResumeLayout(false);
+        _contextMenuAlign.ResumeLayout(false);
+        _contextMenuLoupe.ResumeLayout(false);
         _pnlPreview.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
     }
+
+    private ToolStripMenuItem _menuFolderView;
+    private ToolStripMenuItem _menuOpenExplorer;
+    private ToolStripSeparator toolStripSeparator1;
+    private ToolStripSeparator toolStripSeparator2;
+    private ToolStripSeparator toolStripSeparator3;
+    private ToolStripSeparator toolStripSeparator6;
+    private ToolStripSeparator toolStripSeparator4;
+    private ToolStripSeparator toolStripSeparator5;
+    private ToolStripSeparator toolStripSeparator8;
+    private ToolStripSeparator toolStripSeparator7;
+    private ToolStripSeparator toolStripSeparator9;
 }

@@ -44,7 +44,6 @@ public partial class MainForm : Form
         }
 
         InitializeComponent();
-        InitializeZoom();
         InitializeViewModel();
         RegisterHotKeys();
         RestoreFormBounds();
@@ -65,13 +64,13 @@ public partial class MainForm : Form
         _picPreview.Paint += PicPreview_CropPaint;
         _picPreview.MouseWheel += PicPreview_MouseWheel;
         _pnlPreview.MouseWheel += PicPreview_MouseWheel;
-        _pnlPreview.Resize += (_, _) => UpdateScrollBars();
-        Resize += (_, _) => { };
+        _pnlPreview.Resize += (_, _) => { UpdatePictureBoxZoom(); UpdateStatusBar(); UpdateMenuStates(); UpdateScrollBars(); };
+        Resize += (_, _) => { if (_zoomPercent == 0) { UpdatePictureBoxZoom(); UpdateStatusBar(); UpdateMenuStates(); } };
         UpdateStatusBar();
         UpdateMenuStates();
-        _menuEditShowLoupe.Checked = _viewModel.Settings.ShowLoupe;
-        _ctxShowLoupe.Checked = _viewModel.Settings.ShowLoupe;
-        UpdateLoupeVisibleFromSetting();
+        _menuEditShowLoupe.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Show;
+        _ctxShowLoupe.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Show;
+        ApplyLoupeModeFromSetting();
 
         // コンテキストメニュー表示前に状態を更新
         _contextMenuPreview.Opening += (_, _) => UpdateMenuStates();
@@ -80,6 +79,7 @@ public partial class MainForm : Form
         // メニュードロップダウン表示前に状態を更新
         _menuFile.DropDownOpening += (_, _) => UpdateMenuStates();
         _menuEdit.DropDownOpening += (_, _) => UpdateMenuStates();
+        _menuView.DropDownOpening += (_, _) => UpdateMenuStates();
 
         // リンクラベルの右クリック対策（LinkClicked が右クリックでも発火するため）
         _linkSaveFolder.MouseDown += LinkSaveFolder_MouseDown;
@@ -87,31 +87,11 @@ public partial class MainForm : Form
         Program.LogDebug("MainForm.ctor completed - crop events always subscribed");
     }
 
-    private void InitializeZoom()
-    {
-        _cmbZoom.Items.Add("自動");
-        foreach (var v in s_zoomValues[1..])
-            _cmbZoom.Items.Add($"{v}%");
-        _cmbZoom.SelectedIndex = 0;
-        _zoomIndex = 0;
-        _zoomPercent = 0;
-    }
-
     private void ResetZoomToAuto()
     {
-        _cmbZoom.SelectedIndex = 0;
         _zoomIndex = 0;
         _zoomPercent = 0;
         UpdatePictureBoxZoom();
-    }
-
-    private void CmbZoom_SelectedIndexChanged(object? sender, EventArgs e)
-    {
-        _zoomIndex = _cmbZoom.SelectedIndex;
-        _zoomPercent = s_zoomValues[_zoomIndex];
-        UpdatePictureBoxZoom();
-        UpdateStatusBar();
-        UpdateMenuStates();
     }
 
     /// <summary>
@@ -263,13 +243,18 @@ public partial class MainForm : Form
         var img = _viewModel.PreviewImage;
         var zoomText = img is not null ? $"{GetActualZoomPercent()}%" : "-%";
         var alignText = _viewModel.Settings.CenterAlign ? "中央寄せ" : "左上寄せ";
-        var loupeText = _viewModel.Settings.ShowLoupe ? "on" : "off";
+        var loupeText = _viewModel.Settings.LoupeModeValue switch
+        {
+            LoupeMode.Show => "拡大鏡:常時表示",
+            LoupeMode.Auto => "拡大鏡:範囲選択中のみ",
+            _ => "拡大鏡:非表示",
+        };
         var sizeText = img is not null ? $"({img.Width}, {img.Height})" : "(-, -)";
         var savedText = _viewModel.StatusText;
 
         _lblZoom.Text = $"拡大率 {zoomText}";
         _lblAlign.Text = alignText;
-        _lblLoupe.Text = $"拡大鏡表示: {loupeText}";
+        _lblLoupe.Text = loupeText;
         _lblImageSize.Text = $"イメージサイズ {sizeText}";
         _lblSavedStatus.Text = string.IsNullOrEmpty(savedText) ? "未保存" : savedText;
     }
@@ -300,7 +285,6 @@ public partial class MainForm : Form
         {
             _zoomIndex = bestIndex;
             _zoomPercent = s_zoomValues[_zoomIndex];
-            _cmbZoom.SelectedIndex = _zoomIndex;
             UpdatePictureBoxZoom();
             UpdateStatusBar();
         }
@@ -817,8 +801,29 @@ public partial class MainForm : Form
     // ルーペ位置更新（MouseMove から呼ぶ）
     private void UpdateLoupePosition()
     {
-        // 範囲選択がある切出しモード時のみ表示。設定でオフの場合は非表示
-        if (!_isCropMode || !_cropSelection.SelectionRect.HasValue || _viewModel.PreviewImage is null || !_viewModel.Settings.ShowLoupe)
+        if (_viewModel.PreviewImage is null)
+        {
+            _picLoupe.Visible = false;
+            return;
+        }
+
+        var mode = _viewModel.Settings.LoupeModeValue;
+        if (mode == LoupeMode.Hide)
+        {
+            _picLoupe.Visible = false;
+            return;
+        }
+
+        // 常時表示モードの場合は crop モード/範囲選択がなくても表示
+        if (mode == LoupeMode.Show && (_isCropMode && _cropSelection.SelectionRect.HasValue))
+        {
+            // 画像中央を拡大
+        }
+        else if (mode == LoupeMode.Show)
+        {
+            // 画像中央を拡大表示
+        }
+        else if (!_isCropMode || !_cropSelection.SelectionRect.HasValue)
         {
             _picLoupe.Visible = false;
             return;
@@ -1098,11 +1103,22 @@ public partial class MainForm : Form
         }
     }
 
+    private void MenuFolderView_Click(object? sender, EventArgs e)
+    {
+        CtxLinkFolderView_Click(sender, e);
+    }
+
+    private void MenuOpenExplorer_Click(object? sender, EventArgs e)
+    {
+        CtxLinkOpenExplorer_Click(sender, e);
+    }
+
     private void MenuEditAlignLeft_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.CenterAlign = false;
         _viewModel.Settings.Save();
         UpdatePictureBoxZoom();
+        UpdateStatusBar();
         UpdateMenuStates();
     }
 
@@ -1111,34 +1127,51 @@ public partial class MainForm : Form
         _viewModel.Settings.CenterAlign = true;
         _viewModel.Settings.Save();
         UpdatePictureBoxZoom();
+        UpdateStatusBar();
         UpdateMenuStates();
     }
 
     private void MenuEditShowLoupe_Click(object? sender, EventArgs e)
     {
         var item = (ToolStripMenuItem)sender!;
-        var show = item.Checked;
-        _viewModel.Settings.ShowLoupe = show;
+        _viewModel.Settings.LoupeModeValue = LoupeMode.Show;
         _viewModel.Settings.Save();
-        _menuEditShowLoupe.Checked = show;
-        _ctxShowLoupe.Checked = show;
-        UpdateLoupeVisibleFromSetting();
+        ApplyLoupeModeFromSetting();
+    }
+
+    private void MenuViewLoupeHide_Click(object? sender, EventArgs e)
+    {
+        _viewModel.Settings.LoupeModeValue = LoupeMode.Hide;
+        _viewModel.Settings.Save();
+        UpdateStatusBar();
+        ApplyLoupeModeFromSetting();
+    }
+
+    private void MenuViewLoupeAuto_Click(object? sender, EventArgs e)
+    {
+        _viewModel.Settings.LoupeModeValue = LoupeMode.Auto;
+        _viewModel.Settings.Save();
+        UpdateStatusBar();
+        ApplyLoupeModeFromSetting();
     }
 
     /// <summary>
-    /// 設定に基づいて拡大鏡の表示状態を更新する
+    /// 設定の LoupeMode に基づいて拡大鏡の表示状態を更新する
     /// </summary>
-    private void UpdateLoupeVisibleFromSetting()
+    private void ApplyLoupeModeFromSetting()
     {
-        if (_viewModel.Settings.ShowLoupe && _viewModel.PreviewImage is not null)
+        var mode = _viewModel.Settings.LoupeModeValue;
+        var hasImage = _viewModel.PreviewImage is not null;
+        var show = mode switch
         {
-            _picLoupe.Visible = true;
-            UpdateLoupePosition();
-        }
-        else
-        {
-            _picLoupe.Visible = false;
-        }
+            LoupeMode.Show => hasImage,
+            LoupeMode.Auto => hasImage && _isCropMode && _cropSelection.SelectionRect.HasValue,
+            _ => false,
+        };
+
+        _picLoupe.Visible = show;
+        if (show) UpdateLoupePosition();
+        UpdateMenuStates();
     }
 
     /// <summary>
@@ -1172,20 +1205,115 @@ public partial class MainForm : Form
         _menuEditZoomIn.Enabled = canZoomIn;
         _menuEditZoomOut.Enabled = canZoomOut;
         _menuEditAlignLeft.Enabled = _viewModel.Settings.CenterAlign;
+        _menuEditAlignLeft.Checked = !_viewModel.Settings.CenterAlign;
         _menuEditAlignCenter.Enabled = !_viewModel.Settings.CenterAlign;
-        _menuEditShowLoupe.Enabled = hasSelection;
+        _menuEditAlignCenter.Checked = _viewModel.Settings.CenterAlign;
+        _menuEditShowLoupe.Enabled = _viewModel.Settings.LoupeModeValue != LoupeMode.Show;
+        _menuEditShowLoupe.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Show;
+        _menuViewLoupeHide.Enabled = _viewModel.Settings.LoupeModeValue != LoupeMode.Hide;
+        _menuViewLoupeHide.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Hide;
+        _menuViewLoupeAuto.Enabled = _viewModel.Settings.LoupeModeValue != LoupeMode.Auto;
+        _menuViewLoupeAuto.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Auto;
 
         // コンテキストメニュー（プレビュー）
         _ctxCrop.Enabled = hasImage && hasSelection;
         _ctxAutoCrop.Enabled = hasImage && !hasSelection;
+        _ctxCopy.Enabled = hasImage;
+        _ctxPaste.Enabled = Clipboard.ContainsImage();
         _ctxZoomIn.Enabled = canZoomIn;
         _ctxZoomOut.Enabled = canZoomOut;
+        _ctxPZoomIn.Enabled = canZoomIn;
+        _ctxPZoomOut.Enabled = canZoomOut;
+        _ctxPZoomAuto.Checked = _zoomIndex == 0;
         _ctxAlignLeft.Enabled = _viewModel.Settings.CenterAlign;
+        _ctxAlignLeft.Checked = !_viewModel.Settings.CenterAlign;
         _ctxAlignCenter.Enabled = !_viewModel.Settings.CenterAlign;
-        _ctxShowLoupe.Enabled = hasSelection;
-        _menuEditShowLoupe.Checked = _viewModel.Settings.ShowLoupe;
-        _ctxShowLoupe.Checked = _viewModel.Settings.ShowLoupe;
+        _ctxAlignCenter.Checked = _viewModel.Settings.CenterAlign;
+        _ctxShowLoupe.Enabled = _viewModel.Settings.LoupeModeValue != LoupeMode.Show;
+        _ctxShowLoupe.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Show;
+        _ctxLoupeHide.Enabled = _viewModel.Settings.LoupeModeValue != LoupeMode.Hide;
+        _ctxLoupeHide.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Hide;
+        _ctxLoupeAuto.Enabled = _viewModel.Settings.LoupeModeValue != LoupeMode.Auto;
+        _ctxLoupeAuto.Checked = _viewModel.Settings.LoupeModeValue == LoupeMode.Auto;
+        _ctxZoomAuto.Checked = _zoomIndex == 0;
+        _ctxZoom25.Checked = _zoomIndex == 1;
+        _ctxZoom33.Checked = _zoomIndex == 2;
+        _ctxZoom50.Checked = _zoomIndex == 3;
+        _ctxZoom67.Checked = _zoomIndex == 4;
+        _ctxZoom75.Checked = _zoomIndex == 5;
+        _ctxZoom80.Checked = _zoomIndex == 6;
+        _ctxZoom90.Checked = _zoomIndex == 7;
+        _ctxZoom100.Checked = _zoomIndex == 8;
+        _ctxZoom110.Checked = _zoomIndex == 9;
+        _ctxZoom125.Checked = _zoomIndex == 10;
+        _ctxZoom150.Checked = _zoomIndex == 11;
+        _ctxZoom175.Checked = _zoomIndex == 12;
+        _ctxZoom200.Checked = _zoomIndex == 13;
+        _ctxZoom250.Checked = _zoomIndex == 14;
+        _ctxZoom300.Checked = _zoomIndex == 15;
+        _ctxZoom400.Checked = _zoomIndex == 16;
+        _ctxZoom500.Checked = _zoomIndex == 17;
     }
+
+    // ─── ステータスバーコンテキストメニュー ─────────────────────
+
+    private void LblZoom_MouseDown(object? sender, MouseEventArgs e)
+    {
+        _contextMenuZoom.Show(_statusStrip, new Point(_lblZoom.Bounds.Left, -_statusStrip.Height));
+    }
+
+    private void LblAlign_MouseDown(object? sender, MouseEventArgs e)
+    {
+        _contextMenuAlign.Show(_statusStrip, new Point(_lblAlign.Bounds.Left, -_statusStrip.Height));
+    }
+
+    private void LblLoupe_MouseDown(object? sender, MouseEventArgs e)
+    {
+        _contextMenuLoupe.Show(_statusStrip, new Point(_lblLoupe.Bounds.Left, -_statusStrip.Height));
+    }
+
+    private void SetZoomFromContext(int percent)
+    {
+        for (var i = 0; i < s_zoomValues.Length; i++)
+        {
+            if (s_zoomValues[i] == percent)
+            {
+                _zoomIndex = i;
+                _zoomPercent = percent;
+                UpdatePictureBoxZoom();
+                UpdateStatusBar();
+                UpdateMenuStates();
+                return;
+            }
+        }
+    }
+
+    private void CtxZoomAuto_Click(object? sender, EventArgs e)
+    {
+        _zoomIndex = 0;
+        _zoomPercent = 0;
+        UpdatePictureBoxZoom();
+        UpdateStatusBar();
+        UpdateMenuStates();
+    }
+
+    private void CtxZoom25_Click(object? sender, EventArgs e) { SetZoomFromContext(25); }
+    private void CtxZoom33_Click(object? sender, EventArgs e) { SetZoomFromContext(33); }
+    private void CtxZoom50_Click(object? sender, EventArgs e) { SetZoomFromContext(50); }
+    private void CtxZoom67_Click(object? sender, EventArgs e) { SetZoomFromContext(67); }
+    private void CtxZoom75_Click(object? sender, EventArgs e) { SetZoomFromContext(75); }
+    private void CtxZoom80_Click(object? sender, EventArgs e) { SetZoomFromContext(80); }
+    private void CtxZoom90_Click(object? sender, EventArgs e) { SetZoomFromContext(90); }
+    private void CtxZoom100_Click(object? sender, EventArgs e) { SetZoomFromContext(100); }
+    private void CtxZoom110_Click(object? sender, EventArgs e) { SetZoomFromContext(110); }
+    private void CtxZoom125_Click(object? sender, EventArgs e) { SetZoomFromContext(125); }
+    private void CtxZoom150_Click(object? sender, EventArgs e) { SetZoomFromContext(150); }
+    private void CtxZoom175_Click(object? sender, EventArgs e) { SetZoomFromContext(175); }
+    private void CtxZoom200_Click(object? sender, EventArgs e) { SetZoomFromContext(200); }
+    private void CtxZoom250_Click(object? sender, EventArgs e) { SetZoomFromContext(250); }
+    private void CtxZoom300_Click(object? sender, EventArgs e) { SetZoomFromContext(300); }
+    private void CtxZoom400_Click(object? sender, EventArgs e) { SetZoomFromContext(400); }
+    private void CtxZoom500_Click(object? sender, EventArgs e) { SetZoomFromContext(500); }
 
     private void MenuHotKeySettings_Click(object? sender, EventArgs e)
     {

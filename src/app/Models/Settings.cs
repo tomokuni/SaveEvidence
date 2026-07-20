@@ -60,9 +60,8 @@ public sealed class Settings
     /// <summary>虫眼鏡外枠の太さ</summary>
     public int LoupeFrameWidth { get; set; } = 2;
 
-    /// <summary>拡大鏡を表示するかどうか</summary>
-    public bool ShowLoupe { get; set; } = false;
-
+    /// <summary>拡大鏡の表示モード</summary>
+    public LoupeMode LoupeModeValue { get; set; } = LoupeMode.Hide;
     private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 
     /// <summary>
@@ -166,6 +165,21 @@ public sealed class HotKeySetting
         parts.Add(keyName);
         return string.Join(" + ", parts);
     }
+}
+
+/// <summary>
+/// 拡大鏡の表示モード
+/// </summary>
+public enum LoupeMode
+{
+    /// <summary>常に表示</summary>
+    Show = 0,
+
+    /// <summary>常に非表示</summary>
+    Hide = 1,
+
+    /// <summary>範囲選択中のみ表示</summary>
+    Auto = 2,
 }
 
 /// <summary>
