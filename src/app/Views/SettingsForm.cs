@@ -7,7 +7,7 @@ namespace app.Views;
 /// </summary>
 /// <remarks>
 /// 設定オブジェクトを直接編集するため、OK ボタン押下後に呼び出し元で
-/// <see cref="Services.ISettingsService.Save"/> を呼び出す必要がある。<br/>
+/// <see cref="Services.SettingsService.Save"/> を呼び出す必要がある。<br/>
 /// </remarks>
 public sealed partial class SettingsForm : Form
 {

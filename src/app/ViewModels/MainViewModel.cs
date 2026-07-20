@@ -12,13 +12,12 @@ namespace app.ViewModels;
 /// <remarks>
 /// <see cref="ObservableObject"/> を継承し、<c>[ObservableProperty]</c> や
 /// <c>[RelayCommand]</c> 属性によるソースジェネレーターを活用する。<br/>
-/// 設定管理は <see cref="ISettingsService"/>、ログ出力は <see cref="ILogService"/> を
-/// 介して行い、疎結合な設計を実現する。<br/>
+/// 設定管理は <see cref="Services.SettingsService"/> を介して行い、疎結合な設計を実現する。<br/>
 /// 画像のライフサイクル管理（Dispose）は <c>OnPreviewImageChanging</c> で行う。<br/>
 /// </remarks>
 public sealed partial class MainViewModel : ObservableObject
 {
-    private readonly ISettingsService _settingsService;
+    private readonly SettingsService _settingsService;
     private int _currentNumber;
     private string _lastSavedFileName = "";
 
@@ -32,7 +31,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// MainViewModel の新しいインスタンスを初期化する。
     /// </summary>
     /// <param name="settingsService">設定サービス</param>
-    public MainViewModel(ISettingsService settingsService)
+    public MainViewModel(SettingsService settingsService)
     {
         _settingsService = settingsService;
 

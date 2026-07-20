@@ -12,7 +12,7 @@ public partial class MainForm : Form
 {
     private readonly MainViewModel _viewModel;
     private readonly HotKeyManager? _hotKeyManager;
-    private readonly ISettingsService _settingsService;
+    private readonly SettingsService _settingsService;
     private bool _isExecutingCapture;
     private bool _isCropMode;
     private readonly CropSelection _cropSelection;
@@ -36,7 +36,7 @@ public partial class MainForm : Form
     // リンク右クリックフラグ（LinkClicked とコンテキストメニューの競合対策）
     private bool _linkRightClicked;
 
-    public MainForm(ISettingsService settingsService)
+    public MainForm(SettingsService settingsService)
     {
         _settingsService = settingsService;
         _viewModel = new MainViewModel(settingsService);

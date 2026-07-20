@@ -16,7 +16,7 @@ internal sealed class ViewOption
 /// <remarks>
 /// 画像ファイルは実際のサムネイルを非同期的に生成して表示する。<br/>
 /// ダブルクリックで既定のアプリケーションでファイルを開く。<br/>
-/// 表示モード（特大/大/中/一覧/詳細）とソート順は <see cref="ISettingsService"/> を介して
+/// 表示モード（特大/大/中/一覧/詳細）とソート順は <see cref="Services.SettingsService"/> を介して
 /// 設定ファイルに保存・復元される。<br/>
 /// シェルアイコンとサムネイルの2段階表示により、大量ファイル時でも素早く一覧を表示する。<br/>
 /// </remarks>
@@ -24,7 +24,7 @@ public sealed partial class FolderViewForm : Form
 {
     private readonly string _folderPath;
     private readonly Settings _settings;
-    private readonly ISettingsService _settingsService;
+    private readonly SettingsService _settingsService;
     private bool _sortAscending = true;
     private readonly List<ListViewItem> _items = [];
 
@@ -42,7 +42,7 @@ public sealed partial class FolderViewForm : Form
     /// </summary>
     /// <param name="folderPath">表示するフォルダパス</param>
     /// <param name="settingsService">設定サービス</param>
-    public FolderViewForm(string folderPath, ISettingsService settingsService)
+    public FolderViewForm(string folderPath, SettingsService settingsService)
     {
         _folderPath = folderPath;
         _settingsService = settingsService;

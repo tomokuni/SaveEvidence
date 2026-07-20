@@ -8,7 +8,7 @@ namespace app.Models;
 /// <remarks>
 /// CommunityToolkit.Mvvm の <see cref="ObservableObject"/> を継承し、
 /// <c>[ObservableProperty]</c> 属性により自動的に変更通知を発行する。<br/>
-/// 永続化ロジックは一切含まず、読み書きは <see cref="Services.ISettingsService"/> を介して行う。<br/>
+/// 永続化ロジックは一切含まず、読み書きは <see cref="Services.SettingsService"/> を介して行う。<br/>
 /// </remarks>
 public sealed partial class Settings : ObservableObject
 {
@@ -120,19 +120,14 @@ public sealed class HotKeySetting
     /// <summary>ホットキーとして割り当てるキー</summary>
     public Keys Key { get; set; }
 
-    /// <summary>
-    /// ホットキーのユーザー可読な文字列表現を取得する。
-    /// </summary>
-    /// <returns>"Ctrl + Shift + Q" のような文字列。</returns>
+    /// <summary>ホットキーのユーザー可読な文字列表現（例: "Ctrl + Shift + Q"）を取得する。</summary>
     public override string ToString()
     {
-        // 修飾キー名をコレクション式で収集
         var parts = new List<string>(4);
         if (Modifiers.HasFlag(HotKeyModifiers.Control)) parts.Add("Ctrl");
         if (Modifiers.HasFlag(HotKeyModifiers.Alt)) parts.Add("Alt");
         if (Modifiers.HasFlag(HotKeyModifiers.Shift)) parts.Add("Shift");
         if (Modifiers.HasFlag(HotKeyModifiers.Windows)) parts.Add("Win");
-
         parts.Add(KeyToSymbolString(Key));
         return string.Join(" + ", parts);
     }
