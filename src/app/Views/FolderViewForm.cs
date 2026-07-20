@@ -28,6 +28,8 @@ public sealed partial class FolderViewForm : Form
 
     private static readonly HashSet<string> s_imageExtensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif", ".webp"];
 
+    private CancellationTokenSource? _loadCts;
+
     /// <summary>
     /// FolderViewForm を初期化する
     /// </summary>
@@ -115,18 +117,32 @@ public sealed partial class FolderViewForm : Form
 
     private void LoadFolderContents()
     {
+        // 前回の非同期読み込みをキャンセル
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        _loadCts = new CancellationTokenSource();
+        var ct = _loadCts.Token;
+
+        var imageFiles = new List<(string Path, ListViewItem Item)>();
+
         _listView.BeginUpdate();
         _listView.Items.Clear();
         _items.Clear();
         _listView.LabelWrap = false;
 
-
         try
         {
+            // シェルアイコンキャッシュをクリア
             _largeIconList.Images.Clear();
             _tileIconList.Images.Clear();
             _mediumIconList.Images.Clear();
             _smallIconList.Images.Clear();
+
+            // ImageList ハンドルを強制作成（非同期追加時の NullReferenceException 防止）
+            _ = _largeIconList.Handle;
+            _ = _tileIconList.Handle;
+            _ = _mediumIconList.Handle;
+            _ = _smallIconList.Handle;
 
             var iconCache = new Dictionary<string, (int Large, int Tile, int Medium, int Small)>();
 
@@ -152,14 +168,17 @@ public sealed partial class FolderViewForm : Form
                     var ext = Path.GetExtension(file).ToLowerInvariant();
                     var fileInfo = new FileInfo(file);
 
-                    var icons = s_imageExtensions.Contains(ext)
-                        ? AddThumbnail(file).Medium
-                        : GetIconIndex(file, false, iconCache).Medium;
-
+                    // 画像ファイルはシェルアイコンで仮表示し、後で非同期でサムネイルに差し替え
+                    var icons = GetIconIndex(file, false, iconCache).Medium;
                     var item = new ListViewItem(fileName, icons) { Tag = file };
                     item.SubItems.Add(FormatFileSize(fileInfo.Length));
                     item.SubItems.Add(fileInfo.LastWriteTime.ToString("yyyy/MM/dd HH:mm"));
                     _items.Add(item);
+
+                    if (s_imageExtensions.Contains(ext))
+                    {
+                        imageFiles.Add((file, item));
+                    }
                 }
             }
             catch (UnauthorizedAccessException) { }
@@ -172,35 +191,61 @@ public sealed partial class FolderViewForm : Form
         }
 
         UpdateStatusBar();
+
+        // 非同期で画像サムネイルを読み込む
+        if (imageFiles.Count > 0)
+        {
+            Task.Run(() => LoadThumbnailsAsync(imageFiles, ct), ct);
+        }
     }
 
-    private (int Large, int Tile, int Medium, int Small) AddThumbnail(string filePath)
+    private async Task LoadThumbnailsAsync(List<(string Path, ListViewItem Item)> imageFiles, CancellationToken ct)
     {
-        try
+        foreach (var (filePath, item) in imageFiles)
         {
-            using var original = Image.FromFile(filePath);
+            if (ct.IsCancellationRequested) break;
 
-            var large = ResizeImage(original, 512, 512);
-            _largeIconList.Images.Add(large);
-            var largeIdx = _largeIconList.Images.Count - 1;
+            try
+            {
+                // バックグラウンドでサムネイルを生成
+                using var original = await Task.Run(() => Image.FromFile(filePath), ct);
+                var large = ResizeImage(original, 512, 512);
+                var tile = ResizeImage(original, 256, 256);
+                var medium = ResizeImage(original, 128, 128);
+                var small = ResizeImage(original, 16, 16);
 
-            var tile = ResizeImage(original, 256, 256);
-            _tileIconList.Images.Add(tile);
-            var tileIdx = _tileIconList.Images.Count - 1;
+                // UIスレッドに戻してアイコンを差し替え
+                try
+                {
+                    BeginInvoke(() =>
+                    {
+                        if (IsDisposed || ct.IsCancellationRequested)
+                        {
+                            large.Dispose(); tile.Dispose(); medium.Dispose(); small.Dispose();
+                            return;
+                        }
 
-            var medium = ResizeImage(original, 128, 128);
-            _mediumIconList.Images.Add(medium);
-            var mediumIdx = _mediumIconList.Images.Count - 1;
+                        var largeIdx = _largeIconList.Images.Count;
+                        _largeIconList.Images.Add(large);
+                        var tileIdx = _tileIconList.Images.Count;
+                        _tileIconList.Images.Add(tile);
+                        var mediumIdx = _mediumIconList.Images.Count;
+                        _mediumIconList.Images.Add(medium);
+                        var smallIdx = _smallIconList.Images.Count;
+                        _smallIconList.Images.Add(small);
 
-            var small = ResizeImage(original, 16, 16);
-            _smallIconList.Images.Add(small);
-            var smallIdx = _smallIconList.Images.Count - 1;
-
-            return (largeIdx, tileIdx, mediumIdx, smallIdx);
-        }
-        catch
-        {
-            return (-1, -1, -1, -1);
+                        item.ImageIndex = mediumIdx;
+                    });
+                }
+                catch (ObjectDisposedException)
+                {
+                    large.Dispose(); tile.Dispose(); medium.Dispose(); small.Dispose();
+                }
+            }
+            catch (Exception) when (!ct.IsCancellationRequested)
+            {
+                // 読み込み失敗は無視（シェルアイコンのまま）
+            }
         }
     }
 
@@ -411,6 +456,8 @@ public sealed partial class FolderViewForm : Form
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
+        _loadCts?.Cancel();
+
         if (WindowState == FormWindowState.Normal)
         {
             _settings.FolderViewFormBounds = DesktopBounds;
