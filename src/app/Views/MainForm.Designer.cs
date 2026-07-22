@@ -38,13 +38,8 @@ partial class MainForm
     private Button _btnSelectScreen;
     private Button _btnWindowSelect;
     private Button _btnAreaSelect;
-    private Button _btnAutoCrop;
-    private Button _btnCropMode;
-    private Button _btnCropApply;
-    private Button _btnCopy;
     private Button _btnSave;
     private TextBox _txtFileNameTemplate;
-    private Button _btnSaveFolder;
 
     // プレビュー（Panel でラップ）
     private Panel _pnlPreview;
@@ -161,11 +156,6 @@ partial class MainForm
         _ctxLinkFolderView = new ToolStripMenuItem();
         _ctxLinkOpenExplorer = new ToolStripMenuItem();
         _ctxLinkCopyFolderPath = new ToolStripMenuItem();
-        _btnAutoCrop = new Button();
-        _btnCropMode = new Button();
-        _btnCropApply = new Button();
-        _btnCopy = new Button();
-        _btnSaveFolder = new Button();
         _picPreview = new PictureBox();
         _picLoupe = new PictureBox();
         _statusStrip = new StatusStrip();
@@ -580,61 +570,6 @@ partial class MainForm
         _ctxLinkCopyFolderPath.Size = new Size(243, 24);
         _ctxLinkCopyFolderPath.Text = "パスをコピー";
         _ctxLinkCopyFolderPath.Click += MenuFileCopyFolderPath_Click;
-        // 
-        // _btnAutoCrop
-        // 
-        _btnAutoCrop.AutoSize = true;
-        _btnAutoCrop.Location = new Point(251, 8);
-        _btnAutoCrop.Name = "_btnAutoCrop";
-        _btnAutoCrop.Size = new Size(89, 30);
-        _btnAutoCrop.TabIndex = 3;
-        _btnAutoCrop.Text = "自動切出し";
-        _btnAutoCrop.UseVisualStyleBackColor = true;
-        _btnAutoCrop.Click += BtnAutoCrop_Click;
-        // 
-        // _btnCropMode
-        // 
-        _btnCropMode.AutoSize = true;
-        _btnCropMode.Location = new Point(346, 8);
-        _btnCropMode.Name = "_btnCropMode";
-        _btnCropMode.Size = new Size(89, 30);
-        _btnCropMode.TabIndex = 4;
-        _btnCropMode.Text = "切出し範囲";
-        _btnCropMode.UseVisualStyleBackColor = true;
-        _btnCropMode.Click += BtnCropMode_Click;
-        // 
-        // _btnCropApply
-        // 
-        _btnCropApply.AutoSize = true;
-        _btnCropApply.Location = new Point(441, 8);
-        _btnCropApply.Name = "_btnCropApply";
-        _btnCropApply.Size = new Size(89, 30);
-        _btnCropApply.TabIndex = 5;
-        _btnCropApply.Text = "切出し確定";
-        _btnCropApply.UseVisualStyleBackColor = true;
-        _btnCropApply.Click += BtnCropApply_Click;
-        // 
-        // _btnCopy
-        // 
-        _btnCopy.AutoSize = true;
-        _btnCopy.Location = new Point(536, 8);
-        _btnCopy.Name = "_btnCopy";
-        _btnCopy.Size = new Size(138, 30);
-        _btnCopy.TabIndex = 6;
-        _btnCopy.Text = "クリップボードにコピー";
-        _btnCopy.UseVisualStyleBackColor = true;
-        _btnCopy.Click += BtnCopy_Click;
-        // 
-        // _btnSaveFolder
-        // 
-        _btnSaveFolder.AutoSize = true;
-        _btnSaveFolder.Location = new Point(264, 55);
-        _btnSaveFolder.Name = "_btnSaveFolder";
-        _btnSaveFolder.Size = new Size(75, 30);
-        _btnSaveFolder.TabIndex = 8;
-        _btnSaveFolder.Text = "保存先";
-        _btnSaveFolder.UseVisualStyleBackColor = true;
-        _btnSaveFolder.Click += BtnSaveFolder_Click;
         // 
         // _picPreview
         // 

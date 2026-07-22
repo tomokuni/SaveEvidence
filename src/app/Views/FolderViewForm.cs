@@ -523,11 +523,6 @@ public sealed partial class FolderViewForm : Form
         UpdateStatusBar();
     }
 
-    private void BtnClose_Click(object? sender, EventArgs e)
-    {
-        Close();
-    }
-
     /// <summary>
     /// 設定からウィンドウ位置・サイズを復元する
     /// </summary>

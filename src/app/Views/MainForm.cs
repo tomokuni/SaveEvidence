@@ -399,7 +399,6 @@ public sealed partial class MainForm : Form
         // ─── MainViewModel の変更通知を DataBindings と PropertyChanged で処理 ──
 
         // DataBindings（シンプルな 1:1 バインディングは自動反映）
-        _btnCopy.DataBindings.Add("Enabled", _viewModel, nameof(MainViewModel.CanCopy));
         _btnSave.DataBindings.Add("Enabled", _viewModel, nameof(MainViewModel.CanSave));
         _lblFolderLink.DataBindings.Add("Text", _viewModel, nameof(MainViewModel.SaveFolderPath));
         _txtFileNameTemplate.DataBindings.Add("Text", _viewModel, nameof(MainViewModel.FileNameTemplateText),
@@ -422,7 +421,6 @@ public sealed partial class MainForm : Form
                     break;
 
                 case nameof(MainViewModel.SaveFolderPath):
-                    _toolTip.SetToolTip(_btnSaveFolder, _viewModel.SaveFolderPath);
                     _lblFolderLink.ToolTipText = $"イメージの保存先: {_viewModel.SaveFolderPath}";
                     break;
 
@@ -463,7 +461,8 @@ public sealed partial class MainForm : Form
         _viewModel.StartSelectionMode = StartSelectionMode;
 
         // 初回表示設定
-        _toolTip.SetToolTip(_btnSaveFolder, _viewModel.SaveFolderPath);
+        _toolTip.SetToolTip(_txtFileNameTemplate,
+            "プレースフォルダ：\n    {date} : 日付 yyyyMMdd\n    {time} : 時刻 HHmmss");
         _lblFolderLink.ToolTipText = $"イメージの保存先: {_viewModel.SaveFolderPath}";
 
         // StatusStrip の ToolStripItem は ToolTipText を直接表示できないため
@@ -574,7 +573,7 @@ public sealed partial class MainForm : Form
     private void BtnWindowSelect_Click(object? sender, EventArgs e) => ExecuteCapture(CaptureType.WindowSelect);
     private void BtnAreaSelect_Click(object? sender, EventArgs e) => ExecuteCapture(CaptureType.AreaSelect);
 
-    private void BtnAutoCrop_Click(object? sender, EventArgs e)
+    private void PerformAutoCrop(object? sender, EventArgs e)
     {
         if (_viewModel.PreviewImage is null) return;
         try
@@ -586,7 +585,7 @@ public sealed partial class MainForm : Form
         catch (Exception) { /* 画像処理エラーは無視 */ }
     }
 
-    private void BtnCropApply_Click(object? sender, EventArgs e)
+    private void PerformCrop(object? sender, EventArgs e)
     {
         if (!_cropSelection.SelectionRect.HasValue) return;
         var rect = _cropSelection.SelectionRect.Value;
@@ -605,36 +604,10 @@ public sealed partial class MainForm : Form
     {
         _isCropMode = false;
         _cropSelection.Reset();
-        _btnCropMode.Text = "切出し範囲";
         _pnlPreview.Cursor = Cursors.Default;
         _picLoupe.Visible = false;
         _picPreview.Invalidate();
         NotifyMenuStateChanged();
-    }
-
-    // ─── Crop モード ────────────────────────────────
-
-    private void BtnCropMode_Click(object? sender, EventArgs e)
-    {
-
-        if (_viewModel.PreviewImage is null) { return; }
-
-        _isCropMode = !_isCropMode;
-        _btnCropMode.Text = _isCropMode ? "切出し終了" : "切出し範囲";
-
-        if (_isCropMode)
-        {
-            _cropSelection.Reset();
-            _picPreview.Invalidate();
-            UpdateLoupePosition();
-        }
-        else
-        {
-            _cropSelection.Reset();
-            _pnlPreview.Cursor = Cursors.Default;
-            _picPreview.Invalidate();
-            UpdateLoupePosition();
-        }
     }
 
     private Point ClientToImage(Point clientPoint)
@@ -697,7 +670,6 @@ public sealed partial class MainForm : Form
 
         // 自動で切出しモード開始
         _isCropMode = true;
-        _btnCropMode.Text = "切出し終了";
 
         _cropMouseClientPos = sender == _pnlPreview
             ? _picPreview.PointToClient(_pnlPreview.PointToScreen(e.Location))
@@ -1087,13 +1059,6 @@ public sealed partial class MainForm : Form
         return bmp;
     }
 
-    // ─── クリップボード ─────────────────────────────
-
-    private void BtnCopy_Click(object? sender, EventArgs e)
-    {
-        _viewModel.CopyToClipboard();
-    }
-
     // ─── 保存 ──────────────────────────────────────
 
     private void BtnSave_Click(object? sender, EventArgs e)
@@ -1107,7 +1072,7 @@ public sealed partial class MainForm : Form
 
     // ─── 保存先フォルダ ────────────────────────────
 
-    private void BtnSaveFolder_Click(object? sender, EventArgs e)
+    private void ShowSaveFolderDialog(object? sender, EventArgs e)
     {
         using var dialog = new FolderBrowserDialog();
         dialog.Description = "保存先フォルダを選択してください";
@@ -1152,7 +1117,7 @@ public sealed partial class MainForm : Form
 
     private void MenuFileSaveFolder_Click(object? sender, EventArgs e)
     {
-        BtnSaveFolder_Click(sender, e);
+        ShowSaveFolderDialog(sender, e);
     }
 
     private void MenuEditUndo_Click(object? sender, EventArgs e)
@@ -1185,12 +1150,12 @@ public sealed partial class MainForm : Form
 
     private void MenuEditCrop_Click(object? sender, EventArgs e)
     {
-        BtnCropApply_Click(sender, e);
+        PerformCrop(sender, e);
     }
 
     private void MenuEditAutoCrop_Click(object? sender, EventArgs e)
     {
-        BtnAutoCrop_Click(sender, e);
+        PerformAutoCrop(sender, e);
     }
 
     private void MenuEditCopy_Click(object? sender, EventArgs e)
@@ -1500,7 +1465,7 @@ public sealed partial class MainForm : Form
 
     private void MenuSaveFolder_Click(object? sender, EventArgs e)
     {
-        BtnSaveFolder_Click(sender, e);
+        ShowSaveFolderDialog(sender, e);
     }
 
     private void MenuDisplaySettings_Click(object? sender, EventArgs e)
