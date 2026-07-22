@@ -120,9 +120,10 @@ partial class MainForm
         toolStripSeparator6 = new ToolStripSeparator();
         _menuFileSaveFolder = new ToolStripMenuItem();
         toolStripSeparator9 = new ToolStripSeparator();
-        _menuDisplaySettings = new ToolStripMenuItem();
         _menuFolderView = new ToolStripMenuItem();
         _menuOpenExplorer = new ToolStripMenuItem();
+        toolStripSeparator3 = new ToolStripSeparator();
+        _menuDisplaySettings = new ToolStripMenuItem();
         _menuEdit = new ToolStripMenuItem();
         _menuEditUndo = new ToolStripMenuItem();
         toolStripSeparator4 = new ToolStripSeparator();
@@ -214,7 +215,6 @@ partial class MainForm
         _pnlPreview = new Panel();
         _vScroll = new VScrollBar();
         _hScroll = new HScrollBar();
-        toolStripSeparator3 = new ToolStripSeparator();
         _menuStrip.SuspendLayout();
         _flowToolBar.SuspendLayout();
         _contextMenuLink.SuspendLayout();
@@ -270,18 +270,11 @@ partial class MainForm
         toolStripSeparator9.Name = "toolStripSeparator9";
         toolStripSeparator9.Size = new Size(254, 6);
         // 
-        // _menuDisplaySettings
-        // 
-        _menuDisplaySettings.Name = "_menuDisplaySettings";
-        _menuDisplaySettings.Size = new Size(257, 26);
-        _menuDisplaySettings.Text = "動作設定(&D)...";
-        _menuDisplaySettings.Click += MenuDisplaySettings_Click;
-        // 
         // _menuFolderView
         // 
         _menuFolderView.Name = "_menuFolderView";
         _menuFolderView.Size = new Size(257, 26);
-        _menuFolderView.Text = "フォルダビューの表示";
+        _menuFolderView.Text = "保存先フォルダビューの表示";
         _menuFolderView.Click += MenuFolderView_Click;
         // 
         // _menuOpenExplorer
@@ -290,6 +283,18 @@ partial class MainForm
         _menuOpenExplorer.Size = new Size(257, 26);
         _menuOpenExplorer.Text = "エクスプローラでフォルダを開く";
         _menuOpenExplorer.Click += MenuOpenExplorer_Click;
+        // 
+        // toolStripSeparator3
+        // 
+        toolStripSeparator3.Name = "toolStripSeparator3";
+        toolStripSeparator3.Size = new Size(254, 6);
+        // 
+        // _menuDisplaySettings
+        // 
+        _menuDisplaySettings.Name = "_menuDisplaySettings";
+        _menuDisplaySettings.Size = new Size(257, 26);
+        _menuDisplaySettings.Text = "動作設定(&D)...";
+        _menuDisplaySettings.Click += MenuDisplaySettings_Click;
         // 
         // _menuEdit
         // 
@@ -389,7 +394,7 @@ partial class MainForm
         // 
         _menuEditZoomIn.Name = "_menuEditZoomIn";
         _menuEditZoomIn.ShortcutKeys = Keys.Control | Keys.Oemplus;
-        _menuEditZoomIn.Size = new Size(240, 26);
+        _menuEditZoomIn.Size = new Size(235, 26);
         _menuEditZoomIn.Text = "拡大";
         _menuEditZoomIn.Click += MenuEditZoomIn_Click;
         // 
@@ -397,53 +402,53 @@ partial class MainForm
         // 
         _menuEditZoomOut.Name = "_menuEditZoomOut";
         _menuEditZoomOut.ShortcutKeys = Keys.Control | Keys.OemMinus;
-        _menuEditZoomOut.Size = new Size(240, 26);
+        _menuEditZoomOut.Size = new Size(235, 26);
         _menuEditZoomOut.Text = "縮小";
         _menuEditZoomOut.Click += MenuEditZoomOut_Click;
         // 
         // toolStripSeparator1
         // 
         toolStripSeparator1.Name = "toolStripSeparator1";
-        toolStripSeparator1.Size = new Size(237, 6);
+        toolStripSeparator1.Size = new Size(232, 6);
         // 
         // _menuEditAlignLeft
         // 
         _menuEditAlignLeft.Name = "_menuEditAlignLeft";
-        _menuEditAlignLeft.Size = new Size(240, 26);
+        _menuEditAlignLeft.Size = new Size(235, 26);
         _menuEditAlignLeft.Text = "左上寄せ";
         _menuEditAlignLeft.Click += MenuEditAlignLeft_Click;
         // 
         // _menuEditAlignCenter
         // 
         _menuEditAlignCenter.Name = "_menuEditAlignCenter";
-        _menuEditAlignCenter.Size = new Size(240, 26);
+        _menuEditAlignCenter.Size = new Size(235, 26);
         _menuEditAlignCenter.Text = "中央寄せ";
         _menuEditAlignCenter.Click += MenuEditAlignCenter_Click;
         // 
         // toolStripSeparator2
         // 
         toolStripSeparator2.Name = "toolStripSeparator2";
-        toolStripSeparator2.Size = new Size(237, 6);
+        toolStripSeparator2.Size = new Size(232, 6);
         // 
         // _menuViewLoupeHide
         // 
         _menuViewLoupeHide.Name = "_menuViewLoupeHide";
-        _menuViewLoupeHide.Size = new Size(240, 26);
+        _menuViewLoupeHide.Size = new Size(235, 26);
         _menuViewLoupeHide.Text = "ルーペ:非表示";
         _menuViewLoupeHide.Click += MenuViewLoupeHide_Click;
         // 
         // _menuEditShowLoupe
         // 
         _menuEditShowLoupe.Name = "_menuEditShowLoupe";
-        _menuEditShowLoupe.Size = new Size(240, 26);
+        _menuEditShowLoupe.Size = new Size(235, 26);
         _menuEditShowLoupe.Text = "ルーペ:常時表示";
         _menuEditShowLoupe.Click += MenuEditShowLoupe_Click;
         // 
         // _menuViewLoupeAuto
         // 
         _menuViewLoupeAuto.Name = "_menuViewLoupeAuto";
-        _menuViewLoupeAuto.Size = new Size(240, 26);
-        _menuViewLoupeAuto.Text = "ルーペ:範囲選択中のみ";        _menuViewLoupeAuto.Text = "ルーペ:範囲選択中のみ";
+        _menuViewLoupeAuto.Size = new Size(235, 26);
+        _menuViewLoupeAuto.Text = "ルーペ:範囲選択中のみ";
         _menuViewLoupeAuto.Click += MenuViewLoupeAuto_Click;
         // 
         // _flowToolBar
@@ -543,7 +548,7 @@ partial class MainForm
         _contextMenuLink.ImageScalingSize = new Size(20, 20);
         _contextMenuLink.Items.AddRange(new ToolStripItem[] { _ctxLinkSaveFolder, _ctxLinkFolderView, _ctxLinkOpenExplorer });
         _contextMenuLink.Name = "_contextMenuLink";
-        _contextMenuLink.Size = new Size(244, 82);
+        _contextMenuLink.Size = new Size(244, 104);
         // 
         // _ctxLinkSaveFolder
         // 
@@ -556,7 +561,7 @@ partial class MainForm
         // 
         _ctxLinkFolderView.Name = "_ctxLinkFolderView";
         _ctxLinkFolderView.Size = new Size(243, 24);
-        _ctxLinkFolderView.Text = "フォルダビューの表示";
+        _ctxLinkFolderView.Text = "保存先フォルダビューの表示";
         _ctxLinkFolderView.Click += CtxLinkFolderView_Click;
         // 
         // _ctxLinkOpenExplorer
@@ -1012,11 +1017,6 @@ partial class MainForm
         _hScroll.Size = new Size(1000, 21);
         _hScroll.TabIndex = 4;
         _hScroll.Scroll += HScroll_Scroll;
-        // 
-        // toolStripSeparator3
-        // 
-        toolStripSeparator3.Name = "toolStripSeparator3";
-        toolStripSeparator3.Size = new Size(254, 6);
         // 
         // MainForm
         // 

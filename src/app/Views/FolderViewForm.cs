@@ -1,14 +1,9 @@
 using System.Runtime.InteropServices;
 using app.Models;
 using app.Services;
+using app.ViewModels;
 
 namespace app.Views;
-
-internal sealed class ViewOption
-{
-    public string Text { get; init; } = "";
-    public View View { get; init; }
-}
 
 /// <summary>
 /// 保存先フォルダの内容を表示するモードレスダイアログ。
@@ -22,6 +17,7 @@ internal sealed class ViewOption
 /// </remarks>
 public sealed partial class FolderViewForm : Form
 {
+    private readonly FolderViewViewModel _viewModel;
     private readonly string _folderPath;
     private readonly Settings _settings;
     private readonly SettingsService _settingsService;
@@ -36,6 +32,12 @@ public sealed partial class FolderViewForm : Form
     private static readonly HashSet<string> s_imageExtensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif", ".webp"];
 
     private CancellationTokenSource? _loadCts;
+
+    private readonly bool _isAsyncLoadEnabled = false; // 非同期読み込みを有効にするかどうか（テスト用）
+
+    private ContextMenuStrip _contextMenuFolder = null!;
+    private ToolStripMenuItem _ctxOpenFolder = null!;
+    private ToolStripMenuItem _ctxCopyFolderPath = null!;
 
     /// <summary>
     /// FolderViewForm を初期化する
@@ -59,70 +61,59 @@ public sealed partial class FolderViewForm : Form
         _listView.LargeImageList = _tileIconList;
         _listView.SmallImageList = _smallIconList;
 
-        _cmbView.Items.AddRange([
-            new ViewOption { Text = "特大", View = View.LargeIcon },
-            new ViewOption { Text = "大", View = View.LargeIcon },
-            new ViewOption { Text = "中", View = View.LargeIcon },
-            new ViewOption { Text = "一覧", View = View.List },
-            new ViewOption { Text = "詳細", View = View.Details }
-        ]);
-        _cmbView.DisplayMember = nameof(ViewOption.Text);
-        _cmbView.ValueMember = nameof(ViewOption.View);
+        // ─── ViewModel の初期化 ──
+        _viewModel = new FolderViewViewModel();
 
-        if (_settings.FolderViewModeIndex >= 0 && _settings.FolderViewModeIndex < _cmbView.Items.Count)
-        {
-            _cmbView.SelectedIndex = _settings.FolderViewModeIndex;
-        }
-        else
-        {
-            _cmbView.SelectedIndex = 1;
-        }
+        var viewModeIndex = _settings.FolderViewModeIndex;
+        if (viewModeIndex < 0 || viewModeIndex > 4)
+            viewModeIndex = 1;
 
         _sortAscending = _settings.FolderSortAscending;
-        _btnSort.Text = _sortAscending ? "名前 ↑" : "名前 ↓";
+
+        // 初期値を設定（ViewModel プロパティ → ステータスバー・コンテキストメニュー用）
+        _viewModel.SelectedViewModeIndex = viewModeIndex;
+        _viewModel.IsSortAscending = _sortAscending;
+        _viewModel.FolderPathText = _folderPath;
+        UpdateViewModeText();
+        UpdateSortStatusText();
+        UpdateItemCountText();
+
+        // DataBindings
+        _lblStatus.DataBindings.Add("Text", _viewModel, nameof(FolderViewViewModel.ItemCountText));
+        _lblFolderPath.DataBindings.Add("Text", _viewModel, nameof(FolderViewViewModel.FolderPathText));
+        _lblViewMode.DataBindings.Add("Text", _viewModel, nameof(FolderViewViewModel.ViewModeText));
+        _lblSortStatus.DataBindings.Add("Text", _viewModel, nameof(FolderViewViewModel.SortStatusText));
+
+        // コンテキストメニュー Opening イベント（ViewModel の状態から Checked を設定）
+        _contextMenuView.Opening += ContextMenuView_Opening;
+        _contextMenuSort.Opening += ContextMenuSort_Opening;
+        // メニューバーの表示メニュー DropDownOpening イベント
+        _menuView.DropDownOpening += MenuView_DropDownOpening;
+
+        // ─── フォルダパスリンク用コンテキストメニュー ──
+        _contextMenuFolder = new ContextMenuStrip(components);
+        _ctxOpenFolder = new ToolStripMenuItem("エクスプローラでフォルダを開く");
+        _ctxOpenFolder.Click += CtxOpenFolder_Click;
+        _contextMenuFolder.Items.Add(_ctxOpenFolder);
+        _ctxCopyFolderPath = new ToolStripMenuItem("パスをコピー");
+        _ctxCopyFolderPath.Click += CtxCopyFolderPath_Click;
+        _contextMenuFolder.Items.Add(_ctxCopyFolderPath);
+        _contextMenuFolder.Name = "_contextMenuFolder";
+        // 右クリックでコンテキストメニューを表示
+        _lblFolderPath.MouseUp += LblFolderPath_MouseUp;
 
         if (Directory.Exists(_folderPath))
         {
             LoadFolderContents();
         }
 
-        Text = $"保存先フォルダの内容 - {_folderPath}";
+        Text = $"保存先フォルダビュー - {_folderPath}";
 
-        // リンクラベルの初期化
-        InitializeFolderLink();
-    }
+        // フルパスを ToolTip で表示
+        _lblFolderPath.ToolTipText = _folderPath;
 
-    private void InitializeFolderLink()
-    {
-        _linkFolderName = new LinkLabel
-        {
-            AutoSize = true,
-            Margin = new Padding(20, 6, 3, 3),
-            TabIndex = 10,
-            Text = Path.GetFileName(_folderPath) ?? _folderPath
-        };
-        _linkFolderName.LinkClicked += LinkFolderName_LinkClicked;
-
-        _toolTip = new ToolTip();
-        _toolTip.SetToolTip(_linkFolderName, _folderPath);
-
-        // 閉じるボタンの右側に追加
-        _flowToolBar.Controls.Add(_linkFolderName);
-    }
-
-    private void LinkFolderName_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
-    {
-        try
-        {
-            if (Directory.Exists(_folderPath))
-            {
-                System.Diagnostics.Process.Start("explorer.exe", _folderPath);
-            }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"フォルダを開けませんでした: {ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
+        UpdateStatusBar();
+        _statusStrip.PerformLayout();
     }
 
     private void LoadFolderContents()
@@ -202,7 +193,7 @@ public sealed partial class FolderViewForm : Form
 
         UpdateStatusBar();
 
-        // 非同期で画像サムネイルを読み込む
+        // 画像サムネイルを読み込む（非同期/同期は _isAsyncLoadEnabled で切り替え）
         // ソート順に従い、左上に表示されているものから優先的に処理する
         if (imageFiles.Count > 0)
         {
@@ -210,10 +201,29 @@ public sealed partial class FolderViewForm : Form
             var sortedFiles = imageFiles
                 .OrderBy(f => _listView.Items.IndexOf(f.Item))
                 .ToList();
-            Task.Run(() => LoadThumbnailsAsync(sortedFiles, ct), ct);
+
+            if (_isAsyncLoadEnabled)
+            {
+                // 非同期で画像を読み込む
+                Task.Run(() => LoadThumbnailsAsync(sortedFiles, ct), ct);
+            }
+            else
+            {
+                // 同期で画像を読み込む（テスト用）
+                LoadThumbnailsSync(sortedFiles, ct);
+            }
         }
     }
 
+    /// <summary>
+    /// 画像サムネイルを非同期で読み込む
+    /// </summary>
+    /// <param name="imageFiles">読み込む画像ファイルとListViewItemのリスト</param>
+    /// <param name="ct">キャンセルトークン</param>
+    /// <remarks>
+    /// バックグラウンドスレッドで画像を読み込み、サムネイルを生成してUIスレッドで表示する。<br/>
+    /// ソースサイズは表示サイズ×2で読み込み、高品質ダウンスケールを実現する。<br/>
+    /// </remarks>
     private async Task LoadThumbnailsAsync(List<(string Path, ListViewItem Item)> imageFiles, CancellationToken ct)
     {
         foreach (var (filePath, item) in imageFiles)
@@ -257,6 +267,61 @@ public sealed partial class FolderViewForm : Form
                     });
                 }
                 catch (ObjectDisposedException)
+                {
+                    large.Dispose(); tile.Dispose(); medium.Dispose(); small.Dispose();
+                }
+            }
+            catch (Exception) when (!ct.IsCancellationRequested)
+            {
+                // 読み込み失敗は無視（シェルアイコンのまま）
+            }
+        }
+    }
+
+    /// <summary>
+    /// 画像サムネイルを同期で読み込む（テスト用）
+    /// </summary>
+    /// <param name="imageFiles">読み込む画像ファイルとListViewItemのリスト</param>
+    /// <param name="ct">キャンセルトークン</param>
+    /// <remarks>
+    /// UIスレッドで同期的に画像を読み込み、サムネイルを生成する。<br/>
+    /// テストやデバッグ時に非同期処理の複雑さを排除するために使用する。<br/>
+    /// ソースサイズは表示サイズ×2で読み込み、高品質ダウンスケールを実現する。<br/>
+    /// </remarks>
+    private void LoadThumbnailsSync(List<(string Path, ListViewItem Item)> imageFiles, CancellationToken ct)
+    {
+        foreach (var (filePath, item) in imageFiles)
+        {
+            if (ct.IsCancellationRequested) break;
+
+            try
+            {
+                // 同期でサムネイルを生成
+                // ソースサイズは表示サイズ×2（高品質ダウンスケール用）
+                using var original = Image.FromFile(filePath);
+                var largeSrc = Math.Max(_settings.FolderExtraLargeIconSize * 2, 256);
+                var tileSrc = Math.Max(_settings.FolderLargeIconSize * 2, 192);
+                var mediumSrc = Math.Max(_settings.FolderMediumIconSize * 2, 128);
+                var large = ResizeImage(original, largeSrc, largeSrc);
+                var tile = ResizeImage(original, tileSrc, tileSrc);
+                var medium = ResizeImage(original, mediumSrc, mediumSrc);
+                var small = ResizeImage(original, 16, 16);
+
+                // 同じスレッドなので直接アイコンを差し替え
+                if (!IsDisposed && !ct.IsCancellationRequested)
+                {
+                    var largeIdx = _largeIconList.Images.Count;
+                    _largeIconList.Images.Add(large);
+                    var tileIdx = _tileIconList.Images.Count;
+                    _tileIconList.Images.Add(tile);
+                    var mediumIdx = _mediumIconList.Images.Count;
+                    _mediumIconList.Images.Add(medium);
+                    var smallIdx = _smallIconList.Images.Count;
+                    _smallIconList.Images.Add(small);
+
+                    item.ImageIndex = mediumIdx;
+                }
+                else
                 {
                     large.Dispose(); tile.Dispose(); medium.Dispose(); small.Dispose();
                 }
@@ -397,44 +462,23 @@ public sealed partial class FolderViewForm : Form
 
     private void UpdateStatusBar()
     {
-        _lblStatus.Text = $"{_items.Count} 個のアイテム | {_listView.View}";
+        UpdateItemCountText();
     }
 
-    private void CmbView_SelectedIndexChanged(object? sender, EventArgs e)
+    /// <summary>アイテム数を ViewModel に反映する。</summary>
+    private void UpdateItemCountText()
     {
-        if (_cmbView.SelectedItem is ViewOption option)
-        {
-            if (option.View == View.LargeIcon)
-            {
-                // インデックス: 0=特大, 1=大, 2=中
-                var idx = _cmbView.SelectedIndex;
-                _listView.LargeImageList = idx switch
-                {
-                    0 => _largeIconList,
-                    1 => _tileIconList,
-                    _ => _mediumIconList
-                };
-            }
+        _viewModel.ItemCountText = $"{_items.Count} 個のアイテム";
+    }
 
-            _listView.View = option.View;
+    private static readonly string[] s_viewModeNames = ["特大", "大", "中", "一覧", "詳細"];
 
-            if (option.View == View.Details)
-            {
-                _listView.Columns.Clear();
-                _listView.Columns.Add("名前", 250);
-                _listView.Columns.Add("サイズ", 100);
-                _listView.Columns.Add("更新日時", 150);
-            }
-            else
-            {
-                _listView.Columns.Clear();
-            }
-
-            _settings.FolderViewModeIndex = _cmbView.SelectedIndex;
-            _settingsService.Save();
-
-            UpdateStatusBar();
-        }
+    /// <summary>現在の表示モードを ViewModel に反映する。</summary>
+    private void UpdateViewModeText()
+    {
+        var idx = _viewModel.SelectedViewModeIndex;
+        var modeName = (uint)idx < s_viewModeNames.Length ? s_viewModeNames[idx] : "";
+        _viewModel.ViewModeText = $"表示: {modeName}";
     }
 
     private void ListView_ItemActivate(object? sender, EventArgs e)
@@ -442,16 +486,24 @@ public sealed partial class FolderViewForm : Form
         OpenSelectedItem();
     }
 
-    private void BtnSort_Click(object? sender, EventArgs e)
+    /// <summary>現在のソート状態を ViewModel に反映する。</summary>
+    private void UpdateSortStatusText()
     {
-        _sortAscending = !_sortAscending;
-        _btnSort.Text = _sortAscending ? "名前 ↑" : "名前 ↓";
+        _viewModel.SortStatusText = _sortAscending ? "並替: 名前の昇順 (▲)" : "並替: 名前の降順 (▼)";
+    }
+
+    private void SetSortOrder(bool ascending)
+    {
+        if (_sortAscending == ascending) return;
+        _sortAscending = ascending;
         _listView.BeginUpdate();
         SortAndAddItems();
         _listView.EndUpdate();
-
+        _viewModel.IsSortAscending = _sortAscending;
         _settings.FolderSortAscending = _sortAscending;
         _settingsService.Save();
+        UpdateStatusBar();
+        UpdateSortStatusText();
     }
 
     private void BtnClose_Click(object? sender, EventArgs e)
@@ -489,6 +541,166 @@ public sealed partial class FolderViewForm : Form
         base.OnFormClosing(e);
     }
 
+    private void SetViewMode(int index)
+    {
+        if (index < 0 || index > 4) return;
+
+        _viewModel.SelectedViewModeIndex = index;
+        _settings.FolderViewModeIndex = index;
+        _settingsService.Save();
+
+        // ListView の表示モードを切り替え
+        _listView.View = index switch
+        {
+            0 or 1 or 2 => View.LargeIcon,
+            3 => View.List,
+            _ => View.Details
+        };
+
+        if (index is 0 or 1 or 2)
+        {
+            _listView.LargeImageList = index switch
+            {
+                0 => _largeIconList,
+                1 => _tileIconList,
+                _ => _mediumIconList
+            };
+        }
+
+        // 詳細表示時は列を設定
+        if (index == 4)
+        {
+            _listView.Columns.Clear();
+            _listView.Columns.Add("名前", 250);
+            _listView.Columns.Add("サイズ", 100);
+            _listView.Columns.Add("更新日時", 150);
+        }
+        else
+        {
+            _listView.Columns.Clear();
+        }
+
+        UpdateStatusBar();
+        UpdateViewModeText();
+    }
+
+    private void CtxViewExtraLarge_Click(object? sender, EventArgs e) => SetViewMode(0);
+    private void CtxViewLarge_Click(object? sender, EventArgs e) => SetViewMode(1);
+    private void CtxViewMedium_Click(object? sender, EventArgs e) => SetViewMode(2);
+    private void CtxViewList_Click(object? sender, EventArgs e) => SetViewMode(3);
+    private void CtxViewDetails_Click(object? sender, EventArgs e) => SetViewMode(4);
+    private void CtxSortAscending_Click(object? sender, EventArgs e) => SetSortOrder(true);
+    private void CtxSortDescending_Click(object? sender, EventArgs e) => SetSortOrder(false);
+    private void CtxCopyFolderPath_Click(object? sender, EventArgs e) => CopyFolderPathToClipboard();
+    private void MenuFileOpenExplorer_Click(object? sender, EventArgs e) => OpenFolderInExplorer();
+    private void MenuFileCopyFolderPath_Click(object? sender, EventArgs e) => CopyFolderPathToClipboard();
+    private void MenuViewExtraLarge_Click(object? sender, EventArgs e) => SetViewMode(0);
+    private void MenuViewLarge_Click(object? sender, EventArgs e) => SetViewMode(1);
+    private void MenuViewMedium_Click(object? sender, EventArgs e) => SetViewMode(2);
+    private void MenuViewList_Click(object? sender, EventArgs e) => SetViewMode(3);
+    private void MenuViewDetails_Click(object? sender, EventArgs e) => SetViewMode(4);
+    private void MenuSortAscending_Click(object? sender, EventArgs e) => SetSortOrder(true);
+    private void MenuSortDescending_Click(object? sender, EventArgs e) => SetSortOrder(false);
+    private void LblViewMode_MouseDown(object? sender, MouseEventArgs e) => _contextMenuView.Show(Cursor.Position); 
+    private void LblSortStatus_MouseDown(object? sender, MouseEventArgs e) => _contextMenuSort.Show(Cursor.Position); 
+
+    /// <summary>
+    /// フォルダパスリンクを左クリックしたときにエクスプローラで開く。
+    /// </summary>
+    private void LblFolderPath_Click(object? sender, EventArgs e)
+    {
+        OpenFolderInExplorer();
+    }
+
+    /// <summary>
+    /// フォルダパスリンクを右クリックしたときにコンテキストメニューを表示する。
+    /// </summary>
+    private void LblFolderPath_MouseUp(object? sender, MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Right)
+        {
+            _contextMenuFolder.Show(_statusStrip, e.Location);
+        }
+    }
+
+    /// <summary>
+    /// コンテキストメニュー「エクスプローラでフォルダ開く」のクリックハンドラー。
+    /// </summary>
+    private void CtxOpenFolder_Click(object? sender, EventArgs e)
+    {
+        OpenFolderInExplorer();
+    }
+
+    /// <summary>
+    /// フォルダをエクスプローラで開く。
+    /// </summary>
+    private void OpenFolderInExplorer()
+    {
+        try
+        {
+            if (Directory.Exists(_folderPath))
+                System.Diagnostics.Process.Start("explorer.exe", _folderPath);
+        }
+        catch
+        {
+            MessageBox.Show($"フォルダを開けませんでした: {_folderPath}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    /// <summary>
+    /// フォルダのフルパスをクリップボードにコピーする。
+    /// </summary>
+    private void CopyFolderPathToClipboard()
+    {
+        try
+        {
+            Clipboard.SetText(_folderPath);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"クリップボードへのコピーに失敗しました: {ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    /// <summary>
+    /// ビューモードコンテキストメニュー表示直前に、現在選択中のモードに☑を付ける。
+    /// </summary>
+    private void ContextMenuView_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        var idx = _viewModel.SelectedViewModeIndex;
+        _ctxViewExtraLarge.Checked = idx == 0;
+        _ctxViewLarge.Checked = idx == 1;
+        _ctxViewMedium.Checked = idx == 2;
+        _ctxViewList.Checked = idx == 3;
+        _ctxViewDetails.Checked = idx == 4;
+    }
+
+    /// <summary>
+    /// ソート順コンテキストメニュー表示直前に、現在のソート順に☑を付ける。
+    /// </summary>
+    private void ContextMenuSort_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        _ctxSortAscending.Checked = _viewModel.IsSortAscending;
+        _ctxSortDescending.Checked = !_viewModel.IsSortAscending;
+    }
+
+    /// <summary>
+    /// メニューバーの表示メニュー表示直前に、現在の状態に☑を付ける。
+    /// </summary>
+    private void MenuView_DropDownOpening(object? sender, EventArgs e)
+    {
+        var idx = _viewModel.SelectedViewModeIndex;
+        _menuViewExtraLarge.Checked = idx == 0;
+        _menuViewLarge.Checked = idx == 1;
+        _menuViewMedium.Checked = idx == 2;
+        _menuViewList.Checked = idx == 3;
+        _menuViewDetails.Checked = idx == 4;
+
+        _menuSortAscending.Checked = _viewModel.IsSortAscending;
+        _menuSortDescending.Checked = !_viewModel.IsSortAscending;
+    }
+
+
     [DllImport("shell32.dll", CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
     private static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, int cbFileInfo, uint uFlags);
 
@@ -514,4 +726,11 @@ public sealed partial class FolderViewForm : Form
     private const uint SHGFI_USEFILEATTRIBUTES = 0x000000010;
     private const uint FILE_ATTRIBUTE_NORMAL = 0x00000080;
     private const uint FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
+
+}
+
+internal sealed class ViewOption
+{
+    public string Text { get; init; } = "";
+    public View View { get; init; }
 }
