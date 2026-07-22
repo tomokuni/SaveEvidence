@@ -1,3 +1,4 @@
+using app.Enum;
 using app.Models;
 using app.Services;
 
@@ -12,7 +13,7 @@ namespace app.Views;
 /// ホットキーは設定が変更されるたびに <c>saveAction</c> コールバックを介して永続化される。<br/>
 /// 修飾キー（Ctrl/Alt/Shift/Win）＋キーの組合せで設定する。<br/>
 /// </remarks>
-public partial class HotkeyForm : Form
+public sealed partial class HotkeyForm : Form
 {
     private readonly Settings _settings;
     private readonly Action _saveAction;
@@ -92,7 +93,7 @@ public partial class HotkeyForm : Form
         }
 
         var key = keyData & Keys.KeyCode;
-        var setting = new HotKeySetting { Modifiers = modifiers, Key = key };
+        var setting = new HotKeySetting(modifiers, key);
 
         if (_currentCapturingButton == _btnSetSelectScreen)
         {

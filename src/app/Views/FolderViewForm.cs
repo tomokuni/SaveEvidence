@@ -89,7 +89,7 @@ public sealed partial class FolderViewForm : Form
         _menuView.DropDownOpening += MenuView_DropDownOpening;
 
         // ─── フォルダパスリンク用コンテキストメニュー ──
-        _contextMenuFolder = new ContextMenuStrip(components);
+        _contextMenuFolder = new ContextMenuStrip(components!);
         _ctxOpenFolder = new ToolStripMenuItem("エクスプローラでフォルダを開く");
         _ctxOpenFolder.Click += CtxOpenFolder_Click;
         _contextMenuFolder.Items.Add(_ctxOpenFolder);
@@ -190,7 +190,10 @@ public sealed partial class FolderViewForm : Form
                     _items.Add(item);
                 }
             }
-            catch (UnauthorizedAccessException) { }
+            catch (UnauthorizedAccessException)
+            {
+                // アクセス権がないフォルダはスキップ
+            }
 
             try
             {
@@ -213,7 +216,10 @@ public sealed partial class FolderViewForm : Form
                     }
                 }
             }
-            catch (UnauthorizedAccessException) { }
+            catch (UnauthorizedAccessException)
+            {
+                // アクセス権がないファイルはスキップ
+            }
 
             SortAndAddItems();
         }
@@ -487,6 +493,7 @@ public sealed partial class FolderViewForm : Form
             }
             catch (Exception)
             {
+                // ファイルを開けなくても続行
             }
         }
     }

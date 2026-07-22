@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using app.Enum;
 using app.Models;
 using app.Services;
 using app.ViewModels;
@@ -8,7 +9,7 @@ namespace app.Views;
 /// <summary>
 /// メインフォーム。画面キャプチャとプレビュー表示を行うメインウィンドウ。
 /// </summary>
-public partial class MainForm : Form
+public sealed partial class MainForm : Form
 {
     private readonly MainViewModel _viewModel;
     private readonly HotKeyManager? _hotKeyManager;
@@ -273,7 +274,7 @@ public partial class MainForm : Form
         _lblZoom.ToolTipText = $"拡大率: {zoomText}";
 
         // イメージサイズ
-        var sizeText = hasImage ? $"{img.Width}, {img.Height}" : "-, -";
+        var sizeText = hasImage ? $"{img!.Width}, {img!.Height}" : "-, -";
         _lblImageSize.Text = sizeText;
         _lblImageSize.ToolTipText = $"イメージサイズ: ({sizeText})";
 
@@ -512,11 +513,11 @@ public partial class MainForm : Form
                 {
                     using var fullCapture = CaptureManager.CaptureArea(SystemInformation.VirtualScreen);
                     using var selectionForm = new SelectionForm(CaptureType.SelectScreen, fullCapture, _viewModel.Settings.CaptureBorderColor);
-                    selectionForm.SelectionCompleted += (s, rect) => { try { _viewModel.CaptureScreenArea(rect); } catch (Exception) { } };
-                    selectionForm.Cancelled += (s, e) => { };
+                    selectionForm.SelectionCompleted += (s, rect) => { try { _viewModel.CaptureScreenArea(rect); } catch (Exception) { /* キャプチャエラーは無視 */ } };
+                    selectionForm.Cancelled += (_, _) => { };
                     selectionForm.ShowDialog();
                 }
-                catch (Exception) { }
+                catch (Exception) { /* キャプチャ処理の例外は無視 */ }
                 finally { _isExecutingCapture = false; EnsureVisible(); }
             });
         });
@@ -549,12 +550,12 @@ public partial class MainForm : Form
                                 _viewModel.SetPreviewImage(CaptureManager.CaptureArea(rect));
                             }
                         }
-                        catch (Exception) { }
+                        catch (Exception) { /* キャプチャエラーは無視 */ }
                     };
-                    selectionForm.Cancelled += (s, e) => { };
+                    selectionForm.Cancelled += (_, _) => { };
                     selectionForm.ShowDialog();
                 }
-                catch (Exception) { }
+                catch (Exception) { /* キャプチャ処理の例外は無視 */ }
                 finally { _isExecutingCapture = false; EnsureVisible(); }
             });
         });
@@ -582,7 +583,7 @@ public partial class MainForm : Form
             _viewModel.SetPreviewImage(cropped);
             ExitCropMode();
         }
-        catch (Exception) { }
+        catch (Exception) { /* 画像処理エラーは無視 */ }
     }
 
     private void BtnCropApply_Click(object? sender, EventArgs e)
@@ -597,7 +598,7 @@ public partial class MainForm : Form
             _viewModel.SetPreviewImage(cropped);
             ExitCropMode();
         }
-        catch (Exception) { }
+        catch (Exception) { /* 画像処理エラーは無視 */ }
     }
 
     private void ExitCropMode()

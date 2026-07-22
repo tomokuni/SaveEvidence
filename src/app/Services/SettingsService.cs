@@ -9,7 +9,7 @@ namespace app.Services;
 /// スレッドセーフな読み書きを保証するため <c>Lock</c> による排他制御を行う。<br/>
 /// <see cref="Save"/> を明示的に呼び出すまでファイルへの書き込みは行われない。<br/>
 /// </remarks>
-public sealed class SettingsService
+public sealed class SettingsService : ISettingsService
 {
     private static readonly string s_settingsFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

@@ -1,3 +1,4 @@
+using app.Enum;
 using System.Runtime.InteropServices;
 
 namespace app.Models;
@@ -108,19 +109,4 @@ public sealed partial class HotKeyManager(IntPtr hWnd) : IDisposable
     [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool UnregisterHotKey(IntPtr hWnd, int id);
-}
-
-/// <summary>
-/// 画面キャプチャの取得方法を指定する列挙型。
-/// </summary>
-public enum CaptureType
-{
-    /// <summary>スクリーン選択</summary>
-    SelectScreen,
-
-    /// <summary>ウィンドウ選択</summary>
-    WindowSelect,
-
-    /// <summary>範囲選択</summary>
-    AreaSelect
 }

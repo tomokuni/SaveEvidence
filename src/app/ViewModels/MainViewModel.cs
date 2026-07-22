@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using app.Models;
 using app.Services;
+using app.Enum;
 
 namespace app.ViewModels;
 
@@ -17,7 +18,7 @@ namespace app.ViewModels;
 /// </remarks>
 public sealed partial class MainViewModel : ObservableObject
 {
-    private readonly SettingsService _settingsService;
+    private readonly ISettingsService _settingsService;
     private int _currentNumber;
     private string _lastSavedFileName = "";
 
@@ -31,7 +32,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// MainViewModel の新しいインスタンスを初期化する。
     /// </summary>
     /// <param name="settingsService">設定サービス</param>
-    public MainViewModel(SettingsService settingsService)
+    public MainViewModel(ISettingsService settingsService)
     {
         _settingsService = settingsService;
 
@@ -285,6 +286,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception)
         {
+            // 保存失敗時は false を返す
             return false;
         }
     }

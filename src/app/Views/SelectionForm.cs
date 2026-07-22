@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using app.Enum;
 using app.Models;
 
 namespace app.Views;
@@ -128,6 +129,7 @@ public sealed partial class SelectionForm : Form
         }
         catch (Exception)
         {
+            // 描画エラーは無視して続行
         }
     }
 
@@ -423,6 +425,7 @@ public sealed partial class SelectionForm : Form
         }
         catch (Exception)
         {
+            // キー入力エラーは無視
         }
     }
 
@@ -458,6 +461,7 @@ public sealed partial class SelectionForm : Form
                 }
                 catch
                 {
+                    // 列挙中の個別ウィンドウエラーは無視
                 }
                 return true;
             }, IntPtr.Zero);
@@ -471,6 +475,7 @@ public sealed partial class SelectionForm : Form
         }
         catch (Exception)
         {
+            // ウィンドウ検出エラーは無視
         }
     }
 
@@ -504,6 +509,7 @@ public sealed partial class SelectionForm : Form
         }
         catch (Exception)
         {
+            // キャンセル処理のエラーは無視
         }
         finally
         {
@@ -539,6 +545,7 @@ public sealed partial class SelectionForm : Form
         }
         catch (Exception)
         {
+            // キー処理エラーは無視
         }
         return base.ProcessCmdKey(ref msg, keyData);
     }
