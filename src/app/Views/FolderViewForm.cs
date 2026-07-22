@@ -33,7 +33,7 @@ public sealed partial class FolderViewForm : Form
 
     private CancellationTokenSource? _loadCts;
 
-    private readonly bool _isAsyncLoadEnabled = false; // 非同期読み込みを有効にするかどうか（テスト用）
+    private readonly bool _isAsyncLoadEnabled = true; // 非同期読み込みを有効にするかどうか（テスト用）
 
     private ContextMenuStrip _contextMenuFolder = null!;
     private ToolStripMenuItem _ctxOpenFolder = null!;
@@ -74,9 +74,7 @@ public sealed partial class FolderViewForm : Form
         _viewModel.SelectedViewModeIndex = viewModeIndex;
         _viewModel.IsSortAscending = _sortAscending;
         _viewModel.FolderPathText = _folderPath;
-        UpdateViewModeText();
-        UpdateSortStatusText();
-        UpdateItemCountText();
+        _viewModel.ItemCount = 0;
 
         // DataBindings
         _lblStatus.DataBindings.Add("Text", _viewModel, nameof(FolderViewViewModel.ItemCountText));
@@ -122,13 +120,13 @@ public sealed partial class FolderViewForm : Form
         {
             switch (e.PropertyName)
             {
-                case nameof(FolderViewViewModel.ItemCountText):
-                    _lblStatus.ToolTipText = $"アイテム数: {_viewModel.ItemCountText}";
+                case nameof(FolderViewViewModel.ItemCount):
+                    _lblStatus.ToolTipText = $"アイテム数: {_viewModel.ItemCount}個";
                     break;
-                case nameof(FolderViewViewModel.ViewModeText):
+                case nameof(FolderViewViewModel.SelectedViewModeIndex):
                     _lblViewMode.ToolTipText = $"表示: {_viewModel.ViewModeText}";
                     break;
-                case nameof(FolderViewViewModel.SortStatusText):
+                case nameof(FolderViewViewModel.IsSortAscending):
                     _lblSortStatus.ToolTipText = $"並替: {_viewModel.SortStatusText}";
                     break;
                 case nameof(FolderViewViewModel.FolderPathText):
@@ -495,35 +493,14 @@ public sealed partial class FolderViewForm : Form
 
     private void UpdateStatusBar()
     {
-        UpdateItemCountText();
-    }
-
-    /// <summary>アイテム数を ViewModel に反映する。</summary>
-    private void UpdateItemCountText()
-    {
-        var count = _items.Count;
-        _viewModel.ItemCountText = $"{count} 個のアイテム";
+        _viewModel.ItemCount = _items.Count;
     }
 
     private static readonly string[] s_viewModeNames = ["特大", "大", "中", "一覧", "詳細"];
 
-    /// <summary>現在の表示モードを ViewModel に反映する。</summary>
-    private void UpdateViewModeText()
-    {
-        var idx = _viewModel.SelectedViewModeIndex;
-        var modeName = (uint)idx < s_viewModeNames.Length ? s_viewModeNames[idx] : "";
-        _viewModel.ViewModeText = modeName;
-    }
-
     private void ListView_ItemActivate(object? sender, EventArgs e)
     {
         OpenSelectedItem();
-    }
-
-    /// <summary>現在のソート状態を ViewModel に反映する。</summary>
-    private void UpdateSortStatusText()
-    {
-        _viewModel.SortStatusText = _sortAscending ? "名前の昇順(▲)" : "名前の降順(▼)";
     }
 
     private void SetSortOrder(bool ascending)
@@ -537,7 +514,6 @@ public sealed partial class FolderViewForm : Form
         _settings.FolderSortAscending = _sortAscending;
         _settingsService.Save();
         UpdateStatusBar();
-        UpdateSortStatusText();
     }
 
     private void BtnClose_Click(object? sender, EventArgs e)
@@ -615,7 +591,6 @@ public sealed partial class FolderViewForm : Form
         }
 
         UpdateStatusBar();
-        UpdateViewModeText();
     }
 
     private void CtxViewExtraLarge_Click(object? sender, EventArgs e) => SetViewMode(0);

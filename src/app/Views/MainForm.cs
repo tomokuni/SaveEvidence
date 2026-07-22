@@ -102,6 +102,7 @@ public partial class MainForm : Form
     {
         _zoomIndex = 0;
         _zoomPercent = 0;
+        _viewModel.ZoomPercent = 0;
         UpdatePictureBoxZoom();
     }
 
@@ -1321,6 +1322,9 @@ public partial class MainForm : Form
         var hasSelection = _cropSelection.SelectionRect.HasValue;
         var hasUndo = _undoStack.Count > 0;
 
+        // ViewModel に状態を反映
+        _viewModel.HasSelection = hasSelection;
+
         // 実際の拡大率（自動フィット時の倍率も含む）から拡大/縮小の可否を判定
         var canZoomOut = false;
         var canZoomIn = false;
@@ -1333,21 +1337,23 @@ public partial class MainForm : Form
                 if (s_zoomValues[i] != 0 && s_zoomValues[i] < currentPercent) canZoomOut = true;
             }
         }
+        _viewModel.CanZoomIn = canZoomIn;
+        _viewModel.CanZoomOut = canZoomOut;
 
         _menuFileSave.Enabled = hasImage;
         _menuEditUndo.Enabled = hasUndo;
-        _menuEditCrop.Enabled = hasImage && hasSelection;
-        _menuEditAutoCrop.Enabled = hasImage && !hasSelection;
+        _menuEditCrop.Enabled = _viewModel.HasSelection;
+        _menuEditAutoCrop.Enabled = hasImage && !_viewModel.HasSelection;
         _menuEditCopy.Enabled = hasImage;
         _menuEditPaste.Enabled = Clipboard.ContainsImage();
-        _menuEditZoomIn.Enabled = canZoomIn;
-        _menuEditZoomOut.Enabled = canZoomOut;
+        _menuEditZoomIn.Enabled = _viewModel.CanZoomIn;
+        _menuEditZoomOut.Enabled = _viewModel.CanZoomOut;
         _menuViewZoom.Enabled = hasImage;
         // 拡大率サブメニューのチェック状態を更新
         for (var i = 0; i < s_zoomValues.Length && i < _menuViewZoom.DropDownItems.Count; i++)
         {
             if (_menuViewZoom.DropDownItems[i] is ToolStripMenuItem menuItem)
-                menuItem.Checked = hasImage && _zoomPercent == s_zoomValues[i];
+                menuItem.Checked = hasImage && _viewModel.ZoomPercent == s_zoomValues[i];
         }
         _menuEditAlignLeft.Enabled = _viewModel.Settings.CenterAlign;
         _menuEditAlignLeft.Checked = !_viewModel.Settings.CenterAlign;
@@ -1447,6 +1453,7 @@ public partial class MainForm : Form
             {
                 _zoomIndex = i;
                 _zoomPercent = percent;
+                _viewModel.ZoomPercent = percent;
                 UpdatePictureBoxZoom();
                 UpdateStatusBar();
                 NotifyMenuStateChanged();
@@ -1459,6 +1466,7 @@ public partial class MainForm : Form
     {
         _zoomIndex = 0;
         _zoomPercent = 0;
+        _viewModel.ZoomPercent = 0;
         UpdatePictureBoxZoom();
         UpdateStatusBar();
         NotifyMenuStateChanged();

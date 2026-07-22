@@ -74,6 +74,22 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _saveFolderDisplayName = string.Empty;
 
+    /// <summary>現在のズーム率（0=自動）。View 側から設定される。</summary>
+    [ObservableProperty]
+    private int _zoomPercent;
+
+    /// <summary>切出し選択範囲があるかどうか。View 側から設定される。</summary>
+    [ObservableProperty]
+    private bool _hasSelection;
+
+    /// <summary>ズームイン可能かどうか。View 側から設定される。</summary>
+    [ObservableProperty]
+    private bool _canZoomIn;
+
+    /// <summary>ズームアウト可能かどうか。View 側から設定される。</summary>
+    [ObservableProperty]
+    private bool _canZoomOut;
+
     /// <summary>プレビュー画像が存在するかどうかを取得する。</summary>
     public bool HasPreviewImage => PreviewImage is not null;
 
