@@ -9,7 +9,6 @@ partial class FolderViewForm
     private StatusStrip _statusStrip;
     private ToolStripStatusLabel _lblStatus;
     private ToolStripStatusLabel _lblFolderPath;
-    private ToolStripStatusLabel _lblSpacer;
     private ToolStripStatusLabel _lblViewMode;
     private ToolStripStatusLabel _lblSortStatus;
     private ToolStripStatusLabel _lblDummy;
@@ -52,7 +51,6 @@ partial class FolderViewForm
         _statusStrip = new StatusStrip();
         _lblStatus = new ToolStripStatusLabel();
         _lblFolderPath = new ToolStripStatusLabel();
-        _lblSpacer = new ToolStripStatusLabel();
         _lblViewMode = new ToolStripStatusLabel();
         _lblSortStatus = new ToolStripStatusLabel();
         _lblDummy = new ToolStripStatusLabel();
@@ -68,7 +66,6 @@ partial class FolderViewForm
         _menuStrip = new MenuStrip();
         _menuFile = new ToolStripMenuItem();
         _menuFileOpenExplorer = new ToolStripMenuItem();
-        toolStripSeparator1 = new ToolStripSeparator();
         _menuFileCopyFolderPath = new ToolStripMenuItem();
         _menuView = new ToolStripMenuItem();
         _menuViewExtraLarge = new ToolStripMenuItem();
@@ -99,9 +96,10 @@ partial class FolderViewForm
         // _statusStrip
         // 
         _statusStrip.ImageScalingSize = new Size(20, 20);
-        _statusStrip.Items.AddRange(new ToolStripItem[] { _lblStatus, _lblFolderPath, _lblSpacer, _lblViewMode, _lblSortStatus, _lblDummy });
+        _statusStrip.Items.AddRange(new ToolStripItem[] { _lblStatus, _lblFolderPath, _lblViewMode, _lblSortStatus, _lblDummy });
         _statusStrip.Location = new Point(0, 550);
         _statusStrip.Name = "_statusStrip";
+        _statusStrip.ShowItemToolTips = true;
         _statusStrip.Size = new Size(900, 30);
         _statusStrip.TabIndex = 4;
         // 
@@ -117,16 +115,11 @@ partial class FolderViewForm
         // 
         _lblFolderPath.IsLink = true;
         _lblFolderPath.Name = "_lblFolderPath";
-        _lblFolderPath.Size = new Size(667, 24);
+        _lblFolderPath.Size = new Size(628, 24);
         _lblFolderPath.Spring = true;
-        _lblFolderPath.Text = "FolterPath";
+        _lblFolderPath.Text = "FolderPath";
         _lblFolderPath.TextAlign = ContentAlignment.MiddleLeft;
         _lblFolderPath.Click += LblFolderPath_Click;
-        // 
-        // _lblSpacer
-        // 
-        _lblSpacer.Name = "_lblSpacer";
-        _lblSpacer.Size = new Size(0, 24);
         // 
         // _lblViewMode
         // 
@@ -205,14 +198,14 @@ partial class FolderViewForm
         // 
         _ctxSortAscending.Name = "_ctxSortAscending";
         _ctxSortAscending.Size = new Size(179, 24);
-        _ctxSortAscending.Text = "名前の昇順 (▲)";
+        _ctxSortAscending.Text = "名前の昇順（▲）";
         _ctxSortAscending.Click += CtxSortAscending_Click;
         // 
         // _ctxSortDescending
         // 
         _ctxSortDescending.Name = "_ctxSortDescending";
         _ctxSortDescending.Size = new Size(179, 24);
-        _ctxSortDescending.Text = "名前の降順 (▼)";
+        _ctxSortDescending.Text = "名前の降順（▼）";
         _ctxSortDescending.Click += CtxSortDescending_Click;
         // 
         // _menuStrip
@@ -227,7 +220,7 @@ partial class FolderViewForm
         // 
         // _menuFile
         // 
-        _menuFile.DropDownItems.AddRange(new ToolStripItem[] { _menuFileOpenExplorer, toolStripSeparator1, _menuFileCopyFolderPath });
+        _menuFile.DropDownItems.AddRange(new ToolStripItem[] { _menuFileOpenExplorer, _menuFileCopyFolderPath });
         _menuFile.Name = "_menuFile";
         _menuFile.Size = new Size(86, 24);
         _menuFile.Text = "ファイル (&F)";
@@ -238,11 +231,6 @@ partial class FolderViewForm
         _menuFileOpenExplorer.Size = new Size(257, 26);
         _menuFileOpenExplorer.Text = "エクスプローラでフォルダを開く";
         _menuFileOpenExplorer.Click += MenuFileOpenExplorer_Click;
-        // 
-        // toolStripSeparator1
-        // 
-        toolStripSeparator1.Name = "toolStripSeparator1";
-        toolStripSeparator1.Size = new Size(254, 6);
         // 
         // _menuFileCopyFolderPath
         // 
@@ -333,7 +321,5 @@ partial class FolderViewForm
         ResumeLayout(false);
         PerformLayout();
     }
-
-    private ToolStripSeparator toolStripSeparator1;
     private ToolStripSeparator toolStripSeparator2;
 }

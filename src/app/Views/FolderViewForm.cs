@@ -110,7 +110,40 @@ public sealed partial class FolderViewForm : Form
         Text = $"保存先フォルダビュー - {_folderPath}";
 
         // フルパスを ToolTip で表示
-        _lblFolderPath.ToolTipText = _folderPath;
+        _lblFolderPath.ToolTipText = $"イメージの保存先: {_folderPath}";
+
+        // 各ステータス項目の ToolTip 初期設定
+        _lblStatus.ToolTipText = $"アイテム数: {_items.Count}個";
+        _lblViewMode.ToolTipText = $"表示: {_viewModel.ViewModeText}";
+        _lblSortStatus.ToolTipText = $"並替: {_viewModel.SortStatusText}";
+
+        // ViewModel のプロパティ変更時に ToolTipText を更新
+        _viewModel.PropertyChanged += (s, e) =>
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(FolderViewViewModel.ItemCountText):
+                    _lblStatus.ToolTipText = $"アイテム数: {_viewModel.ItemCountText}";
+                    break;
+                case nameof(FolderViewViewModel.ViewModeText):
+                    _lblViewMode.ToolTipText = $"表示: {_viewModel.ViewModeText}";
+                    break;
+                case nameof(FolderViewViewModel.SortStatusText):
+                    _lblSortStatus.ToolTipText = $"並替: {_viewModel.SortStatusText}";
+                    break;
+                case nameof(FolderViewViewModel.FolderPathText):
+                    _lblFolderPath.ToolTipText = $"イメージの保存先: {_viewModel.FolderPathText}";
+                    break;
+            }
+        };
+
+        // StatusStrip の ToolStripItem は ToolTipText を直接表示できないため
+        // MouseMove で項目を特定して ToolTip を表示する
+        _statusStrip.MouseMove += (_, e) =>
+        {
+            var item = _statusStrip.GetItemAt(e.Location);
+            _toolTip.SetToolTip(_statusStrip, (item as ToolStripStatusLabel)?.ToolTipText ?? "");
+        };
 
         UpdateStatusBar();
         _statusStrip.PerformLayout();
@@ -468,7 +501,8 @@ public sealed partial class FolderViewForm : Form
     /// <summary>アイテム数を ViewModel に反映する。</summary>
     private void UpdateItemCountText()
     {
-        _viewModel.ItemCountText = $"{_items.Count} 個のアイテム";
+        var count = _items.Count;
+        _viewModel.ItemCountText = $"{count} 個のアイテム";
     }
 
     private static readonly string[] s_viewModeNames = ["特大", "大", "中", "一覧", "詳細"];
@@ -478,7 +512,7 @@ public sealed partial class FolderViewForm : Form
     {
         var idx = _viewModel.SelectedViewModeIndex;
         var modeName = (uint)idx < s_viewModeNames.Length ? s_viewModeNames[idx] : "";
-        _viewModel.ViewModeText = $"表示: {modeName}";
+        _viewModel.ViewModeText = modeName;
     }
 
     private void ListView_ItemActivate(object? sender, EventArgs e)
@@ -489,7 +523,7 @@ public sealed partial class FolderViewForm : Form
     /// <summary>現在のソート状態を ViewModel に反映する。</summary>
     private void UpdateSortStatusText()
     {
-        _viewModel.SortStatusText = _sortAscending ? "並替: 名前の昇順 (▲)" : "並替: 名前の降順 (▼)";
+        _viewModel.SortStatusText = _sortAscending ? "名前の昇順(▲)" : "名前の降順(▼)";
     }
 
     private void SetSortOrder(bool ascending)

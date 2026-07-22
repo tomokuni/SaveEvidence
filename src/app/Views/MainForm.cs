@@ -33,9 +33,6 @@ public partial class MainForm : Form
     private readonly List<Image> _undoStack = new(MaxUndoCount);
     private bool _isUndoing;
 
-    // リンク右クリックフラグ（LinkClicked とコンテキストメニューの競合対策）
-    private bool _linkRightClicked;
-
     public MainForm(SettingsService settingsService)
     {
         _settingsService = settingsService;
@@ -90,9 +87,7 @@ public partial class MainForm : Form
         _menuEdit.DropDownOpening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
         _menuView.DropDownOpening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
 
-        // リンクラベルの右クリック対策（LinkClicked が右クリックでも発火するため）
-        _linkSaveFolder.MouseDown += LinkSaveFolder_MouseDown;
-    }
+        }
 
     private void ResetZoomToAuto()
     {
@@ -260,22 +255,50 @@ public partial class MainForm : Form
     private void UpdateStatusBar()
     {
         var img = _viewModel.PreviewImage;
-        var zoomText = img is not null ? $"{GetActualZoomPercent()}%" : "-%";
-        var alignText = _viewModel.Settings.CenterAlign ? "中央寄せ" : "左上寄せ";
+        var hasImage = img is not null;
+
+        // 拡大率
+        var zoomText = hasImage ? $"{GetActualZoomPercent()}%" : "-%";
+        _lblZoom.Text = zoomText;
+        _lblZoom.ToolTipText = $"拡大率: {zoomText}";
+
+        // イメージサイズ
+        var sizeText = hasImage ? $"{img.Width}, {img.Height}" : "-, -";
+        _lblImageSize.Text = sizeText;
+        _lblImageSize.ToolTipText = $"イメージサイズ: ({sizeText})";
+
+        // 保存状態
+        var savedText = _viewModel.StatusText;
+        if (string.IsNullOrEmpty(savedText))
+        {
+            _lblSavedStatus.Text = "未保存";
+            _lblSavedStatus.ToolTipText = "イメージ未保存";
+        }
+        else
+        {
+            // StatusText は "保存済み {ファイル名}" 形式 → 表示用に整形
+            _lblSavedStatus.Text = savedText.Replace("保存済み", "保存済:");
+            _lblSavedStatus.ToolTipText = savedText.Replace("保存済み", "イメージ保存済:");
+        }
+
+        // 寄せ
+        var isCenter = _viewModel.Settings.CenterAlign;
+        var alignText = isCenter ? "中央寄せ" : "左上寄せ";
+        _lblAlign.Text = alignText;
+        _lblAlign.ToolTipText = $"イメージ位置: {alignText}";
+
+        // ルーペ
         var loupeText = _viewModel.Settings.LoupeModeValue switch
         {
-            LoupeMode.Show => "ルーペ:常時表示",
-            LoupeMode.Auto => "ルーペ:範囲選択中のみ",
-            _ => "ルーペ:非表示",
+            LoupeMode.Show => "常時表示",
+            LoupeMode.Auto => "範囲選択時表示",
+            _ => "非表示",
         };
-        var sizeText = img is not null ? $"({img.Width}, {img.Height})" : "(-, -)";
-        var savedText = _viewModel.StatusText;
-
-        _lblZoom.Text = $"拡大率 {zoomText}";
-        _lblAlign.Text = alignText;
         _lblLoupe.Text = loupeText;
-        _lblImageSize.Text = $"サイズ {sizeText}";
-        _lblSavedStatus.Text = string.IsNullOrEmpty(savedText) ? "未保存" : savedText;
+        _lblLoupe.ToolTipText = $"ルーペ: {loupeText}";
+
+        // フォルダーパス
+        _lblFolderLink.ToolTipText = $"イメージの保存先: {_viewModel.SaveFolderPath}";
     }
 
     // ─── ズーム共通 ─────────────────────────────
@@ -367,7 +390,7 @@ public partial class MainForm : Form
         // DataBindings（シンプルな 1:1 バインディングは自動反映）
         _btnCopy.DataBindings.Add("Enabled", _viewModel, nameof(MainViewModel.CanCopy));
         _btnSave.DataBindings.Add("Enabled", _viewModel, nameof(MainViewModel.CanSave));
-        _linkSaveFolder.DataBindings.Add("Text", _viewModel, nameof(MainViewModel.SaveFolderDisplayName));
+        _lblFolderLink.DataBindings.Add("Text", _viewModel, nameof(MainViewModel.SaveFolderPath));
         _txtFileNameTemplate.DataBindings.Add("Text", _viewModel, nameof(MainViewModel.FileNameTemplateText),
             false, DataSourceUpdateMode.OnPropertyChanged);
 
@@ -389,7 +412,7 @@ public partial class MainForm : Form
 
                 case nameof(MainViewModel.SaveFolderPath):
                     _toolTip.SetToolTip(_btnSaveFolder, _viewModel.SaveFolderPath);
-                    _toolTip.SetToolTip(_linkSaveFolder, _viewModel.SaveFolderPath);
+                    _lblFolderLink.ToolTipText = $"イメージの保存先: {_viewModel.SaveFolderPath}";
                     break;
 
                 case nameof(MainViewModel.CurrentFileNamePreview):
@@ -430,7 +453,16 @@ public partial class MainForm : Form
 
         // 初回表示設定
         _toolTip.SetToolTip(_btnSaveFolder, _viewModel.SaveFolderPath);
-        _toolTip.SetToolTip(_linkSaveFolder, _viewModel.SaveFolderPath);
+        _lblFolderLink.ToolTipText = $"イメージの保存先: {_viewModel.SaveFolderPath}";
+
+        // StatusStrip の ToolStripItem は ToolTipText を直接表示できないため
+        // MouseMove で項目を特定して _toolTip で表示する
+        _statusStrip.MouseMove += (_, e) =>
+        {
+            var item = _statusStrip.GetItemAt(e.Location);
+            _toolTip.SetToolTip(_statusStrip, (item as ToolStripStatusLabel)?.ToolTipText ?? "");
+        };
+
         UpdateStatusBar();
     }
 
@@ -1073,22 +1105,7 @@ public partial class MainForm : Form
             _viewModel.SaveFolderPath = dialog.SelectedPath;
     }
 
-    private void LinkSaveFolder_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
-    {
-        // 右クリック時はコンテキストメニューを優先
-        if (_linkRightClicked) return;
 
-        if (!string.IsNullOrEmpty(_viewModel.SaveFolderPath))
-        {
-            var dialog = new FolderViewForm(_viewModel.SaveFolderPath, _settingsService);
-            dialog.Show(this);
-        }
-    }
-
-    private void LinkSaveFolder_MouseDown(object? sender, MouseEventArgs e)
-    {
-        _linkRightClicked = e.Button == MouseButtons.Right;
-    }
 
     private void TxtFileNameTemplate_TextChanged(object? sender, EventArgs e)
     {
@@ -1207,6 +1224,17 @@ public partial class MainForm : Form
     private void MenuOpenExplorer_Click(object? sender, EventArgs e)
     {
         CtxLinkOpenExplorer_Click(sender, e);
+    }
+
+    /// <summary>
+    /// 保存先フォルダのフルパスをクリップボードにコピーする。
+    /// </summary>
+    private void MenuFileCopyFolderPath_Click(object? sender, EventArgs e)
+    {
+        var path = _viewModel.SaveFolderPath;
+        if (string.IsNullOrEmpty(path))
+            return;
+        Clipboard.SetText(path);
     }
 
     private void MenuEditAlignLeft_Click(object? sender, EventArgs e)
@@ -1371,6 +1399,25 @@ public partial class MainForm : Form
     private void LblLoupe_MouseDown(object? sender, MouseEventArgs e)
     {
         _contextMenuLoupe.Show(_statusStrip, new Point(_lblLoupe.Bounds.Left, -_statusStrip.Height));
+    }
+
+    /// <summary>
+    /// ステータスバーのフォルダパスリンクのマウスダウン処理。
+    /// 左クリックでフォルダビューを表示し、右クリックでコンテキストメニューを表示する。
+    /// </summary>
+    private void LblFolderLink_MouseDown(object? sender, MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Right)
+        {
+            _contextMenuLink.Show(_statusStrip, new Point(_lblFolderLink.Bounds.Left, -_statusStrip.Height));
+            return;
+        }
+
+        if (e.Button == MouseButtons.Left && !string.IsNullOrEmpty(_viewModel.SaveFolderPath))
+        {
+            var dialog = new FolderViewForm(_viewModel.SaveFolderPath, _settingsService);
+            dialog.Show(this);
+        }
     }
 
     private void SetZoomFromContext(int percent)
