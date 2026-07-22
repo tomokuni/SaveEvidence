@@ -20,6 +20,7 @@ partial class MainForm
     private ToolStripMenuItem _menuEditPaste;
     private ToolStripMenuItem _menuEditZoomIn;
     private ToolStripMenuItem _menuEditZoomOut;
+    private ToolStripMenuItem _menuViewZoom;
     private ToolStripMenuItem _menuEditAlignLeft;
     private ToolStripMenuItem _menuEditAlignCenter;
     private ToolStripMenuItem _menuEditShowLoupe;
@@ -141,6 +142,7 @@ partial class MainForm
         _menuView = new ToolStripMenuItem();
         _menuEditZoomIn = new ToolStripMenuItem();
         _menuEditZoomOut = new ToolStripMenuItem();
+        _menuViewZoom = new ToolStripMenuItem();
         toolStripSeparator1 = new ToolStripSeparator();
         _menuEditAlignLeft = new ToolStripMenuItem();
         _menuEditAlignCenter = new ToolStripMenuItem();
@@ -395,7 +397,7 @@ partial class MainForm
         // 
         // _menuView
         // 
-        _menuView.DropDownItems.AddRange(new ToolStripItem[] { _menuEditZoomIn, _menuEditZoomOut, toolStripSeparator1, _menuEditAlignLeft, _menuEditAlignCenter, toolStripSeparator2, _menuViewLoupeHide, _menuEditShowLoupe, _menuViewLoupeAuto });
+        _menuView.DropDownItems.AddRange(new ToolStripItem[] { _menuEditZoomIn, _menuEditZoomOut, _menuViewZoom, toolStripSeparator1, _menuEditAlignLeft, _menuEditAlignCenter, toolStripSeparator2, _menuViewLoupeHide, _menuEditShowLoupe, _menuViewLoupeAuto });
         _menuView.Name = "_menuView";
         _menuView.Size = new Size(72, 24);
         _menuView.Text = "表示(&V)";
@@ -415,6 +417,12 @@ partial class MainForm
         _menuEditZoomOut.Size = new Size(238, 26);
         _menuEditZoomOut.Text = "縮小";
         _menuEditZoomOut.Click += MenuEditZoomOut_Click;
+        // 
+        // _menuViewZoom
+        // 
+        _menuViewZoom.Name = "_menuViewZoom";
+        _menuViewZoom.Size = new Size(238, 26);
+        _menuViewZoom.Text = "拡大率";
         // 
         // toolStripSeparator1
         // 

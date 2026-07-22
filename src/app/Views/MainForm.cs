@@ -87,6 +87,15 @@ public partial class MainForm : Form
         _menuEdit.DropDownOpening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
         _menuView.DropDownOpening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
 
+        // 表示メニュー「拡大率」サブメニューにズーム率項目を追加
+        foreach (var zoom in s_zoomValues)
+        {
+            var item = new ToolStripMenuItem();
+            item.Text = zoom == 0 ? "自動" : $"{zoom}%";
+            item.Click += (_, _) => SetZoomFromContext(zoom);
+            _menuViewZoom.DropDownItems.Add(item);
+        }
+
         }
 
     private void ResetZoomToAuto()
@@ -1333,6 +1342,13 @@ public partial class MainForm : Form
         _menuEditPaste.Enabled = Clipboard.ContainsImage();
         _menuEditZoomIn.Enabled = canZoomIn;
         _menuEditZoomOut.Enabled = canZoomOut;
+        _menuViewZoom.Enabled = hasImage;
+        // 拡大率サブメニューのチェック状態を更新
+        for (var i = 0; i < s_zoomValues.Length && i < _menuViewZoom.DropDownItems.Count; i++)
+        {
+            if (_menuViewZoom.DropDownItems[i] is ToolStripMenuItem menuItem)
+                menuItem.Checked = hasImage && _zoomPercent == s_zoomValues[i];
+        }
         _menuEditAlignLeft.Enabled = _viewModel.Settings.CenterAlign;
         _menuEditAlignLeft.Checked = !_viewModel.Settings.CenterAlign;
         _menuEditAlignCenter.Enabled = !_viewModel.Settings.CenterAlign;
@@ -1388,6 +1404,9 @@ public partial class MainForm : Form
 
     private void LblZoom_MouseDown(object? sender, MouseEventArgs e)
     {
+        if (_viewModel.PreviewImage is null)
+            return;
+        UpdateMenuStates();
         _contextMenuZoom.Show(_statusStrip, new Point(_lblZoom.Bounds.Left, -_statusStrip.Height));
     }
 
