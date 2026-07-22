@@ -40,6 +40,7 @@ partial class MainForm
     private Button _btnAreaSelect;
     private Button _btnSave;
     private TextBox _txtFileNameTemplate;
+    private Label _lblValidation;
 
     // プレビュー（Panel でラップ）
     private Panel _pnlPreview;
@@ -151,8 +152,10 @@ partial class MainForm
         _btnAreaSelect = new Button();
         _btnSave = new Button();
         _txtFileNameTemplate = new TextBox();
+        _lblValidation = new Label();
         _contextMenuLink = new ContextMenuStrip(components);
         _ctxLinkSaveFolder = new ToolStripMenuItem();
+        toolStripSeparator10 = new ToolStripSeparator();
         _ctxLinkFolderView = new ToolStripMenuItem();
         _ctxLinkOpenExplorer = new ToolStripMenuItem();
         _ctxLinkCopyFolderPath = new ToolStripMenuItem();
@@ -209,7 +212,6 @@ partial class MainForm
         _pnlPreview = new Panel();
         _vScroll = new VScrollBar();
         _hScroll = new HScrollBar();
-        toolStripSeparator10 = new ToolStripSeparator();
         _menuStrip.SuspendLayout();
         _flowToolBar.SuspendLayout();
         _contextMenuLink.SuspendLayout();
@@ -467,12 +469,14 @@ partial class MainForm
         _flowToolBar.Controls.Add(_btnAreaSelect);
         _flowToolBar.Controls.Add(_btnSave);
         _flowToolBar.Controls.Add(_txtFileNameTemplate);
+        _flowToolBar.Controls.Add(_lblValidation);
         _flowToolBar.Dock = DockStyle.Top;
         _flowToolBar.Location = new Point(0, 28);
         _flowToolBar.Name = "_flowToolBar";
         _flowToolBar.Padding = new Padding(5);
         _flowToolBar.Size = new Size(1000, 57);
         _flowToolBar.TabIndex = 1;
+        _flowToolBar.WrapContents = false;
         // 
         // _btnSelectScreen
         // 
@@ -519,7 +523,8 @@ partial class MainForm
         // _btnSave
         // 
         _btnSave.AutoSize = true;
-        _btnSave.Location = new Point(251, 8);
+        _btnSave.Location = new Point(251, 16);
+        _btnSave.Margin = new Padding(3, 11, 3, 3);
         _btnSave.Name = "_btnSave";
         _btnSave.Size = new Size(75, 30);
         _btnSave.TabIndex = 7;
@@ -529,12 +534,25 @@ partial class MainForm
         // 
         // _txtFileNameTemplate
         // 
-        _txtFileNameTemplate.Location = new Point(332, 8);
+        _txtFileNameTemplate.Location = new Point(332, 19);
+        _txtFileNameTemplate.Margin = new Padding(3, 14, 3, 3);
         _txtFileNameTemplate.Name = "_txtFileNameTemplate";
+        _txtFileNameTemplate.PlaceholderText = "screenshot_{date}-{time}_001.png";
         _txtFileNameTemplate.Size = new Size(250, 27);
         _txtFileNameTemplate.TabIndex = 0;
-        _txtFileNameTemplate.Text = "screenshot_{date}_{time}.png";
+        _txtFileNameTemplate.Text = "screenshot_{date}-{time}.png";
         _txtFileNameTemplate.TextChanged += TxtFileNameTemplate_TextChanged;
+        // 
+        // _lblValidation
+        // 
+        _lblValidation.AutoSize = true;
+        _lblValidation.ForeColor = Color.Red;
+        _lblValidation.Location = new Point(588, 26);
+        _lblValidation.Margin = new Padding(3, 21, 3, 3);
+        _lblValidation.Name = "_lblValidation";
+        _lblValidation.Size = new Size(0, 20);
+        _lblValidation.TabIndex = 8;
+        _lblValidation.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // _contextMenuLink
         // 
@@ -549,6 +567,11 @@ partial class MainForm
         _ctxLinkSaveFolder.Size = new Size(243, 24);
         _ctxLinkSaveFolder.Text = "保存先設定";
         _ctxLinkSaveFolder.Click += MenuFileSaveFolder_Click;
+        // 
+        // toolStripSeparator10
+        // 
+        toolStripSeparator10.Name = "toolStripSeparator10";
+        toolStripSeparator10.Size = new Size(240, 6);
         // 
         // _ctxLinkFolderView
         // 
@@ -974,11 +997,6 @@ partial class MainForm
         _hScroll.Size = new Size(1000, 21);
         _hScroll.TabIndex = 4;
         _hScroll.Scroll += HScroll_Scroll;
-        // 
-        // toolStripSeparator10
-        // 
-        toolStripSeparator10.Name = "toolStripSeparator10";
-        toolStripSeparator10.Size = new Size(240, 6);
         // 
         // MainForm
         // 

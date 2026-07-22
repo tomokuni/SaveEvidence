@@ -16,32 +16,27 @@ public sealed partial class FileNameTemplate
     /// <summary>
     /// テンプレートから実際のファイル名を生成する。
     /// {date} → yyyyMMdd、{time} → HHmmss に置換される。
-    /// 数値の塊はインクリメントされる。
+    /// テンプレート内の数値はそのまま使用される（事前に IncrementRightmostNumber で更新済みであること）。
     /// </summary>
     /// <param name="template">テンプレート文字列</param>
-    /// <param name="currentNumber">現在の数値成分</param>
     /// <returns>生成されたファイル名</returns>
-    public static string Generate(string template, int currentNumber)
+    public static string Generate(string template)
     {
-        // 数値プレースホルダを先に処理（{date}/{time} の数字が誤認識されるのを防止）
-        var result = IncrementRightmostNumber(template, currentNumber);
-
         var now = DateTime.Now;
-        result = result
+        return template
             .Replace("{date}", now.ToString("yyyyMMdd"))
             .Replace("{time}", now.ToString("HHmmss"));
-
-        return result;
     }
 
     /// <summary>
-    /// テンプレート内の右端の数値連続を指定された数値で置換し、桁数を維持する。
+    /// テンプレート内の右端の数値連続を +1 し、桁数を維持する。
+    /// 基本的には <see cref="decimal"/> で扱い、Decimal 型でも扱えない桁数の場合には
+    /// <see cref="System.Numerics.BigInteger"/> として扱う。
     /// </summary>
     /// <param name="text">置換対象の文字列</param>
-    /// <param name="number">埋め込む数値</param>
     /// <returns>置換後の文字列。数値が見つからない場合は元の文字列をそのまま返す。</returns>
-    /// <example>"screenshot_01.png" に 5 を指定 → "screenshot_05.png"</example>
-    public static string IncrementRightmostNumber(string text, int number)
+    /// <example>"screenshot_05.png" → "screenshot_06.png"</example>
+    public static string IncrementRightmostNumber(string text)
     {
         var matches = NumberPattern().Matches(text);
         if (matches.Count == 0)
@@ -53,29 +48,30 @@ public sealed partial class FileNameTemplate
         var originalDigits = lastMatch.Value;
         var width = originalDigits.Length;
 
-        // 数値を指定された桁数でフォーマット
-        var formattedNumber = number.ToString(width > 1 ? $"D{width}" : null);
+        string formattedNumber;
 
-        // 最後のマッチのみを置換（文字列の末尾から処理）
-        var lastIndex = lastMatch.Index;
-        return text[..lastIndex] + formattedNumber + text[(lastIndex + originalDigits.Length)..];
-    }
-
-    /// <summary>
-    /// テンプレート文字列から右端の数値連続の値を整数として抽出する。
-    /// </summary>
-    /// <param name="template">テンプレート文字列</param>
-    /// <returns>抽出された数値。数値が見つからない場合は 1。</returns>
-    public static int ExtractCurrentNumber(string template)
-    {
-        var matches = NumberPattern().Matches(template);
-        if (matches.Count == 0)
+        // decimal でパースを試行
+        if (decimal.TryParse(originalDigits, System.Globalization.NumberStyles.Integer,
+            System.Globalization.CultureInfo.InvariantCulture, out var decValue))
         {
-            return 1;
+            decValue++;
+            formattedNumber = decValue.ToString().PadLeft(width, '0');
+        }
+        // decimal でも扱えない桁数 → BigInteger
+        else if (System.Numerics.BigInteger.TryParse(originalDigits,
+            System.Globalization.NumberStyles.Integer,
+            System.Globalization.CultureInfo.InvariantCulture, out var bigValue))
+        {
+            bigValue++;
+            formattedNumber = bigValue.ToString().PadLeft(width, '0');
+        }
+        else
+        {
+            return text;
         }
 
-        var lastMatch = matches[^1];
-        return int.Parse(lastMatch.Value);
+        var lastIndex = lastMatch.Index;
+        return text[..lastIndex] + formattedNumber + text[(lastIndex + originalDigits.Length)..];
     }
 
     /// <summary>
@@ -83,4 +79,39 @@ public sealed partial class FileNameTemplate
     /// </summary>
     [GeneratedRegex("\\d+")]
     private static partial Regex NumberPattern();
+
+    /// <summary>
+    /// ファイル名テンプレートとして使用可能かどうかを検証する。
+    /// {date}/{time} を置換し右端数値を除去したとき、ファイル名に使用できない文字が含まれていないかを確認する。
+    /// </summary>
+    /// <param name="template">検証するテンプレート文字列</param>
+    /// <param name="errorMessage">検証エラーメッセージ（無効な場合のみ設定）</param>
+    /// <returns>テンプレートが有効な場合は true</returns>
+    public static bool IsValidTemplate(string template, out string? errorMessage)
+    {
+        if (string.IsNullOrEmpty(template))
+        {
+            errorMessage = "ファイル名テンプレートが空です。";
+            return false;
+        }
+
+        // {date} / {time} をプレースホルダ値で仮置換して検証
+        var testName = template
+            .Replace("{date}", "20250101")
+            .Replace("{time}", "120000");
+        // 右端の数値連続も除去（桁数不定のため）
+        testName = NumberPattern().Replace(testName, "0");
+
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var foundChars = testName.Where(c => invalidChars.Contains(c)).Distinct().ToArray();
+        if (foundChars.Length > 0)
+        {
+            var chars = string.Join(" ", foundChars.Select(static c => $"'{c}'"));
+            errorMessage = $"ファイル名に使用できない文字 ({chars}) が含まれています。";
+            return false;
+        }
+
+        errorMessage = null;
+        return true;
+    }
 }

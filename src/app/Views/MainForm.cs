@@ -78,6 +78,7 @@ public sealed partial class MainForm : Form
         UpdateMenuStates();
         UpdateScrollBars();
         ApplyLoupeModeFromSetting();
+        AdjustFileNameBoxWidth();
 
         // コンテキストメニュー表示前に状態を更新
         _contextMenuPreview.Opening += (_, _) => { if (_menuStateDirty) UpdateMenuStates(); };
@@ -91,8 +92,10 @@ public sealed partial class MainForm : Form
         // 表示メニュー「拡大率」サブメニューにズーム率項目を追加
         foreach (var zoom in s_zoomValues)
         {
-            var item = new ToolStripMenuItem();
-            item.Text = zoom == 0 ? "自動" : $"{zoom}%";
+            var item = new ToolStripMenuItem
+            {
+                Text = zoom == 0 ? "自動" : $"{zoom}%"
+            };
             item.Click += (_, _) => SetZoomFromContext(zoom);
             _menuViewZoom.DropDownItems.Add(item);
         }
@@ -112,7 +115,7 @@ public sealed partial class MainForm : Form
     /// </summary>
     private double GetActualZoom()
     {
-        var img = _viewModel.PreviewImage;
+        var img = _picPreview.Image;
         if (img is null) return 1.0;
 
         if (_zoomPercent > 0)
@@ -129,7 +132,7 @@ public sealed partial class MainForm : Form
     /// </summary>
     private void UpdatePictureBoxZoom()
     {
-        var img = _viewModel.PreviewImage;
+        var img = _picPreview.Image;
         if (img is null) return;
 
         var zoom = GetActualZoom();
@@ -265,16 +268,28 @@ public sealed partial class MainForm : Form
 
     private void UpdateStatusBar()
     {
-        var img = _viewModel.PreviewImage;
-        var hasImage = img is not null;
+        var hasPreviewImage = _viewModel.PreviewImage is not null;
 
         // 拡大率
-        var zoomText = hasImage ? $"{GetActualZoomPercent()}%" : "-%";
+        var zoomText = hasPreviewImage ? $"{GetActualZoomPercent()}%" : "-%";
         _lblZoom.Text = zoomText;
         _lblZoom.ToolTipText = $"拡大率: {zoomText}";
 
         // イメージサイズ
-        var sizeText = hasImage ? $"{img!.Width}, {img!.Height}" : "-, -";
+        string sizeText;
+        var previewImg = _picPreview.Image;
+        if (previewImg is not null)
+        {
+            sizeText = $"{previewImg.Width}, {previewImg.Height}";
+        }
+        else if (hasPreviewImage)
+        {
+            sizeText = "?, ?";
+        }
+        else
+        {
+            sizeText = "-, -";
+        }
         _lblImageSize.Text = sizeText;
         _lblImageSize.ToolTipText = $"イメージサイズ: ({sizeText})";
 
@@ -418,6 +433,7 @@ public sealed partial class MainForm : Form
                     }
                     UpdateStatusBar();
                     UpdateMenuStates();
+                    UpdateValidationState();
                     break;
 
                 case nameof(MainViewModel.SaveFolderPath):
@@ -431,6 +447,11 @@ public sealed partial class MainForm : Form
                 case nameof(MainViewModel.IsSaved):
                     _picPreview.Invalidate();
                     UpdateStatusBar();
+                    break;
+
+                case nameof(MainViewModel.HasValidTemplate):
+                case nameof(MainViewModel.ValidationMessage):
+                    UpdateValidationState();
                     break;
             }
         };
@@ -474,6 +495,7 @@ public sealed partial class MainForm : Form
         };
 
         UpdateStatusBar();
+        UpdateValidationState();
     }
 
     private void RegisterHotKeys()
@@ -612,7 +634,7 @@ public sealed partial class MainForm : Form
 
     private Point ClientToImage(Point clientPoint)
     {
-        var img = _viewModel.PreviewImage;
+        var img = _picPreview.Image;
         if (img is null) return Point.Empty;
 
         var zoom = GetActualZoom();
@@ -675,7 +697,7 @@ public sealed partial class MainForm : Form
             ? _picPreview.PointToClient(_pnlPreview.PointToScreen(e.Location))
             : e.Location;
         var imgPt = EventToImage(sender, e.Location);
-        _cropSelection.MouseDown(imgPt, _viewModel.PreviewImage.Size);
+        _cropSelection.MouseDown(imgPt, _picPreview.Image!.Size);
         _picPreview.Refresh();
         _pnlPreview.Invalidate();
     }
@@ -687,7 +709,8 @@ public sealed partial class MainForm : Form
             ? _picPreview.PointToClient(_pnlPreview.PointToScreen(e.Location))
             : e.Location;
         var imgPt = EventToImage(sender, e.Location);
-        _cropSelection.MouseMove(imgPt, _viewModel.PreviewImage.Size);
+        if (_picPreview.Image is not null)
+            _cropSelection.MouseMove(imgPt, _picPreview.Image.Size);
         _pnlPreview.Invalidate();
 
         var zoom = GetActualZoom();
@@ -701,9 +724,12 @@ public sealed partial class MainForm : Form
             double offsetX = 0, offsetY = 0;
             if (_zoomPercent == 0)
             {
-                var img = _viewModel.PreviewImage;
-                offsetX = (pw - img.Width * zoom) / 2;
-                offsetY = (ph - img.Height * zoom) / 2;
+                var img = _picPreview.Image;
+                if (img is not null)
+                {
+                    offsetX = (pw - img.Width * zoom) / 2;
+                    offsetY = (ph - img.Height * zoom) / 2;
+                }
             }
 
             var clientSel = new Rectangle(
@@ -779,7 +805,9 @@ public sealed partial class MainForm : Form
     {
         if (!_isCropMode || _viewModel.PreviewImage is null) return;
 
-        var img = _viewModel.PreviewImage;
+        var img = _picPreview.Image;
+        if (img is null) return;
+
         var zoom = GetActualZoom();
         var pw = _picPreview.ClientSize.Width;
         var ph = _picPreview.ClientSize.Height;
@@ -853,7 +881,8 @@ public sealed partial class MainForm : Form
     // ルーペ位置更新（MouseMove から呼ぶ）
     private void UpdateLoupePosition()
     {
-        if (_viewModel.PreviewImage is null)
+        var img = _picPreview.Image;
+        if (img is null)
         {
             _picLoupe.Visible = false;
             return;
@@ -873,7 +902,6 @@ public sealed partial class MainForm : Form
             return;
         }
 
-        var img = _viewModel.PreviewImage;
         var zoom = GetActualZoom();
 
         var loupeSize = _viewModel.Settings.LoupeSize;
@@ -1086,6 +1114,18 @@ public sealed partial class MainForm : Form
     private void TxtFileNameTemplate_TextChanged(object? sender, EventArgs e)
     {
         _viewModel.FileNameTemplateText = _txtFileNameTemplate.Text;
+        AdjustFileNameBoxWidth();
+    }
+
+    /// <summary>
+    /// ファイル名テキストボックスの幅を入力内容に応じて自動調整する。
+    /// </summary>
+    private void AdjustFileNameBoxWidth()
+    {
+        const int minWidth = 200;
+        const int padding = 20;
+        var textWidth = TextRenderer.MeasureText(_txtFileNameTemplate.Text, _txtFileNameTemplate.Font).Width;
+        _txtFileNameTemplate.Width = Math.Max(minWidth, textWidth + padding);
     }
 
     // ─── アンドゥ ──────────────────────────────────
@@ -1272,6 +1312,19 @@ public sealed partial class MainForm : Form
         if (_picLoupe.Visible) UpdateLoupePosition();
     }
 
+    /// <summary>
+    /// ツールバーのバリデーション表示状態を更新する。
+    /// テンプレート検証メッセージの表示/非表示とテキストボックスの背景色を切り替える。
+    /// </summary>
+    private void UpdateValidationState()
+    {
+        var hasError = _viewModel.ValidationMessage is not null;
+        _lblValidation.Text = _viewModel.ValidationMessage ?? "";
+        _lblValidation.Visible = hasError;
+        _txtFileNameTemplate.BackColor = hasError ? Color.MistyRose : SystemColors.Window;
+        _toolTip.SetToolTip(_btnSave, _viewModel.ValidationMessage ?? "イメージを保存します");
+    }
+
     /// <summary>メニュー状態が変更されたことを通知し、次回メニュー表示時に更新する。</summary>
     private void NotifyMenuStateChanged()
     {
@@ -1306,7 +1359,7 @@ public sealed partial class MainForm : Form
         _viewModel.CanZoomIn = canZoomIn;
         _viewModel.CanZoomOut = canZoomOut;
 
-        _menuFileSave.Enabled = hasImage;
+        _menuFileSave.Enabled = _viewModel.CanSave;
         _menuEditUndo.Enabled = hasUndo;
         _menuEditCrop.Enabled = _viewModel.HasSelection;
         _menuEditAutoCrop.Enabled = hasImage && !_viewModel.HasSelection;

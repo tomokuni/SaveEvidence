@@ -19,11 +19,7 @@ namespace app.ViewModels;
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly ISettingsService _settingsService;
-    private int _currentNumber;
     private string _lastSavedFileName = "";
-
-    /// <summary>画像保存時にインクリメントされる、次回ファイル名に使用する数値成分。</summary>
-    public int CurrentNumber => _currentNumber;
 
     /// <summary>選択モード開始デリゲート（View 側から設定されるコールバック）。</summary>
     public Action<CaptureType>? StartSelectionMode { get; set; }
@@ -42,7 +38,6 @@ public sealed partial class MainViewModel : ObservableObject
             ? settings.SaveFolderPath
             : Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "SaveEvidence");
-        _currentNumber = FileNameTemplate.ExtractCurrentNumber(_fileNameTemplateText);
         UpdateSaveFolderDisplayName();
     }
 
@@ -56,7 +51,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>画像が保存済みかどうか</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanSave))]
     [NotifyPropertyChangedFor(nameof(StatusText))]
     private bool _isSaved;
 
@@ -64,6 +58,9 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentFileNamePreview))]
     [NotifyPropertyChangedFor(nameof(StatusText))]
+    [NotifyPropertyChangedFor(nameof(HasValidTemplate))]
+    [NotifyPropertyChangedFor(nameof(ValidationMessage))]
+    [NotifyPropertyChangedFor(nameof(CanSave))]
     private string _fileNameTemplateText = string.Empty;
 
     /// <summary>保存先フォルダパス</summary>
@@ -97,16 +94,15 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>クリップボードにコピー可能かどうかを取得する。</summary>
     public bool CanCopy => PreviewImage is not null;
 
-    /// <summary>保存可能かどうかを取得する（画像があり、かつ未保存の場合のみ保存可能）。</summary>
-    public bool CanSave => PreviewImage is not null && !IsSaved;
+    /// <summary>保存可能かどうかを取得する（画像があり、かつ有効なファイル名テンプレートの場合のみ保存可能）。</summary>
+    public bool CanSave => PreviewImage is not null && HasValidTemplate;
 
     /// <summary>現在のファイル名プレビューテキストを取得する。</summary>
     public string CurrentFileNamePreview
     {
         get
         {
-            var displayNumber = _currentNumber;
-            return $"保存ファイル名: {FileNameTemplate.Generate(FileNameTemplateText, displayNumber)}";
+            return $"保存ファイル名: {FileNameTemplate.Generate(FileNameTemplateText)}";
         }
     }
 
@@ -118,6 +114,19 @@ public sealed partial class MainViewModel : ObservableObject
             if (IsSaved && !string.IsNullOrEmpty(_lastSavedFileName))
                 return $"保存済み {_lastSavedFileName}";
             return "";
+        }
+    }
+
+    /// <summary>ファイル名テンプレートが有効かどうかを取得する。</summary>
+    public bool HasValidTemplate => FileNameTemplate.IsValidTemplate(FileNameTemplateText, out _);
+
+    /// <summary>ファイル名テンプレートの検証エラーメッセージを取得する。有効な場合は null。</summary>
+    public string? ValidationMessage
+    {
+        get
+        {
+            FileNameTemplate.IsValidTemplate(FileNameTemplateText, out var message);
+            return message;
         }
     }
 
@@ -141,7 +150,6 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>ファイル名テンプレート変更時に数値成分を抽出し、設定を保存する。</summary>
     partial void OnFileNameTemplateTextChanged(string value)
     {
-        _currentNumber = FileNameTemplate.ExtractCurrentNumber(value);
         _settingsService.Current.FileNameTemplate = value;
         _settingsService.Save();
     }
@@ -242,7 +250,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         try
         {
-            var fileName = FileNameTemplate.Generate(FileNameTemplateText, _currentNumber);
+            var fileName = FileNameTemplate.Generate(FileNameTemplateText);
             var filePath = Path.Combine(SaveFolderPath, fileName);
 
             if (File.Exists(filePath))
@@ -276,8 +284,7 @@ public sealed partial class MainViewModel : ObservableObject
 
             PreviewImage.Save(filePath, format);
 
-            _currentNumber++;
-            FileNameTemplateText = FileNameTemplate.IncrementRightmostNumber(FileNameTemplateText, _currentNumber);
+            FileNameTemplateText = FileNameTemplate.IncrementRightmostNumber(FileNameTemplateText);
 
             _lastSavedFileName = fileName;
             IsSaved = true;
