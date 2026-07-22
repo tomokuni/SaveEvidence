@@ -41,5 +41,5 @@ Thumbs.db
 # Project-specific
 *.log
 appsettings.local.json
-PublishProfiles/
 *.tmp
+FolderProfile.pubxml.user

@@ -10,6 +10,7 @@
     <StartupObject>app.Program</StartupObject>
     <AnalysisLevel>latest</AnalysisLevel>
     <NoWarn>$(NoWarn);CA2101;SYSLIB1054;MVVMTK0042</NoWarn>
+    <AssemblyName>SaveEvidence</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
