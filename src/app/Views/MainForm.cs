@@ -102,6 +102,7 @@ public sealed partial class MainForm : Form
 
         }
 
+    /// <summary>ズームを自動（画像をパネルにフィット）にリセットする。</summary>
     private void ResetZoomToAuto()
     {
         _zoomIndex = 0;
@@ -227,18 +228,29 @@ public sealed partial class MainForm : Form
             _picBaseLocation.Y - _scrollY);
     }
 
+    /// <summary>垂直スクロールバーの値変更イベントを処理する。</summary>
     private void VScroll_Scroll(object? sender, ScrollEventArgs e)
     {
         _scrollY = e.NewValue;
         UpdatePictureLocation();
     }
 
+    /// <summary>水平スクロールバーの値変更イベントを処理する。</summary>
     private void HScroll_Scroll(object? sender, ScrollEventArgs e)
     {
         _scrollX = e.NewValue;
         UpdatePictureLocation();
     }
 
+    /// <summary>プレビュー画像を新しい画像で差し替え、表示を更新する。古い画像はDisposeされる。</summary>
+    /// <param name="image">新しい表示画像</param>
+    /// <remarks>
+    /// 1. 古い画像をDisposeしてPictureBoxをクリア<br/>
+    /// 2. 画像のコピーを新規作成してPictureBoxに設定<br/>
+    /// 3. ズームを再計算して画像位置を更新<br/>
+    /// 4. 切出しモード中ならCropPaintイベントを再購読<br/>
+    /// 5. ルーペ位置を初期化<br/>
+    /// </remarks>
     private void UpdatePreviewImage(Image image)
     {
         _picPreview.Image?.Dispose();
@@ -261,11 +273,13 @@ public sealed partial class MainForm : Form
         NotifyMenuStateChanged();
     }
 
+    /// <summary>PictureBox描画時（現在は未使用。描画はCropPaintで行う）。</summary>
     private void PicPreview_Paint(object? sender, PaintEventArgs e)
     {
         // 画像のPaintは何もしない
     }
 
+    /// <summary>ステータスバーの表示内容（拡大率、画像サイズ、保存状態、配置、ルーペ状態）を現在の状態に更新する。</summary>
     private void UpdateStatusBar()
     {
         var hasPreviewImage = _viewModel.PreviewImage is not null;
@@ -361,6 +375,7 @@ public sealed partial class MainForm : Form
 
     // ─── マウスホイール ─────────────────────────────
 
+    /// <summary>マウスホイールイベントを処理する。Ctrl+ホイールでズーム、Shift+ホイールで水平スクロール、通常で垂直スクロール。</summary>
     private void PicPreview_MouseWheel(object? sender, MouseEventArgs e)
     {
         if (ModifierKeys == Keys.Control)
@@ -409,6 +424,14 @@ public sealed partial class MainForm : Form
 
     // ─── キャプチャ実行 ─────────────────────────────
 
+    /// <summary>ViewModelとのバインド設定と、プロパティ変更通知の購読を初期化する。</summary>
+    /// <remarks>
+    /// 処理フロー:<br/>
+    /// 1. DataBindings による簡易バインディングの設定（ボタン有効状態、テキスト等）<br/>
+    /// 2. PropertyChanged イベントによる複合バインディングの設定<br/>
+    /// 3. Settings の PropertyChanged 購読<br/>
+    /// 4. 初回表示設定（ToolTip、ステータスバー）<br/>
+    /// </remarks>
     private void InitializeViewModel()
     {
         // ─── MainViewModel の変更通知を DataBindings と PropertyChanged で処理 ──
@@ -498,11 +521,14 @@ public sealed partial class MainForm : Form
         UpdateValidationState();
     }
 
+    /// <summary>現在の設定に基づいて全ホットキーを再登録する。</summary>
     private void RegisterHotKeys()
     {
         _hotKeyManager?.RegisterAll(_viewModel.Settings);
     }
 
+    /// <summary>指定されたキャプチャ種別を実行する。実行中は二重起動を防止する。</summary>
+    /// <param name="captureType">実行するキャプチャの種類</param>
     private void ExecuteCapture(CaptureType captureType)
     {
         if (_isExecutingCapture) return;
@@ -515,6 +541,7 @@ public sealed partial class MainForm : Form
         }
     }
 
+    /// <summary>スクリーン選択キャプチャを実行する。シングルスクリーン時は即時キャプチャ、マルチスクリーン時は SelectionForm を表示する。</summary>
     private void PerformSelectScreenCapture()
     {
         var screens = CaptureManager.GetAllScreenBounds();
@@ -544,6 +571,16 @@ public sealed partial class MainForm : Form
         });
     }
 
+    /// <summary>指定されたキャプチャ種別の SelectionForm をモーダル表示し、選択完了後に画像をプレビューに設定する。</summary>
+    /// <param name="captureType">キャプチャの種類（WindowSelect または AreaSelect）</param>
+    /// <remarks>
+    /// 処理フロー:<br/>
+    /// 1. メインフォームを非表示<br/>
+    /// 2. 300ms待機後、仮想画面全体をキャプチャ<br/>
+    /// 3. SelectionForm をモーダル表示<br/>
+    /// 4. SelectionCompleted イベントでキャプチャ結果をプレビューに設定<br/>
+    /// 5. フォームを再表示<br/>
+    /// </remarks>
     private void StartSelectionMode(CaptureType captureType)
     {
         Hide();
@@ -582,6 +619,7 @@ public sealed partial class MainForm : Form
         });
     }
 
+    /// <summary>フォームを確実に可視状態にする（非表示・最小化時でも復元）。</summary>
     private void EnsureVisible()
     {
         if (!Visible) Show();
@@ -591,10 +629,14 @@ public sealed partial class MainForm : Form
 
     // ─── ボタンイベント ─────────────────────────────
 
+    /// <summary>スクリーン選択ボタンのクリックイベント。</summary>
     private void BtnSelectScreen_Click(object? sender, EventArgs e) => ExecuteCapture(CaptureType.SelectScreen);
+    /// <summary>ウィンドウ選択ボタンのクリックイベント。</summary>
     private void BtnWindowSelect_Click(object? sender, EventArgs e) => ExecuteCapture(CaptureType.WindowSelect);
+    /// <summary>範囲選択ボタンのクリックイベント。</summary>
     private void BtnAreaSelect_Click(object? sender, EventArgs e) => ExecuteCapture(CaptureType.AreaSelect);
 
+    /// <summary>画像からウィンドウ領域を自動検出して切り出す。</summary>
     private void PerformAutoCrop(object? sender, EventArgs e)
     {
         if (_viewModel.PreviewImage is null) return;
@@ -607,6 +649,7 @@ public sealed partial class MainForm : Form
         catch (Exception) { /* 画像処理エラーは無視 */ }
     }
 
+    /// <summary>現在の選択矩形に従って画像を切り出す。切り出し前にアンドゥスタックに退避する。</summary>
     private void PerformCrop(object? sender, EventArgs e)
     {
         if (!_cropSelection.SelectionRect.HasValue) return;
@@ -622,6 +665,7 @@ public sealed partial class MainForm : Form
         catch (Exception) { /* 画像処理エラーは無視 */ }
     }
 
+    /// <summary>切出しモードを終了し、選択状態をリセットしてカーソル・ルーペを初期状態に戻す。</summary>
     private void ExitCropMode()
     {
         _isCropMode = false;
@@ -632,6 +676,9 @@ public sealed partial class MainForm : Form
         NotifyMenuStateChanged();
     }
 
+    /// <summary>PictureBoxのクライアント座標を画像座標に変換する（ズーム・オフセット考慮）。</summary>
+    /// <param name="clientPoint">PictureBoxクライアント座標</param>
+    /// <returns>画像座標（ピクセル単位）。画像範囲外の場合はクランプされる。</returns>
     private Point ClientToImage(Point clientPoint)
     {
         var img = _picPreview.Image;
@@ -665,6 +712,10 @@ public sealed partial class MainForm : Form
         return ClientToImage(picPt);
     }
 
+    /// <summary>イベントの発生源に応じて適切な座標変換を行い、画像座標を返す。</summary>
+    /// <param name="sender">イベント発生元オブジェクト</param>
+    /// <param name="clientPt">クライアント座標</param>
+    /// <returns>画像座標</returns>
     private Point EventToImage(object? sender, Point clientPt)
     {
         if (sender == _pnlPreview)
@@ -685,6 +736,11 @@ public sealed partial class MainForm : Form
         PicPreview_CropMouseDown(sender, e);
     }
 
+    /// <summary>プレビュー画像上のマウスダウンを処理し、切出しモードを開始する。</summary>
+    /// <remarks>
+    /// 左クリックで切出しモードに移行し、CropSelection.MouseDown に処理を委譲する。<br/>
+    /// マウス座標はイベント発生源に応じて PictureBox座標または Panel座標から画像座標に変換される。<br/>
+    /// </remarks>
     private void PicPreview_CropMouseDown(object? sender, MouseEventArgs e)
     {
         if (e.Button != MouseButtons.Left) return;
@@ -702,6 +758,12 @@ public sealed partial class MainForm : Form
         _pnlPreview.Invalidate();
     }
 
+    /// <summary>プレビュー画像上のマウス移動を処理し、選択矩形の更新とカーソル形状の変更を行う。</summary>
+    /// <remarks>
+    /// CropSelection.MouseMove に処理を委譲し、選択矩形のリサイズ/移動/新規作成を行う。<br/>
+    /// マウス位置に応じてカーソル形状（リサイズ/移動/十字）を切り替える。<br/>
+    /// ルーペ位置も併せて更新する。<br/>
+    /// </remarks>
     private void PicPreview_CropMouseMove(object? sender, MouseEventArgs e)
     {
         if (_viewModel.PreviewImage is null) return;
@@ -751,6 +813,7 @@ public sealed partial class MainForm : Form
         UpdateLoupePosition();
     }
 
+    /// <summary>プレビュー画像上のマウスアップを処理し、選択操作を確定する。</summary>
     private void PicPreview_CropMouseUp(object? sender, MouseEventArgs e)
     {
         _cropMouseClientPos = sender == _pnlPreview
@@ -780,6 +843,7 @@ public sealed partial class MainForm : Form
         PicPreview_CropMouseMove(_pnlPreview, args);
     }
 
+    /// <summary>ルーピング画像上のマウスダウンをプレビューパネル座標に変換して転送する。</summary>
     private void PicLoupe_MouseDown(object? sender, MouseEventArgs e)
     {
         if (e.Button == MouseButtons.Right)
@@ -793,6 +857,7 @@ public sealed partial class MainForm : Form
         PicPreview_CropMouseDown(_pnlPreview, args);
     }
 
+    /// <summary>ルーピング画像上のマウスアップをプレビューパネル座標に変換して転送する。</summary>
     private void PicLoupe_MouseUp(object? sender, MouseEventArgs e)
     {
         var screenPt = _picLoupe.PointToScreen(e.Location);
@@ -801,6 +866,12 @@ public sealed partial class MainForm : Form
         PicPreview_CropMouseUp(_pnlPreview, args);
     }
 
+    /// <summary>切出しモード時の選択矩形とハンドル、暗転領域を PictureBox に描画する。</summary>
+    /// <remarks>
+    /// 描画は画像領域のみにクリッピングして行う。<br/>
+    /// 選択領域外を半透明黒で暗転、選択枠を指定色の破線で描画し、8ハンドル（白塗り＋黒枠）を表示する。<br/>
+    /// 未選択時は全面を半透明黒で暗転表示する。<br/>
+    /// </remarks>
     private void PicPreview_CropPaint(object? sender, PaintEventArgs e)
     {
         if (!_isCropMode || _viewModel.PreviewImage is null) return;
@@ -867,6 +938,12 @@ public sealed partial class MainForm : Form
         e.Graphics.ResetClip();
     }
 
+    /// <summary>画像座標の選択矩形からクライアント座標系の8ハンドル位置を算出する（ズーム・オフセット考慮）。</summary>
+    /// <param name="imgRect">画像座標の選択矩形</param>
+    /// <param name="zoom">現在の拡大率</param>
+    /// <param name="ox">X方向の描画オフセット</param>
+    /// <param name="oy">Y方向の描画オフセット</param>
+    /// <returns>8ハンドルのクライアント座標配列</returns>
     private static Point[] GetHandleClientPoints(Rectangle imgRect, double zoom, int ox, int oy)
     {
         var cx = (int)((imgRect.X + imgRect.Width / 2.0) * zoom) + ox;
@@ -878,7 +955,12 @@ public sealed partial class MainForm : Form
         return [new(l, t), new(cx, t), new(r, t), new(l, cy), new(r, cy), new(l, b), new(cx, b), new(r, b)];
     }
 
-    // ルーペ位置更新（MouseMove から呼ぶ）
+    /// <summary>マウスカーソル位置に基づいてルーペの表示位置と拡大画像を更新する。</summary>
+    /// <remarks>
+    /// ルーペはプレビューパネルの右下に固定表示される。<br/>
+    /// LoupeMode.Hide の場合は非表示、LoupeMode.Auto の場合は切出しモード＋選択範囲があるときのみ表示する。<br/>
+    /// マウスが画像領域外にある場合はルーペを非表示にする。<br/>
+    /// </remarks>
     private void UpdateLoupePosition()
     {
         var img = _picPreview.Image;
@@ -1029,6 +1111,7 @@ public sealed partial class MainForm : Form
         oldImage?.Dispose();
     }
 
+    /// <summary>現在の拡大率を取得する（GetActualZoom のエイリアス）。</summary>
     private double GetPreviewZoom() => GetActualZoom();
 
     private int _lastCheckerCellSize;
@@ -1089,6 +1172,7 @@ public sealed partial class MainForm : Form
 
     // ─── 保存 ──────────────────────────────────────
 
+    /// <summary>保存ボタンのクリックイベント。画像保存後にステータスバーを更新し切出しモードを終了する。</summary>
     private void BtnSave_Click(object? sender, EventArgs e)
     {
         if (_viewModel.SaveImage())
@@ -1100,6 +1184,7 @@ public sealed partial class MainForm : Form
 
     // ─── 保存先フォルダ ────────────────────────────
 
+    /// <summary>保存先フォルダ選択ダイアログを表示し、選択されたパスをViewModelに設定する。</summary>
     private void ShowSaveFolderDialog(object? sender, EventArgs e)
     {
         using var dialog = new FolderBrowserDialog();
@@ -1111,6 +1196,7 @@ public sealed partial class MainForm : Form
 
 
 
+    /// <summary>ファイル名テンプレートテキストボックスの変更をViewModelに反映し、テキストボックス幅を自動調整する。</summary>
     private void TxtFileNameTemplate_TextChanged(object? sender, EventArgs e)
     {
         _viewModel.FileNameTemplateText = _txtFileNameTemplate.Text;
@@ -1150,16 +1236,19 @@ public sealed partial class MainForm : Form
 
     // ─── メニューイベント
 
+    /// <summary>ファイルメニューの「保存」クリックイベント。</summary>
     private void MenuFileSave_Click(object? sender, EventArgs e)
     {
         BtnSave_Click(sender, e);
     }
 
+    /// <summary>ファイルメニューの「保存先フォルダ」クリックイベント。</summary>
     private void MenuFileSaveFolder_Click(object? sender, EventArgs e)
     {
         ShowSaveFolderDialog(sender, e);
     }
 
+    /// <summary>編集メニューの「元に戻す」クリックイベント。アンドゥスタックから画像を復元する。</summary>
     private void MenuEditUndo_Click(object? sender, EventArgs e)
     {
         if (_undoStack.Count == 0 || _viewModel.PreviewImage is null) return;
@@ -1178,31 +1267,37 @@ public sealed partial class MainForm : Form
         NotifyMenuStateChanged();
     }
 
+    /// <summary>表示メニューの「ズームイン」クリックイベント。</summary>
     private void MenuEditZoomIn_Click(object? sender, EventArgs e)
     {
         ZoomIn();
     }
 
+    /// <summary>表示メニューの「ズームアウト」クリックイベント。</summary>
     private void MenuEditZoomOut_Click(object? sender, EventArgs e)
     {
         ZoomOut();
     }
 
+    /// <summary>編集メニューの「切り出し」クリックイベント。</summary>
     private void MenuEditCrop_Click(object? sender, EventArgs e)
     {
         PerformCrop(sender, e);
     }
 
+    /// <summary>編集メニューの「自動切り出し」クリックイベント。</summary>
     private void MenuEditAutoCrop_Click(object? sender, EventArgs e)
     {
         PerformAutoCrop(sender, e);
     }
 
+    /// <summary>編集メニューの「コピー」クリックイベント。</summary>
     private void MenuEditCopy_Click(object? sender, EventArgs e)
     {
         _viewModel.CopyToClipboard();
     }
 
+    /// <summary>編集メニューの「貼り付け」クリックイベント。</summary>
     private void MenuEditPaste_Click(object? sender, EventArgs e)
     {
         PushUndo();
@@ -1212,6 +1307,7 @@ public sealed partial class MainForm : Form
         }
     }
 
+    /// <summary>コンテキストメニューの「フォルダビュー」クリックイベント。FolderViewFormをモードレス表示する。</summary>
     private void CtxLinkFolderView_Click(object? sender, EventArgs e)
     {
         if (!string.IsNullOrEmpty(_viewModel.SaveFolderPath))
@@ -1232,11 +1328,13 @@ public sealed partial class MainForm : Form
         }
     }
 
+    /// <summary>ファイルメニューの「フォルダビュー」クリックイベント。</summary>
     private void MenuFolderView_Click(object? sender, EventArgs e)
     {
         CtxLinkFolderView_Click(sender, e);
     }
 
+    /// <summary>ファイルメニューの「エクスプローラで開く」クリックイベント。</summary>
     private void MenuOpenExplorer_Click(object? sender, EventArgs e)
     {
         CtxLinkOpenExplorer_Click(sender, e);
@@ -1253,6 +1351,7 @@ public sealed partial class MainForm : Form
         Clipboard.SetText(path);
     }
 
+    /// <summary>表示メニューの「左上寄せ」クリックイベント。設定を保存し表示を更新する。</summary>
     private void MenuEditAlignLeft_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.CenterAlign = false;
@@ -1260,6 +1359,7 @@ public sealed partial class MainForm : Form
         UpdatePictureBoxZoom();
     }
 
+    /// <summary>表示メニューの「中央寄せ」クリックイベント。設定を保存し表示を更新する。</summary>
     private void MenuEditAlignCenter_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.CenterAlign = true;
@@ -1267,18 +1367,21 @@ public sealed partial class MainForm : Form
         UpdatePictureBoxZoom();
     }
 
+    /// <summary>表示メニューの「ルーペ常時表示」クリックイベント。</summary>
     private void MenuEditShowLoupe_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.LoupeModeValue = LoupeMode.Show;
         _settingsService.Save();
     }
 
+    /// <summary>表示メニューの「ルーペ非表示」クリックイベント。</summary>
     private void MenuViewLoupeHide_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.LoupeModeValue = LoupeMode.Hide;
         _settingsService.Save();
     }
 
+    /// <summary>表示メニューの「ルーペ自動表示」クリックイベント。</summary>
     private void MenuViewLoupeAuto_Click(object? sender, EventArgs e)
     {
         _viewModel.Settings.LoupeModeValue = LoupeMode.Auto;
@@ -1427,6 +1530,7 @@ public sealed partial class MainForm : Form
 
     // ─── ステータスバーコンテキストメニュー ─────────────────────
 
+    /// <summary>ステータスバーの拡大率表示クリックイベント。コンテキストメニューを表示する。</summary>
     private void LblZoom_MouseDown(object? sender, MouseEventArgs e)
     {
         if (_viewModel.PreviewImage is null)
@@ -1435,11 +1539,13 @@ public sealed partial class MainForm : Form
         _contextMenuZoom.Show(_statusStrip, new Point(_lblZoom.Bounds.Left, -_statusStrip.Height));
     }
 
+    /// <summary>ステータスバーの配置表示クリックイベント。コンテキストメニューを表示する。</summary>
     private void LblAlign_MouseDown(object? sender, MouseEventArgs e)
     {
         _contextMenuAlign.Show(_statusStrip, new Point(_lblAlign.Bounds.Left, -_statusStrip.Height));
     }
 
+    /// <summary>ステータスバーのルーペ状態表示クリックイベント。コンテキストメニューを表示する。</summary>
     private void LblLoupe_MouseDown(object? sender, MouseEventArgs e)
     {
         _contextMenuLoupe.Show(_statusStrip, new Point(_lblLoupe.Bounds.Left, -_statusStrip.Height));
@@ -1464,6 +1570,8 @@ public sealed partial class MainForm : Form
         }
     }
 
+    /// <summary>コンテキストメニューから指定された拡大率を設定する。</summary>
+    /// <param name="percent">設定する拡大率（%）</param>
     private void SetZoomFromContext(int percent)
     {
         for (var i = 0; i < s_zoomValues.Length; i++)
@@ -1481,6 +1589,7 @@ public sealed partial class MainForm : Form
         }
     }
 
+    /// <summary>コンテキストメニューの「自動」クリックイベント。</summary>
     private void CtxZoomAuto_Click(object? sender, EventArgs e)
     {
         _zoomIndex = 0;
@@ -1491,24 +1600,42 @@ public sealed partial class MainForm : Form
         NotifyMenuStateChanged();
     }
 
+    /// <summary>25% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom25_Click(object? sender, EventArgs e) { SetZoomFromContext(25); }
+    /// <summary>33% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom33_Click(object? sender, EventArgs e) { SetZoomFromContext(33); }
+    /// <summary>50% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom50_Click(object? sender, EventArgs e) { SetZoomFromContext(50); }
+    /// <summary>67% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom67_Click(object? sender, EventArgs e) { SetZoomFromContext(67); }
+    /// <summary>75% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom75_Click(object? sender, EventArgs e) { SetZoomFromContext(75); }
+    /// <summary>80% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom80_Click(object? sender, EventArgs e) { SetZoomFromContext(80); }
+    /// <summary>90% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom90_Click(object? sender, EventArgs e) { SetZoomFromContext(90); }
+    /// <summary>100% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom100_Click(object? sender, EventArgs e) { SetZoomFromContext(100); }
+    /// <summary>110% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom110_Click(object? sender, EventArgs e) { SetZoomFromContext(110); }
+    /// <summary>125% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom125_Click(object? sender, EventArgs e) { SetZoomFromContext(125); }
+    /// <summary>150% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom150_Click(object? sender, EventArgs e) { SetZoomFromContext(150); }
+    /// <summary>175% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom175_Click(object? sender, EventArgs e) { SetZoomFromContext(175); }
+    /// <summary>200% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom200_Click(object? sender, EventArgs e) { SetZoomFromContext(200); }
+    /// <summary>250% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom250_Click(object? sender, EventArgs e) { SetZoomFromContext(250); }
+    /// <summary>300% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom300_Click(object? sender, EventArgs e) { SetZoomFromContext(300); }
+    /// <summary>400% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom400_Click(object? sender, EventArgs e) { SetZoomFromContext(400); }
+    /// <summary>500% 拡大率コンテキストメニュークリックイベント。</summary>
     private void CtxZoom500_Click(object? sender, EventArgs e) { SetZoomFromContext(500); }
 
+    /// <summary>ファイルメニューの「ホットキー設定」クリックイベント。HotkeyForm をモーダル表示する。</summary>
     private void MenuHotKeySettings_Click(object? sender, EventArgs e)
     {
         using var dialog = new HotkeyForm(_viewModel.Settings, () => _settingsService.Save());
@@ -1516,11 +1643,13 @@ public sealed partial class MainForm : Form
             _hotKeyManager?.RegisterAll(_viewModel.Settings);
     }
 
+    /// <summary>ファイルメニューの「保存先フォルダの変更」クリックイベント。</summary>
     private void MenuSaveFolder_Click(object? sender, EventArgs e)
     {
         ShowSaveFolderDialog(sender, e);
     }
 
+    /// <summary>表示メニューの「表示設定」クリックイベント。SettingsForm をモーダル表示する。</summary>
     private void MenuDisplaySettings_Click(object? sender, EventArgs e)
     {
         using var dialog = new SettingsForm(_viewModel.Settings);
@@ -1543,6 +1672,14 @@ public sealed partial class MainForm : Form
     /// </summary>
     private void ZoomOut() => StepZoom(-1);
 
+    /// <summary>キーボードショートカットを処理する。</summary>
+    /// <remarks>
+    /// 対応するショートカット:<br/>
+    /// - Ctrl+C: 画像をクリップボードにコピー<br/>
+    /// - Ctrl+V: クリップボードから画像を貼り付け<br/>
+    /// - Ctrl+Plus/Add: ズームイン<br/>
+    /// - Ctrl+Minus/Subtract: ズームアウト<br/>
+    /// </remarks>
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
         if (keyData == (Keys.Control | Keys.C))
@@ -1570,6 +1707,7 @@ public sealed partial class MainForm : Form
         return base.ProcessCmdKey(ref msg, keyData);
     }
 
+    /// <summary>ウィンドウメッセージを処理する。WM_HOTKEY メッセージを捕捉してホットキー処理に委譲する。</summary>
     protected override void WndProc(ref Message m)
     {
         const int WM_HOTKEY = 0x0312;
@@ -1585,6 +1723,7 @@ public sealed partial class MainForm : Form
         base.WndProc(ref m);
     }
 
+    /// <summary>前回終了時のウィンドウ位置・サイズ・状態を復元する。</summary>
     private void RestoreFormBounds()
     {
         var bounds = _viewModel.Settings.MainFormBounds;
@@ -1598,6 +1737,7 @@ public sealed partial class MainForm : Form
             WindowState = state;
     }
 
+    /// <summary>フォーム終了時に現在のウィンドウ位置・サイズ・状態を設定に保存する。</summary>
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         if (WindowState == FormWindowState.Normal)
@@ -1610,6 +1750,7 @@ public sealed partial class MainForm : Form
         base.OnFormClosing(e);
     }
 
+    /// <summary>使用中のリソースを解放する（HotKeyManager、チェッカー模様パターン、ブラシ）。</summary>
     protected override void Dispose(bool disposing)
     {
         if (disposing)

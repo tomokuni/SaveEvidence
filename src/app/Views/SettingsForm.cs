@@ -25,6 +25,7 @@ public sealed partial class SettingsForm : Form
         LoadSettings();
     }
 
+    /// <summary>設定オブジェクトの値を各コントロールに読み込む。</summary>
     private void LoadSettings()
     {
         _cmbAlign.SelectedIndex = _settings.CenterAlign ? 0 : 1;
@@ -46,6 +47,7 @@ public sealed partial class SettingsForm : Form
         _numFolderMedium.Value = _settings.FolderMediumIconSize;
     }
 
+    /// <summary>OKボタンクリック時、各コントロールの値を設定オブジェクトに書き戻してダイアログを閉じる。</summary>
     private void BtnOk_Click(object? sender, EventArgs e)
     {
         _settings.CenterAlign = _cmbAlign.SelectedIndex == 0;
@@ -64,8 +66,10 @@ public sealed partial class SettingsForm : Form
         Close();
     }
 
+    /// <summary>キャプチャモードコンボボックスの選択変更イベント。説明文を更新する。</summary>
     private void CmbCaptureMode_SelectedIndexChanged(object? sender, EventArgs e) => UpdateCaptureModeDescription();
 
+    /// <summary>キャプチャモードの説明ラベルを現在の選択に応じて更新する。</summary>
     private void UpdateCaptureModeDescription()
     {
         _lblCaptureModeDesc.Text = _cmbCaptureMode.SelectedIndex switch
@@ -79,17 +83,24 @@ public sealed partial class SettingsForm : Form
         };
     }
 
+    /// <summary>キャンセルボタンクリック時、変更を破棄してダイアログを閉じる。</summary>
     private void BtnCancel_Click(object? sender, EventArgs e)
     {
         DialogResult = DialogResult.Cancel;
         Close();
     }
 
+    /// <summary>キャプチャ境界色選択ボタンのクリックイベント。</summary>
     private void BtnCaptureColor_Click(object? sender, EventArgs e) => PickColor(_txtCaptureBorder);
+    /// <summary>切り出し境界色選択ボタンのクリックイベント。</summary>
     private void BtnCropColor_Click(object? sender, EventArgs e) => PickColor(_txtCropBorder);
+    /// <summary>ルーペ十字線色選択ボタンのクリックイベント。</summary>
     private void BtnCrossColor_Click(object? sender, EventArgs e) => PickColor(_txtLoupeCross);
+    /// <summary>ルーペ外枠色選択ボタンのクリックイベント。</summary>
     private void BtnFrameColor_Click(object? sender, EventArgs e) => PickColor(_txtLoupeFrame);
 
+    /// <summary>ColorDialog を表示し、選択された色名を TextBox に設定する。</summary>
+    /// <param name="tb">色名を設定する TextBox</param>
     private static void PickColor(TextBox tb)
     {
         using var dlg = new ColorDialog();

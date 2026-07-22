@@ -370,6 +370,11 @@ public sealed partial class FolderViewForm : Form
         }
     }
 
+    /// <summary>画像を指定サイズにリサイズする（アスペクト比維持、中央寄せ）。</summary>
+    /// <param name="original">元画像</param>
+    /// <param name="maxWidth">最大幅（ピクセル）</param>
+    /// <param name="maxHeight">最大高さ（ピクセル）</param>
+    /// <returns>リサイズされた新しいビットマップ</returns>
     private static Bitmap ResizeImage(Image original, int maxWidth, int maxHeight)
     {
         var ratio = Math.Min((double)maxWidth / original.Width, (double)maxHeight / original.Height);
@@ -387,6 +392,7 @@ public sealed partial class FolderViewForm : Form
         return thumb;
     }
 
+    /// <summary>アイテムをソートして ListView に追加する。ソート順は設定の昇順／降順に従う。</summary>
     private void SortAndAddItems()
     {
         var sorted = (_sortAscending
@@ -397,6 +403,9 @@ public sealed partial class FolderViewForm : Form
         _listView.Items.AddRange([.. sorted]);
     }
 
+    /// <summary>ファイルサイズを人間可読な文字列に変換する（B/KB/MB/GB）。</summary>
+    /// <param name="bytes">バイト単位のファイルサイズ</param>
+    /// <returns>例: "1.5 MB" のようなフォーマット済文字列</returns>
     private static string FormatFileSize(long bytes)
     {
         if (bytes < 1024) return $"{bytes} B";
@@ -405,6 +414,11 @@ public sealed partial class FolderViewForm : Form
         return $"{bytes / (1024.0 * 1024 * 1024):F2} GB";
     }
 
+    /// <summary>ファイルまたはフォルダのシェルアイコンを取得し、各サイズの ImageList に追加する（キャッシュ対応）。</summary>
+    /// <param name="path">ファイルまたはフォルダのパス</param>
+    /// <param name="isFolder">フォルダの場合は true</param>
+    /// <param name="cache">拡張子ベースのキャッシュ辞書</param>
+    /// <returns>各 ImageList のインデックス (Large, Tile, Medium, Small)</returns>
     private (int Large, int Tile, int Medium, int Small) GetIconIndex(string path, bool isFolder, Dictionary<string, (int Large, int Tile, int Medium, int Small)> cache)
     {
         var key = isFolder ? "FOLDER" : Path.GetExtension(path).ToLowerInvariant();
@@ -462,6 +476,12 @@ public sealed partial class FolderViewForm : Form
         return result;
     }
 
+    /// <summary>アイコンを指定サイズにリサイズして ImageList に追加する。</summary>
+    /// <param name="icon">追加するアイコン</param>
+    /// <param name="imageList">追加先の ImageList</param>
+    /// <param name="width">リサイズ幅（ピクセル）</param>
+    /// <param name="height">リサイズ高さ（ピクセル）</param>
+    /// <returns>追加された ImageList 内のインデックス</returns>
     private static int AddResizedIcon(Icon icon, ImageList imageList, int width, int height)
     {
         using var bmp = icon.ToBitmap();
@@ -477,6 +497,7 @@ public sealed partial class FolderViewForm : Form
         return imageList.Images.Count - 1;
     }
 
+    /// <summary>ListViewで選択されているアイテムを関連付けられたアプリケーションで開く。</summary>
     private void OpenSelectedItem()
     {
         if (_listView.SelectedItems.Count == 0) return;
@@ -498,6 +519,7 @@ public sealed partial class FolderViewForm : Form
         }
     }
 
+    /// <summary>ステータスバーのアイテム数表示を更新する。</summary>
     private void UpdateStatusBar()
     {
         _viewModel.ItemCount = _items.Count;
@@ -505,11 +527,14 @@ public sealed partial class FolderViewForm : Form
 
     private static readonly string[] s_viewModeNames = ["特大", "大", "中", "一覧", "詳細"];
 
+    /// <summary>ListViewのアイテムがアクティブ化（ダブルクリック）された時にファイルを開く。</summary>
     private void ListView_ItemActivate(object? sender, EventArgs e)
     {
         OpenSelectedItem();
     }
 
+    /// <summary>並び替え順を設定し、表示を更新して設定を保存する。</summary>
+    /// <param name="ascending">昇順の場合は true、降順の場合は false</param>
     private void SetSortOrder(bool ascending)
     {
         if (_sortAscending == ascending) return;
@@ -536,6 +561,7 @@ public sealed partial class FolderViewForm : Form
         }
     }
 
+    /// <summary>フォーム終了時に非同期読み込みをキャンセルし、ウィンドウ位置を設定に保存する。</summary>
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         _loadCts?.Cancel();
@@ -553,6 +579,16 @@ public sealed partial class FolderViewForm : Form
         base.OnFormClosing(e);
     }
 
+    /// <summary>表示モードを設定し、ListViewのビューとイメージリストを切り替える。</summary>
+    /// <param name="index">表示モードインデックス（0=特大, 1=大, 2=中, 3=一覧, 4=詳細）</param>
+    /// <remarks>
+    /// 処理フロー:<br/>
+    /// 1. ViewModelとSettingsに現在の表示モードを反映<br/>
+    /// 2. ListView.View をモードに応じて LargeIcon/List/Details に切り替え<br/>
+    /// 3. LargeIcon モード時は適切な ImageList（特大/大/中）を割り当て<br/>
+    /// 4. 詳細モード時は列ヘッダー（名前/サイズ/更新日時）を設定<br/>
+    /// 5. 設定を保存しステータスバーを更新<br/>
+    /// </remarks>
     private void SetViewMode(int index)
     {
         if (index < 0 || index > 4) return;
@@ -595,24 +631,43 @@ public sealed partial class FolderViewForm : Form
         UpdateStatusBar();
     }
 
+    /// <summary>コンテキストメニュー「特大」クリックイベント。</summary>
     private void CtxViewExtraLarge_Click(object? sender, EventArgs e) => SetViewMode(0);
+    /// <summary>コンテキストメニュー「大」クリックイベント。</summary>
     private void CtxViewLarge_Click(object? sender, EventArgs e) => SetViewMode(1);
+    /// <summary>コンテキストメニュー「中」クリックイベント。</summary>
     private void CtxViewMedium_Click(object? sender, EventArgs e) => SetViewMode(2);
+    /// <summary>コンテキストメニュー「一覧」クリックイベント。</summary>
     private void CtxViewList_Click(object? sender, EventArgs e) => SetViewMode(3);
+    /// <summary>コンテキストメニュー「詳細」クリックイベント。</summary>
     private void CtxViewDetails_Click(object? sender, EventArgs e) => SetViewMode(4);
+    /// <summary>コンテキストメニュー「昇順」クリックイベント。</summary>
     private void CtxSortAscending_Click(object? sender, EventArgs e) => SetSortOrder(true);
+    /// <summary>コンテキストメニュー「降順」クリックイベント。</summary>
     private void CtxSortDescending_Click(object? sender, EventArgs e) => SetSortOrder(false);
+    /// <summary>コンテキストメニュー「パスをコピー」クリックイベント。</summary>
     private void CtxCopyFolderPath_Click(object? sender, EventArgs e) => CopyFolderPathToClipboard();
+    /// <summary>メニューバー「エクスプローラで開く」クリックイベント。</summary>
     private void MenuFileOpenExplorer_Click(object? sender, EventArgs e) => OpenFolderInExplorer();
+    /// <summary>メニューバー「パスをコピー」クリックイベント。</summary>
     private void MenuFileCopyFolderPath_Click(object? sender, EventArgs e) => CopyFolderPathToClipboard();
+    /// <summary>メニューバー表示メニュー「特大」クリックイベント。</summary>
     private void MenuViewExtraLarge_Click(object? sender, EventArgs e) => SetViewMode(0);
+    /// <summary>メニューバー表示メニュー「大」クリックイベント。</summary>
     private void MenuViewLarge_Click(object? sender, EventArgs e) => SetViewMode(1);
+    /// <summary>メニューバー表示メニュー「中」クリックイベント。</summary>
     private void MenuViewMedium_Click(object? sender, EventArgs e) => SetViewMode(2);
+    /// <summary>メニューバー表示メニュー「一覧」クリックイベント。</summary>
     private void MenuViewList_Click(object? sender, EventArgs e) => SetViewMode(3);
+    /// <summary>メニューバー表示メニュー「詳細」クリックイベント。</summary>
     private void MenuViewDetails_Click(object? sender, EventArgs e) => SetViewMode(4);
+    /// <summary>メニューバー表示メニュー「昇順」クリックイベント。</summary>
     private void MenuSortAscending_Click(object? sender, EventArgs e) => SetSortOrder(true);
+    /// <summary>メニューバー表示メニュー「降順」クリックイベント。</summary>
     private void MenuSortDescending_Click(object? sender, EventArgs e) => SetSortOrder(false);
+    /// <summary>ステータスバーの表示モードラベルクリックイベント。コンテキストメニューを表示する。</summary>
     private void LblViewMode_MouseDown(object? sender, MouseEventArgs e) => _contextMenuView.Show(Cursor.Position); 
+    /// <summary>ステータスバーのソート状態ラベルクリックイベント。コンテキストメニューを表示する。</summary>
     private void LblSortStatus_MouseDown(object? sender, MouseEventArgs e) => _contextMenuSort.Show(Cursor.Position); 
 
     /// <summary>
@@ -740,8 +795,12 @@ public sealed partial class FolderViewForm : Form
 
 }
 
+/// <summary>表示モードの名前とListView.Viewの対応を表す内部クラス。</summary>
 internal sealed class ViewOption
 {
+    /// <summary>表示モード名（例：「特大」「詳細」）を取得または初期化する。</summary>
     public string Text { get; init; } = "";
+
+    /// <summary>ListView.View の値を取得または初期化する。</summary>
     public View View { get; init; }
 }

@@ -13,43 +13,43 @@ namespace app.Models;
 /// </remarks>
 public sealed partial class Settings : ObservableObject
 {
-    /// <summary>選択スクリーンキャプチャのホットキー</summary>
+    /// <summary>スクリーン選択キャプチャのホットキー設定を取得または設定する。</summary>
     [ObservableProperty]
     private HotKeySetting _selectScreenHotKey = new(HotKeyModifiers.Control | HotKeyModifiers.Shift, Keys.Q);
 
-    /// <summary>ウィンドウ選択キャプチャのホットキー</summary>
+    /// <summary>ウィンドウ選択キャプチャのホットキー設定を取得または設定する。</summary>
     [ObservableProperty]
     private HotKeySetting _windowSelectHotKey = new(HotKeyModifiers.Control | HotKeyModifiers.Shift, Keys.W);
 
-    /// <summary>範囲選択キャプチャのホットキー</summary>
+    /// <summary>範囲選択キャプチャのホットキー設定を取得または設定する。</summary>
     [ObservableProperty]
     private HotKeySetting _areaSelectHotKey = new(HotKeyModifiers.Control | HotKeyModifiers.Shift, Keys.E);
 
-    /// <summary>ファイル名テンプレート</summary>
+    /// <summary>ファイル名テンプレート文字列を取得または設定する。{date}や{time}のプレースホルダを使用可能。</summary>
     [ObservableProperty]
     private string _fileNameTemplate = "screenshot_{date}_{time}.png";
 
-    /// <summary>保存先フォルダパス</summary>
+    /// <summary>キャプチャ画像の保存先フォルダパスを取得または設定する。</summary>
     [ObservableProperty]
     private string _saveFolderPath = string.Empty;
 
-    /// <summary>FolderViewForm の表示モードインデックス</summary>
+    /// <summary>FolderViewForm の表示モードインデックス（0=特大,1=大,2=中,3=小）を取得または設定する。</summary>
     [ObservableProperty]
     private int _folderViewModeIndex = 1;
 
-    /// <summary>FolderViewForm のソート昇順フラグ</summary>
+    /// <summary>FolderViewForm でファイル名ソートの昇順（true）／降順（false）を取得または設定する。</summary>
     [ObservableProperty]
     private bool _folderSortAscending = true;
 
-    /// <summary>MainForm のウィンドウ位置・サイズ</summary>
+    /// <summary>MainForm のウィンドウ位置・サイズを取得または設定する。次回起動時に復元に使用。</summary>
     [ObservableProperty]
     private Rectangle? _mainFormBounds;
 
-    /// <summary>MainForm のウィンドウ状態</summary>
+    /// <summary>MainForm のウィンドウ状態（最大化/最小化/通常）を取得または設定する。</summary>
     [ObservableProperty]
     private FormWindowState _mainFormWindowState = FormWindowState.Normal;
 
-    /// <summary>FolderViewForm のウィンドウ位置・サイズ</summary>
+    /// <summary>FolderViewForm のウィンドウ位置・サイズを取得または設定する。次回起動時に復元に使用。</summary>
     [ObservableProperty]
     private Rectangle? _folderViewFormBounds;
 
@@ -65,39 +65,39 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private int _folderMediumIconSize = 160;
 
-    /// <summary>中央寄せ（true）／左上寄せ（false）</summary>
+    /// <summary>プレビュー画像の中央寄せ（true）／左上寄せ（false）を取得または設定する。</summary>
     [ObservableProperty]
     private bool _centerAlign = true;
 
-    /// <summary>キャプチャ時（SelectionForm）の境界線色</summary>
+    /// <summary>キャプチャ時（SelectionForm）の選択枠境界線色を取得または設定する。</summary>
     [ObservableProperty]
     private string _captureBorderColor = "White";
 
-    /// <summary>プレビュー範囲選択（MainForm crop）の境界線色</summary>
+    /// <summary>プレビュー範囲選択（MainForm crop）の境界線色を取得または設定する。</summary>
     [ObservableProperty]
     private string _cropBorderColor = "White";
 
-    /// <summary>虫眼鏡十字線の色</summary>
+    /// <summary>ルーペ十字線の色を取得または設定する。</summary>
     [ObservableProperty]
     private string _loupeCrossColor = "Red";
 
-    /// <summary>虫眼鏡外枠の色</summary>
+    /// <summary>ルーペ外枠の色を取得または設定する。</summary>
     [ObservableProperty]
     private string _loupeFrameColor = "White";
 
-    /// <summary>虫眼鏡外枠の太さ</summary>
+    /// <summary>ルーペ外枠の太さ（ピクセル）を取得または設定する。</summary>
     [ObservableProperty]
     private int _loupeFrameWidth = 2;
 
-    /// <summary>ルーペの拡大率（4〜32、偶数推奨）。</summary>
+    /// <summary>ルーペの拡大率（4〜32、偶数推奨）を取得または設定する。</summary>
     [ObservableProperty]
     private int _loupeZoomLevel = 8;
 
-    /// <summary>ルーペの一辺のサイズ（ピクセル、64〜512）。</summary>
+    /// <summary>ルーペの一辺のサイズ（ピクセル、64〜512）を取得または設定する。</summary>
     [ObservableProperty]
     private int _loupeSize = 170;
 
-    /// <summary>ルーペの表示モード</summary>
+    /// <summary>ルーペの表示モード（表示/非表示/自動）を取得または設定する。</summary>
     [ObservableProperty]
     private LoupeMode _loupeModeValue = LoupeMode.Hide;
 

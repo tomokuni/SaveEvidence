@@ -206,45 +206,63 @@ public static partial class CaptureManager
         return Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
     }
 
+    /// <summary>GetWindowRect Win32 API。ウィンドウの矩形領域を取得する。</summary>
     [LibraryImport("user32.dll", EntryPoint = "GetWindowRect", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool GetWindowRectNative(IntPtr hWnd, out RECT lpRect);
 
+    /// <summary>WindowFromPoint Win32 API。指定座標にあるウィンドウハンドルを取得する。</summary>
     [LibraryImport("user32.dll", EntryPoint = "WindowFromPoint")]
     private static partial IntPtr WindowFromPoint(POINT point);
 
+    /// <summary>GetCursorPos Win32 API。マウスカーソルの現在位置をスクリーン座標で取得する。</summary>
     [LibraryImport("user32.dll", EntryPoint = "GetCursorPos")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool GetCursorPosNative(out POINT lpPoint);
 
+    /// <summary>GetAncestor Win32 API。指定ウィンドウの祖先（GA_ROOT=トップレベル）を取得する。</summary>
     [LibraryImport("user32.dll")]
     private static partial IntPtr GetAncestor(IntPtr hWnd, uint gaFlags);
 
+    /// <summary>PrintWindow Win32 API。ウィンドウの内容を指定デバイスコンテキストに描画する。</summary>
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, uint nFlags);
 
+    /// <summary>DwmGetWindowAttribute Win32 API。DWM（Desktop Window Manager）からウィンドウ属性を取得する。</summary>
     [DllImport("dwmapi.dll")]
     private static extern int DwmGetWindowAttribute(IntPtr hWnd, int dwAttribute, ref RECT pvAttribute, int cbAttribute);
 
+    /// <summary>GetAncestor の GA_ROOT 定数（ルートトップレベルウィンドウを取得）。</summary>
     private const uint GA_ROOT = 2;
+    /// <summary>PrintWindow の PW_CLIENTONLY フラグ（クライアント領域のみ描画）。</summary>
     private const uint PW_CLIENTONLY = 0x00000001;
+    /// <summary>PrintWindow の PW_RENDERFULLCONTENT フラグ（DWMに完全描画を要求）。</summary>
     private const uint PW_RENDERFULLCONTENT = 0x00000002;
+    /// <summary>DwmGetWindowAttribute の DWMWA_EXTENDED_FRAME_BOUNDS 属性（半透明影を除外した可視矩形）。</summary>
     private const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
 
+    /// <summary>Win32 RECT 構造体（Left, Top, Right, Bottom）。</summary>
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT
     {
+        /// <summary>左端のX座標。</summary>
         public int Left;
+        /// <summary>上端のY座標。</summary>
         public int Top;
+        /// <summary>右端のX座標。</summary>
         public int Right;
+        /// <summary>下端のY座標。</summary>
         public int Bottom;
     }
 
+    /// <summary>Win32 POINT 構造体（X, Y）。</summary>
     [StructLayout(LayoutKind.Sequential)]
     private struct POINT
     {
+        /// <summary>X座標。</summary>
         public int X;
+        /// <summary>Y座標。</summary>
         public int Y;
     }
 }

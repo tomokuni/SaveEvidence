@@ -119,6 +119,7 @@ public sealed partial class HotkeyForm : Form
         return true;
     }
 
+    /// <summary>フォーム終了時にキー入力受付状態を解除する。</summary>
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         _isCapturing = false;

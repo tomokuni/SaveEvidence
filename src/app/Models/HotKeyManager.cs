@@ -95,17 +95,29 @@ public sealed partial class HotKeyManager(IntPtr hWnd) : IDisposable
         Register(settings.AreaSelectHotKey, CaptureType.AreaSelect);
     }
 
+    /// <summary>使用中のリソースを解放し、全ホットキーの登録を解除する。</summary>
     public void Dispose()
     {
         UnregisterAll();
     }
 
+    /// <summary>WM_HOTKEY メッセージID。</summary>
     private const int WM_HOTKEY = 0x0312;
 
+    /// <summary>RegisterHotKey Win32 API。グローバルホットキーを登録する。</summary>
+    /// <param name="hWnd">ホットキー通知を受け取るウィンドウハンドル</param>
+    /// <param name="id">ホットキーの一意識別子</param>
+    /// <param name="fsModifiers">修飾キーフラグの組み合わせ</param>
+    /// <param name="vk">仮想キーコード</param>
+    /// <returns>登録が成功した場合は true</returns>
     [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, uint vk);
 
+    /// <summary>UnregisterHotKey Win32 API。グローバルホットキーの登録を解除する。</summary>
+    /// <param name="hWnd">ホットキーを登録したウィンドウハンドル</param>
+    /// <param name="id">解除するホットキーの識別子</param>
+    /// <returns>解除が成功した場合は true</returns>
     [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool UnregisterHotKey(IntPtr hWnd, int id);

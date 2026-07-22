@@ -304,6 +304,12 @@ public sealed partial class SelectionForm : Form
         return -1;
     }
 
+    /// <summary>マウスダウンイベントを処理する。キャプチャ種別に応じて選択の開始または確定を行う。</summary>
+    /// <remarks>
+    /// AreaSelect: ドラッグ開始点を記録<br/>
+    /// SelectScreen: クリックされたスクリーンを確定してイベント発火<br/>
+    /// WindowSelect: ハイライト中のウィンドウを確定してイベント発火<br/>
+    /// </remarks>
     private void SelectionForm_MouseDown(object? sender, MouseEventArgs e)
     {
         try
@@ -343,6 +349,12 @@ public sealed partial class SelectionForm : Form
         }
     }
 
+    /// <summary>マウス移動イベントを処理する。キャプチャ種別に応じてハイライト表示や選択矩形を更新する。</summary>
+    /// <remarks>
+    /// AreaSelect: ドラッグ中の選択矩形を更新<br/>
+    /// SelectScreen: マウス下のスクリーンをハイライト<br/>
+    /// WindowSelect: マウス下のウィンドウを検出してハイライト<br/>
+    /// </remarks>
     private void SelectionForm_MouseMove(object? sender, MouseEventArgs e)
     {
         try
@@ -381,6 +393,8 @@ public sealed partial class SelectionForm : Form
         }
     }
 
+    /// <summary>マウスアップイベントを処理する。領域選択モードで選択が確定した場合、SelectionCompleted イベントを発火する。</summary>
+    /// <remarks>選択矩形が5x5ピクセル未満の場合は無効として扱われる。</remarks>
     private void SelectionForm_MouseUp(object? sender, MouseEventArgs e)
     {
         try
@@ -414,6 +428,7 @@ public sealed partial class SelectionForm : Form
         }
     }
 
+    /// <summary>キーダウンイベントを処理する。Escapeキーでキャプチャをキャンセルする。</summary>
     private void SelectionForm_KeyDown(object? sender, KeyEventArgs e)
     {
         try
@@ -497,9 +512,7 @@ public sealed partial class SelectionForm : Form
         return sb.ToString();
     }
 
-    /// <summary>
-    /// キャプチャをキャンセルする
-    /// </summary>
+    /// <summary>キャプチャをキャンセルし、Cancelled イベントを発火してフォームを閉じる。</summary>
     private void CancelCapture()
     {
         try
@@ -524,6 +537,10 @@ public sealed partial class SelectionForm : Form
         }
     }
 
+    /// <summary>2つの点から正規化された矩形（左上・右下が正しい矩形）を算出する。</summary>
+    /// <param name="start">開始点</param>
+    /// <param name="end">終了点</param>
+    /// <returns>幅・高さが正の値となる Rectangle</returns>
     private static Rectangle GetNormalizedRectangle(Point start, Point end)
     {
         var x = Math.Min(start.X, end.X);
@@ -533,6 +550,7 @@ public sealed partial class SelectionForm : Form
         return new Rectangle(x, y, width, height);
     }
 
+    /// <summary>キーボードショートカットを処理する。Escapeキーでキャプチャをキャンセルする。</summary>
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
         try
@@ -550,6 +568,7 @@ public sealed partial class SelectionForm : Form
         return base.ProcessCmdKey(ref msg, keyData);
     }
 
+    /// <summary>使用中のリソースを解放する（タイマー、イベントハンドラ）。</summary>
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -566,21 +585,30 @@ public sealed partial class SelectionForm : Form
         base.Dispose(disposing);
     }
 
+    /// <summary>GetWindowText Win32 API。ウィンドウのタイトルバーテキストを取得する。</summary>
     [DllImport("user32.dll", EntryPoint = "GetWindowText", CharSet = CharSet.Auto)]
     private static extern int GetWindowTextNative(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
 
+    /// <summary>EnumWindows Win32 API。全トップレベルウィンドウを列挙する。</summary>
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
+    /// <summary>IsWindowVisible Win32 API。指定されたウィンドウが可視状態か判定する。</summary>
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsWindowVisible(IntPtr hWnd);
 
+    /// <summary>GetAncestor Win32 API。指定されたウィンドウの親/ルートウィンドウを取得する。</summary>
     [DllImport("user32.dll")]
     private static extern IntPtr GetAncestor(IntPtr hWnd, uint gaFlags);
 
+    /// <summary>EnumWindows に渡すコールバックデリゲート。</summary>
+    /// <param name="hWnd">列挙されたウィンドウハンドル</param>
+    /// <param name="lParam">アプリケーション定義の追加パラメータ</param>
+    /// <returns>列挙を続行する場合は true、停止する場合は false</returns>
     private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
+    /// <summary>GetAncestor に指定する GA_ROOT 定数（ルートウィンドウを取得）。</summary>
     private const uint GA_ROOT = 2;
 }

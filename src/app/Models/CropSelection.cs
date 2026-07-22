@@ -98,10 +98,16 @@ public sealed class CropSelection
     }
 
     /// <summary>
-    /// マウス移動処理
+    /// マウスの移動に応じて、アクティブな操作（新規選択、リサイズ、移動）を実行する。
     /// </summary>
-    /// <param name="imgPoint">画像上の座標</param>
-    /// <param name="imageSize">画像サイズ</param>
+    /// <param name="imgPoint">画像上の現在のマウス座標（ピクセル単位）</param>
+    /// <param name="imageSize">画像サイズ（ピクセル単位）</param>
+    /// <remarks>
+    /// 以下の3種類の操作を自動的に振り分ける:<br/>
+    /// - リサイズ中（_activeHandle != None）: 選択矩形を8方向ハンドルに従って変形<br/>
+    /// - 移動中（_isMoving）: 選択矩形全体をマウス移動量に応じて平行移動<br/>
+    /// - 新規選択中（_isDragging）: ドラッグ開始点から現在位置までの矩形を計算<br/>
+    /// </remarks>
     public void MouseMove(Point imgPoint, Size imageSize)
     {
         if (_activeHandle != HandleType.None)
@@ -131,6 +137,13 @@ public sealed class CropSelection
         }
     }
 
+    /// <summary>
+    /// マウスボタンを離した時の処理。アクティブな操作（リサイズ／移動／新規選択）を確定する。
+    /// </summary>
+    /// <remarks>
+    /// ドラッグ中だった場合は選択を終了する。<br/>
+    /// 新規ドラッグの結果、選択矩形が5x5ピクセル未満の場合は選択を無効（null）とする。<br/>
+    /// </remarks>
     public void MouseUp()
     {
 
@@ -158,8 +171,14 @@ public sealed class CropSelection
     }
 
     /// <summary>
-    /// カーソル位置に対応する適切なカーソルを返す（画像座標ベース）
+    /// カーソル位置に対応する適切なカーソル形状を返す（画像座標ベース）。
     /// </summary>
+    /// <param name="imgPoint">画像上のマウス座標（ピクセル単位）</param>
+    /// <returns>該当するカーソル。選択領域外または未選択の場合は null。</returns>
+    /// <remarks>
+    /// カーソルがハンドル上にある場合はリサイズ方向に対応したカーソル、領域内の場合は SizeAll、
+    /// 領域外の場合は null を返す。<br/>
+    /// </remarks>
     public Cursor? GetCursor(Point imgPoint)
     {
         if (!SelectionRect.HasValue)
@@ -177,11 +196,16 @@ public sealed class CropSelection
     }
 
     /// <summary>
-    /// カーソル位置に対応する適切なカーソルを返す（クライアント座標ベース、固定ヒットサイズ）
+    /// カーソル位置に対応する適切なカーソル形状を返す（クライアント座標ベース、固定ヒットサイズ）。
     /// </summary>
-    /// <param name="clientPoint">クライアント座標</param>
-    /// <param name="clientHandlePoints">GetHandleClientPoints で算出した8ハンドルのクライアント座標</param>
+    /// <param name="clientPoint">クライアント座標（ピクセル単位）</param>
+    /// <param name="clientHandlePoints"><c>GetHandleClientPoints</c> で算出した8ハンドルのクライアント座標配列</param>
     /// <param name="clientRect">選択領域のクライアント座標（画面の表示領域）</param>
+    /// <returns>該当するカーソル。選択領域外または未選択の場合は null。</returns>
+    /// <remarks>
+    /// <see cref="GetCursor"/> とは異なり、拡大率に依存しない固定ピクセルサイズ（HandleSize=24）で
+    /// ヒットテストを行う。これにより、ズーム倍率に関わらず一定の操作性を確保する。<br/>
+    /// </remarks>
     public Cursor? GetCursorClient(Point clientPoint, Point[] clientHandlePoints, Rectangle clientRect)
     {
         if (!SelectionRect.HasValue)
@@ -212,8 +236,15 @@ public sealed class CropSelection
     }
 
     /// <summary>
-    /// 選択領域とハンドルを画像上に描画する
+    /// 選択領域と8方向ハンドルを画像上に描画する。
     /// </summary>
+    /// <param name="g">描画先の Graphics オブジェクト</param>
+    /// <param name="imageSize">画像サイズ（ピクセル単位）</param>
+    /// <remarks>
+    /// 未選択時は全面を半透明黒（Alpah=80）で暗転表示する。<br/>
+    /// 選択時は選択領域外のみを半透明黒（Alpha=100）で暗転し、選択領域を白枠で囲む。<br/>
+    /// 8つのハンドル（白塗り＋黒枠）を各頂点と辺の中点に描画する。<br/>
+    /// </remarks>
     public void Draw(Graphics g, Size imageSize)
     {
         if (!SelectionRect.HasValue)
@@ -251,8 +282,11 @@ public sealed class CropSelection
         }
     }
 
-    // ---- private ----
+    // ---- private メソッド ----
 
+    /// <summary>選択矩形の8つのハンドル位置（画像座標）を算出する。</summary>
+    /// <param name="rect">選択矩形</param>
+    /// <returns>8ハンドルの座標配列（左上、上中央、右上、左中央、右中央、左下、下中央、右下の順）</returns>
     private static Point[] GetHandlePoints(Rectangle rect)
     {
         var cx = rect.X + rect.Width / 2;
@@ -265,6 +299,10 @@ public sealed class CropSelection
         ];
     }
 
+    /// <summary>指定された点がどのハンドル領域内にあるかを判定する。</summary>
+    /// <param name="pt">判定する点（画像座標）</param>
+    /// <param name="rect">選択矩形</param>
+    /// <returns>該当する HandleType。いずれのハンドルにも当たらない場合は <see cref="HandleType.None"/>。</returns>
     private static HandleType HitTestHandle(Point pt, Rectangle rect)
     {
         var pts = GetHandlePoints(rect);
@@ -282,6 +320,10 @@ public sealed class CropSelection
         return HandleType.None;
     }
 
+    /// <summary>指定された点が選択領域の内部（ハンドル領域を除く）にあるかどうかを判定する。</summary>
+    /// <param name="pt">判定する点（画像座標）</param>
+    /// <param name="sel">選択矩形</param>
+    /// <returns>内部にある場合は true</returns>
     private static bool IsInsideSelection(Point pt, Rectangle sel)
     {
         if (HitTestHandle(pt, sel) != HandleType.None)
@@ -290,6 +332,9 @@ public sealed class CropSelection
         return inner.Contains(pt);
     }
 
+    /// <summary>ハンドルの種類に対応するマウスカーソル形状を取得する。</summary>
+    /// <param name="handle">ハンドルの種類</param>
+    /// <returns>対応する Cursor オブジェクト</returns>
     private static Cursor GetHandleCursor(HandleType handle) => handle switch
     {
         HandleType.TopLeft or HandleType.BottomRight => Cursors.SizeNWSE,
@@ -299,6 +344,13 @@ public sealed class CropSelection
         _ => Cursors.SizeAll
     };
 
+    /// <summary>選択矩形を指定されたハンドル方向にリサイズする。最小サイズは5x5ピクセル。</summary>
+    /// <param name="original">元の選択矩形</param>
+    /// <param name="handle">操作中のハンドル</param>
+    /// <param name="newPos">新しいマウス位置（画像座標）</param>
+    /// <param name="imgW">画像幅</param>
+    /// <param name="imgH">画像高さ</param>
+    /// <returns>リサイズ後の矩形</returns>
     private static Rectangle ResizeRect(Rectangle original, HandleType handle, Point newPos, int imgW, int imgH)
     {
         var l = original.Left;
@@ -326,7 +378,10 @@ public sealed class CropSelection
         return new Rectangle(l, t, r - l + 1, b - t + 1);
     }
 
-    /// <summary>2点を正規化し、両方の点を含むインクルーシブな矩形を返す。</summary>
+    /// <summary>2点を正規化し、両方の点を含むインクルーシブな矩形を返す（幅・高さは1以上を保証）。</summary>
+    /// <param name="p1">1点目の座標</param>
+    /// <param name="p2">2点目の座標</param>
+    /// <returns>両点を含む Rectangle</returns>
     private static Rectangle NormalizeRect(Point p1, Point p2)
     {
         var x = Math.Min(p1.X, p2.X);

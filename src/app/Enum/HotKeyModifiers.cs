@@ -2,7 +2,8 @@ namespace app.Enum;
 
 /// <summary>ホットキーの修飾キーを指定するためのフラグ列挙型。</summary>
 /// <remarks>
-/// ビットフラグとして設計されており、複数の修飾キーを組み合わせて使用する。
+/// ビットフラグとして設計されており、複数の修飾キーを組み合わせて使用する。<br/>
+/// <see cref="HotKeySetting"/> と組み合わせてホットキーの一意な組合せを定義する。<br/>
 /// </remarks>
 [Flags]
 public enum HotKeyModifiers

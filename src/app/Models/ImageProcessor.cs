@@ -47,6 +47,17 @@ public static class ImageProcessor
         return Crop(image, bounds);
     }
 
+    /// <summary>画像四隅の背景色を基準に、ウィンドウ領域の矩形を自動検出する。</summary>
+    /// <param name="bitmap">解析対象のビットマップ</param>
+    /// <returns>検出されたウィンドウ領域の矩形。検出失敗時は画像全体の矩形を返す。</returns>
+    /// <remarks>
+    /// 処理フロー:<br/>
+    /// 1. 四隅のピクセル色を取得し、最頻色を背景色として決定<br/>
+    /// 2. 上・下・左・右から背景色と異なるピクセルが現れる境界を探索<br/>
+    /// 3. 検出領域が10x10ピクセル未満の場合は検出失敗として画像全体を返す<br/>
+    /// <br/>
+    /// 最適化施策: 20ピクセル間隔のサンプリング走査により、全ピクセル検査を回避。<br/>
+    /// </remarks>
     private static Rectangle DetectWindowBounds(Bitmap bitmap)
     {
         var width = bitmap.Width;
@@ -77,8 +88,12 @@ public static class ImageProcessor
         return new Rectangle(left, top, detectedWidth, detectedHeight);
     }
 
+    /// <summary>色をint値（ARGB形式の下位24bit）に変換する。GroupByのキー生成用。</summary>
+    /// <param name="c">変換する色</param>
+    /// <returns>RGB各8bitを連結したint値</returns>
     private static int ColorToArgbKey(Color c) => (c.R << 16) | (c.G << 8) | c.B;
 
+    /// <summary>上端から背景色が続く行数をスキャンし、最初の非背景色行のY座標を返す。</summary>
     private static int ScanTopBg(Bitmap bmp, Color bg, int w, int h)
     {
         for (var y = 0; y < h; y++)
@@ -86,6 +101,7 @@ public static class ImageProcessor
         return 0;
     }
 
+    /// <summary>下端から背景色が続く行数をスキャンし、最後の非背景色行のY座標を返す。</summary>
     private static int ScanBottomBg(Bitmap bmp, Color bg, int w, int h, int top)
     {
         for (var y = h - 1; y >= top; y--)
@@ -93,6 +109,7 @@ public static class ImageProcessor
         return h - 1;
     }
 
+    /// <summary>左端から背景色が続く列をスキャンし、最初の非背景色列のX座標を返す。</summary>
     private static int ScanLeftBg(Bitmap bmp, Color bg, int w, int top, int bottom)
     {
         for (var x = 0; x < w; x++)
@@ -100,6 +117,7 @@ public static class ImageProcessor
         return 0;
     }
 
+    /// <summary>右端から背景色が続く列をスキャンし、最後の非背景色列のX座標を返す。</summary>
     private static int ScanRightBg(Bitmap bmp, Color bg, int w, int left, int top, int bottom)
     {
         for (var x = w - 1; x >= left; x--)
@@ -107,6 +125,8 @@ public static class ImageProcessor
         return w - 1;
     }
 
+    /// <summary>指定された行の全サンプルピクセルが指定色に類似しているかを判定する。</summary>
+    /// <remarks>20ピクセル間隔でサンプリングし、全ピクセル検査を回避する。</remarks>
     private static bool IsRowColor(Bitmap bmp, int y, Color c, int w)
     {
         var step = Math.Max(1, w / 20);
@@ -115,6 +135,8 @@ public static class ImageProcessor
         return true;
     }
 
+    /// <summary>指定された列の全サンプルピクセルが指定色に類似しているかを判定する。</summary>
+    /// <remarks>20ピクセル間隔でサンプリングし、全ピクセル検査を回避する。</remarks>
     private static bool IsColColor(Bitmap bmp, int x, Color c, int top, int bottom)
     {
         var step = Math.Max(1, (bottom - top) / 20);
@@ -124,8 +146,14 @@ public static class ImageProcessor
     }
 
     /// <summary>
-    /// 2つの色が類似しているかどうかを判定する（許容誤差 30）
+    /// 2つの色が類似しているかどうかを判定する。
     /// </summary>
+    /// <param name="a">比較する色1</param>
+    /// <param name="b">比較する色2</param>
+    /// <returns>RGB各成分の差分合計が30未満の場合は true（類似とみなす）</returns>
+    /// <remarks>
+    /// この許容値（30）は背景色のわずかなグラデーションやアンチエイリアスの影響を無視するために設定している。<br/>
+    /// </remarks>
     private static bool IsColorSimilar(Color a, Color b)
     {
         var diff = Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
