@@ -1,0 +1,262 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:app.ViewModels"
+             xmlns:helpers="clr-namespace:app.Helpers"
+             xmlns:converters="clr-namespace:app.Converters"
+             x:Class="app.Views.Pages.SettingsPage"
+             x:DataType="vm:MainViewModel">
+    <UserControl.Resources>
+        <converters:ColorDisplayConverter x:Key="ColorDisplayConverter"/>
+        <converters:StringToBrushConverter x:Key="StringToBrushConverter"/>
+    </UserControl.Resources>
+    <Grid RowDefinitions="*">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                  Margin="10">
+
+            <!-- 保存設定 -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1" Grid.Row="0" Margin="0,0,0,5" Padding="5">
+                <StackPanel>
+                    <TextBlock Text="保存設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="5">
+                        <Label Content="保存先フォルダ:" Grid.Column="0"/>
+                        <Button Content="参照..." Grid.Column="1" Click="OnBrowseFolderClick"/>
+                        <TextBox Text="{Binding SaveFolderPath}" Grid.Column="2"
+                                 MinWidth="400" 
+                                 VerticalContentAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 画像設定 -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1" Grid.Row="1" Margin="0,0,0,5" Padding="5">
+                <StackPanel>
+                    <TextBlock Text="画像設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <CheckBox IsChecked="{Binding Settings.CenterAlign}"
+                              Content="プレビュー画像を中央に配置"/>
+                    <Grid ColumnDefinitions="Auto,Auto" Margin="0,5,0,0">
+                        <Label Content="市松模様のタイルサイズ:" Grid.Column="0"/>
+                        <NumericUpDown Value="{Binding Settings.PreviewCheckerSize}"
+                                       Minimum="1" Maximum="20" Increment="1"
+                                       Grid.Column="1" MinWidth="120"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- キャプチャ設定 -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1" Grid.Row="2" Margin="0,0,0,5" Padding="5">
+                <StackPanel>
+                    <TextBlock Text="キャプチャ設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <CheckBox IsChecked="{Binding Settings.HideMainWindowOnCapture}"
+                              Content="キャプチャ時にメインウィンドウを隠す"
+                              Margin="0,5,0,0"/>
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto" Margin="0,5,0,0"
+                          ColumnSpacing="5" RowSpacing="5">
+                        <Label Content="方式:" Grid.Row="0" Grid.Column="0"/>
+                        <ComboBox SelectedIndex="{Binding Settings.CaptureModeIndex}"
+                                  Grid.Column="1" MinWidth="120">
+                            <ComboBoxItem>PrintWindow（推奨）</ComboBoxItem>
+                            <ComboBoxItem>CopyFromScreen</ComboBoxItem>
+                        </ComboBox>
+                        <Label Content="キャプチャ枠の色:" Grid.Row="1" Grid.Column="0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="3"
+                                    Grid.Row="1" Grid.Column="1">
+                            <Border Width="18" Height="18"
+                                    CornerRadius="2"
+                                    BorderBrush="Gray" BorderThickness="1"
+                                    VerticalAlignment="Center"
+                                    Background="{Binding Settings.CaptureBorderColor, Converter={StaticResource StringToBrushConverter}}"/>
+                            <ComboBox x:Name="CaptureBorderColorCombo"
+                                      ItemsSource="{x:Static helpers:ColorEntry.All}"
+                                      Text="{Binding Settings.CaptureBorderColor, Converter={StaticResource ColorDisplayConverter}}"
+                                      IsEditable="True"
+                                      MinWidth="120"
+                                      SelectionChanged="OnColorComboBoxSelectionChanged"
+                                      LostFocus="OnColorComboBoxLostFocus"
+                                      Tag="CaptureBorderColor"
+                                      ToolTip.Tip="色名または16進カラーコードを入力、または▼から選択">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:CompileBindings="False">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Border Width="14" Height="14" CornerRadius="2"
+                                                    BorderBrush="Gray" BorderThickness="1"
+                                                    Background="{Binding Hex}"/>
+                                            <TextBlock Text="{Binding DisplayName}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Content="…" MinWidth="24" MinHeight="22"
+                                    Click="OnColorPickerClick"
+                                    Tag="CaptureBorderColor"
+                                    ToolTip.Tip="色選択ダイアログ"/>
+                        </StackPanel>
+                        <Label Content="キャプチャ枠の不透明度:" Grid.Row="2" Grid.Column="0"/>
+                        <NumericUpDown Value="{Binding Settings.CaptureBorderOpacity}"
+                                       Minimum="0.0" Maximum="1.0" Increment="0.05"
+                                       Grid.Row="2" Grid.Column="1" MinWidth="120"/>
+                        <Label Content="キャプチャ時の不透明度:" Grid.Row="3" Grid.Column="0"/>
+                        <NumericUpDown Value="{Binding Settings.CaptureOverlayOpacity}"
+                                       Minimum="0.0" Maximum="1.0" Increment="0.05"
+                                       Grid.Row="3" Grid.Column="1" MinWidth="120"/>
+                        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                                    Orientation="Horizontal" Spacing="5" Margin="0,5,0,0">
+                            <Label Content="色の並び順:"/>
+                            <ComboBox SelectedIndex="0" MinWidth="150"
+                                      SelectionChanged="OnColorSortModeChanged">
+                                <ComboBoxItem>色名順 (A→Z)</ComboBoxItem>
+                                <ComboBoxItem>色相順 (虹色順)</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ルーペ設定 -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1" Grid.Row="3" Margin="0,0,0,5" Padding="5">
+                <StackPanel>
+                    <TextBlock Text="ルーペ設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                          ColumnSpacing="5" RowSpacing="5">
+                        <Label Content="拡大率:" Grid.Row="0" Grid.Column="0"/>
+                        <NumericUpDown Value="{Binding Settings.LoupeZoomLevel}"
+                                       Minimum="4" Maximum="32" Increment="2"
+                                       Grid.Row="0" Grid.Column="1" MinWidth="20"/>
+                        <Label Content="サイズ:" Grid.Row="1" Grid.Column="0"/>
+                        <NumericUpDown Value="{Binding Settings.LoupeSize}"
+                                       Minimum="64" Maximum="512" Increment="8"
+                                       Grid.Row="1" Grid.Column="1" MinWidth="20"/>
+                        <Label Content="十字線色:" Grid.Row="2" Grid.Column="0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="3"
+                                    Grid.Row="2" Grid.Column="1">
+                            <Border Width="18" Height="18"
+                                    CornerRadius="2"
+                                    BorderBrush="Gray" BorderThickness="1"
+                                    VerticalAlignment="Center"
+                                    Background="{Binding Settings.LoupeCrossColor, Converter={StaticResource StringToBrushConverter}}"/>
+                            <ComboBox x:Name="LoupeCrossColorCombo"
+                                      ItemsSource="{x:Static helpers:ColorEntry.All}"
+                                      Text="{Binding Settings.LoupeCrossColor, Converter={StaticResource ColorDisplayConverter}}"
+                                      IsEditable="True"
+                                      MinWidth="120"
+                                      SelectionChanged="OnColorComboBoxSelectionChanged"
+                                      LostFocus="OnColorComboBoxLostFocus"
+                                      Tag="LoupeCrossColor"
+                                      ToolTip.Tip="色名または16進カラーコードを入力、または▼から選択">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:CompileBindings="False">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Border Width="14" Height="14" CornerRadius="2"
+                                                    BorderBrush="Gray" BorderThickness="1"
+                                                    Background="{Binding Hex}"/>
+                                            <TextBlock Text="{Binding DisplayName}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Content="…" MinWidth="24" MinHeight="22"
+                                    Click="OnColorPickerClick"
+                                    Tag="LoupeCrossColor"
+                                    ToolTip.Tip="色選択ダイアログ"/>
+                        </StackPanel>
+                        <Label Content="枠色:" Grid.Row="3" Grid.Column="0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="3"
+                                    Grid.Row="3" Grid.Column="1">
+                            <Border Width="18" Height="18"
+                                    CornerRadius="2"
+                                    BorderBrush="Gray" BorderThickness="1"
+                                    VerticalAlignment="Center"
+                                    Background="{Binding Settings.LoupeFrameColor, Converter={StaticResource StringToBrushConverter}}"/>
+                            <ComboBox x:Name="LoupeFrameColorCombo"
+                                      ItemsSource="{x:Static helpers:ColorEntry.All}"
+                                      Text="{Binding Settings.LoupeFrameColor, Converter={StaticResource ColorDisplayConverter}}"
+                                      IsEditable="True"
+                                      MinWidth="120"
+                                      SelectionChanged="OnColorComboBoxSelectionChanged"
+                                      LostFocus="OnColorComboBoxLostFocus"
+                                      Tag="LoupeFrameColor"
+                                      ToolTip.Tip="色名または16進カラーコードを入力、または▼から選択">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:CompileBindings="False">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Border Width="14" Height="14" CornerRadius="2"
+                                                    BorderBrush="Gray" BorderThickness="1"
+                                                    Background="{Binding Hex}"/>
+                                            <TextBlock Text="{Binding DisplayName}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Content="…" MinWidth="24" MinHeight="22"
+                                    Click="OnColorPickerClick"
+                                    Tag="LoupeFrameColor"
+                                    ToolTip.Tip="色選択ダイアログ"/>
+                        </StackPanel>
+                        <Label Content="枠の太さ:" Grid.Row="4" Grid.Column="0"/>
+                        <NumericUpDown Value="{Binding Settings.LoupeFrameWidth}"
+                                       Minimum="1" Maximum="10"
+                                       Grid.Row="4" Grid.Column="1" MinWidth="20"/>
+                        <Label Content="十字線の不透明度:" Grid.Row="5" Grid.Column="0"/>
+                        <NumericUpDown Value="{Binding Settings.LoupeCrossOpacity}"
+                                       Minimum="0.0" Maximum="1.0" Increment="0.05"
+                                       Grid.Row="5" Grid.Column="1" MinWidth="20"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ホットキー設定 -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1" Grid.Row="4" Margin="0,0,0,5" Padding="5">
+                <StackPanel>
+                    <TextBlock Text="ホットキー設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto,Auto"
+                          ColumnSpacing="5" RowSpacing="5">
+                        <!-- 全画面キャプチャ -->
+                        <Label Content="全画面キャプチャ:" Grid.Row="0" Grid.Column="0"/>
+                        <TextBox x:Name="SelectScreenTextBox"
+                                 Text="{Binding Settings.SelectScreenHotKey, Mode=OneWay}"
+                                 MinWidth="200"
+                                 Grid.Row="0" Grid.Column="1"
+                                 ToolTip.Tip="クリックしてキーの組合せを押すか、ホットキー名を直接入力（例: Ctrl + Shift + Q）"
+                                 PointerPressed="OnHotkeyTextBoxPointerPressed"
+                                 KeyDown="OnHotkeyTextBoxKeyDown"
+                                 LostFocus="OnHotkeyTextBoxLostFocus"/>
+                        <Button Content="クリア" Grid.Row="0" Grid.Column="2"
+                                Click="OnClearSelectScreenClick"/>
+                        <!-- ウィンドウ選択キャプチャ -->
+                        <Label Content="ウィンドウ選択キャプチャ:" Grid.Row="1" Grid.Column="0"/>
+                        <TextBox x:Name="WindowSelectTextBox"
+                                 Text="{Binding Settings.WindowSelectHotKey, Mode=OneWay}"
+                                 MinWidth="200"
+                                 Grid.Row="1" Grid.Column="1"
+                                 ToolTip.Tip="クリックしてキーの組合せを押すか、ホットキー名を直接入力（例: Ctrl + Shift + W）"
+                                 PointerPressed="OnHotkeyTextBoxPointerPressed"
+                                 KeyDown="OnHotkeyTextBoxKeyDown"
+                                 LostFocus="OnHotkeyTextBoxLostFocus"/>
+                        <Button Content="クリア" Grid.Row="1" Grid.Column="2"
+                                Click="OnClearWindowSelectClick"/>
+                        <!-- 範囲選択キャプチャ -->
+                        <Label Content="範囲選択キャプチャ:" Grid.Row="2" Grid.Column="0"/>
+                        <TextBox x:Name="AreaSelectTextBox"
+                                 Text="{Binding Settings.AreaSelectHotKey, Mode=OneWay}"
+                                 MinWidth="200"
+                                 Grid.Row="2" Grid.Column="1"
+                                 ToolTip.Tip="クリックしてキーの組合せを押すか、ホットキー名を直接入力（例: Ctrl + Shift + E）"
+                                 PointerPressed="OnHotkeyTextBoxPointerPressed"
+                                 KeyDown="OnHotkeyTextBoxKeyDown"
+                                 LostFocus="OnHotkeyTextBoxLostFocus"/>
+                        <Button Content="クリア" Grid.Row="2" Grid.Column="2"
+                                Click="OnClearAreaSelectClick"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
