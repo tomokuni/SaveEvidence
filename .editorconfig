@@ -15,6 +15,9 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
+# 不要な using をビルド時に警告として検出する（「必要のない名前空間に対する using は記載しない」方針の恒久化）
+dotnet_diagnostic.IDE0005.severity = warning
+
 # XAML files
 [*.xaml]
 indent_style = space

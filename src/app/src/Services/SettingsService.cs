@@ -1,0 +1,122 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Avalonia;
+using app.Models;
+
+namespace app.Services;
+
+/// <summary><see cref="PixelRect"/> の JSON コンバーター（読み取り専用プロパティ対応）。</summary>
+internal sealed class PixelRectConverter : JsonConverter<PixelRect>
+{
+    public override PixelRect Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        int x = 0, y = 0, w = 0, h = 0;
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject) break;
+            if (reader.TokenType == JsonTokenType.PropertyName)
+            {
+                var prop = reader.GetString();
+                reader.Read();
+                switch (prop)
+                {
+                    case "X": x = reader.GetInt32(); break;
+                    case "Y": y = reader.GetInt32(); break;
+                    case "Width": w = reader.GetInt32(); break;
+                    case "Height": h = reader.GetInt32(); break;
+                }
+            }
+        }
+        return new PixelRect(x, y, w, h);
+    }
+
+    public override void Write(Utf8JsonWriter writer, PixelRect value, JsonSerializerOptions options)
+    {
+        writer.WriteStartObject();
+        writer.WriteNumber("X", value.X);
+        writer.WriteNumber("Y", value.Y);
+        writer.WriteNumber("Width", value.Width);
+        writer.WriteNumber("Height", value.Height);
+        writer.WriteEndObject();
+    }
+}
+
+/// <summary>JSON ファイルによる設定管理を提供する。</summary>
+/// <remarks>
+/// 設定ファイルは <c>%LOCALAPPDATA%\SaveEvidence\settings.json</c> に保存される。<br/>
+/// スレッドセーフな読み書きを保証するため <c>Lock</c> による排他制御を行う。<br/>
+/// <see cref="Save"/> を明示的に呼び出すまでファイルへの書き込みは行われない。<br/>
+/// </remarks>
+public sealed class SettingsService : ISettingsService
+{
+    private static readonly string s_settingsFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "SaveEvidence", "settings.json");
+
+    private static readonly JsonSerializerOptions s_jsonOptions = new()
+    {
+        WriteIndented = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        // enum は数値ではなく文字列（例: "ThemeMode": "Dark"）で保存する（設定ファイルの可読性向上）
+        Converters =
+        {
+            new PixelRectConverter(),
+            new JsonStringEnumConverter(),
+        },
+    };
+
+    private readonly Lock _lock = new();
+    private Settings _current;
+
+    public SettingsService() => _current = LoadInternal();
+
+    /// <summary>現在の設定オブジェクトを取得する。</summary>
+    public Settings Current
+    {
+        get { lock (_lock) return _current; }
+    }
+
+    /// <summary>設定をファイルに保存する。</summary>
+    public void Save()
+    {
+        lock (_lock) { SaveInternal(_current); }
+    }
+
+    /// <summary>設定をファイルから再読み込みする。</summary>
+    public void Reload()
+    {
+        lock (_lock) { _current = LoadInternal(); }
+    }
+
+    private static Settings LoadInternal()
+    {
+        try
+        {
+            var dir = Path.GetDirectoryName(s_settingsFilePath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
+            if (File.Exists(s_settingsFilePath))
+                return JsonSerializer.Deserialize<Settings>(File.ReadAllText(s_settingsFilePath), s_jsonOptions) ?? new Settings();
+        }
+        catch
+        {
+            // 読込失敗時は既定値で続行
+        }
+        return new Settings();
+    }
+
+    private static void SaveInternal(Settings settings)
+    {
+        try
+        {
+            var dir = Path.GetDirectoryName(s_settingsFilePath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            File.WriteAllText(s_settingsFilePath, JsonSerializer.Serialize(settings, s_jsonOptions));
+        }
+        catch
+        {
+            // 保存失敗時は続行
+        }
+    }
+}

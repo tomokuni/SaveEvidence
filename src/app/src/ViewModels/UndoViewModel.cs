@@ -1,0 +1,35 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace app.ViewModels;
+
+/// <summary>
+/// Undo 一覧ページのステータスバー表示のための ViewModel。
+/// </summary>
+/// <remarks>
+/// CommunityToolkit.Mvvm の <see cref="ObservableObject"/> を継承し、
+/// <c>[ObservableProperty]</c> 属性により自動的に変更通知を発行する。<br/>
+/// アイテム数（ItemCount）、表示モード（SelectedViewModeIndex）などの
+/// プリミティブな状態を保持し、ItemCountText / ViewModeText は自動計算される。<br/>
+/// View はプリミティブなプロパティのみを操作し、表示テキストは
+/// DataBinding により自動反映される。<br/>
+/// </remarks>
+public sealed partial class UndoViewModel : ObservableObject
+{
+    private static readonly string[] s_viewModeNames = ["特大", "大", "中"];
+
+    /// <summary>アイテム数</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ItemCountText))]
+    private int _itemCount;
+
+    /// <summary>現在選択されている表示モードのインデックス（0=特大, 1=大, 2=中）</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ViewModeText))]
+    private int _selectedViewModeIndex = 1;
+
+    /// <summary>アイテム数テキスト（例：「5 個のアイテム」）を取得する。</summary>
+    public string ItemCountText => $"{ItemCount} 個のアイテム";
+
+    /// <summary>現在の表示モードテキスト（例：「大」）を取得する。</summary>
+    public string ViewModeText => (uint)SelectedViewModeIndex < s_viewModeNames.Length ? s_viewModeNames[SelectedViewModeIndex] : "";
+}

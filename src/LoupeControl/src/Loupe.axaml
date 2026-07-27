@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Estable.AvaloniaUI.Loupe.LoupeControl"
+             x:Name="PART_Root"
+             x:CompileBindings="False"
+             IsVisible="False">
+    <!-- ルーペ画像表示領域（外枠はビットマップ自体に描画済み）+ 座標ラベル（ルーペの上側にオーバーレイ） -->
+    <Grid>
+        <Image x:Name="PART_Image"
+               Stretch="Fill"/>
+        <!-- 中心座標ラベル（ルーペの上端中央に表示。CenterPoint = ドメイン座標を "xy (x, y)" で表示） -->
+        <Border x:Name="PART_CoordLabel"
+                IsVisible="False"
+                CornerRadius="2"
+                Margin="2"
+                Padding="4,1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top">
+            <TextBlock x:Name="PART_CoordText"
+                       Text=""
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
+</UserControl>

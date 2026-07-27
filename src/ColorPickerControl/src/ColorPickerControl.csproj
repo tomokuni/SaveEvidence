@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Estable.AvaloniaUI.ColorPicker</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="[12.1.*,)" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="[12.1.*, )" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+    <Page Remove="..\tests\**" />
+    <AvaloniaXaml Remove="..\tests\**" />
+    <EmbeddedResource Remove="..\tests\**" />
+    <!-- sample/ は独立したサンプルアプリケーションのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\sample\**" />
+    <None Remove="..\sample\**" />
+    <Page Remove="..\sample\**" />
+    <AvaloniaXaml Remove="..\sample\**" />
+    <EmbeddedResource Remove="..\sample\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）およびホスト（app）から internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="ColorPickerControl.Tests" />
+  </ItemGroup>
+
+</Project>
+

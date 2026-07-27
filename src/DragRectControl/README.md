@@ -1,0 +1,155 @@
+# DragRectControl
+
+## 目次
+
+- [DragRectControl](#dragrectcontrol)
+  - [目次](#目次)
+  - [1. 概要](#1-概要)
+  - [2. 機能一覧](#2-機能一覧)
+  - [3. システム要件](#3-システム要件)
+  - [4. インストール](#4-インストール)
+  - [5. クイックスタート](#5-クイックスタート)
+    - [AXAML](#axaml)
+    - [Code-behind（イベント購読・座標ポート設定）](#code-behindイベント購読座標ポート設定)
+  - [6. 座標系](#6-座標系)
+  - [7. サンプル](#7-サンプル)
+  - [8. ドキュメント](#8-ドキュメント)
+  - [9. プロジェクト構成](#9-プロジェクト構成)
+  - [10. ライセンス](#10-ライセンス)
+
+---
+
+## 1. 概要
+
+Avalonia UI 用のリサイズ可能な領域選択コントロールです。マウスドラッグ・キーボード微調整（nudge）・描画をコントロール内で完結します。
+
+## 2. 機能一覧
+
+- マウスドラッグによる領域選択
+- 選択矩形のドラッグ移動
+- 8方向ドラッグハンドルによるリサイズ
+- 矢印キーによる1Pixel単位のキーボード微調整（nudge）
+- ドメイン座標系で正確な nudge（矢印キー1回 = ドメイン1Pixel）
+- 選択枠線・ハンドル・始点マーカーの自己描画
+- カーソル座標ラベルの表示（任意設定・`(x, y)` 形式）
+- ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
+- Avalonia Binding 対応の StyledProperty
+- ドメイン↔DIP 座標変換ポート（`ICoordinatePort` 直接注入）
+- **閉区間描画（始点・終点を含む）**: 選択枠・ハンドルは終点（Right/Bottom）に +1 して DIP 変換（FadeMask の非暗転領域・キャプチャの閉区間 +1 と一致）
+- **ホイール操作（祖先 ScrollViewer が存在する Crop モード）**: Ctrl+ホイールで `ZoomRequested` / 通常ホイールで ScrollViewer をスクロール（Shift 併用で横スクロール）
+- **シンプル実装**: 状態（選択矩形・ドラッグ・nudge）を 1 クラス（`DragRectState`）に集約
+
+## 3. システム要件
+
+- .NET 10
+- Avalonia 12.1 以降
+- C# 14
+
+## 4. インストール
+
+現在は NuGet パッケージではなく、プロジェクト参照で利用します。
+
+```xml
+<ProjectReference Include="..\DragRectControl\src\DragRectControl.csproj" />
+```
+
+必要な名前空間:
+
+```csharp
+using Avalonia;
+using Estable.AvaloniaUI.DragRect;
+using Estable.AvaloniaUI.Platform; // ICoordinatePort / CoordinatePort
+```
+
+## 5. クイックスタート
+
+### AXAML
+
+```xml
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dragrect="clr-namespace:Estable.AvaloniaUI.DragRect;assembly=DragRectControl">
+    <Canvas>
+        <dragrect:DragRectControl x:Name="SelectionOverlay"
+                                   BorderColor="#FFA9A9A9"
+                                   BorderThickness="2.0"
+                                   HandleColor="White"
+                                   HandleSize="10.0"
+                                   HandleHitRadius="12.0"
+                                   MinSelectionSize="6"
+                                   MarkerColor="White"
+                                   MarkerLength="16.0" />
+    </Canvas>
+</Window>
+```
+
+### Code-behind（イベント購読・座標ポート設定）
+
+```csharp
+var dragRect = new DragRectControl
+{
+    BorderColor = Colors.White,
+    HandleSize = 10.0,
+};
+
+// 結果は公開イベントで通知される（マウス・キーイベントを直接処理しない）
+dragRect.SelectionChanged += (_, e) => UpdatePreview(e.Rect);
+dragRect.SelectionCompleted += (_, e) => ConfirmSelection(e.Rect);
+dragRect.SelectionCancelled += (_, _) => CancelSelection();
+dragRect.ConfirmRequested += (_, e) => ConfirmSelection(e.Rect);
+dragRect.CancelRequested += (_, _) => CancelSelection();
+
+// 座標ポートを設定（ドメイン = 画像ピクセル等）。ポート生成は PlatformFactory の CoordinatePort ファクトリを使用する。
+dragRect.SetCoordinateTransform(CoordinatePort.DomainScale(() => 2.0)); // 例: DPI 200%（Forward = DIP→ドメイン × 2）
+// 複雑な変換は Compose / ScrollOffset / ImageLayout 等で組み立てる
+
+panel.Children.Add(dragRect);
+```
+
+## 6. 座標系
+
+DragRectControl は 3 つの座標系を使い分けます。
+
+| 座標系 | 用途 |
+| --- | --- |
+| ドメイン座標 | 選択状態・nudge・イベント通知 |
+| コントロールローカル DIP | マウス入力・描画 |
+| 画面物理 Pixel | カーソル操作・画面変換 |
+
+ドメイン ↔ DIP の変換は `SetCoordinateTransform(ICoordinatePort?)` で注入します（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。
+
+## 7. サンプル
+
+`sample/` に動作確認用のサンプルアプリが含まれています。マウスドラッグによる選択・nudge・外観変更・イベントログを確認できます。
+
+```bash
+dotnet run --project sample/DragRectControl.Sample.csproj
+```
+
+詳細は [sample/README.md](sample/README.md) を参照してください。
+
+## 8. ドキュメント
+
+- [外部機能仕様書](SPEC_ExtFunc.md)
+- [システム仕様書](SPEC_System.md)
+
+## 9. プロジェクト構成
+
+```text
+DragRectControl/
+├── src/
+│   ├── DragRectControl.csproj     # 独立プロジェクト（PlatformFactory のみ参照）
+│   ├── DragRectControl.cs         # 公開 API + イベントオーバーライド + 描画
+│   ├── DragRectState.cs           # 選択・nudge 状態（internal・純粋ロジック）
+│   ├── DragHandle.cs              # 公開型（ドラッグハンドル種別 enum）
+│   ├── DragRectEventArgs.cs        # 公開イベント引数・状態 Snapshot（enum / record / EventArgs）
+│   ├── DragRectSnapshot.cs         # 状態 Snapshot レコード
+│   ├── Selection/                  # 内部型（SelectionGeometry）
+│   └── Drawing/                    # 内部型（DragRectDrawer）
+├── sample/                         # サンプルアプリ（sample/README.md 参照）
+└── tests/                          # 単体テスト（公開 API 経由・87 件）
+```
+
+## 10. ライセンス
+
+このリポジトリのライセンス方針に従います。ライセンスが明示されていない環境では、再配布・商用利用の条件を確認してから利用してください。

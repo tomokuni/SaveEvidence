@@ -1,0 +1,430 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:app.ViewModels"
+             xmlns:enum="using:app.Enum"
+             xmlns:converters="clr-namespace:app.Converters"
+             xmlns:controls="clr-namespace:Estable.AvaloniaUI.ColorPicker;assembly=ColorPickerControl"
+             x:Class="app.Views.Pages.SettingsPage"
+             x:DataType="vm:MainViewModel">
+    <UserControl.Resources>
+        <converters:EnumToDisplayNameConverter x:Key="EnumToDisplayNameConverter"/>
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <!-- 保存先フォルダのバリデーションエラー時に枠線を赤くする（フォーカス・ホバー状態でもテーマスタイルに優先する） -->
+        <Style Selector="TextBox.validation-error /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="Red"/>
+        </Style>
+    </UserControl.Styles>
+    <Grid RowDefinitions="Auto,*">
+        <!-- ツールバー領域（フォルダビュー / キャプチャと同じサイズ・レイアウト。上部の余白はタイトルバー領域とのスペース、右側の余白はウィンドウ右上のシステムボタンとの重なりを防止。中身は空） -->
+        <!-- MinHeight はフォルダビューのツールバーボタン（toolbar クラス Height=32）と同じ高さを確保する -->
+        <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="2,6,140,2" MinHeight="32"/>
+
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  Margin="10">
+
+                <!-- 外観設定 -->
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" Grid.Row="0" Margin="0,0,0,5" Padding="5">
+                    <StackPanel>
+                        <TextBlock Text="外観テーマ設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="5">
+                            <Label Content="テーマ:" Grid.Column="0"/>
+                            <ComboBox ItemsSource="{Binding ThemeModes}"
+                                      SelectedItem="{Binding Settings.ThemeMode}"
+                                      Grid.Column="1"
+                                      MinWidth="140"
+                                      HorizontalAlignment="Left">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="enum:ThemeMode">
+                                        <TextBlock Text="{Binding Converter={StaticResource EnumToDisplayNameConverter}}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- 保存設定 -->
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" Grid.Row="1" Margin="0,0,0,5" Padding="5">
+                    <StackPanel>
+                        <TextBlock Text="保存設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="5">
+                            <Label Content="保存先フォルダ:" Grid.Column="0"/>
+                            <!-- ToolTip は {MyPictures} がマークアップ拡張と衝突するためコードビハインドで設定する -->
+                            <TextBox x:Name="SaveFolderTextBox" Text="{Binding SaveFolderPath}" Grid.Column="1"
+                                     MinWidth="400"
+                                     VerticalContentAlignment="Center"
+                                     Classes.validation-error="{Binding HasInvalidSaveFolder}"/>
+                            <Button Content="参照..." Grid.Column="2" Click="OnBrowseFolderClick"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- 画像設定 -->
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" Grid.Row="2" Margin="0,0,0,5" Padding="5">
+                    <StackPanel>
+                        <TextBlock Text="画像設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <CheckBox IsChecked="{Binding Settings.CenterAlign}"
+                                  Content="画像を中央に配置（オフで左上配置）"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- キャプチャ設定 -->
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" Grid.Row="3" Margin="0,0,0,5" Padding="5">
+                    <StackPanel>
+                        <TextBlock Text="キャプチャ設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <CheckBox IsChecked="{Binding Settings.HideMainWindowOnCapture}"
+                                  Content="キャプチャ時にメインウィンドウを隠す"
+                                  Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ドラッグハンドル設定 -->
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" Grid.Row="4" Margin="0,0,0,5" Padding="5">
+                    <StackPanel>
+                        <TextBlock Text="矩形選択範囲の制限" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <CheckBox IsChecked="{Binding Settings.ClampToDomainBounds}"
+                                  Content="画像外の選択を禁止（境界内にクリップ）"
+                                  Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ホットキー設定 -->
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" Grid.Row="5" Margin="0,0,0,5" Padding="5">
+                    <StackPanel>
+                        <TextBlock Text="ホットキー設定" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto,Auto"
+                              ColumnSpacing="5" RowSpacing="5">
+                            <!-- 全画面キャプチャ -->
+                            <Label Content="全画面キャプチャ:" Grid.Row="0" Grid.Column="0"/>
+                            <TextBox x:Name="SelectScreenTextBox"
+                                     Text="{Binding Settings.SelectScreenHotKey, Mode=OneWay}"
+                                     MinWidth="200"
+                                     Grid.Row="0" Grid.Column="1"
+                                     ToolTip.Tip="クリックしてキーの組合せを押すか、ホットキー名を直接入力（例: Ctrl + Shift + Q）"
+                                     PointerPressed="OnHotkeyTextBoxPointerPressed"
+                                     KeyDown="OnHotkeyTextBoxKeyDown"
+                                     LostFocus="OnHotkeyTextBoxLostFocus"/>
+                            <Button Content="クリア" Grid.Row="0" Grid.Column="2"
+                                    Click="OnClearSelectScreenClick"/>
+                            <!-- ウィンドウ選択キャプチャ -->
+                            <Label Content="ウィンドウ選択キャプチャ:" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox x:Name="WindowSelectTextBox"
+                                     Text="{Binding Settings.WindowSelectHotKey, Mode=OneWay}"
+                                     MinWidth="200"
+                                     Grid.Row="1" Grid.Column="1"
+                                     ToolTip.Tip="クリックしてキーの組合せを押すか、ホットキー名を直接入力（例: Ctrl + Shift + W）"
+                                     PointerPressed="OnHotkeyTextBoxPointerPressed"
+                                     KeyDown="OnHotkeyTextBoxKeyDown"
+                                     LostFocus="OnHotkeyTextBoxLostFocus"/>
+                            <Button Content="クリア" Grid.Row="1" Grid.Column="2"
+                                    Click="OnClearWindowSelectClick"/>
+                            <!-- 範囲選択キャプチャ -->
+                            <Label Content="範囲選択キャプチャ:" Grid.Row="2" Grid.Column="0"/>
+                            <TextBox x:Name="AreaSelectTextBox"
+                                     Text="{Binding Settings.AreaSelectHotKey, Mode=OneWay}"
+                                     MinWidth="200"
+                                     Grid.Row="2" Grid.Column="1"
+                                     ToolTip.Tip="クリックしてキーの組合せを押すか、ホットキー名を直接入力（例: Ctrl + Shift + E）"
+                                     PointerPressed="OnHotkeyTextBoxPointerPressed"
+                                     KeyDown="OnHotkeyTextBoxKeyDown"
+                                     LostFocus="OnHotkeyTextBoxLostFocus"/>
+                            <Button Content="クリア" Grid.Row="2" Grid.Column="2"
+                                    Click="OnClearAreaSelectClick"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- 外観設定（各セクションの詳細設定を統合。折り畳みなし） -->
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" Grid.Row="6" Margin="0,0,0,5" Padding="5">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,5">
+                            <Button Content="デフォルト値に戻す"
+                                    DockPanel.Dock="Right"
+                                    Padding="8,2"
+                                    HorizontalAlignment="Right"
+                                    Click="OnResetAppearanceToDefaultsClick"/>
+                            <TextBlock Text="外観設定" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </DockPanel>
+
+                        <!-- 3 列構成: カテゴリ | 設定項目名 | 設定値 -->
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                              ColumnDefinitions="Auto,Auto,Auto,20"
+                              Margin="0,5,0,0" ColumnSpacing="5" RowSpacing="5">
+
+                            <!-- ラベル設定（一番上） -->
+                            <TextBlock Text="ラベル設定" FontWeight="SemiBold" MinWidth="180"
+                                       HorizontalAlignment="Right" TextAlignment="Right" Margin="0,0,16,0"
+                                       Grid.Row="0" Grid.RowSpan="5" Grid.Column="0" VerticalAlignment="Top"/>
+                            <CheckBox IsChecked="{Binding Settings.SizeLabelVisible}"
+                                      Content="選択矩形のサイズを表示"
+                                      Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"/>
+                            <CheckBox IsChecked="{Binding Settings.ShowSubLines}"
+                                      Content="矩形操作を矩形内に表示"
+                                      Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"/>
+                            <CheckBox IsChecked="{Binding Settings.InfoLabelVisible}"
+                                      Content="選択中のウィンドウのタイトルを表示"
+                                      Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"/>
+                            <CheckBox IsChecked="{Binding Settings.ShowCoordLabel}"
+                                      Content="矩形操作時にカーソル位置の座標をカーソル横に表示"
+                                      Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"/>
+                            <CheckBox IsChecked="{Binding Settings.LoupeShowCoordLabel}"
+                                      Content="ルーペの中心座標をルーペ上部に表示"
+                                      Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"/>
+
+                            <!-- 選択枠・暗転 -->
+                            <!-- カテゴリ区切りの薄い水平線 -->
+                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
+                                    Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4"/>
+                            <TextBlock Text="選択枠・暗転" FontWeight="SemiBold" MinWidth="180"
+                                       HorizontalAlignment="Right" TextAlignment="Right" 
+                                       Margin="0,8,16,0"
+                                       Grid.Row="5" Grid.RowSpan="4" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="選択枠の色:"  Margin="0,8,0,0" Grid.Row="5" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="CaptureBorderColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.CaptureBorderColor, Mode=TwoWay}"
+                                                          Margin="0,8,0,0"
+                                                         Grid.Row="5" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="選択枠の太さ:" Grid.Row="6" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.CaptureBorderThickness}"
+                                           Minimum="0.5" Maximum="8.0" Increment="0.5"
+                                           Grid.Row="6" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="選択矩形の最小サイズ:" Grid.Row="7" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.MinSelectionSize}"
+                                           Minimum="1" Maximum="100" Increment="1" FormatString="N0"
+                                           Grid.Row="7" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="暗転オーバーレイの色:" Grid.Row="8" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="CaptureOverlayColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.CaptureOverlayColor, Mode=TwoWay}"
+                                                         Grid.Row="8" Grid.Column="2" MinWidth="200"/>
+
+                            <!-- ドラッグハンドル・マーカー -->
+                            <!-- カテゴリ区切りの薄い水平線 -->
+                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
+                                    Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="4"/>
+                            <TextBlock Text="ドラッグハンドル・マーカー" FontWeight="SemiBold" MinWidth="180"
+                                       HorizontalAlignment="Right" TextAlignment="Right"
+                                       Margin="0,8,16,0"
+                                       Grid.Row="9" Grid.RowSpan="5" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="ハンドルの色:" Margin="0,8,0,0" Grid.Row="9" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="HandleColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.HandleColor, Mode=TwoWay}"
+                                                         Margin="0,8,0,0"
+                                                         Grid.Row="9" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="ハンドルのサイズ:" Grid.Row="10" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.HandleSize}"
+                                           Minimum="2" Maximum="30" Increment="1"
+                                           Grid.Row="10" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="ハンドル判定半径:" Grid.Row="11" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.HandleHitRadius}"
+                                           Minimum="2" Maximum="40" Increment="1"
+                                           Grid.Row="11" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="マーカーの色:" Grid.Row="12" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="MarkerColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.MarkerColor, Mode=TwoWay}"
+                                                         Grid.Row="12" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="マーカーの長さ:" Grid.Row="13" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.MarkerLength}"
+                                           Minimum="8" Maximum="40" Increment="2"
+                                           Grid.Row="13" Grid.Column="2" MinWidth="120"/>
+
+                            <!-- ルーペ -->
+                            <!-- カテゴリ区切りの薄い水平線 -->
+                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
+                                    Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="4"/>
+                            <TextBlock Text="ルーペ" FontWeight="SemiBold" MinWidth="180"
+                                       HorizontalAlignment="Right" TextAlignment="Right"
+                                       Margin="0,8,16,0"
+                                       Grid.Row="14" Grid.RowSpan="8" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="枠色:" Margin="0,8,0,0" Grid.Row="14" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="LoupeFrameColorPicker"
+                                                         Margin="0,8,0,0"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.LoupeFrameColor, Mode=TwoWay}"
+                                                         Grid.Row="14" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="枠の太さ:" Grid.Row="15" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.LoupeFrameWidth}"
+                                           Minimum="1" Maximum="10" Increment="1"
+                                           FormatString="N0"
+                                           Grid.Row="15" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="十字線色:" Grid.Row="16" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="LoupeCrossColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.LoupeCrossColor, Mode=TwoWay}"
+                                                         Grid.Row="16" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="選択矩形破線の色A:" Grid.Row="17" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="LoupeSelectionRectColorAPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.LoupeSelectionRectColorA, Mode=TwoWay}"
+                                                         Grid.Row="17" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="選択矩形破線の色B:" Grid.Row="18" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="LoupeSelectionRectColorBPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.LoupeSelectionRectColorB, Mode=TwoWay}"
+                                                         Grid.Row="18" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="拡大率:" Grid.Row="19" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.LoupeZoomLevel}"
+                                           Minimum="4" Maximum="32" Increment="2"
+                                           Grid.Row="19" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="サイズ:" Grid.Row="20" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.LoupeSize}"
+                                           Minimum="64" Maximum="512" Increment="8"
+                                           Grid.Row="20" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="カーソルからのオフセット:" Grid.Row="21" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.LoupeOffset}"
+                                           Minimum="0" Maximum="200" Increment="4"
+                                           Grid.Row="21" Grid.Column="2" MinWidth="120"/>
+
+                            <!-- 市松模様（プレビュー背景とルーペ背景に適用） -->
+                            <!-- カテゴリ区切りの薄い水平線 -->
+                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
+                                    Grid.Row="22" Grid.Column="0" Grid.ColumnSpan="4"/>
+                            <TextBlock Text="市松模様" FontWeight="SemiBold" MinWidth="180"
+                                       HorizontalAlignment="Right" TextAlignment="Right"
+                                       Margin="0,8,16,0"
+                                       Grid.Row="22" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="市松模様 A:" Margin="0,8,0,0" Grid.Row="22" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="PreviewCheckerColorAPicker"
+                                                         Margin="0,8,0,0"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.PreviewCheckerColorA, Mode=TwoWay}"
+                                                         Grid.Row="22" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="市松模様 B:" Grid.Row="23" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="PreviewCheckerColorBPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.PreviewCheckerColorB, Mode=TwoWay}"
+                                                         Grid.Row="23" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="市松模様のタイルサイズ:" Grid.Row="24" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.PreviewCheckerSize}"
+                                           Minimum="1" Maximum="20" Increment="1" FormatString="N0"
+                                           Grid.Row="24" Grid.Column="2" MinWidth="120"/>
+
+                            <!-- 選択矩形内のラベル -->
+                            <!-- カテゴリ区切りの薄い水平線 -->
+                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
+                                    Grid.Row="25" Grid.Column="0" Grid.ColumnSpan="4"/>
+                            <TextBlock Text="選択矩形内のラベル" FontWeight="SemiBold" MinWidth="180"
+                                       HorizontalAlignment="Right" TextAlignment="Right"
+                                       Margin="0,8,16,0"
+                                       Grid.Row="25" Grid.RowSpan="9" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="1 行目 テキスト色:" Margin="0,8,0,0" Grid.Row="25" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="SizeLabelColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.CaptureTextColor, Mode=TwoWay}"
+                                                         Margin="0,8,0,0"
+                                                         Grid.Row="25" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="1 行目 背景色:" Grid.Row="26" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="SizeLabelBackgroundColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.SizeLabelBackgroundColor, Mode=TwoWay}"
+                                                         Grid.Row="26" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="1 行目 フォントサイズ:" Grid.Row="27" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.SizeLabelFontSize}"
+                                           Minimum="8" Maximum="32" Increment="1"
+                                           Grid.Row="27" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="2 行目 テキスト色:" Grid.Row="28" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="SubLineColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.SubLineColor, Mode=TwoWay}"
+                                                         Grid.Row="28" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="2 行目 背景色:" Grid.Row="29" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="SubLineBackgroundColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.SubLineBackgroundColor, Mode=TwoWay}"
+                                                         Grid.Row="29" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="2 行目 フォントサイズ:" Grid.Row="30" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.SubLineFontSize}"
+                                           Minimum="8" Maximum="32" Increment="1"
+                                           Grid.Row="30" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="3 行目 テキスト色:" Grid.Row="31" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="InfoLabelColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.InfoLabelColor, Mode=TwoWay}"
+                                                         Grid.Row="31" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="3 行目 背景色:" Grid.Row="32" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="InfoLabelBackgroundColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.InfoLabelBackgroundColor, Mode=TwoWay}"
+                                                         Grid.Row="32" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="3 行目 フォントサイズ:" Grid.Row="33" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.InfoLabelFontSize}"
+                                           Minimum="8" Maximum="32" Increment="1"
+                                           Grid.Row="33" Grid.Column="2" MinWidth="120"/>
+
+                            <!-- カーソル位置の座標ラベル（DragRect） -->
+                            <!-- カテゴリ区切りの薄い水平線 -->
+                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
+                                    Grid.Row="34" Grid.Column="0" Grid.ColumnSpan="4"/>
+                            <TextBlock Text="カーソル位置の座標ラベル" FontWeight="SemiBold" MinWidth="180"
+                                       HorizontalAlignment="Right" TextAlignment="Right"
+                                       Margin="0,8,16,0"
+                                       Grid.Row="34" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="テキスト色:" Margin="0,8,0,0" Grid.Row="34" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="CoordLabelColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.CoordLabelColor, Mode=TwoWay}"
+                                                         Margin="0,8,0,0"
+                                                         Grid.Row="34" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="背景色:" Grid.Row="35" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="CoordLabelBackgroundColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.CoordLabelBackgroundColor, Mode=TwoWay}"
+                                                         Grid.Row="35" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="フォントサイズ:" Grid.Row="36" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.CoordLabelFontSize}"
+                                           Minimum="6" Maximum="48" Increment="1"
+                                           Grid.Row="36" Grid.Column="2" MinWidth="120"/>
+
+                            <!-- ルーペの中心座標ラベル -->
+                            <!-- カテゴリ区切りの薄い水平線 -->
+                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
+                                    Grid.Row="37" Grid.Column="0" Grid.ColumnSpan="4"/>
+                            <TextBlock Text="ルーペの中心座標ラベル" FontWeight="SemiBold" MinWidth="180"
+                                       HorizontalAlignment="Right" TextAlignment="Right"
+                                       Margin="0,8,16,0"
+                                       Grid.Row="37" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="座標ラベルのテキスト色:" Margin="0,8,0,0" Grid.Row="37" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="LoupeCoordLabelColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.LoupeCoordLabelColor, Mode=TwoWay}"
+                                                         Margin="0,8,0,0"
+                                                         Grid.Row="37" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="座標ラベルの背景色:" Grid.Row="38" Grid.Column="1"/>
+                            <controls:ColorPickerControl x:Name="LoupeCoordLabelBackgroundColorPicker"
+                                                         HighlightBorderOnError="True"
+                                                         SelectedColor="{Binding Settings.LoupeCoordLabelBackgroundColor, Mode=TwoWay}"
+                                                         Grid.Row="38" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="座標ラベルのフォントサイズ:" Grid.Row="39" Grid.Column="1"/>
+                            <NumericUpDown Value="{Binding Settings.LoupeCoordLabelFontSize}"
+                                           Minimum="6" Maximum="48" Increment="1"
+                                           Grid.Row="39" Grid.Column="2" MinWidth="120"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
+

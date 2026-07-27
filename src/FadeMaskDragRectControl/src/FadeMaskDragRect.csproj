@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.AvaloniaUI.FadeMaskDragRect</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="[12.1.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="FadeMaskDragRect.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 複合コントロール（DragRect + FadeMask + Loupe）を構成する内包コントロール -->
+    <ProjectReference Include="..\..\DragRectControl\src\DragRectControl.csproj" />
+    <ProjectReference Include="..\..\FadeMaskControl\src\FadeMaskControl.csproj" />
+    <ProjectReference Include="..\..\LoupeControl\src\LoupeControl.csproj" />
+    <!-- 座標変換ポート（ICoordinatePort / CoordinatePort） -->
+    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+  </ItemGroup>
+
+</Project>

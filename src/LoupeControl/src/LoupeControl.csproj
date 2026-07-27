@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.AvaloniaUI.Loupe</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="[12.1.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 座標変換ポート（ICoordinatePort）を外部から注入するため参照する -->
+    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+    <Page Remove="..\tests\**" />
+    <AvaloniaXaml Remove="..\tests\**" />
+    <EmbeddedResource Remove="..\tests\**" />
+    <!-- sample/ は独立したサンプルアプリケーションのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\sample\**" />
+    <None Remove="..\sample\**" />
+    <Page Remove="..\sample\**" />
+    <AvaloniaXaml Remove="..\sample\**" />
+    <EmbeddedResource Remove="..\sample\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="LoupeControl.Tests" />
+  </ItemGroup>
+
+</Project>

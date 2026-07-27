@@ -1,0 +1,164 @@
+# ColorPickerControl
+
+## 目次
+
+- [1. 概要](#1-概要)
+- [2. 機能一覧](#2-機能一覧)
+- [3. システム要件](#3-システム要件)
+- [4. インストール](#4-インストール)
+- [5. クイックスタート](#5-クイックスタート)
+- [6. 入力動作](#6-入力動作)
+- [7. ColorView テーマ（内包テーマ）](#7-colorview-テーマ内包テーマ)
+- [8. プラットフォーム](#8-プラットフォーム)
+- [9. サンプル](#9-サンプル)
+- [10. ドキュメント](#10-ドキュメント)
+- [11. アーキテクチャ](#11-アーキテクチャ)
+- [12. プロジェクト構成](#12-プロジェクト構成)
+- [13. ライセンス](#13-ライセンス)
+
+---
+
+## 1. 概要
+
+Avalonia UI 用の色選択コントロールです。色名/16進コード入力の ComboBox とカラーピッカーを統合し、選択色のプレビュー・バリデーションを自己完結します。
+
+## 2. 機能一覧
+
+- 色名（英名）または16進カラーコードのテキスト入力
+- ドロップダウンによる色一覧選択（色相順 / 色名順）
+- 選択中の色をテキスト領域左端にスウォッチ表示
+- カラーピッカー（ColorView）を Flyout で表示
+- 入力バリデーション（無効な色はエラー通知・最終有効値への自動復帰）
+- バリデーション失敗時の枠線強調（オプション）
+- Avalonia Binding対応のStyledProperty（双方向バインド）
+- ComboBox のサイズ・パディング・マージンを外部制御可能
+
+## 3. システム要件
+
+- .NET 10
+- Avalonia 12.1 以降
+- C# 14
+
+## 4. インストール
+
+現在はNuGetパッケージではなく、プロジェクト参照で利用します。
+
+```xml
+<ProjectReference Include="..\ColorPickerControl\src\ColorPickerControl.csproj" />
+```
+
+必要な名前空間:
+
+```csharp
+using Estable.AvaloniaUI.ColorPicker;
+```
+
+## 5. クイックスタート
+
+### AXAML
+
+```xml
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:cp="clr-namespace:Estable.AvaloniaUI.ColorPicker;assembly=ColorPickerControl">
+    <cp:ColorPickerControl SelectedColor="{Binding BorderColor, Mode=TwoWay}"
+                           ColorSortMode="ByHue"
+                           HighlightBorderOnError="True"
+                           Width="300" />
+</Window>
+```
+
+### Code-behind
+
+```csharp
+using Estable.AvaloniaUI.ColorPicker;
+
+var colorPicker = new ColorPickerControl
+{
+    SelectedColor = "Red",
+    ColorSortMode = ColorSortMode.ByHue,
+    HighlightBorderOnError = true,
+    Width = 300,
+};
+
+// 選択色の変更を監視（双方向バインドの代替）
+colorPicker.PropertyChanged += (_, e) =>
+{
+    if (e.Property == ColorPickerControl.SelectedColorProperty)
+    {
+        UpdatePreview(colorPicker.SelectedColor);
+    }
+};
+
+panel.Children.Add(colorPicker);
+```
+
+## 6. 入力動作
+
+- **テキスト入力**: 色名または16進コードを直接入力できます。
+- **ドロップダウン選択**: 選択後にテキストの全選択が自動解除されます。
+- **無効な入力**: フォーカス喪失時に最終有効値へ自動復帰します。
+- **カラーピッカー**: 右端の「…」ボタンで Flyout 形式の ColorView を開きます。OK で適用、キャンセルで破棄。
+
+## 7. ColorView テーマ（内包テーマ）
+
+カラーピッカー（`ColorView`）のテーマは**コントロールに内包**されています。ホスト側で `<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />` を指定しなくても、Flyout 内の ColorView が正しく描画されます。
+
+- ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます。
+- 未指定の場合のみ、内包テーマがデフォルトとして自動適用されます（重複追加なし）。
+
+## 8. プラットフォーム
+
+- プラットフォーム非依存（Avalonia のみに依存）。
+- Windows / Linux / macOS で同一の動作を提供します。
+
+## 9. サンプル
+
+`sample/` に動作確認用のサンプルアプリが含まれています。以下の機能をデモします。
+
+- 色相順（`ByHue`）と色名順（`ByName`）の切替（並び順切替 ComboBox 連動）
+- `HighlightBorderOnError` による枠線強調の有効/無効
+- バリデーション状態（`HasValidationError` / `ValidationErrorMessage`）のライブ表示
+- ComboBox レイアウト設定（`ComboBoxMinWidth` / `ComboBoxMaxWidth` / `ComboBoxWidth` / `ComboBoxPadding` / `ComboBoxMargin`）
+- カラーピッカー（「…」ボタン）の Flyout 表示
+
+```bash
+dotnet run --project sample/ColorPickerControl.Sample.csproj
+```
+
+## 10. ドキュメント
+
+- [外部機能仕様書](SPEC_ExtFunc.md)
+- [システム仕様書](SPEC_System.md)
+
+## 11. アーキテクチャ
+
+公開 API（公開プロパティ・StyledProperty・公開 API 一覧）は `src/ColorPicker.axaml.cs`（XAML コードビハインド）に集約します。
+入力イベント処理・Flyout・テーマ管理・バリデーションも同ファイルの非公開メンバー（private / internal）として隠蔽し、ファイル分割による無理な分離を避けます。
+
+- `ColorPicker.axaml.cs`: 公開 API（StyledProperty・公開プロパティ・公開 API 一覧）＋ 非公開実装（入力イベント・Flyout・テーマ管理・バリデーション）
+- `ColorPicker.axaml`: UI レイアウト（ComboBox + スウォッチ + Button）
+- `ColorSortMode.cs`: 公開 enum（並び順）
+- `StringToBrushConverter.cs`: 公開コンバーター（色 → Brush）
+- `ColorEntry.cs`: 色一覧データ（internal）
+
+依存方向は**一方向の階層構造**（コントロール → ドメイン（ColorEntry / コンバーター））で、双方向依存・内部公開・具象依存を解消します。
+
+## 12. プロジェクト構成
+
+```text
+ColorPickerControl/
+├── src/
+│   ├── ColorPickerControl.csproj
+│   ├── ColorPicker.axaml          # 公開コントロール（UIレイアウト）
+│   ├── ColorPicker.axaml.cs       # コードビハインド（公開 API 一覧・StyledProperty・公開プロパティ・非公開実装を単一ファイルに集約）
+│   ├── ColorSortMode.cs           # 並び順 enum（公開）
+│   ├── StringToBrushConverter.cs  # 色→ブラシコンバーター（公開）
+│   └── ColorEntry.cs              # 色名レコード・全色一覧（internal）
+├── sample/                        # サンプルアプリ（sample/README.md 参照）
+└── tests/                         # 単体テスト（行・ブランチ 100%）
+```
+
+## 13. ライセンス
+
+このリポジトリのライセンス方針に従います。ライセンスが明示されていない環境では、再配布・商用利用の条件を確認してから利用してください。

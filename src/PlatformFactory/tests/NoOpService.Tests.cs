@@ -1,0 +1,96 @@
+using Avalonia;
+using Avalonia.Platform;
+using Estable.AvaloniaUI.Platform.NoOp;
+using Xunit;
+
+namespace Estable.AvaloniaUI.Platform.Tests;
+
+/// <summary>NoOp 実装（プラットフォーム非対応のフォールバック）の単体テスト。</summary>
+/// <remarks>
+/// NoOp 系は内部型（internal）のため、<see cref="PlatformFactory"/> 経由ではなく直接生成して検証する。<br/>
+/// いずれも「例外なく安全に動作する（フォールバック）」ことを検証するため、ヘッドレス実行を必要としない。
+/// </remarks>
+public class NoOpServiceTests
+{
+    // ====================================================================
+    // NoOpCursorService
+    // ====================================================================
+
+    [Fact]
+    public void NoOpCursorService_位置取得はデフォルトを返す()
+    {
+        var service = NoOpCursorService.Instance;
+
+        Assert.Equal(default, service.GetCursorScreenPoint());
+    }
+
+    [Fact]
+    public void NoOpCursorService_位置移動と表示切替は何もしない()
+    {
+        var service = NoOpCursorService.Instance;
+
+        // 例外なく完了する
+        service.SetCursorScreenPoint(new PixelPoint(10, 20));
+        service.ShowCursor(true);
+        service.ShowCursor(false);
+    }
+
+    // ====================================================================
+    // NoOpCaptureService
+    // ====================================================================
+
+    [Fact]
+    public void NoOpCaptureService_キャプチャは常にnullを返す()
+    {
+        var service = NoOpCaptureService.Instance;
+
+        Assert.Null(service.CaptureArea(new PixelRect(0, 0, 100, 100)));
+        Assert.Null(service.CaptureVirtualScreen(out var origin));
+        Assert.Equal(default, origin);
+        Assert.Null(service.CaptureWindow(new DummyHandle()));
+    }
+
+    // ====================================================================
+    // NoOpWindowService
+    // ====================================================================
+
+    [Fact]
+    public void NoOpWindowService_操作は何もしない()
+    {
+        var service = NoOpWindowService.Instance;
+        var handle = new DummyHandle();
+
+        service.HideFromTaskSwitcher(handle);
+        service.EvacuateWindow(handle);
+
+        // キャプチャ除外は常に false
+        Assert.False(service.SetCaptureExclusion(handle, true));
+        Assert.False(service.SetCaptureExclusion(handle, false));
+    }
+
+    // ====================================================================
+    // NoOpCursorOverrideGuard
+    // ====================================================================
+
+    [Fact]
+    public void NoOpCursorOverrideGuard_アタッチしても抑止されない()
+    {
+        var guard = new NoOpCursorOverrideGuard();
+
+        // IsAttached は常に false
+        Assert.False(guard.IsAttached);
+
+        // Guard は設定・取得できる
+        guard.Guard = () => true;
+        Assert.NotNull(guard.Guard);
+        Assert.True(guard.Guard());
+        guard.Dispose();
+    }
+
+    /// <summary>テスト用のダミー IPlatformHandle。</summary>
+    private sealed class DummyHandle : IPlatformHandle
+    {
+        public IntPtr Handle => IntPtr.Zero;
+        public string HandleDescriptor => "Dummy";
+    }
+}
