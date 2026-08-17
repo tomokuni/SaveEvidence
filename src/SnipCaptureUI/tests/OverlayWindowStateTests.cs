@@ -93,6 +93,30 @@ public class OverlayWindowStateTests
     }
 
     // ====================================================================
+    // サイズラベル（ドメイン矩形からの物理サイズ + DisplayScale 生成）
+    // ====================================================================
+
+    [Fact]
+    public void FormatDomainSizeLabel_ドメイン矩形とスケーリングからラベルを生成する()
+    {
+        // 100% モニタ: 物理サイズはドメインの値そのまま（3840x2160）、DisplayScale は 100%
+        var label100 = InvokeFormatDomainSizeLabel(new Rect(0, 0, 3840, 2160), 1.0);
+        Assert.Equal("(0, 0) - (3840, 2160),  (3840×2160), DisplayScale: (100%)", label100);
+
+        // 120% モニタ: 物理サイズは変わらず 3840x2160（スケーリングに依存しない）、DisplayScale は 120%
+        var label120 = InvokeFormatDomainSizeLabel(new Rect(0, 0, 3840, 2160), 1.2);
+        Assert.Equal("(0, 0) - (3840, 2160),  (3840×2160), DisplayScale: (120%)", label120);
+    }
+
+    [Fact]
+    public void FormatDomainSizeLabel_オフセット付き矩形の座標とサイズが正しい()
+    {
+        // セカンダリモニタ（負の座標・1920x1200）: 物理サイズはドメインの値そのまま
+        var label = InvokeFormatDomainSizeLabel(new Rect(1914, -1200, 1920, 1200), 1.0);
+        Assert.Equal("(1914, -1200) - (3834, 0),  (1920×1200), DisplayScale: (100%)", label);
+    }
+
+    // ====================================================================
     // リフレクションヘルパー（private 静的メソッドの直接検証）
     // ====================================================================
 
@@ -109,5 +133,12 @@ public class OverlayWindowStateTests
         var method = typeof(OverlayWindow).GetMethod(
             "ParseScreenIndex", BindingFlags.Static | BindingFlags.NonPublic)!;
         return (int)method.Invoke(null, [title])!;
+    }
+
+    private static string InvokeFormatDomainSizeLabel(Rect domainRect, double scaling)
+    {
+        var method = typeof(OverlayWindow).GetMethod(
+            "FormatDomainSizeLabel", BindingFlags.Static | BindingFlags.NonPublic)!;
+        return (string)method.Invoke(null, [domainRect, scaling])!;
     }
 }

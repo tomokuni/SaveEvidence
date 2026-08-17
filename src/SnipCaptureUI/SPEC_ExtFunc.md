@@ -58,8 +58,8 @@
 
 `SnipCaptureUI` は、外部アプリケーションが画面キャプチャと切出しを**単一の API**（`SnipCapture`）で利用できるようにする Facade パターンのライブラリです。
 
-状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と PlatformFactory が保持し、<br/>
-`SnipCapture` は「組み立て・ライフサイクル」のみを担う薄い統括者です。<br/>
+状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と PlatformFactory が保持し、
+`SnipCapture` は「組み立て・ライフサイクル」のみを担う薄い統括者です。  
 SnipCaptureUI は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）を直接参照しない（公開型のカプセル化）。
 
 次の機能を提供します。
@@ -271,11 +271,16 @@ var result = await _snipCapture.StartCaptureAsync(CaptureType.AreaSelect, window
 | --- | --- | --- |
 | `OverlayColor` | `Color?` | 暗転オーバーレイの外観（不透明度は色のアルファに統合） |
 | `SizeLabelVisible` / `SizeLabelColor` / `SizeLabelFontSize` | `bool?` / `Color?` / `double?` | サイズラベル（1 行目） |
-| `SizeLabelOverride` | `string?` | サイズラベルのテキスト明示指定 |
+| `SizeLabelOverride` | `string?` | サイズラベルのテキスト明示指定。未指定（null）時はドメイン矩形から自動生成（後述） |
+| `DisplayScaleScaling` | `double?` | サイズラベルの DisplayScale 表示の既定値（0 以下はオーバーレイの `scaling`）。選択中の矩形がある場合は、その矩形の中心が含まれるモニタの実スケーリングが表示される（マルチモニタ対応） |
+
+**サイズラベルの自動生成（ScreenSelect / WindowSelect / AreaSelect）**: 選択中の矩形（ドメイン = 画面物理 − Position。物理ピクセル）から直接生成する。
+座標・サイズはドメインの値そのまま（スケーリングに依存しない実際の物理ピクセル）、DisplayScale は矩形の中心が含まれるモニタの実スケーリング（例: 100% モニタなら 100%）。
+DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マルチモニタでサイズ・DisplayScale が一致しない問題）を排除する。
 | `TextBackgroundColor` | `Color?` | サイズラベル（1 行目）の背景色 |
 | `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | `bool?` / `double?` / `Color?` / `Color?` | 操作ラベル（2 行目・背景はアルファ込み） |
 | `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | `bool?` / `Color?` / `Color?` / `double?` | 情報ラベル（3 行目・背景はアルファ込み） |
-| `DisplayScaleScaling` | `double?` | サイズラベル表示用の DPI スケーリング（マルチスクリーン補正） |
+| `DisplayScaleScaling` | `double?` | サイズラベルの DisplayScale 表示の既定値（0 以下はオーバーレイの `scaling`）。選択中の矩形がある場合は、その矩形の中心が含まれるモニタの実スケーリングが表示される（マルチモニタ対応） |
 
 **Loupe 外観（16 項目）**:
 
@@ -378,6 +383,7 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 | `Debug` | `SnipCaptureLog.LogOverlayConfirm` | オーバーレイ確定要求（Enter / ダブルクリック等） |
 | `Debug` | `SnipCaptureLog.LogOverlayCancel` | オーバーレイキャンセル要求（Esc 等） |
 | `Debug` | `SnipCaptureLog.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ） |
+| `Trace` | `SnipCaptureLog.LogHighlight` | ハイライト検出結果（ScreenSelect / WindowSelect・検出矩形 / タイトル / クラス名。マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用） |
 | `Debug` | `SnipCaptureLog.LogCropStart` | Crop セッション開始（元画像サイズ） |
 | `Debug` | `SnipCaptureLog.LogCropCompleted` | Crop 確定（切り出し矩形） |
 | `Debug` | `SnipCaptureLog.LogCropCancelled` | Crop キャンセル |

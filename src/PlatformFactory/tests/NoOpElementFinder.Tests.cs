@@ -78,6 +78,25 @@ public class NoOpElementFinderTests
     }
 
     [AvaloniaFact]
+    public void ElementFinderResults_ClassName付きで構築できる()
+    {
+        var handle = new DummyHandle();
+
+        // クラス名を設定した結果（ウィンドウ検出時。デスクトップ除外の検証用）を構築できる
+        var result = new ElementFinderResults(
+            new PixelRect(10, 10, 100, 80),
+            IsDetected: true,
+            Title: "Test Window",
+            Handle: handle,
+            ClassName: "CabinetWClass");
+
+        Assert.Equal("CabinetWClass", result.ClassName);
+        // 省略時は null（後方互換）
+        var without = new ElementFinderResults(new PixelRect(0, 0, 10, 10), IsDetected: true);
+        Assert.Null(without.ClassName);
+    }
+
+    [AvaloniaFact]
     public void NoOpCursorOverrideGuard_アタッチしても何もしない()
     {
         var guard = new NoOpCursorOverrideGuard();

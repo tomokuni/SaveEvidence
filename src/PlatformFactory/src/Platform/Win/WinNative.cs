@@ -254,6 +254,12 @@ internal static partial class WinNative
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
+    /// <summary>ウィンドウが最大化されているかを判定する（user32.IsZoomed）。</summary>
+    /// <param name="hWnd">ウィンドウハンドル。</param>
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool IsZoomed(IntPtr hWnd);
+
     /// <summary>ウィンドウの可視状態を判定する（user32.IsWindowVisible）。</summary>
     /// <param name="hWnd">ウィンドウハンドル。</param>
     [LibraryImport("user32.dll")]

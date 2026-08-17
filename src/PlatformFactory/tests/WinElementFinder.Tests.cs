@@ -68,6 +68,22 @@ public class WinElementFinderTests
     }
 
     [AvaloniaFact]
+    public void WinElementFinder_ListWindowsがクラス名を設定する()
+    {
+        var finder = CreateFinder();
+
+        var windows = finder.ListWindows();
+
+        // 実環境（Windows）でウィンドウが 1 つ以上ある場合は、クラス名が空でないことを確認する
+        // （デスクトップウィンドウの特定・除外の検証に使用。ヘッドレス環境では 0 件でスキップ）
+        foreach (var w in windows)
+        {
+            Assert.NotNull(w.ClassName);
+            Assert.NotEqual("", w.ClassName);
+        }
+    }
+
+    [AvaloniaFact]
     public void WinElementFinder_FindScreenUnderCursorが実モニター内の位置を検出する()
     {
         var finder = CreateFinder();
@@ -122,5 +138,26 @@ public class WinElementFinderTests
 
         // 例外なく呼び出せる（検出・未検出は実環境のウィンドウ構成に依存）
         _ = finder.FindWindowUnderCursor();
+    }
+
+    [AvaloniaFact]
+    public void WinElementFinder_TryGetWindowVisibleRectが実ウィンドウで例外なく動作する()
+    {
+        var finder = CreateFinder();
+        var windows = finder.ListWindows();
+        if (windows.Count == 0) return; // ウィンドウが無い環境ではスキップ
+
+        // 検出された各ウィンドウで可視矩形が取得できる（最大化は GetWindowRect / 通常は DWM 影除外）
+        foreach (var w in windows)
+        {
+            if (w.Handle is not { } handle) continue;
+
+            var ok = finder.TryGetWindowVisibleRect(handle, out var rect);
+
+            // 除外条件（0x0 サイズ）が適用済みのウィンドウのため、正のサイズの矩形が取得できる
+            Assert.True(ok);
+            Assert.True(rect.Width > 0);
+            Assert.True(rect.Height > 0);
+        }
     }
 }

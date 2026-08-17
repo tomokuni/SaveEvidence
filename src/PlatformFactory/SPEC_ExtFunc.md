@@ -224,7 +224,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | | `void ShowCursor(bool show)` | マウスポインターの表示 / 非表示切替 |
 | `IElementFinder` | `ElementFinderResults FindWindowUnderCursor()` | カーソル位置（内部取得）の最前面ウィンドウ検出 |
 | | `ElementFinderResults FindScreenUnderCursor()` | カーソル位置（内部取得）が含まれるスクリーン検出 |
-| | `ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint)` | 指定位置（画面物理 Pixel）の最前面ウィンドウ検出 |
+| | `ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint)` | 指定位置（画面物理 Pixel）の最前面ウィンドウ検出。ウィンドウ矩形は最大化時 = ワークエリア（`GetWindowRect`）/ 通常時 = DWM 影除外（`DWMWA_EXTENDED_FRAME_BOUNDS`）。タスクバー / デスクトップウィンドウ（クラス名: `Shell_TrayWnd` / `Shell_SecondaryTrayWnd` / `Shell_ImmersiveTrayWnd` / `Progman` / `WorkerW`）は選択対象外。**タイトル空の `ApplicationFrameWindow`**（スタートメニュー等の UWP オーバーレイ）も除外（タイトル付きの実際の UWP アプリは選択対象） |
 | | `ElementFinderResults FindScreenUnderCursor(PixelPoint screenPoint)` | 指定位置（画面物理 Pixel）が含まれるスクリーン検出 |
 | | `IReadOnlyList<ElementFinderResults> ListScreens()` | 全スクリーン一覧（仮想スクリーン 1 枚画像の管理用） |
 | | `IReadOnlyList<ElementFinderResults> ListWindows()` | 全ウィンドウ一覧 |
@@ -262,7 +262,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | 型 | 説明 |
 | --- | --- |
 | `WindowCaptureMode` enum | `RedrawDirect`（再描画結果を直接取得）/ `ScreenCopy`（画面上の表示をコピー） |
-| `ElementFinderResults` record struct | 検出要素の結果（`Bounds`（画面物理 Pixel）/ `IsDetected` / `Title` / `Handle`） |
+| `ElementFinderResults` record struct | 検出要素の結果（`Bounds`（画面物理 Pixel）/ `IsDetected` / `Title` / `Handle` / `ClassName`） |
 | `BitmapFactory.CreateEmpty()` | 0x0 の空 Bitmap 生成（キャンセル時の戻り値用。生成失敗時 null） |
 | `BitmapExtensions.CopyRegionWithPadding` | 範囲外許容で領域コピー（クリップ + オフセット、範囲外は透明のまま。座標はピクセル単位） |
 | `BitmapExtensions.ExtractRegion` | 矩形切り出し（範囲外は透明パディング。座標はピクセル単位。w/h ≤ 0 は `ArgumentOutOfRangeException`） |

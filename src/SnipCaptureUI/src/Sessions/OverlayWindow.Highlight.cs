@@ -1,8 +1,8 @@
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
@@ -47,10 +47,13 @@ internal sealed partial class OverlayWindow
         SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds) : null;
         SelectionOverlay.HasHighlight = detection.IsDetected;
         SelectionOverlay.ScreenIndex = detection.IsDetected ? ParseScreenIndex(detection.Title) : -1;
-        // マルチスクリーン補正: 検出したスクリーンのスケーリングを描画用に反映する
-        SelectionOverlay.DisplayScaleScaling = detection.IsDetected
-            ? FindScalingForPoint(screenPoint, _scaling, Screens.All.Select(s => (s.Bounds, s.Scaling)))
-            : _scaling;
+        // サイズラベルの物理ピクセル換算は、ドメイン（画面物理 − Position）を DIP 変換した
+        // DomainScale(_scaling) と往復一致するよう _scaling（オーバーレイの表示スケール）を維持する。
+        // マルチモニタで異なるスケーリングのスクリーンを選択しても、選択矩形はドメイン（物理ピクセル）
+        // のまま保持され、DIP 変換（÷ _scaling）と物理換算（× _scaling）で正しい物理サイズを表示する。
+        SnipCaptureLog.LogHighlight(_log, "ScreenSelect", detection.IsDetected,
+            detection.IsDetected ? ToWindowPixel(detection.Bounds).ToString() : "",
+            detection.Title ?? "", "");
     }
 
     /// <summary>点を含むスクリーンのスケーリング係数を返す（純粋関数）。該当なしはフォールバックを返す。</summary>
@@ -67,6 +70,39 @@ internal sealed partial class OverlayWindow
             if (bounds.Contains(point)) return scaling;
         }
         return fallback;
+    }
+
+    /// <summary>ドメイン矩形の中心が含まれるモニタのスケーリング係数を返す（サイズラベルの DisplayScale 表示用）。</summary>
+    /// <param name="domainRect">ドメイン矩形（= 画面物理 − Position。仮想スクリーンピクセル）。</param>
+    /// <returns>矩形中心のモニタのスケーリング係数。該当なしはオーバーレイのスケーリング（<see cref="_scaling"/>）。</returns>
+    /// <remarks>
+    /// ドメイン矩形の中心に <see cref="Position"/> を加算して画面物理座標へ戻し、<see cref="FindScalingForPoint"/> で
+    /// モニタを特定する。これにより、マルチモニタ（異なる DPI）でも選択中のモニタの実スケーリングを表示できる。
+    /// </remarks>
+    private double GetMonitorScalingForRect(Rect domainRect)
+    {
+        var center = new PixelPoint(
+            (int)(domainRect.X + domainRect.Width / 2 + Position.X),
+            (int)(domainRect.Y + domainRect.Height / 2 + Position.Y));
+        return FindScalingForPoint(center, _scaling, Screens.All.Select(s => (s.Bounds, s.Scaling)));
+    }
+
+    /// <summary>ドメイン矩形からサイズラベルを生成する（物理ピクセル + DisplayScale）。</summary>
+    /// <param name="domainRect">ドメイン矩形（= 画面物理 − Position。物理ピクセル）。</param>
+    /// <param name="scaling">DisplayScale 表示用のスケーリング係数（選択中のモニタの実スケーリング）。</param>
+    /// <returns>"(L, T) - (R, B),  (W×H), DisplayScale: (P%)" 形式のテキスト。</returns>
+    /// <remarks>
+    /// ドメインは画面物理座標のため、座標・サイズはスケーリングに依存しない物理ピクセルとして直接取得できる。<br/>
+    /// DIP 変換（÷ _scaling）→ 物理換算（× DisplayScaleScaling）の往復誤差（マルチモニタでのサイズ・DisplayScale の
+    /// 不一致）を排除するため、ドメインから直接生成する（単一実装・DRY）。
+    /// </remarks>
+    private static string FormatDomainSizeLabel(Rect domainRect, double scaling)
+    {
+        int l = (int)domainRect.X, t = (int)domainRect.Y;
+        int r = (int)domainRect.Right, b = (int)domainRect.Bottom;
+        int w = (int)domainRect.Width, h = (int)domainRect.Height;
+        int pct = (int)(scaling * 100);
+        return $"({l}, {t}) - ({r}, {b}),  ({w}×{h}), DisplayScale: ({pct}%)";
     }
 
     /// <summary>検出結果のタイトル（「Screen {インデックス}」形式）からインデックスを取得する。</summary>
@@ -87,17 +123,11 @@ internal sealed partial class OverlayWindow
         SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds) : null;
         SelectionOverlay.HasHighlight = detection.IsDetected;
         SelectionOverlay.WindowTitle = detection.Title ?? "";
-        // マルチスクリーン補正: ハイライト矩形の中心がどのスクリーンにあるかを特定し、そのスケーリングを反映する
-        if (detection.IsDetected)
-        {
-            var center = detection.Bounds.Center;
-            SelectionOverlay.DisplayScaleScaling = FindScalingForPoint(
-                new PixelPoint((int)center.X, (int)center.Y), _scaling, Screens.All.Select(s => (s.Bounds, s.Scaling)));
-        }
-        else
-        {
-            SelectionOverlay.DisplayScaleScaling = _scaling;
-        }
+        // サイズラベルの物理ピクセル換算は _scaling（オーバーレイの表示スケール）を維持する
+        // （ScreenSelect と同一。マルチモニタでもドメイン（物理ピクセル）の往復が一致する）。
+        SnipCaptureLog.LogHighlight(_log, "WindowSelect", detection.IsDetected,
+            detection.IsDetected ? ToWindowPixel(detection.Bounds).ToString() : "",
+            detection.Title ?? "", detection.ClassName ?? "");
     }
 
     /// <summary>画面物理座標の矩形をウィンドウローカル DIP に変換する。</summary>

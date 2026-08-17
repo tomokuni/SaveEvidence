@@ -216,6 +216,7 @@ overlay.InvalidateVisual(); // 再描画を要求
 **非暗転領域（穴）は始点・終点の両ピクセルを含む閉区間**、**暗転領域は始点・終点のいずれも含まない**ことを意図する仕様です。
 
 - `LogicalSelectionRect`（ドメイン座標）を DIP へ変換する際は、終点（`Right` / `Bottom`）に +1 してから変換します（`Rect(Inverse(始点), Inverse(終点 + (1, 1)))`）。
+- `LogicalHighlightRect`（ScreenSelect / WindowSelect のスクリーン・ウィンドウ境界）は、検出結果（PixelRect）が最初から**全ピクセルを含む閉区間表現**のため、+1 しません（`ToDipRect(rect, port, closedInterval: false)`。+1 すると実際より 1px 大きい枠・サイズラベルになる）。
 - `FadeMaskDrawer.DrawOverlay` は受け取った矩形の外側（上・下・左・右）を暗転で塗りつぶすため、閉区間の矩形を受け取れば自動的に終点ピクセルも非暗転になります。
 - これにより、DragRect の選択枠（閉区間描画）・キャプチャ（閉区間 +1）と表示が一致します。
 

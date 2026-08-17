@@ -15,6 +15,8 @@
     - [5.2 メソッド](#52-メソッド)
     - [5.3 イベント](#53-イベント)
     - [5.4 型](#54-型)
+      - [5.4.1 FadeMaskDragRectMode](#541-fademaskdragrectmode)
+      - [5.4.2 FadeMaskDragRectSettings](#542-fademaskdragrectsettings)
   - [6. 座標系](#6-座標系)
   - [7. モード](#7-モード)
   - [8. 配線（内部で完結する状態同期）](#8-配線内部で完結する状態同期)
@@ -67,7 +69,7 @@ using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable.AvaloniaUI.Platform; // ICoordinatePort / CoordinatePort
 ```
 
-公開 API は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）の型を参照しないため、<br/>
+公開 API は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）の型を参照しないため、
 これらの using は不要です（公開型のカプセル化）。
 
 ## 4. 基本的な使用方法

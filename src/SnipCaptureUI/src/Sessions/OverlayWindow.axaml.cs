@@ -147,8 +147,22 @@ internal sealed partial class OverlayWindow : Window
         // 外観設定（DragRect / FadeMask / Loupe を一括適用。設定変換は拡張メソッドに一元化）
         SelectionOverlay.AppearanceSettings =
             s.ToFadeMaskDragRectSettings(scaling: _scaling, positionOffset: 20.0);
-        // サイズラベル: 設定値（CaptureSettings.SizeLabelOverride）を描画時に評価する（Provider 方式）
-        SelectionOverlay.SizeLabelOverrideProvider = () => s.SizeLabelOverride;
+        // サイズラベル: 選択中の矩形（ドメイン = 画面物理 − Position）と、そのモニタの実スケーリングから
+        // 描画時に直接生成する（物理ピクセルはスケーリングに依存しない。DIP 換算の往復誤差を排除）。
+        // ハイライト（ScreenSelect / WindowSelect）・選択（AreaSelect）の順で優先し、未選択は設定値に委ねる。
+        SelectionOverlay.SizeLabelOverrideProvider = () =>
+        {
+            if (SelectionOverlay.LogicalHighlightRect is { } highlight)
+            {
+                return FormatDomainSizeLabel(highlight, GetMonitorScalingForRect(highlight));
+            }
+            if (SelectionOverlay.HasSelection)
+            {
+                var selection = SelectionOverlay.SelectionRect;
+                return FormatDomainSizeLabel(selection, GetMonitorScalingForRect(selection));
+            }
+            return s.SizeLabelOverride;
+        };
         // 選択矩形・ハイライトはドメイン座標（仮想スクリーンピクセル）で設定し、描画時に DIP へ変換する（DragRect と同方式）
         // DomainScale: Forward = DIP→ドメイン（× scaling）/ Inverse = ドメイン→DIP（÷ scaling）
         // DragRect / FadeMask / Loupe の 3 コントロールへ同一ポートを一括分配する。

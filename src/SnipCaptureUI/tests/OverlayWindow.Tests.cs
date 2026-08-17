@@ -535,6 +535,41 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
+    public void UpdateSelectScreenHighlight_サイズラベル換算はオーバーレイのスケーリングを維持する()
+    {
+        var finder = new MockElementFinder
+        {
+            ScreenResult = new ElementFinderResults(
+                new PixelRect(200, 100, 1920, 1080),
+                IsDetected: true,
+                Title: "Screen 1"),
+        };
+        // scaling = 2.0（オーバーレイの表示スケール。DisplayScaleScaling も _scaling で初期化される）
+        var window = CreateWindow(CaptureType.ScreenSelect, scaling: 2.0, elementFinder: finder);
+
+        // マルチモニタでカーソル位置のスクリーンのスケーリングが異なっても、
+        // サイズラベルの物理換算はドメイン（画面物理 − Position）と往復一致するよう _scaling を維持する
+        // （修正: 従来はカーソル位置のスクリーンのスケーリングで上書きし、マルチモニタで誤表示していた）
+        InvokeUpdateSelectScreenHighlight(window, new PixelPoint(500, 500));
+
+        Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void UpdateSelectScreenHighlight_未検出時もサイズラベル換算を維持する()
+    {
+        // 未検出（MockElementFinder は常に default）
+        var window = CreateWindow(CaptureType.ScreenSelect, scaling: 2.0);
+
+        InvokeUpdateSelectScreenHighlight(window, new PixelPoint(100, 100));
+
+        // 未検出時も _scaling（2.0）のまま維持される
+        Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void UpdateWindowSelectHighlight_検出時はハイライトを反映する()
     {
         var finder = new MockElementFinder
@@ -553,6 +588,25 @@ public class OverlayWindowTests
         Assert.True(window.SelectionOverlay.HasHighlight);
         Assert.Equal(new Rect(200, 150, 800, 600), window.SelectionOverlay.LogicalHighlightRect);
         Assert.Equal("Sample Window", window.SelectionOverlay.WindowTitle);
+    }
+
+    [AvaloniaFact]
+    public void UpdateWindowSelectHighlight_サイズラベル換算はオーバーレイのスケーリングを維持する()
+    {
+        var finder = new MockElementFinder
+        {
+            WindowResult = new ElementFinderResults(
+                new PixelRect(300, 200, 800, 600),
+                IsDetected: true,
+                Title: "Sample Window"),
+        };
+        var window = CreateWindow(CaptureType.WindowSelect, scaling: 2.0, elementFinder: finder);
+
+        // ウィンドウのハイライトでもサイズラベル換算は _scaling を維持する（ScreenSelect と同一）
+        InvokeUpdateWindowSelectHighlight(window, new PixelPoint(500, 500));
+
+        Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
+        window.Close();
     }
 
     [AvaloniaFact]

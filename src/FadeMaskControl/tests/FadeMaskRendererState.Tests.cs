@@ -74,6 +74,28 @@ public class FadeMaskRendererStateTests
         Assert.Equal(new Avalonia.Rect(20, 40, 62, 82), result);
     }
 
+    [Fact]
+    public void ToDipRect_closedIntervalがfalseなら終点を加算しない()
+    {
+        var logical = new Avalonia.Rect(10, 20, 30, 40);
+        var result = FadeMaskRenderer.ToDipRect(logical, CoordinatePort.Identity, closedInterval: false);
+
+        // ハイライト矩形（スクリーン/ウィンドウ境界）は既に全ピクセルを含むため +1 しない
+        // （+1 すると 3840x2160 が 3841x2161 になる不具合の回帰防止）
+        Assert.Equal(new Avalonia.Rect(10, 20, 30, 40), result);
+    }
+
+    [Fact]
+    public void ToDipRect_closedIntervalがfalseでもスケールポートで正しく変換される()
+    {
+        var logical = new Avalonia.Rect(10, 20, 30, 40);
+        // Scale(2.0) の Inverse = ドメイン座標 → DIP 座標（2 倍）
+        var result = FadeMaskRenderer.ToDipRect(logical, CoordinatePort.Scale(2.0), closedInterval: false);
+
+        // 終点を加算せず 2 倍: (10*2, 20*2, 30*2, 40*2)
+        Assert.Equal(new Avalonia.Rect(20, 40, 60, 80), result);
+    }
+
     // ====================================================================
     // GetBorderRects（枠線 4 辺矩形計算）
     // ====================================================================

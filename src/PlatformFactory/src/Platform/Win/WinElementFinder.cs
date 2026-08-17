@@ -138,31 +138,72 @@ internal sealed class WinElementFinder : IElementFinder
             var handle = new PlatformHandle(hWnd, "HWND");
             if (!TryGetWindowVisibleRect(handle, out var visibleRect)) return true;
             var title = GetWindowTitle(handle);
-            results.Add(new ElementFinderResults(visibleRect, true, Title: title, Handle: handle));
+            var className = GetWindowClassName(hWnd);
+            // タイトルが空の UWP フレーム（スタートメニュー等のオーバーレイ）は除外する
+            // （通常の UWP アプリはタイトル付きで選択対象に残す。IsExcludedFrame の判定条件）
+            if (IsExcludedFrame(className, title)) return true;
+            results.Add(new ElementFinderResults(visibleRect, true, Title: title, Handle: handle, ClassName: className));
             return true;
         }, IntPtr.Zero);
 
         return results;
     }
 
+    /// <summary>ウィンドウのクラス名を取得する。</summary>
+    /// <param name="hWnd">ウィンドウハンドル。</param>
+    /// <returns>クラス名。取得できない場合は空文字。</returns>
+    /// <remarks><see cref="ListWindows"/> の結果（<see cref="ElementFinderResults.ClassName"/>）で使用する。</remarks>
+    private static string GetWindowClassName(IntPtr hWnd)
+    {
+        var className = new char[256];
+        var len = WinNative.GetClassName(hWnd, className, className.Length);
+        return len > 0 ? className.AsSpan(0, len).ToString() : "";
+    }
+
     /// <summary>タスクバー / デスクトップウィンドウ（仕様 2.4.2 の除外対象）かどうかを判定する。</summary>
     /// <remarks>
-    /// クラス名で判定する: Shell_TrayWnd（タスクバー）、Progman / WorkerW（デスクトップ）。<br/>
-    /// デスクトップ全体のキャプチャは ScreenSelect を使用するため、これらは選択対象外とする。<br/>
+    /// クラス名で判定する: Shell_TrayWnd（タスクバー）、Shell_SecondaryTrayWnd（セカンダリタスクバー・
+    /// マルチモニタ）、Shell_ImmersiveTrayWnd（Windows 8/10 のタスクバー）、Progman / WorkerW（デスクトップ）。<br/>
+    /// デスクトップ全体のキャプチャは ScreenSelect を使用するため、これらは選択対象外とする。
     /// </remarks>
     private static bool IsExcludedClass(IntPtr hWnd)
     {
         var className = new char[256];
         var len = WinNative.GetClassName(hWnd, className, className.Length);
         if (len <= 0) return false;
-        return className.AsSpan(0, len).SequenceEqual("Shell_TrayWnd")
-            || className.AsSpan(0, len).SequenceEqual("Progman")
-            || className.AsSpan(0, len).SequenceEqual("WorkerW");
+        return IsExcludedClassName(className.AsSpan(0, len).ToString());
     }
 
-    /// <summary>ウィンドウの可視矩形領域を取得する（DWM 影除外）。</summary>
+    /// <summary>タイトルが空の UWP フレーム（スタートメニュー等のオーバーレイ）かどうかを判定する（純粋関数・テスト容易）。</summary>
+    /// <param name="className">クラス名。</param>
+    /// <param name="title">ウィンドウタイトル。</param>
+    /// <returns>除外対象（タイトル空の <c>ApplicationFrameWindow</c>）なら true。</returns>
     /// <remarks>
-    /// DWM の DWMWA_EXTENDED_FRAME_BOUNDS で影を除外した矩形を取得し、失敗時は GetWindowRect にフォールバックする。<br/>
+    /// Windows 10 の UWP アプリは <c>ApplicationFrameWindow</c>（フレーム・タイトルバー）をトップレベルに持ち、<br/>
+    /// 実際のコンテンツは子ウィンドウ（Windows.UI.Core.CoreWindow）に表示される。<br/>
+    /// スタートメニュー / タスクビュー等のシステムオーバーレイも <c>ApplicationFrameWindow</c> だがタイトルが空のため、<br/>
+    /// 「タイトル空」を条件に除外する（タイトル付きの実際の UWP アプリは選択対象に残す）。
+    /// </remarks>
+    internal static bool IsExcludedFrame(string className, string title)
+        => className == "ApplicationFrameWindow" && string.IsNullOrEmpty(title);
+
+    /// <summary>タスクバー / デスクトップウィンドウのクラス名かどうかを判定する（純粋関数・テスト容易）。</summary>
+    /// <param name="className">クラス名。</param>
+    /// <returns>除外対象のクラス名なら true。</returns>
+    /// <remarks>
+    /// 文字列ベースの純粋判定のため、ヘッドレス不要のテストで検証できる。<br/>
+    /// 除外対象: <c>Shell_TrayWnd</c> / <c>Shell_SecondaryTrayWnd</c> / <c>Shell_ImmersiveTrayWnd</c> / <c>Progman</c> / <c>WorkerW</c>。
+    /// </remarks>
+    internal static bool IsExcludedClassName(string className)
+        => className is "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "Shell_ImmersiveTrayWnd"
+            or "Progman" or "WorkerW";
+
+    /// <summary>ウィンドウの可視矩形領域を取得する（最大化はワークエリア・通常は DWM 影除外）。</summary>
+    /// <remarks>
+    /// 最大化ウィンドウには影がなく、<c>DWMWA_EXTENDED_FRAME_BOUNDS</c> は左右に 8px の内部マージンを返す<br/>
+    /// （Windows 10 の既知の挙動）ため、<c>GetWindowRect</c>（ワークエリア = タスクバーを除く最大化領域）を使用する。<br/>
+    /// 通常ウィンドウは <c>DWMWA_EXTENDED_FRAME_BOUNDS</c> で影を除外した可視領域を取得し、<br/>
+    /// 失敗時は <c>GetWindowRect</c> にフォールバックする。<br/>
     /// インターフェイスからは公開せず、<see cref="FindWindowUnderCursor"/> の内部実装として使用する。
     /// </remarks>
     internal bool TryGetWindowVisibleRect(IPlatformHandle handle, out PixelRect rect)
@@ -174,7 +215,20 @@ internal sealed class WinElementFinder : IElementFinder
             return false;
         }
 
-        // DWM 影除外: DWMWA_EXTENDED_FRAME_BOUNDS で可視領域を取得する
+        // 最大化ウィンドウ: 影がないため GetWindowRect（ワークエリア）を使用する
+        // （DWMWA_EXTENDED_FRAME_BOUNDS は最大化時に 8px の内部マージンを返す既知の挙動の回避）
+        if (WinNative.IsZoomed(hWnd))
+        {
+            if (!WinNative.GetWindowRect(hWnd, out var zoomedRect))
+            {
+                rect = default;
+                return false;
+            }
+            rect = new PixelRect(zoomedRect.Left, zoomedRect.Top, zoomedRect.Width, zoomedRect.Height);
+            return true;
+        }
+
+        // 通常ウィンドウ: DWM 影除外（DWMWA_EXTENDED_FRAME_BOUNDS）で可視領域を取得する
         WinNative.RECT visibleRect = default;
         var hr = WinNative.DwmGetWindowAttribute(hWnd, WinNative.DWMWA_EXTENDED_FRAME_BOUNDS,
             ref visibleRect, Marshal.SizeOf<WinNative.RECT>());

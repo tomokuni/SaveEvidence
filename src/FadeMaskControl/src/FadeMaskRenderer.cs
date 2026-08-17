@@ -182,11 +182,13 @@ public sealed class FadeMaskRenderer
         var textColor = TextColor;
 
         // ── 2. 穴あけ矩形の決定（論理矩形 + 座標変換ポートを描画時に評価。ポート未設定は等価変換） ──
+        // 選択矩形は閉区間（+1）で DIP 変換する。ハイライト矩形（スクリーン/ウィンドウ境界）は
+        // 既に全ピクセルを含む閉区間表現（PixelRect 由来）のため +1 しない（1px 大きく表示されるのを防ぐ）。
         var selectionRect = LogicalSelectionRect is { } logical
             ? ToDipRect(logical, CoordinateTransform ?? CoordinatePort.Identity)
             : (Rect?)null;
         var highlightRect = LogicalHighlightRect is { } hl
-            ? ToDipRect(hl, CoordinateTransform ?? CoordinatePort.Identity)
+            ? ToDipRect(hl, CoordinateTransform ?? CoordinatePort.Identity, closedInterval: false)
             : (Rect?)null;
         var sizeLabelOverride = SizeLabelOverrideProvider?.Invoke();
         var holeRect = HasHighlight ? highlightRect
@@ -255,17 +257,24 @@ public sealed class FadeMaskRenderer
 
     /// <summary>論理座標の矩形をポート経由で DIP 矩形へ変換する。</summary>
     /// <param name="logical">論理座標（ドメイン）の矩形。</param>
+    /// <param name="logical">論理座標（ドメイン）の矩形。</param>
     /// <param name="port">座標変換ポート。</param>
+    /// <param name="closedInterval">閉区間（終点 +1）として扱うか。既定は true。</param>
     /// <returns>DIP 座標の矩形。</returns>
     /// <remarks>
     /// 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、<br/>
     /// 終点（Right / Bottom）に +1 してから DIP 変換する（終点のピクセルも非暗転領域に含める）。<br/>
-    /// これにより暗転領域は始点・終点のいずれも含まない（キャプチャの閉区間 +1 と一致）。
+    /// これにより暗転領域は始点・終点のいずれも含まない（キャプチャの閉区間 +1 と一致）。<br/>
+    /// ハイライト矩形（ScreenSelect / WindowSelect のスクリーン・ウィンドウ境界）は最初から<br/>
+    /// 全ピクセルを含む閉区間表現（PixelRect 由来）のため、<c>closedInterval: false</c> で +1 しない<br/>
+    /// （+1 すると実際より 1px 大きい枠・サイズラベルになる）。
     /// </remarks>
-    internal static Rect ToDipRect(Rect logical, ICoordinatePort port)
+    internal static Rect ToDipRect(Rect logical, ICoordinatePort port, bool closedInterval = true)
     {
         var tl = port.Inverse(logical.TopLeft);
-        var br = port.Inverse(new Point(logical.Right + 1, logical.Bottom + 1));
+        var br = port.Inverse(closedInterval
+            ? new Point(logical.Right + 1, logical.Bottom + 1)
+            : logical.BottomRight);
         return new Rect(tl, br);
     }
 

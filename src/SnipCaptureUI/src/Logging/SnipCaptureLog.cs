@@ -83,6 +83,22 @@ internal static partial class SnipCaptureLog
     [LoggerMessage(LogLevel.Debug, "[SnipCapture] VirtualScreen: origin=({X}, {Y}) size={Width}x{Height}")]
     public static partial void LogVirtualScreen(ILogger logger, int x, int y, int width, int height);
 
+    /// <summary>ハイライト検出結果（ScreenSelect / WindowSelect）のログ。</summary>
+    /// <remarks>
+    /// LogLevel: Trace <br/>
+    /// 出力書式: <c>[SnipCapture] Highlight: type={Type} detected={Detected} rect={Rect} title={Title} class={ClassName}</c><br/>
+    /// 選択された矩形（ドメイン = 画面物理 − Position）と検出対象（タイトル・クラス名）を記録し、<br/>
+    /// マルチモニタ・最大化ウィンドウの矩形検証（8px マージン等）とデスクトップウィンドウの特定に使用する。
+    /// </remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="type">キャプチャ種別（ScreenSelect / WindowSelect）。</param>
+    /// <param name="detected">検出されたかどうか。</param>
+    /// <param name="rect">検出矩形（ドメイン座標。未検出時は空文字）。</param>
+    /// <param name="title">検出対象のタイトル（スクリーン番号 / ウィンドウタイトル。未検出時は空文字）。</param>
+    /// <param name="className">検出対象のクラス名（ウィンドウ検出時のみ。未検出時は空文字）。</param>
+    [LoggerMessage(LogLevel.Trace, "[SnipCapture] Highlight: type={Type} detected={Detected} rect={Rect} title={Title} class={ClassName}")]
+    public static partial void LogHighlight(ILogger logger, string type, bool detected, string rect, string title, string className);
+
     /// <summary>Crop セッション開始のログ。</summary>
     /// <remarks>
     /// LogLevel: Debug <br/>
