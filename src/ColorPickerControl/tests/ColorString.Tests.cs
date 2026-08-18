@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using Estable.AvaloniaUI.Platform;
 using Xunit;
 
 namespace Estable.AvaloniaUI.ColorPicker.Tests;
@@ -46,7 +47,7 @@ public class ColorStringTests
     {
         Assert.True(ColorString.TryParse("Red", out var color, out var opacity));
 
-        Assert.Equal(Color.FromArgb(255, 255, 0, 0), color);
+        Assert.Equal(Colors.Red, color);
         Assert.Equal(1.0, opacity);
     }
 
@@ -64,7 +65,7 @@ public class ColorStringTests
     {
         Assert.True(ColorString.TryParse("#80FF0000", out var color, out var opacity));
 
-        Assert.Equal(Color.FromArgb(128, 255, 0, 0), color);
+        Assert.Equal(Color.FromAColor(128, Colors.Red), color);
         // +{n}% が無い場合は不透明度は 1.0 として扱う（アルファ成分は色に保持される）
         Assert.Equal(1.0, opacity);
     }
@@ -74,7 +75,7 @@ public class ColorStringTests
     {
         Assert.True(ColorString.TryParse("Red+50%", out var color, out var opacity));
 
-        Assert.Equal(Color.FromArgb(128, 255, 0, 0), color);
+        Assert.Equal(Color.FromAColor(128, Colors.Red), color);
         Assert.Equal(0.5, opacity);
     }
 
@@ -93,7 +94,7 @@ public class ColorStringTests
     {
         Assert.True(ColorString.TryParse("Red+0%", out var color, out var opacity));
 
-        Assert.Equal(Color.FromArgb(0, 255, 0, 0), color);
+        Assert.Equal(Color.FromAColor(0, Colors.Red), color);
         Assert.Equal(0.0, opacity);
     }
 
@@ -102,7 +103,7 @@ public class ColorStringTests
     {
         Assert.True(ColorString.TryParse("Red+100%", out var color, out var opacity));
 
-        Assert.Equal(Color.FromArgb(255, 255, 0, 0), color);
+        Assert.Equal(Colors.Red, color);
         Assert.Equal(1.0, opacity);
     }
 
@@ -231,7 +232,7 @@ public class ColorStringTests
     public void Format_アルファは無視されRGBで色名を判定する()
     {
         // アルファ付きでも RGB が一致すれば色名で表す
-        Assert.Equal("Red+50%", ColorString.Format(Color.FromArgb(128, 255, 0, 0), 0.5));
+        Assert.Equal("Red+50%", ColorString.Format(Color.FromAColor(128, Colors.Red), 0.5));
     }
 
     [Fact]
@@ -432,7 +433,7 @@ public class ColorStringTests
     [Fact]
     public void ToArgbHex_色オブジェクトはアルファ先頭の8桁に変換される()
     {
-        Assert.Equal("#80FF0000", ColorString.ToArgbHex(Color.FromArgb(0x80, 0xFF, 0x00, 0x00)));
+        Assert.Equal("#80FF0000", ColorString.ToArgbHex(Color.FromAColor(0x80, Colors.Red)));
     }
 
     [Fact]
@@ -450,13 +451,13 @@ public class ColorStringTests
     {
         var names = new Dictionary<string, Color>
         {
-            ["Red"] = Color.FromRgb(255, 0, 0),
-            ["Blue"] = Color.FromRgb(0, 0, 255),
+            ["Red"] = Colors.Red,
+            ["Blue"] = Colors.Blue,
         };
 
         var (exact, rgb) = ColorString.BuildReverseLookups(names);
 
-        Assert.Equal("Red", exact[Color.FromRgb(255, 0, 0)]);
+        Assert.Equal("Red", exact[Colors.Red]);
         Assert.Equal("Blue", rgb[(0, 0, 255)]);
     }
 
@@ -465,13 +466,13 @@ public class ColorStringTests
     {
         var names = new Dictionary<string, Color>
         {
-            ["First"] = Color.FromRgb(255, 0, 0),
-            ["Second"] = Color.FromRgb(255, 0, 0),
+            ["First"] = Colors.Red,
+            ["Second"] = Colors.Red,
         };
 
         var (exact, _) = ColorString.BuildReverseLookups(names);
 
-        Assert.Equal("First", exact[Color.FromRgb(255, 0, 0)]);
+        Assert.Equal("First", exact[Colors.Red]);
     }
 
     [Fact]
@@ -480,7 +481,7 @@ public class ColorStringTests
         // 半透明（A=0）→ 不透明（A=255）の順に処理され、不透明の色名が優先登録される
         var names = new Dictionary<string, Color>
         {
-            ["Transparent"] = Color.FromArgb(0, 255, 255, 255),
+            ["Transparent"] = Color.FromAColor(0, Colors.White),
             ["White"] = Colors.White,
         };
 
@@ -494,8 +495,8 @@ public class ColorStringTests
     {
         var names = new Dictionary<string, Color>
         {
-            ["First"] = Color.FromRgb(255, 0, 255),
-            ["Second"] = Color.FromRgb(255, 0, 255),
+            ["First"] = Colors.Magenta,
+            ["Second"] = Colors.Magenta,
         };
 
         var (_, rgb) = ColorString.BuildReverseLookups(names);
@@ -508,8 +509,8 @@ public class ColorStringTests
     {
         var names = new Dictionary<string, Color>
         {
-            ["First"] = Color.FromArgb(100, 255, 0, 0),
-            ["Second"] = Color.FromArgb(50, 255, 0, 0),
+            ["First"] = Color.FromAColor(100, Colors.Red),
+            ["Second"] = Color.FromAColor(50, Colors.Red),
         };
 
         var (_, rgb) = ColorString.BuildReverseLookups(names);

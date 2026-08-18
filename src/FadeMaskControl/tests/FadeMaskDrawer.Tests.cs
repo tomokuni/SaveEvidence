@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Headless.XUnit;
+using Estable.AvaloniaUI.Platform;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMask.Tests;
@@ -29,7 +30,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(50, 50, 100, 80),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: false);
     }
@@ -43,7 +44,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(50, 50, 100, 80),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: true,
             scaling: 1.25);
@@ -58,7 +59,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(50, 50, 100, 80),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: true,
             sizeLabelOverride: "Custom Label");
@@ -73,7 +74,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             null,
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: false);
     }
@@ -88,7 +89,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(0, 0, 300, 300),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: true);
     }
@@ -102,7 +103,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(50, 50, 100, 80),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: true,
             scaling: 0);
@@ -117,7 +118,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(50, 50, 100, 80),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: true,
             subLines:
@@ -137,7 +138,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(50, 50, 100, 80),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: false,
             subLines:
@@ -155,7 +156,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(50, 50, 100, 80),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: true,
             subLines: []);
@@ -171,15 +172,15 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(50, 50, 100, 80),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: true,
             subLines:
             [
-                new FadeMaskDrawer.SubLine("Enter / クリック: 確定  Esc: キャンセル", 12.0, Colors.White, Color.FromArgb(179, 0, 0, 139)),
-                new FadeMaskDrawer.SubLine("Test Window", 11.0, Colors.LightGray, Color.FromArgb(77, 139, 0, 0)),
+                new FadeMaskDrawer.SubLine("Enter / クリック: 確定  Esc: キャンセル", 12.0, Colors.White, Color.FromAColor(179, Colors.DarkBlue)),
+                new FadeMaskDrawer.SubLine("Test Window", 11.0, Colors.LightGray, Color.FromAColor(77, Colors.DarkRed)),
             ],
-            textBgColor: Color.FromArgb(128, 0, 0, 0));
+            textBgColor: Color.FromAColor(128, Colors.Black));
     }
 
     [AvaloniaFact]
@@ -192,7 +193,7 @@ public class FadeMaskDrawerTests
             ctx,
             new Rect(0, 0, 300, 300),
             new Rect(50, 50, 100, 80),
-            Color.FromArgb(150, 0, 0, 0),
+            Color.FromAColor(150, Colors.Black),
             Colors.White, 14.0,
             showSizeLabel: true,
             subLines:

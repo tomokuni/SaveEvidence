@@ -30,7 +30,7 @@ public class DragRectControlStateTests
         var control = CreateControl();
 
         // 枠線の既定は DarkGray（設定画面の選択枠の色と一致）
-        Assert.Equal(Color.FromArgb(0xFF, 0xA9, 0xA9, 0xA9), control.BorderColor);
+        Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), control.BorderColor);
         Assert.Equal(2.0, control.BorderThickness);
         Assert.Equal(Colors.White, control.HandleColor);
         Assert.Equal(10.0, control.HandleSize);
@@ -42,7 +42,7 @@ public class DragRectControlStateTests
         Assert.False(control.ShowCoordLabel);
         Assert.Equal(Colors.White, control.CoordLabelColor);
         // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(Color.FromArgb(153, 0, 0, 0), control.CoordLabelBackgroundColor);
+        Assert.Equal(Color.FromAColor(153, Colors.Black), control.CoordLabelBackgroundColor);
         Assert.Equal(12.0, control.CoordLabelFontSize);
         Assert.NotNull(control.Log);
     }
@@ -75,11 +75,11 @@ public class DragRectControlStateTests
         // カーソル座標ラベル
         control.ShowCoordLabel = true;
         control.CoordLabelColor = Colors.Cyan;
-        control.CoordLabelBackgroundColor = Color.FromArgb(128, 0, 100, 0); // 暗緑 50%
+        control.CoordLabelBackgroundColor = Color.FromAColor(128, Colors.DarkGreen);
         control.CoordLabelFontSize = 14.0;
         Assert.True(control.ShowCoordLabel);
         Assert.Equal(Colors.Cyan, control.CoordLabelColor);
-        Assert.Equal(Color.FromArgb(128, 0, 100, 0), control.CoordLabelBackgroundColor);
+        Assert.Equal(Color.FromAColor(128, Colors.DarkGreen), control.CoordLabelBackgroundColor);
         Assert.Equal(14.0, control.CoordLabelFontSize);
     }
 

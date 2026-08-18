@@ -47,7 +47,7 @@ internal sealed class CaptureSession(
     public async Task<CaptureResult?> RunAsync(Window owner, bool showWithOwner = true)
     {
         var tcs = new TaskCompletionSource<CaptureResult?>();
-        LogMessage.LogCaptureStart(_log, captureType.ToString());
+        _log.LogCaptureStart(captureType.ToString());
 
         // オーナーウィンドウのキャプチャ除外（オーバーレイがキャプチャ画像に写り込まないようにする）
         bool ownerExcluded = false;
@@ -124,12 +124,12 @@ internal sealed class CaptureSession(
             // フロー: APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）
             if (result is { Image: not null, SourceBounds: { } bounds })
             {
-                LogMessage.LogCaptureCompleted(_log, bounds.ToString());
-                LogMessage.LogResult(_log, result.Image.PixelSize.Width, result.Image.PixelSize.Height, bounds.ToString());
+                _log.LogCaptureCompleted(bounds.ToString());
+                _log.LogResult(result.Image.PixelSize.Width, result.Image.PixelSize.Height, bounds.ToString());
             }
             else
             {
-                LogMessage.LogCaptureCancelled(_log);
+                _log.LogCaptureCancelled();
             }
             onCaptured?.Invoke(result);
             return result;

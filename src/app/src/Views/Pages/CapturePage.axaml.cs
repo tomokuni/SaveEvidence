@@ -767,21 +767,21 @@ public sealed partial class CapturePage : UserControl
 
     private void OnCaptureScreenClick(object? sender, RoutedEventArgs e)
     {
-        AppLog.LogCaptureMenuScreen(_logger);
+        _logger.LogCaptureMenuScreen();
         if (_parentWindow is MainWindow mw)
             mw.StartSelectionMode(CaptureType.ScreenSelect);
     }
 
     private void OnCaptureWindowClick(object? sender, RoutedEventArgs e)
     {
-        AppLog.LogCaptureMenuWindow(_logger);
+        _logger.LogCaptureMenuWindow();
         if (_parentWindow is MainWindow mw)
             mw.StartSelectionMode(CaptureType.WindowSelect);
     }
 
     private void OnCaptureAreaClick(object? sender, RoutedEventArgs e)
     {
-        AppLog.LogCaptureMenuArea(_logger);
+        _logger.LogCaptureMenuArea();
         if (_parentWindow is MainWindow mw)
             mw.StartSelectionMode(CaptureType.AreaSelect);
     }
@@ -907,7 +907,7 @@ public sealed partial class CapturePage : UserControl
         var point = e.GetCurrentPoint(ZoomableView.ImageControl);
         var isRight = point.Properties.IsRightButtonPressed;
         var hasCropTask = _cropTask is not null;
-        AppLog.LogPreviewPointerPressed(_logger, isRight, hasCropTask);
+        _logger.LogPreviewPointerPressed(isRight, hasCropTask);
         if (isRight && hasCropTask)
         {
             ShowCropContextMenu();

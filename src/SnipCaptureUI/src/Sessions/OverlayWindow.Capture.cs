@@ -91,7 +91,7 @@ internal sealed partial class OverlayWindow
     /// </remarks>
     private void CompleteSelectionCore(Bitmap? result, PixelRect captureRect)
     {
-        LogMessage.LogCaptureCompleted(_log, captureRect.ToString());
+        _log.LogCaptureCompleted(captureRect.ToString());
         Close();
         _onComplete(result, captureRect);
     }
@@ -115,11 +115,7 @@ internal sealed partial class OverlayWindow
 
         // バックグラウンドで切り出す（Bitmap 破棄時は例外を捕捉してキャッシュ更新をスキップ）
         var vBitmap = _virtualScreenBitmap;
-        var localRect = new PixelRect(
-            captureRect.X - _virtualScreenOrigin.X,
-            captureRect.Y - _virtualScreenOrigin.Y,
-            captureRect.Width,
-            captureRect.Height);
+        var localRect = ToBitmapLocalRect(captureRect, _virtualScreenOrigin);
         _ = Task.Run(() =>
         {
             try
@@ -155,20 +151,27 @@ internal sealed partial class OverlayWindow
     private static Bitmap? ExtractClipCore(Bitmap? vBitmap, PixelPoint origin, PixelRect captureRect)
     {
         if (vBitmap is not { } bmp) return null;
-        var localRect = new PixelRect(
+        return bmp.ExtractRegion(ToBitmapLocalRect(captureRect, origin));
+    }
+
+    /// <summary>キャプチャ矩形（画面物理座標）を Bitmap ローカル座標（= 画面物理 − 仮想スクリーン原点）へ変換する。</summary>
+    /// <param name="captureRect">キャプチャ矩形（画面物理座標・閉区間）。</param>
+    /// <param name="origin">仮想スクリーンの原点（画面物理座標）。</param>
+    /// <returns>Bitmap ローカル座標の矩形。</returns>
+    /// <remarks><see cref="PreExtractClip"/> と <see cref="ExtractClipCore"/> で共用する（単一所有）。</remarks>
+    private static PixelRect ToBitmapLocalRect(PixelRect captureRect, PixelPoint origin)
+        => new(
             captureRect.X - origin.X,
             captureRect.Y - origin.Y,
             captureRect.Width,
             captureRect.Height);
-        return bmp.ExtractRegion(localRect);
-    }
 
     /// <summary>選択をキャンセルする（0x0 の空結果）。</summary>
     private void CompleteCancelled()
     {
         if (_hasCompleted) return;
         _hasCompleted = true;
-        LogMessage.LogOverlayCancel(_log);
+        _log.LogOverlayCancel();
         _watchdog.Stop();
         _onComplete(null, null);
         Close();
@@ -213,7 +216,7 @@ internal sealed partial class OverlayWindow
         _virtualScreenBitmap?.Dispose();
         _virtualScreenBitmap = bitmap;
         _virtualScreenOrigin = origin;
-        LogMessage.LogVirtualScreen(_log, origin.X, origin.Y, bitmap?.PixelSize.Width ?? 0, bitmap?.PixelSize.Height ?? 0);
+        _log.LogVirtualScreen(origin.X, origin.Y, bitmap?.PixelSize.Width ?? 0, bitmap?.PixelSize.Height ?? 0);
         // 固定背景画像（VirtualScreenImage）にも表示する（AreaSelect の背景・ルーペソースの視覚化）
         VirtualScreenImage.Source = bitmap;
         // ルーペの Source を設定する。

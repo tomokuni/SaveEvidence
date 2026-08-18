@@ -90,7 +90,7 @@ using Estable.AvaloniaUI.FadeMask;
 var overlay = new FadeMaskControl
 {
     LogicalSelectionRect = new Rect(50, 50, 200, 150),
-    OverlayColor = Color.FromArgb(150, 0, 0, 0),
+    OverlayColor = Color.FromAColor(150, Colors.Black),
     ShowSizeLabel = true,
 };
 panel.Children.Add(overlay);
@@ -123,9 +123,9 @@ overlay.InvalidateVisual(); // 再描画を要求
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `LogicalSelectionRect` | `Rect?` | `null` | 選択矩形（**ドメイン座標系**）。`SetCoordinateTransform` で設定した座標変換ポートで描画時に DIP へ変換される（ウィンドウサイズ変更・ズーム・スクロールに追従） |
-| `OverlayColor` | `Color` | `Color.FromArgb(0,0,0,0)` | 暗転オーバーレイの色 |
+| `OverlayColor` | `Color` | `Color.FromAColor(128, Colors.Black)` | 暗転オーバーレイの色（既定は黒 50%） |
 | `TextColor` | `Color` | `White` | ラベルテキストの色 |
-| `TextBackgroundColor` | `Color` | `Color.FromArgb(153,0,0,0)` | ラベル背景の色（不透明度は色のアルファに統合。既定は黒 60%） |
+| `TextBackgroundColor` | `Color` | `Color.FromAColor(153, Colors.Black)` | ラベル背景の色（不透明度は色のアルファに統合。既定は黒 60%） |
 | `FontSize` | `double` | `14.0` | ラベルのフォントサイズ（DIP 座標系） |
 | `ShowSizeLabel` | `bool` | `true` | サイズラベルの表示有無 |
 | `ExternalRenderer` | `FadeMaskRenderer?` | `null` | 外部レンダラー（設定時は描画を完全委譲。設定時に既存の座標変換ポート・論理選択矩形をレンダラーへ同期） |
@@ -137,17 +137,17 @@ overlay.InvalidateVisual(); // 再描画を要求
 | `Scaling` | `double` | `1.0` | DPI スケーリング係数 |
 | `DisplayScaleScaling` | `double` | `Scaling` | サイズラベル用スケーリング（マルチスクリーン補正） |
 | `TextColor` | `Color` | `White` | ラベルテキストの色 |
-| `TextBackgroundColor` | `Color` | `Color.FromArgb(153,0,0,0)` | サイズラベル（1 行目）の背景色（不透明度は色のアルファに統合。既定は黒 60%） |
+| `TextBackgroundColor` | `Color` | `Color.FromAColor(153, Colors.Black)` | サイズラベル（1 行目）の背景色（不透明度は色のアルファに統合。既定は黒 60%） |
 | `FontSize` | `double` | `14.0` | ラベルのフォントサイズ（DIP 座標系） |
-| `OverlayArgbColor` | `Color` | `Color.FromArgb(128,0,0,0)` | 暗転オーバーレイの色（アルファ含む。既定は黒 50%） |
+| `OverlayArgbColor` | `Color` | `Color.FromAColor(128, Colors.Black)` | 暗転オーバーレイの色（アルファ含む。既定は黒 50%） |
 | `BorderColor` | `Color` | `DarkGray（#FFA9A9A9）` | 選択枠線の色（不透明度は色のアルファに統合） |
 | `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（DIP 座標系） |
 | `InfoLabelColor` | `Color` | `White` | 情報ラベル（3 行目）の文字色 |
-| `InfoLabelBackgroundColor` | `Color` | `Color.FromArgb(153,0,0,0)` | 情報ラベル（3 行目）の背景色（不透明度は色のアルファに統合。既定は黒 60%） |
+| `InfoLabelBackgroundColor` | `Color` | `Color.FromAColor(153, Colors.Black)` | 情報ラベル（3 行目）の背景色（不透明度は色のアルファに統合。既定は黒 60%） |
 | `InfoLabelFontSize` | `double` | `14.0` | 情報ラベル（3 行目）のフォントサイズ（DIP 座標系） |
 | `ShowSubLines` | `bool` | `true` | 操作ラベル（2 行目）の表示有無 |
 | `SubLineFontSize` | `double` | `14.0` | 操作ラベル（2 行目）のフォントサイズ（DIP 座標系） |
-| `SubLineColor` | `Color` | `#DCDCDC` | 操作ラベル（2 行目）の文字色 |
+| `SubLineColor` | `Color` | `Gainsboro（#DCDCDC）` | 操作ラベル（2 行目）の文字色 |
 | `SubLineBackgroundColor` | `Color` | `#99000000`（黒 60%） | 操作ラベル（2 行目）の背景色（不透明度はアルファに統合） |
 | `LogicalHighlightRect` | `Rect?` | `null` | ハイライト矩形（WindowSelect / ScreenSelect・**ドメイン座標系**）。`CoordinateTransform` と組み合わせて描画時に DIP 変換 |
 | `LogicalSelectionRect` | `Rect?` | `null` | 選択矩形（AreaSelect / Crop・**ドメイン座標系**）。`CoordinateTransform` と組み合わせて描画時に DIP 変換 |

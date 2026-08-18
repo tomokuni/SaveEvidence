@@ -154,10 +154,10 @@ public class FadeMaskControlStateTests
 
         Assert.Null(control.LogicalSelectionRect);
         // 暗転オーバーレイの既定は黒 50%（設定画面のデフォルトと一致）
-        Assert.Equal(Color.FromArgb(128, 0, 0, 0), control.OverlayColor);
+        Assert.Equal(Color.FromAColor(128, Colors.Black), control.OverlayColor);
         Assert.Equal(Colors.White, control.TextColor);
         // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(Color.FromArgb(153, 0, 0, 0), control.TextBackgroundColor);
+        Assert.Equal(Color.FromAColor(153, Colors.Black), control.TextBackgroundColor);
         Assert.Equal(14.0, control.FontSize);
         Assert.True(control.ShowSizeLabel);
     }
@@ -172,17 +172,17 @@ public class FadeMaskControlStateTests
         var control = new FadeMaskControl
         {
             LogicalSelectionRect = new Rect(10, 20, 100, 80),
-            OverlayColor = Color.FromArgb(150, 0, 0, 0),
+            OverlayColor = Color.FromAColor(150, Colors.Black),
             TextColor = Colors.Blue,
-            TextBackgroundColor = Color.FromArgb(204, 0, 0, 128),
+            TextBackgroundColor = Color.FromAColor(204, Colors.Navy),
             FontSize = 18.0,
             ShowSizeLabel = false,
         };
 
         Assert.Equal(new Rect(10, 20, 100, 80), control.LogicalSelectionRect);
-        Assert.Equal(Color.FromArgb(150, 0, 0, 0), control.OverlayColor);
+        Assert.Equal(Color.FromAColor(150, Colors.Black), control.OverlayColor);
         Assert.Equal(Colors.Blue, control.TextColor);
-        Assert.Equal(Color.FromArgb(204, 0, 0, 128), control.TextBackgroundColor);
+        Assert.Equal(Color.FromAColor(204, Colors.Navy), control.TextBackgroundColor);
         Assert.Equal(18.0, control.FontSize);
         Assert.False(control.ShowSizeLabel);
     }

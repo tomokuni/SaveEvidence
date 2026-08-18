@@ -31,12 +31,8 @@ internal sealed partial class OverlayWindow
         if (SelectionOverlay.LogicalHighlightRect is { } highlightLogical)
         {
             // ドメイン（ウィンドウローカル物理ピクセル = 画面物理 − Position）→ 画面物理座標へ変換
-            var highlightScreen = new Rect(
-                highlightLogical.X + Position.X,
-                highlightLogical.Y + Position.Y,
-                highlightLogical.Width,
-                highlightLogical.Height);
-            PreExtractClip(highlightScreen);
+            // （変換は DomainToScreenRect に委譲する。ドメイン + Position の一元化）
+            PreExtractClip(DomainToScreenRect(highlightLogical, Position));
         }
     }
 
@@ -51,7 +47,7 @@ internal sealed partial class OverlayWindow
         // DomainScale(_scaling) と往復一致するよう _scaling（オーバーレイの表示スケール）を維持する。
         // マルチモニタで異なるスケーリングのスクリーンを選択しても、選択矩形はドメイン（物理ピクセル）
         // のまま保持され、DIP 変換（÷ _scaling）と物理換算（× _scaling）で正しい物理サイズを表示する。
-        LogMessage.LogHighlight(_log, "ScreenSelect", detection.IsDetected,
+        _log.LogHighlight("ScreenSelect", detection.IsDetected,
             detection.IsDetected ? ToWindowPixel(detection.Bounds).ToString() : "",
             detection.Title ?? "", "");
     }
@@ -125,7 +121,7 @@ internal sealed partial class OverlayWindow
         SelectionOverlay.WindowTitle = detection.Title ?? "";
         // サイズラベルの物理ピクセル換算は _scaling（オーバーレイの表示スケール）を維持する
         // （ScreenSelect と同一。マルチモニタでもドメイン（物理ピクセル）の往復が一致する）。
-        LogMessage.LogHighlight(_log, "WindowSelect", detection.IsDetected,
+        _log.LogHighlight("WindowSelect", detection.IsDetected,
             detection.IsDetected ? ToWindowPixel(detection.Bounds).ToString() : "",
             detection.Title ?? "", detection.ClassName ?? "");
     }

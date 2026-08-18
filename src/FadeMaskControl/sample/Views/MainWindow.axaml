@@ -18,8 +18,6 @@
             <Grid Width="560" Height="320" Background="LightGray">
                 <fm:FadeMaskControl x:Name="Overlay"
                                     OverlayColor="{Binding OverlayColor}"
-                                    BorderColor="{Binding BorderColor}"
-                                    BorderThickness="{Binding BorderThickness}"
                                     TextColor="{Binding TextColor}"
                                     TextBackgroundColor="{Binding TextBackgroundColor}"
                                     FontSize="{Binding FontSize}"

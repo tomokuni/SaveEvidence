@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using Estable.AvaloniaUI.Platform;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
@@ -171,7 +172,7 @@ public sealed record FadeMaskDragRectSettings
         {
             // DragRect 外観
             MinSelectionSize = MinSelectionSize ?? 6.0,
-            BorderColor = BorderColor ?? Color.FromArgb(0xFF, 0xA9, 0xA9, 0xA9),
+            BorderColor = BorderColor ?? Color.FromAColor(0xFF, Colors.DarkGray),
             BorderThickness = BorderThickness ?? 2.0,
             HandleColor = HandleColor ?? Colors.White,
             HandleSize = HandleSize ?? 10.0,
@@ -182,34 +183,34 @@ public sealed record FadeMaskDragRectSettings
             // カーソル座標ラベル（DragRect）
             ShowCoordLabel = ShowCoordLabel ?? false,
             CoordLabelColor = CoordLabelColor ?? Colors.White,
-            CoordLabelBackgroundColor = CoordLabelBackgroundColor ?? Color.FromArgb(153, 0, 0, 0),
+            CoordLabelBackgroundColor = CoordLabelBackgroundColor ?? Color.FromAColor(153, Colors.Black),
             CoordLabelFontSize = CoordLabelFontSize ?? 12.0,
             // FadeMask 外観
             Scaling = Scaling ?? 1.0,
             DisplayScaleScaling = DisplayScaleScaling ?? 1.0,
             // 暗転オーバーレイの既定は黒 50%（アルファ込み）
-            OverlayColor = OverlayColor ?? Color.FromArgb(128, 0, 0, 0),
+            OverlayColor = OverlayColor ?? Color.FromAColor(128, Colors.Black),
             TextColor = TextColor ?? Colors.White,
-            TextBackgroundColor = TextBackgroundColor ?? Color.FromArgb(153, 0, 0, 0),
+            TextBackgroundColor = TextBackgroundColor ?? Color.FromAColor(153, Colors.Black),
             FontSize = FontSize ?? 14.0,
             ShowSizeLabel = ShowSizeLabel ?? true,
             InfoLabelVisible = InfoLabelVisible ?? true,
             InfoLabelColor = InfoLabelColor ?? Colors.White,
-            InfoLabelBackgroundColor = InfoLabelBackgroundColor ?? Color.FromArgb(153, 0, 0, 0),
+            InfoLabelBackgroundColor = InfoLabelBackgroundColor ?? Color.FromAColor(153, Colors.Black),
             InfoLabelFontSize = InfoLabelFontSize ?? 14.0,
             // サブライン（サイズラベルの下の 2 行目以降）
             ShowSubLines = ShowSubLines ?? true,
             SubLineFontSize = SubLineFontSize ?? 12.0,
-            SubLineColor = SubLineColor ?? Color.FromRgb(0xDC, 0xDC, 0xDC),
-            SubLineBackgroundColor = SubLineBackgroundColor ?? Color.FromArgb(153, 0, 0, 0),
+            SubLineColor = SubLineColor ?? Colors.Gainsboro,
+            SubLineBackgroundColor = SubLineBackgroundColor ?? Color.FromAColor(153, Colors.Black),
             // Loupe 外観（既定は Settings / LoupeControl の既定と一致させる）
             RequestedSize = RequestedSize ?? 160,
             ZoomLevel = ZoomLevel ?? 4,
             RenderScaling = RenderScaling ?? 1.0,
-            CrossColor = CrossColor ?? Color.FromArgb(102, 255, 0, 0),
+            CrossColor = CrossColor ?? Color.FromAColor(102, Colors.Red),
             CheckerSize = CheckerSize ?? 6,
-            CheckerColorA = CheckerColorA ?? Color.FromArgb(0x4C, 0x80, 0x80, 0x80),
-            CheckerColorB = CheckerColorB ?? Color.FromArgb(0x4C, 0xA9, 0xA9, 0xA9),
+            CheckerColorA = CheckerColorA ?? Color.FromAColor(0x4C, Colors.Gray),
+            CheckerColorB = CheckerColorB ?? Color.FromAColor(0x4C, Colors.DarkGray),
             FrameColor = FrameColor ?? Colors.LightGray,
             FrameWidth = FrameWidth ?? 2,
             SelectionRectColorA = SelectionRectColorA ?? Colors.White,
@@ -218,7 +219,7 @@ public sealed record FadeMaskDragRectSettings
             // ルーペ座標ラベル
             LoupeShowCoordLabel = LoupeShowCoordLabel ?? true,
             LoupeCoordLabelColor = LoupeCoordLabelColor ?? Colors.White,
-            LoupeCoordLabelBackgroundColor = LoupeCoordLabelBackgroundColor ?? Color.FromArgb(153, 0, 0, 0),
+            LoupeCoordLabelBackgroundColor = LoupeCoordLabelBackgroundColor ?? Color.FromAColor(153, Colors.Black),
             LoupeCoordLabelFontSize = LoupeCoordLabelFontSize ?? 12.0,
         };
 }

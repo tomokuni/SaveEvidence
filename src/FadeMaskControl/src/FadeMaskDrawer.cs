@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
+using Estable.AvaloniaUI.Platform;
 using System.Collections.Concurrent;
 using System.Globalization;
 
@@ -25,7 +26,7 @@ internal static class FadeMaskDrawer
     private const double LabelPadding = 4.0;
 
     /// <summary>ラベル背景の既定色（黒 50%。不透明度はアルファに統合）。</summary>
-    private static readonly Color DefaultLabelBackground = Color.FromArgb(128, 0, 0, 0);
+    private static readonly Color DefaultLabelBackground = Color.FromAColor(128, Colors.Black);
 
     /// <summary>色に対応するブラシを取得する（キャッシュ優先・未登録なら生成して登録）。</summary>
     /// <param name="color">ブラシの色。</param>

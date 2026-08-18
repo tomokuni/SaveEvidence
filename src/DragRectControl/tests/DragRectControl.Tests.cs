@@ -1340,7 +1340,7 @@ public class DragRectControlTests
 
         control.ShowCoordLabel = true;
         control.CoordLabelColor = Colors.White;
-        control.CoordLabelBackgroundColor = Color.FromArgb(128, 0, 0, 0);
+        control.CoordLabelBackgroundColor = Color.FromAColor(128, Colors.Black);
         control.CoordLabelFontSize = 12.0;
 
         // マウス移動 → Render で座標ラベルが描画される（例外なし）

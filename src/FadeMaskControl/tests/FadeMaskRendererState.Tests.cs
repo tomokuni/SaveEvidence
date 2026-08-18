@@ -35,9 +35,9 @@ public class FadeMaskRendererStateTests
         var renderer = new FadeMaskRenderer();
 
         // 1〜3 行目の背景色は不透明度をアルファに統合した黒 60%（#99000000）
-        Assert.Equal(Color.FromArgb(153, 0, 0, 0), renderer.TextBackgroundColor);
-        Assert.Equal(Color.FromArgb(153, 0, 0, 0), renderer.SubLineBackgroundColor);
-        Assert.Equal(Color.FromArgb(153, 0, 0, 0), renderer.InfoLabelBackgroundColor);
+        Assert.Equal(Color.FromAColor(153, Colors.Black), renderer.TextBackgroundColor);
+        Assert.Equal(Color.FromAColor(153, Colors.Black), renderer.SubLineBackgroundColor);
+        Assert.Equal(Color.FromAColor(153, Colors.Black), renderer.InfoLabelBackgroundColor);
     }
 
     [Fact]
@@ -45,8 +45,8 @@ public class FadeMaskRendererStateTests
     {
         var renderer = new FadeMaskRenderer();
 
-        // 操作ラベルの文字色の既定は #DCDCDC（White ではない）
-        Assert.Equal(Color.FromRgb(0xDC, 0xDC, 0xDC), renderer.SubLineColor);
+        // 操作ラベルの文字色の既定は #DCDCDC（Gainsboro）
+        Assert.Equal(Colors.Gainsboro, renderer.SubLineColor);
     }
 
     // ====================================================================

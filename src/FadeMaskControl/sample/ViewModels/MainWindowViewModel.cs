@@ -3,6 +3,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Media;
 using Estable.AvaloniaUI.FadeMask;
+using Estable.AvaloniaUI.Platform;
 
 namespace FadeMaskControl.Sample.ViewModels;
 
@@ -16,11 +17,11 @@ namespace FadeMaskControl.Sample.ViewModels;
 public class MainWindowViewModel : INotifyPropertyChanged
 {
     private Rect _selectionRect = new(50, 40, 220, 160);
-    private Color _overlayColor = Color.FromArgb(150, 0, 0, 0);
+    private Color _overlayColor = Color.FromAColor(150, Colors.Black);
     private Color _borderColor = Colors.Red;
     private double _borderThickness = 2.0;
     private Color _textColor = Colors.White;
-    private Color _textBackgroundColor = Color.FromArgb(128, 0, 0, 0);
+    private Color _textBackgroundColor = Color.FromAColor(128, Colors.Black);
     private double _fontSize = 14.0;
     private bool _showSizeLabel = true;
     private int _selectedModeIndex;
@@ -101,7 +102,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         get => _overlayColor.A;
         set
         {
-            _overlayColor = Color.FromArgb((byte)Math.Clamp(value, 0, 255), _overlayColor.R, _overlayColor.G, _overlayColor.B);
+            _overlayColor = Color.FromAColor((byte)Math.Clamp(value, 0, 255), _overlayColor);
             // 外部レンダラーへ反映（ExternalRenderer 設定時は FadeMaskControl の StyledProperty が無視されるため）
             Renderer.OverlayArgbColor = _overlayColor;
             OnPropertyChanged(nameof(OverlayOpacity));
@@ -323,7 +324,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    private Color _infoLabelBackgroundColor = Color.FromArgb(128, 0, 0, 0);
+    private Color _infoLabelBackgroundColor = Color.FromAColor(128, Colors.Black);
 
     /// <summary>情報ラベルの背景色（FadeMaskRenderer.InfoLabelBackgroundColor・不透明度はアルファに統合）。</summary>
     public Color InfoLabelBackgroundColor

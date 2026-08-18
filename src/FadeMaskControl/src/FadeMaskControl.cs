@@ -35,7 +35,7 @@ public class FadeMaskControl : Control
     /// <summary><see cref="OverlayColor"/> 依存関係プロパティ。</summary>
     /// <remarks>既定は黒 50%（<c>#80000000</c>。設定画面の暗転オーバーレイのデフォルトと一致）。</remarks>
     public static readonly StyledProperty<Color> OverlayColorProperty =
-        AvaloniaProperty.Register<FadeMaskControl, Color>(nameof(OverlayColor), Color.FromArgb(128, 0, 0, 0));
+        AvaloniaProperty.Register<FadeMaskControl, Color>(nameof(OverlayColor), Color.FromAColor(128, Colors.Black));
 
     /// <summary><see cref="TextColor"/> 依存関係プロパティ。</summary>
     public static readonly StyledProperty<Color> TextColorProperty =
@@ -43,7 +43,7 @@ public class FadeMaskControl : Control
 
     /// <summary><see cref="TextBackgroundColor"/> 依存関係プロパティ（不透明度は色のアルファに統合。既定は黒 60%）。</summary>
     public static readonly StyledProperty<Color> TextBackgroundColorProperty =
-        AvaloniaProperty.Register<FadeMaskControl, Color>(nameof(TextBackgroundColor), Color.FromArgb(153, 0, 0, 0));
+        AvaloniaProperty.Register<FadeMaskControl, Color>(nameof(TextBackgroundColor), Color.FromAColor(153, Colors.Black));
 
     /// <summary><see cref="FontSize"/> 依存関係プロパティ。</summary>
     public static readonly StyledProperty<double> FontSizeProperty =
@@ -58,7 +58,7 @@ public class FadeMaskControl : Control
     // ====================================================================
 
     /// <summary>暗転オーバーレイの色を取得または設定する。</summary>
-    /// <value>アルファ値を含む色（例: Color.FromArgb(150, 0, 0, 0)）。</value>
+    /// <value>アルファ値を含む色（例: Color.FromAColor(150, Colors.Black)）。</value>
     public Color OverlayColor { get => GetValue(OverlayColorProperty); set => SetValue(OverlayColorProperty, value); }
 
     // ====================================================================

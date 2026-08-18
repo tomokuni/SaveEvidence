@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using Estable.AvaloniaUI.Platform;
 using Xunit;
 using Avalonia.Headless.XUnit;
 
@@ -40,7 +41,7 @@ public class CaptureSettingsTests
         Assert.Equal(160, s.LoupeSize);
         Assert.Equal(4, s.LoupeZoomLevel);
         // 枠線の既定は DarkGray（設定画面の選択枠の色と一致）
-        Assert.Equal(Color.FromArgb(0xFF, 0xA9, 0xA9, 0xA9), s.BorderColor);
+        Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), s.BorderColor);
         Assert.NotNull(s.WindowCaptureMode);
         Assert.True(s.LoupeVisible);
         // 追加メンバーのデフォルト値
@@ -51,9 +52,9 @@ public class CaptureSettingsTests
         Assert.Equal(Colors.White, s.MarkerColor);
         Assert.Equal(16.0, s.MarkerLength);
         Assert.Equal(1.0, s.LoupeRenderScaling);
-        // 市松模様の既定は Gray 30%（#4C808080）/ Silver 30%（#4CA9A9A9）（設定画面の現在値）
-        Assert.Equal(Color.FromArgb(0x4C, 0x80, 0x80, 0x80), s.LoupeCheckerColorA);
-        Assert.Equal(Color.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), s.LoupeCheckerColorB);
+        // 市松模様の既定は Gray 30%（#4C808080）/ DarkGray 30%（#4CA9A9A9）（設定画面の現在値）
+        Assert.Equal(Color.FromAColor(0x4C, Colors.Gray), s.LoupeCheckerColorA);
+        Assert.Equal(Color.FromAColor(0x4C, Colors.DarkGray), s.LoupeCheckerColorB);
         // 選択矩形破線の既定は白 / 黒（アルファ 255）
         Assert.Equal(Colors.White, s.LoupeSelectionRectColorA);
         Assert.Equal(Colors.Black, s.LoupeSelectionRectColorB);

@@ -202,6 +202,12 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | `Stop` | `void Stop()` | 監視停止 |
 | `Pulse` | `void Pulse()` | UI スレッド生存通知（イベントハンドラから呼ぶ） |
 
+#### 5.2.6 ColorExtensions（C# 14 静的拡張メンバー）
+
+| メソッド | シグネチャ | 説明 |
+| --- | --- | --- |
+| `FromAColor` | `static Color FromAColor(byte alpha, Color baseColor)` | 基準色（名前付き色等）と不透明度から色を生成する。既存の `Color.FromArgb(alpha, r, g, b)` は RGB 直指定で何色か判別しにくいため、基準色を指定して可読性を向上する（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
+
 ### 5.3 イベント
 
 公開イベントは定義されていません。本ライブラリはサービスの生成・座標変換・画面キャプチャの抽象提供のみで、結果は戻り値 / コールバック（`Func<bool>? Guard` 等）で通知します。
@@ -266,6 +272,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | `BitmapFactory.CreateEmpty()` | キャンセル時の空結果（常に null。0x0 の空 Bitmap を表す） |
 | `BitmapExtensions.CopyRegionWithPadding` | 範囲外許容で領域コピー（クリップ + オフセット、範囲外は透明のまま。座標はピクセル単位） |
 | `BitmapExtensions.ExtractRegion` | 矩形切り出し（範囲外は透明パディング。座標はピクセル単位。w/h ≤ 0 は `ArgumentOutOfRangeException`） |
+| `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から `Color` を生成（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
 
 ## 6. 座標系
 

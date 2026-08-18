@@ -230,7 +230,7 @@ public sealed partial class DragRectControl : Control
     /// <summary><see cref="BorderColor"/> 依存関係プロパティ（不透明度は色のアルファに統合）。</summary>
     /// <remarks>既定は DarkGray（<c>#FFA9A9A9</c>。設定画面の選択枠の色と一致）。</remarks>
     public static readonly StyledProperty<Color> BorderColorProperty =
-        AvaloniaProperty.Register<DragRectControl, Color>(nameof(BorderColor), defaultValue: Color.FromArgb(0xFF, 0xA9, 0xA9, 0xA9));
+        AvaloniaProperty.Register<DragRectControl, Color>(nameof(BorderColor), defaultValue: Color.FromAColor(0xFF, Colors.DarkGray));
 
     /// <summary><see cref="BorderThickness"/> 依存関係プロパティ。</summary>
     /// <remarks>デフォルトは FadeMaskRenderer / App（Settings）の既定（2.0）と一致させる。</remarks>
@@ -276,7 +276,7 @@ public sealed partial class DragRectControl : Control
 
     /// <summary><see cref="CoordLabelBackgroundColor"/> 依存関係プロパティ（カーソル座標ラベルの背景色・不透明度はアルファに統合）。</summary>
     public static readonly StyledProperty<Color> CoordLabelBackgroundColorProperty =
-        AvaloniaProperty.Register<DragRectControl, Color>(nameof(CoordLabelBackgroundColor), defaultValue: Color.FromArgb(153, 0, 0, 0));
+        AvaloniaProperty.Register<DragRectControl, Color>(nameof(CoordLabelBackgroundColor), defaultValue: Color.FromAColor(153, Colors.Black));
 
     /// <summary><see cref="CoordLabelFontSize"/> 依存関係プロパティ（カーソル座標ラベルのフォントサイズ 6〜48 に補正）。</summary>
     public static readonly StyledProperty<double> CoordLabelFontSizeProperty =

@@ -89,7 +89,7 @@ internal sealed class CropSession(
         // 選択オーバーレイ複合コントロールを親パネルに配置
         _parentPanel.Children.Add(_selectionOverlay);
         ConfigureControls();
-        LogMessage.LogCropStart(_log, (int)_sourceImageSize.Width, (int)_sourceImageSize.Height);
+        _log.LogCropStart((int)_sourceImageSize.Width, (int)_sourceImageSize.Height);
 
         // プレビューの ScrollViewer を複合コントロール（DragRect）へ明示注入する（スクロール・ズーム検知 + ホイール操作）。
         // DragRect はプレビューと兄弟の親パネルに配置されるため、祖先探索では見つからない（明示注入が唯一の連携方式）。
@@ -103,7 +103,7 @@ internal sealed class CropSession(
             if (_completed) return;
             _completed = true;
             var bounds = ExecuteCropForSize(logicalRect);
-            LogMessage.LogCropCompleted(_log, bounds.ToString());
+            _log.LogCropCompleted(bounds.ToString());
             Cleanup();
             tcs.TrySetResult(bounds);
         }
@@ -112,7 +112,7 @@ internal sealed class CropSession(
         {
             if (_completed) return;
             _completed = true;
-            LogMessage.LogCropCancelled(_log);
+            _log.LogCropCancelled();
             Cleanup();
             tcs.TrySetResult(default); // 0x0 の空 PixelRect
         }
@@ -187,11 +187,6 @@ internal sealed class CropSession(
     {
         var s = _settings;
         // 外観設定（DragRect / FadeMask / Loupe を一括適用。設定変換は拡張メソッドに一元化）
-        // 座標変換ポート: ドメイン = 論理座標（元画像ピクセル）。ズーム・スクロール・レターボックスは
-        // プレビュー表示状態（Bounds / Stretch）と TranslatePoint（スクロール込みの表示位置）から導出する。
-        // ① プレビュー内部DIP ↔ 論理（ImageLayout は呼び出し毎にレイアウトを再評価 = ズーム・サイズ変更に追従）
-        // ② 親パネルDIP ↔ プレビュー内部DIP（PreviewOrigin = レイアウト位置 + スクロール。ScrollOffset で平行移動）
-        // 2 段階の変換を CoordinatePort.Compose で 1 ポートに合成する（1 ポート 1 変換の責務分離）。
         _selectionOverlay.AppearanceSettings =
             s.ToFadeMaskDragRectSettings(scaling: 1.0, positionOffset: s.LoupeOffset!.Value);
         // サイズラベルも描画時に最新の表示スケールから生成する（ズーム率表示の追従）。
@@ -202,14 +197,18 @@ internal sealed class CropSession(
         // プレビュー表示状態（Bounds / Stretch / RenderTransform）と TranslatePoint（スクロール込みの表示位置）から導出する。
         // ① プレビュー内部DIP ↔ 論理（ImageLayout は呼び出し毎にレイアウトを再評価 = ズーム・サイズ変更に追従）
         // ② 親パネルDIP ↔ プレビュー内部DIP（PreviewOrigin = レイアウト位置 + スクロール。ScrollOffset で平行移動）
-        // 2 段階の変換を CoordinatePort.Compose で 1 ポートに合成する（1 ポート 1 変換の責務分離）。
-        // DragRect / FadeMask / Loupe の 3 コントロールへ同一ポートを一括分配する。
+        // 2 段階の変換を CoordinatePort.Compose で 1 ポートに合成し、DragRect / FadeMask / Loupe の 3 コントロールへ一括分配する。
         _selectionOverlay.SetCoordinateTransform(CoordinatePort.Compose(
             CoordinatePort.ImageLayout(
                 DisplaySize,
                 _sourceImageSize,
                 () => previewControl is not Image img || img.Stretch == Stretch.Uniform),
-            CoordinatePort.ScrollOffset(() => new Vector(PreviewOrigin().X, PreviewOrigin().Y))));
+            CoordinatePort.ScrollOffset(() =>
+            {
+                // 同値の原点取得は一度だけ実行して共有する
+                var origin = PreviewOrigin();
+                return new Vector(origin.X, origin.Y);
+            })));
         // ルーペソース（元画像）
         _selectionOverlay.SetLoupeSource(sourceImage);
     }

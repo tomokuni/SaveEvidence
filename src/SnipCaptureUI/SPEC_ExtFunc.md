@@ -348,7 +348,8 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 
 ## 8. ログ
 
-本プロジェクトのログ定義は `Logging/SnipCaptureLog.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。
+本プロジェクトのログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
+各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogCaptureStart(type)`）。
 `SnipCapture` コンストラクタの `logger` 引数で注入し、null の場合は出力しない（app では NLog へ転送）。
 出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
 
@@ -376,18 +377,18 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Debug` | `SnipCaptureLog.LogCaptureStart` | キャプチャセッション開始（種別） |
-| `Debug` | `SnipCaptureLog.LogCaptureCompleted` | キャプチャ確定（矩形） |
-| `Debug` | `SnipCaptureLog.LogCaptureCancelled` | キャプチャキャンセル |
-| `Debug` | `SnipCaptureLog.LogResult` | キャプチャ結果サイズ（画像サイズ / 矩形） |
-| `Debug` | `SnipCaptureLog.LogOverlayConfirm` | オーバーレイ確定要求（Enter / ダブルクリック等） |
-| `Debug` | `SnipCaptureLog.LogOverlayCancel` | オーバーレイキャンセル要求（Esc 等） |
-| `Debug` | `SnipCaptureLog.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ） |
-| `Trace` | `SnipCaptureLog.LogHighlight` | ハイライト検出結果（ScreenSelect / WindowSelect・検出矩形 / タイトル / クラス名。マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用） |
-| `Debug` | `SnipCaptureLog.LogCropStart` | Crop セッション開始（元画像サイズ） |
-| `Debug` | `SnipCaptureLog.LogCropCompleted` | Crop 確定（切り出し矩形） |
-| `Debug` | `SnipCaptureLog.LogCropCancelled` | Crop キャンセル |
-| `Debug` | `SnipCaptureLog.LogSettingChanged` | 設定値変更（変更前後） |
+| `Debug` | `LogMessage.LogCaptureStart` | キャプチャセッション開始（種別） |
+| `Debug` | `LogMessage.LogCaptureCompleted` | キャプチャ確定（矩形） |
+| `Debug` | `LogMessage.LogCaptureCancelled` | キャプチャキャンセル |
+| `Debug` | `LogMessage.LogResult` | キャプチャ結果サイズ（画像サイズ / 矩形） |
+| `Debug` | `LogMessage.LogOverlayConfirm` | オーバーレイ確定要求（Enter / ダブルクリック等） |
+| `Debug` | `LogMessage.LogOverlayCancel` | オーバーレイキャンセル要求（Esc 等） |
+| `Debug` | `LogMessage.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ） |
+| `Trace` | `LogMessage.LogHighlight` | ハイライト検出結果（ScreenSelect / WindowSelect・検出矩形 / タイトル / クラス名。マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用） |
+| `Debug` | `LogMessage.LogCropStart` | Crop セッション開始（元画像サイズ） |
+| `Debug` | `LogMessage.LogCropCompleted` | Crop 確定（切り出し矩形） |
+| `Debug` | `LogMessage.LogCropCancelled` | Crop キャンセル |
+| `Debug` | `LogMessage.LogSettingChanged` | 設定値変更（変更前後） |
 
 ## 9. 制約事項
 

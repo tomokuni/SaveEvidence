@@ -37,6 +37,7 @@
 - **要素検出**: `IElementFinder`（カーソル位置のウィンドウ / スクリーン検出・一覧取得）
 - **UI ハング監視**: `Watchdog`（UI スレッド完全ハング時の最終保険。オーバーレイ退避）
 - **画像ユーティリティ**: `BitmapFactory`（空 Bitmap）/ `BitmapExtensions`（領域切り出し・パディング付きコピー）
+- **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
 - **プラットフォーム非依存の公開 API**: 公開型は Avalonia / .NET 標準型（`Bitmap` / `PixelPoint` / `PixelRect` / `IPlatformHandle`）のみを使用し、Win32 ハンドル・System.Drawing 型を公開しない
 
 ## 3. システム要件
@@ -139,6 +140,7 @@ PlatformFactory/
 │       ├── Watchdog.cs             # UI ハング監視（public）
 │       ├── WindowCaptureMode.cs    # キャプチャモード enum
 │       ├── ElementFinderResults.cs # 要素検出結果 record
+│       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
 │       ├── PlatformLog.cs          # ログ定義（internal）
 │       ├── Coordinate/             # 座標変換（ICoordinatePort / CoordinatePort / CoordinatePortExtensions / ScreenConverter / CoordinateMath）
 │       ├── Imaging/                # 画像ユーティリティ（BitmapFactory / BitmapExtensions）

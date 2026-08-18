@@ -318,7 +318,7 @@ public sealed partial class LoupeControl : UserControl
         AvaloniaProperty.Register<LoupeControl, int>(nameof(ZoomLevel), defaultValue: ZoomLevelDefault, coerce: CoerceZoomLevel);
 
     /// <summary>十字線の色の既定ブラシ（赤 40% = アルファ 102）。</summary>
-    private static readonly IBrush DefaultCrossColor = new SolidColorBrush(Color.FromArgb(102, 255, 0, 0));
+    private static readonly IBrush DefaultCrossColor = new SolidColorBrush(Color.FromAColor(102, Colors.Red));
 
     /// <summary><see cref="CrossColor"/> 依存関係プロパティ（不透明度は色のアルファに統合）。</summary>
     public static readonly StyledProperty<IBrush?> CrossColorProperty =
@@ -333,7 +333,7 @@ public sealed partial class LoupeControl : UserControl
     /// static フィールド初期化子は宣言順に実行されるため、<see cref="CheckerColorAProperty"/> より先に宣言する<br/>
     /// （逆順だとプロパティ登録時に null がデフォルト値として固定される）。<br/>
     /// </remarks>
-    private static readonly IBrush DefaultCheckerColorA = new SolidColorBrush(Color.FromArgb(0x4C, 0x80, 0x80, 0x80));
+    private static readonly IBrush DefaultCheckerColorA = new SolidColorBrush(Color.FromAColor(0x4C, Colors.Gray));
 
     /// <summary><see cref="CheckerColorA"/> 依存関係プロパティ。</summary>
     /// <remarks>既定は Gray 30%（<c>#4C808080</c>。設定画面の市松模様 A と一致）。</remarks>
@@ -345,7 +345,7 @@ public sealed partial class LoupeControl : UserControl
     /// static フィールド初期化子は宣言順に実行されるため、<see cref="CheckerColorBProperty"/> より先に宣言する<br/>
     /// （逆順だとプロパティ登録時に null がデフォルト値として固定される）。<br/>
     /// </remarks>
-    private static readonly IBrush DefaultCheckerColorB = new SolidColorBrush(Color.FromArgb(0x4C, 0xA9, 0xA9, 0xA9));
+    private static readonly IBrush DefaultCheckerColorB = new SolidColorBrush(Color.FromAColor(0x4C, Colors.DarkGray));
 
     /// <summary><see cref="CheckerColorB"/> 依存関係プロパティ。</summary>
     /// <remarks>既定は Silver 30%（<c>#4CA9A9A9</c>。設定画面の市松模様 B と一致）。</remarks>
@@ -397,7 +397,7 @@ public sealed partial class LoupeControl : UserControl
         AvaloniaProperty.Register<LoupeControl, IBrush?>(nameof(CoordLabelColor), defaultValue: Brushes.White);
 
     /// <summary>中心座標ラベルの背景色の既定ブラシ（黒 60% = アルファ 153）。</summary>
-    private static readonly IBrush DefaultCoordLabelBackgroundColor = new SolidColorBrush(Color.FromArgb(153, 0, 0, 0));
+    private static readonly IBrush DefaultCoordLabelBackgroundColor = new SolidColorBrush(Color.FromAColor(153, Colors.Black));
 
     /// <summary><see cref="CoordLabelBackgroundColor"/> 依存関係プロパティ（座標ラベルの背景色・不透明度はアルファに統合）。</summary>
     public static readonly StyledProperty<IBrush?> CoordLabelBackgroundColorProperty =

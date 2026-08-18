@@ -338,7 +338,7 @@ internal sealed partial class OverlayWindow : Window
     /// </remarks>
     private void OnAreaConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
     {
-        LogMessage.LogOverlayConfirm(_log, e.SelectionRect.ToString());
+        _log.LogOverlayConfirm(e.SelectionRect.ToString());
         var screenRect = DomainToScreenRect(e.SelectionRect, Position);
         CompleteSelection(screenRect);
     }

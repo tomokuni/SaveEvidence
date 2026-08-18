@@ -220,6 +220,7 @@ flowchart TB
 | `ElementFinderResults` record struct | 検出要素の結果（`Bounds` / `IsDetected` / `Title` / `Handle`） |
 | `BitmapFactory.CreateEmpty()` | 0x0 の空 Bitmap 生成（キャンセル時の戻り値用） |
 | `BitmapExtensions.CopyRegionWithPadding` / `ExtractRegion` | 範囲外許容の領域コピー / 矩形切り出し |
+| `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |
 
 ### 6.8 内部実装（Win 系）
 

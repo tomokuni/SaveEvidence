@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Estable.AvaloniaUI.Loupe.Rendering;
+using Estable.AvaloniaUI.Platform;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;
@@ -156,12 +157,12 @@ public class LoupeRendererTests
 
         // 選択矩形（ドメイン座標系）と中心を指定して描画する（2 色破線: 色A/色B・不透明度はアルファに統合）
         var result = LoupeRenderer.DrawLoupe(
-            src, 160, 4, new SolidColorBrush(Color.FromArgb(102, 255, 0, 0)), 6,
+            src, 160, 4, new SolidColorBrush(Color.FromAColor(102, Colors.Red)), 6,
             Brushes.White, Brushes.LightGray, Brushes.Black, 2,
             selectionRect: new Rect(40, 40, 20, 20),
             centerPoint: new Point(50, 50),
-            selectionRectColorA: new SolidColorBrush(Color.FromArgb(204, 255, 255, 255)),
-            selectionRectColorB: new SolidColorBrush(Color.FromArgb(204, 0, 0, 0)));
+            selectionRectColorA: new SolidColorBrush(Color.FromAColor(204, Colors.White)),
+            selectionRectColorB: new SolidColorBrush(Color.FromAColor(204, Colors.Black)));
 
         Assert.NotNull(result);
         Assert.Equal(160, result.PixelSize.Width);

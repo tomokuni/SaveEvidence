@@ -1,6 +1,5 @@
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Avalonia;
 using Avalonia.Media.Imaging;
@@ -69,7 +68,7 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
         origin = new PixelPoint(vx, vy);
         if (vw <= 0 || vh <= 0) return null;
 
-        LogVirtualScreenBounds(_log, vx, vy, vw, vh);
+        _log.LogVirtualScreenBounds(vx, vy, vw, vh);
         return CaptureArea(new PixelRect(vx, vy, vw, vh));
     }
 
@@ -82,8 +81,8 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     /// CopyFromScreen 方式の場合は背景キャプチャ画像から切り出す。<br/>
     /// </remarks>
     public DrawingBitmap? CaptureWindowCore(IntPtr hWnd, WindowCaptureMode mode = WindowCaptureMode.RedrawDirect)
-    {
-        LogCaptureWindow(_log, hWnd.ToString("X"), mode);
+    {       
+        _log.LogCaptureWindow(hWnd.ToString("X"), mode);
         var visibleRect = GetWindowVisibleRect(hWnd);
         if (visibleRect.IsEmpty) return null;
 
@@ -100,23 +99,23 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
 
             if (fullBitmap is not null)
             {
-                LogPrintWindowSuccess(_log, fullBitmap.Width, fullBitmap.Height);
+                _log.LogPrintWindowSuccess(fullBitmap.Width, fullBitmap.Height);
                 var cropped = CropToVisibleRect(fullBitmap, fullRect, visibleRect);
                 if (cropped is not null)
                 {
                     fullBitmap.Dispose();
-                    LogCroppedToVisibleRect(_log, cropped.Width, cropped.Height);
+                    _log.LogCroppedToVisibleRect(cropped.Width, cropped.Height);
                     return cropped;
                 }
                 return fullBitmap;
             }
 
             // 仕様 2.4.3: PrintWindow 全フラグ失敗時は null を返す（CopyFromScreen へのフォールバックは行わない）
-            LogPrintWindowAllFlagsFailed(_log);
+            _log.LogPrintWindowAllFlagsFailed();
             return null;
         }
 
-        LogCopyFromScreen(_log, visibleRect);
+        _log.LogCopyFromScreen(visibleRect);
         return CaptureSdBitmap(visibleRect);
     }
 
@@ -214,11 +213,11 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     /// </remarks>
     private DrawingBitmap CaptureSdBitmap(Rectangle bounds)
     {
-        LogCaptureSdBitmap(_log, bounds);
+        _log.LogCaptureSdBitmap(bounds);
         var bitmap = new DrawingBitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppRgb);
         using var g = Graphics.FromImage(bitmap);
         g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, bounds.Size);
-        LogCaptureSdBitmapDone(_log, bitmap.Width, bitmap.Height);
+        _log.LogCaptureSdBitmapDone(bitmap.Width, bitmap.Height);
         return bitmap;
     }
 
@@ -242,15 +241,15 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
 
             if (success && IsBitmapValid(bitmap))
             {
-                LogTryPrintWindowSuccess(_log, flags, bitmap.Width, bitmap.Height);
+                _log.LogTryPrintWindowSuccess(flags, bitmap.Width, bitmap.Height);
                 return bitmap;
             }
-            LogTryPrintWindowFailed(_log, flags, success);
+            _log.LogTryPrintWindowFailed(flags, success);
             bitmap.Dispose();
         }
         catch (Exception ex)
         {
-            LogTryPrintWindowError(_log, ex, flags);
+            _log.LogTryPrintWindowError(ex, flags);
         }
         return null;
     }

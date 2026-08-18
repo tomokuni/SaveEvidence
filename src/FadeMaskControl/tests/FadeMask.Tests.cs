@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Estable.AvaloniaUI.Platform;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMask.Tests;
@@ -34,7 +35,7 @@ public class FadeMaskTests
         var control = new FadeMaskControl
         {
             LogicalSelectionRect = new Rect(10, 10, 50, 50),
-            OverlayColor = Color.FromArgb(150, 0, 0, 0),
+            OverlayColor = Color.FromAColor(150, Colors.Black),
         };
         control.Measure(new Size(200, 200));
         control.Arrange(new Rect(0, 0, 200, 200));

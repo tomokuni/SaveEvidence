@@ -1,9 +1,9 @@
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Estable.AvaloniaUI.Platform;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -54,7 +54,7 @@ public class ColorPickerFlyoutFactoryTests
 
         // 半透明（A=128）。ColorView は HSV(float) 経由で色を保持するため
         // アルファが僅かに量子化される場合がある（128 → 127 など）。
-        colorView!.Color = Color.FromArgb(128, 255, 0, 0);
+        colorView!.Color = Color.FromAColor(128, Colors.Red);
         Dispatcher.UIThread.RunJobs();
         var expected = colorView.Color;
 

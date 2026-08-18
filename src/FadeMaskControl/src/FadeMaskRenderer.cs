@@ -36,16 +36,16 @@ public sealed class FadeMaskRenderer
     public Color TextColor { get; set; } = Colors.White;
 
     /// <summary>サイズラベル（1 行目）の背景の色（不透明度は色のアルファに統合。既定は黒 60%）。</summary>
-    public Color TextBackgroundColor { get; set; } = Color.FromArgb(153, 0, 0, 0);
+    public Color TextBackgroundColor { get; set; } = Color.FromAColor(153, Colors.Black);
 
     /// <summary>ラベルテキストのフォントサイズ（DIP）。</summary>
     public double FontSize { get; set; } = 14.0;
 
     /// <summary>暗転オーバーレイの色（アルファを含む。既定は黒 50% = アルファ 128）。</summary>
-    public Color OverlayArgbColor { get; set; } = Color.FromArgb(128, 0, 0, 0);
+    public Color OverlayArgbColor { get; set; } = Color.FromAColor(128, Colors.Black);
 
     /// <summary>選択枠線の色（不透明度は色のアルファに統合。既定は DarkGray = 設定画面の選択枠の色）。</summary>
-    public Color BorderColor { get; set; } = Color.FromArgb(0xFF, 0xA9, 0xA9, 0xA9);
+    public Color BorderColor { get; set; } = Color.FromAColor(0xFF, Colors.DarkGray);
 
     /// <summary>選択枠線の太さ（DIP）。</summary>
     public double BorderThickness { get; set; } = 2.0;
@@ -54,7 +54,7 @@ public sealed class FadeMaskRenderer
     public Color InfoLabelColor { get; set; } = Colors.White;
 
     /// <summary>情報ラベルの背景の色（不透明度は色のアルファに統合。既定は黒 60%）。</summary>
-    public Color InfoLabelBackgroundColor { get; set; } = Color.FromArgb(153, 0, 0, 0);
+    public Color InfoLabelBackgroundColor { get; set; } = Color.FromAColor(153, Colors.Black);
 
     /// <summary>情報ラベルのフォントサイズ（DIP）。</summary>
     public double InfoLabelFontSize { get; set; } = 14.0;
@@ -103,10 +103,10 @@ public sealed class FadeMaskRenderer
 
     /// <summary>サブライン（2 行目以降）の文字色。1 行目（サイズラベル）と同じ既定値。</summary>
     /// <remarks>操作方法・スクリーン番号・ウィンドウタイトルなどのサブラインに適用される。</remarks>
-    public Color SubLineColor { get; set; } = Color.FromRgb(0xDC, 0xDC, 0xDC);
+    public Color SubLineColor { get; set; } = Colors.Gainsboro;
 
     /// <summary>サブライン（2 行目以降）の背景の色（不透明度は色のアルファに統合。既定は黒 60%）。</summary>
-    public Color SubLineBackgroundColor { get; set; } = Color.FromArgb(153, 0, 0, 0);
+    public Color SubLineBackgroundColor { get; set; } = Color.FromAColor(153, Colors.Black);
 
     /// <summary>サブライン（2 行目以降）の表示有無。</summary>
     /// <remarks>false の場合はサブラインを描画しない（サイズラベルのみ表示）。</remarks>

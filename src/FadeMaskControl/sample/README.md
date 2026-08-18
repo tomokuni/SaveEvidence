@@ -20,7 +20,7 @@
 
 - `FadeMaskControl`（`Estable.AvaloniaUI.FadeMask.FadeMaskControl`）を実際に Visual Tree へ配置して動作を確認できます。
 - 暗転オーバーレイ（穴あけマスク）とサイズラベルの描画を確認できます。
-- 公開プロパティ（`SelectionRect` / `OverlayColor` / `BorderColor` / `BorderThickness` / `TextColor` / `TextBackgroundColor` / `FontSize` / `ShowSizeLabel`）のバインドと動的変更を確認できます。色の不透明度は色のアルファに統合されています。
+- 公開プロパティ（`SelectionRect` / `OverlayColor` / `TextColor` / `TextBackgroundColor` / `FontSize` / `ShowSizeLabel`）のバインドと動的変更を確認できます。色の不透明度は色のアルファに統合されています。
 
 ## 2. 実行方法
 
@@ -54,7 +54,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ FadeMa
 | 選択矩形（X / Y / W / H） | テキストボックスで選択矩形の座標・サイズを編集（**数値を入力すると即座に反映**） |
 | 「矩形なし（全面暗転）」ボタン | `SelectionRect` を 0x0 に設定し全面暗転を確認 |
 | 暗転オーバーレイ（Opacity） | スライダーで `OverlayColor` のアルファ値（0〜255）を変更 |
-| 選択枠線（Thickness） | スライダーで `BorderThickness` を変更（不透明度は色のアルファで表現） |
+| 選択枠線（Thickness） | スライダーで外部レンダラー（`ExternalRenderer`）の `BorderThickness` を変更（不透明度は色のアルファで表現） |
 | サイズラベル | `ShowSizeLabel` チェックボックス・`FontSize` スライダー・`SizeLabelOverride` テキストボックス（空は自動生成）で変更 |
 | スケーリング | `Scaling` / `DisplayScaleScaling` のスライダー（0 は自動 = Scaling と同値）で変更 |
 | 情報ラベル | `InfoLabelVisible` チェックボックス・`InfoLabelColor`（色コード）・`InfoLabelBackgroundColor`（アルファ込み） / `InfoLabelFontSize` スライダーで変更（ScreenSelect / WindowSelect のハイライト時のみ表示） |
@@ -91,8 +91,6 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ FadeMa
     <Grid Background="LightGray">
         <fm:FadeMaskControl LogicalSelectionRect="{Binding SelectionRect}"
                             OverlayColor="#96000000"
-                            BorderColor="Red"
-                            BorderThickness="2"
                             ShowSizeLabel="True"/>
     </Grid>
 </Window>

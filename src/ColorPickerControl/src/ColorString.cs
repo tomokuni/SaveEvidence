@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using Avalonia.Media;
+using Estable.AvaloniaUI.Platform;
 
 namespace Estable.AvaloniaUI.ColorPicker;
 
@@ -188,7 +189,7 @@ public static class ColorString
                 // 不透明度をアルファへ合成する（例: "Red+50%" → #80FF0000）
                 // pct * 2.55 は浮動小数誤差（例: 50 * 2.55 = 127.4999...）を生むため
                 // 整数倍してから除算し、50% → 128（#80）が正確に得られるようにする
-                color = Color.FromArgb((byte)Math.Round(pct * 255.0 / 100.0), parsed.R, parsed.G, parsed.B);
+                color = Color.FromAColor((byte)Math.Round(pct * 255.0 / 100.0), parsed);
                 return true;
             }
             return false;

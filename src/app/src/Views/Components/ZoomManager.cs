@@ -68,7 +68,7 @@ public sealed class ZoomManager
         var target = ZoomTransition.NextLevel(current, ComputeRawFitZoomPercent());
         if (target is not { } t) return;
 
-        AppLog.LogZoomIn(_logger, current, t);
+        _logger.LogZoomIn(current, t);
         // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ（1 回だけ実行）
         ViewModel.ZoomPercent = t;
     }
@@ -85,7 +85,7 @@ public sealed class ZoomManager
         var target = ZoomTransition.PrevLevel(current, ComputeRawFitZoomPercent());
         if (target is not { } t) return;
 
-        AppLog.LogZoomOut(_logger, current, t);
+        _logger.LogZoomOut(current, t);
         // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ（1 回だけ実行）
         ViewModel.ZoomPercent = t;
     }
@@ -102,7 +102,7 @@ public sealed class ZoomManager
         var target = ZoomTransition.WheelZoomIn(current, ComputeRawFitZoomPercent());
         if (target is not { } t) return;
 
-        AppLog.LogZoomInWheel(_logger, current, t);
+        _logger.LogZoomInWheel(current, t);
         // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ
         ViewModel.ZoomPercent = t;
     }
@@ -119,7 +119,7 @@ public sealed class ZoomManager
         var target = ZoomTransition.WheelZoomOut(current, ComputeRawFitZoomPercent());
         if (target is not { } t) return;
 
-        AppLog.LogZoomOutWheel(_logger, current, t);
+        _logger.LogZoomOutWheel(current, t);
         // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ
         ViewModel.ZoomPercent = t;
     }

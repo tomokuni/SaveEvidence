@@ -468,10 +468,10 @@ public class LoupeControlTests
         Assert.Equal(2, control.FrameWidth);
         Assert.Equal(1.0, control.RenderScaling);
         // 十字線の既定は赤 40%（アルファ 102）
-        Assert.Equal(Color.FromArgb(102, 255, 0, 0), ((ISolidColorBrush)control.CrossColor!).Color);
-        // 市松模様の既定は Gray 30%（#4C808080）/ Silver 30%（#4CA9A9A9）（設定画面の現在値）
-        Assert.Equal(Color.FromArgb(0x4C, 0x80, 0x80, 0x80), ((ISolidColorBrush)control.CheckerColorA!).Color);
-        Assert.Equal(Color.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), ((ISolidColorBrush)control.CheckerColorB!).Color);
+        Assert.Equal(Color.FromAColor(102, Colors.Red), ((ISolidColorBrush)control.CrossColor!).Color);
+        // 市松模様の既定は Gray 30%（#4C808080）/ DarkGray 30%（#4CA9A9A9）（設定画面の現在値）
+        Assert.Equal(Color.FromAColor(0x4C, Colors.Gray), ((ISolidColorBrush)control.CheckerColorA!).Color);
+        Assert.Equal(Color.FromAColor(0x4C, Colors.DarkGray), ((ISolidColorBrush)control.CheckerColorB!).Color);
         Assert.Same(Brushes.LightGray, control.FrameColor);
         Assert.False(control.SelectionRectVisible);
         Assert.Null(control.SelectionRect);
@@ -493,7 +493,7 @@ public class LoupeControlTests
         Assert.True(control.ShowCoordLabel);
         Assert.Same(Brushes.White, control.CoordLabelColor);
         // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(Color.FromArgb(153, 0, 0, 0), ((SolidColorBrush)control.CoordLabelBackgroundColor!).Color);
+        Assert.Equal(Color.FromAColor(153, Colors.Black), ((SolidColorBrush)control.CoordLabelBackgroundColor!).Color);
         Assert.Equal(12.0, control.CoordLabelFontSize);
     }
 
@@ -527,7 +527,7 @@ public class LoupeControlTests
     {
         var control = CreateControl();
         var color = new SolidColorBrush(Colors.Yellow);
-        var bg = new SolidColorBrush(Color.FromArgb(179, 0, 0, 139)); // 暗青 70%
+        var bg = new SolidColorBrush(Color.FromAColor(179, Colors.DarkBlue)); // 暗青 70%
         control.ShowCoordLabel = true;
         control.CoordLabelColor = color;
         control.CoordLabelBackgroundColor = bg;
@@ -541,7 +541,7 @@ public class LoupeControlTests
         Assert.NotNull(control.CoordLabelBorder);
         // 背景は色（アルファ込み）がそのまま反映される
         Assert.True(control.CoordLabelBorder!.Background is SolidColorBrush sb
-            && sb.Color == Color.FromArgb(179, 0, 0, 139));
+            && sb.Color == Color.FromAColor(179, Colors.DarkBlue));
     }
 
     // ====================================================================

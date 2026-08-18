@@ -85,7 +85,7 @@ SelectionOverlay.AppearanceSettings = new FadeMaskDragRectSettings
     MinSelectionSize = 6,
     BorderColor = Colors.White,
     BorderThickness = 2.0,
-    OverlayColor = Color.FromArgb(77, 0, 0, 0), // 黒 30%（不透明度は色のアルファに統合）
+    OverlayColor = Color.FromAColor(77, Colors.Black), // 黒 30%（不透明度は色のアルファに統合）
     RequestedSize = 200,
     ZoomLevel = 2,
 });

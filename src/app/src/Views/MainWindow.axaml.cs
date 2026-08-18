@@ -67,7 +67,7 @@ public sealed partial class MainWindow : Window
 
         // SnipCaptureUI 公開 Facade を生成
         // ロガーは NLog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、7日で自動削除）へ転送する。
-        // AppLog.CreateLogger が nlog.config を自動読み込みするため、コード内の設定は不要。
+        // LogMessage.CreateLogger が nlog.config を自動読み込みするため、コード内の設定は不要。
         _snipCaptureLogger = AppLog.CreateLogger("SnipCaptureUI");
         _snipCapture = new SnipCapture(logger: _snipCaptureLogger);
         // キャプチャ完了イベントを購読する（同期実行: 画像変更 → 完了後に APP が再表示される）
@@ -84,7 +84,7 @@ public sealed partial class MainWindow : Window
             }
             catch (Exception ex)
             {
-                AppLog.LogSettingsApplyError(_logger, ex, e.PropertyName ?? "<null>");
+                _logger.LogSettingsApplyError(ex, e.PropertyName ?? "<null>");
             }
         };
         // 起動時の初期設定を反映する
@@ -99,7 +99,7 @@ public sealed partial class MainWindow : Window
             }
             catch (Exception ex)
             {
-                AppLog.LogSettingsApplyError(_logger, ex, nameof(ScalingChanged));
+                _logger.LogSettingsApplyError(ex, nameof(ScalingChanged));
             }
         };
 
@@ -246,12 +246,12 @@ public sealed partial class MainWindow : Window
     /// <summary>WM_HOTKEY 受信時（INativeWindowInterceptor から）。</summary>
     private void OnHotKeyReceived(int hotKeyId)
     {
-        AppLog.LogHotKeyReceived(_logger);
+        _logger.LogHotKeyReceived();
         const uint WM_HOTKEY = 0x0312;
         var captureType = _hotKeyService?.ProcessHotKeyMessage(WM_HOTKEY, (IntPtr)hotKeyId);
         if (captureType is { } ct)
         {
-            AppLog.LogHotKeyTriggered(_logger, ct);
+            _logger.LogHotKeyTriggered(ct);
             StartSelectionMode(ct);
         }
     }
@@ -267,13 +267,13 @@ public sealed partial class MainWindow : Window
     /// <summary>アクティブ時にルーペ再開（Timer不要になったが、必要に応じて処理）。</summary>
     private void OnMainWindowActivated(object? sender, EventArgs e)
     {
-        AppLog.LogActivated(_logger);
+        _logger.LogActivated();
     }
 
     /// <summary>非アクティブ時。</summary>
     private void OnMainWindowDeactivated(object? sender, EventArgs e)
     {
-        AppLog.LogDeactivated(_logger);
+        _logger.LogDeactivated();
     }
 
     /// <summary>ウィンドウ位置・サイズを復元する。</summary>
@@ -470,7 +470,7 @@ public sealed partial class MainWindow : Window
     /// <summary>選択モードを開始する。</summary>
     internal async void StartSelectionMode(CaptureType captureType)
     {
-        AppLog.LogStartSelectionMode(_logger, captureType);
+        _logger.LogStartSelectionMode(captureType);
 
         // キャプチャ開始直前に設定を反映する（PropertyChanged 購読に加えて確実に最新の設定を使う。
         // 設定画面での変更が購読で反映されないケース（起動直後・Reload 後など）を防ぐ）。
@@ -482,7 +482,7 @@ public sealed partial class MainWindow : Window
         var result = await _snipCapture.StartCaptureAsync(captureType, this);
 
         var imgInfo = result?.Image is not null ? $"{result.Image.PixelSize.Width}x{result.Image.PixelSize.Height}" : "null";
-        AppLog.LogSessionReturned(_logger, imgInfo, result?.SourceBounds?.ToString() ?? "null");
+        _logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
     }
 
     /// <summary>キャプチャ完了イベントの受信処理（同期実行。画像変更を行う）。</summary>

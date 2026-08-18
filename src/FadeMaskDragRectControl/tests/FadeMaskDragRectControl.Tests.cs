@@ -1,13 +1,11 @@
 using BindingFlags = System.Reflection.BindingFlags;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using Avalonia.Threading;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
@@ -130,7 +128,7 @@ public class FadeMaskDragRectControlTests
         var settings = new FadeMaskDragRectSettings
         {
             MinSelectionSize = 5,
-            BorderColor = Color.FromArgb(102, 255, 0, 0), // 赤 40%
+            BorderColor = Color.FromAColor(102, Colors.Red),
             BorderThickness = 3.0,
             HandleColor = Colors.Blue,
             HandleSize = 12.0,
@@ -143,7 +141,7 @@ public class FadeMaskDragRectControlTests
         control.AppearanceSettings = settings;
 
         Assert.Equal(5, control.DragRect.MinSelectionSize);
-        Assert.Equal(Color.FromArgb(102, 255, 0, 0), control.DragRect.BorderColor);
+        Assert.Equal(Color.FromAColor(102, Colors.Red), control.DragRect.BorderColor);
         Assert.Equal(3.0, control.DragRect.BorderThickness);
         Assert.Equal(Colors.Blue, control.DragRect.HandleColor);
         Assert.Equal(12.0, control.DragRect.HandleSize);
@@ -161,16 +159,16 @@ public class FadeMaskDragRectControlTests
         {
             Scaling = 2.0,
             DisplayScaleScaling = 1.5,
-            OverlayColor = Color.FromArgb(128, 0, 0, 139), // 暗青 50%
+            OverlayColor = Color.FromAColor(128, Colors.DarkBlue), // 暗青 50%
             TextColor = Colors.Yellow,
-            TextBackgroundColor = Color.FromArgb(179, 0, 0, 139), // 暗青 70%
+            TextBackgroundColor = Color.FromAColor(179, Colors.DarkBlue), // 暗青 70%
             FontSize = 18.0,
             ShowSizeLabel = false,
             ShowSubLines = false,
             SubLineFontSize = 13.0,
             SubLineColor = Colors.Orange,
-            SubLineBackgroundColor = Color.FromArgb(102, 0, 100, 0), // 暗緑 40%
-            InfoLabelBackgroundColor = Color.FromArgb(128, 139, 0, 0), // 暗赤 50%
+            SubLineBackgroundColor = Color.FromAColor(102, Colors.DarkGreen), // 暗緑 40%
+            InfoLabelBackgroundColor = Color.FromAColor(128, Colors.DarkRed), // 暗赤 50%
             InfoLabelVisible = false,
             InfoLabelColor = Colors.Cyan,
             InfoLabelFontSize = 12.0,
@@ -181,16 +179,16 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(2.0, control.Renderer.Scaling);
         Assert.Equal(1.5, control.Renderer.DisplayScaleScaling);
         // OverlayColor（アルファ込み）がそのまま OverlayArgbColor へ反映される
-        Assert.Equal(Color.FromArgb(128, 0, 0, 139), control.Renderer.OverlayArgbColor);
+        Assert.Equal(Color.FromAColor(128, Colors.DarkBlue), control.Renderer.OverlayArgbColor);
         Assert.Equal(Colors.Yellow, control.Renderer.TextColor);
-        Assert.Equal(Color.FromArgb(179, 0, 0, 139), control.Renderer.TextBackgroundColor);
+        Assert.Equal(Color.FromAColor(179, Colors.DarkBlue), control.Renderer.TextBackgroundColor);
         Assert.Equal(18.0, control.Renderer.FontSize);
         Assert.False(control.Renderer.ShowSizeLabel);
         Assert.False(control.Renderer.ShowSubLines);
         Assert.Equal(13.0, control.Renderer.SubLineFontSize);
         Assert.Equal(Colors.Orange, control.Renderer.SubLineColor);
-        Assert.Equal(Color.FromArgb(102, 0, 100, 0), control.Renderer.SubLineBackgroundColor);
-        Assert.Equal(Color.FromArgb(128, 139, 0, 0), control.Renderer.InfoLabelBackgroundColor);
+        Assert.Equal(Color.FromAColor(102, Colors.DarkGreen), control.Renderer.SubLineBackgroundColor);
+        Assert.Equal(Color.FromAColor(128, Colors.DarkRed), control.Renderer.InfoLabelBackgroundColor);
         Assert.False(control.Renderer.InfoLabelVisible);
         Assert.Equal(Colors.Cyan, control.Renderer.InfoLabelColor);
         Assert.Equal(12.0, control.Renderer.InfoLabelFontSize);
@@ -205,22 +203,22 @@ public class FadeMaskDragRectControlTests
             RequestedSize = 150,
             ZoomLevel = 3,
             RenderScaling = 2.0,
-            CrossColor = Color.FromArgb(204, 255, 0, 0), // 赤 80%
+            CrossColor = Color.FromAColor(204, Colors.Red), // 赤 80%
             CheckerSize = 10,
             CheckerColorA = Colors.Black,
             CheckerColorB = Colors.White,
             FrameColor = Colors.Gray,
             FrameWidth = 4,
-            SelectionRectColorA = Color.FromArgb(204, 255, 255, 255),
-            SelectionRectColorB = Color.FromArgb(204, 0, 0, 0),
+            SelectionRectColorA = Color.FromAColor(204, Colors.White),
+            SelectionRectColorB = Color.FromAColor(204, Colors.Black),
             PositionOffset = 30.0,
             ShowCoordLabel = true,
             CoordLabelColor = Colors.Yellow,
-            CoordLabelBackgroundColor = Color.FromArgb(179, 0, 100, 0), // 暗緑 70%
+            CoordLabelBackgroundColor = Color.FromAColor(179, Colors.DarkGreen), // 暗緑 70%
             CoordLabelFontSize = 14.0,
             LoupeShowCoordLabel = true,
             LoupeCoordLabelColor = Colors.Cyan,
-            LoupeCoordLabelBackgroundColor = Color.FromArgb(153, 139, 0, 0), // 暗赤 60%
+            LoupeCoordLabelBackgroundColor = Color.FromAColor(153, Colors.DarkRed), // 暗赤 60%
             LoupeCoordLabelFontSize = 13.0,
         };
 
@@ -229,27 +227,27 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(150, control.Loupe.RequestedSize);
         Assert.Equal(3, control.Loupe.ZoomLevel);
         Assert.Equal(2.0, control.Loupe.RenderScaling);
-        Assert.Equal(Color.FromArgb(204, 255, 0, 0), ((SolidColorBrush)control.Loupe.CrossColor!).Color);
+        Assert.Equal(Color.FromAColor(204, Colors.Red), ((SolidColorBrush)control.Loupe.CrossColor!).Color);
         Assert.Equal(10, control.Loupe.CheckerSize);
         Assert.Equal(4, control.Loupe.FrameWidth);
         Assert.True(control.Loupe.SelectionRectVisible);
-        Assert.Equal(Color.FromArgb(204, 255, 255, 255), ((SolidColorBrush)control.Loupe.SelectionRectColorA!).Color);
+        Assert.Equal(Color.FromAColor(204, Colors.White), ((SolidColorBrush)control.Loupe.SelectionRectColorA!).Color);
         Assert.Equal(30.0, control.Loupe.PositionOffset);
         // 座標ラベル（DragRect / Loupe）
         Assert.True(control.DragRect.ShowCoordLabel);
         Assert.Equal(Colors.Yellow, control.DragRect.CoordLabelColor);
-        Assert.Equal(Color.FromArgb(179, 0, 100, 0), control.DragRect.CoordLabelBackgroundColor);
+        Assert.Equal(Color.FromAColor(179, Colors.DarkGreen), control.DragRect.CoordLabelBackgroundColor);
         Assert.Equal(14.0, control.DragRect.CoordLabelFontSize);
         Assert.True(control.Loupe.ShowCoordLabel);
         Assert.Equal(13.0, control.Loupe.CoordLabelFontSize);
-        Assert.Equal(Color.FromArgb(153, 139, 0, 0), ((SolidColorBrush)control.Loupe.CoordLabelBackgroundColor!).Color);
+        Assert.Equal(Color.FromAColor(153, Colors.DarkRed), ((SolidColorBrush)control.Loupe.CoordLabelBackgroundColor!).Color);
     }
 
     [AvaloniaFact]
     public void AppearanceSettings_同一色の再設定でブラシが共有される()
     {
         var control = new FadeMaskDragRectControl();
-        var color = Color.FromArgb(204, 255, 0, 0);
+        var color = Color.FromAColor(204, Colors.Red);
 
         // 同じ色を 2 回設定 → ブラシキャッシュのヒットパス（TryGetValue が true）を実行する
         control.AppearanceSettings = new FadeMaskDragRectSettings { CrossColor = color };
