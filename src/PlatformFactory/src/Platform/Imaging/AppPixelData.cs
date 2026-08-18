@@ -74,14 +74,11 @@ public sealed class AppPixelData
     /// <remarks>
     /// <c>Bitmap.CopyPixels</c>（ネイティブ memcpy 相当）で直接読み取るため、<br/>
     /// PNG エンコード/デコードや System.Drawing を経由しない（高速・可逆）。<br/>
-    /// サイズが 0 の場合は空のデータ（0x0）を返す。<br/>
     /// </remarks>
     public static unsafe AppPixelData ToPixelData(Bitmap bitmap)
     {
         var w = bitmap.PixelSize.Width;
         var h = bitmap.PixelSize.Height;
-        if (w < 1 || h < 1)
-            return new AppPixelData(0, 0, 0, []);
 
         var stride = w * 4;
         var pixels = new byte[stride * h];

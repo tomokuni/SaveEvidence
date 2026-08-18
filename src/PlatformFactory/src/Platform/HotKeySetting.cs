@@ -16,10 +16,10 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, Key Key)
     public override string ToString()
     {
         var parts = new List<string>(4);
-        if (Modifiers.HasFlag(HotKeyModifiers.Control)) parts.Add("Ctrl");
-        if (Modifiers.HasFlag(HotKeyModifiers.Alt)) parts.Add("Alt");
-        if (Modifiers.HasFlag(HotKeyModifiers.Shift)) parts.Add("Shift");
-        if (Modifiers.HasFlag(HotKeyModifiers.Windows)) parts.Add("Win");
+        if ((Modifiers & HotKeyModifiers.Control) != 0) parts.Add("Ctrl");
+        if ((Modifiers & HotKeyModifiers.Alt) != 0) parts.Add("Alt");
+        if ((Modifiers & HotKeyModifiers.Shift) != 0) parts.Add("Shift");
+        if ((Modifiers & HotKeyModifiers.Windows) != 0) parts.Add("Win");
         parts.Add(KeyToSymbolString(Key));
         return string.Join(" + ", parts);
     }

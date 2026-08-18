@@ -120,18 +120,17 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
         return CaptureSdBitmap(visibleRect);
     }
 
-    /// <summary>ウィンドウの可視矩形領域を取得する（DWM 影除外）。</summary>
+    /// <summary>ウィンドウの可視矩形領域を取得する（最大化はワークエリア・通常は DWM 影除外）。</summary>
     /// <param name="hWnd">対象ウィンドウハンドル。</param>
     /// <returns>可視矩形。取得失敗時は <see cref="Rectangle.Empty"/>。</returns>
+    /// <remarks>
+    /// 可視矩形の取得（最大化のワークエリア / DWM 影除外 / GetWindowRect フォールバック）は
+    /// <see cref="WinNative.TryGetVisibleRect"/> に委譲する（<see cref="WinElementFinder"/> と共用・単一所有）。
+    /// </remarks>
     public Rectangle GetWindowVisibleRect(IntPtr hWnd)
     {
-        if (hWnd == IntPtr.Zero) return Rectangle.Empty;
-        WinNative.RECT visibleRect = default;
-        var hr = WinNative.DwmGetWindowAttribute(hWnd, WinNative.DWMWA_EXTENDED_FRAME_BOUNDS,
-            ref visibleRect, Marshal.SizeOf<WinNative.RECT>());
-        if (hr >= 0 && visibleRect.Left < visibleRect.Right && visibleRect.Top < visibleRect.Bottom)
-            return Rectangle.FromLTRB(visibleRect.Left, visibleRect.Top, visibleRect.Right, visibleRect.Bottom);
-        return GetWindowRect(hWnd);
+        if (!WinNative.TryGetVisibleRect(hWnd, out var rect)) return Rectangle.Empty;
+        return Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
     }
 
     /// <summary>ウィンドウの矩形領域を取得する（GetWindowRect ラッパー）。</summary>
@@ -185,11 +184,10 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
                 {
                     var pSrc = (byte*)(bmpData.Scan0 + y * stride);
                     var pDst = (byte*)(locked.Address + y * dstStride);
+                    // 行全体を一括コピーし、アルファバイトのみ 255（不透明）へ上書きする
+                    Buffer.MemoryCopy(pSrc, pDst, rowBytes, rowBytes);
                     for (var x = 0; x < w; x++)
                     {
-                        pDst[x * 4] = pSrc[x * 4];
-                        pDst[x * 4 + 1] = pSrc[x * 4 + 1];
-                        pDst[x * 4 + 2] = pSrc[x * 4 + 2];
                         pDst[x * 4 + 3] = 255;
                     }
                 }
@@ -231,8 +229,16 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
             var bitmap = new DrawingBitmap(width, height);
             using var g = Graphics.FromImage(bitmap);
             var hdc = g.GetHdc();
-            var success = WinNative.PrintWindow(hWnd, hdc, flags);
-            g.ReleaseHdc(hdc);
+            bool success;
+            try
+            {
+                success = WinNative.PrintWindow(hWnd, hdc, flags);
+            }
+            finally
+            {
+                // GetHdc 後の HDC は例外経路でも必ず解放する（デバイスコンテキストのリーク防止）
+                g.ReleaseHdc(hdc);
+            }
 
             if (success && IsBitmapValid(bitmap))
             {

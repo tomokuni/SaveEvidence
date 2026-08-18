@@ -47,6 +47,32 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// </remarks>
 public sealed class FadeMaskDragRectControl : Panel
 {
+    /// <summary>ブラシキャッシュ（色 → ブラシ。容量制限付き）。</summary>
+    private static readonly Dictionary<Color, SolidColorBrush> s_brushCache = [];
+
+    /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
+    private const int BrushCacheCapacity = 32;
+
+    /// <summary>色に対応するブラシを静的キャッシュから取得する（未登録なら生成して登録）。</summary>
+    /// <param name="color">ブラシの色。</param>
+    /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
+    /// <remarks>容量超過時は全クリアして無制限の増加を防ぐ。</remarks>
+    private static SolidColorBrush GetSharedBrush(Color color)
+    {
+        if (s_brushCache.TryGetValue(color, out var cached))
+        {
+            return cached;
+        }
+
+        var brush = new SolidColorBrush(color);
+        if (s_brushCache.Count >= BrushCacheCapacity)
+        {
+            s_brushCache.Clear();
+        }
+        s_brushCache[color] = brush;
+        return brush;
+    }
+
     /// <summary>暗転マスク描画コントロール（FadeMaskRenderer を ExternalRenderer として適用）。</summary>
     private readonly FadeMaskControl _overlay = new() { IsHitTestVisible = false, ZIndex = 50, ClipToBounds = true };
 
@@ -59,10 +85,10 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>オーバーレイ描画レンダラー（描画状態の真のソース）。</summary>
     private readonly FadeMaskRenderer _renderer = new();
 
-    /// <summary>動作モード（バッキングフィールド）。</summary>
+    /// <summary>動作モード（C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義）。</summary>
     private FadeMaskDragRectMode _mode = FadeMaskDragRectMode.AreaSelect;
 
-    /// <summary>サイズラベルを描画時に評価するプロバイダ（バッキングフィールド）。</summary>
+    /// <summary>サイズラベルを描画時に評価するプロバイダ（C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義）。</summary>
     private Func<string?>? _sizeLabelOverrideProvider;
 
     /// <summary>現在の外観設定（バッキングフィールド。全メンバー non-null）。</summary>
@@ -92,12 +118,11 @@ public sealed class FadeMaskDragRectControl : Panel
         _dragRect.SelectionCancelled += OnSelectionCancelled;
         _dragRect.ViewportChanged += OnViewportChanged;
         _dragRect.LoupePositionMoved += OnLoupePositionMoved;
-        _dragRect.ConfirmRequested += (_, e) =>
-            ConfirmRequested?.Invoke(this, new FadeMaskDragRectSelectionEventArgs(e.Rect));
-        _dragRect.CancelRequested += (_, _) => CancelRequested?.Invoke(this, EventArgs.Empty);
-        _dragRect.ZoomRequested += (_, zoomIn) => ZoomRequested?.Invoke(this, zoomIn);
+        _dragRect.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect);
+        _dragRect.CancelRequested += (_, _) => RaiseCancelRequested();
+        _dragRect.ZoomRequested += (_, zoomIn) => RaiseZoomRequested(zoomIn);
 
-        _renderer.ShowFullOverlay = true;
+        // 全面暗転・描画モード・各コントロールの可視性は ApplyMode がモード（既定 AreaSelect）から一括適用する
         ApplyMode();
     }
 
@@ -123,7 +148,6 @@ public sealed class FadeMaskDragRectControl : Panel
             ApplyMode();
         }
     }
-
     // ====================================================================
     // 公開 API: 状態・イベント・操作
     // ====================================================================
@@ -318,26 +342,25 @@ public sealed class FadeMaskDragRectControl : Panel
         _renderer.SubLineFontSize = settings.SubLineFontSize!.Value;
         _renderer.SubLineColor = settings.SubLineColor!.Value;
         _renderer.SubLineBackgroundColor = settings.SubLineBackgroundColor!.Value;
-        _renderer.SizeLabelOverrideProvider = _sizeLabelOverrideProvider;
 
         // Loupe 外観（LoupeControl の公開外観設定を全て適用）
         _loupeControl.RequestedSize = settings.RequestedSize!.Value;
         _loupeControl.ZoomLevel = settings.ZoomLevel!.Value;
         _loupeControl.RenderScaling = settings.RenderScaling!.Value;
-        _loupeControl.CrossColor = new SolidColorBrush(settings.CrossColor!.Value);
+        _loupeControl.CrossColor = GetSharedBrush(settings.CrossColor!.Value);
         _loupeControl.CheckerSize = settings.CheckerSize!.Value;
-        _loupeControl.CheckerColorA = new SolidColorBrush(settings.CheckerColorA!.Value);
-        _loupeControl.CheckerColorB = new SolidColorBrush(settings.CheckerColorB!.Value);
-        _loupeControl.FrameColor = new SolidColorBrush(settings.FrameColor!.Value);
+        _loupeControl.CheckerColorA = GetSharedBrush(settings.CheckerColorA!.Value);
+        _loupeControl.CheckerColorB = GetSharedBrush(settings.CheckerColorB!.Value);
+        _loupeControl.FrameColor = GetSharedBrush(settings.FrameColor!.Value);
         _loupeControl.FrameWidth = settings.FrameWidth!.Value;
         // SelectionRectVisible はモード依存（ApplyMode が設定する）のため、ここでは設定しない
-        _loupeControl.SelectionRectColorA = new SolidColorBrush(settings.SelectionRectColorA!.Value);
-        _loupeControl.SelectionRectColorB = new SolidColorBrush(settings.SelectionRectColorB!.Value);
+        _loupeControl.SelectionRectColorA = GetSharedBrush(settings.SelectionRectColorA!.Value);
+        _loupeControl.SelectionRectColorB = GetSharedBrush(settings.SelectionRectColorB!.Value);
         _loupeControl.PositionOffset = settings.PositionOffset!.Value;
         // ルーペ座標ラベル
         _loupeControl.ShowCoordLabel = settings.LoupeShowCoordLabel!.Value;
-        _loupeControl.CoordLabelColor = new SolidColorBrush(settings.LoupeCoordLabelColor!.Value);
-        _loupeControl.CoordLabelBackgroundColor = new SolidColorBrush(settings.LoupeCoordLabelBackgroundColor!.Value);
+        _loupeControl.CoordLabelColor = GetSharedBrush(settings.LoupeCoordLabelColor!.Value);
+        _loupeControl.CoordLabelBackgroundColor = GetSharedBrush(settings.LoupeCoordLabelBackgroundColor!.Value);
         _loupeControl.CoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value;
 
         _overlay.InvalidateVisual();
@@ -390,19 +413,25 @@ public sealed class FadeMaskDragRectControl : Panel
     public void SetSelection(Rect rect)
     {
         var hasSelection = rect.Width > 0 && rect.Height > 0;
-        _renderer.HasSelection = hasSelection;
-        _renderer.LogicalSelectionRect = hasSelection ? rect : null;
-        _loupeControl.SelectionRect = hasSelection ? rect : null;
-        _overlay.InvalidateVisual();
+        SyncSelectionState(hasSelection ? rect : null);
     }
 
     /// <summary>選択状態をクリアして全面暗転（穴あけなし）に戻す（新規選択開始・キャンセル時）。</summary>
     /// <remarks>矩形外クリックのドラッグ開始やキャンセル時の FadeMask 残留を防止する（DragRect は非表示でも状態が残るため）。</remarks>
-    public void ClearSelection()
+    public void ClearSelection() => SyncSelectionState(null);
+
+    /// <summary>選択状態を FadeMask レンダラーとルーペへ同期して再描画する。</summary>
+    /// <param name="rect">選択矩形（ドメイン座標）。null は選択なし。</param>
+    /// <remarks>
+    /// <see cref="SetSelection"/> と <see cref="ClearSelection"/> で共用する（重複排除）。<br/>
+    /// 選択状態の真のソースは <see cref="FadeMaskRenderer"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>
+    /// ルーペ画像上の選択枠（破線）も同期する。DIP 矩形の算出は描画時に行う（レイアウト変化に追従）。
+    /// </remarks>
+    private void SyncSelectionState(Rect? rect)
     {
-        _renderer.HasSelection = false;
-        _renderer.LogicalSelectionRect = null;
-        _loupeControl.SelectionRect = null;
+        _renderer.HasSelection = rect is not null;
+        _renderer.LogicalSelectionRect = rect;
+        _loupeControl.SelectionRect = rect;
         _overlay.InvalidateVisual();
     }
 
@@ -416,6 +445,18 @@ public sealed class FadeMaskDragRectControl : Panel
     public void SetLoupePosition(Point domainPos)
     {
         if (_loupeControl.Parent is null) return;
+        UpdateLoupePosition(domainPos);
+    }
+
+    /// <summary>ルーペの中心位置（ドメイン座標）を設定して表示を開始する（Source 設定済みの場合のみ表示）。</summary>
+    /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>
+    /// <remarks>
+    /// <see cref="SetLoupePosition"/> と <see cref="OnLoupePositionMoved"/> で共用する（重複排除）。<br/>
+    /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordinateTransform"/>）から自己計算する。<br/>
+    /// <b>Source 未設定の間は表示しない</b>（未設定の市松模様を防ぐ）。
+    /// </remarks>
+    private void UpdateLoupePosition(Point domainPos)
+    {
         _loupeControl.CenterPoint = domainPos;
         // Source が設定済みの場合のみ表示する（未設定の市松模様を防ぐ）
         if (_loupeControl.Source is not null)
@@ -487,11 +528,7 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>ハイライト対象のウィンドウタイトル（未検出時は空文字）。</summary>
-    public string WindowTitle
-    {
-        get => _renderer.WindowTitle;
-        set => _renderer.WindowTitle = value;
-    }
+    public string WindowTitle { get => _renderer.WindowTitle; set => _renderer.WindowTitle = value; }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効）。</summary>
     /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ。</remarks>
@@ -572,14 +609,32 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void OnLoupePositionMoved(object? sender, DragRectPointEventArgs e)
     {
-        _loupeControl.CenterPoint = e.Point;
-        // Source が設定済みの場合のみ表示する（未設定の市松模様を防ぐ）
-        if (_loupeControl.Source is not null)
-        {
-            _loupeControl.IsVisible = true;
-        }
-        LoupePositionMoved?.Invoke(this, new FadeMaskDragRectPointEventArgs(e.Point));
+        UpdateLoupePosition(e.Point);
+        RaiseLoupePositionMoved(e.Point);
     }
+
+    // ====================================================================
+    // イベント発火（ホストへの通知。発火形式を一貫させるため private ヘルパーに集約）
+    // ====================================================================
+
+    /// <summary>確定要求イベントを発火する。</summary>
+    /// <param name="rect">確定した選択矩形（ドメイン座標）。</param>
+    private void RaiseConfirmRequested(Rect rect)
+        => ConfirmRequested?.Invoke(this, new FadeMaskDragRectSelectionEventArgs(rect));
+
+    /// <summary>キャンセル要求イベントを発火する。</summary>
+    private void RaiseCancelRequested()
+        => CancelRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>ズーム要求イベントを発火する。</summary>
+    /// <param name="zoomIn">ズームインする場合は true。</param>
+    private void RaiseZoomRequested(bool zoomIn)
+        => ZoomRequested?.Invoke(this, zoomIn);
+
+    /// <summary>ルーペ中心更新イベントを発火する。</summary>
+    /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>
+    private void RaiseLoupePositionMoved(Point domainPos)
+        => LoupePositionMoved?.Invoke(this, new FadeMaskDragRectPointEventArgs(domainPos));
 
     // ====================================================================
     // レイアウト
@@ -595,9 +650,11 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
+        // 全子コントロールを同一矩形（パネル全面）に Arrange する（矩形は一度だけ生成して共有）
+        var fullRect = new Rect(finalSize);
         foreach (var child in Children)
         {
-            child.Arrange(new Rect(finalSize));
+            child.Arrange(fullRect);
         }
         return finalSize;
     }

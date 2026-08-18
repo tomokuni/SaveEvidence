@@ -1,6 +1,4 @@
-using Avalonia;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 
 namespace Estable.AvaloniaUI.Platform.Imaging;
 
@@ -14,22 +12,12 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 /// </remarks>
 public static class BitmapFactory
 {
-    /// <summary>サイズ 0x0 の空 Bitmap を生成する（キャンセル時の戻り値用）。生成に失敗した場合は null。</summary>
-    /// <returns>0x0 の空 Bitmap。生成できない環境では null。</returns>
+    /// <summary>キャンセル時の空結果（null）を返す。</summary>
+    /// <returns>常に null（0x0 の空 Bitmap を表すキャンセル意図の明示）。</returns>
     /// <remarks>
-    /// 0x0 の WriteableBitmap がプラットフォームで生成できない場合に備えて例外を捕捉し、<br/>
-    /// null を返す（呼び出し側でキャンセル扱いとして処理する）。<br/>
+    /// Avalonia の <see cref="WriteableBitmap"/> はサイズ 1x1 以上が必須のため、<br/>
+    /// 0x0 の空 Bitmap は生成できない。呼び出し側（<c>CaptureSession</c>）が null を<br/>
+    /// キャンセル扱いとして処理するための戻り値メソッドである。<br/>
     /// </remarks>
-    public static Bitmap? CreateEmpty()
-    {
-        try
-        {
-            return new WriteableBitmap(new PixelSize(0, 0), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
-        }
-        catch
-        {
-            // 0x0 の WriteableBitmap が生成できない環境では null を返す（呼び出し側でキャンセル扱い）
-            return null;
-        }
-    }
+    public static Bitmap? CreateEmpty() => null;
 }

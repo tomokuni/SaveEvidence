@@ -19,6 +19,9 @@ internal sealed class WinCursorService : ICursorService
     /// <summary>ロガー（null の場合は出力なし）。</summary>
     private readonly ILogger _log;
 
+    /// <summary><see cref="WinNative.CURSORINFO"/> 構造体のマーシャリングサイズ（バイト）。</summary>
+    private static readonly int CursorInfoSize = Marshal.SizeOf<WinNative.CURSORINFO>();
+
     /// <summary><see cref="WinCursorService"/> の新しいインスタンスを初期化します。</summary>
     /// <param name="logger">ロガー。null の場合は出力なし。</param>
     /// <remarks>
@@ -31,7 +34,7 @@ internal sealed class WinCursorService : ICursorService
         _log = logger ?? NullLogger.Instance;
 
         // Win32 の表示カウンタと状態追跡を同期する（初期状態の実態を取得）
-        var info = new WinNative.CURSORINFO { cbSize = Marshal.SizeOf<WinNative.CURSORINFO>() };
+        var info = new WinNative.CURSORINFO { cbSize = CursorInfoSize };
         if (WinNative.GetCursorInfo(ref info))
         {
             _cursorVisible = (info.flags & WinNative.CURSOR_SHOWING) != 0;
@@ -82,7 +85,7 @@ internal sealed class WinCursorService : ICursorService
     {
         if (_cursorVisible == show) return;
         _cursorVisible = show;
-        PlatformLog.LogCursorVisibilityChanged(_log, show);
+        _log.LogCursorVisibilityChanged(show);
         WinNative.ShowCursor(show);
     }
 

@@ -30,4 +30,12 @@ public class AppPixelDataTests
 
         Assert.Null(data.ToBitmap());
     }
+
+    [Fact]
+    public void ToBitmap_幅または高さが0の場合はnullを返す()
+    {
+        // 幅 0・高さあり / 幅あり・高さ 0 の両方で null（サイズ 0 判定の各分岐）
+        Assert.Null(new AppPixelData(0, 10, 0, []).ToBitmap());
+        Assert.Null(new AppPixelData(10, 0, 40, []).ToBitmap());
+    }
 }

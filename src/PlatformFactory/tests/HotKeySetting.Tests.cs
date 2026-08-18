@@ -34,6 +34,33 @@ public class HotKeySettingTests
         Assert.Equal("Alt + 1", setting.ToString());
     }
 
+    [Theory]
+    [InlineData(Key.D0, "0")]
+    [InlineData(Key.D2, "2")]
+    [InlineData(Key.D3, "3")]
+    [InlineData(Key.D4, "4")]
+    [InlineData(Key.D5, "5")]
+    [InlineData(Key.D6, "6")]
+    [InlineData(Key.D7, "7")]
+    [InlineData(Key.D8, "8")]
+    [InlineData(Key.D9, "9")]
+    [InlineData(Key.OemMinus, "-")]
+    [InlineData(Key.OemPlus, "=")]
+    [InlineData(Key.OemOpenBrackets, "[")]
+    [InlineData(Key.OemCloseBrackets, "]")]
+    [InlineData(Key.OemPipe, "\\")]
+    [InlineData(Key.OemSemicolon, ";")]
+    [InlineData(Key.OemComma, ",")]
+    [InlineData(Key.OemPeriod, ".")]
+    [InlineData(Key.OemQuestion, "/")]
+    [InlineData(Key.Q, "Q")]
+    public void 変換_記号キーは記号で表示する(Key key, string symbol)
+    {
+        var setting = new HotKeySetting(HotKeyModifiers.None, key);
+
+        Assert.Equal(symbol, setting.ToString());
+    }
+
     [Fact]
     public void ToString_記号キーは記号で表示する()
     {

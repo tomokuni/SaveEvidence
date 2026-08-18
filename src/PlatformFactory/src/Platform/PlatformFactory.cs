@@ -22,11 +22,6 @@ namespace Estable.AvaloniaUI.Platform;
 /// <br/>
 /// 注意点:<br/>
 /// - ホスト（上位 AP）が独自実装を注入する場合は、本ファクトリを使わず SetXxx メソッドで差し替える。<br/>
-/// <br/>
-/// 最適化手法:<br/>
-/// - NoOp 実装はシングルトン（<c>Instance</c>）を返し、インスタンス生成コストを回避する。<br/>
-/// - プラットフォーム判定（<see cref="OperatingSystem.IsWindows"/>）はキャッシュ不可能な OS 問い合わせのため、<br/>
-///   生成時にのみ評価する（頻繁な呼び出しは避け、ファクトリ経由で既定実装を再利用する）。
 /// </remarks>
 public static class PlatformFactory
 {

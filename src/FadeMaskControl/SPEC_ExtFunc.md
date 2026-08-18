@@ -262,4 +262,3 @@ overlay.InvalidateVisual(); // 再描画を要求
 | `Debug` | `LogMessage.LogSelectionRectChanged` | 論理選択矩形（ドメイン座標）の変更（変更前後） |
 | `Debug` | `LogMessage.LogExternalRenderer` | 外部レンダラーの設定 / 解除 |
 | `Trace` | `LogMessage.LogCoordinateTransform` | 座標変換ポートの設定 |
-

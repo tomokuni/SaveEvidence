@@ -15,6 +15,9 @@ namespace Estable.AvaloniaUI.Platform.Win;
 /// </remarks>
 internal sealed class WinElementFinder : IElementFinder
 {
+    /// <summary>クラス名取得バッファのサイズ（文字数）。</summary>
+    private const int ClassNameBufferSize = 256;
+
     /// <summary>カーソル位置取得用の共有プラットフォーム実装（Win32）。</summary>
     /// <remarks>カーソル位置の取得（<see cref="GetCursorScreenPoint"/>）に使用する。</remarks>
     private readonly ICursorService _cursorService = new WinCursorService();
@@ -152,10 +155,10 @@ internal sealed class WinElementFinder : IElementFinder
     /// <summary>ウィンドウのクラス名を取得する。</summary>
     /// <param name="hWnd">ウィンドウハンドル。</param>
     /// <returns>クラス名。取得できない場合は空文字。</returns>
-    /// <remarks><see cref="ListWindows"/> の結果（<see cref="ElementFinderResults.ClassName"/>）で使用する。</remarks>
+    /// <remarks><see cref="ListWindows"/> の結果（<see cref="ElementFinderResults.ClassName"/>）と除外判定（<see cref="IsExcludedClass"/>）で使用する。</remarks>
     private static string GetWindowClassName(IntPtr hWnd)
     {
-        var className = new char[256];
+        var className = new char[ClassNameBufferSize];
         var len = WinNative.GetClassName(hWnd, className, className.Length);
         return len > 0 ? className.AsSpan(0, len).ToString() : "";
     }
@@ -168,10 +171,9 @@ internal sealed class WinElementFinder : IElementFinder
     /// </remarks>
     private static bool IsExcludedClass(IntPtr hWnd)
     {
-        var className = new char[256];
-        var len = WinNative.GetClassName(hWnd, className, className.Length);
-        if (len <= 0) return false;
-        return IsExcludedClassName(className.AsSpan(0, len).ToString());
+        // クラス名の取得は GetWindowClassName に委譲する（重複排除）
+        var className = GetWindowClassName(hWnd);
+        return className.Length > 0 && IsExcludedClassName(className);
     }
 
     /// <summary>タイトルが空の UWP フレーム（スタートメニュー等のオーバーレイ）かどうかを判定する（純粋関数・テスト容易）。</summary>
@@ -199,52 +201,23 @@ internal sealed class WinElementFinder : IElementFinder
             or "Progman" or "WorkerW";
 
     /// <summary>ウィンドウの可視矩形領域を取得する（最大化はワークエリア・通常は DWM 影除外）。</summary>
+    /// <param name="handle">ウィンドウの識別子。</param>
+    /// <param name="rect">取得した可視矩形（画面物理座標）。</param>
+    /// <returns>取得できた場合は true。</returns>
     /// <remarks>
-    /// 最大化ウィンドウには影がなく、<c>DWMWA_EXTENDED_FRAME_BOUNDS</c> は左右に 8px の内部マージンを返す<br/>
-    /// （Windows 10 の既知の挙動）ため、<c>GetWindowRect</c>（ワークエリア = タスクバーを除く最大化領域）を使用する。<br/>
-    /// 通常ウィンドウは <c>DWMWA_EXTENDED_FRAME_BOUNDS</c> で影を除外した可視領域を取得し、<br/>
-    /// 失敗時は <c>GetWindowRect</c> にフォールバックする。<br/>
+    /// 可視矩形の取得（最大化のワークエリア / DWM 影除外 / GetWindowRect フォールバック）は
+    /// <see cref="WinNative.TryGetVisibleRect"/> に委譲する（<see cref="WinCaptureService"/> と共用・単一所有）。<br/>
     /// インターフェイスからは公開せず、<see cref="FindWindowUnderCursor"/> の内部実装として使用する。
     /// </remarks>
     internal bool TryGetWindowVisibleRect(IPlatformHandle handle, out PixelRect rect)
     {
-        var hWnd = handle.Handle;
-        if (hWnd == IntPtr.Zero)
+        if (!WinNative.TryGetVisibleRect(handle.Handle, out var nativeRect))
         {
             rect = default;
             return false;
         }
 
-        // 最大化ウィンドウ: 影がないため GetWindowRect（ワークエリア）を使用する
-        // （DWMWA_EXTENDED_FRAME_BOUNDS は最大化時に 8px の内部マージンを返す既知の挙動の回避）
-        if (WinNative.IsZoomed(hWnd))
-        {
-            if (!WinNative.GetWindowRect(hWnd, out var zoomedRect))
-            {
-                rect = default;
-                return false;
-            }
-            rect = new PixelRect(zoomedRect.Left, zoomedRect.Top, zoomedRect.Width, zoomedRect.Height);
-            return true;
-        }
-
-        // 通常ウィンドウ: DWM 影除外（DWMWA_EXTENDED_FRAME_BOUNDS）で可視領域を取得する
-        WinNative.RECT visibleRect = default;
-        var hr = WinNative.DwmGetWindowAttribute(hWnd, WinNative.DWMWA_EXTENDED_FRAME_BOUNDS,
-            ref visibleRect, Marshal.SizeOf<WinNative.RECT>());
-        if (hr >= 0 && visibleRect.Left < visibleRect.Right && visibleRect.Top < visibleRect.Bottom)
-        {
-            rect = new PixelRect(visibleRect.Left, visibleRect.Top, visibleRect.Width, visibleRect.Height);
-            return true;
-        }
-
-        // フォールバック: GetWindowRect
-        if (!WinNative.GetWindowRect(hWnd, out var wndRect))
-        {
-            rect = default;
-            return false;
-        }
-        rect = new PixelRect(wndRect.Left, wndRect.Top, wndRect.Width, wndRect.Height);
+        rect = new PixelRect(nativeRect.Left, nativeRect.Top, nativeRect.Width, nativeRect.Height);
         return true;
     }
 

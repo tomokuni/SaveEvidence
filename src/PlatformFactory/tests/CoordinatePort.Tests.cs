@@ -294,6 +294,20 @@ public class CoordinatePortTests
         Assert.Equal(1.0, sx, 6);
     }
 
+    [Fact]
+    public void ImageLayoutScaleX_uniformProviderを指定してスケールを切り替えられる()
+    {
+        // uniformProvider: false（非 Uniform = 各軸独立スケール）→ X スケール = 元幅 / 表示幅
+        var sx = CoordinatePort.ImageLayoutScaleX(
+            () => new Size(200, 100), new Size(100, 100), uniformProvider: () => false);
+        Assert.Equal(0.5, sx, 6);
+
+        // uniformProvider: true（Uniform = 最小スケールに揃える）→ X スケールは 1.0
+        var sxUniform = CoordinatePort.ImageLayoutScaleX(
+            () => new Size(200, 100), new Size(100, 100), uniformProvider: () => true);
+        Assert.Equal(1.0, sxUniform, 6);
+    }
+
     // ====================================================================
     // ForwardRect / InverseRect（矩形変換）
     // ====================================================================

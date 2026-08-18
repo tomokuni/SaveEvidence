@@ -118,6 +118,19 @@ public class ImageProcessorTests
     }
 
     [Fact]
+    public void DetectAndCropWindow_全面単色は元画像のコピーを返す()
+    {
+        // 全面単色 → 検出矩形 = 画像全体 → 元画像のコピーが返る（bounds == fullRect 分岐）
+        var src = CreateSolid(100, 100, 0, 0, 255);
+
+        var result = ImageProcessor.DetectAndCropWindow(src);
+
+        Assert.NotNull(result);
+        Assert.Equal(100, result!.Width);
+        Assert.Equal(100, result.Height);
+    }
+
+    [Fact]
     public void IsColorSimilar_差分30未満は類似とみなす()
     {
         // 内部ロジック（Crop / DetectAndCropWindow 経由で検証）。近い色（差分 < 30）は背景とみなされる

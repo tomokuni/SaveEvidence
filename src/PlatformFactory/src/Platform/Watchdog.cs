@@ -113,7 +113,7 @@ public sealed class Watchdog(ILogger? logger, IWindowService windowService)
         // UI ハング検知: プラットフォーム実装でオーバーレイを退避する（キャッシュ済みハンドルのみ使用）
         if (_windowHandle is null) return;
 
-        PlatformLog.LogWatchdogEvacuate(_log);
+        _log.LogWatchdogEvacuate();
 
         try
         {

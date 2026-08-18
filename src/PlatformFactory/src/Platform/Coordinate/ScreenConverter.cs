@@ -78,6 +78,11 @@ public static class ScreenConverter
     public static ICoordinatePort CreateVisualDipPort(Visual source)
         => new CoordinatePort(
             p => ScreenToLocalDip(source, new PixelPoint((int)p.X, (int)p.Y)),
-            p => new Point(LocalDipToScreen(source, p).X, LocalDipToScreen(source, p).Y),
+            p =>
+            {
+                // 同一スコープの同値計算は一度だけ実行して共有する（TopLevel 解決コストを繰り返さない）
+                var screen = LocalDipToScreen(source, p);
+                return new Point(screen.X, screen.Y);
+            },
             () => null);
 }

@@ -263,7 +263,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | --- | --- |
 | `WindowCaptureMode` enum | `RedrawDirect`（再描画結果を直接取得）/ `ScreenCopy`（画面上の表示をコピー） |
 | `ElementFinderResults` record struct | 検出要素の結果（`Bounds`（画面物理 Pixel）/ `IsDetected` / `Title` / `Handle` / `ClassName`） |
-| `BitmapFactory.CreateEmpty()` | 0x0 の空 Bitmap 生成（キャンセル時の戻り値用。生成失敗時 null） |
+| `BitmapFactory.CreateEmpty()` | キャンセル時の空結果（常に null。0x0 の空 Bitmap を表す） |
 | `BitmapExtensions.CopyRegionWithPadding` | 範囲外許容で領域コピー（クリップ + オフセット、範囲外は透明のまま。座標はピクセル単位） |
 | `BitmapExtensions.ExtractRegion` | 矩形切り出し（範囲外は透明パディング。座標はピクセル単位。w/h ≤ 0 は `ArgumentOutOfRangeException`） |
 
@@ -292,7 +292,8 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 
 ## 7. ログ
 
-本プロジェクトのログ定義は `PlatformLog.cs`（internal・LoggerMessage ソース生成）と `WinCaptureService.Log.cs`（private）に集約し、`ILogger` 経由で出力する。
+本プロジェクトのログ定義は `PlatformLog.cs`（internal・LoggerMessage ソース生成）と `WinCaptureService.Log.cs`（private）に集約し、`ILogger` の拡張メソッドとして定義する。
+各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogCursorVisibilityChanged(show)`）。
 各サービスのコンストラクタ / ファクトリメソッド（`PlatformFactory.CreateXxx(ILogger? logger = null)`）でロガーを注入する。null の場合は出力しない。
 出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
 

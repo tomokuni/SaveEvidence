@@ -58,8 +58,9 @@ public static class ImageProcessor
     {
         var bounds = DetectWindowBounds(source);
 
+        // DetectWindowBounds は常に 0 以上の矩形を返す（検出失敗時は画像全体）。全体の場合はコピーを返す。
         var fullRect = new PixelRect(0, 0, source.Width, source.Height);
-        if (bounds == default(PixelRect) || bounds == fullRect)
+        if (bounds == fullRect)
         {
             // 元画像のコピーを返す
             var stride = source.Width * 4;
@@ -176,11 +177,10 @@ public static class ImageProcessor
         var step = Math.Max(1, (endX - startX + 1) / 20);
         for (var x = startX; x <= endX; x += step)
         {
-            var off = y * stride + x * 4;
-            var span = pixels.Span;
-            var pr = span[off + 2];
-            var pg = span[off + 1];
-            var pb = span[off];
+            var argb = GetPixelArgb(pixels, stride, x, y);
+            var pr = (byte)(argb >> 16);
+            var pg = (byte)(argb >> 8);
+            var pb = (byte)argb;
             if (!IsColorSimilar(pr, pg, pb, bgR, bgG, bgB)) return false;
         }
         return true;
@@ -194,11 +194,10 @@ public static class ImageProcessor
         var step = Math.Max(1, (bottom - top + 1) / 20);
         for (var y = top; y <= bottom; y += step)
         {
-            var off = y * stride + x * 4;
-            var span = pixels.Span;
-            var pr = span[off + 2];
-            var pg = span[off + 1];
-            var pb = span[off];
+            var argb = GetPixelArgb(pixels, stride, x, y);
+            var pr = (byte)(argb >> 16);
+            var pg = (byte)(argb >> 8);
+            var pb = (byte)argb;
             if (!IsColorSimilar(pr, pg, pb, bgR, bgG, bgB)) return false;
         }
         return true;

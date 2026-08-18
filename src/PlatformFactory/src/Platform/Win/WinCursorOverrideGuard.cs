@@ -17,6 +17,9 @@ namespace Estable.AvaloniaUI.Platform.Win;
 /// </remarks>
 internal sealed class WinCursorOverrideGuard : ICursorOverrideGuard
 {
+    /// <summary>lParam 下位ワード（ヒットテスト結果）を取得するための 16bit マスク。</summary>
+    private const int LowWordMask = 0xFFFF;
+
     /// <summary>サブクラス化中のウィンドウハンドル。未アタッチ時は <see cref="IntPtr.Zero"/>。</summary>
     private IntPtr _hwnd;
 
@@ -78,7 +81,7 @@ internal sealed class WinCursorOverrideGuard : ICursorOverrideGuard
         if (msg == WinNative.WM_SETCURSOR)
         {
             // lParam 下位ワード = ヒットテスト結果。クライアント領域内のときのみ抑止判定を行う。
-            int hitTest = (int)(lParam.ToInt64() & 0xFFFF);
+            int hitTest = (int)(lParam.ToInt64() & LowWordMask);
             if (hitTest == WinNative.HTCLIENT && Guard?.Invoke() == true)
                 return new IntPtr(1); // 処理済み（TRUE）: OS によるカーソル上書きを抑止
         }

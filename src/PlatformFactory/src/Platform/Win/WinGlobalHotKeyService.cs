@@ -25,6 +25,7 @@ public sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T 
     /// <inheritdoc/>
     public void RegisterAll(IReadOnlyList<(T Action, HotKeySetting Setting)> registrations)
     {
+        // 全解除は一度だけ行う（RegisterCore 内では解除しない。空辞書の無駄なスキャンを回避）
         UnregisterAll();
         foreach (var (action, setting) in registrations)
         {
@@ -35,15 +36,14 @@ public sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T 
     /// <inheritdoc/>
     public void Unregister(T action)
     {
-        var keysToRemove = _registeredHotKeys
-            .Where(kvp => EqualityComparer<T>.Default.Equals(kvp.Value, action))
-            .Select(kvp => kvp.Key)
-            .ToList();
-
-        foreach (var id in keysToRemove)
+        // 辞書の走査は直接ループで行う（LINQ 2 段 + ToList の中間コレクションを回避）
+        foreach (var kvp in _registeredHotKeys)
         {
-            WinNative.UnregisterHotKey(_hWnd, id);
-            _registeredHotKeys.Remove(id);
+            if (EqualityComparer<T>.Default.Equals(kvp.Value, action))
+            {
+                WinNative.UnregisterHotKey(_hWnd, kvp.Key);
+                _registeredHotKeys.Remove(kvp.Key);
+            }
         }
     }
 
@@ -51,7 +51,9 @@ public sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T 
     public void UnregisterAll()
     {
         foreach (var id in _registeredHotKeys.Keys)
+        {
             WinNative.UnregisterHotKey(_hWnd, id);
+        }
         _registeredHotKeys.Clear();
     }
 
@@ -74,9 +76,9 @@ public sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T 
     }
 
     /// <summary>1件のホットキーを登録する。</summary>
+    /// <remarks><see cref="RegisterAll"/> が事前に全解除しているため、個別解除は行わない。</remarks>
     private void RegisterCore(T action, HotKeySetting setting)
     {
-        Unregister(action);
         var id = ++_currentId;
         var modifiers = (int)setting.Modifiers;
         var key = WinNative.KeyToWin32VirtualKey(setting.Key);

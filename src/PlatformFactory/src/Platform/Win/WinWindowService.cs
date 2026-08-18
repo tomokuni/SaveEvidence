@@ -37,7 +37,7 @@ internal sealed class WinWindowService : IWindowService
         var nativeHwnd = handle.Handle;
         if (nativeHwnd == IntPtr.Zero) return;
 
-        PlatformLog.LogWindowHiddenFromTaskSwitcher(_log, nativeHwnd.ToString("X"));
+        _log.LogWindowHiddenFromTaskSwitcher(nativeHwnd.ToString("X"));
         var exStyle = WinNative.GetWindowLongPtr(nativeHwnd, WinNative.GWL_EXSTYLE).ToInt64();
         WinNative.SetWindowLongPtr(nativeHwnd, WinNative.GWL_EXSTYLE,
             new IntPtr(exStyle | WinNative.WS_EX_TOOLWINDOW));
@@ -60,7 +60,7 @@ internal sealed class WinWindowService : IWindowService
 
         var affinity = exclude ? WinNative.WDA_EXCLUDEFROMCAPTURE : WinNative.WDA_NONE;
         var success = WinNative.SetWindowDisplayAffinity(nativeHwnd, affinity);
-        PlatformLog.LogCaptureExclusionChanged(_log, nativeHwnd.ToString("X"), exclude, success);
+        _log.LogCaptureExclusionChanged(nativeHwnd.ToString("X"), exclude, success);
         if (success && exclude)
         {
             // 除外設定が DWM に反映されるまで 1 フレーム待つ（設定直後のキャプチャを防ぐ）
@@ -85,7 +85,7 @@ internal sealed class WinWindowService : IWindowService
         var nativeHwnd = handle.Handle;
         if (nativeHwnd == IntPtr.Zero) return;
 
-        PlatformLog.LogWindowEvacuated(_log, nativeHwnd.ToString("X"));
+        _log.LogWindowEvacuated(nativeHwnd.ToString("X"));
 
         // 1. Topmost を解除
         WinNative.SetWindowPos(nativeHwnd, WinNative.HWND_NOTOPMOST, 0, 0, 0, 0,

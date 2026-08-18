@@ -18,6 +18,9 @@ namespace Estable.AvaloniaUI.Platform.Win;
 /// </remarks>
 internal static partial class WinNative
 {
+    /// <summary><see cref="RECT"/> 構造体のマーシャリングサイズ（バイト）。</summary>
+    internal static readonly int RectSize = Marshal.SizeOf<RECT>();
+
     // ============================================================
     // 構造体
     // ============================================================
@@ -413,6 +416,43 @@ internal static partial class WinNative
             GetSystemMetrics(SM_YVIRTUALSCREEN),
             GetSystemMetrics(SM_CXVIRTUALSCREEN),
             GetSystemMetrics(SM_CYVIRTUALSCREEN));
+
+    /// <summary>ウィンドウの可視矩形領域を取得する（最大化はワークエリア・通常は DWM 影除外）。</summary>
+    /// <param name="hWnd">対象ウィンドウハンドル。</param>
+    /// <param name="rect">取得した可視矩形。</param>
+    /// <returns>取得できた場合は true。</returns>
+    /// <remarks>
+    /// 最大化ウィンドウには影がなく、<c>DWMWA_EXTENDED_FRAME_BOUNDS</c> は左右に 8px の内部マージンを返す<br/>
+    /// （Windows 10 の既知の挙動）ため、<c>GetWindowRect</c>（ワークエリア = タスクバーを除く最大化領域）を使用する。<br/>
+    /// 通常ウィンドウは <c>DWMWA_EXTENDED_FRAME_BOUNDS</c> で影を除外した可視領域を取得し、<br/>
+    /// 失敗時は <c>GetWindowRect</c> にフォールバックする。<br/>
+    /// <see cref="WinElementFinder"/> / <see cref="WinCaptureService"/> で共用する（単一所有）。
+    /// </remarks>
+    internal static bool TryGetVisibleRect(IntPtr hWnd, out RECT rect)
+    {
+        rect = default;
+        if (hWnd == IntPtr.Zero) return false;
+
+        // 最大化ウィンドウ: 影がないため GetWindowRect（ワークエリア）を使用する
+        // （DWMWA_EXTENDED_FRAME_BOUNDS は最大化時に 8px の内部マージンを返す既知の挙動の回避）
+        if (IsZoomed(hWnd))
+        {
+            return GetWindowRect(hWnd, out rect);
+        }
+
+        // 通常ウィンドウ: DWM 影除外（DWMWA_EXTENDED_FRAME_BOUNDS）で可視領域を取得する
+        RECT visibleRect = default;
+        var hr = DwmGetWindowAttribute(hWnd, DWMWA_EXTENDED_FRAME_BOUNDS,
+            ref visibleRect, RectSize);
+        if (hr >= 0 && visibleRect.Left < visibleRect.Right && visibleRect.Top < visibleRect.Bottom)
+        {
+            rect = visibleRect;
+            return true;
+        }
+
+        // フォールバック: GetWindowRect
+        return GetWindowRect(hWnd, out rect);
+    }
 
     // ============================================================
     // 定数（ホットキー）

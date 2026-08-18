@@ -22,7 +22,6 @@
   - [8. 配線（内部で完結する状態同期）](#8-配線内部で完結する状態同期)
   - [9. ライフサイクルと所有権](#9-ライフサイクルと所有権)
   - [10. 制約事項](#10-制約事項)
-  - [11. 最適化施策](#11-最適化施策)
 
 ---
 
@@ -231,7 +230,7 @@ parentPanel.Children.Add(overlay);
 
 - **ドメイン座標**: ホストが定義する論理座標（Crop: 元画像ピクセル / AreaSelect: 仮想スクリーンピクセル）。
 - **DIP 座標**: コントロールローカル DIP。`SetCoordinateTransform` で注入した `ICoordinatePort` が変換します。
-- **動的評価**: 変換関数は描画・表示時に毎回評価されるため、ズーム・スクロール・ウィンドウサイズ変更に追従します（イベント時の DIP キャッシュ不使用）。
+- **追従性**: ズーム・スクロール・ウィンドウサイズ変更などのレイアウト変化に、座標変換が常に追従します。
 - **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します（FadeMaskRenderer.ToDipRect が終点に +1）。
 
 ## 7. モード
@@ -275,13 +274,3 @@ graph TD
 - `SetLoupePosition` はコントロールが Visual Tree に配置されてから呼び出してください（配置前は無視されます）。
 - `ScreenSelect` / `WindowSelect` モードでは DragRect / Loupe が無効になるため、`RequestConfirm` / `RequestCancel` は使用できません（クリック確定フローはホストが担います）。
 - 全面暗転（`ShowFullOverlay`）は `Crop` / `AreaSelect` でのみ有効です。
-
-## 11. 最適化施策
-
-| 施策 | 内容 |
-| --- | --- |
-| 配線の一元化 | DragRect / FadeMask / Loupe の配線を本コントロールに集約（Facade / Composite・DRY） |
-| イベント駆動・ポーリング排除 | 選択状態の同期は内包コントロールの公開イベントのみで行い、ホストは状態をポーリングしない |
-| 座標変換の動的評価 | 変換ポートを描画時に毎回評価し、ズーム・スクロール・ウィンドウサイズ変更への追従をイベント連鎖なしで実現 |
-| 状態の単一ソース | 選択状態は FadeMaskRenderer（HasSelection / LogicalSelectionRect）に集約し、DragRect の選択変更（SelectionChanged）から同期（ハイライトは Renderer が真のソース） |
-| 設定の一括適用 | `AppearanceSettings` で全外観を 1 回の設定で反映（部分更新・同一値スキップにより無駄な再適用を防止） |

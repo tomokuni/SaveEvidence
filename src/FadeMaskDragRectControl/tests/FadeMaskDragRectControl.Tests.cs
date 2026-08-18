@@ -246,6 +246,38 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
+    public void AppearanceSettings_同一色の再設定でブラシが共有される()
+    {
+        var control = new FadeMaskDragRectControl();
+        var color = Color.FromArgb(204, 255, 0, 0);
+
+        // 同じ色を 2 回設定 → ブラシキャッシュのヒットパス（TryGetValue が true）を実行する
+        control.AppearanceSettings = new FadeMaskDragRectSettings { CrossColor = color };
+        var first = control.Loupe.CrossColor;
+        control.AppearanceSettings = new FadeMaskDragRectSettings { CrossColor = color };
+        var second = control.Loupe.CrossColor;
+
+        Assert.Same(first, second);
+    }
+
+    [AvaloniaFact]
+    public void AppearanceSettings_ブラシキャッシュ容量超過時も例外なく適用される()
+    {
+        var control = new FadeMaskDragRectControl();
+
+        // キャッシュ容量（32）を超える 33 色を順次設定し、容量超過時のキャッシュクリア経路を実行する
+        for (int i = 0; i <= 32; i++)
+        {
+            control.AppearanceSettings = new FadeMaskDragRectSettings
+            {
+                CrossColor = Color.FromArgb(255, (byte)i, (byte)(255 - i), (byte)(i * 3)),
+            };
+        }
+
+        Assert.NotNull(control.Loupe.CrossColor);
+    }
+
+    [AvaloniaFact]
     public void AppearanceSettings_部分更新でnull以外のみ反映される()
     {
         var control = new FadeMaskDragRectControl();
@@ -671,9 +703,10 @@ public class FadeMaskDragRectControlTests
         eventDelegate?.DynamicInvoke(control.DragRect,
             new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
 
-        // ルーペ表示位置が再計算される（NotifyViewportChanged → Loupe.RefreshPosition 経由で RenderTransform が更新）
+        // ルーペ表示位置が再計算される（NotifyViewportChanged → Loupe.RefreshPosition 経由で RenderTransform が更新される。
+        // TranslateTransform は同一インスタンスの値更新のため Same で検証）
         Assert.NotNull(control.Loupe.RenderTransform);
-        Assert.NotSame(before, control.Loupe.RenderTransform);
+        Assert.Same(before, control.Loupe.RenderTransform);
         window.Close();
     }
 
@@ -927,6 +960,9 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(1, control.Renderer.ScreenIndex);
         Assert.Equal(1.5, control.Renderer.DisplayScaleScaling);
         Assert.Equal("Sample Window", control.Renderer.WindowTitle);
+        // コントロール経由の getter も検証する（レンダラーへの委譲）
+        Assert.Equal(1.5, control.DisplayScaleScaling);
+        Assert.Equal("Sample Window", control.WindowTitle);
     }
 
     [AvaloniaFact]
