@@ -361,7 +361,7 @@ CaptureSize = ceil(BitmapSize / ZoomLevel)
 
 #### 5.1.16 IsVisible
 
-Avalonia標準の `Visual.IsVisible` を使用します。
+Avalonia標準の `Visual.IsVisible` を使用します。初期値は `false`（コンストラクタで設定。表示指示は `IsVisible = true` で行う）。
 
 - `true`: ルーペ画像を生成して内部 `Image` に表示
 - `false`: 未実行の再描画を無効化し、現在のBitmapを解放
@@ -542,7 +542,8 @@ public ILogger Log { get; set; } = NullLogger.Instance;
 
 ### 7.2 ログレベルポリシー
 
-ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`Log` プロパティの `ILogger` 経由で出力する。
+ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
+呼び出し側では logger 引数を省略し、`Log` プロパティ経由で出力する（例: `Log.LogUpdateError(ex)`）。
 トレースログは LogLevel.Trace に限定せず、「重要度 × 発生頻度」でレベルを使い分ける。
 
 | LogLevel | 対象 | 本番での意図 |
@@ -570,14 +571,13 @@ public ILogger Log { get; set; } = NullLogger.Instance;
 | `Trace` | `LogMessage.LogRequestRender` | 再描画要求（表示状態 / キュー済み） |
 | `Trace` | `LogMessage.LogRenderCore` | RenderCore 実行（世代番号） |
 | `Trace` | `LogMessage.LogGenerateAsyncDone` | 非同期生成の完了・破棄（設定有無 / 世代） |
-| `Trace` | `LogMessage.LogUpdatePosition` | 表示位置（RenderTransform）更新 |
 
 ### 7.3 Bitmap以外のIImage
 
 `Source` に `Bitmap` 以外の `IImage` が設定された場合:
 
 1. `NotSupportedException` を生成
-2. `LogMessage.LogUpdateError(Log, exception)` で記録
+2. `Log.LogUpdateError(exception)` で記録
 3. `RenderAsync()` を直接呼び出した場合は例外を呼び出し元へ返す
 4. 自動再描画の場合は例外を観測済みとして処理し、UIスレッドを未処理例外で終了させない
 

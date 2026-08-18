@@ -109,6 +109,10 @@ public class LoupeControlTests
         // 描画は内部 Image 要素（PART_Image）が null でも完了する（LoupeBitmap は生成される）
         Assert.NotNull(control.LoupeBitmap);
         Assert.Null(control.PART_Image);
+
+        // PART_Image が null の状態で解放する（ReleaseBitmap の null 分岐をカバー）
+        control.Clear();
+        Assert.Null(control.LoupeBitmap);
     }
 
     [AvaloniaFact]
@@ -559,10 +563,10 @@ public class LoupeControlTests
 
         control.PositionOffset = 20;
 
-        // オフセット 20 → カーソル右下 +20 に表示（RenderTransform が更新される）
+        // オフセット 20 → カーソル右下 +20 に表示（RenderTransform は同一インスタンスで値が更新される）
         Assert.Equal(20, control.PositionOffset);
         Assert.NotNull(control.RenderTransform);
-        Assert.NotSame(before, control.RenderTransform);
+        Assert.Same(before, control.RenderTransform);
         window.Close();
     }
 
@@ -659,7 +663,7 @@ public class LoupeControlTests
         control.RefreshPosition();
 
         Assert.NotNull(control.RenderTransform);
-        Assert.NotSame(before, control.RenderTransform);
+        Assert.Same(before, control.RenderTransform);
         window.Close();
     }
 
@@ -683,6 +687,25 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
+    public async Task 抽出中にSourceが破棄されると市松模様のみで描画される()
+    {
+        var control = CreateControl();
+        var bitmap = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = bitmap;
+        control.CenterPoint = new Point(100, 100);
+
+        // RenderAsync は生存検証（PixelSize）まで同期実行される。生存検証後に破棄することで、
+        // Task.Run 内の抽出が ObjectDisposedException → region null となり、市松模様のみで描画される。
+        var task = control.RenderAsync();
+        bitmap.Dispose();
+
+        await task;
+
+        // 例外なく完了し、市松模様のみの Bitmap が生成される
+        Assert.NotNull(control.LoupeBitmap);
+    }
+
+    [AvaloniaFact]
     public void Sourceを再設定すると変更通知される()
     {
         var control = CreateControl();
@@ -696,6 +719,30 @@ public class LoupeControlTests
         control.ZoomLevel = 8;
 
         Assert.NotNull(control.Source);
+    }
+
+    [AvaloniaFact]
+    public async Task 実ロガー設定時に全ログメソッドが実行される()
+    {
+        var control = CreateControl();
+        control.Log = new TestHelper.ListLogger();
+
+        // 初回設定（OldValue = null）と再設定（NewValue あり）の両経路で LogSettingChanged を実行する
+        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.CenterPoint = new Point(100, 100);
+        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+
+        // null 設定（NewValue = null）で LogSettingChanged の null 分岐を実行する
+        control.Source = null;
+        control.CenterPoint = null;
+
+        // RequestRender がポストした RenderCore（LogRenderCore）を実行する
+        Dispatcher.UIThread.RunJobs();
+
+        // RenderAsync で LogGenerateAsyncDone を実行する
+        await control.RenderAsync();
+        Dispatcher.UIThread.RunJobs();
+        control.Clear();
     }
 
     [AvaloniaFact]
@@ -729,6 +776,23 @@ public class LoupeControlTests
         // IBrush のうち SolidColorBrush 以外（GradientBrush）を設定
         control.CoordLabelBackgroundColor = new LinearGradientBrush();
         control.CenterPoint = new Point(10, 20);
+
+        Assert.NotNull(control.CoordLabelBorder);
+        Assert.True(control.CoordLabelBorder!.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public void 座標ラベル背景色のブラシは容量超過時も例外なく共有される()
+    {
+        var control = new LoupeControl();
+        control.ShowCoordLabel = true;
+
+        // ブラシキャッシュ容量（32）を超える 33 色を順次設定し、容量超過時のキャッシュクリア経路を実行する
+        for (int i = 0; i <= 32; i++)
+        {
+            control.CoordLabelBackgroundColor = new SolidColorBrush(Color.FromArgb(255, (byte)i, (byte)(255 - i), (byte)(i * 3)));
+            control.CenterPoint = new Point(i + 1, 20);
+        }
 
         Assert.NotNull(control.CoordLabelBorder);
         Assert.True(control.CoordLabelBorder!.IsVisible);

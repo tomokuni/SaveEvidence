@@ -36,8 +36,8 @@ namespace Estable.AvaloniaUI.Loupe;
 /// <br/>
 /// <b>色指定</b>: 色は <see cref="IBrush"/> で指定する（文字列解析は行わない）。<br/>
 /// 不透明度は色のアルファに統合する（例: 十字線の赤 40% = <c>#66FF0000</c> の <see cref="SolidColorBrush"/>）。<br/>
-/// 数値プロパティ（<see cref="RequestedSize"/> / <see cref="ZoomLevel"/> /<br/>
-/// <see cref="CheckerSize"/> / <see cref="FrameWidth"/>）は範囲外の値を安全域へ補正（coerce）する。<br/>
+/// 数値プロパティ（<see cref="RequestedSize"/> / <see cref="ZoomLevel"/> / <see cref="RenderScaling"/> /<br/>
+/// <see cref="CheckerSize"/> / <see cref="FrameWidth"/> / <see cref="CoordLabelFontSize"/>）は範囲外の値を安全域へ補正（coerce）する。<br/>
 /// <br/>
 /// **公開 API 一覧**:<br/>
 /// - 入力: <see cref="Source"/> / <see cref="CenterPoint"/><br/>
@@ -49,6 +49,70 @@ namespace Estable.AvaloniaUI.Loupe;
 /// </remarks>
 public sealed partial class LoupeControl : UserControl
 {
+    /// <summary>ブラシキャッシュ（色 → ブラシ。容量制限付き）。</summary>
+    private static readonly Dictionary<Color, SolidColorBrush> s_brushCache = [];
+
+    /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
+    private const int BrushCacheCapacity = 32;
+
+    // ====================================================================
+    // 数値プロパティの安全域・既定値（coerce とプロパティ登録で共用）
+    // ====================================================================
+
+    /// <summary><see cref="RequestedSize"/> の最小値（DIP）。</summary>
+    private const int RequestedSizeMin = 1;
+
+    /// <summary><see cref="RequestedSize"/> の最大値（DIP）。</summary>
+    private const int RequestedSizeMax = 4096;
+
+    /// <summary><see cref="RequestedSize"/> の既定値（DIP）。</summary>
+    private const int RequestedSizeDefault = 160;
+
+    /// <summary><see cref="ZoomLevel"/> の最小値。</summary>
+    private const int ZoomLevelMin = 1;
+
+    /// <summary><see cref="ZoomLevel"/> の最大値。</summary>
+    private const int ZoomLevelMax = 64;
+
+    /// <summary><see cref="ZoomLevel"/> の既定値。</summary>
+    private const int ZoomLevelDefault = 4;
+
+    /// <summary><see cref="RenderScaling"/> の最小値。</summary>
+    private const double RenderScalingMin = 0.1;
+
+    /// <summary><see cref="RenderScaling"/> の最大値。</summary>
+    private const double RenderScalingMax = 8.0;
+
+    /// <summary><see cref="RenderScaling"/> の既定値（補正不能時のフォールバックも兼ねる）。</summary>
+    private const double RenderScalingDefault = 1.0;
+
+    /// <summary><see cref="CheckerSize"/> の最小値（ピクセル）。</summary>
+    private const int CheckerSizeMin = 1;
+
+    /// <summary><see cref="CheckerSize"/> の最大値（ピクセル）。</summary>
+    private const int CheckerSizeMax = 128;
+
+    /// <summary><see cref="CheckerSize"/> の既定値（ピクセル）。</summary>
+    private const int CheckerSizeDefault = 6;
+
+    /// <summary><see cref="FrameWidth"/> の最小値（ピクセル）。</summary>
+    private const int FrameWidthMin = 1;
+
+    /// <summary><see cref="FrameWidth"/> の最大値（ピクセル）。</summary>
+    private const int FrameWidthMax = 64;
+
+    /// <summary><see cref="FrameWidth"/> の既定値（ピクセル）。</summary>
+    private const int FrameWidthDefault = 2;
+
+    /// <summary><see cref="CoordLabelFontSize"/> の最小値（DIP）。</summary>
+    private const double CoordLabelFontSizeMin = 6;
+
+    /// <summary><see cref="CoordLabelFontSize"/> の最大値（DIP）。</summary>
+    private const double CoordLabelFontSizeMax = 48;
+
+    /// <summary><see cref="CoordLabelFontSize"/> の既定値（補正不能時のフォールバックも兼ねる）。</summary>
+    private const double CoordLabelFontSizeDefault = 12.0;
+
     /// <summary><see cref="LoupeControl"/> クラスの新しいインスタンスを初期化します。</summary>
     /// <remarks>
     /// <see cref="InitializeComponent()"/> を呼び出して AXAML で定義された子要素を生成します。<br/>
@@ -56,6 +120,8 @@ public sealed partial class LoupeControl : UserControl
     public LoupeControl()
     {
         InitializeComponent();
+        // 初期状態は非表示（表示指示は IsVisible=true で行う。XAML 属性ではなくコンストラクタで設定する）
+        IsVisible = false;
         UpdateCoordLabel();
     }
 
@@ -66,18 +132,21 @@ public sealed partial class LoupeControl : UserControl
     /// <summary>論理座標（ドメイン）↔ 親パネル DIP の座標変換ポート。</summary>
     private ICoordinatePort _coordinatePort = CoordinatePort.Identity;
 
-    /// <summary>ルーペ中心（<see cref="CenterPoint"/>）からの右下オフセット（DIP）。</summary>
-    private double _positionOffset;
+    /// <summary>表示位置（RenderTransform）のインスタンス（座標更新時は値を書き換えて再利用する）。</summary>
+    private readonly TranslateTransform _positionTransform = new();
 
     /// <summary>ルーペ中心（<see cref="CenterPoint"/>）からの右下オフセット（DIP）を取得または設定する。</summary>
     /// <value>カーソル位置（ルーペ中心）からの右下方向へのオフセット量（DIP）。</value>
-    /// <remarks>ホスト（上位 AP）が設定する。設定後の位置反映は <see cref="UpdatePosition"/> で行う。</remarks>
+    /// <remarks>
+    /// ホスト（上位 AP）が設定する。設定後の位置反映は <see cref="UpdatePosition"/> で行う。<br/>
+    /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。
+    /// </remarks>
     public double PositionOffset
     {
-        get => _positionOffset;
+        get => field;
         set
         {
-            _positionOffset = value;
+            field = value;
             UpdatePosition();
         }
     }
@@ -117,10 +186,11 @@ public sealed partial class LoupeControl : UserControl
         if (Parent is not Panel parent) return;
 
         var parentSize = parent.Bounds.Size;
+        var hasParentSize = parentSize.Width > 0 && parentSize.Height > 0;
 
         // 表示サイズ: 基本サイズ（RequestedSize）を親パネルサイズにクランプ（クランプはコントロールが内包）
         double size = RequestedSize;
-        if (parentSize.Width > 0 && parentSize.Height > 0)
+        if (hasParentSize)
             size = Math.Min(size, Math.Min(parentSize.Width, parentSize.Height));
         _displaySize = (int)size;
         Width = size;
@@ -128,14 +198,17 @@ public sealed partial class LoupeControl : UserControl
 
         // 表示位置: 中心 → 親パネルDIP → カーソル右下 + オフセット → クランプ
         var dip = port.Inverse(center);
-        double mx = dip.X + _positionOffset;
-        double my = dip.Y + _positionOffset;
-        if (parentSize.Width > 0 && parentSize.Height > 0)
+        double mx = dip.X + PositionOffset;
+        double my = dip.Y + PositionOffset;
+        if (hasParentSize)
         {
             mx = Math.Clamp(mx, 0, Math.Max(0, parentSize.Width - size));
             my = Math.Clamp(my, 0, Math.Max(0, parentSize.Height - size));
         }
-        RenderTransform = new TranslateTransform(mx, my);
+        // 同一インスタンスの値を更新して再利用する（毎回の生成を回避。StyledProperty 変更で再適用される）
+        _positionTransform.X = mx;
+        _positionTransform.Y = my;
+        RenderTransform = _positionTransform;
     }
 
     /// <summary>レイアウト（Arrange）時に表示位置・サイズを再計算する（ウィンドウサイズ変更等に追従）。</summary>
@@ -155,13 +228,13 @@ public sealed partial class LoupeControl : UserControl
     {
         SourceProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            LogMessage.LogSettingChanged(o.Log, nameof(Source), e.OldValue?.ToString() ?? "null", e.NewValue?.ToString() ?? "null");
+            o.Log.LogSettingChanged(nameof(Source), e.OldValue?.ToString() ?? "null", e.NewValue?.ToString() ?? "null");
             o.RequestRender();
         });
         // CenterPoint 変更時は再描画に加えて表示位置（RenderTransform）も更新する（座標変換ポート + 親パネルサイズから算出）
         CenterPointProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            LogMessage.LogSettingChanged(o.Log, nameof(CenterPoint), e.OldValue?.ToString() ?? "null", e.NewValue?.ToString() ?? "null");
+            o.Log.LogSettingChanged(nameof(CenterPoint), e.OldValue?.ToString() ?? "null", e.NewValue?.ToString() ?? "null");
             o.RequestRender();
             o.UpdatePosition();
             o.UpdateCoordLabel();
@@ -169,36 +242,54 @@ public sealed partial class LoupeControl : UserControl
         RequestedSizeProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
             // OldValue / NewValue は StyledProperty&lt;int&gt; により常に非 null（boxed int）
-            LogMessage.LogSettingChanged(o.Log, nameof(RequestedSize), e.OldValue!.ToString()!, e.NewValue!.ToString()!);
+            o.Log.LogSettingChanged(nameof(RequestedSize), e.OldValue!.ToString()!, e.NewValue!.ToString()!);
             o.RequestRender();
             o.UpdatePosition();
         });
         RenderScalingProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
             // OldValue / NewValue は StyledProperty&lt;double&gt; により常に非 null（boxed double）
-            LogMessage.LogSettingChanged(o.Log, nameof(RenderScaling), e.OldValue!.ToString()!, e.NewValue!.ToString()!);
+            o.Log.LogSettingChanged(nameof(RenderScaling), e.OldValue!.ToString()!, e.NewValue!.ToString()!);
             o.RequestRender();
         });
         ZoomLevelProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
             // OldValue / NewValue は StyledProperty&lt;int&gt; により常に非 null（boxed int）
-            LogMessage.LogSettingChanged(o.Log, nameof(ZoomLevel), e.OldValue!.ToString()!, e.NewValue!.ToString()!);
+            o.Log.LogSettingChanged(nameof(ZoomLevel), e.OldValue!.ToString()!, e.NewValue!.ToString()!);
             o.RequestRender();
         });
-        CrossColorProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        CheckerSizeProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        CheckerColorAProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        CheckerColorBProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        FrameColorProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        FrameWidthProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        SelectionRectVisibleProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        SelectionRectColorAProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        SelectionRectColorBProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        SelectionRectProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
-        ShowCoordLabelProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.UpdateCoordLabel());
-        CoordLabelColorProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.UpdateCoordLabel());
-        CoordLabelBackgroundColorProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.UpdateCoordLabel());
-        CoordLabelFontSizeProperty.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.UpdateCoordLabel());
+        // 再描画のみが必要な外観プロパティは一括登録する（同一ハンドラの定義重複を排除）
+        AvaloniaProperty[] renderOnlyProperties =
+        [
+            CrossColorProperty,
+            CheckerSizeProperty,
+            CheckerColorAProperty,
+            CheckerColorBProperty,
+            FrameColorProperty,
+            FrameWidthProperty,
+            SelectionRectVisibleProperty,
+            SelectionRectColorAProperty,
+            SelectionRectColorBProperty,
+            SelectionRectProperty,
+        ];
+        foreach (var property in renderOnlyProperties)
+        {
+            property.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.RequestRender());
+        }
+
+        // 座標ラベルのみを更新するプロパティも一括登録する
+        AvaloniaProperty[] coordLabelProperties =
+        [
+            ShowCoordLabelProperty,
+            CoordLabelColorProperty,
+            CoordLabelBackgroundColorProperty,
+            CoordLabelFontSizeProperty,
+        ];
+        foreach (var property in coordLabelProperties)
+        {
+            property.Changed.AddClassHandler<LoupeControl>(static (o, _) => o.UpdateCoordLabel());
+        }
+
         IsVisibleProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) => o.OnIsVisibleChanged(e));
     }
 
@@ -216,15 +307,15 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary><see cref="RequestedSize"/> 依存関係プロパティ（1〜4096 に補正）。</summary>
     public static readonly StyledProperty<int> RequestedSizeProperty =
-        AvaloniaProperty.Register<LoupeControl, int>(nameof(RequestedSize), defaultValue: 160, coerce: CoerceRequestedSize);
+        AvaloniaProperty.Register<LoupeControl, int>(nameof(RequestedSize), defaultValue: RequestedSizeDefault, coerce: CoerceRequestedSize);
 
     /// <summary>表示DIPを物理ピクセルへ変換するスケーリング係数。</summary>
     public static readonly StyledProperty<double> RenderScalingProperty =
-        AvaloniaProperty.Register<LoupeControl, double>(nameof(RenderScaling), defaultValue: 1.0, coerce: CoerceRenderScaling);
+        AvaloniaProperty.Register<LoupeControl, double>(nameof(RenderScaling), defaultValue: RenderScalingDefault, coerce: CoerceRenderScaling);
 
     /// <summary><see cref="ZoomLevel"/> 依存関係プロパティ（1〜64 に補正）。</summary>
     public static readonly StyledProperty<int> ZoomLevelProperty =
-        AvaloniaProperty.Register<LoupeControl, int>(nameof(ZoomLevel), defaultValue: 4, coerce: CoerceZoomLevel);
+        AvaloniaProperty.Register<LoupeControl, int>(nameof(ZoomLevel), defaultValue: ZoomLevelDefault, coerce: CoerceZoomLevel);
 
     /// <summary>十字線の色の既定ブラシ（赤 40% = アルファ 102）。</summary>
     private static readonly IBrush DefaultCrossColor = new SolidColorBrush(Color.FromArgb(102, 255, 0, 0));
@@ -235,7 +326,7 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary><see cref="CheckerSize"/> 依存関係プロパティ（1〜128 に補正）。</summary>
     public static readonly StyledProperty<int> CheckerSizeProperty =
-        AvaloniaProperty.Register<LoupeControl, int>(nameof(CheckerSize), defaultValue: 6, coerce: CoerceCheckerSize);
+        AvaloniaProperty.Register<LoupeControl, int>(nameof(CheckerSize), defaultValue: CheckerSizeDefault, coerce: CoerceCheckerSize);
 
     /// <summary>市松模様の色Aの既定ブラシ（Gray 30% = #4C808080。設定画面の市松模様 A と一致）。全インスタンスで共有する不変ブラシ。</summary>
     /// <remarks>
@@ -267,7 +358,7 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary><see cref="FrameWidth"/> 依存関係プロパティ（1〜64 に補正）。</summary>
     public static readonly StyledProperty<int> FrameWidthProperty =
-        AvaloniaProperty.Register<LoupeControl, int>(nameof(FrameWidth), defaultValue: 2, coerce: CoerceFrameWidth);
+        AvaloniaProperty.Register<LoupeControl, int>(nameof(FrameWidth), defaultValue: FrameWidthDefault, coerce: CoerceFrameWidth);
 
     /// <summary>選択矩形破線の色A（明色）の既定ブラシ（白 100% = <c>#FFFFFFFF</c>）。</summary>
     /// <summary>選択矩形破線の色B（暗色）の既定ブラシ（黒 100% = <c>#FF000000</c>）。</summary>
@@ -314,25 +405,25 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary><see cref="CoordLabelFontSize"/> 依存関係プロパティ（座標ラベルのフォントサイズ 6〜48 に補正）。</summary>
     public static readonly StyledProperty<double> CoordLabelFontSizeProperty =
-        AvaloniaProperty.Register<LoupeControl, double>(nameof(CoordLabelFontSize), defaultValue: 12.0, coerce: CoerceCoordLabelFontSize);
+        AvaloniaProperty.Register<LoupeControl, double>(nameof(CoordLabelFontSize), defaultValue: CoordLabelFontSizeDefault, coerce: CoerceCoordLabelFontSize);
 
     /// <summary><see cref="RequestedSize"/> を安全域へ補正する（1〜4096）。</summary>
-    private static int CoerceRequestedSize(AvaloniaObject o, int v) => Math.Clamp(v, 1, 4096);
+    private static int CoerceRequestedSize(AvaloniaObject o, int v) => Math.Clamp(v, RequestedSizeMin, RequestedSizeMax);
 
     /// <summary><see cref="ZoomLevel"/> を安全域へ補正する。</summary>
-    private static int CoerceZoomLevel(AvaloniaObject o, int v) => Math.Clamp(v, 1, 64);
+    private static int CoerceZoomLevel(AvaloniaObject o, int v) => Math.Clamp(v, ZoomLevelMin, ZoomLevelMax);
 
     /// <summary>描画スケーリング係数を安全域へ補正する。</summary>
-    private static double CoerceRenderScaling(AvaloniaObject o, double v) => double.IsFinite(v) ? Math.Clamp(v, 0.1, 8.0) : 1.0;
+    private static double CoerceRenderScaling(AvaloniaObject o, double v) => double.IsFinite(v) ? Math.Clamp(v, RenderScalingMin, RenderScalingMax) : RenderScalingDefault;
 
     /// <summary><see cref="CheckerSize"/> を安全域へ補正する。</summary>
-    private static int CoerceCheckerSize(AvaloniaObject o, int v) => Math.Clamp(v, 1, 128);
+    private static int CoerceCheckerSize(AvaloniaObject o, int v) => Math.Clamp(v, CheckerSizeMin, CheckerSizeMax);
 
     /// <summary><see cref="FrameWidth"/> を安全域へ補正する。</summary>
-    private static int CoerceFrameWidth(AvaloniaObject o, int v) => Math.Clamp(v, 1, 64);
+    private static int CoerceFrameWidth(AvaloniaObject o, int v) => Math.Clamp(v, FrameWidthMin, FrameWidthMax);
 
     /// <summary><see cref="CoordLabelFontSize"/> を安全域へ補正する。</summary>
-    private static double CoerceCoordLabelFontSize(AvaloniaObject o, double v) => double.IsFinite(v) ? Math.Clamp(v, 6, 48) : 12.0;
+    private static double CoerceCoordLabelFontSize(AvaloniaObject o, double v) => double.IsFinite(v) ? Math.Clamp(v, CoordLabelFontSizeMin, CoordLabelFontSizeMax) : CoordLabelFontSizeDefault;
 
     // ====================================================================
     // 公開プロパティ（入力）
@@ -361,7 +452,7 @@ public sealed partial class LoupeControl : UserControl
     /// 基本サイズ（<see cref="RequestedSize"/>）から <see cref="UpdatePosition"/> が親パネルサイズでクランプし、<br/>
     /// 本フィールドへ反映する（表示サイズはコントロールが自己管理。ホストは関与しない）。
     /// </remarks>
-    private int _displaySize = 160;
+    private int _displaySize = RequestedSizeDefault;
 
     /// <summary>ルーペの基本サイズ（DIP・ユーザー設定値）を取得または設定する（1〜4096）。</summary>
     /// <remarks>
@@ -531,18 +622,40 @@ public sealed partial class LoupeControl : UserControl
     {
         if (PART_CoordLabel is null || PART_CoordText is null) return;
 
-        PART_CoordLabel.IsVisible = ShowCoordLabel && CenterPoint is not null;
+        // CenterPoint は一度だけ取得し、有無判定と座標参照で共有する（null-forgiving 演算子を使わない）
+        var centerPoint = CenterPoint;
+        PART_CoordLabel.IsVisible = ShowCoordLabel && centerPoint is not null;
         if (!PART_CoordLabel.IsVisible) return;
 
-        var c = CenterPoint!.Value;
+        var c = centerPoint!.Value;
         PART_CoordText.Text = $"({c.X:F0}, {c.Y:F0})";
         PART_CoordText.Foreground = CoordLabelColor;
         PART_CoordText.FontSize = CoordLabelFontSize;
-        // 背景色（不透明度は色のアルファに統合）を Border へ反映する
+        // 背景色（不透明度は色のアルファに統合）を Border へ反映する（SolidColorBrush は静的キャッシュで共有）
         var bg = CoordLabelBackgroundColor ?? Brushes.Black;
         PART_CoordLabel.Background = bg is SolidColorBrush scb
-            ? new SolidColorBrush(scb.Color)
+            ? GetSharedBrush(scb.Color)
             : bg;
+    }
+
+    /// <summary>色に対応するブラシを静的キャッシュから取得する（未登録なら生成して登録）。</summary>
+    /// <param name="color">ブラシの色。</param>
+    /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
+    /// <remarks>容量超過時は全クリアして無制限の増加を防ぐ。</remarks>
+    private static SolidColorBrush GetSharedBrush(Color color)
+    {
+        if (s_brushCache.TryGetValue(color, out var cached))
+        {
+            return cached;
+        }
+
+        var brush = new SolidColorBrush(color);
+        if (s_brushCache.Count >= BrushCacheCapacity)
+        {
+            s_brushCache.Clear();
+        }
+        s_brushCache[color] = brush;
+        return brush;
     }
 
     // ====================================================================
@@ -567,30 +680,40 @@ public sealed partial class LoupeControl : UserControl
     /// </remarks>
     public void ForceUpdate()
     {
-        _renderQueued = false;
-        if (!IsVisible)
+        if (TryBeginRender(out var generation))
         {
-            ReleaseBitmap();
-            return;
+            StartRender(generation);
         }
-
-        var generation = Interlocked.Increment(ref _renderGeneration);
-        StartRender(generation);
     }
 
     /// <summary>現在の状態から画像を非同期に生成します。</summary>
     /// <returns>生成完了を表すタスク。</returns>
     public Task RenderAsync()
     {
+        return TryBeginRender(out var generation)
+            ? GenerateAsync(generation)
+            : Task.CompletedTask;
+    }
+
+    /// <summary>再描画を開始できるか判定し、開始できる場合は新しい世代番号を採番する。</summary>
+    /// <param name="generation">採番した世代番号（開始できない場合は 0）。</param>
+    /// <returns>再描画を開始できる場合は true。</returns>
+    /// <remarks>
+    /// <see cref="ForceUpdate"/> と <see cref="RenderAsync"/> で共用する（未実行要求の破棄・非表示時の解放・世代採番の重複排除）。<br/>
+    /// 非表示時はビットマップを解放して false を返す（再描画は行わない）。
+    /// </remarks>
+    private bool TryBeginRender(out long generation)
+    {
         _renderQueued = false;
         if (!IsVisible)
         {
             ReleaseBitmap();
-            return Task.CompletedTask;
+            generation = 0;
+            return false;
         }
 
-        var generation = Interlocked.Increment(ref _renderGeneration);
-        return GenerateAsync(generation);
+        generation = Interlocked.Increment(ref _renderGeneration);
+        return true;
     }
 
     // ====================================================================
@@ -630,7 +753,7 @@ public sealed partial class LoupeControl : UserControl
     /// </remarks>
     private void RequestRender()
     {
-        LogMessage.LogRequestRender(Log, IsVisible, _renderQueued);
+        Log.LogRequestRender(IsVisible, _renderQueued);
         if (!IsVisible)
         {
             Interlocked.Increment(ref _renderGeneration);
@@ -657,7 +780,7 @@ public sealed partial class LoupeControl : UserControl
 
         _renderQueued = false;
         var generation = Interlocked.Increment(ref _renderGeneration);
-        LogMessage.LogRenderCore(Log, generation);
+        Log.LogRenderCore(generation);
         StartRender(generation);
     }
 
@@ -728,9 +851,10 @@ public sealed partial class LoupeControl : UserControl
             var checkerColorB = CheckerColorB;
             var frameColor = FrameColor;
             var frameWidth = FrameWidth;
-            var selectionRect = SelectionRectVisible ? SelectionRect : null;
-            var selectionRectColorA = SelectionRectVisible ? SelectionRectColorA : null;
-            var selectionRectColorB = SelectionRectVisible ? SelectionRectColorB : null;
+            var selectionVisible = SelectionRectVisible;
+            var selectionRect = selectionVisible ? SelectionRect : null;
+            var selectionRectColorA = selectionVisible ? SelectionRectColorA : null;
+            var selectionRectColorB = selectionVisible ? SelectionRectColorB : null;
             var scaling = RenderScaling;
             var pixelSize = Math.Max(1, (int)Math.Ceiling(size * scaling));
 
@@ -742,20 +866,21 @@ public sealed partial class LoupeControl : UserControl
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 var current = Volatile.Read(ref _renderGeneration);
-                if (!IsVisible || generation != current)
+                var visible = IsVisible;
+                if (!visible || generation != current)
                 {
                     bitmap.Dispose();
-                    LogMessage.LogGenerateAsyncDone(Log, false, true, IsVisible, generation, current);
+                    Log.LogGenerateAsyncDone(false, true, visible, generation, current);
                     return;
                 }
 
                 SetLoupeBitmap(bitmap, size);
-                LogMessage.LogGenerateAsyncDone(Log, true, false, IsVisible, generation, current);
+                Log.LogGenerateAsyncDone(true, false, visible, generation, current);
             });
         }
         catch (Exception ex)
         {
-            LogMessage.LogUpdateError(Log, ex);
+            Log.LogUpdateError(ex);
             throw;
         }
     }
@@ -777,9 +902,15 @@ public sealed partial class LoupeControl : UserControl
         var checkerPixelSize = Math.Max(1, (int)Math.Ceiling(checkerSize * scaling));
         var framePixelWidth = Math.Max(1, (int)Math.Ceiling(frameWidth * scaling));
 
+        // 画像なし・破棄済み・抽出失敗のいずれでも市松模様のみで描画する（生成経路の一元化）
+        Task<Bitmap> DrawCheckerboardOnly() =>
+            Dispatcher.UIThread.InvokeAsync(() => LoupeRenderer.DrawLoupeCheckerboardOnly(
+                pixelSize, crossColor, checkerPixelSize,
+                checkerColorA, checkerColorB, frameColor, framePixelWidth)).GetTask();
+
         if (source is Bitmap bitmap && center is { } centerPoint)
         {
-            var captureSize = (int)Math.Ceiling((double)pixelSize / zoomLevel);
+            var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel);
 
             // 抽出前に UI スレッドで Bitmap の生存を検証する。
             // Source（元画像）は UI スレッドで破棄される可能性がある（Clear / モード切替 / 別 Bitmap への
@@ -791,9 +922,7 @@ public sealed partial class LoupeControl : UserControl
             catch (ObjectDisposedException)
             {
                 // 破棄済み Source: 市松模様のみで描画する（前回のビットマップは維持）
-                return await Dispatcher.UIThread.InvokeAsync(() => LoupeRenderer.DrawLoupeCheckerboardOnly(
-                    pixelSize, crossColor, checkerPixelSize,
-                    checkerColorA, checkerColorB, frameColor, framePixelWidth));
+                return await DrawCheckerboardOnly();
             }
 
             var region = await Task.Run(() =>
@@ -814,9 +943,7 @@ public sealed partial class LoupeControl : UserControl
             if (region is null)
             {
                 // 抽出中に Source が破棄された: 市松模様のみで描画する
-                return await Dispatcher.UIThread.InvokeAsync(() => LoupeRenderer.DrawLoupeCheckerboardOnly(
-                    pixelSize, crossColor, checkerPixelSize,
-                    checkerColorA, checkerColorB, frameColor, framePixelWidth));
+                return await DrawCheckerboardOnly();
             }
 
             // WriteableBitmap生成・Lock・RenderTargetBitmap生成・DrawingContext操作はUIスレッドに限定する。
@@ -831,9 +958,7 @@ public sealed partial class LoupeControl : UserControl
             });
         }
 
-        return await Dispatcher.UIThread.InvokeAsync(() => LoupeRenderer.DrawLoupeCheckerboardOnly(
-            pixelSize, crossColor, checkerPixelSize,
-            checkerColorA, checkerColorB, frameColor, framePixelWidth));
+        return await DrawCheckerboardOnly();
     }
 
     /// <summary>生成したルーペビットマップをコントロールへ反映する。</summary>

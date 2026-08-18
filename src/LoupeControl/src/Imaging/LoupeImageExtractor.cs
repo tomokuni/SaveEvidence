@@ -14,6 +14,14 @@ namespace Estable.AvaloniaUI.Loupe.Imaging;
 /// </remarks>
 internal static class LoupeImageExtractor
 {
+    /// <summary>ルーペの一辺（ピクセル）から切り出し領域の一辺（ドメインピクセル）を計算する。</summary>
+    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="zoomLevel">拡大率（1〜64）。</param>
+    /// <returns>切り出し領域の一辺（ドメインピクセル。切り上げ）。</returns>
+    /// <remarks>切り出し・十字線位置・選択矩形変換の各所で共用する（単一所有）。</remarks>
+    public static int ComputeCaptureSize(int pixelSize, int zoomLevel)
+        => (int)Math.Ceiling((double)pixelSize / zoomLevel);
+
     /// <summary>Bitmap の指定位置を中心とした領域のBGRAピクセルデータを抽出する。</summary>
     /// <param name="src">切り出し元の Bitmap。</param>
     /// <param name="centerX">中心のX座標（Bitmap ローカルピクセル）。</param>
@@ -71,13 +79,16 @@ internal static class LoupeImageExtractor
     {
         var dstStride = checked(size * 4);
         var srcRect = new PixelRect(centerX - size / 2, centerY - size / 2, size, size);
-        var interX = Math.Max(srcRect.X, 0);
-        var interY = Math.Max(srcRect.Y, 0);
+        // 同一スコープで複数回参照する矩形の座標はローカル変数へ一度だけ格納する
+        var srcX = srcRect.X;
+        var srcY = srcRect.Y;
+        var interX = Math.Max(srcX, 0);
+        var interY = Math.Max(srcY, 0);
         var interW = Math.Min(srcRect.Right, srcW) - interX;
         var interH = Math.Min(srcRect.Bottom, srcH) - interY;
         if (interW <= 0 || interH <= 0) return (null, 0);
 
-        var dstOffset = (interY - srcRect.Y) * dstStride + (interX - srcRect.X) * 4;
+        var dstOffset = (interY - srcY) * dstStride + (interX - srcX) * 4;
         return (new PixelRect(interX, interY, interW, interH), dstOffset);
     }
 

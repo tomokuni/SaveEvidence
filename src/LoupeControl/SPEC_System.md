@@ -204,8 +204,9 @@ sequenceDiagram
 
 | プロパティ | 範囲 |
 | --- | --- |
-| LoupeSize | 8〜4096 |
+| RequestedSize | 1〜4096 |
 | ZoomLevel | 1〜64 |
 | RenderScaling | 0.1〜8.0（非有限値は 1.0） |
 | CheckerSize | 1〜128 |
 | FrameWidth | 1〜64 |
+| CoordLabelFontSize | 6〜48（非有限値は 12.0） |

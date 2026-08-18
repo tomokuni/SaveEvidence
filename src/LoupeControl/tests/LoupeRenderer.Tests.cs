@@ -298,6 +298,20 @@ public class LoupeRendererTests
         LoupeDecorationRenderer.DrawSelectionRect(ctx, new Rect(-100, -100, 10, 10), new Point(0, 0), 4, 160, Brushes.White, Brushes.Black);
     }
 
+    [AvaloniaFact]
+    public void DrawDashedLine_逆方向の線も例外なく描画される()
+    {
+        using var ctx = CreateContext();
+
+        // from → to が負方向（to が from より小さい）の線。sign が負になる分岐を実行する
+        LoupeDecorationRenderer.DrawDashedLine(
+            ctx, new Point(50, 10), new Point(10, 10), 1, 1, 2,
+            new Pen(Brushes.White, 1), new Pen(Brushes.Black, 1));
+        LoupeDecorationRenderer.DrawDashedLine(
+            ctx, new Point(10, 50), new Point(10, 10), 1, 1, 2,
+            new Pen(Brushes.White, 1), new Pen(Brushes.Black, 1));
+    }
+
     /// <summary>テスト用の DrawingContext を生成する。</summary>
     private static DrawingContext CreateContext()
     {

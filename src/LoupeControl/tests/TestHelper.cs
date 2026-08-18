@@ -52,6 +52,28 @@ public static class TestHelper
         /// <inheritdoc />
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
+            // LoggerMessage 生成コードが state を IReadOnlyList として走査する経路を実行する（Count・インデクサ・列挙・範囲外）
+            if (state is IReadOnlyList<KeyValuePair<string, object?>> list)
+            {
+                _ = list.Count;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    _ = list[i];
+                }
+                foreach (var kv in list)
+                {
+                    _ = kv.Key;
+                }
+                try
+                {
+                    _ = list[list.Count];
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    // 範囲外アクセスの例外経路も生成コードの網羅対象として実行する
+                }
+            }
+
             Messages.Add(formatter(state, exception));
             if (logLevel == LogLevel.Error)
             {

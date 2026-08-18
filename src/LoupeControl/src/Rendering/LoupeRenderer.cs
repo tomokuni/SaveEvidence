@@ -15,6 +15,9 @@ namespace Estable.AvaloniaUI.Loupe.Rendering;
 /// </remarks>
 internal static class LoupeRenderer
 {
+    /// <summary>ビットマップ生成時の DPI（96 = 1 ピクセル = 1 DIP）。</summary>
+    private static readonly Vector s_dpi = new(96, 96);
+
     /// <summary>Bitmapと中心座標からルーペ画像を生成します。</summary>
     /// <param name="srcBitmap">拡大元の100%画像の Bitmap。</param>
     /// <param name="centerPoint">拡大中心（元画像ピクセル座標）。</param>
@@ -45,7 +48,7 @@ internal static class LoupeRenderer
                 checkerColorA, checkerColorB, frameColor, frameWidth);
         }
 
-        var captureSize = (int)Math.Ceiling((double)loupeSize / zoomLevel);
+        var captureSize = LoupeImageExtractor.ComputeCaptureSize(loupeSize, zoomLevel);
         var region = LoupeImageExtractor.ExtractRegionAt(
             srcBitmap, (int)center.X, (int)center.Y, captureSize);
         using var cropped = LoupeImageExtractor.CreateBitmap(region);
@@ -90,9 +93,8 @@ internal static class LoupeRenderer
         IBrush? selectionRectColorA = null,
         IBrush? selectionRectColorB = null)
     {
-        var dpi = new Vector(96, 96);
         var pixelSize = new PixelSize(loupeSize, loupeSize);
-        var rtb = new RenderTargetBitmap(pixelSize, dpi);
+        var rtb = new RenderTargetBitmap(pixelSize, s_dpi);
 
         using var ctx = rtb.CreateDrawingContext();
 
@@ -102,21 +104,21 @@ internal static class LoupeRenderer
         // 2. ソース画像を zoomLevel 倍に拡大して描画
         LoupeImageRenderer.Draw(ctx, srcBitmap, zoomLevel);
 
-        // 2.5. 選択矩形の枠線（ドメイン座標系 → ルーペ座標に変換して 2 色破線で描画）
+        // 3. 選択矩形の枠線（ドメイン座標系 → ルーペ座標に変換して 2 色破線で描画）
         if (selectionRect is { } selRect && centerPoint is { } cp &&
             selectionRectColorA is { } selColorA && selectionRectColorB is { } selColorB)
         {
-            var captureSize = (int)Math.Ceiling((double)loupeSize / zoomLevel);
+            var captureSize = LoupeImageExtractor.ComputeCaptureSize(loupeSize, zoomLevel);
             var topLeft = new Point(cp.X - captureSize / 2.0, cp.Y - captureSize / 2.0);
             LoupeDecorationRenderer.DrawSelectionRect(
                 ctx, selRect, topLeft, zoomLevel, loupeSize,
                 selColorA, selColorB);
         }
 
-        // 3. 十字線
+        // 4. 十字線
         LoupeDecorationRenderer.DrawCrosshair(ctx, loupeSize, zoomLevel, crossColor);
 
-        // 4. 外枠
+        // 5. 外枠
         LoupeDecorationRenderer.DrawFrame(ctx, loupeSize, frameColor, frameWidth);
 
         return rtb;
@@ -140,9 +142,8 @@ internal static class LoupeRenderer
         IBrush? frameColor,
         int frameWidth)
     {
-        var dpi = new Vector(96, 96);
         var pixelSize = new PixelSize(loupeSize, loupeSize);
-        var rtb = new RenderTargetBitmap(pixelSize, dpi);
+        var rtb = new RenderTargetBitmap(pixelSize, s_dpi);
 
         using var ctx = rtb.CreateDrawingContext();
 
