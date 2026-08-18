@@ -6,30 +6,19 @@ namespace Estable.AvaloniaUI.FadeMask;
 
 /// <summary>OverlayWindow の暗転オーバーレイ描画ロジックを提供する。</summary>
 /// <remarks>
-/// 穴あけマスク（暗転＋選択枠＋サイズラベル）、ウィンドウタイトル（WindowSelect）、
-/// スクリーンラベル（SelectScreen）、ルーペ（AreaSelect）の描画を担当する。<br/>
+/// 穴あけマスク（暗転＋選択枠＋サイズラベル）とサブライン（操作・情報ラベル）の描画を担当する。<br/>
 /// <see cref="FadeMaskControl"/> の <c>Render()</c>（ExternalRenderer）から呼び出されることを想定し、
 /// 描画に必要な全ての状態をプロパティとして外部から注入する。<br/>
+/// 拡大鏡は Visual Tree に配置した LoupeControl 自身が描画する（本レンダラーの責務外）。<br/>
 /// </remarks>
 public sealed class FadeMaskRenderer
 {
-    // ====================================================================
-    // 依存関係（OverlayWindow / FadeMaskControl から注入）
-    // ====================================================================
-
-    /// <summary>拡大鏡管理（AreaSelect モードの拡大鏡描画用）。拡大鏡は Visual Tree 上の
-    /// LoupeControl 自身が描画するため、ここではルーペ非表示判定にのみ使用する。</summary>
-    // 注: ルーペ描画は LoupeControl（Visual Tree 配置）自身が行うため、本レンダラーはルーペに依存しない。
-
     // ====================================================================
     // 描画状態（Render 前に設定）
     // ====================================================================
 
     /// <summary>DPI スケーリング係数。</summary>
     public double Scaling { get; set; } = 1.0;
-
-    /// <summary>サイズラベル表示用の DPI スケーリング係数のバッキングフィールド（マルチスクリーン補正）。</summary>
-    private double _displayScaleScaling;
 
     /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正）。</summary>
     /// <value>未設定（0以下）の場合は <see cref="Scaling"/> と同じ値が使用される。</value>
@@ -39,8 +28,8 @@ public sealed class FadeMaskRenderer
     /// </remarks>
     public double DisplayScaleScaling
     {
-        get => _displayScaleScaling > 0 ? _displayScaleScaling : Scaling;
-        set => _displayScaleScaling = value;
+        get => field > 0 ? field : Scaling;
+        set => field = value;
     }
 
     /// <summary>ラベルテキストの色。</summary>
@@ -114,7 +103,6 @@ public sealed class FadeMaskRenderer
 
     /// <summary>サブライン（2 行目以降）の文字色。1 行目（サイズラベル）と同じ既定値。</summary>
     /// <remarks>操作方法・スクリーン番号・ウィンドウタイトルなどのサブラインに適用される。</remarks>
-    /// <summary>サブライン（サイズラベルの下の 2 行目以降）の文字色。</summary>
     public Color SubLineColor { get; set; } = Color.FromRgb(0xDC, 0xDC, 0xDC);
 
     /// <summary>サブライン（2 行目以降）の背景の色（不透明度は色のアルファに統合。既定は黒 60%）。</summary>
@@ -170,46 +158,44 @@ public sealed class FadeMaskRenderer
     /// <param name="boundsSize">ウィンドウのクライアントサイズ（DIP）</param>
     /// <remarks>
     /// 以下の順で描画する:<br/>
-    /// 1. Fix モードの固定背景画像（全画面キャプチャの静止画）<br/>
-    /// 2. 暗転マスク ＋ 選択枠線 ＋ サイズラベル（<see cref="FadeMaskDrawer.DrawOverlay"/>）<br/>
-    /// 3. ウィンドウタイトルテキスト（WindowSelect のハイライト時）<br/>
-    /// 4. スクリーン番号ラベル（SelectScreen の選択時）<br/>
-    /// 5. 拡大鏡（AreaSelect の領域選択時、最前面）<br/>
+    /// 1. 暗転マスク ＋ サイズラベル ＋ サブライン（<see cref="FadeMaskDrawer.DrawOverlay"/>）<br/>
+    /// 2. 選択枠線（<see cref="GetBorderRects"/>。穴あけ矩形がある場合のみ）<br/>
+    /// 拡大鏡は Visual Tree に配置した LoupeControl 自身が描画する（本レンダラーの責務外）。<br/>
     /// </remarks>
     public void Draw(DrawingContext context, Size boundsSize)
     {
         var clientRect = new Rect(0, 0, boundsSize.Width, boundsSize.Height);
         var textColor = TextColor;
 
-        // ── 2. 穴あけ矩形の決定（論理矩形 + 座標変換ポートを描画時に評価。ポート未設定は等価変換） ──
+        // 穴あけ矩形の決定（論理矩形 + 座標変換ポートを描画時に評価。ポート未設定は等価変換）
         // 選択矩形は閉区間（+1）で DIP 変換する。ハイライト矩形（スクリーン/ウィンドウ境界）は
         // 既に全ピクセルを含む閉区間表現（PixelRect 由来）のため +1 しない（1px 大きく表示されるのを防ぐ）。
+        var port = CoordinateTransform ?? CoordinatePort.Identity;
         var selectionRect = LogicalSelectionRect is { } logical
-            ? ToDipRect(logical, CoordinateTransform ?? CoordinatePort.Identity)
+            ? ToDipRect(logical, port)
             : (Rect?)null;
         var highlightRect = LogicalHighlightRect is { } hl
-            ? ToDipRect(hl, CoordinateTransform ?? CoordinatePort.Identity, closedInterval: false)
+            ? ToDipRect(hl, port, closedInterval: false)
             : (Rect?)null;
-        var sizeLabelOverride = SizeLabelOverrideProvider?.Invoke();
         var holeRect = HasHighlight ? highlightRect
                     : HasSelection ? selectionRect
                     : (Rect?)null;
 
-        if (holeRect.HasValue)
+        if (holeRect.HasValue || ShowFullOverlay)
         {
-            var hr = holeRect.Value;
+            // サイズラベルのプロバイダはラベル表示時のみ評価する（非表示時・描画しないケースでの無駄な呼び出しを回避）
+            var sizeLabelOverride = ShowSizeLabel ? SizeLabelOverrideProvider?.Invoke() : null;
 
-            // サブライン（サイズラベルの下に表示する 2 行目以降）
-            // - ScreenSelect / WindowSelect: 2 行目 = スクリーン番号 / ウィンドウタイトル、3 行目 = 操作方法
-            // - AreaSelect: 2 行目 = 操作方法
-            // 情報ラベル（ウィンドウタイトル / スクリーン番号）は左上のラベル領域に集約する。
-            var subLines = BuildSubLines();
+            // サブライン（サイズラベルの下に表示する 2 行目以降）は穴あけ矩形がある場合のみ生成する
+            // - 2 行目 = 操作ラベル（モード別の確定・キャンセル方法）
+            // - 3 行目 = 情報ラベル（WindowSelect のウィンドウタイトル）
+            var subLines = holeRect.HasValue ? BuildSubLines() : null;
 
-            // 暗転マスク＋サイズラベル（Selection の責務）
+            // 暗転マスク＋サイズラベル（Selection の責務。穴あけ矩形が null の場合は全面暗転）
             FadeMaskDrawer.DrawOverlay(
                 context,
                 clientRect,
-                hr,
+                holeRect,
                 OverlayArgbColor,
                 textColor,
                 FontSize,
@@ -223,40 +209,22 @@ public sealed class FadeMaskRenderer
             // （ScreenSelect / WindowSelect）でも枠線を表示するため、ここで描画する。
             // AreaSelect では DragRectControl が枠線・ハンドルを描画するが、二重描画しても
             // 同色・同太さのため視覚的な問題はない（重なりは同一位置）。
-            // 不透明度は borderColor のアルファに統合済み（SolidColorBrush がアルファを反映する）
-            var borderColor = BorderColor;
-            var borderBrush = new SolidColorBrush(borderColor);
-            var t = Math.Max(0.5, BorderThickness);
-            // 矩形の四辺に枠線を描画する（半辺ずつ外側へ広げて矩形内に収める。矩形計算は純粋関数に委譲）
-            foreach (var rect in GetBorderRects(hr, t))
+            if (holeRect is { } hr)
             {
-                context.DrawRectangle(borderBrush, null, rect);
+                // 不透明度は BorderColor のアルファに統合済み（SolidColorBrush がアルファを反映する）
+                var borderBrush = FadeMaskDrawer.GetBrush(BorderColor);
+                // 矩形の四辺に枠線を描画する（半辺ずつ外側へ広げて矩形内に収める。矩形計算は純粋関数に委譲）
+                foreach (var rect in GetBorderRects(hr, BorderThickness))
+                {
+                    context.DrawRectangle(borderBrush, null, rect);
+                }
             }
-
-            // DragRectControl が選択枠・ハンドル・始点マーカーを描画する。
-
-            // 注記: 拡大鏡は穴あけ矩形ブロック内では描画しない。
-            // メソッド末尾で一括描画する（最前面・選択矩形の有無に関わらず AreaSelect では常時表示、仕様 5.3.1）。
-        }
-        else if (ShowFullOverlay)
-        {
-            // ── 選択なしで全面暗転（MainWindow 切出しモード用） ──
-            FadeMaskDrawer.DrawOverlay(
-                context,
-                clientRect,
-                null,    // 選択矩形なし → 全面暗転マスク
-                OverlayArgbColor,
-                textColor, FontSize,
-                ShowSizeLabel, sizeLabelOverride, DisplayScaleScaling,
-                textBgColor: TextBackgroundColor);
-
         }
 
         // 拡大鏡はVisual Treeへ配置したLoupeControl自身が描画する。
     }
 
     /// <summary>論理座標の矩形をポート経由で DIP 矩形へ変換する。</summary>
-    /// <param name="logical">論理座標（ドメイン）の矩形。</param>
     /// <param name="logical">論理座標（ドメイン）の矩形。</param>
     /// <param name="port">座標変換ポート。</param>
     /// <param name="closedInterval">閉区間（終点 +1）として扱うか。既定は true。</param>
@@ -310,18 +278,22 @@ public sealed class FadeMaskRenderer
     /// </remarks>
     internal IReadOnlyList<FadeMaskDrawer.SubLine> BuildSubLines()
     {
+        // 表示する行がない場合は空リストを返す（描画側は空リストをスキップする）
+        if (!ShowSubLines
+            && !(InfoLabelVisible && Mode == FadeMaskRenderMode.WindowSelect && !string.IsNullOrEmpty(WindowTitle)))
+        {
+            return Array.Empty<FadeMaskDrawer.SubLine>();
+        }
+
         var lines = new List<FadeMaskDrawer.SubLine>(2);
 
         // 2 行目: 操作ラベル（キー・マウス操作の確定 / キャンセル方法）
         if (ShowSubLines)
         {
-            string operationText = Mode switch
-            {
-                FadeMaskRenderMode.ScreenSelect => "Enter / クリック: 確定  Esc: キャンセル",
-                FadeMaskRenderMode.WindowSelect => "Enter / クリック: 確定  Esc: キャンセル",
-                FadeMaskRenderMode.AreaSelect => "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル",
-                _ => "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル", // Crop
-            };
+            // 確定操作の文字列は 2 系統（Enter 系 / ダブルクリック系）に集約する（モード別の重複排除）
+            string operationText = Mode is FadeMaskRenderMode.ScreenSelect or FadeMaskRenderMode.WindowSelect
+                ? "Enter / クリック: 確定  Esc: キャンセル"
+                : "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル";
             lines.Add(new FadeMaskDrawer.SubLine(
                 operationText, SubLineFontSize, SubLineColor,
                 SubLineBackgroundColor));

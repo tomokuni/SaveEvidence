@@ -91,7 +91,7 @@ internal sealed partial class OverlayWindow
     /// </remarks>
     private void CompleteSelectionCore(Bitmap? result, PixelRect captureRect)
     {
-        SnipCaptureLog.LogCaptureCompleted(_log, captureRect.ToString());
+        LogMessage.LogCaptureCompleted(_log, captureRect.ToString());
         Close();
         _onComplete(result, captureRect);
     }
@@ -168,7 +168,7 @@ internal sealed partial class OverlayWindow
     {
         if (_hasCompleted) return;
         _hasCompleted = true;
-        SnipCaptureLog.LogOverlayCancel(_log);
+        LogMessage.LogOverlayCancel(_log);
         _watchdog.Stop();
         _onComplete(null, null);
         Close();
@@ -213,7 +213,7 @@ internal sealed partial class OverlayWindow
         _virtualScreenBitmap?.Dispose();
         _virtualScreenBitmap = bitmap;
         _virtualScreenOrigin = origin;
-        SnipCaptureLog.LogVirtualScreen(_log, origin.X, origin.Y, bitmap?.PixelSize.Width ?? 0, bitmap?.PixelSize.Height ?? 0);
+        LogMessage.LogVirtualScreen(_log, origin.X, origin.Y, bitmap?.PixelSize.Width ?? 0, bitmap?.PixelSize.Height ?? 0);
         // 固定背景画像（VirtualScreenImage）にも表示する（AreaSelect の背景・ルーペソースの視覚化）
         VirtualScreenImage.Source = bitmap;
         // ルーペの Source を設定する。

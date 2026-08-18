@@ -51,7 +51,7 @@ internal sealed partial class OverlayWindow
         // DomainScale(_scaling) と往復一致するよう _scaling（オーバーレイの表示スケール）を維持する。
         // マルチモニタで異なるスケーリングのスクリーンを選択しても、選択矩形はドメイン（物理ピクセル）
         // のまま保持され、DIP 変換（÷ _scaling）と物理換算（× _scaling）で正しい物理サイズを表示する。
-        SnipCaptureLog.LogHighlight(_log, "ScreenSelect", detection.IsDetected,
+        LogMessage.LogHighlight(_log, "ScreenSelect", detection.IsDetected,
             detection.IsDetected ? ToWindowPixel(detection.Bounds).ToString() : "",
             detection.Title ?? "", "");
     }
@@ -125,7 +125,7 @@ internal sealed partial class OverlayWindow
         SelectionOverlay.WindowTitle = detection.Title ?? "";
         // サイズラベルの物理ピクセル換算は _scaling（オーバーレイの表示スケール）を維持する
         // （ScreenSelect と同一。マルチモニタでもドメイン（物理ピクセル）の往復が一致する）。
-        SnipCaptureLog.LogHighlight(_log, "WindowSelect", detection.IsDetected,
+        LogMessage.LogHighlight(_log, "WindowSelect", detection.IsDetected,
             detection.IsDetected ? ToWindowPixel(detection.Bounds).ToString() : "",
             detection.Title ?? "", detection.ClassName ?? "");
     }

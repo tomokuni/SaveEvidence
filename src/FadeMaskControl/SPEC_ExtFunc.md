@@ -28,9 +28,6 @@
   - [6. ログ](#6-ログ)
     - [6.1 LogLevel 設定ポリシー](#61-loglevel-設定ポリシー)
     - [6.2 ログ定義一覧](#62-ログ定義一覧)
-  - [7. 最適化施策](#7-最適化施策)
-
----
 
 ## 1. 文書概要
 
@@ -80,8 +77,6 @@ using Estable.AvaloniaUI.FadeMask;
         <fm:FadeMaskControl x:Name="Overlay"
                             LogicalSelectionRect="{Binding SelectionRect}"
                             OverlayColor="#96000000"
-                            BorderColor="Red"
-                            BorderThickness="2"
                             ShowSizeLabel="True"/>
     </Grid>
 </Window>
@@ -96,8 +91,6 @@ var overlay = new FadeMaskControl
 {
     LogicalSelectionRect = new Rect(50, 50, 200, 150),
     OverlayColor = Color.FromArgb(150, 0, 0, 0),
-    BorderColor = Colors.Red,
-    BorderThickness = 2.0,
     ShowSizeLabel = true,
 };
 panel.Children.Add(overlay);
@@ -131,8 +124,6 @@ overlay.InvalidateVisual(); // 再描画を要求
 | --- | --- | --- | --- |
 | `LogicalSelectionRect` | `Rect?` | `null` | 選択矩形（**ドメイン座標系**）。`SetCoordinateTransform` で設定した座標変換ポートで描画時に DIP へ変換される（ウィンドウサイズ変更・ズーム・スクロールに追従） |
 | `OverlayColor` | `Color` | `Color.FromArgb(0,0,0,0)` | 暗転オーバーレイの色 |
-| `BorderColor` | `Color` | `DarkGray（#FFA9A9A9）` | 選択枠線の色（不透明度は色のアルファに統合） |
-| `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（DIP 座標系） |
 | `TextColor` | `Color` | `White` | ラベルテキストの色 |
 | `TextBackgroundColor` | `Color` | `Color.FromArgb(153,0,0,0)` | ラベル背景の色（不透明度は色のアルファに統合。既定は黒 60%） |
 | `FontSize` | `double` | `14.0` | ラベルのフォントサイズ（DIP 座標系） |
@@ -168,10 +159,6 @@ overlay.InvalidateVisual(); // 再描画を要求
 | `Mode` | `FadeMaskRenderMode` | `WindowSelect` | 描画モード |
 | `InfoLabelVisible` | `bool` | `true` | 情報ラベル（3 行目）の表示有無 |
 | `ShowSizeLabel` | `bool` | `true` | サイズラベル（1 行目）の表示有無 |
-| `ShowSubLines` | `bool` | `true` | 操作ラベル（2 行目）の表示有無 |
-| `SubLineFontSize` | `double` | `14.0` | 操作ラベル（2 行目）のフォントサイズ |
-| `SubLineColor` | `Color` | `#DCDCDC` | 操作ラベル（2 行目）の文字色 |
-| `SubLineBackgroundColor` | `Color` | `#99000000`（黒 60%） | 操作ラベル（2 行目）の背景色（不透明度はアルファに統合） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルのテキストを描画時に評価するプロバイダ（null 時は矩形から自動生成） |
 | `ShowFullOverlay` | `bool` | `false` | 選択なしでも全面暗転（Crop 用） |
 
@@ -243,7 +230,8 @@ overlay.InvalidateVisual(); // 再描画を要求
 
 ## 6. ログ
 
-本コントロールのログ定義は `Logging/FadeMaskLog.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。
+本コントロールのログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
+呼び出し側では logger 引数を省略し、プロパティ（`FadeMaskControl.Log`）経由で出力する（例: `Log.LogSelectionRectChanged(old, value)`）。
 描画専用コントロールのため、マウス・キーイベントのログはない（状態の変更のみ記録）。
 出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
 
@@ -271,15 +259,7 @@ overlay.InvalidateVisual(); // 再描画を要求
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Debug` | `FadeMaskLog.LogSelectionRectChanged` | 論理選択矩形（ドメイン座標）の変更（変更前後） |
-| `Debug` | `FadeMaskLog.LogExternalRenderer` | 外部レンダラーの設定 / 解除 |
-| `Trace` | `FadeMaskLog.LogCoordinateTransform` | 座標変換ポートの設定 |
+| `Debug` | `LogMessage.LogSelectionRectChanged` | 論理選択矩形（ドメイン座標）の変更（変更前後） |
+| `Debug` | `LogMessage.LogExternalRenderer` | 外部レンダラーの設定 / 解除 |
+| `Trace` | `LogMessage.LogCoordinateTransform` | 座標変換ポートの設定 |
 
-## 7. 最適化施策
-
-| 施策 | 内容 |
-| --- | --- |
-| AffectsRender 登録 | 描画に影響する StyledProperty のみ再描画をトリガー（不要な再描画を抑制） |
-| 共通描画ロジックの一元化 | 暗転マスク・サイズラベルは `FadeMaskDrawer` に集約（`FadeMaskControl` と `FadeMaskRenderer` で共用・DRY） |
-| ブラシの即時生成 | 描画毎に `SolidColorBrush` を生成（状態がプロパティで完結するためキャッシュ不要・シンプル優先） |
-| モード判定の単一化 | 描画要素の切り替えは `FadeMaskRenderMode` の列挙で判定（bool フラグ分岐なし・可読性向上） |

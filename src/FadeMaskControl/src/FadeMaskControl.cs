@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Estable.AvaloniaUI.FadeMask;
 
-/// <summary>領域選択時の暗転オーバーレイ（穴あけマスク）＋選択枠＋サイズラベル＋ドラッグハンドル＋始点マーカーを描画するコントロール。</summary>
+/// <summary>領域選択時の暗転オーバーレイ（穴あけマスク）＋サイズラベルを描画するコントロール。</summary>
 /// <remarks>
 /// <see cref="Render(DrawingContext)"/> のオーバーライドで直接描画する軽量なコントロール。<br/>
 /// AXAML に配置して依存関係プロパティ経由で制御し、外部レンダラー（<see cref="FadeMaskRenderer"/>）を
@@ -17,7 +17,6 @@ namespace Estable.AvaloniaUI.FadeMask;
 /// **公開 API 一覧**:<br/>
 /// - 選択矩形: <see cref="LogicalSelectionRect"/>（ドメイン座標 + <see cref="SetCoordinateTransform"/> で DIP 変換）<br/>
 /// - 暗転オーバーレイ: <see cref="OverlayColor"/><br/>
-/// - 選択枠線: <see cref="BorderColor"/> / <see cref="BorderThickness"/><br/>
 /// - サイズラベル: <see cref="TextColor"/> / <see cref="TextBackgroundColor"/> / <see cref="FontSize"/> / <see cref="ShowSizeLabel"/><br/>
 /// - 外部レンダラー委譲: <see cref="ExternalRenderer"/><br/>
 /// 色の不透明度は色のアルファに統合する（例: 黒 50% = <c>#80000000</c>）。
@@ -37,15 +36,6 @@ public class FadeMaskControl : Control
     /// <remarks>既定は黒 50%（<c>#80000000</c>。設定画面の暗転オーバーレイのデフォルトと一致）。</remarks>
     public static readonly StyledProperty<Color> OverlayColorProperty =
         AvaloniaProperty.Register<FadeMaskControl, Color>(nameof(OverlayColor), Color.FromArgb(128, 0, 0, 0));
-
-    /// <summary><see cref="BorderColor"/> 依存関係プロパティ（不透明度は色のアルファに統合）。</summary>
-    /// <remarks>既定は DarkGray（<c>#FFA9A9A9</c>。設定画面の選択枠の色と一致）。</remarks>
-    public static readonly StyledProperty<Color> BorderColorProperty =
-        AvaloniaProperty.Register<FadeMaskControl, Color>(nameof(BorderColor), Color.FromArgb(0xFF, 0xA9, 0xA9, 0xA9));
-
-    /// <summary><see cref="BorderThickness"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<double> BorderThicknessProperty =
-        AvaloniaProperty.Register<FadeMaskControl, double>(nameof(BorderThickness), 2.0);
 
     /// <summary><see cref="TextColor"/> 依存関係プロパティ。</summary>
     public static readonly StyledProperty<Color> TextColorProperty =
@@ -72,16 +62,6 @@ public class FadeMaskControl : Control
     public Color OverlayColor { get => GetValue(OverlayColorProperty); set => SetValue(OverlayColorProperty, value); }
 
     // ====================================================================
-    // 選択枠線
-    // ====================================================================
-
-    /// <summary>選択枠線の色（不透明度は色のアルファに統合）を取得または設定する。</summary>
-    public Color BorderColor { get => GetValue(BorderColorProperty); set => SetValue(BorderColorProperty, value); }
-
-    /// <summary>選択枠線の太さを取得または設定する。</summary>
-    public double BorderThickness { get => GetValue(BorderThicknessProperty); set => SetValue(BorderThicknessProperty, value); }
-
-    // ====================================================================
     // サイズラベル
     // ====================================================================
 
@@ -102,21 +82,20 @@ public class FadeMaskControl : Control
     // ====================================================================
 
     /// <summary>内部ロガー（コンストラクタ注入用。null の場合は出力なし）。</summary>
-    private ILogger _log = NullLogger.Instance;
-
-    /// <summary>内部ロガー（横断的関心事）。</summary>
+    /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</value>
+    /// <remarks>
+    /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
+    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。
+    /// </remarks>
     public ILogger Log
     {
-        get => _log;
-        set => _log = value ?? NullLogger.Instance;
+        get => field ?? NullLogger.Instance;
+        set => field = value ?? NullLogger.Instance;
     }
 
     // ====================================================================
     // 外部レンダラー委譲（FadeMaskRenderer を AXAML 配置コントロールで使用するため）
     // ====================================================================
-
-    /// <summary>外部レンダラー（バッキングフィールド）。</summary>
-    private FadeMaskRenderer? _externalRenderer;
 
     /// <summary>外部レンダラーが設定されている場合、<see cref="Render(DrawingContext)"/> での描画をこのレンダラーに完全委譲する（依存関係プロパティの描画は行われない）。</summary>
     /// <remarks>
@@ -129,16 +108,16 @@ public class FadeMaskControl : Control
     /// </remarks>
     public FadeMaskRenderer? ExternalRenderer
     {
-        get => _externalRenderer;
+        get => field;
         set
         {
-            _externalRenderer = value;
-            FadeMaskLog.LogExternalRenderer(_log, value is not null);
-            if (_externalRenderer is { } renderer)
+            field = value;
+            Log.LogExternalRenderer(value is not null);
+            if (field is { } renderer)
             {
                 // 既に設定済みの座標変換ポート・論理矩形をレンダラーへ同期する（CropSession の設定順序に依存させない）
                 renderer.CoordinateTransform = _coordinatePort;
-                renderer.LogicalSelectionRect = _logicalSelectionRect;
+                renderer.LogicalSelectionRect = LogicalSelectionRect;
             }
             InvalidateVisual();
         }
@@ -151,9 +130,6 @@ public class FadeMaskControl : Control
     /// <summary>論理座標（ドメイン）↔ コントロールローカル DIP の座標変換ポート。</summary>
     private ICoordinatePort _coordinatePort = CoordinatePort.Identity;
 
-    /// <summary>論理座標（ドメイン）の選択矩形。null の場合は選択なし。</summary>
-    private Rect? _logicalSelectionRect;
-
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Inverse = ドメイン→DIP）。null の場合は等価変換。</param>
     /// <remarks>
@@ -165,7 +141,7 @@ public class FadeMaskControl : Control
     public void SetCoordinateTransform(ICoordinatePort? port)
     {
         _coordinatePort = port ?? CoordinatePort.Identity;
-        FadeMaskLog.LogCoordinateTransform(_log);
+        Log.LogCoordinateTransform();
         if (ExternalRenderer is { } renderer) renderer.CoordinateTransform = _coordinatePort;
         InvalidateVisual();
     }
@@ -178,12 +154,12 @@ public class FadeMaskControl : Control
     /// </remarks>
     public Rect? LogicalSelectionRect
     {
-        get => _logicalSelectionRect;
+        get => field;
         set
         {
-            var old = _logicalSelectionRect;
-            _logicalSelectionRect = value;
-            FadeMaskLog.LogSelectionRectChanged(_log, old?.ToString() ?? "null", value?.ToString() ?? "null");
+            var old = field;
+            field = value;
+            Log.LogSelectionRectChanged(old?.ToString() ?? "null", value?.ToString() ?? "null");
             if (ExternalRenderer is { } renderer) renderer.LogicalSelectionRect = value;
             InvalidateVisual();
         }
@@ -199,8 +175,6 @@ public class FadeMaskControl : Control
     {
         AffectsRender<FadeMaskControl>(
             OverlayColorProperty,
-            BorderColorProperty,
-            BorderThicknessProperty,
             TextColorProperty,
             TextBackgroundColorProperty,
             FontSizeProperty,
@@ -215,17 +189,23 @@ public class FadeMaskControl : Control
     /// </remarks>
     public override void Render(DrawingContext context)
     {
+        var bounds = Bounds;
+
         // 外部レンダラーが設定されている場合は委譲する
-        if (ExternalRenderer is not null)
+        var externalRenderer = ExternalRenderer;
+        if (externalRenderer is not null)
         {
-            ExternalRenderer.Draw(context, Bounds.Size);
+            externalRenderer.Draw(context, bounds.Size);
             return;
         }
 
-        var clientRect = new Rect(0, 0, Bounds.Width, Bounds.Height);
+        var clientRect = new Rect(0, 0, bounds.Width, bounds.Height);
 
         // 選択矩形（DIP）: 論理矩形 + 座標変換ポートを描画時に評価（レイアウト変化に追従）
-        Rect? selRect = LogicalSelectionRect is { } logical ? ToDipRect(logical, _coordinatePort) : null;
+        // 変換は FadeMaskRenderer.ToDipRect に委譲する（閉区間 +1 変換の重複排除・単一所有）
+        Rect? selRect = LogicalSelectionRect is { } logical
+            ? FadeMaskRenderer.ToDipRect(logical, _coordinatePort)
+            : null;
         var hasSelection = selRect is { Width: > 0, Height: > 0 };
 
         // 暗転マスク＋サイズラベル（Selection の責務。共通ロジックは FadeMaskDrawer に委譲）
@@ -238,21 +218,5 @@ public class FadeMaskControl : Control
             FontSize,
             ShowSizeLabel && hasSelection,
             textBgColor: TextBackgroundColor);
-    }
-
-    /// <summary>論理座標の矩形をポート経由で DIP 矩形へ変換する。</summary>
-    /// <param name="logical">論理座標（ドメイン）の矩形。</param>
-    /// <param name="port">座標変換ポート。</param>
-    /// <returns>DIP 座標の矩形。</returns>
-    /// <remarks>
-    /// 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、<br/>
-    /// 終点（Right / Bottom）に +1 してから DIP 変換する（終点のピクセルも非暗転領域に含める）。<br/>
-    /// これにより暗転領域は始点・終点のいずれも含まない（キャプチャの閉区間 +1 と一致）。
-    /// </remarks>
-    private static Rect ToDipRect(Rect logical, ICoordinatePort port)
-    {
-        var tl = port.Inverse(logical.TopLeft);
-        var br = port.Inverse(new Point(logical.Right + 1, logical.Bottom + 1));
-        return new Rect(tl, br);
     }
 }

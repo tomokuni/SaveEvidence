@@ -8,7 +8,7 @@ namespace Estable.AvaloniaUI.SnipCaptureUI.Logging;
 /// マウス操作・キー操作・確定/キャンセルをトレースログで記録し、挙動解析に利用する。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。
 /// </remarks>
-internal static partial class SnipCaptureLog
+internal static partial class LogMessage
 {
     /// <summary>キャプチャセッション開始のログ。</summary>
     /// <remarks>

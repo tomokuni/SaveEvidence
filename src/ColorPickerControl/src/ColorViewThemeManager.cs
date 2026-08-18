@@ -17,11 +17,7 @@ namespace Estable.AvaloniaUI.ColorPicker;
 /// <br/>
 /// **適用パターン**: シングルトン相当の静的管理（適用済みフラグと**二重チェックロック**で二重適用を防止）。<br/>
 /// <br/>
-/// **最適化施策**:<br/>
-/// - 適用済みフラグをロック外で先判定し、適用済みならロック取得も行わず即座に終了する<br/>
-///   （従来は Flyout 表示のたびに <c>app.Styles</c> を走査していた）。<br/>
-/// - 並行した初回呼び出しはロック内の再確認（二重チェックロック）で安全に直列化する。<br/>
-/// - <see cref="ColorPickerFlyoutFactory"/> からのみ参照される（<see cref="ColorPickerControl"/> から分離）。
+/// <see cref="ColorPickerFlyoutFactory"/> からのみ参照される（<see cref="ColorPickerControl"/> から分離）。
 /// </remarks>
 internal static class ColorViewThemeManager
 {

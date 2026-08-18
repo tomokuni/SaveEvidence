@@ -61,12 +61,10 @@ public sealed partial class DragRectControl
             scrollViewer.ScrollChanged -= OnScrollViewerChanged;
             _attachedScrollViewer = null;
         }
-        // nudge 中はポインターを再表示する（カーソル移動なし）
         if (_state.NudgeActive)
         {
-            _state.NudgeActive = false;
-            _state.CrosshairVisible = false;
-            _state.Cursor.ShowCursor(true);
+            // nudge 中はポインターを再表示する（EndNudge に委譲して重複を排除）
+            EndNudge();
         }
         _state.Reset();
         InvalidateVisual();
@@ -135,15 +133,14 @@ public sealed partial class DragRectControl
         if (_state.HasSelection)
         {
             DragRectDrawer.DrawBorder(context, rect, BorderColor, BorderThickness);
-            var borderBrush = new SolidColorBrush(BorderColor);
-            DragRectDrawer.DrawHandles(context, rect, HandleSize, HandleColor, borderBrush);
+            DragRectDrawer.DrawHandles(context, rect, HandleSize, HandleColor, BorderColor);
         }
 
         // nudge 中はドラッグ中のハンドル位置に十字マーカーを表示する（仕様 4.4）
         if (_state.NudgeActive && _state.CrosshairVisible)
         {
             var markerDip = _coordinatePort.Inverse(GetMarkerPosition());
-            DragRectDrawer.DrawStartMarker(context, markerDip, MarkerColor, 2.0, MarkerLength / 2);
+            DragRectDrawer.DrawStartMarker(context, markerDip, MarkerColor, MarkerThickness, MarkerLength / 2);
         }
 
         // カーソルの右側にカーソルのドメイン座標ラベル（"(x, y)"）を表示する

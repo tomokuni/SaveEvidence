@@ -1,6 +1,7 @@
 using Estable.AvaloniaUI.DragRect.Selection;
 using Avalonia;
 using Avalonia.Media;
+using System.Collections.Concurrent;
 using System.Globalization;
 
 namespace Estable.AvaloniaUI.DragRect.Drawing;
@@ -11,41 +12,124 @@ namespace Estable.AvaloniaUI.DragRect.Drawing;
 /// ハンドル位置は <see cref="Selection.SelectionGeometry.GetHandlePosition"/>（DRY）から取得し、中心に描画する。<br/>
 /// <br/>
 /// 暗転マスク・サイズラベル等の選択オーバーレイ描画は Selection 側（FadeMaskDrawer）が担う。<br/>
+/// <br/>
+/// **適用パターン**: Flyweight（色・太さで決まるブラシ / ペンをキャッシュして再利用）。
 /// </remarks>
 internal static class DragRectDrawer
 {
+    /// <summary>ブラシキャッシュ（色 → ブラシ。Flyweight・容量制限付き）。</summary>
+    private static readonly ConcurrentDictionary<Color, SolidColorBrush> s_brushCache = new();
+
+    /// <summary>ペンキャッシュ（色・太さ → ペン。Flyweight・容量制限付き）。</summary>
+    private static readonly ConcurrentDictionary<(Color Color, double Thickness), Pen> s_penCache = new();
+
+    /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
+    /// <remarks>テスト（DragRectControl.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
+    internal const int BrushCacheCapacity = 128;
+
+    /// <summary>ペンキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
+    /// <remarks>テスト（DragRectControl.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
+    internal const int PenCacheCapacity = 128;
+
+    /// <summary>色に対応するブラシを取得する（キャッシュ優先・未登録なら生成して登録）。</summary>
+    /// <param name="color">ブラシの色。</param>
+    /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
+    /// <remarks>容量超過時はキャッシュを全クリアしてから登録する（<see cref="AddWithCapacityLimit{T}"/> に委譲）。</remarks>
+    private static SolidColorBrush GetBrush(Color color)
+    {
+        if (s_brushCache.TryGetValue(color, out var cached))
+        {
+            return cached;
+        }
+
+        var brush = new SolidColorBrush(color);
+        AddWithCapacityLimit(s_brushCache, BrushCacheCapacity, color, brush);
+        return brush;
+    }
+
+    /// <summary>色・太さに対応するペンを取得する（キャッシュ優先・未登録なら生成して登録）。</summary>
+    /// <param name="color">ペンの色。</param>
+    /// <param name="thickness">ペンの太さ。</param>
+    /// <returns>色・太さに対応する <see cref="Pen"/>。</returns>
+    /// <remarks>容量超過時はキャッシュを全クリアしてから登録する（<see cref="AddWithCapacityLimit{T}"/> に委譲）。</remarks>
+    private static Pen GetPen(Color color, double thickness)
+    {
+        var key = (color, thickness);
+        if (s_penCache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var pen = new Pen(GetBrush(color), thickness);
+        AddWithCapacityLimit(s_penCache, PenCacheCapacity, key, pen);
+        return pen;
+    }
+    /// <summary>描画対象のハンドル種別（8 方向。None / Move を除く）の静的配列。</summary>
+    /// <remarks>
+    /// <see cref="Enum.GetValues{T}()"/> は呼び出し毎に配列を生成するため、
+    /// 描画ホットパスでの毎回の列挙を排除する（<see cref="DrawHandles"/> で使用）。
+    /// </remarks>
+    private static readonly DragHandle[] s_handleTypes =
+        [.. Enum.GetValues<DragHandle>().Where(h => h != DragHandle.None && h != DragHandle.Move)];
+
+    /// <summary>ハンドル枠線のペン太さ（DIP）。</summary>
+    private const double HandlePenThickness = 1.5;
+
+    /// <summary>座標ラベルのパディング（DIP）。</summary>
+    private const double LabelPadding = 4.0;
+
+    /// <summary>座標ラベルのカーソルからのオフセット（DIP）。</summary>
+    private const double LabelOffset = 8.0;
+    /// <summary>容量制限付きキャッシュへ値を登録する（超過時は全クリアしてから登録）。</summary>
+    /// <typeparam name="TKey">キャッシュのキー型。</typeparam>
+    /// <typeparam name="TValue">キャッシュの値型。</typeparam>
+    /// <param name="cache">対象キャッシュ。</param>
+    /// <param name="capacity">キャッシュの最大容量。</param>
+    /// <param name="key">登録キー。</param>
+    /// <param name="value">登録値。</param>
+    /// <remarks>
+    /// 容量超過時は全クリアして無制限の増加を防ぐ（同一キーは直後に再キャッシュされる）。<br/>
+    /// ブラシ・ペンの 2 つのキャッシュで同一の登録ロジックを共有する（DRY・容量管理の単一所有）。
+    /// </remarks>
+    private static void AddWithCapacityLimit<TKey, TValue>(
+        ConcurrentDictionary<TKey, TValue> cache, int capacity, TKey key, TValue value)
+        where TKey : notnull
+    {
+        if (cache.Count >= capacity)
+        {
+            cache.Clear();
+        }
+        cache[key] = value;
+    }
+
     /// <summary>選択枠線を描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>
     /// <param name="rect">選択矩形。</param>
     /// <param name="borderColor">枠線の色（不透明度は色のアルファに統合）。</param>
     /// <param name="borderThickness">枠線の太さ。</param>
     public static void DrawBorder(DrawingContext context, Rect rect, Color borderColor, double borderThickness)
-    {
-        var borderBrush = new SolidColorBrush(borderColor);
-        var borderPen = new Pen(borderBrush, borderThickness);
-        context.DrawRectangle(borderPen, rect);
-    }
+        => context.DrawRectangle(GetPen(borderColor, borderThickness), rect);
 
     /// <summary>ドラッグハンドル（白色矩形＋枠線）を描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>
     /// <param name="rect">選択矩形。</param>
     /// <param name="handleSize">ハンドルの一辺サイズ。</param>
     /// <param name="handleColor">ハンドルの色。デフォルト（透明）は白。</param>
-    /// <param name="borderBrush">枠線ブラシ（ハンドル枠に使用）。</param>
+    /// <param name="borderColor">枠線の色（ハンドル枠に使用）。</param>
     /// <remarks>
     /// 8方向のハンドル（None / Move を除く）を列挙し、<see cref="Selection.SelectionGeometry.GetHandlePosition"/> から<br/>
-    /// 中心位置を取得して描画する。新ハンドル追加時は DragHandle の追加のみで描画が追従する（OCP）。<br/>
+    /// 中心位置を取得して描画する。新ハンドル追加時は DragHandle の追加のみで描画が追従する（OCP）。
     /// </remarks>
-    public static void DrawHandles(DrawingContext context, Rect rect, double handleSize, Color handleColor, IBrush borderBrush)
+    public static void DrawHandles(DrawingContext context, Rect rect, double handleSize, Color handleColor, Color borderColor)
     {
-        var handleFill = new SolidColorBrush(handleColor == default ? Colors.White : handleColor);
-        var handlePen = new Pen(borderBrush, 1.5);
+        var handleFill = GetBrush(handleColor == default ? Colors.White : handleColor);
+        var handlePen = GetPen(borderColor, HandlePenThickness);
         double hs = handleSize;
         double hh = hs / 2;
 
-        foreach (var handle in Enum.GetValues<DragHandle>())
+        // 描画対象の 8 方向ハンドルを静的配列から列挙する（Enum.GetValues の毎回生成を排除）
+        foreach (var handle in s_handleTypes)
         {
-            if (handle == DragHandle.None || handle == DragHandle.Move) continue;
             var center = SelectionGeometry.GetHandlePosition(rect, handle);
             DrawHandle(context, center.X - hh, center.Y - hh, hs, hs, handleFill, handlePen);
         }
@@ -59,7 +143,7 @@ internal static class DragRectDrawer
     /// <param name="size">十字線の半幅。</param>
     public static void DrawStartMarker(DrawingContext context, Point center, Color color, double thickness, double size)
     {
-        var pen = new Pen(new SolidColorBrush(color), thickness);
+        var pen = GetPen(color, thickness);
         context.DrawLine(pen, new Point(center.X - size, center.Y), new Point(center.X + size, center.Y));
         context.DrawLine(pen, new Point(center.X, center.Y - size), new Point(center.X, center.Y + size));
     }
@@ -101,17 +185,16 @@ internal static class DragRectDrawer
             FlowDirection.LeftToRight,
             Typeface.Default,
             fontSize,
-            new SolidColorBrush(textColor));
+            GetBrush(textColor));
 
-        var pad = 4.0;
+        var pad = LabelPadding;
         var w = ft.Width + pad * 2;
         var h = ft.Height + pad * 2;
         // ラベル配置（カーソル右側 + クランプ）は純粋関数に委譲
         var labelPos = ComputeCoordLabelPosition(cursorDip, clientSize, w, h);
 
         // 不透明度は bgColor のアルファに統合済み（SolidColorBrush がアルファを反映する）
-        var bgBrush = new SolidColorBrush(bgColor);
-        context.FillRectangle(bgBrush, new Rect(labelPos.X, labelPos.Y, w, h));
+        context.FillRectangle(GetBrush(bgColor), new Rect(labelPos.X, labelPos.Y, w, h));
         context.DrawText(ft, new Point(labelPos.X + pad, labelPos.Y + pad));
     }
 
@@ -128,8 +211,8 @@ internal static class DragRectDrawer
     /// </remarks>
     public static Point ComputeCoordLabelPosition(Point cursorDip, Size clientSize, double labelWidth, double labelHeight)
     {
-        double x = cursorDip.X + 8;
-        double y = cursorDip.Y + 8;
+        double x = cursorDip.X + LabelOffset;
+        double y = cursorDip.Y + LabelOffset;
         if (clientSize.Width > 0) x = Math.Min(x, Math.Max(0, clientSize.Width - labelWidth));
         if (clientSize.Height > 0) y = Math.Min(y, Math.Max(0, clientSize.Height - labelHeight));
         return new Point(x, y);

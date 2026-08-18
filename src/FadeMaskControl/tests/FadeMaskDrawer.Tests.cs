@@ -200,5 +200,28 @@ public class FadeMaskDrawerTests
                 new FadeMaskDrawer.SubLine("操作ラベル", 12.0, Colors.White),
             ]);
     }
+
+    [AvaloniaFact]
+    public void DrawOverlay_ブラシキャッシュ容量超過時も例外なく描画する()
+    {
+        // キャッシュ容量（128）を超える 129 色を順次描画し、容量超過時のキャッシュクリア経路を実行する
+        for (int i = 0; i <= FadeMaskDrawer.BrushCacheCapacity; i++)
+        {
+            using var ctx = CreateContext();
+            var color = Color.FromArgb((byte)(100 + i % 100), (byte)(i * 2), (byte)(255 - i), (byte)(i * 3));
+
+            FadeMaskDrawer.DrawOverlay(
+                ctx,
+                new Rect(0, 0, 300, 300),
+                new Rect(50, 50, 100, 80),
+                color,
+                color, 14.0,
+                showSizeLabel: true,
+                subLines:
+                [
+                    new FadeMaskDrawer.SubLine("操作ラベル", 12.0, color, color),
+                ]);
+        }
+    }
 }
 

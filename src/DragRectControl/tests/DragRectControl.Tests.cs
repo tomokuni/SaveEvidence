@@ -1,4 +1,5 @@
 using BindingFlags = System.Reflection.BindingFlags;
+using Estable.AvaloniaUI.DragRect.Drawing;
 using Estable.AvaloniaUI.Platform;
 using Avalonia;
 using Avalonia.Controls;
@@ -1403,6 +1404,34 @@ public class DragRectControlTests
         var control = new DragRectControl { Width = 0, Height = 0, ShowCoordLabel = true };
         var window = Show(control);
 
+        control.InvalidateVisual();
+        window.CaptureRenderedFrame();
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void 描画_ブラシペンキャッシュ容量超過後も正しく描画される()
+    {
+        var control = CreateControl();
+        var window = Show(control);
+        control.SetSelection(new Rect(20, 20, 100, 80));
+
+        // ブラシ/ペンキャッシュの容量（BrushCacheCapacity）を超える色で描画を繰り返し、
+        // 容量超過（全クリア）分岐を実行する（無制限メモリ増加の防止と正しさの両立）
+        for (var i = 0; i < DragRectDrawer.BrushCacheCapacity + 1; i++)
+        {
+            control.BorderColor = Color.FromRgb((byte)(i % 256), (byte)((i / 256) % 256), 0);
+            control.InvalidateVisual();
+            window.CaptureRenderedFrame();
+        }
+
+        // クリア後に再描画しても例外なく正しく描画される（キャッシュが再構築される）
+        control.BorderColor = Colors.Red;
+        control.InvalidateVisual();
+        window.CaptureRenderedFrame();
+
+        // 同じ色・太さで再描画し、ブラシ/ペンのキャッシュヒット分岐を実行する
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
 

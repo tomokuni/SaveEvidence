@@ -2,12 +2,16 @@
 
 ## 目次
 
-- [DragRectControl システム仕様書（SPEC_System）](#dragrectcontrol-システム仕様書spec_system)
+- [DragRectControl システム仕様書（SPEC\_System）](#dragrectcontrol-システム仕様書spec_system)
   - [目次](#目次)
   - [1. システム概要](#1-システム概要)
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
+    - [3.1 レイヤー構造](#31-レイヤー構造)
+    - [3.2 依存の方向](#32-依存の方向)
   - [4. 例外処理ポリシー](#4-例外処理ポリシー)
+    - [4.1 基本方針](#41-基本方針)
+    - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
   - [5. コンポーネント図](#5-コンポーネント図)
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 DragRectControl](#61-dragrectcontrol)
@@ -18,6 +22,7 @@
     - [6.6 公開イベント引数](#66-公開イベント引数)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
+    - [8.1 状態の初期化と破棄（所有権）](#81-状態の初期化と破棄所有権)
 
 ---
 
@@ -115,6 +120,7 @@ flowchart TB
   - 公開イベント（Selection系 / Mouse系 / Confirm / Cancel / Viewport）の通知
   - ドメイン↔DIP 座標ポートの保持（`SetCoordinateTransform`）
   - 祖先 ScrollViewer の ScrollChanged 購読（`ViewportChanged` 発行）
+  - 公開イベントの発火は専用ヘルパー（`Raise...`）に集約（イベント引数の生成と `?.Invoke` の一元化・発火形式の一貫性）
 - **公開API**:
   - イベント 14 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `MouseDown` / `MouseUp` / `MouseClicked` / `MouseDoubleClicked` / `MouseMoved` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ConfirmRequested` / `CancelRequested`
   - StyledProperty 13 種: `BorderColor` / `BorderThickness` / `HandleColor` / `HandleSize` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds` / `MarkerColor` / `MarkerLength` / `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize`
@@ -129,8 +135,9 @@ flowchart TB
 - **責務**:
   - 選択矩形・ドラッグ状態・アクティブハンドル・nudge 状態（基点＋累積オフセット）の保持
   - 純粋ロジック: `HitTest` / `StartNewSelection` / `StartDrag` / `UpdateDrag` / `EndDrag` / `Nudge` / `GetOppositeCorner` / `GetInteractionState` / `CreateSnapshot`
-  - クリップ（`ClampToDomainBounds` + `Port.Bounds` による境界内制限）
+  - クリップ（`ClampToDomainBounds` + `Port.Bounds` による境界内制限。境界 Rect 生成は `GetBoundsRect` に一元化）
   - カーソル操作（`ICursorService`）
+  - nudge 終了の共通化（`EndNudgeIfActive`。`Reset` / `SetSelection` でカーソル再表示を委譲）
 - **可視性**: internal（外部から見えない）
 - **依存**: SelectionGeometry / DragHandle / ICoordinatePort（PlatformFactory）/ ICursorService（PlatformFactory）
 
@@ -144,8 +151,9 @@ flowchart TB
 ### 6.4 DragRectDrawer
 
 - **分類**: 内部静的クラス（`internal static class`）
-- **責務**: 枠線・ドラッグハンドル・始点マーカーの描画
+- **責務**: 枠線・ドラッグハンドル・始点マーカー・座標ラベルの描画
 - **可視性**: internal（外部から見えない）
+- **特徴**: 色・太さで決まる `SolidColorBrush` / `Pen` を容量制限付きキャッシュ（各 128 件・超過時全クリア）で共有し、描画毎の生成を排除（Flyweight パターン）。容量管理は `AddWithCapacityLimit` に一元化（単一所有）。描画対象の 8 方向ハンドル配列は静的フィールドに一度だけ実体化し、`Enum.GetValues` の毎回生成を排除（`s_handleTypes`）
 - **依存**: Avalonia（DrawingContext / SolidColorBrush / Pen）/ SelectionGeometry
 
 ### 6.5 DragHandle
@@ -195,3 +203,9 @@ sequenceDiagram
     Ctl->>Stt: Nudge（整数加算）
     Ctl-->>AP: SelectionChanged / LoupePositionMoved
 ```
+
+### 8.1 状態の初期化と破棄（所有権）
+
+- コントロール自身が保持する状態（選択矩形・nudge 状態）は `ResetSelection()` で初期化します（上位 AP は状態をポーリングせず、イベントで把握）。
+- 上位 AP はコントロールを Visual Tree から除去するだけで破棄できます（所有権は上位 AP にあり、明示的な解放 API は不要）。
+- ビジュアルツリー切断時（`OnDetachedFromVisualTree`）は TopLevel キー購読・ScrollViewer 購読を解除し、nudge 中ならポインターを再表示します（`EndNudge` に委譲）。

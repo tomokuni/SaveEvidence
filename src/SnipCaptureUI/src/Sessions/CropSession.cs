@@ -89,7 +89,7 @@ internal sealed class CropSession(
         // 選択オーバーレイ複合コントロールを親パネルに配置
         _parentPanel.Children.Add(_selectionOverlay);
         ConfigureControls();
-        SnipCaptureLog.LogCropStart(_log, (int)_sourceImageSize.Width, (int)_sourceImageSize.Height);
+        LogMessage.LogCropStart(_log, (int)_sourceImageSize.Width, (int)_sourceImageSize.Height);
 
         // プレビューの ScrollViewer を複合コントロール（DragRect）へ明示注入する（スクロール・ズーム検知 + ホイール操作）。
         // DragRect はプレビューと兄弟の親パネルに配置されるため、祖先探索では見つからない（明示注入が唯一の連携方式）。
@@ -103,7 +103,7 @@ internal sealed class CropSession(
             if (_completed) return;
             _completed = true;
             var bounds = ExecuteCropForSize(logicalRect);
-            SnipCaptureLog.LogCropCompleted(_log, bounds.ToString());
+            LogMessage.LogCropCompleted(_log, bounds.ToString());
             Cleanup();
             tcs.TrySetResult(bounds);
         }
@@ -112,7 +112,7 @@ internal sealed class CropSession(
         {
             if (_completed) return;
             _completed = true;
-            SnipCaptureLog.LogCropCancelled(_log);
+            LogMessage.LogCropCancelled(_log);
             Cleanup();
             tcs.TrySetResult(default); // 0x0 の空 PixelRect
         }

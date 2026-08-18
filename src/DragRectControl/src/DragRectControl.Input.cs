@@ -39,8 +39,7 @@ public sealed partial class DragRectControl
         // Escape / Enter の確定・キャンセルを自己完結で処理する（フォーカス非依存）
         if (e.Key == Key.Escape)
         {
-            DragRectLog.LogKeyDown(_log, e.Key.ToString(), handled: true);
-            DragRectLog.LogCancelRequested(_log);
+            Log.LogKeyDown(e.Key.ToString(), handled: true);
             RequestCancel();
             e.Handled = true;
             return;
@@ -48,10 +47,10 @@ public sealed partial class DragRectControl
 
         if (e.Key == Key.Enter)
         {
-            DragRectLog.LogKeyDown(_log, e.Key.ToString(), handled: true);
+            Log.LogKeyDown(e.Key.ToString(), handled: true);
             if (_state.HasSelection)
             {
-                DragRectLog.LogConfirmRequested(_log, _state.SelectionRect.ToString());
+                Log.LogConfirmRequested(_state.SelectionRect.ToString());
             }
             RequestConfirm();
             e.Handled = true;
@@ -66,7 +65,7 @@ public sealed partial class DragRectControl
 
         if (HandleArrowKey(e.Key))
         {
-            DragRectLog.LogKeyDown(_log, e.Key.ToString(), handled: true);
+            Log.LogKeyDown(e.Key.ToString(), handled: true);
             e.Handled = true;
         }
     }

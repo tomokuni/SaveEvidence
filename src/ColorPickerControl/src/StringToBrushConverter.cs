@@ -18,16 +18,7 @@ namespace Estable.AvaloniaUI.ColorPicker;
 /// リソース定義: <c>&lt;cp:StringToBrushConverter x:Key="StringToBrushConverter"/&gt;</c><br/>
 /// バインド: <c>Background="{Binding SelectedColor, Converter={StaticResource StringToBrushConverter}}"</c><br/>
 /// <br/>
-/// **適用パターン**: Flyweight（解析済み色の <see cref="SolidColorBrush"/> をキャッシュして再利用）。<br/>
-/// <br/>
-/// **最適化施策**:<br/>
-/// - バインド更新（キーストローク毎）に新しい Brush を生成する従来実装を排除し、<br/>
-///   <see cref="ConcurrentDictionary{TKey, TValue}"/> で入力文字列ごとに 1 つの Brush を共有する<br/>
-///   （SolidColorBrush は不変オブジェクトのため共有は安全。未使用ブラシの GC 負荷と生成コストを削減）。<br/>
-/// - キャッシュを先に引き、ヒット時は <see cref="ColorString.TryParse"/> を呼ばずに既存ブラシを返す<br/>
-///   （キャッシュヒット時の解析を排除）。<br/>
-/// - キャッシュの容量管理（超過時全クリア）は <see cref="ColorString.AddWithCapacityLimit{T}"/> に委譲する<br/>
-///   （容量管理ロジックの単一所有。既存ブラシはバインドが参照を保持するため、クリアしても表示は維持される）。
+/// **適用パターン**: Flyweight（解析済み色の <see cref="SolidColorBrush"/> をキャッシュして再利用）。
 /// </remarks>
 public sealed class StringToBrushConverter : IValueConverter
 {

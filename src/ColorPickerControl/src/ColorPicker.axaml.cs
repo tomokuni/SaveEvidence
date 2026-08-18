@@ -43,11 +43,6 @@ namespace Estable.AvaloniaUI.ColorPicker;
 /// - 色文字列の妥当性検証: <see cref="ColorValidator"/><br/>
 /// - ComboBox テキスト選択の解除: <see cref="TextBoxSelectionHelper"/><br/>
 /// - 色文字列の解析・整形・正規化: <see cref="ColorString"/> / <see cref="ColorEntry"/> / 各コンバーター<br/>
-/// <br/>
-/// **最適化施策**:<br/>
-/// - キーストローク毎に発生する <see cref="SelectedColor"/> 変更のバリデーションを
-///   <see cref="ColorValidator.IsValid(string?)"/> の 1 回の解析に集約し、二重解析を排除する。<br/>
-/// - <see cref="Log"/> は C#14 の <c>field</c> キーワードで簡潔に定義する（null は <see cref="NullLogger"/> へフォールバック）。
 /// </remarks>
 public sealed partial class ColorPickerControl : UserControl
 {
@@ -273,7 +268,7 @@ public sealed partial class ColorPickerControl : UserControl
         {
             // change.NewValue / OldValue は StyledProperty<string> により常に string（分岐なし）
             var color = (string)change.NewValue!;
-            ColorPickerLog.LogSelectedColorChanged(Log, (string)change.OldValue!, color);
+            Log.LogSelectedColorChanged((string)change.OldValue!, color);
 
             // 解析は 1 回だけ行い、最終有効値の追跡とバリデーション更新で共有する（二重解析の排除）
             var valid = ColorValidator.IsValid(color);
@@ -342,7 +337,7 @@ public sealed partial class ColorPickerControl : UserControl
 
         // ログ用の最終有効性（復帰時は復帰値が有効なため true）
         var finalValid = valid || _lastValidColor is not null;
-        ColorPickerLog.LogLostFocus(Log, color, finalValid);
+        Log.LogLostFocus(color, finalValid);
     }
 
     /// <summary>Flyout 形式のカラーピッカーを開いて選択色を反映する。</summary>
@@ -354,7 +349,7 @@ public sealed partial class ColorPickerControl : UserControl
 
         // SelectedColor は 1 回だけ取得してログと Flyout 構築で共有する（二重 getter の排除）
         var color = SelectedColor;
-        ColorPickerLog.LogOpenFlyout(Log, color);
+        Log.LogOpenFlyout(color);
         var flyout = ColorPickerFlyoutFactory.Create(color, Log, value => SelectedColor = value);
         flyout.ShowAt(button);
     }

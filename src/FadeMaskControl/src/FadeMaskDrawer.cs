@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
+using System.Collections.Concurrent;
 using System.Globalization;
 
 namespace Estable.AvaloniaUI.FadeMask;
@@ -13,6 +14,55 @@ namespace Estable.AvaloniaUI.FadeMask;
 /// </remarks>
 internal static class FadeMaskDrawer
 {
+    /// <summary>ブラシキャッシュ（色 → ブラシ。容量制限付き）。</summary>
+    private static readonly ConcurrentDictionary<Color, SolidColorBrush> s_brushCache = new();
+
+    /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
+    /// <remarks>テスト（FadeMaskControl.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
+    internal const int BrushCacheCapacity = 128;
+
+    /// <summary>サイズラベルの内側余白（DIP）。</summary>
+    private const double LabelPadding = 4.0;
+
+    /// <summary>ラベル背景の既定色（黒 50%。不透明度はアルファに統合）。</summary>
+    private static readonly Color DefaultLabelBackground = Color.FromArgb(128, 0, 0, 0);
+
+    /// <summary>色に対応するブラシを取得する（キャッシュ優先・未登録なら生成して登録）。</summary>
+    /// <param name="color">ブラシの色。</param>
+    /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
+    /// <remarks>容量超過時はキャッシュを全クリアしてから登録する（<see cref="AddWithCapacityLimit{TKey, TValue}"/> に委譲）。</remarks>
+    internal static SolidColorBrush GetBrush(Color color)
+    {
+        if (s_brushCache.TryGetValue(color, out var cached))
+        {
+            return cached;
+        }
+
+        var brush = new SolidColorBrush(color);
+        AddWithCapacityLimit(s_brushCache, BrushCacheCapacity, color, brush);
+        return brush;
+    }
+
+    /// <summary>容量制限付きキャッシュへ値を登録する（超過時は全クリアしてから登録）。</summary>
+    /// <typeparam name="TKey">キャッシュのキー型。</typeparam>
+    /// <typeparam name="TValue">キャッシュの値型。</typeparam>
+    /// <param name="cache">対象キャッシュ。</param>
+    /// <param name="capacity">キャッシュの最大容量。</param>
+    /// <param name="key">登録キー。</param>
+    /// <param name="value">登録値。</param>
+    /// <remarks>
+    /// 容量超過時は全クリアして無制限の増加を防ぐ（同一キーは直後に再キャッシュされる）。
+    /// </remarks>
+    private static void AddWithCapacityLimit<TKey, TValue>(
+        ConcurrentDictionary<TKey, TValue> cache, int capacity, TKey key, TValue value)
+        where TKey : notnull
+    {
+        if (cache.Count >= capacity)
+        {
+            cache.Clear();
+        }
+        cache[key] = value;
+    }
     /// <summary>サイズラベルの下に表示するサブライン（2 行目以降）の 1 行分の内容。</summary>
     /// <remarks>
     /// 各行でフォントサイズ・文字色・背景色を個別に指定できる（1 行目 = サイズラベルと同等の設定）。<br/>
@@ -58,7 +108,7 @@ internal static class FadeMaskDrawer
             var sr = selectionRect.Value;
 
             // ---- 4辺の穴あけマスク（矩形計算は純粋関数に委譲） ----
-            var overlayBrush = new SolidColorBrush(overlayColor);
+            var overlayBrush = GetBrush(overlayColor);
             foreach (var rect in GetMaskRects(clientRect, sr))
             {
                 context.FillRectangle(overlayBrush, rect);
@@ -66,10 +116,7 @@ internal static class FadeMaskDrawer
 
             // ---- サイズラベル（1 行目） + サブライン（2 行目以降） ----
             // サイズラベルが非表示の場合は、サブラインを 1 行目から描画する（繰り上げ）。
-            var pad = 4.0;
-            // 1 行目（サイズラベル）の背景（textBgColor は省略時 default = 黒 50%。不透明度は色のアルファに統合）
-            var textBgBrush = new SolidColorBrush(textBgColor == default ? Color.FromArgb(128, 0, 0, 0) : textBgColor);
-            double y = sr.Y + pad; // 描画開始位置（サイズラベル非表示時はサブラインがここから始まる）
+            double y = sr.Y + LabelPadding; // 描画開始位置（サイズラベル非表示時はサブラインがここから始まる）
 
             if (showSizeLabel)
             {
@@ -82,17 +129,7 @@ internal static class FadeMaskDrawer
                 {
                     sizeText = FormatSizeLabel(sr, scaling);
                 }
-                var ft = new FormattedText(
-                    sizeText,
-                    CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    Typeface.Default,
-                    fontSize,
-                    new SolidColorBrush(textColor));
-                var textRect = new Rect(sr.X + pad, y, ft.Width + pad * 2, ft.Height + pad * 2);
-                context.FillRectangle(textBgBrush, textRect);
-                context.DrawText(ft, new Point(sr.X + pad * 2, y + pad));
-                y = textRect.Bottom + pad;
+                y = DrawLabelLine(context, sr.X, y, sizeText, fontSize, textColor, textBgColor);
             }
 
             // ---- サブライン（2 行目以降。操作方法・タイトル。各行でフォント/色/背景を個別指定） ----
@@ -100,29 +137,49 @@ internal static class FadeMaskDrawer
             {
                 foreach (var sub in subLines)
                 {
-                    var lineFt = new FormattedText(
-                        sub.Text,
-                        CultureInfo.CurrentCulture,
-                        FlowDirection.LeftToRight,
-                        Typeface.Default,
-                        sub.FontSize,
-                        new SolidColorBrush(sub.Color));
-                    // サブラインの背景（各行の背景色。不透明度は色のアルファに統合。省略時は黒 50%）
-                    var lineBgBrush = new SolidColorBrush(
-                        sub.BackgroundColor == default ? Color.FromArgb(128, 0, 0, 0) : sub.BackgroundColor);
-                    // サブラインはサイズラベルと同じ幅の背景に描画する（最大幅に合わせて広げる）
-                    var lineRect = new Rect(sr.X + pad, y, lineFt.Width + pad * 2, lineFt.Height + pad * 2);
-                    context.FillRectangle(lineBgBrush, lineRect);
-                    context.DrawText(lineFt, new Point(sr.X + pad * 2, y + pad));
-                    y = lineRect.Bottom + pad;
+                    y = DrawLabelLine(context, sr.X, y, sub.Text, sub.FontSize, sub.Color, sub.BackgroundColor);
                 }
             }
         }
         else
         {
             // 選択矩形なし → 全面暗転
-            context.FillRectangle(new SolidColorBrush(overlayColor), clientRect);
+            context.FillRectangle(GetBrush(overlayColor), clientRect);
         }
+    }
+
+    /// <summary>ラベル 1 行（テキスト + 背景）を描画し、次の行の Y 座標を返す。</summary>
+    /// <param name="context">描画コンテキスト。</param>
+    /// <param name="x">ラベル領域の左端（選択矩形の X）。</param>
+    /// <param name="y">ラベル行の先頭 Y。</param>
+    /// <param name="text">ラベルのテキスト。</param>
+    /// <param name="fontSize">フォントサイズ（DIP）。</param>
+    /// <param name="textColor">テキストの色。</param>
+    /// <param name="backgroundColor">背景の色（不透明度は色のアルファに統合。省略時 default = 黒 50%）。</param>
+    /// <returns>次の行の先頭 Y 座標（= 本行の下端 + 内側余白）。</returns>
+    /// <remarks>
+    /// サイズラベル（1 行目）とサブライン（2 行目以降）で共用する。<br/>
+    /// 背景色は <paramref name="backgroundColor"/> が default の場合に黒 50% へフォールバックする。<br/>
+    /// 描画矩形はテキスト幅に内側余白（<see cref="LabelPadding"/> ×2）を加えたサイズとする。
+    /// </remarks>
+    private static double DrawLabelLine(
+        DrawingContext context, double x, double y, string text,
+        double fontSize, Color textColor, Color backgroundColor)
+    {
+        var pad = LabelPadding;
+        var pad2 = pad * 2;
+        var ft = new FormattedText(
+            text,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            Typeface.Default,
+            fontSize,
+            GetBrush(textColor));
+        var bgBrush = GetBrush(backgroundColor == default ? DefaultLabelBackground : backgroundColor);
+        var rect = new Rect(x, y, ft.Width + pad2, ft.Height + pad2);
+        context.FillRectangle(bgBrush, rect);
+        context.DrawText(ft, new Point(x + pad2, y + pad));
+        return rect.Bottom + pad;
     }
 
     /// <summary>選択矩形に対する穴あけマスク（暗転オーバーレイ）の 4 辺矩形を計算する（純粋関数）。</summary>
@@ -135,20 +192,29 @@ internal static class FadeMaskDrawer
     /// </remarks>
     public static IReadOnlyList<Rect> GetMaskRects(Rect clientRect, Rect selectionRect)
     {
+        // 同一スコープで複数回参照される矩形の座標・サイズはローカル変数へ一度だけ格納する
+        var cw = clientRect.Width;
+        var ch = clientRect.Height;
+        var selTop = selectionRect.Top;
+        var selBottom = selectionRect.Bottom;
+        var selLeft = selectionRect.Left;
+        var selRight = selectionRect.Right;
+        var selHeight = selectionRect.Height;
+
         var rects = new List<Rect>(4);
 
         // 上
-        if (selectionRect.Top > 0)
-            rects.Add(new Rect(0, 0, clientRect.Width, selectionRect.Top));
+        if (selTop > 0)
+            rects.Add(new Rect(0, 0, cw, selTop));
         // 下
-        if (selectionRect.Bottom < clientRect.Height)
-            rects.Add(new Rect(0, selectionRect.Bottom, clientRect.Width, clientRect.Height - selectionRect.Bottom));
+        if (selBottom < ch)
+            rects.Add(new Rect(0, selBottom, cw, ch - selBottom));
         // 左
-        if (selectionRect.Left > 0)
-            rects.Add(new Rect(0, selectionRect.Top, selectionRect.Left, selectionRect.Height));
+        if (selLeft > 0)
+            rects.Add(new Rect(0, selTop, selLeft, selHeight));
         // 右
-        if (selectionRect.Right < clientRect.Width)
-            rects.Add(new Rect(selectionRect.Right, selectionRect.Top, clientRect.Width - selectionRect.Right, selectionRect.Height));
+        if (selRight < cw)
+            rects.Add(new Rect(selRight, selTop, cw - selRight, selHeight));
 
         return rects;
     }

@@ -19,20 +19,7 @@ namespace Estable.AvaloniaUI.ColorPicker;
 /// 本形式は <see cref="ColorPickerControl.SelectedColor"/> の文字列仕様であり、<br/>
 /// ホストアプリ（設定の保存・反映）も本ユーティリティで解析できるよう public とする。<br/>
 /// <br/>
-/// **適用パターン**: Flyweight（色 → 色名 の逆引き辞書を事前構築し、検索を O(1) 化）。<br/>
-/// <br/>
-/// **最適化施策**:<br/>
-/// - 色名 → 色 の辞書に加えて、色 → 色名 の逆引き辞書（ARGB 完全一致 / RGB 一致）を静的構築時に事前生成する。<br/>
-///   ComboBox の入力はキーストローク毎に <see cref="ToDisplayText"/> が呼ばれるため、<br/>
-///   従来の全件走査（140 色 × 2 パス）を排除し O(1) 検索へ高速化した。<br/>
-/// - RGB 一致の逆引きは不透明（A=255）の色名を優先して登録する（White と Transparent の同 RGB 競合の解決）。<br/>
-/// - <see cref="TryParse"/> の解析結果を容量制限付きキャッシュで共有し、同一文字列の再解析を排除する。<br/>
-///   ComboBox の 1 入力（キーストローク）あたり最大 4 回呼ばれる解析を 1 回へ集約する。<br/>
-/// - <see cref="ToDisplayText"/> の表示テキストも容量制限付きキャッシュで共有し、<br/>
-///   整形（色名検索＋文字列補間）の毎回実行を排除する（バインド更新時の文字列生成コストを削減）。<br/>
-/// - <see cref="ToArgbHex(string?)"/> の正規化文字列も容量制限付きキャッシュで共有し、<br/>
-///   ComboBox の ConvertBack（キーストローク毎）で発生する 16進補間を排除する。<br/>
-/// - 16進整形は StringBuilder を使わず文字列補間（X2 書式）で行う（一時オブジェクトの削減）。
+/// **適用パターン**: Flyweight（色 → 色名 の逆引き辞書を事前構築し、検索を O(1) 化）。
 /// </remarks>
 public static class ColorString
 {

@@ -95,7 +95,7 @@ internal static class ColorPickerFlyoutFactory
         {
             // アルファを含む #AARRGGBB 形式へ整形して SelectedColor（保存値）へ反映する
             var formatted = ColorString.ToArgbHex(colorView.Color);
-            ColorPickerLog.LogFlyoutOk(log, formatted);
+            log.LogFlyoutOk(formatted);
             applyColor(formatted);
             flyout.Hide();
         };
@@ -103,7 +103,7 @@ internal static class ColorPickerFlyoutFactory
         // キャンセル: 何もせず閉じる
         cancelButton.Click += (_, _) =>
         {
-            ColorPickerLog.LogFlyoutCancel(log);
+            log.LogFlyoutCancel();
             flyout.Hide();
         };
 

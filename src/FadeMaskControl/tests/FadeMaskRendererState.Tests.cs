@@ -175,6 +175,23 @@ public class FadeMaskRendererStateTests
     }
 
     [Fact]
+    public void BuildSubLines_操作ラベル無効でも情報ラベルは表示する()
+    {
+        var renderer = new FadeMaskRenderer
+        {
+            Mode = FadeMaskRenderMode.WindowSelect,
+            ShowSubLines = false,
+            InfoLabelVisible = true,
+            WindowTitle = "Test Window",
+        };
+
+        var lines = renderer.BuildSubLines();
+
+        Assert.Single(lines);
+        Assert.Equal("Test Window", lines[0].Text);
+    }
+
+    [Fact]
     public void BuildSubLines_WindowSelectで情報ラベルを3行目に追加する()
     {
         var renderer = new FadeMaskRenderer

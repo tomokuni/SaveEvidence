@@ -142,12 +142,12 @@ DragRectControl/
 │   ├── DragRectControl.cs         # 公開 API + イベントオーバーライド + 描画
 │   ├── DragRectState.cs           # 選択・nudge 状態（internal・純粋ロジック）
 │   ├── DragHandle.cs              # 公開型（ドラッグハンドル種別 enum）
-│   ├── DragRectEventArgs.cs        # 公開イベント引数・状態 Snapshot（enum / record / EventArgs）
-│   ├── DragRectSnapshot.cs         # 状態 Snapshot レコード
-│   ├── Selection/                  # 内部型（SelectionGeometry）
-│   └── Drawing/                    # 内部型（DragRectDrawer）
-├── sample/                         # サンプルアプリ（sample/README.md 参照）
-└── tests/                          # 単体テスト（公開 API 経由・87 件）
+│   ├── DragRectEventArgs.cs       # 公開イベント引数・状態 Snapshot（enum / record / EventArgs）
+│   ├── DragRectSnapshot.cs        # 状態 Snapshot レコード
+│   ├── Selection/                 # 内部型（SelectionGeometry）
+│   └── Drawing/                   # 内部型（DragRectDrawer）
+├── sample/                        # サンプルアプリ（sample/README.md 参照）
+└── tests/                         # 単体テスト（公開 API 経由・87 件）
 ```
 
 ## 10. ライセンス

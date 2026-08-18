@@ -50,9 +50,6 @@ public sealed partial class DragRectControl : Control
     /// <summary>ズーム・スクロール検知用に購読した祖先 ScrollViewer。解除時に使用する。</summary>
     private ScrollViewer? _attachedScrollViewer;
 
-    /// <summary>内部ロガー（横断的関心事）。</summary>
-    private ILogger _log = NullLogger.Instance;
-
     /// <summary>nudge のカーソル位置追跡（SetCursorPos のエコー PointerMoved 抑制用）。</summary>
     private bool _nudgeHandledInKeyDown;
 
@@ -64,6 +61,21 @@ public sealed partial class DragRectControl : Control
 
     /// <summary>座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。</summary>
     private ICoordinatePort _coordinatePort = CoordinatePort.Identity;
+
+    /// <summary>左上/右下ハンドル用カーソル（静的共有。ポインター移動毎の生成を排除）。</summary>
+    private static readonly Cursor s_topLeftCornerCursor = new(StandardCursorType.TopLeftCorner);
+
+    /// <summary>右上/左下ハンドル用カーソル（静的共有）。</summary>
+    private static readonly Cursor s_topRightCornerCursor = new(StandardCursorType.TopRightCorner);
+
+    /// <summary>上下リサイズ用カーソル（静的共有）。</summary>
+    private static readonly Cursor s_sizeNorthSouthCursor = new(StandardCursorType.SizeNorthSouth);
+
+    /// <summary>左右リサイズ用カーソル（静的共有）。</summary>
+    private static readonly Cursor s_sizeWestEastCursor = new(StandardCursorType.SizeWestEast);
+
+    /// <summary>移動用カーソル（静的共有）。</summary>
+    private static readonly Cursor s_sizeAllCursor = new(StandardCursorType.SizeAll);
 
     // ====================================================================
     // コンストラクタ
@@ -106,7 +118,7 @@ public sealed partial class DragRectControl : Control
         // 変更前後の値をログ出力する。
         ClampToDomainBoundsProperty.Changed.AddClassHandler<DragRectControl>(static (c, e) =>
         {
-            DragRectLog.LogSettingChanged(c.Log, nameof(ClampToDomainBounds),
+            c.Log.LogSettingChanged(nameof(ClampToDomainBounds),
                 e.OldValue?.ToString() ?? "", e.NewValue?.ToString() ?? "");
             c.ApplyClampToBounds();
         });
@@ -123,10 +135,15 @@ public sealed partial class DragRectControl : Control
     // ====================================================================
 
     /// <summary>内部ロガー（コンストラクタ注入用。null の場合は出力なし）。</summary>
+    /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</value>
+    /// <remarks>
+    /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
+    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。
+    /// </remarks>
     public ILogger Log
     {
-        get => _log;
-        set => _log = value ?? NullLogger.Instance;
+        get => field ?? NullLogger.Instance;
+        set => field = value ?? NullLogger.Instance;
     }
 
     // ====================================================================
@@ -330,6 +347,9 @@ public sealed partial class DragRectControl : Control
         set => SetValue(MarkerColorProperty, value);
     }
 
+    /// <summary>十字マーカーの線の太さ（DIP）。</summary>
+    private const double MarkerThickness = 2.0;
+
     /// <summary>nudge 中に表示する十字マーカーの長さ（全長。中心から両端までの長さ・DIP 座標）。</summary>
     /// <remarks>既定値は 16.0（半幅 8.0 の十字線。ドラッグハンドルより大きいサイズ）。</remarks>
     public double MarkerLength
@@ -369,7 +389,20 @@ public sealed partial class DragRectControl : Control
     }
 
     /// <summary><see cref="CoordLabelFontSize"/> を安全域へ補正する。</summary>
-    private static double CoerceCoordLabelFontSize(AvaloniaObject o, double v) => double.IsFinite(v) ? Math.Clamp(v, 6, 48) : 12.0;
+    private static double CoerceCoordLabelFontSize(AvaloniaObject o, double v)
+        => double.IsFinite(v) ? Math.Clamp(v, CoordLabelFontSizeMin, CoordLabelFontSizeMax) : CoordLabelFontSizeDefault;
+
+    /// <summary>カーソル座標ラベルのフォントサイズの最小値。</summary>
+    private const double CoordLabelFontSizeMin = 6.0;
+
+    /// <summary>カーソル座標ラベルのフォントサイズの最大値。</summary>
+    private const double CoordLabelFontSizeMax = 48.0;
+
+    /// <summary>カーソル座標ラベルのフォントサイズの既定値。</summary>
+    private const double CoordLabelFontSizeDefault = 12.0;
+
+    /// <summary>マウスホイール 1 段あたりのスクロール量（DIP）。</summary>
+    private const double WheelScrollUnit = 48.0;
 
     // ====================================================================
     // 公開操作 API
@@ -451,7 +484,7 @@ public sealed partial class DragRectControl : Control
     /// </remarks>
     public void RequestCancel()
     {
-        DragRectLog.LogCancelRequested(_log);
+        Log.LogCancelRequested();
         if (_state.IsDragging || _state.HasSelection)
         {
             ResetSelection();
@@ -467,7 +500,7 @@ public sealed partial class DragRectControl : Control
     public void RequestConfirm()
     {
         if (_state.IsDragging || !_state.HasSelection) return;
-        DragRectLog.LogConfirmRequested(_log, _state.SelectionRect.ToString());
+        Log.LogConfirmRequested(_state.SelectionRect.ToString());
         ConfirmRequested?.Invoke(this, new SelectionRectEventArgs(_state.SelectionRect, _state.CreateSnapshot()));
     }
 
@@ -490,6 +523,26 @@ public sealed partial class DragRectControl : Control
     /// <summary><see cref="SelectionCancelled"/> を発火する。</summary>
     private void RaiseSelectionCancelled()
         => SelectionCancelled?.Invoke(this, EventArgs.Empty);
+
+    /// <summary><see cref="MouseDown"/> を発火する。</summary>
+    private void RaiseMouseDown(Point domainPos)
+        => MouseDown?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
+
+    /// <summary><see cref="MouseUp"/> を発火する。</summary>
+    private void RaiseMouseUp(Point domainPos)
+        => MouseUp?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
+
+    /// <summary><see cref="MouseClicked"/> を発火する。</summary>
+    private void RaiseMouseClicked(Point domainPos)
+        => MouseClicked?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
+
+    /// <summary><see cref="MouseDoubleClicked"/> を発火する。</summary>
+    private void RaiseMouseDoubleClicked(Point domainPos)
+        => MouseDoubleClicked?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
+
+    /// <summary><see cref="MouseMoved"/> を発火する。</summary>
+    private void RaiseMouseMoved(Point domainPos)
+        => MouseMoved?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
 
     /// <summary><see cref="LoupePositionMoved"/> を発火する。</summary>
     private void RaiseLoupePositionMoved(Point domainPos)
@@ -569,8 +622,8 @@ public sealed partial class DragRectControl : Control
         var domainPos = _coordinatePort.Forward(e.GetPosition(this));
 
         // マウス Down 直前の位置をログ（高頻度の移動ログは行わない）
-        DragRectLog.LogPositionBeforeDown(_log, domainPos.X, domainPos.Y);
-        DragRectLog.LogMouseDown(_log, domainPos.X, domainPos.Y, e.ClickCount, _state.HasSelection);
+        Log.LogPositionBeforeDown(domainPos.X, domainPos.Y);
+        Log.LogMouseDown(domainPos.X, domainPos.Y, e.ClickCount, _state.HasSelection);
 
         // nudge 中ならリセット（ポインター再表示・基点クリア）してから押下処理する
         if (_state.NudgeActive)
@@ -582,22 +635,22 @@ public sealed partial class DragRectControl : Control
 
         _lastPressPos = domainPos;
         _dragPerformed = false;
-        MouseDown?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
+        RaiseMouseDown(domainPos);
 
         // ダブルクリック検出: ドラッグ処理は行わず、矩形内判定で確定/キャンセル要求を DragRect 自身が発行する
         if (e.ClickCount >= 2)
         {
             var inside = _state.HasSelection && _state.SelectionRect.Contains(domainPos);
-            DragRectLog.LogDoubleClick(_log, domainPos.X, domainPos.Y, inside);
-            MouseDoubleClicked?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
+            Log.LogDoubleClick(domainPos.X, domainPos.Y, inside);
+            RaiseMouseDoubleClicked(domainPos);
             if (inside)
             {
-                DragRectLog.LogConfirmRequested(_log, _state.SelectionRect.ToString());
+                Log.LogConfirmRequested(_state.SelectionRect.ToString());
                 ConfirmRequested?.Invoke(this, new SelectionRectEventArgs(_state.SelectionRect, _state.CreateSnapshot(domainPos)));
             }
             else
             {
-                DragRectLog.LogCancelRequested(_log);
+                Log.LogCancelRequested();
                 CancelRequested?.Invoke(this, EventArgs.Empty);
             }
             e.Handled = true;
@@ -608,7 +661,7 @@ public sealed partial class DragRectControl : Control
         var handle = _state.HitTest(domainPos, ToDomainRadius());
         if (handle != DragHandle.None)
         {
-            DragRectLog.LogDragStart(_log, handle.ToString(), domainPos.X, domainPos.Y);
+            Log.LogDragStart(handle.ToString(), domainPos.X, domainPos.Y);
             _state.StartDrag(handle, domainPos);
 
             // C案: リサイズハンドル（8 方向）では、ポインタ自体をハンドル点へスナップし、
@@ -641,30 +694,32 @@ public sealed partial class DragRectControl : Control
     /// <remarks>
     /// ボタン押下中のドラッグ処理を <see cref="DragRectState.UpdateDrag"/> に委譲する。<br/>
     /// ドラッグハンドルに近づいたときはハンドル種別に応じたカーソルへ変更する。<br/>
-    /// nudge 中は SetCursorPos 由来の PointerMoved で矩形を上書きしない（単押し nudge が戻る問題の対策）。
+    /// nudge 中は SetCursorPos 由来の PointerMoved で矩形を上書きしない（単押し nudge が戻る問題の対策）。<br/>
+    /// ヒットテスト半径（<see cref="ToDomainRadius"/>）は 1 回だけ計算して、エコー判定・カーソル更新・ドラッグ更新で共有する
+    /// （ポインター移動毎の Forward 変換の重複呼び出しを排除）。
     /// </remarks>
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
         var domainPos = _coordinatePort.Forward(e.GetPosition(this));
-        var isPressed = e.GetCurrentPoint(this).Properties.IsLeftButtonPressed;
+        var hitRadius = ToDomainRadius();
 
         // nudge 終了（EndNudge の SetCursorPos）直後のエコー PointerMoved をスキップする
-        if (_state.SuppressEchoAt is { } echoPos && SelectionGeometry.IsNear(domainPos, echoPos, ToDomainRadius()))
+        if (_state.SuppressEchoAt is { } echoPos && SelectionGeometry.IsNear(domainPos, echoPos, hitRadius))
         {
             // エコー抑制は最初の 1 回のみ（Reset まで残留すると、同じ位置へのホバーでカーソル形状の更新が
             // 妨げられるため、消費したらクリアする）。
             _state.SuppressEchoAt = null;
             // 抑制時でもカーソル形状はハンドル位置に応じて更新する（nudge 後のホバーで矢印のままになる問題の対策）
-            UpdateCursor(domainPos);
+            UpdateCursor(domainPos, hitRadius);
             return;
         }
 
         // マウスポインタの位置を通知（nudge 関係なく常時。要素検出等の汎用用途）
-        MouseMoved?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
+        RaiseMouseMoved(domainPos);
 
         // ドラッグハンドルに近づいたときのカーソル変更
-        UpdateCursor(domainPos);
+        UpdateCursor(domainPos, hitRadius);
 
         // nudge 中は SetCursorPos 由来の PointerMoved で矩形・基点（LastMousePosition）を上書きしない
         // （LastMousePosition は nudge 適用後の終点を保持し、解放時のルーペ位置が実マウス位置に飛ぶのを防ぐ）
@@ -677,7 +732,7 @@ public sealed partial class DragRectControl : Control
 
         if (_state.IsDragging)
         {
-            _state.UpdateDrag(domainPos, ToDomainRadius(), MinSelectionSize, ClampToDomainBounds);
+            _state.UpdateDrag(domainPos, MinSelectionSize, ClampToDomainBounds);
             // Click 判定用: 押下中のドラッグ移動で矩形が変化した場合はドラッグ発生
             if (_state.SelectionRect != _state.DragStartRect)
             {
@@ -713,11 +768,11 @@ public sealed partial class DragRectControl : Control
         base.OnPointerReleased(e);
         _state.IsMouseDown = false;
         var domainPos = _coordinatePort.Forward(e.GetPosition(this));
-        MouseUp?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
+        RaiseMouseUp(domainPos);
 
         // マウス Up 直後の位置をログ（高頻度の移動ログは行わない）
-        DragRectLog.LogMouseUp(_log, domainPos.X, domainPos.Y, _state.IsDragging, _state.HasSelection);
-        DragRectLog.LogPositionAfterUp(_log, domainPos.X, domainPos.Y);
+        Log.LogMouseUp(domainPos.X, domainPos.Y, _state.IsDragging, _state.HasSelection);
+        Log.LogPositionAfterUp(domainPos.X, domainPos.Y);
 
         var wasDragging = _state.IsDragging;
         var wasNudging = _state.NudgeActive;
@@ -725,8 +780,8 @@ public sealed partial class DragRectControl : Control
         // nudge 中のマーカー位置（EndDrag が IsDragging / ActiveHandle をリセットする前に計算）
         var nudgePos = wasNudging ? GetMarkerPosition() : default;
 
-        // ドラッグ終了（確定 or キャンセル判定）
-        if (_state.IsDragging)
+        // ドラッグ終了（確定 or キャンセル判定）。wasDragging は EndDrag 前の状態と同値のため再利用する
+        if (wasDragging)
         {
             var cancelled = _state.SelectionRect.Width < MinSelectionSize || _state.SelectionRect.Height < MinSelectionSize;
             _state.EndDrag();
@@ -744,8 +799,8 @@ public sealed partial class DragRectControl : Control
         // Click 検出: ドラッグ移動なしの Down→Up 完結（シングルクリック）
         if (wasDragging && !_dragPerformed)
         {
-            DragRectLog.LogClick(_log, pressPos.X, pressPos.Y);
-            MouseClicked?.Invoke(this, new DragRectPointEventArgs(pressPos, _state.CreateSnapshot(pressPos)));
+            Log.LogClick(pressPos.X, pressPos.Y);
+            RaiseMouseClicked(pressPos);
         }
 
         // nudge 中なら終了する（ポインタを nudge 位置へ移動・十字線を消す・ポインタ再表示）
@@ -759,7 +814,7 @@ public sealed partial class DragRectControl : Control
             _state.SuppressEchoAt = nudgePos;
             // カーソルは nudge 位置（ハンドル上）にあるため、ハンドルに応じたカーソル形状へ即時更新する
             // （マウスを動かさない限り PointerMoved が発火せず、形状が更新されないため）。
-            UpdateCursor(nudgePos);
+            UpdateCursor(nudgePos, ToDomainRadius());
         }
 
         InvalidateVisual();
@@ -784,34 +839,36 @@ public sealed partial class DragRectControl : Control
         // Ctrl + ホイール: ズーム要求（ズームは上位 AP が実施）
         if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
-            DragRectLog.LogZoomRequested(_log, e.Delta.Y > 0);
+            Log.LogZoomRequested(e.Delta.Y > 0);
             ZoomRequested?.Invoke(this, e.Delta.Y > 0);
             e.Handled = true;
             return;
         }
 
         // 通常ホイール: 祖先 ScrollViewer をスクロール（Shift 併用で横スクロール）
-        const double scrollUnit = 48.0;
-        double dx = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? e.Delta.Y * scrollUnit : 0;
-        double dy = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 0 : e.Delta.Y * scrollUnit;
+        double dx = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? e.Delta.Y * WheelScrollUnit : 0;
+        double dy = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 0 : e.Delta.Y * WheelScrollUnit;
         scrollViewer.Offset = new Vector(scrollViewer.Offset.X + dx, scrollViewer.Offset.Y + dy);
-        DragRectLog.LogWheelScroll(_log, dx, dy, scrollViewer.Offset.X, scrollViewer.Offset.Y);
+        Log.LogWheelScroll(dx, dy, scrollViewer.Offset.X, scrollViewer.Offset.Y);
         e.Handled = true;
     }
 
     /// <summary>ドラッグハンドル上のカーソル形状を更新する。</summary>
     /// <param name="domainPos">判定するドメイン座標。</param>
-    /// <remarks>ハンドル上ではリサイズ方向に応じたカーソル、枠内では移動カーソルを表示する。</remarks>
-    private void UpdateCursor(Point domainPos)
+    /// <param name="hitRadius">ヒットテスト半径（ドメイン座標。呼び出し側で事前計算済み）。</param>
+    /// <remarks>ハンドル上ではリサイズ方向に応じたカーソル、枠内では移動カーソルを表示する。<br/>
+    /// ヒットテスト半径は呼び出し側から受け取り、内部で <see cref="ToDomainRadius"/> を再計算しない（ホットパス高速化）。</remarks>
+    private void UpdateCursor(Point domainPos, double hitRadius)
     {
-        var handle = _state.HitTest(domainPos, ToDomainRadius());
+        var handle = _state.HitTest(domainPos, hitRadius);
+        // 標準カーソルは静的フィールドで共有する（ポインター移動毎の Cursor 生成を排除）
         Cursor = handle switch
         {
-            DragHandle.TopLeft or DragHandle.BottomRight => new Cursor(StandardCursorType.TopLeftCorner),
-            DragHandle.TopRight or DragHandle.BottomLeft => new Cursor(StandardCursorType.TopRightCorner),
-            DragHandle.TopCenter or DragHandle.BottomCenter => new Cursor(StandardCursorType.SizeNorthSouth),
-            DragHandle.MiddleLeft or DragHandle.MiddleRight => new Cursor(StandardCursorType.SizeWestEast),
-            DragHandle.Move => new Cursor(StandardCursorType.SizeAll),
+            DragHandle.TopLeft or DragHandle.BottomRight => s_topLeftCornerCursor,
+            DragHandle.TopRight or DragHandle.BottomLeft => s_topRightCornerCursor,
+            DragHandle.TopCenter or DragHandle.BottomCenter => s_sizeNorthSouthCursor,
+            DragHandle.MiddleLeft or DragHandle.MiddleRight => s_sizeWestEastCursor,
+            DragHandle.Move => s_sizeAllCursor,
             _ => Cursor.Default,
         };
     }

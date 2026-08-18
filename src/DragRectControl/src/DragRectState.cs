@@ -108,10 +108,13 @@ internal sealed class DragRectState
             NudgeActive);
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
-    /// <remarks>nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。</remarks>
+    /// <remarks>
+    /// nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。<br/>
+    /// nudge の終了処理は <see cref="EndNudgeIfActive"/> に委譲する（重複排除）。
+    /// </remarks>
     public void Reset()
     {
-        bool wasNudging = NudgeActive;
+        EndNudgeIfActive();
         SelectionRect = default;
         StartPoint = default;
         LastMousePosition = default;
@@ -120,57 +123,64 @@ internal sealed class DragRectState
         ActiveHandle = DragHandle.None;
         DragStartRect = default;
         DragStartPoint = default;
-        NudgeActive = false;
         NudgeBase = default;
-        NudgeOffsetX = 0;
-        NudgeOffsetY = 0;
         CrosshairVisible = false;
         SuppressEchoAt = null;
-
-        // nudge 中（カーソル非表示）なら再表示する（ResetSelection 経由で破棄される際の非表示残留防止）
-        if (wasNudging)
-        {
-            Cursor.ShowCursor(true);
-        }
     }
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
-    /// <remarks>nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。</remarks>
+    /// <remarks>
+    /// nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。<br/>
+    /// nudge の終了処理は <see cref="EndNudgeIfActive"/> に委譲する（重複排除）。
+    /// </remarks>
     public void SetSelection(Rect rect)
     {
-        bool wasNudging = NudgeActive;
+        EndNudgeIfActive();
         SelectionRect = rect;
         IsDragging = false;
         ActiveHandle = DragHandle.None;
+    }
+
+    /// <summary>nudge 中ならカーソルを再表示して nudge 状態を終了する。</summary>
+    /// <returns>nudge 中だった場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <see cref="Reset"/> / <see cref="SetSelection"/> で共通利用する（DRY）。<br/>
+    /// nudge 中（カーソル非表示）のまま状態を破棄・復元すると、カーソルが非表示のまま残るため再表示する。
+    /// </remarks>
+    private bool EndNudgeIfActive()
+    {
+        if (!NudgeActive) return false;
         NudgeActive = false;
         NudgeOffsetX = 0;
         NudgeOffsetY = 0;
-
-        // nudge 中（カーソル非表示）なら再表示する（外部からの復元時の非表示残留防止）
-        if (wasNudging)
-        {
-            Cursor.ShowCursor(true);
-        }
+        Cursor.ShowCursor(true);
+        return true;
     }
 
     /// <summary>指定座標がどのドラッグハンドルに当たるかを判定する。</summary>
     /// <param name="pos">判定する座標（ドメイン座標）。</param>
     /// <param name="hitRadius">ヒットテスト半径（ドメイン座標）。</param>
     /// <returns>ヒットしたハンドル種別。選択矩形が空の場合は常に <see cref="DragHandle.None"/>。</returns>
+    /// <remarks>
+    /// ハンドル位置は <see cref="SelectionGeometry.GetHandlePosition"/> から取得し、
+    /// 各ハンドルへの距離判定でヒットを確定する（ハンドル位置計算の DRY・二重所有の排除）。<br/>
+    /// 判定順は「角（8 方向）→ 矩形内（Move）」で、角が辺より優先される（従来の優先度を維持）。
+    /// </remarks>
     public DragHandle HitTest(Point pos, double hitRadius)
     {
         var r = SelectionRect;
         if (!HasSelection) return DragHandle.None;
 
-        if (SelectionGeometry.IsNear(pos, r.TopLeft, hitRadius)) return DragHandle.TopLeft;
-        if (SelectionGeometry.IsNear(pos, r.TopRight, hitRadius)) return DragHandle.TopRight;
-        if (SelectionGeometry.IsNear(pos, r.BottomLeft, hitRadius)) return DragHandle.BottomLeft;
-        if (SelectionGeometry.IsNear(pos, r.BottomRight, hitRadius)) return DragHandle.BottomRight;
-        if (SelectionGeometry.IsNear(pos, new Point(r.Center.X, r.Top), hitRadius)) return DragHandle.TopCenter;
-        if (SelectionGeometry.IsNear(pos, new Point(r.Center.X, r.Bottom), hitRadius)) return DragHandle.BottomCenter;
-        if (SelectionGeometry.IsNear(pos, new Point(r.Left, r.Center.Y), hitRadius)) return DragHandle.MiddleLeft;
-        if (SelectionGeometry.IsNear(pos, new Point(r.Right, r.Center.Y), hitRadius)) return DragHandle.MiddleRight;
+        // 8 方向のハンドル位置を列挙してヒット判定する（角優先 → 辺 → Move の順）
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.TopLeft), hitRadius)) return DragHandle.TopLeft;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.TopRight), hitRadius)) return DragHandle.TopRight;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.BottomLeft), hitRadius)) return DragHandle.BottomLeft;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.BottomRight), hitRadius)) return DragHandle.BottomRight;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.TopCenter), hitRadius)) return DragHandle.TopCenter;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.BottomCenter), hitRadius)) return DragHandle.BottomCenter;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.MiddleLeft), hitRadius)) return DragHandle.MiddleLeft;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.MiddleRight), hitRadius)) return DragHandle.MiddleRight;
         if (r.Contains(pos)) return DragHandle.Move;
         return DragHandle.None;
     }
@@ -202,7 +212,6 @@ internal sealed class DragRectState
 
     /// <summary>ドラッグ中のマウス移動を処理する。</summary>
     /// <param name="currentPos">現在のマウス位置（ドメイン座標）。</param>
-    /// <param name="hitRadius">ヒットテスト半径（ドメイン座標）。</param>
     /// <param name="minSize">選択矩形の最小サイズ。</param>
     /// <param name="clampToBounds">ドメイン境界内にクリップするかどうか。</param>
     /// <remarks>
@@ -211,9 +220,9 @@ internal sealed class DragRectState
     /// - ハンドル変形: 固定角を動かさず、動く辺のみ境界内に制限。<br/>
     /// - 移動（Move）: 矩形全体が境界内に収まるようにシフト。<br/>
     /// </remarks>
-    public void UpdateDrag(Point currentPos, double hitRadius, double minSize, bool clampToBounds)
+    public void UpdateDrag(Point currentPos, double minSize, bool clampToBounds)
     {
-        var bounds = clampToBounds && Port.Bounds is { } size ? new Rect(0, 0, size.Width, size.Height) : (Rect?)null;
+        var bounds = GetBoundsRect(clampToBounds);
 
         if (ActiveHandle != DragHandle.None)
         {
@@ -233,6 +242,15 @@ internal sealed class DragRectState
         }
         LastMousePosition = currentPos;
     }
+
+    /// <summary>ドメイン境界の矩形を取得する（クリップ有効時のみ）。</summary>
+    /// <param name="clampToBounds">ドメイン境界内にクリップするかどうか。</param>
+    /// <returns>ドメイン境界の矩形。クリップ無効または境界未設定（null）の場合は null。</returns>
+    /// <remarks>
+    /// <see cref="UpdateDrag"/> / <see cref="Nudge"/> で共通利用する（境界 Rect 生成の重複排除）。
+    /// </remarks>
+    private Rect? GetBoundsRect(bool clampToBounds)
+        => clampToBounds && Port.Bounds is { } size ? new Rect(0, 0, size.Width, size.Height) : null;
 
     /// <summary>ドラッグを終了する。</summary>
     public void EndDrag()
@@ -255,7 +273,7 @@ internal sealed class DragRectState
     /// </remarks>
     public void Nudge(double dx, double dy, double minSize, bool clampToBounds)
     {
-        var bounds = clampToBounds && Port.Bounds is { } size ? new Rect(0, 0, size.Width, size.Height) : (Rect?)null;
+        var bounds = GetBoundsRect(clampToBounds);
 
         if (ActiveHandle != DragHandle.None)
         {
@@ -407,10 +425,13 @@ internal sealed class DragRectState
         double y1 = Math.Min(t, b);
         double y2 = Math.Max(t, b);
 
-        var m = Math.Max(minSize, 1.0);
+        var m = Math.Max(minSize, MinSelectionSizeLowerBound);
         if (x2 - x1 < m) x2 = x1 + m;
         if (y2 - y1 < m) y2 = y1 + m;
 
         return new Rect(x1, y1, x2 - x1, y2 - y1);
     }
+
+    /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>
+    private const double MinSelectionSizeLowerBound = 1.0;
 }
