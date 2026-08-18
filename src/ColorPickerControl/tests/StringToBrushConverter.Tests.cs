@@ -24,6 +24,32 @@ public class StringToBrushConverterTests
     }
 
     [Fact]
+    public void Convert_同一入力はキャッシュされた同一インスタンスを返す()
+    {
+        // Flyweight キャッシュにより、同一入力は生成済みブラシを共有する（無駄な生成の排除）
+        var first = s_converter.Convert("Red", typeof(IBrush), null, CultureInfo.InvariantCulture);
+        var second = s_converter.Convert("Red", typeof(IBrush), null, CultureInfo.InvariantCulture);
+
+        Assert.Same(first, second);
+    }
+
+    [Fact]
+    public void Convert_キャッシュ容量超過後も正しく変換される()
+    {
+        // 容量（BrushCacheCapacity）を超える個別の入力でキャッシュを溢れさせ、
+        // 全クリア後も正しく変換できることを検証する（無制限増加の防止と正しさの両立）
+        for (var i = 0; i < StringToBrushConverter.BrushCacheCapacity + 1; i++)
+        {
+            var r = s_converter.Convert($"#{i:X6}", typeof(IBrush), null, CultureInfo.InvariantCulture);
+            Assert.IsType<SolidColorBrush>(r);
+        }
+
+        var result = s_converter.Convert("#123456", typeof(IBrush), null, CultureInfo.InvariantCulture);
+        var brush = Assert.IsType<SolidColorBrush>(result);
+        Assert.Equal(Color.FromArgb(255, 0x12, 0x34, 0x56), brush.Color);
+    }
+
+    [Fact]
     public void Convert_16進コードはSolidColorBrushを返す()
     {
         var result = s_converter.Convert("#00FF00", typeof(IBrush), null, CultureInfo.InvariantCulture);

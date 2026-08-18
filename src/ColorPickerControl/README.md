@@ -133,16 +133,22 @@ dotnet run --project sample/ColorPickerControl.Sample.csproj
 
 ## 11. アーキテクチャ
 
-公開 API（公開プロパティ・StyledProperty・公開 API 一覧）は `src/ColorPicker.axaml.cs`（XAML コードビハインド）に集約します。
-入力イベント処理・Flyout・テーマ管理・バリデーションも同ファイルの非公開メンバー（private / internal）として隠蔽し、ファイル分割による無理な分離を避けます。
+公開 API（公開プロパティ・StyledProperty）は `src/ColorPicker.axaml.cs`（XAML コードビハインド）に集約します。
+関心事ごとに専用クラスへ委譲し、単一責任（SRP）と一方向依存を維持します。
 
-- `ColorPicker.axaml.cs`: 公開 API（StyledProperty・公開プロパティ・公開 API 一覧）＋ 非公開実装（入力イベント・Flyout・テーマ管理・バリデーション）
+- `ColorPicker.axaml.cs`: 公開 API（StyledProperty・公開プロパティ）＋ イベント処理 ＋ バリデーション状態
 - `ColorPicker.axaml`: UI レイアウト（ComboBox + スウォッチ + Button）
+- `ColorPickerFlyoutFactory.cs`: カラーピッカー Flyout の構築（Simple Factory パターン）
+- `ColorViewThemeManager.cs`: ColorView テーマの自動適用（ホスト明示指定を優先）
+- `ColorValidator.cs`: 色文字列の妥当性検証
+- `TextBoxSelectionHelper.cs`: ビジュアルツリー内の TextBox 検索と選択解除
 - `ColorSortMode.cs`: 公開 enum（並び順）
-- `StringToBrushConverter.cs`: 公開コンバーター（色 → Brush）
+- `StringToBrushConverter.cs`: 公開コンバーター（色 → Brush。Flyweight キャッシュ）
+- `ColorDisplayConverter.cs`: 公開コンバーター（保存値 ↔ 表示テキスト）
+- `ColorString.cs`: 公開静的ユーティリティ（色文字列の解析・整形・正規化。O(1) 色名検索）
 - `ColorEntry.cs`: 色一覧データ（internal）
 
-依存方向は**一方向の階層構造**（コントロール → ドメイン（ColorEntry / コンバーター））で、双方向依存・内部公開・具象依存を解消します。
+依存方向は**一方向の階層構造**（コントロール → 生成/検証 → ドメイン（ColorString / ColorEntry / コンバーター））で、双方向依存・内部公開・具象依存を解消します。
 
 ## 12. プロジェクト構成
 
@@ -151,10 +157,17 @@ ColorPickerControl/
 ├── src/
 │   ├── ColorPickerControl.csproj
 │   ├── ColorPicker.axaml          # 公開コントロール（UIレイアウト）
-│   ├── ColorPicker.axaml.cs       # コードビハインド（公開 API 一覧・StyledProperty・公開プロパティ・非公開実装を単一ファイルに集約）
+│   ├── ColorPicker.axaml.cs       # コードビハインド（公開 API・StyledProperty・イベント処理・バリデーション状態）
+│   ├── ColorPickerFlyoutFactory.cs# カラーピッカー Flyout 構築（Simple Factory）
+│   ├── ColorViewThemeManager.cs   # ColorView テーマの自動適用
+│   ├── ColorValidator.cs          # 色文字列の妥当性検証
+│   ├── TextBoxSelectionHelper.cs  # TextBox 検索とテキスト選択解除
 │   ├── ColorSortMode.cs           # 並び順 enum（公開）
-│   ├── StringToBrushConverter.cs  # 色→ブラシコンバーター（公開）
-│   └── ColorEntry.cs              # 色名レコード・全色一覧（internal）
+│   ├── StringToBrushConverter.cs  # 色→ブラシコンバーター（公開・Flyweight キャッシュ）
+│   ├── ColorDisplayConverter.cs   # 保存値↔表示テキスト変換（公開）
+│   ├── ColorString.cs             # 色文字列ユーティリティ（公開・O(1) 色名検索）
+│   ├── ColorEntry.cs              # 色名レコード・全色一覧（internal）
+│   └── Logging/                   # LoggerMessage ログ定義（internal）
 ├── sample/                        # サンプルアプリ（sample/README.md 参照）
 └── tests/                         # 単体テスト（行・ブランチ 100%）
 ```

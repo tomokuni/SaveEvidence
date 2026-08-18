@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
@@ -16,9 +17,32 @@ namespace Estable.AvaloniaUI.ColorPicker;
 /// **利用例（XAML）**:<br/>
 /// リソース定義: <c>&lt;cp:StringToBrushConverter x:Key="StringToBrushConverter"/&gt;</c><br/>
 /// バインド: <c>Background="{Binding SelectedColor, Converter={StaticResource StringToBrushConverter}}"</c><br/>
+/// <br/>
+/// **適用パターン**: Flyweight（解析済み色の <see cref="SolidColorBrush"/> をキャッシュして再利用）。<br/>
+/// <br/>
+/// **最適化施策**:<br/>
+/// - バインド更新（キーストローク毎）に新しい Brush を生成する従来実装を排除し、<br/>
+///   <see cref="ConcurrentDictionary{TKey, TValue}"/> で入力文字列ごとに 1 つの Brush を共有する<br/>
+///   （SolidColorBrush は不変オブジェクトのため共有は安全。未使用ブラシの GC 負荷と生成コストを削減）。<br/>
+/// - キャッシュを先に引き、ヒット時は <see cref="ColorString.TryParse"/> を呼ばずに既存ブラシを返す<br/>
+///   （キャッシュヒット時の解析を排除）。<br/>
+/// - キャッシュの容量管理（超過時全クリア）は <see cref="ColorString.AddWithCapacityLimit{T}"/> に委譲する<br/>
+///   （容量管理ロジックの単一所有。既存ブラシはバインドが参照を保持するため、クリアしても表示は維持される）。
 /// </remarks>
 public sealed class StringToBrushConverter : IValueConverter
 {
+    /// <summary>解析済み入力文字列 → ブラシ のキャッシュ（Flyweight。同一入力のブラシ生成を再利用）。</summary>
+    /// <remarks>
+    /// キーは入力文字列そのもの（"Red" と "#FFFF0000" は別エントリ）。<br/>
+    /// キャッシュは静的であるため、複数インスタンス・複数バインディングで共有される。<br/>
+    /// 容量超過時は <see cref="BrushCacheCapacity"/> を上限に全クリアする（<see cref="ColorString.AddWithCapacityLimit{T}"/> に委譲）。
+    /// </remarks>
+    private static readonly ConcurrentDictionary<string, SolidColorBrush> s_brushCache = new();
+
+    /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
+    /// <remarks>テスト（ColorPickerControl.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
+    internal const int BrushCacheCapacity = 256;
+
     /// <summary>色名 → IBrush に変換する。</summary>
     /// <param name="value">変換元の値。色と不透明度を統合した文字列（例: "Red", "Red+50%", "#336699+75%"）。</param>
     /// <param name="targetType">変換先の型。</param>
@@ -26,17 +50,28 @@ public sealed class StringToBrushConverter : IValueConverter
     /// <param name="culture">カルチャ情報（未使用）。</param>
     /// <returns>変換結果の <see cref="IBrush"/>。解釈できない場合は <see cref="Brushes.Transparent"/>。</returns>
     /// <remarks>
-    /// <see cref="ColorString.TryParse(string, out Color, out double)"/> で解析可能な文字列のみ
-    /// <see cref="SolidColorBrush"/> を生成する（不透明度はアルファへ合成される）。<br/>
+    /// 処理フロー:<br/>
+    /// 1. キャッシュを引き、ヒットした場合は解析せず既存ブラシを返す。<br/>
+    /// 2. <see cref="ColorString.TryParse(string, out Color, out double)"/> で解析可能な文字列のみ<br/>
+    ///    <see cref="SolidColorBrush"/> を生成し、<see cref="ColorString.AddWithCapacityLimit{T}"/> で登録する<br/>
+    ///    （不透明度はアルファへ合成される。容量超過時は自動で全クリアされる）。
     /// </remarks>
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is string name && !string.IsNullOrEmpty(name))
+        if (value is string { Length: > 0 } text)
         {
-            // 色 + 不透明度（+n%）の形式から Color を解析（不透明度はアルファへ合成）
-            if (ColorString.TryParse(name, out var color, out _))
+            // キャッシュ優先（ヒット時は解析せず既存ブラシを返す）
+            if (s_brushCache.TryGetValue(text, out var cached))
             {
-                return new SolidColorBrush(color);
+                return cached;
+            }
+
+            if (ColorString.TryParse(text, out var color, out _))
+            {
+                // 容量管理は ColorString の共通ヘルパーに委譲する（容量管理ロジックの単一所有）
+                var brush = new SolidColorBrush(color);
+                ColorString.AddWithCapacityLimit(s_brushCache, BrushCacheCapacity, text, brush);
+                return brush;
             }
         }
 

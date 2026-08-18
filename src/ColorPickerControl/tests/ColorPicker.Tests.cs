@@ -5,7 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -13,7 +12,12 @@ using Xunit;
 
 namespace Estable.AvaloniaUI.ColorPicker.Tests;
 
-/// <summary><see cref="ColorPickerControl"/> の単体テスト（Facade の公開プロパティ・バリデーション・ソート・イベント）。</summary>
+/// <summary><see cref="ColorPickerControl"/> の単体テスト（公開プロパティ・バリデーション・ソート・イベント）。</summary>
+/// <remarks>
+/// Flyout 構築（<see cref="ColorPickerFlyoutFactory"/>）とテーマ管理（<see cref="ColorViewThemeManager"/>）は
+/// 各クラスのテストファイルで検証する。<br/>
+/// 純粋演算テストは <c>[Fact]</c> で並列実行し、ヘッドレス必須のテストのみ <c>[AvaloniaFact]</c> で直列実行する。
+/// </remarks>
 [Collection("AvaloniaHeadless")]
 public class ColorPickerTests
 {
@@ -251,19 +255,6 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void ComboBoxPadding変更_ComboBox未初期化なら何もしない()
-    {
-        var control = CreateControl();
-        // _comboBox を null にして防御分岐をカバーする（通常はコンストラクタで初期化されるため到達しない）
-        typeof(ColorPickerControl).GetField("_comboBox",
-            BindingFlags.Instance | BindingFlags.NonPublic)!
-            .SetValue(control, null);
-
-        // 例外なく無視される
-        control.ComboBoxPadding = new Thickness(4);
-    }
-
-    [AvaloniaFact]
     public void ComboBoxMargin変更でComboBoxのMarginが設定される()
     {
         var control = CreateControl();
@@ -491,133 +482,5 @@ public class ColorPickerTests
 
         var combo = control._comboBox;
         Assert.DoesNotContain("validation-error", combo.Classes);
-    }
-
-    // ====================================================================
-    // カラーピッカー Flyout（CreateColorPickerFlyout）
-    // ====================================================================
-
-    [AvaloniaFact]
-    public void CreateColorPickerFlyout_OKボタンで色が16進に変換されて反映される()
-    {
-        var control = CreateControl();
-        control.SelectedColor = "#FF8800";
-
-        var flyout = control.CreateColorPickerFlyout();
-        var okButton = FindButtonByContent(flyout.Content, "OK");
-        Assert.NotNull(okButton);
-
-        // ColorView の色を変更してから OK を押す → SelectedColor が #AARRGGBB になる
-        var colorView = FindColorView(flyout.Content);
-        Assert.NotNull(colorView);
-        colorView!.Color = Color.FromRgb(0x12, 0x34, 0x56);
-        Dispatcher.UIThread.RunJobs();
-        var expected = colorView.Color;
-
-        okButton!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-
-        // 保存値はアルファを含む #AARRGGBB（アルファ先頭8桁）形式で、ColorView.Color と一致する
-        Assert.Matches("^#[0-9A-F]{8}$", control.SelectedColor);
-        Assert.True(Color.TryParse(control.SelectedColor, out var parsed));
-        Assert.Equal(expected, parsed);
-    }
-
-    [AvaloniaFact]
-    public void CreateColorPickerFlyout_アルファ付き色は8桁の16進に変換される()
-    {
-        var control = CreateControl();
-
-        var flyout = control.CreateColorPickerFlyout();
-        var okButton = FindButtonByContent(flyout.Content, "OK");
-        var colorView = FindColorView(flyout.Content);
-        Assert.NotNull(colorView);
-        // 半透明（A=128）。ColorView は HSV(float) 経由で色を保持するため
-        // アルファが僅かに量子化される場合がある（128 → 127 など）。
-        colorView!.Color = Color.FromArgb(128, 255, 0, 0);
-        Dispatcher.UIThread.RunJobs();
-        var expected = colorView.Color;
-
-        okButton!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-
-        // OK ボタンは ColorView.Color を #AARRGGBB（アルファ先頭8桁）へ変換して反映する
-        Assert.Matches("^#[0-9A-F]{8}$", control.SelectedColor);
-        Assert.True(Color.TryParse(control.SelectedColor, out var parsed));
-        Assert.Equal(expected, parsed);
-    }
-
-    [AvaloniaFact]
-    public void CreateColorPickerFlyout_キャンセルボタンでは色が変わらない()
-    {
-        var control = CreateControl();
-        control.SelectedColor = "Red";
-
-        var flyout = control.CreateColorPickerFlyout();
-        var cancelButton = FindButtonByContent(flyout.Content, "キャンセル");
-        Assert.NotNull(cancelButton);
-
-        cancelButton!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-
-        // 初期設定時に #AARRGGBB へ正規化された値のまま変化しない
-        Assert.Equal("#FFFF0000", control.SelectedColor);
-    }
-
-    [AvaloniaFact]
-    public void CreateColorPickerFlyout_SelectedColorが無効な場合は初期色が白になる()
-    {
-        var control = CreateControl();
-        control.SelectedColor = "NotAColor";
-
-        var flyout = control.CreateColorPickerFlyout();
-        var colorView = FindColorView(flyout.Content);
-
-        Assert.NotNull(colorView);
-        Assert.Equal(Colors.White, colorView!.Color);
-    }
-
-    [AvaloniaFact]
-    public void CreateColorPickerFlyout_SelectedColorが非空で解析不能な場合も白になる()
-    {
-        var control = CreateControl();
-        // 非空だが Color.TryParse に失敗する値（!IsNullOrWhiteSpace=true && TryParse=false の分岐）
-        control.SelectedColor = "#GGGGGG";
-
-        var flyout = control.CreateColorPickerFlyout();
-        var colorView = FindColorView(flyout.Content);
-
-        Assert.NotNull(colorView);
-        Assert.Equal(Colors.White, colorView!.Color);
-    }
-
-    /// <summary>Flyout の Content ツリーから指定テキストの Button を再帰検索する。</summary>
-    private static Button? FindButtonByContent(object? content, string text)
-    {
-        if (content is Button button && button.Content is string s && s == text) return button;
-        if (content is Panel panel)
-        {
-            foreach (var child in panel.Children)
-            {
-                var result = FindButtonByContent(child, text);
-                if (result is not null) return result;
-            }
-        }
-        return null;
-    }
-
-    /// <summary>Flyout の Content ツリーから ColorView を再帰検索する。</summary>
-    private static ColorView? FindColorView(object? content)
-    {
-        if (content is ColorView colorView) return colorView;
-        if (content is Panel panel)
-        {
-            foreach (var child in panel.Children)
-            {
-                var result = FindColorView(child);
-                if (result is not null) return result;
-            }
-        }
-        return null;
     }
 }

@@ -1,6 +1,7 @@
+using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
-using System.Text;
 using Avalonia.Media;
 
 namespace Estable.AvaloniaUI.ColorPicker;
@@ -16,7 +17,22 @@ namespace Estable.AvaloniaUI.ColorPicker;
 ///   - 不透明度が 100% 以外の場合: <c>{色}+{不透明度%}</c>（例: "Red+50%", "#336699+75%"）<br/>
 /// 入力は両形式（色名 / #RRGGBB / #AARRGGBB / +% 形式）を <see cref="TryParse"/> で受け付ける。<br/>
 /// 本形式は <see cref="ColorPickerControl.SelectedColor"/> の文字列仕様であり、<br/>
-/// ホストアプリ（設定の保存・反映）も本ユーティリティで解析できるよう public とする。
+/// ホストアプリ（設定の保存・反映）も本ユーティリティで解析できるよう public とする。<br/>
+/// <br/>
+/// **適用パターン**: Flyweight（色 → 色名 の逆引き辞書を事前構築し、検索を O(1) 化）。<br/>
+/// <br/>
+/// **最適化施策**:<br/>
+/// - 色名 → 色 の辞書に加えて、色 → 色名 の逆引き辞書（ARGB 完全一致 / RGB 一致）を静的構築時に事前生成する。<br/>
+///   ComboBox の入力はキーストローク毎に <see cref="ToDisplayText"/> が呼ばれるため、<br/>
+///   従来の全件走査（140 色 × 2 パス）を排除し O(1) 検索へ高速化した。<br/>
+/// - RGB 一致の逆引きは不透明（A=255）の色名を優先して登録する（White と Transparent の同 RGB 競合の解決）。<br/>
+/// - <see cref="TryParse"/> の解析結果を容量制限付きキャッシュで共有し、同一文字列の再解析を排除する。<br/>
+///   ComboBox の 1 入力（キーストローク）あたり最大 4 回呼ばれる解析を 1 回へ集約する。<br/>
+/// - <see cref="ToDisplayText"/> の表示テキストも容量制限付きキャッシュで共有し、<br/>
+///   整形（色名検索＋文字列補間）の毎回実行を排除する（バインド更新時の文字列生成コストを削減）。<br/>
+/// - <see cref="ToArgbHex(string?)"/> の正規化文字列も容量制限付きキャッシュで共有し、<br/>
+///   ComboBox の ConvertBack（キーストローク毎）で発生する 16進補間を排除する。<br/>
+/// - 16進整形は StringBuilder を使わず文字列補間（X2 書式）で行う（一時オブジェクトの削減）。
 /// </remarks>
 public static class ColorString
 {
@@ -24,18 +40,101 @@ public static class ColorString
     /// <remarks><see cref="Colors"/> の公開静的プロパティをリフレクションで列挙する（140 色）。</remarks>
     private static readonly IReadOnlyDictionary<string, Color> s_colorNames;
 
-    /// <summary>静的コンストラクタ。色名一覧を構築する。</summary>
+    /// <summary>色（ARGB 完全一致）→ 色名 の逆引き辞書（<see cref="FindColorName"/> の O(1) 検索用）。</summary>
+    private static readonly IReadOnlyDictionary<Color, string> s_exactNameByColor;
+
+    /// <summary>RGB 一致（アルファ無視）→ 色名 の逆引き辞書（同 RGB は不透明 A=255 を優先登録）。</summary>
+    private static readonly IReadOnlyDictionary<(byte R, byte G, byte B), string> s_nameByRgb;
+
+    /// <summary><see cref="TryParse"/> の解析結果キャッシュ（入力文字列 → 解析結果）。</summary>
     /// <remarks>
-    /// <see cref="Colors"/> の公開静的プロパティのうち <see cref="Color"/> 型のみを列挙する
-    /// （<see cref="ColorEntry"/> と同一のフィルタ方式。`is` 判定の防御分岐を作らない）。
+    /// ComboBox のテキスト入力はキーストローク毎に <see cref="TryParse"/> が複数回呼ばれるため、<br/>
+    /// 同一文字列の解析結果を共有して再解析を排除する（スレッドセーフ）。
     /// </remarks>
+    private static readonly ConcurrentDictionary<string, (bool Success, Color Color, double Opacity)> s_parseCache = new();
+
+    /// <summary>解析結果キャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
+    /// <remarks>テスト（ColorPickerControl.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
+    internal const int ParseCacheCapacity = 512;
+
+    /// <summary><see cref="ToDisplayText"/> の表示テキストキャッシュ（入力文字列 → 表示テキスト）。</summary>
+    /// <remarks>
+    /// ComboBox の表示バインドはキーストローク毎に <see cref="ToDisplayText"/> を呼ぶため、<br/>
+    /// 整形結果（色名検索＋文字列補間）を共有して毎回の文字列生成を排除する（スレッドセーフ）。
+    /// </remarks>
+    private static readonly ConcurrentDictionary<string, string> s_displayTextCache = new();
+
+    /// <summary>表示テキストキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
+    /// <remarks>テスト（ColorPickerControl.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
+    internal const int DisplayTextCacheCapacity = 512;
+
+    /// <summary><see cref="ToArgbHex(string?)"/> の正規化文字列キャッシュ（入力文字列 → #AARRGGBB）。</summary>
+    /// <remarks>
+    /// ComboBox の ConvertBack（キーストローク毎のバインド更新）が <see cref="ToArgbHex(string?)"/> を呼ぶため、<br/>
+    /// 正規化結果（16進補間）を共有して毎回の文字列生成を排除する（スレッドセーフ）。
+    /// </remarks>
+    private static readonly ConcurrentDictionary<string, string> s_normalizedCache = new();
+
+    /// <summary>正規化文字列キャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
+    /// <remarks>テスト（ColorPickerControl.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
+    internal const int NormalizedCacheCapacity = 512;
+
+    /// <summary>トリマーに <see cref="Colors"/> の静的プロパティがリフレクションで使用されることを伝える。</summary>
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Colors))]
     static ColorString()
     {
-        s_colorNames = typeof(Colors)
+        // Colors の公開静的プロパティのうち Color 型のみを列挙する
+        // （`is` 判定の防御分岐を作らず、PropertyType の完全一致でフィルタする）
+        var names = typeof(Colors)
             .GetProperties(BindingFlags.Public | BindingFlags.Static)
             .Where(p => p.PropertyType == typeof(Color))
             .ToDictionary(p => p.Name, p => (Color)p.GetValue(null)!, StringComparer.OrdinalIgnoreCase);
+
+        s_colorNames = names;
+        (s_exactNameByColor, s_nameByRgb) = BuildReverseLookups(names);
     }
+
+    /// <summary>色名辞書から色 → 色名 の逆引き辞書を構築する。</summary>
+    /// <param name="names">色名 → 色 の辞書。</param>
+    /// <returns>ARGB 完全一致の辞書と RGB 一致（アルファ無視）の辞書の組。</returns>
+    /// <remarks>
+    /// 純粋関数として分離し、テストから任意データで全分岐を検証できるようにする。<br/>
+    /// RGB 一致辞書は「不透明（A=255）を優先、両方不透明なら先勝ち、両方半透明なら先勝ち」で登録する。<br/>
+    /// テスト（ColorPickerControl.Tests）が全分岐（新規 RGB / 不透明優先 / 先勝ち）を検証するため internal 公開する。
+    /// </remarks>
+    internal static (Dictionary<Color, string> Exact, Dictionary<(byte R, byte G, byte B), string> Rgb) BuildReverseLookups(
+        IReadOnlyDictionary<string, Color> names)
+    {
+        var exact = new Dictionary<Color, string>(names.Count);
+        var rgb = new Dictionary<(byte R, byte G, byte B), string>(names.Count);
+
+        foreach (var (name, color) in names)
+        {
+            // ARGB 完全一致は最初に見つかった色名を保持する（TryAdd で重複を安全に無視）
+            exact.TryAdd(color, name);
+
+            var key = (color.R, color.G, color.B);
+            if (rgb.TryGetValue(key, out var existingName))
+            {
+                var existingIsOpaque = names[existingName].A == 255;
+                if (existingIsOpaque || color.A != 255)
+                {
+                    // 既存が不透明（先勝ち）または新規が半透明（既存を維持）の場合は登録しない
+                    continue;
+                }
+            }
+            rgb[key] = name;
+        }
+
+        return (exact, rgb);
+    }
+
+    /// <summary>色名（英名）の辞書（<see cref="Colors"/> の全色名 → 色）。</summary>
+    /// <remarks>
+    /// <see cref="ColorEntry"/> が同一の色一覧を再利用するための内部公開（リフレクション走査の重複排除）。<br/>
+    /// キーは大文字小文字を無視する比較（OrdinalIgnoreCase）で保持される。
+    /// </remarks>
+    internal static IReadOnlyDictionary<string, Color> ColorNames => s_colorNames;
 
     /// <summary>指定された色名が <see cref="Colors"/> に定義されているか判定する。</summary>
     /// <param name="name">色名（例: "Red"）。大文字小文字は無視。</param>
@@ -58,6 +157,35 @@ public static class ColorString
         color = default;
         opacity = 1.0;
         if (string.IsNullOrWhiteSpace(text)) return false;
+
+        // 解析結果キャッシュ（キーストローク毎の同一文字列の再解析を排除）
+        if (s_parseCache.TryGetValue(text, out var cached))
+        {
+            color = cached.Color;
+            opacity = cached.Opacity;
+            return cached.Success;
+        }
+
+        var success = TryParseCore(text, out color, out opacity);
+        AddWithCapacityLimit(s_parseCache, ParseCacheCapacity, text, (success, color, opacity));
+        return success;
+    }
+
+    /// <summary>色文字列を実際に解析する（キャッシュなしの解析本体）。</summary>
+    /// <param name="text">解析対象の文字列（null / 空白は呼び出し元で除外済み）。</param>
+    /// <param name="color">解析結果の色（アルファは <paramref name="opacity"/> に応じて 0〜255 に合成される）。</param>
+    /// <param name="opacity">解析結果の不透明度（0.0〜1.0）。</param>
+    /// <returns>解析に成功した場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <see cref="TryParse"/> からキャッシュを経由して呼ばれる純粋な解析処理。<br/>
+    /// 不透明度部分（<c>+{n}%</c>）が省略された場合は不透明度 1.0 として扱う。<br/>
+    /// 色は <see cref="Color.TryParse(string, out Color)"/> で解釈する（色名・16進・アルファ付き16進）。<br/>
+    /// <c>+{n}%</c> が指定された場合、色のアルファを不透明度へ合成する（例: "Red+50%" → <c>#80FF0000</c>）。
+    /// </remarks>
+    private static bool TryParseCore(string text, out Color color, out double opacity)
+    {
+        color = default;
+        opacity = 1.0;
 
         // "+{n}%" の不透明度部分を分離する
         var plusIndex = text.LastIndexOf('+');
@@ -103,11 +231,23 @@ public static class ColorString
     /// <returns>表示用テキスト（例: "Red+50%", "Red", "#336699+75%"）。解析できない場合は入力をそのまま返す。</returns>
     /// <remarks>
     /// ComboBox などの画面表示に使用する。不透明度は <c>+{n}%</c> 形式で表し、1.0（100%）の場合は省略する。<br/>
-    /// <c>+{n}%</c> 形式を含まない入力（#AARRGGBB 等）はアルファ成分を不透明度として解釈する。
+    /// <c>+{n}%</c> 形式を含まない入力（#AARRGGBB 等）はアルファ成分を不透明度として解釈する。<br/>
+    /// 処理フロー:<br/>
+    /// 1. 表示テキストキャッシュを引き、ヒットした場合は即座に返す（整形の毎回実行を排除）。<br/>
+    /// 2. <see cref="TryParse"/> で解析し、失敗時は入力をそのまま返す（キャッシュしない）。<br/>
+    /// 3. 不透明度を確定して <see cref="Format"/> で整形し、キャッシュへ登録して返す。<br/>
+    /// 容量超過時はキャッシュを全クリアしてから登録する。
     /// </remarks>
     public static string ToDisplayText(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return text ?? string.Empty;
+
+        // 表示テキストキャッシュ（バインド更新毎の整形を排除）
+        if (s_displayTextCache.TryGetValue(text, out var cached))
+        {
+            return cached;
+        }
+
         if (!TryParse(text, out var color, out var opacity)) return text;
 
         // 不透明度が明示指定されていない場合（+{n}% なし）は、アルファ成分を不透明度として扱う
@@ -115,7 +255,10 @@ public static class ColorString
         {
             opacity = color.A / 255.0;
         }
-        return Format(color, opacity);
+
+        var displayText = Format(color, opacity);
+        AddWithCapacityLimit(s_displayTextCache, DisplayTextCacheCapacity, text, displayText);
+        return displayText;
     }
 
     /// <summary>任意の色文字列（色名 / #RRGGBB / #AARRGGBB / +% 形式）を <c>#AARRGGBB</c>（アルファ先頭16進）へ正規化する。</summary>
@@ -123,13 +266,48 @@ public static class ColorString
     /// <returns><c>#AARRGGBB</c> 形式の保存値（例: "#80FF0000"）。解析できない場合は入力をそのまま返す。</returns>
     /// <remarks>
     /// Settings などの保存値は Avalonia 標準の <c>#AARRGGBB</c>（アルファ先頭）とする。<br/>
-    /// 色名・#RRGGBB はアルファ 255（不透明）へ、<c>+{n}%</c> は指定された不透明度へ正規化する。
+    /// 色名・#RRGGBB はアルファ 255（不透明）へ、<c>+{n}%</c> は指定された不透明度へ正規化する。<br/>
+    /// 処理フロー:<br/>
+    /// 1. 正規化文字列キャッシュを引き、ヒットした場合は即座に返す（16進補間の毎回実行を排除）。<br/>
+    /// 2. <see cref="TryParse"/> で解析し、失敗時は入力をそのまま返す（キャッシュしない）。<br/>
+    /// 3. <see cref="ToArgbHex(Color)"/> で正規化し、キャッシュへ登録して返す。<br/>
+    /// 容量超過時はキャッシュを全クリアしてから登録する。
     /// </remarks>
     public static string ToArgbHex(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return text ?? string.Empty;
+
+        // 正規化文字列キャッシュ（ConvertBack のキーストローク毎の補間を排除）
+        if (s_normalizedCache.TryGetValue(text, out var cached))
+        {
+            return cached;
+        }
+
         if (!TryParse(text, out var color, out _)) return text;
-        return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+
+        var normalized = ToArgbHex(color);
+        AddWithCapacityLimit(s_normalizedCache, NormalizedCacheCapacity, text, normalized);
+        return normalized;
+    }
+
+    /// <summary>容量制限付きキャッシュへ値を登録する（超過時は全クリアしてから登録）。</summary>
+    /// <param name="cache">対象キャッシュ。</param>
+    /// <param name="capacity">キャッシュの最大容量。</param>
+    /// <param name="key">登録キー。</param>
+    /// <param name="value">登録値。</param>
+    /// <remarks>
+    /// 容量超過時は全クリアして無制限の増加を防ぐ（同一文字列は直後に再キャッシュされる）。<br/>
+    /// <see cref="ColorString"/> の 3 キャッシュ（解析 / 表示テキスト / 正規化）と
+    /// <see cref="StringToBrushConverter"/> のブラシキャッシュで共有する（容量管理の単一所有・DRY）。
+    /// </remarks>
+    internal static void AddWithCapacityLimit<T>(
+        ConcurrentDictionary<string, T> cache, int capacity, string key, T value)
+    {
+        if (cache.Count >= capacity)
+        {
+            cache.Clear();
+        }
+        cache[key] = value;
     }
 
     /// <summary>色を <c>#AARRGGBB</c>（アルファ先頭・常時アルファ含む）形式へ変換する。</summary>
@@ -147,42 +325,20 @@ public static class ColorString
     /// <param name="color">色。</param>
     /// <returns>一致する色名。未定義の場合は null。</returns>
     /// <remarks>
-    /// アルファも含めて完全一致する色名を最優先する。<br/>
-    /// 完全一致が無い場合は RGB のみで一致する色名を返す（同 RGB で複数ある場合は
-    /// 不透明（A=255）の色名を優先。例: White と Transparent は同 RGB のため、
-    /// 半透明の白は "White" と表示される）。<br/>
+    /// アルファも含めて完全一致する色名を最優先する（<see cref="s_exactNameByColor"/> の O(1) 検索）。<br/>
+    /// 完全一致が無い場合は RGB のみで一致する色名を返す（<see cref="s_nameByRgb"/>。同 RGB で複数ある場合は
+    /// 不透明（A=255）の色名が優先登録されている。例: White と Transparent は同 RGB のため、
+    /// 半透明の白は "White" と表示される）。
     /// </remarks>
     private static string? FindColorName(Color color)
     {
-        // アルファも含めて完全一致する色名を優先する
-        foreach (var (name, c) in s_colorNames)
-        {
-            if (c == color) return name;
-        }
-
-        // RGB のみで一致する色名を探す（不透明（A=255）の色名を優先）
-        string? fallback = null;
-        foreach (var (name, c) in s_colorNames)
-        {
-            if (c.R == color.R && c.G == color.G && c.B == color.B)
-            {
-                if (c.A == 255) return name;
-                fallback ??= name;
-            }
-        }
-        return fallback;
+        if (s_exactNameByColor.TryGetValue(color, out var exact)) return exact;
+        return s_nameByRgb.TryGetValue((color.R, color.G, color.B), out var rgb) ? rgb : null;
     }
 
     /// <summary>色を <c>#RRGGBB</c>（アルファなし16進）へ変換する。</summary>
     /// <param name="color">色。</param>
     /// <returns><c>#RRGGBB</c> 形式の文字列。</returns>
     private static string ToHex(Color color)
-    {
-        var sb = new StringBuilder(7);
-        sb.Append('#');
-        sb.Append(color.R.ToString("X2", CultureInfo.InvariantCulture));
-        sb.Append(color.G.ToString("X2", CultureInfo.InvariantCulture));
-        sb.Append(color.B.ToString("X2", CultureInfo.InvariantCulture));
-        return sb.ToString();
-    }
+        => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 }

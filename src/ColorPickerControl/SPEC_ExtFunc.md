@@ -37,9 +37,8 @@
   - [7. ログ](#7-ログ)
     - [7.1 LogLevel 設定ポリシー](#71-loglevel-設定ポリシー)
     - [7.2 ログ定義一覧](#72-ログ定義一覧)
-  - [8. 最適化施策](#8-最適化施策)
-  - [9. 制限事項](#9-制限事項)
-  - [10. テスト](#10-テスト)
+  - [8. 制限事項](#8-制限事項)
+  - [9. テスト](#9-テスト)
 
 ---
 
@@ -130,9 +129,6 @@ if (colorPicker.HasValidationError)
     var reason = colorPicker.ValidationErrorMessage; // "無効な色コードです。"
 }
 ```
-
-> **注**: `ColorEntry`（ドロップダウンの色一覧データ）は internal 型のため外部から直接利用できません。
-> 色一覧はコントロール内部で自動生成されます。
 
 ## 5. 公開API
 
@@ -278,9 +274,10 @@ ComboBox の `Text` プロパティとのバインドに使用する（`Selected
 `<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />` を
 指定しなくても、Flyout 内の ColorView が正しく描画されます。
 
-- ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます（`EnsureColorViewTheme` が毎回判定）。
-- 未指定の場合のみ、内包テーマ（Fluent.xaml）をデフォルトとして一度だけ自動適用します。
+- ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます（`ColorViewThemeManager.EnsureApplied` が明示指定を検出）。
+- 未指定の場合のみ、内包テーマ（Fluent.xaml）をデフォルトとして一度だけ自動適用します（適用済みフラグによる二重適用防止）。
 - 適用対象はアプリケーションのグローバル `Styles`（Flyout / Popup はオーバーレイレイヤーのため、コントロールのローカル Styles では伝播しないため）。
+- テーマ適用の管理は `ColorViewThemeManager`（internal）が担当します。
 
 ## 7. ログ
 
@@ -317,24 +314,14 @@ ComboBox の `Text` プロパティとのバインドに使用する（`Selected
 | `Debug` | `ColorPickerLog.LogOpenFlyout` | カラーピッカー Flyout を開く（現在の選択色） |
 | `Debug` | `ColorPickerLog.LogFlyoutOk` | Flyout の OK で色確定 |
 | `Debug` | `ColorPickerLog.LogFlyoutCancel` | Flyout のキャンセル |
-| `Debug` | `ColorPickerLog.LogSettingChanged` | 設定値変更（変更前後） |
 | `Trace` | `ColorPickerLog.LogLostFocus` | フォーカス喪失（色と有効性） |
 
-## 8. 最適化施策
-
-| 施策 | 内容 |
-| --- | --- |
-| 色一覧の静的キャッシュ | `ColorEntry` の全色一覧（`All` / `AllByHue`）は静的コンストラクタで一度だけ構築し、以降は参照を返す（生成コストなし） |
-| ColorView テーマの一度だけ適用 | `EnsureColorViewThemeCore` は `s_colorViewThemeApplied` フラグで内包テーマの適用を一度だけに制限（複数インスタンスでの重複ロード防止） |
-| バリデーションの軽量判定 | `IsValidColor` は `Color.TryParse` の直接判定（文字列パースのみ。ブラシ生成なし） |
-| スウォッチ用 Padding 調整の最小化 | `OnComboBoxTemplateApplied` で一度だけ購読解除し、以後の調整を防止（テンプレート再適用時の二重加算なし） |
-
-## 9. 制限事項
+## 8. 制限事項
 
 - `ColorView` を Flyout で表示するため、ヘッドレス環境（テスト）ではポップアップ表示ができない場合があります。
 - 色一覧は `Avalonia.Media.Colors` の静的プロパティをリフレクションで取得して構築します（トリマー対策として `DynamicDependency` を付与済み）。
 
-## 10. テスト
+## 9. テスト
 
 `tests/` プロジェクト（xUnit v3 + Avalonia.Headless）で、行・ブランチカバレッジ 100% を達成しています。
 

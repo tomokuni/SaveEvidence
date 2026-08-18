@@ -167,6 +167,44 @@ public class ColorStringTests
     }
 
     // ====================================================================
+    // TryParse キャッシュ（同一文字列の再解析排除）
+    // ====================================================================
+
+    [Fact]
+    public void TryParse_同一文字列はキャッシュから同じ結果を返す()
+    {
+        Assert.True(ColorString.TryParse("Red+50%", out var first, out var firstOpacity));
+        Assert.True(ColorString.TryParse("Red+50%", out var second, out var secondOpacity));
+
+        // キャッシュヒットにより 2 回目も同じ解析結果が返る（再解析なし）
+        Assert.Equal(first, second);
+        Assert.Equal(firstOpacity, secondOpacity);
+    }
+
+    [Fact]
+    public void TryParse_失敗結果もキャッシュされる()
+    {
+        Assert.False(ColorString.TryParse("NotAColor", out _, out _));
+        Assert.False(ColorString.TryParse("NotAColor", out _, out _));
+    }
+
+    [Fact]
+    public void TryParse_キャッシュ容量超過でクリアされても正しく解析される()
+    {
+        // 容量（ParseCacheCapacity）を超える個別の入力でキャッシュを溢れさせ、
+        // 全クリア後も同じ結果が返ることを検証する（無制限増加の防止と正しさの両立）
+        for (var i = 0; i < ColorString.ParseCacheCapacity + 1; i++)
+        {
+            Assert.True(ColorString.TryParse($"#{i:X6}", out _, out _));
+        }
+
+        // クリア後に再解析しても同じ結果になる
+        Assert.True(ColorString.TryParse("#123456", out var color, out var opacity));
+        Assert.Equal(Color.FromArgb(255, 0x12, 0x34, 0x56), color);
+        Assert.Equal(1.0, opacity);
+    }
+
+    // ====================================================================
     // Format
     // ====================================================================
 
@@ -258,10 +296,14 @@ public class ColorStringTests
         Assert.Equal("", ColorString.ToDisplayText(""));
     }
 
-    [Fact]
-    public void ToDisplayText_解析できない値はそのまま返す()
+    [Theory]
+    [InlineData("NotAColor")]
+    [InlineData("#GGGGGG")]
+    public void 変換_解析できない値はそのまま返す(string input)
     {
-        Assert.Equal("NotAColor", ColorString.ToDisplayText("NotAColor"));
+        // 解析できない値は、表示変換（ToDisplayText）と正規化（ToArgbHex）の両方でそのまま返す
+        Assert.Equal(input, ColorString.ToDisplayText(input));
+        Assert.Equal(input, ColorString.ToArgbHex(input));
     }
 
     [Fact]
@@ -275,6 +317,41 @@ public class ColorStringTests
     {
         // White と Transparent は同 RGB のため、RGB 一致では不透明（A=255）の色名を優先する
         Assert.Equal("White+50%", ColorString.ToDisplayText("#80FFFFFF"));
+    }
+
+    // ====================================================================
+    // ToDisplayText キャッシュ（同一文字列の再整形排除）
+    // ====================================================================
+
+    [Fact]
+    public void ToDisplayText_同一文字列はキャッシュから同じ結果を返す()
+    {
+        var first = ColorString.ToDisplayText("#80FF0000");
+        var second = ColorString.ToDisplayText("#80FF0000");
+
+        // 表示テキストキャッシュにより 2 回目も同じ整形結果が返る（再整形なし）
+        Assert.Equal(first, second);
+        Assert.Equal("Red+50%", second);
+    }
+
+    [Fact]
+    public void ToDisplayText_解析できない値はキャッシュされずそのまま返す()
+    {
+        Assert.Equal("NotAColor", ColorString.ToDisplayText("NotAColor"));
+        Assert.Equal("NotAColor", ColorString.ToDisplayText("NotAColor"));
+    }
+
+    [Fact]
+    public void ToDisplayText_キャッシュ容量超過でクリアされても正しく整形される()
+    {
+        // 容量（DisplayTextCacheCapacity）を超える個別の入力でキャッシュを溢れさせ、
+        // 全クリア後も同じ結果が返ることを検証する（無制限増加の防止と正しさの両立）
+        for (var i = 0; i < ColorString.DisplayTextCacheCapacity + 1; i++)
+        {
+            ColorString.ToDisplayText($"#{i:X6}");
+        }
+
+        Assert.Equal("Blue", ColorString.ToDisplayText("#0000FF"));
     }
 
     // ====================================================================
@@ -313,10 +390,39 @@ public class ColorStringTests
         Assert.Equal("", ColorString.ToArgbHex(""));
     }
 
+    // ====================================================================
+    // ToArgbHex(string) 正規化キャッシュ（同一文字列の再補間排除）
+    // ====================================================================
+
     [Fact]
-    public void ToArgbHex_解析できない値はそのまま返す()
+    public void ToArgbHex_同一文字列はキャッシュから同じ結果を返す()
+    {
+        var first = ColorString.ToArgbHex("Red+50%");
+        var second = ColorString.ToArgbHex("Red+50%");
+
+        // 正規化文字列キャッシュにより 2 回目も同じ結果が返る（再補間なし）
+        Assert.Equal(first, second);
+        Assert.Equal("#80FF0000", second);
+    }
+
+    [Fact]
+    public void ToArgbHex_解析できない値はキャッシュされずそのまま返す()
     {
         Assert.Equal("NotAColor", ColorString.ToArgbHex("NotAColor"));
+        Assert.Equal("NotAColor", ColorString.ToArgbHex("NotAColor"));
+    }
+
+    [Fact]
+    public void ToArgbHex_キャッシュ容量超過でクリアされても正しく正規化される()
+    {
+        // 容量（NormalizedCacheCapacity）を超える個別の入力でキャッシュを溢れさせ、
+        // 全クリア後も同じ結果が返ることを検証する（無制限増加の防止と正しさの両立）
+        for (var i = 0; i < ColorString.NormalizedCacheCapacity + 1; i++)
+        {
+            ColorString.ToArgbHex($"#{i:X6}");
+        }
+
+        Assert.Equal("#FF0000FF", ColorString.ToArgbHex("Blue"));
     }
 
     // ====================================================================
@@ -333,5 +439,81 @@ public class ColorStringTests
     public void ToArgbHex_色オブジェクトのアルファ255でも省略せず8桁で返す()
     {
         Assert.Equal("#FF123456", ColorString.ToArgbHex(Color.FromRgb(0x12, 0x34, 0x56)));
+    }
+
+    // ====================================================================
+    // BuildReverseLookups（逆引き辞書の構築）
+    // ====================================================================
+
+    [Fact]
+    public void BuildReverseLookups_ARGB完全一致の辞書が構築される()
+    {
+        var names = new Dictionary<string, Color>
+        {
+            ["Red"] = Color.FromRgb(255, 0, 0),
+            ["Blue"] = Color.FromRgb(0, 0, 255),
+        };
+
+        var (exact, rgb) = ColorString.BuildReverseLookups(names);
+
+        Assert.Equal("Red", exact[Color.FromRgb(255, 0, 0)]);
+        Assert.Equal("Blue", rgb[(0, 0, 255)]);
+    }
+
+    [Fact]
+    public void BuildReverseLookups_同一ARGBは最初の色名が保持される()
+    {
+        var names = new Dictionary<string, Color>
+        {
+            ["First"] = Color.FromRgb(255, 0, 0),
+            ["Second"] = Color.FromRgb(255, 0, 0),
+        };
+
+        var (exact, _) = ColorString.BuildReverseLookups(names);
+
+        Assert.Equal("First", exact[Color.FromRgb(255, 0, 0)]);
+    }
+
+    [Fact]
+    public void BuildReverseLookups_同RGBは不透明が優先される()
+    {
+        // 半透明（A=0）→ 不透明（A=255）の順に処理され、不透明の色名が優先登録される
+        var names = new Dictionary<string, Color>
+        {
+            ["Transparent"] = Color.FromArgb(0, 255, 255, 255),
+            ["White"] = Colors.White,
+        };
+
+        var (_, rgb) = ColorString.BuildReverseLookups(names);
+
+        Assert.Equal("White", rgb[(255, 255, 255)]);
+    }
+
+    [Fact]
+    public void BuildReverseLookups_同RGBが両方不透明なら先勝ち()
+    {
+        var names = new Dictionary<string, Color>
+        {
+            ["First"] = Color.FromRgb(255, 0, 255),
+            ["Second"] = Color.FromRgb(255, 0, 255),
+        };
+
+        var (_, rgb) = ColorString.BuildReverseLookups(names);
+
+        Assert.Equal("First", rgb[(255, 0, 255)]);
+    }
+
+    [Fact]
+    public void BuildReverseLookups_同RGBが両方半透明なら先勝ち()
+    {
+        var names = new Dictionary<string, Color>
+        {
+            ["First"] = Color.FromArgb(100, 255, 0, 0),
+            ["Second"] = Color.FromArgb(50, 255, 0, 0),
+        };
+
+        var (_, rgb) = ColorString.BuildReverseLookups(names);
+
+        Assert.Equal("First", rgb[(255, 0, 0)]);
     }
 }

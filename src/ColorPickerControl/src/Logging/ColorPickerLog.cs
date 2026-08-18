@@ -59,16 +59,4 @@ internal static partial class ColorPickerLog
     /// <param name="valid">色が有効かどうか。</param>
     [LoggerMessage(LogLevel.Trace, "[ColorPicker] LostFocus: color={Color} valid={Valid}")]
     public static partial void LogLostFocus(ILogger logger, string color, bool valid);
-
-    /// <summary>設定値変更のログ（変更前後）。</summary>
-    /// <remarks>
-    /// LogLevel: Debug <br/>
-    /// 出力書式: <c>[ColorPicker] Setting: {Name} {Old} → {New}</c>
-    /// </remarks>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="name">設定名。</param>
-    /// <param name="oldValue">変更前の値。</param>
-    /// <param name="newValue">変更後の値。</param>
-    [LoggerMessage(LogLevel.Debug, "[ColorPicker] Setting: {Name} {OldValue} → {NewValue}")]
-    public static partial void LogSettingChanged(ILogger logger, string name, string oldValue, string newValue);
 }

@@ -3,13 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
-using Avalonia.Markup.Xaml;
-using Avalonia.Markup.Xaml.Styling;
-using Avalonia.Media;
-using Avalonia.Styling;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
 using Estable.AvaloniaUI.ColorPicker.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -38,13 +32,22 @@ namespace Estable.AvaloniaUI.ColorPicker;
 /// - 検証: <see cref="HasValidationError"/> / <see cref="ValidationErrorMessage"/> / <see cref="HighlightBorderOnError"/><br/>
 /// - 外観（ComboBox サイズ）: <see cref="ComboBoxWidth"/> / <see cref="ComboBoxMinWidth"/> / <see cref="ComboBoxMaxWidth"/> /<br/>
 ///   <see cref="ComboBoxPadding"/> / <see cref="ComboBoxMargin"/><br/>
-/// - 関連型: <see cref="ColorSortMode"/> / <see cref="StringToBrushConverter"/> / <see cref="ColorEntry"/>（internal）<br/>
+/// - ログ: <see cref="Log"/><br/>
+/// - 関連型: <see cref="ColorSortMode"/> / <see cref="StringToBrushConverter"/> / <see cref="ColorDisplayConverter"/> / <see cref="ColorString"/> / <see cref="ColorEntry"/>（internal）<br/>
 /// <br/>
 /// **構成**: 本クラスは <c>ColorPicker.axaml</c>（<c>x:Class</c>）と対になるコードビハインドであり、<br/>
-/// 依存関係プロパティ（StyledProperty）・公開プロパティ・入力イベント処理・Flyout・テーマ管理・
-/// バリデーションを単一ファイルに集約する。<br/>
-/// 色一覧データ（<see cref="ColorEntry"/>）と色変換コンバーター（<see cref="StringToBrushConverter"/>）は
-/// ルート直下の別ファイルに定義する。<br/>
+/// 依存関係プロパティ（StyledProperty）・公開プロパティ・入力イベント処理・バリデーション状態を保持する。<br/>
+/// 関心事ごとに以下のクラスへ委譲し、単一責任と一方向依存を維持する:<br/>
+/// - カラーピッカー Flyout 構築: <see cref="ColorPickerFlyoutFactory"/>（Simple Factory パターン）<br/>
+/// - ColorView テーマ適用: <see cref="ColorViewThemeManager"/><br/>
+/// - 色文字列の妥当性検証: <see cref="ColorValidator"/><br/>
+/// - ComboBox テキスト選択の解除: <see cref="TextBoxSelectionHelper"/><br/>
+/// - 色文字列の解析・整形・正規化: <see cref="ColorString"/> / <see cref="ColorEntry"/> / 各コンバーター<br/>
+/// <br/>
+/// **最適化施策**:<br/>
+/// - キーストローク毎に発生する <see cref="SelectedColor"/> 変更のバリデーションを
+///   <see cref="ColorValidator.IsValid(string?)"/> の 1 回の解析に集約し、二重解析を排除する。<br/>
+/// - <see cref="Log"/> は C#14 の <c>field</c> キーワードで簡潔に定義する（null は <see cref="NullLogger"/> へフォールバック）。
 /// </remarks>
 public sealed partial class ColorPickerControl : UserControl
 {
@@ -188,28 +191,24 @@ public sealed partial class ColorPickerControl : UserControl
     }
 
     // ====================================================================
-    // 定数・静的フィールド
+    // ログ
     // ====================================================================
 
-    /// <summary>内部ロガー（null の場合は出力なし）。</summary>
-    private ILogger _log = NullLogger.Instance;
-
     /// <summary>内部ロガー（横断的関心事）。</summary>
+    /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</value>
+    /// <remarks>
+    /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
+    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。
+    /// </remarks>
     public ILogger Log
     {
-        get => _log;
-        set => _log = value ?? NullLogger.Instance;
+        get => field ?? NullLogger.Instance;
+        set => field = value ?? NullLogger.Instance;
     }
 
-    /// <summary>ColorView テーマ（Fluent.xaml）の適用済みフラグ（複数インスタンスで重複追加しない）。</summary>
-    private static bool s_colorViewThemeApplied;
-
-    /// <summary>ColorView テーマの同期オブジェクト。</summary>
-    private static readonly object s_colorViewThemeLock = new();
-
-    /// <summary>ColorView（カラーピッカー）のテーマ URI。</summary>
-    private static readonly Uri ColorViewThemeUri =
-        new("avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml");
+    // ====================================================================
+    // 定数
+    // ====================================================================
 
     /// <summary>色スウォッチの幅＋両脇マージン（ピクセル）。Left Padding に加算される。</summary>
     private const double SwatchPaddingOffset = 20;
@@ -233,8 +232,10 @@ public sealed partial class ColorPickerControl : UserControl
 
         if (!Design.IsDesignMode)
         {
-            _lastValidColor = SelectedColor;
-            UpdateValidationStatus(SelectedColor);
+            // SelectedColor は 1 回だけ取得して初期値とバリデーションで共有する（二重 getter の排除）
+            var initialColor = SelectedColor;
+            _lastValidColor = initialColor;
+            UpdateValidationStatus(initialColor);
         }
 
         // テーマテンプレート適用後に Padding を調整
@@ -270,14 +271,17 @@ public sealed partial class ColorPickerControl : UserControl
 
         if (change.Property == SelectedColorProperty)
         {
-            // change.NewValue / OldValue は StyledProperty&lt;string&gt; により常に string（分岐なし）
+            // change.NewValue / OldValue は StyledProperty<string> により常に string（分岐なし）
             var color = (string)change.NewValue!;
-            ColorPickerLog.LogSelectedColorChanged(_log, (string)change.OldValue!, color);
-            if (IsValidColor(color))
+            ColorPickerLog.LogSelectedColorChanged(Log, (string)change.OldValue!, color);
+
+            // 解析は 1 回だけ行い、最終有効値の追跡とバリデーション更新で共有する（二重解析の排除）
+            var valid = ColorValidator.IsValid(color);
+            if (valid)
             {
                 _lastValidColor = color;
             }
-            UpdateValidationStatus(color);
+            UpdateValidationStatusCore(color, valid);
         }
         else if (change.Property == HighlightBorderOnErrorProperty)
         {
@@ -291,13 +295,10 @@ public sealed partial class ColorPickerControl : UserControl
         }
         else if (change.Property == ComboBoxPaddingProperty)
         {
-            if (_comboBox is null) return;
             ApplyPaddingWithSwatchOffset();
         }
         else if (change.Property == ComboBoxMarginProperty)
         {
-            if (_comboBox is null) return;
-
             if (change.NewValue is Thickness margin)
                 _comboBox.Margin = margin;
             else
@@ -306,121 +307,56 @@ public sealed partial class ColorPickerControl : UserControl
     }
 
     /// <summary>ドロップダウン選択後にテキスト選択状態を解除する。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">イベント引数（未使用）。</param>
     private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (sender is not ComboBox comboBox) return;
 
-        Dispatcher.UIThread.Post(() => ResetTextBoxSelection(comboBox));
+        Dispatcher.UIThread.Post(() => TextBoxSelectionHelper.ResetSelection(comboBox));
     }
 
     /// <summary>フォーカス喪失時、無効な色を最終有効値に戻す。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">イベント引数（未使用）。</param>
+    /// <remarks>
+    /// 最終有効値が存在し現在の値が無効な場合は復帰する（復帰後の再検証は
+    /// <see cref="OnPropertyChanged(AvaloniaPropertyChangedEventArgs)"/> が行う）。<br/>
+    /// 解析は 1 回だけ行い、復帰判定・バリデーション更新・ログ判定で共有する。
+    /// </remarks>
     private void OnLostFocus(object? sender, RoutedEventArgs e)
     {
-        if (_lastValidColor is not null && !IsValidColor(SelectedColor))
+        var color = SelectedColor;
+        var valid = ColorValidator.IsValid(color);
+
+        if (_lastValidColor is not null && !valid)
         {
-            SelectedColor = _lastValidColor;
+            // 無効な入力は最終有効値へ復帰する（再検証は OnPropertyChanged が行う）
+            color = _lastValidColor;
+            SelectedColor = color;
         }
-        UpdateValidationStatus(SelectedColor);
-        ColorPickerLog.LogLostFocus(_log, SelectedColor, IsValidColor(SelectedColor));
+        else
+        {
+            UpdateValidationStatusCore(color, valid);
+        }
+
+        // ログ用の最終有効性（復帰時は復帰値が有効なため true）
+        var finalValid = valid || _lastValidColor is not null;
+        ColorPickerLog.LogLostFocus(Log, color, finalValid);
     }
 
     /// <summary>Flyout 形式のカラーピッカーを開いて選択色を反映する。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">イベント引数（未使用）。</param>
     private void OnColorPickerButtonClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button) return;
 
-        ColorPickerLog.LogOpenFlyout(_log, SelectedColor);
-        var flyout = CreateColorPickerFlyout();
+        // SelectedColor は 1 回だけ取得してログと Flyout 構築で共有する（二重 getter の排除）
+        var color = SelectedColor;
+        ColorPickerLog.LogOpenFlyout(Log, color);
+        var flyout = ColorPickerFlyoutFactory.Create(color, Log, value => SelectedColor = value);
         flyout.ShowAt(button);
-    }
-
-    /// <summary>カラーピッカー Flyout を構築する。</summary>
-    /// <returns>OK / キャンセル ボタンを含む Flyout。</returns>
-    /// <remarks>
-    /// テスト（ColorPickerControl.Tests）が OK / キャンセル ボタンの動作を検証するため internal 公開する。<br/>
-    /// ColorView の初期色は <see cref="SelectedColor"/> をパースした色（失敗時は白）。<br/>
-    /// OK ボタンは選択色を16進文字列に変換して <see cref="SelectedColor"/> へ反映する。<br/>
-    /// </remarks>
-    internal Flyout CreateColorPickerFlyout()
-    {
-        // ColorView テーマを確保する（ホストが明示指定していればそれに従い、未指定なら内包テーマを適用）
-        EnsureColorViewTheme();
-
-        // 初期色をパース（色 + 不透明度の統合形式に対応）
-        var initColor = Colors.White;
-        if (!string.IsNullOrWhiteSpace(SelectedColor) && ColorString.TryParse(SelectedColor, out var parsed, out _))
-            initColor = parsed;
-
-        // ColorView コントロール
-        // 固定サイズ（Width/Height）は設定しない。ColorSpectrum は常に正方形で配置され、
-        // タブ（Spectrum / Palette / Components）とスライダーを収めるには高さが必要なため、
-        // 固定サイズ（280x240）ではコンテンツが左右下で見切れる。テーマの自然なサイズに任せる。
-        // Hex 入力タブは #AARRGGBB（アルファ先頭）形式で表示する（Avalonia 標準の Color.Parse と整合）。
-        var colorView = new ColorView
-        {
-            Color = initColor,
-            MinWidth = 280,
-            MinHeight = 320,
-            HexInputAlphaPosition = AlphaComponentPosition.Leading,
-        };
-
-        // OK / キャンセル ボタン
-        // 固定 Width を設定した Button は Fluent テーマでコンテンツが左寄せになるため、
-        // HorizontalContentAlignment を明示的に中央揃えにする（短い "OK" でも中央に表示される）。
-        var okButton = new Button
-        {
-            Content = "OK",
-            Width = 70,
-            Margin = new Thickness(3),
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-        };
-        var cancelButton = new Button
-        {
-            Content = "キャンセル",
-            Width = 70,
-            Margin = new Thickness(3),
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-        };
-
-        // Flyout コンテンツ
-        var flyout = new Flyout
-        {
-            Content = new StackPanel
-            {
-                Spacing = 8,
-                Children =
-                {
-                    colorView,
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        Spacing = 5,
-                        Children = { okButton, cancelButton },
-                    },
-                },
-            },
-            Placement = PlacementMode.BottomEdgeAlignedRight,
-        };
-
-        // OK: 色を適用して閉じる（SelectedColor = 保存値は #AARRGGBB 形式。不透明度はアルファへ合成済み）
-        okButton.Click += (_, _) =>
-        {
-            // アルファを含む #AARRGGBB 形式へ整形して SelectedColor（保存値）へ反映する
-            var formatted = ColorString.ToArgbHex(colorView.Color);
-            ColorPickerLog.LogFlyoutOk(_log, formatted);
-            SelectedColor = formatted;
-            flyout.Hide();
-        };
-
-        // キャンセル: 何もせず閉じる
-        cancelButton.Click += (_, _) =>
-        {
-            ColorPickerLog.LogFlyoutCancel(_log);
-            flyout.Hide();
-        };
-
-        return flyout;
     }
 
     /// <summary>バリデーション状態に応じて ComboBox の枠線を更新する。</summary>
@@ -435,139 +371,37 @@ public sealed partial class ColorPickerControl : UserControl
     /// </remarks>
     private void UpdateBorderValidationVisual()
     {
-        if (_comboBox is null) return;
-
         _comboBox.Classes.Set("validation-error", HighlightBorderOnError && HasValidationError);
     }
 
     // ====================================================================
-    // ColorView テーマ管理
+    // 色バリデーション（純粋演算）
     // ====================================================================
-
-    /// <summary>ColorView テーマをアプリケーションへ自動適用する（デフォルト内包・明示指定を優先）。</summary>
-    /// <remarks>
-    /// Flyout / Popup はオーバーレイレイヤーに表示されるため、コントロールのローカル Styles では
-    /// ColorView へテーマが伝播しない。そのため <see cref="Application.Current"/> の Styles へ追加する。<br/>
-    /// - アプリ側で既に ColorView の StyleInclude が指定されている場合は追加しない（明示指定を優先・毎回判定）。<br/>
-    /// - 未指定の場合のみ、内包テーマ（Fluent.xaml）を <see cref="AvaloniaXamlLoader.Load(Uri, Uri)"/> で
-    ///   ロードしてデフォルトとして一度だけ追加する。<br/>
-    /// - デザインモード / Application 未初期化時は何もしない。<br/>
-    /// </remarks>
-    internal static void EnsureColorViewTheme()
-        => EnsureColorViewThemeCore(Application.Current);
-
-    /// <summary>ColorView テーマを指定アプリケーションへ自動適用する（デフォルト内包・明示指定を優先）。</summary>
-    /// <param name="app">対象アプリケーション。null の場合は何もしない。</param>
-    /// <remarks>
-    /// Flyout / Popup はオーバーレイレイヤーに表示されるため、コントロールのローカル Styles では
-    /// ColorView へテーマが伝播しない。そのためアプリケーションの Styles へ追加する。<br/>
-    /// - アプリ側で既に ColorView の StyleInclude が指定されている場合は追加しない（明示指定を優先・毎回判定）。<br/>
-    /// - 未指定の場合のみ、内包テーマ（Fluent.xaml）を <see cref="AvaloniaXamlLoader.Load(Uri, Uri)"/> で
-    ///   ロードしてデフォルトとして一度だけ追加する。<br/>
-    /// - デザインモード / Application 未初期化時は何もしない。<br/>
-    /// テスト（ColorPickerControl.Tests）が app=null の分岐を検証するため Core を分離する。<br/>
-    /// </remarks>
-    internal static void EnsureColorViewThemeCore(Application? app)
-    {
-        if (app is null || Design.IsDesignMode)
-        {
-            return;
-        }
-
-        lock (s_colorViewThemeLock)
-        {
-            // アプリ側で明示的に ColorView テーマが指定されている場合はそれに従う（内包テーマは追加しない）
-            var hostThemeSpecified = app.Styles.Any(IsColorViewTheme);
-            if (hostThemeSpecified)
-            {
-                return;
-            }
-
-            // 未指定の場合のみ、内包テーマをデフォルトとして一度だけ追加する
-            if (!s_colorViewThemeApplied)
-            {
-                if (AvaloniaXamlLoader.Load(ColorViewThemeUri, ColorViewThemeUri) is IStyle theme)
-                {
-                    app.Styles.Add(theme);
-                }
-
-                s_colorViewThemeApplied = true;
-            }
-        }
-    }
-
-    /// <summary>指定スタイルが ColorView テーマ（ColorPicker の StyleInclude）であるか判定する。</summary>
-    /// <param name="style">判定対象のスタイル。</param>
-    /// <returns>ColorView テーマの場合は <see langword="true"/>。</returns>
-    /// <remarks>
-    /// アプリ側の明示指定（StyleInclude）を検出するための判定。<br/>
-    /// テスト（ColorPickerControl.Tests）が全分岐（Source null / 無関係テーマ / ColorPicker テーマ）を
-    /// 検証するため internal 公開する。<br/>
-    /// </remarks>
-    internal static bool IsColorViewTheme(IStyle style)
-        => style is StyleInclude { Source: { } src }
-            && src.ToString().Contains("Avalonia.Controls.ColorPicker", StringComparison.Ordinal);
-
-    /// <summary>指定ビジュアルツリー内の TextBox のテキスト選択を末尾に移動する。</summary>
-    /// <param name="visual">検索対象のビジュアルツリー。</param>
-    /// <remarks>
-    /// ドロップダウン選択後、ComboBox 内のテキストが全選択されたままになるのを防ぐ。<br/>
-    /// テスト（ColorPickerControl.Tests）がテキスト選択解除の分岐を検証するため internal 公開する。<br/>
-    /// </remarks>
-    internal static void ResetTextBoxSelection(Visual visual)
-    {
-        var textBox = FindTextBoxInVisualTree(visual);
-        if (textBox is not null)
-        {
-            var len = textBox.Text?.Length ?? 0;
-            textBox.SelectionStart = len;
-            textBox.SelectionEnd = len;
-        }
-    }
-
-    /// <summary>ビジュアルツリーから TextBox を再帰検索する。</summary>
-    /// <remarks>テスト（ColorPickerControl.Tests）が検索分岐を検証するため internal 公開する。</remarks>
-    internal static TextBox? FindTextBoxInVisualTree(Visual visual)
-    {
-        if (visual is TextBox tb) return tb;
-        foreach (var child in visual.GetVisualChildren())
-        {
-            var result = FindTextBoxInVisualTree(child);
-            if (result is not null) return result;
-        }
-        return null;
-    }
-
-    // ====================================================================
-    // 色バリデーション・変換（純粋演算）
-    // ====================================================================
-
-    /// <summary>色の妥当性を検証する。</summary>
-    /// <remarks>
-    /// 色と不透明度を統合した形式（"Red", "Red+50%", "#336699+75%"）を <see cref="ColorString.TryParse"/> で検証する。<br/>
-    /// テスト（ColorPickerControl.Tests）が null 分岐を検証するため internal 公開する。
-    /// </remarks>
-    internal static bool IsValidColor(string? color)
-        => color is not null && ColorString.TryParse(color, out _, out _);
 
     /// <summary>バリデーション状態を更新する。</summary>
+    /// <param name="color">検証対象の色文字列。</param>
     /// <remarks>テスト（ColorPickerControl.Tests）が全分岐を検証するため internal 公開する。</remarks>
     internal void UpdateValidationStatus(string color)
+        => UpdateValidationStatusCore(color, ColorValidator.IsValid(color));
+
+    /// <summary>バリデーション状態を更新する（解析結果を再利用する内部実装）。</summary>
+    /// <param name="color">検証対象の色文字列。</param>
+    /// <param name="isValid">事前に判定済みの有効性（呼び出し元での二重解析を排除）。</param>
+    /// <remarks>
+    /// 空文字または有効な色はエラーなし、無効な色はエラーありとして<br/>
+    /// <see cref="HasValidationError"/> / <see cref="ValidationErrorMessage"/> を更新し、枠線表示も更新する。
+    /// </remarks>
+    private void UpdateValidationStatusCore(string color, bool isValid)
     {
-        if (string.IsNullOrEmpty(color))
+        if (string.IsNullOrEmpty(color) || isValid)
         {
             HasValidationError = false;
             ValidationErrorMessage = null;
-        }
-        else if (!IsValidColor(color))
-        {
-            HasValidationError = true;
-            ValidationErrorMessage = "無効な色コードです。";
         }
         else
         {
-            HasValidationError = false;
-            ValidationErrorMessage = null;
+            HasValidationError = true;
+            ValidationErrorMessage = "無効な色コードです。";
         }
         UpdateBorderValidationVisual();
     }
