@@ -44,7 +44,7 @@ public sealed partial class UndoPage : UserControl
         if (Design.IsDesignMode) return;
 
         _viewModel = Program.ServiceProvider.GetRequiredService<UndoViewModel>();
-        _settingsService = (SettingsService)Program.ServiceProvider.GetRequiredService<ISettingsService>();
+        _settingsService = Program.SettingsService;
         _undoStack = Program.ServiceProvider.GetRequiredService<UndoStack>();
         _mainViewModel = Program.ServiceProvider.GetRequiredService<MainViewModel>();
         DataContext = _viewModel;
@@ -128,44 +128,34 @@ public sealed partial class UndoPage : UserControl
 
         var size = GetIconSize();
         var items = new List<UndoListItem>();
+        void AddItem(Bitmap thumbnail, string label, bool isCurrent)
+            => items.Add(new UndoListItem
+            {
+                Thumbnail = thumbnail,
+                Label = label,
+                IsCurrent = isCurrent,
+                ThumbnailWidth = size
+            });
 
         // 1. Redo スタック（新しい順。_redoStack[0] が現在に最も近い未来）
         var redo = _undoStack.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
-            items.Add(new UndoListItem
-            {
-                Thumbnail = redo[i],
-                Label = $"Redo {i + 1}",
-                IsCurrent = false,
-                ThumbnailWidth = size
-            });
+            AddItem(redo[i], $"Redo {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
         var currentImage = _mainViewModel.PreviewImage;
         if (currentImage is not null)
         {
-            items.Add(new UndoListItem
-            {
-                Thumbnail = currentImage,
-                Label = "現在",
-                IsCurrent = true,
-                ThumbnailWidth = size
-            });
+            AddItem(currentImage, "現在", isCurrent: true);
         }
 
         // 3. Undo スタック（新しい順。_stack[^1] が現在の直前）
         var undo = _undoStack.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
-            items.Add(new UndoListItem
-            {
-                Thumbnail = undo[i],
-                Label = $"Undo {undo.Count - i}",
-                IsCurrent = false,
-                ThumbnailWidth = size
-            });
+            AddItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false);
         }
 
         _viewModel.ItemCount = items.Count;

@@ -197,13 +197,11 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ApplyZoom` | `void()` | 現在の ZoomPercent を ZoomableView に適用（再入防止） |
 | `SyncZoomSlider` | `void()` | ZoomPercent をスライダに反映（再入防止） |
 | `UpdateImageAlignment` | `void()` | 中央寄せ設定を ZoomableView に反映 |
-| `ComputeActualZoomPercent` | `int()` | 現在の実表示倍率（%）を取得（Fit 中は実効倍率、クランプ 1〜500） |
 | `OnZoomableViewSizeChanged` | `void(SizeChangedEventArgs)` | リサイズ時の Fit 拡大率表示更新 |
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
 | `ViewModel` | `MainViewModel` | メイン ViewModel（ZoomPercent / ZoomLevels / ZoomDisplayText 等） |
-| `PreviewImageControl` | `Image` | 画像表示コントロール（ZoomableView.ImageControl） |
 | `ZoomableView` | `ZoomableView` | ズーム・パン対応ビューポート（ScrollViewer 不使用） |
 | `ZoomSlider` | `Slider` | 拡大率スライダ |
 | `PointerPosition` | `Point?` | ズーム中心（ビューポートローカル DIP）。null = ビューポート中心 |
@@ -212,6 +210,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 
 | メンバー | 説明 |
 | --- | --- |
+| `ImageControl` | 画像表示コントロール（`Image`。Crop セッション等の外部参照用） |
 | `SetSource(IImage?)` | 画像ソースを設定（Fit 表示にリセット） |
 | `SetZoom(double, Point?)` | ズーム率を設定（ズーム中心維持込み。null 中心 = ビューポート中心） |
 | `SetOffset(Vector)` | パン位置を設定（スクロール範囲にクランプ） |
@@ -220,6 +219,8 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `DisplaySize()` | 画像の表示サイズ（ビューポート座標） |
 | `ImageOriginViewport()` | 画像原点のビューポート座標 |
 | `ImageRectViewport()` | 画像の表示矩形（原点 + サイズ・ビューポート座標。表示サイズと原点を 1 回の計算で取得） |
+| `ZoomPercent` | 現在のズーム率（%）。0 = Fit |
+| `Offset` | 現在のパン位置（コンテンツ座標。ビューポート左上に対応） |
 | `Scale` / `EffectiveScale` | ズーム率スケール / 実効スケール（Fit 中は FitScale） |
 | `CenterAlign` | Fit 時の中央寄せ / 左上寄せ |
 | `ZoomRequested` | Ctrl+ホイールのズーム要求イベント（`ZoomRequestedEventArgs`） |

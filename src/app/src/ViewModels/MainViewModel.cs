@@ -3,13 +3,11 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using app.Enum;
 using app.Models;
 using app.Services;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace app.ViewModels;
 
@@ -23,14 +21,11 @@ namespace app.ViewModels;
 /// 設定管理は <see cref="Services.SettingsService"/> を介して行い、疎結合な設計を実現する。<br/>
 /// 画像のライフサイクル管理（Dispose）は <c>OnPreviewImageChanging</c> で行う。<br/>
 /// ピクセル操作（切出し・ウィンドウ検出）は PlatformFactory の <see cref="ImageProcessor"/> / <see cref="AppPixelData"/> に委譲し、
-/// 画面キャプチャは <see cref="ICaptureService"/> に委譲する（プラットフォーム抽象。DIP）。
+/// 画面キャプチャは SnipCaptureUI の <see cref="CaptureType"/> に委譲する（プラットフォーム抽象。DIP）。
 /// </remarks>
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly ISettingsService _settingsService;
-
-    /// <summary>画面キャプチャサービス（プラットフォーム抽象）。</summary>
-    private readonly ICaptureService _captureService;
 
     private string _lastSavedFileName = "";
 
@@ -59,11 +54,9 @@ public sealed partial class MainViewModel : ObservableObject
     /// MainViewModel の新しいインスタンスを初期化する。
     /// </summary>
     /// <param name="settingsService">設定サービス</param>
-    /// <param name="captureService">画面キャプチャサービス。null の場合は PlatformFactory の既定実装を使用する。</param>
-    public MainViewModel(ISettingsService settingsService, ICaptureService? captureService = null)
+    public MainViewModel(ISettingsService settingsService)
     {
         _settingsService = settingsService;
-        _captureService = captureService ?? PlatformFactory.CreateCaptureService(NullLogger.Instance);
 
         var settings = _settingsService.Current;
         _fileNameTemplateText = settings.FileNameTemplate;
@@ -287,15 +280,6 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateSaveFolderDisplayName();
     }
 
-    /// <summary>
-    /// 指定されたスクリーン領域をキャプチャしてプレビューに設定する。
-    /// </summary>
-    /// <param name="bounds">キャプチャするスクリーン座標の矩形領域（PixelRect）</param>
-    public void CaptureScreenArea(PixelRect bounds)
-    {
-        PreviewImage = _captureService.CaptureArea(bounds);
-    }
-
     /// <summary>指定された画像（Avalonia Bitmap）をプレビューとして設定する。</summary>
     /// <param name="image">設定する画像</param>
     public void SetPreviewImage(Bitmap image) => PreviewImage = image;
@@ -333,26 +317,17 @@ public sealed partial class MainViewModel : ObservableObject
     /// <param name="bounds">切り出す矩形領域（画像座標 PixelRect）</param>
     [RelayCommand]
     private void CropPreview(PixelRect bounds)
-    {
-        if (PreviewImage is null)
-        {
-            return;
-        }
-
-        BeforeEditAction?.Invoke();
-
-        // PreviewImage → AppPixelData → Crop → Bitmap（ピクセル操作は PlatformFactory の共通基盤に委譲）
-        var srcData = AppPixelData.ToPixelData(PreviewImage);
-        var croppedData = ImageProcessor.Crop(srcData, bounds);
-        if (croppedData is not null)
-        {
-            PreviewImage = croppedData.ToBitmap();
-        }
-    }
+        => ApplyPixelEdit(srcData => ImageProcessor.Crop(srcData, bounds));
 
     /// <summary>プレビュー画像からウィンドウ領域を自動判定して切り出す。</summary>
     [RelayCommand]
     private void AutoCropWindow()
+        => ApplyPixelEdit(ImageProcessor.DetectAndCropWindow);
+
+    /// <summary>ピクセル編集（切出し等）を適用する（BeforeEditAction → 変換 → 画像差し替え）。</summary>
+    /// <param name="edit">AppPixelData を受け取り、編集後の AppPixelData を返す処理。</param>
+    /// <remarks>ピクセル操作は PlatformFactory の共通基盤（<see cref="ImageProcessor"/>）に委譲する。</remarks>
+    private void ApplyPixelEdit(Func<AppPixelData, AppPixelData?> edit)
     {
         if (PreviewImage is null)
         {
@@ -361,12 +336,12 @@ public sealed partial class MainViewModel : ObservableObject
 
         BeforeEditAction?.Invoke();
 
-        // PreviewImage → AppPixelData → DetectAndCropWindow → Bitmap（ピクセル操作は PlatformFactory の共通基盤に委譲）
+        // PreviewImage → AppPixelData → 編集 → Bitmap
         var srcData = AppPixelData.ToPixelData(PreviewImage);
-        var croppedData = ImageProcessor.DetectAndCropWindow(srcData);
-        if (croppedData is not null)
+        var edited = edit(srcData);
+        if (edited is not null)
         {
-            PreviewImage = croppedData.ToBitmap();
+            PreviewImage = edited.ToBitmap();
         }
     }
 

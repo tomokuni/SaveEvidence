@@ -15,6 +15,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -51,16 +52,11 @@ public sealed partial class CapturePage : UserControl
     /// <summary>進行中の Crop セッションの Task。</summary>
     private Task<PixelRect?>? _cropTask;
 
-    private const int MinCropSize = 20;
-
     // Undo スタック（DI から取得するシングルトン。UndoPage と共有）
     private readonly UndoStack _undoStack = null!;
 
     // 親Window参照（Loaded まで待たずに Initialize で確保）
     private Window? _parentWindow;
-
-    // キャプチャ元の100%画像と画面領域
-    private PixelRect? _originalCaptureBounds;
 
     // キャプチャ中フラグ
     private bool _isCaptureInProgress;
@@ -99,7 +95,6 @@ public sealed partial class CapturePage : UserControl
 
         // ZoomManager に依存関係を注入
         _zoomManager.ViewModel = _viewModel;
-        _zoomManager.PreviewImageControl = ZoomableView.ImageControl;
         _zoomManager.ZoomableView = ZoomableView;
         _zoomManager.ZoomSlider = ZoomSlider;
 
@@ -495,7 +490,6 @@ public sealed partial class CapturePage : UserControl
         if (_isCaptureInProgress) return;
         CancelCropSession();
 
-        _originalCaptureBounds = null;
         UpdateCropButtonText();
     }
 
@@ -607,35 +601,26 @@ public sealed partial class CapturePage : UserControl
     public void RestoreUndo()
     {
         var prev = _undoStack.Undo(_viewModel.PreviewImage);
-        if (prev is null) return;
-        _viewModel.PreviewImage?.Dispose();
-        _viewModel.SetPreviewImage(prev);
-        _originalCaptureBounds = null;
+        if (prev is not null) RestoreImage(prev);
     }
 
     /// <summary>Redo スタックから画像を復元する。</summary>
     public void RestoreRedo()
     {
         var redo = _undoStack.Redo();
-        if (redo is null) return;
+        if (redo is not null) RestoreImage(redo);
+    }
+
+    /// <summary>復元した画像へプレビューを差し替える。</summary>
+    /// <param name="image">復元する画像（呼び出し元から所有権が移る）。</param>
+    private void RestoreImage(Bitmap image)
+    {
         _viewModel.PreviewImage?.Dispose();
-        _viewModel.SetPreviewImage(redo);
-        _originalCaptureBounds = null;
+        _viewModel.SetPreviewImage(image);
     }
 
     /// <summary>キャプチャ中フラグを設定する（MainWindowから呼ばれる）。</summary>
     public void SetIsCaptureInProgress(bool value) => _isCaptureInProgress = value;
-
-    /// <summary>キャプチャ完了時に元画像のキャプチャ矩形を設定する（MainWindowから呼ばれる）。</summary>
-    /// <param name="sourceBounds">キャプチャ元の画面領域。</param>
-    /// <remarks>
-    /// 元画像 Bitmap 自体は <see cref="MainViewModel.PreviewImage"/> が管理するため、ここでは矩形のみ保持する。<br/>
-    /// 保持した矩形は Undo / Redo 復元時や画像変更時に null 化される。
-    /// </remarks>
-    public void SetOriginalCapture(PixelRect? sourceBounds)
-    {
-        _originalCaptureBounds = sourceBounds;
-    }
 
     // ====================================================================
     // 画像系ボタン
@@ -680,12 +665,9 @@ public sealed partial class CapturePage : UserControl
         box.Width = Math.Clamp(width, box.MinWidth, box.MaxWidth);
     }
 
-    /// <summary>クリップボードから貼り付け、元画像をリセットする。</summary>
+    /// <summary>クリップボードから貼り付けを行う。</summary>
     public async Task PasteFromClipboard()
-    {
-        _originalCaptureBounds = null;
-        await _viewModel.PasteFromClipboard();
-    }
+        => await _viewModel.PasteFromClipboard();
 
     // ====================================================================
     // 切出し (Crop)

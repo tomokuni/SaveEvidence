@@ -41,7 +41,7 @@ public sealed partial class SettingsPage : UserControl
         if (Design.IsDesignMode) return;
 
         _viewModel = Program.ServiceProvider.GetRequiredService<MainViewModel>();
-        _settingsService = (SettingsService)Program.ServiceProvider.GetRequiredService<ISettingsService>();
+        _settingsService = Program.SettingsService;
         DataContext = _viewModel;
 
         // 全設定変更を即時ファイル保存する
@@ -196,6 +196,18 @@ public sealed partial class SettingsPage : UserControl
         _currentHotkeyTarget = GetHotkeyTarget(tb);
     }
 
+    /// <summary>ホットキーキャプチャ状態を解除する（ハイライト解除 + 状態リセット）。</summary>
+    /// <param name="tb">解除対象のテキストボックス。</param>
+    private void ExitHotkeyCaptureMode(TextBox tb)
+    {
+        tb.ClearValue(TextBlock.BackgroundProperty);
+        if (_currentHotkeyTextBox == tb)
+        {
+            _currentHotkeyTextBox = null;
+            _currentHotkeyTarget = null;
+        }
+    }
+
     /// <summary>キー押下をキャプチャしてホットキーとして設定する（各 TextBox の KeyDown）。</summary>
     private void OnHotkeyTextBoxKeyDown(object? sender, KeyEventArgs e)
     {
@@ -228,9 +240,7 @@ public sealed partial class SettingsPage : UserControl
         e.Handled = true;
 
         // キャプチャ状態を解除
-        tb.ClearValue(TextBlock.BackgroundProperty);
-        _currentHotkeyTextBox = null;
-        _currentHotkeyTarget = null;
+        ExitHotkeyCaptureMode(tb);
     }
 
     /// <summary>テキストボックスからフォーカスが外れた時にテキスト入力をホットキーとして解釈する。</summary>
@@ -269,12 +279,7 @@ public sealed partial class SettingsPage : UserControl
         }
 
         // キャプチャ状態を解除
-        tb.ClearValue(TextBlock.BackgroundProperty);
-        if (_currentHotkeyTextBox == tb)
-        {
-            _currentHotkeyTextBox = null;
-            _currentHotkeyTarget = null;
-        }
+        ExitHotkeyCaptureMode(tb);
     }
 
     /// <summary>TextBox に対応するホットキーターゲットを取得する。</summary>
@@ -357,22 +362,10 @@ public sealed partial class SettingsPage : UserControl
     private void OnClearAreaSelectClick(object? sender, RoutedEventArgs e)
         => ClearHotkey(HotkeyTarget.AreaSelect, AreaSelectTextBox);
 
-    /// <summary>指定されたホットキーをクリアする。</summary>
+    /// <summary>指定されたホットキーをクリアして表示を更新する。</summary>
     private void ClearHotkey(HotkeyTarget target, TextBox textBox)
     {
-        var noneSetting = new HotKeySetting(HotKeyModifiers.None, Key.None);
-        switch (target)
-        {
-            case HotkeyTarget.SelectScreen:
-                _viewModel.Settings.SelectScreenHotKey = noneSetting;
-                break;
-            case HotkeyTarget.WindowSelect:
-                _viewModel.Settings.WindowSelectHotKey = noneSetting;
-                break;
-            case HotkeyTarget.AreaSelect:
-                _viewModel.Settings.AreaSelectHotKey = noneSetting;
-                break;
-        }
+        SetHotkey(target, new HotKeySetting(HotKeyModifiers.None, Key.None));
         textBox.Text = "(未設定)";
     }
 

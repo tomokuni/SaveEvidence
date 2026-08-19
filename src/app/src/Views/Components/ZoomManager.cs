@@ -1,3 +1,4 @@
+using app.Controls;
 using app.Logging;
 using app.ViewModels;
 using Avalonia;
@@ -12,7 +13,7 @@ namespace app.Views.Components;
 /// <remarks>
 /// 画像プレビューのズームイン・ズームアウト・Fit表示、スライダとの同期、<br/>
 /// ビューポートリサイズ時の Fit 再適用、画像配置（中央寄せ/左寄せ）などを管理する。<br/>
-/// プロパティ注入で Window の ViewModel・PreviewImageControl・ZoomableView・<br/>
+/// プロパティ注入で Window の ViewModel・ZoomableView・<br/>
 /// ZoomSlider を受け取り、内部でズーム計算・UI更新を行う。<br/>
 /// ズーム率の選択はステータスバーのスライダ（10〜500%）とフライアウト（自動, 10〜500%）で行う。<br/>
 /// <br/>
@@ -36,15 +37,12 @@ public sealed class ZoomManager
     /// <summary>メインViewModel。Window から設定する。</summary>
     public MainViewModel ViewModel { get; set; } = null!;
 
-    /// <summary>画像表示コントロール。Window から設定する。</summary>
-    public Image PreviewImageControl { get; set; } = null!;
-
     /// <summary>ズーム・パン対応ビューポート（ScrollViewer 不使用）。Window から設定する。</summary>
     /// <remarks>
     /// RenderTransform ベースのため、レイアウト処理によるオフセット上書きが発生しない。<br/>
     /// ズーム中心維持（<see cref="ZoomMath.ComputeOffsetAfterScaleChange"/>）も内部的に処理する。
     /// </remarks>
-    public app.Controls.ZoomableView ZoomableView { get; set; } = null!;
+    public ZoomableView ZoomableView { get; set; } = null!;
 
     /// <summary>ズーム率調整用スライダ（ステータスバー）。Window から設定する。</summary>
     public Slider ZoomSlider { get; set; } = null!;
@@ -154,7 +152,7 @@ public sealed class ZoomManager
         ViewModel.CanZoomOut = ZoomTransition.CanZoomOut(zoom, fitZoom);
 
         // ステータスバーには現在の実効拡大率を % で表示する（「自動」表記は行わない）
-        var actual = zoom > 0 ? zoom : Math.Clamp((int)Math.Round(fitZoom), 1, 500);
+        var actual = zoom > 0 ? zoom : ClampZoomPercent(fitZoom);
         ViewModel.ZoomDisplayText = $"{actual}%";
     }
 
@@ -178,7 +176,7 @@ public sealed class ZoomManager
             // Fit の実効倍率が変わるため、ステータスバーの拡大率表示を新しいビューポートサイズで更新する
             var fitZoom = ZoomMath.FitZoomPercent(
                 new Size(img.PixelSize.Width, img.PixelSize.Height), e.NewSize);
-            ViewModel.ZoomDisplayText = $"{Math.Clamp((int)Math.Round(fitZoom), 1, 500)}%";
+            ViewModel.ZoomDisplayText = $"{ClampZoomPercent(fitZoom)}%";
         }
     }
 
@@ -244,20 +242,9 @@ public sealed class ZoomManager
         return 100;
     }
 
-    /// <summary>
-    /// 現在の実表示倍率（%）を計算する。
-    /// </summary>
-    /// <returns>実表示倍率（%）。1〜500 の範囲にクランプされる。</returns>
-    /// <remarks>
-    /// ZoomPercent &gt; 0 の場合はそのまま返す。<br/>
-    /// ZoomPercent &lt;= 0（Fit 表示）の場合は、プレビュー画像の表示サイズと元画像サイズから<br/>
-    /// 実表示倍率（Uniform 表示）を算出する。<br/>
-    /// 実表示倍率を 1〜500 の範囲にクランプする。
-    /// </remarks>
-    public int ComputeActualZoomPercent()
-    {
-        var zoom = ViewModel.ZoomPercent;
-        if (zoom > 0) return zoom;
-        return Math.Clamp((int)Math.Round(ComputeRawFitZoomPercent()), 1, 500);
-    }
+    /// <summary>実効倍率（%）を表示用の整数値（1〜500）に丸めてクランプする。</summary>
+    /// <param name="fitZoom">Fit の実効倍率（%）。</param>
+    /// <returns>1〜500 の範囲にクランプされた倍率（%）。</returns>
+    private static int ClampZoomPercent(double fitZoom)
+        => Math.Clamp((int)Math.Round(fitZoom), 1, 500);
 }

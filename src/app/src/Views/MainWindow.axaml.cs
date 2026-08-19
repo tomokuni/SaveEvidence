@@ -76,32 +76,12 @@ public sealed partial class MainWindow : Window
         // 設定変更を SnipCapture へ即時反映する（MVVM 的: 設定画面での変更がセッション開始を待たずに反映される）。
         // SnipCapture.AppearanceSettings 側で同一値の再設定はスキップされるため、無駄な更新は発生しない。
         // 例外が発生しても UI を壊さないよう try-catch で保護し、ログに記録する。
-        _settingsService.Current.PropertyChanged += (_, e) =>
-        {
-            try
-            {
-                ApplySnipCaptureSettings();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogSettingsApplyError(ex, e.PropertyName ?? "<null>");
-            }
-        };
+        _settingsService.Current.PropertyChanged += (_, e) => TryApplySnipCaptureSettings(e.PropertyName ?? "<null>");
         // 起動時の初期設定を反映する
         ApplySnipCaptureSettings();
 
         // DPI スケーリング（描画スケール）の変化に追従する（別モニタへの移動・ディスプレイ設定変更時）
-        ScalingChanged += (_, _) =>
-        {
-            try
-            {
-                ApplySnipCaptureSettings();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogSettingsApplyError(ex, nameof(ScalingChanged));
-            }
-        };
+        ScalingChanged += (_, _) => TryApplySnipCaptureSettings(nameof(ScalingChanged));
 
         // ViewModel にコールバックを設定
         SetupViewModelCallbacks();
@@ -110,12 +90,12 @@ public sealed partial class MainWindow : Window
         CaptureContent.Initialize(viewModel, settingsService, this, _snipCapture);
 
         // グローバルホットキーを登録（ネイティブウィンドウハンドルが必要）
+        // 実際の登録は NavigateTo(AppPage.Capture) が行う（キャプチャページ表示時のみ有効）
         var platformHandle = TryGetPlatformHandle();
         if (platformHandle is not null)
         {
             _hotKeyService = hotKeyService;
             _hotKeyService.Initialize(platformHandle.Handle);
-            RegisterHotKeys();
 
             // WM_HOTKEY メッセージを受信するためウィンドウプロシージャをサブクラス化
             _wndInterceptor = wndInterceptor;
@@ -466,6 +446,20 @@ public sealed partial class MainWindow : Window
         _snipCapture.AppearanceSettings = capSettings;
     }
 
+    /// <summary>SnipCapture 設定の反映を例外保護付きで行う（失敗時はログに記録）。</summary>
+    /// <param name="propertyName">変更の契機となったプロパティ名（ログ用）。</param>
+    private void TryApplySnipCaptureSettings(string propertyName)
+    {
+        try
+        {
+            ApplySnipCaptureSettings();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogSettingsApplyError(ex, propertyName);
+        }
+    }
+
     /// <summary>選択モードを開始する。</summary>
     internal async void StartSelectionMode(CaptureType captureType)
     {
@@ -497,7 +491,6 @@ public sealed partial class MainWindow : Window
         if (result?.Image is not null)
         {
             CaptureContent.PushUndo();
-            CaptureContent.SetOriginalCapture(result.SourceBounds);
             CaptureContent.SetIsCaptureInProgress(true);
             _viewModel.SetPreviewImage(result.Image);
             CaptureContent.SetIsCaptureInProgress(false);

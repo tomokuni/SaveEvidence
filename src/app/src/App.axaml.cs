@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using app.Enum;
-using app.Services;
 using app.Views;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -55,7 +54,7 @@ public sealed partial class App : Application
     /// </remarks>
     private void ApplyThemeVariant()
     {
-        var settings = Program.ServiceProvider.GetRequiredService<ISettingsService>().Current;
+        var settings = Program.SettingsService.Current;
 
         // 設定変更時にテーマを再適用する（購読解除は不要。App はアプリ生存期間中生き続ける）
         settings.PropertyChanged -= OnSettingsPropertyChanged;

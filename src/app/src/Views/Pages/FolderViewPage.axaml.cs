@@ -46,7 +46,7 @@ public sealed partial class FolderViewPage : UserControl
 
         _viewModel = Program.ServiceProvider.GetRequiredService<FolderViewViewModel>();
         _mainViewModel = Program.ServiceProvider.GetRequiredService<MainViewModel>();
-        _settingsService = (SettingsService)Program.ServiceProvider.GetRequiredService<ISettingsService>();
+        _settingsService = Program.SettingsService;
         DataContext = _viewModel;
 
         // 起動時（ページ初期化時）に保存済みの表示モード・ソート順を復元する
@@ -141,29 +141,22 @@ public sealed partial class FolderViewPage : UserControl
     private void LoadFiles()
     {
         var folderPath = _mainViewModel.SaveFolderPathResolved;
+        _viewModel.FolderPathText = folderPath;
         if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
         {
             _viewModel.ItemCount = 0;
-            _viewModel.FolderPathText = folderPath;
             FileListBox.ItemsSource = null;
             return;
         }
-
-        _viewModel.FolderPathText = folderPath;
 
         var files = Directory.GetFiles(folderPath, "*.*")
             .Where(static f => IsImageFile(f))
             .ToList();
 
-        // ソート順を適用
-        if (_viewModel.IsSortAscending)
-        {
-            files.Sort(StringComparer.OrdinalIgnoreCase);
-        }
-        else
-        {
-            files.Sort((a, b) => StringComparer.OrdinalIgnoreCase.Compare(b, a));
-        }
+        // ソート順を適用（比較子を選択。名前順・大文字小文字を区別しない）
+        files.Sort(_viewModel.IsSortAscending
+            ? StringComparer.OrdinalIgnoreCase
+            : Comparer<string>.Create((a, b) => StringComparer.OrdinalIgnoreCase.Compare(b, a)));
 
         var iconSize = GetIconSize();
         var items = files.Select(f => new FileListItem

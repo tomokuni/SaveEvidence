@@ -24,6 +24,11 @@ internal static class Program
     /// <summary>アプリケーション全体で使用する DI サービスプロバイダー。</summary>
     public static ServiceProvider ServiceProvider { get; private set; } = null!;
 
+    /// <summary>設定サービスを DI コンテナから取得する。</summary>
+    /// <returns>設定サービス（シングルトン）。</returns>
+    public static SettingsService SettingsService
+        => (SettingsService)ServiceProvider.GetRequiredService<ISettingsService>();
+
     /// <summary>メインエントリポイント。</summary>
     [STAThread]
     private static void Main(string[] args)

@@ -345,8 +345,11 @@ public sealed class ZoomableView : Panel
         UpdateScrollBars();
         InvalidateVisual();
         // ビューポート変化を通知する（オーバーレイ等の追従用。座標変換は受け側が最新表示から再評価する）
-        ViewportChanged?.Invoke(this, EventArgs.Empty);
+        RaiseViewportChanged();
     }
+
+    /// <summary>ビューポート変化イベントを発火する。</summary>
+    private void RaiseViewportChanged() => ViewportChanged?.Invoke(this, EventArgs.Empty);
 
     /// <summary>スクロールバーの表示状態・範囲・値を現在の表示状態に同期する。</summary>
     /// <remarks>
@@ -371,25 +374,30 @@ public sealed class ZoomableView : Panel
             var scale = _zoomPercent > 0 ? Scale : FitScale(content);
 
             // 縦スクロールバー
-            var vMax = ScrollMetrics.MaxOffset(content.Height, Bounds.Height, scale);
-            var vViewport = ScrollMetrics.ViewportSize(Bounds.Height, scale);
-            _verticalScrollBar.Maximum = vMax;
-            _verticalScrollBar.ViewportSize = vViewport;
-            _verticalScrollBar.Value = Math.Clamp(_offset.Y, 0, vMax);
-            _verticalScrollBar.IsVisible = vMax > 0;
+            SyncScrollBar(_verticalScrollBar, content.Height, _offset.Y, scale);
 
             // 横スクロールバー
-            var hMax = ScrollMetrics.MaxOffset(content.Width, Bounds.Width, scale);
-            var hViewport = ScrollMetrics.ViewportSize(Bounds.Width, scale);
-            _horizontalScrollBar.Maximum = hMax;
-            _horizontalScrollBar.ViewportSize = hViewport;
-            _horizontalScrollBar.Value = Math.Clamp(_offset.X, 0, hMax);
-            _horizontalScrollBar.IsVisible = hMax > 0;
+            SyncScrollBar(_horizontalScrollBar, content.Width, _offset.X, scale);
         }
         finally
         {
             _isSyncingScrollBars = false;
         }
+    }
+
+    /// <summary>スクロールバーの範囲・値・表示状態を現在のパン位置に同期する。</summary>
+    /// <param name="bar">対象のスクロールバー。</param>
+    /// <param name="contentSize">コンテンツサイズ（コンテンツ座標）。</param>
+    /// <param name="offset">現在のオフセット（コンテンツ座標）。</param>
+    /// <param name="scale">表示スケール。</param>
+    private void SyncScrollBar(ScrollBar bar, double contentSize, double offset, double scale)
+    {
+        var viewportSize = bar == _verticalScrollBar ? Bounds.Height : Bounds.Width;
+        var max = ScrollMetrics.MaxOffset(contentSize, viewportSize, scale);
+        bar.Maximum = max;
+        bar.ViewportSize = ScrollMetrics.ViewportSize(viewportSize, scale);
+        bar.Value = Math.Clamp(offset, 0, max);
+        bar.IsVisible = max > 0;
     }
 
     /// <summary>スクロールバーの操作（ユーザーによる Value 変更）でパンする。</summary>
@@ -441,10 +449,11 @@ public sealed class ZoomableView : Panel
     {
         if (!_isPanning) return;
         var pos = e.GetPosition(this);
+        var scale = EffectiveScale;
         // 掴んだ位置（コンテンツ座標）がポインタに追従するようオフセットを設定（クランプは SetOffset 内で行う）
         SetOffset(new Vector(
-            _grabContentPos.X - pos.X / EffectiveScale,
-            _grabContentPos.Y - pos.Y / EffectiveScale));
+            _grabContentPos.X - pos.X / scale,
+            _grabContentPos.Y - pos.Y / scale));
         e.Handled = true;
     }
 
@@ -464,7 +473,7 @@ public sealed class ZoomableView : Panel
         {
             // Ctrl+ホイール: ズーム要求（ズーム率の決定は上位が行う。マウスポインタ位置をズーム中心に使用）
             var pointerPos = e.GetPosition(this);
-            ZoomRequested?.Invoke(this, new ZoomRequestedEventArgs(e.Delta.Y > 0, pointerPos));
+            RaiseZoomRequested(e.Delta.Y > 0, pointerPos);
             e.Handled = true;
             return;
         }
@@ -474,7 +483,14 @@ public sealed class ZoomableView : Panel
         var isShift = (e.KeyModifiers & KeyModifiers.Shift) != 0;
         var dx = isShift ? e.Delta.Y * scrollUnit : e.Delta.X * scrollUnit;
         var dy = isShift ? 0 : e.Delta.Y * scrollUnit;
-        PanBy(new Vector(dx / EffectiveScale, dy / EffectiveScale));
+        var scale = EffectiveScale;
+        PanBy(new Vector(dx / scale, dy / scale));
         e.Handled = true;
     }
+
+    /// <summary>ズーム要求イベントを発火する。</summary>
+    /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
+    /// <param name="pointerPosition">ズーム中心として使用するマウスポインタ位置（ビューポートローカル座標）。</param>
+    private void RaiseZoomRequested(bool zoomIn, Point pointerPosition)
+        => ZoomRequested?.Invoke(this, new ZoomRequestedEventArgs(zoomIn, pointerPosition));
 }

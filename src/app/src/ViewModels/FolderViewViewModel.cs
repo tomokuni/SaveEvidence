@@ -16,8 +16,6 @@ namespace app.ViewModels;
 /// </remarks>
 public sealed partial class FolderViewViewModel : ObservableObject
 {
-    private static readonly string[] s_viewModeNames = ["特大", "大", "中"];
-
     /// <summary>アイテム数</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ItemCountText))]
@@ -38,10 +36,10 @@ public sealed partial class FolderViewViewModel : ObservableObject
     private string _folderPathText = "";
 
     /// <summary>アイテム数テキスト（例：「10 個のアイテム」）を取得する。</summary>
-    public string ItemCountText => $"{ItemCount} 個のアイテム";
+    public string ItemCountText => ViewModeDisplay.GetItemCountText(ItemCount);
 
     /// <summary>現在の表示モードテキスト（例：「大」）を取得する。</summary>
-    public string ViewModeText => (uint)SelectedViewModeIndex < s_viewModeNames.Length ? s_viewModeNames[SelectedViewModeIndex] : "";
+    public string ViewModeText => ViewModeDisplay.GetText(SelectedViewModeIndex);
 
     /// <summary>現在のソート状態テキスト（例：「名前の昇順(▲)」）を取得する。</summary>
     public string SortStatusText => IsSortAscending ? "名前の昇順(▲)" : "名前の降順(▼)";
