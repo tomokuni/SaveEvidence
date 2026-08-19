@@ -1,5 +1,7 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using app.Models;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -24,6 +26,11 @@ internal static partial class IconLoader
     /// <summary>SVG の viewBox サイズ（Fluent System Icons 標準の 24x24）。</summary>
     private const double ViewBoxSize = 24;
 
+    /// <summary>ジオメトリキャッシュの最大保持数。</summary>
+    private const int GeometryCacheCapacity = 32;
+
+    private static readonly ConcurrentDictionary<string, Geometry> s_geometryCache = new();
+
     /// <summary>指定 SVG ファイルからアイコン描画用のジオメトリを読み込む。</summary>
     /// <param name="fileName">SVG ファイル名（例: "ic_fluent_scan_table_24_regular.svg"）。</param>
     /// <returns>パスデータから生成したジオメトリ。</returns>
@@ -32,20 +39,20 @@ internal static partial class IconLoader
     /// （表示上のフェールセーフ。アイコン欠落時もアプリはクラッシュしない）。
     /// </remarks>
     public static Geometry LoadGeometry(string fileName)
-    {
-        try
+        => CapacityLimitedCache.GetOrAdd(s_geometryCache, GeometryCacheCapacity, fileName, static f =>
         {
-            var svg = ReadSvg(fileName);
-            var match = PathDataRegex().Match(svg);
-            if (!match.Success) return StreamGeometry.Parse("M0,0");
-            return StreamGeometry.Parse(match.Groups[1].Value);
-        }
-        catch (Exception)
-        {
-            // リソース読み込み失敗（FileNotFoundException 等）は空ジオメトリで代替する（UI を壊さない）
-            return StreamGeometry.Parse("M0,0");
-        }
-    }
+            try
+            {
+                var svg = ReadSvg(f);
+                var match = PathDataRegex().Match(svg);
+                return match.Success ? StreamGeometry.Parse(match.Groups[1].Value) : StreamGeometry.Parse("M0,0");
+            }
+            catch (Exception)
+            {
+                // リソース読み込み失敗（FileNotFoundException 等）は空ジオメトリで代替する（UI を壊さない）
+                return StreamGeometry.Parse("M0,0");
+            }
+        });
 
     /// <summary>指定 SVG ファイルからウィンドウアイコンを生成する。</summary>
     /// <param name="fileName">SVG ファイル名。</param>

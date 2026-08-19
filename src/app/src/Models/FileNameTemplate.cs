@@ -16,6 +16,8 @@ namespace app.Models;
 /// </remarks>
 public sealed partial class FileNameTemplate
 {
+    private static readonly char[] s_invalidFileNameChars = Path.GetInvalidFileNameChars();
+
     /// <summary>
     /// テンプレートから実際のファイル名を生成する。
     /// {date} → yyyyMMdd、{time} → HHmmss、{yyyy}/{MM}/{dd}/{HH}/{mm}/{ss} → 日時個別 に置換される。
@@ -118,7 +120,7 @@ public sealed partial class FileNameTemplate
         // 右端の数値連続も除去（桁数不定のため）
         testName = NumberPattern().Replace(testName, "0");
 
-        var invalidChars = Path.GetInvalidFileNameChars();
+        var invalidChars = s_invalidFileNameChars;
         var foundChars = testName.Where(c => invalidChars.Contains(c)).Distinct().ToArray();
         if (foundChars.Length > 0)
         {

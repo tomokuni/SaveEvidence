@@ -173,12 +173,7 @@ public sealed partial class UndoPage : UserControl
     }
 
     /// <summary>表示モードに応じたアイコンサイズを取得する（フォルダビューと同一サイズを使用）。</summary>
-    private int GetIconSize() => _viewModel.SelectedViewModeIndex switch
-    {
-        0 => _settingsService.Current.FolderExtraLargeIconSize,
-        1 => _settingsService.Current.FolderLargeIconSize,
-        _ => _settingsService.Current.FolderMediumIconSize,
-    };
+    private int GetIconSize() => _settingsService.Current.GetIconSize(_viewModel.SelectedViewModeIndex);
 
     /// <summary>表示モードボタンの共通クリックハンドラ。対応する表示モードに切り替え、一覧を再構築する。</summary>
     private void OnViewModeClick(object? sender, RoutedEventArgs e)
@@ -232,22 +227,4 @@ public sealed partial class UndoPage : UserControl
             // 外部ツールで開けなくてもユーザー操作を妨げない
         }
     }
-}
-
-/// <summary>
-/// Undo 一覧表示用のアイテム。
-/// </summary>
-public sealed class UndoListItem
-{
-    /// <summary>表示する画像（Undo / Redo スタックの Bitmap または現在のプレビュー画像）。</summary>
-    public required Bitmap Thumbnail { get; init; }
-
-    /// <summary>ラベル（例: "現在" / "Undo 1" / "Redo 1"）。</summary>
-    public required string Label { get; init; }
-
-    /// <summary>現在のキャプチャページに表示中の画像かどうか（true のとき青枠で強調）。</summary>
-    public required bool IsCurrent { get; init; }
-
-    /// <summary>表示幅（アイコンサイズから設定）。</summary>
-    public required int ThumbnailWidth { get; init; }
 }

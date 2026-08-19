@@ -13,7 +13,7 @@ namespace app.Tests;
 /// LoggerMessage 生成コードの state 走査（Count・インデクサ・列挙・範囲外アクセス）と
 /// IsEnabled 分岐の両パスを網羅する。
 /// </remarks>
-public class LogMessageTests
+public class AppLogTests
 {
     [Fact]
     public void 実ロガー設定時に全ログメソッドが実行される()
@@ -34,21 +34,21 @@ public class LogMessageTests
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>
     private static void InvokeAll(ILogger logger)
     {
-        AppLog.LogZoomIn(logger, 100, 125);
-        AppLog.LogZoomOut(logger, 125, 100);
-        AppLog.LogZoomInWheel(logger, 100, 125);
-        AppLog.LogZoomOutWheel(logger, 125, 100);
-        AppLog.LogCaptureMenuScreen(logger);
-        AppLog.LogCaptureMenuWindow(logger);
-        AppLog.LogCaptureMenuArea(logger);
-        AppLog.LogPreviewPointerPressed(logger, isRight: true, hasCropTask: false);
-        AppLog.LogSettingsApplyError(logger, new InvalidOperationException("test"), "ZoomLevel");
-        AppLog.LogHotKeyReceived(logger);
-        AppLog.LogHotKeyTriggered(logger, CaptureType.AreaSelect);
-        AppLog.LogActivated(logger);
-        AppLog.LogDeactivated(logger);
-        AppLog.LogStartSelectionMode(logger, CaptureType.ScreenSelect);
-        AppLog.LogSessionReturned(logger, "1920x1080", "0,0,1920,1080");
+        logger.LogZoomIn(100, 125);
+        logger.LogZoomOut(125, 100);
+        logger.LogZoomInWheel(100, 125);
+        logger.LogZoomOutWheel(125, 100);
+        logger.LogCaptureMenuScreen();
+        logger.LogCaptureMenuWindow();
+        logger.LogCaptureMenuArea();
+        logger.LogPreviewPointerPressed(isRight: true, hasCropTask: false);
+        logger.LogSettingsApplyError(new InvalidOperationException("test"), "ZoomLevel");
+        logger.LogHotKeyReceived();
+        logger.LogHotKeyTriggered(CaptureType.AreaSelect);
+        logger.LogActivated();
+        logger.LogDeactivated();
+        logger.LogStartSelectionMode(CaptureType.ScreenSelect);
+        logger.LogSessionReturned("1920x1080", "0,0,1920,1080");
     }
 
     /// <summary>LoggerMessage 生成コードの state 走査（Count・インデクサ・IEnumerable・範囲外）を網羅するテスト用ロガー。</summary>

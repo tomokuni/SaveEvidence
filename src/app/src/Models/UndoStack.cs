@@ -6,7 +6,6 @@ namespace app.Models;
 /// 画像の Undo / Redo スタックを管理する。
 /// </summary>
 /// <remarks>
-/// MainWindow の <c>PushUndo</c>/<c>RestoreUndo</c> で使用していたスタックを独立させたもの。<br/>
 /// 最大 <see cref="MaxCount"/> 段階まで画像を保管し、超過時は古いものから破棄する。<br/>
 /// 画像のクローンは PNG エンコード＋デコードで行い、元の Bitmap に影響を与えない。<br/>
 /// スレッドセーフではないので、UI スレッドからのみ操作すること。<br/>
@@ -56,13 +55,7 @@ public sealed class UndoStack
         // 新しい操作を加えた時点で Redo 履歴は無効になる
         ClearRedo();
 
-        var copy = Clone(currentImage);
-        _stack.Add(copy);
-        if (_stack.Count > MaxCount)
-        {
-            _stack[0].Dispose();
-            _stack.RemoveAt(0);
-        }
+        AddWithLimit(_stack, Clone(currentImage));
     }
 
     /// <summary>
@@ -81,20 +74,13 @@ public sealed class UndoStack
         // 現在の画像を Redo スタックへ退避（後で Redo で戻せるようにする）
         if (currentImage is not null)
         {
-            _redoStack.Add(Clone(currentImage));
-            if (_redoStack.Count > MaxCount)
-            {
-                _redoStack[0].Dispose();
-                _redoStack.RemoveAt(0);
-            }
+            AddWithLimit(_redoStack, Clone(currentImage));
         }
 
         IsRestoring = true;
         try
         {
-            var last = _stack[^1];
-            _stack.RemoveAt(_stack.Count - 1);
-            return last;
+            return PopLast(_stack);
         }
         finally
         {
@@ -113,10 +99,7 @@ public sealed class UndoStack
     public Bitmap? Redo()
     {
         if (_redoStack.Count == 0) return null;
-
-        var last = _redoStack[^1];
-        _redoStack.RemoveAt(_redoStack.Count - 1);
-        return last;
+        return PopLast(_redoStack);
     }
 
     /// <summary>画像を PNG 経由で複製する。</summary>
@@ -128,6 +111,29 @@ public sealed class UndoStack
         return new Bitmap(ms);
     }
 
+    /// <summary>スタックに画像を追加し、容量超過時は最古の画像を破棄する。</summary>
+    /// <param name="stack">追加対象のスタック。</param>
+    /// <param name="copy">追加する画像（クローン済み）。</param>
+    private static void AddWithLimit(List<Bitmap> stack, Bitmap copy)
+    {
+        stack.Add(copy);
+        if (stack.Count > MaxCount)
+        {
+            stack[0].Dispose();
+            stack.RemoveAt(0);
+        }
+    }
+
+    /// <summary>スタック末尾の画像を取り出して削除する。</summary>
+    /// <param name="stack">対象のスタック（空でないこと）。</param>
+    /// <returns>末尾の画像。呼び出し元が所有権を持つ。</returns>
+    private static Bitmap PopLast(List<Bitmap> stack)
+    {
+        var last = stack[^1];
+        stack.RemoveAt(stack.Count - 1);
+        return last;
+    }
+
     /// <summary>Redo スタック内の画像を全て破棄して空にする。</summary>
     private void ClearRedo()
     {
@@ -136,12 +142,6 @@ public sealed class UndoStack
             bmp.Dispose();
         }
         _redoStack.Clear();
-    }
-
-    /// <summary>スタック内の全ての画像を破棄し、スタックを空にする。</summary>
-    public void DisposeAll()
-    {
-        Clear();
     }
 
     /// <summary>スタック内の全ての画像を破棄し、スタックを空にする。</summary>

@@ -135,7 +135,7 @@ public sealed class ZoomManager
     public bool ApplyZoomFromText(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return false;
-        var cleaned = text.Trim().TrimEnd('%').Trim();
+        var cleaned = text.Trim().TrimEnd('%');
         if (!int.TryParse(cleaned, out var value)) return false;
         if (value is < 10 or > 500) return false;
 
@@ -178,12 +178,16 @@ public sealed class ZoomManager
         // ZoomableView にズーム率を設定（ズーム中心維持は ZoomableView 内で処理。防御コード不要）
         ZoomableView.SetZoom(zoom, center);
 
+        // Fit の実効倍率は 1 回だけ計算し、遷移可否判定と表示テキストで共有する
+        var fitZoom = ComputeRawFitZoomPercent();
+
         // ズーム遷移ロジック（⊖⊕ 23 段階・Fit 基準）で有効/無効を判定する
-        ViewModel.CanZoomIn = ZoomTransition.CanZoomIn(zoom, ComputeRawFitZoomPercent());
-        ViewModel.CanZoomOut = ZoomTransition.CanZoomOut(zoom, ComputeRawFitZoomPercent());
+        ViewModel.CanZoomIn = ZoomTransition.CanZoomIn(zoom, fitZoom);
+        ViewModel.CanZoomOut = ZoomTransition.CanZoomOut(zoom, fitZoom);
 
         // ステータスバーには現在の実効拡大率を % で表示する（「自動」表記は行わない）
-        ViewModel.ZoomDisplayText = $"{ComputeActualZoomPercent()}%";
+        var actual = zoom > 0 ? zoom : Math.Clamp((int)Math.Round(fitZoom), 1, 500);
+        ViewModel.ZoomDisplayText = $"{actual}%";
     }
 
     /// <summary>ビューポートリサイズ時に Fit モードの拡大率表示を更新する。</summary>

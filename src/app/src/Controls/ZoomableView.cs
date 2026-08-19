@@ -40,6 +40,15 @@ public sealed class ZoomableView : Panel
         RenderTransformOrigin = new RelativePoint(0, 0, RelativeUnit.Relative),
     };
 
+    /// <summary>固定倍率表示用の翻訳変換（描画位置 = スケール × (コンテンツ − オフセット)）。</summary>
+    private readonly TranslateTransform _translateTransform = new();
+
+    /// <summary>固定倍率表示用の拡大縮小変換。</summary>
+    private readonly ScaleTransform _scaleTransform = new();
+
+    /// <summary>翻訳 → 拡大縮小の合成変換（Children は先頭から適用される）。</summary>
+    private readonly TransformGroup _transformGroup = new();
+
     /// <summary>ズーム率（0 = Fit / 100 = 100%）。</summary>
     private double _zoomPercent;
 
@@ -147,6 +156,9 @@ public sealed class ZoomableView : Panel
         // 高品質補間（ズーム時の画質）
         RenderOptions.SetBitmapInterpolationMode(_image, BitmapInterpolationMode.HighQuality);
 
+        _transformGroup.Children.Add(_translateTransform);
+        _transformGroup.Children.Add(_scaleTransform);
+
         PointerPressed += OnPointerPressed;
         PointerMoved += OnPointerMoved;
         PointerReleased += OnPointerReleased;
@@ -236,14 +248,27 @@ public sealed class ZoomableView : Panel
         return new Size(content.Width * Scale, content.Height * Scale);
     }
 
+    /// <summary>画像の表示矩形（ビューポート座標）を取得する。</summary>
+    /// <returns>画像の表示矩形。画像未設定時は default。</returns>
+    public Rect ImageRectViewport()
+    {
+        var display = DisplaySize();
+        var origin = ImageOriginViewport(display);
+        return new Rect(origin, display);
+    }
+
     /// <summary>画像原点のビューポート座標を取得する。</summary>
     /// <returns>画像原点のビューポート座標。</returns>
-    public Point ImageOriginViewport()
+    public Point ImageOriginViewport() => ImageOriginViewport(DisplaySize());
+
+    /// <summary>画像原点のビューポート座標を取得する（表示サイズは呼び出し側で計算済みのものを渡す）。</summary>
+    /// <param name="display">画像の表示サイズ（ビューポート座標）。</param>
+    /// <returns>画像原点のビューポート座標。</returns>
+    private Point ImageOriginViewport(Size display)
     {
         if (_zoomPercent <= 0)
         {
             // Fit: CenterAlign に応じてビューポート中央（画像が小さい場合）または原点
-            var display = DisplaySize();
             if (_centerAlign)
             {
                 return new Point(
@@ -310,11 +335,11 @@ public sealed class ZoomableView : Panel
             _image.MaxHeight = double.PositiveInfinity;
 
             // 描画位置 = Scale × (コンテンツ − オフセット)
-            // TransformGroup の Children は先頭から適用される（Translate → Scale の順で合成）
-            var group = new TransformGroup();
-            group.Children.Add(new TranslateTransform(-_offset.X, -_offset.Y));
-            group.Children.Add(new ScaleTransform(Scale, Scale));
-            _image.RenderTransform = group;
+            _translateTransform.X = -_offset.X;
+            _translateTransform.Y = -_offset.Y;
+            _scaleTransform.ScaleX = Scale;
+            _scaleTransform.ScaleY = Scale;
+            _image.RenderTransform = _transformGroup;
         }
 
         UpdateScrollBars();
@@ -435,7 +460,7 @@ public sealed class ZoomableView : Panel
     /// <summary>ホイールでパンまたはズーム要求を行う。</summary>
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if ((e.KeyModifiers & KeyModifiers.Control) != 0)
         {
             // Ctrl+ホイール: ズーム要求（ズーム率の決定は上位が行う。マウスポインタ位置をズーム中心に使用）
             var pointerPos = e.GetPosition(this);
@@ -446,8 +471,9 @@ public sealed class ZoomableView : Panel
 
         // 通常ホイール: パン（Shift 併用で横スクロール）
         const double scrollUnit = 48.0;
-        var dx = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? e.Delta.Y * scrollUnit : e.Delta.X * scrollUnit;
-        var dy = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 0 : e.Delta.Y * scrollUnit;
+        var isShift = (e.KeyModifiers & KeyModifiers.Shift) != 0;
+        var dx = isShift ? e.Delta.Y * scrollUnit : e.Delta.X * scrollUnit;
+        var dy = isShift ? 0 : e.Delta.Y * scrollUnit;
         PanBy(new Vector(dx / EffectiveScale, dy / EffectiveScale));
         e.Handled = true;
     }

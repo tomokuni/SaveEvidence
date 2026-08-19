@@ -67,7 +67,7 @@ public sealed partial class MainWindow : Window
 
         // SnipCaptureUI 公開 Facade を生成
         // ロガーは NLog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、7日で自動削除）へ転送する。
-        // LogMessage.CreateLogger が nlog.config を自動読み込みするため、コード内の設定は不要。
+        // AppLog.CreateLogger が nlog.config を自動読み込みするため、コード内の設定は不要。
         _snipCaptureLogger = AppLog.CreateLogger("SnipCaptureUI");
         _snipCapture = new SnipCapture(logger: _snipCaptureLogger);
         // キャプチャ完了イベントを購読する（同期実行: 画像変更 → 完了後に APP が再表示される）
@@ -228,8 +228,7 @@ public sealed partial class MainWindow : Window
                 "上書き確認",
                 $"ファイル「{fileName}」は既に存在します。上書きしますか？");
         };
-
-                    }
+    }
 
     /// <summary>ホットキーを登録する。</summary>
     private void RegisterHotKeys()
@@ -264,13 +263,13 @@ public sealed partial class MainWindow : Window
         _snipCapture.Dispose();
     }
 
-    /// <summary>アクティブ時にルーペ再開（Timer不要になったが、必要に応じて処理）。</summary>
+    /// <summary>ウィンドウのアクティブ化を記録する。</summary>
     private void OnMainWindowActivated(object? sender, EventArgs e)
     {
         _logger.LogActivated();
     }
 
-    /// <summary>非アクティブ時。</summary>
+    /// <summary>ウィンドウの非アクティブ化を記録する。</summary>
     private void OnMainWindowDeactivated(object? sender, EventArgs e)
     {
         _logger.LogDeactivated();

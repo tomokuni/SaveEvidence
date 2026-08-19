@@ -177,14 +177,21 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>ズーム率の選択肢（0=自動）を取得する。</summary>
     /// <remarks>フライアウト選択肢: 自動 + 固定倍率 10〜500% の全13段階。</remarks>
-    public int[] ZoomLevels => [0, 10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
+    public IReadOnlyList<int> ZoomLevels => s_zoomLevels;
 
     /// <summary>テーマモードの選択肢（Light / Dark / System）を取得する。</summary>
     /// <remarks>設定画面の ComboBox の ItemsSource に使用する。</remarks>
-    public ThemeMode[] ThemeModes => System.Enum.GetValues<ThemeMode>();
+    public IReadOnlyList<ThemeMode> ThemeModes => s_themeModes;
 
     /// <summary>ComboBox 表示用のズーム率ラベル一覧を取得する。</summary>
-    public string[] ZoomLabels => ["自動(Fit)", "10%", "15%", "25%", "35%", "50%", "75%", "100%", "150%", "200%", "250%", "350%", "500%"];
+    public IReadOnlyList<string> ZoomLabels => s_zoomLabels;
+
+    private static readonly int[] s_zoomLevels = [0, 10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
+
+    private static readonly ThemeMode[] s_themeModes = System.Enum.GetValues<ThemeMode>();
+
+    private static readonly string[] s_zoomLabels =
+        ["自動(Fit)", "10%", "15%", "25%", "35%", "50%", "75%", "100%", "150%", "200%", "250%", "350%", "500%"];
 
     /// <summary>現在のファイル名プレビューテキストを取得する。</summary>
     public string CurrentFileNamePreview
@@ -215,7 +222,8 @@ public sealed partial class MainViewModel : ObservableObject
     public string ImageSizeDisplayText => PreviewImage is { } img ? $"{img.PixelSize.Width} x {img.PixelSize.Height}" : "";
 
     /// <summary>ファイル名テンプレートが有効かどうかを取得する。</summary>
-    public bool HasValidTemplate => FileNameTemplate.IsValidTemplate(FileNameTemplateText, out _);
+    /// <remarks><see cref="ValidationMessage"/> が null かどうかで判定する。</remarks>
+    public bool HasValidTemplate => ValidationMessage is null;
 
     /// <summary>ファイル名テンプレートが無効かどうかを取得する（枠線エラー表示用）。</summary>
     /// <remarks><see cref="HasValidTemplate"/> の否定。View の <c>validation-error</c> クラスバインディングに使用する。</remarks>

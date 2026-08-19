@@ -10,8 +10,10 @@ namespace app.Views.Components;
 /// </remarks>
 public static class ZoomTransition
 {
-    /// <summary>⊖⊕ボタンのズームレベル（Fit は含まない。仕様に基づく 23 段階）。</summary>
-    public static readonly int[] ButtonZoomLevels = [10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500];
+    private static readonly int[] s_buttonZoomLevels = [10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500];
+
+    /// <summary>⊖⊕ボタンのズームレベル（Fit は含まない。仕様に基づく 23 段階・読み取り専用）。</summary>
+    public static IReadOnlyList<int> ButtonZoomLevels => s_buttonZoomLevels;
 
     /// <summary>Ctrl+ホイールのズーム倍率。</summary>
     public const double WheelFactor = 1.1;
@@ -35,19 +37,19 @@ public static class ZoomTransition
     {
         if (current <= 0)
         {
-            var idx = Array.FindIndex(ButtonZoomLevels, level => level > fitZoom);
-            return idx < 0 ? null : ButtonZoomLevels[idx];
+            var idx = Array.FindIndex(s_buttonZoomLevels, level => level > fitZoom);
+            return idx < 0 ? null : s_buttonZoomLevels[idx];
         }
 
-        var i = Array.IndexOf(ButtonZoomLevels, current);
+        var i = Array.IndexOf(s_buttonZoomLevels, current);
         if (i >= 0)
         {
-            if (i >= ButtonZoomLevels.Length - 1) return null; // リスト末尾（500%）で停止
-            return ButtonZoomLevels[i + 1];
+            if (i >= s_buttonZoomLevels.Length - 1) return null; // リスト末尾（500%）で停止
+            return s_buttonZoomLevels[i + 1];
         }
 
-        var next = Array.FindIndex(ButtonZoomLevels, level => level > current);
-        return next < 0 ? null : ButtonZoomLevels[next];
+        var next = Array.FindIndex(s_buttonZoomLevels, level => level > current);
+        return next < 0 ? null : s_buttonZoomLevels[next];
     }
 
     /// <summary>ズームアウトの前のレベルを返す。移動先がなければ null。</summary>
@@ -63,16 +65,16 @@ public static class ZoomTransition
     {
         if (current <= 0)
         {
-            var idx = Array.FindLastIndex(ButtonZoomLevels, level => level < fitZoom);
-            return idx < 0 ? null : ButtonZoomLevels[idx];
+            var idx = Array.FindLastIndex(s_buttonZoomLevels, level => level < fitZoom);
+            return idx < 0 ? null : s_buttonZoomLevels[idx];
         }
 
-        var i = Array.IndexOf(ButtonZoomLevels, current);
-        if (i > 0) return ButtonZoomLevels[i - 1];
+        var i = Array.IndexOf(s_buttonZoomLevels, current);
+        if (i > 0) return s_buttonZoomLevels[i - 1];
         if (i < 0)
         {
-            var prev = Array.FindLastIndex(ButtonZoomLevels, level => level < current);
-            return prev < 0 ? null : ButtonZoomLevels[prev];
+            var prev = Array.FindLastIndex(s_buttonZoomLevels, level => level < current);
+            return prev < 0 ? null : s_buttonZoomLevels[prev];
         }
 
         return null; // i == 0（リスト先頭 10%）で停止

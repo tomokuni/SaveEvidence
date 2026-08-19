@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using app.Models;
 using app.Services;
 using app.ViewModels;
 using Avalonia;
@@ -24,6 +26,16 @@ public sealed partial class FolderViewPage : UserControl
     private FolderViewViewModel _viewModel = null!;
     private MainViewModel _mainViewModel = null!;
     private SettingsService _settingsService = null!;
+
+    /// <summary>サムネイルキャッシュの最大保持数。</summary>
+    private const int ThumbnailCacheCapacity = 100;
+
+    private static readonly ConcurrentDictionary<(string Path, int Size, DateTime LastWrite), Bitmap> s_thumbnailCache = new();
+
+    private static readonly HashSet<string> s_imageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif", ".webp"
+    };
 
     /// <summary>FolderViewPage を初期化する。</summary>
     public FolderViewPage()
@@ -168,18 +180,21 @@ public sealed partial class FolderViewPage : UserControl
 
     /// <summary>指定されたファイルパスが画像ファイルかどうかを判定する。</summary>
     private static bool IsImageFile(string path)
-    {
-        var ext = Path.GetExtension(path).ToLowerInvariant();
-        return ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".gif" or ".tiff" or ".tif" or ".webp";
-    }
+        => s_imageExtensions.Contains(Path.GetExtension(path));
 
     /// <summary>画像ファイルのサムネイルを読み込む。</summary>
     private static Bitmap? LoadThumbnail(string filePath, int size)
     {
         try
         {
-            using var stream = File.OpenRead(filePath);
-            return Bitmap.DecodeToWidth(stream, size);
+            var lastWrite = File.GetLastWriteTimeUtc(filePath);
+            (string Path, int Size, DateTime LastWrite) key = (filePath, size, lastWrite);
+            return CapacityLimitedCache.GetOrAdd(
+                s_thumbnailCache, ThumbnailCacheCapacity, key, static k =>
+                {
+                    using var stream = File.OpenRead(k.Path);
+                    return Bitmap.DecodeToWidth(stream, k.Size);
+                });
         }
         catch (Exception)
         {
@@ -188,12 +203,7 @@ public sealed partial class FolderViewPage : UserControl
     }
 
     /// <summary>表示モードに応じたアイコンサイズを取得する。</summary>
-    private int GetIconSize() => _viewModel.SelectedViewModeIndex switch
-    {
-        0 => _settingsService.Current.FolderExtraLargeIconSize,
-        1 => _settingsService.Current.FolderLargeIconSize,
-        _ => _settingsService.Current.FolderMediumIconSize,
-    };
+    private int GetIconSize() => _settingsService.Current.GetIconSize(_viewModel.SelectedViewModeIndex);
 
     /// <summary>表示モードボタンの共通クリックハンドラ。対応する表示モードに切り替え、ファイルを再読込する。</summary>
     private void OnViewModeClick(object? sender, RoutedEventArgs e)
@@ -268,23 +278,4 @@ public sealed partial class FolderViewPage : UserControl
             // ファイルを開けなくてもユーザー操作を妨げない
         }
     }
-
-}
-
-/// <summary>
-/// ファイル一覧表示用のアイテム。
-/// </summary>
-public sealed class FileListItem
-{
-    /// <summary>ファイルの完全パス。</summary>
-    public required string FilePath { get; init; }
-
-    /// <summary>ファイル名（表示用）。</summary>
-    public required string FileName { get; init; }
-
-    /// <summary>サムネイル画像。</summary>
-    public Bitmap? Thumbnail { get; init; }
-
-    /// <summary>表示幅（アイコンサイズから設定）。</summary>
-    public int ThumbnailWidth { get; init; }
 }

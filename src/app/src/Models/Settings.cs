@@ -350,5 +350,16 @@ public sealed partial class Settings : ObservableObject
         LoupeCoordLabelBackgroundColor = d.LoupeCoordLabelBackgroundColor;
         LoupeCoordLabelFontSize = d.LoupeCoordLabelFontSize;
     }
+
+    /// <summary>表示モードインデックスに対応するアイコンサイズを取得する。</summary>
+    /// <param name="viewModeIndex">表示モード（0=特大, 1=大, 2=中）。範囲外は中アイコン。</param>
+    /// <returns>アイコンサイズ（ピクセル）。</returns>
+    /// <remarks>フォルダビューと Undo 一覧のサムネイルサイズで共用する（単一所有・DRY）。</remarks>
+    public int GetIconSize(int viewModeIndex) => viewModeIndex switch
+    {
+        0 => FolderExtraLargeIconSize,
+        1 => FolderLargeIconSize,
+        _ => FolderMediumIconSize,
+    };
 }
 

@@ -91,7 +91,6 @@ internal static class Program
 
         // Views（ウィンドウ）
         services.AddTransient<MainWindow>();
-        // SettingsWindow / HotkeyWindow / FolderViewWindow は
-        // ナビゲーションページ（Pages 配下の UserControl）に移行済み
+        // サブウィンドウ（Settings / Hotkey / FolderView）はナビゲーションページ（Pages 配下の UserControl）として実装
     }
 }

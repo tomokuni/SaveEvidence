@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Globalization;
 using Estable.AvaloniaUI.Platform;
@@ -66,6 +67,11 @@ public sealed partial class CapturePage : UserControl
 
     // アプリケーションロガー
     private static readonly ILogger _logger = AppLog.CreateLogger("CapturePage");
+
+    /// <summary>市松模様背景（DrawingBrush）キャッシュの最大保持数。</summary>
+    private const int CheckerBrushCacheCapacity = 16;
+
+    private static readonly ConcurrentDictionary<(Color Light, Color Dark, int Size), DrawingBrush> s_checkerBrushCache = new();
 
     // ====================================================================
     // 構築
@@ -228,10 +234,10 @@ public sealed partial class CapturePage : UserControl
     private static KeyModifiers ToKeyModifiers(HotKeyModifiers modifiers)
     {
         var result = KeyModifiers.None;
-        if (modifiers.HasFlag(HotKeyModifiers.Control)) result |= KeyModifiers.Control;
-        if (modifiers.HasFlag(HotKeyModifiers.Alt)) result |= KeyModifiers.Alt;
-        if (modifiers.HasFlag(HotKeyModifiers.Shift)) result |= KeyModifiers.Shift;
-        if (modifiers.HasFlag(HotKeyModifiers.Windows)) result |= KeyModifiers.Meta;
+        if ((modifiers & HotKeyModifiers.Control) != 0) result |= KeyModifiers.Control;
+        if ((modifiers & HotKeyModifiers.Alt) != 0) result |= KeyModifiers.Alt;
+        if ((modifiers & HotKeyModifiers.Shift) != 0) result |= KeyModifiers.Shift;
+        if ((modifiers & HotKeyModifiers.Windows) != 0) result |= KeyModifiers.Meta;
         return result;
     }
 
@@ -345,6 +351,8 @@ public sealed partial class CapturePage : UserControl
     /// </remarks>
     private static object BuildFileNameTemplateToolTip()
     {
+        var now = DateTime.Now;
+
         // 幅はコンテンツの自然幅（最長の NoWrap 行）に合わせ、長い行は折り返す（画面からはみ出さない上限）
         var panel = new StackPanel { MaxWidth = 600 };
 
@@ -371,49 +379,49 @@ public sealed partial class CapturePage : UserControl
         });
         panel.Children.Add(new TextBlock
         {
-            Text =$"{{date}} → 日付（例: {DateTime.Now:yyyyMMdd} = yyyyMMdd）",
+            Text =$"{{date}} → 日付（例: {now:yyyyMMdd} = yyyyMMdd）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 1),
         });
         panel.Children.Add(new TextBlock
         {
-            Text =$"{{time}} → 時刻（例: {DateTime.Now:HHmmss} = HHmmss）",
+            Text =$"{{time}} → 時刻（例: {now:HHmmss} = HHmmss）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 1),
         });
         panel.Children.Add(new TextBlock
         {
-            Text = $"{{yyyy}} → 年（例: {DateTime.Now:yyyy} = yyyy）",
+            Text = $"{{yyyy}} → 年（例: {now:yyyy} = yyyy）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 1),
         });
         panel.Children.Add(new TextBlock
         {
-            Text = $"{{MM}} → 月（例: {DateTime.Now:MM} = MM）",
+            Text = $"{{MM}} → 月（例: {now:MM} = MM）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 1),
         });
         panel.Children.Add(new TextBlock
         {
-            Text = $"{{dd}} → 日（例: {DateTime.Now:dd} = dd）",
+            Text = $"{{dd}} → 日（例: {now:dd} = dd）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 1),
         });
         panel.Children.Add(new TextBlock
         {
-            Text = $"{{HH}} → 時（例: {DateTime.Now:HH} = HH）",
+            Text = $"{{HH}} → 時（例: {now:HH} = HH）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 1),
         });
         panel.Children.Add(new TextBlock
         {
-            Text = $"{{mm}} → 分（例: {DateTime.Now:mm} = mm）",
+            Text = $"{{mm}} → 分（例: {now:mm} = mm）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 1),
         });
         panel.Children.Add(new TextBlock
         {
-            Text = $"{{ss}} → 秒（例: {DateTime.Now:ss} = ss）",
+            Text = $"{{ss}} → 秒（例: {now:ss} = ss）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 6),
         });
@@ -459,7 +467,7 @@ public sealed partial class CapturePage : UserControl
         });
         panel.Children.Add(new TextBlock
         {
-            Text = $"screenshot_{DateTime.Now:yyyyMMdd}_{DateTime.Now:HHmmss}_01.png",
+            Text = $"screenshot_{now:yyyyMMdd}_{now:HHmmss}_01.png",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 0),
         });
@@ -497,6 +505,8 @@ public sealed partial class CapturePage : UserControl
 
     private void SubscribeCheckerSizeChange()
     {
+        // 再読込時に再購読しても重複登録されないよう、先に解除してから購読する
+        _viewModel.Settings.PropertyChanged -= OnCheckerSizePropertyChanged;
         _viewModel.Settings.PropertyChanged += OnCheckerSizePropertyChanged;
     }
 
@@ -537,34 +547,53 @@ public sealed partial class CapturePage : UserControl
             // 市松模様の色は画像設定（PreviewCheckerColorA / B）から取得する（ルーペと共通）
             var lightColor = Color.Parse(settings.PreviewCheckerColorA);
             var darkerColor = Color.Parse(settings.PreviewCheckerColorB);
-            var lightBrush = new SolidColorBrush(lightColor);
-            var darkerBrush = new SolidColorBrush(darkerColor);
+            (Color Light, Color Dark, int Size) key = (lightColor, darkerColor, checkerSize);
 
-            var drawingGroup = new DrawingGroup();
-            drawingGroup.Children.Add(new GeometryDrawing
-            {
-                Brush = darkerBrush,
-                Geometry = new RectangleGeometry(new Rect(0, 0, checkerSize * 2, checkerSize * 2))
-            });
-            drawingGroup.Children.Add(new GeometryDrawing
-            {
-                Brush = lightBrush,
-                Geometry = new RectangleGeometry(new Rect(0, 0, checkerSize, checkerSize))
-            });
-            drawingGroup.Children.Add(new GeometryDrawing
-            {
-                Brush = lightBrush,
-                Geometry = new RectangleGeometry(new Rect(checkerSize, checkerSize, checkerSize, checkerSize))
-            });
+            var brush = CapacityLimitedCache.GetOrAdd(
+                s_checkerBrushCache, CheckerBrushCacheCapacity, key,
+                static k => BuildCheckerBrush(k.Light, k.Dark, k.Size));
 
-            ZoomableView.Background = new DrawingBrush
-            {
-                Drawing = drawingGroup,
-                TileMode = TileMode.Tile,
-                DestinationRect = new RelativeRect(0, 0, checkerSize * 2, checkerSize * 2, RelativeUnit.Absolute)
-            };
+            ZoomableView.Background = brush;
         }
-        catch { }
+        catch
+        {
+            // 市松模様の描画リソース構築失敗（不正な色コード等）時は背景を更新しない
+        }
+    }
+
+    /// <summary>市松模様のタイル描画ブラシを構築する。</summary>
+    /// <param name="light">明色（色 A）。</param>
+    /// <param name="dark">暗色（色 B）。</param>
+    /// <param name="size">1 タイルのサイズ（ピクセル）。</param>
+    /// <returns>タイル表示の <see cref="DrawingBrush"/>。</returns>
+    private static DrawingBrush BuildCheckerBrush(Color light, Color dark, int size)
+    {
+        var lightBrush = new SolidColorBrush(light);
+        var darkerBrush = new SolidColorBrush(dark);
+
+        var drawingGroup = new DrawingGroup();
+        drawingGroup.Children.Add(new GeometryDrawing
+        {
+            Brush = darkerBrush,
+            Geometry = new RectangleGeometry(new Rect(0, 0, size * 2, size * 2))
+        });
+        drawingGroup.Children.Add(new GeometryDrawing
+        {
+            Brush = lightBrush,
+            Geometry = new RectangleGeometry(new Rect(0, 0, size, size))
+        });
+        drawingGroup.Children.Add(new GeometryDrawing
+        {
+            Brush = lightBrush,
+            Geometry = new RectangleGeometry(new Rect(size, size, size, size))
+        });
+
+        return new DrawingBrush
+        {
+            Drawing = drawingGroup,
+            TileMode = TileMode.Tile,
+            DestinationRect = new RelativeRect(0, 0, size * 2, size * 2, RelativeUnit.Absolute)
+        };
     }
 
     /// <summary>現在の画像をUndoスタックに保存する。</summary>
@@ -757,7 +786,10 @@ public sealed partial class CapturePage : UserControl
     private async void OnPasteMenuClick(object? sender, RoutedEventArgs e)
     {
         try { await PasteFromClipboard(); }
-        catch { }
+        catch
+        {
+            // 貼り付け失敗（クリップボードに画像がない等）は何もしない
+        }
     }
 
     private void OnUndoMenuClick(object? sender, RoutedEventArgs e) => RestoreUndo();
@@ -858,15 +890,6 @@ public sealed partial class CapturePage : UserControl
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ポインタイベント。</param>
     /// <remarks>
-    /// ビューポート座標のポインタ位置から画像原点を引き、画像表示サイズで除して元画像ピクセルへ変換する<br/>
-    /// （ズーム率・スクロールオフセットは TranslatePoint が反映済みのため、個別に考慮する必要はない）。<br/>
-    /// 画像外（ビューポートの空き領域）では "-" を表示する。<br/>
-    /// 画像サイズ（ドメイン座標）は <see cref="MainViewModel.ImageSizeDisplayText"/> にバインディングで表示される。
-    /// </remarks>
-    /// <summary>マウスポインタ移動時に、ポインタ位置のドメイン座標（画像ピクセル）をステータスバーへ表示する。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">ポインタイベント。</param>
-    /// <remarks>
     /// ビューポート座標 → コンテンツ座標（元画像ピクセル）の変換は ZoomableView が行う。<br/>
     /// 画像外（ビューポートの空き領域）では "-" を表示する。<br/>
     /// 画像サイズ（ドメイン座標）は <see cref="MainViewModel.ImageSizeDisplayText"/> にバインディングで表示される。
@@ -880,12 +903,11 @@ public sealed partial class CapturePage : UserControl
         }
 
         var viewportPos = e.GetPosition(ZoomableView);
-        // 画像内かどうかを判定する（画像原点を起点とした表示サイズ内か）
-        var imageOrigin = ZoomableView.ImageOriginViewport();
-        var displaySize = ZoomableView.DisplaySize();
-        var displayPoint = viewportPos - imageOrigin;
+        // 画像内かどうかを判定する（画像原点を起点とした表示サイズ内か。矩形は 1 回の計算で取得）
+        var imageRect = ZoomableView.ImageRectViewport();
+        var displayPoint = viewportPos - imageRect.Position;
         if (displayPoint.X < 0 || displayPoint.Y < 0 ||
-            displayPoint.X >= displaySize.Width || displayPoint.Y >= displaySize.Height)
+            displayPoint.X >= imageRect.Width || displayPoint.Y >= imageRect.Height)
         {
             _viewModel.PointerDisplayText = "-";
             return;
@@ -950,7 +972,6 @@ public sealed partial class CapturePage : UserControl
     public void CleanupCaptureResources()
     {
         CancelCropSession();
-        _undoStack.DisposeAll();
         _undoStack.Clear();
         // 元画像 Bitmap は ViewModel（PreviewImage）が管理するため、ここでは破棄しない
     }

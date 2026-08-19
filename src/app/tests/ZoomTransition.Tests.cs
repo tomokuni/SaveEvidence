@@ -29,7 +29,7 @@ public class ZoomTransitionTests
         var levels = ZoomTransition.ButtonZoomLevels;
         Assert.Equal(ZoomTransition.MinZoom, levels[0]);
         Assert.Equal(ZoomTransition.MaxZoom, levels[^1]);
-        for (int i = 1; i < levels.Length; i++)
+        for (int i = 1; i < levels.Count; i++)
         {
             Assert.True(levels[i - 1] < levels[i], $"段階 {i} が昇順でない: {levels[i - 1]} -> {levels[i]}");
         }
