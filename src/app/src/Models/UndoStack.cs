@@ -135,23 +135,23 @@ public sealed class UndoStack
     }
 
     /// <summary>Redo スタック内の画像を全て破棄して空にする。</summary>
-    private void ClearRedo()
-    {
-        foreach (var bmp in _redoStack)
-        {
-            bmp.Dispose();
-        }
-        _redoStack.Clear();
-    }
+    private void ClearRedo() => DisposeAll(_redoStack);
 
     /// <summary>スタック内の全ての画像を破棄し、スタックを空にする。</summary>
     public void Clear()
     {
-        foreach (var bmp in _stack)
+        DisposeAll(_stack);
+        ClearRedo();
+    }
+
+    /// <summary>スタック内の画像を全て破棄して空にする。</summary>
+    /// <param name="stack">対象のスタック。</param>
+    private static void DisposeAll(List<Bitmap> stack)
+    {
+        foreach (var bmp in stack)
         {
             bmp.Dispose();
         }
-        _stack.Clear();
-        ClearRedo();
+        stack.Clear();
     }
 }

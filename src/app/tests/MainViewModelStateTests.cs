@@ -55,6 +55,59 @@ public class MainViewModelStateTests
         Assert.Null(message);
     }
 
+    [Fact]
+    public void Generate_エスケープの中括弧はリテラルとして解決される()
+    {
+        // {{ は {、}} は } に解決される（プレースホルダとして誤置換されない）
+        var name = FileNameTemplate.Generate("{{date}}_{time}.png");
+
+        Assert.Equal($"{{date}}_{DateTime.Now:HHmmss}.png", name);
+    }
+
+    [Fact]
+    public void Generate_エスケープ中のプレースホルダは置換されない()
+    {
+        // {{date}} は {date} というリテラル文字列になる（date は置換されない）
+        var name = FileNameTemplate.Generate("img_{{date}}.png");
+
+        Assert.Equal("img_{date}.png", name);
+    }
+
+    [Fact]
+    public void Generate_中括弧内のトークンは組み合わせて置換される()
+    {
+        var now = DateTime.Now;
+
+        // { } 内で複数のトークンを自由に組み合わせられる（yyyyMMdd / HHmm 等）
+        Assert.Equal($"abcd{{e}}f{now:yyyyMMdd}-{now:HHmm}", FileNameTemplate.Generate("abcd{{e}}f{yyyyMMdd}-{HHmm}"));
+        Assert.Equal($"{now:yyyy}年{now:MM}月{now:dd}日", FileNameTemplate.Generate("{yyyy}年{MM}月{dd}日"));
+    }
+
+    [Fact]
+    public void Generate_未定義トークンはそのまま残る()
+    {
+        var now = DateTime.Now;
+
+        // 定義外のトークン（example 等）は置換されず、中括弧が外れてそのまま出力される
+        Assert.Equal($"example{now:yyyyMMdd}", FileNameTemplate.Generate("{example}{yyyyMMdd}"));
+    }
+
+    [Fact]
+    public void IsValidTemplate_エスケープが解決されて検証される()
+    {
+        // {{ / }} はリテラル { / } に解決される（{ } は Windows のファイル名で使用可能なため有効と判定）
+        Assert.True(FileNameTemplate.IsValidTemplate("img_{{date}}.png", out var message));
+        Assert.Null(message);
+    }
+
+    [Fact]
+    public void IsValidTemplate_複合トークンは解決されて検証される()
+    {
+        // {yyyyMMdd} は数字へ解決されるため有効
+        Assert.True(FileNameTemplate.IsValidTemplate("img_{yyyyMMdd}-{HHmm}.png", out var message));
+        Assert.Null(message);
+    }
+
     // ====================================================================
     // 保存先フォルダのプレースホルダ解決（{MyPictures}）
     // ====================================================================

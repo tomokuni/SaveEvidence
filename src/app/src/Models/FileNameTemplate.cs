@@ -8,8 +8,10 @@ namespace app.Models;
 /// ファイル名テンプレート文字列を解析し、実際の保存ファイル名を生成するユーティリティクラス。
 /// </summary>
 /// <remarks>
-/// テンプレート内の <c>{date}</c> は <c>yyyyMMdd</c>、<c>{time}</c> は <c>HHmmss</c> に置換される。<br/>
-/// 日時個別プレースホルダ: <c>{yyyy}</c>（年 4 桁）/<c>{MM}</c>（月 2 桁）/<c>{dd}</c>（日 2 桁）/<c>{HH}</c>（時 2 桁・24 時間）/<c>{mm}</c>（分 2 桁）/<c>{ss}</c>（秒 2 桁）。<br/>
+/// プレースフォルダは <c>{ }</c> で囲われた文字列を対象とし、その内部のトークン（<c>date</c> / <c>time</c> / <c>yyyy</c> / <c>MM</c> / <c>dd</c> / <c>HH</c> / <c>mm</c> / <c>ss</c>）を日時値へ置換する。<br/>
+/// 例: <c>{yyyyMMdd}</c> → <c>20260819</c>、<c>{HHmm}</c> → <c>2352</c>。<br/>
+/// <c>{date}</c> は <c>yyyyMMdd</c>、<c>{time}</c> は <c>HHmmss</c> の省略形。<br/>
+/// 中括弧自体を表す場合は <c>{{</c>（リテラル <c>{</c>）/ <c>}}</c>（リテラル <c>}</c>）としてエスケープする（例: <c>"{{date}}"</c> → <c>"{date}"</c>）。<br/>
 /// テンプレートに含まれる右端の数値連続は、画像保存時に自動インクリメントされる通番として扱われる。<br/>
 /// 例: <c>"screenshot_{date}_{time}_01.png"</c> → <c>"screenshot_20250101_120000_01.png"</c><br/>
 /// ソースジェネレーターにより正規表現が最適化される（partial + GeneratedRegex）。<br/>
@@ -18,9 +20,29 @@ public sealed partial class FileNameTemplate
 {
     private static readonly char[] s_invalidFileNameChars = Path.GetInvalidFileNameChars();
 
+    /// <summary>エスケープ <c>{{</c> の一時トークン（置換処理中の衝突防止用・PUA）。</summary>
+    private const string OpenBraceToken = "\uE000";
+
+    /// <summary>エスケープ <c>}}</c> の一時トークン（置換処理中の衝突防止用・PUA）。</summary>
+    private const string CloseBraceToken = "\uE001";
+
+    /// <summary>日時トークンの定義（トークン名・日時書式・検証用サンプル値）。</summary>
+    private static readonly (string Token, string Format, string Sample)[] s_tokens =
+    [
+        ("date", "yyyyMMdd", "20250101"),
+        ("time", "HHmmss", "120000"),
+        ("yyyy", "yyyy", "2025"),
+        ("MM", "MM", "01"),
+        ("dd", "dd", "01"),
+        ("HH", "HH", "12"),
+        ("mm", "mm", "00"),
+        ("ss", "ss", "00"),
+    ];
+
     /// <summary>
     /// テンプレートから実際のファイル名を生成する。
-    /// {date} → yyyyMMdd、{time} → HHmmss、{yyyy}/{MM}/{dd}/{HH}/{mm}/{ss} → 日時個別 に置換される。
+    /// { } で囲われた領域内のトークン（date/time/yyyy/MM/dd/HH/mm/ss）を日時値へ置換する。<br/>
+    /// {{ はリテラル {、}} はリテラル } として解決される。<br/>
     /// テンプレート内の数値はそのまま使用される（事前に IncrementRightmostNumber で更新済みであること）。
     /// </summary>
     /// <param name="template">テンプレート文字列</param>
@@ -28,15 +50,7 @@ public sealed partial class FileNameTemplate
     public static string Generate(string template)
     {
         var now = DateTime.Now;
-        return template
-            .Replace("{date}", now.ToString("yyyyMMdd"))
-            .Replace("{time}", now.ToString("HHmmss"))
-            .Replace("{yyyy}", now.ToString("yyyy"))
-            .Replace("{MM}", now.ToString("MM"))
-            .Replace("{dd}", now.ToString("dd"))
-            .Replace("{HH}", now.ToString("HH"))
-            .Replace("{mm}", now.ToString("mm"))
-            .Replace("{ss}", now.ToString("ss"));
+        return ReplacePlaceholders(template, t => now.ToString(t.Format));
     }
 
     /// <summary>
@@ -93,8 +107,8 @@ public sealed partial class FileNameTemplate
 
     /// <summary>
     /// ファイル名テンプレートとして使用可能かどうかを検証する。
-    /// プレースホルダ（{date}/{time}/{yyyy}/{MM}/{dd}/{HH}/{mm}/{ss}）を置換し右端数値を除去したとき、
-    /// ファイル名に使用できない文字が含まれていないかを確認する。
+    /// プレースホルダ（{ } 内のトークン）とエスケープ（{{ / }}）を解決し、
+    /// 右端数値を除去したとき、ファイル名に使用できない文字が含まれていないかを確認する。
     /// </summary>
     /// <param name="template">検証するテンプレート文字列</param>
     /// <param name="errorMessage">検証エラーメッセージ（無効な場合のみ設定）</param>
@@ -107,16 +121,8 @@ public sealed partial class FileNameTemplate
             return false;
         }
 
-        // プレースホルダを値で仮置換して検証
-        var testName = template
-            .Replace("{date}", "20250101")
-            .Replace("{time}", "120000")
-            .Replace("{yyyy}", "2025")
-            .Replace("{MM}", "01")
-            .Replace("{dd}", "01")
-            .Replace("{HH}", "12")
-            .Replace("{mm}", "00")
-            .Replace("{ss}", "00");
+        // プレースホルダを値で仮置換して検証（サンプル値は定義配列から取得）
+        var testName = ReplacePlaceholders(template, t => t.Sample);
         // 右端の数値連続も除去（桁数不定のため）
         testName = NumberPattern().Replace(testName, "0");
 
@@ -132,4 +138,40 @@ public sealed partial class FileNameTemplate
         errorMessage = null;
         return true;
     }
+
+    /// <summary>エスケープ（<c>{{</c> → <c>{</c> / <c>}}</c> → <c>}</c>）を解決し、{ } 内の日時トークンを置換する。</summary>
+    /// <param name="template">テンプレート文字列。</param>
+    /// <param name="valueOf">トークン定義から置換値を生成する関数。</param>
+    /// <returns>置換後の文字列。</returns>
+    /// <remarks>
+    /// <c>{{</c> / <c>}}</c> を一時トークンで保護してから <c>{ }</c> の領域を置換し、最後に復元する<br/>
+    /// （エスケープ後の <c>{</c> / <c>}</c> がプレースホルダとして誤置換されるのを防ぐ）。<br/>
+    /// トークンは <c>date</c> / <c>time</c> を先に、個別トークン（<c>yyyy</c> 等）を後に置換する<br/>
+    /// （date の展開値に個別トークン名が含まれないため、二重置換は発生しない）。
+    /// </remarks>
+    private static string ReplacePlaceholders(string template, Func<(string Token, string Format, string Sample), string> valueOf)
+    {
+        var result = template
+            .Replace("{{", OpenBraceToken)
+            .Replace("}}", CloseBraceToken);
+
+        // { } で囲われた領域を検出し、領域内のトークンを日時値へ置換する
+        result = PlaceholderPattern().Replace(result, match =>
+        {
+            var content = match.Groups[1].Value;
+            foreach (var token in s_tokens)
+            {
+                content = content.Replace(token.Token, valueOf(token));
+            }
+            return content;
+        });
+
+        return result
+            .Replace(OpenBraceToken, "{")
+            .Replace(CloseBraceToken, "}");
+    }
+
+    /// <summary>{ } で囲われたプレースホルダ領域を検出する正規表現（入れ子なし・最長一致）。</summary>
+    [GeneratedRegex("\\{([^{}]*)\\}")]
+    private static partial Regex PlaceholderPattern();
 }

@@ -63,15 +63,7 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomIn()
-    {
-        var current = ViewModel.ZoomPercent;
-        var target = ZoomTransition.NextLevel(current, ComputeRawFitZoomPercent());
-        if (target is not { } t) return;
-
-        _logger.LogZoomIn(current, t);
-        // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ（1 回だけ実行）
-        ViewModel.ZoomPercent = t;
-    }
+        => ApplyZoomTransition(ZoomTransition.NextLevel(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), _logger.LogZoomIn);
 
     /// <summary>ズームアウトする（⊖⊕ボタン）。</summary>
     /// <remarks>
@@ -80,15 +72,7 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomOut()
-    {
-        var current = ViewModel.ZoomPercent;
-        var target = ZoomTransition.PrevLevel(current, ComputeRawFitZoomPercent());
-        if (target is not { } t) return;
-
-        _logger.LogZoomOut(current, t);
-        // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ（1 回だけ実行）
-        ViewModel.ZoomPercent = t;
-    }
+        => ApplyZoomTransition(ZoomTransition.PrevLevel(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), _logger.LogZoomOut);
 
     /// <summary>Ctrl+ホイールでズームインする（拡大 = Round(現在の拡大率 × 1.1)）。</summary>
     /// <remarks>
@@ -97,15 +81,7 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomInByWheel()
-    {
-        var current = ViewModel.ZoomPercent;
-        var target = ZoomTransition.WheelZoomIn(current, ComputeRawFitZoomPercent());
-        if (target is not { } t) return;
-
-        _logger.LogZoomInWheel(current, t);
-        // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ
-        ViewModel.ZoomPercent = t;
-    }
+        => ApplyZoomTransition(ZoomTransition.WheelZoomIn(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), _logger.LogZoomInWheel);
 
     /// <summary>Ctrl+ホイールでズームアウトする（縮小 = Round(現在の拡大率 ÷ 1.1)）。</summary>
     /// <remarks>
@@ -114,15 +90,7 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomOutByWheel()
-    {
-        var current = ViewModel.ZoomPercent;
-        var target = ZoomTransition.WheelZoomOut(current, ComputeRawFitZoomPercent());
-        if (target is not { } t) return;
-
-        _logger.LogZoomOutWheel(current, t);
-        // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ
-        ViewModel.ZoomPercent = t;
-    }
+        => ApplyZoomTransition(ZoomTransition.WheelZoomOut(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), _logger.LogZoomOutWheel);
 
     /// <summary>ComboBox のテキスト入力からズーム率をパースして適用する。</summary>
     /// <param name="text">入力テキスト（例: "25"、"25%"、"150 %"）。</param>
@@ -190,6 +158,17 @@ public sealed class ZoomManager
         ViewModel.ZoomDisplayText = $"{actual}%";
     }
 
+    /// <summary>ズーム遷移の適用（ログ記録 + ZoomPercent 設定）を共通化する。</summary>
+    /// <param name="target">遷移先のズーム率。null の場合は何もしない（移動不可）。</param>
+    /// <param name="log">変更前後のズーム率を記録するログメソッド。</param>
+    /// <remarks>ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ（1 回だけ実行）。</remarks>
+    private void ApplyZoomTransition(int? target, Action<int, int> log)
+    {
+        if (target is not { } t) return;
+        log(ViewModel.ZoomPercent, t);
+        ViewModel.ZoomPercent = t;
+    }
+
     /// <summary>ビューポートリサイズ時に Fit モードの拡大率表示を更新する。</summary>
     /// <remarks>Fit 実効倍率はビューポートと元画像サイズから算出する（<see cref="ZoomMath.FitZoomPercent"/> に委譲）。</remarks>
     public void OnZoomableViewSizeChanged(SizeChangedEventArgs e)
@@ -197,9 +176,9 @@ public sealed class ZoomManager
         if (ViewModel.ZoomPercent <= 0 && ViewModel.PreviewImage is { } img)
         {
             // Fit の実効倍率が変わるため、ステータスバーの拡大率表示を新しいビューポートサイズで更新する
-            var scale = ZoomMath.FitZoomPercent(
-                new Size(img.PixelSize.Width, img.PixelSize.Height), e.NewSize) / 100.0;
-            ViewModel.ZoomDisplayText = $"{Math.Clamp((int)Math.Round(scale * 100), 1, 500)}%";
+            var fitZoom = ZoomMath.FitZoomPercent(
+                new Size(img.PixelSize.Width, img.PixelSize.Height), e.NewSize);
+            ViewModel.ZoomDisplayText = $"{Math.Clamp((int)Math.Round(fitZoom), 1, 500)}%";
         }
     }
 

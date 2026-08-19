@@ -238,10 +238,10 @@ public sealed partial class SettingsPage : UserControl
     {
         if (sender is not TextBox tb) return;
 
+        var target = GetHotkeyTarget(tb);
         var text = tb.Text;
         if (string.IsNullOrWhiteSpace(text) || text == "(未設定)")
         {
-            var target = GetHotkeyTarget(tb);
             if (target.HasValue && GetCurrentHotkey(target.Value).Key != Key.None)
             {
                 ClearHotkey(target.Value, tb);
@@ -251,7 +251,6 @@ public sealed partial class SettingsPage : UserControl
 
         if (TryParseHotKeyText(text, out var setting))
         {
-            var target = GetHotkeyTarget(tb);
             if (target.HasValue)
             {
                 SetHotkey(target.Value, setting);
@@ -262,7 +261,6 @@ public sealed partial class SettingsPage : UserControl
         else
         {
             // 解釈できない場合は現在の設定値に戻す
-            var target = GetHotkeyTarget(tb);
             if (target.HasValue)
             {
                 var current = GetCurrentHotkey(target.Value);

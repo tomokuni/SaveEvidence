@@ -798,24 +798,22 @@ public sealed partial class CapturePage : UserControl
     private void OnRedoMenuClick(object? sender, RoutedEventArgs e) => RestoreRedo();
 
     private void OnCaptureScreenClick(object? sender, RoutedEventArgs e)
-    {
-        _logger.LogCaptureMenuScreen();
-        if (_parentWindow is MainWindow mw)
-            mw.StartSelectionMode(CaptureType.ScreenSelect);
-    }
+        => StartCapture(CaptureType.ScreenSelect, _logger.LogCaptureMenuScreen);
 
     private void OnCaptureWindowClick(object? sender, RoutedEventArgs e)
-    {
-        _logger.LogCaptureMenuWindow();
-        if (_parentWindow is MainWindow mw)
-            mw.StartSelectionMode(CaptureType.WindowSelect);
-    }
+        => StartCapture(CaptureType.WindowSelect, _logger.LogCaptureMenuWindow);
 
     private void OnCaptureAreaClick(object? sender, RoutedEventArgs e)
+        => StartCapture(CaptureType.AreaSelect, _logger.LogCaptureMenuArea);
+
+    /// <summary>メニューからのキャプチャ開始を共通処理する（ログ記録 + MainWindow への委譲）。</summary>
+    /// <param name="captureType">開始するキャプチャ種別。</param>
+    /// <param name="log">メニュークリックのログメソッド。</param>
+    private void StartCapture(CaptureType captureType, Action log)
     {
-        _logger.LogCaptureMenuArea();
+        log();
         if (_parentWindow is MainWindow mw)
-            mw.StartSelectionMode(CaptureType.AreaSelect);
+            mw.StartSelectionMode(captureType);
     }
 
     private void OnCropMenuClick(object? sender, RoutedEventArgs e)

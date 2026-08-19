@@ -232,6 +232,7 @@ flowchart TB
 | --- | --- | --- |
 | `BottomAlignWrapPanel` | 公開パネル（`public sealed class : Panel`） | 横方向折り返し + 行内下端揃え。各行の高さは最大アイテム高さで決定（FolderViewPage の一覧用） |
 | `ZoomRequestedEventArgs` | 公開 record | Ctrl+ホイールのズーム要求（ZoomIn / PointerPosition） |
+| `FileNameTemplate` | 公開ユーティリティ（`public sealed partial class`） | ファイル名テンプレートの解析・生成・検証。日時プレースホルダ（`{date}` / `{time}` 等）とエスケープ（`{{` / `}}`）の解決、右端数値のオートインクリメント。外部仕様は SPEC_ExtFunc.md（13. ファイル名テンプレート）を参照 |
 
 ### 6.10 App（テーマ適用）
 
