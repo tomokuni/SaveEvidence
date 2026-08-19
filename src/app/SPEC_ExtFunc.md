@@ -51,7 +51,7 @@
 | --- | --- |
 | 対象 | `ZoomManager` / `ZoomableView` / `CapturePage`（ズーム関連） |
 | プロジェクト | `app/app.csproj` |
-| 名前空間 | `app.Views.Components` / `app.Controls` / `app.Views.Pages` |
+| 名前空間 | `app.Controls` / `app.Views.Components` / `app.Views.Pages` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主な用途 | 画像プレビューのズームイン・アウト・Fit 表示・ズーム中心維持・パン・スクロールバー・ステータスバー連動 |

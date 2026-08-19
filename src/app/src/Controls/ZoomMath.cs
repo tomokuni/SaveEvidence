@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace app.Views.Components;
+namespace app.Controls;
 
 /// <summary>
 /// ズーム中心維持の計算（純粋関数）。

@@ -1,4 +1,4 @@
-namespace app.Views.Components;
+namespace app.Controls;
 
 /// <summary>
 /// ズーム遷移の計算ロジック（純粋関数）。

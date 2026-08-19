@@ -1,4 +1,4 @@
-using app.Views.Components;
+using app.Controls;
 using Xunit;
 
 namespace app.Tests;
