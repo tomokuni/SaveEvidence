@@ -1,7 +1,7 @@
-using System.ComponentModel;
-using System.Windows.Input;
 using Avalonia;
 using Avalonia.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
 
@@ -12,9 +12,10 @@ namespace FadeMaskControl.Sample.ViewModels;
 /// FadeMaskControl の公開プロパティ（SelectionRect / OverlayColor / BorderColor /
 /// BorderThickness / TextColor / TextBackgroundColor / FontSize / ShowSizeLabel）を双方向バインドで公開する。<br/>
 /// 色の不透明度は色のアルファに統合する。<br/>
-/// 選択矩形の座標は個別プロパティ（X / Y / W / H）として編集し、<see cref="SelectionRect"/> へ反映する。
+/// 選択矩形の座標は個別プロパティ（X / Y / W / H）として編集し、<see cref="SelectionRect"/> へ反映する。<br/>
+/// 変更通知とコマンドは CommunityToolkit.Mvvm（<see cref="ObservableObject"/> / <c>[RelayCommand]</c>）で提供する。
 /// </remarks>
-public class MainWindowViewModel : INotifyPropertyChanged
+public partial class MainWindowViewModel : ObservableObject
 {
     private Rect _selectionRect = new(50, 40, 220, 160);
     private Color _overlayColor = Color.FromAColor(150, Colors.Black);
@@ -94,7 +95,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>選択矩形をクリアするコマンド。</summary>
-    public RelayCommand ClearRectCommand { get; }
+    [RelayCommand]
+    private void ClearRect() => SelectionRect = new Rect(0, 0, 0, 0);
 
     /// <summary>暗転オーバーレイのアルファ値（0〜255、編集用）。</summary>
     public int OverlayOpacity
@@ -456,35 +458,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// <summary>MainWindowViewModel を初期化する。</summary>
     public MainWindowViewModel()
     {
-        ClearRectCommand = new RelayCommand(() => SelectionRect = new Rect(0, 0, 0, 0));
         // 初期モード（AreaSelect）をレンダラーへ反映する
         ApplyMode(FadeMaskRenderMode.AreaSelect);
     }
-
-    /// <summary>プロパティ変更通知。</summary>
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    /// <summary>プロパティ変更を通知する。</summary>
-    protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
-/// <summary>簡易コマンド（ICommand 実装）。</summary>
-/// <remarks>ViewModel の操作を View のボタンへ接続するための最小実装。<br/>
-/// CanExecute は常に true のため、イベントは explicit 実装（未使用警告を回避）で提供する。</remarks>
-public sealed class RelayCommand(Action execute) : ICommand
-{
-    private readonly Action _execute = execute;
-
-    /// <inheritdoc/>
-    bool ICommand.CanExecute(object? parameter) => true;
-
-    /// <inheritdoc/>
-    void ICommand.Execute(object? parameter) => _execute();
-
-    /// <inheritdoc/>
-    event EventHandler? ICommand.CanExecuteChanged
-    {
-        add { }
-        remove { }
-    }
-}

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace DragRectControl.Sample.ViewModels;
 
@@ -17,7 +18,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public string StatusText
     {
         get => _statusText;
-        set => Set(ref _statusText, value);
+        set => SetProperty(ref _statusText, value);
     }
 
     private int _zoomPercent = 100;
@@ -28,7 +29,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _zoomPercent;
         set
         {
-            if (Set(ref _zoomPercent, value))
+            if (SetProperty(ref _zoomPercent, value))
             {
                 // ZoomText は ZoomPercent から算出されるため変更を通知する
                 OnPropertyChanged(nameof(ZoomText));
@@ -45,7 +46,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool HasSelection
     {
         get => _hasSelection;
-        set => Set(ref _hasSelection, value);
+        set => SetProperty(ref _hasSelection, value);
     }
 
     private Rect _selectionRect;
@@ -54,7 +55,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public Rect SelectionRect
     {
         get => _selectionRect;
-        set => Set(ref _selectionRect, value);
+        set => SetProperty(ref _selectionRect, value);
     }
 
     // ====================================================================
@@ -72,7 +73,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _borderThickness;
         set
         {
-            if (Set(ref _borderThickness, value))
+            if (SetProperty(ref _borderThickness, value))
             {
                 OnPropertyChanged(nameof(BorderThicknessText));
             }
@@ -87,7 +88,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _handleSize;
         set
         {
-            if (Set(ref _handleSize, value))
+            if (SetProperty(ref _handleSize, value))
             {
                 OnPropertyChanged(nameof(HandleSizeText));
             }
@@ -102,7 +103,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _handleHitRadius;
         set
         {
-            if (Set(ref _handleHitRadius, value))
+            if (SetProperty(ref _handleHitRadius, value))
             {
                 OnPropertyChanged(nameof(HandleHitRadiusText));
             }
@@ -117,7 +118,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _minSelectionSize;
         set
         {
-            if (Set(ref _minSelectionSize, value))
+            if (SetProperty(ref _minSelectionSize, value))
             {
                 OnPropertyChanged(nameof(MinSelectionSizeText));
             }
@@ -130,7 +131,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool ClampToDomainBounds
     {
         get => _clampToDomainBounds;
-        set => Set(ref _clampToDomainBounds, value);
+        set => SetProperty(ref _clampToDomainBounds, value);
     }
 
     private ColorOption _borderColorOption = ColorOptions.Blue;
@@ -139,7 +140,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public ColorOption BorderColorOption
     {
         get => _borderColorOption;
-        set => Set(ref _borderColorOption, value);
+        set => SetProperty(ref _borderColorOption, value);
     }
 
     private ColorOption _handleColorOption = ColorOptions.Blue;
@@ -148,7 +149,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public ColorOption HandleColorOption
     {
         get => _handleColorOption;
-        set => Set(ref _handleColorOption, value);
+        set => SetProperty(ref _handleColorOption, value);
     }
 
     private ColorOption _markerColorOption = ColorOptions.Blue;
@@ -157,7 +158,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public ColorOption MarkerColorOption
     {
         get => _markerColorOption;
-        set => Set(ref _markerColorOption, value);
+        set => SetProperty(ref _markerColorOption, value);
     }
 
     private double _markerLength = 16.0;
@@ -168,7 +169,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _markerLength;
         set
         {
-            if (Set(ref _markerLength, value))
+            if (SetProperty(ref _markerLength, value))
             {
                 OnPropertyChanged(nameof(MarkerLengthText));
             }

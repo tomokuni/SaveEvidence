@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
 using LoupeControl.Sample.Imaging;
 
 namespace LoupeControl.Sample.ViewModels;
@@ -42,7 +43,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool IsLoupeVisible
     {
         get => _isLoupeVisible;
-        set => Set(ref _isLoupeVisible, value);
+        set => SetProperty(ref _isLoupeVisible, value);
     }
 
     // ====================================================================
@@ -57,7 +58,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _centerPoint;
         set
         {
-            if (Set(ref _centerPoint, value))
+            if (SetProperty(ref _centerPoint, value))
             {
                 OnPropertyChanged(nameof(CoordinateText));
             }
@@ -76,7 +77,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _zoomLevel;
         set
         {
-            if (Set(ref _zoomLevel, value))
+            if (SetProperty(ref _zoomLevel, value))
             {
                 OnPropertyChanged(nameof(ZoomText));
                 OnPropertyChanged(nameof(CoordinateText));
@@ -92,7 +93,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _requestedSize;
         set
         {
-            if (Set(ref _requestedSize, value))
+            if (SetProperty(ref _requestedSize, value))
             {
                 OnPropertyChanged(nameof(RequestedSizeText));
                 OnPropertyChanged(nameof(CoordinateText));
@@ -116,7 +117,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _selectionRectVisible;
         set
         {
-            if (Set(ref _selectionRectVisible, value))
+            if (SetProperty(ref _selectionRectVisible, value))
             {
                 OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
@@ -133,7 +134,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _selectionRectX;
         set
         {
-            if (Set(ref _selectionRectX, value))
+            if (SetProperty(ref _selectionRectX, value))
             {
                 OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
@@ -150,7 +151,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _selectionRectY;
         set
         {
-            if (Set(ref _selectionRectY, value))
+            if (SetProperty(ref _selectionRectY, value))
             {
                 OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
@@ -167,7 +168,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _selectionRectWidth;
         set
         {
-            if (Set(ref _selectionRectWidth, value))
+            if (SetProperty(ref _selectionRectWidth, value))
             {
                 OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
@@ -184,7 +185,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _selectionRectHeight;
         set
         {
-            if (Set(ref _selectionRectHeight, value))
+            if (SetProperty(ref _selectionRectHeight, value))
             {
                 OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
@@ -211,7 +212,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _checkerSize;
         set
         {
-            if (Set(ref _checkerSize, value))
+            if (SetProperty(ref _checkerSize, value))
             {
                 OnPropertyChanged(nameof(CheckerSizeText));
             }
@@ -226,7 +227,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _frameWidth;
         set
         {
-            if (Set(ref _frameWidth, value))
+            if (SetProperty(ref _frameWidth, value))
             {
                 OnPropertyChanged(nameof(FrameWidthText));
             }
@@ -241,7 +242,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _renderScaling;
         set
         {
-            if (Set(ref _renderScaling, value))
+            if (SetProperty(ref _renderScaling, value))
             {
                 OnPropertyChanged(nameof(RenderScalingText));
             }
@@ -260,7 +261,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _crossColorOption;
         set
         {
-            if (Set(ref _crossColorOption, value))
+            if (SetProperty(ref _crossColorOption, value))
             {
                 OnPropertyChanged(nameof(CrossBrush));
             }
@@ -277,7 +278,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _checkerColorAOption;
         set
         {
-            if (Set(ref _checkerColorAOption, value))
+            if (SetProperty(ref _checkerColorAOption, value))
             {
                 OnPropertyChanged(nameof(CheckerColorABrush));
             }
@@ -295,7 +296,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _checkerColorBOption;
         set
         {
-            if (Set(ref _checkerColorBOption, value))
+            if (SetProperty(ref _checkerColorBOption, value))
             {
                 OnPropertyChanged(nameof(CheckerColorBBrush));
             }
@@ -313,7 +314,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _frameColorOption;
         set
         {
-            if (Set(ref _frameColorOption, value))
+            if (SetProperty(ref _frameColorOption, value))
             {
                 OnPropertyChanged(nameof(FrameBrush));
             }
@@ -331,7 +332,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _selectionRectColorAOption;
         set
         {
-            if (Set(ref _selectionRectColorAOption, value))
+            if (SetProperty(ref _selectionRectColorAOption, value))
             {
                 OnPropertyChanged(nameof(SelectionRectBrushA));
             }
@@ -349,7 +350,7 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _selectionRectColorBOption;
         set
         {
-            if (Set(ref _selectionRectColorBOption, value))
+            if (SetProperty(ref _selectionRectColorBOption, value))
             {
                 OnPropertyChanged(nameof(SelectionRectBrushB));
             }

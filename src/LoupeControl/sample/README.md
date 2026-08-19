@@ -90,7 +90,6 @@ LoupeControl/sample/
 ├── app.manifest                 # Windows DPI 設定（PerMonitorV2）
 ├── Program.cs                   # エントリポイント
 ├── App.axaml / App.axaml.cs     # アプリケーション定義（FluentTheme）
-├── ObservableObject.cs          # INPC の最小実装
 ├── Logging/
 │   └── DebugLogger.cs           # LoupeControl.Log の設定例（デバッグ出力へ転送）
 ├── Imaging/

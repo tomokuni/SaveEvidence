@@ -83,9 +83,8 @@ SnipCaptureUI/sample/
 ├── app.manifest                # アプリケーションマニフェスト（DPI 認識 PerMonitorV2）
 ├── Program.cs                  # エントリポイント（Avalonia 起動）
 ├── App.axaml(.cs)              # アプリケーション本体（FluentTheme）
-├── ObservableObject.cs         # INotifyPropertyChanged の最小実装
 ├── ViewModels/
-│   └── MainWindowViewModel.cs  # キャプチャ結果・設定・操作ログの保持
+│   └── MainWindowViewModel.cs  # キャプチャ結果・設定・操作ログの保持（CommunityToolkit.Mvvm の ObservableObject）
 └── Views/
     ├── MainWindow.axaml        # メインウィンドウのレイアウト
     └── MainWindow.axaml.cs     # SnipCapture の呼び出し・結果反映・ダミー画像生成

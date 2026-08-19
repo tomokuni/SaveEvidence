@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using Estable.AvaloniaUI.ColorPicker;
 
 namespace ColorPickerControl.Sample.ViewModels;

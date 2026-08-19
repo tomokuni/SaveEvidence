@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Estable.AvaloniaUI.SnipCaptureUI;
 
 namespace SnipCaptureUI.Sample.ViewModels;
@@ -20,21 +21,21 @@ public sealed class MainWindowViewModel : ObservableObject
     public string StatusText
     {
         get => _statusText;
-        set => Set(ref _statusText, value);
+        set => SetProperty(ref _statusText, value);
     }
 
     /// <summary>キャプチャ結果の画像（null = 未キャプチャ）。</summary>
     public Bitmap? CapturedImage
     {
         get => _capturedImage;
-        set => Set(ref _capturedImage, value);
+        set => SetProperty(ref _capturedImage, value);
     }
 
     /// <summary>キャプチャ結果の説明テキスト（領域・サイズ等）。</summary>
     public string ResultText
     {
         get => _resultText;
-        set => Set(ref _resultText, value);
+        set => SetProperty(ref _resultText, value);
     }
 
     /// <summary>ルーペを表示するかどうか（AreaSelect に反映）。</summary>

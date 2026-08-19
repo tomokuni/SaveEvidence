@@ -209,7 +209,7 @@ public sealed partial class ColorPickerControl : UserControl
     private const double SwatchPaddingOffset = 20;
 
     /// <summary>スウォッチの縦位置をテキストと揃えるための微調整（ピクセル）。</summary>
-    private const double SwatchTextYAxisOffset = 1; // スウォッチの縦位置をテキストと揃えるための微調整（ピクセル）
+    private const double SwatchTextYAxisOffset = 1;
 
     // ====================================================================
     // コンストラクタ・初期化

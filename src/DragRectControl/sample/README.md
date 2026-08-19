@@ -162,12 +162,11 @@ DragRectControl/sample/
 ├── app.manifest                   # Windows DPI 設定（PerMonitorV2）
 ├── Program.cs                     # エントリポイント
 ├── App.axaml / App.axaml.cs       # アプリケーション定義（FluentTheme）
-├── ObservableObject.cs            # INPC の最小実装
 ├── Logging/
 │   └── InMemoryLogger.cs          # DragRectControl.Log の設定例（メモリ内ログ）
 ├── ViewModels/
 │   ├── ColorOption.cs             # 色選択肢
-│   └── MainWindowViewModel.cs     # 選択状態・ステータス表示
+│   └── MainWindowViewModel.cs     # 選択状態・ステータス表示（CommunityToolkit.Mvvm の ObservableObject）
 └── Views/
     └── MainWindow.axaml(.cs)      # 選択面 + 操作ガイド + ボタン
 ```
