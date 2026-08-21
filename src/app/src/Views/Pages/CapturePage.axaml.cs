@@ -126,14 +126,6 @@ public sealed partial class CapturePage : UserControl
         // 設定変更時（中央寄せ/原点寄せ）に画像配置を即時反映する
         SubscribeCenterAlignChange();
 
-        // 設定再読込時も市松模様を再購読＋更新
-        _viewModel.AfterSettingsReloaded += () =>
-        {
-            SubscribeCheckerSizeChange();
-            UpdateCheckerboardBackground();
-            _zoomManager.UpdateImageAlignment();
-        };
-
         // 初期のズーム率をスライダに反映
         SyncZoomSlider();
 

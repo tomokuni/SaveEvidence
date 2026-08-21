@@ -56,6 +56,9 @@
     <Project Path="src/SnipCaptureUI/tests/SnipCaptureUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/ZoomViewControl/" />
+  <Folder Name="/src/ZoomViewControl/sample/">
+    <Project Path="src/ZoomViewControl/sample/ZoomViewControl.Sample.csproj" />
+  </Folder>
   <Folder Name="/src/ZoomViewControl/src/">
     <Project Path="src/ZoomViewControl/src/ZoomViewControl.csproj" />
   </Folder>

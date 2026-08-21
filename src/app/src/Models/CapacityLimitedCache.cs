@@ -26,6 +26,14 @@ internal static class CapacityLimitedCache
         value = factory(key);
         if (cache.Count >= capacity)
         {
+            // IDisposable 値（Bitmap 等）は破棄してからクリアする（リソースリーク防止）
+            foreach (var cached in cache.Values)
+            {
+                if (cached is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
             cache.Clear();
         }
         cache[key] = value;

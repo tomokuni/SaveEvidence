@@ -1,15 +1,12 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using app.Models;
-using app.Services;
 using app.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
-using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace app.Views.Pages;
@@ -20,12 +17,11 @@ namespace app.Views.Pages;
 /// <remarks>
 /// 画像ファイルのサムネイル一覧を表示し、クリックでメイン画面のプレビューに読み込む。<br/>
 /// 表示モード（特大/大/中）、ソート切替、更新機能を提供する。<br/>
+/// 表示モードの復元・保存、ToggleButton 同期、ページ表示時の再構築は <see cref="ViewModePageBase"/> に共通化する。
 /// </remarks>
-public sealed partial class FolderViewPage : UserControl
+public sealed partial class FolderViewPage : ViewModePageBase
 {
     private FolderViewViewModel _viewModel = null!;
-    private MainViewModel _mainViewModel = null!;
-    private SettingsService _settingsService = null!;
 
     /// <summary>サムネイルキャッシュの最大保持数。</summary>
     private const int ThumbnailCacheCapacity = 100;
@@ -45,102 +41,52 @@ public sealed partial class FolderViewPage : UserControl
         if (Design.IsDesignMode) return;
 
         _viewModel = Program.ServiceProvider.GetRequiredService<FolderViewViewModel>();
-        _mainViewModel = Program.ServiceProvider.GetRequiredService<MainViewModel>();
-        _settingsService = Program.SettingsService;
         DataContext = _viewModel;
 
-        // 起動時（ページ初期化時）に保存済みの表示モード・ソート順を復元する
-        RestoreViewSettings();
-
-        Loaded += OnLoaded;
-
-        // ナビゲーションでフォルダビューが表示されるたびに、保存済み設定を復元して Toggle 状態へ反映する
-        PropertyChanged += OnIsVisiblePropertyChanged;
-
-        // コンストラクタでも初期Toggle状態を同期
-        InitialSyncToggleStates();
+        InitializeViewModePage(
+            Program.SettingsService,
+            Program.ServiceProvider.GetRequiredService<MainViewModel>(),
+            ExtraLargeButton, LargeButton, MediumButton);
     }
 
-    /// <summary>保存済みの表示モード・ソート順を ViewModel へ復元する。</summary>
+    /// <summary>現在の表示モードのインデックス（0=特大, 1=大, 2=中）。</summary>
+    protected override int SelectedViewModeIndex
+    {
+        get => _viewModel.SelectedViewModeIndex;
+        set => _viewModel.SelectedViewModeIndex = value;
+    }
+
+    /// <summary>保存済みの表示モード・ソート順を ViewModel へ復元し、ソート Toggle に反映する。</summary>
     /// <remarks>
     /// <see cref="Settings.FolderViewModeIndex"/> と <see cref="Settings.FolderViewSortAscending"/> を
     /// <see cref="FolderViewViewModel.SelectedViewModeIndex"/> / <see cref="FolderViewViewModel.IsSortAscending"/> へ反映する。<br/>
-    /// 値の範囲チェック（0〜2）を行い、不正値は既定値（大）にフォールバックする。
+    /// 値の範囲チェックは <see cref="ViewModeDisplay.ClampIndex"/> に委譲する。
     /// </remarks>
-    private void RestoreViewSettings()
+    protected override void RestoreViewModeSettings()
     {
-        var settings = _settingsService.Current;
-        var modeIndex = settings.FolderViewModeIndex;
-        _viewModel.SelectedViewModeIndex = modeIndex is >= 0 and <= 2 ? modeIndex : 1;
+        var settings = SettingsService.Current;
+        _viewModel.SelectedViewModeIndex = ViewModeDisplay.ClampIndex(settings.FolderViewModeIndex);
         _viewModel.IsSortAscending = settings.FolderViewSortAscending;
+        SyncSortToggleStates();
     }
 
     /// <summary>現在の表示モード・ソート順を設定へ保存する。</summary>
     /// <remarks>フォルダビューの操作（表示モード切替・ソート切替）のたびに呼び出し、設定ファイルへ反映する。</remarks>
-    private void SaveViewSettings()
+    protected override void SaveViewModeSettings()
     {
-        var settings = _settingsService.Current;
+        var settings = SettingsService.Current;
         settings.FolderViewModeIndex = _viewModel.SelectedViewModeIndex;
         settings.FolderViewSortAscending = _viewModel.IsSortAscending;
-        _settingsService.Save();
+        SettingsService.Save();
     }
 
-    /// <summary>初期表示時のToggle状態をDispatcher経由で同期する。</summary>
-    /// <remarks>
-    /// <see cref="OnLoaded"/> で <see cref="RestoreViewSettings"/> と同期が行われるため、
-    /// 本メソッドはフォールバックとして動作する（IsLoaded 判定は行わない。Loaded 前に呼ばれても
-    /// ToggleButton の IsChecked は設定可能なため）。
-    /// </remarks>
-    private void InitialSyncToggleStates()
-    {
-        if (!Design.IsDesignMode)
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                SyncViewModeToggleStates();
-                SyncSortToggleStates();
-            }, DispatcherPriority.Loaded);
-        }
-    }
-
-    /// <summary>ページ表示時にファイル一覧を読み込み、保存済みの表示モード・ソート順を復元して同期する。</summary>
-    /// <remarks>
-    /// <see cref="RestoreViewSettings"/> を実行してから <see cref="SyncViewModeToggleStates"/> を呼ぶことで、
-    /// 起動時に復元された表示モードが ToggleButton の選択状態（チェック）へ確実に反映される。<br/>
-    /// LoadFiles は復元後の <see cref="FolderViewViewModel.SelectedViewModeIndex"/> に基づいて
-    /// アイコンサイズを決定する（復元 → 読込の順で行う）。<br/>
-    /// <c>Loaded</c> は visual tree 接続時に一度だけ発火するため、ナビゲーションで再表示されるたびに
-    /// 復元・同期するよう <see cref="OnIsVisibleChanged"/> でも同様の処理を行う。
-    /// </remarks>
-    private void OnLoaded(object? sender, RoutedEventArgs e)
-    {
-        RestoreViewSettings();
-        LoadFiles();
-        SyncViewModeToggleStates();
-        SyncSortToggleStates();
-    }
-
-    /// <summary>ページの表示状態変更時のハンドラ。表示されるたびに保存済み設定を復元して同期する。</summary>
-    /// <remarks>
-    /// ナビゲーションでフォルダビューへ切り替わったとき（IsVisible = true）に、
-    /// 保存済みの表示モード・ソート順を復元し、ToggleButton の選択状態へ反映する。<br/>
-    /// Avalonia では <c>IsVisibleChanged</c> イベントが存在しないため、
-    /// <see cref="Visual.PropertyChanged"/> で <see cref="Visual.IsVisibleProperty"/> の変更を監視する。
-    /// </remarks>
-    private void OnIsVisiblePropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-    {
-        if (e.Property == IsVisibleProperty && IsVisible)
-        {
-            RestoreViewSettings();
-            SyncViewModeToggleStates();
-            SyncSortToggleStates();
-        }
-    }
+    /// <summary>ファイル一覧を再読み込みする。</summary>
+    protected override void ReloadItems() => LoadFiles();
 
     /// <summary>ファイル一覧を読み込む。</summary>
     private void LoadFiles()
     {
-        var folderPath = _mainViewModel.SaveFolderPathResolved;
+        var folderPath = MainViewModel.SaveFolderPathResolved;
         _viewModel.FolderPathText = folderPath;
         if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
         {
@@ -195,35 +141,11 @@ public sealed partial class FolderViewPage : UserControl
         }
     }
 
-    /// <summary>表示モードに応じたアイコンサイズを取得する。</summary>
-    private int GetIconSize() => _settingsService.Current.GetIconSize(_viewModel.SelectedViewModeIndex);
-
-    /// <summary>表示モードボタンの共通クリックハンドラ。対応する表示モードに切り替え、ファイルを再読込する。</summary>
-    private void OnViewModeClick(object? sender, RoutedEventArgs e)
-    {
-        if (sender is ToggleButton { Tag: string tag } && int.TryParse(tag, out var index))
-        {
-            _viewModel.SelectedViewModeIndex = index;
-            SaveViewSettings();
-            LoadFiles();
-            SyncViewModeToggleStates();
-        }
-    }
-
-    /// <summary>表示モードの ToggleButton の IsChecked を SelectedViewModeIndex に合わせて同期する。</summary>
-    /// <remarks>各ボタンは <c>x:Name</c> で個別参照する（Tag ベースの一括走査は行わない）。</remarks>
-    private void SyncViewModeToggleStates()
-    {
-        ExtraLargeButton.IsChecked = _viewModel.SelectedViewModeIndex == 0;
-        LargeButton.IsChecked = _viewModel.SelectedViewModeIndex == 1;
-        MediumButton.IsChecked = _viewModel.SelectedViewModeIndex == 2;
-    }
-
     /// <summary>昇順ボタンクリック。</summary>
     private void OnSortAscendingClick(object? sender, RoutedEventArgs e)
     {
         _viewModel.IsSortAscending = true;
-        SaveViewSettings();
+        SaveViewModeSettings();
         LoadFiles();
         SyncSortToggleStates();
     }
@@ -232,7 +154,7 @@ public sealed partial class FolderViewPage : UserControl
     private void OnSortDescendingClick(object? sender, RoutedEventArgs e)
     {
         _viewModel.IsSortAscending = false;
-        SaveViewSettings();
+        SaveViewModeSettings();
         LoadFiles();
         SyncSortToggleStates();
     }

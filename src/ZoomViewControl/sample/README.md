@@ -1,0 +1,100 @@
+# ZoomViewControl サンプルアプリケーション
+
+## 目次
+
+- [ZoomViewControl サンプルアプリケーション](#zoomviewcontrol-サンプルアプリケーション)
+  - [目次](#目次)
+  - [1. 概要](#1-概要)
+  - [2. 実行方法](#2-実行方法)
+  - [3. 操作方法](#3-操作方法)
+  - [4. 検証項目（動作確認チェックリスト）](#4-検証項目動作確認チェックリスト)
+  - [5. 構成](#5-構成)
+  - [6. 使い方（初めての方向け）](#6-使い方初めての方向け)
+
+---
+
+## 1. 概要
+
+`ZoomViewControl/sample/` にある **ZoomViewControl 動作確認用の独立したサンプルアプリケーション**です。
+
+- `ZoomableView`（`Estable.AvaloniaUI.ZoomView.ZoomableView`）を実際に配置して、ズーム・パン・Fit 表示の動作を確認できます。
+- `ZoomManager`（`Estable.AvaloniaUI.ZoomView.ZoomManager`）に `IZoomHost` 実装（`MainWindowViewModel`）を注入し、ボタン・スライダ・Ctrl+ホイールのズーム操作を統括させます。
+- テスト画像（グラデーション＋グリッド＋マーカー）を生成して初期表示します。画像ファイルを開いて差し替えることもできます。
+- ポインタ位置のドメイン座標（元画像ピクセル）をステータス表示します（`ViewportToContent` の使用例）。
+
+## 2. 実行方法
+
+```powershell
+dotnet run --project sample/ZoomViewControl.Sample.csproj
+```
+
+リリース構成で実行する場合:
+
+```powershell
+dotnet run -c Release --project sample/ZoomViewControl.Sample.csproj
+```
+
+### バッチファイル（リリースビルド＆起動）
+
+`sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
+
+```text
+RunSample.bat  →  リリースビルド（dotnet build -c Release）→ ZoomViewControl.Sample.exe を起動
+```
+
+> 本サンプルは 独立したプロジェクトです。
+> `ZoomViewControl.csproj` は `sample/**` をコンパイル対象から除外しています。
+
+## 3. 操作方法
+
+| 操作 | 内容 |
+| --- | --- |
+| ⊕ / ⊖ ボタン | ズームイン / ズームアウト（`ZoomTransition.ButtonZoomLevels` の 23 段階を遷移） |
+| Fit ボタン | Fit 表示（ズーム率 0 = 自動。ビューポートに収まる Uniform スケール） |
+| ズームスライダ | ズーム率を直接指定（10〜500%） |
+| マウスドラッグ | パン（grab 方式。掴んだ位置がポインタに追従） |
+| ホイール | 縦パン |
+| Shift + ホイール | 横パン |
+| Ctrl + ホイール | マウスポインタ位置を中心にズーム（×1.1 / ÷1.1 連続遷移） |
+| 画像を開く... | 画像ファイル（PNG / JPG / BMP / GIF / WEBP）をプレビューへ読み込み |
+| ポインタ座標表示 | マウス位置のドメイン座標（元画像ピクセル）をステータス表示（画像外は `-`） |
+
+## 4. 検証項目（動作確認チェックリスト）
+
+- [ ] 起動時にテスト画像（グラデーション＋グリッド＋マーカー）が Fit 表示される
+- [ ] ⊕ / ⊖ ボタンでズーム率が段階遷移し、`ZoomDisplayText` とスライダが同期する
+- [ ] Fit 中は実効倍率の % が表示され、⊕ / ⊖ で実効倍率を基準に段階遷移する
+- [ ] ズームスライダの変更が即時反映され、ズーム中心（表示中の位置）が維持される
+- [ ] Ctrl+ホイールでマウスポインタ位置を中心にズームする（ポインタ位置が維持される）
+- [ ] マウスドラッグでパンできる（掴んだ位置がポインタに追従）
+- [ ] ホイール / Shift+ホイールで縦・横にパンできる
+- [ ] スクロールバーが表示され、ドラッグでパンできる（コンテンツがビューポートより大きい場合）
+- [ ] 10px / 50px グリッドがズーム倍率どおりに拡大される（倍率の検証）
+- [ ] ウィンドウをリサイズすると Fit 表示が再計算される
+- [ ] 画像を開く... で画像を差し替えると Fit 表示にリセットされる
+- [ ] ポインタ座標表示が画像ピクセル（ドメイン座標）と一致する（画像外は `-`）
+
+## 5. 構成
+
+```text
+ZoomViewControl/sample/
+├── ZoomViewControl.Sample.csproj   # サンプルアプリのプロジェクト（net10.0 / Avalonia 12.1）
+├── app.manifest                 # Windows DPI 設定（PerMonitorV2）
+├── Program.cs                   # エントリポイント
+├── App.axaml / App.axaml.cs     # アプリケーション定義（FluentTheme）
+├── Imaging/
+│   └── TestImageFactory.cs      # テスト画像生成（グラデーション＋グリッド＋マーカー）
+├── ViewModels/
+│   └── MainWindowViewModel.cs   # IZoomHost 実装（ZoomPercent / PreviewImage / ZoomDisplayText 等）
+└── Views/
+    ├── MainWindow.axaml(.cs)    # メイン画面（ツールバー＋ズームビュー＋スライダ）
+```
+
+## 6. 使い方（初めての方向け）
+
+1. **起動**: テスト画像（グラデーション＋グリッド＋マーカー）が Fit 表示されます。
+2. **ズーム**: ⊕ / ⊖ ボタン、ズームスライダ、Ctrl+ホイールで拡大・縮小できます。ズーム率はステータスバーに % で表示されます。
+3. **パン**: 画像をマウスでドラッグすると移動できます。ホイール（縦）/ Shift+ホイール（横）でもパンできます。
+4. **Fit**: Fit ボタンで画像をビューポート全体に収めます。ウィンドウをリサイズすると Fit 表示も追従します。
+5. **画像の差し替え**: 「画像を開く...」で任意の画像ファイルを読み込めます（読み込み後は Fit 表示に戻ります）。
+6. **座標確認**: 画像上をマウスで動かすと、ポインタ位置の元画像ピクセル座標が下部に表示されます。

@@ -47,14 +47,6 @@ public sealed partial class SettingsPage : UserControl
         // 全設定変更を即時ファイル保存する
         _settingsService.Current.PropertyChanged += (_, _) => _settingsService.Save();
 
-        // ホットキー入力のキーボードフックを各 TextBox に直接登録
-        // （UserControl レベルだとイベントが到達しないケースがあるため）
-        foreach (var tb in new[] { SelectScreenTextBox, WindowSelectTextBox, AreaSelectTextBox })
-        {
-            tb.AddHandler(InputElement.KeyDownEvent, OnHotkeyTextBoxKeyDown,
-                RoutingStrategies.Bubble, handledEventsToo: true);
-        }
-
         // 保存先フォルダの ToolTip（{MyPictures} はマークアップ拡張と衝突するためコード側で構築）
         ToolTip.SetTip(SaveFolderTextBox, BuildSaveFolderToolTip());
     }
@@ -226,6 +218,7 @@ public sealed partial class SettingsPage : UserControl
         if ((e.KeyModifiers & KeyModifiers.Control) != 0) modifiers |= HotKeyModifiers.Control;
         if ((e.KeyModifiers & KeyModifiers.Shift) != 0) modifiers |= HotKeyModifiers.Shift;
         if ((e.KeyModifiers & KeyModifiers.Alt) != 0) modifiers |= HotKeyModifiers.Alt;
+        if ((e.KeyModifiers & KeyModifiers.Meta) != 0) modifiers |= HotKeyModifiers.Windows;
 
         // 修飾キーなし → 通常のテキスト入力として扱う
         if (modifiers == HotKeyModifiers.None) return;

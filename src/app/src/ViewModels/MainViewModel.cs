@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -30,6 +29,15 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
 
     private string _lastSavedFileName = "";
 
+    /// <summary>ファイル名テンプレートの検証結果（有効時は null）。</summary>
+    private string? _validationMessage;
+
+    /// <summary>保存先フォルダパスのプレースホルダ解決後の実パス。</summary>
+    private string _saveFolderPathResolved = "";
+
+    /// <summary>保存先フォルダが無効かどうか。</summary>
+    private bool _hasInvalidSaveFolder;
+
     /// <summary>Fit 時の画像の中央寄せ / 左上寄せ（<see cref="IZoomHost"/> 実装）。</summary>
     public bool CenterAlign => Settings.CenterAlign;
 
@@ -51,9 +59,6 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
     /// <summary>画像編集（切り出し等）前に View 側で Undo をプッシュするためのコールバック。</summary>
     public Action? BeforeEditAction { get; set; }
 
-    /// <summary>設定再読込後に View 側で UI を更新するためのコールバック。</summary>
-    public Action? AfterSettingsReloaded { get; set; }
-
     /// <summary>
     /// MainViewModel の新しいインスタンスを初期化する。
     /// </summary>
@@ -68,7 +73,8 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
             ? settings.SaveFolderPath
             : Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "SaveEvidence");
-        UpdateSaveFolderDisplayName();
+        UpdateValidation();
+        UpdateSaveFolderResolution();
     }
 
     /// <summary>プレビュー画像（Avalonia Bitmap）</summary>
@@ -90,7 +96,6 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
 
     /// <summary>ファイル名テンプレート文字列</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CurrentFileNamePreview))]
     [NotifyPropertyChangedFor(nameof(HasValidTemplate))]
     [NotifyPropertyChangedFor(nameof(HasInvalidTemplate))]
     [NotifyPropertyChangedFor(nameof(ValidationMessage))]
@@ -100,19 +105,17 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
     /// <summary>保存先フォルダパス</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SaveFolderPathResolved))]
-    [NotifyPropertyChangedFor(nameof(SaveFolderDisplayName))]
     [NotifyPropertyChangedFor(nameof(HasInvalidSaveFolder))]
     private string _saveFolderPath = string.Empty;
 
     /// <summary>保存先フォルダパスのプレースホルダを解決した実パス。</summary>
     /// <remarks>設定値（<see cref="SaveFolderPath"/>）に含まれるプレースホルダ（例: <c>{MyPictures}</c>）を展開する。</remarks>
-    public string SaveFolderPathResolved => ResolveSaveFolderPath(SaveFolderPath);
+    public string SaveFolderPathResolved => _saveFolderPathResolved;
 
     /// <summary>保存先フォルダが無効かどうか（プレースホルダ解決後のパスが存在しない場合）。</summary>
     /// <value>解決後のパスが空、または <see cref="Directory.Exists"/> が false の場合 true。</value>
     /// <remarks>設定画面のテキストボックス枠の赤表示（<c>validation-error</c> クラス）に使用する。</remarks>
-    public bool HasInvalidSaveFolder
-        => string.IsNullOrEmpty(SaveFolderPathResolved) || !Directory.Exists(SaveFolderPathResolved);
+    public bool HasInvalidSaveFolder => _hasInvalidSaveFolder;
 
     /// <summary>保存先フォルダパスのプレースホルダ（<c>{MyPictures}</c> 等）を展開する。</summary>
     /// <param name="path">プレースホルダを含む可能性のあるフォルダパス。</param>
@@ -128,10 +131,6 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
             : path.Replace("{MyPictures}",
                 Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
                 StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>保存先フォルダの表示名</summary>
-    [ObservableProperty]
-    private string _saveFolderDisplayName = string.Empty;
 
     /// <summary>現在のズーム率（0=自動）。View 側から設定される。</summary>
     [ObservableProperty]
@@ -172,32 +171,11 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
     /// <summary>貼り付け可能かどうかを取得する。</summary>
     public bool CanPaste => PasteFromClipboardAsync is not null;
 
-    /// <summary>ズーム率の選択肢（0=自動）を取得する。</summary>
-    /// <remarks>フライアウト選択肢: 自動 + 固定倍率 10〜500% の全13段階。</remarks>
-    public IReadOnlyList<int> ZoomLevels => s_zoomLevels;
-
     /// <summary>テーマモードの選択肢（Light / Dark / System）を取得する。</summary>
     /// <remarks>設定画面の ComboBox の ItemsSource に使用する。</remarks>
     public IReadOnlyList<ThemeMode> ThemeModes => s_themeModes;
 
-    /// <summary>ComboBox 表示用のズーム率ラベル一覧を取得する。</summary>
-    public IReadOnlyList<string> ZoomLabels => s_zoomLabels;
-
-    private static readonly int[] s_zoomLevels = [0, 10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
-
     private static readonly ThemeMode[] s_themeModes = System.Enum.GetValues<ThemeMode>();
-
-    private static readonly string[] s_zoomLabels =
-        ["自動(Fit)", "10%", "15%", "25%", "35%", "50%", "75%", "100%", "150%", "200%", "250%", "350%", "500%"];
-
-    /// <summary>現在のファイル名プレビューテキストを取得する。</summary>
-    public string CurrentFileNamePreview
-    {
-        get
-        {
-            return $"保存ファイル名: {FileNameTemplate.Generate(FileNameTemplateText)}";
-        }
-    }
 
     /// <summary>現在の状態テキスト（左側: 保存済み/未）。</summary>
     /// <remarks>表示している画像が保存済みなら「保存済み」、画像変更後（キャプチャ・Crop・貼り付け等）または初期表示なら「未」。</remarks>
@@ -220,21 +198,14 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
 
     /// <summary>ファイル名テンプレートが有効かどうかを取得する。</summary>
     /// <remarks><see cref="ValidationMessage"/> が null かどうかで判定する。</remarks>
-    public bool HasValidTemplate => ValidationMessage is null;
+    public bool HasValidTemplate => _validationMessage is null;
 
     /// <summary>ファイル名テンプレートが無効かどうかを取得する（枠線エラー表示用）。</summary>
     /// <remarks><see cref="HasValidTemplate"/> の否定。View の <c>validation-error</c> クラスバインディングに使用する。</remarks>
     public bool HasInvalidTemplate => !HasValidTemplate;
 
     /// <summary>ファイル名テンプレートの検証エラーメッセージを取得する。有効な場合は null。</summary>
-    public string? ValidationMessage
-    {
-        get
-        {
-            FileNameTemplate.IsValidTemplate(FileNameTemplateText, out var message);
-            return message;
-        }
-    }
+    public string? ValidationMessage => _validationMessage;
 
     /// <summary>設定オブジェクトを取得する。</summary>
     public Settings Settings => _settingsService.Current;
@@ -269,19 +240,34 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
         _previousPreviewImage = null;
     }
 
-    /// <summary>ファイル名テンプレート変更時に数値成分を抽出し、設定を保存する。</summary>
+    /// <summary>ファイル名テンプレート変更時に検証結果を更新し、設定を保存する。</summary>
     partial void OnFileNameTemplateTextChanged(string value)
     {
         _settingsService.Current.FileNameTemplate = value;
         _settingsService.Save();
+        UpdateValidation();
     }
 
-    /// <summary>保存先フォルダ変更時に設定を保存し、表示名を更新する。</summary>
+    /// <summary>保存先フォルダ変更時に解決結果を更新し、設定を保存する。</summary>
     partial void OnSaveFolderPathChanged(string value)
     {
         _settingsService.Current.SaveFolderPath = value;
         _settingsService.Save();
-        UpdateSaveFolderDisplayName();
+        UpdateSaveFolderResolution();
+    }
+
+    /// <summary>ファイル名テンプレートの検証結果を更新する。</summary>
+    private void UpdateValidation()
+    {
+        FileNameTemplate.IsValidTemplate(FileNameTemplateText, out var message);
+        _validationMessage = message;
+    }
+
+    /// <summary>保存先フォルダの解決結果を更新する。</summary>
+    private void UpdateSaveFolderResolution()
+    {
+        _saveFolderPathResolved = ResolveSaveFolderPath(SaveFolderPath);
+        _hasInvalidSaveFolder = string.IsNullOrEmpty(_saveFolderPathResolved) || !Directory.Exists(_saveFolderPathResolved);
     }
 
     /// <summary>指定された画像（Avalonia Bitmap）をプレビューとして設定する。</summary>
@@ -410,37 +396,5 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
         }
     }
 
-    /// <summary>保存先フォルダをエクスプローラーで開く。</summary>
-    [RelayCommand]
-    private void OpenSaveFolder()
-    {
-        var resolved = SaveFolderPathResolved;
-        if (!string.IsNullOrEmpty(resolved))
-        {
-            if (!Directory.Exists(resolved))
-            {
-                Directory.CreateDirectory(resolved);
-            }
-
-            Process.Start("explorer.exe", resolved);
-        }
-    }
-
-    /// <summary>設定を再読み込みして、関連プロパティの変更を通知する。</summary>
-    public void ReloadSettings()
-    {
-        _settingsService.Reload();
-        OnPropertyChanged(nameof(FileNameTemplateText));
-        OnPropertyChanged(nameof(SaveFolderPath));
-        OnPropertyChanged(nameof(SaveFolderDisplayName));
-
-        AfterSettingsReloaded?.Invoke();
-    }
-
-    /// <summary>保存先フォルダの表示名（フォルダ名のみ）を更新する。</summary>
-    private void UpdateSaveFolderDisplayName()
-    {
-        SaveFolderDisplayName = Path.GetFileName(SaveFolderPathResolved);
-    }
 }
 

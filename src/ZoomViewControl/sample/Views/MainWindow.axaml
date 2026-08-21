@@ -1,0 +1,57 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:zoom="clr-namespace:Estable.AvaloniaUI.ZoomView;assembly=ZoomViewControl"
+        xmlns:vm="clr-namespace:ZoomViewControl.Sample.ViewModels"
+        x:Class="ZoomViewControl.Sample.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="ZoomViewControl 動作確認サンプル"
+        Width="1180" Height="760"
+        WindowStartupLocation="CenterScreen">
+
+    <DockPanel>
+
+        <!-- ───────────────────────── 上部: ツールバー ───────────────────────── -->
+        <Border DockPanel.Dock="Top" Padding="8"
+                BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Background="#FAFAFA">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Content="⊖" MinWidth="32" Click="OnZoomOutClick"
+                        ToolTip.Tip="ズームアウト（段階遷移）"/>
+                <Button Content="⊕" MinWidth="32" Click="OnZoomInClick"
+                        ToolTip.Tip="ズームイン（段階遷移）"/>
+                <Button Content="Fit" MinWidth="48" Click="OnFitClick"
+                        ToolTip.Tip="Fit 表示（自動）"/>
+                <TextBlock Text="{Binding ZoomDisplayText}" MinWidth="56"
+                           VerticalAlignment="Center" TextAlignment="Center" FontWeight="Bold"/>
+                <Separator Margin="4,0"/>
+                <Button Content="画像を開く..." Click="OnOpenImageClick"
+                        ToolTip.Tip="画像ファイル（PNG / JPG / BMP / GIF / WEBP）を開く"/>
+                <TextBlock Text="{Binding ImageSizeText}" VerticalAlignment="Center"
+                           Foreground="#666666" Margin="8,0,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ───────────────────────── 中央: ズームビュー ───────────────────────── -->
+        <zoom:ZoomableView x:Name="ZoomableView" Background="#FF2B2B2B"/>
+
+        <!-- ───────────────────────── 下部: スライダと座標表示 ───────────────────────── -->
+        <Border DockPanel.Dock="Bottom" Padding="12,8"
+                BorderBrush="#DDDDDD" BorderThickness="0,1,0,0" Background="#FAFAFA">
+            <StackPanel Spacing="4">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="ズーム率" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="SliderValueText" DockPanel.Dock="Right"
+                               Text="{Binding ZoomDisplayText}" VerticalAlignment="Center" MinWidth="56"
+                               TextAlignment="Right"/>
+                </DockPanel>
+                <Slider x:Name="ZoomSlider"
+                        Minimum="10" Maximum="500"
+                        ToolTip.Tip="ズーム率（10〜500%）"/>
+                <TextBlock x:Name="PointerPositionText" Text="ポインタ: -（画像外）" FontSize="12" Foreground="#666666"/>
+                <TextBlock Text="操作: ドラッグでパン / ホイールで縦パン / Shift+ホイールで横パン / Ctrl+ホイールでズーム"
+                           FontSize="11" Foreground="#999999"/>
+            </StackPanel>
+        </Border>
+
+    </DockPanel>
+
+</Window>

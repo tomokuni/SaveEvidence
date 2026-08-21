@@ -1,16 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:app.ViewModels"
-             xmlns:converters="clr-namespace:app.Converters"
              xmlns:controls="clr-namespace:app.Controls"
              xmlns:local="clr-namespace:app.Views.Pages"
              x:Class="app.Views.Pages.FolderViewPage"
              x:DataType="vm:FolderViewViewModel">
-    <UserControl.Resources>
-        <ResourceDictionary>
-            <converters:NegateConverter x:Key="NegateConverter"/>
-        </ResourceDictionary>
-    </UserControl.Resources>
     <UserControl.Styles>
         <!-- ホバー中は枠をハイライトし、影を表示しない（擬似クラスによる状態変化はスタイルでのみ表現可能） -->
         <Style Selector="Border.thumbnail-frame:pointerover">

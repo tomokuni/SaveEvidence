@@ -10,7 +10,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
-using Avalonia.Media;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 // ILogger は NLog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
@@ -174,7 +173,6 @@ public sealed partial class MainWindow : Window
     /// <summary>ViewModel に UI 操作用のコールバックを設定する。</summary>
     private void SetupViewModelCallbacks()
     {
-        _viewModel.StartSelectionMode = StartSelectionMode;
         _viewModel.CopyToClipboardAsync = async (Bitmap? bitmap) =>
         {
             if (bitmap is not null && Clipboard is not null)
@@ -333,9 +331,6 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>キャプチャページに遷移する（FolderViewPage からの呼び出し用）。</summary>
-    public void NavigateToCapturePage() => NavigateTo(AppPage.Capture);
-
     /// <summary>ナビゲーションアイテムの選択状態を更新する。</summary>
     private static void UpdateNavItemSelection(Border selectedItem)
     {
@@ -375,72 +370,12 @@ public sealed partial class MainWindow : Window
     /// <remarks>
     /// キャプチャ（<see cref="StartSelectionMode"/>）・切出し（CapturePage）のセッション開始前に呼び出し、<br/>
     /// 設定画面での変更（画像外の選択を禁止 等）をセッションへ即時反映する（起動時設定のままにならないようにする）。<br/>
-    /// Settings → CaptureSettings の変換はここに一元化する（DRY 原則）。
+    /// Settings → CaptureSettings の変換は <see cref="CaptureSettingsMapper"/> に委譲する。
     /// </remarks>
     public void ApplySnipCaptureSettings()
     {
-        // Settings → CaptureSettings に変換（全メンバーを明示的に設定。色は Color 型で渡す）
-        // WindowCaptureMode は渡さない（キャプチャの実処理は仮想スクリーン全体から切り出す方式のため、
-        // 常に ScreenCopy で動作する。SnipCaptureUI 側のデフォルトに委ねる）
-        var s = _settingsService.Current;
-
-        var capSettings = new CaptureSettings(
-            HideOwnerWindow: s.HideMainWindowOnCapture,
-            LoupeVisible: s.LoupeModeValue != 0,
-            HideBeforeCaptureDelay: TimeSpan.FromMilliseconds(s.HideBeforeCaptureDelayMs),
-            MinSelectionSize: s.MinSelectionSize,
-            BorderColor: Color.Parse(s.CaptureBorderColor),
-            BorderThickness: s.CaptureBorderThickness,
-            OverlayColor: Color.Parse(s.CaptureOverlayColor),
-            HandleColor: Color.Parse(s.HandleColor),
-            HandleSize: s.HandleSize,
-            HandleHitRadius: s.HandleHitRadius,
-            ClampToDomainBounds: s.ClampToDomainBounds,
-            MarkerColor: Color.Parse(s.MarkerColor),
-            MarkerLength: s.MarkerLength,
-            // カーソル座標ラベル（DragRect）
-            ShowCoordLabel: s.ShowCoordLabel,
-            CoordLabelColor: Color.Parse(s.CoordLabelColor),
-            CoordLabelBackgroundColor: Color.Parse(s.CoordLabelBackgroundColor),
-            CoordLabelFontSize: s.CoordLabelFontSize,
-            LoupeSize: s.LoupeSize,
-            LoupeZoomLevel: s.LoupeZoomLevel,
-            LoupeOffset: s.LoupeOffset,
-            // 描画スケールはウィンドウの DPI スケーリング（DesktopScaling）から自動設定する
-            // （100% = 1.0 / 125% = 1.25 / 150% = 1.5 / 200% = 2.0。設定画面の項目はなし）
-            LoupeRenderScaling: DesktopScaling,
-            LoupeCrossColor: Color.Parse(s.LoupeCrossColor),
-            LoupeFrameColor: Color.Parse(s.LoupeFrameColor),
-            LoupeFrameThickness: s.LoupeFrameWidth,
-            LoupeCheckerSize: s.PreviewCheckerSize,
-            LoupeCheckerColorA: Color.Parse(s.PreviewCheckerColorA),
-            LoupeCheckerColorB: Color.Parse(s.PreviewCheckerColorB),
-            LoupeSelectionRectColorA: Color.Parse(s.LoupeSelectionRectColorA),
-            LoupeSelectionRectColorB: Color.Parse(s.LoupeSelectionRectColorB),
-            // ルーペ座標ラベル
-            LoupeShowCoordLabel: s.LoupeShowCoordLabel,
-            LoupeCoordLabelColor: Color.Parse(s.LoupeCoordLabelColor),
-            LoupeCoordLabelBackgroundColor: Color.Parse(s.LoupeCoordLabelBackgroundColor),
-            LoupeCoordLabelFontSize: s.LoupeCoordLabelFontSize,
-            SizeLabelVisible: s.SizeLabelVisible,
-            SizeLabelColor: Color.Parse(s.CaptureTextColor),
-            SizeLabelFontSize: s.SizeLabelFontSize,
-            // SizeLabelOverride / DisplayScaleScaling はコードから動的に設定されるため、設定画面の固定値は使用しない
-            // （CropSession が Provider を動的設定 / OverlayWindow.Highlight が DisplayScaleScaling を動的設定）。
-            // ここでは null（自動生成）と 0（自動 = Scaling と同値）を渡す。
-            SizeLabelOverride: null,
-            // サイズラベル（1 行目）の背景色（SizeLabelColor は CaptureTextColor と共用 = ラベル設定の 1 行目）
-            TextBackgroundColor: Color.Parse(s.SizeLabelBackgroundColor),
-            InfoLabelVisible: s.InfoLabelVisible,
-            InfoLabelColor: Color.Parse(s.InfoLabelColor),
-            InfoLabelBackgroundColor: Color.Parse(s.InfoLabelBackgroundColor),
-            InfoLabelFontSize: s.InfoLabelFontSize,
-            // サブライン（サイズラベルの下の 2 行目以降）
-            ShowSubLines: s.ShowSubLines,
-            SubLineFontSize: s.SubLineFontSize,
-            SubLineColor: Color.Parse(s.SubLineColor),
-            SubLineBackgroundColor: Color.Parse(s.SubLineBackgroundColor),
-            DisplayScaleScaling: 0);
+        // 変換は CaptureSettingsMapper に一元化する
+        var capSettings = CaptureSettingsMapper.From(_settingsService.Current, DesktopScaling);
 
         // 設定を SnipCapture に反映（部分更新）
         _snipCapture.AppearanceSettings = capSettings;

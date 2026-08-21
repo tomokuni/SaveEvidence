@@ -32,6 +32,7 @@ public sealed class SettingsService : ISettingsService
 
     private readonly Lock _lock = new();
     private Settings _current;
+    private string? _lastSavedJson;
 
     public SettingsService() => _current = LoadInternal();
 
@@ -44,13 +45,14 @@ public sealed class SettingsService : ISettingsService
     /// <summary>設定をファイルに保存する。</summary>
     public void Save()
     {
-        lock (_lock) { SaveInternal(_current); }
-    }
+        lock (_lock)
+        {
+            var json = JsonSerializer.Serialize(_current, s_jsonOptions);
+            if (json == _lastSavedJson) return;
 
-    /// <summary>設定をファイルから再読み込みする。</summary>
-    public void Reload()
-    {
-        lock (_lock) { _current = LoadInternal(); }
+            SaveInternal(json);
+            _lastSavedJson = json;
+        }
     }
 
     private static Settings LoadInternal()
@@ -70,13 +72,13 @@ public sealed class SettingsService : ISettingsService
         return new Settings();
     }
 
-    private static void SaveInternal(Settings settings)
+    private static void SaveInternal(string json)
     {
         try
         {
             var dir = Path.GetDirectoryName(s_settingsFilePath);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
-            File.WriteAllText(s_settingsFilePath, JsonSerializer.Serialize(settings, s_jsonOptions));
+            File.WriteAllText(s_settingsFilePath, json);
         }
         catch
         {

@@ -68,7 +68,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 ## 6. キャプチャ設定
 
-> 色は不透明度を統合した `#AARRGGBB` 形式で保存し、`MainWindow.ApplySnipCaptureSettings` で `Color.Parse` してそのまま渡す（コントロール側も色のアルファに統合済み）。
+> 色は不透明度を統合した `#AARRGGBB` 形式で保存し、設定反映時に `Color.Parse` してそのまま渡す（コントロール側も色のアルファに統合済み）。
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
@@ -120,7 +120,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 ルーペの描画スケール（`LoupeControl.RenderScaling`・DIP→物理ピクセル倍率）は、**ユーザー設定ではなくウィンドウの DPI スケーリングから自動取得**して反映する。
 
 - 取得元: `MainWindow.DesktopScaling`（100% = 1.0 / 125% = 1.25 / 150% = 1.5 / 200% = 2.0）
-- 反映経路: `ApplySnipCaptureSettings` 内で `LoupeRenderScaling: DesktopScaling` として渡す
+- 反映: `CaptureSettings.LoupeRenderScaling` に `MainWindow.DesktopScaling` を渡す
 - DPI 変化への追従: `MainWindow.ScalingChanged` イベントで再反映（別モニタへの移動・ディスプレイ設定変更時）
 - 設定画面のルーペ設定には表示しない（ユーザー設定不要のため）
 

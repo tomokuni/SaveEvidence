@@ -111,8 +111,8 @@
 - **現在の画像の強調**: 現在のキャプチャページに表示中の画像は青枠（`BorderBrush #0078D4`・`BorderThickness 3`）で強調表示する
 - **表示モード**: ツールバーの特大 / 大 / 中 ボタンで切替可能。選択状態は `Settings.UndoViewModeIndex`（0=特大, 1=大, 2=中、既定 1=大）に保存・復元される。アイコンサイズはフォルダビューと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する
 - **外部ツール表示**: サムネイルのダブルクリックで一時フォルダへ PNG として保存し、OS の既定アプリ（外部ツール）で開く（Undo / Redo スタックの画像はファイルではなく Bitmap のため）
-- **更新タイミング**: ナビゲーションで Undo 一覧を表示するたびに最新の履歴を読み込む（`UndoPage` が `IsVisible` 変更を監視し、自身で `Refresh()` を呼び出し再構築する。UndoStack / MainViewModel は DI シングルトンから取得）
-- **表示モードの保存・復元**: 表示モード切替操作のたびに保存（`SaveViewSettings`）。復元はページ初期化 / `Refresh` 時（範囲チェック付き）
+- **更新タイミング**: ナビゲーションで Undo 一覧を表示するたびに最新の履歴を読み込む（`UndoPage` が `IsVisible` 変更を監視し、保存済み設定の復元と一覧の再構築を行う。UndoStack / MainViewModel は DI シングルトンから取得）
+- **表示モードの保存・復元**: 表示モード切替操作のたびに保存（`SaveViewModeSettings`）。復元はページ表示時（範囲チェック付き・`ViewModeDisplay.ClampIndex`）
 
 ### 4.4 ラベル設定（キャプチャ・切出し時の左上ラベル）
 
@@ -244,7 +244,7 @@
 
 - **拡大率表示**: `MainViewModel.ZoomDisplayText`（`IZoomHost` 実装）に ZoomManager が拡大率（%）を設定し、ステータスバーがバインディングで表示する。Fit 中も実効倍率の % を表示する（「自動」表記なし）
 - **座標表示**: `CapturePage.OnImagePointerMoved` が `ZoomableView.ImageRectViewport()` / `ViewportToContent()` でポインタのドメイン座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `-`）
-- **フライアウト選択肢**: `MainViewModel.ZoomLevels` / `ZoomLabels`（0=自動 + 固定倍率 10〜500% の 13 段階）を提供し、`ZoomManager.ApplyZoomFromText` / `ApplyZoomFromSlider` でズーム率を適用する
+- **フライアウト選択肢**: 拡大率ボタンのクリックで表示されるフライアウト（0=自動 + 固定倍率 10〜500% の 13 段階）から選択し、`MainViewModel.ZoomPercent` を設定する（`CapturePage.OnZoomFlyoutItemClick`）
 
 詳細仕様（遷移ルール・表示方式・公開 API）は `ZoomViewControl` の `SPEC_ExtFunc.md` を参照してください。
 

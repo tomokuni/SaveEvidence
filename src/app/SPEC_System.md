@@ -94,8 +94,9 @@ flowchart TB
     subgraph APP["app プロジェクト (app)"]
         MW["MainWindow<br/>public sealed partial : Window<br/>Views/MainWindow.axaml(.cs)"]
         CP["CapturePage<br/>public sealed partial : UserControl<br/>Views/Pages/CapturePage.axaml(.cs)"]
-        FV["FolderViewPage<br/>public sealed partial : UserControl<br/>Views/Pages/FolderViewPage.axaml(.cs)"]
-        UP["UndoPage<br/>public sealed partial : UserControl<br/>Views/Pages/UndoPage.axaml(.cs)"]
+        FV["FolderViewPage<br/>public sealed partial : ViewModePageBase<br/>Views/Pages/FolderViewPage.axaml(.cs)"]
+        UP["UndoPage<br/>public sealed partial : ViewModePageBase<br/>Views/Pages/UndoPage.axaml(.cs)"]
+        VMPB["ViewModePageBase<br/>public abstract : UserControl<br/>Views/Pages/ViewModePageBase.cs"]
         SP["SettingsPage<br/>public sealed partial : UserControl<br/>Views/Pages/SettingsPage.axaml(.cs)"]
         CD["ConfirmDialog<br/>public static<br/>Views/ConfirmDialog.cs"]
         ZM["ZoomManager / ZoomableView / ZoomMath / ZoomTransition / ScrollMetrics<br/>ZoomViewControl（独立プロジェクト）"]
@@ -153,7 +154,7 @@ flowchart TB
   - グローバルホットキーの登録・WM_HOTKEY 受信（WndProc サブクラス化）
   - 設定変更の SnipCapture への即時反映（`ApplySnipCaptureSettings`）
   - ウィンドウ位置・サイズの復元 / 保存
-- **公開メンバー**: `StartSelectionMode(CaptureType)` / `ApplySnipCaptureSettings()` / `NavigateToCapturePage()` 等
+- **公開メンバー**: `StartSelectionMode(CaptureType)` / `ApplySnipCaptureSettings()` 等
 - **依存**: CapturePage / FolderViewPage / UndoPage / SettingsPage / MainViewModel / SettingsService / SnipCapture / IGlobalHotKeyService / INativeWindowInterceptor / ConfirmDialog
 
 ### 6.2 CapturePage
@@ -170,27 +171,27 @@ flowchart TB
 
 ### 6.3 FolderViewPage
 
-- **分類**: 公開ページ（`public sealed partial class : UserControl`）
+- **分類**: 公開ページ（`public sealed partial class : ViewModePageBase`）
 - **責務**:
   - 保存先フォルダの画像一覧表示（サムネイル + ファイル名）
   - 表示モード（特大 / 大 / 中）・ソート（昇順 / 降順）の切替
-  - 表示モード・ソート順の設定保存（`Settings.FolderViewModeIndex` / `Settings.FolderViewSortAscending`）と起動時復元
+  - 表示モード・ソート順の設定保存（`Settings.FolderViewModeIndex` / `Settings.FolderViewSortAscending`）とページ表示時復元
   - ダブルクリックで既定アプリによりファイルを開く
 - **特徴**: 一覧の ItemsPanel は `BottomAlignWrapPanel`（行内下端揃え）。行の高さは各行の最大アイテム高さに応じ、ファイル名 1 文字目の高さ位置が行内で揃う
 - **テーマ対応**: リスト背景・ファイル名ラベル・サムネイル枠線/影はテーマ（ライト/ダーク）に応じて切り替わる。背景・枠線・文字色は Fluent テーマの標準リソース（`DynamicResource`）を参照し、影のみ App リソース（`ThumbnailShadow`）で定義する
-- **復元タイミング**: コンストラクタ / `Loaded` / `IsVisible` 変更時（ナビゲーション再表示）に復元し、ToggleButton の選択状態へ同期する
+- **復元タイミング**: `IsVisible` 変更時（ナビゲーション再表示）に保存済み設定を復元し、ToggleButton の選択状態へ同期して一覧を再構築する（`ViewModePageBase` に共通化）
 - **依存**: FolderViewViewModel / MainViewModel / SettingsService
 
 ### 6.4 UndoPage
 
-- **分類**: 公開ページ（`public sealed partial class : UserControl`）
+- **分類**: 公開ページ（`public sealed partial class : ViewModePageBase`）
 - **責務**:
   - Undo / Redo スタックと現在のプレビュー画像を時系列順（新しい → 古い）にサムネイル一覧表示
   - 現在のキャプチャページに表示中の画像を青枠（`BorderBrush #0078D4`・`BorderThickness 3`）で強調
-  - 表示モード（特大 / 大 / 中）の切替と設定保存（`Settings.UndoViewModeIndex`）・起動時復元
+  - 表示モード（特大 / 大 / 中）の切替と設定保存（`Settings.UndoViewModeIndex`）・ページ表示時復元
   - サムネイルのダブルクリックで一時ファイル（PNG）に保存し、OS の既定アプリ（外部ツール）で開く
 - **表示順**: Redo（新しい）→ 現在 → Undo（古い）の固定（時系列順で新しい → 古い）
-- **更新タイミング**: `IsVisible` 変更時（ナビゲーション再表示）に自身で最新の履歴を読み込む（`Refresh()`・FolderViewPage と同じパターン）
+- **更新タイミング**: `IsVisible` 変更時（ナビゲーション再表示）に自身で最新の履歴を読み込む（保存済み設定の復元と一覧の再構築。`ViewModePageBase` に共通化）
 - **依存**: UndoViewModel / MainViewModel（PreviewImage・DI シングルトン）/ UndoStack（DI シングルトン・CapturePage と共有）
 
 ### 6.5 SettingsPage
@@ -226,6 +227,7 @@ flowchart TB
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
 | `BottomAlignWrapPanel` | 公開パネル（`public sealed class : Panel`） | 横方向折り返し + 行内下端揃え。各行の高さは最大アイテム高さで決定（FolderViewPage の一覧用） |
+| `ViewModePageBase` | 公開基底ページ（`public abstract class : UserControl`） | 表示モードを持つ一覧ページ（FolderViewPage / UndoPage）の共通基盤。設定復元・保存、ToggleButton 同期、ページ表示時の一覧再構築を共通化 |
 | `FileNameTemplate` | 公開ユーティリティ（`public sealed partial class`） | ファイル名テンプレートの解析・生成・検証。日時プレースホルダ（`{date}` / `{time}` 等）とエスケープ（`{{` / `}}`）の解決、右端数値のオートインクリメント。外部仕様は SPEC_ExtFunc.md（5. ファイル名テンプレート）を参照 |
 
 ### 6.10 App（テーマ適用）

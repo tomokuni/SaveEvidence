@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 
@@ -39,6 +40,20 @@ public static class ConfirmDialog
 
         yesButton.Click += (_, _) => { tcs.TrySetResult(true); dialog.Close(); };
         noButton.Click += (_, _) => { tcs.TrySetResult(false); dialog.Close(); };
+
+        // ウィンドウが閉じられた場合（Alt+F4 等）も待機が完了するようにする（キャンセル扱い）
+        dialog.Closed += (_, _) => tcs.TrySetResult(false);
+
+        // Esc キーでキャンセルできるようにする
+        dialog.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                tcs.TrySetResult(false);
+                dialog.Close();
+            }
+        };
 
         dialog.Content = new StackPanel
         {

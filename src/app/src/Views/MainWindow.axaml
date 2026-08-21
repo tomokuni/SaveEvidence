@@ -2,7 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:app.ViewModels"
         xmlns:pages="clr-namespace:app.Views.Pages"
-        xmlns:conv="clr-namespace:app.Converters"
         xmlns:chrome="clr-namespace:Avalonia.Controls.Chrome;assembly=Avalonia.Controls"
         x:Class="app.Views.MainWindow"
         x:DataType="vm:MainViewModel"
@@ -11,10 +10,6 @@
         MinWidth="800" MinHeight="400"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="32">
-    <Window.Resources>
-        <conv:IntToThicknessConverter x:Key="IntToThicknessConverter"/>
-        <conv:StringToBrushConverter x:Key="StringToBrushConverter"/>
-    </Window.Resources>
     <Window.Styles>
         <Style Selector="MenuItem, Button, ToggleButton">
             <Setter Property="Cursor" Value="Hand"/>

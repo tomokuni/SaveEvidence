@@ -10,7 +10,4 @@ public interface ISettingsService
 
     /// <summary>設定をファイルに保存する。</summary>
     void Save();
-
-    /// <summary>設定をファイルから再読み込みする。</summary>
-    void Reload();
 }

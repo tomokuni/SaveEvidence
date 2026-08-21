@@ -1,15 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:app.Converters"
              x:Class="app.App">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- 色変換用コンバーター -->
-            <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter"/>
-            <converters:StringIsNullOrEmptyConverter x:Key="StringIsNullOrEmptyConverter"/>
-            <converters:BoundsToMarginConverter x:Key="BoundsToMarginConverter"/>
-            <converters:NegateConverter x:Key="NegateConverter"/>
-
             <!-- フォルダビューのサムネイル影（Fluent テーマに BoxShadows の標準リソースがないため、
                  テーマ非依存の単一値として App レベルで定義する） -->
             <BoxShadows x:Key="ThumbnailShadow">0 3 10 0 #8A000000</BoxShadows>
