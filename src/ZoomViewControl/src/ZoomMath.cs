@@ -3,72 +3,41 @@ using Avalonia;
 namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>
-/// ズーム中心維持の計算（純粋関数）。
+/// ズーム表示の幾何計算（純粋関数）。
 /// </summary>
 /// <remarks>
-/// ズーム中心の画像内の点を求め、ズーム後の画像サイズで再スケーリングして<br/>
-/// 新しいスクロールオフセットを計算する。<br/>
+/// Fit 実効倍率・ズーム中心維持（スケール変化時のオフセット）・スクロール範囲クランプ・<br/>
+/// ビューポート ↔ コンテンツ座標変換を計算する。<br/>
 /// UI 状態（ViewModel・コントロール）に依存しないため、単体テストで仕様を検証できる。<br/>
-/// ZoomManager から呼び出される他、仕様の回帰テストの対象となる。
+/// ZoomManager / ZoomableView から呼び出される他、仕様の回帰テストの対象となる。<br/>
+/// スクロール範囲の計算は <see cref="ScrollMetrics"/> へ委譲する（単一所有）。
 /// </remarks>
 public static class ZoomMath
 {
+    /// <summary>Fit 表示時の実効スケール（Uniform）を計算する。</summary>
+    /// <param name="imageSize">元画像サイズ（ピクセル）。</param>
+    /// <param name="viewportSize">ビューポートサイズ（DIP）。</param>
+    /// <returns>実効スケール。アスペクト比維持のため幅・高さのスケールの小さい方（min）を使用する。</returns>
+    /// <remarks>
+    /// Uniform スケールの単一所有メソッドであり、<see cref="FitZoomPercent"/> と ZoomableView の表示サイズ計算は本メソッドへ委譲する。<br/>
+    /// 画像サイズが 0 以下またはスケールが 0 以下の場合は 1 として扱う。
+    /// </remarks>
+    public static double FitScale(Size imageSize, Size viewportSize)
+    {
+        if (imageSize.Width <= 0 || imageSize.Height <= 0) return 1;
+        var scaleX = viewportSize.Width / imageSize.Width;
+        var scaleY = viewportSize.Height / imageSize.Height;
+        var scale = Math.Min(scaleX, scaleY);
+        return scale > 0 ? scale : 1;
+    }
+
     /// <summary>Fit 表示時の実効倍率（%）をクランプなしで計算する。</summary>
     /// <param name="imageSize">元画像サイズ（ピクセル）。</param>
     /// <param name="viewportSize">ビューポートサイズ（DIP）。</param>
     /// <returns>実効倍率（%）。Uniform（アスペクト比維持）のため、幅・高さのスケールの小さい方（min）を使用する。</returns>
-    /// <remarks>現在の表示状態に依存しない（常に一定の Fit 実効倍率を返す）。</remarks>
+    /// <remarks>現在の表示状態に依存しない（常に一定の Fit 実効倍率を返す）。スケール計算は <see cref="FitScale"/> に委譲する。</remarks>
     public static double FitZoomPercent(Size imageSize, Size viewportSize)
-    {
-        if (imageSize.Width <= 0 || imageSize.Height <= 0) return 100;
-        var scaleX = viewportSize.Width / imageSize.Width;
-        var scaleY = viewportSize.Height / imageSize.Height;
-        return Math.Min(scaleX, scaleY) * 100.0;
-    }
-
-    /// <summary>ズーム中心の「画像内の点」を求める（中央寄せ時の画像原点補正込み）。</summary>
-    /// <param name="offset">ズーム前のスクロールオフセット。</param>
-    /// <param name="center">ズーム中心（ビューポートローカル）。</param>
-    /// <param name="viewport">ズーム前のビューポートサイズ。</param>
-    /// <param name="imageSize">ズーム前の画像表示サイズ。</param>
-    /// <param name="wasCentered">ズーム前の画像配置が中央寄せかどうか。</param>
-    /// <returns>ズーム中心に対応する画像内の点。</returns>
-    /// <remarks>
-    /// 中央寄せの場合は、コンテンツ座標（Offset + Center）と画像内の点が一致しないため、<br/>
-    /// 画像のコンテンツ上の原点位置（(ビューポート - 画像サイズ) / 2）を考慮して補正する。
-    /// </remarks>
-    public static Point ComputeImagePoint(Vector offset, Point center, Size viewport, Size imageSize, bool wasCentered)
-    {
-        var contentPoint = new Point(offset.X + center.X, offset.Y + center.Y);
-        var originX = wasCentered ? (viewport.Width - imageSize.Width) / 2 : 0;
-        var originY = wasCentered ? (viewport.Height - imageSize.Height) / 2 : 0;
-        return new Point(contentPoint.X - originX, contentPoint.Y - originY);
-    }
-
-    /// <summary>ズーム後のスクロールオフセットを求める（画像内の点がズーム中心に来るように）。</summary>
-    /// <param name="imagePoint">ズーム中心の画像内の点（<see cref="ComputeImagePoint"/> の結果）。</param>
-    /// <param name="prevImageSize">ズーム前の画像表示サイズ。</param>
-    /// <param name="newImageSize">ズーム後の画像表示サイズ。</param>
-    /// <param name="center">ズーム中心（ビューポートローカル）。</param>
-    /// <param name="viewport">ズーム後のビューポートサイズ。</param>
-    /// <param name="extent">ズーム後のコンテンツサイズ。</param>
-    /// <returns>新しいスクロールオフセット。スクロール範囲（Extent - Viewport）にクランプされる。</returns>
-    /// <remarks>
-    /// 画像内の点は「ズーム前画像上の相対位置」として正規化し、ズーム後の画像サイズで再スケーリングする。<br/>
-    /// ズーム率が変わると画像の表示サイズが変わるため、このスケーリングが必須<br/>
-    /// （単純な ContentPoint - Center では prevOffset と同値になり、常に左上基準になる）。
-    /// </remarks>
-    public static Vector ComputeOffsetAfterZoom(
-        Point imagePoint, Size prevImageSize, Size newImageSize,
-        Point center, Size viewport, Size extent)
-    {
-        // ゼロ除算を防ぐ（prevImageSize が 0 の場合はスケールを 1 にする）
-        var scaleX = prevImageSize.Width > 0 ? newImageSize.Width / prevImageSize.Width : 1;
-        var scaleY = prevImageSize.Height > 0 ? newImageSize.Height / prevImageSize.Height : 1;
-        var newOffsetX = Math.Clamp(imagePoint.X * scaleX - center.X, 0, Math.Max(0, extent.Width - viewport.Width));
-        var newOffsetY = Math.Clamp(imagePoint.Y * scaleY - center.Y, 0, Math.Max(0, extent.Height - viewport.Height));
-        return new Vector(newOffsetX, newOffsetY);
-    }
+        => FitScale(imageSize, viewportSize) * 100.0;
 
     /// <summary>ズーム率変更後のスクロールオフセットを求める（コンテンツ座標不変・スケールが変わる場合）。</summary>
     /// <param name="offset">ズーム前のオフセット（コンテンツ座標。ビューポート左上に対応）。</param>
@@ -95,8 +64,8 @@ public static class ZoomMath
         var newOffset = new Vector(c.X - center.X / newScale, c.Y - center.Y / newScale);
 
         // クランプ: offset ∈ [0, content − viewport / scale]
-        var maxX = Math.Max(0, contentSize.Width - viewport.Width / newScale);
-        var maxY = Math.Max(0, contentSize.Height - viewport.Height / newScale);
+        var maxX = ScrollMetrics.MaxOffset(contentSize.Width, viewport.Width, newScale);
+        var maxY = ScrollMetrics.MaxOffset(contentSize.Height, viewport.Height, newScale);
         return new Vector(Math.Clamp(newOffset.X, 0, maxX), Math.Clamp(newOffset.Y, 0, maxY));
     }
 
@@ -108,9 +77,8 @@ public static class ZoomMath
     /// <returns>クランプ後のオフセット。</returns>
     public static Vector ClampOffset(Vector offset, double scale, Size contentSize, Size viewport)
     {
-        scale = scale > 0 ? scale : 1;
-        var maxX = Math.Max(0, contentSize.Width - viewport.Width / scale);
-        var maxY = Math.Max(0, contentSize.Height - viewport.Height / scale);
+        var maxX = ScrollMetrics.MaxOffset(contentSize.Width, viewport.Width, scale);
+        var maxY = ScrollMetrics.MaxOffset(contentSize.Height, viewport.Height, scale);
         return new Vector(Math.Clamp(offset.X, 0, maxX), Math.Clamp(offset.Y, 0, maxY));
     }
 

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -168,6 +169,156 @@ public class ZoomableViewTests
         var size = view.DisplaySize();
         Assert.Equal(2000.0, size.Width);
         Assert.Equal(1000.0, size.Height);
+    }
+
+    [AvaloniaFact]
+    public void DisplaySize_Fitではビューポートに収まるサイズになる()
+    {
+        var view = CreateView();
+
+        // 画像 1000x500、ビューポート 400x200 → FitScale = min(0.4, 0.4) = 0.4
+        var size = view.DisplaySize();
+        Assert.Equal(400.0, size.Width);
+        Assert.Equal(200.0, size.Height);
+    }
+
+    // ====================================================================
+    // ImageRectViewport（画像の表示矩形。原点補正含む）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public void ImageRectViewport_固定倍率ではオフセット分シフトした矩形を返す()
+    {
+        var view = CreateView();
+        view.SetZoom(100); // scale = 1
+        view.SetOffset(new Vector(100, 50));
+
+        // 画像 1000x500 が 1 倍表示、オフセット (-100, -50) 分シフト
+        var rect = view.ImageRectViewport();
+        Assert.Equal(-100.0, rect.X);
+        Assert.Equal(-50.0, rect.Y);
+        Assert.Equal(1000.0, rect.Width);
+        Assert.Equal(500.0, rect.Height);
+    }
+
+    [AvaloniaFact]
+    public void ImageRectViewport_Fit中央寄せで原点が補正される()
+    {
+        var view = CreateView();
+        view.CenterAlign = true;
+
+        // 画像 1000x500 が FitScale 0.4 で 400x200、ビューポート 400x200 と一致 → 原点 (0,0)
+        var rect = view.ImageRectViewport();
+        Assert.Equal(0.0, rect.X);
+        Assert.Equal(0.0, rect.Y);
+        Assert.Equal(400.0, rect.Width);
+        Assert.Equal(200.0, rect.Height);
+    }
+
+    [AvaloniaFact]
+    public void ImageRectViewport_Fit左上寄せで原点が0になる()
+    {
+        var view = CreateView();
+        view.CenterAlign = false;
+
+        // 画像 1000x500 が FitScale 0.4 で 400x200 → 左上寄せなら原点 (0,0)
+        var rect = view.ImageRectViewport();
+        Assert.Equal(0.0, rect.X);
+        Assert.Equal(0.0, rect.Y);
+    }
+
+    [AvaloniaFact]
+    public void ImageRectViewport_画像未設定時はdefaultを返す()
+    {
+        var view = new ZoomableView();
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        Assert.Equal(default, view.ImageRectViewport());
+    }
+
+    // ====================================================================
+    // CenterAlign（Fit 時の画像自体の配置）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public void CenterAlign_Fit中は画像が中央配置になる()
+    {
+        var view = CreateView();
+        view.CenterAlign = true;
+
+        // 画像自体の配置も中央に切り替わる（回帰: オーバーレイ座標のみ中央で描画とずれていた）
+        Assert.Equal(HorizontalAlignment.Center, view.ImageControl.HorizontalAlignment);
+        Assert.Equal(VerticalAlignment.Center, view.ImageControl.VerticalAlignment);
+    }
+
+    [AvaloniaFact]
+    public void CenterAlign_Fit中は左上配置に戻る()
+    {
+        var view = CreateView();
+        view.CenterAlign = true;
+
+        view.CenterAlign = false;
+
+        Assert.Equal(HorizontalAlignment.Left, view.ImageControl.HorizontalAlignment);
+        Assert.Equal(VerticalAlignment.Top, view.ImageControl.VerticalAlignment);
+    }
+
+    [AvaloniaFact]
+    public void CenterAlign_固定倍率中は左上配置のまま()
+    {
+        var view = CreateView();
+        view.SetZoom(200);
+
+        view.CenterAlign = true;
+
+        // 固定倍率はパン位置で制御するため、配置は常に左上
+        Assert.Equal(HorizontalAlignment.Left, view.ImageControl.HorizontalAlignment);
+        Assert.Equal(VerticalAlignment.Top, view.ImageControl.VerticalAlignment);
+    }
+
+    [AvaloniaFact]
+    public void CenterAlign_変更でViewportChangedが発火する()
+    {
+        var view = CreateView();
+        var count = 0;
+        view.ViewportChanged += (_, _) => count++;
+
+        view.CenterAlign = false;
+
+        // オーバーレイ座標・画像配置が変わるため通知する
+        Assert.Equal(1, count);
+    }
+
+    [AvaloniaFact]
+    public void SetZoom_固定倍率への移行で配置が左上に戻る()
+    {
+        var view = CreateView();
+        view.CenterAlign = true; // Fit: 中央配置
+        Assert.Equal(HorizontalAlignment.Center, view.ImageControl.HorizontalAlignment);
+
+        // 固定倍率へ移行 → パン制御に切り替わり、配置は左上に戻る（回帰: Center が残る）
+        view.SetZoom(200);
+        Assert.Equal(HorizontalAlignment.Left, view.ImageControl.HorizontalAlignment);
+        Assert.Equal(VerticalAlignment.Top, view.ImageControl.VerticalAlignment);
+    }
+
+    [AvaloniaFact]
+    public void SetZoom_画像が小さい場合の中央寄せの原点補正が正しい()
+    {
+        // 画像 100x50 がビューポート 400x200 に Fit → 表示 400x200 と一致 → 原点補正なし
+        var view = new ZoomableView();
+        view.SetSource(CreateBitmap(100, 50));
+        view.CenterAlign = true;
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        Assert.Equal(HorizontalAlignment.Center, view.ImageControl.HorizontalAlignment);
+        var rect = view.ImageRectViewport();
+        Assert.Equal(0.0, rect.X);
+        Assert.Equal(0.0, rect.Y);
+        Assert.Equal(400.0, rect.Width);
+        Assert.Equal(200.0, rect.Height);
     }
 
     [AvaloniaFact]
@@ -507,5 +658,120 @@ public class ZoomableViewTests
         view.VerticalScrollBar.Value = 100;
 
         Assert.Equal(1, count);
+    }
+
+    [AvaloniaFact]
+    public void ViewportChanged_同じ値のSetOffsetでは発火しない()
+    {
+        var view = CreateView();
+        view.SetZoom(200);
+        view.SetOffset(new Vector(100, 50));
+        var count = 0;
+        view.ViewportChanged += (_, _) => count++;
+
+        // クランプ結果が現在値と等しい場合は更新・通知をスキップする（ホットパス最適化）
+        view.SetOffset(new Vector(100, 50));
+        Assert.Equal(0, count);
+
+        // 値が変われば発火する
+        view.SetOffset(new Vector(200, 50));
+        Assert.Equal(1, count);
+    }
+
+    [AvaloniaFact]
+    public void ViewportChanged_クランプ端でのPanByでは発火しない()
+    {
+        var view = CreateView();
+        view.SetZoom(100); // 最大オフセット (600, 300)
+        view.SetOffset(new Vector(600, 300)); // スクロール範囲端
+        var count = 0;
+        view.ViewportChanged += (_, _) => count++;
+
+        // 端でさらに右へパン → クランプ結果が変化しないためスキップ
+        view.PanBy(new Vector(100, 0));
+        Assert.Equal(0, count);
+    }
+
+    // ====================================================================
+    // SetSource（画像の変更・解除）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public void SetSource_nullでスクロールバーが非表示になる()
+    {
+        var view = CreateView();
+        view.SetZoom(200); // スクロールバー表示状態にする
+
+        Assert.True(view.VerticalScrollBar.IsVisible);
+
+        // 画像を解除 → スクロールバーが非表示に戻る（回帰: SetSource(null) で残っていた）
+        view.SetSource(null);
+
+        Assert.False(view.VerticalScrollBar.IsVisible);
+        Assert.False(view.HorizontalScrollBar.IsVisible);
+        Assert.Equal(0.0, view.ZoomPercent); // Fit にリセット
+    }
+
+    [AvaloniaFact]
+    public void SetSource_nullでViewportChangedが発火する()
+    {
+        var view = CreateView();
+        view.SetZoom(200);
+        var count = 0;
+        view.ViewportChanged += (_, _) => count++;
+
+        view.SetSource(null);
+
+        Assert.Equal(1, count);
+    }
+
+    [AvaloniaFact]
+    public void SetSource_nullでEffectiveScaleが1になる()
+    {
+        var view = CreateView();
+
+        view.SetSource(null);
+
+        // 画像なし時は実効スケールが 1（ゼロ除算防止のフォールバック）
+        Assert.Equal(1.0, view.EffectiveScale);
+    }
+
+    // ====================================================================
+    // リサイズ（Fit 表示の再適用）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public void リサイズでFit表示の最大サイズが更新される()
+    {
+        var view = new ZoomableView();
+        view.SetSource(CreateBitmap(1000, 500));
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+        Assert.Equal(400.0, view.ImageControl.MaxWidth); // Fit: ビューポート幅に制約
+
+        // ビューポートを拡大 → Fit の最大幅も新しいサイズに更新される（回帰: リサイズで古い値のまま）
+        view.Measure(new Size(800, 400));
+        view.Arrange(new Rect(0, 0, 800, 400));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(800.0, view.ImageControl.MaxWidth);
+        Assert.Equal(400.0, view.ImageControl.MaxHeight);
+    }
+
+    [AvaloniaFact]
+    public void リサイズでFit表示の実効スケールが再計算される()
+    {
+        var view = new ZoomableView();
+        view.SetSource(CreateBitmap(1000, 500));
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+        Assert.Equal(0.4, view.EffectiveScale);
+
+        // ビューポート拡大 → FitScale = min(800/1000, 400/500) = 0.8
+        view.Measure(new Size(800, 400));
+        view.Arrange(new Rect(0, 0, 800, 400));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(0.8, view.EffectiveScale);
     }
 }

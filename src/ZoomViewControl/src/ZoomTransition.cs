@@ -30,26 +30,17 @@ public static class ZoomTransition
     /// <returns>次のズームレベル。移動先がなければ null。</returns>
     /// <remarks>
     /// Fit 表示中は実効倍率より大きい最初のレベルへ移動する。<br/>
-    /// 固定倍率表示中は現在のレベルの次のレベルへ移動する（リストにない値は次に大きいレベル）。<br/>
+    /// 固定倍率表示中は現在の値より大きい最初のレベルへ移動する（リスト内は隣、リスト外は次に大きい）。<br/>
     /// リスト末尾（500%）では null（移動不可）を返す。
     /// </remarks>
     public static int? NextLevel(int current, double fitZoom)
     {
-        if (current <= 0)
-        {
-            var idx = Array.FindIndex(s_buttonZoomLevels, level => level > fitZoom);
-            return idx < 0 ? null : s_buttonZoomLevels[idx];
-        }
-
-        var i = Array.IndexOf(s_buttonZoomLevels, current);
-        if (i >= 0)
-        {
-            if (i >= s_buttonZoomLevels.Length - 1) return null; // リスト末尾（500%）で停止
-            return s_buttonZoomLevels[i + 1];
-        }
-
-        var next = Array.FindIndex(s_buttonZoomLevels, level => level > current);
-        return next < 0 ? null : s_buttonZoomLevels[next];
+        // Fit の実効倍率は小数になり得るため、整数レベルとの比較に正規化する
+        // （レベルは整数なので、level > fitZoom ⟺ level > floor(fitZoom) が成立する）
+        var baseValue = current <= 0 ? (int)fitZoom : current;
+        var idx = Array.BinarySearch(s_buttonZoomLevels, baseValue);
+        var nextIdx = idx >= 0 ? idx + 1 : ~idx;
+        return nextIdx >= s_buttonZoomLevels.Length ? null : s_buttonZoomLevels[nextIdx];
     }
 
     /// <summary>ズームアウトの前のレベルを返す。移動先がなければ null。</summary>
@@ -58,26 +49,17 @@ public static class ZoomTransition
     /// <returns>前のズームレベル。移動先がなければ null。</returns>
     /// <remarks>
     /// Fit 表示中は実効倍率より小さい最後のレベルへ移動する。<br/>
-    /// 固定倍率表示中は現在のレベルの前のレベルへ移動する（リストにない値は次に小さいレベル）。<br/>
+    /// 固定倍率表示中は現在の値より小さい最後のレベルへ移動する（リスト内は隣、リスト外は次に小さい）。<br/>
     /// リスト先頭（10%）では null（移動不可）を返す。
     /// </remarks>
     public static int? PrevLevel(int current, double fitZoom)
     {
-        if (current <= 0)
-        {
-            var idx = Array.FindLastIndex(s_buttonZoomLevels, level => level < fitZoom);
-            return idx < 0 ? null : s_buttonZoomLevels[idx];
-        }
-
-        var i = Array.IndexOf(s_buttonZoomLevels, current);
-        if (i > 0) return s_buttonZoomLevels[i - 1];
-        if (i < 0)
-        {
-            var prev = Array.FindLastIndex(s_buttonZoomLevels, level => level < current);
-            return prev < 0 ? null : s_buttonZoomLevels[prev];
-        }
-
-        return null; // i == 0（リスト先頭 10%）で停止
+        // Fit の実効倍率は小数になり得るため、整数レベルとの比較に正規化する
+        // （レベルは整数なので、level < fitZoom ⟺ level < ceil(fitZoom) が成立する）
+        var baseValue = current <= 0 ? (int)Math.Ceiling(fitZoom) : current;
+        var idx = Array.BinarySearch(s_buttonZoomLevels, baseValue);
+        var prevIdx = idx > 0 ? idx - 1 : ~idx - 1;
+        return prevIdx < 0 ? null : s_buttonZoomLevels[prevIdx];
     }
 
     /// <summary>Ctrl+ホイールのズームイン倍率を返す。移動先がなければ null。</summary>

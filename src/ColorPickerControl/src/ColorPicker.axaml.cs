@@ -366,6 +366,12 @@ public sealed partial class ColorPickerControl : UserControl
     /// </remarks>
     private void UpdateBorderValidationVisual()
     {
+        // InitializeComponent 中は名前スコープのフィールド代入前のため _comboBox が null のことがある
+        // （TwoWay Text バインディングの初期書き戻しが SelectedColor 変更として届く）。
+        // バリデーション状態（HasValidationError / ValidationErrorMessage）は更新済みのため、
+        // 枠線のみ構築後にコンストラクタの UpdateValidationStatus が適用する。
+        if (_comboBox is null) return;
+
         _comboBox.Classes.Set("validation-error", HighlightBorderOnError && HasValidationError);
     }
 

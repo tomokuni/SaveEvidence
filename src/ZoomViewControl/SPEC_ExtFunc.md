@@ -169,7 +169,6 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `PanBy(Vector)` | パン（コンテンツ座標の移動量） |
 | `ViewportToContent(Point)` / `ContentToViewport(Point)` | ビューポート ↔ コンテンツ座標変換 |
 | `DisplaySize()` | 画像の表示サイズ（ビューポート座標） |
-| `ImageOriginViewport()` | 画像原点のビューポート座標 |
 | `ImageRectViewport()` | 画像の表示矩形（原点 + サイズ・ビューポート座標。表示サイズと原点を 1 回の計算で取得） |
 | `ZoomPercent` | 現在のズーム率（%）。0 = Fit |
 | `Offset` | 現在のパン位置（コンテンツ座標。ビューポート左上に対応） |
@@ -194,16 +193,14 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 
 | クラス | 関数 | 説明 |
 | --- | --- | --- |
-| `ZoomMath` | `FitZoomPercent` | Fit 実効倍率（%）の計算 |
-| `ZoomMath` | `ComputeImagePoint` | ズーム中心の画像内の点（中央寄せ補正込み） |
-| `ZoomMath` | `ComputeOffsetAfterZoom` | 画像サイズ変化時のオフセット計算 |
+| `ZoomMath` | `FitScale` / `FitZoomPercent` | Fit 実効スケール / 実効倍率（%）の計算 |
 | `ZoomMath` | `ComputeOffsetAfterScaleChange` | スケール変化時のオフセット計算（ズーム中心維持） |
 | `ZoomMath` | `ClampOffset` | オフセットのスクロール範囲クランプ |
 | `ZoomMath` | `ViewportToContent` / `ContentToViewport` | ビューポート ↔ コンテンツ座標変換（純粋関数） |
 | `ZoomTransition` | `NextLevel` / `PrevLevel` | ⊖⊕ 23 段階の遷移 |
 | `ZoomTransition` | `WheelZoomIn` / `WheelZoomOut` | Ctrl+ホイール ×1.1 の遷移 |
 | `ZoomTransition` | `CanZoomIn` / `CanZoomOut` | ズームイン / アウト可否判定 |
-| `ScrollMetrics` | `MaxOffset` / `ViewportSize` / `IsScrollable` / `ThumbRatio` | スクロールバーの幾何計算 |
+| `ScrollMetrics` | `MaxOffset` / `ViewportSize` | スクロールバーの範囲・表示範囲の計算 |
 
 ## 7. ログ
 

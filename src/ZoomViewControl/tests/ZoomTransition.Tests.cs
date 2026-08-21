@@ -79,6 +79,16 @@ public class ZoomTransitionTests
     }
 
     [Fact]
+    public void NextLevel_Fit中の実効倍率が小数でも同じ遷移になる()
+    {
+        // 実効倍率は小数になり得る（例: ビューポートに応じた Fit 倍率）。
+        // 整数レベルとの比較（floor）と等価になることを保証する（回帰: 二分探索の正規化）。
+        Assert.Equal(40, ZoomTransition.NextLevel(current: 0, fitZoom: 33.5));
+        Assert.Equal(40, ZoomTransition.NextLevel(current: 0, fitZoom: 39.9));
+        Assert.Equal(50, ZoomTransition.NextLevel(current: 0, fitZoom: 40.0));
+    }
+
+    [Fact]
     public void NextLevel_Fit中の実効倍率が500以上なら移動不可()
     {
         var result = ZoomTransition.NextLevel(current: 0, fitZoom: 500);
@@ -126,6 +136,15 @@ public class ZoomTransitionTests
     {
         var result = ZoomTransition.PrevLevel(current: 0, fitZoom: 33);
         Assert.Equal(25, result);
+    }
+
+    [Fact]
+    public void PrevLevel_Fit中の実効倍率が小数でも同じ遷移になる()
+    {
+        // 整数レベルとの比較（ceil）と等価になることを保証する（回帰: 二分探索の正規化）。
+        Assert.Equal(33, ZoomTransition.PrevLevel(current: 0, fitZoom: 33.5));
+        Assert.Equal(33, ZoomTransition.PrevLevel(current: 0, fitZoom: 39.9));
+        Assert.Equal(33, ZoomTransition.PrevLevel(current: 0, fitZoom: 40.0));
     }
 
     [Fact]

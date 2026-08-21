@@ -30,6 +30,12 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// </remarks>
 public sealed class ZoomableView : Panel
 {
+    /// <summary>スクロールバーの太さ（DIP）。</summary>
+    private const double ScrollBarThickness = 10;
+
+    /// <summary>ホイールパンの 1 ノッチあたりの移動量（DIP）。</summary>
+    private const double WheelScrollUnit = 48.0;
+
     /// <summary>画像表示コントロール（RenderTransform でズーム・パン）。</summary>
     private readonly Image _image = new()
     {
@@ -66,11 +72,17 @@ public sealed class ZoomableView : Panel
     /// <summary>スクロールバー同期中の再入防止フラグ。</summary>
     private bool _isSyncingScrollBars;
 
+    /// <summary>現在の実効スケール（表示に使用するスケール）。表示状態の変更時に再計算する。</summary>
+    private double _effectiveScale = 1;
+
+    /// <summary>実効スケールの再計算が必要かどうか。</summary>
+    private bool _effectiveScaleDirty = true;
+
     /// <summary>縦スクロールバー（オーバーレイ表示）。</summary>
     private readonly ScrollBar _verticalScrollBar = new()
     {
         Orientation = Orientation.Vertical,
-        Width = 10,
+        Width = ScrollBarThickness,
         HorizontalAlignment = HorizontalAlignment.Right,
         VerticalAlignment = VerticalAlignment.Stretch,
         IsVisible = false,
@@ -80,7 +92,7 @@ public sealed class ZoomableView : Panel
     private readonly ScrollBar _horizontalScrollBar = new()
     {
         Orientation = Orientation.Horizontal,
-        Height = 10,
+        Height = ScrollBarThickness,
         HorizontalAlignment = HorizontalAlignment.Stretch,
         VerticalAlignment = VerticalAlignment.Bottom,
         IsVisible = false,
@@ -104,9 +116,26 @@ public sealed class ZoomableView : Panel
     {
         get
         {
-            if (_zoomPercent > 0) return Scale;
-            if (_image.Source is not { } src) return 1;
-            return FitScale(new Size(src.Size.Width, src.Size.Height));
+            if (_effectiveScaleDirty) RefreshEffectiveScale();
+            return _effectiveScale;
+        }
+    }
+
+    /// <summary>実効スケールを現在の表示状態から再計算する。</summary>
+    private void RefreshEffectiveScale()
+    {
+        _effectiveScaleDirty = false;
+        if (_zoomPercent > 0)
+        {
+            _effectiveScale = Scale;
+        }
+        else if (_image.Source is { } src)
+        {
+            _effectiveScale = ZoomMath.FitScale(new Size(src.Size.Width, src.Size.Height), Bounds.Size);
+        }
+        else
+        {
+            _effectiveScale = 1;
         }
     }
 
@@ -121,7 +150,8 @@ public sealed class ZoomableView : Panel
         {
             if (_centerAlign == value) return;
             _centerAlign = value;
-            InvalidateVisual();
+            // Fit 中は画像配置（中央/左上）とオーバーレイ座標の両方に影響するため、表示を更新する
+            UpdateLayoutAndTransform();
         }
     }
 
@@ -163,6 +193,14 @@ public sealed class ZoomableView : Panel
         PointerReleased += OnPointerReleased;
         PointerWheelChanged += OnPointerWheelChanged;
 
+        // ビューポートサイズ（Bounds）の変更で実効スケールが変わるため、再計算を予約して表示を更新する
+        // （Fit 表示の MaxWidth/MaxHeight は Bounds 依存のため、リサイズ時に再適用が必要）
+        SizeChanged += (_, _) =>
+        {
+            _effectiveScaleDirty = true;
+            UpdateLayoutAndTransform();
+        };
+
         // スクロールバーの操作（ドラッグ・矢印・ページ送り）でパンする
         _verticalScrollBar.ValueChanged += OnScrollBarValueChanged;
         _horizontalScrollBar.ValueChanged += OnScrollBarValueChanged;
@@ -190,21 +228,22 @@ public sealed class ZoomableView : Panel
     public void SetZoom(double zoomPercent, Point? center = null)
     {
         var oldScale = Scale;
-        zoomPercent = Math.Clamp(zoomPercent, 0, 500);
+        zoomPercent = Math.Clamp(zoomPercent, 0, ZoomTransition.MaxZoom);
         _zoomPercent = zoomPercent;
-        center ??= new Point(Bounds.Width / 2, Bounds.Height / 2);
 
         if (zoomPercent <= 0)
         {
-            // Fit: オフセットをリセット（ズーム表示は Fit スケールで描画）
+            // Fit: オフセットをリセット（ズーム表示は Fit スケールで描画）。ズーム中心は不要
             _offset = default;
         }
-        else if (oldScale > 0 && _image.Source is not null)
+        else if (oldScale > 0 && _image.Source is { } src)
         {
             // ズーム中心維持: コンテンツ座標（元画像ピクセル）を不変に保つ
+            var bounds = Bounds;
+            center ??= new Point(bounds.Width / 2, bounds.Height / 2);
             _offset = ZoomMath.ComputeOffsetAfterScaleChange(
                 _offset, center.Value, oldScale, Scale,
-                new Size(_image.Source.Size.Width, _image.Source.Size.Height), Bounds.Size);
+                src.Size, bounds.Size);
         }
 
         UpdateLayoutAndTransform();
@@ -214,7 +253,11 @@ public sealed class ZoomableView : Panel
     /// <param name="offset">パン位置（コンテンツ座標）。</param>
     public void SetOffset(Vector offset)
     {
-        _offset = ClampCurrentOffset(offset);
+        var clamped = ClampCurrentOffset(offset);
+        // クランプ結果が現在値と等しい場合（スクロール範囲端での連続ドラッグ等）は
+        // 表示更新・イベント通知をスキップする（ホットパスでの無駄な再描画を排除）
+        if (clamped == _offset) return;
+        _offset = clamped;
         UpdateLayoutAndTransform();
     }
 
@@ -237,14 +280,9 @@ public sealed class ZoomableView : Panel
     public Size DisplaySize()
     {
         if (_image.Source is not { } src) return default;
-        var content = new Size(src.Size.Width, src.Size.Height);
-        if (_zoomPercent <= 0)
-        {
-            // Fit: ビューポートに収まるスケール（Uniform）
-            var scale = FitScale(content);
-            return new Size(content.Width * scale, content.Height * scale);
-        }
-        return new Size(content.Width * Scale, content.Height * Scale);
+        var size = src.Size;
+        var scale = EffectiveScale;
+        return new Size(size.Width * scale, size.Height * scale);
     }
 
     /// <summary>画像の表示矩形（ビューポート座標）を取得する。</summary>
@@ -252,13 +290,11 @@ public sealed class ZoomableView : Panel
     public Rect ImageRectViewport()
     {
         var display = DisplaySize();
+        // 画像未設定時（DisplaySize が default）は原点補正を行わず default を返す
+        if (display == default) return default;
         var origin = ImageOriginViewport(display);
         return new Rect(origin, display);
     }
-
-    /// <summary>画像原点のビューポート座標を取得する。</summary>
-    /// <returns>画像原点のビューポート座標。</returns>
-    public Point ImageOriginViewport() => ImageOriginViewport(DisplaySize());
 
     /// <summary>画像原点のビューポート座標を取得する（表示サイズは呼び出し側で計算済みのものを渡す）。</summary>
     /// <param name="display">画像の表示サイズ（ビューポート座標）。</param>
@@ -270,22 +306,21 @@ public sealed class ZoomableView : Panel
             // Fit: CenterAlign に応じてビューポート中央（画像が小さい場合）または原点
             if (_centerAlign)
             {
+                var bounds = Bounds;
                 return new Point(
-                    Math.Max(0, (Bounds.Width - display.Width) / 2),
-                    Math.Max(0, (Bounds.Height - display.Height) / 2));
+                    Math.Max(0, (bounds.Width - display.Width) / 2),
+                    Math.Max(0, (bounds.Height - display.Height) / 2));
             }
             return new Point(0, 0);
         }
-        return new Point(-_offset.X * Scale, -_offset.Y * Scale);
+        var scale = Scale;
+        return new Point(-_offset.X * scale, -_offset.Y * scale);
     }
 
     /// <summary>パンする（コンテンツ座標の移動量）。</summary>
     /// <param name="delta">コンテンツ座標の移動量。</param>
     public void PanBy(Vector delta)
-    {
-        _offset = ClampCurrentOffset(new Vector(_offset.X + delta.X, _offset.Y + delta.Y));
-        UpdateLayoutAndTransform();
-    }
+        => SetOffset(new Vector(_offset.X + delta.X, _offset.Y + delta.Y));
 
     /// <summary>現在のオフセットをスクロール範囲内にクランプする。</summary>
     /// <param name="offset">クランプするオフセット。</param>
@@ -293,54 +328,55 @@ public sealed class ZoomableView : Panel
     private Vector ClampCurrentOffset(Vector offset)
     {
         if (_image.Source is not { } src || _zoomPercent <= 0) return default;
-        return ZoomMath.ClampOffset(offset, Scale,
-            new Size(src.Size.Width, src.Size.Height), Bounds.Size);
-    }
-
-    /// <summary>Fit 時のスケール（Uniform）を計算する。</summary>
-    /// <param name="content">コンテンツサイズ。</param>
-    /// <returns>Fit スケール。</returns>
-    private double FitScale(Size content)
-    {
-        if (content.Width <= 0 || content.Height <= 0) return 1;
-        var sx = Bounds.Width / content.Width;
-        var sy = Bounds.Height / content.Height;
-        var s = Math.Min(sx, sy);
-        return s > 0 ? s : 1;
+        return ZoomMath.ClampOffset(offset, Scale, src.Size, Bounds.Size);
     }
 
     /// <summary>表示（レイアウトサイズ・RenderTransform・スクロールバー）を更新する。</summary>
     private void UpdateLayoutAndTransform()
     {
-        if (_image.Source is not { } src) return;
+        // ズーム率・画像ソース・ビューポートサイズのいずれかが変わったため、実効スケールを再計算対象にする
+        _effectiveScaleDirty = true;
 
-        if (_zoomPercent <= 0)
+        if (_image.Source is { } src)
         {
-            // Fit: 画像を Uniform で表示（明示サイズなし・RenderTransform なし）
-            _image.Stretch = Stretch.Uniform;
-            _image.Width = double.NaN;
-            _image.Height = double.NaN;
-            _image.MaxWidth = Bounds.Width;
-            _image.MaxHeight = Bounds.Height;
-            _image.RenderTransform = null;
-        }
-        else
-        {
-            // 固定倍率: 元サイズのまま RenderTransform でスケール + パン
-            _image.Stretch = Stretch.None;
-            _image.Width = src.Size.Width;
-            _image.Height = src.Size.Height;
-            _image.MaxWidth = double.PositiveInfinity;
-            _image.MaxHeight = double.PositiveInfinity;
+            if (_zoomPercent <= 0)
+            {
+                // Fit: 画像を Uniform で表示（明示サイズなし・RenderTransform なし）
+                // CenterAlign に応じて画像自体の配置も切り替える（オーバーレイ座標との一致）
+                var bounds = Bounds;
+                _image.Stretch = Stretch.Uniform;
+                _image.Width = double.NaN;
+                _image.Height = double.NaN;
+                _image.MaxWidth = bounds.Width;
+                _image.MaxHeight = bounds.Height;
+                _image.HorizontalAlignment = _centerAlign ? HorizontalAlignment.Center : HorizontalAlignment.Left;
+                _image.VerticalAlignment = _centerAlign ? VerticalAlignment.Center : VerticalAlignment.Top;
+                _image.RenderTransform = null;
+            }
+            else
+            {
+                // 固定倍率: 元サイズのまま RenderTransform でスケール + パン
+                // パン位置（オフセット）で制御するため、配置は常に左上に固定する
+                var imageSize = src.Size;
+                var scale = Scale;
+                _image.Stretch = Stretch.None;
+                _image.Width = imageSize.Width;
+                _image.Height = imageSize.Height;
+                _image.MaxWidth = double.PositiveInfinity;
+                _image.MaxHeight = double.PositiveInfinity;
+                _image.HorizontalAlignment = HorizontalAlignment.Left;
+                _image.VerticalAlignment = VerticalAlignment.Top;
 
-            // 描画位置 = Scale × (コンテンツ − オフセット)
-            _translateTransform.X = -_offset.X;
-            _translateTransform.Y = -_offset.Y;
-            _scaleTransform.ScaleX = Scale;
-            _scaleTransform.ScaleY = Scale;
-            _image.RenderTransform = _transformGroup;
+                // 描画位置 = Scale × (コンテンツ − オフセット)
+                _translateTransform.X = -_offset.X;
+                _translateTransform.Y = -_offset.Y;
+                _scaleTransform.ScaleX = scale;
+                _scaleTransform.ScaleY = scale;
+                _image.RenderTransform = _transformGroup;
+            }
         }
 
+        // 画像なし時は UpdateScrollBars が両バーを非表示にする（SetSource(null) 対応）。表示・通知は常に実行する
         UpdateScrollBars();
         InvalidateVisual();
         // ビューポート変化を通知する（オーバーレイ等の追従用。座標変換は受け側が最新表示から再評価する）
@@ -368,9 +404,17 @@ public sealed class ZoomableView : Panel
                 return;
             }
 
-            // 表示スケール（Fit 中は Fit スケール。画像はビューポートに収まるため範囲 0 になる）
-            var content = new Size(src.Size.Width, src.Size.Height);
-            var scale = _zoomPercent > 0 ? Scale : FitScale(content);
+            // Fit 中は画像がビューポートに収まるためスクロール範囲が必ず 0（スクロールバー非表示）
+            if (_zoomPercent <= 0)
+            {
+                _verticalScrollBar.IsVisible = false;
+                _horizontalScrollBar.IsVisible = false;
+                return;
+            }
+
+            // 表示スケール（固定倍率中は Scale）
+            var content = src.Size;
+            var scale = EffectiveScale;
 
             // 縦スクロールバー
             SyncScrollBar(_verticalScrollBar, content.Height, _offset.Y, scale);
@@ -392,9 +436,11 @@ public sealed class ZoomableView : Panel
     private void SyncScrollBar(ScrollBar bar, double contentSize, double offset, double scale)
     {
         var viewportSize = bar == _verticalScrollBar ? Bounds.Height : Bounds.Width;
-        var max = ScrollMetrics.MaxOffset(contentSize, viewportSize, scale);
+        // コンテンツ座標での表示範囲（サムサイズ）を 1 回だけ計算し、最大オフセットと共有する
+        var vs = ScrollMetrics.ViewportSize(viewportSize, scale);
+        var max = Math.Max(0, contentSize - vs);
         bar.Maximum = max;
-        bar.ViewportSize = ScrollMetrics.ViewportSize(viewportSize, scale);
+        bar.ViewportSize = vs;
         bar.Value = Math.Clamp(offset, 0, max);
         bar.IsVisible = max > 0;
     }
@@ -406,15 +452,15 @@ public sealed class ZoomableView : Panel
     private void OnScrollBarValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
     {
         if (_isSyncingScrollBars) return;
+        // クランプ・表示更新は SetOffset に委譲する（パン操作との共通化）
         if (sender == _verticalScrollBar)
         {
-            _offset = ClampCurrentOffset(new Vector(_offset.X, e.NewValue));
+            SetOffset(new Vector(_offset.X, e.NewValue));
         }
         else
         {
-            _offset = ClampCurrentOffset(new Vector(e.NewValue, _offset.Y));
+            SetOffset(new Vector(e.NewValue, _offset.Y));
         }
-        UpdateLayoutAndTransform();
     }
 
     // ====================================================================
@@ -428,9 +474,10 @@ public sealed class ZoomableView : Panel
     /// </remarks>
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        var point = e.GetCurrentPoint(this);
+        if (!point.Properties.IsLeftButtonPressed) return;
         _isPanning = true;
-        _grabContentPos = ViewportToContent(e.GetPosition(this));
+        _grabContentPos = ViewportToContent(point.Position);
         e.Pointer.Capture(this);
         e.Handled = true;
     }
@@ -478,10 +525,10 @@ public sealed class ZoomableView : Panel
         }
 
         // 通常ホイール: パン（Shift 併用で横スクロール）
-        const double scrollUnit = 48.0;
         var isShift = (e.KeyModifiers & KeyModifiers.Shift) != 0;
-        var dx = isShift ? e.Delta.Y * scrollUnit : e.Delta.X * scrollUnit;
-        var dy = isShift ? 0 : e.Delta.Y * scrollUnit;
+        var delta = e.Delta;
+        var dx = isShift ? delta.Y * WheelScrollUnit : delta.X * WheelScrollUnit;
+        var dy = isShift ? 0 : delta.Y * WheelScrollUnit;
         var scale = EffectiveScale;
         PanBy(new Vector(dx / scale, dy / scale));
         e.Handled = true;

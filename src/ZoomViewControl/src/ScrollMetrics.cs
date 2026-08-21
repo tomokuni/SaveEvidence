@@ -1,7 +1,7 @@
 namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>
-/// スクロールバーの表示状態・サムサイズ・範囲の計算（純粋関数）。
+/// スクロールバーの範囲・ビューポートサイズの計算（純粋関数）。
 /// </summary>
 /// <remarks>
 /// スクロールバーの幾何計算を UI 状態（ScrollBar コントロール）から分離し、<br/>
@@ -15,7 +15,11 @@ public static class ScrollMetrics
     /// <param name="viewportSize">ビューポートサイズ（表示座標）。</param>
     /// <param name="scale">スケール（倍率 / 100）。</param>
     /// <returns>最大オフセット。コンテンツがビューポート以下の場合は 0。</returns>
-    /// <remarks>描画位置 = スケール × (コンテンツ座標 − オフセット) の定義に基づき、<br/>オフセットの最大値はコンテンツ − ビューポート / スケール。</remarks>
+    /// <remarks>
+    /// 描画位置 = スケール × (コンテンツ座標 − オフセット) の定義に基づき、<br/>
+    /// オフセットの最大値はコンテンツ − ビューポート / スケール。<br/>
+    /// スクロール範囲の単一所有メソッドであり、<see cref="ZoomMath"/> のクランプ計算も本メソッドへ委譲する。
+    /// </remarks>
     public static double MaxOffset(double contentSize, double viewportSize, double scale)
     {
         scale = scale > 0 ? scale : 1;
@@ -31,25 +35,5 @@ public static class ScrollMetrics
     {
         scale = scale > 0 ? scale : 1;
         return viewportSize / scale;
-    }
-
-    /// <summary>スクロールバーを表示すべきかどうかを判定する。</summary>
-    /// <param name="contentSize">コンテンツサイズ（コンテンツ座標）。</param>
-    /// <param name="viewportSize">ビューポートサイズ（表示座標）。</param>
-    /// <param name="scale">スケール（倍率 / 100）。</param>
-    /// <returns>スクロール可能（コンテンツがビューポートより大きい）なら true。</returns>
-    public static bool IsScrollable(double contentSize, double viewportSize, double scale)
-        => contentSize > ViewportSize(viewportSize, scale);
-
-    /// <summary>サムのサイズ割合（0〜1）を計算する。</summary>
-    /// <param name="contentSize">コンテンツサイズ（コンテンツ座標）。</param>
-    /// <param name="viewportSize">ビューポートサイズ（表示座標）。</param>
-    /// <param name="scale">スケール（倍率 / 100）。</param>
-    /// <returns>サムの割合（0 超 1 以下）。コンテンツがビューポート以下の場合は 1。</returns>
-    public static double ThumbRatio(double contentSize, double viewportSize, double scale)
-    {
-        var vs = ViewportSize(viewportSize, scale);
-        if (contentSize <= vs) return 1.0;
-        return vs / contentSize;
     }
 }

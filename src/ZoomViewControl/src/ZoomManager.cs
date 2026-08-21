@@ -7,13 +7,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>
-/// MainWindow 用のズーム管理クラス。
+/// 画像プレビューのズーム操作を統括するマネージャー。
 /// </summary>
 /// <remarks>
 /// 画像プレビューのズームイン・ズームアウト・Fit表示、スライダとの同期、<br/>
 /// ビューポートリサイズ時の Fit 再適用、画像配置（中央寄せ/左寄せ）などを管理する。<br/>
-/// プロパティ注入で Window の ViewModel・ZoomableView・<br/>
-/// ZoomSlider を受け取り、内部でズーム計算・UI更新を行う。<br/>
+/// プロパティ注入でホスト（<see cref="IZoomHost"/>）・<see cref="ZoomableView"/>・<br/>
+/// ズームスライダを受け取り、内部でズーム計算・UI更新を行う。<br/>
 /// ズーム率の選択はステータスバーのスライダ（10〜500%）とフライアウト（自動, 10〜500%）で行う。<br/>
 /// <br/>
 /// <b>ズーム表示方式</b>: <see cref="ZoomableView"/>（ScrollViewer 不使用）が RenderTransform<br/>
@@ -29,6 +29,9 @@ public sealed class ZoomManager
 
     /// <summary>ApplyZoom 再入防止フラグ（ZoomPercent の PropertyChanged と直接呼び出しの二重実行を防ぐ）。</summary>
     private bool _isApplyingZoom;
+
+    /// <summary>スライダ同期時の値比較許容差。</summary>
+    private const double SliderEpsilon = 0.01;
 
     /// <summary>内部ロガー（横断的関心事）。null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</summary>
     /// <value>null 可。設定しない場合はログを出力しない。</value>
@@ -65,7 +68,12 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomIn()
-        => ApplyZoomTransition(ZoomTransition.NextLevel(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), Log.LogZoomIn);
+    {
+        var zoom = ViewModel.ZoomPercent;
+        // 遷移関数は Fit 中（current <= 0）のみ fitZoom を使うため、固定倍率中は計算しない
+        var fitZoom = zoom <= 0 ? ComputeRawFitZoomPercent() : 0;
+        ApplyZoomTransition(ZoomTransition.NextLevel(zoom, fitZoom), Log.LogZoomIn);
+    }
 
     /// <summary>ズームアウトする（⊖⊕ボタン）。</summary>
     /// <remarks>
@@ -74,7 +82,11 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomOut()
-        => ApplyZoomTransition(ZoomTransition.PrevLevel(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), Log.LogZoomOut);
+    {
+        var zoom = ViewModel.ZoomPercent;
+        var fitZoom = zoom <= 0 ? ComputeRawFitZoomPercent() : 0;
+        ApplyZoomTransition(ZoomTransition.PrevLevel(zoom, fitZoom), Log.LogZoomOut);
+    }
 
     /// <summary>Ctrl+ホイールでズームインする（拡大 = Round(現在の拡大率 × 1.1)）。</summary>
     /// <remarks>
@@ -83,7 +95,11 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomInByWheel()
-        => ApplyZoomTransition(ZoomTransition.WheelZoomIn(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), Log.LogZoomInWheel);
+    {
+        var zoom = ViewModel.ZoomPercent;
+        var fitZoom = zoom <= 0 ? ComputeRawFitZoomPercent() : 0;
+        ApplyZoomTransition(ZoomTransition.WheelZoomIn(zoom, fitZoom), Log.LogZoomInWheel);
+    }
 
     /// <summary>Ctrl+ホイールでズームアウトする（縮小 = Round(現在の拡大率 ÷ 1.1)）。</summary>
     /// <remarks>
@@ -92,14 +108,18 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomOutByWheel()
-        => ApplyZoomTransition(ZoomTransition.WheelZoomOut(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), Log.LogZoomOutWheel);
+    {
+        var zoom = ViewModel.ZoomPercent;
+        var fitZoom = zoom <= 0 ? ComputeRawFitZoomPercent() : 0;
+        ApplyZoomTransition(ZoomTransition.WheelZoomOut(zoom, fitZoom), Log.LogZoomOutWheel);
+    }
 
     /// <summary>ComboBox のテキスト入力からズーム率をパースして適用する。</summary>
     /// <param name="text">入力テキスト（例: "25"、"25%"、"150 %"）。</param>
     /// <returns>適用できた場合は true、無効な入力の場合は false。</returns>
     /// <remarks>
-    /// 入力値は「数値」または「数値 + %」形式を受理し、10〜500 の範囲に制限する<br/>
-    /// （ZoomLevels の最小固定倍率 10% と最大倍率 500% と整合）。<br/>
+    /// 入力値は「数値」または「数値 + %」形式を受理し、<see cref="ZoomTransition.MinZoom"/> 〜
+    /// <see cref="ZoomTransition.MaxZoom"/> の範囲に制限する。<br/>
     /// 数値以外・範囲外・空の入力は無視し、既存のズーム率を維持する（適用不可を false で通知）。
     /// </remarks>
     public bool ApplyZoomFromText(string? text)
@@ -107,9 +127,9 @@ public sealed class ZoomManager
         if (string.IsNullOrWhiteSpace(text)) return false;
         var cleaned = text.Trim().TrimEnd('%');
         if (!int.TryParse(cleaned, out var value)) return false;
-        if (value is < 10 or > 500) return false;
+        if (value is < ZoomTransition.MinZoom or > ZoomTransition.MaxZoom) return false;
 
-        // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ
+        // ZoomPercent の設定で PropertyChanged が発火し、ホスト側のハンドラが ApplyZoom() を呼ぶ
         ViewModel.ZoomPercent = value;
         return true;
     }
@@ -119,7 +139,7 @@ public sealed class ZoomManager
     /// <see cref="ZoomableView"/>（ScrollViewer 不使用）にズーム率を設定する。<br/>
     /// ズーム中心（マウスポインタ位置 or ビューポート中心）とズーム中心維持は<br/>
     /// <see cref="ZoomMath.ComputeOffsetAfterScaleChange"/> により ZoomableView 内で処理される。<br/>
-    /// ZoomPercent の PropertyChanged（CapturePage のハンドラ）と本メソッドの直接呼び出しが重なるため、<br/>
+    /// ZoomPercent の PropertyChanged（ホスト側のハンドラ）と本メソッドの直接呼び出しが重なるため、<br/>
     /// 再入防止フラグで 1 回だけ実行する。
     /// </remarks>
     public void ApplyZoom()
@@ -142,11 +162,9 @@ public sealed class ZoomManager
         var zoom = ViewModel.ZoomPercent;
         if (ViewModel.PreviewImage is null) return;
 
-        // ズーム中心（ビューポートローカル）。マウスポインタが無い場合はビューポート中心
-        var center = PointerPosition ?? new Point(ZoomableView.Bounds.Width / 2, ZoomableView.Bounds.Height / 2);
-
-        // ZoomableView にズーム率を設定（ズーム中心維持は ZoomableView 内で処理。防御コード不要）
-        ZoomableView.SetZoom(zoom, center);
+        // ZoomableView にズーム率を設定。ズーム中心（ポインタ位置 or ビューポート中心）と
+        // ズーム中心維持は ZoomableView 内で処理される（null 中心 = ビューポート中心）
+        ZoomableView.SetZoom(zoom, PointerPosition);
 
         // Fit の実効倍率は 1 回だけ計算し、遷移可否判定と表示テキストで共有する
         var fitZoom = ComputeRawFitZoomPercent();
@@ -163,7 +181,7 @@ public sealed class ZoomManager
     /// <summary>ズーム遷移の適用（ログ記録 + ZoomPercent 設定）を共通化する。</summary>
     /// <param name="target">遷移先のズーム率。null の場合は何もしない（移動不可）。</param>
     /// <param name="log">変更前後のズーム率を記録するログメソッド。</param>
-    /// <remarks>ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ（1 回だけ実行）。</remarks>
+    /// <remarks>ZoomPercent の設定で PropertyChanged が発火し、ホスト側のハンドラが ApplyZoom() を呼ぶ（1 回だけ実行）。</remarks>
     private void ApplyZoomTransition(int? target, Action<int, int> log)
     {
         if (target is not { } t) return;
@@ -190,8 +208,8 @@ public sealed class ZoomManager
     public void ApplyZoomFromSlider(double value)
     {
         var zoom = (int)Math.Round(value);
-        if (zoom is < 10 or > 500) return;
-        // ZoomPercent の設定で PropertyChanged が発火し、CapturePage のハンドラが ApplyZoom() を呼ぶ
+        if (zoom is < ZoomTransition.MinZoom or > ZoomTransition.MaxZoom) return;
+        // ZoomPercent の設定で PropertyChanged が発火し、ホスト側のハンドラが ApplyZoom() を呼ぶ
         ViewModel.ZoomPercent = zoom;
     }
 
@@ -206,11 +224,12 @@ public sealed class ZoomManager
         _isSyncingZoom = true;
         try
         {
+            var slider = ZoomSlider;
             var zoom = ViewModel.ZoomPercent;
-            var sliderValue = zoom > 0 ? zoom : ZoomSlider.Minimum;
-            if (Math.Abs(ZoomSlider.Value - sliderValue) > 0.01)
+            var sliderValue = zoom > 0 ? zoom : slider.Minimum;
+            if (Math.Abs(slider.Value - sliderValue) > SliderEpsilon)
             {
-                ZoomSlider.Value = sliderValue;
+                slider.Value = sliderValue;
             }
         }
         finally

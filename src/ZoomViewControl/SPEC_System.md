@@ -69,7 +69,7 @@ ZoomViewControl（本ライブラリ）
 
 - **分類**: 公開コントロール（`public sealed class : Panel`）
 - **責務**: ScrollViewer 不使用のパン・ズームビューポート。RenderTransform（ScaleTransform + TranslateTransform）で表示。マウスドラッグパンは grab 方式（掴んだ位置がポインタに追従）
-- **公開メンバー**: `SetSource` / `SetZoom` / `SetOffset` / `PanBy` / `ViewportToContent` / `ContentToViewport` / `DisplaySize` / `ImageOriginViewport` / `ImageRectViewport` / `ImageControl` / `ZoomPercent` / `Offset` / `Scale` / `EffectiveScale` / `CenterAlign` / `ZoomRequested` / `ViewportChanged`
+- **公開メンバー**: `SetSource` / `SetZoom` / `SetOffset` / `PanBy` / `ViewportToContent` / `ContentToViewport` / `DisplaySize` / `ImageRectViewport` / `ImageControl` / `ZoomPercent` / `Offset` / `Scale` / `EffectiveScale` / `CenterAlign` / `ZoomRequested` / `ViewportChanged`
 - **依存**: ZoomMath / ScrollMetrics / ZoomRequestedEventArgs
 
 ### 4.3 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）
@@ -78,7 +78,7 @@ ZoomViewControl（本ライブラリ）
 | --- | --- | --- |
 | `ZoomMath` | 公開静的クラス | ズーム中心維持・Fit 実効倍率・座標変換・オフセットクランプの計算 |
 | `ZoomTransition` | 公開静的クラス | ⊖⊕ 23 段階遷移・Ctrl+ホイール ×1.1 遷移・可否判定 |
-| `ScrollMetrics` | 公開静的クラス | スクロールバーの範囲・ビューポートサイズ・サムサイズの計算 |
+| `ScrollMetrics` | 公開静的クラス | スクロールバーの範囲・ビューポートサイズの計算 |
 
 - UI 非依存のため、ヘッドレス不要の `[Fact]` で並列テスト可能（単体テストで仕様を検証）。
 

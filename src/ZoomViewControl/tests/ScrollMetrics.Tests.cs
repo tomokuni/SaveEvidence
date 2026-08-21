@@ -6,7 +6,7 @@ namespace Estable.AvaloniaUI.ZoomView.Tests;
 /// ScrollMetrics（スクロールバーの幾何計算・純粋関数）の回帰テスト。
 /// </summary>
 /// <remarks>
-/// スクロールバーの範囲・ビューポートサイズ・サムサイズの計算を検証する。<br/>
+/// スクロールバーの範囲・ビューポートサイズの計算を検証する。<br/>
 /// バグ修正（スクロールバーが表示されない・範囲が正しくない）の回帰防止を目的とする。
 /// </remarks>
 public class ScrollMetricsTests
@@ -64,57 +64,5 @@ public class ScrollMetricsTests
     {
         var result = ScrollMetrics.ViewportSize(400, 0.0);
         Assert.Equal(400.0, result);
-    }
-
-    // ====================================================================
-    // IsScrollable（スクロールバー表示判定）
-    // ====================================================================
-
-    [Fact]
-    public void IsScrollable_コンテンツがビューポートより大きい場合はtrue()
-    {
-        Assert.True(ScrollMetrics.IsScrollable(1000, 400, 1.0));
-    }
-
-    [Fact]
-    public void IsScrollable_コンテンツがビューポート以下の場合はfalse()
-    {
-        Assert.False(ScrollMetrics.IsScrollable(300, 400, 1.0));
-    }
-
-    [Fact]
-    public void IsScrollable_ズームでビューポート相当が小さくなるとtrueになる()
-    {
-        // コンテンツ 500、ビューポート 400、scale 2 → 表示範囲 200 < 500 → スクロール必要
-        Assert.True(ScrollMetrics.IsScrollable(500, 400, 2.0));
-        // scale 1 では 400 相当... いや、500 > 400 なので true
-        Assert.True(ScrollMetrics.IsScrollable(500, 400, 1.0));
-    }
-
-    // ====================================================================
-    // ThumbRatio（サムのサイズ割合）
-    // ====================================================================
-
-    [Fact]
-    public void ThumbRatio_コンテンツがビューポートより大きい場合は表示範囲の割合()
-    {
-        // コンテンツ 1000、ビューポート 400、scale 1 → 400/1000 = 0.4
-        var result = ScrollMetrics.ThumbRatio(1000, 400, 1.0);
-        Assert.Equal(0.4, result);
-    }
-
-    [Fact]
-    public void ThumbRatio_コンテンツがビューポート以下の場合は1()
-    {
-        var result = ScrollMetrics.ThumbRatio(300, 400, 1.0);
-        Assert.Equal(1.0, result);
-    }
-
-    [Fact]
-    public void ThumbRatio_ズーム時はスケールで除したビューポートの割合()
-    {
-        // コンテンツ 1000、ビューポート 400、scale 2 → 表示範囲 200 → 200/1000 = 0.2
-        var result = ScrollMetrics.ThumbRatio(1000, 400, 2.0);
-        Assert.Equal(0.2, result);
     }
 }

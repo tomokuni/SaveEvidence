@@ -4,17 +4,58 @@ using Xunit;
 namespace Estable.AvaloniaUI.ZoomView.Tests;
 
 /// <summary>
-/// ZoomMath（ズーム中心維持の純粋関数）の回帰テスト。
+/// ZoomMath（ズーム表示の幾何計算・純粋関数）の回帰テスト。
 /// </summary>
 /// <remarks>
-/// ズーム中心維持の計算仕様（画像内の点の導出・ズーム後オフセットの算出・Fit 実効倍率）を検証する。<br/>
-/// バグ修正（ズーム率の変化が考慮されず常に左上基準になる・中央寄せ時のずれ）の回帰防止を目的とする。
+/// ズーム中心維持の計算仕様（ズーム率変更時のオフセット算出・クランプ・Fit 実効倍率・座標変換）を検証する。
 /// </remarks>
 public class ZoomMathTests
 {
     // ====================================================================
-    // FitZoomPercent（Fit 実効倍率）
+    // FitScale / FitZoomPercent（Fit 実効スケール・倍率）
     // ====================================================================
+
+    [Fact]
+    public void FitScale_幅と高さのスケールの小さい方を返す()
+    {
+        // 画像 1000x2000、ビューポート 500x400 → X=0.5, Y=0.2 → 0.2
+        var result = ZoomMath.FitScale(new Size(1000, 2000), new Size(500, 400));
+        Assert.Equal(0.2, result);
+    }
+
+    [Fact]
+    public void FitScale_幅が基準になる場合()
+    {
+        // 画像 2000x1000、ビューポート 500x400 → X=0.25, Y=0.4 → 0.25
+        var result = ZoomMath.FitScale(new Size(2000, 1000), new Size(500, 400));
+        Assert.Equal(0.25, result);
+    }
+
+    [Fact]
+    public void FitScale_画像サイズが0なら1を返す()
+    {
+        Assert.Equal(1.0, ZoomMath.FitScale(new Size(0, 100), new Size(500, 400)));
+        Assert.Equal(1.0, ZoomMath.FitScale(new Size(100, 0), new Size(500, 400)));
+    }
+
+    [Fact]
+    public void FitScale_スケールが0以下なら1を返す()
+    {
+        // ビューポート 0x0 → スケール 0 → 1 にフォールバック
+        Assert.Equal(1.0, ZoomMath.FitScale(new Size(1000, 500), new Size(0, 0)));
+    }
+
+    [Fact]
+    public void FitZoomPercent_FitScaleの100倍を返す()
+    {
+        // 画像 1000x2000、ビューポート 500x400 → FitScale 0.2 → 20%
+        var percent = ZoomMath.FitZoomPercent(new Size(1000, 2000), new Size(500, 400));
+        Assert.Equal(20.0, percent);
+
+        // FitScale との一貫性（単一所有の委譲）
+        var scale = ZoomMath.FitScale(new Size(1000, 2000), new Size(500, 400));
+        Assert.Equal(scale * 100.0, percent);
+    }
 
     [Fact]
     public void FitZoomPercent_幅と高さのスケールの小さい方を返す()
@@ -37,113 +78,6 @@ public class ZoomMathTests
     {
         Assert.Equal(100.0, ZoomMath.FitZoomPercent(new Size(0, 100), new Size(500, 400)));
         Assert.Equal(100.0, ZoomMath.FitZoomPercent(new Size(100, 0), new Size(500, 400)));
-    }
-
-    // ====================================================================
-    // ComputeImagePoint（ズーム中心の画像内の点）
-    // ====================================================================
-
-    [Fact]
-    public void ComputeImagePoint_非中央寄せではOffsetとCenterの和になる()
-    {
-        // 非中央寄せ（Left/Top）: コンテンツ座標 = Offset + Center がそのまま画像内の点
-        var result = ZoomMath.ComputeImagePoint(
-            new Vector(100, 50), new Point(200, 150),
-            new Size(800, 600), new Size(800, 600), wasCentered: false);
-        Assert.Equal(new Point(300, 200), result);
-    }
-
-    [Fact]
-    public void ComputeImagePoint_中央寄せでは画像原点分を補正する()
-    {
-        // 中央寄せ: 画像 400x300 がビューポート 800x600 の中央 → 原点は (200, 150)
-        // コンテンツ座標 (400, 350) - 原点 (200, 150) = 画像内 (200, 200)
-        var result = ZoomMath.ComputeImagePoint(
-            new Vector(0, 0), new Point(400, 350),
-            new Size(800, 600), new Size(400, 300), wasCentered: true);
-        Assert.Equal(new Point(200, 200), result);
-    }
-
-    [Fact]
-    public void ComputeImagePoint_中央寄せでスクロール中も正しく補正する()
-    {
-        // 画像 400x300 がビューポート 800x600 の中央、スクロール (100, 50)
-        // コンテンツ座標 = (100+300, 50+200) = (400, 250) - 原点 (200, 150) = (200, 100)
-        var result = ZoomMath.ComputeImagePoint(
-            new Vector(100, 50), new Point(300, 200),
-            new Size(800, 600), new Size(400, 300), wasCentered: true);
-        Assert.Equal(new Point(200, 100), result);
-    }
-
-    // ====================================================================
-    // ComputeOffsetAfterZoom（ズーム後のオフセット）
-    // ====================================================================
-
-    [Fact]
-    public void ComputeOffsetAfterZoom_ズームインでオフセットが進む()
-    {
-        // ズーム前: 画像 2000x1000、中心の画像内の点 (1000, 500)
-        // ズーム後: 画像 2200x1100（110%）→ 点は (1100, 550) に移動。中心 (660, 300) を引いて (440, 250)
-        var result = ZoomMath.ComputeOffsetAfterZoom(
-            new Point(1000, 500), new Size(2000, 1000), new Size(2200, 1100),
-            new Point(660, 300), new Size(1320, 600), new Size(2200, 1100));
-        Assert.Equal(new Vector(440, 250), result);
-    }
-
-    [Fact]
-    public void ComputeOffsetAfterZoom_ズームアウトでオフセットが戻る()
-    {
-        // ズーム前: 画像 2200x1100、中心の画像内の点 (1100, 550)
-        // ズーム後: 画像 2000x1000 → 点は (1000, 500) に移動。中心 (660, 300) を引いて (340, 200)
-        var result = ZoomMath.ComputeOffsetAfterZoom(
-            new Point(1100, 550), new Size(2200, 1100), new Size(2000, 1000),
-            new Point(660, 300), new Size(1320, 600), new Size(2000, 1000));
-        Assert.Equal(new Vector(340, 200), result);
-    }
-
-    [Fact]
-    public void ComputeOffsetAfterZoom_スクロール範囲を超えないようクランプする()
-    {
-        // 画像内の点が画像の右端 (1990, 990)。ズーム後オフセットは (1990*1.1-660, ...) = (1529, ...)
-        // Extent=2200 Viewport=1320 → 最大オフセット = 880
-        var result = ZoomMath.ComputeOffsetAfterZoom(
-            new Point(1990, 990), new Size(2000, 1000), new Size(2200, 1100),
-            new Point(660, 300), new Size(1320, 600), new Size(2200, 1100));
-        Assert.Equal(880.0, result.X);
-        Assert.Equal(500.0, result.Y);
-    }
-
-    [Fact]
-    public void ComputeOffsetAfterZoom_オフセットが負にならないよう0にクランプする()
-    {
-        // 画像内の点が原点 (0, 0)。ズームアウトでオフセットが負になり得る → 0 にクランプ
-        var result = ZoomMath.ComputeOffsetAfterZoom(
-            new Point(0, 0), new Size(2000, 1000), new Size(1000, 500),
-            new Point(660, 300), new Size(1320, 600), new Size(1000, 500));
-        Assert.Equal(0.0, result.X);
-        Assert.Equal(0.0, result.Y);
-    }
-
-    [Fact]
-    public void ComputeOffsetAfterZoom_画像がビューポート以下の場合はオフセット0になる()
-    {
-        // 画像 500x300 < ビューポート 1320x600 → スクロール範囲 0
-        var result = ZoomMath.ComputeOffsetAfterZoom(
-            new Point(100, 100), new Size(500, 300), new Size(500, 300),
-            new Point(660, 300), new Size(1320, 600), new Size(500, 300));
-        Assert.Equal(0.0, result.X);
-        Assert.Equal(0.0, result.Y);
-    }
-
-    [Fact]
-    public void ComputeOffsetAfterZoom_ズーム前画像サイズが0でもゼロ除算しない()
-    {
-        // ゼロ除算を防ぎ、スケール 1 として計算される
-        var result = ZoomMath.ComputeOffsetAfterZoom(
-            new Point(100, 100), new Size(0, 0), new Size(1000, 1000),
-            new Point(660, 300), new Size(1320, 600), new Size(1000, 1000));
-        Assert.Equal(0.0, result.X); // 100 - 660 → 負 → 0 にクランプ
-        Assert.Equal(0.0, result.Y);
     }
 
     // ====================================================================

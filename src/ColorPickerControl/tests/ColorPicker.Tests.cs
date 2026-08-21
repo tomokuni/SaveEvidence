@@ -483,4 +483,29 @@ public class ColorPickerTests
         var combo = control._comboBox;
         Assert.DoesNotContain("validation-error", combo.Classes);
     }
+
+    // ====================================================================
+    // InitializeComponent 中のバインディング書き戻し（回帰）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public void SelectedColor_ComboBox未構築時の書き戻しでも例外にならない()
+    {
+        var control = CreateControl();
+        var combo = control._comboBox;
+
+        // InitializeComponent 中は名前スコープのフィールド代入前のため _comboBox が null のことがある
+        // （実アプリでは TwoWay Text バインディングの初期書き戻しがこのタイミングで届く）。
+        // 枠線更新をスキップし、バリデーション状態のみ更新されることを保証する（回帰: NRE 対策）。
+        control._comboBox = null!;
+        control.SelectedColor = "NotAColor";
+
+        Assert.True(control.HasValidationError);
+        Assert.Equal("無効な色コードです。", control.ValidationErrorMessage);
+
+        // フィールド復元後は枠線更新が適用される
+        control._comboBox = combo;
+        control.HighlightBorderOnError = true;
+        Assert.Contains("validation-error", combo.Classes);
+    }
 }
