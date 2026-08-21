@@ -6,23 +6,31 @@
   - [目次](#目次)
   - [1. 文書概要](#1-文書概要)
   - [2. 目的](#2-目的)
-  - [3. ズーム遷移ルール](#3-ズーム遷移ルール)
-    - [3.1 ⊖⊕ ボタンの段階（23 段階）](#31--ボタンの段階23-段階)
-    - [3.2 Ctrl+ホイールの遷移（×1.1 ／ ÷1.1）](#32-ctrlホイールの遷移11--11)
-  - [4. ズーム表示方式（ZoomableView）](#4-ズーム表示方式zoomableview)
-    - [4.1 座標系](#41-座標系)
-    - [4.2 ズーム中心維持](#42-ズーム中心維持)
-    - [4.3 パンとスクロールバー](#43-パンとスクロールバー)
-  - [5. Fit 表示](#5-fit-表示)
-    - [5.1 Fit 実効倍率の計算](#51-fit-実効倍率の計算)
-    - [5.2 Fit 中の遷移](#52-fit-中の遷移)
-  - [6. 公開 API](#6-公開-api)
-    - [6.1 ZoomManager](#61-zoommanager)
-    - [6.2 ZoomableView](#62-zoomableview)
-    - [6.3 IZoomHost](#63-izoomhost)
-    - [6.4 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）](#64-zoommath--zoomtransition--scrollmetrics純粋関数)
-  - [7. ログ](#7-ログ)
-  - [8. 制約事項](#8-制約事項)
+  - [3. 外部利用条件](#3-外部利用条件)
+    - [3.1 プロジェクト参照](#31-プロジェクト参照)
+    - [3.2 必要な名前空間](#32-必要な名前空間)
+    - [3.3 IZoomHost の実装](#33-izoomhost-の実装)
+  - [4. 基本的な使用方法](#4-基本的な使用方法)
+    - [4.1 ZoomManager への注入](#41-zoommanager-への注入)
+    - [4.2 ZoomableView の配置](#42-zoomableview-の配置)
+    - [4.3 イベント連携](#43-イベント連携)
+  - [5. ズーム遷移ルール](#5-ズーム遷移ルール)
+    - [5.1 ⊖⊕ ボタンの段階（23 段階）](#51--ボタンの段階23-段階)
+    - [5.2 Ctrl+ホイールの遷移（×1.1 ／ ÷1.1）](#52-ctrlホイールの遷移11--11)
+  - [6. ズーム表示方式（ZoomableView）](#6-ズーム表示方式zoomableview)
+    - [6.1 座標系](#61-座標系)
+    - [6.2 ズーム中心維持](#62-ズーム中心維持)
+    - [6.3 パンとスクロールバー](#63-パンとスクロールバー)
+  - [7. Fit 表示](#7-fit-表示)
+    - [7.1 Fit 実効倍率の計算](#71-fit-実効倍率の計算)
+    - [7.2 Fit 中の遷移](#72-fit-中の遷移)
+  - [8. 公開 API](#8-公開-api)
+    - [8.1 ZoomManager](#81-zoommanager)
+    - [8.2 ZoomableView](#82-zoomableview)
+    - [8.3 IZoomHost](#83-izoomhost)
+    - [8.4 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）](#84-zoommath--zoomtransition--scrollmetrics純粋関数)
+  - [9. ログ](#9-ログ)
+  - [10. 制約事項](#10-制約事項)
 
 ---
 
@@ -48,9 +56,69 @@
 
 ホスト（上位 AP）は `IZoomHost` を実装して `ZoomManager` に注入し、`ZoomManager` がズーム率・表示状態を読み書きします。
 
-## 3. ズーム遷移ルール
+## 3. 外部利用条件
 
-### 3.1 ⊖⊕ ボタンの段階（23 段階）
+### 3.1 プロジェクト参照
+
+```xml
+<ProjectReference Include="..\ZoomViewControl\src\ZoomViewControl.csproj" />
+```
+
+### 3.2 必要な名前空間
+
+```csharp
+using Estable.AvaloniaUI.ZoomView;
+```
+
+### 3.3 IZoomHost の実装
+
+ホスト（上位 AP の ViewModel 等）は `IZoomHost` を実装して `ZoomManager.ViewModel` へ注入する。
+
+| メンバー | 役割 |
+| --- | --- |
+| `ZoomPercent` | 現在のズーム率（%）。0 = Fit（自動）。ZoomManager が読み書きする |
+| `PreviewImage` | ズーム対象のプレビュー画像。null の場合は画像なし |
+| `CanZoomIn` / `CanZoomOut` | ズームイン / アウト可能かどうか。ZoomManager が設定する |
+| `ZoomDisplayText` | ステータスバー等に表示する拡大率テキスト。ZoomManager が設定する |
+| `CenterAlign` | Fit 時の画像の中央寄せ / 左上寄せ |
+
+## 4. 基本的な使用方法
+
+### 4.1 ZoomManager への注入
+
+`ZoomManager` のプロパティへホスト・ビューポート・スライダを注入する。
+
+```csharp
+var zoomManager = new ZoomManager
+{
+    ViewModel = viewModel,      // IZoomHost 実装
+    ZoomableView = zoomableView,
+    ZoomSlider = slider,
+};
+zoomManager.Log = logger;       // 任意（未設定時は NullLogger）
+```
+
+- `PointerPosition`: Ctrl+ホイールズーム時のズーム中心（ビューポートローカル DIP）。null = ビューポート中心
+- スライダの `ValueChanged` は XAML ロード中（Slider 初期化の coerce）にも発火するため、**依存注入後のコンストラクタで購読**し、`ApplyZoomFromSlider` へ委譲する
+
+### 4.2 ZoomableView の配置
+
+```xml
+<zoom:ZoomableView x:Name="ZoomableView" Background="#FF2B2B2B"/>
+```
+
+- `SetSource(image)` で画像ソースを設定する（Fit 表示にリセット）
+- `SetZoom(percent, center)` でズーム率を設定する（null 中心 = ビューポート中心）
+
+### 4.3 イベント連携
+
+- **`ZoomRequested`**（Ctrl+ホイール）: `ZoomRequestedEventArgs`（`ZoomIn` + `PointerPosition`）でマウス位置を通知する。`ZoomManager.PointerPosition` に設定して `ZoomInByWheel` / `ZoomOutByWheel` を呼び、ズーム後に null へ戻す
+- **`ViewportChanged`**: パン・ズーム・表示状態の変化を通知する。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する
+- **`SizeChanged`**: ビューポートのリサイズ時に `ZoomManager.OnZoomableViewSizeChanged` を呼び、Fit 表示を再適用する
+
+## 5. ズーム遷移ルール
+
+### 5.1 ⊖⊕ ボタンの段階（23 段階）
 
 ⊖⊕ ボタンは以下の 23 段階を順に遷移します（`ZoomTransition.ButtonZoomLevels`）。Fit は遷移に含めません。
 
@@ -64,7 +132,7 @@
 - リスト先頭（10%）で ⊖ 停止、リスト末尾（500%）で ⊕ 停止
 - Fit 表示中 → 実効倍率より大きい／小さい最初／最後の段階へ移動
 
-### 3.2 Ctrl+ホイールの遷移（×1.1 ／ ÷1.1）
+### 5.2 Ctrl+ホイールの遷移（×1.1 ／ ÷1.1）
 
 Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomManager.ZoomInByWheel` / `ZoomOutByWheel`）。
 
@@ -74,11 +142,11 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomM
 - Fit 表示中 → 実効倍率を基準に ×1.1 ／ ÷1.1 する（500% 以上の Fit は拡大不可、10% 以下の Fit は縮小不可）
 - Fit は遷移に含めない（⊖⊕・ホイールでは Fit 表示を考慮しない）
 
-## 4. ズーム表示方式（ZoomableView）
+## 6. ズーム表示方式（ZoomableView）
 
 `ZoomableView`（`Estable.AvaloniaUI.ZoomView`）は **ScrollViewer を使用しない**自己完結型ビューポートです。ズーム・パンを RenderTransform（ScaleTransform + TranslateTransform）で実現し、ScrollViewer のレイアウト処理によるオフセット上書きが**原理的に発生しない**ため、ズーム中心維持の防御コード（保留オフセット再設定・収束ループ・Dispatcher.Post 保険）が不要です。
 
-### 4.1 座標系
+### 6.1 座標系
 
 ```text
 - コンテンツ座標 = 元画像ピクセル（ズーム率に依存しない不変座標）
@@ -91,7 +159,7 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomM
 - `ViewportToContent(Point)` / `ContentToViewport(Point)` で双方向変換
 - 実効スケール（`EffectiveScale`）: 固定倍率中は `ズーム率 / 100`、Fit 中は `FitScale`（ビューポートに収まる Uniform スケール）。Fit 中の座標変換でゼロ除算が発生しない
 
-### 4.2 ズーム中心維持
+### 6.2 ズーム中心維持
 
 - **画像内にマウスポインタがある場合**: マウスポインタ位置を中心に拡大縮小
 - **画像外（ビューポートの空き領域）**: ビューポート中心を基準に拡大縮小
@@ -103,7 +171,7 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomM
   offset' = c − center / newScale（スクロール範囲にクランプ）
   ```
 
-### 4.3 パンとスクロールバー
+### 6.3 パンとスクロールバー
 
 - **マウスドラッグ（grab 方式）**: 左ボタン押下 + 移動でパン（ポインタキャプチャ付き）
   - 押下時に掴んだ位置の**コンテンツ座標（元画像ピクセル）**を保存し、その位置がポインタに追従するようオフセットを再計算する（`オフセット = 掴んだコンテンツ座標 − ポインタ位置 ÷ 実効スケール`）
@@ -116,9 +184,9 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomM
   - スクロールバーのドラッグ・矢印・ページ送りでパン（`ValueChanged` → オフセット更新）
   - ズーム・パン時にスクロールバーの値と範囲を同期
 
-## 5. Fit 表示
+## 7. Fit 表示
 
-### 5.1 Fit 実効倍率の計算
+### 7.1 Fit 実効倍率の計算
 
 Fit 実効倍率は現在の表示状態（Bounds・ZoomPercent）に依存せず、**ビューポートと元画像サイズから一定に計算**します（`ZoomMath.FitZoomPercent`）。
 
@@ -128,14 +196,14 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 実効倍率 = min(scaleX, scaleY) × 100   ※Uniform（アスペクト比維持）
 ```
 
-### 5.2 Fit 中の遷移
+### 7.2 Fit 中の遷移
 
 - ⊖⊕: 実効倍率を基準に 23 段階リストを移動
 - Ctrl+ホイール: 実効倍率 ×1.1 ／ ÷1.1 へ移動
 
-## 6. 公開 API
+## 8. 公開 API
 
-### 6.1 ZoomManager
+### 8.1 ZoomManager
 
 | メソッド | シグネチャ | 説明 |
 | --- | --- | --- |
@@ -158,7 +226,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `PointerPosition` | `Point?` | ズーム中心（ビューポートローカル DIP）。null = ビューポート中心 |
 | `Log` | `ILogger` | 内部ロガー。null は `NullLogger` へフォールバック |
 
-### 6.2 ZoomableView
+### 8.2 ZoomableView
 
 | メンバー | 説明 |
 | --- | --- |
@@ -177,7 +245,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ZoomRequested` | Ctrl+ホイールのズーム要求イベント（`ZoomRequestedEventArgs`） |
 | `ViewportChanged` | ビューポート（パン・ズーム・表示状態）変化イベント。表示適用後に発火し、オーバーレイ（暗転マスク・選択枠・ルーペ）の追従に使用する |
 
-### 6.3 IZoomHost
+### 8.3 IZoomHost
 
 ホスト（上位 AP の ViewModel 等）が実装する抽象インターフェース。
 
@@ -189,7 +257,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ZoomDisplayText` | ステータスバー等に表示する拡大率テキスト |
 | `CenterAlign` | Fit 時の画像の中央寄せ / 左上寄せ |
 
-### 6.4 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）
+### 8.4 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）
 
 | クラス | 関数 | 説明 |
 | --- | --- | --- |
@@ -202,7 +270,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ZoomTransition` | `CanZoomIn` / `CanZoomOut` | ズームイン / アウト可否判定 |
 | `ScrollMetrics` | `MaxOffset` / `ViewportSize` | スクロールバーの範囲・表示範囲の計算 |
 
-## 7. ログ
+## 9. ログ
 
 本プロジェクトのログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。`ZoomManager.Log` へ注入されたロガーへ出力する（未設定時は `NullLogger` で無出力）。
 
@@ -211,7 +279,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `Information` | `LogZoomIn` / `LogZoomOut` | ズームイン/アウト（⊖⊕ボタン）の変更前後 % |
 | `Information` | `LogZoomInWheel` / `LogZoomOutWheel` | Ctrl+ホイールズームの変更前後 % |
 
-## 8. 制約事項
+## 10. 制約事項
 
 - ズーム率の適用は `ZoomPercent` の PropertyChanged（ホスト側のハンドラ）経由で `ApplyZoom()` が 1 回だけ実行される（直接呼び出しと重複しないよう再入防止フラグで保護）
 - スライダの範囲は 10〜500%（0=自動はフライアウトでのみ選択）。Fit 中はスライダ最小値に合わせる

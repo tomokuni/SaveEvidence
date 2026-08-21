@@ -1,68 +1,44 @@
 <Solution>
-  <Folder Name="/src/">
+  <Folder Name="/src/app/">
+    <Project Path="src/app/src/app.csproj" />
+    <Project Path="src/app/tests/app.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/ColorPickerControl/">
+    <Project Path="src/ColorPickerControl/sample/ColorPickerControl.Sample.csproj" />
     <Project Path="src/ColorPickerControl/src/ColorPickerControl.csproj" />
     <Project Path="src/ColorPickerControl/tests/ColorPickerControl.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/DragRectControl/">
+    <Project Path="src/DragRectControl/sample/DragRectControl.Sample.csproj" />
     <Project Path="src/DragRectControl/src/DragRectControl.csproj" />
     <Project Path="src/DragRectControl/tests/DragRectControl.Tests.csproj" />
-    <Project Path="src/FadeMaskDragRectControl/src/FadeMaskDragRect.csproj" />
-    <Project Path="src/FadeMaskDragRectControl/tests/FadeMaskDragRect.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/FadeMaskControl/">
+    <Project Path="src/FadeMaskControl/sample/FadeMaskControl.Sample.csproj" />
     <Project Path="src/FadeMaskControl/src/FadeMaskControl.csproj" />
     <Project Path="src/FadeMaskControl/tests/FadeMaskControl.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/FadeMaskDragRectControl/">
+    <Project Path="src/FadeMaskDragRectControl/src/FadeMaskDragRect.csproj" />
+    <Project Path="src/FadeMaskDragRectControl/tests/FadeMaskDragRect.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/LoupeControl/">
+    <Project Path="src/LoupeControl/sample/LoupeControl.Sample.csproj" />
     <Project Path="src/LoupeControl/src/LoupeControl.csproj" />
     <Project Path="src/LoupeControl/tests/LoupeControl.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/PlatformFactory/">
     <Project Path="src/PlatformFactory/src/PlatformFactory.csproj" />
     <Project Path="src/PlatformFactory/tests/PlatformFactory.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/app/" />
-  <Folder Name="/src/app/src/">
-    <Project Path="src/app/src/app.csproj" />
-  </Folder>
-  <Folder Name="/src/app/tests/">
-    <Project Path="src/app/tests/app.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/ColorPickerControl/" />
-  <Folder Name="/src/ColorPickerControl/sample/">
-    <Project Path="src/ColorPickerControl/sample/ColorPickerControl.Sample.csproj" />
-  </Folder>
-  <Folder Name="/src/LoupeControl/src/" />
-  <Folder Name="/src/PlatformFactory/" />
-  <Folder Name="/src/DragRectControl/" />
-  <Folder Name="/src/DragRectControl/sample/">
-    <Project Path="src/DragRectControl/sample/DragRectControl.Sample.csproj" />
-  </Folder>
-  <Folder Name="/src/DragRectControl/src/" />
-  <Folder Name="/src/DragRectControl/tests/" />
-  <Folder Name="/src/FadeMaskDragRectControl/" />
-  <Folder Name="/src/FadeMaskDragRectControl/src/" />
-  <Folder Name="/src/FadeMaskDragRectControl/tests/" />
-  <Folder Name="/src/FadeMaskControl/" />
-  <Folder Name="/src/FadeMaskControl/sample/">
-    <Project Path="src/FadeMaskControl/sample/FadeMaskControl.Sample.csproj" />
-  </Folder>
-  <Folder Name="/src/FadeMaskControl/src/" />
-  <Folder Name="/src/LoupeControl/" />
-  <Folder Name="/src/LoupeControl/sample/">
-    <Project Path="src/LoupeControl/sample/LoupeControl.Sample.csproj" />
-  </Folder>
-  <Folder Name="/src/PlatformFactory/src/" />
-  <Folder Name="/src/SnipCaptureUI/" />
-  <Folder Name="/src/SnipCaptureUI/sample/">
+  <Folder Name="/src/SnipCaptureUI/">
     <Project Path="src/SnipCaptureUI/sample/SnipCaptureUI.Sample.csproj" />
-  </Folder>
-  <Folder Name="/src/SnipCaptureUI/src/">
     <Project Path="src/SnipCaptureUI/src/SnipCaptureUI.csproj" />
-  </Folder>
-  <Folder Name="/src/SnipCaptureUI/tests/">
     <Project Path="src/SnipCaptureUI/tests/SnipCaptureUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/ZoomViewControl/" />
-  <Folder Name="/src/ZoomViewControl/sample/">
+  <Folder Name="/src/ZoomViewControl/">
     <Project Path="src/ZoomViewControl/sample/ZoomViewControl.Sample.csproj" />
-  </Folder>
-  <Folder Name="/src/ZoomViewControl/src/">
     <Project Path="src/ZoomViewControl/src/ZoomViewControl.csproj" />
-  </Folder>
-  <Folder Name="/src/ZoomViewControl/tests/">
     <Project Path="src/ZoomViewControl/tests/ZoomViewControl.Tests.csproj" />
   </Folder>
 </Solution>

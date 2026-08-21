@@ -56,6 +56,10 @@ public partial class MainWindow : Window
                     _zoomManager.ApplyZoom();
                     SyncZoomSlider();
                     break;
+                case nameof(MainWindowViewModel.CenterAlign):
+                    // 中央寄せ/左上寄せの変更を画像配置へ即時反映する
+                    _zoomManager.UpdateImageAlignment();
+                    break;
             }
         };
 

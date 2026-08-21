@@ -38,8 +38,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IZoomHost
     [ObservableProperty]
     private string _zoomDisplayText = "100%";
 
-    /// <summary>Fit 時の画像の中央寄せ / 左上寄せ。</summary>
-    public bool CenterAlign => true;
+    /// <summary>Fit 時の画像の中央寄せ / 左上寄せ（設定パネルのチェックボックスで変更）。</summary>
+    [ObservableProperty]
+    private bool _centerAlign = true;
 
     /// <summary>画像サイズ（元画像ピクセル）の表示テキスト。画像未設定時は空欄。</summary>
     public string ImageSizeText => PreviewImage is { } img ? $"{img.PixelSize.Width} x {img.PixelSize.Height}" : "";
