@@ -1,4 +1,3 @@
-using app.Controls;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -9,7 +8,7 @@ using Avalonia.Platform;
 using Avalonia.Threading;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.AvaloniaUI.ZoomView.Tests;
 
 /// <summary>
 /// ZoomableView（ScrollViewer 不使用のパン・ズームコントロール）の回帰テスト。

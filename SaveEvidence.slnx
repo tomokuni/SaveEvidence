@@ -13,6 +13,7 @@
     <Project Path="src/PlatformFactory/src/PlatformFactory.csproj" />
     <Project Path="src/PlatformFactory/tests/PlatformFactory.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/app/" />
   <Folder Name="/src/app/src/">
     <Project Path="src/app/src/app.csproj" />
   </Folder>
@@ -53,5 +54,12 @@
   </Folder>
   <Folder Name="/src/SnipCaptureUI/tests/">
     <Project Path="src/SnipCaptureUI/tests/SnipCaptureUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/ZoomViewControl/" />
+  <Folder Name="/src/ZoomViewControl/src/">
+    <Project Path="src/ZoomViewControl/src/ZoomViewControl.csproj" />
+  </Folder>
+  <Folder Name="/src/ZoomViewControl/tests/">
+    <Project Path="src/ZoomViewControl/tests/ZoomViewControl.Tests.csproj" />
   </Folder>
 </Solution>

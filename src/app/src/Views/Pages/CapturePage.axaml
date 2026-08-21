@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:app.ViewModels"
-             xmlns:controls="clr-namespace:app.Controls"
+             xmlns:zoom="clr-namespace:Estable.AvaloniaUI.ZoomView;assembly=ZoomViewControl"
              x:Class="app.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
@@ -127,7 +127,7 @@
               PointerPressed="OnImageAreaPointerPressed">
             <!-- ズーム・パン対応ビューポート（ScrollViewer 不使用。RenderTransform ベースのため
                  オフセット上書き・防御コードが不要。画像は ZoomableView が内部で管理する） -->
-            <controls:ZoomableView x:Name="ZoomableView"
+            <zoom:ZoomableView x:Name="ZoomableView"
                                    Background="Transparent"/>
         </Grid>
 

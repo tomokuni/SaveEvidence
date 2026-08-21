@@ -1,4 +1,4 @@
-namespace app.Controls;
+namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>
 /// ズーム遷移の計算ロジック（純粋関数）。

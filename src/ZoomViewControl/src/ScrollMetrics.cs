@@ -1,4 +1,4 @@
-namespace app.Controls;
+namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>
 /// スクロールバーの表示状態・サムサイズ・範囲の計算（純粋関数）。

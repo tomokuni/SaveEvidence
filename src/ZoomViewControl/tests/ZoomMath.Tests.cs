@@ -1,8 +1,7 @@
-using app.Controls;
 using Avalonia;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.AvaloniaUI.ZoomView.Tests;
 
 /// <summary>
 /// ZoomMath（ズーム中心維持の純粋関数）の回帰テスト。

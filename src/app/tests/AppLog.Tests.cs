@@ -34,10 +34,6 @@ public class AppLogTests
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>
     private static void InvokeAll(ILogger logger)
     {
-        logger.LogZoomIn(100, 125);
-        logger.LogZoomOut(125, 100);
-        logger.LogZoomInWheel(100, 125);
-        logger.LogZoomOutWheel(125, 100);
         logger.LogCaptureMenuScreen();
         logger.LogCaptureMenuWindow();
         logger.LogCaptureMenuArea();

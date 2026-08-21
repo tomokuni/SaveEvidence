@@ -6,7 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 
-namespace app.Controls;
+namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>
 /// パン・ズーム可能な画像表示コントロール。

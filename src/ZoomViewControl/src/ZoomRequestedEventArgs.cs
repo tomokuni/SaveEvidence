@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace app.Controls;
+namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>ズーム要求イベントの引数。</summary>
 /// <param name="ZoomIn">true = ズームイン / false = ズームアウト。</param>

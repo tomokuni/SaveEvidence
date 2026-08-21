@@ -1,7 +1,6 @@
-using app.Controls;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.AvaloniaUI.ZoomView.Tests;
 
 /// <summary>
 /// ZoomTransition の回帰テスト。

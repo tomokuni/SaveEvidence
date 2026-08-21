@@ -3,12 +3,12 @@ using System.ComponentModel;
 using System.Globalization;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.SnipCaptureUI;
+using Estable.AvaloniaUI.ZoomView;
 using app.Icons;
 using app.Logging;
 using app.Models;
 using app.Services;
 using app.ViewModels;
-using app.Views.Components;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -94,6 +94,7 @@ public sealed partial class CapturePage : UserControl
         SetupViewModelCallbacks();
 
         // ZoomManager に依存関係を注入
+        _zoomManager.Log = _logger;
         _zoomManager.ViewModel = _viewModel;
         _zoomManager.ZoomableView = ZoomableView;
         _zoomManager.ZoomSlider = ZoomSlider;

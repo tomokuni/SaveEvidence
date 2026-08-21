@@ -19,7 +19,7 @@
     - [6.3 FolderViewPage](#63-folderviewpage)
     - [6.4 UndoPage](#64-undopage)
     - [6.5 SettingsPage](#65-settingspage)
-    - [6.6 ZoomManager / ZoomableView](#66-zoommanager--zoomableview)
+    - [6.6 ZoomViewControl（ズーム・パン表示）](#66-zoomviewcontrolズームパン表示)
     - [6.7 ViewModel 群](#67-viewmodel-群)
     - [6.8 SettingsService](#68-settingsservice)
     - [6.9 その他のコントロール](#69-その他のコントロール)
@@ -60,8 +60,8 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 ```text
 View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage）
   → ViewModel Layer（MainViewModel / FolderViewViewModel / UndoViewModel）
-    → Model / Service Layer（UndoStack / SettingsService / ZoomManager 等）
-      → 外部ライブラリ（SnipCaptureUI / ColorPickerControl / PlatformFactory）
+    → Model / Service Layer（UndoStack / SettingsService 等）
+      → 外部ライブラリ（SnipCaptureUI / ColorPickerControl / PlatformFactory / ZoomViewControl）
 ```
 
 ### 3.2 依存の方向
@@ -69,7 +69,7 @@ View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage
 - 依存は**一方向の階層構造**（View → ViewModel → Service / Model → 外部ライブラリ）。
 - ViewModel は View の詳細（コントロール型）に依存せず、公開プロパティ・コールバックで連携する。
 - サービスはインターフェース（`ISettingsService`）を介して注入される（DIP）。
-- ズーム計算（`ZoomMath` / `ZoomTransition` / `ScrollMetrics`）は UI 非依存の純粋関数に分離され、単体テストで検証できる。
+- ズーム計算・表示は独立プロジェクト `ZoomViewControl` に委譲し、app は `IZoomHost` 実装（MainViewModel）を注入して操作を指示する（一方向依存）。
 
 ## 4. 例外処理ポリシー
 
@@ -98,10 +98,7 @@ flowchart TB
         UP["UndoPage<br/>public sealed partial : UserControl<br/>Views/Pages/UndoPage.axaml(.cs)"]
         SP["SettingsPage<br/>public sealed partial : UserControl<br/>Views/Pages/SettingsPage.axaml(.cs)"]
         CD["ConfirmDialog<br/>public static<br/>Views/ConfirmDialog.cs"]
-        ZM["ZoomManager<br/>public sealed<br/>Views/Components/ZoomManager.cs"]
-        ZV["ZoomableView<br/>public sealed : Panel<br/>Controls/ZoomableView.cs"]
-        ZMth["ZoomMath / ZoomTransition<br/>Controls/（純粋関数）"]
-        SM["ScrollMetrics<br/>Controls/（純粋関数）"]
+        ZM["ZoomManager / ZoomableView / ZoomMath / ZoomTransition / ScrollMetrics<br/>ZoomViewControl（独立プロジェクト）"]
         BAW["BottomAlignWrapPanel<br/>public sealed : Panel<br/>Controls/BottomAlignWrapPanel.cs"]
         MV["MainViewModel / FolderViewViewModel / UndoViewModel<br/>ViewModels/"]
         US["UndoStack<br/>Models/UndoStack.cs<br/>（DI シングルトン）"]
@@ -163,13 +160,13 @@ flowchart TB
 
 - **分類**: 公開ページ（`public sealed partial class : UserControl`）
 - **責務**:
-  - 画像プレビュー（ZoomableView + ZoomManager）の統括
+  - 画像プレビュー（ZoomViewControl の ZoomableView + ZoomManager）の統括
   - 切出し（Crop）セッションの開始・確定・キャンセル
   - キャプチャメニュー（全画面 / ウィンドウ / 範囲選択）の受付
   - ステータスバーへのポインタ座標・画像サイズ表示
   - Ctrl ショートカット（保存 / コピー / 貼り付け / Undo / Redo / 切り出し / ズーム）の一括処理（`OnGlobalKeyDown`）
 - **公開メンバー**: `Initialize(...)` / `ExitCropMode()` / `CleanupCaptureResources()` 等
-- **依存**: MainViewModel / ZoomManager / ZoomableView / SnipCapture / UndoStack / AppLog
+- **依存**: MainViewModel / ZoomViewControl（ZoomManager / ZoomableView）/ SnipCapture / UndoStack / AppLog
 
 ### 6.3 FolderViewPage
 
@@ -205,12 +202,9 @@ flowchart TB
 - **設定項目の対応先**: 全設定項目と反映先コントロールの対応は `SPEC_SettingTargetTable.md` を参照
 - **依存**: SettingsService / ColorPickerControl（色選択）
 
-### 6.6 ZoomManager / ZoomableView
+### 6.6 ZoomViewControl（ズーム・パン表示）
 
-| コンポーネント | 分類 | 責務 |
-| --- | --- | --- |
-| `ZoomManager` | 公開クラス（`public sealed class`） | ズーム率の遷移・スライダ同期・ZoomableView への適用を統括。計算は ZoomMath / ZoomTransition に委譲 |
-| `ZoomableView` | 公開コントロール（`public sealed class : Panel`） | ScrollViewer 不使用のパン・ズームビューポート。RenderTransform（ScaleTransform + TranslateTransform）で表示。マウスドラッグパンは grab 方式（掴んだ位置がポインタに追従） |
+ズーム・パン・Fit 表示は**独立プロジェクト `ZoomViewControl`**（`ZoomManager` / `ZoomableView` / `ZoomMath` / `ZoomTransition` / `ScrollMetrics` / `IZoomHost`）が提供する。app の `MainViewModel` が `IZoomHost` を実装し、CapturePage が `ZoomManager` へ注入して操作を指示する。詳細は `ZoomViewControl` の `SPEC_System.md` を参照。
 
 ### 6.7 ViewModel 群
 
@@ -232,8 +226,7 @@ flowchart TB
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
 | `BottomAlignWrapPanel` | 公開パネル（`public sealed class : Panel`） | 横方向折り返し + 行内下端揃え。各行の高さは最大アイテム高さで決定（FolderViewPage の一覧用） |
-| `ZoomRequestedEventArgs` | 公開 record | Ctrl+ホイールのズーム要求（ZoomIn / PointerPosition） |
-| `FileNameTemplate` | 公開ユーティリティ（`public sealed partial class`） | ファイル名テンプレートの解析・生成・検証。日時プレースホルダ（`{date}` / `{time}` 等）とエスケープ（`{{` / `}}`）の解決、右端数値のオートインクリメント。外部仕様は SPEC_ExtFunc.md（13. ファイル名テンプレート）を参照 |
+| `FileNameTemplate` | 公開ユーティリティ（`public sealed partial class`） | ファイル名テンプレートの解析・生成・検証。日時プレースホルダ（`{date}` / `{time}` 等）とエスケープ（`{{` / `}}`）の解決、右端数値のオートインクリメント。外部仕様は SPEC_ExtFunc.md（5. ファイル名テンプレート）を参照 |
 
 ### 6.10 App（テーマ適用）
 
@@ -247,7 +240,7 @@ flowchart TB
 - 依存方向は**一方向の階層構造**（View → ViewModel → Service / Model → 外部ライブラリ）。
 - View は ViewModel に依存する（DataBindings とイベントハンドラ経由）。ViewModel は View の詳細（コントロール型）に依存しない。
 - サービスはインターフェース（`ISettingsService`）を介して注入される（DIP）。
-- ズーム計算は純粋関数（ZoomMath / ZoomTransition / ScrollMetrics）に分離し、UI から独立してテスト可能にする。
+- ズーム計算・表示は独立プロジェクト `ZoomViewControl` に委譲し、app は `IZoomHost` 実装（MainViewModel）を注入して操作を指示する（一方向依存・DIP）。
 - キャプチャ・切出しの詳細は SnipCaptureUI に委譲し、app は公開 Facade（SnipCapture）のみに依存する。
 
 ## 8. ログ
@@ -256,10 +249,10 @@ flowchart TB
 
 | LogLevel | 対象 | 例 |
 | --- | --- | --- |
-| `Information` | ユーザー操作の主要イベント（低頻度） | ズーム変更 % / キャプチャメニュークリック / ホットキー発火 / キャプチャ開始・戻り値 |
+| `Information` | ユーザー操作の主要イベント（低頻度） | キャプチャメニュークリック / ホットキー発火 / キャプチャ開始・戻り値（ズーム変更 % は ZoomViewControl の LogMessage が出力） |
 | `Error` | 例外・失敗 | 設定変更の SnipCapture 反映で例外 |
 
-詳細は `SPEC_ExtFunc.md` の「9. ログ」を参照。
+詳細は `SPEC_ExtFunc.md` の「8. ログ」を参照。
 
 ## 9. ライフサイクル
 
@@ -280,7 +273,7 @@ sequenceDiagram
 
     MW->>SN: StartCaptureAsync（キャプチャ）
     SN-->>MW: CaptureResult（画像変更）
-    MW->>MW: CapturePage に画像反映（PreviewImage 変更 → ZoomManager.ApplyZoom）
+    MW->>MW: CapturePage に画像反映（PreviewImage 変更 → ZoomManager.ApplyZoom ※ZoomViewControl）
 
     MW->>SS: ウィンドウ位置・サイズ保存（Closing）
     MW->>MW: ホットキー解除・SnipCapture.Dispose

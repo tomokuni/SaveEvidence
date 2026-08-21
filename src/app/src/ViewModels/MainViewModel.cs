@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
+using Estable.AvaloniaUI.ZoomView;
 using app.Enum;
 using app.Models;
 using app.Services;
@@ -23,11 +24,14 @@ namespace app.ViewModels;
 /// ピクセル操作（切出し・ウィンドウ検出）は PlatformFactory の <see cref="ImageProcessor"/> / <see cref="AppPixelData"/> に委譲し、
 /// 画面キャプチャは SnipCaptureUI の <see cref="CaptureType"/> に委譲する（プラットフォーム抽象。DIP）。
 /// </remarks>
-public sealed partial class MainViewModel : ObservableObject
+public sealed partial class MainViewModel : ObservableObject, IZoomHost
 {
     private readonly ISettingsService _settingsService;
 
     private string _lastSavedFileName = "";
+
+    /// <summary>Fit 時の画像の中央寄せ / 左上寄せ（<see cref="IZoomHost"/> 実装）。</summary>
+    public bool CenterAlign => Settings.CenterAlign;
 
     /// <summary>プレビュー画像変更前の旧画像（新しい画像が Image.Source へ反映された後に破棄する）。</summary>
     private Bitmap? _previousPreviewImage;

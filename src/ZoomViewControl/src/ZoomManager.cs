@@ -1,11 +1,10 @@
-using app.Controls;
-using app.Logging;
-using app.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
+using Estable.AvaloniaUI.ZoomView.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
-namespace app.Views.Components;
+namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>
 /// MainWindow 用のズーム管理クラス。
@@ -26,16 +25,21 @@ namespace app.Views.Components;
 /// </remarks>
 public sealed class ZoomManager
 {
-    /// <summary>アプリケーションロガー。</summary>
-    private static readonly ILogger _logger = AppLog.CreateLogger("ZoomManager");
-
     private bool _isSyncingZoom;
 
     /// <summary>ApplyZoom 再入防止フラグ（ZoomPercent の PropertyChanged と直接呼び出しの二重実行を防ぐ）。</summary>
     private bool _isApplyingZoom;
 
-    /// <summary>メインViewModel。Window から設定する。</summary>
-    public MainViewModel ViewModel { get; set; } = null!;
+    /// <summary>内部ロガー（横断的関心事）。null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</summary>
+    /// <value>null 可。設定しない場合はログを出力しない。</value>
+    public ILogger Log
+    {
+        get => field ?? NullLogger.Instance;
+        set => field = value ?? NullLogger.Instance;
+    }
+
+    /// <summary>ズーム対象のホスト（ViewModel 等）。Window から設定する。</summary>
+    public IZoomHost ViewModel { get; set; } = null!;
 
     /// <summary>ズーム・パン対応ビューポート（ScrollViewer 不使用）。Window から設定する。</summary>
     /// <remarks>
@@ -61,7 +65,7 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomIn()
-        => ApplyZoomTransition(ZoomTransition.NextLevel(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), _logger.LogZoomIn);
+        => ApplyZoomTransition(ZoomTransition.NextLevel(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), Log.LogZoomIn);
 
     /// <summary>ズームアウトする（⊖⊕ボタン）。</summary>
     /// <remarks>
@@ -70,7 +74,7 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomOut()
-        => ApplyZoomTransition(ZoomTransition.PrevLevel(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), _logger.LogZoomOut);
+        => ApplyZoomTransition(ZoomTransition.PrevLevel(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), Log.LogZoomOut);
 
     /// <summary>Ctrl+ホイールでズームインする（拡大 = Round(現在の拡大率 × 1.1)）。</summary>
     /// <remarks>
@@ -79,7 +83,7 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomInByWheel()
-        => ApplyZoomTransition(ZoomTransition.WheelZoomIn(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), _logger.LogZoomInWheel);
+        => ApplyZoomTransition(ZoomTransition.WheelZoomIn(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), Log.LogZoomInWheel);
 
     /// <summary>Ctrl+ホイールでズームアウトする（縮小 = Round(現在の拡大率 ÷ 1.1)）。</summary>
     /// <remarks>
@@ -88,7 +92,7 @@ public sealed class ZoomManager
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
     public void ZoomOutByWheel()
-        => ApplyZoomTransition(ZoomTransition.WheelZoomOut(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), _logger.LogZoomOutWheel);
+        => ApplyZoomTransition(ZoomTransition.WheelZoomOut(ViewModel.ZoomPercent, ComputeRawFitZoomPercent()), Log.LogZoomOutWheel);
 
     /// <summary>ComboBox のテキスト入力からズーム率をパースして適用する。</summary>
     /// <param name="text">入力テキスト（例: "25"、"25%"、"150 %"）。</param>
@@ -222,7 +226,7 @@ public sealed class ZoomManager
     /// </remarks>
     public void UpdateImageAlignment()
     {
-        ZoomableView.CenterAlign = ViewModel.Settings.CenterAlign;
+        ZoomableView.CenterAlign = ViewModel.CenterAlign;
     }
 
     /// <summary>Fit 表示時の実表示倍率（%）をクランプなしで計算する。</summary>

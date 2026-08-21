@@ -1,7 +1,6 @@
-using app.Controls;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.AvaloniaUI.ZoomView.Tests;
 
 /// <summary>
 /// ScrollMetrics（スクロールバーの幾何計算・純粋関数）の回帰テスト。

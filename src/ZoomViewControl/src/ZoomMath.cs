@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace app.Controls;
+namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>
 /// ズーム中心維持の計算（純粋関数）。
