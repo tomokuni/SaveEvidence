@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/app/">
+    <Project Path="src/app/sample/WindowDetectionSample.csproj" />
     <Project Path="src/app/src/app.csproj" />
     <Project Path="src/app/tests/app.Tests.csproj" />
   </Folder>
