@@ -1,8 +1,12 @@
 <Solution>
+  <Folder Name="/src/" />
   <Folder Name="/src/app/">
     <Project Path="src/app/sample/WindowDetectionSample.csproj" />
     <Project Path="src/app/src/app.csproj" />
     <Project Path="src/app/tests/app.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/app/sample2/">
+    <Project Path="src/app/sample2/Sample2.csproj" />
   </Folder>
   <Folder Name="/src/ColorPickerControl/">
     <Project Path="src/ColorPickerControl/sample/ColorPickerControl.Sample.csproj" />
@@ -32,11 +36,13 @@
     <Project Path="src/PlatformFactory/src/PlatformFactory.csproj" />
     <Project Path="src/PlatformFactory/tests/PlatformFactory.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/PlatformFactory/src/" />
   <Folder Name="/src/SnipCaptureUI/">
     <Project Path="src/SnipCaptureUI/sample/SnipCaptureUI.Sample.csproj" />
     <Project Path="src/SnipCaptureUI/src/SnipCaptureUI.csproj" />
     <Project Path="src/SnipCaptureUI/tests/SnipCaptureUI.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/SnipCaptureUI/src/" />
   <Folder Name="/src/ZoomViewControl/">
     <Project Path="src/ZoomViewControl/sample/ZoomViewControl.Sample.csproj" />
     <Project Path="src/ZoomViewControl/src/ZoomViewControl.csproj" />
