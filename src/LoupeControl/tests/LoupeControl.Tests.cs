@@ -812,4 +812,71 @@ public class LoupeControlTests
         control.ShowCoordLabel = true;
         control.CenterPoint = new Point(10, 20);
     }
+
+    // ====================================================================
+    // Rendered イベント（描画完了通知・Bitmap 受け渡し）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public async Task 描画完了でRenderedイベントが発火し描画済みBitmapと表示情報を通知する()
+    {
+        var control = CreateControl();
+        LoupeRenderedEventArgs? args = null;
+        control.Rendered += (_, e) => args = e;
+
+        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.CenterPoint = new Point(100, 100);
+        await control.RenderAsync();
+
+        // RequestedSize=100 / ZoomLevel=2 / RenderScaling=1.0 の場合:
+        // pixelSize = ceil(100×1.0) = 100, captureSize = ceil(100/2) = 50
+        // CaptureTopLeft = (100−25, 100−25) = (75, 75), Scale = 100×2/100 = 2.0
+        Assert.NotNull(args);
+        Assert.NotNull(args!.Bitmap);
+        Assert.IsType<WriteableBitmap>(args.Bitmap);
+        Assert.Equal(100, args.Bitmap.PixelSize.Width);
+        Assert.Equal(100, args.Bitmap.PixelSize.Height);
+        Assert.Equal(100, args.Size);
+        Assert.Equal(2, args.ZoomLevel);
+        Assert.Equal(new Point(100, 100), args.CenterPoint);
+        Assert.Equal(new Point(75, 75), args.CaptureTopLeft);
+        Assert.Equal(2.0, args.Scale);
+        // 親パネル未接続（テスト）のため表示位置は既定値 (0,0)
+        Assert.Equal(default, args.Position);
+    }
+
+    [AvaloniaFact]
+    public async Task 中心未設定でもRenderedイベントが発火し市松模様のBitmapとnullのCaptureTopLeftを通知する()
+    {
+        var control = CreateControl();
+        LoupeRenderedEventArgs? args = null;
+        control.Rendered += (_, e) => args = e;
+
+        // CenterPoint 未設定（市松模様のみの描画）でもイベントは発火する
+        await control.RenderAsync();
+
+        Assert.NotNull(args);
+        Assert.NotNull(args!.Bitmap);
+        Assert.IsType<WriteableBitmap>(args.Bitmap);
+        Assert.Null(args.CenterPoint);
+        Assert.Null(args.CaptureTopLeft);
+        Assert.Equal(100, args.Size);
+    }
+
+    [AvaloniaFact]
+    public async Task 再描画のたびにRenderedイベントが発火する()
+    {
+        var control = CreateControl();
+        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.CenterPoint = new Point(100, 100);
+        await control.RenderAsync();
+
+        var count = 0;
+        control.Rendered += (_, _) => count++;
+
+        control.CenterPoint = new Point(120, 120);
+        await control.RenderAsync();
+
+        Assert.Equal(1, count);
+    }
 }

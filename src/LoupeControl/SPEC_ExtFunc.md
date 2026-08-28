@@ -42,6 +42,7 @@
     - [5.3 表示位置・サイズの自己計算（座標変換ポート方式）](#53-表示位置サイズの自己計算座標変換ポート方式)
       - [5.3.1 PositionOffset](#531-positionoffset)
     - [5.4 イベント](#54-イベント)
+      - [5.4.1 Rendered](#541-rendered)
     - [5.5 型](#55-型)
       - [5.5.1 LoupeControl](#551-loupecontrol)
   - [6. 非同期描画と世代管理](#6-非同期描画と世代管理)
@@ -95,6 +96,7 @@
 - 古い非同期描画結果を破棄する世代管理
 - 非表示時のBitmap解放
 - 描画エラーの注入ロガーへの記録
+- 描画完了通知イベント（`Rendered`・表示情報付きオーバーレイ描画用）
 
 ## 3. 外部利用条件
 
@@ -467,11 +469,47 @@ void RefreshPosition()
 
 ### 5.4 イベント
 
-公開イベントは定義されていません。コントロールは StyledProperty の変更通知と双方向バインドでホストと連携します。
+#### 5.4.1 Rendered
+
+```csharp
+event EventHandler<LoupeRenderedEventArgs>? Rendered
+```
+
+ルーペの描画完了（表示内容の反映）を通知します。拡大画像が実際にコントロールへ反映された時点で発火します。
+
+| 項目 | 内容 |
+| --- | --- |
+| 引数型 | `LoupeRenderedEventArgs` |
+| 発火タイミング | 描画結果が内部 `Image` へ反映された直後（非同期描画・バッチ化のため、プロパティ変更より 1 フレーム遅れる） |
+| 用途 | ホストがルーペに重ねるオーバーレイ（線分・選択矩形等）の描画位置を計算する |
+
+**`LoupeRenderedEventArgs` のプロパティ**
+
+| プロパティ | 型 | 説明 |
+| --- | --- | --- |
+| `Position` | `Point` | ルーペの表示左上（親パネル内 DIP） |
+| `Size` | `double` | ルーペの表示サイズ（一辺・DIP） |
+| `ZoomLevel` | `int` | 拡大率 |
+| `CenterPoint` | `Point?` | 拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定時は null |
+| `CaptureTopLeft` | `Point?` | 切り出し領域の左上（ドメイン座標）。中心未設定時は null |
+| `Scale` | `double` | ドメイン座標 → ルーペ内容座標（ルーペローカル DIP）の変換係数 |
+
+オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求められます。
+
+```csharp
+loupe.Rendered += (_, e) =>
+{
+    if (e.CaptureTopLeft is not { } topLeft) return;
+    var local = (ドメイン座標 - topLeft) * e.Scale;
+    // e.Position / e.Size にオーバーレイを配置し、local に線分等を描画する
+};
+```
+
+> プロパティ変更による再描画（`RequestRender`）では、最新状態のスナップショットに対して 1 回だけ発火します（連続変更は 1 フレームに 1 回に結合）。
 
 ### 5.5 型
 
-公開型は `LoupeControl` のみです。
+公開型は `LoupeControl` と `LoupeRenderedEventArgs` です。
 描画・画像処理・ログの実装はすべて internal（非公開）です。
 
 #### 5.5.1 LoupeControl

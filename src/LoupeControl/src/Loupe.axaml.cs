@@ -45,6 +45,7 @@ namespace Estable.AvaloniaUI.Loupe;
 /// - 外観: <see cref="CrossColor"/> / <see cref="CheckerSize"/> / <see cref="CheckerColorA"/> / <see cref="CheckerColorB"/> / <see cref="FrameColor"/> / <see cref="FrameWidth"/><br/>
 /// - 選択矩形: <see cref="SelectionRect"/> / <see cref="SelectionRectVisible"/> / <see cref="SelectionRectColorA"/> / <see cref="SelectionRectColorB"/>（選択枠をルーペ上に 2 色破線で表示）<br/>
 /// - ログ: <see cref="Log"/><br/>
+/// - イベント: <see cref="Rendered"/>（描画完了時に描画済み Bitmap と表示情報を通知。ホストが Bitmap に直接オーバーレイを描画できる）<br/>
 /// - 操作: <see cref="Clear()"/> / <see cref="ForceUpdate()"/> / <see cref="RenderAsync()"/><br/>
 /// </remarks>
 public sealed partial class LoupeControl : UserControl
@@ -737,6 +738,48 @@ public sealed partial class LoupeControl : UserControl
     public ILogger Log { get; set; } = NullLogger.Instance;
 
     // ====================================================================
+    // イベント
+    // ====================================================================
+
+    /// <summary>ルーペの描画完了を通知するイベント（描画済み Bitmap と表示情報を渡す）。</summary>
+    /// <remarks>
+    /// 拡大画像の描画結果（<see cref="LoupeRenderedEventArgs.Bitmap"/>）と表示状態を通知する。<br/>
+    /// イベントは表示へ反映する前に同期的に発火するため、ホスト側はイベントハンドラ内で<br/>
+    /// Bitmap を <c>Lock</c> してオーバーレイ（線分の破線等）を直接描画できる（描画後は表示へ反映される）。<br/>
+    /// 描画は非同期・バッチ化されるため、プロパティ変更より 1 フレーム遅れて発火する。
+    /// </remarks>
+    public event EventHandler<LoupeRenderedEventArgs>? Rendered;
+
+    /// <summary><see cref="Rendered"/> イベントを発火する（描画済み Bitmap と表示情報を構築して通知）。</summary>
+    /// <param name="bitmap">描画済みのルーペ画像（WriteableBitmap）。ホストが Lock してオーバーレイを描画できる。</param>
+    /// <param name="size">表示サイズ（DIP）。</param>
+    /// <remarks>
+    /// 表示位置（<see cref="_positionTransform"/>）・表示サイズ（<paramref name="size"/>）・拡大率・中心・
+    /// 切り出し領域（<see cref="LoupeImageExtractor.ComputeCaptureSize"/>）・スケール（ドメイン → ルーペ画像ピクセル）を
+    /// 一度だけ取得してイベント引数を生成する（イベント発火形式の集約）。<br/>
+    /// 中心未設定時は <see cref="LoupeRenderedEventArgs.CenterPoint"/> / <see cref="LoupeRenderedEventArgs.CaptureTopLeft"/> が null になる（オーバーレイ描画不可）。
+    /// </remarks>
+    private void RaiseRendered(Bitmap bitmap, int size)
+    {
+        var zoom = ZoomLevel;
+        var pixelSize = Math.Max(1, (int)Math.Ceiling(size * RenderScaling));
+        var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoom);
+        var center = CenterPoint;
+
+        Rendered?.Invoke(this, new LoupeRenderedEventArgs(
+            bitmap,
+            new Point(_positionTransform.X, _positionTransform.Y),
+            size,
+            zoom,
+            center,
+            center is { } c
+                // 切り出し領域の左上は LoupeImageExtractor.ExtractRegionAt と同一の整数計算（(int)X − captureSize/2）で一致させる
+                ? new Point((int)c.X - captureSize / 2, (int)c.Y - captureSize / 2)
+                : null,
+            (double)size * zoom / pixelSize));
+    }
+
+    // ====================================================================
     // 再描画のバッチ化
     // ====================================================================
 
@@ -886,7 +929,7 @@ public sealed partial class LoupeControl : UserControl
     }
 
     /// <summary>画像抽出を非同期に実行し、Avaloniaの描画オブジェクトをUIスレッドで合成する。</summary>
-    private static async Task<Bitmap> RenderBitmapAsync(
+    private static async Task<WriteableBitmap> RenderBitmapAsync(
         IImage? source, Point? center, int pixelSize, int zoomLevel,
         IBrush? crossColor, int checkerSize,
         IBrush? checkerColorA, IBrush? checkerColorB, IBrush? frameColor,
@@ -903,7 +946,7 @@ public sealed partial class LoupeControl : UserControl
         var framePixelWidth = Math.Max(1, (int)Math.Ceiling(frameWidth * scaling));
 
         // 画像なし・破棄済み・抽出失敗のいずれでも市松模様のみで描画する（生成経路の一元化）
-        Task<Bitmap> DrawCheckerboardOnly() =>
+        Task<WriteableBitmap> DrawCheckerboardOnly() =>
             Dispatcher.UIThread.InvokeAsync(() => LoupeRenderer.DrawLoupeCheckerboardOnly(
                 pixelSize, crossColor, checkerPixelSize,
                 checkerColorA, checkerColorB, frameColor, framePixelWidth)).GetTask();
@@ -963,9 +1006,12 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary>生成したルーペビットマップをコントロールへ反映する。</summary>
     /// <param name="bmp">生成したルーペビットマップ。</param>
+    /// <param name="size">表示サイズ（DIP）。</param>
     /// <remarks>
     /// 前回のビットマップを破棄し、<see cref="LoupeBitmap"/> と表示内容（サイズ・画像）を更新する。<br/>
     /// 表示状態（IsVisible）は変更しない（表示状態と再描画の分離）。<br/>
+    /// 表示への反映前に <see cref="Rendered"/> イベントを発火し、ホスト側が Bitmap にオーバーレイ<br/>
+    /// （線分の破線等）を描画できるようにする（イベント後に表示へ反映）。
     /// </remarks>
     private void SetLoupeBitmap(Bitmap bmp, int size)
     {
@@ -973,6 +1019,11 @@ public sealed partial class LoupeControl : UserControl
         LoupeBitmap = bmp;
         Width = size;
         Height = size;
-        PART_Image?.Source = bmp;
+
+        // ホストが Bitmap へオーバーレイ（破線等）を描画するフック。イベント内で Bitmap が更新される
+        RaiseRendered(bmp, size);
+
+        // イベント後の Bitmap（ホストのオーバーレイ描画を含む）を表示へ反映する
+        PART_Image?.Source = LoupeBitmap;
     }
 }

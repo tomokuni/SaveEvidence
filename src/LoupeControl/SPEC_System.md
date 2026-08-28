@@ -82,6 +82,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 flowchart TB
     subgraph LC["LoupeControl プロジェクト (LoupeControl)"]
         Ctl["LoupeControl<br/>public sealed partial<br/>: UserControl<br/>Loupe.axaml / Loupe.axaml.cs"]
+        Evt["LoupeRenderedEventArgs<br/>public sealed class<br/>LoupeRenderedEventArgs.cs"]
         Rdr["LoupeRenderer<br/>internal static class<br/>Rendering/LoupeRenderer.cs"]
         Bg["LoupeBackgroundRenderer<br/>internal static class"]
         Img["LoupeImageRenderer<br/>internal static class"]
@@ -121,7 +122,7 @@ flowchart TB
     - 非同期描画: 領域抽出を `Task.Run` で非同期化し、Avaloniaの描画オブジェクト生成とUI反映はUIスレッドで行う。世代番号で古い結果を破棄する
     - 座標単位: `RequestedSize` はDIP、レンダラーへ渡すサイズと装飾幅は `RenderScaling` で物理ピクセルへ変換
   - 値の補正: `coerce` コールバックで数値プロパティを安全域へ矯正
-- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ サイズ（`RequestedSize` / `RenderScaling` / `ZoomLevel`）/ 外観（`CrossColor` / `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `FrameColor` / `FrameWidth`・不透明度は色のアルファに統合）/ 選択矩形（`SelectionRect` / `SelectionRectVisible` / `SelectionRectColorA` / `SelectionRectColorB`・2 色破線オーバーレイ）/ 座標ラベル（`ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize`）/ ログ（`Log`）/ 操作（`Clear` / `ForceUpdate` / `RenderAsync` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
+- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ サイズ（`RequestedSize` / `RenderScaling` / `ZoomLevel`）/ 外観（`CrossColor` / `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `FrameColor` / `FrameWidth`・不透明度は色のアルファに統合）/ 選択矩形（`SelectionRect` / `SelectionRectVisible` / `SelectionRectColorA` / `SelectionRectColorB`・2 色破線オーバーレイ）/ 座標ラベル（`ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で表示位置・サイズ・ズーム・中心・切り出し左上・スケールを通知）/ 操作（`Clear` / `ForceUpdate` / `RenderAsync` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
 - **依存**: LoupeRenderer / LogMessage / Avalonia / ILogger
 
 ### 6.2 LoupeRenderer

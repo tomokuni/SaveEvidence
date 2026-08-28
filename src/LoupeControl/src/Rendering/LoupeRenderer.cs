@@ -71,14 +71,17 @@ internal static class LoupeRenderer
     /// <param name="centerPoint">切り出し中心（ドメイン座標系）。<paramref name="selectionRect"/> の変換基準。</param>
     /// <param name="selectionRectColorA">選択矩形破線の色A（明色・不透明度はアルファに統合）。null の場合は描画しない。</param>
     /// <param name="selectionRectColorB">選択矩形破線の色B（暗色・不透明度はアルファに統合）。null の場合は描画しない。</param>
-    /// <returns>描画結果の Avalonia Bitmap。</returns>
+    /// <returns>描画結果の WriteableBitmap（ホストが Lock してオーバーレイを描画できる）。</returns>
     /// <remarks>
     /// ソース Bitmap は <c>DrawImage</c> のスケーリングで拡大描画する（中間バッファ不要）。<br/>
+    /// 描画は <see cref="RenderTargetBitmap"/> で行い、結果を <see cref="WriteableBitmap"/> へコピーして返す<br/>
+    /// （ホストが <see cref="LoupeControl.Rendered"/> イベントの引数で受け取り、<c>Lock</c> して<br/>
+    /// オーバーレイ（線分の破線等）を直接描画できるようにするため）。<br/>
     /// 例外はそのまま伝播し、記録は呼び出し側（<see cref="LoupeControl"/>）が一元的に行う。<br/>
     /// 選択矩形（<paramref name="selectionRect"/>）は切り出し領域との交差部分を 2 色破線（色A/色B を<br/>
     /// ダッシュごとに交互）で描画する（選択位置の視覚化・市松風の視認性）。
     /// </remarks>
-    public static Bitmap DrawLoupe(
+    public static WriteableBitmap DrawLoupe(
         Bitmap srcBitmap,
         int loupeSize,
         int zoomLevel,
@@ -96,32 +99,33 @@ internal static class LoupeRenderer
         var pixelSize = new PixelSize(loupeSize, loupeSize);
         var rtb = new RenderTargetBitmap(pixelSize, s_dpi);
 
-        using var ctx = rtb.CreateDrawingContext();
-
-        // 1. 市松模様の背景
-        LoupeBackgroundRenderer.DrawCheckerboard(ctx, loupeSize, checkerSize, checkerColorA, checkerColorB);
-
-        // 2. ソース画像を zoomLevel 倍に拡大して描画
-        LoupeImageRenderer.Draw(ctx, srcBitmap, zoomLevel);
-
-        // 3. 選択矩形の枠線（ドメイン座標系 → ルーペ座標に変換して 2 色破線で描画）
-        if (selectionRect is { } selRect && centerPoint is { } cp &&
-            selectionRectColorA is { } selColorA && selectionRectColorB is { } selColorB)
+        using (var ctx = rtb.CreateDrawingContext())
         {
-            var captureSize = LoupeImageExtractor.ComputeCaptureSize(loupeSize, zoomLevel);
-            var topLeft = new Point(cp.X - captureSize / 2.0, cp.Y - captureSize / 2.0);
-            LoupeDecorationRenderer.DrawSelectionRect(
-                ctx, selRect, topLeft, zoomLevel, loupeSize,
-                selColorA, selColorB);
+            // 1. 市松模様の背景
+            LoupeBackgroundRenderer.DrawCheckerboard(ctx, loupeSize, checkerSize, checkerColorA, checkerColorB);
+
+            // 2. ソース画像を zoomLevel 倍に拡大して描画
+            LoupeImageRenderer.Draw(ctx, srcBitmap, zoomLevel);
+
+            // 3. 選択矩形の枠線（ドメイン座標系 → ルーペ座標に変換して 2 色破線で描画）
+            if (selectionRect is { } selRect && centerPoint is { } cp &&
+                selectionRectColorA is { } selColorA && selectionRectColorB is { } selColorB)
+            {
+                var captureSize = LoupeImageExtractor.ComputeCaptureSize(loupeSize, zoomLevel);
+                var topLeft = new Point(cp.X - captureSize / 2.0, cp.Y - captureSize / 2.0);
+                LoupeDecorationRenderer.DrawSelectionRect(
+                    ctx, selRect, topLeft, zoomLevel, loupeSize,
+                    selColorA, selColorB);
+            }
+
+            // 4. 十字線
+            LoupeDecorationRenderer.DrawCrosshair(ctx, loupeSize, zoomLevel, crossColor);
+
+            // 5. 外枠
+            LoupeDecorationRenderer.DrawFrame(ctx, loupeSize, frameColor, frameWidth);
         }
 
-        // 4. 十字線
-        LoupeDecorationRenderer.DrawCrosshair(ctx, loupeSize, zoomLevel, crossColor);
-
-        // 5. 外枠
-        LoupeDecorationRenderer.DrawFrame(ctx, loupeSize, frameColor, frameWidth);
-
-        return rtb;
+        return ToWriteableBitmap(rtb);
     }
 
     /// <summary>画像なし時の市松模様のみのルーペを描画する。</summary>
@@ -132,8 +136,8 @@ internal static class LoupeRenderer
     /// <param name="checkerColorB">市松模様の色B（暗色）。null の場合は透明。</param>
     /// <param name="frameColor">外枠の色。null の場合は外枠を描画しない。</param>
     /// <param name="frameWidth">外枠の太さ（ピクセル）。</param>
-    /// <returns>市松模様のみの Avalonia Bitmap。</returns>
-    public static Bitmap DrawLoupeCheckerboardOnly(
+    /// <returns>市松模様のみの WriteableBitmap。</returns>
+    public static WriteableBitmap DrawLoupeCheckerboardOnly(
         int loupeSize,
         IBrush? crossColor,
         int checkerSize,
@@ -145,15 +149,34 @@ internal static class LoupeRenderer
         var pixelSize = new PixelSize(loupeSize, loupeSize);
         var rtb = new RenderTargetBitmap(pixelSize, s_dpi);
 
-        using var ctx = rtb.CreateDrawingContext();
+        using (var ctx = rtb.CreateDrawingContext())
+        {
+            // 市松模様の背景
+            LoupeBackgroundRenderer.DrawCheckerboard(ctx, loupeSize, checkerSize, checkerColorA, checkerColorB);
 
-        // 市松模様の背景
-        LoupeBackgroundRenderer.DrawCheckerboard(ctx, loupeSize, checkerSize, checkerColorA, checkerColorB);
+            // 外枠
+            LoupeDecorationRenderer.DrawFrame(ctx, loupeSize, frameColor, frameWidth);
+        }
 
-        // 外枠
-        LoupeDecorationRenderer.DrawFrame(ctx, loupeSize, frameColor, frameWidth);
+        return ToWriteableBitmap(rtb);
+    }
 
-        return rtb;
+    /// <summary>RenderTargetBitmap の描画結果を WriteableBitmap へコピーして返す。</summary>
+    /// <param name="source">描画済みの RenderTargetBitmap。</param>
+    /// <returns>ピクセルをコピーした WriteableBitmap（ホストが Lock してオーバーレイを描画できる）。</returns>
+    /// <remarks>
+    /// ホスト（上位 AP）がイベント内で Bitmap にオーバーレイを描画できるよう、<br/>
+    /// CPU 書き込み可能な WriteableBitmap へ変換する（描画自体は RenderTargetBitmap で行う）。
+    /// </remarks>
+    private static WriteableBitmap ToWriteableBitmap(RenderTargetBitmap source)
+    {
+        var size = source.PixelSize;
+        var stride = size.Width * 4;
+        var bitmap = new WriteableBitmap(size, s_dpi);
+
+        using var locked = bitmap.Lock();
+        source.CopyPixels(new PixelRect(0, 0, size.Width, size.Height), locked.Address, stride * size.Height, stride);
+        return bitmap;
     }
 
 }

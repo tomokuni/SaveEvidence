@@ -1,0 +1,66 @@
+using Avalonia;
+using Avalonia.Media.Imaging;
+
+namespace Estable.AvaloniaUI.Loupe;
+
+/// <summary>ルーペの描画完了時に上位へ通知する描画結果と表示情報。</summary>
+/// <remarks>
+/// <see cref="LoupeControl.Rendered"/> イベントの引数。<br/>
+/// 描画済みのルーペ画像（<see cref="Bitmap"/>）と表示状態（位置・サイズ・切り出し領域等）を表し、<br/>
+/// ホスト側はイベントハンドラ内で <see cref="Bitmap"/> を <c>Lock</c> してオーバーレイ（破線・図形等）を<br/>
+/// 直接描画できる（描画後の画像は <see cref="LoupeControl"/> が表示へ反映する）。<br/>
+/// 座標系は次のとおり:<br/>
+/// - <see cref="Bitmap"/>: ルーペ画像のピクセル座標（1 ピクセル = <see cref="Scale"/> の逆数 DIP）<br/>
+/// - <see cref="Position"/>: 親パネル内の表示左上（DIP）<br/>
+/// - <see cref="CenterPoint"/> / <see cref="CaptureTopLeft"/>: ドメイン座標（元画像ピクセル座標）<br/>
+/// - <see cref="Scale"/>: ドメイン座標 → ルーペ画像ピクセル座標の変換係数<br/>
+/// オーバーレイの描画位置は <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で求められる。
+/// </remarks>
+public sealed class LoupeRenderedEventArgs : EventArgs
+{
+    /// <summary>表示情報を初期化する。</summary>
+    /// <param name="bitmap">描画済みのルーペ画像（WriteableBitmap）。</param>
+    /// <param name="position">ルーペの表示左上（親パネル内 DIP）。</param>
+    /// <param name="size">ルーペの表示サイズ（一辺・DIP）。</param>
+    /// <param name="zoomLevel">拡大率。</param>
+    /// <param name="centerPoint">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定時は null。</param>
+    /// <param name="captureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null。</param>
+    /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
+    public LoupeRenderedEventArgs(
+        Bitmap bitmap, Point position, double size, int zoomLevel, Point? centerPoint, Point? captureTopLeft, double scale)
+    {
+        Bitmap = bitmap;
+        Position = position;
+        Size = size;
+        ZoomLevel = zoomLevel;
+        CenterPoint = centerPoint;
+        CaptureTopLeft = captureTopLeft;
+        Scale = scale;
+    }
+
+    /// <summary>描画済みのルーペ画像（WriteableBitmap）。イベントハンドラ内で <c>Lock</c> してオーバーレイを描画できる。</summary>
+    /// <remarks>
+    /// イベントハンドラ内で <see cref="Bitmap"/> を更新した内容は、イベント終了後に
+    /// <see cref="LoupeControl"/> が表示へ反映する（イベントは表示反映前に同期的に発火する）。<br/>
+    /// <see cref="Bitmap"/> の所有権は <see cref="LoupeControl"/> が保持する（ホスト側で Dispose しないこと）。
+    /// </remarks>
+    public Bitmap Bitmap { get; }
+
+    /// <summary>ルーペの表示左上（親パネル内 DIP）。</summary>
+    public Point Position { get; }
+
+    /// <summary>ルーペの表示サイズ（一辺・DIP）。</summary>
+    public double Size { get; }
+
+    /// <summary>拡大率。</summary>
+    public int ZoomLevel { get; }
+
+    /// <summary>拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定時は null。</summary>
+    public Point? CenterPoint { get; }
+
+    /// <summary>切り出し領域の左上（ドメイン座標）。中心未設定時は null。</summary>
+    public Point? CaptureTopLeft { get; }
+
+    /// <summary>ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</summary>
+    public double Scale { get; }
+}

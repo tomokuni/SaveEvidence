@@ -48,6 +48,7 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 - 世代管理による古い描画結果の破棄
 - 非表示時の生成Bitmap解放
 - `ILogger` によるエラー通知
+- 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で表示位置・サイズ・拡大率・中心・切り出し左上・スケールを通知。ホスト側のオーバーレイ描画用）
 - **座標変換ポート（`SetCoordinateTransform(ICoordinatePort?)` + `PositionOffset`）**: DragRectControl と同方式。表示位置（`RenderTransform`）と表示サイズ（親パネルでクランプ）をレイアウト時に自己計算（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **`RefreshPosition()`**: パン・ズーム等のレイアウト非変更なビューポート変化時に、表示位置・サイズを再計算（座標変換ポートは呼び出し毎に最新の表示状態を評価）
 
