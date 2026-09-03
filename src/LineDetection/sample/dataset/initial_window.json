@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 0,
+    "Y": 0,
+    "Width": 900,
+    "Height": 640,
+    "Right": 900,
+    "Bottom": 640
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 48,
+        "Y": 38,
+        "Width": 804,
+        "Height": 564,
+        "Right": 852,
+        "Bottom": 602
+      },
+      "Title": "初期表示の検証用ウィンドウ（二重矩形）",
+      "ClassName": "InitialWindow"
+    }
+  ]
+}

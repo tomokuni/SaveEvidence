@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 2155,
+    "Y": 796,
+    "Width": 1345,
+    "Height": 1063,
+    "Right": 3500,
+    "Bottom": 1859
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 29,
+        "Y": 23,
+        "Width": 1283,
+        "Height": 1001,
+        "Right": 1312,
+        "Bottom": 1024
+      },
+      "Title": "\u30ED\u30C3\u30AF\u30B9\u30AF\u30EA\u30FC\u30F3 \u2014 1Password",
+      "ClassName": "Chrome_WidgetWin_1"
+    }
+  ]
+}

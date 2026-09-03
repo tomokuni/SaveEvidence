@@ -1,0 +1,97 @@
+# LineDetection システム仕様書
+
+本仕様書は、`Estable.AvaloniaUI.LineDetection`（LineDetection ライブラリ）の**システム概要・アーキテクチャ・内部設計**を定義します。
+
+## 目次
+
+- [LineDetection システム仕様書](#linedetection-システム仕様書)
+  - [目次](#目次)
+  - [1. システム概要](#1-システム概要)
+  - [2. 技術スタック](#2-技術スタック)
+  - [3. アーキテクチャ](#3-アーキテクチャ)
+  - [4. コンポーネント構成](#4-コンポーネント構成)
+  - [5. 依存関係](#5-依存関係)
+  - [6. 検出アルゴリズム](#6-検出アルゴリズム)
+    - [6.1. ロジック方式（LogicLineDetector）](#61-ロジック方式logiclinedetector)
+      - [主な内部処理](#主な内部処理)
+  - [7. 例外処理ポリシー](#7-例外処理ポリシー)
+
+---
+
+## 1. システム概要
+
+LineDetection は、キャプチャ画像から Windows のウィンドウ枠となる水平・垂直の辺（線分）を検出するライブラリです。
+
+- 検出方式は `ILineDetector` で抽象化され、ロジック方式（Canny + Hough）を同一の API で利用できます。
+- 入力は OpenCvSharp の `Mat`（BGRA）、出力は `LineDetectionResult` のリストです。
+
+## 2. 技術スタック
+
+| 項目 | 内容 |
+| --- | --- |
+| 言語 | C#（.NET 10） |
+| UI フレームワーク | Avalonia 12.1 |
+| 画像処理 | OpenCvSharp4（OpenCV） |
+
+## 3. アーキテクチャ
+
+``` text
+[呼び出し元 (ViewModel etc.)]
+        │ ILineDetector
+        ▼
+┌─────────────────────────────┐
+│ ILineDetector (抽象)        │
+│  └─ LogicLineDetector       │
+│       (Canny + Hough)       │
+└─────────────────────────────┘
+        │ Detect(Mat)
+        ▼
+[LineDetectionResult リスト]
+```
+
+- 呼び出し元は `ILineDetector` にのみ依存します（依存性逆転）。
+- 検出方式の追加は `ILineDetector` の実装を追加するだけで可能です（開放閉鎖原則）。
+
+## 4. コンポーネント構成
+
+| ファイル | 責務 |
+| --- | --- |
+| `DetectionResult.cs` | `LineOrientation`（向き）・`LineDetectionResult`（結果レコード）・`ILineDetector`（インターフェース）を定義。 |
+| `LogicLineDetector.cs` | ロジック方式の検出器。Canny + HoughLinesP + 幾何学的一貫性による矩形検出。 |
+| `MatHelper.cs` | `Bitmap` ↔ `Mat` 変換のヘルパー（内部使用）。 |
+
+## 5. 依存関係
+
+- `DetectionResult.cs` → （Avalonia, OpenCvSharp）
+- `LogicLineDetector.cs` → `DetectionResult.cs`（ILineDetector・LineOrientation）
+
+いずれも他の検出器へ依存しません（疎結合）。`MatHelper` は内部実装のため公開 API ではありません。
+
+## 6. 検出アルゴリズム
+
+### 6.1. ロジック方式（LogicLineDetector）
+
+```text
+BGRA Mat
+  → グレースケール化
+  → Canny エッジ検出
+  → HoughLinesP で線分抽出（水平 / 垂直に分類）
+  → 同一直線上の断片をクラスタリングしてマージ
+  → 近接する平行線（外縁・内縁・透過枠の分裂）を統合
+  → 各辺を元画像の輝度プロファイルの枠の外側の境界へ補正
+  → 線分に沿ったエッジ支持率で文字列の断片を除外
+  → 矩形（ウィンドウの 4 辺）を構成できる場合、対辺同長・コーナー近接を満たすものを優先出力
+  → 矩形を構成できない場合は、フィルタ済みの線分リストを出力
+```
+
+#### 主な内部処理
+
+- **クラスタリング**（`MergeCollinearAll`）: 同一垂直座標の断片を広いギャップ（`RectMergeGap=200`）で連結します。
+- **枠の外側の境界への補正**（`SnapToEdgeByGradient`）: 元画像の輝度プロファイルから枠線コアを求め、外側の境界（排他座標）を返します。
+- **近接平行線の統合**（`MergeParallelLines`）: 透過枠で分裂した枠線を 1 本に統合します。代表座標はエッジ支持率が最も高い線分、同点ならスパンが最長の線分を採用します。
+- **エッジ支持率フィルタ**（`EdgeSupportRatio`）: 文字列（断続エッジ）を除外します。
+- **矩形探索**（`BuildRectangles`）: 対辺同長（比率 `OppositeSpanRatio`）・コーナー近接（辺の長さ × `CornerToleranceRatio`）を満たし、画像端からの距離合計が最小の矩形を選択します。
+
+## 7. 例外処理ポリシー
+
+- `LogicLineDetector`: 例外を投げません。画像の幾何学的特徴のみで検出するため、実行時エラーは発生しません。

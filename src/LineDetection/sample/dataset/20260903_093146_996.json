@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 329,
+    "Y": 114,
+    "Width": 1604,
+    "Height": 1955,
+    "Right": 1933,
+    "Bottom": 2069
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 41,
+        "Y": 29,
+        "Width": 1537,
+        "Height": 1732,
+        "Right": 1578,
+        "Bottom": 1761
+      },
+      "Title": "20260824_113853_910.json  - \u79C0\u4E38",
+      "ClassName": "Hidemaru32Class"
+    }
+  ]
+}

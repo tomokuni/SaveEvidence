@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 871,
+    "Y": 410,
+    "Width": 1671,
+    "Height": 944,
+    "Right": 2542,
+    "Bottom": 1354
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 69,
+        "Y": 70,
+        "Width": 1513,
+        "Height": 795,
+        "Right": 1582,
+        "Bottom": 865
+      },
+      "Title": "UpNote",
+      "ClassName": "Chrome_WidgetWin_1"
+    }
+  ]
+}

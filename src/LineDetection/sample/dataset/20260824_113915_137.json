@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 171,
+    "Y": 1329,
+    "Width": 1353,
+    "Height": 573,
+    "Right": 1524,
+    "Bottom": 1902
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 54,
+        "Y": 42,
+        "Width": 1178,
+        "Height": 464,
+        "Right": 1232,
+        "Bottom": 506
+      },
+      "Title": "(無題)(更新) - 秀丸",
+      "ClassName": "Hidemaru32Class"
+    }
+  ]
+}

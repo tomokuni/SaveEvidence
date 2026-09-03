@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:LineDetectionSample.ViewModels"
+        xmlns:views="clr-namespace:LineDetectionSample.Views"
+        x:Class="LineDetectionSample.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="ウィンドウ枠 辺検出サンプル"
+        Width="1280" Height="820"
+        WindowStartupLocation="CenterScreen">
+
+    <DockPanel>
+
+        <!-- ───────────────────────── 左: ナビゲーションペイン ───────────────────────── -->
+        <Border DockPanel.Dock="Left" Width="150" Padding="10"
+                BorderBrush="#DDDDDD" BorderThickness="0,0,1,0" Background="#F0F0F0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="12">
+
+                    <TextBlock Text="ナビゲーション" FontSize="13" FontWeight="Bold"/>
+
+                    <!-- ナビゲーション -->
+                    <ListBox ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPageItem}"
+                             BorderThickness="0" Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PageItem">
+                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="4,4">
+                                    <PathIcon Data="{Binding Icon}" Width="16" Height="16" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Label}" FontSize="13" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- ───────────────────────── 中央: ページ切替 ───────────────────────── -->
+        <Grid>
+
+            <!-- 線分検出ページ -->
+            <Grid IsVisible="{Binding IsLineDetectionPage}">
+                <views:DetectPage DataContext="{Binding DetectPage}"/>
+            </Grid>
+
+            <!-- データ検証ページ -->
+            <Grid IsVisible="{Binding IsVerifyLinesPage}">
+                <views:VerifyPage DataContext="{Binding VerifyPage}"/>
+            </Grid>
+
+            <!-- データ作成ページ -->
+            <Grid IsVisible="{Binding IsDatasetCreatePage}">
+                <views:CreatePage DataContext="{Binding CreatePage}"/>
+            </Grid>
+
+            <!-- データ全検証ページ -->
+            <Grid IsVisible="{Binding IsVerifyAllPage}">
+                <views:VerifyAllPage DataContext="{Binding VerifyAllPage}"/>
+            </Grid>
+
+        </Grid>
+
+    </DockPanel>
+
+</Window>

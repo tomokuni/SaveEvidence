@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:LineDetectionSample.ViewModels"
+             xmlns:loupe="clr-namespace:Estable.AvaloniaUI.Loupe;assembly=LoupeControl"
+             x:Class="LineDetectionSample.Views.LineCanvasView"
+             x:DataType="vm:DetectionContext">
+
+    <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+        <Grid x:Name="ImageHost"
+              PointerMoved="OnOverlayPointerMoved"
+              PointerPressed="OnOverlayPointerPressed"
+              PointerEntered="OnImageHostPointerEntered"
+              PointerExited="OnImageHostPointerExited"
+              Background="#FF2B2B2B">
+            <Image Source="{Binding Image}" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+
+            <!-- 検出した辺（線分）のオーバーレイ -->
+            <ItemsControl ItemsSource="{Binding OverlayLines}" IsHitTestVisible="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:LineItem">
+                        <Line StartPoint="{Binding Start}" EndPoint="{Binding End}"
+                              Stroke="{Binding Stroke}"
+                              StrokeThickness="{Binding StrokeThickness}"
+                              StrokeLineCap="Round"
+                              IsHitTestVisible="False"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- ルーペ -->
+            <loupe:LoupeControl x:Name="Loupe"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                IsHitTestVisible="False"
+                                IsVisible="{Binding IsLoupeVisible}"
+                                Source="{Binding Image}"
+                                CenterPoint="{Binding LoupeCenter}"
+                                RequestedSize="220"
+                                ZoomLevel="4"
+                                CrossColor="#33FF0000"
+                                FrameColor="#CCCCCC"
+                                FrameWidth="1"
+                                ShowCoordLabel="False"/>
+
+            <!-- 画像が無い場合のプレースホルダー -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
+                        IsVisible="{Binding !HasImage}">
+                <TextBlock Text="画像がありません" FontSize="20" FontWeight="Bold" Foreground="White"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="クリップボードに画像（スクリーンショット等）をコピーして、&#x0a;Ctrl+V で貼り付けてください。"
+                           FontSize="13" Foreground="#CCCCCC" TextAlignment="Center" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Grid>
+    </Viewbox>
+
+</UserControl>

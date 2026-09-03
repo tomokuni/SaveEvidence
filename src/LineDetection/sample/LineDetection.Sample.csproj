@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>LineDetectionSample</RootNamespace>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="[12.1.*,)" />
+    <PackageReference Include="Avalonia.Desktop" Version="[12.1.*,)" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.1.*,)" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="[12.1.*,)" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.2.*,)" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
+    <PackageReference Include="OpenCvSharp5" Version="[5.*,)" />
+    <PackageReference Include="OpenCvSharp5.runtime.win" Version="[5.*,)" />
+    <PackageReference Include="System.Reactive" Version="[6.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 検出ロジック（ロジック方式）を参照する -->
+    <ProjectReference Include="..\src\LineDetection.csproj" />
+    <!-- マウス位置の拡大表示（ルーペ）に使用する -->
+    <ProjectReference Include="..\..\LoupeControl\src\LoupeControl.csproj" />
+    <!-- データセット作成ページの DragRect キャプチャ（スクリーン領域選択 + ウィンドウ列挙）に使用する -->
+    <ProjectReference Include="..\..\SnipCaptureUI\src\SnipCaptureUI.csproj" />
+    <!-- SnipCaptureUI が内部で使用する要素検出（ウィンドウ列挙）機能 -->
+    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- dataset の検証用画像 + 正解 JSON を出力ディレクトリへコピーする（一致確認機能で使用） -->
+    <Content Include="dataset\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

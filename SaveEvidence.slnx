@@ -27,11 +27,22 @@
     <Project Path="src/FadeMaskDragRectControl/src/FadeMaskDragRect.csproj" />
     <Project Path="src/FadeMaskDragRectControl/tests/FadeMaskDragRect.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/LineDetection/" />
+  <Folder Name="/src/LineDetection/sample/">
+    <Project Path="src/LineDetection/sample/LineDetection.Sample.csproj" />
+  </Folder>
+  <Folder Name="/src/LineDetection/src/">
+    <Project Path="src/LineDetection/src/LineDetection.csproj" />
+  </Folder>
+  <Folder Name="/src/LineDetection/tests/">
+    <Project Path="src/LineDetection/tests/LineDetection.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/LoupeControl/">
     <Project Path="src/LoupeControl/sample/LoupeControl.Sample.csproj" />
     <Project Path="src/LoupeControl/src/LoupeControl.csproj" />
     <Project Path="src/LoupeControl/tests/LoupeControl.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/LoupeControl/src/" />
   <Folder Name="/src/PlatformFactory/">
     <Project Path="src/PlatformFactory/src/PlatformFactory.csproj" />
     <Project Path="src/PlatformFactory/tests/PlatformFactory.Tests.csproj" />

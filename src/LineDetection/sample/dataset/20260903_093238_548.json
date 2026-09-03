@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 1259,
+    "Y": 338,
+    "Width": 2250,
+    "Height": 1524,
+    "Right": 3509,
+    "Bottom": 1862
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 26,
+        "Y": 31,
+        "Width": 2193,
+        "Height": 1467,
+        "Right": 2219,
+        "Bottom": 1498
+      },
+      "Title": "copilot-instructions.md - SaveEvidence_Avalonia (\u30EF\u30FC\u30AF\u30B9\u30DA\u30FC\u30B9) - Visual Studio Code",
+      "ClassName": "Chrome_WidgetWin_1"
+    }
+  ]
+}

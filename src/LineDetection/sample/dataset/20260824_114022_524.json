@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 144,
+    "Y": 22,
+    "Width": 1578,
+    "Height": 1503,
+    "Right": 1722,
+    "Bottom": 1525
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 346,
+        "Y": 101,
+        "Width": 1094,
+        "Height": 1192,
+        "Right": 1440,
+        "Bottom": 1293
+      },
+      "Title": "Gemini - YOLOv8n ONNXモデルの推論実装解説 - Google Gemini",
+      "ClassName": "Chrome_WidgetWin_1"
+    }
+  ]
+}

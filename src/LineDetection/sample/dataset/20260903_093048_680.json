@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 39,
+    "Y": 284,
+    "Width": 2218,
+    "Height": 1805,
+    "Right": 2257,
+    "Bottom": 2089
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 62,
+        "Y": 40,
+        "Width": 2134,
+        "Height": 1694,
+        "Right": 2196,
+        "Bottom": 1734
+      },
+      "Title": "Dev \u3068\u305D\u306E\u4ED6\u306E\u30BF\u30D6 5 \u500B - \u30A8\u30AF\u30B9\u30D7\u30ED\u30FC\u30E9\u30FC",
+      "ClassName": "CabinetWClass"
+    }
+  ]
+}
