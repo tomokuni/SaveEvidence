@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 1264,
+    "Y": 1265,
+    "Width": 471,
+    "Height": 738,
+    "Right": 1735,
+    "Bottom": 2003
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 42,
+        "Y": 42,
+        "Width": 401,
+        "Height": 666,
+        "Right": 443,
+        "Bottom": 708
+      },
+      "Title": "\u96FB\u5353",
+      "ClassName": "ApplicationFrameWindow"
+    }
+  ]
+}

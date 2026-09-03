@@ -1,5 +1,7 @@
 using app.Models;
 using app.ViewModels;
+using Avalonia;
+using Estable.AvaloniaUI.LineDetection;
 using Xunit;
 using MockSettingsService = app.Tests.MainViewModelTests.MockSettingsService;
 
@@ -195,6 +197,70 @@ public class MainViewModelStateTests
         vm.SaveFolderPath = missing;
 
         Assert.True(vm.HasInvalidSaveFolder);
+    }
+
+    // ====================================================================
+    // 自動切り出し（LineDetection 矩形復元）
+    // ====================================================================
+
+    /// <summary>垂直線を生成するヘルパー。</summary>
+    /// <param name="x">垂直線の X 座標。</param>
+    /// <returns>垂直線の検出結果。</returns>
+    private static LineDetectionResult VerticalLine(double x)
+        => new(new Point(x, 0), new Point(x, 1000), LineOrientation.Vertical, 1000);
+
+    /// <summary>水平線を生成するヘルパー。</summary>
+    /// <param name="y">水平線の Y 座標。</param>
+    /// <returns>水平線の検出結果。</returns>
+    private static LineDetectionResult HorizontalLine(double y)
+        => new(new Point(0, y), new Point(1000, y), LineOrientation.Horizontal, 1000);
+
+    [Fact]
+    public void TryReconstructRects_垂直2本と水平2本から外側の境界を復元する()
+    {
+        // 垂直 X=100, 300 / 水平 Y=50, 200 の矩形
+        IReadOnlyList<LineDetectionResult> results =
+        [
+            VerticalLine(100), VerticalLine(300),
+            HorizontalLine(50), HorizontalLine(200),
+        ];
+
+        var rects = MainViewModel.TryReconstructRects(results);
+
+        var rect = Assert.Single(rects);
+        Assert.Equal(100, rect.X);      // 左端 = 最小垂直 X
+        Assert.Equal(50, rect.Y);       // 上端 = 最小水平 Y
+        Assert.Equal(200, rect.Width);  // 幅 = 最大垂直 X − 最小垂直 X
+        Assert.Equal(150, rect.Height); // 高さ = 最大水平 Y − 最小水平 Y
+    }
+
+    [Fact]
+    public void TryReconstructRects_垂直または水平が2本未満は空を返す()
+    {
+        // 垂直のみ 2 本（水平なし）は復元できない
+        Assert.Empty(MainViewModel.TryReconstructRects([VerticalLine(100), VerticalLine(300), HorizontalLine(50)]));
+
+        // 水平のみ 2 本（垂直なし）は復元できない
+        Assert.Empty(MainViewModel.TryReconstructRects([VerticalLine(100), HorizontalLine(50), HorizontalLine(200)]));
+
+        // 線分が空
+        Assert.Empty(MainViewModel.TryReconstructRects([]));
+    }
+
+    [Fact]
+    public void TryReconstructRects_重複座標は統合して外側の境界を復元する()
+    {
+        // 同じ X/Y に複数の線分があっても Distinct で統合される
+        IReadOnlyList<LineDetectionResult> results =
+        [
+            VerticalLine(100), VerticalLine(100), VerticalLine(300),
+            HorizontalLine(50), HorizontalLine(50), HorizontalLine(200),
+        ];
+
+        var rects = MainViewModel.TryReconstructRects(results);
+        var rect = Assert.Single(rects);
+        Assert.Equal(100, rect.X);
+        Assert.Equal(50, rect.Y);
     }
 
     [Fact]

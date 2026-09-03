@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 1623,
+    "Y": 170,
+    "Width": 1298,
+    "Height": 925,
+    "Right": 2921,
+    "Bottom": 1095
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 49,
+        "Y": 33,
+        "Width": 1227,
+        "Height": 858,
+        "Right": 1276,
+        "Bottom": 891
+      },
+      "Title": "Gemini - winget \u30A2\u30C3\u30D7\u30B0\u30EC\u30FC\u30C9\u5F37\u5236\u65B9\u6CD5 - Google Gemini",
+      "ClassName": "Chrome_WidgetWin_1"
+    }
+  ]
+}

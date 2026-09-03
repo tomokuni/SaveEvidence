@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Estable.AvaloniaUI.LineDetection;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.AvaloniaUI.ZoomView;
@@ -140,6 +141,22 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
     [ObservableProperty]
     private bool _hasSelection;
 
+    /// <summary>自動切り出しモード中かどうか（検出した矩形を表示中）。</summary>
+    [ObservableProperty]
+    private bool _isAutoCropActive;
+
+    /// <summary>自動切り出しで検出された矩形候補群（画像座標 PixelRect・閉区間・面積昇順）。</summary>
+    [ObservableProperty]
+    private IReadOnlyList<PixelRect> _detectedRects = [];
+
+    /// <summary>現在ホバー中の矩形（複数矩形内にある場合は最も面積の小さいもの）。なければ null。</summary>
+    [ObservableProperty]
+    private PixelRect? _hoveredRect;
+
+    /// <summary>ステータスメッセージ（自動切り出しの検出結果・案内）。</summary>
+    [ObservableProperty]
+    private string _statusMessage = "";
+
     /// <summary>ズームイン可能かどうか。View 側から設定される。</summary>
     [ObservableProperty]
     private bool _canZoomIn;
@@ -238,6 +255,12 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
     {
         _previousPreviewImage?.Dispose();
         _previousPreviewImage = null;
+
+        // 画像変更時は自動切り出しの検出矩形・モードを無効化する（既存画像に対する検出結果のため）
+        IsAutoCropActive = false;
+        DetectedRects = [];
+        HoveredRect = null;
+        StatusMessage = "";
     }
 
     /// <summary>ファイル名テンプレート変更時に検証結果を更新し、設定を保存する。</summary>
@@ -309,10 +332,130 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
     private void CropPreview(PixelRect bounds)
         => ApplyPixelEdit(srcData => ImageProcessor.Crop(srcData, bounds));
 
-    /// <summary>プレビュー画像からウィンドウ領域を自動判定して切り出す。</summary>
+    /// <summary>プレビュー画像を LineDetection で検出し、ウィンドウ矩形の候補を表示する。</summary>
+    /// <remarks>
+    /// LineDetection（<see cref="LogicLineDetector"/>）で水平・垂直の辺を検出し、<br/>
+    /// 矩形（ウィンドウの 4 辺）の候補を復元して画像上に水色で表示する。<br/>
+    /// ユーザーが矩形内でダブルクリックすると、その矩形で切り出す（<see cref="ConfirmAutoCrop"/>）。<br/>
+    /// マウス位置が複数矩形内にある場合は、<see cref="HoveredRect"/>（面積最小）が赤色で強調される。<br/>
+    /// 検出結果が空の場合は <see cref="StatusMessage"/> に通知する。
+    /// </remarks>
     [RelayCommand]
     private void AutoCropWindow()
-        => ApplyPixelEdit(ImageProcessor.DetectAndCropWindow);
+    {
+        if (PreviewImage is not { } image)
+        {
+            return;
+        }
+
+        // Bitmap → AppPixelData → PixelImage（検出器の入力）
+        var srcData = AppPixelData.ToPixelData(image);
+        var pixelImage = new PixelImage(srcData.Width, srcData.Height, srcData.Stride, srcData.PixelData);
+
+        // LineDetection で水平・垂直の辺（線分）を検出し、矩形（ウィンドウの 4 辺）を復元する
+        var detector = new LogicLineDetector();
+        var results = detector.Detect(pixelImage);
+
+        var rects = TryReconstructRects(results);
+        DetectedRects = rects;
+        IsAutoCropActive = rects.Count > 0;
+        HoveredRect = null;
+
+        StatusMessage = rects.Count > 0
+            ? $"自動切り出し: {rects.Count} 個のウィンドウを検出しました。ダブルクリックで確定してください。"
+            : "自動切り出し: ウィンドウを検出できませんでした。";
+    }
+
+    /// <summary>検出された線分から矩形（ウィンドウの 4 辺）の候補を復元する。</summary>
+    /// <param name="results">検出された線分一覧。</param>
+    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 PixelRect。面積昇順）。</returns>
+    /// <remarks>
+    /// <see cref="LogicLineDetector"/> の検出結果（水平・垂直の線分）から、<br/>
+    /// 垂直線のペア × 水平線のペアの<b>全組み合わせ</b>で矩形候補を生成する。<br/>
+    /// これにより複数ウィンドウを含む画像では複数の矩形候補が得られ、<br/>
+    /// マウス位置が複数矩形内にある場合は面積最小のものを選択できる。<br/>
+    /// 幅・高さが 1 未満（同一座標のペア）のものは除外する。<br/>
+    /// 純粋関数のため <c>internal</c> で公開し、単体テストから検証できるようにする。
+    /// </remarks>
+    internal static IReadOnlyList<PixelRect> TryReconstructRects(IReadOnlyList<LineDetectionResult> results)
+    {
+        var verticalX = results
+            .Where(r => r.Orientation == LineOrientation.Vertical)
+            .Select(r => (int)Math.Round(r.Start.X))
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
+        var horizontalY = results
+            .Where(r => r.Orientation == LineOrientation.Horizontal)
+            .Select(r => (int)Math.Round(r.Start.Y))
+            .Distinct()
+            .OrderBy(y => y)
+            .ToList();
+
+        // 垂直 2 本・水平 2 本が揃わない場合は復元できない
+        if (verticalX.Count < 2 || horizontalY.Count < 2)
+        {
+            return [];
+        }
+
+        // 垂直線ペア × 水平線ペアの全組み合わせから矩形候補を生成する（面積昇順）
+        var rects = new List<PixelRect>();
+        for (var xi = 0; xi < verticalX.Count - 1; xi++)
+        {
+            for (var xj = xi + 1; xj < verticalX.Count; xj++)
+            {
+                var left = verticalX[xi];
+                var right = verticalX[xj];
+                for (var yi = 0; yi < horizontalY.Count - 1; yi++)
+                {
+                    for (var yj = yi + 1; yj < horizontalY.Count; yj++)
+                    {
+                        var top = horizontalY[yi];
+                        var bottom = horizontalY[yj];
+                        var width = right - left;
+                        var height = bottom - top;
+                        if (width <= 0 || height <= 0)
+                        {
+                            continue;
+                        }
+
+                        rects.Add(new PixelRect(left, top, width, height));
+                    }
+                }
+            }
+        }
+
+        return rects.OrderBy(r => (long)r.Width * r.Height).ToList();
+    }
+
+    /// <summary>確定したウィンドウ矩形でプレビュー画像を切り出す。</summary>
+    /// <param name="bounds">確定した矩形領域（画像座標 PixelRect）。</param>
+    [RelayCommand]
+    private void ConfirmAutoCrop(PixelRect bounds)
+    {
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
+
+        // 検出モードを終了し、確定した矩形で切り出す（BeforeEditAction → Crop → 画像差し替え）
+        IsAutoCropActive = false;
+        DetectedRects = [];
+        HoveredRect = null;
+        StatusMessage = "";
+
+        ApplyPixelEdit(srcData => ImageProcessor.Crop(srcData, bounds));
+    }
+
+    /// <summary>自動切り出しモードをキャンセルする。</summary>
+    [RelayCommand]
+    private void CancelAutoCrop()
+    {
+        IsAutoCropActive = false;
+        DetectedRects = [];
+        HoveredRect = null;
+        StatusMessage = "";
+    }
 
     /// <summary>ピクセル編集（切出し等）を適用する（BeforeEditAction → 変換 → 画像差し替え）。</summary>
     /// <param name="edit">AppPixelData を受け取り、編集後の AppPixelData を返す処理。</param>

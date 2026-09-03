@@ -117,6 +117,12 @@ public sealed partial class CapturePage : UserControl
                     // 保存先フォルダの変更を保存ボタンの ToolTip に反映する
                     UpdateSaveButtonToolTip();
                     break;
+                case nameof(MainViewModel.IsAutoCropActive):
+                case nameof(MainViewModel.DetectedRects):
+                case nameof(MainViewModel.HoveredRect):
+                    // 自動切り出しの矩形オーバーレイを更新する
+                    UpdateAutoCropOverlay();
+                    break;
             }
         };
 
@@ -149,7 +155,11 @@ public sealed partial class CapturePage : UserControl
         // ビューポート（パン・ズーム・表示サイズ）の変化を Crop オーバーレイへ通知する
         // （暗転マスク・選択枠・ルーペの追従。ScrollViewer 連携の ScrollChanged に相当する中継）。
         // Crop 未実行時は SnipCapture 側で無視されるため、常時購読で問題ない。
-        ZoomableView.ViewportChanged += (_, _) => _snipCapture.NotifyCropViewportChanged();
+        ZoomableView.ViewportChanged += (_, _) =>
+        {
+            _snipCapture.NotifyCropViewportChanged();
+            UpdateAutoCropOverlay();
+        };
 
         // 初期の市松模様背景を設定
         UpdateCheckerboardBackground();
@@ -908,6 +918,168 @@ public sealed partial class CapturePage : UserControl
             ShowCropContextMenu();
             e.Handled = true;
         }
+        else if (isRight && _viewModel.IsAutoCropActive)
+        {
+            // 自動切り出しモード中は右クリックでキャンセルする
+            _viewModel.CancelAutoCropCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    // ====================================================================
+    // 自動切り出し（LineDetection 矩形選択）
+    // ====================================================================
+
+    /// <summary>自動切り出しで検出された矩形の枠線色（通常・水色）。</summary>
+    private static readonly IBrush s_autoCropBrush = new SolidColorBrush(Color.Parse("#00BFFF"));
+
+    /// <summary>自動切り出しでホバー中の矩形の枠線色（赤色）。</summary>
+    private static readonly IBrush s_autoCropHoverBrush = new SolidColorBrush(Color.Parse("#FF3B30"));
+
+    /// <summary>自動切り出しの矩形枠線の太さ（DIP）。</summary>
+    private const double AutoCropStrokeThickness = 2.0;
+
+    /// <summary>検出矩形オーバーレイを現在のビューポート状態に合わせて再描画する。</summary>
+    /// <remarks>
+    /// <see cref="MainViewModel.DetectedRects"/> の各矩形を <see cref="ZoomableView.ContentToViewport"/> で
+    /// ビューポート座標へ変換し、<see cref="AutoCropOverlay"/>（Canvas）へ矩形（Rectangle）を配置する。<br/>
+    /// ホバー中の矩形（<see cref="MainViewModel.HoveredRect"/>）は赤色で強調する。
+    /// </remarks>
+    private void UpdateAutoCropOverlay()
+    {
+        // 自動切り出しモード中のみオーバーレイがポインターイベントを受け取る（通常時は ZoomableView へ素通し）
+        AutoCropOverlay.IsHitTestVisible = _viewModel.IsAutoCropActive;
+
+        AutoCropOverlay.Children.Clear();
+        if (!_viewModel.IsAutoCropActive || _viewModel.PreviewImage is null)
+        {
+            return;
+        }
+
+        foreach (var rect in _viewModel.DetectedRects)
+        {
+            // ドメイン座標 → ビューポート座標へ変換して配置する。
+            // ContentToViewport は Fit 中央寄せの原点補正を考慮しないため、
+            // 画像の表示矩形（ImageRectViewport）の原点を基準に変換する。
+            var topLeft = ContentToViewportDomain(new Point(rect.X, rect.Y));
+            var bottomRight = ContentToViewportDomain(new Point(rect.Right, rect.Bottom));
+            var isHover = _viewModel.HoveredRect == rect;
+
+            var rectElement = new Avalonia.Controls.Shapes.Rectangle
+            {
+                Width = Math.Max(0, bottomRight.X - topLeft.X),
+                Height = Math.Max(0, bottomRight.Y - topLeft.Y),
+                Stroke = isHover ? s_autoCropHoverBrush : s_autoCropBrush,
+                StrokeThickness = AutoCropStrokeThickness,
+                Fill = isHover ? new SolidColorBrush(Color.FromArgb(40, 255, 59, 48)) : null,
+                Tag = rect,
+            };
+            Canvas.SetLeft(rectElement, topLeft.X);
+            Canvas.SetTop(rectElement, topLeft.Y);
+            AutoCropOverlay.Children.Add(rectElement);
+        }
+    }
+
+    /// <summary>自動切り出しモード中のマウス移動で、領域内の最小矩形をホバー矩形として設定する。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">ポインタイベント。</param>
+    /// <remarks>
+    /// ビューポート座標 → ドメイン座標へ変換し、その座標を含む矩形のうち<b>面積が最小</b>のものを
+    /// <see cref="MainViewModel.HoveredRect"/> に設定する（複数矩形が重なる場合の優先判定）。<br/>
+    /// いずれの矩形にも含まれない場合は null に設定する。
+    /// </remarks>
+    private void OnAutoCropPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (!_viewModel.IsAutoCropActive)
+        {
+            return;
+        }
+
+        var viewportPos = e.GetPosition(AutoCropOverlay);
+        var contentPos = ViewportToContentDomain(viewportPos);
+
+        // 領域内の矩形のうち、最も面積の小さいものを選択する
+        var hit = _viewModel.DetectedRects
+            .Where(r => contentPos.X >= r.X && contentPos.X <= r.Right
+                     && contentPos.Y >= r.Y && contentPos.Y <= r.Bottom)
+            .OrderBy(r => (long)r.Width * r.Height)
+            .FirstOrDefault();
+
+        if (_viewModel.HoveredRect != hit)
+        {
+            _viewModel.HoveredRect = hit == default(PixelRect) ? null : hit;
+        }
+    }
+
+    /// <summary>自動切り出しモード中のダブルクリックで、領域内の最小矩形を確定して切り出す。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">ポインタイベント。</param>
+    /// <remarks>
+    /// クリック位置（ドメイン座標）を含む矩形のうち<b>面積が最小</b>のものを確定し、
+    /// <see cref="MainViewModel.ConfirmAutoCropCommand"/> で切り出す。<br/>
+    /// 何も選択されていない場合は何もしない。
+    /// </remarks>
+    private void OnAutoCropPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!_viewModel.IsAutoCropActive)
+        {
+            return;
+        }
+
+        // ダブルクリックのみ確定（単一クリックでは確定しない）
+        var point = e.GetCurrentPoint(AutoCropOverlay);
+        if (!point.Properties.IsLeftButtonPressed || e.ClickCount < 2)
+        {
+            return;
+        }
+
+        var viewportPos = e.GetPosition(AutoCropOverlay);
+        var contentPos = ViewportToContentDomain(viewportPos);
+
+        var hit = _viewModel.DetectedRects
+            .Where(r => contentPos.X >= r.X && contentPos.X <= r.Right
+                     && contentPos.Y >= r.Y && contentPos.Y <= r.Bottom)
+            .OrderBy(r => (long)r.Width * r.Height)
+            .FirstOrDefault();
+
+        if (hit != default(PixelRect))
+        {
+            _viewModel.ConfirmAutoCropCommand.Execute(hit);
+        }
+    }
+
+    /// <summary>ビューポート座標をドメイン座標（元画像ピクセル）へ変換する。</summary>
+    /// <param name="viewportPos">ビューポート座標。</param>
+    /// <returns>ドメイン座標。</returns>
+    /// <remarks>
+    /// <see cref="ZoomableView.ViewportToContent"/> は Fit 中央寄せの原点補正を考慮しないため、<br/>
+    /// 画像の表示矩形（<see cref="ZoomableView.ImageRectViewport"/>）の原点を基準に逆変換する。<br/>
+    /// 変換式: <c>ドメイン座標 = (ビューポート座標 − 画像原点) / 実効スケール</c>。
+    /// </remarks>
+    private Point ViewportToContentDomain(Point viewportPos)
+    {
+        var imageRect = ZoomableView.ImageRectViewport();
+        var scale = ZoomableView.EffectiveScale;
+        return new Point(
+            (viewportPos.X - imageRect.X) / scale,
+            (viewportPos.Y - imageRect.Y) / scale);
+    }
+
+    /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
+    /// <param name="contentPos">ドメイン座標。</param>
+    /// <returns>ビューポート座標。</returns>
+    /// <remarks>
+    /// <see cref="ZoomableView.ContentToViewport"/> は Fit 中央寄せの原点補正を考慮しないため、<br/>
+    /// 画像の表示矩形（<see cref="ZoomableView.ImageRectViewport"/>）の原点を基準に変換する。<br/>
+    /// 変換式: <c>ビューポート座標 = 画像原点 + ドメイン座標 × 実効スケール</c>。
+    /// </remarks>
+    private Point ContentToViewportDomain(Point contentPos)
+    {
+        var imageRect = ZoomableView.ImageRectViewport();
+        var scale = ZoomableView.EffectiveScale;
+        return new Point(
+            imageRect.X + contentPos.X * scale,
+            imageRect.Y + contentPos.Y * scale);
     }
 
     // ====================================================================

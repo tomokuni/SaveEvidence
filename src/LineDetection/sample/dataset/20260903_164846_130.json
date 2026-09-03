@@ -1,0 +1,24 @@
+{
+  "CaptureBounds": {
+    "X": 181,
+    "Y": 346,
+    "Width": 1683,
+    "Height": 1347,
+    "Right": 1864,
+    "Bottom": 1693
+  },
+  "GroundTruthWindows": [
+    {
+      "Bounds": {
+        "X": 22,
+        "Y": 29,
+        "Width": 1639,
+        "Height": 1290,
+        "Right": 1661,
+        "Bottom": 1319
+      },
+      "Title": "\u30BF\u30A4\u30C8\u30EB\u306A\u3057 - \u30DA\u30A4\u30F3\u30C8",
+      "ClassName": "MSPaintApp"
+    }
+  ]
+}

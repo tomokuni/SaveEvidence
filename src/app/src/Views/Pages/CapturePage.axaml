@@ -129,6 +129,15 @@
                  オフセット上書き・防御コードが不要。画像は ZoomableView が内部で管理する） -->
             <zoom:ZoomableView x:Name="ZoomableView"
                                    Background="Transparent"/>
+
+            <!-- 自動切り出し（LineDetection 検出）の矩形選択オーバーレイ。
+                 ZoomableView と同一セルに重ね、検出矩形は ContentToViewport でビューポート座標へ変換して Canvas に配置する。
+                 矩形の生成・再配置はコードビハインド（UpdateAutoCropOverlay）で行う -->
+            <Canvas x:Name="AutoCropOverlay"
+                    IsHitTestVisible="True"
+                    Background="Transparent"
+                    PointerMoved="OnAutoCropPointerMoved"
+                    PointerPressed="OnAutoCropPointerPressed"/>
         </Grid>
 
         <!-- ステータスバー（左: 保存済み/未 | 保存ファイル名 / 右: 拡大率（スライダ + % + フライアウト）） -->
@@ -141,6 +150,7 @@
                            ToolTip.Tip="画像サイズ（ドメイン座標 = 元画像ピクセル）"/>
                 <TextBlock Text="{Binding SaveStatusText}" FontSize="12"/>
                 <TextBlock Text="{Binding SavedFileName}" FontSize="12"/>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#007ACC" VerticalAlignment="Center"/>
             </StackPanel>
 
             <!-- 右側（右寄せ）: 拡大率 -->
