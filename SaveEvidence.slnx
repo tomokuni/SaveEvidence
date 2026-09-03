@@ -1,12 +1,8 @@
 <Solution>
   <Folder Name="/src/" />
   <Folder Name="/src/app/">
-    <Project Path="src/app/sample_RectDetection/WindowDetectionSample.csproj" />
     <Project Path="src/app/src/app.csproj" />
     <Project Path="src/app/tests/app.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/app/sample_createdataset/">
-    <Project Path="src/app/sample_createdataset/SampleCreateDataset.csproj" />
   </Folder>
   <Folder Name="/src/ColorPickerControl/">
     <Project Path="src/ColorPickerControl/sample/ColorPickerControl.Sample.csproj" />
@@ -27,14 +23,9 @@
     <Project Path="src/FadeMaskDragRectControl/src/FadeMaskDragRect.csproj" />
     <Project Path="src/FadeMaskDragRectControl/tests/FadeMaskDragRect.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/LineDetection/" />
-  <Folder Name="/src/LineDetection/sample/">
+  <Folder Name="/src/LineDetection/">
     <Project Path="src/LineDetection/sample/LineDetection.Sample.csproj" />
-  </Folder>
-  <Folder Name="/src/LineDetection/src/">
     <Project Path="src/LineDetection/src/LineDetection.csproj" />
-  </Folder>
-  <Folder Name="/src/LineDetection/tests/">
     <Project Path="src/LineDetection/tests/LineDetection.Tests.csproj" />
   </Folder>
   <Folder Name="/src/LoupeControl/">
