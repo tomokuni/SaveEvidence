@@ -17,12 +17,16 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <!-- ライブラリ（LineDetection）と同じ Avalonia 12.1 系に揃える（12.1.1 が推移参照で混入するのを防ぐ） -->
+    <!-- ライブラリ（LineDetection）の LineDetectionResult が Avalonia.Point を使用するため参照する -->
     <PackageReference Include="Avalonia" Version="[12.*,)" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\src\LineDetection.csproj" />
+    <!-- テストで PNG を読み込み PixelImage を構築するために OpenCV を直接参照する
+         （検出器本体（LineDetection）は OpenCV に依存するが、public API には露出しない） -->
+    <PackageReference Include="OpenCvSharp5" Version="[5.*,)" />
+    <PackageReference Include="OpenCvSharp5.runtime.win" Version="[5.*,)" />
   </ItemGroup>
 
   <ItemGroup>

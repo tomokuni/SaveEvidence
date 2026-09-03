@@ -129,8 +129,8 @@ public sealed partial class DetectionContext : ObservableObject
             return;
         }
 
-        using var mat = MatHelper.ToMat(Image);
-        var results = detector.Detector.Detect(mat);
+        // 検出器は OpenCV 非依存のピクセルバッファ（PixelImage）を受け取るため、Bitmap を変換する
+        var results = detector.Detector.Detect(BitmapImageConverter.ToPixelImage(Image));
 
         // モデル依存方式のエラー（モデル未配置等）をステータスへ反映する
         if (detector.Detector.ErrorMessage is { } error)

@@ -31,8 +31,7 @@ internal static class DatasetVerifier
         try
         {
             using var bitmap = new Bitmap(entry.PngPath);
-            using var mat = MatHelper.ToMat(bitmap);
-            var results = detector.Detect(mat);
+            var results = detector.Detect(BitmapImageConverter.ToPixelImage(bitmap));
 
             if (TryReconstructBounds(results) is not { } bound)
             {

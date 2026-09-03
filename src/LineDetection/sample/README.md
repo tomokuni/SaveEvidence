@@ -41,7 +41,7 @@ dotnet run -c Release --project src/LineDetection/sample/LineDetection.Sample.cs
 
 または `RunSample.bat` をダブルクリックすると、リリースビルド後にアプリが起動します。
 
-> 本サンプルは独立したプロジェクトです（LineDetection ライブラリ + LoupeControl ライブラリ + OpenCvSharp4 を使用）。
+> 本サンプルは独立したプロジェクトです（LineDetection ライブラリ + LoupeControl ライブラリ + OpenCvSharp5 を使用）。
 
 ## 3. 操作方法
 
@@ -102,6 +102,6 @@ src/LineDetection/
 │   ├── RunSample.bat
 │   ├── ViewModels/       # MainWindowViewModel・LineItem・LineDetectorOption
 │   ├── Views/            # MainWindow.axaml / MainWindow.axaml.cs
-│   └── Imaging/          # ClipboardImageReader（Win32 CF_DIB）・MatHelper
+│   └── Imaging/          # ClipboardImageReader（Win32 CF_DIB）・BitmapImageConverter（Bitmap → PixelImage）
 └── README.md / SPEC_ExtFunc.md / SPEC_System.md
 ```
