@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
-using Avalonia.Interactivity;
 using LineDetectionSample.Imaging;
 using LineDetectionSample.ViewModels;
 

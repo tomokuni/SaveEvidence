@@ -76,7 +76,8 @@ public sealed partial class DetectionContext : ObservableObject
     public bool HasImage => Image is not null;
 
     /// <summary>選択中の検出方式。</summary>
-    public LineDetectorOption SelectedDetector { get; set; }
+    /// <remarks>使用側（ページ ViewModel）が設定する。既定値は null。</remarks>
+    public LineDetectorOption? SelectedDetector { get; set; }
 
     /// <summary>垂直線分のグループ見出しテキスト。</summary>
     public string VerticalCountText => $"垂直線分（{VerticalLines.Count}）";
@@ -86,13 +87,6 @@ public sealed partial class DetectionContext : ObservableObject
 
     /// <summary>選択中の線分の表示テキスト（一覧・改行区切り）。未選択時は「なし」。</summary>
     public string SelectedLineText { get; private set; } = "選択中: なし";
-
-    /// <summary>DetectionContext を初期化する。</summary>
-    public DetectionContext()
-    {
-        // 既定の検出方式を設定する（ロジック方式）
-        SelectedDetector = new LineDetectorOption(new LogicLineDetector());
-    }
 
     /// <summary>画像の変更時に表示状態を更新する。</summary>
     partial void OnImageChanged(Bitmap? value)
@@ -129,11 +123,17 @@ public sealed partial class DetectionContext : ObservableObject
             return;
         }
 
+        if (SelectedDetector is not { } detector)
+        {
+            StatusText = "検出方式が選択されていません。";
+            return;
+        }
+
         using var mat = MatHelper.ToMat(Image);
-        var results = SelectedDetector.Detector.Detect(mat);
+        var results = detector.Detector.Detect(mat);
 
         // モデル依存方式のエラー（モデル未配置等）をステータスへ反映する
-        if (SelectedDetector.Detector.ErrorMessage is { } error)
+        if (detector.Detector.ErrorMessage is { } error)
         {
             StatusText = error;
             UpdateLines([]);
@@ -157,22 +157,27 @@ public sealed partial class DetectionContext : ObservableObject
         UpdateLines(allLines);
 
         StatusText = results.Count > 0
-            ? $"{SelectedDetector.Name}: 垂直線分 {verticals.Count} 本・水平線分 {horizontals.Count} 本 を検出"
-            : $"{SelectedDetector.Name}: 線分を検出できませんでした";
+            ? $"{detector.Name}: 垂直線分 {verticals.Count} 本・水平線分 {horizontals.Count} 本 を検出"
+            : $"{detector.Name}: 線分を検出できませんでした";
     }
 
     /// <summary>検出結果の線分一覧を各グループとオーバーレイへ反映する。</summary>
-    /// <param name="lines">検出結果の線分アイテム一覧（垂直 → 水平の順）。</param>
+    /// <param name="lines">検出結果の線分アイテム一覧（垂直 → 水平の順でスコア降順）。</param>
     private void UpdateLines(List<LineItem> lines)
     {
-        VerticalLines = lines.Where(l => l.Orientation == LineOrientation.Vertical).ToList();
-        HorizontalLines = lines.Where(l => l.Orientation == LineOrientation.Horizontal).ToList();
-
         OverlayLines.Clear();
         foreach (var line in lines)
         {
             OverlayLines.Add(line);
         }
+
+        // グループは入力の並び（垂直 → 水平）を保ったまま一括で参照する（追加の Where 反復を避ける）
+        VerticalLines = lines
+            .Where(l => l.Orientation == LineOrientation.Vertical)
+            .ToList();
+        HorizontalLines = lines
+            .Where(l => l.Orientation == LineOrientation.Horizontal)
+            .ToList();
 
         OnPropertyChanged(nameof(VerticalLines));
         OnPropertyChanged(nameof(HorizontalLines));
@@ -190,31 +195,41 @@ public sealed partial class DetectionContext : ObservableObject
     /// <remarks>
     /// ポインタから <see cref="HoverDistance"/> 以内にある最寄りの線分だけをホバー状態にし、<br/>
     /// それ以外の線分はホバー解除する（一覧側のホバーは <see cref="SetLineHover"/> が担当）。<br/>
-    /// マウス位置の画像ドメイン座標を <see cref="PointerDomainText"/> へ反映する。
+    /// マウス位置の画像ドメイン座標を <see cref="PointerDomainText"/> へ反映する。<br/>
+    /// ホバー対象が変化した場合のみルーペ内の表示を更新する（無変化時の再計算を避ける）。
     /// </remarks>
     public void UpdateHover(Point pos)
     {
         PointerDomainText = $"({pos.X:0}, {pos.Y:0})";
 
         LineItem? nearest = null;
-        var best = HoverDistance;
+        var bestSquared = HoverDistance * HoverDistance;
 
         foreach (var line in OverlayLines)
         {
-            var distance = DistanceToSegment(pos, line.Start, line.End);
-            if (distance < best)
+            var squared = DistanceToSegmentSquared(pos, line.Start, line.End);
+            if (squared < bestSquared)
             {
-                best = distance;
+                bestSquared = squared;
                 nearest = line;
             }
         }
 
+        // ホバー対象が変化したときだけルーペの表示を更新する（ポインタ移動毎の無駄な再計算を防ぐ）
+        var changed = false;
         foreach (var line in OverlayLines)
         {
-            line.IsHovered = line == nearest;
+            if (line.IsHovered != (line == nearest))
+            {
+                line.IsHovered = line == nearest;
+                changed = true;
+            }
         }
 
-        UpdateLoupeOverlay();
+        if (changed)
+        {
+            UpdateLoupeOverlay();
+        }
     }
 
     /// <summary>ポインタが画像上から離れたときの表示をクリアする。</summary>
@@ -248,7 +263,8 @@ public sealed partial class DetectionContext : ObservableObject
     /// </remarks>
     public void ToggleSelectAt(Point pos)
     {
-        var hit = OverlayLines.FirstOrDefault(line => DistanceToSegment(pos, line.Start, line.End) < HoverDistance);
+        var hit = OverlayLines.FirstOrDefault(
+            line => DistanceToSegmentSquared(pos, line.Start, line.End) < HoverDistance * HoverDistance);
         if (hit is not null)
         {
             ToggleSelect(hit);
@@ -319,18 +335,26 @@ public sealed partial class DetectionContext : ObservableObject
     /// </remarks>
     private void UpdateLoupeOverlay()
     {
-        var selected = _selectionOrder.Where(l => l.IsSelected).ToList();
-        LoupeOverlayLines = selected.Count > 0 ? selected : OverlayLines.Where(l => l.IsHovered).ToList();
+        // _selectionOrder は常に選択中の線分のみを保持するため、IsSelected の再判定は不要
+        if (_selectionOrder.Count > 0)
+        {
+            LoupeOverlayLines = [.. _selectionOrder];
+        }
+        else
+        {
+            LoupeOverlayLines = OverlayLines.Where(l => l.IsHovered).ToList();
+        }
+
         OnPropertyChanged(nameof(LoupeOverlayLines));
     }
 
-    /// <summary>点から線分への最短距離を計算する。</summary>
+    /// <summary>点から線分への最短距離の二乗値を計算する。</summary>
     /// <param name="p">判定する点。</param>
     /// <param name="a">線分の始点。</param>
     /// <param name="b">線分の終点。</param>
-    /// <returns>点と線分の最短距離。</returns>
-    /// <remarks>線分に射影した点が線分の範囲内にあるかで、垂線長と端点距離を切り替える。</remarks>
-    private static double DistanceToSegment(Point p, Point a, Point b)
+    /// <returns>点と線分の最短距離の二乗値。</returns>
+    /// <remarks>近接判定（しきい値の二乗と比較）に使用するため、開平方を行わない（ホットパス高速化）。</remarks>
+    private static double DistanceToSegmentSquared(Point p, Point a, Point b)
     {
         var abx = b.X - a.X;
         var aby = b.Y - a.Y;
@@ -340,14 +364,12 @@ public sealed partial class DetectionContext : ObservableObject
         var length = abx * abx + aby * aby;
         if (length == 0)
         {
-            return Math.Sqrt(apx * apx + apy * apy);
+            return apx * apx + apy * apy;
         }
 
         var t = Math.Max(0, Math.Min(1, (apx * abx + apy * aby) / length));
-        var cx = a.X + t * abx;
-        var cy = a.Y + t * aby;
-        var dx = p.X - cx;
-        var dy = p.Y - cy;
-        return Math.Sqrt(dx * dx + dy * dy);
+        var dx = p.X - (a.X + t * abx);
+        var dy = p.Y - (a.Y + t * aby);
+        return dx * dx + dy * dy;
     }
 }

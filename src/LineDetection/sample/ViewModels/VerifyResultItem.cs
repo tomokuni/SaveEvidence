@@ -13,8 +13,10 @@ namespace LineDetectionSample.ViewModels;
 public sealed record VerifyResultItem(string Name, bool IsCorrect, IReadOnlyList<string> DetailLines)
 {
     /// <summary>一致/不一致の表示テキスト。</summary>
+    /// <value>「一致」または「不一致」。</value>
     public string StatusText => IsCorrect ? "一致" : "不一致";
 
     /// <summary>データ名のフォントウェイト（一致時は太字、不一致時は通常）。</summary>
+    /// <value><see cref="FontWeight.Bold"/> または <see cref="FontWeight.Normal"/>。</value>
     public FontWeight NameFontWeight => IsCorrect ? FontWeight.Bold : FontWeight.Normal;
 }

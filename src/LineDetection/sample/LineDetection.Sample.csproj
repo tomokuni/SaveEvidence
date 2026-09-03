@@ -13,15 +13,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="[12.1.*,)" />
-    <PackageReference Include="Avalonia.Desktop" Version="[12.1.*,)" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.1.*,)" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="[12.1.*,)" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.2.*,)" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="Avalonia" Version="[12.*,)" />
+    <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.*,)" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="[12.*,)" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.*,)" Condition="'$(Configuration)' == 'Debug'" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
     <PackageReference Include="OpenCvSharp5" Version="[5.*,)" />
     <PackageReference Include="OpenCvSharp5.runtime.win" Version="[5.*,)" />
-    <PackageReference Include="System.Reactive" Version="[6.*,)" />
+    <PackageReference Include="System.Reactive" Version="[7.*,)" />
   </ItemGroup>
 
   <ItemGroup>

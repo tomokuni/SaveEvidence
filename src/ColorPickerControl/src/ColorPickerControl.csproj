@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="[12.1.*,)" />
+    <PackageReference Include="Avalonia" Version="[12.*,)" />
     <PackageReference Include="Avalonia.Controls.ColorPicker" Version="[12.1.*, )" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
   </ItemGroup>

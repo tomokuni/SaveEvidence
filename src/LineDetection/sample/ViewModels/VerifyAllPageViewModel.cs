@@ -50,9 +50,7 @@ public sealed partial class VerifyAllPageViewModel : ObservableObject
         if (DatasetItems.Count == 0)
         {
             StatusText = "dataset 検証対象がありません";
-            OnPropertyChanged(nameof(MatchedCount));
-            OnPropertyChanged(nameof(TotalCount));
-            OnPropertyChanged(nameof(SummaryText));
+            NotifySummaryChanged();
             return;
         }
 
@@ -62,6 +60,12 @@ public sealed partial class VerifyAllPageViewModel : ObservableObject
         }
 
         StatusText = $"dataset 検証: {MatchedCount}/{TotalCount} 一致（許容誤差 0px）";
+        NotifySummaryChanged();
+    }
+
+    /// <summary>サマリ関連プロパティの変更を一括通知する。</summary>
+    private void NotifySummaryChanged()
+    {
         OnPropertyChanged(nameof(MatchedCount));
         OnPropertyChanged(nameof(TotalCount));
         OnPropertyChanged(nameof(SummaryText));

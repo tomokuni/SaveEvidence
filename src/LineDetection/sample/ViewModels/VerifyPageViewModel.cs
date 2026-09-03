@@ -1,5 +1,6 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Estable.AvaloniaUI.LineDetection;
 using System.Collections.ObjectModel;
 
 namespace LineDetectionSample.ViewModels;
@@ -36,6 +37,7 @@ public sealed partial class VerifyPageViewModel : ObservableObject
     public VerifyPageViewModel()
     {
         Context = new DetectionContext();
+        Context.SelectedDetector = new LineDetectorOption(new LogicLineDetector());
         DatasetItems = DatasetVerifier.LoadDatasetItems();
 
         // 初期選択を Initial_window とする（大文字小文字を無視して照合。見つからない場合は未選択のまま）
@@ -68,7 +70,10 @@ public sealed partial class VerifyPageViewModel : ObservableObject
 
             // 選択画像 1 件分のみを検証結果として表示する
             VerifyResults.Clear();
-            VerifyResults.Add(DatasetVerifier.VerifyImage(value, Context.SelectedDetector.Detector));
+            if (Context.SelectedDetector is { } detector)
+            {
+                VerifyResults.Add(DatasetVerifier.VerifyImage(value, detector.Detector));
+            }
 
             Context.StatusText = $"dataset: {value.Name} を検証";
         }

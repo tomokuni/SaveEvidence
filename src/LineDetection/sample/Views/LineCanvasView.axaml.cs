@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -31,12 +30,6 @@ public partial class LineCanvasView : UserControl
 {
     /// <summary>ルーペをカーソルの右下へ配置するオフセット量（DIP）。</summary>
     private const double LoupePositionOffset = 24;
-
-    /// <summary>ホバー中の線分のルーペ内表示色（赤）。</summary>
-    private static readonly IBrush s_hoverOverlayBrush = new SolidColorBrush(Color.Parse("#FF3B30"));
-
-    /// <summary>選択中の線分のルーペ内表示色（オレンジ）。</summary>
-    private static readonly IBrush s_selectedOverlayBrush = new SolidColorBrush(Color.Parse("#FF8C00"));
 
     /// <summary>Shared ViewModel（線分検出・データ検証ページ共通の検出コンテキスト）。</summary>
     private DetectionContext? _ctx;
@@ -155,20 +148,25 @@ public partial class LineCanvasView : UserControl
         }
 
         using var locked = writeable.Lock();
+
+        // 選択中 = オレンジ / ホバー中 = 赤。色は事前に選んでから描画する（ループ内のキャストを避ける）
         foreach (var line in lines)
         {
             var start = new Point((line.Start.X - topLeft.X) * e.Scale, (line.Start.Y - topLeft.Y) * e.Scale);
             var end = new Point((line.End.X - topLeft.X) * e.Scale, (line.End.Y - topLeft.Y) * e.Scale);
-            var color = (line.IsSelected ? s_selectedOverlayBrush : s_hoverOverlayBrush) as SolidColorBrush;
-            if (color is not null)
-            {
-                // 検出された線分の座標をそのまま使って破線を描画する。
-                // 線分の座標は LogicLineDetector がウィンドウ枠の境界（外縁）に補正済みのため、
-                // ルーペ内でも枠の線上に表示される（見た目だけのスナップは行わない）
-                DrawDashedLine(locked, start, end, color.Color, DashPattern, e.Scale);
-            }
+
+            // 検出された線分の座標をそのまま使って破線を描画する。
+            // 線分の座標は LogicLineDetector がウィンドウ枠の境界（外縁）に補正済みのため、
+            // ルーペ内でも枠の線上に表示される（見た目だけのスナップは行わない）
+            DrawDashedLine(locked, start, end, line.IsSelected ? s_selectedOverlayColor : s_hoverOverlayColor, DashPattern, e.Scale);
         }
     }
+
+    /// <summary>ホバー中の線分のルーペ内表示色（赤）。</summary>
+    private static readonly Color s_hoverOverlayColor = Color.Parse("#FF3B30");
+
+    /// <summary>選択中の線分のルーペ内表示色（オレンジ）。</summary>
+    private static readonly Color s_selectedOverlayColor = Color.Parse("#FF8C00");
 
     /// <summary>ルーペ内の線分オーバーレイの破線パターン（描画 4px・間隔 3px・ルーピクセル）。</summary>
     private static readonly double[] DashPattern = [4.0, 3.0];

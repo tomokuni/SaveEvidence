@@ -33,16 +33,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.*" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.*,)" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
-    <PackageReference Include="Avalonia.Desktop" Version="[12.1.*,)" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.2.*,)" />
-    <PackageReference Include="FluentAvaloniaUI" Version="3.0.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.*,)" />
+    <PackageReference Include="FluentAvaloniaUI" Version="[3.*,)" />
     <!-- FluentIcons.Avalonia (必要に応じて追加) -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10.*,)" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
-    <PackageReference Include="NLog" Version="6.1.4" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="6.1.4" />
+    <PackageReference Include="NLog" Version="[6.*,)" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="[6.*,)" />
   </ItemGroup>
 
   <ItemGroup>

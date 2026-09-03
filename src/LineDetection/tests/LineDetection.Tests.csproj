@@ -17,6 +17,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <!-- ライブラリ（LineDetection）と同じ Avalonia 12.1 系に揃える（12.1.1 が推移参照で混入するのを防ぐ） -->
+    <PackageReference Include="Avalonia" Version="[12.*,)" />
   </ItemGroup>
 
   <ItemGroup>

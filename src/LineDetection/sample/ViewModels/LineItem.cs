@@ -45,21 +45,27 @@ public sealed partial class LineItem : ObservableObject
     }
 
     /// <summary>一覧内の表示インデックス。</summary>
+    /// <value>垂直・水平を合わせた通し番号（0 始まり）。</value>
     public int Index { get; }
 
     /// <summary>始点（画像座標・ピクセル）。</summary>
+    /// <value>画像ピクセル座標の X・Y（例: (48, 38)）。</value>
     public Point Start { get; }
 
     /// <summary>終点（画像座標・ピクセル）。</summary>
+    /// <value>画像ピクセル座標の X・Y（例: (852, 38)）。</value>
     public Point End { get; }
 
     /// <summary>線分の向き（水平 / 垂直）。</summary>
+    /// <value>水平または垂直。</value>
     public LineOrientation Orientation { get; }
 
     /// <summary>確からしさ（長さ・信頼度等）。</summary>
+    /// <value>線分の長さ（ピクセル）。大きいほど有力。</value>
     public double Score { get; }
 
     /// <summary>線分の長さ（ピクセル）。</summary>
+    /// <value>始点・終点間のユークリッド距離（例: 804px）。</value>
     public double Length { get; }
 
     /// <summary>マウスオーバー中かどうか。</summary>
@@ -86,16 +92,14 @@ public sealed partial class LineItem : ObservableObject
     public string Summary => $"#{Index} ({Start.X:0}, {Start.Y:0}) → ({End.X:0}, {End.Y:0})  長さ {Length:0}px";
 
     /// <summary>ホバー状態の変化時に表示色を更新する。</summary>
-    partial void OnIsHoveredChanged(bool value)
-    {
-        OnPropertyChanged(nameof(Stroke));
-        OnPropertyChanged(nameof(StrokeThickness));
-        OnPropertyChanged(nameof(RowBackground));
-        OnPropertyChanged(nameof(IndicatorBrush));
-    }
+    partial void OnIsHoveredChanged(bool value) => NotifyLineAppearanceChanged();
 
     /// <summary>選択状態の変化時に表示色を更新する。</summary>
-    partial void OnIsSelectedChanged(bool value)
+    partial void OnIsSelectedChanged(bool value) => NotifyLineAppearanceChanged();
+
+    /// <summary>線分の表示色（線・行背景・インジケーター）の変更を一括通知する。</summary>
+    /// <remarks>ホバー・選択のどちらの変化でも、線分の見た目（太さ含む）は同じ 4 プロパティに依存するため一括で通知する。</remarks>
+    private void NotifyLineAppearanceChanged()
     {
         OnPropertyChanged(nameof(Stroke));
         OnPropertyChanged(nameof(StrokeThickness));

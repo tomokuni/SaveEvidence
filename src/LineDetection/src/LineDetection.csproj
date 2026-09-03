@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="[12.1.*,)" />
+    <PackageReference Include="Avalonia" Version="[12.*,)" />
     <PackageReference Include="OpenCvSharp5" Version="[5.*,)" />
     <PackageReference Include="OpenCvSharp5.runtime.win" Version="[5.*,)" />
   </ItemGroup>
