@@ -17,8 +17,8 @@
 
 `ZoomViewControl/sample/` にある **ZoomViewControl 動作確認用の独立したサンプルアプリケーション**です。
 
-- `ZoomableView`（`Estable.AvaloniaUI.ZoomView.ZoomableView`）を実際に配置して、ズーム・パン・Fit 表示の動作を確認できます。
-- `ZoomManager`（`Estable.AvaloniaUI.ZoomView.ZoomManager`）に `IZoomHost` 実装（`MainWindowViewModel`）を注入し、ボタン・スライダ・Ctrl+ホイールのズーム操作を統括させます。
+- `ZoomViewControl`（`Estable.AvaloniaUI.ZoomView.ZoomViewControl`）を実際に配置して、ズーム・パン・Fit 表示の動作を確認できます。
+- `ZoomViewControl` は自己完結型複合コントロールで、ボタン・スライダ・Ctrl+ホイールのズーム操作を統括します。
 - **画面左側の設定パネル**でコントロールに対する設定（ズーム率・中央寄せ/左上寄せ・画像選択）を行います。
 - テスト画像（グラデーション＋グリッド＋マーカー）を生成して初期表示します。画像ファイルを開いて差し替えることもできます。
 - ポインタ位置のドメイン座標（元画像ピクセル）を設定パネルに表示します（`ViewportToContent` の使用例）。
@@ -88,7 +88,7 @@ ZoomViewControl/sample/
 ├── Imaging/
 │   └── TestImageFactory.cs      # テスト画像生成（グラデーション＋グリッド＋マーカー）
 ├── ViewModels/
-│   └── MainWindowViewModel.cs   # IZoomHost 実装（ZoomPercent / PreviewImage / CenterAlign 等）
+│   └── MainWindowViewModel.cs   # 表示用状態（ZoomPercent / PreviewImage / CenterAlign / ZoomDisplayText 等）
 └── Views/
     ├── MainWindow.axaml(.cs)    # メイン画面（左: 設定パネル / 右: ズームビュー）
 ```

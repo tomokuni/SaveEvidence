@@ -236,4 +236,56 @@ public class ZoomMathTests
         Assert.Equal(viewportPos.X, back.X, 6);
         Assert.Equal(viewportPos.Y, back.Y, 6);
     }
+
+    // ====================================================================
+    // ViewportToContentImage / ContentToViewportImage（画像表示矩形原点基準の変換）
+    // ====================================================================
+
+    [Fact]
+    public void ViewportToContentImage_画像原点を基準にビューポートからコンテンツへ変換する()
+    {
+        // 画像原点 (100,50)・スケール 2.0 → ((10-100)/2, (20-50)/2) = (-45, -15)
+        var result = ZoomMath.ViewportToContentImage(new Point(10, 20), new Point(100, 50), 2.0);
+
+        Assert.Equal(new Point(-45, -15), result);
+    }
+
+    [Fact]
+    public void ViewportToContentImage_スケール0以下は1として扱う()
+    {
+        var result = ZoomMath.ViewportToContentImage(new Point(110, 70), new Point(100, 50), 0);
+
+        Assert.Equal(new Point(10, 20), result);
+    }
+
+    [Fact]
+    public void ContentToViewportImage_画像原点を基準にコンテンツからビューポートへ変換する()
+    {
+        // 画像原点 (100,50)・スケール 2.0 → (100 + (-45)*2, 50 + (-15)*2) = (10, 20)
+        var result = ZoomMath.ContentToViewportImage(new Point(-45, -15), new Point(100, 50), 2.0);
+
+        Assert.Equal(new Point(10, 20), result);
+    }
+
+    [Fact]
+    public void ContentToViewportImage_スケール0以下は1として扱う()
+    {
+        var result = ZoomMath.ContentToViewportImage(new Point(10, 20), new Point(100, 50), 0);
+
+        Assert.Equal(new Point(110, 70), result);
+    }
+
+    [Fact]
+    public void 画像基準の往復変換で元のビューポート座標に戻る()
+    {
+        var viewportPos = new Point(150, 260);
+        var imageOrigin = new Point(60, 80);
+        var scale = 1.75;
+
+        var content = ZoomMath.ViewportToContentImage(viewportPos, imageOrigin, scale);
+        var back = ZoomMath.ContentToViewportImage(content, imageOrigin, scale);
+
+        Assert.Equal(viewportPos.X, back.X, 6);
+        Assert.Equal(viewportPos.Y, back.Y, 6);
+    }
 }

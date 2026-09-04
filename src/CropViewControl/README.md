@@ -52,7 +52,7 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 現在は NuGet パッケージではなく、プロジェクト参照で利用します。
 
 ```xml
-<ProjectReference Include="..\CropView\src\CropView.csproj" />
+<ProjectReference Include="..\CropView\src\CropViewControl.csproj" />
 ```
 
 必要な名前空間:
@@ -69,8 +69,8 @@ using Estable.AvaloniaUI.FadeMaskDragRect; // FadeMaskDragRectMode
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropView">
-    <crop:CropView x:Name="CropPreview" />
+        xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropViewControl">
+    <crop:CropViewControl x:Name="CropPreview" />
 </Window>
 ```
 
@@ -120,8 +120,8 @@ Crop プレビューを拡大・パン・Fit しながら、ドラッグ選択 �
 ```text
 CropView/
 ├── src/
-│   ├── CropView.csproj
-│   ├── CropView.cs          （高レベル複合コントロール本体）
+│   ├── CropViewControl.csproj
+│   ├── CropViewControl.cs    （高レベル複合コントロール本体）
 │   ├── OverlayRect.cs       （外部提供矩形の描画情報 record）
 │   └── OverlayLineStyle.cs  （枠線スタイル enum）
 └── tests/

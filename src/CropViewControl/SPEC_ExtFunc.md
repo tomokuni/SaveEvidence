@@ -8,7 +8,7 @@
   - [目次](#目次)
   - [1. 概要](#1-概要)
   - [2. 公開 API](#2-公開-api)
-    - [2.1. CropView クラス](#21-cropview-クラス)
+    - [2.1. CropViewControl クラス](#21-cropviewcontrol-クラス)
     - [2.2. OverlayRect 構造体](#22-overlayrect-構造体)
     - [2.3. OverlayLineStyle 列挙型](#23-overlaylinestyle-列挙型)
   - [3. 入力・出力](#3-入力出力)
@@ -31,7 +31,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 名前空間: `Estable.AvaloniaUI.CropView`
 
-### 2.1. CropView クラス
+### 2.1. CropViewControl クラス
 
 画像表示 + 領域選択 + 外部提供矩形の統合コントロール（`Panel` のサブクラス）。
 
@@ -39,7 +39,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Source` | `IImage?` | 表示画像。ZoomView とルーペへ伝搬。変更時は Fit 表示にリセット。 |
+| `Source` | `IImage?` | 表示画像。ZoomViewControl とルーペへ伝搬。変更時は Fit 表示にリセット。 |
 | `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（ドメイン座標）。View とルーペの両方へ描画。 |
 | `SelectionMode` | `FadeMaskDragRectMode` | 選択モード（既定 `Crop`）。FadeMaskDragRectControl へ委譲。 |
 | `ZoomPercent` | `int` | 現在のズーム率（%）。0 = Fit。 |
@@ -123,4 +123,4 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 ## 6. スレッド安全性
 
 - 本コントロールは Avalonia の UI スレッドで操作することを前提とします。
-- 内部のコントロール（ZoomView / FadeMaskDragRect / ルーペ）も同様に UI スレッドで操作します。
+- 内部のコントロール（ZoomViewControl / FadeMaskDragRect / ルーペ）も同様に UI スレッドで操作します。

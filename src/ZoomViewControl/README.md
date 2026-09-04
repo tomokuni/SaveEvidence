@@ -9,9 +9,8 @@
   - [3. システム要件](#3-システム要件)
   - [4. インストール](#4-インストール)
   - [5. クイックスタート](#5-クイックスタート)
-    - [AXAML（ZoomableView の配置）](#axamlzoomableview-の配置)
-    - [IZoomHost の実装](#izoomhost-の実装)
-    - [ZoomManager の注入](#zoommanager-の注入)
+    - [AXAML（ZoomView の配置）](#axamlzoomview-の配置)
+    - [画像の設定とイベント購読](#画像の設定とイベント購読)
   - [6. ズーム操作](#6-ズーム操作)
   - [7. サンプル](#7-サンプル)
   - [8. ドキュメント](#8-ドキュメント)
@@ -24,10 +23,10 @@
 
 画像プレビューのズーム・パン・Fit 表示を提供する独立ライブラリです。
 
-- **ZoomableView**: ScrollViewer を使用しない自己完結型ビューポート（RenderTransform ベース）
-- **ZoomManager**: ズーム率の遷移・適用を統括（`IZoomHost` を注入）。特定コントロールに依存せず、`ZoomChanged` イベントでホストへ通知
+- **ZoomViewControl**: 自己完結型複合コントロール。`ZoomableView` を内包し、ズーム率の遷移・適用・Fit 表示・可否・表示テキストを統括。特定コントロールに依存せず、`ZoomChanged` イベントでズーム率と可否をホストへ通知
+- **ZoomableView**: ScrollViewer を使用しない自己完結型ビューポート（RenderTransform ベース）。`ZoomViewControl.ZoomableView` で低レベル機能（座標変換・オーバーレイ追従）を提供
 - **純粋関数**: `ZoomMath`（ズーム中心維持）/ `ZoomTransition`（段階遷移）/ `ScrollMetrics`（スクロールバー幾何）
-- 上位 AP は `IZoomHost` を実装して注入するだけで、ズーム計算・表示の詳細は本ライブラリが担います
+- 上位 AP は `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読するだけで、ズーム計算・表示の詳細は本ライブラリが担います
 
 ## 2. 機能一覧
 
@@ -35,10 +34,10 @@
 - **ズーム中心維持**: マウスポインタ位置 / ビューポート中心を基準に拡大縮小
 - **パン**: マウスドラッグ（grab 方式）/ ホイール / スクロールバー
 - **Fit 表示**: ビューポートに収まる Uniform スケール（自動）と実効倍率の表示
-- **座標変換**: ビューポート ↔ コンテンツ（元画像ピクセル）の双方向変換
+- **座標変換**: ビューポート ↔ コンテンツ（元画像ピクセル）の双方向変換。オフセット基準に加え、画像表示矩形の原点基準（Fit 中央寄せ補正込み）も提供
 - **スクロールバー**: オーバーレイ表示（コンテンツがビューポートより大きい場合のみ）
 - **イベント**: `ZoomRequested`（Ctrl+ホイール）/ `ViewportChanged`（表示状態の変化通知）
-- **ログ**: `ZoomManager.Log` への `ILogger` 注入（未設定時は `NullLogger`）
+- **ログ**: `ZoomViewControl.Log` への `ILogger` 注入（未設定時は `NullLogger`）
 
 ## 3. システム要件
 
@@ -62,60 +61,43 @@ using Estable.AvaloniaUI.ZoomView;
 
 ## 5. クイックスタート
 
-### AXAML（ZoomableView の配置）
+### AXAML（ZoomViewControl の配置）
 
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:zoom="clr-namespace:Estable.AvaloniaUI.ZoomView;assembly=ZoomViewControl">
-    <zoom:ZoomableView x:Name="ZoomableView" Background="#FF2B2B2B"/>
+    <zoom:ZoomViewControl x:Name="ZoomView" Background="#FF2B2B2B"/>
 </Window>
 ```
 
-### IZoomHost の実装
+### 画像の設定とイベント購読
 
 ```csharp
-// ホスト（ViewModel 等）が IZoomHost を実装
-public sealed partial class MainViewModel : ObservableObject, IZoomHost
-{
-    public int ZoomPercent { get; set; }
-    public Bitmap? PreviewImage { get; set; }
-    public bool CanZoomIn { get; set; }
-    public bool CanZoomOut { get; set; }
-    public string ZoomDisplayText { get; set; } = "100%";
-    public bool CenterAlign => /* 設定値 */;
-}
-```
+// ZoomViewControl に画像を設定（Fit 表示にリセット）とロガー注入
+zoomView.Log = logger;                  // 任意（未設定時は NullLogger）
+zoomView.Source = image;
 
-### ZoomManager の注入
-
-```csharp
-// ZoomManager に注入
-var zoomManager = new ZoomManager
+// ズーム率の変化をスライダと ⊖⊕ ボタンの状態へ同期する（ZoomViewControl は特定コントロールに依存しない）
+zoomView.ZoomChanged += (_, e) =>
 {
-    ViewModel = viewModel,
-    ZoomableView = zoomableView,
+    zoomSlider.Value = e.ZoomPercent;
+    zoomInButton.IsEnabled = e.CanZoomIn;
+    zoomOutButton.IsEnabled = e.CanZoomOut;
 };
 
-// ズーム率の変化をスライダへ同期する（ZoomManager は特定コントロールに依存しない）
-zoomManager.ZoomChanged += (_, zoom) => zoomSlider.Value = zoom;
-
-// スライダの変更を ZoomManager へ反映（XAML ロード中の Slider 初期化でも
+// スライダの変更を ZoomViewControl へ反映（XAML ロード中の Slider 初期化でも
 // ValueChanged が発火するため、依存注入後のコンストラクタで購読する）
-zoomSlider.ValueChanged += (_, e) => zoomManager.ApplyZoomFromSlider(zoomSlider.Value);
+zoomSlider.ValueChanged += (_, e) => zoomView.ApplyZoomFromSlider(zoomSlider.Value);
 
-// 画像変更時にソースを設定（Fit 表示にリセット）
-zoomableView.SetSource(image);
-
-// Ctrl+ホイールのズーム要求（マウスポインタ位置をズーム中心に設定）
-zoomableView.ZoomRequested += (_, e) =>
-{
-    zoomManager.PointerPosition = e.PointerPosition;
-    if (e.ZoomIn) zoomManager.ZoomInByWheel();
-    else zoomManager.ZoomOutByWheel();
-    zoomManager.PointerPosition = null;
-};
+// 初期表示時（ZoomChanged 発火前）は、ズーム可否プロパティでボタン状態を初期化する
+zoomInButton.IsEnabled = zoomView.CanZoomIn;
+zoomOutButton.IsEnabled = zoomView.CanZoomOut;
 ```
+
+> Ctrl+ホイールのズーム要求（`ZoomRequested`）・ビューポートリサイズ（`SizeChanged`）の配線は
+> `ZoomViewControl` が内部で自己完結するため、ホスト側で購読する必要はありません。
+> ホストは `ZoomChanged`（スライダ・⊖⊕ ボタン同期用）と `ZoomableView.ViewportChanged`（オーバーレイ追従用）のみ購読します。
 
 ## 6. ズーム操作
 
@@ -150,12 +132,13 @@ dotnet run --project sample/ZoomViewControl.Sample.csproj
 ```text
 ZoomViewControl/
 ├── src/          # ライブラリ本体
-│   ├── ZoomManager.cs          # ズーム遷移・適用の統括（ZoomChanged で通知）
+│   ├── ZoomView.cs             # 自己完結型複合コントロール（ズーム遷移・適用・表示を統括）
 │   ├── ZoomableView.cs         # ScrollViewer 不使用のパン・ズームビューポート
 │   ├── ZoomMath.cs             # ズーム中心維持・Fit 実効倍率・座標変換（純粋関数）
 │   ├── ZoomTransition.cs       # 段階遷移・×1.1 遷移（純粋関数）
 │   ├── ScrollMetrics.cs        # スクロールバー幾何（純粋関数）
-│   ├── IZoomHost.cs            # ホスト抽象インターフェース
+│   ├── ZoomChangedEventArgs.cs # ズーム変更イベント引数
+│   ├── ZoomAvailability.cs     # ズーム可否の値オブジェクト
 │   ├── ZoomRequestedEventArgs.cs
 │   └── Logging/                # ログ定義（LogMessage）
 ├── tests/        # 単体テスト（ZoomViewControl.Tests）

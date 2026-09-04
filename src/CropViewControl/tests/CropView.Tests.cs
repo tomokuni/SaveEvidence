@@ -10,12 +10,12 @@ using Xunit;
 
 namespace Estable.AvaloniaUI.CropView.Tests;
 
-/// <summary><see cref="CropView"/> の単体テスト（公開 API・座標変換・矩形オーバーレイ）。</summary>
+/// <summary><see cref="CropViewControl"/> の単体テスト（公開 API・座標変換・矩形オーバーレイ）。</summary>
 /// <remarks>
-/// 対象: <c>CropView.cs</c>（画像表示 + 領域選択 + 外部提供矩形の統合コントロール）。<br/>
+/// 対象: <c>CropViewControl.cs</c>（画像表示 + 領域選択 + 外部提供矩形の統合コントロール）。<br/>
 /// 公開 API: Source / Rects / SelectionMode / ZoomPercent / ZoomIn / ZoomOut / Fit /
 /// SetSelection / ClearSelection / SetCoordinateTransform / 座標変換（ContentToViewport / ViewportToContent）。<br/>
-/// パブリック API 経由で内包コントロール（ZoomView / FadeMaskDragRect）との連携を検証する。
+/// パブリック API 経由で内包コントロール（ZoomViewControl / FadeMaskDragRect）との連携を検証する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class CropViewTests
@@ -40,10 +40,10 @@ public class CropViewTests
         return bitmap;
     }
 
-    /// <summary>テスト用の CropView（画像を設定済み）を生成する。</summary>
-    private static CropView CreateView()
+    /// <summary>テスト用の CropViewControl（画像を設定済み）を生成する。</summary>
+    private static CropViewControl CreateView()
     {
-        var view = new CropView { Source = CreateBitmap() };
+        var view = new CropViewControl { Source = CreateBitmap() };
         view.Measure(new Size(400, 200));
         view.Arrange(new Rect(0, 0, 400, 200));
         return view;
@@ -53,7 +53,7 @@ public class CropViewTests
     public void Source_設定した画像が取得できる()
     {
         using var bitmap = CreateBitmap();
-        var view = new CropView { Source = bitmap };
+        var view = new CropViewControl { Source = bitmap };
 
         Assert.Same(bitmap, view.Source);
     }
@@ -61,7 +61,7 @@ public class CropViewTests
     [AvaloniaFact]
     public void SelectionMode_既定値はCropである()
     {
-        var view = new CropView();
+        var view = new CropViewControl();
 
         Assert.Equal(FadeMaskDragRectMode.Crop, view.SelectionMode);
 
@@ -73,7 +73,7 @@ public class CropViewTests
     [AvaloniaFact]
     public void Rects_設定した矩形の一覧が取得できる()
     {
-        var view = new CropView();
+        var view = new CropViewControl();
         var rects = new[]
         {
             new OverlayRect(new Rect(10, 10, 50, 40), OverlayLineStyle.Dashed, Colors.Red, Colors.White, 2.0),

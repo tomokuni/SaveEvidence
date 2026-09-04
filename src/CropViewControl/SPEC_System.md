@@ -39,7 +39,7 @@ flowchart TB
     end
 
     subgraph CV["CropView（本ライブラリ）"]
-        Ctl["CropView<br/>public sealed partial<br/>: Panel"]
+        Ctl["CropViewControl<br/>public sealed partial<br/>: Panel"]
         ZV["ZoomableView<br/>ZoomViewControl"]
         FM["FadeMaskDragRectControl<br/>FadeMaskDragRect"]
         RO["矩形オーバーレイ<br/>Canvas"]
@@ -60,24 +60,24 @@ flowchart TB
     FM --> FadeMask
 ```
 
-- ホストは `CropView` にのみ依存します（Facade）。
+- ホストは `CropViewControl` にのみ依存します（Facade）。
 - 画像表示（`ZoomableView`）・領域選択（`FadeMaskDragRectControl`）・矩形描画は本コントロール内で配線されます。
 
 ## 4. コンポーネント構成
 
 | ファイル | 責務 |
 | --- | --- |
-| `CropView.cs` | 高レベル複合コントロール本体。ZoomView / FadeMaskDragRect / 矩形オーバーレイの組み立て・配線・状態同期。ズーム操作・座標変換・ルーペへの矩形描画。 |
+| `CropViewControl.cs` | 高レベル複合コントロール本体。ZoomViewControl / FadeMaskDragRect / 矩形オーバーレイの組み立て・配線・状態同期。ズーム操作・座標変換・ルーペへの矩形描画。 |
 | `OverlayRect.cs` | 外部提供矩形の描画情報（record struct）。破線種類・前景色・背景色・線幅。 |
 | `OverlayLineStyle.cs` | 枠線スタイル enum（Solid / Dashed / Dotted）。 |
 
 ## 5. 依存関係
 
-- `CropView.cs` → `ZoomViewControl` / `FadeMaskDragRectControl` / `Avalonia`
-- `CropView.cs` → `LoupeControl`（ルーペへの矩形描画のため `LoupeRenderedEventArgs`）
+- `CropViewControl.cs` → `ZoomViewControl` / `FadeMaskDragRectControl` / `Avalonia`
+- `CropViewControl.cs` → `LoupeControl`（ルーペへの矩形描画のため `LoupeRenderedEventArgs`）
 - `OverlayRect.cs` / `OverlayLineStyle.cs` → `Avalonia`
 
 ## 6. 例外処理ポリシー
 
-- 内包コントロール（ZoomView / FadeMaskDragRect）が発生させる例外は、そのまま伝播します（本コントロールで捕捉しません）。
+- 内包コントロール（ZoomViewControl / FadeMaskDragRect）が発生させる例外は、そのまま伝播します（本コントロールで捕捉しません）。
 - ルーペ描画失敗（画像デコード・ピクセル操作）は `LoupeControl` の `ILogger` 通知に委譲します。

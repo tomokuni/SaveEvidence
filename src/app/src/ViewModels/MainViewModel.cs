@@ -24,7 +24,7 @@ namespace app.ViewModels;
 /// ピクセル操作（切出し・ウィンドウ検出）は PlatformFactory の <see cref="ImageProcessor"/> / <see cref="AppPixelData"/> に委譲し、
 /// 画面キャプチャは SnipCaptureUI の <see cref="CaptureType"/> に委譲する（プラットフォーム抽象。DIP）。
 /// </remarks>
-public sealed partial class MainViewModel : ObservableObject, IZoomHost
+public sealed partial class MainViewModel : ObservableObject
 {
     private readonly ISettingsService _settingsService;
 
@@ -39,7 +39,8 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
     /// <summary>保存先フォルダが無効かどうか。</summary>
     private bool _hasInvalidSaveFolder;
 
-    /// <summary>Fit 時の画像の中央寄せ / 左上寄せ（<see cref="IZoomHost"/> 実装）。</summary>
+    /// <summary>Fit 時の画像の中央寄せ / 左上寄せ。</summary>
+    /// <remarks>配置は <see cref="ZoomViewControl.CenterAlign"/> へ反映される（画像がビューポートより小さい場合）。</remarks>
     public bool CenterAlign => Settings.CenterAlign;
 
     /// <summary>プレビュー画像変更前の旧画像（新しい画像が Image.Source へ反映された後に破棄する）。</summary>
@@ -133,7 +134,8 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
                 Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
                 StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>現在のズーム率（0=自動）。View 側から設定される。</summary>
+    /// <summary>現在のズーム率（%）。0 = 自動（Fit）。表示用ストア（ズーム率の単一所有は ZoomableView。ZoomChanged で更新）。</summary>
+    /// <remarks>スライダ・ズーム表示のバインディング用に保持する。ズーム率の実ソースは ZoomViewControl 側。</remarks>
     [ObservableProperty]
     private int _zoomPercent;
 
@@ -156,14 +158,6 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
     /// <summary>ステータスメッセージ（自動切り出しの検出結果・案内）。</summary>
     [ObservableProperty]
     private string _statusMessage = "";
-
-    /// <summary>ズームイン可能かどうか。View 側から設定される。</summary>
-    [ObservableProperty]
-    private bool _canZoomIn;
-
-    /// <summary>ズームアウト可能かどうか。View 側から設定される。</summary>
-    [ObservableProperty]
-    private bool _canZoomOut;
 
     /// <summary>ナビゲーションパネルの展開状態（true = 展開 / false = アイコンのみ収納）。</summary>
     /// <remarks>展開時はタイトル + テキスト + アイコンを表示する。収納時はアイコンのみ表示する。</remarks>

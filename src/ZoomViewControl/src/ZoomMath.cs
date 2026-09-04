@@ -9,7 +9,7 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// Fit 実効倍率・ズーム中心維持（スケール変化時のオフセット）・スクロール範囲クランプ・<br/>
 /// ビューポート ↔ コンテンツ座標変換を計算する。<br/>
 /// UI 状態（ViewModel・コントロール）に依存しないため、単体テストで仕様を検証できる。<br/>
-/// ZoomManager / ZoomableView から呼び出される他、仕様の回帰テストの対象となる。<br/>
+/// ZoomViewControl / ZoomableView から呼び出される他、仕様の回帰テストの対象となる。<br/>
 /// スクロール範囲の計算は <see cref="ScrollMetrics"/> へ委譲する（単一所有）。
 /// </remarks>
 public static class ZoomMath
@@ -110,5 +110,37 @@ public static class ZoomMath
     {
         var s = effectiveScale > 0 ? effectiveScale : 1;
         return new Point((contentPos.X - offset.X) * s, (contentPos.Y - offset.Y) * s);
+    }
+
+    /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準・純粋関数）。</summary>
+    /// <param name="viewportPos">ビューポート座標。</param>
+    /// <param name="imageOrigin">画像表示矩形の原点（ビューポート座標）。Fit 中央寄せ等の原点補正を含む。</param>
+    /// <param name="effectiveScale">実効スケール（倍率 / 100。Fit 中は FitScale）。0 以下の場合は 1 として扱う。</param>
+    /// <returns>コンテンツ座標。</returns>
+    /// <remarks>
+    /// <see cref="ViewportToContent"/>（オフセット基準）とは異なり、<b>画像表示矩形の原点</b>（<c>imageOrigin</c>）を基準に変換する。<br/>
+    /// これにより Fit 中央寄せの原点補正を考慮した、画像内の正確な座標変換ができる。<br/>
+    /// 変換式: <c>コンテンツ座標 = (ビューポート座標 − 画像原点) / スケール</c>。
+    /// </remarks>
+    public static Point ViewportToContentImage(Point viewportPos, Point imageOrigin, double effectiveScale)
+    {
+        var s = effectiveScale > 0 ? effectiveScale : 1;
+        return new Point((viewportPos.X - imageOrigin.X) / s, (viewportPos.Y - imageOrigin.Y) / s);
+    }
+
+    /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準・純粋関数）。</summary>
+    /// <param name="contentPos">コンテンツ座標。</param>
+    /// <param name="imageOrigin">画像表示矩形の原点（ビューポート座標）。Fit 中央寄せ等の原点補正を含む。</param>
+    /// <param name="effectiveScale">実効スケール（倍率 / 100。Fit 中は FitScale）。0 以下の場合は 1 として扱う。</param>
+    /// <returns>ビューポート座標。</returns>
+    /// <remarks>
+    /// <see cref="ContentToViewport"/>（オフセット基準）とは異なり、<b>画像表示矩形の原点</b>（<c>imageOrigin</c>）を基準に変換する。<br/>
+    /// これにより Fit 中央寄せの原点補正を考慮した、画像内の正確な座標変換ができる。<br/>
+    /// 変換式: <c>ビューポート座標 = 画像原点 + コンテンツ座標 × スケール</c>。
+    /// </remarks>
+    public static Point ContentToViewportImage(Point contentPos, Point imageOrigin, double effectiveScale)
+    {
+        var s = effectiveScale > 0 ? effectiveScale : 1;
+        return new Point(imageOrigin.X + contentPos.X * s, imageOrigin.Y + contentPos.Y * s);
     }
 }

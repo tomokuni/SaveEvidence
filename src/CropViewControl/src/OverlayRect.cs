@@ -10,8 +10,8 @@ namespace Estable.AvaloniaUI.CropView;
 /// <param name="Background">背景色（透明度を含む）。破線の市松風 2 色目。</param>
 /// <param name="Thickness">枠線の太さ（ピクセル）。</param>
 /// <remarks>
-/// ホスト（上位 AP）から <see cref="CropView.Rects"/> に設定することで、<br/>
-/// <see cref="CropView"/> が矩形を View（ビューポート）とルーペ画像の両方へ描画する。<br/>
+/// ホスト（上位 AP）から <see cref="CropViewControl.Rects"/> に設定することで、<br/>
+/// <see cref="CropViewControl"/> が矩形を View（ビューポート）とルーペ画像の両方へ描画する。<br/>
 /// 破線（<see cref="OverlayLineStyle.Dashed"/> / <see cref="OverlayLineStyle.Dotted"/>）の場合は<br/>
 /// <see cref="Foreground"/> と <see cref="Background"/> をダッシュごとに交互に塗る（市松風の視認性）。
 /// </remarks>

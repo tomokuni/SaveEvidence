@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\FadeMaskDragRectControl\src\FadeMaskDragRect.csproj" />
+    <ProjectReference Include="..\..\FadeMaskDragRectControl\src\FadeMaskDragRectControl.csproj" />
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
   </ItemGroup>
 

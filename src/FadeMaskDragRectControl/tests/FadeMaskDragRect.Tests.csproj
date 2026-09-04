@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\FadeMaskDragRect.csproj" />
+    <ProjectReference Include="..\src\FadeMaskDragRectControl.csproj" />
   </ItemGroup>
 
 </Project>

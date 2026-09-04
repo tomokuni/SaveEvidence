@@ -1,18 +1,17 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.AvaloniaUI.ZoomView;
 
 namespace ZoomViewControl.Sample.ViewModels;
 
 /// <summary>
-/// メイン画面の ViewModel。ZoomViewControl の <see cref="IZoomHost"/> を実装する。
+/// メイン画面の ViewModel。ZoomViewControl の状態（ズーム率・表示テキスト・中央寄せ）を表示用に保持する。
 /// </summary>
 /// <remarks>
-/// <see cref="ZoomManager"/> がズーム率・表示状態（<see cref="ZoomDisplayText"/> 等）を
-/// 本 ViewModel へ読み書きする。<br/>
+/// ズーム率・可否・表示テキストの状態は <c>ZoomViewControl</c>（自己完結型複合コントロール）が所有し、<br/>
+/// 本 ViewModel は <c>ZoomChanged</c> イベントで通知された値を表示用に保持する。<br/>
 /// 画像のライフサイクル管理（Dispose）は <see cref="SetPreviewImage"/> で行う。
 /// </remarks>
-public sealed partial class MainWindowViewModel : ObservableObject, IZoomHost
+public sealed partial class MainWindowViewModel : ObservableObject
 {
     /// <summary>プレビュー画像変更前の旧画像（破棄用）。</summary>
     private Bitmap? _previousPreviewImage;
@@ -22,19 +21,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IZoomHost
     [NotifyPropertyChangedFor(nameof(ImageSizeText))]
     private Bitmap? _previewImage;
 
-    /// <summary>現在のズーム率（%）。0 = Fit（自動）。</summary>
+    /// <summary>現在のズーム率（%）。0 = Fit（自動）。表示用ストア（ズーム率の単一所有は ZoomViewControl。ZoomChanged で更新）。</summary>
     [ObservableProperty]
     private int _zoomPercent;
 
-    /// <summary>ズームイン可能かどうか。</summary>
-    [ObservableProperty]
-    private bool _canZoomIn;
-
-    /// <summary>ズームアウト可能かどうか。</summary>
-    [ObservableProperty]
-    private bool _canZoomOut;
-
-    /// <summary>ステータスバー等に表示する拡大率テキスト。</summary>
+    /// <summary>ステータスバー等に表示する拡大率テキスト。（表示用ストア。ZoomChanged で更新）。</summary>
     [ObservableProperty]
     private string _zoomDisplayText = "100%";
 

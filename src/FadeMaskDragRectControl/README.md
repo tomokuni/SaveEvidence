@@ -65,7 +65,7 @@ using Estable.AvaloniaUI.Platform; // ICoordinatePort / CoordinatePort
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:fdr="clr-namespace:Estable.AvaloniaUI.FadeMaskDragRect;assembly=FadeMaskDragRect">
+        xmlns:fdr="clr-namespace:Estable.AvaloniaUI.FadeMaskDragRect;assembly=FadeMaskDragRectControl">
     <Grid>
         <Image x:Name="VirtualScreen" Stretch="Fill" />
         <fdr:FadeMaskDragRectControl x:Name="SelectionOverlay" />

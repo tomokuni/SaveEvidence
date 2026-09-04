@@ -11,7 +11,7 @@
   </Folder>
   <Folder Name="/src/CropView/" />
   <Folder Name="/src/CropView/src/">
-    <Project Path="src/CropView/src/CropView.csproj" />
+    <Project Path="src/CropView/src/CropViewControl.csproj" />
   </Folder>
   <Folder Name="/src/CropView/tests/">
     <Project Path="src/CropView/tests/CropView.Tests.csproj" />
@@ -27,7 +27,7 @@
     <Project Path="src/FadeMaskControl/tests/FadeMaskControl.Tests.csproj" />
   </Folder>
   <Folder Name="/src/FadeMaskDragRectControl/">
-    <Project Path="src/FadeMaskDragRectControl/src/FadeMaskDragRect.csproj" />
+    <Project Path="src/FadeMaskDragRectControl/src/FadeMaskDragRectControl.csproj" />
     <Project Path="src/FadeMaskDragRectControl/tests/FadeMaskDragRect.Tests.csproj" />
   </Folder>
   <Folder Name="/src/FadeMaskDragRectControl/src/" />

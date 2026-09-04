@@ -9,11 +9,9 @@
   - [3. 外部利用条件](#3-外部利用条件)
     - [3.1 プロジェクト参照](#31-プロジェクト参照)
     - [3.2 必要な名前空間](#32-必要な名前空間)
-    - [3.3 IZoomHost の実装](#33-izoomhost-の実装)
   - [4. 基本的な使用方法](#4-基本的な使用方法)
-    - [4.1 ZoomManager への注入](#41-zoommanager-への注入)
-    - [4.2 ZoomableView の配置](#42-zoomableview-の配置)
-    - [4.3 イベント連携](#43-イベント連携)
+    - [4.1 ZoomViewControl の配置](#41-zoomviewcontrol-の配置)
+    - [4.2 イベント連携](#42-イベント連携)
   - [5. ズーム遷移ルール](#5-ズーム遷移ルール)
     - [5.1 ⊖⊕ ボタンの段階（23 段階）](#51--ボタンの段階23-段階)
     - [5.2 Ctrl+ホイールの遷移（×1.1 ／ ÷1.1）](#52-ctrlホイールの遷移11--11)
@@ -25,10 +23,10 @@
     - [7.1 Fit 実効倍率の計算](#71-fit-実効倍率の計算)
     - [7.2 Fit 中の遷移](#72-fit-中の遷移)
   - [8. 公開 API](#8-公開-api)
-    - [8.1 ZoomManager](#81-zoommanager)
+    - [8.1 ZoomViewControl](#81-zoomviewcontrol)
     - [8.2 ZoomableView](#82-zoomableview)
-    - [8.3 IZoomHost](#83-izoomhost)
-    - [8.4 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）](#84-zoommath--zoomtransition--scrollmetrics純粋関数)
+    - [8.3 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）](#83-zoommath--zoomtransition--scrollmetrics純粋関数)
+    - [8.4 ZoomAvailability / ZoomChangedEventArgs（値オブジェクト）](#84-zoomavailability--zoomchangedeventargs値オブジェクト)
   - [9. ログ](#9-ログ)
   - [10. 制約事項](#10-制約事項)
 
@@ -38,7 +36,7 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| 対象 | `ZoomManager` / `ZoomableView` / `ZoomMath` / `ZoomTransition` / `ScrollMetrics` / `IZoomHost` |
+| 対象 | `ZoomViewControl` / `ZoomableView` / `ZoomMath` / `ZoomTransition` / `ScrollMetrics` |
 | プロジェクト | `ZoomViewControl/ZoomViewControl.csproj` |
 | 名前空間 | `Estable.AvaloniaUI.ZoomView` / `Estable.AvaloniaUI.ZoomView.Logging` |
 | 対象フレームワーク | `net10.0` |
@@ -54,7 +52,7 @@
 - パン（マウスドラッグ・ホイール・スクロールバー）
 - Fit 表示と実効倍率の計算・表示
 
-ホスト（上位 AP）は `IZoomHost` を実装して `ZoomManager` に注入し、`ZoomManager` がズーム率・表示状態を読み書きします。
+ホスト（上位 AP）は `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読するだけで、ズーム率・表示状態の管理は `ZoomViewControl` が担います。
 
 ## 3. 外部利用条件
 
@@ -70,53 +68,36 @@
 using Estable.AvaloniaUI.ZoomView;
 ```
 
-### 3.3 IZoomHost の実装
-
-ホスト（上位 AP の ViewModel 等）は `IZoomHost` を実装して `ZoomManager.ViewModel` へ注入する。
-
-| メンバー | 役割 |
-| --- | --- |
-| `ZoomPercent` | 現在のズーム率（%）。0 = Fit（自動）。ZoomManager が読み書きする |
-| `PreviewImage` | ズーム対象のプレビュー画像。null の場合は画像なし |
-| `CanZoomIn` / `CanZoomOut` | ズームイン / アウト可能かどうか。ZoomManager が設定する |
-| `ZoomDisplayText` | ステータスバー等に表示する拡大率テキスト。ZoomManager が設定する |
-| `CenterAlign` | Fit 時の画像の中央寄せ / 左上寄せ |
-
 ## 4. 基本的な使用方法
 
-### 4.1 ZoomManager への注入
+### 4.1 ZoomViewControl の配置
 
-`ZoomManager` のプロパティへホスト・ビューポートを注入する。スライダは `ZoomChanged` イベントを購読してホスト側で同期する。
+`ZoomViewControl`（自己完結型複合コントロール）を XAML に配置し、`Source` を設定する。ズーム要求（Ctrl+ホイール）とビューポートリサイズの配線は内部で自己完結する。スライダは `ZoomChanged` イベントを購読してホスト側で同期する。
+
+```xml
+<zoom:ZoomViewControl x:Name="ZoomView" Background="#FF2B2B2B"/>
+```
 
 ```csharp
-var zoomManager = new ZoomManager
-{
-    ViewModel = viewModel,      // IZoomHost 実装
-    ZoomableView = zoomableView,
-};
-zoomManager.Log = logger;       // 任意（未設定時は NullLogger）
+// ZoomViewControl に画像とロガーを設定（ズーム要求・リサイズの配線は内部で自己完結）
+zoomView.Log = logger;              // 任意（未設定時は NullLogger）
+zoomView.Source = image;
 
-// ズーム率の変化をスライダへ同期する（ZoomManager は特定コントロールに依存しない）
-zoomManager.ZoomChanged += (_, zoom) => slider.Value = zoom;
+// ズーム率の変化をスライダへ同期する（ZoomViewControl は特定コントロールに依存しない）
+zoomView.ZoomChanged += (_, e) => slider.Value = e.ZoomPercent;
 ```
 
 - `PointerPosition`: Ctrl+ホイールズーム時のズーム中心（ビューポートローカル DIP）。null = ビューポート中心
+- ホストからズーム率を直接変更する場合は `zoomView.ZoomPercent = value` を使用する（`ZoomableView` が単一所有。読み書き可能プロパティ）
 - スライダの `ValueChanged` は XAML ロード中（Slider 初期化の coerce）にも発火するため、**依存注入後のコンストラクタで購読**し、`ApplyZoomFromSlider` へ委譲する
+- `ZoomViewControl` 内部で `ZoomRequested`（Ctrl+ホイールのズーム要求）と `SizeChanged`（ビューポートリサイズの Fit 再適用）を購読する
 
-### 4.2 ZoomableView の配置
+### 4.2 イベント連携
 
-```xml
-<zoom:ZoomableView x:Name="ZoomableView" Background="#FF2B2B2B"/>
-```
-
-- `SetSource(image)` で画像ソースを設定する（Fit 表示にリセット）
-- `SetZoom(percent, center)` でズーム率を設定する（null 中心 = ビューポート中心）
-
-### 4.3 イベント連携
-
-- **`ZoomRequested`**（Ctrl+ホイール）: `ZoomRequestedEventArgs`（`ZoomIn` + `PointerPosition`）でマウス位置を通知する。`ZoomManager.PointerPosition` に設定して `ZoomInByWheel` / `ZoomOutByWheel` を呼び、ズーム後に null へ戻す
-- **`ViewportChanged`**: パン・ズーム・表示状態の変化を通知する。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する
-- **`SizeChanged`**: ビューポートのリサイズ時に `ZoomManager.OnZoomableViewSizeChanged` を呼び、Fit 表示を再適用する
+- **`ZoomChanged`**: `ZoomChangedEventArgs`（`ZoomPercent` + `Availability`）でズーム率と可否を通知する。スライダ・⊖⊕ ボタンの同期に使用する
+- **`ZoomableView.ZoomRequested`**（Ctrl+ホイール）: `ZoomRequestedEventArgs`（`ZoomIn` + `PointerPosition`）でマウス位置を通知する。`ZoomViewControl` が内部で購読し、ズームを適用した後に `PointerPosition` を null へ戻す（ホスト側の配線不要）
+- **`ZoomableView.ViewportChanged`**: パン・ズーム・表示状態の変化を通知する。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する
+- **`ZoomableView.SizeChanged`**: ビューポートのリサイズ時に Fit 表示を再適用する（`ZoomViewControl` が内部で購読する）
 
 ## 5. ズーム遷移ルール
 
@@ -136,7 +117,7 @@ zoomManager.ZoomChanged += (_, zoom) => slider.Value = zoom;
 
 ### 5.2 Ctrl+ホイールの遷移（×1.1 ／ ÷1.1）
 
-Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomManager.ZoomInByWheel` / `ZoomOutByWheel`）。
+Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomViewControl.ZoomInByWheel` / `ZoomOutByWheel`）。
 
 - 拡大: `Round(現在の拡大率 × 1.1)`
 - 縮小: `Round(現在の拡大率 ÷ 1.1)`
@@ -159,6 +140,9 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomM
 ```
 
 - `ViewportToContent(Point)` / `ContentToViewport(Point)` で双方向変換
+  - オフセット（スクロール）基準。ビューポート左上に対応するコンテンツ座標を基準に変換する
+- `ViewportToContentImage(Point)` / `ContentToViewportImage(Point)` で双方向変換
+  - 画像表示矩形（`ImageRectViewport`）の原点基準。Fit 中央寄せの原点補正を含み、画像内の正確な座標変換ができる
 - 実効スケール（`EffectiveScale`）: 固定倍率中は `ズーム率 / 100`、Fit 中は `FitScale`（ビューポートに収まる Uniform スケール）。Fit 中の座標変換でゼロ除算が発生しない
 
 ### 6.2 ズーム中心維持
@@ -205,27 +189,30 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 
 ## 8. 公開 API
 
-### 8.1 ZoomManager
+### 8.1 ZoomViewControl
 
-| メソッド | シグネチャ | 説明 |
+自己完結型複合コントロール（`public sealed class : Panel`）。`ZoomableView` を内包し、ズーム率・遷移・表示を統括する。
+
+| メソッド / プロパティ | シグネチャ | 説明 |
 | --- | --- | --- |
+| `Source` | `IImage?`（読み書き） | ズーム対象の画像。設定すると Fit 表示にリセット |
+| `ZoomPercent` | `int`（読み書き） | ズーム率（%）。getter は ZoomableView から取得、setter はズーム中心維持込みで設定（0 = Fit） |
+| `CenterAlign` | `bool`（読み書き） | Fit 時の画像の中央寄せ / 左上寄せ |
+| `ZoomDisplayText` | `string`（読み取り） | ステータスバー等に表示する拡大率テキスト（本コントロールが更新） |
 | `ZoomIn` | `void()` | ⊖⊕ ボタンのズームイン（23 段階） |
 | `ZoomOut` | `void()` | ⊖⊕ ボタンのズームアウト（23 段階） |
 | `ZoomInByWheel` | `void()` | Ctrl+ホイールのズームイン（×1.1） |
 | `ZoomOutByWheel` | `void()` | Ctrl+ホイールのズームアウト（÷1.1） |
 | `ApplyZoomFromSlider` | `void(double)` | スライダ値（10〜500）によるズーム適用 |
 | `ApplyZoomFromText` | `bool(string?)` | テキスト入力（数値 or 数値+%）のパース・適用（10〜500） |
-| `ApplyZoom` | `void()` | 現在の ZoomPercent を ZoomableView に適用（再入防止） |
-| `UpdateImageAlignment` | `void()` | 中央寄せ設定を ZoomableView に反映 |
-| `OnZoomableViewSizeChanged` | `void(SizeChangedEventArgs)` | リサイズ時の Fit 拡大率表示更新 |
-
-| プロパティ / イベント | 型 | 説明 |
-| --- | --- | --- |
-| `ViewModel` | `IZoomHost` | ズーム対象のホスト（ZoomPercent / PreviewImage / ZoomDisplayText 等） |
-| `ZoomableView` | `ZoomableView` | ズーム・パン対応ビューポート（ScrollViewer 不使用） |
-| `ZoomChanged` | `event EventHandler<int>` | ズーム率変更の通知（ホスト側のスライダ等の同期用） |
+| `CanZoomIn` | `bool` | 現在の状態でズームイン可能か（段階遷移仕様に基づく遅延計算キャッシュ） |
+| `CanZoomOut` | `bool` | 現在の状態でズームアウト可能か（段階遷移仕様に基づく遅延計算キャッシュ） |
+| `ZoomChanged` | `event EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（変更後のズーム率 + 可否。ホスト側のスライダ・⊖⊕ ボタン等の同期用） |
 | `PointerPosition` | `Point?` | ズーム中心（ビューポートローカル DIP）。null = ビューポート中心 |
+| `ZoomableView` | `ZoomableView` | 内包するパン・ズームビューポート（低レベル機能・座標変換・オーバーレイ追従用） |
 | `Log` | `ILogger` | 内部ロガー。null は `NullLogger` へフォールバック |
+
+> `CanZoomIn` / `CanZoomOut` はキャッシュ付きの遅延計算で、`null`（未計算）状態を参照時に再計算してキャッシュする（ズーム状態が変わる箇所で未計算に戻す）。初期表示時にイベントを待たずにボタン状態を設定する場合は、本プロパティを参照する。
 
 ### 8.2 ZoomableView
 
@@ -236,7 +223,8 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `SetZoom(double, Point?)` | ズーム率を設定（ズーム中心維持込み。null 中心 = ビューポート中心） |
 | `SetOffset(Vector)` | パン位置を設定（スクロール範囲にクランプ） |
 | `PanBy(Vector)` | パン（コンテンツ座標の移動量） |
-| `ViewportToContent(Point)` / `ContentToViewport(Point)` | ビューポート ↔ コンテンツ座標変換 |
+| `ViewportToContent(Point)` / `ContentToViewport(Point)` | ビューポート ↔ コンテンツ座標変換（オフセット基準） |
+| `ViewportToContentImage(Point)` / `ContentToViewportImage(Point)` | ビューポート ↔ コンテンツ座標変換（画像表示矩形の原点基準。Fit 中央寄せ補正込み） |
 | `DisplaySize()` | 画像の表示サイズ（ビューポート座標） |
 | `ImageRectViewport()` | 画像の表示矩形（原点 + サイズ・ビューポート座標。表示サイズと原点を 1 回の計算で取得） |
 | `ZoomPercent` | 現在のズーム率（%）。0 = Fit |
@@ -246,34 +234,31 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ZoomRequested` | Ctrl+ホイールのズーム要求イベント（`ZoomRequestedEventArgs`） |
 | `ViewportChanged` | ビューポート（パン・ズーム・表示状態）変化イベント。表示適用後に発火し、オーバーレイ（暗転マスク・選択枠・ルーペ）の追従に使用する |
 
-### 8.3 IZoomHost
-
-ホスト（上位 AP の ViewModel 等）が実装する抽象インターフェース。
-
-| メンバー | 説明 |
-| --- | --- |
-| `ZoomPercent` | 現在のズーム率（%）。0 = Fit（自動） |
-| `PreviewImage` | ズーム対象のプレビュー画像。null の場合は画像なし |
-| `CanZoomIn` / `CanZoomOut` | ズームイン / アウト可能かどうか |
-| `ZoomDisplayText` | ステータスバー等に表示する拡大率テキスト |
-| `CenterAlign` | Fit 時の画像の中央寄せ / 左上寄せ |
-
-### 8.4 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）
+### 8.3 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）
 
 | クラス | 関数 | 説明 |
 | --- | --- | --- |
 | `ZoomMath` | `FitScale` / `FitZoomPercent` | Fit 実効スケール / 実効倍率（%）の計算 |
 | `ZoomMath` | `ComputeOffsetAfterScaleChange` | スケール変化時のオフセット計算（ズーム中心維持） |
 | `ZoomMath` | `ClampOffset` | オフセットのスクロール範囲クランプ |
-| `ZoomMath` | `ViewportToContent` / `ContentToViewport` | ビューポート ↔ コンテンツ座標変換（純粋関数） |
+| `ZoomMath` | `ViewportToContent` / `ContentToViewport` | ビューポート ↔ コンテンツ座標変換（純粋関数・オフセット基準） |
+| `ZoomMath` | `ViewportToContentImage` / `ContentToViewportImage` | ビューポート ↔ コンテンツ座標変換（純粋関数・画像表示矩形の原点基準） |
 | `ZoomTransition` | `NextLevel` / `PrevLevel` | ⊖⊕ 23 段階の遷移 |
 | `ZoomTransition` | `WheelZoomIn` / `WheelZoomOut` | Ctrl+ホイール ×1.1 の遷移 |
 | `ZoomTransition` | `CanZoomIn` / `CanZoomOut` | ズームイン / アウト可否判定 |
 | `ScrollMetrics` | `MaxOffset` / `ViewportSize` | スクロールバーの範囲・表示範囲の計算 |
 
+### 8.4 ZoomAvailability / ZoomChangedEventArgs（値オブジェクト）
+
+| メンバー | 説明 |
+| --- | --- |
+| `ZoomAvailability` | `readonly record struct`。ズーム操作の可否（`CanZoomIn` + `CanZoomOut`）を単一の値として保持する。公開面は Non-Null |
+| `ZoomAvailability?` | `ZoomViewControl` 内部で「未計算」（null）を表すキャッシュに使用。参照時に遅延計算してキャッシュし、2 値の整合性を構造的に保証する |
+| `ZoomChangedEventArgs` | `sealed record (int ZoomPercent, ZoomAvailability Availability)`。ズーム率と可否を Non-Null の値オブジェクトで公開。`CanZoomIn` / `CanZoomOut` はコンビニエンスプロパティ |
+
 ## 9. ログ
 
-本プロジェクトのログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。`ZoomManager.Log` へ注入されたロガーへ出力する（未設定時は `NullLogger` で無出力）。
+本プロジェクトのログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。`ZoomViewControl.Log` へ注入されたロガーへ出力する（未設定時は `NullLogger` で無出力）。
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
@@ -282,7 +267,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 
 ## 10. 制約事項
 
-- ズーム率の適用は `ZoomPercent` の PropertyChanged（ホスト側のハンドラ）経由で `ApplyZoom()` が 1 回だけ実行される（直接呼び出しと重複しないよう再入防止フラグで保護）
+- ズーム率は `ZoomViewControl` が単一所有し、`ZoomPercent` の setter で `ZoomableView.SetZoom`（ズーム中心維持込み）と `ApplyZoom`（表示テキスト・可否・イベント通知）が 1 回だけ実行される（再入防止フラグで保護）
 - スライダの範囲は 10〜500%（0=自動はフライアウトでのみ選択）。Fit 中はスライダ最小値に合わせる
 - Fit 中はパン不可（画像がビューポートに収まるため）。スクロールバーも非表示
 - スクロールバーはオーバーレイ表示のため、画像の表示領域を圧迫しない

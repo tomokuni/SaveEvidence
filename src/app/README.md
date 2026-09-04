@@ -177,7 +177,7 @@ dotnet test src/app/tests/app.Tests.csproj
 | プロジェクト | 役割 |
 | --- | --- |
 | `SnipCaptureUI` | キャプチャ / 切出しセッション（Facade `SnipCapture`） |
-| `ZoomViewControl` | ズーム・パン・Fit 表示（`ZoomableView` / `ZoomManager`） |
+| `ZoomViewControl` | ズーム・パン・Fit 表示（`ZoomViewControl`） |
 | `ColorPickerControl` | 色選択コントロール（設定画面の色入力） |
 | `PlatformFactory` | プラットフォーム抽象（キャプチャ・要素検出・ウィンドウ操作・ホットキー） |
 

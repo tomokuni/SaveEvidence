@@ -77,6 +77,70 @@ public class ZoomableViewTests
     }
 
     [AvaloniaFact]
+    public void ViewportToContentImage_画像原点基準で固定倍率の変換が正しい()
+    {
+        var view = CreateView();
+        view.SetZoom(100); // scale = 1
+        view.SetOffset(new Vector(100, 50));
+
+        // 画像原点 = (-offset*scale) = (-100, -50)
+        // ビューポート (200, 150) → コンテンツ ((200+100)/1, (150+50)/1) = (300, 200)
+        var result = view.ViewportToContentImage(new Point(200, 150));
+        Assert.Equal(new Point(300, 200), result);
+    }
+
+    [AvaloniaFact]
+    public void ContentToViewportImage_画像原点基準で固定倍率の逆変換が正しい()
+    {
+        var view = CreateView();
+        view.SetZoom(100); // scale = 1
+        view.SetOffset(new Vector(100, 50));
+
+        // 画像原点 = (-100, -50)、コンテンツ (300, 200) → ビューポート (-100+300, -50+200) = (200, 150)
+        var result = view.ContentToViewportImage(new Point(300, 200));
+        Assert.Equal(new Point(200, 150), result);
+    }
+
+    [AvaloniaFact]
+    public void Fit表示中にViewportToContentImageが正しい()
+    {
+        var view = CreateView();
+        // Fit（zoomPercent = 0）・CenterAlign（デフォルト）・表示 400x200 → 画像原点 (0, 0)
+
+        // 画像 1000x500、ビューポート 400x200 → FitScale = 0.4
+        // ビューポート (200, 100) → コンテンツ (200/0.4, 100/0.4) = (500, 250)
+        var result = view.ViewportToContentImage(new Point(200, 100));
+        Assert.Equal(500.0, result.X);
+        Assert.Equal(250.0, result.Y);
+    }
+
+    [AvaloniaFact]
+    public void Fit表示中にContentToViewportImageが正しい()
+    {
+        var view = CreateView();
+
+        // コンテンツ (500, 250) → ビューポート (500*0.4, 250*0.4) = (200, 100)
+        var result = view.ContentToViewportImage(new Point(500, 250));
+        Assert.Equal(200.0, result.X);
+        Assert.Equal(100.0, result.Y);
+    }
+
+    [AvaloniaFact]
+    public void 画像基準の往復変換で元のビューポート座標に戻る()
+    {
+        var view = CreateView();
+        view.SetZoom(200);
+        view.SetOffset(new Vector(30, 40));
+
+        var viewportPos = new Point(123, 456);
+        var content = view.ViewportToContentImage(viewportPos);
+        var back = view.ContentToViewportImage(content);
+
+        Assert.Equal(viewportPos.X, back.X, 6);
+        Assert.Equal(viewportPos.Y, back.Y, 6);
+    }
+
+    [AvaloniaFact]
     public void SetOffset_スクロール範囲を超えないようクランプされる()
     {
         var view = CreateView();

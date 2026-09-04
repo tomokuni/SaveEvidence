@@ -126,9 +126,9 @@
         <Grid Grid.Row="1" x:Name="ImageAreaGrid"
               PointerPressed="OnImageAreaPointerPressed">
             <!-- ズーム・パン対応ビューポート（ScrollViewer 不使用。RenderTransform ベースのため
-                 オフセット上書き・防御コードが不要。画像は ZoomableView が内部で管理する） -->
-            <zoom:ZoomableView x:Name="ZoomableView"
-                                   Background="Transparent"/>
+                 オフセット上書き・防御コードが不要。画像は内部的に管理する自己完結型 ZoomViewControl） -->
+<zoom:ZoomViewControl x:Name="ZoomableView"
+                           Background="Transparent"/>
 
             <!-- 自動切り出し（LineDetection 検出）の矩形選択オーバーレイ。
                  ZoomableView と同一セルに重ね、検出矩形は ContentToViewport でビューポート座標へ変換して Canvas に配置する。
@@ -158,8 +158,9 @@
                 <TextBlock Text="拡大率:" FontSize="12" VerticalAlignment="Center"/>
 
                 <!-- ズームアウト（⊖）。フライアウトの選択肢（25〜500%）に沿ってズームアウトする -->
-                <Button ToolTip.Tip="ズームアウト（25〜500% の選択肢）"
+                <Button x:Name="ZoomOutButton" ToolTip.Tip="ズームアウト（25〜500% の選択肢）"
                         Click="OnZoomOutButtonClick"
+                        IsEnabled="False"
                         Padding="2,0"
                         MinWidth="22"
                         Height="20"
@@ -184,8 +185,9 @@
                         ToolTip.Tip="拡大率を調整（10〜500%）" />
 
                 <!-- ズームイン（⊕）。フライアウトの選択肢（25〜500%）に沿ってズームインする -->
-                <Button ToolTip.Tip="ズームイン（25〜500% の選択肢）"
+                <Button x:Name="ZoomInButton" ToolTip.Tip="ズームイン（25〜500% の選択肢）"
                         Click="OnZoomInButtonClick"
+                        IsEnabled="False"
                         Padding="2,0"
                         MinWidth="22"
                         Height="20"

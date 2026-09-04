@@ -18,16 +18,16 @@ namespace Estable.AvaloniaUI.CropView;
 /// 画像表示（拡大・パン・Fit）と領域選択（ドラッグ・暗転・ルーペ）を統合した高レベル複合コントロール。
 /// </summary>
 /// <remarks>
-/// <b>適用パターン</b>: Facade / Composite（<see cref="ZoomableView"/> と <see cref="FadeMaskDragRectControl"/> を内包し、
+/// <b>適用パターン</b>: Facade / Composite（<see cref="ZoomViewControl"/> と <see cref="FadeMaskDragRectControl"/> を内包し、
 /// ホストへ統一インターフェースを提供）。<br/>
 /// <br/>
 /// <b>内部構造</b>:<br/>
-/// - <see cref="ZoomableView"/>: 画像ビューポート（拡大・パン・Fit・原寸）。<br/>
+/// - <see cref="ZoomViewControl"/>: 画像ビューポート（拡大・パン・Fit・原寸）。<br/>
 /// - <see cref="FadeMaskDragRectControl"/>: 領域選択オーバーレイ（ドラッグ選択・暗転マスク・ルーペ）。<br/>
 /// - 矩形オーバーレイ: ホストから渡された <see cref="OverlayRect"/> をビューポート座標へ変換して表示する。<br/>
 /// <br/>
 /// <b>責務分離</b>:<br/>
-/// - 画像表示（ズーム・パン）は <see cref="ZoomableView"/> が担う（ズーム率管理は本コントロール）。<br/>
+/// - 画像表示（ズーム・パン）は <see cref="ZoomViewControl"/> が担う（ズーム率管理は本コントロール）。<br/>
 /// - 領域選択（ドラッグ・暗転・ルーペ）は <see cref="FadeMaskDragRectControl"/> が担う。<br/>
 /// - 外部提供矩形（<see cref="Rects"/>）の描画は本コントロールが担う（View / ルーペの両方へ描画）。<br/>
 /// <br/>
@@ -36,10 +36,10 @@ namespace Estable.AvaloniaUI.CropView;
 /// - ズーム操作（<see cref="ZoomIn"/> / <see cref="ZoomOut"/> / Fit）は本コントロールが提供する。<br/>
 /// - 選択状態の外部設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）は <see cref="FadeMaskDragRectControl"/> へ委譲する。
 /// </remarks>
-public sealed partial class CropView : Panel, IZoomHost
+public sealed partial class CropViewControl : Panel
 {
-    /// <summary>画像ビューポート（拡大・パン・Fit）。</summary>
-    private readonly ZoomableView _zoomView = new() { ZIndex = 0 };
+    /// <summary>ズーム・パンビューポート（自己完結型複合コントロール。拡大・パン・Fit）。</summary>
+    private readonly ZoomViewControl _zoomView = new() { ZIndex = 0 };
 
     /// <summary>領域選択オーバーレイ（ドラッグ選択・暗転マスク・ルーペ）。</summary>
     private readonly FadeMaskDragRectControl _selectionOverlay = new() { ZIndex = 10 };
@@ -47,17 +47,15 @@ public sealed partial class CropView : Panel, IZoomHost
     /// <summary>外部提供矩形オーバーレイ（ビューポート座標で描画）。</summary>
     private readonly Canvas _rectOverlay = new() { ZIndex = 20, IsHitTestVisible = false };
 
-    /// <summary>ズーム操作（<see cref="ZoomTransition"/> / <see cref="ZoomMath"/> に委譲）。</summary>
-    private readonly ZoomManager _zoomManager = new();
-
     /// <summary>
-    /// <see cref="CropView"/> の新しいインスタンスを初期化する。
+    /// <see cref="CropViewControl"/> の新しいインスタンスを初期化する。
     /// </summary>
     /// <remarks>
-    /// 子コントロール（<see cref="ZoomableView"/> / <see cref="FadeMaskDragRectControl"/> / 矩形オーバーレイ）を生成して配置し、<br/>
-    /// ビューポート変化（パン・ズーム）とズーム要求（Ctrl+ホイール）を配線する。
+    /// 子コントロール（<see cref="ZoomViewControl"/> / <see cref="FadeMaskDragRectControl"/> / 矩形オーバーレイ）を生成して配置し、<br/>
+    /// ビューポート変化（パン・ズーム）を配線する。<br/>
+    /// ズーム要求（Ctrl+ホイール）・ズーム率の遷移は <see cref="ZoomViewControl"/> が自己完結する。
     /// </remarks>
-    public CropView()
+    public CropViewControl()
     {
         _zoomView.HorizontalAlignment = HorizontalAlignment.Stretch;
         _zoomView.VerticalAlignment = VerticalAlignment.Stretch;
@@ -65,28 +63,12 @@ public sealed partial class CropView : Panel, IZoomHost
         Children.Add(_selectionOverlay);
         Children.Add(_rectOverlay);
 
-        // ZoomManager へ依存関係を注入する（ズーム仕様の一元管理。スライダは内包しないため設定しない）
-        _zoomManager.ViewModel = this;
-        _zoomManager.ZoomableView = _zoomView;
-
         // ビューポート変化（パン・ズーム）を領域選択オーバーレイと矩形オーバーレイへ中継する
-        _zoomView.ViewportChanged += (_, _) =>
+        _zoomView.ZoomableView.ViewportChanged += (_, _) =>
         {
             _selectionOverlay.NotifyViewportChanged();
             UpdateRectOverlay();
         };
-
-        // Ctrl+ホイールによるズーム要求（ズーム率の決定は ZoomManager）
-        _zoomView.ZoomRequested += (_, e) =>
-        {
-            _zoomManager.PointerPosition = e.PointerPosition;
-            if (e.ZoomIn) _zoomManager.ZoomInByWheel();
-            else _zoomManager.ZoomOutByWheel();
-            _zoomManager.PointerPosition = null;
-        };
-
-        // ビューポートサイズ変更時に Fit 表示（表示テキスト）を再計算する
-        _zoomView.SizeChanged += (_, e) => _zoomManager.OnZoomableViewSizeChanged(e);
 
         // ルーペ描画完了時に、外部提供矩形をルーペ Bitmap へ描画する
         _selectionOverlay.LoupeRendered += OnLoupeRendered;
@@ -109,7 +91,7 @@ public sealed partial class CropView : Panel, IZoomHost
         set => _selectionOverlay.Mode = value;
     }
 
-    /// <summary>表示する画像を設定する（ZoomView とルーペへ伝搬する）。</summary>
+    /// <summary>表示する画像を設定する（ZoomViewControl とルーペへ伝搬する）。</summary>
     /// <remarks>画像変更時は Fit 表示にリセットし、ズーム状態を適用する。</remarks>
     public IImage? Source
     {
@@ -117,8 +99,7 @@ public sealed partial class CropView : Panel, IZoomHost
         set
         {
             _source = value;
-            _zoomView.SetSource(value);
-            _zoomManager.ApplyZoom();
+            _zoomView.Source = value;
             UpdateLoupeSource();
         }
     }
@@ -154,33 +135,29 @@ public sealed partial class CropView : Panel, IZoomHost
     // 公開 API: ズーム
     // ====================================================================
 
-    /// <summary>現在のズーム率（%）。0 = Fit（自動）。変更時は <see cref="ZoomManager"/> が表示を適用する。</summary>
-    /// <remarks><see cref="IZoomHost"/> 実装。setter は <see cref="ZoomManager.ApplyZoom"/> を呼ぶ。</remarks>
+    /// <summary>現在のズーム率（%）。0 = Fit（自動）。変更時は <see cref="ZoomViewControl"/> が表示を適用する。</summary>
+    /// <remarks>
+    /// ズーム率は <see cref="ZoomViewControl"/> が単一所有するため、getter / setter は <see cref="ZoomViewControl.ZoomPercent"/> へ委譲する。<br/>
+    /// （表示・通知は <see cref="ZoomViewControl"/> が行う）。
+    /// </remarks>
     public int ZoomPercent
     {
-        get => _zoomPercent;
-        set
-        {
-            if (_zoomPercent == value) return;
-            _zoomPercent = value;
-            _zoomManager.ApplyZoom();
-        }
+        get => _zoomView.ZoomPercent;
+        set => _zoomView.ZoomPercent = value;
     }
 
-    private int _zoomPercent;
-
     /// <summary>ズームインする（⊖⊕ボタン相当。段階遷移）。</summary>
-    public void ZoomIn() => _zoomManager.ZoomIn();
+    public void ZoomIn() => _zoomView.ZoomIn();
 
     /// <summary>ズームアウトする（⊖⊕ボタン相当。段階遷移）。</summary>
-    public void ZoomOut() => _zoomManager.ZoomOut();
+    public void ZoomOut() => _zoomView.ZoomOut();
 
     /// <summary>Fit 表示（ウィンドウに合わせて画像を表示）に戻す。</summary>
-    public void Fit() => ZoomPercent = 0;
+    public void Fit() => _zoomView.ZoomPercent = 0;
 
     /// <summary>拡大率表示テキスト（例: "100%"）。</summary>
-    /// <remarks><see cref="IZoomHost"/> 実装。ZoomManager が更新する。</remarks>
-    public string ZoomDisplayText { get; set; } = "100%";
+    /// <remarks><see cref="ZoomViewControl"/> が所有。ホストは <see cref="ZoomViewControl.ZoomChanged"/> で通知された値を参照する。</remarks>
+    public string ZoomDisplayText => _zoomView.ZoomDisplayText;
 
     // ====================================================================
     // 公開 API: 選択状態（FadeMaskDragRectControl へ委譲）
@@ -204,8 +181,8 @@ public sealed partial class CropView : Panel, IZoomHost
     public void SetCoordinateTransform(ICoordinatePort? port) => _selectionOverlay.SetCoordinateTransform(port);
 
     /// <summary>ズーム対象の画像コントロール（ホストが Crop セッション等で参照する）。</summary>
-    /// <remarks><see cref="ZoomableView.ImageControl"/> を公開する（Crop セッションの対象画像コントロール）。</remarks>
-    public Image ImageControl => _zoomView.ImageControl;
+    /// <remarks><see cref="ZoomViewControl.ZoomableView"/> の <see cref="ZoomableView.ImageControl"/> を公開する（Crop セッションの対象画像コントロール）。</remarks>
+    public Image ImageControl => _zoomView.ZoomableView.ImageControl;
 
     /// <summary>選択確定要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Enter キー相当）。</summary>
     public void RequestConfirm() => _selectionOverlay.RequestConfirm();
@@ -247,7 +224,7 @@ public sealed partial class CropView : Panel, IZoomHost
 
     /// <summary>矩形オーバーレイを再描画する。</summary>
     /// <remarks>
-    /// <see cref="Rects"/> の各矩形を <see cref="ZoomViewContentToViewport"/> でビューポート座標へ変換し、<br/>
+    /// <see cref="Rects"/> の各矩形を <see cref="ContentToViewport"/>（画像表示矩形の原点基準）でビューポート座標へ変換し、<br/>
     /// <see cref="_rectOverlay"/>（Canvas）へ <c>Rectangle</c> を配置する。
     /// </remarks>
     private void UpdateRectOverlay()
@@ -260,8 +237,8 @@ public sealed partial class CropView : Panel, IZoomHost
 
         foreach (var rect in Rects)
         {
-            var topLeft = ZoomViewContentToViewport(new Point(rect.Bounds.X, rect.Bounds.Y));
-            var bottomRight = ZoomViewContentToViewport(new Point(rect.Bounds.Right, rect.Bounds.Bottom));
+            var topLeft = ContentToViewport(new Point(rect.Bounds.X, rect.Bounds.Y));
+            var bottomRight = ContentToViewport(new Point(rect.Bounds.Right, rect.Bounds.Bottom));
 
             var rectElement = CreateRectElement(topLeft, bottomRight, rect);
 
@@ -271,40 +248,25 @@ public sealed partial class CropView : Panel, IZoomHost
         }
     }
 
-    /// <summary>ビューポート座標をドメイン座標へ変換する。</summary>
+    /// <summary>ビューポート座標をドメイン座標（元画像ピクセル）へ変換する。</summary>
     /// <param name="viewportPos">ビューポート座標。</param>
     /// <returns>ドメイン座標。</returns>
     /// <remarks>
-    /// <see cref="ZoomableView.ViewportToContent"/> は Fit 中央寄せの原点補正を考慮しないため、<br/>
-    /// 画像の表示矩形（<see cref="ZoomableView.ImageRectViewport"/>）の原点を基準に逆変換する。
+    /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
+    /// 変換は <see cref="ZoomableView.ViewportToContentImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
     public Point ViewportToContent(Point viewportPos)
-    {
-        var imageRect = _zoomView.ImageRectViewport();
-        var scale = _zoomView.EffectiveScale;
-        return new Point(
-            (viewportPos.X - imageRect.X) / scale,
-            (viewportPos.Y - imageRect.Y) / scale);
-    }
+        => _zoomView.ZoomableView.ViewportToContentImage(viewportPos);
 
-    /// <summary>ドメイン座標をビューポート座標へ変換する。</summary>
+    /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
     /// <param name="contentPos">ドメイン座標。</param>
     /// <returns>ビューポート座標。</returns>
     /// <remarks>
-    /// <see cref="ZoomableView.ContentToViewport"/> は Fit 中央寄せの原点補正を考慮しないため、<br/>
-    /// 画像の表示矩形（<see cref="ZoomableView.ImageRectViewport"/>）の原点を基準に変換する。
+    /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
+    /// 変換は <see cref="ZoomableView.ContentToViewportImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
     public Point ContentToViewport(Point contentPos)
-    {
-        var imageRect = _zoomView.ImageRectViewport();
-        var scale = _zoomView.EffectiveScale;
-        return new Point(
-            imageRect.X + contentPos.X * scale,
-            imageRect.Y + contentPos.Y * scale);
-    }
-
-    /// <summary>ドメイン座標 → ビューポート座標へ変換する（<see cref="ContentToViewport"/> のエイリアス）。</summary>
-    private Point ZoomViewContentToViewport(Point contentPos) => ContentToViewport(contentPos);
+        => _zoomView.ZoomableView.ContentToViewportImage(contentPos);
 
     // ====================================================================
     // 矩形オーバーレイ作成（破線スタイル・色・幅）
@@ -551,24 +513,4 @@ public sealed partial class CropView : Panel, IZoomHost
             buffer[offset + 3] = color.A;
         }
     }
-
-    // ====================================================================
-    // IZoomHost 実装（ZoomManager 用）
-    // ====================================================================
-
-    /// <summary>ズーム対象のプレビュー画像。</summary>
-    /// <remarks><see cref="IZoomHost"/> 実装。Source が Bitmap の場合に返す。</remarks>
-    public Bitmap? PreviewImage => Source as Bitmap;
-
-    /// <summary>ズームイン可能かどうか。</summary>
-    /// <remarks><see cref="IZoomHost"/> 実装。</remarks>
-    public bool CanZoomIn { get; set; }
-
-    /// <summary>ズームアウト可能かどうか。</summary>
-    /// <remarks><see cref="IZoomHost"/> 実装。</remarks>
-    public bool CanZoomOut { get; set; }
-
-    /// <summary>Fit 時の画像の中央寄せ / 左上寄せ。</summary>
-    /// <remarks><see cref="IZoomHost"/> 実装。</remarks>
-    public bool CenterAlign => true;
 }

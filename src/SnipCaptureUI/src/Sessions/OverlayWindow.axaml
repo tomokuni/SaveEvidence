@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:fdr="clr-namespace:Estable.AvaloniaUI.FadeMaskDragRect;assembly=FadeMaskDragRect"
+        xmlns:fdr="clr-namespace:Estable.AvaloniaUI.FadeMaskDragRect;assembly=FadeMaskDragRectControl"
         x:Class="Estable.AvaloniaUI.SnipCaptureUI.OverlayWindow"
         Title="選択"
         WindowStartupLocation="Manual"

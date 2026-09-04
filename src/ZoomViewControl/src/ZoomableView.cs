@@ -156,7 +156,7 @@ public sealed class ZoomableView : Panel
     }
 
     /// <summary>ズーム要求イベント（Ctrl+ホイール。ズーム方向とマウスポインタ位置を通知）。</summary>
-    /// <remarks>ズーム率の決定（遷移ロジック）は上位（ZoomManager）が行う。</remarks>
+    /// <remarks>ズーム率の決定（遷移ロジック）は上位（ZoomViewControl）が行う。</remarks>
     public event EventHandler<ZoomRequestedEventArgs>? ZoomRequested;
 
     /// <summary>ビューポート（パン・ズーム・表示状態）が変化したときに発生するイベント。</summary>
@@ -221,7 +221,7 @@ public sealed class ZoomableView : Panel
     /// <param name="zoomPercent">ズーム率（%）。0 = Fit。</param>
     /// <param name="center">ズーム中心（ビューポート座標）。null の場合はビューポート中心。</param>
     /// <remarks>
-    /// ズーム率の遷移ロジック（段階・倍率）は上位（ZoomManager / ZoomTransition）が決定し、<br/>
+    /// ズーム率の遷移ロジック（段階・倍率）は上位（ZoomViewControl / ZoomTransition）が決定し、<br/>
     /// 本メソッドはズーム中心維持を含む表示の適用のみを行う。<br/>
     /// Fit（0）の場合は画像をビューポートに収めてオフセットをリセットする。
     /// </remarks>
@@ -274,6 +274,28 @@ public sealed class ZoomableView : Panel
     /// <remarks>スケールは実効スケール（Fit 中は FitScale）を使用する。変換は ZoomMath の純粋関数に委譲する。</remarks>
     public Point ContentToViewport(Point contentPos)
         => ZoomMath.ContentToViewport(contentPos, _offset, EffectiveScale);
+
+    /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準）。</summary>
+    /// <param name="viewportPos">ビューポート座標。</param>
+    /// <returns>コンテンツ座標。</returns>
+    /// <remarks>
+    /// <see cref="ViewportToContent"/>（オフセット基準）とは異なり、<b>画像表示矩形の原点</b>
+    /// （<see cref="ImageRectViewport"/>）を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
+    /// 変換は <see cref="ZoomMath.ViewportToContentImage"/> に委譲する。
+    /// </remarks>
+    public Point ViewportToContentImage(Point viewportPos)
+        => ZoomMath.ViewportToContentImage(viewportPos, ImageRectViewport().Position, EffectiveScale);
+
+    /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準）。</summary>
+    /// <param name="contentPos">コンテンツ座標。</param>
+    /// <returns>ビューポート座標。</returns>
+    /// <remarks>
+    /// <see cref="ContentToViewport"/>（オフセット基準）とは異なり、<b>画像表示矩形の原点</b>
+    /// （<see cref="ImageRectViewport"/>）を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
+    /// 変換は <see cref="ZoomMath.ContentToViewportImage"/> に委譲する。
+    /// </remarks>
+    public Point ContentToViewportImage(Point contentPos)
+        => ZoomMath.ContentToViewportImage(contentPos, ImageRectViewport().Position, EffectiveScale);
 
     /// <summary>画像の表示サイズ（ビューポート座標）を取得する。</summary>
     /// <returns>表示サイズ。画像未設定時は default。</returns>

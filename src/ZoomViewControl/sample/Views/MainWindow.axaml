@@ -24,10 +24,10 @@
                     <!-- ズーム操作 -->
                     <TextBlock Text="ズーム操作"/>
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="⊖" MinWidth="40" Click="OnZoomOutClick"
-                                ToolTip.Tip="ズームアウト（段階遷移）"/>
-                        <Button Content="⊕" MinWidth="40" Click="OnZoomInClick"
-                                ToolTip.Tip="ズームイン（段階遷移）"/>
+                        <Button x:Name="ZoomOutButton" Content="⊖" MinWidth="40" Click="OnZoomOutClick"
+                                IsEnabled="False" ToolTip.Tip="ズームアウト（段階遷移）"/>
+                        <Button x:Name="ZoomInButton" Content="⊕" MinWidth="40" Click="OnZoomInClick"
+                                IsEnabled="False" ToolTip.Tip="ズームイン（段階遷移）"/>
                         <Button Content="Fit" MinWidth="48" Click="OnFitClick"
                                 ToolTip.Tip="Fit 表示（自動）"/>
                         <TextBlock Text="{Binding ZoomDisplayText}" MinWidth="56"
@@ -76,7 +76,8 @@
         </Border>
 
         <!-- ───────────────────────── 右: ズームビュー ───────────────────────── -->
-        <zoom:ZoomableView x:Name="ZoomableView" Background="#FF2B2B2B"/>
+        <zoom:ZoomViewControl x:Name="ZoomableView" Background="#FF2B2B2B"/>
+
 
     </DockPanel>
 

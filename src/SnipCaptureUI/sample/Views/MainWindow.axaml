@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:SnipCaptureUI.Sample.ViewModels"
-        xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropView"
+        xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropViewControl"
         x:Class="SnipCaptureUI.Sample.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="SnipCaptureUI 動作確認サンプル"
@@ -94,7 +94,7 @@
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="切出し（Crop）プレビュー: ドラッグで選択 → Enter / ダブルクリックで確定（マウスホイールで拡大・パン）"
                                FontSize="11" Foreground="Gray" Margin="8,4"/>
-                    <crop:CropView x:Name="PreviewCropView"/>
+                    <crop:CropViewControl x:Name="PreviewCropView"/>
                 </DockPanel>
             </Border>
 
