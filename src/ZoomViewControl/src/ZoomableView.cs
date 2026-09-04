@@ -244,7 +244,6 @@ internal sealed class ZoomableView : Panel
     public void SetZoom(double zoomPercent, Point? center = null)
     {
         var oldScale = Scale;
-        zoomPercent = Math.Clamp(zoomPercent, 0, ZoomTransition.MaxZoom);
         _zoomPercent = zoomPercent;
 
         if (zoomPercent <= 0)
@@ -549,9 +548,9 @@ internal sealed class ZoomableView : Panel
     private void SyncScrollBar(ScrollBar bar, double contentSize, double offset, double scale)
     {
         var viewportSize = bar == _verticalScrollBar ? Bounds.Height : Bounds.Width;
-        // コンテンツ座標での表示範囲（サムサイズ）を 1 回だけ計算し、最大オフセットと共有する
+        // コンテンツ座標での表示範囲（サムサイズ）と最大オフセットを ScrollMetrics へ委譲する（単一所有・DRY）
         var vs = ScrollMetrics.ViewportSize(viewportSize, scale);
-        var max = Math.Max(0, contentSize - vs);
+        var max = ScrollMetrics.MaxOffset(contentSize, viewportSize, scale);
         bar.Maximum = max;
         bar.ViewportSize = vs;
         bar.Value = Math.Clamp(offset, 0, max);

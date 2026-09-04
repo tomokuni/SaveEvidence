@@ -7,12 +7,13 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// </summary>
 /// <remarks>
 /// Fit 実効倍率・ズーム中心維持（スケール変化時のオフセット）・スクロール範囲クランプ・<br/>
-/// ビューポート ↔ コンテンツ座標変換を計算する。<br/>
+/// ビューポート ↔ コンテンツ座標変換・表示文字列生成を計算する。<br/>
 /// UI 状態（ViewModel・コントロール）に依存しないため、単体テストで仕様を検証できる。<br/>
 /// ZoomViewControl / ZoomableView から呼び出される他、仕様の回帰テストの対象となる。<br/>
-/// スクロール範囲の計算は <see cref="ScrollMetrics"/> へ委譲する（単一所有）。
+/// スクロール範囲の計算は <see cref="ScrollMetrics"/> へ委譲する（単一所有）。<br/>
+/// コントロール内部の計算であり、外部ホストからは直接参照しない（テストのみ internal アクセス）。
 /// </remarks>
-public static class ZoomMath
+internal static class ZoomMath
 {
     /// <summary>Fit 表示時の実効スケール（Uniform）を計算する。</summary>
     /// <param name="imageSize">元画像サイズ（ピクセル）。</param>
@@ -38,26 +39,6 @@ public static class ZoomMath
     /// <remarks>現在の表示状態に依存しない（常に一定の Fit 実効倍率を返す）。スケール計算は <see cref="FitScale"/> に委譲する。</remarks>
     public static double FitZoomPercent(Size imageSize, Size viewportSize)
         => FitScale(imageSize, viewportSize) * 100.0;
-
-    /// <summary>表示用の実効倍率（%）を整数に丸めた値を返す（1〜500 にクランプ）。</summary>
-    /// <param name="displayZoomPercent">表示用の実効倍率（%）。Fit 中は実効倍率、固定倍率中はズーム率。</param>
-    /// <returns>1〜500 の範囲に丸め・クランプされた倍率（%）。</returns>
-    /// <remarks>
-    /// ホストがステータスバー等に表示する整数倍率（例: "100%" の "100"）を導出するための純粋関数。<br/>
-    /// 表示の丸め・クランプロジックの単一所有（DRY）。<see cref="ZoomChangedEventArgs.DisplayZoomPercent"/> から文字列を生成する際に使用する。
-    /// </remarks>
-    public static int ToDisplayZoomPercent(double displayZoomPercent)
-        => Math.Clamp((int)Math.Round(displayZoomPercent), 1, 500);
-
-    /// <summary>表示用の実効倍率（%）からステータスバー表示文字列（例: "100%"）を生成する。</summary>
-    /// <param name="displayZoomPercent">表示用の実効倍率（%）。Fit 中は実効倍率、固定倍率中はズーム率。</param>
-    /// <returns>拡大率表示文字列（例: "100%"）。</returns>
-    /// <remarks>
-    /// <see cref="ToDisplayZoomPercent"/> で整数倍率に丸め・クランプし、<c>"%」</c> を付加する。<br/>
-    /// ホストが <see cref="ZoomChangedEventArgs.DisplayZoomPercent"/> から表示文字列を生成するための純粋関数（単一所有・DRY）。
-    /// </remarks>
-    public static string FormatZoomDisplayText(double displayZoomPercent)
-        => $"{ToDisplayZoomPercent(displayZoomPercent)}%";
 
     /// <summary>ズーム率変更後のスクロールオフセットを求める（コンテンツ座標不変・スケールが変わる場合）。</summary>
     /// <param name="offset">ズーム前のオフセット（コンテンツ座標。ビューポート左上に対応）。</param>

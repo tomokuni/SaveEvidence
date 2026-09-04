@@ -6,6 +6,7 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// <remarks>
 /// 2 つの可否を単一の値として保持し、「片方だけ計算済み」という矛盾状態を構造的に排除する。<br/>
 /// <see cref="ZoomViewControl.CanZoomIn"/> / <see cref="ZoomViewControl.CanZoomOut"/> の遅延計算キャッシュに使用し、<br/>
-/// null（未計算）を <see cref="bool"/> の実値（false 等）と区別できるようにする。
+/// null（未計算）を <see cref="bool"/> の実値（false 等）と区別できるようにする。<br/>
+/// コントロール内部のキャッシュ値オブジェクトであり、外部ホストからは直接参照しない（テストのみ internal アクセス）。
 /// </remarks>
-public readonly record struct ZoomAvailability(bool CanZoomIn, bool CanZoomOut);
+internal readonly record struct ZoomAvailability(bool CanZoomIn, bool CanZoomOut);

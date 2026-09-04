@@ -23,9 +23,10 @@
 
 画像プレビューのズーム・パン・Fit 表示を提供する独立ライブラリです。
 
-- **ZoomViewControl**: 自己完結型複合コントロール。内部 ZoomableView を内包し、ズーム率（実効ズーム率）の遷移・適用・Fit 表示・可否を統括。特定コントロールに依存せず、`ZoomChanged` イベントで実効ズーム率と可否をホストへ通知（表示文字列の生成はホストの責務）
-- **ZoomableView（内部実装）**: ScrollViewer を使用しない自己完結型ビューポート（RenderTransform ベース）。`ZoomViewControl` が Facade として必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知・画像コントロール）を再公開
-- **純粋関数**: `ZoomMath`（ズーム中心維持）/ `ZoomTransition`（段階遷移）/ `ScrollMetrics`（スクロールバー幾何）
+- **ZoomViewControl**: 自己完結型複合コントロール。内部 ZoomableView を内包し、ズーム率（実効ズーム率）の遷移・適用・Fit 表示・可否を統括。特定コントロールに依存せず、`ZoomChanged` イベントで実効ズーム率・Fit 状態・可否をホストへ通知（表示文字列の生成はホストの責務）
+- **ZoomableView（内部実装）**: ScrollViewer を使用しない自己完結型ビューポート（RenderTransform ベース）。`ZoomViewControl` が Facade として必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知）を再公開
+- **設定（`ZoomConfig`）**: ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をコンストラクタで注入する不変値。`ZoomViewControl` の読み取り専用プロパティで参照でき、クランプ・書式化に使用できる
+- **純粋関数（内部実装）**: `ZoomMath` / `ZoomTransition` / `ScrollMetrics` はコントロール内部の計算のため非公開（遷移パラメータは `ZoomConfig` で受け取る純粋関数であり状態を持たない）
 - 上位 AP は `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読するだけで、ズーム計算・表示の詳細は本ライブラリが担います
 
 ## 2. 機能一覧
@@ -36,7 +37,7 @@
 - **Fit 表示**: ビューポートに収まる Uniform スケール（自動）と実効倍率の表示
 - **座標変換**: ビューポート ↔ コンテンツ（元画像ピクセル）の双方向変換。オフセット基準に加え、画像表示矩形の原点基準（Fit 中央寄せ補正込み）も提供
 - **スクロールバー**: オーバーレイ表示（コンテンツがビューポートより大きい場合のみ）
-- **イベント**: `ZoomRequested`（Ctrl+ホイール）/ `ViewportChanged`（表示状態の変化通知）
+- **イベント**: `ZoomChanged`（実効ズーム率・Fit 状態・可否の通知）/ `ViewportChanged`（表示状態の変化通知）。Ctrl+ホイールのズーム要求は内部で自己完結するため、ホストは購読不要
 - **ログ**: `ZoomViewControl.Log` への `ILogger` 注入（未設定時は `NullLogger`）
 
 ## 3. システム要件
@@ -67,9 +68,20 @@ using Estable.AvaloniaUI.ZoomView;
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:zoom="clr-namespace:Estable.AvaloniaUI.ZoomView;assembly=ZoomViewControl">
-    <zoom:ZoomViewControl x:Name="ZoomView" Background="#FF2B2B2B"/>
+    <zoom:ZoomViewControl x:Name="ZoomView" Background="#FF2B2B2B"
+                          MinZoom="20" MaxZoom="800" WheelFactor="1.2"/>
 </Window>
 ```
+
+#### 設定（ズーム範囲・倍率）
+
+`ZoomViewControl` の `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` は**読み書き可能プロパティ**として公開されており、XAML 属性またはコードビハインドで設定できます（既定値は従来の定数値）。
+
+- **XAML 属性**: `MinZoom="20"` のように直接設定（数値のみ。レベル集合はコンマ区切りで設定不可のためコードで設定する）
+- **コードビハインド**: `zoomView.MinZoom = 20;` / `zoomView.ButtonZoomLevels = [10, 20, 50, 100];` のように設定する
+- **コンストラクタ注入**: `var zoomView = new ZoomViewControl(new ZoomConfig(20, 800, 1.2, [10, 20, 50, 100, 200]));` のように生成時に設定する（コードのみ・XAML では使用不可）
+
+> `ButtonZoomLevels`（`IReadOnlyList<double>`）は XAML 属性では設定できないため、カスタムする場合はコードビハインドまたはコンストラクタで設定する。
 
 ### 画像の設定とイベント購読
 
@@ -106,7 +118,7 @@ zoomOutButton.IsEnabled = zoomView.CanZoomOut;
 
 | 操作 | 内容 |
 | --- | --- |
-| ⊕ / ⊖ ボタン | ズームイン / ズームアウト（`ZoomTransition.ButtonZoomLevels` の 23 段階） |
+| ⊕ / ⊖ ボタン | ズームイン / ズームアウト（23 段階。段階リストはコントロール内部で管理） |
 | Ctrl + ホイール | マウスポインタ位置を中心にズーム（×1.1 / ÷1.1 連続遷移） |
 | マウスドラッグ | パン（grab 方式。掴んだ位置がポインタに追従） |
 | ホイール / Shift+ホイール | 縦パン / 横パン |
@@ -137,6 +149,7 @@ ZoomViewControl/
 ├── src/          # ライブラリ本体
 │   ├── ZoomViewControl.cs      # 自己完結型複合コントロール（ズーム遷移・適用・表示を統括）
 │   ├── ZoomableView.cs         # ScrollViewer 不使用のパン・ズームビューポート
+│   ├── ZoomConfig.cs           # ズーム遷移の設定（コンストラクタ注入・不変値）
 │   ├── ZoomMath.cs             # ズーム中心維持・Fit 実効倍率・座標変換（純粋関数）
 │   ├── ZoomTransition.cs       # 段階遷移・×1.1 遷移（純粋関数）
 │   ├── ScrollMetrics.cs        # スクロールバー幾何（純粋関数）

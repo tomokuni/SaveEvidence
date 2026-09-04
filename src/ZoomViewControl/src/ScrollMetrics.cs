@@ -6,9 +6,10 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// <remarks>
 /// スクロールバーの幾何計算を UI 状態（ScrollBar コントロール）から分離し、<br/>
 /// 単体テストで仕様を検証できるようにする。<br/>
-/// 座標系は「コンテンツ座標 = 元画像ピクセル」で、ビューポートサイズはスケールで除してコンテンツ座標に変換する。
+/// 座標系は「コンテンツ座標 = 元画像ピクセル」で、ビューポートサイズはスケールで除してコンテンツ座標に変換する。<br/>
+/// コントロール内部のスクロール計算であり、外部ホストからは直接参照しない（テストのみ internal アクセス）。
 /// </remarks>
-public static class ScrollMetrics
+internal static class ScrollMetrics
 {
     /// <summary>スクロール範囲の最大オフセット（コンテンツ座標）を計算する。</summary>
     /// <param name="contentSize">コンテンツサイズ（コンテンツ座標）。</param>

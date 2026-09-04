@@ -100,8 +100,8 @@ public sealed partial class CapturePage : UserControl
             SyncZoomSlider(e.ZoomPercent);
             UpdateZoomButtonState(e.CanZoomIn, e.CanZoomOut);
             _viewModel.ZoomPercent = e.ZoomPercent;
-            // 表示文字列はホスト側で生成する（ZoomMath.FormatZoomDisplayText に委譲。e.ZoomPercent は実効ズーム率のため Fit 中も 0 にならない）
-            _viewModel.ZoomDisplayText = ZoomMath.FormatZoomDisplayText(e.ZoomPercent);
+            // 表示文字列はホスト側の書式（整数%表記）で生成する（e.ZoomPercent は実効ズーム率のため Fit 中も 0 にならない）
+            _viewModel.ZoomDisplayText = $"{e.ZoomPercent:0}%";
         };
 
         // ViewModel のプロパティ変更時にズーム設定を適用する

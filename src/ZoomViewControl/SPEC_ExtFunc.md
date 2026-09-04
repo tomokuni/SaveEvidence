@@ -24,8 +24,11 @@
     - [7.2 Fit 中の遷移](#72-fit-中の遷移)
   - [8. 公開 API](#8-公開-api)
     - [8.1 ZoomViewControl](#81-zoomviewcontrol)
-    - [8.2 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）](#82-zoommath--zoomtransition--scrollmetrics純粋関数)
-    - [8.3 ZoomAvailability / ZoomChangedEventArgs（値オブジェクト）](#83-zoomavailability--zoomchangedeventargs値オブジェクト)
+    - [8.2 ZoomConfig（設定値）](#82-zoomconfig設定値)
+      - [設定方法（3 通り）](#設定方法3-通り)
+      - [バリデーション（不変条件）](#バリデーション不変条件)
+    - [8.3 純粋関数（内部実装）](#83-純粋関数内部実装)
+    - [8.4 ZoomChangedEventArgs（値オブジェクト）](#84-zoomchangedeventargs値オブジェクト)
   - [9. ログ](#9-ログ)
   - [10. 制約事項](#10-制約事項)
 
@@ -35,7 +38,7 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| 対象 | `ZoomViewControl` / `ZoomableView` / `ZoomMath` / `ZoomTransition` / `ScrollMetrics` |
+| 対象 | `ZoomViewControl`（公開コントロール） |
 | プロジェクト | `ZoomViewControl/ZoomViewControl.csproj` |
 | 名前空間 | `Estable.AvaloniaUI.ZoomView` / `Estable.AvaloniaUI.ZoomView.Logging` |
 | 対象フレームワーク | `net10.0` |
@@ -93,7 +96,7 @@ zoomView.ZoomChanged += (_, e) => slider.Value = e.ZoomPercent;
 
 ### 4.2 イベント連携
 
-- **`ZoomChanged`**: `ZoomChangedEventArgs`（`ZoomPercent` + `Availability`）で実効ズーム率・可否を通知する。スライダ・⊖⊕ ボタンの同期と、表示文字列の生成（`ZoomMath.FormatZoomDisplayText` を使用）に使う。表示文字列の生成はホスト側の責務。Fit 判定は `IsFit` で行う（`ZoomPercent` は実効ズーム率のため 0 にならない）
+- **`ZoomChanged`**: `ZoomChangedEventArgs`（`ZoomPercent` + `IsFit` + `CanZoomIn` + `CanZoomOut`）で実効ズーム率・Fit 状態・可否を通知する。スライダ・⊖⊕ ボタンの同期と、表示文字列の生成に使う。表示文字列の生成（書式・丸め・% 表記等）はホスト側の責務（`ZoomPercent` は数値を通知するのみ）。Fit 判定は `IsFit` で行う（`ZoomPercent` は実効ズーム率のため 0 にならない）
 - **`ViewportChanged`**（`ZoomViewControl` の再公開）: 内包 `ZoomableView` のパン・ズーム・表示状態の変化を再発火する。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する。ホストが内部 `ZoomableView` へ到達する必要がない
 - Ctrl+ホイールのズーム要求（`ZoomRequested`）とビューポートリサイズ（`SizeChanged`）は `ZoomViewControl` が内部で購読し、自己完結する（ホスト側の配線不要）
 
@@ -213,10 +216,14 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ContentToViewportImage` | `Point(Point)` | コンテンツ座標 → ビューポート座標変換（画像表示矩形の原点基準） |
 | `ImageRectViewport` | `Rect()` | 画像の表示矩形（原点 + サイズ・ビューポート座標） |
 | `Log` | `ILogger` | 内部ロガー。null は `NullLogger` へフォールバック |
+| `MinZoom` | `double`（読み書き） | ズーム率の最小値（固定倍率）。設定時に `ZoomConfig` を再構築 |
+| `MaxZoom` | `double`（読み書き） | ズーム率の最大値（固定倍率）。設定時に `ZoomConfig` を再構築 |
+| `WheelFactor` | `double`（読み書き） | Ctrl+ホイールのズーム倍率。設定時に `ZoomConfig` を再構築 |
+| `ButtonZoomLevels` | `IReadOnlyList<double>`（読み書き） | ⊖⊕ ボタンのズームレベル集合。設定時に `ZoomConfig` を再構築 |
 
 > 内部 `Image` コントロール（`ImageControl`）は公開しない（内部実装の露出を回避。ホストは `Source` / 座標変換等の意味的な API のみ使用する）。
 
-> 表示用の拡大率テキスト（`ZoomDisplayText`）は公開しない。表示文字列はホスト側で `ZoomChanged` の `ZoomPercent`（実効ズーム率）から `ZoomMath.FormatZoomDisplayText` を使用して生成する（表示の仕方はホストの責務）。
+> 表示用の拡大率テキスト（`ZoomDisplayText`）は公開しない。表示文字列はホスト側で `ZoomChanged` の `ZoomPercent`（実効ズーム率）から自前の書式で生成する（表示の仕方・書式はホストの責務。ライブラリは書式を固定しない）。
 > `ZoomPercent` setter で 0 は設定できない（0 以下は無視）。Fit 表示は `ZoomFit` を使用する。
 > スライダ用の `ApplyZoomFromSlider` も公開しない（`ZoomPercent` が `double` なのでスライダ値も直接設定できる。役割を統合）。
 
@@ -224,27 +231,61 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 > `ApplyZoom`（可否・イベント通知の反映）も内部実装のため非公開。ズーム率変更の適用経路（`ZoomPercent` setter・各ズーム操作）が内部的に呼び出す。
 > `CanZoomIn` / `CanZoomOut` はキャッシュ付きの遅延計算で、`null`（未計算）状態を参照時に再計算してキャッシュする（ズーム状態が変わる箇所で未計算に戻す）。初期表示時にイベントを待たずにボタン状態を設定する場合は、本プロパティを参照する。
 
-### 8.2 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）
+### 8.2 ZoomConfig（設定値）
 
-| クラス | 関数 | 説明 |
+ズーム遷移のパラメータをまとめた不変値。`ZoomViewControl` の**コンストラクタ注入**で設定する（既定は `ZoomConfig.Default`）。
+
+| プロパティ | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `MinZoom` | `double` | `10` | ズーム率の最小値（固定倍率） |
+| `MaxZoom` | `double` | `500` | ズーム率の最大値（固定倍率） |
+| `WheelFactor` | `double` | `1.1` | Ctrl+ホイールのズーム倍率 |
+| `ButtonZoomLevels` | `IReadOnlyList<double>` | 23 段階 | ⊖⊕ ボタンのズームレベル集合 |
+| `Default` | `ZoomConfig` | 既定値 | 従来の定数値に基づく既定の設定 |
+
+#### 設定方法（3 通り）
+
+| 方法 | 記述 | 備考 |
 | --- | --- | --- |
-| `ZoomMath` | `FitScale` / `FitZoomPercent` | Fit 実効スケール / 実効倍率（%）の計算 |
-| `ZoomMath` | `ComputeOffsetAfterScaleChange` | スケール変化時のオフセット計算（ズーム中心維持） |
-| `ZoomMath` | `ClampOffset` | オフセットのスクロール範囲クランプ |
-| `ZoomMath` | `ViewportToContent` / `ContentToViewport` | ビューポート ↔ コンテンツ座標変換（純粋関数・オフセット基準） |
-| `ZoomMath` | `ViewportToContentImage` / `ContentToViewportImage` | ビューポート ↔ コンテンツ座標変換（純粋関数・画像表示矩形の原点基準） |
-| `ZoomTransition` | `NextLevel` / `PrevLevel` | ⊖⊕ 23 段階の遷移 |
-| `ZoomTransition` | `WheelZoomIn` / `WheelZoomOut` | Ctrl+ホイール ×1.1 の遷移 |
-| `ZoomTransition` | `CanZoomIn` / `CanZoomOut` | ズームイン / アウト可否判定 |
-| `ScrollMetrics` | `MaxOffset` / `ViewportSize` | スクロールバーの範囲・表示範囲の計算 |
+| コンストラクタ注入 | `new ZoomViewControl(new ZoomConfig(20, 800, 1.2, [...]))` | コードのみ・生成時に設定 |
+| プロパティ設定（コード） | `zoomView.MinZoom = 20;` / `zoomView.ButtonZoomLevels = [...];` | 生成後に設定（XAML 配置でも可） |
+| プロパティ設定（XAML 属性） | `<zoom:ZoomViewControl MinZoom="20" MaxZoom="800" WheelFactor="1.2"/>` | XAML 配置で設定（数値のみ） |
 
-### 8.3 ZoomAvailability / ZoomChangedEventArgs（値オブジェクト）
+- `ZoomViewControl` の `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` は**読み書き可能プロパティ**。設定時に `ZoomConfig` を再構築し、ズーム可否を再計算する。
+- `ButtonZoomLevels`（`IReadOnlyList<double>`）は XAML 属性では設定できないため、コードビハインドまたはコンストラクタで設定する。
+- クランプ・書式化には、これらのプロパティ（または `ZoomConfig`）の値を参照する。
+
+#### バリデーション（不変条件）
+
+`ZoomConfig` は生成時に不変条件を検証し、不正な値には例外を投げる（コントロールが動作する値・範囲を保証するガード）。
+
+| プロパティ | 不変条件 | 違反時の例外 |
+| --- | --- | --- |
+| `MinZoom` | `0` より大きい | `ArgumentOutOfRangeException` |
+| `MaxZoom` | `MinZoom` 以上 | `ArgumentOutOfRangeException` |
+| `WheelFactor` | `1` より大きい | `ArgumentOutOfRangeException` |
+| `ButtonZoomLevels` | null でない・空でない・昇順・`MinZoom`〜`MaxZoom` の範囲内 | `ArgumentNullException` / `ArgumentException` / `ArgumentOutOfRangeException` |
+
+- 検証はコンストラクタで行われ、`ZoomViewControl` の各プロパティ設定（`MinZoom` 等）も検証付きの `ZoomConfig` 再構築を経由するため、すべての設定経路（XAML・コード・コンストラクタ）でガードされる。
+- レベル集合の昇順・範囲は `ArgumentOutOfRangeException`（範囲外）と `ArgumentException`（昇順違反）で区別される。
+
+### 8.3 純粋関数（内部実装）
+
+| クラス | 責務 | 公開の可否 |
+| --- | --- | --- |
+| `ZoomMath` | Fit 実効倍率・ズーム中心維持・座標変換・オフセットクランプの計算 | `internal` |
+| `ZoomTransition` | ⊖⊕ 段階遷移・Ctrl+ホイール ×1.1 遷移・可否判定 | `internal` |
+| `ScrollMetrics` | スクロールバーの範囲・ビューポートサイズの計算 | `internal` |
+
+純粋関数はコントロール内部の計算のため **`internal`**。遷移パラメータ（ズーム範囲・倍率・レベル集合）は引数（`ZoomConfig`）で受け取る純粋関数であり、状態を持たない（パラメータの所有は `ZoomViewControl`）。
+
+### 8.4 ZoomChangedEventArgs（値オブジェクト）
 
 | メンバー | 説明 |
 | --- | --- |
-| `ZoomAvailability` | `readonly record struct`。ズーム操作の可否（`CanZoomIn` + `CanZoomOut`）を単一の値として保持する。公開面は Non-Null |
-| `ZoomAvailability?` | `ZoomViewControl` 内部で「未計算」（null）を表すキャッシュに使用。参照時に遅延計算してキャッシュし、2 値の整合性を構造的に保証する |
-| `ZoomChangedEventArgs` | `sealed record (double ZoomPercent, ZoomAvailability Availability)`。実効ズーム率と可否を Non-Null の値オブジェクトで公開。`CanZoomIn` / `CanZoomOut` はコンビニエンスプロパティ |
+| `ZoomChangedEventArgs` | `sealed record (double ZoomPercent, bool IsFit, bool CanZoomIn, bool CanZoomOut)`。実効ズーム率・Fit 状態・ズーム可否を Non-Null の値で公開する |
+
+> 内部キャッシュ（ズーム可否の遅延計算）は `ZoomViewControl` 内部の値オブジェクト（`ZoomAvailability`）で管理するが、公開面には露出しない（`CanZoomIn` / `CanZoomOut` として展開して通知する）。
 
 ## 9. ログ
 

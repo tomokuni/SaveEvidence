@@ -42,6 +42,9 @@ public sealed class ZoomViewControl : Panel
     /// <summary>内包するパン・ズームビューポート。</summary>
     private readonly ZoomableView _zoomableView = new();
 
+    /// <summary>ズーム遷移の設定（コンストラクタまたはプロパティで設定。不変値）。</summary>
+    private ZoomConfig _config;
+
     /// <summary>内部ロガー（横断的関心事）。null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</summary>
     /// <value>null 可。設定しない場合はログを出力しない。</value>
     public ILogger Log
@@ -50,15 +53,88 @@ public sealed class ZoomViewControl : Panel
         set => field = value ?? NullLogger.Instance;
     }
 
+    /// <summary>ズーム率の最小値（固定倍率）。</summary>
+    /// <remarks>
+    /// <see cref="ZoomConfig"/> の <see cref="ZoomConfig.MinZoom"/> を返す。設定時は <see cref="ZoomConfig"/> を再構築する（検証付き）。<br/>
+    /// クランプ・書式化に参照できる。
+    /// </remarks>
+    public double MinZoom
+    {
+        get => _config.MinZoom;
+        set => SetConfig(NewConfig(minZoom: value));
+    }
+
+    /// <summary>ズーム率の最大値（固定倍率）。</summary>
+    /// <remarks>
+    /// <see cref="ZoomConfig"/> の <see cref="ZoomConfig.MaxZoom"/> を返す。設定時は <see cref="ZoomConfig"/> を再構築する（検証付き）。<br/>
+    /// クランプ・書式化に参照できる。
+    /// </remarks>
+    public double MaxZoom
+    {
+        get => _config.MaxZoom;
+        set => SetConfig(NewConfig(maxZoom: value));
+    }
+
+    /// <summary>Ctrl+ホイールのズーム倍率。</summary>
+    /// <remarks><see cref="ZoomConfig"/> の <see cref="ZoomConfig.WheelFactor"/> を返す。設定時は <see cref="ZoomConfig"/> を再構築する（検証付き）。</remarks>
+    public double WheelFactor
+    {
+        get => _config.WheelFactor;
+        set => SetConfig(NewConfig(wheelFactor: value));
+    }
+
+    /// <summary>⊖⊕ ボタンのズームレベル集合。</summary>
+    /// <remarks><see cref="ZoomConfig"/> の <see cref="ZoomConfig.ButtonZoomLevels"/> を返す。設定時は <see cref="ZoomConfig"/> を再構築する（検証付き）。</remarks>
+    public IReadOnlyList<double> ButtonZoomLevels
+    {
+        get => _config.ButtonZoomLevels;
+        set => SetConfig(NewConfig(buttonZoomLevels: value));
+    }
+
+    /// <summary>要素の一部を差し替えた、検証付きの新しい <see cref="ZoomConfig"/> を構築する。</summary>
+    /// <param name="minZoom">新しい最小値。null の場合は現在値。</param>
+    /// <param name="maxZoom">新しい最大値。null の場合は現在値。</param>
+    /// <param name="wheelFactor">新しいズーム倍率。null の場合は現在値。</param>
+    /// <param name="buttonZoomLevels">新しいレベル集合。null の場合は現在値。</param>
+    /// <returns>検証済みの新しい <see cref="ZoomConfig"/>。</returns>
+    /// <remarks>コンストラクタ（検証付き）を経由するため、不正な値には <see cref="ArgumentException"/> が投げられる。</remarks>
+    private ZoomConfig NewConfig(
+        double? minZoom = null,
+        double? maxZoom = null,
+        double? wheelFactor = null,
+        IReadOnlyList<double>? buttonZoomLevels = null)
+        => new(
+            minZoom ?? _config.MinZoom,
+            maxZoom ?? _config.MaxZoom,
+            wheelFactor ?? _config.WheelFactor,
+            buttonZoomLevels ?? _config.ButtonZoomLevels);
+
+    /// <summary>設定値を更新し、ズーム可否を再計算する。</summary>
+    /// <param name="config">新しい設定（検証済み）。</param>
+    private void SetConfig(ZoomConfig config)
+    {
+        _config = config;
+        // ズーム範囲が変わったため、可否（CanZoomIn / CanZoomOut）を未計算に戻して再評価する
+        _availability = null;
+    }
+
+    /// <summary>ZoomViewControl を初期化し、内包する ZoomableView の配線を自己完結させる（既定の設定）。</summary>
+    /// <remarks>
+    /// ズーム遷移の設定は既定値（<see cref="ZoomConfig.Default"/>）を使用する。<br/>
+    /// カスタム設定は <see cref="ZoomViewControl(ZoomConfig)"/> を使用する。
+    /// </remarks>
+    public ZoomViewControl() : this(ZoomConfig.Default) { }
+
     /// <summary>ZoomViewControl を初期化し、内包する ZoomableView の配線を自己完結させる。</summary>
+    /// <param name="config">ズーム遷移の設定。</param>
     /// <remarks>
     /// ZoomableView を子として追加し、Ctrl+ホイールのズーム要求（ZoomableView.ZoomRequested）と<br/>
     /// ビューポートリサイズ時の Fit 再適用（ZoomableView.SizeChanged）を内部で購読する。<br/>
-    /// これによりホストは ZoomableView.ZoomRequested / ZoomableView.SizeChanged の配線を
-    /// コードビハインドで行う必要がなくなる（配線の重複を排除・責任の集約）。
+    /// ホストは ZoomableView.ZoomRequested / ZoomableView.SizeChanged の配線をコードビハインドで行う必要がない。
     /// </remarks>
-    public ZoomViewControl()
+    public ZoomViewControl(ZoomConfig config)
     {
+        _config = config;
         Children.Add(_zoomableView);
 
         // Ctrl+ホイールのズーム要求（ズーム率の決定は本コントロール。マウスポインタ位置をズーム中心に使用）。
@@ -163,12 +239,12 @@ public sealed class ZoomViewControl : Panel
     /// </remarks>
     public double ZoomPercent
     {
-        get => IsFit ? Math.Clamp(ComputeRawFitZoomPercent(), ZoomTransition.MinZoom, ZoomTransition.MaxZoom) : _zoomableView.ZoomPercent;
+        get => IsFit ? Math.Clamp(ComputeRawFitZoomPercent(), _config.MinZoom, _config.MaxZoom) : _zoomableView.ZoomPercent;
         set
         {
-            // 0 以下は Fit の意図と区別するため受け付けない（Fit は ZoomFit を使用）
+            // 0 以下は Fit の意図と区別するため受け付けない（Fit は ZoomFit を使用）。範囲は設定（ZoomConfig）でクランプ
             if (value <= 0) return;
-            _zoomableView.SetZoom(value, PointerPosition);
+            _zoomableView.SetZoom(_config.ClampZoom(value), PointerPosition);
             ApplyZoom();
         }
     }
@@ -219,19 +295,19 @@ public sealed class ZoomViewControl : Panel
 
     /// <summary>ズームインする（⊖⊕ボタン）。</summary>
     /// <remarks>
-    /// <see cref="ZoomTransition.ButtonZoomLevels"/> の次のレベルへ移動する（<see cref="ZoomTransition.NextLevel"/>）。<br/>
-    /// Fit は遷移に含めない。リスト末尾（500%）で停止する。<br/>
+    /// 設定されたレベル集合（<see cref="ButtonZoomLevels"/>）の次のレベルへ移動する（<see cref="ZoomTransition.NextLevel"/>）。<br/>
+    /// Fit は遷移に含めない。リスト末尾（<see cref="MaxZoom"/>）で停止する。<br/>
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
-    public void ZoomIn() => ApplyZoomStep(ZoomTransition.NextLevel, Log.LogZoomIn);
+    public void ZoomIn() => ApplyZoomStep((c, f) => ZoomTransition.NextLevel(c, f, _config), Log.LogZoomIn);
 
     /// <summary>ズームアウトする（⊖⊕ボタン）。</summary>
     /// <remarks>
-    /// <see cref="ZoomTransition.ButtonZoomLevels"/> の前のレベルへ移動する（<see cref="ZoomTransition.PrevLevel"/>）。<br/>
-    /// Fit は遷移に含めない。リスト先頭（10%）で停止する。<br/>
+    /// 設定されたレベル集合（<see cref="ButtonZoomLevels"/>）の前のレベルへ移動する（<see cref="ZoomTransition.PrevLevel"/>）。<br/>
+    /// Fit は遷移に含めない。リスト先頭（<see cref="MinZoom"/>）で停止する。<br/>
     /// 移動先がなければ何もしない（現在のズーム率を維持）。
     /// </remarks>
-    public void ZoomOut() => ApplyZoomStep(ZoomTransition.PrevLevel, Log.LogZoomOut);
+    public void ZoomOut() => ApplyZoomStep((c, f) => ZoomTransition.PrevLevel(c, f, _config), Log.LogZoomOut);
 
     /// <summary>Fit 表示（ビューポートに収まる自動倍率）へ戻す。</summary>
     /// <remarks>
@@ -245,23 +321,23 @@ public sealed class ZoomViewControl : Panel
         ApplyZoom();
     }
 
-    /// <summary>Ctrl+ホイールでズームインする（拡大 = Round(現在の拡大率 × 1.1)）。</summary>
+    /// <summary>Ctrl+ホイールでズームインする（拡大 = Round(現在の拡大率 × WheelFactor)）。</summary>
     /// <remarks>
     /// <see cref="ZoomTransition.WheelZoomIn"/> で倍率を計算する。Fit は遷移に含めない。<br/>
-    /// Fit 表示中は実効倍率の 1.1 倍へ移動する（実効倍率 ≥ 500 なら拡大不可）。<br/>
+    /// Fit 表示中は実効倍率の WheelFactor 倍へ移動する（実効倍率 ≥ <see cref="MaxZoom"/> なら拡大不可）。<br/>
     /// 移動先がなければ何もしない（現在のズーム率を維持）。<br/>
     /// Ctrl+ホイールのハンドラのみが使用する（外部からの呼び出しは不要）。
     /// </remarks>
-    private void ZoomInByWheel() => ApplyZoomStep(ZoomTransition.WheelZoomIn, Log.LogZoomInWheel);
+    private void ZoomInByWheel() => ApplyZoomStep((c, f) => ZoomTransition.WheelZoomIn(c, f, _config), Log.LogZoomInWheel);
 
-    /// <summary>Ctrl+ホイールでズームアウトする（縮小 = Round(現在の拡大率 ÷ 1.1)）。</summary>
+    /// <summary>Ctrl+ホイールでズームアウトする（縮小 = Round(現在の拡大率 ÷ WheelFactor)）。</summary>
     /// <remarks>
     /// <see cref="ZoomTransition.WheelZoomOut"/> で倍率を計算する。Fit は遷移に含めない。<br/>
-    /// Fit 表示中は実効倍率の 1/1.1 倍へ移動する（実効倍率 ≤ 10 なら縮小不可）。<br/>
+    /// Fit 表示中は実効倍率の 1/WheelFactor 倍へ移動する（実効倍率 ≤ <see cref="MinZoom"/> なら縮小不可）。<br/>
     /// 移動先がなければ何もしない（現在のズーム率を維持）。<br/>
     /// Ctrl+ホイールのハンドラのみが使用する（外部からの呼び出しは不要）。
     /// </remarks>
-    private void ZoomOutByWheel() => ApplyZoomStep(ZoomTransition.WheelZoomOut, Log.LogZoomOutWheel);
+    private void ZoomOutByWheel() => ApplyZoomStep((c, f) => ZoomTransition.WheelZoomOut(c, f, _config), Log.LogZoomOutWheel);
 
     /// <summary>ズーム遷移の一歩を適用する（遷移計算・ログ・ZoomableView への設定・表示反映を共通化）。</summary>
     /// <param name="transition">現在のズーム率と Fit 実効倍率から遷移先のズーム率を計算する関数。</param>
@@ -310,14 +386,18 @@ public sealed class ZoomViewControl : Panel
     {
         if (Source is null) return;
 
-        // ZoomPercent（実効ズーム率・Fit 中は実効倍率）と Fit 実効倍率を 1 回だけ計算して共有する
-        var zoom = ZoomPercent;
-        var fitZoom = ComputeRawFitZoomPercent();
+        // 内部ズーム率（0 = Fit / >0 = 固定倍率）が現在の状態
+        var internalZoom = _zoomableView.ZoomPercent;
+        var isFit = internalZoom <= 0;
 
-        // ⊖⊕ ボタンの Enable/Disable 制御用に、段階遷移仕様（ZoomTransition）で可否を即時計算してキャッシュし、通知する
-        RefreshZoomAvailability(_zoomableView.ZoomPercent, fitZoom);
-        var isFit = _zoomableView.ZoomPercent <= 0;
-        ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(zoom, isFit, _availability!.Value));
+        // Fit 実効倍率を計算し、実効ズーム率（Fit 中はクランプした実効倍率・固定倍率中はズーム率）を導出する
+        var fitZoom = ComputeRawFitZoomPercent();
+        var zoom = isFit ? _config.ClampZoom(fitZoom) : internalZoom;
+
+        // ⊖⊕ ボタンの Enable/Disable 制御用に、段階遷移仕様で可否を即時計算してキャッシュし、通知する
+        RefreshZoomAvailability(internalZoom, fitZoom);
+        var availability = _availability!.Value;
+        ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(zoom, isFit, availability.CanZoomIn, availability.CanZoomOut));
     }
 
     /// <summary>現在のズーム状態からズーム可否を取得する（未計算なら遅延計算してキャッシュ）。</summary>
@@ -346,7 +426,7 @@ public sealed class ZoomViewControl : Panel
     /// <returns>ズーム可否。画像未設定時（<see cref="Source"/> が null）は false。</returns>
     private ZoomAvailability BuildAvailability(double zoom, double fitZoom)
         => zoom > 0 || Source is not null
-            ? new ZoomAvailability(ZoomTransition.CanZoomIn(zoom, fitZoom), ZoomTransition.CanZoomOut(zoom, fitZoom))
+            ? new ZoomAvailability(ZoomTransition.CanZoomIn(zoom, fitZoom, _config), ZoomTransition.CanZoomOut(zoom, fitZoom, _config))
             : new ZoomAvailability(false, false);
 
     /// <summary>ズーム遷移の適用（ログ記録 + ZoomableView へのズーム率設定）を共通化する。</summary>
@@ -358,7 +438,7 @@ public sealed class ZoomViewControl : Panel
         if (target is not { } t) return;
         var zoom = (int)Math.Round(_zoomableView.ZoomPercent);
         log(zoom, (int)Math.Round(t));
-        _zoomableView.SetZoom(t, PointerPosition);
+        _zoomableView.SetZoom(_config.ClampZoom(t), PointerPosition);
         ApplyZoom();
     }
 

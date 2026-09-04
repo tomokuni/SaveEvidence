@@ -38,8 +38,8 @@ public partial class MainWindow : Window
             SyncZoomSlider(e.ZoomPercent);
             UpdateZoomButtonState(e.CanZoomIn, e.CanZoomOut);
             _vm.ZoomPercent = e.ZoomPercent;
-            // 表示文字列はホスト側で生成する（ZoomMath.FormatZoomDisplayText に委譲。e.ZoomPercent は実効ズーム率のため Fit 中も 0 にならない）
-            _vm.ZoomDisplayText = ZoomMath.FormatZoomDisplayText(e.ZoomPercent);
+            // 表示文字列はホスト側の書式（整数%表記）で生成する（e.ZoomPercent は実効ズーム率のため Fit 中も 0 にならない）
+            _vm.ZoomDisplayText = $"{e.ZoomPercent:0}%";
         };
 
         // スライダの変更を ZoomViewControl へ反映する
