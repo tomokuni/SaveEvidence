@@ -127,4 +127,34 @@ public class ZoomConfigTests
         var config = new ZoomConfig(10, 500, 1.1, [10, 50, 100]);
         Assert.Equal(expected, config.ClampZoom(input));
     }
+
+    // ====================================================================
+    // With（検証付き部分更新）
+    // ====================================================================
+
+    [Fact]
+    public void With_指定したプロパティのみ差し替える()
+    {
+        var config = new ZoomConfig(10, 500, 1.1, [10, 50, 100]);
+
+        var updated = config.With(wheelFactor: 1.2);
+
+        Assert.Equal(10.0, updated.MinZoom);    // 未指定は現在値
+        Assert.Equal(500.0, updated.MaxZoom);   // 未指定は現在値
+        Assert.Equal(1.2, updated.WheelFactor); // 差し替え
+        Assert.Equal([10, 50, 100], updated.ButtonZoomLevels); // 未指定は現在値
+        // 元の config は不変（影響を受けない）
+        Assert.Equal(1.1, config.WheelFactor);
+    }
+
+    [Fact]
+    public void With_不正な値なら例外を投げる()
+    {
+        var config = new ZoomConfig(10, 500, 1.1, [10, 50, 100]);
+
+        // minZoom を MaxZoom 超に設定 → 検証エラー
+        Assert.Throws<ArgumentOutOfRangeException>(() => config.With(minZoom: 800));
+        // WheelFactor を 1 以下に設定 → 検証エラー
+        Assert.Throws<ArgumentOutOfRangeException>(() => config.With(wheelFactor: 1.0));
+    }
 }

@@ -81,7 +81,7 @@ flowchart TB
     subgraph ZVC["ZoomViewControl プロジェクト"]
         ZVW["ZoomViewControl<br/>public sealed : Panel<br/>ZoomViewControl.cs（遷移決定・適用・内部配線・ZoomChanged 通知）"]
         ZV["ZoomableView<br/>internal sealed : Panel<br/>ZoomableView.cs（パン・ズームビューポート）"]
-        PF["ZoomConfig<br/>public record（設定値・コンストラクタ注入 / 読み書きプロパティ）"]
+        PF["ZoomConfig<br/>public sealed class（設定値・コンストラクタ注入 / 読み書きプロパティ・With）"]
         PFI["ZoomMath / ZoomTransition / ScrollMetrics<br/>internal static（純粋関数・内部）"]
         LG["LogMessage<br/>Logging/LogMessage.cs（LoggerMessage）"]
     end
@@ -128,7 +128,7 @@ flowchart TB
 
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
-| `ZoomConfig` | 公開 record | ズーム遷移の設定（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`。不変値・コンストラクタ注入または読み書きプロパティ） |
+| `ZoomConfig` | 公開 sealed class | ズーム遷移の設定（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`。検証付き不変値・コンストラクタ注入または読み書きプロパティ・`With` で部分更新） |
 | `ZoomMath` | 内部静的クラス | ズーム中心維持・Fit 実効倍率・座標変換（オフセット基準 / 画像表示矩形原点基準）・オフセットクランプの計算 |
 | `ZoomTransition` | 内部静的クラス | ⊖⊕ 段階遷移・Ctrl+ホイール ×1.1 遷移・可否判定。`ZoomConfig` を引数で受け取る |
 | `ScrollMetrics` | 内部静的クラス | スクロールバーの範囲・ビューポートサイズの計算 |

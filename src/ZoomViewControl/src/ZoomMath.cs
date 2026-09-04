@@ -7,11 +7,11 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// </summary>
 /// <remarks>
 /// Fit 実効倍率・ズーム中心維持（スケール変化時のオフセット）・スクロール範囲クランプ・<br/>
-/// ビューポート ↔ コンテンツ座標変換・表示文字列生成を計算する。<br/>
+/// ビューポート ↔ コンテンツ座標変換を計算する。<br/>
 /// UI 状態（ViewModel・コントロール）に依存しないため、単体テストで仕様を検証できる。<br/>
-/// ZoomViewControl / ZoomableView から呼び出される他、仕様の回帰テストの対象となる。<br/>
-/// スクロール範囲の計算は <see cref="ScrollMetrics"/> へ委譲する（単一所有）。<br/>
-/// コントロール内部の計算であり、外部ホストからは直接参照しない（テストのみ internal アクセス）。
+/// ZoomViewControl / ZoomableView から呼び出される。<br/>
+/// スクロール範囲の計算は <see cref="ScrollMetrics"/> へ委譲する。<br/>
+/// コントロール内部の計算であり、外部ホストからは直接参照しない。
 /// </remarks>
 internal static class ZoomMath
 {

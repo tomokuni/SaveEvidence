@@ -26,9 +26,8 @@
     - [8.1 ZoomViewControl](#81-zoomviewcontrol)
     - [8.2 ZoomConfig（設定値）](#82-zoomconfig設定値)
       - [設定方法（3 通り）](#設定方法3-通り)
-      - [バリデーション（不変条件）](#バリデーション不変条件)
-    - [8.3 純粋関数（内部実装）](#83-純粋関数内部実装)
-    - [8.4 ZoomChangedEventArgs（値オブジェクト）](#84-zoomchangedeventargs値オブジェクト)
+      - [値のガード](#値のガード)
+    - [8.3 ZoomChangedEventArgs（イベント引数）](#83-zoomchangedeventargsイベント引数)
   - [9. ログ](#9-ログ)
   - [10. 制約事項](#10-制約事項)
 
@@ -89,22 +88,21 @@ zoomView.Source = image;
 zoomView.ZoomChanged += (_, e) => slider.Value = e.ZoomPercent;
 ```
 
-- `PointerPosition`: Ctrl+ホイールズーム時のズーム中心（ビューポートローカル DIP）。null = ビューポート中心
-- ホストからズーム率を直接変更する場合は `zoomView.ZoomPercent = value` を使用する（`ZoomableView` が単一所有。読み書き可能プロパティ。`double` でスライダの連続値も設定できる）
+- ホストからズーム率を直接変更する場合は `zoomView.ZoomPercent = value` を使用する（読み書き可能プロパティ。`double` でスライダの連続値も設定できる）
 - スライダの `ValueChanged` は XAML ロード中（Slider 初期化の coerce）にも発火するため、**依存注入後のコンストラクタで購読**し、`zoomView.ZoomPercent = slider.Value` へ委譲する
-- `ZoomViewControl` 内部で `ZoomRequested`（Ctrl+ホイールのズーム要求）と `SizeChanged`（ビューポートリサイズの Fit 再適用）を購読する
+- コントロールは Ctrl+ホイールのズーム要求とビューポートリサイズ（Fit 再適用）を内部で購読し、自己完結する（ホスト側の配線不要）
 
 ### 4.2 イベント連携
 
 - **`ZoomChanged`**: `ZoomChangedEventArgs`（`ZoomPercent` + `IsFit` + `CanZoomIn` + `CanZoomOut`）で実効ズーム率・Fit 状態・可否を通知する。スライダ・⊖⊕ ボタンの同期と、表示文字列の生成に使う。表示文字列の生成（書式・丸め・% 表記等）はホスト側の責務（`ZoomPercent` は数値を通知するのみ）。Fit 判定は `IsFit` で行う（`ZoomPercent` は実効ズーム率のため 0 にならない）
-- **`ViewportChanged`**（`ZoomViewControl` の再公開）: 内包 `ZoomableView` のパン・ズーム・表示状態の変化を再発火する。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する。ホストが内部 `ZoomableView` へ到達する必要がない
-- Ctrl+ホイールのズーム要求（`ZoomRequested`）とビューポートリサイズ（`SizeChanged`）は `ZoomViewControl` が内部で購読し、自己完結する（ホスト側の配線不要）
+- **`ViewportChanged`**: パン・ズーム・表示状態の変化を通知する。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する
+- Ctrl+ホイールのズーム要求とビューポートリサイズ（Fit 再適用）はコントロールが内部で購読し、自己完結する（ホスト側の配線不要）
 
 ## 5. ズーム遷移ルール
 
 ### 5.1 ⊖⊕ ボタンの段階（23 段階）
 
-⊖⊕ ボタンは以下の 23 段階を順に遷移します（`ZoomTransition.ButtonZoomLevels`）。
+⊖⊕ ボタンは以下の 23 段階を順に遷移します（このレベル集合は `ZoomConfig.ButtonZoomLevels` でカスタム設定できます）。
 
 ```text
 10 → 12 → 15 → 20 → 25 → 33 → 40 → 50 → 62 → 75 → 80 → 90
@@ -132,14 +130,13 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomV
 
 ## 6. 座標系（ズーム表示）
 
-`ZoomViewControl`（Facade）が提供する座標変換 API（`ViewportToContentImage` / `ContentToViewportImage` / `ImageRectViewport`）を理解するための座標系を説明します。
-内部の表示方式（`ZoomableView`）の実装詳細は `SPEC_System.md` を参照してください（外部からは `ZoomViewControl` 経由でアクセスする）。
+`ZoomViewControl` が提供する座標変換 API（`ViewportToContentImage` / `ContentToViewportImage` / `ImageRectViewport`）を理解するための座標系を説明します。
 
 ### 6.1 座標系
 
 ```text
 - コンテンツ座標 = 元画像ピクセル（ズーム率に依存しない不変座標）
-- ビューポート座標 = ZoomableView のローカル座標（表示座標）
+- ビューポート座標 = コントロールのローカル座標（表示座標）
 - 描画位置 = 実効スケール × (コンテンツ座標 − オフセット)
 - オフセット = 「ビューポート左上に対応するコンテンツ座標」。スクロール範囲
   （コンテンツ − ビューポート / 実効スケール）にクランプされる
@@ -155,8 +152,7 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomV
 
 - **画像内にマウスポインタがある場合**: マウスポインタ位置を中心に拡大縮小
 - **画像外（ビューポートの空き領域）**: ビューポート中心を基準に拡大縮小
-- `ZoomRequested` イベント（`ZoomRequestedEventArgs`: `ZoomIn` + `PointerPosition`）でマウス位置を通知
-- ズーム中心の計算は `ZoomMath.ComputeOffsetAfterScaleChange`（純粋関数）:
+- ズーム中心の計算はコントロール内部で行われ、以下の考え方に基づく:
 
   ```text
   コンテンツ座標 c = offset + center / oldScale（不変に保つ）
@@ -172,7 +168,7 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomV
   - Fit 中はパン不可（画像がビューポートに収まるため。オフセット 0）
 - **ホイール**: 縦パン / Shift+ホイールで横パン（Ctrl+ホイールはズーム要求）
 - **スクロールバー**: 縦横の `ScrollBar`（オーバーレイ表示）。コンテンツがビューポートより大きい場合のみ表示
-  - 範囲（Maximum / ViewportSize）・サムサイズは `ScrollMetrics`（純粋関数）で計算
+  - 範囲（Maximum / ViewportSize）・サムサイズはコントロール内部で計算
   - スクロールバーのドラッグ・矢印・ページ送りでパン（`ValueChanged` → オフセット更新）
   - ズーム・パン時にスクロールバーの値と範囲を同期
 
@@ -180,7 +176,7 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomV
 
 ### 7.1 Fit 実効倍率の計算
 
-Fit 実効倍率は現在の表示状態（Bounds・ZoomPercent）に依存せず、**ビューポートと元画像サイズから一定に計算**します（`ZoomMath.FitZoomPercent`）。
+Fit 実効倍率は現在の表示状態（Bounds・ZoomPercent）に依存せず、**ビューポートと元画像サイズから一定に計算**します。
 
 ```text
 scaleX = ビューポート幅 ÷ 元画像幅
@@ -197,7 +193,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 
 ### 8.1 ZoomViewControl
 
-自己完結型複合コントロール（`public sealed class : Panel`）。内部 ZoomableView を内包し、ズーム率・遷移・表示を統括する。
+自己完結型複合コントロール（`public sealed class : Panel`）。内部ビューポートを内包し、ズーム率・遷移・表示を統括する。
 
 | メソッド / プロパティ | シグネチャ | 説明 |
 | --- | --- | --- |
@@ -208,8 +204,8 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ZoomIn` | `void()` | ⊖⊕ ボタンのズームイン（23 段階） |
 | `ZoomOut` | `void()` | ⊖⊕ ボタンのズームアウト（23 段階） |
 | `ZoomFit` | `void()` | Fit 表示（ビューポートに収まる自動倍率）へ戻す（唯一の Fit 移行経路。`ZoomIn` / `ZoomOut` と対になるズーム操作） |
-| `CanZoomIn` | `bool` | 現在の状態でズームイン可能か（段階遷移仕様に基づく遅延計算キャッシュ） |
-| `CanZoomOut` | `bool` | 現在の状態でズームアウト可能か（段階遷移仕様に基づく遅延計算キャッシュ） |
+| `CanZoomIn` | `bool` | 現在の状態でズームイン可能か |
+| `CanZoomOut` | `bool` | 現在の状態でズームアウト可能か |
 | `ZoomChanged` | `event EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（変更後のズーム率 + 可否。ホスト側のスライダ・⊖⊕ ボタン等の同期用） |
 | `ViewportChanged` | `event EventHandler` | ビューポート（パン・ズーム・表示状態）変化の通知。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する |
 | `ViewportToContentImage` | `Point(Point)` | ビューポート座標 → コンテンツ座標変換（画像表示矩形の原点基準） |
@@ -221,19 +217,13 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `WheelFactor` | `double`（読み書き） | Ctrl+ホイールのズーム倍率。設定時に `ZoomConfig` を再構築 |
 | `ButtonZoomLevels` | `IReadOnlyList<double>`（読み書き） | ⊖⊕ ボタンのズームレベル集合。設定時に `ZoomConfig` を再構築 |
 
-> 内部 `Image` コントロール（`ImageControl`）は公開しない（内部実装の露出を回避。ホストは `Source` / 座標変換等の意味的な API のみ使用する）。
+> 表示文字列はホスト側で `ZoomChanged` の `ZoomPercent`（実効ズーム率）から自前の書式で生成する（書式はホストの責務。ライブラリは数値のみを通知する）。
 
-> 表示用の拡大率テキスト（`ZoomDisplayText`）は公開しない。表示文字列はホスト側で `ZoomChanged` の `ZoomPercent`（実効ズーム率）から自前の書式で生成する（表示の仕方・書式はホストの責務。ライブラリは書式を固定しない）。
-> `ZoomPercent` setter で 0 は設定できない（0 以下は無視）。Fit 表示は `ZoomFit` を使用する。
-> スライダ用の `ApplyZoomFromSlider` も公開しない（`ZoomPercent` が `double` なのでスライダ値も直接設定できる。役割を統合）。
-
-> Ctrl+ホイールのズームイン / アウト（`ZoomInByWheel` / `ZoomOutByWheel`）とズーム中心（`PointerPosition`）は内部実装のため非公開。Ctrl+ホイールのハンドラが内部で使用する。
-> `ApplyZoom`（可否・イベント通知の反映）も内部実装のため非公開。ズーム率変更の適用経路（`ZoomPercent` setter・各ズーム操作）が内部的に呼び出す。
-> `CanZoomIn` / `CanZoomOut` はキャッシュ付きの遅延計算で、`null`（未計算）状態を参照時に再計算してキャッシュする（ズーム状態が変わる箇所で未計算に戻す）。初期表示時にイベントを待たずにボタン状態を設定する場合は、本プロパティを参照する。
+> `CanZoomIn` / `CanZoomOut` は読み取り専用。初期表示時にイベントを待たずにボタン状態を設定したい場合は、これらのプロパティを参照する。
 
 ### 8.2 ZoomConfig（設定値）
 
-ズーム遷移のパラメータをまとめた不変値。`ZoomViewControl` の**コンストラクタ注入**で設定する（既定は `ZoomConfig.Default`）。
+ズーム遷移のパラメータをまとめた**検証付き不変値**（`public sealed class`）。`ZoomViewControl` のコンストラクタ注入で設定する（既定は `ZoomConfig.Default`）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -241,7 +231,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `MaxZoom` | `double` | `500` | ズーム率の最大値（固定倍率） |
 | `WheelFactor` | `double` | `1.1` | Ctrl+ホイールのズーム倍率 |
 | `ButtonZoomLevels` | `IReadOnlyList<double>` | 23 段階 | ⊖⊕ ボタンのズームレベル集合 |
-| `Default` | `ZoomConfig` | 既定値 | 従来の定数値に基づく既定の設定 |
+| `Default` | `ZoomConfig` | 既定値 | 既定の設定 |
 
 #### 設定方法（3 通り）
 
@@ -251,56 +241,32 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | プロパティ設定（コード） | `zoomView.MinZoom = 20;` / `zoomView.ButtonZoomLevels = [...];` | 生成後に設定（XAML 配置でも可） |
 | プロパティ設定（XAML 属性） | `<zoom:ZoomViewControl MinZoom="20" MaxZoom="800" WheelFactor="1.2"/>` | XAML 配置で設定（数値のみ） |
 
-- `ZoomViewControl` の `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` は**読み書き可能プロパティ**。設定時に `ZoomConfig` を再構築し、ズーム可否を再計算する。
+- `ZoomViewControl` の `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` は**読み書き可能プロパティ**。設定するとズーム可否が再計算される。
 - `ButtonZoomLevels`（`IReadOnlyList<double>`）は XAML 属性では設定できないため、コードビハインドまたはコンストラクタで設定する。
-- クランプ・書式化には、これらのプロパティ（または `ZoomConfig`）の値を参照する。
 
-#### バリデーション（不変条件）
+#### 値のガード
 
-`ZoomConfig` は生成時に不変条件を検証し、不正な値には例外を投げる（コントロールが動作する値・範囲を保証するガード）。
+`ZoomConfig` はコントロールが動作する値・範囲を保証する。設定値が不変条件を満たさない場合（`MinZoom` が 0 以下・`MaxZoom` が `MinZoom` 未満・`WheelFactor` が 1 以下・`ButtonZoomLevels` が範囲外/非昇順/空）は、生成時に例外を投げる。
 
-| プロパティ | 不変条件 | 違反時の例外 |
-| --- | --- | --- |
-| `MinZoom` | `0` より大きい | `ArgumentOutOfRangeException` |
-| `MaxZoom` | `MinZoom` 以上 | `ArgumentOutOfRangeException` |
-| `WheelFactor` | `1` より大きい | `ArgumentOutOfRangeException` |
-| `ButtonZoomLevels` | null でない・空でない・昇順・`MinZoom`〜`MaxZoom` の範囲内 | `ArgumentNullException` / `ArgumentException` / `ArgumentOutOfRangeException` |
-
-- 検証はコンストラクタで行われ、`ZoomViewControl` の各プロパティ設定（`MinZoom` 等）も検証付きの `ZoomConfig` 再構築を経由するため、すべての設定経路（XAML・コード・コンストラクタ）でガードされる。
-- レベル集合の昇順・範囲は `ArgumentOutOfRangeException`（範囲外）と `ArgumentException`（昇順違反）で区別される。
-
-### 8.3 純粋関数（内部実装）
-
-| クラス | 責務 | 公開の可否 |
-| --- | --- | --- |
-| `ZoomMath` | Fit 実効倍率・ズーム中心維持・座標変換・オフセットクランプの計算 | `internal` |
-| `ZoomTransition` | ⊖⊕ 段階遷移・Ctrl+ホイール ×1.1 遷移・可否判定 | `internal` |
-| `ScrollMetrics` | スクロールバーの範囲・ビューポートサイズの計算 | `internal` |
-
-純粋関数はコントロール内部の計算のため **`internal`**。遷移パラメータ（ズーム範囲・倍率・レベル集合）は引数（`ZoomConfig`）で受け取る純粋関数であり、状態を持たない（パラメータの所有は `ZoomViewControl`）。
-
-### 8.4 ZoomChangedEventArgs（値オブジェクト）
+### 8.3 ZoomChangedEventArgs（イベント引数）
 
 | メンバー | 説明 |
 | --- | --- |
-| `ZoomChangedEventArgs` | `sealed record (double ZoomPercent, bool IsFit, bool CanZoomIn, bool CanZoomOut)`。実効ズーム率・Fit 状態・ズーム可否を Non-Null の値で公開する |
-
-> 内部キャッシュ（ズーム可否の遅延計算）は `ZoomViewControl` 内部の値オブジェクト（`ZoomAvailability`）で管理するが、公開面には露出しない（`CanZoomIn` / `CanZoomOut` として展開して通知する）。
+| `ZoomChangedEventArgs` | `sealed record (double ZoomPercent, bool IsFit, bool CanZoomIn, bool CanZoomOut)`。実効ズーム率・Fit 状態・ズーム可否を通知する
 
 ## 9. ログ
 
-本プロジェクトのログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。`ZoomViewControl.Log` へ注入されたロガーへ出力する（未設定時は `NullLogger` で無出力）。
+`ZoomViewControl.Log` へ `ILogger` を注入すると、ズーム操作のトレースログが出力される（未設定時は `NullLogger` で無出力）。
 
-| レベル | メソッド | 出力内容 |
-| --- | --- | --- |
-| `Information` | `LogZoomIn` / `LogZoomOut` | ズームイン/アウト（⊖⊕ボタン）の変更前後 % |
-| `Information` | `LogZoomInWheel` / `LogZoomOutWheel` | Ctrl+ホイールズームの変更前後 % |
+| レベル | 出力内容 |
+| --- | --- |
+| `Information` | ズームイン/アウト（⊖⊕ボタン）の変更前後 % |
+| `Information` | Ctrl+ホイールズームの変更前後 % |
 
 ## 10. 制約事項
 
-- ズーム率は `ZoomViewControl` が単一所有し、`ZoomPercent` の setter で `ZoomableView.SetZoom`（ズーム中心維持込み）と `ApplyZoom`（可否・イベント通知）が 1 回だけ実行される（再入防止フラグで保護）
 - `ZoomPercent`（実効ズーム率）は 0 にならない。`ZoomPercent` setter で 0 を設定することはできない（0 以下は無視）。Fit 表示は `ZoomFit` で行う
-- スライダの範囲は 10〜500%。Fit 中はスライダ最小値に合わせる（`IsFit` を参照）
+- スライダの範囲は `ZoomConfig.MinZoom`〜`ZoomConfig.MaxZoom`。Fit 中はスライダ最小値に合わせる（`IsFit` を参照）
 - Fit 中はパン不可（画像がビューポートに収まるため）。スクロールバーも非表示
 - スクロールバーはオーバーレイ表示のため、画像の表示領域を圧迫しない
-- `Ctrl + マウスホイール` は ZoomableView が捕捉し、通常のパンには伝播しない（Ctrl を離すとパンに戻る）
+- `Ctrl + マウスホイール` はコントロールが捕捉し、通常のパンには伝播しない（Ctrl を離すとパンに戻る）

@@ -25,7 +25,7 @@
 
 - **ZoomViewControl**: 自己完結型複合コントロール。内部 ZoomableView を内包し、ズーム率（実効ズーム率）の遷移・適用・Fit 表示・可否を統括。特定コントロールに依存せず、`ZoomChanged` イベントで実効ズーム率・Fit 状態・可否をホストへ通知（表示文字列の生成はホストの責務）
 - **ZoomableView（内部実装）**: ScrollViewer を使用しない自己完結型ビューポート（RenderTransform ベース）。`ZoomViewControl` が Facade として必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知）を再公開
-- **設定（`ZoomConfig`）**: ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をコンストラクタで注入する不変値。`ZoomViewControl` の読み取り専用プロパティで参照でき、クランプ・書式化に使用できる
+- **設定（`ZoomConfig`）**: ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をまとめた検証付き不変値。コンストラクタ注入で指定し、`ZoomViewControl` のプロパティで参照・設定できる。クランプ・書式化に使用でき、不正な値はガードされる
 - **純粋関数（内部実装）**: `ZoomMath` / `ZoomTransition` / `ScrollMetrics` はコントロール内部の計算のため非公開（遷移パラメータは `ZoomConfig` で受け取る純粋関数であり状態を持たない）
 - 上位 AP は `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読するだけで、ズーム計算・表示の詳細は本ライブラリが担います
 
@@ -75,13 +75,14 @@ using Estable.AvaloniaUI.ZoomView;
 
 #### 設定（ズーム範囲・倍率）
 
-`ZoomViewControl` の `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` は**読み書き可能プロパティ**として公開されており、XAML 属性またはコードビハインドで設定できます（既定値は従来の定数値）。
+`ZoomViewControl` の `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` は**読み書き可能プロパティ**として公開されており、XAML 属性またはコードビハインドで設定できます。設定値は `ZoomConfig`（検証付き不変値）で管理され、設定時に `ZoomConfig.With`（検証付き部分更新）を経由するため、不正な値はガードされます。
 
 - **XAML 属性**: `MinZoom="20"` のように直接設定（数値のみ。レベル集合はコンマ区切りで設定不可のためコードで設定する）
 - **コードビハインド**: `zoomView.MinZoom = 20;` / `zoomView.ButtonZoomLevels = [10, 20, 50, 100];` のように設定する
 - **コンストラクタ注入**: `var zoomView = new ZoomViewControl(new ZoomConfig(20, 800, 1.2, [10, 20, 50, 100, 200]));` のように生成時に設定する（コードのみ・XAML では使用不可）
 
 > `ButtonZoomLevels`（`IReadOnlyList<double>`）は XAML 属性では設定できないため、カスタムする場合はコードビハインドまたはコンストラクタで設定する。
+> `ZoomConfig` はプロパティの直接変更ができません（読み取り専用）。値の部分更新は `ZoomConfig.With` 経由で行う。
 
 ### 画像の設定とイベント購読
 

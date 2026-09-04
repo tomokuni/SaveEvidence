@@ -269,12 +269,10 @@ internal sealed class ZoomableView : Panel
     public void SetOffset(Vector offset)
     {
         var clamped = ClampCurrentOffset(offset);
-        // クランプ結果が現在値と等しい場合（スクロール範囲端での連続ドラッグ等）は
-        // 表示更新・イベント通知をスキップする（ホットパスでの無駄な再描画を排除）
+        // クランプ結果が現在値と等しい場合は更新・通知をスキップする
         if (clamped == _offset) return;
         _offset = clamped;
-        // パンはオフセット変更のみで画像配置（レイアウト）は不変のため、
-        // Transform 更新とスクロールバー・再描画のみ行う（レイアウト再計算を排除）
+        // パンはオフセット変更のみで画像配置（レイアウト）は不変のため、Transform 更新とスクロールバー同期・再描画のみ行う
         UpdateTransformAndSync();
     }
 
@@ -441,8 +439,7 @@ internal sealed class ZoomableView : Panel
     /// <summary>RenderTransform の値更新とスクロールバー同期・再描画・ビューポート通知を行う。</summary>
     /// <remarks>
     /// パン（<see cref="SetOffset"/>）と表示変更（<see cref="UpdateLayoutAndTransform"/>）の共通処理。<br/>
-    /// パン時は画像配置（レイアウト）が不変のため、レイアウト再計算を伴わない Transform 更新と
-    /// スクロールバー同期・再描画のみを行い、ホットパスでの無駄なレイアウト計算を排除する。<br/>
+    /// パン時は画像配置（レイアウト）が不変のため、Transform 更新とスクロールバー同期・再描画のみを行う。<br/>
     /// 固定倍率中のみ Transform を更新し、Fit 中（RenderTransform = null）はスキップする。<br/>
     /// 画像がビューポートより小さい場合の中央寄せ（<see cref="CenterAlign"/>）は、
     /// レイアウト（HorizontalAlignment）ではなく translate で行う（スケール ≠ 1 でも中央一致）。
@@ -459,19 +456,10 @@ internal sealed class ZoomableView : Panel
             _scaleTransform.ScaleX = scale;
             _scaleTransform.ScaleY = scale;
 
-            // CenterAlign: 軸ごとに独立して中央寄せ補正（translate はコンテンツ座標系・pre-scale）を加える。
-            // 画像のベース原点は RenderTransform の基準（0,0）。オフセット（パン位置・スクロール各軸）は
-            // クランプされる。
-            //
-            // 重要な注意: TransformGroup の Children[0]（translate）は ScaleTransform の内側（pre-scale）に適用され、
-            // 実際の描画位置は「scale × translate」になる（実測: transform(0,0) = scale × translate）。
-            // そのため translate は「コンテンツ（画像ピクセル）座標系」で指定する必要がある。
-            // 中央寄せの目標位置（ビューポート座標） = (ビューポート − 表示サイズ) / 2 をコンテンツ座標へ変換するには
-            // scale で除する。これにより描画位置 transform(0,0) = scale × translate = (ビューポート − 表示サイズ) / 2 となり、
-            // ImageOriginViewport の中央寄せ原点補正（ビューポート座標）と一致する。
-            //
-            // 軸ごとに「表示サイズ <= ビューポート」の軸のみ中央寄せし、スクロール可能な軸（表示サイズ > ビューポート）は
-            // オフセットによるパン位置を維持する。これにより横方向が大きく縦方向が小さい場合でも縦方向の中央寄せが維持される。
+            // CenterAlign: 軸ごとに独立して中央寄せ補正を加える。
+            // TransformGroup の translate は ScaleTransform の内側（pre-scale）に適用され、描画位置は「scale × translate」になるため、
+            // translate はコンテンツ座標系で指定する。中央寄せ補正（ビューポート座標）をコンテンツ座標へ変換するには scale で除する。
+            // スクロール可能な軸（表示サイズ > ビューポート）はオフセットによるパン位置を維持し、スクロール不能な軸のみ中央寄せする。
             if (_centerAlign && _image.Source is { } src && _image.Width > 0 && _image.Height > 0)
             {
                 var bounds = Bounds;

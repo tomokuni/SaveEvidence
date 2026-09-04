@@ -4,26 +4,26 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// <remarks>
 /// ズーム遷移のパラメータをまとめた不変値。<br/>
 /// <see cref="ZoomViewControl"/> が所有し、純粋関数である <see cref="ZoomTransition"/> へ渡す（状態を純粋関数に持たせない）。<br/>
-/// 各プロパティは <c>init</c>（生成時のみ設定可能）で、コンストラクタ・<see cref="With"/> で不変条件（価格・範囲・昇順・非空）を検証する。<br/>
+/// プロパティは読み取り専用で、<see cref="With"/> により検証付きの部分更新を行う（値を直接変更できない）。<br/>
 /// 既定値は従来の定数値（MinZoom=10 / MaxZoom=500 / WheelFactor=1.1 / 23 段階）。
 /// </remarks>
-public sealed record ZoomConfig
+public sealed class ZoomConfig
 {
     /// <summary>ズーム率の最小値（固定倍率。%）。</summary>
     /// <value>0 より大きい。</value>
-    public double MinZoom { get; init; }
+    public double MinZoom { get; }
 
     /// <summary>ズーム率の最大値（固定倍率。%）。</summary>
     /// <value><see cref="MinZoom"/> 以上。</value>
-    public double MaxZoom { get; init; }
+    public double MaxZoom { get; }
 
     /// <summary>Ctrl+ホイールのズーム倍率。</summary>
     /// <value>1 より大きい。</value>
-    public double WheelFactor { get; init; }
+    public double WheelFactor { get; }
 
     /// <summary>⊖⊕ ボタンのズームレベル集合（昇順ソート済み・Fit は含まない）。</summary>
     /// <value>非空・昇順・<see cref="MinZoom"/>〜<see cref="MaxZoom"/> の範囲内。</value>
-    public IReadOnlyList<double> ButtonZoomLevels { get; init; }
+    public IReadOnlyList<double> ButtonZoomLevels { get; }
 
     /// <summary>既定値に基づく <see cref="ZoomConfig"/> を生成する。</summary>
     public ZoomConfig() : this(
@@ -54,6 +54,24 @@ public sealed record ZoomConfig
         ZoomTransition.DefaultWheelFactor,
         ZoomTransition.DefaultButtonZoomLevels);
 
+    /// <summary>一部のプロパティを差し替えた、検証付きの新しい <see cref="ZoomConfig"/> を返す。</summary>
+    /// <param name="minZoom">新しい最小値。null の場合は現在値。</param>
+    /// <param name="maxZoom">新しい最大値。null の場合は現在値。</param>
+    /// <param name="wheelFactor">新しいズーム倍率。null の場合は現在値。</param>
+    /// <param name="buttonZoomLevels">新しいレベル集合。null の場合は現在値。</param>
+    /// <returns>検証済みの新しい <see cref="ZoomConfig"/>。</returns>
+    /// <remarks>コンストラクタ（検証付き）を経由するため、不正な値には <see cref="ArgumentException"/> が投げられる。</remarks>
+    public ZoomConfig With(
+        double? minZoom = null,
+        double? maxZoom = null,
+        double? wheelFactor = null,
+        IReadOnlyList<double>? buttonZoomLevels = null)
+        => new(
+            minZoom ?? MinZoom,
+            maxZoom ?? MaxZoom,
+            wheelFactor ?? WheelFactor,
+            buttonZoomLevels ?? ButtonZoomLevels);
+
     /// <summary>ズーム率を <see cref="MinZoom"/>〜<see cref="MaxZoom"/> にクランプする。</summary>
     /// <param name="zoom">クランプするズーム率（%）。</param>
     /// <returns>クランプ後のズーム率（%）。</returns>
@@ -72,7 +90,7 @@ public sealed record ZoomConfig
         ValidateButtonZoomLevels();
     }
 
-    /// <summary>レベル集合（非空・昇順・範囲内・範囲外を除外）を検証する。</summary>
+    /// <summary>レベル集合（非空・昇順・範囲内）を検証する。</summary>
     /// <exception cref="ArgumentException">レベル集合が空、昇順でない、または範囲外の値が含まれるとき。</exception>
     private void ValidateButtonZoomLevels()
     {

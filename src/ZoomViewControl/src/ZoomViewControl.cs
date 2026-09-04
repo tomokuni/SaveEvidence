@@ -55,59 +55,41 @@ public sealed class ZoomViewControl : Panel
 
     /// <summary>ズーム率の最小値（固定倍率）。</summary>
     /// <remarks>
-    /// <see cref="ZoomConfig"/> の <see cref="ZoomConfig.MinZoom"/> を返す。設定時は <see cref="ZoomConfig"/> を再構築する（検証付き）。<br/>
+    /// <see cref="ZoomConfig"/> の <see cref="ZoomConfig.MinZoom"/> を返す。設定時は <see cref="ZoomConfig.With"/>（検証付き）で再構築する。<br/>
     /// クランプ・書式化に参照できる。
     /// </remarks>
     public double MinZoom
     {
         get => _config.MinZoom;
-        set => SetConfig(NewConfig(minZoom: value));
+        set => SetConfig(_config.With(minZoom: value));
     }
 
     /// <summary>ズーム率の最大値（固定倍率）。</summary>
     /// <remarks>
-    /// <see cref="ZoomConfig"/> の <see cref="ZoomConfig.MaxZoom"/> を返す。設定時は <see cref="ZoomConfig"/> を再構築する（検証付き）。<br/>
+    /// <see cref="ZoomConfig"/> の <see cref="ZoomConfig.MaxZoom"/> を返す。設定時は <see cref="ZoomConfig.With"/>（検証付き）で再構築する。<br/>
     /// クランプ・書式化に参照できる。
     /// </remarks>
     public double MaxZoom
     {
         get => _config.MaxZoom;
-        set => SetConfig(NewConfig(maxZoom: value));
+        set => SetConfig(_config.With(maxZoom: value));
     }
 
     /// <summary>Ctrl+ホイールのズーム倍率。</summary>
-    /// <remarks><see cref="ZoomConfig"/> の <see cref="ZoomConfig.WheelFactor"/> を返す。設定時は <see cref="ZoomConfig"/> を再構築する（検証付き）。</remarks>
+    /// <remarks><see cref="ZoomConfig"/> の <see cref="ZoomConfig.WheelFactor"/> を返す。設定時は <see cref="ZoomConfig.With"/>（検証付き）で再構築する。</remarks>
     public double WheelFactor
     {
         get => _config.WheelFactor;
-        set => SetConfig(NewConfig(wheelFactor: value));
+        set => SetConfig(_config.With(wheelFactor: value));
     }
 
     /// <summary>⊖⊕ ボタンのズームレベル集合。</summary>
-    /// <remarks><see cref="ZoomConfig"/> の <see cref="ZoomConfig.ButtonZoomLevels"/> を返す。設定時は <see cref="ZoomConfig"/> を再構築する（検証付き）。</remarks>
+    /// <remarks><see cref="ZoomConfig"/> の <see cref="ZoomConfig.ButtonZoomLevels"/> を返す。設定時は <see cref="ZoomConfig.With"/>（検証付き）で再構築する。</remarks>
     public IReadOnlyList<double> ButtonZoomLevels
     {
         get => _config.ButtonZoomLevels;
-        set => SetConfig(NewConfig(buttonZoomLevels: value));
+        set => SetConfig(_config.With(buttonZoomLevels: value));
     }
-
-    /// <summary>要素の一部を差し替えた、検証付きの新しい <see cref="ZoomConfig"/> を構築する。</summary>
-    /// <param name="minZoom">新しい最小値。null の場合は現在値。</param>
-    /// <param name="maxZoom">新しい最大値。null の場合は現在値。</param>
-    /// <param name="wheelFactor">新しいズーム倍率。null の場合は現在値。</param>
-    /// <param name="buttonZoomLevels">新しいレベル集合。null の場合は現在値。</param>
-    /// <returns>検証済みの新しい <see cref="ZoomConfig"/>。</returns>
-    /// <remarks>コンストラクタ（検証付き）を経由するため、不正な値には <see cref="ArgumentException"/> が投げられる。</remarks>
-    private ZoomConfig NewConfig(
-        double? minZoom = null,
-        double? maxZoom = null,
-        double? wheelFactor = null,
-        IReadOnlyList<double>? buttonZoomLevels = null)
-        => new(
-            minZoom ?? _config.MinZoom,
-            maxZoom ?? _config.MaxZoom,
-            wheelFactor ?? _config.WheelFactor,
-            buttonZoomLevels ?? _config.ButtonZoomLevels);
 
     /// <summary>設定値を更新し、ズーム可否を再計算する。</summary>
     /// <param name="config">新しい設定（検証済み）。</param>
@@ -446,16 +428,15 @@ public sealed class ZoomViewControl : Panel
     /// <remarks>
     /// Fit 実効倍率はビューポートと元画像サイズから算出する（<see cref="ZoomMath.FitZoomPercent"/> に委譲）。<br/>
     /// Fit 中のズーム可否（<see cref="CanZoomIn"/> / <see cref="CanZoomOut"/>）も実効倍率に依存するため、
-    /// 未計算（null）に戻して次の参照時に遅延計算する。また <see cref="ZoomChanged"/> を発火して表示用倍率を再通知する
-    /// （Fit 中の実効倍率がリサイズで変化するため、ホストは表示文字列を再生成する）。
+    /// 未計算（null）に戻して次の参照時に遅延計算する。また <see cref="ZoomChanged"/> を発火して表示用倍率を再通知する。
     /// </remarks>
     private void OnZoomableViewSizeChanged(SizeChangedEventArgs e)
     {
-        if (ZoomPercent <= 0)
+        if (IsFit)
         {
             // ズーム可否は実効倍率に依存するため、未計算（null）に戻して次の参照時に再計算（遅延）する
             _availability = null;
-            // 表示用倍率（実効倍率）が変わったため、ホストへ再通知する（表示文字列の再生成用）
+            // 表示用倍率（実効倍率）が変わったため、ホストへ再通知する
             ApplyZoom();
         }
     }
@@ -476,7 +457,4 @@ public sealed class ZoomViewControl : Panel
         }
         return 100;
     }
-
-    /// <summary>実効倍率（%）を表示用の整数値（1〜500）に丸めてクランプする。</summary>
-    /// <param name="fitZoom">Fit の実効倍率（%）。</param>
 }

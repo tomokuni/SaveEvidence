@@ -6,9 +6,8 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// <remarks>
 /// ⊖⊕ ボタンの 23 段階遷移と Ctrl+ホイールの ×1.1 遷移を決定する。<br/>
 /// UI 状態（ViewModel・コントロール）に依存しないため、単体テストで遷移仕様を検証できる。<br/>
-/// ZoomViewControl から呼び出される他、仕様の回帰テストの対象となる。<br/>
-/// 遷移パラメータ（ズーム範囲・倍率・レベル集合）は <see cref="ZoomConfig"/> で受け取る純粋関数であり、状態を持たない。<br/>
-/// パラメータの所有は上位（<see cref="ZoomViewControl"/>）が行い、本クラスは計算のみを担う（Single Source of Truth）。
+/// ZoomViewControl から呼び出される。<br/>
+/// 遷移パラメータ（ズーム範囲・倍率・レベル集合）は <see cref="ZoomConfig"/> で受け取る純粋関数であり、状態を持たない。
 /// </remarks>
 internal static class ZoomTransition
 {
