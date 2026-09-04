@@ -64,7 +64,7 @@ public sealed partial class CropViewControl : Panel
         Children.Add(_rectOverlay);
 
         // ビューポート変化（パン・ズーム）を領域選択オーバーレイと矩形オーバーレイへ中継する
-        _zoomView.ZoomableView.ViewportChanged += (_, _) =>
+        _zoomView.ViewportChanged += (_, _) =>
         {
             _selectionOverlay.NotifyViewportChanged();
             UpdateRectOverlay();
@@ -153,7 +153,8 @@ public sealed partial class CropViewControl : Panel
     public void ZoomOut() => _zoomView.ZoomOut();
 
     /// <summary>Fit 表示（ウィンドウに合わせて画像を表示）に戻す。</summary>
-    public void Fit() => _zoomView.ZoomPercent = 0;
+    /// <remarks><see cref="ZoomViewControl.Fit"/> へ委譲する（ズーム率の単一所有）。</remarks>
+    public void Fit() => _zoomView.Fit();
 
     /// <summary>拡大率表示テキスト（例: "100%"）。</summary>
     /// <remarks><see cref="ZoomViewControl"/> が所有。ホストは <see cref="ZoomViewControl.ZoomChanged"/> で通知された値を参照する。</remarks>
@@ -181,8 +182,8 @@ public sealed partial class CropViewControl : Panel
     public void SetCoordinateTransform(ICoordinatePort? port) => _selectionOverlay.SetCoordinateTransform(port);
 
     /// <summary>ズーム対象の画像コントロール（ホストが Crop セッション等で参照する）。</summary>
-    /// <remarks><see cref="ZoomViewControl.ZoomableView"/> の <see cref="ZoomableView.ImageControl"/> を公開する（Crop セッションの対象画像コントロール）。</remarks>
-    public Image ImageControl => _zoomView.ZoomableView.ImageControl;
+    /// <remarks><see cref="ZoomViewControl.ImageControl"/> を公開する（Crop セッションの対象画像コントロール）。</remarks>
+    public Image ImageControl => _zoomView.ImageControl;
 
     /// <summary>選択確定要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Enter キー相当）。</summary>
     public void RequestConfirm() => _selectionOverlay.RequestConfirm();
@@ -253,20 +254,20 @@ public sealed partial class CropViewControl : Panel
     /// <returns>ドメイン座標。</returns>
     /// <remarks>
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
-    /// 変換は <see cref="ZoomableView.ViewportToContentImage"/> に委譲する（座標変換の単一所有）。
+    /// 変換は <see cref="ZoomViewControl.ViewportToContentImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
     public Point ViewportToContent(Point viewportPos)
-        => _zoomView.ZoomableView.ViewportToContentImage(viewportPos);
+        => _zoomView.ViewportToContentImage(viewportPos);
 
     /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
     /// <param name="contentPos">ドメイン座標。</param>
     /// <returns>ビューポート座標。</returns>
     /// <remarks>
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
-    /// 変換は <see cref="ZoomableView.ContentToViewportImage"/> に委譲する（座標変換の単一所有）。
+    /// 変換は <see cref="ZoomViewControl.ContentToViewportImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
     public Point ContentToViewport(Point contentPos)
-        => _zoomView.ZoomableView.ContentToViewportImage(contentPos);
+        => _zoomView.ContentToViewportImage(contentPos);
 
     // ====================================================================
     // 矩形オーバーレイ作成（破線スタイル・色・幅）

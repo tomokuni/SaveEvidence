@@ -9,7 +9,7 @@
   - [3. システム要件](#3-システム要件)
   - [4. インストール](#4-インストール)
   - [5. クイックスタート](#5-クイックスタート)
-    - [AXAML（ZoomView の配置）](#axamlzoomview-の配置)
+    - [AXAML（ZoomViewControl の配置）](#axamlzoomviewcontrol-の配置)
     - [画像の設定とイベント購読](#画像の設定とイベント購読)
   - [6. ズーム操作](#6-ズーム操作)
   - [7. サンプル](#7-サンプル)
@@ -24,7 +24,7 @@
 画像プレビューのズーム・パン・Fit 表示を提供する独立ライブラリです。
 
 - **ZoomViewControl**: 自己完結型複合コントロール。`ZoomableView` を内包し、ズーム率の遷移・適用・Fit 表示・可否・表示テキストを統括。特定コントロールに依存せず、`ZoomChanged` イベントでズーム率と可否をホストへ通知
-- **ZoomableView**: ScrollViewer を使用しない自己完結型ビューポート（RenderTransform ベース）。`ZoomViewControl.ZoomableView` で低レベル機能（座標変換・オーバーレイ追従）を提供
+- **ZoomableView**: ScrollViewer を使用しない自己完結型ビューポート（RenderTransform ベース）。`ZoomViewControl` が Facade として必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知・画像コントロール）を再公開
 - **純粋関数**: `ZoomMath`（ズーム中心維持）/ `ZoomTransition`（段階遷移）/ `ScrollMetrics`（スクロールバー幾何）
 - 上位 AP は `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読するだけで、ズーム計算・表示の詳細は本ライブラリが担います
 
@@ -97,7 +97,9 @@ zoomOutButton.IsEnabled = zoomView.CanZoomOut;
 
 > Ctrl+ホイールのズーム要求（`ZoomRequested`）・ビューポートリサイズ（`SizeChanged`）の配線は
 > `ZoomViewControl` が内部で自己完結するため、ホスト側で購読する必要はありません。
-> ホストは `ZoomChanged`（スライダ・⊖⊕ ボタン同期用）と `ZoomableView.ViewportChanged`（オーバーレイ追従用）のみ購読します。
+> ホストは `ZoomChanged`（スライダ・⊖⊕ ボタン同期用）と `ViewportChanged`（オーバーレイ追従用）のみ購読します。
+> 座標変換（`ViewportToContentImage` / `ContentToViewportImage`）・画像表示矩形（`ImageRectViewport`）・
+> 画像コントロール（`ImageControl`）も `ZoomViewControl` が Facade として提供します（内部 `ZoomableView` へは到達しません）。
 
 ## 6. ズーム操作
 
@@ -132,7 +134,7 @@ dotnet run --project sample/ZoomViewControl.Sample.csproj
 ```text
 ZoomViewControl/
 ├── src/          # ライブラリ本体
-│   ├── ZoomView.cs             # 自己完結型複合コントロール（ズーム遷移・適用・表示を統括）
+│   ├── ZoomViewControl.cs      # 自己完結型複合コントロール（ズーム遷移・適用・表示を統括）
 │   ├── ZoomableView.cs         # ScrollViewer 不使用のパン・ズームビューポート
 │   ├── ZoomMath.cs             # ズーム中心維持・Fit 実効倍率・座標変換（純粋関数）
 │   ├── ZoomTransition.cs       # 段階遷移・×1.1 遷移（純粋関数）

@@ -62,7 +62,7 @@ public partial class MainWindow : Window
         };
 
         // マウスポインタ移動でポインタ位置のドメイン座標（画像ピクセル）を表示する
-        ZoomableView.ZoomableView.PointerMoved += OnPointerMoved;
+        ZoomableView.PointerMoved += OnPointerMoved;
 
         // 初期表示: テスト画像を設定（ズーム・パンの動作確認用）
         _vm.SetPreviewImage(TestImageFactory.Create());
@@ -80,7 +80,7 @@ public partial class MainWindow : Window
     private void OnZoomInClick(object? sender, RoutedEventArgs e) => ZoomableView.ZoomIn();
 
     /// <summary>Fit ボタンクリック（ズーム率 0 = 自動）。</summary>
-    private void OnFitClick(object? sender, RoutedEventArgs e) => ZoomableView.ZoomPercent = 0;
+    private void OnFitClick(object? sender, RoutedEventArgs e) => ZoomableView.Fit();
 
     /// <summary>ズームスライダの変更ハンドラ。スライダ操作によるズーム率の適用を行う。</summary>
     /// <param name="sender">イベント送信元。</param>
@@ -148,8 +148,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var viewportPos = e.GetPosition(ZoomableView.ZoomableView);
-        var imageRect = ZoomableView.ZoomableView.ImageRectViewport();
+        var viewportPos = e.GetPosition(ZoomableView);
+        var imageRect = ZoomableView.ImageRectViewport();
         var displayPoint = viewportPos - imageRect.Position;
         if (displayPoint.X < 0 || displayPoint.Y < 0 ||
             displayPoint.X >= imageRect.Width || displayPoint.Y >= imageRect.Height)
@@ -159,7 +159,7 @@ public partial class MainWindow : Window
         }
 
         // 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）
-        var contentPos = ZoomableView.ZoomableView.ViewportToContentImage(viewportPos);
+        var contentPos = ZoomableView.ViewportToContentImage(viewportPos);
         var x = (int)Math.Clamp(contentPos.X, 0, img.PixelSize.Width - 1);
         var y = (int)Math.Clamp(contentPos.Y, 0, img.PixelSize.Height - 1);
         PointerPositionText.Text = $"ポインタ: {x}, {y}（画像ピクセル）";

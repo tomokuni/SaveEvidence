@@ -137,12 +137,12 @@ public sealed partial class CapturePage : UserControl
         _viewModel.ZoomDisplayText = ZoomableView.ZoomDisplayText;
 
         // マウスポインタ移動でステータスバーの座標表示（ドメイン座標）を更新する
-        ZoomableView.ZoomableView.PointerMoved += OnImagePointerMoved;
+        ZoomableView.PointerMoved += OnImagePointerMoved;
 
         // ビューポート（パン・ズーム・表示サイズ）の変化を Crop オーバーレイへ通知する
         // （暗転マスク・選択枠・ルーペの追従。ScrollViewer 連携の ScrollChanged に相当する中継）。
         // Crop 未実行時は SnipCapture 側で無視されるため、常時購読で問題ない。
-        ZoomableView.ZoomableView.ViewportChanged += (_, _) =>
+        ZoomableView.ViewportChanged += (_, _) =>
         {
             _snipCapture.NotifyCropViewportChanged();
             UpdateAutoCropOverlay();
@@ -698,7 +698,7 @@ public sealed partial class CapturePage : UserControl
         // プレビュー状態（ScrollOffset / ZoomPercent）は SnipCaptureUI が DragRect イベント / 表示状態から導出する
         // Ctrl+ホイールによるズーム要求は ZoomViewControl へ委譲する（ズーム状態の整合・Crop 終了後の継続）
         _cropTask = _snipCapture.StartCropAsync(
-            ZoomableView.ZoomableView.ImageControl, _parentWindow!, srcBmp,
+            ZoomableView.ImageControl, _parentWindow!, srcBmp,
             zoomIn => { if (zoomIn) ZoomableView.ZoomIn(); else ZoomableView.ZoomOut(); });
 
         if (_cropTask is null)
@@ -805,7 +805,7 @@ public sealed partial class CapturePage : UserControl
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ルーティングイベント。</param>
     /// <remarks>ズーム率を 0（自動 Fit）に設定する。ズーム率は ZoomViewControl が適用し、ZoomChanged でスライダ・ViewModel へ同期される。</remarks>
-    private void OnZoomFitButtonClick(object? sender, RoutedEventArgs e) => ZoomableView.ZoomPercent = 0;
+    private void OnZoomFitButtonClick(object? sender, RoutedEventArgs e) => ZoomableView.Fit();
 
     /// <summary>ズームインする（Ctrl+キー等の外部からの要求用。⊖⊕ボタンと同じ遷移）。</summary>
     public void ZoomInByButton() => ZoomableView.ZoomIn();
@@ -895,9 +895,9 @@ public sealed partial class CapturePage : UserControl
             return;
         }
 
-        var viewportPos = e.GetPosition(ZoomableView.ZoomableView);
+        var viewportPos = e.GetPosition(ZoomableView);
         // 画像内かどうかを判定する（画像原点を起点とした表示サイズ内か。矩形は 1 回の計算で取得）
-        var imageRect = ZoomableView.ZoomableView.ImageRectViewport();
+        var imageRect = ZoomableView.ImageRectViewport();
         var displayPoint = viewportPos - imageRect.Position;
         if (displayPoint.X < 0 || displayPoint.Y < 0 ||
             displayPoint.X >= imageRect.Width || displayPoint.Y >= imageRect.Height)
@@ -919,7 +919,7 @@ public sealed partial class CapturePage : UserControl
 
     private void OnImageAreaPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        var point = e.GetCurrentPoint(ZoomableView.ZoomableView.ImageControl);
+        var point = e.GetCurrentPoint(ZoomableView.ImageControl);
         var isRight = point.Properties.IsRightButtonPressed;
         var hasCropTask = _cropTask is not null;
         _logger.LogPreviewPointerPressed(isRight, hasCropTask);
@@ -1062,20 +1062,20 @@ public sealed partial class CapturePage : UserControl
     /// <returns>ドメイン座標。</returns>
     /// <remarks>
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
-    /// 変換は <see cref="ZoomableView.ViewportToContentImage"/> に委譲する（座標変換の単一所有）。
+    /// 変換は <see cref="ZoomViewControl.ViewportToContentImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
     private Point ViewportToContentDomain(Point viewportPos)
-        => ZoomableView.ZoomableView.ViewportToContentImage(viewportPos);
+        => ZoomableView.ViewportToContentImage(viewportPos);
 
     /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
     /// <param name="contentPos">ドメイン座標。</param>
     /// <returns>ビューポート座標。</returns>
     /// <remarks>
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
-    /// 変換は <see cref="ZoomableView.ContentToViewportImage"/> に委譲する（座標変換の単一所有）。
+    /// 変換は <see cref="ZoomViewControl.ContentToViewportImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
     private Point ContentToViewportDomain(Point contentPos)
-        => ZoomableView.ZoomableView.ContentToViewportImage(contentPos);
+        => ZoomableView.ContentToViewportImage(contentPos);
 
     // ====================================================================
     // コンテキストメニュー
@@ -1097,7 +1097,7 @@ public sealed partial class CapturePage : UserControl
         menu.Items.Add(confirmItem);
         menu.Items.Add(cancelItem);
         menu.Closed += (_, _) => _cropContextMenu = null;
-        menu.Open(ZoomableView.ZoomableView.ImageControl);
+        menu.Open(ZoomableView.ImageControl);
         _cropContextMenu = menu;
     }
 

@@ -24,7 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\src\SnipCaptureUI.csproj" />
     <!-- Crop プレビュー用の高レベル複合コントロール（ZoomViewControl + 領域選択） -->
-    <ProjectReference Include="..\..\CropView\src\CropViewControl.csproj" />
+    <ProjectReference Include="..\..\CropViewControl\src\CropViewControl.csproj" />
   </ItemGroup>
 
 </Project>

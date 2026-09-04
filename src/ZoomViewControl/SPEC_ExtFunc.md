@@ -95,9 +95,8 @@ zoomView.ZoomChanged += (_, e) => slider.Value = e.ZoomPercent;
 ### 4.2 イベント連携
 
 - **`ZoomChanged`**: `ZoomChangedEventArgs`（`ZoomPercent` + `Availability`）でズーム率と可否を通知する。スライダ・⊖⊕ ボタンの同期に使用する
-- **`ZoomableView.ZoomRequested`**（Ctrl+ホイール）: `ZoomRequestedEventArgs`（`ZoomIn` + `PointerPosition`）でマウス位置を通知する。`ZoomViewControl` が内部で購読し、ズームを適用した後に `PointerPosition` を null へ戻す（ホスト側の配線不要）
-- **`ZoomableView.ViewportChanged`**: パン・ズーム・表示状態の変化を通知する。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する
-- **`ZoomableView.SizeChanged`**: ビューポートのリサイズ時に Fit 表示を再適用する（`ZoomViewControl` が内部で購読する）
+- **`ViewportChanged`**（`ZoomViewControl` の再公開）: 内包 `ZoomableView` のパン・ズーム・表示状態の変化を再発火する。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する。ホストが内部 `ZoomableView` へ到達する必要がない
+- Ctrl+ホイールのズーム要求（`ZoomRequested`）とビューポートリサイズ（`SizeChanged`）は `ZoomViewControl` が内部で購読し、自己完結する（ホスト側の配線不要）
 
 ## 5. ズーム遷移ルール
 
@@ -117,7 +116,7 @@ zoomView.ZoomChanged += (_, e) => slider.Value = e.ZoomPercent;
 
 ### 5.2 Ctrl+ホイールの遷移（×1.1 ／ ÷1.1）
 
-Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomViewControl.ZoomInByWheel` / `ZoomOutByWheel`）。
+Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomViewControl` 内部のハンドラが適用）。
 
 - 拡大: `Round(現在の拡大率 × 1.1)`
 - 縮小: `Round(現在の拡大率 ÷ 1.1)`
@@ -201,17 +200,20 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ZoomDisplayText` | `string`（読み取り） | ステータスバー等に表示する拡大率テキスト（本コントロールが更新） |
 | `ZoomIn` | `void()` | ⊖⊕ ボタンのズームイン（23 段階） |
 | `ZoomOut` | `void()` | ⊖⊕ ボタンのズームアウト（23 段階） |
-| `ZoomInByWheel` | `void()` | Ctrl+ホイールのズームイン（×1.1） |
-| `ZoomOutByWheel` | `void()` | Ctrl+ホイールのズームアウト（÷1.1） |
+| `Fit` | `void()` | Fit 表示（ビューポートに収まる自動倍率）へ戻す（`ZoomPercent = 0` の意味的ラッパー） |
 | `ApplyZoomFromSlider` | `void(double)` | スライダ値（10〜500）によるズーム適用 |
-| `ApplyZoomFromText` | `bool(string?)` | テキスト入力（数値 or 数値+%）のパース・適用（10〜500） |
 | `CanZoomIn` | `bool` | 現在の状態でズームイン可能か（段階遷移仕様に基づく遅延計算キャッシュ） |
 | `CanZoomOut` | `bool` | 現在の状態でズームアウト可能か（段階遷移仕様に基づく遅延計算キャッシュ） |
 | `ZoomChanged` | `event EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（変更後のズーム率 + 可否。ホスト側のスライダ・⊖⊕ ボタン等の同期用） |
-| `PointerPosition` | `Point?` | ズーム中心（ビューポートローカル DIP）。null = ビューポート中心 |
-| `ZoomableView` | `ZoomableView` | 内包するパン・ズームビューポート（低レベル機能・座標変換・オーバーレイ追従用） |
+| `ViewportChanged` | `event EventHandler` | ビューポート（パン・ズーム・表示状態）変化の通知。オーバーレイ（暗転マスク・選択枠・ルーペ等）の追従に使用する |
+| `ViewportToContentImage` | `Point(Point)` | ビューポート座標 → コンテンツ座標変換（画像表示矩形の原点基準） |
+| `ContentToViewportImage` | `Point(Point)` | コンテンツ座標 → ビューポート座標変換（画像表示矩形の原点基準） |
+| `ImageRectViewport` | `Rect()` | 画像の表示矩形（原点 + サイズ・ビューポート座標） |
+| `ImageControl` | `Image` | 画像表示コントロール（Crop セッション等の対象画像） |
 | `Log` | `ILogger` | 内部ロガー。null は `NullLogger` へフォールバック |
 
+> Ctrl+ホイールのズームイン / アウト（`ZoomInByWheel` / `ZoomOutByWheel`）とズーム中心（`PointerPosition`）は内部実装のため非公開。Ctrl+ホイールのハンドラが内部で使用する。
+> `ApplyZoom`（表示テキスト・可否・イベント通知の反映）も内部実装のため非公開。ズーム率変更の適用経路（`ZoomPercent` setter・各ズーム操作）が内部的に呼び出す。
 > `CanZoomIn` / `CanZoomOut` はキャッシュ付きの遅延計算で、`null`（未計算）状態を参照時に再計算してキャッシュする（ズーム状態が変わる箇所で未計算に戻す）。初期表示時にイベントを待たずにボタン状態を設定する場合は、本プロパティを参照する。
 
 ### 8.2 ZoomableView

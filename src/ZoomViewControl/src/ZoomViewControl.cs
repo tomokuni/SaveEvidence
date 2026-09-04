@@ -74,6 +74,10 @@ public sealed class ZoomViewControl : Panel
         // ビューポートリサイズ時に Fit 表示（表示テキスト）を再計算する
         _zoomableView.SizeChanged += (_, e) => OnZoomableViewSizeChanged(e);
 
+        // ビューポート変化（パン・ズーム・表示状態）を外部へ再発火する（オーバーレイ追従用）。
+        // ホストが内部 ZoomableView へ到達する必要をなくすため、本コントロールが中継する。
+        _zoomableView.ViewportChanged += (_, _) => ViewportChanged?.Invoke(this, EventArgs.Empty);
+
         // 初期状態のズーム可否を未計算に戻す（初回参照時に遅延計算してキャッシュする）
         _availability = null;
     }
@@ -81,9 +85,11 @@ public sealed class ZoomViewControl : Panel
     /// <summary>ズーム中心として使用するマウスポインタ位置（ビューポートローカル DIP）。null の場合はビューポート中心。</summary>
     /// <remarks>
     /// Ctrl+ホイールズーム時に設定され、マウスポインタ位置を中心に拡大縮小する。<br/>
-    /// null（ボタン・スライダ・フライアウト操作）の場合は、表示されている中心位置を中心に拡大縮小する。
+    /// null（ボタン・スライダ・フライアウト操作）の場合は、表示されている中心位置を中心に拡大縮小する。<br/>
+    /// 外部からは設定せず、内部（Ctrl+ホイールハンドラ）のみが使用する。<br/>
+    /// 内部のズーム処理は <see cref="ZoomPercent"/>・<see cref="ApplyZoomTransition"/> が本位置を参照する。
     /// </remarks>
-    public Point? PointerPosition { get; set; }
+    private Point? PointerPosition { get; set; }
 
     /// <summary>表示する画像（ズーム対象）。設定すると Fit 表示にリセットする。</summary>
     /// <remarks>画像変更時は内部 <see cref="ZoomableView"/> へ伝搬する。null で画像なし。</remarks>
@@ -107,6 +113,38 @@ public sealed class ZoomViewControl : Panel
             ApplyZoom();
         }
     }
+
+    /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準）。</summary>
+    /// <param name="viewportPos">ビューポート座標。</param>
+    /// <returns>コンテンツ座標（元画像ピクセル）。</returns>
+    /// <remarks>
+    /// <see cref="ZoomableView.ViewportToContentImage"/> へ委譲する（座標変換の単一所有）。<br/>
+    /// 画像表示矩形（<see cref="ImageRectViewport"/>）の原点を基準に変換し、Fit 中央寄せの原点補正を含む。<br/>
+    /// ホストが内部 <see cref="ZoomableView"/> へ到達する必要をなくすため、本コントロールが中継する。
+    /// </remarks>
+    public Point ViewportToContentImage(Point viewportPos)
+        => _zoomableView.ViewportToContentImage(viewportPos);
+
+    /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準）。</summary>
+    /// <param name="contentPos">コンテンツ座標（元画像ピクセル）。</param>
+    /// <returns>ビューポート座標。</returns>
+    /// <remarks>
+    /// <see cref="ZoomableView.ContentToViewportImage"/> へ委譲する（座標変換の単一所有）。<br/>
+    /// 画像表示矩形（<see cref="ImageRectViewport"/>）の原点を基準に変換し、Fit 中央寄せの原点補正を含む。<br/>
+    /// ホストが内部 <see cref="ZoomableView"/> へ到達する必要をなくすため、本コントロールが中継する。
+    /// </remarks>
+    public Point ContentToViewportImage(Point contentPos)
+        => _zoomableView.ContentToViewportImage(contentPos);
+
+    /// <summary>画像の表示矩形（ビューポート座標）を取得する。</summary>
+    /// <returns>画像の表示矩形。画像未設定時は default。</returns>
+    /// <remarks>
+    /// <see cref="ZoomableView.ImageRectViewport"/> へ委譲する。<br/>
+    /// 画像原点を起点とした表示サイズ（Fit 中央寄せの原点補正を含む）を取得し、画像内判定に使用する。<br/>
+    /// ホストが内部 <see cref="ZoomableView"/> へ到達する必要をなくすため、本コントロールが中継する。
+    /// </remarks>
+    public Rect ImageRectViewport()
+        => _zoomableView.ImageRectViewport();
 
     /// <summary>ステータスバー等に表示する拡大率テキスト（例: "100%"）。本コントロールが更新する。</summary>
     public string ZoomDisplayText { get; private set; } = "100%";
@@ -154,13 +192,21 @@ public sealed class ZoomViewControl : Panel
     /// </remarks>
     public event EventHandler<ZoomChangedEventArgs>? ZoomChanged;
 
-    /// <summary>内包するパン・ズームビューポート（座標変換・イベント等の低レベルアクセス用）。</summary>
+    /// <summary>ビューポート（パン・ズーム・表示状態）が変化したときに発火するイベント（オーバーレイ追従用）。</summary>
     /// <remarks>
-    /// 通常は <see cref="ZoomIn"/> 等の高レベル API で操作するが、<br/>
-    /// 座標変換（<see cref="ZoomableView.ViewportToContentImage"/> 等）やオーバーレイ追従（<see cref="ZoomableView.ViewportChanged"/>）等、
-    /// 低レベルの細かな操作が必要なホストへ公開する。
+    /// 内包する <see cref="ZoomableView.ViewportChanged"/> を再発火する。<br/>
+    /// パン・ズーム・スクロールバー・画像配置の変更後に発火し、<br/>
+    /// 画像プレビュー上のオーバーレイ（Crop の暗転マスク・選択枠・ルーペ等）の追従に使用する。<br/>
+    /// ホストが内部 <see cref="ZoomableView"/> へ到達する必要をなくすため、本コントロールが中継する。
     /// </remarks>
-    public ZoomableView ZoomableView => _zoomableView;
+    public event EventHandler? ViewportChanged;
+
+    /// <summary>ズーム対象の画像コントロール（Crop セッション等の対象画像）。</summary>
+    /// <remarks>
+    /// 内包する <see cref="ZoomableView.ImageControl"/> を公開する（<see cref="ZoomableView"/> の露出を避けるため）。<br/>
+    /// Crop セッション（SnipCapture）の対象画像コントロール・ポインターイベントの受信元等に使用する。
+    /// </remarks>
+    public Image ImageControl => _zoomableView.ImageControl;
 
     /// <summary>ズームインする（⊖⊕ボタン）。</summary>
     /// <remarks>
@@ -189,13 +235,22 @@ public sealed class ZoomViewControl : Panel
         ApplyZoomTransition(ZoomTransition.PrevLevel(zoom, fitZoom), Log.LogZoomOut);
     }
 
+    /// <summary>Fit 表示（ビューポートに収まる自動倍率）へ戻す。</summary>
+    /// <remarks>
+    /// ズーム率を 0（Fit）に設定する。<c>ZoomPercent = 0</c> のマジックナンバー依存を避けるため、<br/>
+    /// 意味を表す専用メソッド <see cref="Fit"/> を提供する（KISS / カプセル化）。<br/>
+    /// Fit 表示中は実効倍率（ビューポートと元画像サイズから算出）が表示テキスト・ズーム可否の基準になる。
+    /// </remarks>
+    public void Fit() => ZoomPercent = 0;
+
     /// <summary>Ctrl+ホイールでズームインする（拡大 = Round(現在の拡大率 × 1.1)）。</summary>
     /// <remarks>
     /// <see cref="ZoomTransition.WheelZoomIn"/> で倍率を計算する。Fit は遷移に含めない。<br/>
     /// Fit 表示中は実効倍率の 1.1 倍へ移動する（実効倍率 ≥ 500 なら拡大不可）。<br/>
-    /// 移動先がなければ何もしない（現在のズーム率を維持）。
+    /// 移動先がなければ何もしない（現在のズーム率を維持）。<br/>
+    /// Ctrl+ホイールのハンドラのみが使用する（外部からの呼び出しは不要）。
     /// </remarks>
-    public void ZoomInByWheel()
+    private void ZoomInByWheel()
     {
         var zoom = ZoomPercent;
         var fitZoom = zoom <= 0 ? ComputeRawFitZoomPercent() : 0;
@@ -206,32 +261,14 @@ public sealed class ZoomViewControl : Panel
     /// <remarks>
     /// <see cref="ZoomTransition.WheelZoomOut"/> で倍率を計算する。Fit は遷移に含めない。<br/>
     /// Fit 表示中は実効倍率の 1/1.1 倍へ移動する（実効倍率 ≤ 10 なら縮小不可）。<br/>
-    /// 移動先がなければ何もしない（現在のズーム率を維持）。
+    /// 移動先がなければ何もしない（現在のズーム率を維持）。<br/>
+    /// Ctrl+ホイールのハンドラのみが使用する（外部からの呼び出しは不要）。
     /// </remarks>
-    public void ZoomOutByWheel()
+    private void ZoomOutByWheel()
     {
         var zoom = ZoomPercent;
         var fitZoom = zoom <= 0 ? ComputeRawFitZoomPercent() : 0;
         ApplyZoomTransition(ZoomTransition.WheelZoomOut(zoom, fitZoom), Log.LogZoomOutWheel);
-    }
-
-    /// <summary>ComboBox のテキスト入力からズーム率をパースして適用する。</summary>
-    /// <param name="text">入力テキスト（例: "25"、"25%"、"150 %"）。</param>
-    /// <returns>適用できた場合は true、無効な入力の場合は false。</returns>
-    /// <remarks>
-    /// 入力値は「数値」または「数値 + %」形式を受理し、<see cref="ZoomTransition.MinZoom"/> 〜
-    /// <see cref="ZoomTransition.MaxZoom"/> の範囲に制限する。<br/>
-    /// 数値以外・範囲外・空の入力は無視し、既存のズーム率を維持する（適用不可を false で通知）。
-    /// </remarks>
-    public bool ApplyZoomFromText(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return false;
-        var cleaned = text.Trim().TrimEnd('%');
-        if (!int.TryParse(cleaned, out var value)) return false;
-        if (value is < ZoomTransition.MinZoom or > ZoomTransition.MaxZoom) return false;
-
-        ZoomPercent = value;
-        return true;
     }
 
     /// <summary>スライダの値（ZoomPercent）変更時にズームを適用する。</summary>
@@ -249,9 +286,10 @@ public sealed class ZoomViewControl : Panel
     /// 内包する <see cref="ZoomableView"/> が所有する現在のズーム率から、<br/>
     /// ステータスバーの表示テキスト（<see cref="ZoomDisplayText"/>）とズーム可否を更新する。<br/>
     /// <see cref="ZoomPercent"/> と <see cref="ZoomableView"/> のズーム率を同期させるため、<br/>
-    /// ズーム率変更（<see cref="ZoomPercent"/> の setter・<see cref="ZoomIn"/>・<see cref="ApplyZoomFromSlider"/> 等）の後に呼ぶ。
+    /// ズーム率変更（<see cref="ZoomPercent"/> の setter・<see cref="ZoomIn"/>・<see cref="ApplyZoomFromSlider"/> 等）の後に呼ぶ。<br/>
+    /// ズーム率変更の適用経路（<see cref="ZoomPercent"/> setter・各ズーム操作）が内部的に呼び出す（再入防止付き）。
     /// </remarks>
-    public void ApplyZoom()
+    private void ApplyZoom()
     {
         if (_isApplyingZoom) return; // 再入防止
         _isApplyingZoom = true;

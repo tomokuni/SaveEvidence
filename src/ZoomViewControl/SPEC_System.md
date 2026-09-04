@@ -106,8 +106,9 @@ flowchart TB
 ### 6.1 ZoomViewControl
 
 - **分類**: 公開コントロール（`public sealed class : Panel`。自己完結型複合コントロール）
-- **責務**: `ZoomableView` を内包し、ズーム率の遷移（⊖⊕ 23 段階 / Ctrl+ホイール ×1.1）・適用・Fit 表示を統括。ズーム要求（`ZoomRequested`）・リサイズ（`SizeChanged`）の配線を自己完結。ズーム率変更・可否は `ZoomChanged` で通知、可否は `CanZoomIn` / `CanZoomOut` で公開
-- **公開メンバー**: `Source` / `ZoomPercent` / `CenterAlign` / `ZoomDisplayText` / `ZoomIn` / `ZoomOut` / `ZoomInByWheel` / `ZoomOutByWheel` / `ApplyZoomFromSlider` / `ApplyZoomFromText` / `CanZoomIn` / `CanZoomOut` / `ZoomableView` / `PointerPosition` / `Log` / `ZoomChanged`（イベント）
+- **責務**: `ZoomableView` を内包し、ズーム率の遷移（⊖⊕ 23 段階 / Ctrl+ホイール ×1.1）・適用・Fit 表示を統括。ズーム要求（`ZoomRequested`）・リサイズ（`SizeChanged`）の配線を自己完結。ズーム率変更・可否は `ZoomChanged` で通知、可否は `CanZoomIn` / `CanZoomOut` で公開。ホストが内部 `ZoomableView` へ到達しないよう、必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知・画像コントロール）を Facade として再公開
+- **公開メンバー**: `Source` / `ZoomPercent` / `CenterAlign` / `ZoomDisplayText` / `ZoomIn` / `ZoomOut` / `Fit` / `ApplyZoomFromSlider` / `CanZoomIn` / `CanZoomOut` / `Log` / `ZoomChanged`（イベント）/ `ViewportChanged`（イベント）/ `ViewportToContentImage` / `ContentToViewportImage` / `ImageRectViewport` / `ImageControl`
+- **非公開（内部のみ）**: `ZoomInByWheel` / `ZoomOutByWheel`（Ctrl+ホイールハンドラのみ）/ `PointerPosition`（ズーム中心。Ctrl+ホイールハンドラのみ）/ `ApplyZoom`（表示テキスト・可否・イベント通知の反映。ズーム率変更経路が内部的に呼ぶ）/ `ZoomableView`（内包するビューポート。公開しない）
 - **依存**: ZoomableView / ZoomMath / ZoomTransition / LogMessage / ZoomAvailability（値オブジェクト。2 値の可否を単一保持）
 - **ズーム率の単一所有**: ズーム率は内包する `ZoomableView` が所有し、本コントロールは `ZoomPercent`（読み書き）で操作窓口を提供する
 
