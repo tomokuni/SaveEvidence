@@ -1,3 +1,4 @@
+using Avalonia.Media.Imaging;
 using OpenCvSharp;
 using AvaloniaPoint = Avalonia.Point;
 
@@ -113,7 +114,7 @@ public sealed class LogicLineDetector : ILineDetector
     ///    4 辺をコーナー近傍で交差する閉区間として出力する（<see cref="BuildRectangles"/>）<br/>
     /// 6. 矩形を構成できない場合は、最小長・暗いピクセル割合でフィルタしてスコア（長さ）降順で返す
     /// </remarks>
-    public IReadOnlyList<LineDetectionResult> Detect(PixelImage image)
+    public IReadOnlyList<LineDetectionResult> Detect(Bitmap image)
     {
         using var mat = MatHelper.ToMat(image);
         using var gray = new Mat();
@@ -145,7 +146,7 @@ public sealed class LogicLineDetector : ILineDetector
         var mergedV = MergeCollinearAll(verticals, isHorizontal: false, gap: MaxLineGap);
 
         // 矩形（ウィンドウの 4 辺）を構成できる場合は、閉区間として優先出力する
-        var rectangles = BuildRectangles(mergedH, mergedV, image.Width, image.Height, gray, edges);
+        var rectangles = BuildRectangles(mergedH, mergedV, image.PixelSize.Width, image.PixelSize.Height, gray, edges);
         if (rectangles.Count > 0)
         {
             return rectangles.OrderByDescending(r => r.Score).ToList();

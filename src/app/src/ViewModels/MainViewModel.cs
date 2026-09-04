@@ -348,13 +348,9 @@ public sealed partial class MainViewModel : ObservableObject, IZoomHost
             return;
         }
 
-        // Bitmap → AppPixelData → PixelImage（検出器の入力）
-        var srcData = AppPixelData.ToPixelData(image);
-        var pixelImage = new PixelImage(srcData.Width, srcData.Height, srcData.Stride, srcData.PixelData);
-
         // LineDetection で水平・垂直の辺（線分）を検出し、矩形（ウィンドウの 4 辺）を復元する
         var detector = new LogicLineDetector();
-        var results = detector.Detect(pixelImage);
+        var results = detector.Detect(image);
 
         var rects = TryReconstructRects(results);
         DetectedRects = rects;

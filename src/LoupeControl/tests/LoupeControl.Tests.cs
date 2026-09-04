@@ -439,10 +439,6 @@ public class LoupeControlTests
         control.RenderScaling = 2.0;
         control.FrameWidth = 3;
         control.CheckerSize = 5;
-        control.SelectionRectVisible = true;
-        control.SelectionRect = new Rect(10, 10, 50, 40);
-        control.SelectionRectColorA = brush;
-        control.SelectionRectColorB = brush;
 
         Assert.Same(brush, control.CrossColor);
         Assert.Same(brush, control.CheckerColorA);
@@ -451,10 +447,6 @@ public class LoupeControlTests
         Assert.Equal(2.0, control.RenderScaling);
         Assert.Equal(3, control.FrameWidth);
         Assert.Equal(5, control.CheckerSize);
-        Assert.True(control.SelectionRectVisible);
-        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionRect);
-        Assert.Same(brush, control.SelectionRectColorA);
-        Assert.Same(brush, control.SelectionRectColorB);
     }
 
     [AvaloniaFact]
@@ -473,11 +465,6 @@ public class LoupeControlTests
         Assert.Equal(Color.FromAColor(0x4C, Colors.Gray), ((ISolidColorBrush)control.CheckerColorA!).Color);
         Assert.Equal(Color.FromAColor(0x4C, Colors.DarkGray), ((ISolidColorBrush)control.CheckerColorB!).Color);
         Assert.Same(Brushes.LightGray, control.FrameColor);
-        Assert.False(control.SelectionRectVisible);
-        Assert.Null(control.SelectionRect);
-        // 選択矩形破線の既定は白 100% / 黒 100%（設定画面の現在値）
-        Assert.Equal(Colors.White, ((ISolidColorBrush)control.SelectionRectColorA!).Color);
-        Assert.Equal(Colors.Black, ((ISolidColorBrush)control.SelectionRectColorB!).Color);
     }
 
     // ====================================================================

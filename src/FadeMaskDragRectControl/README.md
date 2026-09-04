@@ -31,7 +31,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 - **外観の一括設定**: `AppearanceSettings` プロパティ（nullable record・部分更新）で DragRect / FadeMask / Loupe の外観を 1 回で設定
 - **座標変換ポートの一括分配**: `SetCoordinateTransform(ICoordinatePort?)` で 3 コントロールへ同一ポートを分配
 - **ビューポート変化の追従**: `NotifyViewportChanged()` でパン・ズーム等のビューポート変化を通知（DragRect / FadeMask の再描画 + ルーペ位置再計算。ScrollViewer 連携のスクロールも同じ経路で処理）
-- **選択状態の外部設定**: `SetSelection` / `ClearSelection` / `SetDragRectSelection` で選択矩形を暗転マスクとルーペへ同期
+- **選択状態の外部設定**: `SetSelection` / `ClearSelection` / `SetDragRectSelection` で選択矩形を暗転マスクへ同期（ルーペの選択矩形破線は `Rendered` イベント経由で描画）
 - **ルーペ制御**: `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `LoupeCenterPoint` で中心・ソース・後片付けを制御
 - **ハイライト状態**: `LogicalHighlightRect` / `HasHighlight` / `ScreenIndex` / `DisplayScaleScaling` / `WindowTitle` で ScreenSelect / WindowSelect のハイライトを設定
 - **公開型のカプセル化**: イベント引数は独自型（`FadeMaskDragRectSelectionEventArgs` / `FadeMaskDragRectPointEventArgs`）、内包コントロールへの直接アクセスは internal（公開 API は本コントロールのみ）
@@ -106,7 +106,7 @@ SelectionOverlay.Loupe.Source = bitmap;
 
 - **ドメイン座標**: 元画像ピクセル（Crop）または仮想スクリーンピクセル（AreaSelect）など、ホストが定義する論理座標。
 - **DIP 座標**: コントロールローカル DIP。`SetCoordinateTransform` で注入した `ICoordinatePort` がドメイン ↔ DIP を双方向変換します（描画時に毎回評価され、ズーム・スクロール・ウィンドウサイズ変更に追従）。
-- **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します。
+- **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠（`Rendered` イベント経由でホスト側が描画）が一致します。
 
 ## 7. サンプル
 

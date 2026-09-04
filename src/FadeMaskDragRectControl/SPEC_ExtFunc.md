@@ -242,7 +242,7 @@ parentPanel.Children.Add(overlay);
 | `ScreenSelect` | `FadeMaskRenderMode.ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ。クリック確定フローはホストが担う） |
 | `WindowSelect` | `FadeMaskRenderMode.WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ。クリック確定フローはホストが担う） |
 
-- ルーペの選択矩形破線（`LoupeControl.SelectionRectVisible`）はモードに応じて `ApplyMode` が有効化する（`Crop` / `AreaSelect` で有効。モード依存設定のため、外観設定の「同じ値スキップ」に左右されない）。
+- ルーペの選択矩形破線はモードに応じて `ApplyMode` が有効化する（`Crop` / `AreaSelect` で有効。モード依存設定のため、外観設定の「同じ値スキップ」に左右されない）。描画は `LoupeControl.Rendered` イベントを受けた本コントロール（ホスト側）が行う。
 
 ## 8. 配線（内部で完結する状態同期）
 
@@ -257,7 +257,7 @@ graph TD
     SC -->|"イベント中継"| HOST["ホスト（CropSession / OverlayWindow）"]
 ```
 
-- `SelectionChanged` / `ViewportChanged`: 選択矩形を FadeMask（`LogicalSelectionRect` / `HasSelection`）とルーペ（`SelectionRect`）へ同期し、オーバーレイを再描画。
+- `SelectionChanged` / `ViewportChanged`: 選択矩形を FadeMask（`LogicalSelectionRect` / `HasSelection`）へ同期し、オーバーレイを再描画。ルーペの選択矩形破線は `Rendered` イベント経由で描画する。
 - `SelectionStarted` / `SelectionCancelled`: 選択状態をクリア（前の矩形の暗転マスク残留を防止）。
 - `LoupePositionMoved`: ルーペの `CenterPoint` を更新して表示開始（表示位置は座標変換ポートから自己計算）。
 - `ConfirmRequested` / `CancelRequested` / `ZoomRequested`: ホストへ中継。

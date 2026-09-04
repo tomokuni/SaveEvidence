@@ -43,7 +43,6 @@ namespace Estable.AvaloniaUI.Loupe;
 /// - 入力: <see cref="Source"/> / <see cref="CenterPoint"/><br/>
 /// - サイズ: <see cref="RequestedSize"/> / <see cref="RenderScaling"/> / <see cref="ZoomLevel"/><br/>
 /// - 外観: <see cref="CrossColor"/> / <see cref="CheckerSize"/> / <see cref="CheckerColorA"/> / <see cref="CheckerColorB"/> / <see cref="FrameColor"/> / <see cref="FrameWidth"/><br/>
-/// - 選択矩形: <see cref="SelectionRect"/> / <see cref="SelectionRectVisible"/> / <see cref="SelectionRectColorA"/> / <see cref="SelectionRectColorB"/>（選択枠をルーペ上に 2 色破線で表示）<br/>
 /// - ログ: <see cref="Log"/><br/>
 /// - イベント: <see cref="Rendered"/>（描画完了時に描画済み Bitmap と表示情報を通知。ホストが Bitmap に直接オーバーレイを描画できる）<br/>
 /// - 操作: <see cref="Clear()"/> / <see cref="ForceUpdate()"/> / <see cref="RenderAsync()"/><br/>
@@ -268,10 +267,6 @@ public sealed partial class LoupeControl : UserControl
             CheckerColorBProperty,
             FrameColorProperty,
             FrameWidthProperty,
-            SelectionRectVisibleProperty,
-            SelectionRectColorAProperty,
-            SelectionRectColorBProperty,
-            SelectionRectProperty,
         ];
         foreach (var property in renderOnlyProperties)
         {
@@ -360,33 +355,6 @@ public sealed partial class LoupeControl : UserControl
     /// <summary><see cref="FrameWidth"/> 依存関係プロパティ（1〜64 に補正）。</summary>
     public static readonly StyledProperty<int> FrameWidthProperty =
         AvaloniaProperty.Register<LoupeControl, int>(nameof(FrameWidth), defaultValue: FrameWidthDefault, coerce: CoerceFrameWidth);
-
-    /// <summary>選択矩形破線の色A（明色）の既定ブラシ（白 100% = <c>#FFFFFFFF</c>）。</summary>
-    /// <summary>選択矩形破線の色B（暗色）の既定ブラシ（黒 100% = <c>#FF000000</c>）。</summary>
-    /// <remarks>
-    /// 選択矩形の破線は色A（白）と色B（黒）をダッシュごとに交互に塗り、市松風の視認性を確保する。<br/>
-    /// 不透明度（既定 100%）は色のアルファに統合する。<br/>
-    /// static フィールド初期化子は宣言順に実行されるため、<see cref="SelectionRectColorAProperty"/> より先に宣言する<br/>
-    /// （逆順だとプロパティ登録時に null がデフォルト値として固定される）。<br/>
-    /// </remarks>
-    private static readonly IBrush DefaultSelectionRectColorA = Brushes.White;
-    private static readonly IBrush DefaultSelectionRectColorB = Brushes.Black;
-
-    /// <summary><see cref="SelectionRect"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<Rect?> SelectionRectProperty =
-        AvaloniaProperty.Register<LoupeControl, Rect?>(nameof(SelectionRect));
-
-    /// <summary><see cref="SelectionRectVisible"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<bool> SelectionRectVisibleProperty =
-        AvaloniaProperty.Register<LoupeControl, bool>(nameof(SelectionRectVisible), defaultValue: false);
-
-    /// <summary><see cref="SelectionRectColorA"/> 依存関係プロパティ（不透明度は色のアルファに統合）。</summary>
-    public static readonly StyledProperty<IBrush?> SelectionRectColorAProperty =
-        AvaloniaProperty.Register<LoupeControl, IBrush?>(nameof(SelectionRectColorA), defaultValue: DefaultSelectionRectColorA);
-
-    /// <summary><see cref="SelectionRectColorB"/> 依存関係プロパティ（不透明度は色のアルファに統合）。</summary>
-    public static readonly StyledProperty<IBrush?> SelectionRectColorBProperty =
-        AvaloniaProperty.Register<LoupeControl, IBrush?>(nameof(SelectionRectColorB), defaultValue: DefaultSelectionRectColorB);
 
     /// <summary><see cref="ShowCoordLabel"/> 依存関係プロパティ。</summary>
     /// <remarks>既定は true（設定画面のルーペ座標ラベル表示のデフォルトと一致）。</remarks>
@@ -527,44 +495,6 @@ public sealed partial class LoupeControl : UserControl
     {
         get => GetValue(FrameWidthProperty);
         set => SetValue(FrameWidthProperty, value);
-    }
-
-    /// <summary>ルーペ画像上に破線でオーバーレイ表示する選択矩形（ドメイン座標系 = 元画像ピクセル座標）を取得または設定する。</summary>
-    /// <remarks>
-    /// <see cref="CenterPoint"/> と同じ座標系（元画像ピクセル座標）で指定する。<br/>
-    /// ルーペの切り出し領域内に選択矩形が含まれる場合、その枠線を破線で描画する（選択位置の視覚化）。<br/>
-    /// 領域選択 / Crop のドラッグ中・矩形確定後に、現在の選択矩形を確認するために使用する。
-    /// </remarks>
-    public Rect? SelectionRect
-    {
-        get => GetValue(SelectionRectProperty);
-        set => SetValue(SelectionRectProperty, value);
-    }
-
-    /// <summary>選択矩形の破線オーバーレイを表示するかどうかを取得または設定する。</summary>
-    /// <remarks>既定は false（非表示）。true にすると <see cref="SelectionRect"/> の枠線を破線で描画する。</remarks>
-    public bool SelectionRectVisible
-    {
-        get => GetValue(SelectionRectVisibleProperty);
-        set => SetValue(SelectionRectVisibleProperty, value);
-    }
-
-    /// <summary>選択矩形の破線オーバーレイの色A（明色）を取得または設定する。</summary>
-    /// <remarks>既定は白 80%（<c>#CCFFFFFF</c>）。色B（<see cref="SelectionRectColorB"/>）と交互に破線のダッシュを塗る。<br/>
-    /// 不透明度は色のアルファに統合する。</remarks>
-    public IBrush? SelectionRectColorA
-    {
-        get => GetValue(SelectionRectColorAProperty);
-        set => SetValue(SelectionRectColorAProperty, value);
-    }
-
-    /// <summary>選択矩形の破線オーバーレイの色B（暗色）を取得または設定する。</summary>
-    /// <remarks>既定は黒 80%（<c>#CC000000</c>）。色A（<see cref="SelectionRectColorA"/>）と交互に破線のダッシュを塗る。<br/>
-    /// 不透明度は色のアルファに統合する。</remarks>
-    public IBrush? SelectionRectColorB
-    {
-        get => GetValue(SelectionRectColorBProperty);
-        set => SetValue(SelectionRectColorBProperty, value);
     }
 
     /// <summary>ルーペの上側に中心座標ラベルを表示するかどうかを取得または設定する。</summary>
@@ -894,17 +824,12 @@ public sealed partial class LoupeControl : UserControl
             var checkerColorB = CheckerColorB;
             var frameColor = FrameColor;
             var frameWidth = FrameWidth;
-            var selectionVisible = SelectionRectVisible;
-            var selectionRect = selectionVisible ? SelectionRect : null;
-            var selectionRectColorA = selectionVisible ? SelectionRectColorA : null;
-            var selectionRectColorB = selectionVisible ? SelectionRectColorB : null;
             var scaling = RenderScaling;
             var pixelSize = Math.Max(1, (int)Math.Ceiling(size * scaling));
 
             var bitmap = await RenderBitmapAsync(
                 source, center, pixelSize, zoom, crossColor,
-                checkerSize, checkerColorA, checkerColorB, frameColor, frameWidth, scaling,
-                selectionRect, selectionRectColorA, selectionRectColorB);
+                checkerSize, checkerColorA, checkerColorB, frameColor, frameWidth, scaling);
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
@@ -933,8 +858,7 @@ public sealed partial class LoupeControl : UserControl
         IImage? source, Point? center, int pixelSize, int zoomLevel,
         IBrush? crossColor, int checkerSize,
         IBrush? checkerColorA, IBrush? checkerColorB, IBrush? frameColor,
-        int frameWidth, double scaling,
-        Rect? selectionRect, IBrush? selectionRectColorA, IBrush? selectionRectColorB)
+        int frameWidth, double scaling)
     {
         if (source is not null and not Bitmap)
         {
@@ -995,9 +919,7 @@ public sealed partial class LoupeControl : UserControl
                 using var cropped = LoupeImageExtractor.CreateBitmap(region);
                 return LoupeRenderer.DrawLoupe(
                     cropped, pixelSize, zoomLevel, crossColor,
-                    checkerPixelSize, checkerColorA, checkerColorB, frameColor, framePixelWidth,
-                    selectionRect: selectionRect, centerPoint: centerPoint,
-                    selectionRectColorA: selectionRectColorA, selectionRectColorB: selectionRectColorB);
+                    checkerPixelSize, checkerColorA, checkerColorB, frameColor, framePixelWidth);
             });
         }
 

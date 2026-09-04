@@ -115,14 +115,14 @@ flowchart TB
 
 - **分類**: 公開コントロール（`public sealed partial class LoupeControl : UserControl`）
 - **責務**:
-  - 状態管理: 19個の StyledProperty（`Source: IImage?` / `CenterPoint` / サイズ / 外観 / 選択矩形 / 座標ラベル）
+  - 状態管理: 15個の StyledProperty（`Source: IImage?` / `CenterPoint` / サイズ / 外観 / 座標ラベル）
     - ライフサイクル: 世代管理付き非同期ビットマップ生成と解放（`ReleaseBitmap`）
   - 表示制御: 標準プロパティ `IsVisible` で表示・非表示を指示（表示時=同期描画、非表示時=解放）
     - 再描画のバッチ化: `Dispatcher.UIThread.Post` で複数プロパティ変更を1フレーム1回の再描画に結合
     - 非同期描画: 領域抽出を `Task.Run` で非同期化し、Avaloniaの描画オブジェクト生成とUI反映はUIスレッドで行う。世代番号で古い結果を破棄する
     - 座標単位: `RequestedSize` はDIP、レンダラーへ渡すサイズと装飾幅は `RenderScaling` で物理ピクセルへ変換
   - 値の補正: `coerce` コールバックで数値プロパティを安全域へ矯正
-- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ サイズ（`RequestedSize` / `RenderScaling` / `ZoomLevel`）/ 外観（`CrossColor` / `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `FrameColor` / `FrameWidth`・不透明度は色のアルファに統合）/ 選択矩形（`SelectionRect` / `SelectionRectVisible` / `SelectionRectColorA` / `SelectionRectColorB`・2 色破線オーバーレイ）/ 座標ラベル（`ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で表示位置・サイズ・ズーム・中心・切り出し左上・スケールを通知）/ 操作（`Clear` / `ForceUpdate` / `RenderAsync` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
+- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ サイズ（`RequestedSize` / `RenderScaling` / `ZoomLevel`）/ 外観（`CrossColor` / `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `FrameColor` / `FrameWidth`・不透明度は色のアルファに統合）/ 座標ラベル（`ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で表示位置・サイズ・ズーム・中心・切り出し左上・スケールを通知。ホストが描画済み Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `ForceUpdate` / `RenderAsync` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
 - **依存**: LoupeRenderer / LogMessage / Avalonia / ILogger
 
 ### 6.2 LoupeRenderer

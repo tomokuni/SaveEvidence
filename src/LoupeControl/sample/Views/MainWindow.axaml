@@ -108,13 +108,7 @@
                                        Value="{Binding SelectionRectHeight, Mode=TwoWay}" Width="110"/>
                     </StackPanel>
 
-                    <TextBlock Text="選択矩形の色A（SelectionRectColorA）"/>
-                    <ComboBox ItemsSource="{Binding SelectionRectColorAOptions}" SelectedItem="{Binding SelectionRectColorAOption}"/>
-
-                    <TextBlock Text="選択矩形の色B（SelectionRectColorB・不透明度は色のアルファ）"/>
-                    <ComboBox ItemsSource="{Binding SelectionRectColorBOptions}" SelectedItem="{Binding SelectionRectColorBOption}"/>
-
-                    <TextBlock Text="※ ズーム 2 倍以上で破線が表示されます（1 倍では潰れるため非表示）。"
+                    <TextBlock Text="※ 選択矩形の破線オーバーレイはホスト側（Rendered イベント）で描画されます。"
                                FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
 
                     <Separator/>
@@ -145,7 +139,7 @@
                            Canvas.Top="{Binding SelectionRectY}"
                            Width="{Binding SelectionRectWidth}"
                            Height="{Binding SelectionRectHeight}"
-                           Stroke="{Binding SelectionRectBrushA}"
+                           Stroke="#FF8C00"
                            StrokeThickness="2"
                            StrokeDashArray="4,2"
                            Fill="#30FF8C00"
@@ -174,11 +168,7 @@
                                     CheckerColorB="{Binding CheckerColorBBrush}"
                                     FrameColor="{Binding FrameBrush}"
                                     FrameWidth="{Binding FrameWidth}"
-                                    RenderScaling="{Binding RenderScaling}"
-                                    SelectionRect="{Binding SelectionRect}"
-                                    SelectionRectVisible="{Binding SelectionRectVisible}"
-                                    SelectionRectColorA="{Binding SelectionRectBrushA}"
-                                    SelectionRectColorB="{Binding SelectionRectBrushB}"/>
+                                    RenderScaling="{Binding RenderScaling}"/>
 
             </Canvas>
 

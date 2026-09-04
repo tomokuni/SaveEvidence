@@ -23,7 +23,7 @@
 LineDetection は、キャプチャ画像から Windows のウィンドウ枠となる水平・垂直の辺（線分）を検出するライブラリです。
 
 - 検出方式は `ILineDetector` で抽象化され、ロジック方式（Canny + Hough）を同一の API で利用できます。
-- 入力は OpenCV・Avalonia 非依存の `PixelImage`（BGRA）、出力は `LineDetectionResult` のリストです。
+- 入力は `Bitmap`（BGRA）、出力は `LineDetectionResult` のリストです。
 - OpenCvSharp は内部利用に閉じ、公開 API には露出しません。
 
 ## 2. 技術スタック
@@ -46,7 +46,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 │       (Canny + Hough)       │
 │       └─ MatHelper (ToMat)  │
 └─────────────────────────────┘
-        │ Detect(PixelImage)
+        │ Detect(Bitmap)
         ▼
 [LineDetectionResult リスト]
 ```
@@ -59,24 +59,23 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | ファイル | 責務 |
 | --- | --- |
 | `DetectionResult.cs` | `LineOrientation`（向き）・`LineDetectionResult`（結果レコード）・`ILineDetector`（インターフェース）を定義。 |
-| `PixelImage.cs` | OpenCV・Avalonia 非依存のピクセルバッファ値型（検出器の入力）。 |
 | `LogicLineDetector.cs` | ロジック方式の検出器。Canny + HoughLinesP + 幾何学的一貫性による矩形検出。 |
-| `MatHelper.cs` | `PixelImage` ↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
+| `MatHelper.cs` | `Bitmap` ↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
 
 ## 5. 依存関係
 
-- `DetectionResult.cs` → `PixelImage`・`LineDetectionResult`（Avalonia.Point）
+- `DetectionResult.cs` → `LineDetectionResult`（Avalonia.Point）
 - `LogicLineDetector.cs` → `DetectionResult.cs`（ILineDetector・LineOrientation）・`MatHelper`
 - `MatHelper.cs` → OpenCvSharp（内部のみ）
 
-いずれも他の検出器へ依存しません（疎結合）。`MatHelper` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(PixelImage)`）には露出しません。
+いずれも他の検出器へ依存しません（疎結合）。`MatHelper` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(Bitmap)`）には露出しません。
 
 ## 6. 検出アルゴリズム
 
 ### 6.1. ロジック方式（LogicLineDetector）
 
 ```text
-PixelImage (BGRA)
+Bitmap (BGRA)
   → MatHelper.ToMat (OpenCV の Mat へ変換)
   → グレースケール化
   → Canny エッジ検出

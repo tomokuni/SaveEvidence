@@ -27,12 +27,8 @@
       - [5.1.9 CheckerColorA / CheckerColorB](#519-checkercolora--checkercolorb)
       - [5.1.10 FrameColor](#5110-framecolor)
       - [5.1.11 FrameWidth](#5111-framewidth)
-      - [5.1.12 SelectionRect](#5112-selectionrect)
-      - [5.1.13 SelectionRectVisible](#5113-selectionrectvisible)
-      - [5.1.14 SelectionRectColorA / SelectionRectColorB](#5114-selectionrectcolora--selectionrectcolorb)
-      - [5.1.15 選択矩形の破線オーバーレイの描画仕様](#5115-選択矩形の破線オーバーレイの描画仕様)
-      - [5.1.16 IsVisible](#5116-isvisible)
-      - [5.1.17 Log](#5117-log)
+      - [5.1.12 IsVisible](#5112-isvisible)
+      - [5.1.13 Log](#5113-log)
     - [5.2 メソッド](#52-メソッド)
       - [5.2.1 RenderAsync](#521-renderasync)
       - [5.2.2 ForceUpdate](#522-forceupdate)
@@ -326,42 +322,7 @@ CaptureSize = ceil(BitmapSize / ZoomLevel)
 | 既定値 | `2` |
 | 補正範囲 | `1`〜`64` |
 
-#### 5.1.12 SelectionRect
-
-| 項目 | 内容 |
-| --- | --- |
-| 型 | `Rect?` |
-| 既定値 | `null`（非表示） |
-| 説明 | ルーペ画像上に破線でオーバーレイ表示する選択矩形（**ドメイン座標系** = 元画像ピクセル座標）。`CenterPoint` と同じ座標系 |
-
-#### 5.1.13 SelectionRectVisible
-
-| 項目 | 内容 |
-| --- | --- |
-| 型 | `bool` |
-| 既定値 | `false` |
-| 説明 | 選択矩形の破線オーバーレイを表示するかどうか。true で `SelectionRect` の枠線を破線で描画 |
-
-#### 5.1.14 SelectionRectColorA / SelectionRectColorB
-
-| 項目 | 内容 |
-| --- | --- |
-| 型 | `IBrush?` |
-| 既定値 | 色A: 白（`#FFFFFFFF`）/ 色B: 黒（`#FF000000`） |
-| `null` | 選択矩形を描画しない（`SelectionRectVisible = true` でも非表示） |
-
-選択矩形の破線は色A（明色）と色B（暗色）をダッシュごとに交互に塗り、市松風の視認性を確保する。
-不透明度は色のアルファに統合します。
-
-#### 5.1.15 選択矩形の破線オーバーレイの描画仕様
-
-- ズーム 2 倍以上で有効（1 倍では破線が潰れるため描画しない）。
-- 選択矩形（ドメイン座標）をルーペ座標に変換（`(rect − 切り出し左上) × ズーム倍率`）し、4 辺を 1px 破線（2px 描画 → 2px 空白）で描画する。
-- ダッシュは色A → 色B → 色A → … と交互に塗る（市松風の視認性）。
-- ルーペの切り出し領域と交差しない場合は何も描画しない。
-- 領域選択（AreaSelect） / Crop のドラッグ中・矩形確定後に、現在の選択矩形をルーペで拡大確認するために使用する。
-
-#### 5.1.16 IsVisible
+#### 5.1.12 IsVisible
 
 Avalonia標準の `Visual.IsVisible` を使用します。初期値は `false`（コンストラクタで設定。表示指示は `IsVisible = true` で行う）。
 
@@ -370,7 +331,7 @@ Avalonia標準の `Visual.IsVisible` を使用します。初期値は `false`�
 
 非表示中に画像・座標・外観を変更しても、Bitmapは生成されません。
 
-#### 5.1.17 Log
+#### 5.1.13 Log
 
 | 項目 | 内容 |
 | --- | --- |
@@ -481,7 +442,7 @@ event EventHandler<LoupeRenderedEventArgs>? Rendered
 | --- | --- |
 | 引数型 | `LoupeRenderedEventArgs` |
 | 発火タイミング | 描画結果が内部 `Image` へ反映された直後（非同期描画・バッチ化のため、プロパティ変更より 1 フレーム遅れる） |
-| 用途 | ホストがルーペに重ねるオーバーレイ（線分・選択矩形等）の描画位置を計算する |
+| 用途 | ホストがルーペに重ねるオーバーレイ（線分・選択枠等）の描画位置を計算する |
 
 **`LoupeRenderedEventArgs` のプロパティ**
 

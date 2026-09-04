@@ -3,7 +3,6 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Estable.AvaloniaUI.LineDetection;
-using LineDetectionSample.Imaging;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -129,8 +128,8 @@ public sealed partial class DetectionContext : ObservableObject
             return;
         }
 
-        // 検出器は OpenCV 非依存のピクセルバッファ（PixelImage）を受け取るため、Bitmap を変換する
-        var results = detector.Detector.Detect(BitmapImageConverter.ToPixelImage(Image));
+        // 検出器は Bitmap を入力として受け取る
+        var results = detector.Detector.Detect(Image);
 
         // モデル依存方式のエラー（モデル未配置等）をステータスへ反映する
         if (detector.Detector.ErrorMessage is { } error)

@@ -1,36 +1,34 @@
 using System.Runtime.InteropServices;
+using Avalonia;
+using Avalonia.Media.Imaging;
 using OpenCvSharp;
 
 namespace Estable.AvaloniaUI.LineDetection;
 
-/// <summary>PixelImage ↔ Mat 変換のヘルパー。</summary>
+/// <summary>Bitmap ↔ Mat 変換のヘルパー。</summary>
 /// <remarks>OpenCV 依存を内部に閉じ込める（本クラスだけが <c>OpenCvSharp</c> を参照する）。</remarks>
 internal static class MatHelper
 {
-    /// <summary>PixelImage（BGRA8888）を Mat（CV_8UC4）へ変換する。</summary>
-    /// <param name="image">変換元の PixelImage。</param>
+    /// <summary>Bitmap（BGRA8888）を Mat（CV_8UC4）へ変換する。</summary>
+    /// <param name="bitmap">変換元の Bitmap。</param>
     /// <returns>変換された Mat（呼び出し元で破棄する）。</returns>
-    public static Mat ToMat(PixelImage image)
+    public static Mat ToMat(Bitmap bitmap)
     {
-        var width = image.Width;
-        var height = image.Height;
-        var mat = new Mat(height, width, MatType.CV_8UC4);
-        var pixels = image.Pixels.ToArray();
+        var width = bitmap.PixelSize.Width;
+        var height = bitmap.PixelSize.Height;
+        var stride = width * 4;
+        var pixels = new byte[height * stride];
 
-        if (image.Stride == width * 4)
+        unsafe
         {
-            // 通常の場合（連続したバッファ）は一括コピーする
-            Marshal.Copy(pixels, 0, mat.Data, pixels.Length);
-        }
-        else
-        {
-            // Stride が width*4 と異なる場合（パディングあり）は行ごとにコピーする
-            for (var y = 0; y < height; y++)
+            fixed (byte* p = pixels)
             {
-                Marshal.Copy(pixels, y * image.Stride, mat.Data + y * width * 4, width * 4);
+                bitmap.CopyPixels(new PixelRect(0, 0, width, height), (nint)p, pixels.Length, stride);
             }
         }
 
+        var mat = new Mat(height, width, MatType.CV_8UC4);
+        Marshal.Copy(pixels, 0, mat.Data, pixels.Length);
         return mat;
     }
 }

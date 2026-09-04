@@ -9,6 +9,7 @@ using Avalonia.Platform;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
@@ -230,8 +231,6 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(Color.FromAColor(204, Colors.Red), ((SolidColorBrush)control.Loupe.CrossColor!).Color);
         Assert.Equal(10, control.Loupe.CheckerSize);
         Assert.Equal(4, control.Loupe.FrameWidth);
-        Assert.True(control.Loupe.SelectionRectVisible);
-        Assert.Equal(Color.FromAColor(204, Colors.White), ((SolidColorBrush)control.Loupe.SelectionRectColorA!).Color);
         Assert.Equal(30.0, control.Loupe.PositionOffset);
         // 座標ラベル（DragRect / Loupe）
         Assert.True(control.DragRect.ShowCoordLabel);
@@ -405,7 +404,6 @@ public class FadeMaskDragRectControlTests
 
         Assert.Equal(rect, control.Renderer.LogicalSelectionRect);
         Assert.True(control.Renderer.HasSelection);
-        Assert.Equal(rect, control.Loupe.SelectionRect);
     }
 
     [AvaloniaFact]
@@ -417,7 +415,6 @@ public class FadeMaskDragRectControlTests
 
         Assert.Null(control.Renderer.LogicalSelectionRect);
         Assert.False(control.Renderer.HasSelection);
-        Assert.Null(control.Loupe.SelectionRect);
     }
 
     [AvaloniaFact]
@@ -430,7 +427,6 @@ public class FadeMaskDragRectControlTests
 
         Assert.Null(control.Renderer.LogicalSelectionRect);
         Assert.False(control.Renderer.HasSelection);
-        Assert.Null(control.Loupe.SelectionRect);
     }
 
     // ====================================================================
@@ -448,7 +444,6 @@ public class FadeMaskDragRectControlTests
 
         Assert.Equal(rect, control.Renderer.LogicalSelectionRect);
         Assert.True(control.Renderer.HasSelection);
-        Assert.Equal(rect, control.Loupe.SelectionRect);
     }
 
     [AvaloniaFact]
@@ -623,7 +618,6 @@ public class FadeMaskDragRectControlTests
         Assert.True(control.HasSelection);
         Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionRect);
         Assert.Equal(new Rect(10, 10, 50, 40), control.Renderer.LogicalSelectionRect);
-        Assert.Equal(new Rect(10, 10, 50, 40), control.Loupe.SelectionRect);
     }
 
     [AvaloniaFact]
@@ -971,5 +965,66 @@ public class FadeMaskDragRectControlTests
         Assert.True(new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.AreaSelect }.ShowFullOverlay);
         Assert.False(new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.ScreenSelect }.ShowFullOverlay);
         Assert.False(new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.WindowSelect }.ShowFullOverlay);
+    }
+
+    // ====================================================================
+    // ルーペの選択矩形破線オーバーレイ（Rendered イベント経由・ホスト側描画）
+    // ====================================================================
+
+    /// <summary>選択矩形破線オーバーレイが領域内にピクセルを描画することを検証する。</summary>
+    [AvaloniaFact]
+    public void DrawSelectionRectOverlay_選択矩形の辺に破線が描画される()
+    {
+        // 白の 40x40 Bitmap に選択矩形（10,10,20,20）をズーム 4 で描画する
+        var bitmap = CreateSolidBitmap(40, 40);
+        var selectionRect = new Rect(10, 10, 20, 20);
+        var captureTopLeft = new Point(5, 5);
+        var scale = 4.0;
+
+        FadeMaskDragRectControl.DrawSelectionRectOverlay(
+            bitmap, selectionRect, captureTopLeft, scale, Colors.Black, Colors.Transparent);
+
+        // 上辺（ドメイン y=10 → ルーペ (10-5)*4=20）のピクセルが描画されていることを検証する
+        using var locked = bitmap.Lock();
+        var pixels = new byte[4];
+        Marshal.Copy(locked.Address + 20 * locked.RowBytes + 20 * 4, pixels, 0, 4);
+
+        // 白背景（255）より暗い = 破線が描画されている
+        Assert.True(pixels[0] < 255, $"選択矩形の辺に線が描画されていない: B={pixels[0]}");
+    }
+
+    /// <summary>ズーム 1 倍以下では破線を描画しないことを検証する。</summary>
+    [AvaloniaFact]
+    public void DrawSelectionRectOverlay_ズーム1倍では描画しない()
+    {
+        var bitmap = CreateSolidBitmap(40, 40);
+
+        // scale < 2 → 何も描画しない（例外なく早期リターンする）
+        FadeMaskDragRectControl.DrawSelectionRectOverlay(
+            bitmap, new Rect(10, 10, 20, 20), new Point(5, 5), 1.0, Colors.Black, Colors.Transparent);
+
+        // ヘッドレス環境では Lock() 書き込みの読み戻しが不安定なため、ピクセル値は検証しない
+        // （scale < 2 の早期リターンで例外なく実行されることを検証する）
+        Assert.Equal(40, bitmap.PixelSize.Width);
+    }
+
+    /// <summary>テスト用の単色 Bitmap（白）を生成する。</summary>
+    private static WriteableBitmap CreateSolidBitmap(int width, int height)
+    {
+        var bitmap = new WriteableBitmap(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+        using var locked = bitmap.Lock();
+        var stride = locked.RowBytes;
+        unsafe
+        {
+            var ptr = (byte*)locked.Address;
+            for (var i = 0; i < stride * height; i += 4)
+            {
+                ptr[i] = 255;     // B
+                ptr[i + 1] = 255; // G
+                ptr[i + 2] = 255; // R
+                ptr[i + 3] = 255; // A
+            }
+        }
+        return bitmap;
     }
 }

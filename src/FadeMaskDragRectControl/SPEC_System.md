@@ -183,7 +183,7 @@ sequenceDiagram
     H->>C: Visual Tree へ配置
     DR-->>C: SelectionChanged（選択矩形）
     C-->>FM: LogicalSelectionRect / HasSelection 同期 + 再描画
-    C-->>LC: SelectionRect 同期
+    C-->>LC: Rendered イベントで選択矩形破線を描画
     DR-->>C: LoupePositionMoved（中心）
     C-->>LC: CenterPoint 更新 + 表示開始
     DR-->>C: ConfirmRequested
@@ -195,7 +195,7 @@ sequenceDiagram
 
 | 内包イベント | 複合コントロールの処理 | 同期先 |
 | --- | --- | --- |
-| `SelectionChanged` | `SetSelection(e.Rect)` | FadeMask（LogicalSelectionRect / HasSelection）+ Loupe（SelectionRect）+ 再描画 |
+| `SelectionChanged` | `SetSelection(e.Rect)` | FadeMask（LogicalSelectionRect / HasSelection）+ 再描画。ルーペの選択矩形破線は Rendered イベント経由で描画 |
 | `ViewportChanged` / ホスト通知（`NotifyViewportChanged`） | `NotifyViewportChanged()`（再描画 + ルーペ位置再計算） | DragRect + FadeMask 再描画 + Loupe（RefreshPosition）。選択矩形はビューポート変化で不変のため再同期しない |
 | `SelectionStarted` | `ClearSelection()` | FadeMask 選択状態クリア（残留防止） |
 | `SelectionCancelled` | `ClearSelection()` | FadeMask 選択状態クリア（残留防止） |

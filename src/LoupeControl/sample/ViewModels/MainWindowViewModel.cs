@@ -27,12 +27,6 @@ public sealed class MainWindowViewModel : ObservableObject
     /// <summary>外枠の色選択肢。</summary>
     public IReadOnlyList<BrushOption> FrameColorOptions { get; } = BrushOptions.All;
 
-    /// <summary>選択矩形の破線の色A（明色）選択肢。</summary>
-    public IReadOnlyList<BrushOption> SelectionRectColorAOptions { get; } = BrushOptions.All;
-
-    /// <summary>選択矩形の破線の色B（暗色）選択肢。</summary>
-    public IReadOnlyList<BrushOption> SelectionRectColorBOptions { get; } = BrushOptions.All;
-
     // ====================================================================
     // 表示制御
     // ====================================================================
@@ -119,9 +113,7 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _selectionRectVisible, value))
             {
-                OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
-                OnPropertyChanged(nameof(CoordinateText));
             }
         }
     }
@@ -136,9 +128,7 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _selectionRectX, value))
             {
-                OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
-                OnPropertyChanged(nameof(CoordinateText));
             }
         }
     }
@@ -153,9 +143,7 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _selectionRectY, value))
             {
-                OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
-                OnPropertyChanged(nameof(CoordinateText));
             }
         }
     }
@@ -170,9 +158,7 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _selectionRectWidth, value))
             {
-                OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
-                OnPropertyChanged(nameof(CoordinateText));
             }
         }
     }
@@ -187,18 +173,10 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _selectionRectHeight, value))
             {
-                OnPropertyChanged(nameof(SelectionRect));
                 OnPropertyChanged(nameof(SelectionRectLabel));
-                OnPropertyChanged(nameof(CoordinateText));
             }
         }
     }
-
-    /// <summary>選択矩形（ドメイン座標系 = 元画像ピクセル座標）。非表示・サイズ 0 の場合は null。</summary>
-    public Rect? SelectionRect =>
-        SelectionRectVisible && SelectionRectWidth > 0 && SelectionRectHeight > 0
-            ? new Rect(SelectionRectX, SelectionRectY, SelectionRectWidth, SelectionRectHeight)
-            : null;
 
     /// <summary>選択矩形の座標ラベル（テスト画像上のオーバーレイ枠に表示）。</summary>
     public string SelectionRectLabel =>
@@ -323,42 +301,6 @@ public sealed class MainWindowViewModel : ObservableObject
 
     /// <summary>外枠のブラシ。</summary>
     public IBrush? FrameBrush => FrameColorOption.Brush;
-
-    private BrushOption _selectionRectColorAOption = BrushOptions.White;
-
-    /// <summary>選択矩形の破線の色A（明色）選択。</summary>
-    public BrushOption SelectionRectColorAOption
-    {
-        get => _selectionRectColorAOption;
-        set
-        {
-            if (SetProperty(ref _selectionRectColorAOption, value))
-            {
-                OnPropertyChanged(nameof(SelectionRectBrushA));
-            }
-        }
-    }
-
-    /// <summary>選択矩形の破線の色Aブラシ（null は描画しない）。</summary>
-    public IBrush? SelectionRectBrushA => SelectionRectColorAOption.Brush;
-
-    private BrushOption _selectionRectColorBOption = BrushOptions.Black;
-
-    /// <summary>選択矩形の破線の色B（暗色）選択。</summary>
-    public BrushOption SelectionRectColorBOption
-    {
-        get => _selectionRectColorBOption;
-        set
-        {
-            if (SetProperty(ref _selectionRectColorBOption, value))
-            {
-                OnPropertyChanged(nameof(SelectionRectBrushB));
-            }
-        }
-    }
-
-    /// <summary>選択矩形の破線の色Bブラシ（null は描画しない）。</summary>
-    public IBrush? SelectionRectBrushB => SelectionRectColorBOption.Brush;
 
     // ====================================================================
     // 表示テキスト

@@ -10,10 +10,9 @@
   - [2. 公開 API](#2-公開-api)
     - [2.1. LineOrientation 列挙型](#21-lineorientation-列挙型)
     - [2.2. LineDetectionResult 構造体](#22-linedetectionresult-構造体)
-    - [2.3. PixelImage 構造体](#23-pixelimage-構造体)
-    - [2.4. ILineDetector インターフェース](#24-ilinedetector-インターフェース)
-    - [2.5. LogicLineDetector クラス](#25-logiclinedetector-クラス)
-      - [2.5.1. プロパティ](#251-プロパティ)
+    - [2.3. ILineDetector インターフェース](#23-ilinedetector-インターフェース)
+    - [2.4. LogicLineDetector クラス](#24-logiclinedetector-クラス)
+      - [2.4.1. プロパティ](#241-プロパティ)
   - [3. 入力・出力](#3-入力出力)
     - [3.1. 入力画像](#31-入力画像)
     - [3.2. 検出結果](#32-検出結果)
@@ -28,7 +27,7 @@
 LineDetection は、キャプチャ画像から Windows のウィンドウ枠となる水平・垂直の辺（線分）を検出するライブラリです。
 
 - 検出方式は `ILineDetector` を通して抽象化され、ロジック方式を同一のインターフェースで利用できます。
-- 入力は OpenCV・Avalonia に依存しない `PixelImage`（BGRA・1 ピクセル 4 バイト）で、出力は線分リストです。
+- 入力は `Bitmap`（BGRA・1 ピクセル 4 バイト）で、出力は線分リストです。
 - OpenCvSharp は内部利用に閉じており、公開 API には露出しません。
 
 ## 2. 公開 API
@@ -55,20 +54,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | `Orientation` | `LineOrientation` | 線分の向き（水平 / 垂直）。 |
 | `Score` | `double` | 確からしさ（長さ・信頼度等）。大きいほど有力。 |
 
-### 2.3. PixelImage 構造体
-
-画像のピクセルバッファを表す不変の値型。
-
-| メンバー | 型 | 説明 |
-| --- | --- | --- |
-| `Width` | `int` | 画像の幅（ピクセル）。 |
-| `Height` | `int` | 画像の高さ（ピクセル）。 |
-| `Stride` | `int` | 1 行のバイト数（幅 × 4 以上）。 |
-| `Pixels` | `ReadOnlyMemory<byte>` | ピクセルデータ（BGRA 順・1 ピクセル 4 バイト）。 |
-
-OpenCV・Avalonia に依存しない純粋な値型です。コンストラクタは `PixelImage(int Width, int Height, int Stride, ReadOnlyMemory<byte> Pixels)` です。
-
-### 2.4. ILineDetector インターフェース
+### 2.3. ILineDetector インターフェース
 
 辺（線分）検出器の共通インターフェース。
 
@@ -77,13 +63,13 @@ OpenCV・Avalonia に依存しない純粋な値型です。コンストラク�
 | `string Name { get; }` | 検出方式の表示名。 |
 | `string ModelInfo { get; }` | モデルサイズの表示。モデルを使わない方式は空文字。 |
 | `string? ErrorMessage { get; }` | モデル読込・実行エラーのメッセージ。正常時は null。 |
-| `IReadOnlyList<LineDetectionResult> Detect(PixelImage image)` | 画像から水平・垂直の辺（線分）を検出する。スコア降順。 |
+| `IReadOnlyList<LineDetectionResult> Detect(Bitmap image)` | 画像から水平・垂直の辺（線分）を検出する。スコア降順。 |
 
-### 2.5. LogicLineDetector クラス
+### 2.4. LogicLineDetector クラス
 
 ロジック方式（Canny エッジ + HoughLinesP）による検出器。`ILineDetector` を実装します。
 
-#### 2.5.1. プロパティ
+#### 2.4.1. プロパティ
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -106,11 +92,9 @@ OpenCV・Avalonia に依存しない純粋な値型です。コンストラク�
 
 ### 3.1. 入力画像
 
-- 型: `PixelImage`
+- 型: `Bitmap`（Avalonia）
 - フォーマット: BGRA（1 ピクセル 4 バイト）
-- `Stride` は 1 行のバイト数（`Width × 4` 以上。パディングありの場合は行ごとに詰め替え）。
 - 検出器は入力画像をグレースケール化して解析します（`Detect` 実行時に内部で変換）。
-- `Bitmap` / `WriteableBitmap`（Avalonia）からの変換は呼び出し側（サンプルアプリ等）で行います。
 
 ### 3.2. 検出結果
 

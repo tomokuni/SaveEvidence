@@ -2,10 +2,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
+using System.Runtime.InteropServices;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
@@ -91,6 +94,9 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>サイズラベルを描画時に評価するプロバイダ（C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義）。</summary>
     private Func<string?>? _sizeLabelOverrideProvider;
 
+    /// <summary>ルーペに選択矩形の破線オーバーレイを描画するかどうか（モード依存。Crop / AreaSelect でのみ有効）。</summary>
+    private bool _showSelectionOverlay;
+
     /// <summary>現在の外観設定（バッキングフィールド。全メンバー non-null）。</summary>
     private FadeMaskDragRectSettings _currentAppearance = new FadeMaskDragRectSettings().ToNonNull();
 
@@ -121,6 +127,10 @@ public sealed class FadeMaskDragRectControl : Panel
         _dragRect.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect);
         _dragRect.CancelRequested += (_, _) => RaiseCancelRequested();
         _dragRect.ZoomRequested += (_, zoomIn) => RaiseZoomRequested(zoomIn);
+
+        // ルーペ描画完了時に選択矩形の破線オーバーレイをホスト側で描画する
+        // （LoupeControl の選択矩形 API は削除済み。描画は Rendered イベント経由で行う）
+        _loupeControl.Rendered += OnLoupeRendered;
 
         // 全面暗転・描画モード・各コントロールの可視性は ApplyMode がモード（既定 AreaSelect）から一括適用する
         ApplyMode();
@@ -353,9 +363,6 @@ public sealed class FadeMaskDragRectControl : Panel
         _loupeControl.CheckerColorB = GetSharedBrush(settings.CheckerColorB!.Value);
         _loupeControl.FrameColor = GetSharedBrush(settings.FrameColor!.Value);
         _loupeControl.FrameWidth = settings.FrameWidth!.Value;
-        // SelectionRectVisible はモード依存（ApplyMode が設定する）のため、ここでは設定しない
-        _loupeControl.SelectionRectColorA = GetSharedBrush(settings.SelectionRectColorA!.Value);
-        _loupeControl.SelectionRectColorB = GetSharedBrush(settings.SelectionRectColorB!.Value);
         _loupeControl.PositionOffset = settings.PositionOffset!.Value;
         // ルーペ座標ラベル
         _loupeControl.ShowCoordLabel = settings.LoupeShowCoordLabel!.Value;
@@ -431,7 +438,6 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         _renderer.HasSelection = rect is not null;
         _renderer.LogicalSelectionRect = rect;
-        _loupeControl.SelectionRect = rect;
         _overlay.InvalidateVisual();
     }
 
@@ -557,8 +563,8 @@ public sealed class FadeMaskDragRectControl : Panel
         _dragRect.IsVisible = useDragRect;
         _renderer.ShowFullOverlay = useDragRect;
         // 選択位置の視覚化用に、ルーペの選択矩形破線オーバーレイをモードに応じて有効化する
-        // （モード依存設定のため ApplyAppearance の「同じ値スキップ」に左右されないよう ApplyMode で適用）。
-        _loupeControl.SelectionRectVisible = useDragRect;
+        // （描画は Rendered イベント経由でホスト側が行う。モード依存設定のため ApplyMode で管理）。
+        _showSelectionOverlay = useDragRect;
         _overlay.InvalidateVisual();
     }
 
@@ -597,6 +603,178 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="e">イベント引数。</param>
     /// <remarks>ドラッグが小さすぎてキャンセルされた場合も、FadeMask に矩形が残らないようにする。</remarks>
     private void OnSelectionCancelled(object? sender, EventArgs e) => ClearSelection();
+
+    // ====================================================================
+    // ルーペの選択矩形破線オーバーレイ（Rendered イベント経由・ホスト側描画）
+    // ====================================================================
+
+    /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを描画済み Bitmap へ描く。</summary>
+    /// <param name="sender">イベント送信元（LoupeControl）。</param>
+    /// <param name="e">描画済み Bitmap と表示情報。</param>
+    /// <remarks>
+    /// 選択矩形の破線は <see cref="LoupeControl"/> 内部では描画せず、本クラス（ホスト側）が<br/>
+    /// <see cref="LoupeControl.Rendered"/> イベントで通知された <see cref="LoupeRenderedEventArgs.Bitmap"/> へ直接描画する。<br/>
+    /// 選択矩形（<see cref="SelectionRect"/> = ドメイン座標）は <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で<br/>
+    /// ルーペ画像ピクセル座標へ変換する。<br/>
+    /// ルーペ破線の色は <see cref="_currentAppearance"/>（<c>SelectionRectColorA / B</c>）を使用する。
+    /// </remarks>
+    private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
+    {
+        if (!_showSelectionOverlay || e.Bitmap is not WriteableBitmap writeable || e.CaptureTopLeft is not { } topLeft)
+        {
+            return;
+        }
+
+        if (_renderer.LogicalSelectionRect is not { } selectionRect)
+        {
+            return;
+        }
+
+        var colorA = _currentAppearance.SelectionRectColorA;
+        var colorB = _currentAppearance.SelectionRectColorB;
+        if (colorA is null || colorB is null)
+        {
+            return;
+        }
+
+        // 破線色（色A / 色B）を 2 つ用意し、市松風に交互に塗る
+        DrawSelectionRectOverlay(writeable, selectionRect, topLeft, e.Scale, colorA.Value, colorB.Value);
+    }
+
+    /// <summary>選択矩形の 4 辺を 2 色破線でルーペ Bitmap へ描画する。</summary>
+    /// <param name="writeable">描画対象の WriteableBitmap。</param>
+    /// <param name="selectionRect">選択矩形（ドメイン座標系・半開区間）。</param>
+    /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
+    /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
+    /// <param name="colorA">破線の色A（明色）。</param>
+    /// <param name="colorB">破線の色B（暗色）。</param>
+    /// <remarks>
+    /// 選択矩形（ドメイン座標）をルーペピクセル座標へ変換（<c>(rect − captureTopLeft) × scale</c>）し、<br/>
+    /// 4 辺を 1px 破線（1px 描画 → 1px 空白）で描画する（色A / 色B を 1 ピクセルごとに交互に切り替える）。<br/>
+    /// 選択矩形は半開区間のため、終点のピクセルを含むよう +1（= 1 ドメインピクセル）する（閉区間化）。<br/>
+    /// ズーム 1 倍では破線が潰れるため描画しない（2 倍以上で有効）。<br/>
+    /// 純粋描画のため <c>internal</c> で公開し、単体テストから検証できるようにする。
+    /// </remarks>
+    internal static void DrawSelectionRectOverlay(
+        WriteableBitmap writeable, Rect selectionRect, Point captureTopLeft, double scale, Color colorA, Color colorB)
+    {
+        if (scale < 2)
+        {
+            return;
+        }
+
+        // ドメイン座標 → ルーペピクセル座標（半開区間の終点を含むよう +1 する）
+        double x = (selectionRect.X - captureTopLeft.X) * scale;
+        double y = (selectionRect.Y - captureTopLeft.Y) * scale;
+        double w = (selectionRect.Width + 1) * scale;
+        double h = (selectionRect.Height + 1) * scale;
+
+        // ルーペの切り出し領域と交差しない場合は描画しない
+        var pixelSize = writeable.PixelSize.Width;
+        if (x + w < 0 || y + h < 0 || x > pixelSize || y > pixelSize)
+        {
+            return;
+        }
+
+        using var locked = writeable.Lock();
+        // 上辺・下辺（x 方向）と左辺・右辺（y 方向）を描画する
+        DrawDashedRectEdge(locked, new Point(x, y), new Point(x + w, y), colorA, colorB);
+        DrawDashedRectEdge(locked, new Point(x, y + h), new Point(x + w, y + h), colorA, colorB);
+        DrawDashedRectEdge(locked, new Point(x, y), new Point(x, y + h), colorA, colorB);
+        DrawDashedRectEdge(locked, new Point(x + w, y), new Point(x + w, y + h), colorA, colorB);
+    }
+
+    /// <summary>ロック済みピクセルバッファ上に 2 色のダッシュ破線（1px 描画 → 1px 空白）を描画する。</summary>
+    /// <param name="locked">ロック済みのピクセルバッファ。</param>
+    /// <param name="from">始点（ルーペピクセル座標）。</param>
+    /// <param name="to">終点（ルーペピクセル座標）。</param>
+    /// <param name="colorA">破線の色A。</param>
+    /// <param name="colorB">破線の色B。</param>
+    /// <remarks>水平または垂直の辺を想定する。色A / 色B を 1 ピクセルごとに交互に切り替える（市松風）。</remarks>
+    private static void DrawDashedRectEdge(ILockedFramebuffer locked, Point from, Point to, Color colorA, Color colorB)
+    {
+        bool horizontal = Math.Abs(to.Y - from.Y) < Math.Abs(to.X - from.X);
+        double length = horizontal ? to.X - from.X : to.Y - from.Y;
+        double start = horizontal ? from.X : from.Y;
+        double fixedCoord = horizontal ? from.Y : from.X;
+        double sign = length >= 0 ? 1 : -1;
+        double distance = Math.Abs(length);
+
+        // 破線パターン: 1px 描画 → 1px 空白。色は 1 ピクセルごとに色A → 色B → 色A → … と交互に切り替える
+        const int dash = 1;
+        const int gap = 1;
+        const int step = dash + gap;
+
+        var width = locked.Size.Width;
+        var height = locked.Size.Height;
+        var stride = locked.RowBytes;
+        var format = locked.Format;
+
+        // 既存ピクセルを保持したまま破線を描くため、バッファへコピーしてから書き戻す
+        var buffer = new byte[stride * height];
+        Marshal.Copy(locked.Address, buffer, 0, buffer.Length);
+
+        int dashIndex = 0;
+        for (double pos = 0; pos < distance; pos += step)
+        {
+            double segStart = start + sign * pos;
+            double segEnd = start + sign * Math.Min(pos + dash, distance);
+            // ダッシュごとに色を交互（0 始まり = 色A）
+            var color = dashIndex % 2 == 0 ? colorA : colorB;
+            dashIndex++;
+
+            if (horizontal)
+            {
+                for (var px = (int)Math.Round(segStart); px <= (int)Math.Round(segEnd); px++)
+                {
+                    SetPixel(buffer, stride, format, px, (int)Math.Round(fixedCoord), color, width, height);
+                }
+            }
+            else
+            {
+                for (var py = (int)Math.Round(segStart); py <= (int)Math.Round(segEnd); py++)
+                {
+                    SetPixel(buffer, stride, format, (int)Math.Round(fixedCoord), py, color, width, height);
+                }
+            }
+        }
+
+        Marshal.Copy(buffer, 0, locked.Address, buffer.Length);
+    }
+
+    /// <summary>ピクセルバッファへ色を書き込む。</summary>
+    /// <param name="buffer">ピクセルバッファ。</param>
+    /// <param name="stride">1 行のバイト数。</param>
+    /// <param name="format">ピクセルフォーマット。</param>
+    /// <param name="x">X 座標。</param>
+    /// <param name="y">Y 座標。</param>
+    /// <param name="color">描画色（不透明）。</param>
+    /// <param name="width">バッファ幅。</param>
+    /// <param name="height">バッファ高さ。</param>
+    private static void SetPixel(
+        byte[] buffer, int stride, PixelFormat format, int x, int y, Color color, int width, int height)
+    {
+        if (x < 0 || x >= width || y < 0 || y >= height)
+        {
+            return;
+        }
+
+        var offset = y * stride + x * 4;
+        if (format == PixelFormat.Bgra8888)
+        {
+            buffer[offset] = color.B;
+            buffer[offset + 1] = color.G;
+            buffer[offset + 2] = color.R;
+            buffer[offset + 3] = 255;
+        }
+        else
+        {
+            buffer[offset] = color.R;
+            buffer[offset + 1] = color.G;
+            buffer[offset + 2] = color.B;
+            buffer[offset + 3] = 255;
+        }
+    }
 
     /// <summary>ルーペ更新（LoupePositionMoved）。中心はドメイン座標のまま LoupeControl に設定する。</summary>
     /// <param name="sender">イベント送信元（DragRectControl）。</param>

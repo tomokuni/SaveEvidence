@@ -29,17 +29,13 @@ internal static class LoupeRenderer
     /// <param name="checkerColorB">市松模様の色B（暗色）。null の場合は透明。</param>
     /// <param name="frameColor">外枠の色。null の場合は外枠を描画しない。</param>
     /// <param name="frameWidth">外枠の太さ（ピクセル）。</param>
-    /// <param name="selectionRect">ルーペ画像上に破線でオーバーレイ表示する選択矩形（ドメイン座標系）。null は非表示。</param>
-    /// <param name="selectionRectColorA">選択矩形破線の色A（明色・不透明度はアルファに統合）。null の場合は描画しない。</param>
-    /// <param name="selectionRectColorB">選択矩形破線の色B（暗色・不透明度はアルファに統合）。null の場合は描画しない。</param>
     /// <returns>生成したルーペ画像。</returns>
     public static Bitmap Render(
         Bitmap? srcBitmap, Point? centerPoint,
         int loupeSize, int zoomLevel,
         IBrush? crossColor,
         int checkerSize, IBrush? checkerColorA, IBrush? checkerColorB,
-        IBrush? frameColor, int frameWidth,
-        Rect? selectionRect = null, IBrush? selectionRectColorA = null, IBrush? selectionRectColorB = null)
+        IBrush? frameColor, int frameWidth)
     {
         if (srcBitmap is null || centerPoint is not { } center)
         {
@@ -53,8 +49,7 @@ internal static class LoupeRenderer
             srcBitmap, (int)center.X, (int)center.Y, captureSize);
         using var cropped = LoupeImageExtractor.CreateBitmap(region);
         return DrawLoupe(cropped, loupeSize, zoomLevel, crossColor,
-            checkerSize, checkerColorA, checkerColorB, frameColor, frameWidth,
-            selectionRect, center, selectionRectColorA, selectionRectColorB);
+            checkerSize, checkerColorA, checkerColorB, frameColor, frameWidth);
     }
 
     /// <summary>ルーペ画像を描画する。</summary>
@@ -67,19 +62,13 @@ internal static class LoupeRenderer
     /// <param name="checkerColorB">市松模様の色B（暗色）。null の場合は透明。</param>
     /// <param name="frameColor">外枠の色。null の場合は外枠を描画しない。</param>
     /// <param name="frameWidth">外枠の太さ（ピクセル）。</param>
-    /// <param name="selectionRect">ルーペ画像上に破線でオーバーレイ表示する選択矩形（ドメイン座標系）。null は非表示。</param>
-    /// <param name="centerPoint">切り出し中心（ドメイン座標系）。<paramref name="selectionRect"/> の変換基準。</param>
-    /// <param name="selectionRectColorA">選択矩形破線の色A（明色・不透明度はアルファに統合）。null の場合は描画しない。</param>
-    /// <param name="selectionRectColorB">選択矩形破線の色B（暗色・不透明度はアルファに統合）。null の場合は描画しない。</param>
     /// <returns>描画結果の WriteableBitmap（ホストが Lock してオーバーレイを描画できる）。</returns>
     /// <remarks>
     /// ソース Bitmap は <c>DrawImage</c> のスケーリングで拡大描画する（中間バッファ不要）。<br/>
     /// 描画は <see cref="RenderTargetBitmap"/> で行い、結果を <see cref="WriteableBitmap"/> へコピーして返す<br/>
     /// （ホストが <see cref="LoupeControl.Rendered"/> イベントの引数で受け取り、<c>Lock</c> して<br/>
     /// オーバーレイ（線分の破線等）を直接描画できるようにするため）。<br/>
-    /// 例外はそのまま伝播し、記録は呼び出し側（<see cref="LoupeControl"/>）が一元的に行う。<br/>
-    /// 選択矩形（<paramref name="selectionRect"/>）は切り出し領域との交差部分を 2 色破線（色A/色B を<br/>
-    /// ダッシュごとに交互）で描画する（選択位置の視覚化・市松風の視認性）。
+    /// 例外はそのまま伝播し、記録は呼び出し側（<see cref="LoupeControl"/>）が一元的に行う。
     /// </remarks>
     public static WriteableBitmap DrawLoupe(
         Bitmap srcBitmap,
@@ -90,11 +79,7 @@ internal static class LoupeRenderer
         IBrush? checkerColorA,
         IBrush? checkerColorB,
         IBrush? frameColor,
-        int frameWidth,
-        Rect? selectionRect = null,
-        Point? centerPoint = null,
-        IBrush? selectionRectColorA = null,
-        IBrush? selectionRectColorB = null)
+        int frameWidth)
     {
         var pixelSize = new PixelSize(loupeSize, loupeSize);
         var rtb = new RenderTargetBitmap(pixelSize, s_dpi);
@@ -107,21 +92,10 @@ internal static class LoupeRenderer
             // 2. ソース画像を zoomLevel 倍に拡大して描画
             LoupeImageRenderer.Draw(ctx, srcBitmap, zoomLevel);
 
-            // 3. 選択矩形の枠線（ドメイン座標系 → ルーペ座標に変換して 2 色破線で描画）
-            if (selectionRect is { } selRect && centerPoint is { } cp &&
-                selectionRectColorA is { } selColorA && selectionRectColorB is { } selColorB)
-            {
-                var captureSize = LoupeImageExtractor.ComputeCaptureSize(loupeSize, zoomLevel);
-                var topLeft = new Point(cp.X - captureSize / 2.0, cp.Y - captureSize / 2.0);
-                LoupeDecorationRenderer.DrawSelectionRect(
-                    ctx, selRect, topLeft, zoomLevel, loupeSize,
-                    selColorA, selColorB);
-            }
-
-            // 4. 十字線
+            // 3. 十字線
             LoupeDecorationRenderer.DrawCrosshair(ctx, loupeSize, zoomLevel, crossColor);
 
-            // 5. 外枠
+            // 4. 外枠
             LoupeDecorationRenderer.DrawFrame(ctx, loupeSize, frameColor, frameWidth);
         }
 
