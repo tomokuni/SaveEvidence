@@ -20,18 +20,17 @@
     - [5.2 メソッド](#52-メソッド)
       - [5.2.1 PlatformFactory（静的ファクトリ）](#521-platformfactory静的ファクトリ)
       - [5.2.2 CoordinatePort（静的ファクトリ）](#522-coordinateport静的ファクトリ)
-      - [5.2.3 CoordinatePortExtensions](#523-coordinateportextensions)
-      - [5.2.4 ScreenConverter](#524-screenconverter)
-      - [5.2.5 Watchdog](#525-watchdog)
+      - [5.2.3 ScreenConverter](#523-screenconverter)
+      - [5.2.4 Watchdog](#524-watchdog)
+      - [5.2.5 ColorExtensions（C# 14 静的拡張メンバー）](#525-colorextensionsc-14-静的拡張メンバー)
     - [5.3 イベント](#53-イベント)
     - [5.4 型](#54-型)
       - [5.4.1 PlatformFactory](#541-platformfactory)
-      - [5.4.2 インターフェース（6 種）](#542-インターフェース6-種)
+      - [5.4.2 インターフェース（7 種）](#542-インターフェース7-種)
       - [5.4.3 CoordinatePort](#543-coordinateport)
-      - [5.4.4 CoordinatePortExtensions](#544-coordinateportextensions)
-      - [5.4.5 ScreenConverter](#545-screenconverter)
-      - [5.4.6 Watchdog](#546-watchdog)
-      - [5.4.7 その他の公開型](#547-その他の公開型)
+      - [5.4.4 ScreenConverter](#544-screenconverter)
+      - [5.4.5 Watchdog](#545-watchdog)
+      - [5.4.6 その他の公開型](#546-その他の公開型)
   - [6. 座標系](#6-座標系)
     - [6.1 3 層の座標](#61-3-層の座標)
     - [6.2 CoordinatePort の変換規則](#62-coordinateport-の変換規則)
@@ -65,9 +64,10 @@
 - カーソル上書き抑止（`ICursorOverrideGuard`）
 - 画面キャプチャ（`ICaptureService`）
 - ネイティブウィンドウ操作（`IWindowService`）
-- 座標変換ポート（`ICoordinatePort` / `CoordinatePort` / `CoordinatePortExtensions` / `ScreenConverter`）
+- グローバルホットキー（`IGlobalHotKeyService<T>`）
+- 座標変換ポート（`ICoordinatePort` / `CoordinatePort` / `ScreenConverter`）
 - UI ハング監視（`Watchdog`）
-- 画像ユーティリティ（`BitmapFactory` / `BitmapExtensions`）
+- 画像ユーティリティ（`BitmapExtensions`）
 
 ## 3. 外部利用条件
 
@@ -81,7 +81,7 @@
 
 ```csharp
 using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordinatePort / CoordinatePort / ScreenConverter / Watchdog 等
-using Estable.AvaloniaUI.Platform.Imaging;  // BitmapFactory / BitmapExtensions
+using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions 等
 ```
 
 ## 4. 基本的な使用方法
@@ -94,6 +94,7 @@ var captureService = PlatformFactory.CreateCaptureService(logger);
 var elementFinder = PlatformFactory.CreateElementFinder();
 var windowService = PlatformFactory.CreateWindowService();
 var cursorOverrideGuard = PlatformFactory.CreateCursorOverrideGuard();
+var hotKeyService = PlatformFactory.CreateGlobalHotKeyService<MyActionType>();
 ```
 
 ホスト（上位 AP）が独自実装を持つ場合は、本ファクトリを使わず各インターフェースに直接注入します（DIP）。
@@ -165,6 +166,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | `CreateCursorOverrideGuard` | `ICursorOverrideGuard CreateCursorOverrideGuard()` | 既定のカーソル上書き抑止ガードを生成 |
 | `CreateCaptureService` | `ICaptureService CreateCaptureService(ILogger? logger = null)` | 既定のキャプチャサービスを生成 |
 | `CreateWindowService` | `IWindowService CreateWindowService(ILogger? logger = null)` | 既定のネイティブウィンドウ操作サービスを生成 |
+| `CreateGlobalHotKeyService` | `IGlobalHotKeyService<T> CreateGlobalHotKeyService<T>() where T : notnull` | 既定のグローバルホットキーサービスを生成 |
 
 #### 5.2.2 CoordinatePort（静的ファクトリ）
 
@@ -178,14 +180,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | `ImageLayoutScaleX` | `static double ImageLayoutScaleX(Func<Size> viewportSizeProvider, Size sourceSize, Func<bool>? uniformProvider = null)` | 画像レイアウトの X スケール（ズーム率導出用） |
 | コンストラクタ | `CoordinatePort(Func<Point, Point> forward, Func<Point, Point> inverse, Func<Size?> bounds)` | 変換関数を直接注入（座標系は利用側が定義） |
 
-#### 5.2.3 CoordinatePortExtensions
-
-| メソッド | シグネチャ | 説明 |
-| --- | --- | --- |
-| `ForwardRect` | `Rect ForwardRect(this ICoordinatePort port, Rect rect)` | 順変換で矩形の対角 2 点を変換（座標系はポートの定義に従う） |
-| `InverseRect` | `Rect InverseRect(this ICoordinatePort port, Rect rect)` | 逆変換で矩形の対角 2 点を変換（座標系はポートの定義に従う） |
-
-#### 5.2.4 ScreenConverter
+#### 5.2.3 ScreenConverter
 
 | メソッド | シグネチャ | 説明 |
 | --- | --- | --- |
@@ -194,7 +189,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | `CreateDipPort` | `ICoordinatePort CreateDipPort(PixelPoint origin, double renderScaling)` | ローカル DIP 座標系 ↔ 画面物理 Pixel の変換ポート（Forward = 物理 → DIP） |
 | `CreateVisualDipPort` | `ICoordinatePort CreateVisualDipPort(Visual source)` | コントロールローカル DIP 座標系 ↔ 画面物理 Pixel の動的ポート（TopLevel を毎回解決） |
 
-#### 5.2.5 Watchdog
+#### 5.2.4 Watchdog
 
 | メソッド | シグネチャ | 説明 |
 | --- | --- | --- |
@@ -202,7 +197,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | `Stop` | `void Stop()` | 監視停止 |
 | `Pulse` | `void Pulse()` | UI スレッド生存通知（イベントハンドラから呼ぶ） |
 
-#### 5.2.6 ColorExtensions（C# 14 静的拡張メンバー）
+#### 5.2.5 ColorExtensions（C# 14 静的拡張メンバー）
 
 | メソッド | シグネチャ | 説明 |
 | --- | --- | --- |
@@ -210,39 +205,39 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 
 ### 5.3 イベント
 
-公開イベントは定義されていません。本ライブラリはサービスの生成・座標変換・画面キャプチャの抽象提供のみで、結果は戻り値 / コールバック（`Func<bool>? Guard` 等）で通知します。
+公開イベントとして、`IGlobalHotKeyService<T>.HotKeyPressed`（WM_HOTKEY 受信時のアクション配信）があります。その他はサービスの生成・座標変換・画面キャプチャの抽象提供のみで、結果は戻り値で通知します。
 
 ### 5.4 型
 
-公開型は `PlatformFactory` / 各インターフェース（6 種）/ `CoordinatePort` / `CoordinatePortExtensions` / `ScreenConverter` / `Watchdog` / `WindowCaptureMode` / `ElementFinderResults` / `BitmapFactory` / `BitmapExtensions` です。
+公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `WindowCaptureMode` / `ElementFinderResults` / `BitmapExtensions` です。
 プラットフォーム固有実装（Win / NoOp 系）と内部ユーティリティ（`CoordinateMath` / `PlatformLog`）はすべて internal（非公開）です。公開 API はプラットフォーム非依存型のみを使用します。
 
 #### 5.4.1 PlatformFactory
 
 公開静的ファクトリ（`public static class`・Factory Method パターン）。生成メソッドは「5.2.1 メソッド」に記載の通りです。
 
-#### 5.4.2 インターフェース（6 種）
+#### 5.4.2 インターフェース（7 種）
 
 | インターフェース | メンバー | 説明 |
 | --- | --- | --- |
 | `ICursorService` | `PixelPoint GetCursorScreenPoint()` | 現在のカーソル位置を画面物理 Pixel で取得 |
 | | `void SetCursorScreenPoint(PixelPoint point)` | カーソルを画面物理 Pixel へ移動 |
 | | `void ShowCursor(bool show)` | マウスポインターの表示 / 非表示切替 |
-| `IElementFinder` | `ElementFinderResults FindWindowUnderCursor()` | カーソル位置（内部取得）の最前面ウィンドウ検出 |
-| | `ElementFinderResults FindScreenUnderCursor()` | カーソル位置（内部取得）が含まれるスクリーン検出 |
-| | `ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint)` | 指定位置（画面物理 Pixel）の最前面ウィンドウ検出。ウィンドウ矩形は最大化時 = ワークエリア（`GetWindowRect`）/ 通常時 = DWM 影除外（`DWMWA_EXTENDED_FRAME_BOUNDS`）。タスクバー / デスクトップウィンドウ（クラス名: `Shell_TrayWnd` / `Shell_SecondaryTrayWnd` / `Shell_ImmersiveTrayWnd` / `Progman` / `WorkerW`）は選択対象外。**タイトル空の `ApplicationFrameWindow`**（スタートメニュー等の UWP オーバーレイ）も除外（タイトル付きの実際の UWP アプリは選択対象） |
+| `IElementFinder` | `ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint)` | 指定位置（画面物理 Pixel）の最前面ウィンドウ検出。ウィンドウ矩形は最大化時 = ワークエリア（`GetWindowRect`）/ 通常時 = DWM 影除外（`DWMWA_EXTENDED_FRAME_BOUNDS`）。タスクバー / デスクトップウィンドウ（クラス名: `Shell_TrayWnd` / `Shell_SecondaryTrayWnd` / `Shell_ImmersiveTrayWnd` / `Progman` / `WorkerW`）は選択対象外。**タイトル空の `ApplicationFrameWindow`**（スタートメニュー等の UWP オーバーレイ）も除外（タイトル付きの実際の UWP アプリは選択対象） |
 | | `ElementFinderResults FindScreenUnderCursor(PixelPoint screenPoint)` | 指定位置（画面物理 Pixel）が含まれるスクリーン検出 |
 | | `IReadOnlyList<ElementFinderResults> ListScreens()` | 全スクリーン一覧（仮想スクリーン 1 枚画像の管理用） |
 | | `IReadOnlyList<ElementFinderResults> ListWindows()` | 全ウィンドウ一覧 |
-| `ICursorOverrideGuard` | `Func<bool>? Guard { get; set; }` | カーソル上書き抑止の判定コールバック（true で抑止 + カーソル形状再適用） |
-| | `bool IsAttached { get; }` | 抑止がアタッチ済みか |
-| | `void Attach(TopLevel window)` | 指定ウィンドウにカーソル上書き抑止をアタッチ |
+| `ICursorOverrideGuard` | `bool IsAttached { get; }` | 抑止がアタッチ済みか |
+| | `void Attach(TopLevel window)` | 指定ウィンドウにカーソル上書き抑止をアタッチ（アタッチ中は常に抑止） |
 | `ICaptureService` | `Bitmap? CaptureArea(PixelRect bounds)` | 指定画面領域（画面物理 Pixel 座標）をキャプチャ |
 | | `Bitmap? CaptureVirtualScreen(out PixelPoint origin)` | 仮想スクリーン全体を 1 回のキャプチャで取得（origin は画面物理 Pixel） |
-| | `Bitmap? CaptureWindow(IPlatformHandle handle, WindowCaptureMode mode = RedrawDirect)` | 指定ウィンドウをキャプチャ |
 | `IWindowService` | `void HideFromTaskSwitcher(IPlatformHandle handle)` | タスクバー / Alt+Tab 非表示（選択オーバーレイ用） |
 | | `bool SetCaptureExclusion(IPlatformHandle handle, bool exclude)` | キャプチャ除外 / 解除（Windows 10 2004+ のみ true） |
 | | `void EvacuateWindow(IPlatformHandle handle)` | 最前面解除・非表示・クローズ（UI ハング時の退避） |
+| `IGlobalHotKeyService<T>` | `void Initialize(IntPtr hWnd)` | 初期化（WndProc サブクラス化で WM_HOTKEY 受信） |
+| | `void RegisterAll(IReadOnlyList<(T Action, HotKeySetting Setting)> registrations)` | ホットキーとアクションの対応を登録 |
+| | `void UnregisterAll()` | 全ホットキーを解除 |
+| | `event Action<T>? HotKeyPressed` | WM_HOTKEY 受信時にアクションを配信 |
 | `ICoordinatePort` | `Point Forward(Point p)` | 順変換（座標系 A → B。座標系はポート定義による） |
 | | `Point Inverse(Point p)` | 逆変換（座標系 B → A。座標系はポート定義による） |
 | | `Size? Bounds { get; }` | 座標系 B の境界（null = 無制限） |
@@ -251,25 +246,20 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 
 公開座標変換ポート（`public sealed class : ICoordinatePort`）。プロパティは「5.1.1」、生成メソッドは「5.2.2」に記載の通りです。
 
-#### 5.4.4 CoordinatePortExtensions
+#### 5.4.4 ScreenConverter
 
-公開拡張クラス（`public static class`）。メソッドは「5.2.3」に記載の通りです。
+公開静的クラス（`public static class`）。メソッドは「5.2.3」に記載の通りです。
 
-#### 5.4.5 ScreenConverter
+#### 5.4.5 Watchdog
 
-公開静的クラス（`public static class`）。メソッドは「5.2.4」に記載の通りです。
+公開クラス（`public sealed class`・Primary Constructor `Watchdog(ILogger?, IWindowService)`）。メソッドは「5.2.4」に記載の通りです。
 
-#### 5.4.6 Watchdog
-
-公開クラス（`public sealed class`・Primary Constructor `Watchdog(ILogger?, IWindowService)`）。メソッドは「5.2.5」に記載の通りです。
-
-#### 5.4.7 その他の公開型
+#### 5.4.6 その他の公開型
 
 | 型 | 説明 |
 | --- | --- |
 | `WindowCaptureMode` enum | `RedrawDirect`（再描画結果を直接取得）/ `ScreenCopy`（画面上の表示をコピー） |
 | `ElementFinderResults` record struct | 検出要素の結果（`Bounds`（画面物理 Pixel）/ `IsDetected` / `Title` / `Handle` / `ClassName`） |
-| `BitmapFactory.CreateEmpty()` | キャンセル時の空結果（常に null。0x0 の空 Bitmap を表す） |
 | `BitmapExtensions.CopyRegionWithPadding` | 範囲外許容で領域コピー（クリップ + オフセット、範囲外は透明のまま。座標はピクセル単位） |
 | `BitmapExtensions.ExtractRegion` | 矩形切り出し（範囲外は透明パディング。座標はピクセル単位。w/h ≤ 0 は `ArgumentOutOfRangeException`） |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から `Color` を生成（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
@@ -334,14 +324,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | `Information` | `PlatformLog.LogWindowHiddenFromTaskSwitcher` | タスクバー / Alt+Tab からの除外 |
 | `Information` | `PlatformLog.LogCaptureExclusionChanged` | キャプチャ除外設定の変更（成否込み） |
 | `Debug` | `WinCaptureService.LogVirtualScreenBounds` | 仮想スクリーン全体キャプチャの矩形 |
-| `Debug` | `WinCaptureService.LogCaptureWindow` | ウィンドウキャプチャ（hWnd / モード） |
-| `Debug` | `WinCaptureService.LogPrintWindowSuccess` | PrintWindow 成功（ビットマップサイズ） |
-| `Debug` | `WinCaptureService.LogCroppedToVisibleRect` | 可視矩形への切り出し |
-| `Debug` | `WinCaptureService.LogCopyFromScreen` | CopyFromScreen によるフォールバック |
 | `Debug` | `WinCaptureService.LogCaptureSdBitmap` / `LogCaptureSdBitmapDone` | 仮想スクリーン Bitmap キャプチャの開始 / 完了 |
-| `Debug` | `WinCaptureService.LogTryPrintWindowSuccess` / `LogTryPrintWindowFailed` | TryPrintWindow の成否（フラグ込み） |
-| `Warning` | `WinCaptureService.LogPrintWindowAllFlagsFailed` | PrintWindow 全フラグ失敗（null を返す） |
-| `Error` | `WinCaptureService.LogTryPrintWindowError` | TryPrintWindow の例外 |
 
 ## 8. 制約事項
 

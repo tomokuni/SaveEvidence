@@ -30,13 +30,14 @@
 
 - **Factory Method パターン**: `PlatformFactory.CreateXxx()` で実行時プラットフォームに応じた既定実装を生成（Windows = Win32 API 実装 / 他環境 = NoOp 実装）
 - **プラットフォーム判定の一元化**: `OperatingSystem.IsWindows()` による分岐を本ライブラリに集約（各プロジェクトの重複分岐を排除・DRY）
-- **抽象化 API**: `ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `ICoordinatePort` の 6 インターフェースで具象型への依存を排除（DIP）
+- **抽象化 API**: `ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort` のインターフェースで具象型への依存を排除（DIP）
 - **座標変換ポート**: `CoordinatePort`（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout` / `ImageLayoutScaleX`）でドメイン ↔ DIP ↔ 画面物理の変換を Func 委譲で提供
-- **座標変換ユーティリティ**: `ScreenConverter`（ローカル DIP ↔ 画面物理）と `CoordinatePortExtensions`（矩形の Forward / Inverse）
-- **画面キャプチャ**: `ICaptureService.CaptureArea` / `CaptureVirtualScreen` / `CaptureWindow`（Windows: System.Drawing + Win32 API）
+- **座標変換ユーティリティ**: `ScreenConverter`（ローカル DIP ↔ 画面物理）
+- **画面キャプチャ**: `ICaptureService.CaptureArea` / `CaptureVirtualScreen`（Windows: System.Drawing + Win32 API）
 - **要素検出**: `IElementFinder`（カーソル位置のウィンドウ / スクリーン検出・一覧取得）
+- **グローバルホットキー**: `IGlobalHotKeyService<T>`（登録・WM_HOTKEY 受信・アクション配信。WndProc サブクラス化を内包）
 - **UI ハング監視**: `Watchdog`（UI スレッド完全ハング時の最終保険。オーバーレイ退避）
-- **画像ユーティリティ**: `BitmapFactory`（空 Bitmap）/ `BitmapExtensions`（領域切り出し・パディング付きコピー）
+- **画像ユーティリティ**: `BitmapExtensions`（領域切り出し・パディング付きコピー）
 - **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
 - **プラットフォーム非依存の公開 API**: 公開型は Avalonia / .NET 標準型（`Bitmap` / `PixelPoint` / `PixelRect` / `IPlatformHandle`）のみを使用し、Win32 ハンドル・System.Drawing 型を公開しない
 
@@ -58,7 +59,7 @@
 
 ```csharp
 using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordinatePort / CoordinatePort / ScreenConverter / Watchdog 等
-using Estable.AvaloniaUI.Platform.Imaging;  // BitmapFactory / BitmapExtensions
+using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions 等
 ```
 
 ## 5. クイックスタート
@@ -72,6 +73,7 @@ var captureService = PlatformFactory.CreateCaptureService(logger);
 var elementFinder = PlatformFactory.CreateElementFinder();
 var windowService = PlatformFactory.CreateWindowService();
 var cursorOverrideGuard = PlatformFactory.CreateCursorOverrideGuard();
+var hotKeyService = PlatformFactory.CreateGlobalHotKeyService<MyActionType>();
 
 // ホストが独自実装を持つ場合は、本ファクトリを使わず各インターフェースに直接注入する（DIP）
 ```
@@ -137,16 +139,17 @@ PlatformFactory/
 │       ├── ICursorOverrideGuard.cs # カーソル上書き抑止抽象
 │       ├── ICaptureService.cs      # キャプチャ抽象
 │       ├── IWindowService.cs       # ウィンドウ操作抽象
+│       ├── IGlobalHotKeyService.cs # グローバルホットキー抽象
 │       ├── Watchdog.cs             # UI ハング監視（public）
 │       ├── WindowCaptureMode.cs    # キャプチャモード enum
 │       ├── ElementFinderResults.cs # 要素検出結果 record
 │       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
 │       ├── PlatformLog.cs          # ログ定義（internal）
-│       ├── Coordinate/             # 座標変換（ICoordinatePort / CoordinatePort / CoordinatePortExtensions / ScreenConverter / CoordinateMath）
-│       ├── Imaging/                # 画像ユーティリティ（BitmapFactory / BitmapExtensions）
+│       ├── Coordinate/             # 座標変換（ICoordinatePort / CoordinatePort / ScreenConverter / CoordinateMath）
+│       ├── Imaging/                # 画像ユーティリティ（BitmapExtensions 等）
 │       ├── Win/                    # Windows 実装（internal: Win32 API / P-Invoke 集約）
 │       └── NoOp/                   # 他環境フォールバック（internal: シングルトン）
-└── tests/                          # 単体テスト（76 件）
+└── tests/                          # 単体テスト
 ```
 
 ## 10. ライセンス

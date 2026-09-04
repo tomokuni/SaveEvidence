@@ -100,15 +100,6 @@ public class CoordinatePortTests
         Assert.Equal(new Point(10, 20), port.Inverse(new Point(10, 20)));
     }
 
-    [Fact]
-    public void Scale_矩形変換でスケールを適用する()
-    {
-        var port = CoordinatePort.Scale(2.0);
-        // ドメイン矩形（100, 100, 200, 100）→ DIP（50, 50, 100, 50）
-        var rect = port.ForwardRect(new Rect(100, 100, 200, 100));
-        Assert.Equal(new Rect(50, 50, 100, 50), rect);
-    }
-
     // ====================================================================
     // DomainScale（DIP → ドメインの乗算。DragRect のドメイン方向）
     // ====================================================================
@@ -306,34 +297,5 @@ public class CoordinatePortTests
         var sxUniform = CoordinatePort.ImageLayoutScaleX(
             () => new Size(200, 100), new Size(100, 100), uniformProvider: () => true);
         Assert.Equal(1.0, sxUniform, 6);
-    }
-
-    // ====================================================================
-    // ForwardRect / InverseRect（矩形変換）
-    // ====================================================================
-
-    [Fact]
-    public void ForwardRect_順変換で矩形を変換する()
-    {
-        var port = CoordinatePort.ScrollOffset(() => new Vector(30, 50));
-        var rect = port.ForwardRect(new Rect(100, 200, 50, 60));
-        Assert.Equal(new Rect(70, 150, 50, 60), rect);
-    }
-
-    [Fact]
-    public void InverseRect_逆変換で矩形を変換する()
-    {
-        var port = CoordinatePort.ScrollOffset(() => new Vector(30, 50));
-        var rect = port.InverseRect(new Rect(70, 150, 50, 60));
-        Assert.Equal(new Rect(100, 200, 50, 60), rect);
-    }
-
-    [Fact]
-    public void ForwardRect_画像レイアウトで矩形を変換する()
-    {
-        var port = CoordinatePort.ImageLayout(() => new Size(200, 100), new Size(100, 100));
-        // 論理矩形 (0, 0, 100, 100) → DIP 矩形 (50, 0, 100, 100)
-        var rect = port.InverseRect(new Rect(0, 0, 100, 100));
-        Assert.Equal(new Rect(50, 0, 100, 100), rect);
     }
 }

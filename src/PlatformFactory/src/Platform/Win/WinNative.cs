@@ -125,13 +125,6 @@ internal static partial class WinNative
     /// <summary>DWM 拡張フレーム境界（影を除外した可視矩形）の属性 ID。</summary>
     internal const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
 
-    // --- PrintWindow フラグ ---
-    /// <summary>PrintWindow: クライアント領域のみを描画するフラグ。</summary>
-    internal const uint PW_CLIENTONLY = 0x00000001;
-
-    /// <summary>PrintWindow: フルコンテンツを描画するフラグ。</summary>
-    internal const uint PW_RENDERFULLCONTENT = 0x00000002;
-
     // --- 仮想スクリーン（全モニタのバウンディングボックス） ---
     /// <summary>仮想スクリーン左端のメトリクス。</summary>
     internal const int SM_XVIRTUALSCREEN = 76;
@@ -311,14 +304,6 @@ internal static partial class WinNative
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
-
-    /// <summary>ウィンドウをデバイスコンテキストへ直接描画する（user32.PrintWindow）。</summary>
-    /// <param name="hWnd">ウィンドウハンドル。</param>
-    /// <param name="hdcBlt">描画先デバイスコンテキスト。</param>
-    /// <param name="nFlags">描画フラグ（<see cref="PW_CLIENTONLY"/> / <see cref="PW_RENDERFULLCONTENT"/>）。</param>
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, uint nFlags);
 
     /// <summary>指定されたシステムメトリクス（SM_ 定数）を取得する（user32.GetSystemMetrics）。</summary>
     /// <param name="nIndex">取得するシステムメトリクスのインデックス。</param>

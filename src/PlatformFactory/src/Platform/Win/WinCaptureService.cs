@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using DrawingBitmap = System.Drawing.Bitmap;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using AvaloniaPixelFormat = Avalonia.Platform.PixelFormat;
-using DrawingPoint = System.Drawing.Point;
 // Bitmap は System.Drawing.Bitmap（DrawingBitmap 別名）と衝突するため、Avalonia 側を優先する別名で解決する
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
@@ -72,88 +71,6 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
         return CaptureArea(new PixelRect(vx, vy, vw, vh));
     }
 
-    /// <summary>指定されたウィンドウの領域をキャプチャする（System.Drawing ベースの内部実装）。</summary>
-    /// <param name="hWnd">キャプチャ対象のウィンドウハンドル。</param>
-    /// <param name="mode">キャプチャ方式（RedrawDirect は PrintWindow、ScreenCopy は CopyFromScreen）。</param>
-    /// <returns>キャプチャした画像。失敗時（PrintWindow 全フラグ失敗等）は null。</returns>
-    /// <remarks>
-    /// 仕様 2.4.3: PrintWindow 方式で失敗した場合は null を返し、CopyFromScreen へのフォールバックは行わない。<br/>
-    /// CopyFromScreen 方式の場合は背景キャプチャ画像から切り出す。<br/>
-    /// </remarks>
-    public DrawingBitmap? CaptureWindowCore(IntPtr hWnd, WindowCaptureMode mode = WindowCaptureMode.RedrawDirect)
-    {       
-        _log.LogCaptureWindow(hWnd.ToString("X"), mode);
-        var visibleRect = GetWindowVisibleRect(hWnd);
-        if (visibleRect.IsEmpty) return null;
-
-        if (mode == WindowCaptureMode.RedrawDirect)
-        {
-            var fullRect = GetWindowRect(hWnd);
-            if (fullRect.IsEmpty) return null;
-            var fw = fullRect.Width;
-            var fh = fullRect.Height;
-
-            var fullBitmap = TryPrintWindow(hWnd, fw, fh, 0)
-                          ?? TryPrintWindow(hWnd, fw, fh, WinNative.PW_RENDERFULLCONTENT)
-                          ?? TryPrintWindow(hWnd, fw, fh, WinNative.PW_CLIENTONLY);
-
-            if (fullBitmap is not null)
-            {
-                _log.LogPrintWindowSuccess(fullBitmap.Width, fullBitmap.Height);
-                var cropped = CropToVisibleRect(fullBitmap, fullRect, visibleRect);
-                if (cropped is not null)
-                {
-                    fullBitmap.Dispose();
-                    _log.LogCroppedToVisibleRect(cropped.Width, cropped.Height);
-                    return cropped;
-                }
-                return fullBitmap;
-            }
-
-            // 仕様 2.4.3: PrintWindow 全フラグ失敗時は null を返す（CopyFromScreen へのフォールバックは行わない）
-            _log.LogPrintWindowAllFlagsFailed();
-            return null;
-        }
-
-        _log.LogCopyFromScreen(visibleRect);
-        return CaptureSdBitmap(visibleRect);
-    }
-
-    /// <summary>ウィンドウの可視矩形領域を取得する（最大化はワークエリア・通常は DWM 影除外）。</summary>
-    /// <param name="hWnd">対象ウィンドウハンドル。</param>
-    /// <returns>可視矩形。取得失敗時は <see cref="Rectangle.Empty"/>。</returns>
-    /// <remarks>
-    /// 可視矩形の取得（最大化のワークエリア / DWM 影除外 / GetWindowRect フォールバック）は
-    /// <see cref="WinNative.TryGetVisibleRect"/> に委譲する（<see cref="WinElementFinder"/> と共用・単一所有）。
-    /// </remarks>
-    public Rectangle GetWindowVisibleRect(IntPtr hWnd)
-    {
-        if (!WinNative.TryGetVisibleRect(hWnd, out var rect)) return Rectangle.Empty;
-        return Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
-    }
-
-    /// <summary>ウィンドウの矩形領域を取得する（GetWindowRect ラッパー）。</summary>
-    /// <param name="hWnd">対象ウィンドウハンドル。</param>
-    /// <returns>ウィンドウ矩形。取得失敗時は <see cref="Rectangle.Empty"/>。</returns>
-    public Rectangle GetWindowRect(IntPtr hWnd)
-    {
-        if (hWnd == IntPtr.Zero) return Rectangle.Empty;
-        if (!WinNative.GetWindowRect(hWnd, out var rect)) return Rectangle.Empty;
-        return Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
-    }
-
-    /// <summary>ウィンドウ領域をキャプチャし Avalonia Bitmap を返す（インターフェイス実装）。</summary>
-    /// <param name="handle">キャプチャ対象のウィンドウ識別子。</param>
-    /// <param name="mode">キャプチャ方式。</param>
-    /// <returns>キャプチャした画像。失敗時は null（仕様 2.4.3）。</returns>
-    public Bitmap? CaptureWindow(IPlatformHandle handle, WindowCaptureMode mode = WindowCaptureMode.RedrawDirect)
-    {
-        var hWnd = handle.Handle;
-        using var sdBmp = CaptureWindowCore(hWnd, mode);
-        if (sdBmp is null) return null;
-        return ConvertToAvaloniaBitmap(sdBmp);
-    }
-
     /// <summary>System.Drawing.Bitmap → Avalonia Bitmap 変換。</summary>
     /// <param name="source">変換元の System.Drawing.Bitmap。</param>
     /// <returns>変換結果の Avalonia Bitmap。</returns>
@@ -162,7 +79,7 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     /// PNG エンコード/デコードを経由しない（高速・可逆）。アルファは常に 255（不透明）に設定する。<br/>
     /// WriteableBitmap の生成・Lock はスレッド非依存のため、バックグラウンドスレッドから呼び出し可能。<br/>
     /// </remarks>
-    public Bitmap ConvertToAvaloniaBitmap(DrawingBitmap source)
+    private Bitmap ConvertToAvaloniaBitmap(DrawingBitmap source)
     {
         var rect = new Rectangle(0, 0, source.Width, source.Height);
         var bmpData = source.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -221,84 +138,4 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
         return bitmap;
     }
 
-    private DrawingBitmap? TryPrintWindow(IntPtr hWnd, int width, int height, uint flags)
-    {
-        try
-        {
-            var bitmap = new DrawingBitmap(width, height);
-            using var g = Graphics.FromImage(bitmap);
-            var hdc = g.GetHdc();
-            bool success;
-            try
-            {
-                success = WinNative.PrintWindow(hWnd, hdc, flags);
-            }
-            finally
-            {
-                // GetHdc 後の HDC は例外経路でも必ず解放する（デバイスコンテキストのリーク防止）
-                g.ReleaseHdc(hdc);
-            }
-
-            if (success && IsBitmapValid(bitmap))
-            {
-                _log.LogTryPrintWindowSuccess(flags, bitmap.Width, bitmap.Height);
-                return bitmap;
-            }
-            _log.LogTryPrintWindowFailed(flags, success);
-            bitmap.Dispose();
-        }
-        catch (Exception ex)
-        {
-            _log.LogTryPrintWindowError(ex, flags);
-        }
-        return null;
-    }
-
-    private bool IsBitmapValid(DrawingBitmap bitmap)
-    {
-        var w = bitmap.Width;
-        var h = bitmap.Height;
-        DrawingPoint[] samples =
-        [
-            new DrawingPoint(w / 2, h / 2),
-            new DrawingPoint(w / 4, h / 4),
-            new DrawingPoint(w * 3 / 4, h / 4),
-            new DrawingPoint(w / 4, h * 3 / 4),
-            new DrawingPoint(w * 3 / 4, h * 3 / 4),
-        ];
-        foreach (var pt in samples)
-        {
-            if (pt.X >= 0 && pt.X < w && pt.Y >= 0 && pt.Y < h)
-            {
-                var pixel = bitmap.GetPixel(pt.X, pt.Y);
-                if (pixel.R != 0 || pixel.G != 0 || pixel.B != 0) return true;
-            }
-        }
-        return false;
-    }
-
-    private DrawingBitmap? CropToVisibleRect(DrawingBitmap fullBitmap, Rectangle fullRect, Rectangle visibleRect)
-    {
-        if (visibleRect.IsEmpty || visibleRect == fullRect) return null;
-        var cropX = visibleRect.X - fullRect.X;
-        var cropY = visibleRect.Y - fullRect.Y;
-        var cropW = visibleRect.Width;
-        var cropH = visibleRect.Height;
-        if (cropX < 0) { cropW += cropX; cropX = 0; }
-        if (cropY < 0) { cropH += cropY; cropY = 0; }
-        cropW = Math.Min(cropW, fullBitmap.Width - cropX);
-        cropH = Math.Min(cropH, fullBitmap.Height - cropY);
-        if (cropW <= 0 || cropH <= 0) return null;
-        if (cropX == 0 && cropY == 0 && cropW == fullBitmap.Width && cropH == fullBitmap.Height) return null;
-        try
-        {
-            return fullBitmap.Clone(new Rectangle(cropX, cropY, cropW, cropH), fullBitmap.PixelFormat);
-        }
-        catch
-        {
-            // Clone 失敗（ピクセル形式非対応等）は null を返し、呼び出し側（CaptureWindow）は
-            // PrintWindow 成功分の fullBitmap をそのまま使用する（切り出しはベストエフォート）。
-            return null;
-        }
-    }
 }

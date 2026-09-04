@@ -1,25 +1,37 @@
-using Estable.AvaloniaUI.Platform;
+using System.Runtime.InteropServices;
 
 namespace Estable.AvaloniaUI.Platform.Win;
 
 /// <summary>Windows 実装の <see cref="IGlobalHotKeyService{T}"/>。</summary>
 /// <remarks>
-/// RegisterHotKey / UnregisterHotKey Win32 API をラップし、<br/>
-/// 複数ホットキーの登録管理と WM_HOTKEY メッセージ処理を提供する。<br/>
+/// RegisterHotKey / UnregisterHotKey Win32 API でホットキーを登録管理し、<br/>
+/// WndProc サブクラス化で WM_HOTKEY メッセージを捕捉して <see cref="HotKeyPressed"/> で配信する。<br/>
 /// P/Invoke 呼び出しは <c>Estable.AvaloniaUI.Platform.Win.WinNative</c> に委譲する。<br/>
+/// デリゲートはフィールドに保持し、WndProc の呼び出し中に GC されないようにする。<br/>
 /// </remarks>
 /// <typeparam name="T">ホットキーに割り当てるアクションの識別子。</typeparam>
-public sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T : notnull
+internal sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T : notnull
 {
     private IntPtr _hWnd;
+    private IntPtr _originalWndProc;
+    private WinNative.WndProcDelegate? _wndProcDelegate;
     private int _currentId;
     private readonly Dictionary<int, T> _registeredHotKeys = [];
     private bool _disposed;
 
     /// <inheritdoc/>
+    public event Action<T>? HotKeyPressed;
+
+    /// <inheritdoc/>
     public void Initialize(IntPtr hWnd)
     {
+        Detach();
         _hWnd = hWnd;
+        if (_hWnd == IntPtr.Zero) return;
+
+        _wndProcDelegate = WndProc;
+        _originalWndProc = WinNative.SetWindowLongPtr(
+            hWnd, WinNative.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
     }
 
     /// <inheritdoc/>
@@ -34,20 +46,6 @@ public sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T 
     }
 
     /// <inheritdoc/>
-    public void Unregister(T action)
-    {
-        // 辞書の走査は直接ループで行う（LINQ 2 段 + ToList の中間コレクションを回避）
-        foreach (var kvp in _registeredHotKeys)
-        {
-            if (EqualityComparer<T>.Default.Equals(kvp.Value, action))
-            {
-                WinNative.UnregisterHotKey(_hWnd, kvp.Key);
-                _registeredHotKeys.Remove(kvp.Key);
-            }
-        }
-    }
-
-    /// <inheritdoc/>
     public void UnregisterAll()
     {
         foreach (var id in _registeredHotKeys.Keys)
@@ -58,21 +56,39 @@ public sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T 
     }
 
     /// <inheritdoc/>
-    public T? ProcessHotKeyMessage(uint msg, nint wParam)
-    {
-        if (msg != WinNative.WM_HOTKEY) return default;
-        var id = (int)wParam;
-        return _registeredHotKeys.TryGetValue(id, out var action) ? action : default;
-    }
-
-    /// <inheritdoc/>
     public void Dispose()
     {
         if (!_disposed)
         {
             UnregisterAll();
+            Detach();
             _disposed = true;
         }
+    }
+
+    /// <summary>WndProc サブクラス化を解除し、元の WndProc を復元する。</summary>
+    private void Detach()
+    {
+        if (_hWnd != IntPtr.Zero && _originalWndProc != IntPtr.Zero)
+        {
+            WinNative.SetWindowLongPtr(_hWnd, WinNative.GWLP_WNDPROC, _originalWndProc);
+            _originalWndProc = IntPtr.Zero;
+            _hWnd = IntPtr.Zero;
+        }
+        _wndProcDelegate = null;
+    }
+
+    /// <summary>サブクラス化した WndProc。WM_HOTKEY メッセージを捕捉して対応するアクションを配信する。</summary>
+    private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        if (msg == WinNative.WM_HOTKEY)
+        {
+            var id = (int)wParam;
+            if (_registeredHotKeys.TryGetValue(id, out var action))
+                HotKeyPressed?.Invoke(action);
+            return new IntPtr(1);
+        }
+        return WinNative.CallWindowProc(_originalWndProc, hWnd, msg, wParam, lParam);
     }
 
     /// <summary>1件のホットキーを登録する。</summary>

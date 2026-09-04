@@ -23,7 +23,6 @@ public class SnipCaptureTests
             origin = default;
             return null;
         }
-        public Bitmap? CaptureWindow(IPlatformHandle handle, WindowCaptureMode mode = WindowCaptureMode.RedrawDirect) => null;
     }
 
     /// <summary>ウィンドウサービスのモック。</summary>

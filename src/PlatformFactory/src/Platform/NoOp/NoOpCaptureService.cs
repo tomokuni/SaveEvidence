@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 
 namespace Estable.AvaloniaUI.Platform.NoOp;
 
@@ -25,7 +24,4 @@ internal sealed class NoOpCaptureService : ICaptureService
         origin = default;
         return null;
     }
-
-    /// <inheritdoc/>
-    public Bitmap? CaptureWindow(IPlatformHandle handle, WindowCaptureMode mode = WindowCaptureMode.RedrawDirect) => null;
 }

@@ -41,10 +41,4 @@ public interface ICaptureService
     /// 画面キャプチャ（GDI 同期コール等）と同一のバックグラウンドスレッドで実行可能である。<br/>
     /// </remarks>
     Bitmap? CaptureVirtualScreen(out PixelPoint origin);
-
-    /// <summary>指定されたウィンドウをキャプチャする（Avalonia Bitmap で返す）。</summary>
-    /// <param name="handle">キャプチャ対象のウィンドウ識別子（プラットフォーム非依存）。</param>
-    /// <param name="mode">ウィンドウキャプチャの取得方式。</param>
-    /// <returns>キャプチャした画像。失敗時は null。</returns>
-    Bitmap? CaptureWindow(IPlatformHandle handle, WindowCaptureMode mode = WindowCaptureMode.RedrawDirect);
 }

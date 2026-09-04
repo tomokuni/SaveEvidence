@@ -45,9 +45,6 @@ public sealed partial class MainWindow : Window
     // 早期 return せず、初期ページの選択状態が設定されるようにする）
     private AppPage? _navSelectedPage;
 
-    // Win32 WndProc サブクラス化（WM_HOTKEY 受信用）
-    private INativeWindowInterceptor _wndInterceptor = null!;
-
     /// <summary>
     /// MainWindow を初期化する。
     /// </summary>
@@ -55,7 +52,7 @@ public sealed partial class MainWindow : Window
     /// <param name="settingsService">設定サービス</param>
     /// <param name="hotKeyService">ホットキーサービス</param>
     public MainWindow(MainViewModel viewModel, ISettingsService settingsService,
-        IGlobalHotKeyService<CaptureType> hotKeyService, INativeWindowInterceptor wndInterceptor)
+        IGlobalHotKeyService<CaptureType> hotKeyService)
     {
         InitializeComponent();
         if (Design.IsDesignMode) return;
@@ -95,16 +92,11 @@ public sealed partial class MainWindow : Window
         {
             _hotKeyService = hotKeyService;
             _hotKeyService.Initialize(platformHandle.Handle);
-
-            // WM_HOTKEY メッセージを受信するためウィンドウプロシージャをサブクラス化
-            _wndInterceptor = wndInterceptor;
-            _wndInterceptor.Attach(platformHandle.Handle);
-            _wndInterceptor.HotKeyReceived += OnHotKeyReceived;
+            _hotKeyService.HotKeyPressed += OnHotKeyPressed;
         }
         else
         {
             _hotKeyService = null!;
-            _wndInterceptor = null!;
         }
 
         // ウィンドウ位置・サイズの復元
@@ -220,23 +212,22 @@ public sealed partial class MainWindow : Window
         ]);
     }
 
-    /// <summary>WM_HOTKEY 受信時（INativeWindowInterceptor から）。</summary>
-    private void OnHotKeyReceived(int hotKeyId)
+    /// <summary>WM_HOTKEY 受信時（ホットキーサービスから対応するアクションが配信される）。</summary>
+    private void OnHotKeyPressed(CaptureType captureType)
     {
         _logger.LogHotKeyReceived();
-        const uint WM_HOTKEY = 0x0312;
-        var captureType = _hotKeyService?.ProcessHotKeyMessage(WM_HOTKEY, (IntPtr)hotKeyId);
-        if (captureType is { } ct)
-        {
-            _logger.LogHotKeyTriggered(ct);
-            StartSelectionMode(ct);
-        }
+        _logger.LogHotKeyTriggered(captureType);
+        StartSelectionMode(captureType);
     }
+
     private void OnMainWindowClosing(object? sender, WindowClosingEventArgs e)
     {
         SaveWindowBounds();
-        _hotKeyService?.Dispose();
-        _wndInterceptor?.Dispose();
+        if (_hotKeyService is not null)
+        {
+            _hotKeyService.HotKeyPressed -= OnHotKeyPressed;
+            _hotKeyService.Dispose();
+        }
         CaptureContent.CleanupCaptureResources();
         _snipCapture.Dispose();
     }

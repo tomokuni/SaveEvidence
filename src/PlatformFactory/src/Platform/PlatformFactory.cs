@@ -83,4 +83,16 @@ public static class PlatformFactory
         => OperatingSystem.IsWindows()
             ? new WinWindowService(logger)
             : NoOpWindowService.Instance;
+
+    /// <summary>実行時プラットフォームに応じた既定のグローバルホットキーサービスを生成する。</summary>
+    /// <typeparam name="T">ホットキーに割り当てるアクションの識別子。</typeparam>
+    /// <returns>既定の <see cref="IGlobalHotKeyService{T}"/> 実装。</returns>
+    /// <remarks>
+    /// - Windows: <see cref="WinGlobalHotKeyService{T}"/>（RegisterHotKey + WndProc サブクラス化）<br/>
+    /// - 他環境（Linux / macOS）: NoOp 相当の無操作実装（現在は Windows のみ対応）<br/>
+    /// </remarks>
+    public static IGlobalHotKeyService<T> CreateGlobalHotKeyService<T>() where T : notnull
+        => OperatingSystem.IsWindows()
+            ? new WinGlobalHotKeyService<T>()
+            : new NoOpGlobalHotKeyService<T>();
 }

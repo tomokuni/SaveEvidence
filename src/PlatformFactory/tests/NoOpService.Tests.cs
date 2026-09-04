@@ -47,7 +47,6 @@ public class NoOpServiceTests
         Assert.Null(service.CaptureArea(new PixelRect(0, 0, 100, 100)));
         Assert.Null(service.CaptureVirtualScreen(out var origin));
         Assert.Equal(default, origin);
-        Assert.Null(service.CaptureWindow(new DummyHandle()));
     }
 
     // ====================================================================

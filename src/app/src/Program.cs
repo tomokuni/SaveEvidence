@@ -4,7 +4,6 @@ using app.ViewModels;
 using app.Views;
 using Avalonia;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Win;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
@@ -80,9 +79,9 @@ internal static class Program
         // Settings（シングルトンとして共有インスタンスを管理）
         services.AddSingleton<ISettingsService, SettingsService>();
 
-        // OS依存サービスの登録（実装は PlatformFactory の Windows 実装。アクション識別子は CaptureType）
-        services.AddSingleton<IGlobalHotKeyService<CaptureType>, WinGlobalHotKeyService<CaptureType>>();
-        services.AddSingleton<INativeWindowInterceptor, WinNativeWindowInterceptor>();
+        // OS依存サービスの登録（実装は PlatformFactory が実行時プラットフォームに応じて生成。アクション識別子は CaptureType）
+        services.AddSingleton<IGlobalHotKeyService<CaptureType>>(
+            _ => PlatformFactory.CreateGlobalHotKeyService<CaptureType>());
 
         // ViewModels
         // MainViewModel はシングルトン（ナビゲーションページ（FolderViewPage / UndoPage 等）が

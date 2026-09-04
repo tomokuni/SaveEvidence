@@ -47,12 +47,63 @@ internal sealed class WinElementFinder : IElementFinder
     /// <param name="screenPoint">判定する位置（画面物理座標）。</param>
     /// <returns>ウィンドウの検出結果（矩形・タイトル・識別子）。未検出時は <see cref="ElementFinderResults.IsDetected"/> = false。</returns>
     /// <remarks>
-    /// <see cref="ListWindows"/>（全ウィンドウ一覧）を列挙し、<paramref name="screenPoint"/> を含む最初の<br/>
-    /// ウィンドウを採用する（EnumWindows の列挙順 = 元の FindWindowUnderCursor と同じ最前面順）。<br/>
-    /// 除外条件（自プロセス・不可視・無効・最小化・0x0・タスクバー/デスクトップ）は ListWindows が適用済み。
+    /// <see cref="EnumWindows"/> の列挙順（最前面順）で、<paramref name="screenPoint"/> を含む最初のウィンドウを採用する。<br/>
+    /// 除外条件（自プロセス・不可視・無効・最小化・0x0・タスクバー/デスクトップ）は <see cref="IsEligibleWindow"/> で適用し、<br/>
+    /// ホットパスで毎回全列挙しないよう、最初の一致で列挙を早期終了する。
     /// </remarks>
     public ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint)
-        => ListWindows().FirstOrDefault(r => r.Bounds.Contains(screenPoint));
+    {
+        var selfPid = WinNative.GetCurrentProcessId();
+        ElementFinderResults result = default;
+        var found = false;
+
+        WinNative.EnumWindows((hWnd, _) =>
+        {
+            if (IsEligibleWindow(hWnd, selfPid, out var candidates))
+            {
+                foreach (var candidate in candidates)
+                {
+                    if (candidate.Bounds.Contains(screenPoint))
+                    {
+                        result = candidate;
+                        found = true;
+                        return false; // 最初の一致で列挙を停止（ホットパス最適化）
+                    }
+                }
+            }
+            return true;
+        }, IntPtr.Zero);
+
+        return found ? result : default;
+    }
+
+    /// <summary>ウィンドウを選択対象とするか判定し、対象なら検出結果の候補を返す（<see cref="ListWindows"/> と共用）。</summary>
+    /// <param name="hWnd">ウィンドウハンドル。</param>
+    /// <param name="selfPid">自プロセスの PID（自ウィンドウの除外用）。</param>
+    /// <param name="candidates">選択対象の検出結果（通常は 0 または 1 件）。対象外なら空。</param>
+    /// <returns>選択対象なら true。</returns>
+    private bool IsEligibleWindow(IntPtr hWnd, uint selfPid, out IReadOnlyList<ElementFinderResults> candidates)
+    {
+        candidates = [];
+        WinNative.GetWindowThreadProcessId(hWnd, out var pid);
+        if (pid == selfPid) return false;
+        if (!WinNative.IsWindowVisible(hWnd)) return false;
+        if (!WinNative.IsWindowEnabled(hWnd)) return false;
+        if (WinNative.IsIconic(hWnd)) return false;
+        if (IsExcludedClass(hWnd)) return false;
+
+        if (!WinNative.GetWindowRect(hWnd, out var rect)) return false;
+        if (rect.Width <= 0 || rect.Height <= 0) return false;
+
+        var handle = new PlatformHandle(hWnd, "HWND");
+        if (!TryGetWindowVisibleRect(handle, out var visibleRect)) return false;
+        var title = GetWindowTitle(handle);
+        var className = GetWindowClassName(hWnd);
+        if (IsExcludedFrame(className, title)) return false;
+
+        candidates = [new ElementFinderResults(visibleRect, true, Title: title, Handle: handle, ClassName: className)];
+        return true;
+    }
 
     /// <summary>指定位置が含まれるスクリーンを検出する。</summary>
     /// <param name="screenPoint">判定する位置（画面物理座標）。</param>
@@ -96,28 +147,11 @@ internal sealed class WinElementFinder : IElementFinder
         var selfPid = WinNative.GetCurrentProcessId();
 
         // EnumWindows: 全トップレベルウィンドウを列挙し、除外条件を適用して一覧化する
-        // コールバック内では安全なAPIのみを呼び出す（IsWindowVisible, IsWindowEnabled, IsIconic, GetWindowRect, GetClassName）
+        // 除外判定は IsEligibleWindow（FindWindowUnderCursor と共用・単一所有）に委譲する。
         WinNative.EnumWindows((hWnd, _) =>
         {
-            // 自プロセスのウィンドウ（オーバーレイ等）を除外（外部設定不要で自己完結）
-            WinNative.GetWindowThreadProcessId(hWnd, out var pid);
-            if (pid == selfPid) return true;
-            if (!WinNative.IsWindowVisible(hWnd)) return true;
-            if (!WinNative.IsWindowEnabled(hWnd)) return true;
-            if (WinNative.IsIconic(hWnd)) return true;
-            if (IsExcludedClass(hWnd)) return true;
-
-            if (!WinNative.GetWindowRect(hWnd, out var rect)) return true;
-            if (rect.Width <= 0 || rect.Height <= 0) return true;
-
-            var handle = new PlatformHandle(hWnd, "HWND");
-            if (!TryGetWindowVisibleRect(handle, out var visibleRect)) return true;
-            var title = GetWindowTitle(handle);
-            var className = GetWindowClassName(hWnd);
-            // タイトルが空の UWP フレーム（スタートメニュー等のオーバーレイ）は除外する
-            // （通常の UWP アプリはタイトル付きで選択対象に残す。IsExcludedFrame の判定条件）
-            if (IsExcludedFrame(className, title)) return true;
-            results.Add(new ElementFinderResults(visibleRect, true, Title: title, Handle: handle, ClassName: className));
+            if (IsEligibleWindow(hWnd, selfPid, out var candidates))
+                results.AddRange(candidates);
             return true;
         }, IntPtr.Zero);
 

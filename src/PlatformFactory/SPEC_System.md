@@ -13,13 +13,12 @@
     - [6.1 PlatformFactory](#61-platformfactory)
     - [6.2 各インターフェース（抽象）](#62-各インターフェース抽象)
     - [6.3 CoordinatePort](#63-coordinateport)
-    - [6.4 CoordinatePortExtensions](#64-coordinateportextensions)
-    - [6.5 ScreenConverter](#65-screenconverter)
-    - [6.6 Watchdog](#66-watchdog)
-    - [6.7 その他の公開型](#67-その他の公開型)
-    - [6.8 内部実装（Win 系）](#68-内部実装win-系)
-    - [6.9 内部実装（NoOp 系）](#69-内部実装noop-系)
-    - [6.10 内部ユーティリティ](#610-内部ユーティリティ)
+    - [6.4 ScreenConverter](#64-screenconverter)
+    - [6.5 Watchdog](#65-watchdog)
+    - [6.6 その他の公開型](#66-その他の公開型)
+    - [6.7 内部実装（Win 系）](#67-内部実装win-系)
+    - [6.8 内部実装（NoOp 系）](#68-内部実装noop-系)
+    - [6.9 内部ユーティリティ](#69-内部ユーティリティ)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
 
@@ -73,7 +72,6 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ### 4.2 本プロジェクト固有の例外処理
 
-- PrintWindow の失敗は自動フォールバック（PrintWindow → CopyFromScreen。3 段階フォールバック）。
 - キャプチャはバックグラウンド + タイムアウト（上位 AP が制御）で実行し、UI スレッドをブロックしない。
 - 他環境（Linux / macOS）では NoOp 実装（安全なフォールバック）で例外なく動作する（Win32 DLL 依存を回避）。
 - UI スレッド完全ハング時は Watchdog がバックグラウンドからオーバーレイを退避する（最終保険）。
@@ -89,14 +87,13 @@ flowchart TB
         ICg["ICursorOverrideGuard<br/>public interface"]
         ICp["ICaptureService<br/>public interface"]
         IWd["IWindowService<br/>public interface"]
+        IGH["IGlobalHotKeyService&lt;T&gt;<br/>public interface"]
         ICd["ICoordinatePort<br/>public interface"]
         Cpt["CoordinatePort<br/>public sealed<br/>Coordinate/CoordinatePort.cs<br/>（Func 委譲の具象実装）"]
-        Cpx["CoordinatePortExtensions<br/>public static<br/>Coordinate/CoordinatePortExtensions.cs"]
         Scn["ScreenConverter<br/>public static<br/>Coordinate/ScreenConverter.cs"]
         Wdg["Watchdog<br/>public sealed<br/>Watchdog.cs"]
         Wcm["WindowCaptureMode<br/>public enum"]
         Efr["ElementFinderResults<br/>public readonly record struct"]
-        Bmf["BitmapFactory<br/>public static<br/>Imaging/BitmapFactory.cs"]
         Bmx["BitmapExtensions<br/>public static<br/>Imaging/BitmapExtensions.cs"]
         Win["Win 実装群<br/>internal sealed<br/>Win/（Win32 API・P-Invoke 集約）"]
         NoOp["NoOp 実装群<br/>internal sealed<br/>NoOp/（シングルトン）"]
@@ -117,22 +114,22 @@ flowchart TB
     Fac --> ICg
     Fac --> ICp
     Fac --> IWd
+    Fac --> IGH
     ICr --> Win
     IEl --> Win
     ICg --> Win
     ICp --> Win
     IWd --> Win
+    IGH --> Win
     ICr --> NoOp
     IEl --> NoOp
     ICg --> NoOp
     ICp --> NoOp
     IWd --> NoOp
+    IGH --> NoOp
     ICd --> Cpt
     Cpt --> Mth
-    Cpt --> IWd
     Wdg --> IWd
-    Bmx --> Bmf
-    Cpx --> ICd
     Scn --> ICd
     Win --> Av
     Win --> Sd
@@ -155,6 +152,7 @@ flowchart TB
   - `CreateCursorOverrideGuard()` → `ICursorOverrideGuard`（Windows: `WinCursorOverrideGuard` / 他: `NoOpCursorOverrideGuard`）
   - `CreateCaptureService(ILogger? logger = null)` → `ICaptureService`（Windows: `WinCaptureService` / 他: `NoOpCaptureService.Instance`）
   - `CreateWindowService()` → `IWindowService`（Windows: `WinWindowService` / 他: `NoOpWindowService.Instance`）
+  - `CreateGlobalHotKeyService<T>() where T : notnull` → `IGlobalHotKeyService<T>`（Windows: `WinGlobalHotKeyService<T>` / 他: `NoOpGlobalHotKeyService<T>`）
 - **可視性**: public
 - **依存**: 各インターフェース / Win 実装 / NoOp 実装
 
@@ -163,10 +161,11 @@ flowchart TB
 | コンポーネント | メンバー | 説明 |
 | --- | --- | --- |
 | `ICursorService` | `GetCursorScreenPoint()` / `SetCursorScreenPoint(PixelPoint)` / `ShowCursor(bool)` | カーソル位置の取得・移動・表示切替 |
-| `IElementFinder` | `FindWindowUnderCursor()` / `FindScreenUnderCursor()` / `ListScreens()` / `ListWindows()` | カーソル位置のウィンドウ / スクリーン検出・一覧取得 |
-| `ICursorOverrideGuard` | `Guard`（`Func<bool>?`）/ `IsAttached` / `Attach(TopLevel)` | カーソル上書き抑止（WndProc サブクラス化） |
-| `ICaptureService` | `CaptureArea(PixelRect)` / `CaptureVirtualScreen(out PixelPoint)` / `CaptureWindow(IPlatformHandle, WindowCaptureMode)` | 画面・仮想スクリーン・ウィンドウのキャプチャ |
+| `IElementFinder` | `FindWindowUnderCursor(PixelPoint)` / `FindScreenUnderCursor(PixelPoint)` / `ListScreens()` / `ListWindows()` | 指定位置のウィンドウ / スクリーン検出・一覧取得 |
+| `ICursorOverrideGuard` | `IsAttached` / `Attach(TopLevel)` | カーソル上書き抑止（WndProc サブクラス化。アタッチ中は常に抑止） |
+| `ICaptureService` | `CaptureArea(PixelRect)` / `CaptureVirtualScreen(out PixelPoint)` | 画面領域・仮想スクリーンのキャプチャ |
 | `IWindowService` | `HideFromTaskSwitcher(IPlatformHandle)` / `SetCaptureExclusion(IPlatformHandle, bool)` / `EvacuateWindow(IPlatformHandle)` | タスクスイッチャー非表示・キャプチャ除外・退避 |
+| `IGlobalHotKeyService<T>` | `Initialize(IntPtr)` / `RegisterAll(...)` / `UnregisterAll()` / `event Action<T>? HotKeyPressed` | グローバルホットキーの登録・WM_HOTKEY 受信・アクション配信 |
 | `ICoordinatePort` | `Forward(Point)` / `Inverse(Point)` / `Bounds`（`Size?`） | 座標系 A ↔ B の変換ポート |
 
 - **可視性**: public
@@ -189,14 +188,7 @@ flowchart TB
 - **可視性**: public
 - **依存**: `CoordinateMath`（internal。画像レイアウト計算の委譲）
 
-### 6.4 CoordinatePortExtensions
-
-- **分類**: 公開拡張クラス（`public static class`）
-- **責務**: `ICoordinatePort` の矩形変換（対角 2 点の変換）を提供
-- **公開メソッド**: `ForwardRect(Rect)` / `InverseRect(Rect)`
-- **可視性**: public
-
-### 6.5 ScreenConverter
+### 6.4 ScreenConverter
 
 - **分類**: 公開静的クラス（`public static class`）
 - **責務**: コントロールローカル DIP ↔ 画面物理 Pixel の変換と変換ポートの生成
@@ -204,7 +196,7 @@ flowchart TB
 - **可視性**: public
 - **依存**: `ICoordinatePort`
 
-### 6.6 Watchdog
+### 6.5 Watchdog
 
 - **分類**: 公開クラス（`public sealed class`・Primary Constructor `Watchdog(ILogger?, IWindowService)`）
 - **責務**: UI スレッド完全ハング時の最終保険。バックグラウンドスレッドから `IWindowService.EvacuateWindow` でオーバーレイを退避
@@ -212,30 +204,30 @@ flowchart TB
 - **可視性**: public
 - **依存**: `IWindowService` / `PlatformLog`（internal・ログ定義）
 
-### 6.7 その他の公開型
+### 6.6 その他の公開型
 
 | コンポーネント | 説明 |
 | --- | --- |
 | `WindowCaptureMode` enum | `RedrawDirect`（再描画結果を直接取得）/ `ScreenCopy`（画面上の表示をコピー） |
-| `ElementFinderResults` record struct | 検出要素の結果（`Bounds` / `IsDetected` / `Title` / `Handle`） |
-| `BitmapFactory.CreateEmpty()` | 0x0 の空 Bitmap 生成（キャンセル時の戻り値用） |
+| `ElementFinderResults` record struct | 検出要素の結果（`Bounds` / `IsDetected` / `Title` / `Handle` / `ClassName`） |
 | `BitmapExtensions.CopyRegionWithPadding` / `ExtractRegion` | 範囲外許容の領域コピー / 矩形切り出し |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |
 
-### 6.8 内部実装（Win 系）
+### 6.7 内部実装（Win 系）
 
 | コンポーネント | 説明 |
 | --- | --- |
-| `Win\WinCaptureService` | CopyFromScreen / PrintWindow による画面・ウィンドウキャプチャ（System.Drawing 内包） |
+| `Win\WinCaptureService` | CopyFromScreen による画面・仮想スクリーンキャプチャ（System.Drawing 内包） |
 | `Win\WinCursorService` | Win32（GetCursorPos / SetCursorPos / ShowCursor）によるカーソル操作 |
 | `Win\WinElementFinder` | Win32（EnumWindows / EnumDisplayMonitors）による要素検出（自ウィンドウ除外を自己解決） |
 | `Win\WinWindowService` | タスクスイッチャー非表示 / キャプチャ除外 / 退避 |
 | `Win\WinCursorOverrideGuard` | WndProc サブクラス化で WM_SETCURSOR 抑止 |
+| `Win\WinGlobalHotKeyService<T>` | RegisterHotKey / WndProc サブクラス化で WM_HOTKEY を受信し、アクションを配信 |
 | `Win\WinNative` | P/Invoke 集約（struct / delegate / const / Win32 API） |
 
 - **可視性**: すべて internal（本ファクトリが唯一の生成経路）
 
-### 6.9 内部実装（NoOp 系）
+### 6.8 内部実装（NoOp 系）
 
 | コンポーネント | 説明 |
 | --- | --- |
@@ -244,10 +236,11 @@ flowchart TB
 | `NoOp\NoOpCursorService` | 何もしない（Get = default / Set = 無視） |
 | `NoOp\NoOpElementFinder` | 常に未検出（`Instance` シングルトン） |
 | `NoOp\NoOpWindowService` | 何もしない（`SetCaptureExclusion` のみ false） |
+| `NoOp\NoOpGlobalHotKeyService<T>` | ホットキー機能なし（HotKeyPressed は発生しない） |
 
 - **可視性**: すべて internal（他環境での安全なフォールバック。Win32 DLL 依存を回避）
 
-### 6.10 内部ユーティリティ
+### 6.9 内部ユーティリティ
 
 | コンポーネント | 説明 |
 | --- | --- |
