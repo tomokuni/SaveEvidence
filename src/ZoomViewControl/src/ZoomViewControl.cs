@@ -310,16 +310,25 @@ public sealed class ZoomViewControl : Panel
 
         // Fit の実効倍率は 1 回だけ計算し、表示テキストとズーム率の実効値で共有する
         var fitZoom = ComputeRawFitZoomPercent();
+        var zoom = ZoomPercent;
 
         // ステータスバーには現在の実効拡大率を % で表示する（「自動」表記は行わない）
-        var zoom = ZoomPercent;
-        var actual = zoom > 0 ? zoom : ClampZoomPercent(fitZoom);
-        ZoomDisplayText = $"{actual}%";
+        UpdateZoomDisplayText(zoom, fitZoom);
 
         // ⊖⊕ ボタンの Enable/Disable 制御用に、段階遷移仕様（ZoomTransition）で可否を即時計算してキャッシュし、通知する
         RefreshZoomAvailability(zoom, fitZoom);
         ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(zoom, _availability!.Value));
     }
+
+    /// <summary>現在のズーム状態から表示用の拡大率テキストを生成して <see cref="ZoomDisplayText"/> を更新する。</summary>
+    /// <param name="zoom">現在のズーム率（%）。0 = Fit。</param>
+    /// <param name="fitZoom">Fit の実効倍率（%）。</param>
+    /// <remarks>
+    /// Fit 中（<c>zoom &lt;= 0</c>）は実効倍率を表示し、固定倍率中はズーム率を表示する（<see cref="ClampZoomPercent"/> でクランプ）。<br/>
+    /// <see cref="ApplyZoomCore"/> と <see cref="OnZoomableViewSizeChanged"/> の 2 箇所から呼ばれ、生成ロジックを単一所有する（DRY）。
+    /// </remarks>
+    private void UpdateZoomDisplayText(int zoom, double fitZoom)
+        => ZoomDisplayText = $"{(zoom > 0 ? zoom : ClampZoomPercent(fitZoom))}%";
 
     /// <summary>現在のズーム状態からズーム可否を取得する（未計算なら遅延計算してキャッシュ）。</summary>
     /// <returns>ズーム可否。</returns>
@@ -376,7 +385,7 @@ public sealed class ZoomViewControl : Panel
             var fitZoom = ComputeRawFitZoomPercent();
             if (Source is not null)
             {
-                ZoomDisplayText = $"{ClampZoomPercent(fitZoom)}%";
+                UpdateZoomDisplayText(0, fitZoom);
             }
             // ズーム可否は実効倍率に依存するため、未計算（null）に戻して次の参照時に再計算（遅延）する
             _availability = null;
