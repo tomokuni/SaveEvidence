@@ -252,7 +252,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 
 | メンバー | 説明 |
 | --- | --- |
-| `ZoomChangedEventArgs` | `sealed record (double ZoomPercent, bool IsFit, bool CanZoomIn, bool CanZoomOut)`。実効ズーム率・Fit 状態・ズーム可否を通知する
+| `ZoomChangedEventArgs` | `sealed record (double ZoomPercent, bool IsFit, bool CanZoomIn, bool CanZoomOut)`。実効ズーム率・Fit 状態・ズーム可否を通知する |
 
 ## 9. ログ
 

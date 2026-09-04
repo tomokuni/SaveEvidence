@@ -62,9 +62,6 @@ public class OverlayWindowTests
         /// <summary>ウィンドウ検出の結果（既定は未検出）。</summary>
         public ElementFinderResults WindowResult { get; set; }
 
-        public PixelPoint GetCursorScreenPoint() => default;
-        public ElementFinderResults FindWindowUnderCursor() => WindowResult;
-        public ElementFinderResults FindScreenUnderCursor() => ScreenResult;
         public ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint) => WindowResult;
         public ElementFinderResults FindScreenUnderCursor(PixelPoint screenPoint) => ScreenResult;
         public IReadOnlyList<ElementFinderResults> ListScreens() => [];

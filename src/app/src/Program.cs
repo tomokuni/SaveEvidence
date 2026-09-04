@@ -4,6 +4,7 @@ using app.ViewModels;
 using app.Views;
 using Avalonia;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Win;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;

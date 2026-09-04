@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -95,7 +94,7 @@ internal sealed class CaptureSession(
                 // キャンセル（null）は 0x0 の空結果として扱う
                 if (bitmap is null || bounds is null)
                 {
-                    tcs.TrySetResult(new CaptureResult(BitmapFactory.CreateEmpty(), new PixelRect(0, 0, 0, 0)));
+                    tcs.TrySetResult(new CaptureResult(null, new PixelRect(0, 0, 0, 0)));
                 }
                 else
                 {

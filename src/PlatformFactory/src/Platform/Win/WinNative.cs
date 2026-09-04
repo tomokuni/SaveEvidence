@@ -458,28 +458,6 @@ internal static partial class WinNative
     internal const uint WM_HOTKEY = 0x0312;
 
     // ============================================================
-    // 定数（カーソル ID: LoadCursor 用）
-    // ============================================================
-
-    /// <summary>サイズ変更カーソル（左上-右下方向）。</summary>
-    internal const int IDC_SIZENWSE = 32642;
-
-    /// <summary>サイズ変更カーソル（右上-左下方向）。</summary>
-    internal const int IDC_SIZENESW = 32643;
-
-    /// <summary>水平サイズ変更カーソル。</summary>
-    internal const int IDC_SIZEWE = 32644;
-
-    /// <summary>垂直サイズ変更カーソル。</summary>
-    internal const int IDC_SIZENS = 32645;
-
-    /// <summary>四方サイズ変更カーソル。</summary>
-    internal const int IDC_SIZEALL = 32646;
-
-    /// <summary>十字カーソル。</summary>
-    internal const int IDC_CROSS = 32515;
-
-    // ============================================================
     // user32.dll — ホットキー
     // ============================================================
 
@@ -500,24 +478,6 @@ internal static partial class WinNative
     [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool UnregisterHotKey(IntPtr hWnd, int id);
-
-    // ============================================================
-    // user32.dll — カーソル
-    // ============================================================
-
-    /// <summary>システムカーソルを読み込む（user32.LoadCursor）。</summary>
-    /// <param name="hInstance">カスタムカーソルを含むモジュールのハンドル。システムカーソルでは IntPtr.Zero。</param>
-    /// <param name="lpCursorName">カーソル ID（IDC_ 定数）またはカスタムカーソルの名前。</param>
-    /// <returns>カーソルのハンドル。</returns>
-    [DllImport("user32.dll")]
-    internal static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
-
-    /// <summary>現在のカーソル形状を設定する（user32.SetCursor）。</summary>
-    /// <param name="hCursor">設定するカーソルのハンドル。</param>
-    /// <returns>直前のカーソルのハンドル。</returns>
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static extern bool SetCursor(IntPtr hCursor);
 
     /// <summary>Avalonia の <see cref="Key"/> を Win32 仮想キーコードへ変換する。</summary>
     /// <param name="key">変換対象のキー。</param>

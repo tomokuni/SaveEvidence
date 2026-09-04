@@ -11,7 +11,7 @@ namespace Estable.AvaloniaUI.Platform.Win;
 /// 破棄時（Detach / Dispose）に元の WndProc を復元する。<br/>
 /// <br/>
 /// Windows 固有のメッセージ番号（WM_SETCURSOR）とヒットテスト値（HTCLIENT）の判定は本クラスに内蔵し、<br/>
-/// 利用側には <see cref="ICursorOverrideGuard.Guard"/> という抽象操作のみを公開する（プラットフォーム分離）。<br/>
+/// 利用側にはアタッチのみを公開する（プラットフォーム分離）。<br/>
 /// 生成は <see cref="PlatformFactory.CreateCursorOverrideGuard"/> が唯一の経路。<br/>
 /// 継承不可。<br/>
 /// </remarks>
@@ -28,13 +28,6 @@ internal sealed class WinCursorOverrideGuard : ICursorOverrideGuard
 
     /// <summary>サブクラス化した WndProc デリゲート。GC 防止のためフィールドに保持する。</summary>
     private WinNative.WndProcDelegate? _wndProcDelegate;
-
-    /// <summary>カーソル上書き抑止の判定コールバック（WM_SETCURSOR かつクライアント領域内のときに評価される）。</summary>
-    /// <remarks>
-    /// true を返すと OS によるカーソル上書きを抑止する。<br/>
-    /// 未設定の場合は常に OS のデフォルト動作に委譲する。<br/>
-    /// </remarks>
-    public Func<bool>? Guard { get; set; }
 
     /// <summary>サブクラス化が設定されているかどうか。</summary>
     public bool IsAttached => _hwnd != IntPtr.Zero;
@@ -72,17 +65,18 @@ internal sealed class WinCursorOverrideGuard : ICursorOverrideGuard
 
     /// <summary>サブクラス化した WndProc。フックしたメッセージ以外は元の WndProc へ委譲する。</summary>
     /// <remarks>
-    /// WM_SETCURSOR かつクライアント領域（HTCLIENT）内ではカーソル上書き抑止の判定を行い、<br/>
-    /// 抑止が決定した場合のみメッセージを処理済み（TRUE）として元の WndProc へ委譲しない。<br/>
+    /// WM_SETCURSOR かつクライアント領域（HTCLIENT）内ではカーソル上書きを抑止し、<br/>
+    /// メッセージを処理済み（TRUE）として元の WndProc へ委譲しない。<br/>
+    /// アタッチ中は常に抑止する（現在のカーソル形状を維持する）。
     /// </remarks>
     private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
     {
         // WM_SETCURSOR: OS がカーソル形状を上書きしようとしたときに送られる。
         if (msg == WinNative.WM_SETCURSOR)
         {
-            // lParam 下位ワード = ヒットテスト結果。クライアント領域内のときのみ抑止判定を行う。
+            // lParam 下位ワード = ヒットテスト結果。クライアント領域内のときのみ抑止する。
             int hitTest = (int)(lParam.ToInt64() & LowWordMask);
-            if (hitTest == WinNative.HTCLIENT && Guard?.Invoke() == true)
+            if (hitTest == WinNative.HTCLIENT)
                 return new IntPtr(1); // 処理済み（TRUE）: OS によるカーソル上書きを抑止
         }
         return WinNative.CallWindowProc(_originalWndProc, hWnd, msg, wParam, lParam);

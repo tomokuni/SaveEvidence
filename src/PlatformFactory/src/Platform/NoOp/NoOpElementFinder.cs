@@ -15,18 +15,6 @@ internal sealed class NoOpElementFinder : IElementFinder
     public static NoOpElementFinder Instance { get; } = new();
 
     /// <inheritdoc/>
-    public PixelPoint GetCursorScreenPoint()
-        => default;
-
-    /// <inheritdoc/>
-    public ElementFinderResults FindWindowUnderCursor()
-        => new(default, false);
-
-    /// <inheritdoc/>
-    public ElementFinderResults FindScreenUnderCursor()
-        => new(default, false);
-
-    /// <inheritdoc/>
     public ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint)
         => new(default, false);
 

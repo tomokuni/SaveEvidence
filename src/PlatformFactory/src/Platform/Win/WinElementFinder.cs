@@ -4,12 +4,10 @@ using System.Runtime.InteropServices;
 
 namespace Estable.AvaloniaUI.Platform.Win;
 
-/// <summary>Win32 API を利用した要素（ウィンドウ・スクリーン）検出ユーティリティを内包する。</summary>
+/// <summary>Win32 API を利用した要素（ウィンドウ・スクリーン）検出実装。</summary>
 /// <remarks>
 /// P/Invoke 呼び出しは <c>WinNative</c> に委譲する。<br/>
-/// <see cref="IElementFinder"/> の実装であり、テスト時のモックに備える。<br/>
-/// 自己完結型: 自ウィンドウの除外（自プロセスのウィンドウ）とスクリーン境界
-/// （Win32 の EnumDisplayMonitors）は外部からの設定なしに解決する。<br/>
+/// 自己完結型: 自ウィンドウの除外（自プロセスのウィンドウ）とスクリーン境界は外部からの設定なしに解決する。<br/>
 /// 生成は <see cref="PlatformFactory.CreateElementFinder"/> が唯一の経路。<br/>
 /// 継承不可。<br/>
 /// </remarks>
@@ -17,10 +15,6 @@ internal sealed class WinElementFinder : IElementFinder
 {
     /// <summary>クラス名取得バッファのサイズ（文字数）。</summary>
     private const int ClassNameBufferSize = 256;
-
-    /// <summary>カーソル位置取得用の共有プラットフォーム実装（Win32）。</summary>
-    /// <remarks>カーソル位置の取得（<see cref="GetCursorScreenPoint"/>）に使用する。</remarks>
-    private readonly ICursorService _cursorService = new WinCursorService();
 
     private IReadOnlyList<PixelRect>? _screenBounds;
 
@@ -49,29 +43,7 @@ internal sealed class WinElementFinder : IElementFinder
         return bounds;
     }
 
-    // ====================================================================
-    // カーソル位置取得（パラメーターなし API の入力）
-    // ====================================================================
-
-    /// <summary>現在のカーソル位置を画面物理座標で取得する。</summary>
-    /// <returns>現在のカーソル位置（画面物理座標）。</returns>
-    /// <remarks>共有プラットフォームの <see cref="WinCursorService.GetCursorScreenPoint"/> に委譲する（Win32 の <c>GetCursorPos</c> で取得）。</remarks>
-    public PixelPoint GetCursorScreenPoint()
-        => _cursorService.GetCursorScreenPoint();
-
-    /// <summary>カーソル位置の最前面ウィンドウを検出する（カーソル位置は内部で取得）。</summary>
-    /// <returns>ウィンドウの検出結果。未検出時は <see cref="ElementFinderResults.IsDetected"/> = false。</returns>
-    /// <remarks><see cref="GetCursorScreenPoint"/> でカーソル位置を取得し、<see cref="FindWindowUnderCursor(Avalonia.PixelPoint)"/> に委譲する。</remarks>
-    public ElementFinderResults FindWindowUnderCursor()
-        => FindWindowUnderCursor(GetCursorScreenPoint());
-
-    /// <summary>カーソル位置が含まれるスクリーンを検出する（カーソル位置は内部で取得）。</summary>
-    /// <returns>スクリーンの検出結果。未検出時は <see cref="ElementFinderResults.IsDetected"/> = false。</returns>
-    /// <remarks><see cref="GetCursorScreenPoint"/> でカーソル位置を取得し、<see cref="FindScreenUnderCursor(Avalonia.PixelPoint)"/> に委譲する。</remarks>
-    public ElementFinderResults FindScreenUnderCursor()
-        => FindScreenUnderCursor(GetCursorScreenPoint());
-
-    /// <summary>カーソル位置の最前面ウィンドウを検出する。</summary>
+    /// <summary>指定位置の最前面ウィンドウを検出する。</summary>
     /// <param name="screenPoint">判定する位置（画面物理座標）。</param>
     /// <returns>ウィンドウの検出結果（矩形・タイトル・識別子）。未検出時は <see cref="ElementFinderResults.IsDetected"/> = false。</returns>
     /// <remarks>

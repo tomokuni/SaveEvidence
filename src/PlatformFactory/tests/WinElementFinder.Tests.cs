@@ -20,17 +20,6 @@ public class WinElementFinderTests
     private static WinElementFinder CreateFinder() => new();
 
     [AvaloniaFact]
-    public void WinElementFinder_GetCursorScreenPointが現在位置を返す()
-    {
-        var finder = CreateFinder();
-
-        var pos = finder.GetCursorScreenPoint();
-
-        // 何らかの位置が返る（例外なく Win32 GetCursorPos が呼ばれる）
-        Assert.True(pos.X != int.MinValue || pos.Y != int.MinValue);
-    }
-
-    [AvaloniaFact]
     public void WinElementFinder_ListScreensが実モニターを列挙する()
     {
         var finder = CreateFinder();
@@ -128,16 +117,6 @@ public class WinElementFinderTests
 
         // 例外なく呼び出せる（検出・未検出は実環境のウィンドウ構成に依存）
         _ = finder.FindWindowUnderCursor(center);
-        _ = finder.FindWindowUnderCursor();
-    }
-
-    [AvaloniaFact]
-    public void WinElementFinder_FindWindowUnderCursorがカーソル位置ベースで例外なく呼び出せる()
-    {
-        var finder = CreateFinder();
-
-        // 例外なく呼び出せる（検出・未検出は実環境のウィンドウ構成に依存）
-        _ = finder.FindWindowUnderCursor();
     }
 
     [AvaloniaFact]

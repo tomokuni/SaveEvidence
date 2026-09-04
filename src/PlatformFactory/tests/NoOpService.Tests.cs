@@ -77,13 +77,8 @@ public class NoOpServiceTests
     {
         var guard = new NoOpCursorOverrideGuard();
 
-        // IsAttached は常に false
+        // IsAttached は常に false（抑止なし）
         Assert.False(guard.IsAttached);
-
-        // Guard は設定・取得できる
-        guard.Guard = () => true;
-        Assert.NotNull(guard.Guard);
-        Assert.True(guard.Guard());
         guard.Dispose();
     }
 

@@ -24,9 +24,6 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, Key Key)
         return string.Join(" + ", parts);
     }
 
-    /// <summary>Win32 RegisterHotKey 用の仮想キーコードを取得する。</summary>
-    public uint GetVirtualKeyCode() => (uint)Key;
-
     private static string KeyToSymbolString(Key key) => key switch
     {
         Key.D0 => "0", Key.D1 => "1", Key.D2 => "2", Key.D3 => "3", Key.D4 => "4",

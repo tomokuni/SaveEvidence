@@ -70,14 +70,6 @@ public class HotKeySettingTests
     }
 
     [Fact]
-    public void GetVirtualKeyCode_Keyの値を返す()
-    {
-        var setting = new HotKeySetting(HotKeyModifiers.None, Key.F5);
-
-        Assert.Equal((uint)Key.F5, setting.GetVirtualKeyCode());
-    }
-
-    [Fact]
     public void レコード等価性で同一の組合せは一致する()
     {
         var a = new HotKeySetting(HotKeyModifiers.Control, Key.S);

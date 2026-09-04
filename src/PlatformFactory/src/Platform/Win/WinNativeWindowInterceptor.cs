@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
-using Estable.AvaloniaUI.Platform.Win;
+using Estable.AvaloniaUI.Platform;
 
-namespace Estable.AvaloniaUI.Platform;
+namespace Estable.AvaloniaUI.Platform.Win;
 
 /// <summary>Windows 実装の <see cref="INativeWindowInterceptor"/>。</summary>
 /// <remarks>

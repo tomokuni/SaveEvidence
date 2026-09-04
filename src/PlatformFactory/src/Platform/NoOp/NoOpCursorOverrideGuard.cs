@@ -14,9 +14,6 @@ namespace Estable.AvaloniaUI.Platform.NoOp;
 internal sealed class NoOpCursorOverrideGuard : ICursorOverrideGuard
 {
     /// <inheritdoc/>
-    public Func<bool>? Guard { get; set; }
-
-    /// <inheritdoc/>
     public bool IsAttached => false;
 
     /// <inheritdoc/>

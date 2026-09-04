@@ -15,23 +15,6 @@ namespace Estable.AvaloniaUI.Platform.Tests;
 public class NoOpElementFinderTests
 {
     [AvaloniaFact]
-    public void NoOpElementFinder_カーソル位置はdefaultを返す()
-    {
-        var finder = NoOpElementFinder.Instance;
-
-        Assert.Equal(default, finder.GetCursorScreenPoint());
-    }
-
-    [AvaloniaFact]
-    public void NoOpElementFinder_カーソル位置ベースは未検出を返す()
-    {
-        var finder = NoOpElementFinder.Instance;
-
-        Assert.False(finder.FindWindowUnderCursor().IsDetected);
-        Assert.False(finder.FindScreenUnderCursor().IsDetected);
-    }
-
-    [AvaloniaFact]
     public void NoOpElementFinder_指定位置ベースも未検出を返す()
     {
         var finder = NoOpElementFinder.Instance;

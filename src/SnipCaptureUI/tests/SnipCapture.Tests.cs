@@ -37,9 +37,6 @@ public class SnipCaptureTests
     /// <summary>要素検出のモック（常に未検出）。</summary>
     private sealed class MockElementFinder : IElementFinder
     {
-        public PixelPoint GetCursorScreenPoint() => default;
-        public ElementFinderResults FindWindowUnderCursor() => default;
-        public ElementFinderResults FindScreenUnderCursor() => default;
         public ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint) => default;
         public ElementFinderResults FindScreenUnderCursor(PixelPoint screenPoint) => default;
         public IReadOnlyList<ElementFinderResults> ListScreens() => [];

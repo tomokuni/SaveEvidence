@@ -327,9 +327,7 @@ public sealed class ZoomViewControl : Panel
     /// <remarks>
     /// ズーム操作（⊖⊕ボタン・Ctrl+ホイール）の共通処理。<br/>
     /// Fit 中（<c>zoom &lt;= 0</c>）のみ Fit 実効倍率を計算し、固定倍率中は 0 を渡す（遷移関数は Fit 中のみ fitZoom を使うため）。<br/>
-    /// 遷移先が null（移動不可）の場合は何もしない。<br/>
-    /// <see cref="ZoomIn"/> / <see cref="ZoomOut"/> / <see cref="ZoomInByWheel"/> / <see cref="ZoomOutByWheel"/> から呼ばれ、
-    /// 遷移計算と適用の重複を排除する（DRY）。
+    /// 遷移先が null（移動不可）の場合は何もしない。
     /// </remarks>
     private void ApplyZoomStep(Func<double, double, double?> transition, Action<int, int> log)
     {
