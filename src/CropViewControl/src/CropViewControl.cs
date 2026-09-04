@@ -138,9 +138,9 @@ public sealed partial class CropViewControl : Panel
     /// <summary>現在のズーム率（%）。0 = Fit（自動）。変更時は <see cref="ZoomViewControl"/> が表示を適用する。</summary>
     /// <remarks>
     /// ズーム率は <see cref="ZoomViewControl"/> が単一所有するため、getter / setter は <see cref="ZoomViewControl.ZoomPercent"/> へ委譲する。<br/>
-    /// （表示・通知は <see cref="ZoomViewControl"/> が行う）。
+    /// （表示・通知は <see cref="ZoomViewControl"/> が行う）。<c>double</c> でスライダ等の連続値も設定できる。
     /// </remarks>
-    public int ZoomPercent
+    public double ZoomPercent
     {
         get => _zoomView.ZoomPercent;
         set => _zoomView.ZoomPercent = value;
@@ -153,12 +153,22 @@ public sealed partial class CropViewControl : Panel
     public void ZoomOut() => _zoomView.ZoomOut();
 
     /// <summary>Fit 表示（ウィンドウに合わせて画像を表示）に戻す。</summary>
-    /// <remarks><see cref="ZoomViewControl.Fit"/> へ委譲する（ズーム率の単一所有）。</remarks>
-    public void Fit() => _zoomView.Fit();
+    /// <remarks><see cref="ZoomViewControl.ZoomFit"/> へ委譲する（ズーム率の単一所有）。<see cref="ZoomIn"/> / <see cref="ZoomOut"/> と対になるズーム操作。</remarks>
+    public void ZoomFit() => _zoomView.ZoomFit();
 
-    /// <summary>拡大率表示テキスト（例: "100%"）。</summary>
-    /// <remarks><see cref="ZoomViewControl"/> が所有。ホストは <see cref="ZoomViewControl.ZoomChanged"/> で通知された値を参照する。</remarks>
-    public string ZoomDisplayText => _zoomView.ZoomDisplayText;
+    /// <summary>現在 Fit 表示中かどうか（ズーム率が 0 = 自動）。</summary>
+    /// <value>Fit 表示中なら true。</value>
+    /// <remarks><see cref="ZoomViewControl.IsFit"/> へ委譲する。ホストは内部 <c>Image.Stretch</c> に依存せず Fit 状態を判定できる。</remarks>
+    public bool IsFit => _zoomView.IsFit;
+
+    /// <summary>内包するズーム・パンビューポート（SnipCapture の Crop セッションが座標変換・Fit 状態を利用する）。</summary>
+    /// <remarks>
+    /// <see cref="ZoomViewControl"/> を公開する（<c>StartCropAsync</c> の引数として利用するため）。<br/>
+    /// ズーム操作（<see cref="ZoomPercent"/> / <see cref="ZoomIn"/> / <see cref="ZoomOut"/> / <see cref="ZoomFit"/>）は本コントロールの公開 API へ委譲済みで、
+    /// 通常のホストは <see cref="ZoomView"/> を直接参照する必要はない。<br/>
+    /// SnipCapture の Crop セッション（<see cref="ZoomView"/> の <see cref="ZoomViewControl.IsFit"/> 等）が利用する。
+    /// </remarks>
+    public ZoomViewControl ZoomView => _zoomView;
 
     // ====================================================================
     // 公開 API: 選択状態（FadeMaskDragRectControl へ委譲）
@@ -180,10 +190,6 @@ public sealed partial class CropViewControl : Panel
     /// <summary>座標変換ポートを設定する（内包コントロールへ分配）。</summary>
     /// <param name="port">座標変換ポート。null で等価変換。</param>
     public void SetCoordinateTransform(ICoordinatePort? port) => _selectionOverlay.SetCoordinateTransform(port);
-
-    /// <summary>ズーム対象の画像コントロール（ホストが Crop セッション等で参照する）。</summary>
-    /// <remarks><see cref="ZoomViewControl.ImageControl"/> を公開する（Crop セッションの対象画像コントロール）。</remarks>
-    public Image ImageControl => _zoomView.ImageControl;
 
     /// <summary>選択確定要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Enter キー相当）。</summary>
     public void RequestConfirm() => _selectionOverlay.RequestConfirm();

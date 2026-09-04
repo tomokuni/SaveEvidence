@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -175,7 +176,7 @@ public class ZoomableViewTests
     }
 
     // ====================================================================
-    // Fit 中の座標変換（回帰: 座標表示が更新されない）
+    // Fit 中の座標変換
     // ====================================================================
 
     [AvaloniaFact]
@@ -311,7 +312,7 @@ public class ZoomableViewTests
         var view = CreateView();
         view.CenterAlign = true;
 
-        // 画像自体の配置も中央に切り替わる（回帰: オーバーレイ座標のみ中央で描画とずれていた）
+        // 画像自体の配置も中央に切り替わる（オーバーレイ座標との一致）
         Assert.Equal(HorizontalAlignment.Center, view.ImageControl.HorizontalAlignment);
         Assert.Equal(VerticalAlignment.Center, view.ImageControl.VerticalAlignment);
     }
@@ -329,16 +330,56 @@ public class ZoomableViewTests
     }
 
     [AvaloniaFact]
-    public void CenterAlign_固定倍率中は左上配置のまま()
+    public void CenterAlign_固定倍率で画像がビューポートより大きい場合は左上配置のまま()
     {
-        var view = CreateView();
-        view.SetZoom(200);
+        var view = CreateView(); // 画像 1000x500・ビューポート 400x200
+        view.SetZoom(200);       // 表示 2000x1000（ビューポートより大きい）
 
         view.CenterAlign = true;
 
-        // 固定倍率はパン位置で制御するため、配置は常に左上
+        // 画像がビューポートより大きい場合はパン位置（オフセット）で制御するため、配置は左上
         Assert.Equal(HorizontalAlignment.Left, view.ImageControl.HorizontalAlignment);
         Assert.Equal(VerticalAlignment.Top, view.ImageControl.VerticalAlignment);
+    }
+
+    [AvaloniaFact]
+    public void CenterAlign_固定倍率で画像がビューポートより小さい場合は中央配置になる()
+    {
+        // 画像 100x50・ビューポート 400x200・固定倍率 100% → 表示 100x50（ビューポートより小さい）
+        var view = new ZoomableView();
+        view.SetSource(CreateBitmap(100, 50));
+        view.CenterAlign = true;
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        view.SetZoom(100);
+
+        // 中央寄せは translate 補正で行う（配置は常に左上）。translate はコンテンツ座標（pre-scale）系。
+        // 補正（コンテンツ座標） = (ビューポート − 表示サイズ) / 2 / scale
+        var tf = view.ImageControl.RenderTransform as TransformGroup;
+        var tt = tf!.Children[0] as TranslateTransform;
+        // 表示サイズ 100x50、ビューポート 400x200、scale=1 → 補正 = (150, 75) / 1 = (150, 75)
+        Assert.Equal(150.0, tt!.X);
+        Assert.Equal(75.0, tt!.Y);
+    }
+
+    [AvaloniaFact]
+    public void CenterAlign_固定倍率で画像がビューポートより小さい場合は左上配置に戻る()
+    {
+        // 画像 100x50・ビューポート 400x200・固定倍率 100%
+        var view = new ZoomableView();
+        view.SetSource(CreateBitmap(100, 50));
+        view.CenterAlign = false;
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        view.SetZoom(100);
+
+        // 左上寄せなら translate 補正は加わらず、(-offset*scale, -offset*scale) = (0, 0)
+        var tf = view.ImageControl.RenderTransform as TransformGroup;
+        var tt = tf!.Children[0] as TranslateTransform;
+        Assert.Equal(0.0, tt!.X);
+        Assert.Equal(0.0, tt!.Y);
     }
 
     [AvaloniaFact]
@@ -355,13 +396,14 @@ public class ZoomableViewTests
     }
 
     [AvaloniaFact]
-    public void SetZoom_固定倍率への移行で配置が左上に戻る()
+    public void SetZoom_固定倍率への移行で配置が左上になる()
     {
-        var view = CreateView();
-        view.CenterAlign = true; // Fit: 中央配置
+        var view = CreateView(); // 画像 1000x500・ビューポート 400x200
+        view.CenterAlign = true; // Fit: 中央配置（Stretch.Uniform + Center）
         Assert.Equal(HorizontalAlignment.Center, view.ImageControl.HorizontalAlignment);
 
-        // 固定倍率へ移行 → パン制御に切り替わり、配置は左上に戻る（回帰: Center が残る）
+        // 固定倍率へ移行 → レイアウト配置は常に左上（中央寄せは translate 補正で行う）
+        // SetZoom(200) で画像がビューポートより大きくなるため、パン制御（オフセット）が優先され translate 補正は加わらない
         view.SetZoom(200);
         Assert.Equal(HorizontalAlignment.Left, view.ImageControl.HorizontalAlignment);
         Assert.Equal(VerticalAlignment.Top, view.ImageControl.VerticalAlignment);
@@ -383,6 +425,124 @@ public class ZoomableViewTests
         Assert.Equal(0.0, rect.Y);
         Assert.Equal(400.0, rect.Width);
         Assert.Equal(200.0, rect.Height);
+    }
+
+    [AvaloniaFact]
+    public void CenterAlign_固定倍率でズームアウトし画像が小さい場合も中央寄せされる()
+    {
+        // 画像 1000x500・ビューポート 400x200・ズームアウト 20% → 表示 200x100（ビューポートより小さい）
+        var view = new ZoomableView();
+        view.SetSource(CreateBitmap(1000, 500));
+        view.CenterAlign = true;
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        view.SetZoom(20);
+
+        // 中央寄せ補正（ビューポート座標） = (400 − 200) / 2 = 100、(200 − 100) / 2 = 50
+        var rect = view.ImageRectViewport();
+        Assert.Equal(100.0, rect.X);
+        Assert.Equal(50.0, rect.Y);
+        Assert.Equal(200.0, rect.Width);
+        Assert.Equal(100.0, rect.Height);
+
+        // 重要: TransformGroup の translate はスケールの内側（pre-scale）に適用され、実際の描画位置は
+        // 「scale × translate」。そのため translate はコンテンツ座標（画像ピクセル）系で指定される。
+        // 中央寄せ補正をコンテンツ座標へ変換するには scale（=0.2）で除する:
+        //   translate.X = (400 − 200) / 2 / 0.2 = 500
+        //   translate.Y = (200 − 100) / 2 / 0.2 = 250
+        // これにより、実際の描画位置 transform(0,0) = scale × translate = (100, 50) が ImageRect 原点と一致する。
+        var tf = view.ImageControl.RenderTransform as TransformGroup;
+        var tt = tf!.Children[0] as TranslateTransform;
+        Assert.Equal(500.0, tt!.X);
+        Assert.Equal(250.0, tt!.Y);
+        // 実効描画位置（scale × translate）が ImageRectViewport の原点と一致することを確認する
+        var actual = tf.Value.Transform(new Point(0, 0));
+        Assert.Equal(rect.X, actual.X, 6);
+        Assert.Equal(rect.Y, actual.Y, 6);
+    }
+
+    [AvaloniaFact]
+    public void CenterAlign_横方向が大きく縦方向が小さい場合は縦のみ中央寄せされる()
+    {
+        // 画像 2000x100・ビューポート 400x200・固定倍率 100% → 表示 2000x100
+        // 横方向 2000 > 400（スクロール可能）、縦方向 100 < 200（スクロール不能）
+        var view = new ZoomableView();
+        view.SetSource(CreateBitmap(2000, 100));
+        view.CenterAlign = true;
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        view.SetZoom(100);
+
+        // 縦方向のみ中央寄せ: y = (200 − 100) / 2 = 50
+        // 横方向はオフセット（パン位置）が優先される: x = -offset.X * scale = 0（初期オフセット 0）
+        var rect = view.ImageRectViewport();
+        Assert.Equal(0.0, rect.X);       // 横方向はスクロール可能（左寄せ）
+        Assert.Equal(50.0, rect.Y);      // 縦方向は中央寄せが維持される
+        Assert.Equal(2000.0, rect.Width);
+        Assert.Equal(100.0, rect.Height);
+
+        // 縦方向のみ translate 補正が加わる（横方向はパン位置のまま）
+        var tf = view.ImageControl.RenderTransform as TransformGroup;
+        var tt = tf!.Children[0] as TranslateTransform;
+        Assert.Equal(0.0, tt!.X);        // 横方向は translate 補正なし
+        Assert.Equal(50.0, tt!.Y);       // 縦方向の中央寄せ = (200 − 100) / 2 / scale(1) = 50
+    }
+
+    [AvaloniaFact]
+    public void CenterAlign_横パン中でも縦中央寄せが維持される()
+    {
+        // 画像 2000x100・ビューポート 400x200・固定倍率 100%
+        var view = new ZoomableView();
+        view.SetSource(CreateBitmap(2000, 100));
+        view.CenterAlign = true;
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        view.SetZoom(100);
+        view.SetOffset(new Vector(300, 0)); // 横方向に 300 パン（最大オフセット 1600）
+
+        // 縦方向はスクロール不能（表示 100 < 200）なのでオフセット Y は 0 にクランプ
+        Assert.Equal(0.0, view.Offset.Y);
+        var rect = view.ImageRectViewport();
+        // 横方向: -offset.X * scale = -300 → パン位置。縦方向: (200 - 100)/2 = 50 → 中央寄せ
+        Assert.Equal(-300.0, rect.X);
+        Assert.Equal(50.0, rect.Y);
+
+        // translate でも一致すること（ImageOriginViewport と UpdateTransformAndSync の整合）
+        var tf = view.ImageControl.RenderTransform as TransformGroup;
+        var actual = tf!.Value.Transform(new Point(0, 0));
+        Assert.Equal(rect.X, actual.X, 6);
+        Assert.Equal(rect.Y, actual.Y, 6);
+    }
+
+    [AvaloniaFact]
+    public void CenterAlign_縦パン中でも横中央寄せが維持される()
+    {
+        // 画像 100x2000・ビューポート 400x200・固定倍率 100%
+        // 横方向 100 < 400（スクロール不能）、縦方向 2000 > 200（スクロール可能）
+        var view = new ZoomableView();
+        view.SetSource(CreateBitmap(100, 2000));
+        view.CenterAlign = true;
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        view.SetZoom(100);
+        view.SetOffset(new Vector(0, 300)); // 縦方向に 300 パン（最大オフセット 1800）
+
+        // 横方向はスクロール不能（表示 100 < 400）なのでオフセット X は 0 にクランプ
+        Assert.Equal(0.0, view.Offset.X);
+        var rect = view.ImageRectViewport();
+        // 横方向: (400 - 100)/2 = 150 → 中央寄せ。縦方向: -offset.Y * scale = -300 → パン位置
+        Assert.Equal(150.0, rect.X);
+        Assert.Equal(-300.0, rect.Y);
+
+        // translate でも一致すること
+        var tf = view.ImageControl.RenderTransform as TransformGroup;
+        var actual = tf!.Value.Transform(new Point(0, 0));
+        Assert.Equal(rect.X, actual.X, 6);
+        Assert.Equal(rect.Y, actual.Y, 6);
     }
 
     [AvaloniaFact]
@@ -669,6 +829,8 @@ public class ZoomableViewTests
         Assert.True(received!.ZoomIn);
     }
 
+
+
     // ====================================================================
     // イベント（ViewportChanged: Crop オーバーレイの追従通知）
     // ====================================================================
@@ -768,7 +930,7 @@ public class ZoomableViewTests
 
         Assert.True(view.VerticalScrollBar.IsVisible);
 
-        // 画像を解除 → スクロールバーが非表示に戻る（回帰: SetSource(null) で残っていた）
+        // 画像を解除 → スクロールバーが非表示に戻る
         view.SetSource(null);
 
         Assert.False(view.VerticalScrollBar.IsVisible);
@@ -813,7 +975,7 @@ public class ZoomableViewTests
         view.Arrange(new Rect(0, 0, 400, 200));
         Assert.Equal(400.0, view.ImageControl.MaxWidth); // Fit: ビューポート幅に制約
 
-        // ビューポートを拡大 → Fit の最大幅も新しいサイズに更新される（回帰: リサイズで古い値のまま）
+        // ビューポートを拡大 → Fit の最大幅も新しいサイズに更新される
         view.Measure(new Size(800, 400));
         view.Arrange(new Rect(0, 0, 800, 400));
         Dispatcher.UIThread.RunJobs();

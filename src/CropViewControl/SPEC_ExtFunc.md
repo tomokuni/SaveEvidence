@@ -43,10 +43,11 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（ドメイン座標）。View とルーペの両方へ描画。 |
 | `SelectionMode` | `FadeMaskDragRectMode` | 選択モード（既定 `Crop`）。FadeMaskDragRectControl へ委譲。 |
 | `ZoomPercent` | `int` | 現在のズーム率（%）。0 = Fit。 |
+| `IsFit` | `bool` | 現在 Fit 表示中かどうか（ズーム率が 0 = 自動）。 |
 | `ZoomDisplayText` | `string` | 拡大率表示テキスト（例: "100%"）。 |
 | `HasSelection` | `bool` | 現在の選択状態（選択矩形の有無）。 |
 | `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標）。未選択時は 0x0。 |
-| `ImageControl` | `Image` | ズーム対象の画像コントロール（Crop セッション用）。 |
+| `ZoomView` | `ZoomViewControl` | 内包するズーム・パンビューポート（SnipCapture の Crop セッションが利用）。 |
 
 #### 2.1.2 メソッド
 
@@ -54,7 +55,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | --- | --- |
 | `void ZoomIn()` | ズームイン（`ZoomTransition.NextLevel` で段階遷移）。 |
 | `void ZoomOut()` | ズームアウト（`ZoomTransition.PrevLevel` で段階遷移）。 |
-| `void Fit()` | Fit 表示（ウィンドウに合わせて表示）に戻す。 |
+| `void ZoomFit()` | Fit 表示（ウィンドウに合わせて表示）に戻す（`ZoomIn` / `ZoomOut` と対になるズーム操作）。 |
 | `void SetSelection(Rect rect)` | 選択状態を外部から設定（FadeMaskDragRectControl へ委譲）。 |
 | `void ClearSelection()` | 選択状態をクリア（FadeMaskDragRectControl へ委譲）。 |
 | `void SetCoordinateTransform(ICoordinatePort? port)` | 座標変換ポートを設定（内包コントロールへ分配）。 |

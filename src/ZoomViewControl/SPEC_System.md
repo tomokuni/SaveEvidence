@@ -107,16 +107,18 @@ flowchart TB
 
 - **分類**: 公開コントロール（`public sealed class : Panel`。自己完結型複合コントロール）
 - **責務**: `ZoomableView` を内包し、ズーム率の遷移（⊖⊕ 23 段階 / Ctrl+ホイール ×1.1）・適用・Fit 表示を統括。ズーム要求（`ZoomRequested`）・リサイズ（`SizeChanged`）の配線を自己完結。ズーム率変更・可否は `ZoomChanged` で通知、可否は `CanZoomIn` / `CanZoomOut` で公開。ホストが内部 `ZoomableView` へ到達しないよう、必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知・画像コントロール）を Facade として再公開
-- **公開メンバー**: `Source` / `ZoomPercent` / `CenterAlign` / `ZoomDisplayText` / `ZoomIn` / `ZoomOut` / `Fit` / `ApplyZoomFromSlider` / `CanZoomIn` / `CanZoomOut` / `Log` / `ZoomChanged`（イベント）/ `ViewportChanged`（イベント）/ `ViewportToContentImage` / `ContentToViewportImage` / `ImageRectViewport` / `ImageControl`
-- **非公開（内部のみ）**: `ZoomInByWheel` / `ZoomOutByWheel`（Ctrl+ホイールハンドラのみ）/ `PointerPosition`（ズーム中心。Ctrl+ホイールハンドラのみ）/ `ApplyZoom`（表示テキスト・可否・イベント通知の反映。ズーム率変更経路が内部的に呼ぶ）/ `ZoomableView`（内包するビューポート。公開しない）
+- **非公開メンバー**: `ZoomInByWheel` / `ZoomOutByWheel`（Ctrl+ホイールハンドラのみ）/ `PointerPosition`（ズーム中心。Ctrl+ホイールハンドラのみ）/ `ApplyZoom`（可否・イベント通知の反映。ズーム率変更経路が内部的に呼ぶ）/ `ZoomableView`（内包するビューポート。公開しない）
+- **公開 API の詳細**: `SPEC_ExtFunc.md` の 8.1 を参照
 - **依存**: ZoomableView / ZoomMath / ZoomTransition / LogMessage / ZoomAvailability（値オブジェクト。2 値の可否を単一保持）
 - **ズーム率の単一所有**: ズーム率は内包する `ZoomableView` が所有し、本コントロールは `ZoomPercent`（読み書き）で操作窓口を提供する
 
 ### 6.2 ZoomableView
 
-- **分類**: 公開コントロール（`public sealed class : Panel`）
-- **責務**: ScrollViewer 不使用のパン・ズームビューポート。RenderTransform（ScaleTransform + TranslateTransform）で表示。マウスドラッグパンは grab 方式（掴んだ位置がポインタに追従）
-- **公開メンバー**: `SetSource` / `SetZoom` / `SetOffset` / `PanBy` / `ViewportToContent` / `ContentToViewport` / `ViewportToContentImage` / `ContentToViewportImage` / `DisplaySize` / `ImageRectViewport` / `ImageControl` / `ZoomPercent` / `Offset` / `Scale` / `EffectiveScale` / `CenterAlign` / `ZoomRequested` / `ViewportChanged`
+- **分類**: 内部コントロール（`internal sealed class : Panel`。`ZoomViewControl` の内部実装）
+- **責務**: ScrollViewer 不使用のパン・ズームビューポート。RenderTransform（ScaleTransform + TranslateTransform）で表示。マウスドラッグパンは grab 方式（掴んだ位置がポインタに追従）。外部からは `ZoomViewControl`（Facade）経由でアクセスする
+- **内部実装の詳細**:
+  - ScrollViewer を使用しない（RenderTransform ベース）。ScrollViewer のレイアウト処理によるオフセット上書きが原理的に発生しないため、ズーム中心維持の防御コード（保留オフセット再設定・収束ループ・Dispatcher.Post 保険）が不要
+  - 描画位置 = 実効スケール × (コンテンツ座標 − オフセット)。オフセットはスクロール範囲（コンテンツ − ビューポート / 実効スケール）にクランプされる
 - **依存**: ZoomMath / ScrollMetrics / ZoomRequestedEventArgs
 
 ### 6.3 ZoomMath / ZoomTransition / ScrollMetrics（純粋関数）

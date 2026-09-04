@@ -9,9 +9,7 @@ namespace app.Tests;
 /// </summary>
 /// <remarks>
 /// app.csproj の <c>AvaloniaResource</c> で埋め込まれた SVG が<br/>
-/// <c>avares://</c> で正しく読み込めることを検証する（アセンブリ名の解決を含む）。<br/>
-/// 回帰: アセンブリ名（SaveEvidence）と URI（avares://{アセンブリ名}/...）の不一致で
-/// FileNotFoundException が発生した問題の再発防止。
+/// <c>avares://</c> で正しく読み込めることを検証する（アセンブリ名の解決を含む）。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class IconLoaderTests

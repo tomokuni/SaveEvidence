@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
+using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -28,7 +29,7 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 /// 座標変換は「論理 ↔ 親パネルDIP」の 1 段で完結する。
 /// </remarks>
 internal sealed class CropSession(
-    Control previewControl,
+    ZoomViewControl previewControl,
     Window hostWindow,
     Bitmap sourceImage,
     CaptureSettings settings,
@@ -202,7 +203,7 @@ internal sealed class CropSession(
             CoordinatePort.ImageLayout(
                 DisplaySize,
                 _sourceImageSize,
-                () => previewControl is not Image img || img.Stretch == Stretch.Uniform),
+                () => previewControl.IsFit),
             CoordinatePort.ScrollOffset(() =>
             {
                 // 同値の原点取得は一度だけ実行して共有する
@@ -261,7 +262,7 @@ internal sealed class CropSession(
         double scaleX = CoordinatePort.ImageLayoutScaleX(
             DisplaySize,
             _sourceImageSize,
-            () => previewControl is not Image img || img.Stretch == Stretch.Uniform);
+            () => previewControl.IsFit);
         int displayPct = (int)Math.Round(100.0 / Math.Max(scaleX, 0.01));
         return $"LT: ({l}, {t}),  RB: ({r}, {b}),  WH: ({r - l + 1}, {b - t + 1}), Zoom: ({displayPct}%)";
     }

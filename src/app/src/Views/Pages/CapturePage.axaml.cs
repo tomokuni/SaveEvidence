@@ -100,7 +100,8 @@ public sealed partial class CapturePage : UserControl
             SyncZoomSlider(e.ZoomPercent);
             UpdateZoomButtonState(e.CanZoomIn, e.CanZoomOut);
             _viewModel.ZoomPercent = e.ZoomPercent;
-            _viewModel.ZoomDisplayText = ZoomableView.ZoomDisplayText;
+            // 表示文字列はホスト側で生成する（ZoomMath.FormatZoomDisplayText に委譲。e.ZoomPercent は実効ズーム率のため Fit 中も 0 にならない）
+            _viewModel.ZoomDisplayText = ZoomMath.FormatZoomDisplayText(e.ZoomPercent);
         };
 
         // ViewModel のプロパティ変更時にズーム設定を適用する
@@ -134,7 +135,6 @@ public sealed partial class CapturePage : UserControl
         // 初期のズーム率をスライダに反映し、⊕⊖ ボタン・表示テキストの状態を ZoomViewControl で初期化する
         SyncZoomSlider(_viewModel.ZoomPercent);
         UpdateZoomButtonState(ZoomableView.CanZoomIn, ZoomableView.CanZoomOut);
-        _viewModel.ZoomDisplayText = ZoomableView.ZoomDisplayText;
 
         // マウスポインタ移動でステータスバーの座標表示（ドメイン座標）を更新する
         ZoomableView.PointerMoved += OnImagePointerMoved;
@@ -698,7 +698,7 @@ public sealed partial class CapturePage : UserControl
         // プレビュー状態（ScrollOffset / ZoomPercent）は SnipCaptureUI が DragRect イベント / 表示状態から導出する
         // Ctrl+ホイールによるズーム要求は ZoomViewControl へ委譲する（ズーム状態の整合・Crop 終了後の継続）
         _cropTask = _snipCapture.StartCropAsync(
-            ZoomableView.ImageControl, _parentWindow!, srcBmp,
+            ZoomableView, _parentWindow!, srcBmp,
             zoomIn => { if (zoomIn) ZoomableView.ZoomIn(); else ZoomableView.ZoomOut(); });
 
         if (_cropTask is null)
@@ -805,7 +805,7 @@ public sealed partial class CapturePage : UserControl
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ルーティングイベント。</param>
     /// <remarks>ズーム率を 0（自動 Fit）に設定する。ズーム率は ZoomViewControl が適用し、ZoomChanged でスライダ・ViewModel へ同期される。</remarks>
-    private void OnZoomFitButtonClick(object? sender, RoutedEventArgs e) => ZoomableView.Fit();
+    private void OnZoomFitButtonClick(object? sender, RoutedEventArgs e) => ZoomableView.ZoomFit();
 
     /// <summary>ズームインする（Ctrl+キー等の外部からの要求用。⊖⊕ボタンと同じ遷移）。</summary>
     public void ZoomInByButton() => ZoomableView.ZoomIn();
@@ -820,7 +820,8 @@ public sealed partial class CapturePage : UserControl
     private void OnZoomSliderValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
     {
         if (_isSyncingZoomSlider) return;
-        ZoomableView.ApplyZoomFromSlider(ZoomSlider.Value);
+        // ズーム率は double で設定する（ApplyZoomFromSlider は廃止・ZoomPercent に統合）
+        ZoomableView.ZoomPercent = ZoomSlider.Value;
     }
 
     /// <summary>スライダ同期中の再入防止フラグ。</summary>
@@ -829,19 +830,19 @@ public sealed partial class CapturePage : UserControl
     /// <summary>スライダ同期時の値比較許容差。</summary>
     private const double ZoomSliderEpsilon = 0.01;
 
-    /// <summary>ZoomPercent の変更をスライダに反映する（再入防止付きラッパー）。</summary>
-    /// <param name="zoom">現在のズーム率（%）。0 = Fit。</param>
+    /// <summary>現在のズーム率をスライダに反映する（再入防止付きラッパー）。</summary>
+    /// <param name="zoom">現在の実効ズーム率（%）。Fit 中は実効倍率。</param>
     /// <remarks>
-    /// ズーム率の変化（<see cref="ZoomViewControl.ZoomChanged"/>）を受けて、スライダ値を現在のズーム率へ同期する。<br/>
-    /// 自動（Fit）表示中はスライダで表現できないため、最小値に合わせる。<br/>
+    /// 実効ズーム率の変化（<see cref="ZoomViewControl.ZoomChanged"/>）を受けて、スライダ値を現在のズーム率へ同期する。<br/>
+    /// Fit 中も実際に表示されている実効倍率をスライダに反映する（スライダ範囲 <see cref="ZoomSlider.Minimum"/> 〜 <see cref="ZoomSlider.Maximum"/> にクランプ）。<br/>
     /// スライダへの値設定で発火する <see cref="OnZoomSliderValueChanged"/> を無視するためにフラグで保護する。
     /// </remarks>
-    private void SyncZoomSlider(int zoom)
+    private void SyncZoomSlider(double zoom)
     {
         _isSyncingZoomSlider = true;
         try
         {
-            var sliderValue = zoom > 0 ? zoom : ZoomSlider.Minimum;
+            var sliderValue = Math.Clamp(zoom, ZoomSlider.Minimum, ZoomSlider.Maximum);
             if (Math.Abs(ZoomSlider.Value - sliderValue) > ZoomSliderEpsilon)
             {
                 ZoomSlider.Value = sliderValue;
@@ -919,7 +920,7 @@ public sealed partial class CapturePage : UserControl
 
     private void OnImageAreaPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        var point = e.GetCurrentPoint(ZoomableView.ImageControl);
+        var point = e.GetCurrentPoint(ZoomableView);
         var isRight = point.Properties.IsRightButtonPressed;
         var hasCropTask = _cropTask is not null;
         _logger.LogPreviewPointerPressed(isRight, hasCropTask);
@@ -1097,7 +1098,7 @@ public sealed partial class CapturePage : UserControl
         menu.Items.Add(confirmItem);
         menu.Items.Add(cancelItem);
         menu.Closed += (_, _) => _cropContextMenu = null;
-        menu.Open(ZoomableView.ImageControl);
+        menu.Open(ZoomableView);
         _cropContextMenu = menu;
     }
 

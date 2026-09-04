@@ -23,7 +23,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     /// <summary>現在のズーム率（%）。0 = Fit（自動）。表示用ストア（ズーム率の単一所有は ZoomViewControl。ZoomChanged で更新）。</summary>
     [ObservableProperty]
-    private int _zoomPercent;
+    private double _zoomPercent;
 
     /// <summary>ステータスバー等に表示する拡大率テキスト。（表示用ストア。ZoomChanged で更新）。</summary>
     [ObservableProperty]

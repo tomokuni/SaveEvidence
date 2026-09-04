@@ -32,7 +32,7 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 ## 2. 機能一覧
 
 - **複合構造（Facade / Composite）**: `ZoomableView` + `FadeMaskDragRectControl` + 矩形オーバーレイを内包
-- **画像表示**: 拡大（`ZoomIn` / `ZoomOut`）/ 原寸 / Fit 表示（`Fit`）/ パン（マウスドラッグ・ホイール）
+- **画像表示**: 拡大（`ZoomIn` / `ZoomOut`）/ 原寸 / Fit 表示（`ZoomFit`）/ パン（マウスドラッグ・ホイール）
 - **領域選択**: ドラッグ選択・暗転マスク・ルーペ（`FadeMaskDragRectControl` へ委譲）
 - **外部提供矩形**: `Rects`（`IReadOnlyList<OverlayRect>`）を View（ビューポート）とルーペの両方へ描画
   - 矩形情報（`OverlayRect`）: 矩形・破線種類・前景色・背景色・線幅
@@ -89,7 +89,7 @@ CropPreview.Rects = new[]
 // ズーム操作（拡大・縮小・Fit）
 CropPreview.ZoomIn();
 CropPreview.ZoomOut();
-CropPreview.Fit();
+CropPreview.ZoomFit();
 
 // 選択モード（既定 Crop）
 CropPreview.SelectionMode = FadeMaskDragRectMode.Crop;

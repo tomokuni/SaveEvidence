@@ -496,7 +496,7 @@ public class ColorPickerTests
 
         // InitializeComponent 中は名前スコープのフィールド代入前のため _comboBox が null のことがある
         // （実アプリでは TwoWay Text バインディングの初期書き戻しがこのタイミングで届く）。
-        // 枠線更新をスキップし、バリデーション状態のみ更新されることを保証する（回帰: NRE 対策）。
+        // 枠線更新をスキップし、バリデーション状態のみ更新されることを保証する。
         control._comboBox = null!;
         control.SelectedColor = "NotAColor";
 

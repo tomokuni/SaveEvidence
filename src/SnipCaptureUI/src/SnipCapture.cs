@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -141,7 +142,7 @@ public sealed class SnipCapture : IDisposable
     /// 実行中に同一インスタンスへ再呼び出しされた場合は null を返す。
     /// </remarks>
     public Task<PixelRect?> StartCropAsync(
-        Control previewControl, Window hostWindow, Bitmap sourceImage,
+        ZoomViewControl previewControl, Window hostWindow, Bitmap sourceImage,
         Action<bool>? zoomRequestHandler = null)
     {
         ThrowIfDisposed();

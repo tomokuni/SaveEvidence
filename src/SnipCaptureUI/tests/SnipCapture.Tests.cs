@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
@@ -52,8 +53,8 @@ public class SnipCaptureTests
         var bitmap = CreateBitmap(10, 10);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(null!, new Window(), bitmap));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(new Border(), null!, bitmap));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(new Border(), new Window(), null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(new ZoomViewControl(), null!, bitmap));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(new ZoomViewControl(), new Window(), null!));
     }
 
     [AvaloniaFact]
@@ -62,11 +63,11 @@ public class SnipCaptureTests
         var capture = new SnipCapture();
         capture.Dispose();
 
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => capture.StartCropAsync(new Border(), new Window(), CreateBitmap(10, 10)));
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => capture.StartCropAsync(new ZoomViewControl(), new Window(), CreateBitmap(10, 10)));
     }
 
     // ====================================================================
-    // 回帰: スクリーン/ウィンドウ選択で自身のウィンドウが非表示にならない
+    // スクリーン/ウィンドウ選択で自身のウィンドウが非表示にならない
     // ====================================================================
 
     [AvaloniaFact]
@@ -129,7 +130,7 @@ public class SnipCaptureTests
     }
 
     // ====================================================================
-    // 回帰: キャプチャ完了イベント（画像変更 → APP 再表示の順序）
+    // キャプチャ完了イベント（画像変更 → APP 再表示の順序）
     // ====================================================================
 
     [AvaloniaFact]
@@ -167,14 +168,14 @@ public class SnipCaptureTests
     }
 
     // ====================================================================
-    // 回帰: 閉区間キャプチャ（Crop の始点・終点を含む）
+    // 閉区間キャプチャ（Crop の始点・終点を含む）
     // ====================================================================
 
     [AvaloniaFact]
     public void CropSession_ExecuteCropForSize_閉区間で始点終点のピクセルを含む()
     {
         var panel = new Panel();
-        var preview = new Image();
+        var preview = new ZoomViewControl();
         panel.Children.Add(preview);
         var bitmap = CreateBitmap(100, 100);
         var session = new CropSession(preview, new Window(), bitmap, new CaptureSettings(), NullLogger.Instance);
@@ -189,7 +190,7 @@ public class SnipCaptureTests
     public void CropSession_ExecuteCropForSize_画像右端では幅が画像サイズにクランプされる()
     {
         var panel = new Panel();
-        var preview = new Image();
+        var preview = new ZoomViewControl();
         panel.Children.Add(preview);
         var bitmap = CreateBitmap(100, 100);
         var session = new CropSession(preview, new Window(), bitmap, new CaptureSettings(), NullLogger.Instance);
@@ -205,7 +206,7 @@ public class SnipCaptureTests
     public void CropSession_ExecuteCropForSize_最小サイズ未満は空を返す()
     {
         var panel = new Panel();
-        var preview = new Image();
+        var preview = new ZoomViewControl();
         panel.Children.Add(preview);
         var bitmap = CreateBitmap(100, 100);
         var session = new CropSession(preview, new Window(), bitmap, new CaptureSettings(), NullLogger.Instance);
@@ -224,7 +225,7 @@ public class SnipCaptureTests
     public void CropSession_ApplySettings_実行中に設定を再適用して例外なく動作する()
     {
         var panel = new Panel();
-        var preview = new Image();
+        var preview = new ZoomViewControl();
         panel.Children.Add(preview);
         var bitmap = CreateBitmap(100, 100);
         var window = new Window();
@@ -244,7 +245,7 @@ public class SnipCaptureTests
     public void CropSession_NotifyViewportChanged_実行中に再描画を要求して例外なく動作する()
     {
         var panel = new Panel();
-        var preview = new Image();
+        var preview = new ZoomViewControl();
         panel.Children.Add(preview);
         var bitmap = CreateBitmap(100, 100);
         var window = new Window();
@@ -265,7 +266,7 @@ public class SnipCaptureTests
     {
         var capture = new SnipCapture(null, NullLogger.Instance);
         var panel = new Panel();
-        var preview = new Image();
+        var preview = new ZoomViewControl();
         panel.Children.Add(preview);
         var window = new Window();
         window.Content = panel;
@@ -292,7 +293,7 @@ public class SnipCaptureTests
     {
         var capture = new SnipCapture(null, NullLogger.Instance);
         var panel = new Panel();
-        var preview = new Image();
+        var preview = new ZoomViewControl();
         panel.Children.Add(preview);
         var window = new Window();
         window.Content = panel;

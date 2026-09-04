@@ -137,7 +137,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>現在のズーム率（%）。0 = 自動（Fit）。表示用ストア（ズーム率の単一所有は ZoomableView。ZoomChanged で更新）。</summary>
     /// <remarks>スライダ・ズーム表示のバインディング用に保持する。ズーム率の実ソースは ZoomViewControl 側。</remarks>
     [ObservableProperty]
-    private int _zoomPercent;
+    private double _zoomPercent;
 
     /// <summary>切出し選択範囲があるかどうか。View 側から設定される。</summary>
     [ObservableProperty]

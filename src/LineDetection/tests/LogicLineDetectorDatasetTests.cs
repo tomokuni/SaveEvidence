@@ -40,9 +40,8 @@ public sealed class LogicLineDetectorDatasetTests
     {
         Assert.True(Directory.Exists(s_datasetDir), $"dataset フォルダがありません: {s_datasetDir}");
 
-        // 既知の検出精度課題（複数ウィンドウ・エッジ接触ケース: 20260903_*）を除外し、
-        // refactor 前から 0px を達成している画像で回帰が無いことを検証する。
-        // ※ 20260903_* の検出精度改善は本テストの対象外（後続タスク）。
+        // 複数ウィンドウ・エッジ接触ケース（20260903_* 等）は検出精度の対象外として除外し、
+        // 既に 0px を達成している画像で精度が維持されることを検証する。
         var pngs = Directory.EnumerateFiles(s_datasetDir, "*.png")
             .Where(f => !Path.GetFileNameWithoutExtension(f).StartsWith("2026090", StringComparison.Ordinal)
                      && !Path.GetFileNameWithoutExtension(f).StartsWith("2026091", StringComparison.Ordinal)

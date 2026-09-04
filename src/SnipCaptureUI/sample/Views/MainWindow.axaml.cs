@@ -132,7 +132,7 @@ public sealed partial class MainWindow : Window
         }
 
         _vm.AddLog("[App] Crop を開始します（プレビュー上でドラッグ選択 → Enter / ダブルクリックで確定）。");
-        var rect = await _capture.StartCropAsync(PreviewCropView.ImageControl, this, _previewBitmap);
+        var rect = await _capture.StartCropAsync(PreviewCropView.ZoomView, this, _previewBitmap);
         _vm.UpdateCropResult(rect);
         _vm.AddLog(rect is { Width: > 0, Height: > 0 }
             ? $"[App] Crop が完了しました: {rect.Value}（元画像ピクセル）"

@@ -39,6 +39,26 @@ public static class ZoomMath
     public static double FitZoomPercent(Size imageSize, Size viewportSize)
         => FitScale(imageSize, viewportSize) * 100.0;
 
+    /// <summary>表示用の実効倍率（%）を整数に丸めた値を返す（1〜500 にクランプ）。</summary>
+    /// <param name="displayZoomPercent">表示用の実効倍率（%）。Fit 中は実効倍率、固定倍率中はズーム率。</param>
+    /// <returns>1〜500 の範囲に丸め・クランプされた倍率（%）。</returns>
+    /// <remarks>
+    /// ホストがステータスバー等に表示する整数倍率（例: "100%" の "100"）を導出するための純粋関数。<br/>
+    /// 表示の丸め・クランプロジックの単一所有（DRY）。<see cref="ZoomChangedEventArgs.DisplayZoomPercent"/> から文字列を生成する際に使用する。
+    /// </remarks>
+    public static int ToDisplayZoomPercent(double displayZoomPercent)
+        => Math.Clamp((int)Math.Round(displayZoomPercent), 1, 500);
+
+    /// <summary>表示用の実効倍率（%）からステータスバー表示文字列（例: "100%"）を生成する。</summary>
+    /// <param name="displayZoomPercent">表示用の実効倍率（%）。Fit 中は実効倍率、固定倍率中はズーム率。</param>
+    /// <returns>拡大率表示文字列（例: "100%"）。</returns>
+    /// <remarks>
+    /// <see cref="ToDisplayZoomPercent"/> で整数倍率に丸め・クランプし、<c>"%」</c> を付加する。<br/>
+    /// ホストが <see cref="ZoomChangedEventArgs.DisplayZoomPercent"/> から表示文字列を生成するための純粋関数（単一所有・DRY）。
+    /// </remarks>
+    public static string FormatZoomDisplayText(double displayZoomPercent)
+        => $"{ToDisplayZoomPercent(displayZoomPercent)}%";
+
     /// <summary>ズーム率変更後のスクロールオフセットを求める（コンテンツ座標不変・スケールが変わる場合）。</summary>
     /// <param name="offset">ズーム前のオフセット（コンテンツ座標。ビューポート左上に対応）。</param>
     /// <param name="center">ズーム中心（ビューポートローカル）。</param>

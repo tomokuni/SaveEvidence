@@ -11,7 +11,7 @@
   </Folder>
   <Folder Name="/src/CropViewControl/">
     <Project Path="src/CropViewControl/src/CropViewControl.csproj" />
-    <Project Path="src/CropViewControl/tests/CropView.Tests.csproj" />
+    <Project Path="src/CropViewControl/tests/CropViewControl.Tests.csproj" />
   </Folder>
   <Folder Name="/src/DragRectControl/">
     <Project Path="src/DragRectControl/sample/DragRectControl.Sample.csproj" />

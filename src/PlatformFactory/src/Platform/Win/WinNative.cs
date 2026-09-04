@@ -10,11 +10,7 @@ namespace Estable.AvaloniaUI.Platform.Win;
 /// 要素（ウィンドウ・スクリーン）検出（<c>EnumWindows</c> / <c>EnumDisplayMonitors</c> 等）、<br/>
 /// 画面/ウィンドウキャプチャ（<c>PrintWindow</c> / <c>GetSystemMetrics</c> 等）、<br/>
 /// ネイティブウィンドウ操作（<c>SetWindowPos</c> / <c>ShowWindow</c> / <c>PostMessage</c> 等）、<br/>
-/// キャプチャ除外（<c>SetWindowDisplayAffinity</c>）に必要な Win32 API を集約する（Windows 依存の最小実装）。<br/>
-/// <br/>
-/// 元は用途ごとに CaptureNative / CursorNative / WindowFinderNative / WindowNative に分割されていたが、<br/>
-/// 同じ Win32 API（RECT / GetWindowRect / DwmGetWindowAttribute / SetWindowLongPtr 等）が重複していたため、<br/>
-/// 単一の WinNative に統合した（DRY）。SnipCaptureUI の WinNative も本クラスに統合した。<br/>
+/// キャプチャ除外（<c>SetWindowDisplayAffinity</c>）に必要な Win32 API を集約する（Windows 依存の最小実装・DRY）。
 /// </remarks>
 internal static partial class WinNative
 {

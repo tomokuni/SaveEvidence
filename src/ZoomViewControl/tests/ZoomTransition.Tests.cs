@@ -18,7 +18,7 @@ public class ZoomTransitionTests
     [Fact]
     public void ButtonZoomLevels_仕様の23段階が昇順で定義されている()
     {
-        var expected = new[] { 10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500 };
+        double[] expected = [10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500];
         Assert.Equal(expected, ZoomTransition.ButtonZoomLevels);
     }
 
@@ -44,7 +44,7 @@ public class ZoomTransitionTests
     [InlineData(100, 110)]
     [InlineData(250, 300)]
     [InlineData(450, 500)]
-    public void NextLevel_固定倍率の次の段階へ遷移する(int current, int expected)
+    public void NextLevel_固定倍率の次の段階へ遷移する(double current, double expected)
     {
         var result = ZoomTransition.NextLevel(current, fitZoom: 33);
         Assert.Equal(expected, result);
@@ -82,10 +82,10 @@ public class ZoomTransitionTests
     public void NextLevel_Fit中の実効倍率が小数でも同じ遷移になる()
     {
         // 実効倍率は小数になり得る（例: ビューポートに応じた Fit 倍率）。
-        // 整数レベルとの比較（floor）と等価になることを保証する（回帰: 二分探索の正規化）。
-        Assert.Equal(40, ZoomTransition.NextLevel(current: 0, fitZoom: 33.5));
-        Assert.Equal(40, ZoomTransition.NextLevel(current: 0, fitZoom: 39.9));
-        Assert.Equal(50, ZoomTransition.NextLevel(current: 0, fitZoom: 40.0));
+        // 整数レベルとの比較（floor）と等価になることを保証する。
+        Assert.Equal(40.0, ZoomTransition.NextLevel(current: 0, fitZoom: 33.5));
+        Assert.Equal(40.0, ZoomTransition.NextLevel(current: 0, fitZoom: 39.9));
+        Assert.Equal(50.0, ZoomTransition.NextLevel(current: 0, fitZoom: 40.0));
     }
 
     [Fact]
@@ -93,6 +93,38 @@ public class ZoomTransitionTests
     {
         var result = ZoomTransition.NextLevel(current: 0, fitZoom: 500);
         Assert.Null(result);
+    }
+
+    [Fact]
+    public void NextLevel_fitZoomが現在値と次に大きい段階の間にあればfitZoomを挟む()
+    {
+        // current=100 < fitZoom=102 < next=110 → fitZoom=102 を次の倍率とする（Fit 実効倍率を経由）
+        var result = ZoomTransition.NextLevel(current: 100, fitZoom: 102);
+        Assert.Equal(102, result);
+    }
+
+    [Fact]
+    public void NextLevel_fitZoomが現在値以下なら23段階レベルを優先する()
+    {
+        // fitZoom=99 <= current=100 のため、fitZoom を挟まず 23 段階レベル（110）を返す
+        var result = ZoomTransition.NextLevel(current: 100, fitZoom: 99);
+        Assert.Equal(110, result);
+    }
+
+    [Fact]
+    public void NextLevel_fitZoomが次に大きい段階以上なら23段階レベルを優先する()
+    {
+        // fitZoom=115 >= next=110 のため、fitZoom を挟まず 23 段階レベル（110）を返す
+        var result = ZoomTransition.NextLevel(current: 100, fitZoom: 115);
+        Assert.Equal(110, result);
+    }
+
+    [Fact]
+    public void NextLevel_Fit中の実効倍率が範囲外なら下限上限にクランプして遷移する()
+    {
+        // fitZoom が MinZoom（10）未満 → クランプして 10 （Fit 中）
+        var result = ZoomTransition.NextLevel(current: 0, fitZoom: 5);
+        Assert.Equal(10, result);
     }
 
     // ====================================================================
@@ -104,7 +136,7 @@ public class ZoomTransitionTests
     [InlineData(100, 90)]
     [InlineData(250, 200)]
     [InlineData(500, 450)]
-    public void PrevLevel_固定倍率の前の段階へ遷移する(int current, int expected)
+    public void PrevLevel_固定倍率の前の段階へ遷移する(double current, double expected)
     {
         var result = ZoomTransition.PrevLevel(current, fitZoom: 33);
         Assert.Equal(expected, result);
@@ -132,6 +164,30 @@ public class ZoomTransitionTests
     }
 
     [Fact]
+    public void PrevLevel_fitZoomが前の段階と現在値の間にあればfitZoomを挟む()
+    {
+        // prev=10 < fitZoom=11 < current=12 → fitZoom=11 を次の倍率とする（Fit 実効倍率を経由）
+        var result = ZoomTransition.PrevLevel(current: 12, fitZoom: 11);
+        Assert.Equal(11, result);
+    }
+
+    [Fact]
+    public void PrevLevel_fitZoomが前の段階以下なら23段階レベルを優先する()
+    {
+        // prev=10 >= fitZoom=9 のため、fitZoom を挟まず 23 段階レベル（10）を返す
+        var result = ZoomTransition.PrevLevel(current: 12, fitZoom: 9);
+        Assert.Equal(10, result);
+    }
+
+    [Fact]
+    public void PrevLevel_fitZoomが現在値以上なら23段階レベルを優先する()
+    {
+        // fitZoom=13 >= current=12 のため、fitZoom を挟まず 23 段階レベル（10）を返す
+        var result = ZoomTransition.PrevLevel(current: 12, fitZoom: 13);
+        Assert.Equal(10, result);
+    }
+
+    [Fact]
     public void PrevLevel_Fit中は実効倍率より小さい最後の段階へ遷移する()
     {
         var result = ZoomTransition.PrevLevel(current: 0, fitZoom: 33);
@@ -141,10 +197,10 @@ public class ZoomTransitionTests
     [Fact]
     public void PrevLevel_Fit中の実効倍率が小数でも同じ遷移になる()
     {
-        // 整数レベルとの比較（ceil）と等価になることを保証する（回帰: 二分探索の正規化）。
-        Assert.Equal(33, ZoomTransition.PrevLevel(current: 0, fitZoom: 33.5));
-        Assert.Equal(33, ZoomTransition.PrevLevel(current: 0, fitZoom: 39.9));
-        Assert.Equal(33, ZoomTransition.PrevLevel(current: 0, fitZoom: 40.0));
+        // 整数レベルとの比較（ceil）と等価になることを保証する。
+        Assert.Equal(33.0, ZoomTransition.PrevLevel(current: 0, fitZoom: 33.5));
+        Assert.Equal(33.0, ZoomTransition.PrevLevel(current: 0, fitZoom: 39.9));
+        Assert.Equal(33.0, ZoomTransition.PrevLevel(current: 0, fitZoom: 40.0));
     }
 
     [Fact]

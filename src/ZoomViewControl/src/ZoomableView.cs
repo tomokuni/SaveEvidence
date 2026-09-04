@@ -28,7 +28,7 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// <br/>
 /// <b>適用パターン</b>: カスタムコントロール（自己完結型ビューポート）。計算は <see cref="ZoomMath"/>（純粋関数）に委譲。
 /// </remarks>
-public sealed class ZoomableView : Panel
+internal sealed class ZoomableView : Panel
 {
     /// <summary>スクロールバーの太さ（DIP）。</summary>
     private const double ScrollBarThickness = 10;
@@ -98,8 +98,19 @@ public sealed class ZoomableView : Panel
         IsVisible = false,
     };
 
-    /// <summary>画像表示コントロール（AccessKey 等の外部参照用）。</summary>
-    public Image ImageControl => _image;
+    /// <summary>画像表示コントロール（内部実装。テスト用アクセサとして公開）。</summary>
+    internal Image ImageControl => _image;
+
+    /// <summary>表示する画像（ズーム対象）。設定すると Fit 表示にリセットする。</summary>
+    /// <remarks>
+    /// 内部 <c>Image</c> の <c>Source</c> を委譲する。<br/>
+    /// <c>Image</c> そのもの（<see cref="ImageControl"/>）は Crop セッション等で対象画像として必要な場合にのみ取得する。
+    /// </remarks>
+    public IImage? Source
+    {
+        get => _image.Source;
+        set => SetSource(value);
+    }
 
     /// <summary>現在のズーム率（%）。0 = Fit。</summary>
     public double ZoomPercent => _zoomPercent;
@@ -142,7 +153,12 @@ public sealed class ZoomableView : Panel
     /// <summary>現在のパン位置（コンテンツ座標）。</summary>
     public Vector Offset => _offset;
 
-    /// <summary>画像がビューポートより小さい場合に中央寄せするか（false で左上寄せ）。</summary>
+    /// <summary>その軸で画像がビューポートより小さい場合に中央寄せするか（false で左上寄せ）。</summary>
+    /// <remarks>
+    /// Fit 表示中および固定倍率で、その軸で画像がビューポートより小さい場合に有効（軸ごとに独立して判定）。<br/>
+    /// 一方の軸がスクロール可能（画像がビューポートより大きい）でも、他方の軸の中央寄せは維持される。<br/>
+    /// スクロール可能な軸はパン制御（オフセット）が優先されるため、本設定はその軸には反映されない。
+    /// </remarks>
     public bool CenterAlign
     {
         get => _centerAlign;
@@ -150,7 +166,7 @@ public sealed class ZoomableView : Panel
         {
             if (_centerAlign == value) return;
             _centerAlign = value;
-            // Fit 中は画像配置（中央/左上）とオーバーレイ座標の両方に影響するため、表示を更新する
+            // 画像配置（中央/左上）とオーバーレイ座標の両方に影響するため、表示を更新する
             UpdateLayoutAndTransform();
         }
     }
@@ -258,7 +274,9 @@ public sealed class ZoomableView : Panel
         // 表示更新・イベント通知をスキップする（ホットパスでの無駄な再描画を排除）
         if (clamped == _offset) return;
         _offset = clamped;
-        UpdateLayoutAndTransform();
+        // パンはオフセット変更のみで画像配置（レイアウト）は不変のため、
+        // Transform 更新とスクロールバー・再描画のみ行う（レイアウト再計算を排除）
+        UpdateTransformAndSync();
     }
 
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）に変換する。</summary>
@@ -323,12 +341,12 @@ public sealed class ZoomableView : Panel
     /// <returns>画像原点のビューポート座標。</returns>
     private Point ImageOriginViewport(Size display)
     {
+        var bounds = Bounds;
         if (_zoomPercent <= 0)
         {
             // Fit: CenterAlign に応じてビューポート中央（画像が小さい場合）または原点
             if (_centerAlign)
             {
-                var bounds = Bounds;
                 return new Point(
                     Math.Max(0, (bounds.Width - display.Width) / 2),
                     Math.Max(0, (bounds.Height - display.Height) / 2));
@@ -336,7 +354,29 @@ public sealed class ZoomableView : Panel
             return new Point(0, 0);
         }
         var scale = Scale;
-        return new Point(-_offset.X * scale, -_offset.Y * scale);
+        // 固定倍率では軸ごとに独立して扱う:
+        // - スクロール可能な軸（表示サイズ > ビューポート）: オフセットによるパン位置（-offset*scale）を維持。
+        // - スクロール不能な軸（表示サイズ < ビューポート）: CenterAlign に応じて中央寄せ補正（(ビューポート−表示サイズ)/2）を適用。
+        //   どちらの軸もクランプによりオフセットは 0（原点）になるため、パン位置と中央寄せは排他である。
+        // このビューポート座標の原点は、RenderTransform の translate（pre-scale・コンテンツ座標）を
+        // scale 倍した実効描画位置と一致する（UpdateTransformAndSync の中央寄せ補正）。
+        var x = display.Width <= bounds.Width
+            ? MaxCentered(display.Width, bounds.Width)
+            : -_offset.X * scale;
+        var y = display.Height <= bounds.Height
+            ? MaxCentered(display.Height, bounds.Height)
+            : -_offset.Y * scale;
+        return new Point(x, y);
+    }
+
+    /// <summary>中央寄せの原点補正（ビューポート座標）を軸単位で計算する。</summary>
+    /// <param name="displaySize">画像の表示サイズ（ビューポート座標）。</param>
+    /// <param name="viewportSize">ビューポートのサイズ。</param>
+    /// <returns>中央寄せ原点。CenterAlign が false の場合、または表示サイズがビューポートより大きい場合は 0。</returns>
+    private double MaxCentered(double displaySize, double viewportSize)
+    {
+        if (!_centerAlign || displaySize > viewportSize) return 0;
+        return (viewportSize - displaySize) / 2;
     }
 
     /// <summary>パンする（コンテンツ座標の移動量）。</summary>
@@ -378,9 +418,11 @@ public sealed class ZoomableView : Panel
             else
             {
                 // 固定倍率: 元サイズのまま RenderTransform でスケール + パン
-                // パン位置（オフセット）で制御するため、配置は常に左上に固定する
+                // 画像の配置は常に左上とし、パン・中央寄せは RenderTransform の translate で行う。
+                // HorizontalAlignment による中央寄せは、RenderTransform が左上（RenderTransformOrigin=(0,0)）を
+                // 基準に拡大縮小するためスケール ≠ 1 で中央からずれる。中央寄せは UpdateTransformAndSync が
+                // translate（送り画像原点 / スケール）で行い、座標変換（ImageOriginViewport）と描画位置を一致させる。
                 var imageSize = src.Size;
-                var scale = Scale;
                 _image.Stretch = Stretch.None;
                 _image.Width = imageSize.Width;
                 _image.Height = imageSize.Height;
@@ -390,11 +432,60 @@ public sealed class ZoomableView : Panel
                 _image.VerticalAlignment = VerticalAlignment.Top;
 
                 // 描画位置 = Scale × (コンテンツ − オフセット)
-                _translateTransform.X = -_offset.X;
-                _translateTransform.Y = -_offset.Y;
-                _scaleTransform.ScaleX = scale;
-                _scaleTransform.ScaleY = scale;
                 _image.RenderTransform = _transformGroup;
+            }
+        }
+
+        UpdateTransformAndSync();
+    }
+
+    /// <summary>RenderTransform の値更新とスクロールバー同期・再描画・ビューポート通知を行う。</summary>
+    /// <remarks>
+    /// パン（<see cref="SetOffset"/>）と表示変更（<see cref="UpdateLayoutAndTransform"/>）の共通処理。<br/>
+    /// パン時は画像配置（レイアウト）が不変のため、レイアウト再計算を伴わない Transform 更新と
+    /// スクロールバー同期・再描画のみを行い、ホットパスでの無駄なレイアウト計算を排除する。<br/>
+    /// 固定倍率中のみ Transform を更新し、Fit 中（RenderTransform = null）はスキップする。<br/>
+    /// 画像がビューポートより小さい場合の中央寄せ（<see cref="CenterAlign"/>）は、
+    /// レイアウト（HorizontalAlignment）ではなく translate で行う（スケール ≠ 1 でも中央一致）。
+    /// </remarks>
+    private void UpdateTransformAndSync()
+    {
+        // 固定倍率中のみ TranslateTransform / ScaleTransform を更新する（Fit 中は RenderTransform = null）
+        if (_zoomPercent > 0)
+        {
+            // 描画位置 = Scale × (コンテンツ − オフセット)
+            var scale = Scale;
+            _translateTransform.X = -_offset.X;
+            _translateTransform.Y = -_offset.Y;
+            _scaleTransform.ScaleX = scale;
+            _scaleTransform.ScaleY = scale;
+
+            // CenterAlign: 軸ごとに独立して中央寄せ補正（translate はコンテンツ座標系・pre-scale）を加える。
+            // 画像のベース原点は RenderTransform の基準（0,0）。オフセット（パン位置・スクロール各軸）は
+            // クランプされる。
+            //
+            // 重要な注意: TransformGroup の Children[0]（translate）は ScaleTransform の内側（pre-scale）に適用され、
+            // 実際の描画位置は「scale × translate」になる（実測: transform(0,0) = scale × translate）。
+            // そのため translate は「コンテンツ（画像ピクセル）座標系」で指定する必要がある。
+            // 中央寄せの目標位置（ビューポート座標） = (ビューポート − 表示サイズ) / 2 をコンテンツ座標へ変換するには
+            // scale で除する。これにより描画位置 transform(0,0) = scale × translate = (ビューポート − 表示サイズ) / 2 となり、
+            // ImageOriginViewport の中央寄せ原点補正（ビューポート座標）と一致する。
+            //
+            // 軸ごとに「表示サイズ <= ビューポート」の軸のみ中央寄せし、スクロール可能な軸（表示サイズ > ビューポート）は
+            // オフセットによるパン位置を維持する。これにより横方向が大きく縦方向が小さい場合でも縦方向の中央寄せが維持される。
+            if (_centerAlign && _image.Source is { } src && _image.Width > 0 && _image.Height > 0)
+            {
+                var bounds = Bounds;
+                var displayWidth = _image.Width * scale;
+                var displayHeight = _image.Height * scale;
+                if (displayWidth <= bounds.Width)
+                {
+                    _translateTransform.X += (bounds.Width - displayWidth) / 2 / scale;
+                }
+                if (displayHeight <= bounds.Height)
+                {
+                    _translateTransform.Y += (bounds.Height - displayHeight) / 2 / scale;
+                }
             }
         }
 

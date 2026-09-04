@@ -38,7 +38,8 @@ public partial class MainWindow : Window
             SyncZoomSlider(e.ZoomPercent);
             UpdateZoomButtonState(e.CanZoomIn, e.CanZoomOut);
             _vm.ZoomPercent = e.ZoomPercent;
-            _vm.ZoomDisplayText = ZoomableView.ZoomDisplayText;
+            // 表示文字列はホスト側で生成する（ZoomMath.FormatZoomDisplayText に委譲。e.ZoomPercent は実効ズーム率のため Fit 中も 0 にならない）
+            _vm.ZoomDisplayText = ZoomMath.FormatZoomDisplayText(e.ZoomPercent);
         };
 
         // スライダの変更を ZoomViewControl へ反映する
@@ -70,7 +71,6 @@ public partial class MainWindow : Window
         // 初期のズーム率をスライダに反映し、⊕⊖ ボタン・表示テキストの状態を ZoomViewControl で初期化する
         SyncZoomSlider(_vm.ZoomPercent);
         UpdateZoomButtonState(ZoomableView.CanZoomIn, ZoomableView.CanZoomOut);
-        _vm.ZoomDisplayText = ZoomableView.ZoomDisplayText;
     }
 
     /// <summary>ズームアウトボタンクリック。</summary>
@@ -80,7 +80,7 @@ public partial class MainWindow : Window
     private void OnZoomInClick(object? sender, RoutedEventArgs e) => ZoomableView.ZoomIn();
 
     /// <summary>Fit ボタンクリック（ズーム率 0 = 自動）。</summary>
-    private void OnFitClick(object? sender, RoutedEventArgs e) => ZoomableView.Fit();
+    private void OnFitClick(object? sender, RoutedEventArgs e) => ZoomableView.ZoomFit();
 
     /// <summary>ズームスライダの変更ハンドラ。スライダ操作によるズーム率の適用を行う。</summary>
     /// <param name="sender">イベント送信元。</param>
@@ -89,26 +89,27 @@ public partial class MainWindow : Window
     private void OnZoomSliderValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
     {
         if (_isSyncingZoomSlider) return;
-        ZoomableView.ApplyZoomFromSlider(ZoomSlider.Value);
+        // ズーム率は double で設定する（ApplyZoomFromSlider は廃止・ZoomPercent に統合）
+        ZoomableView.ZoomPercent = ZoomSlider.Value;
     }
 
     /// <summary>スライダ同期時の値比較許容差。</summary>
     private const double ZoomSliderEpsilon = 0.01;
 
     /// <summary>ズームスライダの値を現在のズーム率へ同期する。</summary>
-    /// <param name="zoom">現在のズーム率（%）。0 = Fit。</param>
+    /// <param name="zoom">現在の実効ズーム率（%）。Fit 中は実効倍率。</param>
     /// <remarks>
-    /// ズーム率の変化（<see cref="ZoomViewControl.ZoomChanged"/>）を受けて、スライダ値を現在のズーム率へ同期する。<br/>
-    /// 自動（Fit）表示中はスライダで表現できないため、最小値に合わせる。<br/>
+    /// 実効ズーム率の変化（<see cref="ZoomViewControl.ZoomChanged"/>）を受けて、スライダ値を現在のズーム率へ同期する。<br/>
+    /// Fit 中も実際に表示されている実効倍率をスライダに反映する（スライダ範囲 <see cref="ZoomSlider.Minimum"/> 〜 <see cref="ZoomSlider.Maximum"/> にクランプ）。<br/>
     /// 同期中の ValueChanged による再入を防ぐ。
     /// </remarks>
-    private void SyncZoomSlider(int zoom)
+    private void SyncZoomSlider(double zoom)
     {
         if (_isSyncingZoomSlider) return;
         _isSyncingZoomSlider = true;
         try
         {
-            var sliderValue = zoom > 0 ? zoom : ZoomSlider.Minimum;
+            var sliderValue = Math.Clamp(zoom, ZoomSlider.Minimum, ZoomSlider.Maximum);
             if (Math.Abs(ZoomSlider.Value - sliderValue) > ZoomSliderEpsilon)
             {
                 ZoomSlider.Value = sliderValue;

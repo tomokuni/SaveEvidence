@@ -30,6 +30,7 @@ TestResults/
 # IDE
 .vscode/
 .idea/
+.work/
 *.swp
 *.swo
 *~

@@ -5,9 +5,7 @@ namespace app.Tests;
 
 /// <summary><see cref="AppPage"/> の単体テスト。</summary>
 /// <remarks>
-/// ナビゲーションページの enum 定義を検証する。<br/>
-/// 従来は int のマジックナンバー（0=キャプチャ, 1=フォルダビュー, 2=Undo 一覧, 3=設定）で管理しており、
-/// ページ追加時に index のずれによる誤遷移が発生したため、型安全な enum に統一した。
+/// ナビゲーションページの enum 定義を検証する。
 /// </remarks>
 public class AppPageTests
 {
