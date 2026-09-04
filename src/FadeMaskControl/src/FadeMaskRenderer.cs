@@ -4,7 +4,7 @@ using Estable.AvaloniaUI.Platform;
 
 namespace Estable.AvaloniaUI.FadeMask;
 
-/// <summary>OverlayWindow の暗転オーバーレイ描画ロジックを提供する。</summary>
+/// <summary>領域選択オーバーレイの暗転描画ロジックを提供する。</summary>
 /// <remarks>
 /// 穴あけマスク（暗転＋選択枠＋サイズラベル）とサブライン（操作・情報ラベル）の描画を担当する。<br/>
 /// <see cref="FadeMaskControl"/> の <c>Render()</c>（ExternalRenderer）から呼び出されることを想定し、
@@ -134,7 +134,7 @@ public sealed class FadeMaskRenderer
     /// 描画のたびに呼び出され、最新の状態（選択矩形・ズーム率等）からサイズラベル文字列を生成する。<br/>
     /// null の場合は <see cref="FadeMaskDrawer.DrawOverlay"/> が DIP 矩形 + <see cref="DisplayScaleScaling"/> から自動生成する。<br/>
     /// - Crop: 論理座標（元画像ピクセル）+ 実表示ズーム率で生成（レイアウト変化に追従）。<br/>
-    /// - OverlayWindow: 設定値（<c>CaptureSettings.SizeLabelOverride</c>）を返す。<br/>
+    /// - 範囲選択（AreaSelect）等: 設定値（<c>CaptureSettings.SizeLabelOverride</c>）を返す。<br/>
     /// ホストが選択矩形（<see cref="LogicalSelectionRect"/>）と選択状態（<see cref="HasSelection"/>）を真のソースとして参照できる。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider { get; set; }
@@ -143,8 +143,8 @@ public sealed class FadeMaskRenderer
     /// <remarks>
     /// true かつ <see cref="HasSelection"/> / <see cref="HasHighlight"/> がいずれも false の場合、
     /// 全面を暗転表示する。<br/>
-    /// - OverlayWindow の AreaSelect: ドラッグ前（選択なし）から全面暗転を表示するために使用する。<br/>
-    /// - MainWindow の切出しモード（Crop）: 選択なしの初期状態を全面暗転で表示するために使用する。<br/>
+    /// - 範囲選択（AreaSelect）: ドラッグ前（選択なし）から全面暗転を表示するために使用する。<br/>
+    /// - 切出しモード（Crop）: 選択なしの初期状態を全面暗転で表示するために使用する。<br/>
     /// 選択あり（HasSelection / HasHighlight）の場合は穴あけ暗転（<see cref="LogicalSelectionRect"/> / <see cref="LogicalHighlightRect"/>）が優先される。
     /// </remarks>
     public bool ShowFullOverlay { get; set; }

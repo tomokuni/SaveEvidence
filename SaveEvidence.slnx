@@ -9,6 +9,13 @@
     <Project Path="src/ColorPickerControl/src/ColorPickerControl.csproj" />
     <Project Path="src/ColorPickerControl/tests/ColorPickerControl.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/CropView/" />
+  <Folder Name="/src/CropView/src/">
+    <Project Path="src/CropView/src/CropView.csproj" />
+  </Folder>
+  <Folder Name="/src/CropView/tests/">
+    <Project Path="src/CropView/tests/CropView.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/DragRectControl/">
     <Project Path="src/DragRectControl/sample/DragRectControl.Sample.csproj" />
     <Project Path="src/DragRectControl/src/DragRectControl.csproj" />
@@ -23,6 +30,7 @@
     <Project Path="src/FadeMaskDragRectControl/src/FadeMaskDragRect.csproj" />
     <Project Path="src/FadeMaskDragRectControl/tests/FadeMaskDragRect.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/FadeMaskDragRectControl/src/" />
   <Folder Name="/src/LineDetection/">
     <Project Path="src/LineDetection/sample/LineDetection.Sample.csproj" />
     <Project Path="src/LineDetection/src/LineDetection.csproj" />
@@ -50,4 +58,5 @@
     <Project Path="src/ZoomViewControl/src/ZoomViewControl.csproj" />
     <Project Path="src/ZoomViewControl/tests/ZoomViewControl.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/ZoomViewControl/src/" />
 </Solution>

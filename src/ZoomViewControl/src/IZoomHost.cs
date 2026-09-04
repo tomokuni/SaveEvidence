@@ -5,7 +5,7 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// <summary>ズーム操作の対象となるホスト（ViewModel 等）の抽象。</summary>
 /// <remarks>
 /// <see cref="ZoomManager"/> がズーム率・画像・表示状態を読み書きするための最小インターフェース。<br/>
-/// ホスト（app の MainViewModel 等）は本インターフェースを実装して <see cref="ZoomManager"/> に注入する。
+/// ホスト（上位 AP の ViewModel 等）は本インターフェースを実装して <see cref="ZoomManager"/> に注入する。
 /// </remarks>
 public interface IZoomHost
 {

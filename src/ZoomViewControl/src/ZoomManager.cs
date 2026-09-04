@@ -10,28 +10,24 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// 画像プレビューのズーム操作を統括するマネージャー。
 /// </summary>
 /// <remarks>
-/// 画像プレビューのズームイン・ズームアウト・Fit表示、スライダとの同期、<br/>
-/// ビューポートリサイズ時の Fit 再適用、画像配置（中央寄せ/左寄せ）などを管理する。<br/>
-/// プロパティ注入でホスト（<see cref="IZoomHost"/>）・<see cref="ZoomableView"/>・<br/>
-/// ズームスライダを受け取り、内部でズーム計算・UI更新を行う。<br/>
-/// ズーム率の選択はステータスバーのスライダ（10〜500%）とフライアウト（自動, 10〜500%）で行う。<br/>
+/// 画像プレビューのズームイン・ズームアウト・Fit表示、ビューポートリサイズ時の Fit 再適用、<br/>
+/// 画像配置（中央寄せ/左寄せ）などを管理する。<br/>
+/// プロパティ注入でホスト（<see cref="IZoomHost"/>）・<see cref="ZoomableView"/> を受け取り、<br/>
+/// 内部でズーム計算・UI更新を行う。<br/>
+/// ズーム率の変化は <see cref="ZoomChanged"/> イベントでホストへ通知する（ホスト側のスライダ等の同期用）。<br/>
 /// <br/>
 /// <b>ズーム表示方式</b>: <see cref="ZoomableView"/>（ScrollViewer 不使用）が RenderTransform<br/>
 /// （ScaleTransform + TranslateTransform）でズーム・パンを実現する。<br/>
 /// ScrollViewer のレイアウト処理によるオフセット上書きが発生しないため、<br/>
 /// ズーム中心維持の防御コード（保留オフセット再設定等）が不要。<br/>
 /// ズーム中心の計算（<see cref="ZoomMath"/>）と遷移（<see cref="ZoomTransition"/>）は純粋関数に分離し、<br/>
-/// 単体テストで仕様を検証できる。
+/// 単体テストで仕様を検証できる。<br/>
+/// <b>汎用性</b>: 特定コントロール（Slider 等）へは依存しない。ズーム表示の反映は <see cref="ZoomChanged"/> で疎結合にする。
 /// </remarks>
 public sealed class ZoomManager
 {
-    private bool _isSyncingZoom;
-
     /// <summary>ApplyZoom 再入防止フラグ（ZoomPercent の PropertyChanged と直接呼び出しの二重実行を防ぐ）。</summary>
     private bool _isApplyingZoom;
-
-    /// <summary>スライダ同期時の値比較許容差。</summary>
-    private const double SliderEpsilon = 0.01;
 
     /// <summary>内部ロガー（横断的関心事）。null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</summary>
     /// <value>null 可。設定しない場合はログを出力しない。</value>
@@ -51,8 +47,13 @@ public sealed class ZoomManager
     /// </remarks>
     public ZoomableView ZoomableView { get; set; } = null!;
 
-    /// <summary>ズーム率調整用スライダ（ステータスバー）。Window から設定する。</summary>
-    public Slider ZoomSlider { get; set; } = null!;
+    /// <summary>ズーム率が変更されたときに発火するイベント（ホスト側のスライダ等の同期用）。</summary>
+    /// <remarks>
+    /// <see cref="ApplyZoom"/> 実行後に現在のズーム率（<see cref="IZoomHost.ZoomPercent"/>）を通知する。<br/>
+    /// ホスト側は本イベントを購読し、スライダ・表示テキスト等の任意の UI へ反映できる<br/>
+    /// （<see cref="ZoomManager"/> は特定コントロールに依存しない）。
+    /// </remarks>
+    public event EventHandler<int>? ZoomChanged;
 
     /// <summary>ズーム中心として使用するマウスポインタ位置（ビューポートローカル DIP）。null の場合はビューポート中心。</summary>
     /// <remarks>
@@ -176,6 +177,9 @@ public sealed class ZoomManager
         // ステータスバーには現在の実効拡大率を % で表示する（「自動」表記は行わない）
         var actual = zoom > 0 ? zoom : ClampZoomPercent(fitZoom);
         ViewModel.ZoomDisplayText = $"{actual}%";
+
+        // ズーム率の変化をホストへ通知する（スライダ等の同期用）
+        ZoomChanged?.Invoke(this, zoom);
     }
 
     /// <summary>ズーム遷移の適用（ログ記録 + ZoomPercent 設定）を共通化する。</summary>
@@ -211,31 +215,6 @@ public sealed class ZoomManager
         if (zoom is < ZoomTransition.MinZoom or > ZoomTransition.MaxZoom) return;
         // ZoomPercent の設定で PropertyChanged が発火し、ホスト側のハンドラが ApplyZoom() を呼ぶ
         ViewModel.ZoomPercent = zoom;
-    }
-
-    /// <summary>ZoomPercent の変更をスライダに反映する（自動=0 の場合はスライダ最小値 10 に合わせる）。</summary>
-    /// <remarks>
-    /// 自動（Fit）表示中はスライダで表現できないため、最小値（10）に合わせる。<br/>
-    /// フライアウトで自動を選択した場合も同様。スライダを動かすと固定倍率に切り替わる。
-    /// </remarks>
-    public void SyncZoomSlider()
-    {
-        if (_isSyncingZoom) return;
-        _isSyncingZoom = true;
-        try
-        {
-            var slider = ZoomSlider;
-            var zoom = ViewModel.ZoomPercent;
-            var sliderValue = zoom > 0 ? zoom : slider.Minimum;
-            if (Math.Abs(slider.Value - sliderValue) > SliderEpsilon)
-            {
-                slider.Value = sliderValue;
-            }
-        }
-        finally
-        {
-            _isSyncingZoom = false;
-        }
     }
 
     /// <summary>中央寄せ設定を ZoomableView に反映する（Fit 時の中央寄せ/左上寄せ）。</summary>

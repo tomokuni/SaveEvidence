@@ -826,7 +826,7 @@ public sealed partial class DragRectControl : Control
     /// 祖先 <see cref="ScrollViewer"/>（<see cref="_attachedScrollViewer"/>）が存在する場合（Crop モード）のみ処理する:<br/>
     /// - Ctrl + ホイール: <see cref="ZoomRequested"/> を発火する（ズームの実処理は上位 AP が実施）。<br/>
     /// - 通常ホイール: 祖先 ScrollViewer をスクロールする（Shift 併用で横スクロール）。<br/>
-    /// ScrollViewer が存在しない場合（AreaSelect の OverlayWindow 等）は何もせず既定の動作に委ねる。<br/>
+    /// ScrollViewer が存在しない場合（範囲選択（AreaSelect）等）は何もせず既定の動作に委ねる。<br/>
     /// </remarks>
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {

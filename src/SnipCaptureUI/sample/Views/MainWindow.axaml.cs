@@ -48,7 +48,7 @@ public sealed partial class MainWindow : Window
 
         // Crop プレビューのダミー画像を生成して表示する
         _previewBitmap = CreateDummyBitmap(PreviewWidth, PreviewHeight);
-        PreviewImage.Source = _previewBitmap;
+        PreviewCropView.Source = _previewBitmap;
 
         // ログ行の追加を監視して自動スクロールする
         _vm.LogLines.CollectionChanged += OnLogLinesChanged;
@@ -132,7 +132,7 @@ public sealed partial class MainWindow : Window
         }
 
         _vm.AddLog("[App] Crop を開始します（プレビュー上でドラッグ選択 → Enter / ダブルクリックで確定）。");
-        var rect = await _capture.StartCropAsync(PreviewImage, this, _previewBitmap);
+        var rect = await _capture.StartCropAsync(PreviewCropView.ImageControl, this, _previewBitmap);
         _vm.UpdateCropResult(rect);
         _vm.AddLog(rect is { Width: > 0, Height: > 0 }
             ? $"[App] Crop が完了しました: {rect.Value}（元画像ピクセル）"

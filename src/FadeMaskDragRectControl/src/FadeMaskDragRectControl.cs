@@ -182,6 +182,14 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ルーペ中心の更新イベント（ドメイン座標。ホストの追加制御用フック）。</summary>
     public event EventHandler<FadeMaskDragRectPointEventArgs>? LoupePositionMoved;
 
+    /// <summary>ルーペ描画完了イベント（描画済み Bitmap と表示情報。ホストがオーバーレイを描画できる）。</summary>
+    /// <remarks>
+    /// <see cref="LoupeControl.Rendered"/> を中継する。<br/>
+    /// ホスト（上位 AP）は <see cref="LoupeRenderedEventArgs.Bitmap"/> を <c>Lock</c> して<br/>
+    /// 外部提供矩形（破線等）を直接描画できる（描画後は表示へ反映される）。
+    /// </remarks>
+    public event EventHandler<LoupeRenderedEventArgs>? LoupeRendered;
+
     /// <summary>選択確定要求を DragRect へ委譲する（Enter キー相当）。</summary>
     public void RequestConfirm() => _dragRect.RequestConfirm();
 
@@ -392,7 +400,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// ホストは最新の選択状態（<see cref="SelectionRect"/> / <see cref="HasSelection"/> 等）からサイズラベル文字列を生成するクロージャを設定する。<br/>
     /// - Crop: 論理座標（元画像ピクセル）+ 実表示ズーム率で生成（レイアウト変化に追従）。<br/>
-    /// - OverlayWindow: 設定値（<c>CaptureSettings.SizeLabelOverride</c>）を返す。<br/>
+    /// - 範囲選択（AreaSelect）等: 設定値（<c>CaptureSettings.SizeLabelOverride</c>）を返す。<br/>
     /// 設定時はレンダラーへ伝搬し、再描画を要求する。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
@@ -413,7 +421,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>選択状態をオーバーレイ描画（FadeMask + ルーペの選択枠）へ反映する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。サイズ 0 以下は選択なし。</param>
     /// <remarks>
-    /// ホスト（OverlayWindow の UpdateOverlay 等）が選択矩形を外部から設定する際に使用する。<br/>
+    /// ホスト（上位 AP）が選択矩形を外部から設定する際に使用する。<br/>
     /// DIP 矩形の算出は描画時に行う（<see cref="SetCoordinateTransform"/> で設定した座標変換ポートが<br/>
     /// 最新のレイアウトから導出する。レイアウト変化に常に追従）。
     /// </remarks>
@@ -622,24 +630,29 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         if (!_showSelectionOverlay || e.Bitmap is not WriteableBitmap writeable || e.CaptureTopLeft is not { } topLeft)
         {
+            // 選択矩形非表示でも、ホストへルーペ描画完了を中継する（外部提供矩形の描画用）
+            RaiseLoupeRendered(e);
             return;
         }
 
-        if (_renderer.LogicalSelectionRect is not { } selectionRect)
+        if (_renderer.LogicalSelectionRect is { } selectionRect)
         {
-            return;
+            var colorA = _currentAppearance.SelectionRectColorA;
+            var colorB = _currentAppearance.SelectionRectColorB;
+            if (colorA is not null && colorB is not null)
+            {
+                // 破線色（色A / 色B）を 2 つ用意し、市松風に交互に塗る
+                DrawSelectionRectOverlay(writeable, selectionRect, topLeft, e.Scale, colorA.Value, colorB.Value);
+            }
         }
 
-        var colorA = _currentAppearance.SelectionRectColorA;
-        var colorB = _currentAppearance.SelectionRectColorB;
-        if (colorA is null || colorB is null)
-        {
-            return;
-        }
-
-        // 破線色（色A / 色B）を 2 つ用意し、市松風に交互に塗る
-        DrawSelectionRectOverlay(writeable, selectionRect, topLeft, e.Scale, colorA.Value, colorB.Value);
+        // ホスト（上位 AP）へルーペ描画完了を中継する（外部提供矩形の描画用）
+        RaiseLoupeRendered(e);
     }
+
+    /// <summary><see cref="LoupeRendered"/> イベントを発火する。</summary>
+    /// <param name="e">ルーペ描画完了イベント引数。</param>
+    private void RaiseLoupeRendered(LoupeRenderedEventArgs e) => LoupeRendered?.Invoke(this, e);
 
     /// <summary>選択矩形の 4 辺を 2 色破線でルーペ Bitmap へ描画する。</summary>
     /// <param name="writeable">描画対象の WriteableBitmap。</param>

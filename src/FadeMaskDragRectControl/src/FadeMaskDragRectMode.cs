@@ -2,7 +2,7 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
 /// <summary>FadeMaskDragRectControl の動作モード（FadeMaskRenderMode への変換と子コントロールの可視性を決定）。</summary>
 /// <remarks>
-/// ホスト（CropSession / OverlayWindow）はキャプチャ種別に応じて本モードを設定するだけで、<br/>
+/// ホスト（上位 AP）はキャプチャ種別に応じて本モードを設定するだけで、<br/>
 /// 内部コントロール（DragRect / Loupe）の有効・無効と全面暗転の表示が自動的に切り替わる。<br/>
 /// <br/>
 /// - <see cref="Crop"/>: DragRect + FadeMask + Loupe を有効化（プレビュー内の切出し）。<br/>

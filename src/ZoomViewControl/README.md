@@ -25,7 +25,7 @@
 画像プレビューのズーム・パン・Fit 表示を提供する独立ライブラリです。
 
 - **ZoomableView**: ScrollViewer を使用しない自己完結型ビューポート（RenderTransform ベース）
-- **ZoomManager**: ズーム率の遷移・適用・スライダ同期を統括（`IZoomHost` を注入）
+- **ZoomManager**: ズーム率の遷移・適用を統括（`IZoomHost` を注入）。特定コントロールに依存せず、`ZoomChanged` イベントでホストへ通知
 - **純粋関数**: `ZoomMath`（ズーム中心維持）/ `ZoomTransition`（段階遷移）/ `ScrollMetrics`（スクロールバー幾何）
 - 上位 AP は `IZoomHost` を実装して注入するだけで、ズーム計算・表示の詳細は本ライブラリが担います
 
@@ -95,8 +95,10 @@ var zoomManager = new ZoomManager
 {
     ViewModel = viewModel,
     ZoomableView = zoomableView,
-    ZoomSlider = slider,
 };
+
+// ズーム率の変化をスライダへ同期する（ZoomManager は特定コントロールに依存しない）
+zoomManager.ZoomChanged += (_, zoom) => zoomSlider.Value = zoom;
 
 // スライダの変更を ZoomManager へ反映（XAML ロード中の Slider 初期化でも
 // ValueChanged が発火するため、依存注入後のコンストラクタで購読する）
@@ -148,7 +150,7 @@ dotnet run --project sample/ZoomViewControl.Sample.csproj
 ```text
 ZoomViewControl/
 ├── src/          # ライブラリ本体
-│   ├── ZoomManager.cs          # ズーム遷移・適用・スライダ同期の統括
+│   ├── ZoomManager.cs          # ズーム遷移・適用の統括（ZoomChanged で通知）
 │   ├── ZoomableView.cs         # ScrollViewer 不使用のパン・ズームビューポート
 │   ├── ZoomMath.cs             # ズーム中心維持・Fit 実効倍率・座標変換（純粋関数）
 │   ├── ZoomTransition.cs       # 段階遷移・×1.1 遷移（純粋関数）

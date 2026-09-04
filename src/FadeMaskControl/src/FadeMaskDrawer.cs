@@ -11,7 +11,7 @@ namespace Estable.AvaloniaUI.FadeMask;
 /// 暗転マスク（4辺の穴あけ）とサイズラベルの描画を担当する。<br/>
 /// 選択枠線・ドラッグハンドル・始点マーカーは DragRect の責務（<see cref="DragRectDrawer"/>）が担う。<br/>
 /// <see cref="FadeMaskControl"/> の <see cref="FadeMaskControl.Render"/> と、<br/>
-/// OverlayWindow の <c>Render()</c> オーバーライドの両方から呼び出される。<br/>
+/// ホスト側の <c>Render()</c> オーバーライドの両方から呼び出される。<br/>
 /// </remarks>
 internal static class FadeMaskDrawer
 {
@@ -85,7 +85,7 @@ internal static class FadeMaskDrawer
     /// <param name="showSizeLabel">サイズラベルを表示するか</param>
     /// <param name="sizeLabelOverride">サイズラベルのテキストを明示指定する。
     /// null の場合は <paramref name="selectionRect"/> から自動生成される。
-    /// MainWindow の切出しモードでは元画像座標系の値が渡される。</param>
+    /// 切出しモード（Crop）では元画像座標系の値が渡される。</param>
     /// <param name="scaling">DPI スケーリング係数（1.0=100%, 1.25=125%）。
     /// サイズラベル自動生成時に DIP→物理ピクセル変換に使用される。</param>
     /// <param name="subLines">サイズラベルの下に追加表示するサブライン（2 行目以降）。

@@ -18,7 +18,7 @@ namespace Estable.AvaloniaUI.Platform;
 /// - ウィンドウ識別は Avalonia <see cref="IPlatformHandle"/>（プラットフォーム非依存の識別子）を使用する。<br/>
 /// <br/>
 /// 具象実装ではなく本インターフェイスへ依存させることで、以下を達成する（DIP）:<br/>
-/// - テスト時のモックが可能（SelectionSession / OverlayWindow の単体テスト）<br/>
+/// - テスト時のモックが可能（上位 AP の単体テスト）<br/>
 /// </remarks>
 public interface ICaptureService
 {

@@ -86,16 +86,18 @@ using Estable.AvaloniaUI.ZoomView;
 
 ### 4.1 ZoomManager への注入
 
-`ZoomManager` のプロパティへホスト・ビューポート・スライダを注入する。
+`ZoomManager` のプロパティへホスト・ビューポートを注入する。スライダは `ZoomChanged` イベントを購読してホスト側で同期する。
 
 ```csharp
 var zoomManager = new ZoomManager
 {
     ViewModel = viewModel,      // IZoomHost 実装
     ZoomableView = zoomableView,
-    ZoomSlider = slider,
 };
 zoomManager.Log = logger;       // 任意（未設定時は NullLogger）
+
+// ズーム率の変化をスライダへ同期する（ZoomManager は特定コントロールに依存しない）
+zoomManager.ZoomChanged += (_, zoom) => slider.Value = zoom;
 ```
 
 - `PointerPosition`: Ctrl+ホイールズーム時のズーム中心（ビューポートローカル DIP）。null = ビューポート中心
@@ -214,15 +216,14 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ApplyZoomFromSlider` | `void(double)` | スライダ値（10〜500）によるズーム適用 |
 | `ApplyZoomFromText` | `bool(string?)` | テキスト入力（数値 or 数値+%）のパース・適用（10〜500） |
 | `ApplyZoom` | `void()` | 現在の ZoomPercent を ZoomableView に適用（再入防止） |
-| `SyncZoomSlider` | `void()` | ZoomPercent をスライダに反映（再入防止） |
 | `UpdateImageAlignment` | `void()` | 中央寄せ設定を ZoomableView に反映 |
 | `OnZoomableViewSizeChanged` | `void(SizeChangedEventArgs)` | リサイズ時の Fit 拡大率表示更新 |
 
-| プロパティ | 型 | 説明 |
+| プロパティ / イベント | 型 | 説明 |
 | --- | --- | --- |
 | `ViewModel` | `IZoomHost` | ズーム対象のホスト（ZoomPercent / PreviewImage / ZoomDisplayText 等） |
 | `ZoomableView` | `ZoomableView` | ズーム・パン対応ビューポート（ScrollViewer 不使用） |
-| `ZoomSlider` | `Slider` | 拡大率スライダ |
+| `ZoomChanged` | `event EventHandler<int>` | ズーム率変更の通知（ホスト側のスライダ等の同期用） |
 | `PointerPosition` | `Point?` | ズーム中心（ビューポートローカル DIP）。null = ビューポート中心 |
 | `Log` | `ILogger` | 内部ロガー。null は `NullLogger` へフォールバック |
 

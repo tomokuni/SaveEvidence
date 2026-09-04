@@ -47,7 +47,7 @@
 上位 AP（app 等）: IZoomHost 実装 → ZoomManager へ注入
   ↓
 ZoomViewControl（本ライブラリ）
-  ├── ZoomManager（マネージャー: 遷移決定・適用・スライダ同期）
+  ├── ZoomManager（マネージャー: 遷移決定・適用・ZoomChanged による通知）
   ├── ZoomableView（コントロール: パン・ズーム表示）
   ├── ZoomMath / ZoomTransition / ScrollMetrics（純粋関数: 計算）
   └── Logging/LogMessage（LoggerMessage 定義）
@@ -78,7 +78,7 @@ ZoomViewControl（本ライブラリ）
 ```mermaid
 flowchart TB
     subgraph ZVC["ZoomViewControl プロジェクト"]
-        ZM["ZoomManager<br/>public sealed<br/>ZoomManager.cs（遷移決定・適用・スライダ同期）"]
+        ZM["ZoomManager<br/>public sealed<br/>ZoomManager.cs（遷移決定・適用・ZoomChanged 通知）"]
         ZV["ZoomableView<br/>public sealed : Panel<br/>ZoomableView.cs（パン・ズームビューポート）"]
         PF["ZoomMath / ZoomTransition / ScrollMetrics<br/>public static（純粋関数）"]
         IH["IZoomHost<br/>public interface<br/>IZoomHost.cs"]
@@ -107,9 +107,9 @@ flowchart TB
 ### 6.1 ZoomManager
 
 - **分類**: 公開クラス（`public sealed class`）
-- **責務**: ズーム率の遷移（⊖⊕ 23 段階 / Ctrl+ホイール ×1.1）・スライダ同期・ZoomableView への適用を統括
-- **公開メンバー**: `ZoomIn` / `ZoomOut` / `ZoomInByWheel` / `ZoomOutByWheel` / `ApplyZoomFromSlider` / `ApplyZoomFromText` / `ApplyZoom` / `SyncZoomSlider` / `UpdateImageAlignment` / `OnZoomableViewSizeChanged` / `Log`
-- **注入プロパティ**: `ViewModel`（IZoomHost）/ `ZoomableView` / `ZoomSlider` / `PointerPosition` / `Log`
+- **責務**: ズーム率の遷移（⊖⊕ 23 段階 / Ctrl+ホイール ×1.1）・ZoomableView への適用を統括。ズーム率変更は `ZoomChanged` で通知
+- **公開メンバー**: `ZoomIn` / `ZoomOut` / `ZoomInByWheel` / `ZoomOutByWheel` / `ApplyZoomFromSlider` / `ApplyZoomFromText` / `ApplyZoom` / `UpdateImageAlignment` / `OnZoomableViewSizeChanged` / `Log` / `ZoomChanged`（イベント）
+- **注入プロパティ**: `ViewModel`（IZoomHost）/ `ZoomableView` / `PointerPosition` / `Log`
 - **依存**: IZoomHost / ZoomableView / ZoomMath / ZoomTransition / LogMessage
 
 ### 6.2 ZoomableView

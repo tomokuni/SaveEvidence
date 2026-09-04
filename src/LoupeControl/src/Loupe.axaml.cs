@@ -14,7 +14,7 @@ namespace Estable.AvaloniaUI.Loupe;
 
 /// <summary>拡大鏡（ルーペ）コントロール。</summary>
 /// <remarks>
-/// 領域選択時（OverlayWindow）とプレビュー画像切出し時（MainWindow）の両方で<br/>
+/// 領域選択時とプレビュー画像切出し時の両方で<br/>
 /// 共通利用するための単一のコントロール。<br/>
 /// 入力はすべて StyledProperty（<see cref="Source"/> / <see cref="CenterPoint"/> / 外観）として公開され、<br/>
 /// バインディングまたはコードから制御できる。<br/>

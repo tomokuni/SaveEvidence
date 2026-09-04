@@ -36,7 +36,9 @@ public partial class MainWindow : Window
         // ZoomManager に依存関係を注入
         _zoomManager.ViewModel = _vm;
         _zoomManager.ZoomableView = ZoomableView;
-        _zoomManager.ZoomSlider = ZoomSlider;
+
+        // ズーム率の変化をスライダへ同期する（ZoomManager はスライダに依存しないため、ホスト側で同期する）
+        _zoomManager.ZoomChanged += (_, _) => SyncZoomSlider();
 
         // スライダの変更を ZoomManager へ反映する
         // （XAML ロード中の Slider 初期化（Value の coerce）でも ValueChanged が発火するため、
@@ -54,7 +56,6 @@ public partial class MainWindow : Window
                     break;
                 case nameof(MainWindowViewModel.ZoomPercent):
                     _zoomManager.ApplyZoom();
-                    SyncZoomSlider();
                     break;
                 case nameof(MainWindowViewModel.CenterAlign):
                     // 中央寄せ/左上寄せの変更を画像配置へ即時反映する
@@ -109,15 +110,27 @@ public partial class MainWindow : Window
     private void OnZoomableViewSizeChanged(object? sender, SizeChangedEventArgs e)
         => _zoomManager.OnZoomableViewSizeChanged(e);
 
+    /// <summary>スライダ同期時の値比較許容差。</summary>
+    private const double ZoomSliderEpsilon = 0.01;
+
     /// <summary>ズームスライダの値を現在のズーム率へ同期する。</summary>
-    /// <remarks>同期中の ValueChanged による再入を防ぐ。</remarks>
+    /// <remarks>
+    /// ズーム率の変化（<see cref="ZoomManager.ZoomChanged"/>）を受けて、スライダ値を現在のズーム率へ同期する。<br/>
+    /// 自動（Fit）表示中はスライダで表現できないため、最小値に合わせる。<br/>
+    /// 同期中の ValueChanged による再入を防ぐ。
+    /// </remarks>
     private void SyncZoomSlider()
     {
         if (_isSyncingZoomSlider) return;
         _isSyncingZoomSlider = true;
         try
         {
-            _zoomManager.SyncZoomSlider();
+            var zoom = _vm.ZoomPercent;
+            var sliderValue = zoom > 0 ? zoom : ZoomSlider.Minimum;
+            if (Math.Abs(ZoomSlider.Value - sliderValue) > ZoomSliderEpsilon)
+            {
+                ZoomSlider.Value = sliderValue;
+            }
         }
         finally
         {

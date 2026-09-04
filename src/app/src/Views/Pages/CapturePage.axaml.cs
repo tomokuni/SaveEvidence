@@ -97,7 +97,9 @@ public sealed partial class CapturePage : UserControl
         _zoomManager.Log = _logger;
         _zoomManager.ViewModel = _viewModel;
         _zoomManager.ZoomableView = ZoomableView;
-        _zoomManager.ZoomSlider = ZoomSlider;
+
+        // ズーム率の変化をスライダへ同期する（ZoomManager はスライダに依存しないため、ホスト側で同期する）
+        _zoomManager.ZoomChanged += (_, _) => SyncZoomSlider();
 
         // ViewModel のプロパティ変更時にズーム設定を適用する
         _viewModel.PropertyChanged += (_, e) =>
@@ -111,7 +113,6 @@ public sealed partial class CapturePage : UserControl
                     break;
                 case nameof(MainViewModel.ZoomPercent):
                     _zoomManager.ApplyZoom();
-                    SyncZoomSlider();
                     break;
                 case nameof(MainViewModel.SaveFolderPath):
                     // 保存先フォルダの変更を保存ボタンの ToolTip に反映する
@@ -839,14 +840,26 @@ public sealed partial class CapturePage : UserControl
     /// <summary>スライダ同期中の再入防止フラグ。</summary>
     private bool _isSyncingZoomSlider;
 
+    /// <summary>スライダ同期時の値比較許容差。</summary>
+    private const double ZoomSliderEpsilon = 0.01;
+
     /// <summary>ZoomPercent の変更をスライダに反映する（再入防止付きラッパー）。</summary>
-    /// <remarks>スライダへの値設定で発火する <see cref="OnZoomSliderValueChanged"/> を無視するためにフラグで保護する。</remarks>
+    /// <remarks>
+    /// ズーム率の変化（<see cref="ZoomManager.ZoomChanged"/>）を受けて、スライダ値を現在のズーム率へ同期する。<br/>
+    /// 自動（Fit）表示中はスライダで表現できないため、最小値に合わせる。<br/>
+    /// スライダへの値設定で発火する <see cref="OnZoomSliderValueChanged"/> を無視するためにフラグで保護する。
+    /// </remarks>
     private void SyncZoomSlider()
     {
         _isSyncingZoomSlider = true;
         try
         {
-            _zoomManager.SyncZoomSlider();
+            var zoom = _viewModel.ZoomPercent;
+            var sliderValue = zoom > 0 ? zoom : ZoomSlider.Minimum;
+            if (Math.Abs(ZoomSlider.Value - sliderValue) > ZoomSliderEpsilon)
+            {
+                ZoomSlider.Value = sliderValue;
+            }
         }
         finally
         {
