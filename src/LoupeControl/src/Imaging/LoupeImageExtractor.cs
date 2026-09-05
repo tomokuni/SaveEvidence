@@ -1,6 +1,6 @@
 using Avalonia;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using System.Runtime.InteropServices;
 
 namespace Estable.AvaloniaUI.Loupe.Imaging;
@@ -22,18 +22,18 @@ internal static class LoupeImageExtractor
     public static int ComputeCaptureSize(int pixelSize, int zoomLevel)
         => (int)Math.Ceiling((double)pixelSize / zoomLevel);
 
-    /// <summary>Bitmap の指定位置を中心とした領域のBGRAピクセルデータを抽出する。</summary>
+    /// <summary>Bitmap の指定位置を中心とした領域を UnifiedBitmap として抽出する。</summary>
     /// <param name="src">切り出し元の Bitmap。</param>
     /// <param name="centerX">中心のX座標（Bitmap ローカルピクセル）。</param>
     /// <param name="centerY">中心のY座標（Bitmap ローカルピクセル）。</param>
     /// <param name="size">切り出す領域の一辺のサイズ（ピクセル）。</param>
-    /// <returns>切り出した領域のBGRAピクセルデータ。範囲外部分は透明。</returns>
+    /// <returns>切り出した領域の UnifiedBitmap（BGRA）。範囲外部分は透明。破棄は呼び出し側。</returns>
     /// <remarks>
     /// ルーペのソース画像切り出し（AreaSelect / Crop 共通）で使用する。<br/>
-    /// WriteableBitmapは生成せず、バックグラウンドへ渡せるマネージド配列を返す。<br/>
+    /// WriteableBitmap は生成せず、バックグラウンドへ渡せる <see cref="UnifiedBitmap"/>（ピクセルコンテナ）を返す。<br/>
     /// 画像端では透明パディングとなり、市松模様が透ける。<br/>
     /// </remarks>
-    public static LoupePixelRegion ExtractRegionAt(Bitmap src, int centerX, int centerY, int size)
+    public static UnifiedBitmap ExtractRegionAt(Bitmap src, int centerX, int centerY, int size)
     {
         var dstStride = checked(size * 4);
         var pixels = new byte[checked(dstStride * size)];
@@ -57,7 +57,19 @@ internal static class LoupeImageExtractor
             }
         }
 
-        return new LoupePixelRegion(pixels, size, dstStride);
+        // byte[] → UnifiedBitmap（BGRA8888・Premul）へ変換
+        var result = UnifiedBitmap.Create(size, size);
+        for (var y = 0; y < size; y++)
+        {
+            var row = y * dstStride;
+            for (var x = 0; x < size; x++)
+            {
+                var off = row + x * 4;
+                result.SetPixel(x, y, b: pixels[off], g: pixels[off + 1], r: pixels[off + 2], a: pixels[off + 3]);
+            }
+        }
+
+        return result;
     }
 
     /// <summary>中心座標とサイズから、ソース範囲内にクリップしたコピー領域とバッファ内オフセットを計算する（純粋関数）。</summary>
@@ -92,17 +104,13 @@ internal static class LoupeImageExtractor
         return (new PixelRect(interX, interY, interW, interH), dstOffset);
     }
 
-    /// <summary>抽出済みピクセルデータからWriteableBitmapを生成する。</summary>
-    /// <param name="region">抽出済みピクセル領域。</param>
-    /// <returns>生成したWriteableBitmap。</returns>
+    /// <summary>抽出済み UnifiedBitmap から表示用 WriteableBitmap を生成する。</summary>
+    /// <param name="region">抽出済みピクセル領域（UnifiedBitmap）。</param>
+    /// <returns>生成した WriteableBitmap。</returns>
     /// <remarks>呼び出し側はAvalonia UIスレッドで実行する。</remarks>
-    public static WriteableBitmap CreateBitmap(LoupePixelRegion region)
+    public static WriteableBitmap ToWriteableBitmap(this UnifiedBitmap region)
     {
-        var bitmap = new WriteableBitmap(
-            new PixelSize(region.Size, region.Size),
-            new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
-        using var locked = bitmap.Lock();
-        Marshal.Copy(region.Pixels, 0, locked.Address, region.Pixels.Length);
-        return bitmap;
+        // UnifiedBitmap → Avalonia WriteableBitmap（表示用）。ToAvaloniaBitmap は複製を作るため、region の破棄は呼び出し側が行う。
+        return (WriteableBitmap)region.ToAvaloniaBitmap();
     }
 }

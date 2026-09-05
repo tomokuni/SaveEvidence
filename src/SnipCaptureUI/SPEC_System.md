@@ -128,7 +128,7 @@ flowchart TB
 - **公開メンバー**:
   - コンストラクタ: `SnipCapture(CaptureSettings? initialSettings = null, ILogger? logger = null)`
   - プロパティ: `AppearanceSettings`（`CaptureSettings`。getter は全メンバー non-null / setter は部分更新 + 検証）
-  - メソッド: `StartCaptureAsync(CaptureType, Window)` / `StartCropAsync(Control, Window, Bitmap)` / `Cancel()` / `Confirm()` / `Dispose()`
+  - メソッド: `StartCaptureAsync(CaptureType, Window)` / `StartCropAsync(Control, Window, UnifiedBitmap)` / `Cancel()` / `Confirm()` / `Dispose()`
 - **可視性**: public
 - **依存**: CaptureSession / CropSession / CaptureSettings / CaptureResult / CaptureType / PlatformFactory
 

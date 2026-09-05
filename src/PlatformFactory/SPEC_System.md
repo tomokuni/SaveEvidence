@@ -94,9 +94,9 @@ flowchart TB
         Wdg["Watchdog<br/>public sealed<br/>Watchdog.cs"]
         Efr["ElementFinderResults<br/>public readonly record struct"]
         Bmx["BitmapExtensions<br/>public static<br/>Imaging/BitmapExtensions.cs"]
-        Apd["AppPixelData<br/>public sealed<br/>Imaging/AppPixelData.cs<br/>（Avalonia 非依存ピクセルバッファ）"]
         Ub["UnifiedBitmap<br/>public sealed<br/>Imaging/UnifiedBitmap.cs<br/>（コア：ピクセル操作・Create/FromSKBitmap/ToSKBitmap・IDisposable）"]
         Ube["UnifiedBitmapExtensions<br/>public static<br/>Imaging/UnifiedBitmapExtensions.cs<br/>（生成・変換：ToUnifiedBitmap / ToAvaloniaBitmap 等 / Avalonia・System.Drawing 依存）"]
+        Img["ImageProcessor<br/>public static<br/>Imaging/ImageProcessor.cs<br/>（切り出し・ウィンドウ検出）"]
         Win["Win 実装群<br/>internal sealed<br/>Win/（Win32 API・P-Invoke 集約）"]
         NoOp["NoOp 実装群<br/>internal sealed<br/>NoOp/（シングルトン）"]
         Mth["CoordinateMath<br/>internal static<br/>Coordinate/CoordinateMath.cs"]
@@ -134,10 +134,9 @@ flowchart TB
     Cpt --> Mth
     Wdg --> IWd
     Scn --> ICd
-    Bmx --> Apd
+    Img --> Ub
     Ube --> Ub
     Ub -->|コアは SKBitmap のみに依存| Sk
-    Ube --> Apd
     Ube --> Av
     Ube --> Sk
     Win --> Av
@@ -220,9 +219,9 @@ flowchart TB
 | `ElementFinderResults` record struct | 検出要素の結果（`Bounds` / `IsDetected` / `Title` / `Handle` / `ClassName`） |
 | `BitmapExtensions.CopyRegionWithPadding` / `ExtractRegion` | 範囲外許容の領域コピー / 矩形切り出し |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |
-| `AppPixelData` | Avalonia 非依存のピクセルバッファ（BGRA8888・アルファ乗算済み）。表示境界では Avalonia `Bitmap` を使用し、ピクセル演算では本型（`byte[]`）で行うハイブリッド方針の中核 |
 | `UnifiedBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー（コア）。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、`SkiaSharp` のみに依存したピクセル操作と `Create` / `FromSKBitmap` / `ToSKBitmap`（生成・変換）を提供。静的共有状態を持たないため並列・大規模利用に適する |
 | `UnifiedBitmapExtensions` | `UnifiedBitmap` の生成・変換拡張。`ToUnifiedBitmap`（`this Bitmap` / `this DrawingBitmap`）と `To～` / `Size` / `Clear(AvaloniaColor)`（`this UnifiedBitmap`）を提供し、Avalonia / System.Drawing との変換を閉じる |
+| `ImageProcessor` | 画像の切り出し・ウィンドウ領域検出を提供する静的ユーティリティ。`UnifiedBitmap` に対してピクセルレベルの操作を行い、ピクセル演算をコアに委譲する |
 
 ### 6.7 内部実装（Win 系）
 

@@ -45,9 +45,9 @@ internal static class LoupeRenderer
         }
 
         var captureSize = LoupeImageExtractor.ComputeCaptureSize(loupeSize, zoomLevel);
-        var region = LoupeImageExtractor.ExtractRegionAt(
+        using var region = LoupeImageExtractor.ExtractRegionAt(
             srcBitmap, (int)center.X, (int)center.Y, captureSize);
-        using var cropped = LoupeImageExtractor.CreateBitmap(region);
+        using var cropped = region.ToWriteableBitmap();
         return DrawLoupe(cropped, loupeSize, zoomLevel, crossColor,
             checkerSize, checkerColorA, checkerColorB, frameColor, frameWidth);
     }

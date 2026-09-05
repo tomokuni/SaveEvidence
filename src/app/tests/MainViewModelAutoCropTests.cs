@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using MockSettingsService = app.Tests.MainViewModelTests.MockSettingsService;
 using Xunit;
 
@@ -19,22 +20,19 @@ public sealed class MainViewModelAutoCropTests
 {
     /// <summary>白背景に黒枠線の矩形を描画した Bitmap を生成する。</summary>
     /// <returns>生成した Bitmap。</returns>
-    /// <remarks>検出器の最小長（<c>MinLineLength=50</c>）を満たすよう十分なサイズ（200x200）を描画する。</remarks>
+    /// <remarks>
+    /// 検出器の最小長（<c>MinLineLength=50</c>）を満たすよう十分なサイズ（200x200）を描画する。<br/>
+    /// <see cref="UnifiedBitmap"/>（SkiaSharp 内部）で構築してから <c>ToAvaloniaBitmap()</c> で変換する。
+    /// ヘッドレスでは <c>WriteableBitmap.Lock()</c> 書き込みが読み出しに反映されないため、
+    /// ピクセル保持が確実な <see cref="UnifiedBitmap"/> を経由する（読取りは <c>CopyPixels</c> ベースで反映される）。
+    /// </remarks>
     private static Bitmap CreateRectBitmap()
     {
         const int size = 200;
         const int border = 3;
-        var stride = size * 4;
-        var pixels = new byte[size * stride];
 
-        // 全体を白で塗る
-        for (var i = 0; i < pixels.Length; i += 4)
-        {
-            pixels[i] = 255;     // B
-            pixels[i + 1] = 255; // G
-            pixels[i + 2] = 255; // R
-            pixels[i + 3] = 255; // A
-        }
+        var unified = UnifiedBitmap.Create(size, size);
+        unified.Clear(b: 255, g: 255, r: 255, a: 255); // 白
 
         // 外周に黒枠線を描く
         for (var y = 0; y < size; y++)
@@ -45,19 +43,14 @@ public sealed class MainViewModelAutoCropTests
                     || x < border || x >= size - border;
                 if (isBorder)
                 {
-                    var i = y * stride + x * 4;
-                    pixels[i] = 0;
-                    pixels[i + 1] = 0;
-                    pixels[i + 2] = 0;
-                    pixels[i + 3] = 255;
+                    unified.SetPixel(x, y, b: 0, g: 0, r: 0, a: 255);
                 }
             }
         }
 
-        var wb = new WriteableBitmap(new PixelSize(size, size), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
-        using var locked = wb.Lock();
-        System.Runtime.InteropServices.Marshal.Copy(pixels, 0, locked.Address, pixels.Length);
-        return wb;
+        var av = unified.ToAvaloniaBitmap();
+        unified.Dispose();
+        return av;
     }
 
     /// <summary>自動切り出しを実行すると検出矩形が設定されることを検証する。</summary>

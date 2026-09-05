@@ -1,6 +1,4 @@
-using Avalonia;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 
 namespace app.Models;
 
@@ -9,7 +7,7 @@ namespace app.Models;
 /// </summary>
 /// <remarks>
 /// 最大 <see cref="MaxCount"/> 段階まで画像を保管し、超過時は古いものから破棄する。<br/>
-/// 画像のクローンはピクセルコピーで行い、元の Bitmap に影響を与えない。<br/>
+/// 画像のクローンはピクセルコピーで行い、元の画像に影響を与えない。<br/>
 /// スレッドセーフではないので、UI スレッドからのみ操作すること。<br/>
 /// Undo 実行時は現在の画像を Redo スタックへ退避し、新しい操作（<see cref="Push"/>）で Redo 履歴をクリアする。
 /// </remarks>
@@ -18,8 +16,8 @@ public sealed class UndoStack
     /// <summary>Undo の最大保存段数。</summary>
     public const int MaxCount = 5;
 
-    private readonly List<Bitmap> _stack = new(MaxCount);
-    private readonly List<Bitmap> _redoStack = new(MaxCount);
+    private readonly List<UnifiedBitmap> _stack = new(MaxCount);
+    private readonly List<UnifiedBitmap> _redoStack = new(MaxCount);
 
     /// <summary>現在の Undo スタック深度。</summary>
     public int Count => _stack.Count;
@@ -28,14 +26,14 @@ public sealed class UndoStack
     public int RedoCount => _redoStack.Count;
 
     /// <summary>Undo スタック内の画像を古い順に取得する（読み取り専用）。</summary>
-    /// <returns>Undo スタック内の Bitmap の一覧（_stack[0] が最古）。</returns>
+    /// <returns>Undo スタック内の画像の一覧（_stack[0] が最古）。</returns>
     /// <remarks>参照を返すため、呼び出し元で変更・破棄してはならない。</remarks>
-    public IReadOnlyList<Bitmap> GetUndoHistory() => _stack;
+    public IReadOnlyList<UnifiedBitmap> GetUndoHistory() => _stack;
 
     /// <summary>Redo スタック内の画像を古い順（退避された順）に取得する（読み取り専用）。</summary>
-    /// <returns>Redo スタック内の Bitmap の一覧（_redoStack[0] が現在に最も近い未来）。</returns>
+    /// <returns>Redo スタック内の画像の一覧（_redoStack[0] が現在に最も近い未来）。</returns>
     /// <remarks>参照を返すため、呼び出し元で変更・破棄してはならない。</remarks>
-    public IReadOnlyList<Bitmap> GetRedoHistory() => _redoStack;
+    public IReadOnlyList<UnifiedBitmap> GetRedoHistory() => _redoStack;
 
     /// <summary>Undo 復元中かどうか。</summary>
     public bool IsRestoring { get; private set; }
@@ -45,11 +43,10 @@ public sealed class UndoStack
     /// </summary>
     /// <param name="currentImage">現在表示中の画像。null の場合は何もしない。</param>
     /// <remarks>
-    /// 画像は PNG 形式でシリアライズ→デシリアライズして複製されるため、<br/>
-    /// 元の <c>Bitmap</c> オブジェクトに変更があっても影響を受けない。<br/>
+    /// 画像はピクセルコピーで複製されるため、元の画像に変更があっても影響を受けない。<br/>
     /// 新しい操作のため Redo 履歴はクリアされる。
     /// </remarks>
-    public void Push(Bitmap? currentImage)
+    public void Push(UnifiedBitmap? currentImage)
     {
         if (IsRestoring) return;
         if (currentImage is null) return;
@@ -66,10 +63,9 @@ public sealed class UndoStack
     /// <param name="currentImage">現在表示中の画像（Redo スタックへ退避される）。null の場合は退避しない。</param>
     /// <returns>復元された画像。スタックが空の場合は null。</returns>
     /// <remarks>
-    /// 呼び出し元は返された <c>Bitmap</c> の所有権を持つため、<br/>
-    /// 適切に破棄する責任がある。
+    /// 呼び出し元は返された画像の所有権を持つため、適切に破棄する責任がある。
     /// </remarks>
-    public Bitmap? Undo(Bitmap? currentImage)
+    public UnifiedBitmap? Undo(UnifiedBitmap? currentImage)
     {
         if (_stack.Count == 0) return null;
 
@@ -95,42 +91,27 @@ public sealed class UndoStack
     /// </summary>
     /// <returns>復元された画像。スタックが空の場合は null。</returns>
     /// <remarks>
-    /// 呼び出し元は返された <c>Bitmap</c> の所有権を持つため、<br/>
-    /// 適切に破棄する責任がある。
+    /// 呼び出し元は返された画像の所有権を持つため、適切に破棄する責任がある。
     /// </remarks>
-    public Bitmap? Redo()
+    public UnifiedBitmap? Redo()
     {
         if (_redoStack.Count == 0) return null;
         return PopLast(_redoStack);
     }
 
     /// <summary>画像をピクセルコピーで複製する（Encoder 非依存・ヘッドレス環境でも安定）。</summary>
-    private static unsafe Bitmap Clone(Bitmap source)
+    private static UnifiedBitmap Clone(UnifiedBitmap source)
     {
-        var w = source.PixelSize.Width;
-        var h = source.PixelSize.Height;
-        var srcStride = w * 4; // BGRA8888
-
-        var wb = new WriteableBitmap(new PixelSize(w, h), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
-        using var locked = wb.Lock();
-        var dstStride = locked.RowBytes;
-        var rowBytes = Math.Min(srcStride, dstStride);
-        var buffer = new byte[srcStride * h];
-        fixed (byte* p = buffer)
-        {
-            source.CopyPixels(new PixelRect(0, 0, w, h), (nint)p, buffer.Length, srcStride);
-        }
-        for (var y = 0; y < h; y++)
-        {
-            System.Runtime.InteropServices.Marshal.Copy(buffer, y * srcStride, locked.Address + y * dstStride, rowBytes);
-        }
-        return wb;
+        // SKBitmap（UnifiedBitmap 内部）のピクセルを直接コピーして複製する。
+        // 元画像と独立したインスタンスを生成するため、元に変更があっても影響しない。
+        var copy = source.Clone();
+        return copy;
     }
 
     /// <summary>スタックに画像を追加し、容量超過時は最古の画像を破棄する。</summary>
     /// <param name="stack">追加対象のスタック。</param>
     /// <param name="copy">追加する画像（クローン済み）。</param>
-    private static void AddWithLimit(List<Bitmap> stack, Bitmap copy)
+    private static void AddWithLimit(List<UnifiedBitmap> stack, UnifiedBitmap copy)
     {
         stack.Add(copy);
         if (stack.Count > MaxCount)
@@ -143,7 +124,7 @@ public sealed class UndoStack
     /// <summary>スタック末尾の画像を取り出して削除する。</summary>
     /// <param name="stack">対象のスタック（空でないこと）。</param>
     /// <returns>末尾の画像。呼び出し元が所有権を持つ。</returns>
-    private static Bitmap PopLast(List<Bitmap> stack)
+    private static UnifiedBitmap PopLast(List<UnifiedBitmap> stack)
     {
         var last = stack[^1];
         stack.RemoveAt(stack.Count - 1);
@@ -162,7 +143,7 @@ public sealed class UndoStack
 
     /// <summary>スタック内の画像を全て破棄して空にする。</summary>
     /// <param name="stack">対象のスタック。</param>
-    private static void DisposeAll(List<Bitmap> stack)
+    private static void DisposeAll(List<UnifiedBitmap> stack)
     {
         foreach (var bmp in stack)
         {

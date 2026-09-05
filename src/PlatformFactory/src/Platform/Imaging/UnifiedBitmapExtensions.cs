@@ -52,6 +52,7 @@ public static class UnifiedBitmapExtensions
         var pixels = new byte[srcStride * h];
         fixed (byte* p = pixels)
         {
+            // CopyPixels（ネイティブ memcpy 相当）で一括読み取り
             bitmap.CopyPixels(new PixelRect(0, 0, w, h), (nint)p, srcStride * h, srcStride);
             for (var y = 0; y < h; y++)
             {

@@ -1,5 +1,6 @@
 using Avalonia.Headless.XUnit;
 using Estable.AvaloniaUI.LineDetection;
+using Estable.AvaloniaUI.Platform.Imaging;
 using System.Text.Json;
 using Xunit;
 
@@ -60,8 +61,9 @@ public sealed class LogicLineDetectorDatasetTests
             Assert.NotNull(gt);
 
             using var image = TestHelper.LoadBitmap(png);
+            using var unified = image.ToUnifiedBitmap();
             var detector = new LogicLineDetector();
-            var results = detector.Detect(image);
+            var results = detector.Detect(unified);
 
             var detected = TryReconstructBounds(results);
             Assert.True(detected is not null, $"{name}: 矩形を復元できません");

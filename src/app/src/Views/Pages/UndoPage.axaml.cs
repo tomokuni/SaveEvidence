@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace app.Views.Pages;
@@ -92,10 +93,12 @@ public sealed partial class UndoPage : ViewModePageBase
             });
 
         // 1. Redo スタック（新しい順。_redoStack[0] が現在に最も近い未来）
+        // UndoStack は UnifiedBitmap を保持し、表示境界で ToAvaloniaBitmap により Bitmap へ変換する。
+        // 変換した Bitmap は UndoListItem が所有する（破棄しない）。
         var redo = _undoStack.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
-            AddItem(redo[i], $"Redo {i + 1}", isCurrent: false);
+            AddItem(redo[i].ToAvaloniaBitmap(), $"Redo {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
@@ -109,7 +112,7 @@ public sealed partial class UndoPage : ViewModePageBase
         var undo = _undoStack.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
-            AddItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false);
+            AddItem(undo[i].ToAvaloniaBitmap(), $"Undo {undo.Count - i}", isCurrent: false);
         }
 
         _viewModel.ItemCount = items.Count;

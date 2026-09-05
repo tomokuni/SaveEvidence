@@ -67,7 +67,7 @@ internal sealed partial class OverlayWindow
         // 完了後に UI スレッドで確定する（確定→画像表示までの待ち時間を短縮）。
         var vBitmap = _virtualScreenBitmap;
         var origin = _virtualScreenOrigin;
-        Task<Bitmap?> clipTask;
+        Task<UnifiedBitmap?> clipTask;
         if (vBitmap is null)
         {
             // キャプチャ未完了（オーバーレイを先に表示した直後）: 確定矩形を直接キャプチャする
@@ -89,7 +89,7 @@ internal sealed partial class OverlayWindow
     /// <remarks>
     /// オーバーレイを閉じる（Close で仮想スクリーンが解放される。result は所有権が移っているため破棄されない）。
     /// </remarks>
-    private void CompleteSelectionCore(Bitmap? result, PixelRect captureRect)
+    private void CompleteSelectionCore(UnifiedBitmap? result, PixelRect captureRect)
     {
         _log.LogCaptureCompleted(captureRect.ToString());
         Close();
@@ -120,7 +120,8 @@ internal sealed partial class OverlayWindow
         {
             try
             {
-                var clipped = vBitmap?.ExtractRegion(localRect);
+                // ImageProcessor を経由して仮想スクリーンの UnifiedBitmap から切り出す（Clipped は UnifiedBitmap）
+                var clipped = vBitmap is null ? null : ImageProcessor.Crop(vBitmap, localRect);
                 if (clipped is null) return;
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -148,10 +149,10 @@ internal sealed partial class OverlayWindow
     /// バックグラウンドスレッドから安全に実行できる（PreExtractClip と同方式）。<br/>
     /// 仮想スクリーン未設定時のフォールバック（CaptureArea）は呼び出し側が行う。
     /// </remarks>
-    private static Bitmap? ExtractClipCore(Bitmap? vBitmap, PixelPoint origin, PixelRect captureRect)
+    private static UnifiedBitmap? ExtractClipCore(UnifiedBitmap? vBitmap, PixelPoint origin, PixelRect captureRect)
     {
         if (vBitmap is not { } bmp) return null;
-        return bmp.ExtractRegion(ToBitmapLocalRect(captureRect, origin));
+        return ImageProcessor.Crop(bmp, ToBitmapLocalRect(captureRect, origin));
     }
 
     /// <summary>キャプチャ矩形（画面物理座標）を Bitmap ローカル座標（= 画面物理 − 仮想スクリーン原点）へ変換する。</summary>
@@ -211,20 +212,21 @@ internal sealed partial class OverlayWindow
     /// ルーペの Source も同時に設定する（AreaSelect のウィンドウ表示時は Bitmap が未取得のため、
     /// 取得完了時に改めて設定しないと市松模様のままになる）。
     /// </remarks>
-    public void SetVirtualScreen(Bitmap? bitmap, PixelPoint origin)
+    public void SetVirtualScreen(UnifiedBitmap? bitmap, PixelPoint origin)
     {
         _virtualScreenBitmap?.Dispose();
         _virtualScreenBitmap = bitmap;
         _virtualScreenOrigin = origin;
-        _log.LogVirtualScreen(origin.X, origin.Y, bitmap?.PixelSize.Width ?? 0, bitmap?.PixelSize.Height ?? 0);
+        _log.LogVirtualScreen(origin.X, origin.Y, bitmap?.PixelWidth ?? 0, bitmap?.PixelHeight ?? 0);
         // 固定背景画像（VirtualScreenImage）にも表示する（AreaSelect の背景・ルーペソースの視覚化）
-        VirtualScreenImage.Source = bitmap;
+        VirtualScreenImage.Source = bitmap?.ToAvaloniaBitmap();
         // ルーペの Source を設定する。
         // Source 未設定の間はルーペが表示されない（市松模様防止）ため、ここで Source を設定し、
         // 既にドラッグ中（CenterPoint 設定済み）なら SetLoupePosition を再呼び出しして表示を開始する。
         if (bitmap is not null && _captureType == CaptureType.AreaSelect)
         {
-            SelectionOverlay.SetLoupeSource(bitmap);
+            using var loupeSrc = bitmap.ToAvaloniaBitmap();
+            SelectionOverlay.SetLoupeSource(loupeSrc);
             if (SelectionOverlay.LoupeCenterPoint is { } center)
             {
                 SelectionOverlay.SetLoupePosition(center);

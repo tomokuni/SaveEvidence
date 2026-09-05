@@ -1,5 +1,5 @@
-using Avalonia.Media.Imaging;
 using AvaloniaPoint = Avalonia.Point;
+using Estable.AvaloniaUI.Platform.Imaging;
 
 namespace Estable.AvaloniaUI.LineDetection;
 
@@ -33,7 +33,7 @@ public interface ILineDetector
     string? ErrorMessage { get; }
 
     /// <summary>画像から水平・垂直の辺（線分）を検出する。</summary>
-    /// <param name="image">解析対象の画像（BGRA Bitmap）。</param>
+    /// <param name="image">解析対象の画像（UnifiedBitmap・BGRA8888）。</param>
     /// <returns>検出した線分のリスト（スコア降順）。</returns>
-    IReadOnlyList<LineDetectionResult> Detect(Bitmap image);
+    IReadOnlyList<LineDetectionResult> Detect(UnifiedBitmap image);
 }

@@ -1,4 +1,4 @@
-using Avalonia.Media.Imaging;
+using Estable.AvaloniaUI.Platform.Imaging;
 using OpenCvSharp;
 using AvaloniaPoint = Avalonia.Point;
 
@@ -102,7 +102,7 @@ public sealed class LogicLineDetector : ILineDetector
     private readonly record struct LineSeg(int X1, int Y1, int X2, int Y2);
 
     /// <summary>画像から水平・垂直の辺（線分）を検出する。</summary>
-    /// <param name="image">解析対象の画像（BGRA ピクセルバッファ）。</param>
+    /// <param name="image">解析対象の画像（UnifiedBitmap・BGRA8888）。</param>
     /// <returns>検出した線分のリスト（スコア = 長さ・降順）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
@@ -114,7 +114,7 @@ public sealed class LogicLineDetector : ILineDetector
     ///    4 辺をコーナー近傍で交差する閉区間として出力する（<see cref="BuildRectangles"/>）<br/>
     /// 6. 矩形を構成できない場合は、最小長・暗いピクセル割合でフィルタしてスコア（長さ）降順で返す
     /// </remarks>
-    public IReadOnlyList<LineDetectionResult> Detect(Bitmap image)
+    public IReadOnlyList<LineDetectionResult> Detect(UnifiedBitmap image)
     {
         using var mat = MatHelper.ToMat(image);
         using var gray = new Mat();
@@ -146,7 +146,7 @@ public sealed class LogicLineDetector : ILineDetector
         var mergedV = MergeCollinearAll(verticals, isHorizontal: false, gap: MaxLineGap);
 
         // 矩形（ウィンドウの 4 辺）を構成できる場合は、閉区間として優先出力する
-        var rectangles = BuildRectangles(mergedH, mergedV, image.PixelSize.Width, image.PixelSize.Height, gray, edges);
+        var rectangles = BuildRectangles(mergedH, mergedV, image.PixelWidth, image.PixelHeight, gray, edges);
         if (rectangles.Count > 0)
         {
             return rectangles.OrderByDescending(r => r.Score).ToList();

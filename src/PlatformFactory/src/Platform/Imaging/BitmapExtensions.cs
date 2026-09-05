@@ -44,7 +44,7 @@ public static class BitmapExtensions
         var interH = interB - interY;
         if (interW <= 0 || interH <= 0) return;
 
-        var dstOffset = (dstY + (interY - srcRect.Y)) * dstStride + (dstX + (interX - srcRect.X)) * AppPixelData.BytesPerPixel;
+        var dstOffset = (dstY + (interY - srcRect.Y)) * dstStride + (dstX + (interX - srcRect.X)) * 4;
         src.CopyPixels(
             new PixelRect(interX, interY, interW, interH),
             dst + dstOffset,

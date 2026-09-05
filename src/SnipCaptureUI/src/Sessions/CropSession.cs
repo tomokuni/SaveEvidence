@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable.AvaloniaUI.ZoomView;
@@ -31,7 +32,7 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 internal sealed class CropSession(
     ZoomViewControl previewControl,
     Window hostWindow,
-    Bitmap sourceImage,
+    UnifiedBitmap sourceImage,
     CaptureSettings settings,
     ILogger? logger = null,
     Action<bool>? zoomHandler = null)
@@ -43,7 +44,7 @@ internal sealed class CropSession(
     private readonly Action<bool>? _zoomHandler = zoomHandler;
 
     /// <summary>元画像のピクセルサイズ（論理座標系の範囲）。</summary>
-    private readonly Size _sourceImageSize = new(sourceImage.PixelSize.Width, sourceImage.PixelSize.Height);
+    private readonly Size _sourceImageSize = new(sourceImage.PixelWidth, sourceImage.PixelHeight);
 
     /// <summary>オーバーレイ・ルーペの配置先パネル（previewControl の祖先 Panel）。</summary>
     private readonly Panel _parentPanel = FindAncestorPanel(previewControl)
@@ -210,8 +211,9 @@ internal sealed class CropSession(
                 var origin = PreviewOrigin();
                 return new Vector(origin.X, origin.Y);
             })));
-        // ルーペソース（元画像）
-        _selectionOverlay.SetLoupeSource(sourceImage);
+        // ルーペソース（元画像）。LoupeControl.Source は IImage のため、UnifiedBitmap → Avalonia Bitmap へ変換して渡す（表示境界）。
+        using var loupeSource = sourceImage.ToAvaloniaBitmap();
+        _selectionOverlay.SetLoupeSource(loupeSource);
     }
 
     /// <summary>プレビューの表示サイズ（RenderTransform 込み）を親パネル上の座標差から導出する。</summary>

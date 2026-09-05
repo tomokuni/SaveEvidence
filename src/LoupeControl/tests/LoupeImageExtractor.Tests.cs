@@ -11,14 +11,14 @@ namespace Estable.AvaloniaUI.Loupe.Tests;
 public class LoupeImageExtractorTests
 {
     [AvaloniaFact]
-    public void ExtractRegionAt_中心領域のピクセルデータを指定サイズで抽出する()
+    public void ExtractRegionAt_中心領域を指定サイズで抽出する()
     {
         var src = TestHelper.CreateSolidBitmap(200, 200);
 
-        var result = LoupeImageExtractor.ExtractRegionAt(src, 100, 100, 40);
+        using var result = LoupeImageExtractor.ExtractRegionAt(src, 100, 100, 40);
 
-        Assert.Equal(40, result.Size);
-        Assert.Equal(40 * 40 * 4, result.Pixels.Length);
+        Assert.Equal(40, result.PixelWidth);
+        Assert.Equal(40, result.PixelHeight);
     }
 
     [AvaloniaFact]
@@ -27,10 +27,10 @@ public class LoupeImageExtractorTests
         var src = TestHelper.CreateSolidBitmap(100, 100);
 
         // 中心 (0,0) は範囲外パディングを含む
-        var result = LoupeImageExtractor.ExtractRegionAt(src, 0, 0, 20);
+        using var result = LoupeImageExtractor.ExtractRegionAt(src, 0, 0, 20);
 
-        Assert.Equal(20, result.Size);
-        Assert.Equal(20 * 20 * 4, result.Pixels.Length);
+        Assert.Equal(20, result.PixelWidth);
+        Assert.Equal(20, result.PixelHeight);
     }
 
     [AvaloniaFact]
@@ -39,10 +39,10 @@ public class LoupeImageExtractorTests
         var src = TestHelper.CreateSolidBitmap(100, 100);
 
         // 中心 (200,200) は画像範囲外（完全に透明）
-        var result = LoupeImageExtractor.ExtractRegionAt(src, 200, 200, 20);
+        using var result = LoupeImageExtractor.ExtractRegionAt(src, 200, 200, 20);
 
-        Assert.Equal(20, result.Size);
-        Assert.Equal(20 * 20 * 4, result.Pixels.Length);
+        Assert.Equal(20, result.PixelWidth);
+        Assert.Equal(20, result.PixelHeight);
     }
 }
 

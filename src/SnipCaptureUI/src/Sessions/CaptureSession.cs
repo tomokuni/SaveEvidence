@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -124,7 +125,7 @@ internal sealed class CaptureSession(
             if (result is { Image: not null, SourceBounds: { } bounds })
             {
                 _log.LogCaptureCompleted(bounds.ToString());
-                _log.LogResult(result.Image.PixelSize.Width, result.Image.PixelSize.Height, bounds.ToString());
+                _log.LogResult(result.Image.PixelWidth, result.Image.PixelHeight, bounds.ToString());
             }
             else
             {
@@ -164,7 +165,7 @@ internal sealed class CaptureSession(
     /// <b>重要</b>: <c>out origin</c> はタスク完了後にしか有効にならないため、<br/>
     /// 原点はタスク完了後に <paramref name="originProvider"/> で遅延評価する（マルチモニタの座標ずれ防止）。
     /// </remarks>
-    private void SetupVirtualScreenContinuation(Task<Bitmap?> captureTask, Func<PixelPoint> originProvider)
+    private void SetupVirtualScreenContinuation(Task<UnifiedBitmap?> captureTask, Func<PixelPoint> originProvider)
     {
         _ = Task.Run(async () =>
         {

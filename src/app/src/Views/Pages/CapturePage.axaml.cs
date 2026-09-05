@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Globalization;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.AvaloniaUI.ZoomView;
 using app.Icons;
@@ -583,30 +584,34 @@ public sealed partial class CapturePage : UserControl
     /// <summary>現在の画像をUndoスタックに保存する。</summary>
     public void PushUndo()
     {
-        if (_viewModel.PreviewImage is not null)
-            _undoStack.Push(_viewModel.PreviewImage);
+        if (_viewModel.PreviewImage is { } image)
+            _undoStack.Push(image.ToUnifiedBitmap());
     }
 
     /// <summary>Undo スタックから画像を復元する（現在の画像は Redo スタックへ退避される）。</summary>
     public void RestoreUndo()
     {
-        var prev = _undoStack.Undo(_viewModel.PreviewImage);
+        // 現在のプレビュー画像（Bitmap）を UnifiedBitmap へ変換して Undo へ渡す（Undo スタックは UnifiedBitmap を保持）。
+        var current = _viewModel.PreviewImage is { } img ? img.ToUnifiedBitmap() : null;
+        using var prev = _undoStack.Undo(current);
+        current?.Dispose();
         if (prev is not null) RestoreImage(prev);
     }
 
     /// <summary>Redo スタックから画像を復元する。</summary>
     public void RestoreRedo()
     {
-        var redo = _undoStack.Redo();
+        using var redo = _undoStack.Redo();
         if (redo is not null) RestoreImage(redo);
     }
 
     /// <summary>復元した画像へプレビューを差し替える。</summary>
-    /// <param name="image">復元する画像（呼び出し元から所有権が移る）。</param>
-    private void RestoreImage(Bitmap image)
+    /// <param name="image">復元する画像（UnifiedBitmap）。表示境界で Avalonia Bitmap へ変換する。</param>
+    private void RestoreImage(UnifiedBitmap image)
     {
         _viewModel.PreviewImage?.Dispose();
-        _viewModel.SetPreviewImage(image);
+        using var av = image.ToAvaloniaBitmap();
+        _viewModel.SetPreviewImage(av);
     }
 
     /// <summary>キャプチャ中フラグを設定する（MainWindowから呼ばれる）。</summary>
@@ -697,8 +702,10 @@ public sealed partial class CapturePage : UserControl
         // 設定は MainWindow の Settings.PropertyChanged 購読で常に最新のため、ここでは同期しない
         // プレビュー状態（ScrollOffset / ZoomPercent）は SnipCaptureUI が DragRect イベント / 表示状態から導出する
         // Ctrl+ホイールによるズーム要求は ZoomViewControl へ委譲する（ズーム状態の整合・Crop 終了後の継続）
+        // CropSession は UnifiedBitmap を受け取るため、プレビュー画像（Bitmap）を変換する。
+        using var unified = srcBmp.ToUnifiedBitmap();
         _cropTask = _snipCapture.StartCropAsync(
-            ZoomableView, _parentWindow!, srcBmp,
+            ZoomableView, _parentWindow!, unified,
             zoomIn => { if (zoomIn) ZoomableView.ZoomIn(); else ZoomableView.ZoomOut(); });
 
         if (_cropTask is null)
@@ -726,7 +733,7 @@ public sealed partial class CapturePage : UserControl
         var srcBmp = _viewModel.PreviewImage;
         if (srcBmp is null) return;
 
-        _undoStack.Push(srcBmp);
+        _undoStack.Push(srcBmp.ToUnifiedBitmap());
         _viewModel.CropPreviewCommand.Execute(bounds);
         UpdateCropButtonText();
     }

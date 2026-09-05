@@ -4,10 +4,11 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 
 /// <summary>画像の切り出し処理と、背景色を自動判別したウィンドウ領域検出を提供する静的ユーティリティクラス。</summary>
 /// <remarks>
-/// <see cref="AppPixelData"/> に対してピクセル配列レベルで操作を行う（UI フレームワーク非依存・状態なし）。<br/>
+/// <see cref="UnifiedBitmap"/> に対してピクセルレベルの操作を行う（UI フレームワーク非依存・状態なし）。<br/>
 /// ウィンドウ領域検出は、画像四隅の背景色を基準に、同じ色が連続する領域を除去する方式を採用する。<br/>
 /// 色の類似判定は RGB 各成分の差分合計が <see cref="ColorSimilarThreshold"/> 未満を「類似」とみなす。<br/>
 /// 全メソッドが静的であり、インスタンス化は不要（他フレームワーク・テスト環境への移植容易性を確保）。<br/>
+/// <see cref="UnifiedBitmap"/> は <see cref="System.IDisposable"/> のため、呼び出し側が破棄する（所有権は本クラスへ移らない）。
 /// </remarks>
 public static class ImageProcessor
 {
@@ -23,13 +24,15 @@ public static class ImageProcessor
     /// <summary>画像から指定された矩形領域を切り出す。</summary>
     /// <param name="source">元画像。</param>
     /// <param name="bounds">切り出す矩形領域（画像座標ピクセル単位）。</param>
-    /// <returns>切り出された新しい画像データ。範囲外の場合は null。</returns>
-    public static AppPixelData? Crop(AppPixelData source, PixelRect bounds)
+    /// <returns>切り出された新しいビットマップ。範囲外の場合は null。</returns>
+    /// <remarks>
+    /// デスティネーションは事前にゼロ初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
+    /// 呼び出し側で戻り値を破棄すること。
+    /// </remarks>
+    public static UnifiedBitmap? Crop(UnifiedBitmap source, PixelRect bounds)
     {
-        var srcPixels = source.PixelData;
-        var srcStride = source.Stride;
-        var srcW = source.Width;
-        var srcH = source.Height;
+        var srcW = source.PixelWidth;
+        var srcH = source.PixelHeight;
 
         var dstW = bounds.Width;
         var dstH = bounds.Height;
@@ -42,39 +45,36 @@ public static class ImageProcessor
         var cropH = Math.Min(dstH, srcH - cropY);
         if (cropW <= 0 || cropH <= 0) return null;
 
-        var dstStride = dstW * AppPixelData.BytesPerPixel;
-        var dstPixels = new byte[dstStride * dstH];
+        var result = UnifiedBitmap.Create(dstW, dstH);
 
         for (var y = 0; y < cropH; y++)
         {
-            var srcRowStart = (cropY + y) * srcStride + cropX * AppPixelData.BytesPerPixel;
-            var dstRowStart = y * dstStride;
-            srcPixels.AsSpan(srcRowStart, cropW * AppPixelData.BytesPerPixel)
-                     .CopyTo(dstPixels.AsSpan(dstRowStart, cropW * AppPixelData.BytesPerPixel));
+            for (var x = 0; x < cropW; x++)
+            {
+                result.SetPixel(x, y, source.GetPixel(cropX + x, cropY + y));
+            }
         }
 
-        return new AppPixelData(dstW, dstH, dstStride, dstPixels);
+        return result;
     }
 
     /// <summary>画像内のウィンドウ領域を自動判定して切り出す。</summary>
     /// <param name="source">処理対象画像。</param>
-    /// <returns>検出されたウィンドウ領域を切り出した新しい画像データ。検出できない場合は元画像のコピー。</returns>
+    /// <returns>検出されたウィンドウ領域を切り出した新しいビットマップ。検出できない場合は元画像のコピー。</returns>
     /// <remarks>
     /// 四隅の色と同じ色が続く領域を背景とみなして除去する方式。<br/>
     /// 検出結果が縦横 <see cref="MinDetectSize"/> ピクセル未満の場合は、検出失敗として元画像のコピーを返す。<br/>
+    /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>
-    public static AppPixelData? DetectAndCropWindow(AppPixelData source)
+    public static UnifiedBitmap? DetectAndCropWindow(UnifiedBitmap source)
     {
         var bounds = DetectWindowBounds(source);
 
         // DetectWindowBounds は常に 0 以上の矩形を返す（検出失敗時は画像全体）。全体の場合はコピーを返す。
-        var fullRect = new PixelRect(0, 0, source.Width, source.Height);
+        var fullRect = new PixelRect(0, 0, source.PixelWidth, source.PixelHeight);
         if (bounds == fullRect)
         {
-            // 元画像のコピーを返す
-            var stride = source.Width * AppPixelData.BytesPerPixel;
-            var pixels = source.PixelData.ToArray();
-            return new AppPixelData(source.Width, source.Height, stride, pixels);
+            return source.Clone();
         }
 
         return Crop(source, bounds);
@@ -89,32 +89,30 @@ public static class ImageProcessor
     /// 2. 上・下・左・右から背景色と異なるピクセルが現れる境界を探索<br/>
     /// 3. 検出領域が縦横 <see cref="MinDetectSize"/> ピクセル未満の場合は検出失敗として画像全体を返す<br/>
     /// </remarks>
-    public static PixelRect DetectWindowBounds(AppPixelData source)
+    public static PixelRect DetectWindowBounds(UnifiedBitmap source)
     {
-        var width = source.Width;
-        var height = source.Height;
-        var stride = source.Stride;
-        var pixels = source.PixelData;
+        var width = source.PixelWidth;
+        var height = source.PixelHeight;
 
         // 四隅の色を取得
         var corners = new[]
         {
-            GetPixelArgb(pixels, stride, 0, 0),
-            GetPixelArgb(pixels, stride, width - 1, 0),
-            GetPixelArgb(pixels, stride, 0, height - 1),
-            GetPixelArgb(pixels, stride, width - 1, height - 1)
+            source.GetPixel(0, 0),
+            source.GetPixel(width - 1, 0),
+            source.GetPixel(0, height - 1),
+            source.GetPixel(width - 1, height - 1)
         };
-        var bgArgb = corners.GroupBy(c => c)
+        var bgArgb = corners.GroupBy(c => ToArgb(c))
                             .MaxBy(g => g.Count())!;
 
         var bgR = (byte)(bgArgb.Key >> 16);
         var bgG = (byte)(bgArgb.Key >> 8);
         var bgB = (byte)(bgArgb.Key);
 
-        var top = ScanTopBg(pixels, stride, bgR, bgG, bgB, width, height);
-        var bottom = ScanBottomBg(pixels, stride, bgR, bgG, bgB, width, height, top);
-        var left = ScanLeftBg(pixels, stride, bgR, bgG, bgB, width, top, bottom);
-        var right = ScanRightBg(pixels, stride, bgR, bgG, bgB, width, left, top, bottom);
+        var top = ScanTopBg(source, bgR, bgG, bgB, width, height);
+        var bottom = ScanBottomBg(source, bgR, bgG, bgB, width, height, top);
+        var left = ScanLeftBg(source, bgR, bgG, bgB, width, top, bottom);
+        var right = ScanRightBg(source, bgR, bgG, bgB, width, left, top, bottom);
 
         var detectedWidth = right - left + 1;
         var detectedHeight = bottom - top + 1;
@@ -128,82 +126,70 @@ public static class ImageProcessor
         return new PixelRect(left, top, detectedWidth, detectedHeight);
     }
 
-    /// <summary>指定座標のピクセルから ARGB キー値（RGB下位24bit）を取得する。</summary>
-    private static int GetPixelArgb(ReadOnlyMemory<byte> pixels, int stride, int x, int y)
-    {
-        var off = y * stride + x * AppPixelData.BytesPerPixel;
-        var span = pixels.Span;
-        // BGRA ストレージ: span[off]=B, span[off+1]=G, span[off+2]=R, span[off+3]=A
-        var r = span[off + 2];
-        var g = span[off + 1];
-        var b = span[off];
-        return (r << 16) | (g << 8) | b;
-    }
+    /// <summary>ピクセルを ARGB キー値（RGB下位24bit）へ変換する。</summary>
+    /// <param name="pixel">BGRA ピクセル。</param>
+    /// <returns>RGB 下位 24bit のキー値。</returns>
+    private static int ToArgb((byte B, byte G, byte R, byte A) pixel)
+        => (pixel.R << 16) | (pixel.G << 8) | pixel.B;
 
     /// <summary>上端から背景色が続く行数をスキャンし、最初の非背景色行のY座標を返す。</summary>
-    private static int ScanTopBg(ReadOnlyMemory<byte> pixels, int stride,
+    private static int ScanTopBg(UnifiedBitmap source,
         byte bgR, byte bgG, byte bgB, int w, int h)
     {
         for (var y = 0; y < h; y++)
-            if (!IsRowColor(pixels, stride, y, bgR, bgG, bgB, w, 0, w - 1)) return y;
+            if (!IsRowColor(source, y, bgR, bgG, bgB, w, 0, w - 1)) return y;
         return 0;
     }
 
     /// <summary>下端から背景色が続く行数をスキャンし、最後の非背景色行のY座標を返す。</summary>
-    private static int ScanBottomBg(ReadOnlyMemory<byte> pixels, int stride,
+    private static int ScanBottomBg(UnifiedBitmap source,
         byte bgR, byte bgG, byte bgB, int w, int h, int top)
     {
         for (var y = h - 1; y >= top; y--)
-            if (!IsRowColor(pixels, stride, y, bgR, bgG, bgB, w, 0, w - 1)) return y;
+            if (!IsRowColor(source, y, bgR, bgG, bgB, w, 0, w - 1)) return y;
         return h - 1;
     }
 
     /// <summary>左端から背景色が続く列をスキャンし、最初の非背景色列のX座標を返す。</summary>
-    private static int ScanLeftBg(ReadOnlyMemory<byte> pixels, int stride,
+    private static int ScanLeftBg(UnifiedBitmap source,
         byte bgR, byte bgG, byte bgB, int w, int top, int bottom)
     {
         for (var x = 0; x < w; x++)
-            if (!IsColColor(pixels, stride, x, bgR, bgG, bgB, top, bottom)) return x;
+            if (!IsColColor(source, x, bgR, bgG, bgB, top, bottom)) return x;
         return 0;
     }
 
     /// <summary>右端から背景色が続く列をスキャンし、最後の非背景色列のX座標を返す。</summary>
-    private static int ScanRightBg(ReadOnlyMemory<byte> pixels, int stride,
+    private static int ScanRightBg(UnifiedBitmap source,
         byte bgR, byte bgG, byte bgB, int w, int left, int top, int bottom)
     {
         for (var x = w - 1; x >= left; x--)
-            if (!IsColColor(pixels, stride, x, bgR, bgG, bgB, top, bottom)) return x;
+            if (!IsColColor(source, x, bgR, bgG, bgB, top, bottom)) return x;
         return w - 1;
     }
 
     /// <summary>指定された行の全サンプルピクセルが指定色に類似しているかを判定する。</summary>
-    private static bool IsRowColor(ReadOnlyMemory<byte> pixels, int stride, int y,
+    private static bool IsRowColor(UnifiedBitmap source, int y,
         byte bgR, byte bgG, byte bgB, int w, int startX, int endX)
     {
         var step = Math.Max(1, (endX - startX + 1) / SampleCount);
         for (var x = startX; x <= endX; x += step)
         {
-            var argb = GetPixelArgb(pixels, stride, x, y);
-            var pr = (byte)(argb >> 16);
-            var pg = (byte)(argb >> 8);
-            var pb = (byte)argb;
-            if (!IsColorSimilar(pr, pg, pb, bgR, bgG, bgB)) return false;
+            var pixel = source.GetPixel(x, y);
+            if (!IsColorSimilar(pixel.R, pixel.G, pixel.B, bgR, bgG, bgB)) return false;
         }
         return true;
     }
 
     /// <summary>指定された列の全サンプルピクセルが指定色に類似しているかを判定する。</summary>
-    private static bool IsColColor(ReadOnlyMemory<byte> pixels, int stride, int x,
+    private static bool IsColColor(UnifiedBitmap source, int x,
         byte bgR, byte bgG, byte bgB, int top, int bottom)
     {
         var step = Math.Max(1, (bottom - top + 1) / SampleCount);
         for (var y = top; y <= bottom; y += step)
         {
-            var argb = GetPixelArgb(pixels, stride, x, y);
-            var pr = (byte)(argb >> 16);
-            var pg = (byte)(argb >> 8);
-            var pb = (byte)argb;
-            if (!IsColorSimilar(pr, pg, pb, bgR, bgG, bgB)) return false;
+            var pixel = source.GetPixel(x, y);
+            if (!IsColorSimilar(pixel.R, pixel.G, pixel.B, bgR, bgG, bgB)) return false;
         }
         return true;
     }

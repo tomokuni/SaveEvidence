@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
 using Microsoft.Extensions.Logging;
@@ -27,7 +28,7 @@ internal sealed partial class OverlayWindow : Window
     private readonly CaptureType _captureType;
 
     /// <summary>キャプチャ完了コールバック（確定・キャンセル・エラー時に呼ばれる）。</summary>
-    private readonly Action<Bitmap?, PixelRect?> _onComplete;
+    private readonly Action<UnifiedBitmap?, PixelRect?> _onComplete;
 
     /// <summary>DPI スケーリング係数（プライマリスクリーン基準）。</summary>
     private readonly double _scaling;
@@ -53,8 +54,8 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>クリック確定型の押下時に固定したハイライト矩形。リリース時に確定する。</summary>
     private Rect? _clickFixedRect;
 
-    /// <summary>仮想スクリーン全体の Bitmap（全モード共通のキャプチャソース・切り出し元）。</summary>
-    private Bitmap? _virtualScreenBitmap;
+    /// <summary>仮想スクリーン全体の UnifiedBitmap（全モード共通のキャプチャソース・切り出し元）。</summary>
+    private UnifiedBitmap? _virtualScreenBitmap;
 
     /// <summary>仮想スクリーンの原点（画面物理座標）。Bitmap 上の座標 = 画面物理座標 − 原点。</summary>
     private PixelPoint _virtualScreenOrigin;
@@ -63,7 +64,7 @@ internal sealed partial class OverlayWindow : Window
     private PixelRect? _cachedClipRect;
 
     /// <summary>事前切り出し済みの Bitmap（確定時に再利用。枠の変更がない場合は切り出しをスキップ）。</summary>
-    private Bitmap? _cachedClipBitmap;
+    private UnifiedBitmap? _cachedClipBitmap;
 
     /// <summary>事前切り出しの実行回数（テスト検証用）。</summary>
     private int _preExtractCount;
@@ -87,7 +88,7 @@ internal sealed partial class OverlayWindow : Window
         CaptureType captureType,
         CaptureSettings settings,
         double scaling,
-        Action<Bitmap?, PixelRect?> onComplete,
+        Action<UnifiedBitmap?, PixelRect?> onComplete,
         ILogger? logger = null)
     {
         InitializeComponent();
@@ -261,7 +262,8 @@ internal sealed partial class OverlayWindow : Window
         // ウィンドウ Position = 仮想スクリーン原点のため、既に仮想スクリーン Bitmap 上の座標と一致する。
         // 仮想スクリーン原点（_virtualScreenOrigin）を更に引くとマルチモニタ（原点が (0,0) でない）でずれるため引かない。
         SelectionOverlay.SetLoupePosition(domainPos);
-        SelectionOverlay.SetLoupeSource(wb);
+        using var loupeSrc = wb.ToAvaloniaBitmap();
+        SelectionOverlay.SetLoupeSource(loupeSrc);
     }
 
     // ====================================================================

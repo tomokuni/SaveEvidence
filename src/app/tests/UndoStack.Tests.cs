@@ -1,8 +1,6 @@
 using app.Models;
-using Avalonia;
 using Avalonia.Headless.XUnit;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
 namespace app.Tests;
@@ -15,11 +13,11 @@ namespace app.Tests;
 [Collection("AvaloniaHeadless")]
 public class UndoStackTests
 {
-    /// <summary>テスト用の Bitmap（size x size の WriteableBitmap）を生成する。</summary>
+    /// <summary>テスト用の UnifiedBitmap（size x size）を生成する。</summary>
     /// <param name="size">一辺のピクセル数（既定 10）。</param>
-    /// <returns>生成した Bitmap。</returns>
-    private static WriteableBitmap CreateBitmap(int size = 10)
-        => new(new PixelSize(size, size), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+    /// <returns>生成した UnifiedBitmap。</returns>
+    private static UnifiedBitmap CreateBitmap(int size = 10)
+        => UnifiedBitmap.Create(size, size);
 
     [AvaloniaFact]
     public void Undo_現在の画像をRedoスタックへ退避して復元する()
@@ -137,8 +135,10 @@ public class UndoStackTests
 
         // 古い順（_stack[0] が最古）で取得できる（クローンのためサイズで判別）
         Assert.Equal(2, history.Count);
-        Assert.Equal(new PixelSize(10, 10), history[0].PixelSize);
-        Assert.Equal(new PixelSize(11, 11), history[1].PixelSize);
+        Assert.Equal(10, history[0].PixelWidth);
+        Assert.Equal(10, history[0].PixelHeight);
+        Assert.Equal(11, history[1].PixelWidth);
+        Assert.Equal(11, history[1].PixelHeight);
     }
 
     [AvaloniaFact]
@@ -167,8 +167,10 @@ public class UndoStackTests
 
         // 退避された順（_redoStack[0] が現在に最も近い未来）で取得できる（クローンのためサイズで判別）
         Assert.Equal(2, history.Count);
-        Assert.Equal(new PixelSize(12, 12), history[0].PixelSize);
-        Assert.Equal(new PixelSize(11, 11), history[1].PixelSize);
+        Assert.Equal(12, history[0].PixelWidth);
+        Assert.Equal(12, history[0].PixelHeight);
+        Assert.Equal(11, history[1].PixelWidth);
+        Assert.Equal(11, history[1].PixelHeight);
 
         restored1!.Dispose();
         restored2!.Dispose();

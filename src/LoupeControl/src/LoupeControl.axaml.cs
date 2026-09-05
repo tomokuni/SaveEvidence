@@ -916,10 +916,13 @@ public sealed partial class LoupeControl : UserControl
             // WriteableBitmap生成・Lock・RenderTargetBitmap生成・DrawingContext操作はUIスレッドに限定する。
             return await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                using var cropped = LoupeImageExtractor.CreateBitmap(region);
-                return LoupeRenderer.DrawLoupe(
-                    cropped, pixelSize, zoomLevel, crossColor,
-                    checkerPixelSize, checkerColorA, checkerColorB, frameColor, framePixelWidth);
+                using var cropped = region.ToWriteableBitmap();
+                using (region)
+                {
+                    return LoupeRenderer.DrawLoupe(
+                        cropped, pixelSize, zoomLevel, crossColor,
+                        checkerPixelSize, checkerColorA, checkerColorB, frameColor, framePixelWidth);
+                }
             });
         }
 

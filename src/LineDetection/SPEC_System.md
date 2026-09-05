@@ -23,7 +23,7 @@
 LineDetection は、キャプチャ画像から Windows のウィンドウ枠となる水平・垂直の辺（線分）を検出するライブラリです。
 
 - 検出方式は `ILineDetector` で抽象化され、ロジック方式（Canny + Hough）を同一の API で利用できます。
-- 入力は `Bitmap`（BGRA）、出力は `LineDetectionResult` のリストです。
+- 入力は `UnifiedBitmap`（BGRA8888）、出力は `LineDetectionResult` のリストです。
 - OpenCvSharp は内部利用に閉じ、公開 API には露出しません。
 
 ## 2. 技術スタック
@@ -46,7 +46,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 │       (Canny + Hough)       │
 │       └─ MatHelper (ToMat)  │
 └─────────────────────────────┘
-        │ Detect(Bitmap)
+        │ Detect(UnifiedBitmap)
         ▼
 [LineDetectionResult リスト]
 ```
@@ -68,7 +68,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 - `LogicLineDetector.cs` → `DetectionResult.cs`（ILineDetector・LineOrientation）・`MatHelper`
 - `MatHelper.cs` → OpenCvSharp（内部のみ）
 
-いずれも他の検出器へ依存しません（疎結合）。`MatHelper` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(Bitmap)`）には露出しません。
+いずれも他の検出器へ依存しません（疎結合）。`MatHelper` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(UnifiedBitmap)`）には露出しません。
 
 ## 6. 検出アルゴリズム
 

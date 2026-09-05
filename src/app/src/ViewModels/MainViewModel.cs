@@ -21,7 +21,7 @@ namespace app.ViewModels;
 /// <c>[RelayCommand]</c> 属性によるソースジェネレーターを活用する。<br/>
 /// 設定管理は <see cref="Services.SettingsService"/> を介して行い、疎結合な設計を実現する。<br/>
 /// 画像のライフサイクル管理（Dispose）は <c>OnPreviewImageChanging</c> で行う。<br/>
-/// ピクセル操作（切出し・ウィンドウ検出）は PlatformFactory の <see cref="ImageProcessor"/> / <see cref="AppPixelData"/> に委譲し、
+/// ピクセル操作（切出し・ウィンドウ検出）は PlatformFactory の <see cref="ImageProcessor"/> / <see cref="UnifiedBitmap"/> に委譲し、
 /// 画面キャプチャは SnipCaptureUI の <see cref="CaptureType"/> に委譲する（プラットフォーム抽象。DIP）。
 /// </remarks>
 public sealed partial class MainViewModel : ObservableObject
@@ -344,7 +344,8 @@ public sealed partial class MainViewModel : ObservableObject
 
         // LineDetection で水平・垂直の辺（線分）を検出し、矩形（ウィンドウの 4 辺）を復元する
         var detector = new LogicLineDetector();
-        var results = detector.Detect(image);
+        using var unified = image.ToUnifiedBitmap();
+        var results = detector.Detect(unified);
 
         var rects = TryReconstructRects(results);
         DetectedRects = rects;
@@ -448,9 +449,9 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>ピクセル編集（切出し等）を適用する（BeforeEditAction → 変換 → 画像差し替え）。</summary>
-    /// <param name="edit">AppPixelData を受け取り、編集後の AppPixelData を返す処理。</param>
+    /// <param name="edit">UnifiedBitmap を受け取り、編集後の UnifiedBitmap を返す処理。</param>
     /// <remarks>ピクセル操作は PlatformFactory の共通基盤（<see cref="ImageProcessor"/>）に委譲する。</remarks>
-    private void ApplyPixelEdit(Func<AppPixelData, AppPixelData?> edit)
+    private void ApplyPixelEdit(Func<UnifiedBitmap, UnifiedBitmap?> edit)
     {
         if (PreviewImage is null)
         {
@@ -459,12 +460,15 @@ public sealed partial class MainViewModel : ObservableObject
 
         BeforeEditAction?.Invoke();
 
-        // PreviewImage → AppPixelData → 編集 → Bitmap
-        var srcData = AppPixelData.ToPixelData(PreviewImage);
+        // PreviewImage → UnifiedBitmap → 編集 → Bitmap
+        using var srcData = PreviewImage.ToUnifiedBitmap();
         var edited = edit(srcData);
         if (edited is not null)
         {
-            PreviewImage = edited.ToBitmap();
+            using (edited)
+            {
+                PreviewImage = edited.ToAvaloniaBitmap();
+            }
         }
     }
 

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -17,8 +18,8 @@ public class SnipCaptureTests
     /// <summary>キャプチャサービスのモック。</summary>
     private sealed class MockCaptureService : ICaptureService
     {
-        public Bitmap? CaptureArea(PixelRect bounds) => null;
-        public Bitmap? CaptureVirtualScreen(out PixelPoint origin)
+        public UnifiedBitmap? CaptureArea(PixelRect bounds) => null;
+        public UnifiedBitmap? CaptureVirtualScreen(out PixelPoint origin)
         {
             origin = default;
             return null;
@@ -311,8 +312,8 @@ public class SnipCaptureTests
         window.Close();
     }
 
-    /// <summary>テスト用 Bitmap を生成する。</summary>
-    private static WriteableBitmap CreateBitmap(int width, int height)
-        => new(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+    /// <summary>テスト用 UnifiedBitmap を生成する。</summary>
+    private static UnifiedBitmap CreateBitmap(int width, int height)
+        => UnifiedBitmap.Create(width, height);
 }
 

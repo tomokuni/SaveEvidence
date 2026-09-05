@@ -152,7 +152,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Image` | `Bitmap?` | キャプチャした画像（エラー時 null） |
+| `Image` | `UnifiedBitmap?` | キャプチャした画像（エラー時 null。破棄は呼び出し側） |
 | `SourceBounds` | `PixelRect?` | キャプチャした領域（**画面物理 Pixel** の仮想画面座標。エラー時 null） |
 
 `Image` と `SourceBounds` は常に同時に null または同時に非 null です。
@@ -171,7 +171,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 | --- | --- | --- |
 | コンストラクタ | `SnipCapture(CaptureSettings? initialSettings = null, ILogger? logger = null)` | インスタンスを生成。設定値が許容範囲外なら `ArgumentOutOfRangeException` |
 | `StartCaptureAsync` | `Task<CaptureResult?> StartCaptureAsync(CaptureType type, Window owner)` | 選択キャプチャを開始。実行中は null / キャンセル時は 0x0 の空結果 |
-| `StartCropAsync` | `Task<PixelRect?> StartCropAsync(Control previewControl, Window hostWindow, Bitmap sourceImage, Action<bool>? zoomRequestHandler = null)` | 切出しを開始。戻り値は元画像上の論理座標（**ドメイン座標系** = 元画像ピクセル）。実行中は null / キャンセル時は 0x0 の空 `PixelRect`。`zoomRequestHandler` は Ctrl+ホイールによるズーム要求（true = ズームイン / false = ズームアウト）を上位 AP へ通知する（null の場合はズーム操作なし） |
+| `StartCropAsync` | `Task<PixelRect?> StartCropAsync(Control previewControl, Window hostWindow, UnifiedBitmap sourceImage, Action<bool>? zoomRequestHandler = null)` | 切出しを開始。戻り値は元画像上の論理座標（**ドメイン座標系** = 元画像ピクセル）。実行中は null / キャンセル時は 0x0 の空 `PixelRect`。`zoomRequestHandler` は Ctrl+ホイールによるズーム要求（true = ズームイン / false = ズームアウト）を上位 AP へ通知する（null の場合はズーム操作なし） |
 | `Cancel` | `void Cancel()` | 進行中セッションをキャンセル（Capture: オーバーレイを閉じる / Crop: 0x0 で完了） |
 | `Confirm` | `void Confirm()` | Crop を現在の選択矩形で確定（Enter キー相当。FadeMaskDragRectControl.RequestConfirm に委譲） |
 | `NotifyCropViewportChanged` | `void NotifyCropViewportChanged()` | 実行中の Crop セッションへビューポート（パン・ズーム・表示サイズ）の変化を通知。ビューポート実装に依存せず、ホストがビューポート変化を検知した際に中継する（暗転マスク・選択枠・ルーペの追従）。Crop 未実行時は何もしない |
@@ -405,7 +405,7 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 | 薄い統括者（Facade） | SnipCapture は状態を保持せず、組み立て・配線・ライフサイクルのみを担う（各コントロールの状態保持を活用し、状態コピーを排除） |
 | イベント駆動・ポーリング排除 | 選択状態の同期は各コントロールの公開イベントのみで行い、ホストは状態をポーリングしない |
 | 背景キャプチャ | 仮想スクリーン全体のキャプチャはバックグラウンドスレッド + 5 秒タイムアウトで実行し、UI スレッドをブロックしない（DWM 応答不能時の安全策） |
-| 確定時の切り出し（高速化） | 仮想スクリーン Bitmap をセッション開始時に取得し、確定時は `BitmapExtensions.ExtractRegion` で切り出す（再キャプチャ・DWM 待機なしで確定を高速化） |
+| 確定時の切り出し（高速化） | 仮想スクリーン UnifiedBitmap をセッション開始時に取得し、確定時は `ImageProcessor.Crop` で切り出す（再キャプチャ・DWM 待機なしで確定を高速化） |
 | 枠選択中の事前切り出し（高速化） | スクリーン/ウィンドウ選択のホバー時・領域選択のドラッグ後に、枠（選択矩形）をバックグラウンドで事前切り出ししてキャッシュ（確定時の切り出しをスキップ）。同じ矩形の場合は切り出しをスキップ（キャッシュ再利用） |
 | 座標変換の 1 段化 | Crop の座標変換は「論理 ↔ 親 Panel DIP」の 1 段（`CoordinatePort.Compose(ImageLayout, ScrollOffset)`）で完結（プレビュー状態コピー不要） |
 | 設定の部分更新 | `CaptureSettings` は全メンバー nullable とし、null で現在値維持（設定オブジェクトの再構築コストを回避） |

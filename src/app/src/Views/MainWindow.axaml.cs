@@ -1,4 +1,5 @@
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using app.Enum;
 using app.Icons;
@@ -396,7 +397,7 @@ public sealed partial class MainWindow : Window
         // フロー: APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）
         var result = await _snipCapture.StartCaptureAsync(captureType, this);
 
-        var imgInfo = result?.Image is not null ? $"{result.Image.PixelSize.Width}x{result.Image.PixelSize.Height}" : "null";
+        var imgInfo = result?.Image is not null ? $"{result.Image.PixelWidth}x{result.Image.PixelHeight}" : "null";
         _logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
     }
 
@@ -410,11 +411,13 @@ public sealed partial class MainWindow : Window
     private void OnCaptureCompleted(CaptureResult? result)
     {
         // キャプチャ結果の処理（画像変更）
-        if (result?.Image is not null)
+        if (result?.Image is { } captured)
         {
             CaptureContent.PushUndo();
             CaptureContent.SetIsCaptureInProgress(true);
-            _viewModel.SetPreviewImage(result.Image);
+            // キャプチャ結果（UnifiedBitmap）を表示用 Bitmap へ変換してプレビューへ設定する（表示境界）。
+            using var image = captured.ToAvaloniaBitmap();
+            _viewModel.SetPreviewImage(image);
             CaptureContent.SetIsCaptureInProgress(false);
             CaptureContent.ExitCropMode();
         }

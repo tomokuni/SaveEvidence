@@ -3,6 +3,7 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using LineDetectionSample.Models;
 using System.Collections.ObjectModel;
@@ -70,7 +71,8 @@ public sealed partial class CreatePageViewModel : ObservableObject
             return;
         }
 
-        CapturedImage = image;
+        // キャプチャ結果（UnifiedBitmap）を表示用 Bitmap へ変換する（表示境界）。
+        CapturedImage = image.ToAvaloniaBitmap();
         CaptureBounds = bounds;
         WindowInfos.Clear();
 

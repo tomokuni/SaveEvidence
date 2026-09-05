@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using SnipCaptureUI.Sample.ViewModels;
 using System.Collections.Specialized;
@@ -67,8 +68,8 @@ public sealed partial class MainWindow : Window
     {
         if (result?.Image is { } image)
         {
-            // 画像変更（同期実行。このハンドラの完了後に APP が再表示される）
-            _vm.CapturedImage = image;
+            // 画像変更（同期実行。このハンドラの完了後に APP が再表示される）。キャプチャ結果（UnifiedBitmap）を表示用 Bitmap へ変換。
+            _vm.CapturedImage = image.ToAvaloniaBitmap();
             _vm.AddLog("[Event] CaptureCompleted（同期）：キャプチャ画像を更新しました。");
         }
         else
@@ -132,7 +133,8 @@ public sealed partial class MainWindow : Window
         }
 
         _vm.AddLog("[App] Crop を開始します（プレビュー上でドラッグ選択 → Enter / ダブルクリックで確定）。");
-        var rect = await _capture.StartCropAsync(PreviewCropView.ZoomView, this, _previewBitmap);
+        using var unified = _previewBitmap.ToUnifiedBitmap();
+        var rect = await _capture.StartCropAsync(PreviewCropView.ZoomView, this, unified);
         _vm.UpdateCropResult(rect);
         _vm.AddLog(rect is { Width: > 0, Height: > 0 }
             ? $"[App] Crop が完了しました: {rect.Value}（元画像ピクセル）"

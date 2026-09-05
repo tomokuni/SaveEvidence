@@ -70,7 +70,7 @@
 - グローバルホットキー（`IGlobalHotKeyService<T>`）
 - 座標変換ポート（`ICoordinatePort` / `CoordinatePort` / `ScreenConverter`）
 - UI ハング監視（`Watchdog`）
-- 画像ユーティリティ（`BitmapExtensions` / `AppPixelData` / `UnifiedBitmap`）
+- 画像ユーティリティ（`BitmapExtensions` / `UnifiedBitmap` / `UnifiedBitmapExtensions` / `ImageProcessor`）
 
 ## 3. 外部利用条件
 
@@ -84,7 +84,7 @@
 
 ```csharp
 using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordinatePort / CoordinatePort / ScreenConverter / Watchdog 等
-using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / AppPixelData / UnifiedBitmap 等
+using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / UnifiedBitmap / UnifiedBitmapExtensions / ImageProcessor 等
 ```
 
 ## 4. 基本的な使用方法
@@ -244,7 +244,7 @@ Avalonia / System.Drawing 依存の生成・変換は `UnifiedBitmapExtensions`�
 
 ### 5.4 型
 
-公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` / `AppPixelData` / `UnifiedBitmap` / `UnifiedBitmapExtensions` です。
+公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` / `UnifiedBitmap` / `UnifiedBitmapExtensions` / `ImageProcessor` です。
 プラットフォーム固有実装（Win / NoOp 系）と内部ユーティリティ（`CoordinateMath` / `PlatformLog`）はすべて internal（非公開）です。公開 API はプラットフォーム非依存型のみを使用します。
 
 #### 5.4.1 PlatformFactory
@@ -297,9 +297,9 @@ Avalonia / System.Drawing 依存の生成・変換は `UnifiedBitmapExtensions`�
 | `BitmapExtensions.CopyRegionWithPadding` | 範囲外許容で領域コピー（クリップ + オフセット、範囲外は透明のまま。座標はピクセル単位） |
 | `BitmapExtensions.ExtractRegion` | 矩形切り出し（範囲外は透明パディング。座標はピクセル単位。w/h ≤ 0 は `ArgumentOutOfRangeException`） |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から `Color` を生成（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
-| `AppPixelData` | Avalonia 非依存のピクセルバッファ（BGRA8888・アルファ乗算済み）。`Width` / `Height` / `Stride` / `PixelData`（`byte[]`）を保持し、Avalonia `Bitmap` と `ToBitmap` / `ToPixelData` で相互変換（`Bitmap.CopyPixels` / `WriteableBitmap.Lock` ベースで高速・可逆） |
 | `UnifiedBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー（コア）。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、`SkiaSharp` のみに依存したピクセル操作と `Create` / `FromSKBitmap` / `ToSKBitmap` を提供 |
 | `UnifiedBitmapExtensions` | `UnifiedBitmap` の生成・変換拡張（`this Bitmap` / `this DrawingBitmap` / `this UnifiedBitmap`）。Avalonia `Bitmap` / `System.Drawing.Bitmap` との相互変換を提供 |
+| `ImageProcessor` | 画像の切り出し・ウィンドウ領域検出を提供する静的ユーティリティ。`UnifiedBitmap` に対してピクセルレベルの操作を行う（`Crop` / `DetectAndCropWindow` / `DetectWindowBounds`） |
 
 ## 6. 座標系
 

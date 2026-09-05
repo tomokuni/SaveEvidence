@@ -1,5 +1,5 @@
 using Avalonia;
-using Avalonia.Media.Imaging;
+using Estable.AvaloniaUI.Platform.Imaging;
 
 namespace Estable.AvaloniaUI.Platform.NoOp;
 
@@ -16,10 +16,10 @@ internal sealed class NoOpCaptureService : ICaptureService
     public static NoOpCaptureService Instance { get; } = new();
 
     /// <inheritdoc/>
-    public Bitmap? CaptureArea(PixelRect bounds) => null;
+    public UnifiedBitmap? CaptureArea(PixelRect bounds) => null;
 
     /// <inheritdoc/>
-    public Bitmap? CaptureVirtualScreen(out PixelPoint origin)
+    public UnifiedBitmap? CaptureVirtualScreen(out PixelPoint origin)
     {
         origin = default;
         return null;

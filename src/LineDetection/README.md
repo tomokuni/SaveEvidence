@@ -58,11 +58,13 @@ Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブ
 
 ```csharp
 using Estable.AvaloniaUI.LineDetection;
+using Estable.AvaloniaUI.Platform.Imaging;
 
 ILineDetector detector = new LogicLineDetector();
 
-// 検出器は Bitmap を直接入力とする（BGRA）
-var lines = detector.Detect(bitmap);
+// 検出器は UnifiedBitmap を入力とする（BGRA8888）。Bitmap → UnifiedBitmap 変換して渡す
+using var unified = bitmap.ToUnifiedBitmap();
+var lines = detector.Detect(unified);
 ```
 
 ### 検出結果

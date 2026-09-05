@@ -151,9 +151,9 @@ flowchart TB
 ### 6.5 LoupeImageExtractor
 
 - **分類**: 内部静的クラス（`internal static class`）
-- **責務**: 元画像からの領域切り出し（`CopyPixels` ベース、範囲外は透明パディング）
-- **公開API**: `ExtractRegionAt`（BGRA ピクセル配列抽出）/ `CreateBitmap`（抽出済みピクセル配列から WriteableBitmap 生成）/ `LoupePixelRegion`（抽出結果レコード）
-- **依存**: なし（Avalonia のみ）
+- **責務**: 元画像からの領域切り出し（`CopyPixels` ベース、範囲外は透明パディング）を `UnifiedBitmap` として提供し、表示用 `WriteableBitmap` へ変換する
+- **公開API**: `ExtractRegionAt`（`UnifiedBitmap` 抽出）/ `ToWriteableBitmap`（`UnifiedBitmap` → `WriteableBitmap` 変換）/ `ComputeClipRect`（クリップ領域計算）
+- **依存**: Avalonia / `Estable.AvaloniaUI.Platform.Imaging`（`UnifiedBitmap`）
 
 ### 6.6 LogMessage
 

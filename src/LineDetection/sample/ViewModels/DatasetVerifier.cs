@@ -1,5 +1,6 @@
 using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.LineDetection;
+using Estable.AvaloniaUI.Platform.Imaging;
 using System.Text.Json;
 
 namespace LineDetectionSample.ViewModels;
@@ -30,7 +31,8 @@ internal static class DatasetVerifier
         try
         {
             using var bitmap = new Bitmap(entry.PngPath);
-            var results = detector.Detect(bitmap);
+            using var unified = bitmap.ToUnifiedBitmap();
+            var results = detector.Detect(unified);
 
             if (TryReconstructBounds(results) is not { } bound)
             {
