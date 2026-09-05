@@ -11,14 +11,14 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 /// <b>設計</b>: 本型は内部表現（<see cref="SKBitmap"/> BGRA8888・Premul）と、ビットマップ種別に依存しない
 /// ピクセル操作のみを提供する。<br/>
 /// Avalonia / System.Drawing / WPF 依存の生成・変換（<c>Create</c> / <c>From～</c> / <c>To～</c>）は
-/// <see cref="UnifiedBitmapExtensions"/>（<c>extension(UnifiedBitmap)</c>）が担う。<br/>
+/// <see cref="PbBitmapExtensions"/>（<c>extension(PbBitmap)</c>）が担う。<br/>
 /// <br/>
 /// <b>ピクセル形式</b>: BGRA8888（アルファ乗算済み、System.Drawing の Format32bppPArgb 相当）。<br/>
 /// <b>所有権</b>: 内部 SKBitmap の所有権は本型が保持する。<br/>
 /// <b>スレッド安全性</b>: 静的共有状態を持たないため各インスタンスは独立して並列利用できるが、
 /// 単一インスタンスへの同時ピクセル操作は直列化すること（<see cref="SKBitmap"/> はスレッドセーフではない）。
 /// </remarks>
-public sealed class UnifiedBitmap : IDisposable
+public sealed class PbBitmap : IDisposable
 {
     /// <summary>1 ピクセルあたりのバイト数（BGRA8888）。</summary>
     private const int BytesPerPixel = 4;
@@ -35,7 +35,7 @@ public sealed class UnifiedBitmap : IDisposable
     /// ホットパスで毎回のネイティブ呼び出し・プロパティ評価を排除）。<br/>
     /// <c>init</c> アクセサにより、初期化後は再設定できない（読み取り専用）。
     /// </remarks>
-    internal UnifiedBitmap(SKBitmap bitmap)
+    internal PbBitmap(SKBitmap bitmap)
     {
         _bitmap = bitmap;
         Address = bitmap.GetPixels();
@@ -69,7 +69,7 @@ public sealed class UnifiedBitmap : IDisposable
     /// <param name="width">幅（ピクセル）。正の値。</param>
     /// <param name="height">高さ（ピクセル）。正の値。</param>
     /// <returns>生成されたビットマップ。</returns>
-    public static UnifiedBitmap Create(int width, int height)
+    public static PbBitmap Create(int width, int height)
         => new(new SKBitmap(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul)));
 
     /// <summary>SKBitmap からラッパーを生成する（引数の所有権を譲り受ける）。</summary>
@@ -79,7 +79,7 @@ public sealed class UnifiedBitmap : IDisposable
     /// 引数はアルファ乗算済み BGRA8888 であること。<br/>
     /// 戻り値の破棄時に引数の SKBitmap も Dispose される（所有権が移る）。
     /// </remarks>
-    public static UnifiedBitmap FromSKBitmap(SKBitmap bitmap) => new(bitmap);
+    public static PbBitmap FromSKBitmap(SKBitmap bitmap) => new(bitmap);
 
     /// <summary>内部 SKBitmap を返す（呼び出し側で Dispose しないこと）。</summary>
     /// <returns>内部 SKBitmap（共有参照）。</returns>
@@ -201,10 +201,10 @@ public sealed class UnifiedBitmap : IDisposable
 
     /// <summary>本ビットマップの複製を生成する。</summary>
     /// <returns>独立した複製（所有権は呼び出し側）。</returns>
-    public UnifiedBitmap Clone()
+    public PbBitmap Clone()
     {
         ThrowIfDisposed();
-        return new UnifiedBitmap(_bitmap.Copy());
+        return new PbBitmap(_bitmap.Copy());
     }
 
     /// <summary>画像から指定された矩形領域を切り出す。</summary>
@@ -216,7 +216,7 @@ public sealed class UnifiedBitmap : IDisposable
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>
-    public UnifiedBitmap Crop(Rectangle rect)
+    public PbBitmap Crop(Rectangle rect)
         => Crop(rect.X, rect.Y, rect.Width, rect.Height);
 
     /// <summary>画像から指定された矩形領域を切り出す。</summary>
@@ -232,7 +232,7 @@ public sealed class UnifiedBitmap : IDisposable
     /// 内部ではピクセルバッファ（<see cref="Address"/>）へ直接アクセスし、行単位で <c>Buffer.MemoryCopy</c> によりコピーする。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>
-    public unsafe UnifiedBitmap Crop(int x, int y, int width, int height)
+    public unsafe PbBitmap Crop(int x, int y, int width, int height)
     {
         ThrowIfDisposed();
         if (width <= 0)

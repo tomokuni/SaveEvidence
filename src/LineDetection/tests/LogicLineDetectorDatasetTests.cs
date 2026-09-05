@@ -61,7 +61,7 @@ public sealed class LogicLineDetectorDatasetTests
             Assert.NotNull(gt);
 
             using var image = TestHelper.LoadBitmap(png);
-            using var unified = image.ToUnifiedBitmap();
+            using var unified = image.ToPbBitmap();
             var detector = new LogicLineDetector();
             var results = detector.Detect(unified);
 

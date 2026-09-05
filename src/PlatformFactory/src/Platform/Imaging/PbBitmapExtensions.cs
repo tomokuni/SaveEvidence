@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using SkiaSharp;
@@ -13,20 +14,20 @@ using AvaloniaColor = Avalonia.Media.Color;
 namespace Estable.AvaloniaUI.Platform.Imaging;
 
 /// <summary>
-/// <see cref="UnifiedBitmap"/> の生成・変換拡張。
+/// <see cref="PbBitmap"/> の生成・変換拡張。
 /// </summary>
 /// <remarks>
 /// <b>依存分離</b>: 本クラスは Avalonia / System.Drawing との変換を担い、
-/// <see cref="UnifiedBitmap"/> 本体（コア）の依存を閉じる。<br/>
-/// <see cref="UnifiedBitmap"/> はピクセル操作と <c>Create</c> / <c>FromSKBitmap</c> / <c>ToSKBitmap</c>（SkiaSharp のみに依存）を提供し、
+/// <see cref="PbBitmap"/> 本体（コア）の依存を閉じる。<br/>
+/// <see cref="PbBitmap"/> はピクセル操作と <c>Create</c> / <c>FromSKBitmap</c> / <c>ToSKBitmap</c>（SkiaSharp のみに依存）を提供し、
 /// 外部ビットマップ種別（Avalonia / System.Drawing）の生成・変換は本クラスへ分離する。<br/>
 /// <br/>
-/// <b>C# 拡張メソッド</b>: ファイル種別からの生成（<c>bitmap.ToUnifiedBitmap()</c>）とインスタンス変換（<c>bmp.ToAvaloniaWriteableBitmap()</c> 等）は
-/// <c>this UnifiedBitmap</c> / <c>this Bitmap</c> の拡張メソッドとして実装する。<br/>
+/// <b>C# 拡張メソッド</b>: ファイル種別からの生成（<c>bitmap.ToPbBitmap()</c>）とインスタンス変換（<c>bmp.ToAvaloniaWriteableBitmap()</c> 等）は
+/// <c>this PbBitmap</c> / <c>this Bitmap</c> の拡張メソッドとして実装する。<br/>
 /// <br/>
 /// <b>所有権</b>: <c>ToAvaloniaWriteableBitmap()</c> / <c>ToSystemDrawingBitmap()</c> は複製を返す（呼び出し側が所有）。
 /// </remarks>
-public static class UnifiedBitmapExtensions
+public static class PbBitmapExtensions
 {
     /// <summary>1 ピクセルあたりのバイト数（BGRA8888）。</summary>
     private const int BytesPerPixel = 4;
@@ -42,11 +43,11 @@ public static class UnifiedBitmapExtensions
     /// <c>Bitmap.CopyPixels</c>（ネイティブ memcpy 相当）で、SKBitmap のピクセルバッファへ直接コピーする。<br/>
     /// 中間バッファ（byte[]）を介さないため高速・低アロケーション。PNG エンコード/デコードや System.Drawing を経由しない（可逆）。
     /// </remarks>
-    public static unsafe UnifiedBitmap ToUnifiedBitmap(this Bitmap bitmap)
+    public static unsafe PbBitmap ToPbBitmap(this Bitmap bitmap)
     {
         var w = bitmap.PixelSize.Width;
         var h = bitmap.PixelSize.Height;
-        var result = UnifiedBitmap.Create(w, h);
+        var result = PbBitmap.Create(w, h);
         var dstStride = result.Stride;
         var dst = (byte*)result.Address;
 
@@ -65,9 +66,9 @@ public static class UnifiedBitmapExtensions
     /// <returns>変換された Avalonia WriteableBitmap。</returns>
     /// <remarks>
     /// 内部 SKBitmap を複製して Avalonia に渡すため、返された Bitmap の破棄は呼び出し側が所有する。<br/>
-    /// ゼロコピーで受け渡したい場合は <see cref="ToSKBitmap(UnifiedBitmap)"/> を使用すること。
+    /// ゼロコピーで受け渡したい場合は <see cref="ToSKBitmap(PbBitmap)"/> を使用すること。
     /// </remarks>
-    public static unsafe WriteableBitmap ToAvaloniaWriteableBitmap(this UnifiedBitmap bitmap)
+    public static unsafe WriteableBitmap ToAvaloniaWriteableBitmap(this PbBitmap bitmap)
     {
         bitmap.ThrowIfDisposed();
         // Width / Height を一度だけ取得し、PixelSize 生成と行ループの両方で共有する（Size 値生成を削減）
@@ -96,10 +97,21 @@ public static class UnifiedBitmapExtensions
         return wb;
     }
 
+    /// <summary>Avalonia の画像入力（<see cref="IImage"/>）として公開するアダプタを生成する（ゼロコピー・複製なし）。</summary>
+    /// <param name="bitmap">対象のビットマップ。</param>
+    /// <returns><see cref="PbBitmapImage"/>（所有権は <see cref="PbBitmapImage.Dispose"/> で解放する）。</returns>
+    /// <remarks>
+    /// <c>WriteableBitmap</c> / <c>Bitmap</c> を生成せず、内部 SKBitmap を Skia へ直接描画する（ゼロコピー）。<br/>
+    /// 内包する <see cref="PbBitmap"/> の所有権は生成した <see cref="PbBitmapImage"/> へ移るため、
+    /// 呼び出し側は元の <paramref name="bitmap"/> を破棄しないこと（破棄漏れ・二重破棄防止）。
+    /// </remarks>
+    public static IImage ToImage(this PbBitmap bitmap)
+        => new PbBitmapImage(bitmap);
+
     /// <summary>画像サイズ（Avalonia PixelSize）。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <returns>Avalonia PixelSize。</returns>
-    public static PixelSize Size(this UnifiedBitmap bitmap)
+    public static PixelSize Size(this PbBitmap bitmap)
         => new(bitmap.Size.Width, bitmap.Size.Height);
 
     /// <summary>Avalonia PixelRect で指定された矩形領域を切り出す。</summary>
@@ -110,14 +122,14 @@ public static class UnifiedBitmapExtensions
     /// コアの <c>Crop(int, int, int, int)</c> へ委譲する。<br/>
     /// 幅・高さが 0 以下の場合は <see cref="ArgumentOutOfRangeException"/>。
     /// </remarks>
-    public static UnifiedBitmap Crop(this UnifiedBitmap bitmap, PixelRect rect)
+    public static PbBitmap Crop(this PbBitmap bitmap, PixelRect rect)
         => bitmap.Crop(rect.X, rect.Y, rect.Width, rect.Height);
 
     /// <summary>指定座標（Avalonia PixelPoint）のピクセルを Avalonia Color で取得する。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <param name="point">座標（ピクセル）。</param>
     /// <returns>取得した Avalonia Color。範囲外は IndexOutOfRangeException。</returns>
-    public static AvaloniaColor GetPixel(this UnifiedBitmap bitmap, PixelPoint point)
+    public static AvaloniaColor GetPixel(this PbBitmap bitmap, PixelPoint point)
     {
         var color = bitmap.GetPixel(new Point(point.X, point.Y));
         return AvaloniaColor.FromArgb(color.A, color.R, color.G, color.B);
@@ -127,7 +139,7 @@ public static class UnifiedBitmapExtensions
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <param name="point">座標（ピクセル）。</param>
     /// <param name="color">設定する Avalonia Color。アルファ乗算して書き込む。</param>
-    public static void SetPixel(this UnifiedBitmap bitmap, PixelPoint point, AvaloniaColor color)
+    public static void SetPixel(this PbBitmap bitmap, PixelPoint point, AvaloniaColor color)
         => bitmap.SetPixel(new Point(point.X, point.Y), Color.FromArgb(color.A, color.R, color.G, color.B));
 
     /// <summary>指定座標（ピクセル）へ Avalonia Color を書き込む（範囲外は無視）。</summary>
@@ -137,19 +149,19 @@ public static class UnifiedBitmapExtensions
     /// <param name="color">設定する Avalonia Color。</param>
     /// <returns>書き込めたかどうか。範囲外の場合は false。</returns>
     /// <remarks>
-    /// <see cref="UnifiedBitmap.TrySetPixel"/> へ委譲する（Avalonia Color → System.Drawing Color へ変換）。<br/>
+    /// <see cref="PbBitmap.TrySetPixel"/> へ委譲する（Avalonia Color → System.Drawing Color へ変換）。<br/>
     /// 範囲外チェックはコア側で行う。
     /// </remarks>
-    public static bool TrySetPixel(this UnifiedBitmap bitmap, int x, int y, AvaloniaColor color)
+    public static bool TrySetPixel(this PbBitmap bitmap, int x, int y, AvaloniaColor color)
         => bitmap.TrySetPixel(x, y, Color.FromArgb(color.A, color.R, color.G, color.B));
 
     /// <summary>全ピクセルを指定色（Avalonia Color）で塗りつぶす。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <param name="color">塗りつぶし色。アルファ乗算して書き込む。</param>
-    public static void Clear(this UnifiedBitmap bitmap, AvaloniaColor color)
+    public static void Clear(this PbBitmap bitmap, AvaloniaColor color)
     {
         var premult = Premultiply(color);
-        // UnifiedBitmap.Clear(byte b, byte g, byte r, byte a) は BGRA 順のため、SKColor(RGB) から BGRA へ並べ替えて委譲する。
+        // PbBitmap.Clear(byte b, byte g, byte r, byte a) は BGRA 順のため、SKColor(RGB) から BGRA へ並べ替えて委譲する。
         bitmap.Clear(premult.Blue, premult.Green, premult.Red, premult.Alpha);
     }
 
@@ -178,7 +190,7 @@ public static class UnifiedBitmapExtensions
     /// <returns>生成されたビットマップ。</returns>
     /// <remarks>System.Drawing は Windows 専用のため、本メソッドは Windows でのみ利用可能。</remarks>
     [SupportedOSPlatform("windows")]
-    public static UnifiedBitmap ToUnifiedBitmap(this DrawingBitmap bitmap)
+    public static PbBitmap ToPbBitmap(this DrawingBitmap bitmap)
     {
         var w = bitmap.Width;
         var h = bitmap.Height;
@@ -208,7 +220,7 @@ public static class UnifiedBitmapExtensions
                 }
             }
             // コアの公開ファクトリへ委譲（SKBitmap の所有権を移す）
-            return UnifiedBitmap.FromSKBitmap(buffer);
+            return PbBitmap.FromSKBitmap(buffer);
         }
         finally
         {
@@ -221,7 +233,7 @@ public static class UnifiedBitmapExtensions
     /// <returns>変換された System.Drawing.Bitmap。</returns>
     /// <remarks>System.Drawing は Windows 専用のため、本メソッドは Windows でのみ利用可能。</remarks>
     [SupportedOSPlatform("windows")]
-    public static DrawingBitmap ToSystemDrawingBitmap(this UnifiedBitmap bitmap)
+    public static DrawingBitmap ToSystemDrawingBitmap(this PbBitmap bitmap)
     {
         bitmap.ThrowIfDisposed();
         var width = bitmap.Size.Width;

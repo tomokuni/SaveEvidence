@@ -364,11 +364,11 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>外部提供矩形の 4 辺をルーペのバッファへ描画する。</summary>
-    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
+    /// <param name="bitmap">描画対象の PbBitmap。</param>
     /// <param name="rect">描画する矩形（ドメイン座標）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    private static void DrawRectToLoupe(UnifiedBitmap bitmap, OverlayRect rect, Point captureTopLeft, double scale)
+    private static void DrawRectToLoupe(PbBitmap bitmap, OverlayRect rect, Point captureTopLeft, double scale)
     {
         // ドメイン座標 → ルーペピクセル座標（半開区間の終点を含むよう +1 する）
         double x = (rect.Bounds.X - captureTopLeft.X) * scale;
@@ -389,12 +389,12 @@ public sealed partial class CropViewControl : Panel
         DrawRectEdge(bitmap, new Point(x + w, y), new Point(x + w, y + h), rect);
     }
 
-    /// <summary>UnifiedBitmap 上に矩形の 1 辺を描画する（実線または破線）。</summary>
-    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
+    /// <summary>PbBitmap 上に矩形の 1 辺を描画する（実線または破線）。</summary>
+    /// <param name="bitmap">描画対象の PbBitmap。</param>
     /// <param name="from">始点（ルーペピクセル座標）。</param>
     /// <param name="to">終点（ルーペピクセル座標）。</param>
     /// <param name="rect">描画スタイル（破線種類・前景色・背景色・幅）。</param>
-    private static void DrawRectEdge(UnifiedBitmap bitmap, Point from, Point to, OverlayRect rect)
+    private static void DrawRectEdge(PbBitmap bitmap, Point from, Point to, OverlayRect rect)
     {
         bool horizontal = Math.Abs(to.Y - from.Y) < Math.Abs(to.X - from.X);
         double length = horizontal ? to.X - from.X : to.Y - from.Y;
@@ -448,17 +448,17 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>線の太さを考慮して UnifiedBitmap へ色を打ち込む。</summary>
-    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
+    /// <summary>線の太さを考慮して PbBitmap へ色を打ち込む。</summary>
+    /// <param name="bitmap">描画対象の PbBitmap。</param>
     /// <param name="x">中心 X 座標。</param>
     /// <param name="y">中心 Y 座標。</param>
     /// <param name="color">描画色（不透明）。</param>
     /// <param name="half">線の太さの半径（半幅）。</param>
     /// <param name="horizontal">水平辺かどうか。</param>
-    private static void StampPixel(UnifiedBitmap bitmap, int x, int y, Color color, int half, bool horizontal)
+    private static void StampPixel(PbBitmap bitmap, int x, int y, Color color, int half, bool horizontal)
     {
         // 水平辺は Y 固定で太さ方向が X、垂直辺は X 固定で太さ方向が Y になる。
-        // 太さ分だけ固定座標の両側へ広げて描画する（範囲外は UnifiedBitmapExtensions.TrySetPixel が無視）。
+        // 太さ分だけ固定座標の両側へ広げて描画する（範囲外は PbBitmapExtensions.TrySetPixel が無視）。
         var fixedCoord = horizontal ? y : x;
         for (var d = -half; d <= half; d++)
         {

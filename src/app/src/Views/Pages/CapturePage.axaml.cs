@@ -112,8 +112,10 @@ public sealed partial class CapturePage : UserControl
             {
                 case nameof(MainViewModel.PreviewImage):
                     OnPreviewImageChanged();
-                    // PreviewImage（UnifiedBitmap）を表示境界で Avalonia Bitmap へ変換して ZoomView へ設定する
-                    ZoomableView.Source = _viewModel.PreviewImage is { } bmp ? bmp.ToAvaloniaWriteableBitmap() : null;
+                    // PreviewImage（PbBitmap）を表示境界で Avalonia 画像（IImage）へ変換して ZoomView へ設定する。
+                    // WriteableBitmap を生成せず、PbBitmap を内包した PbBitmapImage を設定する（Skia 直描画）。
+                    // 所有権は ViewModel（PreviewImage）が保持し、本コントロールは共有参照のみ（Dispose しない）。
+                    ZoomableView.Source = _viewModel.PreviewImage is { } bmp ? new PbBitmapImage(bmp) : null;
                     break;
                 case nameof(MainViewModel.SaveFolderPath):
                     // 保存先フォルダの変更を保存ボタンの ToolTip に反映する
@@ -592,7 +594,7 @@ public sealed partial class CapturePage : UserControl
     /// <summary>Undo スタックから画像を復元する（現在の画像は Redo スタックへ退避される）。</summary>
     public void RestoreUndo()
     {
-        // 現在のプレビュー画像（UnifiedBitmap）を Undo へ渡す（Undo スタックは UnifiedBitmap を保持）。
+        // 現在のプレビュー画像（PbBitmap）を Undo へ渡す（Undo スタックは PbBitmap を保持）。
         var current = _viewModel.PreviewImage;
         using var prev = _undoStack.Undo(current);
         if (prev is not null) RestoreImage(prev);
@@ -606,8 +608,8 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>復元した画像へプレビューを差し替える。</summary>
-    /// <param name="image">復元する画像（UnifiedBitmap）。所有権は ViewModel へ移る。</param>
-    private void RestoreImage(UnifiedBitmap image)
+    /// <param name="image">復元する画像（PbBitmap）。所有権は ViewModel へ移る。</param>
+    private void RestoreImage(PbBitmap image)
     {
         _viewModel.PreviewImage?.Dispose();
         _viewModel.SetPreviewImage(image);
@@ -701,7 +703,7 @@ public sealed partial class CapturePage : UserControl
         // 設定は MainWindow の Settings.PropertyChanged 購読で常に最新のため、ここでは同期しない
         // プレビュー状態（ScrollOffset / ZoomPercent）は SnipCaptureUI が DragRect イベント / 表示状態から導出する
         // Ctrl+ホイールによるズーム要求は ZoomViewControl へ委譲する（ズーム状態の整合・Crop 終了後の継続）
-        // CropSession は UnifiedBitmap を受け取る（内部処理は UnifiedBitmap に統一）。
+        // CropSession は PbBitmap を受け取る（内部処理は PbBitmap に統一）。
         _cropTask = _snipCapture.StartCropAsync(
             ZoomableView, _parentWindow!, srcBmp,
             zoomIn => { if (zoomIn) ZoomableView.ZoomIn(); else ZoomableView.ZoomOut(); });

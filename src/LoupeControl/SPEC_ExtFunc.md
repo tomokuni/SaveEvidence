@@ -49,7 +49,7 @@
     - [7.1 ロガーの責務](#71-ロガーの責務)
     - [7.2 ログレベルポリシー](#72-ログレベルポリシー)
       - [ログ定義一覧](#ログ定義一覧)
-    - [7.3 Bitmap以外のIImage](#73-bitmap以外のiimage)
+    - [7.3 Bitmap / PbBitmapImage 以外の IImage](#73-bitmap--unifiedbitmapimage-以外の-iimage)
     - [7.4 出力先の例](#74-出力先の例)
   - [8. ライフサイクルと所有権](#8-ライフサイクルと所有権)
     - [8.1 Sourceの所有権](#81-sourceの所有権)
@@ -184,7 +184,7 @@ public Point? CenterPoint { get; set; } = new(400, 300);
 public bool IsLoupeVisible { get; set; } = true;
 ```
 
-`Source` は `Image.Source` と同じAvaloniaの `IImage?` 型です。ただし現在のピクセル抽出処理は `Bitmap` のみをサポートします。
+`Source` は `Image.Source` と同じAvaloniaの `IImage?` 型です。ピクセル抽出処理は `Bitmap` と `PbBitmapImage`（`PbBitmap` を内包する `IImage` アダプタ）をサポートします。
 
 ## 5. 公開API
 
@@ -201,11 +201,11 @@ public bool IsLoupeVisible { get; set; } = true;
 | 既定値 | `null` |
 | 用途 | 拡大元画像 |
 | Binding | 対応 |
-| 実装上の対応型 | `Bitmap` |
+| 実装上の対応型 | `Bitmap` / `PbBitmapImage` |
 
 `Source` が `null` の場合、画像なしの市松模様を描画します。
 
-`Source` に `Bitmap` 以外の `IImage` を設定した場合、`NotSupportedException` が発生します。例外は `LoupeControl.Log` に記録されます。
+`Source` に `Bitmap` 以外の `IImage`（`PbBitmapImage` を除く）を設定した場合、`NotSupportedException` が発生します。例外は `LoupeControl.Log` に記録されます。
 
 #### 5.1.2 CenterPoint
 
@@ -351,14 +351,14 @@ Task RenderAsync()
 
 処理の分担は次のとおりです。
 
-1. `IImage` が `Bitmap` か検証
-2. `Bitmap` の領域抽出をバックグラウンド処理
+1. `IImage` が `Bitmap` または `PbBitmapImage` か検証
+2. 元画像（`Bitmap` は複製、`PbBitmapImage` は内包 `PbBitmap`）から領域抽出をバックグラウンド処理
 3. 抽出BitmapをUIスレッドへ渡す
 4. `RenderTargetBitmap` と `DrawingContext` で合成
 5. 世代番号を確認
 6. 最新世代であれば内部 `Image.Source` へ設定
 
-`Source` がBitmap以外の場合は `NotSupportedException` がスローされます。
+`Source` が `Bitmap` / `PbBitmapImage` 以外の `IImage` の場合は `NotSupportedException` がスローされます。
 
 ```csharp
 await loupe.RenderAsync();
@@ -571,9 +571,9 @@ public ILogger Log { get; set; } = NullLogger.Instance;
 | `Trace` | `LogMessage.LogRenderCore` | RenderCore 実行（世代番号） |
 | `Trace` | `LogMessage.LogGenerateAsyncDone` | 非同期生成の完了・破棄（設定有無 / 世代） |
 
-### 7.3 Bitmap以外のIImage
+### 7.3 Bitmap / PbBitmapImage 以外の IImage
 
-`Source` に `Bitmap` 以外の `IImage` が設定された場合:
+`Source` に `Bitmap` / `PbBitmapImage` 以外の `IImage` が設定された場合:
 
 1. `NotSupportedException` を生成
 2. `Log.LogUpdateError(exception)` で記録
@@ -590,9 +590,9 @@ public ILogger Log { get; set; } = NullLogger.Instance;
 
 ### 8.1 Sourceの所有権
 
-`Source` に設定した元画像の所有権は利用側にあります。
+`Source` に設定した元画像（`Bitmap` / `PbBitmapImage`）の所有権は利用側にあります。
 
-`LoupeControl` は元画像を破棄しません。
+`LoupeControl` は元画像を破棄しません（`PbBitmapImage` を設定した場合も、内包する `PbBitmap` の破棄は利用側に委ねる）。
 
 ### 8.2 生成Bitmapの所有権
 
@@ -605,7 +605,11 @@ public ILogger Log { get; set; } = NullLogger.Instance;
 
 ### 8.3 一時Bitmap
 
-バックグラウンドではピクセル配列だけを抽出し、`WriteableBitmap` の生成・ロック書き込みはUIスレッドで行います。UIスレッドで生成した一時 `WriteableBitmap` は合成処理完了後に破棄します。
+バックグラウンドではピクセル配列だけを抽出し、合成（`RenderTargetBitmap` / `DrawingContext`）はUIスレッドで行います。
+
+表示への反映は `PbBitmapImage`（`PbBitmap` を内包する `IImage`）を内部 `Image.Source` へ設定し、`WriteableBitmap` の生成は行いません（`ISkiaSharpApiLeaseFeature` による Skia 直描画。Skia が提供されない環境では no-op）。
+
+`LoupeRenderer` が合成する一時 `RenderTargetBitmap` は合成完了後に破棄します。
 
 ## 9. 表示位置・サイズの責務
 

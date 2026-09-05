@@ -4,18 +4,18 @@ using OpenCvSharp;
 
 namespace Estable.AvaloniaUI.LineDetection;
 
-/// <summary>UnifiedBitmap ↔ Mat 変換のヘルパー。</summary>
+/// <summary>PbBitmap ↔ Mat 変換のヘルパー。</summary>
 /// <remarks>OpenCV 依存を内部に閉じ込める（本クラスだけが <c>OpenCvSharp</c> を参照する）。</remarks>
 internal static class MatHelper
 {
-    /// <summary>UnifiedBitmap（BGRA8888）を Mat（CV_8UC4）へ変換する。</summary>
-    /// <param name="bitmap">変換元の UnifiedBitmap。</param>
+    /// <summary>PbBitmap（BGRA8888）を Mat（CV_8UC4）へ変換する。</summary>
+    /// <param name="bitmap">変換元の PbBitmap。</param>
     /// <returns>変換された Mat（呼び出し元で破棄する）。</returns>
     /// <remarks>
-    /// ピクセルバッファ（<see cref="UnifiedBitmap.Address"/>）を直接読み取り、<see cref="Mat"/> へコピーする。<br/>
+    /// ピクセルバッファ（<see cref="PbBitmap.Address"/>）を直接読み取り、<see cref="Mat"/> へコピーする。<br/>
     /// ストライドが幅×4 と異なる場合は行単位でコピーする。
     /// </remarks>
-    public static Mat ToMat(UnifiedBitmap bitmap)
+    public static Mat ToMat(PbBitmap bitmap)
     {
         var width = bitmap.Width;
         var height = bitmap.Height;

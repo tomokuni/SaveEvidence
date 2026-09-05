@@ -13,11 +13,11 @@ namespace app.Tests;
 [Collection("AvaloniaHeadless")]
 public class UndoStackTests
 {
-    /// <summary>テスト用の UnifiedBitmap（size x size）を生成する。</summary>
+    /// <summary>テスト用の PbBitmap（size x size）を生成する。</summary>
     /// <param name="size">一辺のピクセル数（既定 10）。</param>
-    /// <returns>生成した UnifiedBitmap。</returns>
-    private static UnifiedBitmap CreateBitmap(int size = 10)
-        => UnifiedBitmap.Create(size, size);
+    /// <returns>生成した PbBitmap。</returns>
+    private static PbBitmap CreateBitmap(int size = 10)
+        => PbBitmap.Create(size, size);
 
     [AvaloniaFact]
     public void Undo_現在の画像をRedoスタックへ退避して復元する()

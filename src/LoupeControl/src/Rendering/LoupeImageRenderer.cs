@@ -9,9 +9,9 @@ internal static class LoupeImageRenderer
 {
     /// <summary>ソース画像をズーム倍率で拡大してルーペ領域へ描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>
-    /// <param name="image">拡大元の切り出し済み画像（UnifiedBitmap）。</param>
+    /// <param name="image">拡大元の切り出し済み画像（PbBitmap）。</param>
     /// <param name="zoomLevel">拡大率（1〜64）。</param>
-    public static void Draw(DrawingContext context, UnifiedBitmap image, int zoomLevel)
+    public static void Draw(DrawingContext context, PbBitmap image, int zoomLevel)
     {
         var sourceSize = new Size(image.Size.Width, image.Size.Height);
         var source = new Rect(0, 0, sourceSize.Width, sourceSize.Height);

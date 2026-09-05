@@ -33,7 +33,7 @@ public interface ILineDetector
     string? ErrorMessage { get; }
 
     /// <summary>画像から水平・垂直の辺（線分）を検出する。</summary>
-    /// <param name="image">解析対象の画像（UnifiedBitmap・BGRA8888）。</param>
+    /// <param name="image">解析対象の画像（PbBitmap・BGRA8888）。</param>
     /// <returns>検出した線分のリスト（スコア降順）。</returns>
-    IReadOnlyList<LineDetectionResult> Detect(UnifiedBitmap image);
+    IReadOnlyList<LineDetectionResult> Detect(PbBitmap image);
 }

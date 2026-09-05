@@ -18,8 +18,8 @@ public class SnipCaptureTests
     /// <summary>キャプチャサービスのモック。</summary>
     private sealed class MockCaptureService : ICaptureService
     {
-        public UnifiedBitmap? CaptureArea(PixelRect bounds) => null;
-        public UnifiedBitmap? CaptureVirtualScreen(out PixelPoint origin)
+        public PbBitmap? CaptureArea(PixelRect bounds) => null;
+        public PbBitmap? CaptureVirtualScreen(out PixelPoint origin)
         {
             origin = default;
             return null;
@@ -312,8 +312,8 @@ public class SnipCaptureTests
         window.Close();
     }
 
-    /// <summary>テスト用 UnifiedBitmap を生成する。</summary>
-    private static UnifiedBitmap CreateBitmap(int width, int height)
-        => UnifiedBitmap.Create(width, height);
+    /// <summary>テスト用 PbBitmap を生成する。</summary>
+    private static PbBitmap CreateBitmap(int width, int height)
+        => PbBitmap.Create(width, height);
 }
 

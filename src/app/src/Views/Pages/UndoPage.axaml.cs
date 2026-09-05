@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using app.Models;
 using app.ViewModels;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,7 +83,7 @@ public sealed partial class UndoPage : ViewModePageBase
 
         var size = GetIconSize();
         var items = new List<UndoListItem>();
-        void AddItem(Bitmap thumbnail, string label, bool isCurrent)
+        void AddItem(IImage thumbnail, string label, bool isCurrent)
             => items.Add(new UndoListItem
             {
                 Thumbnail = thumbnail,
@@ -93,27 +93,27 @@ public sealed partial class UndoPage : ViewModePageBase
             });
 
         // 1. Redo スタック（新しい順。_redoStack[0] が現在に最も近い未来）
-        // UndoStack は UnifiedBitmap を保持し、表示境界で ToAvaloniaWriteableBitmap により Bitmap へ変換する。
-        // 変換した Bitmap は UndoListItem が所有する（破棄しない）。
+        // UndoStack は PbBitmap を保持し、表示境界で PbBitmapImage（IImage）へ変換する。
+        // 変換した IImage は UndoListItem が参照する（所有権は UndoStack / ViewModel が保持）。
         var redo = _undoStack.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
-            AddItem(redo[i].ToAvaloniaWriteableBitmap(), $"Redo {i + 1}", isCurrent: false);
+            AddItem(new PbBitmapImage(redo[i]), $"Redo {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
         var currentImage = MainViewModel.PreviewImage;
         if (currentImage is not null)
         {
-            // 表示境界で Avalonia Bitmap へ変換してサムネイルへ設定する。
-            AddItem(currentImage.ToAvaloniaWriteableBitmap(), "現在", isCurrent: true);
+            // 表示境界で IImage（PbBitmapImage）へ変換してサムネイルへ設定する。
+            AddItem(new PbBitmapImage(currentImage), "現在", isCurrent: true);
         }
 
         // 3. Undo スタック（新しい順。_stack[^1] が現在の直前）
         var undo = _undoStack.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
-            AddItem(undo[i].ToAvaloniaWriteableBitmap(), $"Undo {undo.Count - i}", isCurrent: false);
+            AddItem(new PbBitmapImage(undo[i]), $"Undo {undo.Count - i}", isCurrent: false);
         }
 
         _viewModel.ItemCount = items.Count;
@@ -136,7 +136,17 @@ public sealed partial class UndoPage : ViewModePageBase
         try
         {
             var tempFile = Path.Combine(Path.GetTempPath(), $"SaveEvidence_undo_{Guid.NewGuid():N}.png");
-            item.Thumbnail.Save(tempFile, PngBitmapEncoderOptions.Default);
+
+            // サムネイルは IImage（PbBitmapImage）のため、保存用に Avalonia Bitmap へ一時変換する。
+            if (item.Thumbnail is PbBitmapImage unifiedImage && unifiedImage.Bitmap is { } bitmap)
+            {
+                using var av = bitmap.ToAvaloniaWriteableBitmap();
+                av.Save(tempFile, PngBitmapEncoderOptions.Default);
+            }
+            else
+            {
+                return;
+            }
 
             using var process = new Process();
             process.StartInfo = new ProcessStartInfo

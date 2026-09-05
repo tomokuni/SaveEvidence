@@ -63,7 +63,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | `string Name { get; }` | 検出方式の表示名。 |
 | `string ModelInfo { get; }` | モデルサイズの表示。モデルを使わない方式は空文字。 |
 | `string? ErrorMessage { get; }` | モデル読込・実行エラーのメッセージ。正常時は null。 |
-| `IReadOnlyList<LineDetectionResult> Detect(UnifiedBitmap image)` | 画像から水平・垂直の辺（線分）を検出する。スコア降順。 |
+| `IReadOnlyList<LineDetectionResult> Detect(PbBitmap image)` | 画像から水平・垂直の辺（線分）を検出する。スコア降順。 |
 
 ### 2.4. LogicLineDetector クラス
 

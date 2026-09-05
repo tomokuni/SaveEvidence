@@ -164,9 +164,9 @@ Canvas.SetTop(loupe, 220);
 
 ## 7. サポート外の画像
 
-公開プロパティの型はAvalonia標準の `IImage?` ですが、ピクセル抽出を必要とするため、現在の実装で対応する実体は `Bitmap` です。
+公開プロパティの型はAvalonia標準の `IImage?` ですが、ピクセル抽出を必要とするため、対応する実体は `Bitmap` と `PbBitmapImage`（`PbBitmap` を内包する `IImage` アダプタ）です。
 
-`Bitmap` 以外の `IImage` を設定した場合は、`NotSupportedException` を発生させ、設定された `ILogger` へ記録します。
+`Bitmap` / `PbBitmapImage` 以外の `IImage` を設定した場合は、`NotSupportedException` を発生させ、設定された `ILogger` へ記録します。
 
 ```csharp
 loupe.Log = logger;
@@ -176,7 +176,7 @@ loupe.Log = logger;
 
 ## 8. 所有権とライフサイクル
 
-- `Source` に設定した元画像は利用側が所有します。`LoupeControl` は元画像を破棄しません。
+- `Source` に設定した元画像（`Bitmap` / `PbBitmapImage`）は利用側が所有します。`LoupeControl` は元画像を破棄しません。
 - ルーペ表示用に内部生成したBitmapは `LoupeControl` が所有します。
 - 非表示化、`Clear()`、新しい描画結果の採用時に、古い生成Bitmapを破棄します。
 - 非同期処理で古くなった生成結果も採用せず破棄します。

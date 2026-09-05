@@ -16,18 +16,18 @@ namespace app.Tests;
 [Collection("AvaloniaHeadless")]
 public sealed class MainViewModelAutoCropTests
 {
-    /// <summary>白背景に黒枠線の矩形を描画した UnifiedBitmap を生成する。</summary>
-    /// <returns>生成した UnifiedBitmap。</returns>
+    /// <summary>白背景に黒枠線の矩形を描画した PbBitmap を生成する。</summary>
+    /// <returns>生成した PbBitmap。</returns>
     /// <remarks>
     /// ヘッドレスでは <c>WriteableBitmap.Lock()</c> 書き込みが読み出しに反映されないため、<br/>
-    /// ピクセル保持が確実な <see cref="UnifiedBitmap"/>（SkiaSharp 内部）で構築する。
+    /// ピクセル保持が確実な <see cref="PbBitmap"/>（SkiaSharp 内部）で構築する。
     /// </remarks>
-    private static UnifiedBitmap CreateRectBitmap()
+    private static PbBitmap CreateRectBitmap()
     {
         const int size = 200;
         const int border = 3;
 
-        var unified = UnifiedBitmap.Create(size, size);
+        var unified = PbBitmap.Create(size, size);
         unified.Clear(b: 255, g: 255, r: 255, a: 255); // 白
 
         // 外周に黒枠線を描く

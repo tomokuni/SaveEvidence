@@ -32,7 +32,7 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 internal sealed class CropSession(
     ZoomViewControl previewControl,
     Window hostWindow,
-    UnifiedBitmap sourceImage,
+    PbBitmap sourceImage,
     CaptureSettings settings,
     ILogger? logger = null,
     Action<bool>? zoomHandler = null)
@@ -211,9 +211,10 @@ internal sealed class CropSession(
                 var origin = PreviewOrigin();
                 return new Vector(origin.X, origin.Y);
             })));
-        // ルーペソース（元画像）。LoupeControl.Source は IImage のため、UnifiedBitmap → Avalonia Bitmap へ変換して渡す（表示境界）。
-        using var loupeSource = sourceImage.ToAvaloniaWriteableBitmap();
-        _selectionOverlay.SetLoupeSource(loupeSource);
+        // ルーペソース（元画像）。LoupeControl.Source は IImage のため、PbBitmap を内包した IImage
+        // （PbBitmapImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
+        // sourceImage の所有権は呼び出し側にあり、本セッションでは破棄しない（Dispose を呼ばない）。
+        _selectionOverlay.SetLoupeSource(new PbBitmapImage(sourceImage));
     }
 
     /// <summary>プレビューの表示サイズ（RenderTransform 込み）を親パネル上の座標差から導出する。</summary>

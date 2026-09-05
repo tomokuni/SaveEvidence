@@ -62,8 +62,8 @@ using Estable.AvaloniaUI.Platform.Imaging;
 
 ILineDetector detector = new LogicLineDetector();
 
-// 検出器は UnifiedBitmap を入力とする（BGRA8888）。Bitmap → UnifiedBitmap 変換して渡す
-using var unified = bitmap.ToUnifiedBitmap();
+// 検出器は PbBitmap を入力とする（BGRA8888）。Bitmap → PbBitmap 変換して渡す
+using var unified = bitmap.ToPbBitmap();
 var lines = detector.Detect(unified);
 ```
 

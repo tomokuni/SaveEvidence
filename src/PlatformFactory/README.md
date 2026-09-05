@@ -37,7 +37,7 @@
 - **要素検出**: `IElementFinder`（カーソル位置のウィンドウ / スクリーン検出・一覧取得）
 - **グローバルホットキー**: `IGlobalHotKeyService<T>`（登録・WM_HOTKEY 受信・アクション配信。WndProc サブクラス化を内包）
 - **UI ハング監視**: `Watchdog`（UI スレッド完全ハング時の最終保険。オーバーレイ退避）
-- **画像ユーティリティ**: `BitmapExtensions`（領域切り出し・パディング付きコピー）/ `UnifiedBitmap`（複数ビットマップ種別を横断する軽量ラッパーのコア）。内部に `SKBitmap`(BGRA8888・Premul) を所有し、`SkiaSharp` のみに依存したピクセル操作（`GetPixel` / `SetPixel` / `Clear` / `Clone`）と `Create` / `FromSKBitmap` / `ToSKBitmap`（SKBitmap 生成・変換）を提供。/ `UnifiedBitmapExtensions`（生成・変換拡張。`ToUnifiedBitmap` / `ToAvaloniaBitmap` / `ToSystemDrawingBitmap` で Avalonia / System.Drawing / SkiaSharp と高速変換）
+- **画像ユーティリティ**: `BitmapExtensions`（領域切り出し・パディング付きコピー）/ `PbBitmap`（複数ビットマップ種別を横断する軽量ラッパーのコア）。内部に `SKBitmap`(BGRA8888・Premul) を所有し、`SkiaSharp` のみに依存したピクセル操作（`GetPixel` / `SetPixel` / `Clear` / `Clone`）と `Create` / `FromSKBitmap` / `ToSKBitmap`（SKBitmap 生成・変換）を提供。/ `PbBitmapExtensions`（生成・変換拡張。`ToPbBitmap` / `ToAvaloniaBitmap` / `ToSystemDrawingBitmap` で Avalonia / System.Drawing / SkiaSharp と高速変換）
 - **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
 - **プラットフォーム非依存の公開 API**: 公開型は Avalonia / .NET 標準型（`Bitmap` / `PixelPoint` / `PixelRect` / `IPlatformHandle`）のみを使用し、Win32 ハンドル・System.Drawing 型を公開しない
 
@@ -59,7 +59,7 @@
 
 ```csharp
 using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordinatePort / CoordinatePort / ScreenConverter / Watchdog 等
-using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / UnifiedBitmap / UnifiedBitmapExtensions / ImageProcessor 等
+using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / PbBitmap / PbBitmapExtensions / ImageProcessor 等
 ```
 
 ## 5. クイックスタート
@@ -145,7 +145,7 @@ PlatformFactory/
 │       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
 │       ├── PlatformLog.cs          # ログ定義（internal）
 │       ├── Coordinate/             # 座標変換（ICoordinatePort / CoordinatePort / ScreenConverter / CoordinateMath）
-│       ├── Imaging/                # 画像ユーティリティ（BitmapExtensions / UnifiedBitmap / UnifiedBitmapExtensions / ImageProcessor）
+│       ├── Imaging/                # 画像ユーティリティ（BitmapExtensions / PbBitmap / PbBitmapExtensions / ImageProcessor）
 │       ├── Win/                    # Windows 実装（internal: Win32 API / P-Invoke 集約）
 │       └── NoOp/                   # 他環境フォールバック（internal: シングルトン）
 └── tests/                          # 単体テスト

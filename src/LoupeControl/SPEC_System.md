@@ -2,12 +2,16 @@
 
 ## 目次
 
-- [LoupeControl システム仕様書（SPEC_System）](#loupecontrol-システム仕様書spec_system)
+- [LoupeControl システム仕様書（SPEC\_System）](#loupecontrol-システム仕様書spec_system)
   - [目次](#目次)
   - [1. システム概要](#1-システム概要)
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
+    - [3.1 レイヤー構造](#31-レイヤー構造)
+    - [3.2 依存の方向](#32-依存の方向)
   - [4. 例外処理ポリシー](#4-例外処理ポリシー)
+    - [4.1 基本方針](#41-基本方針)
+    - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
   - [5. コンポーネント図](#5-コンポーネント図)
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 LoupeControl](#61-loupecontrol)
@@ -71,7 +75,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ### 4.2 本プロジェクト固有の例外処理
 
-- `Source` に `Bitmap` 以外の `IImage` が設定された場合、`NotSupportedException` を生成し `LogMessage.LogUpdateError` で記録する。
+- `Source` に `Bitmap` / `PbBitmapImage` 以外の `IImage` が設定された場合、`NotSupportedException` を生成し `LogMessage.LogUpdateError` で記録する。
 - `RenderAsync()` を直接呼び出した場合は例外を呼び出し元へ返す。
 - 自動再描画の場合は例外を観測済みとして処理し、UI スレッドを未処理例外で終了させない。
 - 非同期生成は世代番号で古い結果を破棄し、解放後の破棄を防止する。
@@ -143,17 +147,18 @@ flowchart TB
 ### 6.4 画像入力とピクセル抽出
 
 - 公開画像入力はAvalonia標準の `IImage?` とし、`Image.Source` と同じBindingモデルで利用できる。
-- ピクセル抽出が必要な `LoupeImageExtractor` の内部境界だけ `Bitmap` を要求する。
-- `Source` が `Bitmap` の場合は `CopyPixels` による抽出を行う。
-- Bitmap以外の `IImage` は `NotSupportedException` が発生する。
-- バックグラウンドではピクセル配列だけを抽出する。`WriteableBitmap` の生成・ロック書き込みはUIスレッドで行い、合成完了後に一時Bitmapを破棄する。
+- ピクセル抽出が必要な `LoupeImageExtractor` の内部境界だけ `PbBitmap` を要求する。
+- `Source` が `Bitmap` の場合は `CopyPixels` による複製（`PbBitmap` 化）で抽出する。
+- `Source` が `PbBitmapImage` の場合は内包する `PbBitmap` を直接抽出する（複製なし）。
+- `Bitmap` / `PbBitmapImage` 以外の `IImage` は `NotSupportedException` が発生する。
+- バックグラウンドではピクセル配列だけを抽出する。合成（`RenderTargetBitmap` / `DrawingContext`）はUIスレッドで行い、合成完了後に一時 `RenderTargetBitmap` を破棄する。
 
 ### 6.5 LoupeImageExtractor
 
 - **分類**: 内部静的クラス（`internal static class`）
-- **責務**: 元画像からの領域切り出し（`CopyPixels` ベース、範囲外は透明パディング）を `UnifiedBitmap` として提供し、表示用 `WriteableBitmap` へ変換する
-- **公開API**: `ExtractRegionAt`（`UnifiedBitmap` 抽出）/ `ToWriteableBitmap`（`UnifiedBitmap` → `WriteableBitmap` 変換）/ `ComputeClipRect`（クリップ領域計算）
-- **依存**: Avalonia / `Estable.AvaloniaUI.Platform.Imaging`（`UnifiedBitmap`）
+- **責務**: 元画像（`PbBitmap`）からの領域切り出し（範囲外は透明パディング）を `PbBitmap` として提供する
+- **公開API**: `ExtractRegionAt`（`PbBitmap` 抽出）/ `ComputeCaptureSize`（切り出し領域サイズ計算）
+- **依存**: Avalonia / `Estable.AvaloniaUI.Platform.Imaging`（`PbBitmap`）
 
 ### 6.6 LogMessage
 

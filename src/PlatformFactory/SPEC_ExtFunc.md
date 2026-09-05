@@ -23,7 +23,7 @@
       - [5.2.3 ScreenConverter](#523-screenconverter)
       - [5.2.4 Watchdog](#524-watchdog)
       - [5.2.5 ColorExtensions（C# 14 静的拡張メンバー）](#525-colorextensionsc-14-静的拡張メンバー)
-      - [5.2.6 UnifiedBitmap（ピクセル操作）と UnifiedBitmapExtensions（生成・変換）](#526-unifiedbitmapピクセル操作と-unifiedbitmapextensions生成変換)
+      - [5.2.6 PbBitmap（ピクセル操作）と PbBitmapExtensions（生成・変換）](#526-unifiedbitmapピクセル操作と-unifiedbitmapextensions生成変換)
     - [5.3 イベント](#53-イベント)
     - [5.4 型](#54-型)
       - [5.4.1 PlatformFactory](#541-platformfactory)
@@ -70,7 +70,7 @@
 - グローバルホットキー（`IGlobalHotKeyService<T>`）
 - 座標変換ポート（`ICoordinatePort` / `CoordinatePort` / `ScreenConverter`）
 - UI ハング監視（`Watchdog`）
-- 画像ユーティリティ（`BitmapExtensions` / `UnifiedBitmap` / `UnifiedBitmapExtensions` / `ImageProcessor`）
+- 画像ユーティリティ（`BitmapExtensions` / `PbBitmap` / `PbBitmapExtensions` / `ImageProcessor`）
 
 ## 3. 外部利用条件
 
@@ -84,7 +84,7 @@
 
 ```csharp
 using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordinatePort / CoordinatePort / ScreenConverter / Watchdog 等
-using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / UnifiedBitmap / UnifiedBitmapExtensions / ImageProcessor 等
+using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / PbBitmap / PbBitmapExtensions / ImageProcessor 等
 ```
 
 ## 4. 基本的な使用方法
@@ -205,17 +205,17 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | --- | --- | --- |
 | `FromAColor` | `static Color FromAColor(byte alpha, Color baseColor)` | 基準色（名前付き色等）と不透明度から色を生成する。既存の `Color.FromArgb(alpha, r, g, b)` は RGB 直指定で何色か判別しにくいため、基準色を指定して可読性を向上する（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
 
-#### 5.2.6 UnifiedBitmap（ピクセル操作）と UnifiedBitmapExtensions（生成・変換）
+#### 5.2.6 PbBitmap（ピクセル操作）と PbBitmapExtensions（生成・変換）
 
-`UnifiedBitmap` は内部表現（`SKBitmap` BGRA8888・Premul）と、`SkiaSharp` のみに依存するピクセル操作・生成/変換（`Create` / `FromSKBitmap` / `ToSKBitmap`）を提供するコア型です。  
-Avalonia / System.Drawing 依存の生成・変換は `UnifiedBitmapExtensions`（`this Bitmap` / `this DrawingBitmap` と `this UnifiedBitmap` の拡張メソッド）に分離され、コアは画像種別（Avalonia / System.Drawing）に依存しません。  
+`PbBitmap` は内部表現（`SKBitmap` BGRA8888・Premul）と、`SkiaSharp` のみに依存するピクセル操作・生成/変換（`Create` / `FromSKBitmap` / `ToSKBitmap`）を提供するコア型です。  
+Avalonia / System.Drawing 依存の生成・変換は `PbBitmapExtensions`（`this Bitmap` / `this DrawingBitmap` と `this PbBitmap` の拡張メソッド）に分離され、コアは画像種別（Avalonia / System.Drawing）に依存しません。  
 
-**UnifiedBitmap（コア）**:
+**PbBitmap（コア）**:
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 生成 | `Create` | `static UnifiedBitmap Create(int width, int height)` | 指定サイズの空ビットマップ（BGRA8888・Premul）を生成。`SkiaSharp` のみに依存 |
-| 生成 | `FromSKBitmap` | `static UnifiedBitmap FromSKBitmap(SKBitmap bitmap)` | 内部 `SKBitmap` から生成（**所有権を譲り受け**、破棄に連動）。`SkiaSharp` のみに依存 |
+| 生成 | `Create` | `static PbBitmap Create(int width, int height)` | 指定サイズの空ビットマップ（BGRA8888・Premul）を生成。`SkiaSharp` のみに依存 |
+| 生成 | `FromSKBitmap` | `static PbBitmap FromSKBitmap(SKBitmap bitmap)` | 内部 `SKBitmap` から生成（**所有権を譲り受け**、破棄に連動）。`SkiaSharp` のみに依存 |
 | プロパティ | `PixelWidth` / `PixelHeight` | `int` | 幅 / 高さ（ピクセル） |
 | プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（パディング含む） |
 | プロパティ | `IsDisposed` | `bool` | 破棄済みか |
@@ -223,20 +223,23 @@ Avalonia / System.Drawing 依存の生成・変換は `UnifiedBitmapExtensions`�
 | ピクセル | `SetPixel` | `void SetPixel(int x, int y, byte b, byte g, byte r, byte a)` | 指定座標の BGRA（アルファ乗算済み）を設定 |
 | ピクセル | `Clear` | `void Clear(byte b, byte g, byte r, byte a)` | 全ピクセルを指定色（BGRA）で塗りつぶし |
 | 変換 | `ToSKBitmap` | `SKBitmap ToSKBitmap()` | 内部インスタンスを返す（共有参照。呼び出し側で Dispose しない）。`SkiaSharp` のみに依存 |
-| その他 | `Clone` | `UnifiedBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
+| その他 | `Clone` | `PbBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
 
-**UnifiedBitmapExtensions（生成・変換）**:
+**PbBitmapExtensions（生成・変換）**:
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 生成 | `ToUnifiedBitmap` | `UnifiedBitmap ToUnifiedBitmap(this Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。元は変更されない。`CopyPixels` ベースで高速・可逆） |
-| 生成 | `ToUnifiedBitmap` | `UnifiedBitmap ToUnifiedBitmap(this DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から生成（複製。**Windows 専用**） |
-| 変換 | `Size` | `PixelSize Size()` | 画像サイズ（Avalonia `PixelSize`）。`this UnifiedBitmap` のインスタンス拡張 |
+| 生成 | `ToPbBitmap` | `PbBitmap ToPbBitmap(this Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。元は変更されない。`CopyPixels` ベースで高速・可逆） |
+| 生成 | `ToPbBitmap` | `PbBitmap ToPbBitmap(this DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から生成（複製。**Windows 専用**） |
+| 変換 | `Size` | `PixelSize Size()` | 画像サイズ（Avalonia `PixelSize`）。`this PbBitmap` のインスタンス拡張 |
 | 変換 | `ToAvaloniaBitmap` | `Bitmap ToAvaloniaBitmap()` | Avalonia `Bitmap` へ変換（複製を所有。`WriteableBitmap.Lock` ベース） |
+| 変換 | `ToImage` | `IImage ToImage()` | Avalonia の画像入力（`IImage`）として公開するアダプタ（`PbBitmapImage`）を生成（**ゼロコピー・複製なし**） |
 | 変換 | `ToSystemDrawingBitmap` | `DrawingBitmap ToSystemDrawingBitmap()` | `System.Drawing.Bitmap`（Format32bppPArgb）へ変換（複製。**Windows 専用**） |
 | ピクセル | `Clear` | `void Clear(AvaloniaColor color)` | 全ピクセルを指定色（Avalonia Color）で塗りつぶし（アルファ乗算） |
 
-> `FromSKBitmap` は引数の所有権を譲り受け、本型の破棄時に `Dispose` します。`ToSKBitmap` は内部インスタンスをそのまま返すため呼び出し側で `Dispose` しないでください。`ToAvaloniaBitmap` / `ToSystemDrawingBitmap` は複製を返すため呼び出し側が所有します。
+> `FromSKBitmap` は引数の所有権を譲り受け、本型の破棄時に `Dispose` します。`ToSKBitmap` は内部インスタンスをそのまま返すため呼び出し側で `Dispose` しないでください。`ToAvaloniaBitmap` / `ToSystemDrawingBitmap` は複製を返すため呼び出し側が所有します。`ToImage` は内包する `PbBitmap` の所有権を生成した `PbBitmapImage` へ移すため、呼び出し側は元の `PbBitmap` を破棄しないでください。
+
+`PbBitmapImage` は `PbBitmap` を内包して `IImage` として公開するアダプタです。`Draw` は `ISkiaSharpApiLeaseFeature` を取得して `SKCanvas` へ直接描画します（`WriteableBitmap` / `Bitmap` を生成しないゼロコピー描画）。破棄は `Dispose` で行い、内包 `PbBitmap` の所有権を保持します。
 
 ### 5.3 イベント
 
@@ -244,7 +247,7 @@ Avalonia / System.Drawing 依存の生成・変換は `UnifiedBitmapExtensions`�
 
 ### 5.4 型
 
-公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` / `UnifiedBitmap` / `UnifiedBitmapExtensions` / `ImageProcessor` です。
+公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` / `PbBitmap` / `PbBitmapImage` / `PbBitmapExtensions` / `ImageProcessor` です。
 プラットフォーム固有実装（Win / NoOp 系）と内部ユーティリティ（`CoordinateMath` / `PlatformLog`）はすべて internal（非公開）です。公開 API はプラットフォーム非依存型のみを使用します。
 
 #### 5.4.1 PlatformFactory
@@ -297,9 +300,9 @@ Avalonia / System.Drawing 依存の生成・変換は `UnifiedBitmapExtensions`�
 | `BitmapExtensions.CopyRegionWithPadding` | 範囲外許容で領域コピー（クリップ + オフセット、範囲外は透明のまま。座標はピクセル単位） |
 | `BitmapExtensions.ExtractRegion` | 矩形切り出し（範囲外は透明パディング。座標はピクセル単位。w/h ≤ 0 は `ArgumentOutOfRangeException`） |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から `Color` を生成（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
-| `UnifiedBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー（コア）。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、`SkiaSharp` のみに依存したピクセル操作と `Create` / `FromSKBitmap` / `ToSKBitmap` を提供 |
-| `UnifiedBitmapExtensions` | `UnifiedBitmap` の生成・変換拡張（`this Bitmap` / `this DrawingBitmap` / `this UnifiedBitmap`）。Avalonia `Bitmap` / `System.Drawing.Bitmap` との相互変換を提供 |
-| `ImageProcessor` | 画像の切り出し・ウィンドウ領域検出を提供する静的ユーティリティ。`UnifiedBitmap` に対してピクセルレベルの操作を行う（`Crop` / `DetectAndCropWindow` / `DetectWindowBounds`） |
+| `PbBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー（コア）。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、`SkiaSharp` のみに依存したピクセル操作と `Create` / `FromSKBitmap` / `ToSKBitmap` を提供 |
+| `PbBitmapExtensions` | `PbBitmap` の生成・変換拡張（`this Bitmap` / `this DrawingBitmap` / `this PbBitmap`）。Avalonia `Bitmap` / `System.Drawing.Bitmap` との相互変換を提供 |
+| `ImageProcessor` | 画像の切り出し・ウィンドウ領域検出を提供する静的ユーティリティ。`PbBitmap` に対してピクセルレベルの操作を行う（`Crop` / `DetectAndCropWindow` / `DetectWindowBounds`） |
 
 ## 6. 座標系
 

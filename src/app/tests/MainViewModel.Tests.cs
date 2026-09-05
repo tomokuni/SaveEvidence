@@ -29,11 +29,11 @@ public class MainViewModelTests
         public void Reload() { }
     }
 
-    /// <summary>テスト用の UnifiedBitmap（10x10）を生成する。</summary>
-    /// <returns>生成した UnifiedBitmap。</returns>
-    private static UnifiedBitmap CreateBitmap()
+    /// <summary>テスト用の PbBitmap（10x10）を生成する。</summary>
+    /// <returns>生成した PbBitmap。</returns>
+    private static PbBitmap CreateBitmap()
     {
-        var bmp = UnifiedBitmap.Create(10, 10);
+        var bmp = PbBitmap.Create(10, 10);
         bmp.Clear(b: 255, g: 255, r: 255, a: 255);
         return bmp;
     }

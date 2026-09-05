@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;
@@ -33,6 +34,22 @@ public class LoupeControlTests
     {
         var control = CreateControl();
         control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.CenterPoint = new Point(100, 100);
+
+        await control.RenderAsync();
+
+        Assert.NotNull(control.LoupeBitmap);
+    }
+
+    [AvaloniaFact]
+    public async Task PbBitmapImageをSourceに設定するとLoupeBitmapが生成される()
+    {
+        // PbBitmapImage（PbBitmap を内包する IImage）を Source に設定した場合、
+        // ルーペ画像が生成される（Bitmap を生成しない Skia 直アクセス経路の検証）。
+        using var bmp = PbBitmap.Create(200, 200);
+        using var image = new PbBitmapImage(bmp);
+        var control = CreateControl();
+        control.Source = image;
         control.CenterPoint = new Point(100, 100);
 
         await control.RenderAsync();
@@ -690,6 +707,41 @@ public class LoupeControlTests
 
         // 例外なく完了し、市松模様のみの Bitmap が生成される
         Assert.NotNull(control.LoupeBitmap);
+    }
+
+    [AvaloniaFact]
+    public async Task 生成後にPART_Imageのソースが破棄されず有効に保持される()
+    {
+        // 回帰テスト: SetLoupeBitmap が using で即座に破棄した WriteableBitmap を PART_Image.Source に
+        // 設定すると、レイアウトパス（Image.MeasureOverride → Bitmap.get_Size）で ObjectDisposedException が
+        // 発生し、領域選択開始時にアプリがハングする。表示用画像（PbBitmapImage）はコントロールが所有し、
+        // 内包する PbBitmap が有効なまま保持されることを検証する。
+        var control = CreateControl();
+        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.CenterPoint = new Point(100, 100);
+        await control.RenderAsync();
+
+        // Source が破棄済みでないこと（Size 参照で ObjectDisposedException が発生しない）
+        Assert.NotNull(control.PART_Image);
+        Assert.NotNull(control.PART_Image!.Source);
+        Assert.True(control.PART_Image.Source is PbBitmapImage img
+            && img.Bitmap is { } bmp && bmp.Size.Width > 0);
+    }
+
+    [AvaloniaFact]
+    public async Task Clear後にPART_Imageのソースが解放される()
+    {
+        var control = CreateControl();
+        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.CenterPoint = new Point(100, 100);
+        await control.RenderAsync();
+
+        // Clear で表示用 Bitmap と PART_Image.Source の両方が解放される（破棄済み Bitmap の残留防止）
+        control.Clear();
+
+        Assert.Null(control.LoupeBitmap);
+        Assert.NotNull(control.PART_Image);
+        Assert.Null(control.PART_Image!.Source);
     }
 
     [AvaloniaFact]

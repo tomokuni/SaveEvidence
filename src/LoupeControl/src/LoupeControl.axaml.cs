@@ -652,8 +652,16 @@ public sealed partial class LoupeControl : UserControl
     // 出力（internal）
     // ====================================================================
 
-    /// <summary>内部描画結果（UnifiedBitmap）。所有権は本コントロールが保持し、外部へ公開しない。</summary>
-    internal UnifiedBitmap? LoupeBitmap { get; private set; }
+    /// <summary>表示用の画像アダプタ（PbBitmapImage）。所有権は本コントロールが保持し、外部へ公開しない。</summary>
+    /// <remarks>
+    /// <see cref="PART_Image"/> の Source へ設定する <see cref="PbBitmapImage"/> を保持する。<br/>
+    /// <c>WriteableBitmap</c> を生成せず Skia 直描画するため、破棄は <see cref="ReleaseBitmap"/> で行う。
+    /// </remarks>
+    private PbBitmapImage? _loupeImage;
+
+    /// <summary>内部描画結果（PbBitmap）。所有権は本コントロールが保持し、外部へ公開しない。</summary>
+    /// <remarks><see cref="_loupeImage"/> が内包する PbBitmap を返す（共有参照。破棄はしないこと）。</remarks>
+    internal PbBitmap? LoupeBitmap => _loupeImage?.Bitmap;
 
     /// <summary>座標ラベルの Border（テスト・デザインツール用の内部アクセサ）。</summary>
     internal Border? CoordLabelBorder => PART_CoordLabel;
@@ -681,8 +689,8 @@ public sealed partial class LoupeControl : UserControl
     /// </remarks>
     public event EventHandler<LoupeRenderedEventArgs>? Rendered;
 
-    /// <summary><see cref="Rendered"/> イベントを発火する（描画済み UnifiedBitmap と表示情報を構築して通知）。</summary>
-    /// <param name="bitmap">描画済みのルーペ画像（UnifiedBitmap）。ホストがピクセルにオーバーレイを描画できる。</param>
+    /// <summary><see cref="Rendered"/> イベントを発火する（描画済み PbBitmap と表示情報を構築して通知）。</summary>
+    /// <param name="bitmap">描画済みのルーペ画像（PbBitmap）。ホストがピクセルにオーバーレイを描画できる。</param>
     /// <param name="size">表示サイズ（DIP）。</param>
     /// <remarks>
     /// 表示位置（<see cref="_positionTransform"/>）・表示サイズ（<paramref name="size"/>）・拡大率・中心・
@@ -690,7 +698,7 @@ public sealed partial class LoupeControl : UserControl
     /// 一度だけ取得してイベント引数を生成する（イベント発火形式の集約）。<br/>
     /// 中心未設定時は <see cref="LoupeRenderedEventArgs.CenterPoint"/> / <see cref="LoupeRenderedEventArgs.CaptureTopLeft"/> が null になる（オーバーレイ描画不可）。
     /// </remarks>
-    private void RaiseRendered(UnifiedBitmap bitmap, int size)
+    private void RaiseRendered(PbBitmap bitmap, int size)
     {
         var zoom = ZoomLevel;
         var pixelSize = Math.Max(1, (int)Math.Ceiling(size * RenderScaling));
@@ -786,9 +794,10 @@ public sealed partial class LoupeControl : UserControl
     /// <summary>ビットマップを解放して画像表示をクリアする（冪等）。</summary>
     private void ReleaseBitmap()
     {
-        LoupeBitmap?.Dispose();
-        LoupeBitmap = null;
+        // 破棄済み PbBitmap を Image.Source が参照し続けないよう、先に Source を解除してから解放する。
         PART_Image?.Source = null;
+        _loupeImage?.Dispose();
+        _loupeImage = null;
     }
 
     /// <summary>自動再描画を開始し、失敗を観測済みタスクとして処理する。</summary>
@@ -855,37 +864,40 @@ public sealed partial class LoupeControl : UserControl
     }
 
     /// <summary>画像抽出を非同期に実行し、Avaloniaの描画オブジェクトをUIスレッドで合成する。</summary>
-    private static async Task<UnifiedBitmap> RenderBitmapAsync(
+    private static async Task<PbBitmap> RenderBitmapAsync(
         IImage? source, Point? center, int pixelSize, int zoomLevel,
         IBrush? crossColor, int checkerSize,
         IBrush? checkerColorA, IBrush? checkerColorB, IBrush? frameColor,
         int frameWidth, double scaling)
     {
-        if (source is not null and not Bitmap)
+        if (source is not null and not Bitmap and not PbBitmapImage)
         {
             throw new NotSupportedException(
-                $"LoupeControl は {source.GetType().FullName} をサポートしていません。Bitmap を指定してください。");
+                $"LoupeControl は {source.GetType().FullName} をサポートしていません。Bitmap または PbBitmapImage を指定してください。");
         }
 
         var checkerPixelSize = Math.Max(1, (int)Math.Ceiling(checkerSize * scaling));
         var framePixelWidth = Math.Max(1, (int)Math.Ceiling(frameWidth * scaling));
 
         // 画像なし・破棄済み・抽出失敗のいずれでも市松模様のみで描画する（生成経路の一元化）
-        Task<UnifiedBitmap> DrawCheckerboardOnly() =>
+        Task<PbBitmap> DrawCheckerboardOnly() =>
             Dispatcher.UIThread.InvokeAsync(() => LoupeRenderer.DrawLoupeCheckerboardOnly(
                 pixelSize, crossColor, checkerPixelSize,
                 checkerColorA, checkerColorB, frameColor, framePixelWidth)).GetTask();
 
-        if (source is Bitmap bitmap && center is { } centerPoint)
+        if (center is not { } centerPoint)
         {
-            var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel);
+            return await DrawCheckerboardOnly();
+        }
 
-            // 抽出前に UI スレッドで Bitmap の生存を検証する。
-            // Source（元画像）は UI スレッドで破棄される可能性がある（Clear / モード切替 / 別 Bitmap への
-            // 置き換え）。検証なしで Task.Run に渡すと、抽出中に ObjectDisposedException が発生する。
+        // 抽出元の PbBitmap を取得する（Bitmap は複製、PbBitmapImage は共有参照）。
+        // 破棄済み Bitmap は PixelSize 参照で検出し、市松模様のみにフォールバックする（ObjectDisposedException 防止）。
+        PbBitmap? sourceBitmap;
+        if (source is Bitmap sourceBitmapImage)
+        {
             try
             {
-                _ = bitmap.PixelSize;
+                _ = sourceBitmapImage.PixelSize;
             }
             catch (ObjectDisposedException)
             {
@@ -893,14 +905,32 @@ public sealed partial class LoupeControl : UserControl
                 return await DrawCheckerboardOnly();
             }
 
+            sourceBitmap = sourceBitmapImage.ToPbBitmap();
+        }
+        else if (source is PbBitmapImage unifiedImage)
+        {
+            sourceBitmap = unifiedImage.Bitmap;
+        }
+        else
+        {
+            return await DrawCheckerboardOnly();
+        }
+
+        if (sourceBitmap is null)
+        {
+            return await DrawCheckerboardOnly();
+        }
+
+        try
+        {
+            var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel);
             var region = await Task.Run(() =>
             {
                 // Task.Run 実行中に破棄される場合に備え、抽出内でも ObjectDisposedException を捕捉する。
                 // この場合も市松模様で描画する（例外を UI へ伝播させない）。
                 try
                 {
-                    using var unified = bitmap.ToUnifiedBitmap();
-                    return LoupeImageExtractor.ExtractRegionAt(unified, (int)centerPoint.X, (int)centerPoint.Y, captureSize);
+                    return LoupeImageExtractor.ExtractRegionAt(sourceBitmap, (int)centerPoint.X, (int)centerPoint.Y, captureSize);
                 }
                 catch (ObjectDisposedException)
                 {
@@ -925,31 +955,39 @@ public sealed partial class LoupeControl : UserControl
                 }
             });
         }
-
-        return await DrawCheckerboardOnly();
+        finally
+        {
+            // Bitmap 由来の場合のみ複製を破棄する（PbBitmapImage の共有参照は破棄しない）。
+            if (source is Bitmap)
+            {
+                sourceBitmap.Dispose();
+            }
+        }
     }
 
     /// <summary>生成したルーペビットマップをコントロールへ反映する。</summary>
-    /// <param name="bmp">生成したルーペビットマップ（UnifiedBitmap）。</param>
+    /// <param name="bmp">生成したルーペビットマップ（PbBitmap）。</param>
     /// <param name="size">表示サイズ（DIP）。</param>
     /// <remarks>
     /// 前回のビットマップを破棄し、<see cref="LoupeBitmap"/> と表示内容（サイズ・画像）を更新する。<br/>
     /// 表示状態（IsVisible）は変更しない（表示状態と再描画の分離）。<br/>
-    /// 表示への反映前に <see cref="Rendered"/> イベントを発火し、ホスト側が UnifiedBitmap のピクセルに<br/>
+    /// 表示への反映前に <see cref="Rendered"/> イベントを発火し、ホスト側が PbBitmap のピクセルに<br/>
     /// オーバーレイ（線分の破線等）を描画できるようにする（イベント後に表示へ反映）。
     /// </remarks>
-    private void SetLoupeBitmap(UnifiedBitmap bmp, int size)
+    private void SetLoupeBitmap(PbBitmap bmp, int size)
     {
-        LoupeBitmap?.Dispose();
-        LoupeBitmap = bmp;
+        // 前回の画像アダプタ（PbBitmapImage）を破棄してから置き換える（破棄済み Bitmap の残留防止）。
+        _loupeImage?.Dispose();
         Width = size;
         Height = size;
 
-        // ホストが UnifiedBitmap のピクセルへオーバーレイ（破線等）を描画するフック。イベント内でピクセルが更新される
+        // ホストが PbBitmap のピクセルへオーバーレイ（破線等）を描画するフック。イベント内でピクセルが更新される
         RaiseRendered(bmp, size);
 
-        // イベント後の UnifiedBitmap（ホストのオーバーレイ描画を含む）を表示境界で Avalonia Bitmap へ変換して反映する
-        using var av = LoupeBitmap.ToAvaloniaWriteableBitmap();
-        PART_Image?.Source = av;
+        // イベント後の PbBitmap（ホストのオーバーレイ描画を含む）を表示境界で Avalonia 画像として反映する。
+        // WriteableBitmap を生成せず、PbBitmap を内包した IImage（PbBitmapImage）を Source に設定する
+        // （Skia 直描画・ゼロコピー）。
+        _loupeImage = new PbBitmapImage(bmp);
+        PART_Image?.Source = _loupeImage;
     }
 }

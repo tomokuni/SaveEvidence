@@ -653,7 +653,7 @@ public sealed class FadeMaskDragRectControl : Panel
     private void RaiseLoupeRendered(LoupeRenderedEventArgs e) => LoupeRendered?.Invoke(this, e);
 
     /// <summary>選択矩形の 4 辺を 2 色破線でルーペ Bitmap へ描画する。</summary>
-    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
+    /// <param name="bitmap">描画対象の PbBitmap。</param>
     /// <param name="selectionRect">選択矩形（ドメイン座標系・半開区間）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
@@ -667,7 +667,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 純粋描画のため <c>internal</c> で公開し、単体テストから検証できるようにする。
     /// </remarks>
     internal static void DrawSelectionRectOverlay(
-        UnifiedBitmap bitmap, Rect selectionRect, Point captureTopLeft, double scale, Color colorA, Color colorB)
+        PbBitmap bitmap, Rect selectionRect, Point captureTopLeft, double scale, Color colorA, Color colorB)
     {
         if (scale < 2)
         {
@@ -694,14 +694,14 @@ public sealed class FadeMaskDragRectControl : Panel
         DrawDashedRectEdge(bitmap, new Point(x + w, y), new Point(x + w, y + h), colorA, colorB);
     }
 
-    /// <summary>UnifiedBitmap 上に 2 色のダッシュ破線（1px 描画 → 1px 空白）を描画する。</summary>
-    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
+    /// <summary>PbBitmap 上に 2 色のダッシュ破線（1px 描画 → 1px 空白）を描画する。</summary>
+    /// <param name="bitmap">描画対象の PbBitmap。</param>
     /// <param name="from">始点（ルーペピクセル座標）。</param>
     /// <param name="to">終点（ルーペピクセル座標）。</param>
     /// <param name="colorA">破線の色A。</param>
     /// <param name="colorB">破線の色B。</param>
     /// <remarks>水平または垂直の辺を想定する。色A / 色B を 1 ピクセルごとに交互に切り替える（市松風）。</remarks>
-    private static void DrawDashedRectEdge(UnifiedBitmap bitmap, Point from, Point to, Color colorA, Color colorB)
+    private static void DrawDashedRectEdge(PbBitmap bitmap, Point from, Point to, Color colorA, Color colorB)
     {
         bool horizontal = Math.Abs(to.Y - from.Y) < Math.Abs(to.X - from.X);
         double length = horizontal ? to.X - from.X : to.Y - from.Y;

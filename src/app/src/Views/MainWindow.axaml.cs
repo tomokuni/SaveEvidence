@@ -415,7 +415,7 @@ public sealed partial class MainWindow : Window
         {
             CaptureContent.PushUndo();
             CaptureContent.SetIsCaptureInProgress(true);
-            // キャプチャ結果（UnifiedBitmap）を内部表現のままプレビューへ設定する（所有権は ViewModel へ移る）。
+            // キャプチャ結果（PbBitmap）を内部表現のままプレビューへ設定する（所有権は ViewModel へ移る）。
             _viewModel.SetPreviewImage(captured);
             CaptureContent.SetIsCaptureInProgress(false);
             CaptureContent.ExitCropMode();

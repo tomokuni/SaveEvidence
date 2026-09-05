@@ -129,8 +129,8 @@ public sealed partial class DetectionContext : ObservableObject
             return;
         }
 
-        // 検出器は UnifiedBitmap を入力として受け取る（Bitmap → UnifiedBitmap 変換）
-        using var unified = Image.ToUnifiedBitmap();
+        // 検出器は PbBitmap を入力として受け取る（Bitmap → PbBitmap 変換）
+        using var unified = Image.ToPbBitmap();
         var results = detector.Detector.Detect(unified);
 
         // モデル依存方式のエラー（モデル未配置等）をステータスへ反映する

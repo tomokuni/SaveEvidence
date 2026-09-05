@@ -165,7 +165,7 @@ internal sealed class CaptureSession(
     /// <b>重要</b>: <c>out origin</c> はタスク完了後にしか有効にならないため、<br/>
     /// 原点はタスク完了後に <paramref name="originProvider"/> で遅延評価する（マルチモニタの座標ずれ防止）。
     /// </remarks>
-    private void SetupVirtualScreenContinuation(Task<UnifiedBitmap?> captureTask, Func<PixelPoint> originProvider)
+    private void SetupVirtualScreenContinuation(Task<PbBitmap?> captureTask, Func<PixelPoint> originProvider)
     {
         _ = Task.Run(async () =>
         {

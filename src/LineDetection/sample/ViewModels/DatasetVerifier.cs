@@ -31,7 +31,7 @@ internal static class DatasetVerifier
         try
         {
             using var bitmap = new Bitmap(entry.PngPath);
-            using var unified = bitmap.ToUnifiedBitmap();
+            using var unified = bitmap.ToPbBitmap();
             var results = detector.Detect(unified);
 
             if (TryReconstructBounds(results) is not { } bound)

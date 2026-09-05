@@ -1006,9 +1006,9 @@ public class FadeMaskDragRectControlTests
     }
 
     /// <summary>テスト用の単色 Bitmap（白）を生成する。</summary>
-    private static UnifiedBitmap CreateSolidBitmap(int width, int height)
+    private static PbBitmap CreateSolidBitmap(int width, int height)
     {
-        var bitmap = UnifiedBitmap.Create(width, height);
+        var bitmap = PbBitmap.Create(width, height);
         bitmap.Clear(b: 255, g: 255, r: 255, a: 255);
         return bitmap;
     }

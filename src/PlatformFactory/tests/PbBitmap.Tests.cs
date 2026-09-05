@@ -7,19 +7,19 @@ using AvaloniaColor = Avalonia.Media.Color;
 namespace Estable.AvaloniaUI.Platform.Tests;
 
 /// <summary>
-/// <see cref="UnifiedBitmap"/> の単体テスト。
+/// <see cref="PbBitmap"/> の単体テスト。
 /// </summary>
 /// <remarks>
-/// <see cref="UnifiedBitmap"/> は静的共有状態を持たないため、本テストは Avalonia ヘッドレス初期化に依存しない
+/// <see cref="PbBitmap"/> は静的共有状態を持たないため、本テストは Avalonia ヘッドレス初期化に依存しない
 /// （<c>[Collection]</c> により並列実行可能）。<br/>
 /// Avalonia Bitmap の変換（<c>ToAvaloniaWriteableBitmap</c> / 入力側変換）は
-/// ヘッドレス環境が必要なため、別テスト（<see cref="UnifiedBitmapAvaloniaTests"/>）で検証する。
+/// ヘッドレス環境が必要なため、別テスト（<see cref="PbBitmapAvaloniaTests"/>）で検証する。
 /// </remarks>
-[Collection("UnifiedBitmapNonAvalonia")]
-public class UnifiedBitmapTests
+[Collection("PbBitmapNonAvalonia")]
+public class PbBitmapTests
 {
     /// <summary>指定サイズの空のビットマップを生成する。</summary>
-    private static UnifiedBitmap Create(int w = 4, int h = 4) => UnifiedBitmap.Create(w, h);
+    private static PbBitmap Create(int w = 4, int h = 4) => PbBitmap.Create(w, h);
 
     // ====================================================================
     // 生成・基本プロパティ
@@ -180,7 +180,7 @@ public class UnifiedBitmapTests
     public void FromSKBitmap_所有権を譲り受け破棄に連動する()
     {
         var sk = new SKBitmap(new SKImageInfo(4, 4, SKColorType.Bgra8888, SKAlphaType.Premul));
-        var bmp = UnifiedBitmap.FromSKBitmap(sk);
+        var bmp = PbBitmap.FromSKBitmap(sk);
         Assert.Equal(4, bmp.Size.Width);
         bmp.Dispose();
         Assert.True(bmp.IsDisposed);
@@ -189,7 +189,7 @@ public class UnifiedBitmapTests
     [Fact]
     public void FromSKBitmap_部分透明アルファを保持する()
     {
-        // SKBitmap に直接ピクセルを書き、UnifiedBitmap 経由で値を検証する。
+        // SKBitmap に直接ピクセルを書き、PbBitmap 経由で値を検証する。
         // （内部が SKBitmap のため、Avalonia ヘッドレス初期化に依存せず検証できる）
         var sk = new SKBitmap(new SKImageInfo(4, 4, SKColorType.Bgra8888, SKAlphaType.Premul));
         unsafe
@@ -202,7 +202,7 @@ public class UnifiedBitmapTests
             ptr[3] = 128; // A
         }
 
-        using var bmp = UnifiedBitmap.FromSKBitmap(sk);
+        using var bmp = PbBitmap.FromSKBitmap(sk);
         var px = bmp.GetPixel(0, 0);
         Assert.Equal((byte)255, px.B);
         Assert.Equal((byte)0, px.G);
@@ -213,13 +213,13 @@ public class UnifiedBitmapTests
     [Fact]
     public void ヘッドレス不要でアルファ付きピクセルを往復させる()
     {
-        // SKBitmap を内部に持つ UnifiedBitmap は、Avalonia ヘッドレス初期化に依存せず
+        // SKBitmap を内部に持つ PbBitmap は、Avalonia ヘッドレス初期化に依存せず
         // アルファ付きピクセルデータを SKBitmap 経由の往復で保持できることを検証する。
-        using var bmp = UnifiedBitmap.Create(3, 3);
+        using var bmp = PbBitmap.Create(3, 3);
         bmp.SetPixel(2, 1, b: 10, g: 20, r: 30, a: 64);
 
         using var sk = bmp.ToSKBitmap();
-        using var roundTripped = UnifiedBitmap.FromSKBitmap(sk.Copy());
+        using var roundTripped = PbBitmap.FromSKBitmap(sk.Copy());
 
         var px = roundTripped.GetPixel(2, 1);
         Assert.Equal((byte)10, px.B);

@@ -143,7 +143,7 @@ public sealed class SnipCapture : IDisposable
     /// 実行中に同一インスタンスへ再呼び出しされた場合は null を返す。
     /// </remarks>
     public Task<PixelRect?> StartCropAsync(
-        ZoomViewControl previewControl, Window hostWindow, UnifiedBitmap sourceImage,
+        ZoomViewControl previewControl, Window hostWindow, PbBitmap sourceImage,
         Action<bool>? zoomRequestHandler = null)
     {
         ThrowIfDisposed();

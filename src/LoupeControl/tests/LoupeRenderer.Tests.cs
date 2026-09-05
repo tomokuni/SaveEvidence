@@ -15,10 +15,10 @@ namespace Estable.AvaloniaUI.Loupe.Tests;
 [Collection("AvaloniaHeadless")]
 public class LoupeRendererTests
 {
-    /// <summary>テスト用 UnifiedBitmap（白で塗りつぶし）を生成する。</summary>
-    private static UnifiedBitmap CreateBitmap(int size)
+    /// <summary>テスト用 PbBitmap（白で塗りつぶし）を生成する。</summary>
+    private static PbBitmap CreateBitmap(int size)
     {
-        var bitmap = UnifiedBitmap.Create(size, size);
+        var bitmap = PbBitmap.Create(size, size);
         bitmap.Clear(b: 255, g: 255, r: 255, a: 255);
         return bitmap;
     }

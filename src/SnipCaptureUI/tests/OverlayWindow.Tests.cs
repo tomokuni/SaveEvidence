@@ -31,13 +31,13 @@ public class OverlayWindowTests
         /// <summary>CaptureArea の呼び出し回数（確定時の再キャプチャが廃止されたことの検証用）。</summary>
         public int CaptureAreaCallCount { get; private set; }
 
-        public UnifiedBitmap? CaptureArea(PixelRect bounds)
+        public PbBitmap? CaptureArea(PixelRect bounds)
         {
             CaptureAreaCallCount++;
             return null;
         }
 
-        public UnifiedBitmap? CaptureVirtualScreen(out PixelPoint origin)
+        public PbBitmap? CaptureVirtualScreen(out PixelPoint origin)
         {
             origin = default;
             return null;
@@ -71,7 +71,7 @@ public class OverlayWindowTests
     private static OverlayWindow CreateWindow(
         CaptureType captureType = CaptureType.AreaSelect,
         double scaling = 1.0,
-        Action<UnifiedBitmap?, PixelRect?>? onComplete = null,
+        Action<PbBitmap?, PixelRect?>? onComplete = null,
         MockCaptureService? captureService = null,
         MockElementFinder? elementFinder = null)
         => new(
@@ -221,7 +221,7 @@ public class OverlayWindowTests
     public async Task CompleteSelection_仮想スクリーンから切り出しCaptureAreaを呼ばない()
     {
         var captureService = new MockCaptureService();
-        UnifiedBitmap? captured = null;
+        PbBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -230,7 +230,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = UnifiedBitmap.Create(10, 10);
+        var virtualScreen = PbBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 確定: 選択矩形 (2,2)〜(5,5)（半開区間幅 3）→ 閉区間 (2,2,4,4)
@@ -251,7 +251,7 @@ public class OverlayWindowTests
     public async Task CompleteSelection_仮想スクリーン未設定ならCaptureAreaでフォールバックする()
     {
         var captureService = new MockCaptureService();
-        UnifiedBitmap? captured = null;
+        PbBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -280,7 +280,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = UnifiedBitmap.Create(10, 10);
+        var virtualScreen = PbBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 枠更新（ドラッグ後の矩形）→ 事前切り出しが実行される（Task.Run + Post のため完了をポーリングで待つ）
@@ -297,7 +297,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = UnifiedBitmap.Create(10, 10);
+        var virtualScreen = PbBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 同じ矩形で 2 回枠更新 → 事前切り出しは 1 回だけ（2 回目はスキップ）
@@ -316,7 +316,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = UnifiedBitmap.Create(10, 10);
+        var virtualScreen = PbBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 異なる矩形で 2 回枠更新 → 事前切り出しは 2 回
@@ -333,7 +333,7 @@ public class OverlayWindowTests
     public async Task CompleteSelection_事前切り出しキャッシュを再利用する()
     {
         var captureService = new MockCaptureService();
-        UnifiedBitmap? captured = null;
+        PbBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -342,7 +342,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = UnifiedBitmap.Create(10, 10);
+        var virtualScreen = PbBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 枠更新（事前切り出し）→ 完了をポーリングで待つ
@@ -369,7 +369,7 @@ public class OverlayWindowTests
     [AvaloniaFact]
     public async Task AreaSelect_確定要求でキャプチャが確定する()
     {
-        UnifiedBitmap? captured = null;
+        PbBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -377,7 +377,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = UnifiedBitmap.Create(10, 10);
+        var virtualScreen = PbBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 矩形を設定してから確定要求（Enter キー相当）を発行する
@@ -397,7 +397,7 @@ public class OverlayWindowTests
     [AvaloniaFact]
     public void AreaSelect_キャンセル要求でキャンセルされる()
     {
-        UnifiedBitmap? captured = null;
+        PbBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -405,7 +405,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定
-        var virtualScreen = UnifiedBitmap.Create(10, 10);
+        var virtualScreen = PbBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // キャンセル要求（Esc キー相当）を発行する
@@ -429,7 +429,7 @@ public class OverlayWindowTests
         window.Show(); // _loupeControl.Parent の接続に必要
 
         // 仮想スクリーン Bitmap（3840×1080 = デュアルモニタ相当）を設定
-        var bitmap = UnifiedBitmap.Create(3840, 1080);
+        var bitmap = PbBitmap.Create(3840, 1080);
         window.SetVirtualScreen(bitmap, new PixelPoint(-1920, 0));
 
         // ドメイン（仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）でルーペを更新
@@ -447,7 +447,7 @@ public class OverlayWindowTests
         window.Show(); // _loupeControl.Parent の接続に必要
 
         // マルチモニタ（プライマリが右側・仮想スクリーン原点が (-1920, 0)）のケース
-        var bitmap = UnifiedBitmap.Create(3840, 1080);
+        var bitmap = PbBitmap.Create(3840, 1080);
         window.SetVirtualScreen(bitmap, new PixelPoint(-1920, 0));
 
         // ドメイン（= ローカル DIP × scaling）でルーペを更新
@@ -456,6 +456,42 @@ public class OverlayWindowTests
         // 仮想スクリーン原点を減算すると (4800, 540) にずれる（範囲外）ため、ドメイン座標のままであるべき
         Assert.Equal(new Point(2880, 540), window.SelectionOverlay.LoupeCenterPoint);
         window.Close();
+    }
+
+    [AvaloniaFact]
+    public void SetVirtualScreen_背景とルーペのソースが破棄されず有効に保持される()
+    {
+        // 回帰テスト: SetVirtualScreen が using で即座に破棄した WriteableBitmap を Image.Source に
+        // 設定すると、レイアウトパス（Image.MeasureOverride → Bitmap.get_Size）で ObjectDisposedException が
+        // 発生し、領域選択開始時にアプリがハングする。背景（VirtualScreenImage）とルーペの拡大元画像は
+        // 本ウィンドウが所有し、有効なまま保持されることを検証する。
+        var window = CreateWindow(CaptureType.AreaSelect);
+        window.Show();
+
+        var bitmap = PbBitmap.Create(100, 100);
+        window.SetVirtualScreen(bitmap, default);
+
+        // 固定背景画像（VirtualScreenImage）の Source が破棄済みでないこと（Size 参照で例外なし）
+        Assert.NotNull(window.VirtualScreenImageControl.Source);
+        Assert.True(window.VirtualScreenImageControl.Source is PbBitmapImage img
+            && img.Bitmap is { } bmp && bmp.Size.Width > 0);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void SetVirtualScreen_Close後に背景とルーペのソースが解放される()
+    {
+        var window = CreateWindow(CaptureType.AreaSelect);
+        window.Show();
+
+        var bitmap = PbBitmap.Create(100, 100);
+        window.SetVirtualScreen(bitmap, default);
+        Assert.NotNull(window.VirtualScreenImageControl.Source);
+
+        // Close で表示用 WriteableBitmap と VirtualScreenImage.Source の両方が解放される（破棄済み Bitmap 残留防止）
+        window.Close();
+
+        Assert.Null(window.VirtualScreenImageControl.Source);
     }
 
     /// <summary>バックグラウンド（Task.Run + Dispatcher.Post）の非同期完了をタイムアウト付きで待つ。</summary>

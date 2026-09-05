@@ -1,0 +1,137 @@
+using Avalonia;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
+using Xunit;
+using Avalonia.Headless.XUnit;
+
+namespace Estable.AvaloniaUI.Platform.Tests;
+
+/// <summary>
+/// <see cref="PbBitmap"/> の Avalonia WriteableBitmap 変換テスト（ヘッドレス依存・直列実行）。
+/// </summary>
+/// <remarks>
+/// <c>Bitmap.ToPbBitmap()</c> / <c>bitmap.ToAvaloniaWriteableBitmap()</c> は
+/// <c>WriteableBitmap</c> の生成・ピクセルコピーを伴うため、Avalonia ヘッドレスプラットフォームが必要。<br/>
+/// そのため <see cref="AvaloniaHeadlessCollection"/> 内で直列実行する（純粋計算テストは
+/// <see cref="PbBitmapTests"/> で並列実行）。<br/>
+/// サイズ・ストライドを主に検証する（ピクセル値はヘッドレス環境で不安定なため検証しない）。
+/// </remarks>
+[Collection("AvaloniaHeadless")]
+public class PbBitmapAvaloniaTests
+{
+    /// <summary>テスト用の WriteableBitmap を生成する。</summary>
+    private static WriteableBitmap CreateBitmap(int width, int height)
+        => new(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+
+    [AvaloniaFact]
+    public void ToAvaloniaWriteableBitmap_サイズが一致する()
+    {
+        using var bmp = PbBitmap.Create(8, 8);
+
+        var result = bmp.ToAvaloniaWriteableBitmap();
+
+        Assert.Equal(new PixelSize(8, 8), result.PixelSize);
+    }
+
+    [AvaloniaFact]
+    public void ToPbBitmap_サイズが一致する()
+    {
+        var src = CreateBitmap(8, 8);
+
+        using var bmp = src.ToPbBitmap();
+
+        Assert.Equal(8, bmp.Size.Width);
+        Assert.Equal(8, bmp.Size.Height);
+    }
+
+    [AvaloniaFact]
+    public void Avalonia_往復変換でサイズが一致する()
+    {
+        // Bitmap → PbBitmap → Bitmap の往復でサイズが保持される。
+        var src = CreateBitmap(12, 10);
+
+        using var bmp = src.ToPbBitmap();
+        var back = bmp.ToAvaloniaWriteableBitmap();
+
+        Assert.Equal(src.PixelSize, back.PixelSize);
+    }
+
+    [AvaloniaFact]
+    public void ToPbBitmap_元Bitmapは変更されない()
+    {
+        var src = CreateBitmap(8, 8);
+
+        using var bmp = src.ToPbBitmap();
+
+        // 元のサイズが保持される（複製のため元は変更されない）
+        Assert.Equal(new PixelSize(8, 8), src.PixelSize);
+    }
+
+    [AvaloniaFact]
+    public void ToPbBitmap_内部ストライドが幅4倍以上になる()
+    {
+        // Avalonia の WriteableBitmap.RowBytes はプラットフォーム依存で幅の4バイト以上になり得る。
+        // PbBitmap は幅の4バイト以上を保持し、以降のピクセル演算で正しく扱う。
+        var src = CreateBitmap(7, 5);
+
+        using var bmp = src.ToPbBitmap();
+
+        Assert.Equal(7, bmp.Size.Width);
+        Assert.Equal(5, bmp.Size.Height);
+        Assert.True(bmp.Stride >= 7 * 4);
+    }
+
+    // ====================================================================
+    // PbBitmapImage（PbBitmap を IImage として公開するアダプタ）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public void PbBitmapImage_Sizeが一致する()
+    {
+        using var bmp = PbBitmap.Create(8, 6);
+        using var image = new PbBitmapImage(bmp);
+
+        Assert.Equal(new Size(8, 6), image.Size);
+    }
+
+    [AvaloniaFact]
+    public void PbBitmapImage_Bitmapが内包する元と一致する()
+    {
+        using var bmp = PbBitmap.Create(8, 6);
+        using var image = new PbBitmapImage(bmp);
+
+        Assert.Same(bmp, image.Bitmap);
+    }
+
+    [AvaloniaFact]
+    public void PbBitmapImage_Dispose後にBitmapがnullになる()
+    {
+        using var bmp = PbBitmap.Create(8, 6);
+        var image = new PbBitmapImage(bmp);
+
+        image.Dispose();
+
+        Assert.Null(image.Bitmap);
+    }
+
+    [AvaloniaFact]
+    public void PbBitmapImage_Dispose後にSizeでObjectDisposedExceptionを投げる()
+    {
+        using var bmp = PbBitmap.Create(8, 6);
+        using var image = new PbBitmapImage(bmp);
+
+        image.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => _ = image.Size);
+    }
+
+    [AvaloniaFact]
+    public void PbBitmapImage_ToImage拡張がIImageを返す()
+    {
+        using var bmp = PbBitmap.Create(8, 6);
+        using var image = (PbBitmapImage)bmp.ToImage();
+
+        Assert.Same(bmp, image.Bitmap);
+    }
+}
