@@ -328,7 +328,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <param name="bounds">切り出す矩形領域（画像座標 PixelRect）</param>
     [RelayCommand]
     private void CropPreview(PixelRect bounds)
-        => ApplyPixelEdit(srcData => srcData.Crop(new System.Drawing.Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height)));
+        => ApplyPixelEdit(srcData => srcData.Crop(bounds));
 
     /// <summary>プレビュー画像を LineDetection で検出し、ウィンドウ矩形の候補を表示する。</summary>
     /// <remarks>
@@ -438,7 +438,7 @@ public sealed partial class MainViewModel : ObservableObject
         HoveredRect = null;
         StatusMessage = "";
 
-        ApplyPixelEdit(srcData => srcData.Crop(new System.Drawing.Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height)));
+        ApplyPixelEdit(srcData => srcData.Crop(bounds));
     }
 
     /// <summary>自動切り出しモードをキャンセルする。</summary>

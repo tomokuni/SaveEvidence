@@ -1,6 +1,4 @@
 using System.Runtime.InteropServices;
-using Avalonia;
-using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform.Imaging;
 using OpenCvSharp;
 
@@ -14,23 +12,22 @@ internal static class MatHelper
     /// <param name="bitmap">変換元の UnifiedBitmap。</param>
     /// <returns>変換された Mat（呼び出し元で破棄する）。</returns>
     /// <remarks>
-    /// 内部の SKBitmap（BGRA8888・Premul）のピクセルバッファを直接読み取り、<see cref="Mat"/> へコピーする。<br/>
+    /// ピクセルバッファ（<see cref="UnifiedBitmap.Address"/>）を直接読み取り、<see cref="Mat"/> へコピーする。<br/>
     /// ストライドが幅×4 と異なる場合は行単位でコピーする。
     /// </remarks>
     public static Mat ToMat(UnifiedBitmap bitmap)
     {
-        var width = bitmap.Size.Width;
-        var height = bitmap.Size.Height;
+        var width = bitmap.Width;
+        var height = bitmap.Height;
         var stride = width * 4;
         var pixels = new byte[height * stride];
-        var sk = bitmap.ToSKBitmap();
-        var srcStride = sk.RowBytes;
+        var srcStride = bitmap.Stride;
 
         unsafe
         {
             fixed (byte* p = pixels)
             {
-                var src = (byte*)sk.GetPixels();
+                var src = (byte*)bitmap.Address;
                 if (srcStride == stride)
                 {
                     Buffer.MemoryCopy(src, p, pixels.Length, pixels.Length);

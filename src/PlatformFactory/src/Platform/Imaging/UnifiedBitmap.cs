@@ -29,43 +29,20 @@ public sealed class UnifiedBitmap : IDisposable
 
     /// <summary>内部 SKBitmap からラッパーを構築する（所有権を譲り受ける）。</summary>
     /// <param name="bitmap">内部表現となる SKBitmap（BGRA8888・Premul）。所有権が本型へ移る。</param>
-    internal UnifiedBitmap(SKBitmap bitmap) => _bitmap = bitmap;
-
-    // ====================================================================
-    // 生成・変換
-    // ====================================================================
-
-    /// <summary>指定サイズの空のビットマップ（BGRA8888・Premul）を生成する。</summary>
-    /// <param name="width">幅（ピクセル）。正の値。</param>
-    /// <param name="height">高さ（ピクセル）。正の値。</param>
-    /// <returns>生成されたビットマップ。</returns>
     /// <remarks>
-    /// <c>SkiaSharp</c> のみに依存し、Avalonia / System.Drawing への依存を持たない。<br/>
-    /// 本型はコア（ピクセル操作）に該当するため、拡張クラスではなく本型に内包する。
+    /// ピクセルポインタ・ストライド・寸法はビットマップ生成後に不変のため、<br/>
+    /// 構築時に一度だけ取得して読み取り専用プロパティへ設定する（<see cref="GetPixel"/> / <see cref="SetPixel"/> の
+    /// ホットパスで毎回のネイティブ呼び出し・プロパティ評価を排除）。<br/>
+    /// <c>init</c> アクセサにより、初期化後は再設定できない（読み取り専用）。
     /// </remarks>
-    public static UnifiedBitmap Create(int width, int height)
-        => new(new SKBitmap(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul)));
-
-    /// <summary>SKBitmap からラッパーを生成する（引数の所有権を譲り受ける）。</summary>
-    /// <param name="bitmap">内部表現となる SKBitmap（BGRA8888・Premul）。</param>
-    /// <returns>生成されたビットマップ。</returns>
-    /// <remarks>
-    /// 本型はコア（ピクセル操作）に該当するため、拡張クラスではなく本型に内包する。<br/>
-    /// 引数はアルファ乗算済み BGRA8888 であること。<br/>
-    /// 戻り値の破棄時に引数の SKBitmap も Dispose される（所有権が移る）。
-    /// </remarks>
-    public static UnifiedBitmap FromSKBitmap(SKBitmap bitmap) => new(bitmap);
-
-    /// <summary>内部 SKBitmap を返す（呼び出し側で Dispose しないこと）。</summary>
-    /// <returns>内部 SKBitmap（共有参照）。</returns>
-    /// <remarks>
-    /// 本型はコア（ピクセル操作）に該当するため、拡張クラスではなく本型に内包する。<br/>
-    /// 内部インスタンスをそのまま返すため、呼び出し側で Dispose しないこと（所有権は本型が保持）。
-    /// </remarks>
-    public SKBitmap ToSKBitmap()
+    internal UnifiedBitmap(SKBitmap bitmap)
     {
-        ThrowIfDisposed();
-        return _bitmap;
+        _bitmap = bitmap;
+        Address = bitmap.GetPixels();
+        Stride = bitmap.RowBytes;
+        Width = bitmap.Width;
+        Height = bitmap.Height;
+        Size = new Size(Width, Height);
     }
 
     // ====================================================================
@@ -85,28 +62,55 @@ public sealed class UnifiedBitmap : IDisposable
         => ObjectDisposedException.ThrowIf(_disposed, this);
 
     // ====================================================================
+    // 生成・変換
+    // ====================================================================
+
+    /// <summary>指定サイズの空のビットマップ（BGRA8888・Premul）を生成する。</summary>
+    /// <param name="width">幅（ピクセル）。正の値。</param>
+    /// <param name="height">高さ（ピクセル）。正の値。</param>
+    /// <returns>生成されたビットマップ。</returns>
+    public static UnifiedBitmap Create(int width, int height)
+        => new(new SKBitmap(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul)));
+
+    /// <summary>SKBitmap からラッパーを生成する（引数の所有権を譲り受ける）。</summary>
+    /// <param name="bitmap">内部表現となる SKBitmap（BGRA8888・Premul）。</param>
+    /// <returns>生成されたビットマップ。</returns>
+    /// <remarks>
+    /// 引数はアルファ乗算済み BGRA8888 であること。<br/>
+    /// 戻り値の破棄時に引数の SKBitmap も Dispose される（所有権が移る）。
+    /// </remarks>
+    public static UnifiedBitmap FromSKBitmap(SKBitmap bitmap) => new(bitmap);
+
+    /// <summary>内部 SKBitmap を返す（呼び出し側で Dispose しないこと）。</summary>
+    /// <returns>内部 SKBitmap（共有参照）。</returns>
+    /// <remarks>
+    /// 本型はコア（ピクセル操作）に該当するため、拡張クラスではなく本型に内包する。<br/>
+    /// 内部インスタンスをそのまま返すため、呼び出し側で Dispose しないこと（所有権は本型が保持）。
+    /// </remarks>
+    public SKBitmap ToSKBitmap()
+    {
+        ThrowIfDisposed();
+        return _bitmap;
+    }
+
+    // ====================================================================
     // 基本プロパティ
     // ====================================================================
 
-    /// <summary>幅・高さ（ピクセル）。</summary>
-    public Size Size => new(_bitmap.Width, _bitmap.Height);
-
     /// <summary>幅（ピクセル）。</summary>
-    public int Width => _bitmap.Width;
+    public int Width { get; init; }
 
     /// <summary>高さ（ピクセル）。</summary>
-    public int Height => _bitmap.Height;
+    public int Height { get; init; }
 
-    /// <summary>1 ラインあたりのバイト数（パディングを含む）。</summary>
-    public int Stride => _bitmap.RowBytes;
+    /// <summary>幅・高さ（ピクセル）。</summary>
+    public Size Size { get; init; }
 
     /// <summary>ピクセルデータ先頭アドレス（BGRA8888）。</summary>
-    /// <remarks>
-    /// 内部 SKBitmap のピクセルバッファ先頭アドレスを返す。<br/>
-    /// SKBitmap は常時書き込み可能なため、<c>Lock</c> 不要で直接読み書きできる。<br/>
-    /// 呼び出し側は <see cref="Stride"/> を考慮してアクセスし、本型の破棄後は参照しないこと。
-    /// </remarks>
-    public nint Address => _bitmap.GetPixels();
+    public nint Address { get; init; }
+
+    /// <summary>1 ラインあたりのバイト数（パディングを含む）。</summary>
+    public int Stride { get; init; }
 
     /// <summary>破棄済みかどうか。</summary>
     public bool IsDisposed => _disposed;
@@ -122,7 +126,7 @@ public sealed class UnifiedBitmap : IDisposable
     public unsafe (byte B, byte G, byte R, byte A) GetPixel(int x, int y)
     {
         ThrowIfDisposed();
-        var p = (byte*)_bitmap.GetPixels() + y * _bitmap.RowBytes + x * BytesPerPixel;
+        var p = (byte*)Address + y * Stride + x * BytesPerPixel;
         return (p[0], p[1], p[2], p[3]);
     }
 
@@ -145,7 +149,7 @@ public sealed class UnifiedBitmap : IDisposable
     public unsafe void SetPixel(int x, int y, byte b, byte g, byte r, byte a)
     {
         ThrowIfDisposed();
-        var p = (byte*)_bitmap.GetPixels() + y * _bitmap.RowBytes + x * BytesPerPixel;
+        var p = (byte*)Address + y * Stride + x * BytesPerPixel;
         p[0] = b;
         p[1] = g;
         p[2] = r;
@@ -157,6 +161,27 @@ public sealed class UnifiedBitmap : IDisposable
     /// <param name="color">設定する色。</param>
     public void SetPixel(Point point, Color color)
         => SetPixel(point.X, point.Y, color.B, color.G, color.R, color.A);
+
+    /// <summary>指定座標のピクセルを色で設定する（範囲外は無視）。</summary>
+    /// <param name="x">X 座標（ピクセル）。</param>
+    /// <param name="y">Y 座標（ピクセル）。</param>
+    /// <param name="color">設定する色。</param>
+    /// <returns>書き込めたかどうか。範囲外の場合は false。</returns>
+    /// <remarks>
+    /// 描画（破線・矩形オーバーレイ等）で範囲外を無視したい場合に使用する。<br/>
+    /// <see cref="SetPixel(int, int, byte, byte, byte, byte)"/> は範囲外で例外のため、<br/>
+    /// 範囲外チェック（<c>x</c> / <c>y</c> が画像サイズ内かどうか）を行ってから委譲する。
+    /// </remarks>
+    public bool TrySetPixel(int x, int y, Color color)
+    {
+        if (x < 0 || x >= Width || y < 0 || y >= Height)
+        {
+            return false;
+        }
+
+        SetPixel(x, y, color.B, color.G, color.R, color.A);
+        return true;
+    }
 
     /// <summary>全ピクセルを指定色（BGRA）で塗りつぶす。</summary>
     /// <param name="b">青成分（0〜255）。</param>
@@ -189,7 +214,6 @@ public sealed class UnifiedBitmap : IDisposable
     /// <remarks>
     /// デスティネーションは事前にゼロ初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
-    /// 内部では <see cref="GetPixel"/> / <see cref="SetPixel"/> ループでピクセルをコピーする。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>
     public UnifiedBitmap Crop(Rectangle rect)
@@ -205,10 +229,10 @@ public sealed class UnifiedBitmap : IDisposable
     /// <remarks>
     /// デスティネーションは事前にゼロ初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
-    /// 内部では <see cref="GetPixel"/> / <see cref="SetPixel"/> ループでピクセルをコピーする。<br/>
+    /// 内部ではピクセルバッファ（<see cref="Address"/>）へ直接アクセスし、行単位で <c>Buffer.MemoryCopy</c> によりコピーする。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>
-    public UnifiedBitmap Crop(int x, int y, int width, int height)
+    public unsafe UnifiedBitmap Crop(int x, int y, int width, int height)
     {
         ThrowIfDisposed();
         if (width <= 0)
@@ -224,21 +248,28 @@ public sealed class UnifiedBitmap : IDisposable
         var srcW = Width;
         var srcH = Height;
 
-        // ソース範囲内にクランプ（交差しない場合は透明パディングのまま。ループは0回となる）
+        // ソース範囲内にクランプ（交差しない場合は透明パディングのまま。コピー行数が 0 となる）
         var cropX = Math.Max(0, x);
         var cropY = Math.Max(0, y);
         var cropW = Math.Min(width, srcW - cropX);
         var cropH = Math.Min(height, srcH - cropY);
 
         var result = Create(width, height);
+        var dstStride = result.Stride;
+        var srcStride = Stride;
+
+        // コピーする 1 行のバイト数（BGRA8888 は 4 バイト/ピクセル。左右のストライド差を考慮して短い方）
+        var rowBytes = Math.Min(cropW * BytesPerPixel, dstStride);
+
+        var src = (byte*)Address;
+        var dst = (byte*)result.Address;
 
         for (var row = 0; row < cropH; row++)
         {
-            for (var col = 0; col < cropW; col++)
-            {
-                var (b, g, r, a) = GetPixel(cropX + col, cropY + row);
-                result.SetPixel(col, row, b, g, r, a);
-            }
+            // ソースの切り出し開始行へ移動し、行単位で memcpy（デスティネーションは行先頭から）
+            var pSrc = src + (cropY + row) * srcStride + cropX * BytesPerPixel;
+            var pDst = dst + row * dstStride;
+            Buffer.MemoryCopy(pSrc, pDst, dstStride, rowBytes);
         }
 
         return result;

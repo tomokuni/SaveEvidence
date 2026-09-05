@@ -1,15 +1,14 @@
-using Avalonia;
-using Avalonia.Media.Imaging;
+using System.Drawing;
 using Estable.AvaloniaUI.Platform.Imaging;
 
 namespace Estable.AvaloniaUI.Loupe.Imaging;
 
-/// <summary>ルーペの画像処理ヘルパー：Bitmap の領域切り出し（CopyPixels ベース）を提供する。</summary>
+/// <summary>ルーペの画像処理ヘルパー：切り出し領域サイズの計算を提供する。</summary>
 /// <remarks>
-/// ピクセルデータの抽出・変換など、画像処理（Imaging）に関わる操作を提供する。<br/>
+/// ピクセルデータの抽出・切り出しは <see cref="UnifiedBitmap"/>（コア）が担い、<br/>
+/// 本クラスはルーペ固有の領域サイズ計算（<see cref="ComputeCaptureSize"/>）を提供する。<br/>
 /// 描画（市松模様・拡大・十字線・外枠）は <see cref="LoupeRenderer"/> が担う（責務分離）。<br/>
 /// ソース範囲外は透明パディングとなり、市松模様が透ける。<br/>
-/// バックグラウンド処理ではピクセルデータだけを返し、Avalonia の WriteableBitmap 生成はUIスレッド側で行う。<br/>
 /// </remarks>
 internal static class LoupeImageExtractor
 {
@@ -21,65 +20,17 @@ internal static class LoupeImageExtractor
     public static int ComputeCaptureSize(int pixelSize, int zoomLevel)
         => (int)Math.Ceiling((double)pixelSize / zoomLevel);
 
-    /// <summary>Bitmap の指定位置を中心とした領域を UnifiedBitmap として抽出する。</summary>
-    /// <param name="src">切り出し元の Bitmap。</param>
-    /// <param name="centerX">中心のX座標（Bitmap ローカルピクセル）。</param>
-    /// <param name="centerY">中心のY座標（Bitmap ローカルピクセル）。</param>
-    /// <param name="size">切り出す領域の一辺のサイズ（ピクセル）。</param>
-    /// <returns>切り出した領域の UnifiedBitmap（BGRA）。範囲外部分は透明。破棄は呼び出し側。</returns>
+    /// <summary>指定位置を中心とした正方形領域を切り出す（ソース範囲外は透明パディング）。</summary>
+    /// <param name="source">切り出し元の UnifiedBitmap。</param>
+    /// <param name="centerX">中心のX座標（画像ローカルピクセル）。</param>
+    /// <param name="centerY">中心のY座標（画像ローカルピクセル）。</param>
+    /// <param name="size">切り出す領域の一辺のサイズ（ピクセル）。正の値。</param>
+    /// <returns>切り出された新しいビットマップ（<paramref name="size"/> × <paramref name="size"/>）。範囲外部分は透明。破棄は呼び出し側。</returns>
     /// <remarks>
     /// ルーペのソース画像切り出し（AreaSelect / Crop 共通）で使用する。<br/>
-    /// WriteableBitmap は生成せず、バックグラウンドへ渡せる <see cref="UnifiedBitmap"/>（ピクセルコンテナ）を返す。<br/>
-    /// 画像端では透明パディングとなり、市松模様が透ける。<br/>
+    /// <see cref="UnifiedBitmap.Crop(Rectangle)"/> へ委譲する（中心座標 → 左上座標へ変換）。<br/>
+    /// 画像端では透明パディングとなり、市松模様が透ける。
     /// </remarks>
-    public static UnifiedBitmap ExtractRegionAt(Bitmap src, int centerX, int centerY, int size)
-    {
-        var result = UnifiedBitmap.Create(size, size);
-
-        // ソース範囲内にクリップしてコピー（範囲外はバッファ初期値（透明）のまま = 透明パディング）
-        // UnifiedBitmap（SKBitmap）のピクセルバッファ（Address）へ直接 CopyPixels する（中間 byte[] なし・高速）。
-        var (clipRect, dstOffset) = ComputeClipRect(centerX, centerY, size, src.PixelSize.Width, src.PixelSize.Height);
-        if (clipRect is { } inter)
-        {
-            src.CopyPixels(
-                inter,
-                result.Address + dstOffset,
-                checked(result.Stride * size),
-                result.Stride);
-        }
-
-        return result;
-    }
-
-    /// <summary>中心座標とサイズから、ソース範囲内にクリップしたコピー領域とバッファ内オフセットを計算する（純粋関数）。</summary>
-    /// <param name="centerX">中心のX座標（Bitmap ローカルピクセル）。</param>
-    /// <param name="centerY">中心のY座標（Bitmap ローカルピクセル）。</param>
-    /// <param name="size">切り出す領域の一辺のサイズ（ピクセル）。</param>
-    /// <param name="srcW">ソース Bitmap の幅。</param>
-    /// <param name="srcH">ソース Bitmap の高さ。</param>
-    /// <returns>
-    /// クリップ後のコピー領域（ソース Bitmap 上の矩形。交差なしは null）と、<br/>
-    /// デスティネーションバッファ内の書込み開始オフセット（バイト単位）のタプル。
-    /// </returns>
-    /// <remarks>
-    /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。<br/>
-    /// ソース範囲外の部分はバッファ初期値（透明）のままとなる（クリップ + オフセットコピー）。<br/>
-    /// </remarks>
-    public static (PixelRect? ClipRect, int DstOffset) ComputeClipRect(
-        int centerX, int centerY, int size, int srcW, int srcH)
-    {
-        var dstStride = checked(size * 4);
-        var srcRect = new PixelRect(centerX - size / 2, centerY - size / 2, size, size);
-        // 同一スコープで複数回参照する矩形の座標はローカル変数へ一度だけ格納する
-        var srcX = srcRect.X;
-        var srcY = srcRect.Y;
-        var interX = Math.Max(srcX, 0);
-        var interY = Math.Max(srcY, 0);
-        var interW = Math.Min(srcRect.Right, srcW) - interX;
-        var interH = Math.Min(srcRect.Bottom, srcH) - interY;
-        if (interW <= 0 || interH <= 0) return (null, 0);
-
-        var dstOffset = (interY - srcY) * dstStride + (interX - srcX) * 4;
-        return (new PixelRect(interX, interY, interW, interH), dstOffset);
-    }
+    public static UnifiedBitmap ExtractRegionAt(UnifiedBitmap source, int centerX, int centerY, int size)
+        => source.Crop(new Rectangle(centerX - size / 2, centerY - size / 2, size, size));
 }

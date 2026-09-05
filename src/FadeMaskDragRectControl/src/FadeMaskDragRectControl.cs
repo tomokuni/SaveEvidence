@@ -731,32 +731,17 @@ public sealed class FadeMaskDragRectControl : Panel
             {
                 for (var px = (int)Math.Round(segStart); px <= (int)Math.Round(segEnd); px++)
                 {
-                    SetPixel(bitmap, px, (int)Math.Round(fixedCoord), color);
+                    bitmap.TrySetPixel(px, (int)Math.Round(fixedCoord), color);
                 }
             }
             else
             {
                 for (var py = (int)Math.Round(segStart); py <= (int)Math.Round(segEnd); py++)
                 {
-                    SetPixel(bitmap, (int)Math.Round(fixedCoord), py, color);
+                    bitmap.TrySetPixel((int)Math.Round(fixedCoord), py, color);
                 }
             }
         }
-    }
-
-    /// <summary>UnifiedBitmap へ 1 ピクセルを色で書き込む（範囲外は無視）。</summary>
-    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
-    /// <param name="x">X 座標。</param>
-    /// <param name="y">Y 座標。</param>
-    /// <param name="color">描画色。BGRA へ変換して書き込む。</param>
-    private static void SetPixel(UnifiedBitmap bitmap, int x, int y, Color color)
-    {
-        if (x < 0 || x >= bitmap.Size.Width || y < 0 || y >= bitmap.Size.Height)
-        {
-            return;
-        }
-
-        bitmap.SetPixel(x, y, color.B, color.G, color.R, color.A);
     }
 
     /// <summary>ルーペ更新（LoupePositionMoved）。中心はドメイン座標のまま LoupeControl に設定する。</summary>

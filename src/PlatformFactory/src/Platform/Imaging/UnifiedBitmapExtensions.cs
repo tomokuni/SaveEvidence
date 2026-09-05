@@ -70,16 +70,28 @@ public static class UnifiedBitmapExtensions
     public static unsafe WriteableBitmap ToAvaloniaWriteableBitmap(this UnifiedBitmap bitmap)
     {
         bitmap.ThrowIfDisposed();
-        var wb = new WriteableBitmap(bitmap.Size(), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
+        // Width / Height を一度だけ取得し、PixelSize 生成と行ループの両方で共有する（Size 値生成を削減）
+        var size = bitmap.Size;
+        var height = size.Height;
+        var wb = new WriteableBitmap(new PixelSize(size.Width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
         using var fb = wb.Lock();
         var dstStride = fb.RowBytes;
         var srcStride = bitmap.Stride;
         var rowBytes = Math.Min(srcStride, dstStride);
         var src = (byte*)bitmap.Address;
         var dst = (byte*)fb.Address;
-        for (var y = 0; y < bitmap.Size.Height; y++)
+        if (srcStride == dstStride)
         {
-            Buffer.MemoryCopy(src + y * srcStride, dst + y * dstStride, dstStride, rowBytes);
+            // ストライドが同一の場合は連続領域なので、行単位ではなく全領域を 1 回でコピーする（高速化）
+            var totalBytes = rowBytes * height;
+            Buffer.MemoryCopy(src, dst, totalBytes, totalBytes);
+        }
+        else
+        {
+            for (var y = 0; y < height; y++)
+            {
+                Buffer.MemoryCopy(src + y * srcStride, dst + y * dstStride, dstStride, rowBytes);
+            }
         }
         return wb;
     }
@@ -117,6 +129,19 @@ public static class UnifiedBitmapExtensions
     /// <param name="color">設定する Avalonia Color。アルファ乗算して書き込む。</param>
     public static void SetPixel(this UnifiedBitmap bitmap, PixelPoint point, AvaloniaColor color)
         => bitmap.SetPixel(new Point(point.X, point.Y), Color.FromArgb(color.A, color.R, color.G, color.B));
+
+    /// <summary>指定座標（ピクセル）へ Avalonia Color を書き込む（範囲外は無視）。</summary>
+    /// <param name="bitmap">対象のビットマップ。</param>
+    /// <param name="x">X 座標（ピクセル）。</param>
+    /// <param name="y">Y 座標（ピクセル）。</param>
+    /// <param name="color">設定する Avalonia Color。</param>
+    /// <returns>書き込めたかどうか。範囲外の場合は false。</returns>
+    /// <remarks>
+    /// <see cref="UnifiedBitmap.TrySetPixel"/> へ委譲する（Avalonia Color → System.Drawing Color へ変換）。<br/>
+    /// 範囲外チェックはコア側で行う。
+    /// </remarks>
+    public static bool TrySetPixel(this UnifiedBitmap bitmap, int x, int y, AvaloniaColor color)
+        => bitmap.TrySetPixel(x, y, Color.FromArgb(color.A, color.R, color.G, color.B));
 
     /// <summary>全ピクセルを指定色（Avalonia Color）で塗りつぶす。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
@@ -164,16 +189,26 @@ public static class UnifiedBitmapExtensions
             var dstStride = buffer.RowBytes;
             var srcStride = data.Stride;
             var rowBytes = Math.Min(dstStride, srcStride);
+            var totalBytes = rowBytes * h;
             unsafe
             {
                 var dst = (byte*)buffer.GetPixels();
                 var src = (byte*)data.Scan0;
-                for (var y = 0; y < h; y++)
+                if (srcStride == dstStride)
                 {
-                    Buffer.MemoryCopy(src + y * srcStride, dst + y * dstStride, dstStride, rowBytes);
+                    // ストライドが同一の場合は連続領域なので、行単位ではなく全領域を 1 回でコピーする（高速化）
+                    Buffer.MemoryCopy(src, dst, totalBytes, totalBytes);
+                }
+                else
+                {
+                    for (var y = 0; y < h; y++)
+                    {
+                        Buffer.MemoryCopy(src + y * srcStride, dst + y * dstStride, dstStride, rowBytes);
+                    }
                 }
             }
-            return new UnifiedBitmap(buffer);
+            // コアの公開ファクトリへ委譲（SKBitmap の所有権を移す）
+            return UnifiedBitmap.FromSKBitmap(buffer);
         }
         finally
         {
@@ -189,20 +224,31 @@ public static class UnifiedBitmapExtensions
     public static DrawingBitmap ToSystemDrawingBitmap(this UnifiedBitmap bitmap)
     {
         bitmap.ThrowIfDisposed();
-        var sd = new DrawingBitmap(bitmap.Size.Width, bitmap.Size.Height, DrawingPixelFormat.Format32bppPArgb);
-        var data = sd.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Size.Width, bitmap.Size.Height), DrawingImageLockMode.WriteOnly, DrawingPixelFormat.Format32bppPArgb);
+        var width = bitmap.Size.Width;
+        var height = bitmap.Size.Height;
+        var sd = new DrawingBitmap(width, height, DrawingPixelFormat.Format32bppPArgb);
+        var data = sd.LockBits(new System.Drawing.Rectangle(0, 0, width, height), DrawingImageLockMode.WriteOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
             var srcStride = bitmap.Stride;
             var dstStride = data.Stride;
             var rowBytes = Math.Min(srcStride, dstStride);
+            var totalBytes = rowBytes * height;
             unsafe
             {
                 var src = (byte*)bitmap.Address;
                 var dst = (byte*)data.Scan0;
-                for (var y = 0; y < bitmap.Size.Height; y++)
+                if (srcStride == dstStride)
                 {
-                    Buffer.MemoryCopy(src + y * srcStride, dst + y * dstStride, dstStride, rowBytes);
+                    // ストライドが同一の場合は連続領域なので、行単位ではなく全領域を 1 回でコピーする（高速化）
+                    Buffer.MemoryCopy(src, dst, totalBytes, totalBytes);
+                }
+                else
+                {
+                    for (var y = 0; y < height; y++)
+                    {
+                        Buffer.MemoryCopy(src + y * srcStride, dst + y * dstStride, dstStride, rowBytes);
+                    }
                 }
             }
             return sd;

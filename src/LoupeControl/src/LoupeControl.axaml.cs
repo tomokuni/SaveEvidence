@@ -899,8 +899,8 @@ public sealed partial class LoupeControl : UserControl
                 // この場合も市松模様で描画する（例外を UI へ伝播させない）。
                 try
                 {
-                    return LoupeImageExtractor.ExtractRegionAt(
-                        bitmap, (int)centerPoint.X, (int)centerPoint.Y, captureSize);
+                    using var unified = bitmap.ToUnifiedBitmap();
+                    return LoupeImageExtractor.ExtractRegionAt(unified, (int)centerPoint.X, (int)centerPoint.Y, captureSize);
                 }
                 catch (ObjectDisposedException)
                 {

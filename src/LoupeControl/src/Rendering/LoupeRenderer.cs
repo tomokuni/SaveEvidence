@@ -46,7 +46,7 @@ internal static class LoupeRenderer
         }
 
         var captureSize = LoupeImageExtractor.ComputeCaptureSize(loupeSize, zoomLevel);
-        using var region = srcBitmap.Crop(new System.Drawing.Rectangle((int)center.X, (int)center.Y, captureSize, captureSize));
+        using var region = LoupeImageExtractor.ExtractRegionAt(srcBitmap, (int)center.X, (int)center.Y, captureSize);
         return DrawLoupe(region, loupeSize, zoomLevel, crossColor,
             checkerSize, checkerColorA, checkerColorB, frameColor, frameWidth);
     }
@@ -98,7 +98,7 @@ internal static class LoupeRenderer
             LoupeDecorationRenderer.DrawFrame(ctx, loupeSize, frameColor, frameWidth);
         }
 
-        return ToUnifiedBitmap(rtb);
+        return rtb.ToUnifiedBitmap();
     }
 
     /// <summary>画像なし時の市松模様のみのルーペを描画する。</summary>
@@ -131,23 +131,7 @@ internal static class LoupeRenderer
             LoupeDecorationRenderer.DrawFrame(ctx, loupeSize, frameColor, frameWidth);
         }
 
-        return ToUnifiedBitmap(rtb);
-    }
-
-    /// <summary>RenderTargetBitmap の描画結果を UnifiedBitmap へコピーして返す。</summary>
-    /// <param name="source">描画済みの RenderTargetBitmap。</param>
-    /// <returns>ピクセルをコピーした UnifiedBitmap（ホストがピクセルにオーバーレイを描画できる）。</returns>
-    /// <remarks>
-    /// ホスト（上位 AP）がイベント内でピクセルにオーバーレイを描画できるよう、<br/>
-    /// CPU 書き込み可能な <see cref="UnifiedBitmap"/> へ変換する（描画自体は RenderTargetBitmap で行う）。
-    /// </remarks>
-    private static UnifiedBitmap ToUnifiedBitmap(RenderTargetBitmap source)
-    {
-        var size = source.PixelSize;
-        var result = UnifiedBitmap.Create(size.Width, size.Height);
-        var stride = result.Stride;
-        source.CopyPixels(new PixelRect(0, 0, size.Width, size.Height), result.Address, stride * size.Height, stride);
-        return result;
+        return rtb.ToUnifiedBitmap();
     }
 
 }

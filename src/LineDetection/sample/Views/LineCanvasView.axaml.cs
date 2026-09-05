@@ -245,17 +245,12 @@ public partial class LineCanvasView : UserControl
                 continue;
             }
 
-            // 中心点 + 法線方向へ太さ分のピクセルを塗る
+            // 中心点 + 法線方向へ太さ分のピクセルを塗る（範囲外は UnifiedBitmapExtensions.TrySetPixel が無視）
             for (int n = -half; n <= half; n++)
             {
                 int ox = (int)Math.Round(px + ux * n);
                 int oy = (int)Math.Round(py + uy * n);
-                if (ox < 0 || ox >= width || oy < 0 || oy >= height)
-                {
-                    continue;
-                }
-
-                bitmap.SetPixel(ox, oy, color.B, color.G, color.R, color.A);
+                bitmap.TrySetPixel(ox, oy, color);
             }
         }
     }

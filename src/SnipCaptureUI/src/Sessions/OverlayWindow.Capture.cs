@@ -121,7 +121,7 @@ internal sealed partial class OverlayWindow
             {
                 // UnifiedBitmap から切り出す（Clipped は UnifiedBitmap）。ImageProcessor は廃止済み。
                 if (vBitmap is not { } vb) return;
-                var clipped = vb.Crop(localRect.X, localRect.Y, localRect.Width, localRect.Height);
+                var clipped = vb.Crop(localRect);
                 Dispatcher.UIThread.Post(() =>
                 {
                     // 古いキャッシュを破棄して新しいキャッシュへ置き換える
@@ -151,8 +151,7 @@ internal sealed partial class OverlayWindow
     private static UnifiedBitmap? ExtractClipCore(UnifiedBitmap? vBitmap, PixelPoint origin, PixelRect captureRect)
     {
         if (vBitmap is not { } bmp) return null;
-        var local = ToBitmapLocalRect(captureRect, origin);
-        return bmp.Crop(local.X, local.Y, local.Width, local.Height);
+        return bmp.Crop(ToBitmapLocalRect(captureRect, origin));
     }
 
     /// <summary>キャプチャ矩形（画面物理座標）を Bitmap ローカル座標（= 画面物理 − 仮想スクリーン原点）へ変換する。</summary>

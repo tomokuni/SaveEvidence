@@ -458,28 +458,13 @@ public sealed partial class CropViewControl : Panel
     private static void StampPixel(UnifiedBitmap bitmap, int x, int y, Color color, int half, bool horizontal)
     {
         // 水平辺は Y 固定で太さ方向が X、垂直辺は X 固定で太さ方向が Y になる。
-        // 太さ分だけ固定座標の両側へ広げて描画する。
+        // 太さ分だけ固定座標の両側へ広げて描画する（範囲外は UnifiedBitmapExtensions.TrySetPixel が無視）。
         var fixedCoord = horizontal ? y : x;
         for (var d = -half; d <= half; d++)
         {
             var px = horizontal ? x : fixedCoord + d;
             var py = horizontal ? fixedCoord + d : y;
-            SetPixel(bitmap, px, py, color);
+            bitmap.TrySetPixel(px, py, color);
         }
-    }
-
-    /// <summary>UnifiedBitmap へ 1 ピクセルを色で書き込む（範囲外は無視）。</summary>
-    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
-    /// <param name="x">X 座標。</param>
-    /// <param name="y">Y 座標。</param>
-    /// <param name="color">描画色。BGRA へ変換して書き込む。</param>
-    private static void SetPixel(UnifiedBitmap bitmap, int x, int y, Color color)
-    {
-        if (x < 0 || x >= bitmap.Size.Width || y < 0 || y >= bitmap.Size.Height)
-        {
-            return;
-        }
-
-        bitmap.SetPixel(x, y, color.B, color.G, color.R, color.A);
     }
 }
