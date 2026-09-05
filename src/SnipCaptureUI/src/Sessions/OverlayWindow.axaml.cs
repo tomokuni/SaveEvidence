@@ -231,16 +231,17 @@ internal sealed partial class OverlayWindow : Window
             (int)rect.Width + 1, (int)rect.Height + 1);
 
     /// <summary>キャプチャ種別に応じたキャプチャ矩形（画面物理座標・PixelRect）へ変換する。</summary>
+    /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="screenRect">選択矩形（画面物理座標）。</param>
     /// <returns>キャプチャ矩形。</returns>
     /// <remarks>
     /// AreaSelect: ドラッグ選択の半開区間を閉区間化（+1）して終点ピクセルまで含める（<see cref="ToClosedIntervalPixelRect"/>）。<br/>
     /// ScreenSelect / WindowSelect: 画面・ウィンドウの矩形は最初から全ピクセルを含むため、<br/>
     /// +1 すると画面外（ウィンドウ外）に 1px はみ出す。そのため +1 せずそのまま使用する。<br/>
-    /// 単体テストから呼び出し可能（internal）。
+    /// 純粋関数のため静的メソッドとする（ヘッドレス不要で単体テスト可能）。
     /// </remarks>
-    internal PixelRect ToCapturePixelRect(Rect screenRect)
-        => _captureType == CaptureType.AreaSelect
+    internal static PixelRect ToCapturePixelRect(CaptureType captureType, Rect screenRect)
+        => captureType == CaptureType.AreaSelect
             ? ToClosedIntervalPixelRect(screenRect)
             : new PixelRect((int)screenRect.X, (int)screenRect.Y, (int)screenRect.Width, (int)screenRect.Height);
 

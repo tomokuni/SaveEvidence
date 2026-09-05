@@ -176,44 +176,6 @@ public class OverlayWindowTests
     // ====================================================================
     // 閉区間キャプチャ（始点・終点のピクセルを含む）
     // ====================================================================
-
-    [AvaloniaFact]
-    public void ToCapturePixelRect_AreaSelectでは閉区間として1を加算する()
-    {
-        // AreaSelect はドラッグ選択の半開区間を閉区間化する（終点ピクセルを含める）
-        var window = CreateWindow(CaptureType.AreaSelect, scaling: 1.0);
-
-        var result = window.ToCapturePixelRect(new Rect(10, 10, 40, 40));
-
-        Assert.Equal(new PixelRect(10, 10, 41, 41), result);
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void ToCapturePixelRect_ScreenSelectでは1を加算しない()
-    {
-        // 4K 画面の全画面矩形（3840×2160）は既に全ピクセルを含む。+1 すると画面外に 1px はみ出す
-        var window = CreateWindow(CaptureType.ScreenSelect, scaling: 1.0);
-
-        var result = window.ToCapturePixelRect(new Rect(0, 0, 3840, 2160));
-
-        Assert.Equal(new PixelRect(0, 0, 3840, 2160), result);
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void ToCapturePixelRect_WindowSelectでは1を加算しない()
-    {
-        // ウィンドウの矩形（GetWindowRect 由来）は既に全ピクセルを含む。+1 するとウィンドウ外に 1px はみ出す
-        var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0);
-
-        var result = window.ToCapturePixelRect(new Rect(100, 50, 800, 600));
-
-        Assert.Equal(new PixelRect(100, 50, 800, 600), result);
-        window.Close();
-    }
-
-    // ====================================================================
     // 高速化: 確定時の切り出し（仮想スクリーンから。CaptureArea を呼ばない）
     // ====================================================================
 

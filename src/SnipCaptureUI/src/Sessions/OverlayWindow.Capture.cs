@@ -50,7 +50,7 @@ internal sealed partial class OverlayWindow
         _hasCompleted = true;
         _watchdog.Stop();
         // キャプチャ矩形（画面物理座標）: AreaSelect は閉区間（+1）、ScreenSelect / WindowSelect はそのまま
-        var captureRect = ToCapturePixelRect(screenRect);
+        var captureRect = ToCapturePixelRect(_captureType, screenRect);
         // 事前切り出しキャッシュが現在の矩形と一致する場合は再利用する（切り出しスキップ = 高速化）
         if (_cachedClipRect == captureRect && _cachedClipBitmap is { } cached)
         {
@@ -108,7 +108,7 @@ internal sealed partial class OverlayWindow
     private void PreExtractClip(Rect screenRect)
     {
         // キャプチャ矩形（画面物理座標）: AreaSelect は閉区間（+1）、ScreenSelect / WindowSelect はそのまま
-        var captureRect = ToCapturePixelRect(screenRect);
+        var captureRect = ToCapturePixelRect(_captureType, screenRect);
         // 同じ矩形ならスキップ（枠の変更がない場合は同じ画像になる）
         if (_cachedClipRect == captureRect) return;
 

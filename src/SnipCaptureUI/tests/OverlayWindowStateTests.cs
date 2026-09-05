@@ -56,6 +56,37 @@ public class OverlayWindowStateTests
     }
 
     // ====================================================================
+    // キャプチャ種別に応じた矩形変換（AreaSelect は閉区間、Screen/Window はそのまま）
+    // ====================================================================
+
+    [Fact]
+    public void ToCapturePixelRect_AreaSelectでは閉区間として1を加算する()
+    {
+        // AreaSelect はドラッグ選択の半開区間を閉区間化する（終点ピクセルを含める）
+        var result = OverlayWindow.ToCapturePixelRect(CaptureType.AreaSelect, new Rect(10, 10, 40, 40));
+
+        Assert.Equal(new PixelRect(10, 10, 41, 41), result);
+    }
+
+    [Fact]
+    public void ToCapturePixelRect_ScreenSelectでは1を加算しない()
+    {
+        // 4K 画面の全画面矩形（3840×2160）は既に全ピクセルを含む。+1 すると画面外に 1px はみ出す
+        var result = OverlayWindow.ToCapturePixelRect(CaptureType.ScreenSelect, new Rect(0, 0, 3840, 2160));
+
+        Assert.Equal(new PixelRect(0, 0, 3840, 2160), result);
+    }
+
+    [Fact]
+    public void ToCapturePixelRect_WindowSelectでは1を加算しない()
+    {
+        // ウィンドウの矩形（GetWindowRect 由来）は既に全ピクセルを含む。+1 するとウィンドウ外に 1px はみ出す
+        var result = OverlayWindow.ToCapturePixelRect(CaptureType.WindowSelect, new Rect(100, 50, 800, 600));
+
+        Assert.Equal(new PixelRect(100, 50, 800, 600), result);
+    }
+
+    // ====================================================================
     // ハイライト（ScreenSelect / WindowSelect の検出ハイライト）
     // ====================================================================
 
