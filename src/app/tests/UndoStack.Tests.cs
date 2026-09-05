@@ -135,10 +135,10 @@ public class UndoStackTests
 
         // 古い順（_stack[0] が最古）で取得できる（クローンのためサイズで判別）
         Assert.Equal(2, history.Count);
-        Assert.Equal(10, history[0].PixelWidth);
-        Assert.Equal(10, history[0].PixelHeight);
-        Assert.Equal(11, history[1].PixelWidth);
-        Assert.Equal(11, history[1].PixelHeight);
+        Assert.Equal(10, history[0].Size.Width);
+        Assert.Equal(10, history[0].Size.Height);
+        Assert.Equal(11, history[1].Size.Width);
+        Assert.Equal(11, history[1].Size.Height);
     }
 
     [AvaloniaFact]
@@ -167,10 +167,10 @@ public class UndoStackTests
 
         // 退避された順（_redoStack[0] が現在に最も近い未来）で取得できる（クローンのためサイズで判別）
         Assert.Equal(2, history.Count);
-        Assert.Equal(12, history[0].PixelWidth);
-        Assert.Equal(12, history[0].PixelHeight);
-        Assert.Equal(11, history[1].PixelWidth);
-        Assert.Equal(11, history[1].PixelHeight);
+        Assert.Equal(12, history[0].Size.Width);
+        Assert.Equal(12, history[0].Size.Height);
+        Assert.Equal(11, history[1].Size.Width);
+        Assert.Equal(11, history[1].Size.Height);
 
         restored1!.Dispose();
         restored2!.Dispose();

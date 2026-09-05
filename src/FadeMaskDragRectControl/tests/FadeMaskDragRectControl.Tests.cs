@@ -9,7 +9,7 @@ using Avalonia.Platform;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
-using System.Runtime.InteropServices;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
@@ -985,12 +985,10 @@ public class FadeMaskDragRectControlTests
             bitmap, selectionRect, captureTopLeft, scale, Colors.Black, Colors.Transparent);
 
         // 上辺（ドメイン y=10 → ルーペ (10-5)*4=20）のピクセルが描画されていることを検証する
-        using var locked = bitmap.Lock();
-        var pixels = new byte[4];
-        Marshal.Copy(locked.Address + 20 * locked.RowBytes + 20 * 4, pixels, 0, 4);
+        var pixel = bitmap.GetPixel(20, 20);
 
         // 白背景（255）より暗い = 破線が描画されている
-        Assert.True(pixels[0] < 255, $"選択矩形の辺に線が描画されていない: B={pixels[0]}");
+        Assert.True(pixel.B < 255, $"選択矩形の辺に線が描画されていない: B={pixel.B}");
     }
 
     /// <summary>ズーム 1 倍以下では破線を描画しないことを検証する。</summary>
@@ -1003,28 +1001,15 @@ public class FadeMaskDragRectControlTests
         FadeMaskDragRectControl.DrawSelectionRectOverlay(
             bitmap, new Rect(10, 10, 20, 20), new Point(5, 5), 1.0, Colors.Black, Colors.Transparent);
 
-        // ヘッドレス環境では Lock() 書き込みの読み戻しが不安定なため、ピクセル値は検証しない
-        // （scale < 2 の早期リターンで例外なく実行されることを検証する）
-        Assert.Equal(40, bitmap.PixelSize.Width);
+        // scale < 2 の早期リターンで例外なく実行されることを検証する
+        Assert.Equal(40, bitmap.Size.Width);
     }
 
     /// <summary>テスト用の単色 Bitmap（白）を生成する。</summary>
-    private static WriteableBitmap CreateSolidBitmap(int width, int height)
+    private static UnifiedBitmap CreateSolidBitmap(int width, int height)
     {
-        var bitmap = new WriteableBitmap(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
-        using var locked = bitmap.Lock();
-        var stride = locked.RowBytes;
-        unsafe
-        {
-            var ptr = (byte*)locked.Address;
-            for (var i = 0; i < stride * height; i += 4)
-            {
-                ptr[i] = 255;     // B
-                ptr[i + 1] = 255; // G
-                ptr[i + 2] = 255; // R
-                ptr[i + 3] = 255; // A
-            }
-        }
+        var bitmap = UnifiedBitmap.Create(width, height);
+        bitmap.Clear(b: 255, g: 255, r: 255, a: 255);
         return bitmap;
     }
 }

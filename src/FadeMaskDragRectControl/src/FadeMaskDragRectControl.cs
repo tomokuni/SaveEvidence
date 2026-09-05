@@ -2,13 +2,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
-using System.Runtime.InteropServices;
+using Estable.AvaloniaUI.Platform.Imaging;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
@@ -628,7 +626,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {
-        if (!_showSelectionOverlay || e.Bitmap is not WriteableBitmap writeable || e.CaptureTopLeft is not { } topLeft)
+        if (!_showSelectionOverlay || e.CaptureTopLeft is not { } topLeft)
         {
             // 選択矩形非表示でも、ホストへルーペ描画完了を中継する（外部提供矩形の描画用）
             RaiseLoupeRendered(e);
@@ -642,7 +640,7 @@ public sealed class FadeMaskDragRectControl : Panel
             if (colorA is not null && colorB is not null)
             {
                 // 破線色（色A / 色B）を 2 つ用意し、市松風に交互に塗る
-                DrawSelectionRectOverlay(writeable, selectionRect, topLeft, e.Scale, colorA.Value, colorB.Value);
+                DrawSelectionRectOverlay(e.Bitmap, selectionRect, topLeft, e.Scale, colorA.Value, colorB.Value);
             }
         }
 
@@ -655,7 +653,7 @@ public sealed class FadeMaskDragRectControl : Panel
     private void RaiseLoupeRendered(LoupeRenderedEventArgs e) => LoupeRendered?.Invoke(this, e);
 
     /// <summary>選択矩形の 4 辺を 2 色破線でルーペ Bitmap へ描画する。</summary>
-    /// <param name="writeable">描画対象の WriteableBitmap。</param>
+    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
     /// <param name="selectionRect">選択矩形（ドメイン座標系・半開区間）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
@@ -669,7 +667,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 純粋描画のため <c>internal</c> で公開し、単体テストから検証できるようにする。
     /// </remarks>
     internal static void DrawSelectionRectOverlay(
-        WriteableBitmap writeable, Rect selectionRect, Point captureTopLeft, double scale, Color colorA, Color colorB)
+        UnifiedBitmap bitmap, Rect selectionRect, Point captureTopLeft, double scale, Color colorA, Color colorB)
     {
         if (scale < 2)
         {
@@ -683,28 +681,27 @@ public sealed class FadeMaskDragRectControl : Panel
         double h = (selectionRect.Height + 1) * scale;
 
         // ルーペの切り出し領域と交差しない場合は描画しない
-        var pixelSize = writeable.PixelSize.Width;
+        var pixelSize = bitmap.Size.Width;
         if (x + w < 0 || y + h < 0 || x > pixelSize || y > pixelSize)
         {
             return;
         }
 
-        using var locked = writeable.Lock();
         // 上辺・下辺（x 方向）と左辺・右辺（y 方向）を描画する
-        DrawDashedRectEdge(locked, new Point(x, y), new Point(x + w, y), colorA, colorB);
-        DrawDashedRectEdge(locked, new Point(x, y + h), new Point(x + w, y + h), colorA, colorB);
-        DrawDashedRectEdge(locked, new Point(x, y), new Point(x, y + h), colorA, colorB);
-        DrawDashedRectEdge(locked, new Point(x + w, y), new Point(x + w, y + h), colorA, colorB);
+        DrawDashedRectEdge(bitmap, new Point(x, y), new Point(x + w, y), colorA, colorB);
+        DrawDashedRectEdge(bitmap, new Point(x, y + h), new Point(x + w, y + h), colorA, colorB);
+        DrawDashedRectEdge(bitmap, new Point(x, y), new Point(x, y + h), colorA, colorB);
+        DrawDashedRectEdge(bitmap, new Point(x + w, y), new Point(x + w, y + h), colorA, colorB);
     }
 
-    /// <summary>ロック済みピクセルバッファ上に 2 色のダッシュ破線（1px 描画 → 1px 空白）を描画する。</summary>
-    /// <param name="locked">ロック済みのピクセルバッファ。</param>
+    /// <summary>UnifiedBitmap 上に 2 色のダッシュ破線（1px 描画 → 1px 空白）を描画する。</summary>
+    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
     /// <param name="from">始点（ルーペピクセル座標）。</param>
     /// <param name="to">終点（ルーペピクセル座標）。</param>
     /// <param name="colorA">破線の色A。</param>
     /// <param name="colorB">破線の色B。</param>
     /// <remarks>水平または垂直の辺を想定する。色A / 色B を 1 ピクセルごとに交互に切り替える（市松風）。</remarks>
-    private static void DrawDashedRectEdge(ILockedFramebuffer locked, Point from, Point to, Color colorA, Color colorB)
+    private static void DrawDashedRectEdge(UnifiedBitmap bitmap, Point from, Point to, Color colorA, Color colorB)
     {
         bool horizontal = Math.Abs(to.Y - from.Y) < Math.Abs(to.X - from.X);
         double length = horizontal ? to.X - from.X : to.Y - from.Y;
@@ -718,14 +715,8 @@ public sealed class FadeMaskDragRectControl : Panel
         const int gap = 1;
         const int step = dash + gap;
 
-        var width = locked.Size.Width;
-        var height = locked.Size.Height;
-        var stride = locked.RowBytes;
-        var format = locked.Format;
-
-        // 既存ピクセルを保持したまま破線を描くため、バッファへコピーしてから書き戻す
-        var buffer = new byte[stride * height];
-        Marshal.Copy(locked.Address, buffer, 0, buffer.Length);
+        var width = bitmap.Size.Width;
+        var height = bitmap.Size.Height;
 
         int dashIndex = 0;
         for (double pos = 0; pos < distance; pos += step)
@@ -740,53 +731,32 @@ public sealed class FadeMaskDragRectControl : Panel
             {
                 for (var px = (int)Math.Round(segStart); px <= (int)Math.Round(segEnd); px++)
                 {
-                    SetPixel(buffer, stride, format, px, (int)Math.Round(fixedCoord), color, width, height);
+                    SetPixel(bitmap, px, (int)Math.Round(fixedCoord), color);
                 }
             }
             else
             {
                 for (var py = (int)Math.Round(segStart); py <= (int)Math.Round(segEnd); py++)
                 {
-                    SetPixel(buffer, stride, format, (int)Math.Round(fixedCoord), py, color, width, height);
+                    SetPixel(bitmap, (int)Math.Round(fixedCoord), py, color);
                 }
             }
         }
-
-        Marshal.Copy(buffer, 0, locked.Address, buffer.Length);
     }
 
-    /// <summary>ピクセルバッファへ色を書き込む。</summary>
-    /// <param name="buffer">ピクセルバッファ。</param>
-    /// <param name="stride">1 行のバイト数。</param>
-    /// <param name="format">ピクセルフォーマット。</param>
+    /// <summary>UnifiedBitmap へ 1 ピクセルを色で書き込む（範囲外は無視）。</summary>
+    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
     /// <param name="x">X 座標。</param>
     /// <param name="y">Y 座標。</param>
-    /// <param name="color">描画色（不透明）。</param>
-    /// <param name="width">バッファ幅。</param>
-    /// <param name="height">バッファ高さ。</param>
-    private static void SetPixel(
-        byte[] buffer, int stride, PixelFormat format, int x, int y, Color color, int width, int height)
+    /// <param name="color">描画色。BGRA へ変換して書き込む。</param>
+    private static void SetPixel(UnifiedBitmap bitmap, int x, int y, Color color)
     {
-        if (x < 0 || x >= width || y < 0 || y >= height)
+        if (x < 0 || x >= bitmap.Size.Width || y < 0 || y >= bitmap.Size.Height)
         {
             return;
         }
 
-        var offset = y * stride + x * 4;
-        if (format == PixelFormat.Bgra8888)
-        {
-            buffer[offset] = color.B;
-            buffer[offset + 1] = color.G;
-            buffer[offset + 2] = color.R;
-            buffer[offset + 3] = 255;
-        }
-        else
-        {
-            buffer[offset] = color.R;
-            buffer[offset + 1] = color.G;
-            buffer[offset + 2] = color.B;
-            buffer[offset + 3] = 255;
-        }
+        bitmap.SetPixel(x, y, color.B, color.G, color.R, color.A);
     }
 
     /// <summary>ルーペ更新（LoupePositionMoved）。中心はドメイン座標のまま LoupeControl に設定する。</summary>

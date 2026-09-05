@@ -1,8 +1,6 @@
 using app.ViewModels;
-using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using MockSettingsService = app.Tests.MainViewModelTests.MockSettingsService;
 using Xunit;
@@ -18,15 +16,13 @@ namespace app.Tests;
 [Collection("AvaloniaHeadless")]
 public sealed class MainViewModelAutoCropTests
 {
-    /// <summary>白背景に黒枠線の矩形を描画した Bitmap を生成する。</summary>
-    /// <returns>生成した Bitmap。</returns>
+    /// <summary>白背景に黒枠線の矩形を描画した UnifiedBitmap を生成する。</summary>
+    /// <returns>生成した UnifiedBitmap。</returns>
     /// <remarks>
-    /// 検出器の最小長（<c>MinLineLength=50</c>）を満たすよう十分なサイズ（200x200）を描画する。<br/>
-    /// <see cref="UnifiedBitmap"/>（SkiaSharp 内部）で構築してから <c>ToAvaloniaBitmap()</c> で変換する。
-    /// ヘッドレスでは <c>WriteableBitmap.Lock()</c> 書き込みが読み出しに反映されないため、
-    /// ピクセル保持が確実な <see cref="UnifiedBitmap"/> を経由する（読取りは <c>CopyPixels</c> ベースで反映される）。
+    /// ヘッドレスでは <c>WriteableBitmap.Lock()</c> 書き込みが読み出しに反映されないため、<br/>
+    /// ピクセル保持が確実な <see cref="UnifiedBitmap"/>（SkiaSharp 内部）で構築する。
     /// </remarks>
-    private static Bitmap CreateRectBitmap()
+    private static UnifiedBitmap CreateRectBitmap()
     {
         const int size = 200;
         const int border = 3;
@@ -48,9 +44,7 @@ public sealed class MainViewModelAutoCropTests
             }
         }
 
-        var av = unified.ToAvaloniaBitmap();
-        unified.Dispose();
-        return av;
+        return unified;
     }
 
     /// <summary>自動切り出しを実行すると検出矩形が設定されることを検証する。</summary>
@@ -126,7 +120,7 @@ public sealed class MainViewModelAutoCropTests
         {
             PreviewImage = CreateRectBitmap(),
         };
-        var beforeSize = vm.PreviewImage!.PixelSize;
+        var beforeSize = vm.PreviewImage!.Size.Width;
 
         // 画像の一部（左上 100x100）を切り出す
         var bounds = new Avalonia.PixelRect(0, 0, 100, 100);
@@ -137,6 +131,6 @@ public sealed class MainViewModelAutoCropTests
 
         // 切り出し後は画像サイズが変わる（100x100 以外に矩形があるため既定サイズから縮小される）
         Assert.NotNull(vm.PreviewImage);
-        Assert.NotEqual(beforeSize, vm.PreviewImage!.PixelSize);
+        Assert.NotEqual(beforeSize, vm.PreviewImage!.Size.Width);
     }
 }

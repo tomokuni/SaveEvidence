@@ -52,7 +52,7 @@ public sealed class MainWindowViewModel : ObservableObject
         if (result?.Image is { } image && result.SourceBounds is { } bounds)
         {
             // キャプチャ結果（UnifiedBitmap）を表示用 Bitmap へ変換する（表示境界）。
-            CapturedImage = image.ToAvaloniaBitmap();
+            CapturedImage = image.ToAvaloniaWriteableBitmap();
             ResultText = $"領域: X={bounds.X}, Y={bounds.Y}, 幅={bounds.Width}, 高さ={bounds.Height}（仮想画面座標）";
             StatusText = "キャプチャが完了しました。";
         }

@@ -62,20 +62,24 @@ public sealed partial class DragRectControl : Control
     /// <summary>座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。</summary>
     private ICoordinatePort _coordinatePort = CoordinatePort.Identity;
 
-    /// <summary>左上/右下ハンドル用カーソル（静的共有。ポインター移動毎の生成を排除）。</summary>
-    private static readonly Cursor s_topLeftCornerCursor = new(StandardCursorType.TopLeftCorner);
+    // 標準カーソルは Lazy で遅延生成する（呼び出し時に ICursorFactory を解決する）。
+    // static readonly フィールドとして型初期化時に new Cursor(...) すると、Avalonia ヘッドレス初期化前に
+    // 本コントロールが参照された場合に Unable to locate 'ICursorFactory' で失敗するため（並列テストの競合）。
+    // Lazy を使うことで、実際にカーソルを設定する時点（UpdateCursor）まで生成を遅延し、AvaloniaLocator 解決後に行う。
+    /// <summary>左上/右下ハンドル用カーソル（遅延生成・静的共有）。</summary>
+    private static readonly Lazy<Cursor> s_topLeftCornerCursor = new(() => new Cursor(StandardCursorType.TopLeftCorner));
 
-    /// <summary>右上/左下ハンドル用カーソル（静的共有）。</summary>
-    private static readonly Cursor s_topRightCornerCursor = new(StandardCursorType.TopRightCorner);
+    /// <summary>右上/左下ハンドル用カーソル（遅延生成・静的共有）。</summary>
+    private static readonly Lazy<Cursor> s_topRightCornerCursor = new(() => new Cursor(StandardCursorType.TopRightCorner));
 
-    /// <summary>上下リサイズ用カーソル（静的共有）。</summary>
-    private static readonly Cursor s_sizeNorthSouthCursor = new(StandardCursorType.SizeNorthSouth);
+    /// <summary>上下リサイズ用カーソル（遅延生成・静的共有）。</summary>
+    private static readonly Lazy<Cursor> s_sizeNorthSouthCursor = new(() => new Cursor(StandardCursorType.SizeNorthSouth));
 
-    /// <summary>左右リサイズ用カーソル（静的共有）。</summary>
-    private static readonly Cursor s_sizeWestEastCursor = new(StandardCursorType.SizeWestEast);
+    /// <summary>左右リサイズ用カーソル（遅延生成・静的共有）。</summary>
+    private static readonly Lazy<Cursor> s_sizeWestEastCursor = new(() => new Cursor(StandardCursorType.SizeWestEast));
 
-    /// <summary>移動用カーソル（静的共有）。</summary>
-    private static readonly Cursor s_sizeAllCursor = new(StandardCursorType.SizeAll);
+    /// <summary>移動用カーソル（遅延生成・静的共有）。</summary>
+    private static readonly Lazy<Cursor> s_sizeAllCursor = new(() => new Cursor(StandardCursorType.SizeAll));
 
     // ====================================================================
     // コンストラクタ
@@ -861,14 +865,14 @@ public sealed partial class DragRectControl : Control
     private void UpdateCursor(Point domainPos, double hitRadius)
     {
         var handle = _state.HitTest(domainPos, hitRadius);
-        // 標準カーソルは静的フィールドで共有する（ポインター移動毎の Cursor 生成を排除）
+        // 標準カーソルは Lazy で遅延共有する（ポインター移動毎の生成を排除しつつ、初回アクセスで ICursorFactory を解決）
         Cursor = handle switch
         {
-            DragHandle.TopLeft or DragHandle.BottomRight => s_topLeftCornerCursor,
-            DragHandle.TopRight or DragHandle.BottomLeft => s_topRightCornerCursor,
-            DragHandle.TopCenter or DragHandle.BottomCenter => s_sizeNorthSouthCursor,
-            DragHandle.MiddleLeft or DragHandle.MiddleRight => s_sizeWestEastCursor,
-            DragHandle.Move => s_sizeAllCursor,
+            DragHandle.TopLeft or DragHandle.BottomRight => s_topLeftCornerCursor.Value,
+            DragHandle.TopRight or DragHandle.BottomLeft => s_topRightCornerCursor.Value,
+            DragHandle.TopCenter or DragHandle.BottomCenter => s_sizeNorthSouthCursor.Value,
+            DragHandle.MiddleLeft or DragHandle.MiddleRight => s_sizeWestEastCursor.Value,
+            DragHandle.Move => s_sizeAllCursor.Value,
             _ => Cursor.Default,
         };
     }

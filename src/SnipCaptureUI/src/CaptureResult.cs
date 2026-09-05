@@ -12,7 +12,7 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 /// - キャンセル時: 両方 0x0（Image: 0x0 の空 UnifiedBitmap、SourceBounds: 0x0 の空 PixelRect）<br/>
 /// `SourceBounds` は仮想画面座標（複数モニターを包含する座標空間）で表されるため、<br/>
 /// プライマリモニターが (0,0) にない場合、X / Y は負値になり得る。<br/>
-/// `Image` は表示境界で <c>ToAvaloniaBitmap()</c> により変換する（破棄は呼び出し側）。
+/// `Image` は表示境界で <c>ToAvaloniaWriteableBitmap()</c> により変換する（破棄は呼び出し側）。
 /// </remarks>
 public sealed record CaptureResult(UnifiedBitmap? Image, PixelRect? SourceBounds);
 

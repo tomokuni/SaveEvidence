@@ -93,26 +93,27 @@ public sealed partial class UndoPage : ViewModePageBase
             });
 
         // 1. Redo スタック（新しい順。_redoStack[0] が現在に最も近い未来）
-        // UndoStack は UnifiedBitmap を保持し、表示境界で ToAvaloniaBitmap により Bitmap へ変換する。
+        // UndoStack は UnifiedBitmap を保持し、表示境界で ToAvaloniaWriteableBitmap により Bitmap へ変換する。
         // 変換した Bitmap は UndoListItem が所有する（破棄しない）。
         var redo = _undoStack.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
-            AddItem(redo[i].ToAvaloniaBitmap(), $"Redo {i + 1}", isCurrent: false);
+            AddItem(redo[i].ToAvaloniaWriteableBitmap(), $"Redo {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
         var currentImage = MainViewModel.PreviewImage;
         if (currentImage is not null)
         {
-            AddItem(currentImage, "現在", isCurrent: true);
+            // 表示境界で Avalonia Bitmap へ変換してサムネイルへ設定する。
+            AddItem(currentImage.ToAvaloniaWriteableBitmap(), "現在", isCurrent: true);
         }
 
         // 3. Undo スタック（新しい順。_stack[^1] が現在の直前）
         var undo = _undoStack.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
-            AddItem(undo[i].ToAvaloniaBitmap(), $"Undo {undo.Count - i}", isCurrent: false);
+            AddItem(undo[i].ToAvaloniaWriteableBitmap(), $"Undo {undo.Count - i}", isCurrent: false);
         }
 
         _viewModel.ItemCount = items.Count;

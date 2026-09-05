@@ -63,8 +63,8 @@ public class LoupeControlTests
         await control.RenderAsync();
 
         Assert.NotNull(control.LoupeBitmap);
-        Assert.Equal(100, control.LoupeBitmap!.PixelSize.Width);
-        Assert.Equal(100, control.LoupeBitmap.PixelSize.Height);
+        Assert.Equal(100, control.LoupeBitmap!.Size.Width);
+        Assert.Equal(100, control.LoupeBitmap.Size.Height);
     }
 
     [AvaloniaFact]
@@ -77,8 +77,8 @@ public class LoupeControlTests
 
         // center が未設定のため、画像抽出は行わず市松模様のみ描画する
         Assert.NotNull(control.LoupeBitmap);
-        Assert.Equal(100, control.LoupeBitmap!.PixelSize.Width);
-        Assert.Equal(100, control.LoupeBitmap.PixelSize.Height);
+        Assert.Equal(100, control.LoupeBitmap!.Size.Width);
+        Assert.Equal(100, control.LoupeBitmap.Size.Height);
     }
 
     [AvaloniaFact]
@@ -820,9 +820,8 @@ public class LoupeControlTests
         // CaptureTopLeft = (100−25, 100−25) = (75, 75), Scale = 100×2/100 = 2.0
         Assert.NotNull(args);
         Assert.NotNull(args!.Bitmap);
-        Assert.IsType<WriteableBitmap>(args.Bitmap);
-        Assert.Equal(100, args.Bitmap.PixelSize.Width);
-        Assert.Equal(100, args.Bitmap.PixelSize.Height);
+        Assert.Equal(100, args.Bitmap.Size.Width);
+        Assert.Equal(100, args.Bitmap.Size.Height);
         Assert.Equal(100, args.Size);
         Assert.Equal(2, args.ZoomLevel);
         Assert.Equal(new Point(100, 100), args.CenterPoint);
@@ -842,9 +841,8 @@ public class LoupeControlTests
         // CenterPoint 未設定（市松模様のみの描画）でもイベントは発火する
         await control.RenderAsync();
 
-        Assert.NotNull(args);
-        Assert.NotNull(args!.Bitmap);
-        Assert.IsType<WriteableBitmap>(args.Bitmap);
+        Assert.NotNull(args!);
+        Assert.NotNull(args.Bitmap);
         Assert.Null(args.CenterPoint);
         Assert.Null(args.CaptureTopLeft);
         Assert.Equal(100, args.Size);

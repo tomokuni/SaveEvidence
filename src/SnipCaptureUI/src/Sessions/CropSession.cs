@@ -44,7 +44,7 @@ internal sealed class CropSession(
     private readonly Action<bool>? _zoomHandler = zoomHandler;
 
     /// <summary>元画像のピクセルサイズ（論理座標系の範囲）。</summary>
-    private readonly Size _sourceImageSize = new(sourceImage.PixelWidth, sourceImage.PixelHeight);
+    private readonly Size _sourceImageSize = new(sourceImage.Size.Width, sourceImage.Size.Height);
 
     /// <summary>オーバーレイ・ルーペの配置先パネル（previewControl の祖先 Panel）。</summary>
     private readonly Panel _parentPanel = FindAncestorPanel(previewControl)
@@ -212,7 +212,7 @@ internal sealed class CropSession(
                 return new Vector(origin.X, origin.Y);
             })));
         // ルーペソース（元画像）。LoupeControl.Source は IImage のため、UnifiedBitmap → Avalonia Bitmap へ変換して渡す（表示境界）。
-        using var loupeSource = sourceImage.ToAvaloniaBitmap();
+        using var loupeSource = sourceImage.ToAvaloniaWriteableBitmap();
         _selectionOverlay.SetLoupeSource(loupeSource);
     }
 

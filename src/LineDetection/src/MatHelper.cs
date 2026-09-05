@@ -19,8 +19,8 @@ internal static class MatHelper
     /// </remarks>
     public static Mat ToMat(UnifiedBitmap bitmap)
     {
-        var width = bitmap.PixelWidth;
-        var height = bitmap.PixelHeight;
+        var width = bitmap.Size.Width;
+        var height = bitmap.Size.Height;
         var stride = width * 4;
         var pixels = new byte[height * stride];
         var sk = bitmap.ToSKBitmap();

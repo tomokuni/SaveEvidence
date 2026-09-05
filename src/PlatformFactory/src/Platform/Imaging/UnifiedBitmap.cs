@@ -1,4 +1,8 @@
 using SkiaSharp;
+using Point = System.Drawing.Point;
+using Rectangle = System.Drawing.Rectangle;
+using Size = System.Drawing.Size;
+using Color = System.Drawing.Color;
 
 namespace Estable.AvaloniaUI.Platform.Imaging;
 
@@ -84,25 +88,28 @@ public sealed class UnifiedBitmap : IDisposable
     // 基本プロパティ
     // ====================================================================
 
+    /// <summary>幅・高さ（ピクセル）。</summary>
+    public Size Size => new(_bitmap.Width, _bitmap.Height);
+
     /// <summary>幅（ピクセル）。</summary>
-    public int PixelWidth => _bitmap.Width;
+    public int Width => _bitmap.Width;
 
     /// <summary>高さ（ピクセル）。</summary>
-    public int PixelHeight => _bitmap.Height;
+    public int Height => _bitmap.Height;
 
     /// <summary>1 ラインあたりのバイト数（パディングを含む）。</summary>
     public int Stride => _bitmap.RowBytes;
 
+    /// <summary>ピクセルデータ先頭アドレス（BGRA8888）。</summary>
+    /// <remarks>
+    /// 内部 SKBitmap のピクセルバッファ先頭アドレスを返す。<br/>
+    /// SKBitmap は常時書き込み可能なため、<c>Lock</c> 不要で直接読み書きできる。<br/>
+    /// 呼び出し側は <see cref="Stride"/> を考慮してアクセスし、本型の破棄後は参照しないこと。
+    /// </remarks>
+    public nint Address => _bitmap.GetPixels();
+
     /// <summary>破棄済みかどうか。</summary>
     public bool IsDisposed => _disposed;
-
-    /// <summary>内部 SKBitmap を公開する（拡張クラス専用）。</summary>
-    /// <remarks>所有権は本型が保持する。呼び出し側で Dispose しないこと。</remarks>
-    internal SKBitmap Bitmap => _bitmap;
-
-    /// <summary>内部 SKBitmap のピクセルアドレスを取得する（拡張クラス専用）。</summary>
-    /// <returns>ピクセルデータ先頭アドレス。</returns>
-    internal nint GetPixelsAddress() => _bitmap.GetPixels();
 
     // ====================================================================
     // ピクセル操作
@@ -117,6 +124,15 @@ public sealed class UnifiedBitmap : IDisposable
         ThrowIfDisposed();
         var p = (byte*)_bitmap.GetPixels() + y * _bitmap.RowBytes + x * BytesPerPixel;
         return (p[0], p[1], p[2], p[3]);
+    }
+
+    /// <summary>指定座標のピクセルを BGRA（アルファ乗算済み）で取得する。</summary>
+    /// <param name="point">座標（ピクセル）。</param>
+    /// <returns>取得した色（<see cref="Color"/>）。範囲外は IndexOutOfRangeException。</returns>
+    public Color GetPixel(Point point)
+    {
+        var (b, g, r, a) = GetPixel(point.X, point.Y);
+        return Color.FromArgb(a, r, g, b);
     }
 
     /// <summary>指定座標のピクセルを BGRA（アルファ乗算済み）で設定する。</summary>
@@ -137,13 +153,10 @@ public sealed class UnifiedBitmap : IDisposable
     }
 
     /// <summary>指定座標のピクセルを BGRA（アルファ乗算済み）で設定する。</summary>
-    /// <param name="x">X 座標（ピクセル）。</param>
-    /// <param name="y">Y 座標（ピクセル）。</param>
-    /// <param name="color">設定する色（BGRA、アルファ乗算済み）。</param>
-    public void SetPixel(int x, int y, (byte b, byte g, byte r, byte a) color)
-    {
-        SetPixel(x, y, color.b, color.g, color.r, color.a);
-    }
+    /// <param name="point">座標（ピクセル）。</param>
+    /// <param name="color">設定する色。</param>
+    public void SetPixel(Point point, Color color)
+        => SetPixel(point.X, point.Y, color.B, color.G, color.R, color.A);
 
     /// <summary>全ピクセルを指定色（BGRA）で塗りつぶす。</summary>
     /// <param name="b">青成分（0〜255）。</param>
@@ -156,12 +169,10 @@ public sealed class UnifiedBitmap : IDisposable
         _bitmap.Erase(new SKColor(r, g, b, a));
     }
 
-    /// <summary>全ピクセルを指定色（BGRA）で塗りつぶす。</summary>
-    /// <param name="color">塗りつぶし色（BGRA、アルファ乗算済み）。</param>
-    public void Clear((byte b, byte g, byte r, byte a) color)
-    {
-        Clear(color.b, color.g, color.r, color.a);
-    }
+    /// <summary>全ピクセルを指定色で塗りつぶす。</summary>
+    /// <param name="color">塗りつぶし色。</param>
+    public void Clear(Color color)
+        => Clear(color.B, color.G, color.R, color.A);
 
     /// <summary>本ビットマップの複製を生成する。</summary>
     /// <returns>独立した複製（所有権は呼び出し側）。</returns>
@@ -169,5 +180,67 @@ public sealed class UnifiedBitmap : IDisposable
     {
         ThrowIfDisposed();
         return new UnifiedBitmap(_bitmap.Copy());
+    }
+
+    /// <summary>画像から指定された矩形領域を切り出す。</summary>
+    /// <param name="rect">切り出し領域（画像ローカルピクセル）。</param>
+    /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="rect"/> の幅・高さが0以下。</exception>
+    /// <remarks>
+    /// デスティネーションは事前にゼロ初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
+    /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
+    /// 内部では <see cref="GetPixel"/> / <see cref="SetPixel"/> ループでピクセルをコピーする。<br/>
+    /// 呼び出し側で戻り値を破棄すること。
+    /// </remarks>
+    public UnifiedBitmap Crop(Rectangle rect)
+        => Crop(rect.X, rect.Y, rect.Width, rect.Height);
+
+    /// <summary>画像から指定された矩形領域を切り出す。</summary>
+    /// <param name="x">切り出し領域の左上X座標（画像ローカルピクセル）。負値は0へクランプ。</param>
+    /// <param name="y">切り出し領域の左上Y座標（画像ローカルピクセル）。負値は0へクランプ。</param>
+    /// <param name="width">切り出し領域の幅（ピクセル）。正の値。</param>
+    /// <param name="height">切り出し領域の高さ（ピクセル）。正の値。</param>
+    /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="width"/> / <paramref name="height"/> が0以下。</exception>
+    /// <remarks>
+    /// デスティネーションは事前にゼロ初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
+    /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
+    /// 内部では <see cref="GetPixel"/> / <see cref="SetPixel"/> ループでピクセルをコピーする。<br/>
+    /// 呼び出し側で戻り値を破棄すること。
+    /// </remarks>
+    public UnifiedBitmap Crop(int x, int y, int width, int height)
+    {
+        ThrowIfDisposed();
+        if (width <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width), width, "切り出し領域の幅は正の値である必要があります。");
+        }
+
+        if (height <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(height), height, "切り出し領域の高さは正の値である必要があります。");
+        }
+
+        var srcW = Width;
+        var srcH = Height;
+
+        // ソース範囲内にクランプ（交差しない場合は透明パディングのまま。ループは0回となる）
+        var cropX = Math.Max(0, x);
+        var cropY = Math.Max(0, y);
+        var cropW = Math.Min(width, srcW - cropX);
+        var cropH = Math.Min(height, srcH - cropY);
+
+        var result = Create(width, height);
+
+        for (var row = 0; row < cropH; row++)
+        {
+            for (var col = 0; col < cropW; col++)
+            {
+                var (b, g, r, a) = GetPixel(cropX + col, cropY + row);
+                result.SetPixel(col, row, b, g, r, a);
+            }
+        }
+
+        return result;
     }
 }

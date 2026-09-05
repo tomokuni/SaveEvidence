@@ -1,6 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
+using Estable.AvaloniaUI.Platform.Imaging;
 
 namespace Estable.AvaloniaUI.Loupe.Rendering;
 
@@ -9,12 +9,16 @@ internal static class LoupeImageRenderer
 {
     /// <summary>ソース画像をズーム倍率で拡大してルーペ領域へ描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>
-    /// <param name="image">拡大元の切り出し済み画像。</param>
+    /// <param name="image">拡大元の切り出し済み画像（UnifiedBitmap）。</param>
     /// <param name="zoomLevel">拡大率（1〜64）。</param>
-    public static void Draw(DrawingContext context, Bitmap image, int zoomLevel)
+    public static void Draw(DrawingContext context, UnifiedBitmap image, int zoomLevel)
     {
-        var source = new Rect(0, 0, image.PixelSize.Width, image.PixelSize.Height);
+        var sourceSize = new Size(image.Size.Width, image.Size.Height);
+        var source = new Rect(0, 0, sourceSize.Width, sourceSize.Height);
         var destination = new Rect(0, 0, source.Width * zoomLevel, source.Height * zoomLevel);
-        context.DrawImage(image, source, destination);
+
+        // DrawImage は IImage を要求するため、表示境界で Avalonia WriteableBitmap へ変換する。
+        using var av = image.ToAvaloniaWriteableBitmap();
+        context.DrawImage(av, source, destination);
     }
 }

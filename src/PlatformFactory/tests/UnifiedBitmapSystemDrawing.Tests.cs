@@ -50,8 +50,8 @@ public class UnifiedBitmapSystemDrawingTests
     {
         using var sd = CreateSolidDrawingBitmap(4, 4, 0, 0, 255, 255); // 赤・不透明
         using var bmp = sd.ToUnifiedBitmap();
-        Assert.Equal(4, bmp.PixelWidth);
-        Assert.Equal(4, bmp.PixelHeight);
+        Assert.Equal(4, bmp.Size.Width);
+        Assert.Equal(4, bmp.Size.Height);
         var px = bmp.GetPixel(1, 1);
         Assert.Equal((byte)0, px.B);
         Assert.Equal((byte)255, px.R);
@@ -101,8 +101,8 @@ public class UnifiedBitmapSystemDrawingTests
         using var bmp = UnifiedBitmap.Create(4, 4);
         bmp.SetPixel(0, 0, b: 1, g: 2, r: 3, a: 255);
         using var sd = bmp.ToSystemDrawingBitmap();
-        Assert.Equal(bmp.PixelWidth, sd.Width);
-        Assert.Equal(bmp.PixelHeight, sd.Height);
+        Assert.Equal(bmp.Size.Width, sd.Width);
+        Assert.Equal(bmp.Size.Height, sd.Height);
         var data = sd.LockBits(new System.Drawing.Rectangle(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {

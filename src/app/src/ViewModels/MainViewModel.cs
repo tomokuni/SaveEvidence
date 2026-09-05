@@ -21,7 +21,7 @@ namespace app.ViewModels;
 /// <c>[RelayCommand]</c> 属性によるソースジェネレーターを活用する。<br/>
 /// 設定管理は <see cref="Services.SettingsService"/> を介して行い、疎結合な設計を実現する。<br/>
 /// 画像のライフサイクル管理（Dispose）は <c>OnPreviewImageChanging</c> で行う。<br/>
-/// ピクセル操作（切出し・ウィンドウ検出）は PlatformFactory の <see cref="ImageProcessor"/> / <see cref="UnifiedBitmap"/> に委譲し、
+/// ピクセル操作（切出し）は PlatformFactory の <see cref="UnifiedBitmap"/> に委譲し、
 /// 画面キャプチャは SnipCaptureUI の <see cref="CaptureType"/> に委譲する（プラットフォーム抽象。DIP）。
 /// </remarks>
 public sealed partial class MainViewModel : ObservableObject
@@ -44,7 +44,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool CenterAlign => Settings.CenterAlign;
 
     /// <summary>プレビュー画像変更前の旧画像（新しい画像が Image.Source へ反映された後に破棄する）。</summary>
-    private Bitmap? _previousPreviewImage;
+    private UnifiedBitmap? _previousPreviewImage;
 
     /// <summary>選択モード開始デリゲート（View 側から設定されるコールバック）。</summary>
     public Action<CaptureType>? StartSelectionMode { get; set; }
@@ -79,7 +79,7 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateSaveFolderResolution();
     }
 
-    /// <summary>プレビュー画像（Avalonia Bitmap）</summary>
+    /// <summary>プレビュー画像（UnifiedBitmap。表示は表示境界で Avalonia WriteableBitmap へ変換する）</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasPreviewImage))]
     [NotifyPropertyChangedFor(nameof(CanCopy))]
@@ -87,7 +87,7 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SaveStatusText))]
     [NotifyPropertyChangedFor(nameof(SavedFileName))]
     [NotifyPropertyChangedFor(nameof(ImageSizeDisplayText))]
-    private Bitmap? _previewImage;
+    private UnifiedBitmap? _previewImage;
 
     /// <summary>画像が保存済みかどうか</summary>
     [ObservableProperty]
@@ -205,7 +205,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>画像サイズ（ドメイン座標 = 元画像ピクセル）の表示テキスト。</summary>
     /// <remarks>画像未設定時は空欄。画像サイズはズーム状態に依存しない固定値。</remarks>
-    public string ImageSizeDisplayText => PreviewImage is { } img ? $"{img.PixelSize.Width} x {img.PixelSize.Height}" : "";
+    public string ImageSizeDisplayText => PreviewImage is { } img ? $"{img.Size.Width} x {img.Size.Height}" : "";
 
     /// <summary>ファイル名テンプレートが有効かどうかを取得する。</summary>
     /// <remarks><see cref="ValidationMessage"/> が null かどうかで判定する。</remarks>
@@ -231,7 +231,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// ウィンドウ再表示時にプレビューエリアがチラつく（破棄済み Bitmap の描画）。<br/>
     /// 破棄は <c>OnPreviewImageChanged</c>（新しい画像が設定された後）で行う。
     /// </remarks>
-    partial void OnPreviewImageChanging(Bitmap? value)
+    partial void OnPreviewImageChanging(UnifiedBitmap? value)
     {
         // 前回の画像を保持（OnPreviewImageChanged で破棄。Image.Source 更新前に破棄しない）
         _previousPreviewImage = _previewImage;
@@ -245,7 +245,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// 新しい画像が <c>Image.Source</c> へ反映された後に前回の画像を破棄することで、<br/>
     /// 破棄済み Bitmap が描画されるチラつきを防止する。
     /// </remarks>
-    partial void OnPreviewImageChanged(Bitmap? value)
+    partial void OnPreviewImageChanged(UnifiedBitmap? value)
     {
         _previousPreviewImage?.Dispose();
         _previousPreviewImage = null;
@@ -287,9 +287,9 @@ public sealed partial class MainViewModel : ObservableObject
         _hasInvalidSaveFolder = string.IsNullOrEmpty(_saveFolderPathResolved) || !Directory.Exists(_saveFolderPathResolved);
     }
 
-    /// <summary>指定された画像（Avalonia Bitmap）をプレビューとして設定する。</summary>
-    /// <param name="image">設定する画像</param>
-    public void SetPreviewImage(Bitmap image) => PreviewImage = image;
+    /// <summary>指定された画像（UnifiedBitmap）をプレビューとして設定する。</summary>
+    /// <param name="image">設定する画像。所有権が本型へ移る。</param>
+    public void SetPreviewImage(UnifiedBitmap image) => PreviewImage = image;
 
     /// <summary>画像をクリップボードにコピーする。</summary>
     [RelayCommand]
@@ -297,7 +297,9 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (PreviewImage is not null && CopyToClipboardAsync is not null)
         {
-            await CopyToClipboardAsync(PreviewImage);
+            // クリップボードは Avalonia Bitmap を要求するため、表示境界で変換する。
+            using var av = PreviewImage.ToAvaloniaWriteableBitmap();
+            await CopyToClipboardAsync(av);
         }
     }
 
@@ -313,7 +315,9 @@ public sealed partial class MainViewModel : ObservableObject
         var image = await PasteFromClipboardAsync();
         if (image is not null)
         {
-            PreviewImage = image;
+            // 貼り付け結果（Avalonia Bitmap）を内部表現へ変換して保持する。
+            using var unified = image.ToUnifiedBitmap();
+            PreviewImage = unified;
             return true;
         }
 
@@ -324,7 +328,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <param name="bounds">切り出す矩形領域（画像座標 PixelRect）</param>
     [RelayCommand]
     private void CropPreview(PixelRect bounds)
-        => ApplyPixelEdit(srcData => ImageProcessor.Crop(srcData, bounds));
+        => ApplyPixelEdit(srcData => srcData.Crop(new System.Drawing.Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height)));
 
     /// <summary>プレビュー画像を LineDetection で検出し、ウィンドウ矩形の候補を表示する。</summary>
     /// <remarks>
@@ -344,8 +348,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         // LineDetection で水平・垂直の辺（線分）を検出し、矩形（ウィンドウの 4 辺）を復元する
         var detector = new LogicLineDetector();
-        using var unified = image.ToUnifiedBitmap();
-        var results = detector.Detect(unified);
+        var results = detector.Detect(image);
 
         var rects = TryReconstructRects(results);
         DetectedRects = rects;
@@ -435,7 +438,7 @@ public sealed partial class MainViewModel : ObservableObject
         HoveredRect = null;
         StatusMessage = "";
 
-        ApplyPixelEdit(srcData => ImageProcessor.Crop(srcData, bounds));
+        ApplyPixelEdit(srcData => srcData.Crop(new System.Drawing.Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height)));
     }
 
     /// <summary>自動切り出しモードをキャンセルする。</summary>
@@ -450,7 +453,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>ピクセル編集（切出し等）を適用する（BeforeEditAction → 変換 → 画像差し替え）。</summary>
     /// <param name="edit">UnifiedBitmap を受け取り、編集後の UnifiedBitmap を返す処理。</param>
-    /// <remarks>ピクセル操作は PlatformFactory の共通基盤（<see cref="ImageProcessor"/>）に委譲する。</remarks>
+    /// <remarks>ピクセル操作は PlatformFactory の共通基盤（<see cref="UnifiedBitmap"/>）に委譲する。</remarks>
     private void ApplyPixelEdit(Func<UnifiedBitmap, UnifiedBitmap?> edit)
     {
         if (PreviewImage is null)
@@ -460,15 +463,11 @@ public sealed partial class MainViewModel : ObservableObject
 
         BeforeEditAction?.Invoke();
 
-        // PreviewImage → UnifiedBitmap → 編集 → Bitmap
-        using var srcData = PreviewImage.ToUnifiedBitmap();
-        var edited = edit(srcData);
+        // PreviewImage（UnifiedBitmap）→ 編集 → 編集結果を新しいプレビューとして設定する（所有権は ViewModel へ移る）
+        var edited = edit(PreviewImage);
         if (edited is not null)
         {
-            using (edited)
-            {
-                PreviewImage = edited.ToAvaloniaBitmap();
-            }
+            PreviewImage = edited;
         }
     }
 
@@ -516,8 +515,11 @@ public sealed partial class MainViewModel : ObservableObject
                 Directory.CreateDirectory(directory);
             }
 
-            // Avalonia Bitmap を保存（ファイル拡張子から自動判別）
-            PreviewImage.Save(filePath, PngBitmapEncoderOptions.Default);
+            // UnifiedBitmap を表示境界で Avalonia Bitmap へ変換して保存（ファイル拡張子から自動判別）
+            using (var av = PreviewImage.ToAvaloniaWriteableBitmap())
+            {
+                av.Save(filePath, PngBitmapEncoderOptions.Default);
+            }
 
             FileNameTemplateText = FileNameTemplate.IncrementRightmostNumber(FileNameTemplateText);
 

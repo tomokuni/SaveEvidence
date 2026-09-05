@@ -8,10 +8,10 @@ using Avalonia.Headless.XUnit;
 namespace Estable.AvaloniaUI.Platform.Tests;
 
 /// <summary>
-/// <see cref="UnifiedBitmap"/> の Avalonia Bitmap 変換テスト（ヘッドレス依存・直列実行）。
+/// <see cref="UnifiedBitmap"/> の Avalonia WriteableBitmap 変換テスト（ヘッドレス依存・直列実行）。
 /// </summary>
 /// <remarks>
-/// <c>Bitmap.ToUnifiedBitmap()</c> / <c>bitmap.ToAvaloniaBitmap()</c> は
+/// <c>Bitmap.ToUnifiedBitmap()</c> / <c>bitmap.ToAvaloniaWriteableBitmap()</c> は
 /// <c>WriteableBitmap</c> の生成・ピクセルコピーを伴うため、Avalonia ヘッドレスプラットフォームが必要。<br/>
 /// そのため <see cref="AvaloniaHeadlessCollection"/> 内で直列実行する（純粋計算テストは
 /// <see cref="UnifiedBitmapTests"/> で並列実行）。<br/>
@@ -25,11 +25,11 @@ public class UnifiedBitmapAvaloniaTests
         => new(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
 
     [AvaloniaFact]
-    public void ToAvaloniaBitmap_サイズが一致する()
+    public void ToAvaloniaWriteableBitmap_サイズが一致する()
     {
         using var bmp = UnifiedBitmap.Create(8, 8);
 
-        var result = bmp.ToAvaloniaBitmap();
+        var result = bmp.ToAvaloniaWriteableBitmap();
 
         Assert.Equal(new PixelSize(8, 8), result.PixelSize);
     }
@@ -41,8 +41,8 @@ public class UnifiedBitmapAvaloniaTests
 
         using var bmp = src.ToUnifiedBitmap();
 
-        Assert.Equal(8, bmp.PixelWidth);
-        Assert.Equal(8, bmp.PixelHeight);
+        Assert.Equal(8, bmp.Size.Width);
+        Assert.Equal(8, bmp.Size.Height);
     }
 
     [AvaloniaFact]
@@ -52,7 +52,7 @@ public class UnifiedBitmapAvaloniaTests
         var src = CreateBitmap(12, 10);
 
         using var bmp = src.ToUnifiedBitmap();
-        var back = bmp.ToAvaloniaBitmap();
+        var back = bmp.ToAvaloniaWriteableBitmap();
 
         Assert.Equal(src.PixelSize, back.PixelSize);
     }
@@ -77,8 +77,8 @@ public class UnifiedBitmapAvaloniaTests
 
         using var bmp = src.ToUnifiedBitmap();
 
-        Assert.Equal(7, bmp.PixelWidth);
-        Assert.Equal(5, bmp.PixelHeight);
+        Assert.Equal(7, bmp.Size.Width);
+        Assert.Equal(5, bmp.Size.Height);
         Assert.True(bmp.Stride >= 7 * 4);
     }
 }

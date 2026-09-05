@@ -152,7 +152,7 @@ public sealed class SnipCapture : IDisposable
         ArgumentNullException.ThrowIfNull(sourceImage);
         if (_captureSession is not null || _cropSession is not null) return Task.FromResult<PixelRect?>(null); // 再入禁止
 
-        var sourceImageSize = new Size(sourceImage.PixelWidth, sourceImage.PixelHeight);
+        var sourceImageSize = new Size(sourceImage.Size.Width, sourceImage.Size.Height);
         if (sourceImageSize.Width <= 0 || sourceImageSize.Height <= 0)
             throw new ArgumentException("sourceImage のサイズが 0 です。", nameof(sourceImage));
 

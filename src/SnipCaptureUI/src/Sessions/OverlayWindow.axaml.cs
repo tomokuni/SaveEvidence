@@ -262,7 +262,7 @@ internal sealed partial class OverlayWindow : Window
         // ウィンドウ Position = 仮想スクリーン原点のため、既に仮想スクリーン Bitmap 上の座標と一致する。
         // 仮想スクリーン原点（_virtualScreenOrigin）を更に引くとマルチモニタ（原点が (0,0) でない）でずれるため引かない。
         SelectionOverlay.SetLoupePosition(domainPos);
-        using var loupeSrc = wb.ToAvaloniaBitmap();
+        using var loupeSrc = wb.ToAvaloniaWriteableBitmap();
         SelectionOverlay.SetLoupeSource(loupeSrc);
     }
 

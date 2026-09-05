@@ -1,5 +1,4 @@
 using Avalonia;
-using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
@@ -120,9 +119,9 @@ internal sealed partial class OverlayWindow
         {
             try
             {
-                // ImageProcessor を経由して仮想スクリーンの UnifiedBitmap から切り出す（Clipped は UnifiedBitmap）
-                var clipped = vBitmap is null ? null : ImageProcessor.Crop(vBitmap, localRect);
-                if (clipped is null) return;
+                // UnifiedBitmap から切り出す（Clipped は UnifiedBitmap）。ImageProcessor は廃止済み。
+                if (vBitmap is not { } vb) return;
+                var clipped = vb.Crop(localRect.X, localRect.Y, localRect.Width, localRect.Height);
                 Dispatcher.UIThread.Post(() =>
                 {
                     // 古いキャッシュを破棄して新しいキャッシュへ置き換える
@@ -152,7 +151,8 @@ internal sealed partial class OverlayWindow
     private static UnifiedBitmap? ExtractClipCore(UnifiedBitmap? vBitmap, PixelPoint origin, PixelRect captureRect)
     {
         if (vBitmap is not { } bmp) return null;
-        return ImageProcessor.Crop(bmp, ToBitmapLocalRect(captureRect, origin));
+        var local = ToBitmapLocalRect(captureRect, origin);
+        return bmp.Crop(local.X, local.Y, local.Width, local.Height);
     }
 
     /// <summary>キャプチャ矩形（画面物理座標）を Bitmap ローカル座標（= 画面物理 − 仮想スクリーン原点）へ変換する。</summary>
@@ -217,15 +217,15 @@ internal sealed partial class OverlayWindow
         _virtualScreenBitmap?.Dispose();
         _virtualScreenBitmap = bitmap;
         _virtualScreenOrigin = origin;
-        _log.LogVirtualScreen(origin.X, origin.Y, bitmap?.PixelWidth ?? 0, bitmap?.PixelHeight ?? 0);
+        _log.LogVirtualScreen(origin.X, origin.Y, bitmap?.Size.Width ?? 0, bitmap?.Size.Height ?? 0);
         // 固定背景画像（VirtualScreenImage）にも表示する（AreaSelect の背景・ルーペソースの視覚化）
-        VirtualScreenImage.Source = bitmap?.ToAvaloniaBitmap();
+        VirtualScreenImage.Source = bitmap?.ToAvaloniaWriteableBitmap();
         // ルーペの Source を設定する。
         // Source 未設定の間はルーペが表示されない（市松模様防止）ため、ここで Source を設定し、
         // 既にドラッグ中（CenterPoint 設定済み）なら SetLoupePosition を再呼び出しして表示を開始する。
         if (bitmap is not null && _captureType == CaptureType.AreaSelect)
         {
-            using var loupeSrc = bitmap.ToAvaloniaBitmap();
+            using var loupeSrc = bitmap.ToAvaloniaWriteableBitmap();
             SelectionOverlay.SetLoupeSource(loupeSrc);
             if (SelectionOverlay.LoupeCenterPoint is { } center)
             {

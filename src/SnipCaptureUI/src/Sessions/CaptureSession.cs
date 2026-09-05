@@ -125,7 +125,7 @@ internal sealed class CaptureSession(
             if (result is { Image: not null, SourceBounds: { } bounds })
             {
                 _log.LogCaptureCompleted(bounds.ToString());
-                _log.LogResult(result.Image.PixelWidth, result.Image.PixelHeight, bounds.ToString());
+                _log.LogResult(result.Image.Size.Width, result.Image.Size.Height, bounds.ToString());
             }
             else
             {

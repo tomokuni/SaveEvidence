@@ -4,13 +4,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
-using System.Runtime.InteropServices;
 
 namespace Estable.AvaloniaUI.CropView;
 
@@ -354,24 +352,23 @@ public sealed partial class CropViewControl : Panel
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {
-        if (Rects.Count == 0 || e.Bitmap is not WriteableBitmap writeable || e.CaptureTopLeft is not { } topLeft)
+        if (Rects.Count == 0 || e.CaptureTopLeft is not { } topLeft)
         {
             return;
         }
 
-        using var locked = writeable.Lock();
         foreach (var rect in Rects)
         {
-            DrawRectToLoupe(locked, rect, topLeft, e.Scale);
+            DrawRectToLoupe(e.Bitmap, rect, topLeft, e.Scale);
         }
     }
 
-    /// <summary>外部提供矩形の 4 辺をルーペのロック済みバッファへ描画する。</summary>
-    /// <param name="locked">ロック済みのピクセルバッファ。</param>
+    /// <summary>外部提供矩形の 4 辺をルーペのバッファへ描画する。</summary>
+    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
     /// <param name="rect">描画する矩形（ドメイン座標）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    private static void DrawRectToLoupe(ILockedFramebuffer locked, OverlayRect rect, Point captureTopLeft, double scale)
+    private static void DrawRectToLoupe(UnifiedBitmap bitmap, OverlayRect rect, Point captureTopLeft, double scale)
     {
         // ドメイン座標 → ルーペピクセル座標（半開区間の終点を含むよう +1 する）
         double x = (rect.Bounds.X - captureTopLeft.X) * scale;
@@ -379,25 +376,25 @@ public sealed partial class CropViewControl : Panel
         double w = (rect.Bounds.Width + 1) * scale;
         double h = (rect.Bounds.Height + 1) * scale;
 
-        var pixelSize = locked.Size.Width;
+        var pixelSize = bitmap.Size.Width;
         if (x + w < 0 || y + h < 0 || x > pixelSize || y > pixelSize)
         {
             return;
         }
 
         // 4 辺（上・下・左・右）を描画する
-        DrawRectEdge(locked, new Point(x, y), new Point(x + w, y), rect);
-        DrawRectEdge(locked, new Point(x, y + h), new Point(x + w, y + h), rect);
-        DrawRectEdge(locked, new Point(x, y), new Point(x, y + h), rect);
-        DrawRectEdge(locked, new Point(x + w, y), new Point(x + w, y + h), rect);
+        DrawRectEdge(bitmap, new Point(x, y), new Point(x + w, y), rect);
+        DrawRectEdge(bitmap, new Point(x, y + h), new Point(x + w, y + h), rect);
+        DrawRectEdge(bitmap, new Point(x, y), new Point(x, y + h), rect);
+        DrawRectEdge(bitmap, new Point(x + w, y), new Point(x + w, y + h), rect);
     }
 
-    /// <summary>ロック済みピクセルバッファ上に矩形の 1 辺を描画する（実線または破線）。</summary>
-    /// <param name="locked">ロック済みのピクセルバッファ。</param>
+    /// <summary>UnifiedBitmap 上に矩形の 1 辺を描画する（実線または破線）。</summary>
+    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
     /// <param name="from">始点（ルーペピクセル座標）。</param>
     /// <param name="to">終点（ルーペピクセル座標）。</param>
     /// <param name="rect">描画スタイル（破線種類・前景色・背景色・幅）。</param>
-    private static void DrawRectEdge(ILockedFramebuffer locked, Point from, Point to, OverlayRect rect)
+    private static void DrawRectEdge(UnifiedBitmap bitmap, Point from, Point to, OverlayRect rect)
     {
         bool horizontal = Math.Abs(to.Y - from.Y) < Math.Abs(to.X - from.X);
         double length = horizontal ? to.X - from.X : to.Y - from.Y;
@@ -405,15 +402,6 @@ public sealed partial class CropViewControl : Panel
         double fixedCoord = horizontal ? from.Y : from.X;
         double sign = length >= 0 ? 1 : -1;
         double distance = Math.Abs(length);
-
-        var width = locked.Size.Width;
-        var height = locked.Size.Height;
-        var stride = locked.RowBytes;
-        var format = locked.Format;
-
-        // 既存ピクセルを保持したまま描くため、バッファへコピーしてから書き戻す
-        var buffer = new byte[stride * height];
-        Marshal.Copy(locked.Address, buffer, 0, buffer.Length);
 
         // 線の太さ
         var thickness = Math.Max(1, (int)Math.Round(rect.Thickness));
@@ -445,7 +433,7 @@ public sealed partial class CropViewControl : Panel
                 var pxTo = (int)Math.Round(segEnd);
                 for (var px = pxFrom; px <= pxTo; px++)
                 {
-                    StampPixel(buffer, stride, format, px, (int)Math.Round(fixedCoord), color, width, height, half, horizontal);
+                    StampPixel(bitmap, px, (int)Math.Round(fixedCoord), color, half, horizontal);
                 }
             }
             else
@@ -454,28 +442,20 @@ public sealed partial class CropViewControl : Panel
                 var pyTo = (int)Math.Round(segEnd);
                 for (var py = pyFrom; py <= pyTo; py++)
                 {
-                    StampPixel(buffer, stride, format, (int)Math.Round(fixedCoord), py, color, width, height, half, horizontal);
+                    StampPixel(bitmap, (int)Math.Round(fixedCoord), py, color, half, horizontal);
                 }
             }
         }
-
-        Marshal.Copy(buffer, 0, locked.Address, buffer.Length);
     }
 
-    /// <summary>線の太さを考慮してピクセルバッファへ色を打ち込む。</summary>
-    /// <param name="buffer">ピクセルバッファ。</param>
-    /// <param name="stride">1 行のバイト数。</param>
-    /// <param name="format">ピクセルフォーマット。</param>
+    /// <summary>線の太さを考慮して UnifiedBitmap へ色を打ち込む。</summary>
+    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
     /// <param name="x">中心 X 座標。</param>
     /// <param name="y">中心 Y 座標。</param>
     /// <param name="color">描画色（不透明）。</param>
-    /// <param name="width">バッファ幅。</param>
-    /// <param name="height">バッファ高さ。</param>
     /// <param name="half">線の太さの半径（半幅）。</param>
     /// <param name="horizontal">水平辺かどうか。</param>
-    private static void StampPixel(
-        byte[] buffer, int stride, PixelFormat format, int x, int y, Color color,
-        int width, int height, int half, bool horizontal)
+    private static void StampPixel(UnifiedBitmap bitmap, int x, int y, Color color, int half, bool horizontal)
     {
         // 水平辺は Y 固定で太さ方向が X、垂直辺は X 固定で太さ方向が Y になる。
         // 太さ分だけ固定座標の両側へ広げて描画する。
@@ -484,40 +464,22 @@ public sealed partial class CropViewControl : Panel
         {
             var px = horizontal ? x : fixedCoord + d;
             var py = horizontal ? fixedCoord + d : y;
-            SetPixel(buffer, stride, format, px, py, color, width, height);
+            SetPixel(bitmap, px, py, color);
         }
     }
 
-    /// <summary>ピクセルバッファへ 1 ピクセルを描画する。</summary>
-    /// <param name="buffer">ピクセルバッファ。</param>
-    /// <param name="stride">1 行のバイト数。</param>
-    /// <param name="format">ピクセルフォーマット。</param>
+    /// <summary>UnifiedBitmap へ 1 ピクセルを色で書き込む（範囲外は無視）。</summary>
+    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
     /// <param name="x">X 座標。</param>
     /// <param name="y">Y 座標。</param>
-    /// <param name="color">描画色。</param>
-    /// <param name="width">バッファ幅。</param>
-    /// <param name="height">バッファ高さ。</param>
-    private static void SetPixel(byte[] buffer, int stride, PixelFormat format, int x, int y, Color color, int width, int height)
+    /// <param name="color">描画色。BGRA へ変換して書き込む。</param>
+    private static void SetPixel(UnifiedBitmap bitmap, int x, int y, Color color)
     {
-        if (x < 0 || x >= width || y < 0 || y >= height)
+        if (x < 0 || x >= bitmap.Size.Width || y < 0 || y >= bitmap.Size.Height)
         {
             return;
         }
 
-        var offset = y * stride + x * 4;
-        if (format == PixelFormat.Bgra8888)
-        {
-            buffer[offset] = color.B;
-            buffer[offset + 1] = color.G;
-            buffer[offset + 2] = color.R;
-            buffer[offset + 3] = color.A;
-        }
-        else
-        {
-            buffer[offset] = color.R;
-            buffer[offset + 1] = color.G;
-            buffer[offset + 2] = color.B;
-            buffer[offset + 3] = color.A;
-        }
+        bitmap.SetPixel(x, y, color.B, color.G, color.R, color.A);
     }
 }

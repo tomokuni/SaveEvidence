@@ -2,14 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using LineDetectionSample.ViewModels;
 using System.ComponentModel;
 using System.Reactive.Linq;
-using System.Runtime.InteropServices;
 
 namespace LineDetectionSample.Views;
 
@@ -137,7 +135,7 @@ public partial class LineCanvasView : UserControl
     /// </remarks>
     private void DrawLoupeOverlay(LoupeRenderedEventArgs e)
     {
-        if (e.Bitmap is not WriteableBitmap writeable || e.CaptureTopLeft is not { } topLeft)
+        if (e.CaptureTopLeft is not { } topLeft)
         {
             return;
         }
@@ -146,8 +144,6 @@ public partial class LineCanvasView : UserControl
         {
             return;
         }
-
-        using var locked = writeable.Lock();
 
         // 選択中 = オレンジ / ホバー中 = 赤。色は事前に選んでから描画する（ループ内のキャストを避ける）
         foreach (var line in lines)
@@ -158,7 +154,7 @@ public partial class LineCanvasView : UserControl
             // 検出された線分の座標をそのまま使って破線を描画する。
             // 線分の座標は LogicLineDetector がウィンドウ枠の境界（外縁）に補正済みのため、
             // ルーペ内でも枠の線上に表示される（見た目だけのスナップは行わない）
-            DrawDashedLine(locked, start, end, line.IsSelected ? s_selectedOverlayColor : s_hoverOverlayColor, DashPattern, e.Scale);
+            DrawDashedLine(e.Bitmap, start, end, line.IsSelected ? s_selectedOverlayColor : s_hoverOverlayColor, DashPattern, e.Scale);
         }
     }
 
@@ -171,23 +167,23 @@ public partial class LineCanvasView : UserControl
     /// <summary>ルーペ内の線分オーバーレイの破線パターン（描画 4px・間隔 3px・ルーピクセル）。</summary>
     private static readonly double[] DashPattern = [4.0, 3.0];
 
-    /// <summary>ピクセルバッファ上に破線の線分を描画する。</summary>
-    /// <param name="framebuffer">ロック済みのピクセルバッファ（WriteableBitmap）。</param>
+    /// <summary>UnifiedBitmap 上に破線の線分を描画する。</summary>
+    /// <param name="bitmap">描画対象の UnifiedBitmap。</param>
     /// <param name="start">線分の始点（Bitmap ピクセル座標）。</param>
     /// <param name="end">線分の終点（Bitmap ピクセル座標）。</param>
     /// <param name="color">描画色（不透明）。</param>
     /// <param name="dash">破線パターン（描画長・間隔長の交互リスト・ルーピクセル）。</param>
     /// <param name="thickness">線の太さ（ルーピクセル）。1 ドメインピクセル = ズーム倍率（<see cref="LoupeRenderedEventArgs.Scale"/>）分。</param>
     /// <remarks>
-    /// ロック済みバッファの既存ピクセルを保持したまま、<paramref name="dash"/> のパターンで線分上のピクセルを塗る。<br/>
+    /// 既存ピクセルを保持したまま、<paramref name="dash"/> のパターンで線分上のピクセルを塗る。<br/>
     /// 線の太さは <paramref name="thickness"/> の分だけ線分の両側へ広げて塗る（中心線の法線方向）。<br/>
-    /// ピクセルフォーマットは <see cref="ILockedFramebuffer.Format"/>（Bgra8888 / Rgba8888）に応じてバイト順を切り替える。
+    /// 描画は <see cref="UnifiedBitmap.SetPixel"/> で行う（BGRA 変換はヘルパーに委譲）。
     /// </remarks>
     private static void DrawDashedLine(
-        ILockedFramebuffer framebuffer, Point start, Point end, Color color, IReadOnlyList<double> dash, double thickness)
+        UnifiedBitmap bitmap, Point start, Point end, Color color, IReadOnlyList<double> dash, double thickness)
     {
-        var width = framebuffer.Size.Width;
-        var height = framebuffer.Size.Height;
+        var width = bitmap.Size.Width;
+        var height = bitmap.Size.Height;
         if (width <= 0 || height <= 0)
         {
             return;
@@ -221,12 +217,6 @@ public partial class LineCanvasView : UserControl
         var half = Math.Max(0, (int)Math.Ceiling(thickness / 2.0) - 1);
         var ux = -dy / length; // 法線 X
         var uy = dx / length;  // 法線 Y
-
-        const int bytesPerPixel = 4;
-        // 既存ピクセルを保持したまま破線を描くため、バッファへコピーしてから書き戻す
-        var stride = framebuffer.RowBytes;
-        var buffer = new byte[stride * height];
-        Marshal.Copy(framebuffer.Address, buffer, 0, buffer.Length);
 
         // 線分を 1 ピクセル刻みで辿り、ダッシュパターンに応じて塗る
         int steps = Math.Max(1, (int)Math.Ceiling(length));
@@ -265,25 +255,9 @@ public partial class LineCanvasView : UserControl
                     continue;
                 }
 
-                int offset = oy * stride + ox * bytesPerPixel;
-                if (framebuffer.Format == PixelFormat.Bgra8888)
-                {
-                    buffer[offset] = color.B;
-                    buffer[offset + 1] = color.G;
-                    buffer[offset + 2] = color.R;
-                    buffer[offset + 3] = 255;
-                }
-                else
-                {
-                    buffer[offset] = color.R;
-                    buffer[offset + 1] = color.G;
-                    buffer[offset + 2] = color.B;
-                    buffer[offset + 3] = 255;
-                }
+                bitmap.SetPixel(ox, oy, color.B, color.G, color.R, color.A);
             }
         }
-
-        Marshal.Copy(buffer, 0, framebuffer.Address, buffer.Length);
     }
 
     /// <summary>画像上のマウス移動で線分のホバー状態とルーペ中心を更新する。</summary>

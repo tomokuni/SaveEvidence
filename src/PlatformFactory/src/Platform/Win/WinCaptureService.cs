@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Runtime.Versioning;
 using Avalonia;
 using Avalonia.Platform;
@@ -46,7 +45,7 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     {
         var sdRect = new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         using var sdBmp = CaptureSdBitmap(sdRect);
-        return ConvertToUnifiedBitmap(sdBmp);
+        return sdBmp.ToUnifiedBitmap();
     }
 
     /// <summary>仮想スクリーン（全モニタを包含する領域）全体を 1 回のキャプチャで取得する。</summary>
@@ -68,64 +67,19 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
         return CaptureArea(new PixelRect(vx, vy, vw, vh));
     }
 
-    /// <summary>System.Drawing.Bitmap → UnifiedBitmap 変換。</summary>
-    /// <param name="source">変換元の System.Drawing.Bitmap。</param>
-    /// <returns>変換結果の UnifiedBitmap。</returns>
-    /// <remarks>
-    /// <see cref="UnifiedBitmap.FromSystemDrawingBitmap"/>（LockBits ベース）で BGRA8888・Premul へ変換する。<br/>
-    /// PNG エンコード/デコードを経由しない（高速・可逆）。アルファは常に 255（不透明）に設定される。<br/>
-    /// SKBitmap の生成はスレッド非依存のため、バックグラウンドスレッドから呼び出し可能。<br/>
-    /// </remarks>
-    private static UnifiedBitmap ConvertToUnifiedBitmap(DrawingBitmap source)
-    {
-        // アルファを常に 255（不透明）に設定するため、Format32bppArgb で読み取り、Premul へ設定する。
-        var rect = new Rectangle(0, 0, source.Width, source.Height);
-        var bmpData = source.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-        try
-        {
-            var w = source.Width;
-            var h = source.Height;
-            var stride = bmpData.Stride;
-            var result = UnifiedBitmap.Create(w, h);
-            var dstStride = result.Stride;
-            var rowBytes = Math.Min(stride, dstStride);
-            unsafe
-            {
-                var pDst = (byte*)result.Bitmap.GetPixels();
-                for (var y = 0; y < h; y++)
-                {
-                    var pSrc = (byte*)(bmpData.Scan0 + y * stride);
-                    // 行全体を一括コピーし、アルファバイトのみ 255（不透明）へ上書きする
-                    Buffer.MemoryCopy(pSrc, pDst + y * dstStride, rowBytes, rowBytes);
-                    for (var x = 0; x < w; x++)
-                    {
-                        pDst[y * dstStride + x * 4 + 3] = 255;
-                    }
-                }
-            }
-            return result;
-        }
-        finally
-        {
-            source.UnlockBits(bmpData);
-        }
-    }
-
-    // ====================================================================
-    // 内部ヘルパー（System.Drawing は本セクションに閉じ込める）
-    // ====================================================================
-
     /// <summary>指定された画面領域を System.Drawing.Bitmap としてキャプチャする（内部ヘルパー）。</summary>
     /// <param name="bounds">キャプチャする画面領域（画面物理座標）。</param>
     /// <returns>キャプチャした System.Drawing.Bitmap。</returns>
     /// <remarks>
     /// CopyFromScreen は GDI の同期コールであり、DWM 応答不能時にはブロックする可能性がある。<br/>
     /// 呼び出し側（SelectionSession）はバックグラウンド実行とタイムアウトで保護する。<br/>
+    /// <c>Format32bppPArgb</c>（アルファ乗算済み・不透明）で生成し、<see cref="UnifiedBitmapExtensions.ToUnifiedBitmap(System.Drawing.Bitmap)"/>
+    /// が PArgb を直接読み取れるようにする（アルファ強制不要）。
     /// </remarks>
     private DrawingBitmap CaptureSdBitmap(Rectangle bounds)
     {
         _log.LogCaptureSdBitmap(bounds);
-        var bitmap = new DrawingBitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppRgb);
+        var bitmap = new DrawingBitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppPArgb);
         using var g = Graphics.FromImage(bitmap);
         g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, bounds.Size);
         _log.LogCaptureSdBitmapDone(bitmap.Width, bitmap.Height);

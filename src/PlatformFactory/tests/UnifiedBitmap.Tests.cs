@@ -12,7 +12,7 @@ namespace Estable.AvaloniaUI.Platform.Tests;
 /// <remarks>
 /// <see cref="UnifiedBitmap"/> は静的共有状態を持たないため、本テストは Avalonia ヘッドレス初期化に依存しない
 /// （<c>[Collection]</c> により並列実行可能）。<br/>
-/// Avalonia Bitmap の変換（<see cref="UnifiedBitmap.ToAvaloniaBitmap"/> / <see cref="UnifiedBitmap.FromAvaloniaBitmap"/>）は
+/// Avalonia Bitmap の変換（<c>ToAvaloniaWriteableBitmap</c> / 入力側変換）は
 /// ヘッドレス環境が必要なため、別テスト（<see cref="UnifiedBitmapAvaloniaTests"/>）で検証する。
 /// </remarks>
 [Collection("UnifiedBitmapNonAvalonia")]
@@ -29,8 +29,8 @@ public class UnifiedBitmapTests
     public void Create_指定サイズで生成する()
     {
         using var bmp = Create(6, 8);
-        Assert.Equal(6, bmp.PixelWidth);
-        Assert.Equal(8, bmp.PixelHeight);
+        Assert.Equal(6, bmp.Size.Width);
+        Assert.Equal(8, bmp.Size.Height);
         Assert.True(bmp.Stride >= 6 * 4);
         Assert.False(bmp.IsDisposed);
     }
@@ -181,7 +181,7 @@ public class UnifiedBitmapTests
     {
         var sk = new SKBitmap(new SKImageInfo(4, 4, SKColorType.Bgra8888, SKAlphaType.Premul));
         var bmp = UnifiedBitmap.FromSKBitmap(sk);
-        Assert.Equal(4, bmp.PixelWidth);
+        Assert.Equal(4, bmp.Size.Width);
         bmp.Dispose();
         Assert.True(bmp.IsDisposed);
     }
@@ -248,5 +248,81 @@ public class UnifiedBitmapTests
         Assert.Equal((byte)0, px.B);
         Assert.Equal((byte)255, px.R);
         Assert.Equal((byte)255, px.A);
+    }
+
+    // ====================================================================
+    // Crop（矩形切り出し）
+    // ====================================================================
+
+    [Fact]
+    public void Crop_範囲内の矩形を切り出す()
+    {
+        using var src = Create(10, 10);
+        src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
+
+        using var result = src.Crop(new System.Drawing.Rectangle(2, 2, 4, 4));
+
+        Assert.Equal(4, result.Size.Width);
+        Assert.Equal(4, result.Size.Height);
+        // 切り出しピクセルが保持されている
+        Assert.Equal((byte)255, result.GetPixel(0, 0).R);
+    }
+
+    [Fact]
+    public void Crop_幅0の矩形は例外を投げる()
+    {
+        using var src = Create(10, 10);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new System.Drawing.Rectangle(0, 0, 0, 4)));
+    }
+
+    [Fact]
+    public void Crop_高さ0の矩形は例外を投げる()
+    {
+        using var src = Create(10, 10);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new System.Drawing.Rectangle(0, 0, 4, 0)));
+    }
+
+    [Fact]
+    public void Crop_範囲外は透明パディングで要求サイズを返す()
+    {
+        using var src = Create(10, 10);
+        src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
+
+        // 矩形が右端を超える場合、コピーできる部分のみコピーし、範囲外は透明（0）のまま
+        using var result = src.Crop(new System.Drawing.Rectangle(8, 0, 10, 10));
+
+        Assert.Equal(10, result.Size.Width);
+        Assert.Equal(10, result.Size.Height);
+        // コピー可能な左側 2px 分は赤（R=255）が保持される
+        Assert.Equal((byte)255, result.GetPixel(0, 0).R);
+        // 範囲外（右側 8px 分）は透明（R=0）
+        Assert.Equal((byte)0, result.GetPixel(9, 0).R);
+    }
+
+    [Fact]
+    public void Crop_完全に範囲外でも要求サイズを透明パディングで返す()
+    {
+        using var src = Create(10, 10);
+        src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
+
+        // 矩形がソースと交差しない場合でも、要求サイズの全透明ビットマップを返す
+        using var result = src.Crop(new System.Drawing.Rectangle(20, 20, 5, 5));
+
+        Assert.Equal(5, result.Size.Width);
+        Assert.Equal(5, result.Size.Height);
+        // 全ピクセル透明
+        Assert.Equal((byte)0, result.GetPixel(0, 0).R);
+        Assert.Equal((byte)0, result.GetPixel(4, 4).A);
+    }
+
+    [Fact]
+    public void Crop_破棄後は例外を投げる()
+    {
+        var src = Create(10, 10);
+        src.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => src.Crop(new System.Drawing.Rectangle(0, 0, 4, 4)));
     }
 }

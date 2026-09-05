@@ -146,7 +146,7 @@ public sealed class LogicLineDetector : ILineDetector
         var mergedV = MergeCollinearAll(verticals, isHorizontal: false, gap: MaxLineGap);
 
         // 矩形（ウィンドウの 4 辺）を構成できる場合は、閉区間として優先出力する
-        var rectangles = BuildRectangles(mergedH, mergedV, image.PixelWidth, image.PixelHeight, gray, edges);
+        var rectangles = BuildRectangles(mergedH, mergedV, image.Size.Width, image.Size.Height, gray, edges);
         if (rectangles.Count > 0)
         {
             return rectangles.OrderByDescending(r => r.Score).ToList();

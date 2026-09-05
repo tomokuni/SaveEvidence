@@ -2,10 +2,8 @@ using app.Enum;
 using app.Models;
 using app.Services;
 using app.ViewModels;
-using Avalonia;
 using Avalonia.Headless.XUnit;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
 namespace app.Tests;
@@ -31,10 +29,14 @@ public class MainViewModelTests
         public void Reload() { }
     }
 
-    /// <summary>テスト用の Bitmap（10x10 の WriteableBitmap）を生成する。</summary>
-    /// <returns>生成した Bitmap。</returns>
-    private static WriteableBitmap CreateBitmap()
-        => new(new PixelSize(10, 10), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+    /// <summary>テスト用の UnifiedBitmap（10x10）を生成する。</summary>
+    /// <returns>生成した UnifiedBitmap。</returns>
+    private static UnifiedBitmap CreateBitmap()
+    {
+        var bmp = UnifiedBitmap.Create(10, 10);
+        bmp.Clear(b: 255, g: 255, r: 255, a: 255);
+        return bmp;
+    }
 
     /// <summary>一時フォルダを生成し、テスト終了時に削除する（IDisposable）。</summary>
     private sealed class TempDir : IDisposable

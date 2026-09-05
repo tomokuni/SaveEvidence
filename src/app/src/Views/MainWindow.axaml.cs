@@ -397,7 +397,7 @@ public sealed partial class MainWindow : Window
         // フロー: APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）
         var result = await _snipCapture.StartCaptureAsync(captureType, this);
 
-        var imgInfo = result?.Image is not null ? $"{result.Image.PixelWidth}x{result.Image.PixelHeight}" : "null";
+        var imgInfo = result?.Image is not null ? $"{result.Image.Size.Width}x{result.Image.Size.Height}" : "null";
         _logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
     }
 
@@ -415,9 +415,8 @@ public sealed partial class MainWindow : Window
         {
             CaptureContent.PushUndo();
             CaptureContent.SetIsCaptureInProgress(true);
-            // キャプチャ結果（UnifiedBitmap）を表示用 Bitmap へ変換してプレビューへ設定する（表示境界）。
-            using var image = captured.ToAvaloniaBitmap();
-            _viewModel.SetPreviewImage(image);
+            // キャプチャ結果（UnifiedBitmap）を内部表現のままプレビューへ設定する（所有権は ViewModel へ移る）。
+            _viewModel.SetPreviewImage(captured);
             CaptureContent.SetIsCaptureInProgress(false);
             CaptureContent.ExitCropMode();
         }

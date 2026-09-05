@@ -17,8 +17,8 @@ public class LoupeImageExtractorTests
 
         using var result = LoupeImageExtractor.ExtractRegionAt(src, 100, 100, 40);
 
-        Assert.Equal(40, result.PixelWidth);
-        Assert.Equal(40, result.PixelHeight);
+        Assert.Equal(40, result.Size.Width);
+        Assert.Equal(40, result.Size.Height);
     }
 
     [AvaloniaFact]
@@ -29,8 +29,8 @@ public class LoupeImageExtractorTests
         // 中心 (0,0) は範囲外パディングを含む
         using var result = LoupeImageExtractor.ExtractRegionAt(src, 0, 0, 20);
 
-        Assert.Equal(20, result.PixelWidth);
-        Assert.Equal(20, result.PixelHeight);
+        Assert.Equal(20, result.Size.Width);
+        Assert.Equal(20, result.Size.Height);
     }
 
     [AvaloniaFact]
@@ -41,8 +41,8 @@ public class LoupeImageExtractorTests
         // 中心 (200,200) は画像範囲外（完全に透明）
         using var result = LoupeImageExtractor.ExtractRegionAt(src, 200, 200, 20);
 
-        Assert.Equal(20, result.PixelWidth);
-        Assert.Equal(20, result.PixelHeight);
+        Assert.Equal(20, result.Size.Width);
+        Assert.Equal(20, result.Size.Height);
     }
 }
 
