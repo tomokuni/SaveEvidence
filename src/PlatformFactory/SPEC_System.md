@@ -95,7 +95,8 @@ flowchart TB
         Efr["ElementFinderResults<br/>public readonly record struct"]
         Bmx["BitmapExtensions<br/>public static<br/>Imaging/BitmapExtensions.cs"]
         Apd["AppPixelData<br/>public sealed<br/>Imaging/AppPixelData.cs<br/>（Avalonia 非依存ピクセルバッファ）"]
-        Ub["UnifiedBitmap<br/>public sealed<br/>Imaging/UnifiedBitmap.cs<br/>（複数 Bitmap 種別ラッパー・IDisposable）"]
+        Ub["UnifiedBitmap<br/>public sealed<br/>Imaging/UnifiedBitmap.cs<br/>（コア：ピクセル操作・Create/FromSKBitmap/ToSKBitmap・IDisposable）"]
+        Ube["UnifiedBitmapExtensions<br/>public static<br/>Imaging/UnifiedBitmapExtensions.cs<br/>（生成・変換：Avalonia / System.Drawing 依存）"]
         Win["Win 実装群<br/>internal sealed<br/>Win/（Win32 API・P-Invoke 集約）"]
         NoOp["NoOp 実装群<br/>internal sealed<br/>NoOp/（シングルトン）"]
         Mth["CoordinateMath<br/>internal static<br/>Coordinate/CoordinateMath.cs"]
@@ -134,9 +135,11 @@ flowchart TB
     Wdg --> IWd
     Scn --> ICd
     Bmx --> Apd
-    Ub --> Apd
-    Ub --> Sk
-    Ub --> Av
+    Ube --> Ub
+    Ub -->|コアは SKBitmap のみに依存| Sk
+    Ube --> Apd
+    Ube --> Av
+    Ube --> Sk
     Win --> Av
     Win --> Sd
     DR -->|"ファクトリ / インターフェース / 座標ポート"| Fac
@@ -218,7 +221,8 @@ flowchart TB
 | `BitmapExtensions.CopyRegionWithPadding` / `ExtractRegion` | 範囲外許容の領域コピー / 矩形切り出し |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |
 | `AppPixelData` | Avalonia 非依存のピクセルバッファ（BGRA8888・アルファ乗算済み）。表示境界では Avalonia `Bitmap` を使用し、ピクセル演算では本型（`byte[]`）で行うハイブリッド方針の中核 |
-| `UnifiedBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、Avalonia / System.Drawing / SkiaSharp / `AppPixelData` と高速変換。静的共有状態を持たないため並列・大規模利用に適する |
+| `UnifiedBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー（コア）。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、`SkiaSharp` のみに依存したピクセル操作と `Create` / `FromSKBitmap` / `ToSKBitmap`（生成・変換）を提供。静的共有状態を持たないため並列・大規模利用に適する |
+| `UnifiedBitmapExtensions` | `UnifiedBitmap` の生成・変換拡張。`From～`（`extension(UnifiedBitmap)` 静的拡張）と `To～` / `Size` / `Clear(AvaloniaColor)`（`this UnifiedBitmap` インスタンス拡張）を提供し、Avalonia / System.Drawing / `AppPixelData` との変換を閉じる |
 
 ### 6.7 内部実装（Win 系）
 

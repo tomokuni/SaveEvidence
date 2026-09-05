@@ -23,6 +23,7 @@
       - [5.2.3 ScreenConverter](#523-screenconverter)
       - [5.2.4 Watchdog](#524-watchdog)
       - [5.2.5 ColorExtensions（C# 14 静的拡張メンバー）](#525-colorextensionsc-14-静的拡張メンバー)
+      - [5.2.6 UnifiedBitmap（ピクセル操作）と UnifiedBitmapExtensions（生成・変換）](#526-unifiedbitmapピクセル操作と-unifiedbitmapextensions生成変換)
     - [5.3 イベント](#53-イベント)
     - [5.4 型](#54-型)
       - [5.4.1 PlatformFactory](#541-platformfactory)
@@ -35,6 +36,8 @@
     - [6.1 3 層の座標](#61-3-層の座標)
     - [6.2 CoordinatePort の変換規則](#62-coordinateport-の変換規則)
   - [7. ログ](#7-ログ)
+    - [7.1 LogLevel 設定ポリシー](#71-loglevel-設定ポリシー)
+    - [7.2 ログ定義一覧](#72-ログ定義一覧)
   - [8. 制約事項](#8-制約事項)
   - [9. 最適化施策](#9-最適化施策)
 
@@ -202,30 +205,40 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | --- | --- | --- |
 | `FromAColor` | `static Color FromAColor(byte alpha, Color baseColor)` | 基準色（名前付き色等）と不透明度から色を生成する。既存の `Color.FromArgb(alpha, r, g, b)` は RGB 直指定で何色か判別しにくいため、基準色を指定して可読性を向上する（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
 
-#### 5.2.6 UnifiedBitmap（生成・変換・ピクセル操作）
+#### 5.2.6 UnifiedBitmap（ピクセル操作）と UnifiedBitmapExtensions（生成・変換）
+
+`UnifiedBitmap` は内部表現（`SKBitmap` BGRA8888・Premul）と、`SkiaSharp` のみに依存するピクセル操作・生成/変換（`Create` / `FromSKBitmap` / `ToSKBitmap`）を提供するコア型です。  
+Avalonia / System.Drawing / WPF / `AppPixelData` 依存の生成・変換は `UnifiedBitmapExtensions`（C# 14 `extension(UnifiedBitmap)` の静的拡張 + `this UnifiedBitmap` のインスタンス拡張）に分離され、コアは画像種別（Avalonia / System.Drawing）に依存しません。  
+
+**UnifiedBitmap（コア）**:
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 生成 | `Create` | `static UnifiedBitmap Create(int width, int height)` | 指定サイズの空ビットマップ（BGRA8888・Premul）を生成 |
-| 生成 | `FromSKBitmap` | `static UnifiedBitmap FromSKBitmap(SKBitmap bitmap)` | 内部 `SKBitmap` から生成（**所有権を譲り受け**、破棄に連動） |
+| 生成 | `Create` | `static UnifiedBitmap Create(int width, int height)` | 指定サイズの空ビットマップ（BGRA8888・Premul）を生成。`SkiaSharp` のみに依存 |
+| 生成 | `FromSKBitmap` | `static UnifiedBitmap FromSKBitmap(SKBitmap bitmap)` | 内部 `SKBitmap` から生成（**所有権を譲り受け**、破棄に連動）。`SkiaSharp` のみに依存 |
+| プロパティ | `PixelWidth` / `PixelHeight` | `int` | 幅 / 高さ（ピクセル） |
+| プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（パディング含む） |
+| プロパティ | `IsDisposed` | `bool` | 破棄済みか |
+| ピクセル | `GetPixelBgra` | `(byte B, byte G, byte R, byte A) GetPixelBgra(int x, int y)` | 指定座標の BGRA（アルファ乗算済み）を取得。範囲外は `IndexOutOfRangeException` |
+| ピクセル | `SetPixelBgra` | `void SetPixelBgra(int x, int y, byte b, byte g, byte r, byte a)` | 指定座標の BGRA（アルファ乗算済み）を設定 |
+| ピクセル | `Clear` | `void Clear(SKColor color)` | 全ピクセルを指定色（SKColor）で塗りつぶし |
+| 変換 | `ToSKBitmap` | `SKBitmap ToSKBitmap()` | 内部インスタンスを返す（共有参照。呼び出し側で Dispose しない）。`SkiaSharp` のみに依存 |
+| その他 | `Clone` | `UnifiedBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
+
+**UnifiedBitmapExtensions（生成・変換）**:
+
+| 種別 | メンバー | シグネチャ | 説明 |
+| --- | --- | --- | --- |
 | 生成 | `FromAvaloniaBitmap` | `static UnifiedBitmap FromAvaloniaBitmap(Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。元は変更されない。`CopyPixels` ベースで高速・可逆） |
 | 生成 | `FromSystemDrawingBitmap` | `static UnifiedBitmap FromSystemDrawingBitmap(DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から生成（複製。**Windows 専用**） |
 | 生成 | `FromAppPixelData` | `static UnifiedBitmap FromAppPixelData(AppPixelData pixelData)` | `AppPixelData`（BGRA8888 バッファ）から生成（複製） |
 | 生成 | `FromWpfBitmapSource` | `static UnifiedBitmap FromWpfBitmapSource(object source)` | WPF `BitmapSource` / `BitmapImage` から生成。**未対応**（`UseWPF` 無効時でも使用可、呼ぶと `PlatformNotSupportedException`） |
-| プロパティ | `PixelWidth` / `PixelHeight` | `int` | 幅 / 高さ（ピクセル） |
-| プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（`System.Drawing.Bitmap` の代替） |
-| プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（パディング含む） |
-| プロパティ | `Size` | `PixelSize` | 画像サイズ（Avalonia `PixelSize`） |
-| プロパティ | `IsDisposed` | `bool` | 破棄済みか |
-| 変換 | `ToSKBitmap` | `SKBitmap` | 内部インスタンスを返す（共有参照。呼び出し側で Dispose しない） |
-| 変換 | `ToAvaloniaBitmap` | `Bitmap` | Avalonia `Bitmap` へ変換（複製を所有。`WriteableBitmap.Lock` ベース） |
-| 変換 | `ToSystemDrawingBitmap` | `DrawingBitmap` | `System.Drawing.Bitmap`（Format32bppPArgb）へ変換（複製。**Windows 専用**） |
-| 変換 | `ToAppPixelData` | `AppPixelData` | `AppPixelData`（BGRA8888）へ変換（複製） |
-| 変換 | `ToWpfBitmapImage` | `object` | WPF `BitmapImage` を生成。**未対応**（呼ぶと `PlatformNotSupportedException`） |
-| ピクセル | `GetPixelBgra` | `(byte B, byte G, byte R, byte A) GetPixelBgra(int x, int y)` | 指定座標の BGRA（アルファ乗算済み）を取得。範囲外は `IndexOutOfRangeException` |
-| ピクセル | `SetPixelBgra` | `void SetPixelBgra(int x, int y, byte b, byte g, byte r, byte a)` | 指定座標の BGRA（アルファ乗算済み）を設定 |
-| ピクセル | `Clear` | `void Clear(AvaloniaColor color)` / `void Clear(SKColor color)` | 全ピクセルを指定色で塗りつぶし（Avalonia 版はアルファ乗算） |
-| その他 | `Clone` | `UnifiedBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
+| 変換 | `Size` | `PixelSize Size()` | 画像サイズ（Avalonia `PixelSize`）。`this UnifiedBitmap` のインスタンス拡張 |
+| 変換 | `ToAvaloniaBitmap` | `Bitmap ToAvaloniaBitmap()` | Avalonia `Bitmap` へ変換（複製を所有。`WriteableBitmap.Lock` ベース） |
+| 変換 | `ToSystemDrawingBitmap` | `DrawingBitmap ToSystemDrawingBitmap()` | `System.Drawing.Bitmap`（Format32bppPArgb）へ変換（複製。**Windows 専用**） |
+| 変換 | `ToAppPixelData` | `AppPixelData ToAppPixelData()` | `AppPixelData`（BGRA8888）へ変換（複製） |
+| 変換 | `ToWpfBitmapImage` | `object ToWpfBitmapImage()` | WPF `BitmapImage` を生成。**未対応**（呼ぶと `PlatformNotSupportedException`） |
+| ピクセル | `Clear` | `void Clear(AvaloniaColor color)` | 全ピクセルを指定色（Avalonia Color）で塗りつぶし（アルファ乗算） |
 
 > `FromSKBitmap` は引数の所有権を譲り受け、本型の破棄時に `Dispose` します。`ToSKBitmap` は内部インスタンスをそのまま返すため呼び出し側で `Dispose` しないでください。`ToAvaloniaBitmap` / `ToSystemDrawingBitmap` / `ToAppPixelData` は複製を返すため呼び出し側が所有します。
 
@@ -235,7 +248,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 
 ### 5.4 型
 
-公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` / `AppPixelData` / `UnifiedBitmap` です。
+公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` / `AppPixelData` / `UnifiedBitmap` / `UnifiedBitmapExtensions` です。
 プラットフォーム固有実装（Win / NoOp 系）と内部ユーティリティ（`CoordinateMath` / `PlatformLog`）はすべて internal（非公開）です。公開 API はプラットフォーム非依存型のみを使用します。
 
 #### 5.4.1 PlatformFactory

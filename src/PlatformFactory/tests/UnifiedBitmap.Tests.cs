@@ -46,8 +46,6 @@ public class UnifiedBitmapTests
         using var bmp = Create(6, 8);
         Assert.Equal(6, bmp.PixelWidth);
         Assert.Equal(8, bmp.PixelHeight);
-        Assert.Equal(6, bmp.Width);
-        Assert.Equal(8, bmp.Height);
         Assert.True(bmp.Stride >= 6 * 4);
         Assert.False(bmp.IsDisposed);
     }
@@ -375,7 +373,7 @@ public class UnifiedBitmapTests
     public void Size_ピクセルサイズを返す()
     {
         using var bmp = Create(6, 8);
-        Assert.Equal(new PixelSize(6, 8), bmp.Size);
+        Assert.Equal(new PixelSize(6, 8), bmp.Size());
     }
 
     [Fact]
