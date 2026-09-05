@@ -46,25 +46,25 @@ public class UnifiedBitmapSystemDrawingTests
     }
 
     [Fact]
-    public void FromSystemDrawingBitmap_ピクセルをコピーする()
+    public void ToUnifiedBitmap_ピクセルをコピーする()
     {
         using var sd = CreateSolidDrawingBitmap(4, 4, 0, 0, 255, 255); // 赤・不透明
-        using var bmp = UnifiedBitmap.FromSystemDrawingBitmap(sd);
+        using var bmp = sd.ToUnifiedBitmap();
         Assert.Equal(4, bmp.PixelWidth);
         Assert.Equal(4, bmp.PixelHeight);
-        var px = bmp.GetPixelBgra(1, 1);
+        var px = bmp.GetPixel(1, 1);
         Assert.Equal((byte)0, px.B);
         Assert.Equal((byte)255, px.R);
         Assert.Equal((byte)255, px.A);
     }
 
     [Fact]
-    public void FromSystemDrawingBitmap_部分透明アルファを保持する()
+    public void ToUnifiedBitmap_部分透明アルファを保持する()
     {
         // 50% アルファの青（BGRA: B=255, G=0, R=0, A=128）
         using var sd = CreateSolidDrawingBitmap(4, 4, 255, 0, 0, 128);
-        using var bmp = UnifiedBitmap.FromSystemDrawingBitmap(sd);
-        var px = bmp.GetPixelBgra(1, 1);
+        using var bmp = sd.ToUnifiedBitmap();
+        var px = bmp.GetPixel(1, 1);
         Assert.Equal((byte)255, px.B);
         Assert.Equal((byte)0, px.G);
         Assert.Equal((byte)0, px.R);
@@ -75,7 +75,7 @@ public class UnifiedBitmapSystemDrawingTests
     public void ToSystemDrawingBitmap_部分透明アルファを保持する()
     {
         using var bmp = UnifiedBitmap.Create(4, 4);
-        bmp.SetPixelBgra(0, 0, b: 255, g: 0, r: 0, a: 128);
+        bmp.SetPixel(0, 0, b: 255, g: 0, r: 0, a: 128);
         using var sd = bmp.ToSystemDrawingBitmap();
         var data = sd.LockBits(new System.Drawing.Rectangle(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
@@ -99,7 +99,7 @@ public class UnifiedBitmapSystemDrawingTests
     public void ToSystemDrawingBitmap_複製を生成する()
     {
         using var bmp = UnifiedBitmap.Create(4, 4);
-        bmp.SetPixelBgra(0, 0, b: 1, g: 2, r: 3, a: 255);
+        bmp.SetPixel(0, 0, b: 1, g: 2, r: 3, a: 255);
         using var sd = bmp.ToSystemDrawingBitmap();
         Assert.Equal(bmp.PixelWidth, sd.Width);
         Assert.Equal(bmp.PixelHeight, sd.Height);
@@ -125,7 +125,7 @@ public class UnifiedBitmapSystemDrawingTests
     public void SystemDrawing_往復変換でサイズが一致する()
     {
         using var sd = CreateSolidDrawingBitmap(4, 4, 0, 0, 255, 255);
-        using var bmp = UnifiedBitmap.FromSystemDrawingBitmap(sd);
+        using var bmp = sd.ToUnifiedBitmap();
         using var back = bmp.ToSystemDrawingBitmap();
         Assert.Equal(sd.Width, back.Width);
         Assert.Equal(sd.Height, back.Height);

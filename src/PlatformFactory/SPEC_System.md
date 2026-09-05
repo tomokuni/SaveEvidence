@@ -96,7 +96,7 @@ flowchart TB
         Bmx["BitmapExtensions<br/>public static<br/>Imaging/BitmapExtensions.cs"]
         Apd["AppPixelData<br/>public sealed<br/>Imaging/AppPixelData.cs<br/>（Avalonia 非依存ピクセルバッファ）"]
         Ub["UnifiedBitmap<br/>public sealed<br/>Imaging/UnifiedBitmap.cs<br/>（コア：ピクセル操作・Create/FromSKBitmap/ToSKBitmap・IDisposable）"]
-        Ube["UnifiedBitmapExtensions<br/>public static<br/>Imaging/UnifiedBitmapExtensions.cs<br/>（生成・変換：Avalonia / System.Drawing 依存）"]
+        Ube["UnifiedBitmapExtensions<br/>public static<br/>Imaging/UnifiedBitmapExtensions.cs<br/>（生成・変換：ToUnifiedBitmap / ToAvaloniaBitmap 等 / Avalonia・System.Drawing 依存）"]
         Win["Win 実装群<br/>internal sealed<br/>Win/（Win32 API・P-Invoke 集約）"]
         NoOp["NoOp 実装群<br/>internal sealed<br/>NoOp/（シングルトン）"]
         Mth["CoordinateMath<br/>internal static<br/>Coordinate/CoordinateMath.cs"]
@@ -222,7 +222,7 @@ flowchart TB
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |
 | `AppPixelData` | Avalonia 非依存のピクセルバッファ（BGRA8888・アルファ乗算済み）。表示境界では Avalonia `Bitmap` を使用し、ピクセル演算では本型（`byte[]`）で行うハイブリッド方針の中核 |
 | `UnifiedBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー（コア）。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、`SkiaSharp` のみに依存したピクセル操作と `Create` / `FromSKBitmap` / `ToSKBitmap`（生成・変換）を提供。静的共有状態を持たないため並列・大規模利用に適する |
-| `UnifiedBitmapExtensions` | `UnifiedBitmap` の生成・変換拡張。`From～`（`extension(UnifiedBitmap)` 静的拡張）と `To～` / `Size` / `Clear(AvaloniaColor)`（`this UnifiedBitmap` インスタンス拡張）を提供し、Avalonia / System.Drawing / `AppPixelData` との変換を閉じる |
+| `UnifiedBitmapExtensions` | `UnifiedBitmap` の生成・変換拡張。`ToUnifiedBitmap`（`this Bitmap` / `this DrawingBitmap`）と `To～` / `Size` / `Clear(AvaloniaColor)`（`this UnifiedBitmap`）を提供し、Avalonia / System.Drawing との変換を閉じる |
 
 ### 6.7 内部実装（Win 系）
 

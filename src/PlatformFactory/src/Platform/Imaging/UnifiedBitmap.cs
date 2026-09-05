@@ -112,7 +112,7 @@ public sealed class UnifiedBitmap : IDisposable
     /// <param name="x">X 座標（ピクセル）。</param>
     /// <param name="y">Y 座標（ピクセル）。</param>
     /// <returns>(B, G, R, A) のタプル。範囲外は IndexOutOfRangeException。</returns>
-    public unsafe (byte B, byte G, byte R, byte A) GetPixelBgra(int x, int y)
+    public unsafe (byte B, byte G, byte R, byte A) GetPixel(int x, int y)
     {
         ThrowIfDisposed();
         var p = (byte*)_bitmap.GetPixels() + y * _bitmap.RowBytes + x * BytesPerPixel;
@@ -126,7 +126,7 @@ public sealed class UnifiedBitmap : IDisposable
     /// <param name="g">緑成分（0〜255）。</param>
     /// <param name="r">赤成分（0〜255）。</param>
     /// <param name="a">アルファ成分（0〜255）。</param>
-    public unsafe void SetPixelBgra(int x, int y, byte b, byte g, byte r, byte a)
+    public unsafe void SetPixel(int x, int y, byte b, byte g, byte r, byte a)
     {
         ThrowIfDisposed();
         var p = (byte*)_bitmap.GetPixels() + y * _bitmap.RowBytes + x * BytesPerPixel;
@@ -140,9 +140,9 @@ public sealed class UnifiedBitmap : IDisposable
     /// <param name="x">X 座標（ピクセル）。</param>
     /// <param name="y">Y 座標（ピクセル）。</param>
     /// <param name="color">設定する色（BGRA、アルファ乗算済み）。</param>
-    public void SetPixelBgra(int x, int y, (byte b, byte g, byte r, byte a) color)
+    public void SetPixel(int x, int y, (byte b, byte g, byte r, byte a) color)
     {
-        SetPixelBgra(x, y, color.b, color.g, color.r, color.a);
+        SetPixel(x, y, color.b, color.g, color.r, color.a);
     }
 
     /// <summary>全ピクセルを指定色（BGRA）で塗りつぶす。</summary>

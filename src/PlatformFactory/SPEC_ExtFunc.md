@@ -208,7 +208,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 #### 5.2.6 UnifiedBitmap（ピクセル操作）と UnifiedBitmapExtensions（生成・変換）
 
 `UnifiedBitmap` は内部表現（`SKBitmap` BGRA8888・Premul）と、`SkiaSharp` のみに依存するピクセル操作・生成/変換（`Create` / `FromSKBitmap` / `ToSKBitmap`）を提供するコア型です。  
-Avalonia / System.Drawing / WPF / `AppPixelData` 依存の生成・変換は `UnifiedBitmapExtensions`（C# 14 `extension(UnifiedBitmap)` の静的拡張 + `this UnifiedBitmap` のインスタンス拡張）に分離され、コアは画像種別（Avalonia / System.Drawing）に依存しません。  
+Avalonia / System.Drawing 依存の生成・変換は `UnifiedBitmapExtensions`（`this Bitmap` / `this DrawingBitmap` と `this UnifiedBitmap` の拡張メソッド）に分離され、コアは画像種別（Avalonia / System.Drawing）に依存しません。  
 
 **UnifiedBitmap（コア）**:
 
@@ -219,9 +219,9 @@ Avalonia / System.Drawing / WPF / `AppPixelData` 依存の生成・変換は `Un
 | プロパティ | `PixelWidth` / `PixelHeight` | `int` | 幅 / 高さ（ピクセル） |
 | プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（パディング含む） |
 | プロパティ | `IsDisposed` | `bool` | 破棄済みか |
-| ピクセル | `GetPixelBgra` | `(byte B, byte G, byte R, byte A) GetPixelBgra(int x, int y)` | 指定座標の BGRA（アルファ乗算済み）を取得。範囲外は `IndexOutOfRangeException` |
-| ピクセル | `SetPixelBgra` | `void SetPixelBgra(int x, int y, byte b, byte g, byte r, byte a)` | 指定座標の BGRA（アルファ乗算済み）を設定 |
-| ピクセル | `Clear` | `void Clear(SKColor color)` | 全ピクセルを指定色（SKColor）で塗りつぶし |
+| ピクセル | `GetPixel` | `(byte B, byte G, byte R, byte A) GetPixel(int x, int y)` | 指定座標の BGRA（アルファ乗算済み）を取得。範囲外は `IndexOutOfRangeException` |
+| ピクセル | `SetPixel` | `void SetPixel(int x, int y, byte b, byte g, byte r, byte a)` | 指定座標の BGRA（アルファ乗算済み）を設定 |
+| ピクセル | `Clear` | `void Clear(byte b, byte g, byte r, byte a)` | 全ピクセルを指定色（BGRA）で塗りつぶし |
 | 変換 | `ToSKBitmap` | `SKBitmap ToSKBitmap()` | 内部インスタンスを返す（共有参照。呼び出し側で Dispose しない）。`SkiaSharp` のみに依存 |
 | その他 | `Clone` | `UnifiedBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
 
@@ -229,18 +229,14 @@ Avalonia / System.Drawing / WPF / `AppPixelData` 依存の生成・変換は `Un
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 生成 | `FromAvaloniaBitmap` | `static UnifiedBitmap FromAvaloniaBitmap(Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。元は変更されない。`CopyPixels` ベースで高速・可逆） |
-| 生成 | `FromSystemDrawingBitmap` | `static UnifiedBitmap FromSystemDrawingBitmap(DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から生成（複製。**Windows 専用**） |
-| 生成 | `FromAppPixelData` | `static UnifiedBitmap FromAppPixelData(AppPixelData pixelData)` | `AppPixelData`（BGRA8888 バッファ）から生成（複製） |
-| 生成 | `FromWpfBitmapSource` | `static UnifiedBitmap FromWpfBitmapSource(object source)` | WPF `BitmapSource` / `BitmapImage` から生成。**未対応**（`UseWPF` 無効時でも使用可、呼ぶと `PlatformNotSupportedException`） |
+| 生成 | `ToUnifiedBitmap` | `UnifiedBitmap ToUnifiedBitmap(this Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。元は変更されない。`CopyPixels` ベースで高速・可逆） |
+| 生成 | `ToUnifiedBitmap` | `UnifiedBitmap ToUnifiedBitmap(this DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から生成（複製。**Windows 専用**） |
 | 変換 | `Size` | `PixelSize Size()` | 画像サイズ（Avalonia `PixelSize`）。`this UnifiedBitmap` のインスタンス拡張 |
 | 変換 | `ToAvaloniaBitmap` | `Bitmap ToAvaloniaBitmap()` | Avalonia `Bitmap` へ変換（複製を所有。`WriteableBitmap.Lock` ベース） |
 | 変換 | `ToSystemDrawingBitmap` | `DrawingBitmap ToSystemDrawingBitmap()` | `System.Drawing.Bitmap`（Format32bppPArgb）へ変換（複製。**Windows 専用**） |
-| 変換 | `ToAppPixelData` | `AppPixelData ToAppPixelData()` | `AppPixelData`（BGRA8888）へ変換（複製） |
-| 変換 | `ToWpfBitmapImage` | `object ToWpfBitmapImage()` | WPF `BitmapImage` を生成。**未対応**（呼ぶと `PlatformNotSupportedException`） |
 | ピクセル | `Clear` | `void Clear(AvaloniaColor color)` | 全ピクセルを指定色（Avalonia Color）で塗りつぶし（アルファ乗算） |
 
-> `FromSKBitmap` は引数の所有権を譲り受け、本型の破棄時に `Dispose` します。`ToSKBitmap` は内部インスタンスをそのまま返すため呼び出し側で `Dispose` しないでください。`ToAvaloniaBitmap` / `ToSystemDrawingBitmap` / `ToAppPixelData` は複製を返すため呼び出し側が所有します。
+> `FromSKBitmap` は引数の所有権を譲り受け、本型の破棄時に `Dispose` します。`ToSKBitmap` は内部インスタンスをそのまま返すため呼び出し側で `Dispose` しないでください。`ToAvaloniaBitmap` / `ToSystemDrawingBitmap` は複製を返すため呼び出し側が所有します。
 
 ### 5.3 イベント
 
@@ -302,7 +298,8 @@ Avalonia / System.Drawing / WPF / `AppPixelData` 依存の生成・変換は `Un
 | `BitmapExtensions.ExtractRegion` | 矩形切り出し（範囲外は透明パディング。座標はピクセル単位。w/h ≤ 0 は `ArgumentOutOfRangeException`） |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から `Color` を生成（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
 | `AppPixelData` | Avalonia 非依存のピクセルバッファ（BGRA8888・アルファ乗算済み）。`Width` / `Height` / `Stride` / `PixelData`（`byte[]`）を保持し、Avalonia `Bitmap` と `ToBitmap` / `ToPixelData` で相互変換（`Bitmap.CopyPixels` / `WriteableBitmap.Lock` ベースで高速・可逆） |
-| `UnifiedBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、Avalonia `Bitmap` / `System.Drawing.Bitmap` / `SKBitmap` / `AppPixelData` と高速変換。WPF は API のみ用意して未実装例外（`UseWPF` 無効時も使用可） |
+| `UnifiedBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー（コア）。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、`SkiaSharp` のみに依存したピクセル操作と `Create` / `FromSKBitmap` / `ToSKBitmap` を提供 |
+| `UnifiedBitmapExtensions` | `UnifiedBitmap` の生成・変換拡張（`this Bitmap` / `this DrawingBitmap` / `this UnifiedBitmap`）。Avalonia `Bitmap` / `System.Drawing.Bitmap` との相互変換を提供 |
 
 ## 6. 座標系
 
