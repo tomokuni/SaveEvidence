@@ -49,7 +49,7 @@
     - [7.1 ロガーの責務](#71-ロガーの責務)
     - [7.2 ログレベルポリシー](#72-ログレベルポリシー)
       - [ログ定義一覧](#ログ定義一覧)
-    - [7.3 Bitmap / PbBitmapImage 以外の IImage](#73-bitmap--unifiedbitmapimage-以外の-iimage)
+    - [7.3 Bitmap / PbBitmapImage 以外の IImage](#73-bitmap--pbbitmapimage-以外の-iimage)
     - [7.4 出力先の例](#74-出力先の例)
   - [8. ライフサイクルと所有権](#8-ライフサイクルと所有権)
     - [8.1 Sourceの所有権](#81-sourceの所有権)

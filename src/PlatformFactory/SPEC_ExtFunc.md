@@ -23,7 +23,7 @@
       - [5.2.3 ScreenConverter](#523-screenconverter)
       - [5.2.4 Watchdog](#524-watchdog)
       - [5.2.5 ColorExtensions（C# 14 静的拡張メンバー）](#525-colorextensionsc-14-静的拡張メンバー)
-      - [5.2.6 PbBitmap（ピクセル操作）と PbBitmapExtensions（生成・変換）](#526-unifiedbitmapピクセル操作と-unifiedbitmapextensions生成変換)
+      - [5.2.6 PbBitmap（ピクセル操作）と PbBitmapExtensions（生成・変換）](#526-pbbitmapピクセル操作と-pbbitmapextensions生成変換)
     - [5.3 イベント](#53-イベント)
     - [5.4 型](#54-型)
       - [5.4.1 PlatformFactory](#541-platformfactory)

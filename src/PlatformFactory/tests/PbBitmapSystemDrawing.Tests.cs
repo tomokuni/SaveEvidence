@@ -13,10 +13,9 @@ namespace Estable.AvaloniaUI.Platform.Tests;
 /// <remarks>
 /// System.Drawing は Windows 専用のため、本クラスは <see cref="SupportedOSPlatformAttribute"/> で Windows に限定する。<br/>
 /// 変換は LockBits（ネイティブコピー）ベースのため、Avalonia ヘッドレス初期化に依存せず<br/>
-/// <c>[Fact]</c> で並列実行できる（静的共有状態を持たない）。
+/// <c>[Fact]</c> で並列実行できる（各テストが独立した Bitmap を生成し、静的共有状態を持たない）。
 /// </remarks>
 [SupportedOSPlatform("windows")]
-[Collection("PbBitmapNonAvalonia")]
 public class PbBitmapSystemDrawingTests
 {
     /// <summary>単色の System.Drawing.Bitmap（Format32bppPArgb）を生成する。</summary>

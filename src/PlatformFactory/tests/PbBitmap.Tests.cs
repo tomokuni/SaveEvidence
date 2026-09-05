@@ -11,11 +11,10 @@ namespace Estable.AvaloniaUI.Platform.Tests;
 /// </summary>
 /// <remarks>
 /// <see cref="PbBitmap"/> は静的共有状態を持たないため、本テストは Avalonia ヘッドレス初期化に依存しない
-/// （<c>[Collection]</c> により並列実行可能）。<br/>
+/// （コレクションに属さない <c>[Fact]</c> として並列実行される）。<br/>
 /// Avalonia Bitmap の変換（<c>ToAvaloniaWriteableBitmap</c> / 入力側変換）は
 /// ヘッドレス環境が必要なため、別テスト（<see cref="PbBitmapAvaloniaTests"/>）で検証する。
 /// </remarks>
-[Collection("PbBitmapNonAvalonia")]
 public class PbBitmapTests
 {
     /// <summary>指定サイズの空のビットマップを生成する。</summary>
