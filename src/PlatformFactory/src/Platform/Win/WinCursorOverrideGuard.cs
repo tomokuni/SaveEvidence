@@ -50,7 +50,7 @@ internal sealed class WinCursorOverrideGuard : ICursorOverrideGuard
     }
 
     /// <summary>サブクラス化を解除し、元の WndProc を復元する。</summary>
-    public void Detach()
+    private void Detach()
     {
         if (!IsAttached) return;
         if (_originalWndProc != IntPtr.Zero)

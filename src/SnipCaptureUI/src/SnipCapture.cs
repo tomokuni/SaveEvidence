@@ -240,7 +240,6 @@ public sealed class SnipCapture : IDisposable
         var cur = current ?? def;
         var i = input ?? new CaptureSettings();
         return new CaptureSettings(
-            WindowCaptureMode: i.WindowCaptureMode ?? cur.WindowCaptureMode,
             HideOwnerWindow: i.HideOwnerWindow ?? cur.HideOwnerWindow,
             LoupeVisible: i.LoupeVisible ?? cur.LoupeVisible,
             HideBeforeCaptureDelay: i.HideBeforeCaptureDelay ?? cur.HideBeforeCaptureDelay,

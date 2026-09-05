@@ -20,6 +20,9 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 /// </remarks>
 public sealed class AppPixelData
 {
+    /// <summary>BGRA8888 の 1 ピクセルあたりのバイト数。</summary>
+    internal const int BytesPerPixel = 4;
+
     /// <summary>画像の幅（ピクセル）。</summary>
     public int Width { get; }
 
@@ -80,7 +83,7 @@ public sealed class AppPixelData
         var w = bitmap.PixelSize.Width;
         var h = bitmap.PixelSize.Height;
 
-        var stride = w * 4;
+        var stride = w * BytesPerPixel;
         var pixels = new byte[stride * h];
         fixed (byte* p = pixels)
         {

@@ -151,11 +151,11 @@ flowchart TB
 - **責務**:
   - ナビゲーション（キャプチャ / フォルダビュー / Undo 一覧 / 設定）の統括
   - キャプチャ（ScreenSelect / WindowSelect / AreaSelect）の開始と結果の反映
-  - グローバルホットキーの登録・WM_HOTKEY 受信（WndProc サブクラス化）
+  - グローバルホットキーの登録・WM_HOTKEY 受信（`IGlobalHotKeyService` 経由）
   - 設定変更の SnipCapture への即時反映（`ApplySnipCaptureSettings`）
   - ウィンドウ位置・サイズの復元 / 保存
 - **公開メンバー**: `StartSelectionMode(CaptureType)` / `ApplySnipCaptureSettings()` 等
-- **依存**: CapturePage / FolderViewPage / UndoPage / SettingsPage / MainViewModel / SettingsService / SnipCapture / IGlobalHotKeyService / INativeWindowInterceptor / ConfirmDialog
+- **依存**: CapturePage / FolderViewPage / UndoPage / SettingsPage / MainViewModel / SettingsService / SnipCapture / IGlobalHotKeyService / ConfirmDialog
 
 ### 6.2 CapturePage
 

@@ -92,7 +92,6 @@ flowchart TB
         Cpt["CoordinatePort<br/>public sealed<br/>Coordinate/CoordinatePort.cs<br/>（Func 委譲の具象実装）"]
         Scn["ScreenConverter<br/>public static<br/>Coordinate/ScreenConverter.cs"]
         Wdg["Watchdog<br/>public sealed<br/>Watchdog.cs"]
-        Wcm["WindowCaptureMode<br/>public enum"]
         Efr["ElementFinderResults<br/>public readonly record struct"]
         Bmx["BitmapExtensions<br/>public static<br/>Imaging/BitmapExtensions.cs"]
         Win["Win 実装群<br/>internal sealed<br/>Win/（Win32 API・P-Invoke 集約）"]
@@ -192,7 +191,7 @@ flowchart TB
 
 - **分類**: 公開静的クラス（`public static class`）
 - **責務**: コントロールローカル DIP ↔ 画面物理 Pixel の変換と変換ポートの生成
-- **公開メソッド**: `LocalDipToScreen(Visual, Point)` / `ScreenToLocalDip(Visual, PixelPoint)` / `CreateDipPort(PixelPoint, double)` / `CreateVisualDipPort(Visual)`
+- **公開メソッド**: `LocalDipToScreen(Visual, Point)` / `ScreenToLocalDip(Visual, PixelPoint)` / `CreateVisualDipPort(Visual)`
 - **可視性**: public
 - **依存**: `ICoordinatePort`
 
@@ -208,7 +207,6 @@ flowchart TB
 
 | コンポーネント | 説明 |
 | --- | --- |
-| `WindowCaptureMode` enum | `RedrawDirect`（再描画結果を直接取得）/ `ScreenCopy`（画面上の表示をコピー） |
 | `ElementFinderResults` record struct | 検出要素の結果（`Bounds` / `IsDetected` / `Title` / `Handle` / `ClassName`） |
 | `BitmapExtensions.CopyRegionWithPadding` / `ExtractRegion` | 範囲外許容の領域コピー / 矩形切り出し |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |

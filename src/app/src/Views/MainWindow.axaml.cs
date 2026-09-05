@@ -87,16 +87,12 @@ public sealed partial class MainWindow : Window
 
         // グローバルホットキーを登録（ネイティブウィンドウハンドルが必要）
         // 実際の登録は NavigateTo(AppPage.Capture) が行う（キャプチャページ表示時のみ有効）
+        _hotKeyService = hotKeyService;
         var platformHandle = TryGetPlatformHandle();
         if (platformHandle is not null)
         {
-            _hotKeyService = hotKeyService;
             _hotKeyService.Initialize(platformHandle.Handle);
             _hotKeyService.HotKeyPressed += OnHotKeyPressed;
-        }
-        else
-        {
-            _hotKeyService = null!;
         }
 
         // ウィンドウ位置・サイズの復元

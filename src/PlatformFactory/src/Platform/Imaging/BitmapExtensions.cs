@@ -10,10 +10,7 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 /// マネージド byte ループを経由せずに領域コピー・切り出しを行う（高速・可逆）。<br/>
 /// <br/>
 /// ソース範囲外はデスティネーションの初期値（透明）のままとなり、画像端での切り出し時に<br/>
-/// 透明パディングが自然に生成される。<br/>
-/// <br/>
-/// 元は SnipCaptureUI の Imaging 内部実装として提供されていたが、汎用的な<br/>
-/// ピクセル操作のため共有プラットフォーム（本プロジェクト）へ移設した。
+/// 透明パディングが自然に生成される。
 /// </remarks>
 public static class BitmapExtensions
 {
@@ -30,7 +27,7 @@ public static class BitmapExtensions
     /// バッファ初期値（透明）のままとする（クリップ + オフセットコピー）。<br/>
     /// 呼び出し側でバッファをゼロ初期化しておく必要がある。<br/>
     /// </remarks>
-    public static unsafe void CopyRegionWithPadding(
+    public static void CopyRegionWithPadding(
         this Bitmap src,
         PixelRect srcRect,
         IntPtr dst, int dstStride, int dstBufferSize,
@@ -47,7 +44,7 @@ public static class BitmapExtensions
         var interH = interB - interY;
         if (interW <= 0 || interH <= 0) return;
 
-        var dstOffset = (dstY + (interY - srcRect.Y)) * dstStride + (dstX + (interX - srcRect.X)) * 4;
+        var dstOffset = (dstY + (interY - srcRect.Y)) * dstStride + (dstX + (interX - srcRect.X)) * AppPixelData.BytesPerPixel;
         src.CopyPixels(
             new PixelRect(interX, interY, interW, interH),
             dst + dstOffset,
@@ -63,7 +60,7 @@ public static class BitmapExtensions
     /// 仮想スクリーンからの確定領域切り出し（AreaSelect 確定時）で使用する。<br/>
     /// 結果は WriteableBitmap（Avalonia 標準）で返し、中間バッファ（byte[]）を介さない。<br/>
     /// </remarks>
-    public static unsafe Bitmap ExtractRegion(this Bitmap src, PixelRect rect)
+    public static Bitmap ExtractRegion(this Bitmap src, PixelRect rect)
     {
         var w = rect.Width;
         var h = rect.Height;

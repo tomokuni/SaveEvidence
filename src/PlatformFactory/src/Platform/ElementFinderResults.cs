@@ -7,7 +7,7 @@ namespace Estable.AvaloniaUI.Platform;
 /// <param name="Bounds">検出した要素の矩形（画面物理座標）。</param>
 /// <param name="IsDetected">要素を検出できたかどうか。</param>
 /// <param name="Title">検出した要素の表示名。ウィンドウ検出時はウィンドウタイトル、スクリーン検出時は「Screen {インデックス}」。未検出時は null。</param>
-/// <param name="Handle">検出した要素の識別子（ウィンドウ検出時のみ設定。将来の PrintWindow 等のキャプチャで使用。スクリーンは座標キャプチャのため不要）。</param>
+/// <param name="Handle">検出したウィンドウの識別子（ウィンドウ検出時のみ設定。スクリーン検出時・未検出時は null）。</param>
 /// <param name="ClassName">検出したウィンドウのクラス名（ウィンドウ検出時のみ設定。スクリーン検出時・未検出時は null）。</param>
 /// <remarks>
 /// 指定された位置（画面物理座標）のスクリーン / 最前面ウィンドウを判定した結果を保持する不変データ。<br/>

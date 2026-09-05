@@ -59,7 +59,7 @@ internal sealed class CropSession(
         new() { ZIndex = 50, ClipToBounds = true, Mode = FadeMaskDragRectMode.Crop };
 
     /// <summary>カーソル上書き抑止（Crop 中の十字カーソル維持）。</summary>
-    private readonly ICursorOverrideGuard? _cursorGuard = PlatformFactory.CreateCursorOverrideGuard();
+    private readonly ICursorOverrideGuard _cursorGuard = PlatformFactory.CreateCursorOverrideGuard();
 
     /// <summary>設定（全メンバー non-null）。実行中に <see cref="ApplySettings"/> で更新できる。</summary>
     private CaptureSettings _settings = settings.ToNonNull();
@@ -129,7 +129,7 @@ internal sealed class CropSession(
             _selectionOverlay.CancelRequested -= OnCancelEvent;
             _selectionOverlay.ZoomRequested -= OnZoomRequested;
             _selectionOverlay.AttachScrollViewer(null); // 明示注入した ScrollViewer 連携を解除
-            _cursorGuard?.Dispose();
+            _cursorGuard.Dispose();
             _selectionOverlay.ClearLoupe();
             _parentPanel.Children.Remove(_selectionOverlay);
             hostWindow.Cursor = Cursor.Default;
@@ -148,7 +148,7 @@ internal sealed class CropSession(
         hostWindow.Deactivated += OnDeactivated;
 
         // カーソル上書き抑止（WM_SETCURSOR による十字カーソルの上書き防止）
-        _cursorGuard?.Attach(hostWindow);
+        _cursorGuard.Attach(hostWindow);
         _selectionOverlay.FocusDragRect();
 
         return tcs.Task;
@@ -195,7 +195,7 @@ internal sealed class CropSession(
         _selectionOverlay.SizeLabelOverrideProvider = () =>
             _selectionOverlay.HasSelection ? FormatSizeLabel(_selectionOverlay.SelectionRect) : null;
         // 座標変換ポート: ドメイン = 論理座標（元画像ピクセル）。ズーム・スクロール・レターボックスは
-        // プレビュー表示状態（Bounds / Stretch / RenderTransform）と TranslatePoint（スクロール込みの表示位置）から導出する。
+        // プレビュー表示状態（Fit 判定・レイアウト）と TranslatePoint（スクロール込みの表示位置）から導出する。
         // ① プレビュー内部DIP ↔ 論理（ImageLayout は呼び出し毎にレイアウトを再評価 = ズーム・サイズ変更に追従）
         // ② 親パネルDIP ↔ プレビュー内部DIP（PreviewOrigin = レイアウト位置 + スクロール。ScrollOffset で平行移動）
         // 2 段階の変換を CoordinatePort.Compose で 1 ポートに合成し、DragRect / FadeMask / Loupe の 3 コントロールへ一括分配する。

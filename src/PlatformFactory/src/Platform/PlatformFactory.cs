@@ -9,19 +9,18 @@ namespace Estable.AvaloniaUI.Platform;
 /// 提供機能: 実行時プラットフォーム（Windows / 他環境）に応じて、プラットフォーム固有の既定実装を生成する。<br/>
 /// <br/>
 /// 特徴:<br/>
-/// - Windows: Win32 API ベースの実装（<see cref="WinCursorService"/> / <see cref="WinElementFinder"/> / <see cref="WinCursorOverrideGuard"/> / <see cref="WinCaptureService"/> / <see cref="WinWindowService"/>）を生成する。<br/>
-/// - 他環境（Linux / macOS）: NoOp 実装（<see cref="NoOpCursorService"/> / <see cref="NoOpElementFinder"/> / <see cref="NoOpCaptureService"/> / <see cref="NoOpWindowService"/>）を生成する。
+/// - Windows: Win32 API ベースの実装（<see cref="WinCursorService"/> / <see cref="WinElementFinder"/> / <see cref="WinCursorOverrideGuard"/> / <see cref="WinCaptureService"/> / <see cref="WinWindowService"/> / <see cref="WinGlobalHotKeyService{T}"/>）を生成する。<br/>
+/// - 他環境（Linux / macOS）: NoOp 実装（<see cref="NoOpCursorService"/> / <see cref="NoOpElementFinder"/> / <see cref="NoOpCaptureService"/> / <see cref="NoOpWindowService"/> / <see cref="NoOpGlobalHotKeyService{T}"/>）を生成する。
 ///   Win32 DLL 依存を回避し、例外なく安全に動作するフォールバック。<br/>
 /// <br/>
 /// 実装の詳細:<br/>
-/// - 各プロジェクト（DragRectControl / SnipCaptureUI）が持っていた
-///   <c>OperatingSystem.IsWindows()</c> による分岐を本クラスに集約し、プラットフォーム判定を一元化する（DRY）。<br/>
-/// - 生成された既定実装は <see cref="ICursorService"/> / <see cref="IElementFinder"/> / <see cref="ICursorOverrideGuard"/> / <see cref="ICaptureService"/> / <see cref="IWindowService"/> の抽象で返し、
+/// - <c>OperatingSystem.IsWindows()</c> による分岐を本クラスに集約し、プラットフォーム判定を一元化する（DRY）。<br/>
+/// - 生成された既定実装は <see cref="ICursorService"/> / <see cref="IElementFinder"/> / <see cref="ICursorOverrideGuard"/> / <see cref="ICaptureService"/> / <see cref="IWindowService"/> / <see cref="IGlobalHotKeyService{T}"/> の抽象で返し、
 ///   具象型への依存を排除する（DIP）。<br/>
 /// - プラットフォーム実装（Win 系 / NoOp 系）は本ファクトリが唯一の生成経路となるため、internal に隠蔽できる（公開 API 最小化）。<br/>
 /// <br/>
 /// 注意点:<br/>
-/// - ホスト（上位 AP）が独自実装を注入する場合は、本ファクトリを使わず SetXxx メソッドで差し替える。<br/>
+/// - ホスト（上位 AP）が独自実装を注入する場合は、本ファクトリを使わず各インターフェースへ直接注入する（DIP）。<br/>
 /// </remarks>
 public static class PlatformFactory
 {

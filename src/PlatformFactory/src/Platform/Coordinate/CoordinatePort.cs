@@ -63,8 +63,7 @@ public sealed class CoordinatePort : ICoordinatePort
     /// <param name="factorProvider">DIP → ドメインのスケール倍率を提供する関数（呼び出し毎に評価。0 以下の場合は 1.0 として扱う）。</param>
     /// <returns>Forward = ローカル DIP → ドメイン（倍率で乗算）、Inverse = ドメイン → ローカル DIP（倍率で除算）のポート。</returns>
     /// <remarks>
-    /// DragRectControl のドメイン座標系（AreaSelect: 仮想スクリーンピクセル = ウィンドウローカル DIP × DisplayScaling）に
-    /// 合わせた方向のスケーリングポートを提供する。<br/>
+    /// ドメイン座標（例: 画面物理ピクセル = ローカル DIP × DisplayScaling）に合わせた方向のスケーリングポートを提供する。<br/>
     /// 倍率は関数で提供されるため、DPI スケール等の動的変化を反映できる（<see cref="Scale(double)"/> は固定値・方向が逆）。<br/>
     /// Bounds は未指定（null = 無制限）。
     /// </remarks>

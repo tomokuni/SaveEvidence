@@ -141,7 +141,6 @@ PlatformFactory/
 │       ├── IWindowService.cs       # ウィンドウ操作抽象
 │       ├── IGlobalHotKeyService.cs # グローバルホットキー抽象
 │       ├── Watchdog.cs             # UI ハング監視（public）
-│       ├── WindowCaptureMode.cs    # キャプチャモード enum
 │       ├── ElementFinderResults.cs # 要素検出結果 record
 │       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
 │       ├── PlatformLog.cs          # ログ定義（internal）

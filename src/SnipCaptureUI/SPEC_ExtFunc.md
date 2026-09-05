@@ -158,7 +158,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 `Image` と `SourceBounds` は常に同時に null または同時に非 null です。
 
 - エラー時: 両方 null
-- キャンセル時: 両方 0x0（`BitmapFactory.CreateEmpty()` と `PixelRect(0, 0, 0, 0)`）
+- キャンセル時: 両方 0x0（`null` と `PixelRect(0, 0, 0, 0)`）
 - 成功時: 両方 non-null
 
 `SourceBounds` は仮想画面座標（複数モニターを包含する座標空間）のため、プライマリモニターが (0,0) にない場合 X / Y は負値になり得ます。
@@ -244,11 +244,10 @@ var result = await _snipCapture.StartCaptureAsync(CaptureType.AreaSelect, window
 - 初期設定（コンストラクタ）: null = SnipCaptureUI のデフォルト値として扱う。
 - 設定適用（Settings の setter）: null = 現在の設定値を維持する（部分更新）。
 
-**キャプチャ動作（4 項目）**:
+**キャプチャ動作（3 項目）**:
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `WindowCaptureMode` | `WindowCaptureMode?` | ウィンドウキャプチャ方式（RedrawDirect / ScreenCopy） |
 | `HideOwnerWindow` | `bool?` | キャプチャ時にオーナーウィンドウを非表示にするか |
 | `LoupeVisible` | `bool?` | ルーペの表示状態 |
 | `HideBeforeCaptureDelay` | `TimeSpan?` | ウィンドウ非表示後の DWM 反映待機時間 |

@@ -11,7 +11,11 @@ namespace Estable.AvaloniaUI.Platform.NoOp;
 internal sealed class NoOpGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T : notnull
 {
     /// <inheritdoc/>
-    public event Action<T>? HotKeyPressed;
+    public event Action<T>? HotKeyPressed
+    {
+        add { }
+        remove { }
+    }
 
     /// <inheritdoc/>
     public void Initialize(IntPtr hWnd)

@@ -12,10 +12,7 @@ namespace Estable.AvaloniaUI.Platform;
 /// OS 依存の画面物理変換（<see cref="TopLevel"/> の RenderScaling / 画面上位置 / PointToScreen / PointToClient）を
 /// 集約する唯一の場所である。<br/>
 /// ローカル DIP ↔ 画面物理の双方向変換は <see cref="CreateDipPort"/> / <see cref="CreateVisualDipPort"/> で<br/>
-/// <see cref="ICoordinatePort"/> として提供する。<br/>
-/// <br/>
-/// 元は DragRectControl の内部実装（DragRectScreenConverter）として提供されていたが、<br/>
-/// 汎用的な画面座標変換のため共有プラットフォーム（本プロジェクト）の Coordinate へ集約した。
+/// <see cref="ICoordinatePort"/> として提供する。
 /// </remarks>
 public static class ScreenConverter
 {
@@ -55,10 +52,9 @@ public static class ScreenConverter
     /// <returns>Forward = 物理→DIP、Inverse = DIP→物理のポート。</returns>
     /// <remarks>
     /// <c>Forward(p) = (p - origin) / renderScaling</c>、<c>Inverse(p) = p × renderScaling + origin</c> を提供する。<br/>
-    /// Loupe の画面物理位置計算・カーソル位置の DIP 変換など、<see cref="TopLevel"/> 由来の<br/>
-    /// スケーリングと原点を持つ座標変換を <see cref="ICoordinatePort"/> として集約する。
+    /// <see cref="TopLevel"/> 由来のスケーリングと原点を持つ座標変換を <see cref="ICoordinatePort"/> として集約する。
     /// </remarks>
-    public static ICoordinatePort CreateDipPort(PixelPoint origin, double renderScaling)
+    internal static ICoordinatePort CreateDipPort(PixelPoint origin, double renderScaling)
     {
         double s = renderScaling > 0 ? renderScaling : 1.0;
         return new CoordinatePort(
@@ -72,8 +68,7 @@ public static class ScreenConverter
     /// <returns>Forward = 画面物理→コントロールローカル DIP、Inverse = コントロールローカル DIP→画面物理のポート。</returns>
     /// <remarks>
     /// <see cref="TopLevel"/> を呼び出し毎に解決するため、ウィンドウ移動・スクロールの動的変化を反映できる。<br/>
-    /// ビジュアルツリー未接続時は等価変換（画面座標 = ローカル DIP）する。<br/>
-    /// nudge のカーソル位置変換（DragRectControl）等で使用する（単一実装・DRY 原則）。
+    /// ビジュアルツリー未接続時は等価変換（画面座標 = ローカル DIP）する。
     /// </remarks>
     public static ICoordinatePort CreateVisualDipPort(Visual source)
         => new CoordinatePort(

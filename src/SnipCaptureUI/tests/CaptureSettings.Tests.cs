@@ -42,7 +42,6 @@ public class CaptureSettingsTests
         Assert.Equal(4, s.LoupeZoomLevel);
         // 枠線の既定は DarkGray（設定画面の選択枠の色と一致）
         Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), s.BorderColor);
-        Assert.NotNull(s.WindowCaptureMode);
         Assert.True(s.LoupeVisible);
         // 追加メンバーのデフォルト値
         Assert.Equal(Colors.White, s.HandleColor);

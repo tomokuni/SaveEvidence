@@ -54,7 +54,7 @@
 
 ## 2. 目的
 
-`PlatformFactory` は、上位 AP（DragRectControl / SnipCaptureUI 等）が持っていた `OperatingSystem.IsWindows()` によるプラットフォーム分岐を一元化し、プラットフォーム固有実装（Win32 API ベース）とフォールバック実装（NoOp）を抽象（インターフェース）経由で提供します。
+`PlatformFactory` は、実行時プラットフォーム（Windows / 他環境）に応じたプラットフォーム分岐を一元化し、プラットフォーム固有実装（Win32 API ベース）とフォールバック実装（NoOp）を抽象（インターフェース）経由で提供します。
 
 次の機能を提供します。
 
@@ -126,8 +126,8 @@ ICoordinatePort composed = CoordinatePort.Compose(layout, scroll);
 var screenPt = ScreenConverter.LocalDipToScreen(control, localDip); // ローカル DIP → 画面物理
 var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物理 → ローカル DIP
 
-// ローカル DIP ↔ 画面物理の変換ポートを生成（Forward = 物理 → DIP）
-ICoordinatePort dipPort = ScreenConverter.CreateDipPort(origin, renderScaling);
+// コントロールローカル DIP ↔ 画面物理の動的変換ポート（TopLevel を毎回解決）
+ICoordinatePort dipPort = ScreenConverter.CreateVisualDipPort(control);
 ```
 
 ### 4.4 UI ハング監視（Watchdog）
@@ -186,7 +186,6 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | --- | --- | --- |
 | `LocalDipToScreen` | `PixelPoint LocalDipToScreen(Visual source, Point local)` | コントロールローカル DIP 座標系 → 画面物理 Pixel（`TopLevel.PointToScreen` 委譲） |
 | `ScreenToLocalDip` | `Point ScreenToLocalDip(Visual source, PixelPoint screen)` | 画面物理 Pixel → コントロールローカル DIP 座標系 |
-| `CreateDipPort` | `ICoordinatePort CreateDipPort(PixelPoint origin, double renderScaling)` | ローカル DIP 座標系 ↔ 画面物理 Pixel の変換ポート（Forward = 物理 → DIP） |
 | `CreateVisualDipPort` | `ICoordinatePort CreateVisualDipPort(Visual source)` | コントロールローカル DIP 座標系 ↔ 画面物理 Pixel の動的ポート（TopLevel を毎回解決） |
 
 #### 5.2.4 Watchdog
@@ -209,7 +208,7 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 
 ### 5.4 型
 
-公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `WindowCaptureMode` / `ElementFinderResults` / `BitmapExtensions` です。
+公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` です。
 プラットフォーム固有実装（Win / NoOp 系）と内部ユーティリティ（`CoordinateMath` / `PlatformLog`）はすべて internal（非公開）です。公開 API はプラットフォーム非依存型のみを使用します。
 
 #### 5.4.1 PlatformFactory
@@ -258,7 +257,6 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 
 | 型 | 説明 |
 | --- | --- |
-| `WindowCaptureMode` enum | `RedrawDirect`（再描画結果を直接取得）/ `ScreenCopy`（画面上の表示をコピー） |
 | `ElementFinderResults` record struct | 検出要素の結果（`Bounds`（画面物理 Pixel）/ `IsDetected` / `Title` / `Handle` / `ClassName`） |
 | `BitmapExtensions.CopyRegionWithPadding` | 範囲外許容で領域コピー（クリップ + オフセット、範囲外は透明のまま。座標はピクセル単位） |
 | `BitmapExtensions.ExtractRegion` | 矩形切り出し（範囲外は透明パディング。座標はピクセル単位。w/h ≤ 0 は `ArgumentOutOfRangeException`） |

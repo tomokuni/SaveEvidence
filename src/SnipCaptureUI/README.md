@@ -138,7 +138,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 | プロジェクト | 利用機能 |
 | --- | --- |
-| `PlatformFactory` | `PlatformFactory`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` / `ICoordinatePort` / `CoordinatePort` / `ScreenConverter` / `Watchdog` / `BitmapFactory` 等 |
+| `PlatformFactory` | `PlatformFactory`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` / `ICoordinatePort` / `CoordinatePort` / `ScreenConverter` / `Watchdog` 等 |
 | `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包する複合コントロール。公開 API は本コントロールのみ） |
 
 SnipCaptureUI は内包コントロール（`DragRectControl` / `FadeMaskControl` / `LoupeControl`）を直接参照しない（窓口は `FadeMaskDragRectControl` のみ。公開型のカプセル化）。

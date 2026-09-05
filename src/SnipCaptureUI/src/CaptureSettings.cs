@@ -1,15 +1,11 @@
 using Avalonia.Media;
 using Estable.AvaloniaUI.Platform;
-// パラメータ名 WindowCaptureMode と型名が衝突するため、型側に別名を定義する
-using WindowCaptureModeEnum = Estable.AvaloniaUI.Platform.WindowCaptureMode;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
 /// <summary>キャプチャの外観および拡大鏡の設定値を保持するレコード型。</summary>
-/// <param name="WindowCaptureMode">ウィンドウキャプチャ方式。null はデフォルト値。</param>
 /// <param name="HideOwnerWindow">キャプチャ時にオーナーウィンドウを非表示にするか。</param>
 /// <param name="LoupeVisible">ルーペの表示状態。</param>
-
 /// <param name="HideBeforeCaptureDelay">ウィンドウ非表示後の DWM 反映待機時間。</param>
 /// <param name="MinSelectionSize">選択矩形の最小サイズ。単位はモードにより異なる: AreaSelect では物理ピクセル、Crop では論理座標（元画像ピクセル）。</param>
 /// <param name="BorderColor">選択枠線の色（不透明度は色のアルファに統合）。</param>
@@ -59,7 +55,6 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 /// 実行時状態（選択矩形・ハイライト矩形等）と Source / CenterPoint 等の入力は本型の対象外（セッションが管理）。
 /// </remarks>
 public sealed record CaptureSettings(
-    WindowCaptureMode? WindowCaptureMode = null,
     bool? HideOwnerWindow = null,
     bool? LoupeVisible = null,
     TimeSpan? HideBeforeCaptureDelay = null,
@@ -132,7 +127,6 @@ public sealed record CaptureSettings(
     /// <remarks>null は「部分更新のための入力」としてのみ使用され、適用時は本メソッドでデフォルト値に置き換える。</remarks>
     public CaptureSettings ToNonNull()
         => new(
-            WindowCaptureMode: WindowCaptureMode ?? WindowCaptureModeEnum.ScreenCopy,
             HideOwnerWindow: HideOwnerWindow ?? true,
             LoupeVisible: LoupeVisible ?? true,
             HideBeforeCaptureDelay: HideBeforeCaptureDelay ?? TimeSpan.FromMilliseconds(50),

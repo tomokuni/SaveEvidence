@@ -88,7 +88,7 @@ flowchart TB
     end
     subgraph Dep["外部依存プロジェクト"]
         FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectSettings<br/>（DragRect + FadeMask + Loupe を内包）"]
-        PF["PlatformFactory<br/>ICaptureService / IWindowService / IElementFinder<br/>ICoordinatePort / CoordinatePort / ScreenConverter<br/>Watchdog / ICursorOverrideGuard / BitmapFactory"]
+        PF["PlatformFactory<br/>ICaptureService / IWindowService / IElementFinder<br/>ICoordinatePort / CoordinatePort / ScreenConverter<br/>Watchdog / ICursorOverrideGuard"]
     end
     subgraph FMCInternal["FadeMaskDragRect の内包コントロール（外部からは非公開・internal）"]
         DR["DragRectControl<br/>DragRectControl（選択矩形 UI）"]
@@ -166,7 +166,7 @@ flowchart TB
   - 非アクティブ化 / Close → キャンセル
   - ウォッチドッグ（UI ハング時退避）
 - **可視性**: internal（クラス。コンストラクタ等のシグネチャは public）
-- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ PlatformFactory（ICaptureService / IWindowService / IElementFinder / Watchdog / ScreenConverter / BitmapFactory）
+- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ PlatformFactory（ICaptureService / IWindowService / IElementFinder / Watchdog / ScreenConverter）
 
 ### 6.5 公開データ型
 

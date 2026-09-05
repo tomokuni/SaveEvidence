@@ -55,36 +55,28 @@ internal sealed class WinElementFinder : IElementFinder
     {
         var selfPid = WinNative.GetCurrentProcessId();
         ElementFinderResults result = default;
-        var found = false;
 
         WinNative.EnumWindows((hWnd, _) =>
         {
-            if (IsEligibleWindow(hWnd, selfPid, out var candidates))
+            if (IsEligibleWindow(hWnd, selfPid, out var candidate) && candidate.Bounds.Contains(screenPoint))
             {
-                foreach (var candidate in candidates)
-                {
-                    if (candidate.Bounds.Contains(screenPoint))
-                    {
-                        result = candidate;
-                        found = true;
-                        return false; // 最初の一致で列挙を停止（ホットパス最適化）
-                    }
-                }
+                result = candidate;
+                return false; // 最初の一致で列挙を停止（ホットパス最適化）
             }
             return true;
         }, IntPtr.Zero);
 
-        return found ? result : default;
+        return result;
     }
 
-    /// <summary>ウィンドウを選択対象とするか判定し、対象なら検出結果の候補を返す（<see cref="ListWindows"/> と共用）。</summary>
+    /// <summary>ウィンドウを選択対象とするか判定し、対象なら検出結果を返す（<see cref="ListWindows"/> と共用）。</summary>
     /// <param name="hWnd">ウィンドウハンドル。</param>
     /// <param name="selfPid">自プロセスの PID（自ウィンドウの除外用）。</param>
-    /// <param name="candidates">選択対象の検出結果（通常は 0 または 1 件）。対象外なら空。</param>
+    /// <param name="candidate">選択対象の検出結果。対象外なら default。</param>
     /// <returns>選択対象なら true。</returns>
-    private bool IsEligibleWindow(IntPtr hWnd, uint selfPid, out IReadOnlyList<ElementFinderResults> candidates)
+    private bool IsEligibleWindow(IntPtr hWnd, uint selfPid, out ElementFinderResults candidate)
     {
-        candidates = [];
+        candidate = default;
         WinNative.GetWindowThreadProcessId(hWnd, out var pid);
         if (pid == selfPid) return false;
         if (!WinNative.IsWindowVisible(hWnd)) return false;
@@ -101,7 +93,7 @@ internal sealed class WinElementFinder : IElementFinder
         var className = GetWindowClassName(hWnd);
         if (IsExcludedFrame(className, title)) return false;
 
-        candidates = [new ElementFinderResults(visibleRect, true, Title: title, Handle: handle, ClassName: className)];
+        candidate = new ElementFinderResults(visibleRect, true, Title: title, Handle: handle, ClassName: className);
         return true;
     }
 
@@ -150,8 +142,8 @@ internal sealed class WinElementFinder : IElementFinder
         // 除外判定は IsEligibleWindow（FindWindowUnderCursor と共用・単一所有）に委譲する。
         WinNative.EnumWindows((hWnd, _) =>
         {
-            if (IsEligibleWindow(hWnd, selfPid, out var candidates))
-                results.AddRange(candidates);
+            if (IsEligibleWindow(hWnd, selfPid, out var candidate))
+                results.Add(candidate);
             return true;
         }, IntPtr.Zero);
 
@@ -192,7 +184,7 @@ internal sealed class WinElementFinder : IElementFinder
     /// スタートメニュー / タスクビュー等のシステムオーバーレイも <c>ApplicationFrameWindow</c> だがタイトルが空のため、<br/>
     /// 「タイトル空」を条件に除外する（タイトル付きの実際の UWP アプリは選択対象に残す）。
     /// </remarks>
-    internal static bool IsExcludedFrame(string className, string title)
+    internal static bool IsExcludedFrame(string className, string? title)
         => className == "ApplicationFrameWindow" && string.IsNullOrEmpty(title);
 
     /// <summary>タスクバー / デスクトップウィンドウのクラス名かどうかを判定する（純粋関数・テスト容易）。</summary>

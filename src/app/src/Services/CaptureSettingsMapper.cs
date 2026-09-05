@@ -7,8 +7,7 @@ namespace app.Services;
 /// <summary>Settings → CaptureSettings の変換を提供する。</summary>
 /// <remarks>
 /// SnipCapture へ反映するキャプチャ設定の変換を一元化する（MainWindow から委譲）。<br/>
-/// <c>WindowCaptureMode</c> は渡さない（キャプチャの実処理は仮想スクリーン全体から切り出す方式のため、<br/>
-/// 常に ScreenCopy で動作する。SnipCaptureUI 側のデフォルトに委ねる）。<br/>
+
 /// <c>SizeLabelOverride</c> / <c>DisplayScaleScaling</c> はコードから動的に設定されるため、<br/>
 /// 設定画面の固定値は使用しない（CropSession が Provider を動的設定 / OverlayWindow.Highlight が
 /// DisplayScaleScaling を動的設定）。ここでは null（自動生成）と 0（自動 = Scaling と同値）を渡す。

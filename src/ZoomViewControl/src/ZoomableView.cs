@@ -104,7 +104,7 @@ internal sealed class ZoomableView : Panel
     /// <summary>表示する画像（ズーム対象）。設定すると Fit 表示にリセットする。</summary>
     /// <remarks>
     /// 内部 <c>Image</c> の <c>Source</c> を委譲する。<br/>
-    /// <c>Image</c> そのもの（<see cref="ImageControl"/>）は Crop セッション等で対象画像として必要な場合にのみ取得する。
+    /// <c>Image</c> そのもの（<see cref="ImageControl"/>）はテスト専用のアクセサであり、ホストは本プロパティを使用する。
     /// </remarks>
     public IImage? Source
     {

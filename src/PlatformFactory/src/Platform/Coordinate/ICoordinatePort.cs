@@ -8,7 +8,7 @@ namespace Estable.AvaloniaUI.Platform;
 /// 具象実装はホスト（上位 AP）が変換関数と境界を提供して生成する（<see cref="CoordinatePort"/>）。<br/>
 /// <br/>
 /// 用途例:<br/>
-/// - DragRectControl: ドメインピクセル ↔ コントロールローカル DIP（Forward = DIP→ドメイン / Inverse = ドメイン→DIP）<br/>
+/// - ドメインピクセル ↔ コントロールローカル DIP（Forward = DIP→ドメイン / Inverse = ドメイン→DIP）<br/>
 /// - 画像プレビュー: 元画像ピクセル（論理座標） ↔ 表示 DIP（Forward = DIP→論理 / Inverse = 論理→DIP）<br/>
 /// <br/>
 /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>

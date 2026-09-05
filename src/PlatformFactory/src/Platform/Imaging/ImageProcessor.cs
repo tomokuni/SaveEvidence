@@ -6,11 +6,20 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 /// <remarks>
 /// <see cref="AppPixelData"/> に対してピクセル配列レベルで操作を行う（UI フレームワーク非依存・状態なし）。<br/>
 /// ウィンドウ領域検出は、画像四隅の背景色を基準に、同じ色が連続する領域を除去する方式を採用する。<br/>
-/// 色の類似判定は RGB 各成分の差分合計が 30 未満を「類似」とみなす。<br/>
+/// 色の類似判定は RGB 各成分の差分合計が <see cref="ColorSimilarThreshold"/> 未満を「類似」とみなす。<br/>
 /// 全メソッドが静的であり、インスタンス化は不要（他フレームワーク・テスト環境への移植容易性を確保）。<br/>
 /// </remarks>
 public static class ImageProcessor
 {
+    /// <summary>背景色の類似判定におけるサンプル数（走査範囲を均等分割する個数）。</summary>
+    private const int SampleCount = 20;
+
+    /// <summary>色の類似判定閾値（RGB 各成分の差分合計）。未満なら「類似」とみなす。</summary>
+    private const int ColorSimilarThreshold = 30;
+
+    /// <summary>ウィンドウ領域検出の最小サイズ（縦・横ピクセル）。未満は検出失敗とみなす。</summary>
+    private const int MinDetectSize = 10;
+
     /// <summary>画像から指定された矩形領域を切り出す。</summary>
     /// <param name="source">元画像。</param>
     /// <param name="bounds">切り出す矩形領域（画像座標ピクセル単位）。</param>
@@ -33,15 +42,15 @@ public static class ImageProcessor
         var cropH = Math.Min(dstH, srcH - cropY);
         if (cropW <= 0 || cropH <= 0) return null;
 
-        var dstStride = dstW * 4;
+        var dstStride = dstW * AppPixelData.BytesPerPixel;
         var dstPixels = new byte[dstStride * dstH];
 
         for (var y = 0; y < cropH; y++)
         {
-            var srcRowStart = (cropY + y) * srcStride + cropX * 4;
+            var srcRowStart = (cropY + y) * srcStride + cropX * AppPixelData.BytesPerPixel;
             var dstRowStart = y * dstStride;
-            srcPixels.AsSpan(srcRowStart, cropW * 4)
-                     .CopyTo(dstPixels.AsSpan(dstRowStart, cropW * 4));
+            srcPixels.AsSpan(srcRowStart, cropW * AppPixelData.BytesPerPixel)
+                     .CopyTo(dstPixels.AsSpan(dstRowStart, cropW * AppPixelData.BytesPerPixel));
         }
 
         return new AppPixelData(dstW, dstH, dstStride, dstPixels);
@@ -52,7 +61,7 @@ public static class ImageProcessor
     /// <returns>検出されたウィンドウ領域を切り出した新しい画像データ。検出できない場合は元画像のコピー。</returns>
     /// <remarks>
     /// 四隅の色と同じ色が続く領域を背景とみなして除去する方式。<br/>
-    /// 検出結果が 10x10 ピクセル未満の場合は、検出失敗として元画像のコピーを返す。<br/>
+    /// 検出結果が縦横 <see cref="MinDetectSize"/> ピクセル未満の場合は、検出失敗として元画像のコピーを返す。<br/>
     /// </remarks>
     public static AppPixelData? DetectAndCropWindow(AppPixelData source)
     {
@@ -63,7 +72,7 @@ public static class ImageProcessor
         if (bounds == fullRect)
         {
             // 元画像のコピーを返す
-            var stride = source.Width * 4;
+            var stride = source.Width * AppPixelData.BytesPerPixel;
             var pixels = source.PixelData.ToArray();
             return new AppPixelData(source.Width, source.Height, stride, pixels);
         }
@@ -78,9 +87,7 @@ public static class ImageProcessor
     /// 処理フロー:<br/>
     /// 1. 四隅のピクセル色を取得し、最頻色を背景色として決定<br/>
     /// 2. 上・下・左・右から背景色と異なるピクセルが現れる境界を探索<br/>
-    /// 3. 検出領域が10x10ピクセル未満の場合は検出失敗として画像全体を返す<br/>
-    /// <br/>
-    /// 最適化施策: 20ピクセル間隔のサンプリング走査により、全ピクセル検査を回避。
+    /// 3. 検出領域が縦横 <see cref="MinDetectSize"/> ピクセル未満の場合は検出失敗として画像全体を返す<br/>
     /// </remarks>
     public static PixelRect DetectWindowBounds(AppPixelData source)
     {
@@ -112,7 +119,7 @@ public static class ImageProcessor
         var detectedWidth = right - left + 1;
         var detectedHeight = bottom - top + 1;
 
-        if (detectedWidth < 10 || detectedHeight < 10 ||
+        if (detectedWidth < MinDetectSize || detectedHeight < MinDetectSize ||
             (left == 0 && top == 0 && right == width - 1 && bottom == height - 1))
         {
             return new PixelRect(0, 0, width, height);
@@ -124,7 +131,7 @@ public static class ImageProcessor
     /// <summary>指定座標のピクセルから ARGB キー値（RGB下位24bit）を取得する。</summary>
     private static int GetPixelArgb(ReadOnlyMemory<byte> pixels, int stride, int x, int y)
     {
-        var off = y * stride + x * 4;
+        var off = y * stride + x * AppPixelData.BytesPerPixel;
         var span = pixels.Span;
         // BGRA ストレージ: span[off]=B, span[off+1]=G, span[off+2]=R, span[off+3]=A
         var r = span[off + 2];
@@ -170,11 +177,10 @@ public static class ImageProcessor
     }
 
     /// <summary>指定された行の全サンプルピクセルが指定色に類似しているかを判定する。</summary>
-    /// <remarks>20ピクセル間隔でサンプリングし、全ピクセル検査を回避する。</remarks>
     private static bool IsRowColor(ReadOnlyMemory<byte> pixels, int stride, int y,
         byte bgR, byte bgG, byte bgB, int w, int startX, int endX)
     {
-        var step = Math.Max(1, (endX - startX + 1) / 20);
+        var step = Math.Max(1, (endX - startX + 1) / SampleCount);
         for (var x = startX; x <= endX; x += step)
         {
             var argb = GetPixelArgb(pixels, stride, x, y);
@@ -187,11 +193,10 @@ public static class ImageProcessor
     }
 
     /// <summary>指定された列の全サンプルピクセルが指定色に類似しているかを判定する。</summary>
-    /// <remarks>20ピクセル間隔でサンプリングし、全ピクセル検査を回避する。</remarks>
     private static bool IsColColor(ReadOnlyMemory<byte> pixels, int stride, int x,
         byte bgR, byte bgG, byte bgB, int top, int bottom)
     {
-        var step = Math.Max(1, (bottom - top + 1) / 20);
+        var step = Math.Max(1, (bottom - top + 1) / SampleCount);
         for (var y = top; y <= bottom; y += step)
         {
             var argb = GetPixelArgb(pixels, stride, x, y);
@@ -203,12 +208,12 @@ public static class ImageProcessor
         return true;
     }
 
-    /// <summary>2色が類似しているかを判定する（RGB 各成分の差分合計が 30 未満）。</summary>
+    /// <summary>2色が類似しているかを判定する（RGB 各成分の差分合計が閾値未満）。</summary>
     private static bool IsColorSimilar(byte r1, byte g1, byte b1, byte r2, byte g2, byte b2)
     {
         var dr = Math.Abs(r1 - r2);
         var dg = Math.Abs(g1 - g2);
         var db = Math.Abs(b1 - b2);
-        return dr + dg + db < 30;
+        return dr + dg + db < ColorSimilarThreshold;
     }
 }
