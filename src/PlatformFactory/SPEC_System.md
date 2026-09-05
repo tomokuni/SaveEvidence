@@ -94,12 +94,15 @@ flowchart TB
         Wdg["Watchdog<br/>public sealed<br/>Watchdog.cs"]
         Efr["ElementFinderResults<br/>public readonly record struct"]
         Bmx["BitmapExtensions<br/>public static<br/>Imaging/BitmapExtensions.cs"]
+        Apd["AppPixelData<br/>public sealed<br/>Imaging/AppPixelData.cs<br/>（Avalonia 非依存ピクセルバッファ）"]
+        Ub["UnifiedBitmap<br/>public sealed<br/>Imaging/UnifiedBitmap.cs<br/>（複数 Bitmap 種別ラッパー・IDisposable）"]
         Win["Win 実装群<br/>internal sealed<br/>Win/（Win32 API・P-Invoke 集約）"]
         NoOp["NoOp 実装群<br/>internal sealed<br/>NoOp/（シングルトン）"]
         Mth["CoordinateMath<br/>internal static<br/>Coordinate/CoordinateMath.cs"]
     end
     subgraph Dep["外部依存"]
         Av["Avalonia 12.1<br/>Bitmap / PixelPoint / PixelRect / TopLevel"]
+        Sk["SkiaSharp<br/>SKBitmap (BGRA8888・Premul)"]
         Lg["Microsoft.Extensions.Logging.Abstractions"]
         Sd["System.Drawing.Common"]
     end
@@ -130,6 +133,10 @@ flowchart TB
     Cpt --> Mth
     Wdg --> IWd
     Scn --> ICd
+    Bmx --> Apd
+    Ub --> Apd
+    Ub --> Sk
+    Ub --> Av
     Win --> Av
     Win --> Sd
     DR -->|"ファクトリ / インターフェース / 座標ポート"| Fac
@@ -210,6 +217,8 @@ flowchart TB
 | `ElementFinderResults` record struct | 検出要素の結果（`Bounds` / `IsDetected` / `Title` / `Handle` / `ClassName`） |
 | `BitmapExtensions.CopyRegionWithPadding` / `ExtractRegion` | 範囲外許容の領域コピー / 矩形切り出し |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |
+| `AppPixelData` | Avalonia 非依存のピクセルバッファ（BGRA8888・アルファ乗算済み）。表示境界では Avalonia `Bitmap` を使用し、ピクセル演算では本型（`byte[]`）で行うハイブリッド方針の中核 |
+| `UnifiedBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、Avalonia / System.Drawing / SkiaSharp / `AppPixelData` と高速変換。静的共有状態を持たないため並列・大規模利用に適する |
 
 ### 6.7 内部実装（Win 系）
 
