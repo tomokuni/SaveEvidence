@@ -113,9 +113,9 @@ public sealed partial class CapturePage : UserControl
                 case nameof(MainViewModel.PreviewImage):
                     OnPreviewImageChanged();
                     // PreviewImage（PbBitmap）を表示境界で Avalonia 画像（IImage）へ変換して ZoomView へ設定する。
-                    // WriteableBitmap を生成せず、PbBitmap を内包した PbBitmapImage を設定する（Skia 直描画）。
+                    // WriteableBitmap を生成せず、PbBitmap を内包した PbBitmapAvaloniaImage を設定する（Skia 直描画）。
                     // 所有権は ViewModel（PreviewImage）が保持し、本コントロールは共有参照のみ（Dispose しない）。
-                    ZoomableView.Source = _viewModel.PreviewImage is { } bmp ? new PbBitmapImage(bmp) : null;
+                    ZoomableView.Source = _viewModel.PreviewImage is { } bmp ? new PbBitmapAvaloniaImage(bmp) : null;
                     break;
                 case nameof(MainViewModel.SaveFolderPath):
                     // 保存先フォルダの変更を保存ボタンの ToolTip に反映する

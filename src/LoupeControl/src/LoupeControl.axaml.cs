@@ -652,12 +652,12 @@ public sealed partial class LoupeControl : UserControl
     // 出力（internal）
     // ====================================================================
 
-    /// <summary>表示用の画像アダプタ（PbBitmapImage）。所有権は本コントロールが保持し、外部へ公開しない。</summary>
+    /// <summary>表示用の画像アダプタ（PbBitmapAvaloniaImage）。所有権は本コントロールが保持し、外部へ公開しない。</summary>
     /// <remarks>
-    /// <see cref="PART_Image"/> の Source へ設定する <see cref="PbBitmapImage"/> を保持する。<br/>
+    /// <see cref="PART_Image"/> の Source へ設定する <see cref="PbBitmapAvaloniaImage"/> を保持する。<br/>
     /// <c>WriteableBitmap</c> を生成せず Skia 直描画するため、破棄は <see cref="ReleaseBitmap"/> で行う。
     /// </remarks>
-    private PbBitmapImage? _loupeImage;
+    private PbBitmapAvaloniaImage? _loupeImage;
 
     /// <summary>内部描画結果（PbBitmap）。所有権は本コントロールが保持し、外部へ公開しない。</summary>
     /// <remarks><see cref="_loupeImage"/> が内包する PbBitmap を返す（共有参照。破棄はしないこと）。</remarks>
@@ -870,10 +870,10 @@ public sealed partial class LoupeControl : UserControl
         IBrush? checkerColorA, IBrush? checkerColorB, IBrush? frameColor,
         int frameWidth, double scaling)
     {
-        if (source is not null and not Bitmap and not PbBitmapImage)
+        if (source is not null and not Bitmap and not PbBitmapAvaloniaImage)
         {
             throw new NotSupportedException(
-                $"LoupeControl は {source.GetType().FullName} をサポートしていません。Bitmap または PbBitmapImage を指定してください。");
+                $"LoupeControl は {source.GetType().FullName} をサポートしていません。Bitmap または PbBitmapAvaloniaImage を指定してください。");
         }
 
         var checkerPixelSize = Math.Max(1, (int)Math.Ceiling(checkerSize * scaling));
@@ -890,7 +890,7 @@ public sealed partial class LoupeControl : UserControl
             return await DrawCheckerboardOnly();
         }
 
-        // 抽出元の PbBitmap を取得する（Bitmap は複製、PbBitmapImage は共有参照）。
+        // 抽出元の PbBitmap を取得する（Bitmap は複製、PbBitmapAvaloniaImage は共有参照）。
         // 破棄済み Bitmap は PixelSize 参照で検出し、市松模様のみにフォールバックする（ObjectDisposedException 防止）。
         PbBitmap? sourceBitmap;
         if (source is Bitmap sourceBitmapImage)
@@ -907,7 +907,7 @@ public sealed partial class LoupeControl : UserControl
 
             sourceBitmap = sourceBitmapImage.ToPbBitmap();
         }
-        else if (source is PbBitmapImage unifiedImage)
+        else if (source is PbBitmapAvaloniaImage unifiedImage)
         {
             sourceBitmap = unifiedImage.Bitmap;
         }
@@ -957,7 +957,7 @@ public sealed partial class LoupeControl : UserControl
         }
         finally
         {
-            // Bitmap 由来の場合のみ複製を破棄する（PbBitmapImage の共有参照は破棄しない）。
+            // Bitmap 由来の場合のみ複製を破棄する（PbBitmapAvaloniaImage の共有参照は破棄しない）。
             if (source is Bitmap)
             {
                 sourceBitmap.Dispose();
@@ -976,7 +976,7 @@ public sealed partial class LoupeControl : UserControl
     /// </remarks>
     private void SetLoupeBitmap(PbBitmap bmp, int size)
     {
-        // 前回の画像アダプタ（PbBitmapImage）を破棄してから置き換える（破棄済み Bitmap の残留防止）。
+        // 前回の画像アダプタ（PbBitmapAvaloniaImage）を破棄してから置き換える（破棄済み Bitmap の残留防止）。
         _loupeImage?.Dispose();
         Width = size;
         Height = size;
@@ -985,9 +985,9 @@ public sealed partial class LoupeControl : UserControl
         RaiseRendered(bmp, size);
 
         // イベント後の PbBitmap（ホストのオーバーレイ描画を含む）を表示境界で Avalonia 画像として反映する。
-        // WriteableBitmap を生成せず、PbBitmap を内包した IImage（PbBitmapImage）を Source に設定する
+        // WriteableBitmap を生成せず、PbBitmap を内包した IImage（PbBitmapAvaloniaImage）を Source に設定する
         // （Skia 直描画・ゼロコピー）。
-        _loupeImage = new PbBitmapImage(bmp);
+        _loupeImage = new PbBitmapAvaloniaImage(bmp);
         PART_Image?.Source = _loupeImage;
     }
 }

@@ -1,5 +1,3 @@
-using Avalonia.Headless.XUnit;
-using Estable.AvaloniaUI.LineDetection;
 using Estable.AvaloniaUI.Platform.Imaging;
 using System.Text.Json;
 using Xunit;
@@ -12,9 +10,9 @@ namespace Estable.AvaloniaUI.LineDetection.Tests;
 /// 検出結果から復元した矩形を JSON の <c>GroundTruthWindows[0].Bounds</c>（ドメイン座標・排他座標）と<br/>
 /// 許容誤差 0 pixel で照合する。<br/>
 /// パブリック API（<c>LogicLineDetector.Detect</c>）経由で検証する。<br/>
-/// PNG の読み込みは <see cref="TestHelper.LoadBitmap"/>（OpenCV → <see cref="WriteableBitmap"/>）を使用する。<br/>
-/// <b>ヘッドレス制約</b>: Avalonia.Headless では <see cref="WriteableBitmap"/> のピクセル操作が不安定なため、<br/>
-/// 本テスト（0px 一致の厳密検証）は<b>実環境（Skia 初期化済みの GUI）</b>でのみ成立する。<br/>
+/// PNG の読み込みは <see cref="TestHelper.LoadBitmap"/>（OpenCV → <see cref="PbBitmap"/>）を使用する。<br/>
+/// <b>PbBitmap 採用理由</b>: ヘッドレスでは <c>WriteableBitmap</c> のピクセル保持が不完全なため、<br/>
+/// <see cref="PbBitmap"/>（Skia 内部・安定）で読み込むことで 0px 一致の厳密検証をヘッドレスでも成立させる。<br/>
 /// <b>対象外の画像</b>: 複数ウィンドウ・エッジ接触ケースの <c>20260903_*</c> は<br/>
 /// 検出精度の改善課題（後続タスク）であり、本テスト（回帰検証）の範囲外とする。
 /// </remarks>
@@ -29,14 +27,13 @@ public sealed class LogicLineDetectorDatasetTests
     /// <summary>dataset の全画像について、検出結果と正解が一致することを検証する。</summary>
     /// <remarks>
     /// 1. dataset 内の各 PNG に対応する JSON を読み込む<br/>
-    /// 2. PNG を <see cref="TestHelper.LoadBitmap"/>（OpenCV → <see cref="WriteableBitmap"/>）として読み込む<br/>
+    /// 2. PNG を <see cref="TestHelper.LoadBitmap"/>（OpenCV → <see cref="PbBitmap"/>）として読み込む<br/>
     /// 3. <see cref="LogicLineDetector.Detect"/> を実行する<br/>
     /// 4. 検出結果（垂直 2 本・水平 2 本）から外側の境界（排他座標）を復元する<br/>
     /// 5. 復元した境界を <c>GroundTruthWindows[0].Bounds</c> と 0px 誤差で比較する<br/>
-    /// <b>Skip</b>: Avalonia.Headless では <see cref="WriteableBitmap"/> のピクセル保持が不完全なため、<br/>
-    /// 厳密な 0px 検証は<b>実環境（Skia 初期化済みの GUI）</b>でのみ成立する（<see cref="LogicLineDetectorTests"/> が簡易パターンを検証）。
+    /// <see cref="PbBitmap"/> はヘッドレスでもピクセルを安定保持するため、<c>[Fact]</c> で並列実行できる。
     /// </remarks>
-    [AvaloniaFact(Skip = "Avalonia.Headless では WriteableBitmap のピクセル保持が不完全なため、実環境（GUI）で 0px 検証する")]
+    [Fact]
     public void Detect_全画像が正解と一致する()
     {
         Assert.True(Directory.Exists(s_datasetDir), $"dataset フォルダがありません: {s_datasetDir}");
@@ -60,8 +57,7 @@ public sealed class LogicLineDetectorDatasetTests
             var gt = LoadGroundTruth(jsonPath);
             Assert.NotNull(gt);
 
-            using var image = TestHelper.LoadBitmap(png);
-            using var unified = image.ToPbBitmap();
+            using var unified = TestHelper.LoadBitmap(png);
             var detector = new LogicLineDetector();
             var results = detector.Detect(unified);
 

@@ -260,7 +260,7 @@ internal sealed partial class OverlayWindow : Window
         // ソース: ドメイン（仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）は
         // ウィンドウ Position = 仮想スクリーン原点のため、既に仮想スクリーン Bitmap 上の座標と一致する。
         // 仮想スクリーン原点（_virtualScreenOrigin）を更に引くとマルチモニタ（原点が (0,0) でない）でずれるため引かない。
-        // ルーペの拡大元画像（Source）は SetVirtualScreen で一度だけ設定済み（PbBitmapImage）のため、
+        // ルーペの拡大元画像（Source）は SetVirtualScreen で一度だけ設定済み（PbBitmapAvaloniaImage）のため、
         // ここでは中心位置の更新のみ行う（MouseMove 毎の全画面コピー生成と破棄済み Bitmap 残留を防ぐ）。
         SelectionOverlay.SetLoupePosition(domainPos);
     }

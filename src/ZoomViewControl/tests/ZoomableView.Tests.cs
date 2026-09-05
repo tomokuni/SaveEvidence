@@ -5,9 +5,8 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Threading;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.ZoomView.Tests;
@@ -23,9 +22,13 @@ namespace Estable.AvaloniaUI.ZoomView.Tests;
 [Collection("AvaloniaHeadless")]
 public class ZoomableViewTests
 {
-    /// <summary>テスト用の画像（1000x500）を生成する。</summary>
-    private static WriteableBitmap CreateBitmap(int w, int h)
-        => new(new PixelSize(w, h), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+    /// <summary>テスト用の画像（指定サイズ・白の単色）を生成する。</summary>
+    private static PbBitmapAvaloniaImage CreateBitmap(int w, int h)
+    {
+        var bmp = PbBitmap.Create(w, h);
+        bmp.Clear(b: 255, g: 255, r: 255, a: 255);
+        return new PbBitmapAvaloniaImage(bmp);
+    }
 
     /// <summary>テスト用の ZoomableView を生成する（画像 1000x500 を設定・400x200 に配置）。</summary>
     private static ZoomableView CreateView()

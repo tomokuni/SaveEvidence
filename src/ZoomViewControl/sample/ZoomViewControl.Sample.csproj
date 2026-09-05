@@ -23,6 +23,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\ZoomViewControl.csproj" />
+    <!-- サンプルは PbBitmap（テスト画像生成・Skia 直描画表示）を使用するため、PlatformFactory を参照する -->
+    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
   </ItemGroup>
 
 </Project>

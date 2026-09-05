@@ -11,7 +11,7 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 /// <b>設計</b>: 本型は内部表現（<see cref="SKBitmap"/> BGRA8888・Premul）と、ビットマップ種別に依存しない
 /// ピクセル操作のみを提供する。<br/>
 /// Avalonia / System.Drawing / WPF 依存の生成・変換（<c>Create</c> / <c>From～</c> / <c>To～</c>）は
-/// <see cref="PbBitmapExtensions"/>（<c>extension(PbBitmap)</c>）が担う。<br/>
+/// <see cref="PbBitmapAvaloniaExtensions"/> / <see cref="PbBitmapDrawingExtensions"/>（<c>extension(PbBitmap)</c>）が担う。<br/>
 /// <br/>
 /// <b>ピクセル形式</b>: BGRA8888（アルファ乗算済み、System.Drawing の Format32bppPArgb 相当）。<br/>
 /// <b>所有権</b>: 内部 SKBitmap の所有権は本型が保持する。<br/>
@@ -71,6 +71,22 @@ public sealed class PbBitmap : IDisposable
     /// <returns>生成されたビットマップ。</returns>
     public static PbBitmap Create(int width, int height)
         => new(new SKBitmap(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul)));
+
+    /// <summary>指定サイズのビットマップ（BGRA8888・Premul）を生成し、全ピクセルを指定色で塗りつぶす。</summary>
+    /// <param name="width">幅（ピクセル）。正の値。</param>
+    /// <param name="height">高さ（ピクセル）。正の値。</param>
+    /// <param name="color">塗りつぶし色（BGRA。アルファ乗算済み）。</param>
+    /// <returns>生成されたビットマップ（全ピクセルが指定色）。</returns>
+    /// <remarks>
+    /// <see cref="Create(int, int)"/> で生成後に <see cref="Clear(Color)"/> を呼ぶのと等価。<br/>
+    /// 生成と一括塗りつぶしを1回で行う（テスト・サンプルで多用する単色 Bitmap 生成を簡便にする）。
+    /// </remarks>
+    public static PbBitmap Create(int width, int height, Color color)
+    {
+        var bitmap = Create(width, height);
+        bitmap.Clear(color);
+        return bitmap;
+    }
 
     /// <summary>SKBitmap からラッパーを生成する（引数の所有権を譲り受ける）。</summary>
     /// <param name="bitmap">内部表現となる SKBitmap（BGRA8888・Premul）。</param>

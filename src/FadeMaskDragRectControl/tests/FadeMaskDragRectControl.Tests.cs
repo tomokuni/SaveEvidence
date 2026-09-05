@@ -23,9 +23,6 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
 [Collection("AvaloniaHeadless")]
 public class FadeMaskDragRectControlTests
 {
-    /// <summary>テスト用の Bitmap（10x10）を生成する。</summary>
-    private static WriteableBitmap CreateBitmap()
-        => new(new PixelSize(10, 10), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
     // ====================================================================
     // コンストラクタ・内部構造
     // ====================================================================
@@ -552,7 +549,7 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
 
         // Source 設定後に再呼び出しすると表示される
-        control.Loupe.Source = CreateBitmap();
+        control.Loupe.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Transparent);
         control.SetLoupePosition(new Point(960, 540));
         Assert.True(control.Loupe.IsVisible);
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
@@ -750,7 +747,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
         window.Show();
-        control.Loupe.Source = CreateBitmap();
+        control.Loupe.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Transparent);
 
         FadeMaskDragRectPointEventArgs? received = null;
         control.LoupePositionMoved += (_, e) => received = e;
@@ -876,7 +873,7 @@ public class FadeMaskDragRectControlTests
     public void SetLoupeSource_ルーペのSourceが設定される()
     {
         var control = new FadeMaskDragRectControl();
-        var bitmap = CreateBitmap();
+        var bitmap = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Transparent);
 
         control.SetLoupeSource(bitmap);
 
@@ -889,7 +886,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = control };
         window.Show();
-        control.SetLoupeSource(CreateBitmap());
+        control.SetLoupeSource(PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Transparent));
         control.SetLoupePosition(new Point(10, 10));
         Assert.True(control.Loupe.IsVisible);
 
@@ -970,46 +967,6 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
     // ルーペの選択矩形破線オーバーレイ（Rendered イベント経由・ホスト側描画）
     // ====================================================================
-
-    /// <summary>選択矩形破線オーバーレイが領域内にピクセルを描画することを検証する。</summary>
-    [AvaloniaFact]
-    public void DrawSelectionRectOverlay_選択矩形の辺に破線が描画される()
-    {
-        // 白の 40x40 Bitmap に選択矩形（10,10,20,20）をズーム 4 で描画する
-        var bitmap = CreateSolidBitmap(40, 40);
-        var selectionRect = new Rect(10, 10, 20, 20);
-        var captureTopLeft = new Point(5, 5);
-        var scale = 4.0;
-
-        FadeMaskDragRectControl.DrawSelectionRectOverlay(
-            bitmap, selectionRect, captureTopLeft, scale, Colors.Black, Colors.Transparent);
-
-        // 上辺（ドメイン y=10 → ルーペ (10-5)*4=20）のピクセルが描画されていることを検証する
-        var pixel = bitmap.GetPixel(20, 20);
-
-        // 白背景（255）より暗い = 破線が描画されている
-        Assert.True(pixel.B < 255, $"選択矩形の辺に線が描画されていない: B={pixel.B}");
-    }
-
-    /// <summary>ズーム 1 倍以下では破線を描画しないことを検証する。</summary>
-    [AvaloniaFact]
-    public void DrawSelectionRectOverlay_ズーム1倍では描画しない()
-    {
-        var bitmap = CreateSolidBitmap(40, 40);
-
-        // scale < 2 → 何も描画しない（例外なく早期リターンする）
-        FadeMaskDragRectControl.DrawSelectionRectOverlay(
-            bitmap, new Rect(10, 10, 20, 20), new Point(5, 5), 1.0, Colors.Black, Colors.Transparent);
-
-        // scale < 2 の早期リターンで例外なく実行されることを検証する
-        Assert.Equal(40, bitmap.Size.Width);
-    }
-
-    /// <summary>テスト用の単色 Bitmap（白）を生成する。</summary>
-    private static PbBitmap CreateSolidBitmap(int width, int height)
-    {
-        var bitmap = PbBitmap.Create(width, height);
-        bitmap.Clear(b: 255, g: 255, r: 255, a: 255);
-        return bitmap;
-    }
+    // 選択矩形破線オーバーレイの描画は純粋な静的メソッド（DrawSelectionRectOverlay）のため、
+    // PbBitmap のみを使用し、ヘッドレス不要で並列実行できるテスト（FadeMaskDragRectOverlayTests）で検証する。
 }

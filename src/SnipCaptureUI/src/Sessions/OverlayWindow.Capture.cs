@@ -220,13 +220,13 @@ internal sealed partial class OverlayWindow
         _virtualScreenOrigin = origin;
         _log.LogVirtualScreen(origin.X, origin.Y, bitmap?.Size.Width ?? 0, bitmap?.Size.Height ?? 0);
 
-        // 固定背景画像（VirtualScreenImage）とルーペの拡大元画像（Source）へ同一の PbBitmapImage を設定する。
-        // WriteableBitmap を生成せず、PbBitmap を内包した IImage（PbBitmapImage）を Source に設定する
+        // 固定背景画像（VirtualScreenImage）とルーペの拡大元画像（Source）へ同一の PbBitmapAvaloniaImage を設定する。
+        // WriteableBitmap を生成せず、PbBitmap を内包した IImage（PbBitmapAvaloniaImage）を Source に設定する
         // （Skia 直描画・ゼロコピー。破棄は _virtualScreenBitmap の Dispose が一元管理する）。
-        PbBitmapImage? displayImage = bitmap is null ? null : new PbBitmapImage(bitmap);
+        PbBitmapAvaloniaImage? displayImage = bitmap is null ? null : new PbBitmapAvaloniaImage(bitmap);
         VirtualScreenImage.Source = displayImage;
 
-        // ルーペの Source を設定する（同一の PbBitmapImage を共有する）。
+        // ルーペの Source を設定する（同一の PbBitmapAvaloniaImage を共有する）。
         // Source 未設定の間はルーペが表示されない（市松模様防止）ため、ここで Source を設定し、
         // 既にドラッグ中（CenterPoint 設定済み）なら SetLoupePosition を再呼び出しして表示を開始する。
         if (displayImage is not null && _captureType == CaptureType.AreaSelect)

@@ -73,7 +73,7 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     /// <remarks>
     /// CopyFromScreen は GDI の同期コールであり、DWM 応答不能時にはブロックする可能性がある。<br/>
     /// 呼び出し側（SelectionSession）はバックグラウンド実行とタイムアウトで保護する。<br/>
-    /// <c>Format32bppPArgb</c>（アルファ乗算済み・不透明）で生成し、<see cref="PbBitmapExtensions.ToPbBitmap(System.Drawing.Bitmap)"/>
+    /// <c>Format32bppPArgb</c>（アルファ乗算済み・不透明）で生成し、<see cref="PbBitmapDrawingExtensions.ToPbBitmap(System.Drawing.Bitmap)"/>
     /// が PArgb を直接読み取れるようにする（アルファ強制不要）。
     /// </remarks>
     private DrawingBitmap CaptureSdBitmap(Rectangle bounds)

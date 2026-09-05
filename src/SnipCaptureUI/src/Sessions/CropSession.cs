@@ -212,9 +212,9 @@ internal sealed class CropSession(
                 return new Vector(origin.X, origin.Y);
             })));
         // ルーペソース（元画像）。LoupeControl.Source は IImage のため、PbBitmap を内包した IImage
-        // （PbBitmapImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
+        // （PbBitmapAvaloniaImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
         // sourceImage の所有権は呼び出し側にあり、本セッションでは破棄しない（Dispose を呼ばない）。
-        _selectionOverlay.SetLoupeSource(new PbBitmapImage(sourceImage));
+        _selectionOverlay.SetLoupeSource(new PbBitmapAvaloniaImage(sourceImage));
     }
 
     /// <summary>プレビューの表示サイズ（RenderTransform 込み）を親パネル上の座標差から導出する。</summary>

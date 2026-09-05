@@ -458,7 +458,7 @@ public sealed partial class CropViewControl : Panel
     private static void StampPixel(PbBitmap bitmap, int x, int y, Color color, int half, bool horizontal)
     {
         // 水平辺は Y 固定で太さ方向が X、垂直辺は X 固定で太さ方向が Y になる。
-        // 太さ分だけ固定座標の両側へ広げて描画する（範囲外は PbBitmapExtensions.TrySetPixel が無視）。
+        // 太さ分だけ固定座標の両側へ広げて描画する（範囲外は PbBitmapAvaloniaExtensions.TrySetPixel が無視）。
         var fixedCoord = horizontal ? y : x;
         for (var d = -half; d <= half; d++)
         {

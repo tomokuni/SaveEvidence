@@ -245,7 +245,7 @@ public partial class LineCanvasView : UserControl
                 continue;
             }
 
-            // 中心点 + 法線方向へ太さ分のピクセルを塗る（範囲外は PbBitmapExtensions.TrySetPixel が無視）
+            // 中心点 + 法線方向へ太さ分のピクセルを塗る（範囲外は PbBitmapAvaloniaExtensions.TrySetPixel が無視）
             for (int n = -half; n <= half; n++)
             {
                 int ox = (int)Math.Round(px + ux * n);

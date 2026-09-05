@@ -93,27 +93,27 @@ public sealed partial class UndoPage : ViewModePageBase
             });
 
         // 1. Redo スタック（新しい順。_redoStack[0] が現在に最も近い未来）
-        // UndoStack は PbBitmap を保持し、表示境界で PbBitmapImage（IImage）へ変換する。
+        // UndoStack は PbBitmap を保持し、表示境界で PbBitmapAvaloniaImage（IImage）へ変換する。
         // 変換した IImage は UndoListItem が参照する（所有権は UndoStack / ViewModel が保持）。
         var redo = _undoStack.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
-            AddItem(new PbBitmapImage(redo[i]), $"Redo {i + 1}", isCurrent: false);
+            AddItem(new PbBitmapAvaloniaImage(redo[i]), $"Redo {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
         var currentImage = MainViewModel.PreviewImage;
         if (currentImage is not null)
         {
-            // 表示境界で IImage（PbBitmapImage）へ変換してサムネイルへ設定する。
-            AddItem(new PbBitmapImage(currentImage), "現在", isCurrent: true);
+            // 表示境界で IImage（PbBitmapAvaloniaImage）へ変換してサムネイルへ設定する。
+            AddItem(new PbBitmapAvaloniaImage(currentImage), "現在", isCurrent: true);
         }
 
         // 3. Undo スタック（新しい順。_stack[^1] が現在の直前）
         var undo = _undoStack.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
-            AddItem(new PbBitmapImage(undo[i]), $"Undo {undo.Count - i}", isCurrent: false);
+            AddItem(new PbBitmapAvaloniaImage(undo[i]), $"Undo {undo.Count - i}", isCurrent: false);
         }
 
         _viewModel.ItemCount = items.Count;
@@ -137,8 +137,8 @@ public sealed partial class UndoPage : ViewModePageBase
         {
             var tempFile = Path.Combine(Path.GetTempPath(), $"SaveEvidence_undo_{Guid.NewGuid():N}.png");
 
-            // サムネイルは IImage（PbBitmapImage）のため、保存用に Avalonia Bitmap へ一時変換する。
-            if (item.Thumbnail is PbBitmapImage unifiedImage && unifiedImage.Bitmap is { } bitmap)
+            // サムネイルは IImage（PbBitmapAvaloniaImage）のため、保存用に Avalonia Bitmap へ一時変換する。
+            if (item.Thumbnail is PbBitmapAvaloniaImage unifiedImage && unifiedImage.Bitmap is { } bitmap)
             {
                 using var av = bitmap.ToAvaloniaWriteableBitmap();
                 av.Save(tempFile, PngBitmapEncoderOptions.Default);

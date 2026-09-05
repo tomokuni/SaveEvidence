@@ -35,6 +35,25 @@ public class PbBitmapTests
     }
 
     [Fact]
+    public void Create_色付きで指定サイズを生成し全ピクセルが塗りつぶされる()
+    {
+        // 赤・不透明（BGRA=0,0,255,255）で生成し、全ピクセルが指定色になることを検証する。
+        var color = System.Drawing.Color.FromArgb(255, 255, 0, 0); // A=255, R=255, G=0, B=0
+        using var bmp = PbBitmap.Create(6, 8, color);
+
+        // サイズが指定どおり
+        Assert.Equal(6, bmp.Size.Width);
+        Assert.Equal(8, bmp.Size.Height);
+
+        // 全ピクセルが指定色（BGRA）になる
+        var px = bmp.GetPixel(3, 4);
+        Assert.Equal((byte)0, px.B);
+        Assert.Equal((byte)0, px.G);
+        Assert.Equal((byte)255, px.R);
+        Assert.Equal((byte)255, px.A);
+    }
+
+    [Fact]
     public void Create_破棄後はIsDisposedが真になる()
     {
         var bmp = Create();

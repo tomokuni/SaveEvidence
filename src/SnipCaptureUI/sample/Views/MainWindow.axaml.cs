@@ -31,8 +31,8 @@ public sealed partial class MainWindow : Window
     /// <summary>ビューモデル。</summary>
     private readonly MainWindowViewModel _vm = new();
 
-    /// <summary>Crop プレビュー用のダミー画像。</summary>
-    private WriteableBitmap? _previewBitmap;
+    /// <summary>Crop プレビュー用のダミー画像（PbBitmapAvaloniaImage。Skia 直描画・ゼロコピー表示）。</summary>
+    private PbBitmapAvaloniaImage? _previewBitmap;
 
     /// <summary>MainWindow を初期化する。</summary>
     public MainWindow()
@@ -133,7 +133,13 @@ public sealed partial class MainWindow : Window
         }
 
         _vm.AddLog("[App] Crop を開始します（プレビュー上でドラッグ選択 → Enter / ダブルクリックで確定）。");
-        using var unified = _previewBitmap.ToPbBitmap();
+        var unified = _previewBitmap.Bitmap;
+        if (unified is null)
+        {
+            _vm.AddLog("[App] プレビュー画像の内部ビットマップがありません。");
+            return;
+        }
+
         var rect = await _capture.StartCropAsync(PreviewCropView.ZoomView, this, unified);
         _vm.UpdateCropResult(rect);
         _vm.AddLog(rect is { Width: > 0, Height: > 0 }
@@ -177,52 +183,44 @@ public sealed partial class MainWindow : Window
     /// <summary>グリッド付きのダミー画像を生成する（Crop プレビュー用）。</summary>
     /// <param name="width">画像の幅。</param>
     /// <param name="height">画像の高さ。</param>
-    /// <returns>生成した WriteableBitmap。</returns>
+    /// <returns>生成した <see cref="PbBitmapAvaloniaImage"/>（<see cref="IImage"/> として表示できる）。</returns>
     /// <remarks>
     /// 白地に 100px 間隔の薄いグリッドと、中央に色付きの矩形を描画する（サイズ感・座標の確認用）。<br/>
-    /// ピクセル操作は unsafe で行い、BGRA32 形式で書き込む。
+    /// <b>PbBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、
+    /// <see cref="PbBitmapAvaloniaImage"/>（Skia 直描画・ゼロコピー）として表示できる。
     /// </remarks>
-    private static unsafe WriteableBitmap CreateDummyBitmap(int width, int height)
+    private static PbBitmapAvaloniaImage CreateDummyBitmap(int width, int height)
     {
-        var bitmap = new WriteableBitmap(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
-        using (var fb = bitmap.Lock())
+        var bitmap = PbBitmap.Create(width, height);
+
+        for (int y = 0; y < height; y++)
         {
-            var buffer = (byte*)fb.Address;
-            int stride = fb.RowBytes;
-
-            for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
             {
-                for (int x = 0; x < width; x++)
+                byte r = 255;
+                byte g = 255;
+                byte b = 255;
+
+                // 100px 間隔のグリッド線（薄いグレー）
+                if (x % 100 == 0 || y % 100 == 0)
                 {
-                    byte r = 255;
-                    byte g = 255;
-                    byte b = 255;
-
-                    // 100px 間隔のグリッド線（薄いグレー）
-                    if (x % 100 == 0 || y % 100 == 0)
-                    {
-                        r = 220;
-                        g = 220;
-                        b = 220;
-                    }
-
-                    // 中央の色付き矩形（サイズ感の確認用）
-                    if (x is >= 200 and < 440 && y is >= 100 and < 300)
-                    {
-                        r = 120;
-                        g = 180;
-                        b = 240;
-                    }
-
-                    int offset = y * stride + x * 4;
-                    buffer[offset + 0] = b;
-                    buffer[offset + 1] = g;
-                    buffer[offset + 2] = r;
-                    buffer[offset + 3] = 255;
+                    r = 220;
+                    g = 220;
+                    b = 220;
                 }
+
+                // 中央の色付き矩形（サイズ感の確認用）
+                if (x is >= 200 and < 440 && y is >= 100 and < 300)
+                {
+                    r = 120;
+                    g = 180;
+                    b = 240;
+                }
+
+                bitmap.SetPixel(x, y, b, g, r, 255);
             }
         }
 
-        return bitmap;
+        return new PbBitmapAvaloniaImage(bitmap);
     }
 }

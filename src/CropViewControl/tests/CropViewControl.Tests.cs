@@ -1,9 +1,8 @@
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Estable.AvaloniaUI.FadeMaskDragRect;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.CropView.Tests;
@@ -18,30 +17,10 @@ namespace Estable.AvaloniaUI.CropView.Tests;
 [Collection("AvaloniaHeadless")]
 public class CropViewTests
 {
-    /// <summary>テスト用の単色 Bitmap（10x10・青）を生成する。</summary>
-    private static Bitmap CreateBitmap()
-    {
-        var bitmap = new WriteableBitmap(new PixelSize(10, 10), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
-        using var locked = bitmap.Lock();
-        var stride = locked.RowBytes;
-        unsafe
-        {
-            var ptr = (byte*)locked.Address;
-            for (var i = 0; i < stride * 10; i += 4)
-            {
-                ptr[i] = 255;     // B
-                ptr[i + 1] = 0;   // G
-                ptr[i + 2] = 0;   // R
-                ptr[i + 3] = 255; // A
-            }
-        }
-        return bitmap;
-    }
-
     /// <summary>テスト用の CropViewControl（画像を設定済み）を生成する。</summary>
     private static CropViewControl CreateView()
     {
-        var view = new CropViewControl { Source = CreateBitmap() };
+        var view = new CropViewControl { Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Blue) };
         view.Measure(new Size(400, 200));
         view.Arrange(new Rect(0, 0, 400, 200));
         return view;
@@ -50,7 +29,7 @@ public class CropViewTests
     [AvaloniaFact]
     public void Source_設定した画像が取得できる()
     {
-        using var bitmap = CreateBitmap();
+        using var bitmap = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Blue);
         var view = new CropViewControl { Source = bitmap };
 
         Assert.Same(bitmap, view.Source);

@@ -3,13 +3,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Threading;
 using DragRectControl.Sample.Logging;
 using DragRectControl.Sample.ViewModels;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using System.Collections.Specialized;
 
 namespace DragRectControl.Sample.Views;
@@ -23,8 +22,8 @@ public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _vm = new();
 
-    /// <summary>背景に敷くダミー画像（ドメイン面のサイズ感を示す）。</summary>
-    private static readonly WriteableBitmap Backdrop = CreateBackdrop();
+    /// <summary>背景に敷くダミー画像（ドメイン面のサイズ感を示す）。Skia 直描画（PbBitmapAvaloniaImage）で表示する。</summary>
+    private static readonly PbBitmapAvaloniaImage Backdrop = CreateBackdrop();
 
     /// <summary>画像の論理幅（ドメインピクセル）。</summary>
     private const double ImageWidth = 1200;
@@ -380,35 +379,23 @@ public partial class MainWindow : Window
     /// ビットマップサイズは <see cref="ImageWidth"/> / <see cref="ImageHeight"/> に合わせる
     /// （const のためリテラルで指定。グリッド間隔は 100px で視認性を確保する）。
     /// </remarks>
-    private static WriteableBitmap CreateBackdrop()
+    private static PbBitmapAvaloniaImage CreateBackdrop()
     {
         const int width = 1200;
         const int height = 800;
-        var bitmap = new WriteableBitmap(
-            new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
+        var bitmap = PbBitmap.Create(width, height);
 
-        using var locked = bitmap.Lock();
-        unsafe
+        for (var y = 0; y < height; y++)
         {
-            var ptr = (byte*)locked.Address;
-            var stride = locked.RowBytes;
-
-            for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
             {
-                for (var x = 0; x < width; x++)
-                {
-                    // 淡いグリッド（100px 間隔。画像サイズ拡大に合わせて間隔も広げる）
-                    var isGrid = x % 100 == 0 || y % 100 == 0;
-                    byte v = isGrid ? (byte)200 : (byte)235;
-                    var offset = y * stride + x * 4;
-                    ptr[offset] = v;       // B
-                    ptr[offset + 1] = v;   // G
-                    ptr[offset + 2] = v;   // R
-                    ptr[offset + 3] = 255; // A
-                }
+                // 淡いグリッド（100px 間隔。画像サイズ拡大に合わせて間隔も広げる）
+                var isGrid = x % 100 == 0 || y % 100 == 0;
+                byte v = isGrid ? (byte)200 : (byte)235;
+                bitmap.SetPixel(x, y, v, v, v, 255);
             }
         }
 
-        return bitmap;
+        return new PbBitmapAvaloniaImage(bitmap);
     }
 }

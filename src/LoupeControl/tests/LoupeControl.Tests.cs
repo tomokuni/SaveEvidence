@@ -33,7 +33,7 @@ public class LoupeControlTests
     public async Task SourceとCenterPointを設定するとLoupeBitmapが生成される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
 
         await control.RenderAsync();
@@ -42,12 +42,12 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
-    public async Task PbBitmapImageをSourceに設定するとLoupeBitmapが生成される()
+    public async Task PbBitmapAvaloniaImageをSourceに設定するとLoupeBitmapが生成される()
     {
-        // PbBitmapImage（PbBitmap を内包する IImage）を Source に設定した場合、
+        // PbBitmapAvaloniaImage（PbBitmap を内包する IImage）を Source に設定した場合、
         // ルーペ画像が生成される（Bitmap を生成しない Skia 直アクセス経路の検証）。
         using var bmp = PbBitmap.Create(200, 200);
-        using var image = new PbBitmapImage(bmp);
+        using var image = new PbBitmapAvaloniaImage(bmp);
         var control = CreateControl();
         control.Source = image;
         control.CenterPoint = new Point(100, 100);
@@ -63,7 +63,7 @@ public class LoupeControlTests
         var control = CreateControl();
 
         // ポスト前は同期生成されない（バッチ化: 要求は1つの Dispatcher ジョブに結合される）
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         Assert.Null(control.LoupeBitmap);
 
@@ -88,7 +88,7 @@ public class LoupeControlTests
     public async Task Source設定_CenterPoint未設定でも市松模様のLoupeBitmapが生成される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
 
         await control.RenderAsync();
 
@@ -136,7 +136,7 @@ public class LoupeControlTests
     public async Task CenterPoint変更でLoupeBitmapが再生成される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
         var first = control.LoupeBitmap;
@@ -152,7 +152,7 @@ public class LoupeControlTests
     public async Task ForceUpdateでLoupeBitmapが再生成される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
         var first = control.LoupeBitmap;
@@ -174,7 +174,7 @@ public class LoupeControlTests
     public async Task RenderAsyncを再実行するとLoupeBitmapが再生成される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
         var first = control.LoupeBitmap;
@@ -189,7 +189,7 @@ public class LoupeControlTests
     public async Task 外観プロパティの変更でLoupeBitmapが再生成される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
         var first = control.LoupeBitmap;
@@ -209,7 +209,7 @@ public class LoupeControlTests
     public async Task ClearでLoupeBitmapが解放される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
 
@@ -223,7 +223,7 @@ public class LoupeControlTests
     public async Task IsVisible_falseでLoupeBitmapが解放される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
 
@@ -242,7 +242,7 @@ public class LoupeControlTests
         var control = CreateControl();
         control.IsVisible = false;
 
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         Dispatcher.UIThread.RunJobs();
 
@@ -258,7 +258,7 @@ public class LoupeControlTests
     public async Task IsVisible_trueで非同期生成して表示する()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
 
@@ -316,7 +316,7 @@ public class LoupeControlTests
     {
         var control = CreateControl();
         control.Source = new CroppedBitmap(
-            TestHelper.CreateSolidBitmap(100, 100), new PixelRect(0, 0, 50, 50));
+            PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(100, 100, Colors.Blue), new PixelRect(0, 0, 50, 50));
         control.CenterPoint = new Point(25, 25);
 
         await Assert.ThrowsAsync<NotSupportedException>(() => control.RenderAsync());
@@ -329,7 +329,7 @@ public class LoupeControlTests
         var sink = new TestHelper.ListLogger();
         control.Log = sink;
         control.Source = new CroppedBitmap(
-            TestHelper.CreateSolidBitmap(100, 100), new PixelRect(0, 0, 10, 10));
+            PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(100, 100, Colors.Blue), new PixelRect(0, 0, 10, 10));
         control.CenterPoint = new Point(5, 5);
 
         await Assert.ThrowsAsync<NotSupportedException>(() => control.RenderAsync());
@@ -344,7 +344,7 @@ public class LoupeControlTests
         var sink = new TestHelper.ListLogger();
         control.Log = sink;
         control.Source = new CroppedBitmap(
-            TestHelper.CreateSolidBitmap(100, 100), new PixelRect(0, 0, 10, 10));
+            PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(100, 100, Colors.Blue), new PixelRect(0, 0, 10, 10));
         control.CenterPoint = new Point(5, 5);
 
         // StartRender（fire-and-forget）経由の生成失敗 → ContinueWith(OnlyOnFaulted) で観測される
@@ -368,7 +368,7 @@ public class LoupeControlTests
     public async Task RenderAsync実行中に非表示になると生成画像は破棄される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
 
         // 生成（Task.Run での画素抽出）中に非表示へ切り替えると、
@@ -386,7 +386,7 @@ public class LoupeControlTests
     {
         var control = CreateControl();
         control.IsVisible = false;
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
 
         control.ForceUpdate();
@@ -400,7 +400,7 @@ public class LoupeControlTests
     {
         var control = CreateControl();
         control.IsVisible = false;
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
 
         var task = control.RenderAsync();
@@ -679,7 +679,7 @@ public class LoupeControlTests
     public async Task 破棄済みSourceは市松模様のみで描画される()
     {
         var control = CreateControl();
-        var bitmap = TestHelper.CreateSolidBitmap(200, 200);
+        var bitmap = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.Source = bitmap;
         control.CenterPoint = new Point(100, 100);
         bitmap.Dispose(); // 破棄済み Bitmap（生存検証で ObjectDisposedException）
@@ -694,7 +694,7 @@ public class LoupeControlTests
     public async Task 抽出中にSourceが破棄されると市松模様のみで描画される()
     {
         var control = CreateControl();
-        var bitmap = TestHelper.CreateSolidBitmap(200, 200);
+        var bitmap = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.Source = bitmap;
         control.CenterPoint = new Point(100, 100);
 
@@ -714,17 +714,17 @@ public class LoupeControlTests
     {
         // 回帰テスト: SetLoupeBitmap が using で即座に破棄した WriteableBitmap を PART_Image.Source に
         // 設定すると、レイアウトパス（Image.MeasureOverride → Bitmap.get_Size）で ObjectDisposedException が
-        // 発生し、領域選択開始時にアプリがハングする。表示用画像（PbBitmapImage）はコントロールが所有し、
+        // 発生し、領域選択開始時にアプリがハングする。表示用画像（PbBitmapAvaloniaImage）はコントロールが所有し、
         // 内包する PbBitmap が有効なまま保持されることを検証する。
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
 
         // Source が破棄済みでないこと（Size 参照で ObjectDisposedException が発生しない）
         Assert.NotNull(control.PART_Image);
         Assert.NotNull(control.PART_Image!.Source);
-        Assert.True(control.PART_Image.Source is PbBitmapImage img
+        Assert.True(control.PART_Image.Source is PbBitmapAvaloniaImage img
             && img.Bitmap is { } bmp && bmp.Size.Width > 0);
     }
 
@@ -732,7 +732,7 @@ public class LoupeControlTests
     public async Task Clear後にPART_Imageのソースが解放される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
 
@@ -748,10 +748,10 @@ public class LoupeControlTests
     public void Sourceを再設定すると変更通知される()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
 
         // 再設定（OldValue が null でない）→ 変更ログの両分岐が実行される
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(50, 50);
         control.RequestedSize = 120;
         control.RenderScaling = 1.5;
@@ -767,9 +767,9 @@ public class LoupeControlTests
         control.Log = new TestHelper.ListLogger();
 
         // 初回設定（OldValue = null）と再設定（NewValue あり）の両経路で LogSettingChanged を実行する
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
 
         // null 設定（NewValue = null）で LogSettingChanged の null 分岐を実行する
         control.Source = null;
@@ -863,7 +863,7 @@ public class LoupeControlTests
         LoupeRenderedEventArgs? args = null;
         control.Rendered += (_, e) => args = e;
 
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
 
@@ -904,7 +904,7 @@ public class LoupeControlTests
     public async Task 再描画のたびにRenderedイベントが発火する()
     {
         var control = CreateControl();
-        control.Source = TestHelper.CreateSolidBitmap(200, 200);
+        control.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.RenderAsync();
 

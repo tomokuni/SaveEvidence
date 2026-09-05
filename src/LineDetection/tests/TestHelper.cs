@@ -1,29 +1,28 @@
-using Avalonia;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
+using Estable.AvaloniaUI.Platform.Imaging;
 using OpenCvSharp;
-using System.Runtime.InteropServices;
 
 namespace Estable.AvaloniaUI.LineDetection.Tests;
 
 /// <summary>テスト用の共通ヘルパー。</summary>
 /// <remarks>
-/// 検出器本体（<see cref="LogicLineDetector"/>）は <see cref="Bitmap"/> を入力に取る。<br/>
-/// テストでは PNG を OpenCV（<see cref="Cv2"/>）で読み込み、BGRA の <see cref="WriteableBitmap"/> を構築する。<br/>
+/// 検出器本体（<see cref="LogicLineDetector"/>）は <see cref="PbBitmap"/> を入力に取る。<br/>
+/// テストでは PNG を OpenCV（<see cref="Cv2"/>）で読み込み、BGRA の <see cref="PbBitmap"/> を構築する。<br/>
 /// （Avalonia の <c>new Bitmap(path)</c> はヘッドレスで 1x1 になるため、OpenCV でデコードする）<br/>
-/// OpenCV はテスト専用のユーティリティで、検出器の public API には露出しない。
+/// OpenCV はテスト専用のユーティリティで、検出器の public API には露出しない。<br/>
+/// <b>PbBitmap 採用理由</b>: ヘッドレスでは <c>WriteableBitmap</c> のピクセル保持が不完全なため、
+/// 検出器の入力を <see cref="PbBitmap"/>（SkiaHub 内部・安定）にして厳密検証をヘッドレスで成立させる。
 /// </remarks>
 internal static class TestHelper
 {
-    /// <summary>PNG 画像を読み込んで BGRA の Bitmap を構築する。</summary>
+    /// <summary>PNG 画像を読み込んで BGRA の PbBitmap を構築する。</summary>
     /// <param name="path">PNG ファイルのパス。</param>
-    /// <returns>構築した Bitmap。</returns>
+    /// <returns>構築した PbBitmap（BGRA8888）。</returns>
     /// <remarks>
     /// 1. <see cref="Cv2.ImRead(string)"/> で BGR 画像を読み込む<br/>
     /// 2. <see cref="ColorConversionCodes.BGR2BGRA"/> で BGRA へ変換する<br/>
-    /// 3. <c>Mat.Data</c> から <see cref="WriteableBitmap"/> のピクセルバッファへコピーする
+    /// 3. <c>Mat.Data</c> から <see cref="PbBitmap"/> のピクセルバッファへ直接コピーする（中間バッファなし）
     /// </remarks>
-    public static Bitmap LoadBitmap(string path)
+    public static PbBitmap LoadBitmap(string path)
     {
         using var mat = Cv2.ImRead(path);
         using var bgra = new Mat();
@@ -32,26 +31,23 @@ internal static class TestHelper
         var height = bgra.Height;
         var width = bgra.Width;
         var srcStride = (int)bgra.Step();
-        var pixels = new byte[height * srcStride];
-        Marshal.Copy(bgra.Data, pixels, 0, pixels.Length);
-
-        var bitmap = new WriteableBitmap(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
-        using var locked = bitmap.Lock();
-        var dstStride = locked.RowBytes;
+        var result = PbBitmap.Create(width, height);
+        var dstStride = result.Stride;
         unsafe
         {
-            // 行ごとにピクセルバッファへ直接コピーする（WriteableBitmap の RowBytes と OpenCV の Step() が異なる場合に対応）
-            var dst = (byte*)locked.Address;
+            // Mat のピクセルバッファから PbBitmap のピクセルバッファへ行単位で直接コピーする
+            // （WriteableBitmap の中間バッファ・Lock を介さず、安定かつ低アロケーション）。
+            var src = (byte*)bgra.Data;
+            var dst = (byte*)result.Address;
             for (var y = 0; y < height; y++)
             {
-                var srcRow = y * srcStride;
-                var dstRow = y * dstStride;
-                for (var x = 0; x < width * 4; x++)
-                {
-                    dst[dstRow + x] = pixels[srcRow + x];
-                }
+                Buffer.MemoryCopy(
+                    src + y * srcStride,
+                    dst + y * dstStride,
+                    dstStride,
+                    Math.Min(srcStride, dstStride));
             }
         }
-        return bitmap;
+        return result;
     }
 }

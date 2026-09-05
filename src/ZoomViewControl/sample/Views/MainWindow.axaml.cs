@@ -4,7 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using Estable.AvaloniaUI.ZoomView;
+using Estable.AvaloniaUI.Platform.Imaging;
 using ZoomViewControl.Sample.Imaging;
 using ZoomViewControl.Sample.ViewModels;
 
@@ -66,7 +66,7 @@ public partial class MainWindow : Window
         ZoomableView.PointerMoved += OnPointerMoved;
 
         // 初期表示: テスト画像を設定（ズーム・パンの動作確認用）
-        _vm.SetPreviewImage(TestImageFactory.Create());
+        _vm.SetPreviewImage((PbBitmapAvaloniaImage)TestImageFactory.Create());
 
         // 初期のズーム率をスライダに反映し、⊕⊖ ボタン・表示テキストの状態を ZoomViewControl で初期化する
         SyncZoomSlider(_vm.ZoomPercent);
@@ -161,8 +161,8 @@ public partial class MainWindow : Window
 
         // 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）
         var contentPos = ZoomableView.ViewportToContentImage(viewportPos);
-        var x = (int)Math.Clamp(contentPos.X, 0, img.PixelSize.Width - 1);
-        var y = (int)Math.Clamp(contentPos.Y, 0, img.PixelSize.Height - 1);
+        var x = (int)Math.Clamp(contentPos.X, 0, img.Size.Width - 1);
+        var y = (int)Math.Clamp(contentPos.Y, 0, img.Size.Height - 1);
         PointerPositionText.Text = $"ポインタ: {x}, {y}（画像ピクセル）";
     }
 
@@ -192,7 +192,8 @@ public partial class MainWindow : Window
         try
         {
             using var stream = File.OpenRead(files[0].Path.LocalPath);
-            _vm.SetPreviewImage(new Bitmap(stream));
+            using var bitmap = new Bitmap(stream);
+            _vm.SetPreviewImage(new PbBitmapAvaloniaImage(bitmap.ToPbBitmap()));
         }
         catch (Exception)
         {

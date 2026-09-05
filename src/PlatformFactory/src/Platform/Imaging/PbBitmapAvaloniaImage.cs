@@ -21,7 +21,7 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 /// <br/>
 /// <b>公開 API</b>: <see cref="Size"/>（<see cref="IImage"/>）・ <see cref="Draw"/>（<see cref="IImage"/>）・ <see cref="Dispose"/>。
 /// </remarks>
-public sealed class PbBitmapImage : IImage, IDisposable
+public sealed class PbBitmapAvaloniaImage : IImage, IDisposable
 {
     /// <summary>内部の PbBitmap（コア。所有権は本クラスが保持）。</summary>
     private PbBitmap? _bitmap;
@@ -29,7 +29,7 @@ public sealed class PbBitmapImage : IImage, IDisposable
     /// <summary><see cref="PbBitmap"/> を内包して初期化する（所有権を譲り受ける）。</summary>
     /// <param name="bitmap">内包する PbBitmap。所有権が本クラスへ移る。</param>
     /// <remarks>破棄は <see cref="Dispose"/> で行う（呼び出し側は破棄しないこと）。</remarks>
-    public PbBitmapImage(PbBitmap bitmap)
+    public PbBitmapAvaloniaImage(PbBitmap bitmap)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
         _bitmap = bitmap;
@@ -41,7 +41,7 @@ public sealed class PbBitmapImage : IImage, IDisposable
     {
         get
         {
-            var b = _bitmap ?? throw new ObjectDisposedException(nameof(PbBitmapImage));
+            var b = _bitmap ?? throw new ObjectDisposedException(nameof(PbBitmapAvaloniaImage));
             return new Size(b.Width, b.Height);
         }
     }
@@ -60,14 +60,14 @@ public sealed class PbBitmapImage : IImage, IDisposable
     /// </remarks>
     public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
     {
-        _ = _bitmap ?? throw new ObjectDisposedException(nameof(PbBitmapImage));
+        _ = _bitmap ?? throw new ObjectDisposedException(nameof(PbBitmapAvaloniaImage));
 
         // Skia 直アクセス（ゼロコピー）。
         // DrawingContext からは PlatformImpl（IDrawingContextImpl）へ直接アクセスできないため、
         // public の Custom() を経由して ImmediateDrawingContext（IOptionalFeatureProvider）を得る。
         // ImmediateDrawingContext.TryGetFeature は PlatformImpl.GetFeature に委譲される。
         // Skia が提供されない環境（ヘッドレス等）では Custom 内の lease が null になり、no-op となる。
-        context.Custom(new PbBitmapImageDrawOperation(this, sourceRect, destRect));
+        context.Custom(new PbBitmapAvaloniaImageDrawOperation(this, sourceRect, destRect));
     }
 
     /// <summary>内包する PbBitmap（参照アクセサ。破棄は <see cref="Dispose"/> が担う）。</summary>
@@ -92,23 +92,23 @@ public sealed class PbBitmapImage : IImage, IDisposable
 
     /// <summary>Skia 直アクセスで PbBitmap を描画するカスタム描画オペレーション。</summary>
     /// <remarks>
-    /// <see cref="PbBitmapImage.Draw"/> が <see cref="DrawingContext.Custom"/> 経由で登録し、
+    /// <see cref="PbBitmapAvaloniaImage.Draw"/> が <see cref="DrawingContext.Custom"/> 経由で登録し、
     /// <see cref="Render"/> で <see cref="ISkiaSharpApiLeaseFeature"/> を取得して <c>SKCanvas</c> へ直接描画する。<br/>
-    /// <b>所有権</b>: 本オペレーションは <see cref="PbBitmapImage"/> を参照するのみで、破棄しない
-    /// （破棄は <see cref="PbBitmapImage.Dispose"/> が担う）。<br/>
+    /// <b>所有権</b>: 本オペレーションは <see cref="PbBitmapAvaloniaImage"/> を参照するのみで、破棄しない
+    /// （破棄は <see cref="PbBitmapAvaloniaImage.Dispose"/> が担う）。<br/>
     /// <b>描画</b>: Skia が提供されない環境（ヘッドレス等）では何も描画しない（safe no-op）。
     /// </remarks>
-    private sealed class PbBitmapImageDrawOperation : ICustomDrawOperation
+    private sealed class PbBitmapAvaloniaImageDrawOperation : ICustomDrawOperation
     {
-        private readonly PbBitmapImage _owner;
+        private readonly PbBitmapAvaloniaImage _owner;
         private readonly Rect _sourceRect;
         private readonly Rect _destRect;
 
         /// <summary>描画オペレーションを初期化する。</summary>
-        /// <param name="owner">描画する <see cref="PbBitmapImage"/>（所有権は移らない）。</param>
+        /// <param name="owner">描画する <see cref="PbBitmapAvaloniaImage"/>（所有権は移らない）。</param>
         /// <param name="sourceRect">画像内の描画元矩形。</param>
         /// <param name="destRect">出力先の描画先矩形。</param>
-        public PbBitmapImageDrawOperation(PbBitmapImage owner, Rect sourceRect, Rect destRect)
+        public PbBitmapAvaloniaImageDrawOperation(PbBitmapAvaloniaImage owner, Rect sourceRect, Rect destRect)
         {
             _owner = owner;
             _sourceRect = sourceRect;
@@ -159,15 +159,15 @@ public sealed class PbBitmapImage : IImage, IDisposable
 
         /// <summary>描画オペレーション同士の等価比較（参照比較）。</summary>
         public bool Equals(ICustomDrawOperation? other)
-            => other is PbBitmapImageDrawOperation otherOp
+            => other is PbBitmapAvaloniaImageDrawOperation otherOp
                && ReferenceEquals(_owner, otherOp._owner)
                && _sourceRect == otherOp._sourceRect
                && _destRect == otherOp._destRect;
 
-        /// <summary>呼び出し側が破棄しない（所有権は <see cref="PbBitmapImage"/> が保持）。</summary>
+        /// <summary>呼び出し側が破棄しない（所有権は <see cref="PbBitmapAvaloniaImage"/> が保持）。</summary>
         public void Dispose()
         {
-            // リソースは PbBitmapImage が所有するため、本オペレーションでは何も解放しない。
+            // リソースは PbBitmapAvaloniaImage が所有するため、本オペレーションでは何も解放しない。
         }
     }
 }
