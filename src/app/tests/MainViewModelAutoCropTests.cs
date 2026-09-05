@@ -2,7 +2,7 @@ using app.ViewModels;
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
-using Estable.AvaloniaUI.Platform.Imaging;
+using Avalonia.Platform;
 using MockSettingsService = app.Tests.MainViewModelTests.MockSettingsService;
 using Xunit;
 
@@ -12,7 +12,7 @@ namespace app.Tests;
 /// <remarks>
 /// <c>[AvaloniaFact]</c>（ヘッドレス）で <see cref="MainViewModel.AutoCropWindowCommand"/> を実行し、<br/>
 /// 検出結果（<see cref="MainViewModel.DetectedRects"/>）が設定されることを検証する。<br/>
-/// 単純な矩形パターン（白背景・黒枠線）を <see cref="AppPixelData"/> から <see cref="Bitmap"/> へ変換してプレビューに設定する。
+/// 単純な矩形パターン（白背景・黒枠線）の <see cref="Bitmap"/> をプレビューに設定する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public sealed class MainViewModelAutoCropTests
@@ -54,8 +54,10 @@ public sealed class MainViewModelAutoCropTests
             }
         }
 
-        var data = new AppPixelData(size, size, stride, pixels);
-        return data.ToBitmap()!;
+        var wb = new WriteableBitmap(new PixelSize(size, size), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+        using var locked = wb.Lock();
+        System.Runtime.InteropServices.Marshal.Copy(pixels, 0, locked.Address, pixels.Length);
+        return wb;
     }
 
     /// <summary>自動切り出しを実行すると検出矩形が設定されることを検証する。</summary>

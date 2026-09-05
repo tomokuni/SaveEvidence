@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 
 namespace app.Models;
 
@@ -7,7 +9,7 @@ namespace app.Models;
 /// </summary>
 /// <remarks>
 /// 最大 <see cref="MaxCount"/> 段階まで画像を保管し、超過時は古いものから破棄する。<br/>
-/// 画像のクローンは PNG エンコード＋デコードで行い、元の Bitmap に影響を与えない。<br/>
+/// 画像のクローンはピクセルコピーで行い、元の Bitmap に影響を与えない。<br/>
 /// スレッドセーフではないので、UI スレッドからのみ操作すること。<br/>
 /// Undo 実行時は現在の画像を Redo スタックへ退避し、新しい操作（<see cref="Push"/>）で Redo 履歴をクリアする。
 /// </remarks>
@@ -102,13 +104,27 @@ public sealed class UndoStack
         return PopLast(_redoStack);
     }
 
-    /// <summary>画像を PNG 経由で複製する。</summary>
-    private static Bitmap Clone(Bitmap source)
+    /// <summary>画像をピクセルコピーで複製する（Encoder 非依存・ヘッドレス環境でも安定）。</summary>
+    private static unsafe Bitmap Clone(Bitmap source)
     {
-        using var ms = new MemoryStream();
-        source.Save(ms, PngBitmapEncoderOptions.Default);
-        ms.Seek(0, SeekOrigin.Begin);
-        return new Bitmap(ms);
+        var w = source.PixelSize.Width;
+        var h = source.PixelSize.Height;
+        var srcStride = w * 4; // BGRA8888
+
+        var wb = new WriteableBitmap(new PixelSize(w, h), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+        using var locked = wb.Lock();
+        var dstStride = locked.RowBytes;
+        var rowBytes = Math.Min(srcStride, dstStride);
+        var buffer = new byte[srcStride * h];
+        fixed (byte* p = buffer)
+        {
+            source.CopyPixels(new PixelRect(0, 0, w, h), (nint)p, buffer.Length, srcStride);
+        }
+        for (var y = 0; y < h; y++)
+        {
+            System.Runtime.InteropServices.Marshal.Copy(buffer, y * srcStride, locked.Address + y * dstStride, rowBytes);
+        }
+        return wb;
     }
 
     /// <summary>スタックに画像を追加し、容量超過時は最古の画像を破棄する。</summary>

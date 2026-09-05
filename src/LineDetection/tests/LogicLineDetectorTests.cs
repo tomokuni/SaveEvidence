@@ -16,6 +16,7 @@ namespace Estable.AvaloniaUI.LineDetection.Tests;
 /// ヘッドレスの <see cref="WriteableBitmap"/> は <c>Lock()</c> 書き込みが部分的にしか保持されないことがあるため、<br/>
 /// 検出は簡易パターン（白背景・黒枠）に限定する（厳密な 0px 検証は <see cref="LogicLineDetectorDatasetTests"/> が実環境で担う）。
 /// </remarks>
+[Collection("AvaloniaHeadless")]
 public sealed class LogicLineDetectorTests
 {
     /// <summary>白背景に黒い枠線の矩形を描画した Bitmap を構築する。</summary>

@@ -17,6 +17,6 @@ public class TestAppBuilder
     /// <summary>Avalonia アプリケーションビルダーを構成する。</summary>
     /// <returns>構成済みの AppBuilder。</returns>
     public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<Application>()
-        .UseHeadless(new AvaloniaHeadlessPlatformOptions())
-        .UseSkia();
+        .UseSkia()
+        .UseHeadless(new AvaloniaHeadlessPlatformOptions());
 }
