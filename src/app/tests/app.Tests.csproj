@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\app.csproj" />
-    <ProjectReference Include="..\..\..\..\Estable\src\Primitives\src\Primitives.csproj" />
+    <ProjectReference Include="..\..\..\..\Estable\src\Estable.csproj" />
   </ItemGroup>
 
   <!-- xUnit 並列化設定（Avalonia ヘッドレスアセンブリ間の静的競合を防ぐためアセンブリ間の並列を無効化） -->
