@@ -1,13 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using PbBitmap = Estable.Media.EsBitmap;
-using Estable.Media;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 

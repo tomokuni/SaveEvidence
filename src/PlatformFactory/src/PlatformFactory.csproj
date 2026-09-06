@@ -19,7 +19,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
-    <ProjectReference Include="..\..\..\..\Estable\src\Media\Media.csproj" />
   </ItemGroup>
 
   <ItemGroup>

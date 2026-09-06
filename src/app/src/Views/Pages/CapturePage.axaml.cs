@@ -7,9 +7,7 @@ using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.AvaloniaUI.ZoomView;
-using Estable;
 using app.Icons;
-using PbBitmap = Estable.Media.EsBitmap;
 using app.Logging;
 using app.Models;
 using app.Services;
@@ -909,7 +907,7 @@ public sealed partial class CapturePage : UserControl
         var viewportPos = e.GetPosition(ZoomableView);
         // 画像内かどうかを判定する（画像原点を起点とした表示サイズ内か。矩形は 1 回の計算で取得）
         var imageRect = ZoomableView.ImageRectViewport();
-        var displayPoint = viewportPos.ToPointD() - imageRect.Position;
+        var displayPoint = viewportPos.ToPoint() - imageRect.Position;
         if (displayPoint.X < 0 || displayPoint.Y < 0 ||
             displayPoint.X >= imageRect.Width || displayPoint.Y >= imageRect.Height)
         {
@@ -918,7 +916,7 @@ public sealed partial class CapturePage : UserControl
         }
 
         // 表示座標 → ドメイン座標（元画像ピクセル）へ変換し、画像範囲内にクランプする
-        var contentPos = ViewportToContentDomain(viewportPos.ToPointD());
+        var contentPos = ViewportToContentDomain(viewportPos.ToPoint());
         var x = (int)Math.Clamp(contentPos.X, 0, img.Size.Width - 1);
         var y = (int)Math.Clamp(contentPos.Y, 0, img.Size.Height - 1);
         _viewModel.PointerDisplayText = $"{x}, {y}";
@@ -981,8 +979,8 @@ public sealed partial class CapturePage : UserControl
         {
             // ドメイン座標 → ビューポート座標へ変換して配置する。
             // 画像表示矩形の原点を基準に変換する（ZoomableView.ContentToViewportImage へ委譲）。
-            var topLeft = ContentToViewportDomain(new PointD(rect.X, rect.Y));
-            var bottomRight = ContentToViewportDomain(new PointD(rect.Right, rect.Bottom));
+            var topLeft = ContentToViewportDomain(new Point(rect.X, rect.Y));
+            var bottomRight = ContentToViewportDomain(new Point(rect.Right, rect.Bottom));
             var isHover = _viewModel.HoveredRect == rect;
 
             var rectElement = new Avalonia.Controls.Shapes.Rectangle
@@ -1016,7 +1014,7 @@ public sealed partial class CapturePage : UserControl
         }
 
         var viewportPos = e.GetPosition(AutoCropOverlay);
-        var contentPos = ViewportToContentDomain(viewportPos.ToPointD());
+        var contentPos = ViewportToContentDomain(viewportPos.ToPoint());
 
         // 領域内の矩形のうち、最も面積の小さいものを選択する
         var hit = _viewModel.DetectedRects
@@ -1054,7 +1052,7 @@ public sealed partial class CapturePage : UserControl
         }
 
         var viewportPos = e.GetPosition(AutoCropOverlay);
-        var contentPos = ViewportToContentDomain(viewportPos.ToPointD());
+        var contentPos = ViewportToContentDomain(viewportPos.ToPoint());
 
         var hit = _viewModel.DetectedRects
             .Where(r => contentPos.X >= r.X && contentPos.X <= r.Right
@@ -1075,7 +1073,7 @@ public sealed partial class CapturePage : UserControl
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
     /// 変換は <see cref="ZoomViewControl.ViewportToContentImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
-    private PointD ViewportToContentDomain(PointD viewportPos)
+    private Point ViewportToContentDomain(Point viewportPos)
         => ZoomableView.ViewportToContentImage(viewportPos);
 
     /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
@@ -1085,7 +1083,7 @@ public sealed partial class CapturePage : UserControl
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
     /// 変換は <see cref="ZoomViewControl.ContentToViewportImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
-    private PointD ContentToViewportDomain(PointD contentPos)
+    private Point ContentToViewportDomain(Point contentPos)
         => ZoomableView.ContentToViewportImage(contentPos);
 
     // ====================================================================

@@ -1,5 +1,4 @@
 using Estable.AvaloniaUI.Platform.Imaging;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace app.Models;
 

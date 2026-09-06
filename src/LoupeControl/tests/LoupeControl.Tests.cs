@@ -6,16 +6,10 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
-using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
-using Estable.Media;
-using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable;
-using Estable.Media;
 using Xunit;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;
 
@@ -594,9 +588,9 @@ public class LoupeControlTests
 
         // ドメイン = DIP × 2（拡大）→ 中心 (100,100) は DIP (50,50) に変換される
         control.SetCoordinateTransform(new CoordTransform(
-            p => new PointD(p.X * 2, p.Y * 2),
-            p => new PointD(p.X / 2, p.Y / 2),
-            () => new SizeD(300, 300)));
+            p => new Point(p.X * 2, p.Y * 2),
+            p => new Point(p.X / 2, p.Y / 2),
+            () => new Size(300, 300)));
 
         Assert.NotNull(control.RenderTransform);
         window.Close();
@@ -665,9 +659,9 @@ public class LoupeControlTests
         // 変換係数を後から変更できるよう、可変な係数を使う（パン・ズーム等の動的変化の模擬）
         var factor = 2.0;
         control.SetCoordinateTransform(new CoordTransform(
-            p => new PointD(p.X * factor, p.Y * factor),
-            p => new PointD(p.X / factor, p.Y / factor),
-            () => new SizeD(300, 300)));
+            p => new Point(p.X * factor, p.Y * factor),
+            p => new Point(p.X / factor, p.Y / factor),
+            () => new Size(300, 300)));
         var before = control.RenderTransform;
 
         // 係数を変更して RefreshPosition → 表示位置（RenderTransform）が再計算される
@@ -884,8 +878,8 @@ public class LoupeControlTests
         Assert.Equal(100, args.Bitmap.Size.Height);
         Assert.Equal(100, args.Size);
         Assert.Equal(2, args.ZoomLevel);
-        Assert.Equal(new PointD(100, 100), args.CenterPoint);
-        Assert.Equal(new PointD(75, 75), args.CaptureTopLeft);
+        Assert.Equal(new Point(100, 100), args.CenterPoint);
+        Assert.Equal(new Point(75, 75), args.CaptureTopLeft);
         Assert.Equal(2.0, args.Scale);
         // 親パネル未接続（テスト）のため表示位置は既定値 (0,0)
         Assert.Equal(default, args.Position);

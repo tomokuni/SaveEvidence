@@ -1,11 +1,10 @@
 using System.Runtime.Versioning;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Media;
 using Xunit;
 using DrawingBitmap = System.Drawing.Bitmap;
 using DrawingImageLockMode = System.Drawing.Imaging.ImageLockMode;
 using DrawingPixelFormat = System.Drawing.Imaging.PixelFormat;
-using PbBitmap = Estable.Media.EsBitmap;
+using RectInt = System.Drawing.Rectangle;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
 
@@ -24,7 +23,7 @@ public class PbBitmapSystemDrawingTests
     private static DrawingBitmap CreateSolidDrawingBitmap(int width, int height, byte b, byte g, byte r, byte a)
     {
         var bitmap = new DrawingBitmap(width, height, DrawingPixelFormat.Format32bppPArgb);
-        var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, width, height), DrawingImageLockMode.WriteOnly, DrawingPixelFormat.Format32bppPArgb);
+        var data = bitmap.LockBits(new RectInt(0, 0, width, height), DrawingImageLockMode.WriteOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
             unsafe
@@ -50,7 +49,7 @@ public class PbBitmapSystemDrawingTests
     public void ToPbBitmap_ピクセルをコピーする()
     {
         using var sd = CreateSolidDrawingBitmap(4, 4, 0, 0, 255, 255); // 赤・不透明
-        using var bmp = sd.ToEsBitmap();
+        using var bmp = sd.ToPbBitmap();
         Assert.Equal(4, bmp.Size.Width);
         Assert.Equal(4, bmp.Size.Height);
         var px = bmp.GetPixel(1, 1);
@@ -64,7 +63,7 @@ public class PbBitmapSystemDrawingTests
     {
         // 50% アルファの青（BGRA: B=255, G=0, R=0, A=128）
         using var sd = CreateSolidDrawingBitmap(4, 4, 255, 0, 0, 128);
-        using var bmp = sd.ToEsBitmap();
+        using var bmp = sd.ToPbBitmap();
         var px = bmp.GetPixel(1, 1);
         Assert.Equal((byte)255, px.B);
         Assert.Equal((byte)0, px.G);
@@ -78,7 +77,7 @@ public class PbBitmapSystemDrawingTests
         using var bmp = PbBitmap.Create(4, 4);
         bmp.SetPixel(0, 0, b: 255, g: 0, r: 0, a: 128);
         using var sd = bmp.ToSystemDrawingBitmap();
-        var data = sd.LockBits(new System.Drawing.Rectangle(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
+        var data = sd.LockBits(new RectInt(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
             unsafe
@@ -104,7 +103,7 @@ public class PbBitmapSystemDrawingTests
         using var sd = bmp.ToSystemDrawingBitmap();
         Assert.Equal(bmp.Size.Width, sd.Width);
         Assert.Equal(bmp.Size.Height, sd.Height);
-        var data = sd.LockBits(new System.Drawing.Rectangle(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
+        var data = sd.LockBits(new RectInt(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
             unsafe
@@ -126,7 +125,7 @@ public class PbBitmapSystemDrawingTests
     public void SystemDrawing_往復変換でサイズが一致する()
     {
         using var sd = CreateSolidDrawingBitmap(4, 4, 0, 0, 255, 255);
-        using var bmp = sd.ToEsBitmap();
+        using var bmp = sd.ToPbBitmap();
         using var back = bmp.ToSystemDrawingBitmap();
         Assert.Equal(sd.Width, back.Width);
         Assert.Equal(sd.Height, back.Height);

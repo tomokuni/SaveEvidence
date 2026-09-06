@@ -1,5 +1,3 @@
-using Avalonia;
-
 namespace Estable.AvaloniaUI.ZoomView;
 
 /// <summary>ズーム率変更イベントの引数。</summary>

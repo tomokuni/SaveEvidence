@@ -5,12 +5,10 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
-using AvaloniaPoint = Avalonia.Point;
-using AvaloniaVector = Avalonia.Vector;
-using Point = Estable.PointD;
+using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
-using Vector = Estable.VectorD;
+using Vector = Avalonia.Vector;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
@@ -461,7 +459,7 @@ public class ZoomableViewTests
         Assert.Equal(500.0, tt!.X);
         Assert.Equal(250.0, tt!.Y);
         // 実効描画位置（scale × translate）が ImageRectViewport の原点と一致することを確認する
-        var actual = tf.Value.Transform(new AvaloniaPoint(0, 0));
+        var actual = tf.Value.Transform(new Point(0, 0));
         Assert.Equal(rect.X, actual.X, 6);
         Assert.Equal(rect.Y, actual.Y, 6);
     }
@@ -516,7 +514,7 @@ public class ZoomableViewTests
 
         // translate でも一致すること（ImageOriginViewport と UpdateTransformAndSync の整合）
         var tf = view.ImageControl.RenderTransform as TransformGroup;
-        var actual = tf!.Value.Transform(new AvaloniaPoint(0, 0));
+        var actual = tf!.Value.Transform(new Point(0, 0));
         Assert.Equal(rect.X, actual.X, 6);
         Assert.Equal(rect.Y, actual.Y, 6);
     }
@@ -544,7 +542,7 @@ public class ZoomableViewTests
 
         // translate でも一致すること
         var tf = view.ImageControl.RenderTransform as TransformGroup;
-        var actual = tf!.Value.Transform(new AvaloniaPoint(0, 0));
+        var actual = tf!.Value.Transform(new Point(0, 0));
         Assert.Equal(rect.X, actual.X, 6);
         Assert.Equal(rect.Y, actual.Y, 6);
     }
@@ -687,15 +685,15 @@ public class ZoomableViewTests
             view.SetOffset(new Vector(300, 150));
 
             // 押下 (100, 50): 掴んだコンテンツ = (300+100, 150+50) = (400, 200)
-            window.MouseDown(new AvaloniaPoint(100, 50), MouseButton.Left);
+            window.MouseDown(new Point(100, 50), MouseButton.Left);
 
             // 移動 (200, 100): オフセット = (400-200, 200-100) = (200, 100)
-            window.MouseMove(new AvaloniaPoint(200, 100));
+            window.MouseMove(new Point(200, 100));
 
             Assert.Equal(200.0, view.Offset.X);
             Assert.Equal(100.0, view.Offset.Y);
 
-            window.MouseUp(new AvaloniaPoint(200, 100), MouseButton.Left);
+            window.MouseUp(new Point(200, 100), MouseButton.Left);
         }
         finally
         {
@@ -712,20 +710,20 @@ public class ZoomableViewTests
             view.SetZoom(100);
             view.SetOffset(new Vector(300, 150));
 
-            window.MouseDown(new AvaloniaPoint(100, 50), MouseButton.Left);
+            window.MouseDown(new Point(100, 50), MouseButton.Left);
 
             // 右下へドラッグ（+100, +50）→ 掴んだコンテンツがポインタに追従し、コンテンツ自体も右下へ移動
             // オフセットは減少する = 描画位置（Scale×(content−offset)）は増加 = コンテンツが右下へ移動
-            window.MouseMove(new AvaloniaPoint(200, 100));
+            window.MouseMove(new Point(200, 100));
             Assert.Equal(200.0, view.Offset.X); // 300 → 200
             Assert.Equal(100.0, view.Offset.Y); // 150 → 100
 
             // 左上へドラッグ（-100, -50）→ コンテンツは左上へ移動（オフセット増加）
-            window.MouseMove(new AvaloniaPoint(0, 0));
+            window.MouseMove(new Point(0, 0));
             Assert.Equal(400.0, view.Offset.X); // 200 → 400
             Assert.Equal(200.0, view.Offset.Y); // 100 → 200
 
-            window.MouseUp(new AvaloniaPoint(0, 0), MouseButton.Left);
+            window.MouseUp(new Point(0, 0), MouseButton.Left);
         }
         finally
         {
@@ -742,19 +740,19 @@ public class ZoomableViewTests
             view.SetZoom(100); // 最大オフセット (600, 300)
             view.SetOffset(new Vector(300, 150));
 
-            window.MouseDown(new AvaloniaPoint(100, 50), MouseButton.Left);
+            window.MouseDown(new Point(100, 50), MouseButton.Left);
 
             // 左上へ大きくドラッグ → オフセットは増加し上限（600, 300）でクランプされる
-            window.MouseMove(new AvaloniaPoint(-500, -500));
+            window.MouseMove(new Point(-500, -500));
             Assert.Equal(600.0, view.Offset.X);
             Assert.Equal(300.0, view.Offset.Y);
 
             // 右下へ大きくドラッグ → オフセットは減少し下限（0, 0）でクランプされる
-            window.MouseMove(new AvaloniaPoint(1000, 500));
+            window.MouseMove(new Point(1000, 500));
             Assert.Equal(0.0, view.Offset.X);
             Assert.Equal(0.0, view.Offset.Y);
 
-            window.MouseUp(new AvaloniaPoint(1000, 500), MouseButton.Left);
+            window.MouseUp(new Point(1000, 500), MouseButton.Left);
         }
         finally
         {
@@ -771,13 +769,13 @@ public class ZoomableViewTests
             view.SetZoom(100);
             view.SetOffset(new Vector(300, 150));
 
-            window.MouseDown(new AvaloniaPoint(100, 50), MouseButton.Left);
-            window.MouseMove(new AvaloniaPoint(200, 100));
-            window.MouseUp(new AvaloniaPoint(200, 100), MouseButton.Left);
+            window.MouseDown(new Point(100, 50), MouseButton.Left);
+            window.MouseMove(new Point(200, 100));
+            window.MouseUp(new Point(200, 100), MouseButton.Left);
 
             // 解放後の移動はパンに反映されない
             var before = view.Offset;
-            window.MouseMove(new AvaloniaPoint(300, 150));
+            window.MouseMove(new Point(300, 150));
             Assert.Equal(before, view.Offset);
         }
         finally
@@ -793,14 +791,14 @@ public class ZoomableViewTests
         try
         {
             // Fit（zoomPercent = 0）のまま
-            window.MouseDown(new AvaloniaPoint(100, 50), MouseButton.Left);
-            window.MouseMove(new AvaloniaPoint(200, 100));
+            window.MouseDown(new Point(100, 50), MouseButton.Left);
+            window.MouseMove(new Point(200, 100));
 
             // Fit 中はオフセット 0 のまま（クランプで 0）
             Assert.Equal(0.0, view.Offset.X);
             Assert.Equal(0.0, view.Offset.Y);
 
-            window.MouseUp(new AvaloniaPoint(200, 100), MouseButton.Left);
+            window.MouseUp(new Point(200, 100), MouseButton.Left);
         }
         finally
         {
@@ -823,7 +821,7 @@ public class ZoomableViewTests
         var pointer = new Pointer(1, PointerType.Mouse, true);
         var props = new PointerPointProperties();
         var e = new PointerWheelEventArgs(
-            view, pointer, view, new AvaloniaPoint(0, 0), 0, props, KeyModifiers.Control, new AvaloniaVector(0, 1))
+            view, pointer, view, new Point(0, 0), 0, props, KeyModifiers.Control, new Vector(0, 1))
         {
             RoutedEvent = InputElement.PointerWheelChangedEvent,
         };

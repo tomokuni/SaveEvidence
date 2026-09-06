@@ -1,6 +1,5 @@
+using RectInt = System.Drawing.Rectangle;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.Loupe.Imaging;
 
@@ -29,7 +28,7 @@ internal static class LoupeImageExtractor
     /// <returns>切り出された新しいビットマップ（<paramref name="size"/> × <paramref name="size"/>）。範囲外部分は透明。破棄は呼び出し側。</returns>
     /// <remarks>
     /// ルーペのソース画像切り出し（AreaSelect / Crop 共通）で使用する。<br/>
-    /// <see cref="PbBitmap.Crop(Rectangle)"/> へ委譲する（中心座標 → 左上座標へ変換）。<br/>
+    /// <see cref="PbBitmap.Crop(RectInt)"/> へ委譲する（中心座標 → 左上座標へ変換）。<br/>
     /// 画像端では透明パディングとなり、市松模様が透ける。
     /// </remarks>
     public static PbBitmap ExtractRegionAt(PbBitmap source, int centerX, int centerY, int size)

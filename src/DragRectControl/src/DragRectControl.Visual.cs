@@ -5,9 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using AvaloniaRect = Avalonia.Rect;
-using Estable;
-using Estable.Media;
 
 namespace Estable.AvaloniaUI.DragRect;
 
@@ -125,15 +122,15 @@ public sealed partial class DragRectControl
         base.Render(context);
 
         // ヒットテスト領域の確保（透明ブラシ）。選択なしの初期状態でもポインター操作を受けるため。
-        context.FillRectangle(Brushes.Transparent, new AvaloniaRect(Bounds.Size));
+        context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
 
         // 選択矩形はドメインピクセルで保持されるため、描画前にローカル DIP に変換する。
         // 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、終点（Right / Bottom）に +1 してから変換する
         // （終点のピクセルも枠線・ハンドルに含める。キャプチャの閉区間 +1 と一致）。
         var domainRect = _state.SelectionRect;
         var dipTopLeft = _coordinatePort.Inverse(domainRect.TopLeft);
-        var dipBottomRight = _coordinatePort.Inverse(new PointD(domainRect.Right + 1, domainRect.Bottom + 1));
-        var rect = new AvaloniaRect(dipTopLeft.ToAvaloniaPoint(), dipBottomRight.ToAvaloniaPoint());
+        var dipBottomRight = _coordinatePort.Inverse(new Point(domainRect.Right + 1, domainRect.Bottom + 1));
+        var rect = new Rect(dipTopLeft.ToAvaloniaPoint(), dipBottomRight.ToAvaloniaPoint());
         if (_state.HasSelection)
         {
             DragRectDrawer.DrawBorder(context, rect, BorderColor, BorderThickness);

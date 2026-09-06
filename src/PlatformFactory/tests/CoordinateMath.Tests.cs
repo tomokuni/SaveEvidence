@@ -1,5 +1,4 @@
 using Xunit;
-using Estable.Media;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
 

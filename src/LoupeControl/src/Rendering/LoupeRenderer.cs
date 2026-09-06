@@ -3,7 +3,6 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Loupe.Imaging;
 using Estable.AvaloniaUI.Platform.Imaging;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.Loupe.Rendering;
 

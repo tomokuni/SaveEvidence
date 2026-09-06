@@ -1,5 +1,5 @@
+using Avalonia;
 using Avalonia.Media;
-using Estable;
 
 namespace Estable.AvaloniaUI.CropView;
 
@@ -16,4 +16,4 @@ namespace Estable.AvaloniaUI.CropView;
 /// <see cref="Foreground"/> と <see cref="Background"/> をダッシュごとに交互に塗る（市松風の視認性）。
 /// </remarks>
 public readonly record struct OverlayRect(
-    RectD Bounds, OverlayLineStyle Style, Color Foreground, Color Background, double Thickness);
+    Rect Bounds, OverlayLineStyle Style, Color Foreground, Color Background, double Thickness);

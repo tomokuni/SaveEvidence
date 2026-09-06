@@ -9,12 +9,9 @@ using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
-using Estable;
 using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging;
-using PbBitmap = Estable.Media.EsBitmap;
 using Microsoft.Extensions.Logging.Abstractions;
-using Estable.Media;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
@@ -48,7 +45,7 @@ internal sealed class CropSession(
     private readonly Action<bool>? _zoomHandler = zoomHandler;
 
     /// <summary>元画像のピクセルサイズ（論理座標系の範囲）。</summary>
-    private readonly SizeD _sourceImageSize = new(sourceImage.Size.Width, sourceImage.Size.Height);
+    private readonly Size _sourceImageSize = new(sourceImage.Size.Width, sourceImage.Size.Height);
 
     /// <summary>オーバーレイ・ルーペの配置先パネル（previewControl の祖先 Panel）。</summary>
     private readonly Panel _parentPanel = FindAncestorPanel(previewControl)
@@ -120,7 +117,7 @@ internal sealed class CropSession(
             _selectionOverlay.AttachScrollViewer(scrollViewer);
         }
 
-        void OnConfirm(RectD logicalRect)
+        void OnConfirm(Rect logicalRect)
         {
             if (_completed) return;
             _completed = true;
@@ -222,14 +219,14 @@ internal sealed class CropSession(
         // 2 段階の変換を CoordTransform.Compose で 1 ポートに合成し、DragRect / FadeMask / Loupe の 3 コントロールへ一括分配する。
         _selectionOverlay.SetCoordinateTransform(CoordTransform.Compose(
             CoordTransform.ImageLayout(
-                () => DisplaySize().ToSizeD(),
+                () => DisplaySize().ToSize(),
                 _sourceImageSize,
                 () => previewControl.IsFit),
             CoordTransform.ScrollOffset(() =>
             {
                 // 同値の原点取得は一度だけ実行して共有する
                 var origin = PreviewOrigin();
-                return new VectorD(origin.X, origin.Y);
+                return new Vector(origin.X, origin.Y);
             })));
         // ルーペソース（元画像）。LoupeControl.Source は IImage のため、PbBitmap を内包した IImage
         // （PbBitmapAvaloniaImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
@@ -278,13 +275,13 @@ internal sealed class CropSession(
     /// <param name="rectLogical">論理座標（元画像ピクセル）の選択矩形。</param>
     /// <returns>サイズ情報ラベル文字列。</returns>
     /// <remarks>WH は閉区間（始点・終点のピクセルを含む）のピクセル数（<c>幅 + 1</c>）で表示する。</remarks>
-    private string FormatSizeLabel(RectD rectLogical)
+    private string FormatSizeLabel(Rect rectLogical)
     {
         int l = (int)rectLogical.X, t = (int)rectLogical.Y;
         int r = (int)rectLogical.Right, b = (int)rectLogical.Bottom;
         // Zoom は実際の表示スケール（元画像ピクセル / DIP）から導出する（プレビュー状態の保持なし）
         double scaleX = CoordTransform.ImageLayoutScaleX(
-            () => DisplaySize().ToSizeD(),
+            () => DisplaySize().ToSize(),
             _sourceImageSize,
             () => previewControl.IsFit);
         int displayPct = (int)Math.Round(100.0 / Math.Max(scaleX, 0.01));
@@ -301,7 +298,7 @@ internal sealed class CropSession(
     /// 画像右端・下端では <c>+1</c> が画像サイズを超えないようクランプする。<br/>
     /// 単体テストから呼び出し可能（internal）。
     /// </remarks>
-    internal PixelRect ExecuteCropForSize(RectD logicalRect)
+    internal PixelRect ExecuteCropForSize(Rect logicalRect)
         => ComputeCropBounds(logicalRect, _sourceImageSize, _settings.MinSelectionSize!.Value);
 
     /// <summary>選択矩形（半開区間）を閉区間の切り出し範囲（論理座標）へ変換する（純粋関数）。</summary>
@@ -316,7 +313,7 @@ internal sealed class CropSession(
     /// 終点のピクセルまで切り出す（仕様: 選択矩形の始点・終点は切出し対象に含まれる）。<br/>
     /// 画像右端・下端では <c>+1</c> が画像サイズを超えないようクランプする。<br/>
     /// </remarks>
-    internal static PixelRect ComputeCropBounds(RectD logicalRect, SizeD sourceImageSize, double minSize)
+    internal static PixelRect ComputeCropBounds(Rect logicalRect, Size sourceImageSize, double minSize)
     {
         if (logicalRect.Width < minSize || logicalRect.Height < minSize) return default;
         double l = Math.Max(logicalRect.X, 0), t = Math.Max(logicalRect.Y, 0);

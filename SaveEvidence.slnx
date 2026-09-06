@@ -56,5 +56,4 @@
   </Folder>
   <Folder Name="/src/ZoomViewControl/src/" />
   <Project Path="../Estable/src/Estable/Estable.csproj" />
-  <Project Path="../Estable/src/Media/Media.csproj" />
 </Solution>

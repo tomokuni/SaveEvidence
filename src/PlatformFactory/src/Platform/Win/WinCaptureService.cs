@@ -2,14 +2,12 @@ using System.Drawing;
 using System.Runtime.Versioning;
 using Avalonia;
 using Avalonia.Platform;
-using Estable.Media;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using DrawingBitmap = System.Drawing.Bitmap;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
-using PbBitmap = Estable.Media.EsBitmap;
-using PbBitmapDrawingExtensions = Estable.Media.BitmapDrawingExtensions;
+using RectInt = System.Drawing.Rectangle;
 
 namespace Estable.AvaloniaUI.Platform.Win;
 
@@ -46,9 +44,9 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     /// </remarks>
     public PbBitmap? CaptureArea(PixelRect bounds)
     {
-        var sdRect = new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        var sdRect = new RectInt(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         using var sdBmp = CaptureSdBitmap(sdRect);
-        return sdBmp.ToEsBitmap();
+        return sdBmp.ToPbBitmap();
     }
 
     /// <summary>仮想スクリーン（全モニタを包含する領域）全体を 1 回のキャプチャで取得する。</summary>
@@ -79,7 +77,7 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     /// <c>Format32bppPArgb</c>（アルファ乗算済み・不透明）で生成し、<see cref="PbBitmapDrawingExtensions.ToPbBitmap(System.Drawing.Bitmap)"/>
     /// が PArgb を直接読み取れるようにする（アルファ強制不要）。
     /// </remarks>
-    private DrawingBitmap CaptureSdBitmap(Rectangle bounds)
+    private DrawingBitmap CaptureSdBitmap(RectInt bounds)
     {
         _log.LogCaptureSdBitmap(bounds);
         var bitmap = new DrawingBitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppPArgb);

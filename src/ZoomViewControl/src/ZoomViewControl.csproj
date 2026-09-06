@@ -13,12 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- コアの座標値型（PointD / RectD / SizeD / VectorD）を利用するため、PlatformFactory を参照する
-         （座標変換の純粋関数（ZoomMath）を UI 非依存にするための依存。汎用コントロール本体は PlatformFactory の
-         画像・プラットフォーム機能には依存しない） -->
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
     <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
-    <ProjectReference Include="..\..\..\..\Estable\src\Media\Media.csproj" />
   </ItemGroup>
 
   <ItemGroup>

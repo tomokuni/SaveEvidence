@@ -7,11 +7,8 @@ using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
-using Estable;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using PbBitmap = Estable.Media.EsBitmap;
-using Estable.Media;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
@@ -179,7 +176,7 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>選択状態をオーバーレイ描画へ反映する（AreaSelect 用）。</summary>
     /// <param name="selectionRect">選択矩形（ドメイン = 仮想スクリーンピクセル）。</param>
     /// <remarks>単体テストから呼び出し可能（internal）。</remarks>
-    internal void UpdateOverlay(RectD selectionRect)
+    internal void UpdateOverlay(Rect selectionRect)
     {
         // ドメイン（仮想スクリーンピクセル）の選択矩形を複合コントロール（FadeMask + ルーペ）へ反映する。
         // DIP 変換（÷ scaling）+ 閉区間（終点 +1）は描画時に座標変換ポート（DomainScale）が行う。
@@ -258,7 +255,7 @@ internal sealed partial class OverlayWindow : Window
     /// 表示位置・サイズは LoupeControl が座標変換ポート（SetCoordinateTransform）から<br/>
     /// 自己計算する（カーソル右下 + オフセット + クランプ）。単体テストから呼び出し可能（internal）。
     /// </remarks>
-    internal void UpdateLoupe(PointD domainPos)
+    internal void UpdateLoupe(Point domainPos)
     {
         // 仮想スクリーン Bitmap が未取得の間はルーペを表示しない（Source 未設定の市松模様を防ぐ）。
         // 表示開始は SetVirtualScreen（Source 設定後）が行う（ルーペの IsVisible = true は SetLoupePosition が担う）。

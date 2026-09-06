@@ -12,10 +12,7 @@ using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable;
 using System.Collections.Specialized;
-using PbBitmap = Estable.Media.EsBitmap;
-using Estable.Media;
 
 namespace DragRectControl.Sample.Views;
 
@@ -128,9 +125,9 @@ public partial class MainWindow : Window
         // SetCoordinateTransform は内部で InvalidateVisual を呼び、ズーム時のちらつきを防ぐ
         // Forward = DIP→ドメイン（_zoom で除算 = 画像ピクセルへ）、Inverse = ドメイン→DIP（_zoom で乗算）
         DragRect.SetCoordinateTransform(new CoordTransform(
-            p => new PointD(p.X / _zoom, p.Y / _zoom),
-            p => new PointD(p.X * _zoom, p.Y * _zoom),
-            () => new SizeD(ImageWidth, ImageHeight)));
+            p => new Point(p.X / _zoom, p.Y / _zoom),
+            p => new Point(p.X * _zoom, p.Y * _zoom),
+            () => new Size(ImageWidth, ImageHeight)));
 
         // スクロールオフセットを同期的に設定する（Canvas サイズ変更と同じフレームで反映される）
         ImageScroll.Offset = newOffset;
@@ -348,7 +345,7 @@ public partial class MainWindow : Window
     /// <remarks>外部からの復元（<see cref="DragRectControl.SetSelection"/>）の動作確認。</remarks>
     private void OnSetFixedClicked(object? sender, RoutedEventArgs e)
     {
-        DragRect.SetSelection(new RectD(250, 180, 500, 360));
+        DragRect.SetSelection(new Rect(250, 180, 500, 360));
         _vm.UpdateSelection(true, new Rect(250, 180, 500, 360));
         _vm.AddLog("[App] SetSelection(250,180,500,360) を呼び出しました。");
     }

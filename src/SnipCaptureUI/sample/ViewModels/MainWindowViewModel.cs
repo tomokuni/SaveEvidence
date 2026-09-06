@@ -3,7 +3,6 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace SnipCaptureUI.Sample.ViewModels;
 

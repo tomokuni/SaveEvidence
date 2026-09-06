@@ -1,9 +1,7 @@
+using Avalonia;
 using Estable.AvaloniaUI.Platform;
-using Estable.Media;
 using Avalonia.Media;
-using Rect = Estable.RectD;
-using Estable;
-using Estable.Media;
+using Rect = Avalonia.Rect;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -109,7 +107,7 @@ public class DragRectControlStateTests
         control.SetSelection(new Rect(10, 10, 50, 40));
         var snap1 = control.CurrentSnapshot;
         Assert.Equal(DragRectInteractionState.Selected, snap1.State);
-        Assert.Equal(new RectD(10, 10, 50, 40), snap1.SelectionRect);
+        Assert.Equal(new Rect(10, 10, 50, 40), snap1.SelectionRect);
         Assert.True(snap1.HasSelection);
         Assert.False(snap1.IsDragging);
         Assert.False(snap1.NudgeActive);
@@ -119,20 +117,20 @@ public class DragRectControlStateTests
     public void DragRectSnapshot_HasSelection_幅か高さが0ならfalseを返す()
     {
         // Width>0 かつ Height=0（幅のみの矩形は選択として無効）
-        var snap1 = new DragRectSnapshot(DragRectInteractionState.Selected, new RectD(0, 0, 100, 0), DragHandle.None, default, false, false, false);
+        var snap1 = new DragRectSnapshot(DragRectInteractionState.Selected, new Rect(0, 0, 100, 0), DragHandle.None, default, false, false, false);
         Assert.False(snap1.HasSelection);
 
         // Width=0 かつ Height>0（高さのみの矩形は選択として無効）
-        var snap2 = new DragRectSnapshot(DragRectInteractionState.Selected, new RectD(0, 0, 0, 100), DragHandle.None, default, false, false, false);
+        var snap2 = new DragRectSnapshot(DragRectInteractionState.Selected, new Rect(0, 0, 0, 100), DragHandle.None, default, false, false, false);
         Assert.False(snap2.HasSelection);
     }
 
     [Fact]
     public void DragRectSnapshot_MousePositionが取得できる()
     {
-        var snap = new DragRectSnapshot(DragRectInteractionState.Selected, default, DragHandle.None, new PointD(5, 7), false, false, false);
+        var snap = new DragRectSnapshot(DragRectInteractionState.Selected, default, DragHandle.None, new Point(5, 7), false, false, false);
 
-        Assert.Equal(new PointD(5, 7), snap.MousePosition);
+        Assert.Equal(new Point(5, 7), snap.MousePosition);
     }
 
     // ====================================================================
@@ -197,7 +195,7 @@ public class DragRectControlStateTests
         control.SetSelection(new Rect(10, 10, 50, 40));
 
         Assert.NotNull(raised);
-        Assert.Equal(new RectD(10, 10, 50, 40), raised!.Rect);
+        Assert.Equal(new Rect(10, 10, 50, 40), raised!.Rect);
     }
 
     [Fact]
@@ -205,7 +203,7 @@ public class DragRectControlStateTests
     {
         var control = CreateControl();
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new Size(200, 200)));
         SelectionRectEventArgs? raised = null;
         control.SelectionChanged += (_, e) => raised = e;
 
@@ -213,15 +211,15 @@ public class DragRectControlStateTests
         control.SetSelection(new Rect(150, 150, 100, 100));
 
         Assert.NotNull(raised);
-        Assert.Equal(new RectD(150, 150, 50, 50), raised!.Rect);
+        Assert.Equal(new Rect(150, 150, 50, 50), raised!.Rect);
     }
 
     [Fact]
     public void ClampToDomainBounds_ON切替時に既存の選択矩形がクリップされる()
     {
         var control = CreateControl();
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
-        var rects = new List<RectD>();
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new Size(200, 200)));
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 既定は ON のため、OFF → ON の切替シナリオを明示する
@@ -229,20 +227,20 @@ public class DragRectControlStateTests
 
         // 画像外にはみ出す矩形（左上が負・右下が 200 超え）を選択状態にする（OFF のためクリップされない）
         control.SetSelection(new Rect(-50, -30, 300, 260));
-        Assert.Equal(new RectD(-50, -30, 300, 260), rects[^1]);
+        Assert.Equal(new Rect(-50, -30, 300, 260), rects[^1]);
 
         // ON に切り替えた瞬間に境界内 (0,0)-(200,200) へクリップされる
         control.ClampToDomainBounds = true;
 
-        Assert.Equal(new RectD(0, 0, 200, 200), rects[^1]);
+        Assert.Equal(new Rect(0, 0, 200, 200), rects[^1]);
     }
 
     [Fact]
     public void ClampToDomainBounds_ON切替時に境界内の矩形は変更されない()
     {
         var control = CreateControl();
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
-        var rects = new List<RectD>();
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new Size(200, 200)));
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         control.SetSelection(new Rect(20, 20, 100, 80));
@@ -252,7 +250,7 @@ public class DragRectControlStateTests
         control.ClampToDomainBounds = true;
 
         Assert.Single(rects);
-        Assert.Equal(new RectD(20, 20, 100, 80), rects[^1]);
+        Assert.Equal(new Rect(20, 20, 100, 80), rects[^1]);
     }
 
     [Fact]
@@ -266,7 +264,7 @@ public class DragRectControlStateTests
 
         Assert.NotNull(raised);
         // Snapshot はイベント引数の Rect と同一の選択矩形（ドメイン座標）を保持する
-        Assert.Equal(new RectD(10, 10, 50, 40), raised!.Snapshot.SelectionRect);
+        Assert.Equal(new Rect(10, 10, 50, 40), raised!.Snapshot.SelectionRect);
         // 選択復元後はハンドルなし（新規選択・移動・未選択時は None）
         Assert.Equal(DragHandle.None, raised.Snapshot.ActiveHandle);
         // 選択確定後の状態は Selected
@@ -298,7 +296,7 @@ public class DragRectControlStateTests
         control.RequestConfirm();
 
         Assert.NotNull(raised);
-        Assert.Equal(new RectD(10, 10, 50, 40), raised!.Rect);
+        Assert.Equal(new Rect(10, 10, 50, 40), raised!.Rect);
     }
 
     [Fact]

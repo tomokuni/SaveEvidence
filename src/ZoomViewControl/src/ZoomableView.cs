@@ -6,7 +6,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform.Geometry;
-using Estable;
 
 namespace Estable.AvaloniaUI.ZoomView;
 
@@ -60,13 +59,13 @@ internal sealed class ZoomableView : Panel
     private double _zoomPercent;
 
     /// <summary>パン位置（コンテンツ座標。ビューポート左上に対応）。</summary>
-    private VectorD _offset;
+    private Vector _offset;
 
     /// <summary>マウスドラッグによるパン中かどうか。</summary>
     private bool _isPanning;
 
     /// <summary>ドラッグ開始時に掴んだコンテンツ座標（grab 原点。この位置がポインタに追従する）。</summary>
-    private PointD _grabContentPos;
+    private Point _grabContentPos;
 
     /// <summary>画像がビューポートより小さい場合に中央寄せするか（false で左上寄せ）。</summary>
     private bool _centerAlign = true;
@@ -145,7 +144,7 @@ internal sealed class ZoomableView : Panel
         else if (_image.Source is { } src)
         {
             _effectiveScale = ZoomMath.FitScale(
-                new SizeD(src.Size.Width, src.Size.Height), Bounds.Size.ToSizeD());
+                new Size(src.Size.Width, src.Size.Height), Bounds.Size.ToSize());
         }
         else
         {
@@ -154,7 +153,7 @@ internal sealed class ZoomableView : Panel
     }
 
     /// <summary>現在のパン位置（コンテンツ座標）。</summary>
-    public VectorD Offset => _offset;
+    public Vector Offset => _offset;
 
     /// <summary>その軸で画像がビューポートより小さい場合に中央寄せするか（false で左上寄せ）。</summary>
     /// <remarks>
@@ -244,7 +243,7 @@ internal sealed class ZoomableView : Panel
     /// 本メソッドはズーム中心維持を含む表示の適用のみを行う。<br/>
     /// Fit（0）の場合は画像をビューポートに収めてオフセットをリセットする。
     /// </remarks>
-    public void SetZoom(double zoomPercent, PointD? center = null)
+    public void SetZoom(double zoomPercent, Point? center = null)
     {
         var oldScale = Scale;
         _zoomPercent = zoomPercent;
@@ -258,10 +257,10 @@ internal sealed class ZoomableView : Panel
         {
             // ズーム中心維持: コンテンツ座標（元画像ピクセル）を不変に保つ
             var bounds = Bounds;
-            var zoomCenter = center ?? new PointD(bounds.Width / 2, bounds.Height / 2);
+            var zoomCenter = center ?? new Point(bounds.Width / 2, bounds.Height / 2);
             _offset = ZoomMath.ComputeOffsetAfterScaleChange(
                 _offset, zoomCenter, oldScale, Scale,
-                src.Size.ToSizeD(), bounds.Size.ToSizeD());
+                src.Size.ToSize(), bounds.Size.ToSize());
         }
 
         UpdateLayoutAndTransform();
@@ -269,7 +268,7 @@ internal sealed class ZoomableView : Panel
 
     /// <summary>パン位置を設定する（コンテンツ座標。クランプされる）。</summary>
     /// <param name="offset">パン位置（コンテンツ座標）。</param>
-    public void SetOffset(VectorD offset)
+    public void SetOffset(Vector offset)
     {
         var clamped = ClampCurrentOffset(offset);
         // クランプ結果が現在値と等しい場合は更新・通知をスキップする
@@ -283,14 +282,14 @@ internal sealed class ZoomableView : Panel
     /// <param name="viewportPos">ビューポート座標。</param>
     /// <returns>コンテンツ座標。</returns>
     /// <remarks>スケールは実効スケール（Fit 中は FitScale）を使用する。変換は ZoomMath の純粋関数に委譲する。</remarks>
-    public PointD ViewportToContent(PointD viewportPos)
+    public Point ViewportToContent(Point viewportPos)
         => ZoomMath.ViewportToContent(viewportPos, _offset, EffectiveScale);
 
     /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標に変換する。</summary>
     /// <param name="contentPos">コンテンツ座標。</param>
     /// <returns>ビューポート座標。</returns>
     /// <remarks>スケールは実効スケール（Fit 中は FitScale）を使用する。変換は ZoomMath の純粋関数に委譲する。</remarks>
-    public PointD ContentToViewport(PointD contentPos)
+    public Point ContentToViewport(Point contentPos)
         => ZoomMath.ContentToViewport(contentPos, _offset, EffectiveScale);
 
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準）。</summary>
@@ -301,7 +300,7 @@ internal sealed class ZoomableView : Panel
     /// （<see cref="ImageRectViewport"/>）を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
     /// 変換は <see cref="ZoomMath.ViewportToContentImage"/> に委譲する。
     /// </remarks>
-    public PointD ViewportToContentImage(PointD viewportPos)
+    public Point ViewportToContentImage(Point viewportPos)
         => ZoomMath.ViewportToContentImage(
             viewportPos, ImageRectViewport().Position, EffectiveScale);
 
@@ -313,35 +312,35 @@ internal sealed class ZoomableView : Panel
     /// （<see cref="ImageRectViewport"/>）を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
     /// 変換は <see cref="ZoomMath.ContentToViewportImage"/> に委譲する。
     /// </remarks>
-    public PointD ContentToViewportImage(PointD contentPos)
+    public Point ContentToViewportImage(Point contentPos)
         => ZoomMath.ContentToViewportImage(
             contentPos, ImageRectViewport().Position, EffectiveScale);
 
     /// <summary>画像の表示サイズ（ビューポート座標）を取得する。</summary>
     /// <returns>表示サイズ。画像未設定時は default。</returns>
-    public SizeD DisplaySize()
+    public Size DisplaySize()
     {
         if (_image.Source is not { } src) return default;
         var size = src.Size;
         var scale = EffectiveScale;
-        return new SizeD(size.Width * scale, size.Height * scale);
+        return new Size(size.Width * scale, size.Height * scale);
     }
 
     /// <summary>画像の表示矩形（ビューポート座標）を取得する。</summary>
     /// <returns>画像の表示矩形。画像未設定時は default。</returns>
-    public RectD ImageRectViewport()
+    public Rect ImageRectViewport()
     {
         var display = DisplaySize();
         // 画像未設定時（DisplaySize が default）は原点補正を行わず default を返す
         if (display == default) return default;
         var origin = ImageOriginViewport(display);
-        return new RectD(origin.X, origin.Y, display.Width, display.Height);
+        return new Rect(origin.X, origin.Y, display.Width, display.Height);
     }
 
     /// <summary>画像原点のビューポート座標を取得する（表示サイズは呼び出し側で計算済みのものを渡す）。</summary>
     /// <param name="display">画像の表示サイズ（ビューポート座標）。</param>
     /// <returns>画像原点のビューポート座標。</returns>
-    private PointD ImageOriginViewport(SizeD display)
+    private Point ImageOriginViewport(Size display)
     {
         var bounds = Bounds;
         if (_zoomPercent <= 0)
@@ -349,11 +348,11 @@ internal sealed class ZoomableView : Panel
             // Fit: CenterAlign に応じてビューポート中央（画像が小さい場合）または原点
             if (_centerAlign)
             {
-                return new PointD(
+                return new Point(
                     Math.Max(0, (bounds.Width - display.Width) / 2),
                     Math.Max(0, (bounds.Height - display.Height) / 2));
             }
-            return new PointD(0, 0);
+            return new Point(0, 0);
         }
         var scale = Scale;
         // 固定倍率では軸ごとに独立して扱う:
@@ -368,7 +367,7 @@ internal sealed class ZoomableView : Panel
         var y = display.Height <= bounds.Height
             ? MaxCentered(display.Height, bounds.Height)
             : -_offset.Y * scale;
-        return new PointD(x, y);
+        return new Point(x, y);
     }
 
     /// <summary>中央寄せの原点補正（ビューポート座標）を軸単位で計算する。</summary>
@@ -383,16 +382,16 @@ internal sealed class ZoomableView : Panel
 
     /// <summary>パンする（コンテンツ座標の移動量）。</summary>
     /// <param name="delta">コンテンツ座標の移動量。</param>
-    public void PanBy(VectorD delta)
+    public void PanBy(Vector delta)
         => SetOffset(_offset + delta);
 
     /// <summary>現在のオフセットをスクロール範囲内にクランプする。</summary>
     /// <param name="offset">クランプするオフセット。</param>
     /// <returns>クランプ後のオフセット。</returns>
-    private VectorD ClampCurrentOffset(VectorD offset)
+    private Vector ClampCurrentOffset(Vector offset)
     {
         if (_image.Source is not { } src || _zoomPercent <= 0) return default;
-        return ZoomMath.ClampOffset(offset, Scale, src.Size.ToSizeD(), Bounds.Size.ToSizeD());
+        return ZoomMath.ClampOffset(offset, Scale, src.Size.ToSize(), Bounds.Size.ToSize());
     }
 
     /// <summary>表示（レイアウトサイズ・RenderTransform・スクロールバー）を更新する。</summary>
@@ -560,11 +559,11 @@ internal sealed class ZoomableView : Panel
         // クランプ・表示更新は SetOffset に委譲する（パン操作との共通化）
         if (sender == _verticalScrollBar)
         {
-            SetOffset(new VectorD(_offset.X, e.NewValue));
+            SetOffset(new Vector(_offset.X, e.NewValue));
         }
         else
         {
-            SetOffset(new VectorD(e.NewValue, _offset.Y));
+            SetOffset(new Vector(e.NewValue, _offset.Y));
         }
     }
 
@@ -582,7 +581,7 @@ internal sealed class ZoomableView : Panel
         var point = e.GetCurrentPoint(this);
         if (!point.Properties.IsLeftButtonPressed) return;
         _isPanning = true;
-        _grabContentPos = ViewportToContent(point.Position.ToPointD());
+        _grabContentPos = ViewportToContent(point.Position.ToPoint());
         e.Pointer.Capture(this);
         e.Handled = true;
     }
@@ -602,7 +601,7 @@ internal sealed class ZoomableView : Panel
         var pos = e.GetPosition(this);
         var scale = EffectiveScale;
         // 掴んだ位置（コンテンツ座標）がポインタに追従するようオフセットを設定（クランプは SetOffset 内で行う）
-        SetOffset(new VectorD(
+        SetOffset(new Vector(
             _grabContentPos.X - pos.X / scale,
             _grabContentPos.Y - pos.Y / scale));
         e.Handled = true;
@@ -624,7 +623,7 @@ internal sealed class ZoomableView : Panel
         {
             // Ctrl+ホイール: ズーム要求（ズーム率の決定は上位が行う。マウスポインタ位置をズーム中心に使用）
             var pointerPos = e.GetPosition(this);
-            RaiseZoomRequested(e.Delta.Y > 0, pointerPos.ToPointD());
+            RaiseZoomRequested(e.Delta.Y > 0, pointerPos.ToPoint());
             e.Handled = true;
             return;
         }
@@ -635,13 +634,13 @@ internal sealed class ZoomableView : Panel
         var dx = isShift ? delta.Y * WheelScrollUnit : delta.X * WheelScrollUnit;
         var dy = isShift ? 0 : delta.Y * WheelScrollUnit;
         var scale = EffectiveScale;
-        PanBy(new VectorD(dx / scale, dy / scale));
+        PanBy(new Vector(dx / scale, dy / scale));
         e.Handled = true;
     }
 
     /// <summary>ズーム要求イベントを発火する。</summary>
     /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
     /// <param name="pointerPosition">ズーム中心として使用するマウスポインタ位置（ビューポートローカル座標）。</param>
-    private void RaiseZoomRequested(bool zoomIn, PointD pointerPosition)
+    private void RaiseZoomRequested(bool zoomIn, Point pointerPosition)
         => ZoomRequested?.Invoke(this, new ZoomRequestedEventArgs(zoomIn, pointerPosition));
 }

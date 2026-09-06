@@ -25,7 +25,6 @@
     <ProjectReference Include="..\src\ZoomViewControl.csproj" />
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
     <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
-    <ProjectReference Include="..\..\..\..\Estable\src\Media\Media.csproj" />
   </ItemGroup>
 
 </Project>

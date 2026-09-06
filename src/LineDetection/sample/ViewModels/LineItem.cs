@@ -38,7 +38,7 @@ public sealed partial class LineItem : ObservableObject
     public LineItem(LineDetectionResult result, int index)
     {
         Index = index;
-        // 検出結果（PointD）は表示用（Avalonia Point）のため、UI 境界で変換する（コアと UI の分離）。
+        // 検出結果（Point）は表示用（Avalonia Point）のため、UI 境界で変換する（コアと UI の分離）。
         Start = result.Start.ToAvaloniaPoint();
         End = result.End.ToAvaloniaPoint();
         Orientation = result.Orientation;

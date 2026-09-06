@@ -5,14 +5,11 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Point = Avalonia.Point;
-using Rect = Estable.RectD;
+using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
-using Estable.Media;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable;
-using Estable.Media;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
@@ -451,12 +448,12 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
         control.DragRect.SetSelection(new Rect(10, 10, 50, 40));
-        RectD? confirmed = null;
+        Rect? confirmed = null;
         control.ConfirmRequested += (_, e) => confirmed = e.SelectionRect;
 
         control.RequestConfirm();
 
-        Assert.Equal(new RectD(10, 10, 50, 40), confirmed);
+        Assert.Equal(new Rect(10, 10, 50, 40), confirmed);
     }
 
     [AvaloniaFact]
@@ -470,7 +467,7 @@ public class FadeMaskDragRectControlTests
             "ConfirmRequested", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
         eventDelegate?.DynamicInvoke(control.DragRect,
-            new SelectionRectEventArgs(new RectD(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
+            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
 
         // 例外なく完了する
         Assert.True(true);
@@ -547,13 +544,13 @@ public class FadeMaskDragRectControlTests
         window.Show();
 
         // Source 未設定の間は表示しない（市松模様防止の仕様）
-        control.SetLoupePosition(new PointD(960, 540));
+        control.SetLoupePosition(new Point(960, 540));
         Assert.False(control.Loupe.IsVisible);
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
 
         // Source 設定後に再呼び出しすると表示される
         control.Loupe.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
-        control.SetLoupePosition(new PointD(960, 540));
+        control.SetLoupePosition(new Point(960, 540));
         Assert.True(control.Loupe.IsVisible);
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
 
@@ -666,7 +663,7 @@ public class FadeMaskDragRectControlTests
             "ViewportChanged", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
         eventDelegate?.DynamicInvoke(control.DragRect,
-            new SelectionRectEventArgs(new RectD(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
+            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
 
         // 選択状態は維持される（再描画要求のみ）
         Assert.True(control.HasSelection);
@@ -693,7 +690,7 @@ public class FadeMaskDragRectControlTests
             "ViewportChanged", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
         eventDelegate?.DynamicInvoke(control.DragRect,
-            new SelectionRectEventArgs(new RectD(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
+            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
 
         // ルーペ表示位置が再計算される（NotifyViewportChanged → Loupe.RefreshPosition 経由で RenderTransform が更新される。
         // TranslateTransform は同一インスタンスの値更新のため Same で検証）
@@ -719,7 +716,7 @@ public class FadeMaskDragRectControlTests
             "SelectionStarted", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
         eventDelegate?.DynamicInvoke(control.DragRect,
-            new DragRectPointEventArgs(new PointD(0, 0), control.DragRect.CurrentSnapshot));
+            new DragRectPointEventArgs(new Point(0, 0), control.DragRect.CurrentSnapshot));
 
         Assert.False(control.Renderer.HasSelection);
     }
@@ -759,14 +756,14 @@ public class FadeMaskDragRectControlTests
         var field = typeof(DragRectControl).GetField(
             "LoupePositionMoved", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        var args = new DragRectPointEventArgs(new PointD(100, 200), control.DragRect.CurrentSnapshot);
+        var args = new DragRectPointEventArgs(new Point(100, 200), control.DragRect.CurrentSnapshot);
         eventDelegate?.DynamicInvoke(control.DragRect, args);
 
         // ルーペ中心が更新され、ホストへ独自イベント引数（位置）で中継される
         Assert.Equal(new Point(100, 200), control.Loupe.CenterPoint);
         Assert.True(control.Loupe.IsVisible);
         Assert.NotNull(received);
-        Assert.Equal(new PointD(100, 200), received!.Position);
+        Assert.Equal(new Point(100, 200), received!.Position);
 
         window.Close();
     }
@@ -780,7 +777,7 @@ public class FadeMaskDragRectControlTests
         var field = typeof(DragRectControl).GetField(
             "LoupePositionMoved", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        var args = new DragRectPointEventArgs(new PointD(100, 200), control.DragRect.CurrentSnapshot);
+        var args = new DragRectPointEventArgs(new Point(100, 200), control.DragRect.CurrentSnapshot);
         eventDelegate?.DynamicInvoke(control.DragRect, args);
 
         // 購読者がいないため例外なく完了する（ルーペ中心は更新されるが表示はしない）
@@ -890,7 +887,7 @@ public class FadeMaskDragRectControlTests
         var window = new Window { Content = control };
         window.Show();
         control.SetLoupeSource(PbBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent));
-        control.SetLoupePosition(new PointD(10, 10));
+        control.SetLoupePosition(new Point(10, 10));
         Assert.True(control.Loupe.IsVisible);
 
         control.ClearLoupe();
@@ -908,8 +905,8 @@ public class FadeMaskDragRectControlTests
         window.Show();
 
         Assert.Null(control.LoupeCenterPoint);
-        control.SetLoupePosition(new PointD(100, 200));
-        Assert.Equal(new PointD(100, 200), control.LoupeCenterPoint);
+        control.SetLoupePosition(new Point(100, 200));
+        Assert.Equal(new Point(100, 200), control.LoupeCenterPoint);
         window.Close();
     }
 

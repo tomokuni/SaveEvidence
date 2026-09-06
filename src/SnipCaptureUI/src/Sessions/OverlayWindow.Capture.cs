@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 

@@ -3,8 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Estable.AvaloniaUI.DragRect.Logging;
 using Estable.AvaloniaUI.Platform;
-using Estable;
-using Estable.Media;
 
 namespace Estable.AvaloniaUI.DragRect;
 
@@ -121,7 +119,7 @@ public sealed partial class DragRectControl
         if (TopLevel.GetTopLevel(this) is { } topLevel)
         {
             var screenPt = _state.Cursor.GetCursorScreenPoint();
-            var localDip = ScreenConverter.CreateVisualDipPort(this).Forward(new PointD(screenPt.X, screenPt.Y));
+            var localDip = ScreenConverter.CreateVisualDipPort(this).Forward(new Point(screenPt.X, screenPt.Y));
             var domainPos = _coordinatePort.Forward(localDip);
             _state.LastMousePosition = domainPos;
         }
@@ -168,7 +166,7 @@ public sealed partial class DragRectControl
     /// <summary>ドメイン座標を画面物理座標に変換する。</summary>
     /// <param name="domainPos">ドメイン座標。</param>
     /// <returns>画面物理座標。</returns>
-    private PixelPoint ToScreen(PointD domainPos)
+    private PixelPoint ToScreen(Point domainPos)
     {
         var localDip = _coordinatePort.Inverse(domainPos);
         return ScreenConverter.LocalDipToScreen(this, localDip);

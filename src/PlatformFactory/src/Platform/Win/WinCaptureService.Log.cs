@@ -1,5 +1,5 @@
-using System.Drawing;
 using Microsoft.Extensions.Logging;
+using RectInt = System.Drawing.Rectangle;
 
 namespace Estable.AvaloniaUI.Platform.Win;
 
@@ -34,7 +34,7 @@ internal static partial class WinCaptureServiceLog
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="bounds">キャプチャ矩形。</param>
     [LoggerMessage(LogLevel.Debug, "[CaptureService] CaptureSdBitmap: bounds={Bounds}")]
-    internal static partial void LogCaptureSdBitmap(this ILogger logger, Rectangle bounds);
+    internal static partial void LogCaptureSdBitmap(this ILogger logger, RectInt bounds);
 
     /// <summary>画面領域キャプチャ完了のデバッグログ。</summary>
     /// <remarks>

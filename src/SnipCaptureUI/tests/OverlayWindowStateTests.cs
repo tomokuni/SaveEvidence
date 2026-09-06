@@ -1,6 +1,5 @@
 using Avalonia;
 using Rect = Avalonia.Rect;
-using Estable;
 using System.Reflection;
 using Xunit;
 
@@ -133,11 +132,11 @@ public class OverlayWindowStateTests
     public void FormatDomainSizeLabel_ドメイン矩形とスケーリングからラベルを生成する()
     {
         // 100% モニタ: 物理サイズはドメインの値そのまま（3840x2160）、DisplayScale は 100%
-        var label100 = InvokeFormatDomainSizeLabel(new RectD(0, 0, 3840, 2160), 1.0);
+        var label100 = InvokeFormatDomainSizeLabel(new Rect(0, 0, 3840, 2160), 1.0);
         Assert.Equal("(0, 0) - (3840, 2160),  (3840×2160), DisplayScale: (100%)", label100);
 
         // 120% モニタ: 物理サイズは変わらず 3840x2160（スケーリングに依存しない）、DisplayScale は 120%
-        var label120 = InvokeFormatDomainSizeLabel(new RectD(0, 0, 3840, 2160), 1.2);
+        var label120 = InvokeFormatDomainSizeLabel(new Rect(0, 0, 3840, 2160), 1.2);
         Assert.Equal("(0, 0) - (3840, 2160),  (3840×2160), DisplayScale: (120%)", label120);
     }
 
@@ -145,7 +144,7 @@ public class OverlayWindowStateTests
     public void FormatDomainSizeLabel_オフセット付き矩形の座標とサイズが正しい()
     {
         // セカンダリモニタ（負の座標・1920x1200）: 物理サイズはドメインの値そのまま
-        var label = InvokeFormatDomainSizeLabel(new RectD(1914, -1200, 1920, 1200), 1.0);
+        var label = InvokeFormatDomainSizeLabel(new Rect(1914, -1200, 1920, 1200), 1.0);
         Assert.Equal("(1914, -1200) - (3834, 0),  (1920×1200), DisplayScale: (100%)", label);
     }
 
@@ -168,7 +167,7 @@ public class OverlayWindowStateTests
         return (int)method.Invoke(null, [title])!;
     }
 
-    private static string InvokeFormatDomainSizeLabel(RectD domainRect, double scaling)
+    private static string InvokeFormatDomainSizeLabel(Rect domainRect, double scaling)
     {
         var method = typeof(OverlayWindow).GetMethod(
             "FormatDomainSizeLabel", BindingFlags.Static | BindingFlags.NonPublic)!;

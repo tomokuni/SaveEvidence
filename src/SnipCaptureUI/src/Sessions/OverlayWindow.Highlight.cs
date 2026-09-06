@@ -5,7 +5,6 @@ using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
-using Estable;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
@@ -23,7 +22,7 @@ internal sealed partial class OverlayWindow
     private void OnClickMoved(object? sender, PointerEventArgs e)
     {
         // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
-        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this).ToPointD());
+        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this).ToPoint());
         if (_captureType == CaptureType.ScreenSelect)
             UpdateSelectScreenHighlight(screenPoint);
         else
@@ -43,7 +42,7 @@ internal sealed partial class OverlayWindow
     private void UpdateSelectScreenHighlight(PixelPoint screenPoint)
     {
         var detection = _detector.FindScreenUnderCursor(screenPoint);
-        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds).ToRectD() : null;
+        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds).ToRect() : null;
         SelectionOverlay.HasHighlight = detection.IsDetected;
         SelectionOverlay.ScreenIndex = detection.IsDetected ? ParseScreenIndex(detection.Title) : -1;
         // サイズラベルの物理ピクセル換算は、ドメイン（画面物理 − Position）を DIP 変換した
@@ -78,7 +77,7 @@ internal sealed partial class OverlayWindow
     /// ドメイン矩形の中心に <see cref="Position"/> を加算して画面物理座標へ戻し、<see cref="FindScalingForPoint"/> で
     /// モニタを特定する。これにより、マルチモニタ（異なる DPI）でも選択中のモニタの実スケーリングを表示できる。
     /// </remarks>
-    private double GetMonitorScalingForRect(RectD domainRect)
+    private double GetMonitorScalingForRect(Rect domainRect)
     {
         var center = new PixelPoint(
             (int)(domainRect.X + domainRect.Width / 2 + Position.X),
@@ -95,7 +94,7 @@ internal sealed partial class OverlayWindow
     /// DIP 変換（÷ _scaling）→ 物理換算（× DisplayScaleScaling）の往復誤差（マルチモニタでのサイズ・DisplayScale の
     /// 不一致）を排除するため、ドメインから直接生成する（単一実装・DRY）。
     /// </remarks>
-    private static string FormatDomainSizeLabel(RectD domainRect, double scaling)
+    private static string FormatDomainSizeLabel(Rect domainRect, double scaling)
     {
         int l = (int)domainRect.X, t = (int)domainRect.Y;
         int r = (int)domainRect.Right, b = (int)domainRect.Bottom;
@@ -119,7 +118,7 @@ internal sealed partial class OverlayWindow
     private void UpdateWindowSelectHighlight(PixelPoint screenPoint)
     {
         var detection = _detector.FindWindowUnderCursor(screenPoint);
-        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds).ToRectD() : null;
+        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds).ToRect() : null;
         SelectionOverlay.HasHighlight = detection.IsDetected;
         SelectionOverlay.WindowTitle = detection.Title ?? "";
         // サイズラベルの物理ピクセル換算は _scaling（オーバーレイの表示スケール）を維持する
@@ -155,7 +154,7 @@ internal sealed partial class OverlayWindow
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
         // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
-        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this).ToPointD());
+        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this).ToPoint());
         var targetRect = _captureType == CaptureType.ScreenSelect
             ? _detector.FindScreenUnderCursor(screenPoint).Bounds
             : _detector.FindWindowUnderCursor(screenPoint).Bounds;

@@ -1,10 +1,9 @@
 using Avalonia;
-using Rect = Estable.RectInt;
+using RectInt = System.Drawing.Rectangle;
 using Estable.AvaloniaUI.Platform.Imaging;
 using SkiaSharp;
 using Xunit;
 using AvaloniaColor = Avalonia.Media.Color;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
 
@@ -280,7 +279,7 @@ public class PbBitmapTests
         using var src = Create(10, 10);
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
-        using var result = src.Crop(new Rect(2, 2, 4, 4));
+        using var result = src.Crop(new RectInt(2, 2, 4, 4));
 
         Assert.Equal(4, result.Size.Width);
         Assert.Equal(4, result.Size.Height);
@@ -293,7 +292,7 @@ public class PbBitmapTests
     {
         using var src = Create(10, 10);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new Rect(0, 0, 0, 4)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new RectInt(0, 0, 0, 4)));
     }
 
     [Fact]
@@ -301,7 +300,7 @@ public class PbBitmapTests
     {
         using var src = Create(10, 10);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new Rect(0, 0, 4, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new RectInt(0, 0, 4, 0)));
     }
 
     [Fact]
@@ -311,7 +310,7 @@ public class PbBitmapTests
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
         // 矩形が右端を超える場合、コピーできる部分のみコピーし、範囲外は透明（0）のまま
-        using var result = src.Crop(new Rect(8, 0, 10, 10));
+        using var result = src.Crop(new RectInt(8, 0, 10, 10));
 
         Assert.Equal(10, result.Size.Width);
         Assert.Equal(10, result.Size.Height);
@@ -328,7 +327,7 @@ public class PbBitmapTests
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
         // 矩形がソースと交差しない場合でも、要求サイズの全透明ビットマップを返す
-        using var result = src.Crop(new Rect(20, 20, 5, 5));
+        using var result = src.Crop(new RectInt(20, 20, 5, 5));
 
         Assert.Equal(5, result.Size.Width);
         Assert.Equal(5, result.Size.Height);
@@ -343,6 +342,6 @@ public class PbBitmapTests
         var src = Create(10, 10);
         src.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => src.Crop(new Rect(0, 0, 4, 4)));
+        Assert.Throws<ObjectDisposedException>(() => src.Crop(new RectInt(0, 0, 4, 4)));
     }
 }

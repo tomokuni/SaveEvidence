@@ -1,7 +1,6 @@
 using BindingFlags = System.Reflection.BindingFlags;
 using Estable.AvaloniaUI.DragRect.Drawing;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Geometry;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -9,10 +8,8 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Point = Avalonia.Point;
-using Rect = Estable.RectD;
+using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
-using Estable;
-using Estable.Media;
 using Xunit;
 
 namespace Estable.AvaloniaUI.DragRect.Tests;
@@ -125,7 +122,7 @@ public class DragRectControlTests
 
         Assert.NotNull(duringDrag);
         // ドラッグ中の矩形（ドメイン座標）が Snapshot に含まれる
-        Assert.Equal(new RectD(20, 20, 60, 60), duringDrag!.Snapshot.SelectionRect);
+        Assert.Equal(new Rect(20, 20, 60, 60), duringDrag!.Snapshot.SelectionRect);
         // 新規選択ドラッグ中はハンドルなし（None）
         Assert.Equal(DragHandle.None, duringDrag.Snapshot.ActiveHandle);
         // ドラッグ中の状態は Dragging
@@ -156,7 +153,7 @@ public class DragRectControlTests
         // リサイズドラッグ中はアクティブハンドルが TopLeft
         Assert.Equal(DragHandle.TopLeft, duringResize!.Snapshot.ActiveHandle);
         // リサイズ後の矩形（ドメイン座標）が Snapshot に含まれる
-        Assert.Equal(new RectD(30, 30, 120, 100), duringResize.Snapshot.SelectionRect);
+        Assert.Equal(new Rect(30, 30, 120, 100), duringResize.Snapshot.SelectionRect);
         // リサイズドラッグ中の状態は Dragging
         Assert.Equal(DragRectInteractionState.Dragging, duringResize.Snapshot.State);
 
@@ -174,7 +171,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         var pointer = CreatePointer();
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 押下 (20,20) → 移動 (80,80) → 解放
@@ -184,7 +181,7 @@ public class DragRectControlTests
 
         // 最終的な選択矩形（ドメイン座標 = 等価変換）が通知される
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(20, 20, 60, 60), rects[^1]);
+        Assert.Equal(new Rect(20, 20, 60, 60), rects[^1]);
         window.Close();
     }
 
@@ -196,8 +193,8 @@ public class DragRectControlTests
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
-        var rects = new List<RectD>();
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new Size(200, 200)));
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 画像外（-50,-30）で押下 → ドラッグ (80,80) → 解放
@@ -207,7 +204,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(0, 0, 80, 80), rects[^1]);
+        Assert.Equal(new Rect(0, 0, 80, 80), rects[^1]);
         window.Close();
     }
 
@@ -219,8 +216,8 @@ public class DragRectControlTests
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
-        var rects = new List<RectD>();
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new Size(200, 200)));
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 画像内 (20,20) で押下 → 画像外 (250,180) へドラッグ → 解放
@@ -230,7 +227,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(250, 180)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(20, 20, 180, 160), rects[^1]);
+        Assert.Equal(new Rect(20, 20, 180, 160), rects[^1]);
         window.Close();
     }
 
@@ -396,7 +393,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         var pointer = CreatePointer();
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // ドラッグ開始
@@ -492,12 +489,12 @@ public class DragRectControlTests
         var control = CreateControl();
         // ドメイン = DIP × 2（拡大）
         control.SetCoordinateTransform(new CoordTransform(
-            p => new PointD(p.X * 2, p.Y * 2),
-            p => new PointD(p.X / 2, p.Y / 2),
+            p => new Point(p.X * 2, p.Y * 2),
+            p => new Point(p.X / 2, p.Y / 2),
             () => null));
         var window = Show(control);
         var pointer = CreatePointer();
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // DIP (20,20) → (80,80) はドメイン (40,40) → (160,160)
@@ -506,7 +503,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(40, 40, 120, 120), rects[^1]);
+        Assert.Equal(new Rect(40, 40, 120, 120), rects[^1]);
         window.Close();
     }
 
@@ -520,14 +517,14 @@ public class DragRectControlTests
         // 等価変換でもドラッグが動作する（例外なし）
         var window = Show(control);
         var pointer = CreatePointer();
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(10, 10)), 0UL, LeftPressed(), KeyModifiers.None, 1));
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 40)), 0UL, LeftPressed(), KeyModifiers.None));
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(50, 40)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
-        Assert.Equal(new RectD(10, 10, 40, 30), rects[^1]);
+        Assert.Equal(new Rect(10, 10, 40, 30), rects[^1]);
         window.Close();
     }
 
@@ -536,7 +533,7 @@ public class DragRectControlTests
     {
         var control = CreateControl();
         // Forward が常に (0,0) を返す変換（スケール 0）→ ToDomainRadius は HandleHitRadius にフォールバック
-        control.SetCoordinateTransform(new CoordTransform(_ => new PointD(0, 0), p => p, () => null));
+        control.SetCoordinateTransform(new CoordTransform(_ => new Point(0, 0), p => p, () => null));
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
@@ -560,7 +557,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 右下ハンドル（80,80 付近）を (100,100) へドラッグ
@@ -569,7 +566,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(100, 100)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(20, 20, 80, 80), rects[^1]);
+        Assert.Equal(new Rect(20, 20, 80, 80), rects[^1]);
         window.Close();
     }
 
@@ -580,7 +577,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 枠内（50,50）を (70,70) へドラッグ（+20, +20 移動）
@@ -589,7 +586,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(70, 70)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(40, 40, 60, 60), rects[^1]);
+        Assert.Equal(new Rect(40, 40, 60, 60), rects[^1]);
         window.Close();
     }
 
@@ -600,7 +597,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 右下ハンドル（80,80）を左上方向（10,10）へドラッグ → 矩形が反転（正規化）される
@@ -610,7 +607,7 @@ public class DragRectControlTests
 
         Assert.NotEmpty(rects);
         // 右下ハンドルを左上へ -70 移動 → 右辺 10・下辺 10 に反転（正規化）され、最小サイズ 10 を保つ
-        Assert.Equal(new RectD(10, 10, 10, 10), rects[^1]);
+        Assert.Equal(new Rect(10, 10, 10, 10), rects[^1]);
         window.Close();
     }
 
@@ -669,7 +666,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // TopCenter ハンドル（50,20 付近）を (50,10) へドラッグ → 上辺が 10 に
@@ -678,7 +675,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(50, 10)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(20, 10, 60, 70), rects[^1]);
+        Assert.Equal(new Rect(20, 10, 60, 70), rects[^1]);
         window.Close();
     }
 
@@ -689,7 +686,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // MiddleLeft ハンドル（20,50 付近）を (10,50) へドラッグ → 左辺が 10 に
@@ -698,7 +695,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(10, 50)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(10, 20, 70, 60), rects[^1]);
+        Assert.Equal(new Rect(10, 20, 70, 60), rects[^1]);
         window.Close();
     }
 
@@ -709,7 +706,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // MiddleRight ハンドル（80,50 付近）を (90,50) へドラッグ → 右辺が 90 に
@@ -718,7 +715,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(90, 50)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(20, 20, 70, 60), rects[^1]);
+        Assert.Equal(new Rect(20, 20, 70, 60), rects[^1]);
         window.Close();
     }
 
@@ -729,7 +726,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // TopRight ハンドル（80,20 付近）を (90,10) へドラッグ → 右辺 90・上辺 10
@@ -738,7 +735,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(90, 10)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(20, 10, 70, 70), rects[^1]);
+        Assert.Equal(new Rect(20, 10, 70, 70), rects[^1]);
         window.Close();
     }
 
@@ -749,7 +746,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // BottomLeft ハンドル（20,80 付近）を (10,90) へドラッグ → 左辺 10・下辺 90
@@ -758,7 +755,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(10, 90)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(10, 20, 70, 70), rects[^1]);
+        Assert.Equal(new Rect(10, 20, 70, 70), rects[^1]);
         window.Close();
     }
 
@@ -769,7 +766,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // BottomCenter ハンドル（50,80 付近）を (50,90) へドラッグ → 下辺が 90 に
@@ -778,7 +775,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(50, 90)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(20, 20, 60, 70), rects[^1]);
+        Assert.Equal(new Rect(20, 20, 60, 70), rects[^1]);
         window.Close();
     }
 
@@ -787,11 +784,11 @@ public class DragRectControlTests
     {
         var control = CreateControl();
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new Size(200, 200)));
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 枠内 (50,50) を掴んで左へ大きくドラッグ（-100, 0）→ 矩形全体が左端 (0,20) にシフト（サイズ維持）
@@ -800,7 +797,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(-50, 50)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(rects);
-        Assert.Equal(new RectD(0, 20, 60, 60), rects[^1]);
+        Assert.Equal(new Rect(0, 20, 60, 60), rects[^1]);
         window.Close();
     }
 
@@ -814,7 +811,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var rects = new List<RectD>();
+        var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 領域作成後はマウス Down 中のみ nudge 許可 → 押下状態で矢印キー
@@ -831,7 +828,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         var pointer = CreatePointer();
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // ドラッグ開始（nudge 許可: マウス Down 中）
@@ -854,7 +851,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         var pointer = CreatePointer();
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // ドラッグ開始（コントロールはフォーカスなし。OnKeyDown は呼ばれない）
@@ -923,7 +920,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         control.SetSelection(new Rect(10, 10, 50, 40));
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // フォーカスを取得した状態で矢印キー（OnKeyDown 経由）→ 選択確定後は nudge 無効
@@ -940,7 +937,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         control.SetSelection(new Rect(10, 10, 50, 40));
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 選択確定後（マウス Down なし）の矢印キー → nudge 無効（ルーペ位置は通知されない）
@@ -998,7 +995,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 左上ハンドル（20,20 付近）を押下してリサイズ開始（ActiveHandle = TopLeft）
@@ -1009,7 +1006,7 @@ public class DragRectControlTests
 
         // 十字マーカーは「ドラッグ中のハンドル（左上）」を追従する（固定コーナーではない）
         Assert.NotEmpty(positions);
-        Assert.Equal(new PointD(21, 20), positions[^1]);
+        Assert.Equal(new Point(21, 20), positions[^1]);
         window.Close();
     }
 
@@ -1019,7 +1016,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         var pointer = CreatePointer();
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // (10,10) から (50,50) へドラッグして新規選択中にする（終点 = 50,50）
@@ -1031,7 +1028,7 @@ public class DragRectControlTests
 
         // 十字マーカーは終点（ドラッグ中の位置）を追従する
         Assert.NotEmpty(positions);
-        Assert.Equal(new PointD(51, 50), positions[^1]);
+        Assert.Equal(new Point(51, 50), positions[^1]);
         window.Close();
     }
 
@@ -1046,10 +1043,10 @@ public class DragRectControlTests
 
         // ローカル DIP (300,200) に対応する画面物理座標をモックのカーソル位置として設定する
         // （HandleArrowKey 内の逆変換（画面物理 → ローカル DIP）が (300,200) に一致する）
-        var screenPt = ScreenConverter.LocalDipToScreen(control, new PointD(300, 200));
+        var screenPt = ScreenConverter.LocalDipToScreen(control, new Point(300, 200));
         mock.Position = screenPt;
 
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 矩形未作成状態（StartPoint が未設定）で矢印キー Right を押す
@@ -1057,7 +1054,7 @@ public class DragRectControlTests
 
         // マーカーは「カーソル位置 (300,200) + 1px 右」を追従する（StartPoint が (0,0) のままなら (1,0) に飛ぶ）
         Assert.NotEmpty(positions);
-        Assert.Equal(new PointD(301, 200), positions[^1]);
+        Assert.Equal(new Point(301, 200), positions[^1]);
         window.Close();
     }
 
@@ -1070,24 +1067,24 @@ public class DragRectControlTests
         window.Show();
 
         // 1 回目の nudge セッション: カーソル位置 (300,200) から Right → (301,200)
-        mock.Position = ScreenConverter.LocalDipToScreen(control, new PointD(300, 200));
+        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(300, 200));
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
         // nudge 終了（マウス Up。StartPoint は (301,200) のまま残る）
         control.RaiseEvent(new PointerReleasedEventArgs(control, new Pointer(1, PointerType.Mouse, true), window,
             ToScreenPoint(control, new Point(301, 200)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 2 回目の nudge セッション: ユーザーがマウスを (800,600) へ移動してから Right を押す
-        mock.Position = ScreenConverter.LocalDipToScreen(control, new PointD(800, 600));
+        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(800, 600));
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
         // 基点は古い nudge 位置 (301,200) ではなく、新しいカーソル位置 (800,600) に同期される
         // （同期されないと (302,200) にジャンプする）
         Assert.NotEmpty(positions);
-        Assert.Equal(new PointD(801, 600), positions[^1]);
+        Assert.Equal(new Point(801, 600), positions[^1]);
         window.Close();
     }
 
@@ -1103,9 +1100,9 @@ public class DragRectControlTests
         window.Show();
 
         // カーソル位置 (300,200) に固定（2 回目以降の再評価でも同じ位置を返す = 移動を相殺する）
-        mock.Position = ScreenConverter.LocalDipToScreen(control, new PointD(300, 200));
+        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(300, 200));
 
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 1 回目のキー押下（セッション開始）: カーソル位置 (300,200) から Right → (301,200)
@@ -1116,7 +1113,7 @@ public class DragRectControlTests
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
         Assert.Equal(2, positions.Count);
-        Assert.Equal(new PointD(302, 200), positions[^1]);
+        Assert.Equal(new Point(302, 200), positions[^1]);
         window.Close();
     }
 
@@ -1126,7 +1123,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         var pointer = CreatePointer();
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 新規選択ドラッグ開始（(10,10) → (50,50)。終点 = 50,50）
@@ -1143,7 +1140,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.NotEmpty(positions);
-        Assert.Equal(new PointD(51, 50), positions[^1]);
+        Assert.Equal(new Point(51, 50), positions[^1]);
         window.Close();
     }
 
@@ -1215,7 +1212,7 @@ public class DragRectControlTests
         // nudge（終点が (51,50) へ移動 = nudge 位置）
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
         // 実コードの ToScreen（LocalDipToScreen）と同じ変換で期待値を求める（PixelPoint 型）
-        var nudgeScreenPos = ScreenConverter.LocalDipToScreen(control, new PointD(51, 50));
+        var nudgeScreenPos = ScreenConverter.LocalDipToScreen(control, new Point(51, 50));
 
         // nudge 中にマウスを動かす（実マウス位置 (80,80)。カーソルはそこに移動した状態）
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftPressed(), KeyModifiers.None));
@@ -1248,7 +1245,7 @@ public class DragRectControlTests
 
         // ポインタ（OS カーソル）が右下ハンドル点 (80,80) へスナップされる
         // （実コードの ToScreen（LocalDipToScreen）と同じ変換で期待値を求める）
-        var snapScreenPos = ScreenConverter.LocalDipToScreen(control, new PointD(80, 80));
+        var snapScreenPos = ScreenConverter.LocalDipToScreen(control, new Point(80, 80));
         Assert.NotNull(mock.LastSetPoint);
         Assert.Equal(snapScreenPos, mock.LastSetPoint!.Value);
         window.Close();
@@ -1278,9 +1275,9 @@ public class DragRectControlTests
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）。マウス位置と矩形の角がずれる状況を作る
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new Size(200, 200)));
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 右下ハンドル（80,80）を押下してリサイズ開始（スナップ位置 = 同じ）
@@ -1290,7 +1287,7 @@ public class DragRectControlTests
 
         // ルーペ中心はマウス位置 (250,250) ではなく、アクティブハンドル（右下 (200,200)）を追従する
         Assert.NotEmpty(positions);
-        Assert.Equal(new PointD(200, 200), positions[^1]);
+        Assert.Equal(new Point(200, 200), positions[^1]);
         window.Close();
     }
 
@@ -1301,7 +1298,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 矩形内のオフセット位置 (40,40) を押下（Move 判定。ヒット半径 12 から離れている。スナップなし）
@@ -1311,7 +1308,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(60, 60)), 0UL, LeftPressed(), KeyModifiers.None));
 
         Assert.NotEmpty(positions);
-        Assert.Equal(new PointD(60, 60), positions[^1]);
+        Assert.Equal(new Point(60, 60), positions[^1]);
         window.Close();
     }
 
@@ -1321,7 +1318,7 @@ public class DragRectControlTests
         var control = CreateControl();
         var window = Show(control);
         var pointer = CreatePointer();
-        var positions = new List<PointD>();
+        var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // (10,10) から (50,50) へドラッグ（終点 = 50,50）
@@ -1329,7 +1326,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None));
 
         Assert.NotEmpty(positions);
-        Assert.Equal(new PointD(50, 50), positions[^1]);
+        Assert.Equal(new Point(50, 50), positions[^1]);
         window.Close();
     }
 

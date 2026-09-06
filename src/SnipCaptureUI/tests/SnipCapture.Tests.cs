@@ -1,15 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using Rect = Estable.RectD;
+using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
-using Estable;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using PbBitmap = Estable.Media.EsBitmap;
 using Avalonia.Headless.XUnit;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI.Tests;

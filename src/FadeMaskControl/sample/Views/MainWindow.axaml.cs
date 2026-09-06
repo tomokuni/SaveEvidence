@@ -39,7 +39,7 @@ public partial class MainWindow : Window
                 if (args.PropertyName == nameof(MainWindowViewModel.SelectionRect))
                 {
                     var r = vm.SelectionRect;
-                    Overlay.LogicalSelectionRect = r.Width > 0 && r.Height > 0 ? r.ToRectD() : null;
+                    Overlay.LogicalSelectionRect = r.Width > 0 && r.Height > 0 ? r.ToRect() : null;
                 }
                 // 描画に影響するプロパティ（モード・選択矩形・外観）の変更で再描画を要求する
                 if (args.PropertyName is nameof(MainWindowViewModel.SelectedModeIndex)

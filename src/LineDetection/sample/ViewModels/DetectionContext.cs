@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Estable.AvaloniaUI.LineDetection;
 using Estable.AvaloniaUI.Platform.Imaging;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 
 namespace LineDetectionSample.ViewModels;
 

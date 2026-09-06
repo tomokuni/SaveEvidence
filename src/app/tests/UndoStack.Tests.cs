@@ -2,7 +2,6 @@ using app.Models;
 using Avalonia.Headless.XUnit;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace app.Tests;
 

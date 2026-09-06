@@ -1,6 +1,5 @@
+using Avalonia;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.LineDetection;
 
@@ -20,11 +19,11 @@ public enum LineOrientation
 /// <param name="Orientation">線分の向き（水平 / 垂直）。</param>
 /// <param name="Score">確からしさ（長さ・信頼度等）。大きいほど有力。</param>
 /// <remarks>
-/// 座標は UI フレームワーク非依存の <see cref="PointD"/>（double の XY 値型）で保持する。
+/// 座標は UI フレームワーク非依存の <see cref="Point"/>（double の XY 値型）で保持する。
 /// これにより検出ロジック（<see cref="LogicLineDetector"/>）と上位の表示境界（app / sample）を分離し、<br/>
 /// 単体テストをヘッドレス不要（<c>[Fact]</c> 並列）で実行できる（移植性・テスト容易性向上）。
 /// </remarks>
-public readonly record struct LineDetectionResult(PointD Start, PointD End, LineOrientation Orientation, double Score);
+public readonly record struct LineDetectionResult(Point Start, Point End, LineOrientation Orientation, double Score);
 
 /// <summary>辺（線分）検出器の共通インターフェース。</summary>
 public interface ILineDetector

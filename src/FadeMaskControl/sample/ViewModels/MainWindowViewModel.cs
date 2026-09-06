@@ -5,7 +5,6 @@ using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
-using Estable;
 
 namespace FadeMaskControl.Sample.ViewModels;
 
@@ -400,7 +399,7 @@ public partial class MainWindowViewModel : ObservableObject
         // 選択矩形の変更は AreaSelect / Crop モードの描画（穴あけ位置）に反映する
         if (Renderer.Mode is FadeMaskRenderMode.AreaSelect or FadeMaskRenderMode.Crop)
         {
-            Renderer.LogicalSelectionRect = SelectionRect.Width > 0 && SelectionRect.Height > 0 ? SelectionRect.ToRectD() : null;
+            Renderer.LogicalSelectionRect = SelectionRect.Width > 0 && SelectionRect.Height > 0 ? SelectionRect.ToRect() : null;
         }
     }
 
@@ -421,7 +420,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             case FadeMaskRenderMode.AreaSelect:
                 r.HasSelection = true;
-                r.LogicalSelectionRect = SelectionRect.Width > 0 && SelectionRect.Height > 0 ? SelectionRect.ToRectD() : null;
+                r.LogicalSelectionRect = SelectionRect.Width > 0 && SelectionRect.Height > 0 ? SelectionRect.ToRect() : null;
                 r.HasHighlight = false;
                 r.ShowFullOverlay = false;
                 r.WindowTitle = "";
@@ -430,7 +429,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             case FadeMaskRenderMode.ScreenSelect:
                 r.HasHighlight = true;
-                r.LogicalHighlightRect = new RectD(80, 60, 300, 180);
+                r.LogicalHighlightRect = new Rect(80, 60, 300, 180);
                 r.ScreenIndex = 1;
                 r.HasSelection = false;
                 r.ShowFullOverlay = false;
@@ -439,7 +438,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             case FadeMaskRenderMode.WindowSelect:
                 r.HasHighlight = true;
-                r.LogicalHighlightRect = new RectD(80, 60, 300, 180);
+                r.LogicalHighlightRect = new Rect(80, 60, 300, 180);
                 r.WindowTitle = "Sample Window";
                 r.HasSelection = false;
                 r.ShowFullOverlay = false;
@@ -448,7 +447,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             case FadeMaskRenderMode.Crop:
                 r.HasSelection = true;
-                r.LogicalSelectionRect = SelectionRect.Width > 0 && SelectionRect.Height > 0 ? SelectionRect.ToRectD() : null;
+                r.LogicalSelectionRect = SelectionRect.Width > 0 && SelectionRect.Height > 0 ? SelectionRect.ToRect() : null;
                 r.HasHighlight = false;
                 r.ShowFullOverlay = true; // 全面暗転 + 選択矩形
                 r.WindowTitle = "";

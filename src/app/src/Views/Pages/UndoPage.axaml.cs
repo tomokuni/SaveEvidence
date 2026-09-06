@@ -7,7 +7,6 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Microsoft.Extensions.DependencyInjection;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace app.Views.Pages;
 

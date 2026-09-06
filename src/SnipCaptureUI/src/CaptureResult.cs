@@ -1,6 +1,5 @@
 using Avalonia;
 using Estable.AvaloniaUI.Platform.Imaging;
-using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 

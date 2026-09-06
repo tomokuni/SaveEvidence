@@ -1,4 +1,4 @@
-using Estable;
+using Avalonia;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
@@ -9,4 +9,4 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// ホストは FadeMaskDragRectControl の公開 API のみで利用できる（公開型のカプセル化）。
 /// </remarks>
 /// <param name="SelectionRect">選択矩形（ドメイン座標）。</param>
-public sealed record FadeMaskDragRectSelectionEventArgs(RectD SelectionRect);
+public sealed record FadeMaskDragRectSelectionEventArgs(Rect SelectionRect);

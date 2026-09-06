@@ -1,4 +1,4 @@
-using Estable;
+using Avalonia;
 
 namespace Estable.AvaloniaUI.ZoomView;
 
@@ -12,7 +12,7 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// ZoomViewControl / ZoomableView から呼び出される。<br/>
 /// スクロール範囲の計算は <see cref="ScrollMetrics"/> へ委譲する。<br/>
 /// コントロール内部の計算であり、外部ホストからは直接参照しない。<br/>
-/// <b>依存分離</b>: 座標・サイズは UI フレームワーク非依存の <see cref="PointD"/> / <see cref="VectorD"/> / <see cref="SizeD"/> で扱い、<br/>
+/// <b>依存分離</b>: 座標・サイズは UI フレームワーク非依存の <see cref="Point"/> / <see cref="Vector"/> / <see cref="Size"/> で扱い、<br/>
 /// UI 境界（<c>ZoomableView</c>）で Avalonia 型へ変換する（移植性・テスト容易性向上）。
 /// </remarks>
 internal static class ZoomMath
@@ -25,7 +25,7 @@ internal static class ZoomMath
     /// Uniform スケールの単一所有メソッドであり、<see cref="FitZoomPercent"/> と ZoomableView の表示サイズ計算は本メソッドへ委譲する。<br/>
     /// 画像サイズが 0 以下またはスケールが 0 以下の場合は 1 として扱う。
     /// </remarks>
-    public static double FitScale(SizeD imageSize, SizeD viewportSize)
+    public static double FitScale(Size imageSize, Size viewportSize)
     {
         if (imageSize.Width <= 0 || imageSize.Height <= 0) return 1;
         var scaleX = viewportSize.Width / imageSize.Width;
@@ -39,7 +39,7 @@ internal static class ZoomMath
     /// <param name="viewportSize">ビューポートサイズ（DIP）。</param>
     /// <returns>実効倍率（%）。Uniform（アスペクト比維持）のため、幅・高さのスケールの小さい方（min）を使用する。</returns>
     /// <remarks>現在の表示状態に依存しない（常に一定の Fit 実効倍率を返す）。スケール計算は <see cref="FitScale"/> に委譲する。</remarks>
-    public static double FitZoomPercent(SizeD imageSize, SizeD viewportSize)
+    public static double FitZoomPercent(Size imageSize, Size viewportSize)
         => FitScale(imageSize, viewportSize) * 100.0;
 
     /// <summary>ズーム率変更後のスクロールオフセットを求める（コンテンツ座標不変・スケールが変わる場合）。</summary>
@@ -55,21 +55,21 @@ internal static class ZoomMath
     /// ズーム中心（ビューポート座標 center）のコンテンツ座標を不変に保つ:<br/>
     /// コンテンツ座標 c = offset + center / oldScale → offset' = c − center / newScale
     /// </remarks>
-    public static VectorD ComputeOffsetAfterScaleChange(
-        VectorD offset, PointD center, double oldScale, double newScale, SizeD contentSize, SizeD viewport)
+    public static Vector ComputeOffsetAfterScaleChange(
+        Vector offset, Point center, double oldScale, double newScale, Size contentSize, Size viewport)
     {
         // ゼロ除算を防ぐ（スケールが 0 の場合は 1 として扱う）
         oldScale = oldScale > 0 ? oldScale : 1;
         newScale = newScale > 0 ? newScale : 1;
 
         // ズーム中心のコンテンツ座標 = offset + center / oldScale（不変に保つ）
-        var c = new PointD(offset.X + center.X / oldScale, offset.Y + center.Y / oldScale);
-        var newOffset = new VectorD(c.X - center.X / newScale, c.Y - center.Y / newScale);
+        var c = new Point(offset.X + center.X / oldScale, offset.Y + center.Y / oldScale);
+        var newOffset = new Vector(c.X - center.X / newScale, c.Y - center.Y / newScale);
 
         // クランプ: offset ∈ [0, content − viewport / scale]
         var maxX = ScrollMetrics.MaxOffset(contentSize.Width, viewport.Width, newScale);
         var maxY = ScrollMetrics.MaxOffset(contentSize.Height, viewport.Height, newScale);
-        return new VectorD(Math.Clamp(newOffset.X, 0, maxX), Math.Clamp(newOffset.Y, 0, maxY));
+        return new Vector(Math.Clamp(newOffset.X, 0, maxX), Math.Clamp(newOffset.Y, 0, maxY));
     }
 
     /// <summary>オフセットをスクロール範囲（コンテンツ − ビューポート / スケール）内にクランプする。</summary>
@@ -78,11 +78,11 @@ internal static class ZoomMath
     /// <param name="contentSize">コンテンツサイズ（コンテンツ座標）。</param>
     /// <param name="viewport">ビューポートサイズ。</param>
     /// <returns>クランプ後のオフセット。</returns>
-    public static VectorD ClampOffset(VectorD offset, double scale, SizeD contentSize, SizeD viewport)
+    public static Vector ClampOffset(Vector offset, double scale, Size contentSize, Size viewport)
     {
         var maxX = ScrollMetrics.MaxOffset(contentSize.Width, viewport.Width, scale);
         var maxY = ScrollMetrics.MaxOffset(contentSize.Height, viewport.Height, scale);
-        return new VectorD(Math.Clamp(offset.X, 0, maxX), Math.Clamp(offset.Y, 0, maxY));
+        return new Vector(Math.Clamp(offset.X, 0, maxX), Math.Clamp(offset.Y, 0, maxY));
     }
 
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（純粋関数）。</summary>
@@ -94,10 +94,10 @@ internal static class ZoomMath
     /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。<br/>
     /// 変換式: <c>コンテンツ座標 = オフセット + ビューポート座標 / スケール</c>。
     /// </remarks>
-    public static PointD ViewportToContent(PointD viewportPos, VectorD offset, double effectiveScale)
+    public static Point ViewportToContent(Point viewportPos, Vector offset, double effectiveScale)
     {
         var s = effectiveScale > 0 ? effectiveScale : 1;
-        return new PointD(offset.X + viewportPos.X / s, offset.Y + viewportPos.Y / s);
+        return new Point(offset.X + viewportPos.X / s, offset.Y + viewportPos.Y / s);
     }
 
     /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（純粋関数）。</summary>
@@ -109,10 +109,10 @@ internal static class ZoomMath
     /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。<br/>
     /// 変換式: <c>ビューポート座標 = (コンテンツ座標 − オフセット) × スケール</c>。
     /// </remarks>
-    public static PointD ContentToViewport(PointD contentPos, VectorD offset, double effectiveScale)
+    public static Point ContentToViewport(Point contentPos, Vector offset, double effectiveScale)
     {
         var s = effectiveScale > 0 ? effectiveScale : 1;
-        return new PointD((contentPos.X - offset.X) * s, (contentPos.Y - offset.Y) * s);
+        return new Point((contentPos.X - offset.X) * s, (contentPos.Y - offset.Y) * s);
     }
 
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準・純粋関数）。</summary>
@@ -125,10 +125,10 @@ internal static class ZoomMath
     /// これにより Fit 中央寄せの原点補正を考慮した、画像内の正確な座標変換ができる。<br/>
     /// 変換式: <c>コンテンツ座標 = (ビューポート座標 − 画像原点) / スケール</c>。
     /// </remarks>
-    public static PointD ViewportToContentImage(PointD viewportPos, PointD imageOrigin, double effectiveScale)
+    public static Point ViewportToContentImage(Point viewportPos, Point imageOrigin, double effectiveScale)
     {
         var s = effectiveScale > 0 ? effectiveScale : 1;
-        return new PointD((viewportPos.X - imageOrigin.X) / s, (viewportPos.Y - imageOrigin.Y) / s);
+        return new Point((viewportPos.X - imageOrigin.X) / s, (viewportPos.Y - imageOrigin.Y) / s);
     }
 
     /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準・純粋関数）。</summary>
@@ -141,9 +141,9 @@ internal static class ZoomMath
     /// これにより Fit 中央寄せの原点補正を考慮した、画像内の正確な座標変換ができる。<br/>
     /// 変換式: <c>ビューポート座標 = 画像原点 + コンテンツ座標 × スケール</c>。
     /// </remarks>
-    public static PointD ContentToViewportImage(PointD contentPos, PointD imageOrigin, double effectiveScale)
+    public static Point ContentToViewportImage(Point contentPos, Point imageOrigin, double effectiveScale)
     {
         var s = effectiveScale > 0 ? effectiveScale : 1;
-        return new PointD(imageOrigin.X + contentPos.X * s, imageOrigin.Y + contentPos.Y * s);
+        return new Point(imageOrigin.X + contentPos.X * s, imageOrigin.Y + contentPos.Y * s);
     }
 }

@@ -1,8 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Estable.AvaloniaUI.Platform.Geometry;
-using Estable;
-using Estable.Media;
 
 namespace Estable.AvaloniaUI.Platform;
 
@@ -25,7 +23,7 @@ public static class ScreenConverter
     /// <param name="local">コントロールローカル DIP 座標。</param>
     /// <returns>画面物理座標。</returns>
     /// <remarks><see cref="TopLevel.PointToScreen"/> に委譲する。</remarks>
-    public static PixelPoint LocalDipToScreen(Visual source, PointD local)
+    public static PixelPoint LocalDipToScreen(Visual source, Point local)
     {
         var localPoint = local.ToAvaloniaPoint();
         var topLevel = TopLevel.GetTopLevel(source);
@@ -42,13 +40,13 @@ public static class ScreenConverter
     /// <see cref="TopLevel.PointToClient"/> と <see cref="VisualExtensions.TranslatePoint"/> に委譲する。<br/>
     /// ビジュアルツリー未接続時は等価変換（画面座標をそのまま返す）。
     /// </remarks>
-    public static PointD ScreenToLocalDip(Visual source, PixelPoint screen)
+    public static Point ScreenToLocalDip(Visual source, PixelPoint screen)
     {
         var topLevel = TopLevel.GetTopLevel(source);
-        if (topLevel is null) return new PointD(screen.X, screen.Y);
+        if (topLevel is null) return new Point(screen.X, screen.Y);
         var clientDip = topLevel.PointToClient(screen);
         var origin = VisualExtensions.TranslatePoint(source, default, topLevel) ?? default;
-        return (clientDip - origin).ToPointD();
+        return (clientDip - origin).ToPoint();
     }
 
     /// <summary>ローカル DIP ↔ 画面物理ピクセル変換ポートを生成する。</summary>
@@ -63,8 +61,8 @@ public static class ScreenConverter
     {
         double s = renderScaling > 0 ? renderScaling : 1.0;
         return new CoordTransform(
-            p => new PointD((p.X - origin.X) / s, (p.Y - origin.Y) / s),
-            p => new PointD(p.X * s + origin.X, p.Y * s + origin.Y),
+            p => new Point((p.X - origin.X) / s, (p.Y - origin.Y) / s),
+            p => new Point(p.X * s + origin.X, p.Y * s + origin.Y),
             () => null);
     }
 
@@ -82,7 +80,7 @@ public static class ScreenConverter
             {
                 // 同一スコープの同値計算は一度だけ実行して共有する（TopLevel 解決コストを繰り返さない）
                 var screen = LocalDipToScreen(source, p);
-                return new PointD(screen.X, screen.Y);
+                return new Point(screen.X, screen.Y);
             },
             () => null);
 }

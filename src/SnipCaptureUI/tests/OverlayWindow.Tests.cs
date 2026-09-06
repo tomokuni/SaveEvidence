@@ -2,19 +2,16 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
-using Rect = Estable.RectD;
+using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
-using Estable;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
-using PbBitmap = Estable.Media.EsBitmap;
 using BindingFlags = System.Reflection.BindingFlags;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI.Tests;
@@ -123,12 +120,12 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.AreaSelect, scaling: 1.0);
 
         // 選択矩形（ドメイン = 仮想スクリーンピクセル）を更新 → 選択状態（暗転マスク・ルーペ）へ反映される
-        window.UpdateOverlay(new RectD(100, 200, 400, 300));
+        window.UpdateOverlay(new Rect(100, 200, 400, 300));
         Assert.True(window.SelectionOverlay.HasSelection);
-        Assert.Equal(new RectD(100, 200, 400, 300), window.SelectionOverlay.SelectionRect);
+        Assert.Equal(new Rect(100, 200, 400, 300), window.SelectionOverlay.SelectionRect);
 
         // サイズ 0 の矩形（未選択）→ 選択状態はクリアされる
-        window.UpdateOverlay(new RectD(0, 0, 0, 0));
+        window.UpdateOverlay(new Rect(0, 0, 0, 0));
         Assert.False(window.SelectionOverlay.HasSelection);
     }
 
@@ -137,11 +134,11 @@ public class OverlayWindowTests
     {
         var window = CreateWindow(scaling: 2.0);
 
-        window.UpdateOverlay(new RectD(100, 200, 400, 300));
+        window.UpdateOverlay(new Rect(100, 200, 400, 300));
 
         // 選択矩形はドメイン（仮想スクリーンピクセル）のまま設定される。
         // DIP 変換（÷ scaling）+ 閉区間（終点 +1）は描画時に座標変換ポート（DomainScale）が行う。
-        Assert.Equal(new RectD(100, 200, 400, 300), window.SelectionOverlay.SelectionRect);
+        Assert.Equal(new Rect(100, 200, 400, 300), window.SelectionOverlay.SelectionRect);
         Assert.True(window.SelectionOverlay.HasSelection);
     }
 
@@ -399,10 +396,10 @@ public class OverlayWindowTests
         window.SetVirtualScreen(bitmap, new PixelPoint(-1920, 0));
 
         // ドメイン（仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）でルーペを更新
-        window.UpdateLoupe(new PointD(960, 540));
+        window.UpdateLoupe(new Point(960, 540));
 
         // ドメインは既に仮想スクリーン Bitmap 上の座標と一致する（原点を再減算しない）
-        Assert.Equal(new PointD(960, 540), window.SelectionOverlay.LoupeCenterPoint);
+        Assert.Equal(new Point(960, 540), window.SelectionOverlay.LoupeCenterPoint);
         window.Close();
     }
 
@@ -417,10 +414,10 @@ public class OverlayWindowTests
         window.SetVirtualScreen(bitmap, new PixelPoint(-1920, 0));
 
         // ドメイン（= ローカル DIP × scaling）でルーペを更新
-        window.UpdateLoupe(new PointD(2880, 540));
+        window.UpdateLoupe(new Point(2880, 540));
 
         // 仮想スクリーン原点を減算すると (4800, 540) にずれる（範囲外）ため、ドメイン座標のままであるべき
-        Assert.Equal(new PointD(2880, 540), window.SelectionOverlay.LoupeCenterPoint);
+        Assert.Equal(new Point(2880, 540), window.SelectionOverlay.LoupeCenterPoint);
         window.Close();
     }
 

@@ -1,5 +1,4 @@
-using Estable;
-using Estable.Media;
+using Avalonia;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
@@ -15,26 +14,26 @@ public class CoordTransformTests
     public void Compose_順変換はinnerを先に適用する()
     {
         // inner: +10（座標系 A → 中間）、outer: ×2（中間 → 座標系 B）
-        var inner = new CoordTransform(p => p + new VectorD(10, 10), p => p - new VectorD(10, 10), () => null);
-        var outer = new CoordTransform(p => new PointD(p.X * 2, p.Y * 2), p => new PointD(p.X / 2, p.Y / 2), () => null);
+        var inner = new CoordTransform(p => p + new Vector(10, 10), p => p - new Vector(10, 10), () => null);
+        var outer = new CoordTransform(p => new Point(p.X * 2, p.Y * 2), p => new Point(p.X / 2, p.Y / 2), () => null);
         var composed = CoordTransform.Compose(outer, inner);
 
         // Forward(5) = outer.Forward(inner.Forward(5)) = outer.Forward(15) = 30
-        Assert.Equal(new PointD(30, 30), composed.Forward(new PointD(5, 5)));
+        Assert.Equal(new Point(30, 30), composed.Forward(new Point(5, 5)));
         // Inverse(30) = inner.Inverse(outer.Inverse(30)) = inner.Inverse(15) = 5
-        Assert.Equal(new PointD(5, 5), composed.Inverse(new PointD(30, 30)));
+        Assert.Equal(new Point(5, 5), composed.Inverse(new Point(30, 30)));
     }
 
     [Fact]
     public void Compose_Boundsはouterを優先しnull時はinnerを使う()
     {
-        var inner = new CoordTransform(p => p, p => p, () => new SizeD(100, 100));
+        var inner = new CoordTransform(p => p, p => p, () => new Size(100, 100));
         var outer = new CoordTransform(p => p, p => p, () => null);
-        Assert.Equal(new SizeD(100, 100), CoordTransform.Compose(outer, inner).Bounds);
+        Assert.Equal(new Size(100, 100), CoordTransform.Compose(outer, inner).Bounds);
 
-        var inner2 = new CoordTransform(p => p, p => p, () => new SizeD(50, 50));
-        var outer2 = new CoordTransform(p => p, p => p, () => new SizeD(200, 200));
-        Assert.Equal(new SizeD(200, 200), CoordTransform.Compose(outer2, inner2).Bounds);
+        var inner2 = new CoordTransform(p => p, p => p, () => new Size(50, 50));
+        var outer2 = new CoordTransform(p => p, p => p, () => new Size(200, 200));
+        Assert.Equal(new Size(200, 200), CoordTransform.Compose(outer2, inner2).Bounds);
     }
 
     // ====================================================================
@@ -44,25 +43,25 @@ public class CoordTransformTests
     [Fact]
     public void ScrollOffset_順変換でスクロールを減算する()
     {
-        var port = CoordTransform.ScrollOffset(() => new VectorD(30, 50));
-        Assert.Equal(new PointD(70, 150), port.Forward(new PointD(100, 200)));
+        var port = CoordTransform.ScrollOffset(() => new Vector(30, 50));
+        Assert.Equal(new Point(70, 150), port.Forward(new Point(100, 200)));
     }
 
     [Fact]
     public void ScrollOffset_逆変換でスクロールを加算する()
     {
-        var port = CoordTransform.ScrollOffset(() => new VectorD(30, 50));
-        Assert.Equal(new PointD(100, 200), port.Inverse(new PointD(70, 150)));
+        var port = CoordTransform.ScrollOffset(() => new Vector(30, 50));
+        Assert.Equal(new Point(100, 200), port.Inverse(new Point(70, 150)));
     }
 
     [Fact]
     public void ScrollOffset_プロバイダは呼び出し毎に評価される()
     {
-        var offset = new VectorD(10, 10);
+        var offset = new Vector(10, 10);
         var port = CoordTransform.ScrollOffset(() => offset);
-        Assert.Equal(new PointD(90, 90), port.Forward(new PointD(100, 100)));
-        offset = new VectorD(20, 20);
-        Assert.Equal(new PointD(80, 80), port.Forward(new PointD(100, 100)));
+        Assert.Equal(new Point(90, 90), port.Forward(new Point(100, 100)));
+        offset = new Vector(20, 20);
+        Assert.Equal(new Point(80, 80), port.Forward(new Point(100, 100)));
     }
 
     // ====================================================================
@@ -73,21 +72,21 @@ public class CoordTransformTests
     public void Scale_順変換でfactorで除算する()
     {
         var port = CoordTransform.Scale(2.0);
-        Assert.Equal(new PointD(50, 75), port.Forward(new PointD(100, 150)));
+        Assert.Equal(new Point(50, 75), port.Forward(new Point(100, 150)));
     }
 
     [Fact]
     public void Scale_逆変換でfactorで乗算する()
     {
         var port = CoordTransform.Scale(2.0);
-        Assert.Equal(new PointD(100, 150), port.Inverse(new PointD(50, 75)));
+        Assert.Equal(new Point(100, 150), port.Inverse(new Point(50, 75)));
     }
 
     [Fact]
     public void Scale_往復で元の座標に戻る()
     {
         var port = CoordTransform.Scale(1.5);
-        var p = new PointD(123.4, 456.7);
+        var p = new Point(123.4, 456.7);
         var roundTrip = port.Forward(port.Inverse(p));
         Assert.Equal(p.X, roundTrip.X, 6);
         Assert.Equal(p.Y, roundTrip.Y, 6);
@@ -97,8 +96,8 @@ public class CoordTransformTests
     public void Scale_倍率0以下は等倍として扱う()
     {
         var port = CoordTransform.Scale(0);
-        Assert.Equal(new PointD(10, 20), port.Forward(new PointD(10, 20)));
-        Assert.Equal(new PointD(10, 20), port.Inverse(new PointD(10, 20)));
+        Assert.Equal(new Point(10, 20), port.Forward(new Point(10, 20)));
+        Assert.Equal(new Point(10, 20), port.Inverse(new Point(10, 20)));
     }
 
     // ====================================================================
@@ -110,7 +109,7 @@ public class CoordTransformTests
     {
         // Forward = DIP → ドメイン（乗算）
         var port = CoordTransform.DomainScale(() => 2.0);
-        Assert.Equal(new PointD(200, 300), port.Forward(new PointD(100, 150)));
+        Assert.Equal(new Point(200, 300), port.Forward(new Point(100, 150)));
     }
 
     [Fact]
@@ -118,14 +117,14 @@ public class CoordTransformTests
     {
         // Inverse = ドメイン → DIP（除算）
         var port = CoordTransform.DomainScale(() => 2.0);
-        Assert.Equal(new PointD(100, 150), port.Inverse(new PointD(200, 300)));
+        Assert.Equal(new Point(100, 150), port.Inverse(new Point(200, 300)));
     }
 
     [Fact]
     public void DomainScale_往復で元の座標に戻る()
     {
         var port = CoordTransform.DomainScale(() => 1.5);
-        var p = new PointD(123.4, 456.7);
+        var p = new Point(123.4, 456.7);
         var roundTrip = port.Inverse(port.Forward(p));
         Assert.Equal(p.X, roundTrip.X, 6);
         Assert.Equal(p.Y, roundTrip.Y, 6);
@@ -136,18 +135,18 @@ public class CoordTransformTests
     {
         var factor = 1.0;
         var port = CoordTransform.DomainScale(() => factor);
-        Assert.Equal(new PointD(100, 100), port.Forward(new PointD(100, 100)));
+        Assert.Equal(new Point(100, 100), port.Forward(new Point(100, 100)));
 
         factor = 2.0;
-        Assert.Equal(new PointD(200, 200), port.Forward(new PointD(100, 100)));
+        Assert.Equal(new Point(200, 200), port.Forward(new Point(100, 100)));
     }
 
     [Fact]
     public void DomainScale_倍率0以下は等倍として扱う()
     {
         var port = CoordTransform.DomainScale(() => 0);
-        Assert.Equal(new PointD(10, 20), port.Forward(new PointD(10, 20)));
-        Assert.Equal(new PointD(10, 20), port.Inverse(new PointD(10, 20)));
+        Assert.Equal(new Point(10, 20), port.Forward(new Point(10, 20)));
+        Assert.Equal(new Point(10, 20), port.Inverse(new Point(10, 20)));
     }
 
     [Fact]
@@ -165,10 +164,10 @@ public class CoordTransformTests
     public void ImageLayout_順変換でDIPを論理に変換する()
     {
         // 表示領域 200x100（横長）、元画像 100x100（正方形）→ 表示 100x100、オフセット (50, 0)、スケール 1.0
-        var port = CoordTransform.ImageLayout(() => new SizeD(200, 100), new SizeD(100, 100));
+        var port = CoordTransform.ImageLayout(() => new Size(200, 100), new Size(100, 100));
 
         // 表示中央（DIP 100, 50）→ 画像中央（50, 50）
-        var p = port.Forward(new PointD(100, 50));
+        var p = port.Forward(new Point(100, 50));
         Assert.Equal(50, p.X, 6);
         Assert.Equal(50, p.Y, 6);
     }
@@ -177,10 +176,10 @@ public class CoordTransformTests
     public void ImageLayout_逆変換で論理をDIPに変換する()
     {
         // 表示領域 200x100（横長）、元画像 100x100（正方形）→ 表示 100x100、オフセット (50, 0)、スケール 1.0
-        var port = CoordTransform.ImageLayout(() => new SizeD(200, 100), new SizeD(100, 100));
+        var port = CoordTransform.ImageLayout(() => new Size(200, 100), new Size(100, 100));
 
         // 画像中央（50, 50）→ 表示中央（DIP 100, 50）
-        var p = port.Inverse(new PointD(50, 50));
+        var p = port.Inverse(new Point(50, 50));
         Assert.Equal(100, p.X, 6);
         Assert.Equal(50, p.Y, 6);
     }
@@ -188,8 +187,8 @@ public class CoordTransformTests
     [Fact]
     public void ImageLayout_往復で元の座標に戻る()
     {
-        var port = CoordTransform.ImageLayout(() => new SizeD(800, 600), new SizeD(400, 300));
-        var dip = new PointD(123.4, 456.7);
+        var port = CoordTransform.ImageLayout(() => new Size(800, 600), new Size(400, 300));
+        var dip = new Point(123.4, 456.7);
         var roundTrip = port.Inverse(port.Forward(dip));
         Assert.Equal(dip.X, roundTrip.X, 6);
         Assert.Equal(dip.Y, roundTrip.Y, 6);
@@ -198,14 +197,14 @@ public class CoordTransformTests
     [Fact]
     public void ImageLayout_表示サイズ変更に追従する()
     {
-        var viewport = new SizeD(200, 100);
-        var port = CoordTransform.ImageLayout(() => viewport, new SizeD(100, 100));
+        var viewport = new Size(200, 100);
+        var port = CoordTransform.ImageLayout(() => viewport, new Size(100, 100));
         // 表示 200x100 → 表示領域 100x100、オフセット (50, 0)、スケール 1.0
-        Assert.Equal(50, port.Forward(new PointD(100, 50)).X, 6);
+        Assert.Equal(50, port.Forward(new Point(100, 50)).X, 6);
 
         // ズームで表示領域が 400x200 に変化 → 表示領域 200x200、オフセット (100, 0)、スケール 0.5（動的評価）
-        viewport = new SizeD(400, 200);
-        Assert.Equal(75, port.Forward(new PointD(250, 100)).X, 6);
+        viewport = new Size(400, 200);
+        Assert.Equal(75, port.Forward(new Point(250, 100)).X, 6);
     }
 
     [Fact]
@@ -213,31 +212,31 @@ public class CoordTransformTests
     {
         var uniform = true;
         var port = CoordTransform.ImageLayout(
-            () => new SizeD(200, 100),
-            new SizeD(100, 100),
+            () => new Size(200, 100),
+            new Size(100, 100),
             () => uniform);
 
         // Uniform: 表示 100x100、オフセット (50, 0)、スケール 1.0 → (100, 50) → (50, 50)
-        Assert.Equal(50, port.Forward(new PointD(100, 50)).X, 6);
+        Assert.Equal(50, port.Forward(new Point(100, 50)).X, 6);
 
         // Fill: 表示 200x100、スケール (0.5, 1.0) → (100, 50) → (50, 50)
         uniform = false;
-        Assert.Equal(50, port.Forward(new PointD(100, 50)).X, 6);
+        Assert.Equal(50, port.Forward(new Point(100, 50)).X, 6);
     }
 
     [Fact]
     public void ImageLayout_表示領域が0以下なら等価変換する()
     {
-        var port = CoordTransform.ImageLayout(() => new SizeD(0, 0), new SizeD(100, 50));
-        Assert.Equal(new PointD(10, 20), port.Forward(new PointD(10, 20)));
-        Assert.Equal(new PointD(10, 20), port.Inverse(new PointD(10, 20)));
+        var port = CoordTransform.ImageLayout(() => new Size(0, 0), new Size(100, 50));
+        Assert.Equal(new Point(10, 20), port.Forward(new Point(10, 20)));
+        Assert.Equal(new Point(10, 20), port.Inverse(new Point(10, 20)));
     }
 
     [Fact]
     public void ImageLayout_Boundsは元画像サイズを返す()
     {
-        var port = CoordTransform.ImageLayout(() => new SizeD(200, 100), new SizeD(100, 50));
-        Assert.Equal(new SizeD(100, 50), port.Bounds);
+        var port = CoordTransform.ImageLayout(() => new Size(200, 100), new Size(100, 50));
+        Assert.Equal(new Size(100, 50), port.Bounds);
     }
 
     // ====================================================================
@@ -248,7 +247,7 @@ public class CoordTransformTests
     public void ImageLayoutScaleX_レターボックス時にスケールを返す()
     {
         // 表示 200x100、元画像 100x100 → スケール 1.0
-        var sx = CoordTransform.ImageLayoutScaleX(() => new SizeD(200, 100), new SizeD(100, 100));
+        var sx = CoordTransform.ImageLayoutScaleX(() => new Size(200, 100), new Size(100, 100));
         Assert.Equal(1.0, sx, 6);
     }
 
@@ -256,33 +255,33 @@ public class CoordTransformTests
     public void ImageLayoutScaleX_縮小時にスケール係数を返す()
     {
         // 表示 100x100、元画像 200x100（横長）→ 表示 100x50、スケール 2.0
-        var sx = CoordTransform.ImageLayoutScaleX(() => new SizeD(100, 100), new SizeD(200, 100));
+        var sx = CoordTransform.ImageLayoutScaleX(() => new Size(100, 100), new Size(200, 100));
         Assert.Equal(2.0, sx, 6);
     }
 
     [Fact]
     public void ImageLayoutScaleX_呼び出し毎に現在の表示状態を反映する()
     {
-        var viewport = new SizeD(200, 100);
+        var viewport = new Size(200, 100);
         // 表示 200x100、元画像 100x100 → スケール 1.0
-        Assert.Equal(1.0, CoordTransform.ImageLayoutScaleX(() => viewport, new SizeD(100, 100)), 6);
+        Assert.Equal(1.0, CoordTransform.ImageLayoutScaleX(() => viewport, new Size(100, 100)), 6);
 
         // ズームで表示領域が 2 倍 → スケール 0.5（呼び出し毎に評価）
-        viewport = new SizeD(400, 200);
-        Assert.Equal(0.5, CoordTransform.ImageLayoutScaleX(() => viewport, new SizeD(100, 100)), 6);
+        viewport = new Size(400, 200);
+        Assert.Equal(0.5, CoordTransform.ImageLayoutScaleX(() => viewport, new Size(100, 100)), 6);
     }
 
     [Fact]
     public void ImageLayoutScaleX_表示領域0以下は等倍を返す()
     {
-        var sx = CoordTransform.ImageLayoutScaleX(() => new SizeD(0, 0), new SizeD(100, 50));
+        var sx = CoordTransform.ImageLayoutScaleX(() => new Size(0, 0), new Size(100, 50));
         Assert.Equal(1.0, sx, 6);
     }
 
     [Fact]
     public void ImageLayoutScaleX_元画像サイズ0以下は等倍を返す()
     {
-        var sx = CoordTransform.ImageLayoutScaleX(() => new SizeD(100, 100), new SizeD(0, 50));
+        var sx = CoordTransform.ImageLayoutScaleX(() => new Size(100, 100), new Size(0, 50));
         Assert.Equal(1.0, sx, 6);
     }
 
@@ -291,12 +290,12 @@ public class CoordTransformTests
     {
         // uniformProvider: false（非 Uniform = 各軸独立スケール）→ X スケール = 元幅 / 表示幅
         var sx = CoordTransform.ImageLayoutScaleX(
-            () => new SizeD(200, 100), new SizeD(100, 100), uniformProvider: () => false);
+            () => new Size(200, 100), new Size(100, 100), uniformProvider: () => false);
         Assert.Equal(0.5, sx, 6);
 
         // uniformProvider: true（Uniform = 最小スケールに揃える）→ X スケールは 1.0
         var sxUniform = CoordTransform.ImageLayoutScaleX(
-            () => new SizeD(200, 100), new SizeD(100, 100), uniformProvider: () => true);
+            () => new Size(200, 100), new Size(100, 100), uniformProvider: () => true);
         Assert.Equal(1.0, sxUniform, 6);
     }
 }

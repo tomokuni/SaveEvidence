@@ -1,7 +1,7 @@
+using Avalonia;
 using app.Models;
 using app.ViewModels;
 using Estable.AvaloniaUI.LineDetection;
-using Estable;
 using Xunit;
 using MockSettingsService = app.Tests.MainViewModelTests.MockSettingsService;
 
@@ -207,13 +207,13 @@ public class MainViewModelStateTests
     /// <param name="x">垂直線の X 座標。</param>
     /// <returns>垂直線の検出結果。</returns>
     private static LineDetectionResult VerticalLine(double x)
-        => new(new PointD(x, 0), new PointD(x, 1000), LineOrientation.Vertical, 1000);
+        => new(new Point(x, 0), new Point(x, 1000), LineOrientation.Vertical, 1000);
 
     /// <summary>水平線を生成するヘルパー。</summary>
     /// <param name="y">水平線の Y 座標。</param>
     /// <returns>水平線の検出結果。</returns>
     private static LineDetectionResult HorizontalLine(double y)
-        => new(new PointD(0, y), new PointD(1000, y), LineOrientation.Horizontal, 1000);
+        => new(new Point(0, y), new Point(1000, y), LineOrientation.Horizontal, 1000);
 
     [Fact]
     public void TryReconstructRects_垂直2本と水平2本から外側の境界を復元する()

@@ -152,7 +152,7 @@ public partial class MainWindow : Window
 
         var viewportPos = e.GetPosition(ZoomableView);
         var imageRect = ZoomableView.ImageRectViewport();
-        var displayPoint = viewportPos.ToPointD() - imageRect.Position;
+        var displayPoint = viewportPos.ToPoint() - imageRect.Position;
         if (displayPoint.X < 0 || displayPoint.Y < 0 ||
             displayPoint.X >= imageRect.Width || displayPoint.Y >= imageRect.Height)
         {
@@ -161,7 +161,7 @@ public partial class MainWindow : Window
         }
 
         // 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）
-        var contentPos = ZoomableView.ViewportToContentImage(viewportPos.ToPointD());
+        var contentPos = ZoomableView.ViewportToContentImage(viewportPos.ToPoint());
         var x = (int)Math.Clamp(contentPos.X, 0, img.Size.Width - 1);
         var y = (int)Math.Clamp(contentPos.Y, 0, img.Size.Height - 1);
         PointerPositionText.Text = $"ポインタ: {x}, {y}（画像ピクセル）";

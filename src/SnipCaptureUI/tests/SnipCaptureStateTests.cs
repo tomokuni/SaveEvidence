@@ -1,7 +1,6 @@
 using Avalonia;
-using Rect = Estable.RectD;
-using Size = Estable.SizeD;
-using Estable;
+using Rect = Avalonia.Rect;
+using Size = Avalonia.Size;
 using Xunit;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI.Tests;

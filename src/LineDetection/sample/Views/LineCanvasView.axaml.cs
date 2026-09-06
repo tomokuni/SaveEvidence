@@ -8,8 +8,6 @@ using Estable.AvaloniaUI.Platform.Imaging;
 using LineDetectionSample.ViewModels;
 using System.ComponentModel;
 using System.Reactive.Linq;
-using PbBitmap = Estable.Media.EsBitmap;
-using Estable.Media;
 
 namespace LineDetectionSample.Views;
 

@@ -1,12 +1,10 @@
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using app.Enum;
 using app.Icons;
 using app.Logging;
 using app.Services;
 using app.ViewModels;
-using PbBitmap = Estable.Media.EsBitmap;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
