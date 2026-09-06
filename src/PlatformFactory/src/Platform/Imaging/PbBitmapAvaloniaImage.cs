@@ -132,6 +132,13 @@ public sealed class PbBitmapAvaloniaImage : IImage, IDisposable
                 return;
             }
 
+            // 内包 PbBitmap が外部から破棄されている場合も安全に描画しない（破棄済みピクセルへのアクセスを防止）。
+            // PbBitmapAvaloniaImage がまだ参照している間に、共有 PbBitmap が破棄される経路（プレビュー画像の置き換え等）があるため。
+            if (b.IsDisposed)
+            {
+                return;
+            }
+
             // Skia 直アクセス（ゼロコピー）。Skia が提供されない環境（ヘッドレス等）では no-op。
             var lease = context.TryGetFeature<ISkiaSharpApiLeaseFeature>();
             if (lease is null)

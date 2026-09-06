@@ -7,6 +7,8 @@ using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
@@ -154,6 +156,24 @@ public sealed class FadeMaskDragRectControl : Panel
             if (_mode == value) return;
             _mode = value;
             ApplyMode();
+        }
+    }
+
+    /// <summary>内部ロガー（内包コントロール（DragRect / Loupe）へ伝搬）。null の場合は出力なし。</summary>
+    /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする。設定時に内包コントロール（<c>DragRectControl</c> / <c>LoupeControl</c>）へ伝搬する。</value>
+    /// <remarks>
+    /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
+    /// 内包コントロールの詳細ログ（ルーペの生成・更新・エラー、ドラッグ操作）をホストのログ基盤（NLog）へ出力するために使用する。
+    /// </remarks>
+    public ILogger Log
+    {
+        get => field ?? NullLogger.Instance;
+        set
+        {
+            field = value ?? NullLogger.Instance;
+            // 内包コントロールへ伝搬する（ルーペの Trace ログ・ドラッグ操作ログをホストのログ基盤へ転送）
+            _loupeControl.Log = field;
+            _dragRect.Log = field;
         }
     }
     // ====================================================================

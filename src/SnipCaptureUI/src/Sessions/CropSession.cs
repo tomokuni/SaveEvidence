@@ -1,8 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
@@ -56,14 +54,30 @@ internal sealed class CropSession(
     /// はみ出す場合でも、ツールバー・ステータスバー等の兄弟領域へ描画しないようクリップする。<br/>
     /// モードは Crop（プレビュー内の切出し。全面暗転 + 選択矩形 + ルーペ）。
     /// </remarks>
-    private readonly FadeMaskDragRectControl _selectionOverlay =
-        new() { ZIndex = 50, ClipToBounds = true, Mode = FadeMaskDragRectMode.Crop };
+    private readonly FadeMaskDragRectControl _selectionOverlay = new()
+    {
+        ZIndex = 50,
+        ClipToBounds = true,
+        Mode = FadeMaskDragRectMode.Crop,
+        // 内包コントロール（ルーペ / ドラッグ）の詳細ログ（Trace）をホストのログ基盤（NLog）へ転送する（不具合調査用）。
+        Log = logger ?? NullLogger.Instance,
+    };
 
     /// <summary>カーソル上書き抑止（Crop 中の十字カーソル維持）。</summary>
     private readonly ICursorOverrideGuard _cursorGuard = PlatformFactory.CreateCursorOverrideGuard();
 
     /// <summary>設定（全メンバー non-null）。実行中に <see cref="ApplySettings"/> で更新できる。</summary>
     private CaptureSettings _settings = settings.ToNonNull();
+
+    /// <summary>ルーペソース用の画像アダプタ（<see cref="sourceImage"/> を内包。一度だけ生成して再利用する）。</summary>
+    /// <remarks>
+    /// <see cref="ConfigureControls"/> はセッション開始と設定変更（<see cref="ApplySettings"/>）で複数回呼ばれる。<br/>
+    /// 毎回 <c>new PbBitmapAvaloniaImage(sourceImage)</c> すると、同じ元画像を別インスタンスでラップし直し、<br/>
+    /// 旧アダプタが <see cref="LoupeControl"/> に残る（リーク）とともに <c>Source</c> の再設定で無駄な再描画が発生する。<br/>
+    /// そのため一度だけ生成して再利用する。<br/>
+    /// <c>sourceImage</c> の所有権は呼び出し側にあり、本セッションでは破棄しない（<see cref="Dispose"/> を呼ばない）。
+    /// </remarks>
+    private readonly PbBitmapAvaloniaImage _loupeSourceImage = new(sourceImage);
 
     /// <summary>セッション結果の待機先（RunAsync で生成）。</summary>
     private TaskCompletionSource<PixelRect?>? _tcs;
@@ -214,7 +228,8 @@ internal sealed class CropSession(
         // ルーペソース（元画像）。LoupeControl.Source は IImage のため、PbBitmap を内包した IImage
         // （PbBitmapAvaloniaImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
         // sourceImage の所有権は呼び出し側にあり、本セッションでは破棄しない（Dispose を呼ばない）。
-        _selectionOverlay.SetLoupeSource(new PbBitmapAvaloniaImage(sourceImage));
+        // アダプタはフィールドで一度だけ生成して再利用する（ConfigureControls の複数呼び出しでのリーク・再描画防止）。
+        _selectionOverlay.SetLoupeSource(_loupeSourceImage);
     }
 
     /// <summary>プレビューの表示サイズ（RenderTransform 込み）を親パネル上の座標差から導出する。</summary>

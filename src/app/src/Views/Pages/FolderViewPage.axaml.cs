@@ -1,13 +1,14 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using app.Logging;
 using app.Models;
 using app.ViewModels;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace app.Views.Pages;
 
@@ -22,6 +23,9 @@ namespace app.Views.Pages;
 public sealed partial class FolderViewPage : ViewModePageBase
 {
     private FolderViewViewModel _viewModel = null!;
+
+    /// <summary>アプリケーションロガー。</summary>
+    private static readonly ILogger _logger = AppLog.CreateLogger("FolderViewPage");
 
     /// <summary>サムネイルキャッシュの最大保持数。</summary>
     private const int ThumbnailCacheCapacity = 100;
@@ -84,7 +88,27 @@ public sealed partial class FolderViewPage : ViewModePageBase
     protected override void ReloadItems() => LoadFiles();
 
     /// <summary>ファイル一覧を読み込む。</summary>
+    /// <remarks>
+    /// フォルダ列挙・サムネイル生成で例外が発生してもナビゲーションを継続できるよう、全体を try/catch で保護する<br/>
+    /// （ファイルアクセス拒否・破損画像等で「ナビからフォルダビューのクリックで落ちる」ことを防ぐ）。<br/>
+    /// 失敗時はアイテム数を 0 にし、一覧を空にする。
+    /// </remarks>
     private void LoadFiles()
+    {
+        try
+        {
+            LoadFilesCore();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogFolderViewLoadError(ex, MainViewModel.SaveFolderPathResolved);
+            _viewModel.ItemCount = 0;
+            FileListBox.ItemsSource = null;
+        }
+    }
+
+    /// <summary>ファイル一覧を読み込む（本体）。</summary>
+    private void LoadFilesCore()
     {
         var folderPath = MainViewModel.SaveFolderPathResolved;
         _viewModel.FolderPathText = folderPath;

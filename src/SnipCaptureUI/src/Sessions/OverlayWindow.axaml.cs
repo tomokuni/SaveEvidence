@@ -138,6 +138,8 @@ internal sealed partial class OverlayWindow : Window
         // モード（描画モード・DragRect / Loupe の有効・無効・全面暗転を一括切替）
         // - AreaSelect: DragRect + FadeMask + Loupe 有効（全面暗転 + 選択矩形 + ルーペ）
         // - ScreenSelect / WindowSelect: FadeMask のみ有効（ハイライト表示。クリック確定フローは本クラスが担う）
+        // 内包コントロール（ルーペ / ドラッグ）の詳細ログ（Trace）をホストのログ基盤へ転送する（不具合調査用）。
+        SelectionOverlay.Log = _log;
         SelectionOverlay.Mode = _captureType switch
         {
             CaptureType.AreaSelect => FadeMaskDragRectMode.AreaSelect,

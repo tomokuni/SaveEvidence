@@ -972,12 +972,14 @@ public sealed partial class LoupeControl : UserControl
     /// 前回のビットマップを破棄し、<see cref="LoupeBitmap"/> と表示内容（サイズ・画像）を更新する。<br/>
     /// 表示状態（IsVisible）は変更しない（表示状態と再描画の分離）。<br/>
     /// 表示への反映前に <see cref="Rendered"/> イベントを発火し、ホスト側が PbBitmap のピクセルに<br/>
-    /// オーバーレイ（線分の破線等）を描画できるようにする（イベント後に表示へ反映）。
+    /// オーバーレイ（線分の破線等）を描画できるようにする（イベント後に表示へ反映）。<br/>
+    /// <b>チラつき防止</b>: <see cref="PART_Image.Source"/> が前回のアダプタを参照し続ける間に、<br/>
+    /// その内包 <see cref="PbBitmap"/> を破棄すると、描画時に破棄済みピクセルへアクセスして例外・チラつきが生じる。<br/>
+    /// そのため、新しいアダプタを先に <see cref="PART_Image.Source"/> へ設定し、旧アダプタは後から破棄する<br/>
+    /// （描画が参照するアダプタを連続的に保ち、破棄済み Bitmap の参照を防ぐ）。
     /// </remarks>
     private void SetLoupeBitmap(PbBitmap bmp, int size)
     {
-        // 前回の画像アダプタ（PbBitmapAvaloniaImage）を破棄してから置き換える（破棄済み Bitmap の残留防止）。
-        _loupeImage?.Dispose();
         Width = size;
         Height = size;
 
@@ -987,7 +989,11 @@ public sealed partial class LoupeControl : UserControl
         // イベント後の PbBitmap（ホストのオーバーレイ描画を含む）を表示境界で Avalonia 画像として反映する。
         // WriteableBitmap を生成せず、PbBitmap を内包した IImage（PbBitmapAvaloniaImage）を Source に設定する
         // （Skia 直描画・ゼロコピー）。
+        // 旧アダプタを破棄する前に、新しいアダプタを先に Source へ設定する（破棄済み Bitmap の参照防止・チラつき防止）。
+        var previous = _loupeImage;
         _loupeImage = new PbBitmapAvaloniaImage(bmp);
         PART_Image?.Source = _loupeImage;
+        // 旧アダプタは新しい Source 設定後に破棄する（PART_Image.Source が旧アダプタを参照しなくなった後）。
+        previous?.Dispose();
     }
 }

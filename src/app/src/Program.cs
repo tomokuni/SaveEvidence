@@ -1,8 +1,11 @@
+using System.Reflection;
+using app.Logging;
 using app.Models;
 using app.Services;
 using app.ViewModels;
 using app.Views;
 using Avalonia;
+using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,18 +38,51 @@ internal static class Program
     {
         // NLog を初期化（nlog.config を自動読み込み）
         var logger = LogManager.GetLogger("App");
+        var appLog = AppLog.CreateLogger("App");
 
-        // グローバル例外ハンドラを登録
+        // アプリケーションバージョンを取得（クラッシュ原因の特定用）
+        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "(unknown)";
+        appLog.LogAppStartup(version);
+
+        // グローバル例外ハンドラを登録（未処理の例外をすべて補足・記録してクラッシュ原因を特定できるようにする）
+        // ① AppDomain レベルの未処理例外（アプリ全体。スタックトレースを含む Fatal で記録）
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             var ex = e.ExceptionObject as Exception;
-            logger.Fatal(ex, "AppDomain.UnhandledException");
+            if (ex is null)
+            {
+                logger.Fatal("AppDomain.UnhandledException (例外オブジェクトを取得できません)");
+            }
+            else
+            {
+                appLog.LogUnhandledException(ex, "AppDomain.UnhandledException");
+                logger.Fatal(ex, "AppDomain.UnhandledException");
+            }
         };
+
+        // ② Task の未観測例外（fire-and-forget のタスクで発生する例外。ルーペの非同期生成などが対象）
         TaskScheduler.UnobservedTaskException += (_, e) =>
         {
+            appLog.LogUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
             logger.Fatal(e.Exception, "TaskScheduler.UnobservedTaskException");
             e.SetObserved();
         };
+
+        // ③ Avalonia UI スレッド（Dispatcher）の未処理例外（UI 操作・描画・ルーペ更新・ナビゲーションの例外を補足）
+        Dispatcher.UIThread.UnhandledException += (_, e) =>
+        {
+            appLog.LogUnhandledException(e.Exception, "Dispatcher.UIThread.UnhandledException");
+            logger.Fatal(e.Exception, "Dispatcher.UIThread.UnhandledException");
+            e.Handled = true; // UI スレッドを黙って死亡させず、ウィンドウの表示を維持する（クラッシュ抑止）
+        };
+
+        // ④ 例外が最初に投げられた時点を記録する（破棄済みピクセルなどの「最初の例外」を捉える）。
+        // 握りつぶされる例外も含むためログ量が膨大になる。次回の不具合調査時のみ、
+        // ビルド時に <DefineConstants>FirstChanceLogging</DefineConstants> を付けて有効化する。
+#if FirstChanceLogging
+        AppDomain.CurrentDomain.FirstChanceException += (_, e) =>
+            appLog.LogFirstChanceException(e.Exception, e.Exception.Message);
+#endif
 
         try
         {
@@ -55,11 +91,13 @@ internal static class Program
             ConfigureServices(services);
             ServiceProvider = services.BuildServiceProvider();
 
-            // Avalonia アプリケーションを起動
-            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+            // Avalonia アプリケーションを起動（戻り値 = 終了コード）
+            var exitCode = BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+            appLog.LogAppExit(exitCode);
         }
         catch (Exception ex)
         {
+            appLog.LogUnhandledException(ex, "Main で未処理の例外");
             logger.Fatal(ex, "Main で未処理の例外");
             throw;
         }

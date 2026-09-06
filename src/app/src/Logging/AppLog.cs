@@ -33,6 +33,43 @@ internal static partial class AppLog
     internal static ILogger CreateLogger(string categoryName) => Factory.CreateLogger(categoryName);
 
     // ====================================================================
+    // グローバル例外補足（ルート）・アプリライフサイクル
+    // ====================================================================
+
+    /// <summary>未処理の例外（AppDomain / UI スレッド / TaskScheduler）を記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="source">例外の発生源（例: "AppDomain.UnhandledException", "Dispatcher.UIThread"）。</param>
+    /// <remarks>
+    /// アプリがクラッシュする直前の例外を確実に記録する（クラッシュ原因の特定用）。<br/>
+    /// <c>Fatal</c> レベルで記録し、スタックトレースを含む。
+    /// </remarks>
+    [LoggerMessage(LogLevel.Critical, "未処理の例外: {source}")]
+    internal static partial void LogUnhandledException(this ILogger logger, Exception ex, string source);
+
+    /// <summary>例外が最初に投げられた時点を記録する（FirstChanceException）。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="ex">最初に投げられた例外。</param>
+    /// <remarks>
+    /// <b>注意</b>: すべての例外（握りつぶされるものも含む）が対象のため、ログ量が非常に多くなる。<br/>
+    /// 次回の不具合調査時にのみ有効化することを推奨する（既定では「記録しない」フラグで制御する）。
+    /// </remarks>
+    [LoggerMessage(LogLevel.Trace, "FirstChanceException: {message}")]
+    internal static partial void LogFirstChanceException(this ILogger logger, Exception ex, string message);
+
+    /// <summary>アプリケーションの起動を記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="version">アプリのバージョン。</param>
+    [LoggerMessage(LogLevel.Information, "アプリケーション起動 (version={version})")]
+    internal static partial void LogAppStartup(this ILogger logger, string version);
+
+    /// <summary>アプリケーションの終了を記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="exitCode">終了コード。</param>
+    [LoggerMessage(LogLevel.Information, "アプリケーション終了 (exitCode={exitCode})")]
+    internal static partial void LogAppExit(this ILogger logger, int exitCode);
+
+    // ====================================================================
     // CapturePage（キャプチャメニュー）
     // ====================================================================
 
@@ -57,6 +94,14 @@ internal static partial class AppLog
     /// <param name="hasCropTask">切出しセッション実行中かどうか。</param>
     [LoggerMessage(LogLevel.Information, "プレビューでポインタ押下: 右ボタン={isRight}, 切出し中={hasCropTask}")]
     internal static partial void LogPreviewPointerPressed(this ILogger logger, bool isRight, bool hasCropTask);
+
+    /// <summary>フォルダビューのファイル一覧読み込みで例外が発生したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="folderPath">対象のフォルダパス。</param>
+    /// <remarks>ナビゲーション中断（クラッシュ）を防ぐため、一覧は空にして継続する。</remarks>
+    [LoggerMessage(LogLevel.Error, "フォルダビュー一覧の読み込みで例外が発生: {folderPath}")]
+    internal static partial void LogFolderViewLoadError(this ILogger logger, Exception ex, string folderPath);
 
     // ====================================================================
     // MainWindow（設定・ホットキー・キャプチャ開始）
