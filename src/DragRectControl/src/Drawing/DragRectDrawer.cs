@@ -1,6 +1,10 @@
 using Estable.AvaloniaUI.DragRect.Selection;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Avalonia;
 using Avalonia.Media;
+using AvaloniaPoint = Avalonia.Point;
+using AvaloniaRect = Avalonia.Rect;
+using AvaloniaSize = Avalonia.Size;
 using System.Collections.Concurrent;
 using System.Globalization;
 
@@ -107,7 +111,7 @@ internal static class DragRectDrawer
     /// <param name="rect">選択矩形。</param>
     /// <param name="borderColor">枠線の色（不透明度は色のアルファに統合）。</param>
     /// <param name="borderThickness">枠線の太さ。</param>
-    public static void DrawBorder(DrawingContext context, Rect rect, Color borderColor, double borderThickness)
+    public static void DrawBorder(DrawingContext context, AvaloniaRect rect, Color borderColor, double borderThickness)
         => context.DrawRectangle(GetPen(borderColor, borderThickness), rect);
 
     /// <summary>ドラッグハンドル（白色矩形＋枠線）を描画する。</summary>
@@ -120,17 +124,18 @@ internal static class DragRectDrawer
     /// 8方向のハンドル（None / Move を除く）を列挙し、<see cref="Selection.SelectionGeometry.GetHandlePosition"/> から<br/>
     /// 中心位置を取得して描画する。新ハンドル追加時は DragHandle の追加のみで描画が追従する（OCP）。
     /// </remarks>
-    public static void DrawHandles(DrawingContext context, Rect rect, double handleSize, Color handleColor, Color borderColor)
+    public static void DrawHandles(DrawingContext context, AvaloniaRect rect, double handleSize, Color handleColor, Color borderColor)
     {
         var handleFill = GetBrush(handleColor == default ? Colors.White : handleColor);
         var handlePen = GetPen(borderColor, HandlePenThickness);
         double hs = handleSize;
         double hh = hs / 2;
 
-        // 描画対象の 8 方向ハンドルを静的配列から列挙する（Enum.GetValues の毎回生成を排除）
+        // ドメイン計算 (SelectionGeometry) は UI 非依存のため、Avalonia Rect → RectD へ変換して呼び出す。
+        var rectD = rect.ToRectD();
         foreach (var handle in s_handleTypes)
         {
-            var center = SelectionGeometry.GetHandlePosition(rect, handle);
+            var center = SelectionGeometry.GetHandlePosition(rectD, handle);
             DrawHandle(context, center.X - hh, center.Y - hh, hs, hs, handleFill, handlePen);
         }
     }
@@ -141,17 +146,17 @@ internal static class DragRectDrawer
     /// <param name="color">十字線の色。</param>
     /// <param name="thickness">十字線の太さ。</param>
     /// <param name="size">十字線の半幅。</param>
-    public static void DrawStartMarker(DrawingContext context, Point center, Color color, double thickness, double size)
+    public static void DrawStartMarker(DrawingContext context, AvaloniaPoint center, Color color, double thickness, double size)
     {
         var pen = GetPen(color, thickness);
-        context.DrawLine(pen, new Point(center.X - size, center.Y), new Point(center.X + size, center.Y));
-        context.DrawLine(pen, new Point(center.X, center.Y - size), new Point(center.X, center.Y + size));
+        context.DrawLine(pen, new AvaloniaPoint(center.X - size, center.Y), new AvaloniaPoint(center.X + size, center.Y));
+        context.DrawLine(pen, new AvaloniaPoint(center.X, center.Y - size), new AvaloniaPoint(center.X, center.Y + size));
     }
 
     /// <summary>ドラッグハンドル（矩形＋枠線）を描画する。</summary>
     private static void DrawHandle(DrawingContext context, double x, double y, double w, double h, IBrush fill, Pen pen)
     {
-        var r = new Rect(x, y, w, h);
+        var r = new AvaloniaRect(x, y, w, h);
         context.FillRectangle(fill, r);
         context.DrawRectangle(pen, r);
     }
@@ -171,9 +176,9 @@ internal static class DragRectDrawer
     /// </remarks>
     public static void DrawCoordLabel(
         DrawingContext context,
-        Point cursorDip,
-        Point domainPos,
-        Size clientSize,
+        AvaloniaPoint cursorDip,
+        AvaloniaPoint domainPos,
+        AvaloniaSize clientSize,
         Color textColor,
         Color bgColor,
         double fontSize)
@@ -194,8 +199,8 @@ internal static class DragRectDrawer
         var labelPos = ComputeCoordLabelPosition(cursorDip, clientSize, w, h);
 
         // 不透明度は bgColor のアルファに統合済み（SolidColorBrush がアルファを反映する）
-        context.FillRectangle(GetBrush(bgColor), new Rect(labelPos.X, labelPos.Y, w, h));
-        context.DrawText(ft, new Point(labelPos.X + pad, labelPos.Y + pad));
+        context.FillRectangle(GetBrush(bgColor), new AvaloniaRect(labelPos.X, labelPos.Y, w, h));
+        context.DrawText(ft, new AvaloniaPoint(labelPos.X + pad, labelPos.Y + pad));
     }
 
     /// <summary>カーソル座標ラベルの左上位置を計算する（純粋関数）。</summary>
@@ -209,13 +214,13 @@ internal static class DragRectDrawer
     /// カーソルの右側（+8px オフセット）に配置し、描画領域の右端・下端をはみ出す場合は<br/>
     /// 領域内へクランプする（ラベル全体が見えるよう左寄せ・上寄せ）。
     /// </remarks>
-    public static Point ComputeCoordLabelPosition(Point cursorDip, Size clientSize, double labelWidth, double labelHeight)
+    public static AvaloniaPoint ComputeCoordLabelPosition(AvaloniaPoint cursorDip, AvaloniaSize clientSize, double labelWidth, double labelHeight)
     {
         double x = cursorDip.X + LabelOffset;
         double y = cursorDip.Y + LabelOffset;
         if (clientSize.Width > 0) x = Math.Min(x, Math.Max(0, clientSize.Width - labelWidth));
         if (clientSize.Height > 0) y = Math.Min(y, Math.Max(0, clientSize.Height - labelHeight));
-        return new Point(x, y);
+        return new AvaloniaPoint(x, y);
     }
 }
 

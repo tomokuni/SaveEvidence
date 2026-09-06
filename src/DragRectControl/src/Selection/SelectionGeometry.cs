@@ -1,4 +1,4 @@
-using Avalonia;
+using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.DragRect.Selection;
 
@@ -6,8 +6,10 @@ namespace Estable.AvaloniaUI.DragRect.Selection;
 /// <remarks>
 /// 状態を持たない純粋関数のみを提供し、状態管理（<see cref="SelectionController"/>）と描画層
 /// （<see cref="DragRectDrawer"/>）から共通利用する（DRY 原則・疎結合）。<br/>
-/// 本クラスは <see cref="Point"/> と <see cref="Rect"/> 以外の UI 要素に依存しないため、単体テストが容易である。<br/>
+/// 本クラスは <see cref="PointD"/> と <see cref="RectD"/> 以外の UI 要素に依存しないため、単体テストが容易である<br/>
+/// （UI 境界では <see cref="AvaloniaGeometryAdapters"/> / <see cref="RectDExt"/> で Avalonia / System.Drawing と変換する）。<br/>
 /// 描画層は本クラスのみに依存し、状態保持クラス（Controller）へ直接依存しない。<br/>
+/// <b>依存分離</b>: コアの幾何計算（本クラス）は UI フレームワークに依存しない（移植性・テスト容易性）。
 /// </remarks>
 internal static class SelectionGeometry
 {
@@ -15,7 +17,7 @@ internal static class SelectionGeometry
     /// <param name="start">始点。</param>
     /// <param name="end">終点。</param>
     /// <returns>常に Width, Height が正の矩形。</returns>
-    public static Rect CreateFromPoints(Point start, Point end)
+    public static RectD CreateFromPoints(PointD start, PointD end)
         => new(
             Math.Min(start.X, end.X),
             Math.Min(start.Y, end.Y),
@@ -30,15 +32,15 @@ internal static class SelectionGeometry
     /// ハンドル位置はヒットテスト・nudge のカーソル追従先・描画（ハンドル矩形の中心）で共通利用する（DRY 原則）。<br/>
     /// 描画側（<see cref="DragRectDrawer"/>）は本メソッドからハンドル中心位置を取得し、ハンドルサイズ分を展開して描画する。<br/>
     /// </remarks>
-    public static Point GetHandlePosition(Rect rect, DragHandle handle) => handle switch
+    public static PointD GetHandlePosition(RectD rect, DragHandle handle) => handle switch
     {
         DragHandle.TopLeft => rect.TopLeft,
-        DragHandle.TopCenter => new Point(rect.Center.X, rect.Top),
+        DragHandle.TopCenter => new PointD(rect.Center.X, rect.Top),
         DragHandle.TopRight => rect.TopRight,
-        DragHandle.MiddleLeft => new Point(rect.Left, rect.Center.Y),
-        DragHandle.MiddleRight => new Point(rect.Right, rect.Center.Y),
+        DragHandle.MiddleLeft => new PointD(rect.Left, rect.Center.Y),
+        DragHandle.MiddleRight => new PointD(rect.Right, rect.Center.Y),
         DragHandle.BottomLeft => rect.BottomLeft,
-        DragHandle.BottomCenter => new Point(rect.Center.X, rect.Bottom),
+        DragHandle.BottomCenter => new PointD(rect.Center.X, rect.Bottom),
         DragHandle.BottomRight => rect.BottomRight,
         DragHandle.Move => rect.Center,
         _ => rect.BottomRight,
@@ -49,7 +51,7 @@ internal static class SelectionGeometry
     /// <param name="p2">2点目。</param>
     /// <param name="radius">判定半径。</param>
     /// <returns>半径以内の場合は <see langword="true"/>。</returns>
-    public static bool IsNear(Point p1, Point p2, double radius)
+    public static bool IsNear(PointD p1, PointD p2, double radius)
         => Math.Abs(p1.X - p2.X) <= radius && Math.Abs(p1.Y - p2.Y) <= radius;
 
     /// <summary>矩形の「始点でない方の隅」（終点）を取得する。</summary>
@@ -61,8 +63,9 @@ internal static class SelectionGeometry
     /// Y も同様に下辺（Bottom）または上辺（Y）を終点とする。<br/>
     /// nudge の終点移動・基点更新で共通利用する（DRY 原則）。<br/>
     /// </remarks>
-    public static Point GetOppositeCorner(Rect rect, Point startPoint)
+    public static PointD GetOppositeCorner(RectD rect, PointD startPoint)
         => new(
             Math.Abs(startPoint.X - rect.X) < 0.001 ? rect.Right : rect.X,
             Math.Abs(startPoint.Y - rect.Y) < 0.001 ? rect.Bottom : rect.Y);
 }
+

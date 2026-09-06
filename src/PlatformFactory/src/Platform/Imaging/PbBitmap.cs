@@ -1,8 +1,6 @@
 using SkiaSharp;
-using Point = System.Drawing.Point;
-using Rectangle = System.Drawing.Rectangle;
-using Size = System.Drawing.Size;
 using Color = System.Drawing.Color;
+using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.Platform.Imaging;
 
@@ -232,7 +230,7 @@ public sealed class PbBitmap : IDisposable
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>
-    public PbBitmap Crop(Rectangle rect)
+    public PbBitmap Crop(Rect rect)
         => Crop(rect.X, rect.Y, rect.Width, rect.Height);
 
     /// <summary>画像から指定された矩形領域を切り出す。</summary>

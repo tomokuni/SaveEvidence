@@ -1,9 +1,11 @@
 using Estable.AvaloniaUI.DragRect.Logging;
 using Estable.AvaloniaUI.DragRect.Selection;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using AvaloniaRect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -57,7 +59,7 @@ public sealed partial class DragRectControl : Control
     private bool _dragPerformed;
 
     /// <summary>最後のマウスダウン位置（ドメイン座標。Click / MouseUp ログ用）。</summary>
-    private Point _lastPressPos;
+    private PointD _lastPressPos;
 
     /// <summary>座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。</summary>
     private ICoordinatePort _coordinatePort = CoordinatePort.Identity;
@@ -460,15 +462,16 @@ public sealed partial class DragRectControl : Control
     /// <see cref="ClampToDomainBounds"/> が有効な場合は、画像外にはみ出す矩形を境界内にクリップしてから設定する<br/>
     /// （外部からの復元でも「画像外の選択を禁止」を尊重する）。
     /// </remarks>
-    public void SetSelection(Rect rect)
+    public void SetSelection(AvaloniaRect rect)
     {
+        var rectD = rect.ToRectD();
         // ClampToDomainBounds 有効時は画像外にはみ出す矩形を境界内にクリップしてから設定する
         if (ClampToDomainBounds)
         {
-            rect = _state.ClipRectToBounds(rect);
+            rectD = _state.ClipRectToBounds(rectD);
         }
-        _state.SetSelection(rect);
-        RaiseSelectionChanged(rect);
+        _state.SetSelection(rectD.ToAvaloniaRect());
+        RaiseSelectionChanged(rectD);
         InvalidateVisual();
     }
 
@@ -513,15 +516,15 @@ public sealed partial class DragRectControl : Control
     // ====================================================================
 
     /// <summary><see cref="SelectionStarted"/> を発火する。</summary>
-    private void RaiseSelectionStarted(Point domainPos)
+    private void RaiseSelectionStarted(PointD domainPos)
         => SelectionStarted?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
 
     /// <summary><see cref="SelectionChanged"/> を発火する。</summary>
-    private void RaiseSelectionChanged(Rect rect)
+    private void RaiseSelectionChanged(RectD rect)
         => SelectionChanged?.Invoke(this, new SelectionRectEventArgs(rect, _state.CreateSnapshot()));
 
     /// <summary><see cref="SelectionCompleted"/> を発火する。</summary>
-    private void RaiseSelectionCompleted(Rect rect)
+    private void RaiseSelectionCompleted(RectD rect)
         => SelectionCompleted?.Invoke(this, new SelectionRectEventArgs(rect, _state.CreateSnapshot()));
 
     /// <summary><see cref="SelectionCancelled"/> を発火する。</summary>
@@ -529,27 +532,27 @@ public sealed partial class DragRectControl : Control
         => SelectionCancelled?.Invoke(this, EventArgs.Empty);
 
     /// <summary><see cref="MouseDown"/> を発火する。</summary>
-    private void RaiseMouseDown(Point domainPos)
+    private void RaiseMouseDown(PointD domainPos)
         => MouseDown?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
 
     /// <summary><see cref="MouseUp"/> を発火する。</summary>
-    private void RaiseMouseUp(Point domainPos)
+    private void RaiseMouseUp(PointD domainPos)
         => MouseUp?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
 
     /// <summary><see cref="MouseClicked"/> を発火する。</summary>
-    private void RaiseMouseClicked(Point domainPos)
+    private void RaiseMouseClicked(PointD domainPos)
         => MouseClicked?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
 
     /// <summary><see cref="MouseDoubleClicked"/> を発火する。</summary>
-    private void RaiseMouseDoubleClicked(Point domainPos)
+    private void RaiseMouseDoubleClicked(PointD domainPos)
         => MouseDoubleClicked?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
 
     /// <summary><see cref="MouseMoved"/> を発火する。</summary>
-    private void RaiseMouseMoved(Point domainPos)
+    private void RaiseMouseMoved(PointD domainPos)
         => MouseMoved?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
 
     /// <summary><see cref="LoupePositionMoved"/> を発火する。</summary>
-    private void RaiseLoupePositionMoved(Point domainPos)
+    private void RaiseLoupePositionMoved(PointD domainPos)
         => LoupePositionMoved?.Invoke(this, new DragRectPointEventArgs(domainPos, _state.CreateSnapshot(domainPos)));
 
     /// <summary><see cref="ViewportChanged"/> を発火する。</summary>
@@ -566,7 +569,7 @@ public sealed partial class DragRectControl : Control
     {
         var port = _coordinatePort;
         var p0 = port.Forward(default);
-        var p1 = port.Forward(new Point(HandleHitRadius, 0));
+        var p1 = port.Forward(new PointD(HandleHitRadius, 0));
         double radius = Math.Abs(p1.X - p0.X);
         return radius < 0.001 ? HandleHitRadius : radius;
     }
@@ -583,7 +586,7 @@ public sealed partial class DragRectControl : Control
     /// ドラッグ中（<see cref="OnPointerMoved"/>）と nudge 中（<see cref="HandleArrowKey"/>）のルーペ位置通知、<br/>
     /// nudge 中の十字マーカー描画（<see cref="Render"/>）で共通利用する。
     /// </remarks>
-    private Point GetMarkerPosition()
+    private PointD GetMarkerPosition()
     {
         // ハンドル操作中:
         // - リサイズ（8 方向）: ドラッグ中のハンドル位置（ポインタ・矩形の角・ルーペを一体にする）
@@ -623,7 +626,7 @@ public sealed partial class DragRectControl : Control
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
 
         _state.IsMouseDown = true;
-        var domainPos = _coordinatePort.Forward(e.GetPosition(this));
+        var domainPos = _coordinatePort.Forward(e.GetPosition(this).ToPointD());
 
         // マウス Down 直前の位置をログ（高頻度の移動ログは行わない）
         Log.LogPositionBeforeDown(domainPos.X, domainPos.Y);
@@ -705,7 +708,7 @@ public sealed partial class DragRectControl : Control
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        var domainPos = _coordinatePort.Forward(e.GetPosition(this));
+        var domainPos = _coordinatePort.Forward(e.GetPosition(this).ToPointD());
         var hitRadius = ToDomainRadius();
 
         // nudge 終了（EndNudge の SetCursorPos）直後のエコー PointerMoved をスキップする
@@ -771,7 +774,7 @@ public sealed partial class DragRectControl : Control
     {
         base.OnPointerReleased(e);
         _state.IsMouseDown = false;
-        var domainPos = _coordinatePort.Forward(e.GetPosition(this));
+        var domainPos = _coordinatePort.Forward(e.GetPosition(this).ToPointD());
         RaiseMouseUp(domainPos);
 
         // マウス Up 直後の位置をログ（高頻度の移動ログは行わない）
@@ -862,7 +865,7 @@ public sealed partial class DragRectControl : Control
     /// <param name="hitRadius">ヒットテスト半径（ドメイン座標。呼び出し側で事前計算済み）。</param>
     /// <remarks>ハンドル上ではリサイズ方向に応じたカーソル、枠内では移動カーソルを表示する。<br/>
     /// ヒットテスト半径は呼び出し側から受け取り、内部で <see cref="ToDomainRadius"/> を再計算しない（ホットパス高速化）。</remarks>
-    private void UpdateCursor(Point domainPos, double hitRadius)
+    private void UpdateCursor(PointD domainPos, double hitRadius)
     {
         var handle = _state.HitTest(domainPos, hitRadius);
         // 標準カーソルは Lazy で遅延共有する（ポインター移動毎の生成を排除しつつ、初回アクセスで ICursorFactory を解決）

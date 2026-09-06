@@ -1,4 +1,4 @@
-using Avalonia;
+using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
@@ -9,4 +9,4 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// ホストは FadeMaskDragRectControl の公開 API のみで利用できる（公開型のカプセル化）。
 /// </remarks>
 /// <param name="Position">ルーペ中心（ドメイン座標）。</param>
-public sealed record FadeMaskDragRectPointEventArgs(Point Position);
+public sealed record FadeMaskDragRectPointEventArgs(PointD Position);

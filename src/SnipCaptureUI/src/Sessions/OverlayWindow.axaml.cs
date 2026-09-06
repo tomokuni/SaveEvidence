@@ -1,7 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Point = Avalonia.Point;
+using Rect = Avalonia.Rect;
+using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
@@ -343,7 +347,7 @@ internal sealed partial class OverlayWindow : Window
     private void OnAreaConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
     {
         _log.LogOverlayConfirm(e.SelectionRect.ToString());
-        var screenRect = DomainToScreenRect(e.SelectionRect, Position);
+        var screenRect = DomainToScreenRect(e.SelectionRect.ToAvaloniaRect(), Position);
         CompleteSelection(screenRect);
     }
 

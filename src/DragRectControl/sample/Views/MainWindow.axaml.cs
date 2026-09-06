@@ -4,10 +4,13 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Point = Avalonia.Point;
+using Rect = Avalonia.Rect;
 using DragRectControl.Sample.Logging;
 using DragRectControl.Sample.ViewModels;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using System.Collections.Specialized;
 
@@ -122,9 +125,9 @@ public partial class MainWindow : Window
         // SetCoordinateTransform は内部で InvalidateVisual を呼び、ズーム時のちらつきを防ぐ
         // Forward = DIP→ドメイン（_zoom で除算 = 画像ピクセルへ）、Inverse = ドメイン→DIP（_zoom で乗算）
         DragRect.SetCoordinateTransform(new CoordinatePort(
-            p => new Point(p.X / _zoom, p.Y / _zoom),
-            p => new Point(p.X * _zoom, p.Y * _zoom),
-            () => new Size(ImageWidth, ImageHeight)));
+            p => new PointD(p.X / _zoom, p.Y / _zoom),
+            p => new PointD(p.X * _zoom, p.Y * _zoom),
+            () => new SizeD(ImageWidth, ImageHeight)));
 
         // スクロールオフセットを同期的に設定する（Canvas サイズ変更と同じフレームで反映される）
         ImageScroll.Offset = newOffset;
@@ -225,7 +228,7 @@ public partial class MainWindow : Window
     /// <param name="e">選択矩形イベント引数。</param>
     private void OnSelectionChanged(object? sender, SelectionRectEventArgs e)
     {
-        _vm.UpdateSelection(true, e.Rect);
+        _vm.UpdateSelection(true, e.Rect.ToAvaloniaRect());
         _vm.AddLog($"[Event] SelectionChanged: X={e.Rect.X:F0}, Y={e.Rect.Y:F0}, W={e.Rect.Width:F0}, H={e.Rect.Height:F0}");
     }
 
@@ -240,7 +243,7 @@ public partial class MainWindow : Window
     /// <param name="e">選択矩形イベント引数。</param>
     private void OnSelectionCompleted(object? sender, SelectionRectEventArgs e)
     {
-        _vm.UpdateSelection(true, e.Rect);
+        _vm.UpdateSelection(true, e.Rect.ToAvaloniaRect());
         _vm.AddLog($"[Event] SelectionCompleted: X={e.Rect.X:F0}, Y={e.Rect.Y:F0}, W={e.Rect.Width:F0}, H={e.Rect.Height:F0}");
     }
 

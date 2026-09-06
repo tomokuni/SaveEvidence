@@ -1,4 +1,4 @@
-using System.Drawing;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 
 namespace Estable.AvaloniaUI.Loupe.Imaging;
@@ -32,5 +32,5 @@ internal static class LoupeImageExtractor
     /// 画像端では透明パディングとなり、市松模様が透ける。
     /// </remarks>
     public static PbBitmap ExtractRegionAt(PbBitmap source, int centerX, int centerY, int size)
-        => source.Crop(new Rectangle(centerX - size / 2, centerY - size / 2, size, size));
+        => source.Crop(new Rect(centerX - size / 2, centerY - size / 2, size, size));
 }

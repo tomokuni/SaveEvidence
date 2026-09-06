@@ -1,7 +1,11 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Point = Avalonia.Point;
+using Rect = Avalonia.Rect;
+using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Xunit;
 using Avalonia.Headless.XUnit;
 
@@ -69,8 +73,8 @@ public class FadeMaskRendererTests
         renderer.LogicalHighlightRect = new Rect(25, 25, 50, 40);
         renderer.WindowTitle = "Test Window";
         renderer.CoordinateTransform = new CoordinatePort(
-            p => new Point(p.X * 2, p.Y * 2),
-            p => new Point(p.X / 2, p.Y / 2),
+            p => new PointD(p.X * 2, p.Y * 2),
+            p => new PointD(p.X / 2, p.Y / 2),
             () => null);
 
         renderer.Draw(ctx, new Size(300, 300));
@@ -108,8 +112,8 @@ public class FadeMaskRendererTests
         renderer.LogicalSelectionRect = new Rect(25, 25, 50, 40);
         // ドメイン = DIP × 2（拡大）→ 矩形は (50,50)-(150,130) に変換される
         renderer.CoordinateTransform = new CoordinatePort(
-            p => new Point(p.X * 2, p.Y * 2),
-            p => new Point(p.X / 2, p.Y / 2),
+            p => new PointD(p.X * 2, p.Y * 2),
+            p => new PointD(p.X / 2, p.Y / 2),
             () => null);
 
         renderer.Draw(ctx, new Size(300, 300));
@@ -122,8 +126,8 @@ public class FadeMaskRendererTests
         var renderer = CreateRenderer();
         renderer.ShowFullOverlay = true;
         renderer.CoordinateTransform = new CoordinatePort(
-            p => new Point(p.X * 2, p.Y * 2),
-            p => new Point(p.X / 2, p.Y / 2),
+            p => new PointD(p.X * 2, p.Y * 2),
+            p => new PointD(p.X / 2, p.Y / 2),
             () => null);
 
         // 選択なし + ポート設定 → 矩形変換（is {} false）と全面暗転が実行される

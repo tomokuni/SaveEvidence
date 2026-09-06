@@ -65,4 +65,38 @@ internal static class CoordinateMath
             : (dw, dh, 0.0, 0.0);
         return (rw, rh, ox, oy, sw / Math.Max(rw, 1), sh / Math.Max(rh, 1));
     }
+
+    /// <summary>指定点をスクロールオフセット分平行移動する（純粋関数）。</summary>
+    /// <param name="x">X 座標。</param>
+    /// <param name="y">Y 座標。</param>
+    /// <param name="offsetX">X オフセット。</param>
+    /// <param name="offsetY">Y オフセット。</param>
+    /// <returns>オフセット加算（移動）後の座標。</returns>
+    public static (double X, double Y) OffsetPoint(double x, double y, double offsetX, double offsetY)
+        => (x - offsetX, y - offsetY);
+
+    /// <summary>指定点を逆方向にスクロールオフセット分平行移動する（純粋関数）。</summary>
+    /// <param name="x">X 座標。</param>
+    /// <param name="y">Y 座標。</param>
+    /// <param name="offsetX">X オフセット。</param>
+    /// <param name="offsetY">Y オフセット。</param>
+    /// <returns>オフセット減算（逆移動）後の座標。</returns>
+    public static (double X, double Y) InverseOffsetPoint(double x, double y, double offsetX, double offsetY)
+        => (x + offsetX, y + offsetY);
+
+    /// <summary>指定点を等方スケーリングする（純粋関数・原点基準）。</summary>
+    /// <param name="x">X 座標。</param>
+    /// <param name="y">Y 座標。</param>
+    /// <param name="factor">スケール倍率（Forward = 除算 / Inverse = 乗算）。</param>
+    /// <returns>スケーリング後の座標。</returns>
+    public static (double X, double Y) ScalePoint(double x, double y, double factor)
+        => (x / factor, y / factor);
+
+    /// <summary>指定点を逆方向に等方スケーリングする（純粋関数・原点基準）。</summary>
+    /// <param name="x">X 座標。</param>
+    /// <param name="y">Y 座標。</param>
+    /// <param name="factor">スケール倍率。</param>
+    /// <returns>スケーリング後の座標。</returns>
+    public static (double X, double Y) InverseScalePoint(double x, double y, double factor)
+        => (x * factor, y * factor);
 }

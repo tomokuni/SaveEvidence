@@ -1,6 +1,9 @@
 using Avalonia;
 using Avalonia.Media;
+using AvaloniaRect = Avalonia.Rect;
+using AvaloniaSize = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.FadeMask;
 
@@ -68,7 +71,7 @@ public sealed class FadeMaskRenderer
     /// <see cref="LogicalSelectionRect"/> と同様に、<see cref="CoordinateTransform"/> と組み合わせて<br/>
     /// 描画時に最新のレイアウトから DIP 矩形を算出する（座標系の統一・レイアウト変化に追従）。
     /// </remarks>
-    public Rect? LogicalHighlightRect { get; set; }
+    public AvaloniaRect? LogicalHighlightRect { get; set; }
 
     /// <summary>選択矩形（ドメイン座標 = 元画像ピクセル / 仮想スクリーンピクセル）。未設定の場合は null。</summary>
     /// <remarks>
@@ -76,7 +79,7 @@ public sealed class FadeMaskRenderer
     /// （DragRectControl と同方式。ウィンドウサイズ変更・ズーム・スクロールに追従）。<br/>
     /// <see cref="CoordinateTransform"/> 未設定（null）の場合はドメイン = DIP として等価変換する。
     /// </remarks>
-    public Rect? LogicalSelectionRect { get; set; }
+    public AvaloniaRect? LogicalSelectionRect { get; set; }
 
     /// <summary>論理座標（ドメイン）↔ DIP の座標変換ポート。</summary>
     /// <remarks>
@@ -162,9 +165,9 @@ public sealed class FadeMaskRenderer
     /// 2. 選択枠線（<see cref="GetBorderRects"/>。穴あけ矩形がある場合のみ）<br/>
     /// 拡大鏡は Visual Tree に配置した LoupeControl 自身が描画する（本レンダラーの責務外）。<br/>
     /// </remarks>
-    public void Draw(DrawingContext context, Size boundsSize)
+    public void Draw(DrawingContext context, AvaloniaSize boundsSize)
     {
-        var clientRect = new Rect(0, 0, boundsSize.Width, boundsSize.Height);
+        var clientRect = new AvaloniaRect(0, 0, boundsSize.Width, boundsSize.Height);
         var textColor = TextColor;
 
         // 穴あけ矩形の決定（論理矩形 + 座標変換ポートを描画時に評価。ポート未設定は等価変換）
@@ -173,13 +176,13 @@ public sealed class FadeMaskRenderer
         var port = CoordinateTransform ?? CoordinatePort.Identity;
         var selectionRect = LogicalSelectionRect is { } logical
             ? ToDipRect(logical, port)
-            : (Rect?)null;
+            : (AvaloniaRect?)null;
         var highlightRect = LogicalHighlightRect is { } hl
             ? ToDipRect(hl, port, closedInterval: false)
-            : (Rect?)null;
+            : (AvaloniaRect?)null;
         var holeRect = HasHighlight ? highlightRect
                     : HasSelection ? selectionRect
-                    : (Rect?)null;
+                    : (AvaloniaRect?)null;
 
         if (holeRect.HasValue || ShowFullOverlay)
         {
@@ -237,13 +240,13 @@ public sealed class FadeMaskRenderer
     /// 全ピクセルを含む閉区間表現（PixelRect 由来）のため、<c>closedInterval: false</c> で +1 しない<br/>
     /// （+1 すると実際より 1px 大きい枠・サイズラベルになる）。
     /// </remarks>
-    internal static Rect ToDipRect(Rect logical, ICoordinatePort port, bool closedInterval = true)
+    internal static AvaloniaRect ToDipRect(AvaloniaRect logical, ICoordinatePort port, bool closedInterval = true)
     {
-        var tl = port.Inverse(logical.TopLeft);
+        var tl = port.Inverse(logical.TopLeft.ToPointD());
         var br = port.Inverse(closedInterval
-            ? new Point(logical.Right + 1, logical.Bottom + 1)
-            : logical.BottomRight);
-        return new Rect(tl, br);
+            ? new PointD(logical.Right + 1, logical.Bottom + 1)
+            : logical.BottomRight.ToPointD());
+        return new AvaloniaRect(tl.ToAvaloniaPoint(), br.ToAvaloniaPoint());
     }
 
     /// <summary>選択矩形の四辺に描く枠線の矩形を計算する（純粋関数）。</summary>
@@ -255,15 +258,15 @@ public sealed class FadeMaskRenderer
     /// 各辺は矩形の内側に描く（上辺は Y、下辺は Bottom − t、左右は内側に t 幅）。<br/>
     /// 高さ・幅が負にならないよう <c>Math.Max(0, ...)</c> でクランプする。
     /// </remarks>
-    internal static IReadOnlyList<Rect> GetBorderRects(Rect rect, double thickness)
+    internal static IReadOnlyList<AvaloniaRect> GetBorderRects(AvaloniaRect rect, double thickness)
     {
         var t = Math.Max(0.5, thickness);
         return
         [
-            new Rect(rect.X, rect.Y, rect.Width, t),                                                 // 上
-            new Rect(rect.X, rect.Bottom - t, rect.Width, t),                                        // 下
-            new Rect(rect.X, rect.Y + t, t, Math.Max(0, rect.Height - 2 * t)),                       // 左
-            new Rect(rect.Right - t, rect.Y + t, t, Math.Max(0, rect.Height - 2 * t)),               // 右
+            new AvaloniaRect(rect.X, rect.Y, rect.Width, t),                                                 // 上
+            new AvaloniaRect(rect.X, rect.Bottom - t, rect.Width, t),                                        // 下
+            new AvaloniaRect(rect.X, rect.Y + t, t, Math.Max(0, rect.Height - 2 * t)),                       // 左
+            new AvaloniaRect(rect.Right - t, rect.Y + t, t, Math.Max(0, rect.Height - 2 * t)),               // 右
         ];
     }
 

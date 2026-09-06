@@ -1,4 +1,5 @@
 using Avalonia;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using SkiaSharp;
 using Xunit;
@@ -278,7 +279,7 @@ public class PbBitmapTests
         using var src = Create(10, 10);
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
-        using var result = src.Crop(new System.Drawing.Rectangle(2, 2, 4, 4));
+        using var result = src.Crop(new Geometry.Rect(2, 2, 4, 4));
 
         Assert.Equal(4, result.Size.Width);
         Assert.Equal(4, result.Size.Height);
@@ -291,7 +292,7 @@ public class PbBitmapTests
     {
         using var src = Create(10, 10);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new System.Drawing.Rectangle(0, 0, 0, 4)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new Geometry.Rect(0, 0, 0, 4)));
     }
 
     [Fact]
@@ -299,7 +300,7 @@ public class PbBitmapTests
     {
         using var src = Create(10, 10);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new System.Drawing.Rectangle(0, 0, 4, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new Geometry.Rect(0, 0, 4, 0)));
     }
 
     [Fact]
@@ -309,7 +310,7 @@ public class PbBitmapTests
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
         // 矩形が右端を超える場合、コピーできる部分のみコピーし、範囲外は透明（0）のまま
-        using var result = src.Crop(new System.Drawing.Rectangle(8, 0, 10, 10));
+        using var result = src.Crop(new Geometry.Rect(8, 0, 10, 10));
 
         Assert.Equal(10, result.Size.Width);
         Assert.Equal(10, result.Size.Height);
@@ -326,7 +327,7 @@ public class PbBitmapTests
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
         // 矩形がソースと交差しない場合でも、要求サイズの全透明ビットマップを返す
-        using var result = src.Crop(new System.Drawing.Rectangle(20, 20, 5, 5));
+        using var result = src.Crop(new Geometry.Rect(20, 20, 5, 5));
 
         Assert.Equal(5, result.Size.Width);
         Assert.Equal(5, result.Size.Height);
@@ -341,6 +342,6 @@ public class PbBitmapTests
         var src = Create(10, 10);
         src.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => src.Crop(new System.Drawing.Rectangle(0, 0, 4, 4)));
+        Assert.Throws<ObjectDisposedException>(() => src.Crop(new Geometry.Rect(0, 0, 4, 4)));
     }
 }

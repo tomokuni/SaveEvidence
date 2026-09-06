@@ -4,8 +4,8 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using SkiaSharp;
 using Color = System.Drawing.Color;
-using Point = System.Drawing.Point;
 using AvaloniaColor = Avalonia.Media.Color;
+using Geometry = Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.Platform.Imaging;
 
@@ -168,7 +168,7 @@ public static class PbBitmapAvaloniaExtensions
     /// <returns>取得した Avalonia Color。範囲外は IndexOutOfRangeException。</returns>
     public static AvaloniaColor GetPixel(this PbBitmap bitmap, PixelPoint point)
     {
-        var color = bitmap.GetPixel(new Point(point.X, point.Y));
+        var color = bitmap.GetPixel(new Geometry.Point(point.X, point.Y));
         return AvaloniaColor.FromArgb(color.A, color.R, color.G, color.B);
     }
 
@@ -177,7 +177,7 @@ public static class PbBitmapAvaloniaExtensions
     /// <param name="point">座標（ピクセル）。</param>
     /// <param name="color">設定する Avalonia Color。アルファ乗算して書き込む。</param>
     public static void SetPixel(this PbBitmap bitmap, PixelPoint point, AvaloniaColor color)
-        => bitmap.SetPixel(new Point(point.X, point.Y), Color.FromArgb(color.A, color.R, color.G, color.B));
+        => bitmap.SetPixel(new Geometry.Point(point.X, point.Y), Color.FromArgb(color.A, color.R, color.G, color.B));
 
     /// <summary>指定座標（ピクセル）へ Avalonia Color を書き込む（範囲外は無視）。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>

@@ -1,4 +1,4 @@
-using Avalonia;
+using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.DragRect;
 
@@ -23,9 +23,9 @@ namespace Estable.AvaloniaUI.DragRect;
 /// <param name="NudgeActive">nudge（矢印キー微調整）中かどうか。</param>
 public sealed record DragRectSnapshot(
     DragRectInteractionState State,
-    Rect SelectionRect,
+    RectD SelectionRect,
     DragHandle ActiveHandle,
-    Point MousePosition,
+    PointD MousePosition,
     bool IsMouseDown,
     bool IsDragging,
     bool NudgeActive)

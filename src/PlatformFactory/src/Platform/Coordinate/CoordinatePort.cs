@@ -1,4 +1,4 @@
-using Avalonia;
+using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.Platform;
 
@@ -37,10 +37,10 @@ public sealed class CoordinatePort : ICoordinatePort
     /// ScrollViewer 内の画像プレビューで、コンテンツ座標系とビューポート座標系の変換を提供する。<br/>
     /// オフセットは関数で提供されるため、スクロールの動的変化を反映できる。
     /// </remarks>
-    public static ICoordinatePort ScrollOffset(Func<Vector> offsetProvider)
+    public static ICoordinatePort ScrollOffset(Func<VectorD> offsetProvider)
         => new CoordinatePort(
-            p => p - offsetProvider(),
-            p => p + offsetProvider(),
+            p => { var (x, y) = CoordinateMath.OffsetPoint(p.X, p.Y, offsetProvider().X, offsetProvider().Y); return new PointD(x, y); },
+            p => { var (x, y) = CoordinateMath.InverseOffsetPoint(p.X, p.Y, offsetProvider().X, offsetProvider().Y); return new PointD(x, y); },
             () => null);
 
     /// <summary>原点基準の等方スケーリングポートを生成する（座標系 A ↔ 座標系 B = 座標系 A × 倍率）。</summary>
@@ -54,8 +54,8 @@ public sealed class CoordinatePort : ICoordinatePort
     {
         double s = factor > 0 ? factor : 1.0;
         return new CoordinatePort(
-            p => new Point(p.X / s, p.Y / s),
-            p => new Point(p.X * s, p.Y * s),
+            p => { var (x, y) = CoordinateMath.ScalePoint(p.X, p.Y, s); return new PointD(x, y); },
+            p => { var (x, y) = CoordinateMath.InverseScalePoint(p.X, p.Y, s); return new PointD(x, y); },
             () => null);
     }
 
@@ -72,8 +72,8 @@ public sealed class CoordinatePort : ICoordinatePort
         static double Scale(double factor) => factor > 0 ? factor : 1.0;
 
         return new CoordinatePort(
-            p => { double s = Scale(factorProvider()); return new Point(p.X * s, p.Y * s); },
-            p => { double s = Scale(factorProvider()); return new Point(p.X / s, p.Y / s); },
+            p => { double s = Scale(factorProvider()); var (x, y) = CoordinateMath.ScalePoint(p.X, p.Y, 1.0 / s); return new PointD(x, y); },
+            p => { double s = Scale(factorProvider()); var (x, y) = CoordinateMath.ScalePoint(p.X, p.Y, s); return new PointD(x, y); },
             () => null);
     }
 
@@ -90,8 +90,8 @@ public sealed class CoordinatePort : ICoordinatePort
     /// ズーム率（X スケール）の導出には <see cref="ImageLayoutScaleX"/> を使用する。
     /// </remarks>
     public static ICoordinatePort ImageLayout(
-        Func<Size> viewportSizeProvider,
-        Size sourceSize,
+        Func<SizeD> viewportSizeProvider,
+        SizeD sourceSize,
         Func<bool>? uniformProvider = null)
     {
         ICoordinatePort CreateLayout()
@@ -101,8 +101,8 @@ public sealed class CoordinatePort : ICoordinatePort
             var uniform = uniformProvider?.Invoke() ?? true;
             var (ox, oy, sx, sy) = ComputeImageLayout(disp, sourceSize, uniform);
             return new CoordinatePort(
-                dip => new Point((dip.X - ox) * sx, (dip.Y - oy) * sy),
-                logical => new Point(logical.X / sx + ox, logical.Y / sy + oy),
+                dip => new PointD((dip.X - ox) * sx, (dip.Y - oy) * sy),
+                logical => new PointD(logical.X / sx + ox, logical.Y / sy + oy),
                 () => sourceSize);
         }
 
@@ -122,8 +122,8 @@ public sealed class CoordinatePort : ICoordinatePort
     /// X スケールのみを導出する（サイズラベルのズーム率表示等に使用・単一実装・DRY 原則）。
     /// </remarks>
     public static double ImageLayoutScaleX(
-        Func<Size> viewportSizeProvider,
-        Size sourceSize,
+        Func<SizeD> viewportSizeProvider,
+        SizeD sourceSize,
         Func<bool>? uniformProvider = null)
     {
         var disp = viewportSizeProvider();
@@ -143,16 +143,16 @@ public sealed class CoordinatePort : ICoordinatePort
     /// <see cref="ImageLayout"/> / <see cref="ImageLayoutScaleX"/> で共通利用する（単一実装・DRY 原則）。
     /// </remarks>
     private static (double OffsetX, double OffsetY, double ScaleX, double ScaleY) ComputeImageLayout(
-        Size viewport, Size source, bool uniform)
+        SizeD viewport, SizeD source, bool uniform)
     {
         var (_, _, ox, oy, sx, sy) = CoordinateMath.ComputeImageRenderInfo(
             viewport.Width, viewport.Height, source.Width, source.Height, uniform);
         return (ox, oy, Math.Max(sx, 0.01), Math.Max(sy, 0.01));
     }
 
-    private readonly Func<Point, Point> _forward;
-    private readonly Func<Point, Point> _inverse;
-    private readonly Func<Size?> _bounds;
+    private readonly Func<PointD, PointD> _forward;
+    private readonly Func<PointD, PointD> _inverse;
+    private readonly Func<SizeD?> _bounds;
 
     /// <summary><see cref="CoordinatePort"/> の新しいインスタンスを初期化します。</summary>
     /// <param name="forward">順変換（座標系 A → 座標系 B）。</param>
@@ -160,9 +160,9 @@ public sealed class CoordinatePort : ICoordinatePort
     /// <param name="bounds">座標系 B の境界（null = 無制限）。</param>
     /// <remarks>変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。</remarks>
     public CoordinatePort(
-        Func<Point, Point> forward,
-        Func<Point, Point> inverse,
-        Func<Size?> bounds)
+        Func<PointD, PointD> forward,
+        Func<PointD, PointD> inverse,
+        Func<SizeD?> bounds)
     {
         _forward = forward;
         _inverse = inverse;
@@ -170,11 +170,11 @@ public sealed class CoordinatePort : ICoordinatePort
     }
 
     /// <inheritdoc/>
-    public Point Forward(Point p) => _forward(p);
+    public PointD Forward(PointD p) => _forward(p);
 
     /// <inheritdoc/>
-    public Point Inverse(Point p) => _inverse(p);
+    public PointD Inverse(PointD p) => _inverse(p);
 
     /// <inheritdoc/>
-    public Size? Bounds => _bounds();
+    public SizeD? Bounds => _bounds();
 }

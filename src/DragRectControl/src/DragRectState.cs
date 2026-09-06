@@ -1,6 +1,8 @@
-using Avalonia;
+using AvaloniaPoint = Avalonia.Point;
+using AvaloniaRect = Avalonia.Rect;
 using Estable.AvaloniaUI.DragRect.Selection;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.DragRect;
 
@@ -14,21 +16,23 @@ namespace Estable.AvaloniaUI.DragRect;
 /// - マウス入力・描画はコントロールローカル DIP で受け取り、座標変換ポート（<see cref="ICoordinatePort"/>）で変換する。<br/>
 /// <br/>
 /// イベント駆動: 状態変更はコントロール（<see cref="DragRectControl"/>）が公開イベントで通知し、
-/// 本クラスは状態の保持と純粋な更新ロジックのみを担う（ポーリング不要）。
+/// 本クラスは状態の保持と純粋な更新ロジックのみを担う（ポーリング不要）。<br/>
+/// <b>依存分離</b>: ドメイン座標は UI フレームワーク非依存の <see cref="PointD"/> / <see cref="RectD"/> で保持する。<br/>
+/// 公開イベント引数（<see cref="DragRectSnapshot"/> 等）は UI 境界のため、生成時に <see cref="AvaloniaGeometryAdapters"/> で変換する。
 /// </remarks>
 internal sealed class DragRectState
 {
     /// <summary>選択矩形（ドメイン座標）。未選択時は 0x0。</summary>
-    public Rect SelectionRect { get; set; }
+    public RectD SelectionRect { get; set; }
 
     /// <summary>選択矩形が有効かどうか（幅・高さが 0 より大きい）。</summary>
     public bool HasSelection => SelectionRect.Width > 0 && SelectionRect.Height > 0;
 
     /// <summary>ドラッグの始点（ドメイン座標）。</summary>
-    public Point StartPoint { get; set; }
+    public PointD StartPoint { get; set; }
 
     /// <summary>直近のマウス位置（ドメイン座標）。nudge の基点精度向上に使用。</summary>
-    public Point LastMousePosition { get; set; }
+    public PointD LastMousePosition { get; set; }
 
     /// <summary>ドラッグ中かどうか（新規選択・移動・リサイズ）。</summary>
     public bool IsDragging { get; set; }
@@ -40,16 +44,16 @@ internal sealed class DragRectState
     public DragHandle ActiveHandle { get; set; }
 
     /// <summary>ドラッグ開始時の矩形（移動・リサイズの基準）。</summary>
-    public Rect DragStartRect { get; set; }
+    public RectD DragStartRect { get; set; }
 
     /// <summary>ドラッグ開始時のマウス位置（移動・リサイズの基準・ドメイン座標）。</summary>
-    public Point DragStartPoint { get; set; }
+    public PointD DragStartPoint { get; set; }
 
     /// <summary>nudge がアクティブかどうか。</summary>
     public bool NudgeActive { get; set; }
 
     /// <summary>nudge の基点（ドメイン座標）。</summary>
-    public Point NudgeBase { get; set; }
+    public PointD NudgeBase { get; set; }
 
     /// <summary>nudge の累積オフセット X（ドメイン座標・整数加算）。</summary>
     public int NudgeOffsetX { get; set; }
@@ -64,7 +68,7 @@ internal sealed class DragRectState
     public ICoordinatePort Port { get; set; } = CoordinatePort.Identity;
 
     /// <summary>nudge 終了（SetCursorPos）直後のエコー PointerMoved の抑制位置（ドメイン座標）。null は抑制なし。</summary>
-    public Point? SuppressEchoAt { get; set; }
+    public PointD? SuppressEchoAt { get; set; }
 
     /// <summary>カーソルサービス（nudge 時のカーソル移動・表示切替）。</summary>
     public ICursorService Cursor { get; }
@@ -97,7 +101,7 @@ internal sealed class DragRectState
     /// <summary>公開イベント用のスナップショットを生成する。</summary>
     /// <param name="mousePosition">通知時点のマウス位置（ドメイン座標）。省略時は最終位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・ボタン状態・ドラッグ状態・nudge 状態を含むスナップショット。</returns>
-    public DragRectSnapshot CreateSnapshot(Point? mousePosition = null)
+    public DragRectSnapshot CreateSnapshot(PointD? mousePosition = null)
         => new(
             GetInteractionState(),
             SelectionRect,
@@ -129,15 +133,15 @@ internal sealed class DragRectState
     }
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。</param>
+    /// <param name="rect">選択矩形（ドメイン座標・UI 境界のため Avalonia Rect で受け取り PointD へ変換）。</param>
     /// <remarks>
     /// nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。<br/>
     /// nudge の終了処理は <see cref="EndNudgeIfActive"/> に委譲する（重複排除）。
     /// </remarks>
-    public void SetSelection(Rect rect)
+    public void SetSelection(AvaloniaRect rect)
     {
         EndNudgeIfActive();
-        SelectionRect = rect;
+        SelectionRect = rect.ToRectD();
         IsDragging = false;
         ActiveHandle = DragHandle.None;
     }
@@ -167,7 +171,7 @@ internal sealed class DragRectState
     /// 各ハンドルへの距離判定でヒットを確定する（ハンドル位置計算の DRY・二重所有の排除）。<br/>
     /// 判定順は「角（8 方向）→ 矩形内（Move）」で、角が辺より優先される（従来の優先度を維持）。
     /// </remarks>
-    public DragHandle HitTest(Point pos, double hitRadius)
+    public DragHandle HitTest(PointD pos, double hitRadius)
     {
         var r = SelectionRect;
         if (!HasSelection) return DragHandle.None;
@@ -187,10 +191,10 @@ internal sealed class DragRectState
 
     /// <summary>新規選択のドラッグを開始する。</summary>
     /// <param name="startPos">始点座標（ドメイン座標）。</param>
-    public void StartNewSelection(Point startPos)
+    public void StartNewSelection(PointD startPos)
     {
         StartPoint = startPos;
-        SelectionRect = new Rect(startPos, new Size(0, 0));
+        SelectionRect = new RectD(startPos.X, startPos.Y, 0, 0);
         IsDragging = true;
         ActiveHandle = DragHandle.None;
         DragStartPoint = startPos;
@@ -201,7 +205,7 @@ internal sealed class DragRectState
     /// <summary>既存ハンドルによるリサイズ/移動のドラッグを開始する。</summary>
     /// <param name="handle">アクティブにするハンドル。</param>
     /// <param name="pos">現在のマウス位置（ドメイン座標）。</param>
-    public void StartDrag(DragHandle handle, Point pos)
+    public void StartDrag(DragHandle handle, PointD pos)
     {
         ActiveHandle = handle;
         IsDragging = true;
@@ -220,7 +224,7 @@ internal sealed class DragRectState
     /// - ハンドル変形: 固定角を動かさず、動く辺のみ境界内に制限。<br/>
     /// - 移動（Move）: 矩形全体が境界内に収まるようにシフト。<br/>
     /// </remarks>
-    public void UpdateDrag(Point currentPos, double minSize, bool clampToBounds)
+    public void UpdateDrag(PointD currentPos, double minSize, bool clampToBounds)
     {
         var bounds = GetBoundsRect(clampToBounds);
 
@@ -249,8 +253,8 @@ internal sealed class DragRectState
     /// <remarks>
     /// <see cref="UpdateDrag"/> / <see cref="Nudge"/> で共通利用する（境界 Rect 生成の重複排除）。
     /// </remarks>
-    private Rect? GetBoundsRect(bool clampToBounds)
-        => clampToBounds && Port.Bounds is { } size ? new Rect(0, 0, size.Width, size.Height) : null;
+    private RectD? GetBoundsRect(bool clampToBounds)
+        => clampToBounds && Port.Bounds is { } size ? new RectD(0, 0, size.Width, size.Height) : null;
 
     /// <summary>ドラッグを終了する。</summary>
     public void EndDrag()
@@ -289,7 +293,7 @@ internal sealed class DragRectState
         {
             // 新規選択ドラッグ中 / 選択確定後 → 終点を微調整
             var end = SelectionGeometry.GetOppositeCorner(SelectionRect, StartPoint);
-            end = new Point(end.X + dx, end.Y + dy);
+            end = new PointD(end.X + dx, end.Y + dy);
             end = bounds is { } b ? ClampPointToBounds(end, b) : end;
             // 始点も境界内にクリップしてから矩形を作成する（画像外の始点によるはみ出し防止）
             var start = bounds is { } b2 ? ClampPointToBounds(StartPoint, b2) : StartPoint;
@@ -299,14 +303,14 @@ internal sealed class DragRectState
         else
         {
             // 未選択・未ドラッグ → 始点を移動（次回クリック時の始点となる）
-            StartPoint = new Point(StartPoint.X + dx, StartPoint.Y + dy);
+            StartPoint = new PointD(StartPoint.X + dx, StartPoint.Y + dy);
         }
     }
 
     /// <summary>選択矩形の「StartPoint でない方の隅」（終点）を取得する。</summary>
     /// <param name="rect">選択矩形。</param>
     /// <returns>StartPoint と反対側の隅の座標。</returns>
-    public Point GetOppositeCorner(Rect rect)
+    public PointD GetOppositeCorner(RectD rect)
         => SelectionGeometry.GetOppositeCorner(rect, StartPoint);
 
     /// <summary>現在の選択矩形をドメイン境界（<see cref="Port.Bounds"/>）内にクリップして適用する。</summary>
@@ -333,22 +337,22 @@ internal sealed class DragRectState
     /// 矩形の四隅を境界内にクリップし、その包絡矩形（bounding box）を返す。<br/>
     /// 矩形全体を境界内に収める（<see cref="SetSelection"/> 等の外部復元・設定変更時の即時適用用）。
     /// </remarks>
-    public Rect ClipRectToBounds(Rect rect)
+    public RectD ClipRectToBounds(RectD rect)
     {
         if (Port.Bounds is not { } size) return rect;
-        var bounds = new Rect(0, 0, size.Width, size.Height);
+        var bounds = new RectD(0, 0, size.Width, size.Height);
         var l = Math.Clamp(rect.Left, bounds.Left, bounds.Right);
         var t = Math.Clamp(rect.Top, bounds.Top, bounds.Bottom);
         var r = Math.Clamp(rect.Right, bounds.Left, bounds.Right);
         var b = Math.Clamp(rect.Bottom, bounds.Top, bounds.Bottom);
-        return new Rect(l, t, Math.Max(0, r - l), Math.Max(0, b - t));
+        return new RectD(l, t, Math.Max(0, r - l), Math.Max(0, b - t));
     }
 
     /// <summary>点をドメイン境界内にクリップする。</summary>
     /// <param name="p">クリップする点。</param>
     /// <param name="bounds">クリップ範囲。</param>
     /// <returns>境界内に収めた点。</returns>
-    private static Point ClampPointToBounds(Point p, Rect bounds)
+    private static PointD ClampPointToBounds(PointD p, RectD bounds)
         => new(
             Math.Clamp(p.X, bounds.Left, bounds.Right),
             Math.Clamp(p.Y, bounds.Top, bounds.Bottom));
@@ -362,7 +366,7 @@ internal sealed class DragRectState
     /// <see cref="DragHandle.Move"/> の場合は矩形全体が境界内に収まるようにシフトする（サイズは維持）。<br/>
     /// それ以外のハンドル変形は固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限する。
     /// </remarks>
-    private static Rect ClampRectToBounds(Rect rect, Rect bounds, DragHandle handle)
+    private static RectD ClampRectToBounds(RectD rect, RectD bounds, DragHandle handle)
     {
         double l = rect.Left;
         double t = rect.Top;
@@ -386,7 +390,7 @@ internal sealed class DragRectState
             if (b > bounds.Bottom) b = bounds.Bottom;
         }
 
-        return new Rect(l, t, r - l, b - t);
+        return new RectD(l, t, r - l, b - t);
     }
 
     /// <summary>ドラッグハンドル操作による矩形の変形を計算する。</summary>
@@ -400,7 +404,7 @@ internal sealed class DragRectState
     /// ハンドルを反対側までドラッグした場合（l&gt;r または t&gt;b）、矩形を反転（正規化）する。<br/>
     /// 最小サイズは幅・高さが <paramref name="minSize"/> 未満にならないよう保証する。
     /// </remarks>
-    private static Rect ComputeDragRect(Rect original, double dx, double dy, DragHandle handle, double minSize)
+    private static RectD ComputeDragRect(RectD original, double dx, double dy, DragHandle handle, double minSize)
     {
         double l = original.Left;
         double t = original.Top;
@@ -429,7 +433,7 @@ internal sealed class DragRectState
         if (x2 - x1 < m) x2 = x1 + m;
         if (y2 - y1 < m) y2 = y1 + m;
 
-        return new Rect(x1, y1, x2 - x1, y2 - y1);
+        return new RectD(x1, y1, x2 - x1, y2 - y1);
     }
 
     /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>

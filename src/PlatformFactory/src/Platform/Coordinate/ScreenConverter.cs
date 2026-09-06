@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using AvaloniaPoint = Avalonia.Point;
+using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.Platform;
 
@@ -21,7 +23,7 @@ public static class ScreenConverter
     /// <param name="local">コントロールローカル DIP 座標。</param>
     /// <returns>画面物理座標。</returns>
     /// <remarks><see cref="TopLevel.PointToScreen"/> に委譲する。</remarks>
-    public static PixelPoint LocalDipToScreen(Visual source, Point local)
+    public static PixelPoint LocalDipToScreen(Visual source, AvaloniaPoint local)
     {
         var topLevel = TopLevel.GetTopLevel(source);
         if (topLevel is null) return new PixelPoint((int)local.X, (int)local.Y);
@@ -37,10 +39,10 @@ public static class ScreenConverter
     /// <see cref="TopLevel.PointToClient"/> と <see cref="VisualExtensions.TranslatePoint"/> に委譲する。<br/>
     /// ビジュアルツリー未接続時は等価変換（画面座標をそのまま返す）。
     /// </remarks>
-    public static Point ScreenToLocalDip(Visual source, PixelPoint screen)
+    public static AvaloniaPoint ScreenToLocalDip(Visual source, PixelPoint screen)
     {
         var topLevel = TopLevel.GetTopLevel(source);
-        if (topLevel is null) return new Point(screen.X, screen.Y);
+        if (topLevel is null) return new AvaloniaPoint(screen.X, screen.Y);
         var clientDip = topLevel.PointToClient(screen);
         var origin = VisualExtensions.TranslatePoint(source, default, topLevel) ?? default;
         return clientDip - origin;
@@ -58,8 +60,8 @@ public static class ScreenConverter
     {
         double s = renderScaling > 0 ? renderScaling : 1.0;
         return new CoordinatePort(
-            p => new Point((p.X - origin.X) / s, (p.Y - origin.Y) / s),
-            p => new Point(p.X * s + origin.X, p.Y * s + origin.Y),
+            p => new PointD((p.X - origin.X) / s, (p.Y - origin.Y) / s),
+            p => new PointD(p.X * s + origin.X, p.Y * s + origin.Y),
             () => null);
     }
 
@@ -72,12 +74,12 @@ public static class ScreenConverter
     /// </remarks>
     public static ICoordinatePort CreateVisualDipPort(Visual source)
         => new CoordinatePort(
-            p => ScreenToLocalDip(source, new PixelPoint((int)p.X, (int)p.Y)),
+            p => ScreenToLocalDip(source, new PixelPoint((int)p.X, (int)p.Y)).ToPointD(),
             p =>
             {
                 // 同一スコープの同値計算は一度だけ実行して共有する（TopLevel 解決コストを繰り返さない）
-                var screen = LocalDipToScreen(source, p);
-                return new Point(screen.X, screen.Y);
+                var screen = LocalDipToScreen(source, p.ToAvaloniaPoint());
+                return new PointD(screen.X, screen.Y);
             },
             () => null);
 }

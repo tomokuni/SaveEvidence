@@ -2,7 +2,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+using Point = Avalonia.Point;
+using Rect = Avalonia.Rect;
+using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
@@ -133,7 +137,7 @@ internal sealed class CropSession(
             tcs.TrySetResult(default); // 0x0 の空 PixelRect
         }
 
-        void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionRect);
+        void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionRect.ToAvaloniaRect());
 
         void OnCancelEvent(object? sender, EventArgs e) => OnCancel();
 
@@ -216,14 +220,14 @@ internal sealed class CropSession(
         // 2 段階の変換を CoordinatePort.Compose で 1 ポートに合成し、DragRect / FadeMask / Loupe の 3 コントロールへ一括分配する。
         _selectionOverlay.SetCoordinateTransform(CoordinatePort.Compose(
             CoordinatePort.ImageLayout(
-                DisplaySize,
-                _sourceImageSize,
+                () => DisplaySize().ToSizeD(),
+                _sourceImageSize.ToSizeD(),
                 () => previewControl.IsFit),
             CoordinatePort.ScrollOffset(() =>
             {
                 // 同値の原点取得は一度だけ実行して共有する
                 var origin = PreviewOrigin();
-                return new Vector(origin.X, origin.Y);
+                return new VectorD(origin.X, origin.Y);
             })));
         // ルーペソース（元画像）。LoupeControl.Source は IImage のため、PbBitmap を内包した IImage
         // （PbBitmapAvaloniaImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
@@ -278,8 +282,8 @@ internal sealed class CropSession(
         int r = (int)rectLogical.Right, b = (int)rectLogical.Bottom;
         // Zoom は実際の表示スケール（元画像ピクセル / DIP）から導出する（プレビュー状態の保持なし）
         double scaleX = CoordinatePort.ImageLayoutScaleX(
-            DisplaySize,
-            _sourceImageSize,
+            () => DisplaySize().ToSizeD(),
+            _sourceImageSize.ToSizeD(),
             () => previewControl.IsFit);
         int displayPct = (int)Math.Round(100.0 / Math.Max(scaleX, 0.01));
         return $"LT: ({l}, {t}),  RB: ({r}, {b}),  WH: ({r - l + 1}, {b - t + 1}), Zoom: ({displayPct}%)";

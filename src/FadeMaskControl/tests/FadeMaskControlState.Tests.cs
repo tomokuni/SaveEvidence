@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Media;
+using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -110,7 +112,7 @@ public class FadeMaskControlStateTests
         control.ExternalRenderer = renderer;
 
         // ポート設定 → レンダラーへ同期
-        var port = new CoordinatePort(p => p, p => p, () => new Size(200, 200));
+        var port = new CoordinatePort(p => p, p => p, () => new SizeD(200, 200));
         control.SetCoordinateTransform(port);
 
         Assert.Same(port, renderer.CoordinateTransform);

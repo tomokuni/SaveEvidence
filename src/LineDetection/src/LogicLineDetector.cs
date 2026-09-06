@@ -1,6 +1,6 @@
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.AvaloniaUI.Platform.Geometry;
 using OpenCvSharp;
-using AvaloniaPoint = Avalonia.Point;
 
 namespace Estable.AvaloniaUI.LineDetection;
 
@@ -206,8 +206,8 @@ public sealed class LogicLineDetector : ILineDetector
             }
 
             yield return new LineDetectionResult(
-                new AvaloniaPoint(merged.X1, merged.Y1),
-                new AvaloniaPoint(merged.X2, merged.Y2),
+                new PointD(merged.X1, merged.Y1),
+                new PointD(merged.X2, merged.Y2),
                 isHorizontal ? LineOrientation.Horizontal : LineOrientation.Vertical,
                 length);
         }
@@ -799,7 +799,7 @@ public sealed class LogicLineDetector : ILineDetector
     private static LineDetectionResult MakeRectSide(int x1, int y1, int x2, int y2, LineOrientation orientation)
     {
         var length = Math.Sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-        return new LineDetectionResult(new AvaloniaPoint(x1, y1), new AvaloniaPoint(x2, y2), orientation, length);
+        return new LineDetectionResult(new PointD(x1, y1), new PointD(x2, y2), orientation, length);
     }
 
     /// <summary>線分に沿った Canny エッジピクセルの割合を計算する。</summary>

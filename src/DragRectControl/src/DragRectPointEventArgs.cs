@@ -1,19 +1,19 @@
-using Avalonia;
+using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.DragRect;
 
 /// <summary>座標に関する通知のイベント引数。</summary>
 /// <remarks>
-/// 座標（<see cref="Point"/>）に加え、通知時点のスナップショット（<see cref="Snapshot"/>）を含む。<br/>
+/// 座標（<see cref="PointD"/>）に加え、通知時点のスナップショット（<see cref="Snapshot"/>）を含む。<br/>
 /// スクロール補正はイベント引数では行わず、座標変換ポート（<see cref="Platform.ICoordinatePort"/>）方式が担う
 /// （<c>Compose(ImageLayout, ScrollOffset)</c> で変換に組み込む）。
 /// </remarks>
 /// <param name="point">通知対象の座標（ドメイン座標）。</param>
 /// <param name="snapshot">通知時点のスナップショット。</param>
-public sealed class DragRectPointEventArgs(Point point, DragRectSnapshot snapshot) : EventArgs
+public sealed class DragRectPointEventArgs(PointD point, DragRectSnapshot snapshot) : EventArgs
 {
     /// <summary>通知対象の座標（ドメイン座標）。</summary>
-    public Point Point { get; } = point;
+    public PointD Point { get; } = point;
 
     /// <summary>通知時点のスナップショット（状態・選択矩形・アクティブハンドル・マウス位置・操作フラグ）。</summary>
     public DragRectSnapshot Snapshot { get; } = snapshot;

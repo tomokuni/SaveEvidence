@@ -3,10 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using AvaloniaPoint = Avalonia.Point;
+using AvaloniaRect = Avalonia.Rect;
 using Estable.AvaloniaUI.Loupe.Imaging;
 using Estable.AvaloniaUI.Loupe.Logging;
 using Estable.AvaloniaUI.Loupe.Rendering;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -198,7 +201,7 @@ public sealed partial class LoupeControl : UserControl
         Height = size;
 
         // 表示位置: 中心 → 親パネルDIP → カーソル右下 + オフセット → クランプ
-        var dip = port.Inverse(center);
+        var dip = port.Inverse(center.ToPointD());
         double mx = dip.X + PositionOffset;
         double my = dip.Y + PositionOffset;
         if (hasParentSize)
@@ -214,7 +217,7 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary>レイアウト（Arrange）時に表示位置・サイズを再計算する（ウィンドウサイズ変更等に追従）。</summary>
     /// <param name="finalRect">最終レイアウト矩形。</param>
-    protected override void ArrangeCore(Rect finalRect)
+    protected override void ArrangeCore(AvaloniaRect finalRect)
     {
         base.ArrangeCore(finalRect);
         UpdatePosition();
@@ -299,8 +302,8 @@ public sealed partial class LoupeControl : UserControl
         AvaloniaProperty.Register<LoupeControl, IImage?>(nameof(Source));
 
     /// <summary><see cref="CenterPoint"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<Point?> CenterPointProperty =
-        AvaloniaProperty.Register<LoupeControl, Point?>(nameof(CenterPoint));
+    public static readonly StyledProperty<AvaloniaPoint?> CenterPointProperty =
+        AvaloniaProperty.Register<LoupeControl, AvaloniaPoint?>(nameof(CenterPoint));
 
     /// <summary><see cref="RequestedSize"/> 依存関係プロパティ（1〜4096 に補正）。</summary>
     public static readonly StyledProperty<int> RequestedSizeProperty =
@@ -407,7 +410,7 @@ public sealed partial class LoupeControl : UserControl
     }
 
     /// <summary>拡大表示する中心座標（元画像ピクセル座標）。Binding で与える。</summary>
-    public Point? CenterPoint
+    public AvaloniaPoint? CenterPoint
     {
         get => GetValue(CenterPointProperty);
         set => SetValue(CenterPointProperty, value);
@@ -707,13 +710,13 @@ public sealed partial class LoupeControl : UserControl
 
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
             bitmap,
-            new Point(_positionTransform.X, _positionTransform.Y),
+            new AvaloniaPoint(_positionTransform.X, _positionTransform.Y),
             size,
             zoom,
             center,
             center is { } c
                 // 切り出し領域の左上は LoupeImageExtractor.ExtractRegionAt と同一の整数計算（(int)X − captureSize/2）で一致させる
-                ? new Point((int)c.X - captureSize / 2, (int)c.Y - captureSize / 2)
+                ? new AvaloniaPoint((int)c.X - captureSize / 2, (int)c.Y - captureSize / 2)
                 : null,
             (double)size * zoom / pixelSize));
     }
@@ -865,7 +868,7 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary>画像抽出を非同期に実行し、Avaloniaの描画オブジェクトをUIスレッドで合成する。</summary>
     private static async Task<PbBitmap> RenderBitmapAsync(
-        IImage? source, Point? center, int pixelSize, int zoomLevel,
+        IImage? source, AvaloniaPoint? center, int pixelSize, int zoomLevel,
         IBrush? crossColor, int checkerSize,
         IBrush? checkerColorA, IBrush? checkerColorB, IBrush? frameColor,
         int frameWidth, double scaling)
