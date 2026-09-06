@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using app.Models;
+using Estable.SaveEvidence.Models;
 
-namespace app.Services;
+namespace Estable.SaveEvidence.Services;
 
 /// <summary>JSON ファイルによる設定管理を提供する。</summary>
 /// <remarks>

@@ -1,7 +1,7 @@
-using app.Enum;
+using Estable.SaveEvidence.Enum;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.SaveEvidence.Tests;
 
 /// <summary><see cref="AppPage"/> の単体テスト。</summary>
 /// <remarks>

@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace app.Views.Pages;
+namespace Estable.SaveEvidence.Views.Pages;
 
 /// <summary>Undo 一覧表示用のアイテム。</summary>
 public sealed class UndoListItem

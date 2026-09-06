@@ -4,7 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-namespace app.Views;
+namespace Estable.SaveEvidence.Views;
 
 /// <summary>簡易確認ダイアログ（はい / いいえ）を表示する静的ヘルパー。</summary>
 /// <remarks>

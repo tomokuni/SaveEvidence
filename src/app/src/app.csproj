@@ -6,7 +6,8 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
-    <StartupObject>app.Program</StartupObject>
+    <RootNamespace>Estable.SaveEvidence</RootNamespace>
+    <StartupObject>Estable.SaveEvidence.Program</StartupObject>
     <AnalysisLevel>latest</AnalysisLevel>
     <NoWarn>$(NoWarn);CA2101;SYSLIB1051;SYSLIB1054;MVVMTK0042;AVLN3001</NoWarn>
     <AssemblyName>SaveEvidence</AssemblyName>
@@ -38,7 +39,6 @@
     <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.*,)" />
     <PackageReference Include="FluentAvaloniaUI" Version="[3.*,)" />
-    <!-- FluentIcons.Avalonia (必要に応じて追加) -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10.*,)" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
     <PackageReference Include="NLog" Version="[6.*,)" />
@@ -51,7 +51,6 @@
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
     <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
     <ProjectReference Include="..\..\ZoomViewControl\src\ZoomViewControl.csproj" />
-    <!-- ウィンドウ矩形の自動検出（切り出し）に使用する -->
     <ProjectReference Include="..\..\LineDetection\src\LineDetection.csproj" />
   </ItemGroup>
 
@@ -63,15 +62,6 @@
   <ItemGroup>
     <!-- NLog 設定ファイル: 実行ディレクトリへ常に最新版をコピー（無いとログが一切出力されない） -->
     <None Update="nlog.config" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
-    <Compile Remove="..\tests\**" />
-    <None Remove="..\tests\**" />
-    <Page Remove="..\tests\**" />
-    <AvaloniaXaml Remove="..\tests\**" />
-    <EmbeddedResource Remove="..\tests\**" />
   </ItemGroup>
 
 </Project>

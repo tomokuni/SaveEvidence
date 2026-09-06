@@ -1,8 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:app.ViewModels"
+             xmlns:vm="clr-namespace:Estable.SaveEvidence.ViewModels"
              xmlns:zoom="clr-namespace:Estable.AvaloniaUI.ZoomView;assembly=ZoomViewControl"
-             x:Class="app.Views.Pages.CapturePage"
+             x:Class="Estable.SaveEvidence.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
         <!-- スライダのツマミ（サム）サイズを小さくする（Fluent テーマの既定 20px → 10px） -->

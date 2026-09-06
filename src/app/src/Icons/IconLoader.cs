@@ -1,14 +1,14 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using app.Models;
+using Estable.SaveEvidence.Models;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 
-namespace app.Icons;
+namespace Estable.SaveEvidence.Icons;
 
 /// <summary>
 /// Icons フォルダの Fluent アイコン（SVG）からジオメトリ・ウィンドウアイコンを生成するヘルパー。
@@ -18,7 +18,7 @@ namespace app.Icons;
 /// viewBox は 24x24。<br/>
 /// - <see cref="LoadGeometry"/>: UI 上の <see cref="PathIcon"/> 用ジオメトリ（パスデータ）を返す。<br/>
 /// - <see cref="LoadWindowIcon"/>: ウィンドウ / アプリのアイコン用 <see cref="WindowIcon"/> を返す。<br/>
-/// 実装の詳細: SVG は AvaloniaResource として埋め込まれ（app.csproj の <c>AvaloniaResource</c>）、<br/>
+/// 実装の詳細: SVG は AvaloniaResource として埋め込まれ（Estable.SaveEvidence.csproj の <c>AvaloniaResource</c>）、<br/>
 /// 実行時に <c>avares://</c> で読み込む。パスデータは <c>StreamGeometry.Parse</c> で解析する。
 /// </remarks>
 internal static partial class IconLoader
@@ -84,7 +84,7 @@ internal static partial class IconLoader
     /// <param name="fileName">SVG ファイル名。</param>
     /// <returns>SVG の XML テキスト。</returns>
     /// <remarks>
-    /// アセンブリ名は本クラスが属するアセンブリ（app.csproj の <c>AssemblyName</c> = SaveEvidence）から<br/>
+    /// アセンブリ名は本クラスが属するアセンブリ（Estable.SaveEvidence.csproj の <c>AssemblyName</c> = SaveEvidence）から<br/>
     /// 動的に解決する（<see cref="Assembly.GetName"/>）。アセンブリ名変更時も追従する。
     /// </remarks>
     private static string ReadSvg(string fileName)

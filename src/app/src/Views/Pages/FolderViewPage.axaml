@@ -1,9 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:app.ViewModels"
-             xmlns:controls="clr-namespace:app.Controls"
-             xmlns:local="clr-namespace:app.Views.Pages"
-             x:Class="app.Views.Pages.FolderViewPage"
+             xmlns:vm="clr-namespace:Estable.SaveEvidence.ViewModels"
+             xmlns:controls="clr-namespace:Estable.SaveEvidence.Controls"
+             xmlns:local="clr-namespace:Estable.SaveEvidence.Views.Pages"
+             x:Class="Estable.SaveEvidence.Views.Pages.FolderViewPage"
              x:DataType="vm:FolderViewViewModel">
     <UserControl.Styles>
         <!-- ホバー中は枠をハイライトし、影を表示しない（擬似クラスによる状態変化はスタイルでのみ表現可能） -->

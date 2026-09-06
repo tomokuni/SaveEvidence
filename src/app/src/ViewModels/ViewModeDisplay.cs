@@ -1,4 +1,4 @@
-namespace app.ViewModels;
+namespace Estable.SaveEvidence.ViewModels;
 
 /// <summary>表示モード（特大 / 大 / 中）の表示名とアイテム数テキストの単一所有（FolderView と Undo 一覧で共有）。</summary>
 internal static class ViewModeDisplay

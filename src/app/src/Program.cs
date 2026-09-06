@@ -1,9 +1,9 @@
 using System.Reflection;
-using app.Logging;
-using app.Models;
-using app.Services;
-using app.ViewModels;
-using app.Views;
+using Estable.SaveEvidence.Logging;
+using Estable.SaveEvidence.Models;
+using Estable.SaveEvidence.Services;
+using Estable.SaveEvidence.ViewModels;
+using Estable.SaveEvidence.Views;
 using Avalonia;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform;
@@ -11,7 +11,7 @@ using Estable.AvaloniaUI.SnipCaptureUI;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 
-namespace app;
+namespace Estable.SaveEvidence;
 
 /// <summary>
 /// アプリケーションのエントリポイント。

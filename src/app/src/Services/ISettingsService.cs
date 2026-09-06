@@ -1,6 +1,6 @@
-using app.Models;
+using Estable.SaveEvidence.Models;
 
-namespace app.Services;
+namespace Estable.SaveEvidence.Services;
 
 /// <summary>JSON ファイルによる設定管理を提供するサービスインターフェース。</summary>
 public interface ISettingsService

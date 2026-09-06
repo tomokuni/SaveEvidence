@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using app.Logging;
-using app.Models;
-using app.ViewModels;
+using Estable.SaveEvidence.Logging;
+using Estable.SaveEvidence.Models;
+using Estable.SaveEvidence.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -10,7 +10,7 @@ using Avalonia.Media.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace app.Views.Pages;
+namespace Estable.SaveEvidence.Views.Pages;
 
 /// <summary>
 /// 保存先フォルダの画像一覧を表示するフォルダビューページ。

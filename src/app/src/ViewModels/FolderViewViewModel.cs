@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace app.ViewModels;
+namespace Estable.SaveEvidence.ViewModels;
 
 /// <summary>
 /// FolderViewForm のステータスバー表示のための ViewModel。

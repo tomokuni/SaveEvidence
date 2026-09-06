@@ -1,10 +1,10 @@
-using app.Logging;
+using Estable.SaveEvidence.Logging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.SaveEvidence.Tests;
 
 /// <summary><see cref="AppLog"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>

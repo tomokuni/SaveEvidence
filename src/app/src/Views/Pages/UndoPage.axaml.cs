@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using app.Models;
-using app.ViewModels;
+using Estable.SaveEvidence.Models;
+using Estable.SaveEvidence.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -8,7 +8,7 @@ using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace app.Views.Pages;
+namespace Estable.SaveEvidence.Views.Pages;
 
 /// <summary>
 /// Undo / Redo スタックの画像履歴を一覧表示するページ。

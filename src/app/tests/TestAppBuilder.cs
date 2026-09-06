@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Headless;
-using app.Tests;
+using Estable.SaveEvidence.Tests;
 
 [assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
 
-namespace app.Tests;
+namespace Estable.SaveEvidence.Tests;
 
 /// <summary>Avalonia ヘッドレステストのアプリケーションビルダー（アセンブリ属性方式）。</summary>
 /// <remarks>

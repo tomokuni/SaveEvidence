@@ -1,10 +1,10 @@
-using app.Controls;
+using Estable.SaveEvidence.Controls;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.SaveEvidence.Tests;
 
 /// <summary>
 /// BottomAlignWrapPanel（行内下端揃えの折り返しパネル）の単体テスト。

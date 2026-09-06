@@ -1,8 +1,8 @@
-using app.Models;
+using Estable.SaveEvidence.Models;
 using Avalonia.Media;
 using Estable.AvaloniaUI.SnipCaptureUI;
 
-namespace app.Services;
+namespace Estable.SaveEvidence.Services;
 
 /// <summary>Settings → CaptureSettings の変換を提供する。</summary>
 /// <remarks>

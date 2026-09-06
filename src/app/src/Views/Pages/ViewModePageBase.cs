@@ -1,11 +1,11 @@
-using app.Services;
-using app.ViewModels;
+using Estable.SaveEvidence.Services;
+using Estable.SaveEvidence.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 
-namespace app.Views.Pages;
+namespace Estable.SaveEvidence.Views.Pages;
 
 /// <summary>
 /// 表示モード（特大 / 大 / 中）を持つ一覧ページの共通基盤。

@@ -1,6 +1,6 @@
 using Estable.AvaloniaUI.Platform.Imaging;
 
-namespace app.Models;
+namespace Estable.SaveEvidence.Models;
 
 /// <summary>
 /// 画像の Undo / Redo スタックを管理する。

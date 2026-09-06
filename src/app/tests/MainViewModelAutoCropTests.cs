@@ -1,11 +1,11 @@
-using app.ViewModels;
+using Estable.SaveEvidence.ViewModels;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform.Imaging;
-using MockSettingsService = app.Tests.MainViewModelTests.MockSettingsService;
+using MockSettingsService = Estable.SaveEvidence.Tests.MainViewModelTests.MockSettingsService;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.SaveEvidence.Tests;
 
 /// <summary>自動切り出し（LineDetection 矩形検出）の統合テスト。</summary>
 /// <remarks>

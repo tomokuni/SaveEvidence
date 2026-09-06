@@ -1,7 +1,7 @@
-using app.ViewModels;
+using Estable.SaveEvidence.ViewModels;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.SaveEvidence.Tests;
 
 /// <summary>
 /// FolderViewViewModel（フォルダビューの表示モード・ソート状態）の単体テスト。

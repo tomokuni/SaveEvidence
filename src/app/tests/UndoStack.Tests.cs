@@ -1,9 +1,9 @@
-using app.Models;
+using Estable.SaveEvidence.Models;
 using Avalonia.Headless.XUnit;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.SaveEvidence.Tests;
 
 /// <summary><see cref="UndoStack"/> の単体テスト（Undo / Redo の動作確認）。</summary>
 /// <remarks>

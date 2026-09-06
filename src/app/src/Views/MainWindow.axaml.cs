@@ -1,10 +1,10 @@
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.SnipCaptureUI;
-using app.Enum;
-using app.Icons;
-using app.Logging;
-using app.Services;
-using app.ViewModels;
+using Estable.SaveEvidence.Enum;
+using Estable.SaveEvidence.Icons;
+using Estable.SaveEvidence.Logging;
+using Estable.SaveEvidence.Services;
+using Estable.SaveEvidence.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -15,7 +15,7 @@ using Avalonia.Media.Imaging;
 // ILogger は NLog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace app.Views;
+namespace Estable.SaveEvidence.Views;
 
 /// <summary>
 /// SaveEvidence アプリケーションのメインウィンドウ。

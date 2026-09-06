@@ -1,6 +1,6 @@
 using Avalonia.Media.Imaging;
 
-namespace app.Views.Pages;
+namespace Estable.SaveEvidence.Views.Pages;
 
 /// <summary>ファイル一覧表示用のアイテム。</summary>
 public sealed class FileListItem

@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 
-namespace app.Controls;
+namespace Estable.SaveEvidence.Controls;
 
 /// <summary>横方向に折り返し、各行内で子要素を下端揃えするパネル。</summary>
 /// <remarks>

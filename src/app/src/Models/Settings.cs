@@ -1,11 +1,11 @@
-using app.Enum;
+using Estable.SaveEvidence.Enum;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Estable.AvaloniaUI.Platform;
 
-namespace app.Models;
+namespace Estable.SaveEvidence.Models;
 
 /// <summary>
 /// アプリケーションの設定を表すデータモデル（変更通知対応）。

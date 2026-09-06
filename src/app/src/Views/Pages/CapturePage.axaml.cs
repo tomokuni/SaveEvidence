@@ -7,11 +7,11 @@ using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.AvaloniaUI.ZoomView;
-using app.Icons;
-using app.Logging;
-using app.Models;
-using app.Services;
-using app.ViewModels;
+using Estable.SaveEvidence.Icons;
+using Estable.SaveEvidence.Logging;
+using Estable.SaveEvidence.Models;
+using Estable.SaveEvidence.Services;
+using Estable.SaveEvidence.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -21,7 +21,7 @@ using Avalonia.Media;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace app.Views.Pages;
+namespace Estable.SaveEvidence.Views.Pages;
 
 /// <summary>
 /// 画像プレビュー・切出し・ズーム・ルーペ機能を提供するキャプチャページ。

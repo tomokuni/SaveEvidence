@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace app.Models;
+namespace Estable.SaveEvidence.Models;
 
 /// <summary>容量制限付きの静的キャッシュ操作を提供するヘルパー。</summary>
 /// <remarks>

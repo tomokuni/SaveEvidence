@@ -2,7 +2,7 @@ using Estable.AvaloniaUI.SnipCaptureUI;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 
-namespace app.Logging;
+namespace Estable.SaveEvidence.Logging;
 
 /// <summary>
 /// app プロジェクトのトレースログ定義（LoggerMessage ソース生成・拡張メソッド）。

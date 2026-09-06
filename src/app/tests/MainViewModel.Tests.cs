@@ -1,12 +1,12 @@
-using app.Enum;
-using app.Models;
-using app.Services;
-using app.ViewModels;
+using Estable.SaveEvidence.Enum;
+using Estable.SaveEvidence.Models;
+using Estable.SaveEvidence.Services;
+using Estable.SaveEvidence.ViewModels;
 using Avalonia.Headless.XUnit;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
-namespace app.Tests;
+namespace Estable.SaveEvidence.Tests;
 
 /// <summary>
 /// MainViewModel（画像保存・ファイル名テンプレートのオートインクリメント）の単体テスト。

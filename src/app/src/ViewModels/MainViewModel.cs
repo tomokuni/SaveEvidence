@@ -6,11 +6,11 @@ using Estable.AvaloniaUI.LineDetection;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.AvaloniaUI.ZoomView;
-using app.Enum;
-using app.Models;
-using app.Services;
+using Estable.SaveEvidence.Enum;
+using Estable.SaveEvidence.Models;
+using Estable.SaveEvidence.Services;
 
-namespace app.ViewModels;
+namespace Estable.SaveEvidence.ViewModels;
 
 /// <summary>
 /// メイン画面の ViewModel。CommunityToolkit.Mvvm ソースジェネレーターにより、
@@ -125,7 +125,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <remarks>
     /// 対応プレースホルダ: <c>{MyPictures}</c> → <see cref="Environment.SpecialFolder.MyPictures"/>。<br/>
     /// 大文字小文字は区別しない（<c>{mypictures}</c> も展開する）。<br/>
-    /// テスト（app.Tests）から検証するため public 静的メソッドとする。
+    /// テスト（Estable.SaveEvidence.Tests）から検証するため public 静的メソッドとする。
     /// </remarks>
     public static string ResolveSaveFolderPath(string path)
         => string.IsNullOrEmpty(path)

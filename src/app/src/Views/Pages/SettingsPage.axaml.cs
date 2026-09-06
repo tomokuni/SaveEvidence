@@ -1,6 +1,6 @@
 using Estable.AvaloniaUI.Platform;
-using app.Services;
-using app.ViewModels;
+using Estable.SaveEvidence.Services;
+using Estable.SaveEvidence.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -8,10 +8,10 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Microsoft.Extensions.DependencyInjection;
-// Enum は名前空間 app.Enum と衝突するため、System.Enum を SystemEnum 別名で解決する
+// Enum は名前空間 Estable.SaveEvidence.Enum と衝突するため、System.Enum を SystemEnum 別名で解決する
 using SystemEnum = System.Enum;
 
-namespace app.Views.Pages;
+namespace Estable.SaveEvidence.Views.Pages;
 
 /// <summary>
 /// アプリケーション設定ページ。

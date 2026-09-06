@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Avalonia;
 
-namespace app.Services;
+namespace Estable.SaveEvidence.Services;
 
 /// <summary><see cref="PixelRect"/> の JSON コンバーター（読み取り専用プロパティ対応）。</summary>
 internal sealed class PixelRectConverter : JsonConverter<PixelRect>

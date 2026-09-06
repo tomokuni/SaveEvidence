@@ -1,11 +1,11 @@
 using Avalonia;
-using app.Models;
-using app.ViewModels;
+using Estable.SaveEvidence.Models;
+using Estable.SaveEvidence.ViewModels;
 using Estable.AvaloniaUI.LineDetection;
 using Xunit;
-using MockSettingsService = app.Tests.MainViewModelTests.MockSettingsService;
+using MockSettingsService = Estable.SaveEvidence.Tests.MainViewModelTests.MockSettingsService;
 
-namespace app.Tests;
+namespace Estable.SaveEvidence.Tests;
 
 /// <summary>MainViewModel / FileNameTemplate の純粋ロジック（UI 非依存）の単体テスト。</summary>
 /// <remarks>
