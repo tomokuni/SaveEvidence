@@ -20,7 +20,8 @@ public class CropViewTests
     /// <summary>テスト用の CropViewControl（画像を設定済み）を生成する。</summary>
     private static CropViewControl CreateView()
     {
-        var view = new CropViewControl { Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Blue) };
+        // Source は IImage のため、WriteableBitmap を生成しない PbBitmapAvaloniaImage（ゼロコピー）で高速に生成する。
+        var view = new CropViewControl { Source = PbBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Blue) };
         view.Measure(new Size(400, 200));
         view.Arrange(new Rect(0, 0, 400, 200));
         return view;

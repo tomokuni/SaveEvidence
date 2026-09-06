@@ -48,6 +48,22 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
+    public void 画像がWriteableBitmapではなくIImageでもFit実効倍率が計算される()
+    {
+        // 回帰: ComputeRawFitZoomPercent が Source を Bitmap 型へキャストしていたため、
+        // PbBitmapAvaloniaImage（WriteableBitmap を生成しない IImage）では常に 100 を返していた。
+        // IImage.Size（DIP）から Fit 実効倍率を計算するよう修正したことを検証する。
+        var view = new ZoomViewControl();
+        view.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaImage(1000, 500, Colors.White);
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        // FitScale = min(400/1000, 200/500) = 0.4 → FitZoomPercent = 40
+        Assert.True(view.IsFit);
+        Assert.Equal(40.0, view.ZoomPercent, 3);
+    }
+
+    [AvaloniaFact]
     public void ZoomFitでFit表示に戻ると実効ズーム率が0にならない()
     {
         var view = CreateView();

@@ -36,6 +36,8 @@
   <ItemGroup>
     <!-- dataset の画像 + 正解 JSON をテスト実行時に参照する -->
     <None Include="..\sample\dataset\**" Link="dataset\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- xUnit 並列化設定（Avalonia ヘッドレスアセンブリ間の静的競合を防ぐためアセンブリ間の並列を無効化） -->
+    <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

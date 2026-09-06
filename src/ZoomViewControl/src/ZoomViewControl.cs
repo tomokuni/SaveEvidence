@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.ZoomView.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -443,14 +442,16 @@ public sealed class ZoomViewControl : Panel
     /// <returns>実表示倍率（%）。ビューポートと元画像サイズから算出、画像未設定時は 100。</returns>
     /// <remarks>
     /// 現在の表示状態に依存しないため、固定倍率表示中でも常に一定の Fit 実効倍率を返す。<br/>
-    /// 必ずビューポートと元画像サイズから計算する（<see cref="ZoomMath.FitZoomPercent"/> に委譲）。
+    /// 必ずビューポートと元画像サイズから計算する（<see cref="ZoomMath.FitZoomPercent"/> に委譲）。<br/>
+    /// 元画像サイズは <see cref="IImage.Size"/>（DIP）から取得する。Avalonia の <c>Bitmap</c>（<c>System.Drawing</c> でなく <c>Avalonia.Media.Imaging</c>）に限定せず、<br/>
+    /// <see cref="IImage"/> を実装する任意の画像ソースでも正しく計算する。
     /// </remarks>
     private double ComputeRawFitZoomPercent()
     {
-        if (Source is { } img && img is Bitmap bitmap)
+        if (Source is { } img)
         {
             return ZoomMath.FitZoomPercent(
-                new Size(bitmap.PixelSize.Width, bitmap.PixelSize.Height),
+                img.Size,
                 _zoomableView.Bounds.Size);
         }
         return 100;

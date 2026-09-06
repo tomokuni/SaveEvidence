@@ -26,4 +26,9 @@
     <ProjectReference Include="..\src\FadeMaskDragRectControl.csproj" />
   </ItemGroup>
 
+  <!-- xUnit 並列化設定（Avalonia ヘッドレスアセンブリ間の静的競合を防ぐためアセンブリ間の並列を無効化） -->
+  <ItemGroup>
+    <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

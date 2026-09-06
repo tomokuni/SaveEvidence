@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
@@ -549,7 +548,7 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
 
         // Source 設定後に再呼び出しすると表示される
-        control.Loupe.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Transparent);
+        control.Loupe.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
         control.SetLoupePosition(new Point(960, 540));
         Assert.True(control.Loupe.IsVisible);
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
@@ -747,7 +746,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
         window.Show();
-        control.Loupe.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Transparent);
+        control.Loupe.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
 
         FadeMaskDragRectPointEventArgs? received = null;
         control.LoupePositionMoved += (_, e) => received = e;
@@ -873,7 +872,7 @@ public class FadeMaskDragRectControlTests
     public void SetLoupeSource_ルーペのSourceが設定される()
     {
         var control = new FadeMaskDragRectControl();
-        var bitmap = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Transparent);
+        var bitmap = PbBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
 
         control.SetLoupeSource(bitmap);
 
@@ -886,7 +885,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = control };
         window.Show();
-        control.SetLoupeSource(PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Transparent));
+        control.SetLoupeSource(PbBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent));
         control.SetLoupePosition(new Point(10, 10));
         Assert.True(control.Loupe.IsVisible);
 
