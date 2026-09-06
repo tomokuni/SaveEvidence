@@ -1,5 +1,5 @@
 using Avalonia;
-using Rect = Estable.Primitives.Rect;
+using Rect = Estable.Primitives.RectInt;
 using Estable.AvaloniaUI.Platform.Imaging;
 using SkiaSharp;
 using Xunit;

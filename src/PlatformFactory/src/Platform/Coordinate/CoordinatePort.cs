@@ -48,7 +48,7 @@ public sealed class CoordinatePort : ICoordinatePort
     /// <returns>Forward = 座標系 B → 座標系 A（factor で除算）、Inverse = 座標系 A → 座標系 B（factor で乗算）のポート。</returns>
     /// <remarks>
     /// 同一原点の座標系間の比例変換（例: DIP ↔ ドメインピクセル = DIP × DisplayScaling）を提供する。<br/>
-    /// 倍率は生成時に固定される（呼び出し毎に評価する必要がある場合は <see cref="CoordinatePort(Func{Point, Point}, Func{Point, Point}, Func{Size?})"/> を使用する）。
+    /// 倍率は生成時に固定される（呼び出し毎に評価する必要がある場合は <see cref="CoordinatePort(Func{PointD, PointD}, Func{PointD, PointD}, Func{SizeD?})"/> を使用する）。
     /// </remarks>
     public static ICoordinatePort Scale(double factor)
     {

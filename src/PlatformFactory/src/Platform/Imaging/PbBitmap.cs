@@ -40,7 +40,7 @@ public sealed class PbBitmap : IDisposable
         Stride = bitmap.RowBytes;
         Width = bitmap.Width;
         Height = bitmap.Height;
-        Size = new Size(Width, Height);
+        Size = new SizeInt(Width, Height);
     }
 
     // ====================================================================
@@ -118,7 +118,7 @@ public sealed class PbBitmap : IDisposable
     public int Height { get; init; }
 
     /// <summary>幅・高さ（ピクセル）。</summary>
-    public Size Size { get; init; }
+    public SizeInt Size { get; init; }
 
     /// <summary>ピクセルデータ先頭アドレス（BGRA8888）。</summary>
     public nint Address { get; init; }
@@ -147,7 +147,7 @@ public sealed class PbBitmap : IDisposable
     /// <summary>指定座標のピクセルを BGRA（アルファ乗算済み）で取得する。</summary>
     /// <param name="point">座標（ピクセル）。</param>
     /// <returns>取得した色（<see cref="Color"/>）。範囲外は IndexOutOfRangeException。</returns>
-    public Color GetPixel(Point point)
+    public Color GetPixel(PointInt point)
     {
         var (b, g, r, a) = GetPixel(point.X, point.Y);
         return Color.FromArgb(a, r, g, b);
@@ -173,7 +173,7 @@ public sealed class PbBitmap : IDisposable
     /// <summary>指定座標のピクセルを BGRA（アルファ乗算済み）で設定する。</summary>
     /// <param name="point">座標（ピクセル）。</param>
     /// <param name="color">設定する色。</param>
-    public void SetPixel(Point point, Color color)
+    public void SetPixel(PointInt point, Color color)
         => SetPixel(point.X, point.Y, color.B, color.G, color.R, color.A);
 
     /// <summary>指定座標のピクセルを色で設定する（範囲外は無視）。</summary>
@@ -230,7 +230,7 @@ public sealed class PbBitmap : IDisposable
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>
-    public PbBitmap Crop(Rect rect)
+    public PbBitmap Crop(RectInt rect)
         => Crop(rect.X, rect.Y, rect.Width, rect.Height);
 
     /// <summary>画像から指定された矩形領域を切り出す。</summary>

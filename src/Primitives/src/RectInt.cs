@@ -9,10 +9,10 @@ namespace Estable.Primitives;
 /// <b>目的</b>: ピクセル矩形（int）を UI フレームワーク（System.Drawing / Avalonia）から分離する。<br/>
 /// <b>double 版</b>: DIP の矩形（小数を扱う）は <see cref="RectD"/> を使用する。
 /// </remarks>
-public readonly record struct Rect(int X, int Y, int Width, int Height)
+public readonly record struct RectInt(int X, int Y, int Width, int Height)
 {
     /// <summary>空の矩形 (0, 0, 0, 0)。</summary>
-    public static Rect Empty => new(0, 0, 0, 0);
+    public static RectInt Empty => new(0, 0, 0, 0);
 
     /// <summary>左上 X 座標。</summary>
     public int Left => X;
@@ -30,24 +30,24 @@ public readonly record struct Rect(int X, int Y, int Width, int Height)
     public bool IsEmpty => Width <= 0 || Height <= 0;
 
     /// <summary>左上の位置。</summary>
-    public Point Position => new(X, Y);
+    public PointInt Position => new(X, Y);
 
     /// <summary>左上点。</summary>
-    public Point TopLeft => new(X, Y);
+    public PointInt TopLeft => new(X, Y);
 
     /// <summary>右上点。</summary>
-    public Point TopRight => new(X + Width, Y);
+    public PointInt TopRight => new(X + Width, Y);
 
     /// <summary>左下点。</summary>
-    public Point BottomLeft => new(X, Y + Height);
+    public PointInt BottomLeft => new(X, Y + Height);
 
     /// <summary>右下点。</summary>
-    public Point BottomRight => new(X + Width, Y + Height);
+    public PointInt BottomRight => new(X + Width, Y + Height);
 
     /// <summary>指定点が矩形内（境界を含む）かどうかを判定する。</summary>
     /// <param name="point">判定する点。</param>
     /// <returns>矩形内の場合は <see langword="true"/>。</returns>
-    public bool Contains(Point point)
+    public bool Contains(PointInt point)
         => point.X >= X && point.X <= X + Width && point.Y >= Y && point.Y <= Y + Height;
 
     /// <summary>JSON 等での表示に便利な文字列表現を返す。</summary>
