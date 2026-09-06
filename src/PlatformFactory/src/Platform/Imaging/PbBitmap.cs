@@ -1,6 +1,6 @@
 using SkiaSharp;
 using Color = System.Drawing.Color;
-using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 
 namespace Estable.AvaloniaUI.Platform.Imaging;
 

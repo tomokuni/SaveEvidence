@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -8,6 +7,7 @@ using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Primitives;
 using AvaloniaPoint = Avalonia.Point;
 using AvaloniaRect = Avalonia.Rect;
 using AvaloniaSize = Avalonia.Size;
@@ -190,7 +190,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>現在の選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</summary>
     /// <remarks>選択状態の真のソースは FadeMaskRenderer（HasSelection / LogicalSelectionRect）に集約し、<br/>DragRect の選択変更（SelectionChanged）から同期される。</remarks>
-    public AvaloniaRect SelectionRect => _renderer.LogicalSelectionRect ?? default;
+    public RectD SelectionRect => _renderer.LogicalSelectionRect ?? default;
 
     /// <summary>Enter キーまたは RequestConfirm による確定要求イベント（選択確定後のみ発火）。</summary>
     public event EventHandler<FadeMaskDragRectSelectionEventArgs>? ConfirmRequested;
@@ -224,7 +224,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// DragRectControl.SetSelection へ委譲する。SelectionChanged が発火し、暗転マスクとルーペも同期される。<br/>
     /// マウス操作による選択（DragRect 自身が状態を管理）とは独立した、外部からの復元用 API。
     /// </remarks>
-    public void SetDragRectSelection(AvaloniaRect rect) => _dragRect.SetSelection(rect);
+    public void SetDragRectSelection(RectD rect) => _dragRect.SetSelection(rect);
 
     /// <summary>DragRect へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
     /// <remarks>DragRect はフォーカス時に自身の OnKeyDown で矢印キーを処理するため、セッション開始時に呼び出す。</remarks>
@@ -447,7 +447,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// DIP 矩形の算出は描画時に行う（<see cref="SetCoordinateTransform"/> で設定した座標変換ポートが<br/>
     /// 最新のレイアウトから導出する。レイアウト変化に常に追従）。
     /// </remarks>
-    public void SetSelection(AvaloniaRect rect)
+    public void SetSelection(RectD rect)
     {
         var hasSelection = rect.Width > 0 && rect.Height > 0;
         SyncSelectionState(hasSelection ? rect : null);
@@ -464,7 +464,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 選択状態の真のソースは <see cref="FadeMaskRenderer"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>
     /// ルーペ画像上の選択枠（破線）も同期する。DIP 矩形の算出は描画時に行う（レイアウト変化に追従）。
     /// </remarks>
-    private void SyncSelectionState(AvaloniaRect? rect)
+    private void SyncSelectionState(RectD? rect)
     {
         _renderer.HasSelection = rect is not null;
         _renderer.LogicalSelectionRect = rect;
@@ -478,7 +478,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// （カーソル右下 + オフセット + クランプ）。配置前（Parent 未接続）の呼び出しは無視される。<br/>
     /// <b>Source 未設定の間は表示しない</b>（未設定の市松模様を防ぐ。Source 設定後に呼び出し直すことで表示される）。
     /// </remarks>
-    public void SetLoupePosition(AvaloniaPoint domainPos)
+    public void SetLoupePosition(PointD domainPos)
     {
         if (_loupeControl.Parent is null) return;
         UpdateLoupePosition(domainPos);
@@ -491,9 +491,10 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordinateTransform"/>）から自己計算する。<br/>
     /// <b>Source 未設定の間は表示しない</b>（未設定の市松模様を防ぐ）。
     /// </remarks>
-    private void UpdateLoupePosition(AvaloniaPoint domainPos)
+    private void UpdateLoupePosition(PointD domainPos)
     {
-        _loupeControl.CenterPoint = domainPos;
+        // LoupeControl.CenterPoint は StyledProperty（UI 境界）のため、境界で独自型 → Avalonia 型へ変換する。
+        _loupeControl.CenterPoint = domainPos.ToAvaloniaPoint();
         // Source が設定済みの場合のみ表示する（未設定の市松模様を防ぐ）
         if (_loupeControl.Source is not null)
         {
@@ -516,7 +517,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>ルーペ中心（ドメイン座標）。未設定時は null。</summary>
     /// <remarks>ルーペの表示状態の確認（テスト・座標検証）に使用する。</remarks>
-    public AvaloniaPoint? LoupeCenterPoint => _loupeControl.CenterPoint;
+    public PointD? LoupeCenterPoint => _loupeControl.CenterPoint?.ToPointD();
 
     /// <summary>ルーペコントロール（Source 設定・テスト用アクセサ）。</summary>
     internal LoupeControl Loupe => _loupeControl;
@@ -536,7 +537,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>ハイライト矩形（ドメイン座標）。未検出時は null。</summary>
     /// <remarks>FadeMaskRenderer.LogicalHighlightRect へ委譲する。設定後は <see cref="InvalidateOverlay"/> で再描画する。</remarks>
-    public AvaloniaRect? LogicalHighlightRect
+    public RectD? LogicalHighlightRect
     {
         get => _renderer.LogicalHighlightRect;
         set => _renderer.LogicalHighlightRect = value;
@@ -606,7 +607,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// ルーペ画像上の選択枠（破線）も同期する。DIP 矩形の算出は描画時に行う（レイアウト変化に追従）。
     /// </remarks>
     private void OnSelectionChanged(object? sender, SelectionRectEventArgs e)
-        => SetSelection(e.Rect.ToAvaloniaRect());
+        => SetSelection(e.Rect);
 
     /// <summary>ビューポート変化（DragRect の ViewportChanged = ScrollViewer 連携）を内包コントロールへ反映する。</summary>
     /// <param name="sender">イベント送信元（DragRectControl）。</param>
@@ -691,7 +692,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 純粋描画のため <c>internal</c> で公開し、単体テストから検証できるようにする。
     /// </remarks>
     internal static void DrawSelectionRectOverlay(
-        PbBitmap bitmap, AvaloniaRect selectionRect, AvaloniaPoint captureTopLeft, double scale, Color colorA, Color colorB)
+        PbBitmap bitmap, RectD selectionRect, PointD captureTopLeft, double scale, Color colorA, Color colorB)
     {
         if (scale < 2)
         {
@@ -712,10 +713,10 @@ public sealed class FadeMaskDragRectControl : Panel
         }
 
         // 上辺・下辺（x 方向）と左辺・右辺（y 方向）を描画する
-        DrawDashedRectEdge(bitmap, new AvaloniaPoint(x, y), new AvaloniaPoint(x + w, y), colorA, colorB);
-        DrawDashedRectEdge(bitmap, new AvaloniaPoint(x, y + h), new AvaloniaPoint(x + w, y + h), colorA, colorB);
-        DrawDashedRectEdge(bitmap, new AvaloniaPoint(x, y), new AvaloniaPoint(x, y + h), colorA, colorB);
-        DrawDashedRectEdge(bitmap, new AvaloniaPoint(x + w, y), new AvaloniaPoint(x + w, y + h), colorA, colorB);
+        DrawDashedRectEdge(bitmap, new PointD(x, y), new PointD(x + w, y), colorA, colorB);
+        DrawDashedRectEdge(bitmap, new PointD(x, y + h), new PointD(x + w, y + h), colorA, colorB);
+        DrawDashedRectEdge(bitmap, new PointD(x, y), new PointD(x, y + h), colorA, colorB);
+        DrawDashedRectEdge(bitmap, new PointD(x + w, y), new PointD(x + w, y + h), colorA, colorB);
     }
 
     /// <summary>PbBitmap 上に 2 色のダッシュ破線（1px 描画 → 1px 空白）を描画する。</summary>
@@ -725,7 +726,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="colorA">破線の色A。</param>
     /// <param name="colorB">破線の色B。</param>
     /// <remarks>水平または垂直の辺を想定する。色A / 色B を 1 ピクセルごとに交互に切り替える（市松風）。</remarks>
-    private static void DrawDashedRectEdge(PbBitmap bitmap, AvaloniaPoint from, AvaloniaPoint to, Color colorA, Color colorB)
+    private static void DrawDashedRectEdge(PbBitmap bitmap, PointD from, PointD to, Color colorA, Color colorB)
     {
         bool horizontal = Math.Abs(to.Y - from.Y) < Math.Abs(to.X - from.X);
         double length = horizontal ? to.X - from.X : to.Y - from.Y;
@@ -779,7 +780,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void OnLoupePositionMoved(object? sender, DragRectPointEventArgs e)
     {
-        UpdateLoupePosition(e.Point.ToAvaloniaPoint());
+        UpdateLoupePosition(e.Point);
         RaiseLoupePositionMoved(e.Point);
     }
 

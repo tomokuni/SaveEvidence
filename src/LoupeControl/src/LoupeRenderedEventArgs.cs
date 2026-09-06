@@ -1,4 +1,4 @@
-using Avalonia;
+using Estable.Primitives;
 using Estable.AvaloniaUI.Platform.Imaging;
 
 namespace Estable.AvaloniaUI.Loupe;
@@ -27,7 +27,7 @@ public sealed class LoupeRenderedEventArgs : EventArgs
     /// <param name="captureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
     public LoupeRenderedEventArgs(
-        PbBitmap bitmap, Point position, double size, int zoomLevel, Point? centerPoint, Point? captureTopLeft, double scale)
+        PbBitmap bitmap, PointD position, double size, int zoomLevel, PointD? centerPoint, PointD? captureTopLeft, double scale)
     {
         Bitmap = bitmap;
         Position = position;
@@ -47,7 +47,7 @@ public sealed class LoupeRenderedEventArgs : EventArgs
     public PbBitmap Bitmap { get; }
 
     /// <summary>ルーペの表示左上（親パネル内 DIP）。</summary>
-    public Point Position { get; }
+    public PointD Position { get; }
 
     /// <summary>ルーペの表示サイズ（一辺・DIP）。</summary>
     public double Size { get; }
@@ -56,10 +56,10 @@ public sealed class LoupeRenderedEventArgs : EventArgs
     public int ZoomLevel { get; }
 
     /// <summary>拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定時は null。</summary>
-    public Point? CenterPoint { get; }
+    public PointD? CenterPoint { get; }
 
     /// <summary>切り出し領域の左上（ドメイン座標）。中心未設定時は null。</summary>
-    public Point? CaptureTopLeft { get; }
+    public PointD? CaptureTopLeft { get; }
 
     /// <summary>ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</summary>
     public double Scale { get; }

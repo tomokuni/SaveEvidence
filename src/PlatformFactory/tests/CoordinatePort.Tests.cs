@@ -1,4 +1,4 @@
-using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Platform.Tests;

@@ -1,4 +1,4 @@
-namespace Estable.AvaloniaUI.Platform.Geometry;
+namespace Estable.Primitives;
 
 /// <summary>2 次元の移動・差分量（double）の軽量な不変値型。UI フレームワークに依存しない。</summary>
 /// <param name="X">X 成分。</param>

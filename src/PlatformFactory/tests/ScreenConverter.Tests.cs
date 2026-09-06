@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using AvaloniaPoint = Avalonia.Point;
-using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 using Xunit;
 using Avalonia.Headless.XUnit;
 
@@ -70,7 +69,7 @@ public class ScreenConverterTests
 
         var p = ScreenConverter.ScreenToLocalDip(control, new PixelPoint(10, 20));
 
-        Assert.Equal(new AvaloniaPoint(10, 20), p);
+        Assert.Equal(new PointD(10, 20), p);
     }
 
     [AvaloniaFact]
@@ -82,7 +81,7 @@ public class ScreenConverterTests
         window.Show();
 
         // ローカル (30, 40) → 画面物理 → ローカル DIP の往復（ヘッドレスはスケーリング 1.0・原点 (0,0)）
-        var screen = ScreenConverter.LocalDipToScreen(panel, new AvaloniaPoint(30, 40));
+        var screen = ScreenConverter.LocalDipToScreen(panel, new PointD(30, 40));
         var local = ScreenConverter.ScreenToLocalDip(panel, screen);
 
         Assert.Equal(30, local.X, 6);

@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -9,6 +8,7 @@ using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
+using Estable.Primitives;
 
 namespace Estable.AvaloniaUI.CropView;
 
@@ -176,11 +176,11 @@ public sealed partial class CropViewControl : Panel
     public bool HasSelection => _selectionOverlay.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</summary>
-    public Rect SelectionRect => _selectionOverlay.SelectionRect;
+    public RectD SelectionRect => _selectionOverlay.SelectionRect;
 
     /// <summary>選択状態を外部から設定する（暗転マスクとルーペへ同期）。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。サイズ 0 以下は選択なし。</param>
-    public void SetSelection(Rect rect) => _selectionOverlay.SetSelection(rect);
+    public void SetSelection(RectD rect) => _selectionOverlay.SetSelection(rect);
 
     /// <summary>選択状態をクリアする（全面暗転に戻す）。</summary>
     public void ClearSelection() => _selectionOverlay.ClearSelection();
@@ -242,8 +242,8 @@ public sealed partial class CropViewControl : Panel
 
         foreach (var rect in Rects)
         {
-            var topLeft = ContentToViewport(new Point(rect.Bounds.X, rect.Bounds.Y));
-            var bottomRight = ContentToViewport(new Point(rect.Bounds.Right, rect.Bounds.Bottom));
+            var topLeft = ContentToViewport(new PointD(rect.Bounds.X, rect.Bounds.Y));
+            var bottomRight = ContentToViewport(new PointD(rect.Bounds.Right, rect.Bounds.Bottom));
 
             var rectElement = CreateRectElement(topLeft, bottomRight, rect);
 
@@ -260,7 +260,7 @@ public sealed partial class CropViewControl : Panel
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
     /// 変換は <see cref="ZoomViewControl.ViewportToContentImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
-    public Point ViewportToContent(Point viewportPos)
+    public PointD ViewportToContent(PointD viewportPos)
         => _zoomView.ViewportToContentImage(viewportPos);
 
     /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
@@ -270,7 +270,7 @@ public sealed partial class CropViewControl : Panel
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
     /// 変換は <see cref="ZoomViewControl.ContentToViewportImage"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
-    public Point ContentToViewport(Point contentPos)
+    public PointD ContentToViewport(PointD contentPos)
         => _zoomView.ContentToViewportImage(contentPos);
 
     // ====================================================================
@@ -287,7 +287,7 @@ public sealed partial class CropViewControl : Panel
     /// 前景色と背景色をダッシュごとに交互に塗る（市松風）。Avalonia の <c>StrokeDashArray</c> は
     /// 単色しか表現できないため、前景色で破線を描き、背景色を下層の別矩形で表現する。
     /// </remarks>
-    private static Panel CreateRectElement(Point topLeft, Point bottomRight, OverlayRect rect)
+    private static Panel CreateRectElement(PointD topLeft, PointD bottomRight, OverlayRect rect)
     {
         var (dashArray, isDashed) = rect.Style switch
         {
@@ -368,7 +368,7 @@ public sealed partial class CropViewControl : Panel
     /// <param name="rect">描画する矩形（ドメイン座標）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    private static void DrawRectToLoupe(PbBitmap bitmap, OverlayRect rect, Point captureTopLeft, double scale)
+    private static void DrawRectToLoupe(PbBitmap bitmap, OverlayRect rect, PointD captureTopLeft, double scale)
     {
         // ドメイン座標 → ルーペピクセル座標（半開区間の終点を含むよう +1 する）
         double x = (rect.Bounds.X - captureTopLeft.X) * scale;
@@ -383,10 +383,10 @@ public sealed partial class CropViewControl : Panel
         }
 
         // 4 辺（上・下・左・右）を描画する
-        DrawRectEdge(bitmap, new Point(x, y), new Point(x + w, y), rect);
-        DrawRectEdge(bitmap, new Point(x, y + h), new Point(x + w, y + h), rect);
-        DrawRectEdge(bitmap, new Point(x, y), new Point(x, y + h), rect);
-        DrawRectEdge(bitmap, new Point(x + w, y), new Point(x + w, y + h), rect);
+        DrawRectEdge(bitmap, new PointD(x, y), new PointD(x + w, y), rect);
+        DrawRectEdge(bitmap, new PointD(x, y + h), new PointD(x + w, y + h), rect);
+        DrawRectEdge(bitmap, new PointD(x, y), new PointD(x, y + h), rect);
+        DrawRectEdge(bitmap, new PointD(x + w, y), new PointD(x + w, y + h), rect);
     }
 
     /// <summary>PbBitmap 上に矩形の 1 辺を描画する（実線または破線）。</summary>
@@ -394,7 +394,7 @@ public sealed partial class CropViewControl : Panel
     /// <param name="from">始点（ルーペピクセル座標）。</param>
     /// <param name="to">終点（ルーペピクセル座標）。</param>
     /// <param name="rect">描画スタイル（破線種類・前景色・背景色・幅）。</param>
-    private static void DrawRectEdge(PbBitmap bitmap, Point from, Point to, OverlayRect rect)
+    private static void DrawRectEdge(PbBitmap bitmap, PointD from, PointD to, OverlayRect rect)
     {
         bool horizontal = Math.Abs(to.Y - from.Y) < Math.Abs(to.X - from.X);
         double length = horizontal ? to.X - from.X : to.Y - from.Y;

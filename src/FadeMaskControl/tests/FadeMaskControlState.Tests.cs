@@ -1,8 +1,7 @@
-using Avalonia;
 using Avalonia.Media;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -51,7 +50,7 @@ public class FadeMaskControlStateTests
 
         // 各公開操作で LoggerMessage（LogExternalRenderer / LogSelectionRectChanged / LogCoordinateTransform）が実行される
         control.ExternalRenderer = new FadeMaskRenderer();
-        control.LogicalSelectionRect = new Rect(10, 20, 100, 80);
+        control.LogicalSelectionRect = new RectD(10, 20, 100, 80);
         control.SetCoordinateTransform(CoordinatePort.Identity);
     }
 
@@ -129,16 +128,16 @@ public class FadeMaskControlStateTests
         var renderer = new FadeMaskRenderer();
         control.ExternalRenderer = renderer;
 
-        control.LogicalSelectionRect = new Rect(10, 10, 50, 40);
+        control.LogicalSelectionRect = new RectD(10, 10, 50, 40);
 
-        Assert.Equal(new Rect(10, 10, 50, 40), renderer.LogicalSelectionRect);
+        Assert.Equal(new RectD(10, 10, 50, 40), renderer.LogicalSelectionRect);
     }
 
     [Fact]
     public void LogicalSelectionRect_nullを設定するとnullに戻る()
     {
         var control = new FadeMaskControl();
-        control.LogicalSelectionRect = new Rect(10, 10, 50, 40);
+        control.LogicalSelectionRect = new RectD(10, 10, 50, 40);
 
         control.LogicalSelectionRect = null;
 
@@ -173,7 +172,7 @@ public class FadeMaskControlStateTests
     {
         var control = new FadeMaskControl
         {
-            LogicalSelectionRect = new Rect(10, 20, 100, 80),
+            LogicalSelectionRect = new RectD(10, 20, 100, 80),
             OverlayColor = Color.FromAColor(150, Colors.Black),
             TextColor = Colors.Blue,
             TextBackgroundColor = Color.FromAColor(204, Colors.Navy),
@@ -181,7 +180,7 @@ public class FadeMaskControlStateTests
             ShowSizeLabel = false,
         };
 
-        Assert.Equal(new Rect(10, 20, 100, 80), control.LogicalSelectionRect);
+        Assert.Equal(new RectD(10, 20, 100, 80), control.LogicalSelectionRect);
         Assert.Equal(Color.FromAColor(150, Colors.Black), control.OverlayColor);
         Assert.Equal(Colors.Blue, control.TextColor);
         Assert.Equal(Color.FromAColor(204, Colors.Navy), control.TextBackgroundColor);

@@ -1,8 +1,10 @@
-using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
+using Rect = Avalonia.Rect;
+using Size = Avalonia.Size;
 using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Primitives;
 using Xunit;
 
 namespace Estable.AvaloniaUI.CropView.Tests;
@@ -54,8 +56,8 @@ public class CropViewTests
         var view = new CropViewControl();
         var rects = new[]
         {
-            new OverlayRect(new Rect(10, 10, 50, 40), OverlayLineStyle.Dashed, Colors.Red, Colors.White, 2.0),
-            new OverlayRect(new Rect(100, 50, 200, 150), OverlayLineStyle.Solid, Colors.Blue, Colors.Transparent, 1.0),
+            new OverlayRect(new RectD(10, 10, 50, 40), OverlayLineStyle.Dashed, Colors.Red, Colors.White, 2.0),
+            new OverlayRect(new RectD(100, 50, 200, 150), OverlayLineStyle.Solid, Colors.Blue, Colors.Transparent, 1.0),
         };
 
         view.Rects = rects;
@@ -81,7 +83,7 @@ public class CropViewTests
         // 画像 10x10・ビューポート 400x200 → FitScale = min(40, 20) = 20、中央寄せ
         // 画像の表示矩形は 200x200、原点は (100, 0)（横中央）。
         // ドメイン (5, 5) → ビューポート (100 + 5*20, 0 + 5*20) = (200, 100)
-        var result = view.ContentToViewport(new Point(5, 5));
+        var result = view.ContentToViewport(new PointD(5, 5));
 
         Assert.Equal(200.0, result.X);
         Assert.Equal(100.0, result.Y);
@@ -93,7 +95,7 @@ public class CropViewTests
         var view = CreateView();
 
         // ビューポート (200, 100) → ドメイン (5, 5)
-        var result = view.ViewportToContent(new Point(200, 100));
+        var result = view.ViewportToContent(new PointD(200, 100));
 
         Assert.Equal(5.0, result.X, 3);
         Assert.Equal(5.0, result.Y, 3);

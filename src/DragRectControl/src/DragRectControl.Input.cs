@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Estable.AvaloniaUI.DragRect.Logging;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 
 namespace Estable.AvaloniaUI.DragRect;
 
@@ -170,7 +170,7 @@ public sealed partial class DragRectControl
     private PixelPoint ToScreen(PointD domainPos)
     {
         var localDip = _coordinatePort.Inverse(domainPos);
-        return ScreenConverter.LocalDipToScreen(this, localDip.ToAvaloniaPoint());
+        return ScreenConverter.LocalDipToScreen(this, localDip);
     }
 
     /// <summary>nudge を終了し、マウスポインターを再表示する（カーソルは nudge 位置へ移動）。</summary>

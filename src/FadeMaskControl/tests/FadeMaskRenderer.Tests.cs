@@ -1,11 +1,10 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Point = Avalonia.Point;
-using Rect = Avalonia.Rect;
+using Rect = Estable.Primitives.RectD;
 using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 using Xunit;
 using Avalonia.Headless.XUnit;
 

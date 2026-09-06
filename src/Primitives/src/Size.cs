@@ -1,10 +1,10 @@
-namespace Estable.AvaloniaUI.Platform.Geometry;
+namespace Estable.Primitives;
 
 /// <summary>2 次元のサイズ（幅・高さ・int）の軽量な不変値型。ピクセルサイズ専用で、UI フレームワークに依存しない。</summary>
 /// <param name="Width">幅（ピクセル）。</param>
 /// <param name="Height">高さ（ピクセル）。</param>
 /// <remarks>
-/// <b>目的</b>: <see cref="PbBitmap"/> 等のピクセルサイズ（int）を UI フレームワーク（System.Drawing / Avalonia）から分離する。<br/>
+/// <b>目的</b>: ピクセルサイズ（int）を UI フレームワーク（System.Drawing / Avalonia）から分離する。<br/>
 /// <b>double 版</b>: DIP のサイズ（小数を扱う）は <see cref="SizeD"/> を使用する。
 /// </remarks>
 public readonly record struct Size(int Width, int Height)

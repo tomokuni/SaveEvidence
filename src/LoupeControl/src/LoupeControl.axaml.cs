@@ -11,6 +11,7 @@ using Estable.AvaloniaUI.Loupe.Rendering;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Primitives;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -710,13 +711,13 @@ public sealed partial class LoupeControl : UserControl
 
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
             bitmap,
-            new AvaloniaPoint(_positionTransform.X, _positionTransform.Y),
+            new PointD(_positionTransform.X, _positionTransform.Y),
             size,
             zoom,
-            center,
+            center?.ToPointD(),
             center is { } c
                 // 切り出し領域の左上は LoupeImageExtractor.ExtractRegionAt と同一の整数計算（(int)X − captureSize/2）で一致させる
-                ? new AvaloniaPoint((int)c.X - captureSize / 2, (int)c.Y - captureSize / 2)
+                ? new PointD((int)c.X - captureSize / 2, (int)c.Y - captureSize / 2)
                 : null,
             (double)size * zoom / pixelSize));
     }

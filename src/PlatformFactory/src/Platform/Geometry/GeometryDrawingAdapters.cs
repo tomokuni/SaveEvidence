@@ -1,3 +1,5 @@
+using Estable.Primitives;
+
 namespace Estable.AvaloniaUI.Platform.Geometry;
 
 /// <summary>

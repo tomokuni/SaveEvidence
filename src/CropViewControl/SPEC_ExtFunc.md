@@ -46,7 +46,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `IsFit` | `bool` | 現在 Fit 表示中かどうか（ズーム率が 0 = 自動）。 |
 | `ZoomDisplayText` | `string` | 拡大率表示テキスト（例: "100%"）。 |
 | `HasSelection` | `bool` | 現在の選択状態（選択矩形の有無）。 |
-| `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標）。未選択時は 0x0。 |
+| `SelectionRect` | `RectD` | 現在の選択矩形（ドメイン座標）。未選択時は 0x0。 |
 | `ZoomView` | `ZoomViewControl` | 内包するズーム・パンビューポート（SnipCapture の Crop セッションが利用）。 |
 
 #### 2.1.2 メソッド
@@ -56,13 +56,13 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `void ZoomIn()` | ズームイン（`ZoomTransition.NextLevel` で段階遷移）。 |
 | `void ZoomOut()` | ズームアウト（`ZoomTransition.PrevLevel` で段階遷移）。 |
 | `void ZoomFit()` | Fit 表示（ウィンドウに合わせて表示）に戻す（`ZoomIn` / `ZoomOut` と対になるズーム操作）。 |
-| `void SetSelection(Rect rect)` | 選択状態を外部から設定（FadeMaskDragRectControl へ委譲）。 |
+| `void SetSelection(RectD rect)` | 選択状態を外部から設定（FadeMaskDragRectControl へ委譲）。 |
 | `void ClearSelection()` | 選択状態をクリア（FadeMaskDragRectControl へ委譲）。 |
 | `void SetCoordinateTransform(ICoordinatePort? port)` | 座標変換ポートを設定（内包コントロールへ分配）。 |
 | `void RequestConfirm()` | 選択確定要求（FadeMaskDragRectControl へ委譲）。 |
 | `void RequestCancel()` | 選択キャンセル要求（FadeMaskDragRectControl へ委譲）。 |
-| `Point ContentToViewport(Point contentPos)` | ドメイン座標 → ビューポート座標へ変換。 |
-| `Point ViewportToContent(Point viewportPos)` | ビューポート座標 → ドメイン座標へ変換。 |
+| `PointD ContentToViewport(PointD contentPos)` | ドメイン座標 → ビューポート座標へ変換。 |
+| `PointD ViewportToContent(PointD viewportPos)` | ビューポート座標 → ドメイン座標へ変換。 |
 
 #### 2.1.3 イベント
 
@@ -80,13 +80,13 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `Bounds` | `Rect` | 矩形（ドメイン座標 = 元画像ピクセル座標）。 |
+| `Bounds` | `RectD` | 矩形（ドメイン座標 = 元画像ピクセル座標）。 |
 | `Style` | `OverlayLineStyle` | 枠線スタイル。 |
 | `Foreground` | `Color` | 前景色（透明度を含む）。 |
 | `Background` | `Color` | 背景色（透明度を含む）。破線の市松風 2 色目。 |
 | `Thickness` | `double` | 枠線の太さ（ピクセル）。 |
 
-コンストラクタ: `OverlayRect(Rect Bounds, OverlayLineStyle Style, Color Foreground, Color Background, double Thickness)`
+コンストラクタ: `OverlayRect(RectD Bounds, OverlayLineStyle Style, Color Foreground, Color Background, double Thickness)`
 
 ### 2.3. OverlayLineStyle 列挙型
 

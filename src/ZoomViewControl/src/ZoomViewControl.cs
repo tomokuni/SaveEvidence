@@ -1,9 +1,7 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using AvaloniaPoint = Avalonia.Point;
-using AvaloniaRect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 using Estable.AvaloniaUI.ZoomView.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -149,7 +147,7 @@ public sealed class ZoomViewControl : Panel
     /// 外部からは設定せず、内部（Ctrl+ホイールハンドラ）のみが使用する。<br/>
     /// 内部のズーム処理は <see cref="ZoomPercent"/>・<see cref="ApplyZoomTransition"/> が本位置を参照する。
     /// </remarks>
-    private AvaloniaPoint? PointerPosition { get; set; }
+    private PointD? PointerPosition { get; set; }
 
     /// <summary>表示する画像（ズーム対象）。設定すると Fit 表示にリセットする。</summary>
     /// <remarks>画像変更時は内部 ZoomableView へ伝搬する。null で画像なし。</remarks>
@@ -187,7 +185,7 @@ public sealed class ZoomViewControl : Panel
     /// 画像表示矩形（<see cref="ImageRectViewport"/>）の原点を基準に変換し、Fit 中央寄せの原点補正を含む。<br/>
     /// ホストが内部 ZoomableView へ到達する必要をなくすため、本コントロールが中継する。
     /// </remarks>
-    public AvaloniaPoint ViewportToContentImage(AvaloniaPoint viewportPos)
+    public PointD ViewportToContentImage(PointD viewportPos)
         => _zoomableView.ViewportToContentImage(viewportPos);
 
     /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準）。</summary>
@@ -198,7 +196,7 @@ public sealed class ZoomViewControl : Panel
     /// 画像表示矩形（<see cref="ImageRectViewport"/>）の原点を基準に変換し、Fit 中央寄せの原点補正を含む。<br/>
     /// ホストが内部 ZoomableView へ到達する必要をなくすため、本コントロールが中継する。
     /// </remarks>
-    public AvaloniaPoint ContentToViewportImage(AvaloniaPoint contentPos)
+    public PointD ContentToViewportImage(PointD contentPos)
         => _zoomableView.ContentToViewportImage(contentPos);
 
     /// <summary>画像の表示矩形（ビューポート座標）を取得する。</summary>
@@ -208,7 +206,7 @@ public sealed class ZoomViewControl : Panel
     /// 画像原点を起点とした表示サイズ（Fit 中央寄せの原点補正を含む）を取得し、画像内判定に使用する。<br/>
     /// ホストが内部 ZoomableView へ到達する必要をなくすため、本コントロールが中継する。
     /// </remarks>
-    public AvaloniaRect ImageRectViewport()
+    public RectD ImageRectViewport()
         => _zoomableView.ImageRectViewport();
 
     /// <summary>現在の実効ズーム率（%）。Fit 中は実効倍率、固定倍率中はズーム率。ズーム率の単一所有（内部 ZoomableView）から読み書きする。</summary>

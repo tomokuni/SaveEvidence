@@ -12,6 +12,7 @@ using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Primitives;
 using System.Collections.Specialized;
 
 namespace DragRectControl.Sample.Views;
@@ -345,7 +346,7 @@ public partial class MainWindow : Window
     /// <remarks>外部からの復元（<see cref="DragRectControl.SetSelection"/>）の動作確認。</remarks>
     private void OnSetFixedClicked(object? sender, RoutedEventArgs e)
     {
-        DragRect.SetSelection(new Rect(250, 180, 500, 360));
+        DragRect.SetSelection(new RectD(250, 180, 500, 360));
         _vm.UpdateSelection(true, new Rect(250, 180, 500, 360));
         _vm.AddLog("[App] SetSelection(250,180,500,360) を呼び出しました。");
     }

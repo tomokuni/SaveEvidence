@@ -36,6 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\FadeMaskDragRectControl\src\FadeMaskDragRectControl.csproj" />
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <ProjectReference Include="..\..\Primitives\src\Primitives.csproj" />
     <ProjectReference Include="..\..\ZoomViewControl\src\ZoomViewControl.csproj" />
   </ItemGroup>
 

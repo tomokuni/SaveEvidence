@@ -2,7 +2,10 @@ using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Rect = Avalonia.Rect;
+using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
+using Estable.Primitives;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMask.Tests;
@@ -20,7 +23,7 @@ public class FadeMaskTests
     public void Render_ExternalRenderer設定時に委譲して例外なく描画する()
     {
         var control = new FadeMaskControl();
-        var renderer = new FadeMaskRenderer { HasSelection = true, LogicalSelectionRect = new Rect(10, 10, 50, 50) };
+        var renderer = new FadeMaskRenderer { HasSelection = true, LogicalSelectionRect = new RectD(10, 10, 50, 50) };
         control.ExternalRenderer = renderer;
         control.Measure(new Size(200, 200));
         control.Arrange(new Rect(0, 0, 200, 200));
@@ -34,7 +37,7 @@ public class FadeMaskTests
     {
         var control = new FadeMaskControl
         {
-            LogicalSelectionRect = new Rect(10, 10, 50, 50),
+            LogicalSelectionRect = new RectD(10, 10, 50, 50),
             OverlayColor = Color.FromAColor(150, Colors.Black),
         };
         control.Measure(new Size(200, 200));
@@ -60,7 +63,7 @@ public class FadeMaskTests
     {
         var control = new FadeMaskControl
         {
-            LogicalSelectionRect = new Rect(10, 10, 0, 50), // 幅 0 → 選択なし扱い
+            LogicalSelectionRect = new RectD(10, 10, 0, 50), // 幅 0 → 選択なし扱い
         };
         control.Measure(new Size(200, 200));
         control.Arrange(new Rect(0, 0, 200, 200));

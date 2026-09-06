@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\FadeMaskDragRectControl.csproj" />
+    <ProjectReference Include="..\..\Primitives\src\Primitives.csproj" />
   </ItemGroup>
 
   <!-- xUnit 並列化設定（Avalonia ヘッドレスアセンブリ間の静的競合を防ぐためアセンブリ間の並列を無効化） -->

@@ -1,8 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.FadeMask.Logging;
 using Estable.AvaloniaUI.Platform;
+using Estable.Primitives;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -152,7 +154,7 @@ public class FadeMaskControl : Control
     /// <see cref="SetCoordinateTransform"/> で設定した座標変換ポートで描画時に DIP へ変換される<br/>
     /// （ドメイン座標 + ポート変換の一本化。レイアウト変化に追従）。
     /// </remarks>
-    public Rect? LogicalSelectionRect
+    public RectD? LogicalSelectionRect
     {
         get => field;
         set

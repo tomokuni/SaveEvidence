@@ -1,4 +1,4 @@
-namespace Estable.AvaloniaUI.Platform.Geometry;
+namespace Estable.Primitives;
 
 /// <summary>2 次元座標（double）の軽量な不変値型。UI フレームワーク（Avalonia / System.Drawing）に依存しない。</summary>
 /// <param name="X">X 座標。</param>

@@ -1,6 +1,6 @@
-using Avalonia;
 using Avalonia.Media;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Primitives;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
@@ -25,8 +25,8 @@ public class FadeMaskDragRectOverlayTests
     {
         // 白の 40x40 Bitmap に選択矩形（10,10,20,20）をズーム 4 で描画する
         var bitmap = CreateSolidBitmap(40, 40);
-        var selectionRect = new Rect(10, 10, 20, 20);
-        var captureTopLeft = new Point(5, 5);
+        var selectionRect = new RectD(10, 10, 20, 20);
+        var captureTopLeft = new PointD(5, 5);
         var scale = 4.0;
 
         FadeMaskDragRectControl.DrawSelectionRectOverlay(
@@ -47,7 +47,7 @@ public class FadeMaskDragRectOverlayTests
 
         // scale < 2 → 何も描画しない（例外なく早期リターンする）
         FadeMaskDragRectControl.DrawSelectionRectOverlay(
-            bitmap, new Rect(10, 10, 20, 20), new Point(5, 5), 1.0, Colors.Black, Colors.Transparent);
+            bitmap, new RectD(10, 10, 20, 20), new PointD(5, 5), 1.0, Colors.Black, Colors.Transparent);
 
         // scale < 2 の早期リターンで例外なく実行されることを検証する
         Assert.Equal(40, bitmap.Size.Width);

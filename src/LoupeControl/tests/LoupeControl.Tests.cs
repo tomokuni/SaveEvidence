@@ -11,6 +11,7 @@ using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Primitives;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;
@@ -880,8 +881,8 @@ public class LoupeControlTests
         Assert.Equal(100, args.Bitmap.Size.Height);
         Assert.Equal(100, args.Size);
         Assert.Equal(2, args.ZoomLevel);
-        Assert.Equal(new Point(100, 100), args.CenterPoint);
-        Assert.Equal(new Point(75, 75), args.CaptureTopLeft);
+        Assert.Equal(new PointD(100, 100), args.CenterPoint);
+        Assert.Equal(new PointD(75, 75), args.CaptureTopLeft);
         Assert.Equal(2.0, args.Scale);
         // 親パネル未接続（テスト）のため表示位置は既定値 (0,0)
         Assert.Equal(default, args.Position);

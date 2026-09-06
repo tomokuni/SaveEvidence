@@ -3,13 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using Point = Avalonia.Point;
-using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
+using Estable.Primitives;
 using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -46,7 +46,7 @@ internal sealed class CropSession(
     private readonly Action<bool>? _zoomHandler = zoomHandler;
 
     /// <summary>元画像のピクセルサイズ（論理座標系の範囲）。</summary>
-    private readonly Size _sourceImageSize = new(sourceImage.Size.Width, sourceImage.Size.Height);
+    private readonly SizeD _sourceImageSize = new(sourceImage.Size.Width, sourceImage.Size.Height);
 
     /// <summary>オーバーレイ・ルーペの配置先パネル（previewControl の祖先 Panel）。</summary>
     private readonly Panel _parentPanel = FindAncestorPanel(previewControl)
@@ -118,7 +118,7 @@ internal sealed class CropSession(
             _selectionOverlay.AttachScrollViewer(scrollViewer);
         }
 
-        void OnConfirm(Rect logicalRect)
+        void OnConfirm(RectD logicalRect)
         {
             if (_completed) return;
             _completed = true;
@@ -137,7 +137,7 @@ internal sealed class CropSession(
             tcs.TrySetResult(default); // 0x0 の空 PixelRect
         }
 
-        void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionRect.ToAvaloniaRect());
+        void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionRect);
 
         void OnCancelEvent(object? sender, EventArgs e) => OnCancel();
 
@@ -221,7 +221,7 @@ internal sealed class CropSession(
         _selectionOverlay.SetCoordinateTransform(CoordinatePort.Compose(
             CoordinatePort.ImageLayout(
                 () => DisplaySize().ToSizeD(),
-                _sourceImageSize.ToSizeD(),
+                _sourceImageSize,
                 () => previewControl.IsFit),
             CoordinatePort.ScrollOffset(() =>
             {
@@ -276,14 +276,14 @@ internal sealed class CropSession(
     /// <param name="rectLogical">論理座標（元画像ピクセル）の選択矩形。</param>
     /// <returns>サイズ情報ラベル文字列。</returns>
     /// <remarks>WH は閉区間（始点・終点のピクセルを含む）のピクセル数（<c>幅 + 1</c>）で表示する。</remarks>
-    private string FormatSizeLabel(Rect rectLogical)
+    private string FormatSizeLabel(RectD rectLogical)
     {
         int l = (int)rectLogical.X, t = (int)rectLogical.Y;
         int r = (int)rectLogical.Right, b = (int)rectLogical.Bottom;
         // Zoom は実際の表示スケール（元画像ピクセル / DIP）から導出する（プレビュー状態の保持なし）
         double scaleX = CoordinatePort.ImageLayoutScaleX(
             () => DisplaySize().ToSizeD(),
-            _sourceImageSize.ToSizeD(),
+            _sourceImageSize,
             () => previewControl.IsFit);
         int displayPct = (int)Math.Round(100.0 / Math.Max(scaleX, 0.01));
         return $"LT: ({l}, {t}),  RB: ({r}, {b}),  WH: ({r - l + 1}, {b - t + 1}), Zoom: ({displayPct}%)";
@@ -299,7 +299,7 @@ internal sealed class CropSession(
     /// 画像右端・下端では <c>+1</c> が画像サイズを超えないようクランプする。<br/>
     /// 単体テストから呼び出し可能（internal）。
     /// </remarks>
-    internal PixelRect ExecuteCropForSize(Rect logicalRect)
+    internal PixelRect ExecuteCropForSize(RectD logicalRect)
         => ComputeCropBounds(logicalRect, _sourceImageSize, _settings.MinSelectionSize!.Value);
 
     /// <summary>選択矩形（半開区間）を閉区間の切り出し範囲（論理座標）へ変換する（純粋関数）。</summary>
@@ -314,7 +314,7 @@ internal sealed class CropSession(
     /// 終点のピクセルまで切り出す（仕様: 選択矩形の始点・終点は切出し対象に含まれる）。<br/>
     /// 画像右端・下端では <c>+1</c> が画像サイズを超えないようクランプする。<br/>
     /// </remarks>
-    internal static PixelRect ComputeCropBounds(Rect logicalRect, Size sourceImageSize, double minSize)
+    internal static PixelRect ComputeCropBounds(RectD logicalRect, SizeD sourceImageSize, double minSize)
     {
         if (logicalRect.Width < minSize || logicalRect.Height < minSize) return default;
         double l = Math.Max(logicalRect.X, 0), t = Math.Max(logicalRect.Y, 0);

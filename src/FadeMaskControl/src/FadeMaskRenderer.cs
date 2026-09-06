@@ -1,9 +1,9 @@
-using Avalonia;
 using Avalonia.Media;
 using AvaloniaRect = Avalonia.Rect;
 using AvaloniaSize = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 
 namespace Estable.AvaloniaUI.FadeMask;
 
@@ -71,7 +71,7 @@ public sealed class FadeMaskRenderer
     /// <see cref="LogicalSelectionRect"/> と同様に、<see cref="CoordinateTransform"/> と組み合わせて<br/>
     /// 描画時に最新のレイアウトから DIP 矩形を算出する（座標系の統一・レイアウト変化に追従）。
     /// </remarks>
-    public AvaloniaRect? LogicalHighlightRect { get; set; }
+    public RectD? LogicalHighlightRect { get; set; }
 
     /// <summary>選択矩形（ドメイン座標 = 元画像ピクセル / 仮想スクリーンピクセル）。未設定の場合は null。</summary>
     /// <remarks>
@@ -79,7 +79,7 @@ public sealed class FadeMaskRenderer
     /// （DragRectControl と同方式。ウィンドウサイズ変更・ズーム・スクロールに追従）。<br/>
     /// <see cref="CoordinateTransform"/> 未設定（null）の場合はドメイン = DIP として等価変換する。
     /// </remarks>
-    public AvaloniaRect? LogicalSelectionRect { get; set; }
+    public RectD? LogicalSelectionRect { get; set; }
 
     /// <summary>論理座標（ドメイン）↔ DIP の座標変換ポート。</summary>
     /// <remarks>
@@ -240,12 +240,12 @@ public sealed class FadeMaskRenderer
     /// 全ピクセルを含む閉区間表現（PixelRect 由来）のため、<c>closedInterval: false</c> で +1 しない<br/>
     /// （+1 すると実際より 1px 大きい枠・サイズラベルになる）。
     /// </remarks>
-    internal static AvaloniaRect ToDipRect(AvaloniaRect logical, ICoordinatePort port, bool closedInterval = true)
+    internal static AvaloniaRect ToDipRect(RectD logical, ICoordinatePort port, bool closedInterval = true)
     {
-        var tl = port.Inverse(logical.TopLeft.ToPointD());
+        var tl = port.Inverse(logical.TopLeft);
         var br = port.Inverse(closedInterval
             ? new PointD(logical.Right + 1, logical.Bottom + 1)
-            : logical.BottomRight.ToPointD());
+            : logical.BottomRight);
         return new AvaloniaRect(tl.ToAvaloniaPoint(), br.ToAvaloniaPoint());
     }
 

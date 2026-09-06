@@ -1,4 +1,4 @@
-namespace Estable.AvaloniaUI.Platform.Geometry;
+namespace Estable.Primitives;
 
 /// <summary>2 次元の矩形（位置・サイズ・int）の軽量な不変値型。ピクセル矩形専用で、UI フレームワークに依存しない。</summary>
 /// <param name="X">左上 X 座標（ピクセル）。</param>
@@ -6,7 +6,7 @@ namespace Estable.AvaloniaUI.Platform.Geometry;
 /// <param name="Width">幅（ピクセル）。</param>
 /// <param name="Height">高さ（ピクセル）。</param>
 /// <remarks>
-/// <b>目的</b>: <see cref="PbBitmap"/> 等のピクセル矩形（int）を UI フレームワーク（System.Drawing / Avalonia）から分離する。<br/>
+/// <b>目的</b>: ピクセル矩形（int）を UI フレームワーク（System.Drawing / Avalonia）から分離する。<br/>
 /// <b>double 版</b>: DIP の矩形（小数を扱う）は <see cref="RectD"/> を使用する。
 /// </remarks>
 public readonly record struct Rect(int X, int Y, int Width, int Height)

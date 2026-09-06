@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Point = Avalonia.Point;

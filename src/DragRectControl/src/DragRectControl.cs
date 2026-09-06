@@ -5,8 +5,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using AvaloniaRect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
+using Estable.Primitives;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -462,15 +462,15 @@ public sealed partial class DragRectControl : Control
     /// <see cref="ClampToDomainBounds"/> が有効な場合は、画像外にはみ出す矩形を境界内にクリップしてから設定する<br/>
     /// （外部からの復元でも「画像外の選択を禁止」を尊重する）。
     /// </remarks>
-    public void SetSelection(AvaloniaRect rect)
+    public void SetSelection(RectD rect)
     {
-        var rectD = rect.ToRectD();
+        var rectD = rect;
         // ClampToDomainBounds 有効時は画像外にはみ出す矩形を境界内にクリップしてから設定する
         if (ClampToDomainBounds)
         {
             rectD = _state.ClipRectToBounds(rectD);
         }
-        _state.SetSelection(rectD.ToAvaloniaRect());
+        _state.SetSelection(rectD);
         RaiseSelectionChanged(rectD);
         InvalidateVisual();
     }

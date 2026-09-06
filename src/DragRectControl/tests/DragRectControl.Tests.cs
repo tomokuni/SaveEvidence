@@ -9,8 +9,9 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Point = Avalonia.Point;
-using Rect = Avalonia.Rect;
+using Rect = Estable.Primitives.RectD;
 using Size = Avalonia.Size;
+using Estable.Primitives;
 using Xunit;
 
 namespace Estable.AvaloniaUI.DragRect.Tests;
@@ -1044,7 +1045,7 @@ public class DragRectControlTests
 
         // ローカル DIP (300,200) に対応する画面物理座標をモックのカーソル位置として設定する
         // （HandleArrowKey 内の逆変換（画面物理 → ローカル DIP）が (300,200) に一致する）
-        var screenPt = ScreenConverter.LocalDipToScreen(control, new Point(300, 200));
+        var screenPt = ScreenConverter.LocalDipToScreen(control, new PointD(300, 200));
         mock.Position = screenPt;
 
         var positions = new List<PointD>();
@@ -1068,7 +1069,7 @@ public class DragRectControlTests
         window.Show();
 
         // 1 回目の nudge セッション: カーソル位置 (300,200) から Right → (301,200)
-        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(300, 200));
+        mock.Position = ScreenConverter.LocalDipToScreen(control, new PointD(300, 200));
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
         // nudge 終了（マウス Up。StartPoint は (301,200) のまま残る）
@@ -1079,7 +1080,7 @@ public class DragRectControlTests
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 2 回目の nudge セッション: ユーザーがマウスを (800,600) へ移動してから Right を押す
-        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(800, 600));
+        mock.Position = ScreenConverter.LocalDipToScreen(control, new PointD(800, 600));
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
         // 基点は古い nudge 位置 (301,200) ではなく、新しいカーソル位置 (800,600) に同期される
@@ -1101,7 +1102,7 @@ public class DragRectControlTests
         window.Show();
 
         // カーソル位置 (300,200) に固定（2 回目以降の再評価でも同じ位置を返す = 移動を相殺する）
-        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(300, 200));
+        mock.Position = ScreenConverter.LocalDipToScreen(control, new PointD(300, 200));
 
         var positions = new List<PointD>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
@@ -1213,7 +1214,7 @@ public class DragRectControlTests
         // nudge（終点が (51,50) へ移動 = nudge 位置）
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
         // 実コードの ToScreen（LocalDipToScreen）と同じ変換で期待値を求める（PixelPoint 型）
-        var nudgeScreenPos = ScreenConverter.LocalDipToScreen(control, new Point(51, 50));
+        var nudgeScreenPos = ScreenConverter.LocalDipToScreen(control, new PointD(51, 50));
 
         // nudge 中にマウスを動かす（実マウス位置 (80,80)。カーソルはそこに移動した状態）
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftPressed(), KeyModifiers.None));
@@ -1246,7 +1247,7 @@ public class DragRectControlTests
 
         // ポインタ（OS カーソル）が右下ハンドル点 (80,80) へスナップされる
         // （実コードの ToScreen（LocalDipToScreen）と同じ変換で期待値を求める）
-        var snapScreenPos = ScreenConverter.LocalDipToScreen(control, new Point(80, 80));
+        var snapScreenPos = ScreenConverter.LocalDipToScreen(control, new PointD(80, 80));
         Assert.NotNull(mock.LastSetPoint);
         Assert.Equal(snapScreenPos, mock.LastSetPoint!.Value);
         window.Close();

@@ -1,6 +1,5 @@
 using Estable.AvaloniaUI.DragRect.Selection;
 using Estable.AvaloniaUI.Platform.Geometry;
-using Avalonia;
 using Avalonia.Media;
 using AvaloniaPoint = Avalonia.Point;
 using AvaloniaRect = Avalonia.Rect;

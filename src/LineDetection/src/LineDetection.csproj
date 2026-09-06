@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <ProjectReference Include="..\..\Primitives\src\Primitives.csproj" />
   </ItemGroup>
 
   <ItemGroup>

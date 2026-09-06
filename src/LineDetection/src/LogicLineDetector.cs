@@ -1,5 +1,5 @@
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 using OpenCvSharp;
 
 namespace Estable.AvaloniaUI.LineDetection;

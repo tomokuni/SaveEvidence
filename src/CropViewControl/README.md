@@ -60,6 +60,7 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 ```csharp
 using Estable.AvaloniaUI.CropView;
 using Estable.AvaloniaUI.FadeMaskDragRect; // FadeMaskDragRectMode
+using Estable.Primitives; // RectD / PointD
 ```
 
 ## 5. クイックスタート
@@ -83,7 +84,7 @@ CropPreview.Source = bitmap;
 // 外部提供矩形（破線・色・幅）を表示
 CropPreview.Rects = new[]
 {
-    new OverlayRect(new Rect(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Orange, Colors.White, 2.0),
+    new OverlayRect(new RectD(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Orange, Colors.White, 2.0),
 };
 
 // ズーム操作（拡大・縮小・Fit）

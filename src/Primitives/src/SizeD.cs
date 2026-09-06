@@ -1,4 +1,4 @@
-namespace Estable.AvaloniaUI.Platform.Geometry;
+namespace Estable.Primitives;
 
 /// <summary>2 次元のサイズ（幅・高さ・double）の軽量な不変値型。UI フレームワークに依存しない。</summary>
 /// <param name="Width">幅。</param>

@@ -26,6 +26,7 @@
     <ProjectReference Include="..\src\DragRectControl.csproj" />
     <!-- テストで PointD / RectD 等のコア値型を使用するため、PlatformFactory を参照する -->
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <ProjectReference Include="..\..\Primitives\src\Primitives.csproj" />
   </ItemGroup>
 
   <!-- xUnit 並列化設定（Avalonia ヘッドレスアセンブリ間の静的競合を防ぐためアセンブリ間の並列を無効化） -->

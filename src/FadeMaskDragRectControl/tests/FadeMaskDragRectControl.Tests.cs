@@ -5,13 +5,12 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Point = Avalonia.Point;
-using Rect = Avalonia.Rect;
-using Size = Avalonia.Size;
+using Rect = Estable.Primitives.RectD;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Primitives;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
@@ -546,13 +545,13 @@ public class FadeMaskDragRectControlTests
         window.Show();
 
         // Source 未設定の間は表示しない（市松模様防止の仕様）
-        control.SetLoupePosition(new Point(960, 540));
+        control.SetLoupePosition(new PointD(960, 540));
         Assert.False(control.Loupe.IsVisible);
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
 
         // Source 設定後に再呼び出しすると表示される
         control.Loupe.Source = PbBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
-        control.SetLoupePosition(new Point(960, 540));
+        control.SetLoupePosition(new PointD(960, 540));
         Assert.True(control.Loupe.IsVisible);
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
 
@@ -889,7 +888,7 @@ public class FadeMaskDragRectControlTests
         var window = new Window { Content = control };
         window.Show();
         control.SetLoupeSource(PbBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent));
-        control.SetLoupePosition(new Point(10, 10));
+        control.SetLoupePosition(new PointD(10, 10));
         Assert.True(control.Loupe.IsVisible);
 
         control.ClearLoupe();
@@ -907,8 +906,8 @@ public class FadeMaskDragRectControlTests
         window.Show();
 
         Assert.Null(control.LoupeCenterPoint);
-        control.SetLoupePosition(new Point(100, 200));
-        Assert.Equal(new Point(100, 200), control.LoupeCenterPoint);
+        control.SetLoupePosition(new PointD(100, 200));
+        Assert.Equal(new PointD(100, 200), control.LoupeCenterPoint);
         window.Close();
     }
 

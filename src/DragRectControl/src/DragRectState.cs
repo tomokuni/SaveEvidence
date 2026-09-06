@@ -1,8 +1,7 @@
-using AvaloniaPoint = Avalonia.Point;
-using AvaloniaRect = Avalonia.Rect;
 using Estable.AvaloniaUI.DragRect.Selection;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Primitives;
 
 namespace Estable.AvaloniaUI.DragRect;
 
@@ -133,15 +132,15 @@ internal sealed class DragRectState
     }
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標・UI 境界のため Avalonia Rect で受け取り PointD へ変換）。</param>
+    /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <remarks>
     /// nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。<br/>
     /// nudge の終了処理は <see cref="EndNudgeIfActive"/> に委譲する（重複排除）。
     /// </remarks>
-    public void SetSelection(AvaloniaRect rect)
+    public void SetSelection(RectD rect)
     {
         EndNudgeIfActive();
-        SelectionRect = rect.ToRectD();
+        SelectionRect = rect;
         IsDragging = false;
         ActiveHandle = DragHandle.None;
     }

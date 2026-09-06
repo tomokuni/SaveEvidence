@@ -3,6 +3,7 @@ using AvaloniaPoint = Avalonia.Point;
 using AvaloniaRect = Avalonia.Rect;
 using AvaloniaSize = Avalonia.Size;
 using AvaloniaVector = Avalonia.Vector;
+using Estable.Primitives;
 
 namespace Estable.AvaloniaUI.Platform.Geometry;
 

@@ -1,10 +1,10 @@
-namespace Estable.AvaloniaUI.Platform.Geometry;
+namespace Estable.Primitives;
 
 /// <summary>2 次元座標（int）の軽量な不変値型。ピクセル座標専用で、UI フレームワークに依存しない。</summary>
 /// <param name="X">X 座標（ピクセル）。</param>
 /// <param name="Y">Y 座標（ピクセル）。</param>
 /// <remarks>
-/// <b>目的</b>: <see cref="PbBitmap"/> 等のピクセル座標（int）を UI フレームワーク（System.Drawing / Avalonia）から分離する。<br/>
+/// <b>目的</b>: ピクセル座標（int）を UI フレームワーク（System.Drawing / Avalonia）から分離する。<br/>
 /// <b>double 版</b>: DIP・ドメイン座標（小数を扱う）は <see cref="PointD"/> を使用する（座標系の混在防止）。<br/>
 /// <b>スレッド安全性</b>: 不変値型のため、インスタンスはスレッド間で安全に共有できる。
 /// </remarks>

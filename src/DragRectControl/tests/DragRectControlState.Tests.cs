@@ -1,10 +1,7 @@
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Geometry;
-using Avalonia;
 using Avalonia.Media;
-using Point = Avalonia.Point;
-using Rect = Avalonia.Rect;
-using Size = Avalonia.Size;
+using Rect = Estable.Primitives.RectD;
+using Estable.Primitives;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
