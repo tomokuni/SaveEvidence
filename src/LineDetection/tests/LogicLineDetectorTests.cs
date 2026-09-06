@@ -6,6 +6,7 @@ using Estable.AvaloniaUI.LineDetection;
 using Estable.AvaloniaUI.Platform.Imaging;
 using System.Runtime.InteropServices;
 using Xunit;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.LineDetection.Tests;
 

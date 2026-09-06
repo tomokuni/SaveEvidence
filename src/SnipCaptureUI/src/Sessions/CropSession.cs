@@ -12,7 +12,9 @@ using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable;
 using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging;
+using PbBitmap = Estable.Media.EsBitmap;
 using Microsoft.Extensions.Logging.Abstractions;
+using Estable.Media;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
@@ -25,7 +27,7 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 /// - 配線（SelectionChanged → 暗転マスク同期 / LoupePositionMoved → ルーペ更新 / 確定・キャンセル）は<br/>
 ///   複合コントロール内で完結する（ホストの配線コードは不要）。<br/>
 /// - ドメイン = 元画像ピクセル（論理座標）。座標変換ポートは<br/>
-///   <see cref="CoordinatePort.ImageLayout"/> + <see cref="CoordinatePort.ScrollOffset"/>（PlatformFactory）で提供。<br/>
+///   <see cref="CoordTransform.ImageLayout"/> + <see cref="CoordTransform.ScrollOffset"/>（Estable.Media）で提供。<br/>
 /// <br/>
 /// プレビュー状態（ScrollOffset / ViewportOrigin / ZoomPercent）は保持しない。<br/>
 /// スクロールは <see cref="VisualExtensions.TranslatePoint"/>（スクロール込みの表示位置）に含まれるため、<br/>
@@ -217,13 +219,13 @@ internal sealed class CropSession(
         // プレビュー表示状態（Fit 判定・レイアウト）と TranslatePoint（スクロール込みの表示位置）から導出する。
         // ① プレビュー内部DIP ↔ 論理（ImageLayout は呼び出し毎にレイアウトを再評価 = ズーム・サイズ変更に追従）
         // ② 親パネルDIP ↔ プレビュー内部DIP（PreviewOrigin = レイアウト位置 + スクロール。ScrollOffset で平行移動）
-        // 2 段階の変換を CoordinatePort.Compose で 1 ポートに合成し、DragRect / FadeMask / Loupe の 3 コントロールへ一括分配する。
-        _selectionOverlay.SetCoordinateTransform(CoordinatePort.Compose(
-            CoordinatePort.ImageLayout(
+        // 2 段階の変換を CoordTransform.Compose で 1 ポートに合成し、DragRect / FadeMask / Loupe の 3 コントロールへ一括分配する。
+        _selectionOverlay.SetCoordinateTransform(CoordTransform.Compose(
+            CoordTransform.ImageLayout(
                 () => DisplaySize().ToSizeD(),
                 _sourceImageSize,
                 () => previewControl.IsFit),
-            CoordinatePort.ScrollOffset(() =>
+            CoordTransform.ScrollOffset(() =>
             {
                 // 同値の原点取得は一度だけ実行して共有する
                 var origin = PreviewOrigin();
@@ -281,7 +283,7 @@ internal sealed class CropSession(
         int l = (int)rectLogical.X, t = (int)rectLogical.Y;
         int r = (int)rectLogical.Right, b = (int)rectLogical.Bottom;
         // Zoom は実際の表示スケール（元画像ピクセル / DIP）から導出する（プレビュー状態の保持なし）
-        double scaleX = CoordinatePort.ImageLayoutScaleX(
+        double scaleX = CoordTransform.ImageLayoutScaleX(
             () => DisplaySize().ToSizeD(),
             _sourceImageSize,
             () => previewControl.IsFit);

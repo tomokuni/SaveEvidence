@@ -50,6 +50,7 @@
     <ProjectReference Include="..\..\ColorPickerControl\src\ColorPickerControl.csproj" />
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
     <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
+    <ProjectReference Include="..\..\..\..\Estable\src\Media\Media.csproj" />
     <ProjectReference Include="..\..\ZoomViewControl\src\ZoomViewControl.csproj" />
     <!-- ウィンドウ矩形の自動検出（切り出し）に使用する -->
     <ProjectReference Include="..\..\LineDetection\src\LineDetection.csproj" />

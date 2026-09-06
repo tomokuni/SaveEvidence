@@ -26,6 +26,7 @@
     <!-- Crop プレビュー用の高レベル複合コントロール（ZoomViewControl + 領域選択） -->
     <ProjectReference Include="..\..\CropViewControl\src\CropViewControl.csproj" />
     <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
+    <ProjectReference Include="..\..\..\..\Estable\src\Media\Media.csproj" />
   </ItemGroup>
 
 </Project>

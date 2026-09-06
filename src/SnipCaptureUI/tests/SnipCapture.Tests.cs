@@ -9,6 +9,7 @@ using Estable.AvaloniaUI.ZoomView;
 using Estable;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using PbBitmap = Estable.Media.EsBitmap;
 using Avalonia.Headless.XUnit;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI.Tests;

@@ -5,6 +5,7 @@ using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Loupe.Rendering;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;
 

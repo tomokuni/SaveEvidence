@@ -17,6 +17,7 @@
     <!-- 座標変換ポート（ICoordinatePort）を外部から注入するため参照する -->
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
     <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
+    <ProjectReference Include="..\..\..\..\Estable\src\Media\Media.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,6 +6,7 @@ using app.Icons;
 using app.Logging;
 using app.Services;
 using app.ViewModels;
+using PbBitmap = Estable.Media.EsBitmap;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;

@@ -1,6 +1,8 @@
 using Avalonia.Media;
 using Estable.AvaloniaUI.Platform;
+using Estable.Media;
 using Estable;
+using Estable.Media;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMask.Tests;
@@ -58,7 +60,7 @@ public class FadeMaskRendererStateTests
     public void ToDipRect_等価変換で終点に1を加算した閉区間になる()
     {
         var logical = new RectD(10, 20, 30, 40);
-        var result = FadeMaskRenderer.ToDipRect(logical, CoordinatePort.Identity);
+        var result = FadeMaskRenderer.ToDipRect(logical, CoordTransform.Identity);
 
         // 終点（Right / Bottom）に +1 した閉区間 [10,41) × [20,61)
         Assert.Equal(new Avalonia.Rect(10, 20, 31, 41), result);
@@ -69,7 +71,7 @@ public class FadeMaskRendererStateTests
     {
         var logical = new RectD(10, 20, 30, 40);
         // Scale(2.0) の Inverse = ドメイン座標 → DIP 座標（2 倍）
-        var result = FadeMaskRenderer.ToDipRect(logical, CoordinatePort.Scale(2.0));
+        var result = FadeMaskRenderer.ToDipRect(logical, CoordTransform.Scale(2.0));
 
         // 終点 +1 後に 2 倍: (10*2, 20*2, 31*2, 41*2)
         Assert.Equal(new Avalonia.Rect(20, 40, 62, 82), result);
@@ -79,7 +81,7 @@ public class FadeMaskRendererStateTests
     public void ToDipRect_closedIntervalがfalseなら終点を加算しない()
     {
         var logical = new RectD(10, 20, 30, 40);
-        var result = FadeMaskRenderer.ToDipRect(logical, CoordinatePort.Identity, closedInterval: false);
+        var result = FadeMaskRenderer.ToDipRect(logical, CoordTransform.Identity, closedInterval: false);
 
         // ハイライト矩形（スクリーン/ウィンドウ境界）は既に全ピクセルを含むため +1 しない
         // （+1 すると 3840x2160 が 3841x2161 になる不具合の回帰防止）
@@ -91,7 +93,7 @@ public class FadeMaskRendererStateTests
     {
         var logical = new RectD(10, 20, 30, 40);
         // Scale(2.0) の Inverse = ドメイン座標 → DIP 座標（2 倍）
-        var result = FadeMaskRenderer.ToDipRect(logical, CoordinatePort.Scale(2.0), closedInterval: false);
+        var result = FadeMaskRenderer.ToDipRect(logical, CoordTransform.Scale(2.0), closedInterval: false);
 
         // 終点を加算せず 2 倍: (10*2, 20*2, 30*2, 40*2)
         Assert.Equal(new Avalonia.Rect(20, 40, 60, 80), result);

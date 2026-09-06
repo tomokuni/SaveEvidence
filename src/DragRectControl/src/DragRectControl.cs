@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Estable.AvaloniaUI.Platform;
 using Estable;
+using Estable.Media;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -62,7 +63,7 @@ public sealed partial class DragRectControl : Control
     private PointD _lastPressPos;
 
     /// <summary>座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。</summary>
-    private ICoordinatePort _coordinatePort = CoordinatePort.Identity;
+    private ICoordTransform _coordinatePort = CoordTransform.Identity;
 
     // 標準カーソルは Lazy で遅延生成する（呼び出し時に ICursorFactory を解決する）。
     // static readonly フィールドとして型初期化時に new Cursor(...) すると、Avalonia ヘッドレス初期化前に
@@ -338,7 +339,7 @@ public sealed partial class DragRectControl : Control
     /// <remarks>
     /// <see langword="true"/>（既定）: 選択を画像範囲内に制限する。<br/>
     /// <see langword="false"/>: 画像外も選択可能（ドラッグで画像外に矩形を作成・移動できる）。<br/>
-    /// クリップ範囲は <see cref="SetCoordinateTransform"/> の <c>domainBounds</c>（<see cref="Platform.ICoordinatePort.Bounds"/>）で指定する。
+    /// クリップ範囲は <see cref="SetCoordinateTransform"/> の <c>domainBounds</c>（<see cref="Estable.Media.ICoordTransform.Bounds"/>）で指定する。
     /// </remarks>
     public bool ClampToDomainBounds
     {
@@ -443,14 +444,14 @@ public sealed partial class DragRectControl : Control
     /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は等価変換。</param>
     /// <remarks>
     /// ホスト（上位 AP）がモードに応じた変換ポートを設定する（AreaSelect: 仮想スクリーンピクセル / Crop: 元画像ピクセル）。<br/>
-    /// ポートの生成は PlatformFactory の <see cref="Platform.CoordinatePort"/> のファクトリ（<c>Compose</c> / <c>ScrollOffset</c> / <c>DomainScale</c> / <c>ImageLayout</c> 等）で行う。<br/>
+    /// ポートの生成は PlatformFactory の <see cref="Estable.Media.CoordTransform"/> のファクトリ（<c>Compose</c> / <c>ScrollOffset</c> / <c>DomainScale</c> / <c>ImageLayout</c> 等）で行う。<br/>
     /// 未設定時は等価変換（1 ドメインピクセル = 1 DIP・無制限）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
     /// 座標変換の変更は描画（選択矩形・ハンドル・十字線）へ即時反映されるため、再描画を要求する。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordinatePort? port)
+    public void SetCoordinateTransform(ICoordTransform? port)
     {
-        _coordinatePort = port ?? Platform.CoordinatePort.Identity;
+        _coordinatePort = port ?? CoordTransform.Identity;
         _state.Port = _coordinatePort;
         InvalidateVisual();
     }

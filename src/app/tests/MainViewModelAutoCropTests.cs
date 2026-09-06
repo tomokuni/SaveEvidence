@@ -4,6 +4,7 @@ using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform.Imaging;
 using MockSettingsService = app.Tests.MainViewModelTests.MockSettingsService;
 using Xunit;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace app.Tests;
 

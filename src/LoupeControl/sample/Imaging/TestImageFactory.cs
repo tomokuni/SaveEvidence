@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using Estable.AvaloniaUI.Platform.Imaging;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace LoupeControl.Sample.Imaging;
 

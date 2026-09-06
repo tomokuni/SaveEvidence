@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using AvaloniaRect = Avalonia.Rect;
 using Estable;
+using Estable.Media;
 
 namespace Estable.AvaloniaUI.DragRect;
 

@@ -12,6 +12,7 @@ using Point = Avalonia.Point;
 using Rect = Estable.RectD;
 using Size = Avalonia.Size;
 using Estable;
+using Estable.Media;
 using Xunit;
 
 namespace Estable.AvaloniaUI.DragRect.Tests;
@@ -195,7 +196,7 @@ public class DragRectControlTests
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordinatePort(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
         var rects = new List<RectD>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
@@ -218,7 +219,7 @@ public class DragRectControlTests
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordinatePort(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
         var rects = new List<RectD>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
@@ -490,7 +491,7 @@ public class DragRectControlTests
     {
         var control = CreateControl();
         // ドメイン = DIP × 2（拡大）
-        control.SetCoordinateTransform(new CoordinatePort(
+        control.SetCoordinateTransform(new CoordTransform(
             p => new PointD(p.X * 2, p.Y * 2),
             p => new PointD(p.X / 2, p.Y / 2),
             () => null));
@@ -535,7 +536,7 @@ public class DragRectControlTests
     {
         var control = CreateControl();
         // Forward が常に (0,0) を返す変換（スケール 0）→ ToDomainRadius は HandleHitRadius にフォールバック
-        control.SetCoordinateTransform(new CoordinatePort(_ => new PointD(0, 0), p => p, () => null));
+        control.SetCoordinateTransform(new CoordTransform(_ => new PointD(0, 0), p => p, () => null));
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
@@ -786,7 +787,7 @@ public class DragRectControlTests
     {
         var control = CreateControl();
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordinatePort(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
@@ -1277,7 +1278,7 @@ public class DragRectControlTests
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）。マウス位置と矩形の角がずれる状況を作る
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordinatePort(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
         control.SetSelection(new Rect(20, 20, 60, 60));
         var positions = new List<PointD>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);

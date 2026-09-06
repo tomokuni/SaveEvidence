@@ -10,6 +10,8 @@ using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using PbBitmap = Estable.Media.EsBitmap;
+using Estable.Media;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
@@ -171,7 +173,7 @@ internal sealed partial class OverlayWindow : Window
         // 選択矩形・ハイライトはドメイン座標（仮想スクリーンピクセル）で設定し、描画時に DIP へ変換する（DragRect と同方式）
         // DomainScale: Forward = DIP→ドメイン（× scaling）/ Inverse = ドメイン→DIP（÷ scaling）
         // DragRect / FadeMask / Loupe の 3 コントロールへ同一ポートを一括分配する。
-        SelectionOverlay.SetCoordinateTransform(CoordinatePort.DomainScale(() => _scaling));
+        SelectionOverlay.SetCoordinateTransform(CoordTransform.DomainScale(() => _scaling));
     }
 
     /// <summary>選択状態をオーバーレイ描画へ反映する（AreaSelect 用）。</summary>

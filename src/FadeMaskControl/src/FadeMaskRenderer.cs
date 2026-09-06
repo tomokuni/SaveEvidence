@@ -4,6 +4,7 @@ using AvaloniaSize = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable;
+using Estable.Media;
 
 namespace Estable.AvaloniaUI.FadeMask;
 
@@ -86,7 +87,7 @@ public sealed class FadeMaskRenderer
     /// <see cref="LogicalSelectionRect"/> / <see cref="LogicalHighlightRect"/> と組み合わせて描画時に DIP 矩形を算出する（呼び出し毎に評価）。<br/>
     /// null の場合は等価変換（ドメイン = DIP）。
     /// </remarks>
-    public ICoordinatePort? CoordinateTransform { get; set; }
+    public ICoordTransform? CoordinateTransform { get; set; }
 
     /// <summary>ハイライトが有効かどうか。</summary>
     public bool HasHighlight { get; set; }
@@ -173,7 +174,7 @@ public sealed class FadeMaskRenderer
         // 穴あけ矩形の決定（論理矩形 + 座標変換ポートを描画時に評価。ポート未設定は等価変換）
         // 選択矩形は閉区間（+1）で DIP 変換する。ハイライト矩形（スクリーン/ウィンドウ境界）は
         // 既に全ピクセルを含む閉区間表現（PixelRect 由来）のため +1 しない（1px 大きく表示されるのを防ぐ）。
-        var port = CoordinateTransform ?? CoordinatePort.Identity;
+        var port = CoordinateTransform ?? CoordTransform.Identity;
         var selectionRect = LogicalSelectionRect is { } logical
             ? ToDipRect(logical, port)
             : (AvaloniaRect?)null;
@@ -240,7 +241,7 @@ public sealed class FadeMaskRenderer
     /// 全ピクセルを含む閉区間表現（PixelRect 由来）のため、<c>closedInterval: false</c> で +1 しない<br/>
     /// （+1 すると実際より 1px 大きい枠・サイズラベルになる）。
     /// </remarks>
-    internal static AvaloniaRect ToDipRect(RectD logical, ICoordinatePort port, bool closedInterval = true)
+    internal static AvaloniaRect ToDipRect(RectD logical, ICoordTransform port, bool closedInterval = true)
     {
         var tl = port.Inverse(logical.TopLeft);
         var br = port.Inverse(closedInterval

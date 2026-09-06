@@ -9,6 +9,8 @@ using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
 using Estable;
+using Estable.Media;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.CropView;
 
@@ -187,7 +189,7 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>座標変換ポートを設定する（内包コントロールへ分配）。</summary>
     /// <param name="port">座標変換ポート。null で等価変換。</param>
-    public void SetCoordinateTransform(ICoordinatePort? port) => _selectionOverlay.SetCoordinateTransform(port);
+    public void SetCoordinateTransform(ICoordTransform? port) => _selectionOverlay.SetCoordinateTransform(port);
 
     /// <summary>選択確定要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Enter キー相当）。</summary>
     public void RequestConfirm() => _selectionOverlay.RequestConfirm();

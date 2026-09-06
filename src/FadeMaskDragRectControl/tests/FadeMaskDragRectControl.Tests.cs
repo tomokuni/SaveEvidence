@@ -9,8 +9,10 @@ using Rect = Estable.RectD;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
+using Estable.Media;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable;
+using Estable.Media;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
@@ -379,7 +381,7 @@ public class FadeMaskDragRectControlTests
     public void SetCoordinateTransform_3コントロールへ同一ポートが分配される()
     {
         var control = new FadeMaskDragRectControl();
-        var port = CoordinatePort.Identity;
+        var port = CoordTransform.Identity;
 
         control.SetCoordinateTransform(port);
 
@@ -579,11 +581,11 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     /// <summary>コントロールの座標変換ポート（_coordinatePort）をリフレクションで取得する。</summary>
-    private static ICoordinatePort GetCoordinatePort(Control control)
+    private static ICoordTransform GetCoordinatePort(Control control)
     {
         var field = control.GetType().GetField(
             "_coordinatePort", BindingFlags.NonPublic | BindingFlags.Instance);
-        return (ICoordinatePort)field!.GetValue(control)!;
+        return (ICoordTransform)field!.GetValue(control)!;
     }
 
     // ====================================================================

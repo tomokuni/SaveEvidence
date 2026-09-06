@@ -14,6 +14,7 @@ using Estable;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
+using PbBitmap = Estable.Media.EsBitmap;
 using BindingFlags = System.Reflection.BindingFlags;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI.Tests;

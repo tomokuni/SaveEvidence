@@ -5,6 +5,7 @@ using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.FadeMask.Logging;
 using Estable.AvaloniaUI.Platform;
 using Estable;
+using Estable.Media;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -130,7 +131,7 @@ public class FadeMaskControl : Control
     // ====================================================================
 
     /// <summary>論理座標（ドメイン）↔ コントロールローカル DIP の座標変換ポート。</summary>
-    private ICoordinatePort _coordinatePort = CoordinatePort.Identity;
+    private ICoordTransform _coordinatePort = CoordTransform.Identity;
 
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Inverse = ドメイン→DIP）。null の場合は等価変換。</param>
@@ -140,9 +141,9 @@ public class FadeMaskControl : Control
     /// レイアウト変化に追従できる（イベント時の DIP キャッシュは使わない）。<br/>
     /// ExternalRenderer が設定されている場合はレンダラーにも伝搬する。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordinatePort? port)
+    public void SetCoordinateTransform(ICoordTransform? port)
     {
-        _coordinatePort = port ?? CoordinatePort.Identity;
+        _coordinatePort = port ?? CoordTransform.Identity;
         Log.LogCoordinateTransform();
         if (ExternalRenderer is { } renderer) renderer.CoordinateTransform = _coordinatePort;
         InvalidateVisual();

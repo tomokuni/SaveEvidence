@@ -18,6 +18,7 @@
          画像・プラットフォーム機能には依存しない） -->
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
     <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
+    <ProjectReference Include="..\..\..\..\Estable\src\Media\Media.csproj" />
   </ItemGroup>
 
   <ItemGroup>

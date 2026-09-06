@@ -9,10 +9,13 @@ using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
+using Estable.Media;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable;
+using Estable.Media;
 using Xunit;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;
 
@@ -590,7 +593,7 @@ public class LoupeControlTests
         control.CenterPoint = new Point(100, 100);
 
         // ドメイン = DIP × 2（拡大）→ 中心 (100,100) は DIP (50,50) に変換される
-        control.SetCoordinateTransform(new CoordinatePort(
+        control.SetCoordinateTransform(new CoordTransform(
             p => new PointD(p.X * 2, p.Y * 2),
             p => new PointD(p.X / 2, p.Y / 2),
             () => new SizeD(300, 300)));
@@ -661,7 +664,7 @@ public class LoupeControlTests
 
         // 変換係数を後から変更できるよう、可変な係数を使う（パン・ズーム等の動的変化の模擬）
         var factor = 2.0;
-        control.SetCoordinateTransform(new CoordinatePort(
+        control.SetCoordinateTransform(new CoordTransform(
             p => new PointD(p.X * factor, p.Y * factor),
             p => new PointD(p.X / factor, p.Y / factor),
             () => new SizeD(300, 300)));

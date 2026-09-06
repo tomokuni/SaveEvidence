@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.Platform;
 

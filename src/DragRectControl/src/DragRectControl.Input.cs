@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Estable.AvaloniaUI.DragRect.Logging;
 using Estable.AvaloniaUI.Platform;
 using Estable;
+using Estable.Media;
 
 namespace Estable.AvaloniaUI.DragRect;
 

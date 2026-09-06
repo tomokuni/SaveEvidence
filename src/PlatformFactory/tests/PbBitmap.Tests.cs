@@ -4,6 +4,7 @@ using Estable.AvaloniaUI.Platform.Imaging;
 using SkiaSharp;
 using Xunit;
 using AvaloniaColor = Avalonia.Media.Color;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
 

@@ -1,9 +1,10 @@
 using Estable;
+using Estable.Media;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
 
-/// <summary><see cref="CoordinatePort"/> の合成・スクロール・拡張メソッドの単体テスト。</summary>
+/// <summary><see cref="CoordTransform"/> の合成・スクロール・拡張メソッドの単体テスト。</summary>
 public class CoordinatePortTests
 {
     // ====================================================================

@@ -8,6 +8,7 @@ using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.AvaloniaUI.ZoomView;
 using app.Enum;
 using app.Models;
+using PbBitmap = Estable.Media.EsBitmap;
 using app.Services;
 
 namespace app.ViewModels;

@@ -1,7 +1,9 @@
 using Avalonia.Media;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
+using Estable.Media;
 using Estable;
+using Estable.Media;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -51,7 +53,7 @@ public class FadeMaskControlStateTests
         // 各公開操作で LoggerMessage（LogExternalRenderer / LogSelectionRectChanged / LogCoordinateTransform）が実行される
         control.ExternalRenderer = new FadeMaskRenderer();
         control.LogicalSelectionRect = new RectD(10, 20, 100, 80);
-        control.SetCoordinateTransform(CoordinatePort.Identity);
+        control.SetCoordinateTransform(CoordTransform.Identity);
     }
 
     /// <summary>LoggerMessage 生成コードの state 走査（Count・インデクサ・IEnumerable）を網羅するテスト用ロガー。</summary>
@@ -111,7 +113,7 @@ public class FadeMaskControlStateTests
         control.ExternalRenderer = renderer;
 
         // ポート設定 → レンダラーへ同期
-        var port = new CoordinatePort(p => p, p => p, () => new SizeD(200, 200));
+        var port = new CoordTransform(p => p, p => p, () => new SizeD(200, 200));
         control.SetCoordinateTransform(port);
 
         Assert.Same(port, renderer.CoordinateTransform);

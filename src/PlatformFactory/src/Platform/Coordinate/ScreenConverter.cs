@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable;
+using Estable.Media;
 
 namespace Estable.AvaloniaUI.Platform;
 
@@ -14,7 +15,8 @@ namespace Estable.AvaloniaUI.Platform;
 /// OS 依存の画面物理変換（<see cref="TopLevel"/> の RenderScaling / 画面上位置 / PointToScreen / PointToClient）を
 /// 集約する唯一の場所である。<br/>
 /// ローカル DIP ↔ 画面物理の双方向変換は <see cref="CreateDipPort"/> / <see cref="CreateVisualDipPort"/> で<br/>
-/// <see cref="ICoordinatePort"/> として提供する。
+/// <see cref="CoordTransform"/> の
+/// <c>LocalDipToScreen</c> / <c>ScreenToLocalDip</c> / <c>CreateDipPort</c> は PlatformFactory の <see cref="ICoordTransform"/> として提供する。
 /// </remarks>
 public static class ScreenConverter
 {
@@ -55,12 +57,12 @@ public static class ScreenConverter
     /// <returns>Forward = 物理→DIP、Inverse = DIP→物理のポート。</returns>
     /// <remarks>
     /// <c>Forward(p) = (p - origin) / renderScaling</c>、<c>Inverse(p) = p × renderScaling + origin</c> を提供する。<br/>
-    /// <see cref="TopLevel"/> 由来のスケーリングと原点を持つ座標変換を <see cref="ICoordinatePort"/> として集約する。
+    /// <see cref="TopLevel"/> 由来のスケーリングと原点を持つ座標変換を <see cref="ICoordTransform"/> として集約する。
     /// </remarks>
-    internal static ICoordinatePort CreateDipPort(PixelPoint origin, double renderScaling)
+    internal static ICoordTransform CreateDipPort(PixelPoint origin, double renderScaling)
     {
         double s = renderScaling > 0 ? renderScaling : 1.0;
-        return new CoordinatePort(
+        return new CoordTransform(
             p => new PointD((p.X - origin.X) / s, (p.Y - origin.Y) / s),
             p => new PointD(p.X * s + origin.X, p.Y * s + origin.Y),
             () => null);
@@ -73,8 +75,8 @@ public static class ScreenConverter
     /// <see cref="TopLevel"/> を呼び出し毎に解決するため、ウィンドウ移動・スクロールの動的変化を反映できる。<br/>
     /// ビジュアルツリー未接続時は等価変換（画面座標 = ローカル DIP）する。
     /// </remarks>
-    public static ICoordinatePort CreateVisualDipPort(Visual source)
-        => new CoordinatePort(
+    public static ICoordTransform CreateVisualDipPort(Visual source)
+        => new CoordTransform(
             p => ScreenToLocalDip(source, new PixelPoint((int)p.X, (int)p.Y)),
             p =>
             {

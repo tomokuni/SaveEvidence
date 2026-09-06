@@ -2,6 +2,7 @@ using Avalonia.Media;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable;
 using Xunit;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
 

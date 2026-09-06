@@ -2,11 +2,14 @@ using System.Drawing;
 using System.Runtime.Versioning;
 using Avalonia;
 using Avalonia.Platform;
+using Estable.Media;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using DrawingBitmap = System.Drawing.Bitmap;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
+using PbBitmap = Estable.Media.EsBitmap;
+using PbBitmapDrawingExtensions = Estable.Media.BitmapDrawingExtensions;
 
 namespace Estable.AvaloniaUI.Platform.Win;
 
@@ -45,7 +48,7 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     {
         var sdRect = new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         using var sdBmp = CaptureSdBitmap(sdRect);
-        return sdBmp.ToPbBitmap();
+        return sdBmp.ToEsBitmap();
     }
 
     /// <summary>仮想スクリーン（全モニタを包含する領域）全体を 1 回のキャプチャで取得する。</summary>

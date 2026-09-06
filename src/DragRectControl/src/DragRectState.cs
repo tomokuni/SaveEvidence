@@ -2,6 +2,7 @@ using Estable.AvaloniaUI.DragRect.Selection;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable;
+using Estable.Media;
 
 namespace Estable.AvaloniaUI.DragRect;
 
@@ -12,7 +13,7 @@ namespace Estable.AvaloniaUI.DragRect;
 /// <br/>
 /// 座標系:<br/>
 /// - 選択矩形・nudge はドメイン座標（Forward = DIP→ドメイン / Inverse = ドメイン→DIP）で動作する。<br/>
-/// - マウス入力・描画はコントロールローカル DIP で受け取り、座標変換ポート（<see cref="ICoordinatePort"/>）で変換する。<br/>
+/// - マウス入力・描画はコントロールローカル DIP で受け取り、座標変換ポート（<see cref="ICoordTransform"/>）で変換する。<br/>
 /// <br/>
 /// イベント駆動: 状態変更はコントロール（<see cref="DragRectControl"/>）が公開イベントで通知し、
 /// 本クラスは状態の保持と純粋な更新ロジックのみを担う（ポーリング不要）。<br/>
@@ -64,7 +65,7 @@ internal sealed class DragRectState
     public bool CrosshairVisible { get; set; }
 
     /// <summary>座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。</summary>
-    public ICoordinatePort Port { get; set; } = CoordinatePort.Identity;
+    public ICoordTransform Port { get; set; } = CoordTransform.Identity;
 
     /// <summary>nudge 終了（SetCursorPos）直後のエコー PointerMoved の抑制位置（ドメイン座標）。null は抑制なし。</summary>
     public PointD? SuppressEchoAt { get; set; }

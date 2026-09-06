@@ -6,6 +6,8 @@ using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using PbBitmap = Estable.Media.EsBitmap;
+using Estable.Media;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
@@ -17,7 +19,7 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 /// <b>薄い統括者</b>: 状態は DragRectControl / FadeMaskControl / LoupeControl / PlatformFactory が保持し、<br/>
 /// 本クラスは「組み立て・配線・ライフサイクル」のみを担う。<br/>
 /// - プレビュー状態（CropPreviewState）は持たない（スクロールは DragRect イベント / TranslatePoint から取得）。<br/>
-/// - 座標変換は PlatformFactory の <see cref="ICoordinatePort"/>（<see cref="CoordinatePort"/> ファクトリ:
+/// - 座標変換は Estable.Media の <see cref="ICoordTransform"/>（<see cref="CoordTransform"/> ファクトリ:
 ///   <c>ImageLayout</c> / <c>ScrollOffset</c> / <c>Compose</c> 等）に委譲する。<br/>
 /// <br/>
 /// ログ: コンストラクタで注入された <see cref="ILogger"/> へ内部ログを転送する。<br/>

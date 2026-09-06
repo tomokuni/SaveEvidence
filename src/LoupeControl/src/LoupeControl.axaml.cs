@@ -12,6 +12,8 @@ using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable;
+using Estable.Media;
+using PbBitmap = Estable.Media.EsBitmap;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -135,7 +137,7 @@ public sealed partial class LoupeControl : UserControl
     // ====================================================================
 
     /// <summary>論理座標（ドメイン）↔ 親パネル DIP の座標変換ポート。</summary>
-    private ICoordinatePort _coordinatePort = CoordinatePort.Identity;
+    private ICoordTransform _coordinatePort = CoordTransform.Identity;
 
     /// <summary>表示位置（RenderTransform）のインスタンス（座標更新時は値を書き換えて再利用する）。</summary>
     private readonly TranslateTransform _positionTransform = new();
@@ -164,9 +166,9 @@ public sealed partial class LoupeControl : UserControl
     /// 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等の<br/>
     /// レイアウト変化に追従できる（イベント時の DIP キャッシュは使わない）。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordinatePort? port)
+    public void SetCoordinateTransform(ICoordTransform? port)
     {
-        _coordinatePort = port ?? CoordinatePort.Identity;
+        _coordinatePort = port ?? CoordTransform.Identity;
         UpdatePosition();
     }
 

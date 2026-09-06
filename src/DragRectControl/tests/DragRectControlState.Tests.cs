@@ -1,7 +1,9 @@
 using Estable.AvaloniaUI.Platform;
+using Estable.Media;
 using Avalonia.Media;
 using Rect = Estable.RectD;
 using Estable;
+using Estable.Media;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -203,7 +205,7 @@ public class DragRectControlStateTests
     {
         var control = CreateControl();
         control.ClampToDomainBounds = true;
-        control.SetCoordinateTransform(new CoordinatePort(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
         SelectionRectEventArgs? raised = null;
         control.SelectionChanged += (_, e) => raised = e;
 
@@ -218,7 +220,7 @@ public class DragRectControlStateTests
     public void ClampToDomainBounds_ON切替時に既存の選択矩形がクリップされる()
     {
         var control = CreateControl();
-        control.SetCoordinateTransform(new CoordinatePort(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
         var rects = new List<RectD>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
@@ -239,7 +241,7 @@ public class DragRectControlStateTests
     public void ClampToDomainBounds_ON切替時に境界内の矩形は変更されない()
     {
         var control = CreateControl();
-        control.SetCoordinateTransform(new CoordinatePort(p => p, p => p, () => new SizeD(200, 200)));
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new SizeD(200, 200)));
         var rects = new List<RectD>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 

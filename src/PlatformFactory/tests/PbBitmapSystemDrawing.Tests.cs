@@ -1,9 +1,11 @@
 using System.Runtime.Versioning;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Media;
 using Xunit;
 using DrawingBitmap = System.Drawing.Bitmap;
 using DrawingImageLockMode = System.Drawing.Imaging.ImageLockMode;
 using DrawingPixelFormat = System.Drawing.Imaging.PixelFormat;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
 
@@ -48,7 +50,7 @@ public class PbBitmapSystemDrawingTests
     public void ToPbBitmap_ピクセルをコピーする()
     {
         using var sd = CreateSolidDrawingBitmap(4, 4, 0, 0, 255, 255); // 赤・不透明
-        using var bmp = sd.ToPbBitmap();
+        using var bmp = sd.ToEsBitmap();
         Assert.Equal(4, bmp.Size.Width);
         Assert.Equal(4, bmp.Size.Height);
         var px = bmp.GetPixel(1, 1);
@@ -62,7 +64,7 @@ public class PbBitmapSystemDrawingTests
     {
         // 50% アルファの青（BGRA: B=255, G=0, R=0, A=128）
         using var sd = CreateSolidDrawingBitmap(4, 4, 255, 0, 0, 128);
-        using var bmp = sd.ToPbBitmap();
+        using var bmp = sd.ToEsBitmap();
         var px = bmp.GetPixel(1, 1);
         Assert.Equal((byte)255, px.B);
         Assert.Equal((byte)0, px.G);
@@ -124,7 +126,7 @@ public class PbBitmapSystemDrawingTests
     public void SystemDrawing_往復変換でサイズが一致する()
     {
         using var sd = CreateSolidDrawingBitmap(4, 4, 0, 0, 255, 255);
-        using var bmp = sd.ToPbBitmap();
+        using var bmp = sd.ToEsBitmap();
         using var back = bmp.ToSystemDrawingBitmap();
         Assert.Equal(sd.Width, back.Width);
         Assert.Equal(sd.Height, back.Height);

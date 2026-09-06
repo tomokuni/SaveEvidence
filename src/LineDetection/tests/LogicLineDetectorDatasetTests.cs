@@ -1,6 +1,7 @@
 using Estable.AvaloniaUI.Platform.Imaging;
 using System.Text.Json;
 using Xunit;
+using PbBitmap = Estable.Media.EsBitmap;
 
 namespace Estable.AvaloniaUI.LineDetection.Tests;
 

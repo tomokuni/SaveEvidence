@@ -1,5 +1,6 @@
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable;
+using PbBitmap = Estable.Media.EsBitmap;
 using OpenCvSharp;
 
 namespace Estable.AvaloniaUI.LineDetection;

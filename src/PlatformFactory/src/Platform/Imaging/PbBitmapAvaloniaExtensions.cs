@@ -6,6 +6,8 @@ using SkiaSharp;
 using Color = System.Drawing.Color;
 using AvaloniaColor = Avalonia.Media.Color;
 using Point = Estable.PointInt;
+using PbBitmap = Estable.Media.EsBitmap;
+using PbBitmapDrawingExtensions = Estable.Media.BitmapDrawingExtensions;
 
 namespace Estable.AvaloniaUI.Platform.Imaging;
 

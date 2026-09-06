@@ -14,6 +14,8 @@ using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable;
 using System.Collections.Specialized;
+using PbBitmap = Estable.Media.EsBitmap;
+using Estable.Media;
 
 namespace DragRectControl.Sample.Views;
 
@@ -125,7 +127,7 @@ public partial class MainWindow : Window
         // 座標ポート: ドメイン = 画像ピクセル（800x500）、DIP = 表示座標（ズーム倍率で変換）
         // SetCoordinateTransform は内部で InvalidateVisual を呼び、ズーム時のちらつきを防ぐ
         // Forward = DIP→ドメイン（_zoom で除算 = 画像ピクセルへ）、Inverse = ドメイン→DIP（_zoom で乗算）
-        DragRect.SetCoordinateTransform(new CoordinatePort(
+        DragRect.SetCoordinateTransform(new CoordTransform(
             p => new PointD(p.X / _zoom, p.Y / _zoom),
             p => new PointD(p.X * _zoom, p.Y * _zoom),
             () => new SizeD(ImageWidth, ImageHeight)));

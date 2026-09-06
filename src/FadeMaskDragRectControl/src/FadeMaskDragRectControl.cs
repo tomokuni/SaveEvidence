@@ -8,7 +8,9 @@ using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable;
+using Estable.Media;
 using AvaloniaPoint = Avalonia.Point;
+using PbBitmap = Estable.Media.EsBitmap;
 using AvaloniaRect = Avalonia.Rect;
 using AvaloniaSize = Avalonia.Size;
 using Microsoft.Extensions.Logging;
@@ -410,7 +412,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// DragRect / FadeMask / Loupe の 3 コントロールへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordinatePort? port)
+    public void SetCoordinateTransform(ICoordTransform? port)
     {
         _dragRect.SetCoordinateTransform(port);
         _overlay.SetCoordinateTransform(port);
