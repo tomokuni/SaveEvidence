@@ -43,9 +43,6 @@
     <Project Path="src/PlatformFactory/src/PlatformFactory.csproj" />
     <Project Path="src/PlatformFactory/tests/PlatformFactory.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Primitives/">
-    <Project Path="src/Primitives/src/Primitives.csproj" />
-  </Folder>
   <Folder Name="/src/SnipCaptureUI/">
     <Project Path="src/SnipCaptureUI/sample/SnipCaptureUI.Sample.csproj" />
     <Project Path="src/SnipCaptureUI/src/SnipCaptureUI.csproj" />

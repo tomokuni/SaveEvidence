@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Estable.AvaloniaUI.Platform.Geometry;
-using Estable.Primitives;
+using Estable;
 
 namespace Estable.AvaloniaUI.Platform;
 

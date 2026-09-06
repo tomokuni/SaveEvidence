@@ -3,7 +3,7 @@ using AvaloniaRect = Avalonia.Rect;
 using AvaloniaSize = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
-using Estable.Primitives;
+using Estable;
 
 namespace Estable.AvaloniaUI.FadeMask;
 

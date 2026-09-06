@@ -5,7 +5,7 @@ using Avalonia.Media.Imaging;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
-using Estable.Primitives;
+using Estable;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMask.Tests;

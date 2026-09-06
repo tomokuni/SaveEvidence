@@ -1,6 +1,6 @@
 using Avalonia;
 using Rect = Avalonia.Rect;
-using Estable.Primitives;
+using Estable;
 using System.Reflection;
 using Xunit;
 

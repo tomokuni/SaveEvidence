@@ -1,6 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using Estable.Primitives;
+using Estable;
 using Xunit;
 using Avalonia.Headless.XUnit;
 

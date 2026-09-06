@@ -5,7 +5,7 @@ using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
-using Estable.Primitives;
+using Estable;
 
 namespace FadeMaskControl.Sample.ViewModels;
 

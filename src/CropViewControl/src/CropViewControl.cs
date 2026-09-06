@@ -8,7 +8,7 @@ using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
-using Estable.Primitives;
+using Estable;
 
 namespace Estable.AvaloniaUI.CropView;
 

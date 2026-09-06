@@ -1,6 +1,6 @@
 using Avalonia.Media;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Primitives;
+using Estable;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;

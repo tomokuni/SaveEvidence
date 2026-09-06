@@ -12,7 +12,7 @@ using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Primitives;
+using Estable;
 using System.Collections.Specialized;
 
 namespace DragRectControl.Sample.Views;

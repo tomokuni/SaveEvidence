@@ -1,4 +1,4 @@
-using Estable.Primitives;
+using Estable;
 using Xunit;
 
 namespace Estable.AvaloniaUI.DragRect.Tests;

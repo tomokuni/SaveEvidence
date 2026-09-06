@@ -1,5 +1,5 @@
 using Avalonia.Media;
-using Estable.Primitives;
+using Estable;
 
 namespace Estable.AvaloniaUI.CropView;
 

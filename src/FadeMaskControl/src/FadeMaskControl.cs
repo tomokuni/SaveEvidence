@@ -4,7 +4,7 @@ using Avalonia.Media;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.FadeMask.Logging;
 using Estable.AvaloniaUI.Platform;
-using Estable.Primitives;
+using Estable;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

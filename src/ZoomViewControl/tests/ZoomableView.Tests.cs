@@ -7,10 +7,10 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using AvaloniaPoint = Avalonia.Point;
 using AvaloniaVector = Avalonia.Vector;
-using Point = Estable.Primitives.PointD;
+using Point = Estable.PointD;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
-using Vector = Estable.Primitives.VectorD;
+using Vector = Estable.VectorD;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 

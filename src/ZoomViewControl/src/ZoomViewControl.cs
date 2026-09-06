@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 using Estable.AvaloniaUI.Platform.Geometry;
-using Estable.Primitives;
+using Estable;
 using Estable.AvaloniaUI.ZoomView.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

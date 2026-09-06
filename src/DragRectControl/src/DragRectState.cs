@@ -1,7 +1,7 @@
 using Estable.AvaloniaUI.DragRect.Selection;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
-using Estable.Primitives;
+using Estable;
 
 namespace Estable.AvaloniaUI.DragRect;
 

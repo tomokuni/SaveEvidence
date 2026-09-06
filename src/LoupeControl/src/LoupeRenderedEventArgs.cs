@@ -1,4 +1,4 @@
-using Estable.Primitives;
+using Estable;
 using Estable.AvaloniaUI.Platform.Imaging;
 
 namespace Estable.AvaloniaUI.Loupe;

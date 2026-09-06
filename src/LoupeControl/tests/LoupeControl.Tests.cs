@@ -11,7 +11,7 @@ using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Primitives;
+using Estable;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;

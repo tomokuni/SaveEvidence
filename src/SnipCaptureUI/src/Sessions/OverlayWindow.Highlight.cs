@@ -5,7 +5,7 @@ using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
-using Estable.Primitives;
+using Estable;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 

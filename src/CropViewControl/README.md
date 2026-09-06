@@ -60,7 +60,7 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 ```csharp
 using Estable.AvaloniaUI.CropView;
 using Estable.AvaloniaUI.FadeMaskDragRect; // FadeMaskDragRectMode
-using Estable.Primitives; // RectD / PointD
+using Estable; // RectD / PointD
 ```
 
 ## 5. クイックスタート

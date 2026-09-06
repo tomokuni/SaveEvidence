@@ -1,6 +1,6 @@
 using Avalonia.Media;
 using Estable.AvaloniaUI.Platform;
-using Estable.Primitives;
+using Estable;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMask.Tests;

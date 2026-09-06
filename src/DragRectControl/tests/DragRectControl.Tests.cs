@@ -9,9 +9,9 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Point = Avalonia.Point;
-using Rect = Estable.Primitives.RectD;
+using Rect = Estable.RectD;
 using Size = Avalonia.Size;
-using Estable.Primitives;
+using Estable;
 using Xunit;
 
 namespace Estable.AvaloniaUI.DragRect.Tests;

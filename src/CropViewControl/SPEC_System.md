@@ -75,8 +75,8 @@ flowchart TB
 
 - `CropViewControl.cs` → `ZoomViewControl` / `FadeMaskDragRectControl` / `Avalonia`
 - `CropViewControl.cs` → `LoupeControl`（ルーペへの矩形描画のため `LoupeRenderedEventArgs`）
-- `OverlayRect.cs` → `Estable.Primitives`（`RectD`）/ `Avalonia.Media`（`Color`）
-- `OverlayLineStyle.cs` → `Estable.Primitives` 非依存（純粋 enum）
+- `OverlayRect.cs` → `Estable`（`RectD`）/ `Avalonia.Media`（`Color`）
+- `OverlayLineStyle.cs` → `Estable` 非依存（純粋 enum）
 
 ## 6. 例外処理ポリシー
 

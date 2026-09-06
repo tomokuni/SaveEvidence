@@ -5,7 +5,7 @@ using Avalonia.Platform;
 using SkiaSharp;
 using Color = System.Drawing.Color;
 using AvaloniaColor = Avalonia.Media.Color;
-using Point = Estable.Primitives.PointInt;
+using Point = Estable.PointInt;
 
 namespace Estable.AvaloniaUI.Platform.Imaging;
 

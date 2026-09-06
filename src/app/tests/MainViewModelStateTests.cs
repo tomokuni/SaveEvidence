@@ -1,7 +1,7 @@
 using app.Models;
 using app.ViewModels;
 using Estable.AvaloniaUI.LineDetection;
-using Estable.Primitives;
+using Estable;
 using Xunit;
 using MockSettingsService = app.Tests.MainViewModelTests.MockSettingsService;
 

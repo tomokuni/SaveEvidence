@@ -23,7 +23,7 @@
     <ProjectReference Include="..\..\FadeMaskDragRectControl\src\FadeMaskDragRectControl.csproj" />
     <!-- 画像ビューポート（拡大・パン・Fit） -->
     <ProjectReference Include="..\..\ZoomViewControl\src\ZoomViewControl.csproj" />
-    <ProjectReference Include="..\..\Primitives\src\Primitives.csproj" />
+    <ProjectReference Include="..\..\..\..\Estable\src\Primitives\src\Primitives.csproj" />
   </ItemGroup>
 
 </Project>

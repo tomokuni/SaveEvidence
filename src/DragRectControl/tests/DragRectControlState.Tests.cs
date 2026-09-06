@@ -1,7 +1,7 @@
 using Estable.AvaloniaUI.Platform;
 using Avalonia.Media;
-using Rect = Estable.Primitives.RectD;
-using Estable.Primitives;
+using Rect = Estable.RectD;
+using Estable;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

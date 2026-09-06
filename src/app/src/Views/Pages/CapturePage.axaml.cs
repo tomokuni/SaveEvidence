@@ -7,7 +7,7 @@ using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.AvaloniaUI.ZoomView;
-using Estable.Primitives;
+using Estable;
 using app.Icons;
 using app.Logging;
 using app.Models;
