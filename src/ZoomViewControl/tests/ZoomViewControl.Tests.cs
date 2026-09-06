@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
@@ -19,11 +20,7 @@ public class ZoomViewControlTests
 {
     /// <summary>テスト用の画像（指定サイズ・白の単色）を生成する。</summary>
     private static PbBitmapAvaloniaImage CreateBitmap(int w, int h)
-    {
-        var bmp = PbBitmap.Create(w, h);
-        bmp.Clear(b: 255, g: 255, r: 255, a: 255);
-        return new PbBitmapAvaloniaImage(bmp);
-    }
+        => PbBitmapAvaloniaExtensions.CreateAvaloniaImage(w, h, Colors.White);
 
     /// <summary>テスト用の ZoomViewControl（画像を設定済み）を生成する。</summary>
     private static ZoomViewControl CreateView()

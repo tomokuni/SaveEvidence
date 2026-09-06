@@ -53,6 +53,24 @@ public static class PbBitmapAvaloniaExtensions
         return bitmap.ToAvaloniaWriteableBitmap();
     }
 
+    /// <summary>単色の <see cref="PbBitmapAvaloniaImage"/> を生成する（Avalonia 表示境界の <see cref="IImage"/>）。</summary>
+    /// <param name="width">幅（ピクセル）。正の値。</param>
+    /// <param name="height">高さ（ピクセル）。正の値。</param>
+    /// <param name="color">塗りつぶし色（Avalonia Color。アルファ乗算して書き込む）。</param>
+    /// <returns>単色の <see cref="PbBitmapAvaloniaImage"/>（破棄は呼び出し側）。</returns>
+    /// <remarks>
+    /// <c>WriteableBitmap</c> を生成せず、<see cref="PbBitmap"/> を内包する <see cref="PbBitmapAvaloniaImage"/> を返す<br/>
+    /// （テスト・サンプルで多用する単色画像を、表示境界の <see cref="IImage"/> として簡便に生成する）。<br/>
+    /// <see cref="CreateAvaloniaWriteableBitmap"/>（<see cref="WriteableBitmap"/> を返す）とは異なり、<br/>
+    /// Skia 直アクセス（ゼロコピー）で描画されるため画像生成が高速。
+    /// </remarks>
+    public static PbBitmapAvaloniaImage CreateAvaloniaImage(int width, int height, AvaloniaColor color)
+    {
+        var colorArgb = Color.FromArgb(color.A, color.R, color.G, color.B);
+        var bitmap = PbBitmap.Create(width, height, colorArgb);
+        return new PbBitmapAvaloniaImage(bitmap);
+    }
+
     /// <summary>Avalonia Bitmap からラッパーを生成する（複製するため元は変更されない）。</summary>
     /// <param name="bitmap">変換元の Avalonia Bitmap。</param>
     /// <returns>生成されたビットマップ。</returns>

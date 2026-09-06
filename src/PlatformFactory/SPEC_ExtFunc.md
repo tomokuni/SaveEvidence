@@ -70,7 +70,7 @@
 - グローバルホットキー（`IGlobalHotKeyService<T>`）
 - 座標変換ポート（`ICoordinatePort` / `CoordinatePort` / `ScreenConverter`）
 - UI ハング監視（`Watchdog`）
-- 画像ユーティリティ（`BitmapExtensions` / `PbBitmap` / `PbBitmapExtensions` / `ImageProcessor`）
+- 画像ユーティリティ（`BitmapExtensions` / `PbBitmap` / `PbBitmapAvaloniaExtensions` / `PbBitmapDrawingExtensions` / `ImageProcessor`）
 
 ## 3. 外部利用条件
 
@@ -84,7 +84,7 @@
 
 ```csharp
 using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordinatePort / CoordinatePort / ScreenConverter / Watchdog 等
-using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / PbBitmap / PbBitmapExtensions / ImageProcessor 等
+using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / PbBitmap / PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions / ImageProcessor 等
 ```
 
 ## 4. 基本的な使用方法
@@ -205,41 +205,60 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | --- | --- | --- |
 | `FromAColor` | `static Color FromAColor(byte alpha, Color baseColor)` | 基準色（名前付き色等）と不透明度から色を生成する。既存の `Color.FromArgb(alpha, r, g, b)` は RGB 直指定で何色か判別しにくいため、基準色を指定して可読性を向上する（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
 
-#### 5.2.6 PbBitmap（ピクセル操作）と PbBitmapExtensions（生成・変換）
+#### 5.2.6 PbBitmap（ピクセル操作）と PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions（生成・変換）
 
 `PbBitmap` は内部表現（`SKBitmap` BGRA8888・Premul）と、`SkiaSharp` のみに依存するピクセル操作・生成/変換（`Create` / `FromSKBitmap` / `ToSKBitmap`）を提供するコア型です。  
-Avalonia / System.Drawing 依存の生成・変換は `PbBitmapExtensions`（`this Bitmap` / `this DrawingBitmap` と `this PbBitmap` の拡張メソッド）に分離され、コアは画像種別（Avalonia / System.Drawing）に依存しません。  
+Avalonia 依存の生成・変換は `PbBitmapAvaloniaExtensions`（`this Bitmap` / `this PbBitmap` の拡張メソッド）、System.Drawing（Windows）依存の生成・変換は `PbBitmapDrawingExtensions`（`this DrawingBitmap` / `this PbBitmap` の拡張メソッド）に分離され、コアは画像種別（Avalonia / System.Drawing）に依存しません。  
 
 **PbBitmap（コア）**:
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
 | 生成 | `Create` | `static PbBitmap Create(int width, int height)` | 指定サイズの空ビットマップ（BGRA8888・Premul）を生成。`SkiaSharp` のみに依存 |
+| 生成 | `Create` | `static PbBitmap Create(int width, int height, Color color)` | 指定サイズのビットマップを生成し、全ピクセルを指定色で塗りつぶす（`Create` + `Clear` を1回で行う）。テスト・サンプルで多用する単色画像生成を簡便化 |
 | 生成 | `FromSKBitmap` | `static PbBitmap FromSKBitmap(SKBitmap bitmap)` | 内部 `SKBitmap` から生成（**所有権を譲り受け**、破棄に連動）。`SkiaSharp` のみに依存 |
-| プロパティ | `PixelWidth` / `PixelHeight` | `int` | 幅 / 高さ（ピクセル） |
+| プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（ピクセル） |
+| プロパティ | `Size` | `Size` | 幅・高さ（ピクセル。System.Drawing.Size） |
 | プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（パディング含む） |
+| プロパティ | `Address` | `nint` | ピクセルデータ先頭アドレス（BGRA8888） |
 | プロパティ | `IsDisposed` | `bool` | 破棄済みか |
 | ピクセル | `GetPixel` | `(byte B, byte G, byte R, byte A) GetPixel(int x, int y)` | 指定座標の BGRA（アルファ乗算済み）を取得。範囲外は `IndexOutOfRangeException` |
+| ピクセル | `GetPixel` | `Color GetPixel(Point point)` | 指定座標の BGRA を `System.Drawing.Color` で取得 |
 | ピクセル | `SetPixel` | `void SetPixel(int x, int y, byte b, byte g, byte r, byte a)` | 指定座標の BGRA（アルファ乗算済み）を設定 |
+| ピクセル | `SetPixel` | `void SetPixel(Point point, Color color)` | 指定座標へ `System.Drawing.Color` を設定 |
+| ピクセル | `TrySetPixel` | `bool TrySetPixel(int x, int y, Color color)` | 指定座標へ色を設定（範囲外は `false`。描画での範囲外無視に使用） |
 | ピクセル | `Clear` | `void Clear(byte b, byte g, byte r, byte a)` | 全ピクセルを指定色（BGRA）で塗りつぶし |
+| ピクセル | `Clear` | `void Clear(Color color)` | 全ピクセルを指定色（System.Drawing.Color）で塗りつぶし |
 | 変換 | `ToSKBitmap` | `SKBitmap ToSKBitmap()` | 内部インスタンスを返す（共有参照。呼び出し側で Dispose しない）。`SkiaSharp` のみに依存 |
 | その他 | `Clone` | `PbBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
+| その他 | `Crop` | `PbBitmap Crop(Rectangle rect)` / `PbBitmap Crop(int x, int y, int width, int height)` | 指定矩形領域を切り出す（要求サイズ。ソース範囲外は透明パディング） |
 
-**PbBitmapExtensions（生成・変換）**:
+**PbBitmapAvaloniaExtensions（生成・変換・ピクセル操作）**:
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
 | 生成 | `ToPbBitmap` | `PbBitmap ToPbBitmap(this Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。元は変更されない。`CopyPixels` ベースで高速・可逆） |
-| 生成 | `ToPbBitmap` | `PbBitmap ToPbBitmap(this DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から生成（複製。**Windows 専用**） |
-| 変換 | `Size` | `PixelSize Size()` | 画像サイズ（Avalonia `PixelSize`）。`this PbBitmap` のインスタンス拡張 |
-| 変換 | `ToAvaloniaBitmap` | `Bitmap ToAvaloniaBitmap()` | Avalonia `Bitmap` へ変換（複製を所有。`WriteableBitmap.Lock` ベース） |
-| 変換 | `ToImage` | `IImage ToImage()` | Avalonia の画像入力（`IImage`）として公開するアダプタ（`PbBitmapImage`）を生成（**ゼロコピー・複製なし**） |
-| 変換 | `ToSystemDrawingBitmap` | `DrawingBitmap ToSystemDrawingBitmap()` | `System.Drawing.Bitmap`（Format32bppPArgb）へ変換（複製。**Windows 専用**） |
-| ピクセル | `Clear` | `void Clear(AvaloniaColor color)` | 全ピクセルを指定色（Avalonia Color）で塗りつぶし（アルファ乗算） |
+| 生成 | `ToAvaloniaWriteableBitmap` | `WriteableBitmap ToAvaloniaWriteableBitmap(this PbBitmap bitmap)` | Avalonia `WriteableBitmap` へ変換（複製を所有。`WriteableBitmap.Lock` ベース） |
+| 生成 | `ToAvaloniaImage` | `IImage ToAvaloniaImage(this PbBitmap bitmap)` | Avalonia の画像入力（`IImage`）として公開するアダプタ（`PbBitmapAvaloniaImage`）を生成（**ゼロコピー・複製なし**） |
+| 生成 | `CreateAvaloniaWriteableBitmap` | `static WriteableBitmap CreateAvaloniaWriteableBitmap(int width, int height, AvaloniaColor color)` | 単色の Avalonia `WriteableBitmap` を生成（テスト・サンプルの重複色塗りを一元化） |
+| 生成 | `CreateAvaloniaImage` | `static PbBitmapAvaloniaImage CreateAvaloniaImage(int width, int height, AvaloniaColor color)` | 単色の `PbBitmapAvaloniaImage` を生成（`WriteableBitmap` を生成しないゼロコピー版。`Source` 設定等で高速） |
+| 変換 | `Size` | `PixelSize Size(this PbBitmap bitmap)` | 画像サイズ（Avalonia `PixelSize`）。`this PbBitmap` のインスタンス拡張 |
+| 変換 | `Crop` | `PbBitmap Crop(this PbBitmap bitmap, PixelRect rect)` | Avalonia `PixelRect` で切り出し（コアの `Crop` へ委譲） |
+| ピクセル | `GetPixel` | `AvaloniaColor GetPixel(this PbBitmap bitmap, PixelPoint point)` | 指定座標のピクセルを Avalonia Color で取得 |
+| ピクセル | `SetPixel` | `void SetPixel(this PbBitmap bitmap, PixelPoint point, AvaloniaColor color)` | 指定座標へ Avalonia Color を設定 |
+| ピクセル | `TrySetPixel` | `bool TrySetPixel(this PbBitmap bitmap, int x, int y, AvaloniaColor color)` | 指定座標へ Avalonia Color を設定（範囲外は `false`） |
+| ピクセル | `Clear` | `void Clear(this PbBitmap bitmap, AvaloniaColor color)` | 全ピクセルを指定色（Avalonia Color）で塗りつぶし（アルファ乗算） |
 
-> `FromSKBitmap` は引数の所有権を譲り受け、本型の破棄時に `Dispose` します。`ToSKBitmap` は内部インスタンスをそのまま返すため呼び出し側で `Dispose` しないでください。`ToAvaloniaBitmap` / `ToSystemDrawingBitmap` は複製を返すため呼び出し側が所有します。`ToImage` は内包する `PbBitmap` の所有権を生成した `PbBitmapImage` へ移すため、呼び出し側は元の `PbBitmap` を破棄しないでください。
+**PbBitmapDrawingExtensions（System.Drawing・Windows 専用）**:
 
-`PbBitmapImage` は `PbBitmap` を内包して `IImage` として公開するアダプタです。`Draw` は `ISkiaSharpApiLeaseFeature` を取得して `SKCanvas` へ直接描画します（`WriteableBitmap` / `Bitmap` を生成しないゼロコピー描画）。破棄は `Dispose` で行い、内包 `PbBitmap` の所有権を保持します。
+| 種別 | メンバー | シグネチャ | 説明 |
+| --- | --- | --- | --- |
+| 生成 | `ToPbBitmap` | `PbBitmap ToPbBitmap(this DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から生成（複製。**Windows 専用**・`[SupportedOSPlatform("windows")]`） |
+| 変換 | `ToSystemDrawingBitmap` | `DrawingBitmap ToSystemDrawingBitmap(this PbBitmap bitmap)` | `System.Drawing.Bitmap`（Format32bppPArgb）へ変換（複製。**Windows 専用**・`[SupportedOSPlatform("windows")]`） |
+
+> `FromSKBitmap` は引数の所有権を譲り受け、本型の破棄時に `Dispose` します。`ToSKBitmap` は内部インスタンスをそのまま返すため呼び出し側で `Dispose` しないでください。`ToAvaloniaWriteableBitmap` / `ToSystemDrawingBitmap` は複製を返すため呼び出し側が所有します。`ToAvaloniaImage` / `CreateAvaloniaImage` は内包する `PbBitmap` の所有権を生成した `PbBitmapAvaloniaImage` へ移すため、呼び出し側は元の `PbBitmap` を破棄しないでください。
+
+`PbBitmapAvaloniaImage` は `PbBitmap` を内包して `IImage` として公開するアダプタです。`Draw` は `ISkiaSharpApiLeaseFeature` を取得して `SKCanvas` へ直接描画します（`WriteableBitmap` / `Bitmap` を生成しないゼロコピー描画）。破棄は `Dispose` で行い、内包 `PbBitmap` の所有権を保持します。
 
 ### 5.3 イベント
 
@@ -247,7 +266,7 @@ Avalonia / System.Drawing 依存の生成・変換は `PbBitmapExtensions`（`th
 
 ### 5.4 型
 
-公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` / `PbBitmap` / `PbBitmapImage` / `PbBitmapExtensions` / `ImageProcessor` です。
+公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` / `PbBitmap` / `PbBitmapAvaloniaImage` / `PbBitmapAvaloniaExtensions` / `PbBitmapDrawingExtensions` / `ImageProcessor` です。
 プラットフォーム固有実装（Win / NoOp 系）と内部ユーティリティ（`CoordinateMath` / `PlatformLog`）はすべて internal（非公開）です。公開 API はプラットフォーム非依存型のみを使用します。
 
 #### 5.4.1 PlatformFactory

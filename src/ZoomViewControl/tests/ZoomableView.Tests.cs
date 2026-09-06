@@ -24,11 +24,7 @@ public class ZoomableViewTests
 {
     /// <summary>テスト用の画像（指定サイズ・白の単色）を生成する。</summary>
     private static PbBitmapAvaloniaImage CreateBitmap(int w, int h)
-    {
-        var bmp = PbBitmap.Create(w, h);
-        bmp.Clear(b: 255, g: 255, r: 255, a: 255);
-        return new PbBitmapAvaloniaImage(bmp);
-    }
+        => PbBitmapAvaloniaExtensions.CreateAvaloniaImage(w, h, Colors.White);
 
     /// <summary>テスト用の ZoomableView を生成する（画像 1000x500 を設定・400x200 に配置）。</summary>
     private static ZoomableView CreateView()

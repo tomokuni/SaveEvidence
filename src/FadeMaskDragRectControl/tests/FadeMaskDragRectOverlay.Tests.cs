@@ -17,7 +17,7 @@ public class FadeMaskDragRectOverlayTests
 {
     /// <summary>テスト用の単色 Bitmap（白）を生成する。</summary>
     private static PbBitmap CreateSolidBitmap(int width, int height)
-        => PbBitmap.Create(width, height, System.Drawing.Color.FromArgb(255, 255, 255, 255));
+        => PbBitmap.Create(width, height, System.Drawing.Color.White);
 
     /// <summary>選択矩形破線オーバーレイが領域内にピクセルを描画することを検証する。</summary>
     [Fact]

@@ -95,8 +95,9 @@ flowchart TB
         Efr["ElementFinderResults<br/>public readonly record struct"]
         Bmx["BitmapExtensions<br/>public static<br/>Imaging/BitmapExtensions.cs"]
         Ub["PbBitmap<br/>public sealed<br/>Imaging/PbBitmap.cs<br/>（コア：ピクセル操作・Create/FromSKBitmap/ToSKBitmap・IDisposable）"]
-        Ubi["PbBitmapImage<br/>public sealed<br/>Imaging/PbBitmapImage.cs<br/>（IImage アダプタ：Skia 直描画・ゼロコピー・IDisposable）"]
-        Ube["PbBitmapExtensions<br/>public static<br/>Imaging/PbBitmapExtensions.cs<br/>（生成・変換：ToPbBitmap / ToAvaloniaBitmap / ToImage 等 / Avalonia・System.Drawing 依存）"]
+        Ubi["PbBitmapAvaloniaImage<br/>public sealed<br/>Imaging/PbBitmapAvaloniaImage.cs<br/>（IImage アダプタ：Skia 直描画・ゼロコピー・IDisposable）"]
+        Ube["PbBitmapAvaloniaExtensions<br/>public static<br/>Imaging/PbBitmapAvaloniaExtensions.cs<br/>（生成・変換：ToPbBitmap / ToAvaloniaWriteableBitmap / ToAvaloniaImage 等 / Avalonia 依存）"]
+        Ubd["PbBitmapDrawingExtensions<br/>public static<br/>Imaging/PbBitmapDrawingExtensions.cs<br/>（生成・変換：ToPbBitmap / ToSystemDrawingBitmap / System.Drawing・Windows 専用）"]
         Img["ImageProcessor<br/>public static<br/>Imaging/ImageProcessor.cs<br/>（切り出し・ウィンドウ検出）"]
         Win["Win 実装群<br/>internal sealed<br/>Win/（Win32 API・P-Invoke 集約）"]
         NoOp["NoOp 実装群<br/>internal sealed<br/>NoOp/（シングルトン）"]
@@ -221,8 +222,9 @@ flowchart TB
 | `BitmapExtensions.CopyRegionWithPadding` / `ExtractRegion` | 範囲外許容の領域コピー / 矩形切り出し |
 | `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |
 | `PbBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー（コア）。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、`SkiaSharp` のみに依存したピクセル操作と `Create` / `FromSKBitmap` / `ToSKBitmap`（生成・変換）を提供。静的共有状態を持たないため並列・大規模利用に適する |
-| `PbBitmapImage` | `PbBitmap` を内包して Avalonia `IImage` として公開するアダプタ。`Draw` は `ISkiaSharpApiLeaseFeature` を取得して `SKCanvas` へ直接描画（`WriteableBitmap` / `Bitmap` を生成しないゼロコピー描画）。破棄は `Dispose` で行い、内包 `PbBitmap` の所有権を保持する |
-| `PbBitmapExtensions` | `PbBitmap` の生成・変換拡張。`ToPbBitmap`（`this Bitmap` / `this DrawingBitmap`）と `To～` / `ToImage` / `Size` / `Clear(AvaloniaColor)`（`this PbBitmap`）を提供し、Avalonia / System.Drawing との変換を閉じる |
+| `PbBitmapAvaloniaImage` | `PbBitmap` を内包して Avalonia `IImage` として公開するアダプタ。`Draw` は `ISkiaSharpApiLeaseFeature` を取得して `SKCanvas` へ直接描画（`WriteableBitmap` / `Bitmap` を生成しないゼロコピー描画）。破棄は `Dispose` で行い、内包 `PbBitmap` の所有権を保持する |
+| `PbBitmapAvaloniaExtensions` | `PbBitmap` の生成・変換拡張（Avalonia）。`ToPbBitmap`（`this Bitmap`）/ `ToAvaloniaWriteableBitmap` / `ToAvaloniaImage` / `CreateAvaloniaWriteableBitmap` / `CreateAvaloniaImage` / `Size` / `Crop(PixelRect)` / `GetPixel` / `SetPixel` / `TrySetPixel` / `Clear(AvaloniaColor)`（`this PbBitmap`）を提供し、Avalonia との変換を閉じる |
+| `PbBitmapDrawingExtensions` | `PbBitmap` の生成・変換拡張（System.Drawing・Windows 専用・`[SupportedOSPlatform("windows")]`）。`ToPbBitmap`（`this DrawingBitmap`）/ `ToSystemDrawingBitmap`（`this PbBitmap`）を提供する |
 | `ImageProcessor` | 画像の切り出し・ウィンドウ領域検出を提供する静的ユーティリティ。`PbBitmap` に対してピクセルレベルの操作を行い、ピクセル演算をコアに委譲する |
 
 ### 6.7 内部実装（Win 系）
