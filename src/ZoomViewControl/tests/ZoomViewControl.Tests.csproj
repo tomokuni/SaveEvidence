@@ -25,7 +25,7 @@
     <ProjectReference Include="..\src\ZoomViewControl.csproj" />
     <!-- テストは PbBitmap（テスト画像生成・Skia 直描画）を使用するため、PlatformFactory を参照する -->
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
-    <ProjectReference Include="..\..\..\..\Estable\src\Estable.csproj" />
+    <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
   </ItemGroup>
 
   <!-- xUnit 並列化設定（Avalonia ヘッドレスアセンブリ間の静的競合を防ぐためアセンブリ間の並列を無効化） -->

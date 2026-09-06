@@ -31,7 +31,7 @@
     <ProjectReference Include="..\..\SnipCaptureUI\src\SnipCaptureUI.csproj" />
     <!-- SnipCaptureUI が内部で使用する要素検出（ウィンドウ列挙）機能 -->
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
-    <ProjectReference Include="..\..\..\..\Estable\src\Estable.csproj" />
+    <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
   </ItemGroup>
 
   <ItemGroup>

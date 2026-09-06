@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\DragRectControl.csproj" />
-    <ProjectReference Include="..\..\..\..\Estable\src\Estable.csproj" />
+    <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
   </ItemGroup>
 
 </Project>
