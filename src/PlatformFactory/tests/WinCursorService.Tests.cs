@@ -1,6 +1,5 @@
 using Estable.AvaloniaUI.Platform.Win;
 using Avalonia;
-using Avalonia.Headless.XUnit;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
@@ -8,12 +7,14 @@ namespace Estable.AvaloniaUI.Platform.Tests;
 /// <summary><see cref="WinCursorService"/> と <see cref="CursorNative"/>（Win32 P/Invoke）の単体テスト。</summary>
 /// <remarks>
 /// Win32 API は実環境で動作するため、例外なく呼び出せることと状態追跡（ShowCursor の重複呼び出し抑制）を確認する。<br/>
-/// ヘッドレス環境でカーソル位置が OS と完全に同期しない場合があるため、位置の厳密一致は検証しない。<br/>
+/// <see cref="WinCursorService"/> は UI スレッド（Dispatcher）に依存せず <c>PixelPoint</c> のみを扱うため、<br/>
+/// Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）ではなく実 OS 直列コレクション（<see cref="Win32Collection"/>）で検証する。<br/>
+/// ヘッドレス環境でカーソル位置が OS と完全に同期しない場合があるため、位置の厳密一致は検証しない。
 /// </remarks>
-[Collection("AvaloniaHeadless")]
+[Collection("Win32")]
 public class WinCursorServiceTests
 {
-    [AvaloniaFact]
+    [Fact]
     public void WinCursorService_GetCursorScreenPointが現在位置を返す()
     {
         var service = new WinCursorService();
@@ -24,7 +25,7 @@ public class WinCursorServiceTests
         Assert.True(pos.X != int.MinValue || pos.Y != int.MinValue);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void WinCursorService_SetCursorScreenPointがカーソルを移動する()
     {
         var service = new WinCursorService();
@@ -38,7 +39,7 @@ public class WinCursorServiceTests
         Assert.True(after.X != int.MinValue || after.Y != int.MinValue);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void WinCursorService_ShowCursorが状態を追跡する()
     {
         var service = new WinCursorService();
@@ -53,7 +54,7 @@ public class WinCursorServiceTests
         Assert.True(true);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void POINT_コンストラクタとプロパティ()
     {
         var pt = new WinNative.POINT(10, 20);

@@ -35,34 +35,19 @@ public sealed class BottomAlignWrapPanel : Panel
     {
         var wrap = !double.IsInfinity(availableSize.Width) && availableSize.Width > 0;
 
-        double x = 0;
-        double y = 0;
-        double rowHeight = 0;
-        double maxWidth = 0;
-
+        // 子要素の計測（幅のみ制約する。高さはコンテンツ任せ）→ 計測結果を純粋計算へ委譲
+        var sizes = new List<Size>(Children.Count);
         foreach (var child in Children)
         {
-            // 幅のみ制約し、高さはコンテンツ任せ（行の高さは最大アイテム高さで決まる）
             var constraint = wrap
                 ? new Size(availableSize.Width, double.PositiveInfinity)
                 : new Size(double.PositiveInfinity, double.PositiveInfinity);
             child.Measure(constraint);
-            var size = child.DesiredSize;
-
-            // 行が埋まったら次の行へ（先頭アイテムが幅超過の場合は単独行に置く）
-            if (wrap && x > 0 && x + size.Width > availableSize.Width)
-            {
-                x = 0;
-                y += rowHeight;
-                rowHeight = 0;
-            }
-
-            x += size.Width;
-            rowHeight = Math.Max(rowHeight, size.Height);
-            maxWidth = Math.Max(maxWidth, x);
+            sizes.Add(child.DesiredSize);
         }
 
-        return new Size(maxWidth, y + rowHeight);
+        // 折り返し・行高さ計算は UI 非依存の純粋計算へ委譲（テスト並列性向上）
+        return BottomAlignWrapLayout.Measure(sizes, availableSize.Width, wrap);
     }
 
     /// <summary>子要素を幅で折り返し、各行内で下端揃えして配置する。</summary>
@@ -75,44 +60,18 @@ public sealed class BottomAlignWrapPanel : Panel
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
-        // 行単位に子要素と行高さを収集する
-        var rows = new List<(List<Control> Children, double RowHeight)>();
-        var rowItems = new List<Control>();
-        double x = 0;
-        double rowHeight = 0;
-
+        // 各行の配置計算は UI 非依存の純粋計算へ委譲（テスト並列性向上）
+        var sizes = new List<Size>(Children.Count);
         foreach (var child in Children)
         {
-            var size = child.DesiredSize;
-
-            // 行が埋まったら次の行へ（先頭アイテムが幅超過の場合は単独行に置く）
-            if (x > 0 && x + size.Width > finalSize.Width)
-            {
-                rows.Add((rowItems, rowHeight));
-                rowItems = new List<Control>();
-                x = 0;
-                rowHeight = 0;
-            }
-
-            rowItems.Add(child);
-            x += size.Width;
-            rowHeight = Math.Max(rowHeight, size.Height);
+            sizes.Add(child.DesiredSize);
         }
-        if (rowItems.Count > 0) rows.Add((rowItems, rowHeight));
 
-        // 各行内で下端揃えして配置する
-        double y = 0;
-        foreach (var (children, height) in rows)
+        var rects = BottomAlignWrapLayout.Arrange(sizes, finalSize.Width);
+
+        for (int i = 0; i < Children.Count; i++)
         {
-            x = 0;
-            foreach (var child in children)
-            {
-                var size = child.DesiredSize;
-                // 下端揃え: 行の上端から (行高さ − アイテム高さ) 下げた位置に配置する
-                child.Arrange(new Rect(x, y + height - size.Height, size.Width, size.Height));
-                x += size.Width;
-            }
-            y += height;
+            Children[i].Arrange(rects[i]);
         }
 
         return finalSize;

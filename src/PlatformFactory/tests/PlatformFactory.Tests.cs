@@ -1,5 +1,4 @@
 using Estable.AvaloniaUI.Platform.Win;
-using Avalonia.Headless.XUnit;
 using System.Runtime.Versioning;
 using Xunit;
 
@@ -7,14 +6,15 @@ namespace Estable.AvaloniaUI.Platform.Tests;
 
 /// <summary><see cref="PlatformFactory"/> の単体テスト（実行時プラットフォームに応じた既定実装の生成）。</summary>
 /// <remarks>
-/// テストは Windows 環境で実行される前提（Avalonia.Headless は Windows 上で動作）。<br/>
+/// テストは Windows 環境で実行される前提。<br/>
+/// <see cref="PlatformFactory.CreateCursorService"/> 等は <see cref="OperatingSystem.IsWindows"/> の分岐で実装を生成するだけであり、<br/>
+/// Avalonia ヘッドレス（UI スレッド）を必要としないため <c>[Fact]</c> で並列実行する。<br/>
 /// プラットフォーム分岐（Windows / 他環境）のうち、Windows 側の生成を検証する。<br/>
 /// 他環境（Linux / macOS）の分岐は実機検証が必要なため対象外。
 /// </remarks>
-[Collection("AvaloniaHeadless")]
 public class PlatformFactoryTests
 {
-    [AvaloniaFact]
+    [Fact]
     public void CreateCursorService_WindowsではWinCursorServiceを返す()
     {
         var service = PlatformFactory.CreateCursorService();
@@ -24,7 +24,7 @@ public class PlatformFactoryTests
         Assert.IsType<WinCursorService>(service);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void CreateElementFinder_WindowsではWinElementFinderを返す()
     {
         var finder = PlatformFactory.CreateElementFinder();
@@ -34,7 +34,7 @@ public class PlatformFactoryTests
         Assert.IsType<WinElementFinder>(finder);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void CreateCursorOverrideGuard_WindowsではWinCursorOverrideGuardを返す()
     {
         var guard = PlatformFactory.CreateCursorOverrideGuard();
@@ -44,7 +44,7 @@ public class PlatformFactoryTests
         Assert.IsType<WinCursorOverrideGuard>(guard);
     }
 
-    [AvaloniaFact]
+    [Fact]
     [SupportedOSPlatform("windows")]
     public void CreateCaptureService_WindowsではWinCaptureServiceを返す()
     {
@@ -55,7 +55,7 @@ public class PlatformFactoryTests
         Assert.IsType<WinCaptureService>(service);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void CreateWindowService_WindowsではWinWindowServiceを返す()
     {
         var service = PlatformFactory.CreateWindowService();

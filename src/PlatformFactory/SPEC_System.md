@@ -2,20 +2,23 @@
 
 ## 目次
 
-- [PlatformFactory システム仕様書（SPEC_System）](#platformfactory-システム仕様書spec_system)
+- [PlatformFactory システム仕様書（SPEC\_System）](#platformfactory-システム仕様書spec_system)
   - [目次](#目次)
   - [1. システム概要](#1-システム概要)
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
+    - [3.1 レイヤー構造](#31-レイヤー構造)
+    - [3.2 依存の方向](#32-依存の方向)
   - [4. 例外処理ポリシー](#4-例外処理ポリシー)
+    - [4.1 基本方針](#41-基本方針)
+    - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
   - [5. コンポーネント図](#5-コンポーネント図)
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 PlatformFactory](#61-platformfactory)
     - [6.2 各インターフェース（抽象）](#62-各インターフェース抽象)
     - [6.3 CoordinatePort](#63-coordinateport)
     - [6.4 ScreenConverter](#64-screenconverter)
-    - [6.5 Watchdog](#65-watchdog)
-    - [6.6 その他の公開型](#66-その他の公開型)
+    - [6.5 その他の公開型](#65-その他の公開型)
     - [6.7 内部実装（Win 系）](#67-内部実装win-系)
     - [6.8 内部実装（NoOp 系）](#68-内部実装noop-系)
     - [6.9 内部ユーティリティ](#69-内部ユーティリティ)
@@ -74,7 +77,6 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - キャプチャはバックグラウンド + タイムアウト（上位 AP が制御）で実行し、UI スレッドをブロックしない。
 - 他環境（Linux / macOS）では NoOp 実装（安全なフォールバック）で例外なく動作する（Win32 DLL 依存を回避）。
-- UI スレッド完全ハング時は Watchdog がバックグラウンドからオーバーレイを退避する（最終保険）。
 
 ## 5. コンポーネント図
 
@@ -91,7 +93,6 @@ flowchart TB
         ICd["ICoordinatePort<br/>public interface"]
         Cpt["CoordinatePort<br/>public sealed<br/>Coordinate/CoordinatePort.cs<br/>（Func 委譲の具象実装）"]
         Scn["ScreenConverter<br/>public static<br/>Coordinate/ScreenConverter.cs"]
-        Wdg["Watchdog<br/>public sealed<br/>Watchdog.cs"]
         Efr["ElementFinderResults<br/>public readonly record struct"]
         Bmx["BitmapExtensions<br/>public static<br/>Imaging/BitmapExtensions.cs"]
         Ub["PbBitmap<br/>public sealed<br/>Imaging/PbBitmap.cs<br/>（コア：ピクセル操作・Create/FromSKBitmap/ToSKBitmap・IDisposable）"]
@@ -111,7 +112,7 @@ flowchart TB
     end
     subgraph Host["上位AP（消費側）"]
         DR["DragRectControl<br/>ICoordinatePort / ICursorService / ScreenConverter"]
-        SC["SnipCaptureUI<br/>ICaptureService / IWindowService / IElementFinder / Watchdog / CoordinatePort"]
+        SC["SnipCaptureUI<br/>ICaptureService / IWindowService / IElementFinder / CoordinatePort"]
     end
 
     Fac --> ICr
@@ -134,7 +135,6 @@ flowchart TB
     IGH --> NoOp
     ICd --> Cpt
     Cpt --> Mth
-    Wdg --> IWd
     Scn --> ICd
     Img --> Ub
     Ube --> Ub
@@ -144,7 +144,7 @@ flowchart TB
     Win --> Av
     Win --> Sd
     DR -->|"ファクトリ / インターフェース / 座標ポート"| Fac
-    SC -->|"ファクトリ / インターフェース / Watchdog / CoordinatePort"| Fac
+    SC -->|"ファクトリ / インターフェース / CoordinatePort"| Fac
 ```
 
 ## 6. コンポーネント一覧
@@ -206,15 +206,7 @@ flowchart TB
 - **可視性**: public
 - **依存**: `ICoordinatePort`
 
-### 6.5 Watchdog
-
-- **分類**: 公開クラス（`public sealed class`・Primary Constructor `Watchdog(ILogger?, IWindowService)`）
-- **責務**: UI スレッド完全ハング時の最終保険。バックグラウンドスレッドから `IWindowService.EvacuateWindow` でオーバーレイを退避
-- **公開メンバー**: `Start(TopLevel)` / `Stop()` / `Pulse()`
-- **可視性**: public
-- **依存**: `IWindowService` / `PlatformLog`（internal・ログ定義）
-
-### 6.6 その他の公開型
+### 6.5 その他の公開型
 
 | コンポーネント | 説明 |
 | --- | --- |
@@ -259,7 +251,7 @@ flowchart TB
 | コンポーネント | 説明 |
 | --- | --- |
 | `CoordinateMath` | 画像レイアウト計算の一元化（`CalculateUniformLayout` / `ComputeImageRenderInfo`）。`CoordinatePort.ImageLayout` から委譲される |
-| `PlatformLog` | LoggerMessage ソース生成によるログ定義集約（`LogWatchdogEvacuate` 等） |
+| `PlatformLog` | LoggerMessage ソース生成によるログ定義集約 |
 
 - **可視性**: すべて internal
 

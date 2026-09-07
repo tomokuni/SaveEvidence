@@ -15,7 +15,7 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 /// </remarks>
 internal sealed partial class OverlayWindow
 {
-    /// <summary>ウィンドウ表示時の初期化（フォーカス・ウォッチドッグ）。</summary>
+    /// <summary>ウィンドウ表示時の初期化（フォーカス・Alt+Tab 除外）。</summary>
     private void OnWindowOpened(object? sender, EventArgs e)
     {
         Activate();
@@ -26,7 +26,6 @@ internal sealed partial class OverlayWindow
         }
         // ルーペの表示はマウス移動（DragRect の LoupePositionMoved）が行う。
         // ここで中央に表示するとポインタから遠くに描画され、Source 未設定の市松模様も見えるため表示しない。
-        _watchdog.Start(this);
     }
 
     /// <summary>選択を確定してキャプチャする。</summary>
@@ -48,7 +47,6 @@ internal sealed partial class OverlayWindow
     {
         if (_hasCompleted) return;
         _hasCompleted = true;
-        _watchdog.Stop();
         // キャプチャ矩形（画面物理座標）: AreaSelect は閉区間（+1）、ScreenSelect / WindowSelect はそのまま
         var captureRect = ToCapturePixelRect(_captureType, screenRect);
         // 事前切り出しキャッシュが現在の矩形と一致する場合は再利用する（切り出しスキップ = 高速化）
@@ -172,7 +170,6 @@ internal sealed partial class OverlayWindow
         if (_hasCompleted) return;
         _hasCompleted = true;
         _log.LogOverlayCancel();
-        _watchdog.Stop();
         _onComplete(null, null);
         Close();
     }
@@ -191,7 +188,6 @@ internal sealed partial class OverlayWindow
         // 未完了ならキャンセルとして完了する（Close() 経由のキャンセルを確実にする）
         CompleteCancelled();
         SelectionOverlay.ClearLoupe();
-        _watchdog.Stop();
         // 表示境界の画像（VirtualScreenImage・ルーペ Source は PbBitmap を共有）を解除する
         VirtualScreenImage.Source = null;
         _virtualScreenBitmap?.Dispose();

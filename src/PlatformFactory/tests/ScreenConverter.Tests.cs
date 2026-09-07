@@ -7,8 +7,8 @@ namespace Estable.AvaloniaUI.Platform.Tests;
 
 /// <summary><see cref="ScreenConverter"/> の単体テスト（画面物理座標変換ポート）。</summary>
 /// <remarks>
-/// <see cref="Control"/>（<c>Window</c> / <c>Panel</c>）を使うテストは <c>[AvaloniaFact]</c> で直列実行する。<br/>
-/// 純粋な座標変換のみのテスト（<see cref="ScreenConverter.CreateDipPort"/>）は <c>[Fact]</c> で並列実行する。
+/// <see cref="Window"/>（<c>TopLevel</c> 接続）を使うテストは <c>[AvaloniaFact]</c> で直列実行する。<br/>
+/// <see cref="Panel"/> の未接続（<c>TopLevel</c> 非接続）と純粋な座標変換のみのテストは <c>[Fact]</c> で並列実行する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class ScreenConverterTests
@@ -16,16 +16,6 @@ public class ScreenConverterTests
     // ====================================================================
     // ScreenToLocalDip（画面物理 → コントロールローカル DIP）
     // ====================================================================
-
-    [AvaloniaFact]
-    public void ScreenToLocalDip_ビジュアルツリー未接続時は等価変換する()
-    {
-        var control = new Panel();
-
-        var p = ScreenConverter.ScreenToLocalDip(control, new PixelPoint(10, 20));
-
-        Assert.Equal(new Point(10, 20), p);
-    }
 
     [AvaloniaFact]
     public void ScreenToLocalDip_ウィンドウ内のコントロールで逆変換できる()
@@ -64,8 +54,27 @@ public class ScreenConverterTests
         Assert.Equal(40, roundTrip.Y, 6);
         window.Close();
     }
+}
 
-    [AvaloniaFact]
+/// <summary><see cref="ScreenConverter"/> のビジュアルツリー未接続テスト（<see cref="Control"/> 未接続・並列実行）。</summary>
+/// <remarks>
+/// <see cref="Panel"/> を生成するが <see cref="TopLevel"/> に接続しないため、<c>TopLevel.GetTopLevel</c> は null を返し等価変換される。<br/>
+/// <c>Controls</c> を <c>Window</c> に表示しないことから UI スレッド（Dispatcher）を必要とせず <c>[Fact]</c> で並列実行できる。<br/>
+/// <c>Window</c> に表示するテスト（<see cref="ScreenConverterTests"/>）はヘッドレス直列で実行する。
+/// </remarks>
+public class ScreenConverterVisualPortTests
+{
+    [Fact]
+    public void ScreenToLocalDip_ビジュアルツリー未接続時は等価変換する()
+    {
+        var control = new Panel();
+
+        var p = ScreenConverter.ScreenToLocalDip(control, new PixelPoint(10, 20));
+
+        Assert.Equal(new Point(10, 20), p);
+    }
+
+    [Fact]
     public void CreateVisualDipPort_ビジュアルツリー未接続時は等価変換する()
     {
         var control = new Panel();

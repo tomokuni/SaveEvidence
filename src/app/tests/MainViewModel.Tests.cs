@@ -1,7 +1,6 @@
 using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;
-using Avalonia.Headless.XUnit;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
@@ -11,14 +10,13 @@ namespace Estable.SaveEvidence.Tests;
 /// MainViewModel の画像保存（SaveImageAsync）と保存済み状態（IsSaved / CanSave）の単体テスト。
 /// </summary>
 /// <remarks>
-/// <see cref="SaveImageAsync"/> はプレビュー画像を Avalonia Bitmap へ変換して書き出すため、
-/// Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）が必要。<br/>
+/// <see cref="SaveImageAsync"/> の画像エンコード・ファイル書き込みは <see cref="IImageWriter"/> に委譲するため、
+/// テストでは <see cref="MockImageWriter"/> を注入して Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）を不要にする。<br/>
 /// オートインクリメントの順序（「保存してからインクリメント」）を検証する。<br/>
 /// 「screenshot_001.png」と入力されている場合、「screenshot_001.png」で保存してから<br/>
 /// テンプレートの表示が「screenshot_002.png」に更新されることを確認する。<br/>
 /// UI 非依存の純粋ロジック（設定・テンプレート検証等）は <see cref="MainViewModelStateTests"/> で <c>[Fact]</c> 検証する。
 /// </remarks>
-[Collection("AvaloniaHeadless")]
 public class MainViewModelTests
 {
     /// <summary>テスト用の ISettingsService モック（設定をメモリ上に保持する簡易実装）。StateTests からも共有する。</summary>
@@ -29,6 +27,32 @@ public class MainViewModelTests
         public void Save() { }
 
         public void Reload() { }
+    }
+
+    /// <summary>テスト用の IImageWriter モック（要求された画像をダミーデータでファイルへ書き出す）。</summary>
+    /// <remarks>
+    /// Avalonia Skia（<c>WriteableBitmap</c>）に依存せず、ヘッドレス不要で <see cref="MainViewModel.SaveImageAsync"/> の
+    /// 保存フロー（インクリメント・状態更新）を検証する。<br/>
+    /// 実ファイルへの書き出し（<see cref="File.Exists"/> 検証用）はダミーデータで行う。
+    /// </remarks>
+    internal sealed class MockImageWriter : IImageWriter
+    {
+        /// <summary>保存されたファイルパスの一覧。</summary>
+        public List<string> SavedPaths { get; } = [];
+
+        /// <summary>保存対象として渡された画像の一覧。</summary>
+        public List<PbBitmap> SavedImages { get; } = [];
+
+        /// <summary>書き出したダミーデータ（中身は検証しない）。</summary>
+        private static readonly byte[] s_dummy = [1, 2, 3, 4];
+
+        /// <inheritdoc/>
+        public void Save(PbBitmap image, string filePath)
+        {
+            SavedPaths.Add(filePath);
+            SavedImages.Add(image);
+            File.WriteAllBytes(filePath, s_dummy);
+        }
     }
 
     /// <summary>テスト用の PbBitmap（10x10）を生成する。</summary>
@@ -57,12 +81,13 @@ public class MainViewModelTests
         }
     }
 
-    [AvaloniaFact]
+    [Fact]
     public async Task SaveImageAsync_現在のテンプレートで保存し保存後にインクリメントする()
     {
         using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
 
-        var vm = new MainViewModel(new MockSettingsService())
+        var vm = new MainViewModel(new MockSettingsService(), writer)
         {
             PreviewImage = CreateBitmap(),
             FileNameTemplateText = "screenshot_001.png",
@@ -85,14 +110,20 @@ public class MainViewModelTests
         // 3. 保存済みファイル名が「screenshot_001.png」であること（_lastSavedFileName）
         Assert.Equal("screenshot_001.png", vm.SavedFileName);
         Assert.True(vm.IsSaved);
+
+        // 4. 書き込みが画像を伴って要求されたこと（モック活用検証）
+        var saved = Assert.Single(writer.SavedPaths);
+        Assert.EndsWith("screenshot_001.png", saved);
+        Assert.Single(writer.SavedImages);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public async Task SaveImageAsync_プレビュー画像がnullの場合は保存せずインクリメントしない()
     {
         using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
 
-        var vm = new MainViewModel(new MockSettingsService())
+        var vm = new MainViewModel(new MockSettingsService(), writer)
         {
             FileNameTemplateText = "screenshot_001.png",
             SaveFolderPath = tempDir.Path,
@@ -105,17 +136,21 @@ public class MainViewModelTests
         Assert.False(result);
         Assert.Equal("screenshot_001.png", vm.FileNameTemplateText);
         Assert.False(File.Exists(System.IO.Path.Combine(tempDir.Path, "screenshot_001.png")));
+        Assert.Empty(writer.SavedPaths);
+        Assert.Empty(writer.SavedImages);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public async Task SaveImageAsync_同名ファイル存在時に上書きを拒否するとインクリメントしない()
     {
         using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
 
         // 同名ファイルを先に作成しておく
-        await File.WriteAllTextAsync(System.IO.Path.Combine(tempDir.Path, "screenshot_001.png"), "existing");
+        await File.WriteAllTextAsync(
+            System.IO.Path.Combine(tempDir.Path, "screenshot_001.png"), "existing", TestContext.Current.CancellationToken);
 
-        var vm = new MainViewModel(new MockSettingsService())
+        var vm = new MainViewModel(new MockSettingsService(), writer)
         {
             PreviewImage = CreateBitmap(),
             FileNameTemplateText = "screenshot_001.png",
@@ -129,17 +164,20 @@ public class MainViewModelTests
         // 保存キャンセル（false）で、インクリメントもされない
         Assert.False(result);
         Assert.Equal("screenshot_001.png", vm.FileNameTemplateText);
+        Assert.Empty(writer.SavedPaths);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public async Task SaveImageAsync_同名ファイル存在時に上書き許可すると保存後にインクリメントする()
     {
         using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
 
         // 同名ファイルを先に作成しておく
-        await File.WriteAllTextAsync(System.IO.Path.Combine(tempDir.Path, "screenshot_001.png"), "existing");
+        await File.WriteAllTextAsync(
+            System.IO.Path.Combine(tempDir.Path, "screenshot_001.png"), "existing", TestContext.Current.CancellationToken);
 
-        var vm = new MainViewModel(new MockSettingsService())
+        var vm = new MainViewModel(new MockSettingsService(), writer)
         {
             PreviewImage = CreateBitmap(),
             FileNameTemplateText = "screenshot_001.png",
@@ -153,17 +191,19 @@ public class MainViewModelTests
         // 保存成功 → インクリメント
         Assert.True(result);
         Assert.Equal("screenshot_002.png", vm.FileNameTemplateText);
+        Assert.Single(writer.SavedPaths);
     }
 
     // ====================================================================
     // 保存可否（CanSave）と保存済み状態（IsSaved）
     // ====================================================================
 
-    [AvaloniaFact]
-    public void CanSave_保存済みの場合はfalseになる()
+    [Fact]
+    public async Task CanSave_保存済みの場合はfalseになる()
     {
         using var tempDir = new TempDir();
-        var vm = new MainViewModel(new MockSettingsService())
+        var writer = new MockImageWriter();
+        var vm = new MainViewModel(new MockSettingsService(), writer)
         {
             PreviewImage = CreateBitmap(),
             FileNameTemplateText = "screenshot_001.png",
@@ -171,18 +211,19 @@ public class MainViewModelTests
         };
 
         // 保存済みにする（IsSaved = true になる）
-        Assert.True(vm.SaveImageAsync().Result);
+        Assert.True(await vm.SaveImageAsync());
 
         // 保存済みの間は保存不可
         Assert.True(vm.IsSaved);
         Assert.False(vm.CanSave);
     }
 
-    [AvaloniaFact]
-    public void CanSave_画像を変更すると保存済みが解除されtrueに戻る()
+    [Fact]
+    public async Task CanSave_画像を変更すると保存済みが解除されtrueに戻る()
     {
         using var tempDir = new TempDir();
-        var vm = new MainViewModel(new MockSettingsService())
+        var writer = new MockImageWriter();
+        var vm = new MainViewModel(new MockSettingsService(), writer)
         {
             PreviewImage = CreateBitmap(),
             FileNameTemplateText = "screenshot_001.png",
@@ -190,7 +231,7 @@ public class MainViewModelTests
         };
 
         // 保存済みにする
-        Assert.True(vm.SaveImageAsync().Result);
+        Assert.True(await vm.SaveImageAsync());
         Assert.False(vm.CanSave);
 
         // 画像を変更すると保存済みが解除され、保存可能に戻る

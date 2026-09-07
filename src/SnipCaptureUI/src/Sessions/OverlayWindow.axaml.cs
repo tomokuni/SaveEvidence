@@ -46,9 +46,6 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>内部ロガー。</summary>
     private readonly ILogger _log;
 
-    /// <summary>UI ハング監視（ウォッチドッグ）。</summary>
-    private readonly Watchdog _watchdog;
-
     /// <summary>完了済みかどうか（volatile: バックグラウンドスレッドからも参照）。</summary>
     private volatile bool _hasCompleted;
 
@@ -100,7 +97,6 @@ internal sealed partial class OverlayWindow : Window
         _captureService = captureService;
         _detector = detector;
         _scaling = scaling > 0 ? scaling : 1.0;
-        _watchdog = new Watchdog(logger, windowService);
 
         var s = settings.ToNonNull();
 

@@ -4,23 +4,14 @@ namespace Estable.AvaloniaUI.Platform;
 
 /// <summary>PlatformFactory 内のコンポーネントが使用するログ定義（LoggerMessage ソース生成・拡張メソッド）。</summary>
 /// <remarks>
-/// 各コンポーネント（Watchdog 等）の診断ログを一元的に定義する。<br/>
-/// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、
-/// 呼び出し側では logger 引数を省略する（例: <c>_log.LogWatchdogEvacuate()</c>）。<br/>
+/// 各コンポーネントの診断ログを一元的に定義する。<br/>
+/// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、<br/>
+/// 呼び出し側では logger 引数を省略する。<br/>
 /// ログ基盤（ファイル出力・レベル制御・非同期化）はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
 /// カーソル位置取得（GetCursorScreenPoint）やマウス移動に伴う高頻度呼び出しはログ対象外（ノイズ防止）。
 /// </remarks>
 internal static partial class PlatformLog
 {
-    /// <summary>UI ハング検知によるオーバーレイ退避の警告ログ。</summary>
-    /// <remarks>
-    /// LogLevel: Warning <br/>
-    /// 出力書式: <c>[Watchdog] UI ハングを検知。オーバーレイを退避します</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    [LoggerMessage(LogLevel.Warning, "[Watchdog] UI ハングを検知。オーバーレイを退避します")]
-    public static partial void LogWatchdogEvacuate(this ILogger logger);
-
     /// <summary>カーソル表示/非表示の状態変更を記録する。</summary>
     /// <remarks>
     /// LogLevel: Information <br/>

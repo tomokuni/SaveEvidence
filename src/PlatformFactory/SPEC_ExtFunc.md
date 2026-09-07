@@ -13,7 +13,6 @@
     - [4.1 プラットフォームサービスの生成](#41-プラットフォームサービスの生成)
     - [4.2 座標変換ポート](#42-座標変換ポート)
     - [4.3 画面座標変換](#43-画面座標変換)
-    - [4.4 UI ハング監視（Watchdog）](#44-ui-ハング監視watchdog)
   - [5. 公開API](#5-公開api)
     - [5.1 プロパティ](#51-プロパティ)
       - [5.1.1 CoordinatePort.Identity（静的プロパティ）](#511-coordinateportidentity静的プロパティ)
@@ -21,17 +20,15 @@
       - [5.2.1 PlatformFactory（静的ファクトリ）](#521-platformfactory静的ファクトリ)
       - [5.2.2 CoordinatePort（静的ファクトリ）](#522-coordinateport静的ファクトリ)
       - [5.2.3 ScreenConverter](#523-screenconverter)
-      - [5.2.4 Watchdog](#524-watchdog)
-      - [5.2.5 ColorExtensions（C# 14 静的拡張メンバー）](#525-colorextensionsc-14-静的拡張メンバー)
-      - [5.2.6 PbBitmap（ピクセル操作）と PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions（生成・変換）](#526-pbbitmapピクセル操作と-pbbitmapavaloniaextensions--pbbitmapdrawingextensions生成変換)
+      - [5.2.4 ColorExtensions（C# 14 静的拡張メンバー）](#524-colorextensionsc-14-静的拡張メンバー)
+      - [5.2.5 PbBitmap（ピクセル操作）と PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions（生成・変換）](#525-pbbitmapピクセル操作と-pbbitmapavaloniaextensions--pbbitmapdrawingextensions生成変換)
     - [5.3 イベント](#53-イベント)
     - [5.4 型](#54-型)
       - [5.4.1 PlatformFactory](#541-platformfactory)
       - [5.4.2 インターフェース（7 種）](#542-インターフェース7-種)
       - [5.4.3 CoordinatePort](#543-coordinateport)
       - [5.4.4 ScreenConverter](#544-screenconverter)
-      - [5.4.5 Watchdog](#545-watchdog)
-      - [5.4.6 その他の公開型](#546-その他の公開型)
+      - [5.4.5 その他の公開型](#545-その他の公開型)
   - [6. 座標系](#6-座標系)
     - [6.1 3 層の座標](#61-3-層の座標)
     - [6.2 CoordinatePort の変換規則](#62-coordinateport-の変換規則)
@@ -69,7 +66,6 @@
 - ネイティブウィンドウ操作（`IWindowService`）
 - グローバルホットキー（`IGlobalHotKeyService<T>`）
 - 座標変換ポート（`ICoordinatePort` / `CoordinatePort` / `ScreenConverter`）
-- UI ハング監視（`Watchdog`）
 - 画像ユーティリティ（`BitmapExtensions` / `PbBitmap` / `PbBitmapAvaloniaExtensions` / `PbBitmapDrawingExtensions` / `ImageProcessor`）
 
 ## 3. 外部利用条件
@@ -83,7 +79,7 @@
 ### 3.2 必要な名前空間
 
 ```csharp
-using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordinatePort / CoordinatePort / ScreenConverter / Watchdog 等
+using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordinatePort / CoordinatePort / ScreenConverter 等
 using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / PbBitmap / PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions / ImageProcessor 等
 ```
 
@@ -133,18 +129,6 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 ICoordinatePort dipPort = ScreenConverter.CreateVisualDipPort(control);
 ```
 
-### 4.4 UI ハング監視（Watchdog）
-
-```csharp
-var watchdog = new Watchdog(logger, windowService);
-watchdog.Start(overlayWindow);   // 監視開始（1 秒間隔ハートビート + 5 秒タイムアウト監視）
-// UI スレッドのイベントハンドラから生存通知
-watchdog.Pulse();
-watchdog.Stop();                 // 監視停止
-```
-
-UI スレッドが完全にハングした場合、バックグラウンドスレッドから `IWindowService.EvacuateWindow` でオーバーレイを退避します（最終保険）。
-
 ## 5. 公開API
 
 公開 API は「プロパティ / メソッド / イベント / 型」の 4 分類で構成されます。
@@ -191,21 +175,13 @@ UI スレッドが完全にハングした場合、バックグラウンドス�
 | `ScreenToLocalDip` | `Point ScreenToLocalDip(Visual source, PixelPoint screen)` | 画面物理 Pixel → コントロールローカル DIP 座標系 |
 | `CreateVisualDipPort` | `ICoordinatePort CreateVisualDipPort(Visual source)` | コントロールローカル DIP 座標系 ↔ 画面物理 Pixel の動的ポート（TopLevel を毎回解決） |
 
-#### 5.2.4 Watchdog
-
-| メソッド | シグネチャ | 説明 |
-| --- | --- | --- |
-| `Start` | `void Start(TopLevel window)` | 監視開始（1 秒間隔ハートビート + バックグラウンド 5 秒タイムアウト監視） |
-| `Stop` | `void Stop()` | 監視停止 |
-| `Pulse` | `void Pulse()` | UI スレッド生存通知（イベントハンドラから呼ぶ） |
-
-#### 5.2.5 ColorExtensions（C# 14 静的拡張メンバー）
+#### 5.2.4 ColorExtensions（C# 14 静的拡張メンバー）
 
 | メソッド | シグネチャ | 説明 |
 | --- | --- | --- |
 | `FromAColor` | `static Color FromAColor(byte alpha, Color baseColor)` | 基準色（名前付き色等）と不透明度から色を生成する。既存の `Color.FromArgb(alpha, r, g, b)` は RGB 直指定で何色か判別しにくいため、基準色を指定して可読性を向上する（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%） |
 
-#### 5.2.6 PbBitmap（ピクセル操作）と PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions（生成・変換）
+#### 5.2.5 PbBitmap（ピクセル操作）と PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions（生成・変換）
 
 `PbBitmap` は内部表現（`SKBitmap` BGRA8888・Premul）と、`SkiaSharp` のみに依存するピクセル操作・生成/変換（`Create` / `FromSKBitmap` / `ToSKBitmap`）を提供するコア型です。  
 Avalonia 依存の生成・変換は `PbBitmapAvaloniaExtensions`（`this Bitmap` / `this PbBitmap` の拡張メソッド）、System.Drawing（Windows）依存の生成・変換は `PbBitmapDrawingExtensions`（`this DrawingBitmap` / `this PbBitmap` の拡張メソッド）に分離され、コアは画像種別（Avalonia / System.Drawing）に依存しません。  
@@ -266,7 +242,7 @@ Avalonia 依存の生成・変換は `PbBitmapAvaloniaExtensions`（`this Bitmap
 
 ### 5.4 型
 
-公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `Watchdog` / `ElementFinderResults` / `BitmapExtensions` / `PbBitmap` / `PbBitmapAvaloniaImage` / `PbBitmapAvaloniaExtensions` / `PbBitmapDrawingExtensions` / `ImageProcessor` です。
+公開型は `PlatformFactory` / 各インターフェース（`ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort`）/ `CoordinatePort` / `ScreenConverter` / `ElementFinderResults` / `BitmapExtensions` / `PbBitmap` / `PbBitmapAvaloniaImage` / `PbBitmapAvaloniaExtensions` / `PbBitmapDrawingExtensions` / `ImageProcessor` です。
 プラットフォーム固有実装（Win / NoOp 系）と内部ユーティリティ（`CoordinateMath` / `PlatformLog`）はすべて internal（非公開）です。公開 API はプラットフォーム非依存型のみを使用します。
 
 #### 5.4.1 PlatformFactory
@@ -307,11 +283,7 @@ Avalonia 依存の生成・変換は `PbBitmapAvaloniaExtensions`（`this Bitmap
 
 公開静的クラス（`public static class`）。メソッドは「5.2.3」に記載の通りです。
 
-#### 5.4.5 Watchdog
-
-公開クラス（`public sealed class`・Primary Constructor `Watchdog(ILogger?, IWindowService)`）。メソッドは「5.2.4」に記載の通りです。
-
-#### 5.4.6 その他の公開型
+#### 5.4.5 その他の公開型
 
 | 型 | 説明 |
 | --- | --- |
@@ -377,8 +349,7 @@ Avalonia 依存の生成・変換は `PbBitmapAvaloniaExtensions`（`this Bitmap
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Warning` | `PlatformLog.LogWatchdogEvacuate` | UI ハング検知によるオーバーレイ退避 |
-| `Warning` | `PlatformLog.LogWindowEvacuated` | ハング時のウィンドウ退避（最前面解除・非表示・WM_CLOSE） |
+| `Warning` | `PlatformLog.LogWindowEvacuated` | ウィンドウ退避（最前面解除・非表示・WM_CLOSE） |
 | `Information` | `PlatformLog.LogCursorVisibilityChanged` | カーソル表示/非表示の状態変更 |
 | `Information` | `PlatformLog.LogWindowHiddenFromTaskSwitcher` | タスクバー / Alt+Tab からの除外 |
 | `Information` | `PlatformLog.LogCaptureExclusionChanged` | キャプチャ除外設定の変更（成否込み） |
@@ -390,7 +361,6 @@ Avalonia 依存の生成・変換は `PbBitmapAvaloniaExtensions`（`this Bitmap
 - Windows 実装（`WinCaptureService` 等）は `[SupportedOSPlatform("windows")]` 属性付きです。他環境では NoOp 実装（安全なフォールバック）が使用されます。
 - `ICaptureService.CaptureVirtualScreen` の返却座標は仮想スクリーン座標です（プライマリが (0,0) でない場合 X / Y は負値になり得ます）。
 - `IWindowService.SetCaptureExclusion` は Windows 10 2004+ のみ `true` を返します（それ以前はキャプチャ除外できません）。
-- `Watchdog` は UI スレッド完全ハング時の最終保険であり、通常のタイムアウト処理には使用しません（通常処理は上位 AP の安全タイマーが担います）。
 - `CoordinatePort.Scale` は factor ≤ 0 を 1.0 として扱います（縮小・反転はしません）。
 - `BitmapExtensions.ExtractRegion` は幅・高さ ≤ 0 の場合 `ArgumentOutOfRangeException` をスローします。
 

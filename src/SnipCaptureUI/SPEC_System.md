@@ -70,7 +70,6 @@ SnipCaptureUI は内包コントロール（DragRectControl / FadeMaskControl / 
 ### 4.2 本プロジェクト固有の例外処理
 
 - キャプチャ中の例外はオーバーレイを閉じて通常状態に復帰する。
-- UI スレッド完全ハング時は Watchdog がバックグラウンドからオーバーレイを退避する（最終保険）。
 - 仮想スクリーン全体のキャプチャはバックグラウンド + 5 秒タイムアウト（DWM 応答不能時の安全策）。
 
 ## 5. コンポーネント図
@@ -88,7 +87,7 @@ flowchart TB
     end
     subgraph Dep["外部依存プロジェクト"]
         FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectSettings<br/>（DragRect + FadeMask + Loupe を内包）"]
-        PF["PlatformFactory<br/>ICaptureService / IWindowService / IElementFinder<br/>ICoordinatePort / CoordinatePort / ScreenConverter<br/>Watchdog / ICursorOverrideGuard"]
+        PF["PlatformFactory<br/>ICaptureService / IWindowService / IElementFinder<br/>ICoordinatePort / CoordinatePort / ScreenConverter<br/>ICursorOverrideGuard"]
     end
     subgraph FMCInternal["FadeMaskDragRect の内包コントロール（外部からは非公開・internal）"]
         DR["DragRectControl<br/>DragRectControl（選択矩形 UI）"]
@@ -164,9 +163,8 @@ flowchart TB
   - モード別の選択処理（AreaSelect: ドラッグ選択 + ルーペ / Screen・WindowSelect: 要素検出 + ハイライト）
   - クリック確定 → キャプチャ実行 → 結果コールバック
   - 非アクティブ化 / Close → キャンセル
-  - ウォッチドッグ（UI ハング時退避）
 - **可視性**: internal（クラス。コンストラクタ等のシグネチャは public）
-- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ PlatformFactory（ICaptureService / IWindowService / IElementFinder / Watchdog / ScreenConverter）
+- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ PlatformFactory（ICaptureService / IWindowService / IElementFinder / ScreenConverter）
 
 ### 6.5 公開データ型
 

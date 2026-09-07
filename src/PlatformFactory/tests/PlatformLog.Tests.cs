@@ -34,7 +34,6 @@ public class PlatformLogTests
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>
     private static void InvokeAll(ILogger logger)
     {
-        PlatformLog.LogWatchdogEvacuate(logger);
         PlatformLog.LogCursorVisibilityChanged(logger, show: true);
         PlatformLog.LogWindowHiddenFromTaskSwitcher(logger, "1A2B");
         PlatformLog.LogCaptureExclusionChanged(logger, "1A2B", exclude: true, success: true);

@@ -1,25 +1,26 @@
 using Estable.AvaloniaUI.Platform.Win;
 using Avalonia;
-using Avalonia.Headless.XUnit;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
 
 /// <summary><see cref="WinElementFinder"/>（Win32 API 実装）の単体テスト。</summary>
 /// <remarks>
-/// Win32 API（EnumWindows / EnumDisplayMonitors / GetCursorPos）は実環境で動作するため、
+/// Win32 API（EnumWindows / EnumDisplayMonitors / GetCursorPos）は実環境で動作するため、<br/>
 /// 例外なく呼び出せることと、実モニター/実ウィンドウを列挙できることを確認する。<br/>
-/// ヘッドレス環境ではウィンドウ数・モニター構成が OS と完全には同期しない場合があるため、
+/// <see cref="WinElementFinder"/> は UI スレッド（Dispatcher）に依存せず <c>PixelRect</c> / <c>PlatformHandle</c> のみを扱うため、<br/>
+/// Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）ではなく実 OS 直列コレクション（<see cref="Win32Collection"/>）で <c>[Fact]</c> 検証する。<br/>
+/// ヘッドレス環境ではウィンドウ数・モニター構成が OS と完全には同期しない場合があるため、<br/>
 /// 件数は「0 件以上」の緩い検証とし、検出結果の契約（矩形・Title）のみを厳密に検証する。<br/>
 /// <see cref="WinElementFinder"/> は internal のため、自身の Tests（PlatformFactory.Tests）から検証する（IVT 規約）。
 /// </remarks>
-[Collection("AvaloniaHeadless")]
+[Collection("Win32")]
 public class WinElementFinderTests
 {
     /// <summary>テスト対象のファインダーを生成する。</summary>
     private static WinElementFinder CreateFinder() => new();
 
-    [AvaloniaFact]
+    [Fact]
     public void WinElementFinder_ListScreensが実モニターを列挙する()
     {
         var finder = CreateFinder();
@@ -38,7 +39,7 @@ public class WinElementFinderTests
         }
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void WinElementFinder_ListWindowsが実ウィンドウを列挙する()
     {
         var finder = CreateFinder();
@@ -56,7 +57,7 @@ public class WinElementFinderTests
         }
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void WinElementFinder_ListWindowsがクラス名を設定する()
     {
         var finder = CreateFinder();
@@ -72,7 +73,7 @@ public class WinElementFinderTests
         }
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void WinElementFinder_FindScreenUnderCursorが実モニター内の位置を検出する()
     {
         var finder = CreateFinder();
@@ -89,7 +90,7 @@ public class WinElementFinderTests
         Assert.True(result.Bounds.Contains(center));
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void WinElementFinder_FindScreenUnderCursorが実モニター外の位置を未検出にする()
     {
         var finder = CreateFinder();
@@ -106,7 +107,7 @@ public class WinElementFinderTests
         Assert.False(result.IsDetected);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void WinElementFinder_FindWindowUnderCursorが例外なく呼び出せる()
     {
         var finder = CreateFinder();
@@ -119,7 +120,7 @@ public class WinElementFinderTests
         _ = finder.FindWindowUnderCursor(center);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void WinElementFinder_TryGetWindowVisibleRectが実ウィンドウで例外なく動作する()
     {
         var finder = CreateFinder();

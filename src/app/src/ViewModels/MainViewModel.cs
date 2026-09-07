@@ -28,6 +28,8 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly ISettingsService _settingsService;
 
+    private readonly IImageWriter _imageWriter;
+
     private string _lastSavedFileName = "";
 
     /// <summary>ファイル名テンプレートの検証結果（有効時は null）。</summary>
@@ -65,9 +67,11 @@ public sealed partial class MainViewModel : ObservableObject
     /// MainViewModel の新しいインスタンスを初期化する。
     /// </summary>
     /// <param name="settingsService">設定サービス</param>
-    public MainViewModel(ISettingsService settingsService)
+    /// <param name="imageWriter">画像書き込みサービス。null の場合はデフォルト実装（<see cref="AvaloniaImageWriter"/>）を使用する。</param>
+    public MainViewModel(ISettingsService settingsService, IImageWriter? imageWriter = null)
     {
         _settingsService = settingsService;
+        _imageWriter = imageWriter ?? new AvaloniaImageWriter();
 
         var settings = _settingsService.Current;
         _fileNameTemplateText = settings.FileNameTemplate;
@@ -515,11 +519,8 @@ public sealed partial class MainViewModel : ObservableObject
                 Directory.CreateDirectory(directory);
             }
 
-            // PbBitmap を表示境界で Avalonia Bitmap へ変換して保存（ファイル拡張子から自動判別）
-            using (var av = PreviewImage.ToAvaloniaWriteableBitmap())
-            {
-                av.Save(filePath, PngBitmapEncoderOptions.Default);
-            }
+            // 画像エンコード・ファイル書き込みを IImageWriter に委譲する（本番は Avalonia Skia でエンコード）
+            _imageWriter.Save(PreviewImage, filePath);
 
             FileNameTemplateText = FileNameTemplate.IncrementRightmostNumber(FileNameTemplateText);
 
