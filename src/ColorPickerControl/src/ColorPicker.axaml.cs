@@ -323,11 +323,13 @@ public sealed partial class ColorPickerControl : UserControl
     {
         var color = SelectedColor;
         var valid = ColorValidator.IsValid(color);
+        var hasLastValid = _lastValidColor is not null;
 
-        if (_lastValidColor is not null && !valid)
+        // 無効な入力を最終有効値へ復帰するかは純粋関数（ColorValidation.ShouldRecover）で判定する
+        if (ColorValidation.ShouldRecover(valid, hasLastValid))
         {
             // 無効な入力は最終有効値へ復帰する（再検証は OnPropertyChanged が行う）
-            color = _lastValidColor;
+            color = _lastValidColor!;
             SelectedColor = color;
         }
         else
@@ -336,8 +338,7 @@ public sealed partial class ColorPickerControl : UserControl
         }
 
         // ログ用の最終有効性（復帰時は復帰値が有効なため true）
-        var finalValid = valid || _lastValidColor is not null;
-        Log.LogLostFocus(color, finalValid);
+        Log.LogLostFocus(color, valid || hasLastValid);
     }
 
     /// <summary>Flyout 形式のカラーピッカーを開いて選択色を反映する。</summary>
@@ -390,20 +391,14 @@ public sealed partial class ColorPickerControl : UserControl
     /// <param name="isValid">事前に判定済みの有効性（呼び出し元での二重解析を排除）。</param>
     /// <remarks>
     /// 空文字または有効な色はエラーなし、無効な色はエラーありとして<br/>
-    /// <see cref="HasValidationError"/> / <see cref="ValidationErrorMessage"/> を更新し、枠線表示も更新する。
+    /// <see cref="HasValidationError"/> / <see cref="ValidationErrorMessage"/> を更新し、枠線表示も更新する。<br/>
+    /// 判定ロジックは <see cref="ColorValidation.Determine"/>（純粋関数・UI 非依存）へ委譲する。
     /// </remarks>
     private void UpdateValidationStatusCore(string color, bool isValid)
     {
-        if (string.IsNullOrEmpty(color) || isValid)
-        {
-            HasValidationError = false;
-            ValidationErrorMessage = null;
-        }
-        else
-        {
-            HasValidationError = true;
-            ValidationErrorMessage = "無効な色コードです。";
-        }
+        var state = ColorValidation.Determine(color, isValid);
+        HasValidationError = state.hasError;
+        ValidationErrorMessage = state.message;
         UpdateBorderValidationVisual();
     }
 }
