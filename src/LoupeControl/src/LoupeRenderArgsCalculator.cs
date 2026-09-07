@@ -22,7 +22,7 @@ internal static class LoupeRenderArgsCalculator
     /// ドメイン座標 → ルーペ画像ピクセル座標の変換係数。
     /// </returns>
     /// <remarks>
-    /// 切り出し領域の左上は <see cref="LoupeImageExtractor.ExtractRegionAt"/> と同一の整数計算（<c>(int)X − captureSize / 2</c>）で一致させる。
+    /// 切り出し領域の左上計算は <see cref="LoupeImageExtractor.ComputeCaptureTopLeft"/> に委譲する（単一所有・DRY）。
     /// </remarks>
     public static RenderArgs Compute(
         double size, double renderScaling, int zoomLevel, Point? center)
@@ -34,7 +34,7 @@ internal static class LoupeRenderArgsCalculator
             pixelSize,
             captureSize,
             center is { } c
-                ? new Point((int)c.X - captureSize / 2, (int)c.Y - captureSize / 2)
+                ? LoupeImageExtractor.ComputeCaptureTopLeft((int)c.X, (int)c.Y, captureSize)
                 : null,
             (double)size * zoomLevel / pixelSize);
     }

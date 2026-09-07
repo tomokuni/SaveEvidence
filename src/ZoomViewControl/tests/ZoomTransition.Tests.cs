@@ -315,4 +315,39 @@ public class ZoomTransitionTests
         Assert.False(ZoomTransition.CanZoomOut(current: 10, fitZoom: 33));
         Assert.False(ZoomTransition.CanZoomOut(current: 0, fitZoom: 10));
     }
+
+    // ====================================================================
+    // BuildAvailability（ズーム可否の導出）
+    // ====================================================================
+
+    [Fact]
+    public void BuildAvailability_画像ありで遷移先があれば可になる()
+    {
+        var (canZoomIn, canZoomOut) = ZoomTransition.BuildAvailability(
+            current: 0, fitZoom: 33, ZoomConfig.Default, hasSource: true);
+
+        Assert.True(canZoomIn);
+        Assert.True(canZoomOut);
+    }
+
+    [Fact]
+    public void BuildAvailability_画像なしなら何れも不可になる()
+    {
+        var (canZoomIn, canZoomOut) = ZoomTransition.BuildAvailability(
+            current: 0, fitZoom: 33, ZoomConfig.Default, hasSource: false);
+
+        Assert.False(canZoomIn);
+        Assert.False(canZoomOut);
+    }
+
+    [Fact]
+    public void BuildAvailability_画像なしでも固定倍率中は可になる()
+    {
+        // 固定倍率（current > 0）では画像並びに可否が決まる（ソース未設定でも固定倍率中は遷移可能）
+        var (canZoomIn, canZoomOut) = ZoomTransition.BuildAvailability(
+            current: 100, fitZoom: 33, ZoomConfig.Default, hasSource: false);
+
+        Assert.True(canZoomIn);
+        Assert.True(canZoomOut);
+    }
 }

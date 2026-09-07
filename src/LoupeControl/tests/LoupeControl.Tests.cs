@@ -918,4 +918,28 @@ public class LoupeControlTests
 
         Assert.Equal(1, count);
     }
+
+    // ====================================================================
+    // LoupeSourceResolver.IsSourceSupported（対応可能型の判定・ヘッドレス要）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public void IsSourceSupported_Bitmapは対応可能である()
+    {
+        // WriteableBitmap（Avalonia.Media.Imaging.Bitmap のサブクラス）は対応可能。
+        // WriteableBitmap 生成はヘッドレス（IPlatformRenderInterface）を必要とするため、[AvaloniaFact] で検証する。
+        using var bitmap = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.White);
+
+        Assert.True(LoupeSourceResolver.IsSourceSupported(bitmap));
+    }
+
+    [AvaloniaFact]
+    public void IsSourceSupported_未対応型は非対応である()
+    {
+        // CroppedBitmap は Bitmap を継承しないため、未対応型（非対応）として判定される。
+        using var bitmap = PbBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.White);
+        using var cropped = new CroppedBitmap(bitmap, new PixelRect(0, 0, 5, 5));
+
+        Assert.False(LoupeSourceResolver.IsSourceSupported(cropped));
+    }
 }

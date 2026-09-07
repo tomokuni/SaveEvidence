@@ -25,7 +25,6 @@
     <ProjectReference Include="..\..\LoupeControl\src\LoupeControl.csproj" />
     <!-- 座標変換ポート（ICoordinatePort / CoordinatePort） -->
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
-    <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
   </ItemGroup>
 
 </Project>

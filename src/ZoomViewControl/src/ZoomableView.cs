@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Estable.AvaloniaUI.Platform.Coordinate;
 using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.ZoomView;
@@ -113,8 +114,12 @@ internal sealed class ZoomableView : Panel
         set => SetSource(value);
     }
 
-    /// <summary>現在のズーム率（%）。0 = Fit。</summary>
-    public double ZoomPercent => _zoomPercent;
+    /// <summary>現在の内部ズーム率（%）。0 = Fit。</summary>
+    /// <remarks>
+    /// 外部向けの実効ズーム率（<see cref="ZoomViewControl.ZoomPercent"/>）と区別するため「内部」を冠する。<br/>
+    /// 0 は Fit（自動倍率）、0 より大きい値は固定倍率を表す。
+    /// </remarks>
+    public double InternalZoomPercent => _zoomPercent;
 
     /// <summary>現在のスケール（ズーム率 / 100）。Fit 中は 0。</summary>
     public double Scale => _zoomPercent / 100.0;
@@ -139,7 +144,7 @@ internal sealed class ZoomableView : Panel
         _effectiveScaleDirty = false;
         _effectiveScale = ZoomMath.ComputeEffectiveScale(
             _zoomPercent,
-            _image.Source is { } src ? new Size(src.Size.Width, src.Size.Height) : default,
+            _image.Source is { } src ? src.Size.ToSize() : default,
             Bounds.Size.ToSize());
     }
 
@@ -202,11 +207,10 @@ internal sealed class ZoomableView : Panel
         PointerReleased += OnPointerReleased;
         PointerWheelChanged += OnPointerWheelChanged;
 
-        // ビューポートサイズ（Bounds）の変更で実効スケールが変わるため、再計算を予約して表示を更新する
+        // ビューポートサイズ（Bounds）の変更で実効スケールが変わるため、表示を更新する
         // （Fit 表示の MaxWidth/MaxHeight は Bounds 依存のため、リサイズ時に再適用が必要）
         SizeChanged += (_, _) =>
         {
-            _effectiveScaleDirty = true;
             UpdateLayoutAndTransform();
         };
 
@@ -428,18 +432,17 @@ internal sealed class ZoomableView : Panel
             // TransformGroup の translate は ScaleTransform の内側（pre-scale）に適用され、描画位置は「scale × translate」になるため、
             // translate はコンテンツ座標系で指定する。中央寄せ補正（ビューポート座標）をコンテンツ座標へ変換するには scale で除する。
             // スクロール可能な軸（表示サイズ > ビューポート）はオフセットによるパン位置を維持し、スクロール不能な軸のみ中央寄せする。
-            if (_centerAlign && _image.Source is { } src && _image.Width > 0 && _image.Height > 0)
+            if (_centerAlign && _image.Source is not null)
             {
                 var bounds = Bounds;
-                var displayWidth = _image.Width * scale;
-                var displayHeight = _image.Height * scale;
-                if (displayWidth <= bounds.Width)
+                var display = DisplaySize();
+                if (display.Width <= bounds.Width)
                 {
-                    _translateTransform.X += (bounds.Width - displayWidth) / 2 / scale;
+                    _translateTransform.X += (bounds.Width - display.Width) / 2 / scale;
                 }
-                if (displayHeight <= bounds.Height)
+                if (display.Height <= bounds.Height)
                 {
-                    _translateTransform.Y += (bounds.Height - displayHeight) / 2 / scale;
+                    _translateTransform.Y += (bounds.Height - display.Height) / 2 / scale;
                 }
             }
         }
@@ -456,7 +459,7 @@ internal sealed class ZoomableView : Panel
 
     /// <summary>スクロールバーの表示状態・範囲・値を現在の表示状態に同期する。</summary>
     /// <remarks>
-    /// 範囲（Maximum / ViewportSize）は <see cref="ScrollMetrics"/> で計算する。<br/>
+    /// 範囲（Maximum / ViewportSize）は <see cref="ScrollMath"/> で計算する。<br/>
     /// コンテンツがビューポートより大きい場合のみ表示する（Fit 表示では非表示）。
     /// </remarks>
     private void UpdateScrollBars()
@@ -504,9 +507,9 @@ internal sealed class ZoomableView : Panel
     private void SyncScrollBar(ScrollBar bar, double contentSize, double offset, double scale)
     {
         var viewportSize = bar == _verticalScrollBar ? Bounds.Height : Bounds.Width;
-        // コンテンツ座標での表示範囲（サムサイズ）と最大オフセットを ScrollMetrics へ委譲する（単一所有・DRY）
-        var vs = ScrollMetrics.ViewportSize(viewportSize, scale);
-        var max = ScrollMetrics.MaxOffset(contentSize, viewportSize, scale);
+        // コンテンツ座標での表示範囲（サムサイズ）と最大オフセットを ScrollMath へ委譲する（単一所有・DRY）
+        var vs = ScrollMath.ViewportSize(viewportSize, scale);
+        var max = ScrollMath.MaxOffset(contentSize, viewportSize, scale);
         bar.Maximum = max;
         bar.ViewportSize = vs;
         bar.Value = Math.Clamp(offset, 0, max);

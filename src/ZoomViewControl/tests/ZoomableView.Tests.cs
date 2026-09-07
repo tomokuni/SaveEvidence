@@ -44,7 +44,7 @@ public class ZoomableViewTests
     public void SetSource_画像を設定するとFit表示になる()
     {
         var view = CreateView();
-        Assert.Equal(0.0, view.ZoomPercent); // 0 = Fit
+        Assert.Equal(0.0, view.InternalZoomPercent); // 0 = Fit
     }
 
     [AvaloniaFact]
@@ -937,7 +937,7 @@ public class ZoomableViewTests
 
         Assert.False(view.VerticalScrollBar.IsVisible);
         Assert.False(view.HorizontalScrollBar.IsVisible);
-        Assert.Equal(0.0, view.ZoomPercent); // Fit にリセット
+        Assert.Equal(0.0, view.InternalZoomPercent); // Fit にリセット
     }
 
     [AvaloniaFact]

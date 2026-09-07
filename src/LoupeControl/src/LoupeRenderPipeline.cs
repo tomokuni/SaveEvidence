@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Loupe.Imaging;
 using Estable.AvaloniaUI.Loupe.Rendering;
@@ -18,6 +17,31 @@ namespace Estable.AvaloniaUI.Loupe;
 /// </remarks>
 internal static class LoupeRenderPipeline
 {
+    /// <summary>描画モード（市松模様のみ / ソース画像合成）。</summary>
+    internal enum RenderMode
+    {
+        /// <summary>市松模様のみ（ソースなし・中心未設定・解決不能時）。</summary>
+        CheckerboardOnly,
+        /// <summary>ソース画像を切り出して合成する。</summary>
+        Composite,
+    }
+
+    /// <summary>ソース画像・中心座標から描画モードを決定する（純粋関数）。</summary>
+    /// <param name="source">ルーペのソース画像。</param>
+    /// <param name="center">拡大中心（ドメイン座標）。</param>
+    /// <returns>市松模様のみ（<see cref="RenderMode.CheckerboardOnly"/>）または合成（<see cref="RenderMode.Composite"/>）。</returns>
+    /// <remarks>
+    /// 中心未設定、またはソース画像が対応可能型でない（null 以外の未対応型 / 破棄済み）場合は市松模様のみで描画する。<br/>
+    /// 破棄済み <see cref="Bitmap"/> は <see cref="LoupeSourceResolver.Resolve"/> が検出するが、<br/>
+    /// 本関数では <c>Resolve</c> を呼ばず <see cref="LoupeSourceResolver.IsSourceSupported"/> のみで判定する<br/>
+    /// （解決処理を <see cref="RenderAsync"/> に委譲し、複製ビットマップのリークを防ぐ）。<br/>
+    /// UI 非依存のため <c>[Fact]</c> で並列検証できる。
+    /// </remarks>
+    internal static RenderMode DecideRenderMode(IImage? source, Point? center)
+        => center is not null && LoupeSourceResolver.IsSourceSupported(source)
+            ? RenderMode.Composite
+            : RenderMode.CheckerboardOnly;
+
     /// <summary>画像抽出を非同期に実行し、Avaloniaの描画オブジェクトをUIスレッドで合成する。</summary>
     /// <param name="source">ルーペのソース画像。</param>
     /// <param name="center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定時は市松模様のみ。</param>
@@ -40,10 +64,11 @@ internal static class LoupeRenderPipeline
         IBrush? checkerColorA, IBrush? checkerColorB, IBrush? frameColor,
         int frameWidth, double scaling)
     {
-        if (source is not null and not Bitmap and not PbBitmapAvaloniaImage)
+        // 未対応型の判定は LoupeSourceResolver（単一所有）へ委譲する。
+        if (!LoupeSourceResolver.IsSourceSupported(source))
         {
             throw new NotSupportedException(
-                $"LoupeControl は {source.GetType().FullName} をサポートしていません。Bitmap または PbBitmapAvaloniaImage を指定してください。");
+                $"LoupeControl は {source!.GetType().FullName} をサポートしていません。Bitmap または PbBitmapAvaloniaImage を指定してください。");
         }
 
         var checkerPixelSize = DpiScaler.ScaleToPixel(checkerSize, scaling);
@@ -55,13 +80,16 @@ internal static class LoupeRenderPipeline
                 pixelSize, crossColor, checkerPixelSize,
                 checkerColorA, checkerColorB, frameColor, framePixelWidth)).GetTask();
 
-        if (center is not { } centerPoint)
+        // 中心未設定・ソース解決不能の場合は市松模様のみで描画する（純粋関数で判定・単一所有）。
+        if (DecideRenderMode(source, center) == RenderMode.CheckerboardOnly)
         {
             return await DrawCheckerboardOnly();
         }
 
         // 抽出元の PbBitmap を解決する（Bitmap は複製、PbBitmapAvaloniaImage は共有参照。破棄済みは市松模様へフォールバック）
         var resolved = LoupeSourceResolver.Resolve(source, out var sourceBitmap);
+
+        // 破棄済み Source（DecideRenderMode では型判定のみのため、解決で null になる場合）は市松模様のみで描画する。
         if (sourceBitmap is null)
         {
             return await DrawCheckerboardOnly();
@@ -69,6 +97,7 @@ internal static class LoupeRenderPipeline
 
         try
         {
+            var centerPoint = center!.Value;
             var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel);
             var region = await Task.Run(() =>
             {
@@ -106,7 +135,7 @@ internal static class LoupeRenderPipeline
             // Bitmap 由来の場合のみ複製を破棄する（PbBitmapAvaloniaImage の共有参照は破棄しない）。
             if (resolved.IsSourceBitmap)
             {
-                sourceBitmap.Dispose();
+                sourceBitmap!.Dispose();
             }
         }
     }

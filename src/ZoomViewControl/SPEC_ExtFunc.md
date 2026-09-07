@@ -25,7 +25,6 @@
   - [8. 公開 API](#8-公開-api)
     - [8.1 ZoomViewControl](#81-zoomviewcontrol)
     - [8.2 ZoomConfig（設定値）](#82-zoomconfig設定値)
-      - [設定方法（3 通り）](#設定方法3-通り)
       - [値のガード](#値のガード)
     - [8.3 ZoomChangedEventArgs（イベント引数）](#83-zoomchangedeventargsイベント引数)
   - [9. ログ](#9-ログ)
@@ -102,7 +101,7 @@ zoomView.ZoomChanged += (_, e) => slider.Value = e.ZoomPercent;
 
 ### 5.1 ⊖⊕ ボタンの段階（23 段階）
 
-⊖⊕ ボタンは以下の 23 段階を順に遷移します（このレベル集合は `ZoomConfig.ButtonZoomLevels` でカスタム設定できます）。
+⊖⊕ ボタンは以下の 23 段階を順に遷移します（このレベル集合は `ZoomConfig.ButtonZoomLevels` で定義されています）。
 
 ```text
 10 → 12 → 15 → 20 → 25 → 33 → 40 → 50 → 62 → 75 → 80 → 90
@@ -212,18 +211,16 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ContentToViewportImage` | `Point(Point)` | コンテンツ座標 → ビューポート座標変換（画像表示矩形の原点基準） |
 | `ImageRectViewport` | `Rect()` | 画像の表示矩形（原点 + サイズ・ビューポート座標） |
 | `Log` | `ILogger` | 内部ロガー。null は `NullLogger` へフォールバック |
-| `MinZoom` | `double`（読み書き） | ズーム率の最小値（固定倍率）。設定時に `ZoomConfig` を再構築 |
-| `MaxZoom` | `double`（読み書き） | ズーム率の最大値（固定倍率）。設定時に `ZoomConfig` を再構築 |
-| `WheelFactor` | `double`（読み書き） | Ctrl+ホイールのズーム倍率。設定時に `ZoomConfig` を再構築 |
-| `ButtonZoomLevels` | `IReadOnlyList<double>`（読み書き） | ⊖⊕ ボタンのズームレベル集合。設定時に `ZoomConfig` を再構築 |
-
-> 表示文字列はホスト側で `ZoomChanged` の `ZoomPercent`（実効ズーム率）から自前の書式で生成する（書式はホストの責務。ライブラリは数値のみを通知する）。
+| `MinZoom` | `double`（読み書き） | ズーム率の最小値（固定倍率）。設定時に `ZoomConfig.With` で再構築 |
+| `MaxZoom` | `double`（読み書き） | ズーム率の最大値（固定倍率）。設定時に `ZoomConfig.With` で再構築 |
+| `WheelFactor` | `double`（読み書き） | Ctrl+ホイールのズーム倍率。設定時に `ZoomConfig.With` で再構築 |
+| `ButtonZoomLevels` | `IReadOnlyList<double>`（読み書き） | ⊖⊕ ボタンのズームレベル集合。設定時に `ZoomConfig.With` で再構築 |
 
 > `CanZoomIn` / `CanZoomOut` は読み取り専用。初期表示時にイベントを待たずにボタン状態を設定したい場合は、これらのプロパティを参照する。
 
 ### 8.2 ZoomConfig（設定値）
 
-ズーム遷移のパラメータをまとめた**検証付き不変値**（`public sealed class`）。`ZoomViewControl` のコンストラクタ注入で設定する（既定は `ZoomConfig.Default`）。
+ズーム遷移のパラメータをまとめた**検証付き不変値**（`public sealed class`）。ズーム範囲・倍率・レベル集合を外部からカスタマイズするための**公開拡張点**です。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -233,16 +230,16 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ButtonZoomLevels` | `IReadOnlyList<double>` | 23 段階 | ⊖⊕ ボタンのズームレベル集合 |
 | `Default` | `ZoomConfig` | 既定値 | 既定の設定 |
 
-#### 設定方法（3 通り）
+#### 設定方法（2 通り）
 
 | 方法 | 記述 | 備考 |
 | --- | --- | --- |
-| コンストラクタ注入 | `new ZoomViewControl(new ZoomConfig(20, 800, 1.2, [...]))` | コードのみ・生成時に設定 |
-| プロパティ設定（コード） | `zoomView.MinZoom = 20;` / `zoomView.ButtonZoomLevels = [...];` | 生成後に設定（XAML 配置でも可） |
-| プロパティ設定（XAML 属性） | `<zoom:ZoomViewControl MinZoom="20" MaxZoom="800" WheelFactor="1.2"/>` | XAML 配置で設定（数値のみ） |
+| コンストラクタ注入 | `new ZoomViewControl(new ZoomConfig(20, 800, 1.2, [...]))` | 生成時に設定（コードのみ・XAML 配置では無引数コンストラクタを使用） |
+| プロパティ設定 | `zoomView.MinZoom = 20;` など | 生成後に設定。`ZoomViewControl` の設定プロパティ（読み書き）経由で `ZoomConfig.With`（検証付き部分更新）が適用される |
 
 - `ZoomViewControl` の `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` は**読み書き可能プロパティ**。設定するとズーム可否が再計算される。
-- `ButtonZoomLevels`（`IReadOnlyList<double>`）は XAML 属性では設定できないため、コードビハインドまたはコンストラクタで設定する。
+- `ZoomConfig` は読み取り専用の不変値。プロパティの直接変更はできず、`With` 経由での検証付き部分更新のみ。
+- 既定値（`ZoomConfig.Default`）で動作させる場合は無引数コンストラクタ（`ZoomViewControl()`）を使用する。
 
 #### 値のガード
 

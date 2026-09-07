@@ -22,6 +22,20 @@ public class LoupeImageExtractorTests
         Assert.Equal(expected, LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel));
     }
 
+    /// <summary>拡大中心から切り出し領域の左上を計算することを検証する（ExtractRegionAt と同一の整数計算）。</summary>
+    [Theory]
+    [InlineData(50, 50, 4, 48, 48)]
+    [InlineData(0, 0, 4, -2, -2)]
+    [InlineData(101, 99, 25, 89, 87)]
+    public void ComputeCaptureTopLeft_中心を左上として指定サイズ領域を計算する(
+        int centerX, int centerY, int size, int expectedLeft, int expectedTop)
+    {
+        var topLeft = LoupeImageExtractor.ComputeCaptureTopLeft(centerX, centerY, size);
+
+        Assert.Equal(expectedLeft, (int)topLeft.X);
+        Assert.Equal(expectedTop, (int)topLeft.Y);
+    }
+
     /// <summary>中心座標を左上として指定サイズの正方形領域を切り出すことを検証する。</summary>
     [Fact]
     public void ExtractRegionAt_中心を左上として指定サイズで切り出す()

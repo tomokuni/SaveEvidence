@@ -21,7 +21,6 @@
   <ItemGroup>
     <!-- 共有プラットフォーム抽象（カーソル操作: ICursorService / WinCursorService） -->
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
-    <ProjectReference Include="..\..\..\..\Estable\src\Estable\Estable.csproj" />
   </ItemGroup>
 
 </Project>

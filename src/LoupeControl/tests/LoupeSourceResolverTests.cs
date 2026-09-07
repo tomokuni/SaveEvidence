@@ -1,3 +1,5 @@
+using Avalonia;
+using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
@@ -33,5 +35,25 @@ public class LoupeSourceResolverTests
         // 共有参照（内包 PbBitmap と同一）で、破棄は呼び出し側で行わない
         Assert.Same(bmp, bitmap);
         Assert.False(resolved.IsSourceBitmap);
+    }
+
+    // ====================================================================
+    // IsSourceSupported（対応可能型の判定）
+    // ====================================================================
+
+    [Fact]
+    public void IsSourceSupported_nullは対応可能である()
+    {
+        // null は「画像なし」を表すため対応可能（市松模様のみで描画する）
+        Assert.True(LoupeSourceResolver.IsSourceSupported(source: null));
+    }
+
+    [Fact]
+    public void IsSourceSupported_PbBitmapAvaloniaImageは対応可能である()
+    {
+        using var bmp = PbBitmap.Create(10, 10);
+        using var image = new PbBitmapAvaloniaImage(bmp);
+
+        Assert.True(LoupeSourceResolver.IsSourceSupported(image));
     }
 }

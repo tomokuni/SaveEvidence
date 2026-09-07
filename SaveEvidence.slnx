@@ -54,6 +54,4 @@
     <Project Path="src/ZoomViewControl/src/ZoomViewControl.csproj" />
     <Project Path="src/ZoomViewControl/tests/ZoomViewControl.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/ZoomViewControl/src/" />
-  <Project Path="../Estable/src/Estable/Estable.csproj" />
 </Solution>

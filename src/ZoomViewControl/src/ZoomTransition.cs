@@ -151,6 +151,27 @@ internal static class ZoomTransition
     /// <returns>ズームアウト可能なら true。</returns>
     internal static bool CanZoomOut(double current, double fitZoom, ZoomConfig? config = null) => PrevLevel(current, fitZoom, config) is not null;
 
+    /// <summary>ズーム操作の可否（ズームイン・ズームアウト）を導出する。</summary>
+    /// <param name="current">現在のズーム率（%）。0 = Fit。</param>
+    /// <param name="fitZoom">Fit の実効倍率（%）。current &lt;= 0 のときのみ使用。</param>
+    /// <param name="config">ズーム遷移の設定。</param>
+    /// <param name="hasSource">画像ソースが設定されているか（未設定時は可否を false にする）。</param>
+    /// <returns>ズームイン・ズームアウトの可否。</returns>
+    /// <remarks>
+    /// <see cref="ZoomViewControl"/> の <c>BuildAvailability</c> を純粋ロジックとして集約する。<br/>
+    /// 画像未設定（<paramref name="hasSource"/> = false）時は何れも不可（false）を返す。
+    /// </remarks>
+    internal static (bool CanZoomIn, bool CanZoomOut) BuildAvailability(
+        double current, double fitZoom, ZoomConfig config, bool hasSource)
+    {
+        if (current <= 0 && !hasSource)
+        {
+            return (false, false);
+        }
+
+        return (CanZoomIn(current, fitZoom, config), CanZoomOut(current, fitZoom, config));
+    }
+
     /// <summary>昇順ソート済みの <see cref="IReadOnlyList{T}"/> に対して二分探索を行う（<see cref="Array.BinarySearch{T}"/> と同値の戻り値）。</summary>
     /// <param name="levels">昇順ソート済みのレベル集合。</param>
     /// <param name="value">探索する値。</param>

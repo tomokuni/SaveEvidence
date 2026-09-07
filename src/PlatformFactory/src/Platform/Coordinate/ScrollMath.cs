@@ -1,14 +1,14 @@
-namespace Estable.AvaloniaUI.ZoomView;
+namespace Estable.AvaloniaUI.Platform.Coordinate;
 
 /// <summary>
 /// スクロールバーの範囲・ビューポートサイズの計算（純粋関数）。
 /// </summary>
 /// <remarks>
-/// スクロールバーの幾何計算を UI 状態（ScrollBar コントロール）から分離し、単体テストで仕様を検証できるようにする。<br/>
+/// スクロールバーの幾何計算を UI 状態（スクロールバーコントロール等）から分離し、単体テストで仕様を検証できるようにする。<br/>
 /// 座標系は「コンテンツ座標 = 元画像ピクセル」で、ビューポートサイズはスケールで除してコンテンツ座標に変換する。<br/>
-/// コントロール内部のスクロール計算であり、外部ホストからは直接参照しない。
+/// <c>double</c> のみに依存し、UI フレームワーク（Avalonia 等）に依存しないため、ソリューション外でも使用できる汎用部品。
 /// </remarks>
-internal static class ScrollMetrics
+public static class ScrollMath
 {
     /// <summary>スクロール範囲の最大オフセット（コンテンツ座標）を計算する。</summary>
     /// <param name="contentSize">コンテンツサイズ（コンテンツ座標）。</param>
@@ -17,8 +17,7 @@ internal static class ScrollMetrics
     /// <returns>最大オフセット。コンテンツがビューポート以下の場合は 0。</returns>
     /// <remarks>
     /// 描画位置 = スケール × (コンテンツ座標 − オフセット) の定義に基づき、<br/>
-    /// オフセットの最大値はコンテンツ − ビューポート / スケール。<br/>
-    /// スクロール範囲の単一所有メソッドであり、<see cref="ZoomMath"/> のクランプ計算も本メソッドへ委譲する。
+    /// オフセットの最大値はコンテンツ − ビューポート / スケール。
     /// </remarks>
     public static double MaxOffset(double contentSize, double viewportSize, double scale)
     {

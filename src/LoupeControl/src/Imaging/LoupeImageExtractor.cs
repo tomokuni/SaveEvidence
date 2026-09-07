@@ -1,3 +1,4 @@
+using Avalonia;
 using RectInt = System.Drawing.Rectangle;
 using Estable.AvaloniaUI.Platform.Imaging;
 
@@ -20,6 +21,18 @@ internal static class LoupeImageExtractor
     public static int ComputeCaptureSize(int pixelSize, int zoomLevel)
         => (int)Math.Ceiling((double)pixelSize / zoomLevel);
 
+    /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）を計算する。</summary>
+    /// <param name="centerX">拡大中心のX座標（元画像ピクセル）。</param>
+    /// <param name="centerY">拡大中心のY座標（元画像ピクセル）。</param>
+    /// <param name="size">切り出し領域の一辺（ドメインピクセル）。</param>
+    /// <returns>切り出し領域の左上（ドメイン座標）。</returns>
+    /// <remarks>
+    /// <see cref="ExtractRegionAt"/> の中心 → 左上変換と、描画完了イベントの切り出し領域左上計算を単一所有する（DRY）。<br/>
+    /// 中心座標の整数化（<c>(int)</c>）は <see cref="ExtractRegionAt"/> と同一の丸めで一致させる。
+    /// </remarks>
+    public static Point ComputeCaptureTopLeft(int centerX, int centerY, int size)
+        => new(centerX - size / 2, centerY - size / 2);
+
     /// <summary>指定位置を中心とした正方形領域を切り出す（ソース範囲外は透明パディング）。</summary>
     /// <param name="source">切り出し元の PbBitmap。</param>
     /// <param name="centerX">中心のX座標（画像ローカルピクセル）。</param>
@@ -29,8 +42,13 @@ internal static class LoupeImageExtractor
     /// <remarks>
     /// ルーペのソース画像切り出し（AreaSelect / Crop 共通）で使用する。<br/>
     /// <see cref="PbBitmap.Crop(RectInt)"/> へ委譲する（中心座標 → 左上座標へ変換）。<br/>
-    /// 画像端では透明パディングとなり、市松模様が透ける。
+    /// 画像端では透明パディングとなり、市松模様が透ける。<br/>
+    /// 左上変換は <see cref="ComputeCaptureTopLeft"/> に委譲する（切り出し領域左上計算の単一所有）。<br/>
+    /// 中心座標の整数化（<c>(int)</c>）は <see cref="ExtractRegionAt"/> と一致させる。
     /// </remarks>
     public static PbBitmap ExtractRegionAt(PbBitmap source, int centerX, int centerY, int size)
-        => source.Crop(new RectInt(centerX - size / 2, centerY - size / 2, size, size));
+    {
+        var topLeft = ComputeCaptureTopLeft(centerX, centerY, size);
+        return source.Crop(new RectInt((int)topLeft.X, (int)topLeft.Y, size, size));
+    }
 }

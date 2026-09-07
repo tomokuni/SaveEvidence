@@ -753,7 +753,7 @@ public sealed partial class LoupeControl : UserControl
             {
                 var current = _renderCoordinator.Generation;
                 var visible = IsVisible;
-                if (!visible || generation != current)
+                if (!_renderCoordinator.ShouldApply(generation))
                 {
                     bitmap.Dispose();
                     Log.LogGenerateAsyncDone(false, true, visible, generation, current);

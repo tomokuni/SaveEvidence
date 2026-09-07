@@ -17,6 +17,16 @@ internal static class LoupeSourceResolver
     /// <param name="isSourceBitmap">ソースが <see cref="Bitmap"/> 由来か（複製破棄が必要か）。false の場合は共有参照（破棄しない）。</param>
     public readonly record struct Result(PbBitmap? Bitmap, bool IsSourceBitmap);
 
+    /// <summary>ソース画像がルーペで対応可能な型（<see cref="Bitmap"/> / <see cref="PbBitmapAvaloniaImage"/>）かどうかを判定する。</summary>
+    /// <param name="source">判定するソース画像。</param>
+    /// <returns>対応可能なら true。null は「画像なし」として対応可能、未対応型は false。</returns>
+    /// <remarks>
+    /// <see cref="LoupeRenderPipeline"/> の未対応型判定（<see cref="NotSupportedException"/>）を単一所有する（DRY）。<br/>
+    /// null は「画像なし」を表すため対応可能（市松模様のみで描画する）として扱う。
+    /// </remarks>
+    public static bool IsSourceSupported(IImage? source)
+        => source is null or Bitmap or PbBitmapAvaloniaImage;
+
     /// <summary>ソース画像から切り出し元の PbBitmap を解決する。</summary>
     /// <param name="source">ルーペのソース画像（<see cref="Bitmap"/> / <see cref="PbBitmapAvaloniaImage"/>）。</param>
     /// <param name="sourceBitmap">解決した切り出し元。未対応・破棄済み・null の場合は null。</param>
@@ -24,11 +34,20 @@ internal static class LoupeSourceResolver
     /// <remarks>
     /// <see cref="Bitmap"/> は複製（<c>ToPbBitmap()</c>）を返し、破棄は呼び出し側が行う（<see cref="Result.IsSourceBitmap"/> = true）。<br/>
     /// <see cref="PbBitmapAvaloniaImage"/> は共有参照を返し、破棄しない（<see cref="Result.IsSourceBitmap"/> = false）。<br/>
-    /// 破棄済み <see cref="Bitmap"/> は <c>PixelSize</c> 参照で検出する（<see cref="ObjectDisposedException"/> 防止）。
+    /// 破棄済み <see cref="Bitmap"/> は <c>PixelSize</c> 参照で検出する（<see cref="ObjectDisposedException"/> 防止）。<br/>
+    /// 未対応型（<see cref="IsSourceSupported"/> が false）は null を返す（防御的水平性）。<br/>
+    /// <see cref="Resolve"/> は対応可能型（null / <see cref="Bitmap"/> / <see cref="PbBitmapAvaloniaImage"/>）のみを想定し、未対応は null を返す。
     /// </remarks>
     public static Result Resolve(IImage? source, out PbBitmap? sourceBitmap)
     {
         sourceBitmap = null;
+
+        // 未対応型は切り出し元を解決せず null を返す（市松模様のみで描画する）。
+        if (!IsSourceSupported(source))
+        {
+            return new Result(null, IsSourceBitmap: false);
+        }
+
         if (source is null)
         {
             return new Result(null, IsSourceBitmap: false);
@@ -56,7 +75,7 @@ internal static class LoupeSourceResolver
             return new Result(sourceBitmap, IsSourceBitmap: false);
         }
 
-        // 未対応型（Bitmap / PbBitmapAvaloniaImage 以外）は市松模様のみ
+        // 到達不能（IsSourceSupported が対応可能型を保証）。防御として null を返す。
         return new Result(null, IsSourceBitmap: false);
     }
 }

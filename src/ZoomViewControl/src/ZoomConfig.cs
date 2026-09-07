@@ -5,7 +5,9 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// ズーム遷移のパラメータをまとめた不変値。<br/>
 /// <see cref="ZoomViewControl"/> が所有し、純粋関数である <see cref="ZoomTransition"/> へ渡す（状態を純粋関数に持たせない）。<br/>
 /// プロパティは読み取り専用で、<see cref="With"/> により検証付きの部分更新を行う（値を直接変更できない）。<br/>
-/// 既定値は従来の定数値（MinZoom=10 / MaxZoom=500 / WheelFactor=1.1 / 23 段階）。
+/// 既定値は従来の定数値（MinZoom=10 / MaxZoom=500 / WheelFactor=1.1 / 23 段階）。<br/>
+/// <b>拡張点</b>: ズーム範囲・倍率・レベル集合を外部からカスタマイズするための公開値オブジェクト。<br/>
+/// コンストラクタまたは <see cref="With"/> で検証付きの部分更新を行い、不正な値はガードされる。
 /// </remarks>
 public sealed class ZoomConfig
 {

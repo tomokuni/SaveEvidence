@@ -18,6 +18,8 @@ internal static class LoupeImageRenderer
         var destination = new Rect(0, 0, source.Width * zoomLevel, source.Height * zoomLevel);
 
         // DrawImage は IImage を要求するため、表示境界で Avalonia WriteableBitmap へ変換する。
+        // （PbBitmapAvaloniaImage の Skia 直アクセスは RenderTargetBitmap 描画で機能しない場合があるため、
+        //   WriteableBitmap 変換で確実に描画する）
         using var av = image.ToAvaloniaWriteableBitmap();
         context.DrawImage(av, source, destination);
     }

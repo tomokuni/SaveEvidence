@@ -157,7 +157,7 @@ flowchart TB
 
 - **分類**: 内部静的クラス（`internal static class`）
 - **責務**: 元画像（`PbBitmap`）からの領域切り出し（範囲外は透明パディング）を `PbBitmap` として提供する
-- **公開API**: `ExtractRegionAt`（`PbBitmap` 抽出）/ `ComputeCaptureSize`（切り出し領域サイズ計算）
+- **公開API**: `ExtractRegionAt`（`PbBitmap` 抽出）/ `ComputeCaptureSize`（切り出し領域サイズ計算）/ `ComputeCaptureTopLeft`（拡大中心 → 切り出し領域左上計算。`ExtractRegionAt` / `LoupeRenderArgsCalculator` で共用する単一所有）
 - **依存**: Avalonia / `Estable.AvaloniaUI.Platform.Imaging`（`PbBitmap`）
 
 ### 6.6 LogMessage

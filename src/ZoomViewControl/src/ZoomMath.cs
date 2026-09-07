@@ -1,4 +1,5 @@
 using Avalonia;
+using Estable.AvaloniaUI.Platform.Coordinate;
 
 namespace Estable.AvaloniaUI.ZoomView;
 
@@ -10,7 +11,7 @@ namespace Estable.AvaloniaUI.ZoomView;
 /// ビューポート ↔ コンテンツ座標変換を計算する。<br/>
 /// UI 状態（ViewModel・コントロール）に依存しないため、単体テストで仕様を検証できる。<br/>
 /// ZoomViewControl / ZoomableView から呼び出される。<br/>
-/// スクロール範囲の計算は <see cref="ScrollMetrics"/> へ委譲する。<br/>
+/// スクロール範囲の計算は <see cref="ScrollMath"/> へ委譲する。<br/>
 /// コントロール内部の計算であり、外部ホストからは直接参照しない。<br/>
 /// <b>依存分離</b>: 座標・サイズは UI フレームワーク非依存の <see cref="Point"/> / <see cref="Vector"/> / <see cref="Size"/> で扱い、<br/>
 /// UI 境界（<c>ZoomableView</c>）で Avalonia 型へ変換する（移植性・テスト容易性向上）。
@@ -142,8 +143,8 @@ internal static class ZoomMath
         var newOffset = new Vector(c.X - center.X / newScale, c.Y - center.Y / newScale);
 
         // クランプ: offset ∈ [0, content − viewport / scale]
-        var maxX = ScrollMetrics.MaxOffset(contentSize.Width, viewport.Width, newScale);
-        var maxY = ScrollMetrics.MaxOffset(contentSize.Height, viewport.Height, newScale);
+        var maxX = ScrollMath.MaxOffset(contentSize.Width, viewport.Width, newScale);
+        var maxY = ScrollMath.MaxOffset(contentSize.Height, viewport.Height, newScale);
         return new Vector(Math.Clamp(newOffset.X, 0, maxX), Math.Clamp(newOffset.Y, 0, maxY));
     }
 
@@ -155,8 +156,8 @@ internal static class ZoomMath
     /// <returns>クランプ後のオフセット。</returns>
     public static Vector ClampOffset(Vector offset, double scale, Size contentSize, Size viewport)
     {
-        var maxX = ScrollMetrics.MaxOffset(contentSize.Width, viewport.Width, scale);
-        var maxY = ScrollMetrics.MaxOffset(contentSize.Height, viewport.Height, scale);
+        var maxX = ScrollMath.MaxOffset(contentSize.Width, viewport.Width, scale);
+        var maxY = ScrollMath.MaxOffset(contentSize.Height, viewport.Height, scale);
         return new Vector(Math.Clamp(offset.X, 0, maxX), Math.Clamp(offset.Y, 0, maxY));
     }
 
