@@ -137,19 +137,10 @@ internal sealed class ZoomableView : Panel
     private void RefreshEffectiveScale()
     {
         _effectiveScaleDirty = false;
-        if (_zoomPercent > 0)
-        {
-            _effectiveScale = Scale;
-        }
-        else if (_image.Source is { } src)
-        {
-            _effectiveScale = ZoomMath.FitScale(
-                new Size(src.Size.Width, src.Size.Height), Bounds.Size.ToSize());
-        }
-        else
-        {
-            _effectiveScale = 1;
-        }
+        _effectiveScale = ZoomMath.ComputeEffectiveScale(
+            _zoomPercent,
+            _image.Source is { } src ? new Size(src.Size.Width, src.Size.Height) : default,
+            Bounds.Size.ToSize());
     }
 
     /// <summary>現在のパン位置（コンテンツ座標）。</summary>
@@ -340,45 +331,18 @@ internal sealed class ZoomableView : Panel
     /// <summary>画像原点のビューポート座標を取得する（表示サイズは呼び出し側で計算済みのものを渡す）。</summary>
     /// <param name="display">画像の表示サイズ（ビューポート座標）。</param>
     /// <returns>画像原点のビューポート座標。</returns>
+    /// <remarks>計算は <see cref="ZoomMath.ComputeImageOrigin"/>（純粋関数・UI 非依存）へ委譲する。</remarks>
     private Point ImageOriginViewport(Size display)
-    {
-        var bounds = Bounds;
-        if (_zoomPercent <= 0)
-        {
-            // Fit: CenterAlign に応じてビューポート中央（画像が小さい場合）または原点
-            if (_centerAlign)
-            {
-                return new Point(
-                    Math.Max(0, (bounds.Width - display.Width) / 2),
-                    Math.Max(0, (bounds.Height - display.Height) / 2));
-            }
-            return new Point(0, 0);
-        }
-        var scale = Scale;
-        // 固定倍率では軸ごとに独立して扱う:
-        // - スクロール可能な軸（表示サイズ > ビューポート）: オフセットによるパン位置（-offset*scale）を維持。
-        // - スクロール不能な軸（表示サイズ < ビューポート）: CenterAlign に応じて中央寄せ補正（(ビューポート−表示サイズ)/2）を適用。
-        //   どちらの軸もクランプによりオフセットは 0（原点）になるため、パン位置と中央寄せは排他である。
-        // このビューポート座標の原点は、RenderTransform の translate（pre-scale・コンテンツ座標）を
-        // scale 倍した実効描画位置と一致する（UpdateTransformAndSync の中央寄せ補正）。
-        var x = display.Width <= bounds.Width
-            ? MaxCentered(display.Width, bounds.Width)
-            : -_offset.X * scale;
-        var y = display.Height <= bounds.Height
-            ? MaxCentered(display.Height, bounds.Height)
-            : -_offset.Y * scale;
-        return new Point(x, y);
-    }
+        => ZoomMath.ComputeImageOrigin(
+            display, Bounds.Size, _zoomPercent, _offset, Scale, _centerAlign);
 
     /// <summary>中央寄せの原点補正（ビューポート座標）を軸単位で計算する。</summary>
     /// <param name="displaySize">画像の表示サイズ（ビューポート座標）。</param>
     /// <param name="viewportSize">ビューポートのサイズ。</param>
     /// <returns>中央寄せ原点。CenterAlign が false の場合、または表示サイズがビューポートより大きい場合は 0。</returns>
+    /// <remarks>計算は <see cref="ZoomMath.MaxCentered"/>（純粋関数・UI 非依存）へ委譲する。</remarks>
     private double MaxCentered(double displaySize, double viewportSize)
-    {
-        if (!_centerAlign || displaySize > viewportSize) return 0;
-        return (viewportSize - displaySize) / 2;
-    }
+        => ZoomMath.MaxCentered(displaySize, viewportSize, _centerAlign);
 
     /// <summary>パンする（コンテンツ座標の移動量）。</summary>
     /// <param name="delta">コンテンツ座標の移動量。</param>

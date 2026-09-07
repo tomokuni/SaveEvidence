@@ -288,4 +288,108 @@ public class ZoomMathTests
         Assert.Equal(viewportPos.X, back.X, 6);
         Assert.Equal(viewportPos.Y, back.Y, 6);
     }
+
+    // ====================================================================
+    // ComputeEffectiveScale（実効スケール）
+    // ====================================================================
+
+    [Fact]
+    public void ComputeEffectiveScale_固定倍率中はズーム率を100で割った値を返す()
+    {
+        // zoomPercent = 200 → scale = 2
+        var scale = ZoomMath.ComputeEffectiveScale(200, new Size(1000, 500), new Size(400, 200));
+
+        Assert.Equal(2.0, scale, 6);
+    }
+
+    [Fact]
+    public void ComputeEffectiveScale_Fit中はFitScaleを返す()
+    {
+        // zoomPercent = 0（Fit）。画像 1000x500、ビューポート 400x200
+        // scaleX = 400/1000 = 0.4、scaleY = 200/500 = 0.4（min = 0.4）
+        var scale = ZoomMath.ComputeEffectiveScale(0, new Size(1000, 500), new Size(400, 200));
+
+        Assert.Equal(0.4, scale, 6);
+    }
+
+    [Fact]
+    public void ComputeEffectiveScale_Fit中で画像サイズが0なら1を返す()
+    {
+        var scale = ZoomMath.ComputeEffectiveScale(0, new Size(0, 0), new Size(400, 200));
+
+        Assert.Equal(1.0, scale, 6);
+    }
+
+    // ====================================================================
+    // MaxCentered（中央寄せ原点補正）
+    // ====================================================================
+
+    [Fact]
+    public void MaxCentered_中央寄せならビューポート差分の半分を返す()
+    {
+        // 表示 100、ビューポート 400 → (400 - 100) / 2 = 150
+        Assert.Equal(150.0, ZoomMath.MaxCentered(100, 400, centerAlign: true), 6);
+    }
+
+    [Fact]
+    public void MaxCentered_CenterAlignがfalseなら0を返す()
+    {
+        Assert.Equal(0.0, ZoomMath.MaxCentered(100, 400, centerAlign: false), 6);
+    }
+
+    [Fact]
+    public void MaxCentered_表示サイズがビューポートより大きい場合は0を返す()
+    {
+        // 表示 500、ビューポート 400 → スクロール対象のため補正しない
+        Assert.Equal(0.0, ZoomMath.MaxCentered(500, 400, centerAlign: true), 6);
+    }
+
+    // ====================================================================
+    // ComputeImageOrigin（画像原点のビューポート座標）
+    // ====================================================================
+
+    [Fact]
+    public void ComputeImageOrigin_Fitで中央寄せならビューポート中央を原点にする()
+    {
+        // 表示 100x100、ビューポート 400x300 → 中央寄せ (150, 100)
+        var origin = ZoomMath.ComputeImageOrigin(
+            new Size(100, 100), new Size(400, 300), zoomPercent: 0,
+            offset: default, scale: 0, centerAlign: true);
+
+        Assert.Equal(new Point(150, 100), origin);
+    }
+
+    [Fact]
+    public void ComputeImageOrigin_Fitで左上寄せなら原点は0になる()
+    {
+        var origin = ZoomMath.ComputeImageOrigin(
+            new Size(100, 100), new Size(400, 300), zoomPercent: 0,
+            offset: default, scale: 0, centerAlign: false);
+
+        Assert.Equal(new Point(0, 0), origin);
+    }
+
+    [Fact]
+    public void ComputeImageOrigin_固定倍率でスクロール可能な軸はパン位置になる()
+    {
+        // 表示 600x500、ビューポート 400x300（両軸ともスクロール可能）
+        // offset=(100,50), scale=2 → x=-200, y=-100
+        var origin = ZoomMath.ComputeImageOrigin(
+            new Size(600, 500), new Size(400, 300), zoomPercent: 200,
+            offset: new Vector(100, 50), scale: 2, centerAlign: true);
+
+        Assert.Equal(new Point(-200, -100), origin);
+    }
+
+    [Fact]
+    public void ComputeImageOrigin_固定倍率で中央寄せの軸はビューポート中央を原点にする()
+    {
+        // 表示 100x80、ビューポート 400x300（両軸ともスクロール不能）
+        // offset は 0 にクランプされ中央寄せ → x=(400-100)/2=150, y=(300-80)/2=110
+        var origin = ZoomMath.ComputeImageOrigin(
+            new Size(100, 80), new Size(400, 300), zoomPercent: 200,
+            offset: default, scale: 2, centerAlign: true);
+
+        Assert.Equal(new Point(150, 110), origin);
+    }
 }

@@ -221,7 +221,7 @@ public sealed class ZoomViewControl : Panel
     /// </remarks>
     public double ZoomPercent
     {
-        get => IsFit ? Math.Clamp(ComputeRawFitZoomPercent(), _config.MinZoom, _config.MaxZoom) : _zoomableView.ZoomPercent;
+        get => IsFit ? _config.ClampZoom(ComputeRawFitZoomPercent()) : _zoomableView.ZoomPercent;
         set
         {
             // 0 以下は Fit の意図と区別するため受け付けない（Fit は ZoomFit を使用）。範囲は設定（ZoomConfig）でクランプ

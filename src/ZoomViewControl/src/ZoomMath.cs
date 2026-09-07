@@ -42,6 +42,81 @@ internal static class ZoomMath
     public static double FitZoomPercent(Size imageSize, Size viewportSize)
         => FitScale(imageSize, viewportSize) * 100.0;
 
+    /// <summary>現在の表示に使用する実効スケールを計算する。</summary>
+    /// <param name="zoomPercent">内部ズーム率（%）。0 = Fit。</param>
+    /// <param name="imageSize">元画像サイズ（ピクセル）。</param>
+    /// <param name="viewportSize">ビューポートサイズ（DIP）。</param>
+    /// <returns>実効スケール。固定倍率中は <c>zoomPercent / 100</c>、Fit 中は <see cref="FitScale"/>、画像なしは 1。</returns>
+    /// <remarks>
+    /// <see cref="ZoomableView.EffectiveScale"/> の計算を純粋関数として分離する。<br/>
+    /// Fit 中（<c>zoomPercent = 0</c>）は <c>zoomPercent / 100</c> が 0 になるため、<br/>
+    /// 座標変換・パン量計算では実効スケール（本メソッド）を使用する（ゼロ除算防止）。
+    /// </remarks>
+    public static double ComputeEffectiveScale(double zoomPercent, Size imageSize, Size viewportSize)
+    {
+        if (zoomPercent > 0)
+        {
+            return zoomPercent / 100.0;
+        }
+
+        return imageSize.Width > 0 && imageSize.Height > 0
+            ? FitScale(imageSize, viewportSize)
+            : 1;
+    }
+
+    /// <summary>画像表示の中央寄せ原点補正（ビューポート座標）を軸単位で計算する。</summary>
+    /// <param name="displaySize">画像の表示サイズ（ビューポート座標）。</param>
+    /// <param name="viewportSize">ビューポートのサイズ（その軸）。</param>
+    /// <param name="centerAlign">中央寄せするか（false で左上寄せ）。</param>
+    /// <returns>中央寄せ原点。CenterAlign が false の場合、または表示サイズがビューポートより大きい場合は 0。</returns>
+    /// <remarks>
+    /// <see cref="ZoomableView.ImageOriginViewport"/> の中央寄せ補正を純粋関数として分離する。<br/>
+    /// 画像がビューポートより大きい場合はスクロール対象のため補正せず 0 を返す。
+    /// </remarks>
+    public static double MaxCentered(double displaySize, double viewportSize, bool centerAlign)
+    {
+        if (!centerAlign || displaySize > viewportSize) return 0;
+        return (viewportSize - displaySize) / 2;
+    }
+
+    /// <summary>画像原点のビューポート座標（表示矩形の左上位置）を計算する。</summary>
+    /// <param name="displaySize">画像の表示サイズ（ビューポート座標）。</param>
+    /// <param name="viewportSize">ビューポートのサイズ。</param>
+    /// <param name="zoomPercent">内部ズーム率（%）。0 = Fit。</param>
+    /// <param name="offset">スクロールオフセット（コンテンツ座標）。</param>
+    /// <param name="scale">現在のスケール（倍率 / 100）。Fit 中は 0。</param>
+    /// <param name="centerAlign">中央寄せするか（false で左上寄せ）。</param>
+    /// <returns>画像原点のビューポート座標。</returns>
+    /// <remarks>
+    /// <see cref="ZoomableView.ImageOriginViewport"/> の画像原点計算を純粋関数として分離する。<br/>
+    /// Fit 中は CenterAlign に応じてビューポート中央（画像が小さい場合）または原点 (0,0)。<br/>
+    /// 固定倍率では軸ごとに独立して扱い、スクロール可能な軸はオフセットによるパン位置
+    /// （<c>−offset × scale</c>）、スクロール不能な軸は CenterAlign に応じた中央寄せ補正を適用する。
+    /// </remarks>
+    public static Point ComputeImageOrigin(
+        Size displaySize, Size viewportSize, double zoomPercent,
+        Vector offset, double scale, bool centerAlign)
+    {
+        if (zoomPercent <= 0)
+        {
+            // Fit: CenterAlign に応じてビューポート中央（画像が小さい場合）または原点
+            return centerAlign
+                ? new Point(
+                    MaxCentered(displaySize.Width, viewportSize.Width, true),
+                    MaxCentered(displaySize.Height, viewportSize.Height, true))
+                : new Point(0, 0);
+        }
+
+        // 固定倍率では軸ごとに独立して扱う（オフセットは 0 にクランプされ、パン位置と中央寄せは排他）
+        var x = displaySize.Width <= viewportSize.Width
+            ? MaxCentered(displaySize.Width, viewportSize.Width, centerAlign)
+            : -offset.X * scale;
+        var y = displaySize.Height <= viewportSize.Height
+            ? MaxCentered(displaySize.Height, viewportSize.Height, centerAlign)
+            : -offset.Y * scale;
+        return new Point(x, y);
+    }
+
     /// <summary>ズーム率変更後のスクロールオフセットを求める（コンテンツ座標不変・スケールが変わる場合）。</summary>
     /// <param name="offset">ズーム前のオフセット（コンテンツ座標。ビューポート左上に対応）。</param>
     /// <param name="center">ズーム中心（ビューポートローカル）。</param>
