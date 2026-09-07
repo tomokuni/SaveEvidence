@@ -1,4 +1,5 @@
 using Estable.AvaloniaUI.Platform;
+using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;
 using Avalonia;
@@ -8,8 +9,6 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Microsoft.Extensions.DependencyInjection;
-// Enum は名前空間 Estable.SaveEvidence.Enum と衝突するため、System.Enum を SystemEnum 別名で解決する
-using SystemEnum = System.Enum;
 
 namespace Estable.SaveEvidence.Views.Pages;
 
@@ -252,7 +251,7 @@ public sealed partial class SettingsPage : UserControl
             return;
         }
 
-        if (TryParseHotKeyText(text, out var setting))
+        if (HotKeyParser.TryParse(text, out var setting))
         {
             if (target.HasValue)
             {
@@ -303,48 +302,6 @@ public sealed partial class SettingsPage : UserControl
         HotkeyTarget.AreaSelect => _viewModel.Settings.AreaSelectHotKey,
         _ => new HotKeySetting(HotKeyModifiers.None, Key.None)
     };
-
-    /// <summary>ホットキー文字列を解釈して HotKeySetting に変換する。</summary>
-    /// <remarks>
-    /// "Ctrl + Shift + Q", "Ctrl+Shift+Q" 等の形式に対応する。大文字小文字は区別しない。<br/>
-    /// </remarks>
-    /// <param name="text">解釈する文字列</param>
-    /// <param name="setting">変換結果</param>
-    /// <returns>解釈に成功した場合は true</returns>
-    private static bool TryParseHotKeyText(string text, out HotKeySetting setting)
-    {
-        setting = new HotKeySetting(HotKeyModifiers.None, Key.None);
-        if (string.IsNullOrWhiteSpace(text)) return false;
-
-        // "Ctrl + Shift + Q" → ["Ctrl ", " Shift ", " Q"] → trim
-        var parts = text.Split('+', StringSplitOptions.TrimEntries);
-        if (parts.Length < 2) return false;
-
-        var modifiers = HotKeyModifiers.None;
-        for (int i = 0; i < parts.Length - 1; i++)
-        {
-            modifiers |= parts[i].ToLowerInvariant() switch
-            {
-                "ctrl" or "control" => HotKeyModifiers.Control,
-                "shift" => HotKeyModifiers.Shift,
-                "alt" => HotKeyModifiers.Alt,
-                "win" or "windows" => HotKeyModifiers.Windows,
-                _ => HotKeyModifiers.None
-            };
-        }
-
-        // 最低1つの修飾キーが必要
-        if (modifiers == HotKeyModifiers.None) return false;
-
-        var keyName = parts[^1];
-        if (SystemEnum.TryParse<Key>(keyName, true, out var key) && key != Key.None)
-        {
-            setting = new HotKeySetting(modifiers, key);
-            return true;
-        }
-
-        return false;
-    }
 
     private void OnClearSelectScreenClick(object? sender, RoutedEventArgs e)
         => ClearHotkey(HotkeyTarget.SelectScreen, SelectScreenTextBox);

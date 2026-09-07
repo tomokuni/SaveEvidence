@@ -6,15 +6,16 @@ using Xunit;
 
 namespace Estable.AvaloniaUI.Platform.Tests;
 
-/// <summary><see cref="NoOpElementFinder"/>（プラットフォーム未提供時のフォールバック）の単体テスト。</summary>
+/// <summary><see cref="NoOpElementFinder"/> / <see cref="ElementFinderResults"/> の純粋ロジック単体テスト。</summary>
 /// <remarks>
 /// Windows 以外（Linux / macOS）の既定実装であり、常に未検出を返すことを検証する。<br/>
-/// <see cref="NoOpElementFinder"/> は internal のため、自身の Tests（PlatformShared.Tests）から検証する（IVT 規約）。
+/// <see cref="NoOpElementFinder"/> は internal のため、自身の Tests（PlatformShared.Tests）から検証する（IVT 規約）。<br/>
+/// <see cref="Control"/> を生成しないため、Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）に依存せず <c>[Fact]</c> で並列実行する。<br/>
+/// <see cref="Window"/> を生成するテスト（<see cref="NoOpElementFinderTests"/>）のみヘッドレスで直列実行する。
 /// </remarks>
-[Collection("AvaloniaHeadless")]
-public class NoOpElementFinderTests
+public class NoOpElementFinderBehaviorTests
 {
-    [AvaloniaFact]
+    [Fact]
     public void NoOpElementFinder_指定位置ベースも未検出を返す()
     {
         var finder = NoOpElementFinder.Instance;
@@ -23,7 +24,7 @@ public class NoOpElementFinderTests
         Assert.False(finder.FindScreenUnderCursor(new PixelPoint(500, 500)).IsDetected);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void NoOpElementFinder_ListScreensは空リストを返す()
     {
         var finder = NoOpElementFinder.Instance;
@@ -33,7 +34,7 @@ public class NoOpElementFinderTests
         Assert.Empty(result);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void NoOpElementFinder_ListWindowsは空リストを返す()
     {
         var finder = NoOpElementFinder.Instance;
@@ -43,7 +44,7 @@ public class NoOpElementFinderTests
         Assert.Empty(result);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void ElementFinderResults_Handle付きで構築できる()
     {
         var handle = new DummyHandle();
@@ -60,7 +61,7 @@ public class NoOpElementFinderTests
         Assert.Same(handle, result.Handle);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void ElementFinderResults_ClassName付きで構築できる()
     {
         var handle = new DummyHandle();
@@ -79,6 +80,21 @@ public class NoOpElementFinderTests
         Assert.Null(without.ClassName);
     }
 
+    /// <summary>テスト用のダミー IPlatformHandle。</summary>
+    private sealed class DummyHandle : IPlatformHandle
+    {
+        public IntPtr Handle => IntPtr.Zero;
+        public string HandleDescriptor => "Dummy";
+    }
+}
+
+/// <summary><see cref="NoOpCursorOverrideGuard"/> の単体テスト（<see cref="Window"/> を生成するためヘッドレス）。</summary>
+/// <remarks>
+/// <see cref="Window"/> を生成するため、Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）で直列実行する。
+/// </remarks>
+[Collection("AvaloniaHeadless")]
+public class NoOpElementFinderTests
+{
     [AvaloniaFact]
     public void NoOpCursorOverrideGuard_アタッチしても何もしない()
     {
@@ -88,12 +104,5 @@ public class NoOpElementFinderTests
         // ヘッドレス環境でもアタッチは例外なく完了する（IsAttached は false のまま）
         guard.Attach(window);
         Assert.False(guard.IsAttached);
-    }
-
-    /// <summary>テスト用のダミー IPlatformHandle。</summary>
-    private sealed class DummyHandle : IPlatformHandle
-    {
-        public IntPtr Handle => IntPtr.Zero;
-        public string HandleDescriptor => "Dummy";
     }
 }

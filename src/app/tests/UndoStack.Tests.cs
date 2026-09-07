@@ -1,5 +1,4 @@
 using Estable.SaveEvidence.Models;
-using Avalonia.Headless.XUnit;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 
@@ -10,7 +9,6 @@ namespace Estable.SaveEvidence.Tests;
 /// Undo 実行時に現在の画像が Redo スタックへ退避され、Redo で戻せることを検証する。<br/>
 /// 新しい操作（<see cref="UndoStack.Push"/>）で Redo 履歴がクリアされることも検証する。
 /// </remarks>
-[Collection("AvaloniaHeadless")]
 public class UndoStackTests
 {
     /// <summary>テスト用の PbBitmap（size x size）を生成する。</summary>
@@ -19,7 +17,7 @@ public class UndoStackTests
     private static PbBitmap CreateBitmap(int size = 10)
         => PbBitmap.Create(size, size);
 
-    [AvaloniaFact]
+    [Fact]
     public void Undo_現在の画像をRedoスタックへ退避して復元する()
     {
         var stack = new UndoStack();
@@ -46,7 +44,7 @@ public class UndoStackTests
         img2.Dispose();
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void Redo_スタックが空ならnullを返す()
     {
         var stack = new UndoStack();
@@ -54,7 +52,7 @@ public class UndoStackTests
         Assert.Null(stack.Redo());
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void Undo_スタックが空ならnullを返しRedoへ退避しない()
     {
         var stack = new UndoStack();
@@ -66,7 +64,7 @@ public class UndoStackTests
         img.Dispose();
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void Push_新しい操作でRedo履歴がクリアされる()
     {
         var stack = new UndoStack();
@@ -93,7 +91,7 @@ public class UndoStackTests
         img3.Dispose();
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void Clear_UndoとRedoの両方が破棄される()
     {
         var stack = new UndoStack();
@@ -118,7 +116,7 @@ public class UndoStackTests
         img2.Dispose();
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void GetUndoHistory_Pushした順で古い順に取得できる()
     {
         var stack = new UndoStack();
@@ -141,7 +139,7 @@ public class UndoStackTests
         Assert.Equal(11, history[1].Size.Height);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void GetRedoHistory_Undoで退避された順に取得できる()
     {
         var stack = new UndoStack();
@@ -177,7 +175,7 @@ public class UndoStackTests
         img3.Dispose();
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void GetUndoHistory_スタックが空なら空リストを返す()
     {
         var stack = new UndoStack();

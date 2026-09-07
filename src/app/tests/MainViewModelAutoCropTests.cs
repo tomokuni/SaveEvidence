@@ -1,6 +1,4 @@
 using Estable.SaveEvidence.ViewModels;
-using Avalonia.Headless.XUnit;
-using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Platform.Imaging;
 using MockSettingsService = Estable.SaveEvidence.Tests.MainViewModelTests.MockSettingsService;
 using Xunit;
@@ -9,11 +7,11 @@ namespace Estable.SaveEvidence.Tests;
 
 /// <summary>自動切り出し（LineDetection 矩形検出）の統合テスト。</summary>
 /// <remarks>
-/// <c>[AvaloniaFact]</c>（ヘッドレス）で <see cref="MainViewModel.AutoCropWindowCommand"/> を実行し、<br/>
+/// <c>[Fact]</c> で <see cref="MainViewModel.AutoCropWindowCommand"/> を実行し、<br/>
 /// 検出結果（<see cref="MainViewModel.DetectedRects"/>）が設定されることを検証する。<br/>
-/// 単純な矩形パターン（白背景・黒枠線）の <see cref="Bitmap"/> をプレビューに設定する。
+/// 単純な矩形パターン（白背景・黒枠線）の <see cref="PbBitmap"/> をプレビューに設定する。<br/>
+/// LineDetection の <see cref="LogicLineDetector"/> は純粋なピクセル検出のため、Avalonia ヘッドレスは不要。
 /// </remarks>
-[Collection("AvaloniaHeadless")]
 public sealed class MainViewModelAutoCropTests
 {
     /// <summary>白背景に黒枠線の矩形を描画した PbBitmap を生成する。</summary>
@@ -48,7 +46,7 @@ public sealed class MainViewModelAutoCropTests
     }
 
     /// <summary>自動切り出しを実行すると検出矩形が設定されることを検証する。</summary>
-    [AvaloniaFact]
+    [Fact]
     public void AutoCropWindow_矩形画像で検出矩形が設定される()
     {
         var vm = new MainViewModel(new MockSettingsService())
@@ -63,7 +61,7 @@ public sealed class MainViewModelAutoCropTests
     }
 
     /// <summary>画像が無い場合は自動切り出しを実行しても検出矩形が設定されないことを検証する。</summary>
-    [AvaloniaFact]
+    [Fact]
     public void AutoCropWindow_画像が無い場合は何もしない()
     {
         var vm = new MainViewModel(new MockSettingsService());
@@ -75,7 +73,7 @@ public sealed class MainViewModelAutoCropTests
     }
 
     /// <summary>画像変更時に自動切り出しの検出矩形がクリアされることを検証する。</summary>
-    [AvaloniaFact]
+    [Fact]
     public void AutoCropWindow_画像変更で検出矩形がクリアされる()
     {
         var vm = new MainViewModel(new MockSettingsService())
@@ -93,7 +91,7 @@ public sealed class MainViewModelAutoCropTests
     }
 
     /// <summary>キャンセルすると自動切り出しモードと検出矩形がクリアされることを検証する。</summary>
-    [AvaloniaFact]
+    [Fact]
     public void CancelAutoCrop_モードと検出矩形がクリアされる()
     {
         var vm = new MainViewModel(new MockSettingsService())
@@ -113,7 +111,7 @@ public sealed class MainViewModelAutoCropTests
     }
 
     /// <summary>矩形を確定すると切り出しが実行され、モードが終了することを検証する。</summary>
-    [AvaloniaFact]
+    [Fact]
     public void ConfirmAutoCrop_確定した矩形で切り出してモードが終了する()
     {
         var vm = new MainViewModel(new MockSettingsService())

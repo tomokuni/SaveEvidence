@@ -6,57 +6,13 @@ using Avalonia.Headless.XUnit;
 namespace Estable.AvaloniaUI.Platform.Tests;
 
 /// <summary><see cref="ScreenConverter"/> の単体テスト（画面物理座標変換ポート）。</summary>
+/// <remarks>
+/// <see cref="Control"/>（<c>Window</c> / <c>Panel</c>）を使うテストは <c>[AvaloniaFact]</c> で直列実行する。<br/>
+/// 純粋な座標変換のみのテスト（<see cref="ScreenConverter.CreateDipPort"/>）は <c>[Fact]</c> で並列実行する。
+/// </remarks>
 [Collection("AvaloniaHeadless")]
 public class ScreenConverterTests
 {
-    // ====================================================================
-    // CreateDipPort（ローカル DIP ↔ 画面物理）
-    // ====================================================================
-
-    [AvaloniaFact]
-    public void CreateDipPort_逆変換でDIPを画面物理に変換する()
-    {
-        // 原点 (100, 50)、スケーリング 1.25
-        var port = ScreenConverter.CreateDipPort(new PixelPoint(100, 50), 1.25);
-
-        // DIP (200, 100) → 物理 (350, 175)
-        var p = port.Inverse(new Point(200, 100));
-        Assert.Equal(350, p.X, 6);
-        Assert.Equal(175, p.Y, 6);
-    }
-
-    [AvaloniaFact]
-    public void CreateDipPort_順変換で画面物理をDIPに変換する()
-    {
-        var port = ScreenConverter.CreateDipPort(new PixelPoint(100, 50), 1.25);
-
-        // 物理 (350, 175) → DIP (200, 100)
-        var p = port.Forward(new Point(350, 175));
-        Assert.Equal(200, p.X, 6);
-        Assert.Equal(100, p.Y, 6);
-    }
-
-    [AvaloniaFact]
-    public void CreateDipPort_往復で元の座標に戻る()
-    {
-        var port = ScreenConverter.CreateDipPort(new PixelPoint(37, 88), 1.5);
-        var dip = new Point(123.4, 456.7);
-        var roundTrip = port.Forward(port.Inverse(dip));
-        Assert.Equal(dip.X, roundTrip.X, 6);
-        Assert.Equal(dip.Y, roundTrip.Y, 6);
-    }
-
-    [AvaloniaFact]
-    public void CreateDipPort_スケーリング0以下は等倍として扱う()
-    {
-        var port = ScreenConverter.CreateDipPort(new PixelPoint(10, 20), 0);
-
-        // スケール 1.0 として変換（物理 = DIP + 原点）
-        var p = port.Inverse(new Point(100, 200));
-        Assert.Equal(110, p.X, 6);
-        Assert.Equal(220, p.Y, 6);
-    }
-
     // ====================================================================
     // ScreenToLocalDip（画面物理 → コントロールローカル DIP）
     // ====================================================================
@@ -117,5 +73,61 @@ public class ScreenConverterTests
 
         Assert.Equal(new Point(10, 20), port.Forward(new Point(10, 20)));
         Assert.Equal(new Point(10, 20), port.Inverse(new Point(10, 20)));
+    }
+}
+
+/// <summary><see cref="ScreenConverter.CreateDipPort"/> の純粋座標変換の単体テスト。</summary>
+/// <remarks>
+/// <see cref="Control"/> を使用せず、<c>PixelPoint</c> / <c>Point</c> のみの純粋演算のため<br/>
+/// Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）に依存せず <c>[Fact]</c> で並列実行する。
+/// </remarks>
+public class ScreenConverterDipPortTests
+{
+    // ====================================================================
+    // CreateDipPort（ローカル DIP ↔ 画面物理）
+    // ====================================================================
+
+    [Fact]
+    public void CreateDipPort_逆変換でDIPを画面物理に変換する()
+    {
+        // 原点 (100, 50)、スケーリング 1.25
+        var port = ScreenConverter.CreateDipPort(new PixelPoint(100, 50), 1.25);
+
+        // DIP (200, 100) → 物理 (350, 175)
+        var p = port.Inverse(new Point(200, 100));
+        Assert.Equal(350, p.X, 6);
+        Assert.Equal(175, p.Y, 6);
+    }
+
+    [Fact]
+    public void CreateDipPort_順変換で画面物理をDIPに変換する()
+    {
+        var port = ScreenConverter.CreateDipPort(new PixelPoint(100, 50), 1.25);
+
+        // 物理 (350, 175) → DIP (200, 100)
+        var p = port.Forward(new Point(350, 175));
+        Assert.Equal(200, p.X, 6);
+        Assert.Equal(100, p.Y, 6);
+    }
+
+    [Fact]
+    public void CreateDipPort_往復で元の座標に戻る()
+    {
+        var port = ScreenConverter.CreateDipPort(new PixelPoint(37, 88), 1.5);
+        var dip = new Point(123.4, 456.7);
+        var roundTrip = port.Forward(port.Inverse(dip));
+        Assert.Equal(dip.X, roundTrip.X, 6);
+        Assert.Equal(dip.Y, roundTrip.Y, 6);
+    }
+
+    [Fact]
+    public void CreateDipPort_スケーリング0以下は等倍として扱う()
+    {
+        var port = ScreenConverter.CreateDipPort(new PixelPoint(10, 20), 0);
+
+        // スケール 1.0 として変換（物理 = DIP + 原点）
+        var p = port.Inverse(new Point(100, 200));
+        Assert.Equal(110, p.X, 6);
+        Assert.Equal(220, p.Y, 6);
     }
 }
