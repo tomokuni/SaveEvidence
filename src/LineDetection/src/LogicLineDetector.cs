@@ -1,6 +1,7 @@
 using Estable.AvaloniaUI.Platform.Imaging;
 using OpenCvSharp;
 using Point = Avalonia.Point;
+using static Estable.AvaloniaUI.LineDetection.LineSegmentMath;
 
 namespace Estable.AvaloniaUI.LineDetection;
 
@@ -17,6 +18,9 @@ namespace Estable.AvaloniaUI.LineDetection;
 /// </remarks>
 public sealed class LogicLineDetector : ILineDetector
 {
+    /// <summary>検出パラメータ（不変値・検証付き）。既定は <see cref="LineDetectionOptions.Default"/>。</summary>
+    public LineDetectionOptions Options { get; }
+
     /// <summary>方式の表示名。</summary>
     public string Name => "ロジック（Canny + Hough）";
 
@@ -26,80 +30,22 @@ public sealed class LogicLineDetector : ILineDetector
     /// <summary>モデル読込・実行エラー（モデル不使用のため常に null）。</summary>
     public string? ErrorMessage => null;
 
-    /// <summary>Canny の低閾値。</summary>
-    /// <remarks>
-    /// 実画面のキャプチャではウィンドウ枠がアンチエイリアスで薄くなる（輝度差 50〜180）ため、<br/>
-    /// 低いしきい値で薄いエッジも検出する（<see cref="CannyThreshold2"/> はその 3 倍）。
-    /// </remarks>
-    public int CannyThreshold1 { get; set; } = 20;
+    /// <summary>既定の検出パラメータで検出器を初期化する。</summary>
+    public LogicLineDetector()
+        : this(LineDetectionOptions.Default) { }
 
-    /// <summary>Canny の高閾値。</summary>
-    /// <remarks><see cref="CannyThreshold1"/> の 3 倍。強いエッジを優先しつつ薄いエッジも拾う。</remarks>
-    public int CannyThreshold2 { get; set; } = 60;
-
-    /// <summary>HoughLinesP の投票閾値（小さいほど多くの線分を検出）。</summary>
-    /// <remarks>薄い枠線はエッジが弱いため、投票数が少なくなる。低めに設定して検出を漏らさない。</remarks>
-    public int HoughThreshold { get; set; } = 40;
-
-    /// <summary>検出する線分の最小長さ（ピクセル）。マージ後の辺にも適用する。</summary>
-    /// <remarks>
-    /// テキスト文字列の水平エッジは短い線分として検出されるため、ウィンドウ枠（長い直線）との
-    /// 識別を目的に十分な長さを設定する（<see cref="MinEdgeSupportRatio"/> と併用して誤検出を抑制）。
-    /// </remarks>
-    public int MinLineLength { get; set; } = 50;
-
-    /// <summary>同一線分とみなす最大ギャップ（ピクセル）。</summary>
-    public int MaxLineGap { get; set; } = 10;
-
-    /// <summary>水平 / 垂直とみなす角度許容差（度）。</summary>
-    public double AngleTolerance { get; set; } = 5.0;
-
-    /// <summary>辺のクラスタリング許容差（ピクセル）。</summary>
-    /// <remarks>
-    /// 同一線分の断片（Y 方向に分割された垂直線・X 方向に分割された水平線）を連結するための許容差。<br/>
-    /// 枠線とウィンドウ内の罫線（近接する別の平行線）を混ぜないよう 1px に絞る。<br/>
-    /// 近接した平行線の統合は <see cref="MergeParallelLines"/>（外縁採用）が行う。
-    /// </remarks>
-    public int ClusterTolerance { get; set; } = 1;
-
-    /// <summary>線分に沿ったエッジピクセルの最小割合（0.0〜1.0）。</summary>
-    /// <remarks>
-    /// マージ後の線分上で Canny エッジが存在するピクセルの割合が本値を下回る線分は除外する。<br/>
-    /// ウィンドウ枠は連続エッジ（割合が高い）で、文字列の水平エッジは断続的（割合が低い）ため、<br/>
-    /// テキスト部分の誤検出を除外できる。
-    /// </remarks>
-    public double MinEdgeSupportRatio { get; set; } = 0.6;
-
-    /// <summary>矩形の辺に統合する平行線の最大距離（ピクセル）。</summary>
-    /// <remarks>
-    /// ウィンドウ枠は線幅があるため、外縁エッジと内縁エッジが別々に検出される。<br/>
-    /// この距離以内の平行線を平均化して 1 本の辺へ統合する（<see cref="BuildRectangles"/>）。
-    /// </remarks>
-    public double ParallelMergeTolerance { get; set; } = 8.0;
-
-    /// <summary>矩形のコーナー判定の許容差（辺の長さに対する比率）。</summary>
-    /// <remarks>
-    /// ウィンドウ枠はコーナー付近で欠ける（角丸・他ウィンドウとの重なり）ため、<br/>
-    /// 辺の端点とコーナー座標の距離が、辺の長さ × 本比率以内なら近接とみなす。<br/>
-    /// 長い辺（ウィンドウ枠）はコーナー欠け（最大 100px 超）を許容し、<br/>
-    /// ウィンドウ上部の別要素の境界（欠け 300px 超）は除外する。
-    /// </remarks>
-    public double CornerToleranceRatio { get; set; } = 0.2;
-
-    /// <summary>矩形の対辺（上辺と下辺・左辺と右辺）の長さの差の許容比率。</summary>
-    /// <remarks>
-    /// コーナーが欠けてスパンが揃わないことがあるため、対辺の長さの差は比率で許容する。<br/>
-    /// ウィンドウ上部の別要素の境界（対辺差が大きい）を除外しつつ、<br/>
-    /// 別ウィンドウの重なりで端点が欠ける辺（対辺差 0.12 前後）を許容する。
-    /// </remarks>
-    public double OppositeSpanRatio { get; set; } = 0.13;
+    /// <summary>指定した検出パラメータで検出器を初期化する。</summary>
+    /// <param name="options">検出パラメータ（不変値・検証付き）。</param>
+    /// <exception cref="ArgumentException">オプションが不変条件を満たさない場合。</exception>
+    public LogicLineDetector(LineDetectionOptions options)
+    {
+        options.Validate();
+        Options = options;
+    }
 
     /// <summary>コーナー近接判定の最小許容差（ピクセル）。</summary>
     /// <remarks>短い線分で許容差が過小になるのを防ぐ。</remarks>
     private const double MinCornerTolerance = 5.0;
-
-    /// <summary>線分の記録（始点・終点）。</summary>
-    private readonly record struct LineSeg(int X1, int Y1, int X2, int Y2);
 
     /// <summary>画像から水平・垂直の辺（線分）を検出する。</summary>
     /// <param name="image">解析対象の画像（PbBitmap・BGRA8888）。</param>
@@ -116,34 +62,35 @@ public sealed class LogicLineDetector : ILineDetector
     /// </remarks>
     public IReadOnlyList<LineDetectionResult> Detect(PbBitmap image)
     {
+        var options = Options;
         using var mat = MatHelper.ToMat(image);
         using var gray = new Mat();
         Cv2.CvtColor(mat, gray, ColorConversionCodes.BGRA2GRAY);
         using var edges = new Mat();
-        Cv2.Canny(gray, edges, CannyThreshold1, CannyThreshold2);
+        Cv2.Canny(gray, edges, options.CannyThreshold1, options.CannyThreshold2);
 
         var horizontals = new List<LineSeg>();
         var verticals = new List<LineSeg>();
 
-        var houghLines = Cv2.HoughLinesP(edges, 1, Math.PI / 180, HoughThreshold, MinLineLength, MaxLineGap);
+        var houghLines = Cv2.HoughLinesP(edges, 1, Math.PI / 180, options.HoughThreshold, options.MinLineLength, options.MaxLineGap);
         foreach (var seg in houghLines)
         {
             var line = new LineSeg(seg.P1.X, seg.P1.Y, seg.P2.X, seg.P2.Y);
             var angle = Math.Abs(Math.Atan2(line.Y2 - line.Y1, line.X2 - line.X1) * 180 / Math.PI);
 
-            if (angle < AngleTolerance || angle > 180 - AngleTolerance)
+            if (angle < options.AngleTolerance || angle > 180 - options.AngleTolerance)
             {
                 horizontals.Add(line);
             }
-            else if (Math.Abs(angle - 90) < AngleTolerance)
+            else if (Math.Abs(angle - 90) < options.AngleTolerance)
             {
                 verticals.Add(line);
             }
         }
 
         // マージ後の線分（水平・垂直）
-        var mergedH = MergeCollinearAll(horizontals, isHorizontal: true, gap: MaxLineGap);
-        var mergedV = MergeCollinearAll(verticals, isHorizontal: false, gap: MaxLineGap);
+        var mergedH = MergeCollinearAll(horizontals, isHorizontal: true, gap: options.MaxLineGap, options.ClusterTolerance);
+        var mergedV = MergeCollinearAll(verticals, isHorizontal: false, gap: options.MaxLineGap, options.ClusterTolerance);
 
         // 矩形（ウィンドウの 4 辺）を構成できる場合は、閉区間として優先出力する
         var rectangles = BuildRectangles(mergedH, mergedV, image.Width, image.Height, gray, edges);
@@ -160,26 +107,6 @@ public sealed class LogicLineDetector : ILineDetector
         return results.OrderByDescending(r => r.Score).ToList();
     }
 
-    /// <summary>線分群をクラスタリングしてマージし、マージ後の線分一覧を返す。</summary>
-    /// <param name="segments">同一向きの線分群。</param>
-    /// <param name="isHorizontal">水平線分の場合は true。</param>
-    /// <param name="gap">同一クラスタ内の線分を連結する最大ギャップ（ピクセル）。</param>
-    /// <returns>マージ後の線分一覧（長さフィルタは未適用）。</returns>
-    /// <remarks>
-    /// 1. 垂直方向（水平線は Y・垂直線は X）でクラスタリング<br/>
-    /// 2. クラスタ内を水平方向（水平線は X・垂直線は Y）で連結マージ
-    /// </remarks>
-    private List<LineSeg> MergeCollinearAll(List<LineSeg> segments, bool isHorizontal, int gap)
-    {
-        var result = new List<LineSeg>();
-        foreach (var cluster in ClusterByPerpendicular(segments, isHorizontal))
-        {
-            result.AddRange(MergeCollinear(cluster, isHorizontal, gap));
-        }
-
-        return result;
-    }
-
     /// <summary>マージ後の線分をフィルタしてスコア付きの線分結果を生成する。</summary>
     /// <param name="segments">マージ後の線分一覧。</param>
     /// <param name="isHorizontal">水平線分の場合は true。</param>
@@ -191,16 +118,17 @@ public sealed class LogicLineDetector : ILineDetector
     /// </remarks>
     private IEnumerable<LineDetectionResult> FilterAndScore(List<LineSeg> segments, bool isHorizontal, Mat edges)
     {
+        var options = Options;
         foreach (var merged in segments)
         {
             var length = Length(merged);
-            if (length < MinLineLength)
+            if (length < options.MinLineLength)
             {
                 continue;
             }
 
             // 文字列の水平エッジ（断続的）を除外する: 線分に沿ったエッジの割合が低いものは捨てる
-            if (EdgeSupportRatio(merged, edges, isHorizontal) < MinEdgeSupportRatio)
+            if (EdgeSupportRatio(merged, edges, isHorizontal) < options.MinEdgeSupportRatio)
             {
                 continue;
             }
@@ -245,23 +173,24 @@ public sealed class LogicLineDetector : ILineDetector
     private List<LineDetectionResult> BuildRectangles(
         List<LineSeg> horizontals, List<LineSeg> verticals, int imageWidth, int imageHeight, Mat gray, Mat edges)
     {
+        var options = Options;
         // 断片を広いギャップで連結して長い辺を復元し、枠の外側の境界へ補正する。
         // 透明度による背景混合で 1 本の枠線が複数の近接平行線として検出されるため、
         // 近接する平行線を 1 本に統合してから、文字列の断片（エッジ支持率が低い）を除外する
         var hs = MergeParallelLines(
-                MergeCollinearAll(horizontals, isHorizontal: true, gap: RectMergeGap)
+                MergeCollinearAll(horizontals, isHorizontal: true, gap: RectMergeGap, options.ClusterTolerance)
                     .Select(s => SnapToEdgeByGradient(s, isHorizontal: true, imageHeight / 2.0, gray))
                     .ToList(),
-                isHorizontal: true, ParallelMergeTolerance, imageHeight / 2.0, edges)
-            .Where(s => Length(s) >= MinLineLength && EdgeSupportRatio(s, edges, isHorizontal: true) >= MinEdgeSupportRatio)
+                isHorizontal: true, options.ParallelMergeTolerance, imageHeight / 2.0, edges)
+            .Where(s => Length(s) >= options.MinLineLength && EdgeSupportRatio(s, edges, isHorizontal: true) >= options.MinEdgeSupportRatio)
             .ToList();
 
         var vs = MergeParallelLines(
-                MergeCollinearAll(verticals, isHorizontal: false, gap: RectMergeGap)
+                MergeCollinearAll(verticals, isHorizontal: false, gap: RectMergeGap, options.ClusterTolerance)
                     .Select(s => SnapToEdgeByGradient(s, isHorizontal: false, imageWidth / 2.0, gray))
                     .ToList(),
-                isHorizontal: false, ParallelMergeTolerance, imageWidth / 2.0, edges)
-            .Where(s => Length(s) >= MinLineLength && EdgeSupportRatio(s, edges, isHorizontal: false) >= MinEdgeSupportRatio)
+                isHorizontal: false, options.ParallelMergeTolerance, imageWidth / 2.0, edges)
+            .Where(s => Length(s) >= options.MinLineLength && EdgeSupportRatio(s, edges, isHorizontal: false) >= options.MinEdgeSupportRatio)
             .ToList();
 
         // 水平線のペア（上・下）と垂直線のペア（左・右）の組み合わせを探索し、
@@ -282,7 +211,7 @@ public sealed class LogicLineDetector : ILineDetector
                 }
 
                 var y2 = PerpCoord(h2, isHorizontal: true);
-                if (Math.Abs(y2 - y1) < MinLineLength)
+                if (Math.Abs(y2 - y1) < options.MinLineLength)
                 {
                     continue;
                 }
@@ -305,7 +234,7 @@ public sealed class LogicLineDetector : ILineDetector
                         }
 
                         var x2 = PerpCoord(v2, isHorizontal: false);
-                        if (Math.Abs(x2 - x1) < MinLineLength)
+                        if (Math.Abs(x2 - x1) < options.MinLineLength)
                         {
                             continue;
                         }
@@ -410,7 +339,7 @@ public sealed class LogicLineDetector : ILineDetector
     /// <remarks>コーナーを構成する水平辺の端点（cx に最も近い側）と Y 座標がコーナー近傍にある必要がある。</remarks>
     private bool HasHorizontalCorner(in LineSeg seg, double cx, double cy)
     {
-        var tolerance = Math.Max(ParallelSpan(seg, isHorizontal: true) * CornerToleranceRatio, MinCornerTolerance);
+        var tolerance = Math.Max(ParallelSpan(seg, isHorizontal: true) * Options.CornerToleranceRatio, MinCornerTolerance);
 
         var y = PerpCoord(seg, isHorizontal: true);
         if (Math.Abs(y - cy) > tolerance)
@@ -433,7 +362,7 @@ public sealed class LogicLineDetector : ILineDetector
     /// <remarks>コーナーを構成する垂直辺の端点（cy に最も近い側）と X 座標がコーナー近傍にある必要がある。</remarks>
     private bool HasVerticalCorner(in LineSeg seg, double cx, double cy)
     {
-        var tolerance = Math.Max(ParallelSpan(seg, isHorizontal: false) * CornerToleranceRatio, MinCornerTolerance);
+        var tolerance = Math.Max(ParallelSpan(seg, isHorizontal: false) * Options.CornerToleranceRatio, MinCornerTolerance);
 
         var x = PerpCoord(seg, isHorizontal: false);
         if (Math.Abs(x - cx) > tolerance)
@@ -451,13 +380,13 @@ public sealed class LogicLineDetector : ILineDetector
     /// <summary>2 つのスパン（平行方向の長さ）がほぼ同じか判定する。</summary>
     /// <param name="span1">一方のスパン。</param>
     /// <param name="span2">他方のスパン。</param>
-    /// <returns>スパンの差が大きい方の比率 <see cref="OppositeSpanRatio"/> 以内なら true。</returns>
+    /// <returns>スパンの差が大きい方の比率 <see cref="Options.OppositeSpanRatio"/> 以内なら true。</returns>
     /// <remarks>矩形の対辺（上辺と下辺・左辺と右辺）の長さ比較に使用する。<br/>
     /// コーナーが欠けてスパンが揃わないことがあるため、比率で許容する。</remarks>
     private bool SameLength(double span1, double span2)
     {
         var max = Math.Max(span1, span2);
-        return max <= 0 || Math.Abs(span1 - span2) / max <= OppositeSpanRatio;
+        return max <= 0 || Math.Abs(span1 - span2) / max <= Options.OppositeSpanRatio;
     }
 
     /// <summary>線分の平行方向の長さ（水平線は X 幅・垂直線は Y 幅）を返す。</summary>
@@ -891,107 +820,4 @@ public sealed class LogicLineDetector : ILineDetector
     /// 2px に広げると近接する罫線が枠線のエッジを借用して支持率が高くなるため 1px に留める。
     /// </remarks>
     private const int EdgeBandRadius = 1;
-
-    /// <summary>線分を垂直方向（水平線は Y・垂直線は X）でクラスタリングする。</summary>
-    /// <param name="segments">同一向きの線分群。</param>
-    /// <param name="isHorizontal">水平線分の場合は true。</param>
-    /// <returns>垂直方向が近い線分のグループ一覧。</returns>
-    private List<List<LineSeg>> ClusterByPerpendicular(List<LineSeg> segments, bool isHorizontal)
-    {
-        var clusters = new List<List<LineSeg>>();
-        var anchors = new List<double>();
-
-        foreach (var seg in segments.OrderBy(s => PerpCoord(s, isHorizontal)))
-        {
-            var perp = PerpCoord(seg, isHorizontal);
-            var index = -1;
-
-            for (var i = 0; i < clusters.Count; i++)
-            {
-                if (Math.Abs(anchors[i] - perp) <= ClusterTolerance)
-                {
-                    index = i;
-                    break;
-                }
-            }
-
-            if (index < 0)
-            {
-                clusters.Add([seg]);
-                anchors.Add(perp);
-            }
-            else
-            {
-                clusters[index].Add(seg);
-                anchors[index] = (anchors[index] + perp) / 2.0;
-            }
-        }
-
-        return clusters;
-    }
-
-    /// <summary>同一クラスタ内の線分を、水平方向の重なり / ギャップで連結して 1 本の辺へマージする。</summary>
-    /// <param name="cluster">垂直方向が近い線分のグループ。</param>
-    /// <param name="isHorizontal">水平線分の場合は true。</param>
-    /// <param name="gap">連結する最大ギャップ（ピクセル）。</param>
-    /// <returns>マージ後の線分一覧。</returns>
-    private List<LineSeg> MergeCollinear(List<LineSeg> cluster, bool isHorizontal, int gap)
-    {
-        var sorted = cluster.OrderBy(s => ParallelStart(s, isHorizontal)).ToList();
-        var merged = new List<LineSeg>();
-
-        var start = ParallelStart(sorted[0], isHorizontal);
-        var end = ParallelEnd(sorted[0], isHorizontal);
-        var perpSum = PerpCoord(sorted[0], isHorizontal);
-        var count = 1;
-
-        for (var i = 1; i < sorted.Count; i++)
-        {
-            var s = sorted[i];
-            if (ParallelStart(s, isHorizontal) <= end + gap)
-            {
-                end = Math.Max(end, ParallelEnd(s, isHorizontal));
-                perpSum += PerpCoord(s, isHorizontal);
-                count++;
-            }
-            else
-            {
-                merged.Add(MakeLine(start, end, perpSum / count, isHorizontal));
-                start = ParallelStart(s, isHorizontal);
-                end = ParallelEnd(s, isHorizontal);
-                perpSum = PerpCoord(s, isHorizontal);
-                count = 1;
-            }
-        }
-
-        merged.Add(MakeLine(start, end, perpSum / count, isHorizontal));
-        return merged;
-    }
-
-    /// <summary>水平 / 垂直方向の範囲と垂直方向の座標から線分を生成する。</summary>
-    /// <param name="start">水平方向の始点座標。</param>
-    /// <param name="end">水平方向の終点座標。</param>
-    /// <param name="perp">垂直方向の座標（水平線は Y・垂直線は X）。</param>
-    /// <param name="isHorizontal">水平線分の場合は true。</param>
-    /// <returns>生成した線分。</returns>
-    private static LineSeg MakeLine(int start, int end, double perp, bool isHorizontal)
-        => isHorizontal
-            ? new LineSeg(start, (int)Math.Round(perp), end, (int)Math.Round(perp))
-            : new LineSeg((int)Math.Round(perp), start, (int)Math.Round(perp), end);
-
-    /// <summary>線分の長さを計算する。</summary>
-    private static double Length(in LineSeg s)
-        => Math.Sqrt((s.X2 - s.X1) * (s.X2 - s.X1) + (s.Y2 - s.Y1) * (s.Y2 - s.Y1));
-
-    /// <summary>線分の垂直方向座標（水平線は Y・垂直線は X）を返す。</summary>
-    private static double PerpCoord(in LineSeg s, bool isHorizontal)
-        => isHorizontal ? (s.Y1 + s.Y2) / 2.0 : (s.X1 + s.X2) / 2.0;
-
-    /// <summary>線分の水平方向の始点座標（水平線は X・垂直線は Y）を返す。</summary>
-    private static int ParallelStart(in LineSeg s, bool isHorizontal)
-        => isHorizontal ? Math.Min(s.X1, s.X2) : Math.Min(s.Y1, s.Y2);
-
-    /// <summary>線分の水平方向の終点座標（水平線は X・垂直線は Y）を返す。</summary>
-    private static int ParallelEnd(in LineSeg s, bool isHorizontal)
-        => isHorizontal ? Math.Max(s.X1, s.X2) : Math.Max(s.Y1, s.Y2);
 }
