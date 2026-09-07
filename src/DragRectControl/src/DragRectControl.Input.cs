@@ -7,14 +7,25 @@ using Estable.AvaloniaUI.Platform;
 namespace Estable.AvaloniaUI.DragRect;
 
 /// <summary>
-/// DragRectControl のキーボード入力処理（partial 分割）。
+/// DragRectControl の入力処理（partial 分割）。
 /// </summary>
 /// <remarks>
-/// 矢印キー nudge（1 ドメインピクセル単位）と Escape/Enter の確定・キャンセルを処理する。<br/>
-/// フォーカス非依存（TopLevel キー購読）のため、コントロールにフォーカスがなくても動作する。
+/// マウス入力（押下・移動・解放・ホイール）とキーボード入力（矢印キー nudge・Escape/Enter の確定・キャンセル）を担う。<br/>
+/// マウスドラッグ・ハンドル操作は <see cref="DragRectControl"/> 本体の公開 API と連携し、<br/>
+/// キーボード（矢印キー nudge）はフォーカス非依存（TopLevel キー購読）のため、コントロールにフォーカスがなくても動作する。
 /// </remarks>
 public sealed partial class DragRectControl
 {
+    // ====================================================================
+    // マウス入力専用フィールド（Click 判定・マウスダウン位置）
+    // ====================================================================
+
+    /// <summary>マウスダウンからアップまでの間にドラッグ移動（選択状態変化）が発生したか。Click 判定に使用する。</summary>
+    private bool _dragPerformed;
+
+    /// <summary>最後のマウスダウン位置（ドメイン座標。Click / MouseUp ログ用）。</summary>
+    private Point _lastPressPos;
+
     // ====================================================================
     // キーボード（矢印キー nudge・Escape/Enter の確定/キャンセル）
     // ====================================================================
@@ -156,7 +167,7 @@ public sealed partial class DragRectControl
 
         // nudge 後の選択矩形・ルーペ位置を通知
         RaiseSelectionChanged(_state.SelectionRect);
-        var pos = GetMarkerPosition();
+        var pos = _state.GetMarkerPosition();
         RaiseLoupePositionMoved(pos);
         _state.Cursor.SetCursorScreenPoint(ToScreen(pos));
         InvalidateVisual();

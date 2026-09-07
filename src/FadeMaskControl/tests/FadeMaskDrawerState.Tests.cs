@@ -111,4 +111,56 @@ public class FadeMaskDrawerStateTests
 
         Assert.Equal("(10, 20) - (41, 61),  (30×40), DisplayScale: (100%)", text);
     }
+
+    [Fact]
+    public void FormatSizeLabel_負の座標はそのまま物理ピクセルへ変換する()
+    {
+        // 画像外の選択矩形（負座標）: 切り捨てで負値のまま表示する
+        var text = FadeMaskDrawer.FormatSizeLabel(new Rect(-10, -20, 30, 40), 1.0);
+
+        Assert.Equal("(-10, -20) - (20, 20),  (30×40), DisplayScale: (100%)", text);
+    }
+
+    [Fact]
+    public void FormatSizeLabel_ゼロサイズは0を表示する()
+    {
+        var text = FadeMaskDrawer.FormatSizeLabel(new Rect(50, 50, 0, 0), 1.0);
+
+        Assert.Equal("(50, 50) - (50, 50),  (0×0), DisplayScale: (100%)", text);
+    }
+
+    // ====================================================================
+    // GetMaskRects（ゼロサイズ選択矩形のエッジケース）
+    // ====================================================================
+
+    [Fact]
+    public void GetMaskRects_ゼロサイズ選択矩形でも例外なく4辺を返す()
+    {
+        var client = new Rect(0, 0, 100, 100);
+        var sel = new Rect(50, 50, 0, 0);
+
+        var rects = FadeMaskDrawer.GetMaskRects(client, sel);
+
+        // 上・下・左・右の 4 辺（左・右は高さ 0 だが生成される）
+        Assert.Equal(4, rects.Count);
+        Assert.Equal(new Rect(0, 0, 100, 50), rects[0]); // 上
+        Assert.Equal(new Rect(0, 50, 100, 50), rects[1]); // 下
+        Assert.Equal(new Rect(0, 50, 50, 0), rects[2]); // 左（高さ 0）
+        Assert.Equal(new Rect(50, 50, 50, 0), rects[3]); // 右（高さ 0）
+    }
+
+    [Fact]
+    public void GetMaskRects_クライアント端の選択矩形は接する辺を返さない()
+    {
+        var client = new Rect(0, 0, 100, 100);
+        // 左端・上端に接する選択矩形
+        var sel = new Rect(0, 0, 40, 40);
+
+        var rects = FadeMaskDrawer.GetMaskRects(client, sel);
+
+        // 上・左は生成されない。下・右のみ
+        Assert.Equal(2, rects.Count);
+        Assert.Equal(new Rect(0, 40, 100, 60), rects[0]); // 下
+        Assert.Equal(new Rect(40, 0, 60, 40), rects[1]); // 右
+    }
 }

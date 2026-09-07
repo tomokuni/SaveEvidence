@@ -1,4 +1,3 @@
-using Estable.AvaloniaUI.ColorPicker;
 using Xunit;
 
 namespace Estable.AvaloniaUI.ColorPicker.Tests;

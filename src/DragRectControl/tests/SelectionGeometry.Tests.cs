@@ -92,4 +92,97 @@ public class SelectionGeometryTests
         // 始点が右下（rect.Right, rect.Bottom に一致）→ 左上（X, Y）
         Assert.Equal(new Point(10, 20), Selection.SelectionGeometry.GetOppositeCorner(rect, new Point(110, 100)));
     }
+
+    // ====================================================================
+    // ClampPointToBounds
+    // ====================================================================
+
+    [Fact]
+    public void ClampPointToBounds_境界内へクリップする()
+    {
+        var bounds = new Rect(0, 0, 200, 100);
+
+        Assert.Equal(new Point(10, 10), Selection.SelectionGeometry.ClampPointToBounds(new Point(10, 10), bounds));
+        // 左端・上端を超える → 0 にクランプ
+        Assert.Equal(new Point(0, 0), Selection.SelectionGeometry.ClampPointToBounds(new Point(-5, -5), bounds));
+        // 右端・下端を超える → 境界へクランプ
+        Assert.Equal(new Point(200, 100), Selection.SelectionGeometry.ClampPointToBounds(new Point(250, 120), bounds));
+    }
+
+    // ====================================================================
+    // ClampRectToBounds（ハンドル固定）
+    // ====================================================================
+
+    [Fact]
+    public void ClampRectToBounds_Moveは矩形全体を境界内へシフトする()
+    {
+        var bounds = new Rect(0, 0, 200, 100);
+        // 左下方向へはみ出した矩形（Move 中）→ 境界内へシフト
+        var rect = new Rect(180, 80, 50, 40); // Right=230 Bottom=120
+
+        var result = Selection.SelectionGeometry.ClampRectToBounds(rect, bounds, DragHandle.Move);
+
+        Assert.Equal(new Rect(150, 60, 50, 40), result); // サイズは維持・シフトのみ
+    }
+
+    [Fact]
+    public void ClampRectToBounds_ハンドル変形は固定角を維持して辺のみクランプする()
+    {
+        var bounds = new Rect(0, 0, 200, 100);
+        // TopLeft ハンドルが左端・上端を超える → 固定角（右下）を維持し、左・上のみクランプ
+        var rect = new Rect(-20, -10, 100, 80); // Right=80 Bottom=70
+
+        var result = Selection.SelectionGeometry.ClampRectToBounds(rect, bounds, DragHandle.TopLeft);
+
+        Assert.Equal(new Rect(0, 0, 80, 70), result);
+    }
+
+    // ====================================================================
+    // ComputeDragRect
+    // ====================================================================
+
+    [Fact]
+    public void ComputeDragRect_TopLeftハンドルで変形する()
+    {
+        // 元矩形 (10,20,100,80)、TopLeft を (dx=30, dy=10) 移動 → l=40, t=30, r=110, b=100 → (40,30,70,70)
+        var result = Selection.SelectionGeometry.ComputeDragRect(new Rect(10, 20, 100, 80), 30, 10, DragHandle.TopLeft, 10);
+        Assert.Equal(new Rect(40, 30, 70, 70), result);
+    }
+
+    [Fact]
+    public void ComputeDragRect_Moveで全体を平行移動する()
+    {
+        var result = Selection.SelectionGeometry.ComputeDragRect(new Rect(10, 20, 100, 80), 5, -10, DragHandle.Move, 10);
+        Assert.Equal(new Rect(15, 10, 100, 80), result);
+    }
+
+    [Fact]
+    public void ComputeDragRect_反対側までドラッグすると矩形が反転される()
+    {
+        // TopLeft を右へ移動し l > r になる → 反転（正規化）
+        var result = Selection.SelectionGeometry.ComputeDragRect(new Rect(10, 20, 100, 80), 200, 0, DragHandle.TopLeft, 10);
+        // l=210, r=110 → x1=110, x2=210
+        Assert.Equal(new Rect(110, 20, 100, 80), result);
+    }
+
+    [Fact]
+    public void ComputeDragRect_最小サイズ未満は拡張される()
+    {
+        // BottomRight を (dx=-95, dy=-95): r=15, b=5, l=10, t=20 → x1=10,x2=15(幅5)→最小10へ、y1=5,y2=20(高さ15)維持
+        var result = Selection.SelectionGeometry.ComputeDragRect(new Rect(10, 20, 100, 80), -95, -95, DragHandle.BottomRight, 10);
+        Assert.Equal(new Rect(10, 5, 10, 15), result);
+    }
+
+    // ====================================================================
+    // ClampRectToDomainBounds（四隅の包絡矩形）
+    // ====================================================================
+
+    [Fact]
+    public void ClampRectToDomainBounds_矩形を境界内へクリップする()
+    {
+        // 境界 200x100 に対し、はみ出した矩形を包絡矩形でクリップ
+        var result = Selection.SelectionGeometry.ClampRectToDomainBounds(new Rect(-10, -20, 150, 80), new Size(200, 100));
+        // l=0, t=0, r=140, b=60 → (0,0,140,60)
+        Assert.Equal(new Rect(0, 0, 140, 60), result);
+    }
 }

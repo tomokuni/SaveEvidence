@@ -1,5 +1,6 @@
 using Estable.AvaloniaUI.DragRect.Selection;
 using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.AvaloniaUI.Platform.Imaging;
 using Avalonia;
 using Avalonia.Media;
 using System.Collections.Concurrent;
@@ -19,7 +20,8 @@ namespace Estable.AvaloniaUI.DragRect.Drawing;
 internal static class DragRectDrawer
 {
     /// <summary>ブラシキャッシュ（色 → ブラシ。Flyweight・容量制限付き）。</summary>
-    private static readonly ConcurrentDictionary<Color, SolidColorBrush> s_brushCache = new();
+    /// <remarks>PlatformFactory の <see cref="BrushCache"/> へ委譲する（LoupeControl と共用・重複排除・DRY）。</remarks>
+    private static readonly BrushCache s_brushCache = new(BrushCacheCapacity);
 
     /// <summary>ペンキャッシュ（色・太さ → ペン。Flyweight・容量制限付き）。</summary>
     private static readonly ConcurrentDictionary<(Color Color, double Thickness), Pen> s_penCache = new();
@@ -35,18 +37,9 @@ internal static class DragRectDrawer
     /// <summary>色に対応するブラシを取得する（キャッシュ優先・未登録なら生成して登録）。</summary>
     /// <param name="color">ブラシの色。</param>
     /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
-    /// <remarks>容量超過時はキャッシュを全クリアしてから登録する（<see cref="AddWithCapacityLimit{T}"/> に委譲）。</remarks>
+    /// <remarks>容量管理（容量制限・超過時全クリア）は <see cref="BrushCache"/> へ委譲する（単一所有・DRY）。</remarks>
     private static SolidColorBrush GetBrush(Color color)
-    {
-        if (s_brushCache.TryGetValue(color, out var cached))
-        {
-            return cached;
-        }
-
-        var brush = new SolidColorBrush(color);
-        AddWithCapacityLimit(s_brushCache, BrushCacheCapacity, color, brush);
-        return brush;
-    }
+        => s_brushCache.GetOrCreate(color);
 
     /// <summary>色・太さに対応するペンを取得する（キャッシュ優先・未登録なら生成して登録）。</summary>
     /// <param name="color">ペンの色。</param>

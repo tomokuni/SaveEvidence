@@ -1,5 +1,4 @@
 using Avalonia;
-using Estable.AvaloniaUI.Loupe;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;

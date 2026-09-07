@@ -225,4 +225,109 @@ public class FadeMaskRendererStateTests
 
         Assert.Single(lines);
     }
+
+    // ====================================================================
+    // ResolveHoleRect（穴あけ矩形決定・ハイライト優先 → 選択矩形）
+    // ====================================================================
+
+    [Fact]
+    public void ResolveHoleRect_ハイライト有効時はハイライト矩形を優先する()
+    {
+        var highlight = new Avalonia.Rect(10, 20, 100, 80);
+        var selection = new Avalonia.Rect(30, 40, 50, 60);
+
+        var result = FadeMaskRenderer.ResolveHoleRect(
+            hasHighlight: true, highlight, hasSelection: true, selection);
+
+        Assert.Equal(highlight, result);
+    }
+
+    [Fact]
+    public void ResolveHoleRect_ハイライト無効で選択有効時は選択矩形を返す()
+    {
+        var selection = new Avalonia.Rect(30, 40, 50, 60);
+
+        var result = FadeMaskRenderer.ResolveHoleRect(
+            hasHighlight: false, null, hasSelection: true, selection);
+
+        Assert.Equal(selection, result);
+    }
+
+    [Fact]
+    public void ResolveHoleRect_両方無効ならnullを返す()
+    {
+        var result = FadeMaskRenderer.ResolveHoleRect(
+            hasHighlight: false, null, hasSelection: false, null);
+
+        Assert.Null(result);
+    }
+
+    // ====================================================================
+    // ShouldDrawOverlay（暗転オーバーレイ描画の決定）
+    // ====================================================================
+
+    [Fact]
+    public void ShouldDrawOverlay_穴あけ矩形があればtrueを返す()
+    {
+        Assert.True(FadeMaskRenderer.ShouldDrawOverlay(new Avalonia.Rect(10, 20, 50, 40), showFullOverlay: false));
+    }
+
+    [Fact]
+    public void ShouldDrawOverlay_穴あけ矩形がなく全面暗転ならtrueを返す()
+    {
+        Assert.True(FadeMaskRenderer.ShouldDrawOverlay(null, showFullOverlay: true));
+    }
+
+    [Fact]
+    public void ShouldDrawOverlay_両方無効ならfalseを返す()
+    {
+        Assert.False(FadeMaskRenderer.ShouldDrawOverlay(null, showFullOverlay: false));
+    }
+
+    // ====================================================================
+    // ShouldShowInfoLabel / GetOperationText（サブライン決定の純粋関数）
+    // ====================================================================
+
+    [Fact]
+    public void ShouldShowInfoLabel_WindowSelectでタイトルがあり表示有効ならtrueを返す()
+    {
+        Assert.True(FadeMaskRenderer.ShouldShowInfoLabel(
+            FadeMaskRenderMode.WindowSelect, infoLabelVisible: true, "Test Window"));
+    }
+
+    [Fact]
+    public void ShouldShowInfoLabel_モードがWindowSelect以外ならfalseを返す()
+    {
+        Assert.False(FadeMaskRenderer.ShouldShowInfoLabel(
+            FadeMaskRenderMode.ScreenSelect, infoLabelVisible: true, "Test Window"));
+        Assert.False(FadeMaskRenderer.ShouldShowInfoLabel(
+            FadeMaskRenderMode.AreaSelect, infoLabelVisible: true, "Test Window"));
+    }
+
+    [Fact]
+    public void ShouldShowInfoLabel_表示無効またはタイトル空ならfalseを返す()
+    {
+        Assert.False(FadeMaskRenderer.ShouldShowInfoLabel(
+            FadeMaskRenderMode.WindowSelect, infoLabelVisible: false, "Test Window"));
+        Assert.False(FadeMaskRenderer.ShouldShowInfoLabel(
+            FadeMaskRenderMode.WindowSelect, infoLabelVisible: true, ""));
+    }
+
+    [Fact]
+    public void GetOperationText_ScreenSelectとWindowSelectはEnter系を返す()
+    {
+        Assert.Equal("Enter / クリック: 確定  Esc: キャンセル",
+            FadeMaskRenderer.GetOperationText(FadeMaskRenderMode.ScreenSelect));
+        Assert.Equal("Enter / クリック: 確定  Esc: キャンセル",
+            FadeMaskRenderer.GetOperationText(FadeMaskRenderMode.WindowSelect));
+    }
+
+    [Fact]
+    public void GetOperationText_AreaSelectとCropはダブルクリック系を返す()
+    {
+        Assert.Equal("ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル",
+            FadeMaskRenderer.GetOperationText(FadeMaskRenderMode.AreaSelect));
+        Assert.Equal("ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル",
+            FadeMaskRenderer.GetOperationText(FadeMaskRenderMode.Crop));
+    }
 }

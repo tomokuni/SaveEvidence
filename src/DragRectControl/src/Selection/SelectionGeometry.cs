@@ -2,17 +2,22 @@ using Avalonia;
 
 namespace Estable.AvaloniaUI.DragRect.Selection;
 
-/// <summary>選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算）を提供する静的クラス。</summary>
+/// <summary>選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算・ドラッグ変形・境界クリップ）を提供する静的クラス。</summary>
 /// <remarks>
 /// 状態を持たない純粋関数のみを提供し、状態管理（<see cref="SelectionController"/>）と描画層
 /// （<see cref="DragRectDrawer"/>）から共通利用する（DRY 原則・疎結合）。<br/>
 /// 本クラスは <see cref="Point"/> と <see cref="Rect"/> 以外の UI 要素に依存しないため、単体テストが容易である<br/>
 /// （UI 境界では <see cref="AvaloniaGeometryAdapters"/> / <see cref="RectDExt"/> で Avalonia / System.Drawing と変換する）。<br/>
 /// 描画層は本クラスのみに依存し、状態保持クラス（Controller）へ直接依存しない。<br/>
-/// <b>依存分離</b>: コアの幾何計算（本クラス）は UI フレームワークに依存しない（移植性・テスト容易性）。
+/// <b>依存分離</b>: コアの幾何計算（本クラス）は UI フレームワークに依存しない（移植性・テスト容易性）。<br/>
+/// ドラッグ変形（<see cref="ComputeDragRect"/>）・境界クリップ（<see cref="ClampRectToBounds"/> / <see cref="ClampPointToBounds"/>）も<br/>
+/// 本クラスに集約する（単一所有・UI 非依存の <c>[Fact]</c> で並列検証できる）。
 /// </remarks>
 internal static class SelectionGeometry
 {
+    /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>
+    private const double MinSelectionSizeLowerBound = 1.0;
+
     /// <summary>始点と終点から正規化された矩形を生成する。</summary>
     /// <param name="start">始点。</param>
     /// <param name="end">終点。</param>
@@ -67,5 +72,113 @@ internal static class SelectionGeometry
         => new(
             Math.Abs(startPoint.X - rect.X) < 0.001 ? rect.Right : rect.X,
             Math.Abs(startPoint.Y - rect.Y) < 0.001 ? rect.Bottom : rect.Y);
+
+    /// <summary>点をドメイン境界内にクリップする。</summary>
+    /// <param name="p">クリップする点。</param>
+    /// <param name="bounds">クリップ範囲。</param>
+    /// <returns>境界内に収めた点。</returns>
+    /// <remarks>純粋幾何計算のため、UI 非依存の <c>[Fact]</c> で並列検証できる。</remarks>
+    public static Point ClampPointToBounds(Point p, Rect bounds)
+        => new(
+            Math.Clamp(p.X, bounds.Left, bounds.Right),
+            Math.Clamp(p.Y, bounds.Top, bounds.Bottom));
+
+    /// <summary>矩形をドメイン境界内にクリップする（ハンドル種別に応じて固定角を維持）。</summary>
+    /// <param name="rect">クリップする矩形。</param>
+    /// <param name="bounds">クリップ範囲。</param>
+    /// <param name="handle">アクティブなハンドル。</param>
+    /// <returns>境界内に収めた矩形。</returns>
+    /// <remarks>
+    /// <see cref="DragHandle.Move"/> の場合は矩形全体が境界内に収まるようにシフトする（サイズは維持）。<br/>
+    /// それ以外のハンドル変形は固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限する。<br/>
+    /// 純粋幾何計算のため、UI 非依存の <c>[Fact]</c> で並列検証できる。
+    /// </remarks>
+    public static Rect ClampRectToBounds(Rect rect, Rect bounds, DragHandle handle)
+    {
+        double l = rect.Left;
+        double t = rect.Top;
+        double r = rect.Right;
+        double b = rect.Bottom;
+
+        if (handle == DragHandle.Move)
+        {
+            double shiftX = l < bounds.Left ? bounds.Left - l : (r > bounds.Right ? bounds.Right - r : 0);
+            double shiftY = t < bounds.Top ? bounds.Top - t : (b > bounds.Bottom ? bounds.Bottom - b : 0);
+            l += shiftX;
+            r += shiftX;
+            t += shiftY;
+            b += shiftY;
+        }
+        else
+        {
+            if (l < bounds.Left) l = bounds.Left;
+            if (t < bounds.Top) t = bounds.Top;
+            if (r > bounds.Right) r = bounds.Right;
+            if (b > bounds.Bottom) b = bounds.Bottom;
+        }
+
+        return new Rect(l, t, r - l, b - t);
+    }
+
+    /// <summary>矩形をドメイン境界（サイズ）内にクリップする（四隅の包絡矩形・bounding box）。</summary>
+    /// <param name="rect">クリップする矩形（ドメイン座標）。</param>
+    /// <param name="bounds">ドメイン境界のサイズ。</param>
+    /// <returns>境界内に収めた矩形。</returns>
+    /// <remarks>
+    /// 矩形の四隅を境界内にクリップし、その包絡矩形（bounding box）を返す（外部復元・設定変更時の即時適用用）。<br/>
+    /// 純粋幾何計算のため、UI 非依存の <c>[Fact]</c> で並列検証できる。
+    /// </remarks>
+    public static Rect ClampRectToDomainBounds(Rect rect, Size bounds)
+    {
+        var l = Math.Clamp(rect.Left, 0, bounds.Width);
+        var t = Math.Clamp(rect.Top, 0, bounds.Height);
+        var r = Math.Clamp(rect.Right, 0, bounds.Width);
+        var b = Math.Clamp(rect.Bottom, 0, bounds.Height);
+        return new Rect(l, t, Math.Max(0, r - l), Math.Max(0, b - t));
+    }
+
+    /// <summary>ドラッグハンドル操作による矩形の変形を計算する。</summary>
+    /// <param name="original">ドラッグ開始時の矩形。</param>
+    /// <param name="dx">X 方向の移動量。</param>
+    /// <param name="dy">Y 方向の移動量。</param>
+    /// <param name="handle">アクティブなハンドル。</param>
+    /// <param name="minSize">選択矩形の最小サイズ。</param>
+    /// <returns>変形後の矩形（反転を正規化・最小サイズ保証）。</returns>
+    /// <remarks>
+    /// ハンドルを反対側までドラッグした場合（l&gt;r または t&gt;b）、矩形を反転（正規化）する。<br/>
+    /// 最小サイズは幅・高さが <paramref name="minSize"/> 未満にならないよう保証する。<br/>
+    /// 純粋幾何計算のため、UI 非依存の <c>[Fact]</c> で並列検証できる。
+    /// </remarks>
+    public static Rect ComputeDragRect(Rect original, double dx, double dy, DragHandle handle, double minSize)
+    {
+        double l = original.Left;
+        double t = original.Top;
+        double r = original.Right;
+        double b = original.Bottom;
+
+        switch (handle)
+        {
+            case DragHandle.TopLeft: l += dx; t += dy; break;
+            case DragHandle.TopCenter: t += dy; break;
+            case DragHandle.TopRight: r += dx; t += dy; break;
+            case DragHandle.MiddleLeft: l += dx; break;
+            case DragHandle.MiddleRight: r += dx; break;
+            case DragHandle.BottomLeft: l += dx; b += dy; break;
+            case DragHandle.BottomCenter: b += dy; break;
+            case DragHandle.BottomRight: r += dx; b += dy; break;
+            case DragHandle.Move: l += dx; t += dy; r += dx; b += dy; break;
+        }
+
+        double x1 = Math.Min(l, r);
+        double x2 = Math.Max(l, r);
+        double y1 = Math.Min(t, b);
+        double y2 = Math.Max(t, b);
+
+        var m = Math.Max(minSize, MinSelectionSizeLowerBound);
+        if (x2 - x1 < m) x2 = x1 + m;
+        if (y2 - y1 < m) y2 = y1 + m;
+
+        return new Rect(x1, y1, x2 - x1, y2 - y1);
+    }
 }
 

@@ -1,5 +1,4 @@
 using Avalonia;
-using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Xunit;
 

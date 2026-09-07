@@ -10,7 +10,7 @@ namespace Estable.AvaloniaUI.FadeMask;
 /// 穴あけマスク（暗転＋選択枠＋サイズラベル）とサブライン（操作・情報ラベル）の描画を担当する。<br/>
 /// <see cref="FadeMaskControl"/> の <c>Render()</c>（ExternalRenderer）から呼び出されることを想定し、
 /// 描画に必要な全ての状態をプロパティとして外部から注入する。<br/>
-/// 拡大鏡は Visual Tree に配置した LoupeControl 自身が描画する（本レンダラーの責務外）。<br/>
+/// 拡大鏡は Visual Tree に配置した拡大鏡コントロール自身が描画する（本レンダラーの責務外）。<br/>
 /// </remarks>
 public sealed class FadeMaskRenderer
 {
@@ -178,11 +178,10 @@ public sealed class FadeMaskRenderer
         var highlightRect = LogicalHighlightRect is { } hl
             ? ToDipRect(hl, port, closedInterval: false)
             : (Rect?)null;
-        var holeRect = HasHighlight ? highlightRect
-                    : HasSelection ? selectionRect
-                    : (Rect?)null;
+        // 穴あけ矩形の決定（ハイライト優先 → 選択矩形）は純粋関数に委譲する（単一所有・DRY）
+        var holeRect = ResolveHoleRect(HasHighlight, highlightRect, HasSelection, selectionRect);
 
-        if (holeRect.HasValue || ShowFullOverlay)
+        if (ShouldDrawOverlay(holeRect, ShowFullOverlay))
         {
             // サイズラベルのプロバイダはラベル表示時のみ評価する（非表示時・描画しないケースでの無駄な呼び出しを回避）
             var sizeLabelOverride = ShowSizeLabel ? SizeLabelOverrideProvider?.Invoke() : null;
@@ -268,6 +267,34 @@ public sealed class FadeMaskRenderer
         ];
     }
 
+    /// <summary>穴あけ矩形（暗転オーバーレイで穴をあける領域）を決定する（純粋関数）。</summary>
+    /// <param name="hasHighlight">ハイライトが有効か。</param>
+    /// <param name="highlightRect">ハイライト矩形（DIP）。null の場合は無効。</param>
+    /// <param name="hasSelection">選択が有効か。</param>
+    /// <param name="selectionRect">選択矩形（DIP）。null の場合は無効。</param>
+    /// <returns>穴あけ矩形。ハイライト優先・次に選択矩形。ハイライト/選択が無効の場合は null。</returns>
+    /// <remarks>
+    /// <see cref="Draw"/> の穴あけ矩形決定（ハイライト優先 → 選択矩形）を純粋ロジックとして集約する（単一所有・DRY）。<br/>
+    /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。
+    /// </remarks>
+    internal static Rect? ResolveHoleRect(
+        bool hasHighlight, Rect? highlightRect, bool hasSelection, Rect? selectionRect)
+        => hasHighlight ? highlightRect
+            : hasSelection ? selectionRect
+            : null;
+
+    /// <summary>暗転オーバーレイを描画するかどうかを判定する（純粋関数）。</summary>
+    /// <param name="holeRect">穴あけ矩形（DIP）。null の場合は全面暗転を検討。</param>
+    /// <param name="showFullOverlay">選択なしでも全面暗転を表示するか。</param>
+    /// <returns>暗転オーバーレイを描画する場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// 穴あけ矩形がある場合、または全面暗転表示（<paramref name="showFullOverlay"/>）が有効な場合は描画する。<br/>
+    /// <see cref="Draw"/> の描画決定（穴あけ or 全面暗転）を純粋ロジックとして集約する（単一所有・DRY）。<br/>
+    /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。
+    /// </remarks>
+    internal static bool ShouldDrawOverlay(Rect? holeRect, bool showFullOverlay)
+        => holeRect.HasValue || showFullOverlay;
+
     /// <summary>サイズラベルの下に表示するサブライン（2 行目以降）を生成する。</summary>
     /// <returns>サブラインのリスト。表示不要の場合は空リスト。</returns>
     /// <remarks>
@@ -280,8 +307,7 @@ public sealed class FadeMaskRenderer
     internal IReadOnlyList<FadeMaskDrawer.SubLine> BuildSubLines()
     {
         // 表示する行がない場合は空リストを返す（描画側は空リストをスキップする）
-        if (!ShowSubLines
-            && !(InfoLabelVisible && Mode == FadeMaskRenderMode.WindowSelect && !string.IsNullOrEmpty(WindowTitle)))
+        if (!ShowSubLines && !ShouldShowInfoLabel(Mode, InfoLabelVisible, WindowTitle))
         {
             return Array.Empty<FadeMaskDrawer.SubLine>();
         }
@@ -291,17 +317,13 @@ public sealed class FadeMaskRenderer
         // 2 行目: 操作ラベル（キー・マウス操作の確定 / キャンセル方法）
         if (ShowSubLines)
         {
-            // 確定操作の文字列は 2 系統（Enter 系 / ダブルクリック系）に集約する（モード別の重複排除）
-            string operationText = Mode is FadeMaskRenderMode.ScreenSelect or FadeMaskRenderMode.WindowSelect
-                ? "Enter / クリック: 確定  Esc: キャンセル"
-                : "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル";
             lines.Add(new FadeMaskDrawer.SubLine(
-                operationText, SubLineFontSize, SubLineColor,
+                GetOperationText(Mode), SubLineFontSize, SubLineColor,
                 SubLineBackgroundColor));
         }
 
         // 3 行目: 情報ラベル（WindowSelect のウィンドウタイトル）。InfoLabelVisible で表示/非表示を制御
-        if (InfoLabelVisible && Mode == FadeMaskRenderMode.WindowSelect && !string.IsNullOrEmpty(WindowTitle))
+        if (ShouldShowInfoLabel(Mode, InfoLabelVisible, WindowTitle))
         {
             lines.Add(new FadeMaskDrawer.SubLine(
                 WindowTitle, InfoLabelFontSize, InfoLabelColor,
@@ -310,6 +332,30 @@ public sealed class FadeMaskRenderer
 
         return lines;
     }
+
+    /// <summary>情報ラベル（ウィンドウタイトル）を表示するかどうかを判定する（純粋関数）。</summary>
+    /// <param name="mode">オーバーレイ描画モード。</param>
+    /// <param name="infoLabelVisible">情報ラベルの表示有無。</param>
+    /// <param name="windowTitle">ウィンドウタイトル。</param>
+    /// <returns>情報ラベルを表示する場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// WindowSelect モードで情報ラベル表示が有効かつウィンドウタイトルが非空の場合のみ表示する。<br/>
+    /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。
+    /// </remarks>
+    internal static bool ShouldShowInfoLabel(FadeMaskRenderMode mode, bool infoLabelVisible, string windowTitle)
+        => infoLabelVisible && mode == FadeMaskRenderMode.WindowSelect && !string.IsNullOrEmpty(windowTitle);
+
+    /// <summary>操作ラベル（確定・キャンセル方法）のテキストを選定する（純粋関数）。</summary>
+    /// <param name="mode">オーバーレイ描画モード。</param>
+    /// <returns>モードに応じた操作ラベルのテキスト。</returns>
+    /// <remarks>
+    /// 確定操作の文字列は 2 系統（Enter 系 / ダブルクリック系）に集約する（モード別の重複排除）。<br/>
+    /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。
+    /// </remarks>
+    internal static string GetOperationText(FadeMaskRenderMode mode)
+        => mode is FadeMaskRenderMode.ScreenSelect or FadeMaskRenderMode.WindowSelect
+            ? "Enter / クリック: 確定  Esc: キャンセル"
+            : "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル";
 }
 
 

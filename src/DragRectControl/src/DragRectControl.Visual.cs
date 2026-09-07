@@ -140,7 +140,7 @@ public sealed partial class DragRectControl
         // nudge 中はドラッグ中のハンドル位置に十字マーカーを表示する（仕様 4.4）
         if (_state.NudgeActive && _state.CrosshairVisible)
         {
-            var markerDip = _coordinatePort.Inverse(GetMarkerPosition());
+            var markerDip = _coordinatePort.Inverse(_state.GetMarkerPosition());
             DragRectDrawer.DrawStartMarker(context, markerDip.ToAvaloniaPoint(), MarkerColor, MarkerThickness, MarkerLength / 2);
         }
 

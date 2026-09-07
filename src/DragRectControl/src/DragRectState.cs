@@ -229,18 +229,18 @@ internal sealed class DragRectState
 
         if (ActiveHandle != DragHandle.None)
         {
-            // ハンドルによるリサイズ/移動
+            // ハンドルによるリサイズ/移動（変形・クリップは SelectionGeometry へ委譲・単一所有）
             double dx = currentPos.X - DragStartPoint.X;
             double dy = currentPos.Y - DragStartPoint.Y;
-            var rect = ComputeDragRect(DragStartRect, dx, dy, ActiveHandle, minSize);
-            SelectionRect = bounds is { } b ? ClampRectToBounds(rect, b, ActiveHandle) : rect;
+            var rect = SelectionGeometry.ComputeDragRect(DragStartRect, dx, dy, ActiveHandle, minSize);
+            SelectionRect = bounds is { } b ? SelectionGeometry.ClampRectToBounds(rect, b, ActiveHandle) : rect;
         }
         else if (IsDragging)
         {
             // 新規選択（始点→終点）: 始点・終点の両方を境界内にクリップしてから矩形を作成する
             // （始点が画像外（レターボックス等）で押下された場合でも、矩形が画像外にはみ出さないようにする）
-            var start = bounds is { } b ? ClampPointToBounds(StartPoint, b) : StartPoint;
-            var end = bounds is { } b2 ? ClampPointToBounds(currentPos, b2) : currentPos;
+            var start = bounds is { } b ? SelectionGeometry.ClampPointToBounds(StartPoint, b) : StartPoint;
+            var end = bounds is { } b2 ? SelectionGeometry.ClampPointToBounds(currentPos, b2) : currentPos;
             SelectionRect = SelectionGeometry.CreateFromPoints(start, end);
         }
         LastMousePosition = currentPos;
@@ -280,9 +280,9 @@ internal sealed class DragRectState
 
         if (ActiveHandle != DragHandle.None)
         {
-            // ハンドルドラッグ中 → ハンドル方向にリサイズ
-            var rect = ComputeDragRect(SelectionRect, dx, dy, ActiveHandle, minSize);
-            SelectionRect = bounds is { } b ? ClampRectToBounds(rect, b, ActiveHandle) : rect;
+            // ハンドルドラッグ中 → ハンドル方向にリサイズ（変形・クリップは SelectionGeometry へ委譲・単一所有）
+            var rect = SelectionGeometry.ComputeDragRect(SelectionRect, dx, dy, ActiveHandle, minSize);
+            SelectionRect = bounds is { } b ? SelectionGeometry.ClampRectToBounds(rect, b, ActiveHandle) : rect;
             // ドラッグ基準を nudge 後の状態に合わせる（次の UpdateDrag で nudge が失われるのを防ぐ）
             DragStartRect = SelectionRect;
             DragStartPoint = SelectionGeometry.GetHandlePosition(SelectionRect, ActiveHandle);
@@ -293,9 +293,9 @@ internal sealed class DragRectState
             // 新規選択ドラッグ中 / 選択確定後 → 終点を微調整
             var end = SelectionGeometry.GetOppositeCorner(SelectionRect, StartPoint);
             end = new Point(end.X + dx, end.Y + dy);
-            end = bounds is { } b ? ClampPointToBounds(end, b) : end;
+            end = bounds is { } b ? SelectionGeometry.ClampPointToBounds(end, b) : end;
             // 始点も境界内にクリップしてから矩形を作成する（画像外の始点によるはみ出し防止）
-            var start = bounds is { } b2 ? ClampPointToBounds(StartPoint, b2) : StartPoint;
+            var start = bounds is { } b2 ? SelectionGeometry.ClampPointToBounds(StartPoint, b2) : StartPoint;
             LastMousePosition = end;
             SelectionRect = SelectionGeometry.CreateFromPoints(start, end);
         }
@@ -311,6 +311,39 @@ internal sealed class DragRectState
     /// <returns>StartPoint と反対側の隅の座標。</returns>
     public Point GetOppositeCorner(Rect rect)
         => SelectionGeometry.GetOppositeCorner(rect, StartPoint);
+
+    /// <summary>十字マーカー・ルーペが追従する位置（ドメイン座標）を取得する。</summary>
+    /// <returns>ドラッグ中のハンドル位置（ドメイン座標）。</returns>
+    /// <remarks>
+    /// ドラッグ・nudge はカーソルを動かしながら矩形を変形するため、十字マーカー・ルーペは「動いている側のハンドル」を追従する:<br/>
+    /// - ハンドル操作中（リサイズ・移動）: アクティブハンドルの現在位置（移動は矩形中心）。<br/>
+    /// - 新規選択ドラッグ中・nudge: 終点（クリップ・最小サイズ保証後の矩形の角）。<br/>
+    /// - 未選択（始点決め nudge）: 始点。<br/>
+    /// 従来の固定コーナー（<see cref="GetOppositeCorner"/>）ではなく、ドラッグ中のハンドル位置を返すことで<br/>
+    /// マーカー・ルーペが必ず左上等の固定位置に表示される問題を解消する。<br/>
+    /// 純粋ロジック（状態 → マーカー位置）のため、UI 非依存の <c>[Fact]</c> で並列検証できる。
+    /// </remarks>
+    public Point GetMarkerPosition()
+    {
+        // ハンドル操作中:
+        // - リサイズ（8 方向）: ドラッグ中のハンドル位置（ポインタ・矩形の角・ルーペを一体にする）
+        // - 移動（Move）: 掴んだ位置（マウス位置）を追従（ルーペが矩形中心に飛ばず、マウスポインタに追従する）
+        if (ActiveHandle != DragHandle.None)
+        {
+            return ActiveHandle == DragHandle.Move
+                ? LastMousePosition
+                : SelectionGeometry.GetHandlePosition(SelectionRect, ActiveHandle);
+        }
+
+        // 新規選択ドラッグ中・nudge: 終点（クリップ後の矩形の角。nudge で追従）
+        if (IsDragging)
+        {
+            return GetOppositeCorner(SelectionRect);
+        }
+
+        // 未選択（始点決め nudge）: 始点
+        return StartPoint;
+    }
 
     /// <summary>現在の選択矩形をドメイン境界（<see cref="Port.Bounds"/>）内にクリップして適用する。</summary>
     /// <returns>クリップによって矩形が変更された場合は <see langword="true"/>。</returns>
@@ -334,107 +367,11 @@ internal sealed class DragRectState
     /// <returns>境界内に収めた矩形。境界が未設定（null）の場合は元の矩形。</returns>
     /// <remarks>
     /// 矩形の四隅を境界内にクリップし、その包絡矩形（bounding box）を返す。<br/>
-    /// 矩形全体を境界内に収める（<see cref="SetSelection"/> 等の外部復元・設定変更時の即時適用用）。
+    /// 矩形全体を境界内に収める（<see cref="SetSelection"/> 等の外部復元・設定変更時の即時適用用）。<br/>
+    /// クリップ計算は <see cref="SelectionGeometry.ClampRectToDomainBounds"/> へ委譲する（単一所有・DRY）。
     /// </remarks>
     public Rect ClipRectToBounds(Rect rect)
-    {
-        if (Port.Bounds is not { } size) return rect;
-        var bounds = new Rect(0, 0, size.Width, size.Height);
-        var l = Math.Clamp(rect.Left, bounds.Left, bounds.Right);
-        var t = Math.Clamp(rect.Top, bounds.Top, bounds.Bottom);
-        var r = Math.Clamp(rect.Right, bounds.Left, bounds.Right);
-        var b = Math.Clamp(rect.Bottom, bounds.Top, bounds.Bottom);
-        return new Rect(l, t, Math.Max(0, r - l), Math.Max(0, b - t));
-    }
-
-    /// <summary>点をドメイン境界内にクリップする。</summary>
-    /// <param name="p">クリップする点。</param>
-    /// <param name="bounds">クリップ範囲。</param>
-    /// <returns>境界内に収めた点。</returns>
-    private static Point ClampPointToBounds(Point p, Rect bounds)
-        => new(
-            Math.Clamp(p.X, bounds.Left, bounds.Right),
-            Math.Clamp(p.Y, bounds.Top, bounds.Bottom));
-
-    /// <summary>矩形をドメイン境界内にクリップする（ハンドル種別に応じて固定角を維持）。</summary>
-    /// <param name="rect">クリップする矩形。</param>
-    /// <param name="bounds">クリップ範囲。</param>
-    /// <param name="handle">アクティブなハンドル。</param>
-    /// <returns>境界内に収めた矩形。</returns>
-    /// <remarks>
-    /// <see cref="DragHandle.Move"/> の場合は矩形全体が境界内に収まるようにシフトする（サイズは維持）。<br/>
-    /// それ以外のハンドル変形は固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限する。
-    /// </remarks>
-    private static Rect ClampRectToBounds(Rect rect, Rect bounds, DragHandle handle)
-    {
-        double l = rect.Left;
-        double t = rect.Top;
-        double r = rect.Right;
-        double b = rect.Bottom;
-
-        if (handle == DragHandle.Move)
-        {
-            double shiftX = l < bounds.Left ? bounds.Left - l : (r > bounds.Right ? bounds.Right - r : 0);
-            double shiftY = t < bounds.Top ? bounds.Top - t : (b > bounds.Bottom ? bounds.Bottom - b : 0);
-            l += shiftX;
-            r += shiftX;
-            t += shiftY;
-            b += shiftY;
-        }
-        else
-        {
-            if (l < bounds.Left) l = bounds.Left;
-            if (t < bounds.Top) t = bounds.Top;
-            if (r > bounds.Right) r = bounds.Right;
-            if (b > bounds.Bottom) b = bounds.Bottom;
-        }
-
-        return new Rect(l, t, r - l, b - t);
-    }
-
-    /// <summary>ドラッグハンドル操作による矩形の変形を計算する。</summary>
-    /// <param name="original">ドラッグ開始時の矩形。</param>
-    /// <param name="dx">X 方向の移動量。</param>
-    /// <param name="dy">Y 方向の移動量。</param>
-    /// <param name="handle">アクティブなハンドル。</param>
-    /// <param name="minSize">選択矩形の最小サイズ。</param>
-    /// <returns>変形後の矩形（反転を正規化・最小サイズ保証）。</returns>
-    /// <remarks>
-    /// ハンドルを反対側までドラッグした場合（l&gt;r または t&gt;b）、矩形を反転（正規化）する。<br/>
-    /// 最小サイズは幅・高さが <paramref name="minSize"/> 未満にならないよう保証する。
-    /// </remarks>
-    private static Rect ComputeDragRect(Rect original, double dx, double dy, DragHandle handle, double minSize)
-    {
-        double l = original.Left;
-        double t = original.Top;
-        double r = original.Right;
-        double b = original.Bottom;
-
-        switch (handle)
-        {
-            case DragHandle.TopLeft: l += dx; t += dy; break;
-            case DragHandle.TopCenter: t += dy; break;
-            case DragHandle.TopRight: r += dx; t += dy; break;
-            case DragHandle.MiddleLeft: l += dx; break;
-            case DragHandle.MiddleRight: r += dx; break;
-            case DragHandle.BottomLeft: l += dx; b += dy; break;
-            case DragHandle.BottomCenter: b += dy; break;
-            case DragHandle.BottomRight: r += dx; b += dy; break;
-            case DragHandle.Move: l += dx; t += dy; r += dx; b += dy; break;
-        }
-
-        double x1 = Math.Min(l, r);
-        double x2 = Math.Max(l, r);
-        double y1 = Math.Min(t, b);
-        double y2 = Math.Max(t, b);
-
-        var m = Math.Max(minSize, MinSelectionSizeLowerBound);
-        if (x2 - x1 < m) x2 = x1 + m;
-        if (y2 - y1 < m) y2 = y1 + m;
-
-        return new Rect(x1, y1, x2 - x1, y2 - y1);
-    }
-
-    /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>
-    private const double MinSelectionSizeLowerBound = 1.0;
+        => Port.Bounds is { } size
+            ? SelectionGeometry.ClampRectToDomainBounds(rect, size)
+            : rect;
 }

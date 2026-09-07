@@ -54,12 +54,6 @@ public sealed partial class DragRectControl : Control
     /// <summary>nudge のカーソル位置追跡（SetCursorPos のエコー PointerMoved 抑制用）。</summary>
     private bool _nudgeHandledInKeyDown;
 
-    /// <summary>マウスダウンからアップまでの間にドラッグ移動（選択状態変化）が発生したか。Click 判定に使用する。</summary>
-    private bool _dragPerformed;
-
-    /// <summary>最後のマウスダウン位置（ドメイン座標。Click / MouseUp ログ用）。</summary>
-    private Point _lastPressPos;
-
     /// <summary>座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。</summary>
     private ICoordTransform _coordinatePort = CoordTransform.Identity;
 
@@ -573,40 +567,6 @@ public sealed partial class DragRectControl : Control
         return radius < 0.001 ? HandleHitRadius : radius;
     }
 
-    /// <summary>十字マーカー・ルーペが追従する位置（ドメイン座標）を取得する。</summary>
-    /// <returns>ドラッグ中のハンドル位置（ドメイン座標）。</returns>
-    /// <remarks>
-    /// ドラッグ・nudge はカーソルを動かしながら矩形を変形するため、十字マーカー・ルーペは「動いている側のハンドル」を追従する:<br/>
-    /// - ハンドル操作中（リサイズ・移動）: アクティブハンドルの現在位置（移動は矩形中心）。<br/>
-    /// - 新規選択ドラッグ中・nudge: 終点（クリップ・最小サイズ保証後の矩形の角）。<br/>
-    /// - 未選択（始点決め nudge）: 始点。<br/>
-    /// 従来の固定コーナー（<see cref="DragRectState.GetOppositeCorner"/>）ではなく、ドラッグ中のハンドル位置を返すことで<br/>
-    /// マーカー・ルーペが必ず左上等の固定位置に表示される問題を解消する。<br/>
-    /// ドラッグ中（<see cref="OnPointerMoved"/>）と nudge 中（<see cref="HandleArrowKey"/>）のルーペ位置通知、<br/>
-    /// nudge 中の十字マーカー描画（<see cref="Render"/>）で共通利用する。
-    /// </remarks>
-    private Point GetMarkerPosition()
-    {
-        // ハンドル操作中:
-        // - リサイズ（8 方向）: ドラッグ中のハンドル位置（ポインタ・矩形の角・ルーペを一体にする）
-        // - 移動（Move）: 掴んだ位置（マウス位置）を追従（ルーペが矩形中心に飛ばず、マウスポインタに追従する）
-        if (_state.ActiveHandle != DragHandle.None)
-        {
-            return _state.ActiveHandle == DragHandle.Move
-                ? _state.LastMousePosition
-                : SelectionGeometry.GetHandlePosition(_state.SelectionRect, _state.ActiveHandle);
-        }
-
-        // 新規選択ドラッグ中・nudge: 終点（クリップ後の矩形の角。nudge で追従）
-        if (_state.IsDragging)
-        {
-            return SelectionGeometry.GetOppositeCorner(_state.SelectionRect, _state.StartPoint);
-        }
-
-        // 未選択（始点決め nudge）: 始点
-        return _state.StartPoint;
-    }
-
     // ====================================================================
     // イベントオーバーライド（ポインター入力）
     // ====================================================================
@@ -750,7 +710,7 @@ public sealed partial class DragRectControl : Control
             // 新規選択の終点）をルーペ中心に通知する（nudge と同じ挙動）。
             // クリップ（ClampToDomainBounds）や最小サイズ保証でマウス位置と矩形の角がずれる場合も、
             // 実際のハンドル点を追従して矩形の微調整位置を確認できる。
-            RaiseLoupePositionMoved(GetMarkerPosition());
+            RaiseLoupePositionMoved(_state.GetMarkerPosition());
         }
         else
         {
@@ -784,7 +744,7 @@ public sealed partial class DragRectControl : Control
         var wasNudging = _state.NudgeActive;
         var pressPos = _lastPressPos;
         // nudge 中のマーカー位置（EndDrag が IsDragging / ActiveHandle をリセットする前に計算）
-        var nudgePos = wasNudging ? GetMarkerPosition() : default;
+        var nudgePos = wasNudging ? _state.GetMarkerPosition() : default;
 
         // ドラッグ終了（確定 or キャンセル判定）。wasDragging は EndDrag 前の状態と同値のため再利用する
         if (wasDragging)

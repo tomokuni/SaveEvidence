@@ -335,4 +335,49 @@ public class DragRectControlStateTests
 
         Assert.True(raised);
     }
+
+    // ====================================================================
+    // DragRectState.GetMarkerPosition（十字マーカー・ルーペ追従位置の純粋ロジック）
+    // ====================================================================
+
+    [Fact]
+    public void GetMarkerPosition_未選択は始点を返す()
+    {
+        var state = new DragRectState(null);
+        state.StartPoint = new Point(10, 20);
+
+        Assert.Equal(new Point(10, 20), state.GetMarkerPosition());
+    }
+
+    [Fact]
+    public void GetMarkerPosition_新規選択ドラッグ中は終点を返す()
+    {
+        var state = new DragRectState(null);
+        state.StartPoint = new Point(10, 20);
+        state.IsDragging = true;
+        state.SelectionRect = new Rect(10, 20, 50, 40); // 始点 (10,20)、終点 (60,60)
+
+        Assert.Equal(new Point(60, 60), state.GetMarkerPosition());
+    }
+
+    [Fact]
+    public void GetMarkerPosition_リサイズハンドル中はハンドル位置を返す()
+    {
+        var state = new DragRectState(null);
+        state.SelectionRect = new Rect(10, 20, 100, 80);
+        state.ActiveHandle = DragHandle.TopRight;
+
+        Assert.Equal(new Point(110, 20), state.GetMarkerPosition());
+    }
+
+    [Fact]
+    public void GetMarkerPosition_移動ハンドル中はマウス位置を返す()
+    {
+        var state = new DragRectState(null);
+        state.SelectionRect = new Rect(10, 20, 100, 80);
+        state.ActiveHandle = DragHandle.Move;
+        state.LastMousePosition = new Point(45, 67);
+
+        Assert.Equal(new Point(45, 67), state.GetMarkerPosition());
+    }
 }

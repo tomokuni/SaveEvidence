@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
 using Estable.AvaloniaUI.Platform;
-using System.Collections.Concurrent;
+using Estable.AvaloniaUI.Platform.Imaging;
 using System.Globalization;
 
 namespace Estable.AvaloniaUI.FadeMask;
@@ -9,14 +9,15 @@ namespace Estable.AvaloniaUI.FadeMask;
 /// <summary>領域選択時の暗転オーバーレイ（穴あけマスク）描画ロジックを提供する静的クラス。</summary>
 /// <remarks>
 /// 暗転マスク（4辺の穴あけ）とサイズラベルの描画を担当する。<br/>
-/// 選択枠線・ドラッグハンドル・始点マーカーは DragRect の責務（<see cref="DragRectDrawer"/>）が担う。<br/>
+/// 選択枠線・ドラッグハンドル・始点マーカーは DragRect（領域選択コントロール）の責務が担う（本クラスは暗転オーバーレイ専用）。<br/>
 /// <see cref="FadeMaskControl"/> の <see cref="FadeMaskControl.Render"/> と、<br/>
 /// ホスト側の <c>Render()</c> オーバーライドの両方から呼び出される。<br/>
 /// </remarks>
 internal static class FadeMaskDrawer
 {
     /// <summary>ブラシキャッシュ（色 → ブラシ。容量制限付き）。</summary>
-    private static readonly ConcurrentDictionary<Color, SolidColorBrush> s_brushCache = new();
+    /// <remarks>PlatformFactory の <see cref="BrushCache"/> へ委譲する（LoupeControl / DragRectControl と共用・重複排除・DRY）。</remarks>
+    private static readonly BrushCache s_brushCache = new(BrushCacheCapacity);
 
     /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
     /// <remarks>テスト（FadeMaskControl.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
@@ -31,39 +32,9 @@ internal static class FadeMaskDrawer
     /// <summary>色に対応するブラシを取得する（キャッシュ優先・未登録なら生成して登録）。</summary>
     /// <param name="color">ブラシの色。</param>
     /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
-    /// <remarks>容量超過時はキャッシュを全クリアしてから登録する（<see cref="AddWithCapacityLimit{TKey, TValue}"/> に委譲）。</remarks>
+    /// <remarks>容量管理（容量制限・超過時全クリア）は <see cref="BrushCache"/> へ委譲する（単一所有・DRY）。</remarks>
     internal static SolidColorBrush GetBrush(Color color)
-    {
-        if (s_brushCache.TryGetValue(color, out var cached))
-        {
-            return cached;
-        }
-
-        var brush = new SolidColorBrush(color);
-        AddWithCapacityLimit(s_brushCache, BrushCacheCapacity, color, brush);
-        return brush;
-    }
-
-    /// <summary>容量制限付きキャッシュへ値を登録する（超過時は全クリアしてから登録）。</summary>
-    /// <typeparam name="TKey">キャッシュのキー型。</typeparam>
-    /// <typeparam name="TValue">キャッシュの値型。</typeparam>
-    /// <param name="cache">対象キャッシュ。</param>
-    /// <param name="capacity">キャッシュの最大容量。</param>
-    /// <param name="key">登録キー。</param>
-    /// <param name="value">登録値。</param>
-    /// <remarks>
-    /// 容量超過時は全クリアして無制限の増加を防ぐ（同一キーは直後に再キャッシュされる）。
-    /// </remarks>
-    private static void AddWithCapacityLimit<TKey, TValue>(
-        ConcurrentDictionary<TKey, TValue> cache, int capacity, TKey key, TValue value)
-        where TKey : notnull
-    {
-        if (cache.Count >= capacity)
-        {
-            cache.Clear();
-        }
-        cache[key] = value;
-    }
+        => s_brushCache.GetOrCreate(color);
     /// <summary>サイズラベルの下に表示するサブライン（2 行目以降）の 1 行分の内容。</summary>
     /// <remarks>
     /// 各行でフォントサイズ・文字色・背景色を個別に指定できる（1 行目 = サイズラベルと同等の設定）。<br/>
