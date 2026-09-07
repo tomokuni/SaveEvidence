@@ -22,9 +22,20 @@ internal static class LoupeBackgroundRenderer
         {
             for (var x = 0; x < pixelSize; x += size)
             {
-                var brush = ((x / size + y / size) & 1) == 0 ? light : dark;
+                var brush = IsDarkChecker(x / size, y / size) ? dark : light;
                 context.DrawRectangle(brush, null, new Rect(x, y, size, size));
             }
         }
     }
+
+    /// <summary>市松模様のタイル（行・列インデックス）が暗色かどうかを判定する。</summary>
+    /// <param name="col">タイルの列インデックス（左から 0 始まり）。</param>
+    /// <param name="row">タイルの行インデックス（上から 0 始まり）。</param>
+    /// <returns>暗色（色B）なら true、明色（色A）なら false。</returns>
+    /// <remarks>
+    /// 交互パターン（(col + row) が奇数なら暗色）を純粋関数で判定する。<br/>
+    /// UI 非依存のため、<c>[Fact]</c> で並列検証できる。
+    /// </remarks>
+    public static bool IsDarkChecker(int col, int row)
+        => (col + row) % 2 == 1;
 }

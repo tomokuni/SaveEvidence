@@ -7,10 +7,12 @@ using Estable.AvaloniaUI.Loupe.Imaging;
 using Estable.AvaloniaUI.Loupe.Logging;
 using Estable.AvaloniaUI.Loupe.Rendering;
 using Estable.AvaloniaUI.Platform;
+using Estable.AvaloniaUI.Platform.Coordinate;
 using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using static Estable.AvaloniaUI.Loupe.LoupeValueCoercer;
 
 namespace Estable.AvaloniaUI.Loupe;
 
@@ -51,69 +53,12 @@ namespace Estable.AvaloniaUI.Loupe;
 /// </remarks>
 public sealed partial class LoupeControl : UserControl
 {
-    /// <summary>ブラシキャッシュ（色 → ブラシ。容量制限付き）。</summary>
-    private static readonly Dictionary<Color, SolidColorBrush> s_brushCache = [];
-
-    /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
-    private const int BrushCacheCapacity = 32;
+    /// <summary>座標ラベル用ブラシキャッシュ（色 → ブラシ。容量制限付き・PlatformFactory で共通化）。</summary>
+    private static readonly BrushCache s_brushCache = new();
 
     // ====================================================================
-    // 数値プロパティの安全域・既定値（coerce とプロパティ登録で共用）
+    // 数値プロパティの安全域・既定値（LoupeValueCoercer から委譲）
     // ====================================================================
-
-    /// <summary><see cref="RequestedSize"/> の最小値（DIP）。</summary>
-    private const int RequestedSizeMin = 1;
-
-    /// <summary><see cref="RequestedSize"/> の最大値（DIP）。</summary>
-    private const int RequestedSizeMax = 4096;
-
-    /// <summary><see cref="RequestedSize"/> の既定値（DIP）。</summary>
-    private const int RequestedSizeDefault = 160;
-
-    /// <summary><see cref="ZoomLevel"/> の最小値。</summary>
-    private const int ZoomLevelMin = 1;
-
-    /// <summary><see cref="ZoomLevel"/> の最大値。</summary>
-    private const int ZoomLevelMax = 64;
-
-    /// <summary><see cref="ZoomLevel"/> の既定値。</summary>
-    private const int ZoomLevelDefault = 4;
-
-    /// <summary><see cref="RenderScaling"/> の最小値。</summary>
-    private const double RenderScalingMin = 0.1;
-
-    /// <summary><see cref="RenderScaling"/> の最大値。</summary>
-    private const double RenderScalingMax = 8.0;
-
-    /// <summary><see cref="RenderScaling"/> の既定値（補正不能時のフォールバックも兼ねる）。</summary>
-    private const double RenderScalingDefault = 1.0;
-
-    /// <summary><see cref="CheckerSize"/> の最小値（ピクセル）。</summary>
-    private const int CheckerSizeMin = 1;
-
-    /// <summary><see cref="CheckerSize"/> の最大値（ピクセル）。</summary>
-    private const int CheckerSizeMax = 128;
-
-    /// <summary><see cref="CheckerSize"/> の既定値（ピクセル）。</summary>
-    private const int CheckerSizeDefault = 6;
-
-    /// <summary><see cref="FrameWidth"/> の最小値（ピクセル）。</summary>
-    private const int FrameWidthMin = 1;
-
-    /// <summary><see cref="FrameWidth"/> の最大値（ピクセル）。</summary>
-    private const int FrameWidthMax = 64;
-
-    /// <summary><see cref="FrameWidth"/> の既定値（ピクセル）。</summary>
-    private const int FrameWidthDefault = 2;
-
-    /// <summary><see cref="CoordLabelFontSize"/> の最小値（DIP）。</summary>
-    private const double CoordLabelFontSizeMin = 6;
-
-    /// <summary><see cref="CoordLabelFontSize"/> の最大値（DIP）。</summary>
-    private const double CoordLabelFontSizeMax = 48;
-
-    /// <summary><see cref="CoordLabelFontSize"/> の既定値（補正不能時のフォールバックも兼ねる）。</summary>
-    private const double CoordLabelFontSizeDefault = 12.0;
 
     /// <summary><see cref="LoupeControl"/> クラスの新しいインスタンスを初期化します。</summary>
     /// <remarks>
@@ -121,11 +66,22 @@ public sealed partial class LoupeControl : UserControl
     /// </remarks>
     public LoupeControl()
     {
+        // InitializeComponent() は IsVisible 変更イベントを発火するため、コーディネーターを先に初期化する
+        _renderCoordinator = CreateRenderCoordinator();
         InitializeComponent();
         // 初期状態は非表示（表示指示は IsVisible=true で行う。XAML 属性ではなくコンストラクタで設定する）
         IsVisible = false;
         UpdateCoordLabel();
     }
+
+    /// <summary>再描画コーディネーターを、現在の表示状態・ロガー・解放処理を注入して生成する。</summary>
+    private LoupeRenderCoordinator CreateRenderCoordinator()
+        => new(
+            isVisible: () => IsVisible,
+            releaseBitmap: ReleaseBitmap,
+            startRender: StartRender,
+            logRenderCore: generation => Log.LogRenderCore(generation),
+            isLogEnabled: () => Log is not NullLogger);
 
     // ====================================================================
     // 座標変換ポート（DragRectControl と同方式）
@@ -136,6 +92,9 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary>表示位置（RenderTransform）のインスタンス（座標更新時は値を書き換えて再利用する）。</summary>
     private readonly TranslateTransform _positionTransform = new();
+
+    /// <summary>再描画のバッチ化コーディネーター（Dispatcher へのポストで 1 フレームに 1 回に結合）。</summary>
+    private LoupeRenderCoordinator _renderCoordinator;
 
     /// <summary>ルーペ中心（<see cref="CenterPoint"/>）からの右下オフセット（DIP）を取得または設定する。</summary>
     /// <value>カーソル位置（ルーペ中心）からの右下方向へのオフセット量（DIP）。</value>
@@ -190,26 +149,18 @@ public sealed partial class LoupeControl : UserControl
         var parentSize = parent.Bounds.Size;
         var hasParentSize = parentSize.Width > 0 && parentSize.Height > 0;
 
-        // 表示サイズ: 基本サイズ（RequestedSize）を親パネルサイズにクランプ（クランプはコントロールが内包）
-        double size = RequestedSize;
-        if (hasParentSize)
-            size = Math.Min(size, Math.Min(parentSize.Width, parentSize.Height));
-        _displaySize = (int)size;
-        Width = size;
-        Height = size;
+        // 座標変換（ドメイン → 親パネル DIP）は ICoordTransform に委譲し、以降のサイズ・位置計算は純粋関数に委譲する
+        var centerDip = port.Inverse(center.ToPoint());
+        var (size, position) = LoupePositionCalculator.Compute(
+            RequestedSize, parentSize, hasParentSize, centerDip, PositionOffset);
 
-        // 表示位置: 中心 → 親パネルDIP → カーソル右下 + オフセット → クランプ
-        var dip = port.Inverse(center.ToPoint());
-        double mx = dip.X + PositionOffset;
-        double my = dip.Y + PositionOffset;
-        if (hasParentSize)
-        {
-            mx = Math.Clamp(mx, 0, Math.Max(0, parentSize.Width - size));
-            my = Math.Clamp(my, 0, Math.Max(0, parentSize.Height - size));
-        }
+        _displaySize = (int)size.Width;
+        Width = size.Width;
+        Height = size.Height;
+
         // 同一インスタンスの値を更新して再利用する（毎回の生成を回避。StyledProperty 変更で再適用される）
-        _positionTransform.X = mx;
-        _positionTransform.Y = my;
+        _positionTransform.X = position.X;
+        _positionTransform.Y = position.Y;
         RenderTransform = _positionTransform;
     }
 
@@ -379,22 +330,22 @@ public sealed partial class LoupeControl : UserControl
         AvaloniaProperty.Register<LoupeControl, double>(nameof(CoordLabelFontSize), defaultValue: CoordLabelFontSizeDefault, coerce: CoerceCoordLabelFontSize);
 
     /// <summary><see cref="RequestedSize"/> を安全域へ補正する（1〜4096）。</summary>
-    private static int CoerceRequestedSize(AvaloniaObject o, int v) => Math.Clamp(v, RequestedSizeMin, RequestedSizeMax);
+    private static int CoerceRequestedSize(AvaloniaObject o, int v) => LoupeValueCoercer.CoerceRequestedSize(v);
 
     /// <summary><see cref="ZoomLevel"/> を安全域へ補正する。</summary>
-    private static int CoerceZoomLevel(AvaloniaObject o, int v) => Math.Clamp(v, ZoomLevelMin, ZoomLevelMax);
+    private static int CoerceZoomLevel(AvaloniaObject o, int v) => LoupeValueCoercer.CoerceZoomLevel(v);
 
     /// <summary>描画スケーリング係数を安全域へ補正する。</summary>
-    private static double CoerceRenderScaling(AvaloniaObject o, double v) => double.IsFinite(v) ? Math.Clamp(v, RenderScalingMin, RenderScalingMax) : RenderScalingDefault;
+    private static double CoerceRenderScaling(AvaloniaObject o, double v) => LoupeValueCoercer.CoerceRenderScaling(v);
 
     /// <summary><see cref="CheckerSize"/> を安全域へ補正する。</summary>
-    private static int CoerceCheckerSize(AvaloniaObject o, int v) => Math.Clamp(v, CheckerSizeMin, CheckerSizeMax);
+    private static int CoerceCheckerSize(AvaloniaObject o, int v) => LoupeValueCoercer.CoerceCheckerSize(v);
 
     /// <summary><see cref="FrameWidth"/> を安全域へ補正する。</summary>
-    private static int CoerceFrameWidth(AvaloniaObject o, int v) => Math.Clamp(v, FrameWidthMin, FrameWidthMax);
+    private static int CoerceFrameWidth(AvaloniaObject o, int v) => LoupeValueCoercer.CoerceFrameWidth(v);
 
     /// <summary><see cref="CoordLabelFontSize"/> を安全域へ補正する。</summary>
-    private static double CoerceCoordLabelFontSize(AvaloniaObject o, double v) => double.IsFinite(v) ? Math.Clamp(v, CoordLabelFontSizeMin, CoordLabelFontSizeMax) : CoordLabelFontSizeDefault;
+    private static double CoerceCoordLabelFontSize(AvaloniaObject o, double v) => LoupeValueCoercer.CoerceCoordLabelFontSize(v);
 
     // ====================================================================
     // 公開プロパティ（入力）
@@ -561,7 +512,7 @@ public sealed partial class LoupeControl : UserControl
         if (!PART_CoordLabel.IsVisible) return;
 
         var c = centerPoint!.Value;
-        PART_CoordText.Text = $"({c.X:F0}, {c.Y:F0})";
+        PART_CoordText.Text = CoordinateFormatter.Format(c);
         PART_CoordText.Foreground = CoordLabelColor;
         PART_CoordText.FontSize = CoordLabelFontSize;
         // 背景色（不透明度は色のアルファに統合）を Border へ反映する（SolidColorBrush は静的キャッシュで共有）
@@ -574,22 +525,9 @@ public sealed partial class LoupeControl : UserControl
     /// <summary>色に対応するブラシを静的キャッシュから取得する（未登録なら生成して登録）。</summary>
     /// <param name="color">ブラシの色。</param>
     /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
-    /// <remarks>容量超過時は全クリアして無制限の増加を防ぐ。</remarks>
+    /// <remarks>容量超過時は全クリアして無制限の増加を防ぐ（<see cref="BrushCache"/> へ委譲）。</remarks>
     private static SolidColorBrush GetSharedBrush(Color color)
-    {
-        if (s_brushCache.TryGetValue(color, out var cached))
-        {
-            return cached;
-        }
-
-        var brush = new SolidColorBrush(color);
-        if (s_brushCache.Count >= BrushCacheCapacity)
-        {
-            s_brushCache.Clear();
-        }
-        s_brushCache[color] = brush;
-        return brush;
-    }
+        => s_brushCache.GetOrCreate(color);
 
     // ====================================================================
     // 公開メソッド（操作）
@@ -602,7 +540,7 @@ public sealed partial class LoupeControl : UserControl
     /// </remarks>
     public void Clear()
     {
-        _renderQueued = false;
+        _renderCoordinator.CancelPending();
         IsVisible = false;
         ReleaseBitmap();
     }
@@ -637,7 +575,7 @@ public sealed partial class LoupeControl : UserControl
     /// </remarks>
     private bool TryBeginRender(out long generation)
     {
-        _renderQueued = false;
+        _renderCoordinator.CancelPending();
         if (!IsVisible)
         {
             ReleaseBitmap();
@@ -645,7 +583,7 @@ public sealed partial class LoupeControl : UserControl
             return false;
         }
 
-        generation = Interlocked.Increment(ref _renderGeneration);
+        generation = _renderCoordinator.NextGeneration();
         return true;
     }
 
@@ -675,7 +613,13 @@ public sealed partial class LoupeControl : UserControl
     // ====================================================================
 
     /// <summary>内部ロガー（描画エラーの記録用）。</summary>
-    public ILogger Log { get; set; } = NullLogger.Instance;
+    public ILogger Log
+    {
+        get => _log;
+        set => _log = value ?? NullLogger.Instance;
+    }
+
+    private ILogger _log = NullLogger.Instance;
 
     // ====================================================================
     // イベント
@@ -702,9 +646,8 @@ public sealed partial class LoupeControl : UserControl
     private void RaiseRendered(PbBitmap bitmap, int size)
     {
         var zoom = ZoomLevel;
-        var pixelSize = Math.Max(1, (int)Math.Ceiling(size * RenderScaling));
-        var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoom);
         var center = CenterPoint;
+        var args = LoupeRenderArgsCalculator.Compute(size, RenderScaling, zoom, center?.ToPoint());
 
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
             bitmap,
@@ -712,59 +655,23 @@ public sealed partial class LoupeControl : UserControl
             size,
             zoom,
             center?.ToPoint(),
-            center is { } c
-                // 切り出し領域の左上は LoupeImageExtractor.ExtractRegionAt と同一の整数計算（(int)X − captureSize/2）で一致させる
-                ? new Point((int)c.X - captureSize / 2, (int)c.Y - captureSize / 2)
-                : null,
-            (double)size * zoom / pixelSize));
+            args.CaptureTopLeft,
+            args.Scale));
     }
 
     // ====================================================================
     // 再描画のバッチ化
     // ====================================================================
 
-    /// <summary>再描画要求の結合フラグ（true の間は追加要求を無視して1回のポストにまとめる）。</summary>
-    private bool _renderQueued;
-    private long _renderGeneration;
-
-    /// <summary>再描画を要求する（複数要求は Dispatcher のポストにより1回に結合される）。</summary>
+    /// <summary>再描画を要求する（複数要求は <see cref="LoupeRenderCoordinator"/> により 1 回に結合される）。</summary>
     /// <remarks>
     /// プロパティ変更（PropertyChanged）から呼ばれる。<br/>
     /// 複数プロパティの連続変更でもポストは1回となり、<br/>
-    /// 1フレームに1回の再描画に抑える（バッチ化）。<br/>
-    /// ポストされたジョブは次のフレーム描画前に実行されるため、描画遅延は生じない。<br/>
+    /// 1フレームに1回の再描画に抑える（バッチ化は LoupeRenderCoordinator が担う）。
     /// </remarks>
     private void RequestRender()
     {
-        Log.LogRequestRender(IsVisible, _renderQueued);
-        if (!IsVisible)
-        {
-            Interlocked.Increment(ref _renderGeneration);
-            ReleaseBitmap();
-            return;
-        }
-
-        if (_renderQueued)
-        {
-            return;
-        }
-
-        _renderQueued = true;
-        Dispatcher.UIThread.Post(RenderCore);
-    }
-
-    /// <summary>ポストされた再描画を実行する。</summary>
-    private void RenderCore()
-    {
-        if (!_renderQueued)
-        {
-            return;
-        }
-
-        _renderQueued = false;
-        var generation = Interlocked.Increment(ref _renderGeneration);
-        Log.LogRenderCore(generation);
-        StartRender(generation);
+        _renderCoordinator.RequestRender();
     }
 
     // ====================================================================
@@ -780,7 +687,7 @@ public sealed partial class LoupeControl : UserControl
     /// </remarks>
     private void OnIsVisibleChanged(AvaloniaPropertyChangedEventArgs e)
     {
-        _renderQueued = false;
+        _renderCoordinator.CancelPending();
         if (e.GetNewValue<bool>())
         {
             RequestRender();
@@ -836,15 +743,15 @@ public sealed partial class LoupeControl : UserControl
             var frameColor = FrameColor;
             var frameWidth = FrameWidth;
             var scaling = RenderScaling;
-            var pixelSize = Math.Max(1, (int)Math.Ceiling(size * scaling));
+            var pixelSize = DpiScaler.ScaleToPixel(size, scaling);
 
-            var bitmap = await RenderBitmapAsync(
+            var bitmap = await LoupeRenderPipeline.RenderAsync(
                 source, center, pixelSize, zoom, crossColor,
                 checkerSize, checkerColorA, checkerColorB, frameColor, frameWidth, scaling);
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                var current = Volatile.Read(ref _renderGeneration);
+                var current = _renderCoordinator.Generation;
                 var visible = IsVisible;
                 if (!visible || generation != current)
                 {
@@ -861,108 +768,6 @@ public sealed partial class LoupeControl : UserControl
         {
             Log.LogUpdateError(ex);
             throw;
-        }
-    }
-
-    /// <summary>画像抽出を非同期に実行し、Avaloniaの描画オブジェクトをUIスレッドで合成する。</summary>
-    private static async Task<PbBitmap> RenderBitmapAsync(
-        IImage? source, Point? center, int pixelSize, int zoomLevel,
-        IBrush? crossColor, int checkerSize,
-        IBrush? checkerColorA, IBrush? checkerColorB, IBrush? frameColor,
-        int frameWidth, double scaling)
-    {
-        if (source is not null and not Bitmap and not PbBitmapAvaloniaImage)
-        {
-            throw new NotSupportedException(
-                $"LoupeControl は {source.GetType().FullName} をサポートしていません。Bitmap または PbBitmapAvaloniaImage を指定してください。");
-        }
-
-        var checkerPixelSize = Math.Max(1, (int)Math.Ceiling(checkerSize * scaling));
-        var framePixelWidth = Math.Max(1, (int)Math.Ceiling(frameWidth * scaling));
-
-        // 画像なし・破棄済み・抽出失敗のいずれでも市松模様のみで描画する（生成経路の一元化）
-        Task<PbBitmap> DrawCheckerboardOnly() =>
-            Dispatcher.UIThread.InvokeAsync(() => LoupeRenderer.DrawLoupeCheckerboardOnly(
-                pixelSize, crossColor, checkerPixelSize,
-                checkerColorA, checkerColorB, frameColor, framePixelWidth)).GetTask();
-
-        if (center is not { } centerPoint)
-        {
-            return await DrawCheckerboardOnly();
-        }
-
-        // 抽出元の PbBitmap を取得する（Bitmap は複製、PbBitmapAvaloniaImage は共有参照）。
-        // 破棄済み Bitmap は PixelSize 参照で検出し、市松模様のみにフォールバックする（ObjectDisposedException 防止）。
-        PbBitmap? sourceBitmap;
-        if (source is Bitmap sourceBitmapImage)
-        {
-            try
-            {
-                _ = sourceBitmapImage.PixelSize;
-            }
-            catch (ObjectDisposedException)
-            {
-                // 破棄済み Source: 市松模様のみで描画する（前回のビットマップは維持）
-                return await DrawCheckerboardOnly();
-            }
-
-            sourceBitmap = sourceBitmapImage.ToPbBitmap();
-        }
-        else if (source is PbBitmapAvaloniaImage unifiedImage)
-        {
-            sourceBitmap = unifiedImage.Bitmap;
-        }
-        else
-        {
-            return await DrawCheckerboardOnly();
-        }
-
-        if (sourceBitmap is null)
-        {
-            return await DrawCheckerboardOnly();
-        }
-
-        try
-        {
-            var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel);
-            var region = await Task.Run(() =>
-            {
-                // Task.Run 実行中に破棄される場合に備え、抽出内でも ObjectDisposedException を捕捉する。
-                // この場合も市松模様で描画する（例外を UI へ伝播させない）。
-                try
-                {
-                    return LoupeImageExtractor.ExtractRegionAt(sourceBitmap, (int)centerPoint.X, (int)centerPoint.Y, captureSize);
-                }
-                catch (ObjectDisposedException)
-                {
-                    return null;
-                }
-            });
-
-            if (region is null)
-            {
-                // 抽出中に Source が破棄された: 市松模様のみで描画する
-                return await DrawCheckerboardOnly();
-            }
-
-            // RenderTargetBitmap生成・DrawingContext操作はUIスレッドに限定する。
-            return await Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                using (region)
-                {
-                    return LoupeRenderer.DrawLoupe(
-                        region, pixelSize, zoomLevel, crossColor,
-                        checkerPixelSize, checkerColorA, checkerColorB, frameColor, framePixelWidth);
-                }
-            });
-        }
-        finally
-        {
-            // Bitmap 由来の場合のみ複製を破棄する（PbBitmapAvaloniaImage の共有参照は破棄しない）。
-            if (source is Bitmap)
-            {
-                sourceBitmap.Dispose();
-            }
         }
     }
 

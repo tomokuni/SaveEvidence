@@ -1,0 +1,37 @@
+using Estable.AvaloniaUI.Loupe;
+using Estable.AvaloniaUI.Platform.Imaging;
+using Xunit;
+
+namespace Estable.AvaloniaUI.Loupe.Tests;
+
+/// <summary><see cref="LoupeSourceResolver"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
+/// <remarks>
+/// ルーペのソース画像（<see cref="PbBitmapAvaloniaImage"/> / null）から切り出し元の解決ロジックを検証する。<br/>
+/// <see cref="Bitmap"/> 由来の変換（<c>ToPbBitmap()</c>）は <c>WriteableBitmap</c> 生成を伴うため<br/>
+/// <see cref="LoupeControlTests"/>（ヘッドレス直列）が担う。<br/>
+/// UI スレッドに依存せず <c>[Fact]</c> で並列実行する。
+/// </remarks>
+public class LoupeSourceResolverTests
+{
+    [Fact]
+    public void Resolve_nullは市松模様のみにフォールバックする()
+    {
+        var resolved = LoupeSourceResolver.Resolve(source: null, out var bitmap);
+
+        Assert.Null(bitmap);
+        Assert.False(resolved.IsSourceBitmap);
+    }
+
+    [Fact]
+    public void Resolve_PbBitmapAvaloniaImageは共有参照を返す()
+    {
+        using var bmp = PbBitmap.Create(10, 10);
+        using var image = new PbBitmapAvaloniaImage(bmp);
+
+        var resolved = LoupeSourceResolver.Resolve(image, out var bitmap);
+
+        // 共有参照（内包 PbBitmap と同一）で、破棄は呼び出し側で行わない
+        Assert.Same(bmp, bitmap);
+        Assert.False(resolved.IsSourceBitmap);
+    }
+}

@@ -173,3 +173,85 @@ public class LoupeRendererTests
         return rtb.CreateDrawingContext();
     }
 }
+
+/// <summary><see cref="LoupeDecorationRenderer"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
+/// <remarks>
+/// 十字線・外枠の描画矩形の計算のみを検証するため、<br/>
+/// Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）に依存せず <c>[Fact]</c> で並列実行する。<br/>
+/// <c>DrawingContext</c> への描画は <see cref="LoupeRendererTests"/>（ヘッドレス直列）が担う。
+/// </remarks>
+public class LoupeDecorationRendererTests
+{
+    [Fact]
+    public void ComputeCrosshairRects_十字線の縦横2本の矩形を返す()
+    {
+        // pixelSize=100, zoomLevel=4 → blocks = ceil(100/4) = 25、start = 25/2*4 = 48
+        var rects = LoupeDecorationRenderer.ComputeCrosshairRects(100, 4);
+
+        Assert.Equal(2, rects.Count);
+        Assert.Equal(new Rect(48, 0, 4, 100), rects[0]); // 縦
+        Assert.Equal(new Rect(0, 48, 100, 4), rects[1]); // 横
+    }
+
+    [Fact]
+    public void ComputeCrosshairRects_zoomLevel1では中央を1ピクセルで描画する()
+    {
+        // pixelSize=100, zoomLevel=1 → blocks = 100、start = 100/2*1 = 50
+        var rects = LoupeDecorationRenderer.ComputeCrosshairRects(100, 1);
+
+        Assert.Equal(new Rect(50, 0, 1, 100), rects[0]);
+        Assert.Equal(new Rect(0, 50, 100, 1), rects[1]);
+    }
+
+    [Fact]
+    public void ComputeFrameRects_外枠の4辺の矩形を返す()
+    {
+        // pixelSize=100, width=2 → frame=2、inner=100-4=96
+        var rects = LoupeDecorationRenderer.ComputeFrameRects(100, 2);
+
+        Assert.Equal(4, rects.Count);
+        Assert.Equal(new Rect(0, 0, 100, 2), rects[0]);       // 上
+        Assert.Equal(new Rect(0, 98, 100, 2), rects[1]);      // 下
+        Assert.Equal(new Rect(0, 2, 2, 96), rects[2]);        // 左
+        Assert.Equal(new Rect(98, 2, 2, 96), rects[3]);       // 右
+    }
+
+    [Fact]
+    public void ComputeFrameRects_幅がルーペサイズを超える場合は1に正規化する()
+    {
+        // width=0 → frame = clamp(0,1,100) = 1、inner = 100-2 = 98
+        var rects = LoupeDecorationRenderer.ComputeFrameRects(100, 0);
+
+        Assert.Equal(new Rect(0, 0, 100, 1), rects[0]);       // 上
+        Assert.Equal(new Rect(0, 99, 100, 1), rects[1]);      // 下
+        Assert.Equal(new Rect(0, 1, 1, 98), rects[2]);        // 左
+        Assert.Equal(new Rect(99, 1, 1, 98), rects[3]);       // 右
+    }
+}
+
+/// <summary><see cref="LoupeBackgroundRenderer"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
+/// <remarks>
+/// 市松模様の色選択（暗色タイル判定）のみを検証するため、<br/>
+/// Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）に依存せず <c>[Fact]</c> で並列実行する。<br/>
+/// <c>DrawingContext</c> への描画は <see cref="LoupeRendererTests"/>（ヘッドレス直列）が担う。
+/// </remarks>
+public class LoupeBackgroundRendererTests
+{
+    [Fact]
+    public void IsDarkChecker_交互パターンで暗色を判定する()
+    {
+        Assert.True(LoupeBackgroundRenderer.IsDarkChecker(0, 1));
+        Assert.True(LoupeBackgroundRenderer.IsDarkChecker(1, 0));
+        Assert.False(LoupeBackgroundRenderer.IsDarkChecker(0, 0));
+        Assert.False(LoupeBackgroundRenderer.IsDarkChecker(1, 1));
+    }
+
+    [Fact]
+    public void IsDarkChecker_列と行の和が奇数なら暗色になる()
+    {
+        // (2 + 3) = 5（奇数）→ 暗色
+        Assert.True(LoupeBackgroundRenderer.IsDarkChecker(2, 3));
+        // (4 + 2) = 6（偶数）→ 明色
+        Assert.False(LoupeBackgroundRenderer.IsDarkChecker(4, 2));
+    }
+}

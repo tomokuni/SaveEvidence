@@ -180,7 +180,7 @@ internal static class DragRectDrawer
         Color bgColor,
         double fontSize)
     {
-        var text = $"({domainPos.X:F0}, {domainPos.Y:F0})";
+        var text = CoordinateFormatter.Format(domainPos);
         var ft = new FormattedText(
             text,
             CultureInfo.CurrentCulture,
