@@ -9,7 +9,7 @@ using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Microsoft.Extensions.DependencyInjection;
-using NLog;
+using Serilog;
 
 namespace Estable.SaveEvidence;
 
@@ -20,7 +20,7 @@ namespace Estable.SaveEvidence;
 /// Avalonia のデスクトップアプリケーションとして起動する。<br/>
 /// Microsoft.Extensions.DependencyInjection を使用した DI コンテナを構築し、
 /// 各 ViewModel および View の依存関係を管理する。<br/>
-/// ログ出力は NLog により %LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log（7日で自動アーカイブ・削除）へ出力される。<br/>
+/// ログ出力は Serilog により %LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log（日次ローテーション・7日で自動削除）へ出力される。<br/>
 /// </remarks>
 internal static class Program
 {
@@ -36,27 +36,25 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
-        // NLog を初期化（nlog.config を自動読み込み）
-        var logger = LogManager.GetLogger("App");
+        // Serilog を初期化（ファイル出力先は AppLog.CreateLoggingConfiguration と整合させる）。
+        // グローバル例外ハンドラの即時ログ出力に使用するため、Log.Logger を設定する。
         var appLog = AppLog.CreateLogger("App");
-
-        // アプリケーションバージョンを取得（クラッシュ原因の特定用）
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "(unknown)";
         appLog.LogAppStartup(version);
 
         // グローバル例外ハンドラを登録（未処理の例外をすべて補足・記録してクラッシュ原因を特定できるようにする）
-        // ① AppDomain レベルの未処理例外（アプリ全体。スタックトレースを含む Fatal で記録）
+        // ① AppDomain レベルの未処理例外（アプリ全体。スタックトレースを含む Critical で記録）
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             var ex = e.ExceptionObject as Exception;
             if (ex is null)
             {
-                logger.Fatal("AppDomain.UnhandledException (例外オブジェクトを取得できません)");
+                Log.Fatal("AppDomain.UnhandledException (例外オブジェクトを取得できません)");
             }
             else
             {
                 appLog.LogUnhandledException(ex, "AppDomain.UnhandledException");
-                logger.Fatal(ex, "AppDomain.UnhandledException");
+                Log.Fatal(ex, "AppDomain.UnhandledException");
             }
         };
 
@@ -64,7 +62,7 @@ internal static class Program
         TaskScheduler.UnobservedTaskException += (_, e) =>
         {
             appLog.LogUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
-            logger.Fatal(e.Exception, "TaskScheduler.UnobservedTaskException");
+            Log.Fatal(e.Exception, "TaskScheduler.UnobservedTaskException");
             e.SetObserved();
         };
 
@@ -72,7 +70,7 @@ internal static class Program
         Dispatcher.UIThread.UnhandledException += (_, e) =>
         {
             appLog.LogUnhandledException(e.Exception, "Dispatcher.UIThread.UnhandledException");
-            logger.Fatal(e.Exception, "Dispatcher.UIThread.UnhandledException");
+            Log.Fatal(e.Exception, "Dispatcher.UIThread.UnhandledException");
             e.Handled = true; // UI スレッドを黙って死亡させず、ウィンドウの表示を維持する（クラッシュ抑止）
         };
 
@@ -98,7 +96,7 @@ internal static class Program
         catch (Exception ex)
         {
             appLog.LogUnhandledException(ex, "Main で未処理の例外");
-            logger.Fatal(ex, "Main で未処理の例外");
+            Log.Fatal(ex, "Main で未処理の例外");
             throw;
         }
     }

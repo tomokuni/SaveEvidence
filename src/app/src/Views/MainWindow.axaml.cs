@@ -12,7 +12,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
-// ILogger は NLog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
+// ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Estable.SaveEvidence.Views;
@@ -35,7 +35,7 @@ public sealed partial class MainWindow : Window
     /// <summary>SnipCaptureUI の公開 Facade（キャプチャセッションの窓口）。</summary>
     private SnipCapture _snipCapture = null!;
 
-    /// <summary>SnipCaptureUI へ注入するロガー（NLog 経由でファイル出力）。</summary>
+    /// <summary>SnipCaptureUI へ注入するロガー（Serilog 経由でファイル出力）。</summary>
     private ILogger _snipCaptureLogger = null!;
 
     /// <summary>アプリケーションロガー。</summary>
@@ -62,8 +62,8 @@ public sealed partial class MainWindow : Window
         _settingsService = (SettingsService)settingsService;
 
         // SnipCaptureUI 公開 Facade を生成
-        // ロガーは NLog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、7日で自動削除）へ転送する。
-        // AppLog.CreateLogger が nlog.config を自動読み込みするため、コード内の設定は不要。
+        // ロガーは Serilog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、日次ローテーション・7日で自動削除）へ転送する。
+        // AppLog.CreateLogger が Serilog のファイル出力を構成するため、コード内の設定は不要。
         _snipCaptureLogger = AppLog.CreateLogger("SnipCaptureUI");
         _snipCapture = new SnipCapture(logger: _snipCaptureLogger);
         // キャプチャ完了イベントを購読する（同期実行: 画像変更 → 完了後に APP が再表示される）

@@ -48,7 +48,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ターゲットフレームワーク** | net10.0-windows10.0.17763.0 |
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **DI** | Microsoft.Extensions.DependencyInjection |
-| **ログ** | NLog 6.x（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
+| **ログ** | Serilog 4.x + Serilog.Sinks.File（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
 | **シリアル化** | System.Text.Json（設定ファイル） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
 | **依存プロジェクト** | SnipCaptureUI / ColorPickerControl / PlatformFactory |
@@ -112,7 +112,7 @@ flowchart TB
         PF["PlatformFactory<br/>プラットフォーム抽象"]
     end
     subgraph Infra["外部基盤"]
-        NLog["NLog 6.x<br/>%LOCALAPPDATA%\\SaveEvidence\\logs"]
+        Serilog["Serilog 4.x<br/>%LOCALAPPDATA%\\SaveEvidence\\logs"]
         Av["Avalonia 12.1 / FluentAvaloniaUI"]
     end
 
@@ -138,8 +138,8 @@ flowchart TB
     CP --> SN
     SP --> CPK
     SN --> PF
-    AL --> NLog
-    AL -->|"ILogger 転送"| NLog
+    AL --> Serilog
+    AL -->|"ILogger 転送"| Serilog
     App["Program.cs<br/>DI 構築"] --> MW
 ```
 
@@ -247,7 +247,7 @@ flowchart TB
 
 ## 8. ログ
 
-ログ定義は `Logging/AppLog.cs`（LoggerMessage ソース生成）に集約し、NLog 経由で `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（7日で自動アーカイブ・削除）へ出力する。
+ログ定義は `Logging/AppLog.cs`（LoggerMessage ソース生成）に集約し、Serilog 経由で `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7日で自動アーカイブ・削除）へ出力する。
 
 | LogLevel | 対象 | 例 |
 | --- | --- | --- |

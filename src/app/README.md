@@ -166,10 +166,10 @@ dotnet test src/app/tests/app.Tests.csproj
 
 ## 13. ログ
 
-ログは NLog によりファイル出力されます。
+ログは Serilog によりファイル出力されます。
 
 - 場所: `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`
-- 保持: 7 日で自動アーカイブ・削除
+- 保持: 7 日で自動アーカイブ・削除（日次ローテーション）
 - 設定ファイル: `%LOCALAPPDATA%\SaveEvidence\settings.json`（JSON・enum は文字列で保存）
 
 ## 14. 依存プロジェクト

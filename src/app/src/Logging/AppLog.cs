@@ -1,6 +1,8 @@
 using Estable.AvaloniaUI.SnipCaptureUI;
 using Microsoft.Extensions.Logging;
-using NLog.Extensions.Logging;
+using Serilog;
+// ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する。
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Estable.SaveEvidence.Logging;
 
@@ -12,20 +14,56 @@ namespace Estable.SaveEvidence.Logging;
 /// 文字列補間による不要なアロケーションを回避しつつ、一貫したフォーマットで出力する。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、<br/>
 /// 呼び出し側では logger 引数を省略する（例: <c>_logger.LogZoomIn(current, target)</c>）。<br/>
-/// 出力先は NLog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、7日で自動アーカイブ・削除）。<br/>
+/// 出力先は Serilog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、日次ローテーション・7日で自動削除）。<br/>
 /// ロガーは <see cref="CreateLogger"/> で生成し、各クラスの static フィールドで保持する。<br/>
 /// ログメッセージは日本語で記述する（英語は使用しない）。
 /// </remarks>
 internal static partial class AppLog
 {
     /// <summary>
-    /// アプリケーション共有のロガーファクトリ（NLog へ転送）。
+    /// アプリケーション共有の Serilog ロガー（静的 <see cref="Log.Logger"/>）。
     /// </summary>
     /// <remarks>
-    /// AddNLog() が nlog.config を自動読み込みするため、コード内の設定は不要。<br/>
+    /// グローバル例外ハンドラ（<c>Log.Fatal</c>）と <c>ILoggerFactory</c>（MEL ブリッジ）の両方が<br/>
+    /// 同一の Serilog パイプラインを共有するため、静的ロガーを初期化してからファクトリを構築する。
+    /// </remarks>
+    private static readonly ILoggerFactory Factory = CreateFactory();
+
+    /// <summary>Serilog ロガーを初期化し、MEL (Microsoft.Extensions.Logging) ブリッジのファクトリを構築する。</summary>
+    /// <returns>Serilog へ転送する <see cref="ILoggerFactory"/>。</returns>
+    /// <remarks>
+    /// 静的 <see cref="Log.Logger"/> を設定し（<c>Log.Fatal</c> 等の Serilog 直接呼び出し用）、<br/>
+    /// <c>AddSerilog()</c> がグローバルロガーを MEL へ転送する。<br/>
     /// 複数箇所で LoggerFactory.Create しないよう、本クラスに集約する（ログの二重出力防止）。
     /// </remarks>
-    private static readonly ILoggerFactory Factory = LoggerFactory.Create(builder => builder.AddNLog());
+    private static ILoggerFactory CreateFactory()
+    {
+        Log.Logger = CreateLoggingConfiguration().CreateLogger();
+        return LoggerFactory.Create(builder => builder.AddSerilog(dispose: false));
+    }
+
+    /// <summary>Serilog のファイル出力構成を作成する。</summary>
+    /// <returns>ログ出力を %LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log（日次ローテーション・7日保持）へ書き込む構成。</returns>
+    /// <remarks>
+    /// ログカテゴリは <c>{SourceContext}</c> として出力し、例外はスタックトレース込みで改行して書き出す。
+    /// </remarks>
+    private static LoggerConfiguration CreateLoggingConfiguration()
+    {
+        var logDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SaveEvidence",
+            "logs");
+
+        return new LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .Enrich.FromLogContext()
+            .WriteTo.File(
+                Path.Combine(logDir, "SaveEvidence.log"),
+                outputTemplate: "{Timestamp:HH:mm:ss.fff} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                encoding: System.Text.Encoding.UTF8);
+    }
 
     /// <summary>指定カテゴリ名のロガーを生成する。</summary>
     /// <param name="categoryName">ロガーカテゴリ名（例: "CapturePage"）。</param>
