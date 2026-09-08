@@ -140,7 +140,7 @@ public sealed partial class UndoPage : ViewModePageBase
             // サムネイルは IImage（PbBitmapAvaloniaImage）のため、保存用に Avalonia Bitmap へ一時変換する。
             if (item.Thumbnail is PbBitmapAvaloniaImage unifiedImage && unifiedImage.Bitmap is { } bitmap)
             {
-                using var av = bitmap.ToAvaloniaWriteableBitmap();
+                using var av = bitmap.ToAvaloniaBitmap();
                 av.Save(tempFile, PngBitmapEncoderOptions.Default);
             }
             else

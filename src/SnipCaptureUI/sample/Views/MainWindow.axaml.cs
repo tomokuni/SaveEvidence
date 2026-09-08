@@ -66,7 +66,7 @@ public sealed partial class MainWindow : Window
         if (result?.Image is { } image)
         {
             // 画像変更（同期実行。このハンドラの完了後に APP が再表示される）。キャプチャ結果（PbBitmap）を表示用 Bitmap へ変換。
-            _vm.CapturedImage = image.ToAvaloniaWriteableBitmap();
+            _vm.CapturedImage = image.ToAvaloniaBitmap();
             _vm.AddLog("[Event] CaptureCompleted（同期）：キャプチャ画像を更新しました。");
         }
         else
@@ -137,7 +137,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var rect = await _capture.StartCropAsync(PreviewCropView.ZoomView, this, unified);
+        var rect = await _capture.StartCropAsync(PreviewCropView, this, unified);
         _vm.UpdateCropResult(rect);
         _vm.AddLog(rect is { Width: > 0, Height: > 0 }
             ? $"[App] Crop が完了しました: {rect.Value}（元画像ピクセル）"

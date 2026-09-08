@@ -59,10 +59,10 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| スクロール不要時は中央に配置 | `CenterAlign` | `ZoomableView`（画像配置・UpdateImageAlignment） |
-| 市松模様 A（色） | `PreviewCheckerColorA` | `ZoomableView.Background`（プレビュー）+ `LoupeControl.CheckerColorA`（ルーペ） |
-| 市松模様 B（色） | `PreviewCheckerColorB` | `ZoomableView.Background`（プレビュー）+ `LoupeControl.CheckerColorB`（ルーペ） |
-| 市松模様のタイルサイズ | `PreviewCheckerSize` | `ZoomableView.Background`（プレビュー）+ `LoupeControl.CheckerSize`（ルーペ） |
+| スクロール不要時は中央に配置 | `CenterAlign` | `CropView.CenterAlign`（画像配置） |
+| 市松模様 A（色） | `PreviewCheckerColorA` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.CheckerColorA`（ルーペ） |
+| 市松模様 B（色） | `PreviewCheckerColorB` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.CheckerColorB`（ルーペ） |
+| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.CheckerSize`（ルーペ） |
 
 - 市松模様は「画像設定」の詳細設定で管理し、**プレビュー背景とルーペ背景で同じ設定を共有**する。
 

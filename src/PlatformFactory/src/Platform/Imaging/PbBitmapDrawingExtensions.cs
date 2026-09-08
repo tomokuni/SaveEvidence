@@ -67,7 +67,7 @@ public static class PbBitmapDrawingExtensions
     /// <returns>変換された System.Drawing.Bitmap。</returns>
     /// <remarks>System.Drawing は Windows 専用のため、本メソッドは Windows でのみ利用可能。</remarks>
     [SupportedOSPlatform("windows")]
-    public static DrawingBitmap ToSystemDrawingBitmap(this PbBitmap bitmap)
+    public static DrawingBitmap ToDrawingBitmap(this PbBitmap bitmap)
     {
         bitmap.ThrowIfDisposed();
         var width = bitmap.Size.Width;

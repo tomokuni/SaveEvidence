@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.AvaloniaUI.ZoomView;
+using Estable.AvaloniaUI.CropView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -130,23 +130,23 @@ public sealed class SnipCapture : IDisposable
     }
 
     /// <summary>切出し（Crop）を開始する。UI スレッドから呼び出すこと。</summary>
-    /// <param name="previewControl">プレビュー画像を表示するコントロール。</param>
+    /// <param name="cropView">切り出しを行う高レベル複合コントロール（ズーム + 領域選択 + ルーペを内包）。</param>
     /// <param name="hostWindow">ホストウィンドウ。</param>
     /// <param name="sourceImage">元画像（100%キャプチャ画像）。切り出しの論理座標系の基準とルーペ用のソース。</param>
     /// <param name="zoomRequestHandler">Ctrl+ホイールによるズーム要求ハンドラ（true = ズームイン / false = ズームアウト）。null の場合はズーム操作なし。</param>
     /// <returns>確定時は元画像上の切り出し範囲、キャンセル時は 0x0 の空 PixelRect。</returns>
     /// <remarks>
     /// プレビュー状態（ScrollOffset / ZoomPercent）は引数で受け取らない。<br/>
-    /// スクロールは DragRect のイベント / TranslatePoint から取得し、ズームはプレビューの表示状態から導出する。<br/>
+    /// ズーム・パン・Fit・座標変換は <paramref name="cropView"/> が内包する ZoomViewControl が単一所有する。<br/>
     /// Ctrl+ホイールによるズーム要求は <paramref name="zoomRequestHandler"/> で上位 AP に通知する（ズームの実処理は上位が実施）。<br/>
     /// 実行中に同一インスタンスへ再呼び出しされた場合は null を返す。
     /// </remarks>
     public Task<PixelRect?> StartCropAsync(
-        ZoomViewControl previewControl, Window hostWindow, PbBitmap sourceImage,
+        CropViewControl cropView, Window hostWindow, PbBitmap sourceImage,
         Action<bool>? zoomRequestHandler = null)
     {
         ThrowIfDisposed();
-        ArgumentNullException.ThrowIfNull(previewControl);
+        ArgumentNullException.ThrowIfNull(cropView);
         ArgumentNullException.ThrowIfNull(hostWindow);
         ArgumentNullException.ThrowIfNull(sourceImage);
         if (_captureSession is not null || _cropSession is not null) return Task.FromResult<PixelRect?>(null); // 再入禁止
@@ -155,7 +155,7 @@ public sealed class SnipCapture : IDisposable
         if (sourceImageSize.Width <= 0 || sourceImageSize.Height <= 0)
             throw new ArgumentException("sourceImage のサイズが 0 です。", nameof(sourceImage));
 
-        var session = new CropSession(previewControl, hostWindow, sourceImage, _currentSettings, _log, zoomRequestHandler);
+        var session = new CropSession(cropView, hostWindow, sourceImage, _currentSettings, _log, zoomRequestHandler);
         _cropSession = session;
         return AwaitCropAsync(session);
     }

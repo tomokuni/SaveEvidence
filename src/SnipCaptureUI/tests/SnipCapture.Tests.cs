@@ -2,9 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using Rect = Avalonia.Rect;
+using Estable.AvaloniaUI.CropView;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
@@ -50,8 +50,8 @@ public class SnipCaptureTests
         var bitmap = CreateBitmap(10, 10);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(null!, new Window(), bitmap));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(new ZoomViewControl(), null!, bitmap));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(new ZoomViewControl(), new Window(), null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(new CropViewControl(), null!, bitmap));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => capture.StartCropAsync(new CropViewControl(), new Window(), null!));
     }
 
     [AvaloniaFact]
@@ -60,7 +60,7 @@ public class SnipCaptureTests
         var capture = new SnipCapture();
         capture.Dispose();
 
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => capture.StartCropAsync(new ZoomViewControl(), new Window(), CreateBitmap(10, 10)));
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => capture.StartCropAsync(new CropViewControl(), new Window(), CreateBitmap(10, 10)));
     }
 
     // ====================================================================
@@ -172,10 +172,10 @@ public class SnipCaptureTests
     public void CropSession_ExecuteCropForSize_閉区間で始点終点のピクセルを含む()
     {
         var panel = new Panel();
-        var preview = new ZoomViewControl();
-        panel.Children.Add(preview);
+        var cropView = new CropViewControl();
+        panel.Children.Add(cropView);
         var bitmap = CreateBitmap(100, 100);
-        var session = new CropSession(preview, new Window(), bitmap, new CaptureSettings(), NullLogger.Instance);
+        var session = new CropSession(cropView, new Window(), bitmap, new CaptureSettings(), NullLogger.Instance);
 
         // 選択矩形 (10,10,40,40) = 半開区間 [10,50)。閉区間では [10,50] = 41×41 ピクセル
         var result = session.ExecuteCropForSize(new Rect(10, 10, 40, 40));
@@ -187,10 +187,10 @@ public class SnipCaptureTests
     public void CropSession_ExecuteCropForSize_画像右端では幅が画像サイズにクランプされる()
     {
         var panel = new Panel();
-        var preview = new ZoomViewControl();
-        panel.Children.Add(preview);
+        var cropView = new CropViewControl();
+        panel.Children.Add(cropView);
         var bitmap = CreateBitmap(100, 100);
-        var session = new CropSession(preview, new Window(), bitmap, new CaptureSettings(), NullLogger.Instance);
+        var session = new CropSession(cropView, new Window(), bitmap, new CaptureSettings(), NullLogger.Instance);
 
         // 選択矩形が画像右端 (80,80,20,20) = [80,100)。閉区間では [80,100] = 21 ピクセルだが、
         // 画像サイズ 100 を超えないよう 20 ピクセルにクランプする
@@ -203,10 +203,10 @@ public class SnipCaptureTests
     public void CropSession_ExecuteCropForSize_最小サイズ未満は空を返す()
     {
         var panel = new Panel();
-        var preview = new ZoomViewControl();
-        panel.Children.Add(preview);
+        var cropView = new CropViewControl();
+        panel.Children.Add(cropView);
         var bitmap = CreateBitmap(100, 100);
-        var session = new CropSession(preview, new Window(), bitmap, new CaptureSettings(), NullLogger.Instance);
+        var session = new CropSession(cropView, new Window(), bitmap, new CaptureSettings(), NullLogger.Instance);
 
         // 幅・高さが 1 未満（MinSelectionSize の既定値 1.0 未満）→ 空を返す
         var result = session.ExecuteCropForSize(new Rect(10, 10, 0.5, 0.5));
@@ -222,11 +222,11 @@ public class SnipCaptureTests
     public void CropSession_ApplySettings_実行中に設定を再適用して例外なく動作する()
     {
         var panel = new Panel();
-        var preview = new ZoomViewControl();
-        panel.Children.Add(preview);
+        var cropView = new CropViewControl();
+        panel.Children.Add(cropView);
         var bitmap = CreateBitmap(100, 100);
         var window = new Window();
-        var session = new CropSession(preview, window, bitmap, new CaptureSettings(), NullLogger.Instance);
+        var session = new CropSession(cropView, window, bitmap, new CaptureSettings(), NullLogger.Instance);
 
         var task = session.RunAsync();
         // 実行中に設定を再適用（ClampToDomainBounds を ON に変更 → クリップ設定が更新される）
@@ -242,11 +242,11 @@ public class SnipCaptureTests
     public void CropSession_NotifyViewportChanged_実行中に再描画を要求して例外なく動作する()
     {
         var panel = new Panel();
-        var preview = new ZoomViewControl();
-        panel.Children.Add(preview);
+        var cropView = new CropViewControl();
+        panel.Children.Add(cropView);
         var bitmap = CreateBitmap(100, 100);
         var window = new Window();
-        var session = new CropSession(preview, window, bitmap, new CaptureSettings(), NullLogger.Instance);
+        var session = new CropSession(cropView, window, bitmap, new CaptureSettings(), NullLogger.Instance);
 
         var task = session.RunAsync();
         // ビューポート変化（パン・ズーム）の通知 → 例外なく再描画・再計算を要求する
@@ -263,14 +263,14 @@ public class SnipCaptureTests
     {
         var capture = new SnipCapture(null, NullLogger.Instance);
         var panel = new Panel();
-        var preview = new ZoomViewControl();
-        panel.Children.Add(preview);
+        var cropView = new CropViewControl();
+        panel.Children.Add(cropView);
         var window = new Window();
         window.Content = panel;
         window.Show();
 
         var bitmap = CreateBitmap(100, 100);
-        var task = capture.StartCropAsync(preview, window, bitmap);
+        var task = capture.StartCropAsync(cropView, window, bitmap);
         Assert.NotNull(task);
 
         // Crop セッション実行中に設定を変更する（ApplySettings 経由で実行中セッションへ反映）
@@ -290,14 +290,14 @@ public class SnipCaptureTests
     {
         var capture = new SnipCapture(null, NullLogger.Instance);
         var panel = new Panel();
-        var preview = new ZoomViewControl();
-        panel.Children.Add(preview);
+        var cropView = new CropViewControl();
+        panel.Children.Add(cropView);
         var window = new Window();
         window.Content = panel;
         window.Show();
 
         var bitmap = CreateBitmap(100, 100);
-        var task = capture.StartCropAsync(preview, window, bitmap);
+        var task = capture.StartCropAsync(cropView, window, bitmap);
         Assert.NotNull(task);
 
         // ビューポート（パン・ズーム）変化の通知 → 実行中の Crop セッションへ中継される（例外なく動作）

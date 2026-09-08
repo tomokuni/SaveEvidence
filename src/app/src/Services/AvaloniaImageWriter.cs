@@ -21,7 +21,7 @@ public sealed class AvaloniaImageWriter : IImageWriter
         ArgumentNullException.ThrowIfNull(filePath);
 
         // PbBitmap を表示境界で Avalonia Bitmap へ変換して保存（ファイル拡張子から自動判別）
-        using var av = image.ToAvaloniaWriteableBitmap();
+        using var av = image.ToAvaloniaBitmap();
         av.Save(filePath, s_pngOptions);
     }
 }

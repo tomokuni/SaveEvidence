@@ -1,8 +1,5 @@
 using Avalonia;
 using Avalonia.Media;
-using Avalonia.Rendering.SceneGraph;
-using Avalonia.Skia;
-using SkiaSharp;
 
 namespace Estable.AvaloniaUI.Platform.Imaging;
 
@@ -12,9 +9,9 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 /// <b>依存分離</b>: <see cref="PbBitmap"/>（コア）は Skia のみに依存し、Avalonia 依存の変換・描画は本クラスに閉じる。<br/>
 /// 本クラスは <see cref="PlatformFactory"/>（Avalonia / Skia 依存の境界層）に配置する。<br/>
 /// <br/>
-/// <b>描画（ゼロコピー）</b>: <see cref="Draw"/> は <see cref="ISkiaSharpApiLeaseFeature"/> を取得して
-/// <c>SKCanvas</c> へ直接描画する（<c>WriteableBitmap</c> / <c>Bitmap</c> を生成しない）。<br/>
-/// Skia 直アクセスができない環境（Avalonia ヘッドレス等）では何も描画しない（安全な no-op）。<br/>
+/// <b>描画（標準経路）</b>: <see cref="Draw"/> は <see cref="PbBitmap"/> を <see cref="Bitmap"/>（<c>ImmutableBitmap</c>）
+/// へ変換して <c>DrawImage</c> で標準描画する。Skia の標準描画（<c>IDrawableBitmapImpl.Draw</c>）を経由するため、
+/// カスタム描画オペレーション（<c>DrawingContext.Custom</c>）と異なり確実に再描画される。<br/>
 /// <br/>
 /// <b>所有権</b>: 内包する <see cref="PbBitmap"/> の所有権は本クラスが保持し、<see cref="Dispose"/> で解放する。<br/>
 /// 呼び出し側（ホスト）は本クラスの <see cref="Dispose"/> を適切なタイミングで呼ぶこと（破棄漏れ防止）。<br/>
@@ -46,28 +43,37 @@ public sealed class PbBitmapAvaloniaImage : IImage, IDisposable
         }
     }
 
-    /// <summary>内包する PbBitmap へ画像を描画する（Skia 直アクセス。ゼロコピー）。</summary>
+    /// <summary>内包する PbBitmap を標準描画する（<see cref="Bitmap"/> 経由）。</summary>
     /// <param name="context">描画コンテキスト。</param>
     /// <param name="sourceRect">画像内の描画元矩形。</param>
     /// <param name="destRect">出力先の描画先矩形。</param>
     /// <remarks>
-    /// <b>Skia 直アクセス</b>: <see cref="DrawingContext.Custom"/> 経由で <see cref="ImmediateDrawingContext"/> を取得し、
-    /// <see cref="ISkiaSharpApiLeaseFeature"/> から <c>SKCanvas</c> を取得して <c>DrawBitmap</c> で直接描画する
-    /// （<c>WriteableBitmap</c> への複製・変換を排除）。<br/>
-    /// Skia 直アクセスできない環境（ヘッドレス等）では何も描画しない（safe no-op）。<br/>
-    /// <b>注意</b>: <see cref="ISkiaSharpApiLeaseFeature"/> は Avalonia.Skia の <c>[Unstable]</c> API のため、
-    /// 将来のバージョンで変更される可能性がある。
+    /// <b>標準描画</b>: <see cref="PbBitmap"/> を <see cref="Bitmap"/>（内部実装 <c>ImmutableBitmap</c>）へ変換し、
+    /// <c>SplitDrawImage</c> / <c>DrawImage</c> の標準経路で描画する。カスタム描画オペレーション（<c>Custom</c>）ではなく
+    /// 標準の <c>DrawBitmap</c> 経路を辿るため、マウス移動中の再描画でも確実に表示される。<br/>
+    /// <b>注意</b>: <see cref="Bitmap"/> へ変換する際にピクセルを複製する（毎回スナップショット）。<br/>
+    /// 破棄済みの場合は何も描画しない（safe no-op）。
     /// </remarks>
     public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
     {
-        _ = _bitmap ?? throw new ObjectDisposedException(nameof(PbBitmapAvaloniaImage));
+        var b = _bitmap;
+        if (b is null)
+        {
+            // 破棄済み（所有者が Dispose 済み）: 何も描画しない
+            return;
+        }
 
-        // Skia 直アクセス（ゼロコピー）。
-        // DrawingContext からは PlatformImpl（IDrawingContextImpl）へ直接アクセスできないため、
-        // public の Custom() を経由して ImmediateDrawingContext（IOptionalFeatureProvider）を得る。
-        // ImmediateDrawingContext.TryGetFeature は PlatformImpl.GetFeature に委譲される。
-        // Skia が提供されない環境（ヘッドレス等）では Custom 内の lease が null になり、no-op となる。
-        context.Custom(new PbBitmapAvaloniaImageDrawOperation(this, sourceRect, destRect));
+        // 内包 PbBitmap が外部から破棄されている場合も安全に描画しない（破棄済みピクセルへのアクセスを防止）。
+        // PbBitmapAvaloniaImage がまだ参照している間に、共有 PbBitmap が破棄される経路（プレビュー画像の置き換え等）があるため。
+        if (b.IsDisposed)
+        {
+            return;
+        }
+
+        // 標準 Bitmap（内部実装 ImmutableBitmap）へ変換して標準描画する。
+        // ToAvaloniaBitmap はピクセルを複製する（スナップショット）ため、その後本 PbBitmap を書き換えても安全。
+        using var av = b.ToAvaloniaBitmap();
+        context.DrawImage(av, sourceRect, destRect);
     }
 
     /// <summary>内包する PbBitmap（参照アクセサ。破棄は <see cref="Dispose"/> が担う）。</summary>
@@ -88,93 +94,5 @@ public sealed class PbBitmapAvaloniaImage : IImage, IDisposable
     {
         _bitmap?.Dispose();
         _bitmap = null;
-    }
-
-    /// <summary>Skia 直アクセスで PbBitmap を描画するカスタム描画オペレーション。</summary>
-    /// <remarks>
-    /// <see cref="PbBitmapAvaloniaImage.Draw"/> が <see cref="DrawingContext.Custom"/> 経由で登録し、
-    /// <see cref="Render"/> で <see cref="ISkiaSharpApiLeaseFeature"/> を取得して <c>SKCanvas</c> へ直接描画する。<br/>
-    /// <b>所有権</b>: 本オペレーションは <see cref="PbBitmapAvaloniaImage"/> を参照するのみで、破棄しない
-    /// （破棄は <see cref="PbBitmapAvaloniaImage.Dispose"/> が担う）。<br/>
-    /// <b>描画</b>: Skia が提供されない環境（ヘッドレス等）では何も描画しない（safe no-op）。
-    /// </remarks>
-    private sealed class PbBitmapAvaloniaImageDrawOperation : ICustomDrawOperation
-    {
-        private readonly PbBitmapAvaloniaImage _owner;
-        private readonly Rect _sourceRect;
-        private readonly Rect _destRect;
-
-        /// <summary>描画オペレーションを初期化する。</summary>
-        /// <param name="owner">描画する <see cref="PbBitmapAvaloniaImage"/>（所有権は移らない）。</param>
-        /// <param name="sourceRect">画像内の描画元矩形。</param>
-        /// <param name="destRect">出力先の描画先矩形。</param>
-        public PbBitmapAvaloniaImageDrawOperation(PbBitmapAvaloniaImage owner, Rect sourceRect, Rect destRect)
-        {
-            _owner = owner;
-            _sourceRect = sourceRect;
-            _destRect = destRect;
-        }
-
-        /// <summary>描画内容の境界（出力先矩形）。</summary>
-        public Rect Bounds => _destRect;
-
-        /// <summary>指定点が描画先矩形内かどうか（ヒットテスト）。</summary>
-        public bool HitTest(Point p) => _destRect.Contains(p);
-
-        /// <summary>Skia 直アクセスで内部 SKBitmap を描画する。</summary>
-        /// <param name="context">描画コンテキスト。</param>
-        public void Render(ImmediateDrawingContext context)
-        {
-            var b = _owner._bitmap;
-            if (b is null)
-            {
-                // 破棄済み（所有者が Dispose 済み）: 何も描画しない
-                return;
-            }
-
-            // 内包 PbBitmap が外部から破棄されている場合も安全に描画しない（破棄済みピクセルへのアクセスを防止）。
-            // PbBitmapAvaloniaImage がまだ参照している間に、共有 PbBitmap が破棄される経路（プレビュー画像の置き換え等）があるため。
-            if (b.IsDisposed)
-            {
-                return;
-            }
-
-            // Skia 直アクセス（ゼロコピー）。Skia が提供されない環境（ヘッドレス等）では no-op。
-            var lease = context.TryGetFeature<ISkiaSharpApiLeaseFeature>();
-            if (lease is null)
-            {
-                return;
-            }
-
-            using var leaseScope = lease.Lease();
-            var canvas = leaseScope.SkCanvas;
-            var skBitmap = b.ToSKBitmap();
-            var src = new SKRect(
-                (float)_sourceRect.X, (float)_sourceRect.Y,
-                (float)_sourceRect.Right, (float)_sourceRect.Bottom);
-            var dst = new SKRect(
-                (float)_destRect.X, (float)_destRect.Y,
-                (float)_destRect.Right, (float)_destRect.Bottom);
-
-            // SKImage 経由で SKSamplingOptions 版の DrawImage を使う（旧形式 SKPaint.FilterQuality の CS0618 警告を回避）。
-            // SKImage.FromBitmap は SKBitmap のピクセルを共有し、SKImage の破棄は SKBitmap に影響しない。
-            // SKSamplingOptions(Linear) は拡大縮小時のバイリニア補間を提供する。
-            using var image = SKImage.FromBitmap(skBitmap);
-            var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
-            canvas.DrawImage(image, src, dst, sampling);
-        }
-
-        /// <summary>描画オペレーション同士の等価比較（参照比較）。</summary>
-        public bool Equals(ICustomDrawOperation? other)
-            => other is PbBitmapAvaloniaImageDrawOperation otherOp
-               && ReferenceEquals(_owner, otherOp._owner)
-               && _sourceRect == otherOp._sourceRect
-               && _destRect == otherOp._destRect;
-
-        /// <summary>呼び出し側が破棄しない（所有権は <see cref="PbBitmapAvaloniaImage"/> が保持）。</summary>
-        public void Dispose()
-        {
-            // リソースは PbBitmapAvaloniaImage が所有するため、本オペレーションでは何も解放しない。
-        }
     }
 }

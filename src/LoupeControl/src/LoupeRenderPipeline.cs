@@ -78,7 +78,7 @@ internal static class LoupeRenderPipeline
         Task<PbBitmap> DrawCheckerboardOnly() =>
             Dispatcher.UIThread.InvokeAsync(() => LoupeRenderer.DrawLoupeCheckerboardOnly(
                 pixelSize, crossColor, checkerPixelSize,
-                checkerColorA, checkerColorB, frameColor, framePixelWidth)).GetTask();
+                checkerColorA, checkerColorB, frameColor, framePixelWidth), DispatcherPriority.Render).GetTask();
 
         // 中心未設定・ソース解決不能の場合は市松模様のみで描画する（純粋関数で判定・単一所有）。
         if (DecideRenderMode(source, center) == RenderMode.CheckerboardOnly)
@@ -99,21 +99,18 @@ internal static class LoupeRenderPipeline
         {
             var centerPoint = center!.Value;
             var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel);
-            var region = await Task.Run(() =>
-            {
-                // Task.Run 実行中に破棄される場合に備え、抽出内でも ObjectDisposedException を捕捉する。
-                // この場合も市松模様で描画する（例外を UI へ伝播させない）。
-                try
-                {
-                    return LoupeImageExtractor.ExtractRegionAt(sourceBitmap, (int)centerPoint.X, (int)centerPoint.Y, captureSize);
-                }
-                catch (ObjectDisposedException)
-                {
-                    return null;
-                }
-            });
 
-            if (region is null)
+            // 抽出は PbBitmap.Crop（Buffer.MemoryCopy のみ）で軽量なため、UI スレッドで同期実行する。
+            // Task.Run によるバックグラウンド抽出は、マウス移動中の連続再描画でスレッドプールが競合し、
+            // 抽出結果が UI スレッドへ戻る前に次の再描画が要求されて、ルーペ画像が移動停止まで更新されない
+            // （描画が追いつかない）問題を引き起こす。UI スレッドでの同期抽出はこの競合を排除し、確実に追従する。
+            // 破棄済み Source に備え、抽出内で ObjectDisposedException を捕捉する（市松模様へフォールバック）。
+            PbBitmap region;
+            try
+            {
+                region = LoupeImageExtractor.ExtractRegionAt(sourceBitmap, (int)centerPoint.X, (int)centerPoint.Y, captureSize);
+            }
+            catch (ObjectDisposedException)
             {
                 // 抽出中に Source が破棄された: 市松模様のみで描画する
                 return await DrawCheckerboardOnly();
@@ -128,7 +125,7 @@ internal static class LoupeRenderPipeline
                         region, pixelSize, zoomLevel, crossColor,
                         checkerPixelSize, checkerColorA, checkerColorB, frameColor, framePixelWidth);
                 }
-            });
+            }, DispatcherPriority.Render);
         }
         finally
         {

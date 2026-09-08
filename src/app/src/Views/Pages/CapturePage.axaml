@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Estable.SaveEvidence.ViewModels"
-             xmlns:zoom="clr-namespace:Estable.AvaloniaUI.ZoomView;assembly=ZoomViewControl"
+             xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropViewControl"
              x:Class="Estable.SaveEvidence.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
@@ -125,13 +125,13 @@
         <!-- メイン画像エリア -->
         <Grid Grid.Row="1" x:Name="ImageAreaGrid"
               PointerPressed="OnImageAreaPointerPressed">
-            <!-- ズーム・パン対応ビューポート（ScrollViewer 不使用。RenderTransform ベースのため
-                 オフセット上書き・防御コードが不要。画像は内部的に管理する自己完結型 ZoomViewControl） -->
-<zoom:ZoomViewControl x:Name="ZoomableView"
+            <!-- 高レベル複合コントロール（ズーム・パン・Fit + 領域選択 + ルーペを内包。ScrollViewer 不使用。
+                 ズーム率・座標変換・オーバーレイの配線を一本化した CropViewControl） -->
+<crop:CropViewControl x:Name="CropView"
                            Background="Transparent"/>
 
             <!-- 自動切り出し（LineDetection 検出）の矩形選択オーバーレイ。
-                 ZoomableView と同一セルに重ね、検出矩形は ContentToViewport でビューポート座標へ変換して Canvas に配置する。
+                 CropView と同一セルに重ね、検出矩形は ContentToViewport でビューポート座標へ変換して Canvas に配置する。
                  矩形の生成・再配置はコードビハインド（UpdateAutoCropOverlay）で行う -->
             <Canvas x:Name="AutoCropOverlay"
                     IsHitTestVisible="True"

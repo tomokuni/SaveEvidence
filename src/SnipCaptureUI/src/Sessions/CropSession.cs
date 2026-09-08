@@ -1,37 +1,34 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.VisualTree;
 using Point = Avalonia.Point;
 using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
+using Estable.AvaloniaUI.CropView;
 using Estable.AvaloniaUI.FadeMaskDragRect;
-using Estable.AvaloniaUI.ZoomView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
-/// <summary>切出し（Crop）セッション（FadeMaskDragRectControl のライフサイクル管理と確定・キャンセル処理）。</summary>
+/// <summary>切出し（Crop）セッション（CropViewControl のライフサイクル管理と確定・キャンセル処理）。</summary>
 /// <remarks>
 /// 内部実装であり、公開 API は <see cref="SnipCapture.StartCropAsync"/> を使用する。<br/>
 /// <br/>
-/// 状態は持たない（選択矩形・ルーペ表示状態・暗転マスクは複合コントロール<br/>
-/// <see cref="FadeMaskDragRectControl"/> が保持し、本クラスはライフサイクルのみ）。<br/>
+/// 状態は持たない（選択矩形・ルーペ表示状態・暗転マスクは <see cref="CropViewControl"/> が保持し、本クラスはライフサイクルのみ）。<br/>
 /// - 配線（SelectionChanged → 暗転マスク同期 / LoupePositionMoved → ルーペ更新 / 確定・キャンセル）は<br/>
 ///   複合コントロール内で完結する（ホストの配線コードは不要）。<br/>
-/// - ドメイン = 元画像ピクセル（論理座標）。座標変換ポートは<br/>
-///   <see cref="CoordTransform.ImageLayout"/> + <see cref="CoordTransform.ScrollOffset"/>（Estable.Media）で提供。<br/>
+/// - ドメイン = 元画像ピクセル（論理座標）。座標変換は <see cref="CropViewControl"/> が内包する<br/>
+///   <see cref="ZoomViewControl"/>（ズーム・パン・Fit）へ委譲する（ズーム座標の単一所有）。<br/>
 /// <br/>
 /// プレビュー状態（ScrollOffset / ViewportOrigin / ZoomPercent）は保持しない。<br/>
-/// スクロールは <see cref="VisualExtensions.TranslatePoint"/>（スクロール込みの表示位置）に含まれるため、<br/>
-/// 座標変換は「論理 ↔ 親パネルDIP」の 1 段で完結する。
+/// オーバーレイ（DragRect / FadeMask / Loupe）とズームビューポートは <see cref="CropViewControl"/> 内で<br/>
+/// 同一座標空間に配置されるため、座標変換は「ビューポートDIP ↔ 元画像ピクセル」の 1 段で完結する。
 /// </remarks>
 internal sealed class CropSession(
-    ZoomViewControl previewControl,
+    CropViewControl cropView,
     Window hostWindow,
     PbBitmap sourceImage,
     CaptureSettings settings,
@@ -47,40 +44,17 @@ internal sealed class CropSession(
     /// <summary>元画像のピクセルサイズ（論理座標系の範囲）。</summary>
     private readonly Size _sourceImageSize = new(sourceImage.Size.Width, sourceImage.Size.Height);
 
-    /// <summary>オーバーレイ・ルーペの配置先パネル（previewControl の祖先 Panel）。</summary>
-    private readonly Panel _parentPanel = FindAncestorPanel(previewControl)
-        ?? throw new InvalidOperationException("previewControl の親に Panel が見つかりません。");
-
-    /// <summary>選択オーバーレイ複合コントロール（DragRect + FadeMask + Loupe の配線を内包）。</summary>
-    /// <remarks>
-    /// <c>ClipToBounds = true</c>: 画像のスクロール・ズームで選択矩形がパネル（ImageAreaGrid）境界外に<br/>
-    /// はみ出す場合でも、ツールバー・ステータスバー等の兄弟領域へ描画しないようクリップする。<br/>
-    /// モードは Crop（プレビュー内の切出し。全面暗転 + 選択矩形 + ルーペ）。
-    /// </remarks>
-    private readonly FadeMaskDragRectControl _selectionOverlay = new()
-    {
-        ZIndex = 50,
-        ClipToBounds = true,
-        Mode = FadeMaskDragRectMode.Crop,
-        // 内包コントロール（ルーペ / ドラッグ）の詳細ログ（Trace）をホストのログ基盤（NLog）へ転送する（不具合調査用）。
-        Log = logger ?? NullLogger.Instance,
-    };
-
     /// <summary>カーソル上書き抑止（Crop 中の十字カーソル維持）。</summary>
     private readonly ICursorOverrideGuard _cursorGuard = PlatformFactory.CreateCursorOverrideGuard();
 
-    /// <summary>設定（全メンバー non-null）。実行中に <see cref="ApplySettings"/> で更新できる。</summary>
-    private CaptureSettings _settings = settings.ToNonNull();
+    /// <summary>座標変換ポート（ビューポートDIP ↔ 元画像ピクセル）。一度だけ生成して再利用する。</summary>
+    private readonly ICoordTransform _coordinatePort = CreateCoordinatePort(cropView, sourceImage);
 
     /// <summary>ルーペソース用の画像アダプタ（<see cref="sourceImage"/> を内包。一度だけ生成して再利用する）。</summary>
-    /// <remarks>
-    /// <see cref="ConfigureControls"/> はセッション開始と設定変更（<see cref="ApplySettings"/>）で複数回呼ばれる。<br/>
-    /// 毎回 <c>new PbBitmapAvaloniaImage(sourceImage)</c> すると、同じ元画像を別インスタンスでラップし直し、<br/>
-    /// 旧アダプタが <see cref="LoupeControl"/> に残る（リーク）とともに <c>Source</c> の再設定で無駄な再描画が発生する。<br/>
-    /// そのため一度だけ生成して再利用する。<br/>
-    /// <c>sourceImage</c> の所有権は呼び出し側にあり、本セッションでは破棄しない（<see cref="Dispose"/> を呼ばない）。
-    /// </remarks>
     private readonly PbBitmapAvaloniaImage _loupeSourceImage = new(sourceImage);
+
+    /// <summary>設定（全メンバー non-null）。実行中に <see cref="ApplySettings"/> で更新できる。</summary>
+    private CaptureSettings _settings = settings.ToNonNull();
 
     /// <summary>セッション結果の待機先（RunAsync で生成）。</summary>
     private TaskCompletionSource<PixelRect?>? _tcs;
@@ -89,11 +63,29 @@ internal sealed class CropSession(
     private bool _completed;
 
     /// <summary>選択矩形が有効かどうか（複合コントロールの選択状態）。ホスト（SnipCapture）の操作分岐用。</summary>
-    /// <remarks>選択状態の真のソースは FadeMaskRenderer（<see cref="FadeMaskDragRectControl.HasSelection"/>）に集約する。</remarks>
-    public bool HasSelection => _selectionOverlay.HasSelection;
+    /// <remarks>選択状態の真のソースは FadeMask レンダラー（<see cref="CropViewControl.HasSelection"/>）に集約する。</remarks>
+    public bool HasSelection => cropView.HasSelection;
 
     /// <summary>セッション実行中かどうか。</summary>
     private bool _isRunning;
+
+    /// <summary>ビューポートDIP ↔ 元画像ピクセルの座標変換ポートを生成する。</summary>
+    /// <param name="cropView">CropViewControl（ズームビューポートとオーバーレイを内包）。</param>
+    /// <param name="sourceImage">元画像（論理座標系の基準）。</param>
+    /// <returns>Forward = ビューポートDIP → 元画像ピクセル、Inverse = 元画像ピクセル → ビューポートDIP、Bounds = 元画像サイズのポート。</returns>
+    /// <remarks>
+    /// 内包する <see cref="ZoomViewControl"/> の座標変換（<see cref="ZoomViewControl.ViewportToContentImage"/> /
+    /// <see cref="ZoomViewControl.ContentToViewportImage"/>）を委譲する。これにより、ズーム・パン・Fit・中央寄せの<br/>
+    /// 原点補正を全て内包ビューポートが単一所有し、ホストが変換を重複実装する必要がない（DRY 原則）。
+    /// </remarks>
+    private static ICoordTransform CreateCoordinatePort(CropViewControl cropView, PbBitmap sourceImage)
+    {
+        var size = new Size(sourceImage.Size.Width, sourceImage.Size.Height);
+        return new CoordTransform(
+            forward: dip => cropView.ViewportToContent(dip),
+            inverse: logical => cropView.ContentToViewport(logical),
+            bounds: () => size);
+    }
 
     /// <summary>切出しセッションを実行する（確定待機 → 結果返却）。UI スレッドから呼び出すこと。</summary>
     /// <returns>確定時は元画像上の切り出し範囲、キャンセル時は 0x0 の空 PixelRect。</returns>
@@ -105,17 +97,9 @@ internal sealed class CropSession(
         var tcs = new TaskCompletionSource<PixelRect?>();
         _tcs = tcs;
 
-        // 選択オーバーレイ複合コントロールを親パネルに配置
-        _parentPanel.Children.Add(_selectionOverlay);
+        // 外観・座標変換・ルーペソースを設定する（CropViewControl は既に配置済み。追加・除去はしない）
         ConfigureControls();
         _log.LogCropStart((int)_sourceImageSize.Width, (int)_sourceImageSize.Height);
-
-        // プレビューの ScrollViewer を複合コントロール（DragRect）へ明示注入する（スクロール・ズーム検知 + ホイール操作）。
-        // DragRect はプレビューと兄弟の親パネルに配置されるため、祖先探索では見つからない（明示注入が唯一の連携方式）。
-        if (FindAncestorScrollViewer(previewControl) is { } scrollViewer)
-        {
-            _selectionOverlay.AttachScrollViewer(scrollViewer);
-        }
 
         void OnConfirm(Rect logicalRect)
         {
@@ -143,13 +127,11 @@ internal sealed class CropSession(
         void Cleanup()
         {
             hostWindow.Deactivated -= OnDeactivated;
-            _selectionOverlay.ConfirmRequested -= OnConfirmEvent;
-            _selectionOverlay.CancelRequested -= OnCancelEvent;
-            _selectionOverlay.ZoomRequested -= OnZoomRequested;
-            _selectionOverlay.AttachScrollViewer(null); // 明示注入した ScrollViewer 連携を解除
+            cropView.ConfirmRequested -= OnConfirmEvent;
+            cropView.CancelRequested -= OnCancelEvent;
+            cropView.ZoomRequested -= OnZoomRequested;
             _cursorGuard.Dispose();
-            _selectionOverlay.ClearLoupe();
-            _parentPanel.Children.Remove(_selectionOverlay);
+            cropView.ClearLoupe();
             hostWindow.Cursor = Cursor.Default;
             _isRunning = false;
         }
@@ -160,14 +142,14 @@ internal sealed class CropSession(
         void OnZoomRequested(object? sender, bool zoomIn) => _zoomHandler?.Invoke(zoomIn);
 
         // イベント配線（配線は複合コントロール内で完結。ホストは確定・キャンセル・ズーム要求のみ購読）
-        _selectionOverlay.ConfirmRequested += OnConfirmEvent;
-        _selectionOverlay.CancelRequested += OnCancelEvent;
-        _selectionOverlay.ZoomRequested += OnZoomRequested;
+        cropView.ConfirmRequested += OnConfirmEvent;
+        cropView.CancelRequested += OnCancelEvent;
+        cropView.ZoomRequested += OnZoomRequested;
         hostWindow.Deactivated += OnDeactivated;
 
         // カーソル上書き抑止（WM_SETCURSOR による十字カーソルの上書き防止）
         _cursorGuard.Attach(hostWindow);
-        _selectionOverlay.FocusDragRect();
+        cropView.FocusDragRect();
 
         return tcs.Task;
     }
@@ -177,7 +159,7 @@ internal sealed class CropSession(
     public void Cancel()
     {
         if (!_isRunning) return;
-        _selectionOverlay.RequestCancel();
+        cropView.RequestCancel();
     }
 
     /// <summary>進行中の切出しセッションを現在の選択矩形で確定する（Enter キー相当）。</summary>
@@ -185,7 +167,7 @@ internal sealed class CropSession(
     public void Confirm()
     {
         if (!_isRunning) return;
-        _selectionOverlay.RequestConfirm();
+        cropView.RequestConfirm();
     }
 
     /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化をオーバーレイへ通知する（ホストからの呼び出し）。</summary>
@@ -197,7 +179,7 @@ internal sealed class CropSession(
     public void NotifyViewportChanged()
     {
         if (!_isRunning) return;
-        _selectionOverlay.NotifyViewportChanged();
+        cropView.NotifyViewportChanged();
     }
 
     /// <summary>コントロール（外観・座標変換・ルーペソース）を設定する。</summary>
@@ -206,57 +188,25 @@ internal sealed class CropSession(
     {
         var s = _settings;
         // 外観設定（DragRect / FadeMask / Loupe を一括適用。設定変換は拡張メソッドに一元化）
-        _selectionOverlay.AppearanceSettings =
+        cropView.AppearanceSettings =
             s.ToFadeMaskDragRectSettings(scaling: 1.0, positionOffset: s.LoupeOffset!.Value);
-        // サイズラベルも描画時に最新の表示スケールから生成する（ズーム率表示の追従）。
-        // 選択状態の真のソースは複合コントロール（HasSelection / SelectionRect）に集約する。
-        _selectionOverlay.SizeLabelOverrideProvider = () =>
-            _selectionOverlay.HasSelection ? FormatSizeLabel(_selectionOverlay.SelectionRect) : null;
-        // 座標変換ポート: ドメイン = 論理座標（元画像ピクセル）。ズーム・スクロール・レターボックスは
-        // プレビュー表示状態（Fit 判定・レイアウト）と TranslatePoint（スクロール込みの表示位置）から導出する。
-        // ① プレビュー内部DIP ↔ 論理（ImageLayout は呼び出し毎にレイアウトを再評価 = ズーム・サイズ変更に追従）
-        // ② 親パネルDIP ↔ プレビュー内部DIP（PreviewOrigin = レイアウト位置 + スクロール。ScrollOffset で平行移動）
-        // 2 段階の変換を CoordTransform.Compose で 1 ポートに合成し、DragRect / FadeMask / Loupe の 3 コントロールへ一括分配する。
-        _selectionOverlay.SetCoordinateTransform(CoordTransform.Compose(
-            CoordTransform.ImageLayout(
-                () => DisplaySize().ToSize(),
-                _sourceImageSize,
-                () => previewControl.IsFit),
-            CoordTransform.ScrollOffset(() =>
-            {
-                // 同値の原点取得は一度だけ実行して共有する
-                var origin = PreviewOrigin();
-                return new Vector(origin.X, origin.Y);
-            })));
+        // サイズラベルも描画時に最新のズーム率から生成する（ズーム率表示の追従）。
+        cropView.SizeLabelOverrideProvider = () =>
+            cropView.HasSelection ? FormatSizeLabel(cropView.SelectionRect) : null;
+        // 座標変換ポート: ドメイン = 論理座標（元画像ピクセル）。ズーム・パン・Fit・中央寄せの原点補正は
+        // 内包する ZoomViewControl が単一所有する（CoordinatePort はそれを委譲）。
+        cropView.SetCoordinateTransform(_coordinatePort);
         // ルーペソース（元画像）。LoupeControl.Source は IImage のため、PbBitmap を内包した IImage
         // （PbBitmapAvaloniaImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
         // sourceImage の所有権は呼び出し側にあり、本セッションでは破棄しない（Dispose を呼ばない）。
         // アダプタはフィールドで一度だけ生成して再利用する（ConfigureControls の複数呼び出しでのリーク・再描画防止）。
-        _selectionOverlay.SetLoupeSource(_loupeSourceImage);
-    }
-
-    /// <summary>プレビューの表示サイズ（RenderTransform 込み）を親パネル上の座標差から導出する。</summary>
-    /// <returns>表示サイズ。未配置（TranslatePoint が null）の場合は Bounds を返す。</returns>
-    /// <remarks>
-    /// ズーム表示は RenderTransform（ScaleTransform）で行われるため、<c>Bounds.Size</c> は元サイズのまま。<br/>
-    /// 親パネル上の表示位置（TranslatePoint、RenderTransform 込み）の原点と右下の差から表示サイズを算出する。<br/>
-    /// Width/Height 方式（Fill + 明示サイズ）でも TranslatePoint は表示サイズを返すため、両方式で共通に動作する。
-    /// </remarks>
-    private Size DisplaySize()
-    {
-        var bounds = previewControl.Bounds;
-        if (bounds.Width <= 0 || bounds.Height <= 0) return bounds.Size;
-        var origin = previewControl.TranslatePoint(default, _parentPanel) ?? default;
-        var bottomRight = previewControl.TranslatePoint(
-            new Point(bounds.Width, bounds.Height), _parentPanel) ?? default;
-        var size = new Size(bottomRight.X - origin.X, bottomRight.Y - origin.Y);
-        return size.Width > 0 && size.Height > 0 ? size : bounds.Size;
+        cropView.SetLoupeSource(_loupeSourceImage);
     }
 
     /// <summary>セッション実行中に最新の設定を再適用する（Crop 中の設定変更の即時反映）。</summary>
     /// <param name="newSettings">最新の設定（null メンバーは現在値を維持）。</param>
     /// <remarks>
-    /// <see cref="SnipCapture.Settings"/> の変更時に SnipCapture から呼ばれる。<br/>
+    /// <see cref="SnipCapture.AppearanceSettings"/> の変更時に SnipCapture から呼ばれる。<br/>
     /// 外観・クリップ設定（<see cref="ConfigureControls"/>）を再適用し、オーバーレイを再描画する。<br/>
     /// セッションの選択状態・ルーペの表示位置は維持される（座標変換ポートは再設定されるが、動的評価のため追従）。
     /// </remarks>
@@ -267,10 +217,6 @@ internal sealed class CropSession(
         ConfigureControls();
     }
 
-    /// <summary>プレビューの親パネル上の原点（スクロール込みの表示位置）。</summary>
-    private Point PreviewOrigin()
-        => previewControl.TranslatePoint(default, _parentPanel) ?? default;
-
     /// <summary>論理座標の選択矩形からサイズ情報ラベルの文字列を生成する。</summary>
     /// <param name="rectLogical">論理座標（元画像ピクセル）の選択矩形。</param>
     /// <returns>サイズ情報ラベル文字列。</returns>
@@ -279,12 +225,8 @@ internal sealed class CropSession(
     {
         int l = (int)rectLogical.X, t = (int)rectLogical.Y;
         int r = (int)rectLogical.Right, b = (int)rectLogical.Bottom;
-        // Zoom は実際の表示スケール（元画像ピクセル / DIP）から導出する（プレビュー状態の保持なし）
-        double scaleX = CoordTransform.ImageLayoutScaleX(
-            () => DisplaySize().ToSize(),
-            _sourceImageSize,
-            () => previewControl.IsFit);
-        int displayPct = (int)Math.Round(100.0 / Math.Max(scaleX, 0.01));
+        // ズーム率は内包する ZoomViewControl の実効ズーム率を使用する（元画像ピクセル / DIP の可視倍率）。
+        int displayPct = (int)Math.Round(cropView.ZoomPercent);
         return $"LT: ({l}, {t}),  RB: ({r}, {b}),  WH: ({r - l + 1}, {b - t + 1}), Zoom: ({displayPct}%)";
     }
 
@@ -325,32 +267,4 @@ internal sealed class CropSession(
         int h = Math.Min((int)(bt - t) + 1, (int)sourceImageSize.Height - y);
         return new PixelRect(x, y, w, h);
     }
-
-    /// <summary>指定コントロールの祖先にある ScrollViewer を探索する。</summary>
-    /// <param name="control">探索開始コントロール。</param>
-    /// <returns>最初に見つかった ScrollViewer。存在しない場合は null。</returns>
-    /// <remarks>DragRect への明示注入（DragRectControl.AttachScrollViewer）用。</remarks>
-    private static ScrollViewer? FindAncestorScrollViewer(Control control)
-    {
-        for (var v = control.GetVisualParent(); v is not null; v = v.GetVisualParent())
-        {
-            if (v is ScrollViewer scrollViewer) return scrollViewer;
-        }
-        return null;
-    }
-
-    /// <summary>指定コントロールの祖先にある Panel を探索する。</summary>
-    /// <param name="control">探索開始コントロール。</param>
-    /// <returns>最初に見つかった Panel。存在しない場合は null。</returns>
-    private static Panel? FindAncestorPanel(Control control)
-    {
-        var parent = control.Parent;
-        while (parent is not null)
-        {
-            if (parent is Panel panel) return panel;
-            parent = parent.Parent;
-        }
-        return null;
-    }
 }
-

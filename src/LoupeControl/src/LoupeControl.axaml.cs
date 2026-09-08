@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Loupe.Imaging;
 using Estable.AvaloniaUI.Loupe.Logging;
@@ -748,6 +749,10 @@ public sealed partial class LoupeControl : UserControl
                 source, center, pixelSize, zoom, crossColor,
                 checkerSize, checkerColorA, checkerColorB, frameColor, frameWidth, scaling);
 
+            // 描画反映（SetLoupeBitmap）は描画フェーズ（Render 優先度）で実行する。
+            // マウス移動中の連続再描画では、既定の Normal 優先度の継続が入力イベント（Input 優先度）に
+            // 後回しにされ、描画反映が移動停止まで実行されない（ルーペが移動中に更新されない）問題が生じる。
+            // Render 優先度は描画フェーズで毎フレーム実行されるため、連続入力中でも描画が追従する。
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 var current = _renderCoordinator.Generation;
@@ -761,7 +766,7 @@ public sealed partial class LoupeControl : UserControl
 
                 SetLoupeBitmap(bitmap, size);
                 Log.LogGenerateAsyncDone(true, false, visible, generation, current);
-            });
+            }, DispatcherPriority.Render);
         }
         catch (Exception ex)
         {
@@ -792,13 +797,15 @@ public sealed partial class LoupeControl : UserControl
         RaiseRendered(bmp, size);
 
         // イベント後の PbBitmap（ホストのオーバーレイ描画を含む）を表示境界で Avalonia 画像として反映する。
-        // WriteableBitmap を生成せず、PbBitmap を内包した IImage（PbBitmapAvaloniaImage）を Source に設定する
-        // （Skia 直描画・ゼロコピー）。
+        // PbBitmapAvaloniaImage（Skia 直描画・ゼロコピー）を Source に設定する。
         // 旧アダプタを破棄する前に、新しいアダプタを先に Source へ設定する（破棄済み Bitmap の参照防止・チラつき防止）。
-        var previous = _loupeImage;
+        var previousImage = _loupeImage;
         _loupeImage = new PbBitmapAvaloniaImage(bmp);
         PART_Image?.Source = _loupeImage;
+        // Source 差し替えに加えて明示的に再描画を要求する（マウス移動中の連続描画で Image の再描画が
+        // 抑制される場合があるため、確実に再描画してポインタ移動に追従させる）。
+        PART_Image?.InvalidateVisual();
         // 旧アダプタは新しい Source 設定後に破棄する（PART_Image.Source が旧アダプタを参照しなくなった後）。
-        previous?.Dispose();
+        previousImage?.Dispose();
     }
 }

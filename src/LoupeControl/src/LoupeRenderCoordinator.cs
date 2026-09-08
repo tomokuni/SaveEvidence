@@ -45,7 +45,10 @@ internal sealed class LoupeRenderCoordinator
         _startRender = startRender;
         _logRenderCore = logRenderCore;
         _isLogEnabled = isLogEnabled ?? (() => true);
-        _post = post ?? (action => Dispatcher.UIThread.Post(action));
+        // 再描画要求（RenderCore）は描画フェーズ（Render 優先度）でポストする。
+        // マウス移動中の連続再描画では、既定の Normal 優先度のポストが入力イベント（Input 優先度）に
+        // 後回しにされ、描画反映が移動停止まで実行されない問題を防ぐ。
+        _post = post ?? (action => Dispatcher.UIThread.Post(action, DispatcherPriority.Render));
     }
 
     /// <summary>現在の世代番号。</summary>

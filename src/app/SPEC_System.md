@@ -19,7 +19,7 @@
     - [6.3 FolderViewPage](#63-folderviewpage)
     - [6.4 UndoPage](#64-undopage)
     - [6.5 SettingsPage](#65-settingspage)
-    - [6.6 ZoomViewControl（ズーム・パン表示）](#66-zoomviewcontrolズームパン表示)
+    - [6.6 CropViewControl（ズーム・パン表示と領域選択）](#66-cropviewcontrolズームパン表示と領域選択)
     - [6.7 ViewModel 群](#67-viewmodel-群)
     - [6.8 SettingsService](#68-settingsservice)
     - [6.9 その他のコントロール](#69-その他のコントロール)
@@ -203,9 +203,9 @@ flowchart TB
 - **設定項目の対応先**: 全設定項目と反映先コントロールの対応は `SPEC_SettingTargetTable.md` を参照
 - **依存**: SettingsService / ColorPickerControl（色選択）
 
-### 6.6 ZoomViewControl（ズーム・パン表示）
+### 6.6 CropViewControl（ズーム・パン表示と領域選択）
 
-ズーム・パン・Fit 表示は**独立プロジェクト `ZoomViewControl`**（`ZoomViewControl` / `ZoomableView` / `ZoomMath` / `ZoomTransition` / `ScrollMetrics`）が提供する。CapturePage が `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読して操作を指示する。詳細は `ZoomViewControl` の `SPEC_System.md` を参照。
+ズーム・パン・Fit 表示は**独立プロジェクト `CropViewControl`**（`CropViewControl`。内部に `ZoomViewControl` と `FadeMaskDragRectControl` を内包）が提供する。CapturePage が `CropViewControl` の `Source` を設定し、`ZoomChanged`（ズーム率・可否）・`ViewportChanged`（パン・ズーム）を購読して操作を指示する。`SnipCapture.StartCropAsync` は `CropViewControl` を受け取り、切出しセッション（座標変換・確定・キャンセル）を管理する。詳細は `CropViewControl` の `SPEC_System.md` を参照。
 
 ### 6.7 ViewModel 群
 

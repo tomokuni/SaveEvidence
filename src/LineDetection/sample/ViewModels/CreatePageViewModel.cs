@@ -72,7 +72,7 @@ public sealed partial class CreatePageViewModel : ObservableObject
         }
 
         // キャプチャ結果（PbBitmap）を表示用 Bitmap へ変換する（表示境界）。
-        CapturedImage = image.ToAvaloniaWriteableBitmap();
+        CapturedImage = image.ToAvaloniaBitmap();
         CaptureBounds = bounds;
         WindowInfos.Clear();
 

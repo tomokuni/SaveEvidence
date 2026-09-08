@@ -302,7 +302,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (PreviewImage is not null && CopyToClipboardAsync is not null)
         {
             // クリップボードは Avalonia Bitmap を要求するため、表示境界で変換する。
-            using var av = PreviewImage.ToAvaloniaWriteableBitmap();
+            using var av = PreviewImage.ToAvaloniaBitmap();
             await CopyToClipboardAsync(av);
         }
     }

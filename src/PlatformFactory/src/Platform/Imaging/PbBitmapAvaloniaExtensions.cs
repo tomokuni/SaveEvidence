@@ -134,6 +134,29 @@ public static class PbBitmapAvaloniaExtensions
         return wb;
     }
 
+    /// <summary>公開コンストラクタ（<c>new Bitmap(PixelFormat, AlphaFormat, Address, PixelSize, dpi, Stride)</c>）で Avalonia の標準 <see cref="Bitmap"/> を生成する。</summary>
+    /// <param name="bitmap">対象のビットマップ。</param>
+    /// <returns>標準描画経路（<c>IImage</c>）で確実に描画される <see cref="Bitmap"/>。所有権は呼び出し側。</returns>
+    /// <remarks>
+    /// <see cref="Bitmap"/> の公開コンストラクタへ <see cref="PbBitmap.Address"/>（ピクセルバッファ）を直接渡して生成する。<br/>
+    /// Skia の内部実装（<c>ImmutableBitmap</c>）がピクセルを複製するためコピーは発生するが、<br/>
+    /// <c>WriteableBitmap</c> の <c>Lock()</c> オーバーヘッドがなく、<c>Bitmap</c> として標準経路で確実に描画される。<br/>
+    /// <b>注意</b>: 変換時に <see cref="PbBitmap.Address"/> のピクセルを<b>複製する</b>ため、その後 <see cref="PbBitmap"/> を
+    /// 書き換えても本 <see cref="Bitmap"/> には反映されない（スナップショット）。
+    /// </remarks>
+    public static Bitmap ToAvaloniaBitmap(this PbBitmap bitmap)
+    {
+        bitmap.ThrowIfDisposed();
+        var size = bitmap.Size;
+        return new Bitmap(
+            PixelFormat.Bgra8888,
+            AlphaFormat.Premul,
+            bitmap.Address,
+            new PixelSize(size.Width, size.Height),
+            new Vector(96, 96),
+            bitmap.Stride);
+    }
+
     /// <summary>Avalonia の画像入力（<see cref="IImage"/>）として公開するアダプタを生成する（ゼロコピー・複製なし）。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <returns><see cref="PbBitmapAvaloniaImage"/>（所有権は <see cref="PbBitmapAvaloniaImage.Dispose"/> で解放する）。</returns>

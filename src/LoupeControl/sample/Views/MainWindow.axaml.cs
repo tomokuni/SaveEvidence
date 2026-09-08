@@ -31,19 +31,25 @@ public partial class MainWindow : Window
         // 描画エラーの通知先として ILogger を設定する（デバッグ出力へ転送）
         Loupe.Log = new DebugLogger();
 
+        // ルーペをカーソルの右下（+24 DIP）へ配置する。
+        // 配置は LoupeControl.UpdatePosition（RenderTransform）が担い、ホスト側の Canvas.SetLeft/Top とは
+        // 競合しない（Canvas.SetLeft/Top は LoupeControl の RenderTransform と加算され、ルーペが右下に
+        // 大きくずれるため、配置はコントロール自身に任せる）。
+        Loupe.PositionOffset = 24;
+
         // 初期状態でも拡大表示が見えるように中心を設定
         _vm.CenterPoint = new Point(120, 120);
-
-        Loaded += (_, _) => UpdateLoupePosition(new Point(120, 120));
     }
 
-    /// <summary>テスト画像上のマウス移動で中心座標とルーペ位置を更新する。</summary>
+    /// <summary>テスト画像上のマウス移動で中心座標を更新する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ポインタイベント引数。</param>
     /// <remarks>
     /// 中心座標は画像の外もそのまま許可する。LoupeControl は画像外の領域を透明として切り出し、<br/>
     /// 市松模様はカーソルと画像端の距離に応じて部分的に表示される（視野全体が画像外になった場合のみ全面市松）。<br/>
     /// Stretch=None のため画像ローカル DIP ≒ 元画像ピクセル。<br/>
+    /// ルーペの表示位置は LoupeControl.UpdatePosition（RenderTransform + PositionOffset）が計算するため、
+    /// ホスト側では中心座標（CenterPoint）の設定のみを行う。
     /// </remarks>
     private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
     {
@@ -51,21 +57,6 @@ public partial class MainWindow : Window
 
         // 画像範囲へクランプしない（画像外も中心として許容し、距離に応じた部分市松を表示する）
         _vm.CenterPoint = new Point(pos.X, pos.Y);
-        UpdateLoupePosition(pos);
-    }
-
-    /// <summary>ルーペをカーソルの右下（+24 DIP）へ配置し、描画領域内へクランプする。</summary>
-    /// <param name="pos">カーソル位置（画像ローカル座標）。</param>
-    private void UpdateLoupePosition(Point pos)
-    {
-        var size = _vm.RequestedSize;
-        var bounds = new Size(CanvasHost.Bounds.Width, CanvasHost.Bounds.Height);
-
-        var x = Math.Clamp(pos.X + 24, 0, Math.Max(0, bounds.Width - size));
-        var y = Math.Clamp(pos.Y + 24, 0, Math.Max(0, bounds.Height - size));
-
-        Canvas.SetLeft(Loupe, x);
-        Canvas.SetTop(Loupe, y);
     }
 
     /// <summary>Clear() の動作確認（非表示にして Bitmap を解放）。</summary>

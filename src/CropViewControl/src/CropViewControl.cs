@@ -9,6 +9,7 @@ using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
+using Microsoft.Extensions.Logging;
 
 namespace Estable.AvaloniaUI.CropView;
 
@@ -41,6 +42,14 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>領域選択オーバーレイ（ドラッグ選択・暗転マスク・ルーペ）。</summary>
     private readonly FadeMaskDragRectControl _selectionOverlay = new() { ZIndex = 10 };
+
+    /// <summary>内部ロガー（ズームビューポートへ伝搬）。null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/>。</summary>
+    /// <remarks><see cref="ZoomViewControl.Log"/> へ委譲する（ズーム操作・座標変換の詳細ログをホストのログ基盤へ転送）。</remarks>
+    public ILogger Log
+    {
+        get => _zoomView.Log;
+        set => _zoomView.Log = value;
+    }
 
     /// <summary>外部提供矩形オーバーレイ（ビューポート座標で描画）。</summary>
     private readonly Canvas _rectOverlay = new() { ZIndex = 20, IsHitTestVisible = false };
@@ -87,6 +96,13 @@ public sealed partial class CropViewControl : Panel
     {
         get => _selectionOverlay.Mode;
         set => _selectionOverlay.Mode = value;
+    }
+
+    /// <summary>領域選択オーバーレイの外観設定（DragRect / FadeMask / Loupe の外観）。<see cref="FadeMaskDragRectControl.AppearanceSettings"/> へ委譲する。</summary>
+    public FadeMaskDragRectSettings AppearanceSettings
+    {
+        get => _selectionOverlay.AppearanceSettings;
+        set => _selectionOverlay.AppearanceSettings = value;
     }
 
     /// <summary>表示する画像を設定する（ZoomViewControl とルーペへ伝搬する）。</summary>
@@ -169,6 +185,51 @@ public sealed partial class CropViewControl : Panel
     public ZoomViewControl ZoomView => _zoomView;
 
     // ====================================================================
+    // 公開 API: ズーム（ZoomViewControl へ委譲）
+    // ====================================================================
+
+    /// <summary>ズーム率が変更されたときに発火するイベント（<see cref="ZoomViewControl.ZoomChanged"/> へ委譲）。</summary>
+    public event EventHandler<ZoomChangedEventArgs>? ZoomChanged
+    {
+        add => _zoomView.ZoomChanged += value;
+        remove => _zoomView.ZoomChanged -= value;
+    }
+
+    /// <summary>ビューポート（パン・ズーム・表示状態）が変化したときに発火するイベント（<see cref="ZoomViewControl.ViewportChanged"/> へ委譲）。</summary>
+    public event EventHandler? ViewportChanged
+    {
+        add => _zoomView.ViewportChanged += value;
+        remove => _zoomView.ViewportChanged -= value;
+    }
+
+    /// <summary>現在のズーム状態でズームインが可能かどうか（<see cref="ZoomViewControl.CanZoomIn"/> へ委譲）。</summary>
+    public bool CanZoomIn => _zoomView.CanZoomIn;
+
+    /// <summary>現在のズーム状態でズームアウトが可能かどうか（<see cref="ZoomViewControl.CanZoomOut"/> へ委譲）。</summary>
+    public bool CanZoomOut => _zoomView.CanZoomOut;
+
+    /// <summary>画像の中央寄せ / 左上寄せ（<see cref="ZoomViewControl.CenterAlign"/> へ委譲）。</summary>
+    public bool CenterAlign
+    {
+        get => _zoomView.CenterAlign;
+        set => _zoomView.CenterAlign = value;
+    }
+
+    /// <summary>画像の表示矩形（ビューポート座標）を取得する（<see cref="ZoomViewControl.ImageRectViewport"/> へ委譲）。</summary>
+    public Rect ImageRectViewport() => _zoomView.ImageRectViewport();
+
+    /// <summary>ズーム・パンビューポートの背景（市松模様等。レターボックス領域の描画）。<see cref="ZoomViewControl.Background"/> へ委譲する。</summary>
+    /// <remarks>
+    /// 本コントロール自体の背景（<see cref="Panel.Background"/>）とは独立し、内包するビューポートの背景を設定する。<br/>
+    /// 画像のレターボックス領域（画像がビューポートより小さい場合の余白）に市松模様等を表示するために使用する。
+    /// </remarks>
+    public IBrush? ViewportBackground
+    {
+        get => _zoomView.Background;
+        set => _zoomView.Background = value;
+    }
+
+    // ====================================================================
     // 公開 API: 選択状態（FadeMaskDragRectControl へ委譲）
     // ====================================================================
 
@@ -188,6 +249,33 @@ public sealed partial class CropViewControl : Panel
     /// <summary>座標変換ポートを設定する（内包コントロールへ分配）。</summary>
     /// <param name="port">座標変換ポート。null で等価変換。</param>
     public void SetCoordinateTransform(ICoordTransform? port) => _selectionOverlay.SetCoordinateTransform(port);
+
+    /// <summary>祖先 ScrollViewer を内包 DragRect へ明示注入する（スクロール・ズーム検知 + ホイール操作。Crop 用）。</summary>
+    /// <param name="scrollViewer">連携する ScrollViewer。null で連携解除。</param>
+    /// <remarks><see cref="FadeMaskDragRectControl.AttachScrollViewer"/> へ委譲する。</remarks>
+    public void AttachScrollViewer(ScrollViewer? scrollViewer) => _selectionOverlay.AttachScrollViewer(scrollViewer);
+
+    /// <summary>内包 DragRect へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
+    /// <remarks><see cref="FadeMaskDragRectControl.FocusDragRect"/> へ委譲する。</remarks>
+    public void FocusDragRect() => _selectionOverlay.FocusDragRect();
+
+    /// <summary>ルーペの拡大元画像を設定する（<see cref="FadeMaskDragRectControl.SetLoupeSource"/> へ委譲）。</summary>
+    /// <param name="source">ルーペの拡大元画像。null でルーペをクリア。</param>
+    public void SetLoupeSource(IImage? source) => _selectionOverlay.SetLoupeSource(source);
+
+    /// <summary>ルーペのソースをクリアする（<see cref="FadeMaskDragRectControl.ClearLoupe"/> へ委譲）。</summary>
+    public void ClearLoupe() => _selectionOverlay.ClearLoupe();
+
+    /// <summary>サイズラベルを描画時に評価するプロバイダ（<see cref="FadeMaskDragRectControl.SizeLabelOverrideProvider"/> へ委譲）。</summary>
+    public Func<string?>? SizeLabelOverrideProvider
+    {
+        get => _selectionOverlay.SizeLabelOverrideProvider;
+        set => _selectionOverlay.SizeLabelOverrideProvider = value;
+    }
+
+    /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知する。</summary>
+    /// <remarks><see cref="FadeMaskDragRectControl.NotifyViewportChanged"/> へ委譲する（暗転マスク・選択枠・ルーペの追従）。</remarks>
+    public void NotifyViewportChanged() => _selectionOverlay.NotifyViewportChanged();
 
     /// <summary>選択確定要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Enter キー相当）。</summary>
     public void RequestConfirm() => _selectionOverlay.RequestConfirm();

@@ -106,7 +106,7 @@ if (result?.Image is { } image && result.SourceBounds is { } bounds)
 ### 4.2 切出し（Crop）
 
 ```csharp
-var cropRect = await capture.StartCropAsync(previewControl, hostWindow, sourceImage);
+var cropRect = await capture.StartCropAsync(cropView, hostWindow, sourceImage);
 if (cropRect is { } rect && rect.Width > 0 && rect.Height > 0)
 {
     // rect: 元画像上の切り出し範囲（論理座標 = 元画像ピクセル）
@@ -171,7 +171,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 | --- | --- | --- |
 | コンストラクタ | `SnipCapture(CaptureSettings? initialSettings = null, ILogger? logger = null)` | インスタンスを生成。設定値が許容範囲外なら `ArgumentOutOfRangeException` |
 | `StartCaptureAsync` | `Task<CaptureResult?> StartCaptureAsync(CaptureType type, Window owner)` | 選択キャプチャを開始。実行中は null / キャンセル時は 0x0 の空結果 |
-| `StartCropAsync` | `Task<PixelRect?> StartCropAsync(Control previewControl, Window hostWindow, PbBitmap sourceImage, Action<bool>? zoomRequestHandler = null)` | 切出しを開始。戻り値は元画像上の論理座標（**ドメイン座標系** = 元画像ピクセル）。実行中は null / キャンセル時は 0x0 の空 `PixelRect`。`zoomRequestHandler` は Ctrl+ホイールによるズーム要求（true = ズームイン / false = ズームアウト）を上位 AP へ通知する（null の場合はズーム操作なし） |
+| `StartCropAsync` | `Task<PixelRect?> StartCropAsync(CropViewControl cropView, Window hostWindow, PbBitmap sourceImage, Action<bool>? zoomRequestHandler = null)` | 切出しを開始。戻り値は元画像上の論理座標（**ドメイン座標系** = 元画像ピクセル）。実行中は null / キャンセル時は 0x0 の空 `PixelRect`。`zoomRequestHandler` は Ctrl+ホイールによるズーム要求（true = ズームイン / false = ズームアウト）を上位 AP へ通知する（null の場合はズーム操作なし） |
 | `Cancel` | `void Cancel()` | 進行中セッションをキャンセル（Capture: オーバーレイを閉じる / Crop: 0x0 で完了） |
 | `Confirm` | `void Confirm()` | Crop を現在の選択矩形で確定（Enter キー相当。FadeMaskDragRectControl.RequestConfirm に委譲） |
 | `NotifyCropViewportChanged` | `void NotifyCropViewportChanged()` | 実行中の Crop セッションへビューポート（パン・ズーム・表示サイズ）の変化を通知。ビューポート実装に依存せず、ホストがビューポート変化を検知した際に中継する（暗転マスク・選択枠・ルーペの追従）。Crop 未実行時は何もしない |
@@ -394,7 +394,7 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 - `StartCaptureAsync` / `StartCropAsync` は **UI スレッドから呼び出す**こと。
 - 実行中の再呼び出しは `null` を返します（既存セッションを継続）。呼び出し側は null を「進行中のため開始できない」と解釈してください。
 - `Dispose()` 後の公開操作は `ObjectDisposedException` を投げます。
-- `StartCropAsync` の `previewControl` は**祖先に `Panel` が必要**です（配置先がない場合 `InvalidOperationException`）。
+- `StartCropAsync` の `cropView` は `CropViewControl`（ズーム + 領域選択 + ルーペを内包した複合コントロール）です。オーバーレイ（DragRect / FadeMask / Loupe）は `CropViewControl` 内に配置されるため、祖先への配置は不要です（ズーム・パン・Fit・座標変換は内包する `ZoomViewControl` が単一所有）。
 - `CaptureSettings` の数値メンバーは `Validate()` で範囲チェックされ、範囲外は `ArgumentOutOfRangeException` を投げます。
 - キャプチャ画像へのオーバーレイ写り込みは `IWindowService.SetCaptureExclusion`（Windows 10 2004+）で防止します。それ以前の Windows では写り込みが発生する可能性があります。
 
