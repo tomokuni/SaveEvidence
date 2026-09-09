@@ -2,12 +2,16 @@
 
 ## 目次
 
-- [SnipCaptureUI システム仕様書（SPEC_System）](#snipcaptureui-システム仕様書spec_system)
+- [SnipCaptureUI システム仕様書（SPEC\_System）](#snipcaptureui-システム仕様書spec_system)
   - [目次](#目次)
   - [1. システム概要](#1-システム概要)
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
+    - [3.1 レイヤー構造](#31-レイヤー構造)
+    - [3.2 依存の方向](#32-依存の方向)
   - [4. 例外処理ポリシー](#4-例外処理ポリシー)
+    - [4.1 基本方針](#41-基本方針)
+    - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
   - [5. コンポーネント図](#5-コンポーネント図)
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 SnipCapture](#61-snipcapture)
@@ -17,6 +21,9 @@
     - [6.5 公開データ型](#65-公開データ型)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
+  - [9. ログ](#9-ログ)
+    - [9.1 LogLevel 設定ポリシー](#91-loglevel-設定ポリシー)
+    - [9.2 ログ定義一覧](#92-ログ定義一覧)
 
 ---
 
@@ -65,7 +72,7 @@ SnipCaptureUI は内包コントロール（DragRectControl / FadeMaskControl / 
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（`Logging/SnipCaptureLog.cs`）で出力する。高頻度イベントは Debug、障害は Error / Warning で記録する。
+- ログは LoggerMessage ソース生成（`Logging/LogMessage.cs`）で出力する。高頻度イベントは Debug、障害は Error / Warning で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -76,42 +83,37 @@ SnipCaptureUI は内包コントロール（DragRectControl / FadeMaskControl / 
 
 ```mermaid
 flowchart TB
+    subgraph Host["上位AP（app 等）"]
+        AP["app<br/>StartCaptureAsync / StartCropAsync を呼び出し"]
+    end
     subgraph SC["SnipCaptureUI プロジェクト (SnipCaptureUI)"]
+        direction TB
         Fac["SnipCapture<br/>public sealed<br/>SnipCapture.cs<br/>（Facade・薄い統括者）"]
-        St["CaptureSettings<br/>public sealed record"]
-        Rs["CaptureResult<br/>public sealed record"]
-        Ct["CaptureType<br/>public enum"]
         CS["CaptureSession<br/>internal sealed<br/>Sessions/CaptureSession.cs"]
         CrS["CropSession<br/>internal sealed<br/>Sessions/CropSession.cs"]
         OW["OverlayWindow<br/>internal sealed<br/>Sessions/OverlayWindow.axaml(.cs)"]
+        St["CaptureSettings<br/>public sealed record"]
+        Rs["CaptureResult<br/>public sealed record"]
+        Ct["CaptureType<br/>public enum"]
     end
     subgraph Dep["外部依存プロジェクト"]
         FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectSettings<br/>（DragRect + FadeMask + Loupe を内包）"]
-        PF["PlatformFactory<br/>ICaptureService / IWindowService / IElementFinder<br/>ICoordinatePort / CoordinatePort / ScreenConverter<br/>ICursorOverrideGuard"]
     end
     subgraph FMCInternal["FadeMaskDragRect の内包コントロール（外部からは非公開・internal）"]
         DR["DragRectControl<br/>DragRectControl（選択矩形 UI）"]
         FM["FadeMaskControl<br/>FadeMaskControl / FadeMaskRenderer<br/>FadeMaskRenderMode"]
         LP["LoupeControl<br/>LoupeControl（ルーペ表示）"]
     end
-    subgraph Host["上位AP（app 等）"]
-        AP["app<br/>StartCaptureAsync / StartCropAsync を呼び出し"]
-    end
 
+    AP -->|"Task ベース API / 設定 / キャンセル"| Fac
     Fac --> CS
     Fac --> CrS
-    Fac --> St
-    Fac --> Rs
-    Fac --> Ct
     CS --> OW
     OW --> FDR
-    OW --> PF
     CrS --> FDR
-    CrS --> PF
     FDR --> DR
     FDR --> FM
     FDR --> LP
-    AP -->|"Task ベース API / 設定 / キャンセル"| Fac
 ```
 
 ## 6. コンポーネント一覧
@@ -127,7 +129,7 @@ flowchart TB
 - **公開メンバー**:
   - コンストラクタ: `SnipCapture(CaptureSettings? initialSettings = null, ILogger? logger = null)`
   - プロパティ: `AppearanceSettings`（`CaptureSettings`。getter は全メンバー non-null / setter は部分更新 + 検証）
-  - メソッド: `StartCaptureAsync(CaptureType, Window)` / `StartCropAsync(Control, Window, PbBitmap)` / `Cancel()` / `Confirm()` / `Dispose()`
+  - メソッド: `StartCaptureAsync(CaptureType, Window)` / `StartCropAsync(CropViewControl, Window, PbBitmap, Action<bool>?)` / `Cancel()` / `Confirm()` / `Dispose()`
 - **可視性**: public
 - **依存**: CaptureSession / CropSession / CaptureSettings / CaptureResult / CaptureType / PlatformFactory
 
@@ -148,11 +150,11 @@ flowchart TB
 - **責務**:
   - 複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe の配線を内包）の配置・ライフサイクル管理
   - 外観設定の適用: `CaptureSettings` → `FadeMaskDragRectSettings`（拡張メソッドで一元化）→ `AppearanceSettings`（部分更新 + 同一値スキップ）
-  - 座標変換: `CoordinatePort.Compose(ImageLayout, ScrollOffset)` で論理（元画像 px）↔ 親 Panel DIP を 1 段変換し、複合コントロールへ注入
+  - 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、複合コントロールへ注入
   - カーソル上書き抑止（Crop 中の十字カーソル維持）
   - 確定 → 論理 Rect / キャンセル → 0x0 の空 `PixelRect` を返却
 - **可視性**: internal
-- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectSettings）/ PlatformFactory（ICoordinatePort / CoordinatePort / ICursorOverrideGuard）
+- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectSettings）/ PlatformFactory（ICoordTransform / CoordTransform / ICursorOverrideGuard）
 
 ### 6.4 OverlayWindow
 
@@ -201,3 +203,47 @@ sequenceDiagram
     AP->>Fac: Cancel()（進行中のセッションをキャンセル）
     AP->>Fac: Dispose()（リソース解放）
 ```
+
+## 9. ログ
+
+ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
+各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogCaptureStart(type)`）。
+`SnipCapture` コンストラクタの `logger` 引数で注入し、null の場合は出力しない（app では NLog へ転送）。
+出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
+
+### 9.1 LogLevel 設定ポリシー
+
+トレースログは LogLevel.Trace に限定せず、「重要度 × 発生頻度」でレベルを使い分ける。
+
+| LogLevel | 対象 | 本番での意図 |
+| --- | --- | --- |
+| `Error` | 例外・失敗（処理継続不可） | 常時出力し、障害を確実に残す |
+| `Warning` | 異常だがフォールバックで継続 | 常時出力し、異常発生の痕跡を残す |
+| `Information` | ユーザー操作の主要イベント（低頻度） | 常時出力し、操作手順の再現を可能にする |
+| `Debug` | 操作イベントの詳細（セッション開始 / 確定 / キャンセル / 設定変更） | 障害時のみ有効化して解析 |
+| `Trace` | 高頻度・極詳細 | 特別な性能・座標解析時のみ有効化 |
+
+判断基準:
+
+1. 例外・警告は常時残す（`Error` / `Warning`）
+2. 操作の起点イベント（低頻度）は `Information`
+3. マウス・キー等の操作イベント（中頻度）は `Debug`
+4. 高頻度・極詳細は `Trace`
+5. 設定変更（変更前後）は `Debug`
+
+### 9.2 ログ定義一覧
+
+| レベル | メソッド | 出力内容 |
+| --- | --- | --- |
+| `Debug` | `LogMessage.LogCaptureStart` | キャプチャセッション開始（種別） |
+| `Debug` | `LogMessage.LogCaptureCompleted` | キャプチャ確定（矩形） |
+| `Debug` | `LogMessage.LogCaptureCancelled` | キャプチャキャンセル |
+| `Debug` | `LogMessage.LogResult` | キャプチャ結果サイズ（画像サイズ / 矩形） |
+| `Debug` | `LogMessage.LogOverlayConfirm` | オーバーレイ確定要求（Enter / ダブルクリック等） |
+| `Debug` | `LogMessage.LogOverlayCancel` | オーバーレイキャンセル要求（Esc 等） |
+| `Debug` | `LogMessage.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ） |
+| `Trace` | `LogMessage.LogHighlight` | ハイライト検出結果（ScreenSelect / WindowSelect・検出矩形 / タイトル / クラス名。マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用） |
+| `Debug` | `LogMessage.LogCropStart` | Crop セッション開始（元画像サイズ） |
+| `Debug` | `LogMessage.LogCropCompleted` | Crop 確定（切り出し矩形） |
+| `Debug` | `LogMessage.LogCropCancelled` | Crop キャンセル |
+| `Debug` | `LogMessage.LogSettingChanged` | 設定値変更（変更前後） |

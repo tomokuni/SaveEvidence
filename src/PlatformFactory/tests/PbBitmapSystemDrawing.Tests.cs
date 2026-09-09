@@ -72,11 +72,11 @@ public class PbBitmapSystemDrawingTests
     }
 
     [Fact]
-    public void ToSystemDrawingBitmap_部分透明アルファを保持する()
+    public void ToDrawingBitmap_部分透明アルファを保持する()
     {
         using var bmp = PbBitmap.Create(4, 4);
         bmp.SetPixel(0, 0, b: 255, g: 0, r: 0, a: 128);
-        using var sd = bmp.ToSystemDrawingBitmap();
+        using var sd = bmp.ToDrawingBitmap();
         var data = sd.LockBits(new RectInt(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
@@ -96,11 +96,11 @@ public class PbBitmapSystemDrawingTests
     }
 
     [Fact]
-    public void ToSystemDrawingBitmap_複製を生成する()
+    public void ToDrawingBitmap_複製を生成する()
     {
         using var bmp = PbBitmap.Create(4, 4);
         bmp.SetPixel(0, 0, b: 1, g: 2, r: 3, a: 255);
-        using var sd = bmp.ToSystemDrawingBitmap();
+        using var sd = bmp.ToDrawingBitmap();
         Assert.Equal(bmp.Size.Width, sd.Width);
         Assert.Equal(bmp.Size.Height, sd.Height);
         var data = sd.LockBits(new RectInt(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
@@ -126,7 +126,7 @@ public class PbBitmapSystemDrawingTests
     {
         using var sd = CreateSolidDrawingBitmap(4, 4, 0, 0, 255, 255);
         using var bmp = sd.ToPbBitmap();
-        using var back = bmp.ToSystemDrawingBitmap();
+        using var back = bmp.ToDrawingBitmap();
         Assert.Equal(sd.Width, back.Width);
         Assert.Equal(sd.Height, back.Height);
     }

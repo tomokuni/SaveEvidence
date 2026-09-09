@@ -41,24 +41,14 @@
       - [5.4.1 Rendered](#541-rendered)
     - [5.5 型](#55-型)
       - [5.5.1 LoupeControl](#551-loupecontrol)
-  - [6. 非同期描画と世代管理](#6-非同期描画と世代管理)
-    - [6.1 非同期描画の範囲](#61-非同期描画の範囲)
-    - [6.2 世代番号](#62-世代番号)
-    - [6.3 再描画要求の集約](#63-再描画要求の集約)
-  - [7. 例外とログ](#7-例外とログ)
-    - [7.1 ロガーの責務](#71-ロガーの責務)
-    - [7.2 ログレベルポリシー](#72-ログレベルポリシー)
-      - [ログ定義一覧](#ログ定義一覧)
-    - [7.3 Bitmap / PbBitmapImage 以外の IImage](#73-bitmap--pbbitmapimage-以外の-iimage)
-    - [7.4 出力先の例](#74-出力先の例)
-  - [8. ライフサイクルと所有権](#8-ライフサイクルと所有権)
-    - [8.1 Sourceの所有権](#81-sourceの所有権)
-    - [8.2 生成Bitmapの所有権](#82-生成bitmapの所有権)
-    - [8.3 一時Bitmap](#83-一時bitmap)
-  - [9. 表示位置・サイズの責務](#9-表示位置サイズの責務)
-  - [10. 推奨使用パターン](#10-推奨使用パターン)
-  - [11. 制約事項](#11-制約事項)
-  - [12. サンプルアプリケーション](#12-サンプルアプリケーション)
+  - [6. 非同期描画](#6-非同期描画)
+  - [7. ライフサイクルと所有権](#7-ライフサイクルと所有権)
+    - [7.1 Source の所有権](#71-source-の所有権)
+    - [7.2 生成 Bitmap の所有権](#72-生成-bitmap-の所有権)
+  - [8. 表示位置・サイズの責務](#8-表示位置サイズの責務)
+  - [9. 推奨使用パターン](#9-推奨使用パターン)
+  - [10. 制約事項](#10-制約事項)
+  - [11. サンプルアプリケーション](#11-サンプルアプリケーション)
 
 ---
 
@@ -347,16 +337,7 @@ Avalonia標準の `Visual.IsVisible` を使用します。初期値は `false`�
 Task RenderAsync()
 ```
 
-現在のプロパティ状態からルーペ画像を非同期に生成します。
-
-処理の分担は次のとおりです。
-
-1. `IImage` が `Bitmap` または `PbBitmapImage` か検証
-2. 元画像（`Bitmap` は複製、`PbBitmapImage` は内包 `PbBitmap`）から領域抽出をバックグラウンド処理
-3. 抽出BitmapをUIスレッドへ渡す
-4. `RenderTargetBitmap` と `DrawingContext` で合成
-5. 世代番号を確認
-6. 最新世代であれば内部 `Image.Source` へ設定
+現在のプロパティ状態からルーペ画像を非同期に生成します。完了を待機して結果を受け取る場合は、本メソッドを `await` します。
 
 `Source` が `Bitmap` / `PbBitmapImage` 以外の `IImage` の場合は `NotSupportedException` がスローされます。
 
@@ -391,7 +372,7 @@ loupe.Clear();
 #### 5.2.4 SetCoordinateTransform
 
 ```csharp
-void SetCoordinateTransform(ICoordinatePort? port)
+void SetCoordinateTransform(ICoordTransform? port)
 ```
 
 論理座標（ドメイン）↔ 親パネル DIP の座標変換ポートを設定します（null = 等価変換。DragRectControl と同方式）。
@@ -448,6 +429,7 @@ event EventHandler<LoupeRenderedEventArgs>? Rendered
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
+| `Bitmap` | `PbBitmap` | 描画済みのルーペ画像。イベントハンドラ内でピクセルへオーバーレイを直接描画できる（所有権は `LoupeControl` 側） |
 | `Position` | `Point` | ルーペの表示左上（親パネル内 DIP） |
 | `Size` | `double` | ルーペの表示サイズ（一辺・DIP） |
 | `ZoomLevel` | `int` | 拡大率 |
@@ -478,36 +460,11 @@ loupe.Rendered += (_, e) =>
 公開 API は「5.1 プロパティ」「5.2 メソッド」に記載の通りです。
 StyledProperty は同ファイルに定義されます（Avalonia のバインディング・スタイル設定に必要なため public）。
 
-## 6. 非同期描画と世代管理
+## 6. 非同期描画
 
-### 6.1 非同期描画の範囲
+ルーペ画像の生成は非同期で実行され、古い描画結果は自動的に破棄されます。複数のプロパティが連続して変更された場合、再描画は 1 フレームに 1 回に結合されます。
 
-Avaloniaの描画オブジェクトはUIスレッドで扱う必要があるため、すべての処理をバックグラウンドへ移すのではありません。
-
-| 処理 | 実行場所 |
-| --- | --- |
-| 画像領域のピクセル抽出 | バックグラウンド |
-| ピクセル配列の領域抽出 | バックグラウンド |
-| `WriteableBitmap` の生成・ロック書き込み | UIスレッド |
-| `RenderTargetBitmap` の合成 | UIスレッド |
-| `DrawingContext` の操作 | UIスレッド |
-| 内部 `Image.Source` の更新 | UIスレッド |
-| 世代判定 | UIスレッド |
-
-### 6.2 世代番号
-
-描画開始ごとに世代番号を発行します。
-
-```text
-世代1の描画開始
-世代2の描画開始
-世代2の抽出・合成が先に完了 → 世代2を採用
-世代1が後から完了 → 古い結果として破棄
-```
-
-現在の世代と描画開始時の世代が一致しない場合、生成Bitmapを破棄して表示しません。
-
-次の場合も古い描画結果は無効になります。
+古い描画結果が無効になるタイミングは次のとおりです。
 
 - `CenterPoint` の変更
 - `Source` の変更
@@ -515,86 +472,17 @@ Avaloniaの描画オブジェクトはUIスレッドで扱う必要があるた�
 - `IsVisible = false`
 - `ForceUpdate()` の実行
 
-### 6.3 再描画要求の集約
+描画エラー（`Source` が未対応の `IImage` 等）は `Log` へ記録され、`RenderAsync()` を直接呼び出した場合は呼び出し元へ例外が返されます。
 
-各対象プロパティの変更は `RequestRender()` を経由します。
+## 7. ライフサイクルと所有権
 
-```text
-プロパティ変更 → Dispatcherへ再描画要求を登録
-次のプロパティ変更 → 既に登録済みなら追加登録しない
-Dispatcher実行 → 最新状態をスナップショットして1回生成
-```
-
-外観プロパティの連続設定もこの仕組みにより集約されます。
-
-## 7. 例外とログ
-
-### 7.1 ロガーの責務
-
-`LoupeControl` はファイルへ直接ログを書き込みません。
-
-```csharp
-public ILogger Log { get; set; } = NullLogger.Instance;
-```
-
-`Log` に設定された `ILogger` へエラーを記録します。実際の出力先は利用側のロギング構成に依存します。
-
-### 7.2 ログレベルポリシー
-
-ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
-呼び出し側では logger 引数を省略し、`Log` プロパティ経由で出力する（例: `Log.LogUpdateError(ex)`）。
-トレースログは LogLevel.Trace に限定せず、「重要度 × 発生頻度」でレベルを使い分ける。
-
-| LogLevel | 対象 | 本番での意図 |
-| --- | --- | --- |
-| `Error` | 例外・失敗（処理継続不可） | 常時出力し、障害を確実に残す |
-| `Warning` | 異常だがフォールバックで継続 | 常時出力し、異常発生の痕跡を残す |
-| `Information` | ユーザー操作の主要イベント（低頻度） | 常時出力し、操作手順の再現を可能にする |
-| `Debug` | 操作イベントの詳細（設定変更） | 障害時のみ有効化して解析 |
-| `Trace` | 高頻度・極詳細（再描画内部・位置更新） | 特別な性能・座標解析時のみ有効化 |
-
-判断基準:
-
-1. 例外・警告は常時残す（`Error` / `Warning`）
-2. 操作の起点イベント（低頻度）は `Information`
-3. マウス・キー等の操作イベント（中頻度）は `Debug`
-4. 高頻度・極詳細（再描画・位置更新の連続呼び出し）は `Trace`
-5. 設定変更（変更前後）は `Debug`
-
-#### ログ定義一覧
-
-| レベル | メソッド | 出力内容 |
-| --- | --- | --- |
-| `Error` | `LogMessage.LogUpdateError` | ルーペ更新の例外（スタックトレース付き） |
-| `Debug` | `LogMessage.LogSettingChanged` | 設定値変更（変更前後） |
-| `Trace` | `LogMessage.LogRequestRender` | 再描画要求（表示状態 / キュー済み） |
-| `Trace` | `LogMessage.LogRenderCore` | RenderCore 実行（世代番号） |
-| `Trace` | `LogMessage.LogGenerateAsyncDone` | 非同期生成の完了・破棄（設定有無 / 世代） |
-
-### 7.3 Bitmap / PbBitmapImage 以外の IImage
-
-`Source` に `Bitmap` / `PbBitmapImage` 以外の `IImage` が設定された場合:
-
-1. `NotSupportedException` を生成
-2. `Log.LogUpdateError(exception)` で記録
-3. `RenderAsync()` を直接呼び出した場合は例外を呼び出し元へ返す
-4. 自動再描画の場合は例外を観測済みとして処理し、UIスレッドを未処理例外で終了させない
-
-### 7.4 出力先の例
-
-利用側がNLogを設定している場合、`ILogger` のNLogプロバイダーとNLog設定に従ってファイル等へ出力されます。
-
-`LoupeControl` 単体では出力先を決定しません。
-
-## 8. ライフサイクルと所有権
-
-### 8.1 Sourceの所有権
+### 7.1 Source の所有権
 
 `Source` に設定した元画像（`Bitmap` / `PbBitmapImage`）の所有権は利用側にあります。
 
 `LoupeControl` は元画像を破棄しません（`PbBitmapImage` を設定した場合も、内包する `PbBitmap` の破棄は利用側に委ねる）。
 
-### 8.2 生成Bitmapの所有権
+### 7.2 生成 Bitmap の所有権
 
 ルーペ表示用に生成したBitmapの所有権は `LoupeControl` が持ちます。
 
@@ -603,15 +491,7 @@ public ILogger Log { get; set; } = NullLogger.Instance;
 - `Clear()` 時に破棄
 - 世代が古い生成結果は採用せず破棄
 
-### 8.3 一時Bitmap
-
-バックグラウンドではピクセル配列だけを抽出し、合成（`RenderTargetBitmap` / `DrawingContext`）はUIスレッドで行います。
-
-表示への反映は `PbBitmapImage`（`PbBitmap` を内包する `IImage`）を内部 `Image.Source` へ設定し、`WriteableBitmap` の生成は行いません（`ISkiaSharpApiLeaseFeature` による Skia 直描画。Skia が提供されない環境では no-op）。
-
-`LoupeRenderer` が合成する一時 `RenderTargetBitmap` は合成完了後に破棄します。
-
-## 9. 表示位置・サイズの責務
+## 8. 表示位置・サイズの責務
 
 `LoupeControl` は画像生成と内部Image表示に加え、**表示位置・表示サイズを自己計算**します
 （座標変換ポート方式。DragRect / FadeMask と同様）。
@@ -627,7 +507,7 @@ public ILogger Log { get; set; } = NullLogger.Instance;
 - `SetCoordinateTransform` / `PositionOffset` の設定
 - `LoupeControl` のVisual Treeへの追加・削除
 
-## 10. 推奨使用パターン
+## 9. 推奨使用パターン
 
 ```csharp
 private readonly LoupeControl _loupe = new()
@@ -663,7 +543,7 @@ private async Task RefreshLoupeAsync()
 }
 ```
 
-## 11. 制約事項
+## 10. 制約事項
 
 - 領域抽出を行うため、実質的な画像入力対応型はAvalonia `Bitmap` です。
 - `RenderTargetBitmap` と `DrawingContext` の合成はUIスレッドで実行します。
@@ -673,7 +553,7 @@ private async Task RefreshLoupeAsync()
 - `ForceUpdate()` は完了待機APIではありません。完了待機が必要な場合は `RenderAsync()` を使用してください。
 - 外部 `DrawingContext` へルーペを描画するAPIは提供しません。必要な場合も `LoupeControl` をVisual Treeへ配置してください。
 
-## 12. サンプルアプリケーション
+## 11. サンプルアプリケーション
 
 動作確認用サンプルは次のプロジェクトです。
 

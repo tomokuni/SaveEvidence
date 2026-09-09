@@ -30,15 +30,15 @@
 
 - **Factory Method パターン**: `PlatformFactory.CreateXxx()` で実行時プラットフォームに応じた既定実装を生成（Windows = Win32 API 実装 / 他環境 = NoOp 実装）
 - **プラットフォーム判定の一元化**: `OperatingSystem.IsWindows()` による分岐を本ライブラリに集約（各プロジェクトの重複分岐を排除・DRY）
-- **抽象化 API**: `ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordinatePort` のインターフェースで具象型への依存を排除（DIP）
-- **座標変換ポート**: `CoordinatePort`（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout` / `ImageLayoutScaleX`）でドメイン ↔ DIP ↔ 画面物理の変換を Func 委譲で提供
-- **座標変換ユーティリティ**: `ScreenConverter`（ローカル DIP ↔ 画面物理）
-- **画面キャプチャ**: `ICaptureService.CaptureArea` / `CaptureVirtualScreen`（Windows: System.Drawing + Win32 API）
+- **抽象化 API**: `ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordTransform` のインターフェースで具象型への依存を排除（DIP）
+- **座標変換ポート**: `CoordTransform`（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout` / `ImageLayoutScaleX`）でドメイン ↔ DIP ↔ 画面物理の変換を Func 委譲で提供
+- **座標変換ユーティリティ**: `ScreenConverter`（ローカル DIP ↔ 画面物理）/ `ScrollMath`（スクロール範囲）/ `DpiScaler`（DIP → 物理ピクセル）
+- **画面キャプチャ**: `ICaptureService.CaptureArea` / `CaptureVirtualScreen`（Windows: System.Drawing + Win32 API。結果は `PbBitmap`）
 - **要素検出**: `IElementFinder`（カーソル位置のウィンドウ / スクリーン検出・一覧取得）
 - **グローバルホットキー**: `IGlobalHotKeyService<T>`（登録・WM_HOTKEY 受信・アクション配信。WndProc サブクラス化を内包）
-- **画像ユーティリティ**: `BitmapExtensions`（領域切り出し・パディング付きコピー）/ `PbBitmap`（複数ビットマップ種別を横断する軽量ラッパーのコア）。内部に `SKBitmap`(BGRA8888・Premul) を所有し、`SkiaSharp` のみに依存したピクセル操作（`GetPixel` / `SetPixel` / `Clear` / `Clone`）と `Create` / `FromSKBitmap` / `ToSKBitmap`（SKBitmap 生成・変換）を提供。/ `PbBitmapExtensions`（生成・変換拡張。`ToPbBitmap` / `ToAvaloniaBitmap` / `ToSystemDrawingBitmap` で Avalonia / System.Drawing / SkiaSharp と高速変換）
+- **画像ユーティリティ**: 複数ビットマップ種別を横断して扱う `PbBitmap`（コア）と、Avalonia / System.Drawing 向けの生成・変換拡張（`PbBitmapAvaloniaExtensions` / `PbBitmapDrawingExtensions`）、`IImage` アダプタ（`PbBitmapAvaloniaImage`）、ブラシキャッシュ（`BrushCache`）を提供
 - **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
-- **プラットフォーム非依存の公開 API**: 公開型は Avalonia / .NET 標準型（`Bitmap` / `PixelPoint` / `PixelRect` / `IPlatformHandle`）のみを使用し、Win32 ハンドル・System.Drawing 型を公開しない
+- **プラットフォーム非依存の公開 API**: 公開型は Avalonia / .NET 標準型（`PbBitmap` / `PixelPoint` / `PixelRect` / `IPlatformHandle`）のみを使用し、Win32 ハンドル・System.Drawing 型を公開しない
 
 ## 3. システム要件
 
@@ -57,8 +57,8 @@
 必要な名前空間:
 
 ```csharp
-using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordinatePort / CoordinatePort / ScreenConverter 等
-using Estable.AvaloniaUI.Platform.Imaging;  // BitmapExtensions / PbBitmap / PbBitmapExtensions / ImageProcessor 等
+using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordTransform / CoordTransform / ScreenConverter 等
+using Estable.AvaloniaUI.Platform.Imaging;  // PbBitmap / PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions 等
 ```
 
 ## 5. クイックスタート
@@ -81,19 +81,19 @@ var hotKeyService = PlatformFactory.CreateGlobalHotKeyService<MyActionType>();
 
 ```csharp
 // 等価変換（1 ドメイン = 1 DIP・無制限）
-ICoordinatePort identity = CoordinatePort.Identity;
+ICoordTransform identity = CoordTransform.Identity;
 
 // スクロールオフセット平行移動（コンテンツ ↔ ビューポート）
-ICoordinatePort scroll = CoordinatePort.ScrollOffset(() => scrollViewer.Offset);
+ICoordTransform scroll = CoordTransform.ScrollOffset(() => scrollViewer.Offset);
 
 // ドメイン = ローカル DIP × 倍率（呼び出し毎評価。DPI 200% 等）
-ICoordinatePort scale = CoordinatePort.DomainScale(() => 2.0);
+ICoordTransform scale = CoordTransform.DomainScale(() => 2.0);
 
 // 画像レイアウト（レターボックス・Uniform スケール）。Forward = DIP → 論理（元画像ピクセル）
-ICoordinatePort layout = CoordinatePort.ImageLayout(() => viewport.Bounds.Size, sourceSize);
+ICoordTransform layout = CoordTransform.ImageLayout(() => viewport.Bounds.Size, sourceSize);
 
 // 2 ポート合成（inner 先行 → outer 後続）
-ICoordinatePort composed = CoordinatePort.Compose(layout, scroll);
+ICoordTransform composed = CoordTransform.Compose(layout, scroll);
 ```
 
 ### 画面座標変換
@@ -110,7 +110,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt);
 
 ### 公開 API の最小化
 
-プラットフォーム固有実装（`Win\*` / `NoOp\*`）と内部ユーティリティ（`CoordinateMath` / `PlatformLog`）はすべて internal です。公開 API は抽象（各インターフェース）とプラットフォーム非依存型のみで構成され、具象型への依存を排除します（DIP・カプセル化）。
+プラットフォーム固有実装（`Win\*` / `NoOp\*`）と内部ユーティリティ（`CoordMath` / `PlatformLog`）はすべて internal です。公開 API は抽象（各インターフェース）とプラットフォーム非依存型のみで構成され、具象型への依存を排除します（DIP・カプセル化）。
 
 ### 一方向依存
 
@@ -130,7 +130,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt);
 ```text
 PlatformFactory/
 ├── src/
-│   ├── PlatformFactory.csproj      # ライブラリプロジェクト（Avalonia / Logging.Abstractions / System.Drawing.Common）
+│   ├── PlatformFactory.csproj      # ライブラリプロジェクト（Avalonia / Avalonia.Skia / Logging.Abstractions / System.Drawing.Common）
 │   └── Platform/
 │       ├── PlatformFactory.cs      # 公開ファクトリ（Factory Method パターン）
 │       ├── ICursorService.cs       # カーソル操作抽象
@@ -140,10 +140,12 @@ PlatformFactory/
 │       ├── IWindowService.cs       # ウィンドウ操作抽象
 │       ├── IGlobalHotKeyService.cs # グローバルホットキー抽象
 │       ├── ElementFinderResults.cs # 要素検出結果 record
+│       ├── HotKeySetting.cs        # ホットキー組合せ record
 │       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
 │       ├── PlatformLog.cs          # ログ定義（internal）
-│       ├── Coordinate/             # 座標変換（ICoordinatePort / CoordinatePort / ScreenConverter / CoordinateMath）
-│       ├── Imaging/                # 画像ユーティリティ（BitmapExtensions / PbBitmap / PbBitmapExtensions / ImageProcessor）
+│       ├── Coordinate/             # 座標変換（ICoordTransform / CoordTransform / ScreenConverter / ScrollMath / DpiScaler / CoordMath）
+│       ├── Geometry/               # 幾何変換（CoordinateFormatter / AvaloniaGeometryAdapters / RectDExt）
+│       ├── Imaging/                # 画像ユーティリティ（PbBitmap / PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions / PbBitmapAvaloniaImage / BrushCache）
 │       ├── Win/                    # Windows 実装（internal: Win32 API / P-Invoke 集約）
 │       └── NoOp/                   # 他環境フォールバック（internal: シングルトン）
 └── tests/                          # 単体テスト

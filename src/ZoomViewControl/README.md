@@ -24,10 +24,8 @@
 
 画像プレビューのズーム・パン・Fit 表示を提供する独立ライブラリです。
 
-- **ZoomViewControl**: 自己完結型複合コントロール。内部 ZoomableView を内包し、ズーム率（実効ズーム率）の遷移・適用・Fit 表示・可否を統括。特定コントロールに依存せず、`ZoomChanged` イベントで実効ズーム率・Fit 状態・可否をホストへ通知（表示文字列の生成はホストの責務）
-- **ZoomableView（内部実装）**: ScrollViewer を使用しない自己完結型ビューポート（RenderTransform ベース）。`ZoomViewControl` が Facade として必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知）を再公開
+- **ZoomViewControl**: 自己完結型複合コントロール。内部ビューポートを内包し、ズーム率（実効ズーム率）の遷移・適用・Fit 表示・可否を統括。特定コントロールに依存せず、`ZoomChanged` イベントで実効ズーム率・Fit 状態・可否をホストへ通知（表示文字列の生成はホストの責務）
 - **設定（`ZoomConfig`）**: ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をまとめた検証付き不変値（`public`）。コンストラクタ注入または `ZoomViewControl` の設定プロパティ（読み書き）でカスタマイズできる。既定値（`Default`）も用意され、不正な値はガードされる
-- **純粋関数（内部実装）**: `ZoomMath` / `ZoomTransition` / `ScrollMath` はコントロール内部の計算のため非公開（遷移パラメータは `ZoomConfig` で受け取る純粋関数であり状態を持たない）
 - 上位 AP は `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読するだけで、ズーム計算・表示の詳細は本ライブラリが担います
 
 ## 2. 機能一覧

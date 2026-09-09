@@ -300,6 +300,21 @@ public class DragRectControlStateTests
     }
 
     [Fact]
+    public void RequestConfirm_確定後は選択状態がクリアされる()
+    {
+        var control = CreateControl();
+
+        control.SetSelection(new Rect(10, 10, 50, 40));
+        Assert.True(control.CurrentSnapshot.HasSelection);
+
+        // 確定（RequestConfirm）後は選択状態がクリアされる（DragRect の残留を防ぐ）
+        control.RequestConfirm();
+
+        Assert.False(control.CurrentSnapshot.HasSelection);
+        Assert.Equal(DragRectInteractionState.NoSelection, control.CurrentSnapshot.State);
+    }
+
+    [Fact]
     public void RequestConfirm_ドラッグ中は発火しない()
     {
         var control = CreateControl();

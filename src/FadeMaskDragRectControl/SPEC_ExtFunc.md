@@ -65,7 +65,7 @@
 
 ```csharp
 using Estable.AvaloniaUI.FadeMaskDragRect;
-using Estable.AvaloniaUI.Platform; // ICoordinatePort / CoordinatePort
+using Estable.AvaloniaUI.Platform; // ICoordTransform / CoordTransform
 ```
 
 公開 API は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）の型を参照しないため、
@@ -76,7 +76,7 @@ using Estable.AvaloniaUI.Platform; // ICoordinatePort / CoordinatePort
 1. AXAML（またはコード）で `FadeMaskDragRectControl` を配置します。
 2. `Mode` を設定します（キャプチャ種別に応じた描画モード・可視性の切替）。
 3. `AppearanceSettings` で外観を一括設定します（null メンバーは現在値維持の部分更新）。
-4. `SetCoordinateTransform(ICoordinatePort?)` でドメイン ↔ DIP 変換を注入します。
+4. `SetCoordinateTransform(ICoordTransform?)` でドメイン ↔ DIP 変換を注入します。
 5. イベント（`ConfirmRequested` / `CancelRequested` / `ZoomRequested`）を購読します。
 6. ルーペソース（`Loupe.Source`）を設定します。
 
@@ -87,10 +87,12 @@ var overlay = new FadeMaskDragRectControl
     Mode = FadeMaskDragRectMode.Crop,
     ClipToBounds = true,
 };
-overlay.AppearanceSettings = settings.ToFadeMaskDragRectSettings(scaling: 1.0, positionOffset: 20.0);
-overlay.SetCoordinateTransform(CoordinatePort.Compose(
-    CoordinatePort.ImageLayout(() => preview.Bounds.Size, imageSize, () => true),
-    CoordinatePort.ScrollOffset(() => new Vector(origin.X, origin.Y))));
+overlay.AppearanceSettings = settings.ToFadeMaskDragRectSettings(positionOffset: 20.0);
+// DPI スケーリングは AppearanceSettings の対象外（個別プロパティで設定）
+overlay.Scaling = 1.0;
+overlay.SetCoordinateTransform(CoordTransform.Compose(
+    CoordTransform.ImageLayout(() => preview.Bounds.Size, imageSize, () => true),
+    CoordTransform.ScrollOffset(() => new Vector(origin.X, origin.Y))));
 overlay.Loupe.Source = sourceImage;
 parentPanel.Children.Add(overlay);
 ```
@@ -108,7 +110,9 @@ parentPanel.Children.Add(overlay);
 | `LogicalHighlightRect` | `Rect?` | ハイライト矩形（ドメイン座標。未検出時は null。ScreenSelect / WindowSelect 用） |
 | `HasHighlight` | `bool` | ハイライト表示の有無（ScreenSelect / WindowSelect 用） |
 | `ScreenIndex` | `int` | ハイライト対象のスクリーンインデックス（未検出時は -1。ScreenSelect 用） |
-| `DisplayScaleScaling` | `double` | ハイライト描画用の表示スケール（マルチスクリーン補正） |
+| `Scaling` | `double` | DPI スケーリング係数（`AppearanceSettings` の対象外・コードから動的設定。`FadeMaskRenderer.Scaling` へ委譲） |
+| `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。`AppearanceSettings` の対象外・コードから動的設定。`FadeMaskRenderer.DisplayScaleScaling` へ委譲） |
+| `LoupeRenderScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（`AppearanceSettings` の対象外・DPI から自動取得。`LoupeControl.RenderScaling` へ委譲） |
 | `WindowTitle` | `string` | ハイライト対象のウィンドウタイトル（未検出時は空文字。WindowSelect 用） |
 | `ShowFullOverlay` | `bool` | 全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効。読み取り専用） |
 | `LoupeCenterPoint` | `Point?` | ルーペ中心（ドメイン座標。未設定時は null） |
@@ -118,7 +122,7 @@ parentPanel.Children.Add(overlay);
 | 名前 | シグネチャ | 説明 |
 | --- | --- | --- |
 | `AppearanceSettings` | `FadeMaskDragRectSettings`（プロパティ） | 外観設定（DragRect / FadeMask / Loupe）を取得・設定。getter は全メンバー non-null / setter は部分更新 + 同一値スキップ |
-| `SetCoordinateTransform` | `void SetCoordinateTransform(ICoordinatePort? port)` | 座標変換ポートを DragRect / FadeMask / Loupe へ一括分配（null で等価変換） |
+| `SetCoordinateTransform` | `void SetCoordinateTransform(ICoordTransform? port)` | 座標変換ポートを DragRect / FadeMask / Loupe へ一括分配（null で等価変換） |
 | `SetSelection` | `void SetSelection(Rect rect)` | 選択矩形（ドメイン座標）を暗転マスクとルーペへ反映。サイズ 0 以下は選択なし |
 | `ClearSelection` | `void ClearSelection()` | 選択状態をクリアして全面暗転（穴あけなし）に戻す |
 | `SetDragRectSelection` | `void SetDragRectSelection(Rect rect)` | DragRect の選択矩形をプログラム的に設定（外部復元・テスト用。SelectionChanged 発火 → 暗転マスクとルーペへ同期） |
@@ -185,12 +189,10 @@ parentPanel.Children.Add(overlay);
 | `CoordLabelBackgroundColor` | `Color?` | カーソル座標ラベルの背景色（不透明度はアルファに統合） |
 | `CoordLabelFontSize` | `double?` | カーソル座標ラベルのフォントサイズ |
 
-**FadeMask 外観（15 項目）**:
+**FadeMask 外観（13 項目）**:
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Scaling` | `double?` | DPI スケーリング係数 |
-| `DisplayScaleScaling` | `double?` | サイズラベル用スケーリング（マルチスクリーン補正） |
 | `OverlayColor` | `Color?` | 暗転オーバーレイの色（アルファ含む） |
 | `TextColor` | `Color?` | ラベルテキストの色 |
 | `TextBackgroundColor` | `Color?` | サイズラベル（1 行目）の背景色 |
@@ -205,13 +207,12 @@ parentPanel.Children.Add(overlay);
 | `SubLineColor` | `Color?` | 操作ラベル（2 行目）の文字色 |
 | `SubLineBackgroundColor` | `Color?` | 操作ラベル（2 行目）の背景色 |
 
-**Loupe 外観（16 項目）**:
+**Loupe 外観（15 項目）**:
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
 | `RequestedSize` | `int?` | ルーペの基本サイズ（DIP） |
 | `ZoomLevel` | `int?` | 拡大倍率 |
-| `RenderScaling` | `double?` | DIP → 物理ピクセル変換 |
 | `CrossColor` | `Color?` | 十字線の色 |
 | `CheckerSize` | `int?` | 市松模様のタイルサイズ |
 | `CheckerColorA` | `Color?` | 市松模様の色 A |
@@ -229,7 +230,7 @@ parentPanel.Children.Add(overlay);
 ## 6. 座標系
 
 - **ドメイン座標**: ホストが定義する論理座標（Crop: 元画像ピクセル / AreaSelect: 仮想スクリーンピクセル）。
-- **DIP 座標**: コントロールローカル DIP。`SetCoordinateTransform` で注入した `ICoordinatePort` が変換します。
+- **DIP 座標**: コントロールローカル DIP。`SetCoordinateTransform` で注入した `ICoordTransform` が変換します。
 - **追従性**: ズーム・スクロール・ウィンドウサイズ変更などのレイアウト変化に、座標変換が常に追従します。
 - **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します（FadeMaskRenderer.ToDipRect が終点に +1）。
 

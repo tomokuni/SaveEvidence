@@ -36,7 +36,8 @@ Windows デスクトップ上の画面をキャプチャし、プレビュー・
 
 - **キャプチャ**: 全画面（`ScreenSelect`）/ ウィンドウ選択（`WindowSelect`）/ 範囲選択（`AreaSelect`）の 3 モード
 - **切出し（Crop）**: プレビュー画像上の選択矩形で元画像から切り出し
-- **ズーム・パン**: Fit 表示・固定倍率（10〜500%）・パン・マウスホイールズーム（`ZoomViewControl` に委譲）
+- **自動切り出し（LineDetection）**: ウィンドウ矩形を検出して自動切り出し（検出結果を画像上に表示・ダブルクリックで確定）
+- **ズーム・パン**: Fit 表示・固定倍率（10〜500%）・パン・マウスホイールズーム（`CropViewControl` が内包する `ZoomViewControl` に委譲）
 - **保存**: ファイル名テンプレート（日時プレースホルダ・オートインクリメント）・上書き確認
 - **クリップボード連携**: 画像のコピー / 貼り付け
 - **フォルダビュー**: 保存先フォルダの画像一覧（表示モード 特大/大/中・ソート・サムネイル）
@@ -176,10 +177,10 @@ dotnet test src/app/tests/app.Tests.csproj
 
 | プロジェクト | 役割 |
 | --- | --- |
-| `SnipCaptureUI` | キャプチャ / 切出しセッション（Facade `SnipCapture`） |
-| `ZoomViewControl` | ズーム・パン・Fit 表示（`ZoomViewControl`） |
+| `SnipCaptureUI` | キャプチャ / 切出しセッション（Facade `SnipCapture`）。`CropViewControl` / `ZoomViewControl` は本プロジェクト経由の推移的依存 |
 | `ColorPickerControl` | 色選択コントロール（設定画面の色入力） |
 | `PlatformFactory` | プラットフォーム抽象（キャプチャ・要素検出・ウィンドウ操作・ホットキー） |
+| `LineDetection` | ウィンドウ矩形検出（`LogicLineDetector`。自動切り出し用） |
 
 ## 15. ドキュメント
 

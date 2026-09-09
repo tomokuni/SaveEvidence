@@ -48,10 +48,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\SnipCaptureUI\src\SnipCaptureUI.csproj" />
-    <ProjectReference Include="..\..\CropViewControl\src\CropViewControl.csproj" />
     <ProjectReference Include="..\..\ColorPickerControl\src\ColorPickerControl.csproj" />
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
-    <ProjectReference Include="..\..\ZoomViewControl\src\ZoomViewControl.csproj" />
     <ProjectReference Include="..\..\LineDetection\src\LineDetection.csproj" />
   </ItemGroup>
 

@@ -38,14 +38,14 @@
 | 名前空間 | `app.Views` / `app.ViewModels` / `app.Models` / `app.Services` 等 |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
-| 主な用途 | 画面キャプチャアプリ本体。ズーム・パン表示は `ZoomViewControl`（独立プロジェクト）に委譲 |
+| 主な用途 | 画面キャプチャアプリ本体。ズーム・パン表示は `CropViewControl`（`ZoomViewControl` を内包）に委譲 |
 
 ## 2. 目的
 
 画面キャプチャ・プレビュー・保存・フォルダ管理・Undo 履歴を提供するアプリケーションです。
 
 - キャプチャ（スクリーン / ウィンドウ / 範囲選択）の開始と結果の反映
-- プレビュー画像のズーム・パン・Fit 表示（`ZoomViewControl` の `ZoomViewControl` へ委譲）
+- プレビュー画像のズーム・パン・Fit 表示（`CropViewControl` が内包する `ZoomViewControl` へ委譲）
 - 画像の保存（ファイル名テンプレート・オートインクリメント・上書き確認）
 - フォルダビュー / Undo 一覧 / 設定画面
 - テーマ（ライト / ダーク / システム）
@@ -238,13 +238,13 @@
 
 ## 7. 画像プレビュー（ズーム連携）
 
-プレビュー画像のズーム・パン・Fit 表示は `ZoomViewControl`（独立プロジェクト）の `ZoomViewControl` に委譲します。CapturePage は `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読して操作を指示します。
+プレビュー画像のズーム・パン・Fit 表示は `CropViewControl`（`ZoomViewControl` を内包する複合コントロール）に委譲します。CapturePage は `CropView`（`CropViewControl`）の `Source` を設定し、`ZoomChanged` / `ViewportChanged` を購読して操作を指示します。
 
 ### 7.1 拡大率表示と座標表示
 
-- **拡大率表示**: `ZoomViewControl.ZoomDisplayText` を `ZoomViewControl.ZoomChanged` で通知し、ステータスバーがバインディングで表示する（MainViewModel.ZoomDisplayText に反映）。Fit 中も実効倍率の % を表示する（「自動」表記なし）
-- **座標表示**: `CapturePage.OnImagePointerMoved` が `ZoomableView.ImageRectViewport()` / `ViewportToContent()` でポインタのドメイン座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `-`）
-- **フライアウト選択肢**: 拡大率ボタンのクリックで表示されるフライアウト（0=自動 + 固定倍率 10〜500% の 13 段階）から選択し、`MainViewModel.ZoomPercent` を設定する（`CapturePage.OnZoomFlyoutItemClick`）
+- **拡大率表示**: `CropView.ZoomChanged` イベントの `e.ZoomPercent` から `MainViewModel.ZoomDisplayText`（例: "120%"）を生成し、ステータスバーがバインディングで表示する。Fit 中も実効倍率の % を表示する（「自動」表記なし）
+- **座標表示**: `CapturePage.OnImagePointerMoved` が `CropView.ImageRectViewport()` / `CropView.ViewportToContent()`（`ViewportToContentDomain` ヘルパー経由）でポインタのドメイン座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `-`）
+- **フライアウト選択肢**: 拡大率ボタンのクリックで表示されるフライアウト（0=自動 + 固定倍率 10〜500% の 13 段階）から選択し、`CropView.ZoomPercent`（`MainViewModel.ZoomPercent`）を設定する（`CapturePage.OnZoomFlyoutItemClick`）
 
 詳細仕様（遷移ルール・表示方式・公開 API）は `ZoomViewControl` の `SPEC_ExtFunc.md` を参照してください。
 

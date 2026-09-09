@@ -44,11 +44,11 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 - 外枠の色・太さ設定
 - DIP と物理ピクセルの分離（`RenderScaling`）
 - 非同期のピクセル領域抽出
-- 世代管理による古い描画結果の破棄
+- 古い描画結果の自動破棄
 - 非表示時の生成Bitmap解放
 - `ILogger` によるエラー通知
 - 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で表示位置・サイズ・拡大率・中心・切り出し左上・スケールを通知。ホスト側のオーバーレイ描画用。線分・選択矩形等の破線はホストが描画済み Bitmap へ直接描く）
-- **座標変換ポート（`SetCoordinateTransform(ICoordinatePort?)` + `PositionOffset`）**: DragRectControl と同方式。表示位置（`RenderTransform`）と表示サイズ（親パネルでクランプ）をレイアウト時に自己計算（ウィンドウサイズ変更・ズーム・スクロールに追従）
+- **座標変換ポート（`SetCoordinateTransform(ICoordTransform?)` + `PositionOffset`）**: DragRectControl と同方式。表示位置（`RenderTransform`）と表示サイズ（親パネルでクランプ）をレイアウト時に自己計算（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **`RefreshPosition()`**: パン・ズーム等のレイアウト非変更なビューポート変化時に、表示位置・サイズを再計算（座標変換ポートは呼び出し毎に最新の表示状態を評価）
 
 ## 3. システム要件
@@ -158,9 +158,7 @@ Canvas.SetTop(loupe, 220);
 
 ### 非同期描画
 
-画像領域のピクセル抽出はバックグラウンドへオフロードします。一方、Avaloniaの `WriteableBitmap`、`RenderTargetBitmap`、`DrawingContext`、内部 `Image.Source` の生成・更新はUIスレッドで行います。
-
-描画要求が短時間に連続した場合は世代番号で最新の結果だけを採用します。古い結果は表示せず、生成Bitmapを破棄します。
+ルーペ画像の生成は非同期で実行され、古い描画結果は自動的に破棄されます。複数のプロパティが連続して変更された場合、再描画は 1 フレームに 1 回に結合されます。
 
 ## 7. サポート外の画像
 
@@ -184,8 +182,6 @@ loupe.Log = logger;
 ## 9. パフォーマンス
 
 - `Source` や `CenterPoint` の高頻度更新は、利用側で更新間隔を制限することを推奨します。
-- 複数プロパティを連続して変更した場合、Dispatcher待機中の再描画要求は1件に集約されます。
-- ただし、すでに描画処理が開始された後の変更は新しい世代として処理されます。
 - 大きな `RequestedSize` や高い `RenderScaling` は生成Bitmapのサイズと処理負荷を増加させます。
 
 ## 10. サンプルアプリケーション

@@ -39,15 +39,24 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Source` | `IImage?` | 表示画像。ZoomViewControl とルーペへ伝搬。変更時は Fit 表示にリセット。 |
+| `Source` | `IImage?` | 表示画像。ZoomViewControl とルーペへ伝搬。変更時は Fit 表示にリセット。オーバーレイの可視性は本プロパティでは制御しない（`SetSelectionOverlayVisible` が専任）。`null` に変わるときは選択のみクリア。 |
 | `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（ドメイン座標）。View とルーペの両方へ描画。 |
 | `SelectionMode` | `FadeMaskDragRectMode` | 選択モード（既定 `Crop`）。FadeMaskDragRectControl へ委譲。 |
-| `ZoomPercent` | `int` | 現在のズーム率（%）。0 = Fit。 |
+| `AppearanceSettings` | `FadeMaskDragRectSettings` | 領域選択オーバーレイの外観設定（DragRect / FadeMask / Loupe）。FadeMaskDragRectControl へ委譲。 |
+| `Log` | `ILogger` | 内部ロガー（ズームビューポートへ伝搬）。null の場合は NullLogger。 |
+| `Scaling` | `double` | DPI スケーリング係数（`FadeMaskDragRectControl.Scaling` へ委譲。コードから動的設定） |
+| `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（`FadeMaskDragRectControl.DisplayScaleScaling` へ委譲。コードから動的設定） |
+| `LoupeRenderScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（`FadeMaskDragRectControl.LoupeRenderScaling` へ委譲。DPI から自動取得） |
+| `ZoomPercent` | `double` | 現在のズーム率（%）。0 = Fit（自動）。スライダ等の連続値も設定できる。 |
 | `IsFit` | `bool` | 現在 Fit 表示中かどうか（ズーム率が 0 = 自動）。 |
-| `ZoomDisplayText` | `string` | 拡大率表示テキスト（例: "100%"）。 |
+| `CanZoomIn` | `bool` | 現在のズーム状態でズームインが可能か。 |
+| `CanZoomOut` | `bool` | 現在のズーム状態でズームアウトが可能か。 |
+| `CenterAlign` | `bool` | 画像の中央寄せ / 左上寄せ（その軸で画像がビューポートより小さい場合に有効）。 |
+| `ViewportBackground` | `IBrush?` | ズーム・パンビューポートの背景（市松模様等。レターボックス領域の描画）。 |
 | `HasSelection` | `bool` | 現在の選択状態（選択矩形の有無）。 |
 | `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標）。未選択時は 0x0。 |
 | `ZoomView` | `ZoomViewControl` | 内包するズーム・パンビューポート（SnipCapture の Crop セッションが利用）。 |
+| `SizeLabelOverrideProvider` | `Func<string?>?` | サイズラベルを描画時に評価するプロバイダ（FadeMaskDragRectControl へ委譲）。 |
 
 #### 2.1.2 メソッド
 
@@ -58,9 +67,16 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `void ZoomFit()` | Fit 表示（ウィンドウに合わせて表示）に戻す（`ZoomIn` / `ZoomOut` と対になるズーム操作）。 |
 | `void SetSelection(Rect rect)` | 選択状態を外部から設定（FadeMaskDragRectControl へ委譲）。 |
 | `void ClearSelection()` | 選択状態をクリア（FadeMaskDragRectControl へ委譲）。 |
-| `void SetCoordinateTransform(ICoordinatePort? port)` | 座標変換ポートを設定（内包コントロールへ分配）。 |
+| `void SetSelectionOverlayVisible(bool visible)` | 領域選択オーバーレイの可視性とヒットテストを設定（Crop セッションの開始・終了時に制御）。`false` で選択もクリア。 |
+| `void SetCoordinateTransform(ICoordTransform? port)` | 座標変換ポートを設定（内包コントロールへ分配）。 |
 | `void RequestConfirm()` | 選択確定要求（FadeMaskDragRectControl へ委譲）。 |
 | `void RequestCancel()` | 選択キャンセル要求（FadeMaskDragRectControl へ委譲）。 |
+| `void FocusDragRect()` | 内包 DragRect へフォーカスを設定（矢印キー nudge の受付開始）。 |
+| `void SetLoupeSource(IImage? source)` | ルーペの拡大元画像を設定（null でルーペをクリア）。 |
+| `void ClearLoupe()` | ルーペのソースをクリア（FadeMaskDragRectControl へ委譲）。 |
+| `void AttachScrollViewer(ScrollViewer? scrollViewer)` | 祖先 ScrollViewer を内包 DragRect へ明示注入（スクロール・ズーム検知 + ホイール操作。Crop 用）。 |
+| `void NotifyViewportChanged()` | ビューポート（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知。 |
+| `Rect ImageRectViewport()` | 画像の表示矩形（ビューポート座標）を取得。 |
 | `Point ContentToViewport(Point contentPos)` | ドメイン座標 → ビューポート座標へ変換。 |
 | `Point ViewportToContent(Point viewportPos)` | ビューポート座標 → ドメイン座標へ変換。 |
 
@@ -72,6 +88,8 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `CancelRequested` | `EventHandler?` | 選択キャンセル要求（FadeMaskDragRectControl へ委譲）。 |
 | `ZoomRequested` | `EventHandler<bool>` | ズーム要求（FadeMaskDragRectControl へ委譲）。 |
 | `LoupePositionMoved` | `EventHandler<FadeMaskDragRectPointEventArgs>` | ルーペ中心の更新通知（FadeMaskDragRectControl へ委譲）。 |
+| `ZoomChanged` | `EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（ZoomViewControl へ委譲）。 |
+| `ViewportChanged` | `EventHandler?` | ビューポート（パン・ズーム・表示状態）変化の通知（ZoomViewControl へ委譲）。 |
 | `RectsChanged` | `EventHandler?` | 外部提供矩形の変化通知。 |
 
 ### 2.2. OverlayRect 構造体
@@ -104,6 +122,13 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 - `Source`（`IImage?`）で表示画像を設定します。
 - 画像変更時は Fit 表示にリセットされます。
+- 領域選択オーバーレイの可視性とヒットテストは `SetSelectionOverlayVisible` で制御します（Crop セッションの開始・終了時にホストが切替）。`Source` 設定では制御しません。
+  - 初期状態（`Source` 未設定）はオーバーレイを不可視（`IsVisible = false`）+ ヒットテスト不可（`IsHitTestVisible = false`）にします。
+    - 画像なしでの選択矩形作成と、Crop モードの全面暗転（FadeMask）で市松模様が暗くならないようにします。
+  - `Source` が `null` に変わるときは**選択のみクリア**します（オーバーレイの表示・ヒットテスト状態は維持。`SetSelectionOverlayVisible` が専任）。
+  - プレビュー表示時（キャプチャ完了・画像読込）は、`Source` 設定だけではオーバーレイを自動表示しません。
+    - これにより、キャプチャ完了直後に Crop モード（全面暗転）が残るのを防ぎます。
+  - Crop セッション中のみオーバーレイが可視化され、暗転マスクが表示されます。
 
 ### 3.2. 外部提供矩形
 

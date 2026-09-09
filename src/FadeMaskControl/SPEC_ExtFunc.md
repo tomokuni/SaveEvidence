@@ -25,9 +25,6 @@
       - [5.4.3 FadeMaskRenderMode](#543-fademaskrendermode)
     - [5.5 非暗転領域の閉区間仕様（始点・終点を含む）](#55-非暗転領域の閉区間仕様始点終点を含む)
     - [5.6 左上ラベル（3 行構成・繰り上げ）](#56-左上ラベル3-行構成繰り上げ)
-  - [6. ログ](#6-ログ)
-    - [6.1 LogLevel 設定ポリシー](#61-loglevel-設定ポリシー)
-    - [6.2 ログ定義一覧](#62-ログ定義一覧)
 
 ## 1. 文書概要
 
@@ -129,6 +126,7 @@ overlay.InvalidateVisual(); // 再描画を要求
 | `FontSize` | `double` | `14.0` | ラベルのフォントサイズ（DIP 座標系） |
 | `ShowSizeLabel` | `bool` | `true` | サイズラベルの表示有無 |
 | `ExternalRenderer` | `FadeMaskRenderer?` | `null` | 外部レンダラー（設定時は描画を完全委譲。設定時に既存の座標変換ポート・論理選択矩形をレンダラーへ同期） |
+| `Log` | `ILogger` | `NullLogger` | 内部ロガー（null 設定時は `NullLogger` へフォールバック。出力先・レベル制御はホストが所有） |
 
 #### 5.1.2 FadeMaskRenderer
 
@@ -151,7 +149,7 @@ overlay.InvalidateVisual(); // 再描画を要求
 | `SubLineBackgroundColor` | `Color` | `#99000000`（黒 60%） | 操作ラベル（2 行目）の背景色（不透明度はアルファに統合） |
 | `LogicalHighlightRect` | `Rect?` | `null` | ハイライト矩形（WindowSelect / ScreenSelect・**ドメイン座標系**）。`CoordinateTransform` と組み合わせて描画時に DIP 変換 |
 | `LogicalSelectionRect` | `Rect?` | `null` | 選択矩形（AreaSelect / Crop・**ドメイン座標系**）。`CoordinateTransform` と組み合わせて描画時に DIP 変換 |
-| `CoordinateTransform` | `ICoordinatePort?` | `null` | 論理座標（ドメイン）↔ DIP の座標変換ポート。`LogicalSelectionRect` / `LogicalHighlightRect` と組み合わせて描画時に DIP 矩形を算出（全モード共通） |
+| `CoordinateTransform` | `ICoordTransform?` | `null` | 論理座標（ドメイン）↔ DIP の座標変換ポート。`LogicalSelectionRect` / `LogicalHighlightRect` と組み合わせて描画時に DIP 矩形を算出（全モード共通） |
 | `HasHighlight` | `bool` | `false` | ハイライト有効 |
 | `HasSelection` | `bool` | `false` | 選択有効 |
 | `WindowTitle` | `string` | `""` | ハイライトされたウィンドウのタイトル |
@@ -166,7 +164,7 @@ overlay.InvalidateVisual(); // 再描画を要求
 
 | メソッド | 説明 |
 | --- | --- |
-| `SetCoordinateTransform(ICoordinatePort?)` | ドメイン↔DIP 座標変換ポートを設定する（null = 等価変換。DragRectControl と同方式）。設定時は ExternalRenderer へも同期する |
+| `SetCoordinateTransform(ICoordTransform?)` | ドメイン↔DIP 座標変換ポートを設定する（null = 等価変換。DragRectControl と同方式）。設定時は ExternalRenderer へも同期する |
 | `FadeMaskRenderer.Draw(DrawingContext, Size)` | 全描画要素を描画する（`Size` はクライアントサイズ・**DIP 座標系**） |
 
 ### 5.3 イベント
@@ -228,37 +226,4 @@ overlay.InvalidateVisual(); // 再描画を要求
 
 **注記**: 情報ラベル（ウィンドウタイトル / スクリーン番号）は左上のラベル領域（3 行目）に集約して表示します。
 
-## 6. ログ
 
-本コントロールのログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
-呼び出し側では logger 引数を省略し、プロパティ（`FadeMaskControl.Log`）経由で出力する（例: `Log.LogSelectionRectChanged(old, value)`）。
-描画専用コントロールのため、マウス・キーイベントのログはない（状態の変更のみ記録）。
-出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
-
-### 6.1 LogLevel 設定ポリシー
-
-トレースログは LogLevel.Trace に限定せず、「重要度 × 発生頻度」でレベルを使い分ける。
-
-| LogLevel | 対象 | 本番での意図 |
-| --- | --- | --- |
-| `Error` | 例外・失敗（処理継続不可） | 常時出力し、障害を確実に残す |
-| `Warning` | 異常だがフォールバックで継続 | 常時出力し、異常発生の痕跡を残す |
-| `Information` | ユーザー操作の主要イベント（低頻度） | 常時出力し、操作手順の再現を可能にする |
-| `Debug` | 状態変更の詳細（選択矩形 / レンダラー） | 障害時のみ有効化して解析 |
-| `Trace` | 高頻度・極詳細（座標変換設定） | 特別な解析時のみ有効化 |
-
-判断基準:
-
-1. 例外・警告は常時残す（`Error` / `Warning`）
-2. 操作の起点イベント（低頻度）は `Information`
-3. マウス・キー等の操作イベント（中頻度）は `Debug`
-4. 高頻度・極詳細は `Trace`
-5. 設定変更（変更前後）は `Debug`
-
-### 6.2 ログ定義一覧
-
-| レベル | メソッド | 出力内容 |
-| --- | --- | --- |
-| `Debug` | `LogMessage.LogSelectionRectChanged` | 論理選択矩形（ドメイン座標）の変更（変更前後） |
-| `Debug` | `LogMessage.LogExternalRenderer` | 外部レンダラーの設定 / 解除 |
-| `Trace` | `LogMessage.LogCoordinateTransform` | 座標変換ポートの設定 |

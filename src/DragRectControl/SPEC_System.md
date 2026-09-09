@@ -23,6 +23,7 @@
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
     - [8.1 状態の初期化と破棄（所有権）](#81-状態の初期化と破棄所有権)
+  - [9. ログ](#9-ログ)
 
 ---
 
@@ -44,7 +45,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | PlatformFactory（ICoordinatePort / CoordinatePort / ICursorService / ScreenConverter） |
+| **依存プロジェクト** | PlatformFactory（ICoordTransform / CoordTransform / ICursorService / ScreenConverter） |
 
 ## 3. アーキテクチャ
 
@@ -61,7 +62,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 - 依存は**一方向の階層構造**（DragRectControl → DragRectState → SelectionGeometry / PlatformFactory）。
 - DragRectControl は上位 AP に依存しない（再利用可能）。
 - 描画は DragRectDrawer へ委譲し、状態（選択矩形・nudge）は DragRectState に集約する（1 コントロール 1 状態クラス・SRP）。
-- 座標変換は `ICoordinatePort`（PlatformFactory 提供）が担い、コントロールは変換関数を生成しない。
+- 座標変換は `ICoordTransform`（PlatformFactory 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 
 ## 4. 例外処理ポリシー
@@ -70,7 +71,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（`Logging/DragRectLog.cs`）で出力する。操作イベントは Debug、Down 直前 / Up 直後の位置・ホイールは Trace で記録する。
+- ログは LoggerMessage ソース生成（`Logging/LogMessage.cs`）で出力する。操作イベントは Debug、Down 直前 / Up 直後の位置・ホイールは Trace で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -81,7 +82,11 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```mermaid
 flowchart TB
+    subgraph Host["上位AP（消費側）"]
+        AP["上位AP<br/>イベント購読・座標ポート設定・配置"]
+    end
     subgraph DRC2["DragRectControl プロジェクト (DragRectControl)"]
+        direction TB
         Ctl["DragRectControl<br/>public sealed<br/>: Control<br/>DragRectControl.cs（公開 API ＋ イベントオーバーライド ＋ 描画）"]
         Stt["DragRectState<br/>internal sealed<br/>DragRectState.cs<br/>（状態保持 ＋ 純粋ロジック）"]
         Geo["SelectionGeometry<br/>internal static<br/>Selection/SelectionGeometry.cs"]
@@ -89,22 +94,13 @@ flowchart TB
         Hdl["DragHandle<br/>public enum<br/>DragHandle.cs"]
         Evt["DragRectInteractionState enum<br/>DragRectSnapshot record<br/>SelectionRectEventArgs<br/>DragRectPointEventArgs<br/>DragRectEventArgs.cs"]
     end
-    subgraph Dep["外部依存"]
-        Av["Avalonia 12.1<br/>Control / StyledProperty / DrawingContext"]
-        PF["PlatformFactory<br/>ICoordinatePort / CoordinatePort / ICursorService / ScreenConverter"]
-    end
-    subgraph Host["上位AP（消費側）"]
-        AP["上位AP<br/>イベント購読・座標ポート設定・配置"]
-    end
 
+    AP -->|"イベント購読 / SetCoordinateTransform / RequestConfirm / RequestCancel"| Ctl
     Ctl --> Stt
     Ctl --> Drw
     Ctl --> Evt
     Stt --> Geo
     Stt --> Hdl
-    Stt --> PF
-    Ctl --> PF
-    AP -->|"イベント購読 / SetCoordinateTransform / RequestConfirm / RequestCancel"| Ctl
 ```
 
 ## 6. コンポーネント一覧
@@ -125,9 +121,9 @@ flowchart TB
   - イベント 14 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `MouseDown` / `MouseUp` / `MouseClicked` / `MouseDoubleClicked` / `MouseMoved` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ConfirmRequested` / `CancelRequested`
   - StyledProperty 13 種: `BorderColor` / `BorderThickness` / `HandleColor` / `HandleSize` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds` / `MarkerColor` / `MarkerLength` / `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize`
   - プロパティ: `Log`
-  - メソッド: `SetCoordinateTransform(ICoordinatePort?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm`
+  - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm`
 - **構成（シンプル実装）**: 公開 API とイベントオーバーライド（処理は DragRectState へ委譲）を集約し、内部実装を責務別クラスへ分割しない
-- **依存**: DragRectState / DragRectDrawer / SelectionGeometry / ICoordinatePort（PlatformFactory）/ ICursorService（PlatformFactory）/ ScreenConverter（PlatformFactory）
+- **依存**: DragRectState / DragRectDrawer / SelectionGeometry / ICoordTransform（PlatformFactory）/ ICursorService（PlatformFactory）/ ScreenConverter（PlatformFactory）
 
 ### 6.2 DragRectState
 
@@ -139,7 +135,7 @@ flowchart TB
   - カーソル操作（`ICursorService`）
   - nudge 終了の共通化（`EndNudgeIfActive`。`Reset` / `SetSelection` でカーソル再表示を委譲）
 - **可視性**: internal（外部から見えない）
-- **依存**: SelectionGeometry / DragHandle / ICoordinatePort（PlatformFactory）/ ICursorService（PlatformFactory）
+- **依存**: SelectionGeometry / DragHandle / ICoordTransform（PlatformFactory）/ ICursorService（PlatformFactory）
 
 ### 6.3 SelectionGeometry
 
@@ -153,7 +149,7 @@ flowchart TB
 - **分類**: 内部静的クラス（`internal static class`）
 - **責務**: 枠線・ドラッグハンドル・始点マーカー・座標ラベルの描画
 - **可視性**: internal（外部から見えない）
-- **特徴**: 色・太さで決まる `SolidColorBrush` / `Pen` を容量制限付きキャッシュ（各 128 件・超過時全クリア）で共有し、描画毎の生成を排除（Flyweight パターン）。容量管理は `AddWithCapacityLimit` に一元化（単一所有）。描画対象の 8 方向ハンドル配列は静的フィールドに一度だけ実体化し、`Enum.GetValues` の毎回生成を排除（`s_handleTypes`）
+- **特徴**: 色・太さで決まる `SolidColorBrush` / `Pen` を容量制限付きで共有し、描画で再利用する。容量管理は `AddWithCapacityLimit` に一元化（単一所有）。描画対象の 8 方向ハンドル配列は静的フィールドに保持する（`s_handleTypes`）
 - **依存**: Avalonia（DrawingContext / SolidColorBrush / Pen）/ SelectionGeometry
 
 ### 6.5 DragHandle
@@ -165,15 +161,16 @@ flowchart TB
 ### 6.6 公開イベント引数
 
 - `DragRectInteractionState` enum（public）: NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging
-- `DragRectSnapshot` record（public）: State / SelectionRect / ActiveHandle / MousePosition / IsMouseDown
-- `SelectionRectEventArgs` / `DragRectPointEventArgs`（public）: Rect / Point + Snapshot + ScrollOffset（祖先 ScrollViewer の Offset）
+- `DragRectSnapshot` record（public）: State / SelectionRect / ActiveHandle / MousePosition / IsMouseDown / IsDragging / NudgeActive / HasSelection
+- `SelectionRectEventArgs`（public）: Rect + Snapshot
+- `DragRectPointEventArgs`（public）: Point + Snapshot
 
 ## 7. 依存ルール
 
 - 依存方向は**一方向の階層構造**（DragRectControl → DragRectState → SelectionGeometry / PlatformFactory）。
 - DragRectControl は上位 AP に**依存しない**（再利用可能）。
 - 描画は DragRectDrawer へ委譲し、状態（選択矩形・nudge）は DragRectState に集約する（1 コントロール 1 状態クラス・SRP）。
-- 座標変換は `ICoordinatePort`（PlatformFactory 提供）が担い、コントロールは変換関数を生成しない。
+- 座標変換は `ICoordTransform`（PlatformFactory 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 
 ## 8. ライフサイクル
@@ -184,7 +181,7 @@ sequenceDiagram
     participant Ctl as DragRectControl
     participant Stt as DragRectState
 
-    AP->>Ctl: SetCoordinateTransform(ICoordinatePort)
+    AP->>Ctl: SetCoordinateTransform(ICoordTransform)
     Ctl->>Stt: Port 設定
 
     AP->>Ctl: マウス押下（PointerPressed）
@@ -209,3 +206,27 @@ sequenceDiagram
 - コントロール自身が保持する状態（選択矩形・nudge 状態）は `ResetSelection()` で初期化します（上位 AP は状態をポーリングせず、イベントで把握）。
 - 上位 AP はコントロールを Visual Tree から除去するだけで破棄できます（所有権は上位 AP にあり、明示的な解放 API は不要）。
 - ビジュアルツリー切断時（`OnDetachedFromVisualTree`）は TopLevel キー購読・ScrollViewer 購読を解除し、nudge 中ならポインターを再表示します（`EndNudge` に委譲）。
+
+## 9. ログ
+
+ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成・`this ILogger` 拡張メソッド）に集約し、`Log` プロパティの `ILogger` 経由で出力する。
+各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する。未設定（null）の場合は `NullLogger` で無出力。
+出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。マウス移動の高頻度ログは行わない（Down 直前・Up 直後の位置のみ `Trace` で記録）。
+
+### 9.1 ログ定義一覧
+
+| レベル | メソッド | 出力内容 |
+| --- | --- | --- |
+| `Debug` | `LogMessage.LogMouseDown` | ポインター押下（位置 / クリック数 / 選択有無） |
+| `Debug` | `LogMessage.LogMouseUp` | ポインター解放（位置 / ドラッグ有無 / 選択有無） |
+| `Debug` | `LogMessage.LogClick` | クリック（位置） |
+| `Debug` | `LogMessage.LogDoubleClick` | ダブルクリック（位置 / 選択内側か） |
+| `Debug` | `LogMessage.LogDragStart` | ドラッグ開始（ハンドル / 位置） |
+| `Debug` | `LogMessage.LogKeyDown` | キー入力（キー名 / 処理有無） |
+| `Debug` | `LogMessage.LogConfirmRequested` | Enter キーによる確定要求（矩形） |
+| `Debug` | `LogMessage.LogCancelRequested` | Escape キーによるキャンセル要求 |
+| `Debug` | `LogMessage.LogZoomRequested` | Ctrl+ホイールによるズーム要求（拡大/縮小） |
+| `Debug` | `LogMessage.LogSettingChanged` | 設定値変更（変更前後） |
+| `Trace` | `LogMessage.LogPositionBeforeDown` | Down 直前のマウス位置 |
+| `Trace` | `LogMessage.LogPositionAfterUp` | Up 直後のマウス位置 |
+| `Trace` | `LogMessage.LogWheelScroll` | 通常ホイールによるスクロール（移動量 / オフセット） |

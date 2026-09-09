@@ -2,19 +2,23 @@
 
 ## 目次
 
-- [1. 概要](#1-概要)
-- [2. 機能一覧](#2-機能一覧)
-- [3. システム要件](#3-システム要件)
-- [4. インストール](#4-インストール)
-- [5. クイックスタート](#5-クイックスタート)
-- [6. 入力動作](#6-入力動作)
-- [7. ColorView テーマ（内包テーマ）](#7-colorview-テーマ内包テーマ)
-- [8. プラットフォーム](#8-プラットフォーム)
-- [9. サンプル](#9-サンプル)
-- [10. ドキュメント](#10-ドキュメント)
-- [11. アーキテクチャ](#11-アーキテクチャ)
-- [12. プロジェクト構成](#12-プロジェクト構成)
-- [13. ライセンス](#13-ライセンス)
+- [ColorPickerControl](#colorpickercontrol)
+  - [目次](#目次)
+  - [1. 概要](#1-概要)
+  - [2. 機能一覧](#2-機能一覧)
+  - [3. システム要件](#3-システム要件)
+  - [4. インストール](#4-インストール)
+  - [5. クイックスタート](#5-クイックスタート)
+    - [AXAML](#axaml)
+    - [Code-behind](#code-behind)
+  - [6. 入力動作](#6-入力動作)
+  - [7. ColorView テーマ（内包テーマ）](#7-colorview-テーマ内包テーマ)
+  - [8. プラットフォーム](#8-プラットフォーム)
+  - [9. サンプル](#9-サンプル)
+  - [10. ドキュメント](#10-ドキュメント)
+  - [11. アーキテクチャ](#11-アーキテクチャ)
+  - [12. プロジェクト構成](#12-プロジェクト構成)
+  - [13. ライセンス](#13-ライセンス)
 
 ---
 
@@ -143,9 +147,9 @@ dotnet run --project sample/ColorPickerControl.Sample.csproj
 - `ColorValidator.cs`: 色文字列の妥当性検証
 - `TextBoxSelectionHelper.cs`: ビジュアルツリー内の TextBox 検索と選択解除
 - `ColorSortMode.cs`: 公開 enum（並び順）
-- `StringToBrushConverter.cs`: 公開コンバーター（色 → Brush。Flyweight キャッシュ）
+- `StringToBrushConverter.cs`: 公開コンバーター（色 → Brush）
 - `ColorDisplayConverter.cs`: 公開コンバーター（保存値 ↔ 表示テキスト）
-- `ColorString.cs`: 公開静的ユーティリティ（色文字列の解析・整形・正規化。O(1) 色名検索）
+- `ColorString.cs`: 公開静的ユーティリティ（色文字列の解析・整形・正規化）
 - `ColorEntry.cs`: 色一覧データ（internal）
 
 依存方向は**一方向の階層構造**（コントロール → 生成/検証 → ドメイン（ColorString / ColorEntry / コンバーター））で、双方向依存・内部公開・具象依存を解消します。
@@ -163,9 +167,9 @@ ColorPickerControl/
 │   ├── ColorValidator.cs          # 色文字列の妥当性検証
 │   ├── TextBoxSelectionHelper.cs  # TextBox 検索とテキスト選択解除
 │   ├── ColorSortMode.cs           # 並び順 enum（公開）
-│   ├── StringToBrushConverter.cs  # 色→ブラシコンバーター（公開・Flyweight キャッシュ）
+│   ├── StringToBrushConverter.cs  # 色→ブラシコンバーター（公開）
 │   ├── ColorDisplayConverter.cs   # 保存値↔表示テキスト変換（公開）
-│   ├── ColorString.cs             # 色文字列ユーティリティ（公開・O(1) 色名検索）
+│   ├── ColorString.cs             # 色文字列ユーティリティ（公開）
 │   ├── ColorEntry.cs              # 色名レコード・全色一覧（internal）
 │   └── Logging/                   # LoggerMessage ログ定義（internal）
 ├── sample/                        # サンプルアプリ（sample/README.md 参照）

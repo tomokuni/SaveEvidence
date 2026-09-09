@@ -27,7 +27,7 @@
 LineDetection は、キャプチャ画像から Windows のウィンドウ枠となる水平・垂直の辺（線分）を検出するライブラリです。
 
 - 検出方式は `ILineDetector` を通して抽象化され、ロジック方式を同一のインターフェースで利用できます。
-- 入力は `Bitmap`（BGRA・1 ピクセル 4 バイト）で、出力は線分リストです。
+- 入力は `PbBitmap`（BGRA・1 ピクセル 4 バイト）で、出力は線分リストです。
 - OpenCvSharp は内部利用に閉じており、公開 API には露出しません。
 
 ## 2. 公開 API
@@ -85,14 +85,14 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | `ClusterTolerance` | `int` | `1` | 辺のクラスタリング許容差（ピクセル）。 |
 | `MinEdgeSupportRatio` | `double` | `0.6` | 線分に沿ったエッジピクセルの最小割合（0.0〜1.0）。 |
 | `ParallelMergeTolerance` | `double` | `8.0` | 矩形の辺に統合する平行線の最大距離（ピクセル）。 |
-| `CornerToleranceRatio` | `double` | `0.05` | コーナー判定の許容差（辺の長さに対する比率）。 |
-| `OppositeSpanRatio` | `double` | `0.35` | 対辺の長さの差の許容比率。 |
+| `CornerToleranceRatio` | `double` | `0.2` | コーナー判定の許容差（辺の長さに対する比率）。 |
+| `OppositeSpanRatio` | `double` | `0.13` | 対辺の長さの差の許容比率。 |
 
 ## 3. 入力・出力
 
 ### 3.1. 入力画像
 
-- 型: `Bitmap`（Avalonia）
+- 型: `PbBitmap`（BGRA8888）
 - フォーマット: BGRA（1 ピクセル 4 バイト）
 - 検出器は入力画像をグレースケール化して解析します（`Detect` 実行時に内部で変換）。
 

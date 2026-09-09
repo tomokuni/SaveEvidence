@@ -25,10 +25,10 @@
   - [8. 公開 API](#8-公開-api)
     - [8.1 ZoomViewControl](#81-zoomviewcontrol)
     - [8.2 ZoomConfig（設定値）](#82-zoomconfig設定値)
+      - [設定方法（2 通り）](#設定方法2-通り)
       - [値のガード](#値のガード)
     - [8.3 ZoomChangedEventArgs（イベント引数）](#83-zoomchangedeventargsイベント引数)
-  - [9. ログ](#9-ログ)
-  - [10. 制約事項](#10-制約事項)
+  - [9. 制約事項](#9-制約事項)
 
 ---
 
@@ -141,9 +141,7 @@ Ctrl+ホイールは現在の拡大率を基準に連続遷移します（`ZoomV
   （コンテンツ − ビューポート / 実効スケール）にクランプされる
 ```
 
-- `ViewportToContent(Point)` / `ContentToViewport(Point)` で双方向変換
-  - オフセット（スクロール）基準。ビューポート左上に対応するコンテンツ座標を基準に変換する
-- `ViewportToContentImage(Point)` / `ContentToViewportImage(Point)` で双方向変換
+- `ViewportToContentImage(Point)` / `ContentToViewportImage(Point)` で双方向変換（`ZoomViewControl` の公開 API）
   - 画像表示矩形（`ImageRectViewport`）の原点基準。Fit 中央寄せの原点補正を含み、画像内の正確な座標変換ができる
 - 実効スケール（`EffectiveScale`）: 固定倍率中は `ズーム率 / 100`、Fit 中は `FitScale`（ビューポートに収まる Uniform スケール）。Fit 中の座標変換でゼロ除算が発生しない
 
@@ -236,6 +234,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | --- | --- | --- |
 | コンストラクタ注入 | `new ZoomViewControl(new ZoomConfig(20, 800, 1.2, [...]))` | 生成時に設定（コードのみ・XAML 配置では無引数コンストラクタを使用） |
 | プロパティ設定 | `zoomView.MinZoom = 20;` など | 生成後に設定。`ZoomViewControl` の設定プロパティ（読み書き）経由で `ZoomConfig.With`（検証付き部分更新）が適用される |
+| `ZoomConfig.With` | `With(double? minZoom, double? maxZoom, double? wheelFactor, IReadOnlyList<double>? buttonZoomLevels)` | 一部のプロパティを差し替えた検証付きの新しい `ZoomConfig` を返す（null は現在値維持）。不正な値は `ArgumentException` |
 
 - `ZoomViewControl` の `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` は**読み書き可能プロパティ**。設定するとズーム可否が再計算される。
 - `ZoomConfig` は読み取り専用の不変値。プロパティの直接変更はできず、`With` 経由での検証付き部分更新のみ。
@@ -251,16 +250,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | --- | --- |
 | `ZoomChangedEventArgs` | `sealed record (double ZoomPercent, bool IsFit, bool CanZoomIn, bool CanZoomOut)`。実効ズーム率・Fit 状態・ズーム可否を通知する |
 
-## 9. ログ
-
-`ZoomViewControl.Log` へ `ILogger` を注入すると、ズーム操作のトレースログが出力される（未設定時は `NullLogger` で無出力）。
-
-| レベル | 出力内容 |
-| --- | --- |
-| `Information` | ズームイン/アウト（⊖⊕ボタン）の変更前後 % |
-| `Information` | Ctrl+ホイールズームの変更前後 % |
-
-## 10. 制約事項
+## 9. 制約事項
 
 - `ZoomPercent`（実効ズーム率）は 0 にならない。`ZoomPercent` setter で 0 を設定することはできない（0 以下は無視）。Fit 表示は `ZoomFit` で行う
 - スライダの範囲は `ZoomConfig.MinZoom`〜`ZoomConfig.MaxZoom`。Fit 中はスライダ最小値に合わせる（`IsFit` を参照）

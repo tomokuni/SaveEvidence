@@ -19,6 +19,7 @@
     - [6.3 ZoomConfig / 純粋関数](#63-zoomconfig--純粋関数)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ログ](#8-ログ)
+    - [8.1 ログ定義一覧](#81-ログ定義一覧)
 
 ---
 
@@ -78,19 +79,16 @@ ZoomViewControl（本ライブラリ）
 
 ```mermaid
 flowchart TB
+    subgraph Host["上位AP（消費側）"]
+        AP["app 等<br/>ZoomViewControl.Source 設定 → ZoomViewControl.ZoomChanged 購読"]
+    end
     subgraph ZVC["ZoomViewControl プロジェクト"]
+        direction TB
         ZVW["ZoomViewControl<br/>public sealed : Panel<br/>ZoomViewControl.cs（遷移決定・適用・内部配線・ZoomChanged 通知）"]
         ZV["ZoomableView<br/>internal sealed : Panel<br/>ZoomableView.cs（パン・ズームビューポート）"]
         PF["ZoomConfig<br/>public sealed class（設定値・検証付き不変値・With）"]
         PFI["ZoomMath / ZoomTransition / ScrollMath<br/>internal static（純粋関数・内部）"]
         LG["LogMessage<br/>Logging/LogMessage.cs（LoggerMessage）"]
-    end
-    subgraph Host["上位AP（消費側）"]
-        AP["app 等<br/>ZoomViewControl.Source 設定 → ZoomViewControl.ZoomChanged 購読"]
-    end
-    subgraph Dep["外部依存"]
-        AV["Avalonia 12.1<br/>Panel / Image / RenderTransform"]
-        LGAB["Microsoft.Extensions.Logging.Abstractions"]
     end
 
     AP -->|Source 設定 / ZoomChanged 購読| ZVW
@@ -99,8 +97,6 @@ flowchart TB
     ZVW --> PFI
     ZV --> PFI
     ZVW --> LG
-    ZV --> AV
-    LG --> LGAB
 ```
 
 ## 6. コンポーネント一覧
@@ -145,3 +141,12 @@ flowchart TB
 - ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成・`this ILogger` 拡張メソッド）に集約。
 - `ZoomViewControl.Log` プロパティへ注入されたロガーへ出力する。未設定（null）の場合は `NullLogger` で無出力。
 - 出力先・ログレベルはホスト側（上位 AP）のロギング基盤（NLog 等）が決定する（本ライブラリはログ転送のみ）。
+
+### 8.1 ログ定義一覧
+
+| レベル | メソッド | 出力内容 |
+| --- | --- | --- |
+| `Information` | `LogMessage.LogZoomIn` | ズームイン（⊖⊕ボタン）の変更前後 % |
+| `Information` | `LogMessage.LogZoomOut` | ズームアウト（⊖⊕ボタン）の変更前後 % |
+| `Information` | `LogMessage.LogZoomInWheel` | Ctrl+ホイールズームインの変更前後 % |
+| `Information` | `LogMessage.LogZoomOutWheel` | Ctrl+ホイールズームアウトの変更前後 % |

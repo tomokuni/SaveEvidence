@@ -98,6 +98,8 @@ internal sealed class CropSession(
 
         // 外観・座標変換・ルーペソースを設定する（CropViewControl は既に配置済み。追加・除去はしない）
         ConfigureControls();
+        // 領域選択オーバーレイを可視化する（プレビュー表示時は非表示。Crop セッション中のみ表示して暗転を出す）。
+        cropView.SetSelectionOverlayVisible(true);
         _log.LogCropStart((int)_sourceImageSize.Width, (int)_sourceImageSize.Height);
 
         void OnConfirm(Rect logicalRect)
@@ -131,6 +133,9 @@ internal sealed class CropSession(
             cropView.ZoomRequested -= OnZoomRequested;
             _cursorGuard.Dispose();
             cropView.ClearLoupe();
+            // 確定・キャンセル後は領域選択オーバーレイを非表示に戻す（プレビュー表示時は非表示のため）。
+            // 選択状態のクリアとオーバーレイの非表示化を一括で行う（暗転マスクの残留を防ぐ）。
+            cropView.SetSelectionOverlayVisible(false);
             hostWindow.Cursor = Cursor.Default;
             _isRunning = false;
         }
@@ -188,7 +193,11 @@ internal sealed class CropSession(
         var s = _settings;
         // 外観設定（DragRect / FadeMask / Loupe を一括適用。設定変換は拡張メソッドに一元化）
         cropView.AppearanceSettings =
-            s.ToFadeMaskDragRectSettings(scaling: 1.0, positionOffset: s.LoupeOffset!.Value);
+            s.ToFadeMaskDragRectSettings(positionOffset: s.LoupeOffset!.Value);
+        // DPI スケーリング・ルーペ描画スケールは AppearanceSettings の対象外（コードから動的設定）。
+        // プレビュー内 Crop はドメイン = 論理座標（元画像ピクセル）のため Scaling は 1.0 固定。
+        cropView.Scaling = 1.0;
+        cropView.LoupeRenderScaling = s.LoupeRenderScaling!.Value;
         // サイズラベルも描画時に最新のズーム率から生成する（ズーム率表示の追従）。
         cropView.SizeLabelOverrideProvider = () =>
             cropView.HasSelection ? FormatSizeLabel(cropView.SelectionRect) : null;

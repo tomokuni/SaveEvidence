@@ -34,11 +34,7 @@
     - [6.3 無効な入力の扱い](#63-無効な入力の扱い)
     - [6.4 カラーピッカー](#64-カラーピッカー)
     - [6.5 ColorView テーマ（内包）](#65-colorview-テーマ内包)
-  - [7. ログ](#7-ログ)
-    - [7.1 LogLevel 設定ポリシー](#71-loglevel-設定ポリシー)
-    - [7.2 ログ定義一覧](#72-ログ定義一覧)
-  - [8. 制限事項](#8-制限事項)
-  - [9. テスト](#9-テスト)
+  - [7. 制限事項](#7-制限事項)
 
 ---
 
@@ -152,6 +148,7 @@ if (colorPicker.HasValidationError)
 | --- | --- | --- | --- |
 | `ColorSortMode` | `ColorSortMode` | `ByHue` | ドロップダウンの色の並び順（`ByHue` / `ByName`） |
 | `HighlightBorderOnError` | `bool` | `false` | バリデーション失敗時に ComboBox の枠線を赤くするか |
+| `Log` | `ILogger` | `NullLogger` | 内部ロガー（null 設定時は `NullLogger` へフォールバック）。診断ログの出力先 |
 
 #### 5.1.3 バリデーション状態（読み取り専用）
 
@@ -265,7 +262,7 @@ ComboBox の `Text` プロパティとのバインドに使用する（`Selected
 - 右端の「…」ボタンで Flyout 形式のカラーピッカー（`ColorView`）が開きます。
 - 「OK」で選択色を `#AARRGGBB`（アルファ先頭8桁）の保存値として反映し、「キャンセル」で破棄します。
 - 初期表示色は `SelectedColor` をパースした色（失敗時は白）です。
-- 3 つ目のタブ（Hex 入力）の表示形式は `#AARRGGBB`（`HexInputAlphaPosition = Leading`）で、Avalonia 標準の `Color.Parse` と整合します。
+- 3 つ目のタブ（Hex 入力）の表示形式は `#AARRGGBB`（アルファ先頭）で、Avalonia 標準の `Color.Parse` と整合します。
 - 不透明度は ColorView のアルファスライダーで設定でき、保存値のアルファ成分として統合されます（画面表示では `+{不透明度%}`）。
 
 ### 6.5 ColorView テーマ（内包）
@@ -274,58 +271,10 @@ ComboBox の `Text` プロパティとのバインドに使用する（`Selected
 `<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />` を
 指定しなくても、Flyout 内の ColorView が正しく描画されます。
 
-- ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます（`ColorViewThemeManager.EnsureApplied` が明示指定を検出）。
-- 未指定の場合のみ、内包テーマ（Fluent.xaml）をデフォルトとして一度だけ自動適用します（適用済みフラグによる二重適用防止）。
-- 適用対象はアプリケーションのグローバル `Styles`（Flyout / Popup はオーバーレイレイヤーのため、コントロールのローカル Styles では伝播しないため）。
-- テーマ適用の管理は `ColorViewThemeManager`（internal）が担当します。
+- ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます。
+- 未指定の場合のみ、内包テーマ（Fluent.xaml）がデフォルトとして適用されます。
 
-## 7. ログ
-
-本コントロールのログ定義は `Logging/ColorPickerLog.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。
-出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
-
-ログ出力先の `ILogger` は公開プロパティ `Log` で注入する（未設定時は `NullLogger` のため出力なし）。
-
-### 7.1 LogLevel 設定ポリシー
-
-トレースログは LogLevel.Trace に限定せず、「重要度 × 発生頻度」でレベルを使い分ける。
-
-| LogLevel | 対象 | 本番での意図 |
-| --- | --- | --- |
-| `Error` | 例外・失敗（処理継続不可） | 常時出力し、障害を確実に残す |
-| `Warning` | 異常だがフォールバックで継続 | 常時出力し、異常発生の痕跡を残す |
-| `Information` | ユーザー操作の主要イベント（低頻度） | 常時出力し、操作手順の再現を可能にする |
-| `Debug` | 操作イベントの詳細（色選択 / Flyout / 設定変更） | 障害時のみ有効化して解析 |
-| `Trace` | 高頻度・極詳細（フォーカス喪失） | 特別な解析時のみ有効化 |
-
-判断基準:
-
-1. 例外・警告は常時残す（`Error` / `Warning`）
-2. 操作の起点イベント（低頻度）は `Information`
-3. マウス・キー等の操作イベント（中頻度）は `Debug`
-4. 高頻度・極詳細は `Trace`
-5. 設定変更（変更前後）は `Debug`
-
-### 7.2 ログ定義一覧
-
-| レベル | メソッド | 出力内容 |
-| --- | --- | --- |
-| `Debug` | `ColorPickerLog.LogSelectedColorChanged` | 選択色変更（変更前後） |
-| `Debug` | `ColorPickerLog.LogOpenFlyout` | カラーピッカー Flyout を開く（現在の選択色） |
-| `Debug` | `ColorPickerLog.LogFlyoutOk` | Flyout の OK で色確定 |
-| `Debug` | `ColorPickerLog.LogFlyoutCancel` | Flyout のキャンセル |
-| `Trace` | `ColorPickerLog.LogLostFocus` | フォーカス喪失（色と有効性） |
-
-## 8. 制限事項
+## 7. 制限事項
 
 - `ColorView` を Flyout で表示するため、ヘッドレス環境（テスト）ではポップアップ表示ができない場合があります。
 - 色一覧は `Avalonia.Media.Colors` の静的プロパティをリフレクションで取得して構築します（トリマー対策として `DynamicDependency` を付与済み）。
-
-## 9. テスト
-
-`tests/` プロジェクト（xUnit v3 + Avalonia.Headless）で、行・ブランチカバレッジ 100% を達成しています。
-
-- 公開プロパティ・バリデーション・並び順切替
-- イベントハンドラ（SelectionChanged / LostFocus / カラーピッカー）
-- コンバーター・ColorEntry の全分岐
-- 防御分岐（内部メソッド直接テスト）

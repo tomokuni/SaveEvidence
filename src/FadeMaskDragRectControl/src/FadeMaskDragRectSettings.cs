@@ -63,12 +63,6 @@ public sealed record FadeMaskDragRectSettings
     // FadeMask 外観（FadeMaskRenderer の描画設定）
     // ====================================================================
 
-    /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）。</summary>
-    public double? Scaling { get; init; }
-
-    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は Scaling と同値）。</summary>
-    public double? DisplayScaleScaling { get; init; }
-
     /// <summary>暗転オーバーレイの色（不透明度は色のアルファに統合。既定は黒 50%）。</summary>
     public Color? OverlayColor { get; init; }
 
@@ -117,9 +111,6 @@ public sealed record FadeMaskDragRectSettings
 
     /// <summary>ルーペ拡大倍率。</summary>
     public int? ZoomLevel { get; init; }
-
-    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。</summary>
-    public double? RenderScaling { get; init; }
 
     /// <summary>ルーペの十字線の色（不透明度は色のアルファに統合。既定は赤 40%）。</summary>
     public Color? CrossColor { get; init; }
@@ -185,9 +176,6 @@ public sealed record FadeMaskDragRectSettings
             CoordLabelColor = CoordLabelColor ?? Colors.White,
             CoordLabelBackgroundColor = CoordLabelBackgroundColor ?? Color.FromAColor(153, Colors.Black),
             CoordLabelFontSize = CoordLabelFontSize ?? 12.0,
-            // FadeMask 外観
-            Scaling = Scaling ?? 1.0,
-            DisplayScaleScaling = DisplayScaleScaling ?? 1.0,
             // 暗転オーバーレイの既定は黒 50%（アルファ込み）
             OverlayColor = OverlayColor ?? Color.FromAColor(128, Colors.Black),
             TextColor = TextColor ?? Colors.White,
@@ -206,7 +194,6 @@ public sealed record FadeMaskDragRectSettings
             // Loupe 外観（既定は Settings / LoupeControl の既定と一致させる）
             RequestedSize = RequestedSize ?? 160,
             ZoomLevel = ZoomLevel ?? 4,
-            RenderScaling = RenderScaling ?? 1.0,
             CrossColor = CrossColor ?? Color.FromAColor(102, Colors.Red),
             CheckerSize = CheckerSize ?? 6,
             CheckerColorA = CheckerColorA ?? Color.FromAColor(0x4C, Colors.Gray),

@@ -16,7 +16,7 @@
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 PlatformFactory](#61-platformfactory)
     - [6.2 各インターフェース（抽象）](#62-各インターフェース抽象)
-    - [6.3 CoordinatePort](#63-coordinateport)
+    - [6.3 CoordTransform](#63-coordtransform)
     - [6.4 ScreenConverter](#64-screenconverter)
     - [6.5 その他の公開型](#65-その他の公開型)
     - [6.7 内部実装（Win 系）](#67-内部実装win-系)
@@ -24,6 +24,9 @@
     - [6.9 内部ユーティリティ](#69-内部ユーティリティ)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
+  - [9. ログ](#9-ログ)
+    - [9.1 LogLevel 設定ポリシー](#91-loglevel-設定ポリシー)
+    - [9.2 ログ定義一覧](#92-ログ定義一覧)
 
 ---
 
@@ -71,7 +74,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（`PlatformLog.cs` / `WinCaptureService.Log.cs`）で出力する。高頻度イベントは Debug、障害は Error / Warning で記録する。
+- ログは LoggerMessage ソース生成（`PlatformLog.cs` / `WinCaptureServiceLog.cs`）で出力する。高頻度イベントは Debug、障害は Error / Warning で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -82,69 +85,31 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```mermaid
 flowchart TB
+    subgraph Host["上位AP（消費側）"]
+        DR["DragRectControl<br/>ICoordTransform / ICursorService / ScreenConverter"]
+        SC["SnipCaptureUI<br/>ICaptureService / IWindowService / IElementFinder / CoordTransform"]
+        AP["app 等<br/>ICoordTransform / PbBitmap 等"]
+    end
     subgraph PF["PlatformFactory プロジェクト (PlatformFactory)"]
-        Fac["PlatformFactory<br/>public static<br/>PlatformFactory.cs<br/>（Factory Method パターン）"]
-        ICr["ICursorService<br/>public interface"]
-        IEl["IElementFinder<br/>public interface"]
-        ICg["ICursorOverrideGuard<br/>public interface"]
-        ICp["ICaptureService<br/>public interface"]
-        IWd["IWindowService<br/>public interface"]
-        IGH["IGlobalHotKeyService&lt;T&gt;<br/>public interface"]
-        ICd["ICoordinatePort<br/>public interface"]
-        Cpt["CoordinatePort<br/>public sealed<br/>Coordinate/CoordinatePort.cs<br/>（Func 委譲の具象実装）"]
-        Scn["ScreenConverter<br/>public static<br/>Coordinate/ScreenConverter.cs"]
-        Efr["ElementFinderResults<br/>public readonly record struct"]
-        Bmx["BitmapExtensions<br/>public static<br/>Imaging/BitmapExtensions.cs"]
-        Ub["PbBitmap<br/>public sealed<br/>Imaging/PbBitmap.cs<br/>（コア：ピクセル操作・Create/FromSKBitmap/ToSKBitmap・IDisposable）"]
-        Ubi["PbBitmapAvaloniaImage<br/>public sealed<br/>Imaging/PbBitmapAvaloniaImage.cs<br/>（IImage アダプタ：Skia 直描画・ゼロコピー・IDisposable）"]
-        Ube["PbBitmapAvaloniaExtensions<br/>public static<br/>Imaging/PbBitmapAvaloniaExtensions.cs<br/>（生成・変換：ToPbBitmap / ToAvaloniaWriteableBitmap / ToAvaloniaImage 等 / Avalonia 依存）"]
-        Ubd["PbBitmapDrawingExtensions<br/>public static<br/>Imaging/PbBitmapDrawingExtensions.cs<br/>（生成・変換：ToPbBitmap / ToSystemDrawingBitmap / System.Drawing・Windows 専用）"]
-        Img["ImageProcessor<br/>public static<br/>Imaging/ImageProcessor.cs<br/>（切り出し・ウィンドウ検出）"]
-        Win["Win 実装群<br/>internal sealed<br/>Win/（Win32 API・P-Invoke 集約）"]
-        NoOp["NoOp 実装群<br/>internal sealed<br/>NoOp/（シングルトン）"]
-        Mth["CoordinateMath<br/>internal static<br/>Coordinate/CoordinateMath.cs"]
+        direction TB
+        Fac["PlatformFactory<br/>public static<br/>Factory Method パターン"]
+        Intf["公開インターフェース群<br/>ICursorService / IElementFinder / ICursorOverrideGuard<br/>ICaptureService / IWindowService / IGlobalHotKeyService&lt;T&gt; / ICoordTransform"]
+        Impl["具象・ユーティリティ群<br/>CoordTransform / ScreenConverter<br/>PbBitmap / PbBitmapAvaloniaImage<br/>PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions<br/>BrushCache / ScrollMath / DpiScaler<br/>CoordMath / ElementFinderResults"]
+        WInp["プラットフォーム実装群<br/>Win 実装群（Win32 API・P-Invoke 集約）<br/>NoOp 実装群（シングルトン）"]
     end
     subgraph Dep["外部依存"]
-        Av["Avalonia 12.1<br/>Bitmap / PixelPoint / PixelRect / TopLevel"]
         Sk["SkiaSharp<br/>SKBitmap (BGRA8888・Premul)"]
-        Lg["Microsoft.Extensions.Logging.Abstractions"]
         Sd["System.Drawing.Common"]
     end
-    subgraph Host["上位AP（消費側）"]
-        DR["DragRectControl<br/>ICoordinatePort / ICursorService / ScreenConverter"]
-        SC["SnipCaptureUI<br/>ICaptureService / IWindowService / IElementFinder / CoordinatePort"]
-    end
 
-    Fac --> ICr
-    Fac --> IEl
-    Fac --> ICg
-    Fac --> ICp
-    Fac --> IWd
-    Fac --> IGH
-    ICr --> Win
-    IEl --> Win
-    ICg --> Win
-    ICp --> Win
-    IWd --> Win
-    IGH --> Win
-    ICr --> NoOp
-    IEl --> NoOp
-    ICg --> NoOp
-    ICp --> NoOp
-    IWd --> NoOp
-    IGH --> NoOp
-    ICd --> Cpt
-    Cpt --> Mth
-    Scn --> ICd
-    Img --> Ub
-    Ube --> Ub
-    Ub -->|コアは SKBitmap のみに依存| Sk
-    Ube --> Av
-    Ube --> Sk
-    Win --> Av
-    Win --> Sd
     DR -->|"ファクトリ / インターフェース / 座標ポート"| Fac
-    SC -->|"ファクトリ / インターフェース / CoordinatePort"| Fac
+    SC -->|"ファクトリ / インターフェース / CoordTransform"| Fac
+    AP -->|"ICoordTransform / PbBitmap 等"| Fac
+    Fac --> Intf
+    Intf --> WInp
+    Intf --> Impl
+    Impl --> Sk
+    WInp --> Sd
 ```
 
 ## 6. コンポーネント一覧
@@ -176,14 +141,14 @@ flowchart TB
 | `ICaptureService` | `CaptureArea(PixelRect)` / `CaptureVirtualScreen(out PixelPoint)` | 画面領域・仮想スクリーンのキャプチャ |
 | `IWindowService` | `HideFromTaskSwitcher(IPlatformHandle)` / `SetCaptureExclusion(IPlatformHandle, bool)` / `EvacuateWindow(IPlatformHandle)` | タスクスイッチャー非表示・キャプチャ除外・退避 |
 | `IGlobalHotKeyService<T>` | `Initialize(IntPtr)` / `RegisterAll(...)` / `UnregisterAll()` / `event Action<T>? HotKeyPressed` | グローバルホットキーの登録・WM_HOTKEY 受信・アクション配信 |
-| `ICoordinatePort` | `Forward(Point)` / `Inverse(Point)` / `Bounds`（`Size?`） | 座標系 A ↔ B の変換ポート |
+| `ICoordTransform` | `Forward(Point)` / `Inverse(Point)` / `Bounds`（`Size?`） | 座標系 A ↔ B の変換ポート |
 
 - **可視性**: public
-- **依存**: Avalonia 標準型（`Bitmap` / `PixelPoint` / `PixelRect` / `TopLevel` / `IPlatformHandle`）
+- **依存**: Avalonia 標準型（`PixelPoint` / `PixelRect` / `TopLevel` / `IPlatformHandle`）
 
-### 6.3 CoordinatePort
+### 6.3 CoordTransform
 
-- **分類**: 公開座標変換ポート（`public sealed class : ICoordinatePort`）
+- **分類**: 公開座標変換ポート（`public sealed class : ICoordTransform`）
 - **責務**: `Func` 委譲による座標系 A ↔ B の変換と境界の提供
 - **公開メンバー**:
   - `Identity`（静的プロパティ）: 等価変換の既定ポート
@@ -193,10 +158,10 @@ flowchart TB
   - `DomainScale(Func<double>)`（静的メソッド）: ドメイン = ローカル DIP × 倍率（呼び出し毎評価）
   - `ImageLayout(Func<Size>, Size, Func<bool>?)`（静的メソッド）: 画像レイアウト（レターボックス・スケール）の動的ポート
   - `ImageLayoutScaleX(Func<Size>, Size, Func<bool>?)`（静的メソッド）: 画像レイアウトの X スケール（ズーム率導出用）
-  - コンストラクタ: `CoordinatePort(Func<Point, Point> forward, Func<Point, Point> inverse, Func<Size?> bounds)`
-  - `Forward` / `Inverse` / `Bounds`: `ICoordinatePort` の実装
+  - コンストラクタ: `CoordTransform(Func<Point, Point> forward, Func<Point, Point> inverse, Func<Size?> bounds)`
+  - `Forward` / `Inverse` / `Bounds`: `ICoordTransform` の実装
 - **可視性**: public
-- **依存**: `CoordinateMath`（internal。画像レイアウト計算の委譲）
+- **依存**: `CoordMath`（internal。画像レイアウト計算の委譲）
 
 ### 6.4 ScreenConverter
 
@@ -204,20 +169,25 @@ flowchart TB
 - **責務**: コントロールローカル DIP ↔ 画面物理 Pixel の変換と変換ポートの生成
 - **公開メソッド**: `LocalDipToScreen(Visual, Point)` / `ScreenToLocalDip(Visual, PixelPoint)` / `CreateVisualDipPort(Visual)`
 - **可視性**: public
-- **依存**: `ICoordinatePort`
+- **依存**: `ICoordTransform`
 
 ### 6.5 その他の公開型
 
 | コンポーネント | 説明 |
 | --- | --- |
 | `ElementFinderResults` record struct | 検出要素の結果（`Bounds` / `IsDetected` / `Title` / `Handle` / `ClassName`） |
-| `BitmapExtensions.CopyRegionWithPadding` / `ExtractRegion` | 範囲外許容の領域コピー / 矩形切り出し |
-| `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |
+| `HotKeySetting` record | ホットキーの組合せ（`HotKeyModifiers Modifiers` / `Key Key`）。`ToString()` で "Ctrl + Shift + Q" 形式を返す |
+| `ColorExtensions.FromAColor` | C# 14 静的拡張メンバー（`extension(Color)`）。基準色（名前付き色等）とアルファ値から色を生成（RGB 直指定の可読性問題を解消） |
+| `ScrollMath` | スクロール範囲・ビューポートサイズの純粋計算（`MaxOffset` / `ViewportSize`）。UI フレームワーク非依存 |
+| `DpiScaler` | DIP 値をスケーリング係数で物理ピクセルへ変換（`ScaleToPixel`。切り上げ・最低 1） |
+| `CoordinateFormatter` | 座標を `(x, y)` 形式に整形（`Format(Point)`。整数に丸め）。座標ラベルの共用 |
+| `AvaloniaGeometryAdapters` | コアの `Point` / `Size` / `Vector` / `Rect` ↔ Avalonia 型の相互変換（`ToAvaloniaPoint` 等） |
+| `RectDExt` | コアの `Point` / `Size` / `Rect` ↔ System.Drawing 型の相互変換（`ToDrawingPoint` 等） |
 | `PbBitmap` | 複数ビットマップ種別を横断する軽量ユニバーサルラッパー（コア）。内部に `SKBitmap`（BGRA8888・Premul）を唯一所有し、`SkiaSharp` のみに依存したピクセル操作と `Create` / `FromSKBitmap` / `ToSKBitmap`（生成・変換）を提供。静的共有状態を持たないため並列・大規模利用に適する |
 | `PbBitmapAvaloniaImage` | `PbBitmap` を内包して Avalonia `IImage` として公開するアダプタ。`Draw` は `ISkiaSharpApiLeaseFeature` を取得して `SKCanvas` へ直接描画（`WriteableBitmap` / `Bitmap` を生成しないゼロコピー描画）。破棄は `Dispose` で行い、内包 `PbBitmap` の所有権を保持する |
 | `PbBitmapAvaloniaExtensions` | `PbBitmap` の生成・変換拡張（Avalonia）。`ToPbBitmap`（`this Bitmap`）/ `ToAvaloniaWriteableBitmap` / `ToAvaloniaImage` / `CreateAvaloniaWriteableBitmap` / `CreateAvaloniaImage` / `Size` / `Crop(PixelRect)` / `GetPixel` / `SetPixel` / `TrySetPixel` / `Clear(AvaloniaColor)`（`this PbBitmap`）を提供し、Avalonia との変換を閉じる |
-| `PbBitmapDrawingExtensions` | `PbBitmap` の生成・変換拡張（System.Drawing・Windows 専用・`[SupportedOSPlatform("windows")]`）。`ToPbBitmap`（`this DrawingBitmap`）/ `ToSystemDrawingBitmap`（`this PbBitmap`）を提供する |
-| `ImageProcessor` | 画像の切り出し・ウィンドウ領域検出を提供する静的ユーティリティ。`PbBitmap` に対してピクセルレベルの操作を行い、ピクセル演算をコアに委譲する |
+| `PbBitmapDrawingExtensions` | `PbBitmap` の生成・変換拡張（System.Drawing・Windows 専用・`[SupportedOSPlatform("windows")]`）。`ToPbBitmap`（`this DrawingBitmap`）/ `ToDrawingBitmap`（`this PbBitmap`）を提供する |
+| `BrushCache` | 色に対応するブラシの容量制限付きキャッシュ（`GetOrCreate` / `Count` / `MaxCapacity`。スレッド安全） |
 
 ### 6.7 内部実装（Win 系）
 
@@ -250,8 +220,9 @@ flowchart TB
 
 | コンポーネント | 説明 |
 | --- | --- |
-| `CoordinateMath` | 画像レイアウト計算の一元化（`CalculateUniformLayout` / `ComputeImageRenderInfo`）。`CoordinatePort.ImageLayout` から委譲される |
+| `CoordMath` | 画像レイアウト計算の一元化（`CalculateUniformLayout` / `ComputeImageRenderInfo`）。`CoordTransform.ImageLayout` から委譲される |
 | `PlatformLog` | LoggerMessage ソース生成によるログ定義集約 |
+| `WinCaptureServiceLog` | WinCaptureService の LoggerMessage 定義（`LogVirtualScreenBounds` / `LogCaptureSdBitmap` / `LogCaptureSdBitmapDone`） |
 
 - **可視性**: すべて internal
 
@@ -259,7 +230,7 @@ flowchart TB
 
 - 依存方向は**一方向の階層構造**（公開ファクトリ → インターフェース → Win / NoOp 実装）。
 - 上位 AP（DragRectControl / SnipCaptureUI 等）は本ライブラリの**インターフェース経由**で利用し、具象型（Win / NoOp）に依存しない（DIP）。
-- 公開 API はプラットフォーム非依存型（`Bitmap` / `PixelPoint` / `PixelRect` / `IPlatformHandle`）のみを使用し、Win32 ハンドル・System.Drawing 型を公開しない（カプセル化）。
+- 公開 API はプラットフォーム非依存型（`PbBitmap` / `PixelPoint` / `PixelRect` / `IPlatformHandle`）のみを使用し、Win32 ハンドル・System.Drawing 型を公開しない（カプセル化）。
 - プラットフォーム固有実装は本ファクトリが唯一の生成経路となるため、internal に隠蔽できる（公開 API 最小化）。
 
 ## 8. ライフサイクル
@@ -280,3 +251,41 @@ sequenceDiagram
     If->>Impl: Win32 API / フォールバックへ委譲
     Impl-->>AP: 結果を返却
 ```
+
+## 9. ログ
+
+ログ定義は `PlatformLog.cs`（internal・LoggerMessage ソース生成）と `WinCaptureServiceLog.cs`（internal）に集約し、`ILogger` の拡張メソッドとして定義する。
+各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogCursorVisibilityChanged(show)`）。
+各サービスのコンストラクタ / ファクトリメソッド（`PlatformFactory.CreateXxx(ILogger? logger = null)`）でロガーを注入する。null の場合は出力しない。
+出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
+
+### 9.1 LogLevel 設定ポリシー
+
+トレースログは LogLevel.Trace に限定せず、「重要度 × 発生頻度」でレベルを使い分ける。
+
+| LogLevel | 対象 | 本番での意図 |
+| --- | --- | --- |
+| `Error` | 例外・失敗（処理継続不可） | 常時出力し、障害を確実に残す |
+| `Warning` | 異常だがフォールバックで継続（ハング退避・キャプチャ失敗等） | 常時出力し、異常発生の痕跡を残す |
+| `Information` | 重要な状態遷移（低頻度：カーソル表示切替・ウィンドウ操作） | 常時出力し、操作手順の再現を可能にする |
+| `Debug` | 操作イベントの詳細（キャプチャ内部フロー） | 障害時のみ有効化して解析 |
+| `Trace` | 高頻度・極詳細 | 特別な性能・座標解析時のみ有効化 |
+
+判断基準:
+
+1. 例外・警告は常時残す（`Error` / `Warning`）
+2. 重要な状態遷移（低頻度）は `Information`
+3. 操作イベントの詳細（中頻度）は `Debug`
+4. 高頻度・極詳細は `Trace`
+5. カーソル位置取得（`GetCursorScreenPoint`）等の高頻度呼び出しはログ対象外（ノイズ防止）
+
+### 9.2 ログ定義一覧
+
+| レベル | メソッド | 出力内容 |
+| --- | --- | --- |
+| `Warning` | `PlatformLog.LogWindowEvacuated` | ウィンドウ退避（最前面解除・非表示・WM_CLOSE） |
+| `Information` | `PlatformLog.LogCursorVisibilityChanged` | カーソル表示/非表示の状態変更 |
+| `Information` | `PlatformLog.LogWindowHiddenFromTaskSwitcher` | タスクバー / Alt+Tab からの除外 |
+| `Information` | `PlatformLog.LogCaptureExclusionChanged` | キャプチャ除外設定の変更（成否込み） |
+| `Debug` | `WinCaptureServiceLog.LogVirtualScreenBounds` | 仮想スクリーン全体キャプチャの矩形 |
+| `Debug` | `WinCaptureServiceLog.LogCaptureSdBitmap` / `LogCaptureSdBitmapDone` | 仮想スクリーン Bitmap キャプチャの開始 / 完了 |

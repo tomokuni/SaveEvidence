@@ -28,6 +28,10 @@
   - [7. 依存ルール](#7-依存ルール)
   - [8. バリデーション状態遷移](#8-バリデーション状態遷移)
   - [9. ライフサイクル](#9-ライフサイクル)
+  - [10. ログ](#10-ログ)
+    - [10.1 LogLevel 設定ポリシー](#101-loglevel-設定ポリシー)
+    - [10.2 ログ定義一覧](#102-ログ定義一覧)
+  - [11. テスト](#11-テスト)
 
 ---
 
@@ -94,45 +98,23 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```mermaid
 flowchart TB
-    subgraph CPC["ColorPickerControl プロジェクト (ColorPickerControl)"]
-        Ctl["ColorPickerControl<br/>public sealed partial<br/>: UserControl<br/>ColorPicker.axaml.cs（公開 API ＋ イベント処理 ＋ バリデーション状態）"]
-        Xaml["ColorPicker.axaml<br/>ComboBox + スウォッチ + Button"]
-        Fac["ColorPickerFlyoutFactory<br/>internal static<br/>（Simple Factory）"]
-        Thm["ColorViewThemeManager<br/>internal static"]
-        Val["ColorValidator<br/>internal static"]
-        Txt["TextBoxSelectionHelper<br/>internal static"]
-        Ent["ColorEntry<br/>internal sealed record<br/>ColorEntry.cs"]
-        Srt["ColorSortMode<br/>public enum<br/>ColorSortMode.cs"]
-        Conv1["StringToBrushConverter<br/>public sealed"]
-        Str["ColorString<br/>public static"]
-        Dsp["ColorDisplayConverter<br/>public sealed"]
-        Fld["_comboBox / _lastValidColor<br/>private フィールド"]
-    end
-    subgraph Dep["外部依存"]
-        Av["Avalonia 12.1<br/>UserControl / ComboBox / ColorView / Flyout"]
-        ColorPicker["Avalonia.Controls.ColorPicker<br/>ColorView コントロール"]
-    end
     subgraph Host["上位AP（消費側）"]
-        VM["ViewModel<br/>SelectedColor 双方向バインド"]
+        AP["上位AP<br/>SelectedColor 双方向バインド"]
     end
-
+    subgraph CPC["ColorPickerControl プロジェクト (ColorPickerControl)"]
+        direction TB
+        Ctl["ColorPickerControl<br/>public sealed partial : UserControl<br/>（公開 API ＋ イベント処理 ＋ バリデーション状態）"]
+        Xaml["ColorPicker.axaml<br/>ComboBox + スウォッチ + Button"]
+        Fac["ColorPickerFlyoutFactory<br/>Simple Factory（色ドロップダウン構築）"]
+        Impl["内部実装<br/>ColorValidator / ColorEntry / ColorString<br/>ColorViewThemeManager / TextBoxSelectionHelper<br/>StringToBrushConverter / ColorDisplayConverter / ColorSortMode"]
+    end
+    AP -->|"SelectedColor (TwoWay)"| Ctl
+    AP -->|"ColorSortMode / HighlightBorderOnError"| Ctl
+    Ctl -->|"HasValidationError / ValidationErrorMessage"| AP
     Xaml --> Ctl
-    Ctl --> Fld
     Ctl --> Fac
-    Ctl --> Val
-    Ctl --> Txt
-    Ctl --> Ent
-    Ctl --> Srt
-    Fac --> Thm
-    Fac --> Str
-    Fac --> ColorPicker
-    Conv1 --> Str
-    Dsp --> Str
-    Ent --> Str
-    Val --> Str
-    VM -->|"SelectedColor (TwoWay)"| Ctl
-    VM -->|"ColorSortMode / HighlightBorderOnError"| Ctl
-    Ctl -->|"HasValidationError / ValidationErrorMessage"| VM
+    Ctl --> Impl
+    Fac --> Impl
 ```
 
 ## 6. コンポーネント一覧
@@ -152,7 +134,7 @@ flowchart TB
 - **公開API**: `SelectedColor` / `ColorSortMode` / `HighlightBorderOnError` / `HasValidationError` / `ValidationErrorMessage` / `ComboBoxMinWidth` / `ComboBoxMaxWidth` / `ComboBoxWidth` / `ComboBoxPadding` / `ComboBoxMargin` / `Log`（StyledProperty も同ファイルに定義）
 - **構成**: 公開 API（StyledProperty・公開プロパティ）とイベント処理・バリデーション状態を保持し、関心事ごとに専用クラスへ委譲（単一責任・疎結合）
 - **内部メソッド（internal）**: `UpdateValidationStatus`（テストからの検証用に公開）
-- **依存**: ColorPickerFlyoutFactory / ColorValidator / TextBoxSelectionHelper / ColorEntry / ColorSortMode / ColorString
+- **依存**: ColorPickerFlyoutFactory / ColorValidator / TextBoxSelectionHelper / ColorViewThemeManager / ColorEntry / ColorSortMode / ColorString
 
 ### 6.2 ColorPicker.axaml
 
@@ -185,7 +167,7 @@ flowchart TB
 
 - **分類**: 公開 IValueConverter（`public sealed class`）
 - **責務**: 色名/16進コード → `IBrush`（スウォッチ背景）
-- **特徴**: 解釈不能な値は `Brushes.Transparent`。`ConvertBack` は `NotSupportedException`。解析済み色のブラシは静的キャッシュで共有し、容量管理は `ColorString.AddWithCapacityLimit` に委譲（単一所有）
+- **特徴**: 解釈不能な値は `Brushes.Transparent`。`ConvertBack` は `NotSupportedException`。解析済み色のブラシはカラー選択で再利用され、容量管理は `ColorString.AddWithCapacityLimit` に委譲（単一所有）
 - **依存**: Avalonia.Media / Avalonia.Data.Converters / ColorString
 
 ### 6.6 ColorString
@@ -196,7 +178,7 @@ flowchart TB
   - 保存値は `ToArgbHex` で `#AARRGGBB`（アルファ先頭 8 桁）へ正規化
   - 画面表示は `ToDisplayText` / `Format` で `{色}+{不透明度%}` 形式へ整形（不透明度 100% は省略）
   - `TryParse` で両形式を受け付ける（色と不透明度の合成）
-  - 色 → 色名 の逆引き辞書（ARGB 完全一致 / RGB 一致）を静的構築時に事前生成する（Flyweight パターン）
+  - 色 → 色名 の逆引き辞書（ARGB 完全一致 / RGB 一致）を保持し、色名の検索に利用する
   - 容量管理は `AddWithCapacityLimit` ヘルパーに一元化（単一所有。`StringToBrushConverter` のブラシキャッシュも委譲）
   - `Colors` のリフレクション列挙を単一所有し、`ColorEntry` が再利用する
 - **依存**: Avalonia.Media
@@ -226,7 +208,7 @@ flowchart TB
 
 - **分類**: 内部静的ユーティリティ（`internal static class`）
 - **責務**: ColorView（カラーピッカー）テーマのアプリケーションへの自動適用（`EnsureApplied` / `EnsureAppliedCore` / `IsColorViewTheme`）
-- **特徴**: ホストの明示指定（StyleInclude）を優先し、未指定時のみ内包テーマを一度だけ適用。適用済みフラグをロック外で先判定する二重チェックロック（volatile）で二重適用を防止
+- **特徴**: ホストの明示指定（StyleInclude）を優先し、未指定時のみ内包テーマを一度だけ適用する
 - **依存**: Avalonia.Application / AvaloniaXamlLoader
 
 ### 6.11 ColorPickerFlyoutFactory
@@ -287,3 +269,49 @@ sequenceDiagram
     Fly-->>Ctl: OK → SelectedColor 反映
     Ctl-->>VM: SelectedColor 更新（TwoWay）
 ```
+
+## 10. ログ
+
+ログ定義は `Logging/LogMessage.cs`（internal・LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
+各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogSelectedColorChanged(old, new)`）。
+ログ出力先の `ILogger` は公開プロパティ `Log` で注入する（未設定時は `NullLogger` のため出力なし）。
+出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
+
+### 10.1 LogLevel 設定ポリシー
+
+トレースログは LogLevel.Trace に限定せず、「重要度 × 発生頻度」でレベルを使い分ける。
+
+| LogLevel | 対象 | 本番での意図 |
+| --- | --- | --- |
+| `Error` | 例外・失敗（処理継続不可） | 常時出力し、障害を確実に残す |
+| `Warning` | 異常だがフォールバックで継続 | 常時出力し、異常発生の痕跡を残す |
+| `Information` | ユーザー操作の主要イベント（低頻度） | 常時出力し、操作手順の再現を可能にする |
+| `Debug` | 操作イベントの詳細（色選択 / Flyout / 設定変更） | 障害時のみ有効化して解析 |
+| `Trace` | 高頻度・極詳細（フォーカス喪失） | 特別な解析時のみ有効化 |
+
+判断基準:
+
+1. 例外・警告は常時残す（`Error` / `Warning`）
+2. 操作の起点イベント（低頻度）は `Information`
+3. マウス・キー等の操作イベント（中頻度）は `Debug`
+4. 高頻度・極詳細は `Trace`
+5. 設定変更（変更前後）は `Debug`
+
+### 10.2 ログ定義一覧
+
+| レベル | メソッド | 出力内容 |
+| --- | --- | --- |
+| `Debug` | `LogMessage.LogSelectedColorChanged` | 選択色変更（変更前後） |
+| `Debug` | `LogMessage.LogOpenFlyout` | カラーピッカー Flyout を開く（現在の選択色） |
+| `Debug` | `LogMessage.LogFlyoutOk` | Flyout の OK で色確定 |
+| `Debug` | `LogMessage.LogFlyoutCancel` | Flyout のキャンセル |
+| `Trace` | `LogMessage.LogLostFocus` | フォーカス喪失（色と有効性） |
+
+## 11. テスト
+
+`tests/` プロジェクト（xUnit v3 + Avalonia.Headless）で、行・ブランチカバレッジ 100% を達成しています。
+
+- 公開プロパティ・バリデーション・並び順切替
+- イベントハンドラ（SelectionChanged / LostFocus / カラーピッカー）
+- コンバーター・ColorEntry の全分岐
+- 防御分岐（内部メソッド直接テスト）

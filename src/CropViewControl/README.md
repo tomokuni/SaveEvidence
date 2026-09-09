@@ -31,15 +31,16 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 
 ## 2. 機能一覧
 
-- **複合構造（Facade / Composite）**: `ZoomableView` + `FadeMaskDragRectControl` + 矩形オーバーレイを内包
+- **複合構造（Facade / Composite）**: `ZoomViewControl` + `FadeMaskDragRectControl` + 矩形オーバーレイを内包
 - **画像表示**: 拡大（`ZoomIn` / `ZoomOut`）/ 原寸 / Fit 表示（`ZoomFit`）/ パン（マウスドラッグ・ホイール）
 - **領域選択**: ドラッグ選択・暗転マスク・ルーペ（`FadeMaskDragRectControl` へ委譲）
+  - オーバーレイの可視性・ヒットテストは `SetSelectionOverlayVisible` で制御（Crop セッションの開始・終了時にホストが切替）。初期状態（画像なし）は非表示・ヒットテスト不可。
 - **外部提供矩形**: `Rects`（`IReadOnlyList<OverlayRect>`）を View（ビューポート）とルーペの両方へ描画
   - 矩形情報（`OverlayRect`）: 矩形・破線種類・前景色・背景色・線幅
   - 破線種類（`OverlayLineStyle`）: `Solid` / `Dashed` / `Dotted`
 - **座標変換**: `ContentToViewport` / `ViewportToContent`（ドメイン ↔ ビューポート座標）
 - **選択モード**: `SelectionMode`（`FadeMaskDragRectMode`）で切替（既定 `Crop`）
-- **イベント**: `ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `LoupePositionMoved`（FadeMaskDragRectControl へ委譲）
+- **イベント**: `ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `LoupePositionMoved`（FadeMaskDragRectControl へ委譲）/ `RectsChanged`（外部矩形の変化通知）
 
 ## 3. システム要件
 
@@ -52,7 +53,7 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 現在は NuGet パッケージではなく、プロジェクト参照で利用します。
 
 ```xml
-<ProjectReference Include="..\CropView\src\CropViewControl.csproj" />
+<ProjectReference Include="..\src\CropViewControl.csproj" />
 ```
 
 必要な名前空間:
@@ -119,16 +120,16 @@ Crop プレビューを拡大・パン・Fit しながら、ドラッグ選択 �
 ## 8. プロジェクト構成
 
 ```text
-CropView/
+CropViewControl/
 ├── src/
 │   ├── CropViewControl.csproj
 │   ├── CropViewControl.cs    （高レベル複合コントロール本体）
 │   ├── OverlayRect.cs       （外部提供矩形の描画情報 record）
 │   └── OverlayLineStyle.cs  （枠線スタイル enum）
 └── tests/
-    ├── CropView.Tests.csproj
+    ├── CropViewControl.Tests.csproj
     ├── TestAppBuilder.cs
-    └── CropView.Tests.cs
+    └── CropViewControl.Tests.cs
 ```
 
 ## 9. ライセンス

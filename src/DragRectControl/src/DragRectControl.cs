@@ -495,13 +495,15 @@ public sealed partial class DragRectControl : Control
     /// <summary>外部（ホスト）からの確定要求を処理する（Enter キーと同じ条件）。</summary>
     /// <remarks>
     /// UI ボタン等から DragRect の選択を確定する際に呼ぶ。<br/>
-    /// ドラッグ中は無視し、選択確定後のみ <see cref="ConfirmRequested"/>（選択矩形 + Snapshot 付き）を発行する。
+    /// ドラッグ中は無視し、選択確定後のみ <see cref="ConfirmRequested"/>（選択矩形 + Snapshot 付き）を発行する。<br/>
+    /// 確定後に選択状態をクリアする（<see cref="ResetSelection"/>。確定後の再ドラッグ・再確定を防ぐ）。
     /// </remarks>
     public void RequestConfirm()
     {
         if (_state.IsDragging || !_state.HasSelection) return;
         Log.LogConfirmRequested(_state.SelectionRect.ToString());
         ConfirmRequested?.Invoke(this, new SelectionRectEventArgs(_state.SelectionRect, _state.CreateSnapshot()));
+        ResetSelection();
     }
 
     // ====================================================================
@@ -613,6 +615,7 @@ public sealed partial class DragRectControl : Control
             {
                 Log.LogConfirmRequested(_state.SelectionRect.ToString());
                 ConfirmRequested?.Invoke(this, new SelectionRectEventArgs(_state.SelectionRect, _state.CreateSnapshot(domainPos)));
+                ResetSelection();
             }
             else
             {

@@ -300,8 +300,6 @@ public sealed class FadeMaskDragRectControl : Panel
             CoordLabelBackgroundColor = i.CoordLabelBackgroundColor ?? cur.CoordLabelBackgroundColor,
             CoordLabelFontSize = i.CoordLabelFontSize ?? cur.CoordLabelFontSize,
             // FadeMask 外観
-            Scaling = i.Scaling ?? cur.Scaling,
-            DisplayScaleScaling = i.DisplayScaleScaling ?? cur.DisplayScaleScaling,
             OverlayColor = i.OverlayColor ?? cur.OverlayColor,
             TextColor = i.TextColor ?? cur.TextColor,
             FontSize = i.FontSize ?? cur.FontSize,
@@ -318,7 +316,6 @@ public sealed class FadeMaskDragRectControl : Panel
             // Loupe 外観
             RequestedSize = i.RequestedSize ?? cur.RequestedSize,
             ZoomLevel = i.ZoomLevel ?? cur.ZoomLevel,
-            RenderScaling = i.RenderScaling ?? cur.RenderScaling,
             CrossColor = i.CrossColor ?? cur.CrossColor,
             CheckerSize = i.CheckerSize ?? cur.CheckerSize,
             CheckerColorA = i.CheckerColorA ?? cur.CheckerColorA,
@@ -361,8 +358,6 @@ public sealed class FadeMaskDragRectControl : Panel
 
         // FadeMask 外観（FadeMaskRenderer へ直接設定。境界変換は座標変換ポートが担う）
         // 色は不透明度をアルファに統合した値（#AARRGGBB）をそのまま設定する。
-        _renderer.Scaling = settings.Scaling!.Value;
-        _renderer.DisplayScaleScaling = settings.DisplayScaleScaling!.Value;
         _renderer.OverlayArgbColor = settings.OverlayColor!.Value;
         _renderer.TextColor = settings.TextColor!.Value;
         _renderer.TextBackgroundColor = settings.TextBackgroundColor!.Value;
@@ -383,7 +378,6 @@ public sealed class FadeMaskDragRectControl : Panel
         // Loupe 外観（LoupeControl の公開外観設定を全て適用）
         _loupeControl.RequestedSize = settings.RequestedSize!.Value;
         _loupeControl.ZoomLevel = settings.ZoomLevel!.Value;
-        _loupeControl.RenderScaling = settings.RenderScaling!.Value;
         _loupeControl.CrossColor = GetSharedBrush(settings.CrossColor!.Value);
         _loupeControl.CheckerSize = settings.CheckerSize!.Value;
         _loupeControl.CheckerColorA = GetSharedBrush(settings.CheckerColorA!.Value);
@@ -554,11 +548,40 @@ public sealed class FadeMaskDragRectControl : Panel
         set => _renderer.ScreenIndex = value;
     }
 
-    /// <summary>ハイライト描画用の表示スケール（マルチスクリーン補正）。</summary>
+    /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）。</summary>
+    /// <remarks>
+    /// <see cref="FadeMaskRenderer.Scaling"/> へ委譲する。<br/>
+    /// ユーザー設定ではなく、セッション（Crop は 1.0 / 画面キャプチャはウィンドウのスケーリング）が
+    /// <see cref="AppearanceSettings"/> とは独立して設定する（コードから動的設定）。
+    /// </remarks>
+    public double Scaling
+    {
+        get => _renderer.Scaling;
+        set => _renderer.Scaling = value;
+    }
+
+    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="Scaling"/> と同値）。</summary>
+    /// <remarks>
+    /// <see cref="FadeMaskRenderer.DisplayScaleScaling"/> へ委譲する。<br/>
+    /// ユーザー設定ではなく、セッション（OverlayWindow）がハイライト表示のマルチスクリーン補正として
+    /// <see cref="AppearanceSettings"/> とは独立して設定する（コードから動的設定）。
+    /// </remarks>
     public double DisplayScaleScaling
     {
         get => _renderer.DisplayScaleScaling;
         set => _renderer.DisplayScaleScaling = value;
+    }
+
+    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。</summary>
+    /// <remarks>
+    /// <see cref="LoupeControl.RenderScaling"/> へ委譲する。<br/>
+    /// ユーザー設定ではなく、ウィンドウの DPI スケーリング（<c>MainWindow.DesktopScaling</c>）から
+    /// <see cref="AppearanceSettings"/> とは独立して自動取得する。
+    /// </remarks>
+    public double LoupeRenderScaling
+    {
+        get => _loupeControl.RenderScaling;
+        set => _loupeControl.RenderScaling = value;
     }
 
     /// <summary>ハイライト対象のウィンドウタイトル（未検出時は空文字）。</summary>

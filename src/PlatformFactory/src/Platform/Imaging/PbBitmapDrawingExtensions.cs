@@ -14,7 +14,7 @@ namespace Estable.AvaloniaUI.Platform.Imaging;
 /// <b>依存分離</b>: 本クラスは System.Drawing との変換を担い、
 /// <see cref="PbBitmap"/> 本体（コア）の依存を閉じる。<br/>
 /// <br/>
-/// <b>所有権</b>: <c>ToSystemDrawingBitmap()</c> は複製を返す（呼び出し側が所有）。<br/>
+/// <b>所有権</b>: <see cref="ToDrawingBitmap"/> は複製を返す（呼び出し側が所有）。<br/>
 /// <b>Windows 専用</b>: System.Drawing は Windows でのみ利用可能（<see cref="SupportedOSPlatformAttribute"/> で限定）。
 /// </remarks>
 public static class PbBitmapDrawingExtensions

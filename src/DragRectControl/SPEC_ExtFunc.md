@@ -59,7 +59,7 @@ using Avalonia;
 using Estable.AvaloniaUI.DragRect;
 ```
 
-座標ポート（`ICoordinatePort`）を使用する場合は、`PlatformFactory` の名前空間も必要です。
+座標ポート（`ICoordTransform`）を使用する場合は、`PlatformFactory` の名前空間も必要です。
 
 ```csharp
 using Estable.AvaloniaUI.Platform;
@@ -119,11 +119,11 @@ dragRect.CancelRequested += (_, _) => CancelSelection();
 
 ### 4.3 座標ポートの設定
 
-選択状態と nudge はドメイン座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。両者を変換する座標ポート（`ICoordinatePort`）をホストが設定します。ポートの生成は PlatformFactory の `CoordinatePort` ファクトリ（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`）やホスト固有の実装で行います。
+選択状態と nudge はドメイン座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。両者を変換する座標ポート（`ICoordTransform`）をホストが設定します。ポートの生成は PlatformFactory の `CoordTransform` ファクトリ（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`）やホスト固有の実装で行います。
 
 ```csharp
 // AreaSelect 例: ドメイン = 仮想スクリーンピクセル（= DIP × scaling・動的評価）
-control.SetCoordinateTransform(CoordinatePort.DomainScale(() => scaling));
+control.SetCoordinateTransform(CoordTransform.DomainScale(() => scaling));
 
 // 等価変換（1 ドメイン = 1 DIP）
 control.SetCoordinateTransform(null);
@@ -184,50 +184,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Log` | `ILogger` | 操作ログ用ロガー（既定は `NullLogger`） |
-
-ログ定義は `Logging/DragRectLog.cs`（LoggerMessage ソース生成）に集約し、`Log` プロパティの `ILogger` 経由で出力する。
-出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
-
-##### LogLevel 設定ポリシー
-
-トレースログは LogLevel.Trace に限定せず、「重要度 × 発生頻度」でレベルを使い分ける。
-
-| LogLevel | 対象 | 本番での意図 |
-| --- | --- | --- |
-| `Error` | 例外・失敗（処理継続不可） | 常時出力し、障害を確実に残す |
-| `Warning` | 異常だがフォールバックで継続 | 常時出力し、異常発生の痕跡を残す |
-| `Information` | ユーザー操作の主要イベント（低頻度） | 常時出力し、操作手順の再現を可能にする |
-| `Debug` | 操作イベントの詳細（マウス / キー / 設定変更） | 障害時のみ有効化して解析 |
-| `Trace` | 高頻度・極詳細（ホイール・Down 直前/Up 直後の移動位置） | 特別な性能・座標解析時のみ有効化 |
-
-判断基準:
-
-1. 例外・警告は常時残す（`Error` / `Warning`）
-2. 操作の起点イベント（低頻度）は `Information`
-3. マウス・キー等の操作イベント（中頻度）は `Debug`
-4. 高頻度・極詳細（マウス移動相当・ホイール連続）は `Trace`
-5. 設定変更（変更前後）は `Debug`
-
-マウス移動の高頻度ログは行わない。ただし、Down 直前・Up 直後の位置は Down / Up イベント内で記録する（`Trace`）。
-
-##### ログ定義一覧
-
-| レベル | メソッド | 出力内容 |
-| --- | --- | --- |
-| `Debug` | `DragRectLog.LogMouseDown` | ポインター押下（位置 / クリック数 / 選択有無） |
-| `Debug` | `DragRectLog.LogMouseUp` | ポインター解放（位置 / ドラッグ有無 / 選択有無） |
-| `Debug` | `DragRectLog.LogClick` | クリック（位置） |
-| `Debug` | `DragRectLog.LogDoubleClick` | ダブルクリック（位置 / 選択内側か） |
-| `Debug` | `DragRectLog.LogDragStart` | ドラッグ開始（ハンドル / 位置） |
-| `Debug` | `DragRectLog.LogKeyDown` | キー入力（キー名 / 処理有無） |
-| `Debug` | `DragRectLog.LogConfirmRequested` | Enter キーによる確定要求（矩形） |
-| `Debug` | `DragRectLog.LogCancelRequested` | Escape キーによるキャンセル要求 |
-| `Debug` | `DragRectLog.LogZoomRequested` | Ctrl+ホイールによるズーム要求（拡大/縮小） |
-| `Debug` | `DragRectLog.LogSettingChanged` | 設定値変更（変更前後） |
-| `Trace` | `DragRectLog.LogPositionBeforeDown` | Down 直前のマウス位置 |
-| `Trace` | `DragRectLog.LogPositionAfterUp` | Up 直後のマウス位置 |
-| `Trace` | `DragRectLog.LogWheelScroll` | 通常ホイールによるスクロール（移動量 / オフセット） |
+| `Log` | `ILogger` | 操作ログ用ロガー（既定は `NullLogger`。出力先・レベル制御はホストアプリケーションが所有） |
 
 ### 5.2 メソッド
 
@@ -235,10 +192,10 @@ control.ResetSelection();           // 状態と nudge の初期化
 | --- | --- |
 | `SetSelection(Rect)` | 選択矩形をドメイン座標で復元する（`SelectionChanged` で通知。`ClampToDomainBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
-| `SetCoordinateTransform(ICoordinatePort?)` | ドメイン↔DIP 座標変換ポートを設定する（null = 等価変換） |
+| `SetCoordinateTransform(ICoordTransform?)` | ドメイン↔DIP 座標変換ポートを設定する（null = 等価変換） |
 | `AttachScrollViewer(ScrollViewer?)` | 連携する ScrollViewer を明示的に設定する（スクロール・ズーム検知 + ホイール操作。null で解除。祖先探索は行わない） |
 | `RequestCancel()` | キャンセル要求を処理する（Escape キーと同じ条件。選択破棄後に `CancelRequested` を発火） |
-| `RequestConfirm()` | 確定要求を処理する（Enter キーと同じ条件。ドラッグ中は無視し `ConfirmRequested` を発火） |
+| `RequestConfirm()` | 確定要求を処理する（Enter キーと同じ条件。ドラッグ中は無視し `ConfirmRequested` を発火。確定後に選択状態をクリアして再選択・再確定を防ぐ） |
 
 クリップ（画像境界内への制限）は座標ポートの `Bounds` + `ClampToDomainBounds` が担います。
 
@@ -265,7 +222,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 ### 5.4 型
 
-公開型は `DragRectControl` とイベント引数（`DragRectEventArgs.cs` / `DragRectSnapshot.cs`）です。
+公開型は `DragRectControl` / `DragHandle` / `DragRectInteractionState` とイベント引数（`SelectionRectEventArgs.cs` / `DragRectPointEventArgs.cs` / `DragRectSnapshot.cs`）です。
 内部実装（状態・純粋計算・描画）はすべて internal（非公開）です。
 
 #### 5.4.1 DragRectControl（`DragRectControl.cs`）
@@ -273,7 +230,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 公開 API は「5.1 プロパティ」「5.2 メソッド」「5.3 イベント」に記載の通りです。
 StyledProperty は同ファイルに定義されます（Avalonia のバインディング・スタイル設定に必要なため public）。
 
-#### 5.4.2 イベント引数（`DragRectEventArgs.cs` / `DragRectSnapshot.cs`）
+#### 5.4.2 イベント引数（`SelectionRectEventArgs.cs` / `DragRectPointEventArgs.cs` / `DragRectSnapshot.cs`）
 
 | 型 | 説明 |
 | --- | --- |
@@ -295,7 +252,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 ### 6.2 座標ポート
 
-`ICoordinatePort`（PlatformFactory 提供）がドメイン↔DIP 変換とドメイン境界を提供します。
+`ICoordTransform`（PlatformFactory 提供）がドメイン↔DIP 変換とドメイン境界を提供します。
 
 | メンバー | 説明 |
 | --- | --- |
@@ -322,7 +279,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 | 領域選択（ハンドル変形） | 固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限 |
 | 領域移動（Move ドラッグ・nudge） | 矩形全体が境界内に収まるようにシフト（サイズは維持） |
 
-クリップ範囲は `SetCoordinateTransform` のポート `Bounds`（`ICoordinatePort.Bounds`）で指定します（null = 無制限の場合はクリップされません）。
+クリップ範囲は `SetCoordinateTransform` のポート `Bounds`（`ICoordTransform.Bounds`）で指定します（null = 無制限の場合はクリップされません）。
 
 ## 7. Nudge（キーボード微調整）
 
@@ -386,6 +343,7 @@ nudge 中は十字マーカー（`MarkerColor` / `MarkerLength` で外観を指�
 - 左ボタン押下: 新規選択・ハンドルドラッグ・移動ドラッグの開始（クリック回数 2 以上はダブルクリック検出）
 - 左ボタン移動: ドラッグ中の選択矩形更新
 - 左ボタン解放: 選択確定（最小サイズ未満はキャンセル）
+- ダブルクリック（矩形内）: `ConfirmRequested` を発火し、確定後に選択状態をクリア（`ResetSelection`。確定後も選択矩形が残るのを防ぐ）
 - マウスホイール（祖先 ScrollViewer が存在する場合・Crop モード）:
   - **Ctrl + ホイール**: `ZoomRequested` を発火（ズームの実処理は上位 AP が実施）
   - **通常ホイール**: 祖先 `ScrollViewer` をスクロール（Shift 併用で横スクロール。48DIP/段）

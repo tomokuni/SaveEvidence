@@ -129,7 +129,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 1. `CropSession` を生成 → `RunAsync`
 2. **FadeMaskDragRectControl**（DragRect + FadeMask + Loupe の配線を内包する複合コントロール）を祖先 Panel に配置
-3. 座標変換: `CoordinatePort.Compose(ImageLayout, ScrollOffset)` で論理（元画像 px）↔ 親 Panel DIP を変換し、**複合コントロールの `SetCoordinateTransform` で DragRect / FadeMask / Loupe の全コントロールに一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
+3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordinateTransform` で内包コントロール（DragRect / FadeMask / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
 4. マウスホイール操作（Crop 中）: Ctrl+ホイールでズーム要求を `zoomRequestHandler` へ通知 / 通常ホイールで祖先 ScrollViewer をスクロール
 5. **ビューポート変化の通知**: ホストがプレビューのパン・ズームを検知したら `NotifyCropViewportChanged()` を呼ぶ（暗転マスク・選択枠・ルーペが追従。ScrollViewer 連携のスクロールも同じ経路で処理）
 6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `PixelRect` で返却 / キャンセル → 0x0 の空 `PixelRect`
@@ -138,7 +138,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 | プロジェクト | 利用機能 |
 | --- | --- |
-| `PlatformFactory` | `PlatformFactory`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` / `ICoordinatePort` / `CoordinatePort` / `ScreenConverter` 等 |
+| `PlatformFactory` | `PlatformFactory`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` / `ICoordTransform` / `CoordTransform` / `ScreenConverter` 等 |
 | `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包する複合コントロール。公開 API は本コントロールのみ） |
 
 SnipCaptureUI は内包コントロール（`DragRectControl` / `FadeMaskControl` / `LoupeControl`）を直接参照しない（窓口は `FadeMaskDragRectControl` のみ。公開型のカプセル化）。
@@ -160,7 +160,7 @@ SnipCaptureUI/
 │   ├── CaptureResult.cs          # 結果 record（public）
 │   └── Sessions/                 # 内部実装（CaptureSession / CropSession / OverlayWindow）
 ├── sample/                       # サンプルアプリ（sample/README.md 参照）
-└── tests/                        # 単体テスト（23 件）
+└── tests/                        # 単体テスト（79 件）
 ```
 
 ## 10. ライセンス

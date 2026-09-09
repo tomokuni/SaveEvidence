@@ -82,8 +82,6 @@ public class FadeMaskDragRectControlTests
         Assert.NotNull(appearance.ClampToDomainBounds);
         Assert.NotNull(appearance.MarkerColor);
         Assert.NotNull(appearance.MarkerLength);
-        Assert.NotNull(appearance.Scaling);
-        Assert.NotNull(appearance.DisplayScaleScaling);
         Assert.NotNull(appearance.OverlayColor);
         Assert.NotNull(appearance.TextColor);
         Assert.NotNull(appearance.FontSize);
@@ -99,7 +97,6 @@ public class FadeMaskDragRectControlTests
         Assert.NotNull(appearance.InfoLabelFontSize);
         Assert.NotNull(appearance.RequestedSize);
         Assert.NotNull(appearance.ZoomLevel);
-        Assert.NotNull(appearance.RenderScaling);
         Assert.NotNull(appearance.CrossColor);
         Assert.NotNull(appearance.CheckerSize);
         Assert.NotNull(appearance.CheckerColorA);
@@ -155,8 +152,6 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var settings = new FadeMaskDragRectSettings
         {
-            Scaling = 2.0,
-            DisplayScaleScaling = 1.5,
             OverlayColor = Color.FromAColor(128, Colors.DarkBlue), // 暗青 50%
             TextColor = Colors.Yellow,
             TextBackgroundColor = Color.FromAColor(179, Colors.DarkBlue), // 暗青 70%
@@ -173,6 +168,10 @@ public class FadeMaskDragRectControlTests
         };
 
         control.AppearanceSettings = settings;
+
+        // DPI スケーリングは AppearanceSettings の対象外（個別プロパティで設定）
+        control.Scaling = 2.0;
+        control.DisplayScaleScaling = 1.5;
 
         Assert.Equal(2.0, control.Renderer.Scaling);
         Assert.Equal(1.5, control.Renderer.DisplayScaleScaling);
@@ -200,7 +199,6 @@ public class FadeMaskDragRectControlTests
         {
             RequestedSize = 150,
             ZoomLevel = 3,
-            RenderScaling = 2.0,
             CrossColor = Color.FromAColor(204, Colors.Red), // 赤 80%
             CheckerSize = 10,
             CheckerColorA = Colors.Black,
@@ -221,6 +219,9 @@ public class FadeMaskDragRectControlTests
         };
 
         control.AppearanceSettings = settings;
+
+        // ルーペ描画スケールは AppearanceSettings の対象外（DPI から自動取得。個別プロパティで設定）
+        control.LoupeRenderScaling = 2.0;
 
         Assert.Equal(150, control.Loupe.RequestedSize);
         Assert.Equal(3, control.Loupe.ZoomLevel);
@@ -316,8 +317,6 @@ public class FadeMaskDragRectControlTests
             ClampToDomainBounds = initial.ClampToDomainBounds,
             MarkerColor = initial.MarkerColor,
             MarkerLength = initial.MarkerLength,
-            Scaling = initial.Scaling,
-            DisplayScaleScaling = initial.DisplayScaleScaling,
             OverlayColor = initial.OverlayColor,
             TextColor = initial.TextColor,
             FontSize = initial.FontSize,
@@ -333,7 +332,6 @@ public class FadeMaskDragRectControlTests
             InfoLabelFontSize = initial.InfoLabelFontSize,
             RequestedSize = initial.RequestedSize,
             ZoomLevel = initial.ZoomLevel,
-            RenderScaling = initial.RenderScaling,
             CrossColor = initial.CrossColor,
             CheckerSize = initial.CheckerSize,
             CheckerColorA = initial.CheckerColorA,

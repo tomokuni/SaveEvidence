@@ -100,4 +100,94 @@ public class CropViewTests
         Assert.Equal(5.0, result.X, 3);
         Assert.Equal(5.0, result.Y, 3);
     }
+
+    // ====================================================================
+    // Source（画像なし時の領域選択の無効化）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public void Source_未設定の場合は領域選択オーバーレイが不可視でヒットテスト不可になる()
+    {
+        var view = new CropViewControl();
+
+        // 画像なし（初期状態 Source = null）のとき、領域選択（DragRect）はヒットテスト不可かつ不可視
+        // （Crop モードの全面暗転が市松模様を暗くしないよう、オーバーレイごと非表示にする）。
+        Assert.Null(view.Source);
+        Assert.False(view.SelectionOverlay.IsHitTestVisible);
+        Assert.False(view.SelectionOverlay.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public void Source_画像を設定しても領域選択オーバーレイは自動では可視にならない()
+    {
+        var view = CreateView();
+
+        // 画像あり（Source 非 null）でも、オーバーレイは Crop セッションが制御するため自動では可視化しない
+        // （キャプチャ完了直後に Crop モードの暗転が残るのを防ぐ）。
+        Assert.NotNull(view.Source);
+        Assert.False(view.SelectionOverlay.IsHitTestVisible);
+        Assert.False(view.SelectionOverlay.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public void SetSelectionOverlayVisible_trueでオーバーレイが可視でヒットテスト可能になる()
+    {
+        var view = CreateView();
+
+        // Crop セッション開始時: オーバーレイを可視化し、ヒットテストを有効化する
+        view.SetSelectionOverlayVisible(true);
+
+        Assert.True(view.SelectionOverlay.IsVisible);
+        Assert.True(view.SelectionOverlay.IsHitTestVisible);
+    }
+
+    [AvaloniaFact]
+    public void SetSelectionOverlayVisible_falseで不可視になり選択がクリアされる()
+    {
+        var view = CreateView();
+        view.SetSelectionOverlayVisible(true);
+        view.SetSelection(new Rect(10, 10, 50, 40));
+        Assert.True(view.HasSelection);
+
+        // Crop セッション終了時: オーバーレイを非表示にし、選択をクリアする
+        view.SetSelectionOverlayVisible(false);
+
+        Assert.False(view.SelectionOverlay.IsVisible);
+        Assert.False(view.SelectionOverlay.IsHitTestVisible);
+        Assert.False(view.HasSelection);
+    }
+
+    [AvaloniaFact]
+    public void Source_画像をnullへ戻すと選択がクリアされるがオーバーレイの表示状態は維持される()
+    {
+        var view = CreateView();
+        view.SetSelectionOverlayVisible(true);
+        view.SetSelection(new Rect(10, 10, 50, 40));
+
+        // 画像あり → 選択状態
+        Assert.True(view.HasSelection);
+
+        // 画像を null へ戻す（画像なしに戻る）
+        view.Source = null;
+
+        // 選択はクリアされる。オーバーレイの表示・ヒットテスト状態は SetSelectionOverlayVisible が専任のため維持される。
+        Assert.False(view.HasSelection);
+        Assert.True(view.SelectionOverlay.IsVisible);
+        Assert.True(view.SelectionOverlay.IsHitTestVisible);
+    }
+
+    [AvaloniaFact]
+    public void Source_画像をnullへ戻した後にSetSelectionOverlayVisible_falseで不可視になる()
+    {
+        var view = CreateView();
+
+        // 画像を null へ戻す
+        view.Source = null;
+
+        // Crop セッション終了相当: オーバーレイを非表示にし、選択をクリアする
+        view.SetSelectionOverlayVisible(false);
+
+        Assert.False(view.SelectionOverlay.IsVisible);
+        Assert.False(view.SelectionOverlay.IsHitTestVisible);
+    }
 }

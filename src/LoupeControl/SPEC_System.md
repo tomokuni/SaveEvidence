@@ -84,30 +84,25 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```mermaid
 flowchart TB
-    subgraph LC["LoupeControl プロジェクト (LoupeControl)"]
-        Ctl["LoupeControl<br/>public sealed partial<br/>: UserControl<br/>Loupe.axaml / Loupe.axaml.cs"]
-        Evt["LoupeRenderedEventArgs<br/>public sealed class<br/>LoupeRenderedEventArgs.cs"]
-        Rdr["LoupeRenderer<br/>internal static class<br/>Rendering/LoupeRenderer.cs"]
-        Bg["LoupeBackgroundRenderer<br/>internal static class"]
-        Img["LoupeImageRenderer<br/>internal static class"]
-        Dec["LoupeDecorationRenderer<br/>internal static class"]
-        Ext["LoupeImageExtractor<br/>internal static class<br/>Imaging/LoupeImageExtractor.cs"]
-        Log["LogMessage<br/>internal static partial class<br/>Logging/LogMessage.cs"]
-    end
-    subgraph Dep["外部依存"]
-        Av["Avalonia 12.1<br/>StyledProperty / DrawingContext<br/>RenderTargetBitmap / IBrush"]
-        Lg["Microsoft.Extensions.Logging"]
-    end
     subgraph Host["上位AP（消費側）"]
         AP["上位AP<br/>表示条件・設定・座標変換"]
     end
+    subgraph LC["LoupeControl プロジェクト (LoupeControl)"]
+        direction TB
+        Ctl["LoupeControl<br/>public sealed partial<br/>: UserControl<br/>Loupe.axaml / Loupe.axaml.cs"]
+        Rdr["LoupeRenderer<br/>internal static class<br/>Rendering/LoupeRenderer.cs"]
+        Ext["LoupeImageExtractor<br/>internal static class<br/>Imaging/LoupeImageExtractor.cs"]
+        Bg["LoupeBackgroundRenderer<br/>internal static class"]
+        Img["LoupeImageRenderer<br/>internal static class"]
+        Dec["LoupeDecorationRenderer<br/>internal static class"]
+        Evt["LoupeRenderedEventArgs<br/>public sealed class<br/>LoupeRenderedEventArgs.cs"]
+        Log["LogMessage<br/>internal static partial class<br/>Logging/LogMessage.cs"]
+    end
 
+    AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>ForceUpdate / Clear"| Ctl
     Ctl -->|"DrawLoupe /<br/>DrawLoupeCheckerboardOnly"| Rdr
     Ctl -->|"ExtractRegionAt /<br/>CreateBitmap"| Ext
     Ctl -->|"LogUpdateError"| Log
-    AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>ForceUpdate / Clear"| Ctl
-    Ctl -->|"使用"| Dep
-    Log -->|"使用"| Dep
     Rdr --> Bg
     Rdr --> Img
     Rdr --> Dec
@@ -164,7 +159,7 @@ flowchart TB
 
 - **分類**: 内部静的クラス（`internal static partial class`）
 - **責務**: LoggerMessage source generator によるログ定義
-- **公開API**: `LogUpdateError`（Error）/ `LogRequestRender`（Trace）/ `LogRenderCore`（Trace）/ `LogGenerateAsyncDone`（Trace）
+- **公開API**: `LogUpdateError`（Error）/ `LogSettingChanged`（Debug）/ `LogRequestRender`（Trace）/ `LogRenderCore`（Trace）/ `LogGenerateAsyncDone`（Trace）
 - **依存**: Microsoft.Extensions.Logging
 
 ### 6.7 上位AP（消費側）

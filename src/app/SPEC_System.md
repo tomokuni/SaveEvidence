@@ -51,7 +51,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ログ** | Serilog 4.x + Serilog.Sinks.File（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
 | **シリアル化** | System.Text.Json（設定ファイル） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | SnipCaptureUI / ColorPickerControl / PlatformFactory |
+| **依存プロジェクト** | SnipCaptureUI / ColorPickerControl / PlatformFactory / LineDetection |
 
 ## 3. アーキテクチャ
 
@@ -61,7 +61,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage）
   → ViewModel Layer（MainViewModel / FolderViewViewModel / UndoViewModel）
     → Model / Service Layer（UndoStack / SettingsService 等）
-      → 外部ライブラリ（SnipCaptureUI / ColorPickerControl / PlatformFactory / ZoomViewControl）
+      → 外部ライブラリ（SnipCaptureUI / ColorPickerControl / PlatformFactory / LineDetection）
 ```
 
 ### 3.2 依存の方向
@@ -69,7 +69,7 @@ View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage
 - 依存は**一方向の階層構造**（View → ViewModel → Service / Model → 外部ライブラリ）。
 - ViewModel は View の詳細（コントロール型）に依存せず、公開プロパティ・コールバックで連携する。
 - サービスはインターフェース（`ISettingsService`）を介して注入される（DIP）。
-- ズーム計算・表示は独立プロジェクト `ZoomViewControl` に委譲し、app は `ZoomViewControl` の `Source` 設定・`ZoomChanged` 購読で操作を指示する（一方向依存）。
+- ズーム計算・表示は `CropViewControl`（`ZoomViewControl` を内包。SnipCaptureUI 経由の推移的依存）に委譲し、app は `CropViewControl` の `Source` 設定・`ZoomChanged` 購読で操作を指示する（一方向依存）。
 
 ## 4. 例外処理ポリシー
 
@@ -92,55 +92,25 @@ View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage
 ```mermaid
 flowchart TB
     subgraph APP["app プロジェクト (app)"]
-        MW["MainWindow<br/>public sealed partial : Window<br/>Views/MainWindow.axaml(.cs)"]
-        CP["CapturePage<br/>public sealed partial : UserControl<br/>Views/Pages/CapturePage.axaml(.cs)"]
-        FV["FolderViewPage<br/>public sealed partial : ViewModePageBase<br/>Views/Pages/FolderViewPage.axaml(.cs)"]
-        UP["UndoPage<br/>public sealed partial : ViewModePageBase<br/>Views/Pages/UndoPage.axaml(.cs)"]
-        VMPB["ViewModePageBase<br/>public abstract : UserControl<br/>Views/Pages/ViewModePageBase.cs"]
-        SP["SettingsPage<br/>public sealed partial : UserControl<br/>Views/Pages/SettingsPage.axaml(.cs)"]
-        CD["ConfirmDialog<br/>public static<br/>Views/ConfirmDialog.cs"]
-        ZM["ZoomViewControl / ZoomableView / ZoomMath / ZoomTransition / ScrollMetrics<br/>ZoomViewControl（独立プロジェクト）"]
-        BAW["BottomAlignWrapPanel<br/>public sealed : Panel<br/>Controls/BottomAlignWrapPanel.cs"]
-        MV["MainViewModel / FolderViewViewModel / UndoViewModel<br/>ViewModels/"]
-        US["UndoStack<br/>Models/UndoStack.cs<br/>（DI シングルトン）"]
-        SS["SettingsService / ISettingsService<br/>Services/"]
-        AL["AppLog<br/>Logging/AppLog.cs<br/>（LoggerMessage 定義）"]
+        direction TB
+        Main["MainWindow<br/>公開ウィンドウ（ナビゲーション統括）"]
+        CV["CropViewControl<br/>公開複合コントロール<br/>（ズーム + 領域選択 + ルーペ）"]
     end
-    subgraph Dep["外部依存プロジェクト"]
-        SN["SnipCaptureUI<br/>SnipCapture（キャプチャ・切出し）"]
-        CPK["ColorPickerControl<br/>色選択コントロール"]
-        PF["PlatformFactory<br/>プラットフォーム抽象"]
+    subgraph Dep["外部依存プロジェクト（主要コンポーネント）"]
+        SN["SnipCapture<br/>公開 Facade（キャプチャ・切出し）"]
+        CPK["ColorPickerControl<br/>公開コントロール（色選択）"]
+        LD["LogicLineDetector<br/>公開クラス（ウィンドウ矩形検出）"]
     end
     subgraph Infra["外部基盤"]
-        Serilog["Serilog 4.x<br/>%LOCALAPPDATA%\\SaveEvidence\\logs"]
-        Av["Avalonia 12.1 / FluentAvaloniaUI"]
+        direction TB
+        Serilog["Serilog 4.x<br/>ログ出力"]
     end
 
-    MW --> CP
-    MW --> FV
-    MW --> UP
-    MW --> SP
-    CP --> ZM
-    CP --> ZV
-    ZM --> ZV
-    ZM --> ZMth
-    FV --> BAW
-    MW --> MV
-    CP --> MV
-    FV --> MV
-    UP --> MV
-    CP --> US
-    UP --> US
-    MW --> CD
-    MW --> SS
-    CP --> SS
-    MW --> SN
-    CP --> SN
-    SP --> CPK
-    SN --> PF
-    AL --> Serilog
-    AL -->|"ILogger 転送"| Serilog
-    App["Program.cs<br/>DI 構築"] --> MW
+    Main --> CV
+    Main --> SN
+    CV --> SN
+    Main --> CPK
+    Main --> LD
 ```
 
 ## 6. コンポーネント一覧
@@ -161,13 +131,13 @@ flowchart TB
 
 - **分類**: 公開ページ（`public sealed partial class : UserControl`）
 - **責務**:
-  - 画像プレビュー（ZoomViewControl の ZoomViewControl）の統括
+  - 画像プレビュー（`CropViewControl`（ズーム + 領域選択 + ルーペを内包））の統括
   - 切出し（Crop）セッションの開始・確定・キャンセル
   - キャプチャメニュー（全画面 / ウィンドウ / 範囲選択）の受付
   - ステータスバーへのポインタ座標・画像サイズ表示
   - Ctrl ショートカット（保存 / コピー / 貼り付け / Undo / Redo / 切り出し / ズーム）の一括処理（`OnGlobalKeyDown`）
 - **公開メンバー**: `Initialize(...)` / `ExitCropMode()` / `CleanupCaptureResources()` 等
-- **依存**: MainViewModel / ZoomViewControl（ZoomViewControl）/ SnipCapture / UndoStack / AppLog
+- **依存**: MainViewModel / CropViewControl（SnipCaptureUI 経由の推移的依存）/ SnipCapture / UndoStack / AppLog
 
 ### 6.3 FolderViewPage
 
@@ -205,7 +175,7 @@ flowchart TB
 
 ### 6.6 CropViewControl（ズーム・パン表示と領域選択）
 
-ズーム・パン・Fit 表示は**独立プロジェクト `CropViewControl`**（`CropViewControl`。内部に `ZoomViewControl` と `FadeMaskDragRectControl` を内包）が提供する。CapturePage が `CropViewControl` の `Source` を設定し、`ZoomChanged`（ズーム率・可否）・`ViewportChanged`（パン・ズーム）を購読して操作を指示する。`SnipCapture.StartCropAsync` は `CropViewControl` を受け取り、切出しセッション（座標変換・確定・キャンセル）を管理する。詳細は `CropViewControl` の `SPEC_System.md` を参照。
+ズーム・パン・Fit 表示は **`CropViewControl`**（内部に `ZoomViewControl` と `FadeMaskDragRectControl` を内包する複合コントロール。SnipCaptureUI 経由の推移的依存）が提供する。CapturePage が `CropViewControl` の `Source` を設定し、`ZoomChanged`（ズーム率・可否）・`ViewportChanged`（パン・ズーム）を購読して操作を指示する。`SnipCapture.StartCropAsync` は `CropViewControl` を受け取り、切出しセッション（座標変換・確定・キャンセル）を管理する。詳細は `CropViewControl` の `SPEC_System.md` を参照。
 
 ### 6.7 ViewModel 群
 
@@ -242,7 +212,7 @@ flowchart TB
 - 依存方向は**一方向の階層構造**（View → ViewModel → Service / Model → 外部ライブラリ）。
 - View は ViewModel に依存する（DataBindings とイベントハンドラ経由）。ViewModel は View の詳細（コントロール型）に依存しない。
 - サービスはインターフェース（`ISettingsService`）を介して注入される（DIP）。
-- ズーム計算・表示は独立プロジェクト `ZoomViewControl` に委譲し、app は `ZoomViewControl` の `Source` 設定・`ZoomChanged` 購読で操作を指示する（一方向依存）。
+- ズーム計算・表示は `CropViewControl`（`ZoomViewControl` を内包。SnipCaptureUI 経由の推移的依存）に委譲し、app は `CropViewControl` の `Source` 設定・`ZoomChanged` 購読で操作を指示する（一方向依存）。
 - キャプチャ・切出しの詳細は SnipCaptureUI に委譲し、app は公開 Facade（SnipCapture）のみに依存する。
 
 ## 8. ログ
@@ -275,7 +245,7 @@ sequenceDiagram
 
     MW->>SN: StartCaptureAsync（キャプチャ）
     SN-->>MW: CaptureResult（画像変更）
-    MW->>MW: CapturePage に画像反映（PreviewImage 変更 → ZoomViewControl.Source 設定 ※ZoomViewControl）
+    MW->>MW: CapturePage に画像反映（PreviewImage 変更 → CropViewControl.Source 設定）
 
     MW->>SS: ウィンドウ位置・サイズ保存（Closing）
     MW->>MW: ホットキー解除・SnipCapture.Dispose

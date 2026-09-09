@@ -146,7 +146,12 @@ internal sealed partial class OverlayWindow : Window
         };
         // 外観設定（DragRect / FadeMask / Loupe を一括適用。設定変換は拡張メソッドに一元化）
         SelectionOverlay.AppearanceSettings =
-            s.ToFadeMaskDragRectSettings(scaling: _scaling, positionOffset: 20.0);
+            s.ToFadeMaskDragRectSettings(positionOffset: 20.0);
+        // DPI スケーリング・ルーペ描画スケールは AppearanceSettings の対象外（コードから動的設定）。
+        // 画面キャプチャはドメイン = 仮想スクリーンピクセルのため、ウィンドウのスケーリング（_scaling）を設定する。
+        SelectionOverlay.Scaling = _scaling;
+        SelectionOverlay.DisplayScaleScaling = _scaling;
+        SelectionOverlay.LoupeRenderScaling = s.LoupeRenderScaling!.Value;
         // サイズラベル: 選択中の矩形（ドメイン = 画面物理 − Position）と、そのモニタの実スケーリングから
         // 描画時に直接生成する（物理ピクセルはスケーリングに依存しない。DIP 換算の往復誤差を排除）。
         // ハイライト（ScreenSelect / WindowSelect）・選択（AreaSelect）の順で優先し、未選択は設定値に委ねる。

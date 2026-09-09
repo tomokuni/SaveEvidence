@@ -16,6 +16,8 @@
     - [6.4 FadeMaskDrawer](#64-fademaskdrawer)
   - [7. 依存ルール](#7-依存ルール)
   - [8. 描画フロー](#8-描画フロー)
+  - [9. ログ](#9-ログ)
+    - [9.1 ログ定義一覧](#91-ログ定義一覧)
 
 ---
 
@@ -37,7 +39,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | PlatformFactory（ICoordinatePort / CoordinatePort） |
+| **依存プロジェクト** | PlatformFactory（ICoordTransform / CoordTransform） |
 
 ## 3. アーキテクチャ
 
@@ -73,27 +75,24 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```mermaid
 flowchart TB
-    subgraph FMC["FadeMaskControl プロジェクト (FadeMaskControl)"]
-        Ctl["FadeMaskControl<br/>public<br/>: Control<br/>FadeMaskControl.cs（公開 API ＋ 描画実装を単一ファイルに集約）"]
-        Drawer["FadeMaskDrawer<br/>internal static<br/>FadeMaskDrawer.cs"]
-        Rnd["FadeMaskRenderer<br/>public sealed<br/>FadeMaskRenderer.cs"]
-        Mode["FadeMaskRenderMode<br/>public enum<br/>FadeMaskRenderMode.cs"]
-    end
-    subgraph Dep["外部依存"]
-        Av["Avalonia 12.1<br/>Control / DrawingContext / StyledProperty"]
-    end
     subgraph Host["上位AP（消費側）"]
         UI["AXAML 配置<br/>依存関係プロパティで制御"]
         Snip["SnipCaptureUI<br/>ExternalRenderer で委譲"]
     end
+    subgraph FMC["FadeMaskControl プロジェクト (FadeMaskControl)"]
+        direction TB
+        Ctl["FadeMaskControl<br/>public<br/>: Control<br/>FadeMaskControl.cs（公開 API ＋ 描画実装を単一ファイルに集約）"]
+        Rnd["FadeMaskRenderer<br/>public sealed<br/>FadeMaskRenderer.cs"]
+        Drawer["FadeMaskDrawer<br/>internal static<br/>FadeMaskDrawer.cs"]
+        Mode["FadeMaskRenderMode<br/>public enum<br/>FadeMaskRenderMode.cs"]
+    end
 
-    Ctl --> Drawer
-    Ctl --> Rnd
-    Rnd --> Drawer
-    Rnd --> Mode
     UI -->|"SelectionRect / OverlayColor / ..."| Ctl
     Snip -->|"ExternalRenderer = FadeMaskRenderer"| Ctl
     Ctl -->|"描画委譲"| Rnd
+    Ctl --> Drawer
+    Rnd --> Drawer
+    Rnd --> Mode
 ```
 
 ## 6. コンポーネント一覧
@@ -146,3 +145,16 @@ flowchart LR
     C --> E[暗転マスク・枠線・ラベル描画]
     D --> E
 ```
+
+## 9. ログ
+
+ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成・`this ILogger` 拡張メソッド）に集約し、`FadeMaskControl.Log` プロパティの `ILogger` 経由で出力する。
+描画専用コントロールのため、マウス・キーイベントのログはない（状態の変更のみ記録）。出力先・レベル制御はホストアプリケーションが所有する。
+
+### 9.1 ログ定義一覧
+
+| レベル | メソッド | 出力内容 |
+| --- | --- | --- |
+| `Debug` | `LogMessage.LogSelectionRectChanged` | 論理選択矩形（ドメイン座標）の変更（変更前後） |
+| `Debug` | `LogMessage.LogExternalRenderer` | 外部レンダラーの設定 / 解除 |
+| `Trace` | `LogMessage.LogCoordinateTransform` | 座標変換ポートの設定 |

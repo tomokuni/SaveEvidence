@@ -78,35 +78,27 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```mermaid
 flowchart TB
+    subgraph Host["上位AP（消費側）"]
+        AP["CropSession / OverlayWindow<br/>ライフサイクル・モード固有処理"]
+    end
     subgraph FDR["FadeMaskDragRect プロジェクト (FadeMaskDragRect)"]
+        direction TB
         Ctl["FadeMaskDragRectControl<br/>public sealed<br/>: Panel<br/>FadeMaskDragRectControl.cs（公開 API ＋ 配線 ＋ レイアウト）"]
         Mode["FadeMaskDragRectMode<br/>public enum<br/>FadeMaskDragRectMode.cs"]
         Stg["FadeMaskDragRectSettings<br/>public sealed record<br/>FadeMaskDragRectSettings.cs"]
     end
     subgraph Dep["内包コントロール（外部プロジェクト）"]
+        direction TB
         DR["DragRectControl<br/>Estable.AvaloniaUI.DragRect"]
         FM["FadeMaskControl + FadeMaskRenderer<br/>Estable.AvaloniaUI.FadeMask"]
         LC["LoupeControl<br/>Estable.AvaloniaUI.Loupe"]
     end
-    subgraph Dep2["外部依存"]
-        Av["Avalonia 12.1<br/>Panel / Control / DrawingContext"]
-        PF["PlatformFactory<br/>ICoordinatePort / CoordinatePort"]
-    end
-    subgraph Host["上位AP（消費側）"]
-        AP["CropSession / OverlayWindow<br/>ライフサイクル・モード固有処理"]
-    end
 
+    AP -->|"Mode / AppearanceSettings / SetCoordinateTransform / イベント購読"| Ctl
+    Ctl -->|"ConfirmRequested / CancelRequested / ZoomRequested"| AP
     Ctl --> DR
     Ctl --> FM
     Ctl --> LC
-    Ctl --> Mode
-    Ctl --> Stg
-    Ctl --> PF
-    DR --> PF
-    FM --> PF
-    LC --> PF
-    AP -->|"Mode / AppearanceSettings / SetCoordinateTransform / イベント購読"| Ctl
-    Ctl -->|"ConfirmRequested / CancelRequested / ZoomRequested"| AP
 ```
 
 ## 6. コンポーネント一覧
@@ -119,7 +111,7 @@ flowchart TB
 | 基底クラス | `Avalonia.Controls.Panel` |
 | 可視性 | public sealed |
 | 責務 | 内包コントロール（DragRect / FadeMask / Loupe）の生成・配置・配線・状態同期と、ホストへの統一インターフェース提供 |
-| 主要メンバー | `Mode` / `AppearanceSettings` / `SetCoordinateTransform` / `SetSelection` / `ClearSelection` / `SetDragRectSelection` / `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `FocusDragRect` / `RequestConfirm` / `RequestCancel` / `AttachScrollViewer` / `NotifyViewportChanged` / `HasSelection` / `SelectionRect` / ハイライト状態（LogicalHighlightRect 等）/ 公開イベント 4 種（独自引数） |
+| 主要メンバー | `Mode` / `AppearanceSettings` / `SetCoordinateTransform` / `SetSelection` / `ClearSelection` / `SetDragRectSelection` / `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `FocusDragRect` / `RequestConfirm` / `RequestCancel` / `AttachScrollViewer` / `NotifyViewportChanged` / `HasSelection` / `SelectionRect` / ハイライト状態（LogicalHighlightRect 等）/ スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling`。`AppearanceSettings` の対象外）/ 公開イベント 4 種（独自引数） |
 | 内部アクセサ（internal） | `Loupe` / `Renderer` / `Overlay` / `DragRect`（自身の Tests のみアクセス可。公開型のカプセル化のため internal 化） |
 | 内部フィールド | `_overlay`（FadeMaskControl）/ `_dragRect`（DragRectControl）/ `_loupeControl`（LoupeControl）/ `_renderer`（FadeMaskRenderer） |
 
@@ -138,7 +130,7 @@ flowchart TB
 | --- | --- |
 | ファイル | `FadeMaskDragRectSettings.cs` |
 | 種類 | public sealed record |
-| 責務 | 外観設定の一括適用（DragRect 外観 10 項目 / FadeMask 外観 13 項目 / Loupe 外観 15 項目） |
+| 責務 | 外観設定の一括適用（DragRect 外観 13 項目 / FadeMask 外観 13 項目 / Loupe 外観 15 項目） |
 
 ### 6.4 内包コントロール（外部プロジェクト）
 
@@ -156,7 +148,7 @@ flowchart TB
 | `FadeMaskDragRectPointEventArgs` | 本プロジェクト | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
 | `FadeMaskDragRectMode` | 本プロジェクト | 動作モード（描画モード・可視性・全面暗転の切替） |
 | `FadeMaskDragRectSettings` | 本プロジェクト | 外観設定（DragRect / FadeMask / Loupe の外観を網羅） |
-| `ICoordinatePort` / `CoordinatePort` | PlatformFactory | ドメイン ↔ DIP の座標変換ポート |
+| `ICoordTransform` / `CoordTransform` | PlatformFactory | ドメイン ↔ DIP の座標変換ポート |
 
 **公開型のカプセル化**: 公開 API は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）の型を参照しない（イベント引数は独自型・状態はプロパティで提供）。
 

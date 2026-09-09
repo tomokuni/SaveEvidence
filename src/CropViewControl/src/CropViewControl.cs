@@ -41,7 +41,8 @@ public sealed partial class CropViewControl : Panel
     private readonly ZoomViewControl _zoomView = new() { ZIndex = 0 };
 
     /// <summary>領域選択オーバーレイ（ドラッグ選択・暗転マスク・ルーペ）。</summary>
-    private readonly FadeMaskDragRectControl _selectionOverlay = new() { ZIndex = 10 };
+    /// <remarks>画像がない間は <see cref="Source"/> に応じてヒットテストを切るとともに非表示にする（画像なしでの選択矩形作成と全面暗転を防止）。</remarks>
+    private readonly FadeMaskDragRectControl _selectionOverlay = new() { ZIndex = 10, IsHitTestVisible = false, IsVisible = false };
 
     /// <summary>内部ロガー（ズームビューポートへ伝搬）。null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/>。</summary>
     /// <remarks><see cref="ZoomViewControl.Log"/> へ委譲する（ズーム操作・座標変換の詳細ログをホストのログ基盤へ転送）。</remarks>
@@ -105,8 +106,37 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.AppearanceSettings = value;
     }
 
+    /// <summary>DPI スケーリング係数（<see cref="FadeMaskDragRectControl.Scaling"/> へ委譲）。</summary>
+    /// <remarks>ユーザー設定ではなく、セッション（Crop は 1.0）がコードから動的設定する。</remarks>
+    public double Scaling
+    {
+        get => _selectionOverlay.Scaling;
+        set => _selectionOverlay.Scaling = value;
+    }
+
+    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正）。<see cref="FadeMaskDragRectControl.DisplayScaleScaling"/> へ委譲する。</summary>
+    /// <remarks>ユーザー設定ではなく、セッションがコードから動的設定する。0 以下は <see cref="Scaling"/> と同値。</remarks>
+    public double DisplayScaleScaling
+    {
+        get => _selectionOverlay.DisplayScaleScaling;
+        set => _selectionOverlay.DisplayScaleScaling = value;
+    }
+
+    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="FadeMaskDragRectControl.LoupeRenderScaling"/> へ委譲する。</summary>
+    /// <remarks>ユーザー設定ではなく、ウィンドウの DPI スケーリングから自動取得する。</remarks>
+    public double LoupeRenderScaling
+    {
+        get => _selectionOverlay.LoupeRenderScaling;
+        set => _selectionOverlay.LoupeRenderScaling = value;
+    }
+
     /// <summary>表示する画像を設定する（ZoomViewControl とルーペへ伝搬する）。</summary>
-    /// <remarks>画像変更時は Fit 表示にリセットし、ズーム状態を適用する。</remarks>
+    /// <remarks>
+    /// 画像変更時は Fit 表示にリセットし、ズーム状態を適用する。<br/>
+    /// オーバーレイ（領域選択）の可視性は本プロパティでは制御しない。<br/>
+    /// 領域選択オーバーレイの可視性は <see cref="SetSelectionOverlayVisible"/>（Crop セッションが開始・終了時に制御）に一本化する。<br/>
+    /// 画像が <c>null</c> に変わるときは既存の選択をクリアする（画像なしで選択矩形が残るのを防ぐ）。
+    /// </remarks>
     public IImage? Source
     {
         get => _source;
@@ -115,6 +145,12 @@ public sealed partial class CropViewControl : Panel
             _source = value;
             _zoomView.Source = value;
             UpdateLoupeSource();
+            // 画像が null に変わるときは選択状態をクリアする。
+            // （オーバーレイの表示・ヒットテストは SetSelectionOverlayVisible が専任。ここでは触らない）
+            if (value is null)
+            {
+                ClearSelection();
+            }
         }
     }
 
@@ -233,6 +269,9 @@ public sealed partial class CropViewControl : Panel
     // 公開 API: 選択状態（FadeMaskDragRectControl へ委譲）
     // ====================================================================
 
+    /// <summary>領域選択オーバーレイ（テスト用アクセサ。画像なし時のドラッグ無効化の検証用）。</summary>
+    internal FadeMaskDragRectControl SelectionOverlay => _selectionOverlay;
+
     /// <summary>現在の選択状態（選択矩形の有無）。</summary>
     public bool HasSelection => _selectionOverlay.HasSelection;
 
@@ -245,6 +284,23 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>選択状態をクリアする（全面暗転に戻す）。</summary>
     public void ClearSelection() => _selectionOverlay.ClearSelection();
+
+    /// <summary>領域選択オーバーレイの可視性とヒットテストを設定する（Crop セッションの開始・終了時に制御）。</summary>
+    /// <param name="visible">true でオーバーレイを可視化しヒットテストを有効化する。false で非表示かつヒットテストを無効化する。</param>
+    /// <remarks>
+    /// オーバーレイはプレビュー表示時（キャプチャ完了・画像読込）は非表示で、Crop セッション中のみ表示する。<br/>
+    /// Crop モード（<see cref="SelectionMode"/>）では全面暗転（FadeMask）を描画するため、プレビュー表示時に勝手に表示すると<br/>
+    /// 「Crop を開始した状態」のような暗転が残る。<see cref="Source"/> 設定では自動表示せず、本メソッドで明示的に制御する。
+    /// </remarks>
+    public void SetSelectionOverlayVisible(bool visible)
+    {
+        _selectionOverlay.IsVisible = visible;
+        _selectionOverlay.IsHitTestVisible = visible;
+        if (!visible)
+        {
+            ClearSelection();
+        }
+    }
 
     /// <summary>座標変換ポートを設定する（内包コントロールへ分配）。</summary>
     /// <param name="port">座標変換ポート。null で等価変換。</param>

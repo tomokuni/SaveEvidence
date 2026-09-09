@@ -36,19 +36,33 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 ## 3. アーキテクチャ
 
-``` text
-[呼び出し元 (ViewModel etc.)]
-        │ ILineDetector
-        ▼
-┌─────────────────────────────┐
-│ ILineDetector (抽象)        │
-│  └─ LogicLineDetector       │
-│       (Canny + Hough)       │
-│       └─ MatHelper (ToMat)  │
-└─────────────────────────────┘
-        │ Detect(PbBitmap)
-        ▼
-[LineDetectionResult リスト]
+```mermaid
+flowchart TB
+    subgraph Host["上位AP（消費側）"]
+        Caller["上位AP<br/>ILineDetector を利用"]
+    end
+    subgraph LD["LineDetection プロジェクト"]
+        direction TB
+        I["ILineDetector<br/>public interface"]
+        Det["LogicLineDetector<br/>public sealed<br/>（Canny + Hough）"]
+        Opt["LineDetectionOptions<br/>public sealed record<br/>（検出パラメータ）"]
+        Rcn["LineRectangleReconstructor<br/>public static<br/>（矩形復元）"]
+        Sgm["LineSegmentMath<br/>internal static<br/>（線分演算）"]
+        Mh["MatHelper<br/>internal static<br/>（PbBitmap → Mat）"]
+        Res["LineDetectionResult<br/>public readonly record struct"]
+    end
+    subgraph Dep["外部依存"]
+        Cv["OpenCvSharp5<br/>（内部利用のみ）"]
+    end
+
+    Caller -->|"Detect(PbBitmap)"| I
+    I --> Det
+    Det --> Opt
+    Det --> Rcn
+    Det --> Sgm
+    Det --> Mh
+    Det --> Res
+    Mh --> Cv
 ```
 
 - 呼び出し元は `ILineDetector` にのみ依存します（依存性逆転）。
@@ -58,24 +72,28 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 | ファイル | 責務 |
 | --- | --- |
-| `DetectionResult.cs` | `LineOrientation`（向き）・`LineDetectionResult`（結果レコード）・`ILineDetector`（インターフェース）を定義。 |
+| `ILineDetector.cs` | `ILineDetector`（インターフェース）を定義。検出方式の抽象化。 |
+| `LineDetectionResult.cs` | `LineOrientation`（向き）enum・`LineDetectionResult`（結果レコード）を定義。 |
+| `LineDetectionOptions.cs` | ロジック方式の検出パラメータ（不変値・検証付き）と既定値（`Default`）を定義。 |
+| `LineRectangleReconstructor.cs` | 線分の集合から矩形（ウィンドウの 4 辺）を構成する静的ヘルパー。 |
+| `LineSegmentMath.cs` | 線分の演算（接続判定・平行判定・長さ等）の内部ヘルパー。 |
 | `LogicLineDetector.cs` | ロジック方式の検出器。Canny + HoughLinesP + 幾何学的一貫性による矩形検出。 |
-| `MatHelper.cs` | `Bitmap` ↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
+| `MatHelper.cs` | `PbBitmap` ↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
 
 ## 5. 依存関係
 
-- `DetectionResult.cs` → `LineDetectionResult`（Avalonia.Point）
-- `LogicLineDetector.cs` → `DetectionResult.cs`（ILineDetector・LineOrientation）・`MatHelper`
-- `MatHelper.cs` → OpenCvSharp（内部のみ）
+- `ILineDetector.cs` → `LineDetectionResult`（Avalonia.Point）/ `PbBitmap`（PlatformFactory）
+- `LogicLineDetector.cs` → `ILineDetector` / `LineOrientation` / `LineDetectionOptions` / `LineRectangleReconstructor` / `LineSegmentMath` / `MatHelper`
+- `MatHelper.cs` → OpenCvSharp（内部のみ）・`PbBitmap`（PlatformFactory）
 
-いずれも他の検出器へ依存しません（疎結合）。`MatHelper` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(PbBitmap)`）には露出しません。
+いずれも他の検出器へ依存しません（疎結合）。`MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(PbBitmap)`）には露出しません。
 
 ## 6. 検出アルゴリズム
 
 ### 6.1. ロジック方式（LogicLineDetector）
 
 ```text
-Bitmap (BGRA)
+PbBitmap (BGRA8888)
   → MatHelper.ToMat (OpenCV の Mat へ変換)
   → グレースケール化
   → Canny エッジ検出

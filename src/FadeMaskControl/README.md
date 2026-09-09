@@ -32,7 +32,7 @@ Avalonia UI 用の選択オーバーレイ描画コントロールです。領�
 - モード別描画（AreaSelect / ScreenSelect / WindowSelect / Crop）に対応
 - Avalonia Binding 対応の StyledProperty（双方向バインド）
 - サイズラベル・情報ラベルの表示制御（DPI スケーリング対応）
-- **座標変換ポート（`SetCoordinateTransform(ICoordinatePort?)` + `LogicalSelectionRect`）**: DragRectControl と同方式。論理座標（ドメイン）の選択矩形を描画時に動的評価で DIP 変換（ウィンドウサイズ変更・ズーム・スクロールに追従）
+- **座標変換ポート（`SetCoordinateTransform(ICoordTransform?)` + `LogicalSelectionRect`）**: DragRectControl と同方式。論理座標（ドメイン）の選択矩形を描画時に動的評価で DIP 変換（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **非暗転領域の閉区間描画**: 非暗転領域（穴）は始点・終点の両ピクセルを含む閉区間（暗転領域は含まない）
 
 ## 3. システム要件

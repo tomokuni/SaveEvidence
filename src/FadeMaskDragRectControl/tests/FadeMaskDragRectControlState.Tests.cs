@@ -49,8 +49,6 @@ public class FadeMaskDragRectControlStateTests
         Assert.NotNull(resolved.CoordLabelColor);
         Assert.NotNull(resolved.CoordLabelBackgroundColor);
         Assert.NotNull(resolved.CoordLabelFontSize);
-        Assert.NotNull(resolved.Scaling);
-        Assert.NotNull(resolved.DisplayScaleScaling);
         Assert.NotNull(resolved.OverlayColor);
         Assert.NotNull(resolved.TextColor);
         Assert.NotNull(resolved.FontSize);
@@ -66,7 +64,6 @@ public class FadeMaskDragRectControlStateTests
         Assert.NotNull(resolved.TextBackgroundColor);
         Assert.NotNull(resolved.RequestedSize);
         Assert.NotNull(resolved.ZoomLevel);
-        Assert.NotNull(resolved.RenderScaling);
         Assert.NotNull(resolved.CrossColor);
         Assert.NotNull(resolved.CheckerSize);
         Assert.NotNull(resolved.CheckerColorA);
@@ -101,8 +98,6 @@ public class FadeMaskDragRectControlStateTests
             CoordLabelColor = Colors.Cyan,
             CoordLabelBackgroundColor = Colors.DarkBlue,
             CoordLabelFontSize = 16.0,
-            Scaling = 1.25,
-            DisplayScaleScaling = 2.0,
             OverlayColor = Colors.DarkGray,
             TextColor = Colors.Lime,
             FontSize = 18.0,
@@ -118,7 +113,6 @@ public class FadeMaskDragRectControlStateTests
             TextBackgroundColor = Colors.DarkCyan,
             RequestedSize = 200,
             ZoomLevel = 8,
-            RenderScaling = 2.5,
             CrossColor = Colors.Magenta,
             CheckerSize = 10,
             CheckerColorA = Colors.Gray,
@@ -149,8 +143,6 @@ public class FadeMaskDragRectControlStateTests
         Assert.Equal(Colors.Cyan, resolved.CoordLabelColor);
         Assert.Equal(Colors.DarkBlue, resolved.CoordLabelBackgroundColor);
         Assert.Equal(16.0, resolved.CoordLabelFontSize);
-        Assert.Equal(1.25, resolved.Scaling);
-        Assert.Equal(2.0, resolved.DisplayScaleScaling);
         Assert.Equal(Colors.DarkGray, resolved.OverlayColor);
         Assert.Equal(Colors.Lime, resolved.TextColor);
         Assert.Equal(18.0, resolved.FontSize);
@@ -166,7 +158,6 @@ public class FadeMaskDragRectControlStateTests
         Assert.Equal(Colors.DarkCyan, resolved.TextBackgroundColor);
         Assert.Equal(200, resolved.RequestedSize);
         Assert.Equal(8, resolved.ZoomLevel);
-        Assert.Equal(2.5, resolved.RenderScaling);
         Assert.Equal(Colors.Magenta, resolved.CrossColor);
         Assert.Equal(10, resolved.CheckerSize);
         Assert.Equal(Colors.Gray, resolved.CheckerColorA);
