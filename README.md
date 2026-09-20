@@ -257,7 +257,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 ```powershell
 git clone https://github.com/your-org/SaveEvidence.git
 cd SaveEvidence
-dotnet publish src/app/src/app.csproj -c Release -o Publish
+dotnet publish src/app.AvaloniaUI/src/app.AvaloniaUI.csproj -c Release -o Publish
 ```
 
 `Publish/SaveEvidence.exe` を実行してください。

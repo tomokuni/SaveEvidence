@@ -148,7 +148,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Image` | `PbBitmap?` | キャプチャした画像（エラー時 null。破棄は呼び出し側） |
+| `Image` | `EsBitmap?` | キャプチャした画像（エラー時 null。破棄は呼び出し側） |
 | `SourceBounds` | `PixelRect?` | キャプチャした領域（**画面物理 Pixel** の仮想画面座標。エラー時 null） |
 
 `Image` と `SourceBounds` は常に同時に null または同時に非 null です。
@@ -167,7 +167,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 | --- | --- | --- |
 | コンストラクタ | `SnipCapture(CaptureSettings? initialSettings = null, ILogger? logger = null)` | インスタンスを生成。設定値が許容範囲外なら `ArgumentOutOfRangeException` |
 | `StartCaptureAsync` | `Task<CaptureResult?> StartCaptureAsync(CaptureType type, Window owner)` | 選択キャプチャを開始。実行中は null / キャンセル時は 0x0 の空結果 |
-| `StartCropAsync` | `Task<PixelRect?> StartCropAsync(CropViewControl cropView, Window hostWindow, PbBitmap sourceImage, Action<bool>? zoomRequestHandler = null)` | 切出しを開始。戻り値は元画像上の論理座標（**ドメイン座標系** = 元画像ピクセル）。実行中は null / キャンセル時は 0x0 の空 `PixelRect`。`zoomRequestHandler` は Ctrl+ホイールによるズーム要求（true = ズームイン / false = ズームアウト）を上位 AP へ通知する（null の場合はズーム操作なし） |
+| `StartCropAsync` | `Task<PixelRect?> StartCropAsync(CropViewControl cropView, Window hostWindow, EsBitmap sourceImage, Action<bool>? zoomRequestHandler = null)` | 切出しを開始。戻り値は元画像上の論理座標（**ドメイン座標系** = 元画像ピクセル）。実行中は null / キャンセル時は 0x0 の空 `PixelRect`。`zoomRequestHandler` は Ctrl+ホイールによるズーム要求（true = ズームイン / false = ズームアウト）を上位 AP へ通知する（null の場合はズーム操作なし） |
 | `Cancel` | `void Cancel()` | 進行中セッションをキャンセル（Capture: オーバーレイを閉じる / Crop: 0x0 で完了） |
 | `Confirm` | `void Confirm()` | Crop を現在の選択矩形で確定（Enter キー相当。FadeMaskDragRectControl.RequestConfirm に委譲） |
 | `NotifyCropViewportChanged` | `void NotifyCropViewportChanged()` | 実行中の Crop セッションへビューポート（パン・ズーム・表示サイズ）の変化を通知。ビューポート実装に依存せず、ホストがビューポート変化を検知した際に中継する（暗転マスク・選択枠・ルーペの追従）。Crop 未実行時は何もしない |
@@ -218,7 +218,7 @@ var result = await _snipCapture.StartCaptureAsync(CaptureType.AreaSelect, window
 
 ### 5.4 型
 
-公開型は `SnipCapture` / `CaptureType` / `CaptureSettings` / `CaptureResult` です。
+公開型は `SnipCapture` / `CaptureSettings` / `CaptureResult` と、コア公開型の `CaptureType`（`Estable.Platform`。UI フレームワーク非依存の共通基盤が提供）です。
 
 #### 5.4.1 SnipCapture
 
@@ -226,6 +226,8 @@ var result = await _snipCapture.StartCaptureAsync(CaptureType.AreaSelect, window
 メンバーは「5.1.1 プロパティ」「5.2.1 メソッド」「5.3.1 イベント」に記載の通りです。
 
 #### 5.4.2 CaptureType
+
+キャプチャ種別（UI フレームワーク非依存）。`PlatformFactory.Core`（名前空間 `Estable.Platform`）が提供するコア公開型です。利用時は `using Estable.Platform;` が必要です。
 
 | 値 | 説明 |
 | --- | --- |
@@ -313,7 +315,7 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 ### 7.1 StartCaptureAsync
 
 1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出（`owner.Screens`）
-2. `CaptureSession` を生成（`IWindowService` / `ICaptureService` / `IElementFinder` を PlatformFactory から注入）
+2. `CaptureSession` を生成（`IWindowService` / `ICaptureService` / `IElementFinder` を `PlatformFactory.Native` から注入）
 3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`。オーバーレイの写り込み防止）
 4. オーナーウィンドウを非表示（`HideOwnerWindow` が true の場合）
 5. **仮想スクリーン全体をバックグラウンド + 5 秒タイムアウトでキャプチャ（全モード共通。切り出し元）**

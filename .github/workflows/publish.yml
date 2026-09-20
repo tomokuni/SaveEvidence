@@ -1,0 +1,128 @@
+# 全 UI を publish してアーティファクトとして保管する再利用ワークフロー（workflow_call）。
+#
+# 配布する UI の定義（名前・publish スクリプト・出力・配布名・zip の要否）は
+# .github/release-config.json が単一所有し、読み取りは .github/actions/read-config に集約している。
+# UI を追加・変更する場合はこのファイルだけを変更する（ワークフローの変更は不要）。
+#
+# .NET SDK のバージョンはリポジトリルートの global.json が単一所有する（ワークフローでは指定しない）。
+#
+# 呼び出し側:
+#   release.yml … リリース時に呼ぶ（version を渡し、そのバージョンで publish する）
+#
+# 配布物の作成は Native AOT を含む重い処理のため、push では実行しない（リリース時に 1 度だけ行う）。
+# build.yml（ゲート）はビルドとテストのみを行い、本ワークフローを呼ばない。
+name: Publish
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'publish するバージョン（省略時はリポジトリの値を使用）'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  # ────────────────────────────────────────────────────────────
+  # 1. 設定を読む（UI の定義を単一ソースから取り出す）
+  # ────────────────────────────────────────────────────────────
+  config:
+    runs-on: ubuntu-latest
+    # 設定の読み取りのみ（実測 10 秒）。停止した場合に 6 時間（既定）待たないための上限
+    timeout-minutes: 10
+    outputs:
+      uis: ${{ steps.read.outputs.uis }}
+      version_file: ${{ steps.read.outputs.version_file }}
+      retention: ${{ steps.read.outputs.artifact_retention_days }}
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v5
+
+      # matrix で使う uis（1 行の JSON）を含め、全設定をここで読み取る
+      - name: リリース設定を読む
+        id: read
+        uses: ./.github/actions/read-config
+
+  # ────────────────────────────────────────────────────────────
+  # 2. 全 UI を publish して保管（公開は release.yml が行う）
+  # ────────────────────────────────────────────────────────────
+  publish:
+    needs: config
+    runs-on: windows-latest
+    # Native AOT / 単一 exe を含む（実測 3.7 分。コールド キャッシュではさらに伸びる）。
+    # 停止した場合に 6 時間（既定）待たないための上限
+    timeout-minutes: 60
+    strategy:
+      # 1 つ失敗しても他の UI の結果を確認できるよう継続する
+      fail-fast: false
+      matrix:
+        ui: ${{ fromJson(needs.config.outputs.uis) }}
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v5
+
+      # .NET SDK はランナー イメージの最新版を使う（setup-dotnet は不要）。
+      # NuGet のキャッシュは UI ごとに分ける。
+      # 4 ジョブが同時に走るため、共通の大きなキャッシュ（約 1.9GB）を 4 重に復元すると
+      # 競合して 1 ジョブあたりの復元が 40 秒台から 90 秒超へ伸びる。
+      # UI ごとに分けると復元量も必要な分だけになる（例: MewUI は約 50MB、Avalonia UI は約 1.2GB）。
+      - name: NuGet をキャッシュ
+        uses: actions/cache@v6
+        with:
+          # 既定のグローバル パッケージ フォルダ（%USERPROFILE%\.nuget\packages）。NUGET_PACKAGES は変更しない
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ matrix.ui.name }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-${{ matrix.ui.name }}-
+
+      # リリース時は、コミット前に publish するため作業ツリーへバージョンを適用する
+      # （公開する成果物と、リリースでコミットするバージョンを一致させる）
+      - name: バージョンを設定
+        if: inputs.version != ''
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+          VERSION_FILE: ${{ needs.config.outputs.version_file }}
+        run: ./.github/scripts/set-version.ps1 -Version $env:VERSION -VersionFile $env:VERSION_FILE | Out-Null
+
+      - name: ${{ matrix.ui.name }} を publish
+        shell: pwsh
+        env:
+          # パスは設定（release-config.json）が単一所有する。プロジェクト内の表記に合わせて / 区切りで持つ
+          SCRIPT: ${{ matrix.ui.script }}
+        run: |
+          # 注意: cmd は / 区切りのパスを実行できないため、pwsh から呼び出す
+          & $env:SCRIPT
+          if ($LASTEXITCODE -ne 0) { throw "$env:SCRIPT が失敗しました（exit $LASTEXITCODE）" }
+
+      - name: 配布物を zip 化
+        if: matrix.ui.zip
+        shell: pwsh
+        env:
+          # 出力は単一ファイル（exe）とフォルダ（exe + ネイティブ DLL）の両方がある
+          OUTPUT: ${{ matrix.ui.output }}
+          ASSET: ${{ matrix.ui.asset }}
+        run: |
+          if (Test-Path -LiteralPath $env:OUTPUT -PathType Container) {
+            # フォルダの場合はフォルダ自身を zip へ含めず、中身を直下へ配置する
+            Compress-Archive -Path "$($env:OUTPUT)/*" -DestinationPath $env:ASSET -Force
+          }
+          else {
+            # 単一ファイルの場合はそのファイルを直下へ配置する
+            Compress-Archive -Path $env:OUTPUT -DestinationPath $env:ASSET -Force
+          }
+
+          Write-Host "zip を作成しました: $env:ASSET"
+
+      # この成果物は release.yml が GitHub Release へ添付する（公開先は GitHub Release のみ）
+      - name: 成果物をアップロード
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.ui.name }}
+          # zip する UI は作成済みの zip を、しない UI は出力そのものを保管する
+          path: ${{ matrix.ui.zip && matrix.ui.asset || matrix.ui.output }}
+          if-no-files-found: error
+          retention-days: ${{ needs.config.outputs.retention }}

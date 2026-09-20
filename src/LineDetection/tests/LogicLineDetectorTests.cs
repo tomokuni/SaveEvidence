@@ -1,31 +1,31 @@
 using Avalonia.Media.Imaging;
-using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform.Imaging;
 using Xunit;
 
-namespace Estable.AvaloniaUI.LineDetection.Tests;
+namespace Estable.LineDetection.Tests;
 
-/// <summary>LogicLineDetector が PbBitmap 入力を正しく検出できることを検証する。</summary>
+/// <summary>LogicLineDetector が EsBitmap 入力を正しく検出できることを検証する。</summary>
 /// <remarks>
-/// 検出器（<see cref="ILineDetector.Detect"/>）は <see cref="PbBitmap"/> を受け取る。<br/>
+/// 検出器（<see cref="ILineDetector.Detect"/>）は <see cref="EsBitmap"/> を受け取る。<br/>
 /// 本テストは <c>[AvaloniaFact]</c>（ヘッドレス）で、純粋なピクセルパターン（人工画像）から<br/>
 /// 矩形（ウィンドウの 4 辺）を検出できることを検証する。<br/>
 /// ヘッドレスの <see cref="WriteableBitmap"/> は <c>Lock()</c> 書き込みが部分的にしか保持されないことがあるため、<br/>
-/// 初期化は <see cref="PbBitmap"/>（SkiaSharp 内部）で行い、<c>[Fact]</c> 化してヘッドレス不要にした。
+/// 初期化は <see cref="EsBitmap"/>（SkiaSharp 内部）で行い、<c>[Fact]</c> 化してヘッドレス不要にした。
 /// </remarks>
 public sealed class LogicLineDetectorTests
 {
-    /// <summary>白背景に黒い枠線の矩形を描画した PbBitmap を構築する。</summary>
+    /// <summary>白背景に黒い枠線の矩形を描画した EsBitmap を構築する。</summary>
     /// <param name="width">画像の幅。</param>
     /// <param name="height">画像の高さ。</param>
     /// <param name="borderThickness">枠線の太さ（ピクセル）。</param>
-    /// <returns>構築した PbBitmap（BGRA）。</returns>
+    /// <returns>構築した EsBitmap（BGRA）。</returns>
     /// <remarks>
     /// 枠線は矩形の外周（上・下・左・右）に黒（BGR=0, A=255）で描画し、内部は白のままにする。<br/>
     /// 検出器の最小長（<c>MinLineLength=50</c>）を満たすよう、十分なサイズの矩形を描画する。
     /// </remarks>
-    private static PbBitmap CreateRectImage(int width, int height, int borderThickness = 3)
+    private static EsBitmap CreateRectImage(int width, int height, int borderThickness = 3)
     {
-        var bmp = PbBitmap.Create(width, height);
+        var bmp = EsBitmap.Create(width, height);
         bmp.Clear(b: 255, g: 255, r: 255, a: 255); // 白
 
         // 外周に黒い枠線を描く

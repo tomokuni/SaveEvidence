@@ -1,4 +1,4 @@
-using Estable.AvaloniaUI.LineDetection;
+using Estable.LineDetection;
 
 namespace LineDetectionSample.ViewModels;
 

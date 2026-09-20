@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Estable.Platform;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using LineDetectionSample.ViewModels;
 

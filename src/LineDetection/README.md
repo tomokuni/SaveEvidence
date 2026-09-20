@@ -30,7 +30,7 @@ Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブ
 
 - `ILineDetector` を実装した検出器（ロジック方式）を提供
 - 水平・垂直の辺（線分）を `LineDetectionResult` として返却
-- `PbBitmap`（BGRA）を入力とし、画像のピクセルを解析
+- `EsBitmap`（BGRA）を入力とし、画像のピクセルを解析
 - ロジック方式:
   - Canny エッジ + HoughLinesP による水平・垂直の辺検出
   - 同一直線上の断片をクラスタリングして長い辺へ統合
@@ -57,13 +57,13 @@ Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブ
 ### ViewModel
 
 ```csharp
-using Estable.AvaloniaUI.LineDetection;
+using Estable.LineDetection;
 using Estable.AvaloniaUI.Platform.Imaging;
 
 ILineDetector detector = new LogicLineDetector();
 
-// 検出器は PbBitmap を入力とする（BGRA8888）。Bitmap → PbBitmap 変換して渡す
-using var unified = bitmap.ToPbBitmap();
+// 検出器は EsBitmap を入力とする（BGRA8888）。Bitmap → EsBitmap 変換して渡す
+using var unified = bitmap.ToEsBitmap();
 var lines = detector.Detect(unified);
 ```
 

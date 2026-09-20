@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.AvaloniaUI.FadeMaskDragRect</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="[12.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.AvaloniaUI.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 複合コントロール（DragRect + FadeMask + Loupe）を構成する内包コントロール -->
+    <ProjectReference Include="..\..\DragRectControl.AvaloniaUI\src\DragRectControl.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\FadeMaskControl.AvaloniaUI\src\FadeMaskControl.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\LoupeControl.AvaloniaUI\src\LoupeControl.AvaloniaUI.csproj" />
+    <!-- 座標変換ポート（ICoordinatePort / CoordinatePort） -->
+    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <!-- UI 非依存の動作モード・選択矩形オーバーレイ描画 -->
+    <ProjectReference Include="..\..\FadeMaskDragRectControl.Core\src\FadeMaskDragRectControl.Core.csproj" />
+  </ItemGroup>
+
+</Project>

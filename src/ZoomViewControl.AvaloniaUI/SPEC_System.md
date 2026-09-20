@@ -1,0 +1,170 @@
+# ZoomViewControl システム仕様書（SPEC_System）
+
+## 目次
+
+- [ZoomViewControl システム仕様書（SPEC\_System）](#zoomviewcontrol-システム仕様書spec_system)
+  - [目次](#目次)
+  - [1. システム概要](#1-システム概要)
+  - [2. 技術スタック](#2-技術スタック)
+  - [3. アーキテクチャ](#3-アーキテクチャ)
+    - [3.1 レイヤー構造](#31-レイヤー構造)
+    - [3.2 依存の方向](#32-依存の方向)
+  - [4. 例外処理ポリシー](#4-例外処理ポリシー)
+    - [4.1 基本方針](#41-基本方針)
+    - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
+  - [5. コンポーネント図](#5-コンポーネント図)
+  - [6. コンポーネント一覧](#6-コンポーネント一覧)
+    - [6.1 ZoomViewControl](#61-zoomviewcontrol)
+    - [6.2 ZoomableView](#62-zoomableview)
+    - [6.3 ZoomConfig / 純粋関数](#63-zoomconfig--純粋関数)
+  - [7. 依存ルール](#7-依存ルール)
+  - [8. ログ](#8-ログ)
+    - [8.1 ログ定義一覧](#81-ログ定義一覧)
+
+---
+
+## 1. システム概要
+
+画像プレビューのズーム・パン・Fit 表示を提供する独立ライブラリです。ScrollViewer を使用しない自己完結型ビューポート（`ZoomableView`）を内包する、ズーム率の遷移・適用を統括する複合コントロール（`ZoomViewControl`）、ズーム遷移の設定（`ZoomConfig`）、UI 非依存の純粋関数（`ZoomMath` / `ZoomTransition` / `ScrollMath`）で構成されます。設定値（`ZoomConfig`）は公開値オブジェクト（`public`）、純粋関数はすべてコントロール内部の実装（`internal`）で、設定値（`ZoomConfig`）を引数で受け取ります。
+
+上位 AP（app 等）は `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読するだけで、ズーム計算・表示・遷移の詳細は本ライブラリが担います。
+
+## 2. 技術スタック
+
+| 項目 | 内容 |
+| --- | --- |
+| **.NET** | .NET 10.0 |
+| **言語** | C# 14 |
+| **UI** | Avalonia 12.1（`Avalonia`） |
+| **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
+| **テスト** | xUnit v3 / Avalonia.Headless |
+| **依存プロジェクト** | `ZoomViewControl.Core`（UI 非依存の計算・設定値）/ `PlatformFactory`（コア型の相互変換・共通計算） |
+
+## 3. アーキテクチャ
+
+### 3.1 レイヤー構造
+
+```text
+上位 AP（app 等）: ZoomViewControl.Source 設定 → ZoomViewControl.ZoomChanged 購読
+  ↓
+ZoomViewControl（本ライブラリ）
+  ├── ZoomViewControl（複合コントロール: 遷移決定・適用・内部配線・ZoomChanged による通知）
+  ├── ZoomableView（コントロール: パン・ズーム表示）
+  └── Logging/LogMessage（LoggerMessage 定義）
+  ↓
+ZoomViewControl.Core（UI 非依存）
+  ├── ZoomConfig（設定値: ズーム遷移のパラメータ。公開値オブジェクト・検証付き不変値）
+  ├── ZoomTransition（遷移決定: ⊖⊕ 段階・×1.1。internal）
+  ├── ZoomMath（計算: ズーム中心維持・Fit 実効倍率・座標変換。internal）
+  └── ZoomAvailability（ズーム可否の値オブジェクト。internal）
+```
+
+### 3.2 依存の方向
+
+- **上位 AP → ZoomViewControl → ZoomViewControl.Core → PlatformFactory.Core の一方向**。逆方向の依存はない。
+- `ZoomViewControl` が `ZoomableView` を内包し、ズーム率・遷移・表示を統括する（単一所有）。
+- `ZoomViewControl` が `ZoomRequested` / `SizeChanged` を内部購読し、ホスト側の配線重複を排除する（DRY）。
+- 純粋関数（`ZoomMath` / `ZoomTransition`）と設定値（`ZoomConfig`）は **`ZoomViewControl.Core`** が提供する（UI 非依存・`Estable.ZoomView`）。遷移パラメータは `ZoomConfig` で受け取る。
+- `ZoomViewControl` / `ZoomableView` は、Core 呼び出しの境界で 1 行の相互変換（`.ToEsSize()` / `.ToEsVector()` / `.ToAvaloniaPoint()` 等）を行う。UI 内部の状態（`RenderTransform`）とイベント引数は Avalonia 型のまま維持する。
+
+## 4. 例外処理ポリシー
+
+### 4.1 基本方針
+
+- ライブラリは例外を原則伝播し、上位 AP（app 等）で処理する。
+- ログは LoggerMessage ソース生成（`Logging/LogMessage.cs`）で出力する。ズーム操作の前後 % を Information で記録する。
+- `ZoomViewControl.Log` へ注入されたロガーへ出力する（未設定時は `NullLogger` で無出力）。
+
+### 4.2 本プロジェクト固有の例外処理
+
+- コントロール（`ZoomableView`）のイベントハンドラ内の例外は握りつぶさず、上位 AP へ伝播する（コントロールの内部状態を不正にしない）。
+- ズーム率（10〜500%）・オフセット（スクロール範囲）はクランプにより不正な値を防止する。`SetSource(null)` 等のリセット系 API は画像なし時も表示状態（スクロールバー非表示・再描画・通知）を一貫して更新する。
+- `ZoomViewControl.Core` の内部型（`ZoomMath` / `ZoomTransition` / `ZoomAvailability`）は入力の範囲チェック・クランプを内部で行い、例外を発生させない。例外を送出するのは設定値（`ZoomConfig`）の不変条件検証のみ。
+
+## 5. コンポーネント図
+
+```mermaid
+flowchart TB
+    subgraph Host["上位AP（消費側）"]
+        AP["app 等<br/>ZoomViewControl.Source 設定 → ZoomViewControl.ZoomChanged 購読"]
+    end
+    subgraph ZVC["ZoomViewControl プロジェクト"]
+        direction TB
+        ZVW["ZoomViewControl<br/>public sealed : Panel<br/>ZoomViewControl.cs（遷移決定・適用・内部配線・ZoomChanged 通知）"]
+        ZV["ZoomableView<br/>internal sealed : Panel<br/>ZoomableView.cs（パン・ズームビューポート）"]
+        LG["LogMessage<br/>Logging/LogMessage.cs（LoggerMessage）"]
+    end
+    subgraph Core["ZoomViewControl.Core プロジェクト（UI 非依存）"]
+        direction TB
+        CFG["ZoomConfig<br/>public sealed class（設定値・検証付き不変値・With）"]
+        TR["ZoomTransition<br/>internal static（遷移決定・可否判定）"]
+        MATH["ZoomMath<br/>internal static（幾何計算）"]
+        AV["ZoomAvailability<br/>internal record struct（可否の値オブジェクト）"]
+    end
+
+    AP -->|Source 設定 / ZoomChanged 購読| ZVW
+    ZVW --> ZV
+    ZVW --> CFG
+    ZVW --> TR
+    ZVW --> MATH
+    ZVW --> AV
+    ZV --> MATH
+    ZVW --> LG
+```
+
+## 6. コンポーネント一覧
+
+### 6.1 ZoomViewControl
+
+- **分類**: 公開コントロール（`public sealed class : Panel`。自己完結型複合コントロール）
+- **責務**: `ZoomableView` を内包し、ズーム率の遷移（⊖⊕ 23 段階 / Ctrl+ホイール ×1.1）・適用・Fit 表示を統括。ズーム要求（`ZoomRequested`）・リサイズ（`SizeChanged`）の配線を自己完結。ズーム率変更・可否は `ZoomChanged` で通知、可否は `CanZoomIn` / `CanZoomOut` で公開。ホストが内部 `ZoomableView` へ到達しないよう、必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知・画像コントロール）を Facade として再公開
+- **非公開メンバー**: `ZoomInByWheel` / `ZoomOutByWheel`（Ctrl+ホイールハンドラのみ）/ `PointerPosition`（ズーム中心。Ctrl+ホイールハンドラのみ）/ `ApplyZoom`（可否・イベント通知の反映。ズーム率変更経路が内部的に呼ぶ）/ `ZoomableView`（内包するビューポート。公開しない）
+- **公開 API の詳細**: `SPEC_ExtFunc.md` の 8.1 を参照
+- **依存**: ZoomableView / ZoomConfig / ZoomMath / ZoomTransition / ZoomAvailability（以上 `ZoomViewControl.Core`） / ScrollMath（`PlatformFactory.Core`） / LogMessage
+- **ズーム率の単一所有**: ズーム率は内包する `ZoomableView` が所有し、本コントロールは `ZoomPercent`（読み書き）で操作窓口を提供する。遷移パラメータは `ZoomConfig`（公開値オブジェクト）が所有し、ズーム範囲のクランプも本コントロールが行う
+
+### 6.2 ZoomableView
+
+- **分類**: 内部コントロール（`internal sealed class : Panel`。`ZoomViewControl` の内部実装）
+- **責務**: ScrollViewer 不使用のパン・ズームビューポート。RenderTransform（ScaleTransform + TranslateTransform）で表示。マウスドラッグパンは grab 方式（掴んだ位置がポインタに追従）。外部からは `ZoomViewControl`（Facade）経由でアクセスする
+- **内部実装の詳細**:
+  - ScrollViewer を使用しない（RenderTransform ベース）。ScrollViewer のレイアウト処理によるオフセット上書きが原理的に発生しないため、ズーム中心維持の防御コード（保留オフセット再設定・収束ループ・Dispatcher.Post 保険）が不要
+  - 描画位置 = 実効スケール × (コンテンツ座標 − オフセット)。オフセットはスクロール範囲（コンテンツ − ビューポート / 実効スケール）にクランプされる
+- **依存**: ZoomMath（`ZoomViewControl.Core`） / ScrollMath（`PlatformFactory.Core`） / ZoomRequestedEventArgs（ズーム範囲のクランプは `ZoomViewControl` が行うため `ZoomTransition` には依存しない）
+
+### 6.3 ZoomConfig / 純粋関数（`ZoomViewControl.Core`）
+
+すべて UI 非依存プロジェクト（名前空間 `Estable.ZoomView`）が提供する。
+
+| コンポーネント | 分類 | 責務 |
+| --- | --- | --- |
+| `ZoomConfig` | 公開 sealed class | ズーム遷移の設定（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`。検証付き不変値・`With` で部分更新）。外部拡張点 |
+| `ZoomMath` | 内部静的クラス | ズーム中心維持・Fit 実効倍率・座標変換（オフセット基準 / 画像表示矩形原点基準）・オフセットクランプの計算（座標は `EsPoint` / `EsVector` / `EsSize`） |
+| `ZoomTransition` | 内部静的クラス | ⊖⊕ 段階遷移・Ctrl+ホイール ×1.1 遷移・可否判定。`ZoomConfig` を引数で受け取る |
+| `ZoomAvailability` | 内部 record struct | ズーム可否（ズームイン・ズームアウト）を単一に保持する値オブジェクト |
+| `ScrollMath` | 公開静的クラス（`PlatformFactory.Core`） | スクロールバーの範囲・ビューポートサイズの計算。共通基盤に分離 |
+
+- 内部型は `InternalsVisibleTo`（`ZoomViewControl` / 各テスト）で公開しており、公開 API は `ZoomConfig` のみ。
+- UI 非依存のため、ヘッドレス不要の `[Fact]` で並列テスト可能（`ZoomViewControl.Core.Tests` が検証）。
+
+## 7. 依存ルール
+
+- 依存は**一方向**（上位 AP → ZoomViewControl → ZoomViewControl.Core → PlatformFactory.Core）。本ライブラリは上位 AP の型（ViewModel 等）に依存しない。
+- `ZoomViewControl` が `ZoomableView` を内包し、`ZoomRequested` / `SizeChanged` / `ViewportChanged` を内部配線する。
+- UI 非依存の計算・設定値は `ZoomViewControl.Core` が単一所有し、UI 側は境界でコア型へ 1 行変換して委譲する。
+- 純粋関数は UI コントロールから分離され、テスト容易性を確保する。
+
+## 8. ログ
+
+- ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成・`this ILogger` 拡張メソッド）に集約。
+- `ZoomViewControl.Log` プロパティへ注入されたロガーへ出力する。未設定（null）の場合は `NullLogger` で無出力。
+- 出力先・ログレベルはホスト側（上位 AP）のロギング基盤（NLog 等）が決定する（本ライブラリはログ転送のみ）。
+
+### 8.1 ログ定義一覧
+
+| レベル | メソッド | 出力内容 |
+| --- | --- | --- |
+| `Information` | `LogMessage.LogZoomIn` | ズームイン（⊖⊕ボタン）の変更前後 % |
+| `Information` | `LogMessage.LogZoomOut` | ズームアウト（⊖⊕ボタン）の変更前後 % |
+| `Information` | `LogMessage.LogZoomInWheel` | Ctrl+ホイールズームインの変更前後 % |
+| `Information` | `LogMessage.LogZoomOutWheel` | Ctrl+ホイールズームアウトの変更前後 % |

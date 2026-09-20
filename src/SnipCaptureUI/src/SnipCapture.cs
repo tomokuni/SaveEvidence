@@ -1,7 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform;
+using Estable.Platform.Imaging;
 using Estable.AvaloniaUI.CropView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -142,7 +143,7 @@ public sealed class SnipCapture : IDisposable
     /// 実行中に同一インスタンスへ再呼び出しされた場合は null を返す。
     /// </remarks>
     public Task<PixelRect?> StartCropAsync(
-        CropViewControl cropView, Window hostWindow, PbBitmap sourceImage,
+        CropViewControl cropView, Window hostWindow, EsBitmap sourceImage,
         Action<bool>? zoomRequestHandler = null)
     {
         ThrowIfDisposed();

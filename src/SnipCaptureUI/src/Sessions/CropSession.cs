@@ -4,6 +4,10 @@ using Avalonia.Input;
 using Size = Avalonia.Size;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform;
+using Estable.Platform.Coordinate;
+using Estable.Platform.Geometry;
+using Estable.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.CropView;
 using Estable.AvaloniaUI.FadeMaskDragRect;
@@ -29,7 +33,7 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 internal sealed class CropSession(
     CropViewControl cropView,
     Window hostWindow,
-    PbBitmap sourceImage,
+    EsBitmap sourceImage,
     CaptureSettings settings,
     ILogger? logger = null,
     Action<bool>? zoomHandler = null)
@@ -50,7 +54,7 @@ internal sealed class CropSession(
     private readonly ICoordTransform _coordinatePort = CreateCoordinatePort(cropView, sourceImage);
 
     /// <summary>ルーペソース用の画像アダプタ（<see cref="sourceImage"/> を内包。一度だけ生成して再利用する）。</summary>
-    private readonly PbBitmapAvaloniaImage _loupeSourceImage = new(sourceImage);
+    private readonly EsBitmapAvaloniaImage _loupeSourceImage = new(sourceImage);
 
     /// <summary>設定（全メンバー non-null）。実行中に <see cref="ApplySettings"/> で更新できる。</summary>
     private CaptureSettings _settings = settings.ToNonNull();
@@ -77,12 +81,12 @@ internal sealed class CropSession(
     /// <see cref="ZoomViewControl.ContentToViewportImage"/>）を委譲する。これにより、ズーム・パン・Fit・中央寄せの<br/>
     /// 原点補正を全て内包ビューポートが単一所有し、ホストが変換を重複実装する必要がない（DRY 原則）。
     /// </remarks>
-    private static ICoordTransform CreateCoordinatePort(CropViewControl cropView, PbBitmap sourceImage)
+    private static ICoordTransform CreateCoordinatePort(CropViewControl cropView, EsBitmap sourceImage)
     {
-        var size = new Size(sourceImage.Size.Width, sourceImage.Size.Height);
+        var size = new EsSize(sourceImage.Size.Width, sourceImage.Size.Height);
         return new CoordTransform(
-            forward: dip => cropView.ViewportToContent(dip),
-            inverse: logical => cropView.ContentToViewport(logical),
+            forward: dip => cropView.ViewportToContent(dip.ToAvaloniaPoint()).ToEsPoint(),
+            inverse: logical => cropView.ContentToViewport(logical.ToAvaloniaPoint()).ToEsPoint(),
             bounds: () => size);
     }
 
@@ -204,8 +208,8 @@ internal sealed class CropSession(
         // 座標変換ポート: ドメイン = 論理座標（元画像ピクセル）。ズーム・パン・Fit・中央寄せの原点補正は
         // 内包する ZoomViewControl が単一所有する（CoordinatePort はそれを委譲）。
         cropView.SetCoordinateTransform(_coordinatePort);
-        // ルーペソース（元画像）。LoupeControl.Source は IImage のため、PbBitmap を内包した IImage
-        // （PbBitmapAvaloniaImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
+        // ルーペソース（元画像）。LoupeControl.Source は IImage のため、EsBitmap を内包した IImage
+        // （EsBitmapAvaloniaImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
         // sourceImage の所有権は呼び出し側にあり、本セッションでは破棄しない（Dispose を呼ばない）。
         // アダプタはフィールドで一度だけ生成して再利用する（ConfigureControls の複数呼び出しでのリーク・再描画防止）。
         cropView.SetLoupeSource(_loupeSourceImage);

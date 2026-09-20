@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.MewUI.CropView</RootNamespace>
+    <AssemblyName>CropViewControl.MewUI</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- MewUI は API が安定化中（0.x）。破壊的変更を避けるためバージョンを固定する。 -->
+    <MewUIVersion>0.21.1</MewUIVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SkiaCanvasView（コアの EsBitmap とオーバーレイを描画する） -->
+    <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
+    <!-- ズーム操作ログ（内包するズームビューへ伝搬する。Avalonia 版と同一の書式） -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UI 非依存の純粋ロジック（Core）とコア幾何型を参照する -->
+    <ProjectReference Include="..\..\CropViewControl.Core\src\CropViewControl.Core.csproj" />
+    <ProjectReference Include="..\..\ZoomViewControl.MewUI\src\ZoomViewControl.MewUI.csproj" />
+    <ProjectReference Include="..\..\PlatformFactory.Core\src\PlatformFactory.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="CropViewControl.MewUI.Tests" />
+  </ItemGroup>
+
+</Project>

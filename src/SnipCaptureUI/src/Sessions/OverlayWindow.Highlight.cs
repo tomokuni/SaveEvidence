@@ -3,7 +3,8 @@ using Avalonia.Input;
 using Avalonia.Platform;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Platform;
+using Estable.Platform.Geometry;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
@@ -22,7 +23,7 @@ internal sealed partial class OverlayWindow
     private void OnClickMoved(object? sender, PointerEventArgs e)
     {
         // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
-        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this).ToPoint());
+        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPixelPoint();
         if (_captureType == CaptureType.ScreenSelect)
             UpdateSelectScreenHighlight(screenPoint);
         else
@@ -34,15 +35,15 @@ internal sealed partial class OverlayWindow
         {
             // ドメイン（ウィンドウローカル物理ピクセル = 画面物理 − Position）→ 画面物理座標へ変換
             // （変換は DomainToScreenRect に委譲する。ドメイン + Position の一元化）
-            PreExtractClip(DomainToScreenRect(highlightLogical.ToAvaloniaRect(), Position));
+            PreExtractClip(DomainToScreenRect(highlightLogical, Position));
         }
     }
 
     /// <summary>ScreenSelect のハイライトを更新する。</summary>
-    private void UpdateSelectScreenHighlight(PixelPoint screenPoint)
+    private void UpdateSelectScreenHighlight(EsPixelPoint screenPoint)
     {
         var detection = _detector.FindScreenUnderCursor(screenPoint);
-        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds).ToRect() : null;
+        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds) : null;
         SelectionOverlay.HasHighlight = detection.IsDetected;
         SelectionOverlay.ScreenIndex = detection.IsDetected ? ParseScreenIndex(detection.Title) : -1;
         // サイズラベルの物理ピクセル換算は、ドメイン（画面物理 − Position）を DIP 変換した
@@ -115,10 +116,10 @@ internal sealed partial class OverlayWindow
     }
 
     /// <summary>WindowSelect のハイライトを更新する。</summary>
-    private void UpdateWindowSelectHighlight(PixelPoint screenPoint)
+    private void UpdateWindowSelectHighlight(EsPixelPoint screenPoint)
     {
         var detection = _detector.FindWindowUnderCursor(screenPoint);
-        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds).ToRect() : null;
+        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds) : null;
         SelectionOverlay.HasHighlight = detection.IsDetected;
         SelectionOverlay.WindowTitle = detection.Title ?? "";
         // サイズラベルの物理ピクセル換算は _scaling（オーバーレイの表示スケール）を維持する
@@ -129,7 +130,7 @@ internal sealed partial class OverlayWindow
     }
 
     /// <summary>画面物理座標の矩形をウィンドウローカル DIP に変換する。</summary>
-    private Rect ToWindowDip(PixelRect bounds)
+    private Rect ToWindowDip(EsPixelRect bounds)
         => new(
             (bounds.X - Position.X) / _scaling,
             (bounds.Y - Position.Y) / _scaling,
@@ -142,7 +143,7 @@ internal sealed partial class OverlayWindow
     /// 描画時には座標変換ポート（DomainScale）が DIP へ変換する。<br/>
     /// 画面物理座標 → ドメイン: Position を減算する（scaling では割らない）。
     /// </remarks>
-    private Rect ToWindowPixel(PixelRect bounds)
+    private Rect ToWindowPixel(EsPixelRect bounds)
         => new(
             bounds.X - Position.X,
             bounds.Y - Position.Y,
@@ -154,7 +155,7 @@ internal sealed partial class OverlayWindow
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
         // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
-        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this).ToPoint());
+        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPixelPoint();
         var targetRect = _captureType == CaptureType.ScreenSelect
             ? _detector.FindScreenUnderCursor(screenPoint).Bounds
             : _detector.FindWindowUnderCursor(screenPoint).Bounds;

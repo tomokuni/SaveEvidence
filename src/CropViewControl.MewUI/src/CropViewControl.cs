@@ -1,0 +1,187 @@
+using Aprillz.MewUI.Controls;
+using Estable.CropView;
+using Estable.MewUI.ZoomView;
+using Estable.Platform.Geometry;
+using Estable.Platform.Imaging;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using SkiaSharp;
+
+namespace Estable.MewUI.CropView;
+
+/// <summary>画像表示（拡大・パン・Fit）と外部提供矩形のオーバーレイを統合した高レベル複合コントロール（MewUI 版）。</summary>
+/// <remarks>
+/// Avalonia 版 <c>CropViewControl</c> と同じ UI 非依存コア（<c>CropViewControl.Core</c>）を使う。<br/>
+/// <b>適用パターン</b>: Facade（ズームビューと矩形オーバーレイを内包し、ホストへ統一インターフェースを提供）。<br/>
+/// <br/>
+/// <b>内部構造</b>:<br/>
+/// - <see cref="ZoomViewControl"/>: 画像ビューポート（拡大・パン・Fit）。<br/>
+/// - <see cref="RectOverlayCanvas"/>: ホストから渡された <see cref="Rects"/> をビューポート座標へ変換して描画する透明オーバーレイ。<br/>
+/// <br/>
+/// <b>領域選択オーバーレイ</b>: 本コントロールは含まない。ホストが <c>FadeMaskDragRectControl.MewUI</c> を重ねて構成する<br/>
+/// （ドラッグ選択・暗転マスク・ルーペ。`app.MewUI` の切り出しはこの構成）。
+/// </remarks>
+public sealed class CropViewControl : Grid
+{
+    /// <summary>ズーム・パンビューポート（拡大・パン・Fit）。</summary>
+    private readonly ZoomViewControl _zoomView = new();
+
+    /// <summary>外部提供矩形のオーバーレイ（透明。入力は下のズームビューへ通す）。</summary>
+    private readonly RectOverlayCanvas _rectOverlay;
+
+    /// <summary>外部提供矩形（ドメイン座標）。</summary>
+    private IReadOnlyList<OverlayRect> _rects = [];
+
+    /// <summary>CropView コントロールを初期化する。</summary>
+    /// <remarks>
+    /// ズームビューと矩形オーバーレイを重ねて配置し、ビューポートの変化をオーバーレイへ中継する。
+    /// </remarks>
+    public CropViewControl()
+    {
+        _rectOverlay = new RectOverlayCanvas(_zoomView);
+
+        // パン・ズーム・リサイズで矩形オーバーレイを追従させる
+        _zoomView.ViewportChanged += (_, _) => _rectOverlay.InvalidateVisual();
+
+        // 後から追加した子が上へ描画される（ズームビューの上にオーバーレイを重ねる）
+        Add(_zoomView);
+        Add(_rectOverlay);
+    }
+
+    /// <summary>外部提供矩形の変化を通知する（再描画後に発火する）。</summary>
+    public event EventHandler? RectsChanged;
+
+    /// <summary>表示する画像（ズーム・パンの対象）を取得または設定する。</summary>
+    /// <value>表示する画像。null の場合は何も表示しない。設定すると Fit 表示へリセットする。</value>
+    public EsBitmap? Source
+    {
+        get => _zoomView.Source;
+        set => _zoomView.Source = value;
+    }
+
+    /// <summary>画像の中央寄せ / 左上寄せを取得または設定する。</summary>
+    /// <value>true の場合は中央寄せ、false の場合は左上寄せ。</value>
+    public bool CenterAlign
+    {
+        get => _zoomView.CenterAlign;
+        set => _zoomView.CenterAlign = value;
+    }
+
+    /// <summary>市松模様（画像の透明部分の背景）の 1 タイルの一辺を取得または設定する。</summary>
+    /// <value>1 タイルの一辺（DIP）。0 以下の場合は市松模様を描画しない。</value>
+    /// <remarks>Avalonia 版の <c>ViewportBackground</c>（市松模様ブラシ）に相当する。</remarks>
+    public int CheckerSize
+    {
+        get => _zoomView.CheckerSize;
+        set => _zoomView.CheckerSize = value;
+    }
+
+    /// <summary>市松模様の明色を取得または設定する。</summary>
+    /// <value>市松模様の色 A（明色）。</value>
+    public SKColor CheckerColorA
+    {
+        get => _zoomView.CheckerColorA;
+        set => _zoomView.CheckerColorA = value;
+    }
+
+    /// <summary>市松模様の暗色を取得または設定する。</summary>
+    /// <value>市松模様の色 B（暗色）。</value>
+    public SKColor CheckerColorB
+    {
+        get => _zoomView.CheckerColorB;
+        set => _zoomView.CheckerColorB = value;
+    }
+
+    /// <summary>市松模様を描画しない場合の背景色を取得または設定する。</summary>
+    /// <value>背景色。市松模様の色が半透明の場合は本色と合成される。</value>
+    public SKColor BackgroundColor
+    {
+        get => _zoomView.BackgroundColor;
+        set => _zoomView.BackgroundColor = value;
+    }
+
+    /// <summary>外部提供矩形（ドメイン座標）を取得または設定する。</summary>
+    /// <value>ビューポートとルーペへ描画する矩形。空の場合は何も描画しない。</value>
+    /// <remarks>設定すると矩形オーバーレイを再描画し、<see cref="RectsChanged"/> を発火する。</remarks>
+    public IReadOnlyList<OverlayRect> Rects
+    {
+        get => _rects;
+        set
+        {
+            _rects = value;
+            _rectOverlay.SetRects(value);
+            RectsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>内包するズームビューポートを取得する（座標変換・Fit 状態の利用に使う）。</summary>
+    /// <value>ズーム・パンを担うコントロール。</value>
+    public ZoomViewControl ZoomView => _zoomView;
+
+    /// <summary>ズーム操作ログの出力先を取得または設定する（内包するズームビューへ伝搬する）。</summary>
+    /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
+    public ILogger Log
+    {
+        get => _zoomView.Log;
+        set => _zoomView.Log = value ?? NullLogger.Instance;
+    }
+
+    /// <summary>現在のズーム率（%）を取得または設定する。</summary>
+    /// <value>Fit 中は実効倍率、固定倍率中はズーム率。0 より大きい値のみ設定できる。</value>
+    public double ZoomPercent
+    {
+        get => _zoomView.ZoomPercent;
+        set => _zoomView.ZoomPercent = value;
+    }
+
+    /// <summary>現在 Fit 表示中かどうかを取得する。</summary>
+    /// <value>Fit 表示中なら true。</value>
+    public bool IsFit => _zoomView.IsFit;
+
+    /// <summary>ズームイン可能かどうかを取得する。</summary>
+    /// <value>ズームイン可能なら true。</value>
+    public bool CanZoomIn => _zoomView.CanZoomIn;
+
+    /// <summary>ズームアウト可能かどうかを取得する。</summary>
+    /// <value>ズームアウト可能なら true。</value>
+    public bool CanZoomOut => _zoomView.CanZoomOut;
+
+    /// <summary>ズーム率が変更されたときに発火する（内包するズームビューから中継する）。</summary>
+    public event EventHandler<ZoomChangedEventArgs>? ZoomChanged
+    {
+        add => _zoomView.ZoomChanged += value;
+        remove => _zoomView.ZoomChanged -= value;
+    }
+
+    /// <summary>ビューポート（パン・ズーム・表示サイズ）が変化したときに発火する（内包するズームビューから中継する）。</summary>
+    public event EventHandler? ViewportChanged
+    {
+        add => _zoomView.ViewportChanged += value;
+        remove => _zoomView.ViewportChanged -= value;
+    }
+
+    /// <summary>画像の表示矩形（ビューポート座標・DIP）を取得する。</summary>
+    /// <returns>画像の表示矩形。画像未設定時は空の矩形。</returns>
+    public EsRect ImageRectViewport() => _zoomView.ImageRectViewport();
+
+    /// <summary>ズームインする（段階遷移）。</summary>
+    public void ZoomIn() => _zoomView.ZoomIn();
+
+    /// <summary>ズームアウトする（段階遷移）。</summary>
+    public void ZoomOut() => _zoomView.ZoomOut();
+
+    /// <summary>Fit 表示（ビューポートに収まる自動倍率）へ戻す。</summary>
+    public void ZoomFit() => _zoomView.ZoomFit();
+
+    /// <summary>ビューポート座標をドメイン座標（元画像ピクセル）へ変換する。</summary>
+    /// <param name="viewportPos">ビューポート座標（DIP）。</param>
+    /// <returns>ドメイン座標（元画像ピクセル）。</returns>
+    /// <remarks>画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。</remarks>
+    public EsPoint ViewportToContent(EsPoint viewportPos) => _zoomView.ViewportToContentImage(viewportPos);
+
+    /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
+    /// <param name="contentPos">ドメイン座標（元画像ピクセル）。</param>
+    /// <returns>ビューポート座標（DIP）。</returns>
+    /// <remarks>画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。</remarks>
+    public EsPoint ContentToViewport(EsPoint contentPos) => _zoomView.ContentToViewportImage(contentPos);
+}

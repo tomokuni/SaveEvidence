@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:LineDetectionSample.ViewModels"
-             xmlns:loupe="clr-namespace:Estable.AvaloniaUI.Loupe;assembly=LoupeControl"
+             xmlns:loupe="clr-namespace:Estable.AvaloniaUI.Loupe;assembly=LoupeControl.AvaloniaUI"
              x:Class="LineDetectionSample.Views.LineCanvasView"
              x:DataType="vm:DetectionContext">
 

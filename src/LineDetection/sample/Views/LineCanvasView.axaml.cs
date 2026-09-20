@@ -5,6 +5,8 @@ using Avalonia.Media;
 using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform.Coordinate;
+using Estable.Platform.Imaging;
 using LineDetectionSample.ViewModels;
 using System.ComponentModel;
 using System.Reactive.Linq;
@@ -167,8 +169,8 @@ public partial class LineCanvasView : UserControl
     /// <summary>ルーペ内の線分オーバーレイの破線パターン（描画 4px・間隔 3px・ルーピクセル）。</summary>
     private static readonly double[] DashPattern = [4.0, 3.0];
 
-    /// <summary>PbBitmap 上に破線の線分を描画する。</summary>
-    /// <param name="bitmap">描画対象の PbBitmap。</param>
+    /// <summary>EsBitmap 上に破線の線分を描画する。</summary>
+    /// <param name="bitmap">描画対象の EsBitmap。</param>
     /// <param name="start">線分の始点（Bitmap ピクセル座標）。</param>
     /// <param name="end">線分の終点（Bitmap ピクセル座標）。</param>
     /// <param name="color">描画色（不透明）。</param>
@@ -177,10 +179,10 @@ public partial class LineCanvasView : UserControl
     /// <remarks>
     /// 既存ピクセルを保持したまま、<paramref name="dash"/> のパターンで線分上のピクセルを塗る。<br/>
     /// 線の太さは <paramref name="thickness"/> の分だけ線分の両側へ広げて塗る（中心線の法線方向）。<br/>
-    /// 描画は <see cref="PbBitmap.SetPixel"/> で行う（BGRA 変換はヘルパーに委譲）。
+    /// 描画は <see cref="EsBitmap.SetPixel"/> で行う（BGRA 変換はヘルパーに委譲）。
     /// </remarks>
     private static void DrawDashedLine(
-        PbBitmap bitmap, Point start, Point end, Color color, IReadOnlyList<double> dash, double thickness)
+        EsBitmap bitmap, Point start, Point end, Color color, IReadOnlyList<double> dash, double thickness)
     {
         var width = bitmap.Size.Width;
         var height = bitmap.Size.Height;
@@ -245,7 +247,7 @@ public partial class LineCanvasView : UserControl
                 continue;
             }
 
-            // 中心点 + 法線方向へ太さ分のピクセルを塗る（範囲外は PbBitmapAvaloniaExtensions.TrySetPixel が無視）
+            // 中心点 + 法線方向へ太さ分のピクセルを塗る（範囲外は EsBitmapAvaloniaExtensions.TrySetPixel が無視）
             for (int n = -half; n <= half; n++)
             {
                 int ox = (int)Math.Round(px + ux * n);

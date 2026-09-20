@@ -8,7 +8,11 @@ using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform;
+using Estable.Platform.Geometry;
+using Estable.Platform.Imaging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
+using Estable.FadeMaskDragRect;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
@@ -32,13 +36,13 @@ public class OverlayWindowTests
         /// <summary>CaptureArea の呼び出し回数（確定時の再キャプチャが廃止されたことの検証用）。</summary>
         public int CaptureAreaCallCount { get; private set; }
 
-        public PbBitmap? CaptureArea(PixelRect bounds)
+        public EsBitmap? CaptureArea(EsPixelRect bounds)
         {
             CaptureAreaCallCount++;
             return null;
         }
 
-        public PbBitmap? CaptureVirtualScreen(out PixelPoint origin)
+        public EsBitmap? CaptureVirtualScreen(out EsPixelPoint origin)
         {
             origin = default;
             return null;
@@ -48,9 +52,9 @@ public class OverlayWindowTests
     /// <summary>ウィンドウサービスのモック。</summary>
     private sealed class MockWindowService : IWindowService
     {
-        public void HideFromTaskSwitcher(IPlatformHandle handle) { }
-        public bool SetCaptureExclusion(IPlatformHandle handle, bool exclude) => true;
-        public void EvacuateWindow(IPlatformHandle handle) { }
+        public void HideFromTaskSwitcher(EsPlatformHandle handle) { }
+        public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude) => true;
+        public void EvacuateWindow(EsPlatformHandle handle) { }
     }
 
     /// <summary>要素検出のモック（常に未検出）。</summary>
@@ -62,8 +66,8 @@ public class OverlayWindowTests
         /// <summary>ウィンドウ検出の結果（既定は未検出）。</summary>
         public ElementFinderResults WindowResult { get; set; }
 
-        public ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint) => WindowResult;
-        public ElementFinderResults FindScreenUnderCursor(PixelPoint screenPoint) => ScreenResult;
+        public ElementFinderResults FindWindowUnderCursor(EsPixelPoint screenPoint) => WindowResult;
+        public ElementFinderResults FindScreenUnderCursor(EsPixelPoint screenPoint) => ScreenResult;
         public IReadOnlyList<ElementFinderResults> ListScreens() => [];
         public IReadOnlyList<ElementFinderResults> ListWindows() => [];
     }
@@ -72,7 +76,7 @@ public class OverlayWindowTests
     private static OverlayWindow CreateWindow(
         CaptureType captureType = CaptureType.AreaSelect,
         double scaling = 1.0,
-        Action<PbBitmap?, PixelRect?>? onComplete = null,
+        Action<EsBitmap?, PixelRect?>? onComplete = null,
         MockCaptureService? captureService = null,
         MockElementFinder? elementFinder = null)
         => new(
@@ -184,7 +188,7 @@ public class OverlayWindowTests
     public async Task CompleteSelection_仮想スクリーンから切り出しCaptureAreaを呼ばない()
     {
         var captureService = new MockCaptureService();
-        PbBitmap? captured = null;
+        EsBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -193,7 +197,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = PbBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 確定: 選択矩形 (2,2)〜(5,5)（半開区間幅 3）→ 閉区間 (2,2,4,4)
@@ -214,7 +218,7 @@ public class OverlayWindowTests
     public async Task CompleteSelection_仮想スクリーン未設定ならCaptureAreaでフォールバックする()
     {
         var captureService = new MockCaptureService();
-        PbBitmap? captured = null;
+        EsBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -243,7 +247,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = PbBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 枠更新（ドラッグ後の矩形）→ 事前切り出しが実行される（Task.Run + Post のため完了をポーリングで待つ）
@@ -260,7 +264,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = PbBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 同じ矩形で 2 回枠更新 → 事前切り出しは 1 回だけ（2 回目はスキップ）
@@ -279,7 +283,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = PbBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 異なる矩形で 2 回枠更新 → 事前切り出しは 2 回
@@ -296,7 +300,7 @@ public class OverlayWindowTests
     public async Task CompleteSelection_事前切り出しキャッシュを再利用する()
     {
         var captureService = new MockCaptureService();
-        PbBitmap? captured = null;
+        EsBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -305,7 +309,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = PbBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 枠更新（事前切り出し）→ 完了をポーリングで待つ
@@ -332,7 +336,7 @@ public class OverlayWindowTests
     [AvaloniaFact]
     public async Task AreaSelect_確定要求でキャプチャが確定する()
     {
-        PbBitmap? captured = null;
+        EsBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -340,7 +344,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = PbBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 矩形を設定してから確定要求（Enter キー相当）を発行する
@@ -360,7 +364,7 @@ public class OverlayWindowTests
     [AvaloniaFact]
     public void AreaSelect_キャンセル要求でキャンセルされる()
     {
-        PbBitmap? captured = null;
+        EsBitmap? captured = null;
         PixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -368,7 +372,7 @@ public class OverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定
-        var virtualScreen = PbBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // キャンセル要求（Esc キー相当）を発行する
@@ -392,7 +396,7 @@ public class OverlayWindowTests
         window.Show(); // _loupeControl.Parent の接続に必要
 
         // 仮想スクリーン Bitmap（3840×1080 = デュアルモニタ相当）を設定
-        var bitmap = PbBitmap.Create(3840, 1080);
+        var bitmap = EsBitmap.Create(3840, 1080);
         window.SetVirtualScreen(bitmap, new PixelPoint(-1920, 0));
 
         // ドメイン（仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）でルーペを更新
@@ -410,7 +414,7 @@ public class OverlayWindowTests
         window.Show(); // _loupeControl.Parent の接続に必要
 
         // マルチモニタ（プライマリが右側・仮想スクリーン原点が (-1920, 0)）のケース
-        var bitmap = PbBitmap.Create(3840, 1080);
+        var bitmap = EsBitmap.Create(3840, 1080);
         window.SetVirtualScreen(bitmap, new PixelPoint(-1920, 0));
 
         // ドメイン（= ローカル DIP × scaling）でルーペを更新
@@ -431,12 +435,12 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.AreaSelect);
         window.Show();
 
-        var bitmap = PbBitmap.Create(100, 100);
+        var bitmap = EsBitmap.Create(100, 100);
         window.SetVirtualScreen(bitmap, default);
 
         // 固定背景画像（VirtualScreenImage）の Source が破棄済みでないこと（Size 参照で例外なし）
         Assert.NotNull(window.VirtualScreenImageControl.Source);
-        Assert.True(window.VirtualScreenImageControl.Source is PbBitmapAvaloniaImage img
+        Assert.True(window.VirtualScreenImageControl.Source is EsBitmapAvaloniaImage img
             && img.Bitmap is { } bmp && bmp.Size.Width > 0);
         window.Close();
     }
@@ -447,7 +451,7 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.AreaSelect);
         window.Show();
 
-        var bitmap = PbBitmap.Create(100, 100);
+        var bitmap = EsBitmap.Create(100, 100);
         window.SetVirtualScreen(bitmap, default);
         Assert.NotNull(window.VirtualScreenImageControl.Source);
 
@@ -490,7 +494,7 @@ public class OverlayWindowTests
         window.Position = new PixelPoint(100, 50);
 
         // Position を減算した矩形（scaling では割らない・ドメイン座標）
-        var result = InvokeToWindowPixel(window, new PixelRect(200, 150, 800, 600));
+        var result = InvokeToWindowPixel(window, new EsPixelRect(200, 150, 800, 600));
 
         Assert.Equal(new Avalonia.Rect(100, 100, 800, 600), result);
     }
@@ -501,7 +505,7 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.ScreenSelect);
 
         // 未検出（MockElementFinder は常に default）→ ハイライト無効・ScreenIndex -1
-        InvokeUpdateSelectScreenHighlight(window, new PixelPoint(100, 100));
+        InvokeUpdateSelectScreenHighlight(window, new EsPixelPoint(100, 100));
 
         Assert.False(window.SelectionOverlay.HasHighlight);
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
@@ -514,7 +518,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             ScreenResult = new ElementFinderResults(
-                new PixelRect(200, 100, 1920, 1080),
+                new EsPixelRect(200, 100, 1920, 1080),
                 IsDetected: true,
                 Title: "Screen 1"),
         };
@@ -522,7 +526,7 @@ public class OverlayWindowTests
         window.Position = new PixelPoint(100, 50);
 
         // 検出（画面物理 (200,100)-(2120,1180)）→ ドメイン（ウィンドウローカル物理）へ変換して反映
-        InvokeUpdateSelectScreenHighlight(window, new PixelPoint(500, 500));
+        InvokeUpdateSelectScreenHighlight(window, new EsPixelPoint(500, 500));
 
         Assert.True(window.SelectionOverlay.HasHighlight);
         Assert.Equal(new Rect(100, 50, 1920, 1080), window.SelectionOverlay.LogicalHighlightRect);
@@ -535,7 +539,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             ScreenResult = new ElementFinderResults(
-                new PixelRect(200, 100, 1920, 1080),
+                new EsPixelRect(200, 100, 1920, 1080),
                 IsDetected: true,
                 Title: "Screen 1"),
         };
@@ -544,7 +548,7 @@ public class OverlayWindowTests
 
         // マルチモニタでカーソル位置のスクリーンのスケーリングが異なっても、
         // サイズラベルの物理換算はドメイン（画面物理 − Position）と往復一致するよう _scaling を維持する
-        InvokeUpdateSelectScreenHighlight(window, new PixelPoint(500, 500));
+        InvokeUpdateSelectScreenHighlight(window, new EsPixelPoint(500, 500));
 
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
         window.Close();
@@ -556,7 +560,7 @@ public class OverlayWindowTests
         // 未検出（MockElementFinder は常に default）
         var window = CreateWindow(CaptureType.ScreenSelect, scaling: 2.0);
 
-        InvokeUpdateSelectScreenHighlight(window, new PixelPoint(100, 100));
+        InvokeUpdateSelectScreenHighlight(window, new EsPixelPoint(100, 100));
 
         // 未検出時も _scaling（2.0）のまま維持される
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
@@ -569,7 +573,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new PixelRect(300, 200, 800, 600),
+                new EsPixelRect(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
@@ -577,7 +581,7 @@ public class OverlayWindowTests
         window.Position = new PixelPoint(100, 50);
 
         // 検出（画面物理 (300,200)-(1100,800)）→ ドメインへ変換して反映
-        InvokeUpdateWindowSelectHighlight(window, new PixelPoint(500, 500));
+        InvokeUpdateWindowSelectHighlight(window, new EsPixelPoint(500, 500));
 
         Assert.True(window.SelectionOverlay.HasHighlight);
         Assert.Equal(new Rect(200, 150, 800, 600), window.SelectionOverlay.LogicalHighlightRect);
@@ -590,14 +594,14 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new PixelRect(300, 200, 800, 600),
+                new EsPixelRect(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
         var window = CreateWindow(CaptureType.WindowSelect, scaling: 2.0, elementFinder: finder);
 
         // ウィンドウのハイライトでもサイズラベル換算は _scaling を維持する（ScreenSelect と同一）
-        InvokeUpdateWindowSelectHighlight(window, new PixelPoint(500, 500));
+        InvokeUpdateWindowSelectHighlight(window, new EsPixelPoint(500, 500));
 
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
         window.Close();
@@ -610,7 +614,7 @@ public class OverlayWindowTests
         window.Position = new PixelPoint(100, 50);
 
         // (画面物理 − Position) / scaling で変換
-        var result = InvokeToWindowDip(window, new PixelRect(300, 250, 800, 600));
+        var result = InvokeToWindowDip(window, new EsPixelRect(300, 250, 800, 600));
 
         Assert.Equal(new Avalonia.Rect(100, 100, 400, 300), result);
     }
@@ -621,7 +625,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new PixelRect(300, 200, 800, 600),
+                new EsPixelRect(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
@@ -648,7 +652,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new PixelRect(300, 200, 800, 600),
+                new EsPixelRect(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
@@ -674,7 +678,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             ScreenResult = new ElementFinderResults(
-                new PixelRect(200, 100, 1920, 1080),
+                new EsPixelRect(200, 100, 1920, 1080),
                 IsDetected: true,
                 Title: "Screen 1"),
         };
@@ -698,7 +702,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new PixelRect(300, 200, 800, 600),
+                new EsPixelRect(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
@@ -762,7 +766,7 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.WindowSelect);
 
         // 未検出 → ハイライト無効・タイトル空
-        InvokeUpdateWindowSelectHighlight(window, new PixelPoint(100, 100));
+        InvokeUpdateWindowSelectHighlight(window, new EsPixelPoint(100, 100));
 
         Assert.False(window.SelectionOverlay.HasHighlight);
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
@@ -773,14 +777,14 @@ public class OverlayWindowTests
     // リフレクションヘルパー（private メソッドの直接検証）
     // ====================================================================
 
-    private static Avalonia.Rect InvokeToWindowPixel(OverlayWindow window, PixelRect bounds)
+    private static Avalonia.Rect InvokeToWindowPixel(OverlayWindow window, EsPixelRect bounds)
     {
         var method = typeof(OverlayWindow).GetMethod(
             "ToWindowPixel", BindingFlags.Instance | BindingFlags.NonPublic)!;
         return (Avalonia.Rect)method.Invoke(window, [bounds])!;
     }
 
-    private static Avalonia.Rect InvokeToWindowDip(OverlayWindow window, PixelRect bounds)
+    private static Avalonia.Rect InvokeToWindowDip(OverlayWindow window, EsPixelRect bounds)
     {
         var method = typeof(OverlayWindow).GetMethod(
             "ToWindowDip", BindingFlags.Instance | BindingFlags.NonPublic)!;
@@ -808,14 +812,14 @@ public class OverlayWindowTests
         method.Invoke(window, [null, e]);
     }
 
-    private static void InvokeUpdateSelectScreenHighlight(OverlayWindow window, PixelPoint screenPoint)
+    private static void InvokeUpdateSelectScreenHighlight(OverlayWindow window, EsPixelPoint screenPoint)
     {
         var method = typeof(OverlayWindow).GetMethod(
             "UpdateSelectScreenHighlight", BindingFlags.Instance | BindingFlags.NonPublic)!;
         method.Invoke(window, [screenPoint]);
     }
 
-    private static void InvokeUpdateWindowSelectHighlight(OverlayWindow window, PixelPoint screenPoint)
+    private static void InvokeUpdateWindowSelectHighlight(OverlayWindow window, EsPixelPoint screenPoint)
     {
         var method = typeof(OverlayWindow).GetMethod(
             "UpdateWindowSelectHighlight", BindingFlags.Instance | BindingFlags.NonPublic)!;

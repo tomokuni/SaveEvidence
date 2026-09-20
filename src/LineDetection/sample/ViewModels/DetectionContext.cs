@@ -2,8 +2,9 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.AvaloniaUI.LineDetection;
+using Estable.LineDetection;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform.Imaging;
 using System.Collections.ObjectModel;
 
 namespace LineDetectionSample.ViewModels;
@@ -128,8 +129,8 @@ public sealed partial class DetectionContext : ObservableObject
             return;
         }
 
-        // 検出器は PbBitmap を入力として受け取る（Bitmap → PbBitmap 変換）
-        using var unified = Image.ToPbBitmap();
+        // 検出器は EsBitmap を入力として受け取る（Bitmap → EsBitmap 変換）
+        using var unified = Image.ToEsBitmap();
         var results = detector.Detector.Detect(unified);
 
         // モデル依存方式のエラー（モデル未配置等）をステータスへ反映する

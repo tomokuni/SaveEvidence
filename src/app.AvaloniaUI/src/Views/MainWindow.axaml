@@ -1,0 +1,225 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Estable.SaveEvidence.ViewModels;assembly=app.Core"
+        xmlns:pages="clr-namespace:Estable.SaveEvidence.Views.Pages"
+        xmlns:chrome="clr-namespace:Avalonia.Controls.Chrome;assembly=Avalonia.Controls"
+        x:Class="Estable.SaveEvidence.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title=""
+        Width="1200" Height="800"
+        MinWidth="800" MinHeight="400"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="32">
+    <Window.Styles>
+        <Style Selector="MenuItem, Button, ToggleButton">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <!-- ナビゲーションパネルアイテムのスタイル -->
+        <Style Selector="Border.NavItem">
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border.NavItem:hover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}"/>
+        </Style>
+        <Style Selector="Border.NavItem.selected">
+            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListMediumBrush}"/>
+        </Style>
+
+        <!-- ナビゲーション開閉トグルボタンのスタイル（パネル背景に馴染ませる）。
+             Fluent テーマの ToggleButton は擬似クラスに :pointerover を使用し（:hover ではない）、
+             テンプレート内 ContentPresenter#PART_ContentPresenter の Foreground は TemplateBinding されていない。
+             そのため、文字色・背景の上書きは /template/ ContentPresenter#PART_ContentPresenter に対して行う。 -->
+        <Style Selector="ToggleButton.NavToggle">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <!-- 通常状態（▶）: 文字色を通常色に固定（テンプレート内に直接設定） -->
+        <Style Selector="ToggleButton.NavToggle /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        <!-- 通常状態（▶）のホバー: Fluent と同じ薄い背景を表示（:pointerover を使用） -->
+        <Style Selector="ToggleButton.NavToggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        <!-- チェック（展開・◀）状態: 青背景を透明にし、文字色を通常（▶）と同じにする -->
+        <Style Selector="ToggleButton.NavToggle:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <!-- Fluent が ToggleButtonForegroundChecked（白）を設定するため、通常と同じ文字色に戻す -->
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        <!-- チェック（◀）状態のホバー: ▶ と同じ動作（薄い背景を表示・文字色維持） -->
+        <Style Selector="ToggleButton.NavToggle:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        <!-- 押下中も背景・文字色を変えない（通常・チェック共通） -->
+        <Style Selector="ToggleButton.NavToggle:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        <Style Selector="ToggleButton.NavToggle:checked:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+
+        <!-- フルスクリーンボタン（最小化ボタンの左の斜め矢印）を無効化する（KIOSK 化機能は不要）。
+             IsVisible=False にするとボタン群のスペースが消えて最小化・最大化・閉じるが左に寄るため、
+             透明 + 非ヒットテストでスペースを維持したまま操作不可にする。 -->
+        <Style Selector="Button#PART_FullScreenButton">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="IsEnabled" Value="False"/>
+        </Style>
+        <!-- フルスクリーンモードのポップオーバーにも同ボタンが存在するため、同様に無効化する -->
+        <Style Selector="Button#PART_PopoverFullScreenButton">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="IsEnabled" Value="False"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="Auto,*">
+        <!-- ナビパネルの背景（全高）。NavPanel は収納時に Top + Auto 高さへ縮むため、
+             その下の白見えを防ぐために本 Border がウィンドウ下端まで背景色で塗る -->
+        <Border Grid.Column="0"
+                Width="{Binding NavPanelWidth}"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"/>
+
+        <!-- ナビゲーションパネル（左・開閉可能。上部 32px は自前タイトルバー領域）。
+             開閉どちらでも同じ位置（左上）に表示する。閉じたときは高さがコンテンツ分に縮む（UpdateNavPanelLayout で制御）。
+             背景は上の全高 Border が担うため Transparent -->
+        <Border x:Name="NavPanel"
+                Grid.Column="0"
+                Width="{Binding NavPanelWidth}"
+                Background="Transparent">
+            <!--
+            RowDefinitions の * 行は展開時のフッター（v1.0.0）をウィンドウ下端へ押し下げる（Auto ではアイテム直後に来てしまう）。
+            収納時は NavPanel がコンテンツ高さに縮むため * 行は 0 になり、下部の余白は UpdateNavPanelLayout の
+            Padding（背景色付き）で確保する（設定アイコンの下が白く見えないようにする）。
+            -->
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- タイトルバー領域（ナビパネル幅・ドラッグでウィンドウ移動。☰ はクリック可能）。
+                     高さ 40px: ☰（高さ 28px）を中央配置すると上端 6px のスペースが生じ、ツールバー（上端 6px）と揃う -->
+                <Border Grid.Row="0"
+                        Height="50"
+                        Background="Transparent"
+                        chrome:WindowDecorationProperties.ElementRole="TitleBar">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <ToggleButton x:Name="NavToggleButton"
+                                      Grid.Column="0"
+                                      Classes="NavToggle"
+                                      IsChecked="{Binding IsNavigationExpanded}"
+                                      chrome:WindowDecorationProperties.ElementRole="User"
+                                      Margin="6,0,0,0"
+                                      HorizontalAlignment="Left"
+                                      VerticalAlignment="Center"
+                                      ToolTip.Tip="ナビゲーションを開閉">
+                            <!-- PathIcon は ContentPresenter の Foreground を継承しないため、明示的にテーマの通常文字色に固定する
+                                 （チェック状態で Fluent の ToggleButtonForegroundChecked（白）に上書きされないようにする） -->
+                            <PathIcon x:Name="NavToggleIcon"
+                                      Width="16"
+                                      Height="16"
+                                      Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                        </ToggleButton>
+                        <TextBlock Grid.Column="1"
+                                   Text="SaveEvidence"
+                                   FontSize="14"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   Margin="6,0,0,0"
+                                   IsVisible="{Binding IsNavigationExpanded}"/>
+                    </Grid>
+                </Border>
+
+                <!-- ナビゲーションアイテム一覧（収納時はアイコンのみ。アイコンの位置は展開時と同じ左端に固定）。
+                     下部余白 8px により、収納時も設定アイコンの下が背景色で塗られる -->
+                <StackPanel Grid.Row="1" Margin="0,8,0,8">
+                    <Border x:Name="NavCapture"
+                            Classes="NavItem"
+                            ToolTip.Tip="キャプチャ"
+                            PointerPressed="OnNavCaptureClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon x:Name="NavCaptureIcon" Width="16" Height="24"/>
+                            <TextBlock Text="キャプチャ"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding IsNavigationExpanded}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="NavFolderView"
+                            Classes="NavItem"
+                            ToolTip.Tip="フォルダビュー"
+                            PointerPressed="OnNavFolderViewClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon x:Name="NavFolderViewIcon" Width="16" Height="24"/>
+                            <TextBlock Text="フォルダビュー"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding IsNavigationExpanded}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="NavUndo"
+                            Classes="NavItem"
+                            ToolTip.Tip="Undo 一覧"
+                            PointerPressed="OnNavUndoClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon x:Name="NavUndoIcon" Width="16" Height="24"/>
+                            <TextBlock Text="Undo 一覧"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding IsNavigationExpanded}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="NavSettings"
+                            Classes="NavItem"
+                            ToolTip.Tip="設定"
+                            PointerPressed="OnNavSettingsClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon x:Name="NavSettingsIcon" Width="16" Height="24"/>
+                            <TextBlock Text="設定"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding IsNavigationExpanded}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- パネルフッター（バージョン情報。収納時は非表示）。背景は全高の Border が担う -->
+                <TextBlock Grid.Row="2"
+                           Text="v1.0.0"
+                           FontSize="11"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                           Margin="12,8"
+                           HorizontalAlignment="Center"
+                           IsVisible="{Binding IsNavigationExpanded}"/>
+            </Grid>
+        </Border>
+
+        <!-- メインコンテンツエリア（右・ウィンドウ全体の高さを使用。上部 32px もページのツールバー領域として使える） -->
+        <Grid Grid.Column="1">
+            <!-- ===== ページ0: キャプチャ（画像プレビュー） ===== -->
+            <pages:CapturePage x:Name="CaptureContent"/>
+
+            <!-- ===== ページ1: フォルダビュー ===== -->
+            <pages:FolderViewPage x:Name="FolderViewContent" IsVisible="False"/>
+
+            <!-- ===== ページ2: Undo 一覧 ===== -->
+            <pages:UndoPage x:Name="UndoContent" IsVisible="False"/>
+
+            <!-- ===== ページ3: 設定 ===== -->
+            <pages:SettingsPage x:Name="SettingsContent" IsVisible="False"/>
+        </Grid>
+    </Grid>
+</Window>

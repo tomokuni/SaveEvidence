@@ -2,6 +2,8 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform;
+using Estable.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using SnipCaptureUI.Sample.ViewModels;
 using System.Collections.Specialized;
@@ -28,8 +30,8 @@ public sealed partial class MainWindow : Window
     /// <summary>ビューモデル。</summary>
     private readonly MainWindowViewModel _vm = new();
 
-    /// <summary>Crop プレビュー用のダミー画像（PbBitmapAvaloniaImage。Skia 直描画・ゼロコピー表示）。</summary>
-    private PbBitmapAvaloniaImage? _previewBitmap;
+    /// <summary>Crop プレビュー用のダミー画像（EsBitmapAvaloniaImage。Skia 直描画・ゼロコピー表示）。</summary>
+    private EsBitmapAvaloniaImage? _previewBitmap;
 
     /// <summary>MainWindow を初期化する。</summary>
     public MainWindow()
@@ -65,7 +67,7 @@ public sealed partial class MainWindow : Window
     {
         if (result?.Image is { } image)
         {
-            // 画像変更（同期実行。このハンドラの完了後に APP が再表示される）。キャプチャ結果（PbBitmap）を表示用 Bitmap へ変換。
+            // 画像変更（同期実行。このハンドラの完了後に APP が再表示される）。キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換。
             _vm.CapturedImage = image.ToAvaloniaBitmap();
             _vm.AddLog("[Event] CaptureCompleted（同期）：キャプチャ画像を更新しました。");
         }
@@ -180,15 +182,15 @@ public sealed partial class MainWindow : Window
     /// <summary>グリッド付きのダミー画像を生成する（Crop プレビュー用）。</summary>
     /// <param name="width">画像の幅。</param>
     /// <param name="height">画像の高さ。</param>
-    /// <returns>生成した <see cref="PbBitmapAvaloniaImage"/>（<see cref="IImage"/> として表示できる）。</returns>
+    /// <returns>生成した <see cref="EsBitmapAvaloniaImage"/>（<see cref="IImage"/> として表示できる）。</returns>
     /// <remarks>
     /// 白地に 100px 間隔の薄いグリッドと、中央に色付きの矩形を描画する（サイズ感・座標の確認用）。<br/>
-    /// <b>PbBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、
-    /// <see cref="PbBitmapAvaloniaImage"/>（Skia 直描画・ゼロコピー）として表示できる。
+    /// <b>EsBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、
+    /// <see cref="EsBitmapAvaloniaImage"/>（Skia 直描画・ゼロコピー）として表示できる。
     /// </remarks>
-    private static PbBitmapAvaloniaImage CreateDummyBitmap(int width, int height)
+    private static EsBitmapAvaloniaImage CreateDummyBitmap(int width, int height)
     {
-        var bitmap = PbBitmap.Create(width, height);
+        var bitmap = EsBitmap.Create(width, height);
 
         for (int y = 0; y < height; y++)
         {
@@ -218,6 +220,6 @@ public sealed partial class MainWindow : Window
             }
         }
 
-        return new PbBitmapAvaloniaImage(bitmap);
+        return new EsBitmapAvaloniaImage(bitmap);
     }
 }

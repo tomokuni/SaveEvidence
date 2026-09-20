@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.MewUI.DragRect</RootNamespace>
+    <AssemblyName>DragRectControl.MewUI</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- MewUI は API が安定化中（0.x）。破壊的変更を避けるためバージョンを固定する。 -->
+    <MewUIVersion>0.21.1</MewUIVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SkiaCanvasView（枠線・ハンドル・マーカー・座標ラベルを描画する） -->
+    <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
+    <!-- 操作ログ（LoggerMessage ソース生成・NullLogger。Avalonia 版と同一の書式） -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UI 非依存の選択幾何・状態機械（Core）とコア幾何型を参照する -->
+    <ProjectReference Include="..\..\DragRectControl.Core\src\DragRectControl.Core.csproj" />
+    <ProjectReference Include="..\..\PlatformFactory.Core\src\PlatformFactory.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- カーソル操作の既定実装（Win32 / NoOp・UI 非依存）。状態機械は抽象のみに依存し、既定実装の解決は本 UI 層が行う。 -->
+    <ProjectReference Include="..\..\PlatformFactory.Native\src\PlatformFactory.Native.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="DragRectControl.MewUI.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.AvaloniaUI.LineDetection.Tests;
+namespace Estable.LineDetection.Tests;
 
 /// <summary><see cref="LineDetectionOptions"/> の単体テスト（不変値・検証付き）。</summary>
 /// <remarks>

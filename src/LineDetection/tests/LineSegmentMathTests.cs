@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.AvaloniaUI.LineDetection.Tests;
+namespace Estable.LineDetection.Tests;
 
 /// <summary><see cref="LineSegmentMath"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

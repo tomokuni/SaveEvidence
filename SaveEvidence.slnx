@@ -1,44 +1,109 @@
 <Solution>
   <Folder Name="/src/" />
-  <Folder Name="/src/app/">
-    <Project Path="src/app/src/app.csproj" />
-    <Project Path="src/app/tests/app.Tests.csproj" />
+  <Folder Name="/src/app.Core/">
+    <Project Path="src/app.Core/src/app.Core.csproj" />
+    <Project Path="src/app.Core/tests/app.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/ColorPickerControl/">
-    <Project Path="src/ColorPickerControl/sample/ColorPickerControl.Sample.csproj" />
-    <Project Path="src/ColorPickerControl/src/ColorPickerControl.csproj" />
-    <Project Path="src/ColorPickerControl/tests/ColorPickerControl.Tests.csproj" />
+  <Folder Name="/src/app.AvaloniaUI/">
+    <Project Path="src/app.AvaloniaUI/src/app.AvaloniaUI.csproj" />
+    <Project Path="src/app.AvaloniaUI/tests/app.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/CropViewControl/">
-    <Project Path="src/CropViewControl/src/CropViewControl.csproj" />
-    <Project Path="src/CropViewControl/tests/CropViewControl.Tests.csproj" />
+  <Folder Name="/src/app.MewUI/">
+    <Project Path="src/app.MewUI/src/app.MewUI.csproj" />
+    <Project Path="src/app.MewUI/tests/app.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/DragRectControl/">
-    <Project Path="src/DragRectControl/sample/DragRectControl.Sample.csproj" />
-    <Project Path="src/DragRectControl/src/DragRectControl.csproj" />
-    <Project Path="src/DragRectControl/tests/DragRectControl.Tests.csproj" />
+  <Folder Name="/src/ColorPickerControl.AvaloniaUI/">
+    <Project Path="src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj" />
+    <Project Path="src/ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj" />
+    <Project Path="src/ColorPickerControl.AvaloniaUI/tests/ColorPickerControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/FadeMaskControl/">
-    <Project Path="src/FadeMaskControl/sample/FadeMaskControl.Sample.csproj" />
-    <Project Path="src/FadeMaskControl/src/FadeMaskControl.csproj" />
-    <Project Path="src/FadeMaskControl/tests/FadeMaskControl.Tests.csproj" />
+  <Folder Name="/src/CropViewControl.Core/">
+    <Project Path="src/CropViewControl.Core/src/CropViewControl.Core.csproj" />
+    <Project Path="src/CropViewControl.Core/tests/CropViewControl.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/FadeMaskDragRectControl/">
-    <Project Path="src/FadeMaskDragRectControl/src/FadeMaskDragRectControl.csproj" />
-    <Project Path="src/FadeMaskDragRectControl/tests/FadeMaskDragRect.Tests.csproj" />
+  <Folder Name="/src/CropViewControl.Core/src/" />
+  <Folder Name="/src/CropViewControl.MewUI/">
+    <Project Path="src/CropViewControl.MewUI/src/CropViewControl.MewUI.csproj" />
+    <Project Path="src/CropViewControl.MewUI/tests/CropViewControl.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/FadeMaskDragRectControl/src/" />
+  <Folder Name="/src/CropViewControl.AvaloniaUI/">
+    <Project Path="src/CropViewControl.AvaloniaUI/src/CropViewControl.AvaloniaUI.csproj" />
+    <Project Path="src/CropViewControl.AvaloniaUI/tests/CropViewControl.AvaloniaUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/DragRectControl.Core/">
+    <Project Path="src/DragRectControl.Core/src/DragRectControl.Core.csproj" />
+    <Project Path="src/DragRectControl.Core/tests/DragRectControl.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/DragRectControl.MewUI/">
+    <Project Path="src/DragRectControl.MewUI/src/DragRectControl.MewUI.csproj" />
+    <Project Path="src/DragRectControl.MewUI/tests/DragRectControl.MewUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/DragRectControl.MewUI/src/" />
+  <Folder Name="/src/DragRectControl.AvaloniaUI/">
+    <Project Path="src/DragRectControl.AvaloniaUI/sample/DragRectControl.AvaloniaUI.Sample.csproj" />
+    <Project Path="src/DragRectControl.AvaloniaUI/src/DragRectControl.AvaloniaUI.csproj" />
+    <Project Path="src/DragRectControl.AvaloniaUI/tests/DragRectControl.AvaloniaUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/FadeMaskControl.Core/">
+    <Project Path="src/FadeMaskControl.Core/src/FadeMaskControl.Core.csproj" />
+    <Project Path="src/FadeMaskControl.Core/tests/FadeMaskControl.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/FadeMaskControl.Core/src/" />
+  <Folder Name="/src/FadeMaskControl.MewUI/">
+    <Project Path="src/FadeMaskControl.MewUI/src/FadeMaskControl.MewUI.csproj" />
+    <Project Path="src/FadeMaskControl.MewUI/tests/FadeMaskControl.MewUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/FadeMaskControl.MewUI/src/" />
+  <Folder Name="/src/FadeMaskControl.AvaloniaUI/">
+    <Project Path="src/FadeMaskControl.AvaloniaUI/sample/FadeMaskControl.AvaloniaUI.Sample.csproj" />
+    <Project Path="src/FadeMaskControl.AvaloniaUI/src/FadeMaskControl.AvaloniaUI.csproj" />
+    <Project Path="src/FadeMaskControl.AvaloniaUI/tests/FadeMaskControl.AvaloniaUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/FadeMaskDragRectControl.Core/">
+    <Project Path="src/FadeMaskDragRectControl.Core/src/FadeMaskDragRectControl.Core.csproj" />
+    <Project Path="src/FadeMaskDragRectControl.Core/tests/FadeMaskDragRectControl.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/FadeMaskDragRectControl.MewUI/">
+    <Project Path="src/FadeMaskDragRectControl.MewUI/src/FadeMaskDragRectControl.MewUI.csproj" />
+    <Project Path="src/FadeMaskDragRectControl.MewUI/tests/FadeMaskDragRectControl.MewUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/FadeMaskDragRectControl.AvaloniaUI/">
+    <Project Path="src/FadeMaskDragRectControl.AvaloniaUI/src/FadeMaskDragRectControl.AvaloniaUI.csproj" />
+    <Project Path="src/FadeMaskDragRectControl.AvaloniaUI/tests/FadeMaskDragRectControl.AvaloniaUI.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/LineDetection/">
     <Project Path="src/LineDetection/sample/LineDetection.Sample.csproj" />
     <Project Path="src/LineDetection/src/LineDetection.csproj" />
     <Project Path="src/LineDetection/tests/LineDetection.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/LoupeControl/">
-    <Project Path="src/LoupeControl/sample/LoupeControl.Sample.csproj" />
-    <Project Path="src/LoupeControl/src/LoupeControl.csproj" />
-    <Project Path="src/LoupeControl/tests/LoupeControl.Tests.csproj" />
+  <Folder Name="/src/LoupeControl.Core/">
+    <Project Path="src/LoupeControl.Core/src/LoupeControl.Core.csproj" />
+    <Project Path="src/LoupeControl.Core/tests/LoupeControl.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/LoupeControl/src/" />
+  <Folder Name="/src/LoupeControl.Core/src/" />
+  <Folder Name="/src/LoupeControl.MewUI/">
+    <Project Path="src/LoupeControl.MewUI/src/LoupeControl.MewUI.csproj" />
+    <Project Path="src/LoupeControl.MewUI/tests/LoupeControl.MewUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/LoupeControl.MewUI/src/" />
+  <Folder Name="/src/LoupeControl.AvaloniaUI/">
+    <Project Path="src/LoupeControl.AvaloniaUI/sample/LoupeControl.AvaloniaUI.Sample.csproj" />
+    <Project Path="src/LoupeControl.AvaloniaUI/src/LoupeControl.AvaloniaUI.csproj" />
+    <Project Path="src/LoupeControl.AvaloniaUI/tests/LoupeControl.AvaloniaUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/PlatformFactory.Core/">
+    <Project Path="src/PlatformFactory.Core/src/PlatformFactory.Core.csproj" />
+    <Project Path="src/PlatformFactory.Core/tests/PlatformFactory.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/PlatformFactory.Core/src/" />
+  <Folder Name="/src/PlatformFactory.MewUI/">
+    <Project Path="src/PlatformFactory.MewUI/src/PlatformFactory.MewUI.csproj" />
+    <Project Path="src/PlatformFactory.MewUI/tests/PlatformFactory.MewUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/PlatformFactory.Native/">
+    <Project Path="src/PlatformFactory.Native/src/PlatformFactory.Native.csproj" />
+    <Project Path="src/PlatformFactory.Native/tests/PlatformFactory.Native.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/PlatformFactory/">
     <Project Path="src/PlatformFactory/src/PlatformFactory.csproj" />
     <Project Path="src/PlatformFactory/tests/PlatformFactory.Tests.csproj" />
@@ -48,10 +113,17 @@
     <Project Path="src/SnipCaptureUI/src/SnipCaptureUI.csproj" />
     <Project Path="src/SnipCaptureUI/tests/SnipCaptureUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/SnipCaptureUI/src/" />
-  <Folder Name="/src/ZoomViewControl/">
-    <Project Path="src/ZoomViewControl/sample/ZoomViewControl.Sample.csproj" />
-    <Project Path="src/ZoomViewControl/src/ZoomViewControl.csproj" />
-    <Project Path="src/ZoomViewControl/tests/ZoomViewControl.Tests.csproj" />
+  <Folder Name="/src/ZoomViewControl.Core/">
+    <Project Path="src/ZoomViewControl.Core/src/ZoomViewControl.Core.csproj" />
+    <Project Path="src/ZoomViewControl.Core/tests/ZoomViewControl.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/ZoomViewControl.MewUI/">
+    <Project Path="src/ZoomViewControl.MewUI/src/ZoomViewControl.MewUI.csproj" />
+    <Project Path="src/ZoomViewControl.MewUI/tests/ZoomViewControl.MewUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/ZoomViewControl.AvaloniaUI/">
+    <Project Path="src/ZoomViewControl.AvaloniaUI/sample/ZoomViewControl.AvaloniaUI.Sample.csproj" />
+    <Project Path="src/ZoomViewControl.AvaloniaUI/src/ZoomViewControl.AvaloniaUI.csproj" />
+    <Project Path="src/ZoomViewControl.AvaloniaUI/tests/ZoomViewControl.AvaloniaUI.Tests.csproj" />
   </Folder>
 </Solution>

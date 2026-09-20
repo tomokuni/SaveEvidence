@@ -1,6 +1,6 @@
 # LineDetection システム仕様書
 
-本仕様書は、`Estable.AvaloniaUI.LineDetection`（LineDetection ライブラリ）の**システム概要・アーキテクチャ・内部設計**を定義します。
+本仕様書は、`Estable.LineDetection`（LineDetection ライブラリ）の**システム概要・アーキテクチャ・内部設計**を定義します。
 
 ## 目次
 
@@ -23,7 +23,7 @@
 LineDetection は、キャプチャ画像から Windows のウィンドウ枠となる水平・垂直の辺（線分）を検出するライブラリです。
 
 - 検出方式は `ILineDetector` で抽象化され、ロジック方式（Canny + Hough）を同一の API で利用できます。
-- 入力は `PbBitmap`（BGRA8888）、出力は `LineDetectionResult` のリストです。
+- 入力は `EsBitmap`（BGRA8888）、出力は `LineDetectionResult` のリストです。
 - OpenCvSharp は内部利用に閉じ、公開 API には露出しません。
 
 ## 2. 技術スタック
@@ -48,14 +48,14 @@ flowchart TB
         Opt["LineDetectionOptions<br/>public sealed record<br/>（検出パラメータ）"]
         Rcn["LineRectangleReconstructor<br/>public static<br/>（矩形復元）"]
         Sgm["LineSegmentMath<br/>internal static<br/>（線分演算）"]
-        Mh["MatHelper<br/>internal static<br/>（PbBitmap → Mat）"]
+        Mh["MatHelper<br/>internal static<br/>（EsBitmap → Mat）"]
         Res["LineDetectionResult<br/>public readonly record struct"]
     end
     subgraph Dep["外部依存"]
         Cv["OpenCvSharp5<br/>（内部利用のみ）"]
     end
 
-    Caller -->|"Detect(PbBitmap)"| I
+    Caller -->|"Detect(EsBitmap)"| I
     I --> Det
     Det --> Opt
     Det --> Rcn
@@ -75,25 +75,32 @@ flowchart TB
 | `ILineDetector.cs` | `ILineDetector`（インターフェース）を定義。検出方式の抽象化。 |
 | `LineDetectionResult.cs` | `LineOrientation`（向き）enum・`LineDetectionResult`（結果レコード）を定義。 |
 | `LineDetectionOptions.cs` | ロジック方式の検出パラメータ（不変値・検証付き）と既定値（`Default`）を定義。 |
-| `LineRectangleReconstructor.cs` | 線分の集合から矩形（ウィンドウの 4 辺）を構成する静的ヘルパー。 |
+| `LineRectangleReconstructor.cs` | 線分の集合から矩形（ウィンドウの 4 辺）を構成する静的ヘルパー（`EsPixelRect` を返す）。 |
 | `LineSegmentMath.cs` | 線分の演算（接続判定・平行判定・長さ等）の内部ヘルパー。 |
 | `LogicLineDetector.cs` | ロジック方式の検出器。Canny + HoughLinesP + 幾何学的一貫性による矩形検出。 |
-| `MatHelper.cs` | `PbBitmap` ↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
+| `MatHelper.cs` | `EsBitmap` ↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
 
 ## 5. 依存関係
 
-- `ILineDetector.cs` → `LineDetectionResult`（Avalonia.Point）/ `PbBitmap`（PlatformFactory）
+- `ILineDetector.cs` → `LineDetectionResult`（`EsPoint`）/ `EsBitmap`（PlatformFactory.Core）
 - `LogicLineDetector.cs` → `ILineDetector` / `LineOrientation` / `LineDetectionOptions` / `LineRectangleReconstructor` / `LineSegmentMath` / `MatHelper`
-- `MatHelper.cs` → OpenCvSharp（内部のみ）・`PbBitmap`（PlatformFactory）
+- `LineRectangleReconstructor.cs` → `LineDetectionResult` / `EsPixelRect`（PlatformFactory.Core）
+- `MatHelper.cs` → OpenCvSharp（内部のみ）・`EsBitmap`（PlatformFactory.Core）
 
-いずれも他の検出器へ依存しません（疎結合）。`MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(PbBitmap)`）には露出しません。
+本プロジェクトは **UI フレームワーク非依存**です（依存は `PlatformFactory.Core` と OpenCvSharp のみ。Avalonia への依存なし）。座標はコア型（`EsPoint` / `EsPixelRect`）で公開し、UI 側は境界で各 UI の型へ変換します。
+
+### 名前空間
+
+`Estable.AvaloniaUI.LineDetection` は UI 非依存化前の名残です。UI 非依存のアセンブリは `Estable.*`（`Estable.Platform.*` 等）に置く方針のため、**`Estable.LineDetection` へ改名**しました。
+
+いずれも他の検出器へ依存しません（疎結合）。`MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(EsBitmap)`）には露出しません。
 
 ## 6. 検出アルゴリズム
 
 ### 6.1. ロジック方式（LogicLineDetector）
 
 ```text
-PbBitmap (BGRA8888)
+EsBitmap (BGRA8888)
   → MatHelper.ToMat (OpenCV の Mat へ変換)
   → グレースケール化
   → Canny エッジ検出

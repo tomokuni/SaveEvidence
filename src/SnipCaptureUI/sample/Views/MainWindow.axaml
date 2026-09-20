@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:SnipCaptureUI.Sample.ViewModels"
-        xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropViewControl"
+        xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropViewControl.AvaloniaUI"
         x:Class="SnipCaptureUI.Sample.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="SnipCaptureUI 動作確認サンプル"

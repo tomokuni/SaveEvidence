@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.FadeMaskDragRect</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlatformFactory.Core\src\PlatformFactory.Core.csproj" />
+    <!-- 動作モードから FadeMaskRenderMode への変換を行うため -->
+    <ProjectReference Include="..\..\FadeMaskControl.Core\src\FadeMaskControl.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.AvaloniaUI" />
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI" />
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.AvaloniaUI.Tests" />
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI.Tests" />
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.Core.Tests" />
+  </ItemGroup>
+
+</Project>

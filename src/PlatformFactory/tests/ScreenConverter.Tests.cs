@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Estable.Platform.Geometry;
 using Xunit;
 using Avalonia.Headless.XUnit;
 
@@ -48,7 +49,7 @@ public class ScreenConverterTests
 
         var port = ScreenConverter.CreateVisualDipPort(panel);
         // Inverse = ローカル DIP → 画面物理、Forward = 画面物理 → ローカル DIP
-        var roundTrip = port.Forward(port.Inverse(new Point(30, 40)));
+        var roundTrip = port.Forward(port.Inverse(new EsPoint(30, 40)));
 
         Assert.Equal(30, roundTrip.X, 6);
         Assert.Equal(40, roundTrip.Y, 6);
@@ -80,8 +81,8 @@ public class ScreenConverterVisualPortTests
         var control = new Panel();
         var port = ScreenConverter.CreateVisualDipPort(control);
 
-        Assert.Equal(new Point(10, 20), port.Forward(new Point(10, 20)));
-        Assert.Equal(new Point(10, 20), port.Inverse(new Point(10, 20)));
+        Assert.Equal(new EsPoint(10, 20), port.Forward(new EsPoint(10, 20)));
+        Assert.Equal(new EsPoint(10, 20), port.Inverse(new EsPoint(10, 20)));
     }
 }
 
@@ -103,7 +104,7 @@ public class ScreenConverterDipPortTests
         var port = ScreenConverter.CreateDipPort(new PixelPoint(100, 50), 1.25);
 
         // DIP (200, 100) → 物理 (350, 175)
-        var p = port.Inverse(new Point(200, 100));
+        var p = port.Inverse(new EsPoint(200, 100));
         Assert.Equal(350, p.X, 6);
         Assert.Equal(175, p.Y, 6);
     }
@@ -114,7 +115,7 @@ public class ScreenConverterDipPortTests
         var port = ScreenConverter.CreateDipPort(new PixelPoint(100, 50), 1.25);
 
         // 物理 (350, 175) → DIP (200, 100)
-        var p = port.Forward(new Point(350, 175));
+        var p = port.Forward(new EsPoint(350, 175));
         Assert.Equal(200, p.X, 6);
         Assert.Equal(100, p.Y, 6);
     }
@@ -123,7 +124,7 @@ public class ScreenConverterDipPortTests
     public void CreateDipPort_往復で元の座標に戻る()
     {
         var port = ScreenConverter.CreateDipPort(new PixelPoint(37, 88), 1.5);
-        var dip = new Point(123.4, 456.7);
+        var dip = new EsPoint(123.4, 456.7);
         var roundTrip = port.Forward(port.Inverse(dip));
         Assert.Equal(dip.X, roundTrip.X, 6);
         Assert.Equal(dip.Y, roundTrip.Y, 6);
@@ -135,7 +136,7 @@ public class ScreenConverterDipPortTests
         var port = ScreenConverter.CreateDipPort(new PixelPoint(10, 20), 0);
 
         // スケール 1.0 として変換（物理 = DIP + 原点）
-        var p = port.Inverse(new Point(100, 200));
+        var p = port.Inverse(new EsPoint(100, 200));
         Assert.Equal(110, p.X, 6);
         Assert.Equal(220, p.Y, 6);
     }

@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.AvaloniaUI.LineDetection.Tests;
+namespace Estable.LineDetection.Tests;
 
 /// <summary>Avalonia ヘッドレステストの直列化用コレクション定義。</summary>
 /// <remarks>

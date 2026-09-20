@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
-using Estable.AvaloniaUI.Platform.Geometry;
+using Estable.Platform.Coordinate;
+using Estable.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.Platform;
 
@@ -12,9 +13,8 @@ namespace Estable.AvaloniaUI.Platform;
 /// <br/>
 /// OS 依存の画面物理変換（<see cref="TopLevel"/> の RenderScaling / 画面上位置 / PointToScreen / PointToClient）を
 /// 集約する唯一の場所である。<br/>
-/// ローカル DIP ↔ 画面物理の双方向変換は <see cref="CreateDipPort"/> / <see cref="CreateVisualDipPort"/> で<br/>
-/// <see cref="CoordTransform"/> の
-/// <c>LocalDipToScreen</c> / <c>ScreenToLocalDip</c> / <c>CreateDipPort</c> は PlatformFactory の <see cref="ICoordTransform"/> として提供する。
+/// ローカル DIP ↔ 画面物理の双方向変換は <see cref="CreateDipPort"/> / <see cref="CreateVisualDipPort"/> で
+/// <see cref="ICoordTransform"/>（<see cref="CoordTransform"/>）として提供する。
 /// </remarks>
 public static class ScreenConverter
 {
@@ -25,10 +25,9 @@ public static class ScreenConverter
     /// <remarks><see cref="TopLevel.PointToScreen"/> に委譲する。</remarks>
     public static PixelPoint LocalDipToScreen(Visual source, Point local)
     {
-        var localPoint = local.ToAvaloniaPoint();
         var topLevel = TopLevel.GetTopLevel(source);
-        if (topLevel is null) return new PixelPoint((int)localPoint.X, (int)localPoint.Y);
-        var inTopLevel = VisualExtensions.TranslatePoint(source, localPoint, topLevel) ?? localPoint;
+        if (topLevel is null) return new PixelPoint((int)local.X, (int)local.Y);
+        var inTopLevel = VisualExtensions.TranslatePoint(source, local, topLevel) ?? local;
         return topLevel.PointToScreen(inTopLevel);
     }
 
@@ -46,7 +45,7 @@ public static class ScreenConverter
         if (topLevel is null) return new Point(screen.X, screen.Y);
         var clientDip = topLevel.PointToClient(screen);
         var origin = VisualExtensions.TranslatePoint(source, default, topLevel) ?? default;
-        return (clientDip - origin).ToPoint();
+        return clientDip - origin;
     }
 
     /// <summary>ローカル DIP ↔ 画面物理ピクセル変換ポートを生成する。</summary>
@@ -61,8 +60,8 @@ public static class ScreenConverter
     {
         double s = renderScaling > 0 ? renderScaling : 1.0;
         return new CoordTransform(
-            p => new Point((p.X - origin.X) / s, (p.Y - origin.Y) / s),
-            p => new Point(p.X * s + origin.X, p.Y * s + origin.Y),
+            p => new EsPoint((p.X - origin.X) / s, (p.Y - origin.Y) / s),
+            p => new EsPoint(p.X * s + origin.X, p.Y * s + origin.Y),
             () => null);
     }
 
@@ -75,12 +74,12 @@ public static class ScreenConverter
     /// </remarks>
     public static ICoordTransform CreateVisualDipPort(Visual source)
         => new CoordTransform(
-            p => ScreenToLocalDip(source, new PixelPoint((int)p.X, (int)p.Y)),
+            p => ScreenToLocalDip(source, new PixelPoint((int)p.X, (int)p.Y)).ToEsPoint(),
             p =>
             {
                 // 同一スコープの同値計算は一度だけ実行して共有する（TopLevel 解決コストを繰り返さない）
-                var screen = LocalDipToScreen(source, p);
-                return new Point(screen.X, screen.Y);
+                var screen = LocalDipToScreen(source, p.ToAvaloniaPoint());
+                return new EsPoint(screen.X, screen.Y);
             },
             () => null);
 }

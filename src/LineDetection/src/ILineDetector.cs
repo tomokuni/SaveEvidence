@@ -1,6 +1,6 @@
-using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform.Imaging;
 
-namespace Estable.AvaloniaUI.LineDetection;
+namespace Estable.LineDetection;
 
 /// <summary>辺（線分）検出器の共通インターフェース。</summary>
 public interface ILineDetector
@@ -15,7 +15,7 @@ public interface ILineDetector
     string? ErrorMessage { get; }
 
     /// <summary>画像から水平・垂直の辺（線分）を検出する。</summary>
-    /// <param name="image">解析対象の画像（PbBitmap・BGRA8888）。</param>
+    /// <param name="image">解析対象の画像（EsBitmap・BGRA8888）。</param>
     /// <returns>検出した線分のリスト（スコア降順）。</returns>
-    IReadOnlyList<LineDetectionResult> Detect(PbBitmap image);
+    IReadOnlyList<LineDetectionResult> Detect(EsBitmap image);
 }

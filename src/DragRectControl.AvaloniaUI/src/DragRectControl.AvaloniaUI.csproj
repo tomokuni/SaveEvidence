@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.AvaloniaUI.DragRect</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="[12.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="DragRectControl.AvaloniaUI.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 共有プラットフォーム抽象（カーソル操作: ICursorService / WinCursorService） -->
+    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <!-- UI 非依存のコア（選択幾何・状態機械） -->
+    <ProjectReference Include="..\..\DragRectControl.Core\src\DragRectControl.Core.csproj" />
+  </ItemGroup>
+
+</Project>

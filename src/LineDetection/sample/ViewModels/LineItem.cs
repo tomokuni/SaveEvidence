@@ -1,8 +1,8 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Estable.LineDetection;
+using Estable.AvaloniaUI.Platform;
 using Point = Avalonia.Point;
-using Estable.AvaloniaUI.LineDetection;
-using Estable.AvaloniaUI.Platform.Geometry;
 
 namespace LineDetectionSample.ViewModels;
 
@@ -38,7 +38,7 @@ public sealed partial class LineItem : ObservableObject
     public LineItem(LineDetectionResult result, int index)
     {
         Index = index;
-        // 検出結果（Point）は表示用（Avalonia Point）のため、UI 境界で変換する（コアと UI の分離）。
+        // 検出結果の座標は UI 非依存のコア型（EsPoint）で公開されるため、表示境界で Avalonia 型へ変換する。
         Start = result.Start.ToAvaloniaPoint();
         End = result.End.ToAvaloniaPoint();
         Orientation = result.Orientation;

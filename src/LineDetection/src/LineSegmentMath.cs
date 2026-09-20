@@ -1,4 +1,4 @@
-namespace Estable.AvaloniaUI.LineDetection;
+namespace Estable.LineDetection;
 
 /// <summary>検出された線分の座標表現（始点・終点を保持する不変な値オブジェクト）。</summary>
 /// <param name="X1">始点 X 座標（ピクセル）。</param>

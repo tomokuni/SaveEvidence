@@ -31,13 +31,13 @@
 
 - **3 種のキャプチャモード**: `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）
 - **切出し（Crop）**: プレビュー画像上の選択矩形で元画像から切り出し範囲を取得
-- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と PlatformFactory が保持し、`SnipCapture` は「組み立て・ライフサイクル」のみを担う薄い統括者
+- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と PlatformFactory / PlatformFactory.Native が保持し、`SnipCapture` は「組み立て・ライフサイクル」のみを担う薄い統括者
 - **Task ベース API**: 結果は `Task` で返却（`await` で直感的に利用）
 - **キャプチャ完了イベント**: `CaptureCompleted`（同期型）で画像変更 → オーナー再表示の順序を保証
 - **イベント駆動**: 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）
 - **再入禁止ガード**: 実行中の再呼び出しは `null` を返す（既存セッションを継続）
 - **部分更新設定**: `CaptureSettings` は全メンバー nullable（null = デフォルト値 or 現在値維持）で部分更新が可能
-- **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は PlatformFactory 経由で注入（テスト可能・プラットフォーム非依存）
+- **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は PlatformFactory.Native 経由で注入（テスト可能・プラットフォーム非依存）
 
 ## 3. システム要件
 
@@ -138,7 +138,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 | プロジェクト | 利用機能 |
 | --- | --- |
-| `PlatformFactory` | `PlatformFactory`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` / `ICoordTransform` / `CoordTransform` / `ScreenConverter` 等 |
+| `PlatformFactory` | `PlatformFactory`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` は `PlatformFactory.Native`、`ICoordTransform` / `CoordTransform` は `PlatformFactory.Core`、`ScreenConverter` は `PlatformFactory` |
 | `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包する複合コントロール。公開 API は本コントロールのみ） |
 
 SnipCaptureUI は内包コントロール（`DragRectControl` / `FadeMaskControl` / `LoupeControl`）を直接参照しない（窓口は `FadeMaskDragRectControl` のみ。公開型のカプセル化）。
@@ -155,13 +155,14 @@ SnipCaptureUI/
 ├── src/
 │   ├── SnipCaptureUI.csproj      # ライブラリプロジェクト（Avalonia.Desktop / Logging.Abstractions）
 │   ├── SnipCapture.cs            # 公開 Facade（統括者。組み立て・配線・ライフサイクル）
-│   ├── CaptureType.cs            # キャプチャ種別 enum（public）
-│   ├── CaptureSettings.cs        # 設定 record（public・全メンバー nullable）
+│   ├── CaptureSettings.cs        # キャプチャ設定（record）
 │   ├── CaptureResult.cs          # 結果 record（public）
 │   └── Sessions/                 # 内部実装（CaptureSession / CropSession / OverlayWindow）
 ├── sample/                       # サンプルアプリ（sample/README.md 参照）
 └── tests/                        # 単体テスト（79 件）
 ```
+
+`CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `PlatformFactory.Core`（名前空間 `Estable.Platform`）が提供します。利用側は `using Estable.Platform;` を追加してください。
 
 ## 10. ライセンス
 

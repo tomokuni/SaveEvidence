@@ -230,13 +230,13 @@
 ## このワークスペース/ソリューションに固有の指示
 
 ### プロジェクト構成
-- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / DragRectControl / FadeMaskControl / LoupeControl / SnipCaptureUI / LineDetection / PlatformFactory）と、アプリ本体（`app`）から構成される。
-- `app` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
+- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / DragRectControl / FadeMaskControl / LoupeControl / SnipCaptureUI / LineDetection / PlatformFactory）と、アプリ本体（`app.AvaloniaUI`）から構成される。
+- `app.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
 
 ### ドキュメント規約
 - 各プロジェクトに README.md（利用仕様書）・SPEC_ExtFunc.md（外部機能仕様書）・SPEC_System.md（システム仕様書）を置く。
 - README.md / SPEC_ExtFunc.md / SPEC_System.md は、コード変更と同時に更新する（仕様と実装の乖離・反映漏れを防ぐ）。
-- `app`（ホスト）は ZoomViewControl の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する。
+- `app.AvaloniaUI`（ホスト）は ZoomViewControl の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する。
 
 ### テスト規約
 - 使用するテストフレームワークは xUnit v3 系。

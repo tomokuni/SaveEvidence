@@ -1,5 +1,6 @@
 using Avalonia;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform.Imaging;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
 
@@ -9,10 +10,10 @@ namespace Estable.AvaloniaUI.SnipCaptureUI;
 /// <remarks>
 /// `Image` と `SourceBounds` は常に同時に null または同時に非 null となる。<br/>
 /// - エラー時: 両方 null<br/>
-/// - キャンセル時: 両方 0x0（Image: 0x0 の空 PbBitmap、SourceBounds: 0x0 の空 PixelRect）<br/>
+/// - キャンセル時: 両方 0x0（Image: 0x0 の空 EsBitmap、SourceBounds: 0x0 の空 PixelRect）<br/>
 /// `SourceBounds` は仮想画面座標（複数モニターを包含する座標空間）で表されるため、<br/>
 /// プライマリモニターが (0,0) にない場合、X / Y は負値になり得る。<br/>
 /// `Image` は表示境界で <c>ToAvaloniaWriteableBitmap()</c> により変換する（破棄は呼び出し側）。
 /// </remarks>
-public sealed record CaptureResult(PbBitmap? Image, PixelRect? SourceBounds);
+public sealed record CaptureResult(EsBitmap? Image, PixelRect? SourceBounds);
 

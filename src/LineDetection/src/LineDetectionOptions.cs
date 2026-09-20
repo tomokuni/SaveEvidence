@@ -1,4 +1,4 @@
-namespace Estable.AvaloniaUI.LineDetection;
+namespace Estable.LineDetection;
 
 /// <summary>ロジック方式の線分検出パラメータ（不変値・検証付き）。</summary>
 /// <param name="CannyThreshold1">Canny の低閾値。正の値。</param>

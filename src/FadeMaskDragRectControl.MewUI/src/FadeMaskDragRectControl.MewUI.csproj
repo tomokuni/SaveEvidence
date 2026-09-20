@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.MewUI.FadeMaskDragRect</RootNamespace>
+    <AssemblyName>FadeMaskDragRectControl.MewUI</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- MewUI は API が安定化中（0.x）。破壊的変更を避けるためバージョンを固定する。 -->
+    <MewUIVersion>0.21.1</MewUIVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 内包コントロール（全て SkiaCanvasView を基底にする） -->
+    <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
+    <!-- 操作ログ（LoggerMessage ソース生成・NullLogger。内包するドラッグ選択コントロールへ伝搬する） -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 内包する MewUI コントロール（DragRect + FadeMask + Loupe） -->
+    <ProjectReference Include="..\..\DragRectControl.MewUI\src\DragRectControl.MewUI.csproj" />
+    <ProjectReference Include="..\..\FadeMaskControl.MewUI\src\FadeMaskControl.MewUI.csproj" />
+    <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
+    <!-- ルーペの表示位置計算（LoupePositionCalculator） -->
+    <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
+    <!-- UI 非依存の動作モード・選択矩形オーバーレイ描画 -->
+    <ProjectReference Include="..\..\FadeMaskDragRectControl.Core\src\FadeMaskDragRectControl.Core.csproj" />
+    <!-- コア幾何型・座標変換ポート -->
+    <ProjectReference Include="..\..\PlatformFactory.Core\src\PlatformFactory.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI.Tests" />
+  </ItemGroup>
+
+</Project>

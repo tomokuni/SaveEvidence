@@ -1,6 +1,6 @@
-using Avalonia;
+using Estable.Platform.Geometry;
 
-namespace Estable.AvaloniaUI.LineDetection;
+namespace Estable.LineDetection;
 
 /// <summary>検出された線分（<see cref="LineDetectionResult"/>）から矩形（ウィンドウの 4 辺）を復元する純粋ロジック。</summary>
 /// <remarks>
@@ -13,13 +13,13 @@ public static class LineRectangleReconstructor
 {
     /// <summary>検出された線分から矩形（ウィンドウの 4 辺）の候補を復元する。</summary>
     /// <param name="results">検出された線分一覧。</param>
-    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 PixelRect。面積昇順）。</returns>
+    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsPixelRect"/>。面積昇順）。</returns>
     /// <remarks>
     /// 垂直 2 本・水平 2 本が揃わない場合は復元できない（空リストを返す）。<br/>
     /// 幅・高さが 1 未満（同一座標のペア）のものは除外する。<br/>
     /// 「検出→矩形復元」の責務を <see cref="LogicLineDetector"/>（検出）から分離し、単一所有（DRY）とする。
     /// </remarks>
-    public static IReadOnlyList<PixelRect> Reconstruct(IReadOnlyList<LineDetectionResult> results)
+    public static IReadOnlyList<EsPixelRect> Reconstruct(IReadOnlyList<LineDetectionResult> results)
     {
         var verticalX = results
             .Where(r => r.Orientation == LineOrientation.Vertical)
@@ -41,7 +41,7 @@ public static class LineRectangleReconstructor
         }
 
         // 垂直線ペア × 水平線ペアの全組み合わせから矩形候補を生成する（面積昇順）
-        var rects = new List<PixelRect>();
+        var rects = new List<EsPixelRect>();
         for (var xi = 0; xi < verticalX.Count - 1; xi++)
         {
             for (var xj = xi + 1; xj < verticalX.Count; xj++)
@@ -61,7 +61,7 @@ public static class LineRectangleReconstructor
                             continue;
                         }
 
-                        rects.Add(new PixelRect(left, top, width, height));
+                        rects.Add(new EsPixelRect(left, top, width, height));
                     }
                 }
             }

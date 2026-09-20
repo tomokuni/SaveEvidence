@@ -2,7 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform;
+using Estable.Platform.Geometry;
+using Estable.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -52,7 +54,7 @@ internal sealed class CaptureSession(
         bool ownerExcluded = false;
         if (showWithOwner && owner.TryGetPlatformHandle() is { } ownerHandle)
         {
-            ownerExcluded = windowService.SetCaptureExclusion(ownerHandle, true);
+            ownerExcluded = windowService.SetCaptureExclusion(ownerHandle.ToEsPlatformHandle(), true);
         }
 
         // オーナーウィンドウをキャプチャ対象外にする（設定 HideOwnerWindow が true の場合のみ）。
@@ -81,9 +83,9 @@ internal sealed class CaptureSession(
         // 全モード共通で取得し、確定時にこの Bitmap から切り出す（確定時の再キャプチャなしで高速化）。
         // キャプチャ完了前に確定された場合は OverlayWindow.ExtractClip が CaptureArea でフォールバックする。
         // 注: origin は out パラメータのためタスク完了後にしか有効にならない（遅延評価で渡す）。
-        var origin = default(PixelPoint);
+        var origin = default(EsPixelPoint);
         var captureTask = Task.Run(() => captureService.CaptureVirtualScreen(out origin));
-        SetupVirtualScreenContinuation(captureTask, () => origin);
+        SetupVirtualScreenContinuation(captureTask, () => origin.ToAvaloniaPixelPoint());
 
         // オーバーレイウィンドウを生成・表示（キャプチャ完了を待たない）
         _window = new OverlayWindow(
@@ -138,7 +140,7 @@ internal sealed class CaptureSession(
             _window = null;
             if (ownerExcluded && owner.TryGetPlatformHandle() is { } ownerHandle2)
             {
-                windowService.SetCaptureExclusion(ownerHandle2, false);
+                windowService.SetCaptureExclusion(ownerHandle2.ToEsPlatformHandle(), false);
             }
             // オーナーウィンドウを元の状態に復元する（キャプチャ完了イベント＝画像変更の後）。
             // 画像は onCaptured で同期更新済みのため、画面外から元の位置に戻して Opacity を
@@ -164,7 +166,7 @@ internal sealed class CaptureSession(
     /// <b>重要</b>: <c>out origin</c> はタスク完了後にしか有効にならないため、<br/>
     /// 原点はタスク完了後に <paramref name="originProvider"/> で遅延評価する（マルチモニタの座標ずれ防止）。
     /// </remarks>
-    private void SetupVirtualScreenContinuation(Task<PbBitmap?> captureTask, Func<PixelPoint> originProvider)
+    private void SetupVirtualScreenContinuation(Task<EsBitmap?> captureTask, Func<PixelPoint> originProvider)
     {
         _ = Task.Run(async () =>
         {

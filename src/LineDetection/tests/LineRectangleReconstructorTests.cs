@@ -1,7 +1,7 @@
-using Avalonia;
+using Estable.Platform.Geometry;
 using Xunit;
 
-namespace Estable.AvaloniaUI.LineDetection.Tests;
+namespace Estable.LineDetection.Tests;
 
 /// <summary><see cref="LineRectangleReconstructor"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
@@ -12,11 +12,11 @@ public sealed class LineRectangleReconstructorTests
 {
     /// <summary>垂直線の結果を生成する。</summary>
     private static LineDetectionResult VerticalLine(double x)
-        => new(new Point(x, 0), new Point(x, 1000), LineOrientation.Vertical, 1000);
+        => new(new EsPoint(x, 0), new EsPoint(x, 1000), LineOrientation.Vertical, 1000);
 
     /// <summary>水平線の結果を生成する。</summary>
     private static LineDetectionResult HorizontalLine(double y)
-        => new(new Point(0, y), new Point(1000, y), LineOrientation.Horizontal, 1000);
+        => new(new EsPoint(0, y), new EsPoint(1000, y), LineOrientation.Horizontal, 1000);
 
     [Fact]
     public void Reconstruct_垂直2本と水平2本から外側の境界を復元する()
@@ -30,7 +30,7 @@ public sealed class LineRectangleReconstructorTests
         var rects = LineRectangleReconstructor.Reconstruct(results);
 
         var rect = Assert.Single(rects);
-        Assert.Equal(new PixelRect(100, 50, 200, 150), rect);
+        Assert.Equal(new EsPixelRect(100, 50, 200, 150), rect);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public sealed class LineRectangleReconstructorTests
         var rects = LineRectangleReconstructor.Reconstruct(results);
 
         var rect = Assert.Single(rects);
-        Assert.Equal(new PixelRect(100, 50, 200, 150), rect);
+        Assert.Equal(new EsPixelRect(100, 50, 200, 150), rect);
     }
 
     [Fact]

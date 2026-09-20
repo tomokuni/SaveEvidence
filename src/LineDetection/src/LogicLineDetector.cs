@@ -1,9 +1,9 @@
-using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform.Imaging;
 using OpenCvSharp;
-using Point = Avalonia.Point;
-using static Estable.AvaloniaUI.LineDetection.LineSegmentMath;
+using Point = Estable.Platform.Geometry.EsPoint;
+using static Estable.LineDetection.LineSegmentMath;
 
-namespace Estable.AvaloniaUI.LineDetection;
+namespace Estable.LineDetection;
 
 /// <summary>ロジック方式: Canny エッジ + HoughLinesP による水平・垂直の辺検出。</summary>
 /// <remarks>
@@ -48,7 +48,7 @@ public sealed class LogicLineDetector : ILineDetector
     private const double MinCornerTolerance = 5.0;
 
     /// <summary>画像から水平・垂直の辺（線分）を検出する。</summary>
-    /// <param name="image">解析対象の画像（PbBitmap・BGRA8888）。</param>
+    /// <param name="image">解析対象の画像（EsBitmap・BGRA8888）。</param>
     /// <returns>検出した線分のリスト（スコア = 長さ・降順）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
@@ -60,7 +60,7 @@ public sealed class LogicLineDetector : ILineDetector
     ///    4 辺をコーナー近傍で交差する閉区間として出力する（<see cref="BuildRectangles"/>）<br/>
     /// 6. 矩形を構成できない場合は、最小長・暗いピクセル割合でフィルタしてスコア（長さ）降順で返す
     /// </remarks>
-    public IReadOnlyList<LineDetectionResult> Detect(PbBitmap image)
+    public IReadOnlyList<LineDetectionResult> Detect(EsBitmap image)
     {
         var options = Options;
         using var mat = MatHelper.ToMat(image);

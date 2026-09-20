@@ -1,0 +1,28 @@
+{
+  "product": "SaveEvidence",
+  "versionFile": "Directory.Build.props",
+  "solutionFile": "SaveEvidence.slnx",
+  "gateWorkflow": "build.yml",
+  "releaseBranches": [
+    "main",
+    "release/**"
+  ],
+  "artifactRetentionDays": 30,
+  "releaseNotes": "2 種の UI 実装の配布物です。MewUI 版は Native AOT（マネージドコードは exe に同梱）、Avalonia 版は単一 exe + ネイティブ DLL の zip です。",
+  "uis": [
+    {
+      "name": "MewUI",
+      "script": "buildScript/MewUI_publish_aot.bat",
+      "output": "publish/mewui-win-x64-aot",
+      "asset": "SaveEvidence.MewUI.zip",
+      "zip": true
+    },
+    {
+      "name": "AvaloniaUI",
+      "script": "buildScript/AvaloniaUI_publish_single.bat",
+      "output": "publish/avaloniaui-win-x64-single",
+      "asset": "SaveEvidence.zip",
+      "zip": true
+    }
+  ]
+}

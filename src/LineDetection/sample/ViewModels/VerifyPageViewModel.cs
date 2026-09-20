@@ -1,6 +1,6 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.AvaloniaUI.LineDetection;
+using Estable.LineDetection;
 using System.Collections.ObjectModel;
 
 namespace LineDetectionSample.ViewModels;

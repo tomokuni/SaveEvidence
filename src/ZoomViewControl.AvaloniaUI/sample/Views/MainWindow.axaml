@@ -1,0 +1,84 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:zoom="clr-namespace:Estable.AvaloniaUI.ZoomView;assembly=ZoomViewControl.AvaloniaUI"
+        xmlns:vm="clr-namespace:ZoomViewControl.Sample.ViewModels"
+        x:Class="ZoomViewControl.Sample.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="ZoomViewControl 動作確認サンプル"
+        Width="1180" Height="760"
+        WindowStartupLocation="CenterScreen">
+
+    <DockPanel>
+
+        <!-- ───────────────────────── 左: 設定パネル ───────────────────────── -->
+        <Border DockPanel.Dock="Left" Width="360" Padding="12"
+                BorderBrush="#DDDDDD" BorderThickness="0,0,1,0" Background="#FAFAFA">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="10">
+
+                    <TextBlock Text="ZoomViewControl サンプル" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Text="画像をドラッグでパン、Ctrl+ホイールでズームします。" FontSize="12" TextWrapping="Wrap"/>
+
+                    <Separator/>
+
+                    <!-- ズーム操作 -->
+                    <TextBlock Text="ズーム操作"/>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="ZoomOutButton" Content="⊖" MinWidth="40" Click="OnZoomOutClick"
+                                IsEnabled="False" ToolTip.Tip="ズームアウト（段階遷移）"/>
+                        <Button x:Name="ZoomInButton" Content="⊕" MinWidth="40" Click="OnZoomInClick"
+                                IsEnabled="False" ToolTip.Tip="ズームイン（段階遷移）"/>
+                        <Button Content="Fit" MinWidth="48" Click="OnFitClick"
+                                ToolTip.Tip="Fit 表示（自動）"/>
+                        <TextBlock Text="{Binding ZoomDisplayText}" MinWidth="56"
+                                   VerticalAlignment="Center" TextAlignment="Center" FontWeight="Bold"/>
+                    </StackPanel>
+
+                    <!-- ズーム率スライダ -->
+                    <TextBlock Text="ズーム率（スライダ 10〜500%）"/>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding ZoomDisplayText}"
+                                   VerticalAlignment="Center" MinWidth="56" TextAlignment="Right"/>
+                        <Slider x:Name="ZoomSlider"
+                                Minimum="10" Maximum="500"
+                                ToolTip.Tip="ズーム率（10〜500%）"/>
+                    </DockPanel>
+
+                    <Separator/>
+
+                    <!-- 画像 -->
+                    <TextBlock Text="画像"/>
+                    <Button Content="画像を開く..." Click="OnOpenImageClick" HorizontalAlignment="Stretch"
+                            ToolTip.Tip="画像ファイル（PNG / JPG / BMP / GIF / WEBP）を開く"/>
+                    <TextBlock Text="{Binding ImageSizeText}" FontSize="12" Foreground="#666666"/>
+
+                    <Separator/>
+
+                    <!-- Fit 時の配置 -->
+                    <TextBlock Text="Fit 時の配置"/>
+                    <CheckBox Content="中央寄せ（CenterAlign）" IsChecked="{Binding CenterAlign, Mode=TwoWay}"
+                              ToolTip.Tip="OFF で左上寄せ（Fit 表示中に画像がビューポートより小さい場合に反映）"/>
+
+                    <Separator/>
+
+                    <!-- 座標表示 -->
+                    <TextBlock Text="ポインタ座標（画像ピクセル）"/>
+                    <TextBlock x:Name="PointerPositionText" Text="-" FontSize="12" Foreground="#666666"/>
+
+                    <Separator/>
+
+                    <TextBlock Text="操作説明" FontWeight="Bold"/>
+                    <TextBlock Text="・マウスドラッグ: パン&#x0a;・ホイール: 縦パン&#x0a;・Shift+ホイール: 横パン&#x0a;・Ctrl+ホイール: マウス位置を中心にズーム&#x0a;・⊕/⊖: 23 段階遷移&#x0a;・Fit: ビューポートに収まる自動表示"
+                               FontSize="11" Foreground="#666666" TextWrapping="Wrap"/>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- ───────────────────────── 右: ズームビュー ───────────────────────── -->
+        <zoom:ZoomViewControl x:Name="ZoomableView" Background="#FF2B2B2B"/>
+
+
+    </DockPanel>
+
+</Window>

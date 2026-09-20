@@ -1,6 +1,9 @@
 # Build results
 bin/
 obj/
+
+# Release artifacts (buildScript の出力先)
+publish/
 *.DotSettings.user
 
 # Visual Studio cache/options
@@ -38,6 +41,12 @@ TestResults/
 # OS
 .DS_Store
 Thumbs.db
+
+# Python
+.venv
+
+# git
+.git
 
 # Project-specific
 *.log

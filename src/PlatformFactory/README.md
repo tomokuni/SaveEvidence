@@ -9,7 +9,8 @@
   - [3. システム要件](#3-システム要件)
   - [4. インストール](#4-インストール)
   - [5. クイックスタート](#5-クイックスタート)
-    - [プラットフォームサービスの生成](#プラットフォームサービスの生成)
+    - [コア型との相互変換](#コア型との相互変換)
+    - [カーソル上書き抑止のアタッチ](#カーソル上書き抑止のアタッチ)
     - [座標変換ポート](#座標変換ポート)
     - [画面座標変換](#画面座標変換)
   - [6. 設計方針](#6-設計方針)
@@ -24,21 +25,18 @@
 
 ## 1. 概要
 
-実行時プラットフォーム（Windows / 他環境）に応じたプラットフォーム固有実装を生成する静的ファクトリと、座標変換・画面キャプチャ・要素検出などの抽象化 API を提供するライブラリです。
+Avalonia UI 固有のアダプタ（画面座標変換・コア型との相互変換・画像／幾何アダプタ）を提供するライブラリです。
+UI フレームワーク非依存の抽象・値型・純粋ロジックは `PlatformFactory.Core`、ネイティブ（OS）実装とファクトリは `PlatformFactory.Native` が担います。
 
 ## 2. 機能一覧
 
-- **Factory Method パターン**: `PlatformFactory.CreateXxx()` で実行時プラットフォームに応じた既定実装を生成（Windows = Win32 API 実装 / 他環境 = NoOp 実装）
-- **プラットフォーム判定の一元化**: `OperatingSystem.IsWindows()` による分岐を本ライブラリに集約（各プロジェクトの重複分岐を排除・DRY）
-- **抽象化 API**: `ICursorService` / `IElementFinder` / `ICursorOverrideGuard` / `ICaptureService` / `IWindowService` / `IGlobalHotKeyService<T>` / `ICoordTransform` のインターフェースで具象型への依存を排除（DIP）
-- **座標変換ポート**: `CoordTransform`（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout` / `ImageLayoutScaleX`）でドメイン ↔ DIP ↔ 画面物理の変換を Func 委譲で提供
-- **座標変換ユーティリティ**: `ScreenConverter`（ローカル DIP ↔ 画面物理）/ `ScrollMath`（スクロール範囲）/ `DpiScaler`（DIP → 物理ピクセル）
-- **画面キャプチャ**: `ICaptureService.CaptureArea` / `CaptureVirtualScreen`（Windows: System.Drawing + Win32 API。結果は `PbBitmap`）
-- **要素検出**: `IElementFinder`（カーソル位置のウィンドウ / スクリーン検出・一覧取得）
-- **グローバルホットキー**: `IGlobalHotKeyService<T>`（登録・WM_HOTKEY 受信・アクション配信。WndProc サブクラス化を内包）
-- **画像ユーティリティ**: 複数ビットマップ種別を横断して扱う `PbBitmap`（コア）と、Avalonia / System.Drawing 向けの生成・変換拡張（`PbBitmapAvaloniaExtensions` / `PbBitmapDrawingExtensions`）、`IImage` アダプタ（`PbBitmapAvaloniaImage`）、ブラシキャッシュ（`BrushCache`）を提供
+- **画面座標変換**: `ScreenConverter`（コントロールローカル DIP ↔ 画面物理。Avalonia の `TopLevel` に依存するため本プロジェクトに残す）
+- **座標変換ポート**: `ICoordTransform` / `CoordTransform` は UI フレームワーク非依存のコア型として `PlatformFactory.Core` が提供
+- **ネイティブ実装とファクトリ**: `PlatformFactory.CreateXxx()` と Win32 / NoOp 実装は `PlatformFactory.Native` が提供
+- **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPixelPoint`・`EsPixelRect`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
+- **カーソル抑止の仲介**: `CursorOverrideGuardAvaloniaExtensions.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲）
+- **画像ユーティリティ**: `EsBitmap`（`PlatformFactory.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage` アダプタ（`EsBitmapAvaloniaImage`）、ブラシキャッシュ（`BrushCache`）
 - **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
-- **プラットフォーム非依存の公開 API**: 公開型は Avalonia / .NET 標準型（`PbBitmap` / `PixelPoint` / `PixelRect` / `IPlatformHandle`）のみを使用し、Win32 ハンドル・System.Drawing 型を公開しない
 
 ## 3. システム要件
 
@@ -54,47 +52,70 @@
 <ProjectReference Include="..\PlatformFactory\src\PlatformFactory.csproj" />
 ```
 
+本プロジェクトは `PlatformFactory.Core` と `PlatformFactory.Native` を参照しているため、
+本プロジェクトを参照すればそれらの型も利用できます。
+
 必要な名前空間:
 
 ```csharp
-using Estable.AvaloniaUI.Platform;          // PlatformFactory / ICoordTransform / CoordTransform / ScreenConverter 等
-using Estable.AvaloniaUI.Platform.Imaging;  // PbBitmap / PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions 等
+using Estable.AvaloniaUI.Platform;          // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
+using Estable.AvaloniaUI.Platform.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / BrushCache
+using Estable.Platform;                     // PlatformFactory（ファクトリ）/ サービス抽象 / コア値型
+using Estable.Platform.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
+using Estable.Platform.Coordinate;          // ICoordTransform / CoordTransform
+using Estable.Platform.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPixelPoint / EsPixelRect / EsPlatformHandle
 ```
 
 ## 5. クイックスタート
 
-### プラットフォームサービスの生成
+### コア型との相互変換
+
+UI フレームワーク非依存のコア型と Avalonia の型を相互変換します。
 
 ```csharp
-// 実行時プラットフォーム（Windows / 他環境）に応じた既定実装を生成する
-var cursorService = PlatformFactory.CreateCursorService();
-var captureService = PlatformFactory.CreateCaptureService(logger);
-var elementFinder = PlatformFactory.CreateElementFinder();
-var windowService = PlatformFactory.CreateWindowService();
-var cursorOverrideGuard = PlatformFactory.CreateCursorOverrideGuard();
-var hotKeyService = PlatformFactory.CreateGlobalHotKeyService<MyActionType>();
+using Estable.AvaloniaUI.Platform;   // 相互変換拡張
+using Estable.Platform.Geometry;    // EsPoint / EsPixelRect 等
 
-// ホストが独自実装を持つ場合は、本ファクトリを使わず各インターフェースに直接注入する（DIP）
+// Avalonia → コア（サービス抽象へ渡すとき）
+EsPixelRect rect = captureRect.ToEsPixelRect();
+EsPlatformHandle handle = window.TryGetPlatformHandle().ToEsPlatformHandle();
+EsPoint point = avaloniaPoint.ToEsPoint();
+
+// コア → Avalonia（描画・表示境界）
+PixelRect back = rect.ToAvaloniaPixelRect();
+```
+
+### カーソル上書き抑止のアタッチ
+
+`ICursorOverrideGuard.Attach` は UI 非依存のハンドルを受け取るため、Avalonia の `TopLevel` からハンドルを取得する拡張メソッドを提供します。
+
+```csharp
+var guard = PlatformFactory.CreateCursorOverrideGuard();
+guard.Attach(window);   // TopLevel → EsPlatformHandle の変換を仲介する
 ```
 
 ### 座標変換ポート
+
+座標変換ポートは UI フレームワーク非依存のコア型として `PlatformFactory.Core`（`Estable.Platform.Coordinate` 名前空間）が提供します。座標はコア幾何型（`EsPoint` / `EsSize` / `EsVector`）で扱います。
 
 ```csharp
 // 等価変換（1 ドメイン = 1 DIP・無制限）
 ICoordTransform identity = CoordTransform.Identity;
 
 // スクロールオフセット平行移動（コンテンツ ↔ ビューポート）
-ICoordTransform scroll = CoordTransform.ScrollOffset(() => scrollViewer.Offset);
+ICoordTransform scroll = CoordTransform.ScrollOffset(() => scrollViewer.Offset.ToEsVector());
 
 // ドメイン = ローカル DIP × 倍率（呼び出し毎評価。DPI 200% 等）
 ICoordTransform scale = CoordTransform.DomainScale(() => 2.0);
 
 // 画像レイアウト（レターボックス・Uniform スケール）。Forward = DIP → 論理（元画像ピクセル）
-ICoordTransform layout = CoordTransform.ImageLayout(() => viewport.Bounds.Size, sourceSize);
+ICoordTransform layout = CoordTransform.ImageLayout(() => viewport.Bounds.Size.ToEsSize(), sourceSize.ToEsSize());
 
 // 2 ポート合成（inner 先行 → outer 後続）
 ICoordTransform composed = CoordTransform.Compose(layout, scroll);
 ```
+
+Avalonia の `Point` / `Size` / `Vector` を受け渡す場合は、境界で `.ToEsPoint()` / `.ToEsSize()` / `.ToEsVector()`（逆は `.ToAvaloniaPoint()` 等）で変換します。
 
 ### 画面座標変換
 
@@ -108,13 +129,22 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt);
 
 ## 6. 設計方針
 
+### 責務の分割
+
+| プロジェクト | 責務 |
+| --- | --- |
+| `PlatformFactory.Core` | UI 非依存の抽象・値型・純粋ロジック |
+| `PlatformFactory.Native` | Win32 / NoOp 実装とファクトリ（UI 非依存） |
+| 本プロジェクト | Avalonia 固有のアダプタ（`TopLevel` / Avalonia 型に依存するもの）のみ |
+
 ### 公開 API の最小化
 
-プラットフォーム固有実装（`Win\*` / `NoOp\*`）と内部ユーティリティ（`CoordMath` / `PlatformLog`）はすべて internal です。公開 API は抽象（各インターフェース）とプラットフォーム非依存型のみで構成され、具象型への依存を排除します（DIP・カプセル化）。
+Win32 / NoOp 実装は `PlatformFactory.Native` が唯一の生成経路となるため internal です。
+本プロジェクトの公開 API は Avalonia 固有のアダプタ（`ScreenConverter` / 相互変換 / 画像・幾何アダプタ）のみで構成されます。
 
 ### 一方向依存
 
-`PlatformFactory` → 各インターフェース（抽象）→ Win / NoOp 実装（internal）の一方向の階層構造です。上位 AP（DragRectControl / SnipCaptureUI 等）はインターフェース経由で利用します。
+`PlatformFactory`（本プロジェクト）→ `PlatformFactory.Native` → `PlatformFactory.Core` の一方向の階層構造です。上位 AP（DragRectControl / SnipCaptureUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
 
 ## 7. サンプル
 
@@ -130,26 +160,17 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt);
 ```text
 PlatformFactory/
 ├── src/
-│   ├── PlatformFactory.csproj      # ライブラリプロジェクト（Avalonia / Avalonia.Skia / Logging.Abstractions / System.Drawing.Common）
+│   ├── PlatformFactory.csproj      # ライブラリプロジェクト（Avalonia / Avalonia.Skia）
 │   └── Platform/
-│       ├── PlatformFactory.cs      # 公開ファクトリ（Factory Method パターン）
-│       ├── ICursorService.cs       # カーソル操作抽象
-│       ├── IElementFinder.cs       # 要素検出抽象
-│       ├── ICursorOverrideGuard.cs # カーソル上書き抑止抽象
-│       ├── ICaptureService.cs      # キャプチャ抽象
-│       ├── IWindowService.cs       # ウィンドウ操作抽象
-│       ├── IGlobalHotKeyService.cs # グローバルホットキー抽象
-│       ├── ElementFinderResults.cs # 要素検出結果 record
-│       ├── HotKeySetting.cs        # ホットキー組合せ record
 │       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
-│       ├── PlatformLog.cs          # ログ定義（internal）
-│       ├── Coordinate/             # 座標変換（ICoordTransform / CoordTransform / ScreenConverter / ScrollMath / DpiScaler / CoordMath）
-│       ├── Geometry/               # 幾何変換（CoordinateFormatter / AvaloniaGeometryAdapters / RectDExt）
-│       ├── Imaging/                # 画像ユーティリティ（PbBitmap / PbBitmapAvaloniaExtensions / PbBitmapDrawingExtensions / PbBitmapAvaloniaImage / BrushCache）
-│       ├── Win/                    # Windows 実装（internal: Win32 API / P-Invoke 集約）
-│       └── NoOp/                   # 他環境フォールバック（internal: シングルトン）
+│       ├── Coordinate/             # ScreenConverter（Avalonia の TopLevel に依存するため本プロジェクトに残す）
+│       ├── Imaging/                # 画像アダプタ（EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / BrushCache）
+│       └── Interop/                # コア型との相互変換（EsKeyAvaloniaInterop / EsWindowStateAvaloniaInterop / EsGeometryAvaloniaInterop / EsPlatformHandleAvaloniaInterop / ColorAvaloniaInterop / CursorOverrideGuardAvaloniaExtensions）
 └── tests/                          # 単体テスト
 ```
+
+ファクトリと Win32 / NoOp 実装は [`PlatformFactory.Native`](../PlatformFactory.Native/README.md)、
+抽象・値型・純粋ロジックは [`PlatformFactory.Core`](../PlatformFactory.Core/README.md) を参照してください。
 
 ## 10. ライセンス
 

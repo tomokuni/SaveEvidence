@@ -1,6 +1,9 @@
 using Avalonia;
 using Avalonia.Threading;
+using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform;
+using Estable.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 
 namespace Estable.AvaloniaUI.SnipCaptureUI;
@@ -22,7 +25,7 @@ internal sealed partial class OverlayWindow
         Focus();
         if (TryGetPlatformHandle() is { } selfHandle)
         {
-            _windowService.HideFromTaskSwitcher(selfHandle);
+            _windowService.HideFromTaskSwitcher(selfHandle.ToEsPlatformHandle());
         }
         // ルーペの表示はマウス移動（DragRect の LoupePositionMoved）が行う。
         // ここで中央に表示するとポインタから遠くに描画され、Source 未設定の市松模様も見えるため表示しない。
@@ -64,12 +67,12 @@ internal sealed partial class OverlayWindow
         // 完了後に UI スレッドで確定する（確定→画像表示までの待ち時間を短縮）。
         var vBitmap = _virtualScreenBitmap;
         var origin = _virtualScreenOrigin;
-        Task<PbBitmap?> clipTask;
+        Task<EsBitmap?> clipTask;
         if (vBitmap is null)
         {
             // キャプチャ未完了（オーバーレイを先に表示した直後）: 確定矩形を直接キャプチャする
             // （GDI キャプチャはスレッドセーフのためバックグラウンドで実行可能）
-            clipTask = Task.Run(() => _captureService.CaptureArea(captureRect));
+            clipTask = Task.Run(() => _captureService.CaptureArea(captureRect.ToEsPixelRect()));
         }
         else
         {
@@ -86,7 +89,7 @@ internal sealed partial class OverlayWindow
     /// <remarks>
     /// オーバーレイを閉じる（Close で仮想スクリーンが解放される。result は所有権が移っているため破棄されない）。
     /// </remarks>
-    private void CompleteSelectionCore(PbBitmap? result, PixelRect captureRect)
+    private void CompleteSelectionCore(EsBitmap? result, PixelRect captureRect)
     {
         _log.LogCaptureCompleted(captureRect.ToString());
         Close();
@@ -117,7 +120,7 @@ internal sealed partial class OverlayWindow
         {
             try
             {
-                // PbBitmap から切り出す（Clipped は PbBitmap）。ImageProcessor は廃止済み。
+                // EsBitmap から切り出す（Clipped は EsBitmap）。ImageProcessor は廃止済み。
                 if (vBitmap is not { } vb) return;
                 var clipped = vb.Crop(localRect);
                 Dispatcher.UIThread.Post(() =>
@@ -146,7 +149,7 @@ internal sealed partial class OverlayWindow
     /// バックグラウンドスレッドから安全に実行できる（PreExtractClip と同方式）。<br/>
     /// 仮想スクリーン未設定時のフォールバック（CaptureArea）は呼び出し側が行う。
     /// </remarks>
-    private static PbBitmap? ExtractClipCore(PbBitmap? vBitmap, PixelPoint origin, PixelRect captureRect)
+    private static EsBitmap? ExtractClipCore(EsBitmap? vBitmap, PixelPoint origin, PixelRect captureRect)
     {
         if (vBitmap is not { } bmp) return null;
         return bmp.Crop(ToBitmapLocalRect(captureRect, origin));
@@ -188,7 +191,7 @@ internal sealed partial class OverlayWindow
         // 未完了ならキャンセルとして完了する（Close() 経由のキャンセルを確実にする）
         CompleteCancelled();
         SelectionOverlay.ClearLoupe();
-        // 表示境界の画像（VirtualScreenImage・ルーペ Source は PbBitmap を共有）を解除する
+        // 表示境界の画像（VirtualScreenImage・ルーペ Source は EsBitmap を共有）を解除する
         VirtualScreenImage.Source = null;
         _virtualScreenBitmap?.Dispose();
         _virtualScreenBitmap = null;
@@ -209,20 +212,20 @@ internal sealed partial class OverlayWindow
     /// ルーペの Source も同時に設定する（AreaSelect のウィンドウ表示時は Bitmap が未取得のため、
     /// 取得完了時に改めて設定しないと市松模様のままになる）。
     /// </remarks>
-    public void SetVirtualScreen(PbBitmap? bitmap, PixelPoint origin)
+    public void SetVirtualScreen(EsBitmap? bitmap, PixelPoint origin)
     {
         _virtualScreenBitmap?.Dispose();
         _virtualScreenBitmap = bitmap;
         _virtualScreenOrigin = origin;
         _log.LogVirtualScreen(origin.X, origin.Y, bitmap?.Size.Width ?? 0, bitmap?.Size.Height ?? 0);
 
-        // 固定背景画像（VirtualScreenImage）とルーペの拡大元画像（Source）へ同一の PbBitmapAvaloniaImage を設定する。
-        // WriteableBitmap を生成せず、PbBitmap を内包した IImage（PbBitmapAvaloniaImage）を Source に設定する
+        // 固定背景画像（VirtualScreenImage）とルーペの拡大元画像（Source）へ同一の EsBitmapAvaloniaImage を設定する。
+        // WriteableBitmap を生成せず、EsBitmap を内包した IImage（EsBitmapAvaloniaImage）を Source に設定する
         // （Skia 直描画・ゼロコピー。破棄は _virtualScreenBitmap の Dispose が一元管理する）。
-        PbBitmapAvaloniaImage? displayImage = bitmap is null ? null : new PbBitmapAvaloniaImage(bitmap);
+        EsBitmapAvaloniaImage? displayImage = bitmap is null ? null : new EsBitmapAvaloniaImage(bitmap);
         VirtualScreenImage.Source = displayImage;
 
-        // ルーペの Source を設定する（同一の PbBitmapAvaloniaImage を共有する）。
+        // ルーペの Source を設定する（同一の EsBitmapAvaloniaImage を共有する）。
         // Source 未設定の間はルーペが表示されない（市松模様防止）ため、ここで Source を設定し、
         // 既にドラッグ中（CenterPoint 設定済み）なら SetLoupePosition を再呼び出しして表示を開始する。
         if (displayImage is not null && _captureType == CaptureType.AreaSelect)

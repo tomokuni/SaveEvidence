@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 
 namespace SnipCaptureUI.Sample.ViewModels;
@@ -51,7 +52,7 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         if (result?.Image is { } image && result.SourceBounds is { } bounds)
         {
-            // キャプチャ結果（PbBitmap）を表示用 Bitmap へ変換する（表示境界）。
+            // キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換する（表示境界）。
             CapturedImage = image.ToAvaloniaBitmap();
             ResultText = $"領域: X={bounds.X}, Y={bounds.Y}, 幅={bounds.Width}, 高さ={bounds.Height}（仮想画面座標）";
             StatusText = "キャプチャが完了しました。";

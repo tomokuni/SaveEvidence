@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.ZoomView</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlatformFactory.Core\src\PlatformFactory.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
+    <InternalsVisibleTo Include="ZoomViewControl.AvaloniaUI" />
+    <InternalsVisibleTo Include="ZoomViewControl.MewUI" />
+    <InternalsVisibleTo Include="ZoomViewControl.AvaloniaUI.Tests" />
+    <InternalsVisibleTo Include="ZoomViewControl.MewUI.Tests" />
+    <InternalsVisibleTo Include="ZoomViewControl.Core.Tests" />
+  </ItemGroup>
+
+</Project>

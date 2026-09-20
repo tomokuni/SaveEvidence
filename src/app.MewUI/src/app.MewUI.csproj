@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SaveEvidence.MewUI</RootNamespace>
+    <AssemblyName>SaveEvidence.MewUI</AssemblyName>
+    <!-- MewUI は API が安定化中（0.x）。破壊的変更を避けるためバージョンを固定する。 -->
+    <MewUIVersion>0.21.1</MewUIVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core + Win32 プラットフォームホスト + Windows 向け全描画バックエンド -->
+    <PackageReference Include="Aprillz.MewUI.Windows" Version="$(MewUIVersion)" />
+    <!-- SkiaCanvasView（EsBitmap をそのまま描画する） -->
+    <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
+    <!-- Direct2D ↔ Skia の GPU ブリッジ（未登録でも CPU 経路で動作するが、描画コストが高い） -->
+    <PackageReference Include="Aprillz.MewUI.Skia.Interop.Direct2D" Version="$(MewUIVersion)" />
+    <!-- 操作ログ（Avalonia 版と同一のファイルへ出力する） -->
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
+    <PackageReference Include="Serilog" Version="[4.*,)" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="[10.*,)" />
+    <PackageReference Include="Serilog.Sinks.File" Version="[7.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UI 非依存のコア（設定・ViewModel・画像コンテナ） -->
+    <ProjectReference Include="..\..\app.Core\src\app.Core.csproj" />
+    <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型） -->
+    <ProjectReference Include="..\..\PlatformFactory.MewUI\src\PlatformFactory.MewUI.csproj" />
+    <!-- ネイティブサービス（キャプチャ・ホットキー等。UI 非依存） -->
+    <ProjectReference Include="..\..\PlatformFactory.Native\src\PlatformFactory.Native.csproj" />
+    <!-- MewUI 版コントロール（コアロジックを共有する） -->
+    <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
+    <ProjectReference Include="..\..\ZoomViewControl.MewUI\src\ZoomViewControl.MewUI.csproj" />
+    <ProjectReference Include="..\..\CropViewControl.MewUI\src\CropViewControl.MewUI.csproj" />
+    <!-- 領域選択（暗転マスク + 選択矩形 + ルーペ。キャプチャのオーバーレイとプレビューの切り出しで使う） -->
+    <ProjectReference Include="..\..\FadeMaskDragRectControl.MewUI\src\FadeMaskDragRectControl.MewUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 内部型（サービス・ビュー）をテストから検証できるようにする -->
+    <InternalsVisibleTo Include="app.MewUI.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- アイコン（SVG）は Avalonia 版と同一のファイルを共有する（埋め込みリソースとして参照する）。
+         論理名を固定し、実行時はマニフェスト名の列挙なしで読み込む（トリミング / Native AOT 対応）。 -->
+    <EmbeddedResource Include="..\..\app.AvaloniaUI\src\Icons\*.svg">
+      <LogicalName>SaveEvidence.MewUI.Icons.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

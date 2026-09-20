@@ -3,10 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Geometry;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform;
+using Estable.Platform.Coordinate;
+using Estable.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
+using Estable.FadeMaskDragRect;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -29,7 +32,7 @@ internal sealed partial class OverlayWindow : Window
     private readonly CaptureType _captureType;
 
     /// <summary>キャプチャ完了コールバック（確定・キャンセル・エラー時に呼ばれる）。</summary>
-    private readonly Action<PbBitmap?, PixelRect?> _onComplete;
+    private readonly Action<EsBitmap?, PixelRect?> _onComplete;
 
     /// <summary>DPI スケーリング係数（プライマリスクリーン基準）。</summary>
     private readonly double _scaling;
@@ -52,8 +55,8 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>クリック確定型の押下時に固定したハイライト矩形。リリース時に確定する。</summary>
     private Rect? _clickFixedRect;
 
-    /// <summary>仮想スクリーン全体の PbBitmap（全モード共通のキャプチャソース・切り出し元）。</summary>
-    private PbBitmap? _virtualScreenBitmap;
+    /// <summary>仮想スクリーン全体の EsBitmap（全モード共通のキャプチャソース・切り出し元）。</summary>
+    private EsBitmap? _virtualScreenBitmap;
 
     /// <summary>仮想スクリーンの原点（画面物理座標）。Bitmap 上の座標 = 画面物理座標 − 原点。</summary>
     private PixelPoint _virtualScreenOrigin;
@@ -62,7 +65,7 @@ internal sealed partial class OverlayWindow : Window
     private PixelRect? _cachedClipRect;
 
     /// <summary>事前切り出し済みの Bitmap（確定時に再利用。枠の変更がない場合は切り出しをスキップ）。</summary>
-    private PbBitmap? _cachedClipBitmap;
+    private EsBitmap? _cachedClipBitmap;
 
     /// <summary>事前切り出しの実行回数（テスト検証用）。</summary>
     private int _preExtractCount;
@@ -86,7 +89,7 @@ internal sealed partial class OverlayWindow : Window
         CaptureType captureType,
         CaptureSettings settings,
         double scaling,
-        Action<PbBitmap?, PixelRect?> onComplete,
+        Action<EsBitmap?, PixelRect?> onComplete,
         ILogger? logger = null)
     {
         InitializeComponent();
@@ -186,7 +189,7 @@ internal sealed partial class OverlayWindow : Window
         // ドメイン（仮想スクリーンピクセル）はウィンドウ Position 基準のため、画面物理座標へは Position を加算する。
         if (selectionRect.Width > 0 && selectionRect.Height > 0)
         {
-            PreExtractClip(DomainToScreenRect(selectionRect.ToAvaloniaRect(), Position));
+            PreExtractClip(DomainToScreenRect(selectionRect, Position));
         }
     }
 
@@ -266,7 +269,7 @@ internal sealed partial class OverlayWindow : Window
         // ソース: ドメイン（仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）は
         // ウィンドウ Position = 仮想スクリーン原点のため、既に仮想スクリーン Bitmap 上の座標と一致する。
         // 仮想スクリーン原点（_virtualScreenOrigin）を更に引くとマルチモニタ（原点が (0,0) でない）でずれるため引かない。
-        // ルーペの拡大元画像（Source）は SetVirtualScreen で一度だけ設定済み（PbBitmapAvaloniaImage）のため、
+        // ルーペの拡大元画像（Source）は SetVirtualScreen で一度だけ設定済み（EsBitmapAvaloniaImage）のため、
         // ここでは中心位置の更新のみ行う（MouseMove 毎の全画面コピー生成と破棄済み Bitmap 残留を防ぐ）。
         SelectionOverlay.SetLoupePosition(domainPos);
     }
@@ -346,7 +349,7 @@ internal sealed partial class OverlayWindow : Window
     private void OnAreaConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
     {
         _log.LogOverlayConfirm(e.SelectionRect.ToString());
-        var screenRect = DomainToScreenRect(e.SelectionRect.ToAvaloniaRect(), Position);
+        var screenRect = DomainToScreenRect(e.SelectionRect, Position);
         CompleteSelection(screenRect);
     }
 

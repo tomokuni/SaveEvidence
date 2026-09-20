@@ -3,7 +3,9 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Estable.AvaloniaUI.Platform;
+using Estable.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform.Imaging;
 using Estable.AvaloniaUI.SnipCaptureUI;
 using LineDetectionSample.Models;
 using System.Collections.ObjectModel;
@@ -71,7 +73,7 @@ public sealed partial class CreatePageViewModel : ObservableObject
             return;
         }
 
-        // キャプチャ結果（PbBitmap）を表示用 Bitmap へ変換する（表示境界）。
+        // キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換する（表示境界）。
         CapturedImage = image.ToAvaloniaBitmap();
         CaptureBounds = bounds;
         WindowInfos.Clear();
@@ -79,13 +81,15 @@ public sealed partial class CreatePageViewModel : ObservableObject
         var finder = PlatformFactory.CreateElementFinder();
         foreach (var window in finder.ListWindows())
         {
+            // 検出結果の矩形は UI 非依存のコア型のため、表示境界で Avalonia 型へ変換する
+            var windowBounds = window.Bounds.ToAvaloniaPixelRect();
             // キャプチャ領域と交差するウィンドウのみ対象（画像ローカル座標へ変換）
-            if (!Intersects(bounds, window.Bounds))
+            if (!Intersects(bounds, windowBounds))
             {
                 continue;
             }
 
-            var local = ToLocal(bounds, window.Bounds);
+            var local = ToLocal(bounds, windowBounds);
             WindowInfos.Add(new WindowInfoItem(local, window.Title ?? "", window.ClassName ?? "", OnSelectionChanged));
         }
 

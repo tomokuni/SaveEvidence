@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.AvaloniaUI.CropView</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="[12.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="CropViewControl.AvaloniaUI.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UI 非依存の矩形オーバーレイ定義とラスタライザ -->
+    <ProjectReference Include="..\..\CropViewControl.Core\src\CropViewControl.Core.csproj" />
+    <!-- 領域選択オーバーレイ（DragRect + FadeMask + Loupe） -->
+    <ProjectReference Include="..\..\FadeMaskDragRectControl.AvaloniaUI\src\FadeMaskDragRectControl.AvaloniaUI.csproj" />
+    <!-- 画像ビューポート（拡大・パン・Fit） -->
+    <ProjectReference Include="..\..\ZoomViewControl.AvaloniaUI\src\ZoomViewControl.AvaloniaUI.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,117 @@
+# 依存関係（GitHub Actions と NuGet パッケージ）の更新を検知し、Pull Request を作成する。
+#
+# 作成された Pull Request は build.yml（main 向け PR）でビルドとテストが実行される。
+# 内容を確認して main へマージする（方式は Squash merge を推奨）。
+#
+# 注意事項:
+# - Dependabot の Pull Request は fork 相当（読み取り専用トークン・シークレット無し）で実行される。
+#   本リポジトリの build.yml はシークレットを使用しないため、CI はそのまま動作する。
+# - NuGet のメジャー更新（xunit.v3 4 系など、テストの書き方と実行基盤が変わるもの）は自動では作成しない。
+#   ignore の dependency-name は**実際のパッケージ ID と完全一致**させること
+#   （xunit では xunit.v3 / xunit.analyzers に一致しない）。
+version: 2
+
+updates:
+  # ─── GitHub Actions（.github/workflows の uses: で参照しているアクション）───
+  - package-ecosystem: "github-actions"
+    # GitHub Actions の場合は "/" を指定する（/.github/workflows が走査される）
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    # 既定は 5 件。アクションの数が少ないため既定のままで足りる
+    open-pull-requests-limit: 5
+    groups:
+      # 複数のアクションを 1 つの Pull Request にまとめる（レビューとマージの回数を減らす）
+      actions:
+        patterns: ["*"]
+
+  # ─── NuGet（各プロジェクトのパッケージ）───
+  - package-ecosystem: "nuget"
+    # マニフェスト（.csproj）があるディレクトリを指定する（リポジトリルートからの相対パス）
+    # 注意: Dependabot は指定したディレクトリ直下のみを走査する（再帰しない）ため、プロジェクトごとに列挙する
+    directories:
+      # ── アプリ本体（Avalonia UI / MewUI）───
+      - "/src/app.AvaloniaUI/src"
+      - "/src/app.AvaloniaUI/tests"
+      - "/src/app.MewUI/src"
+      - "/src/app.MewUI/tests"
+      - "/src/app.Core/src"
+      - "/src/app.Core/tests"
+      # ── 再利用コントロール（Avalonia UI 版）───
+      - "/src/ColorPickerControl.AvaloniaUI/sample"
+      - "/src/ColorPickerControl.AvaloniaUI/src"
+      - "/src/ColorPickerControl.AvaloniaUI/tests"
+      - "/src/CropViewControl.AvaloniaUI/src"
+      - "/src/CropViewControl.AvaloniaUI/tests"
+      - "/src/DragRectControl.AvaloniaUI/sample"
+      - "/src/DragRectControl.AvaloniaUI/src"
+      - "/src/DragRectControl.AvaloniaUI/tests"
+      - "/src/FadeMaskControl.AvaloniaUI/sample"
+      - "/src/FadeMaskControl.AvaloniaUI/src"
+      - "/src/FadeMaskControl.AvaloniaUI/tests"
+      - "/src/FadeMaskDragRectControl.AvaloniaUI/src"
+      - "/src/FadeMaskDragRectControl.AvaloniaUI/tests"
+      - "/src/LoupeControl.AvaloniaUI/sample"
+      - "/src/LoupeControl.AvaloniaUI/src"
+      - "/src/LoupeControl.AvaloniaUI/tests"
+      - "/src/ZoomViewControl.AvaloniaUI/sample"
+      - "/src/ZoomViewControl.AvaloniaUI/src"
+      - "/src/ZoomViewControl.AvaloniaUI/tests"
+      # ── 再利用コントロール（MewUI 版）───
+      - "/src/CropViewControl.MewUI/src"
+      - "/src/CropViewControl.MewUI/tests"
+      - "/src/DragRectControl.MewUI/src"
+      - "/src/DragRectControl.MewUI/tests"
+      - "/src/FadeMaskControl.MewUI/src"
+      - "/src/FadeMaskControl.MewUI/tests"
+      - "/src/FadeMaskDragRectControl.MewUI/src"
+      - "/src/FadeMaskDragRectControl.MewUI/tests"
+      - "/src/LoupeControl.MewUI/src"
+      - "/src/LoupeControl.MewUI/tests"
+      - "/src/ZoomViewControl.MewUI/src"
+      - "/src/ZoomViewControl.MewUI/tests"
+      # ── コントロールのコア（UI 非依存。パッケージはテストのみが参照する）───
+      - "/src/CropViewControl.Core/tests"
+      - "/src/DragRectControl.Core/tests"
+      - "/src/FadeMaskControl.Core/tests"
+      - "/src/FadeMaskDragRectControl.Core/tests"
+      - "/src/LoupeControl.Core/tests"
+      - "/src/ZoomViewControl.Core/tests"
+      # ── プラットフォーム基盤 ──
+      - "/src/PlatformFactory/src"
+      - "/src/PlatformFactory/tests"
+      - "/src/PlatformFactory.Core/src"
+      - "/src/PlatformFactory.Core/tests"
+      - "/src/PlatformFactory.Native/src"
+      - "/src/PlatformFactory.Native/tests"
+      - "/src/PlatformFactory.MewUI/src"
+      - "/src/PlatformFactory.MewUI/tests"
+      # ── 画像処理・撮影フロー ──
+      - "/src/LineDetection/sample"
+      - "/src/LineDetection/src"
+      - "/src/LineDetection/tests"
+      - "/src/SnipCaptureUI/sample"
+      - "/src/SnipCaptureUI/src"
+      - "/src/SnipCaptureUI/tests"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    groups:
+      # minor / patch を 1 つの Pull Request にまとめる
+      nuget-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # xunit 系はテストの書き方・実行基盤が変わる（破壊的変更）ため、メジャー更新は手動で判断する
+      # 対象パッケージは**実際の ID と完全一致**させる（本リポジトリは xunit.v3 系列を使用する）
+      - dependency-name: "xunit.v3"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "xunit.analyzers"
+        update-types: ["version-update:semver-major"]
+      # MewUI は API が安定化中（0.x）のため、バージョンは固定して手動で更新する
+      # （自動更新されると破壊的変更でビルドが通らなくなる）
+      - dependency-name: "Aprillz.MewUI*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]

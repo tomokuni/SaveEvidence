@@ -1,0 +1,121 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:fm="clr-namespace:Estable.AvaloniaUI.FadeMask;assembly=FadeMaskControl.AvaloniaUI"
+        mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="720"
+        x:Class="FadeMaskControl.Sample.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        xmlns:vm="clr-namespace:FadeMaskControl.Sample.ViewModels"
+        Title="FadeMaskControl サンプル"
+        Width="640" Height="850">
+    <StackPanel Margin="20" Spacing="16">
+        <TextBlock Text="FadeMaskControl サンプル"
+                   FontSize="20" FontWeight="Bold"/>
+
+        <!-- 暗転オーバーレイ（穴あけマスク）の表示領域 -->
+        <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Padding="4">
+            <Grid Width="560" Height="320" Background="LightGray">
+                <fm:FadeMaskControl x:Name="Overlay"
+                                    OverlayColor="{Binding OverlayColor}"
+                                    TextColor="{Binding TextColor}"
+                                    TextBackgroundColor="{Binding TextBackgroundColor}"
+                                    FontSize="{Binding FontSize}"
+                                    ShowSizeLabel="{Binding ShowSizeLabel}"/>
+            </Grid>
+        </Border>
+
+        <!-- 選択矩形の操作 -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="選択矩形（SelectionRect）" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock VerticalAlignment="Center" Text="X:"/>
+                <TextBox Width="60" Text="{Binding RectX, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock VerticalAlignment="Center" Text="Y:"/>
+                <TextBox Width="60" Text="{Binding RectY, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock VerticalAlignment="Center" Text="W:"/>
+                <TextBox Width="60" Text="{Binding RectWidth, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock VerticalAlignment="Center" Text="H:"/>
+                <TextBox Width="60" Text="{Binding RectHeight, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Content="矩形なし（全面暗転）" Command="{Binding ClearRectCommand}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 暗転オーバーレイの設定 -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="暗転オーバーレイ（OverlayColor）" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock VerticalAlignment="Center" Text="Opacity:"/>
+                <Slider Width="200" Minimum="0" Maximum="255" Value="{Binding OverlayOpacity}"/>
+                <TextBlock VerticalAlignment="Center" Text="{Binding OverlayOpacityText}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 選択枠線の設定 -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="選択枠線（BorderColor / BorderThickness・不透明度は色のアルファ）" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock VerticalAlignment="Center" Text="Thickness:"/>
+                <Slider Width="200" Minimum="0.5" Maximum="8" Value="{Binding BorderThickness}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- サイズラベルの設定 -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="サイズラベル（TextColor / FontSize / ShowSizeLabel）" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <CheckBox VerticalAlignment="Center" Content="サイズラベル表示" IsChecked="{Binding ShowSizeLabel}"/>
+                <TextBlock VerticalAlignment="Center" Text="FontSize:"/>
+                <Slider Width="200" Minimum="8" Maximum="32" Value="{Binding FontSize}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock VerticalAlignment="Center" Text="明示指定（SizeLabelOverride・空は自動）:"/>
+                <TextBox Width="260" Text="{Binding SizeLabelOverride, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- スケーリングの設定 -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="スケーリング（Scaling / DisplayScaleScaling）" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock VerticalAlignment="Center" Text="Scaling:"/>
+                <Slider Width="160" Minimum="0.5" Maximum="4" Value="{Binding RendererScaling}"/>
+                <TextBlock VerticalAlignment="Center" Text="{Binding RendererScalingText}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock VerticalAlignment="Center" Text="DisplayScaleScaling:"/>
+                <Slider Width="160" Minimum="0" Maximum="4" Value="{Binding DisplayScaleScaling}"/>
+                <TextBlock VerticalAlignment="Center" Text="{Binding DisplayScaleScalingText}"/>
+            </StackPanel>
+            <TextBlock Text="※ DisplayScaleScaling は 0 で自動（Scaling と同値）。サイズラベルの物理ピクセル換算に使用されます。"
+                       FontSize="11" Opacity="0.7" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- 情報ラベルの設定 -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="情報ラベル（InfoLabelVisible / InfoLabelColor / InfoLabelBackgroundColor / InfoLabelFontSize）" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <CheckBox VerticalAlignment="Center" Content="情報ラベル表示" IsChecked="{Binding InfoLabelVisible}"/>
+                <TextBlock VerticalAlignment="Center" Text="Color:"/>
+                <TextBox Width="90" Text="{Binding InfoLabelColorText, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock VerticalAlignment="Center" Text="BgColor:"/>
+                <TextBox Width="90" Text="{Binding InfoLabelBackgroundColorText, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock VerticalAlignment="Center" Text="FontSize:"/>
+                <Slider Width="120" Minimum="8" Maximum="32" Value="{Binding InfoLabelFontSize}"/>
+            </StackPanel>
+            <TextBlock Text="※ 情報ラベルは ScreenSelect / WindowSelect のハイライト時のみ表示されます（背景色はアルファ込み）。"
+                       FontSize="11" Opacity="0.7" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- モード切替 -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="描画モード" FontWeight="SemiBold"/>
+            <ComboBox ItemsSource="{Binding ModeItems}" SelectedIndex="{Binding SelectedModeIndex}"/>
+        </StackPanel>
+
+        <TextBlock Text="※ 本サンプルは FadeMaskControl 単体（暗転マスク＋サイズラベル）の描画確認用です。モード（AreaSelect / ScreenSelect / WindowSelect / Crop）に応じた描画の切り替えは FadeMaskRenderer（SnipCaptureUI が使用）で確認できます。"
+                   FontSize="11" Opacity="0.7" TextWrapping="Wrap"/>
+    </StackPanel>
+</Window>

@@ -4,7 +4,9 @@ using Avalonia.Platform;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.CropView;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
+using Estable.Platform;
+using Estable.Platform.Geometry;
+using Estable.Platform.Imaging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
@@ -18,8 +20,8 @@ public class SnipCaptureTests
     /// <summary>キャプチャサービスのモック。</summary>
     private sealed class MockCaptureService : ICaptureService
     {
-        public PbBitmap? CaptureArea(PixelRect bounds) => null;
-        public PbBitmap? CaptureVirtualScreen(out PixelPoint origin)
+        public EsBitmap? CaptureArea(EsPixelRect bounds) => null;
+        public EsBitmap? CaptureVirtualScreen(out EsPixelPoint origin)
         {
             origin = default;
             return null;
@@ -29,16 +31,16 @@ public class SnipCaptureTests
     /// <summary>ウィンドウサービスのモック。</summary>
     private sealed class MockWindowService : IWindowService
     {
-        public void HideFromTaskSwitcher(IPlatformHandle handle) { }
-        public bool SetCaptureExclusion(IPlatformHandle handle, bool exclude) => true;
-        public void EvacuateWindow(IPlatformHandle handle) { }
+        public void HideFromTaskSwitcher(EsPlatformHandle handle) { }
+        public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude) => true;
+        public void EvacuateWindow(EsPlatformHandle handle) { }
     }
 
     /// <summary>要素検出のモック（常に未検出）。</summary>
     private sealed class MockElementFinder : IElementFinder
     {
-        public ElementFinderResults FindWindowUnderCursor(PixelPoint screenPoint) => default;
-        public ElementFinderResults FindScreenUnderCursor(PixelPoint screenPoint) => default;
+        public ElementFinderResults FindWindowUnderCursor(EsPixelPoint screenPoint) => default;
+        public ElementFinderResults FindScreenUnderCursor(EsPixelPoint screenPoint) => default;
         public IReadOnlyList<ElementFinderResults> ListScreens() => [];
         public IReadOnlyList<ElementFinderResults> ListWindows() => [];
     }
@@ -312,8 +314,8 @@ public class SnipCaptureTests
         window.Close();
     }
 
-    /// <summary>テスト用 PbBitmap を生成する。</summary>
-    private static PbBitmap CreateBitmap(int width, int height)
-        => PbBitmap.Create(width, height);
+    /// <summary>テスト用 EsBitmap を生成する。</summary>
+    private static EsBitmap CreateBitmap(int width, int height)
+        => EsBitmap.Create(width, height);
 }
 
