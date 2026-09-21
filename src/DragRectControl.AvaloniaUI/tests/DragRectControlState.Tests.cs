@@ -21,69 +21,80 @@ public class DragRectControlStateTests
 {
     /// <summary>テスト用の DragRectControl を生成する。</summary>
     private static DragRectControl CreateControl()
-        => new() { Width = 200, Height = 200, HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
+        => new() { Width = 200, Height = 200, Options = TestOptions };
+
+    /// <summary>テスト用の設定（最小サイズを 10 にしてドラッグ判定をしやすくする）。</summary>
+    private static DragRectOptions TestOptions
+        => DragRectOptions.Default with { HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
 
     // ====================================================================
     // 依存プロパティのデフォルト値
     // ====================================================================
 
     [Fact]
-    public void 依存プロパティのデフォルト値が正しい()
+    public void 設定の既定値が正しい()
     {
         var control = CreateControl();
+        var options = control.Options;
 
         // 枠線の既定は DarkGray（設定画面の選択枠の色と一致）
-        Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), control.BorderColor);
-        Assert.Equal(2.0, control.BorderThickness);
-        Assert.Equal(Colors.White, control.HandleColor);
-        Assert.Equal(10.0, control.HandleSize);
-        Assert.Equal(12.0, control.HandleHitRadius);
-        Assert.Equal(10.0, control.MinSelectionSize); // CreateControl で設定
-        Assert.True(control.ClampToDomainBounds);
-        Assert.Equal(Colors.White, control.MarkerColor);
-        Assert.Equal(16.0, control.MarkerLength);
-        Assert.False(control.ShowCoordLabel);
-        Assert.Equal(Colors.White, control.CoordLabelColor);
+        Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), options.BorderColor.ToAvaloniaColor());
+        Assert.Equal(2.0, options.BorderThickness);
+        Assert.Equal(Colors.White, options.HandleColor.ToAvaloniaColor());
+        Assert.Equal(10.0, options.HandleSize);
+        Assert.Equal(12.0, options.HandleHitRadius);
+        Assert.Equal(10.0, options.MinSelectionSize); // CreateControl で設定
+        Assert.True(options.ClampToDomainBounds);
+        Assert.Equal(Colors.White, options.MarkerColor.ToAvaloniaColor());
+        Assert.Equal(16.0, options.MarkerLength);
+        Assert.False(options.ShowCoordLabel);
+        Assert.Equal(Colors.White, options.CoordLabelColor.ToAvaloniaColor());
         // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(Color.FromAColor(153, Colors.Black), control.CoordLabelBackgroundColor);
-        Assert.Equal(12.0, control.CoordLabelFontSize);
+        Assert.Equal(Color.FromAColor(153, Colors.Black), options.CoordLabelBackgroundColor.ToAvaloniaColor());
+        Assert.Equal(12.0, options.CoordLabelFontSize);
         Assert.NotNull(control.Log);
+
+        // 設定を指定しない場合の既定値はコアの DragRectOptions.Default と一致する
+        Assert.Equal(DragRectOptions.Default, new DragRectControl().Options);
     }
 
     [Fact]
-    public void 外観プロパティを設定すると反映される()
+    public void 設定を変更すると反映される()
     {
         var control = CreateControl();
 
-        control.BorderColor = Colors.Red;
-        control.BorderThickness = 3.0;
-        control.HandleColor = Colors.Blue;
-        control.HandleSize = 14.0;
-        control.HandleHitRadius = 20.0;
-        control.MinSelectionSize = 5.0;
-        control.ClampToDomainBounds = true;
-        control.MarkerColor = Colors.Yellow;
-        control.MarkerLength = 24.0;
+        control.Options = DragRectOptions.Default with
+        {
+            BorderColor = Colors.Red.ToDrawingColor(),
+            BorderThickness = 3.0,
+            HandleColor = Colors.Blue.ToDrawingColor(),
+            HandleSize = 14.0,
+            HandleHitRadius = 20.0,
+            MinSelectionSize = 5.0,
+            ClampToDomainBounds = true,
+            MarkerColor = Colors.Yellow.ToDrawingColor(),
+            MarkerLength = 24.0,
+            // カーソル座標ラベル
+            ShowCoordLabel = true,
+            CoordLabelColor = Colors.Cyan.ToDrawingColor(),
+            CoordLabelBackgroundColor = Color.FromAColor(128, Colors.DarkGreen).ToDrawingColor(),
+            CoordLabelFontSize = 14.0,
+        };
 
-        Assert.Equal(Colors.Red, control.BorderColor);
-        Assert.Equal(3.0, control.BorderThickness);
-        Assert.Equal(Colors.Blue, control.HandleColor);
-        Assert.Equal(14.0, control.HandleSize);
-        Assert.Equal(20.0, control.HandleHitRadius);
-        Assert.Equal(5.0, control.MinSelectionSize);
-        Assert.True(control.ClampToDomainBounds);
-        Assert.Equal(Colors.Yellow, control.MarkerColor);
-        Assert.Equal(24.0, control.MarkerLength);
-
-        // カーソル座標ラベル
-        control.ShowCoordLabel = true;
-        control.CoordLabelColor = Colors.Cyan;
-        control.CoordLabelBackgroundColor = Color.FromAColor(128, Colors.DarkGreen);
-        control.CoordLabelFontSize = 14.0;
-        Assert.True(control.ShowCoordLabel);
-        Assert.Equal(Colors.Cyan, control.CoordLabelColor);
-        Assert.Equal(Color.FromAColor(128, Colors.DarkGreen), control.CoordLabelBackgroundColor);
-        Assert.Equal(14.0, control.CoordLabelFontSize);
+        var options = control.Options;
+        Assert.Equal(Colors.Red, options.BorderColor.ToAvaloniaColor());
+        Assert.Equal(3.0, options.BorderThickness);
+        Assert.Equal(Colors.Blue, options.HandleColor.ToAvaloniaColor());
+        Assert.Equal(14.0, options.HandleSize);
+        Assert.Equal(20.0, options.HandleHitRadius);
+        Assert.Equal(5.0, options.MinSelectionSize);
+        Assert.True(options.ClampToDomainBounds);
+        Assert.Equal(Colors.Yellow, options.MarkerColor.ToAvaloniaColor());
+        Assert.Equal(24.0, options.MarkerLength);
+        Assert.True(options.ShowCoordLabel);
+        Assert.Equal(Colors.Cyan, options.CoordLabelColor.ToAvaloniaColor());
+        Assert.Equal(Color.FromAColor(128, Colors.DarkGreen), options.CoordLabelBackgroundColor.ToAvaloniaColor());
+        Assert.Equal(14.0, options.CoordLabelFontSize);
     }
 
     // ====================================================================
@@ -171,16 +182,16 @@ public class DragRectControlStateTests
         var control = CreateControl();
 
         // NaN → 既定値 12
-        control.CoordLabelFontSize = double.NaN;
-        Assert.Equal(12.0, control.CoordLabelFontSize);
+        control.Options = control.Options with { CoordLabelFontSize = double.NaN };
+        Assert.Equal(12.0, control.Options.CoordLabelFontSize);
 
         // 上限 48 にクランプ
-        control.CoordLabelFontSize = 100.0;
-        Assert.Equal(48.0, control.CoordLabelFontSize);
+        control.Options = control.Options with { CoordLabelFontSize = 100.0 };
+        Assert.Equal(48.0, control.Options.CoordLabelFontSize);
 
         // 下限 6 にクランプ
-        control.CoordLabelFontSize = 1.0;
-        Assert.Equal(6.0, control.CoordLabelFontSize);
+        control.Options = control.Options with { CoordLabelFontSize = 1.0 };
+        Assert.Equal(6.0, control.Options.CoordLabelFontSize);
     }
 
     // ====================================================================
@@ -204,7 +215,7 @@ public class DragRectControlStateTests
     public void SetSelection_ClampToDomainBounds有効時は画像外の矩形をクリップする()
     {
         var control = CreateControl();
-        control.ClampToDomainBounds = true;
+        control.Options = control.Options with { ClampToDomainBounds = true };
         control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         SelectionRectEventArgs? raised = null;
         control.SelectionChanged += (_, e) => raised = e;
@@ -225,14 +236,14 @@ public class DragRectControlStateTests
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 既定は ON のため、OFF → ON の切替シナリオを明示する
-        control.ClampToDomainBounds = false;
+        control.Options = control.Options with { ClampToDomainBounds = false };
 
         // 画像外にはみ出す矩形（左上が負・右下が 200 超え）を選択状態にする（OFF のためクリップされない）
         control.SetSelection(new Rect(-50, -30, 300, 260));
         Assert.Equal(new Rect(-50, -30, 300, 260), rects[^1]);
 
         // ON に切り替えた瞬間に境界内 (0,0)-(200,200) へクリップされる
-        control.ClampToDomainBounds = true;
+        control.Options = control.Options with { ClampToDomainBounds = true };
 
         Assert.Equal(new Rect(0, 0, 200, 200), rects[^1]);
     }
@@ -249,7 +260,7 @@ public class DragRectControlStateTests
         Assert.Single(rects);
 
         // 境界内の矩形なので、ON に切り替えてもクリップされない（SelectionChanged は再発火しない）
-        control.ClampToDomainBounds = true;
+        control.Options = control.Options with { ClampToDomainBounds = true };
 
         Assert.Single(rects);
         Assert.Equal(new Rect(20, 20, 100, 80), rects[^1]);

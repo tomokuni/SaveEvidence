@@ -2,14 +2,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Estable.DragRect;
 
-/// <summary>DragRect の対話処理（入力の通知）が出力する LoggerMessage 定義（ソース生成ログ）。</summary>
+/// <summary>DragRect の操作（入力の判断・ホイール・設定変更）が出力する LoggerMessage 定義（ソース生成ログ）。</summary>
 /// <remarks>
 /// 入力に伴う判断（ドラッグ開始・確定・キャンセル・クリック・キー処理）はコアの状態管理クラスが担うため、<br/>
-/// その経過のログ定義もコアが所有する（UI 層は入力イベントの受付と画面への反映のみを担う）。<br/>
-/// 外観設定の変更・ホイール操作のログは UI 層の責務のため各 UI 実装が定義する。<br/>
+/// その経過のログ定義もコアが所有する。<br/>
+/// ホイールのズーム要求と設定変更のログは、<b>両 UI で同一の書式・レベルにする必要がある</b>ため同じくコアが所有する<br/>
+/// （UI 実装ごとに持つと書式がずれる。各 UI は自 UI 固有の操作のログのみを持つ）。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。
 /// </remarks>
-internal static partial class DragRectLog
+internal static partial class LogMessage
 {
     /// <summary>ポインター押下（マウス Down）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[DragRect] MouseDown: pos=({X}, {Y}) clickCount={ClickCount} hasSelection={HasSelection}</c></remarks>
@@ -93,4 +94,20 @@ internal static partial class DragRectLog
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     [LoggerMessage(LogLevel.Debug, "[DragRect] CancelRequested")]
     public static partial void LogCancelRequested(this ILogger logger);
+
+    /// <summary>Ctrl+ホイールによるズーム要求のログ。</summary>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[DragRect] ZoomRequested: zoomIn={ZoomIn}</c></remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
+    [LoggerMessage(LogLevel.Debug, "[DragRect] ZoomRequested: zoomIn={ZoomIn}")]
+    public static partial void LogZoomRequested(this ILogger logger, bool zoomIn);
+
+    /// <summary>設定値変更のログ（変更前後）。</summary>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[DragRect] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値。</param>
+    /// <param name="newValue">変更後の値。</param>
+    [LoggerMessage(LogLevel.Debug, "[DragRect] Setting: {Name} {OldValue} → {NewValue}")]
+    public static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
 }

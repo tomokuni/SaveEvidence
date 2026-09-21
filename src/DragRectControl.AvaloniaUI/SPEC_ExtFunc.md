@@ -74,13 +74,12 @@ using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:dragrect="clr-namespace:Estable.AvaloniaUI.DragRect;assembly=DragRectControl.AvaloniaUI">
     <Canvas>
-        <dragrect:DragRectControl x:Name="SelectionOverlay"
-                                   BorderColor="White"
-                                   BorderThickness="1"
-                                   HandleSize="10" />
+        <dragrect:DragRectControl x:Name="SelectionOverlay" />
     </Canvas>
 </Window>
 ```
+
+外観・対話パラメータは 1 つの設定値（`Options`）にまとまっているため、AXAML の属性では指定しません（コードまたはバインディングで設定します）。
 
 ## 4. 基本的な使用方法
 
@@ -91,12 +90,16 @@ var dragRect = new DragRectControl
 {
     IsHitTestVisible = true,
     ZIndex = 60,
-    BorderColor = Colors.White,
-    BorderThickness = 2.0,
-    HandleColor = Colors.White,
-    HandleSize = 10.0,
-    HandleHitRadius = 12.0,
-    MinSelectionSize = 1.0
+    // 設定は 1 回でまとめて渡す（同値の再設定では再描画されない）
+    Options = DragRectOptions.Default with
+    {
+        BorderColor = Colors.White.ToDrawingColor(),
+        BorderThickness = 2.0,
+        HandleColor = Colors.White.ToDrawingColor(),
+        HandleSize = 10.0,
+        HandleHitRadius = 12.0,
+        MinSelectionSize = 1.0,
+    },
 };
 
 parentPanel.Children.Add(dragRect);
@@ -141,7 +144,7 @@ control.SetSelection(rect);         // 外部からの復元
 control.ResetSelection();           // 状態と nudge の初期化
 ```
 
-外部復元した矩形（`SetSelection`）は、**`ClampToDomainBounds` が有効な場合は画像外にはみ出す矩形を境界内にクリップしてから設定**します（「画像外の選択を禁止」を外部復元でも尊重）。また、`ClampToDomainBounds` が ON に切り替わった瞬間にも、既存の選択矩形は境界内へ即時クリップされます（ドラッグ開始を待たない）。継続的なクリップは座標ポートの `Bounds` + `ClampToDomainBounds` が担います。
+外部復元した矩形（`SetSelection`）は、**`Options.ClampToDomainBounds` が有効な場合は画像外にはみ出す矩形を境界内にクリップしてから設定**します（「画像外の選択を禁止」を外部復元でも尊重）。また、`Options.ClampToDomainBounds` が ON に切り替わった瞬間にも、既存の選択矩形は境界内へ即時クリップされます（ドラッグ開始を待たない）。継続的なクリップは座標ポートの `Bounds` + `Options.ClampToDomainBounds` が担います。
 
 ## 5. 公開API
 
@@ -150,9 +153,17 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 ### 5.1 プロパティ
 
-#### 5.1.1 外観
+#### 5.1.1 設定（`Options`）
+
+外観・対話パラメータは不変の設定値 `DragRectOptions`（コアの `Estable.DragRect.DragRectOptions`）にまとめて公開し、`Options` プロパティ 1 つで設定します。
 
 | プロパティ | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `Options` | `DragRectOptions` | `DragRectOptions.Default` | 外観・対話パラメータをまとめた設定。変更すると再描画され、対話パラメータはセッションへ伝搬する |
+
+`DragRectOptions` の項目（既定値は本型が単一所有する。すべて `init` のみで不変）:
+
+| 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `BorderColor` | `Color` | `DarkGray（#FFA9A9A9）` | 選択枠線の色（不透明度は色のアルファに統合） |
 | `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（FadeMaskRenderer / App の既定と一致） |
@@ -160,28 +171,25 @@ control.ResetSelection();           // 状態と nudge の初期化
 | `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP 座標系） |
 | `MarkerColor` | `Color` | `White` | nudge 中の十字マーカーの色 |
 | `MarkerLength` | `double` | `16.0` | nudge 中の十字マーカーの長さ（**全長** = 中心から両端までの長さ・DIP 座標系） |
+| `ShowCoordLabel` | `bool` | `false` | カーソル座標ラベル（`(x, y)`）をカーソルの右側に表示するかどうか |
 | `CoordLabelColor` | `Color` | `White` | カーソル座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `Color` | `#99000000`（黒 60%） | カーソル座標ラベルの背景色（不透明度はアルファに統合） |
 | `CoordLabelFontSize` | `double` | `12.0` | カーソル座標ラベルのフォントサイズ（6〜48 に補正） |
-
-#### 5.1.2 動作設定
-
-| プロパティ | 型 | 既定値 | 説明 |
-| --- | --- | --- | --- |
 | `HandleHitRadius` | `double` | `12.0` | ハンドルヒットテスト半径（**DIP 座標系**。ズーム・縮小表示でも画面上の大きさが一定） |
 | `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標系） |
 | `ClampToDomainBounds` | `bool` | `true` | 画像外の選択を禁止するかどうか（ON: 領域選択・移動・nudge を画像境界内にクリップ / OFF: 画像外も選択可能） |
-| `ShowCoordLabel` | `bool` | `false` | カーソル座標ラベル（`(x, y)`）をカーソルの右側に表示するかどうか |
 
-両プロパティは変更時に即時反映されます（静的コンストラクタの Changed ハンドラで `InvalidateVisual` を呼ぶ）。
+`Options` は変更時に即時反映されます（`AffectsRender` による再描画 + セッションへの伝搬）。
+色は UI 非依存の `System.Drawing.Color` で保持し、描画時に Avalonia の色型へ変換します（Avalonia 型からの変換は `EsUtil.Platform.AvaloniaUI` の `ToDrawingColor()`）。
+一部の項目だけを変える場合は `DragRectOptions.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。`CoordLabelFontSize` は設定値の生成時に 6〜48 へ補正されます。
 
-#### 5.1.3 状態
+#### 5.1.2 状態
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `CurrentSnapshot` | `DragRectSnapshot` | - | 現在の選択状態のスナップショット（**ポーリング不要の完全状態**）。`State` / `SelectionRect` / `ActiveHandle` / `MousePosition` / `IsMouseDown` / `IsDragging` / `NudgeActive` / `HasSelection` を公開。イベント引数の Snapshot と同一形式。選択状態の判定（確定・キャンセル等の操作分岐）は `CurrentSnapshot.HasSelection` を使用 |
 
-#### 5.1.4 ログ
+#### 5.1.3 ログ
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
@@ -191,14 +199,14 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 | メソッド | 説明 |
 | --- | --- |
-| `SetSelection(Rect)` | 選択矩形をドメイン座標で復元する（`SelectionChanged` で通知。`ClampToDomainBounds` 有効時は境界内へクリップ） |
+| `SetSelection(Rect)` | 選択矩形をドメイン座標で復元する（`SelectionChanged` で通知。`Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
 | `SetCoordinateTransform(ICoordTransform?)` | ドメイン↔DIP 座標変換ポートを設定する（null = 等価変換） |
 | `AttachScrollViewer(ScrollViewer?)` | 連携する ScrollViewer を明示的に設定する（スクロール・ズーム検知 + ホイール操作。null で解除。祖先探索は行わない） |
 | `RequestCancel()` | キャンセル要求を処理する（Escape キーと同じ条件。選択破棄後に `CancelRequested` を発火） |
 | `RequestConfirm()` | 確定要求を処理する（Enter キーと同じ条件。ドラッグ中は無視し `ConfirmRequested` を発火。確定後に選択状態をクリアして再選択・再確定を防ぐ） |
 
-クリップ（画像境界内への制限）は座標ポートの `Bounds` + `ClampToDomainBounds` が担います。
+クリップ（画像境界内への制限）は座標ポートの `Bounds` + `Options.ClampToDomainBounds` が担います。
 
 ### 5.3 イベント
 
@@ -264,9 +272,9 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 変換関数は呼び出し毎に評価されるため、ズーム・スクロールの動的変化を反映できます。
 
-### 6.3 画像外選択の可否（`ClampToDomainBounds`）
+### 6.3 画像外選択の可否（`Options.ClampToDomainBounds`）
 
-`ClampToDomainBounds` プロパティで、画像（ドメイン境界）の外側を矩形選択可能にするか制御します。
+`Options.ClampToDomainBounds` で、画像（ドメイン境界）の外側を矩形選択可能にするか制御します。
 
 | 値 | 動作 |
 | --- | --- |
@@ -315,7 +323,7 @@ nudge はドメイン座標の整数加算のみで計算します。
 
 ### 7.4 十字マーカー（nudge 位置表示）の描画位置
 
-nudge 中は十字マーカー（`MarkerColor` / `MarkerLength` で外観を指定）を **ドラッグ中のハンドル位置** に描画します（`GetMarkerPosition`）。ルーペ位置（`LoupePositionMoved`）も同じ位置を追従します。
+nudge 中は十字マーカー（`Options.MarkerColor` / `Options.MarkerLength` で外観を指定）を **ドラッグ中のハンドル位置** に描画します（`GetMarkerPosition`）。ルーペ位置（`LoupePositionMoved`）も同じ位置を追従します。
 
 ドラッグ中も同じ位置（`GetMarkerPosition`）をルーペ中心に通知します。これにより、リサイズ中のハンドル点・移動中の掴んだマウス位置・新規選択の終点がルーペで拡大確認できます。
 
@@ -353,9 +361,9 @@ nudge 中は十字マーカー（`MarkerColor` / `MarkerLength` で外観を指�
 
 ## 9. 制約事項
 
-- 矢印キーによる nudge は、コントロールがフォーカスを持っている場合に動作します（フォーカス非依存の nudge は TopLevel キー購読で動作。Drag 開始前のマウス押下前は TopLevel 購読、押下後はフォーカス経由）。
+- 矢印キーによる nudge はフォーカスに依存しません（`TopLevel` のキーイベントを**トンネル**で購読し、フォーカスがどこにあっても 1 回だけ処理します。コントロール自身のキーハンドラは持たないため、キーが二重に処理されることはありません）。
 - `Escape` / `Enter` はコントロールが自己処理し、`CancelRequested` / `ConfirmRequested` を発火します（上位はイベント購読で後始末を行う）。プログラムからは `RequestCancel()` / `RequestConfirm()` で同一条件の要求を発行できます。
-- `HandleHitRadius` の単位は **DIP 座標**、`MinSelectionSize` の単位はドメイン座標です。
+- `Options.HandleHitRadius` の単位は **DIP 座標**、`Options.MinSelectionSize` の単位はドメイン座標です。
 - 既定のカーソルサービスは Windows 実装（`WinCursorService`）です。他プラットフォームでは `ICursorService` を注入してください。
 - リサイズハンドル（8 方向）でマウス Down すると、ポインタ（OS カーソル）がハンドル点へスナップされます（ポインタ・矩形の角・ルーペを一体にするため）。移動（Move）の Down ではスナップされません。
 - nudge 中のカーソル移動は OS カーソル位置を変更します。

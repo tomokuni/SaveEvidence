@@ -42,9 +42,11 @@ internal sealed class DragRectSession
 
     /// <summary>状態管理クラスを初期化する。</summary>
     /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
-    public DragRectSession(ICursorService? cursor)
+    /// <param name="options">初期設定。null 可（null の場合は <see cref="DragRectOptions.Default"/>）。</param>
+    public DragRectSession(ICursorService? cursor, DragRectOptions? options = null)
     {
         _state = new DragRectState(cursor);
+        Options = options ?? DragRectOptions.Default;
     }
 
     /// <summary>上位（UI 層）へ伝える通知。UI 層は自 UI の公開イベントへ転送する。</summary>
@@ -61,17 +63,22 @@ internal sealed class DragRectSession
         set => _log = value ?? NullLogger.Instance;
     }
 
+    /// <summary>現在の設定（外観・対話パラメータ）。</summary>
+    /// <value>反映済みの設定。既定は <see cref="DragRectOptions.Default"/>。</value>
+    /// <remarks>本クラスは対話パラメータのみを使用する（外観は UI 層が描画時に読む）。</remarks>
+    public DragRectOptions Options { get; private set; } = DragRectOptions.Default;
+
     /// <summary>選択矩形の最小サイズ（ドメイン座標）。</summary>
     /// <value>ドメイン座標での最小サイズ。ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる。</value>
-    public double MinSelectionSize { get; set; } = 6.0;
+    public double MinSelectionSize => Options.MinSelectionSize;
 
     /// <summary>ドメイン境界外の選択を禁止するかどうか。</summary>
     /// <value>true の場合は選択をドメイン境界内に制限する。false の場合は境界外も選択できる。</value>
-    public bool ClampToDomainBounds { get; set; }
+    public bool ClampToDomainBounds => Options.ClampToDomainBounds;
 
     /// <summary>ドラッグハンドルのヒットテスト半径（DIP）。</summary>
     /// <value>DIP 座標での半径。ドメイン座標への換算は内部で行う（ズームしても画面上の大きさが一定になる）。</value>
-    public double HandleHitRadius { get; set; } = 12.0;
+    public double HandleHitRadius => Options.HandleHitRadius;
 
     /// <summary>現在の選択矩形（ドメイン座標）。</summary>
     /// <value>選択矩形。未選択時は 0x0。</value>
@@ -119,6 +126,21 @@ internal sealed class DragRectSession
     /// <param name="domain">ドメイン座標。</param>
     /// <returns>ローカル DIP 座標。</returns>
     public EsPoint ToDip(EsPoint domain) => _state.Port.Inverse(domain);
+
+    /// <summary>選択矩形（ドメイン座標）を閉区間としてローカル DIP 矩形へ変換する（描画用）。</summary>
+    /// <param name="domainRect">選択矩形（ドメイン座標）。</param>
+    /// <returns>ローカル DIP の矩形。</returns>
+    /// <remarks>
+    /// 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、終点（Right / Bottom）に +1 してから DIP へ変換する<br/>
+    /// （終点のピクセルも枠線・ハンドルに含める。キャプチャの閉区間 +1 と一致）。<br/>
+    /// 変換規則は本メソッドが単一所有する（描画層は結果を使うだけ）。
+    /// </remarks>
+    public EsRect ToDipRect(EsRect domainRect)
+    {
+        var topLeft = ToDip(domainRect.TopLeft);
+        var bottomRight = ToDip(new EsPoint(domainRect.Right + 1, domainRect.Bottom + 1));
+        return new EsRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
+    }
 
     // ====================================================================
     // 入力の通知（UI 層 → コア）
@@ -219,12 +241,19 @@ internal sealed class DragRectSession
         if (_state.SuppressEchoAt is { } echoPosition && SelectionGeometry.IsNear(position, echoPosition, hitRadius))
         {
             _state.SuppressEchoAt = null;
-            return new DragRectFeedback { UpdateCursorShape = true, CursorHandle = _state.HitTest(position, hitRadius) };
+            return new DragRectFeedback
+            {
+                UpdateCursorShape = true,
+                CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
+            };
         }
 
         NotifyAt(DragRectNoticeKind.MouseMoved, position);
-        var handle = _state.HitTest(position, hitRadius);
-        var cursor = new DragRectFeedback { UpdateCursorShape = true, CursorHandle = handle };
+        var cursor = new DragRectFeedback
+        {
+            UpdateCursorShape = true,
+            CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
+        };
 
         // nudge 中はエコー移動で選択矩形・マウス位置を上書きしない（解放時のルーペ位置が実マウス位置へ飛ぶのを防ぐ）
         if (_state.NudgeActive)
@@ -314,7 +343,7 @@ internal sealed class DragRectSession
                 Cursor = feedback.Cursor | DragRectCursorAction.MoveTo,
                 CursorDomainPosition = nudgePosition,
                 UpdateCursorShape = true,
-                CursorHandle = _state.HitTest(nudgePosition, ToDomainRadius()),
+                CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(nudgePosition, ToDomainRadius())),
             };
         }
 
@@ -512,6 +541,47 @@ internal sealed class DragRectSession
             NotifyState(DragRectNoticeKind.SelectionChanged);
         }
         return new DragRectFeedback { Redraw = true };
+    }
+
+    /// <summary>ビューポート（ズーム・スクロール）の変化を通知する。</summary>
+    /// <returns>UI 層が適用する効果（再描画）。</returns>
+    /// <remarks>
+    /// 選択矩形（ドメイン座標）はズーム・スクロールで変わらないが、上位（暗転マスク等）はビューポート座標で<br/>
+    /// 再描画する必要があるため、現在の選択矩形 + スナップショットを再通知する（状態は変更しない）。<br/>
+    /// 通知の組み立てはコアが単一所有するため、UI 層は呼び出すだけでよい。
+    /// </remarks>
+    public DragRectFeedback NotifyViewportChanged()
+    {
+        NotifyState(DragRectNoticeKind.ViewportChanged);
+        return new DragRectFeedback { Redraw = true };
+    }
+
+    /// <summary>設定（<see cref="DragRectOptions"/>）を反映する。</summary>
+    /// <param name="options">反映する設定（null 不可）。</param>
+    /// <returns>UI 層が適用する効果（境界外選択の禁止が変化した場合のみ再描画）。</returns>
+    /// <remarks>
+    /// 1. 設定を取り込み、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）を更新する。<br/>
+    /// 2. 境界外選択の禁止が変化した場合は変更前後をログ出力し、既存の選択矩形へ即時適用する。<br/>
+    /// 3. 外観（色・サイズ）はセッションが関与しない（UI 層が描画時に読む）。<br/>
+    /// <br/>
+    /// 同値の設定を再適用しても効果・ログを発生させない（UI 層は変更内容を確認せず委譲できる）。
+    /// </remarks>
+    public DragRectFeedback ApplyOptions(DragRectOptions options)
+    {
+        // ログと即時クリップは「境界外選択の禁止」が実際に変化した場合のみ行う
+        bool clampChanged = ClampToDomainBounds != options.ClampToDomainBounds;
+        Options = options;
+
+        if (!clampChanged)
+        {
+            return default;
+        }
+
+        Log.LogSettingChanged(
+            nameof(DragRectOptions.ClampToDomainBounds),
+            (!options.ClampToDomainBounds).ToString(),
+            options.ClampToDomainBounds.ToString());
+        return ApplyClampToBounds();
     }
 
     /// <summary>対話を終了する（ビジュアルツリーからの切断・ウィンドウクローズ）。</summary>

@@ -30,11 +30,9 @@ namespace Estable.AvaloniaUI.DragRect;
 /// <see cref="SelectionCompleted"/>（終点決定）/ <see cref="SelectionCancelled"/>（領域キャンセル）/
 /// <see cref="ConfirmRequested"/> / <see cref="CancelRequested"/> イベントを購読して利用する。<br/>
 /// <br/>
-/// 外観・動作の設定は依存関係プロパティ（<see cref="BorderColor"/> / <see cref="BorderThickness"/> /
-/// <see cref="HandleColor"/> / <see cref="HandleSize"/> / <see cref="HandleHitRadius"/> / <see cref="MinSelectionSize"/> /
-/// <see cref="MarkerColor"/> / <see cref="MarkerLength"/>）で公開し、外部バインディングで制御できる（色の不透明度は色のアルファに統合）。<br/>
-/// 動作に影響する設定（<see cref="MinSelectionSize"/> / <see cref="ClampToDomainBounds"/> / <see cref="HandleHitRadius"/>）は
-/// セッションへ伝搬し、判断はセッションが行う。<br/>
+/// 外観・対話パラメータの設定は 1 つの依存関係プロパティ（<see cref="Options"/>）で公開し、外部バインディングで制御できる<br/>
+/// （色の不透明度は色のアルファに統合。設定値の既定値と範囲補正はコアの <see cref="DragRectOptions"/> が単一所有する）。<br/>
+/// 対話パラメータ（最小選択サイズ・境界外選択の禁止・ハンドルのヒットテスト半径）はセッションへ伝搬し、判断はセッションが行う。<br/>
 /// ログは <see cref="Log"/> プロパティで注入する（デフォルトは <see cref="NullLogger"/>）。<br/>
 /// <br/>
 /// 選択矩形の変更は <see cref="SelectionChanged"/> イベントで外部（上位 Mediator）に通知する。
@@ -51,15 +49,15 @@ public sealed partial class DragRectControl : Control
     /// <summary>カーソルサービス（nudge 時のカーソル移動・表示切替。既定実装の解決は UI 側で行う）。</summary>
     private readonly ICursorService _cursor;
 
+    /// <summary>通常ホイール 1 段あたりのスクロール量（DIP）。</summary>
+    /// <remarks>ホイールの配送先（祖先 ScrollViewer）は UI 層が知る情報のため、本値も UI 層が持つ。</remarks>
+    private const double WheelScrollUnit = 48.0;
+
     /// <summary>フォーカス非依存の矢印キー nudge 用に購読した TopLevel。解除時に使用する。</summary>
     private TopLevel? _attachedTopLevel;
 
     /// <summary>ズーム・スクロール検知用に購読した祖先 ScrollViewer。解除時に使用する。</summary>
     private ScrollViewer? _attachedScrollViewer;
-
-    /// <summary>本コントロール自身のキーハンドラで処理したキーかどうか（TopLevel 購読との二重処理を防ぐ）。</summary>
-    /// <remarks>本コントロールと TopLevel の双方がキーを受け取る（Avalonia のルーティング）ため、処理済みのキーを識別する。</remarks>
-    private bool _nudgeHandledInKeyDown;
 
     // 標準カーソルは Lazy で遅延生成する（呼び出し時に ICursorFactory を解決する）。
     // static readonly フィールドとして型初期化時に new Cursor(...) すると、Avalonia ヘッドレス初期化前に
@@ -99,79 +97,45 @@ public sealed partial class DragRectControl : Control
     /// <param name="cursorService">カーソルサービス。null の場合は Windows 既定実装を使用する。</param>
     /// <remarks>
     /// カーソルサービスの既定実装（Win32）の解決は UI 側で行い、コア（状態管理クラス）は抽象のみに依存する。<br/>
-    /// コアからの通知は公開イベントへ転送し、動作に影響する設定値をセッションへ伝搬する。
+    /// コアからの通知は公開イベントへ転送し、設定（<see cref="Options"/>）をセッションへ伝搬する。
     /// </remarks>
     public DragRectControl(ICursorService? cursorService)
     {
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
-        _session = new DragRectSession(_cursor)
-        {
-            MinSelectionSize = MinSelectionSize,
-            ClampToDomainBounds = ClampToDomainBounds,
-            HandleHitRadius = HandleHitRadius,
-        };
+        _session = new DragRectSession(_cursor, Options);
         _session.Notified += OnSessionNotified;
     }
 
-    /// <summary>静的コンストラクタ。外観・動作設定（StyledProperty）の変更を再描画とセッションへ同期する。</summary>
+    /// <summary>静的コンストラクタ。設定（<see cref="Options"/>）の変更を再描画とセッションへ同期する。</summary>
     /// <remarks>
-    /// 外観プロパティの変更は <see cref="Control.InvalidateVisual"/> で再描画を要求する。<br/>
-    /// 動作設定（最小サイズ・ヒットテスト半径・クリップ）はセッションへ伝搬し、判断はセッションが行う。
+    /// 外観の変更は <see cref="Visual.AffectsRender{T}"/> により再描画を要求する。<br/>
+    /// 対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬し、判断はセッションが行う。
     /// </remarks>
     static DragRectControl()
     {
-        BorderColorProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        BorderThicknessProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        HandleColorProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        HandleSizeProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        HandleHitRadiusProperty.Changed.AddClassHandler<DragRectControl>(static (c, e) =>
-        {
-            // StyledProperty<double> のため常に double（分岐なし）
-            c._session.HandleHitRadius = e.GetNewValue<double>();
-            c.InvalidateVisual();
-        });
-        MinSelectionSizeProperty.Changed.AddClassHandler<DragRectControl>(static (c, e) =>
-        {
-            c._session.MinSelectionSize = e.GetNewValue<double>();
-            c.InvalidateVisual();
-        });
-        // 「画像外の選択を禁止」の ON 切替時、既存の選択矩形を境界内へ即時クリップする（ドラッグ開始を待たない）。
-        // 変更前後の値をログ出力する。
-        ClampToDomainBoundsProperty.Changed.AddClassHandler<DragRectControl>(static (c, e) =>
-        {
-            c._session.ClampToDomainBounds = e.GetNewValue<bool>();
-            c.Log.LogSettingChanged(nameof(ClampToDomainBounds),
-                e.OldValue!.ToString()!, e.NewValue!.ToString()!);
-            c.ApplyFeedback(c._session.ApplyClampToBounds());
-        });
-        MarkerColorProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        MarkerLengthProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        ShowCoordLabelProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        CoordLabelColorProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        CoordLabelBackgroundColorProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        CoordLabelFontSizeProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
+        // 設定（外観を含む）の変更は再描画を要求する
+        AffectsRender<DragRectControl>(OptionsProperty);
+
+        // 対話パラメータをセッションへ伝搬する（変更の影響判断・ログはコアが単一所有する）
+        OptionsProperty.Changed.AddClassHandler<DragRectControl>(
+            static (c, e) => c.ApplyFeedback(c._session.ApplyOptions(e.GetNewValue<DragRectOptions>())));
     }
 
     // ====================================================================
     // ログ
     // ====================================================================
 
-    /// <summary>内部ロガー（コンストラクタ注入用。null の場合は出力なし）。</summary>
+    /// <summary>内部ロガー（null の場合は出力なし）。</summary>
     /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</value>
     /// <remarks>
-    /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
-    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。<br/>
-    /// 入力の判断に伴うログはコア（セッション）が出力するため、同じロガーをセッションへ伝搬する。
+    /// 保持とフォールバック、セッションへの伝搬はコア（<see cref="DragRectSession.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
+    /// 入力の判断に伴うログはセッションが同じロガーで出力する。
     /// </remarks>
     public ILogger Log
     {
-        get => field ?? NullLogger.Instance;
-        set
-        {
-            field = value ?? NullLogger.Instance;
-            _session.Log = field;
-        }
+        get => _session.Log;
+        set => _session.Log = value;
     }
 
     // ====================================================================
@@ -255,183 +219,26 @@ public sealed partial class DragRectControl : Control
     // 外観・動作設定（StyledProperty）
     // ====================================================================
 
-    /// <summary><see cref="BorderColor"/> 依存関係プロパティ（不透明度は色のアルファに統合）。</summary>
-    /// <remarks>既定は DarkGray（<c>#FFA9A9A9</c>。設定画面の選択枠の色と一致）。</remarks>
-    public static readonly StyledProperty<Color> BorderColorProperty =
-        AvaloniaProperty.Register<DragRectControl, Color>(nameof(BorderColor), defaultValue: Color.FromAColor(0xFF, Colors.DarkGray));
-
-    /// <summary><see cref="BorderThickness"/> 依存関係プロパティ。</summary>
-    /// <remarks>デフォルトは FadeMaskRenderer / App（Settings）の既定（2.0）と一致させる。</remarks>
-    public static readonly StyledProperty<double> BorderThicknessProperty =
-        AvaloniaProperty.Register<DragRectControl, double>(nameof(BorderThickness), defaultValue: 2.0);
-
-    /// <summary><see cref="HandleColor"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<Color> HandleColorProperty =
-        AvaloniaProperty.Register<DragRectControl, Color>(nameof(HandleColor), defaultValue: Colors.White);
-
-    /// <summary><see cref="HandleSize"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<double> HandleSizeProperty =
-        AvaloniaProperty.Register<DragRectControl, double>(nameof(HandleSize), defaultValue: 10.0);
-
-    /// <summary><see cref="HandleHitRadius"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<double> HandleHitRadiusProperty =
-        AvaloniaProperty.Register<DragRectControl, double>(nameof(HandleHitRadius), defaultValue: 12.0);
-
-    /// <summary><see cref="MinSelectionSize"/> 依存関係プロパティ。</summary>
-    /// <remarks>既定は 6（設定画面の選択矩形の最小サイズのデフォルトと一致）。</remarks>
-    public static readonly StyledProperty<double> MinSelectionSizeProperty =
-        AvaloniaProperty.Register<DragRectControl, double>(nameof(MinSelectionSize), defaultValue: 6.0);
-
-    /// <summary><see cref="ClampToDomainBounds"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<bool> ClampToDomainBoundsProperty =
-        AvaloniaProperty.Register<DragRectControl, bool>(nameof(ClampToDomainBounds), defaultValue: true);
-
-    /// <summary><see cref="MarkerColor"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<Color> MarkerColorProperty =
-        AvaloniaProperty.Register<DragRectControl, Color>(nameof(MarkerColor), defaultValue: Colors.White);
-
-    /// <summary><see cref="MarkerLength"/> 依存関係プロパティ。</summary>
-    public static readonly StyledProperty<double> MarkerLengthProperty =
-        AvaloniaProperty.Register<DragRectControl, double>(nameof(MarkerLength), defaultValue: 16.0);
-
-    /// <summary><see cref="ShowCoordLabel"/> 依存関係プロパティ（カーソル座標ラベルの表示有無）。</summary>
-    public static readonly StyledProperty<bool> ShowCoordLabelProperty =
-        AvaloniaProperty.Register<DragRectControl, bool>(nameof(ShowCoordLabel), defaultValue: false);
-
-    /// <summary><see cref="CoordLabelColor"/> 依存関係プロパティ（カーソル座標ラベルの文字色）。</summary>
-    public static readonly StyledProperty<Color> CoordLabelColorProperty =
-        AvaloniaProperty.Register<DragRectControl, Color>(nameof(CoordLabelColor), defaultValue: Colors.White);
-
-    /// <summary><see cref="CoordLabelBackgroundColor"/> 依存関係プロパティ（カーソル座標ラベルの背景色・不透明度はアルファに統合）。</summary>
-    public static readonly StyledProperty<Color> CoordLabelBackgroundColorProperty =
-        AvaloniaProperty.Register<DragRectControl, Color>(nameof(CoordLabelBackgroundColor), defaultValue: Color.FromAColor(153, Colors.Black));
-
-    /// <summary><see cref="CoordLabelFontSize"/> 依存関係プロパティ（カーソル座標ラベルのフォントサイズ 6〜48 に補正）。</summary>
-    public static readonly StyledProperty<double> CoordLabelFontSizeProperty =
-        AvaloniaProperty.Register<DragRectControl, double>(nameof(CoordLabelFontSize), defaultValue: 12.0, coerce: CoerceCoordLabelFontSize);
-
-    /// <summary>選択枠線の色（不透明度は色のアルファに統合）。</summary>
-    public Color BorderColor
-    {
-        get => GetValue(BorderColorProperty);
-        set => SetValue(BorderColorProperty, value);
-    }
-
-    /// <summary>選択枠線の太さ。</summary>
-    public double BorderThickness
-    {
-        get => GetValue(BorderThicknessProperty);
-        set => SetValue(BorderThicknessProperty, value);
-    }
-
-    /// <summary>ドラッグハンドルの色。既定値は白。</summary>
-    public Color HandleColor
-    {
-        get => GetValue(HandleColorProperty);
-        set => SetValue(HandleColorProperty, value);
-    }
-
-    /// <summary>ドラッグハンドルの一辺サイズ。</summary>
-    public double HandleSize
-    {
-        get => GetValue(HandleSizeProperty);
-        set => SetValue(HandleSizeProperty, value);
-    }
-    /// <summary>ドラッグハンドルのヒットテスト半径（DIP 座標）。</summary>
+    /// <summary><see cref="Options"/> 依存関係プロパティ（外観・対話パラメータをまとめた設定）。</summary>
     /// <remarks>
-    /// <b>DIP 座標での半径</b>（ユーザー指定・画面上の大きさを DIP で固定）。<br/>
-    /// ズーム・縮小表示（Crop の Fit 等）を変えてもヒットテスト半径の画面上の大きさが一定になる。<br/>
-    /// ドメイン座標系への変換はセッションが行う（設定は <see cref="DragRectSession"/> へ伝搬する）。
+    /// 個別に公開していた設定（外観 10 項目・対話パラメータ 3 項目）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
+    /// 設定値は不変（<see cref="DragRectOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。
     /// </remarks>
-    public double HandleHitRadius
-    {
-        get => GetValue(HandleHitRadiusProperty);
-        set => SetValue(HandleHitRadiusProperty, value);
-    }
+    public static readonly StyledProperty<DragRectOptions> OptionsProperty =
+        AvaloniaProperty.Register<DragRectControl, DragRectOptions>(nameof(Options), defaultValue: DragRectOptions.Default);
 
-    /// <summary>選択矩形の最小サイズ（ドメイン座標）。</summary>
-    /// <remarks>ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる（判断はセッションが行う）。</remarks>
-    public double MinSelectionSize
-    {
-        get => GetValue(MinSelectionSizeProperty);
-        set => SetValue(MinSelectionSizeProperty, value);
-    }
-
-    /// <summary>イメージ（ドメイン境界）の外側を矩形選択可能にするかどうか。</summary>
+    /// <summary>外観・対話パラメータをまとめた設定を取得または設定する。</summary>
+    /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="DragRectOptions.Default"/>。</value>
     /// <remarks>
-    /// <see langword="true"/>（既定）: 選択を画像範囲内に制限する。<br/>
-    /// <see langword="false"/>: 画像外も選択可能（ドラッグで画像外に矩形を作成・移動できる）。<br/>
-    /// クリップ範囲は <see cref="SetCoordinateTransform"/> の <c>domainBounds</c>（<see cref="EsUtil.Platform.AvaloniaUI.ICoordTransform.Bounds"/>）で指定する。
+    /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬する。<br/>
+    /// 一部の項目だけを変える場合は <c>DragRectOptions.Default with { BorderThickness = 3.0 }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
+    /// 色は UI 非依存の <see cref="System.Drawing.Color"/> で受け取り、描画時に Avalonia の色型へ変換する。
     /// </remarks>
-    public bool ClampToDomainBounds
+    public DragRectOptions Options
     {
-        get => GetValue(ClampToDomainBoundsProperty);
-        set => SetValue(ClampToDomainBoundsProperty, value);
+        get => GetValue(OptionsProperty);
+        set => SetValue(OptionsProperty, value);
     }
-
-    /// <summary>nudge 中に表示する十字マーカーの色。</summary>
-    public Color MarkerColor
-    {
-        get => GetValue(MarkerColorProperty);
-        set => SetValue(MarkerColorProperty, value);
-    }
-
-    /// <summary>十字マーカーの線の太さ（DIP）。</summary>
-    private const double MarkerThickness = 2.0;
-
-    /// <summary>nudge 中に表示する十字マーカーの長さ（全長。中心から両端までの長さ・DIP 座標）。</summary>
-    /// <remarks>既定値は 16.0（半幅 8.0 の十字線。ドラッグハンドルより大きいサイズ）。</remarks>
-    public double MarkerLength
-    {
-        get => GetValue(MarkerLengthProperty);
-        set => SetValue(MarkerLengthProperty, value);
-    }
-
-    /// <summary>カーソルの右側にカーソルのドメイン座標ラベル（"(x, y)"）を表示するかどうかを取得または設定する。</summary>
-    /// <remarks>既定は false（非表示）。true にするとマウス位置のドメイン座標をカーソルの右側に表示する。</remarks>
-    public bool ShowCoordLabel
-    {
-        get => GetValue(ShowCoordLabelProperty);
-        set => SetValue(ShowCoordLabelProperty, value);
-    }
-
-    /// <summary>カーソル座標ラベルの文字色を取得または設定する。</summary>
-    public Color CoordLabelColor
-    {
-        get => GetValue(CoordLabelColorProperty);
-        set => SetValue(CoordLabelColorProperty, value);
-    }
-
-    /// <summary>カーソル座標ラベルの背景色を取得または設定する。</summary>
-    /// <remarks>不透明度は色のアルファに統合する（既定: 黒 60% = <c>#99000000</c>）。</remarks>
-    public Color CoordLabelBackgroundColor
-    {
-        get => GetValue(CoordLabelBackgroundColorProperty);
-        set => SetValue(CoordLabelBackgroundColorProperty, value);
-    }
-
-    /// <summary>カーソル座標ラベルのフォントサイズを取得または設定する（6〜48）。</summary>
-    public double CoordLabelFontSize
-    {
-        get => GetValue(CoordLabelFontSizeProperty);
-        set => SetValue(CoordLabelFontSizeProperty, value);
-    }
-
-    /// <summary><see cref="CoordLabelFontSize"/> を安全域へ補正する。</summary>
-    private static double CoerceCoordLabelFontSize(AvaloniaObject o, double v)
-        => double.IsFinite(v) ? Math.Clamp(v, CoordLabelFontSizeMin, CoordLabelFontSizeMax) : CoordLabelFontSizeDefault;
-
-    /// <summary>カーソル座標ラベルのフォントサイズの最小値。</summary>
-    private const double CoordLabelFontSizeMin = 6.0;
-
-    /// <summary>カーソル座標ラベルのフォントサイズの最大値。</summary>
-    private const double CoordLabelFontSizeMax = 48.0;
-
-    /// <summary>カーソル座標ラベルのフォントサイズの既定値。</summary>
-    private const double CoordLabelFontSizeDefault = 12.0;
-
-    /// <summary>マウスホイール 1 段あたりのスクロール量（DIP）。</summary>
-    private const double WheelScrollUnit = 48.0;
 
     // ====================================================================
     // 公開操作 API
@@ -493,41 +300,15 @@ public sealed partial class DragRectControl : Control
     // ====================================================================
 
     /// <summary>コア（状態管理クラス）が返す効果を画面へ適用する。</summary>
-    /// <param name="feedback">適用する効果（再描画・フォーカス・カーソル操作）。</param>
+    /// <param name="feedback">適用する効果（カーソル操作・フォーカス・カーソル形状・再描画）。</param>
     /// <remarks>
-    /// カーソル操作は「移動 → 非表示 → 再表示」の順で適用する（nudge の終了では移動してから再表示する必要がある）。
+    /// 適用する効果の選択・順序はコア（<see cref="DragRectFeedback.ApplyCursor"/> / <see cref="DragRectFeedback.ApplyVisual"/>）が<br/>
+    /// 単一所有する（本層は自 UI の操作へ接続するだけ）。
     /// </remarks>
     private void ApplyFeedback(DragRectFeedback feedback)
     {
-        if (feedback.RequestFocus)
-        {
-            Focus();
-        }
-
-        if (feedback.Cursor.HasFlag(DragRectCursorAction.MoveTo))
-        {
-            _cursor.SetCursorScreenPoint(ToScreen(feedback.CursorDomainPosition));
-        }
-
-        if (feedback.Cursor.HasFlag(DragRectCursorAction.Hide))
-        {
-            _cursor.ShowCursor(false);
-        }
-
-        if (feedback.Cursor.HasFlag(DragRectCursorAction.Show))
-        {
-            _cursor.ShowCursor(true);
-        }
-
-        if (feedback.UpdateCursorShape)
-        {
-            ApplyCursorShape(feedback.CursorHandle);
-        }
-
-        if (feedback.Redraw)
-        {
-            InvalidateVisual();
-        }
+        feedback.ApplyCursor(_cursor, ToScreen);
+        feedback.ApplyVisual(() => Focus(), InvalidateVisual, ApplyCursorShape);
     }
 
     /// <summary>コアからの通知を公開イベントへ転送する（判断はしない）。</summary>
@@ -541,42 +322,24 @@ public sealed partial class DragRectControl : Control
     {
         switch (notice.Kind)
         {
-            case DragRectNoticeKind.SelectionStarted:
-                SelectionStarted?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.SelectionChanged:
-                SelectionChanged?.Invoke(this, ToRectArgs(notice));
-                break;
-            case DragRectNoticeKind.SelectionCompleted:
-                SelectionCompleted?.Invoke(this, ToRectArgs(notice));
-                break;
-            case DragRectNoticeKind.SelectionCancelled:
-                SelectionCancelled?.Invoke(this, EventArgs.Empty);
-                break;
-            case DragRectNoticeKind.MouseDown:
-                MouseDown?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.MouseUp:
-                MouseUp?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.MouseClicked:
-                MouseClicked?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.MouseDoubleClicked:
-                MouseDoubleClicked?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.MouseMoved:
-                MouseMoved?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.LoupePositionMoved:
-                LoupePositionMoved?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.ConfirmRequested:
-                ConfirmRequested?.Invoke(this, ToRectArgs(notice));
-                break;
-            case DragRectNoticeKind.CancelRequested:
-                CancelRequested?.Invoke(this, EventArgs.Empty);
-                break;
+            // 選択（始点・変更・確定・キャンセル）
+            case DragRectNoticeKind.SelectionStarted: SelectionStarted?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.SelectionChanged: SelectionChanged?.Invoke(this, ToRectArgs(notice)); break;
+            case DragRectNoticeKind.SelectionCompleted: SelectionCompleted?.Invoke(this, ToRectArgs(notice)); break;
+            case DragRectNoticeKind.SelectionCancelled: SelectionCancelled?.Invoke(this, EventArgs.Empty); break;
+
+            // ポインター（押下・解放・クリック・ダブルクリック・移動）
+            case DragRectNoticeKind.MouseDown: MouseDown?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.MouseUp: MouseUp?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.MouseClicked: MouseClicked?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.MouseDoubleClicked: MouseDoubleClicked?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.MouseMoved: MouseMoved?.Invoke(this, ToPointArgs(notice)); break;
+
+            // ルーペ・ビューポート・確定要求・キャンセル要求
+            case DragRectNoticeKind.LoupePositionMoved: LoupePositionMoved?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.ViewportChanged: ViewportChanged?.Invoke(this, ToRectArgs(notice)); break;
+            case DragRectNoticeKind.ConfirmRequested: ConfirmRequested?.Invoke(this, ToRectArgs(notice)); break;
+            case DragRectNoticeKind.CancelRequested: CancelRequested?.Invoke(this, EventArgs.Empty); break;
         }
     }
 
@@ -592,23 +355,19 @@ public sealed partial class DragRectControl : Control
     private static SelectionRectEventArgs ToRectArgs(DragRectNotice notice)
         => new(notice.Snapshot.SelectionRect.ToAvaloniaRect(), notice.Snapshot);
 
-    /// <summary><see cref="ViewportChanged"/> を発火する。</summary>
-    private void RaiseViewportChanged()
-        => ViewportChanged?.Invoke(this, new SelectionRectEventArgs(_session.SelectionRect.ToAvaloniaRect(), _session.CreateSnapshot()));
-
-    /// <summary>カーソル形状をハンドル種別に応じて更新する。</summary>
-    /// <param name="handle">カーソル形状の基になるハンドル種別。</param>
-    /// <remarks>ハンドル上ではリサイズ方向に応じたカーソル、枠内では移動カーソル、それ以外は既定カーソルを表示する。</remarks>
-    private void ApplyCursorShape(DragHandle handle)
+    /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
+    /// <param name="kind">カーソル形状の種別（コア提供）。</param>
+    /// <remarks>種別と自 UI のカーソルの対応のみを持つ（どのハンドルが同じカーソルになるかはコアが判断済み）。</remarks>
+    private void ApplyCursorShape(DragCursorKind kind)
     {
         // 標準カーソルは Lazy で遅延共有する（ポインター移動毎の生成を排除しつつ、初回アクセスで ICursorFactory を解決）
-        Cursor = handle switch
+        Cursor = kind switch
         {
-            DragHandle.TopLeft or DragHandle.BottomRight => s_topLeftCornerCursor.Value,
-            DragHandle.TopRight or DragHandle.BottomLeft => s_topRightCornerCursor.Value,
-            DragHandle.TopCenter or DragHandle.BottomCenter => s_sizeNorthSouthCursor.Value,
-            DragHandle.MiddleLeft or DragHandle.MiddleRight => s_sizeWestEastCursor.Value,
-            DragHandle.Move => s_sizeAllCursor.Value,
+            DragCursorKind.DiagonalNWSE => s_topLeftCornerCursor.Value,
+            DragCursorKind.DiagonalNESW => s_topRightCornerCursor.Value,
+            DragCursorKind.Vertical => s_sizeNorthSouthCursor.Value,
+            DragCursorKind.Horizontal => s_sizeWestEastCursor.Value,
+            DragCursorKind.Move => s_sizeAllCursor.Value,
             _ => Cursor.Default,
         };
     }
@@ -627,11 +386,15 @@ public sealed partial class DragRectControl : Control
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
 
-        var feedback = _session.Press(ToDomain(e), e.ClickCount);
+        // 左ボタン以外（右クリック・中ボタン等）は処理しない
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
         e.Handled = true;
-        ApplyFeedback(feedback);
+        ApplyFeedback(_session.Press(ToDomain(e), e.ClickCount));
     }
 
     /// <summary>ポインター移動時の処理。</summary>

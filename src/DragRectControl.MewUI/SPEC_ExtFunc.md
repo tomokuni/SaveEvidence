@@ -33,6 +33,13 @@ Avalonia 版と同一の挙動になります。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
+| `Options` | `DragRectOptions` | `DragRectOptions.Default` | 外観・対話パラメータをまとめた不変の設定値（コアの `Estable.DragRect.DragRectOptions`） |
+| `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
+
+`DragRectOptions` の項目（既定値はコアが単一所有。Avalonia 版と一致）:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
 | `BorderColor` | `System.Drawing.Color` | `#FFA9A9A9` | 選択枠線の色（不透明度はアルファに統合） |
 | `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（DIP） |
 | `HandleColor` | `System.Drawing.Color` | 白 | ドラッグハンドルの塗り色 |
@@ -46,16 +53,18 @@ Avalonia 版と同一の挙動になります。
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正。非数は 12 へ補正） |
-| `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
 
-既定値は Avalonia 版と一致します。
+設定の一部だけを変える場合は `DragRectOptions.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
+同値の設定を再適用しても再描画・ログは発生しません。
+外観（色・サイズ）と対話パラメータ（`HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）は同じ設定値に含まれますが、
+後者だけがセッションへ伝搬します（判断と変更ログはコアが単一所有する）。
 
 ## 5. メソッド
 
 | メソッド | 戻り値 | 説明 |
 | --- | --- | --- |
 | `SetCoordinateTransform(ICoordTransform?)` | - | ドメイン ↔ ローカル DIP の変換ポートを設定する。null の場合は等価変換（1 ドメインピクセル = 1 DIP・境界なし） |
-| `SetSelection(EsRect)` | - | 選択矩形を外部状態から復元する。`ClampToDomainBounds` が有効な場合は境界内へクリップしてから設定する |
+| `SetSelection(EsRect)` | - | 選択矩形を外部状態から復元する。`Options.ClampToDomainBounds` が有効な場合は境界内へクリップしてから設定する |
 | `ResetSelection()` | - | 選択状態と nudge 状態を初期化する（nudge 中だった場合はカーソルを再表示する） |
 | `RequestConfirm()` | - | 確定要求を処理する（Enter と同じ条件）。ドラッグ中・未選択では何もしない |
 | `RequestCancel()` | - | キャンセル要求を処理する（Escape と同じ条件）。選択を破棄した後にイベントを発火する |
@@ -75,8 +84,6 @@ Avalonia 版と同一の挙動になります。
 | `SelectionChanged` | `SelectionRectEventArgs` | 選択矩形の変更（ドラッグ中・nudge 中・外部復元・境界クリップ） |
 | `SelectionCompleted` | `SelectionRectEventArgs` | ドラッグ終了による選択の確定 |
 | `SelectionCancelled` | `EventArgs` | 小さすぎる矩形での終了 |
-| `DragMouseDown` | `DragRectPointEventArgs` | 左ボタンの押下（MewUI の基底メンバーと衝突するため `DragMouseDown` の名で公開する） |
-| `DragMouseUp` | `DragRectPointEventArgs` | 左ボタンの解放（同上） |
 | `MouseClicked` | `DragRectPointEventArgs` | ドラッグ移動なしの押下→解放 |
 | `MouseDoubleClicked` | `DragRectPointEventArgs` | ダブルクリックの検出 |
 | `MouseMoved` | `DragRectPointEventArgs` | マウス移動（nudge の有無に関わらず発火） |
@@ -105,9 +112,9 @@ Avalonia 版と同一の挙動になります。
 
 ### 制限
 
-- `ClampToDomainBounds` が有効な場合、選択は `ICoordTransform.Bounds` で示される境界内に制限されます。
+- `Options.ClampToDomainBounds` が有効な場合、選択は `ICoordTransform.Bounds` で示される境界内に制限されます。
   新規選択・ハンドル変形・移動・nudge のすべてに適用されます。
-- 選択矩形の幅・高さが `MinSelectionSize` 未満の状態でドラッグを終了するとキャンセル扱いになります
+- 選択矩形の幅・高さが `Options.MinSelectionSize` 未満の状態でドラッグを終了するとキャンセル扱いになります
   （`SelectionCancelled` を発火して選択を破棄します）。
 - 矢印キーの nudge は本コントロールにフォーカスがある場合のみ動作します（マウス押下時に自動でフォーカスを取得します）。
   nudge 中は OS カーソルを非表示にし、終了時に nudge 位置へ戻して再表示します。フォーカスを失った場合も nudge を終了します。
@@ -117,7 +124,7 @@ Avalonia 版と同一の挙動になります。
 | 項目 | 差異 |
 | --- | --- |
 | イベント引数の座標 | コア型（`EsPoint` / `EsRect`）で公開する（Avalonia 版は Avalonia の `Point` / `Rect`） |
-| マウスダウン・アップのイベント名 | `DragMouseDown` / `DragMouseUp`（基底 `UIElement` の同名メンバーと衝突するため） |
+| マウスダウン・アップのイベント | 持たない（基底 `UIElement` の同名メンバーが同じ情報を提供するため、本コントロールでは公開しない） |
 | ビューポート変化 | ホストが `NotifyViewportChanged()` を呼ぶ（Avalonia 版は `AttachScrollViewer` で `ScrollViewer` を購読） |
 | nudge のキー入力 | フォーカス依存（Avalonia 版は `TopLevel` を購読してフォーカス非依存） |
 | ログ | `Log` プロパティで `ILogger` を注入して出力する（書式・レベルは Avalonia 版と同一。通常ホイールのスクロールログのみ持たない） |
@@ -128,7 +135,7 @@ Avalonia 版と同一の挙動になります。
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | `MouseDown`（位置・クリック数・選択有無）/ `MouseUp`（位置・ドラッグ有無・選択有無）/ `Click` / `DoubleClick`（矩形内か）/ `DragStart`（ハンドル・位置）/ `KeyDown`（キー・処理有無）/ `ConfirmRequested`（矩形）/ `CancelRequested` / `ZoomRequested` / `Setting`（`ClampToDomainBounds` の変更前後） |
+| Debug | `MouseDown`（位置・クリック数・選択有無）/ `MouseUp`（位置・ドラッグ有無・選択有無）/ `Click` / `DoubleClick`（矩形内か）/ `DragStart`（ハンドル・位置）/ `KeyDown`（キー・処理有無）/ `ConfirmRequested`（矩形）/ `CancelRequested` / `ZoomRequested` / `Setting`（`Options.ClampToDomainBounds` の変更前後） |
 | Trace | `MouseDown 直前の位置` / `MouseUp 直後の位置` |
 
 マウス移動の高頻度ログは出力しません（押下直前・解放直後の位置のみ記録します）。
@@ -138,9 +145,12 @@ Avalonia 版と同一の挙動になります。
 ```csharp
 var dragRect = new DragRectControl
 {
-    BorderColor = System.Drawing.Color.FromArgb(255, 0, 120, 215),
-    HandleHitRadius = 12.0,
-    ShowCoordLabel = true,
+    Options = DragRectOptions.Default with
+    {
+        BorderColor = System.Drawing.Color.FromArgb(255, 0, 120, 215),
+        HandleHitRadius = 12.0,
+        ShowCoordLabel = true,
+    },
 };
 
 // ドメイン境界（画像座標）を設定する
@@ -156,5 +166,5 @@ dragRect.SelectionCompleted += (_, e) => OnCaptured(e.Rect);
 | --- | --- |
 | カーソルサービスが null | Windows 既定実装（Win32）を使用する |
 | `SetCoordinateTransform(null)` | 等価変換（境界なし）を適用する |
-| `CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する（例外は発生しない） |
-| `SetSelection` に境界外の矩形 | `ClampToDomainBounds` が有効なら境界内へクリップする（例外は発生しない） |
+| `Options.CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する（例外は発生しない） |
+| `SetSelection` に境界外の矩形 | `Options.ClampToDomainBounds` が有効なら境界内へクリップする（例外は発生しない） |

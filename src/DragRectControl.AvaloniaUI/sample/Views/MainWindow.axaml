@@ -119,15 +119,10 @@
                             <!-- 背景画像（ズーム・スクロール可能なドメイン面） -->
                             <Image x:Name="BackdropImage" Stretch="Fill" IsHitTestVisible="False"/>
 
-                            <!-- DragRectControl（選択面。ズーム倍率に応じてサイズと座標ポートを更新） -->
-                            <dragrect:DragRectControl x:Name="DragRect"
-                                                       BorderColor="Blue"
-
-                                                       BorderThickness="2.0"
-                                                       HandleColor="Blue"
-                                                       HandleSize="10.0"
-                                                       HandleHitRadius="12.0"
-                                                       MinSelectionSize="4.0"/>
+                            <!-- DragRectControl（選択面。ズーム倍率に応じてサイズと座標ポートを更新）
+                                 外観・対話パラメータは Options（1 つの設定値）で指定するため、
+                                 コードビハインド（ApplyControlSettings）で ViewModel から一括設定する -->
+                            <dragrect:DragRectControl x:Name="DragRect"/>
                         </Canvas>
                     </ScrollViewer>
 

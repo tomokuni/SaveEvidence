@@ -155,9 +155,9 @@ public class FadeMaskDragRectControlTests
         control.BorderThickness = 3.0;
 
         Assert.Equal(DrawingColor.Red, control.Overlay.BorderColor);
-        Assert.Equal(DrawingColor.Red, control.DragRect.BorderColor);
+        Assert.Equal(DrawingColor.Red, control.DragRect.Options.BorderColor);
         Assert.Equal(3.0, control.Overlay.BorderThickness);
-        Assert.Equal(3.0, control.DragRect.BorderThickness);
+        Assert.Equal(3.0, control.DragRect.Options.BorderThickness);
     }
 
     [Fact]
@@ -303,7 +303,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
 
         // ログ出力を伴う操作を実行しても例外にならない（既定は NullLogger）
-        control.DragRect.ClampToDomainBounds = false;
+        control.DragRect.Options = control.DragRect.Options with { ClampToDomainBounds = false };
         control.SetSelection(new EsRect(10, 10, 50, 40));
         control.RequestCancel();
     }

@@ -85,7 +85,8 @@ src/FadeMaskDragRectControl.MewUI/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `FadeMaskDragRectControl` | 子の生成と重ね合わせ、イベント配線、選択状態の同期、モード適用、ルーペの配置、ラベル・破線色・ログの委譲 || `FadeMaskDragRectSkiaRenderer` | コアが列挙した破線を 2 色でキャンバスへ描画する |
+| `FadeMaskDragRectControl` | 子の生成と重ね合わせ、イベント配線、選択状態の同期、モード適用、ルーペの配置、ラベル・破線色・ログの委譲 |
+| `FadeMaskDragRectSkiaRenderer` | コアが列挙した破線を 2 色でキャンバスへ描画する |
 | `FadeMaskDragRectSelectionEventArgs` | 確定した選択矩形（ドメイン座標）の通知 |
 | `FadeMaskDragRectPointEventArgs` | ルーペ中心（ドメイン座標）の通知 |
 

@@ -14,6 +14,31 @@ internal static class SelectionGeometry
     /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>
     private const double MinSelectionSizeLowerBound = 1.0;
 
+    /// <summary>描画対象の 8 方向ハンドル（<see cref="DragHandle.None"/> / <see cref="DragHandle.Move"/> を除く）。</summary>
+    /// <remarks>
+    /// 列挙順は <see cref="DragHandle"/> の宣言順。描画層は本配列を走査してハンドルを描く（ハンドル一覧の単一所有）。<br/>
+    /// 変更しないこと（共有の静的配列）。
+    /// </remarks>
+    public static readonly DragHandle[] DirectionalHandles =
+        [.. Enum.GetValues<DragHandle>().Where(static h => h is not (DragHandle.None or DragHandle.Move))];
+
+    /// <summary>ハンドル種別をカーソル形状の種別へ変換する。</summary>
+    /// <param name="handle">ハンドル種別。</param>
+    /// <returns>カーソル形状の種別。ハンドル外（<see cref="DragHandle.None"/>）の場合は <see cref="DragCursorKind.Default"/>。</returns>
+    /// <remarks>
+    /// 「どのハンドルが同じカーソル形状になるか」を単一所有する（各 UI は自 UI のカーソル型へ写像するだけ）。<br/>
+    /// 左上と右下、右上と左下は同じ斜めカーソルになる（対角のハンドルは同じ向きの図形で表す）。
+    /// </remarks>
+    public static DragCursorKind ToCursorKind(DragHandle handle) => handle switch
+    {
+        DragHandle.TopLeft or DragHandle.BottomRight => DragCursorKind.DiagonalNWSE,
+        DragHandle.TopRight or DragHandle.BottomLeft => DragCursorKind.DiagonalNESW,
+        DragHandle.TopCenter or DragHandle.BottomCenter => DragCursorKind.Vertical,
+        DragHandle.MiddleLeft or DragHandle.MiddleRight => DragCursorKind.Horizontal,
+        DragHandle.Move => DragCursorKind.Move,
+        _ => DragCursorKind.Default,
+    };
+
     /// <summary>始点と終点から正規化された矩形を生成する。</summary>
     /// <param name="start">始点。</param>
     /// <param name="end">終点。</param>

@@ -255,13 +255,17 @@ public sealed class CropOverlay
         _selector.BorderThickness = BorderThickness;
 
         _selector.LoupeOffset = s.LoupeOffset!.Value;
-        _selector.DragRect.HandleColor = s_borderColor;
-        _selector.DragRect.HandleSize = s.HandleSize!.Value;
-        _selector.DragRect.HandleHitRadius = s.HandleHitRadius!.Value;
-        _selector.DragRect.MinSelectionSize = s.MinSelectionSize!.Value;
-        _selector.DragRect.ClampToDomainBounds = s.ClampToDomainBounds!.Value;
-        _selector.DragRect.ShowCoordLabel = s.ShowCoordLabel!.Value;
-        _selector.DragRect.CoordLabelFontSize = s.CoordLabelFontSize!.Value;
+        // 指定する項目だけを差し替える（現在値を維持する。枠線・十字マーカー・座標ラベルの色は本メソッドの対象外）
+        _selector.DragRect.Options = _selector.DragRect.Options with
+        {
+            HandleColor = s_borderColor,
+            HandleSize = s.HandleSize!.Value,
+            HandleHitRadius = s.HandleHitRadius!.Value,
+            MinSelectionSize = s.MinSelectionSize!.Value,
+            ClampToDomainBounds = s.ClampToDomainBounds!.Value,
+            ShowCoordLabel = s.ShowCoordLabel!.Value,
+            CoordLabelFontSize = s.CoordLabelFontSize!.Value,
+        };
         CaptureOverlay.ApplyLoupe(_selector, s, _themeBackground);
 
         // ラベル（サイズ・操作）は切り出しモードの文言を使う（情報ラベルは表示しない）

@@ -60,22 +60,10 @@ internal static class DragRectDrawer
         AddWithCapacityLimit(s_penCache, PenCacheCapacity, key, pen);
         return pen;
     }
-    /// <summary>描画対象のハンドル種別（8 方向。None / Move を除く）の静的配列。</summary>
-    /// <remarks>
-    /// <see cref="Enum.GetValues{T}()"/> は呼び出し毎に配列を生成するため、
-    /// 描画ホットパスでの毎回の列挙を排除する（<see cref="DrawHandles"/> で使用）。
-    /// </remarks>
-    private static readonly DragHandle[] s_handleTypes =
-        [.. Enum.GetValues<DragHandle>().Where(h => h != DragHandle.None && h != DragHandle.Move)];
+    /// <summary>描画対象のハンドル種別（8 方向。None / Move を除く）。</summary>
+    /// <remarks>一覧はコア（<see cref="SelectionGeometry.DirectionalHandles"/>）が単一所有する。</remarks>
+    private static DragHandle[] HandleTypes => SelectionGeometry.DirectionalHandles;
 
-    /// <summary>ハンドル枠線のペン太さ（DIP）。</summary>
-    private const double HandlePenThickness = 1.5;
-
-    /// <summary>座標ラベルのパディング（DIP）。</summary>
-    private const double LabelPadding = 4.0;
-
-    /// <summary>座標ラベルのカーソルからのオフセット（DIP）。</summary>
-    private const double LabelOffset = 8.0;
     /// <summary>容量制限付きキャッシュへ値を登録する（超過時は全クリアしてから登録）。</summary>
     /// <typeparam name="TKey">キャッシュのキー型。</typeparam>
     /// <typeparam name="TValue">キャッシュの値型。</typeparam>
@@ -119,13 +107,13 @@ internal static class DragRectDrawer
     public static void DrawHandles(DrawingContext context, Rect rect, double handleSize, Color handleColor, Color borderColor)
     {
         var handleFill = GetBrush(handleColor == default ? Colors.White : handleColor);
-        var handlePen = GetPen(borderColor, HandlePenThickness);
+        var handlePen = GetPen(borderColor, DragRectAppearance.HandlePenThickness);
         double hs = handleSize;
         double hh = hs / 2;
 
         // ドメイン計算 (SelectionGeometry) は UI 非依存のため、コア型へ変換して渡し、結果のみ DIP へ戻す。
         var domainRect = rect.ToEsRect();
-        foreach (var handle in s_handleTypes)
+        foreach (var handle in HandleTypes)
         {
             var center = SelectionGeometry.GetHandlePosition(domainRect, handle);
             DrawHandle(context, center.X - hh, center.Y - hh, hs, hs, handleFill, handlePen);
@@ -184,35 +172,16 @@ internal static class DragRectDrawer
             fontSize,
             GetBrush(textColor));
 
-        var pad = LabelPadding;
+        var pad = DragRectAppearance.LabelPadding;
         var w = ft.Width + pad * 2;
         var h = ft.Height + pad * 2;
-        // ラベル配置（カーソル右側 + クランプ）は純粋関数に委譲
-        var labelPos = ComputeCoordLabelPosition(cursorDip, clientSize, w, h);
+        // ラベル配置（カーソル右側 + クランプ）はコアの純粋関数へ委譲する
+        var labelPos = DragRectAppearance.ComputeCoordLabelPosition(
+            cursorDip.ToEsPoint(), clientSize.ToEsSize(), w, h).ToAvaloniaPoint();
 
         // 不透明度は bgColor のアルファに統合済み（SolidColorBrush がアルファを反映する）
         context.FillRectangle(GetBrush(bgColor), new Rect(labelPos.X, labelPos.Y, w, h));
         context.DrawText(ft, new Point(labelPos.X + pad, labelPos.Y + pad));
-    }
-
-    /// <summary>カーソル座標ラベルの左上位置を計算する（純粋関数）。</summary>
-    /// <param name="cursorDip">カーソルのローカル DIP 座標。</param>
-    /// <param name="clientSize">描画領域のサイズ（はみ出しクランプ用）。</param>
-    /// <param name="labelWidth">ラベルの幅（DIP）。</param>
-    /// <param name="labelHeight">ラベルの高さ（DIP）。</param>
-    /// <returns>ラベルの左上位置。</returns>
-    /// <remarks>
-    /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。<br/>
-    /// カーソルの右側（+8px オフセット）に配置し、描画領域の右端・下端をはみ出す場合は<br/>
-    /// 領域内へクランプする（ラベル全体が見えるよう左寄せ・上寄せ）。
-    /// </remarks>
-    public static Point ComputeCoordLabelPosition(Point cursorDip, Size clientSize, double labelWidth, double labelHeight)
-    {
-        double x = cursorDip.X + LabelOffset;
-        double y = cursorDip.Y + LabelOffset;
-        if (clientSize.Width > 0) x = Math.Min(x, Math.Max(0, clientSize.Width - labelWidth));
-        if (clientSize.Height > 0) y = Math.Min(y, Math.Max(0, clientSize.Height - labelHeight));
-        return new Point(x, y);
     }
 }
 

@@ -9,6 +9,8 @@ using Rect = Avalonia.Rect;
 using DragRectControl.Sample.Logging;
 using DragRectControl.Sample.ViewModels;
 using Estable.AvaloniaUI.DragRect;
+using Estable.DragRect;
+using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -168,15 +170,18 @@ public partial class MainWindow : Window
     /// <summary>ViewModel の設定プロパティを DragRectControl へ反映する。</summary>
     private void ApplyControlSettings()
     {
-        DragRect.BorderThickness = _vm.BorderThickness;
-        DragRect.HandleSize = _vm.HandleSize;
-        DragRect.HandleHitRadius = _vm.HandleHitRadius;
-        DragRect.MinSelectionSize = _vm.MinSelectionSize;
-        DragRect.BorderColor = _vm.BorderColorOption.Color;
-        DragRect.HandleColor = _vm.HandleColorOption.Color;
-        DragRect.MarkerColor = _vm.MarkerColorOption.Color;
-        DragRect.MarkerLength = _vm.MarkerLength;
-        DragRect.ClampToDomainBounds = _vm.ClampToDomainBounds;
+        DragRect.Options = new DragRectOptions
+        {
+            BorderThickness = _vm.BorderThickness,
+            HandleSize = _vm.HandleSize,
+            HandleHitRadius = _vm.HandleHitRadius,
+            MinSelectionSize = _vm.MinSelectionSize,
+            BorderColor = _vm.BorderColorOption.Color.ToDrawingColor(),
+            HandleColor = _vm.HandleColorOption.Color.ToDrawingColor(),
+            MarkerColor = _vm.MarkerColorOption.Color.ToDrawingColor(),
+            MarkerLength = _vm.MarkerLength,
+            ClampToDomainBounds = _vm.ClampToDomainBounds,
+        };
         // マウスが描画域にない場合でも、設定変更を即時に再描画へ反映する
         DragRect.InvalidateVisual();
     }
@@ -189,39 +194,22 @@ public partial class MainWindow : Window
         switch (e.PropertyName)
         {
             case nameof(MainWindowViewModel.BorderThickness):
-                DragRect.BorderThickness = _vm.BorderThickness;
-                break;
             case nameof(MainWindowViewModel.HandleSize):
-                DragRect.HandleSize = _vm.HandleSize;
-                break;
             case nameof(MainWindowViewModel.HandleHitRadius):
-                DragRect.HandleHitRadius = _vm.HandleHitRadius;
-                break;
             case nameof(MainWindowViewModel.MinSelectionSize):
-                DragRect.MinSelectionSize = _vm.MinSelectionSize;
-                break;
             case nameof(MainWindowViewModel.BorderColorOption):
-                DragRect.BorderColor = _vm.BorderColorOption.Color;
-                break;
             case nameof(MainWindowViewModel.HandleColorOption):
-                DragRect.HandleColor = _vm.HandleColorOption.Color;
-                break;
             case nameof(MainWindowViewModel.MarkerColorOption):
-                DragRect.MarkerColor = _vm.MarkerColorOption.Color;
-                break;
             case nameof(MainWindowViewModel.MarkerLength):
-                DragRect.MarkerLength = _vm.MarkerLength;
+                ApplyControlSettings();
                 break;
             case nameof(MainWindowViewModel.ClampToDomainBounds):
-                DragRect.ClampToDomainBounds = _vm.ClampToDomainBounds;
+                ApplyControlSettings();
                 _vm.AddLog($"[App] ClampToDomainBounds: {(_vm.ClampToDomainBounds ? "ON（画像内にクリップ）" : "OFF（画像外も選択可能）")}");
                 break;
             default:
                 return;
         }
-
-        // マウスが描画域にない場合でも、設定変更を即時に再描画へ反映する
-        DragRect.InvalidateVisual();
     }
 
     /// <summary>選択矩形が変更されたときの処理。</summary>

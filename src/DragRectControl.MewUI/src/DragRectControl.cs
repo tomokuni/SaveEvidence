@@ -2,7 +2,6 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
 using Estable.DragRect;
-using Estable.MewUI.DragRect.Logging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.Native;
@@ -39,79 +38,16 @@ namespace Estable.MewUI.DragRect;
 /// </remarks>
 public sealed class DragRectControl : SkiaCanvasView
 {
-    /// <summary>十字マーカーの線の太さ（DIP）。</summary>
-    private const double MarkerThickness = 2.0;
-
-    /// <summary>カーソル座標ラベルのフォントサイズの最小値。</summary>
-    private const double CoordLabelFontSizeMin = 6.0;
-
-    /// <summary>カーソル座標ラベルのフォントサイズの最大値。</summary>
-    private const double CoordLabelFontSizeMax = 48.0;
-
-    /// <summary>カーソル座標ラベルのフォントサイズの既定値。</summary>
-    private const double CoordLabelFontSizeDefault = 12.0;
-
-    /// <summary><see cref="BorderColor"/> プロパティ（選択枠線の色。不透明度はアルファに統合する）。</summary>
-    public static readonly MewProperty<DrawingColor> BorderColorProperty =
-        MewProperty<DrawingColor>.Register<DragRectControl>(
-            nameof(BorderColor), DrawingColor.FromArgb(255, 169, 169, 169), MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="BorderThickness"/> プロパティ（選択枠線の太さ・DIP）。</summary>
-    public static readonly MewProperty<double> BorderThicknessProperty =
-        MewProperty<double>.Register<DragRectControl>(nameof(BorderThickness), 2.0, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="HandleColor"/> プロパティ（ドラッグハンドルの塗り色）。</summary>
-    public static readonly MewProperty<DrawingColor> HandleColorProperty =
-        MewProperty<DrawingColor>.Register<DragRectControl>(nameof(HandleColor), DrawingColor.White, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="HandleSize"/> プロパティ（ドラッグハンドルの一辺サイズ・DIP）。</summary>
-    public static readonly MewProperty<double> HandleSizeProperty =
-        MewProperty<double>.Register<DragRectControl>(nameof(HandleSize), 10.0, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="HandleHitRadius"/> プロパティ（ドラッグハンドルのヒットテスト半径・DIP）。</summary>
-    public static readonly MewProperty<double> HandleHitRadiusProperty =
-        MewProperty<double>.Register<DragRectControl>(nameof(HandleHitRadius), 12.0, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="MinSelectionSize"/> プロパティ（選択矩形の最小サイズ・ドメイン座標）。</summary>
-    public static readonly MewProperty<double> MinSelectionSizeProperty =
-        MewProperty<double>.Register<DragRectControl>(nameof(MinSelectionSize), 6.0, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="ClampToDomainBounds"/> プロパティ（ドメイン境界外の選択を禁止するか）。</summary>
-    /// <remarks>ON へ切り替えた瞬間に既存の選択矩形を境界内へクリップする（変更通知で適用する）。</remarks>
-    public static readonly MewProperty<bool> ClampToDomainBoundsProperty =
-        MewProperty<bool>.Register<DragRectControl>(
-            nameof(ClampToDomainBounds), true, MewPropertyOptions.None,
-            changed: static (owner, _, newValue) =>
-            {
-                owner._session.ClampToDomainBounds = newValue;
-                owner.ApplyFeedback(owner._session.ApplyClampToBounds());
-            });
-
-    /// <summary><see cref="MarkerColor"/> プロパティ（十字マーカーの色）。</summary>
-    public static readonly MewProperty<DrawingColor> MarkerColorProperty =
-        MewProperty<DrawingColor>.Register<DragRectControl>(nameof(MarkerColor), DrawingColor.White, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="MarkerLength"/> プロパティ（十字マーカーの全長・DIP）。</summary>
-    public static readonly MewProperty<double> MarkerLengthProperty =
-        MewProperty<double>.Register<DragRectControl>(nameof(MarkerLength), 16.0, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="ShowCoordLabel"/> プロパティ（カーソル座標ラベルの表示有無）。</summary>
-    public static readonly MewProperty<bool> ShowCoordLabelProperty =
-        MewProperty<bool>.Register<DragRectControl>(nameof(ShowCoordLabel), false, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="CoordLabelColor"/> プロパティ（カーソル座標ラベルの文字色）。</summary>
-    public static readonly MewProperty<DrawingColor> CoordLabelColorProperty =
-        MewProperty<DrawingColor>.Register<DragRectControl>(nameof(CoordLabelColor), DrawingColor.White, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="CoordLabelBackgroundColor"/> プロパティ（カーソル座標ラベルの背景色。不透明度はアルファに統合する）。</summary>
-    public static readonly MewProperty<DrawingColor> CoordLabelBackgroundColorProperty =
-        MewProperty<DrawingColor>.Register<DragRectControl>(
-            nameof(CoordLabelBackgroundColor), DrawingColor.FromArgb(153, 0, 0, 0), MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="CoordLabelFontSize"/> プロパティ（カーソル座標ラベルのフォントサイズ・6〜48）。</summary>
-    public static readonly MewProperty<double> CoordLabelFontSizeProperty =
-        MewProperty<double>.Register<DragRectControl>(
-            nameof(CoordLabelFontSize), CoordLabelFontSizeDefault, MewPropertyOptions.AffectsRender);
+    /// <summary><see cref="Options"/> プロパティ（外観・対話パラメータをまとめた設定）。</summary>
+    /// <remarks>
+    /// 個別に公開していた設定（外観 10 項目・対話パラメータ 3 項目）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
+    /// 設定値は不変（<see cref="DragRectOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。<br/>
+    /// 対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬し、判断と変更ログはコアが単一所有する。
+    /// </remarks>
+    public static readonly MewProperty<DragRectOptions> OptionsProperty =
+        MewProperty<DragRectOptions>.Register<DragRectControl>(
+            nameof(Options), DragRectOptions.Default, MewPropertyOptions.AffectsRender,
+            changed: static (owner, _, newValue) => owner.ApplyFeedback(owner._session.ApplyOptions(newValue)));
 
     /// <summary><see cref="RenderScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
     public static readonly MewProperty<double> RenderScalingProperty =
@@ -136,18 +72,13 @@ public sealed class DragRectControl : SkiaCanvasView
     /// 静止画として扱い連続再描画を無効化する（選択の変更時のみ再描画する）。<br/>
     /// フォーカスを失った時点で nudge を終了する（カーソルの非表示残留を防ぐ）。<br/>
     /// 矢印キーの nudge はフォーカスを必要とする（Avalonia 版の TopLevel 購読によるフォーカス非依存とは異なる）。<br/>
-    /// コアからの通知は公開イベントへ転送し、動作に影響する設定値をセッションへ伝搬する。
+    /// コアからの通知は公開イベントへ転送し、設定（<see cref="Options"/>）をセッションへ伝搬する。
     /// </remarks>
     public DragRectControl(ICursorService? cursorService)
     {
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
-        _session = new DragRectSession(_cursor)
-        {
-            MinSelectionSize = MinSelectionSize,
-            ClampToDomainBounds = ClampToDomainBounds,
-            HandleHitRadius = HandleHitRadius,
-        };
+        _session = new DragRectSession(_cursor, Options);
         _session.Notified += OnSessionNotified;
 
         ContinuousAnimation = false;
@@ -168,14 +99,6 @@ public sealed class DragRectControl : SkiaCanvasView
 
     /// <summary>領域がキャンセルされたときに発火する（枠外ダブルクリック・小さすぎる矩形等）。</summary>
     public event EventHandler? SelectionCancelled;
-
-    /// <summary>ポインター押下（左ボタン）時に発火する（ドメイン座標）。</summary>
-    /// <remarks>MewUI の基底 <c>UIElement.MouseDown</c> と衝突するため、本コントロールでは <c>DragMouseDown</c> の名で公開する。</remarks>
-    public event EventHandler<DragRectPointEventArgs>? DragMouseDown;
-
-    /// <summary>ポインター解放（左ボタン）時に発火する（ドメイン座標）。</summary>
-    /// <remarks>MewUI の基底 <c>UIElement.MouseUp</c> と衝突するため、本コントロールでは <c>DragMouseUp</c> の名で公開する。</remarks>
-    public event EventHandler<DragRectPointEventArgs>? DragMouseUp;
 
     /// <summary>クリック（ドラッグ移動なしの押下→解放）時に発火する（ドメイン座標）。</summary>
     public event EventHandler<DragRectPointEventArgs>? MouseClicked;
@@ -208,128 +131,17 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <summary>Escape キーによるキャンセル要求時に発火する（選択の破棄は本コントロールが実施済み）。</summary>
     public event EventHandler? CancelRequested;
 
-    /// <summary>選択枠線の色を取得または設定する。</summary>
-    /// <value>枠線の色（アルファで不透明度を表す）。</value>
-    public DrawingColor BorderColor
+    /// <summary>外観・対話パラメータをまとめた設定を取得または設定する。</summary>
+    /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="DragRectOptions.Default"/>。</value>
+    /// <remarks>
+    /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬する。<br/>
+    /// 一部の項目だけを変える場合は <c>DragRectOptions.Default with { BorderThickness = 3.0 }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
+    /// 色は UI 非依存の <see cref="DrawingColor"/> で受け取り、描画（Skia）への変換は描画層が行う。
+    /// </remarks>
+    public DragRectOptions Options
     {
-        get => GetValue(BorderColorProperty);
-        set => SetValue(BorderColorProperty, value);
-    }
-
-    /// <summary>選択枠線の太さを取得または設定する。</summary>
-    /// <value>枠線の太さ（DIP）。</value>
-    public double BorderThickness
-    {
-        get => GetValue(BorderThicknessProperty);
-        set => SetValue(BorderThicknessProperty, value);
-    }
-
-    /// <summary>ドラッグハンドルの塗り色を取得または設定する。</summary>
-    /// <value>ハンドルの塗り色（アルファで不透明度を表す）。</value>
-    public DrawingColor HandleColor
-    {
-        get => GetValue(HandleColorProperty);
-        set => SetValue(HandleColorProperty, value);
-    }
-
-    /// <summary>ドラッグハンドルの一辺サイズを取得または設定する。</summary>
-    /// <value>ハンドルの一辺サイズ（DIP）。</value>
-    public double HandleSize
-    {
-        get => GetValue(HandleSizeProperty);
-        set => SetValue(HandleSizeProperty, value);
-    }
-
-    /// <summary>ドラッグハンドルのヒットテスト半径を取得または設定する。</summary>
-    /// <value>ヒットテスト半径（DIP）。ドメイン座標への変換はセッションが行う。</value>
-    public double HandleHitRadius
-    {
-        get => GetValue(HandleHitRadiusProperty);
-        set
-        {
-            SetValue(HandleHitRadiusProperty, value);
-            _session.HandleHitRadius = value;
-        }
-    }
-
-    /// <summary>選択矩形の最小サイズを取得または設定する。</summary>
-    /// <value>最小サイズ（ドメイン座標）。これ未満の矩形はキャンセル扱いになる（判断はセッションが行う）。</value>
-    public double MinSelectionSize
-    {
-        get => GetValue(MinSelectionSizeProperty);
-        set
-        {
-            SetValue(MinSelectionSizeProperty, value);
-            _session.MinSelectionSize = value;
-        }
-    }
-
-    /// <summary>ドメイン境界外の選択を禁止するかどうかを取得または設定する。</summary>
-    /// <value>true（既定）の場合は選択をドメイン境界内に制限する。false の場合は境界外も選択できる。</value>
-    /// <remarks>クリップ範囲は <see cref="SetCoordinateTransform"/> のポートの Bounds で指定する（変更時は変更前後をログ出力する）。</remarks>
-    public bool ClampToDomainBounds
-    {
-        get => GetValue(ClampToDomainBoundsProperty);
-        set
-        {
-            var oldValue = GetValue(ClampToDomainBoundsProperty);
-            SetValue(ClampToDomainBoundsProperty, value);
-            _session.ClampToDomainBounds = value;
-
-            // 実際に変化した場合のみログ出力する（同じ値の再設定でログが流れないようにする）
-            if (oldValue != value)
-            {
-                Log.LogSettingChanged(nameof(ClampToDomainBounds), oldValue.ToString(), value.ToString());
-            }
-        }
-    }
-
-    /// <summary>十字マーカーの色を取得または設定する。</summary>
-    /// <value>十字マーカーの色（アルファで不透明度を表す）。</value>
-    public DrawingColor MarkerColor
-    {
-        get => GetValue(MarkerColorProperty);
-        set => SetValue(MarkerColorProperty, value);
-    }
-
-    /// <summary>十字マーカーの全長を取得または設定する。</summary>
-    /// <value>十字マーカーの全長（DIP）。中心から両端までの半幅はこの 1/2 になる。</value>
-    public double MarkerLength
-    {
-        get => GetValue(MarkerLengthProperty);
-        set => SetValue(MarkerLengthProperty, value);
-    }
-
-    /// <summary>カーソル座標ラベルを表示するかどうかを取得または設定する。</summary>
-    /// <value>true の場合はマウス位置のドメイン座標をカーソルの右側に表示する。</value>
-    public bool ShowCoordLabel
-    {
-        get => GetValue(ShowCoordLabelProperty);
-        set => SetValue(ShowCoordLabelProperty, value);
-    }
-
-    /// <summary>カーソル座標ラベルの文字色を取得または設定する。</summary>
-    /// <value>ラベルの文字色（アルファで不透明度を表す）。</value>
-    public DrawingColor CoordLabelColor
-    {
-        get => GetValue(CoordLabelColorProperty);
-        set => SetValue(CoordLabelColorProperty, value);
-    }
-
-    /// <summary>カーソル座標ラベルの背景色を取得または設定する。</summary>
-    /// <value>ラベルの背景色（アルファで不透明度を表す。既定は黒 60%）。</value>
-    public DrawingColor CoordLabelBackgroundColor
-    {
-        get => GetValue(CoordLabelBackgroundColorProperty);
-        set => SetValue(CoordLabelBackgroundColorProperty, value);
-    }
-
-    /// <summary>カーソル座標ラベルのフォントサイズを取得または設定する。</summary>
-    /// <value>フォントサイズ（DIP）。6〜48 の範囲へ補正される。</value>
-    public double CoordLabelFontSize
-    {
-        get => GetValue(CoordLabelFontSizeProperty);
-        set => SetValue(CoordLabelFontSizeProperty, CoerceCoordLabelFontSize(value));
+        get => GetValue(OptionsProperty);
+        set => SetValue(OptionsProperty, value);
     }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
@@ -347,18 +159,13 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <summary>操作ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>
-    /// C#14 の <c>field</c> キーワードでバッキング フィールドを暗黙定義する。<br/>
-    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する（呼び出し側で null 判定しない）。<br/>
-    /// 入力の判断に伴うログはコア（セッション）が出力するため、同じロガーをセッションへ伝搬する。
+    /// 保持とフォールバック、セッションへの伝搬はコア（<see cref="DragRectSession.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
+    /// 入力の判断に伴うログはセッションが同じロガーで出力する。
     /// </remarks>
     public ILogger Log
     {
-        get => field ?? NullLogger.Instance;
-        set
-        {
-            field = value ?? NullLogger.Instance;
-            _session.Log = field;
-        }
+        get => _session.Log;
+        set => _session.Log = value;
     }
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
@@ -405,11 +212,7 @@ public sealed class DragRectControl : SkiaCanvasView
     /// 本コントロールは <c>ScrollViewer</c> の自動連携を行わないため、ホスト（上位 AP）が<br/>
     /// ズーム・スクロール・画像サイズ変更の検知時に呼ぶ（暗転マスク等の再描画トリガー）。
     /// </remarks>
-    public void NotifyViewportChanged()
-    {
-        InvalidateVisual();
-        RaiseViewportChanged();
-    }
+    public void NotifyViewportChanged() => ApplyFeedback(_session.NotifyViewportChanged());
 
     /// <summary>要求サイズを返す（親の残余を埋める）。</summary>
     /// <param name="availableSize">親から提示された利用可能サイズ（使用しない）。</param>
@@ -501,11 +304,12 @@ public sealed class DragRectControl : SkiaCanvasView
         e.Handled = true;
     }
 
-    /// <summary>キー入力を処理する（矢印キーの nudge・Escape のキャンセル・Enter の確定）。</summary>
-    /// <param name="e">キーの情報。</param>
+    /// <summary>キーダウン処理（矢印キーの nudge・Escape のキャンセル・Enter の確定）。</summary>
+    /// <param name="e">キーイベント。</param>
     /// <remarks>
-    /// キーをコア型（<see cref="EsKey"/>）へ変換してセッションへ通知し、返された効果を適用するだけである。<br/>
+    /// キーをコア型（<see cref="EsKey"/>）へ変換して通知し、返された効果（再描画・カーソル操作）を適用するだけである。<br/>
     /// 矢印キー nudge・Escape・Enter の判断（nudge の許可条件を含む）はコアが行う。<br/>
+    /// <c>|| e.Handled</c> は、先に誰かが処理済みにしたフラグを false へ戻さないため。<br/>
     /// 本コントロールにフォーカスがある場合のみ呼ばれる（Avalonia 版のフォーカス非依存 nudge とは異なる）。
     /// </remarks>
     protected override void OnKeyDown(KeyEventArgs e)
@@ -513,13 +317,8 @@ public sealed class DragRectControl : SkiaCanvasView
         base.OnKeyDown(e);
 
         var feedback = _session.KeyDown(e.Key.ToEsKey(), CurrentCursorDomainPosition());
-        if (!feedback.Handled)
-        {
-            return;
-        }
-
-        e.Handled = true;
         ApplyFeedback(feedback);
+        e.Handled = feedback.Handled || e.Handled;
     }
 
     /// <summary>現在のカーソル位置（ドメイン座標）を取得する。</summary>
@@ -565,20 +364,6 @@ public sealed class DragRectControl : SkiaCanvasView
         return new EsPixelPoint((int)Math.Round(screen.X), (int)Math.Round(screen.Y));
     }
 
-    /// <summary>選択矩形をローカル DIP 矩形へ変換する。</summary>
-    /// <param name="domainRect">選択矩形（ドメイン座標）。</param>
-    /// <returns>ローカル DIP 矩形。</returns>
-    /// <remarks>
-    /// 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、終点（Right / Bottom）に +1 してから変換する<br/>
-    /// （終点のピクセルも枠線・ハンドルに含める。キャプチャの閉区間 +1 と一致）。
-    /// </remarks>
-    private EsRect ToDipRect(EsRect domainRect)
-    {
-        var topLeft = _session.ToDip(domainRect.TopLeft);
-        var bottomRight = _session.ToDip(new EsPoint(domainRect.Right + 1, domainRect.Bottom + 1));
-        return new EsRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
-    }
-
     /// <summary>マウスキャプチャを取得または解放する。</summary>
     /// <param name="capture">true = 取得 / false = 解放。</param>
     /// <remarks>ドラッグ中にポインタがコントロール外へ出ても移動イベントを受け取れるようにする。</remarks>
@@ -600,42 +385,15 @@ public sealed class DragRectControl : SkiaCanvasView
     }
 
     /// <summary>コア（状態管理クラス）が返す効果を画面へ適用する。</summary>
-    /// <param name="feedback">適用する効果（再描画・フォーカス・マウスキャプチャ・カーソル操作）。</param>
+    /// <param name="feedback">適用する効果（カーソル操作・フォーカス・カーソル形状・再描画）。</param>
     /// <remarks>
-    /// カーソル操作は「移動 → 非表示 → 再表示」の順で適用する（nudge の終了では移動してから再表示する必要がある）。<br/>
-    /// マウスキャプチャの解放はドラッグ終了時に本コントロールが行う（効果には含まれない）。
+    /// 適用する効果の選択・順序はコア（<see cref="DragRectFeedback.ApplyCursor"/> / <see cref="DragRectFeedback.ApplyVisual"/>）が<br/>
+    /// 単一所有する（本層は自 UI の操作へ接続するだけ。マウスキャプチャはハンドラ側で行う）。
     /// </remarks>
     private void ApplyFeedback(DragRectFeedback feedback)
     {
-        if (feedback.RequestFocus)
-        {
-            Focus();
-        }
-
-        if (feedback.Cursor.HasFlag(DragRectCursorAction.MoveTo))
-        {
-            _cursor.SetCursorScreenPoint(ToScreen(feedback.CursorDomainPosition));
-        }
-
-        if (feedback.Cursor.HasFlag(DragRectCursorAction.Hide))
-        {
-            _cursor.ShowCursor(false);
-        }
-
-        if (feedback.Cursor.HasFlag(DragRectCursorAction.Show))
-        {
-            _cursor.ShowCursor(true);
-        }
-
-        if (feedback.UpdateCursorShape)
-        {
-            ApplyCursorShape(feedback.CursorHandle);
-        }
-
-        if (feedback.Redraw)
-        {
-            InvalidateVisual();
-        }
+        feedback.ApplyCursor(_cursor, ToScreen);
+        feedback.ApplyVisual(() => Focus(), InvalidateVisual, ApplyCursorShape);
     }
 
     /// <summary>コアからの通知を公開イベントへ転送する（判断はしない）。</summary>
@@ -643,48 +401,28 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <param name="notice">通知の種別・座標・スナップショット。</param>
     /// <remarks>
     /// 転送のみを担う（確定/キャンセルの判断・状態の更新はコアが済ませている）。<br/>
-    /// MewUI では基底クラスの <c>MouseDown</c> / <c>MouseUp</c> と衝突するため、押下/解放は <c>DragMouseDown</c> / <c>DragMouseUp</c> へ転送する。
+    /// 本 UI は押下・解放の公開イベントを持たない（基底 <c>UIElement</c> の同名メンバーがサービスを提供済みのため）。
     /// </remarks>
     private void OnSessionNotified(object? sender, DragRectNotice notice)
     {
         switch (notice.Kind)
         {
-            case DragRectNoticeKind.SelectionStarted:
-                SelectionStarted?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.SelectionChanged:
-                SelectionChanged?.Invoke(this, ToRectArgs(notice));
-                break;
-            case DragRectNoticeKind.SelectionCompleted:
-                SelectionCompleted?.Invoke(this, ToRectArgs(notice));
-                break;
-            case DragRectNoticeKind.SelectionCancelled:
-                SelectionCancelled?.Invoke(this, EventArgs.Empty);
-                break;
-            case DragRectNoticeKind.MouseDown:
-                DragMouseDown?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.MouseUp:
-                DragMouseUp?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.MouseClicked:
-                MouseClicked?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.MouseDoubleClicked:
-                MouseDoubleClicked?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.MouseMoved:
-                MouseMoved?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.LoupePositionMoved:
-                LoupePositionMoved?.Invoke(this, ToPointArgs(notice));
-                break;
-            case DragRectNoticeKind.ConfirmRequested:
-                ConfirmRequested?.Invoke(this, ToRectArgs(notice));
-                break;
-            case DragRectNoticeKind.CancelRequested:
-                CancelRequested?.Invoke(this, EventArgs.Empty);
-                break;
+            // 選択（始点・変更・確定・キャンセル）
+            case DragRectNoticeKind.SelectionStarted: SelectionStarted?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.SelectionChanged: SelectionChanged?.Invoke(this, ToRectArgs(notice)); break;
+            case DragRectNoticeKind.SelectionCompleted: SelectionCompleted?.Invoke(this, ToRectArgs(notice)); break;
+            case DragRectNoticeKind.SelectionCancelled: SelectionCancelled?.Invoke(this, EventArgs.Empty); break;
+
+            // ポインター（クリック・ダブルクリック・移動）
+            case DragRectNoticeKind.MouseClicked: MouseClicked?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.MouseDoubleClicked: MouseDoubleClicked?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.MouseMoved: MouseMoved?.Invoke(this, ToPointArgs(notice)); break;
+
+            // ルーペ・ビューポート・確定要求・キャンセル要求
+            case DragRectNoticeKind.LoupePositionMoved: LoupePositionMoved?.Invoke(this, ToPointArgs(notice)); break;
+            case DragRectNoticeKind.ViewportChanged: ViewportChanged?.Invoke(this, ToRectArgs(notice)); break;
+            case DragRectNoticeKind.ConfirmRequested: ConfirmRequested?.Invoke(this, ToRectArgs(notice)); break;
+            case DragRectNoticeKind.CancelRequested: CancelRequested?.Invoke(this, EventArgs.Empty); break;
         }
     }
 
@@ -701,24 +439,21 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <summary>カーソル形状をハンドル種別に応じて更新する。</summary>
     /// <param name="handle">カーソル形状の基になるハンドル種別。</param>
     /// <remarks>ハンドル上ではリサイズ方向に応じたカーソル、枠内では移動カーソル、それ以外は既定カーソルを表示する。</remarks>
-    private void ApplyCursorShape(DragHandle handle)
+    /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
+    /// <param name="kind">カーソル形状の種別（コア提供）。</param>
+    /// <remarks>種別と自 UI のカーソルの対応のみを持つ（どのハンドルが同じカーソルになるかはコアが判断済み）。</remarks>
+    private void ApplyCursorShape(DragCursorKind kind)
     {
-        Cursor = handle switch
+        Cursor = kind switch
         {
-            DragHandle.TopLeft or DragHandle.BottomRight => CursorType.SizeNWSE,
-            DragHandle.TopRight or DragHandle.BottomLeft => CursorType.SizeNESW,
-            DragHandle.TopCenter or DragHandle.BottomCenter => CursorType.SizeNS,
-            DragHandle.MiddleLeft or DragHandle.MiddleRight => CursorType.SizeWE,
-            DragHandle.Move => CursorType.SizeAll,
+            DragCursorKind.DiagonalNWSE => CursorType.SizeNWSE,
+            DragCursorKind.DiagonalNESW => CursorType.SizeNESW,
+            DragCursorKind.Vertical => CursorType.SizeNS,
+            DragCursorKind.Horizontal => CursorType.SizeWE,
+            DragCursorKind.Move => CursorType.SizeAll,
             _ => null,
         };
     }
-
-    /// <summary>カーソル座標ラベルのフォントサイズを安全域へ補正する。</summary>
-    /// <param name="value">補正する値。</param>
-    /// <returns>6〜48 に補正した値。非数（NaN / ∞）の場合は既定値。</returns>
-    private static double CoerceCoordLabelFontSize(double value)
-        => double.IsFinite(value) ? Math.Clamp(value, CoordLabelFontSizeMin, CoordLabelFontSizeMax) : CoordLabelFontSizeDefault;
 
     /// <summary>選択枠線・ハンドル・十字マーカー・座標ラベルを描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
@@ -731,6 +466,7 @@ public sealed class DragRectControl : SkiaCanvasView
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
         var scaling = RenderScaling > 0 ? RenderScaling : 1.0;
+        var options = Options;
 
         canvas.Save();
         canvas.Scale((float)scaling);
@@ -738,24 +474,25 @@ public sealed class DragRectControl : SkiaCanvasView
         {
             if (_session.HasSelection)
             {
-                var dipRect = ToDipRect(_session.SelectionRect);
-                DragRectSkiaRenderer.DrawBorder(canvas, dipRect, BorderColor, BorderThickness);
-                DragRectSkiaRenderer.DrawHandles(canvas, dipRect, HandleSize, HandleColor, BorderColor);
+                var dipRect = _session.ToDipRect(_session.SelectionRect);
+                DragRectSkiaRenderer.DrawBorder(canvas, dipRect, options.BorderColor, options.BorderThickness);
+                DragRectSkiaRenderer.DrawHandles(canvas, dipRect, options.HandleSize, options.HandleColor, options.BorderColor);
             }
 
             if (_session.NudgeActive && _session.CrosshairVisible)
             {
                 var markerDip = _session.ToDip(_session.MarkerPosition);
-                DragRectSkiaRenderer.DrawStartMarker(canvas, markerDip, MarkerColor, MarkerThickness, MarkerLength / 2);
+                DragRectSkiaRenderer.DrawStartMarker(
+                    canvas, markerDip, options.MarkerColor, DragRectAppearance.MarkerThickness, options.MarkerLength / 2);
             }
 
-            if (ShowCoordLabel)
+            if (options.ShowCoordLabel)
             {
                 var cursorDip = _session.ToDip(_session.LastMousePosition);
                 var clientSize = new EsSize(info.Width / scaling, info.Height / scaling);
                 DragRectSkiaRenderer.DrawCoordLabel(
                     canvas, cursorDip, _session.LastMousePosition, clientSize,
-                    CoordLabelColor, CoordLabelBackgroundColor, CoordLabelFontSize);
+                    options.CoordLabelColor, options.CoordLabelBackgroundColor, options.CoordLabelFontSize);
             }
         }
         finally
@@ -763,8 +500,4 @@ public sealed class DragRectControl : SkiaCanvasView
             canvas.Restore();
         }
     }
-
-    /// <summary><see cref="ViewportChanged"/> を発火する。</summary>
-    private void RaiseViewportChanged()
-        => ViewportChanged?.Invoke(this, new SelectionRectEventArgs(_session.SelectionRect, _session.CreateSnapshot()));
 }

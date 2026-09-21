@@ -137,15 +137,16 @@ public class FadeMaskDragRectControlTests
 
         control.AppearanceSettings = settings;
 
-        Assert.Equal(5, control.DragRect.MinSelectionSize);
-        Assert.Equal(Color.FromAColor(102, Colors.Red), control.DragRect.BorderColor);
-        Assert.Equal(3.0, control.DragRect.BorderThickness);
-        Assert.Equal(Colors.Blue, control.DragRect.HandleColor);
-        Assert.Equal(12.0, control.DragRect.HandleSize);
-        Assert.Equal(15.0, control.DragRect.HandleHitRadius);
-        Assert.True(control.DragRect.ClampToDomainBounds);
-        Assert.Equal(Colors.Green, control.DragRect.MarkerColor);
-        Assert.Equal(20.0, control.DragRect.MarkerLength);
+        var options = control.DragRect.Options;
+        Assert.Equal(5, options.MinSelectionSize);
+        Assert.Equal(Color.FromAColor(102, Colors.Red), options.BorderColor.ToAvaloniaColor());
+        Assert.Equal(3.0, options.BorderThickness);
+        Assert.Equal(Colors.Blue, options.HandleColor.ToAvaloniaColor());
+        Assert.Equal(12.0, options.HandleSize);
+        Assert.Equal(15.0, options.HandleHitRadius);
+        Assert.True(options.ClampToDomainBounds);
+        Assert.Equal(Colors.Green, options.MarkerColor.ToAvaloniaColor());
+        Assert.Equal(20.0, options.MarkerLength);
     }
 
     [AvaloniaFact]
@@ -233,10 +234,11 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(4, control.Loupe.FrameWidth);
         Assert.Equal(30.0, control.Loupe.PositionOffset);
         // 座標ラベル（DragRect / Loupe）
-        Assert.True(control.DragRect.ShowCoordLabel);
-        Assert.Equal(Colors.Yellow, control.DragRect.CoordLabelColor);
-        Assert.Equal(Color.FromAColor(179, Colors.DarkGreen), control.DragRect.CoordLabelBackgroundColor);
-        Assert.Equal(14.0, control.DragRect.CoordLabelFontSize);
+        var options = control.DragRect.Options;
+        Assert.True(options.ShowCoordLabel);
+        Assert.Equal(Colors.Yellow, options.CoordLabelColor.ToAvaloniaColor());
+        Assert.Equal(Color.FromAColor(179, Colors.DarkGreen), options.CoordLabelBackgroundColor.ToAvaloniaColor());
+        Assert.Equal(14.0, options.CoordLabelFontSize);
         Assert.True(control.Loupe.ShowCoordLabel);
         Assert.Equal(13.0, control.Loupe.CoordLabelFontSize);
         Assert.Equal(Color.FromAColor(153, Colors.DarkRed), ((SolidColorBrush)control.Loupe.CoordLabelBackgroundColor!).Color);
@@ -294,8 +296,8 @@ public class FadeMaskDragRectControlTests
             RequestedSize = 200,
         };
 
-        Assert.Equal(5, control.DragRect.MinSelectionSize);           // 未指定 → 現在値維持
-        Assert.Equal(Colors.Blue, control.DragRect.BorderColor);      // 指定 → 反映
+        Assert.Equal(5, control.DragRect.Options.MinSelectionSize);           // 未指定 → 現在値維持
+        Assert.Equal(Colors.Blue, control.DragRect.Options.BorderColor.ToAvaloniaColor());      // 指定 → 反映
         Assert.Equal(200, control.Loupe.RequestedSize);               // 指定 → 反映
         Assert.Equal(30.0, control.Loupe.PositionOffset);             // 未指定 → 現在値維持
         Assert.Equal(200, control.AppearanceSettings.RequestedSize);  // getter は更新後の値を返す
@@ -366,7 +368,7 @@ public class FadeMaskDragRectControlTests
         // すべて null（既定の new インスタンス）→ 何も変更されない
         control.AppearanceSettings = new FadeMaskDragRectSettings();
 
-        Assert.Equal(7, control.DragRect.MinSelectionSize);
+        Assert.Equal(7, control.DragRect.Options.MinSelectionSize);
         Assert.Equal(7, control.AppearanceSettings.MinSelectionSize);
     }
 

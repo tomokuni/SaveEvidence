@@ -39,6 +39,9 @@ internal enum DragRectNoticeKind
     /// <summary>ルーペが表示する中心座標の変更。</summary>
     LoupePositionMoved,
 
+    /// <summary>ビューポート（ズーム・スクロール）の変化。</summary>
+    ViewportChanged,
+
     /// <summary>確定要求（Enter・ダブルクリック・API 呼び出し）。</summary>
     ConfirmRequested,
 

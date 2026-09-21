@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 
 namespace Estable.DragRect;
@@ -5,7 +6,8 @@ namespace Estable.DragRect;
 /// <summary>コア（状態層）が UI 層へ要求するカーソル操作（フラグの組み合わせ）。</summary>
 /// <remarks>
 /// 1 回の入力通知で複数の操作を要求できる（例: nudge の終了では「nudge 位置へ移動」してから「再表示」する）。<br/>
-/// 適用順は UI 層が固定する（移動 → 非表示 → 再表示）。カーソルの表示残留・原点飛びを防ぐためこの順序を守る必要がある。
+/// 適用順は <see cref="DragRectFeedback.ApplyCursor"/> が固定する（移動 → 非表示 → 再表示）。<br/>
+/// カーソルの表示残留・原点飛びを防ぐためこの順序を守る必要がある。
 /// </remarks>
 [Flags]
 internal enum DragRectCursorAction
@@ -27,6 +29,8 @@ internal enum DragRectCursorAction
 /// <remarks>
 /// コアは状態の更新と通知（<see cref="DragRectNotice"/>）だけを行い、画面への反映方法（再描画・フォーカス・カーソル）は
 /// 本レコードで UI 層へ指示する。UI 層は指示に従って適用するだけで、判断を持たない。<br/>
+/// カーソル操作の適用は UI 非依存（<see cref="ICursorService"/> と画面座標の変換関数のみで完結する）ため、
+/// 本レコードの <see cref="ApplyCursor"/> が単一所有する（両 UI で同一の手順・順序になる）。<br/>
 /// 濃い既定値（<see cref="Handled"/> 以外は false）を持つため、効果が無い通知では <c>default</c> を返せる。<br/>
 /// </remarks>
 internal readonly record struct DragRectFeedback
@@ -50,12 +54,63 @@ internal readonly record struct DragRectFeedback
     /// <summary>カーソル形状を更新するかどうか。</summary>
     public bool UpdateCursorShape { get; init; }
 
-    /// <summary><see cref="UpdateCursorShape"/> が true のときのハンドル種別（UI 層が自 UI のカーソル型へ写像する）。</summary>
-    public DragHandle CursorHandle { get; init; }
+    /// <summary><see cref="UpdateCursorShape"/> が true のときのカーソル形状の種別（UI 層が自 UI のカーソル型へ写像する）。</summary>
+    public DragCursorKind CursorKind { get; init; }
 
     /// <summary>要求するカーソル操作。</summary>
     public DragRectCursorAction Cursor { get; init; }
 
     /// <summary><see cref="DragRectCursorAction.MoveTo"/> の移動先（ドメイン座標）。</summary>
     public EsPoint CursorDomainPosition { get; init; }
+
+    /// <summary>要求されたカーソル操作を適用する。</summary>
+    /// <param name="cursor">カーソルサービス。</param>
+    /// <param name="toScreen">ドメイン座標を画面物理座標へ変換する関数（UI 層が提供する）。</param>
+    /// <remarks>
+    /// 適用順は「移動 → 非表示 → 再表示」に固定する（nudge の終了では移動してから再表示する必要がある）。<br/>
+    /// 画面座標の変換のみ UI 層に委ね、それ以外（どの操作をどの順で行うか）はコアが単一所有する。
+    /// </remarks>
+    public void ApplyCursor(ICursorService cursor, Func<EsPoint, EsPixelPoint> toScreen)
+    {
+        if (Cursor.HasFlag(DragRectCursorAction.MoveTo))
+        {
+            cursor.SetCursorScreenPoint(toScreen(CursorDomainPosition));
+        }
+
+        if (Cursor.HasFlag(DragRectCursorAction.Hide))
+        {
+            cursor.ShowCursor(false);
+        }
+
+        if (Cursor.HasFlag(DragRectCursorAction.Show))
+        {
+            cursor.ShowCursor(true);
+        }
+    }
+
+    /// <summary>要求された表示上の効果（フォーカス・カーソル形状・再描画）を適用する。</summary>
+    /// <param name="requestFocus">フォーカスを取得する操作（UI 層が提供する）。</param>
+    /// <param name="invalidateVisual">再描画を要求する操作（UI 層が提供する）。</param>
+    /// <param name="setCursorShape">カーソル形状を設定する操作（UI 層が自 UI のカーソル型へ写像する）。</param>
+    /// <remarks>
+    /// 適用順は「フォーカス → カーソル形状 → 再描画」に固定する（再描画を最後にして確定後の状態を 1 回で描く）。<br/>
+    /// どの効果をどの順で適用するかはコアが単一所有し、UI 層は自 UI の操作へ接続するだけにする。
+    /// </remarks>
+    public void ApplyVisual(Action requestFocus, Action invalidateVisual, Action<DragCursorKind> setCursorShape)
+    {
+        if (RequestFocus)
+        {
+            requestFocus();
+        }
+
+        if (UpdateCursorShape)
+        {
+            setCursorShape(CursorKind);
+        }
+
+        if (Redraw)
+        {
+            invalidateVisual();
+        }
+    }
 }

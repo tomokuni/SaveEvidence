@@ -52,7 +52,7 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 
 | 層 | 責務 |
 | --- | --- |
-| `DragRectControl.Core` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成** |
+| `DragRectControl.Core` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成（効果の適用順、ビューポート変化の通知、ログの保持を含む）** |
 | `DragRectControl.MewUI` | 入力（マウス・キー）をコア型へ変換してセッションへ通知する、返された効果（再描画・フォーカス・マウスキャプチャ・カーソル形状/操作）を適用する、通知を公開イベントへ転送する、状態を `SKCanvas` へ描画する、DPI の追従 |
 | ホスト | 座標変換ポートの設定、選択の復元・確定・キャンセル、重ね順の管理、ビューポート変化の通知 |
 
@@ -65,8 +65,8 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 | カーソルサービスの既定実装の解決を UI 層で行う | コアは `Platform.Native` を参照できない（循環参照）。コアは抽象と `null` のみを扱う |
 | `SkiaCanvasView`（`Control` 系）を基底にする | 画像の上へ重ねるオーバーレイであり、子要素を持たない。背景を塗らないため下の画像が透ける |
 | `ScrollViewer` を自動購読しない | MewUI 版の画面構成（`Grid` 重ね合わせ）では祖先探索の前提が異なる。ビューポート変化はホストが `NotifyViewportChanged()` で通知する |
-| マウスダウン・アップのイベントを改名する | `UIElement` が同名メンバーを持つため、メンバーの隠蔽を避けて `DragMouseDown` / `DragMouseUp` とする |
-| ログの出力先を持つ | 入力を持つコントロールは操作ログが必要（上位 AP はドラッグ・nudge 用のキー・マウスイベントを直接検出しないため）。既定は `NullLogger` で、ホストが `Log` プロパティで注入する |
+| マウスダウン・アップのイベントを公開しない | `UIElement` が同名メンバー（＝同じ情報を提供するイベント）を持つため、本コントロールでは公開しない（重複を避ける） |
+| ログの出力先を持つ | 入力を持つコントロールは操作ログが必要（上位 AP はドラッグ・nudge 用のキー・マウスイベントを直接検出しないため）。既定は `NullLogger` で、ホストが `Log` プロパティで注入する（保持・フォールバック・セッションへの伝搬はコアが単一所有する） |
 
 ## コンポーネント構成
 
@@ -80,9 +80,8 @@ src/DragRectControl.MewUI/
 └── tests/
     ├── TestHelper.cs                     テスト用の描画先（SKBitmap + SKCanvas）と画素数え上げ
     ├── RecordingLogger.cs                ログ出力を収集するテスト用 ILogger
-    ├── DragRectSkiaRenderer.Tests.cs     描画と配置計算の検証（12 件）
-    ├── DragRectControl.Tests.cs          公開 API・プロパティ・イベントの検証（21 件）
-    └── LogMessage.Tests.cs               UI 層のログ定義の検証（3 件）
+    ├── DragRectSkiaRenderer.Tests.cs     描画の検証（6 件）
+    └── DragRectControl.Tests.cs          公開 API・プロパティ・イベントの検証（21 件）
 ```
 
 | コンポーネント | 責務 |
@@ -109,14 +108,7 @@ classDiagram
         +OnDpiChanged(oldDpi, newDpi) void
     }
     class DragRectControl {
-        +System.Drawing.Color BorderColor
-        +double BorderThickness
-        +double HandleSize
-        +double HandleHitRadius
-        +double MinSelectionSize
-        +bool ClampToDomainBounds
-        +bool ShowCoordLabel
-        +double CoordLabelFontSize
+        +DragRectOptions Options
         +double RenderScaling
         +DragRectSnapshot CurrentSnapshot
         +SetCoordinateTransform(port) void
@@ -155,7 +147,7 @@ classDiagram
     class DragRectFeedback {
         <<DragRectControl.Core>>
         +bool Handled / Redraw / RequestFocus / CaptureMouse
-        +bool UpdateCursorShape / DragHandle CursorHandle
+        +bool UpdateCursorShape / DragCursorKind CursorKind
         +DragRectCursorAction Cursor / EsPoint CursorDomainPosition
     }
     class DragRectSkiaRenderer {
@@ -164,6 +156,15 @@ classDiagram
         +DrawStartMarker(canvas, center, color, thickness, size)$ void
         +DrawCoordLabel(canvas, cursor, domain, clientSize, ...)$ void
         +ComputeCoordLabelPosition(cursor, clientSize, w, h)$ EsPoint
+      }
+      class DragRectAppearance {
+          <<DragRectControl.Core>>
+          +double MarkerThickness$ const
+          +double HandlePenThickness$ const
+          +double LabelOffset$ const
+          +double LabelPadding$ const
+          +CoerceCoordLabelFontSize(value)$ double
+          +ComputeCoordLabelPosition(cursor, clientSize, w, h)$ EsPoint
     }
     class DragRectState {
         <<DragRectControl.Core>>
@@ -232,7 +233,7 @@ sequenceDiagram
     Ctl->>Ctl: CaptureMouse(true)（効果のCaptureMouseが真のとき）
     loop ドラッグ中
         Ctl->>Ses: Move(pos)
-        Ses->>St: UpdateDrag(pos, MinSelectionSize, ClampToDomainBounds)
+        Ses->>St: UpdateDrag(pos, Options.MinSelectionSize, Options.ClampToDomainBounds)
         Ctl->>Host: SelectionChanged / LoupePositionMoved
     end
     Note over Ctl: 左ボタン解放
@@ -266,7 +267,7 @@ sequenceDiagram
         Ses-->>Ctl: 効果（Hide: カーソル非表示）
         Ctl->>Cur: ShowCursor(false)
     end
-    Ses->>St: Nudge(dx, dy, MinSelectionSize, ClampToDomainBounds)
+    Ses->>St: Nudge(dx, dy, Options.MinSelectionSize, Options.ClampToDomainBounds)
     Ses-->>Ctl: 効果（MoveTo: マーカー位置）
     Ctl->>Host: SelectionChanged / LoupePositionMoved
     Ctl->>Cur: SetCursorScreenPoint(ToScreen(marker))
@@ -302,12 +303,12 @@ stateDiagram-v2
 OnPaintSurface(canvas, info)
   ├─ canvas.Scale(RenderScaling)                     … DPI の適用（境界 1 箇所）
   ├─ HasSelection なら
-  │    ├─ ToDipRect(SelectionRect)                   … Inverse 変換（終点は +1 して閉区間を表現）
+  │    ├─ _session.ToDipRect(SelectionRect)          … Inverse 変換（終点は +1 して閉区間を表現。規則はコア）
   │    ├─ DragRectSkiaRenderer.DrawBorder            … 枠線
   │    └─ DragRectSkiaRenderer.DrawHandles           … SelectionGeometry から 8 方向の中心を取得
   ├─ NudgeActive かつ CrosshairVisible なら
   │    └─ DragRectSkiaRenderer.DrawStartMarker       … GetMarkerPosition() の位置
-  └─ ShowCoordLabel なら
+  └─ Options.ShowCoordLabel なら
        └─ DragRectSkiaRenderer.DrawCoordLabel        … CoordinateFormatter（コア）で文字列化
 ```
 
@@ -319,13 +320,13 @@ OnPaintSurface(canvas, info)
 | --- | --- |
 | カーソルサービスが null | `PlatformFactory.CreateCursorService()` の既定実装を使用する |
 | ウィンドウを特定できない（未レイアウト・未表示） | マウスキャプチャとカーソル移動を行わない（例外にしない） |
-| `CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する |
+| `Options.CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する |
 | 破棄済みの画像を描画しようとした | 本コントロールは画像を扱わない（対象外） |
 
 ## 実装上の注意（実測・設計から得た知見）
 
 1. **`UIElement` は `MouseDown` / `MouseUp` メンバーを持つ**。同名の公開イベントを定義すると `CS0108`（メンバーの隠蔽）になるため、
-   本コントロールでは `DragMouseDown` / `DragMouseUp` の名で公開する。
+   基底 `UIElement` が同名メンバー（`MouseDown` / `MouseUp`）を持ち、同じ情報を提供するため、本コントロールでは公開しない（重複を避ける）。
 2. **MewUI の `Rect` / `Size` は負のサイズを 0 にクランプする**。コアは `EsRect` を使うため影響を受けないが、
    MewUI 型へ変換する場合は値が変わりうる（本コントロールはイベント引数も `EsRect` で公開して回避する）。
 3. **`MouseEventArgs.ScreenPosition` は画面座標（デバイスピクセル）**、**`Window.Position` / `ClientToScreen` の入力は DIP** である。
@@ -341,5 +342,5 @@ OnPaintSurface(canvas, info)
 | --- | --- |
 | `ScrollViewer` の自動連携 | ホストが `NotifyViewportChanged()` を呼ぶ方式で代替 |
 | フォーカス非依存の矢印キー nudge | フォーカス依存で実装（`TopLevel` のキー購読は行わない） |
-| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（他の操作ログは書式・レベルとも Avalonia 版と同一） |
+| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`Estable.DragRect.LogMessage`）が所有し、書式・レベルとも Avalonia 版と同一） |
 | 実ウィンドウへの組み込み | `FadeMaskDragRectControl.MewUI` を経由して配線済み（撮影・切り出しの両方） |

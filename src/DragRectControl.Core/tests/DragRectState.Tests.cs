@@ -12,6 +12,9 @@ internal sealed class CursorServiceSpy : ICursorService
     /// <summary><see cref="ShowCursor"/> に渡された値の履歴（呼び出し順）。</summary>
     public List<bool> ShowCalls { get; } = [];
 
+    /// <summary>呼び出しの履歴（種類と値。呼び出し順の検証に使用する）。</summary>
+    public List<string> Calls { get; } = [];
+
     /// <summary><see cref="ICursorService.GetCursorScreenPoint"/> の戻り値。</summary>
     public EsPixelPoint CursorPoint { get; set; }
 
@@ -19,10 +22,18 @@ internal sealed class CursorServiceSpy : ICursorService
     public EsPixelPoint GetCursorScreenPoint() => CursorPoint;
 
     /// <inheritdoc/>
-    public void SetCursorScreenPoint(EsPixelPoint point) => CursorPoint = point;
+    public void SetCursorScreenPoint(EsPixelPoint point)
+    {
+        CursorPoint = point;
+        Calls.Add($"move:{point.X},{point.Y}");
+    }
 
     /// <inheritdoc/>
-    public void ShowCursor(bool show) => ShowCalls.Add(show);
+    public void ShowCursor(bool show)
+    {
+        ShowCalls.Add(show);
+        Calls.Add($"show:{show}");
+    }
 }
 
 /// <summary><see cref="DragRectState"/> の単体テスト（状態遷移・ヒットテスト・ドラッグ・nudge・境界クリップ）。</summary>

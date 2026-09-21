@@ -29,7 +29,11 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
 // 1. 生成（カーソルサービスは省略すると Windows 既定実装になる）
-var dragRect = new DragRectControl { ShowCoordLabel = true };
+var dragRect = new DragRectControl
+{
+    // 外観・対話パラメータは 1 つの設定値で渡す（同値の再設定では再描画されない）
+    Options = DragRectOptions.Default with { ShowCoordLabel = true },
+};
 
 // 2. 座標変換ポートを設定する（Forward = ローカル DIP → ドメイン / Bounds = ドメイン境界）
 dragRect.SetCoordinateTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(1920, 1080)));
@@ -71,7 +75,7 @@ grid.Add(dragRect);     // 選択オーバーレイ（上。入力を受け取�
 | 項目 | Avalonia 版 | MewUI 版 |
 | --- | --- | --- |
 | イベント引数の座標 | Avalonia の `Point` / `Rect` | **コア型の `EsPoint` / `EsRect`** |
-| マウスダウン・アップのイベント名 | `MouseDown` / `MouseUp` | **`DragMouseDown` / `DragMouseUp`**（基底 `UIElement` の同名メンバーと衝突するため） |
+| マウスダウン・アップのイベント | `MouseDown` / `MouseUp` | **持たない**（基底 `UIElement` の同名メンバーが同じ情報を提供するため、本コントロールでは公開しない） |
 | ビューポート変化 | `AttachScrollViewer` で `ScrollViewer` を自動購読 | **`NotifyViewportChanged()` をホストが呼ぶ** |
 | nudge のキー入力 | フォーカス非依存（`TopLevel` を購読） | フォーカス依存（本コントロールにフォーカスがある場合のみ） |
 | ログ | `ILogger` を注入して出力 | `Log` プロパティで同様に出力する（書式・レベルは同一。通常ホイールのスクロールログのみ持たない） |
@@ -80,6 +84,13 @@ grid.Add(dragRect);     // 選択オーバーレイ（上。入力を受け取�
 ## 主なプロパティ
 
 | プロパティ | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `Options` | `DragRectOptions` | `DragRectOptions.Default` | 外観・対話パラメータをまとめた設定（コアの `Estable.DragRect.DragRectOptions`） |
+| `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新） |
+
+`DragRectOptions` の項目（既定値はコアが単一所有。Avalonia 版と同一）:
+
+| 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `BorderColor` | `System.Drawing.Color` | `#FFA9A9A9` | 選択枠線の色（アルファで不透明度） |
 | `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（DIP） |
@@ -92,14 +103,15 @@ grid.Add(dragRect);     // 選択オーバーレイ（上。入力を受け取�
 | `ShowCoordLabel` | `bool` | `false` | カーソル座標ラベルの表示 |
 | `CoordLabelColor` / `CoordLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | ラベルの文字色と背景色 |
 | `CoordLabelFontSize` | `double` | `12.0` | ラベルのフォントサイズ（6〜48 に補正） |
-| `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新） |
+
+色は UI 非依存の `System.Drawing.Color` で指定します。設定の一部だけを変える場合は `DragRectOptions.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
 
 ## 主なメソッド
 
 | メソッド | 説明 |
 | --- | --- |
 | `SetCoordinateTransform(ICoordTransform?)` | ドメイン ↔ ローカル DIP の変換ポートを設定する（null は等価変換） |
-| `SetSelection(EsRect)` | 選択矩形を復元する（`ClampToDomainBounds` 有効時は境界内へクリップ） |
+| `SetSelection(EsRect)` | 選択矩形を復元する（`Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
 | `RequestConfirm()` / `RequestCancel()` | Enter / Escape と同じ条件で確定・キャンセルを要求する |
 | `NotifyViewportChanged()` | ビューポートの変化を通知する（`ViewportChanged` を発火） |
@@ -107,7 +119,7 @@ grid.Add(dragRect);     // 選択オーバーレイ（上。入力を受け取�
 
 ## イベント
 
-`SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `DragMouseDown` / `DragMouseUp` /
+`SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` /
 `MouseClicked` / `MouseDoubleClicked` / `MouseMoved` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` /
 `ConfirmRequested` / `CancelRequested`
 
@@ -119,19 +131,21 @@ dotnet test src/DragRectControl.MewUI/tests/DragRectControl.MewUI.Tests.csproj
 
 - `DragRectSkiaRenderer.Tests.cs`: 枠線・ハンドル・十字マーカー・座標ラベルの画素検証と配置計算（純粋関数）の検証。
 - `DragRectControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、ビューポート通知、`Log` のフォールバックと設定変更ログ。
-- `LogMessage.Tests.cs`: UI 層の操作ログ（ホイール・設定変更）の出力書式（`RecordingLogger` と `NullLogger` の両経路）。
+- ログの定義（操作ログ・ズーム要求・設定変更）はコアの `LogMessage` にあり、その検証はコアのテストが行います。
 
 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの `DragRectSession` が担うため、その検証は `DragRectControl.Core.Tests` が行います。
 
 ## 操作ログ
 
-`Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。<br/>
-入力の判断に伴うログ（マウス操作・キー入力・確定/キャンセル）はコア（`DragRectControl.Core` の `DragRectLog`）が出力し、ロガーはセッションへ伝搬されます。
+`Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。  
+ログはすべてコア（`Estable.DragRect.LogMessage`）が定義し、ロガーはセッションへ伝搬されます。本プロジェクトはログ定義を持ちません。
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | MouseDown / MouseUp / Click / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested（コア）/ ZoomRequested / 設定変更（本 UI 層） |
-| Trace | MouseDown 直前の位置 / MouseUp 直後の位置（コア） |
+| Debug | MouseDown / MouseUp / Click / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / ZoomRequested / 設定変更 |
+| Trace | MouseDown 直前の位置 / MouseUp 直後の位置 |
+
+定義はすべてコア（`Estable.DragRect.LogMessage`）が持ち、本プロジェクトは定義を持ちません。
 
 ## 未対応
 

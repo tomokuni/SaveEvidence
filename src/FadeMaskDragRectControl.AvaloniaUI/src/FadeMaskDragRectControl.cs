@@ -6,6 +6,7 @@ using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.FadeMaskDragRect;
 using Estable.AvaloniaUI.Loupe;
+using Estable.DragRect;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Coordinate;
 using Microsoft.Extensions.Logging;
@@ -340,21 +341,24 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void ApplyAppearance(FadeMaskDragRectSettings settings)
     {
-        // DragRect 外観
-        _dragRect.MinSelectionSize = settings.MinSelectionSize!.Value;
-        _dragRect.BorderColor = settings.BorderColor!.Value;
-        _dragRect.BorderThickness = settings.BorderThickness!.Value;
-        _dragRect.HandleColor = settings.HandleColor!.Value;
-        _dragRect.HandleSize = settings.HandleSize!.Value;
-        _dragRect.HandleHitRadius = settings.HandleHitRadius!.Value;
-        _dragRect.ClampToDomainBounds = settings.ClampToDomainBounds!.Value;
-        _dragRect.MarkerColor = settings.MarkerColor!.Value;
-        _dragRect.MarkerLength = settings.MarkerLength!.Value;
-        // カーソル座標ラベル（DragRect）
-        _dragRect.ShowCoordLabel = settings.ShowCoordLabel!.Value;
-        _dragRect.CoordLabelColor = settings.CoordLabelColor!.Value;
-        _dragRect.CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor!.Value;
-        _dragRect.CoordLabelFontSize = settings.CoordLabelFontSize!.Value;
+        // DragRect 外観・対話パラメータ（設定を 1 つの値へ組み立てて一括設定する。色は UI 非依存の型へ変換する）
+        _dragRect.Options = new DragRectOptions
+        {
+            MinSelectionSize = settings.MinSelectionSize!.Value,
+            BorderColor = settings.BorderColor!.Value.ToDrawingColor(),
+            BorderThickness = settings.BorderThickness!.Value,
+            HandleColor = settings.HandleColor!.Value.ToDrawingColor(),
+            HandleSize = settings.HandleSize!.Value,
+            HandleHitRadius = settings.HandleHitRadius!.Value,
+            ClampToDomainBounds = settings.ClampToDomainBounds!.Value,
+            MarkerColor = settings.MarkerColor!.Value.ToDrawingColor(),
+            MarkerLength = settings.MarkerLength!.Value,
+            // カーソル座標ラベル（DragRect）
+            ShowCoordLabel = settings.ShowCoordLabel!.Value,
+            CoordLabelColor = settings.CoordLabelColor!.Value.ToDrawingColor(),
+            CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor!.Value.ToDrawingColor(),
+            CoordLabelFontSize = settings.CoordLabelFontSize!.Value,
+        };
 
         // FadeMask 外観（FadeMaskRenderer へ直接設定。境界変換は座標変換ポートが担う）
         // 色は不透明度をアルファに統合した値（#AARRGGBB）をそのまま設定する。

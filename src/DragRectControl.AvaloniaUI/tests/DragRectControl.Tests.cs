@@ -28,12 +28,16 @@ public class DragRectControlTests
 {
     /// <summary>テスト用の DragRectControl を生成する。</summary>
     private static DragRectControl CreateControl()
-        => new() { Width = 200, Height = 200, HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
+        => new() { Width = 200, Height = 200, Options = TestOptions };
 
     /// <summary>カーソルサービスを注入してテスト用の DragRectControl を生成する。</summary>
     /// <param name="cursorService">カーソルサービス（GetCursorScreenPoint が固定位置を返すモック）。</param>
     private static DragRectControl CreateControl(ICursorService? cursorService)
-        => new(cursorService) { Width = 200, Height = 200, HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
+        => new(cursorService) { Width = 200, Height = 200, Options = TestOptions };
+
+    /// <summary>テスト用の設定（最小サイズを 10 にしてドラッグ判定をしやすくする）。</summary>
+    private static DragRectOptions TestOptions
+        => DragRectOptions.Default with { HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
 
     /// <summary>固定位置を返すカーソルサービスのモック。</summary>
     /// <param name="screenPoint">GetCursorScreenPoint が返す初期の画面物理座標。</param>
@@ -195,7 +199,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
-        control.ClampToDomainBounds = true;
+        control.Options = control.Options with { ClampToDomainBounds = true };
         control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
@@ -218,7 +222,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
-        control.ClampToDomainBounds = true;
+        control.Options = control.Options with { ClampToDomainBounds = true };
         control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
@@ -382,7 +386,7 @@ public class DragRectControlTests
         var window = Show(control);
 
         // HandleColor = default（透明）→ DrawHandles は白にフォールバックして描画
-        control.HandleColor = default;
+        control.Options = control.Options with { HandleColor = default };
         control.SetSelection(new Rect(20, 20, 60, 60));
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
@@ -786,7 +790,7 @@ public class DragRectControlTests
     public void 移動ドラッグで選択矩形が境界内にシフトされる()
     {
         var control = CreateControl();
-        control.ClampToDomainBounds = true;
+        control.Options = control.Options with { ClampToDomainBounds = true };
         control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var window = Show(control);
         var pointer = CreatePointer();
@@ -879,6 +883,28 @@ public class DragRectControlTests
         control.RaiseEvent(new KeyEventArgs { Key = Key.Escape, RoutedEvent = InputElement.KeyDownEvent });
 
         Assert.True(cancelled);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void 矢印キー1回のnudgeは1回だけ適用される()
+    {
+        var control = CreateControl();
+        var window = Show(control);
+        var pointer = CreatePointer();
+        var rects = new List<Rect>();
+        control.SelectionChanged += (_, e) => rects.Add(e.Rect);
+
+        // 新規選択のドラッグ（nudge 許可: マウス Down 中）→ 矩形は (20, 20, 30, 30)
+        control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(20, 20)), 0UL, LeftPressed(), KeyModifiers.None, 1));
+        control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None));
+        rects.Clear();
+
+        control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
+
+        // キー 1 回で終点が 1 ドメインピクセルだけ動く（フォーカス経由と TopLevel 購読の 2 経路で二重処理されると 2 px 動く）
+        Assert.Equal(new EsRect(20, 20, 31, 30), control.CurrentSnapshot.SelectionRect);
+        Assert.Single(rects);
         window.Close();
     }
 
@@ -1277,7 +1303,7 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）。マウス位置と矩形の角がずれる状況を作る
-        control.ClampToDomainBounds = true;
+        control.Options = control.Options with { ClampToDomainBounds = true };
         control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         control.SetSelection(new Rect(20, 20, 60, 60));
         var positions = new List<Point>();
@@ -1344,10 +1370,13 @@ public class DragRectControlTests
         var window = Show(control);
         var pointer = CreatePointer();
 
-        control.ShowCoordLabel = true;
-        control.CoordLabelColor = Colors.White;
-        control.CoordLabelBackgroundColor = Color.FromAColor(128, Colors.Black);
-        control.CoordLabelFontSize = 12.0;
+        control.Options = control.Options with
+        {
+            ShowCoordLabel = true,
+            CoordLabelColor = Colors.White.ToDrawingColor(),
+            CoordLabelBackgroundColor = Color.FromAColor(128, Colors.Black).ToDrawingColor(),
+            CoordLabelFontSize = 12.0,
+        };
 
         // マウス移動 → Render で座標ラベルが描画される（例外なし）
         control.RaiseEvent(new PointerEventArgs(
@@ -1407,7 +1436,7 @@ public class DragRectControlTests
     public void サイズ0のコントロールでも座標ラベル描画が実行される()
     {
         // クライアントサイズ 0 の描画（DrawCoordLabel のクランプ分岐: サイズ 0 はクランプしない）
-        var control = new DragRectControl { Width = 0, Height = 0, ShowCoordLabel = true };
+        var control = new DragRectControl { Width = 0, Height = 0, Options = DragRectOptions.Default with { ShowCoordLabel = true } };
         var window = Show(control);
 
         control.InvalidateVisual();
@@ -1427,13 +1456,13 @@ public class DragRectControlTests
         // 容量超過（全クリア）分岐を実行する（無制限メモリ増加の防止と正しさの両立）
         for (var i = 0; i < DragRectDrawer.BrushCacheCapacity + 1; i++)
         {
-            control.BorderColor = Color.FromRgb((byte)(i % 256), (byte)((i / 256) % 256), 0);
+            control.Options = control.Options with { BorderColor = Color.FromRgb((byte)(i % 256), (byte)((i / 256) % 256), 0).ToDrawingColor() };
             control.InvalidateVisual();
             window.CaptureRenderedFrame();
         }
 
         // クリア後に再描画しても例外なく正しく描画される（キャッシュが再構築される）
-        control.BorderColor = Colors.Red;
+        control.Options = control.Options with { BorderColor = Colors.Red.ToDrawingColor() };
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
 

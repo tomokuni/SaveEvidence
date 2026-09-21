@@ -4,13 +4,13 @@ using Xunit;
 
 namespace Estable.DragRect.Tests;
 
-/// <summary><see cref="DragRectLog"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
+/// <summary><see cref="LogMessage"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>
 /// ログ定義は internal のため、<see cref="RecordingLogger"/>（IsEnabled=true）と<br/>
 /// <see cref="NullLogger"/>（IsEnabled=false）の両方で全メソッドを直接呼び、<br/>
 /// LoggerMessage 生成コードの state 走査と IsEnabled 分岐の両パスを網羅する。
 /// </remarks>
-public class DragRectLogTests
+public class LogMessageTests
 {
     /// <summary>実ロガー設定時に全ログメソッドが実行されることを検証する。</summary>
     [Fact]
@@ -20,7 +20,7 @@ public class DragRectLogTests
         InvokeAll(logger);
 
         Assert.True(logger.IsEnabled(LogLevel.Trace));
-        Assert.Equal(10, logger.Messages.Count);
+        Assert.Equal(12, logger.Messages.Count);
     }
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
@@ -48,21 +48,25 @@ public class DragRectLogTests
         Assert.Equal("[DragRect] KeyDown: key=Left handled=True", logger.Messages[7]);
         Assert.Equal("[DragRect] ConfirmRequested: rect=(10, 20, 30, 40)", logger.Messages[8]);
         Assert.Equal("[DragRect] CancelRequested", logger.Messages[9]);
+        Assert.Equal("[DragRect] ZoomRequested: zoomIn=True", logger.Messages[10]);
+        Assert.Equal("[DragRect] Setting: MinSelectionSize 3 → 5", logger.Messages[11]);
     }
 
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>
     /// <param name="logger">ロガー。</param>
     private static void InvokeAll(ILogger logger)
     {
-        DragRectLog.LogMouseDown(logger, 10, 20, 1, false);
-        DragRectLog.LogMouseUp(logger, 10, 20, true, true);
-        DragRectLog.LogClick(logger, 10, 20);
-        DragRectLog.LogDoubleClick(logger, 10, 20, true);
-        DragRectLog.LogPositionBeforeDown(logger, 10, 20);
-        DragRectLog.LogPositionAfterUp(logger, 10, 20);
-        DragRectLog.LogDragStart(logger, "Move", 10, 20);
-        DragRectLog.LogKeyDown(logger, "Left", true);
-        DragRectLog.LogConfirmRequested(logger, "(10, 20, 30, 40)");
-        DragRectLog.LogCancelRequested(logger);
+        LogMessage.LogMouseDown(logger, 10, 20, 1, false);
+        LogMessage.LogMouseUp(logger, 10, 20, true, true);
+        LogMessage.LogClick(logger, 10, 20);
+        LogMessage.LogDoubleClick(logger, 10, 20, true);
+        LogMessage.LogPositionBeforeDown(logger, 10, 20);
+        LogMessage.LogPositionAfterUp(logger, 10, 20);
+        LogMessage.LogDragStart(logger, "Move", 10, 20);
+        LogMessage.LogKeyDown(logger, "Left", true);
+        LogMessage.LogConfirmRequested(logger, "(10, 20, 30, 40)");
+        LogMessage.LogCancelRequested(logger);
+        LogMessage.LogZoomRequested(logger, true);
+        LogMessage.LogSettingChanged(logger, "MinSelectionSize", "3", "5");
     }
 }

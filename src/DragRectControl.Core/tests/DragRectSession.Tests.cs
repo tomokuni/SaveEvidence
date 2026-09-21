@@ -260,7 +260,7 @@ public class DragRectSessionTests
     public void Release_最小サイズ未満の矩形はキャンセルする()
     {
         var session = CreateSession(null, out var notices);
-        session.MinSelectionSize = 10.0;
+        session.ApplyOptions(session.Options with { MinSelectionSize = 10.0 });
         session.Press(new EsPoint(10, 10), clickCount: 1);
         session.Move(new EsPoint(15, 15));
         notices.Clear();
@@ -513,7 +513,7 @@ public class DragRectSessionTests
     public void SetSelection_境界内にクリップしてから設定する()
     {
         var session = CreateBoundedSession(null, out _);
-        session.ClampToDomainBounds = true;
+        session.ApplyOptions(session.Options with { ClampToDomainBounds = true });
 
         session.SetSelection(new EsRect(150, 150, 100, 100));
 
@@ -525,7 +525,7 @@ public class DragRectSessionTests
     public void SetSelection_クリップ無効時は境界外の矩形もそのまま設定する()
     {
         var session = CreateBoundedSession(null, out _);
-        session.ClampToDomainBounds = false;
+        session.ApplyOptions(session.Options with { ClampToDomainBounds = false });
 
         session.SetSelection(new EsRect(150, 150, 100, 100));
 
@@ -615,6 +615,8 @@ public class DragRectSessionTests
     public void ApplyClampToBounds_境界を超える選択矩形をクリップし通知する()
     {
         var session = CreateBoundedSession(null, out var notices);
+        // 境界外の選択を作るため、いったんクリップを無効にする（既定は有効のため SetSelection でクリップされる）
+        session.ApplyOptions(session.Options with { ClampToDomainBounds = false });
         session.SetSelection(new EsRect(150, 150, 100, 100));
         notices.Clear();
 
@@ -635,6 +637,153 @@ public class DragRectSessionTests
         session.ApplyClampToBounds();
 
         Assert.Empty(notices);
+    }
+
+    // ====================================================================
+    // 設定の反映（ApplyOptions）
+    // ====================================================================
+
+    [Fact]
+    public void ApplyOptions_対話パラメータを反映する()
+    {
+        var session = CreateSession(null, out _);
+
+        session.ApplyOptions(new DragRectOptions
+        {
+            MinSelectionSize = 20.0,
+            HandleHitRadius = 30.0,
+            ClampToDomainBounds = false,
+        });
+
+        Assert.Equal(20.0, session.MinSelectionSize);
+        Assert.Equal(30.0, session.HandleHitRadius);
+        Assert.False(session.ClampToDomainBounds);
+        Assert.Equal(20.0, session.Options.MinSelectionSize);
+    }
+
+    [Fact]
+    public void ApplyOptions_同値の再適用では効果を返さない()
+    {
+        var session = CreateSession(null, out var notices);
+        var logger = new RecordingLogger();
+        session.Log = logger;
+
+        var feedback = session.ApplyOptions(session.Options);
+
+        Assert.False(feedback.Redraw);
+        Assert.False(feedback.Handled);
+        Assert.Empty(notices);
+        Assert.Empty(logger.Messages);
+    }
+
+    [Fact]
+    public void ApplyOptions_外観のみの変更では設定変更ログを出力しない()
+    {
+        var session = CreateSession(null, out _);
+        var logger = new RecordingLogger();
+        session.Log = logger;
+
+        // 外観（色・サイズ）はセッションが関与しないため、変更しても設定変更ログは流れない
+        session.ApplyOptions(session.Options with
+        {
+            BorderColor = System.Drawing.Color.Red,
+            HandleSize = 20.0,
+            MarkerLength = 40.0,
+            CoordLabelFontSize = 24.0,
+        });
+
+        Assert.Empty(logger.Messages);
+    }
+
+    // ====================================================================
+    // ビューポートの変化（NotifyViewportChanged）
+    // ====================================================================
+
+    [Fact]
+    public void NotifyViewportChanged_現在の選択矩形を再通知し再描画を要求する()
+    {
+        var session = CreateSession(null, out var notices);
+        session.SetSelection(new EsRect(10, 20, 30, 40));
+        notices.Clear();
+
+        var feedback = session.NotifyViewportChanged();
+
+        var notice = Assert.Single(notices);
+        Assert.Equal(DragRectNoticeKind.ViewportChanged, notice.Kind);
+        Assert.Equal(new EsRect(10, 20, 30, 40), notice.Snapshot.SelectionRect);
+        Assert.True(feedback.Redraw);
+    }
+
+    [Fact]
+    public void NotifyViewportChanged_選択なしでも通知する()
+    {
+        var session = CreateSession(null, out var notices);
+
+        var feedback = session.NotifyViewportChanged();
+
+        var notice = Assert.Single(notices);
+        Assert.Equal(DragRectNoticeKind.ViewportChanged, notice.Kind);
+        Assert.False(notice.Snapshot.HasSelection);
+        Assert.True(feedback.Redraw);
+    }
+
+    [Fact]
+    public void NotifyViewportChanged_状態を変更しない()
+    {
+        var session = CreateSession(null, out _);
+        session.SetSelection(new EsRect(10, 20, 30, 40));
+
+        session.NotifyViewportChanged();
+
+        // ビューポートの変化は選択矩形（ドメイン座標）を変えない
+        Assert.Equal(new EsRect(10, 20, 30, 40), session.SelectionRect);
+        Assert.False(session.NudgeActive);
+    }
+
+    [Fact]
+    public void ApplyOptions_境界外選択の禁止の切替でログと即時クリップを行う()
+    {
+        var session = CreateBoundedSession(null, out var notices);
+        var logger = new RecordingLogger();
+        session.Log = logger;
+        // 境界外の選択を作るため、いったんクリップを無効にする
+        session.ApplyOptions(session.Options with { ClampToDomainBounds = false });
+        session.SetSelection(new EsRect(150, 150, 100, 100));
+        notices.Clear();
+        logger.Messages.Clear();
+
+        var feedback = session.ApplyOptions(session.Options with { ClampToDomainBounds = true });
+
+        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionRect);
+        Assert.Equal([DragRectNoticeKind.SelectionChanged], Kinds(notices));
+        Assert.True(feedback.Redraw);
+        Assert.Equal("[DragRect] Setting: ClampToDomainBounds False → True", Assert.Single(logger.Messages));
+    }
+
+    [Fact]
+    public void ApplyOptions_初期設定をコンストラクタで受け取る()
+    {
+        var session = new DragRectSession(
+            null,
+            new DragRectOptions { MinSelectionSize = 25.0, HandleHitRadius = 40.0, ClampToDomainBounds = false })
+        {
+            Log = NullLogger.Instance,
+        };
+
+        Assert.Equal(25.0, session.MinSelectionSize);
+        Assert.Equal(40.0, session.HandleHitRadius);
+        Assert.False(session.ClampToDomainBounds);
+    }
+
+    [Fact]
+    public void ApplyOptions_設定を省略すると既定値を使用する()
+    {
+        var session = new DragRectSession(null) { Log = NullLogger.Instance };
+
+        Assert.Equal(DragRectOptions.Default, session.Options);
+        Assert.Equal(6.0, session.MinSelectionSize);
+        Assert.Equal(12.0, session.HandleHitRadius);
+        Assert.True(session.ClampToDomainBounds);
     }
 
     // ====================================================================
@@ -666,7 +815,7 @@ public class DragRectSessionTests
         var session = CreateSession(null, out _);
         // 表示スケール 2.0（1 DIP = 0.5 ドメイン）にヒット半径 12 DIP を設定する（ドメイン半径 6）
         session.SetPort(CoordTransform.Scale(2.0));
-        session.HandleHitRadius = 12.0;
+        session.ApplyOptions(session.Options with { HandleHitRadius = 12.0 });
         session.SetSelection(new EsRect(50, 50, 100, 80));
 
         // 角から 5 ドメイン離れた位置はヒットする（ドメイン半径 6 以内）

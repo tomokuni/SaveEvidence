@@ -660,17 +660,21 @@ public sealed class CaptureOverlay
         selector.BorderColor = settings.BorderColor ?? DrawingColor.DarkGray;
         selector.BorderThickness = settings.BorderThickness!.Value;
         selector.LoupeOffset = settings.LoupeOffset!.Value;
-        selector.DragRect.HandleColor = settings.HandleColor ?? DrawingColor.White;
-        selector.DragRect.HandleSize = settings.HandleSize!.Value;
-        selector.DragRect.HandleHitRadius = settings.HandleHitRadius!.Value;
-        selector.DragRect.MinSelectionSize = settings.MinSelectionSize!.Value;
-        selector.DragRect.ClampToDomainBounds = settings.ClampToDomainBounds!.Value;
-        selector.DragRect.MarkerColor = settings.MarkerColor ?? DrawingColor.White;
-        selector.DragRect.MarkerLength = settings.MarkerLength!.Value;
-        selector.DragRect.ShowCoordLabel = settings.ShowCoordLabel!.Value;
-        selector.DragRect.CoordLabelColor = settings.CoordLabelColor ?? DrawingColor.White;
-        selector.DragRect.CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0);
-        selector.DragRect.CoordLabelFontSize = settings.CoordLabelFontSize!.Value;
+        // 指定する項目だけを差し替える（枠線の色・太さは selector 側のプロパティが設定するため現在値を維持する）
+        selector.DragRect.Options = selector.DragRect.Options with
+        {
+            HandleColor = settings.HandleColor ?? DrawingColor.White,
+            HandleSize = settings.HandleSize!.Value,
+            HandleHitRadius = settings.HandleHitRadius!.Value,
+            MinSelectionSize = settings.MinSelectionSize!.Value,
+            ClampToDomainBounds = settings.ClampToDomainBounds!.Value,
+            MarkerColor = settings.MarkerColor ?? DrawingColor.White,
+            MarkerLength = settings.MarkerLength!.Value,
+            ShowCoordLabel = settings.ShowCoordLabel!.Value,
+            CoordLabelColor = settings.CoordLabelColor ?? DrawingColor.White,
+            CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
+            CoordLabelFontSize = settings.CoordLabelFontSize!.Value,
+        };
 
         ApplyLoupe(selector, settings);
     }

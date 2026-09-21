@@ -203,7 +203,7 @@ public sealed class FadeMaskDragRectControl : Panel
         set
         {
             _overlay.BorderColor = value;
-            _dragRect.BorderColor = value;
+            _dragRect.Options = _dragRect.Options with { BorderColor = value };
         }
     }
 
@@ -215,7 +215,7 @@ public sealed class FadeMaskDragRectControl : Panel
         set
         {
             _overlay.BorderThickness = value;
-            _dragRect.BorderThickness = value;
+            _dragRect.Options = _dragRect.Options with { BorderThickness = value };
         }
     }
 

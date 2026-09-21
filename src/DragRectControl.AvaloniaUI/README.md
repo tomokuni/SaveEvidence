@@ -12,7 +12,7 @@
   - [4. インストール](#4-インストール)
   - [5. クイックスタート](#5-クイックスタート)
     - [AXAML](#axaml)
-    - [Code-behind（イベント購読・座標ポート設定）](#code-behindイベント購読座標ポート設定)
+    - [Code-behind（設定・イベント購読・座標ポート設定）](#code-behind設定イベント購読座標ポート設定)
   - [6. 座標系](#6-座標系)
   - [7. サンプル](#7-サンプル)
   - [8. ドキュメント](#8-ドキュメント)
@@ -73,26 +73,20 @@ using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize（コア提供）
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:dragrect="clr-namespace:Estable.AvaloniaUI.DragRect;assembly=DragRectControl.AvaloniaUI">
     <Canvas>
-        <dragrect:DragRectControl x:Name="SelectionOverlay"
-                                   BorderColor="#FFA9A9A9"
-                                   BorderThickness="2.0"
-                                   HandleColor="White"
-                                   HandleSize="10.0"
-                                   HandleHitRadius="12.0"
-                                   MinSelectionSize="6"
-                                   MarkerColor="White"
-                                   MarkerLength="16.0" />
+        <dragrect:DragRectControl x:Name="SelectionOverlay" />
     </Canvas>
 </Window>
 ```
 
-### Code-behind（イベント購読・座標ポート設定）
+外観・対話パラメータは 1 つの設定値（`Options`）にまとまっているため、AXAML の属性では指定せずコード（またはバインディング）から設定します。
+
+### Code-behind（設定・イベント購読・座標ポート設定）
 
 ```csharp
 var dragRect = new DragRectControl
 {
-    BorderColor = Colors.White,
-    HandleSize = 10.0,
+    // 設定をまとめて 1 回で渡す（同値の再設定では再描画されない）
+    Options = DragRectOptions.Default with { BorderColor = Colors.White.ToDrawingColor(), HandleSize = 10.0 },
 };
 
 // 結果は公開イベントで通知される（マウス・キーイベントを直接処理しない）
@@ -143,7 +137,7 @@ DragRectControl/
 ├── src/
 │   ├── DragRectControl.csproj     # 独立プロジェクト（Platform.AvaloniaUI + DragRectControl.Core を参照）
 │   ├── DragRectControl.cs         # 公開 API + 効果の適用 + 通知の転送 + ポインター入力 + 描画
-│   ├── DragRectControl.Input.cs   # キーボード入力（コア型 EsKey への変換と通知）
+│   ├── DragRectControl.Input.cs   # キーボード入力（フォーカス非依存。コア型 EsKey への変換と通知）
 │   ├── DragRectControl.Visual.cs  # ビジュアルツリー接続・ScrollViewer 連携・描画
 │   ├── SelectionRectEventArgs.cs  # 公開イベント引数（選択矩形通知）
 │   ├── DragRectPointEventArgs.cs  # 公開イベント引数（座標通知）
@@ -162,10 +156,11 @@ DragRectControl.Core/
 │   ├── DragHandle.cs                 # 公開型（ドラッグハンドル種別 enum）
 │   ├── DragRectInteractionState.cs   # 公開型（対話状態 enum）
 │   ├── DragRectSnapshot.cs           # 公開型（状態 Snapshot record。座標は EsRect / EsPoint）
+│   ├── DragRectOptions.cs            # 公開型（外観・対話パラメータの設定値 record）
 │   ├── DragRectSession.cs            # 内部型（状態管理クラス。入力の解釈・通知・効果）
 │   ├── DragRectNotice.cs             # 内部型（コア → UI の通知の種別と値）
 │   ├── DragRectFeedback.cs           # 内部型（コア → UI の効果。カーソル操作を含む）
-│   ├── DragRectLog.cs                # 内部型（入力の判断の LoggerMessage 定義）
+│   ├── LogMessage.cs                 # 内部型（入力の判断・ズーム・設定変更の LoggerMessage 定義）
 │   ├── DragRectState.cs              # 内部型（状態保持 + 更新ロジック）
 │   └── Selection/                    # 内部型（SelectionGeometry）
 └── tests/                            # 単体テスト（UI 非依存・並列実行）

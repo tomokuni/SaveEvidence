@@ -1,4 +1,5 @@
 using Estable.AvaloniaUI.DragRect.Drawing;
+using Estable.DragRect;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
 using Avalonia;
@@ -16,7 +17,7 @@ namespace Estable.AvaloniaUI.DragRect;
 /// ビジュアルツリー接続時に TopLevel のキーイベントを購読し、切断時に解除する。<br/>
 /// 連携 ScrollViewer（スクロール・ズーム検知）は明示注入のみで設定する（暗黙の祖先探索は行わない）。<br/>
 /// 描画は <see cref="Drawing.DragRectDrawer"/> に委譲し、座標変換（ドメイン → DIP）はセッションのポートに問い合わせる
-/// （描画はセッションの状態を読むだけで、判断を持たない）。
+/// （描画はセッションの状態と <see cref="Options"/> を読むだけで、判断を持たない）。
 /// </remarks>
 public sealed partial class DragRectControl
 {
@@ -27,8 +28,13 @@ public sealed partial class DragRectControl
     /// <summary>ビジュアルツリー接続時に、属する TopLevel のキーイベントを購読する。</summary>
     /// <param name="e">ビジュアルツリー接続イベント。</param>
     /// <remarks>
-    /// Drag 開始前（マウス押下前）は本コントロールにフォーカスがなく、<c>OnKeyDown</c> が呼ばれないため、<br/>
+    /// Drag 開始前（マウス押下前）は本コントロールにフォーカスがなく、コントロール自身のキーハンドラが呼ばれないため、<br/>
     /// 属するウィンドウのキーイベントを購読して矢印キー nudge を自己完結で処理する。<br/>
+    /// <b>トンネル（Tunnel）で購読する</b>: バブリングでは祖先の <c>ScrollViewer</c> が先に矢印キーを処理して
+    /// キーボードスクロールしてしまう（Crop モードのプレビューは ScrollViewer 内にある）。<br/>
+    /// トンネルはルートから下降するため、祖先より先に受け取って処理済みにできる。
+    /// これにより「コントロール自身のハンドラ（フォーカス時）と TopLevel 購読（フォーカス非依存）」の
+    /// 2 経路を持たずに済み、同一キーの二重処理を防ぐ仕組みが不要になる（配送は 1 経路）。<br/>
     /// 連携 ScrollViewer（スクロール・ズーム検知）は <see cref="AttachScrollViewer"/> による明示注入のみで設定する<br/>
     /// （暗黙の祖先探索は行わない。ホストが連携対象を明示的に指定する）。
     /// </remarks>
@@ -39,9 +45,8 @@ public sealed partial class DragRectControl
         {
             _attachedTopLevel = topLevel;
             // handledEventsToo: true で購読する。
-            // Crop モードではプレビューが ScrollViewer 内にあり、フォーカスがプレビューにあると
-            // ScrollViewer が矢印キーを処理して e.Handled=true にする（キーボードスクロール）。
-            topLevel.AddHandler(InputElement.KeyDownEvent, OnTopLevelKeyDown, RoutingStrategies.Bubble, true);
+            // 他のコントロール（ScrollViewer 等）が e.Handled=true にしたキーでも呼ばれるようにするため。
+            topLevel.AddHandler(InputElement.KeyDownEvent, OnTopLevelKeyDown, RoutingStrategies.Tunnel, true);
         }
     }
 
@@ -93,12 +98,9 @@ public sealed partial class DragRectControl
     /// <summary>祖先 ScrollViewer のスクロール・ズーム変化を検知し、再描画と <see cref="ViewportChanged"/> を発行する。</summary>
     /// <param name="sender">イベント送信元（ScrollViewer）。</param>
     /// <param name="e">スクロール変化イベント。</param>
-    /// <remarks>ビューポートの変化は選択矩形（ドメイン座標）を変えないため、再描画と通知のみを行う。</remarks>
+    /// <remarks>ビューポートの変化は選択矩形（ドメイン座標）を変えないため、再描画と通知のみをセッションへ要求する。</remarks>
     private void OnScrollViewerChanged(object? sender, ScrollChangedEventArgs e)
-    {
-        InvalidateVisual();
-        RaiseViewportChanged();
-    }
+        => ApplyFeedback(_session.NotifyViewportChanged());
 
     // ====================================================================
     // 描画（セッションの状態を DragRectDrawer で描く）
@@ -122,33 +124,35 @@ public sealed partial class DragRectControl
         // ヒットテスト領域の確保（透明ブラシ）。選択なしの初期状態でもポインター操作を受けるため。
         context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
 
-        // 選択矩形はドメインピクセルで保持されるため、描画前にローカル DIP に変換する。
-        // 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、終点（Right / Bottom）に +1 してから変換する
-        // （終点のピクセルも枠線・ハンドルに含める。キャプチャの閉区間 +1 と一致）。
-        var domainRect = _session.SelectionRect;
-        var dipTopLeft = _session.ToDip(domainRect.TopLeft);
-        var dipBottomRight = _session.ToDip(new EsPoint(domainRect.Right + 1, domainRect.Bottom + 1));
-        var rect = new Rect(dipTopLeft.ToAvaloniaPoint(), dipBottomRight.ToAvaloniaPoint());
+        // 選択矩形はドメインピクセルで保持されるため、描画前にローカル DIP に変換する（閉区間 +1 の規則はコアが単一所有）。
+        var dipRect = _session.ToDipRect(_session.SelectionRect);
+        var rect = new Rect(dipRect.X, dipRect.Y, dipRect.Width, dipRect.Height);
+        var options = Options;
         if (_session.HasSelection)
         {
-            DragRectDrawer.DrawBorder(context, rect, BorderColor, BorderThickness);
-            DragRectDrawer.DrawHandles(context, rect, HandleSize, HandleColor, BorderColor);
+            // 色は UI 非依存の型（System.Drawing.Color）で保持されるため、描画時に Avalonia の色型へ変換する
+            var borderColor = options.BorderColor.ToAvaloniaColor();
+            DragRectDrawer.DrawBorder(context, rect, borderColor, options.BorderThickness);
+            DragRectDrawer.DrawHandles(context, rect, options.HandleSize, options.HandleColor.ToAvaloniaColor(), borderColor);
         }
 
         // nudge 中はドラッグ中のハンドル位置に十字マーカーを表示する（仕様 4.4）
         if (_session.NudgeActive && _session.CrosshairVisible)
         {
             var markerDip = _session.ToDip(_session.MarkerPosition);
-            DragRectDrawer.DrawStartMarker(context, markerDip.ToAvaloniaPoint(), MarkerColor, MarkerThickness, MarkerLength / 2);
+            DragRectDrawer.DrawStartMarker(
+                context, markerDip.ToAvaloniaPoint(), options.MarkerColor.ToAvaloniaColor(),
+                DragRectAppearance.MarkerThickness, options.MarkerLength / 2);
         }
 
         // カーソルの右側にカーソルのドメイン座標ラベル（"(x, y)"）を表示する
-        if (ShowCoordLabel)
+        if (options.ShowCoordLabel)
         {
             var cursorDip = _session.ToDip(_session.LastMousePosition);
             DragRectDrawer.DrawCoordLabel(
                 context, cursorDip.ToAvaloniaPoint(), _session.LastMousePosition.ToAvaloniaPoint(), Bounds.Size,
-                CoordLabelColor, CoordLabelBackgroundColor, CoordLabelFontSize);
+                options.CoordLabelColor.ToAvaloniaColor(), options.CoordLabelBackgroundColor.ToAvaloniaColor(),
+                options.CoordLabelFontSize);
         }
     }
 }

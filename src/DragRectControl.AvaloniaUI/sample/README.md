@@ -71,7 +71,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ DragRe
 | 「固定矩形」ボタン | `SetSelection()` による外部復元 |
 | 「確定要求」ボタン | `RequestConfirm()`（Enter キーと同じ条件）を呼び出し |
 | 「キャンセル要求」ボタン | `RequestCancel()`（Escape キーと同じ条件）を呼び出し |
-| 「画像外の選択を禁止」チェックボックス | `ClampToDomainBounds` を ON/OFF（ON: 領域選択・移動・nudge を画像境界内にクリップ / OFF: 画像外も選択可能） |
+| 「画像外の選択を禁止」チェックボックス | `Options.ClampToDomainBounds` を ON/OFF（ON: 領域選択・移動・nudge を画像境界内にクリップ / OFF: 画像外も選択可能） |
 | 「ログクリア」ボタン | ログ表示領域をクリア |
 | ログ表示領域 | `DragRectControl` 内部の操作ログ（MouseDown / KeyDown / Nudge 等）を時分秒ミリ秒付きで表示 |
 | 選択面とログ表示の間の分割バー | 上下にドラッグして表示サイズを変更 |

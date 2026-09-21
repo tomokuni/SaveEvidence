@@ -15,24 +15,9 @@ namespace Estable.MewUI.DragRect;
 /// </remarks>
 internal static class DragRectSkiaRenderer
 {
-    /// <summary>ハンドル枠線の太さ（DIP）。</summary>
-    private const double HandlePenThickness = 1.5;
-
-    /// <summary>座標ラベルのテキスト周囲のパディング（DIP）。</summary>
-    private const double LabelPadding = 4.0;
-
-    /// <summary>座標ラベルのカーソルからのオフセット（DIP）。</summary>
-    private const double LabelOffset = 8.0;
-
     /// <summary>座標ラベル背景の上下パディング（DIP）。</summary>
+    /// <remarks>フォントの描画基準（ベースライン）が UI ごとに異なるため、縦方向の余白は本 UI が持つ。</remarks>
     private const double LabelVerticalPadding = 2.0;
-
-    /// <summary>描画対象のハンドル種別（8 方向。<see cref="DragHandle.None"/> と <see cref="DragHandle.Move"/> を除く）の静的配列。</summary>
-    /// <remarks>
-    /// <see cref="Enum.GetValues{T}()"/> は呼び出し毎に配列を生成するため、描画ホットパスでの毎回の列挙を排除する。
-    /// </remarks>
-    private static readonly DragHandle[] s_handleTypes =
-        [.. Enum.GetValues<DragHandle>().Where(static h => h is not (DragHandle.None or DragHandle.Move))];
 
     /// <summary>選択枠線を描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
@@ -79,13 +64,13 @@ internal static class DragRectSkiaRenderer
         {
             IsAntialias = false,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = (float)HandlePenThickness,
+            StrokeWidth = (float)DragRectAppearance.HandlePenThickness,
             Color = ToSKColor(borderColor),
         };
 
         var half = handleSize / 2;
 
-        foreach (var handle in s_handleTypes)
+        foreach (var handle in SelectionGeometry.DirectionalHandles)
         {
             var center = SelectionGeometry.GetHandlePosition(rect, handle);
             var bounds = new SKRect(
@@ -135,7 +120,7 @@ internal static class DragRectSkiaRenderer
     /// <param name="fontSize">ラベルのフォントサイズ（DIP）。</param>
     /// <remarks>
     /// 1. 座標は <see cref="CoordinateFormatter"/>（コア）で "(x, y)" 形式へ文字列化する（Avalonia 版と同一の表記）。<br/>
-    /// 2. ラベル配置（カーソル右側 + はみ出しクランプ）は <see cref="ComputeCoordLabelPosition"/> へ委譲する。<br/>
+    /// 2. ラベル配置（カーソル右側 + はみ出しクランプ）はコアの <see cref="DragRectAppearance.ComputeCoordLabelPosition"/> へ委譲する。<br/>
     /// 3. 背景を塗ってから文字を描画する。
     /// </remarks>
     public static void DrawCoordLabel(
@@ -157,44 +142,15 @@ internal static class DragRectSkiaRenderer
 
         var width = font.MeasureText(text, textPaint);
         var height = (float)fontSize;
-        var labelWidth = width + (float)(LabelPadding * 2);
+        var labelWidth = width + (float)(DragRectAppearance.LabelPadding * 2);
         var labelHeight = height + (float)(LabelVerticalPadding * 2);
 
-        var position = ComputeCoordLabelPosition(cursorDip, clientSize, labelWidth, labelHeight);
+        var position = DragRectAppearance.ComputeCoordLabelPosition(cursorDip, clientSize, labelWidth, labelHeight);
         var left = (float)position.X;
         var top = (float)position.Y;
 
         canvas.DrawRect(new SKRect(left, top, left + labelWidth, top + labelHeight), backgroundPaint);
-        canvas.DrawText(text, left + (float)LabelPadding, top + (float)LabelVerticalPadding + height, SKTextAlign.Left, font, textPaint);
-    }
-
-    /// <summary>カーソル座標ラベルの左上位置を計算する（純粋関数）。</summary>
-    /// <param name="cursorDip">カーソルのローカル DIP 座標。</param>
-    /// <param name="clientSize">描画領域のサイズ（DIP）。0 以下の軸はクランプしない。</param>
-    /// <param name="labelWidth">ラベルの幅（DIP）。</param>
-    /// <param name="labelHeight">ラベルの高さ（DIP）。</param>
-    /// <returns>ラベルの左上位置（DIP）。</returns>
-    /// <remarks>
-    /// カーソルの右側（+8 DIP オフセット）に配置し、描画領域の右端・下端をはみ出す場合は<br/>
-    /// 領域内へクランプする（ラベル全体が見えるよう左寄せ・上寄せ）。<br/>
-    /// UI 非依存の純粋計算のため、ウィンドウ不要の <c>[Fact]</c> で並列テストできる。
-    /// </remarks>
-    public static EsPoint ComputeCoordLabelPosition(EsPoint cursorDip, EsSize clientSize, double labelWidth, double labelHeight)
-    {
-        var x = cursorDip.X + LabelOffset;
-        var y = cursorDip.Y + LabelOffset;
-
-        if (clientSize.Width > 0)
-        {
-            x = Math.Min(x, Math.Max(0, clientSize.Width - labelWidth));
-        }
-
-        if (clientSize.Height > 0)
-        {
-            y = Math.Min(y, Math.Max(0, clientSize.Height - labelHeight));
-        }
-
-        return new EsPoint(x, y);
+        canvas.DrawText(text, left + (float)DragRectAppearance.LabelPadding, top + (float)LabelVerticalPadding + height, SKTextAlign.Left, font, textPaint);
     }
 
     /// <summary>コア幾何型の矩形を Skia の矩形へ変換する。</summary>
