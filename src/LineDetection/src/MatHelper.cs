@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using OpenCvSharp;
 
 namespace Estable.LineDetection;

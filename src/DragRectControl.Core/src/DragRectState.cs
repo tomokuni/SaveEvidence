@@ -1,7 +1,7 @@
 using Estable.DragRect.Selection;
-using Estable.Platform;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 
 namespace Estable.DragRect;
 

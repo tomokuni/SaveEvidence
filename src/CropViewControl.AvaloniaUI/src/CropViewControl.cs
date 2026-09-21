@@ -6,11 +6,11 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable.AvaloniaUI.Loupe;
-using Estable.AvaloniaUI.Platform;
+using EsUtil.Platform.AvaloniaUI;
 using Estable.AvaloniaUI.ZoomView;
 using Estable.CropView;
 using Estable.FadeMaskDragRect;
-using Estable.Platform.Coordinate;
+using EsUtil.Platform.Core.Coordinate;
 using Microsoft.Extensions.Logging;
 
 namespace Estable.AvaloniaUI.CropView;

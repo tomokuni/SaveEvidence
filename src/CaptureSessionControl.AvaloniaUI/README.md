@@ -31,13 +31,13 @@
 
 - **3 種のキャプチャモード**: `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）
 - **切出し（Crop）**: プレビュー画像上の選択矩形で元画像から切り出し範囲を取得
-- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と PlatformFactory / PlatformFactory.Native が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
+- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と Platform.AvaloniaUI / Platform.Native が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
 - **Task ベース API**: 結果は `Task` で返却（`await` で直感的に利用）
 - **キャプチャ完了イベント**: `CaptureCompleted`（同期型）で画像変更 → オーナー再表示の順序を保証
 - **イベント駆動**: 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）
 - **再入禁止ガード**: 実行中の再呼び出しは `null` を返す（既存セッションを継続）
 - **部分更新設定**: `CaptureSettings` は全メンバー nullable（null = デフォルト値 or 現在値維持）で部分更新が可能
-- **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は PlatformFactory.Native 経由で注入（テスト可能・プラットフォーム非依存）
+- **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は Platform.Native 経由で注入（テスト可能・プラットフォーム非依存）
 
 ## 3. システム要件
 
@@ -115,7 +115,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 ### StartCaptureAsync
 
 1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出
-2. `SelectionCaptureSession` を生成（PlatformFactory からサービスを注入）
+2. `SelectionCaptureSession` を生成（Platform.AvaloniaUI からサービスを注入）
 3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`）→ 非表示（`HideOwnerWindow`）
 4. **仮想スクリーン全体をバックグラウンド + タイムアウト付きでキャプチャ（全モード共通の切り出し元）**
 5. `OverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示・ウォッチドッグ）
@@ -138,7 +138,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 | プロジェクト | 利用機能 |
 | --- | --- |
-| `PlatformFactory` | `PlatformFactory`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` は `PlatformFactory.Native`、`ICoordTransform` / `CoordTransform` は `PlatformFactory.Core`、`ScreenConverter` は `PlatformFactory` |
+| `Platform.AvaloniaUI` | `Platform.AvaloniaUI`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` は `Platform.Native`、`ICoordTransform` / `CoordTransform` は `Platform.Core`、`ScreenConverter` は `Platform.AvaloniaUI` |
 | `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包する複合コントロール。公開 API は本コントロールのみ） |
 
 CaptureSessionControl.AvaloniaUI は内包コントロール（`DragRectControl` / `FadeMaskControl` / `LoupeControl`）を直接参照しない（窓口は `FadeMaskDragRectControl` のみ。公開型のカプセル化）。
@@ -160,7 +160,7 @@ CaptureSessionControl.AvaloniaUI/
 └── tests/                        # 単体テスト（79 件）
 ```
 
-`CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `PlatformFactory.Core`（名前空間 `Estable.Platform`）が提供します。利用側は `using Estable.Platform;` を追加してください。
+`CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。利用側は `using EsUtil.Platform.Core;` を追加してください。
 
 `CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `CaptureSessionControl.Core`（名前空間 `Estable.CaptureSession`）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。利用側は `using Estable.CaptureSession;` を追加してください。**色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
 

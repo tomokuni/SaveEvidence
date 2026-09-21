@@ -1,6 +1,6 @@
 using Avalonia.Media.Imaging;
-using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;

@@ -3,7 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Estable.AvaloniaUI.Loupe.Rendering;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;

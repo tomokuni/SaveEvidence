@@ -27,7 +27,7 @@ CaptureSessionControl.MewUI（本プロジェクト。オーバーレイ・入�
 CaptureSessionControl.Core（共通規則: 切り出し矩形・設定・状態・退避手順）
         │ 参照
         ▼
-PlatformFactory.Core（Es* 型 / サービス抽象）
+Platform.Core（Es* 型 / サービス抽象）
 ```
 
 本プロジェクトは **`app.Core`（`Estable.SaveEvidence`）を参照しません**（参照するとアプリのコアへ依存し、ライブラリとして成立しないため）。

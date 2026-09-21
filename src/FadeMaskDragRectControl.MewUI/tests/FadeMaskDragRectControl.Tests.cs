@@ -1,7 +1,7 @@
 using Estable.FadeMaskDragRect;
 using Estable.MewUI.FadeMask;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Aprillz.MewUI;
 using SkiaSharp;
 using Xunit;
@@ -18,8 +18,8 @@ public class FadeMaskDragRectControlTests
 {
     /// <summary>テスト用の拡大元画像を生成する。</summary>
     /// <returns>生成した画像。破棄は呼び出し側。</returns>
-    private static Estable.Platform.Imaging.EsBitmap CreateSource()
-        => Estable.Platform.Imaging.EsBitmap.Create(32, 32, DrawingColor.White);
+    private static EsUtil.Platform.Core.Imaging.EsBitmap CreateSource()
+        => EsUtil.Platform.Core.Imaging.EsBitmap.Create(32, 32, DrawingColor.White);
 
     /// <summary>等倍（1 ドメインピクセル = 1 DIP）で境界 200x200 の座標変換ポートを生成する。</summary>
     /// <returns>座標変換ポート。</returns>

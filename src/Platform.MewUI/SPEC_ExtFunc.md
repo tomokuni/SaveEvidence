@@ -1,0 +1,86 @@
+# Platform.MewUI 外部機能仕様書
+
+`Platform.MewUI` は `Platform.Core` のコア型と MewUI（`Aprillz.MewUI`）の型を相互変換します。名前空間は `EsUtil.Platform.MewUI` です。
+
+## 公開 API
+
+すべて静的クラスの拡張メソッドです。`using EsUtil.Platform.MewUI;` のみで利用できます。
+
+### `EsKeyMewUIInterop`
+
+| メソッド | 説明 |
+| --- | --- |
+| `ToMewUIKey(this EsKey key)` → `Aprillz.MewUI.Key` | コアのキーを MewUI のキーへ変換する。対応先がない場合（MewUI が表現できないキー・未定義値）は `Key.None` |
+| `ToEsKey(this Aprillz.MewUI.Key key)` → `EsKey` | MewUI のキーをコアのキーへ変換する。未定義値は `EsKey.None` |
+| `IsRepresentable(this EsKey key)` → `bool` | MewUI に対応するキーがあるかを判定する（`None` は true） |
+
+#### 変換規則
+
+1. **名前が異なるキー**（`EsKey.Back` ⇔ `Key.Backspace`）を別名表で解決する
+2. **未定義値**（`(EsKey)999` 等）を `Enum.IsDefined` で検出し `None` へフォールバックする
+   （`Enum.TryParse` は数値文字列を受け付けてしまうため、名前解決の成否だけでは検出できない）
+3. **名前が一致するメンバー**へ変換する
+
+#### 対応関係
+
+| 項目 | 値 |
+| --- | --- |
+| `EsKey` のメンバー数 | 223 |
+| MewUI `Key` のメンバー数 | 91 |
+| 名前が一致するキー | 90 |
+| 名前が異なるキー | 1（`Back` ⇔ `Backspace`） |
+| MewUI が表現できない `EsKey` | 133（`BrowserBack` / `DbeRoman` 等。`ToMewUIKey()` は `Key.None` を返す） |
+
+`EsKey` が Avalonia / Win32 のキー体系（223）に合わせているのに対し、MewUI `Key` は抽象化された小さな集合（91・独自採番）であるため、値による対応付けはできません。
+
+### `EsGeometryMewUIInterop`
+
+| メソッド | 説明 |
+| --- | --- |
+| `ToMewUIPoint(this EsPoint)` / `ToEsPoint(this Aprillz.MewUI.Point)` | 2 次元座標 |
+| `ToMewUISize(this EsSize)` / `ToEsSize(this Aprillz.MewUI.Size)` | サイズ |
+| `ToMewUIVector(this EsVector)` / `ToEsVector(this Aprillz.MewUI.Vector)` | ベクター |
+| `ToMewUIRect(this EsRect)` / `ToEsRect(this Aprillz.MewUI.Rect)` | 矩形 |
+| `ToMewUIColor(this System.Drawing.Color)` / `ToDrawingColor(this Aprillz.MewUI.Color)` | 色（ARGB をそのまま保持） |
+
+#### 負のサイズの扱い（挙動の差）
+
+**MewUI の `Rect` / `Size` は負のサイズを 0 にクランプします**（Avalonia は負の値を保持します）。
+
+| 入力 | MewUI での値 | 備考 |
+| --- | --- | --- |
+| `new EsRect(100, 100, -20, -30)` | `X=100, Y=100, W=0, H=0` | 座標は保持され、サイズのみ 0 になる |
+| `new EsSize(-20, -30)` | `W=0, H=0` | — |
+
+コアで「空の矩形」（負のサイズ）を表現している場合、MewUI へ渡すと 0 サイズになります。判定（`Width <= 0`）には影響しませんが、値そのものを保持したい場合は MewUI へ変換しないでください。
+
+### `EsWindowStateMewUIInterop`
+
+| メソッド | 説明 |
+| --- | --- |
+| `ToMewUIWindowState(this EsWindowState)` → `Aprillz.MewUI.Controls.WindowState` | 未定義値は `Normal` |
+| `ToEsWindowState(this Aprillz.MewUI.Controls.WindowState)` → `EsWindowState` | 未定義値は `Normal` |
+
+メンバー名は完全に一致します（`Normal` / `Minimized` / `Maximized` / `FullScreen`）。設定ファイルの互換性のため名前ベースで変換します。
+
+### `EsPlatformHandleMewUIInterop`
+
+| メソッド | 説明 |
+| --- | --- |
+| `ToEsPlatformHandle(this Aprillz.MewUI.Window? window)` → `EsPlatformHandle` | `Window.Handle`（`nint`）をコアの識別子へ変換する。null はハンドル値 0 |
+
+Win32 の HWND に相当するため、`IWindowService` / `ICursorOverrideGuard` などハンドルを要求するサービスへ MewUI のウィンドウを渡せます。
+
+## 依存
+
+| 依存 | 用途 |
+| --- | --- |
+| `Platform.Core`（`EsUtil.Platform.Core.*`） | コア型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsWindowState` / `EsPlatformHandle`） |
+| `Aprillz.MewUI.Core`（バージョン固定） | MewUI の型（`Key` / `Point` / `Size` / `Vector` / `Rect` / `Color` / `Window` / `WindowState`） |
+
+プラットフォームホスト（`Aprillz.MewUI.Windows` 等）やバックエンドには依存しません（型変換のみを担うため）。
+
+## バージョン依存
+
+`Aprillz.MewUI.Core` は **0.21.1 に固定**しています。MewUI は 0.x で API が安定化中のため、
+アップグレード時はテスト（キー数 91 の回帰検知・別名表の一致・負サイズのクランプ）で破壊的変更を検出してください。

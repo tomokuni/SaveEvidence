@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.FadeMask;
-using Estable.AvaloniaUI.Platform;
+using EsUtil.Platform.AvaloniaUI;
 using Estable.FadeMask;
 
 namespace FadeMaskControl.Sample.ViewModels;

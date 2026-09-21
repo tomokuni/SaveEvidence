@@ -1,4 +1,4 @@
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 
 namespace Estable.SaveEvidence.Services;
 

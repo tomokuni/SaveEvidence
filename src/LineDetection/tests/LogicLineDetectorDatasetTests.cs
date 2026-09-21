@@ -1,4 +1,3 @@
-using Estable.Platform.Imaging;
 using System.Text.Json;
 using Xunit;
 

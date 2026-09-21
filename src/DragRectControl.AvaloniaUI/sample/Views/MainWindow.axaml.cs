@@ -9,10 +9,10 @@ using Rect = Avalonia.Rect;
 using DragRectControl.Sample.Logging;
 using DragRectControl.Sample.ViewModels;
 using Estable.AvaloniaUI.DragRect;
-using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using System.Collections.Specialized;
 
 namespace DragRectControl.Sample.Views;

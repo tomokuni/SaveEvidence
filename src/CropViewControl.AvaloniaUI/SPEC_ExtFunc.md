@@ -98,7 +98,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `Bounds` | `EsRect`（`Estable.Platform.Geometry`） | 矩形（ドメイン座標 = 元画像ピクセル座標）。 |
+| `Bounds` | `EsRect`（`EsUtil.Platform.Core.Geometry`） | 矩形（ドメイン座標 = 元画像ピクセル座標）。 |
 | `Style` | `OverlayLineStyle` | 枠線スタイル。 |
 | `Foreground` | `System.Drawing.Color` | 前景色（透明度を含む）。 |
 | `Background` | `System.Drawing.Color` | 背景色（透明度を含む）。破線の市松風 2 色目。 |
@@ -106,7 +106,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 コンストラクタ: `OverlayRect(EsRect Bounds, OverlayLineStyle Style, Color Foreground, Color Background, double Thickness)`
 
-Avalonia の色を使う場合は、境界変換（`PlatformFactory` の `ColorAvaloniaInterop`）で変換する。
+Avalonia の色を使う場合は、境界変換（`Platform.AvaloniaUI` の `ColorAvaloniaInterop`）で変換する。
 
 ```csharp
 new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Orange.ToDrawingColor(), Colors.White.ToDrawingColor(), 2.0)

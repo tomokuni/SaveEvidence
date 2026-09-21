@@ -45,7 +45,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | `LoupeControl.Core`（UI 非依存の計算ロジック）/ `PlatformFactory`（コア型の相互変換・画像コンテナ） |
+| **依存プロジェクト** | `LoupeControl.Core`（UI 非依存の計算ロジック）/ `Platform.AvaloniaUI`（コア型の相互変換・画像コンテナ） |
 
 ## 3. アーキテクチャ
 
@@ -60,7 +60,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ### 3.2 依存の方向
 
-- 依存は**一方向の階層構造**（LoupeControl → Rendering → LoupeControl.Core → PlatformFactory.Core）。双方向依存・具象依存なし。
+- 依存は**一方向の階層構造**（LoupeControl → Rendering → LoupeControl.Core → Platform.Core）。双方向依存・具象依存なし。
 - LoupeControl は上位 AP に依存しない（再利用可能）。
 - 色の境界変換（string → IBrush）は上位 AP 側で行い、LoupeControl 内に文字列解析を持ち込まない。
 - 描画は LoupeRenderer へ委譲し、LoupeControl は状態（DP）とライフサイクル（Bitmap 生成 / 解放）に専念する。
@@ -170,7 +170,7 @@ flowchart TB
 - **所属**: `LoupeControl.Core` プロジェクト（名前空間 `Estable.Loupe.Imaging`）
 - **責務**: 元画像（`EsBitmap`）からの領域切り出し（範囲外は透明パディング）を `EsBitmap` として提供する
 - **公開API**: `ExtractRegionAt`（`EsBitmap` 抽出）/ `ComputeCaptureSize`（切り出し領域サイズ計算）/ `ComputeCaptureTopLeft`（拡大中心 → 切り出し領域左上計算。`ExtractRegionAt` / `LoupeRenderArgsCalculator` で共用する単一所有）
-- **依存**: `PlatformFactory.Core`（`EsBitmap` / `EsPoint`）のみ。Avalonia には依存しない
+- **依存**: `Platform.Core`（`EsBitmap` / `EsPoint`）のみ。Avalonia には依存しない
 
 ### 6.6 LogMessage
 
@@ -186,7 +186,7 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**（LoupeControl → Rendering → LoupeControl.Core → PlatformFactory.Core）。双方向依存・具象依存なし。
+- 依存方向は**一方向の階層構造**（LoupeControl → Rendering → LoupeControl.Core → Platform.Core）。双方向依存・具象依存なし。
 - LoupeControl は上位AP に**依存しない**（再利用可能）。
 - 色の境界変換（string → IBrush）は上位AP 側で行い、LoupeControl 内に文字列解析を持ち込まない。
 - 描画は LoupeRenderer へ委譲し、LoupeControl は状態（DP）とライフサイクル（Bitmap 生成/解放）に専念する。

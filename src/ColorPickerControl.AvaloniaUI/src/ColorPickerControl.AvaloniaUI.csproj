@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

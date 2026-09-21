@@ -2,9 +2,9 @@ using Avalonia;
 using Avalonia.Input;
 using Avalonia.Platform;
 using Rect = Avalonia.Rect;
-using Estable.AvaloniaUI.Platform;
-using Estable.Platform;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Geometry;
 using Estable.AvaloniaUI.CaptureSession.Logging;
 
 namespace Estable.AvaloniaUI.CaptureSession;

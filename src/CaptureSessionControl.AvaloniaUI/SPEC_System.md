@@ -45,7 +45,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | FadeMaskDragRect（複合コントロール）/ PlatformFactory（ScreenConverter）/ PlatformFactory.Native（プラットフォームサービス） |
+| **依存プロジェクト** | FadeMaskDragRect（複合コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Native（プラットフォームサービス） |
 
 CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）を直接参照しない（公開型のカプセル化。窓口は FadeMaskDragRectControl のみ。推移的依存として各プロジェクトを利用）。
 
@@ -57,12 +57,12 @@ CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl /
 公開 Facade（CaptureSessionControl）
   → セッション（SelectionCaptureSession / CropSession）
     → オーバーレイ / 複合コントロール（OverlayWindow / FadeMaskDragRectControl）
-      → 各コントロール（DragRect / FadeMask / Loupe）+ PlatformFactory
+      → 各コントロール（DragRect / FadeMask / Loupe）+ Platform.AvaloniaUI
 ```
 
 ### 3.2 依存の方向
 
-- 依存は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール → 各コントロール / PlatformFactory）。
+- 依存は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール → 各コントロール / Platform.AvaloniaUI）。
 - 配線・状態同期は複合コントロールに集約し、セッションは薄い統括者（SRP / DRY）。
 - プラットフォームサービス（ICaptureService / IWindowService / IElementFinder）は注入され、内部で生成しない（DIP）。
 
@@ -125,13 +125,13 @@ flowchart TB
   - キャプチャ / Crop の開始・キャンセル・確定の公開 API を提供（単一の窓口）
   - セッションの生成とライフサイクル管理（再入禁止・Dispose ガード）
   - 設定（`CaptureSettings`）の保持・部分更新・検証
-  - プラットフォームサービスの注入（`PlatformFactory.Native` 経由）
+  - プラットフォームサービスの注入（`Platform.Native` 経由）
 - **公開メンバー**:
   - コンストラクタ: `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)`
   - プロパティ: `AppearanceSettings`（`CaptureSettings`。getter は全メンバー non-null / setter は部分更新 + 検証）
   - メソッド: `StartCaptureAsync(CaptureType, Window)` / `StartCropAsync(CropViewControl, Window, EsBitmap, Action<bool>?)` / `Cancel()` / `Confirm()` / `Dispose()`
 - **可視性**: public
-- **依存**: SelectionCaptureSession / CropSession / CaptureSettings / CaptureResult / CaptureType / PlatformFactory
+- **依存**: SelectionCaptureSession / CropSession / CaptureSettings / CaptureResult / CaptureType / Platform.AvaloniaUI
 
 ### 6.2 SelectionCaptureSession
 
@@ -154,7 +154,7 @@ flowchart TB
   - カーソル上書き抑止（Crop 中の十字カーソル維持）
   - 確定 → 論理 Rect / キャンセル → 0x0 の空 `PixelRect` を返却
 - **可視性**: internal
-- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectSettings）/ PlatformFactory.Native（ICursorOverrideGuard）/ PlatformFactory.Core（ICoordTransform / CoordTransform）
+- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectSettings）/ Platform.Native（ICursorOverrideGuard）/ Platform.Core（ICoordTransform / CoordTransform）
 
 ### 6.4 OverlayWindow
 
@@ -166,20 +166,20 @@ flowchart TB
   - クリック確定 → キャプチャ実行 → 結果コールバック
   - 非アクティブ化 / Close → キャンセル
 - **可視性**: internal（クラス。コンストラクタ等のシグネチャは public）
-- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ PlatformFactory（ScreenConverter）/ PlatformFactory.Native（ICaptureService / IWindowService / IElementFinder）
+- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Native（ICaptureService / IWindowService / IElementFinder）
 
 ### 6.5 公開データ型
 
 | コンポーネント | 説明 |
 | --- | --- |
-| `CaptureType` enum | `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）。UI 非依存の共通基盤 `PlatformFactory.Core`（`Estable.Platform`）提供 |
+| `CaptureType` enum | `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）。UI 非依存の共通基盤 `Platform.Core`（`EsUtil.Platform.Core`）提供 |
 | `CaptureSettings` record | キャプチャの外観・動作設定（全メンバー nullable・部分更新可・`Validate()` / `ToNonNull()`） |
 | `CaptureResult` record | キャプチャ結果（`Image` / `SourceBounds`。エラー時両方 null・キャンセル時両方 0x0） |
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール FadeMaskDragRectControl → 各コントロール / PlatformFactory）。
-- CaptureSessionControl / セッションは状態を保持せず、状態は複合コントロールと各コントロール / PlatformFactory が保持する（薄い統括者・SRP）。
+- 依存方向は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール FadeMaskDragRectControl → 各コントロール / Platform.AvaloniaUI）。
+- CaptureSessionControl / セッションは状態を保持せず、状態は複合コントロールと各コントロール / Platform.AvaloniaUI が保持する（薄い統括者・SRP）。
 - DragRect / FadeMask / Loupe の配線は複合コントロールに集約され、セッションは配線コードを持たない（DRY）。
 - セッションへのプラットフォームサービス（ICaptureService / IWindowService / IElementFinder）は注入され、内部で生成しない（DIP）。
 - 上位 AP への通知は Task 返却のみ（コールバック / イベント型 API ではない）。

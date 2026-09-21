@@ -23,8 +23,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\ZoomViewControl.AvaloniaUI.csproj" />
-    <!-- テストは EsBitmap（テスト画像生成・Skia 直描画）を使用するため、PlatformFactory を参照する -->
-    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <!-- テストは EsBitmap（テスト画像生成・Skia 直描画）を使用するため、Platform.AvaloniaUI を参照する -->
+    <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 
   <!-- xUnit 並列化設定（Avalonia ヘッドレスアセンブリ間の静的競合を防ぐためアセンブリ間の並列を無効化） -->

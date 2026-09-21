@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Media;
-using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using Estable.FadeMask;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Geometry;
 using System.Globalization;
 
 namespace Estable.AvaloniaUI.FadeMask;
@@ -18,7 +18,7 @@ namespace Estable.AvaloniaUI.FadeMask;
 internal static class FadeMaskDrawer
 {
     /// <summary>ブラシキャッシュ（色 → ブラシ。容量制限付き）。</summary>
-    /// <remarks>PlatformFactory の <see cref="BrushCache"/> へ委譲する（LoupeControl / DragRectControl と共用・重複排除・DRY）。</remarks>
+    /// <remarks>Platform.AvaloniaUI の <see cref="BrushCache"/> へ委譲する（LoupeControl / DragRectControl と共用・重複排除・DRY）。</remarks>
     private static readonly BrushCache s_brushCache = new(BrushCacheCapacity);
 
     /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>

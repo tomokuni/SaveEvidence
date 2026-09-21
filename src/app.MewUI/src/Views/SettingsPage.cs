@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using Estable.MewUI.Platform;
-using Estable.Platform;
+using EsUtil.Platform.MewUI;
+using EsUtil.Platform.Core;
 using Estable.SaveEvidence.Enum;
 using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.Services;

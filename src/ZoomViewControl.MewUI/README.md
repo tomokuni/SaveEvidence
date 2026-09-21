@@ -32,7 +32,7 @@
 
 ```csharp
 using Estable.MewUI.ZoomView;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 
 var zoomView = new ZoomViewControl
 {

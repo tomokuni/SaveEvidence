@@ -22,14 +22,14 @@
 ```text
 FadeMaskControl.AvaloniaUI（Avalonia 実装） / FadeMaskControl.MewUI
   └──> FadeMaskControl.Core（本プロジェクト）
-         └──> PlatformFactory.Core（コア幾何型・座標変換）
+         └──> Platform.Core（コア幾何型・座標変換）
 ```
 
 本プロジェクトが UI フレームワークへ依存することはありません。
 
 ## 座標型
 
-UI フレームワークの幾何型ではなく、`PlatformFactory.Core` のコア幾何型 `EsRect` / `EsPoint` / `EsSize` を使用します。
+UI フレームワークの幾何型ではなく、`Platform.Core` のコア幾何型 `EsRect` / `EsPoint` / `EsSize` を使用します。
 
 UI 実装側は、境界で 1 行の相互変換（`.ToEsRect()` / `.ToAvaloniaRect()`）を行います。
 

@@ -39,8 +39,7 @@
               └─────────┬──────────┘
                         ▼
               ┌────────────────────┐
-              │ PlatformFactory.   │  コア幾何型・DPI 変換
-              │       Core         │
+              │   Platform.Core    │  コア幾何型・DPI 変換
               └────────────────────┘
 ```
 
@@ -130,11 +129,11 @@ classDiagram
         +ExtractRegionAt(source, x, y, size)$ EsBitmap
     }
     class DpiScaler {
-        <<PlatformFactory.Core>>
+        <<Platform.Core>>
         +ScaleToPixel(dip, scaling) int$
     }
     class CoordinateFormatter {
-        <<PlatformFactory.Core>>
+        <<Platform.Core>>
         +Format(point) string$
     }
 

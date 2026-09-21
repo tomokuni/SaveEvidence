@@ -65,8 +65,8 @@
 
 ```csharp
 using Estable.AvaloniaUI.FadeMaskDragRect;
-using Estable.Platform.Coordinate; // ICoordTransform / CoordTransform（コア提供）
-using Estable.Platform.Geometry;   // EsPoint / EsSize / EsVector（コア提供）
+using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
+using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize / EsVector（コア提供）
 ```
 
 公開 API は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）の型を参照しないため、

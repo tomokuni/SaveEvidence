@@ -32,7 +32,7 @@
 
 ```csharp
 using Estable.MewUI.FadeMask;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Geometry;
 
 var overlay = new FadeMaskControl
 {

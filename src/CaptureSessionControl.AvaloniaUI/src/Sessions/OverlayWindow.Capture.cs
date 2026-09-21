@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Threading;
-using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Imaging;
 using Estable.AvaloniaUI.CaptureSession.Logging;
 
 namespace Estable.AvaloniaUI.CaptureSession;

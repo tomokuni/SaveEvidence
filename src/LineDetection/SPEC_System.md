@@ -82,16 +82,16 @@ flowchart TB
 
 ## 5. 依存関係
 
-- `ILineDetector.cs` → `LineDetectionResult`（`EsPoint`）/ `EsBitmap`（PlatformFactory.Core）
+- `ILineDetector.cs` → `LineDetectionResult`（`EsPoint`）/ `EsBitmap`（Platform.Core）
 - `LogicLineDetector.cs` → `ILineDetector` / `LineOrientation` / `LineDetectionOptions` / `LineRectangleReconstructor` / `LineSegmentMath` / `MatHelper`
-- `LineRectangleReconstructor.cs` → `LineDetectionResult` / `EsPixelRect`（PlatformFactory.Core）
-- `MatHelper.cs` → OpenCvSharp（内部のみ）・`EsBitmap`（PlatformFactory.Core）
+- `LineRectangleReconstructor.cs` → `LineDetectionResult` / `EsPixelRect`（Platform.Core）
+- `MatHelper.cs` → OpenCvSharp（内部のみ）・`EsBitmap`（Platform.Core）
 
-本プロジェクトは **UI フレームワーク非依存**です（依存は `PlatformFactory.Core` と OpenCvSharp のみ。Avalonia への依存なし）。座標はコア型（`EsPoint` / `EsPixelRect`）で公開し、UI 側は境界で各 UI の型へ変換します。
+本プロジェクトは **UI フレームワーク非依存**です（依存は `Platform.Core` と OpenCvSharp のみ。Avalonia への依存なし）。座標はコア型（`EsPoint` / `EsPixelRect`）で公開し、UI 側は境界で各 UI の型へ変換します。
 
 ### 名前空間
 
-`Estable.AvaloniaUI.LineDetection` は UI 非依存化前の名残です。UI 非依存のアセンブリは `Estable.*`（`Estable.Platform.*` 等）に置く方針のため、**`Estable.LineDetection` へ改名**しました。
+`Estable.AvaloniaUI.LineDetection` は UI 非依存化前の名残です。UI 非依存のアセンブリは `Estable.*`（`EsUtil.Platform.Core.*` 等）に置く方針のため、**`Estable.LineDetection` へ改名**しました。
 
 いずれも他の検出器へ依存しません（疎結合）。`MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(EsBitmap)`）には露出しません。
 

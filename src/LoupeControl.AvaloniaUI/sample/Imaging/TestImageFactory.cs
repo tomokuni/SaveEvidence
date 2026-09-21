@@ -1,6 +1,6 @@
 using Avalonia.Media;
-using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.Core.Imaging;
 
 namespace LoupeControl.Sample.Imaging;
 

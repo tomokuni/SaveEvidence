@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <!-- 座標変換ポート（ICoordinatePort）を外部から注入するため参照する -->
-    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
     <!-- UI 非依存の暗転オーバーレイ幾何（Core）を参照する -->
     <ProjectReference Include="..\..\FadeMaskControl.Core\src\FadeMaskControl.Core.csproj" />
   </ItemGroup>

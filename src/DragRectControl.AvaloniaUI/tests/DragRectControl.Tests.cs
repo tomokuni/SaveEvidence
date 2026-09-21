@@ -1,10 +1,10 @@
 using BindingFlags = System.Reflection.BindingFlags;
 using Estable.AvaloniaUI.DragRect.Drawing;
-using Estable.AvaloniaUI.Platform;
+using EsUtil.Platform.AvaloniaUI;
 using Estable.DragRect;
-using Estable.Platform;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;

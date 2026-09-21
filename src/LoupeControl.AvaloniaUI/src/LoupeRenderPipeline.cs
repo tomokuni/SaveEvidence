@@ -2,10 +2,10 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Loupe.Rendering;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using Estable.Loupe.Imaging;
-using Estable.Platform.Imaging;
-using Estable.Platform.Coordinate;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core.Coordinate;
 
 namespace Estable.AvaloniaUI.Loupe;
 

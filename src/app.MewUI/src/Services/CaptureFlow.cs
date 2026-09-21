@@ -1,6 +1,7 @@
 using Aprillz.MewUI;
 using Estable.MewUI.CaptureSession;
-using Estable.Platform;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Native;
 using Estable.SaveEvidence.Services;
 using SaveEvidence.MewUI.Logging;
 

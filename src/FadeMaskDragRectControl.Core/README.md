@@ -23,7 +23,7 @@
 
 ```text
 FadeMaskDragRectControl.Core
-    ├── PlatformFactory.Core（Es* 幾何型 / EsBitmap）
+    ├── Platform.Core（Es* 幾何型 / EsBitmap）
     └── FadeMaskControl.Core（FadeMaskRenderMode）
 ```
 

@@ -1,4 +1,4 @@
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Geometry;
 
 namespace Estable.LineDetection;
 

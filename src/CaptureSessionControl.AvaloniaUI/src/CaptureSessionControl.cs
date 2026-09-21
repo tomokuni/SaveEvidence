@@ -1,7 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
-using Estable.Platform;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Imaging;
 using Estable.AvaloniaUI.CropView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

@@ -9,7 +9,7 @@ using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using Vector = Avalonia.Vector;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.ZoomView.Tests;

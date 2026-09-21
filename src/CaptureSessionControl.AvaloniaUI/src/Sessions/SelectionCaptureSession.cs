@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
-using Estable.AvaloniaUI.Platform;
-using Estable.Platform;
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Estable.AvaloniaUI.CaptureSession.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

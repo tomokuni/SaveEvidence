@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using Estable.CaptureSession;
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Estable.SaveEvidence.ViewModels;
 
 namespace SaveEvidence.MewUI.Services;

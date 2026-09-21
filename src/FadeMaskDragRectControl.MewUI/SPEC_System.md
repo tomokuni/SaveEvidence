@@ -39,8 +39,8 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
                                      ▼
         ┌──────────────┬──────────────┬──────────────┬──────────────┐
         ▼              ▼              ▼              ▼              ▼
- DragRectControl  FadeMaskControl  LoupeControl  PlatformFactory  FadeMaskControl
-   .Core            .Core            .Core           .Core           .Core
+ DragRectControl  FadeMaskControl  LoupeControl  Platform.Core       FadeMaskControl
+    .Core            .Core            .Core          .Core                 .Core
 （選択の状態機械）（暗転の幾何）  （位置計算）    （幾何・変換）  （FadeMaskRenderMode）
 ```
 

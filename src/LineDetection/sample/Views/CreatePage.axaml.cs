@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Estable.Platform;
+using EsUtil.Platform.Core;
 using Estable.AvaloniaUI.CaptureSession;
 using LineDetectionSample.ViewModels;
 

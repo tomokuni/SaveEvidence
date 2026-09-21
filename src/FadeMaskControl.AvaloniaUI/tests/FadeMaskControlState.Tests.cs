@@ -1,8 +1,8 @@
 using Avalonia.Media;
 using Rect = Avalonia.Rect;
-using Estable.AvaloniaUI.Platform;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

@@ -18,7 +18,7 @@ Avalonia 版と同一の解釈になります。
 | `DragRectControl.MewUI` / `DragRectControl.Core` | 選択矩形の入力と状態機械 |
 | `FadeMaskControl.MewUI` / `FadeMaskControl.Core` | 暗転マスクの描画 |
 | `LoupeControl.MewUI` / `LoupeControl.Core` | 拡大鏡の描画と表示位置計算 |
-| `PlatformFactory.Core` | コア幾何型・座標変換ポート・画像コンテナ |
+| `Platform.Core` | コア幾何型・座標変換ポート・画像コンテナ |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `Panel`・`MewProperty`・SkiaSharp |
 
 ## 3. 座標系

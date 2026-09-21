@@ -1,5 +1,5 @@
 using Avalonia.Media;
-using Estable.AvaloniaUI.Platform;
+using EsUtil.Platform.AvaloniaUI;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 

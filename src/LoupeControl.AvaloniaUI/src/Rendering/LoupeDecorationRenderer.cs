@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Media;
-using Estable.AvaloniaUI.Platform;
+using EsUtil.Platform.AvaloniaUI;
 using Estable.Loupe;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Geometry;
 
 namespace Estable.AvaloniaUI.Loupe.Rendering;
 

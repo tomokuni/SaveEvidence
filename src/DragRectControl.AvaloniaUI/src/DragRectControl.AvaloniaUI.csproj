@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <!-- 共有プラットフォーム抽象（カーソル操作: ICursorService / WinCursorService） -->
-    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
     <!-- UI 非依存のコア（選択幾何・状態機械） -->
     <ProjectReference Include="..\..\DragRectControl.Core\src\DragRectControl.Core.csproj" />
   </ItemGroup>

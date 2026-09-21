@@ -1,5 +1,5 @@
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using RectInt = System.Drawing.Rectangle;
 
 namespace Estable.Loupe.Imaging;

@@ -8,7 +8,7 @@
 
 - .NET 10 / C# 14
 - UI フレームワークは一切参照しない
-- 外部パッケージへの直接依存なし（`PlatformFactory.Core` 経由で SkiaSharp を参照）
+- 外部パッケージへの直接依存なし（`Platform.Core` 経由で SkiaSharp を参照）
 
 ## アーキテクチャ
 
@@ -16,12 +16,12 @@
 graph LR
   A[LoupeControl<br/>Avalonia 実装] --> B[LoupeControl.Core]
   C["LoupeControl.MewUI（将来）"] --> B
-  B --> D[PlatformFactory.Core]
+  B --> D[Platform.Core]
 ```
 
-- `LoupeControl.Core` は UI フレームワークへ依存しません。依存は `PlatformFactory.Core` のみです。
+- `LoupeControl.Core` は UI フレームワークへ依存しません。依存は `Platform.Core` のみです。
 - UI 実装は、コア型と自身の型（`Avalonia.Point` / `Size`）を相互変換します。変換は境界（サービス呼び出し・イベント引数の生成）の 1 行に限定し、UI 側の状態・描画は UI の型のまま維持します。
-- 型はすべて `internal` とし、`InternalsVisibleTo`（`LoupeControl` / `LoupeControl.AvaloniaUI.Tests` / `LoupeControl.Core.Tests`）で UI 実装とテストへ公開します。公開 API を増やさないための方式です（`PlatformFactory.Core` の `CoordMath` と同じ）。
+- 型はすべて `internal` とし、`InternalsVisibleTo`（`LoupeControl` / `LoupeControl.AvaloniaUI.Tests` / `LoupeControl.Core.Tests`）で UI 実装とテストへ公開します。公開 API を増やさないための方式です（`Platform.Core` の `CoordMath` と同じ）。
 
 ## コンポーネント構成
 
@@ -38,7 +38,7 @@ graph LR
 sequenceDiagram
   participant UI as LoupeControl（Avalonia）
   participant Core as LoupeControl.Core
-  participant PC as PlatformFactory.Core
+  participant PC as Platform.Core
 
   UI->>PC: ICoordTransform.Inverse(center) → EsPoint（親領域 DIP）
   UI->>Core: LoupePositionCalculator.Compute(size, parentSize, hasParentSize, centerDip, offset)
@@ -58,7 +58,7 @@ sequenceDiagram
 | 数値パラメータの安全域とクランプ | `LoupeValueCoercer` |
 | 切り出し領域の一辺（ドメインピクセル） | `Imaging.LoupeImageExtractor.ComputeCaptureSize` |
 | 切り出し領域の左上（中心 → 左上の変換） | `Imaging.LoupeImageExtractor.ComputeCaptureTopLeft` |
-| DIP → 物理ピクセルの変換（切り上げ・最低 1） | `PlatformFactory.Core` の `DpiScaler.ScaleToPixel` |
+| DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
 
 `LoupeRenderArgsCalculator` / `LoupeImageExtractor.ExtractRegionAt` / UI 側の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
 

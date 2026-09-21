@@ -57,7 +57,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 
 ```csharp
 using Estable.AvaloniaUI.FadeMaskDragRect;
-using Estable.Platform.Coordinate; // ICoordTransform / CoordTransform（コア提供）
+using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
 ```
 
 ## 5. クイックスタート

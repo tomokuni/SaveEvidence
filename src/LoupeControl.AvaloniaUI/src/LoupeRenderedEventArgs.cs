@@ -1,5 +1,5 @@
 using Avalonia;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 
 namespace Estable.AvaloniaUI.Loupe;
 

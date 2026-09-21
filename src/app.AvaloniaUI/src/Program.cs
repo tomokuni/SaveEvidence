@@ -6,7 +6,8 @@ using Estable.SaveEvidence.ViewModels;
 using Estable.SaveEvidence.Views;
 using Avalonia;
 using Avalonia.Threading;
-using Estable.Platform;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Native;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 

@@ -6,11 +6,11 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
-using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;

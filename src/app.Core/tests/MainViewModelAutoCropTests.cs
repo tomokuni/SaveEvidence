@@ -1,6 +1,6 @@
 using Estable.SaveEvidence.ViewModels;
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using MockSettingsService = Estable.SaveEvidence.Tests.MainViewModelTests.MockSettingsService;
 using MockImageWriter = Estable.SaveEvidence.Tests.MainViewModelTests.MockImageWriter;
 using Xunit;

@@ -4,13 +4,13 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Loupe.Logging;
 using Estable.AvaloniaUI.Loupe.Rendering;
-using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using Estable.Loupe;
 using Estable.Loupe.Imaging;
-using Estable.Platform.Imaging;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using static Estable.Loupe.LoupeValueCoercer;
@@ -54,7 +54,7 @@ namespace Estable.AvaloniaUI.Loupe;
 /// </remarks>
 public sealed partial class LoupeControl : UserControl
 {
-    /// <summary>座標ラベル用ブラシキャッシュ（色 → ブラシ。容量制限付き・PlatformFactory で共通化）。</summary>
+    /// <summary>座標ラベル用ブラシキャッシュ（色 → ブラシ。容量制限付き・Platform.AvaloniaUI で共通化）。</summary>
     private static readonly BrushCache s_brushCache = new();
 
     // ====================================================================

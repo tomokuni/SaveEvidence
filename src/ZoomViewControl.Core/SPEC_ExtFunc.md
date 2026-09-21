@@ -68,7 +68,7 @@
 | `ContentToViewportImage(EsPoint contentPos, EsPoint imageOrigin, double effectiveScale)` | コンテンツ座標 → ビューポート座標（画像表示矩形の原点基準） |
 
 - スケールが 0 以下の場合は 1 として扱います（ゼロ除算防止）。
-- スクロール範囲の計算は `PlatformFactory.Core` の `ScrollMath` へ委譲します。
+- スクロール範囲の計算は `Platform.Core` の `ScrollMath` へ委譲します。
 
 ## `ZoomAvailability`（内部・値オブジェクト）
 
@@ -82,6 +82,6 @@ internal readonly record struct ZoomAvailability(bool CanZoomIn, bool CanZoomOut
 
 | 依存 | 用途 |
 | --- | --- |
-| `PlatformFactory.Core`（`Estable.Platform.*`） | コア幾何型（`EsPoint` / `EsVector` / `EsSize`）・`ScrollMath` |
+| `Platform.Core`（`EsUtil.Platform.Core.*`） | コア幾何型（`EsPoint` / `EsVector` / `EsSize`）・`ScrollMath` |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。

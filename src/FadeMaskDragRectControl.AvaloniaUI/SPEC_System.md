@@ -43,7 +43,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | DragRectControl / FadeMaskControl / LoupeControl / PlatformFactory |
+| **依存プロジェクト** | DragRectControl / FadeMaskControl / LoupeControl / Platform.AvaloniaUI |
 
 ## 3. アーキテクチャ
 
@@ -51,12 +51,12 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```text
 公開複合コントロール（FadeMaskDragRectControl）
-  → 内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）+ PlatformFactory
+  → 内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）+ Platform.AvaloniaUI
 ```
 
 ### 3.2 依存の方向
 
-- 依存は**一方向の階層構造**（FadeMaskDragRectControl → DragRectControl / FadeMaskControl / LoupeControl / PlatformFactory）。逆依存なし。
+- 依存は**一方向の階層構造**（FadeMaskDragRectControl → DragRectControl / FadeMaskControl / LoupeControl / Platform.AvaloniaUI）。逆依存なし。
 - 内包コントロールは上位 AP の設定型（CaptureSettings 等）に依存しない（FadeMaskDragRectSettings が変換の境界）。
 - ホスト（上位 AP）は FadeMaskDragRectControl の公開 API のみを使用する（内包コントロールへの直接操作はテスト用アクセサ経由のみ）。
 - 配線・状態同期は本コントロールに集約し、セッションは配線コードを持たない（DRY）。
@@ -156,13 +156,13 @@ flowchart TB
 | `FadeMaskDragRectPointEventArgs` | 本プロジェクト | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
 | `FadeMaskDragRectMode` | 本プロジェクト | 動作モード（描画モード・可視性・全面暗転の切替） |
 | `FadeMaskDragRectSettings` | 本プロジェクト | 外観設定（DragRect / FadeMask / Loupe の外観を網羅） |
-| `ICoordTransform` / `CoordTransform` | PlatformFactory.Core | ドメイン ↔ DIP の座標変換ポート |
+| `ICoordTransform` / `CoordTransform` | Platform.Core | ドメイン ↔ DIP の座標変換ポート |
 
 **公開型のカプセル化**: 公開 API は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）の型を参照しない（イベント引数は独自型・状態はプロパティで提供）。
 
 ## 7. 依存ルール
 
-- `FadeMaskDragRectControl` → `DragRectControl` / `FadeMaskControl` / `LoupeControl` / `PlatformFactory` の**一方向依存**（逆依存なし）。
+- `FadeMaskDragRectControl` → `DragRectControl` / `FadeMaskControl` / `LoupeControl` / `Platform.AvaloniaUI` の**一方向依存**（逆依存なし）。
 - 内包コントロールは上位 AP の設定型（CaptureSettings 等）に依存しない（`FadeMaskDragRectSettings` が変換の境界）。
 - ホスト（上位 AP）は `FadeMaskDragRectControl` の公開 API のみを使用する（内包コントロールへの直接アクセスは internal 化され、外部からは不可能）。
 

@@ -1,6 +1,6 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 
 namespace ZoomViewControl.Sample.ViewModels;
 

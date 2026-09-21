@@ -58,7 +58,7 @@ Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブ
 
 ```csharp
 using Estable.LineDetection;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 
 ILineDetector detector = new LogicLineDetector();
 

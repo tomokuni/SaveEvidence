@@ -20,7 +20,7 @@
   <ItemGroup>
     <!-- UI 非依存の純粋ロジック（Core）とコア幾何型を参照する -->
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
-    <ProjectReference Include="..\..\PlatformFactory.Core\src\PlatformFactory.Core.csproj" />
+    <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

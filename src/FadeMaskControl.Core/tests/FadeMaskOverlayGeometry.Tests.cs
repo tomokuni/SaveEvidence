@@ -1,5 +1,5 @@
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
 namespace Estable.FadeMask.Tests;

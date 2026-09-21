@@ -64,7 +64,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `Logger` | `ILogger?` | ロガー（null の場合は出力しない） |
 | `Title` | `string` | オーバーレイウィンドウのタイトル（既定値 `SaveEvidence キャプチャ`。検証スクリプトがウィンドウを識別するため「キャプチャ」を含めること） |
 
-`ICaptureService` / `IElementFinder` / `IWindowService` は `PlatformFactory.Core`（名前空間 `Estable.Platform`）が提供します。生成は `PlatformFactory.CreateXxx()` が唯一の経路です。
+`ICaptureService` / `IElementFinder` / `IWindowService` は `Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。生成は `PlatformFactory.CreateXxx()` が唯一の経路です。
 
 ## 4. 使用する設定項目
 

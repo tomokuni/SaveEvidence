@@ -3,8 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.FadeMask.Logging;
-using Estable.AvaloniaUI.Platform;
-using Estable.Platform.Coordinate;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core.Coordinate;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

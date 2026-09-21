@@ -89,12 +89,12 @@ flowchart TB
 - `CropViewControl.cs` → `ZoomViewControl` / `FadeMaskDragRectControl` / `Avalonia`
 - `CropViewControl.cs` → `LoupeControl`（ルーペへの矩形描画のため `LoupeRenderedEventArgs`）
 - `CropViewControl.cs` → `CropViewControl.Core`（`OverlayRect` / `OverlayLineDash` / `OverlayRectRasterizer`）
-- `CropViewControl.cs` → `PlatformFactory`（座標変換ポート `ICoordTransform` は `PlatformFactory.Core` 提供 / `EsBitmap` は `PlatformFactory.Core` 提供 / 色の相互変換は `ColorAvaloniaInterop`）/ `Microsoft.Extensions.Logging`（`ILogger`）
-- `OverlayRect.cs` → `PlatformFactory.Core`（`EsRect`）。色は `System.Drawing.Color`（UI 非依存）
-- `OverlayRectRasterizer.cs` → `PlatformFactory.Core`（`EsBitmap` / `EsPoint`）。Avalonia には依存しない
+- `CropViewControl.cs` → `Platform.AvaloniaUI`（座標変換ポート `ICoordTransform` は `Platform.Core` 提供 / `EsBitmap` は `Platform.Core` 提供 / 色の相互変換は `ColorAvaloniaInterop`）/ `Microsoft.Extensions.Logging`（`ILogger`）
+- `OverlayRect.cs` → `Platform.Core`（`EsRect`）。色は `System.Drawing.Color`（UI 非依存）
+- `OverlayRectRasterizer.cs` → `Platform.Core`（`EsBitmap` / `EsPoint`）。Avalonia には依存しない
 - `OverlayLineStyle.cs` → `Estable` 非依存（純粋 enum）
 
-依存方向は **CropViewControl → CropViewControl.Core → PlatformFactory.Core** の一方向です。
+依存方向は **CropViewControl → CropViewControl.Core → Platform.Core** の一方向です。
 
 ## 6. 例外処理ポリシー
 

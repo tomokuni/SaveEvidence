@@ -8,7 +8,7 @@
 
 - .NET 10 / C# 14
 - UI フレームワークは一切参照しない
-- 外部パッケージへの直接依存なし（依存は `PlatformFactory.Core` のみ）
+- 外部パッケージへの直接依存なし（依存は `Platform.Core` のみ）
 
 ## アーキテクチャ
 
@@ -16,7 +16,7 @@
 graph LR
   A[ZoomViewControl<br/>Avalonia 実装] --> B[ZoomViewControl.Core]
   C["ZoomViewControl.MewUI（将来）"] --> B
-  B --> D[PlatformFactory.Core]
+  B --> D[Platform.Core]
 ```
 
 - `ZoomViewControl.Core` は UI フレームワークへ依存しません。
@@ -44,7 +44,7 @@ sequenceDiagram
   Core-->>UI: double?（移動先のズーム率）
   UI->>UI: SetZoom（ZoomableView へ適用）
   UI->>Core: ZoomMath.ComputeOffsetAfterScaleChange(offset, center, oldScale, newScale, contentSize, viewport)
-  Core->>Core: ScrollMath.MaxOffset（範囲クランプ。PlatformFactory.Core）
+  Core->>Core: ScrollMath.MaxOffset（範囲クランプ。Platform.Core）
   Core-->>UI: EsVector（新しいオフセット）
   UI->>UI: .ToAvaloniaVector() で RenderTransform へ反映
 ```
@@ -57,7 +57,7 @@ sequenceDiagram
 | ズーム範囲・倍率・レベル集合の不変条件 | `ZoomConfig.Validate` |
 | Uniform（Fit）スケール | `ZoomMath.FitScale` |
 | スクロールバーのトラック・サムの矩形 | `ZoomScrollBarGeometry.Compute` |
-| スクロール範囲の最大オフセット / ビューポートサイズ | `PlatformFactory.Core` の `ScrollMath` |
+| スクロール範囲の最大オフセット / ビューポートサイズ | `Platform.Core` の `ScrollMath` |
 
 `ZoomMath.FitZoomPercent` / `ComputeEffectiveScale` / `ZoomTransition.CanZoomIn` / `CanZoomOut` などは上記へ委譲し、同じ計算を二重に所有しません。
 

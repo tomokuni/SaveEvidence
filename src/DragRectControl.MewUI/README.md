@@ -25,8 +25,8 @@ MewUI は API が安定化中（0.x）のため、パッケージのバージョ
 ```csharp
 using Estable.DragRect;
 using Estable.MewUI.DragRect;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 
 // 1. 生成（カーソルサービスは省略すると Windows 既定実装になる）
 var dragRect = new DragRectControl { ShowCoordLabel = true };

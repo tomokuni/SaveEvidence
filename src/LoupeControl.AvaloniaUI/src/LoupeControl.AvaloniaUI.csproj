@@ -16,7 +16,7 @@
   <ItemGroup>
     <!-- UI 非依存の純粋ロジック（Core）と座標変換ポートを参照する -->
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
-    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

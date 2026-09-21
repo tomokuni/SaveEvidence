@@ -1,4 +1,4 @@
-using Estable.Platform;
+using EsUtil.Platform.Core;
 using Microsoft.Extensions.Logging;
 using Serilog;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する。

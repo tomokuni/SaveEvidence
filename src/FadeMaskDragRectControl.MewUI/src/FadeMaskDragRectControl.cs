@@ -5,8 +5,8 @@ using Estable.Loupe;
 using Estable.MewUI.DragRect;
 using Estable.MewUI.FadeMask;
 using Estable.MewUI.Loupe;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
@@ -401,7 +401,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ルーペの拡大元画像を設定する。</summary>
     /// <param name="source">拡大元の画像。null の場合は解除する。</param>
     /// <remarks>画像を設定しただけでは表示しない（表示開始は <see cref="SetLoupePosition"/> が担う）。</remarks>
-    public void SetLoupeSource(Estable.Platform.Imaging.EsBitmap? source)
+    public void SetLoupeSource(EsUtil.Platform.Core.Imaging.EsBitmap? source)
     {
         _loupe.Source = source;
 

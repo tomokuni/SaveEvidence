@@ -5,8 +5,8 @@
 ## システム概要
 
 `app.MewUI` は、SaveEvidence の UI 層のみを **MewUI**（`Aprillz.MewUI`）で実装したホストアプリです。
-業務ロジック・状態・設定・画像コンテナは UI 非依存のコア（`app.Core` / `PlatformFactory.Core` /
-`PlatformFactory.Native` / `LineDetection`）が所有し、`app.MewUI` はそれらを組み立てて表示するだけです。
+業務ロジック・状態・設定・画像コンテナは UI 非依存のコア（`app.Core` / `Platform.Core` /
+`Platform.Native` / `LineDetection`）が所有し、`app.MewUI` はそれらを組み立てて表示するだけです。
 
 Avalonia 版 `app.AvaloniaUI` と**同じコア**を使うため、設定ファイル・挙動・公開 API は UI 間で共通です。
 
@@ -35,15 +35,14 @@ Avalonia 版 `app.AvaloniaUI` と**同じコア**を使うため、設定ファ�
         │                              │
         ▼                              ▼
 ┌────────────────┐            ┌──────────────────────┐
-│   app.Core     │            │ PlatformFactory.MewUI│  コア型 ⇔ MewUI 型
+│   app.Core     │            │ Platform.MewUI      │  コア型 ⇔ MewUI 型
 │ (VM / 設定)    │            └──────────┬───────────┘
 └───────┬────────┘                       │
         │                                │
         ├───────────────┬────────────────┘
         ▼               ▼
 ┌────────────────┐ ┌─────────────────────┐
-│PlatformFactory │ │ PlatformFactory.    │
-│    .Core       │ │    Native           │
+│  Platform.Core │ │   Platform.Native   │
 │ (抽象・画像・  │ │ (Win32 / NoOp 実装) │
 │  幾何・座標)   │ └─────────────────────┘
 └───────┬────────┘
@@ -65,9 +64,9 @@ Avalonia 版 `app.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 
 ### UI 非依存の担保
 
-`app.MewUI` は `Avalonia*` を参照しません。Avalonia への依存は `PlatformFactory`（アダプタ専用）と
+`app.MewUI` は `Avalonia*` を参照しません。Avalonia への依存は `Platform.AvaloniaUI`（アダプタ専用）と
 `app.AvaloniaUI`（Avalonia UI）のみに閉じています。コアが UI 型を漏らしていないことは、
-`app.Core` / `PlatformFactory.Core` の依存先が SkiaSharp・OpenCvSharp・`System.Drawing.Color` 等に
+`app.Core` / `Platform.Core` の依存先が SkiaSharp・OpenCvSharp・`System.Drawing.Color` 等に
 限られることで担保しています。
 
 ### 境界の変換
@@ -75,7 +74,7 @@ Avalonia 版 `app.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 コアの型（`EsBitmap` / `EsKey` / `EsRect` 等）と MewUI の型は、境界で **1 行の変換**を行います。
 
 ```text
-コア型 ──[PlatformFactory.MewUI の Interop]──> MewUI 型
+コア型 ──[Platform.MewUI の Interop]──> MewUI 型
 ```
 
 - 画像は変換不要（`EsBitmap.ToSKBitmap()` をそのまま描画）。
@@ -150,7 +149,7 @@ tests/
 | `CropBoundsMath`（`CaptureSessionControl.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。Avalonia 版と共用する（`CaptureOverlay` / `CropOverlay` が使用） |
 | `CaptureFlow` | キャプチャの開始（多重起動の防止）と結果の反映（Undo 退避 → プレビュー設定） |
 | `EditHistory` | 編集履歴の移動（履歴からの画像の取り出しとプレビューへの差し替え） |
-| `WindowPlacementMath`（`PlatformFactory.MewUI`） | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
+| `WindowPlacementMath`（`Platform.MewUI`） | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
 | `AppLog` | ログ定義と Serilog のファクトリ（Avalonia 版と同一のファイル・書式。`Logging/AppLog.cs`） |
 | `IconLoader` | Avalonia 版と共有する SVG アイコンを Skia でラスタライズし、画像・ウィンドウアイコン（ICO）を生成する（`Icons/IconLoader.cs`） |
 
@@ -654,7 +653,7 @@ sequenceDiagram
 | `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する（3 件） |
 | ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`verify-ui.ps1` と撮影）で確認する |
 | 組み込み先のコントロール | `LoupeControl.MewUI.Tests` / `ZoomViewControl.MewUI.Tests` が描画と状態を検証する |
-| コアロジック | `app.Core` / `PlatformFactory.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |
+| コアロジック | `app.Core` / `Platform.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |
 
 ### 実機検証（`verify-ui.ps1`）
 

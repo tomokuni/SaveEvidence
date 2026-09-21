@@ -6,7 +6,7 @@ namespace Estable.AvaloniaUI.DragRect;
 /// <summary>座標に関する通知のイベント引数。</summary>
 /// <remarks>
 /// 座標（<see cref="Point"/>）に加え、通知時点のスナップショット（<see cref="Snapshot"/>）を含む。<br/>
-/// スクロール補正はイベント引数では行わず、座標変換ポート（<see cref="Estable.AvaloniaUI.Platform.ICoordTransform"/>）方式が担う
+/// スクロール補正はイベント引数では行わず、座標変換ポート（<see cref="EsUtil.Platform.AvaloniaUI.ICoordTransform"/>）方式が担う
 /// （<c>Compose(ImageLayout, ScrollOffset)</c> で変換に組み込む）。
 /// </remarks>
 /// <param name="point">通知対象の座標（ドメイン座標）。</param>

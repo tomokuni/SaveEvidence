@@ -22,7 +22,7 @@
 ```text
 CropViewControl.AvaloniaUI（Avalonia 実装） / CropViewControl.MewUI
   └──> CropViewControl.Core（本プロジェクト）
-         └──> PlatformFactory.Core（コア幾何型・画像コンテナ）
+         └──> Platform.Core（コア幾何型・画像コンテナ）
 ```
 
 本プロジェクトが UI フレームワークへ依存することはありません。外部パッケージへの直接依存もありません。
@@ -31,10 +31,10 @@ CropViewControl.AvaloniaUI（Avalonia 実装） / CropViewControl.MewUI
 
 | 用途 | 型 | 変換 |
 | --- | --- | --- |
-| 座標 | `EsRect`（`PlatformFactory.Core`） | UI 側で `.ToEsRect()` / `.ToAvaloniaRect()` |
-| 色 | `System.Drawing.Color`（`System.Drawing.Primitives`。クロスプラットフォーム） | UI 側で `.ToDrawingColor()` / `.ToAvaloniaColor()`（`PlatformFactory`） |
+| 座標 | `EsRect`（`Platform.Core`） | UI 側で `.ToEsRect()` / `.ToAvaloniaRect()` |
+| 色 | `System.Drawing.Color`（`System.Drawing.Primitives`。クロスプラットフォーム） | UI 側で `.ToDrawingColor()` / `.ToAvaloniaColor()`（`Platform.AvaloniaUI`） |
 
-`System.Drawing.Color` は `System.Drawing.Common`（Windows 専用の描画 API）ではなく、共有フレームワーク同梱の値型です。`EsBitmap`（`PlatformFactory.Core`）のピクセル API と同じ色型を使います。
+`System.Drawing.Color` は `System.Drawing.Common`（Windows 専用の描画 API）ではなく、共有フレームワーク同梱の値型です。`EsBitmap`（`Platform.Core`）のピクセル API と同じ色型を使います。
 
 ## ビルド
 

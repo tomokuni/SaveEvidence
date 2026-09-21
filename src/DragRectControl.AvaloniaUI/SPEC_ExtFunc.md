@@ -59,11 +59,11 @@ using Avalonia;
 using Estable.AvaloniaUI.DragRect;
 ```
 
-座標ポート（`ICoordTransform`）を使用する場合は、`PlatformFactory.Core` の名前空間も必要です。
+座標ポート（`ICoordTransform`）を使用する場合は、`Platform.Core` の名前空間も必要です。
 
 ```csharp
-using Estable.Platform.Coordinate; // ICoordTransform / CoordTransform
-using Estable.Platform.Geometry;   // EsPoint / EsSize
+using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform
+using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize
 ```
 
 ### 3.3 Visual Tree への配置
@@ -120,7 +120,7 @@ dragRect.CancelRequested += (_, _) => CancelSelection();
 
 ### 4.3 座標ポートの設定
 
-選択状態と nudge はドメイン座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。両者を変換する座標ポート（`ICoordTransform`）をホストが設定します。ポートの生成は `PlatformFactory.Core`（`Estable.Platform.Coordinate`）の `CoordTransform` ファクトリ（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`）やホスト固有の実装で行います。座標はコア幾何型（`EsPoint` / `EsSize`）で扱うため、Avalonia 型を渡す場合は相互変換（`.ToEsSize()` 等）します。
+選択状態と nudge はドメイン座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。両者を変換する座標ポート（`ICoordTransform`）をホストが設定します。ポートの生成は `Platform.Core`（`EsUtil.Platform.Core.Coordinate`）の `CoordTransform` ファクトリ（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`）やホスト固有の実装で行います。座標はコア幾何型（`EsPoint` / `EsSize`）で扱うため、Avalonia 型を渡す場合は相互変換（`.ToEsSize()` 等）します。
 
 ```csharp
 // AreaSelect 例: ドメイン = 仮想スクリーンピクセル（= DIP × scaling・動的評価）
@@ -254,7 +254,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 ### 6.2 座標ポート
 
-`ICoordTransform`（`PlatformFactory.Core` 提供）がドメイン↔DIP 変換とドメイン境界を提供します。
+`ICoordTransform`（`Platform.Core` 提供）がドメイン↔DIP 変換とドメイン境界を提供します。
 
 | メンバー | 説明 |
 | --- | --- |

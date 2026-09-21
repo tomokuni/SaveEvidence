@@ -1,7 +1,7 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Estable.LineDetection;
-using Estable.AvaloniaUI.Platform;
+using EsUtil.Platform.AvaloniaUI;
 using Point = Avalonia.Point;
 
 namespace LineDetectionSample.ViewModels;

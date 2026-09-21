@@ -36,7 +36,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - カーソル座標ラベルの表示（任意設定・`(x, y)` 形式）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - Avalonia Binding 対応の StyledProperty
-- ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `PlatformFactory.Core` 提供）
+- ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
 - **閉区間描画（始点・終点を含む）**: 選択枠・ハンドルは終点（Right/Bottom）に +1 して DIP 変換（FadeMask の非暗転領域・キャプチャの閉区間 +1 と一致）
 - **ホイール操作（祖先 ScrollViewer が存在する Crop モード）**: Ctrl+ホイールで `ZoomRequested` / 通常ホイールで ScrollViewer をスクロール（Shift 併用で横スクロール）
 - **シンプル実装**: 状態（選択矩形・ドラッグ・nudge）を 1 クラス（`DragRectState`）に集約
@@ -60,8 +60,8 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 ```csharp
 using Avalonia;
 using Estable.AvaloniaUI.DragRect;
-using Estable.Platform.Coordinate; // ICoordTransform / CoordTransform（コア提供）
-using Estable.Platform.Geometry;   // EsPoint / EsSize（コア提供）
+using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
+using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize（コア提供）
 ```
 
 ## 5. クイックスタート
@@ -102,7 +102,7 @@ dragRect.SelectionCancelled += (_, _) => CancelSelection();
 dragRect.ConfirmRequested += (_, e) => ConfirmSelection(e.Rect);
 dragRect.CancelRequested += (_, _) => CancelSelection();
 
-// 座標ポートを設定（ドメイン = 画像ピクセル等）。ポート生成は PlatformFactory の CoordTransform ファクトリを使用する。
+// 座標ポートを設定（ドメイン = 画像ピクセル等）。ポート生成は Platform.AvaloniaUI の CoordTransform ファクトリを使用する。
 dragRect.SetCoordinateTransform(CoordTransform.DomainScale(() => 2.0)); // 例: DPI 200%（Forward = DIP→ドメイン × 2）
 // 複雑な変換は Compose / ScrollOffset / ImageLayout 等で組み立てる
 
@@ -141,7 +141,7 @@ dotnet run --project sample/DragRectControl.AvaloniaUI.Sample.csproj
 ```text
 DragRectControl/
 ├── src/
-│   ├── DragRectControl.csproj     # 独立プロジェクト（PlatformFactory + DragRectControl.Core を参照）
+│   ├── DragRectControl.csproj     # 独立プロジェクト（Platform.AvaloniaUI + DragRectControl.Core を参照）
 │   ├── DragRectControl.cs         # 公開 API + イベントオーバーライド + 描画
 │   ├── DragRectControl.Input.cs   # マウス入力・キーボード nudge・カーソル制御
 │   ├── DragRectControl.Visual.cs  # ビジュアルツリー接続・ScrollViewer 連携・描画

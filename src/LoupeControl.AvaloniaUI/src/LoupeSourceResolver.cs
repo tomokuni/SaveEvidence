@@ -1,7 +1,8 @@
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Native.Imaging;
 
 namespace Estable.AvaloniaUI.Loupe;
 

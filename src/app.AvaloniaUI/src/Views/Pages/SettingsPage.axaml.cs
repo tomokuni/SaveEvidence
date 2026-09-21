@@ -1,5 +1,5 @@
-using Estable.AvaloniaUI.Platform;
-using Estable.Platform;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core;
 using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;

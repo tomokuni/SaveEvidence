@@ -27,15 +27,15 @@
 - **ちらつきの防止**: オーナーの退避は非表示ではなく位置の変更。オーバーレイは透明で表示し、画像が合成されたフレームで透明を解除する
 - **選択矩形のクロップ**: 確定時は閉区間（始点・終点のピクセルを含む）で切り出す（計算は Core の `CropBoundsMath`）- **プレビューの切り出し**（`CropOverlay`）: プレビューの上へ領域選択のオーバーレイを重ね、ドラッグで指定した領域で現在の画像を切り出す（適用先は Core の `ICaptureTarget`）
 - **ラベル描画**: サイズラベル・操作ラベル・情報ラベルを選択矩形の左上へ表示する
-- **UI 非依存のサービス注入**: キャプチャ・要素検出・ウィンドウ操作は `PlatformFactory.Core` の抽象を受け取る（本ライブラリはアプリの型を参照しない）
+- **UI 非依存のサービス注入**: キャプチャ・要素検出・ウィンドウ操作は `Platform.Core` の抽象を受け取る（本ライブラリはアプリの型を参照しない）
 
 ## 3. 依存プロジェクト
 
 ```text
 CaptureSessionControl.MewUI
     ├── CaptureSessionControl.Core（撮影・切り出しの共通規則）
-    ├── PlatformFactory.MewUI（コア型 ⇔ MewUI 型の Interop / DIP 変換）
-    ├── PlatformFactory.Core（ICaptureService / IElementFinder / IWindowService）
+    ├── Platform.MewUI（コア型 ⇔ MewUI 型の Interop / DIP 変換）
+    ├── Platform.Core（ICaptureService / IElementFinder / IWindowService）
     ├── FadeMaskDragRectControl.MewUI（暗転マスク + 選択矩形 + ルーペ）
     └── CropViewControl.MewUI（切り出しビュー。将来の切り出しセッション用）
 ```
@@ -47,7 +47,7 @@ CaptureSessionControl.MewUI
 ```csharp
 using Aprillz.MewUI;
 using Estable.MewUI.CaptureSession;
-using Estable.Platform;
+using EsUtil.Platform.Core;
 
 // 撮影セッションに渡すサービスと設定を組み立てる（ホストが生成する）
 var services = new CaptureOverlayServices(

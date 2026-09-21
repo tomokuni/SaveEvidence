@@ -1,6 +1,6 @@
 using Estable.Loupe;
 using Estable.Loupe.Imaging;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using MewUIColor = Aprillz.MewUI.Color;
 
@@ -37,7 +37,7 @@ internal static class LoupeSkiaRenderer
     public static void Render(
         SKCanvas canvas,
         EsBitmap? source,
-        Estable.Platform.Geometry.EsPoint? center,
+        EsUtil.Platform.Core.Geometry.EsPoint? center,
         int pixelSize,
         int zoomLevel,
         MewUIColor? crossColor,
@@ -113,7 +113,7 @@ internal static class LoupeSkiaRenderer
     private static void DrawMagnified(
         SKCanvas canvas,
         EsBitmap? source,
-        Estable.Platform.Geometry.EsPoint? center,
+        EsUtil.Platform.Core.Geometry.EsPoint? center,
         int pixelSize,
         int zoomLevel)
     {
@@ -180,7 +180,7 @@ internal static class LoupeSkiaRenderer
     /// <param name="canvas">描画先のキャンバス。</param>
     /// <param name="rects">塗りつぶす矩形（コア座標）。</param>
     /// <param name="color">塗りつぶしの色。</param>
-    private static void FillRects(SKCanvas canvas, IReadOnlyList<Estable.Platform.Geometry.EsRect> rects, SKColor color)
+    private static void FillRects(SKCanvas canvas, IReadOnlyList<EsUtil.Platform.Core.Geometry.EsRect> rects, SKColor color)
     {
         using var paint = new SKPaint { IsAntialias = false, Color = color, Style = SKPaintStyle.Fill };
 

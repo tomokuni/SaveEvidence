@@ -1,7 +1,7 @@
-using Estable.AvaloniaUI.Platform;
+using EsUtil.Platform.AvaloniaUI;
 using Estable.DragRect;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Avalonia.Media;
 using Rect = Avalonia.Rect;
 using Microsoft.Extensions.Logging.Abstractions;

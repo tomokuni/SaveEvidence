@@ -1,9 +1,9 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Controls;
-using Estable.MewUI.Platform;
+using EsUtil.Platform.MewUI;
 using Estable.MewUI.ZoomView.Logging;
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Estable.ZoomView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

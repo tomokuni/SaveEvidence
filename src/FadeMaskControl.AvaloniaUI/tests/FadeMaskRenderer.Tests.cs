@@ -3,10 +3,10 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
-using Estable.AvaloniaUI.Platform;
+using EsUtil.Platform.AvaloniaUI;
 using Estable.FadeMask;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using Avalonia.Headless.XUnit;
 

@@ -1,8 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Estable.AvaloniaUI.DragRect.Logging;
-using Estable.AvaloniaUI.Platform;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core.Geometry;
 
 namespace Estable.AvaloniaUI.DragRect;
 

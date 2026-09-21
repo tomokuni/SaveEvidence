@@ -230,7 +230,8 @@
 ## このワークスペース/ソリューションに固有の指示
 
 ### プロジェクト構成
-- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / DragRectControl / FadeMaskControl / LoupeControl / CaptureSessionControl.AvaloniaUI / LineDetection / PlatformFactory）と、アプリ本体（`app.AvaloniaUI`）から構成される。
+- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / DragRectControl / FadeMaskControl / LoupeControl / CaptureSessionControl.AvaloniaUI / LineDetection）と、プラットフォーム層（Platform.AvaloniaUI / Platform.Core / Platform.MewUI / Platform.Native）、アプリ本体（`app.AvaloniaUI` / `app.MewUI` / `app.Core`）から構成される。
+- プラットフォーム層は `EsUtil.Platform.*` をルート名前空間とし、`Platform.AvaloniaUI` / `Platform.MewUI` が各 UI のアダプタ、`Platform.Core` が UI 非依存の抽象・値型、`Platform.Native` が Win32 / NoOp 実装と既定実装ファクトリ（`PlatformFactory` クラス）を担う。
 - `app.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
 
 ### ドキュメント規約

@@ -1,5 +1,5 @@
 using Estable.SaveEvidence.Logging;
-using Estable.Platform;
+using EsUtil.Platform.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

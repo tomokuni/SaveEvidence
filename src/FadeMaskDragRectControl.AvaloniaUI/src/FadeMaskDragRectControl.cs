@@ -6,8 +6,8 @@ using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
 using Estable.FadeMaskDragRect;
 using Estable.AvaloniaUI.Loupe;
-using Estable.AvaloniaUI.Platform;
-using Estable.Platform.Coordinate;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core.Coordinate;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

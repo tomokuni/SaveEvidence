@@ -4,8 +4,8 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.Native.Imaging;
 using ZoomViewControl.Sample.Imaging;
 using ZoomViewControl.Sample.ViewModels;
 

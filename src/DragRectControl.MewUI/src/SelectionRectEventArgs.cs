@@ -1,5 +1,5 @@
 using Estable.DragRect;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Geometry;
 
 namespace Estable.MewUI.DragRect;
 
@@ -7,7 +7,7 @@ namespace Estable.MewUI.DragRect;
 /// <remarks>
 /// 矩形（<see cref="EsRect"/>）に加え、通知時点のスナップショット（<see cref="DragRectSnapshot"/>）を含む。<br/>
 /// 矩形は UI 非依存のコア型で公開する（コアの状態機械と同一の型のため、境界変換が不要になる）。<br/>
-/// 座標変換はイベント引数では行わず、座標変換ポート（<see cref="Estable.Platform.Coordinate.ICoordTransform"/>）方式が担う。
+/// 座標変換はイベント引数では行わず、座標変換ポート（<see cref="EsUtil.Platform.Core.Coordinate.ICoordTransform"/>）方式が担う。
 /// </remarks>
 /// <param name="rect">通知対象の矩形（ドメイン座標）。</param>
 /// <param name="snapshot">通知時点のスナップショット。</param>

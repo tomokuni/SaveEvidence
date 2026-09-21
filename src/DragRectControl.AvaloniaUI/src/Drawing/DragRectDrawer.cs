@@ -1,8 +1,8 @@
-using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using Estable.DragRect;
 using Estable.DragRect.Selection;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Geometry;
 using Avalonia;
 using Avalonia.Media;
 using System.Collections.Concurrent;
@@ -22,7 +22,7 @@ namespace Estable.AvaloniaUI.DragRect.Drawing;
 internal static class DragRectDrawer
 {
     /// <summary>ブラシキャッシュ（色 → ブラシ。Flyweight・容量制限付き）。</summary>
-    /// <remarks>PlatformFactory の <see cref="BrushCache"/> へ委譲する（LoupeControl と共用・重複排除・DRY）。</remarks>
+    /// <remarks>Platform.AvaloniaUI の <see cref="BrushCache"/> へ委譲する（LoupeControl と共用・重複排除・DRY）。</remarks>
     private static readonly BrushCache s_brushCache = new(BrushCacheCapacity);
 
     /// <summary>ペンキャッシュ（色・太さ → ペン。Flyweight・容量制限付き）。</summary>

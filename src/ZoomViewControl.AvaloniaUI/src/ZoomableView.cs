@@ -5,8 +5,8 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Estable.AvaloniaUI.Platform;
-using Estable.Platform.Coordinate;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core.Coordinate;
 using Estable.ZoomView;
 
 namespace Estable.AvaloniaUI.ZoomView;

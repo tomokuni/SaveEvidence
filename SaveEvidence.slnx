@@ -104,23 +104,23 @@
     <Project Path="src/LoupeControl.AvaloniaUI/src/LoupeControl.AvaloniaUI.csproj" />
     <Project Path="src/LoupeControl.AvaloniaUI/tests/LoupeControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/PlatformFactory.Core/">
-    <Project Path="src/PlatformFactory.Core/src/PlatformFactory.Core.csproj" />
-    <Project Path="src/PlatformFactory.Core/tests/PlatformFactory.Core.Tests.csproj" />
+  <Folder Name="/src/Platform.Core/">
+    <Project Path="src/Platform.Core/src/Platform.Core.csproj" />
+    <Project Path="src/Platform.Core/tests/Platform.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/PlatformFactory.Core/src/" />
-  <Folder Name="/src/PlatformFactory.MewUI/">
-    <Project Path="src/PlatformFactory.MewUI/src/PlatformFactory.MewUI.csproj" />
-    <Project Path="src/PlatformFactory.MewUI/tests/PlatformFactory.MewUI.Tests.csproj" />
+  <Folder Name="/src/Platform.Core/src/" />
+  <Folder Name="/src/Platform.MewUI/">
+    <Project Path="src/Platform.MewUI/src/Platform.MewUI.csproj" />
+    <Project Path="src/Platform.MewUI/tests/Platform.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/PlatformFactory.MewUI/src/" />
-  <Folder Name="/src/PlatformFactory.Native/">
-    <Project Path="src/PlatformFactory.Native/src/PlatformFactory.Native.csproj" />
-    <Project Path="src/PlatformFactory.Native/tests/PlatformFactory.Native.Tests.csproj" />
+  <Folder Name="/src/Platform.MewUI/src/" />
+  <Folder Name="/src/Platform.Native/">
+    <Project Path="src/Platform.Native/src/Platform.Native.csproj" />
+    <Project Path="src/Platform.Native/tests/Platform.Native.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/PlatformFactory/">
-    <Project Path="src/PlatformFactory/src/PlatformFactory.csproj" />
-    <Project Path="src/PlatformFactory/tests/PlatformFactory.Tests.csproj" />
+  <Folder Name="/src/Platform.AvaloniaUI/">
+    <Project Path="src/Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj" />
+    <Project Path="src/Platform.AvaloniaUI/tests/Platform.AvaloniaUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/CaptureSessionControl.AvaloniaUI/">
     <Project Path="src/CaptureSessionControl.AvaloniaUI/sample/CaptureSessionControl.AvaloniaUI.Sample.csproj" />

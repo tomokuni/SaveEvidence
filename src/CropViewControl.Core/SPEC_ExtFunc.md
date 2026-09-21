@@ -71,6 +71,6 @@ UI 実装の `CropViewControl.Rects` に設定すると、矩形が View（ビ�
 
 | 依存 | 用途 |
 | --- | --- |
-| `PlatformFactory.Core`（`Estable.Platform.*`） | コア幾何型（`EsRect` / `EsPoint`）・`EsBitmap`（描画先） |
+| `Platform.Core`（`EsUtil.Platform.Core.*`） | コア幾何型（`EsRect` / `EsPoint`）・`EsBitmap`（描画先） |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。

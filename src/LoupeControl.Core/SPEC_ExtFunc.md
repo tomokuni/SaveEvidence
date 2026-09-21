@@ -77,6 +77,6 @@ public readonly record struct RenderArgs(int PixelSize, int CaptureSize, EsPoint
 
 | 依存 | 用途 |
 | --- | --- |
-| `PlatformFactory.Core`（`Estable.Platform.*`） | コア幾何型（`EsPoint` / `EsSize`）・`DpiScaler` などの静的計算・`EsBitmap` |
+| `Platform.Core`（`EsUtil.Platform.Core.*`） | コア幾何型（`EsPoint` / `EsSize`）・`DpiScaler` などの静的計算・`EsBitmap` |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。

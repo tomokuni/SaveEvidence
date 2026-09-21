@@ -36,7 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
     <ProjectReference Include="..\..\CropViewControl.AvaloniaUI\src\CropViewControl.AvaloniaUI.csproj" />
-    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 
 </Project>

@@ -5,10 +5,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Estable.AvaloniaUI.Platform;
-using Estable.Platform;
-using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -339,7 +340,7 @@ public sealed partial class DragRectControl : Control
     /// <remarks>
     /// <see langword="true"/>（既定）: 選択を画像範囲内に制限する。<br/>
     /// <see langword="false"/>: 画像外も選択可能（ドラッグで画像外に矩形を作成・移動できる）。<br/>
-    /// クリップ範囲は <see cref="SetCoordinateTransform"/> の <c>domainBounds</c>（<see cref="Estable.AvaloniaUI.Platform.ICoordTransform.Bounds"/>）で指定する。
+    /// クリップ範囲は <see cref="SetCoordinateTransform"/> の <c>domainBounds</c>（<see cref="EsUtil.Platform.AvaloniaUI.ICoordTransform.Bounds"/>）で指定する。
     /// </remarks>
     public bool ClampToDomainBounds
     {
@@ -444,7 +445,7 @@ public sealed partial class DragRectControl : Control
     /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は等価変換。</param>
     /// <remarks>
     /// ホスト（上位 AP）がモードに応じた変換ポートを設定する（AreaSelect: 仮想スクリーンピクセル / Crop: 元画像ピクセル）。<br/>
-    /// ポートの生成は PlatformFactory の <see cref="Estable.AvaloniaUI.Platform.CoordTransform"/> のファクトリ（<c>Compose</c> / <c>ScrollOffset</c> / <c>DomainScale</c> / <c>ImageLayout</c> 等）で行う。<br/>
+    /// ポートの生成は PlatformFactory の <see cref="EsUtil.Platform.AvaloniaUI.CoordTransform"/> のファクトリ（<c>Compose</c> / <c>ScrollOffset</c> / <c>DomainScale</c> / <c>ImageLayout</c> 等）で行う。<br/>
     /// 未設定時は等価変換（1 ドメインピクセル = 1 DIP・無制限）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
     /// 座標変換の変更は描画（選択矩形・ハンドル・十字線）へ即時反映されるため、再描画を要求する。

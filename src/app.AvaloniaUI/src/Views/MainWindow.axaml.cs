@@ -1,9 +1,10 @@
-using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using Estable.AvaloniaUI.CaptureSession;
-using Estable.Platform;
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Native.Imaging;
 using Estable.SaveEvidence.Enum;
 using Estable.SaveEvidence.Icons;
 using Estable.SaveEvidence.Logging;

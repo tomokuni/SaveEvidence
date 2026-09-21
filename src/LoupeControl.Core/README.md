@@ -24,14 +24,14 @@
 ```text
 LoupeControl.AvaloniaUI（Avalonia 実装） / LoupeControl.MewUI
   └──> LoupeControl.Core（本プロジェクト）
-         └──> PlatformFactory.Core（コア幾何型・静的計算）
+         └──> Platform.Core（コア幾何型・静的計算）
 ```
 
-本プロジェクトが UI フレームワークへ依存することはありません。外部パッケージへの直接依存もありません（`PlatformFactory.Core` 経由で SkiaSharp を参照します）。
+本プロジェクトが UI フレームワークへ依存することはありません。外部パッケージへの直接依存もありません（`Platform.Core` 経由で SkiaSharp を参照します）。
 
 ## 座標型
 
-UI フレームワークの幾何型（`Avalonia.Point` / `Size` 等）ではなく、`PlatformFactory.Core` のコア幾何型 `EsPoint` / `EsSize` を使用します。
+UI フレームワークの幾何型（`Avalonia.Point` / `Size` 等）ではなく、`Platform.Core` のコア幾何型 `EsPoint` / `EsSize` を使用します。
 
 UI 実装側は、境界（サービス呼び出し・イベント引数の生成箇所）で 1 行の相互変換（`.ToEsPoint()` / `.ToEsSize()` / `.ToAvaloniaPoint()`）を行います。UI 内部の状態・描画は UI 側の型のままで構いません。
 

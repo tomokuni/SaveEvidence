@@ -5,7 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Estable.SaveEvidence.Views.Pages;

@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using Estable.MewUI.Platform;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.MewUI;
+using EsUtil.Platform.Core.Geometry;
 using Estable.SaveEvidence.Enum;
 using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;

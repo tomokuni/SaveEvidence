@@ -6,7 +6,7 @@
 
 - 選択矩形の幾何計算・状態機械を 1 箇所に集約し、UI ごとの実装差から切り離す。
 - UI 非依存のためヘッドレス実行が不要で、`[Fact]` で並列実行できる。
-- 座標は `EsPoint` / `EsRect` / `EsSize`（`Estable.Platform.Geometry`）で扱う。
+- 座標は `EsPoint` / `EsRect` / `EsSize`（`EsUtil.Platform.Core.Geometry`）で扱う。
 
 ## 構成
 
@@ -24,7 +24,7 @@
 
 ```text
 DragRectControl.Core
-    └── PlatformFactory.Core（Es* 幾何型 / ICoordTransform / ICursorService）
+    └── Platform.Core（Es* 幾何型 / ICoordTransform / ICursorService）
 ```
 
 **UI フレームワークへ依存しません。** カーソル操作は `ICursorService` 抽象にのみ依存し、未指定（`null`）の場合は何もしません。既定実装（Win32）の解決は UI 側の責務です。

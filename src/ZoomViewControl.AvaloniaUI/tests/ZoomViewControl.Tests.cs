@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using Estable.AvaloniaUI.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.ZoomView.Tests;

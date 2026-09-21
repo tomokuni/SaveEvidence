@@ -20,7 +20,7 @@ DragRectControl（MewUI 版）のシステム概要・アーキテクチャ・�
 | 描画 | SkiaSharp（`DrawRect` / `DrawLine` / `DrawText`） |
 | 基底コントロール | `Aprillz.MewUI.Skia.Controls.SkiaCanvasView` |
 | プロパティシステム | `MewProperty<T>`（`MewPropertyOptions.AffectsRender`） |
-| カーソル操作 | `ICursorService`（`PlatformFactory.Native` の Win32 実装） |
+| カーソル操作 | `ICursorService`（`Platform.Native` の Win32 実装） |
 
 ## アーキテクチャ
 
@@ -39,11 +39,11 @@ DragRectControl（MewUI 版）のシステム概要・アーキテクチャ・�
             └───────────┬───────────┘
                         ▼
             ┌───────────────────────┐
-            │  PlatformFactory.Core │  コア幾何型・座標変換ポート・カーソル抽象
+            │  Platform.Core │  コア幾何型・座標変換ポート・カーソル抽象
             └───────────┬───────────┘
                         ▼
             ┌───────────────────────┐
-            │ PlatformFactory.Native│  Win32 / NoOp 実装（UI 非依存）
+            │ Platform.Native│  Win32 / NoOp 実装（UI 非依存）
             └───────────────────────┘
 ```
 
@@ -61,7 +61,7 @@ DragRectControl（MewUI 版）のシステム概要・アーキテクチャ・�
 | --- | --- |
 | 状態機械（`DragRectState`）をコアに置き、UI 側は入力の変換のみを行う | 本コントロールの本体は「状態遷移 + 幾何」であり、UI に残すと MewUI 版で丸ごと書き直しになる |
 | イベント引数をコア型（`EsPoint` / `EsRect`）で公開する | コアの状態機械と同一の型になり境界変換が不要になる。MewUI の `Rect` は負のサイズを 0 にクランプするため、`EsRect` のほうが安全 |
-| カーソルサービスの既定実装の解決を UI 層で行う | コアは `PlatformFactory.Native` を参照できない（循環参照）。コアは抽象と `null` のみを扱う |
+| カーソルサービスの既定実装の解決を UI 層で行う | コアは `Platform.Native` を参照できない（循環参照）。コアは抽象と `null` のみを扱う |
 | `SkiaCanvasView`（`Control` 系）を基底にする | 画像の上へ重ねるオーバーレイであり、子要素を持たない。背景を塗らないため下の画像が透ける |
 | `ScrollViewer` を自動購読しない | MewUI 版の画面構成（`Grid` 重ね合わせ）では祖先探索の前提が異なる。ビューポート変化はホストが `NotifyViewportChanged()` で通知する |
 | マウスダウン・アップのイベントを改名する | `UIElement` が同名メンバーを持つため、メンバーの隠蔽を避けて `DragMouseDown` / `DragMouseUp` とする |
@@ -159,7 +159,7 @@ classDiagram
         +ClampRectToDomainBounds(...)$ EsRect
     }
     class ICursorService {
-        <<PlatformFactory.Core>>
+        <<Platform.Core>>
         +GetCursorScreenPoint() EsPixelPoint
         +SetCursorScreenPoint(point) void
         +ShowCursor(show) void

@@ -38,7 +38,7 @@
 | **UI** | Avalonia 12.1（`Avalonia`） |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless |
-| **依存プロジェクト** | `ZoomViewControl.Core`（UI 非依存の計算・設定値）/ `PlatformFactory`（コア型の相互変換・共通計算） |
+| **依存プロジェクト** | `ZoomViewControl.Core`（UI 非依存の計算・設定値）/ `Platform.AvaloniaUI`（コア型の相互変換・共通計算） |
 
 ## 3. アーキテクチャ
 
@@ -61,7 +61,7 @@ ZoomViewControl.Core（UI 非依存）
 
 ### 3.2 依存の方向
 
-- **上位 AP → ZoomViewControl → ZoomViewControl.Core → PlatformFactory.Core の一方向**。逆方向の依存はない。
+- **上位 AP → ZoomViewControl → ZoomViewControl.Core → Platform.Core の一方向**。逆方向の依存はない。
 - `ZoomViewControl` が `ZoomableView` を内包し、ズーム率・遷移・表示を統括する（単一所有）。
 - `ZoomViewControl` が `ZoomRequested` / `SizeChanged` を内部購読し、ホスト側の配線重複を排除する（DRY）。
 - 純粋関数（`ZoomMath` / `ZoomTransition`）と設定値（`ZoomConfig`）は **`ZoomViewControl.Core`** が提供する（UI 非依存・`Estable.ZoomView`）。遷移パラメータは `ZoomConfig` で受け取る。
@@ -120,7 +120,7 @@ flowchart TB
 - **責務**: `ZoomableView` を内包し、ズーム率の遷移（⊖⊕ 23 段階 / Ctrl+ホイール ×1.1）・適用・Fit 表示を統括。ズーム要求（`ZoomRequested`）・リサイズ（`SizeChanged`）の配線を自己完結。ズーム率変更・可否は `ZoomChanged` で通知、可否は `CanZoomIn` / `CanZoomOut` で公開。ホストが内部 `ZoomableView` へ到達しないよう、必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知・画像コントロール）を Facade として再公開
 - **非公開メンバー**: `ZoomInByWheel` / `ZoomOutByWheel`（Ctrl+ホイールハンドラのみ）/ `PointerPosition`（ズーム中心。Ctrl+ホイールハンドラのみ）/ `ApplyZoom`（可否・イベント通知の反映。ズーム率変更経路が内部的に呼ぶ）/ `ZoomableView`（内包するビューポート。公開しない）
 - **公開 API の詳細**: `SPEC_ExtFunc.md` の 8.1 を参照
-- **依存**: ZoomableView / ZoomConfig / ZoomMath / ZoomTransition / ZoomAvailability（以上 `ZoomViewControl.Core`） / ScrollMath（`PlatformFactory.Core`） / LogMessage
+- **依存**: ZoomableView / ZoomConfig / ZoomMath / ZoomTransition / ZoomAvailability（以上 `ZoomViewControl.Core`） / ScrollMath（`Platform.Core`） / LogMessage
 - **ズーム率の単一所有**: ズーム率は内包する `ZoomableView` が所有し、本コントロールは `ZoomPercent`（読み書き）で操作窓口を提供する。遷移パラメータは `ZoomConfig`（公開値オブジェクト）が所有し、ズーム範囲のクランプも本コントロールが行う
 
 ### 6.2 ZoomableView
@@ -130,7 +130,7 @@ flowchart TB
 - **内部実装の詳細**:
   - ScrollViewer を使用しない（RenderTransform ベース）。ScrollViewer のレイアウト処理によるオフセット上書きが原理的に発生しないため、ズーム中心維持の防御コード（保留オフセット再設定・収束ループ・Dispatcher.Post 保険）が不要
   - 描画位置 = 実効スケール × (コンテンツ座標 − オフセット)。オフセットはスクロール範囲（コンテンツ − ビューポート / 実効スケール）にクランプされる
-- **依存**: ZoomMath（`ZoomViewControl.Core`） / ScrollMath（`PlatformFactory.Core`） / ZoomRequestedEventArgs（ズーム範囲のクランプは `ZoomViewControl` が行うため `ZoomTransition` には依存しない）
+- **依存**: ZoomMath（`ZoomViewControl.Core`） / ScrollMath（`Platform.Core`） / ZoomRequestedEventArgs（ズーム範囲のクランプは `ZoomViewControl` が行うため `ZoomTransition` には依存しない）
 
 ### 6.3 ZoomConfig / 純粋関数（`ZoomViewControl.Core`）
 
@@ -142,14 +142,14 @@ flowchart TB
 | `ZoomMath` | 内部静的クラス | ズーム中心維持・Fit 実効倍率・座標変換（オフセット基準 / 画像表示矩形原点基準）・オフセットクランプの計算（座標は `EsPoint` / `EsVector` / `EsSize`） |
 | `ZoomTransition` | 内部静的クラス | ⊖⊕ 段階遷移・Ctrl+ホイール ×1.1 遷移・可否判定。`ZoomConfig` を引数で受け取る |
 | `ZoomAvailability` | 内部 record struct | ズーム可否（ズームイン・ズームアウト）を単一に保持する値オブジェクト |
-| `ScrollMath` | 公開静的クラス（`PlatformFactory.Core`） | スクロールバーの範囲・ビューポートサイズの計算。共通基盤に分離 |
+| `ScrollMath` | 公開静的クラス（`Platform.Core`） | スクロールバーの範囲・ビューポートサイズの計算。共通基盤に分離 |
 
 - 内部型は `InternalsVisibleTo`（`ZoomViewControl` / 各テスト）で公開しており、公開 API は `ZoomConfig` のみ。
 - UI 非依存のため、ヘッドレス不要の `[Fact]` で並列テスト可能（`ZoomViewControl.Core.Tests` が検証）。
 
 ## 7. 依存ルール
 
-- 依存は**一方向**（上位 AP → ZoomViewControl → ZoomViewControl.Core → PlatformFactory.Core）。本ライブラリは上位 AP の型（ViewModel 等）に依存しない。
+- 依存は**一方向**（上位 AP → ZoomViewControl → ZoomViewControl.Core → Platform.Core）。本ライブラリは上位 AP の型（ViewModel 等）に依存しない。
 - `ZoomViewControl` が `ZoomableView` を内包し、`ZoomRequested` / `SizeChanged` / `ViewportChanged` を内部配線する。
 - UI 非依存の計算・設定値は `ZoomViewControl.Core` が単一所有し、UI 側は境界でコア型へ 1 行変換して委譲する。
 - 純粋関数は UI コントロールから分離され、テスト容易性を確保する。

@@ -1,6 +1,6 @@
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using OpenCvSharp;
-using Point = Estable.Platform.Geometry.EsPoint;
+using Point = EsUtil.Platform.Core.Geometry.EsPoint;
 using static Estable.LineDetection.LineSegmentMath;
 
 namespace Estable.LineDetection;

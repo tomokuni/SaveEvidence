@@ -30,7 +30,7 @@
     <!-- データセット作成ページの DragRect キャプチャ（スクリーン領域選択 + ウィンドウ列挙）に使用する -->
     <ProjectReference Include="..\..\CaptureSessionControl.AvaloniaUI\src\CaptureSessionControl.AvaloniaUI.csproj" />
     <!-- CaptureSessionControl.AvaloniaUI が内部で使用する要素検出（ウィンドウ列挙）機能 -->
-    <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
+    <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

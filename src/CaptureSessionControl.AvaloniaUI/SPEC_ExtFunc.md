@@ -54,7 +54,7 @@
 
 `CaptureSessionControl.AvaloniaUI` は、外部アプリケーションが画面キャプチャと切出しを**単一の API**（`CaptureSessionControl`）で利用できるようにする Facade パターンのライブラリです。
 
-状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と PlatformFactory が保持し、
+状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と Platform.AvaloniaUI が保持し、
 `CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者です。  
 CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）を直接参照しない（公開型のカプセル化）。
 
@@ -218,7 +218,7 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 
 ### 5.4 型
 
-公開型は `CaptureSessionControl`（本プロジェクト）と、コア公開型の `CaptureType`（`Estable.Platform`）・`CaptureSettings` / `CaptureResult`（`Estable.CaptureSession`。`CaptureSessionControl.Core`。UI フレームワーク非依存の共通基盤が提供）です。
+公開型は `CaptureSessionControl`（本プロジェクト）と、コア公開型の `CaptureType`（`EsUtil.Platform.Core`）・`CaptureSettings` / `CaptureResult`（`Estable.CaptureSession`。`CaptureSessionControl.Core`。UI フレームワーク非依存の共通基盤が提供）です。
 
 #### 5.4.1 CaptureSessionControl
 
@@ -227,7 +227,7 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 
 #### 5.4.2 CaptureType
 
-キャプチャ種別（UI フレームワーク非依存）。`PlatformFactory.Core`（名前空間 `Estable.Platform`）が提供するコア公開型です。利用時は `using Estable.Platform;` が必要です。
+キャプチャ種別（UI フレームワーク非依存）。`Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供するコア公開型です。利用時は `using EsUtil.Platform.Core;` が必要です。
 
 | 値 | 説明 |
 | --- | --- |
@@ -315,7 +315,7 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 ### 7.1 StartCaptureAsync
 
 1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出（`owner.Screens`）
-2. `SelectionCaptureSession` を生成（`IWindowService` / `ICaptureService` / `IElementFinder` を `PlatformFactory.Native` から注入）
+2. `SelectionCaptureSession` を生成（`IWindowService` / `ICaptureService` / `IElementFinder` を `Platform.Native` から注入）
 3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`。オーバーレイの写り込み防止）
 4. オーナーウィンドウを非表示（`HideOwnerWindow` が true の場合）
 5. **仮想スクリーン全体をバックグラウンド + 5 秒タイムアウトでキャプチャ（全モード共通。切り出し元）**

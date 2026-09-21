@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Imaging;
 using Estable.AvaloniaUI.CaptureSession.Sample.ViewModels;
 using System.Collections.Specialized;
 using Estable.CaptureSession;

@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Controls;
 using Estable.CaptureSession;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 
 namespace Estable.MewUI.CaptureSession;

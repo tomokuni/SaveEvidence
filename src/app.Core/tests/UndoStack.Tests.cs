@@ -1,5 +1,5 @@
 using Estable.SaveEvidence.Models;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
 namespace Estable.SaveEvidence.Tests;

@@ -33,7 +33,7 @@ FadeMaskDragRectControl（_selectionOverlay）
   ├─ FadeMaskControl
   ├─ DragRectControl
   ├─ LoupeControl
-  └─ PlatformFactory（Avalonia アダプタ）／PlatformFactory.Native（サービス実装）／PlatformFactory.Core（抽象・値型）
+  └─ Platform.AvaloniaUI（Avalonia アダプタ）／Platform.Native（サービス実装）／Platform.Core（抽象・値型）
 ```
 
 - **`CaptureSessionControl.AvaloniaUI` は `CropViewControl` を内包しません**。`StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。
@@ -58,7 +58,7 @@ FadeMaskDragRectControl（_selectionOverlay）
 | `FadeMaskControl` | `ExternalRenderer`（`FadeMaskRenderer`） | 描画は `FadeMaskRenderer` に委譲（外観は `FadeMaskDragRectSettings` 経由） |
 | `DragRectControl` | `BorderColor` / `BorderThickness` / `HandleColor` / `HandleSize` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds` / `MarkerColor` / `MarkerLength` / `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | `FadeMaskDragRectSettings` から `ApplyAppearance` で設定 |
 | `LoupeControl` | `RequestedSize` / `ZoomLevel` / `RenderScaling`（DPI 自動取得）/ `CrossColor` / `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `FrameColor` / `FrameWidth` / `PositionOffset` / `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` / `SelectionRectColorA` / `SelectionRectColorB` | `FadeMaskDragRectSettings` から `ApplyAppearance` で設定（`RenderScaling` 以外） |
-| `PlatformFactory` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。`PlatformFactory.Core` 提供）を提供 |
+| `Platform.AvaloniaUI` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。`Platform.Core` 提供）を提供 |
 
 ### 2.3 反映経路
 
@@ -75,7 +75,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 - 設定画面の変更は `Settings` の `PropertyChanged` で **即時反映** される。
 - CaptureSessionControl.AvaloniaUI への反映は `CaptureSettings`（nullable record・部分更新）を介して行い、`null` のメンバーは現在値を維持する。
 - テーマ・画像配置・市松模様等、app 内で直接処理する項目は個別の購読で反映される。
-- `PlatformFactory` は共通基盤のため、外観設定の公開対象ではない（参考として記載）。
+- `Platform.AvaloniaUI` は共通基盤のため、外観設定の公開対象ではない（参考として記載）。
 
 ## 3. 下位コントロールが公開する外観プロパティと上位での公開有無
 

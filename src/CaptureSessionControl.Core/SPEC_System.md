@@ -23,7 +23,7 @@ CaptureSessionControl.AvaloniaUI / CaptureSessionControl.MewUI（UI 実装）
 CaptureSessionControl.Core（本プロジェクト。共通規則）
         │ 参照
         ▼
-PlatformFactory.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
+Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 ```
 
 依存は一方向です。Core は UI フレームワーク（Avalonia / MewUI）を参照しません。

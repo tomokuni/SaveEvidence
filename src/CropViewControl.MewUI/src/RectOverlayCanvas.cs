@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Controls;
 using Estable.CropView;
 using Estable.MewUI.ZoomView;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 
 namespace Estable.MewUI.CropView;

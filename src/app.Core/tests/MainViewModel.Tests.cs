@@ -1,7 +1,7 @@
 using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
 namespace Estable.SaveEvidence.Tests;

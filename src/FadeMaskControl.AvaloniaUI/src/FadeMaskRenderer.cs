@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Media;
-using Estable.AvaloniaUI.Platform;
+using EsUtil.Platform.AvaloniaUI;
 using Estable.FadeMask;
-using Estable.Platform.Coordinate;
+using EsUtil.Platform.Core.Coordinate;
 
 namespace Estable.AvaloniaUI.FadeMask;
 

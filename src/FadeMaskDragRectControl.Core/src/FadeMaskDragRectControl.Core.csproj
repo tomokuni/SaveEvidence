@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\PlatformFactory.Core\src\PlatformFactory.Core.csproj" />
+    <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
     <!-- 動作モードから FadeMaskRenderMode への変換を行うため -->
     <ProjectReference Include="..\..\FadeMaskControl.Core\src\FadeMaskControl.Core.csproj" />
   </ItemGroup>

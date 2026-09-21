@@ -39,7 +39,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | PlatformFactory.Core（ICoordTransform / CoordTransform）、FadeMaskControl.Core（ラベルの文言・行配置・暗転幾何） |
+| **依存プロジェクト** | Platform.Core（ICoordTransform / CoordTransform）、FadeMaskControl.Core（ラベルの文言・行配置・暗転幾何） |
 
 ## 3. アーキテクチャ
 

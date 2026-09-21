@@ -3,8 +3,8 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Estable.LineDetection;
-using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.Native.Imaging;
 using System.Collections.ObjectModel;
 
 namespace LineDetectionSample.ViewModels;

@@ -1,5 +1,5 @@
-using Estable.Platform;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Geometry;
 
 namespace Estable.CaptureSession;
 

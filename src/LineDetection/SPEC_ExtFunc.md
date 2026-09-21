@@ -50,8 +50,8 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Start` | `EsPoint`（`Estable.Platform.Geometry`） | 始点（画像座標・ピクセル）。 |
-| `End` | `EsPoint`（`Estable.Platform.Geometry`） | 終点（画像座標・ピクセル）。 |
+| `Start` | `EsPoint`（`EsUtil.Platform.Core.Geometry`） | 始点（画像座標・ピクセル）。 |
+| `End` | `EsPoint`（`EsUtil.Platform.Core.Geometry`） | 終点（画像座標・ピクセル）。 |
 | `Orientation` | `LineOrientation` | 線分の向き（水平 / 垂直）。 |
 | `Score` | `double` | 確からしさ（長さ・信頼度等）。大きいほど有力。 |
 

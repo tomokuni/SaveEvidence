@@ -1,8 +1,8 @@
 using Aprillz.MewUI.Controls;
 using Estable.CropView;
 using Estable.MewUI.ZoomView;
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;

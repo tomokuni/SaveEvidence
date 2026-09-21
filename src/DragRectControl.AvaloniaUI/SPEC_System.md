@@ -45,7 +45,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | PlatformFactory（ScreenConverter）/ PlatformFactory.Native（ICursorService）/ PlatformFactory.Core（ICoordTransform / CoordTransform） |
+| **依存プロジェクト** | Platform.AvaloniaUI（ScreenConverter）/ Platform.Native（ICursorService）/ Platform.Core（ICoordTransform / CoordTransform） |
 
 ## 3. アーキテクチャ
 
@@ -54,15 +54,15 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 ```text
 公開コントロール（DragRectControl）
   → 状態（DragRectState）
-    → 共有型（SelectionGeometry / DragRectDrawer）+ PlatformFactory
+    → 共有型（SelectionGeometry / DragRectDrawer）+ Platform.AvaloniaUI
 ```
 
 ### 3.2 依存の方向
 
-- 依存は**一方向の階層構造**（DragRectControl → DragRectState → SelectionGeometry / PlatformFactory / PlatformFactory.Native / PlatformFactory.Core）。
+- 依存は**一方向の階層構造**（DragRectControl → DragRectState → SelectionGeometry / Platform.AvaloniaUI / Platform.Native / Platform.Core）。
 - DragRectControl は上位 AP に依存しない（再利用可能）。
 - 描画は DragRectDrawer へ委譲し、状態（選択矩形・nudge）は DragRectState に集約する（1 コントロール 1 状態クラス・SRP）。
-- 座標変換は `ICoordTransform`（`PlatformFactory.Core` 提供）が担い、コントロールは変換関数を生成しない。
+- 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 
 ## 4. 例外処理ポリシー
@@ -129,7 +129,7 @@ flowchart TB
   - プロパティ: `Log`
   - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm`
 - **構成（シンプル実装）**: 公開 API とイベントオーバーライド（処理は DragRectState へ委譲）を集約し、内部実装を責務別クラスへ分割しない
-- **依存**: DragRectState / DragRectDrawer / SelectionGeometry / ICoordTransform（PlatformFactory.Core）/ ICursorService（PlatformFactory.Native）/ ScreenConverter（PlatformFactory）
+- **依存**: DragRectState / DragRectDrawer / SelectionGeometry / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ ScreenConverter（Platform.AvaloniaUI）
 
 ### 6.2 DragRectState
 
@@ -141,7 +141,7 @@ flowchart TB
   - カーソル操作（`ICursorService`）
   - nudge 終了の共通化（`EndNudgeIfActive`。`Reset` / `SetSelection` でカーソル再表示を委譲）
 - **可視性**: internal（外部から見えない）
-- **依存**: SelectionGeometry / DragHandle / ICoordTransform（PlatformFactory.Core）/ ICursorService（PlatformFactory.Native）
+- **依存**: SelectionGeometry / DragHandle / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）
 
 ### 6.3 SelectionGeometry
 
@@ -173,10 +173,10 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**（DragRectControl → DragRectState → SelectionGeometry / PlatformFactory / PlatformFactory.Core）。
+- 依存方向は**一方向の階層構造**（DragRectControl → DragRectState → SelectionGeometry / Platform.AvaloniaUI / Platform.Core）。
 - DragRectControl は上位 AP に**依存しない**（再利用可能）。
 - 描画は DragRectDrawer へ委譲し、状態（選択矩形・nudge）は DragRectState に集約する（1 コントロール 1 状態クラス・SRP）。
-- 座標変換は `ICoordTransform`（`PlatformFactory.Core` 提供）が担い、コントロールは変換関数を生成しない。
+- 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 
 ## 8. ライフサイクル

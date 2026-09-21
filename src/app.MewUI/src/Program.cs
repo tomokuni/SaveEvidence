@@ -1,7 +1,8 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Interop;
-using Estable.Platform;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Imaging;
 using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;
@@ -14,7 +15,7 @@ namespace SaveEvidence.MewUI;
 
 /// <summary>SaveEvidence の MewUI 版ホスト。</summary>
 /// <remarks>
-/// <b>構成</b>: UI 非依存の <c>app.Core</c>（設定・ViewModel）と <c>PlatformFactory.MewUI</c>（Interop）を使い、<br/>
+/// <b>構成</b>: UI 非依存の <c>app.Core</c>（設定・ViewModel）と <c>Platform.MewUI</c>（Interop）を使い、<br/>
 /// UI 層だけを MewUI で実装する。Avalonia 版 <c>app</c> と同じコアロジックを共有する。<br/>
 /// <br/>
 /// <b>必須の初期化</b>:<br/>

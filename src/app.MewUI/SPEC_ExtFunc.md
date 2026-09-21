@@ -259,9 +259,9 @@
 | アセンブリ | 仕様書 |
 | --- | --- |
 | `app.Core` | `../app/SPEC_ExtFunc.md`（アプリ共通のコア仕様） |
-| `PlatformFactory.Core` | `../PlatformFactory.Core/SPEC_ExtFunc.md` |
-| `PlatformFactory.MewUI` | `../PlatformFactory.MewUI/SPEC_ExtFunc.md` |
-| `PlatformFactory.Native` | `../PlatformFactory.Native/SPEC_ExtFunc.md` |
+| `Platform.Core` | `../Platform.Core/SPEC_ExtFunc.md` |
+| `Platform.MewUI` | `../Platform.MewUI/SPEC_ExtFunc.md` |
+| `Platform.Native` | `../Platform.Native/SPEC_ExtFunc.md` |
 | `LoupeControl.MewUI` | `../LoupeControl.MewUI/SPEC_ExtFunc.md` |
 | `ZoomViewControl.MewUI` | `../ZoomViewControl.MewUI/SPEC_ExtFunc.md` |
 | `CropViewControl.MewUI` | `../CropViewControl.MewUI/SPEC_ExtFunc.md` |

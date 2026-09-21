@@ -1,5 +1,5 @@
 using Aprillz.MewUI;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Geometry;
 using Estable.ZoomView;
 using SkiaSharp;
 using Xunit;
@@ -30,7 +30,7 @@ public class ZoomViewControlTests
     /// <param name="imageHeight">画像の高さ（ピクセル）。</param>
     /// <param name="viewportSize">ビューポートの一辺（DIP）。</param>
     /// <returns>コントロールと画像（画像の破棄は呼び出し側）。</returns>
-    private static (ZoomViewControl Control, Estable.Platform.Imaging.EsBitmap Image) CreateWithImage(
+    private static (ZoomViewControl Control, EsUtil.Platform.Core.Imaging.EsBitmap Image) CreateWithImage(
         int imageWidth = 100, int imageHeight = 100, double viewportSize = 200)
     {
         var image = TestHelper.CreateBitmap(imageWidth, imageHeight, SKColors.Red);

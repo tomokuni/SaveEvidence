@@ -1,5 +1,5 @@
 using Estable.CaptureSession;
-using Estable.Platform;
+using EsUtil.Platform.Core;
 using Microsoft.Extensions.Logging;
 
 namespace Estable.MewUI.CaptureSession;
@@ -13,7 +13,7 @@ namespace Estable.MewUI.CaptureSession;
 /// <remarks>
 /// MewUI 版は DI コンテナを持たないため、ホストが生成したサービスを本レコードで束ねて渡す。<br/>
 /// UI 非依存のサービス（<see cref="ICaptureService"/> / <see cref="IElementFinder"/> / <see cref="IWindowService"/>）は<br/>
-/// <c>PlatformFactory.Core</c> が提供するため、本ライブラリはアプリの型を参照しない。
+/// <c>Platform.Core</c> が提供するため、本ライブラリはアプリの型を参照しない。
 /// </remarks>
 public sealed record CaptureOverlayServices(
     ICaptureService Capture,

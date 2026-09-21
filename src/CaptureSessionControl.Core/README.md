@@ -28,7 +28,7 @@
 
 ```text
 CaptureSessionControl.Core
-    └── PlatformFactory.Core（Es* 幾何型 / EsBitmap）
+    └── Platform.Core（Es* 幾何型 / EsBitmap）
 ```
 
 依存は一方向です（UI プロジェクトから本プロジェクトを参照し、逆は参照しない）。
@@ -37,7 +37,7 @@ CaptureSessionControl.Core
 
 ```csharp
 using Estable.CaptureSession;
-using Estable.Platform.Geometry;
+using EsUtil.Platform.Core.Geometry;
 
 // 選択矩形（画像ピクセル・半開区間）から切り出し範囲を求める
 var bounds = CropBoundsMath.ComputeCropBounds(

@@ -23,14 +23,14 @@
 ```text
 ZoomViewControl.AvaloniaUI（Avalonia 実装） / ZoomViewControl.MewUI
   └──> ZoomViewControl.Core（本プロジェクト）
-         └──> PlatformFactory.Core（コア幾何型・スクロール計算）
+         └──> Platform.Core（コア幾何型・スクロール計算）
 ```
 
 本プロジェクトが UI フレームワークへ依存することはありません。外部パッケージへの直接依存もありません。
 
 ## 座標型
 
-UI フレームワークの幾何型（`Avalonia.Point` / `Vector` / `Size`）ではなく、`PlatformFactory.Core` のコア幾何型 `EsPoint` / `EsVector` / `EsSize` を使用します（`ZoomMath` の引数・戻り値）。
+UI フレームワークの幾何型（`Avalonia.Point` / `Vector` / `Size`）ではなく、`Platform.Core` のコア幾何型 `EsPoint` / `EsVector` / `EsSize` を使用します（`ZoomMath` の引数・戻り値）。
 
 UI 実装側は、境界で 1 行の相互変換（`.ToEsVector()` / `.ToEsSize()` / `.ToEsPoint()` と逆方向の `.ToAvaloniaVector()` 等）を行います。UI 内部の状態（`RenderTransform` 等）とイベント引数は UI 側の型のままです。
 

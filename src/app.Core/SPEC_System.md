@@ -15,9 +15,9 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）と将来の MewUI �
 ```mermaid
   A[app<br/>Avalonia 実装] --> B[app.Core]
   C["app.MewUI（将来）"] --> B
-  B --> D[PlatformFactory.Core]
+  B --> D[Platform.Core]
   B --> F[LineDetection]
-  A --> E[CaptureSessionControl.AvaloniaUI / ColorPickerControl / PlatformFactory]
+  A --> E[CaptureSessionControl.AvaloniaUI / ColorPickerControl / Platform.AvaloniaUI]
   A -->|コールバック注入（クリップボード / 上書き確認）| B
 ```
 
@@ -120,8 +120,8 @@ sequenceDiagram
 | `Models/CapacityLimitedCache.cs` | そのまま移設 |
 | `Models/ImageFileExtensions.cs` | 新設（両 UI のフォルダビューで重複していた拡張子一覧を統合） |
 | `Models/FileNameTemplate.cs` | そのまま移設 |
-| `Models/UndoStack.cs` | そのまま移設（`EsBitmap` は `PlatformFactory.Core` 提供） |
-| `Models/HotKeyParser.cs` | そのまま移設（不要な `using Estable.AvaloniaUI.Platform;` を削除） |
+| `Models/UndoStack.cs` | そのまま移設（`EsBitmap` は `Platform.Core` 提供） |
+| `Models/HotKeyParser.cs` | そのまま移設（不要な `using EsUtil.Platform.AvaloniaUI;` を削除） |
 | `ViewModels/ViewModeDisplay.cs` | そのまま移設 |
 | `ViewModels/FolderViewViewModel.cs` / `ViewModels/UndoViewModel.cs` | そのまま移設（`CommunityToolkit.Mvvm` へ依存） |
 
@@ -134,7 +134,7 @@ sequenceDiagram
 | `Services/SettingsService.cs` | そのまま移設（使用するコンバーターを `EsPixelRectJsonConverter` へ変更） |
 | `Services/PixelRectConverter.cs` | `EsPixelRectJsonConverter` へ改名し、`EsPixelRect` 用へ変更（JSON 形式は同一） |
 
-併せて `PlatformFactory.Core` に `EsWindowState`、`PlatformFactory` に `EsWindowStateAvaloniaInterop` を追加しました。
+併せて `Platform.Core` に `EsWindowState`、`Platform.AvaloniaUI` に `EsWindowStateAvaloniaInterop` を追加しました。
 
 ### 第三段階（`MainViewModel` の UI 非依存化に必要な型）
 
@@ -144,7 +144,7 @@ sequenceDiagram
 
 併せて以下を実施しました。
 
-- `CaptureType`（キャプチャ種別）を `CaptureSessionControl.AvaloniaUI` から `PlatformFactory.Core`（`Estable.Platform`）へ移設
+- `CaptureType`（キャプチャ種別）を `CaptureSessionControl.AvaloniaUI` から `Platform.Core`（`EsUtil.Platform.Core`）へ移設
 - `LineDetection` の `LineDetectionResult` / `LineRectangleReconstructor` を `EsPoint` / `EsPixelRect` 化（`LineDetection` が UI 非依存に）
 - `MainViewModel` の画像座標の矩形を `Avalonia.PixelRect` → `EsPixelRect` へ変更（本体の移設は次段階）
 

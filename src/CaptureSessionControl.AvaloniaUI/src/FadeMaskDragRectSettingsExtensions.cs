@@ -79,7 +79,8 @@ internal static class FadeMaskDragRectSettingsExtensions
             LoupeCoordLabelBackgroundColor = ToAvalonia(settings.LoupeCoordLabelBackgroundColor!.Value),
             LoupeCoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value,
         };
-    }
+    }
+
     /// <summary>コアの色型（<see cref="System.Drawing.Color"/>）を Avalonia の色型へ変換する。</summary>
     /// <param name="color">変換元の色（A/R/G/B）。</param>
     /// <returns>Avalonia の色。</returns>

@@ -1,6 +1,6 @@
 using Estable.LineDetection;
-using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Estable.SaveEvidence.Enum;
 using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.ViewModels;

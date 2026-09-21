@@ -8,7 +8,7 @@
 
 - .NET 10 / C# 14
 - UI フレームワークは一切参照しない
-- 外部パッケージへの直接依存なし（依存は `PlatformFactory.Core` のみ）
+- 外部パッケージへの直接依存なし（依存は `Platform.Core` のみ）
 
 ## アーキテクチャ
 
@@ -16,7 +16,7 @@
 graph LR
   A[CropViewControl<br/>Avalonia 実装] --> B[CropViewControl.Core]
   C["CropViewControl.MewUI（将来）"] --> B
-  B --> D[PlatformFactory.Core]
+  B --> D[Platform.Core]
 ```
 
 - `CropViewControl.Core` は UI フレームワークへ依存しません。
@@ -38,7 +38,7 @@ graph LR
 sequenceDiagram
   participant UI as CropViewControl（Avalonia）
   participant Core as CropViewControl.Core
-  participant PF as PlatformFactory.Core
+  participant PF as Platform.Core
 
   Note over UI: ビューポート表示（図形要素）
   UI->>Core: OverlayLineDash.Get(style) / IsDashed(style)
@@ -57,7 +57,7 @@ sequenceDiagram
 | --- | --- |
 | 枠線スタイルごとのダッシュ長と間隔 | `OverlayLineDash` |
 | 矩形の 4 辺のラスタライズ（太さ・破線の色交互） | `OverlayRectRasterizer` |
-| ピクセル書き込み（範囲外の無視） | `PlatformFactory.Core` の `EsBitmap.TrySetPixel` |
+| ピクセル書き込み（範囲外の無視） | `Platform.Core` の `EsBitmap.TrySetPixel` |
 
 ベクター経路（UI の図形要素）とラスタ経路（ルーペ画像）は同じ `OverlayLineDash` を参照し、ダッシュ長の二重定義がありません。
 

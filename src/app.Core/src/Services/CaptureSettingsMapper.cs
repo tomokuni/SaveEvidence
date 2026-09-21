@@ -72,7 +72,8 @@ internal static class CaptureSettingsMapper
             SubLineColor: ParseColor(settings.SubLineColor),
             SubLineBackgroundColor: ParseColor(settings.SubLineBackgroundColor),
             DisplayScaleScaling: 0);
-    }
+    }
+
     /// <summary>設定の色文字列（<c>#AARRGGBB</c> / <c>#RRGGBB</c>）を色へ変換する。</summary>
     /// <param name="argb">設定の色文字列。前後の空白と <c>#</c> は省略可能。</param>
     /// <returns>変換した色。解析できない場合は透明。</returns>

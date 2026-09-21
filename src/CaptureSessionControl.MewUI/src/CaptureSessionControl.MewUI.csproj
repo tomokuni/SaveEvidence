@@ -27,7 +27,7 @@
     <!-- 撮影・切り出しの共通規則（切り出し矩形・設定・セッション状態・退避手順） -->
     <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型）と DIP 変換 -->
-    <ProjectReference Include="..\..\PlatformFactory.MewUI\src\PlatformFactory.MewUI.csproj" />
+    <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
     <!-- コアロジックを共有する MewUI 版コントロール（選択オーバーレイ・切り出しビュー） -->
     <ProjectReference Include="..\..\FadeMaskDragRectControl.MewUI\src\FadeMaskDragRectControl.MewUI.csproj" />
     <ProjectReference Include="..\..\CropViewControl.MewUI\src\CropViewControl.MewUI.csproj" />
