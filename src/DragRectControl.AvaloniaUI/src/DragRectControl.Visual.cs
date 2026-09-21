@@ -1,7 +1,6 @@
 using Estable.AvaloniaUI.DragRect.Drawing;
 using Estable.DragRect;
 using EsUtil.Platform.AvaloniaUI;
-using EsUtil.Platform.Core.Geometry;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
