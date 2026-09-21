@@ -113,8 +113,10 @@ internal static class Program
     /// <param name="services">サービスコレクション</param>
     private static void ConfigureServices(IServiceCollection services)
     {
-        // Settings（シングルトンとして共有インスタンスを管理）
-        services.AddSingleton<ISettingsService, SettingsService>();
+        // Settings（シングルトンとして共有インスタンスを管理）。
+        // JSON ソース生成コンテキストを注入する: 反射ベースのシリアル化は Native AOT / トリミングで
+        // 公開プロパティが削除され、保存時に設定が空（{}）になる（実測。AOT 配布で設定が全損した）。
+        services.AddSingleton<ISettingsService>(_ => new SettingsService(SettingsJsonContext.Default));
 
         // OS依存サービスの登録（実装は PlatformFactory が実行時プラットフォームに応じて生成。アクション識別子は CaptureType）
         services.AddSingleton<IGlobalHotKeyService<CaptureType>>(

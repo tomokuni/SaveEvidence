@@ -24,6 +24,15 @@ rem  AOT で動作しない実装（実測）:
 rem    - 実行時の XAML 解決（AvaloniaXamlLoader.Load(Uri)）は
 rem      「No precompiled XAML found」で失敗します。XAML はコンパイル時に取り込む形
 rem      （x:Class 付きの Styles）にしてください（ColorViewThemeManager が該当しました）。
+rem
+rem  設定 JSON（重要）:
+rem    Native AOT ではリフレクションベースの System.Text.Json が動作しません
+rem    （Settings の公開プロパティがトリミングで削除され、終了時に設定が空 {} になり全損します）。
+rem    そのためアプリ本体は JSON ソース生成コンテキスト（SettingsJsonContext）を
+rem    SettingsService へ注入しています。コンテキストは Settings を参照する側の
+rem    アセンブリに置く必要があります（同一コンパイル内では MVVM のソース生成結果を
+rem    JSON のソース生成が見られないため）。
+rem    検証は .work/check-settings-roundtrip.ps1（設定の往復）で行えます。
 rem ============================================================
 
 rem スクリプトの場所（buildScript）からリポジトリルートへ移動する

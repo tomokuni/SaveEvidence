@@ -66,6 +66,17 @@ dotnet run --project src/app.AvaloniaUI/src/app.AvaloniaUI.csproj
 dotnet test src/app.AvaloniaUI/tests/app.AvaloniaUI.Tests.csproj
 ```
 
+### 配布ビルド（Native AOT）
+
+```bat
+buildScript\AvaloniaUI_publish_aot.bat
+```
+
+- 出力: `publish/avaloniaui-win-x64-aot`（`SaveEvidence.exe` + ネイティブ DLL）
+- **設定の JSON はソース生成コンテキスト（`SettingsJsonContext`）を `SettingsService` へ注入しています。**
+  反射ベースのシリアル化は AOT / トリミングで公開プロパティが削除され、終了時に**設定が空（`{}`）になって全損します**（実測）。
+  設定項目を追加するときは `Settings` を変更すれば自動で追従しますが、`SettingsJsonContext` を消したり別経路で `SettingsService` を生成しないでください。
+
 ## 5. クイックスタート
 
 1. アプリを起動するとキャプチャページが表示されます。

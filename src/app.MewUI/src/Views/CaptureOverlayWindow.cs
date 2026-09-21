@@ -4,6 +4,7 @@ using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
 using Estable.MewUI.FadeMask;
 using Estable.MewUI.FadeMaskDragRect;
+using Estable.MewUI.Platform;
 using Estable.Platform;
 using Estable.Platform.Coordinate;
 using Estable.Platform.Geometry;
@@ -123,10 +124,14 @@ internal sealed class CaptureOverlayWindow
     /// <param name="type">キャプチャ種別。</param>
     /// <returns>切り出した画像。キャンセル・取得失敗・退化した選択の場合は null。</returns>
     /// <remarks>
-    /// 1. 設定に従ってオーナーを非表示にし、DWM の反映を待つ。<br/>
+    /// 1. 設定に従ってオーナーをキャプチャ除外に設定し、非表示にする（設定: メインウィンドウを隠す）。<br/>
     /// 2. カーソルのあるモニターを対象に決め、その領域をキャプチャする（失敗した場合はオーナーを戻して null）。<br/>
     /// 3. オーバーレイを表示し、確定またはキャンセルまで待つ。<br/>
-    /// 4. オーナーを再表示し、取得画像を破棄して切り出し結果を返す。<br/>
+    /// 4. オーナーを再表示し、キャプチャ除外を解除して取得画像を破棄し、切り出し結果を返す。<br/>
+    /// <b>自ウィンドウの写り込み防止</b>: 非表示（<c>Hide</c>）は DWM の反映に時間がかかるため、<br/>
+    /// 反映前に取得すると自ウィンドウが半透明の状態で写り込む（実測）。<br/>
+    /// <c>SetCaptureExclusion</c>（<c>WDA_EXCLUDEFROMCAPTURE</c>）は反映を待たずに効くため、<br/>
+    /// これと非表示を併用して取得画像から自ウィンドウを排除する（Avalonia 版と同じ方式）。<br/>
     /// <b>対象モニター</b>: 全モニターを跨ぐ 1 枚のオーバーレイは OS の配置補正で位置がずれる（実測）ため、<br/>
     /// カーソルのあるモニターだけを対象にする（一般的なスニッピングツールと同じ挙動）。
     /// </remarks>
@@ -134,18 +139,48 @@ internal sealed class CaptureOverlayWindow
     {
         var settings = services.Settings.Current;
         var wasVisible = owner.IsVisible;
+        var windowService = PlatformFactory.CreateWindowService(s_logger);
+        var ownerHandle = owner.ToEsPlatformHandle();
+        var excluded = false;
 
         if (settings.HideMainWindowOnCapture)
         {
+            // 非表示より先にキャプチャ除外を設定する（非表示の反映を待たずに自ウィンドウを排除する）
+            excluded = windowService.SetCaptureExclusion(ownerHandle, true);
             owner.Hide();
 
-            // 非表示がコンポジションへ反映されるまで待つ（待たないと自ウィンドウが写り込む）
+            // 非表示がコンポジションへ反映されるまで待つ（ウィンドウ検出が自ウィンドウを拾わないようにする）
             var delay = (int)Math.Clamp(settings.HideBeforeCaptureDelayMs, 0, 1000);
             if (delay > 0)
             {
                 Thread.Sleep(delay);
             }
         }
+
+        try
+        {
+            return CaptureCore(services, owner, type, wasVisible);
+        }
+        finally
+        {
+            // キャプチャ除外を解除する（解除しないと以後のキャプチャから自ウィンドウが消え続ける）
+            if (excluded)
+            {
+                windowService.SetCaptureExclusion(ownerHandle, false);
+            }
+        }
+    }
+
+    /// <summary>オーナーを非表示にした状態でキャプチャ本体を実行する。</summary>
+    /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
+    /// <param name="owner">オーナーウィンドウ（再表示の対象）。</param>
+    /// <param name="type">キャプチャ種別。</param>
+    /// <param name="wasVisible">キャプチャ開始前にオーナーが表示されていたかどうか。</param>
+    /// <returns>切り出した画像。キャンセル・取得失敗・退化した選択の場合は null。</returns>
+    /// <remarks>キャプチャ除外の設定・解除は呼び出し側（<see cref="Capture"/>）が担う。</remarks>
+    private static EsBitmap? CaptureCore(AppServices services, Window owner, CaptureType type, bool wasVisible)
+    {
+        var settings = services.Settings.Current;
 
         var finder = PlatformFactory.CreateElementFinder();
         var screens = finder.ListScreens();
