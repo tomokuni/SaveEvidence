@@ -104,4 +104,4 @@ src/LineDetection/
 
 ## 9. ライセンス
 
-本ライブラリは SaveEvidence プロジェクトの一部として提供されます。
+MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

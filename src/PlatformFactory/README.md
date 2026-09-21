@@ -174,4 +174,4 @@ PlatformFactory/
 
 ## 10. ライセンス
 
-MIT
+MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -4,7 +4,9 @@
 
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
 ![Avalonia](https://img.shields.io/badge/UI-Avalonia-8D46D6)
+![MewUI](https://img.shields.io/badge/UI-MewUI-00BFFF)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
+![License](https://img.shields.io/badge/License-MIT-3DA639)
 
 ---
 
@@ -267,6 +269,8 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 配布物は `SaveEvidence.exe` とネイティブ DLL のセットです（フォルダーごと配置してください）。
 
+## 5. 操作方法
+
 ### 5.1 基本操作フロー
 
 ```text
@@ -415,12 +419,8 @@ SaveEvidence は、Avalonia UI 上で CommunityToolkit.Mvvm を使用した MVVM
 
 ## 9. ライセンス
 
-MIT License
+MIT License（全文は [`LICENSE`](LICENSE) を参照）。
 
-Copyright (c) 2025 SaveEvidence
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```text
+Copyright (c) 2026 SEKIYA.Tomokuni
+```

@@ -72,4 +72,4 @@ dotnet test src/DragRectControl.Core/tests/DragRectControl.Core.Tests.csproj
 
 ## ライセンス
 
-このリポジトリのライセンス方針に従います。ライセンスが明示されていない環境では、再配布・商用利用の条件を確認してから利用してください。
+MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -157,4 +157,4 @@ FadeMaskDragRectControl.Core/
 
 ## 10. ライセンス
 
-本プロジェクトのライセンスに従います。
+MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。
