@@ -42,6 +42,10 @@ internal static class SettingsPage
     /// <remarks>Avalonia 版と同じ値（区切り直後の項目の上マージン）。</remarks>
     private const double CategorySpacing = 8;
 
+    /// <summary>外観設定の 3 列グリッドの行間・列間（DIP）。</summary>
+    /// <remarks>Avalonia 版と同じ値（<c>RowSpacing="5"</c> / <c>ColumnSpacing="5"</c>）。</remarks>
+    private const double CategoryGridSpacing = 5;
+
     /// <summary>ページの外周余白（DIP）。</summary>
     private const double PageMargin = 10;
 
@@ -276,7 +280,8 @@ internal static class SettingsPage
     /// <remarks>
     /// Avalonia 版と同じ 3 列（カテゴリ / 項目名 / 設定値）のグリッドにし、列幅を全カテゴリで共有する。<br/>
     /// カテゴリ名は左列を縦に結合して右寄せし、カテゴリの切れ目には全列をまたぐ 1 DIP の水平線を入れる。<br/>
-    /// 区切りの直後の項目は上へ余白を空け、水平線と重ならないようにする。
+    /// 区切りの直後の項目とカテゴリ名は同じ分だけ上へ余白を空け（水平線と重ならず行が揃う）、<br/>
+    /// 行・列の間隔は Avalonia 版の <c>RowSpacing</c> / <c>ColumnSpacing</c> と同じ値にする。
     /// </remarks>
     private static Element BuildAppearanceGrid(
         (string Category, (string Name, FrameworkElement Control)[] Items)[] categories)
@@ -284,24 +289,28 @@ internal static class SettingsPage
         var rowCount = categories.Sum(static category => category.Items.Length);
         var grid = new Grid()
             .Rows(string.Join(',', Enumerable.Repeat("Auto", rowCount)))
-            .Columns($"Auto,Auto,Auto,{CategoryGap}");
+            .Columns($"Auto,Auto,Auto,{CategoryGap}")
+            .Spacing(CategoryGridSpacing);
 
         var row = 0;
 
         foreach (var (category, items) in categories)
         {
+            // カテゴリの切れ目（最初のカテゴリ以外の先頭）は水平線の分だけ下へずらす
+            var categoryOffset = row == 0 ? 0 : CategorySpacing;
+
             var categoryLabel = new Label().Text(category).Bold().FontSize(12);
             categoryLabel.MinWidth = CategoryWidth;
             categoryLabel.HorizontalAlignment = HorizontalAlignment.Right;
             categoryLabel.TextAlignment(TextAlignment.Right);
             categoryLabel.VerticalAlignment = VerticalAlignment.Top;
-            categoryLabel.Margin(new Thickness(0, 0, CategoryGap, 0));
+            categoryLabel.Margin(new Thickness(0, categoryOffset, CategoryGap, 0));
             grid.Add(categoryLabel.GridPosition(row, 0, items.Length, 1));
 
             for (var i = 0; i < items.Length; i++)
             {
-                // カテゴリの切れ目（最初のカテゴリ以外の先頭）に水平線を入れ、項目を下へずらす
-                var offset = i > 0 || row == 0 ? 0 : CategorySpacing;
+                // カテゴリの先頭の行だけ水平線の分だけ下へずらす（他の行はずらさない）
+                var offset = i == 0 ? categoryOffset : 0;
 
                 if (i == 0 && row > 0)
                 {

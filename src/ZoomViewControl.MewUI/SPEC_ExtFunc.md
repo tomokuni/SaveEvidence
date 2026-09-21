@@ -21,8 +21,8 @@
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
 | `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。DPI 変更で自動更新される |
 | `ShowScrollBars` | `bool` | `true` | オーバーレイのスクロールバーを表示するか |
-| `ScrollBarThickness` | `double` | `8.0` | スクロールバーの太さ（DIP） |
-| `ScrollBarMargin` | `double` | `4.0` | ビューポート端からの余白（DIP） |
+| `ScrollBarThickness` | `double` | MewUI 標準のスクロールバーと同じ太さ（`ThemeMetrics.ScrollBarThickness`。既定 4.0） | スクロールバーの太さ（DIP） |
+| `ScrollBarMargin` | `double` | `8.0` | ビューポート端からの余白（DIP）。ウィンドウのリサイズ判定領域（端から 6 DIP）を避ける値 |
 | `ScrollBarColor` | `SKColor` | 白 63%（A=160） | サムの色（アルファで不透明度を表す） |
 | `ScrollBarTrackColor` | `SKColor` | 白 16%（A=40） | トラックの色（アルファ 0 の場合はトラックを描画しない） |
 | `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。**0 より大きい値のみ設定可能**（0 以下は無視）。設定値は `ZoomConfig` の範囲へクランプされる |

@@ -303,6 +303,40 @@ public class EsBitmapTests
     }
 
     [Fact]
+    public void Crop_左上がソース範囲外の場合は透明パディングで位置関係を保つ()
+    {
+        using var src = Create(10, 10);
+        src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
+
+        // 矩形の左上がソースの外（負）の場合、外側は透明のまま、重なる部分は位置関係を保ってコピーする
+        using var result = src.Crop(new RectInt(-3, -3, 10, 10));
+
+        Assert.Equal(10, result.Size.Width);
+        Assert.Equal(10, result.Size.Height);
+        // ソース外（左上の 3x3）は透明
+        Assert.Equal((byte)0, result.GetPixel(0, 0).A);
+        Assert.Equal((byte)0, result.GetPixel(2, 2).A);
+        // ソース (0,0) はデスティネーションの (3,3) へ写る（内容が左上へずれない）
+        Assert.Equal((byte)255, result.GetPixel(3, 3).R);
+        Assert.Equal((byte)255, result.GetPixel(9, 9).R);
+    }
+
+    [Fact]
+    public void Crop_左上が大きく外れた場合は全ピクセル透明を返す()
+    {
+        using var src = Create(10, 10);
+        src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
+
+        // 要求矩形がソースと全く重ならない（左上が負で大きく外れる）場合も、要求サイズの全透明を返す
+        using var result = src.Crop(new RectInt(-20, -20, 5, 5));
+
+        Assert.Equal(5, result.Size.Width);
+        Assert.Equal(5, result.Size.Height);
+        Assert.Equal((byte)0, result.GetPixel(0, 0).A);
+        Assert.Equal((byte)0, result.GetPixel(4, 4).A);
+    }
+
+    [Fact]
     public void Crop_破棄後は例外を投げる()
     {
         var src = Create(10, 10);

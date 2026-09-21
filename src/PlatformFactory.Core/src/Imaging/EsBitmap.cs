@@ -237,14 +237,16 @@ public sealed class EsBitmap : IDisposable
     }
 
     /// <summary>画像から指定された矩形領域を切り出す。</summary>
-    /// <param name="x">切り出し領域の左上X座標（画像ローカルピクセル）。負値は0へクランプ。</param>
-    /// <param name="y">切り出し領域の左上Y座標（画像ローカルピクセル）。負値は0へクランプ。</param>
+    /// <param name="x">切り出し領域の左上X座標（画像ローカルピクセル）。負値の場合はソース左端より外側が透明パディングとなる。</param>
+    /// <param name="y">切り出し領域の左上Y座標（画像ローカルピクセル）。負値の場合はソース上端より外側が透明パディングとなる。</param>
     /// <param name="width">切り出し領域の幅（ピクセル）。正の値。</param>
     /// <param name="height">切り出し領域の高さ（ピクセル）。正の値。</param>
     /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="width"/> / <paramref name="height"/> が0以下。</exception>
     /// <remarks>
     /// デスティネーションは事前にゼロ初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
+    /// 左上がソースの外（負）の場合も、要求矩形とソースの位置関係を保ってコピーする<br/>
+    /// （内容を左上へ詰めない。画像外の領域が透明のまま残る）。<br/>
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
     /// 内部ではピクセルバッファ（<see cref="Address"/>）へ直接アクセスし、行単位で <c>Buffer.MemoryCopy</c> によりコピーする。<br/>
     /// 呼び出し側で戻り値を破棄すること。
@@ -265,28 +267,39 @@ public sealed class EsBitmap : IDisposable
         var srcW = Width;
         var srcH = Height;
 
-        // ソース範囲内にクランプ（交差しない場合は透明パディングのまま。コピー行数が 0 となる）
+        // ソース左端・上端より外側はデスティネーション側でも透明のまま残す（コピー開始位置をずらす）
+        var dstOffsetX = Math.Max(0, -x);
+        var dstOffsetY = Math.Max(0, -y);
+
+        // ソース範囲内にクランプ（交差しない場合はコピー列数・行数が 0 以下となる）
         var cropX = Math.Max(0, x);
         var cropY = Math.Max(0, y);
-        var cropW = Math.Min(width, srcW - cropX);
-        var cropH = Math.Min(height, srcH - cropY);
+        var cropW = Math.Min(width - dstOffsetX, srcW - cropX);
+        var cropH = Math.Min(height - dstOffsetY, srcH - cropY);
 
         var result = Create(width, height);
+
+        // ソースと交差しない場合はゼロ初期化のまま（全ピクセル透明）返す
+        if (cropW <= 0 || cropH <= 0)
+        {
+            return result;
+        }
+
         var dstStride = result.Stride;
         var srcStride = Stride;
 
-        // コピーする 1 行のバイト数（BGRA8888 は 4 バイト/ピクセル。左右のストライド差を考慮して短い方）
-        var rowBytes = Math.Min(cropW * BytesPerPixel, dstStride);
+        // コピーする 1 行のバイト数（BGRA8888 は 4 バイト/ピクセル。デスティネーションの残り幅とストライドの短い方）
+        var rowBytes = Math.Min(cropW * BytesPerPixel, dstStride - dstOffsetX * BytesPerPixel);
 
         var src = (byte*)Address;
         var dst = (byte*)result.Address;
 
         for (var row = 0; row < cropH; row++)
         {
-            // ソースの切り出し開始行へ移動し、行単位で memcpy（デスティネーションは行先頭から）
+            // ソースの切り出し開始行へ移動し、行単位で memcpy（デスティネーションは透明パディング分だけずらす）
             var pSrc = src + (cropY + row) * srcStride + cropX * BytesPerPixel;
-            var pDst = dst + row * dstStride;
-            Buffer.MemoryCopy(pSrc, pDst, dstStride, rowBytes);
+            var pDst = dst + (dstOffsetY + row) * dstStride + dstOffsetX * BytesPerPixel;
+            Buffer.MemoryCopy(pSrc, pDst, dstStride - dstOffsetX * BytesPerPixel, rowBytes);
         }
 
         return result;

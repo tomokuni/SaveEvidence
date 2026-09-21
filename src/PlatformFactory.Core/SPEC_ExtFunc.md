@@ -227,7 +227,7 @@ SkiaSharp のみに依存するピクセルコンテナ（BGRA8888・アルフ�
 | ピクセル | `TrySetPixel` | `bool TrySetPixel(int x, int y, Color color)` | 指定座標へ色を設定（範囲外は `false`） |
 | ピクセル | `Clear` | `void Clear(byte b, byte g, byte r, byte a)` / `void Clear(Color color)` | 全ピクセルを指定色で塗りつぶし |
 | その他 | `Clone` | `EsBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
-| その他 | `Crop` | `EsBitmap Crop(Rectangle rect)` / `EsBitmap Crop(int x, int y, int width, int height)` | 指定矩形領域を切り出す |
+| その他 | `Crop` | `EsBitmap Crop(Rectangle rect)` / `EsBitmap Crop(int x, int y, int width, int height)` | 指定矩形領域を切り出す（ソース範囲外は透明パディング。位置関係は保たれる） |
 | その他 | `Dispose` | `void Dispose()` | 内部 `SKBitmap` を解放（二重呼び出しは無害） |
 | その他 | `ThrowIfDisposed` | `void ThrowIfDisposed()` | 破棄済みなら `ObjectDisposedException` を送出 |
 

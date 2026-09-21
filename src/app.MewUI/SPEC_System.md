@@ -674,6 +674,15 @@ sequenceDiagram
    （背景色はテーマのページ背景色に従うため、色を決め打ちするとテーマ変更で誤判定する）。
 2. **ルーペが表示されていない**。カーソルをウィンドウ外へ退避した状態で、設定の枠色の画素が現れないことを確認する。
 
+### 端に接する UI の当たり判定（`WM_NCHITTEST` の実測）
+
+MewUI のウィンドウは**端から 6 DIP をサイズ変更の判定領域**にします（`Win32WindowBackend` が `WM_NCHITTEST` へ
+`HTRIGHT` / `HTBOTTOM` 等を返す）。そのため、ビューポート端へ密着するオーバーレイ（ズームビューのスクロールバー等）は
+余白を与えないと掴めません（ポインタがウィンドウサイズ変更になり、クリックがコントロールへ届かない）。
+
+当たり判定の境界は、起動中のウィンドウへ `SendMessage(hwnd, WM_NCHITTEST /* 0x0084 */, 0, MAKELPARAM(screenX, screenY))`
+を送って戻り値を実測すると確定できます（125% DPI で端から 1〜7 px が `HTRIGHT` = 11、8 px 以降が `HTCLIENT` = 1）。
+
 **計測側のプロセスを Per-Monitor V2（`SetProcessDpiAwarenessContext(-4)`）にすること**。
 未対応だと座標と撮影が `96/dpi` に仮想化され、ウィンドウの下端・右端が切れた画像になり、
 レイアウトの誤判定（実際に発生）を招く。
@@ -691,6 +700,7 @@ sequenceDiagram
 | `GetWindowRect` は枠を含む矩形、`window.ClientSize` はクライアント領域 | 保存・復元は `ClientSize` を軸に統一する（枠の太さは DPI で変わる） |
 | `DpiHelper.EnablePerMonitorDpiAwareness()` を呼ばないと `GetDpiForMonitor` が仮想化される | `Main` の先頭で必ず呼ぶ（本アプリの 125% 環境では raw DPI が 111 だった） |
 | **ツールチップが表示されているボタンを押すと `Click` が発生しない**（`MouseDown` / `MouseUp` は届くが `IsPressed` / `IsMouseCaptured` が入らない）。ツールチップを閉じる際のポップアップウィンドウ破棄がスレッド全体のマウスキャプチャを解放し、押下で取得したキャプチャを奪うため（aprillz/MewUI#253） | クリックできるボタンは `ClickableToolTip.WithToolTip` で登録し、`Click` が発生しなかった押下を `MouseUp` で補完する |
+| **ウィンドウの端から 6 DIP はサイズ変更の判定領域**（`Win32WindowBackend` の `WM_NCHITTEST` が `HTRIGHT` / `HTBOTTOM` 等を返す）。端へ密着して描くオーバーレイはポインタがリサイズになる | 端に接するオーバーレイ（ズームビューのスクロールバー）は余白を空けて描く（`ScrollBarMargin` の既定 8 DIP。6 DIP より外へ出す） |
 | `PopupManager.PreferNativePopups` を `false` にするとポップアップを別 HWND ではなくウィンドウ内に描画できるが、`internal` のためアプリからは変更できない（Native AOT のため反射も不可） | 上記の補完で対処する（修正版のリリース後に削除する） |
 | **`Window.WindowSize`（DIP）→ 物理ピクセルの換算はプライマリモニターのスケール固定**。倍率の違うモニターでは物理サイズがモニターと一致せず（100% のモニターで 1.25 倍になる）、余白が太い枠として見える。描画側はウィンドウの DPI を使うため両者は一致しない | 撮影オーバーレイは表示後に `WindowState = Maximized` を設定して **OS にモニター全面を決めさせる**。座標変換の倍率は `DpiHelper.GetDpiForWindow` から得る |
 | **マウス移動はヒットテスト対象の要素にしか届かない**（親の `Grid` へ購読しても子がヒットすると届かない）。また領域全体を占める重ね要素はヒットテストを奪う | 移動の購読は最も下の要素（`ZoomViewControl` 等）へ行い、表示専用の重ね要素（`OverlayHost`）は `IsHitTestVisible = false` にする |

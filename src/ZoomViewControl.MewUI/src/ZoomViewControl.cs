@@ -29,12 +29,20 @@ namespace Estable.MewUI.ZoomView;
 /// <br/>
 /// <b>Avalonia 版との違い</b>: 内部の <c>Image</c> + <c>RenderTransform</c> + <c>ScrollBar</c> を持たず、<br/>
 /// Skia のキャンバスへ 1 回の <c>DrawBitmap</c> で描画する（中間ビットマップも Transform の合成も不要）。<br/>
-/// スクロールバーは未実装（必要になった段階で追加する）。
+/// スクロールバーはオーバーレイとして自前描画する（Avalonia 版の標準 <c>ScrollBar</c> に相当）。
 /// </remarks>
 public sealed class ZoomViewControl : SkiaCanvasView
 {
     /// <summary>ホイールパンの 1 ノッチあたりの移動量（DIP）。</summary>
     private const double WheelScrollUnit = 48.0;
+
+    /// <summary>スクロールバーをビューポート端から離す既定の余白（DIP）。</summary>
+    /// <remarks>
+    /// MewUI のウィンドウは端から 6 DIP（デバイスピクセル換算前の値）をサイズ変更の判定領域にするため、<br/>
+    /// 余白 0 ではサム上でポインタがウィンドウサイズ変更になり、マウスで縦スクロールできない。<br/>
+    /// 判定領域の外側へ出る最小限の値とする。
+    /// </remarks>
+    private const double DefaultScrollBarMargin = 8.0;
 
     /// <summary>描画されていない領域の背景色（暗色）。</summary>
     private static readonly SKColor s_background = new(32, 32, 32);
@@ -59,12 +67,14 @@ public sealed class ZoomViewControl : SkiaCanvasView
         MewProperty<bool>.Register<ZoomViewControl>(nameof(ShowScrollBars), true, MewPropertyOptions.AffectsRender);
 
     /// <summary><see cref="ScrollBarThickness"/> プロパティ（スクロールバーの太さ・DIP）。</summary>
+    /// <remarks>既定は MewUI 標準のスクロールバーと同じ太さ（<see cref="ThemeMetrics.Default"/>）にする。</remarks>
     public static readonly MewProperty<double> ScrollBarThicknessProperty =
-        MewProperty<double>.Register<ZoomViewControl>(nameof(ScrollBarThickness), 8.0, MewPropertyOptions.AffectsRender);
+        MewProperty<double>.Register<ZoomViewControl>(nameof(ScrollBarThickness), ThemeMetrics.Default.ScrollBarThickness, MewPropertyOptions.AffectsRender);
 
     /// <summary><see cref="ScrollBarMargin"/> プロパティ（ビューポート端からの余白・DIP）。</summary>
+    /// <remarks>既定は <see cref="DefaultScrollBarMargin"/>（ウィンドウのリサイズ領域を避ける値）。</remarks>
     public static readonly MewProperty<double> ScrollBarMarginProperty =
-        MewProperty<double>.Register<ZoomViewControl>(nameof(ScrollBarMargin), 4.0, MewPropertyOptions.AffectsRender);
+        MewProperty<double>.Register<ZoomViewControl>(nameof(ScrollBarMargin), DefaultScrollBarMargin, MewPropertyOptions.AffectsRender);
 
     /// <summary><see cref="ScrollBarColor"/> プロパティ（サムの色）。</summary>
     public static readonly MewProperty<SKColor> ScrollBarColorProperty =

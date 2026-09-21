@@ -55,8 +55,9 @@ public class ZoomViewControlTests
         Assert.False(control.CanZoomOut);
         // スクロールバー（オーバーレイ）の既定
         Assert.True(control.ShowScrollBars);
-        Assert.Equal(8.0, control.ScrollBarThickness);
-        Assert.Equal(4.0, control.ScrollBarMargin);
+        Assert.Equal(ThemeMetrics.Default.ScrollBarThickness, control.ScrollBarThickness);
+        // ウィンドウのリサイズ判定領域（端から 6 DIP）へ掛からない余白を空ける
+        Assert.True(control.ScrollBarMargin > 6.0, $"余白が小さすぎる: {control.ScrollBarMargin}");
         Assert.Equal(160, control.ScrollBarColor.Alpha);
         Assert.Equal(40, control.ScrollBarTrackColor.Alpha);
     }

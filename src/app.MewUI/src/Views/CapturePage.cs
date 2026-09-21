@@ -149,6 +149,8 @@ internal static class CapturePage
         var iconImages = new List<IconImage>();
 
         // ── ツールバー（Avalonia 版と同じアイコン配置）──
+        // ウィンドウ幅が狭い・ファイル名テンプレートが長い場合はアイコンがウィンドウ操作ボタンへ重なるため、
+        // 横方向へ折り返す（Avalonia 版のツールバーも WrapPanel）。
         var menuButton = new Button
         {
             // メニューのアイコンはベクターグリフを使う（文字の ☰ はフォントの代替字形が下へ寄り、縦位置が揃わない）
@@ -193,9 +195,7 @@ internal static class CapturePage
         var cropButton = IconButton("ic_fluent_crop_24_regular.svg", "切り出し（切出しモード開始/終了）", cropSession.Toggle, iconImages);
         cropButton.BindIsEnabled(hasImage);
 
-        var toolbar = new StackPanel()
-            .Horizontal()
-            .Spacing(2)
+        var toolbar = new WrapPanel()
             .Margin(new Thickness(2, AppStyles.ToolbarMarginTop, AppStyles.ToolbarMarginRight, AppStyles.ToolbarMarginBottom))
             .Children(
                 menuButton,

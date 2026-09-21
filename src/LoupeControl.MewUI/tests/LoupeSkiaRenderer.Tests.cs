@@ -139,27 +139,28 @@ public class LoupeSkiaRendererTests
 
     /// <summary>切り出し領域が画像外へ出た場合の描画（透明パディングで市松模様が透ける）を検証する。</summary>
     /// <remarks>
-    /// コアの <c>EsBitmap.Crop</c> は負の左上座標を 0 へクランプし、右端・下端のみ透明パディングする。<br/>
-    /// そのため画像は左上寄りに描画され、パディング部分では下地の市松模様が見える。
+    /// 画像の外へはみ出した部分は透明パディングとなり、下地の市松模様が見える。<br/>
+    /// 画像は切り出し領域との位置関係を保って描画される（左上へ詰めない）。
     /// </remarks>
     [Fact]
     public void Render_切り出し領域が画像外なら透明パディングされる()
     {
-        // 中心を画像の左上端に置くと、切り出し領域の右端・下端が画像外（透明パディング）になる
+        // 中心を画像の左上端 (0,0) に置くと、切り出し領域の左上が画像外（負）になる
         using var source = TestHelper.CreateBitmap(16, SKColors.Blue);
 
         const int size = 32;
         using var target = TestHelper.CreateTarget(size);
 
-        // pixelSize=32, zoom=1 → captureSize=32、topLeft=(-16,-16) は 0 へクランプされる
+        // pixelSize=32, zoom=1 → captureSize=32、topLeft=(-16,-16)。ソース (0,0) は画像 (16,16) へ写る
         LoupeSkiaRenderer.Render(
             target.Canvas, source, new EsPoint(0, 0), size, 1,
             null, 8, ToColor(SKColors.White), ToColor(SKColors.Black), null, 1);
 
-        // 画像は左上寄り（座標 0〜15）に描画される
-        Assert.Equal(SKColors.Blue, target.GetPixel(4, 4));
-        // 画像外（座標 16〜31）は透明パディングとなり、下地の市松模様が見える
-        Assert.Equal(SKColors.White, target.GetPixel(20, 20));
+        // 画像外（座標 0〜15）は透明パディングとなり、下地の市松模様が見える
+        Assert.Equal(SKColors.White, target.GetPixel(4, 4));
+        // 画像は元の位置関係を保って描画される（座標 16〜31）
+        Assert.Equal(SKColors.Blue, target.GetPixel(20, 20));
+        Assert.Equal(SKColors.Blue, target.GetPixel(31, 31));
     }
 
     /// <summary>破棄済みのソースを渡しても例外にしないことを検証する。</summary>

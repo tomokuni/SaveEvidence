@@ -50,21 +50,23 @@ public class LoupeImageExtractorTests
         Assert.Equal(source.GetPixel(3, 3), region.GetPixel(0, 0));
     }
 
-    /// <summary>ソース端を越える領域では透明パディングされることを検証する。</summary>
+    /// <summary>ソースの左端・上端を越える領域では透明パディングされ、位置関係が保たれることを検証する。</summary>
     [Fact]
     public void ExtractRegionAt_ソース端では透明パディングされる()
     {
         // ソース 10x10、中心 (0,0)、サイズ 4 → 左上 (-2,-2)。ソースと交差するのは (0,0)〜(1,1) のみ
         using var source = EsBitmap.Create(10, 10);
+        source.Clear(b: 0, g: 0, r: 255, a: 255); // 赤（位置関係を判定できるよう単色で塗る）
 
         using var region = LoupeImageExtractor.ExtractRegionAt(source, 0, 0, 4);
 
         Assert.Equal(4, region.Size.Width);
         Assert.Equal(4, region.Size.Height);
-        // 領域 (0,0) はソース (0,0) のピクセルと一致する
-        Assert.Equal(source.GetPixel(0, 0), region.GetPixel(0, 0));
-        // ソース範囲外のピクセルは透明（A=0）にパディングされる
-        var transparent = region.GetPixel(3, 3);
-        Assert.True(transparent.A == 0, $"範囲外ピクセルが透明でない: A={transparent.A}");
+        // ソース範囲外（左上の 2x2）は透明（A=0）にパディングされる
+        Assert.True(region.GetPixel(0, 0).A == 0, $"範囲外ピクセルが透明でない: A={region.GetPixel(0, 0).A}");
+        Assert.True(region.GetPixel(1, 1).A == 0, $"範囲外ピクセルが透明でない: A={region.GetPixel(1, 1).A}");
+        // 交差する部分は位置関係を保つ（ソース (0,0) は領域 (2,2) へ写る）
+        Assert.Equal(source.GetPixel(0, 0), region.GetPixel(2, 2));
+        Assert.Equal(source.GetPixel(1, 1), region.GetPixel(3, 3));
     }
 }

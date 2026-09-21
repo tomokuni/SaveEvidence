@@ -33,6 +33,10 @@ internal sealed class MainWindow
     /// <summary>復元するサイズが設定されていない場合の既定ウィンドウサイズ（DIP）。</summary>
     private static readonly Size DefaultWindowSize = new(1200, 800);
 
+    /// <summary>ウィンドウの最小サイズ（DIP）。</summary>
+    /// <remarks>Avalonia 版 <c>MainWindow.axaml</c> の <c>MinWidth</c> / <c>MinHeight</c> と同じ値。</remarks>
+    private static readonly Size MinWindowSize = new(800, 400);
+
     /// <summary>タイトルバー領域の高さ（DIP）。非クライアント領域をこの高さでクライアント領域へ拡張する。</summary>
     private const double TitleBarHeight = 32;
 
@@ -111,7 +115,9 @@ internal sealed class MainWindow
         // ウィンドウは先に生成する（ナビパネル上部のドラッグ領域が本ウィンドウを参照するため）。
         // ページ内容は後から設定する。
         var window = new Window()
-            .Resizable(DefaultWindowSize.Width, DefaultWindowSize.Height);
+            .Resizable(
+                DefaultWindowSize.Width, DefaultWindowSize.Height,
+                minWidth: MinWindowSize.Width, minHeight: MinWindowSize.Height);
 
         // ホバー・押下で変化する見た目はスタイルで与える（ローカル値で背景を設定すると状態変化が効かなくなる）
         window.StyleSheet = AppStyles.Create();
@@ -191,15 +197,10 @@ internal sealed class MainWindow
         dragArea.OnMouseDoubleClick(_ => ToggleMaximize(window));
         header.Add(dragArea.Column(1));
 
-        var footer = new TextBlock().Text("v1.0.0").FontSize(11);
-        footer.HorizontalAlignment = HorizontalAlignment.Center;
-        footer.Margin = new Thickness(12, 8, 12, 8);
-        footer.IsVisible = viewModel.IsNavigationExpanded;
-
         // ナビパネルの背景はスタイルで与える（テーマ変更で自動的に再解決される）
         navPanel.StyleName = AppStyles.NavPanel;
         navPanel.Width = viewModel.NavPanelWidth;
-        navPanel.Child(new StackPanel().Vertical().Children(header, items, footer));
+        navPanel.Child(new StackPanel().Vertical().Children(header, items));
 
         // 開閉の変更でナビパネルの幅・文字の表示を更新する
         viewModel.PropertyChanged += (_, e) =>
@@ -298,7 +299,6 @@ internal sealed class MainWindow
             var expanded = viewModel.IsNavigationExpanded;
             navPanel.Width = viewModel.NavPanelWidth;
             navTitle.IsVisible = expanded;
-            footer.IsVisible = expanded;
 
             foreach (var text in navItemTexts)
             {
@@ -409,7 +409,9 @@ internal sealed class MainWindow
     /// 保存値（画面物理ピクセル）をモニターのスケールで割って渡す。<br/>
     /// モニターの DPI は <c>Application.Run</c> より前は取得できない（MewUI の <c>DpiHelper</c> は 96 を返す）ため、<br/>
     /// 本メソッドは <c>Application.Run(window, startup)</c> の <c>startup</c>（ディスパッチャ導入後・表示前）から呼ぶ。<br/>
-    /// 幅・高さが 0 以下の壊れた値では復元しない（0 サイズのウィンドウで操作不能になるのを防ぐ）。
+    /// 幅・高さが 0 以下の壊れた値では復元しない（0 サイズのウィンドウで操作不能になるのを防ぐ）。<br/>
+    /// <b>最小サイズはここでも指定する</b>（<see cref="Window.WindowSize"/> を置き換えるため、生成時の指定は失われる）。<br/>
+    /// 保存値が最小サイズより小さい場合は最小サイズへ引き上げる（Avalonia 版の <c>MinWidth</c> / <c>MinHeight</c> と同じ扱い）。
     /// </remarks>
     public static void RestorePlacement(Window window, ISettingsService settingsService)
     {
@@ -422,8 +424,9 @@ internal sealed class MainWindow
         var scale = DpiHelper.GetDpiForPoint(new Point(bounds.X, bounds.Y)) / 96.0;
 
         window.WindowSize = WindowSize.Resizable(
-            WindowPlacementMath.ToDipLength(bounds.Width, scale),
-            WindowPlacementMath.ToDipLength(bounds.Height, scale));
+            Math.Max(MinWindowSize.Width, WindowPlacementMath.ToDipLength(bounds.Width, scale)),
+            Math.Max(MinWindowSize.Height, WindowPlacementMath.ToDipLength(bounds.Height, scale)),
+            MinWindowSize.Width, MinWindowSize.Height);
 
         var position = WindowPlacementMath.ToDipPoint(new EsPixelPoint(bounds.X, bounds.Y), scale);
         window.StartManualPosition(position.X, position.Y);
