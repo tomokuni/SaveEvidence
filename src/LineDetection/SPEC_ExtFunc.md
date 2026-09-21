@@ -13,6 +13,7 @@
     - [2.3. ILineDetector インターフェース](#23-ilinedetector-インターフェース)
     - [2.4. LogicLineDetector クラス](#24-logiclinedetector-クラス)
       - [2.4.1. プロパティ](#241-プロパティ)
+    - [2.5. LineRectangleReconstructor クラス](#25-linerectanglereconstructor-クラス)
   - [3. 入力・出力](#3-入力出力)
     - [3.1. 入力画像](#31-入力画像)
     - [3.2. 検出結果](#32-検出結果)
@@ -89,6 +90,19 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | `ParallelMergeTolerance` | `double` | `8.0` | 矩形の辺に統合する平行線の最大距離（ピクセル）。 |
 | `CornerToleranceRatio` | `double` | `0.2` | コーナー判定の許容差（辺の長さに対する比率）。 |
 | `OppositeSpanRatio` | `double` | `0.13` | 対辺の長さの差の許容比率。 |
+
+### 2.5. LineRectangleReconstructor クラス
+
+検出された線分（`LineDetectionResult`）から矩形（ウィンドウの 4 辺）を復元する純粋ロジック（`public static class`）。
+
+| メソッド | 戻り値 | 説明 |
+| --- | --- | --- |
+| `Reconstruct(IReadOnlyList<LineDetectionResult> results)` | `IReadOnlyList<EsPixelRect>` | 線分から矩形（ウィンドウの 4 辺）の候補を復元する（画像座標・閉区間）。 |
+
+- 4 辺が矩形を構成する組み合わせのみを候補にします（左右の垂直線が矩形の縦範囲を覆い、上下の水平線が矩形の横範囲を覆うこと）。
+- 同一座標の線分は 1 本に統合し、範囲（垂直線は Y・水平線は X の最小〜最大）を合併します（断片化した辺を 1 本として扱う）。
+- 戻り値は面積昇順で、最大 256 件です。UI が全候補を描画するため、候補数を上限で制限します。
+- 垂直 2 本・水平 2 本が揃わない場合は空を返します。幅・高さが 1 未満の矩形は除外します。
 
 ## 3. 入力・出力
 

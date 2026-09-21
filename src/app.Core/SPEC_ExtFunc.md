@@ -181,7 +181,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `PreviewImage` | `EsBitmap?` | プレビュー画像（所有権は本 ViewModel。差し替え時に旧画像を破棄） |
 | `Settings` | `Settings` | 設定オブジェクト（`ISettingsService.Current`） |
 | `HasPreviewImage` / `CanCopy` / `CanSave` / `CanPaste` | `bool` | 各操作の可否（コマンドの `CanExecute`） |
-| `DetectedRects` | `IReadOnlyList<EsPixelRect>` | 自動切り出しで検出した矩形候補群（画像座標・面積昇順） |
+| `DetectedRects` | `IReadOnlyList<EsPixelRect>` | 自動切り出しで検出した矩形候補群（画像座標・面積昇順・最大 256 件） |
 | `HoveredRect` | `EsPixelRect?` | ホバー中の矩形（面積最小） |
 | `IsAutoCropActive` | `bool` | 自動切り出しモード中かどうか |
 | `StatusMessage` / `ZoomDisplayText` / `PointerDisplayText` | `string` | 画面表示用テキスト |

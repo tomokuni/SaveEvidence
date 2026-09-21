@@ -153,6 +153,7 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _isAutoCropActive;
 
     /// <summary>自動切り出しで検出された矩形候補群（画像座標 <see cref="EsPixelRect"/>・閉区間・面積昇順）。</summary>
+    /// <value>4 辺が矩形を構成する候補のみ。座標の重複は統合し、最大 256 件に制限される。</value>
     [ObservableProperty]
     private IReadOnlyList<EsPixelRect> _detectedRects = [];
 
@@ -364,7 +365,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>検出された線分から矩形（ウィンドウの 4 辺）の候補を復元する。</summary>
     /// <param name="results">検出された線分一覧。</param>
-    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsPixelRect"/>。面積昇順）。</returns>
+    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsPixelRect"/>。面積昇順・最大 256 件）。</returns>
     /// <remarks>
     /// 線分→矩形復元のロジックは <see cref="LineRectangleReconstructor"/>（純粋クラス）へ委譲する（単一所有・DRY）。<br/>
     /// 本メソッドはホストからの呼び出し窓口（アプリ固有の委譲）として維持する。

@@ -75,7 +75,7 @@ flowchart TB
 | `ILineDetector.cs` | `ILineDetector`（インターフェース）を定義。検出方式の抽象化。 |
 | `LineDetectionResult.cs` | `LineOrientation`（向き）enum・`LineDetectionResult`（結果レコード）を定義。 |
 | `LineDetectionOptions.cs` | ロジック方式の検出パラメータ（不変値・検証付き）と既定値（`Default`）を定義。 |
-| `LineRectangleReconstructor.cs` | 線分の集合から矩形（ウィンドウの 4 辺）を構成する静的ヘルパー（`EsPixelRect` を返す）。 |
+| `LineRectangleReconstructor.cs` | 線分の集合から矩形（ウィンドウの 4 辺）を構成する静的ヘルパー（`EsPixelRect` を返す）。4 辺が矩形を構成する組み合わせのみを対象とし、候補数と処理量に上限を設けて UI のブロックを防ぐ。 |
 | `LineSegmentMath.cs` | 線分の演算（接続判定・平行判定・長さ等）の内部ヘルパー。 |
 | `LogicLineDetector.cs` | ロジック方式の検出器。Canny + HoughLinesP + 幾何学的一貫性による矩形検出。 |
 | `MatHelper.cs` | `EsBitmap` ↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |

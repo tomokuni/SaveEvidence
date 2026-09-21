@@ -62,6 +62,82 @@ public sealed class MainViewModelAutoCropTests
         Assert.NotEmpty(vm.DetectedRects);
     }
 
+    /// <summary>白背景に罫線を多数描いた EsBitmap（矩形を構成できない画像）を生成する。</summary>
+    /// <param name="width">画像の幅（ピクセル）。</param>
+    /// <param name="height">画像の高さ（ピクセル）。</param>
+    /// <returns>生成した EsBitmap。</returns>
+    /// <remarks>
+    /// 重なり合うウィンドウ風の枠（コーナーがずれて 1 つの矩形を構成しない）と、<br/>
+    /// 表・テキスト相当の短い罫線を描く。検出器は矩形を構成できないため、<br/>
+    /// 検出した線分をそのまま返す経路（多数の線分）を通る。
+    /// </remarks>
+    private static EsBitmap CreateLineHeavyBitmap(int width, int height)
+    {
+        var image = EsBitmap.Create(width, height);
+        image.Clear(b: 255, g: 255, r: 255, a: 255); // 白
+
+        void Horizontal(int x1, int x2, int y)
+        {
+            for (var x = x1; x <= x2 && x < width; x++)
+            {
+                image.SetPixel(x, y, 0, 0, 0, 255);
+            }
+        }
+
+        void Vertical(int y1, int y2, int x)
+        {
+            for (var y = y1; y <= y2 && y < height; y++)
+            {
+                image.SetPixel(x, y, 0, 0, 0, 255);
+            }
+        }
+
+        // 重なり合うウィンドウ風の枠（左右・上下がずれており矩形を構成しない）
+        Horizontal(width / 10, width / 2, height / 10);
+        Horizontal(width / 2, width * 9 / 10, height * 3 / 10);
+        Horizontal(width / 8, width / 2, height * 3 / 5);
+        Horizontal(width / 2, width * 9 / 10, height * 4 / 5);
+        Vertical(height / 10, height / 2, width / 10);
+        Vertical(height * 3 / 10, height * 9 / 10, width / 2);
+        Vertical(height * 3 / 10, height * 4 / 5, width / 8);
+        Vertical(height * 7 / 10, height * 9 / 10, width * 9 / 10);
+
+        // 表・テキスト相当の短い罫線（線分数を増やす）
+        for (var i = 0; i < 60; i++)
+        {
+            Horizontal(width / 10 + i, width / 2 - i, height / 10 + i * 4);
+            Vertical(height / 3 + i, height * 3 / 4 - i, width / 8 + i * 6);
+        }
+
+        return image;
+    }
+
+    /// <summary>矩形を構成できない線分が多い画像でも候補が上限内で短時間に収まることを検証する。</summary>
+    /// <remarks>
+    /// 修正前は垂直ペア×水平ペアの全組み合わせ（この画像で数千万件）を候補にしていたため、<br/>
+    /// UI スレッドが長時間ブロックし、数 GB のメモリを割り当てて固まっていた（実測: 4K 相当で数十秒〜）。<br/>
+    /// 修正後は矩形を構成する組み合わせのみを対象とし、候補数と時間が上限内に収まる。
+    /// </remarks>
+    [Fact]
+    public void AutoCropWindow_矩形を構成できない画像でも候補が上限内に収まる()
+    {
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
+        {
+            PreviewImage = CreateLineHeavyBitmap(3840, 2160),
+        };
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        vm.AutoCropWindowCommand.Execute(null);
+        stopwatch.Stop();
+
+        Assert.True(vm.IsAutoCropActive, "自動切り出しモードが有効になること");
+        Assert.NotEmpty(vm.DetectedRects);
+        Assert.True(vm.DetectedRects.Count <= 256, $"候補が上限を超えている: {vm.DetectedRects.Count}");
+
+        // 修正前は同じ画像で数千万件（数十秒・数 GB）になっていた。上限内なら数秒で終わる
+        Assert.True(stopwatch.Elapsed.TotalSeconds < 15, $"自動切り出しに時間がかかりすぎている: {stopwatch.Elapsed.TotalSeconds:0.0} 秒");
+    }
+
     /// <summary>画像が無い場合は自動切り出しを実行しても検出矩形が設定されないことを検証する。</summary>
     [Fact]
     public void AutoCropWindow_画像が無い場合は何もしない()
