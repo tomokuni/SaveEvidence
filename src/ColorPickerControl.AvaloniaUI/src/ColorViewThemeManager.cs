@@ -15,14 +15,21 @@ namespace Estable.AvaloniaUI.ColorPicker;
 ///   ロードしてデフォルトとして一度だけ追加する。<br/>
 /// - デザインモード / Application 未初期化時は何もしない。<br/>
 /// <br/>
-/// **適用パターン**: シングルトン相当の静的管理（適用済みフラグと**二重チェックロック**で二重適用を防止）。<br/>
+/// <b>Native AOT</b>: 実行時の XAML 解決ができないため、内包テーマのロードは
+/// <c>No precompiled XAML found</c> で失敗する（ホストはアプリの XAML で ColorView テーマを
+/// <c>StyleInclude</c> として取り込むこと。起動は継続し、本クラスは何もしない）。<br/>
+/// <br/>
+/// <b>適用パターン</b>: シングルトン相当の静的管理（適用済みフラグと<b>二重チェックロック</b>で二重適用を防止）。<br/>
 /// <br/>
 /// <see cref="ColorPickerFlyoutFactory"/> からのみ参照される（<see cref="ColorPickerControl"/> から分離）。
 /// </remarks>
 internal static class ColorViewThemeManager
 {
     /// <summary>ColorView テーマ（Fluent.xaml）の適用済みフラグ（複数インスタンスで重複追加しない）。</summary>
-    /// <remarks>ロック外の先判定で読み取るため volatile（二重チェックロックの可視性保証）。</remarks>
+    /// <remarks>
+    /// ロック外の先判定で読み取るため volatile（二重チェックロックの可視性保証）。<br/>
+    /// ロードに失敗した場合（Native AOT）も立てて再試行しない（毎回の例外生成を避ける）。
+    /// </remarks>
     private static volatile bool s_applied;
 
     /// <summary>ColorView テーマの同期オブジェクト（並行した Flyout 表示からの二重追加を防止）。</summary>
@@ -77,7 +84,8 @@ internal static class ColorViewThemeManager
     /// 処理フロー:<br/>
     /// 1. 適用済みフラグを再確認し、適用済みなら何もしない。<br/>
     /// 2. アプリ側で明示的に ColorView テーマが指定されている場合はそれに従う。<br/>
-    /// 3. 未指定の場合のみ、内包テーマを一度だけ追加してフラグを立てる。
+    /// 3. 未指定の場合のみ、内包テーマを一度だけ追加してフラグを立てる。<br/>
+    /// 4. 追加に失敗した場合（Native AOT の実行時 XAML 解決不可）もフラグを立てて再試行しない。
     /// </remarks>
     internal static void ApplyOnceCore(Application app)
     {
@@ -92,9 +100,16 @@ internal static class ColorViewThemeManager
             return;
         }
 
-        // 未指定の場合のみ、内包テーマをデフォルトとして一度だけ追加する
-        // （パッケージの埋め込みリソースのため必ずロードできる。到達不能な null 検証は行わない）
-        app.Styles.Add((IStyle)AvaloniaXamlLoader.Load(ColorViewThemeUri, ColorViewThemeUri)!);
+        try
+        {
+            // 未指定の場合のみ、内包テーマをデフォルトとして一度だけ追加する
+            app.Styles.Add((IStyle)AvaloniaXamlLoader.Load(ColorViewThemeUri, ColorViewThemeUri)!);
+        }
+        catch (XamlLoadException)
+        {
+            // Native AOT では実行時の XAML 解決ができない（No precompiled XAML found）。
+            // ホスト（アプリの XAML）が ColorView テーマを取り込んでいる前提に任せ、再試行しない。
+        }
 
         s_applied = true;
     }

@@ -244,9 +244,12 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 公開ビルドでは以下の設定が有効になります。
 
-- **単一ファイル実行可能ファイル**（`PublishSingleFile`）
-- **ReadyToRun コンパイル**（起動時間短縮）
+- **Native AOT コンパイル**（マネージドコードを exe へネイティブコンパイル。`buildScript/AvaloniaUI_publish_aot.bat`）
 - **自己完結型配置**（ランタイム同梱・x64）
+- ネイティブライブラリ（SkiaSharp / OpenCvSharp 等）は exe の隣へ並べて配布
+
+> 旧方式の「単一ファイル実行（`PublishSingleFile` + ReadyToRun）」は
+> `buildScript/AvaloniaUI_publish_single.bat` に残しています（exe が約 229 MB になるため現在は使いません）。
 
 ---
 
@@ -255,20 +258,16 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 ### 4.1 ソースからのビルド
 
 ```powershell
-git clone https://github.com/your-org/SaveEvidence.git
-cd SaveEvidence
-dotnet publish src/app.AvaloniaUI/src/app.AvaloniaUI.csproj -c Release -o Publish
+ git clone https://github.com/your-org/SaveEvidence.git
+ cd SaveEvidence
+ dotnet publish src/app.AvaloniaUI/src/app.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishAot=true -o Publish
 ```
 
-`Publish/SaveEvidence.exe` を実行してください。
+`Publish/SaveEvidence.exe` を実行してください（隣のネイティブ DLL も必要です）。
 
-### 4.2 単一ファイル実行
+### 4.2 配布物の実行
 
-リリースビルドの出力は単一の `SaveEvidence.exe` です。任意のフォルダに配置して実行してください。
-
----
-
-## 5. 操作方法
+配布物は `SaveEvidence.exe` とネイティブ DLL のセットです（フォルダーごと配置してください）。
 
 ### 5.1 基本操作フロー
 

@@ -5,6 +5,9 @@ rem ============================================================
 rem  SaveEvidence (Avalonia UI) ビルドスクリプト
 rem  Release / 自己完結 / 単一 exe を生成する
 rem
+rem  ⚠ 現在の配布は Native AOT（AvaloniaUI_publish_aot.bat）です。
+rem    本スクリプトは AOT が使えない環境向けの代替です（exe が約 229 MB になります）。
+rem
 rem  方式: PublishSingleFile + SelfContained（csproj の Release 設定と同じ）
 rem  Avalonia は SkiaSharp のネイティブ DLL に依存するが、単一 exe では
 rem  自己展開（IncludeNativeLibrariesForSelfExtract）で同梱される。

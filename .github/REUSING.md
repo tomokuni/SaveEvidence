@@ -153,7 +153,7 @@ UI ごとに `buildScript/<名前>_publish_*.bat` を作成します。仕様は
 - 出力先は `release-config.json` の `output` と一致させる
 - 他のスクリプトを呼ぶ場合は、カレントディレクトリではなく `%~dp0` を基準にする（例: `call "%~dp0MewUI_publish_singleaot.bat"`）
 
-[buildScript/AvaloniaUI_publish_single.bat](../buildScript/AvaloniaUI_publish_single.bat) と [buildScript/MewUI_publish_aot.bat](../buildScript/MewUI_publish_aot.bat) が参考になります。
+[buildScript/AvaloniaUI_publish_aot.bat](../buildScript/AvaloniaUI_publish_aot.bat) と [buildScript/MewUI_publish_aot.bat](../buildScript/MewUI_publish_aot.bat) が参考になります。
 
 ### 5. `show-current-versions.ps1` を調整する
 

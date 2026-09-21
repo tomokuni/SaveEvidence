@@ -208,7 +208,7 @@ flowchart TB
 
 - **分類**: 内部静的ユーティリティ（`internal static class`）
 - **責務**: ColorView（カラーピッカー）テーマのアプリケーションへの自動適用（`EnsureApplied` / `EnsureAppliedCore` / `IsColorViewTheme`）
-- **特徴**: ホストの明示指定（StyleInclude）を優先し、未指定時のみ内包テーマを一度だけ適用する
+- **特徴**: ホストの明示指定（StyleInclude）を優先し、未指定時のみ内包テーマを一度だけ適用する。**Native AOT では実行時の XAML 解決ができないためロードに失敗するが、例外にはせずホストの XAML 取り込みに任せる**
 - **依存**: Avalonia.Application / AvaloniaXamlLoader
 
 ### 6.11 ColorPickerFlyoutFactory

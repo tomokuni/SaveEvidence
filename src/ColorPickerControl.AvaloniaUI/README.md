@@ -113,6 +113,10 @@ panel.Children.Add(colorPicker);
 - ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます。
 - 未指定の場合のみ、内包テーマがデフォルトとして自動適用されます（重複追加なし）。
 
+> **Native AOT のホストは `StyleInclude` をアプリの XAML に書いてください。**
+> 内包テーマは実行時に XAML を解決するため、AOT ではロードできません（`No precompiled XAML found`）。
+> その場合、本コントロールはテーマ適用を諦めてホストの取り込みに任せます（例外にはなりません）。
+
 ## 8. プラットフォーム
 
 - プラットフォーム非依存（Avalonia のみに依存）。
