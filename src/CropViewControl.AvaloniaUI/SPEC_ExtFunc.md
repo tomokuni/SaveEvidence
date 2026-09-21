@@ -86,7 +86,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | --- | --- | --- |
 | `ConfirmRequested` | `EventHandler<FadeMaskDragRectSelectionEventArgs>` | 選択確定要求（FadeMaskDragRectControl へ委譲）。 |
 | `CancelRequested` | `EventHandler?` | 選択キャンセル要求（FadeMaskDragRectControl へ委譲）。 |
-| `ZoomRequested` | `EventHandler<bool>` | ズーム要求（FadeMaskDragRectControl へ委譲）。 |
+| `ZoomRequested` | - | （廃止）領域選択オーバーレイ上のホイールは本コントロールがビューポートへ転送するため、ホストの配線は不要（`ZoomIn` / `ZoomOut` / `ZoomFit` / `ZoomPercent` は従来どおり使用できる） |
 | `LoupePositionMoved` | `EventHandler<FadeMaskDragRectPointEventArgs>` | ルーペ中心の更新通知（FadeMaskDragRectControl へ委譲）。 |
 | `ZoomChanged` | `EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（ZoomViewControl へ委譲）。 |
 | `ViewportChanged` | `EventHandler?` | ビューポート（パン・ズーム・表示状態）変化の通知（ZoomViewControl へ委譲）。 |
@@ -150,7 +150,7 @@ new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Or
 
 ## 5. イベント
 
-- `ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `LoupePositionMoved`: 領域選択の操作をホストへ通知します。
+- `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved`: 領域選択の操作をホストへ通知します。
 - `RectsChanged`: 外部提供矩形の変化を通知します（ルーペへの描画更新用フック）。
 
 ## 6. スレッド安全性

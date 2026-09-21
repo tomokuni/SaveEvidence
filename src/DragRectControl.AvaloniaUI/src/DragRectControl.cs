@@ -194,12 +194,22 @@ public sealed partial class DragRectControl : Control
     /// </remarks>
     public event EventHandler<SelectionRectEventArgs>? ViewportChanged;
 
-    /// <summary>Ctrl+ホイールによるズーム要求イベント（true = ズームイン / false = ズームアウト）。</summary>
+    /// <summary>Ctrl+ホイールによるズーム要求イベント（方向と発生位置）。</summary>
     /// <remarks>
-    /// 祖先 <see cref="ScrollViewer"/> が存在する場合（Crop モード等）に、<see cref="OnPointerWheelChanged"/> から発火する。<br/>
-    /// ズームの実処理（画像サイズ変更・ズーム率管理）は上位 AP が実施する（本コントロールは要求のみ通知）。<br/>
+    /// <see cref="OnPointerWheelChanged"/> から発火する（転送先の有無に関わらず常に通知する）。<br/>
+    /// ズームの実処理（ズーム率管理・表示の変更）は上位 AP が実施する（本コントロールは要求のみ通知）。<br/>
+    /// <see cref="DragRectZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
     /// </remarks>
-    public event EventHandler<bool>? ZoomRequested;
+    public event EventHandler<DragRectZoomRequest>? ZoomRequested;
+
+    /// <summary>通常ホイール（Ctrl なし）によるスクロール要求イベント（生の回転量・修飾キー・発生位置）。</summary>
+    /// <remarks>
+    /// <see cref="OnPointerWheelChanged"/> から発火する（<see cref="AttachScrollViewer"/> で連携 ScrollViewer を<br/>
+    /// 設定している場合はそちらをスクロールするため本イベントは発火しない）。<br/>
+    /// スクロール先（祖先 ScrollViewer・ズームビューポートのパン等）の決定は上位 AP が実施する。<br/>
+    /// 選択矩形はドメイン座標で不変のため、本操作は選択状態を変更しない（ビューの操作）。
+    /// </remarks>
+    public event EventHandler<DragRectScrollRequest>? ScrollRequested;
 
     /// <summary>Enter キーによる確定要求イベント（選択確定後のみ発火。ドラッグ中は発火しない）。</summary>
     /// <remarks>
@@ -424,34 +434,37 @@ public sealed partial class DragRectControl : Control
     /// <summary>マウスホイールでズーム・スクロールを操作する。</summary>
     /// <param name="e">ホイールイベント。</param>
     /// <remarks>
-    /// 祖先 <see cref="ScrollViewer"/>（<see cref="_attachedScrollViewer"/>）が存在する場合（Crop モード）のみ処理する:<br/>
-    /// - Ctrl + ホイール: <see cref="ZoomRequested"/> を発火する（ズームの実処理は上位 AP が実施）。<br/>
-    /// - 通常ホイール: 祖先 ScrollViewer をスクロールする（Shift 併用で横スクロール）。<br/>
-    /// ScrollViewer が存在しない場合（範囲選択（AreaSelect）等）は何もせず既定の動作に委ねる。<br/>
+    /// - Ctrl + ホイール: <see cref="ZoomRequested"/> を発火する（転送先の有無に関わらず常に通知する）。<br/>
+    /// - 通常ホイール: 連携 ScrollViewer（<see cref="AttachScrollViewer"/>）があればそれをスクロールし（Shift 併用で横）、<br/>
+    ///   無ければ <see cref="ScrollRequested"/> で上位 AP へ回転量を通知する（ズームビューポートのパン等）。<br/>
     /// ホイールはビュー（スクロール・ズーム率）の操作であり、選択矩形の状態を変えないため UI 層が担う。
     /// </remarks>
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
-        if (_attachedScrollViewer is not { } scrollViewer)
-        {
-            base.OnPointerWheelChanged(e);
-            return;
-        }
-
-        // Ctrl + ホイール: ズーム要求（ズームは上位 AP が実施）
+        // Ctrl + ホイール: ズーム要求（ズームは上位 AP が実施。発生位置はズーム中心に使える）
         if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
             Log.LogZoomRequested(e.Delta.Y > 0);
-            ZoomRequested?.Invoke(this, e.Delta.Y > 0);
+            ZoomRequested?.Invoke(this, new DragRectZoomRequest(e.Delta.Y > 0, e.GetPosition(this).ToEsPoint()));
             e.Handled = true;
             return;
         }
 
-        // 通常ホイール: 祖先 ScrollViewer をスクロール（Shift 併用で横スクロール）
-        double dx = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? e.Delta.Y * WheelScrollUnit : 0;
-        double dy = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 0 : e.Delta.Y * WheelScrollUnit;
-        scrollViewer.Offset = new Vector(scrollViewer.Offset.X + dx, scrollViewer.Offset.Y + dy);
-        Log.LogWheelScroll(dx, dy, scrollViewer.Offset.X, scrollViewer.Offset.Y);
+        var shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+
+        // 連携 ScrollViewer がある場合はスクロールを本コントロールで完結させる（回転量は DIP へ換算する）
+        if (_attachedScrollViewer is { } scrollViewer)
+        {
+            double dx = shift ? e.Delta.Y * WheelScrollUnit : e.Delta.X * WheelScrollUnit;
+            double dy = shift ? 0 : e.Delta.Y * WheelScrollUnit;
+            scrollViewer.Offset = new Vector(scrollViewer.Offset.X + dx, scrollViewer.Offset.Y + dy);
+            Log.LogWheelScroll(dx, dy, scrollViewer.Offset.X, scrollViewer.Offset.Y);
+            e.Handled = true;
+            return;
+        }
+
+        // 転送先が無い場合は回転量をそのまま通知する（スクロール量の解釈は転送先が単一所有する）
+        ScrollRequested?.Invoke(this, new DragRectScrollRequest(e.Delta.X, e.Delta.Y, shift, e.GetPosition(this).ToEsPoint()));
         e.Handled = true;
     }
 

@@ -716,11 +716,9 @@ public sealed partial class CapturePage : UserControl
 
         // 設定は MainWindow の Settings.PropertyChanged 購読で常に最新のため、ここでは同期しない
         // プレビュー状態（ScrollOffset / ZoomPercent）は CaptureSessionControl.AvaloniaUI が DragRect イベント / 表示状態から導出する
-        // Ctrl+ホイールによるズーム要求は CropViewControl へ委譲する（ズーム状態の整合・Crop 終了後の継続）
+        // 切出し中のホイール操作（Ctrl+ホイールのズーム・通常ホイールのパン）は CropViewControl が内部で完結する
         // CropSession は EsBitmap を受け取る（内部処理は EsBitmap に統一）。
-        _cropTask = _captureSessionControl.StartCropAsync(
-            CropView, _parentWindow!, srcBmp,
-            zoomIn => { if (zoomIn) CropView.ZoomIn(); else CropView.ZoomOut(); });
+        _cropTask = _captureSessionControl.StartCropAsync(CropView, _parentWindow!, srcBmp);
 
         if (_cropTask is null)
         {

@@ -430,4 +430,146 @@ public class ZoomViewControlTests
             Assert.Empty(logger.Messages);
         }
     }
+
+    // ====================================================================
+    // ホイール操作の公開 API（オーバーレイからの転送用）
+    // ====================================================================
+
+    /// <summary>ホイール操作を検証できるコントロールを生成する（画像 1000x500・ビューポート 400x200・100% 表示）。</summary>
+    /// <returns>コントロールと画像（画像の破棄は呼び出し側）。</returns>
+    private static (ZoomViewControl Control, EsUtil.Platform.Core.Imaging.EsBitmap Image) CreatePannableView()
+    {
+        var image = TestHelper.CreateBitmap(1000, 500, SKColors.Red);
+        var control = CreateLaidOut(400, 200);
+        control.Source = image;
+        control.ZoomPercent = 100;
+        return (control, image);
+    }
+
+    [Fact]
+    public void PanByWheel_縦の回転量で表示位置を移動する()
+    {
+        var (control, image) = CreatePannableView();
+        using (image)
+        {
+            var before = control.ImageRectViewport();
+
+            // 1 ノッチ = 48 DIP。実効倍率 1.0 のため表示位置が 48 上へ移動する
+            control.PanByWheel(new EsVector(0, 1), shift: false);
+
+            var after = control.ImageRectViewport();
+            Assert.Equal(before.Y - 48.0, after.Y);
+            Assert.Equal(before.X, after.X);
+        }
+    }
+
+    [Fact]
+    public void PanByWheel_ズーム中は実効倍率で換算する()
+    {
+        var (control, image) = CreatePannableView();
+        using (image)
+        {
+            control.ZoomPercent = 200;
+            var before = control.ImageRectViewport();
+
+            // 実効倍率 2.0 のため 48 DIP ÷ 2 = 24 コンテンツ座標＝画面では 48 DIP 上へ移動する
+            control.PanByWheel(new EsVector(0, 1), shift: false);
+
+            var after = control.ImageRectViewport();
+            Assert.Equal(before.Y - 48.0, after.Y);
+        }
+    }
+
+    [Fact]
+    public void PanByWheel_Shift併用は横へ移動する()
+    {
+        var (control, image) = CreatePannableView();
+        using (image)
+        {
+            var before = control.ImageRectViewport();
+
+            control.PanByWheel(new EsVector(0, 1), shift: true);
+
+            var after = control.ImageRectViewport();
+            Assert.Equal(before.X - 48.0, after.X);
+            Assert.Equal(before.Y, after.Y);
+        }
+    }
+
+    [Fact]
+    public void ZoomByWheel_ズームインはWheelFactor倍へ移動する()
+    {
+        var (control, image) = CreatePannableView();
+        using (image)
+        {
+            control.ZoomByWheel(zoomIn: true);
+
+            // 100% × WheelFactor（1.1）= 110%
+            Assert.Equal(110, control.ZoomPercent);
+        }
+    }
+
+    [Fact]
+    public void ZoomByWheel_ズームアウトはWheelFactor分の1へ移動する()
+    {
+        var (control, image) = CreatePannableView();
+        using (image)
+        {
+            control.ZoomByWheel(zoomIn: false);
+
+            // 100% ÷ WheelFactor（1.1）→ 四捨五入して 91%
+            Assert.Equal(91, control.ZoomPercent);
+        }
+    }
+
+    [Fact]
+    public void ZoomByWheel_指定した位置をズーム中心にする()
+    {
+        var (control, image) = CreatePannableView();
+        using (image)
+        {
+            // ビューポート座標 (0, 0) をズーム中心にする（原点が固定され、表示矩形の原点は動かない）
+            control.ZoomByWheel(zoomIn: true, new EsPoint(0, 0));
+
+            var after = control.ImageRectViewport();
+            Assert.Equal(110, control.ZoomPercent);
+            Assert.Equal(0.0, after.X, 6);
+            Assert.Equal(0.0, after.Y, 6);
+        }
+    }
+
+    [Fact]
+    public void ZoomByWheel_位置を省略するとビューポート中心をズーム中心にする()
+    {
+        var (control, image) = CreatePannableView();
+        using (image)
+        {
+            var before = control.ImageRectViewport();
+
+            control.ZoomByWheel(zoomIn: true);
+
+            // ビューポート中心 (200, 100) のドメイン座標が不変に保たれる
+            // （中心を固定して 1.1 倍するため、表示矩形の原点は中心から逆算した -20, -10 へ移動する）
+            var after = control.ImageRectViewport();
+            Assert.Equal(110, control.ZoomPercent);
+            Assert.Equal(before.X - 20.0, after.X, 6);
+            Assert.Equal(before.Y - 10.0, after.Y, 6);
+        }
+    }
+
+    [Fact]
+    public void ZoomByWheel_移動できない場合はズーム率を維持する()
+    {
+        var (control, image) = CreatePannableView();
+        using (image)
+        {
+            control.ZoomPercent = ZoomConfig.Default.MaxZoom;
+
+            control.ZoomByWheel(zoomIn: true);
+
+            // 上限では移動しない（Fit へも移行しない）
+            Assert.Equal(ZoomConfig.Default.MaxZoom, control.ZoomPercent);
+            Assert.False(control.IsFit);
+        }
+    }
 }

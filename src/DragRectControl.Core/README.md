@@ -31,6 +31,7 @@ UI 層（公開イベントへ転送）
 | `DragHandle` | public | ドラッグハンドル種別（8 方向 + `Move`） |
 | `DragRectInteractionState` | public | 対話状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging） |
 | `DragRectSnapshot` | public | 通知時点の状態の値オブジェクト（`selectionRect` は `EsRect`、`mousePosition` は `EsPoint`） |
+| `DragRectScrollRequest` / `DragRectZoomRequest` | public | ホイール操作の要求（生の回転量・修飾キー・発生位置）。スクロール先とズーム率の決定は転送先（ホスト）が担う |
 | `DragRectOptions` | public | 設定の値オブジェクト（外観 10 項目 + 対話パラメータ 3 項目）。既定値とフォントサイズの補正を単一所有する |
 | `DragRectSession` | internal | **状態管理クラス**。入力の通知を受けて状態を更新し、効果（`DragRectFeedback`）と通知（`DragRectNotice`）を返す |
 | `DragRectNotice` / `DragRectNoticeKind` | internal | コアから UI 層への通知（種別・通知座標・スナップショット） |

@@ -66,7 +66,8 @@ grid.Add(dragRect);     // 選択オーバーレイ（上。入力を受け取�
 | 矢印キー | nudge（1 ドメインピクセル単位の微調整。カーソルを非表示にして十字マーカーを表示） |
 | Enter | 確定要求（`ConfirmRequested`） |
 | Escape | キャンセル要求（`CancelRequested`） |
-| Ctrl + ホイール | ズーム要求（`ZoomRequested`） |
+| Ctrl + ホイール | ズーム要求（`ZoomRequested`。方向と発生位置） |
+| ホイール（Ctrl なし） | スクロール要求（`ScrollRequested`。回転量・Shift・発生位置。スクロール先はホストが決める） |
 
 矢印キーの nudge は本コントロールにフォーカスがある場合のみ動作します（マウス押下時に自動でフォーカスを取得します）。
 
@@ -120,7 +121,7 @@ grid.Add(dragRect);     // 選択オーバーレイ（上。入力を受け取�
 ## イベント
 
 `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` /
-`MouseClicked` / `MouseDoubleClicked` / `MouseMoved` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` /
+`MouseClicked` / `MouseDoubleClicked` / `MouseMoved` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ScrollRequested` /
 `ConfirmRequested` / `CancelRequested`
 
 ## テスト

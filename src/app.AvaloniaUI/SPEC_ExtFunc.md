@@ -245,6 +245,7 @@
 - **拡大率表示**: `CropView.ZoomChanged` イベントの `e.ZoomPercent` から `MainViewModel.ZoomDisplayText`（例: "120%"）を生成し、ステータスバーがバインディングで表示する。Fit 中も実効倍率の % を表示する（「自動」表記なし）
 - **座標表示**: `CapturePage.OnImagePointerMoved` が `CropView.ImageRectViewport()` / `CropView.ViewportToContent()`（`ViewportToContentDomain` ヘルパー経由）でポインタのドメイン座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `-`）
 - **フライアウト選択肢**: 拡大率ボタンのクリックで表示されるフライアウト（0=自動 + 固定倍率 10〜500% の 13 段階）から選択し、`CropView.ZoomPercent`（`MainViewModel.ZoomPercent`）を設定する（`CapturePage.OnZoomFlyoutItemClick`）
+- **切り出し中のズーム・パン**: 切り出し中は選択オーバーレイがプレビューを覆うため、ホイールは `CropViewControl` が内部でビューポートへ転送する（Ctrl+ホイール = カーソル位置を中心にズーム / 通常ホイール = パン / Shift+ホイール = 横パン）。ステータスバーの ⊕⊖ ボタン・スライダ・`Ctrl +` / `Ctrl -` は切り出し中も使用できる（選択矩形はドメイン座標で不変のため維持される）。スクロールバーはオーバーレイの下になり掴めないため、パンはホイールで行う
 
 詳細仕様（遷移ルール・表示方式・公開 API）は `ZoomViewControl` の `SPEC_ExtFunc.md` を参照してください。
 

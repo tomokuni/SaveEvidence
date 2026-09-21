@@ -42,7 +42,7 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
   - 破線種類（`OverlayLineStyle`）: `Solid` / `Dashed` / `Dotted`
 - **座標変換**: `ContentToViewport` / `ViewportToContent`（ドメイン ↔ ビューポート座標）
 - **選択モード**: `SelectionMode`（`FadeMaskDragRectMode`）で切替（既定 `Crop`）
-- **イベント**: `ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `LoupePositionMoved`（FadeMaskDragRectControl へ委譲）/ `RectsChanged`（外部矩形の変化通知）
+- **イベント**: `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved`（FadeMaskDragRectControl へ委譲）/ `RectsChanged`（外部矩形の変化通知）。領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送する
 
 ## 3. システム要件
 

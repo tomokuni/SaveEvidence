@@ -29,16 +29,14 @@ namespace Estable.MewUI.CaptureSession;
 /// <b>テーマ</b>: 市松模様の下地色はテーマに依存するため、ホストが <see cref="RefreshAppearance"/> で更新する<br/>
 /// （テーマ変更の購読はホストが行う。本クラスはテーマの通知元を知らない）。<br/>
 /// <br/>
-/// <b>未対応</b>: 切り出し中のプレビューのズーム操作（Ctrl+ホイール）は、オーバーレイが入力を占有するため無効になる。
+/// <b>外観</b>: 枠線・ハンドル・十字マーカー・座標ラベルは <see cref="CaptureSettings"/> に従う（Avalonia 版の<br/>
+/// <c>CropSession</c> と同じマッピング）。白枠などの固定値は持たない（設定を変えると反映されなくなるため）。<br/>
+/// <br/>
+/// <b>ズーム・パン</b>: 切り出し中もホイール（Ctrl = ズーム / 通常 = パン）でプレビューを操作できる<br/>
+/// （オーバーレイ上のホイールを <see cref="CropViewControl.PanByWheel"/> / <see cref="CropViewControl.ZoomByWheel"/> へ転送する）。
 /// </remarks>
 public sealed class CropOverlay
 {
-    /// <summary>切り出し中の選択枠線の太さ（DIP）。</summary>
-    private const double BorderThickness = 2;
-
-    /// <summary>切り出し中の選択枠線の色（白）。</summary>
-    private static readonly DrawingColor s_borderColor = DrawingColor.FromArgb(255, 255, 255, 255);
-
     /// <summary>切り出し中の暗転の色（黒 40%）。</summary>
     private static readonly DrawingColor s_overlayColor = DrawingColor.FromArgb(102, 0, 0, 0);
 
@@ -98,12 +96,36 @@ public sealed class CropOverlay
         {
             _selector.SetLoupeSource(_target.CurrentImage);
             UpdatePort();
+
+            // 画像の差し替えで座標系（元画像ピクセル）が変わるため、選択を破棄して残留を防ぐ。
+            // ズーム・パン（ビューポートの変化）では座標系が変わらないため、選択は維持する。
+            if (IsActive)
+            {
+                _selector.ClearSelection();
+            }
         };
+
+        // 選択オーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する。
+        // オーバーレイは切り出し中にプレビューを覆って入力を占有するため、ホイールはオーバーレイだけが受け取る。
+        // 回転量から移動量への換算とズーム率の決定は、ズームビューポートが単一所有する。
+        _selector.ScrollRequested += (_, request) =>
+            _view.PanByWheel(new EsVector(request.DeltaX, request.DeltaY), request.Shift);
+        _selector.ZoomRequested += (_, request) =>
+            _view.ZoomByWheel(request.ZoomIn, ToViewportPosition(request.Position));
 
         RefreshAppearance(themeBackground);
         host.Add(_selector);
         UpdatePort();
     }
+
+    /// <summary>選択オーバーレイのローカル座標をビューポート（ズームビュー）のローカル座標へ変換する。</summary>
+    /// <param name="overlayPosition">オーバーレイのローカル座標（DIP）。</param>
+    /// <returns>ビューポートのローカル座標（DIP）。</returns>
+    /// <remarks>
+    /// 両者は通常同一領域を占める（重ね合わせ）が、レイアウトの差に依存しないようビジュアルツリーの変換に委譲する。
+    /// </remarks>
+    private EsPoint ToViewportPosition(EsPoint overlayPosition)
+        => _view.TranslatePositionFrom(_selector, overlayPosition);
 
     /// <summary>切り出し中かどうかを取得する。</summary>
     /// <value>切り出しセッションが進行中の場合は true。</value>
@@ -219,7 +241,8 @@ public sealed class CropOverlay
     /// <summary>表示中のズーム・パンに合わせて座標変換ポートを更新する。</summary>
     /// <remarks>
     /// 画像矩形（ビューポート座標）と実効倍率（表示サイズ ÷ 画像幅）から、ローカル DIP ⇔ 画像ピクセルを<br/>
-    /// 変換するポートを組み立てる。ズーム・パンで表示が変わるたびに呼び直す（ポートは都度生成する）。
+    /// 変換するポートを組み立てる。ズーム・パンで表示が変わるたびに呼び直す（ポートは都度生成する）。<br/>
+    /// ドメイン座標（元画像ピクセル）はズーム・パンで不変のため、選択矩形は維持される（オーバーレイの描画位置のみが追従する）。
     /// </remarks>
     private void UpdatePort()
     {
@@ -234,36 +257,36 @@ public sealed class CropOverlay
             p => new EsPoint((p.X - rect.X) / scale, (p.Y - rect.Y) / scale),
             p => new EsPoint(p.X * scale + rect.X, p.Y * scale + rect.Y),
             () => image is null ? null : new EsSize(image.Width, image.Height)));
-
-        // 画像差し替えで座標系が変わるため、選択を破棄して残留を防ぐ
-        if (IsActive)
-        {
-            _selector.ClearSelection();
-        }
     }
 
     /// <summary>設定の外観を選択コントロールへ反映する。</summary>
-    /// <remarks>ルーペの外観（拡大率・サイズ・色）は <see cref="CaptureOverlay.ApplyLoupe"/> が単一所有する。</remarks>
+    /// <remarks>
+    /// 設定の対応は Avalonia 版の <c>CropSession</c>（<c>ToFadeMaskDragRectSettings</c>）と同じにする（UI ごとに見た目がずれないようにする）。<br/>
+    /// ルーペの外観（拡大率・サイズ・色）は <see cref="CaptureOverlay.ApplyLoupe"/> が単一所有する。
+    /// </remarks>
     private void ApplyAppearance()
     {
         var s = _settings;
 
         _selector.OverlayColor = s.OverlayColor ?? s_overlayColor;
 
-        // プレビュー上の切り出しは白枠で統一する（暗い画像でも視認できるようにする）
-        _selector.BorderColor = s_borderColor;
-        _selector.BorderThickness = BorderThickness;
+        // 枠線・ハンドルは設定に従う（Avalonia 版と同じ。既定は DarkGray / 2.0）
+        _selector.BorderColor = s.BorderColor ?? DrawingColor.DarkGray;
+        _selector.BorderThickness = s.BorderThickness!.Value;
 
         _selector.LoupeOffset = s.LoupeOffset!.Value;
-        // 指定する項目だけを差し替える（現在値を維持する。枠線・十字マーカー・座標ラベルの色は本メソッドの対象外）
         _selector.DragRect.Options = _selector.DragRect.Options with
         {
-            HandleColor = s_borderColor,
+            HandleColor = s.HandleColor ?? DrawingColor.White,
             HandleSize = s.HandleSize!.Value,
             HandleHitRadius = s.HandleHitRadius!.Value,
             MinSelectionSize = s.MinSelectionSize!.Value,
             ClampToDomainBounds = s.ClampToDomainBounds!.Value,
+            MarkerColor = s.MarkerColor ?? DrawingColor.White,
+            MarkerLength = s.MarkerLength!.Value,
             ShowCoordLabel = s.ShowCoordLabel!.Value,
+            CoordLabelColor = s.CoordLabelColor ?? DrawingColor.White,
+            CoordLabelBackgroundColor = s.CoordLabelBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
             CoordLabelFontSize = s.CoordLabelFontSize!.Value,
         };
         CaptureOverlay.ApplyLoupe(_selector, s, _themeBackground);

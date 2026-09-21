@@ -36,9 +36,6 @@ internal sealed class ZoomableView : Panel
     /// <summary>スクロールバーの太さ（DIP）。</summary>
     private const double ScrollBarThickness = 10;
 
-    /// <summary>ホイールパンの 1 ノッチあたりの移動量（DIP）。</summary>
-    private const double WheelScrollUnit = 48.0;
-
     /// <summary>画像表示コントロール（RenderTransform でズーム・パン）。</summary>
     private readonly Image _image = new()
     {
@@ -602,8 +599,8 @@ internal sealed class ZoomableView : Panel
         // 通常ホイール: パン（Shift 併用で横スクロール）
         var isShift = (e.KeyModifiers & KeyModifiers.Shift) != 0;
         var delta = e.Delta;
-        var dx = isShift ? delta.Y * WheelScrollUnit : delta.X * WheelScrollUnit;
-        var dy = isShift ? 0 : delta.Y * WheelScrollUnit;
+        var dx = isShift ? delta.Y * ZoomMath.WheelScrollUnit : delta.X * ZoomMath.WheelScrollUnit;
+        var dy = isShift ? 0 : delta.Y * ZoomMath.WheelScrollUnit;
         var scale = EffectiveScale;
         PanBy(new Vector(dx / scale, dy / scale));
         e.Handled = true;

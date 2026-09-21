@@ -100,7 +100,7 @@ flowchart TB
     end
 
     AP -->|"Mode / AppearanceSettings / SetCoordinateTransform / イベント購読"| Ctl
-    Ctl -->|"ConfirmRequested / CancelRequested / ZoomRequested"| AP
+    Ctl -->|"ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested"| AP
     Ctl --> DR
     Ctl --> FM
     Ctl --> LC
@@ -202,4 +202,4 @@ sequenceDiagram
 | `LoupePositionMoved` | `IsVisible = true` + `CenterPoint` 更新 | Loupe + ホスト通知（`LoupePositionMoved`） |
 | `ConfirmRequested` | ホストへ中継 | ホスト |
 | `CancelRequested` | ホストへ中継 | ホスト |
-| `ZoomRequested` | ホストへ中継 | ホスト |
+| `ZoomRequested` / `ScrollRequested` | ホストへ中継 | ホスト |

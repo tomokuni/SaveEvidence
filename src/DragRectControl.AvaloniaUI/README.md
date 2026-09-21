@@ -38,7 +38,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - Avalonia Binding 対応の StyledProperty
 - ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
 - **閉区間描画（始点・終点を含む）**: 選択枠・ハンドルは終点（Right/Bottom）に +1 して DIP 変換（FadeMask の非暗転領域・キャプチャの閉区間 +1 と一致）
-- **ホイール操作（祖先 ScrollViewer が存在する Crop モード）**: Ctrl+ホイールで `ZoomRequested` / 通常ホイールで ScrollViewer をスクロール（Shift 併用で横スクロール）
+- **ホイール操作**: Ctrl+ホイールで `ZoomRequested`（方向と発生位置） / 通常ホイールで `ScrollRequested`（生の回転量）を発火する。連携 ScrollViewer（`AttachScrollViewer`）がある場合は本コントロールがスクロールし、ない場合は上位 AP がスクロール先を決める
 - **薄い UI 層**: 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの状態管理クラス（`DragRectSession`）が担う。本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う
 
 ## 3. システム要件

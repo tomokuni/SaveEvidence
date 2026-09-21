@@ -102,7 +102,8 @@ SelectionOverlay.SetCoordinateTransform(CoordTransform.DomainScale(() => scaling
 // イベント（配線は内部で完結。確定・キャンセル・ズーム要求のみ購読）
 SelectionOverlay.ConfirmRequested += (_, e) => OnConfirm(e.Rect);
 SelectionOverlay.CancelRequested += (_, _) => OnCancel();
-SelectionOverlay.ZoomRequested += (_, zoomIn) => OnZoom(zoomIn);
+SelectionOverlay.ZoomRequested += (_, request) => OnZoom(request.ZoomIn, request.Position);
+SelectionOverlay.ScrollRequested += (_, request) => OnScroll(request.DeltaX, request.DeltaY, request.Shift);
 
 // ルーペソース（元画像 / 仮想スクリーン Bitmap）
 SelectionOverlay.Loupe.Source = bitmap;

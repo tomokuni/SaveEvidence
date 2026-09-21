@@ -18,6 +18,13 @@ namespace Estable.ZoomView;
 /// </remarks>
 internal static class ZoomMath
 {
+    /// <summary>ホイール 1 ノッチあたりの移動量（DIP）。</summary>
+    /// <remarks>
+    /// ホイール回転量からパン量への換算は両 UI で同じ値でなければならないため、本クラスが単一所有する。<br/>
+    /// UI 層は回転量（ノッチ数）に本値を乗じてから実効倍率で除し、コンテンツ座標の移動量を得る。
+    /// </remarks>
+    internal const double WheelScrollUnit = 48.0;
+
     /// <summary>Fit 表示時の実効スケール（Uniform）を計算する。</summary>
     /// <param name="imageSize">元画像サイズ（ピクセル）。</param>
     /// <param name="viewportSize">ビューポートサイズ（DIP）。</param>

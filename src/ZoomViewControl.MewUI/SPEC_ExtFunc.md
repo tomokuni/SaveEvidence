@@ -41,6 +41,8 @@
 | `SetZoom(double zoomPercent, EsPoint? center = null)` | ズーム率を設定する。0 以下は Fit。`center` を省略するとビューポート中心を維持する |
 | `SetOffset(EsVector offset)` | パン位置を設定する（スクロール範囲へクランプ。同値なら何もしない） |
 | `PanBy(EsVector delta)` | パン位置を移動量だけ加算する |
+| `PanByWheel(EsVector delta, bool shift)` | ホイールの回転量（X/Y）でパンする（1 ノッチ = 48 DIP を実効倍率で除す。Shift 併用は縦回転を横パン） |
+| `ZoomByWheel(bool zoomIn, EsPoint? pointerPosition = null)` | Ctrl+ホイールのズームを適用する（`pointerPosition` はズーム中心。null はビューポート中心） |
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP）。画像未設定時は空の矩形 |
 | `DisplaySize()` | 画像の表示サイズ（ビューポート座標・DIP） |
 | `ViewportToContent(EsPoint)` | ビューポート座標 → コンテンツ座標（オフセット基準） |

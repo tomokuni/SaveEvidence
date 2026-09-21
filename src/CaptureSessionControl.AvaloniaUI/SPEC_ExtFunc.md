@@ -167,7 +167,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 | --- | --- | --- |
 | コンストラクタ | `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)` | インスタンスを生成。設定値が許容範囲外なら `ArgumentOutOfRangeException` |
 | `StartCaptureAsync` | `Task<CaptureResult?> StartCaptureAsync(CaptureType type, Window owner)` | 選択キャプチャを開始。実行中は null / キャンセル時は 0x0 の空結果 |
-| `StartCropAsync` | `Task<PixelRect?> StartCropAsync(CropViewControl cropView, Window hostWindow, EsBitmap sourceImage, Action<bool>? zoomRequestHandler = null)` | 切出しを開始。戻り値は元画像上の論理座標（**ドメイン座標系** = 元画像ピクセル）。実行中は null / キャンセル時は 0x0 の空 `PixelRect`。`zoomRequestHandler` は Ctrl+ホイールによるズーム要求（true = ズームイン / false = ズームアウト）を上位 AP へ通知する（null の場合はズーム操作なし） |
+| `StartCropAsync` | `Task<PixelRect?> StartCropAsync(CropViewControl cropView, Window hostWindow, EsBitmap sourceImage)` | 切出しを開始。戻り値は元画像上の論理座標（**ドメイン座標系** = 元画像ピクセル）。実行中は null / キャンセル時は 0x0 の空 `PixelRect`。Crop 中のズーム・パン（ホイール）は `cropView` が内部で完結するため、上位のズーム配線は不要（`CropViewControl.ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` は従来どおり使用できる） |
 | `Cancel` | `void Cancel()` | 進行中セッションをキャンセル（Capture: オーバーレイを閉じる / Crop: 0x0 で完了） |
 | `Confirm` | `void Confirm()` | Crop を現在の選択矩形で確定（Enter キー相当。FadeMaskDragRectControl.RequestConfirm に委譲） |
 | `NotifyCropViewportChanged` | `void NotifyCropViewportChanged()` | 実行中の Crop セッションへビューポート（パン・ズーム・表示サイズ）の変化を通知。ビューポート実装に依存せず、ホストがビューポート変化を検知した際に中継する（暗転マスク・選択枠・ルーペの追従）。Crop 未実行時は何もしない |
@@ -340,7 +340,7 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
    - DragRect にはプレビューの ScrollViewer を `AttachScrollViewer` で明示注入（スクロール・ズーム検知 + ホイール操作）
    - ビューポート変化の通知は `NotifyCropViewportChanged` に一本化（ScrollViewer 連携の `ScrollChanged` も、ScrollViewer 以外のビューポート実装（RenderTransform ベースのパン・ズーム等）のホスト通知も、同じ経路で再描画・ルーペ位置再計算を行う）
 4. カーソル上書き抑止（Crop 中の十字カーソル維持）
-5. マウスホイール操作（Crop 中）: Ctrl+ホイールで `ZoomRequested` → `zoomRequestHandler` に委譲 / 通常ホイールで祖先 ScrollViewer をスクロール
+5. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポートへ転送する（Ctrl+ホイール = ズーム / 通常ホイール = パン）
 6. **Crop 中の設定変更（`AppearanceSettings` setter）**: `CropSession.ApplySettings` で外観・クリップ設定を再適用（選択状態・ルーペ位置は維持）。キャプチャセッションはモーダル全画面のため対象外
 7. **矩形外クリック・選択キャンセル**: 複合コントロールが `SelectionStarted` / `SelectionCancelled` を購読し、FadeMask の選択状態（`LogicalSelectionRect` / `HasSelection`）をクリアして全面暗転（穴あけなし）に戻す（配線は複合コントロール内で完結）
 8. 確定（`ConfirmRequested` → `ExecuteCropForSize`）→ 論理 Rect を `PixelRect` で返却

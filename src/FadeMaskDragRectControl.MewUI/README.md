@@ -38,7 +38,8 @@ selection.SetLoupePosition(new EsPoint(120, 340));
 // 確定・キャンセル・ズーム要求を購読する
 selection.ConfirmRequested += (_, e) => Capture(e.SelectionRect);
 selection.CancelRequested += (_, _) => Cancel();
-selection.ZoomRequested += (_, zoomIn) => Zoom(zoomIn);
+selection.ZoomRequested += (_, request) => Zoom(request.ZoomIn, request.Position);
+selection.ScrollRequested += (_, request) => Scroll(request.DeltaX, request.DeltaY, request.Shift);
 ```
 
 画像の上へ重ねる場合は、親の `Grid` へ追加します（本コントロールが選択の入力を受け取ります）。
@@ -82,7 +83,7 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 
 ## イベント
 
-`ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `LoupePositionMoved`
+`ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested` / `LoupePositionMoved`
 
 ## Avalonia 版との違い
 

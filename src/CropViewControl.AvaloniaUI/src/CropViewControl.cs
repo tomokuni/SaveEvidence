@@ -11,6 +11,7 @@ using Estable.AvaloniaUI.ZoomView;
 using Estable.CropView;
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 
 namespace Estable.AvaloniaUI.CropView;
@@ -63,7 +64,8 @@ public sealed partial class CropViewControl : Panel
     /// <remarks>
     /// 子コントロール（<see cref="ZoomViewControl"/> / <see cref="FadeMaskDragRectControl"/> / 矩形オーバーレイ）を生成して配置し、<br/>
     /// ビューポート変化（パン・ズーム）を配線する。<br/>
-    /// ズーム要求（Ctrl+ホイール）・ズーム率の遷移は <see cref="ZoomViewControl"/> が自己完結する。
+    /// ズーム要求（Ctrl+ホイール）・ズーム率の遷移は <see cref="ZoomViewControl"/> が自己完結する。<br/>
+    /// 領域選択オーバーレイ上のホイールは本コントロールがビューポートへ転送する（Crop 中もパン・ズームを有効にする）。
     /// </remarks>
     public CropViewControl()
     {
@@ -80,12 +82,30 @@ public sealed partial class CropViewControl : Panel
             UpdateRectOverlay();
         };
 
+        // 領域選択オーバーレイ上のホイールをビューポートへ転送する。
+        // オーバーレイは Crop 中に画像の上を覆って入力を占有するため、ホイールはオーバーレイだけが受け取る
+        // （ビューポートは兄弟要素のため、オーバーレイが処理済みにしたイベントは届かない）。
+        // 回転量から移動量への換算とズーム率の決定はビューポート（ZoomViewControl）が単一所有する。
+        _selectionOverlay.ScrollRequested += (_, request) =>
+            _zoomView.PanByWheel(new Vector(request.DeltaX, request.DeltaY), request.Shift);
+        _selectionOverlay.ZoomRequested += (_, request) =>
+            _zoomView.ZoomByWheel(request.ZoomIn, ToViewportPosition(request.Position));
+
         // ルーペ描画完了時に、外部提供矩形をルーペ Bitmap へ描画する
         _selectionOverlay.LoupeRendered += OnLoupeRendered;
 
         // 既定は Crop（プレビュー内の切出し）。ホストが SelectionMode で変更できる
         _selectionOverlay.Mode = FadeMaskDragRectMode.Crop;
     }
+
+    /// <summary>領域選択オーバーレイのローカル座標をビューポート（ズームビュー）のローカル座標へ変換する。</summary>
+    /// <param name="overlayPosition">オーバーレイのローカル座標（DIP）。</param>
+    /// <returns>ビューポートのローカル座標（DIP）。同一ビジュアルツリーに無い場合は null（ズーム中心はビューポート中心になる）。</returns>
+    /// <remarks>
+    /// 両者は通常同一領域を占める（重ね合わせ）が、レイアウトの差に依存しないようビジュアルツリーの変換に委譲する。
+    /// </remarks>
+    private Point? ToViewportPosition(EsPoint overlayPosition)
+        => _selectionOverlay.TranslatePoint(overlayPosition.ToAvaloniaPoint(), _zoomView);
 
     // ====================================================================
     // 公開 API: 選択モード
@@ -355,21 +375,7 @@ public sealed partial class CropViewControl : Panel
         remove => _selectionOverlay.CancelRequested -= value;
     }
 
-    /// <summary>ズーム要求イベント（<see cref="FadeMaskDragRectControl.ZoomRequested"/> へ委譲）。</summary>
-    public event EventHandler<bool>? ZoomRequested
-    {
-        add => _selectionOverlay.ZoomRequested += value;
-        remove => _selectionOverlay.ZoomRequested -= value;
-    }
-
-    /// <summary>ルーペ中心の更新イベント（<see cref="FadeMaskDragRectControl.LoupePositionMoved"/> へ委譲）。</summary>
-    public event EventHandler<FadeMaskDragRectPointEventArgs>? LoupePositionMoved
-    {
-        add => _selectionOverlay.LoupePositionMoved += value;
-        remove => _selectionOverlay.LoupePositionMoved -= value;
-    }
-
-    // ====================================================================
+    /// <summary>==========================================================
     // 矩形オーバーレイ（外部提供矩形の描画）
     // ====================================================================
 

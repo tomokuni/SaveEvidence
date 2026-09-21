@@ -213,4 +213,138 @@ public class ZoomViewControlTests
         Assert.Equal(0.0, rect.X);
         Assert.Equal(50.0, rect.Y);
     }
+
+    // ====================================================================
+    // ホイール操作の公開 API（オーバーレイからの転送用）
+    // ====================================================================
+
+    /// <summary>パン可能な状態（100% 表示。画像 1000x500・ビューポート 400x200）のコントロールを生成する。</summary>
+    /// <returns>100% 表示にしたコントロール。</returns>
+    private static ZoomViewControl CreatePannableView()
+    {
+        var view = CreateView();
+        view.ZoomPercent = 100;
+        return view;
+    }
+
+    [AvaloniaFact]
+    public void PanByWheel_縦の回転量で表示位置を移動する()
+    {
+        var view = CreatePannableView();
+        var before = view.ImageRectViewport();
+
+        // 1 ノッチ = 48 DIP。実効倍率 1.0 のため表示位置が 48 上へ移動する
+        view.PanByWheel(new Vector(0, 1), shift: false);
+
+        var after = view.ImageRectViewport();
+        Assert.Equal(before.Y - 48.0, after.Y);
+        Assert.Equal(before.X, after.X);
+    }
+
+    [AvaloniaFact]
+    public void PanByWheel_ズーム中は実効倍率で換算する()
+    {
+        var view = CreatePannableView();
+        view.ZoomPercent = 200;
+        var before = view.ImageRectViewport();
+
+        // 実効倍率 2.0 のため 48 DIP ÷ 2 = 24 コンテンツ座標＝画面では 48 DIP 上へ移動する（画面上の移動量は一定）
+        view.PanByWheel(new Vector(0, 1), shift: false);
+
+        var after = view.ImageRectViewport();
+        Assert.Equal(before.Y - 48.0, after.Y);
+    }
+
+    [AvaloniaFact]
+    public void PanByWheel_Shift併用は横へ移動する()
+    {
+        var view = CreatePannableView();
+        var before = view.ImageRectViewport();
+
+        view.PanByWheel(new Vector(0, 1), shift: true);
+
+        var after = view.ImageRectViewport();
+        Assert.Equal(before.X - 48.0, after.X);
+        Assert.Equal(before.Y, after.Y);
+    }
+
+    [AvaloniaFact]
+    public void PanByWheel_Shiftなしの横回転も横へ移動する()
+    {
+        var view = CreatePannableView();
+        var before = view.ImageRectViewport();
+
+        // 横 2 ノッチ = 96 DIP
+        view.PanByWheel(new Vector(2, 0), shift: false);
+
+        var after = view.ImageRectViewport();
+        Assert.Equal(before.X - 96.0, after.X);
+        Assert.Equal(before.Y, after.Y);
+    }
+
+    [AvaloniaFact]
+    public void ZoomByWheel_ズームインはWheelFactor倍へ移動する()
+    {
+        var view = CreatePannableView();
+
+        view.ZoomByWheel(zoomIn: true);
+
+        // 100% × WheelFactor（1.1）= 110%
+        Assert.Equal(110, view.ZoomPercent);
+    }
+
+    [AvaloniaFact]
+    public void ZoomByWheel_ズームアウトはWheelFactor分の1へ移動する()
+    {
+        var view = CreatePannableView();
+
+        view.ZoomByWheel(zoomIn: false);
+
+        // 100% ÷ WheelFactor（1.1）→ 四捨五入して 91%
+        Assert.Equal(91, view.ZoomPercent);
+    }
+
+    [AvaloniaFact]
+    public void ZoomByWheel_指定した位置をズーム中心にする()
+    {
+        var view = CreatePannableView();
+        var before = view.ImageRectViewport();
+
+        // ビューポート座標 (0, 0) をズーム中心にする（左下を中心に拡大するため原点が左上へ寄る）
+        view.ZoomByWheel(zoomIn: true, new Point(0, 0));
+
+        var after = view.ImageRectViewport();
+        Assert.Equal(110, view.ZoomPercent);
+        // 中心 (0, 0) のドメイン座標が不変であることを、位置の移動量で検証する
+        Assert.Equal(0.0, after.X);
+        Assert.Equal(0.0, after.Y - before.Y);
+    }
+
+    [AvaloniaFact]
+    public void ZoomByWheel_位置を省略するとビューポート中心をズーム中心にする()
+    {
+        var view = CreatePannableView();
+        var before = view.ImageRectViewport();
+
+        view.ZoomByWheel(zoomIn: true);
+
+        // ビューポート中心 (200, 100) のドメイン座標が不変に保たれる
+        var after = view.ImageRectViewport();
+        Assert.Equal(110, view.ZoomPercent);
+        Assert.Equal(before.X - 20.0, after.X, 6);
+        Assert.Equal(before.Y - 10.0, after.Y, 6);
+    }
+
+    [AvaloniaFact]
+    public void ZoomByWheel_移動できない場合はズーム率を維持する()
+    {
+        var view = CreatePannableView();
+        view.ZoomPercent = view.MaxZoom;
+
+        view.ZoomByWheel(zoomIn: true);
+
+        // 上限では移動しない（Fit へも移行しない）
+        Assert.Equal(view.MaxZoom, view.ZoomPercent);
+        Assert.False(view.IsFit);
+    }
 }

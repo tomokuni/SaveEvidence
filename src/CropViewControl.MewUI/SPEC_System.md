@@ -192,3 +192,4 @@ sequenceDiagram
 | 選択状態の公開 API | `FadeMaskDragRectControl.MewUI` が担う（本コントロールは矩形オーバーレイのみ） |
 | ルーペへの矩形描画 | `LoupeControl.MewUI` の描画完了イベント（`Rendered`）でキャンバスへ打ち込める（選択矩形の破線は `FadeMaskDragRectControl.MewUI` が実装済み） |
 | スクロールバー連携 | `AttachScrollViewer` 相当（ズームビューのスクロールバー実装に依存する） |
+| 選択オーバーレイ上のホイール | ホストが `PanByWheel` / `ZoomByWheel` へ転送する（本コントロールはオーバーレイを含まないため） |

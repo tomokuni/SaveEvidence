@@ -131,11 +131,11 @@ flowchart TB
   - セッションが返す効果（カーソル操作・フォーカス・カーソル形状・再描画）を適用する（効果の選択と適用順はコアが単一所有）
   - セッションからの通知を公開イベントへ転送する（判断はしない）
   - 描画（`Render`）を起動し、セッションの状態を DragRectDrawer へ渡す
-  - ホイール操作（Ctrl+ホイールの `ZoomRequested`・祖先 ScrollViewer のスクロール）
+  - ホイール操作（Ctrl+ホイールの `ZoomRequested`・通常ホイールの `ScrollRequested` / 連携 ScrollViewer のスクロール）
   - 祖先 ScrollViewer の ScrollChanged 購読（`ViewportChanged` 発行はセッションへ委譲）
   - 設定（外観・対話パラメータ）の保持と、対話パラメータ（`MinSelectionSize` / `ClampToDomainBounds` / `HandleHitRadius`）のセッションへの伝搬
 - **公開API**:
-  - イベント 14 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `MouseDown` / `MouseUp` / `MouseClicked` / `MouseDoubleClicked` / `MouseMoved` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ConfirmRequested` / `CancelRequested`
+  - イベント 15 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `MouseDown` / `MouseUp` / `MouseClicked` / `MouseDoubleClicked` / `MouseMoved` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ScrollRequested` / `ConfirmRequested` / `CancelRequested`
   - StyledProperty 1 種: `Options`（不変の設定値 `DragRectOptions`。外観 10 項目 + 対話パラメータ 3 項目を内包）
   - プロパティ: `Log`（保持・`NullLogger` へのフォールバック・セッションへの伝搬はコアが単一所有）
   - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm`

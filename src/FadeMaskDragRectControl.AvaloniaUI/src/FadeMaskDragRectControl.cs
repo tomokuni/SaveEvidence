@@ -128,7 +128,8 @@ public sealed class FadeMaskDragRectControl : Panel
         _dragRect.LoupePositionMoved += OnLoupePositionMoved;
         _dragRect.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect);
         _dragRect.CancelRequested += (_, _) => RaiseCancelRequested();
-        _dragRect.ZoomRequested += (_, zoomIn) => RaiseZoomRequested(zoomIn);
+        _dragRect.ZoomRequested += (_, request) => RaiseZoomRequested(request);
+        _dragRect.ScrollRequested += (_, request) => RaiseScrollRequested(request);
 
         // ルーペ描画完了時に選択矩形の破線オーバーレイをホスト側で描画する
         // （LoupeControl の選択矩形 API は削除済み。描画は Rendered イベント経由で行う）
@@ -196,8 +197,12 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>Escape キーまたは RequestCancel によるキャンセル要求イベント。</summary>
     public event EventHandler? CancelRequested;
 
-    /// <summary>Ctrl+ホイールによるズーム要求イベント（true = ズームイン / false = ズームアウト）。Crop 用。</summary>
-    public event EventHandler<bool>? ZoomRequested;
+    /// <summary>Ctrl+ホイールによるズーム要求イベント（方向と発生位置）。Crop 用。</summary>
+    public event EventHandler<DragRectZoomRequest>? ZoomRequested;
+
+    /// <summary>通常ホイール（Ctrl なし）によるスクロール要求イベント（生の回転量・修飾キー・発生位置）。Crop 用。</summary>
+    /// <remarks>スクロール先（接続先 ScrollViewer・ズームビューポートのパン等）の決定はホストが実施する。</remarks>
+    public event EventHandler<DragRectScrollRequest>? ScrollRequested;
 
     /// <summary>ルーペ中心の更新イベント（ドメイン座標。ホストの追加制御用フック）。</summary>
     public event EventHandler<FadeMaskDragRectPointEventArgs>? LoupePositionMoved;
@@ -726,8 +731,13 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>ズーム要求イベントを発火する。</summary>
     /// <param name="zoomIn">ズームインする場合は true。</param>
-    private void RaiseZoomRequested(bool zoomIn)
-        => ZoomRequested?.Invoke(this, zoomIn);
+    private void RaiseZoomRequested(DragRectZoomRequest request)
+        => ZoomRequested?.Invoke(this, request);
+
+    /// <summary><see cref="ScrollRequested"/> を発火する。</summary>
+    /// <param name="request">スクロール要求（生の回転量と修飾キー）。</param>
+    private void RaiseScrollRequested(DragRectScrollRequest request)
+        => ScrollRequested?.Invoke(this, request);
 
     /// <summary>ルーペ中心更新イベントを発火する。</summary>
     /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>

@@ -223,7 +223,8 @@ control.ResetSelection();           // 状態と nudge の初期化
 | `MouseDoubleClicked` | `DragRectPointEventArgs` | ダブルクリック検出（ドメイン座標） |
 | `MouseMoved` | `DragRectPointEventArgs` | マウス移動ごとのポインタ位置（ドメイン座標） |
 | `LoupePositionMoved` | `DragRectPointEventArgs` | ドラッグ・nudge 中のルーペ中心位置（ドメイン座標。リサイズ: アクティブハンドル点 / 移動: 掴んだマウス位置 / 新規選択・nudge: 終点） |
-| `ZoomRequested` | `EventHandler<bool>` | Ctrl+ホイールによるズーム要求（true = ズームイン / false = ズームアウト。祖先 ScrollViewer が存在する Crop モードのみ発火） |
+| `ZoomRequested` | `EventHandler<DragRectZoomRequest>` | Ctrl+ホイールによるズーム要求（方向と発生位置。ズームの実処理は上位 AP） |
+| `ScrollRequested` | `EventHandler<DragRectScrollRequest>` | 通常ホイールによるスクロール要求（生の回転量・Shift・発生位置。連携 ScrollViewer がある場合は発火せず本コントロールがスクロールする） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | Enter キーによる確定要求 |
 | `CancelRequested` | `EventArgs` | Escape キーによるキャンセル要求 |
 
@@ -355,7 +356,8 @@ nudge 中は十字マーカー（`Options.MarkerColor` / `Options.MarkerLength` 
 - 左ボタン解放: 選択確定（最小サイズ未満はキャンセル）
 - ダブルクリック（矩形内）: `ConfirmRequested` を発火し、確定後に選択状態をクリア（`ResetSelection`。確定後も選択矩形が残るのを防ぐ）
 - マウスホイール（祖先 ScrollViewer が存在する場合・Crop モード）:
-  - **Ctrl + ホイール**: `ZoomRequested` を発火（ズームの実処理は上位 AP が実施）
+  - **Ctrl + ホイール**: `ZoomRequested` を発火（方向と発生位置。ズームの実処理は上位 AP が実施）
+- **通常ホイール**: 連携 ScrollViewer があればそれをスクロール、なければ `ScrollRequested` を発火（回転量のみ通知。単位の解釈は上位 AP）
   - **通常ホイール**: 祖先 `ScrollViewer` をスクロール（Shift 併用で横スクロール。48DIP/段）
   - ScrollViewer が存在しない場合（AreaSelect の OverlayWindow 等）は無効（既定動作に委譲）
 

@@ -135,17 +135,15 @@ public sealed class CaptureSessionControl : IDisposable
     /// <param name="cropView">切り出しを行う高レベル複合コントロール（ズーム + 領域選択 + ルーペを内包）。</param>
     /// <param name="hostWindow">ホストウィンドウ。</param>
     /// <param name="sourceImage">元画像（100%キャプチャ画像）。切り出しの論理座標系の基準とルーペ用のソース。</param>
-    /// <param name="zoomRequestHandler">Ctrl+ホイールによるズーム要求ハンドラ（true = ズームイン / false = ズームアウト）。null の場合はズーム操作なし。</param>
     /// <returns>確定時は元画像上の切り出し範囲、キャンセル時は 0x0 の空 PixelRect。</returns>
     /// <remarks>
     /// プレビュー状態（ScrollOffset / ZoomPercent）は引数で受け取らない。<br/>
     /// ズーム・パン・Fit・座標変換は <paramref name="cropView"/> が内包する ZoomViewControl が単一所有する。<br/>
-    /// Ctrl+ホイールによるズーム要求は <paramref name="zoomRequestHandler"/> で上位 AP に通知する（ズームの実処理は上位が実施）。<br/>
+    /// 切出し中のホイール操作（Ctrl+ホイールのズーム・通常ホイールのパン）は <paramref name="cropView"/> が内部で完結する（上位の配線は不要）。<br/>
     /// 実行中に同一インスタンスへ再呼び出しされた場合は null を返す。
     /// </remarks>
     public Task<PixelRect?> StartCropAsync(
-        CropViewControl cropView, Window hostWindow, EsBitmap sourceImage,
-        Action<bool>? zoomRequestHandler = null)
+        CropViewControl cropView, Window hostWindow, EsBitmap sourceImage)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(cropView);
@@ -157,7 +155,7 @@ public sealed class CaptureSessionControl : IDisposable
         if (sourceImageSize.Width <= 0 || sourceImageSize.Height <= 0)
             throw new ArgumentException("sourceImage のサイズが 0 です。", nameof(sourceImage));
 
-        var session = new CropSession(cropView, hostWindow, sourceImage, _currentSettings, _log, zoomRequestHandler);
+        var session = new CropSession(cropView, hostWindow, sourceImage, _currentSettings, _log);
         _cropSession = session;
         return AwaitCropAsync(session);
     }

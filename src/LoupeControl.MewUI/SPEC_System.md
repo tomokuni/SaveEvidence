@@ -216,5 +216,5 @@ sequenceDiagram
 | Debug | `Source` / `CenterPoint` / `RequestedSize` / `RenderScaling` / `ZoomLevel` の変更（補正後の値で記録。同一値なら出力しない） |
 | Error | 描画処理の例外（アプリを落とさずログへ記録して描画を中止する） |
 
-Avalonia 版の Trace ログ（再描画パイプライン）は持ちません（MewUI 版は中間ビットマップを作らず同期描画するため）。<br/>
+Avalonia 版の Trace ログ（再描画パイプライン）は持ちません（MewUI 版は中間ビットマップを作らず同期描画するため）。  
 出力先は `Log` プロパティへ注入します（既定は `NullLogger`）。

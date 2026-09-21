@@ -78,7 +78,7 @@ if (result?.Image is { } image)
 
 ```csharp
 // プレビューを表示しているコントロールと元画像から切り出し範囲を取得する
-// Ctrl+ホイールによるズーム要求は zoomRequestHandler で受け取る（true = ズームイン / false = ズームアウト）
+// 切り出し中のホイール操作（Ctrl+ホイールのズーム・通常ホイールのパン）は CropViewControl が内部で完結する（上位の配線は不要）
 var cropRect = await capture.StartCropAsync(previewControl, hostWindow, sourceImage,
     zoomIn => { if (zoomIn) zoomInAction(); else zoomOutAction(); });
 if (cropRect is { } rect && rect.Width > 0 && rect.Height > 0)
@@ -130,7 +130,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 1. `CropSession` を生成 → `RunAsync`
 2. **FadeMaskDragRectControl**（DragRect + FadeMask + Loupe の配線を内包する複合コントロール）を祖先 Panel に配置
 3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordinateTransform` で内包コントロール（DragRect / FadeMask / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
-4. マウスホイール操作（Crop 中）: Ctrl+ホイールでズーム要求を `zoomRequestHandler` へ通知 / 通常ホイールで祖先 ScrollViewer をスクロール
+4. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する
 5. **ビューポート変化の通知**: ホストがプレビューのパン・ズームを検知したら `NotifyCropViewportChanged()` を呼ぶ（暗転マスク・選択枠・ルーペが追従。ScrollViewer 連携のスクロールも同じ経路で処理）
 6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `PixelRect` で返却 / キャンセル → 0x0 の空 `PixelRect`
 

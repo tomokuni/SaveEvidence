@@ -121,9 +121,19 @@ public sealed class DragRectControl : SkiaCanvasView
     /// </remarks>
     public event EventHandler<SelectionRectEventArgs>? ViewportChanged;
 
-    /// <summary>Ctrl+ホイールによるズーム要求時に発火する（true = ズームイン / false = ズームアウト）。</summary>
-    /// <remarks>ズームの実処理（画像サイズ変更・ズーム率管理）は上位 AP が実施する（本コントロールは要求のみ通知する）。</remarks>
-    public event EventHandler<bool>? ZoomRequested;
+    /// <summary>Ctrl+ホイールによるズーム要求時に発火する（方向と発生位置）。</summary>
+    /// <remarks>
+    /// ズームの実処理（画像サイズ変更・ズーム率管理）は上位 AP が実施する（本コントロールは要求のみ通知する）。<br/>
+    /// <see cref="DragRectZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
+    /// </remarks>
+    public event EventHandler<DragRectZoomRequest>? ZoomRequested;
+
+    /// <summary>通常ホイール（Ctrl なし）によるスクロール要求時に発火する（生の回転量・修飾キー・発生位置）。</summary>
+    /// <remarks>
+    /// スクロール先（ズームビューポートのパン等）の決定は上位 AP が実施する（本コントロールは回転量のみ通知する）。<br/>
+    /// 選択矩形はドメイン座標で不変のため、本操作は選択状態を変更しない（ビューの操作）。
+    /// </remarks>
+    public event EventHandler<DragRectScrollRequest>? ScrollRequested;
 
     /// <summary>Enter キーによる確定要求時に発火する（選択確定後のみ。ドラッグ中は発火しない）。</summary>
     public event EventHandler<SelectionRectEventArgs>? ConfirmRequested;
@@ -283,24 +293,26 @@ public sealed class DragRectControl : SkiaCanvasView
         e.Handled = true;
     }
 
-    /// <summary>Ctrl+ホイールでズームを要求する。</summary>
+    /// <summary>ホイールでズーム要求・スクロール要求を行う。</summary>
     /// <param name="e">ホイールの情報。</param>
     /// <remarks>
-    /// Ctrl+ホイールは <see cref="ZoomRequested"/>（ズームの実処理は上位 AP）を発火する。<br/>
-    /// それ以外のホイールは処理しない（スクロールの実処理は上位 AP が担う）。<br/>
+    /// Ctrl+ホイールは <see cref="ZoomRequested"/>（ズームの実処理は上位 AP）、それ以外は <see cref="ScrollRequested"><br/>
+    /// （スクロールの実処理は上位 AP）を発火する。回転量はそのまま通知し、スクロール量の解釈は転送先が単一所有する。<br/>
     /// ホイールはビューの操作であり選択矩形の状態を変えないため UI 層が担う。
     /// </remarks>
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
         base.OnMouseWheel(e);
 
-        if (!e.ControlKey)
+        if (e.ControlKey)
         {
+            Log.LogZoomRequested(e.Delta.Y > 0);
+            ZoomRequested?.Invoke(this, new DragRectZoomRequest(e.Delta.Y > 0, e.GetPosition(this).ToEsPoint()));
+            e.Handled = true;
             return;
         }
 
-        Log.LogZoomRequested(e.Delta.Y > 0);
-        ZoomRequested?.Invoke(this, e.Delta.Y > 0);
+        ScrollRequested?.Invoke(this, new DragRectScrollRequest(e.Delta.X, e.Delta.Y, e.ShiftKey, e.GetPosition(this).ToEsPoint()));
         e.Handled = true;
     }
 

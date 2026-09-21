@@ -3,6 +3,7 @@
 ## 目次
 
 - [Platform.AvaloniaUI システム仕様書（SPEC\_System）](#platformavaloniaui-システム仕様書spec_system)
+  - [目次](#目次)
   - [1. システム概要](#1-システム概要)
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
@@ -28,6 +29,7 @@ Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 本プロジェクト（`Platform.AvaloniaUI`）は、そのうち **Avalonia UI 固有のアダプタ**を担います。
 UI フレームワーク非依存の抽象・値型・純粋ロジックは `Platform.Core`、
 ネイティブ（OS）実装と既定実装のファクトリは `Platform.Native` が提供します。
+
 ## 2. 技術スタック
 
 | 項目 | 内容 |

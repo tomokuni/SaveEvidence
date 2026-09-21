@@ -293,6 +293,42 @@ public sealed class ZoomViewControl : Panel
     /// </remarks>
     public void ZoomIn() => ApplyZoomStep((c, f) => ZoomTransition.NextLevel(c, f, _config), Log.LogZoomIn);
 
+    /// <summary>ホイールの回転量でパンする（回転量から移動量への換算を単一所有する）。</summary>
+    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。1 ノッチ = 1.0）。</param>
+    /// <param name="shift">Shift 併用かどうか（縦回転を横パンとして扱う）。</param>
+    /// <remarks>
+    /// 移動量は DIP で計算し、実効倍率で除してコンテンツ座標へ変換する（ズーム中も画面上の移動量が一定になる）。<br/>
+    /// 本コントロール上でホイールが発生した場合（内包ビューポート）と、ホストが他のコントロール（選択オーバーレイ等）で
+    /// 受けたホイールを転送する場合の双方が本メソッドを使用する（換算則の二重所有を作らない）。
+    /// </remarks>
+    public void PanByWheel(Vector delta, bool shift)
+    {
+        var dx = shift ? delta.Y * ZoomMath.WheelScrollUnit : delta.X * ZoomMath.WheelScrollUnit;
+        var dy = shift ? 0 : delta.Y * ZoomMath.WheelScrollUnit;
+        _zoomableView.PanBy(new Vector(dx / _zoomableView.EffectiveScale, dy / _zoomableView.EffectiveScale));
+    }
+
+    /// <summary>Ctrl+ホイールのズームを適用する（ホイール操作の公開 API）。</summary>
+    /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
+    /// <param name="pointerPosition">ズーム中心とする位置（DIP）。null の場合はビューポート中心。</param>
+    /// <remarks>
+    /// 遷移先の計算とログは <see cref="ApplyZoomStep"/> へ委譲する。<br/>
+    /// 本コントロール上でホイールが発生した場合と、ホストが他のコントロールで受けたホイールを転送する場合の双方が使用する。
+    /// </remarks>
+    public void ZoomByWheel(bool zoomIn, Point? pointerPosition = null)
+    {
+        PointerPosition = pointerPosition;
+        try
+        {
+            if (zoomIn) { ZoomInByWheel(); }
+            else { ZoomOutByWheel(); }
+        }
+        finally
+        {
+            PointerPosition = null;
+        }
+    }
+
     /// <summary>ズームアウトする（⊖⊕ボタン）。</summary>
     /// <remarks>
     /// 設定されたレベル集合（ZoomConfig.ButtonZoomLevels）の前のレベルへ移動する（<see cref="ZoomTransition.PrevLevel"/>）。<br/>

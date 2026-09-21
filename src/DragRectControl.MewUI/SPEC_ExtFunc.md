@@ -89,7 +89,7 @@ Avalonia 版と同一の挙動になります。
 | `MouseMoved` | `DragRectPointEventArgs` | マウス移動（nudge の有無に関わらず発火） |
 | `LoupePositionMoved` | `DragRectPointEventArgs` | ルーペが表示する中心座標（通常追従はポインタ位置、ドラッグ・nudge 中は動いている側のハンドル位置） |
 | `ViewportChanged` | `SelectionRectEventArgs` | `NotifyViewportChanged()` の呼び出し |
-| `ZoomRequested` | `bool` | Ctrl+ホイール（true = ズームイン） |
+| `ZoomRequested` | `DragRectZoomRequest` | Ctrl+ホイール（方向と発生位置） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | 矩形内ダブルクリック・Enter |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel()` |
 
@@ -107,8 +107,8 @@ Avalonia 版と同一の挙動になります。
 | 矢印キー | nudge（1 ドメインピクセル単位）。未選択時は始点、選択確定後・ドラッグ中は終点、ハンドル選択中はそのハンドルを動かす |
 | Enter | `ConfirmRequested` を発火して選択をクリアする（ドラッグ中・未選択では何もしない） |
 | Escape | `CancelRequested` を発火する（選択があれば破棄する） |
-| Ctrl + ホイール | `ZoomRequested` を発火する（ズームの実処理はホスト） |
-| ホイール（Ctrl なし） | 処理しない（スクロールの実処理はホスト） |
+| Ctrl + ホイール | `ZoomRequested` を発火する（方向と発生位置。ズームの実処理はホスト） |
+| ホイール（Ctrl なし） | `ScrollRequested` を発火する（回転量・Shift・発生位置。スクロール先とスクロール量の解釈はホスト） |
 
 ### 制限
 

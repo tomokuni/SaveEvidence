@@ -209,6 +209,8 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ZoomIn` | `void()` | ⊖⊕ ボタンのズームイン（23 段階） |
 | `ZoomOut` | `void()` | ⊖⊕ ボタンのズームアウト（23 段階） |
 | `ZoomFit` | `void()` | Fit 表示（ビューポートに収まる自動倍率）へ戻す（唯一の Fit 移行経路。`ZoomIn` / `ZoomOut` と対になるズーム操作） |
+| `PanByWheel` | `void(Vector delta, bool shift)` | ホイールの回転量（X/Y）でパンする（1 ノッチ = 48 DIP を実効倍率で除す。Shift 併用は縦回転を横パン）。ホストが他のコントロール（選択オーバーレイ等）で受けたホイールの転送に使用する |
+| `ZoomByWheel` | `void(bool zoomIn, Point? pointerPosition = null)` | Ctrl+ホイールのズームを適用する（`pointerPosition` はズーム中心。null はビューポート中心）。同上の転送に使用する |
 | `CanZoomIn` | `bool` | 現在の状態でズームイン可能か |
 | `CanZoomOut` | `bool` | 現在の状態でズームアウト可能か |
 | `ZoomChanged` | `event EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（変更後のズーム率 + 可否。ホスト側のスライダ・⊖⊕ ボタン等の同期用） |

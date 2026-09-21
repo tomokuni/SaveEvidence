@@ -32,9 +32,6 @@ namespace Estable.MewUI.ZoomView;
 /// </remarks>
 public sealed class ZoomViewControl : SkiaCanvasView
 {
-    /// <summary>ホイールパンの 1 ノッチあたりの移動量（DIP）。</summary>
-    private const double WheelScrollUnit = 48.0;
-
     /// <summary>スクロールバーをビューポート端から離す既定の余白（DIP）。</summary>
     /// <remarks>
     /// MewUI のウィンドウは端から 6 DIP（デバイスピクセル換算前の値）をサイズ変更の判定領域にするため、<br/>
@@ -394,6 +391,22 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <param name="delta">コンテンツ座標の移動量。</param>
     public void PanBy(EsVector delta) => SetOffset(new EsVector(_offset.X + delta.X, _offset.Y + delta.Y));
 
+    /// <summary>ホイールの回転量でパンする（回転量から移動量への換算を単一所有する）。</summary>
+    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。1 ノッチ = 1.0）。</param>
+    /// <param name="shift">Shift 併用かどうか（縦回転を横パンとして扱う）。</param>
+    /// <remarks>
+    /// 移動量は DIP で計算し、実効倍率で除してコンテンツ座標へ変換する（ズーム中も画面上の移動量が一定になる）。<br/>
+    /// 本コントロール上でホイールが発生した場合（<see cref="OnMouseWheel"/>）と、ホストが他のコントロール（選択オーバーレイ等）
+    /// で受けたホイールを転送する場合の双方が本メソッドを使用する（換算則の二重所有を作らない）。
+    /// </remarks>
+    public void PanByWheel(EsVector delta, bool shift)
+    {
+        var dx = shift ? delta.Y * ZoomMath.WheelScrollUnit : delta.X * ZoomMath.WheelScrollUnit;
+        var dy = shift ? 0 : delta.Y * ZoomMath.WheelScrollUnit;
+        var scale = EffectiveScale;
+        PanBy(new EsVector(dx / scale, dy / scale));
+    }
+
     /// <summary>ズームインする（次のレベルへ移動する）。</summary>
     /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。</remarks>
     public void ZoomIn() => ApplyZoomStep(
@@ -621,35 +634,22 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <summary>ホイールでパンまたはズームする。</summary>
     /// <param name="e">ホイールの情報。</param>
     /// <remarks>
-    /// Ctrl+ホイールはポインタ位置をズーム中心としたズーム、それ以外はパン（Shift 併用で横パン）とする。
+    /// Ctrl+ホイールはポインタ位置をズーム中心としたズーム、それ以外はパン（Shift 併用で横パン）とする。<br/>
+    /// 換算は <see cref="PanByWheel"/> / <see cref="ZoomByWheel"/> へ委譲する。
     /// </remarks>
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
         base.OnMouseWheel(e);
 
-        var delta = e.Delta.Y;
-
         if (e.ControlKey)
         {
             // Ctrl+ホイール: ポインタ位置をズーム中心にしてズームする
-            _pointerPosition = e.GetPosition(this).ToEsPoint();
-            try
-            {
-                ZoomByWheel(delta > 0);
-            }
-            finally
-            {
-                _pointerPosition = null;
-            }
-
+            ZoomByWheel(e.Delta.Y > 0, e.GetPosition(this).ToEsPoint());
             e.Handled = true;
             return;
         }
 
-        var scale = EffectiveScale;
-        var dx = e.ShiftKey ? delta * WheelScrollUnit : 0;
-        var dy = e.ShiftKey ? 0 : delta * WheelScrollUnit;
-        PanBy(new EsVector(dx / scale, dy / scale));
+        PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), e.ShiftKey);
         e.Handled = true;
     }
 
@@ -673,18 +673,30 @@ public sealed class ZoomViewControl : SkiaCanvasView
         SetZoom(_config.ClampZoom(target), _pointerPosition);
     }
 
-    /// <summary>Ctrl+ホイールのズームを適用する。</summary>
+    /// <summary>Ctrl+ホイールのズームを適用する（ホイール操作の公開 API）。</summary>
     /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
-    /// <remarks>遷移先の計算とログは <see cref="ApplyZoomStep"/> へ委譲する（ログの種別のみここで選ぶ）。</remarks>
-    private void ZoomByWheel(bool zoomIn)
+    /// <param name="pointerPosition">ズーム中心とする位置（DIP）。null の場合はビューポート中心。</param>
+    /// <remarks>
+    /// 遷移先の計算とログは <see cref="ApplyZoomStep"/> へ委譲する（ログの種別のみここで選ぶ）。<br/>
+    /// 本コントロール上でホイールが発生した場合と、ホストが他のコントロールで受けたホイールを転送する場合の双方が使用する。
+    /// </remarks>
+    public void ZoomByWheel(bool zoomIn, EsPoint? pointerPosition = null)
     {
-        if (zoomIn)
+        _pointerPosition = pointerPosition;
+        try
         {
-            ApplyZoomStep((current, fitZoom) => ZoomTransition.WheelZoomIn(current, fitZoom, _config), Log.LogZoomInWheel);
+            if (zoomIn)
+            {
+                ApplyZoomStep((current, fitZoom) => ZoomTransition.WheelZoomIn(current, fitZoom, _config), Log.LogZoomInWheel);
+            }
+            else
+            {
+                ApplyZoomStep((current, fitZoom) => ZoomTransition.WheelZoomOut(current, fitZoom, _config), Log.LogZoomOutWheel);
+            }
         }
-        else
+        finally
         {
-            ApplyZoomStep((current, fitZoom) => ZoomTransition.WheelZoomOut(current, fitZoom, _config), Log.LogZoomOutWheel);
+            _pointerPosition = null;
         }
     }
 

@@ -11,7 +11,9 @@ using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
+using Estable.DragRect;
 using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
@@ -506,17 +508,38 @@ public class FadeMaskDragRectControlTests
     public void ZoomRequested_ズーム要求が中継される()
     {
         var control = new FadeMaskDragRectControl();
-        bool? zoomIn = null;
-        control.ZoomRequested += (_, z) => zoomIn = z;
+        DragRectZoomRequest? received = null;
+        control.ZoomRequested += (_, request) => received = request;
 
         // DragRect の ZoomRequested は通常の .NET イベント（Ctrl+ホイールで発火）のため、
         // リフレクションでバッキングフィールドを取得して直接発火する（中継の検証用）。
         var field = typeof(DragRectControl).GetField(
             "ZoomRequested", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        eventDelegate?.DynamicInvoke(control.DragRect, true);
+        eventDelegate?.DynamicInvoke(control.DragRect, new DragRectZoomRequest(true, new EsPoint(10, 20)));
 
-        Assert.True(zoomIn);
+        Assert.NotNull(received);
+        Assert.True(received!.Value.ZoomIn);
+        Assert.Equal(new EsPoint(10, 20), received.Value.Position);
+    }
+
+    [AvaloniaFact]
+    public void ScrollRequested_スクロール要求が中継される()
+    {
+        var control = new FadeMaskDragRectControl();
+        DragRectScrollRequest? received = null;
+        control.ScrollRequested += (_, request) => received = request;
+
+        // DragRect の ScrollRequested をリフレクションで直接発火する（中継の検証用）。
+        var field = typeof(DragRectControl).GetField(
+            "ScrollRequested", BindingFlags.Instance | BindingFlags.NonPublic);
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
+        eventDelegate?.DynamicInvoke(control.DragRect, new DragRectScrollRequest(0, 1, true, new EsPoint(30, 40)));
+
+        Assert.NotNull(received);
+        Assert.Equal(1.0, received!.Value.DeltaY);
+        Assert.True(received.Value.Shift);
+        Assert.Equal(new EsPoint(30, 40), received.Value.Position);
     }
 
     [AvaloniaFact]
@@ -528,7 +551,7 @@ public class FadeMaskDragRectControlTests
         var field = typeof(DragRectControl).GetField(
             "ZoomRequested", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        eventDelegate?.DynamicInvoke(control.DragRect, true);
+        eventDelegate?.DynamicInvoke(control.DragRect, new DragRectZoomRequest(true, new EsPoint(0, 0)));
 
         // 例外なく完了する
         Assert.True(true);

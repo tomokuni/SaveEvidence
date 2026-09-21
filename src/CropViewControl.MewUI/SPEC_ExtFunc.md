@@ -31,6 +31,9 @@ CropViewControl は、**画像の表示（拡大・パン・Fit）**と、**外�
 | --- | --- |
 | `ZoomIn()` / `ZoomOut()` | 段階レベルを 1 つ移動する（移動先がなければ何もしない） |
 | `ZoomFit()` | Fit 表示へ戻す |
+| `PanByWheel(EsVector, bool)` | ホイールの回転量（X/Y）と Shift 併用でパンする（換算はズームビューが単一所有） |
+| `ZoomByWheel(bool, EsPoint?)` | Ctrl+ホイールのズームを適用する（位置はズーム中心。null はビューポート中心） |
+| `TranslatePositionFrom(Element, EsPoint)` | 重ねた要素のローカル座標を本コントロールの座標へ変換する |
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
 | `ViewportToContent(EsPoint)` | ビューポート座標 → ドメイン座標（画像表示矩形の原点基準） |
 | `ContentToViewport(EsPoint)` | ドメイン座標 → ビューポート座標（画像表示矩形の原点基準） |

@@ -37,14 +37,10 @@ internal sealed class CropSession(
     Window hostWindow,
     EsBitmap sourceImage,
     CaptureSettings settings,
-    ILogger? logger = null,
-    Action<bool>? zoomHandler = null)
+    ILogger? logger = null)
 {
     /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
     private readonly ILogger _log = logger ?? NullLogger.Instance;
-
-    /// <summary>ズーム要求ハンドラ（Ctrl+ホイール。true = ズームイン / false = ズームアウト）。上位 AP がズームを実施する。</summary>
-    private readonly Action<bool>? _zoomHandler = zoomHandler;
 
     /// <summary>元画像のピクセルサイズ（論理座標系の範囲）。</summary>
     private readonly Size _sourceImageSize = new(sourceImage.Size.Width, sourceImage.Size.Height);
@@ -130,7 +126,6 @@ internal sealed class CropSession(
             hostWindow.Deactivated -= OnDeactivated;
             cropView.ConfirmRequested -= OnConfirmEvent;
             cropView.CancelRequested -= OnCancelEvent;
-            cropView.ZoomRequested -= OnZoomRequested;
             _cursorGuard.Dispose();
             cropView.ClearLoupe();
             // 確定・キャンセル後は領域選択オーバーレイを非表示に戻す（プレビュー表示時は非表示のため）。
@@ -142,13 +137,9 @@ internal sealed class CropSession(
 
         void OnDeactivated(object? s, EventArgs e) => OnCancel();
 
-        // ズーム要求（Ctrl+ホイール）: 上位 AP のズーム処理へ委譲する
-        void OnZoomRequested(object? sender, bool zoomIn) => _zoomHandler?.Invoke(zoomIn);
-
-        // イベント配線（配線は複合コントロール内で完結。ホストは確定・キャンセル・ズーム要求のみ購読）
+        // イベント配線（配線は複合コントロール内で完結。ホストは確定・キャンセルのみ購読）
         cropView.ConfirmRequested += OnConfirmEvent;
         cropView.CancelRequested += OnCancelEvent;
-        cropView.ZoomRequested += OnZoomRequested;
         hostWindow.Deactivated += OnDeactivated;
 
         // カーソル上書き抑制（WM_SETCURSOR による十字カーソルの上書き防止）

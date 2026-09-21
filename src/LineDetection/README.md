@@ -44,6 +44,7 @@ Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブ
 - Avalonia 12.1 以降
 - OpenCvSharp5（ロジック方式・内部利用）
   - OpenCvSharp5.runtime.win.slim（ネイティブ。`videoio` を除く縮小構成。動画入出力を使わないため `opencv_videoio_ffmpeg500_64.dll` 約 31 MB を持ち込まない）
+
 ## 4. インストール
 
 `src/LineDetection/src/LineDetection.csproj` をプロジェクト参照に追加します。

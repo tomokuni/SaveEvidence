@@ -78,7 +78,7 @@ using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize / EsVector（コア�
 2. `Mode` を設定します（キャプチャ種別に応じた描画モード・可視性の切替）。
 3. `AppearanceSettings` で外観を一括設定します（null メンバーは現在値維持の部分更新）。
 4. `SetCoordinateTransform(ICoordTransform?)` でドメイン ↔ DIP 変換を注入します。
-5. イベント（`ConfirmRequested` / `CancelRequested` / `ZoomRequested`）を購読します。
+5. イベント（`ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested`）を購読します。
 6. ルーペソース（`Loupe.Source`）を設定します。
 
 ```csharp
@@ -143,7 +143,8 @@ parentPanel.Children.Add(overlay);
 | --- | --- | --- |
 | `ConfirmRequested` | `EventHandler<FadeMaskDragRectSelectionEventArgs>` | 確定要求（DragRect の Enter / ダブルクリック / `RequestConfirm`。選択確定後のみ発火） |
 | `CancelRequested` | `EventHandler` | キャンセル要求（DragRect の Escape / `RequestCancel`） |
-| `ZoomRequested` | `EventHandler<bool>` | Ctrl+ホイールによるズーム要求（true = ズームイン / false = ズームアウト。Crop 用） |
+| `ZoomRequested` | `EventHandler<DragRectZoomRequest>` | Ctrl+ホイールによるズーム要求（方向と発生位置。Crop 用） |
+| `ScrollRequested` | `EventHandler<DragRectScrollRequest>` | 通常ホイールによるスクロール要求（生の回転量・Shift・発生位置。Crop 用） |
 | `LoupePositionMoved` | `EventHandler<FadeMaskDragRectPointEventArgs>` | ルーペ中心の更新通知（ドメイン座標。ホストの追加制御用フック） |
 
 ### 5.4 型
@@ -256,7 +257,7 @@ graph TD
     DR["DragRectControl"] -->|"SelectionChanged / ViewportChanged"| SC["FadeMaskDragRectControl"]
     DR -->|"SelectionStarted / SelectionCancelled"| SC
     DR -->|"LoupePositionMoved"| SC
-    DR -->|"ConfirmRequested / CancelRequested / ZoomRequested"| SC
+    DR -->|"ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested"| SC
     SC -->|"LogicalSelectionRect / HasSelection 同期 + 再描画"| FM["FadeMaskControl + FadeMaskRenderer"]
     SC -->|"CenterPoint 更新 + 表示開始"| LC["LoupeControl"]
     SC -->|"イベント中継"| HOST["ホスト（CropSession / OverlayWindow）"]
@@ -265,7 +266,7 @@ graph TD
 - `SelectionChanged` / `ViewportChanged`: 選択矩形を FadeMask（`LogicalSelectionRect` / `HasSelection`）へ同期し、オーバーレイを再描画。ルーペの選択矩形破線は `Rendered` イベント経由で描画する。
 - `SelectionStarted` / `SelectionCancelled`: 選択状態をクリア（前の矩形の暗転マスク残留を防止）。
 - `LoupePositionMoved`: ルーペの `CenterPoint` を更新して表示開始（表示位置は座標変換ポートから自己計算）。
-- `ConfirmRequested` / `CancelRequested` / `ZoomRequested`: ホストへ中継。
+- `ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested`: ホストへ中継。
 
 ## 9. ライフサイクルと所有権
 

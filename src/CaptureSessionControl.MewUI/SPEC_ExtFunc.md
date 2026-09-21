@@ -78,6 +78,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `HandleColor` / `HandleSize` / `HandleHitRadius` | ドラッグハンドル |
 | `MarkerColor` / `MarkerLength` | 微調整時の十字マーカー |
 | `ClampToDomainBounds` | 画像外の選択を禁止するか |
+| （ホイール操作） | 選択オーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する。ズーム率・パン量の決定は `CropViewControl` が単一所有する |
 | `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | カーソル位置の座標ラベル |
 | `SizeLabelVisible` / `SizeLabelColor` / `TextBackgroundColor` / `SizeLabelFontSize` | サイズラベル |
 | `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル） |
@@ -86,3 +87,9 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `LoupeCheckerSize` / `LoupeCheckerColorA` / `LoupeCheckerColorB` | ルーペの市松模様 |
 | `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | ルーペ画像上の選択矩形破線 |
 | `LoupeShowCoordLabel` / `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | ルーペの中心座標ラベル |
+
+### 4.1 適用先
+
+上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropOverlay`）の**双方**が同じ対応で反映します（切り出しは `loupeOffset` のみモード固有）。
+UI ごとに固定値（白枠 2 DIP 等）を持たないため、設定を変えるとプレビューの切り出しにも反映されます。
+情報ラベルは `FadeMaskLabels.ShouldShowInfoLabel` が WindowSelect モードに限定するため、切り出しでは表示されません。

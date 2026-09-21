@@ -1,10 +1,15 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media;
+using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using EsUtil.Platform.AvaloniaUI.Imaging;
+using Estable.AvaloniaUI.DragRect;
 using Estable.CropView;
+using Estable.DragRect;
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
@@ -192,5 +197,169 @@ public class CropViewTests
 
         Assert.False(view.SelectionOverlay.IsVisible);
         Assert.False(view.SelectionOverlay.IsHitTestVisible);
+    }
+
+    // ====================================================================
+    // 選択オーバーレイ上のホイール（Crop 中のパン・ズーム）
+    // ====================================================================
+
+    /// <summary>パン可能な大きさの画像を持つコントロールを生成する（表示 800x400・ビューポート 400x200）。</summary>
+    /// <returns>画像 400x200 を設定し、200% 表示にしたコントロール。</returns>
+    /// <remarks>小さい画像では Fit 表示でスクロール範囲が 0 になりパンを検証できないため、専用の大きさを使う。</remarks>
+    private static CropViewControl CreatePannableView()
+    {
+        var view = new CropViewControl
+        {
+            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(400, 200, Colors.Blue),
+        };
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+        view.ZoomPercent = 200; // 表示 800x400（スクロール範囲あり）
+        return view;
+    }
+
+    [AvaloniaFact]
+    public void オーバーレイのスクロール要求でビューポートがパンする()
+    {
+        var view = CreatePannableView();
+        var before = view.ViewportToContent(new Point(0, 0));
+
+        // オーバーレイが受けたホイール（通常）はビューポートのパンへ転送される
+        RaiseOverlayEvent(view, "ScrollRequested", new DragRectScrollRequest(0, 1, Shift: false, new EsPoint(0, 0)));
+
+        // 1 ノッチ（48 DIP）を実効倍率（2.0）で除した 24 コンテンツ座標ぶん移動する
+        // （ホイール上 = オフセット増加 = 画像が上へ移動し、左上に見えるコンテンツ座標は +24 になる）
+        var after = view.ViewportToContent(new Point(0, 0));
+        Assert.Equal(before.Y + 24.0, after.Y);
+        Assert.Equal(before.X, after.X);
+    }
+
+    [AvaloniaFact]
+    public void オーバーレイのShift付きスクロール要求は横へパンする()
+    {
+        var view = CreatePannableView();
+        var before = view.ViewportToContent(new Point(0, 0));
+
+        RaiseOverlayEvent(view, "ScrollRequested", new DragRectScrollRequest(0, 1, Shift: true, new EsPoint(0, 0)));
+
+        var after = view.ViewportToContent(new Point(0, 0));
+        Assert.Equal(before.X + 24.0, after.X);
+        Assert.Equal(before.Y, after.Y);
+    }
+
+    [AvaloniaFact]
+    public void オーバーレイのズーム要求でズーム率が変化する()
+    {
+        var view = new CropViewControl
+        {
+            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(400, 200, Colors.Blue),
+        };
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+
+        // Fit 表示（等倍。ビューポートと画像が同サイズ）から WheelFactor 倍（1.1）へ移動する
+        RaiseOverlayEvent(view, "ZoomRequested", new DragRectZoomRequest(ZoomIn: true, new EsPoint(0, 0)));
+
+        Assert.Equal(110, view.ZoomPercent);
+    }
+
+    [AvaloniaFact]
+    public void オーバーレイのズーム要求はカーソル位置を中心にする()
+    {
+        var view = CreatePannableView();
+        var centerBefore = view.ViewportToContent(new Point(0, 0));
+
+        // ビューポート座標 (0, 0) をズーム中心にする（オーバーレイとビューポートは同一領域のため座標は一致する）
+        RaiseOverlayEvent(view, "ZoomRequested", new DragRectZoomRequest(ZoomIn: true, new EsPoint(0, 0)));
+
+        // ズーム中心のコンテンツ座標は不変に保たれる
+        Assert.Equal(centerBefore, view.ViewportToContent(new Point(0, 0)));
+    }
+
+    /// <summary>選択オーバーレイのイベントをリフレクションで直接発火する。</summary>
+    /// <param name="view">対象のコントロール。</param>
+    /// <param name="eventName">イベント名（<c>ScrollRequested</c> / <c>ZoomRequested</c>）。</param>
+    /// <param name="args">イベント引数。</param>
+    /// <remarks>オーバーレイをウィンドウへ配置せずに検証するため、バッキングフィールドから直接ハンドラを呼ぶ。</remarks>
+    private static void RaiseOverlayEvent(CropViewControl view, string eventName, object args)
+    {
+        var overlay = view.SelectionOverlay;
+        var field = overlay.GetType().GetField(
+            eventName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var handler = (MulticastDelegate?)field?.GetValue(overlay);
+        handler?.DynamicInvoke(overlay, args);
+    }
+
+    // ====================================================================
+    // オーバーレイ上の実ホイールイベント（Crop 中のパン・ズームの統合検証）
+    // ====================================================================
+
+    /// <summary>選択オーバーレイ内のドラッグ矩形コントロール（実際にホイールを受け取る要素）を取得する。</summary>
+    /// <param name="view">対象のコントロール。</param>
+    /// <returns>ドラッグ矩形コントロール。</returns>
+    private static DragRectControl FindDragRect(CropViewControl view)
+        => view.SelectionOverlay.Children.OfType<DragRectControl>().Single();
+
+    /// <summary>ホイールイベントを生成する。</summary>
+    /// <param name="source">イベントの発生元。</param>
+    /// <param name="root">イベントのルート（ウィンドウ）。</param>
+    /// <param name="modifiers">修飾キー。</param>
+    /// <param name="deltaY">縦の回転量。</param>
+    /// <returns>生成したホイールイベント。</returns>
+    private static PointerWheelEventArgs CreateWheel(Visual source, Window root, KeyModifiers modifiers, double deltaY)
+    {
+        var pointer = new Pointer(1, PointerType.Mouse, true);
+        var screen = source.PointToScreen(new Point(0, 0));
+        var rootPoint = new Point(screen.X, screen.Y);
+        var raw = modifiers.HasFlag(KeyModifiers.Control) ? RawInputModifiers.Control : RawInputModifiers.None;
+        return new PointerWheelEventArgs(
+            source, pointer, root, rootPoint, 0UL,
+            new PointerPointProperties(raw, PointerUpdateKind.Other), modifiers, new Vector(0, deltaY));
+    }
+
+    [AvaloniaFact]
+    public void オーバーレイ上の実ホイールでCrop中もズームする()
+    {
+        var view = new CropViewControl
+        {
+            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(400, 200, Colors.Blue),
+        };
+        var window = new Window { Content = view };
+        window.Show();
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+        view.SetSelectionOverlayVisible(true);
+
+        // オーバーレイ内のドラッグ矩形（ヒットテスト対象）へ実際の Ctrl+ホイールを配送する
+        var dragRect = FindDragRect(view);
+        dragRect.RaiseEvent(CreateWheel(dragRect, window, KeyModifiers.Control, 1));
+
+        // Fit（等倍）から WheelFactor 倍（1.1）へ移動する
+        Assert.Equal(110, view.ZoomPercent);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void オーバーレイ上の通常ホイールでCrop中もパンする()
+    {
+        var view = new CropViewControl
+        {
+            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(1000, 500, Colors.Blue),
+        };
+        var window = new Window { Content = view };
+        window.Show();
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+        view.ZoomPercent = 100;
+        view.SetSelectionOverlayVisible(true);
+        var before = view.ImageRectViewport();
+
+        var dragRect = FindDragRect(view);
+        dragRect.RaiseEvent(CreateWheel(dragRect, window, KeyModifiers.None, 1));
+
+        // 1 ノッチ（48 DIP）ぶん表示位置が上へ移動する
+        var after = view.ImageRectViewport();
+        Assert.Equal(before.Y - 48.0, after.Y);
+        window.Close();
     }
 }

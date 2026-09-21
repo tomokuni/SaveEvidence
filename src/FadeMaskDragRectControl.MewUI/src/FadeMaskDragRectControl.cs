@@ -1,5 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
+using Estable.DragRect;
 using Estable.FadeMaskDragRect;
 using Estable.Loupe;
 using Estable.MewUI.DragRect;
@@ -96,7 +97,8 @@ public sealed class FadeMaskDragRectControl : Panel
         _dragRect.LoupePositionMoved += (_, e) => OnLoupePositionMoved(e.Point);
         _dragRect.ConfirmRequested += (_, e) => ConfirmRequested?.Invoke(this, new FadeMaskDragRectSelectionEventArgs(e.Rect));
         _dragRect.CancelRequested += (_, _) => CancelRequested?.Invoke(this, EventArgs.Empty);
-        _dragRect.ZoomRequested += (_, zoomIn) => ZoomRequested?.Invoke(this, zoomIn);
+        _dragRect.ZoomRequested += (_, request) => ZoomRequested?.Invoke(this, request);
+        _dragRect.ScrollRequested += (_, request) => ScrollRequested?.Invoke(this, request);
         // ルーペ画像上の選択矩形破線は、ルーペの描画完了直後に同一のキャンバスへ描く
         _loupe.Rendered += OnLoupeRendered;
 
@@ -109,8 +111,12 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>Escape キーまたは <see cref="RequestCancel"/> によるキャンセル要求イベント。</summary>
     public event EventHandler? CancelRequested;
 
-    /// <summary>Ctrl+ホイールによるズーム要求イベント（true = ズームイン / false = ズームアウト）。</summary>
-    public event EventHandler<bool>? ZoomRequested;
+    /// <summary>Ctrl+ホイールによるズーム要求イベント（方向と発生位置）。</summary>
+    public event EventHandler<DragRectZoomRequest>? ZoomRequested;
+
+    /// <summary>通常ホイール（Ctrl なし）によるスクロール要求イベント（生の回転量・修飾キー・発生位置）。</summary>
+    /// <remarks>スクロール先（ズームビューポートのパン等）の決定はホストが実施する。</remarks>
+    public event EventHandler<DragRectScrollRequest>? ScrollRequested;
 
     /// <summary>ルーペ中心の更新イベント（ドメイン座標。ホストの追加制御用フック）。</summary>
     public event EventHandler<FadeMaskDragRectPointEventArgs>? LoupePositionMoved;

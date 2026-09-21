@@ -92,7 +92,7 @@ Avalonia 版と同一の解釈になります。
 | --- | --- | --- |
 | `ConfirmRequested` | `FadeMaskDragRectSelectionEventArgs` | 矩形内ダブルクリック・Enter・`RequestConfirm`（選択確定後のみ） |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel` |
-| `ZoomRequested` | `bool` | Ctrl+ホイール（true = ズームイン） |
+| `ZoomRequested` | `DragRectZoomRequest` | Ctrl+ホイール（方向と発生位置） |
 | `LoupePositionMoved` | `FadeMaskDragRectPointEventArgs` | ドラッグ選択からのルーペ中心の更新（マウス移動・ドラッグ・nudge） |
 
 座標はすべてドメイン座標です。

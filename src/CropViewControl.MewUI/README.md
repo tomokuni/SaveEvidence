@@ -74,6 +74,9 @@ cropView.ZoomChanged += (_, e) => zoomText.Text = $"{e.ZoomPercent:0}%";
 | メソッド | 説明 |
 | --- | --- |
 | `ZoomIn()` / `ZoomOut()` / `ZoomFit()` | 段階遷移・Fit 表示（内包するズームビューへ委譲） |
+| `PanByWheel(delta, shift)` | ホイールの回転量でパンする（ホストがオーバーレイ等で受けたホイールの転送用） |
+| `ZoomByWheel(zoomIn, position)` | Ctrl+ホイールのズームを適用する（同上。`position` はズーム中心） |
+| `TranslatePositionFrom(element, position)` | 重ねた要素のローカル座標を本コントロールの座標へ変換する（ズーム中心の座標合わせ用） |
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
 | `ViewportToContent(pos)` / `ContentToViewport(pos)` | 画像表示矩形の原点基準の座標変換 |
 

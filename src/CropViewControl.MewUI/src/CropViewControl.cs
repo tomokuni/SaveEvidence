@@ -1,8 +1,10 @@
+using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Estable.CropView;
 using Estable.MewUI.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
@@ -184,4 +186,25 @@ public sealed class CropViewControl : Grid
     /// <returns>ビューポート座標（DIP）。</returns>
     /// <remarks>画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。</remarks>
     public EsPoint ContentToViewport(EsPoint contentPos) => _zoomView.ContentToViewportImage(contentPos);
+
+    /// <summary>ホイールの回転量でビューポートをパンする（ホストが他のコントロールで受けたホイールの転送用）。</summary>
+    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。1 ノッチ = 1.0）。</param>
+    /// <param name="shift">Shift 併用かどうか（縦回転を横パンとして扱う）。</param>
+    /// <remarks>回転量から移動量への換算とクランプはズームビューポートが単一所有する。</remarks>
+    public void PanByWheel(EsVector delta, bool shift) => _zoomView.PanByWheel(delta, shift);
+
+    /// <summary>Ctrl+ホイールのズームを適用する（ホストが他のコントロールで受けたホイールの転送用）。</summary>
+    /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
+    /// <param name="viewportPosition">ズーム中心とする位置（ビューポート座標・DIP）。null の場合はビューポート中心。</param>
+    /// <remarks>ズーム率の遷移と表示の適用はズームビューポートが単一所有する。</remarks>
+    public void ZoomByWheel(bool zoomIn, EsPoint? viewportPosition = null)
+        => _zoomView.ZoomByWheel(zoomIn, viewportPosition);
+
+    /// <summary>コントロールのローカル座標をこのコントロール自身のローカル座標へ変換する（同一コントロールならそのまま）。</summary>
+    /// <param name="element">変換元の要素。</param>
+    /// <param name="position">変換元のローカル座標（DIP）。</param>
+    /// <returns>このコントロールのローカル座標（DIP）。</returns>
+    /// <remarks>ホストが重ねたオーバーレイ上のホイール位置をズーム中心として渡すために使用する。</remarks>
+    public EsPoint TranslatePositionFrom(Element element, EsPoint position)
+        => element.TranslatePoint(new Point(position.X, position.Y), this).ToEsPoint();
 }
