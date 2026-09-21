@@ -577,9 +577,24 @@ public class FadeMaskDragRectControlTests
     // ヘルパー
     // ====================================================================
 
-    /// <summary>コントロールの座標変換ポート（_coordinatePort）をリフレクションで取得する。</summary>
+    /// <summary>コントロールの座標変換ポートをリフレクションで取得する。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <returns>設定されている座標変換ポート。</returns>
+    /// <remarks>
+    /// DragRect はポートをコアの状態管理クラス（セッション）が保持するため、<c>_session.State.Port</c> を辿る。<br/>
+    /// 他のコントロール（FadeMask / Loupe）は自前の <c>_coordinatePort</c> フィールドを保持する。
+    /// </remarks>
     private static ICoordTransform GetCoordinatePort(Control control)
     {
+        var sessionField = control.GetType().GetField(
+            "_session", BindingFlags.NonPublic | BindingFlags.Instance);
+        if (sessionField is not null)
+        {
+            var session = sessionField.GetValue(control)!;
+            var state = session.GetType().GetProperty("State")!.GetValue(session)!;
+            return (ICoordTransform)state.GetType().GetProperty("Port")!.GetValue(state)!;
+        }
+
         var field = control.GetType().GetField(
             "_coordinatePort", BindingFlags.NonPublic | BindingFlags.Instance);
         return (ICoordTransform)field!.GetValue(control)!;

@@ -15,7 +15,8 @@ namespace Estable.AvaloniaUI.DragRect;
 /// <remarks>
 /// ビジュアルツリー接続時に TopLevel のキーイベントを購読し、切断時に解除する。<br/>
 /// 連携 ScrollViewer（スクロール・ズーム検知）は明示注入のみで設定する（暗黙の祖先探索は行わない）。<br/>
-/// 描画は <see cref="Drawing.DragRectDrawer"/> に委譲する。
+/// 描画は <see cref="Drawing.DragRectDrawer"/> に委譲し、座標変換（ドメイン → DIP）はセッションのポートに問い合わせる
+/// （描画はセッションの状態を読むだけで、判断を持たない）。
 /// </remarks>
 public sealed partial class DragRectControl
 {
@@ -47,8 +48,8 @@ public sealed partial class DragRectControl
     /// <summary>ビジュアルツリー切断時に TopLevel のキーイベントと ScrollViewer のスクロール購読を解除する。</summary>
     /// <param name="e">ビジュアルツリー切断イベント。</param>
     /// <remarks>
-    /// ウィンドウクローズ・Crop 終了等でビジュアルツリーから外れる際に、<br/>
-    /// キーイベント購読を解除し、nudge 中ならポインターを再表示する（仕様 4.4）。<br/>
+    /// ウィンドウクローズ・Crop 終了等でビジュアルツリーから外れる際に、キーイベント購読を解除し、<br/>
+    /// セッションへ対話の終了を通知する（nudge 中ならポインターを再表示して選択状態を初期化する）。
     /// </remarks>
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -63,13 +64,7 @@ public sealed partial class DragRectControl
             scrollViewer.ScrollChanged -= OnScrollViewerChanged;
             _attachedScrollViewer = null;
         }
-        if (_state.NudgeActive)
-        {
-            // nudge 中はポインターを再表示する（EndNudge に委譲して重複を排除）
-            EndNudge();
-        }
-        _state.Reset();
-        InvalidateVisual();
+        ApplyFeedback(_session.Detach());
     }
 
     /// <summary>連携する ScrollViewer を明示的に設定する（スクロール・ズーム検知 + ホイール操作）。</summary>
@@ -98,6 +93,7 @@ public sealed partial class DragRectControl
     /// <summary>祖先 ScrollViewer のスクロール・ズーム変化を検知し、再描画と <see cref="ViewportChanged"/> を発行する。</summary>
     /// <param name="sender">イベント送信元（ScrollViewer）。</param>
     /// <param name="e">スクロール変化イベント。</param>
+    /// <remarks>ビューポートの変化は選択矩形（ドメイン座標）を変えないため、再描画と通知のみを行う。</remarks>
     private void OnScrollViewerChanged(object? sender, ScrollChangedEventArgs e)
     {
         InvalidateVisual();
@@ -105,12 +101,13 @@ public sealed partial class DragRectControl
     }
 
     // ====================================================================
-    // 描画（DragRectDrawer への委譲）
+    // 描画（セッションの状態を DragRectDrawer で描く）
     // ====================================================================
 
     /// <summary>コントロールを描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>
     /// <remarks>
+    /// セッションの状態（選択矩形・nudge・マウス位置）を読み、DIP へ変換して描画層へ渡すだけである。<br/>
     /// 選択矩形がある場合は枠線（<see cref="Drawing.DragRectDrawer.DrawBorder"/>）と<br/>
     /// ドラッグハンドル（<see cref="Drawing.DragRectDrawer.DrawHandles"/>）を描画する。<br/>
     /// 始点マーカー（<see cref="Drawing.DragRectDrawer.DrawStartMarker"/>）は表示中（未選択の nudge 中）に描画する。<br/>
@@ -128,29 +125,29 @@ public sealed partial class DragRectControl
         // 選択矩形はドメインピクセルで保持されるため、描画前にローカル DIP に変換する。
         // 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、終点（Right / Bottom）に +1 してから変換する
         // （終点のピクセルも枠線・ハンドルに含める。キャプチャの閉区間 +1 と一致）。
-        var domainRect = _state.SelectionRect;
-        var dipTopLeft = _coordinatePort.Inverse(domainRect.TopLeft);
-        var dipBottomRight = _coordinatePort.Inverse(new EsPoint(domainRect.Right + 1, domainRect.Bottom + 1));
+        var domainRect = _session.SelectionRect;
+        var dipTopLeft = _session.ToDip(domainRect.TopLeft);
+        var dipBottomRight = _session.ToDip(new EsPoint(domainRect.Right + 1, domainRect.Bottom + 1));
         var rect = new Rect(dipTopLeft.ToAvaloniaPoint(), dipBottomRight.ToAvaloniaPoint());
-        if (_state.HasSelection)
+        if (_session.HasSelection)
         {
             DragRectDrawer.DrawBorder(context, rect, BorderColor, BorderThickness);
             DragRectDrawer.DrawHandles(context, rect, HandleSize, HandleColor, BorderColor);
         }
 
         // nudge 中はドラッグ中のハンドル位置に十字マーカーを表示する（仕様 4.4）
-        if (_state.NudgeActive && _state.CrosshairVisible)
+        if (_session.NudgeActive && _session.CrosshairVisible)
         {
-            var markerDip = _coordinatePort.Inverse(_state.GetMarkerPosition());
+            var markerDip = _session.ToDip(_session.MarkerPosition);
             DragRectDrawer.DrawStartMarker(context, markerDip.ToAvaloniaPoint(), MarkerColor, MarkerThickness, MarkerLength / 2);
         }
 
         // カーソルの右側にカーソルのドメイン座標ラベル（"(x, y)"）を表示する
         if (ShowCoordLabel)
         {
-            var cursorDip = _coordinatePort.Inverse(_state.LastMousePosition);
+            var cursorDip = _session.ToDip(_session.LastMousePosition);
             DragRectDrawer.DrawCoordLabel(
-                context, cursorDip.ToAvaloniaPoint(), _state.LastMousePosition.ToAvaloniaPoint(), Bounds.Size,
+                context, cursorDip.ToAvaloniaPoint(), _session.LastMousePosition.ToAvaloniaPoint(), Bounds.Size,
                 CoordLabelColor, CoordLabelBackgroundColor, CoordLabelFontSize);
         }
     }

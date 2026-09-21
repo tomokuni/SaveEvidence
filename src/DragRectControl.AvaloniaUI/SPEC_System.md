@@ -15,11 +15,12 @@
   - [5. コンポーネント図](#5-コンポーネント図)
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 DragRectControl](#61-dragrectcontrol)
-    - [6.2 DragRectState](#62-dragrectstate)
-    - [6.3 SelectionGeometry](#63-selectiongeometry)
-    - [6.4 DragRectDrawer](#64-dragrectdrawer)
-    - [6.5 DragHandle](#65-draghandle)
-    - [6.6 公開イベント引数](#66-公開イベント引数)
+    - [6.2 DragRectSession（状態管理クラス）](#62-dragrectsession状態管理クラス)
+    - [6.3 DragRectState](#63-dragrectstate)
+    - [6.4 SelectionGeometry](#64-selectiongeometry)
+    - [6.5 DragRectDrawer](#65-dragrectdrawer)
+    - [6.6 DragHandle](#66-draghandle)
+    - [6.7 公開イベント引数](#67-公開イベント引数)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
     - [8.1 状態の初期化と破棄（所有権）](#81-状態の初期化と破棄所有権)
@@ -52,16 +53,18 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 ### 3.1 レイヤー構造
 
 ```text
-公開コントロール（DragRectControl）
-  → 状態（DragRectState）
-    → 共有型（SelectionGeometry / DragRectDrawer）+ Platform.AvaloniaUI
+公開コントロール（DragRectControl）… 入力の受付 / 効果の適用 / 通知の転送 / 描画
+  → 状態管理クラス（DragRectSession）… 入力の解釈と状態遷移の判断
+    → 状態（DragRectState）… 状態保持と更新ロジック
+      → 共有型（SelectionGeometry / DragRectDrawer）+ Platform.AvaloniaUI
 ```
 
 ### 3.2 依存の方向
 
-- 依存は**一方向の階層構造**（DragRectControl → DragRectState → SelectionGeometry / Platform.AvaloniaUI / Platform.Native / Platform.Core）。
+- 依存は**一方向の階層構造**（DragRectControl → DragRectSession → DragRectState → SelectionGeometry / Platform.AvaloniaUI / Platform.Native / Platform.Core）。
 - DragRectControl は上位 AP に依存しない（再利用可能）。
-- 描画は DragRectDrawer へ委譲し、状態（選択矩形・nudge）は DragRectState に集約する（1 コントロール 1 状態クラス・SRP）。
+- **判断はコア（`DragRectSession`）・反映は UI**: nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルはコアが決め、コントロールは効果（`DragRectFeedback`）を適用するだけにする。
+- 描画は DragRectDrawer へ委譲し、状態（選択矩形・nudge）は DragRectState に集約する。
 - 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 
@@ -71,7 +74,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（`Logging/LogMessage.cs`）で出力する。操作イベントは Debug、Down 直前 / Up 直後の位置・ホイールは Trace で記録する。
+- ログは LoggerMessage ソース生成で出力する。操作イベントは Debug、Down 直前 / Up 直後の位置・ホイールは Trace で記録する。<br/>入力の判断に伴うログはコア（`DragRectLog`）、UI 層の操作（ホイール・設定変更）のログは本プロジェクト（`Logging/LogMessage.cs`）が定義する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -87,6 +90,8 @@ flowchart TB
     end
     subgraph Core["DragRectControl.Core（UI 非依存）"]
         direction TB
+        Ses["DragRectSession<br/>internal sealed<br/>DragRectSession.cs<br/>（状態管理クラス: 入力の解釈 ＋ 通知 ＋ 効果）"]
+        Ntc["DragRectNotice / DragRectFeedback<br/>internal<br/>（コア → UI の通知・効果）"]
         Stt["DragRectState<br/>internal sealed<br/>DragRectState.cs<br/>（状態保持 ＋ 更新ロジック）"]
         Geo["SelectionGeometry<br/>internal static<br/>Selection/SelectionGeometry.cs"]
         Hdl["DragHandle<br/>public enum"]
@@ -100,10 +105,13 @@ flowchart TB
         Evt["SelectionRectEventArgs<br/>DragRectPointEventArgs"]
     end
 
-    AP -->|"イベント購読 / SetCoordinateTransform / RequestConfirm / RequestCancel"| Ctl
-    Ctl --> Stt
+    AP -->|等イベント購読 / SetCoordinateTransform / RequestConfirm / RequestCancel| Ctl
+    Ctl -->|入力の通知（Press / Move / Release / KeyDown）| Ses
+    Ctl -->|効果の適用| Ntc
     Ctl --> Drw
     Ctl --> Evt
+    Ses --> Ntc
+    Ses --> Stt
     Stt --> Geo
     Stt --> Hdl
     Geo --> Hdl
@@ -115,23 +123,36 @@ flowchart TB
 
 - **分類**: 公開コントロール（`public sealed class : Control`）
 - **責務**:
-  - ポインターイベント（Pressed / Moved / Released）の受付と処理（状態更新・クリック/ダブルクリック検出・カーソル形状）
-  - 矢印キー・Escape / Enter キーイベントの受付（nudge・確定・キャンセルの自己処理）
-  - 描画（`Render`）の起動（DragRectDrawer へ委譲）
-  - フォーカス獲得
-  - 公開イベント（Selection系 / Mouse系 / Confirm / Cancel / Viewport）の通知
-  - ドメイン↔DIP 座標ポートの保持（`SetCoordinateTransform`）
+  - ポインターイベント（Pressed / Moved / Released）をコア型へ変換してセッションへ通知する
+  - キーイベント（矢印キー・Escape / Enter）を `EsKey` へ変換してセッションへ通知する（フォーカス非依存の TopLevel 購読を含む）
+  - セッションが返す効果（再描画・フォーカス・カーソル移動/表示切替・カーソル形状）を適用する
+  - セッションからの通知を公開イベントへ転送する（判断はしない）
+  - 描画（`Render`）を起動し、セッションの状態を DragRectDrawer へ渡す
+  - ホイール操作（Ctrl+ホイールの `ZoomRequested`・祖先 ScrollViewer のスクロール）
   - 祖先 ScrollViewer の ScrollChanged 購読（`ViewportChanged` 発行）
-  - 公開イベントの発火は専用ヘルパー（`Raise...`）に集約（イベント引数の生成と `?.Invoke` の一元化・発火形式の一貫性）
+  - 動作に影響する設定値（`MinSelectionSize` / `ClampToDomainBounds` / `HandleHitRadius`）のセッションへの伝搬
 - **公開API**:
   - イベント 14 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `MouseDown` / `MouseUp` / `MouseClicked` / `MouseDoubleClicked` / `MouseMoved` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ConfirmRequested` / `CancelRequested`
   - StyledProperty 13 種: `BorderColor` / `BorderThickness` / `HandleColor` / `HandleSize` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds` / `MarkerColor` / `MarkerLength` / `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize`
   - プロパティ: `Log`
   - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm`
-- **構成（シンプル実装）**: 公開 API とイベントオーバーライド（処理は DragRectState へ委譲）を集約し、内部実装を責務別クラスへ分割しない
-- **依存**: DragRectState / DragRectDrawer / SelectionGeometry / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ ScreenConverter（Platform.AvaloniaUI）
+- **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出）はコアへ委譲する
+- **依存**: DragRectSession / DragRectFeedback / DragRectNotice / DragRectDrawer / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ ScreenConverter（Platform.AvaloniaUI）
 
-### 6.2 DragRectState
+### 6.2 DragRectSession（状態管理クラス）
+
+- **分類**: 内部状態管理クラス（`internal sealed class`・コア提供）
+- **責務**:
+  - 入力の通知（`Press` / `Move` / `Release` / `KeyDown` / `NudgeByKey`）を受けて状態を更新する
+  - 判断: nudge セッションの開始/終了（カーソル非表示・基点同期）・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセル・エコー移動の抑制・カーソル種別の決定
+  - 効果（`DragRectFeedback`: 再描画・フォーカス・マウスキャプチャ・カーソル操作/形状）を返す
+  - 通知（`DragRectNotice`: 種別・通知座標・スナップショット）を発火する（UI 層は公開イベントへ転送するだけ）
+  - 設定値（`MinSelectionSize` / `ClampToDomainBounds` / `HandleHitRadius`）の保持と適用
+- **可視性**: internal（外部から見えない）
+- **依存**: DragRectState / DragRectNotice / DragRectFeedback / DragRectLog / SelectionGeometry / EsKey（Platform.Core）/ ICoordTransform / ICursorService
+- **備考**: **Enter と Return は同一の確定キー**として扱う（Avalonia の `Key` は両者が同値のエイリアスで、名前ベースの相互変換では `Return` が得られるため）
+
+### 6.3 DragRectState
 
 - **分類**: 内部状態クラス（`internal sealed class`・コンポジション）
 - **責務**:
@@ -139,18 +160,18 @@ flowchart TB
   - 純粋ロジック: `HitTest` / `StartNewSelection` / `StartDrag` / `UpdateDrag` / `EndDrag` / `Nudge` / `GetOppositeCorner` / `GetInteractionState` / `CreateSnapshot`
   - クリップ（`ClampToDomainBounds` + `Port.Bounds` による境界内制限。境界 Rect 生成は `GetBoundsRect` に一元化）
   - カーソル操作（`ICursorService`）
-  - nudge 終了の共通化（`EndNudgeIfActive`。`Reset` / `SetSelection` でカーソル再表示を委譲）
+  - nudge 終了の共通化（`EndNudge`。`Reset` / `SetSelection` / `DragRectSession` から共用し、カーソル再表示を委譲）
 - **可視性**: internal（外部から見えない）
 - **依存**: SelectionGeometry / DragHandle / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）
 
-### 6.3 SelectionGeometry
+### 6.4 SelectionGeometry
 
 - **分類**: 内部静的クラス（`internal static class`）
 - **責務**: 選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算）
 - **可視性**: internal（外部から見えない）
 - **依存**: UI 非依存（`DragRectControl.Core` の `EsPoint` / `EsRect`）
 
-### 6.4 DragRectDrawer
+### 6.5 DragRectDrawer
 
 - **分類**: 内部静的クラス（`internal static class`）
 - **責務**: 枠線・ドラッグハンドル・始点マーカー・座標ラベルの描画
@@ -158,13 +179,13 @@ flowchart TB
 - **特徴**: 色・太さで決まる `SolidColorBrush` / `Pen` を容量制限付きで共有し、描画で再利用する。容量管理は `AddWithCapacityLimit` に一元化（単一所有）。描画対象の 8 方向ハンドル配列は静的フィールドに保持する（`s_handleTypes`）
 - **依存**: Avalonia（DrawingContext / SolidColorBrush / Pen）/ SelectionGeometry
 
-### 6.5 DragHandle
+### 6.6 DragHandle
 
 - **分類**: 公開 enum
 - **責務**: ドラッグハンドルの種別（ヒットテスト・矩形変形・nudge・描画で共通利用）
 - **可視性**: public（上位 AP がカーソル形状のマッピングに使用するため）
 
-### 6.6 公開イベント引数
+### 6.7 公開イベント引数
 
 - `DragRectInteractionState` enum（public）: NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging
 - `DragRectSnapshot` record（public）: State / SelectionRect / ActiveHandle / MousePosition / IsMouseDown / IsDragging / NudgeActive / HasSelection。座標は UI 非依存の `EsRect` / `EsPoint`（各 UI の境界で自前の型へ変換する）
@@ -173,9 +194,10 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**（DragRectControl → DragRectState → SelectionGeometry / Platform.AvaloniaUI / Platform.Core）。
+- 依存方向は**一方向の階層構造**（DragRectControl → DragRectSession → DragRectState → SelectionGeometry / Platform.AvaloniaUI / Platform.Core）。
 - DragRectControl は上位 AP に**依存しない**（再利用可能）。
-- 描画は DragRectDrawer へ委譲し、状態（選択矩形・nudge）は DragRectState に集約する（1 コントロール 1 状態クラス・SRP）。
+- 判断（状態遷移・確定/キャンセル・スナップ・クリック検出）はコアの `DragRectSession` に集約し、UI 層は効果を適用するだけにする。
+- 描画は DragRectDrawer へ委譲し、状態（選択矩形・nudge）は DragRectState に集約する。
 - 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 
@@ -185,25 +207,33 @@ flowchart TB
 sequenceDiagram
     participant AP as 上位AP
     participant Ctl as DragRectControl
+    participant Ses as DragRectSession
     participant Stt as DragRectState
 
     AP->>Ctl: SetCoordinateTransform(ICoordTransform)
-    Ctl->>Stt: Port 設定
+    Ctl->>Ses: SetPort
+    Ses->>Stt: Port 設定
 
     AP->>Ctl: マウス押下（PointerPressed）
-    Ctl->>Stt: HitTest / StartNewSelection / StartDrag
+    Ctl->>Ses: Press(ドメイン座標, clickCount)
+    Ses->>Stt: HitTest / StartNewSelection / StartDrag
+    Ses-->>Ctl: 効果（フォーカス・キャンセル・再描画）
+    Ses-->>Ctl: 通知（MouseDown / SelectionStarted）
     Ctl-->>AP: SelectionStarted / SelectionChanged
 
     AP->>Ctl: マウス移動（PointerMoved）
-    Ctl->>Stt: UpdateDrag
-    Ctl-->>AP: SelectionChanged
+    Ctl->>Ses: Move(ドメイン座標)
+    Ses->>Stt: UpdateDrag
+    Ctl-->>AP: SelectionChanged / LoupePositionMoved
 
     AP->>Ctl: マウス解放（PointerReleased）
-    Ctl->>Stt: EndDrag（確定 or キャンセル判定）
+    Ctl->>Ses: Release(ドメイン座標)
+    Ses->>Stt: EndDrag（確定 or キャンセル判定）
     Ctl-->>AP: SelectionCompleted / SelectionCancelled
 
     AP->>Ctl: 矢印キー（KeyDown）
-    Ctl->>Stt: Nudge（整数加算）
+    Ctl->>Ses: KeyDown(EsKey, カーソル位置)
+    Ses->>Stt: Nudge（整数加算）
     Ctl-->>AP: SelectionChanged / LoupePositionMoved
 ```
 
@@ -211,28 +241,35 @@ sequenceDiagram
 
 - コントロール自身が保持する状態（選択矩形・nudge 状態）は `ResetSelection()` で初期化します（上位 AP は状態をポーリングせず、イベントで把握）。
 - 上位 AP はコントロールを Visual Tree から除去するだけで破棄できます（所有権は上位 AP にあり、明示的な解放 API は不要）。
-- ビジュアルツリー切断時（`OnDetachedFromVisualTree`）は TopLevel キー購読・ScrollViewer 購読を解除し、nudge 中ならポインターを再表示します（`EndNudge` に委譲）。
+- ビジュアルツリー切断時（`OnDetachedFromVisualTree`）は TopLevel キー購読・ScrollViewer 購読を解除し、セッションへ対話の終了を通知します（nudge 中ならポインターを再表示して選択状態を初期化）。
 
 ## 9. ログ
 
-ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成・`this ILogger` 拡張メソッド）に集約し、`Log` プロパティの `ILogger` 経由で出力する。
+ログ定義は 2 箇所に分かれる。**入力の判断に伴うログ**（マウス操作・キー入力・確定/キャンセル）はコア（`DragRectControl.Core` の `DragRectLog`）、**UI 層の操作のログ**（ホイール・設定変更）は本プロジェクト（`Logging/LogMessage.cs`）が定義する。
 各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する。未設定（null）の場合は `NullLogger` で無出力。
-出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。マウス移動の高頻度ログは行わない（Down 直前・Up 直後の位置のみ `Trace` で記録）。
+出力先・レベル制御はホストアプリケーションが所有する（定義のみ）。マウス移動の高頻度ログは行わない（Down 直前・Up 直後の位置のみ `Trace` で記録）。
 
 ### 9.1 ログ定義一覧
 
+#### コア（`DragRectLog`）
+
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Debug` | `LogMessage.LogMouseDown` | ポインター押下（位置 / クリック数 / 選択有無） |
-| `Debug` | `LogMessage.LogMouseUp` | ポインター解放（位置 / ドラッグ有無 / 選択有無） |
-| `Debug` | `LogMessage.LogClick` | クリック（位置） |
-| `Debug` | `LogMessage.LogDoubleClick` | ダブルクリック（位置 / 選択内側か） |
-| `Debug` | `LogMessage.LogDragStart` | ドラッグ開始（ハンドル / 位置） |
-| `Debug` | `LogMessage.LogKeyDown` | キー入力（キー名 / 処理有無） |
-| `Debug` | `LogMessage.LogConfirmRequested` | Enter キーによる確定要求（矩形） |
-| `Debug` | `LogMessage.LogCancelRequested` | Escape キーによるキャンセル要求 |
+| `Debug` | `DragRectLog.LogMouseDown` | ポインター押下（位置 / クリック数 / 選択有無） |
+| `Debug` | `DragRectLog.LogMouseUp` | ポインター解放（位置 / ドラッグ有無 / 選択有無） |
+| `Debug` | `DragRectLog.LogClick` | クリック（位置） |
+| `Debug` | `DragRectLog.LogDoubleClick` | ダブルクリック（位置 / 選択内側か） |
+| `Debug` | `DragRectLog.LogDragStart` | ドラッグ開始（ハンドル / 位置）。新規選択も `handle=None` として記録する |
+| `Debug` | `DragRectLog.LogKeyDown` | キー入力（キー名 / 処理有無） |
+| `Debug` | `DragRectLog.LogConfirmRequested` | 確定要求（矩形） |
+| `Debug` | `DragRectLog.LogCancelRequested` | キャンセル要求 |
+| `Trace` | `DragRectLog.LogPositionBeforeDown` | Down 直前のマウス位置 |
+| `Trace` | `DragRectLog.LogPositionAfterUp` | Up 直後のマウス位置 |
+
+#### UI 層（`LogMessage`）
+
+| レベル | メソッド | 出力内容 |
+| --- | --- | --- |
 | `Debug` | `LogMessage.LogZoomRequested` | Ctrl+ホイールによるズーム要求（拡大/縮小） |
 | `Debug` | `LogMessage.LogSettingChanged` | 設定値変更（変更前後） |
-| `Trace` | `LogMessage.LogPositionBeforeDown` | Down 直前のマウス位置 |
-| `Trace` | `LogMessage.LogPositionAfterUp` | Up 直後のマウス位置 |
 | `Trace` | `LogMessage.LogWheelScroll` | 通常ホイールによるスクロール（移動量 / オフセット） |

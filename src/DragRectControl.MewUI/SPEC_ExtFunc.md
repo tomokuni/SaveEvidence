@@ -14,7 +14,7 @@ Avalonia 版と同一の挙動になります。
 
 | 参照 | 用途 |
 | --- | --- |
-| `DragRectControl.Core` | 選択幾何（`SelectionGeometry`）・状態機械（`DragRectState`）・公開型（`DragHandle` / `DragRectInteractionState` / `DragRectSnapshot`） |
+| `DragRectControl.Core` | 選択幾何（`SelectionGeometry`）・状態機械（`DragRectState`）・状態管理クラス（`DragRectSession`）・公開型（`DragHandle` / `DragRectInteractionState` / `DragRectSnapshot`） |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Native` | カーソルサービスの既定実装（Win32 / NoOp） |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `SkiaCanvasView`・`MewProperty`・SkiaSharp 描画 |

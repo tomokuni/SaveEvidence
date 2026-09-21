@@ -111,11 +111,11 @@ internal sealed class DragRectState
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
     /// <remarks>
     /// nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。<br/>
-    /// nudge の終了処理は <see cref="EndNudgeIfActive"/> に委譲する（重複排除）。
+    /// nudge の終了処理は <see cref="EndNudge"/> に委譲する（重複排除）。
     /// </remarks>
     public void Reset()
     {
-        EndNudgeIfActive();
+        EndNudge();
         SelectionRect = default;
         StartPoint = default;
         LastMousePosition = default;
@@ -133,11 +133,11 @@ internal sealed class DragRectState
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <remarks>
     /// nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。<br/>
-    /// nudge の終了処理は <see cref="EndNudgeIfActive"/> に委譲する（重複排除）。
+    /// nudge の終了処理は <see cref="EndNudge"/> に委譲する（重複排除）。
     /// </remarks>
     public void SetSelection(EsRect rect)
     {
-        EndNudgeIfActive();
+        EndNudge();
         SelectionRect = rect;
         IsDragging = false;
         ActiveHandle = DragHandle.None;
@@ -146,10 +146,10 @@ internal sealed class DragRectState
     /// <summary>nudge 中ならカーソルを再表示して nudge 状態を終了する。</summary>
     /// <returns>nudge 中だった場合は true。</returns>
     /// <remarks>
-    /// <see cref="Reset"/> / <see cref="SetSelection"/> で共通利用する（DRY）。<br/>
-    /// nudge 中（カーソル非表示）のまま状態を破棄・復元すると、カーソルが非表示のまま残るため再表示する。
+    /// nudge 中（カーソル非表示）のまま状態を破棄・復元すると、カーソルが非表示のまま残るため再表示する。<br/>
+    /// 本クラス内（<see cref="Reset"/> / <see cref="SetSelection"/>）と、入力の判断を担う状態管理クラスの双方から利用する（DRY）。
     /// </remarks>
-    private bool EndNudgeIfActive()
+    public bool EndNudge()
     {
         if (!NudgeActive) return false;
         NudgeActive = false;

@@ -1,6 +1,5 @@
 using Estable.AvaloniaUI.DragRect.Logging;
 using Estable.DragRect;
-using Estable.DragRect.Selection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -15,30 +14,30 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Estable.AvaloniaUI.DragRect;
 
-/// <summary>リサイズ可能なドラッグ矩形の UI コントロール（シンプル実装版）。</summary>
+/// <summary>リサイズ可能なドラッグ矩形の UI コントロール（Avalonia 版）。</summary>
 /// <remarks>
-/// 公開 API は <see cref="DragRectControl"/> と同一（互換）である。<br/>
-/// マウスイベント（押下・移動・解放）とキーボード（矢印キー nudge・Escape/Enter）の処理、<br/>
-/// <see cref="Drawing.DragRectDrawer"/> による描画（枠線・ハンドル・始点マーカー）を提供する。<br/>
+/// <b>層の構成</b>: 選択・ドラッグ・nudge の判断は UI 非依存の状態管理クラス（<c>DragRectControl.Core</c> の
+/// <see cref="DragRectSession"/>）が担い、本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
 /// <br/>
-/// **自己完結**: 矢印キーの検出・nudge 後の再描画（InvalidateVisual）・カーソル表示/非表示・<br/>
-/// ダブルクリックの確定/キャンセル判定（矩形内 = <see cref="ConfirmRequested"/> / 矩形外 = <see cref="CancelRequested"/>）を<br/>
-/// 本コントロール自身が担う（ホスト依存なし）。ホストは <see cref="SelectionStarted"/>（始点決定）/ <br/>
-/// <see cref="SelectionCompleted"/>（終点決定）/ <see cref="SelectionCancelled"/>（領域キャンセル）/ <br/>
+/// 本クラスの責務:<br/>
+/// 1. ポインター / キー / ホイール入力をコア型（<see cref="EsPoint"/> / <see cref="EsKey"/>）へ変換してセッションへ通知する。<br/>
+/// 2. セッションが返す効果（再描画・フォーカス・カーソル操作）を適用する。<br/>
+/// 3. セッションからの通知を公開イベントへ転送する（判断はしない）。<br/>
+/// 4. セッションの状態を描画する（枠線・ハンドル・十字マーカー・座標ラベル。計算は描画層へ委譲）。<br/>
+/// <br/>
+/// <b>自己完結</b>: 矢印キーの検出・nudge 後の再描画・カーソル表示/非表示・ダブルクリックの確定/キャンセル判定を
+/// コアが担うため、ホスト依存のない動作になっている。ホストは <see cref="SelectionStarted"/>（始点決定）/
+/// <see cref="SelectionCompleted"/>（終点決定）/ <see cref="SelectionCancelled"/>（領域キャンセル）/
 /// <see cref="ConfirmRequested"/> / <see cref="CancelRequested"/> イベントを購読して利用する。<br/>
 /// <br/>
-/// 外観・動作の設定は依存関係プロパティ（<see cref="BorderColor"/> / <see cref="BorderThickness"/> /<br/>
-/// <see cref="HandleColor"/> / <see cref="HandleSize"/> / <see cref="HandleHitRadius"/> / <see cref="MinSelectionSize"/> /<br/>
-/// <see cref="MarkerColor"/> / <see cref="MarkerLength"/>）で公開し、<br/>
-/// 外部バインディングで制御できる（色の不透明度は色のアルファに統合）。<br/>
+/// 外観・動作の設定は依存関係プロパティ（<see cref="BorderColor"/> / <see cref="BorderThickness"/> /
+/// <see cref="HandleColor"/> / <see cref="HandleSize"/> / <see cref="HandleHitRadius"/> / <see cref="MinSelectionSize"/> /
+/// <see cref="MarkerColor"/> / <see cref="MarkerLength"/>）で公開し、外部バインディングで制御できる（色の不透明度は色のアルファに統合）。<br/>
+/// 動作に影響する設定（<see cref="MinSelectionSize"/> / <see cref="ClampToDomainBounds"/> / <see cref="HandleHitRadius"/>）は
+/// セッションへ伝搬し、判断はセッションが行う。<br/>
 /// ログは <see cref="Log"/> プロパティで注入する（デフォルトは <see cref="NullLogger"/>）。<br/>
 /// <br/>
-/// 選択矩形の変更は <see cref="SelectionChanged"/> イベントで外部（上位 Mediator）に通知する。<br/>
-/// <br/>
-/// **構成（シンプル実装）**: 状態（選択矩形・ドラッグ・nudge）は <see cref="DragRectState"/> に集約し、<br/>
-/// 本クラスは公開 API・イベントオーバーライド・描画・ビジュアルツリー購読を担う（コンポジション）。<br/>
-/// 純粋計算（ヒットテスト・矩形変形・クリップ）は <see cref="DragRectState"/> に統合し、<br/>
-/// 描画は <see cref="Drawing.DragRectDrawer"/> に委譲する。<br/>
+/// 選択矩形の変更は <see cref="SelectionChanged"/> イベントで外部（上位 Mediator）に通知する。
 /// </remarks>
 public sealed partial class DragRectControl : Control
 {
@@ -46,8 +45,8 @@ public sealed partial class DragRectControl : Control
     // 内部状態（コンポジション）
     // ====================================================================
 
-    /// <summary>選択・nudge 状態（状態保持 + 純粋ロジック）。</summary>
-    private readonly DragRectState _state;
+    /// <summary>選択・ドラッグ・nudge の状態を管理するセッション（入力の解釈と状態遷移の判断を担う）。</summary>
+    private readonly DragRectSession _session;
 
     /// <summary>カーソルサービス（nudge 時のカーソル移動・表示切替。既定実装の解決は UI 側で行う）。</summary>
     private readonly ICursorService _cursor;
@@ -58,11 +57,9 @@ public sealed partial class DragRectControl : Control
     /// <summary>ズーム・スクロール検知用に購読した祖先 ScrollViewer。解除時に使用する。</summary>
     private ScrollViewer? _attachedScrollViewer;
 
-    /// <summary>nudge のカーソル位置追跡（SetCursorPos のエコー PointerMoved 抑制用）。</summary>
+    /// <summary>本コントロール自身のキーハンドラで処理したキーかどうか（TopLevel 購読との二重処理を防ぐ）。</summary>
+    /// <remarks>本コントロールと TopLevel の双方がキーを受け取る（Avalonia のルーティング）ため、処理済みのキーを識別する。</remarks>
     private bool _nudgeHandledInKeyDown;
-
-    /// <summary>座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。</summary>
-    private ICoordTransform _coordinatePort = CoordTransform.Identity;
 
     // 標準カーソルは Lazy で遅延生成する（呼び出し時に ICursorFactory を解決する）。
     // static readonly フィールドとして型初期化時に new Cursor(...) すると、Avalonia ヘッドレス初期化前に
@@ -100,19 +97,27 @@ public sealed partial class DragRectControl : Control
 
     /// <summary>カーソルサービスを注入して初期化する。</summary>
     /// <param name="cursorService">カーソルサービス。null の場合は Windows 既定実装を使用する。</param>
+    /// <remarks>
+    /// カーソルサービスの既定実装（Win32）の解決は UI 側で行い、コア（状態管理クラス）は抽象のみに依存する。<br/>
+    /// コアからの通知は公開イベントへ転送し、動作に影響する設定値をセッションへ伝搬する。
+    /// </remarks>
     public DragRectControl(ICursorService? cursorService)
     {
         Focusable = true;
-        // カーソルサービスの既定実装（Win32）の解決は UI 側で行い、コア（状態機械）は抽象のみに依存する
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
-        _state = new DragRectState(_cursor);
-        _state.Port = _coordinatePort;
+        _session = new DragRectSession(_cursor)
+        {
+            MinSelectionSize = MinSelectionSize,
+            ClampToDomainBounds = ClampToDomainBounds,
+            HandleHitRadius = HandleHitRadius,
+        };
+        _session.Notified += OnSessionNotified;
     }
 
-    /// <summary>静的コンストラクタ。外観・動作設定（StyledProperty）の変更を再描画へ同期する。</summary>
+    /// <summary>静的コンストラクタ。外観・動作設定（StyledProperty）の変更を再描画とセッションへ同期する。</summary>
     /// <remarks>
     /// 外観プロパティの変更は <see cref="Control.InvalidateVisual"/> で再描画を要求する。<br/>
-    /// 動作設定（ヒットテスト・最小サイズ・クリップ）の変更も再描画へ反映する。
+    /// 動作設定（最小サイズ・ヒットテスト半径・クリップ）はセッションへ伝搬し、判断はセッションが行う。
     /// </remarks>
     static DragRectControl()
     {
@@ -120,15 +125,25 @@ public sealed partial class DragRectControl : Control
         BorderThicknessProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
         HandleColorProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
         HandleSizeProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        HandleHitRadiusProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
-        MinSelectionSizeProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
+        HandleHitRadiusProperty.Changed.AddClassHandler<DragRectControl>(static (c, e) =>
+        {
+            // StyledProperty<double> のため常に double（分岐なし）
+            c._session.HandleHitRadius = e.GetNewValue<double>();
+            c.InvalidateVisual();
+        });
+        MinSelectionSizeProperty.Changed.AddClassHandler<DragRectControl>(static (c, e) =>
+        {
+            c._session.MinSelectionSize = e.GetNewValue<double>();
+            c.InvalidateVisual();
+        });
         // 「画像外の選択を禁止」の ON 切替時、既存の選択矩形を境界内へ即時クリップする（ドラッグ開始を待たない）。
         // 変更前後の値をログ出力する。
         ClampToDomainBoundsProperty.Changed.AddClassHandler<DragRectControl>(static (c, e) =>
         {
+            c._session.ClampToDomainBounds = e.GetNewValue<bool>();
             c.Log.LogSettingChanged(nameof(ClampToDomainBounds),
-                e.OldValue?.ToString() ?? "", e.NewValue?.ToString() ?? "");
-            c.ApplyClampToBounds();
+                e.OldValue!.ToString()!, e.NewValue!.ToString()!);
+            c.ApplyFeedback(c._session.ApplyClampToBounds());
         });
         MarkerColorProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
         MarkerLengthProperty.Changed.AddClassHandler<DragRectControl>(static (c, _) => c.InvalidateVisual());
@@ -146,12 +161,17 @@ public sealed partial class DragRectControl : Control
     /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</value>
     /// <remarks>
     /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
-    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。
+    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。<br/>
+    /// 入力の判断に伴うログはコア（セッション）が出力するため、同じロガーをセッションへ伝搬する。
     /// </remarks>
     public ILogger Log
     {
         get => field ?? NullLogger.Instance;
-        set => field = value ?? NullLogger.Instance;
+        set
+        {
+            field = value ?? NullLogger.Instance;
+            _session.Log = field;
+        }
     }
 
     // ====================================================================
@@ -321,7 +341,7 @@ public sealed partial class DragRectControl : Control
     /// <remarks>
     /// <b>DIP 座標での半径</b>（ユーザー指定・画面上の大きさを DIP で固定）。<br/>
     /// ズーム・縮小表示（Crop の Fit 等）を変えてもヒットテスト半径の画面上の大きさが一定になる。<br/>
-    /// ドメイン座標系への変換は <see cref="ToDomainRadius"/> が行う。
+    /// ドメイン座標系への変換はセッションが行う（設定は <see cref="DragRectSession"/> へ伝搬する）。
     /// </remarks>
     public double HandleHitRadius
     {
@@ -330,6 +350,7 @@ public sealed partial class DragRectControl : Control
     }
 
     /// <summary>選択矩形の最小サイズ（ドメイン座標）。</summary>
+    /// <remarks>ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる（判断はセッションが行う）。</remarks>
     public double MinSelectionSize
     {
         get => GetValue(MinSelectionSizeProperty);
@@ -423,23 +444,7 @@ public sealed partial class DragRectControl : Control
     /// Snapshot と同一形式で現在の状態を取得できる（状態のポーリングは本プロパティで完結）。<br/>
     /// 選択状態の判定（確定・キャンセル等の操作分岐）は <see cref="DragRectSnapshot.HasSelection"/> を使用する。
     /// </remarks>
-    public DragRectSnapshot CurrentSnapshot => _state.CreateSnapshot();
-
-    /// <summary>「画像外の選択を禁止」（<see cref="ClampToDomainBounds"/>）の変更を現在の選択矩形へ適用する。</summary>
-    /// <remarks>
-    /// ON に切り替わった瞬間に、既存の選択矩形をドメイン境界内へクリップして即時反映する。<br/>
-    /// クリップで矩形が変更された場合のみ <see cref="SelectionChanged"/> を発火し、再描画を要求する。<br/>
-    /// <see cref="ClampToDomainBoundsProperty"/> の Changed ハンドラから呼ばれる（プロパティ変更 → 状態適用の一元化）。
-    /// </remarks>
-    private void ApplyClampToBounds()
-    {
-        // 状態適用（クリップ + 変更検出）は DragRectState が担い、通知・再描画は本コントロールが担う
-        if (_state.ClampSelectionToBounds())
-        {
-            RaiseSelectionChanged(_state.SelectionRect);
-        }
-        InvalidateVisual();
-    }
+    public DragRectSnapshot CurrentSnapshot => _session.CreateSnapshot();
 
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は等価変換。</param>
@@ -452,130 +457,160 @@ public sealed partial class DragRectControl : Control
     /// </remarks>
     public void SetCoordinateTransform(ICoordTransform? port)
     {
-        _coordinatePort = port ?? CoordTransform.Identity;
-        _state.Port = _coordinatePort;
+        _session.SetPort(port);
         InvalidateVisual();
     }
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <remarks>
-    /// 状態変更後に再描画を即時要求し、<see cref="SelectionChanged"/> で通知する。<br/>
-    /// <see cref="ClampToDomainBounds"/> が有効な場合は、画像外にはみ出す矩形を境界内にクリップしてから設定する<br/>
-    /// （外部からの復元でも「画像外の選択を禁止」を尊重する）。
+    /// 状態の更新と通知はセッションが担う（<see cref="ClampToDomainBounds"/> が有効な場合は境界内へクリップしてから設定する）。<br/>
+    /// 設定後は <see cref="SelectionChanged"/> が発火し、再描画される。
     /// </remarks>
-    public void SetSelection(Rect rect)
-    {
-        var selectionRect = rect.ToEsRect();
-        // ClampToDomainBounds 有効時は画像外にはみ出す矩形を境界内にクリップしてから設定する
-        if (ClampToDomainBounds)
-        {
-            selectionRect = _state.ClipRectToBounds(selectionRect);
-        }
-        _state.SetSelection(selectionRect);
-        RaiseSelectionChanged(selectionRect);
-        InvalidateVisual();
-    }
+    public void SetSelection(Rect rect) => ApplyFeedback(_session.SetSelection(rect.ToEsRect()));
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
-    /// <remarks>状態変更後に再描画を即時要求する。</remarks>
-    public void ResetSelection()
-    {
-        _state.Reset();
-        InvalidateVisual();
-    }
+    /// <remarks>状態の初期化はセッションが担う（再描画される）。</remarks>
+    public void ResetSelection() => ApplyFeedback(_session.Reset());
 
     /// <summary>キャンセル要求を処理する（Escape キーと同じ条件）。</summary>
     /// <remarks>
     /// 外部（ホスト）が選択操作をキャンセルする際に呼ぶ。<br/>
-    /// ドラッグ中 / 選択ありの場合は選択破棄（<see cref="ResetSelection"/>）を実施した後に
-    /// <see cref="CancelRequested"/> を発火する。
+    /// ドラッグ中 / 選択ありの場合は選択破棄を実施した後に <see cref="CancelRequested"/> を発火する。
     /// </remarks>
-    public void RequestCancel()
-    {
-        Log.LogCancelRequested();
-        if (_state.IsDragging || _state.HasSelection)
-        {
-            ResetSelection();
-        }
-        CancelRequested?.Invoke(this, EventArgs.Empty);
-    }
+    public void RequestCancel() => ApplyFeedback(_session.RequestCancel());
 
     /// <summary>外部（ホスト）からの確定要求を処理する（Enter キーと同じ条件）。</summary>
     /// <remarks>
     /// UI ボタン等から DragRect の選択を確定する際に呼ぶ。<br/>
     /// ドラッグ中は無視し、選択確定後のみ <see cref="ConfirmRequested"/>（選択矩形 + Snapshot 付き）を発行する。<br/>
-    /// 確定後に選択状態をクリアする（<see cref="ResetSelection"/>。確定後の再ドラッグ・再確定を防ぐ）。
+    /// 確定後に選択状態をクリアする（確定後の再ドラッグ・再確定を防ぐ）。
     /// </remarks>
-    public void RequestConfirm()
+    public void RequestConfirm() => ApplyFeedback(_session.RequestConfirm());
+
+    // ====================================================================
+    // コアとの連携（効果の適用・通知の転送）
+    // ====================================================================
+
+    /// <summary>コア（状態管理クラス）が返す効果を画面へ適用する。</summary>
+    /// <param name="feedback">適用する効果（再描画・フォーカス・カーソル操作）。</param>
+    /// <remarks>
+    /// カーソル操作は「移動 → 非表示 → 再表示」の順で適用する（nudge の終了では移動してから再表示する必要がある）。
+    /// </remarks>
+    private void ApplyFeedback(DragRectFeedback feedback)
     {
-        if (_state.IsDragging || !_state.HasSelection) return;
-        Log.LogConfirmRequested(_state.SelectionRect.ToString());
-        ConfirmRequested?.Invoke(this, new SelectionRectEventArgs(_state.SelectionRect.ToAvaloniaRect(), _state.CreateSnapshot()));
-        ResetSelection();
+        if (feedback.RequestFocus)
+        {
+            Focus();
+        }
+
+        if (feedback.Cursor.HasFlag(DragRectCursorAction.MoveTo))
+        {
+            _cursor.SetCursorScreenPoint(ToScreen(feedback.CursorDomainPosition));
+        }
+
+        if (feedback.Cursor.HasFlag(DragRectCursorAction.Hide))
+        {
+            _cursor.ShowCursor(false);
+        }
+
+        if (feedback.Cursor.HasFlag(DragRectCursorAction.Show))
+        {
+            _cursor.ShowCursor(true);
+        }
+
+        if (feedback.UpdateCursorShape)
+        {
+            ApplyCursorShape(feedback.CursorHandle);
+        }
+
+        if (feedback.Redraw)
+        {
+            InvalidateVisual();
+        }
     }
 
-    // ====================================================================
-    // イベント発火ヘルパー（公開イベントへ状態を通知）
-    // ====================================================================
+    /// <summary>コアからの通知を公開イベントへ転送する（判断はしない）。</summary>
+    /// <param name="sender">送信元（セッション）。</param>
+    /// <param name="notice">通知の種別・座標・スナップショット。</param>
+    /// <remarks>
+    /// 転送のみを担う（確定/キャンセルの判断・状態の更新はコアが済ませている）。<br/>
+    /// 各 UI のイベント引数の型（Avalonia の <see cref="Rect"/> / <see cref="Point"/>）へ境界変換する。
+    /// </remarks>
+    private void OnSessionNotified(object? sender, DragRectNotice notice)
+    {
+        switch (notice.Kind)
+        {
+            case DragRectNoticeKind.SelectionStarted:
+                SelectionStarted?.Invoke(this, ToPointArgs(notice));
+                break;
+            case DragRectNoticeKind.SelectionChanged:
+                SelectionChanged?.Invoke(this, ToRectArgs(notice));
+                break;
+            case DragRectNoticeKind.SelectionCompleted:
+                SelectionCompleted?.Invoke(this, ToRectArgs(notice));
+                break;
+            case DragRectNoticeKind.SelectionCancelled:
+                SelectionCancelled?.Invoke(this, EventArgs.Empty);
+                break;
+            case DragRectNoticeKind.MouseDown:
+                MouseDown?.Invoke(this, ToPointArgs(notice));
+                break;
+            case DragRectNoticeKind.MouseUp:
+                MouseUp?.Invoke(this, ToPointArgs(notice));
+                break;
+            case DragRectNoticeKind.MouseClicked:
+                MouseClicked?.Invoke(this, ToPointArgs(notice));
+                break;
+            case DragRectNoticeKind.MouseDoubleClicked:
+                MouseDoubleClicked?.Invoke(this, ToPointArgs(notice));
+                break;
+            case DragRectNoticeKind.MouseMoved:
+                MouseMoved?.Invoke(this, ToPointArgs(notice));
+                break;
+            case DragRectNoticeKind.LoupePositionMoved:
+                LoupePositionMoved?.Invoke(this, ToPointArgs(notice));
+                break;
+            case DragRectNoticeKind.ConfirmRequested:
+                ConfirmRequested?.Invoke(this, ToRectArgs(notice));
+                break;
+            case DragRectNoticeKind.CancelRequested:
+                CancelRequested?.Invoke(this, EventArgs.Empty);
+                break;
+        }
+    }
 
-    /// <summary><see cref="SelectionStarted"/> を発火する。</summary>
-    private void RaiseSelectionStarted(EsPoint domainPos)
-        => SelectionStarted?.Invoke(this, new DragRectPointEventArgs(domainPos.ToAvaloniaPoint(), _state.CreateSnapshot(domainPos)));
+    /// <summary>通知を点座標のイベント引数へ変換する。</summary>
+    /// <param name="notice">通知。</param>
+    /// <returns>通知座標（DIP）とスナップショットを含むイベント引数。</returns>
+    private static DragRectPointEventArgs ToPointArgs(DragRectNotice notice)
+        => new(notice.Position.ToAvaloniaPoint(), notice.Snapshot);
 
-    /// <summary><see cref="SelectionChanged"/> を発火する。</summary>
-    private void RaiseSelectionChanged(EsRect rect)
-        => SelectionChanged?.Invoke(this, new SelectionRectEventArgs(rect.ToAvaloniaRect(), _state.CreateSnapshot()));
-
-    /// <summary><see cref="SelectionCompleted"/> を発火する。</summary>
-    private void RaiseSelectionCompleted(EsRect rect)
-        => SelectionCompleted?.Invoke(this, new SelectionRectEventArgs(rect.ToAvaloniaRect(), _state.CreateSnapshot()));
-
-    /// <summary><see cref="SelectionCancelled"/> を発火する。</summary>
-    private void RaiseSelectionCancelled()
-        => SelectionCancelled?.Invoke(this, EventArgs.Empty);
-
-    /// <summary><see cref="MouseDown"/> を発火する。</summary>
-    private void RaiseMouseDown(EsPoint domainPos)
-        => MouseDown?.Invoke(this, new DragRectPointEventArgs(domainPos.ToAvaloniaPoint(), _state.CreateSnapshot(domainPos)));
-
-    /// <summary><see cref="MouseUp"/> を発火する。</summary>
-    private void RaiseMouseUp(EsPoint domainPos)
-        => MouseUp?.Invoke(this, new DragRectPointEventArgs(domainPos.ToAvaloniaPoint(), _state.CreateSnapshot(domainPos)));
-
-    /// <summary><see cref="MouseClicked"/> を発火する。</summary>
-    private void RaiseMouseClicked(EsPoint domainPos)
-        => MouseClicked?.Invoke(this, new DragRectPointEventArgs(domainPos.ToAvaloniaPoint(), _state.CreateSnapshot(domainPos)));
-
-    /// <summary><see cref="MouseDoubleClicked"/> を発火する。</summary>
-    private void RaiseMouseDoubleClicked(EsPoint domainPos)
-        => MouseDoubleClicked?.Invoke(this, new DragRectPointEventArgs(domainPos.ToAvaloniaPoint(), _state.CreateSnapshot(domainPos)));
-
-    /// <summary><see cref="MouseMoved"/> を発火する。</summary>
-    private void RaiseMouseMoved(EsPoint domainPos)
-        => MouseMoved?.Invoke(this, new DragRectPointEventArgs(domainPos.ToAvaloniaPoint(), _state.CreateSnapshot(domainPos)));
-
-    /// <summary><see cref="LoupePositionMoved"/> を発火する。</summary>
-    private void RaiseLoupePositionMoved(EsPoint domainPos)
-        => LoupePositionMoved?.Invoke(this, new DragRectPointEventArgs(domainPos.ToAvaloniaPoint(), _state.CreateSnapshot(domainPos)));
+    /// <summary>通知を選択矩形のイベント引数へ変換する。</summary>
+    /// <param name="notice">通知。</param>
+    /// <returns>選択矩形（DIP）とスナップショットを含むイベント引数。</returns>
+    private static SelectionRectEventArgs ToRectArgs(DragRectNotice notice)
+        => new(notice.Snapshot.SelectionRect.ToAvaloniaRect(), notice.Snapshot);
 
     /// <summary><see cref="ViewportChanged"/> を発火する。</summary>
     private void RaiseViewportChanged()
-        => ViewportChanged?.Invoke(this, new SelectionRectEventArgs(_state.SelectionRect.ToAvaloniaRect(), _state.CreateSnapshot()));
+        => ViewportChanged?.Invoke(this, new SelectionRectEventArgs(_session.SelectionRect.ToAvaloniaRect(), _session.CreateSnapshot()));
 
-    /// <summary>DIP 半径をドメイン半径に変換する（ヒットテスト用）。</summary>
-    /// <returns>ドメイン座標系でのヒットテスト半径。</returns>
-    /// <remarks>
-    /// Forward の差を取ることでオフセット（レターボックス等）をキャンセルし、スケールのみを得る。<br/>
-    /// スケールがほぼ 0（等価変換）の場合は DIP 半径をそのまま使用する。
-    /// </remarks>
-    private double ToDomainRadius()
+    /// <summary>カーソル形状をハンドル種別に応じて更新する。</summary>
+    /// <param name="handle">カーソル形状の基になるハンドル種別。</param>
+    /// <remarks>ハンドル上ではリサイズ方向に応じたカーソル、枠内では移動カーソル、それ以外は既定カーソルを表示する。</remarks>
+    private void ApplyCursorShape(DragHandle handle)
     {
-        var port = _coordinatePort;
-        var p0 = port.Forward(default);
-        var p1 = port.Forward(new EsPoint(HandleHitRadius, 0));
-        double radius = Math.Abs(p1.X - p0.X);
-        return radius < 0.001 ? HandleHitRadius : radius;
+        // 標準カーソルは Lazy で遅延共有する（ポインター移動毎の生成を排除しつつ、初回アクセスで ICursorFactory を解決）
+        Cursor = handle switch
+        {
+            DragHandle.TopLeft or DragHandle.BottomRight => s_topLeftCornerCursor.Value,
+            DragHandle.TopRight or DragHandle.BottomLeft => s_topRightCornerCursor.Value,
+            DragHandle.TopCenter or DragHandle.BottomCenter => s_sizeNorthSouthCursor.Value,
+            DragHandle.MiddleLeft or DragHandle.MiddleRight => s_sizeWestEastCursor.Value,
+            DragHandle.Move => s_sizeAllCursor.Value,
+            _ => Cursor.Default,
+        };
     }
 
     // ====================================================================
@@ -586,216 +621,41 @@ public sealed partial class DragRectControl : Control
     /// <param name="e">ポインターイベント。</param>
     /// <remarks>
     /// 左ボタン以外（右クリック・中ボタン等）は無視する。<br/>
-    /// 座標はコントロールローカル DIP で取得し、ドメイン座標に変換して処理する。<br/>
-    /// nudge 中は押下位置を nudge 後の始点に置き換えてずれを防ぐ。<br/>
-    /// 矢印キーを受け取れるようフォーカスを獲得する。
+    /// 座標はコントロールローカル DIP で取得し、ドメイン座標へ変換してセッションへ通知する（解釈はコアが行う）。<br/>
+    /// ダブルクリックの確定/キャンセル判定・nudge の終了・ハンドルのスナップはコアの判断に従う。
     /// </remarks>
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
 
-        _state.IsMouseDown = true;
-        var domainPos = _coordinatePort.Forward(e.GetPosition(this).ToEsPoint());
-
-        // マウス Down 直前の位置をログ（高頻度の移動ログは行わない）
-        Log.LogPositionBeforeDown(domainPos.X, domainPos.Y);
-        Log.LogMouseDown(domainPos.X, domainPos.Y, e.ClickCount, _state.HasSelection);
-
-        // nudge 中ならリセット（ポインター再表示・基点クリア）してから押下処理する
-        if (_state.NudgeActive)
-        {
-            domainPos = _state.StartPoint;
-            EndNudge();
-            RaiseLoupePositionMoved(domainPos);
-        }
-
-        _lastPressPos = domainPos;
-        _dragPerformed = false;
-        RaiseMouseDown(domainPos);
-
-        // ダブルクリック検出: ドラッグ処理は行わず、矩形内判定で確定/キャンセル要求を DragRect 自身が発行する
-        if (e.ClickCount >= 2)
-        {
-            var inside = _state.HasSelection && _state.SelectionRect.Contains(domainPos);
-            Log.LogDoubleClick(domainPos.X, domainPos.Y, inside);
-            RaiseMouseDoubleClicked(domainPos);
-            if (inside)
-            {
-                Log.LogConfirmRequested(_state.SelectionRect.ToString());
-                ConfirmRequested?.Invoke(this, new SelectionRectEventArgs(_state.SelectionRect.ToAvaloniaRect(), _state.CreateSnapshot(domainPos)));
-                ResetSelection();
-            }
-            else
-            {
-                Log.LogCancelRequested();
-                CancelRequested?.Invoke(this, EventArgs.Empty);
-            }
-            e.Handled = true;
-            return;
-        }
-
-        // ハンドルヒットテスト → リサイズ/移動 or 新規選択の開始
-        var handle = _state.HitTest(domainPos, ToDomainRadius());
-        if (handle != DragHandle.None)
-        {
-            Log.LogDragStart(handle.ToString(), domainPos.X, domainPos.Y);
-            _state.StartDrag(handle, domainPos);
-
-            // C案: リサイズハンドル（8 方向）では、ポインタ自体をハンドル点へスナップし、
-            // ルーペ中心もハンドル点へ揃える（ポインタ・矩形の角・ルーペを一体にする）。
-            // ドラッグ基準点（DragStartPoint）もハンドル点に揃えることで、スナップ後の最初の移動が
-            // ハンドル点からの差分として正しく矩形へ反映される（Down 位置のズレ分の飛びを防ぐ）。
-            // 移動（Move）は「掴んだ位置」を維持するのが自然なためスナップしない。
-            if (handle != DragHandle.Move)
-            {
-                var handlePos = SelectionGeometry.GetHandlePosition(_state.SelectionRect, handle);
-                _state.DragStartPoint = handlePos;
-                _state.LastMousePosition = handlePos;
-                _cursor.SetCursorScreenPoint(ToScreen(handlePos));
-                RaiseLoupePositionMoved(handlePos);
-            }
-        }
-        else
-        {
-            _state.StartNewSelection(domainPos);
-            RaiseSelectionStarted(domainPos);
-        }
-
+        var feedback = _session.Press(ToDomain(e), e.ClickCount);
         e.Handled = true;
-        Focus();
-        InvalidateVisual();
+        ApplyFeedback(feedback);
     }
 
     /// <summary>ポインター移動時の処理。</summary>
     /// <param name="e">ポインターイベント。</param>
     /// <remarks>
-    /// ボタン押下中のドラッグ処理を <see cref="DragRectState.UpdateDrag"/> に委譲する。<br/>
-    /// ドラッグハンドルに近づいたときはハンドル種別に応じたカーソルへ変更する。<br/>
-    /// nudge 中は SetCursorPos 由来の PointerMoved で矩形を上書きしない（単押し nudge が戻る問題の対策）。<br/>
-    /// ヒットテスト半径（<see cref="ToDomainRadius"/>）は 1 回だけ計算して、エコー判定・カーソル更新・ドラッグ更新で共有する
-    /// （ポインター移動毎の Forward 変換の重複呼び出しを排除）。
+    /// 座標をドメイン座標へ変換してセッションへ通知する。<br/>
+    /// ドラッグの適用・nudge 中のエコー移動の抑制・カーソル形状の決定はコアの判断に従う。
     /// </remarks>
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        var domainPos = _coordinatePort.Forward(e.GetPosition(this).ToEsPoint());
-        var hitRadius = ToDomainRadius();
-
-        // nudge 終了（EndNudge の SetCursorPos）直後のエコー PointerMoved をスキップする
-        if (_state.SuppressEchoAt is { } echoPos && SelectionGeometry.IsNear(domainPos, echoPos, hitRadius))
-        {
-            // エコー抑制は最初の 1 回のみ（Reset まで残留すると、同じ位置へのホバーでカーソル形状の更新が
-            // 妨げられるため、消費したらクリアする）。
-            _state.SuppressEchoAt = null;
-            // 抑制時でもカーソル形状はハンドル位置に応じて更新する（nudge 後のホバーで矢印のままになる問題の対策）
-            UpdateCursor(domainPos, hitRadius);
-            return;
-        }
-
-        // マウスポインタの位置を通知（nudge 関係なく常時。要素検出等の汎用用途）
-        RaiseMouseMoved(domainPos);
-
-        // ドラッグハンドルに近づいたときのカーソル変更
-        UpdateCursor(domainPos, hitRadius);
-
-        // nudge 中は SetCursorPos 由来の PointerMoved で矩形・基点（LastMousePosition）を上書きしない
-        // （LastMousePosition は nudge 適用後の終点を保持し、解放時のルーペ位置が実マウス位置に飛ぶのを防ぐ）
-        if (_state.NudgeActive)
-        {
-            return;
-        }
-
-        _state.LastMousePosition = domainPos;
-
-        if (_state.IsDragging)
-        {
-            _state.UpdateDrag(domainPos, MinSelectionSize, ClampToDomainBounds);
-            // Click 判定用: 押下中のドラッグ移動で矩形が変化した場合はドラッグ発生
-            if (_state.SelectionRect != _state.DragStartRect)
-            {
-                _dragPerformed = true;
-            }
-            RaiseSelectionChanged(_state.SelectionRect);
-
-            // ドラッグ中はアクティブハンドルの位置（リサイズ中のハンドル点・移動中の矩形中心・
-            // 新規選択の終点）をルーペ中心に通知する（nudge と同じ挙動）。
-            // クリップ（ClampToDomainBounds）や最小サイズ保証でマウス位置と矩形の角がずれる場合も、
-            // 実際のハンドル点を追従して矩形の微調整位置を確認できる。
-            RaiseLoupePositionMoved(_state.GetMarkerPosition());
-        }
-        else
-        {
-            // ルーペの中心座標を通知（通常追従: ホバー位置）
-            RaiseLoupePositionMoved(domainPos);
-        }
-        InvalidateVisual();
+        ApplyFeedback(_session.Move(ToDomain(e)));
     }
 
     /// <summary>ポインター解放時の処理。</summary>
     /// <param name="e">ポインターイベント。</param>
     /// <remarks>
-    /// <see cref="DragRectState.EndDrag"/> に委譲し、選択確定・解除を処理する。<br/>
-    /// nudge 中は nudge を必ず終了する（ポインタを nudge 位置へ移動・十字線を消す・ポインタ再表示）。<br/>
-    /// nudge 位置はドラッグ終了処理の前に計算する（<see cref="DragRectState.EndDrag"/> が
-    /// <see cref="DragRectState.IsDragging"/> / <see cref="DragRectState.ActiveHandle"/> をリセットするため、
-    /// 後から <see cref="GetMarkerPosition"/> を呼ぶと固定コーナー（StartPoint）を返してしまう）。
+    /// 座標をドメイン座標へ変換してセッションへ通知する。<br/>
+    /// 最小サイズによるキャンセル・確定・クリック検出・nudge の終了はコアの判断に従う。
     /// </remarks>
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
-        _state.IsMouseDown = false;
-        var domainPos = _coordinatePort.Forward(e.GetPosition(this).ToEsPoint());
-        RaiseMouseUp(domainPos);
-
-        // マウス Up 直後の位置をログ（高頻度の移動ログは行わない）
-        Log.LogMouseUp(domainPos.X, domainPos.Y, _state.IsDragging, _state.HasSelection);
-        Log.LogPositionAfterUp(domainPos.X, domainPos.Y);
-
-        var wasDragging = _state.IsDragging;
-        var wasNudging = _state.NudgeActive;
-        var pressPos = _lastPressPos;
-        // nudge 中のマーカー位置（EndDrag が IsDragging / ActiveHandle をリセットする前に計算）
-        var nudgePos = wasNudging ? _state.GetMarkerPosition() : default;
-
-        // ドラッグ終了（確定 or キャンセル判定）。wasDragging は EndDrag 前の状態と同値のため再利用する
-        if (wasDragging)
-        {
-            var cancelled = _state.SelectionRect.Width < MinSelectionSize || _state.SelectionRect.Height < MinSelectionSize;
-            _state.EndDrag();
-            if (cancelled)
-            {
-                _state.Reset();
-                RaiseSelectionCancelled();
-            }
-            else
-            {
-                RaiseSelectionCompleted(_state.SelectionRect);
-            }
-        }
-
-        // Click 検出: ドラッグ移動なしの Down→Up 完結（シングルクリック）
-        if (wasDragging && !_dragPerformed)
-        {
-            Log.LogClick(pressPos.X, pressPos.Y);
-            RaiseMouseClicked(pressPos);
-        }
-
-        // nudge 中なら終了する（ポインタを nudge 位置へ移動・十字線を消す・ポインタ再表示）
-        if (wasNudging)
-        {
-            // nudge 中にユーザーが物理マウスを動かしても、カーソルは nudge 位置へ戻してから再表示する
-            // （nudge から Up までのマウス移動はキャンセルし、nudge 位置で表示する。SetCursorPos は再表示前に行う）
-            _cursor.SetCursorScreenPoint(ToScreen(nudgePos));
-            EndNudge();
-            RaiseLoupePositionMoved(nudgePos);
-            _state.SuppressEchoAt = nudgePos;
-            // カーソルは nudge 位置（ハンドル上）にあるため、ハンドルに応じたカーソル形状へ即時更新する
-            // （マウスを動かさない限り PointerMoved が発火せず、形状が更新されないため）。
-            UpdateCursor(nudgePos, ToDomainRadius());
-        }
-
-        InvalidateVisual();
+        ApplyFeedback(_session.Release(ToDomain(e)));
     }
 
     /// <summary>マウスホイールでズーム・スクロールを操作する。</summary>
@@ -805,6 +665,7 @@ public sealed partial class DragRectControl : Control
     /// - Ctrl + ホイール: <see cref="ZoomRequested"/> を発火する（ズームの実処理は上位 AP が実施）。<br/>
     /// - 通常ホイール: 祖先 ScrollViewer をスクロールする（Shift 併用で横スクロール）。<br/>
     /// ScrollViewer が存在しない場合（範囲選択（AreaSelect）等）は何もせず既定の動作に委ねる。<br/>
+    /// ホイールはビュー（スクロール・ズーム率）の操作であり、選択矩形の状態を変えないため UI 層が担う。
     /// </remarks>
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
@@ -831,24 +692,16 @@ public sealed partial class DragRectControl : Control
         e.Handled = true;
     }
 
-    /// <summary>ドラッグハンドル上のカーソル形状を更新する。</summary>
-    /// <param name="domainPos">判定するドメイン座標。</param>
-    /// <param name="hitRadius">ヒットテスト半径（ドメイン座標。呼び出し側で事前計算済み）。</param>
-    /// <remarks>ハンドル上ではリサイズ方向に応じたカーソル、枠内では移動カーソルを表示する。<br/>
-    /// ヒットテスト半径は呼び出し側から受け取り、内部で <see cref="ToDomainRadius"/> を再計算しない（ホットパス高速化）。</remarks>
-    private void UpdateCursor(EsPoint domainPos, double hitRadius)
-    {
-        var handle = _state.HitTest(domainPos, hitRadius);
-        // 標準カーソルは Lazy で遅延共有する（ポインター移動毎の生成を排除しつつ、初回アクセスで ICursorFactory を解決）
-        Cursor = handle switch
-        {
-            DragHandle.TopLeft or DragHandle.BottomRight => s_topLeftCornerCursor.Value,
-            DragHandle.TopRight or DragHandle.BottomLeft => s_topRightCornerCursor.Value,
-            DragHandle.TopCenter or DragHandle.BottomCenter => s_sizeNorthSouthCursor.Value,
-            DragHandle.MiddleLeft or DragHandle.MiddleRight => s_sizeWestEastCursor.Value,
-            DragHandle.Move => s_sizeAllCursor.Value,
-            _ => Cursor.Default,
-        };
-    }
+    /// <summary>ポインターイベントの座標をドメイン座標へ変換する。</summary>
+    /// <param name="e">ポインターイベント。</param>
+    /// <returns>ドメイン座標。</returns>
+    /// <remarks>コントロールローカル DIP で取得した座標を、セッションの座標変換ポートで変換する（境界の 1 行変換）。</remarks>
+    private EsPoint ToDomain(PointerEventArgs e) => _session.ToDomain(e.GetPosition(this).ToEsPoint());
+
+    /// <summary>ドメイン座標を画面物理座標へ変換する（カーソル移動用）。</summary>
+    /// <param name="domainPos">ドメイン座標。</param>
+    /// <returns>画面物理座標（UI 非依存のコア型）。</returns>
+    private EsPixelPoint ToScreen(EsPoint domainPos)
+        => ScreenConverter.LocalDipToScreen(this, _session.ToDip(domainPos).ToAvaloniaPoint()).ToEsPixelPoint();
 }
 

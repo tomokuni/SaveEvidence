@@ -5,10 +5,11 @@ DragRectControl（MewUI 版）のシステム概要・アーキテクチャ・�
 ## システム概要
 
 `DragRectControl.MewUI` は、Avalonia 版 `DragRectControl` と**同一の UI 非依存コア（`DragRectControl.Core`）**を使い、
-描画層・入力処理・カーソル制御のみを MewUI（SkiaSharp）で実装したドラッグ矩形コントロールです。
+入力の受付・効果の適用・通知の転送・描画のみを MewUI（SkiaSharp）で実装したドラッグ矩形コントロールです。
 
-コアが担う範囲（選択矩形の正規化・ハンドル位置・ヒットテスト・ドラッグ変形・nudge・境界クリップ・対話状態の合成）は
-両 UI で完全に共通であり、本プロジェクトはコアの状態機械を入力で駆動し、その結果をキャンバスへ描画します。
+コアが担う範囲（選択矩形の正規化・ハンドル位置・ヒットテスト・ドラッグ変形・nudge・境界クリップ・対話状態の合成に加えて、
+nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルの判断）は
+両 UI で完全に共通であり、本プロジェクトは入力をコアへ通知し、返された効果を適用して結果をキャンバスへ描画します。
 
 ## 技術スタック
 
@@ -35,7 +36,7 @@ DragRectControl（MewUI 版）のシステム概要・アーキテクチャ・�
             └───────────┬────────────────────┘
                         ▼
             ┌───────────────────────┐
-            │  DragRectControl.Core │  幾何計算・状態機械（単一所有）
+            │  DragRectControl.Core │  状態管理クラス・幾何計算・状態機械（単一所有）
             └───────────┬───────────┘
                         ▼
             ┌───────────────────────┐
@@ -51,15 +52,15 @@ DragRectControl（MewUI 版）のシステム概要・アーキテクチャ・�
 
 | 層 | 責務 |
 | --- | --- |
-| `DragRectControl.Core` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成 |
-| `DragRectControl.MewUI` | 入力（マウス・キー）をコアの状態機械へ流す、コアの結果を `SKCanvas` へ描画する、カーソル形状と表示の制御、DPI の追従 |
+| `DragRectControl.Core` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成** |
+| `DragRectControl.MewUI` | 入力（マウス・キー）をコア型へ変換してセッションへ通知する、返された効果（再描画・フォーカス・マウスキャプチャ・カーソル形状/操作）を適用する、通知を公開イベントへ転送する、状態を `SKCanvas` へ描画する、DPI の追従 |
 | ホスト | 座標変換ポートの設定、選択の復元・確定・キャンセル、重ね順の管理、ビューポート変化の通知 |
 
 ### 設計判断
 
 | 判断 | 理由 |
 | --- | --- |
-| 状態機械（`DragRectState`）をコアに置き、UI 側は入力の変換のみを行う | 本コントロールの本体は「状態遷移 + 幾何」であり、UI に残すと MewUI 版で丸ごと書き直しになる |
+| 状態機械（`DragRectState`）と入力の判断（`DragRectSession`）をコアに置き、UI 側は入力の変換と効果の適用のみを行う | 本コントロールの本体は「状態遷移 + 幾何 + 入力の解釈」であり、UI に残すと MewUI 版で丸ごと書き直しになる |
 | イベント引数をコア型（`EsPoint` / `EsRect`）で公開する | コアの状態機械と同一の型になり境界変換が不要になる。MewUI の `Rect` は負のサイズを 0 にクランプするため、`EsRect` のほうが安全 |
 | カーソルサービスの既定実装の解決を UI 層で行う | コアは `Platform.Native` を参照できない（循環参照）。コアは抽象と `null` のみを扱う |
 | `SkiaCanvasView`（`Control` 系）を基底にする | 画像の上へ重ねるオーバーレイであり、子要素を持たない。背景を塗らないため下の画像が透ける |
@@ -72,19 +73,21 @@ DragRectControl（MewUI 版）のシステム概要・アーキテクチャ・�
 ```text
 src/DragRectControl.MewUI/
 ├── src/
-│   ├── DragRectControl.cs          公開 API・入力処理・カーソル制御・描画の起点
+│   ├── DragRectControl.cs          公開 API・入力の受付と効果の適用・カーソル制御・描画の起点
 │   ├── DragRectSkiaRenderer.cs     枠線・ハンドル・十字マーカー・座標ラベルの描画
 │   ├── DragRectPointEventArgs.cs   座標通知のイベント引数
 │   └── SelectionRectEventArgs.cs   選択矩形通知のイベント引数
 └── tests/
     ├── TestHelper.cs                     テスト用の描画先（SKBitmap + SKCanvas）と画素数え上げ
-    ├── DragRectSkiaRenderer.Tests.cs     描画と配置計算の検証（16 件）
-    └── DragRectControl.Tests.cs          公開 API・プロパティ・イベントの検証（12 件）
+    ├── RecordingLogger.cs                ログ出力を収集するテスト用 ILogger
+    ├── DragRectSkiaRenderer.Tests.cs     描画と配置計算の検証（12 件）
+    ├── DragRectControl.Tests.cs          公開 API・プロパティ・イベントの検証（21 件）
+    └── LogMessage.Tests.cs               UI 層のログ定義の検証（3 件）
 ```
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `DragRectControl` | `MewProperty` の定義、入力のドメイン変換、コアの状態機械の駆動、カーソル形状・表示の制御、DPI 変更の追従 |
+| `DragRectControl` | `MewProperty` の定義、入力のドメイン変換とセッションへの通知、返された効果（再描画・フォーカス・マウスキャプチャ・カーソル）の適用、マウスキャプチャの取得/解放、DPI 変更の追従 |
 | `DragRectSkiaRenderer` | 枠線・8 方向ハンドル・十字マーカー・座標ラベルの描画と、ラベル配置の純粋計算 |
 | `DragRectPointEventArgs` / `SelectionRectEventArgs` | 通知時点の座標（矩形）とスナップショットの組 |
 | `RenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
@@ -123,10 +126,37 @@ classDiagram
         +RequestCancel() void
         +NotifyViewportChanged() void
         -OnPaintSurface(canvas, info) void
-        -HandleArrowKey(key) bool
+        -OnSessionNotified(sender, notice) void
+        -ApplyFeedback(feedback) void
+        -ApplyCursorShape(handle) void
         -EndNudge() void
         -CaptureMouse(capture) void
         -ToDipRect(rect) EsRect
+    }
+    class DragRectSession {
+        <<DragRectControl.Core>>
+        +Press(pos, clickCount) DragRectFeedback
+        +Move(pos) DragRectFeedback
+        +Release(pos) DragRectFeedback
+        +KeyDown(key, cursorPos) DragRectFeedback
+        +NudgeByKey(key, cursorPos) DragRectFeedback
+        +EndNudge() DragRectFeedback
+        +Detach() DragRectFeedback
+        +SetSelection(rect) DragRectFeedback
+        +SetPort(port) void
+        +Notified EventHandler~DragRectNotice~
+    }
+    class DragRectNotice {
+        <<DragRectControl.Core>>
+        +DragRectNoticeKind Kind
+        +EsPoint Position
+        +DragRectSnapshot Snapshot
+    }
+    class DragRectFeedback {
+        <<DragRectControl.Core>>
+        +bool Handled / Redraw / RequestFocus / CaptureMouse
+        +bool UpdateCursorShape / DragHandle CursorHandle
+        +DragRectCursorAction Cursor / EsPoint CursorDomainPosition
     }
     class DragRectSkiaRenderer {
         +DrawBorder(canvas, rect, color, thickness)$ void
@@ -166,9 +196,12 @@ classDiagram
     }
 
     SkiaCanvasView <|-- DragRectControl
-    DragRectControl *-- DragRectState : 状態機械
+    DragRectControl *-- DragRectSession : 状態管理（入力の解釈）
+    DragRectControl ..> DragRectNotice : 通知を公開イベントへ転送
+    DragRectControl ..> DragRectFeedback : 効果を適用
     DragRectControl ..> DragRectSkiaRenderer : 描画を委譲
-    DragRectControl ..> ICursorService : カーソル操作
+    DragRectSession *-- DragRectState : 状態機械
+    DragRectSession ..> ICursorService : カーソル操作
     DragRectState ..> SelectionGeometry : 幾何計算
     DragRectSkiaRenderer ..> SelectionGeometry : ハンドル位置
 ```
@@ -179,34 +212,37 @@ classDiagram
 sequenceDiagram
     participant Host as ホスト
     participant Ctl as DragRectControl
+    participant Ses as DragRectSession
     participant St as DragRectState
     participant Cur as ICursorService
 
     Host->>Ctl: SetCoordinateTransform(port)
-    Ctl->>St: Port = port
+    Ctl->>Ses: SetPort(port)
     Note over Ctl: 左ボタン押下
     Ctl->>Ctl: ToDomain(e.GetPosition)
-    Ctl->>St: HitTest(pos, ToDomainRadius())
+    Ctl->>Ses: Press(pos, clickCount)
+    Ses->>St: HitTest / StartNewSelection / StartDrag
     alt ハンドルなし
-        Ctl->>St: StartNewSelection(pos)
+        Ses-->>Ctl: 通知（SelectionStarted）
         Ctl->>Host: SelectionStarted
     else ハンドルあり
-        Ctl->>St: StartDrag(handle, pos)
+        Ses-->>Ctl: 効果（MoveTo: ハンドル点）
         Ctl->>Cur: SetCursorScreenPoint(ToScreen(handlePos))
     end
-    Ctl->>Ctl: CaptureMouse(true)
+    Ctl->>Ctl: CaptureMouse(true)（効果のCaptureMouseが真のとき）
     loop ドラッグ中
-        Ctl->>St: UpdateDrag(pos, MinSelectionSize, ClampToDomainBounds)
-        Ctl->>Host: SelectionChanged
-        Ctl->>Host: LoupePositionMoved(GetMarkerPosition())
+        Ctl->>Ses: Move(pos)
+        Ses->>St: UpdateDrag(pos, MinSelectionSize, ClampToDomainBounds)
+        Ctl->>Host: SelectionChanged / LoupePositionMoved
     end
     Note over Ctl: 左ボタン解放
     Ctl->>Ctl: CaptureMouse(false)
+    Ctl->>Ses: Release(pos)
     alt 最小サイズ未満
-        Ctl->>St: Reset()
+        Ses->>St: Reset()
         Ctl->>Host: SelectionCancelled
     else 確定
-        Ctl->>St: EndDrag()
+        Ses->>St: EndDrag()
         Ctl->>Host: SelectionCompleted
     end
 ```
@@ -217,23 +253,28 @@ sequenceDiagram
 sequenceDiagram
     participant Host as ホスト
     participant Ctl as DragRectControl
+    participant Ses as DragRectSession
     participant Cur as ICursorService
     participant St as DragRectState
 
     Note over Ctl: 矢印キー押下（フォーカス保持時）
     Ctl->>Cur: GetCursorScreenPoint()
-    Ctl->>Ctl: ScreenToClient → Port.Forward（基点の記録）
+    Ctl->>Ctl: ScreenToClient → ドメイン座標（基点の記録）
+    Ctl->>Ses: KeyDown(EsKey, cursorPosition)
     alt nudge 未開始
-        Ctl->>St: NudgeActive = true / CrosshairVisible = true
+        Ses->>St: NudgeActive = true / CrosshairVisible = true
+        Ses-->>Ctl: 効果（Hide: カーソル非表示）
         Ctl->>Cur: ShowCursor(false)
     end
-    Ctl->>St: Nudge(dx, dy, MinSelectionSize, ClampToDomainBounds)
-    Ctl->>Host: SelectionChanged
-    Ctl->>Host: LoupePositionMoved(GetMarkerPosition())
+    Ses->>St: Nudge(dx, dy, MinSelectionSize, ClampToDomainBounds)
+    Ses-->>Ctl: 効果（MoveTo: マーカー位置）
+    Ctl->>Host: SelectionChanged / LoupePositionMoved
     Ctl->>Cur: SetCursorScreenPoint(ToScreen(marker))
     Note over Ctl: マウス操作またはフォーカス喪失
+    Ctl->>Ses: EndNudge()
+    Ses-->>Ctl: 効果（Show: カーソル再表示）
     Ctl->>Cur: ShowCursor(true)
-    Ctl->>St: NudgeActive = false
+    Ses->>St: NudgeActive = false
 ```
 
 ## 状態遷移

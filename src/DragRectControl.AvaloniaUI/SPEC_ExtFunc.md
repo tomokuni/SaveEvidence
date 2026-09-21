@@ -225,7 +225,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 公開型は `DragRectControl` / `DragHandle` / `DragRectInteractionState` / `DragRectSnapshot` とイベント引数（`SelectionRectEventArgs` / `DragRectPointEventArgs`）です。
 `DragHandle` / `DragRectInteractionState` / `DragRectSnapshot` は UI 非依存のコア（`DragRectControl.Core`、名前空間 `Estable.DragRect`）が単一所有し、各 UI 実装で共有します。
-内部実装（状態・純粋計算・描画）はすべて internal（非公開）です。
+内部実装（状態・入力の解釈（状態管理クラス）・純粋計算・描画）はすべて internal（非公開）です。
 
 #### 5.4.1 DragRectControl（`DragRectControl.cs`）
 

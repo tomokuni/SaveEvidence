@@ -1,11 +1,11 @@
 # DragRectControl.MewUI
 
 `DragRectControl`（リサイズ可能なドラッグ矩形）の **MewUI 版**です。Avalonia 版と同一の UI 非依存コア（`DragRectControl.Core`）を使い、
-描画層・入力処理・カーソル制御のみを MewUI で実装しています。
+描画層・入力の受付と効果の適用・カーソル制御のみを MewUI で実装しています。
 
 ## 特徴
 
-- **コア共有**: 選択矩形の幾何計算・状態機械（ヒットテスト・ドラッグ変形・nudge・境界クリップ）は `DragRectControl.Core` が単一所有します。
+- **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `DragRectControl.Core` が単一所有します。
   Avalonia 版と MewUI 版の挙動は同じ計算に基づきます。
 - **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへ枠線・ハンドル・十字マーカー・座標ラベルを描画します。
 - **DPI 追従**: `OnDpiChanged` でスケーリング係数を更新し、DIP 座標で描画します（枠線・ハンドルの画面上の大きさを保ちます）。
@@ -119,16 +119,19 @@ dotnet test src/DragRectControl.MewUI/tests/DragRectControl.MewUI.Tests.csproj
 
 - `DragRectSkiaRenderer.Tests.cs`: 枠線・ハンドル・十字マーカー・座標ラベルの画素検証と配置計算（純粋関数）の検証。
 - `DragRectControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、ビューポート通知、`Log` のフォールバックと設定変更ログ。
-- `LogMessage.Tests.cs`: 操作ログ（LoggerMessage）の出力書式（`RecordingLogger` と `NullLogger` の両経路）。
+- `LogMessage.Tests.cs`: UI 層の操作ログ（ホイール・設定変更）の出力書式（`RecordingLogger` と `NullLogger` の両経路）。
+
+入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの `DragRectSession` が担うため、その検証は `DragRectControl.Core.Tests` が行います。
 
 ## 操作ログ
 
-`Log` プロパティへ `ILogger` を設定すると、マウス・キー操作と設定変更を出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。
+`Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。<br/>
+入力の判断に伴うログ（マウス操作・キー入力・確定/キャンセル）はコア（`DragRectControl.Core` の `DragRectLog`）が出力し、ロガーはセッションへ伝搬されます。
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | MouseDown / MouseUp / Click / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / ZoomRequested / 設定変更 |
-| Trace | MouseDown 直前の位置 / MouseUp 直後の位置 |
+| Debug | MouseDown / MouseUp / Click / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested（コア）/ ZoomRequested / 設定変更（本 UI 層） |
+| Trace | MouseDown 直前の位置 / MouseUp 直後の位置（コア） |
 
 ## 未対応
 

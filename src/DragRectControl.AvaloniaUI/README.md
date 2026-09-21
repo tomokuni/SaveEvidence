@@ -39,7 +39,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
 - **閉区間描画（始点・終点を含む）**: 選択枠・ハンドルは終点（Right/Bottom）に +1 して DIP 変換（FadeMask の非暗転領域・キャプチャの閉区間 +1 と一致）
 - **ホイール操作（祖先 ScrollViewer が存在する Crop モード）**: Ctrl+ホイールで `ZoomRequested` / 通常ホイールで ScrollViewer をスクロール（Shift 併用で横スクロール）
-- **シンプル実装**: 状態（選択矩形・ドラッグ・nudge）を 1 クラス（`DragRectState`）に集約
+- **薄い UI 層**: 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの状態管理クラス（`DragRectSession`）が担う。本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う
 
 ## 3. システム要件
 
@@ -142,8 +142,8 @@ dotnet run --project sample/DragRectControl.AvaloniaUI.Sample.csproj
 DragRectControl/
 ├── src/
 │   ├── DragRectControl.csproj     # 独立プロジェクト（Platform.AvaloniaUI + DragRectControl.Core を参照）
-│   ├── DragRectControl.cs         # 公開 API + イベントオーバーライド + 描画
-│   ├── DragRectControl.Input.cs   # マウス入力・キーボード nudge・カーソル制御
+│   ├── DragRectControl.cs         # 公開 API + 効果の適用 + 通知の転送 + ポインター入力 + 描画
+│   ├── DragRectControl.Input.cs   # キーボード入力（コア型 EsKey への変換と通知）
 │   ├── DragRectControl.Visual.cs  # ビジュアルツリー接続・ScrollViewer 連携・描画
 │   ├── SelectionRectEventArgs.cs  # 公開イベント引数（選択矩形通知）
 │   ├── DragRectPointEventArgs.cs  # 公開イベント引数（座標通知）
@@ -154,7 +154,7 @@ DragRectControl/
 
 ### 9.1 共有コア（`DragRectControl.Core`）
 
-UI 非依存の幾何計算・状態機械は `src/DragRectControl.Core` が単一所有します（Avalonia / MewUI で共有）。
+UI 非依存の幾何計算・状態機械・入力の解釈は `src/DragRectControl.Core` が単一所有します（Avalonia / MewUI で共有）。
 
 ```text
 DragRectControl.Core/
@@ -162,6 +162,10 @@ DragRectControl.Core/
 │   ├── DragHandle.cs                 # 公開型（ドラッグハンドル種別 enum）
 │   ├── DragRectInteractionState.cs   # 公開型（対話状態 enum）
 │   ├── DragRectSnapshot.cs           # 公開型（状態 Snapshot record。座標は EsRect / EsPoint）
+│   ├── DragRectSession.cs            # 内部型（状態管理クラス。入力の解釈・通知・効果）
+│   ├── DragRectNotice.cs             # 内部型（コア → UI の通知の種別と値）
+│   ├── DragRectFeedback.cs           # 内部型（コア → UI の効果。カーソル操作を含む）
+│   ├── DragRectLog.cs                # 内部型（入力の判断の LoggerMessage 定義）
 │   ├── DragRectState.cs              # 内部型（状態保持 + 更新ロジック）
 │   └── Selection/                    # 内部型（SelectionGeometry）
 └── tests/                            # 単体テスト（UI 非依存・並列実行）
