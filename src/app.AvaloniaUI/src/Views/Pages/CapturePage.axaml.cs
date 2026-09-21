@@ -234,18 +234,29 @@ public sealed partial class CapturePage : UserControl
         return result;
     }
 
-    /// <summary>メニューを開かずに効く Ctrl ショートカットを処理する。</summary>
+    /// <summary>メニューを開かずに効く Ctrl ショートカットと Escape（自動切り出しのキャンセル）を処理する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">キーイベント。</param>
     /// <remarks>
     /// Ctrl + メニューのアクセラレータ文字（S/C/V/Z/Y/R）の組み合わせで動作する。<br/>
     /// Capture 系（スクリーン / ウィンドウ / 範囲選択）はグローバルホットキー（WM_HOTKEY）で動作するため対象外。<br/>
+    /// Escape は自動切り出し中のキャンセルとして扱う（切り出しモードの Escape と同じ操作）。<br/>
     /// テキスト入力中（<see cref="FileNameTemplateBox"/> 等）はテキスト編集ショートカット（Ctrl+C/V/Z/Y）を優先するため無視する。<br/>
     /// Alt はメニュー展開用のため使用しない（Alt アクセラレータは Header の (_X) 削除で無効化済み）。<br/>
     /// 修飾キー判定は <see cref="IsCtrlShortcut"/> に委譲する（単体テスト対象）。
     /// </remarks>
     private void OnGlobalKeyDown(object? sender, KeyEventArgs e)
     {
+        // 自動切り出し中は Escape でキャンセルする（切り出しモードと同じ操作）。
+        // 自動切り出しはオーバーレイコントロールを持たない（ViewModel の状態で表示する）ため、
+        // テキスト入力中でも優先して処理する。
+        if (e.Key == Key.Escape && _viewModel.IsAutoCropActive)
+        {
+            e.Handled = true;
+            _viewModel.CancelAutoCropCommand.Execute(null);
+            return;
+        }
+
         // テキスト入力中はテキスト編集ショートカットを優先する（Ctrl+C/V/Z/Y 等を横取りしない）
         if (e.Source is TextBox) return;
 
@@ -1007,6 +1018,7 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>
     /// ビューポート座標 → ドメイン座標へ変換し、その座標を含む矩形のうち<b>面積が最小</b>のものを
     /// <see cref="MainViewModel.HoveredRect"/> に設定する（複数矩形が重なる場合の優先判定）。<br/>
+    /// 矩形の判定は <see cref="MainViewModel.HitDetectedRect"/>（コア）が単一所有する。<br/>
     /// いずれの矩形にも含まれない場合は null に設定する。
     /// </remarks>
     private void OnAutoCropPointerMoved(object? sender, PointerEventArgs e)
@@ -1019,28 +1031,21 @@ public sealed partial class CapturePage : UserControl
         var viewportPos = e.GetPosition(AutoCropOverlay);
         var contentPos = ViewportToContentDomain(viewportPos);
 
-        // 領域内の矩形のうち、最も面積の小さいものを選択する
-        var hit = _viewModel.DetectedRects
-            .Where(r => contentPos.X >= r.X && contentPos.X <= r.Right
-                     && contentPos.Y >= r.Y && contentPos.Y <= r.Bottom)
-            .OrderBy(r => (long)r.Width * r.Height)
-            .FirstOrDefault();
-
-        // ヒットなし（既定値）は null として扱う（HoveredRect は未選択を null で表す）
-        EsPixelRect? hovered = hit.Equals(default(EsPixelRect)) ? null : hit;
+        var hovered = _viewModel.HitDetectedRect(contentPos.X, contentPos.Y);
         if (_viewModel.HoveredRect != hovered)
         {
             _viewModel.HoveredRect = hovered;
         }
     }
 
-    /// <summary>自動切り出しモード中のダブルクリックで、領域内の最小矩形を確定して切り出す。</summary>
+    /// <summary>自動切り出しモード中のダブルクリックで、領域内の最小矩形を確定する（領域外はキャンセル）。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ポインタイベント。</param>
     /// <remarks>
     /// クリック位置（ドメイン座標）を含む矩形のうち<b>面積が最小</b>のものを確定し、
     /// <see cref="MainViewModel.ConfirmAutoCropCommand"/> で切り出す。<br/>
-    /// 何も選択されていない場合は何もしない。
+    /// 矩形を含まない領域のダブルクリックは<b>キャンセル</b>とする<br/>
+    /// （切り出しモードの「矩形外クリック: キャンセル」と同じ操作）。
     /// </remarks>
     private void OnAutoCropPointerPressed(object? sender, PointerPressedEventArgs e)
     {
@@ -1049,7 +1054,7 @@ public sealed partial class CapturePage : UserControl
             return;
         }
 
-        // ダブルクリックのみ確定（単一クリックでは確定しない）
+        // ダブルクリックのみ確定・キャンセル（単一クリックでは何もしない）
         var point = e.GetCurrentPoint(AutoCropOverlay);
         if (!point.Properties.IsLeftButtonPressed || e.ClickCount < 2)
         {
@@ -1059,16 +1064,15 @@ public sealed partial class CapturePage : UserControl
         var viewportPos = e.GetPosition(AutoCropOverlay);
         var contentPos = ViewportToContentDomain(viewportPos);
 
-        var hit = _viewModel.DetectedRects
-            .Where(r => contentPos.X >= r.X && contentPos.X <= r.Right
-                     && contentPos.Y >= r.Y && contentPos.Y <= r.Bottom)
-            .OrderBy(r => (long)r.Width * r.Height)
-            .FirstOrDefault();
-
-        if (!hit.Equals(default(EsPixelRect)))
+        // 矩形の判定はコア（MainViewModel.HitDetectedRect）が単一所有する
+        if (_viewModel.HitDetectedRect(contentPos.X, contentPos.Y) is { } hit)
         {
             _viewModel.ConfirmAutoCropCommand.Execute(hit);
+            return;
         }
+
+        // 矩形を含まない領域のダブルクリックはキャンセルとする
+        _viewModel.CancelAutoCropCommand.Execute(null);
     }
 
     /// <summary>ビューポート座標をドメイン座標（元画像ピクセル）へ変換する。</summary>

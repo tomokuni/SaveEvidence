@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "テスト実行（全プロジェクト）",
+      "type": "shell",
+      "command": "dotnet test SaveEvidence.slnx",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "テスト実行（app.AvaloniaUI.Tests）",
+      "type": "shell",
+      "command": "dotnet test src/app.AvaloniaUI/tests/app.AvaloniaUI.Tests.csproj",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "テスト実行（フィルタ指定）",
+      "type": "shell",
+      "command": "dotnet test src/app.AvaloniaUI/tests/app.AvaloniaUI.Tests.csproj --filter ${input:testFilter}",
+      "group": "test",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "testFilter",
+      "type": "promptString",
+      "description": "テストフィルタ（例: FullyQualifiedName~AppPageTests）",
+      "default": "FullyQualifiedName~AppPageTests"
+    }
+  ]
+}

@@ -373,6 +373,39 @@ public sealed partial class MainViewModel : ObservableObject
     internal static IReadOnlyList<EsPixelRect> TryReconstructRects(IReadOnlyList<LineDetectionResult> results)
         => LineRectangleReconstructor.Reconstruct(results);
 
+    /// <summary>指定座標（画像ピクセル）を含む自動切り出しの検出矩形を求める。</summary>
+    /// <param name="x">X 座標（画像ピクセル。ドメイン座標）。</param>
+    /// <param name="y">Y 座標（画像ピクセル。ドメイン座標）。</param>
+    /// <returns>座標を含む矩形のうち面積が最小のもの。含む矩形がない場合は null。</returns>
+    /// <remarks>
+    /// 自動切り出しのホバー強調（<see cref="HoveredRect"/>）とダブルクリックの確定・キャンセル判定で共用する。<br/>
+    /// 複数の矩形が重なる場合は<b>面積が最小</b>のものを選ぶ（内側のウィンドウを優先するため）。<br/>
+    /// 各辺は<b>閉区間</b>として扱う（右端・下端のピクセルも矩形に含める）。<br/>
+    /// 判定を UI 側で重複実装しないよう、本メソッドを単一の所有者とする（両 UI が呼び出す）。
+    /// </remarks>
+    public EsPixelRect? HitDetectedRect(double x, double y)
+    {
+        EsPixelRect? hit = null;
+        var hitArea = long.MaxValue;
+
+        foreach (var rect in DetectedRects)
+        {
+            if (x < rect.X || x > rect.Right || y < rect.Y || y > rect.Bottom)
+            {
+                continue;
+            }
+
+            var area = (long)rect.Width * rect.Height;
+            if (area < hitArea)
+            {
+                hitArea = area;
+                hit = rect;
+            }
+        }
+
+        return hit;
+    }
+
     /// <summary>確定したウィンドウ矩形でプレビュー画像を切り出す。</summary>
     /// <param name="bounds">確定した矩形領域（画像座標 <see cref="EsPixelRect"/>）。</param>
     [RelayCommand]

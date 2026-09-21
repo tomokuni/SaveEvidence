@@ -142,7 +142,7 @@ sequenceDiagram
 | --- | --- |
 | `Services/IImageWriter.cs` | 移設（`EsBitmap` のみ依存のためそのまま）。具象実装 `AvaloniaImageWriter` は `app.AvaloniaUI` 側に残す |
 
-併せて以下を実施しました（詳細は `複数UI対応作業.md` を参照）。
+併せて以下を実施しました。
 
 - `CaptureType`（キャプチャ種別）を `SnipCaptureUI` から `PlatformFactory.Core`（`Estable.Platform`）へ移設
 - `LineDetection` の `LineDetectionResult` / `LineRectangleReconstructor` を `EsPoint` / `EsPixelRect` 化（`LineDetection` が UI 非依存に）
@@ -154,7 +154,7 @@ sequenceDiagram
 | --- | --- |
 | `ViewModels/MainViewModel.cs` | 移設 + UI 型の除去。クリップボードのコールバックを `Bitmap?` → `EsBitmap` へ変更、`IImageWriter` を必須引数化（既定実装 `AvaloniaImageWriter` の生成を削除）、`ZoomViewControl` への `<see cref>` を一般表現へ |
 
-併せて以下を実施しました（詳細は `複数UI対応作業.md` を参照）。
+併せて以下を実施しました。
 
 - `LineDetection` の名前空間を `Estable.AvaloniaUI.LineDetection` → `Estable.LineDetection` へ変更（UI 非依存のため）
 - `app.AvaloniaUI` の `MainWindow`（View）が `EsBitmap` ⇔ `Avalonia.Bitmap` の境界変換を担当

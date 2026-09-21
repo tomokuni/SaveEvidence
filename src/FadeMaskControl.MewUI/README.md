@@ -132,4 +132,3 @@ dotnet test src/FadeMaskControl.MewUI/tests/FadeMaskControl.MewUI.Tests.csproj
 
 - `../FadeMaskControl.Core/README.md` — 共有する UI 非依存ロジック
 - `../FadeMaskControl/README.md` — Avalonia 版フェードマスク
-- `../../複数UI対応作業.md` — 複数 UI 対応の全体計画と進捗

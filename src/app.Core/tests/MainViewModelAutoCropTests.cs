@@ -188,6 +188,60 @@ public sealed class MainViewModelAutoCropTests
         Assert.Equal(string.Empty, vm.StatusMessage);
     }
 
+    /// <summary>検出矩形のヒット判定（座標を含む矩形のうち面積が最小のもの）を検証する。</summary>
+    /// <remarks>
+    /// ホバー強調とダブルクリックの確定・キャンセル判定が共用する（両 UI が同じ判定を使う）。<br/>
+    /// 矩形は閉区間（右端・下端のピクセルも含む）として扱う。
+    /// </remarks>
+    [Fact]
+    public void HitDetectedRect_面積が最小の矩形を返す()
+    {
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
+        {
+            // 外側（10,10,200,200）と内側（50,50,50,50）が重なる
+            DetectedRects =
+            [
+                new EsPixelRect(10, 10, 200, 200),
+                new EsPixelRect(50, 50, 50, 50),
+            ],
+        };
+
+        // 内側の矩形に含まれる座標は内側（面積が最小）を返す
+        Assert.Equal(new EsPixelRect(50, 50, 50, 50), vm.HitDetectedRect(60, 60));
+
+        // 内側の外・外側の中は外側を返す
+        Assert.Equal(new EsPixelRect(10, 10, 200, 200), vm.HitDetectedRect(20, 20));
+    }
+
+    /// <summary>検出矩形のヒット判定が矩形の外側では null を返すことを検証する。</summary>
+    /// <remarks>領域外のダブルクリックをキャンセルとして扱うための判定（両 UI が共用する）。</remarks>
+    [Fact]
+    public void HitDetectedRect_矩形の外側はnullを返す()
+    {
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
+        {
+            DetectedRects = [new EsPixelRect(100, 100, 50, 50)],
+        };
+
+        Assert.Null(vm.HitDetectedRect(99, 120));   // 左外
+        Assert.Null(vm.HitDetectedRect(151, 120));  // 右外
+        Assert.Null(vm.HitDetectedRect(120, 99));   // 上外
+        Assert.Null(vm.HitDetectedRect(120, 151));  // 下外
+
+        // 境界（閉区間）は含む
+        Assert.Equal(new EsPixelRect(100, 100, 50, 50), vm.HitDetectedRect(100, 100));
+        Assert.Equal(new EsPixelRect(100, 100, 50, 50), vm.HitDetectedRect(150, 150));
+    }
+
+    /// <summary>検出矩形が無い場合はヒット判定が null を返すことを検証する。</summary>
+    [Fact]
+    public void HitDetectedRect_矩形が無い場合はnullを返す()
+    {
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
+
+        Assert.Null(vm.HitDetectedRect(0, 0));
+    }
+
     /// <summary>矩形を確定すると切り出しが実行され、モードが終了することを検証する。</summary>
     [Fact]
     public void ConfirmAutoCrop_確定した矩形で切り出してモードが終了する()

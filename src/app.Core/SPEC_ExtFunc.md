@@ -201,6 +201,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。同名時は `ConfirmOverwriteAsync`） |
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsPixelRect`） |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`） |
+| `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。両 UI のホバー強調と確定・キャンセル判定が共用する |
 | `CopyToClipboard()` / `PasteFromClipboard()` | クリップボード操作（実体はコールバックへ委譲） |
 
 ### UI 依存の注入点

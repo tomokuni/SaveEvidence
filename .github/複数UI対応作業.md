@@ -5,268 +5,268 @@ SaveEvidence の UI（Avalonia UI）からコアロジックを分離し、複�
 参考実装: `D:\Dev\Repos\GitHub\ClipboardZenHanConverter`（`src/core` / `src/core_presentation` / `src/app_*` の 4 UI 構成）
 
 - [複数 UI 対応作業](#複数-ui-対応作業)
-  - [目的](#目的)
-  - [プロジェクト名（改名後）](#プロジェクト名改名後)
-  - [現状の構成（着手前）](#現状の構成着手前)
-    - [着手前に判明した前提の誤り](#着手前に判明した前提の誤り)
-  - [全体方針](#全体方針)
-    - [依存方向（一方向を厳守）](#依存方向一方向を厳守)
-    - [分割の判断基準](#分割の判断基準)
-    - [コア型の命名規則（`Es` 接頭辞）](#コア型の命名規則es-接頭辞)
-    - [段階（ティア）](#段階ティア)
-  - [完了した項目](#完了した項目)
-    - [1. `PlatformFactory.Core` の新設（ティア A）](#1-platformfactorycore-の新設ティア-a)
-    - [2. 座標系の純粋計算を Core へ移設（ティア A）](#2-座標系の純粋計算を-core-へ移設ティア-a)
-    - [3. コア幾何型の導入と `CoordinateFormatter` の移設（ティア B）](#3-コア幾何型の導入と-coordinateformatter-の移設ティア-b)
-    - [4. `EsBitmap` の Core 移設（ティア C）](#4-esbitmap-の-core-移設ティア-c)
-    - [5. `ICoordTransform` / `CoordTransform` の Core 移設（ティア D）](#5-icoordtransform--coordtransform-の-core-移設ティア-d)
-    - [6. プラットフォーム値型の導入とサービス抽象の Core 移設（ティア D）](#6-プラットフォーム値型の導入とサービス抽象の-core-移設ティア-d)
-    - [7. テストとドキュメント](#7-テストとドキュメント)
-    - [8. `LoupeControl.Core` の新設（ティア E / 1 コントロールで PoC）](#8-loupecontrolcore-の新設ティア-e--1-コントロールで-poc)
-    - [検証](#検証)
-    - [移設時に得た注意点](#移設時に得た注意点)
-  - [詳細（ティア D / サービス抽象・プラットフォーム値型の Core 化）](#詳細ティア-d--サービス抽象プラットフォーム値型の-core-化)
-    - [目的](#目的-1)
-    - [実施内容](#実施内容)
-    - [変更対象](#変更対象)
-  - [詳細（ティア D / Win・NoOp 実装とファクトリの UI 非依存化）](#詳細ティア-d--winnoop-実装とファクトリの-ui-非依存化)
-    - [課題](#課題)
-    - [実施内容](#実施内容-1)
-    - [変更対象](#変更対象-1)
-  - [詳細（ティア B / `AvaloniaGeometryAdapters` / `RectDExt` の整理）](#詳細ティア-b--avaloniageometryadapters--rectdext-の整理)
-    - [課題](#課題-1)
-    - [方針と結果](#方針と結果)
-    - [変更対象](#変更対象-2)
-  - [詳細（ティア E / `LoupeControl` で Core 分割 PoC）](#詳細ティア-e--loupecontrol-で-core-分割-poc)
-    - [目的](#目的-2)
-    - [現状の `LoupeControl` 構成（調査結果）](#現状の-loupecontrol-構成調査結果)
-    - [実施内容](#実施内容-2)
-    - [変更対象](#変更対象-3)
-    - [実施結果（検証）](#実施結果検証)
-    - [横展開のパターン（本 PoC で確立するもの）](#横展開のパターン本-poc-で確立するもの)
-  - [詳細（ティア E / 他コントロールへ横展開・`ZoomViewControl`）](#詳細ティア-e--他コントロールへ横展開zoomviewcontrol)
-    - [目的](#目的-3)
-    - [候補の絞り込み（機械的な判定）](#候補の絞り込み機械的な判定)
-    - [コントロール別の UI 非依存候補（調査結果）](#コントロール別の-ui-非依存候補調査結果)
-    - [実施順序](#実施順序)
-    - [実施内容（`ZoomViewControl`）](#実施内容zoomviewcontrol)
-    - [変更対象（`ZoomViewControl`）](#変更対象zoomviewcontrol)
-    - [実施結果（検証）](#実施結果検証-1)
-    - [旧ファイルの重複除去（作業中の復旧）](#旧ファイルの重複除去作業中の復旧)
-  - [詳細（ティア E / 他コントロールへ横展開・`CropViewControl`）](#詳細ティア-e--他コントロールへ横展開cropviewcontrol)
-    - [目的](#目的-4)
-    - [調査結果と判断](#調査結果と判断)
-    - [実施内容](#実施内容-3)
-    - [変更対象](#変更対象-4)
-    - [実施結果（検証）](#実施結果検証-2)
-  - [詳細（ティア F / `app.Core` の第一段階）](#詳細ティア-f--appcore-の第一段階)
-    - [目的](#目的-5)
-    - [調査結果（機械的な判定）](#調査結果機械的な判定)
-    - [実施内容](#実施内容-4)
-    - [変更対象](#変更対象-5)
-    - [実施結果（検証）](#実施結果検証-3)
-    - [次段階（`Settings` の UI 非依存化）→ 第二段階として実施済み](#次段階settings-の-ui-非依存化-第二段階として実施済み)
-  - [詳細（ティア F / `app.Core` の第二段階 = 設定モデルと設定サービスの UI 非依存化）](#詳細ティア-f--appcore-の第二段階--設定モデルと設定サービスの-ui-非依存化)
-    - [目的](#目的-6)
-    - [障害と対処](#障害と対処)
-    - [実施内容](#実施内容-5)
-    - [JSON 互換性（既存の設定ファイルをそのまま読み込める）](#json-互換性既存の設定ファイルをそのまま読み込める)
-    - [変更対象](#変更対象-6)
-    - [実施結果（検証）](#実施結果検証-4)
-  - [詳細（ティア F / `app.Core` の第三段階 = `MainViewModel` の UI 非依存化に必要な型の整備）](#詳細ティア-f--appcore-の第三段階--mainviewmodel-の-ui-非依存化に必要な型の整備)
-    - [目的](#目的-7)
-    - [障害の整理](#障害の整理)
-    - [実施内容](#実施内容-6)
-    - [変更対象](#変更対象-7)
-    - [実施結果（検証）](#実施結果検証-5)
-    - [次段階（第三段階の残り）→ 第四段階として実施済み](#次段階第三段階の残り-第四段階として実施済み)
-  - [詳細（ティア F / `app.Core` の第四段階 = `MainViewModel` の移設）](#詳細ティア-f--appcore-の第四段階--mainviewmodel-の移設)
-    - [目的](#目的-8)
-    - [障害の整理](#障害の整理-1)
-    - [実施内容](#実施内容-7)
-    - [変更対象](#変更対象-8)
-    - [実施結果（検証）](#実施結果検証-6)
-    - [作業中の復旧（旧ファイルの復活）](#作業中の復旧旧ファイルの復活)
-  - [改名（`PbBitmap` → `EsBitmap`）](#改名pbbitmap--esbitmap)
-    - [目的](#目的-9)
-    - [実施内容（機械的な一括改名）](#実施内容機械的な一括改名)
-    - [手順（スクリプトで実施）](#手順スクリプトで実施)
-    - [注意点（実際に起きたこと）](#注意点実際に起きたこと)
-    - [実施結果（検証）](#実施結果検証-7)
-  - [詳細（ティア F / MewUI の調査と PoC）](#詳細ティア-f--mewui-の調査と-poc)
-    - [目的](#目的-10)
-    - [MewUI の調査結果（`Aprillz.MewUI` 0.21.1）](#mewui-の調査結果aprillzmewui-0211)
-    - [再利用できる部分 / 作り直しが必要な部分](#再利用できる部分--作り直しが必要な部分)
-    - [PoC の実施内容](#poc-の実施内容)
-    - [検証結果（すべて実機で確認済み）](#検証結果すべて実機で確認済み)
-    - [検証で判明した必須の初期化（見落とすと即時終了）](#検証で判明した必須の初期化見落とすと即時終了)
-    - [検証で判明した API（0.21.1 時点、main のドキュメントとは不一致）](#検証で判明した-api0211-時点main-のドキュメントとは不一致)
-    - [変更対象](#変更対象-9)
-    - [実施結果（検証）](#実施結果検証-8)
-    - [次段階（`app.MewUI`）](#次段階appmewui)
-  - [詳細（ティア F / `PlatformFactory.MewUI` の新設）](#詳細ティア-f--platformfactorymewui-の新設)
-    - [目的](#目的-11)
-    - [調査（実測）で判明した対応型](#調査実測で判明した対応型)
-    - [実測で判明した非対称性（重要）](#実測で判明した非対称性重要)
-    - [実施内容](#実施内容-8)
-    - [変更対象](#変更対象-10)
-    - [実施結果（検証）](#実施結果検証-9)
-    - [未実装（今後の判断）](#未実装今後の判断)
-  - [詳細（ティア F / `app.MewUI` の新設（骨格））](#詳細ティア-f--appmewui-の新設骨格)
-    - [目的](#目的-12)
-    - [実施内容](#実施内容-9)
-    - [変更対象](#変更対象-11)
-    - [実施結果（検証）](#実施結果検証-10)
-    - [実測で判明した MewUI の事項](#実測で判明した-mewui-の事項)
-    - [検証で踏んだ罠（重要）](#検証で踏んだ罠重要)
-    - [未実装（今後の対応）](#未実装今後の対応)
-  - [詳細（MewUI 版コントロールの移植・`LoupeControl`）](#詳細mewui-版コントロールの移植loupecontrol)
-    - [目的](#目的-13)
-    - [方針（コアを共有し、描画層のみを実装する）](#方針コアを共有し描画層のみを実装する)
-    - [実施内容](#実施内容-10)
-    - [変更対象](#変更対象-12)
-    - [実施結果（検証）](#実施結果検証-11)
-    - [実測で判明したこと](#実測で判明したこと)
-  - [詳細（MewUI 版コントロールの移植・`ZoomViewControl`）](#詳細mewui-版コントロールの移植zoomviewcontrol)
-    - [目的](#目的-14)
-    - [方針（2 クラス構成を 1 クラスに統合する）](#方針2-クラス構成を-1-クラスに統合する)
-    - [実施内容](#実施内容-11)
-    - [変更対象](#変更対象-13)
-    - [実施結果（検証）](#実施結果検証-12)
-    - [実測で判明したこと](#実測で判明したこと-1)
-  - [詳細（MewUI 版コントロールの移植・`CropViewControl`）](#詳細mewui-版コントロールの移植cropviewcontrol)
-    - [目的](#目的-15)
-    - [方針（Facade を 2 つのキャンバスの重ね合わせで実装する）](#方針facade-を-2-つのキャンバスの重ね合わせで実装する)
-    - [実施内容](#実施内容-12)
-    - [変更対象](#変更対象-14)
-    - [実施結果（検証）](#実施結果検証-13)
-    - [実測で判明したこと](#実測で判明したこと-2)
-  - [詳細（MewUI 版コントロールの移植・`FadeMaskControl`）](#詳細mewui-版コントロールの移植fademaskcontrol)
-    - [目的](#目的-16)
-    - [方針（幾何をコアへ抽出し、暗転は 4 帯で表現する）](#方針幾何をコアへ抽出し暗転は-4-帯で表現する)
-    - [実施内容](#実施内容-13)
-    - [変更対象](#変更対象-15)
-    - [実施結果（検証）](#実施結果検証-14)
-    - [実測で判明したこと](#実測で判明したこと-3)
-  - [詳細（MewUI 版コントロールの移植・`DragRectControl` のコア抽出）](#詳細mewui-版コントロールの移植dragrectcontrol-のコア抽出)
-    - [目的](#目的-17)
-    - [方針（状態機械ごとコアへ置く）](#方針状態機械ごとコアへ置く)
-    - [実施内容](#実施内容-14)
-    - [変更対象](#変更対象-16)
-    - [実施結果（検証）](#実施結果検証-15)
-    - [実測で判明したこと](#実測で判明したこと-4)
-  - [詳細（MewUI 版コントロールの移植・`DragRectControl`）](#詳細mewui-版コントロールの移植dragrectcontrol)
-    - [目的](#目的-18)
-    - [方針（状態機械はコア、UI は入力の変換と描画に徹する）](#方針状態機械はコアui-は入力の変換と描画に徹する)
-    - [実施内容](#実施内容-15)
-    - [変更対象](#変更対象-17)
-    - [実施結果（検証）](#実施結果検証-16)
-    - [実測で判明したこと](#実測で判明したこと-5)
-  - [詳細（MewUI 版コントロールの移植・`FadeMaskDragRectControl`）](#詳細mewui-版コントロールの移植fademaskdragrectcontrol)
-    - [目的](#目的-19)
-    - [方針（モードの解釈をコアへ出し、配置は本クラスが担う）](#方針モードの解釈をコアへ出し配置は本クラスが担う)
-    - [実施内容](#実施内容-16)
-    - [変更対象](#変更対象-18)
-    - [実施結果（検証）](#実施結果検証-17)
-    - [実測で判明したこと](#実測で判明したこと-6)
-  - [詳細（MewUI 版コントロールの移植・`ZoomViewControl` のスクロールバー）](#詳細mewui-版コントロールの移植zoomviewcontrol-のスクロールバー)
-    - [目的](#目的-20)
-    - [方針（幾何をコアへ置き、描画と入力が同じ配置を共有する）](#方針幾何をコアへ置き描画と入力が同じ配置を共有する)
-    - [実施内容](#実施内容-17)
-    - [変更対象](#変更対象-19)
-    - [実施結果（検証）](#実施結果検証-18)
-    - [実測で判明したこと](#実測で判明したこと-7)
-  - [詳細（CI / リリース整備）](#詳細ci--リリース整備)
-    - [目的](#目的-21)
-    - [方針（リポジトリ固有の知識だけを置き換える）](#方針リポジトリ固有の知識だけを置き換える)
-    - [実施内容](#実施内容-18)
-    - [変更対象](#変更対象-20)
-    - [実施結果（検証）](#実施結果検証-19)
-    - [実測で判明したこと（配布形態の制約）](#実測で判明したこと配布形態の制約)
-  - [詳細（`app.MewUI` の設定永続化 / ウィンドウ配置）](#詳細appmewui-の設定永続化--ウィンドウ配置)
-    - [目的](#目的-22)
-    - [方針（配置の変換を純粋関数へ分離し、復元点は起動時コールバック）](#方針配置の変換を純粋関数へ分離し復元点は起動時コールバック)
-    - [実施内容](#実施内容-19)
-    - [変更対象](#変更対象-21)
-    - [実施結果（検証）](#実施結果検証-20)
-    - [実測で判明したこと（MewUI の配置 API）](#実測で判明したことmewui-の配置-api)
-  - [詳細（`app.MewUI` の Undo 一覧ページ）](#詳細appmewui-の-undo-一覧ページ)
-    - [目的](#目的-23)
-    - [方針（画像表示の手段は既存の MewUI レンダラーと同じ経路にする）](#方針画像表示の手段は既存の-mewui-レンダラーと同じ経路にする)
-    - [実施内容](#実施内容-20)
-    - [変更対象](#変更対象-22)
-    - [実施結果（検証）](#実施結果検証-21)
-    - [実測で判明したこと（MewUI の一覧系 API）](#実測で判明したことmewui-の一覧系-api)
-  - [詳細（`app.MewUI` のフォルダビューページ）](#詳細appmewui-のフォルダビューページ)
-    - [目的](#目的-24)
-    - [方針（ページの生成時期と最新化の呼び出しを明示する）](#方針ページの生成時期と最新化の呼び出しを明示する)
-    - [実施内容](#実施内容-21)
-    - [変更対象](#変更対象-23)
-    - [実施結果（検証）](#実施結果検証-22)
-    - [実測で判明したこと（縮小デコードとページの生成時期）](#実測で判明したこと縮小デコードとページの生成時期)
-  - [詳細（`app.MewUI` の設定ページ）](#詳細appmewui-の設定ページ)
-    - [目的](#目的-25)
-    - [方針（設定は行の組み立てだけにし、変換は専用クラスへ分離する）](#方針設定は行の組み立てだけにし変換は専用クラスへ分離する)
-    - [実施内容](#実施内容-22)
-    - [変更対象](#変更対象-24)
-    - [実施結果（検証）](#実施結果検証-23)
-    - [実測で判明したこと（MewUI の入力系 API）](#実測で判明したことmewui-の入力系-api)
-  - [詳細（`app.MewUI` のキャプチャフローと切り出し）](#詳細appmewui-のキャプチャフローと切り出し)
-    - [目的](#目的-26)
-    - [方針（開始経路を 1 つにし、対象はカーソルのモニターに限定する）](#方針開始経路を-1-つにし対象はカーソルのモニターに限定する)
-    - [実施内容](#実施内容-23)
-    - [変更対象](#変更対象-25)
-    - [実施結果（検証）](#実施結果検証-24)
-    - [未検証（当時の環境の制約。後に解消）](#未検証当時の環境の制約後に解消)
-    - [実測で判明したこと（キャプチャと入力の仮定）](#実測で判明したことキャプチャと入力の仮定)
-  - [詳細（`app.MewUI` の履歴移動とルーペのカーソル追従）](#詳細appmewui-の履歴移動とルーペのカーソル追従)
-    - [目的](#目的-27)
-    - [方針（履歴の移動を専用クラスへ、絶対配置は自前の Panel で行う）](#方針履歴の移動を専用クラスへ絶対配置は自前の-panel-で行う)
-    - [実施内容](#実施内容-24)
-    - [変更対象](#変更対象-26)
-    - [実施結果（検証）](#実施結果検証-25)
-    - [実測で判明したこと（MewUI の絶対配置）](#実測で判明したことmewui-の絶対配置)
-  - [詳細（MewUI 版の Native AOT 配布）](#詳細mewui-版の-native-aot-配布)
-    - [目的](#目的-28)
-    - [方針（JSON コンテキストを参照側アセンブリへ置く）](#方針json-コンテキストを参照側アセンブリへ置く)
-    - [実施内容](#実施内容-25)
-    - [変更対象](#変更対象-27)
-    - [実施結果（検証）](#実施結果検証-26)
-    - [実測で判明したこと（AOT と JSON）](#実測で判明したことaot-と-json)
-  - [詳細（MewUI 版コントロールの移植・`FadeMaskControl` のラベル描画）](#詳細mewui-版コントロールの移植fademaskcontrol-のラベル描画)
-    - [目的](#目的-29)
-    - [方針（レイアウトと文言をコアへ、テキストの実寸測定だけ UI に残す）](#方針レイアウトと文言をコアへテキストの実寸測定だけ-ui-に残す)
-    - [実施内容](#実施内容-26)
-    - [変更対象](#変更対象-28)
-    - [実施結果（検証）](#実施結果検証-27)
-    - [実測で判明したこと（Skia のテキストとフォント）](#実測で判明したことskia-のテキストとフォント)
-  - [詳細（MewUI 版の選択矩形破線オーバーレイ）](#詳細mewui-版の選択矩形破線オーバーレイ)
-    - [目的](#目的-30)
-    - [方針（破線の幾何をコアへ集約し、描画先は UI が選ぶ）](#方針破線の幾何をコアへ集約し描画先は-ui-が選ぶ)
-    - [実施内容](#実施内容-27)
-    - [変更対象](#変更対象-29)
-    - [実施結果（検証）](#実施結果検証-28)
-  - [詳細（MewUI 版の操作ログ・`ILogger` の伝搬）](#詳細mewui-版の操作ログilogger-の伝搬)
-    - [目的](#目的-31)
-    - [方針（書式は同一、ログを持つのは入力を持つコントロール）](#方針書式は同一ログを持つのは入力を持つコントロール)
-    - [実施内容](#実施内容-28)
-    - [変更対象](#変更対象-30)
-    - [実施結果（検証）](#実施結果検証-29)
-  - [これから実施する項目](#これから実施する項目)
-    - [残作業（2026-09-20 時点の監査結果）](#残作業2026-09-20-時点の監査結果)
-    - [MewUI 版を作成したプロジェクト](#mewui-版を作成したプロジェクト)
-    - [各 UI のコントロール実装方針](#各-ui-のコントロール実装方針)
-  - [リスク・判断が必要な点](#リスク判断が必要な点)
-  - [作業ログ](#作業ログ)
+  - [1. 目的](#1-目的)
+  - [2. プロジェクト名（改名後）](#2-プロジェクト名改名後)
+  - [3. 現状の構成（着手前）](#3-現状の構成着手前)
+    - [3.1 着手前に判明した前提の誤り](#31-着手前に判明した前提の誤り)
+  - [4. 全体方針](#4-全体方針)
+    - [4.1 依存方向（一方向を厳守）](#41-依存方向一方向を厳守)
+    - [4.2 分割の判断基準](#42-分割の判断基準)
+    - [4.3 コア型の命名規則（`Es` 接頭辞）](#43-コア型の命名規則es-接頭辞)
+    - [4.4 段階（ティア）](#44-段階ティア)
+  - [5. 完了した項目](#5-完了した項目)
+    - [5.1 `PlatformFactory.Core` の新設（ティア A）](#51-platformfactorycore-の新設ティア-a)
+    - [5.2 座標系の純粋計算を Core へ移設（ティア A）](#52-座標系の純粋計算を-core-へ移設ティア-a)
+    - [5.3 コア幾何型の導入と `CoordinateFormatter` の移設（ティア B）](#53-コア幾何型の導入と-coordinateformatter-の移設ティア-b)
+    - [5.4 `EsBitmap` の Core 移設（ティア C）](#54-esbitmap-の-core-移設ティア-c)
+    - [5.5 `ICoordTransform` / `CoordTransform` の Core 移設（ティア D）](#55-icoordtransform--coordtransform-の-core-移設ティア-d)
+    - [5.6 プラットフォーム値型の導入とサービス抽象の Core 移設（ティア D）](#56-プラットフォーム値型の導入とサービス抽象の-core-移設ティア-d)
+    - [5.7 テストとドキュメント](#57-テストとドキュメント)
+    - [5.8 `LoupeControl.Core` の新設（ティア E / 1 コントロールで PoC）](#58-loupecontrolcore-の新設ティア-e--1-コントロールで-poc)
+    - [5.9 検証](#59-検証)
+    - [5.10 移設時に得た注意点](#510-移設時に得た注意点)
+  - [6. 詳細（ティア D / サービス抽象・プラットフォーム値型の Core 化）](#6-詳細ティア-d--サービス抽象プラットフォーム値型の-core-化)
+    - [6.1 目的](#61-目的)
+    - [6.2 実施内容](#62-実施内容)
+    - [6.3 変更対象](#63-変更対象)
+  - [7. 詳細（ティア D / Win・NoOp 実装とファクトリの UI 非依存化）](#7-詳細ティア-d--winnoop-実装とファクトリの-ui-非依存化)
+    - [7.1 課題](#71-課題)
+    - [7.2 実施内容](#72-実施内容)
+    - [7.3 変更対象](#73-変更対象)
+  - [8. 詳細（ティア B / `AvaloniaGeometryAdapters` / `RectDExt` の整理）](#8-詳細ティア-b--avaloniageometryadapters--rectdext-の整理)
+    - [8.1 課題](#81-課題)
+    - [8.2 方針と結果](#82-方針と結果)
+    - [8.3 変更対象](#83-変更対象)
+  - [9. 詳細（ティア E / `LoupeControl` で Core 分割 PoC）](#9-詳細ティア-e--loupecontrol-で-core-分割-poc)
+    - [9.1 目的](#91-目的)
+    - [9.2 現状の `LoupeControl` 構成（調査結果）](#92-現状の-loupecontrol-構成調査結果)
+    - [9.3 実施内容](#93-実施内容)
+    - [9.4 変更対象](#94-変更対象)
+    - [9.5 実施結果（検証）](#95-実施結果検証)
+    - [9.6 横展開のパターン（本 PoC で確立するもの）](#96-横展開のパターン本-poc-で確立するもの)
+  - [10. 詳細（ティア E / 他コントロールへ横展開・`ZoomViewControl`）](#10-詳細ティア-e--他コントロールへ横展開zoomviewcontrol)
+    - [10.1 目的](#101-目的)
+    - [10.2 候補の絞り込み（機械的な判定）](#102-候補の絞り込み機械的な判定)
+    - [10.3 コントロール別の UI 非依存候補（調査結果）](#103-コントロール別の-ui-非依存候補調査結果)
+    - [10.4 実施順序](#104-実施順序)
+    - [10.5 実施内容（`ZoomViewControl`）](#105-実施内容zoomviewcontrol)
+    - [10.6 変更対象（`ZoomViewControl`）](#106-変更対象zoomviewcontrol)
+    - [10.7 実施結果（検証）](#107-実施結果検証)
+    - [10.8 旧ファイルの重複除去（作業中の復旧）](#108-旧ファイルの重複除去作業中の復旧)
+  - [11. 詳細（ティア E / 他コントロールへ横展開・`CropViewControl`）](#11-詳細ティア-e--他コントロールへ横展開cropviewcontrol)
+    - [11.1 目的](#111-目的)
+    - [11.2 調査結果と判断](#112-調査結果と判断)
+    - [11.3 実施内容](#113-実施内容)
+    - [11.4 変更対象](#114-変更対象)
+    - [11.5 実施結果（検証）](#115-実施結果検証)
+  - [12. 詳細（ティア F / `app.Core` の第一段階）](#12-詳細ティア-f--appcore-の第一段階)
+    - [12.1 目的](#121-目的)
+    - [12.2 調査結果（機械的な判定）](#122-調査結果機械的な判定)
+    - [12.3 実施内容](#123-実施内容)
+    - [12.4 変更対象](#124-変更対象)
+    - [12.5 実施結果（検証）](#125-実施結果検証)
+    - [12.6 次段階（`Settings` の UI 非依存化）→ 第二段階として実施済み](#126-次段階settings-の-ui-非依存化-第二段階として実施済み)
+  - [13. 詳細（ティア F / `app.Core` の第二段階 = 設定モデルと設定サービスの UI 非依存化）](#13-詳細ティア-f--appcore-の第二段階--設定モデルと設定サービスの-ui-非依存化)
+    - [13.1 目的](#131-目的)
+    - [13.2 障害と対処](#132-障害と対処)
+    - [13.3 実施内容](#133-実施内容)
+    - [13.4 JSON 互換性（既存の設定ファイルをそのまま読み込める）](#134-json-互換性既存の設定ファイルをそのまま読み込める)
+    - [13.5 変更対象](#135-変更対象)
+    - [13.6 実施結果（検証）](#136-実施結果検証)
+  - [14. 詳細（ティア F / `app.Core` の第三段階 = `MainViewModel` の UI 非依存化に必要な型の整備）](#14-詳細ティア-f--appcore-の第三段階--mainviewmodel-の-ui-非依存化に必要な型の整備)
+    - [14.1 目的](#141-目的)
+    - [14.2 障害の整理](#142-障害の整理)
+    - [14.3 実施内容](#143-実施内容)
+    - [14.4 変更対象](#144-変更対象)
+    - [14.5 実施結果（検証）](#145-実施結果検証)
+    - [14.6 次段階（第三段階の残り）→ 第四段階として実施済み](#146-次段階第三段階の残り-第四段階として実施済み)
+  - [15. 詳細（ティア F / `app.Core` の第四段階 = `MainViewModel` の移設）](#15-詳細ティア-f--appcore-の第四段階--mainviewmodel-の移設)
+    - [15.1 目的](#151-目的)
+    - [15.2 障害の整理](#152-障害の整理)
+    - [15.3 実施内容](#153-実施内容)
+    - [15.4 変更対象](#154-変更対象)
+    - [15.5 実施結果（検証）](#155-実施結果検証)
+    - [15.6 作業中の復旧（旧ファイルの復活）](#156-作業中の復旧旧ファイルの復活)
+  - [16. 改名（`PbBitmap` → `EsBitmap`）](#16-改名pbbitmap--esbitmap)
+    - [16.1 目的](#161-目的)
+    - [16.2 実施内容（機械的な一括改名）](#162-実施内容機械的な一括改名)
+    - [16.3 手順（スクリプトで実施）](#163-手順スクリプトで実施)
+    - [16.4 注意点（実際に起きたこと）](#164-注意点実際に起きたこと)
+    - [16.5 実施結果（検証）](#165-実施結果検証)
+  - [17. 詳細（ティア F / MewUI の調査と PoC）](#17-詳細ティア-f--mewui-の調査と-poc)
+    - [17.1 目的](#171-目的)
+    - [17.2 MewUI の調査結果（`Aprillz.MewUI` 0.21.1）](#172-mewui-の調査結果aprillzmewui-0211)
+    - [17.3 再利用できる部分 / 作り直しが必要な部分](#173-再利用できる部分--作り直しが必要な部分)
+    - [17.4 PoC の実施内容](#174-poc-の実施内容)
+    - [17.5 検証結果（すべて実機で確認済み）](#175-検証結果すべて実機で確認済み)
+    - [17.6 検証で判明した必須の初期化（見落とすと即時終了）](#176-検証で判明した必須の初期化見落とすと即時終了)
+    - [17.7 検証で判明した API（0.21.1 時点、main のドキュメントとは不一致）](#177-検証で判明した-api0211-時点main-のドキュメントとは不一致)
+    - [17.8 変更対象](#178-変更対象)
+    - [17.9 実施結果（検証）](#179-実施結果検証)
+    - [17.10 次段階（`app.MewUI`）](#1710-次段階appmewui)
+  - [18. 詳細（ティア F / `PlatformFactory.MewUI` の新設）](#18-詳細ティア-f--platformfactorymewui-の新設)
+    - [18.1 目的](#181-目的)
+    - [18.2 調査（実測）で判明した対応型](#182-調査実測で判明した対応型)
+    - [18.3 実測で判明した非対称性（重要）](#183-実測で判明した非対称性重要)
+    - [18.4 実施内容](#184-実施内容)
+    - [18.5 変更対象](#185-変更対象)
+    - [18.6 実施結果（検証）](#186-実施結果検証)
+    - [18.7 未実装（今後の判断）](#187-未実装今後の判断)
+  - [19. 詳細（ティア F / `app.MewUI` の新設（骨格））](#19-詳細ティア-f--appmewui-の新設骨格)
+    - [19.1 目的](#191-目的)
+    - [19.2 実施内容](#192-実施内容)
+    - [19.3 変更対象](#193-変更対象)
+    - [19.4 実施結果（検証）](#194-実施結果検証)
+    - [19.5 実測で判明した MewUI の事項](#195-実測で判明した-mewui-の事項)
+    - [19.6 検証で踏んだ罠（重要）](#196-検証で踏んだ罠重要)
+    - [19.7 未実装（今後の対応）](#197-未実装今後の対応)
+  - [20. 詳細（MewUI 版コントロールの移植・`LoupeControl`）](#20-詳細mewui-版コントロールの移植loupecontrol)
+    - [20.1 目的](#201-目的)
+    - [20.2 方針（コアを共有し、描画層のみを実装する）](#202-方針コアを共有し描画層のみを実装する)
+    - [20.3 実施内容](#203-実施内容)
+    - [20.4 変更対象](#204-変更対象)
+    - [20.5 実施結果（検証）](#205-実施結果検証)
+    - [20.6 実測で判明したこと](#206-実測で判明したこと)
+  - [21. 詳細（MewUI 版コントロールの移植・`ZoomViewControl`）](#21-詳細mewui-版コントロールの移植zoomviewcontrol)
+    - [21.1 目的](#211-目的)
+    - [21.2 方針（2 クラス構成を 1 クラスに統合する）](#212-方針2-クラス構成を-1-クラスに統合する)
+    - [21.3 実施内容](#213-実施内容)
+    - [21.4 変更対象](#214-変更対象)
+    - [21.5 実施結果（検証）](#215-実施結果検証)
+    - [21.6 実測で判明したこと](#216-実測で判明したこと)
+  - [22. 詳細（MewUI 版コントロールの移植・`CropViewControl`）](#22-詳細mewui-版コントロールの移植cropviewcontrol)
+    - [22.1 目的](#221-目的)
+    - [22.2 方針（Facade を 2 つのキャンバスの重ね合わせで実装する）](#222-方針facade-を-2-つのキャンバスの重ね合わせで実装する)
+    - [22.3 実施内容](#223-実施内容)
+    - [22.4 変更対象](#224-変更対象)
+    - [22.5 実施結果（検証）](#225-実施結果検証)
+    - [22.6 実測で判明したこと](#226-実測で判明したこと)
+  - [23. 詳細（MewUI 版コントロールの移植・`FadeMaskControl`）](#23-詳細mewui-版コントロールの移植fademaskcontrol)
+    - [23.1 目的](#231-目的)
+    - [23.2 方針（幾何をコアへ抽出し、暗転は 4 帯で表現する）](#232-方針幾何をコアへ抽出し暗転は-4-帯で表現する)
+    - [23.3 実施内容](#233-実施内容)
+    - [23.4 変更対象](#234-変更対象)
+    - [23.5 実施結果（検証）](#235-実施結果検証)
+    - [23.6 実測で判明したこと](#236-実測で判明したこと)
+  - [24. 詳細（MewUI 版コントロールの移植・`DragRectControl` のコア抽出）](#24-詳細mewui-版コントロールの移植dragrectcontrol-のコア抽出)
+    - [24.1 目的](#241-目的)
+    - [24.2 方針（状態機械ごとコアへ置く）](#242-方針状態機械ごとコアへ置く)
+    - [24.3 実施内容](#243-実施内容)
+    - [24.4 変更対象](#244-変更対象)
+    - [24.5 実施結果（検証）](#245-実施結果検証)
+    - [24.6 実測で判明したこと](#246-実測で判明したこと)
+  - [25. 詳細（MewUI 版コントロールの移植・`DragRectControl`）](#25-詳細mewui-版コントロールの移植dragrectcontrol)
+    - [25.1 目的](#251-目的)
+    - [25.2 方針（状態機械はコア、UI は入力の変換と描画に徹する）](#252-方針状態機械はコアui-は入力の変換と描画に徹する)
+    - [25.3 実施内容](#253-実施内容)
+    - [25.4 変更対象](#254-変更対象)
+    - [25.5 実施結果（検証）](#255-実施結果検証)
+    - [25.6 実測で判明したこと](#256-実測で判明したこと)
+  - [26. 詳細（MewUI 版コントロールの移植・`FadeMaskDragRectControl`）](#26-詳細mewui-版コントロールの移植fademaskdragrectcontrol)
+    - [26.1 目的](#261-目的)
+    - [26.2 方針（モードの解釈をコアへ出し、配置は本クラスが担う）](#262-方針モードの解釈をコアへ出し配置は本クラスが担う)
+    - [26.3 実施内容](#263-実施内容)
+    - [26.4 変更対象](#264-変更対象)
+    - [26.5 実施結果（検証）](#265-実施結果検証)
+    - [26.6 実測で判明したこと](#266-実測で判明したこと)
+  - [27. 詳細（MewUI 版コントロールの移植・`ZoomViewControl` のスクロールバー）](#27-詳細mewui-版コントロールの移植zoomviewcontrol-のスクロールバー)
+    - [27.1 目的](#271-目的)
+    - [27.2 方針（幾何をコアへ置き、描画と入力が同じ配置を共有する）](#272-方針幾何をコアへ置き描画と入力が同じ配置を共有する)
+    - [27.3 実施内容](#273-実施内容)
+    - [27.4 変更対象](#274-変更対象)
+    - [27.5 実施結果（検証）](#275-実施結果検証)
+    - [27.6 実測で判明したこと](#276-実測で判明したこと)
+  - [28. 詳細（CI / リリース整備）](#28-詳細ci--リリース整備)
+    - [28.1 目的](#281-目的)
+    - [28.2 方針（リポジトリ固有の知識だけを置き換える）](#282-方針リポジトリ固有の知識だけを置き換える)
+    - [28.3 実施内容](#283-実施内容)
+    - [28.4 変更対象](#284-変更対象)
+    - [28.5 実施結果（検証）](#285-実施結果検証)
+    - [28.6 実測で判明したこと（配布形態の制約）](#286-実測で判明したこと配布形態の制約)
+  - [29. 詳細（`app.MewUI` の設定永続化 / ウィンドウ配置）](#29-詳細appmewui-の設定永続化--ウィンドウ配置)
+    - [29.1 目的](#291-目的)
+    - [29.2 方針（配置の変換を純粋関数へ分離し、復元点は起動時コールバック）](#292-方針配置の変換を純粋関数へ分離し復元点は起動時コールバック)
+    - [29.3 実施内容](#293-実施内容)
+    - [29.4 変更対象](#294-変更対象)
+    - [29.5 実施結果（検証）](#295-実施結果検証)
+    - [29.6 実測で判明したこと（MewUI の配置 API）](#296-実測で判明したことmewui-の配置-api)
+  - [30. 詳細（`app.MewUI` の Undo 一覧ページ）](#30-詳細appmewui-の-undo-一覧ページ)
+    - [30.1 目的](#301-目的)
+    - [30.2 方針（画像表示の手段は既存の MewUI レンダラーと同じ経路にする）](#302-方針画像表示の手段は既存の-mewui-レンダラーと同じ経路にする)
+    - [30.3 実施内容](#303-実施内容)
+    - [30.4 変更対象](#304-変更対象)
+    - [30.5 実施結果（検証）](#305-実施結果検証)
+    - [30.6 実測で判明したこと（MewUI の一覧系 API）](#306-実測で判明したことmewui-の一覧系-api)
+  - [31. 詳細（`app.MewUI` のフォルダビューページ）](#31-詳細appmewui-のフォルダビューページ)
+    - [31.1 目的](#311-目的)
+    - [31.2 方針（ページの生成時期と最新化の呼び出しを明示する）](#312-方針ページの生成時期と最新化の呼び出しを明示する)
+    - [31.3 実施内容](#313-実施内容)
+    - [31.4 変更対象](#314-変更対象)
+    - [31.5 実施結果（検証）](#315-実施結果検証)
+    - [31.6 実測で判明したこと（縮小デコードとページの生成時期）](#316-実測で判明したこと縮小デコードとページの生成時期)
+  - [32. 詳細（`app.MewUI` の設定ページ）](#32-詳細appmewui-の設定ページ)
+    - [32.1 目的](#321-目的)
+    - [32.2 方針（設定は行の組み立てだけにし、変換は専用クラスへ分離する）](#322-方針設定は行の組み立てだけにし変換は専用クラスへ分離する)
+    - [32.3 実施内容](#323-実施内容)
+    - [32.4 変更対象](#324-変更対象)
+    - [32.5 実施結果（検証）](#325-実施結果検証)
+    - [32.6 実測で判明したこと（MewUI の入力系 API）](#326-実測で判明したことmewui-の入力系-api)
+  - [33. 詳細（`app.MewUI` のキャプチャフローと切り出し）](#33-詳細appmewui-のキャプチャフローと切り出し)
+    - [33.1 目的](#331-目的)
+    - [33.2 方針（開始経路を 1 つにし、対象はカーソルのモニターに限定する）](#332-方針開始経路を-1-つにし対象はカーソルのモニターに限定する)
+    - [33.3 実施内容](#333-実施内容)
+    - [33.4 変更対象](#334-変更対象)
+    - [33.5 実施結果（検証）](#335-実施結果検証)
+    - [33.6 未検証（当時の環境の制約。後に解消）](#336-未検証当時の環境の制約後に解消)
+    - [33.7 実測で判明したこと（キャプチャと入力の仮定）](#337-実測で判明したことキャプチャと入力の仮定)
+  - [34. 詳細（`app.MewUI` の履歴移動とルーペのカーソル追従）](#34-詳細appmewui-の履歴移動とルーペのカーソル追従)
+    - [34.1 目的](#341-目的)
+    - [34.2 方針（履歴の移動を専用クラスへ、絶対配置は自前の Panel で行う）](#342-方針履歴の移動を専用クラスへ絶対配置は自前の-panel-で行う)
+    - [34.3 実施内容](#343-実施内容)
+    - [34.4 変更対象](#344-変更対象)
+    - [34.5 実施結果（検証）](#345-実施結果検証)
+    - [34.6 実測で判明したこと（MewUI の絶対配置）](#346-実測で判明したことmewui-の絶対配置)
+  - [35. 詳細（MewUI 版の Native AOT 配布）](#35-詳細mewui-版の-native-aot-配布)
+    - [35.1 目的](#351-目的)
+    - [35.2 方針（JSON コンテキストを参照側アセンブリへ置く）](#352-方針json-コンテキストを参照側アセンブリへ置く)
+    - [35.3 実施内容](#353-実施内容)
+    - [35.4 変更対象](#354-変更対象)
+    - [35.5 実施結果（検証）](#355-実施結果検証)
+    - [35.6 実測で判明したこと（AOT と JSON）](#356-実測で判明したことaot-と-json)
+  - [36. 詳細（MewUI 版コントロールの移植・`FadeMaskControl` のラベル描画）](#36-詳細mewui-版コントロールの移植fademaskcontrol-のラベル描画)
+    - [36.1 目的](#361-目的)
+    - [36.2 方針（レイアウトと文言をコアへ、テキストの実寸測定だけ UI に残す）](#362-方針レイアウトと文言をコアへテキストの実寸測定だけ-ui-に残す)
+    - [36.3 実施内容](#363-実施内容)
+    - [36.4 変更対象](#364-変更対象)
+    - [36.5 実施結果（検証）](#365-実施結果検証)
+    - [36.6 実測で判明したこと（Skia のテキストとフォント）](#366-実測で判明したことskia-のテキストとフォント)
+  - [37. 詳細（MewUI 版の選択矩形破線オーバーレイ）](#37-詳細mewui-版の選択矩形破線オーバーレイ)
+    - [37.1 目的](#371-目的)
+    - [37.2 方針（破線の幾何をコアへ集約し、描画先は UI が選ぶ）](#372-方針破線の幾何をコアへ集約し描画先は-ui-が選ぶ)
+    - [37.3 実施内容](#373-実施内容)
+    - [37.4 変更対象](#374-変更対象)
+    - [37.5 実施結果（検証）](#375-実施結果検証)
+  - [38. 詳細（MewUI 版の操作ログ・`ILogger` の伝搬）](#38-詳細mewui-版の操作ログilogger-の伝搬)
+    - [38.1 目的](#381-目的)
+    - [38.2 方針（書式は同一、ログを持つのは入力を持つコントロール）](#382-方針書式は同一ログを持つのは入力を持つコントロール)
+    - [38.3 実施内容](#383-実施内容)
+    - [38.4 変更対象](#384-変更対象)
+    - [38.5 実施結果（検証）](#385-実施結果検証)
+  - [39. これから実施する項目](#39-これから実施する項目)
+    - [39.1 残作業（2026-09-20 時点の監査結果）](#391-残作業2026-09-20-時点の監査結果)
+    - [39.2 MewUI 版を作成したプロジェクト](#392-mewui-版を作成したプロジェクト)
+    - [39.3 各 UI のコントロール実装方針](#393-各-ui-のコントロール実装方針)
+  - [40. リスク・判断が必要な点](#40-リスク判断が必要な点)
+  - [41. 作業ログ](#41-作業ログ)
 
-## 目的
+## 1. 目的
 
 - UI とコアロジックを分離し、UI フレームワークを差し替え可能にする。
 - 対象 UI は **Avalonia UI（現行）** と **MewUI（新規）**。
 - 既存のドキュメント規約（各プロジェクトの README / SPEC_ExtFunc / SPEC_System）と
   テスト網羅（パブリック API 経由 100%）を維持する。
 
-## プロジェクト名（改名後）
+## 2. プロジェクト名（改名後）
 
 UI（Avalonia UI / MewUI）を名前に明示するため、プロジェクト名を次のように改名した（No.46）。
 
@@ -286,7 +286,7 @@ UI（Avalonia UI / MewUI）を名前に明示するため、プロジェクト�
 - 本文の `XxxControl` は Avalonia UI 版のコントロール（クラス名）を指し、プロジェクトは `XxxControl.AvaloniaUI` である。同様に本文の `app` は `app.AvaloniaUI` を指す。
 - **アセンブリ名の変更は破壊的変更**である。外部から参照する場合は `InternalsVisibleTo` / `assembly=` / `ProjectReference` の更新が必要（本リポジトリ内はすべて追従済み）。`XxxControl.Tests` のうち `FadeMaskDragRectControl` だけは旧名が `FadeMaskDragRect.Tests` だったため、新名は `FadeMaskDragRectControl.AvaloniaUI.Tests` である。
 
-## 現状の構成（着手前）
+## 3. 現状の構成（着手前）
 
 ```text
 src/
@@ -303,7 +303,7 @@ src/
   LineDetection/           … 画像処理（OpenCV）
 ```
 
-### 着手前に判明した前提の誤り
+### 3.1 着手前に判明した前提の誤り
 
 当初 `PlatformFactory` は「UI 非依存の基盤」と想定していたが、実際は約 40 ファイル中 28 ファイルが
 `Avalonia.*` を参照していた（`HotKeySetting` が `Avalonia.Input.Key` を保持、
@@ -313,9 +313,9 @@ src/
 個々のコントロールを Core 分割しても Avalonia 依存が残る**。このため着手順序を
 「PlatformFactory → コントロール → app」へ変更した。
 
-## 全体方針
+## 4. 全体方針
 
-### 依存方向（一方向を厳守）
+### 4.1 依存方向（一方向を厳守）
 
 ```mermaid
 graph LR
@@ -331,7 +331,7 @@ graph LR
   E --> H[LineDetection]
 ```
 
-### 分割の判断基準
+### 4.2 分割の判断基準
 
 | 区分 | 置き場所 | 例 |
 | --- | --- | --- |
@@ -339,7 +339,7 @@ graph LR
 | UI フレームワークの型を使う実装 | 各 UI プロジェクト | `Panel` / `UserControl` 継承、`.axaml`、`DrawingContext` 描画、入力購読 |
 | 相互変換 | Interop 層（各 UI プロジェクト） | `EsKeyAvaloniaInterop` / `EsGeometryAvaloniaInterop` |
 
-### コア型の命名規則（`Es` 接頭辞）
+### 4.3 コア型の命名規則（`Es` 接頭辞）
 
 UI フレームワーク非依存の型には **`Es`（Estable の略）接頭辞**を付ける（`EsKey` / `EsPoint` / `EsSize` /
 `EsVector` / `EsRect` / `EsPixelPoint` / `EsPixelRect` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap`）。
@@ -347,7 +347,7 @@ UI フレームワーク非依存の型には **`Es`（Estable の略）接頭�
 UI フレームワーク側に同名の型がある場合は**メンバー名を完全一致**させ、`JsonStringEnumConverter` で名前シリアライズする
 設定ファイルの互換性を保つ（`EsKey` ⇔ `Avalonia.Input.Key` / `EsWindowState` ⇔ `Avalonia.Controls.WindowState`）。
 
-### 段階（ティア）
+### 4.4 段階（ティア）
 
 | ティア | 内容 | 状態 |
 | --- | --- | --- |
@@ -358,9 +358,9 @@ UI フレームワーク側に同名の型がある場合は**メンバー名を
 | E | 各コントロールの `Core` / `AvaloniaUI` / `MewUI` 分割 | 完了（`LoupeControl` / `ZoomViewControl` / `CropViewControl` / `FadeMaskControl` / `DragRectControl` / `FadeMaskDragRectControl`） |
 | F | app の `Core` / `Presentation` / `AvaloniaUI` / `MewUI` 分割 | 実施中（`app.Core` 完了・MewUI PoC 完了） |
 
-## 完了した項目
+## 5. 完了した項目
 
-### 1. `PlatformFactory.Core` の新設（ティア A）
+### 5.1 `PlatformFactory.Core` の新設（ティア A）
 
 Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（ルート名前空間 `Estable.Platform`）を新設。
 
@@ -381,7 +381,7 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
   メンバー名を一致させたことで**既存の `AppSetting.json` をそのまま読み込める**（後方互換を維持）。
 - `WinNative.KeyToWin32VirtualKey` の引数を `EsKey` へ変更（`Key.` → `EsKey.` の機械的置換）。
 
-### 2. 座標系の純粋計算を Core へ移設（ティア A）
+### 5.2 座標系の純粋計算を Core へ移設（ティア A）
 
 | 型 | 移設先 | 備考 |
 | --- | --- | --- |
@@ -391,7 +391,7 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
 
 - いずれも `double` のみに依存する純粋計算のため、**シグネチャを変更せずに**移設できた。
 
-### 3. コア幾何型の導入と `CoordinateFormatter` の移設（ティア B）
+### 5.3 コア幾何型の導入と `CoordinateFormatter` の移設（ティア B）
 
 - `EsPoint`（`readonly record struct`、`Estable.Platform.Geometry`）を追加した。
   `EsSize` / `EsVector` / `EsRect` は YAGNI に従い、必要になった時点（ティア D）で追加した。
@@ -400,7 +400,7 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
 - `CoordinateFormatter` を `Estable.Platform.Geometry` へ移設し、引数を `EsPoint` へ変更。
   呼び出し側（`DragRectDrawer` / `LoupeControl`）は `.ToEsPoint()` を 1 行挟むのみ。
 
-### 4. `EsBitmap` の Core 移設（ティア C）
+### 5.4 `EsBitmap` の Core 移設（ティア C）
 
 画像コンテナ `EsBitmap` を `Estable.Platform.Imaging` へ移設した。System.Drawing のプリミティブ型と SkiaSharp のみに依存するため、シグネチャを変更せずコア化できた。
 
@@ -409,7 +409,7 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
 - Avalonia 固有の拡張（`Size()` / `Clear(AvaloniaColor)`）のテストは、Core のテストプロジェクトを UI 非依存に保つため `PlatformFactory.Tests` の `EsBitmapAvaloniaExtensions.Tests.cs` へ分離した。
 - 参照する 60 以上のファイルへ `using Estable.Platform.Imaging;` を追加し、移設で不要になった旧名前空間の `using` を削除した。
 
-### 5. `ICoordTransform` / `CoordTransform` の Core 移設（ティア D）
+### 5.5 `ICoordTransform` / `CoordTransform` の Core 移設（ティア D）
 
 座標変換ポートを `Estable.Platform.Coordinate` へ移設し、座標をコア幾何型へ変更した。
 
@@ -419,7 +419,7 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
 - 変換は各コントロールの入力・描画境界で 1 行の相互変換（`.ToEsPoint()` / `.ToAvaloniaPoint()`）に集約した（内部の状態・描画は従来どおり Avalonia 型のままとし、幾何型の全面置換は行わない）。
 - `ScreenConverter` は `TopLevel` / `Visual` に依存するため `PlatformFactory`（Avalonia 実装）に残し、返すポートの入出力のみコア幾何型に変更した。
 
-### 6. プラットフォーム値型の導入とサービス抽象の Core 移設（ティア D）
+### 5.6 プラットフォーム値型の導入とサービス抽象の Core 移設（ティア D）
 
 サービス抽象（キャプチャ / カーソル / ウィンドウ / 要素検出 / カーソル抑止 / ホットキー）を UI 非依存化した（詳細は後述の「詳細（ティア D / サービス抽象・プラットフォーム値型の Core 化）」）。
 
@@ -435,7 +435,7 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
   `OverlayWindow` 内部の `_virtualScreenOrigin` / `_cachedClipRect` などは Avalonia 型のまま維持し、変換は `ICaptureService` の呼び出し箇所に限定した。
 - 値型のテスト（`EsPixelRect` / `EsPlatformHandle`）と相互変換のテスト（`EsGeometryAvaloniaInterop`）を追加した。
 
-### 7. テストとドキュメント
+### 5.7 テストとドキュメント
 
 - `src/PlatformFactory.Core/tests`（`PlatformFactory.Core.Tests`）を新設し、移設した型のテストを移動。
   ファイル削除を伴う移設では、`git show HEAD:<path>` で原文を取得してから移設する
@@ -443,7 +443,7 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
 - `SaveEvidence.slnx` にプロジェクトを追加。
 - `PlatformFactory` / `PlatformFactory.Core` の README / SPEC_ExtFunc / SPEC_System を更新。
 
-### 8. `LoupeControl.Core` の新設（ティア E / 1 コントロールで PoC）
+### 5.8 `LoupeControl.Core` の新設（ティア E / 1 コントロールで PoC）
 
 コントロールの UI 非依存ロジックを `LoupeControl.Core` へ分離し、他コントロールへ横展開できるパターンを確立した
 （詳細は後述の「詳細（ティア E / `LoupeControl` で Core 分割 PoC）」）。
@@ -456,12 +456,12 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
   （`.ToEsSize()` / `.ToEsPoint()` / `.ToAvaloniaPoint()`）で対応した。UI 側の状態・描画は Avalonia 型のまま維持している。
 - テストは `src/LoupeControl.Core/tests`（`LoupeControl.Core.Tests`）へ 4 クラスを移設した（UI 初期化不要のため `[Fact]` で並列実行）。
 
-### 検証
+### 5.9 検証
 
 - `dotnet build SaveEvidence.slnx` 成功（警告 0）。
 - `dotnet test SaveEvidence.slnx` 全 1117 件 green（14 プロジェクト）。
 
-### 移設時に得た注意点
+### 5.10 移設時に得た注意点
 
 - 移設対象が UI フレームワークの型を使っていないかは、`using` の有無だけでなく**シグネチャの型**まで見る。
 - ファイル削除を伴う移設では、`git show HEAD:<path>` で原文を取得してから移設する（記憶からの再構成は期待値を誤る）。
@@ -469,9 +469,9 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
 - 大量ファイルへの `using` 追加は、置換アンカーがそのファイル内で 1 回だけ出現することを事前確認してから一括置換し、最後にビルドで検証する（逆に旧 `using` の削除は拡張メソッドの見落としが起きやすく、ビルドで 3 ファイルを復元した）。
 - コア型の導入は、**その型を実際に Core へ移すファイルから**行う。既存の UI 型を一括で置換すると churn が大きく、境界の相互変換 1 行で済む箇所まで書き換えることになる。
 
-## 詳細（ティア D / サービス抽象・プラットフォーム値型の Core 化）
+## 6. 詳細（ティア D / サービス抽象・プラットフォーム値型の Core 化）
 
-### 目的
+### 6.1 目的
 
 サービス抽象（キャプチャ / カーソル / ウィンドウ / 要素検出 / カーソル抑止 / ホットキー）は
 `PlatformFactory`（Avalonia プロジェクト）にあり、引数・戻り値に Avalonia 型を持っていた。
@@ -487,7 +487,7 @@ Avalonia を参照しない共有ライブラリ `src/PlatformFactory.Core`（�
 
 MewUI 版のアプリ・コントロールから同じサービス抽象を利用するには、これらを UI 非依存にする必要があった。
 
-### 実施内容
+### 6.2 実施内容
 
 1. **プラットフォーム値型を Core に追加**: `EsPixelPoint` / `EsPixelRect` / `EsPlatformHandle`（`Estable.Platform.Geometry`）。
 2. **6 インターフェースと `ElementFinderResults` を Core へ移設**（`Estable.Platform`）。
@@ -498,7 +498,7 @@ MewUI 版のアプリ・コントロールから同じサービス抽象を利�
 5. **Win / NoOp 実装は `PlatformFactory` に残す**（Win32 実装は UI 非依存だが、ファクトリと同居しているため）。
    MewUI から Win32 実装を再利用するための分離は項目 7（後述・完了）で行った。
 
-### 変更対象
+### 6.3 変更対象
 
 - Core: 値型 3 + インターフェース 6 + `ElementFinderResults`
 - PlatformFactory: 相互変換 2 + `Attach` 拡張 + Win 実装 4 + NoOp 実装 4 + ファクトリ
@@ -507,16 +507,16 @@ MewUI 版のアプリ・コントロールから同じサービス抽象を利�
 - 境界の相互変換 1 行で対応し、`OverlayWindow` 内部の `_virtualScreenOrigin` / `_cachedClipRect` などは
   Avalonia 型のまま維持した（変換は `ICaptureService` の呼び出し箇所に限定）。
 
-## 詳細（ティア D / Win・NoOp 実装とファクトリの UI 非依存化）
+## 7. 詳細（ティア D / Win・NoOp 実装とファクトリの UI 非依存化）
 
-### 課題
+### 7.1 課題
 
 サービス抽象（`ICaptureService` 等）は UI 非依存化したが、その**既定実装**（Win32 / NoOp）と生成ファクトリ
 `PlatformFactory.CreateXxx()` は `PlatformFactory`（Avalonia プロジェクト）に残っていた。
 Win32 実装自体は UI フレームワークに依存していない（`WinNative` の P/Invoke とコア型のみ）ため、
 アセンブリを分離すれば MewUI からもそのまま再利用できる。
 
-### 実施内容
+### 7.2 実施内容
 
 UI 非依存の実装を新プロジェクト `PlatformFactory.Native` へ分離した。
 
@@ -534,7 +534,7 @@ PlatformFactory          … Avalonia 固有のアダプタのみ（ScreenConver
 - `PlatformFactory`（Avalonia）は `PlatformFactory.Native` を参照するため、
   **消費側の `PlatformFactory.CreateXxx()` 呼び出しと Win/NoOp 実装の利用コードは無変更**で済んだ。
 
-### 変更対象
+### 7.3 変更対象
 
 - 新規: `src/PlatformFactory.Native`（src + tests）
 - 移動: ファクトリ / `PlatformLog` / Win 実装 7 / NoOp 実装 6 / `EsBitmapDrawingExtensions`
@@ -545,9 +545,9 @@ PlatformFactory          … Avalonia 固有のアダプタのみ（ScreenConver
   `Attach(EsPlatformHandle)` を直接検証する形へ書き換え、Avalonia 側の拡張メソッド
   （`CursorOverrideGuardAvaloniaExtensions.Attach(TopLevel)`）のテストを `PlatformFactory.Tests` に新設した。
 
-## 詳細（ティア B / `AvaloniaGeometryAdapters` / `RectDExt` の整理）
+## 8. 詳細（ティア B / `AvaloniaGeometryAdapters` / `RectDExt` の整理）
 
-### 課題
+### 8.1 課題
 
 `AvaloniaGeometryAdapters` の 8 メソッドは**すべて実質 no-op**（Avalonia 型 → Avalonia 型の恒等変換）。
 旧設計でコア幾何型を自前で持っていた名残であり、現在はコア型（`Es*`）⇔ Avalonia の変換を
@@ -563,7 +563,7 @@ PlatformFactory          … Avalonia 固有のアダプタのみ（ScreenConver
 
 `RectDExt` は Avalonia ⇔ System.Drawing の実変換を提供するが、**呼び出し箇所が 1 つもない**（未使用）。
 
-### 方針と結果
+### 8.2 方針と結果
 
 1. `AvaloniaGeometryAdapters` を**削除**し、呼び出し側の恒等呼び出し（`x.ToPoint()` / `x.ToSize()` /
    `x.ToAvaloniaPoint()` / `x.ToAvaloniaRect()` 等）を除去した（レシーバはすべて Avalonia 型で、除去しても型は変わらない）。
@@ -575,20 +575,20 @@ PlatformFactory          … Avalonia 固有のアダプタのみ（ScreenConver
 `Es*` ⇔ Avalonia の変換は `EsGeometryAvaloniaInterop` が提供済みのため、機能の欠落はない。
 System.Drawing との変換が必要になった場合は、必要時にコア型（`Es*`）基準で設計し直す。
 
-### 変更対象
+### 8.3 変更対象
 
 - 削除: `GeometryAvaloniaAdapters.cs` / `GeometryDrawingAdapters.cs` / `Platform/Geometry/` フォルダ
 - 呼び出し側: `ScreenConverter` / `DragRectControl`（本体・Visual・Drawer・State・sample） /
   `FadeMaskControl`（sample） / `FadeMaskDragRectControl` / `LoupeControl` / `ZoomViewControl`（本体・sample） /
   `SnipCaptureUI`（OverlayWindow 2 ファイル） / `LineDetection`（sample） / `app.AvaloniaUI`（CapturePage）
 
-## 詳細（ティア E / `LoupeControl` で Core 分割 PoC）
+## 9. 詳細（ティア E / `LoupeControl` で Core 分割 PoC）
 
-### 目的
+### 9.1 目的
 
 コントロールの UI 非依存ロジックを `LoupeControl.Core` へ分離し、**他コントロールへ横展開できるパターン**を確立する。
 
-### 現状の `LoupeControl` 構成（調査結果）
+### 9.2 現状の `LoupeControl` 構成（調査結果）
 
 すでに純粋ロジックは静的クラスへ分離されている（`LoupeValueCoercer` / `LoupePositionCalculator` /
 `LoupeImageExtractor` / `LoupeRenderArgsCalculator`）。ただし以下が UI 側と同居している。
@@ -601,7 +601,7 @@ System.Drawing との変換が必要になった場合は、必要時にコア�
 | | `LoupeRenderArgsCalculator` | `Avalonia.Point` のみ |
 | UI 側に残す | `LoupeControl.axaml.cs` / `LoupeRenderCoordinator` / `LoupeRenderPipeline` / `LoupeSourceResolver` / `Rendering/*` / `LoupeRenderedEventArgs` | `StyledProperty` / `Dispatcher` / `IBrush` / `IImage` / `DrawingContext` |
 
-### 実施内容
+### 9.3 実施内容
 
 1. `src/LoupeControl.Core`（ルート名前空間 `Estable.Loupe`）を新設し、上記 4 ファイルを移設した。
    - `Avalonia.Point` / `Size` を `EsPoint` / `EsSize` へ置換（Core のコア幾何型）。
@@ -614,7 +614,7 @@ System.Drawing との変換が必要になった場合は、必要時にコア�
    MewUI 実装を追加する時点でまとめて行う（`PlatformFactory` → `PlatformFactory.Native` 分離時と同じ判断）。
    → **No.46 で改名を実施済み**（`LoupeControl` → `LoupeControl.AvaloniaUI`）。
 
-### 変更対象
+### 9.4 変更対象
 
 ```text
 src/LoupeControl.Core/src/LoupeControl.Core.csproj          新設（RootNamespace Estable.Loupe、参照: PlatformFactory.Core のみ）
@@ -631,12 +631,12 @@ src/LoupeControl.AvaloniaUI/src/Rendering/LoupeRenderer.cs             using を
 SaveEvidence.slnx                                           LoupeControl.Core / .Tests を追加
 ```
 
-### 実施結果（検証）
+### 9.5 実施結果（検証）
 
 - ビルド: 成功（警告 0）。
 - テスト: 全 1117 件 green。`LoupeControl.AvaloniaUI.Tests` 126 → 88 件、`LoupeControl.Core.Tests` 38 件（合計は不変）。
 
-### 横展開のパターン（本 PoC で確立するもの）
+### 9.6 横展開のパターン（本 PoC で確立するもの）
 
 ```text
 XxxControl.Core          … 純粋ロジック（数学・状態・設定・イベント引数の計算）。依存は Es* と PlatformFactory.Core のみ
@@ -644,14 +644,14 @@ XxxControl.AvaloniaUI    … Avalonia UI 版の実装。Core を参照し、境�
 XxxControl.Core.Tests    … Core のテスト（UI 初期化不要の [Fact]）
 ```
 
-## 詳細（ティア E / 他コントロールへ横展開・`ZoomViewControl`）
+## 10. 詳細（ティア E / 他コントロールへ横展開・`ZoomViewControl`）
 
-### 目的
+### 10.1 目的
 
 `LoupeControl` で確立したパターン（`XxxControl.Core` + `InternalsVisibleTo` + 境界の 1 行変換）を、
 残りのコントロールへ適用する。
 
-### 候補の絞り込み（機械的な判定）
+### 10.2 候補の絞り込み（機械的な判定）
 
 各ファイル内の文字列 `Avalonia` の出現数で「UI 非依存候補」を機械的に絞れる。
 `namespace Estable.AvaloniaUI.*` の 1 件を含むため、**出現数 1 = 名前空間のみ = UI 非依存**である。
@@ -661,7 +661,7 @@ XxxControl.Core.Tests    … Core のテスト（UI 初期化不要の [Fact]）
 | 1 | 名前空間のみ → UI 型を使用していない（移設候補） |
 | 2 以上 | `using Avalonia;` か UI 型をシグネチャに使用（XML ドキュメント内の言及も数えるため、値は目安） |
 
-### コントロール別の UI 非依存候補（調査結果）
+### 10.3 コントロール別の UI 非依存候補（調査結果）
 
 | コントロール | 候補 | 判断 |
 | --- | --- | --- |
@@ -672,13 +672,13 @@ XxxControl.Core.Tests    … Core のテスト（UI 初期化不要の [Fact]）
 | `FadeMaskDragRectControl` | `FadeMaskDragRectMode` / `FadeMaskDragRectSettings`（小） | 完了（`FadeMaskDragRectControl.Core`）。enum とモード写像・破線描画を移設（設定 record は Avalonia 側に残置） |
 | `SnipCaptureUI` | `CaptureType` / `CaptureSettings` / `CaptureResult`（小） | 保留。セッション層は UI 密結合のため、MewUI ホスト設計時に分離範囲を設計する |
 
-### 実施順序
+### 10.4 実施順序
 
 1. `ZoomViewControl`（完了）
 2. `CropViewControl`（完了）
 3. `DragRectControl` 以降は MewUI 実装（ティア F）と並行して分離範囲を決める
 
-### 実施内容（`ZoomViewControl`）
+### 10.5 実施内容（`ZoomViewControl`）
 
 `LoupeControl` との違いと、そこから得た判断基準:
 
@@ -689,7 +689,7 @@ XxxControl.Core.Tests    … Core のテスト（UI 初期化不要の [Fact]）
 | 名前空間 | Core は `Estable.ZoomView`（`LoupeControl.Core` の `Estable.Loupe` と同じ規則で `Control` を落とす） |
 | XML ドキュメントの参照 | Core から UI 型（`ZoomViewControl` / `ZoomableView`）への `<see cref>` は解決できないため、日本語の一般表現に書き換える |
 
-### 変更対象（`ZoomViewControl`）
+### 10.6 変更対象（`ZoomViewControl`）
 
 ```text
 src/ZoomViewControl.Core/src/ZoomViewControl.Core.csproj   新設（RootNamespace Estable.ZoomView、参照: PlatformFactory.Core のみ）
@@ -707,12 +707,12 @@ src/ZoomViewControl.AvaloniaUI/src/ZoomableView.cs                     using 追
 SaveEvidence.slnx                                           ZoomViewControl.Core / .Tests を追加
 ```
 
-### 実施結果（検証）
+### 10.7 実施結果（検証）
 
 - ビルド: 成功（警告 0）。
 - テスト: 全 1117 件 green（15 プロジェクト）。`ZoomViewControl.AvaloniaUI.Tests` 172 → 71 件、`ZoomViewControl.Core.Tests` 101 件（合計は不変）。
 
-### 旧ファイルの重複除去（作業中の復旧）
+### 10.8 旧ファイルの重複除去（作業中の復旧）
 
 作業開始時点で、**事前に `PlatformFactory.Core` / `PlatformFactory.Native` / `LoupeControl.Core` へ移したはずの旧ファイルが
 元の場所に存在**しており（ビルドが二重定義で失敗）、以下を削除して復旧した（リポジトリ外へ退避済み）。
@@ -721,14 +721,14 @@ SaveEvidence.slnx                                           ZoomViewControl.Core
 - `src/PlatformFactory/tests/` の `NoOpElementFinder.Tests` / `NoOpService.Tests` / `EsBitmapSystemDrawing.Tests` / `WinCursorService.Tests` / `WinElementFinder.Tests`
 - `src/ZoomViewControl.AvaloniaUI/src/ZoomMath.cs` / `src/LoupeControl.AvaloniaUI/src/LoupeRenderArgsCalculator.cs` / `src/LoupeControl.AvaloniaUI/src/LoupeImageExtractor.cs` / `src/LoupeControl.AvaloniaUI/tests/LoupeImageExtractor.Tests.cs`
 
-## 詳細（ティア E / 他コントロールへ横展開・`CropViewControl`）
+## 11. 詳細（ティア E / 他コントロールへ横展開・`CropViewControl`）
 
-### 目的
+### 11.1 目的
 
 `LoupeControl` で確立したパターンを `CropViewControl` へ適用する。あわせて、ベクター描画とラスタ描画で
 二重定義されていた破線パターンを一元化する（DRY）。
 
-### 調査結果と判断
+### 11.2 調査結果と判断
 
 | 論点 | 判断 |
 | --- | --- |
@@ -738,7 +738,7 @@ SaveEvidence.slnx                                           ZoomViewControl.Core
 | イベント引数の扱い | `LoupeControl` / `ZoomViewControl` と同じく UI 側に残す（対象なし。Crop 固有のイベント引数は `FadeMaskDragRect` 側） |
 | `CreateRectElement`（Avalonia 図形要素） | UI 側に残す（`Panel` / `Rectangle` / `SolidColorBrush` / `AvaloniaList` を使用）。ダッシュ長のみ Core から取得する |
 
-### 実施内容
+### 11.3 実施内容
 
 1. `src/CropViewControl.Core`（ルート名前空間 `Estable.CropView`）を新設した。
    - `OverlayRect` は `EsRect`（`PlatformFactory.Core`）+ `System.Drawing.Color` で表現する。
@@ -754,7 +754,7 @@ SaveEvidence.slnx                                           ZoomViewControl.Core
    `CreateRectElement` のダッシュ長を `OverlayLineDash` から取得するよう変更した。
 5. テストは `src/CropViewControl.Core/tests`（`CropViewControl.Core.Tests`）を新設した。
 
-### 変更対象
+### 11.4 変更対象
 
 ```text
 src/CropViewControl.Core/src/CropViewControl.Core.csproj    新設（RootNamespace Estable.CropView、参照: PlatformFactory.Core のみ）
@@ -776,21 +776,21 @@ src/PlatformFactory.Native/tests/EsBitmapSystemDrawing.Tests.cs  重複 using �
 SaveEvidence.slnx                                           CropViewControl.Core / .Tests を追加
 ```
 
-### 実施結果（検証）
+### 11.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。既存の CS0105 重複 using も解消）。
 - テスト: 全 1140 件 green（16 プロジェクト）。`CropViewControl.AvaloniaUI.Tests` 12 件（不変）、
   `CropViewControl.Core.Tests` 19 件、`PlatformFactory.Core.Tests` 117 → 121 件（`EsRect` の追加分）。
 
-## 詳細（ティア F / `app.Core` の第一段階）
+## 12. 詳細（ティア F / `app.Core` の第一段階）
 
-### 目的
+### 12.1 目的
 
 アプリ本体（`app.AvaloniaUI`）の UI 非依存部分を `app.Core` へ分離する。ティア E（コントロール）で確立したパターンの
 app 版だが、**app は名前空間が単一（`Estable.SaveEvidence.*`）のため、名前空間を変えずにアセンブリだけを分ける**方式を採る
 （`app.AvaloniaUI` 側の `using` を変更せずに移設でき、差分と回帰リスクを最小化できる）。
 
-### 調査結果（機械的な判定）
+### 12.2 調査結果（機械的な判定）
 
 ティア E と同じ「ファイル内の文字列 `Avalonia` の出現数」で候補を絞った。
 `app.AvaloniaUI` は名前空間が `Estable.SaveEvidence.*`（`Avalonia` を含まない）ため、**出現数 0 = UI 型未使用**と判定できる。
@@ -807,7 +807,7 @@ app 版だが、**app は名前空間が単一（`Estable.SaveEvidence.*`）の�
 | `Services/IImageWriter.cs` | 1 | 保留。シグネチャは `EsBitmap` のみだが、具象（`AvaloniaImageWriter`）が Avalonia Skia 依存 |
 | `Views/**` / `Controls/**` / `Converters/**` / `Icons/**` / `Logging/AppLog.cs` / `Services/CaptureSettingsMapper.cs` | 2〜18 | UI 側に残す |
 
-### 実施内容
+### 12.3 実施内容
 
 1. `src/app.Core`（ルート名前空間 `Estable.SaveEvidence`、`net10.0`）を新設し、上記 9 ファイルを移設した。
    - 依存は `PlatformFactory.Core`（`EsBitmap` / `HotKeySetting` / `EsKey`）と `CommunityToolkit.Mvvm` のみ。
@@ -818,7 +818,7 @@ app 版だが、**app は名前空間が単一（`Estable.SaveEvidence.*`）の�
    - `AppPage.Tests` / `FolderViewViewModel.Tests` / `HotKeyParser.Tests` / `UndoStack.Tests`
    - `HotKeyParser.Tests` の不要な `using Estable.AvaloniaUI.Platform;` も削除した。
 
-### 変更対象
+### 12.4 変更対象
 
 ```text
 src/app.Core/src/app.Core.csproj               新設（net10.0、RootNamespace Estable.SaveEvidence）
@@ -837,12 +837,12 @@ src/app.AvaloniaUI/src/app.AvaloniaUI.csproj                          app.Core �
 SaveEvidence.slnx                               app.Core / app.Core.Tests を追加
 ```
 
-### 実施結果（検証）
+### 12.5 実施結果（検証）
 
 - ビルド: 成功（警告 0）。
 - テスト: 全 1140 件 green（17 プロジェクト）。`app.AvaloniaUI.Tests` 109 → 78 件、`app.Core.Tests` 31 件（合計は不変）。
 
-### 次段階（`Settings` の UI 非依存化）→ 第二段階として実施済み
+### 12.6 次段階（`Settings` の UI 非依存化）→ 第二段階として実施済み
 
 `Settings` の `MainWindowBounds`（`Avalonia.PixelRect?`）を `EsPixelRect?` へ置換できれば、
 `Settings` / `ISettingsService` / `SettingsService` / `PixelRectConverter` をまとめて `app.Core` へ移設できる
@@ -850,13 +850,13 @@ SaveEvidence.slnx                               app.Core / app.Core.Tests を追
 ただし `MainViewModel` の `PixelRect` は**画像座標**（要素検出結果の矩形）であり、画面座標（`MainWindowBounds`）とは
 意味が異なるため、`EsPixelRect` への置換は画面座標のみに限定する。
 
-## 詳細（ティア F / `app.Core` の第二段階 = 設定モデルと設定サービスの UI 非依存化）
+## 13. 詳細（ティア F / `app.Core` の第二段階 = 設定モデルと設定サービスの UI 非依存化）
 
-### 目的
+### 13.1 目的
 
 第一段階で残した `Settings`（UI 型を 2 つ保持）を UI 非依存化し、設定まわりを `app.Core` へ移設する。
 
-### 障害と対処
+### 13.2 障害と対処
 
 `Settings` は以下の 2 つの UI 型を保持していた。
 
@@ -868,7 +868,7 @@ SaveEvidence.slnx                               app.Core / app.Core.Tests を追
 `WindowState` は値が 4 つ（`Normal` / `Minimized` / `Maximized` / `FullScreen`）のため、対応するコア enum を
 新設するのが最も素直な解（`EsKey` と同じ「名前一致」方式）。
 
-### 実施内容
+### 13.3 実施内容
 
 1. `PlatformFactory.Core` に `EsWindowState`（`Normal` / `Minimized` / `Maximized` / `FullScreen`）を追加した。
 2. `PlatformFactory` に `EsWindowStateAvaloniaInterop`（`ToAvaloniaWindowState` / `ToEsWindowState`）を追加した。
@@ -882,7 +882,7 @@ SaveEvidence.slnx                               app.Core / app.Core.Tests を追
    - `settings.MainWindowState = WindowState.ToEsWindowState()`
    - `new EsPixelRect(Position.X, Position.Y, (int)Width, (int)Height)`
 
-### JSON 互換性（既存の設定ファイルをそのまま読み込める）
+### 13.4 JSON 互換性（既存の設定ファイルをそのまま読み込める）
 
 | 項目 | 移設前の JSON | 移設後の JSON |
 | --- | --- | --- |
@@ -891,7 +891,7 @@ SaveEvidence.slnx                               app.Core / app.Core.Tests を追
 
 実際の設定ファイル（`%LOCALAPPDATA%\SaveEvidence\settings.json`）で上記 2 つの形式を実測して確認した。
 
-### 変更対象
+### 13.5 変更対象
 
 ```text
 src/PlatformFactory.Core/src/EsWindowState.cs            新設（Normal / Minimized / Maximized / FullScreen）
@@ -906,19 +906,19 @@ src/app.Core/tests/EsPixelRectJsonConverterTests.cs       新設（8 件）
 src/app.AvaloniaUI/src/Views/MainWindow.axaml.cs                    境界変換（復元・保存の 4 箇所）
 ```
 
-### 実施結果（検証）
+### 13.6 実施結果（検証）
 
 - ビルド: 成功（警告 0）。
 - テスト: 全 1161 件 green（17 プロジェクト）。`PlatformFactory.Tests` 43 → 56 件、`app.Core.Tests` 31 → 39 件。
 
-## 詳細（ティア F / `app.Core` の第三段階 = `MainViewModel` の UI 非依存化に必要な型の整備）
+## 14. 詳細（ティア F / `app.Core` の第三段階 = `MainViewModel` の UI 非依存化に必要な型の整備）
 
-### 目的
+### 14.1 目的
 
 `MainViewModel` を `app.Core` へ移設するには、同 ViewModel が保持する型を UI 非依存にする必要がある。
 ホスト（app）から注入する型と、呼び出している純粋ライブラリの型を先に整備した。
 
-### 障害の整理
+### 14.2 障害の整理
 
 | MainViewModel の依存 | 障害 | 対処 |
 | --- | --- | --- |
@@ -927,7 +927,7 @@ src/app.AvaloniaUI/src/Views/MainWindow.axaml.cs                    境界変換
 | 画像座標の矩形（`DetectedRects` / `HoveredRect` / `CropPreview` / `ConfirmAutoCrop`） | `Avalonia.PixelRect` | `EsPixelRect` へ変更。`LineDetection` の `LineRectangleReconstructor` が返す型も `EsPixelRect` にする必要がある |
 | `LineDetectionResult.Start` / `End` | `Avalonia.Point`（`LineDetection` は UI 非依存を自称していたが実際は依存） | `EsPoint` へ変更し、`LineDetection` を完全に UI 非依存化 |
 
-### 実施内容
+### 14.3 実施内容
 
 1. **`IImageWriter` を `app.Core` へ移設**した。XML ドキュメントの参照を「UI 実装の MainViewModel」へ一般化し、具象実装への `<see cref>` を外した。
 2. **`CaptureType` を `PlatformFactory.Core`（`Estable.Platform`）へ移設**した。
@@ -946,7 +946,7 @@ src/app.AvaloniaUI/src/Views/MainWindow.axaml.cs                    境界変換
    - `EsBitmap.Crop(bounds)` は `Crop(x, y, width, height)` へ変更（`EsPixelRect` から直接渡せる）。
    - `CapturePage`（View）は境界変換（`hit.Equals(default(EsPixelRect))`）で対応した。
 
-### 変更対象
+### 14.4 変更対象
 
 ```text
 src/app.Core/src/Services/IImageWriter.cs                 移設（ドキュメントの参照を一般化）
@@ -971,24 +971,24 @@ src/app.AvaloniaUI/src/Logging/AppLog.cs                            using 追加
 src/LineDetection/sample/Views/CreatePage.axaml.cs       using 追加
 ```
 
-### 実施結果（検証）
+### 14.5 実施結果（検証）
 
 - ビルド: 成功（警告 0）。
 - テスト: 全 1161 件 green（17 プロジェクト）。
 
-### 次段階（第三段階の残り）→ 第四段階として実施済み
+### 14.6 次段階（第三段階の残り）→ 第四段階として実施済み
 
 - `MainViewModel` のクリップボードコールバックを `EsBitmap` ベースへ変更する。
 - `AvaloniaImageWriter` の既定生成を削除し、`IImageWriter` を必須引数化する。
 - `MainViewModel` とそのテストを `app.Core` / `app.Core.Tests` へ移設する。
 
-## 詳細（ティア F / `app.Core` の第四段階 = `MainViewModel` の移設）
+## 15. 詳細（ティア F / `app.Core` の第四段階 = `MainViewModel` の移設）
 
-### 目的
+### 15.1 目的
 
 アプリのメイン画面 ViewModel（約 490 行）を `app.Core` へ移設し、`app.AvaloniaUI`（Avalonia 実装）を UI 層だけにする。
 
-### 障害の整理
+### 15.2 障害の整理
 
 | 障害 | 対処 |
 | --- | --- |
@@ -997,7 +997,7 @@ src/LineDetection/sample/Views/CreatePage.axaml.cs       using 追加
 | `LineDetection` の名前空間が `Estable.AvaloniaUI.LineDetection` | UI 非依存アセンブリの方針どおり `Estable.LineDetection` へ改名 |
 | XAML から `MainViewModel` を解決できない | `clr-namespace:...;assembly=app.Core` を付与（`MainWindow` / `CapturePage` / `SettingsPage`） |
 
-### 実施内容
+### 15.3 実施内容
 
 1. `LineDetection` の名前空間を `Estable.AvaloniaUI.LineDetection` → `Estable.LineDetection` へ改名した
    （28 ファイル / 31 箇所。csproj の `RootNamespace` を含む）。
@@ -1013,7 +1013,7 @@ src/LineDetection/sample/Views/CreatePage.axaml.cs       using 追加
 5. `app.AvaloniaUI` の `LineDetection` 直接参照を削除した（`app.Core` 経由の推移的参照で足りる）。
 6. XAML 3 ファイルの `vm` 名前空間に `;assembly=app.Core` を付与した。
 
-### 変更対象
+### 15.4 変更対象
 
 ```text
 src/LineDetection/src/*.cs                                 名前空間を Estable.LineDetection へ（7 ファイル）
@@ -1034,24 +1034,24 @@ src/app.AvaloniaUI/src/Views/Pages/CapturePage.axaml                  vm に ass
 src/app.AvaloniaUI/src/Views/Pages/SettingsPage.axaml                 vm に assembly=app.Core
 ```
 
-### 実施結果（検証）
+### 15.5 実施結果（検証）
 
 - ビルド: 成功（警告 0）。
 - テスト: 全 1161 件 green（17 プロジェクト）。`app.Core.Tests` 39 → 91 件、`app.AvaloniaUI.Tests` 78 → 26 件（合計は不変）。
 
-### 作業中の復旧（旧ファイルの復活）
+### 15.6 作業中の復旧（旧ファイルの復活）
 
 `src/app.AvaloniaUI/src/ViewModels/MainViewModel.cs` がエディタの未保存タブの自動保存で復活し、**同一型名が 2 アセンブリに存在**する状態になった
 （ビルドは成功するため気づきにくい）。退避してから削除し、続けて XAML の `assembly=` 指定を追加して解決した。
 
-## 改名（`PbBitmap` → `EsBitmap`）
+## 16. 改名（`PbBitmap` → `EsBitmap`）
 
-### 目的
+### 16.1 目的
 
 コア型の命名規則（`Es` 接頭辞）に合わせる。`Pb`（Premultiplied）はピクセル形式の説明であり型名としては
 実装の詳細を表していたため、他のコア型（`EsPoint` / `EsSize` 等）と同じ「Estable のコア型」を表す命名へ統一する。
 
-### 実施内容（機械的な一括改名）
+### 16.2 実施内容（機械的な一括改名）
 
 | 対象 | 変更 |
 | --- | --- |
@@ -1059,14 +1059,14 @@ src/app.AvaloniaUI/src/Views/Pages/SettingsPage.axaml                 vm に ass
 | テストファイル名 | `EsBitmap.Tests` / `EsBitmapAvalonia.Tests` / `EsBitmapAvaloniaExtensions.Tests` / `EsBitmapAvaloniaImage.Tests` / `EsBitmapSystemDrawing.Tests` |
 | 内容置換 | 100 ファイル / 736 箇所（`src` 配下）+ ルートのドキュメント 26 箇所 |
 
-### 手順（スクリプトで実施）
+### 16.3 手順（スクリプトで実施）
 
 1. **ファイル名の改名**: `git mv` で履歴を保持する。**git 管理外のファイル（未追跡の新規プロジェクト）は `git mv` が失敗**するため、
    失敗時は `Rename-Item` へフォールバックする。
 2. **内容の置換**: 拡張子（`.cs` / `.csproj` / `.md` / `.axaml` / `.json` / `.slnx` / `.yml`）で絞り、`obj` / `bin` を除外して置換する。
 3. **残存確認**: ファイル名と内容の両方で `PbBitmap` が 0 件であることを確認する。
 
-### 注意点（実際に起きたこと）
+### 16.4 注意点（実際に起きたこと）
 
 - **`Get-ChildItem -Path 'src','.' -Include <複数拡張子>` は 0 件を返す**（`-Include` は `-Path` の
   ワイルドカード指定か `-Recurse` との組合せで期待通りに動かない）。`-Recurse` で全件取得してから
@@ -1077,20 +1077,20 @@ src/app.AvaloniaUI/src/Views/Pages/SettingsPage.axaml                 vm に ass
 - 複数行の PowerShell をターミナルへ貼ると解析が崩れるため、**スクリプトは `create_file` で `.ps1` として書き出して実行**した
   （`.ps1` 自身も置換対象になるため、確認用スクリプトは改名対象の文字列を含めないようにするか、実行後に削除する）。
 
-### 実施結果（検証）
+### 16.5 実施結果（検証）
 
 - `PbBitmap` の残存: ファイル名 / 内容ともに 0 件。
 - ビルド: 成功（警告 0）。
 - テスト: 全 1161 件 green（17 プロジェクト・型名の変更のみで挙動の変更なし）。
 
-## 詳細（ティア F / MewUI の調査と PoC）
+## 17. 詳細（ティア F / MewUI の調査と PoC）
 
-### 目的
+### 17.1 目的
 
 ティア F の唯一の未知要素だった **MewUI の実現性**を検証する。あわせて「既存資産のうち何が再利用でき、
 何を作り直す必要があるか」を切り分ける。
 
-### MewUI の調査結果（`Aprillz.MewUI` 0.21.1）
+### 17.2 MewUI の調査結果（`Aprillz.MewUI` 0.21.1）
 
 | 項目 | 内容 |
 | --- | --- |
@@ -1104,7 +1104,7 @@ src/app.AvaloniaUI/src/Views/Pages/SettingsPage.axaml                 vm に ass
 | パッケージ構成 | `Aprillz.MewUI`（メタ）/ `.Windows` `.Linux` `.MacOS` / `.Core` / `.Skia`（+ `.Skia.Interop.*`）/ `.Svg` / `.MewDock` / `.MewCharts` / `.WebView2.Win32` |
 | 補助 | MewUI 公式の **agent skill**（`aprillz/mewui-skill`）が公開されており、Copilot / Claude Code での実装支援に使える |
 
-### 再利用できる部分 / 作り直しが必要な部分
+### 17.3 再利用できる部分 / 作り直しが必要な部分
 
 | 層 | 判定 | 内容 |
 | --- | --- | --- |
@@ -1118,7 +1118,7 @@ src/app.AvaloniaUI/src/Views/Pages/SettingsPage.axaml                 vm に ass
 | 各コントロールの UI 実装 | × 作り直し | Avalonia の `DrawingContext` / `StyledProperty` → MewUI の `MewProperty` / `Action<SKCanvas, SKImageInfo>` へ |
 | `app.AvaloniaUI` の `.axaml` | × 作り直し | MewUI は XAML を持たないため C# マークアップへ書き換え（これが `app.MewUI` の主な作業量） |
 
-### PoC の実施内容
+### 17.4 PoC の実施内容
 
 `src/MewUI.PoC`（`net10.0-windows`、`Aprillz.MewUI.Windows` + `Aprillz.MewUI.Skia` を **バージョン固定**で参照）を新設し、
 `app.Core` / `PlatformFactory.Core` を参照した。
@@ -1127,7 +1127,7 @@ src/app.AvaloniaUI/src/Views/Pages/SettingsPage.axaml                 vm に ass
 > 明記していた。`app.MewUI` が全ページ・撮影フロー・AOT まで完成し、`--check` モードの役割（対応型の実測・
 > キー集合の検証）も `PlatformFactory.MewUI.Tests`（36 件）が引き継いだため、リポジトリから削除した。
 
-### 検証結果（すべて実機で確認済み）
+### 17.5 検証結果（すべて実機で確認済み）
 
 | # | 検証項目 | 結果 |
 | --- | --- | --- |
@@ -1140,7 +1140,7 @@ src/app.AvaloniaUI/src/Views/Pages/SettingsPage.axaml                 vm に ass
 証跡は `src/MewUI.PoC/poc-window.png`（グラデーション画像 + `96 x 96` + `未`。**削除済み**）。
 **「コアが保持する画像を、コアの ViewModel の状態とともに、MewUI がそのまま描画・表示できる」ことが実証された。**
 
-### 検証で判明した必須の初期化（見落とすと即時終了）
+### 17.6 検証で判明した必須の初期化（見落とすと即時終了）
 
 **メタパッケージ（`Aprillz.MewUI.Windows`）を参照しても、バックエンドとプラットフォームホストは自動登録されない。**
 `Application.Run` の前に明示登録が必要（どちらも実際に踏んだ）。
@@ -1155,7 +1155,7 @@ No platform host registered. Add a platform package (Aprillz.MewUI.Platform.Win3
 | `Direct2DBackend.Register()` | `Aprillz.MewUI` |
 | `Win32Platform.Register()` | `Aprillz.MewUI` |
 
-### 検証で判明した API（0.21.1 時点、main のドキュメントとは不一致）
+### 17.7 検証で判明した API（0.21.1 時点、main のドキュメントとは不一致）
 
 | 項目 | 内容 |
 | --- | --- |
@@ -1169,7 +1169,7 @@ No platform host registered. Add a platform package (Aprillz.MewUI.Platform.Win3
 **API は main のドキュメントとリリース版で異なる**ため、**同梱 XML ドキュメント（`~/.nuget/packages/.../lib/net10.0/*.xml`）か
 コンパイラのエラーで実 API を確認する**のが確実である（実際、名前空間と `PaintSurface` のシグネチャをこれで特定した）。
 
-### 変更対象
+### 17.8 変更対象
 
 ```text
 src/MewUI.PoC/README.md                      新設（検証項目・結果・判定・必須初期化・判明 API）
@@ -1180,7 +1180,7 @@ src/MewUI.PoC/src/NoOpImageWriter.cs         新設（IImageWriter の PoC 実�
 SaveEvidence.slnx                            MewUI.PoC を追加
 ```
 
-### 実施結果（検証）
+### 17.9 実施結果（検証）
 
 - PoC 単体ビルド: 成功（警告 0）。
 - ソリューション全体: 成功（警告 0）。
@@ -1188,21 +1188,21 @@ SaveEvidence.slnx                            MewUI.PoC を追加
 - テスト: 全 1161 件 green（17 プロジェクト・本体への影響なし）。
 - **ユーザー設定は検証前に退避し、終了後に復元する**手順で実施した（`MainViewModel` が `settings.json` を読み書きするため）。
 
-### 次段階（`app.MewUI`）
+### 17.10 次段階（`app.MewUI`）
 
 `app.AvaloniaUI` の `.axaml` 5 画面（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage）を C# マークアップへ
 書き換えるのが主な作業量。各コントロール（Loupe / ZoomView / CropView / DragRect / FadeMask）は MewUI 版の
 描画実装（`SkiaCanvasView` + `MewProperty`）を新規に書く必要がある。まずは `app.MewUI` の骨格（ウィンドウ +
 `NavigationView` + `app.Core` の VM バインド）から着手し、コントロールは 1 つずつ移植するのが現実的。
 
-## 詳細（ティア F / `PlatformFactory.MewUI` の新設）
+## 18. 詳細（ティア F / `PlatformFactory.MewUI` の新設）
 
-### 目的
+### 18.1 目的
 
 MewUI 側の境界変換（Avalonia 版 `PlatformFactory` に相当）を用意する。コアロジックが UI 非依存のまま
 両 UI を扱うには、UI 固有の型を UI 側に閉じ込め、境界でコア型へ変換する層が必要になる。
 
-### 調査（実測）で判明した対応型
+### 18.2 調査（実測）で判明した対応型
 
 MewUI には対応する型が揃っていた（同梱 XML ドキュメント + `--check` モードで実測）。
 
@@ -1214,7 +1214,7 @@ MewUI には対応する型が揃っていた（同梱 XML ドキュメント + 
 | `EsPlatformHandle` | `Aprillz.MewUI.Window.Handle`（`nint`） | そのまま変換可能 |
 | 色（`System.Drawing.Color`） | `Aprillz.MewUI.Color` | `FromArgb(byte,byte,byte,byte)` / `.A/.R/.G/.B` |
 
-### 実測で判明した非対称性（重要）
+### 18.3 実測で判明した非対称性（重要）
 
 1. **キー体系が根本的に異なる**。`EsKey` は Avalonia / Win32 相当の **223 メンバー**、MewUI の `Key` は
    **抽象化された 91 メンバー（独自採番 0〜90。Win32 の仮想キーコードではない）**。値による対応付けは不可能で、
@@ -1226,7 +1226,7 @@ MewUI には対応する型が揃っていた（同梱 XML ドキュメント + 
    コアで「空の矩形」（負のサイズ）を表現している場合、MewUI へ渡すと 0 サイズになる（座標 X / Y は保持）。
    - これはテストを作成した際に発覚した（当初 `EsRect(100,100,-20,-30)` が値のまま往復すると想定していた）。
 
-### 実施内容
+### 18.4 実施内容
 
 1. `src/PlatformFactory.MewUI`（ルート名前空間 `Estable.MewUI.Platform`、`net10.0`）を新設した。
    依存は `PlatformFactory.Core` と `Aprillz.MewUI.Core`（**0.21.1 固定**）のみ。
@@ -1240,7 +1240,7 @@ MewUI には対応する型が揃っていた（同梱 XML ドキュメント + 
 3. テスト（`PlatformFactory.MewUI.Tests`・36 件）で往復変換・別名・フォールバック・名前一致率を検証した。
    MewUI のキー数（91）と別名の一致を固定値で検証し、0.x の破壊的変更を検出できるようにした。
 
-### 変更対象
+### 18.5 変更対象
 
 ```text
 src/PlatformFactory.MewUI/README.md                          新設
@@ -1256,12 +1256,12 @@ src/MewUI.PoC/src/Program.cs                                 `--check` モード
 SaveEvidence.slnx                                            PlatformFactory.MewUI を追加
 ```
 
-### 実施結果（検証）
+### 18.6 実施結果（検証）
 
 - ビルド: 成功（警告 0）。
 - テスト: 全 1197 件 green（18 プロジェクト）。`PlatformFactory.MewUI.Tests` 36 件を新設。
 
-### 未実装（今後の判断）
+### 18.7 未実装（今後の判断）
 
 | 項目 | 状況 |
 | --- | --- |
@@ -1269,14 +1269,14 @@ SaveEvidence.slnx                                            PlatformFactory.Mew
 | `ICursorOverrideGuard.Attach` 相当 | MewUI のカーソル抑止 API の有無を調査する必要がある |
 | 画像アダプタ | **不要**。MewUI は `SkiaCanvasView` で `EsBitmap.ToSKBitmap()` を直接描画できる（PoC で実証済み） |
 
-## 詳細（ティア F / `app.MewUI` の新設（骨格））
+## 19. 詳細（ティア F / `app.MewUI` の新設（骨格））
 
-### 目的
+### 19.1 目的
 
 MewUI 版のホストアプリを新設し、**UI 層のみを差し替えれば同じコアで動く**ことを実アプリの構成で確認する。
 PoC（`MewUI.PoC`）は単一ウィンドウの検証にとどまるため、ナビゲーション・複数ページ・サービス注入を含む骨格を作る。
 
-### 実施内容
+### 19.2 実施内容
 
 1. `src/app.MewUI`（`SaveEvidence.MewUI` / `net10.0-windows` / `WinExe`）を新設した。
    参照は `app.Core` / `PlatformFactory.MewUI` / `PlatformFactory.Native` と MewUI 本体のみ（Avalonia は参照しない）。
@@ -1294,7 +1294,7 @@ PoC（`MewUI.PoC`）は単一ウィンドウの検証にとどまるため、ナ
    静止画のため `ContinuousAnimation` を `false` にし、画像差し替え時に `InvalidateVisual()` を呼ぶ。
 8. Direct2D ⇔ Skia の GPU ブリッジ（`Aprillz.MewUI.Skia.Interop.Direct2D`）を登録した。
 
-### 変更対象
+### 19.3 変更対象
 
 ```text
 src/app.MewUI/README.md                            新設（利用仕様・レイアウト・検証手順）
@@ -1316,7 +1316,7 @@ src/app.MewUI/tests/MewUIImageWriter.Tests.cs      新設（13 件）
 SaveEvidence.slnx                                  app.MewUI（src / tests）を追加
 ```
 
-### 実施結果（検証）
+### 19.4 実施結果（検証）
 
 - ビルド: 成功（警告 0）。ソリューション全体も成功。
 - テスト: `app.MewUI.Tests` 13 件 green（画像保存の形式判定・画素数保持・上書き・引数検証）。
@@ -1325,7 +1325,7 @@ SaveEvidence.slnx                                  app.MewUI（src / tests）を
 - 検証は `verify-ui.ps1` で自動化した（**計測側を Per-Monitor V2 に設定** → 設定を退避 → 起動 →
   `PrintWindow`（`PW_RENDERFULLCONTENT`）→ 画素実測 → リサイズして再撮影 → 終了 → 復元）。
 
-### 実測で判明した MewUI の事項
+### 19.5 実測で判明した MewUI の事項
 
 1. **`SkiaCanvasView` は Star 行の残余全体を埋める**（`MeasureContent` が `Size.Empty` を返す）。
    3 行の `Grid`（`Auto,*,Auto`）で問題なく配置できる。ウィンドウを縮めても追随する。
@@ -1335,7 +1335,7 @@ SaveEvidence.slnx                                  app.MewUI（src / tests）を
    `SkiaDirect2DInterop.Register()` を呼ばないと CPU 転送経路になる（正しいが遅い）。
 4. **`Rect` / `Size` は負のサイズを 0 にクランプ**する（Avalonia は保持する。`PlatformFactory.MewUI` の項を参照）。
 
-### 検証で踏んだ罠（重要）
+### 19.6 検証で踏んだ罠（重要）
 
 **GUI の画素検証では、計測側プロセスを Per-Monitor V2（`SetProcessDpiAwarenessContext(-4)`）にしないと誤判定する。**
 未対応の計測では座標と `PrintWindow` の撮影が `96/dpi` に仮想化され、**ウィンドウの下端 25% が切れた画像**が得られる。
@@ -1350,7 +1350,7 @@ SaveEvidence.slnx                                  app.MewUI（src / tests）を
 アプリ側の実測値（`Window.ClientSize` = 1200x800 DIP、`dpi=120`、`scale=1.25`）を出力させて初めて判明した。
 **推測でレイアウトを組み替える前に、アプリから実測値を出して事実を確定させること。**
 
-### 未実装（今後の対応）
+### 19.7 未実装（今後の対応）
 
 | 項目 | 状況 |
 | --- | --- |
@@ -1361,13 +1361,13 @@ SaveEvidence.slnx                                  app.MewUI（src / tests）を
 | `ICursorOverrideGuard` 相当 | MewUI のカーソル制御 API の調査が必要 |
 | プレビューの Fit 表示 | 現在はキャンバス全面へ伸縮する（アスペクト比の維持は未対応） |
 
-## 詳細（MewUI 版コントロールの移植・`LoupeControl`）
+## 20. 詳細（MewUI 版コントロールの移植・`LoupeControl`）
 
-### 目的
+### 20.1 目的
 
 MewUI 版コントロールの移植パターンを、ルーペで確立する。UI 層のみを差し替えれば同じコアで同じ見た目になることを示す。
 
-### 方針（コアを共有し、描画層のみを実装する）
+### 20.2 方針（コアを共有し、描画層のみを実装する）
 
 1. **計算・判定はコアが単一所有する**。Avalonia 版にしか無かった純粋計算（十字線・外枠の矩形、市松模様の明暗判定）を
    `LoupeControl.Core` へ移設し、両 UI が同じ結果を使う。移設後も Avalonia 版の見た目が変わらないことをテストで確認する。
@@ -1376,7 +1376,7 @@ MewUI 版コントロールの移植パターンを、ルーペで確立する�
 3. **位置決めはコントロールの責務にしない**。表示位置は「親領域サイズ・中心座標・オフセット」に依存するホストの関心事であり、
    計算はコアの `LoupePositionCalculator` が単一所有する。
 
-### 実施内容
+### 20.3 実施内容
 
 1. `LoupeControl.Core` に純粋計算を追加した。
    - `LoupeDecorationGeometry`: 十字線（2 本）・外枠（4 辺）の矩形を `EsRect` で返す。
@@ -1394,7 +1394,7 @@ MewUI 版コントロールの移植パターンを、ルーペで確立する�
 6. `app.MewUI` のキャプチャページへルーペを重ねて表示した（骨格では右下に固定、拡大中心はプレビュー画像の中心）。
 7. `app.MewUI/verify-ui.ps1` にルーペの判定（枠の存在と、内部が拡大画像で覆われていること）を追加した。
 
-### 変更対象
+### 20.4 変更対象
 
 ```text
 src/LoupeControl.Core/src/LoupeDecorationGeometry.cs              新設（十字線・外枠の矩形）
@@ -1424,14 +1424,14 @@ src/app.MewUI/README.md / SPEC_ExtFunc.md / SPEC_System.md        ルーペの�
 SaveEvidence.slnx                                                 LoupeControl.MewUI（src / tests）を追加
 ```
 
-### 実施結果（検証）
+### 20.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1236 件 green**（20 プロジェクト）。`LoupeControl.MewUI.Tests` 25 件を新設。
 - 実機検証: ルーペの拡大画像・赤い十字線・黒枠・座標ラベル（`(160, 90)`）を撮影と画素実測で確認した。
   検証は `verify-ui.ps1` が自動判定する（`initial_loupeVisible` / `resized_loupeVisible` が真）。
 
-### 実測で判明したこと
+### 20.6 実測で判明したこと
 
 1. **`EsBitmap.Crop` は要求矩形とソースの位置関係を保って透明パディングする**。
    左上が画像の外（負）の場合もパディングが付く（内容を左上へ詰めない）。
@@ -1443,14 +1443,14 @@ SaveEvidence.slnx                                                 LoupeControl.M
    画素を読む方式により、UI 初期化なしの並列テストが成立する（`LoupeSkiaRenderer.Tests`）。
 4. **`SKColor` の成分は `Alpha` / `Red` / `Green` / `Blue`**（`A` / `R` / `G` / `B` ではない）。
 
-## 詳細（MewUI 版コントロールの移植・`ZoomViewControl`）
+## 21. 詳細（MewUI 版コントロールの移植・`ZoomViewControl`）
 
-### 目的
+### 21.1 目的
 
 ルーペで確立したパターン（コアを共有し描画層のみを実装する）を、**入力処理を持つコントロール**へ適用する。
 ズームビューはパン・ズームの入力を持つため、MewUI の入力 API とマウスキャプチャの扱いを確立する。
 
-### 方針（2 クラス構成を 1 クラスに統合する）
+### 21.2 方針（2 クラス構成を 1 クラスに統合する）
 
 Avalonia 版は `ZoomViewControl`（公開 API）と `ZoomableView`（内部ビューポート）の 2 クラス構成だが、**MewUI 版は 1 クラスに統合**した。
 
@@ -1460,7 +1460,7 @@ Avalonia 版は `ZoomViewControl`（公開 API）と `ZoomableView`（内部ビ�
 | スクロールバーを持たない | パンとホイールで代替できる（必要になった段階で追加する。YAGNI） |
 | 描画は分離する | 表示矩形の計算と `DrawBitmap` は `ZoomSkiaRenderer` に分けた（ルーペと同じく、ウィンドウ無しで画素を検証するため） |
 
-### 実施内容
+### 21.3 実施内容
 
 1. `src/ZoomViewControl.MewUI`（ルート名前空間 `Estable.MewUI.ZoomView` / アセンブリ `ZoomViewControl.MewUI`）を新設した。
    参照は `ZoomViewControl.Core` / `PlatformFactory.Core` / `PlatformFactory.MewUI` と `Aprillz.MewUI.Skia`（0.21.1 固定）。
@@ -1477,7 +1477,7 @@ Avalonia 版は `ZoomViewControl`（公開 API）と `ZoomableView`（内部ビ�
    ツールバーへ ⊖ / ⊕ / Fit ボタンとズーム率表示（`ZoomChanged` から文字列化）を追加した。
 7. `verify-ui.ps1` にプレビューの平均色の計測を追加した（ズーム・パンの変化を検出するため）。
 
-### 変更対象
+### 21.4 変更対象
 
 ```text
 src/ZoomViewControl.Core/src/ZoomViewControl.Core.csproj        InternalsVisibleTo に MewUI 実装・テストを追加
@@ -1501,13 +1501,13 @@ src/app.MewUI/README.md / SPEC_ExtFunc.md / SPEC_System.md       ズームビュ
 SaveEvidence.slnx                                               ZoomViewControl.MewUI（src / tests）を追加
 ```
 
-### 実施結果（検証）
+### 21.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1265 件 green**（21 プロジェクト）。`ZoomViewControl.MewUI.Tests` 29 件を新設。
 - 実機検証: Fit 表示（320x180 の画像がビューポートに収まり 300%）、ルーペの重ね表示、ズーム率の表示を撮影で確認した。
 
-### 実測で判明したこと
+### 21.6 実測で判明したこと
 
 1. **`EsBitmap.Size` は `System.Drawing.Size`**（コア幾何型 `EsSize` への変換が境界で必要）。
 2. **MewUI の `MouseEventArgs.GetPosition` は `Aprillz.MewUI.Point` を返す**。
@@ -1517,13 +1517,13 @@ SaveEvidence.slnx                                               ZoomViewControl.
    実際に 3 件の期待ミスを出した（プローブ用の一時テストで実測して確定した）。
    **推測で期待値を書かず、まず表示矩形を実測すること。**
 
-## 詳細（MewUI 版コントロールの移植・`CropViewControl`）
+## 22. 詳細（MewUI 版コントロールの移植・`CropViewControl`）
 
-### 目的
+### 22.1 目的
 
 選択矩形の受け皿となる高レベル複合コントロールを移植する。Facade（複数コントロールの内包）を MewUI でどう組むかを確立する。
 
-### 方針（Facade を 2 つのキャンバスの重ね合わせで実装する）
+### 22.2 方針（Facade を 2 つのキャンバスの重ね合わせで実装する）
 
 Avalonia 版は `Panel` に「ズームビュー + 選択オーバーレイ + 矩形オーバーレイ」を重ねる構成だが、**MewUI 版は選択オーバーレイを本コントロールへ含めず「ズームビュー + 矩形オーバーレイ」の 2 枚**とした（選択オーバーレイは後に移植した `FadeMaskDragRectControl.MewUI` をホストが重ねて構成する。`app.MewUI` の切り出しはこの構成）。
 
@@ -1534,7 +1534,7 @@ Avalonia 版は `Panel` に「ズームビュー + 選択オーバーレイ + �
 | 破線は 2 回描画で表現した | 2 色のダッシュを 1 回で描く API が Skia にない。Avalonia 版が下層矩形と破線矩形を重ねる方式と同じ |
 | 領域選択を持たない | 選択オーバーレイは `FadeMaskDragRectControl.MewUI` をホストが重ねて構成する（依存を増やさない。`app.MewUI` の切り出しはこの構成） |
 
-### 実施内容
+### 22.3 実施内容
 
 1. `src/CropViewControl.MewUI`（ルート名前空間 `Estable.MewUI.CropView` / アセンブリ `CropViewControl.MewUI`）を新設した。
 2. `CropSkiaRenderer` を実装した（矩形 1 つを実線または破線で描画する）。破線は「背景色の実線 → 前景色の破線」の 2 回描画とし、
@@ -1546,7 +1546,7 @@ Avalonia 版は `Panel` に「ズームビュー + 選択オーバーレイ + �
    オーバーレイの追従に必要であり、Avalonia 版にも存在するイベントのため未実装から外した。
 6. `app.MewUI` のプレビューを `CropViewControl.MewUI` へ置き換え、**自動切り出しの検出矩形（`DetectedRects`）を破線枠で表示**するよう配線した。
 
-### 変更対象
+### 22.4 変更対象
 
 ```text
 src/CropViewControl.Core/src/CropViewControl.Core.csproj           InternalsVisibleTo に MewUI 実装・テストを追加
@@ -1570,14 +1570,14 @@ src/app.MewUI/README.md / SPEC_ExtFunc.md / SPEC_System.md          クロップ
 SaveEvidence.slnx                                                  CropViewControl.MewUI（src / tests）を追加
 ```
 
-### 実施結果（検証）
+### 22.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1289 件 green**（22 プロジェクト）。`CropViewControl.MewUI.Tests` 24 件を新設。
 - 実機検証: クロップビュー組み込み後の起動・ステータスバー・ルーペ・リサイズ追従を画素実測で確認した。
   検出矩形の表示は UI 自動操作が不可のためテストで担保した（`CropSkiaRenderer.Tests` が破線のダッシュ長まで検証する）。
 
-### 実測で判明したこと
+### 22.6 実測で判明したこと
 
 1. **MewUI の `Panel` は abstract、`Grid` と `StackPanel` は継承可能**（`sealed` ではない）。
    子の追加は `Children`（`IReadOnlyList<Element>` プロパティ）ではなく `Add(element)` / `AddRange(...)` を使う。
@@ -1586,14 +1586,14 @@ SaveEvidence.slnx                                                  CropViewContr
 4. **コントロール本体のテストで `SetOffset` を検証するときは「パンできる状態」にする**（画像がビューポートより大きい + 固定倍率）。
    画像未設定や Fit 中はオフセットが原点へクランプされ、早期リターンでイベントが発火しない。
 
-## 詳細（MewUI 版コントロールの移植・`FadeMaskControl`）
+## 23. 詳細（MewUI 版コントロールの移植・`FadeMaskControl`）
 
-### 目的
+### 23.1 目的
 
 選択オーバーレイ（`FadeMaskDragRectControl`）の構成要素である暗転マスクを移植する。描画のみのコントロールを先に片付けることで、
 残る `DragRectControl`（入力と状態機械）へ集中できるようにする。
 
-### 方針（幾何をコアへ抽出し、暗転は 4 帯で表現する）
+### 23.2 方針（幾何をコアへ抽出し、暗転は 4 帯で表現する）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -1601,7 +1601,7 @@ SaveEvidence.slnx                                                  CropViewContr
 | 暗転は「クライアント − 穴」の 4 帯で塗る | クリッピング（穴あけパス）はバックエンド差異を受けやすい。矩形の塗り分けなら確実で、Avalonia 版も同じ方式（4 帯） |
 | 当初はサイズラベルを持たない | 切出し用途のみを想定したため（文言の単一所有は用意済み）。No.36 でラベル描画を実装し、両 UI の情報量を揃えた |
 
-### 実施内容
+### 23.3 実施内容
 
 1. `src/FadeMaskControl.Core`（ルート名前空間 `Estable.FadeMask`）を新設した。
    - `FadeMaskRenderMode`（enum）を Avalonia 側から移設し、**enum の単一所有**とした（重複定義を解消）。
@@ -1615,7 +1615,7 @@ SaveEvidence.slnx                                                  CropViewContr
      `OverlayColor` / `BorderColor` / `BorderThickness` / `ShowFullOverlay` / `RenderScaling` / `Scaling` を `MewProperty` で公開する。
      入力は受け取らず（`IsHitTestVisible = false` はホストが設定する）、DPI は `OnDpiChanged` で自動追従する。
 
-### 変更対象
+### 23.4 変更対象
 
 ```text
 src/FadeMaskControl.Core/src/FadeMaskControl.Core.csproj      新設（RootNamespace Estable.FadeMask）
@@ -1644,12 +1644,12 @@ src/FadeMaskControl.MewUI/tests/*.cs                           新設（9 件）
 SaveEvidence.slnx                                              FadeMaskControl.Core / .MewUI を追加
 ```
 
-### 実施結果（検証）
+### 23.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1322 件 green**（24 プロジェクト）。`FadeMaskControl.Core.Tests` 24 件、`FadeMaskControl.MewUI.Tests` 9 件を新設。
 
-### 実測で判明したこと
+### 23.6 実測で判明したこと
 
 1. **`SKColor` のコンストラクタ引数順は R, G, B, A**（`new SKColor(128, 0, 0, 128)` は「赤 128・アルファ 128」であり赤 50% ではない）。
    半透明の期待値を書くときに間違えやすく、実際に 4 件のテストが失敗した。
@@ -1657,14 +1657,14 @@ SaveEvidence.slnx                                              FadeMaskControl.C
 3. **enum を Core へ移すと、消費側の `using` 追加が必要になる**（名前空間が変わるため）。コンパイラが漏れを検出するので、
    ビルドを通せば確実に分かる。
 
-## 詳細（MewUI 版コントロールの移植・`DragRectControl` のコア抽出）
+## 24. 詳細（MewUI 版コントロールの移植・`DragRectControl` のコア抽出）
 
-### 目的
+### 24.1 目的
 
 残る最大のコントロール（`DragRectControl` = 847 行 + 状態 378 行 + 入力・描画）を移植する前に、UI 非依存の部分を
 `DragRectControl.Core` へ抽出する。抽出範囲を確定してから MewUI 版（入力・描画・カーソル）を実装する。
 
-### 方針（状態機械ごとコアへ置く）
+### 24.2 方針（状態機械ごとコアへ置く）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -1673,7 +1673,7 @@ SaveEvidence.slnx                                              FadeMaskControl.C
 | イベント引数は Avalonia 型のまま維持した | 「境界 1 行変換」の原則どおり、`SelectionRectEventArgs` / `DragRectPointEventArgs` は各 UI が自前で定義する。`app.AvaloniaUI` / `FadeMaskDragRectControl` の変更が不要になる |
 | `ICursorService` の既定実装（Win32）の解決を UI 側へ移した | コアは `PlatformFactory.Native` を参照できない（循環参照）。コアは抽象のみに依存し、`null` ならカーソル操作を行わない |
 
-### 実施内容
+### 24.3 実施内容
 
 1. `src/DragRectControl.Core`（ルート名前空間 `Estable.DragRect`）を新設した。
    - `DragHandle` / `DragRectInteractionState` / `DragRectSnapshot`（`EsRect` / `EsPoint` 化）/ `DragRectState` /
@@ -1687,7 +1687,7 @@ SaveEvidence.slnx                                              FadeMaskControl.C
    端のピクセルで変わるため。
 4. テストを `DragRectControl.Core.Tests` へ移設し、`[Fact]` で並列実行できるようにした。
 
-### 変更対象
+### 24.4 変更対象
 
 ```text
 src/DragRectControl.Core/src/DragRectControl.Core.csproj   新設（RootNamespace Estable.DragRect）
@@ -1713,13 +1713,13 @@ src/PlatformFactory.Core/src/Geometry/EsRect.cs            TopLeft 系・Center�
 SaveEvidence.slnx                                          自動追記で分割されたフォルダーを 1 つに統合
 ```
 
-### 実施結果（検証）
+### 24.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1353 件 green**（25 プロジェクト）。`DragRectControl.Core.Tests` 49 件を新設し、
   `DragRectControl.AvaloniaUI.Tests` は 89 件（移設分を除く）。
 
-### 実測で判明したこと
+### 24.6 実測で判明したこと
 
 1. **メソッド呼び出しの結果にオブジェクト初期化子は書けない**（`CreateBounded() { SelectionRect = ... }` は構文エラー）。
    `new` が無いと初期化子として解析されない。テストヘルパーはオーバーロードで受ける形にした。
@@ -1728,14 +1728,14 @@ SaveEvidence.slnx                                          自動追記で分割
 3. **`EsRect.Contains` の開閉区間は移植時に必ず確認する**。Avalonia の `Rect.Contains` は閉区間（終点を含む）であり、
    半開区間（`EsPixelRect.Contains` の流儀）に合わせると端のピクセルで挙動が変わる。
 
-## 詳細（MewUI 版コントロールの移植・`DragRectControl`）
+## 25. 詳細（MewUI 版コントロールの移植・`DragRectControl`）
 
-### 目的
+### 25.1 目的
 
 コア抽出（前項）で確定した共有範囲を使い、入力と状態機械を持つ最大のコントロールの MewUI 実装を追加する。
 本コントロールは「描画のみ」ではなく、マウス・キー入力とカーソル制御を持つため、それらの MewUI での実現方法を確立する。
 
-### 方針（状態機械はコア、UI は入力の変換と描画に徹する）
+### 25.2 方針（状態機械はコア、UI は入力の変換と描画に徹する）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -1745,7 +1745,7 @@ SaveEvidence.slnx                                          自動追記で分割
 | `ScrollViewer` の自動連携をやめた | MewUI 版は `Grid` 重ね合わせで祖先探索の前提が異なる。ホストが `NotifyViewportChanged()` を呼ぶ方式にした |
 | カーソルの表示切替・移動は `ICursorService`（`PlatformFactory.Native`）を使う | UI 非依存の Win32 実装がそのまま動く。`CursorType.None` は要素上のみの非表示であり、nudge 中に要素外へ出る場合を覆えない |
 
-### 実施内容
+### 25.3 実施内容
 
 1. `src/DragRectControl.MewUI`（ルート名前空間 `Estable.MewUI.DragRect` / アセンブリ `DragRectControl.MewUI`）を新設した。
    - `DragRectControl`（`SkiaCanvasView` 派生）: `MewProperty` 13 種、入力（マウス 4・キー 1）、カーソル制御、DPI 追従、描画の起点。
@@ -1755,7 +1755,7 @@ SaveEvidence.slnx                                          自動追記で分割
    MewUI 固有として `NotifyViewportChanged()` を追加した。
 3. テスト（`DragRectControl.MewUI.Tests`）を描画（画素実測）と公開 API の 2 本立てで新設した。
 
-### 変更対象
+### 25.4 変更対象
 
 ```text
 src/DragRectControl.MewUI/README.md                        新設
@@ -1770,13 +1770,13 @@ src/DragRectControl.MewUI/tests/*                          新設（28 件）
 SaveEvidence.slnx                                          自動追記で分割されたフォルダーを統合し、空フォルダーを削除
 ```
 
-### 実施結果（検証）
+### 25.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1381 件 green**（26 プロジェクト）。`DragRectControl.MewUI.Tests` 28 件を新設。
 - 実ウィンドウへの組み込みは未実施（消費側は `FadeMaskDragRectControl.MewUI`。次項）。
 
-### 実測で判明したこと
+### 25.6 実測で判明したこと
 
 1. **MewUI の `UIElement` は `MouseDown` / `MouseUp` メンバーを持つ**。同名の公開イベントを定義すると `CS0108`（隠蔽）になる。
    `new` で隠すと基底側のイベントが使えなくなるため、`DragMouseDown` / `DragMouseUp` へ改名した。
@@ -1785,14 +1785,14 @@ SaveEvidence.slnx                                          自動追記で分割
 3. **`DpiScaler` / `ScreenConverter` を使わずに画面座標を求められる**。`Window.ClientToScreen(Point)`（入力 DIP）と
    `MouseEventArgs.ScreenPosition`（画面デバイスピクセル）があるため、nudge のカーソル移動はこれらで足りる。
 
-## 詳細（MewUI 版コントロールの移植・`FadeMaskDragRectControl`）
+## 26. 詳細（MewUI 版コントロールの移植・`FadeMaskDragRectControl`）
 
-### 目的
+### 26.1 目的
 
 残る 2 つのコントロールを 1 つに統合する複合コントロール（選択矩形 + 暗転マスク + ルーペ）を移植する。
 本コントロールは 3 つのコントロールの生成・配線・状態同期・配置を担うため、Facade の組み方とモードに応じた状態切替を確立する。
 
-### 方針（モードの解釈をコアへ出し、配置は本クラスが担う）
+### 26.2 方針（モードの解釈をコアへ出し、配置は本クラスが担う）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -1803,7 +1803,7 @@ SaveEvidence.slnx                                          自動追記で分割
 | `AppearanceSettings`（40 超のメンバー）を移植しなかった | 内包コントロールが個別プロパティを持つため、設定 record を二重に持つ価値がない（YAGNI）。必要な外観のみ委譲プロパティを提供する |
 | `FadeMaskControl.MewUI` に `Port` を追加した | 等倍スケールだけではオフセット付き変換（ズームビューのレターボックス）で暗転の穴あけが選択矩形とずれる |
 
-### 実施内容
+### 26.3 実施内容
 
 1. `src/FadeMaskDragRectControl.Core`（ルート名前空間 `Estable.FadeMaskDragRect`）を新設した。
    - `FadeMaskDragRectMode`（enum）を Avalonia 側から移設し、Avalonia 側の同名ファイルを削除した（二重定義の解消）。
@@ -1815,7 +1815,7 @@ SaveEvidence.slnx                                          自動追記で分割
    - `FadeMaskDragRectSelectionEventArgs` / `FadeMaskDragRectPointEventArgs`: コア型の座標。
 4. `FadeMaskControl.MewUI` に `Port`（`ICoordTransform?`）を追加した（設定時は `Scaling` より優先）。
 
-### 変更対象
+### 26.4 変更対象
 
 ```text
 src/FadeMaskDragRectControl.Core/src/FadeMaskDragRectControl.Core.csproj  新設（RootNamespace Estable.FadeMaskDragRect）
@@ -1843,27 +1843,27 @@ src/FadeMaskDragRectControl.MewUI/tests/*                                  新�
 SaveEvidence.slnx                                                          Core / MewUI を追加し、分割フォルダーを統合
 ```
 
-### 実施結果（検証）
+### 26.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1423 件 green**（28 プロジェクト）。`FadeMaskDragRectControl.Core.Tests` 17 件、
   `FadeMaskDragRectControl.MewUI.Tests` 27 件を新設。
 - 実ウィンドウへの組み込みは未実施（消費側は `app.MewUI` のキャプチャフロー。次項）。
 
-### 実測で判明したこと
+### 26.6 実測で判明したこと
 
 1. **モードはルーペの可視性にも及ぶ**。ルーペの表示条件を「画像が設定済み」だけにすると、
    表示しないモード（ScreenSelect / WindowSelect）でルーペが現れる（テストで検出。モードの判定を追加した）。
 2. **`ArrangeContent` は非表示の子も配置する**。可視性を配置側でも判定しないと、非表示のルーペにサイズが付く。
 3. **`Panel` の `ArrangeContent` の `bounds` はウィンドウ絶対座標**。子も同じ座標系で `Arrange` する必要がある（親の原点を加算する）。
 
-## 詳細（MewUI 版コントロールの移植・`ZoomViewControl` のスクロールバー）
+## 27. 詳細（MewUI 版コントロールの移植・`ZoomViewControl` のスクロールバー）
 
-### 目的
+### 27.1 目的
 
 MewUI 版のズームビューはパンとホイールでしかスクロールできず、現在位置が分からなかった。オーバーレイのスクロールバーを追加する。
 
-### 方針（幾何をコアへ置き、描画と入力が同じ配置を共有する）
+### 27.2 方針（幾何をコアへ置き、描画と入力が同じ配置を共有する）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -1873,7 +1873,7 @@ MewUI 版のズームビューはパンとホイールでしかスクロール�
 | トラックのクリックで**その位置へ直接移動**した | ページ送り（1 画面ずつ）は挙動が読みにくい。位置指定のほうがスクロールバーの期待に合う |
 | Avalonia 版には追加しなかった | Avalonia 版は `ScrollViewer` の標準スクロールバーを持つため（機能の欠落ではない） |
 
-### 実施内容
+### 27.3 実施内容
 
 1. `src/ZoomViewControl.Core/src/ZoomScrollBarGeometry.cs` を新設した。
    - `Compute(contentSize, viewportSize, scale, offset, thickness, margin, minThumbLength)`:
@@ -1885,7 +1885,7 @@ MewUI 版のズームビューはパンとホイールでしかスクロール�
    パンより優先して判定する。
 4. テストを追加した（幾何 18 件 + MewUI 側の既定値と設定 2 件）。
 
-### 変更対象
+### 27.4 変更対象
 
 ```text
 src/ZoomViewControl.Core/src/ZoomScrollBarGeometry.cs        新設（トラック・サム・逆算）
@@ -1894,27 +1894,27 @@ src/ZoomViewControl.MewUI/src/ZoomViewControl.cs             プロパティ 5 �
 src/ZoomViewControl.MewUI/tests/ZoomViewControl.Tests.cs      既定値と設定のテストを追加
 ```
 
-### 実施結果（検証）
+### 27.5 実施結果（検証）
 
 - ビルド: 成功（警告 0）。
 - テスト: `ZoomViewControl.Core.Tests` 124 件（+18）、`ZoomViewControl.MewUI.Tests` 既存 + 2 件。
 - 実機での見た目確認は未実施（`app.MewUI` のキャプチャフロー実装時に確認する）。
 
-### 実測で判明したこと
+### 27.6 実測で判明したこと
 
 1. **`MaxContentOffset` は「コンテンツ長 − ビューポート長 ÷ 倍率」を返す**。表示の要否（収まるか）は呼び出し側が
    `contentSize × scale > viewportSize` で判定する（収まる軸にスクロールバーを出さない）。
 2. **条件式で `ZoomScrollBar?` を返すには明示キャストが要る**（`ZoomScrollBar` は構造体のため、`?:` の型推論で
    `null` と混在できない）。`(ZoomScrollBar?)null` と書く。
 
-## 詳細（CI / リリース整備）
+## 28. 詳細（CI / リリース整備）
 
-### 目的
+### 28.1 目的
 
 `D:\Dev\Repos\GitHub\ClipboardZenHanConverter` で確立したリリースの仕組み（設定 1 ファイル + 役割別 3 ワークフロー +
 スクリプト）を SaveEvidence へ展開する。
 
-### 方針（リポジトリ固有の知識だけを置き換える）
+### 28.2 方針（リポジトリ固有の知識だけを置き換える）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -1923,7 +1923,7 @@ src/ZoomViewControl.MewUI/tests/ZoomViewControl.Tests.cs      既定値と設定
 | `Directory.Build.props` を新設した | リリースバージョンの単一所有元が必要（流用元と同じく `<Version>` を 1 箇所に置く） |
 | MewUI は**Native AOT（単一 exe）**で配布することにした | 設定 JSON のソース生成コンテキストを参照側アセンブリへ置くことで実測で解決した（詳細は次項） |
 
-### 実施内容
+### 28.3 実施内容
 
 1. `.github` を流用元からコピーした（`workflows` 3 種・`actions/read-config`・`scripts` 4 種・`rulesets`・`dependabot.yml`・
    `RELEASE.md`・`REUSING.md`）。
@@ -1938,7 +1938,7 @@ src/ZoomViewControl.MewUI/tests/ZoomViewControl.Tests.cs      既定値と設定
 6. `publish.yml` の zip 化ロジックを実測で検証した（フォルダ出力 → `Compress-Archive` で中身を直下に配置）。
 7. 配布物を実際に起動して検証した（起動・描画・正常終了）。
 
-### 変更対象
+### 28.4 変更対象
 
 ```text
 Directory.Build.props                                  新設（リリースバージョンの単一所有元）
@@ -1953,10 +1953,10 @@ global.json                                            新設（.NET SDK の単�
 .github/dependabot.yml                                 流用 + directories を 58 プロジェクトへ
 .github/RELEASE.md / REUSING.md                        流用 + リポジトリ固有の記述を更新
 buildScript/MewUI_publish_selfcontained.bat            新設（自己完結・フォルダー配布）→ 削除（No.51）
-buildScript/AvaloniaUI_publish_single.bat              新設（単一 exe + ネイティブ DLL 配布）
+buildScript/AvaloniaUI_publish_single.bat              新設（単一 exe + ネイティブ DLL 配布）→ 削除（No.62）
 ```
 
-### 実施結果（検証）
+### 28.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1447 件 green**（28 プロジェクト）。
@@ -1971,7 +1971,7 @@ buildScript/AvaloniaUI_publish_single.bat              新設（単一 exe + ネ
 - 配布物の起動を実測で確認した（MewUI: 1518x1047 のウィンドウ表示、描画ピクセル率 99.9%、終了コード 0）。
 - **ユーザー設定は検証前に退避し、終了後に復元した**（`%LOCALAPPDATA%\SaveEvidence\settings.json`）。
 
-### 実測で判明したこと（配布形態の制約）
+### 28.6 実測で判明したこと（配布形態の制約）
 
 1. **MewUI は単一 exe にできない。** `libSkiaSharp` 等のネイティブ DLL は Native AOT で exe へ同梱できず、
    exe 単体で起動すると `DllNotFoundException: Unable to load DLL 'libSkiaSharp'` で即時終了する
@@ -1981,7 +1981,7 @@ buildScript/AvaloniaUI_publish_single.bat              新設（単一 exe + ネ
    `Settings`（CommunityToolkit.Mvvm の `[ObservableProperty]` が生成する公開プロパティ）が
    反射シリアライズから見えなくなり、次の実測結果になった。
    - 対策なし: `{}` が出力される（プロパティが削除される）。
-   - `<TrimmerRootAssembly Include="app.Core" />` を追加: `'System.Text.Json.Serialization.Converters.NullableConverter`1[EsPixelRect]'
+   - `<TrimmerRootAssembly Include="app.Core" />` を追加: `'System.Text.Json.Serialization.Converters.NullableConverter 1[EsPixelRect]'
      is missing native code or metadata` で失敗する（`PlatformFactory.Core` / `LineDetection` のルートを追加しても解消しない）。
    - ソース生成コンテキストを `app.Core` 内に置いても解消しない（**ソースジェネレーターは互いの出力を見られない**ため、
      MVVM が生成したプロパティを JSON ジェネレーターが認識できず同じく `{}` になる）。
@@ -1991,15 +1991,15 @@ buildScript/AvaloniaUI_publish_single.bat              新設（単一 exe + ネ
 > **その後の解決（No.33）**: JSON コンテキストを**参照側アセンブリ**（`app.MewUI`）に置くことで AOT 化に成功した。
 > 詳細は後述の「詳細（MewUI 版の Native AOT 配布）」を参照。
 
-## 詳細（`app.MewUI` の設定永続化 / ウィンドウ配置）
+## 29. 詳細（`app.MewUI` の設定永続化 / ウィンドウ配置）
 
-### 目的
+### 29.1 目的
 
 `app.MewUI` は骨格の段階で設定を参照していなかったため、起動のたびに既定サイズ・既定位置で開き、
 ナビの開閉も保持されなかった。Avalonia 版 `app.AvaloniaUI` と同じ `settings.json` を読み書きし、
 ウィンドウ配置とナビ開閉を両 UI で共有できるようにする。
 
-### 方針（配置の変換を純粋関数へ分離し、復元点は起動時コールバック）
+### 29.2 方針（配置の変換を純粋関数へ分離し、復元点は起動時コールバック）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2009,7 +2009,7 @@ buildScript/AvaloniaUI_publish_single.bat              新設（単一 exe + ネ
 | 保存は `Closed` で行った | Avalonia 版と一致させ、UI ごとに保存条件が変わらないようにする |
 | 設定はコアの `ISettingsService` をそのまま使った | 保存形式の単一所有を崩さない（UI ごとの設定型を作らない） |
 
-### 実施内容
+### 29.3 実施内容
 
 1. `WindowPlacementMath` を新設した（`ToPhysicalPixelPoint` / `ToPhysicalPixelSize` / `ToDipPoint` /
    `ToDipLength` / `IsUsable` / `NormalizeScale`）。
@@ -2021,7 +2021,7 @@ buildScript/AvaloniaUI_publish_single.bat              新設（単一 exe + ネ
 5. `Program` で `DpiHelper.EnablePerMonitorDpiAwareness()` を最初に呼び、`Application.Run(window, startup)` へ切り替えた。
 6. 一時診断用の `MonitorDpi.cs` を削除し、`Program.cs` を整理した。
 
-### 変更対象
+### 29.4 変更対象
 
 ```text
 src/app.MewUI/src/Services/WindowPlacementMath.cs   新設（座標変換の純粋関数）
@@ -2030,7 +2030,7 @@ src/app.MewUI/src/Program.cs                        DPI 対応有効化・起動
 tests/WindowPlacementMath.Tests.cs                  新設（19 件）
 ```
 
-### 実施結果（検証）
+### 29.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1474 件 green**（28 プロジェクト）。`app.MewUI.Tests` は 32 件（`MewUIImageWriter` 13 + `WindowPlacementMath` 19）。
@@ -2040,7 +2040,7 @@ tests/WindowPlacementMath.Tests.cs                  新設（19 件）
   位置は `100, 120` が正確、サイズはクライアント領域の `1082 × 753` が保存された。
 - **ユーザーの `settings.json` は検証前に退避し、終了後に復元した**（配置が終了時に保存されるため）。
 
-### 実測で判明したこと（MewUI の配置 API）
+### 29.6 実測で判明したこと（MewUI の配置 API）
 
 1. **`Application.Run` より前は DPI が取得できない**。`DpiHelper.GetSystemDpi()` / `GetDpiForPoint()` は
    `Application.IsRunning` が false の間 **96** を返す。スケール 1.0 で DIP を計算すると 125% 環境で 20% ずれる。
@@ -2053,14 +2053,14 @@ tests/WindowPlacementMath.Tests.cs                  新設（19 件）
 5. **`GetWindowRect` は枠を含み、`window.ClientSize` はクライアント領域**。枠の太さは DPI で変わるため、
    保存・復元は `ClientSize` を軸に統一する（復元は指定値がクライアント領域へ適用されることを実測で確認）。
 
-## 詳細（`app.MewUI` の Undo 一覧ページ）
+## 30. 詳細（`app.MewUI` の Undo 一覧ページ）
 
-### 目的
+### 30.1 目的
 
 `app.MewUI` の Undo 一覧ページは未移植（案内表示）だった。編集履歴をサムネイルで一覧表示する Avalonia 版
 `UndoPage` を MewUI の C# マークアップへ移植し、両 UI で同じ設定（`UndoViewModeIndex`）を共有する。
 
-### 方針（画像表示の手段は既存の MewUI レンダラーと同じ経路にする）
+### 30.2 方針（画像表示の手段は既存の MewUI レンダラーと同じ経路にする）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2071,7 +2071,7 @@ tests/WindowPlacementMath.Tests.cs                  新設（19 件）
 | 表示モードの名前・範囲補正・件数は `ViewModeDisplay`（コア）へ委譲する | 表示モードの仕様の単一所有（Avalonia 版と文言がずれない） |
 | `UndoStack` は `Program` で生成し `BeforeEditAction` と `UndoPage` へ渡す | 履歴の実体を UI 実装が所有しない（キャプチャページと共有する） |
 
-### 実施内容
+### 30.3 実施内容
 
 1. `ThumbnailView` を新設した（`SkiaCanvasView` 派生。`Source` と `RequestedSize` を持つ）。
    縦横比を保って領域へ収め、余白は透明にして親の背景を見せる。
@@ -2084,7 +2084,7 @@ tests/WindowPlacementMath.Tests.cs                  新設（19 件）
 6. `app.Core` の `InternalsVisibleTo` に `SaveEvidence.MewUI` / `app.MewUI.Tests` を追加した（`ViewModeDisplay` の参照のため）。
 7. `Program` で `UndoStack` を生成し、`MainViewModel.BeforeEditAction` で現在の画像を積むようにした。
 
-### 変更対象
+### 30.4 変更対象
 
 ```text
 src/app.MewUI/src/Views/ThumbnailView.cs       新設（SkiaCanvasView 派生のサムネイルビュー）
@@ -2096,7 +2096,7 @@ src/app.Core/src/app.Core.csproj               InternalsVisibleTo の追加
 src/app.Core/tests/ViewModeDisplay.Tests.cs    新設（18 件）
 ```
 
-### 実施結果（検証）
+### 30.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1492 件 green**（28 プロジェクト。`ViewModeDisplay` の境界値 18 件を追加）。
@@ -2107,7 +2107,7 @@ src/app.Core/tests/ViewModeDisplay.Tests.cs    新設（18 件）
 - 表示モードは保存済みの `UndoViewModeIndex: 0`（特大）と `FolderExtraLargeIconSize: 320` を復元した（Avalonia 版と設定を共有）。
 - **ユーザーの `settings.json` は検証前に退避し、終了後に復元した**。
 
-### 実測で判明したこと（MewUI の一覧系 API）
+### 30.6 実測で判明したこと（MewUI の一覧系 API）
 
 1. **`ToggleButton` に `Click` は無く `CheckedChanged` のみ**。プログラムからの `IsChecked` 変更でも発火するため、
    「選択中のインデックスと同じなら何もしない」ガードと、選択中ボタンの解除を握り潰して再チェックする処理が必要になる。
@@ -2117,15 +2117,15 @@ src/app.Core/tests/ViewModeDisplay.Tests.cs    新設（18 件）
 4. **`Panel`（`WrapPanel` を含む）は `Add` / `Clear` で子を直接操作できる**。項目を一度に組み立てる一覧では、
    `ItemsControl` のテンプレート機構を使うより見通しが良い。
 
-## 詳細（`app.MewUI` のフォルダビューページ）
+## 31. 詳細（`app.MewUI` のフォルダビューページ）
 
-### 目的
+### 31.1 目的
 
 `app.MewUI` のフォルダビューページは未移植（案内表示）だった。保存先フォルダの画像をサムネイル一覧表示する
 Avalonia 版 `FolderViewPage` を移植し、表示モード（`FolderViewModeIndex`）とソート順（`FolderViewSortAscending`）を
 両 UI で共有する。
 
-### 方針（ページの生成時期と最新化の呼び出しを明示する）
+### 31.2 方針（ページの生成時期と最新化の呼び出しを明示する）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2135,7 +2135,7 @@ Avalonia 版 `FolderViewPage` を移植し、表示モード（`FolderViewModeIn
 | 画像拡張子の判定をコア（`ImageFileExtensions`）へ移した | 同じ拡張子一覧を 2 つの UI が持っていた（DRY 違反・同時修正の漏れリスク） |
 | 共有するコアオブジェクトを `AppServices` へ束ねた | 引数の増加を抑え、各ページは必要なメンバーだけを受け取る |
 
-### 実施内容
+### 31.3 実施内容
 
 1. コアに `ImageFileExtensions` を新設し、Avalonia 版 `FolderViewPage` の重複していた拡張子一覧を削除して委譲した。
 2. `ImageThumbnailLoader` を新設した（長辺の上限に合わせた縮小デコードと容量制限付きキャッシュ）。
@@ -2145,7 +2145,7 @@ Avalonia 版 `FolderViewPage` を移植し、表示モード（`FolderViewModeIn
 6. `MainWindow` でページの生成結果を保持し、`SelectionChanged` で表示されたページの最新化を呼ぶようにした。
 7. `ThumbnailView` に破棄済み画像のガードを追加した（キャッシュの容量超過で破棄された場合の安全策）。
 
-### 変更対象
+### 31.4 変更対象
 
 ```text
 src/app.Core/src/Models/ImageFileExtensions.cs          新設（拡張子判定の単一所有）
@@ -2160,7 +2160,7 @@ src/app.MewUI/src/Views/ThumbnailView.cs                 破棄済み画像の�
 tests/ImageThumbnailLoader.Tests.cs                      新設（13 件）
 ```
 
-### 実施結果（検証）
+### 31.5 実施結果（検証）
 
 - ビルド: 成功（警告 0。ソリューション全体も成功）。
 - テスト: 全 **1525 件 green**（28 プロジェクト。`ImageFileExtensions` 17 件 + `ImageThumbnailLoader` 13 件を追加）。
@@ -2174,7 +2174,7 @@ tests/ImageThumbnailLoader.Tests.cs                      新設（13 件）
 - 既存の `verify-ui.ps1`（キャプチャページ）を再実行し、ステータスバー・ルーペ・リサイズ追従がすべて成立することを確認した。
 - **ユーザーの `settings.json` は検証前に退避し、終了後に復元した**（検証中は `SaveFolderPath` のみ差し替え）。
 
-### 実測で判明したこと（縮小デコードとページの生成時期）
+### 31.6 実測で判明したこと（縮小デコードとページの生成時期）
 
 1. **`SKCodec.GetScaledDimensions` は形式によって縮小してくれない**。PNG では原寸が返り、その寸法で
    `GetPixels` しても縮小されない（実測。テストで検出）。**縮小はデコード後に `SKBitmap.Resize` で行う必要がある**。
@@ -2187,14 +2187,14 @@ tests/ImageThumbnailLoader.Tests.cs                      新設（13 件）
 5. **`Path.GetExtension(".png")` は `".png"` を返す**（ドットで始まる名前も画像として判定される）。テストの期待値を
    実測に合わせて修正した（推測で「画像でない」としていて 1 件失敗した）。
 
-## 詳細（`app.MewUI` の設定ページ）
+## 32. 詳細（`app.MewUI` の設定ページ）
 
-### 目的
+### 32.1 目的
 
 `app.MewUI` の設定ページは未移植（案内表示）だった。テーマ / 保存 / キャプチャ / ホットキー / 一覧表示 / 外観を編集する
 Avalonia 版 `SettingsPage` を移植し、**両 UI が同じ `settings.json` を読み書きする**状態にする。
 
-### 方針（設定は行の組み立てだけにし、変換は専用クラスへ分離する）
+### 32.2 方針（設定は行の組み立てだけにし、変換は専用クラスへ分離する）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2205,7 +2205,7 @@ Avalonia 版 `SettingsPage` を移植し、**両 UI が同じ `settings.json` �
 | 数値入力の範囲は UI 側でも制限する | 壊れた値（範囲外）を設定ファイルへ書かない |
 | ホットキーの変更は次回起動時に反映する | 登録は起動時（`FirstFrameRendered`）に行うため、動的な再登録はしない（範囲を広げない） |
 
-### 実施内容
+### 32.3 実施内容
 
 1. `SettingsPage` を新設した（折り畳みなしの縦 1 列をスクロール表示。テーマ / 保存 / キャプチャ / ホットキー / 一覧 / 外観）。
 2. `SettingsColorMath` を新設した（`#AARRGGBB` / `#RRGGBB` の解析、整形、不正値のフォールバック）。
@@ -2214,7 +2214,7 @@ Avalonia 版 `SettingsPage` を移植し、**両 UI が同じ `settings.json` �
 5. ホットキーは入力欄での修飾キー付きキー押下と、テキスト入力の両方を受け付けるようにした（クリアボタン付き）。
 6. `MainWindow` のページ定義を `SettingsPage` へ差し替えた。
 
-### 変更対象
+### 32.4 変更対象
 
 ```text
 src/app.MewUI/src/Views/SettingsPage.cs          新設（テーマ / 保存 / キャプチャ / ホットキー / 一覧 / 外観）
@@ -2223,7 +2223,7 @@ src/app.MewUI/src/Views/MainWindow.cs            設定ページの差し替え
 tests/SettingsColorMath.Tests.cs                 新設（22 件）
 ```
 
-### 実施結果（検証）
+### 32.5 実施結果（検証）
 
 - ビルド: 成功（警告 0）。テスト: 全 **1584 件 green**（28 プロジェクト。`SettingsColorMath` 22 件を追加）。
 - 実機撮影で全セクションを目視確認した。数値入力（アイコンサイズ・待機時間・最小サイズ）、
@@ -2231,7 +2231,7 @@ tests/SettingsColorMath.Tests.cs                 新設（22 件）
   色ピッカー（`#FFA9A9A9` / `#80000000` / `#FFFFFFFF` の現在値表示）がいずれも保存値から復元される。
 - ユーザーの `settings.json` は退避・復元した。
 
-### 実測で判明したこと（MewUI の入力系 API）
+### 32.6 実測で判明したこと（MewUI の入力系 API）
 
 1. **MewUI の `Key` 列挙に修飾キーが存在しない**（`LeftCtrl` / `RightCtrl` 等は無い）。修飾は
    `KeyEventArgs` の `ControlKey` / `ShiftKey` / `AltKey` / `MetaKey` で判定する（Win32 の仮想キーコードでもない）。
@@ -2243,15 +2243,15 @@ tests/SettingsColorMath.Tests.cs                 新設（22 件）
 5. **フォルダ選択は `Application.Current.PlatformServices.FileDialog.SelectFolder`**。ネイティブ・マネージドの
    両方が無い環境では例外を防ぐため try/catch で包む。
 
-## 詳細（`app.MewUI` のキャプチャフローと切り出し）
+## 33. 詳細（`app.MewUI` のキャプチャフローと切り出し）
 
-### 目的
+### 33.1 目的
 
 `app.MewUI` は撮影手段を持たず、起動時に置いたプレースホルダ画像しか表示できなかった。Avalonia 版の
 `SnipCaptureUI`（`SnipCapture` / `OverlayWindow` / `CropSession`）に相当する撮影と切り出しを移植し、
 グローバルホットキーからも撮影できるようにする。
 
-### 方針（開始経路を 1 つにし、対象はカーソルのモニターに限定する）
+### 33.2 方針（開始経路を 1 つにし、対象はカーソルのモニターに限定する）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2263,7 +2263,7 @@ tests/SettingsColorMath.Tests.cs                 新設（22 件）
 | 切り出しは `CropPreviewCommand` へ委譲する | Undo 退避と画像差し替えの経路を「自動切り出し」と共通にする（DRY） |
 | ホットキーは初回描画後に登録する | 起動時コールバックではウィンドウプロシージャのサブクラス化が MewUI 側に上書きされ `WM_HOTKEY` を受け取れない（実測） |
 
-### 実施内容
+### 33.3 実施内容
 
 1. `CaptureOverlayWindow` を新設した（オーナーの退避 → 対象モニターの取得 → オーバーレイ表示 → 切り出し）。
 2. `CaptureFlow` を新設した（多重起動の防止、Undo 退避、未保存化、プレビュー設定、ステータス通知）。
@@ -2273,7 +2273,7 @@ tests/SettingsColorMath.Tests.cs                 新設（22 件）
 6. `CapturePage` に撮影 3 種と切り出しのボタンを追加し、切り出しのオーバーレイを重ねるようにした。
 7. `Program` で `StartSelectionMode` とグローバルホットキー（3 種）を配線した（登録は `FirstFrameRendered` 後）。
 
-### 変更対象
+### 33.4 変更対象
 
 ```text
 src/app.MewUI/src/Views/CaptureOverlayWindow.cs    新設（撮影セッション）
@@ -2290,7 +2290,7 @@ tests/CaptureSelectionMath.Tests.cs                新設（22 件）
 tests/ImageDrawMath.Tests.cs                       新設（11 件）
 ```
 
-### 実施結果（検証）
+### 33.5 実施結果（検証）
 
 - ビルド: 成功（警告 0）。テスト: 全 **1584 件 green**（28 プロジェクト）。
 - **撮影を実機で端から端まで確認した**（ホットキーの送出 → オーバーレイ → ドラッグ → Enter → プレビュー反映）。
@@ -2304,7 +2304,7 @@ tests/ImageDrawMath.Tests.cs                       新設（11 件）
   ボタン→確定の一連の操作は、当時の検証スクリプトの欠陥（下記「未検証」）で未確認だったが、修正後に端から端まで検証した。
 - ユーザーの `settings.json` は退避・復元した。
 
-### 未検証（当時の環境の制約。後に解消）
+### 33.6 未検証（当時の環境の制約。後に解消）
 
 - **ツールバーのボタン操作**: 当時は「合成マウス入力がメインウィンドウのツールバーボタンへ届かない」と判断していたが、
   原因は検証スクリプトの `mouse_event` に `MOUSEEVENTF_VIRTUALDESK`（0x4000）が無く、絶対座標がプライマリ モニタ基準に
@@ -2314,7 +2314,7 @@ tests/ImageDrawMath.Tests.cs                       新設（11 件）
   確定は非対話セッションでは Enter を送れないため手動確認の対象（撮影オーバーレイの確定はウィンドウの
   `PreviewKeyDown` で行うため検証済み）。
 
-### 実測で判明したこと（キャプチャと入力の仮定）
+### 33.7 実測で判明したこと（キャプチャと入力の仮定）
 
 1. **全モニターを跨ぐウィンドウは OS に位置を補正される**。仮想スクリーン（3840 x 3360 / 原点 (0, -1200)）と
    同じサイズのウィンドウを (0, -1200) に置いても、実際は (0, 0) に表示された（`GetWindowRect` で実測）。
@@ -2327,13 +2327,13 @@ tests/ImageDrawMath.Tests.cs                       新設（11 件）
    （`CopyFromScreen`）で行うべき（誤判定を実際に起こした）。
 6. **画像外から始めたドラッグは選択が成立しない**（`ClampToDomainBounds`）。検証では画像の表示範囲内でドラッグする。
 
-## 詳細（`app.MewUI` の履歴移動とルーペのカーソル追従）
+## 34. 詳細（`app.MewUI` の履歴移動とルーペのカーソル追従）
 
-### 目的
+### 34.1 目的
 
 キャプチャフローまで実装した時点で残っていた 2 件（履歴の実行操作 / ルーペがカーソルに追従しない）を解消する。
 
-### 方針（履歴の移動を専用クラスへ、絶対配置は自前の Panel で行う）
+### 34.2 方針（履歴の移動を専用クラスへ、絶対配置は自前の Panel で行う）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2344,7 +2344,7 @@ tests/ImageDrawMath.Tests.cs                       新設（11 件）
 | 位置は「親サイズ → 位置」の関数として渡す | 実サイズは配置フェーズでしか得られないため、その時点で最新の基準（カーソル位置）を評価する |
 | ルーペの外観反映を `LoupeAppearance` へ集約した | ルーペはプレビュー・撮影・切り出しの 3 箇所に登場し、同じ対応表を 3 重に持つとずれる |
 
-### 実施内容
+### 34.3 実施内容
 
 1. `EditHistory` を新設した（履歴からの取り出しとプレビューへの差し替え。書式は `Undo` / `Redo`）。
 2. キャプチャページのツールバーへ「戻す」「やり直し」を追加した（画像の有無で可否を切替）。
@@ -2353,7 +2353,7 @@ tests/ImageDrawMath.Tests.cs                       新設（11 件）
 5. `LoupeAppearance` を新設し、ルーペの外観反映を 3 箇所（プレビュー / 撮影 / 切り出し）から 1 箇所へ集約した。
 6. `CaptureFlow` の未保存化と `PreviewCropSession` のルーペ設定を削除した（コア・`LoupeAppearance` が単一所有するため）。
 
-### 変更対象
+### 34.4 変更対象
 
 ```text
 src/app.MewUI/src/Services/EditHistory.cs        新設（戻す / やり直し）
@@ -2366,7 +2366,7 @@ src/app.MewUI/src/Views/CaptureOverlayWindow.cs  ルーペ外観の委譲
 src/LoupeControl.Core/src/LoupeControl.Core.csproj  InternalsVisibleTo（位置計算の共用）
 ```
 
-### 実施結果（検証）
+### 34.5 実施結果（検証）
 
 - ビルド: 成功（警告 0）。テスト: 全 **1588 件 green**（28 プロジェクト）。
 - **履歴の復元を実機で端から端まで確認した**（検証用に起動 4 秒後に `EditHistory.Undo` を呼ぶ一時コードを入れ、確認後に削除）。
@@ -2377,7 +2377,7 @@ src/LoupeControl.Core/src/LoupeControl.Core.csproj  InternalsVisibleTo（位置�
   - カーソルが無い場合は右下（余白 16 DIP）に画像の中央 (160, 90) を表示する。
 - ユーザーの `settings.json` は退避・復元した。
 
-### 実測で判明したこと（MewUI の絶対配置）
+### 34.6 実測で判明したこと（MewUI の絶対配置）
 
 1. **`Grid` の子は `Margin` では位置が変わらない**。子の整列（`HorizontalAlignment` / `VerticalAlignment`）だけで位置が決まる
    （ハードコードした余白 400,300 を指定しても左上に描画された）。
@@ -2389,14 +2389,14 @@ src/LoupeControl.Core/src/LoupeControl.Core.csproj  InternalsVisibleTo（位置�
 5. **履歴の差し替え時の画像の破棄はコアが行う**（`MainViewModel` の `OnPreviewImageChanged`）。
    UI 側で `Dispose` すると、コアの「新しい画像が反映された後に古い画像を破棄する」順序と競合し、破棄済み画像の描画（チラつき）を招く。
 
-## 詳細（MewUI 版の Native AOT 配布）
+## 35. 詳細（MewUI 版の Native AOT 配布）
 
-### 目的
+### 35.1 目的
 
 CI / リリース整備の時点で保留していた配布形態（Native AOT / 単一 exe）を実現する。当時は
 「単一 exe はネイティブ DLL を同梱できない」「AOT はトリミングで設定 JSON が壊れる」の 2 点で不成立としていた。
 
-### 方針（JSON コンテキストを参照側アセンブリへ置く）
+### 35.2 方針（JSON コンテキストを参照側アセンブリへ置く）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2408,7 +2408,7 @@ CI / リリース整備の時点で保留していた配布形態（Native AOT /
 | 反射フォールバックの警告は理由付きで抑制した | フォールバックは意図的なもので、AOT 配布時は必ずコンテキストを注入する（契約をドキュメント化） |
 | 自己完結フォルダーのスクリプトを残した | AOT のリンクには Visual Studio の C++ ビルドツールが必要で、無い環境向けのフォールバックが要る |
 
-### 実施内容
+### 35.3 実施内容
 
 1. `SettingsService` に `JsonSerializerContext?` を受け取るコンストラクタを追加した（読み書きは常に型情報経由に統一）。
 2. JSON オプションの生成を内部 API（`CreateJsonOptions`）にし、書式・変換器の適用経路を 1 つにした。
@@ -2418,7 +2418,7 @@ CI / リリース整備の時点で保留していた配布形態（Native AOT /
 6. `buildScript/MewUI_publish_aot.bat` を新設し、`release-config.json` の MewUI を AOT へ切替えた。
 7. `SettingsServiceJsonTests`（4 件）でソース生成と反射の書式一致を検証するようにした。
 
-### 変更対象
+### 35.4 変更対象
 
 ```text
 src/app.Core/src/Services/SettingsService.cs      コンテキスト注入・型情報経由の読み書き・ジェネリック変換器
@@ -2430,7 +2430,7 @@ buildScript/MewUI_publish_aot.bat                 新設（Native AOT / 単一 e
 .github/RELEASE.md / REUSING.md                   配布物とスクリプト名の記述
 ```
 
-### 実施結果（検証）
+### 35.5 実施結果（検証）
 
 - **AOT publish 成功（警告 0）**。配布物は 4 ファイル 127 MB（自己完結フォルダーは 109 ファイル 226 MB）。
   - 内訳: `SaveEvidence.MewUI.exe` 8.5 MB（マネージドコードを全て含む）+ ネイティブ DLL 3 個
@@ -2442,7 +2442,7 @@ buildScript/MewUI_publish_aot.bat                 新設（Native AOT / 単一 e
 - 描画を実測（ウィンドウ表示とプレビューのグラデーション `cool 32,788 / warm 36,968`）。
 - ユーザーの `settings.json` は各検証で退避・復元した。
 
-### 実測で判明したこと（AOT と JSON）
+### 35.6 実測で判明したこと（AOT と JSON）
 
 1. **`PublishAot=true` は本構成で成立する**（SkiaSharp / OpenCvSharp のネイティブライブラリは同梱できず隣に並ぶだけで、
    マネージドコードは exe へコンパイルされる）。
@@ -2457,14 +2457,14 @@ buildScript/MewUI_publish_aot.bat                 新設（Native AOT / 単一 e
 6. **トリミング（`PublishTrimmed`）は本構成では効果がなかった**（警告 0・サイズも自己完結と同一）。
    MewUI / SkiaSharp のアセンブリがトリミング対象にならないためで、サイズ削減は Native AOT で達成した。
 
-## 詳細（MewUI 版コントロールの移植・`FadeMaskControl` のラベル描画）
+## 36. 詳細（MewUI 版コントロールの移植・`FadeMaskControl` のラベル描画）
 
-### 目的
+### 36.1 目的
 
 MewUI 版 `FadeMaskControl` は暗転・穴あけ・枠線のみで、Avalonia 版が持つラベル（サイズラベル・操作ラベル・
 情報ラベル・サブライン）が未実装だった（No.25 の「サイズラベルを除く」）。両 UI の見た目と情報量を揃える。
 
-### 方針（レイアウトと文言をコアへ、テキストの実寸測定だけ UI に残す）
+### 36.2 方針（レイアウトと文言をコアへ、テキストの実寸測定だけ UI に残す）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2475,7 +2475,7 @@ MewUI 版 `FadeMaskControl` は暗転・穴あけ・枠線のみで、Avalonia �
 | 非 ASCII を含む場合は字形を持つフォントへフォールバックする | `SKTypeface.Default` は日本語のグリフを持たず、ラベルが豆腐（□）になった（実測） |
 | 描画は行列の左上から縦に積む（サイズラベル非表示ならサブラインを繰り上げる） | Avalonia 版の配置規則と同一にする |
 
-### 実施内容
+### 36.3 実施内容
 
 1. `FadeMaskLabelLayout` を新設した（`Padding = 4.0` / `ComputeBackground` / `ComputeTextOrigin` / `NextLineY`）。
 2. `FadeMaskLabels.FormatSizeLabel` を追加し、Avalonia 版の `FadeMaskDrawer.FormatSizeLabel` を委譲へ変更した。
@@ -2489,7 +2489,7 @@ MewUI 版 `FadeMaskControl` は暗転・穴あけ・枠線のみで、Avalonia �
    （「文字描画がないため未対応」という制限を解消）。
 7. Avalonia 版の `FadeMaskDrawer.DrawLabelLine` をコアの `FadeMaskLabelLayout` へ再配線した（余白定数の共有だけだった重複を解消）。
 
-### 変更対象
+### 36.4 変更対象
 
 ```text
 src/FadeMaskControl.Core/src/FadeMaskLabelLayout.cs            新設（余白・背景・文字原点・次の行）
@@ -2509,7 +2509,7 @@ src/FadeMaskDragRectControl.MewUI/tests/FadeMaskDragRectControl.Tests.cs 委譲�
 README.md / SPEC_ExtFunc.md / SPEC_System.md（Core・MewUI・app.MewUI・FadeMaskControl・FadeMaskDragRectControl.MewUI）仕様を同期
 ```
 
-### 実施結果（検証）
+### 36.5 実施結果（検証）
 
 - ビルド成功（警告 0）。テスト **1621 件 green**（28 プロジェクト。`FadeMaskControl.MewUI.Tests` は 14 → 26 件、`FadeMaskDragRectControl.MewUI.Tests` は 27 → 30 件）。
 - 実機（MewUI 版・3840x2160 / 125%）で撮影オーバーレイのラベルを画素実測。
@@ -2520,7 +2520,7 @@ README.md / SPEC_ExtFunc.md / SPEC_System.md（Core・MewUI・app.MewUI・FadeMa
 - Avalonia 版のラベルは同じコア計算へ再配線しても描画結果が変わらないことを確認（`FadeMaskControl.AvaloniaUI.Tests` 88 件 green）。
 - 切り出しオーバーレイはラベル配線をコードで確認（ページ内のドラッグ操作は下記の入力の制約により未検証）。
 
-### 実測で判明したこと（Skia のテキストとフォント）
+### 36.6 実測で判明したこと（Skia のテキストとフォント）
 
 1. **`SKTypeface.Default` は日本語のグリフを持たない環境がある**。ラベルが豆腐（□）になるため、非 ASCII を
    含む場合は `SKFontManager.Default.MatchCharacter` で字形を持つフォントを解決する。解決結果はフィールドへ
@@ -2533,14 +2533,14 @@ README.md / SPEC_ExtFunc.md / SPEC_System.md（Core・MewUI・app.MewUI・FadeMa
 5. **前面にないウィンドウの画素検証は `SetForegroundWindow` を挟む**。`CopyFromScreen` は他ウィンドウを写すため、
    意図しない画面を検証してしまう（実際に起きた）。
 
-## 詳細（MewUI 版の選択矩形破線オーバーレイ）
+## 37. 詳細（MewUI 版の選択矩形破線オーバーレイ）
 
-### 目的
+### 37.1 目的
 
 MewUI 版の選択オーバーレイは、ルーペ画像へ選択矩形の破線を描画していなかった（Avalonia 版はルーペの描画完了
 イベントで描画する）。両 UI の見た目を揃える。
 
-### 方針（破線の幾何をコアへ集約し、描画先は UI が選ぶ）
+### 37.2 方針（破線の幾何をコアへ集約し、描画先は UI が選ぶ）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2550,7 +2550,7 @@ MewUI 版の選択オーバーレイは、ルーペ画像へ選択矩形の破�
 | 描画は専用の `FadeMaskDragRectSkiaRenderer` に分けた | 破線の画素をウィンドウ無しのテストで実測できる（既存のレンダラーと同じ検証手段） |
 | 破線を描くかの判定を内部メソッド（`DrawSelectionOverlay`）へ切った | 公開面を増やさずに、モード・選択有無による分岐をテストできる |
 
-### 実施内容
+### 37.3 実施内容
 
 1. `FadeMaskDragRectOverlay` を「破線の列挙」と「`EsBitmap` への描画」に分割した（列挙が単一所有、描画は委譲）。
 2. `LoupeControl.MewUI` に `Rendered` イベントと `LoupeRenderedEventArgs`（キャンバス・一辺の px・拡大率・中心・切り出し左上・スケール）を追加した。
@@ -2559,7 +2559,7 @@ MewUI 版の選択オーバーレイは、ルーペ画像へ選択矩形の破�
 4. `app.MewUI` の両ホスト（撮影オーバーレイ・切り出し）へ、設定 `LoupeSelectionRectColorA / B` を
    `LoupeAppearance.ApplySelectionOverlay` で反映するようにした。
 
-### 変更対象
+### 37.4 変更対象
 
 ```text
 src/FadeMaskDragRectControl.Core/src/FadeMaskDragRectOverlay.cs   EnumerateDashes（破線の幾何）と Dash を追加
@@ -2575,7 +2575,7 @@ src/app.MewUI/src/Views/CaptureOverlayWindow.cs / PreviewCropSession.cs   破線
 README.md / SPEC_ExtFunc.md / SPEC_System.md（Core・MewUI・app.MewUI）仕様を同期
 ```
 
-### 実施結果（検証）
+### 37.5 実施結果（検証）
 
 - ビルド成功（警告 0）。テスト **1657 件 green**（28 プロジェクト。`FadeMaskDragRectControl.Core.Tests` 24 件、
   `MewUI.Tests` 46 件、`LoupeControl.MewUI.Tests` 27 件）。
@@ -2583,14 +2583,14 @@ README.md / SPEC_ExtFunc.md / SPEC_System.md（Core・MewUI・app.MewUI）仕様
   「白 2 px → 黒 2 px」を交互に繰り返し、**切り出し**では x=827 の列が同じパターンになった
   （破線の色 A = 白 / 色 B = 黒）。
 
-## 詳細（MewUI 版の操作ログ・`ILogger` の伝搬）
+## 38. 詳細（MewUI 版の操作ログ・`ILogger` の伝搬）
 
-### 目的
+### 38.1 目的
 
 MewUI 版のコントロールとアプリはログ出力を持たず、障害時の追跡が Avalonia 版に比べて困難だった。
 `ILogger` を注入できる形にして、Avalonia 版と同じログファイルへ出力する。
 
-### 方針（書式は同一、ログを持つのは入力を持つコントロール）
+### 38.2 方針（書式は同一、ログを持つのは入力を持つコントロール）
 
 | 判断 | 理由 |
 | --- | --- |
@@ -2601,7 +2601,7 @@ MewUI 版のコントロールとアプリはログ出力を持たず、障害�
 | `app.MewUI` に Serilog を導入し、Avalonia 版と同一のファイル・書式にした | UI が違っても 1 つのログで追跡できる（日次ローテーション・7 日保持も共通） |
 | ロガーは `AppLog.CreateLogger(カテゴリ)` の静的フィールドで保持する | Avalonia 版 `AppLog` と同じ方式（DI コンテナを持たない構成に合わせる） |
 
-### 実施内容
+### 38.3 実施内容
 
 1. `src/DragRectControl.MewUI/src/Logging/LogMessage.cs` を新設した（操作ログ 12 種。Avalonia 版の書式と一致）。
 2. `DragRectControl.MewUI` に `Log` プロパティを追加し、マウス・キー・ホイール・設定変更の経路へ出力を追加した。
@@ -2621,7 +2621,7 @@ MewUI 版のコントロールとアプリはログ出力を持たず、障害�
    - `app.MewUI` はズームビュー（`CropViewControl.Log`）にのみ注入する（Avalonia 版と同じ実効範囲。
      ルーペは CenterPoint の更新ごとに記録されるため、プレビューでは注入しない）。
 
-### 変更対象
+### 38.4 変更対象
 
 ```text
 src/DragRectControl.MewUI/src/Logging/LogMessage.cs     新設（操作ログ 12 種）
@@ -2653,7 +2653,7 @@ src/FadeMaskDragRectControl.MewUI/src/FadeMaskDragRectControl.cs  伝搬範囲�
 README.md / SPEC_ExtFunc.md / SPEC_System.md（DragRectControl.MewUI・FadeMaskDragRectControl.MewUI・ZoomViewControl.MewUI・FadeMaskControl.MewUI・LoupeControl.MewUI・CropViewControl.MewUI・app.MewUI）仕様を同期
 ```
 
-### 実施結果（検証）
+### 38.5 実施結果（検証）
 
 - ビルド成功（警告 0）。テスト **1657 件 green**（28 プロジェクト。`DragRectControl.MewUI.Tests` 40 件、
   `app.MewUI.Tests` 115 件）。
@@ -2675,7 +2675,7 @@ README.md / SPEC_ExtFunc.md / SPEC_System.md（DragRectControl.MewUI・FadeMaskD
   `[DragRect]`（操作）のログが出ることを確認した。暗転マスクの状態変更ログは伝搬対象外のため出力されない
   （選択のたびに出ていた冗長なログを、伝搬範囲を Avalonia 版へ揃えることで解消した）。
 
-## これから実施する項目
+## 39. これから実施する項目
 
 優先順は上から。
 
@@ -2733,7 +2733,7 @@ README.md / SPEC_ExtFunc.md / SPEC_System.md（DragRectControl.MewUI・FadeMaskD
 | 50 | MewUI 版の表示・操作の差（12 件）の解消 | F | (1) 閉じるボタンのホバーを赤・(2)(3) フォルダビュー / Undo 一覧のアイテム（サムネイルの影・ホバー枠・透明背景・行内のラベル下端揃え）・(4) 設定ページがタイトルバー領域に重ならない・(5) 拡大時のホイールスクロール・(6) 拡大率のドロップダウン・(7) ポインタ座標の表示・(8) ボタンのホバー色とカーソル・(9) ツールバー / ステータスバーの縦位置・(10) 撮影オーバーレイの太い枠と画像の縮小・(11) 撮影対象が自ウィンドウのモニターに固定、を Avalonia 版と同じにした。共通スタイル（`AppStyles`）を新設し、ローカル値で背景を設定していたためホバーの状態変化が効かなかった点を解消。フォルダ / Undo の下端揃えはコア（`BottomAlignWrapLayout`）へ単一所有化。撮影オーバーレイは MewUI の DIP → 物理の換算がプライマリモニター基準になるため、OS の最大化で対象モニター全面に合わせる | 完了 |
 | 51 | MewUI 版の対話・表示の差（13 件）の解消 | F | (1) 切り出しの閉区間（同じドラッグで Avalonia 版と 1 px 異なっていた）・(2) 最小化 / 最大化のホバーを半透明グレーへ・(3) `MewUI_publish_selfcontained.bat` の削除・(4) フォルダ / Undo のアイテム（ファイル名が離れている・影が硬い・ホバー枠が出ない）・(5) ステータスバー高さの 3 ページ共通化・(6) 拡大率メニューの「自動」が Fit にならず項目を選んでも閉じない・(7)(8) アイコンが領域の中央にない（☰ は文字グリフ、ウィンドウ操作は文字、幅指定で左寄り）・(9) ズーム ⊖⊕ の縦位置・(10) ズームスライダーの欠落・(11)(12) ダークモード（設定ページが白いまま・市松模様が白っぽい）、を解消。アイコンは MewUI のベクターグリフ（`GlyphElement`）へ、面の色はテーマ追従スタイルへ、一覧のアイテムはスタイル + 影の余白補正へ変更した | 完了 |
 
-### 残作業（2026-09-20 時点の監査結果）
+### 39.1 残作業（2026-09-20 時点の監査結果）
 
 表の項目（No.1〜51）はすべて完了。No.36 以降の「残作業」表は、**再監査で 5 件の実装漏れ（No.41〜45）を発見して修正した**（いずれも Avalonia 版との機能差・挙動差）。以下は再確認のうえ**対応不要**と判断した項目で、判断の根拠を併記する。
 
@@ -2751,7 +2751,7 @@ README.md / SPEC_ExtFunc.md / SPEC_System.md（DragRectControl.MewUI・FadeMaskD
 
 **監査の観点（再発防止）**: 「見えている情報」だけでなく「値が正しいか」「対象が設計どおりか」「設計上の接続が漏れていないか」「入出力とウィンドウ属性が同じか」を両 UI で突き合わせる。No.41 は対象（モニターではなくウィンドウ）、No.42 は値（実表示スケール）、No.43 は接続（確認コールバックへ未配線）、No.44 は入出力とウィンドウ属性（右クリック・非アクティブ化・タスクバー）、No.45 は失敗の可観測性（例外が無言で消える）の見落としで、いずれもビルド・テストでは検出できない実機差だった。判定は実機の画素計測（オーバーレイ前後の明度比較・ラベルの切り出し）と**ウィンドウメッセージ・拡張スタイルの実測**、コアの Null 許容プロパティの配線確認で行う。
 
-### MewUI 版を作成したプロジェクト
+### 39.2 MewUI 版を作成したプロジェクト
 
 ```text
 XxxControl.Core 6 種（Loupe / ZoomView / CropView / FadeMask / DragRect / FadeMaskDragRect）
@@ -2762,7 +2762,7 @@ app.AvaloniaUI（Avalonia UI 版のホストアプリ）
 app.MewUI（MewUI 版のホストアプリ）
 ```
 
-### 各 UI のコントロール実装方針
+### 39.3 各 UI のコントロール実装方針
 
 ```text
 XxxControl.Core          … 純粋ロジック（数学・状態・設定・イベント引数）
@@ -2802,7 +2802,7 @@ XxxControl.MewUI         … MewUI 版の実装。同じコアロジックを Me
   （再生成するとページの状態が消え、購読も重複する）。
 - **同名の知識を UI ごとに持たない**（画像の拡張子一覧のように、一覧の対象を決める規則はコアへ置く）。
 
-## リスク・判断が必要な点
+## 40. リスク・判断が必要な点
 
 - **幾何型の全面置換は行わない**。ソリューション全体で Avalonia の幾何型
   （`Point` / `Rect` / `Size` 等）は約 2100 箇所で使われている。全置換は churn が大きく
@@ -2877,7 +2877,7 @@ XxxControl.MewUI         … MewUI 版の実装。同じコアロジックを Me
   `app` は `<AssemblyName>SaveEvidence</AssemblyName>` を、`app_MewUI` は `SaveEvidence.MewUI` を明示しているため**配布物の名前は変わらない**。
 - **公開 API の可視性変更**（internal → public 等）は破壊的変更として扱い、必要時に都度確認する。
 
-## 作業ログ
+## 41. 作業ログ
 
 | 日付 | 内容 | 検証 |
 | --- | --- | --- |
@@ -2945,3 +2945,8 @@ XxxControl.MewUI         … MewUI 版の実装。同じコアロジックを Me
 | 2026-09-21 | No.57。AvaloniaUI 版で自動切り出しを行うと固まる問題を修正した。原因は `LineRectangleReconstructor.Reconstruct` が垂直線ペア × 水平線ペアの**全組み合わせ**（O(V²H²)）を矩形候補にしていたこと。検出器が矩形を構成できない画像（複数ウィンドウが重なる実画面）では多数の線分が返るため、候補が数千万件・数 GB になり UI スレッドが長時間ブロックしていた（実測: 1920x1080 の重なりウィンドウ風画像 139 線分で 550 万候補・486 MB・913 ms、合成 H=200/V=60 で 3,522 万候補・3,526 MB・7 秒。4K の実画面では数十 GB 相当）。**4 辺が実際に矩形を構成する組み合わせのみ**（左右の垂直線が縦範囲を覆い、上下の水平線が横範囲を覆う）を対象にし、同一座標の線分は範囲を合併して 1 本として扱うよう変更した。あわせて全体の候補数（256 件）と 1 ペアあたりの生成数に上限を設け、組み合わせ数に依存しない処理量にした | 実測: 重なりウィンドウ風 139 線分 → **4 ms / 256 候補 / 0 MB**（修正前 913 ms / 550 万候補 / 486 MB）/ 合成 H=200/V=60 → **33 ms / 256 候補 / 10 MB**（修正前 7,096 ms / 3,522 万候補 / 3,526 MB）/ 合成 H=400/V=100 → **88 ms / 256 候補 / 58 MB** / AOT 配布物でも検出時間は JIT と同等（定常 530 ms・初回のみ 1.9 秒）を確認 / 追加テスト 6 件（矩形を構成しない組み合わせの除外・範囲の合併・上限・線分が多い画像）/ ビルド成功（警告 0）/ 1701 件 green |
 | 2026-09-21 | No.58。MewUI 版のキャプチャで自ウィンドウが半透明の状態で写り込む問題を修正した。原因は、撮影前に `Hide()`（`ShowWindow(SW_HIDE)`）だけを行っていたこと。**ウィンドウの非表示は DWM のコンポジションへ即時反映されない**ため、直後の `CopyFromScreen` で自ウィンドウが半透明（実測: 写り込み率 65%）で写り込んでいた（待機 50 ms でも再現）。Avalonia 版と同じく `IWindowService.SetCaptureExclusion`（`WDA_EXCLUDEFROMCAPTURE`）を先に設定し、撮影後に解除する方式へ変更した（除外は非表示の反映を待たずに効く） | 実測: 修正前 α=0.651 / 写り込み画素 96.4% → 修正後 **α=0.000 / 0.0%**（同一の計測スクリプトで A/B 比較。背面のデスクトップは正しく取得）/ キャンセル後はウィンドウが完全復帰（`IsWindowVisible=true`・画像差 0）し、ログで `SetCaptureExclusion` の設定と解除を確認 / ビルド成功（警告 0） |
 | 2026-09-21 | No.59。**AOT 配布版で設定が全損する不具合を修正した**（No.56 の回帰）。`app.AvaloniaUI` は `SettingsService` を DI に登録する際に JSON ソース生成コンテキストを渡しておらず、AOT / トリミングでは公開プロパティが削除されるため、**終了時の保存で `settings.json` が `{}` になり、ホットキー・テーマ・ウィンドウ配置などの設定がすべて失われていた**（実測: AOT 版を起動→終了で `{}`。MewUI 版はコンテキストを渡しているため無事）。`SettingsJsonContext` を `app.AvaloniaUI` に新設して注入し、回帰テスト（コンテキストのメタデータ生成）と検証スクリプト（`.work/check-settings-roundtrip.ps1`）を追加した。あわせて、検証で `{}` になった実設定を `settings.json.before-ui2`（2026-09-20 のスナップショット）と本セッションで実測した値から復元した | 実測: 修正前 AOT 版は起動→終了で 60 キー → **0 キー**、修正後は 60 キーを保持（`savedBounds` / `savedTemplate` も一致）。MewUI AOT 版も 60 キーを保持することを確認 / 追加テスト 2 件 / ビルド成功（警告 0） |
+| 2026-09-21 | No.60。自動切り出しの MewUI 版と AvaloniaUI 版の差を解消し、共通のキャンセル操作を追加した。**枠線が赤と白の破線**だったのは、MewUI 版が実行時に `OverlayLineStyle.Dashed` + 赤/白で描いていたため（Avalonia 版は `Rectangle` の水色実線）。**ダブルクリックで確定しない**原因も同じで、MewUI 版はプレビューのダブルクリックを購読していなかった。両 UI を「水色 `#00BFFF` の実線・ホバー中は赤 `#FF3B30`・2 DIP」に統一し、MewUI 版へホバー（`OnMouseMove`）とダブルクリック（`OnMouseDoubleClick`）を配線した。**キャンセル手段**は両 UI に無かったため、切り出しモードと同じ操作（Escape / 矩形外のダブルクリック）を追加した（MewUI の Escape はオーバーレイコントロールが無いため `MainWindow.PreviewKeyDown` で処理）。矩形のヒット判定は両 UI で重複していたので `MainViewModel.HitDetectedRect` へ集約した | 実機で確認（MewUI）: 自動切り出し→ **水色 4918 画素 / 赤 0**、矩形中心へホバー→ **水色 0 / 赤 4918**、矩形内ダブルクリック→ 枠 0 かつステータスの画像サイズが **3840 x 2160 → 3552 x 2037** へ変化（確定）、再実行→ **水色 455**、Escape→ **枠 0** かつ画像サイズ不変（キャンセル）/ 追加テスト 3 件 / ビルド成功（警告 0）/ 1706 件 green |
+| 2026-09-21 | No.61。本ドキュメントの見出しへ階層番号を付与した（`## 1.` / `### 1.1`。各 SPEC 文書と同じ形式）。先頭の目次は番号とアンカーを合わせて再生成し、`## 完了した項目` に手で振っていた番号（`### 1.`〜`### 8.`）は階層番号へ置き換えて二重番号を避けた | 見出し 254 件（H2 41 / H3 212）の番号の連続性を全件検証し、目次のアンカー 254 件がすべて実在の見出しへ解決することを確認。本文は無変更（差分は見出しと目次のみ） |
+| 2026-09-21 | No.62。旧方式の publish スクリプト `buildScript/AvaloniaUI_publish_single.bat`（単一 exe + ReadyToRun）を削除した。配布は Native AOT（`AvaloniaUI_publish_aot.bat`）へ一本化済みで、単一 exe は exe が約 229 MB になるため使っていなかった。参照（AOT スクリプトのコメント / `README.md` / `REUSING.md` の例示 / 本ドキュメントの変更対象）を更新し、`README.md` の目次にあった壊れたリンク（`4.2 単一ファイル実行`。見出しは「配布物の実行」）も直した。あわせて `REUSING.md` の `MewUI_publish_singleaot.bat`（実在しない名前）を `MewUI_publish_aot.bat` へ訂正した | 削除後の残存参照 0 件を全ファイルで確認（`publish_single` / `singleaot`）/ `buildScript` は AOT の 2 種のみ / README の目次の 4.2 がアンカーと一致 |
+| 2026-09-21 | No.63。本ドキュメントを `.github/` へ移設した（`.github/リファクタリング指針.md` と同じ扱い）。本ドキュメントは開発中の作業記録で、各プロジェクトの README / SPEC から参照する性質のものではないため、参照 7 箇所（`src/app.Core/SPEC_System.md` の 2 箇所と `*.MewUI/README.md` 5 ファイルの「関連ドキュメント」）を削除した。あわせて `global.json` をルートに残す根拠を実測で確定させた（`.github` へ移すと無効になる） | 移設後の残存参照を全 md で確認（すべて `.github/複数UI対応作業.md` を指す）/ `global.json` の探索規則を実測（ルートから `.github/global.json` の固定値を無視して 10.0.401 を選択、`.github` からは同ファイルを参照と明示）→ ルート配置を維持と判断 |
+| 2026-09-21 | No.64。`複数UI対応作業.md` を他ドキュメントから参照しない方針にした。No.63 で移設時にパスを更新した 7 箇所（`src/app.Core/SPEC_System.md` の 2 箇所と `*.MewUI/README.md` 5 ファイルの「関連ドキュメント」）を削除した。あわせて `.vscode` を共有するため `launch.json` に MewUI 版の起動構成（F5）を追加し、`settings.json` にローカル固有の値が無いことを確認した | 全 md の残存参照が本ドキュメント自身の作業ログのみになることを確認 / `settings.json` は Python の venv 設定のみ（絶対パス・ローカル NuGet ソースなし）/ ビルド成功（警告 0） |

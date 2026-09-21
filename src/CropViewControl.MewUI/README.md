@@ -117,4 +117,3 @@ dotnet test src/CropViewControl.MewUI/tests/CropViewControl.MewUI.Tests.csproj
 - `../CropViewControl/README.md` — Avalonia 版クロップビュー
 - `../ZoomViewControl.MewUI/README.md` — 内包するズームビュー
 - `../app.MewUI/README.md` — 組み込み先のアプリ
-- `../../複数UI対応作業.md` — 複数 UI 対応の全体計画と進捗

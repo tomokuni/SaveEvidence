@@ -133,4 +133,3 @@ dotnet test src/LoupeControl.MewUI/tests/LoupeControl.MewUI.Tests.csproj
 - `../LoupeControl.Core/README.md` — 共有する UI 非依存ロジック
 - `../LoupeControl/README.md` — Avalonia 版ルーペ
 - `../app.MewUI/README.md` — 組み込み先のアプリ
-- `../../複数UI対応作業.md` — 複数 UI 対応の全体計画と進捗

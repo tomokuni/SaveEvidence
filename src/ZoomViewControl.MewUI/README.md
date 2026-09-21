@@ -139,4 +139,3 @@ dotnet test src/ZoomViewControl.MewUI/tests/ZoomViewControl.MewUI.Tests.csproj
 - `../ZoomViewControl/README.md` — Avalonia 版ズームビュー
 - `../LoupeControl.MewUI/README.md` — 同じ方式で移植したルーペ
 - `../app.MewUI/README.md` — 組み込み先のアプリ
-- `../../複数UI対応作業.md` — 複数 UI 対応の全体計画と進捗

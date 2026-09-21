@@ -30,8 +30,8 @@ internal static class CapturePage
     /// <summary>ロガー（Avalonia 版と同じログファイルへ出力する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(CapturePage));
 
-    /// <summary>検出矩形の枠線の太さ（DIP）。</summary>
-    private const double DetectedRectThickness = 2;
+    /// <summary>自動切り出しの検出矩形の枠線の太さ（DIP。Avalonia 版と同じ）。</summary>
+    private const double AutoCropBorderThickness = 2;
 
     /// <summary>ツールバーのアイコンの一辺（DIP）。</summary>
     private const double IconSize = 16;
@@ -72,11 +72,11 @@ internal static class CapturePage
     /// <remarks>Avalonia 版のフライアウトと同じ段階を使う。</remarks>
     private static readonly double[] s_zoomMenuLevels = [10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
 
-    /// <summary>検出矩形の前景色（赤・不透明）。</summary>
-    private static readonly System.Drawing.Color s_rectForeground = System.Drawing.Color.FromArgb(255, 255, 64, 64);
+    /// <summary>自動切り出しの検出矩形の枠線色（水色・不透明。Avalonia 版と同じ）。</summary>
+    private static readonly System.Drawing.Color s_autoCropBorder = System.Drawing.Color.FromArgb(255, 0, 191, 255);
 
-    /// <summary>検出矩形の背景色（白・不透明。破線の隙間）。</summary>
-    private static readonly System.Drawing.Color s_rectBackground = System.Drawing.Color.FromArgb(255, 255, 255, 255);
+    /// <summary>自動切り出しの検出矩形の枠線色（ホバー中・赤・不透明。Avalonia 版と同じ）。</summary>
+    private static readonly System.Drawing.Color s_autoCropHoverBorder = System.Drawing.Color.FromArgb(255, 255, 59, 48);
 
     /// <summary>ページの内容を生成する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
@@ -585,12 +585,14 @@ internal static class CapturePage
             .Columns("*")
             .Rows("*");
 
-        // 自動切り出しの検出矩形をオーバーレイへ変換する（画像座標 → ドメイン座標）
+        // 自動切り出しの検出矩形をオーバーレイへ変換する（画像座標 → ドメイン座標）。
+        // ホバー中の矩形は赤で強調する（Avalonia 版と同じ色・実線）
         void SyncRects()
         {
-            cropView.Rects = [.. viewModel.DetectedRects.Select(static r => new OverlayRect(
-                new EsRect(r.X, r.Y, r.Width, r.Height), OverlayLineStyle.Dashed,
-                s_rectForeground, s_rectBackground, DetectedRectThickness))];
+            cropView.Rects = [.. viewModel.DetectedRects.Select(r => new OverlayRect(
+                new EsRect(r.X, r.Y, r.Width, r.Height), OverlayLineStyle.Solid,
+                viewModel.HoveredRect == r ? s_autoCropHoverBorder : s_autoCropBorder,
+                System.Drawing.Color.Transparent, AutoCropBorderThickness))];
         }
 
         viewModel.PropertyChanged += (_, e) =>
@@ -601,6 +603,7 @@ internal static class CapturePage
                     cropView.Source = viewModel.PreviewImage;
                     break;
                 case nameof(MainViewModel.DetectedRects):
+                case nameof(MainViewModel.HoveredRect):
                     SyncRects();
                     break;
             }
@@ -622,10 +625,44 @@ internal static class CapturePage
         zoomView.OnMouseMove(e =>
         {
             var position = e.GetPosition(zoomView);
-            UpdatePointerText(viewModel, zoomView, new EsPoint(position.X, position.Y));
+            var point = new EsPoint(position.X, position.Y);
+            UpdatePointerText(viewModel, zoomView, point);
+
+            // 自動切り出し中はホバー中の矩形を更新する（Avalonia 版と同じ判定）
+            if (viewModel.IsAutoCropActive)
+            {
+                var hovered = FindAutoCropHit(viewModel, zoomView, point);
+                if (viewModel.HoveredRect != hovered)
+                {
+                    viewModel.HoveredRect = hovered;
+                }
+            }
         });
 
-        zoomView.OnMouseLeave(() => viewModel.PointerDisplayText = "-");
+        zoomView.OnMouseLeave(() =>
+        {
+            viewModel.PointerDisplayText = "-";
+            viewModel.HoveredRect = null;
+        });
+
+        // ダブルクリックで矩形を確定し、矩形の外側ならキャンセルする（Avalonia 版と同じ操作）
+        zoomView.OnMouseDoubleClick(e =>
+        {
+            if (!viewModel.IsAutoCropActive)
+            {
+                return;
+            }
+
+            var position = e.GetPosition(zoomView);
+            if (FindAutoCropHit(viewModel, zoomView, new EsPoint(position.X, position.Y)) is { } hit)
+            {
+                viewModel.ConfirmAutoCropCommand.Execute(hit);
+                return;
+            }
+
+            // 領域外のダブルクリックはキャンセル（切り出しモードの「矩形外クリック: キャンセル」と同じ）
+            viewModel.CancelAutoCropCommand.Execute(null);
+        });
 
         // 市松模様の色を変えたときにプレビューへ即時反映する
         settings.PropertyChanged += (_, e) =>
@@ -671,6 +708,39 @@ internal static class CapturePage
         var content = view.ViewportToContentImage(position);
         viewModel.PointerDisplayText =
             $"{(int)Math.Clamp(content.X, 0, image.Width - 1)}, {(int)Math.Clamp(content.Y, 0, image.Height - 1)}";
+    }
+
+    /// <summary>プレビュー上のカーソル位置にある自動切り出しの矩形（面積が最小のもの）を求める。</summary>
+    /// <param name="viewModel">アプリのメイン ViewModel（検出矩形の保持元）。</param>
+    /// <param name="view">プレビュー（座標変換と画像矩形の取得元）。</param>
+    /// <param name="cursorDip">カーソル位置（プレビューのローカル DIP）。</param>
+    /// <returns>カーソル位置を含む矩形（面積が最小）。画像外・矩形なしの場合は null。</returns>
+    /// <remarks>
+    /// 1. 画像が無い場合は null を返す。<br/>
+    /// 2. カーソルが画像の表示矩形の外にある場合は null を返す（画像外の余白を座標として扱わない）。<br/>
+    /// 3. 表示座標をドメイン座標（元画像ピクセル）へ変換し、<see cref="MainViewModel.HitDetectedRect"/> へ委譲する<br/>
+    ///    （矩形の判定はコアが単一所有する）。
+    /// </remarks>
+    private static EsPixelRect? FindAutoCropHit(MainViewModel viewModel, ZoomViewControl view, EsPoint cursorDip)
+    {
+        if (viewModel.PreviewImage is not { } image)
+        {
+            return null;
+        }
+
+        // 画像の表示矩形（ビューポート座標）で内外を判定する
+        var imageRect = view.ImageRectViewport();
+        var localX = cursorDip.X - imageRect.X;
+        var localY = cursorDip.Y - imageRect.Y;
+        if (localX < 0 || localY < 0 || localX >= imageRect.Width || localY >= imageRect.Height)
+        {
+            return null;
+        }
+
+        var content = view.ViewportToContentImage(cursorDip);
+        return viewModel.HitDetectedRect(
+            Math.Clamp(content.X, 0, image.Width - 1),
+            Math.Clamp(content.Y, 0, image.Height - 1));
     }
 
     /// <summary>設定の変更がプレビューの市松模様に関係するかどうかを判定する。</summary>

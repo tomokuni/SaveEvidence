@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Avalonia: SaveEvidence",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/src/app.AvaloniaUI/src/app.AvaloniaUI.csproj"
+        },
+        {
+            "name": "MewUI: SaveEvidence",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/src/app.MewUI/src/app.MewUI.csproj"
+        }
+    ]
+}

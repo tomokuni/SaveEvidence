@@ -16,8 +16,8 @@ rem    - Avalonia / SkiaSharp / OpenCvSharp のネイティブライブラリは
 rem      同じフォルダーへ並べて配布します（libSkiaSharp.dll / av_libglesv2.dll /
 rem      libHarfBuzzSharp.dll / OpenCvSharpExtern.dll / opencv_videoio_ffmpeg500_64.dll）。
 rem
-rem  単一 exe 方式（AvaloniaUI_publish_single.bat）との違い:
-rem    - 単一 exe は自己完結ランタイムを抱えるため exe が約 229 MB になります。
+rem  方式の選定理由:
+rem    - 単一 exe（PublishSingleFile + 自己完結）は exe が約 229 MB になるため採用していません。
 rem    - AOT はマネージドコードのみをネイティブへコンパイルするため約 29 MB になります。
 rem
 rem  AOT で動作しない実装（実測）:

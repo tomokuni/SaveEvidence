@@ -243,6 +243,18 @@ internal sealed class MainWindow
         RestoreWindowState(window, settingsService);
         ApplyNavigationLayout();
 
+        // 自動切り出し中は Escape でキャンセルする（切り出しモードと同じ操作）。
+        // 自動切り出しはオーバーレイコントロールを持たない（ViewModel の状態で表示する）ため、
+        // ページ側でキーを受けられず、ウィンドウのトンネル段階で処理する。
+        window.PreviewKeyDown += e =>
+        {
+            if (e.Key == Key.Escape && viewModel.IsAutoCropActive)
+            {
+                viewModel.CancelAutoCropCommand.Execute(null);
+                e.Handled = true;
+            }
+        };
+
         // テーマが変わったらアイコンとパネル背景の色も更新する（Avalonia 版はテーマのブラシを継承するため）
         window.ThemeChanged += (_, _) =>
         {

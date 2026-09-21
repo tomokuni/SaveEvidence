@@ -31,7 +31,6 @@ TestResults/
 .trx
 
 # IDE
-.vscode/
 .idea/
 .work/
 *.swp
