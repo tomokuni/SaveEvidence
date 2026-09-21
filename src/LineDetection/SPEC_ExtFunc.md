@@ -29,7 +29,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 - 検出方式は `ILineDetector` を通して抽象化され、ロジック方式を同一のインターフェースで利用できます。
 - 入力は `EsBitmap`（BGRA・1 ピクセル 4 バイト）で、出力は線分リストです。
-- OpenCvSharp は内部利用に閉じており、公開 API には露出しません。
+- OpenCvSharp は内部利用に閉じており、公開 API には露出しません。ネイティブは `OpenCvSharp5.runtime.win.slim`（`videoio` を除く縮小構成）を参照します。
 
 ## 2. 公開 API
 

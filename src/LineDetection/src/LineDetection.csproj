@@ -10,7 +10,10 @@
 
   <ItemGroup>
     <PackageReference Include="OpenCvSharp5" Version="[5.*,)" />
-    <PackageReference Include="OpenCvSharp5.runtime.win" Version="[5.*,)" />
+    <!-- slim プロファイル（videoio を無効化）を使う。本ライブラリは imgproc（CvtColor / Canny / HoughLinesP）と
+         imgcodecs（ImRead）のみを使用し、動画入出力（VideoCapture / VideoWriter）は使わないため、
+         videoio と FFmpeg（opencv_videoio_ffmpeg500_64.dll 約 31 MB）を持ち込まない。 -->
+    <PackageReference Include="OpenCvSharp5.runtime.win.slim" Version="[5.*,)" />
   </ItemGroup>
 
   <ItemGroup>

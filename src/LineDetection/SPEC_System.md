@@ -32,7 +32,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | --- | --- |
 | 言語 | C#（.NET 10） |
 | UI フレームワーク | Avalonia 12.1 |
-| 画像処理 | OpenCvSharp5（OpenCV・内部利用） |
+| 画像処理 | OpenCvSharp5（OpenCV・内部利用。ネイティブは `OpenCvSharp5.runtime.win.slim`） |
 
 ## 3. アーキテクチャ
 
@@ -88,6 +88,17 @@ flowchart TB
 - `MatHelper.cs` → OpenCvSharp（内部のみ）・`EsBitmap`（Platform.Core）
 
 本プロジェクトは **UI フレームワーク非依存**です（依存は `Platform.Core` と OpenCvSharp のみ。Avalonia への依存なし）。座標はコア型（`EsPoint` / `EsPixelRect`）で公開し、UI 側は境界で各 UI の型へ変換します。
+
+### ネイティブの構成（slim プロファイル）
+
+使用する OpenCV API は `imgproc`（`CvtColor` / `Canny` / `HoughLinesP`）と `imgcodecs`（テストの `ImRead`）だけで、動画入出力（`videoio` の `VideoCapture` / `VideoWriter`）を使いません。そのためネイティブは `OpenCvSharp5.runtime.win.slim` を参照します。
+
+| 参照 | `OpenCvSharpExtern.dll` | `opencv_videoio_ffmpeg500_64.dll` |
+| --- | --- | --- |
+| `OpenCvSharp5.runtime.win` | 78.0 MB | 29.4 MB |
+| `OpenCvSharp5.runtime.win.slim`（採用） | 61.9 MB | **含まない** |
+
+slim が無効化するモジュール（`videoio` / `video` / `dnn` / `ml` / `highgui` / `contrib` / `stitching` / `barcode`）は本プロジェクトでは使用しません。
 
 ### 名前空間
 

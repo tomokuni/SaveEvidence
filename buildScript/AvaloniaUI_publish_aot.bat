@@ -14,7 +14,7 @@ rem  構成（実測）:
 rem    - マネージドコードは全て SaveEvidence.exe（約 29 MB）へコンパイルされます。
 rem    - Avalonia / SkiaSharp / OpenCvSharp のネイティブライブラリは exe へ同梱できないため、
 rem      同じフォルダーへ並べて配布します（libSkiaSharp.dll / av_libglesv2.dll /
-rem      libHarfBuzzSharp.dll / OpenCvSharpExtern.dll / opencv_videoio_ffmpeg500_64.dll）。
+rem      libHarfBuzzSharp.dll / OpenCvSharpExtern.dll）。
 rem
 rem  方式の選定理由:
 rem    - 単一 exe（PublishSingleFile + 自己完結）は exe が約 229 MB になるため採用していません。

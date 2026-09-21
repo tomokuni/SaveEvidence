@@ -30,7 +30,8 @@
     <!-- テストで PNG を読み込み Bitmap を構築するために OpenCV を直接参照する
          （検出器本体（LineDetection）は OpenCV に依存するが、public API には露出しない） -->
     <PackageReference Include="OpenCvSharp5" Version="[5.*,)" />
-    <PackageReference Include="OpenCvSharp5.runtime.win" Version="[5.*,)" />
+    <!-- ライブラリ本体と同一のネイティブ（slim プロファイル）を使う -->
+    <PackageReference Include="OpenCvSharp5.runtime.win.slim" Version="[5.*,)" />
   </ItemGroup>
 
   <ItemGroup>

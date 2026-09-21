@@ -317,9 +317,12 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 
 | 方式 | 構成 | サイズ（実測） |
 | --- | --- | --- |
-| Native AOT（既定） | exe 1 個（8.5 MB）+ ネイティブ DLL 3 個 | 127 MB / 4 ファイル |
+| Native AOT（既定） | exe 1 個（11.6 MB）+ ネイティブ DLL 2 個 | 84 MB / 3 ファイル |
 
 - AOT のリンクには Visual Studio の C++ ビルドツール（`link.exe`）が必要です。
+- ネイティブ DLL は `OpenCvSharpExtern.dll` / `libSkiaSharp.dll` の 2 個です。OpenCV は縮小構成
+  （`OpenCvSharp5.runtime.win.slim`）のため、動画入出力（`videoio`）と FFmpeg
+  （`opencv_videoio_ffmpeg500_64.dll` 約 31 MB）を同梱しません（本アプリは動画を扱わない）。
 - **設定の読み書きには JSON ソース生成が必須**です。反射ベースのシリアル化はトリミングで設定項目が
   削除され、設定が空（`{}`）になります。アプリ本体は `SettingsJsonContext` を `SettingsService` へ
   注入しています（コンテキストは `Settings` を参照する側のアセンブリに置く必要があります）。
