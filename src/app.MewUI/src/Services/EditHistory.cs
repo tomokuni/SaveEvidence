@@ -6,7 +6,7 @@ namespace SaveEvidence.MewUI.Services;
 /// <remarks>
 /// <b>役割</b>: <see cref="Models.UndoStack"/>（コア）と <see cref="ViewModels.MainViewModel"/> の間で<br/>
 /// 「履歴から画像を取り出してプレビューへ差し替える」操作を 1 箇所に集約する。<br/>
-/// 撮影（<see cref="CaptureFlow"/>）と切り出し（<see cref="Views.PreviewCropSession"/>）は履歴の退避のみを担う。<br/>
+/// 撮影（<see cref="CaptureFlow"/>）と切り出し（<c>CropOverlay</c>。CaptureSessionControl.MewUI）は履歴の退避のみを担う。<br/>
 /// <br/>
 /// <b>所有権</b>: 履歴の画像はスタックが保持し、復元した画像の所有権はプレビューへ移る<br/>
 /// （差し替え前のプレビュー画像は破棄する。履歴側はクローンを持つため影響しない）。<br/>

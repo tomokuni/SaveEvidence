@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Estable.AvaloniaUI.Loupe;
-using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.Platform.Coordinate;
 using Estable.Platform.Imaging;

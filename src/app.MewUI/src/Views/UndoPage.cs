@@ -6,7 +6,6 @@ using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;
 using SaveEvidence.MewUI.Services;
 using System.Diagnostics;
-using MewUIColor = Aprillz.MewUI.Color;
 
 namespace SaveEvidence.MewUI.Views;
 

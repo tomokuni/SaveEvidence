@@ -5,10 +5,9 @@ using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.Platform.Imaging;
-using Estable.AvaloniaUI.SnipCaptureUI;
+using Estable.AvaloniaUI.CaptureSession;
 using Estable.AvaloniaUI.ZoomView;
 using Estable.Platform;
-using Estable.Platform.Geometry;
 using Estable.SaveEvidence.Icons;
 using Estable.SaveEvidence.Logging;
 using Estable.SaveEvidence.Models;
@@ -31,7 +30,7 @@ namespace Estable.SaveEvidence.Views.Pages;
 /// </summary>
 /// <remarks>
 /// MainWindow から分離された画像キャプチャ関連の全機能を提供する。<br/>
-/// SnipCapture による領域選択・切出し、CropViewControl（ズーム + 領域選択 + ルーペを内包）
+/// CaptureSessionControl による領域選択・切出し、CropViewControl（ズーム + 領域選択 + ルーペを内包）
 /// によるズーム制御、ルーペ表示を統一的に管理する。<br/>
 /// MainWindow とは <see cref="MainWindow.Initialize"/>（CapturePage.Initialize）と
 /// <see cref="MainWindow.StartSelectionMode"/>（キャプチャ開始）で連携する。<br/>
@@ -48,8 +47,8 @@ public sealed partial class CapturePage : UserControl
 
     private ISettingsService _settingsService = null!;
 
-    /// <summary>SnipCaptureUI の公開 Facade（Crop セッションの窓口）。</summary>
-    private SnipCapture _snipCapture = null!;
+    /// <summary>CaptureSessionControl.AvaloniaUI の公開 Facade（Crop セッションの窓口）。</summary>
+    private CaptureSessionControl _captureSessionControl = null!;
 
     /// <summary>進行中の Crop セッションの Task。</summary>
     private Task<PixelRect?>? _cropTask;
@@ -86,12 +85,12 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>MainWindow から初期化される。</summary>
-    public void Initialize(MainViewModel viewModel, ISettingsService settingsService, Window parentWindow, SnipCapture snipCapture)
+    public void Initialize(MainViewModel viewModel, ISettingsService settingsService, Window parentWindow, CaptureSessionControl captureSessionControl)
     {
         _viewModel = viewModel;
         _settingsService = settingsService;
         _parentWindow = parentWindow;
-        _snipCapture = snipCapture;
+        _captureSessionControl = captureSessionControl;
 
         SetupViewModelCallbacks();
 
@@ -149,10 +148,10 @@ public sealed partial class CapturePage : UserControl
 
         // ビューポート（パン・ズーム・表示サイズ）の変化を Crop オーバーレイへ通知する
         // （暗転マスク・選択枠・ルーペの追従。ScrollViewer 連携の ScrollChanged に相当する中継）。
-        // Crop 未実行時は SnipCapture 側で無視されるため、常時購読で問題ない。
+        // Crop 未実行時は CaptureSessionControl 側で無視されるため、常時購読で問題ない。
         CropView.ViewportChanged += (_, _) =>
         {
-            _snipCapture.NotifyCropViewportChanged();
+            _captureSessionControl.NotifyCropViewportChanged();
             UpdateAutoCropOverlay();
         };
 
@@ -691,10 +690,10 @@ public sealed partial class CapturePage : UserControl
             // 未開始 → StartCropAsync を開始
             await StartCropSessionAsync();
         }
-        else if (_snipCapture.HasSelection)
+        else if (_captureSessionControl.HasSelection)
         {
             // 開始済み・矩形あり → 現在の選択矩形で確定
-            _snipCapture.Confirm();
+            _captureSessionControl.Confirm();
         }
         else
         {
@@ -716,10 +715,10 @@ public sealed partial class CapturePage : UserControl
         if (srcBmp is null) return;
 
         // 設定は MainWindow の Settings.PropertyChanged 購読で常に最新のため、ここでは同期しない
-        // プレビュー状態（ScrollOffset / ZoomPercent）は SnipCaptureUI が DragRect イベント / 表示状態から導出する
+        // プレビュー状態（ScrollOffset / ZoomPercent）は CaptureSessionControl.AvaloniaUI が DragRect イベント / 表示状態から導出する
         // Ctrl+ホイールによるズーム要求は CropViewControl へ委譲する（ズーム状態の整合・Crop 終了後の継続）
         // CropSession は EsBitmap を受け取る（内部処理は EsBitmap に統一）。
-        _cropTask = _snipCapture.StartCropAsync(
+        _cropTask = _captureSessionControl.StartCropAsync(
             CropView, _parentWindow!, srcBmp,
             zoomIn => { if (zoomIn) CropView.ZoomIn(); else CropView.ZoomOut(); });
 
@@ -767,7 +766,7 @@ public sealed partial class CapturePage : UserControl
     {
         if (_cropTask is not null)
         {
-            _snipCapture.Cancel();
+            _captureSessionControl.Cancel();
             _cropTask = null;
             UpdateCropButtonText();
         }
@@ -1109,7 +1108,7 @@ public sealed partial class CapturePage : UserControl
         var menu = new ContextMenu();
         // 確定可否の事前判定は行わず、Confirm 側で MinSelectionSize 未満なら無効な選択として無視される（仕様 3.5）
         var confirmItem = new MenuItem { Header = "切出し確定" };
-        confirmItem.Click += (_, _) => _snipCapture.Confirm();
+        confirmItem.Click += (_, _) => _captureSessionControl.Confirm();
         var cancelItem = new MenuItem { Header = "キャンセル" };
         cancelItem.Click += (_, _) => CancelCropSession();
         menu.Items.Add(confirmItem);

@@ -1,4 +1,3 @@
-using Estable.Platform;
 using Estable.Platform.Geometry;
 
 namespace Estable.Platform.NoOp;

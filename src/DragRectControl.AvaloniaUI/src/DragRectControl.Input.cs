@@ -1,10 +1,7 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Estable.AvaloniaUI.DragRect.Logging;
 using Estable.AvaloniaUI.Platform;
-using Estable.DragRect;
-using Estable.Platform.Coordinate;
 using Estable.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.DragRect;

@@ -26,6 +26,8 @@
     <InternalsVisibleTo Include="FadeMaskControl.Core.Tests" />
     <!-- アプリ本体（MewUI 版）もラベル文言の選定（FadeMaskLabels）を共用する -->
     <InternalsVisibleTo Include="SaveEvidence.MewUI" />
+    <!-- MewUI 版の撮影セッションもラベル文言の選定（FadeMaskLabels）を共用する -->
+    <InternalsVisibleTo Include="CaptureSessionControl.MewUI" />
   </ItemGroup>
 
 </Project>

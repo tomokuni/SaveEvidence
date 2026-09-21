@@ -16,7 +16,7 @@
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 ZoomViewControl](#61-zoomviewcontrol)
     - [6.2 ZoomableView](#62-zoomableview)
-    - [6.3 ZoomConfig / 純粋関数](#63-zoomconfig--純粋関数)
+    - [6.3 ZoomConfig / 純粋関数（`ZoomViewControl.Core`）](#63-zoomconfig--純粋関数zoomviewcontrolcore)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ログ](#8-ログ)
     - [8.1 ログ定義一覧](#81-ログ定義一覧)

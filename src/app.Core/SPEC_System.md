@@ -17,7 +17,7 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）と将来の MewUI �
   C["app.MewUI（将来）"] --> B
   B --> D[PlatformFactory.Core]
   B --> F[LineDetection]
-  A --> E[SnipCaptureUI / ColorPickerControl / PlatformFactory]
+  A --> E[CaptureSessionControl.AvaloniaUI / ColorPickerControl / PlatformFactory]
   A -->|コールバック注入（クリップボード / 上書き確認）| B
 ```
 
@@ -144,7 +144,7 @@ sequenceDiagram
 
 併せて以下を実施しました。
 
-- `CaptureType`（キャプチャ種別）を `SnipCaptureUI` から `PlatformFactory.Core`（`Estable.Platform`）へ移設
+- `CaptureType`（キャプチャ種別）を `CaptureSessionControl.AvaloniaUI` から `PlatformFactory.Core`（`Estable.Platform`）へ移設
 - `LineDetection` の `LineDetectionResult` / `LineRectangleReconstructor` を `EsPoint` / `EsPixelRect` 化（`LineDetection` が UI 非依存に）
 - `MainViewModel` の画像座標の矩形を `Avalonia.PixelRect` → `EsPixelRect` へ変更（本体の移設は次段階）
 
@@ -169,5 +169,5 @@ sequenceDiagram
 | ファイル | 依存する UI 型 |
 | --- | --- |
 | `Services/AvaloniaImageWriter.cs` | Avalonia Skia（`WriteableBitmap`）。`IImageWriter` の Avalonia 実装 |
-| `Services/CaptureSettingsMapper.cs` | `Avalonia.Media`（色）・`SnipCaptureUI` |
+| `Services/CaptureSettingsMapper.cs` | `Avalonia.Media`（色）・`CaptureSessionControl.AvaloniaUI` |
 | `Views/**` / `Controls/**` / `Converters/**` / `Icons/**` / `Logging/AppLog.cs` | Avalonia の UI 型 |

@@ -25,7 +25,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
-本プロジェクト（FadeMaskControl）は、このシステムのうち**選択オーバーレイ描画**（暗転マスク・選択枠線・サイズラベル・モード別描画）を担う再利用可能なコントロールです。上位 AP（SnipCaptureUI / FadeMaskDragRect）のオーバーレイ表示に使用されます。
+本プロジェクト（FadeMaskControl）は、このシステムのうち**選択オーバーレイ描画**（暗転マスク・選択枠線・サイズラベル・モード別描画）を担う再利用可能なコントロールです。上位 AP（CaptureSessionControl.AvaloniaUI / FadeMaskDragRect）のオーバーレイ表示に使用されます。
 
 ## 2. 技術スタック
 
@@ -77,7 +77,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 flowchart TB
     subgraph Host["上位AP（消費側）"]
         UI["AXAML 配置<br/>依存関係プロパティで制御"]
-        Snip["SnipCaptureUI<br/>ExternalRenderer で委譲"]
+        Snip["CaptureSessionControl.AvaloniaUI<br/>ExternalRenderer で委譲"]
     end
     subgraph FMC["FadeMaskControl プロジェクト (FadeMaskControl)"]
         direction TB

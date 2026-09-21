@@ -10,7 +10,6 @@ using SaveEvidence.MewUI.Logging;
 using SaveEvidence.MewUI.Services;
 using SaveEvidence.MewUI.Views;
 using SkiaSharp;
-using DrawingColor = System.Drawing.Color;
 namespace SaveEvidence.MewUI;
 
 /// <summary>SaveEvidence の MewUI 版ホスト。</summary>

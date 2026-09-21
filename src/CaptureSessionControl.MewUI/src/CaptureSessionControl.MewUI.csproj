@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>Estable.MewUI.CaptureSession</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- MewUI は API が安定化中（0.x）。破壊的変更を避けるためバージョンを固定する。 -->
+    <MewUIVersion>0.21.1</MewUIVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- MewUI のコントロール・描画（Windows 向け全バックエンド + SkiaCanvasView + GPU ブリッジ） -->
+    <PackageReference Include="Aprillz.MewUI.Windows" Version="$(MewUIVersion)" />
+    <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
+    <PackageReference Include="Aprillz.MewUI.Skia.Interop.Direct2D" Version="$(MewUIVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 撮影・切り出しの共通規則（切り出し矩形・設定・セッション状態・退避手順） -->
+    <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
+    <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型）と DIP 変換 -->
+    <ProjectReference Include="..\..\PlatformFactory.MewUI\src\PlatformFactory.MewUI.csproj" />
+    <!-- コアロジックを共有する MewUI 版コントロール（選択オーバーレイ・切り出しビュー） -->
+    <ProjectReference Include="..\..\FadeMaskDragRectControl.MewUI\src\FadeMaskDragRectControl.MewUI.csproj" />
+    <ProjectReference Include="..\..\CropViewControl.MewUI\src\CropViewControl.MewUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- internal 型はテストからのみ参照する（公開 API を増やさない） -->
+    <InternalsVisibleTo Include="CaptureSessionControl.MewUI.Tests" />
+  </ItemGroup>
+
+</Project>

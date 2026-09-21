@@ -1,6 +1,6 @@
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.AvaloniaUI.SnipCaptureUI;
+using Estable.AvaloniaUI.CaptureSession;
 using Estable.Platform;
 using Estable.Platform.Geometry;
 using Estable.Platform.Imaging;
@@ -18,6 +18,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
+using Estable.CaptureSession;
 
 namespace Estable.SaveEvidence.Views;
 
@@ -36,11 +37,11 @@ public sealed partial class MainWindow : Window
     private SettingsService _settingsService = null!;
     private IGlobalHotKeyService<CaptureType> _hotKeyService = null!;
 
-    /// <summary>SnipCaptureUI の公開 Facade（キャプチャセッションの窓口）。</summary>
-    private SnipCapture _snipCapture = null!;
+    /// <summary>CaptureSessionControl.AvaloniaUI の公開 Facade（キャプチャセッションの窓口）。</summary>
+    private CaptureSessionControl _captureSessionControl = null!;
 
-    /// <summary>SnipCaptureUI へ注入するロガー（Serilog 経由でファイル出力）。</summary>
-    private ILogger _snipCaptureLogger = null!;
+    /// <summary>CaptureSessionControl.AvaloniaUI へ注入するロガー（Serilog 経由でファイル出力）。</summary>
+    private ILogger _captureSessionControlLogger = null!;
 
     /// <summary>アプリケーションロガー。</summary>
     private static readonly ILogger _logger = AppLog.CreateLogger("MainWindow");
@@ -65,29 +66,29 @@ public sealed partial class MainWindow : Window
         _viewModel = viewModel;
         _settingsService = (SettingsService)settingsService;
 
-        // SnipCaptureUI 公開 Facade を生成
+        // CaptureSessionControl.AvaloniaUI 公開 Facade を生成
         // ロガーは Serilog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、日次ローテーション・7日で自動削除）へ転送する。
         // AppLog.CreateLogger が Serilog のファイル出力を構成するため、コード内の設定は不要。
-        _snipCaptureLogger = AppLog.CreateLogger("SnipCaptureUI");
-        _snipCapture = new SnipCapture(logger: _snipCaptureLogger);
+        _captureSessionControlLogger = AppLog.CreateLogger("CaptureSessionControl.AvaloniaUI");
+        _captureSessionControl = new CaptureSessionControl(logger: _captureSessionControlLogger);
         // キャプチャ完了イベントを購読する（同期実行: 画像変更 → 完了後に APP が再表示される）
-        _snipCapture.CaptureCompleted += OnCaptureCompleted;
+        _captureSessionControl.CaptureCompleted += OnCaptureCompleted;
 
-        // 設定変更を SnipCapture へ即時反映する（MVVM 的: 設定画面での変更がセッション開始を待たずに反映される）。
-        // SnipCapture.AppearanceSettings 側で同一値の再設定はスキップされるため、無駄な更新は発生しない。
+        // 設定変更を CaptureSessionControl へ即時反映する（MVVM 的: 設定画面での変更がセッション開始を待たずに反映される）。
+        // CaptureSessionControl.AppearanceSettings 側で同一値の再設定はスキップされるため、無駄な更新は発生しない。
         // 例外が発生しても UI を壊さないよう try-catch で保護し、ログに記録する。
-        _settingsService.Current.PropertyChanged += (_, e) => TryApplySnipCaptureSettings(e.PropertyName ?? "<null>");
+        _settingsService.Current.PropertyChanged += (_, e) => TryApplyCaptureSessionSettings(e.PropertyName ?? "<null>");
         // 起動時の初期設定を反映する
-        ApplySnipCaptureSettings();
+        ApplyCaptureSessionSettings();
 
         // DPI スケーリング（描画スケール）の変化に追従する（別モニタへの移動・ディスプレイ設定変更時）
-        ScalingChanged += (_, _) => TryApplySnipCaptureSettings(nameof(ScalingChanged));
+        ScalingChanged += (_, _) => TryApplyCaptureSessionSettings(nameof(ScalingChanged));
 
         // ViewModel にコールバックを設定
         SetupViewModelCallbacks();
 
-        // CapturePage を初期化（SnipCapture を注入）
-        CaptureContent.Initialize(viewModel, settingsService, this, _snipCapture);
+        // CapturePage を初期化（CaptureSessionControl を注入）
+        CaptureContent.Initialize(viewModel, settingsService, this, _captureSessionControl);
 
         // グローバルホットキーを登録（ネイティブウィンドウハンドルが必要）
         // 実際の登録は NavigateTo(AppPage.Capture) が行う（キャプチャページ表示時のみ有効）
@@ -241,7 +242,7 @@ public sealed partial class MainWindow : Window
             _hotKeyService.Dispose();
         }
         CaptureContent.CleanupCaptureResources();
-        _snipCapture.Dispose();
+        _captureSessionControl.Dispose();
     }
 
     /// <summary>ウィンドウのアクティブ化を記録する。</summary>
@@ -369,28 +370,28 @@ public sealed partial class MainWindow : Window
 
     // ===================== キャプチャ関連 =====================
 
-    /// <summary>現在の設定（<see cref="ISettingsService.Current"/>）を SnipCapture へ反映する。</summary>
+    /// <summary>現在の設定（<see cref="ISettingsService.Current"/>）を CaptureSessionControl へ反映する。</summary>
     /// <remarks>
     /// キャプチャ（<see cref="StartSelectionMode"/>）・切出し（CapturePage）のセッション開始前に呼び出し、<br/>
     /// 設定画面での変更（画像外の選択を禁止 等）をセッションへ即時反映する（起動時設定のままにならないようにする）。<br/>
     /// Settings → CaptureSettings の変換は <see cref="CaptureSettingsMapper"/> に委譲する。
     /// </remarks>
-    public void ApplySnipCaptureSettings()
+    public void ApplyCaptureSessionSettings()
     {
         // 変換は CaptureSettingsMapper に一元化する
         var capSettings = CaptureSettingsMapper.From(_settingsService.Current, DesktopScaling);
 
-        // 設定を SnipCapture に反映（部分更新）
-        _snipCapture.AppearanceSettings = capSettings;
+        // 設定を CaptureSessionControl に反映（部分更新）
+        _captureSessionControl.AppearanceSettings = capSettings;
     }
 
-    /// <summary>SnipCapture 設定の反映を例外保護付きで行う（失敗時はログに記録）。</summary>
+    /// <summary>CaptureSessionControl 設定の反映を例外保護付きで行う（失敗時はログに記録）。</summary>
     /// <param name="propertyName">変更の契機となったプロパティ名（ログ用）。</param>
-    private void TryApplySnipCaptureSettings(string propertyName)
+    private void TryApplyCaptureSessionSettings(string propertyName)
     {
         try
         {
-            ApplySnipCaptureSettings();
+            ApplyCaptureSessionSettings();
         }
         catch (Exception ex)
         {
@@ -405,12 +406,12 @@ public sealed partial class MainWindow : Window
 
         // キャプチャ開始直前に設定を反映する（PropertyChanged 購読に加えて確実に最新の設定を使う。
         // 設定画面での変更が購読で反映されないケース（起動直後・Reload 後など）を防ぐ）。
-        ApplySnipCaptureSettings();
+        ApplyCaptureSessionSettings();
 
-        // キャプチャセッションを開始（HideOwnerWindow=true の場合は SnipCapture が自動非表示する）。
-        // 画像変更は CaptureCompleted イベント（同期）で行い、完了後に SnipCapture が APP を再表示する。
+        // キャプチャセッションを開始（HideOwnerWindow=true の場合は CaptureSessionControl が自動非表示する）。
+        // 画像変更は CaptureCompleted イベント（同期）で行い、完了後に CaptureSessionControl が APP を再表示する。
         // フロー: APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）
-        var result = await _snipCapture.StartCaptureAsync(captureType, this);
+        var result = await _captureSessionControl.StartCaptureAsync(captureType, this);
 
         var imgInfo = result?.Image is not null ? $"{result.Image.Size.Width}x{result.Image.Size.Height}" : "null";
         _logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
@@ -420,7 +421,7 @@ public sealed partial class MainWindow : Window
     /// <param name="result">キャプチャ結果。キャンセル時は 0x0 の空結果。</param>
     /// <remarks>
     /// イベントは同期型のため、本ハンドラ（画像変更）の完了後に<br/>
-    /// SnipCapture のキャプチャセッションがオーナー（本ウィンドウ）を再表示する。<br/>
+    /// CaptureSessionControl のキャプチャセッションがオーナー（本ウィンドウ）を再表示する。<br/>
     /// 既に UI スレッドで発行されるため、UI 更新をそのまま実行できる。
     /// </remarks>
     private void OnCaptureCompleted(CaptureResult? result)

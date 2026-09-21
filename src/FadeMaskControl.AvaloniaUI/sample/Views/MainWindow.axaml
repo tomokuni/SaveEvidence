@@ -115,7 +115,7 @@
             <ComboBox ItemsSource="{Binding ModeItems}" SelectedIndex="{Binding SelectedModeIndex}"/>
         </StackPanel>
 
-        <TextBlock Text="※ 本サンプルは FadeMaskControl 単体（暗転マスク＋サイズラベル）の描画確認用です。モード（AreaSelect / ScreenSelect / WindowSelect / Crop）に応じた描画の切り替えは FadeMaskRenderer（SnipCaptureUI が使用）で確認できます。"
+        <TextBlock Text="※ 本サンプルは FadeMaskControl 単体（暗転マスク＋サイズラベル）の描画確認用です。モード（AreaSelect / ScreenSelect / WindowSelect / Crop）に応じた描画の切り替えは FadeMaskRenderer（CaptureSessionControl.AvaloniaUI が使用）で確認できます。"
                    FontSize="11" Opacity="0.7" TextWrapping="Wrap"/>
     </StackPanel>
 </Window>

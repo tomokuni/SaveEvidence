@@ -55,7 +55,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `ViewportBackground` | `IBrush?` | ズーム・パンビューポートの背景（市松模様等。レターボックス領域の描画）。 |
 | `HasSelection` | `bool` | 現在の選択状態（選択矩形の有無）。 |
 | `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標）。未選択時は 0x0。 |
-| `ZoomView` | `ZoomViewControl` | 内包するズーム・パンビューポート（SnipCapture の Crop セッションが利用）。 |
+| `ZoomView` | `ZoomViewControl` | 内包するズーム・パンビューポート（CaptureSessionControl の Crop セッションが利用）。 |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | サイズラベルを描画時に評価するプロバイダ（FadeMaskDragRectControl へ委譲）。 |
 
 #### 2.1.2 メソッド

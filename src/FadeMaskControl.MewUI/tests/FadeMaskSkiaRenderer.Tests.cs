@@ -1,5 +1,3 @@
-using Estable.FadeMask;
-using Estable.MewUI.FadeMask;
 using Estable.Platform.Geometry;
 using SkiaSharp;
 using Xunit;

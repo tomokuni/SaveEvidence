@@ -110,7 +110,7 @@ CropPreview.CancelRequested += (_, _) => OnCancel();
 
 ## 6. サンプルアプリケーション
 
-`SnipCaptureUI/sample/` が CropView を利用した動作確認サンプルです。
+`CaptureSessionControl.AvaloniaUI/sample/` が CropView を利用した動作確認サンプルです。
 Crop プレビューを拡大・パン・Fit しながら、ドラッグ選択 → 確定で切り出しを確認できます。
 
 ## 7. ドキュメント

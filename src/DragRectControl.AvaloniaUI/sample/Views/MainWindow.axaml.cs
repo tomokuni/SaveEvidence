@@ -9,7 +9,6 @@ using Rect = Avalonia.Rect;
 using DragRectControl.Sample.Logging;
 using DragRectControl.Sample.ViewModels;
 using Estable.AvaloniaUI.DragRect;
-using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.Platform.Coordinate;
 using Estable.Platform.Geometry;

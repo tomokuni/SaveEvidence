@@ -3,11 +3,9 @@ using Aprillz.MewUI.Controls;
 using Estable.MewUI.Platform;
 using Estable.Platform.Geometry;
 using Estable.SaveEvidence.Enum;
-using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;
 using SaveEvidence.MewUI.Icons;
-using SaveEvidence.MewUI.Services;
 using MewUIColor = Aprillz.MewUI.Color;
 
 namespace SaveEvidence.MewUI.Views;
@@ -246,12 +244,20 @@ internal sealed class MainWindow
         // 自動切り出し中は Escape でキャンセルする（切り出しモードと同じ操作）。
         // 自動切り出しはオーバーレイコントロールを持たない（ViewModel の状態で表示する）ため、
         // ページ側でキーを受けられず、ウィンドウのトンネル段階で処理する。
+        // ページ固有のショートカット（切り出しの Ctrl+R 等）もここから表示中のページへ転送する。
         window.PreviewKeyDown += e =>
         {
             if (e.Key == Key.Escape && viewModel.IsAutoCropActive)
             {
                 viewModel.CancelAutoCropCommand.Execute(null);
                 e.Handled = true;
+                return;
+            }
+
+            // 表示中のページにのみ転送する（非表示のページのショートカットを発火させない）
+            if (selectedIndex >= 0 && pages[selectedIndex] is { OnKeyDown: { } onKeyDown })
+            {
+                onKeyDown(e);
             }
         };
 

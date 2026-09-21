@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Media;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.Platform;

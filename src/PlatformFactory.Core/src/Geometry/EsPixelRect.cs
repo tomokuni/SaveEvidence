@@ -16,6 +16,10 @@ public readonly record struct EsPixelRect(int X, int Y, int Width, int Height)
     /// <value>右端の X 座標（画面物理ピクセル）。</value>
     public int Right => X + Width;
 
+    /// <summary>幅または高さが 0 以下かどうか（切り出せる範囲が無い）を取得する。</summary>
+    /// <value>幅または高さが 0 以下の場合は true。</value>
+    public bool IsEmpty => Width <= 0 || Height <= 0;
+
     /// <summary>下端の Y 座標（上端 + 高さ）を取得する（排他的境界）。</summary>
     /// <value>下端の Y 座標（画面物理ピクセル）。</value>
     public int Bottom => Y + Height;

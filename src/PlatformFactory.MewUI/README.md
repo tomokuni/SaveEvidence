@@ -15,6 +15,7 @@ Avalonia 版の `PlatformFactory` と同じ役割を MewUI 向けに提供しま
 | `EsGeometryMewUIInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` ⇔ MewUI の対応型。色（`System.Drawing.Color` ⇔ `Aprillz.MewUI.Color`）の変換も含む |
 | `EsWindowStateMewUIInterop` | `EsWindowState` ⇔ `Aprillz.MewUI.Controls.WindowState` |
 | `EsPlatformHandleMewUIInterop` | `Aprillz.MewUI.Window` → `EsPlatformHandle`（`Window.Handle` は `nint`） |
+| `WindowPlacementMath` | ウィンドウ配置の DIP ⇔ 画面物理ピクセルの変換、スケールの正規化、復元可否の判定（純粋関数。`WindowStartupLocation` / `WindowSize` へ DIP を渡すために使う） |
 
 依存方向:
 

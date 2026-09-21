@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Estable.CaptureSession</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlatformFactory.Core\src\PlatformFactory.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+</Project>

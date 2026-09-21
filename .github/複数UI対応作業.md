@@ -256,6 +256,9 @@ SaveEvidence の UI（Avalonia UI）からコアロジックを分離し、複�
     - [39.1 残作業（2026-09-20 時点の監査結果）](#391-残作業2026-09-20-時点の監査結果)
     - [39.2 MewUI 版を作成したプロジェクト](#392-mewui-版を作成したプロジェクト)
     - [39.3 各 UI のコントロール実装方針](#393-各-ui-のコントロール実装方針)
+    - [39.4 セッション層の Core 抽出（設計案）](#394-セッション層の-core-抽出設計案)
+    - [39.5 改名（`CaptureSessionControl.AvaloniaUI`。実施済み）](#395-改名capturesessioncontrolavaloniaui実施済み)
+    - [39.6 MewUI 実装の扱い（`CaptureSessionControl.MewUI`）](#396-mewui-実装の扱いcapturesessioncontrolmewui)
   - [40. リスク・判断が必要な点](#40-リスク判断が必要な点)
   - [41. 作業ログ](#41-作業ログ)
 
@@ -2802,6 +2805,153 @@ XxxControl.MewUI         … MewUI 版の実装。同じコアロジックを Me
   （再生成するとページの状態が消え、購読も重複する）。
 - **同名の知識を UI ごとに持たない**（画像の拡張子一覧のように、一覧の対象を決める規則はコアへ置く）。
 
+### 39.4 セッション層の Core 抽出（設計案）
+
+`SnipCaptureUI`（Avalonia 版）と `app.MewUI` の撮影・切り出しは、**同じ規則を別々に実装している**。MewUI 版が完成したため、項目 12 で保留した「セッション層の分離範囲」を決めて重複を解消する。
+
+**重複の実態（調査結果）**:
+
+| 役割 | Avalonia 版（`SnipCaptureUI`） | MewUI 版（`app.MewUI`） | 状態 |
+| --- | --- | --- | --- |
+| 外観設定の型 | `CaptureSettings`（45 項目・`Avalonia.Media.Color`） | `Settings`（`app.Core`）を直接使用 | 同じ項目の二重定義 |
+| 部分更新のマージ | `SnipCapture.MergeWithDefaults` | なし（`Settings` を直接編集） | Avalonia のみ |
+| 切り出し矩形の計算 | `CropSession.ComputeCropBounds` | `CaptureSelectionMath.ToPixelRect` / `ToClosedInterval` | 同じ規則の二重実装 |
+| 結果の型 | `CaptureResult(EsBitmap?, PixelRect?)` | `EsBitmap?` を直接返す | — |
+| セッションの状態管理 | `CaptureSession` / `CropSession` | `CaptureOverlayWindow` / `PreviewCropSession` | 実行中・完了・再入禁止が別実装 |
+| オーナーの退避・復帰 | `Opacity` 0 + 画面外位置 | 画面外位置 + キャプチャ除外 | 手順が別実装 |
+| オーバーレイの描画・入力 | `OverlayWindow`（XAML + Pointer） | `CaptureOverlayWindow`（Skia + Mouse） | UI 固有（**共有しない**） |
+
+**方針**:
+
+Core へ出すのは UI 型を参照しないものに限る。Core は `PlatformFactory.Core` だけを参照し、Avalonia / MewUI のどちらも参照しない。オーバーレイの描画・入力・ウィンドウ生成は各 UI に残す。
+
+**新プロジェクト（名前は 39.5 の改名に追従する）**:
+
+| プロジェクト | 内容 | 依存 |
+| --- | --- | --- |
+| `XxxControl.Core` | 設定・結果の型、切り出し計算、セッション状態 | `PlatformFactory.Core` |
+| `XxxControl.AvaloniaUI` | 現 `SnipCaptureUI`（改名）。オーバーレイ・入力・Facade | Core / `CropViewControl.AvaloniaUI` / `PlatformFactory` |
+
+**Core へ置く型（案）**:
+
+| 型 | 内容 |
+| --- | --- |
+| `CaptureSettings` | 45 項目の record。色は `System.Drawing.Color`（クロスプラットフォームのプリミティブ）へ変更。`ToNonNull` / `Validate` / `MergeWithDefaults` を単一所有 |
+| `CaptureResult` | `(EsBitmap? Image, EsPixelRect Bounds)`。キャンセルは `Image = null`（0 サイズの画像を作らない） |
+| `CropBoundsMath` | `Compute(EsRect selection, EsSize imageSize, double minSelectionSize)` → `EsPixelRect`（空 = 切り出し不可）。**閉区間（+1）と端のクランプ**を単一所有 |
+| `CaptureSessionState` | 実行中・完了・破棄の状態機械（`TryBegin` / `Complete` / `Cancel` / `IsRunning`）。再入禁止と `TaskCompletionSource` の寿命を含む |
+| `ICaptureOwnerWindow`（ポート） | `IsVisible` / `GetBounds` / `SetBounds` / `SetOpacity` / `Show` / `Activate`。UI 側が境界 1 行で実装する |
+
+**移行手順（各段でビルドとテストが通る状態を保つ）**:
+
+| 段 | 内容 | 検証 |
+| --- | --- | --- |
+| 1 ✅ | `CropBoundsMath` を `CaptureSessionControl.Core` へ新設し、`CropSession.ComputeCropBounds` を委譲。`CaptureSelectionMath`（MewUI）は削除して境界値テストを Core へ集約（重複解消） | 既存テストがそのまま通ることを確認（1710 件 green。移設前 1702 件 − 25 件 + 33 件） |
+| 2 ✅ | `CaptureSettings` / `CaptureResult` を `CaptureSessionControl.Core` へ移設（色型を `System.Drawing.Color` へ）。Avalonia 側は境界（`FadeMaskDragRectSettingsExtensions` / `CaptureSettingsMapper`）で変換 | ビルド成功（警告 0）/ 1710 件 green |
+| 3 | `Settings` → `CaptureSettings` の変換を `app.Core` へ集約（現在は `app.AvaloniaUI/CaptureSettingsMapper`。MewUI も同じ変換を通す） | 両 UI が同じ変換を通ること |
+| 4 | `CaptureSessionState` を Core へ新設し、両 UI のセッションがこれを使う | 追加テスト（再入・二重完了・破棄・キャンセル） |
+| 5 | オーナーの退避・復帰を `ICaptureOwnerWindow` 越しの共通手順へ（除外を先に設定・`Hide` を使わない・復帰は位置と不透明度） | 実機（写り込み 0・ちらつきなし） |
+| 6 | `CaptureSessionControl.AvaloniaUI` へ改名（39.5。39.4 の段 1〜5 は現行名のまま進め、まとめて改名する） | ビルド・全テスト・`verify-ui.ps1` |
+
+**期待効果**:
+
+- 切り出し規則（2 実装 → 1）、設定の部分更新（Avalonia のみ → 共通）、セッション状態（2 実装 → 1）が解消される
+- 閉区間・最小サイズ・端のクランプが 1 箇所から導かれ、両 UI の挙動が一致する
+- 境界値テストが 1 箇所に集まり、UI を増やしても同じテストが効く
+
+**リスク**:
+
+- `CaptureSettings` の色型変更は公開 API の破壊的変更だが、利用者は本リポジトリ内のみ（影響は限定的）
+- MewUI 側は現在 `CaptureSettings` を使っていないため、段 3〜5 で設定経路が変わる（挙動差が出やすいため段ごとに実機確認する）
+
+### 39.5 改名（`CaptureSessionControl.AvaloniaUI`。実施済み）
+
+`SnipCaptureUI` だけが `XxxControl.AvaloniaUI` の命名規則から外れている。規則の実態を確認した結果は次のとおり。
+
+| 規則 | 実例（実測） |
+| --- | --- |
+| プロジェクト名 = 主要公開型の名前 + UI 接尾辞 | `LoupeControl.AvaloniaUI` / `CropViewControl.Core` / `ZoomViewControl.MewUI` |
+| 名前空間は接尾辞（`Control` / `Factory`）を落とした語幹 | `LoupeControl.AvaloniaUI` → `Estable.AvaloniaUI.Loupe` / `CropViewControl.Core` → `Estable.CropView` / `PlatformFactory` → `Estable.AvaloniaUI.Platform` |
+
+つまり `Control` は **ベースクラスの主張ではなく「プロジェクト名＝型名」「名前空間＝語幹」を成立させる目印**（名前空間と型名の衝突を避ける役割）。型が実際に `Control` を継承しているかは問われていない。したがって「Control 型を持たない（`Window` + Facade）」という点は A / C に共通で、**A と C を分ける理由にならない**。
+
+分けるのは語幹が表す範囲:
+
+| 案 | 名前（Core / Avalonia） | 語幹が表すもの | 評価 |
+| --- | --- | --- | --- |
+| A | `SnipCaptureControl.Core` / `.AvaloniaUI` | 撮影（Snip）のみ | 実体の半分（`StartCaptureAsync`）しか表さない。ライブラリは切り出し（`StartCropAsync` / `CropSession` 249 行）も所有する |
+| **C（推奨）** | `CaptureSessionControl.Core` / `.AvaloniaUI` | 撮影と切り出しを貫く**セッションのライフサイクル** | Facade の実体（開始 → 確定/キャンセル待ち → 後片付け、再入禁止）と一致し、39.4 で Core へ出す `CaptureSessionState` とも揃う |
+| B | `SnipCaptureUI.Core` / `.AvaloniaUI` | 撮影のみ（UI が冗長） | 変更は最小だが語幹の問題は残る |
+| D | `SnipCaptureOverlay.Core` / `.AvaloniaUI` | オーバーレイ | 切り出し（プレビュー上のオーバーレイ）も含むため狭い |
+
+**推奨は C**。改名コストは A と変わらない（Facade の識別子 `SnipCapture` を置き換える点は同じ。実測: コード 179 箇所 / ドキュメント 202 箇所）。語幹だけが「実体の全体」を表す C のほうが妥当。
+
+**採用**: 案 C（`CaptureSessionControl.Core` / `CaptureSessionControl.AvaloniaUI`）。あわせて内部型 `CaptureSession` を `SelectionCaptureSession` へ改名した（名前空間の末尾と同名になり、`Estable.AvaloniaUI.CaptureSession.CaptureSession` という紛らわしい完全名になるため）。段 6 で実施済み。
+
+**実施で判明した点**: サンプルプロジェクトの名前空間はプロジェクト名由来（`CaptureSessionControl.AvaloniaUI.Sample`）のため、ルート セグメントが公開クラス名と衝突して `CS0118`（名前空間を型として使用）になった。`Estable.AvaloniaUI.CaptureSession.Sample` へ揃えて解消した（ライブラリの名前空間を `Estable.AvaloniaUI.CaptureSession` にしたのと同じ理由）。
+
+C に伴う追加リネームが 1 件ある。内部型 `CaptureSession` は名前空間の末尾セグメント（`Estable.AvaloniaUI.CaptureSession`）と同名になり、`Estable.AvaloniaUI.CaptureSession.CaptureSession` という紛らわしい完全名になるため、`SelectionCaptureSession` へ改名する（撮影種別の選択を担う実体を表す、より明確な名前。実測 16 箇所）。結果として `CaptureSessionControl`（Facade）/ `SelectionCaptureSession`（撮影）/ `CropSession`（切り出し）という、層が読める並びになる。
+
+改名の影響範囲（案 C の場合）:
+
+```text
+src/SnipCaptureUI/src/SnipCaptureUI.csproj             → src/CaptureSessionControl.AvaloniaUI/src/CaptureSessionControl.AvaloniaUI.csproj
+src/SnipCaptureUI/{sample,tests}/                      → 同上（CaptureSessionControl.AvaloniaUI.Sample / .Tests）
+RootNamespace Estable.AvaloniaUI.SnipCaptureUI         → Estable.AvaloniaUI.CaptureSession
+公開型 SnipCapture                                      → CaptureSessionControl（コード 179 箇所 / ドキュメント 202 箇所）
+内部型 CaptureSession                                   → SelectionCaptureSession（16 箇所。名前空間末尾との同名を回避）
+SaveEvidence.slnx / .github/dependabot.yml / InternalsVisibleTo / 参照 2 件（app.AvaloniaUI / LineDetection.Sample）
+README / SPEC（2 ファイル）・複数UI対応作業.md の記載
+```
+
+39.4 の Core 抽出と同時に実施する場合、39.4 の段 1〜5 は現行名のまま進め、**段 6 でまとめて改名**するのが衝突が少ない（`using` の書き換えが 1 回で済む）。
+
+### 39.6 MewUI 実装の扱い（`CaptureSessionControl.MewUI`）
+
+39.4 の設計は「共有できる規則を Core へ出す」ことに限定しており、**MewUI 側の実装がアプリ内に残る**。両 UI の役割の範囲は実際に異なる（実測）。
+
+| 観点 | Avalonia 版 | MewUI 版 |
+| --- | --- | --- |
+| 実体の置き場所 | `SnipCaptureUI`（独立プロジェクト） | `app.MewUI` 内（`Views/CaptureOverlayWindow.cs` / `Views/PreviewCropSession.cs` / `Services/CaptureFlow.cs`） |
+| アプリ固有型への依存 | **なし**（`AppServices` / `MainViewModel` / `Settings` を参照しない） | **あり**（`AppServices` / `MainViewModel` / `Settings` / `AppLog` を直接参照） |
+| 利用ホスト | 2（`app.AvaloniaUI` / `LineDetection.Sample`） | 1（`app.MewUI`） |
+| 位置づけ | 汎用ライブラリ | アプリの実装 |
+
+**結論**: 対称性のためには `CaptureSessionControl.MewUI` を作るのが妥当だが、**単なる移設では作れない**（アプリ固有型に結合しているため）。先に依存を反転させる必要がある。
+
+**必要な反転（3 点）**:
+
+| # | 現在の依存 | 反転後 |
+| --- | --- | --- |
+| 1 | `Settings`（`Estable.SaveEvidence`） | `CaptureSettings`（Core）。39.4 の段 2 で解消する |
+| 2 | `MainViewModel`（`Estable.SaveEvidence.ViewModels`） | ポート `ICaptureTarget`（Core）。参照は「現在の画像の取得」と「切り出しの適用」のみ |
+| 3 | `AppServices` / `AppLog` | 明示引数（設定・サービス）と注入 `ILogger`。結果の反映（Undo へ積む・未保存化・プレビュー設定・ステータス通知）はアプリ側の `ICaptureTarget` 実装へ移す |
+
+**レイヤー配置（分割の結論）**:
+
+| 要素 | 配置 | 理由 |
+| --- | --- | --- |
+| `CaptureOverlayWindow`（オーバーレイの描画・入力・切り出し） | `CaptureSessionControl.MewUI` | UI 部品だがアプリ固有でない（Avalonia 版 `OverlayWindow` と同層） |
+| 撮影セッション（オーナー退避 → 取得 → 確定/キャンセル → 復帰） | 同上 | Avalonia 版 `SelectionCaptureSession` と同じ役割 |
+| `PreviewCropSession`（プレビューの切り出し） | 同上 | Avalonia 版 `CropSession` と同じ役割 |
+| `CapturePage`（ページ構成・ツールバー・テンプレート・ホットキー配線） | `app.MewUI` のまま | アプリのページ（再利用対象ではない） |
+| 結果の反映（Undo 退避・未保存化・プレビュー設定・ステータス通知） | `app.MewUI`（`ICaptureTarget` の実装） | アプリのドメイン操作 |
+
+**守るべき制約**: `CaptureSessionControl.MewUI` は `app.Core`（`Estable.SaveEvidence`）を参照しない（参照するとアプリのコアへ依存し、ライブラリとして成立しない）。`CaptureSettings` と `ICaptureTarget` は Core 側に置く。
+
+**YAGNI との整合**: MewUI 側の利用ホストは現時点で 1 つだけなので、分離しなくても動作に影響はない。分離する理由は「将来の再利用」ではなく、**`XxxControl.*` の対称性と、コア規則（切り出し・設定・セッション）の単一所有を両 UI で成立させること**。分離しない場合でも 39.4 の段 1〜4（共有規則の Core 化）で重複は解消するが、MewUI のセッションはアプリ内に残り、役割の範囲は非対称のままになる。
+
+**手順への追加**:
+
+| 段 | 内容 | 検証 |
+| --- | --- | --- |
+| 7 ✅ | `ICaptureTarget` を Core へ新設（現在の画像・画像差し替えの通知・切り出しの適用）。`app.MewUI` の実装は段 8b で行う | 契約テスト 3 件を追加（1727 件 green） |
+| 8a ✅ | `CaptureSessionControl.MewUI` を新設し、`CaptureOverlay`（旧 `CaptureOverlayWindow`）/ `ImageView` を移設（`Settings` → `CaptureSettings`、`AppServices` → `CaptureOverlayServices`、`AppLog` → 注入 `ILogger`）。`ImageDrawMath` は Core、`WindowPlacementMath` は `PlatformFactory.MewUI` へ移設 | ビルド成功（警告 0）/ 1727 件 green |
+| 8b ✅ | `PreviewCropSession` → `CropOverlay` として `CaptureSessionControl.MewUI` へ移設（`MainViewModel` → `ICaptureTarget`（`MainViewModelCaptureTarget`）/ `Settings` → `CaptureSettings` / `AppLog` → 注入 `ILogger` / `AppStyles` → テーマ色の注入と `RefreshAppearance`）。あわせて **切り出しの `Ctrl+R` を実装**（MewUI 版に無く、Avalonia 版の `MenuItem.InputGesture` と差があった） | 実機: `切出し開始: image=1920x1200` → `切出し確定: rect=504,315,782,522` → 画像が `782x522` へ差し替わることを確認 / ビルド成功（警告 0）/ 1727 件 green |
+| 9 ✅ | `app.MewUI` はページ・共通スタイル・`ICaptureTarget` の実装（`MainViewModelCaptureTarget`）・`CaptureFlow`（ライブラリのファサード呼び出し）のみを残す状態になった。`LoupeAppearance`（プレビューの常時ルーペ用）は `Settings` を入力とするアプリ側の適用ロジックとして残す（任意の改善: ライブラリの `ApplyLoupe` は `CaptureSettings` を入力とするため、統合すると境界の変換が増える） | 実機（撮影 3 種・切り出し・マルチモニター）/ ビルド成功（警告 0）/ 1727 件 green |
+
+順序は 7 → 8 → 9（先にポートを用意しないと移設できない）。39.5 の改名（段 6）とは独立して実施できる。
+
 ## 40. リスク・判断が必要な点
 
 - **幾何型の全面置換は行わない**。ソリューション全体で Avalonia の幾何型
@@ -2951,3 +3101,7 @@ XxxControl.MewUI         … MewUI 版の実装。同じコアロジックを Me
 | 2026-09-21 | No.64。`複数UI対応作業.md` を他ドキュメントから参照しない方針にした。No.63 で移設時にパスを更新した 7 箇所（`src/app.Core/SPEC_System.md` の 2 箇所と `*.MewUI/README.md` 5 ファイルの「関連ドキュメント」）を削除した。あわせて `.vscode` を共有するため `launch.json` に MewUI 版の起動構成（F5）を追加し、`settings.json` にローカル固有の値が無いことを確認した | 全 md の残存参照が本ドキュメント自身の作業ログのみになることを確認 / `settings.json` は Python の venv 設定のみ（絶対パス・ローカル NuGet ソースなし）/ ビルド成功（警告 0） |
 | 2026-09-21 | No.65。MewUI 版のキャプチャ開始時のちらつきを解消した。原因は 2 つあった。(1) 撮影の前にメインウィンドウを `Hide` し、復帰時に `Show` していたため、ウィンドウが再作成されて「一瞬表示 → 非表示 → 再表示」のちらつきが出ていた（Avalonia 版が同じ理由で非表示をやめている）。(2) オーバーレイは表示時にウィンドウ背景（実測 247,248,250）で塗られるため、撮影画像を描くまでの約 65 ms が白い面として見えていた。撮影前の退避を位置の変更（画面外配置 `-32000` DIP）へ変え、併せて撮影前の待機（`HideBeforeCaptureDelayMs` の 50 ms）を削除した。オーバーレイは `Opacity = 0` で表示して `FrameRendered` を数え、画像が合成されたフレームで透明を解除するようにし、背景色は撮影画像の平均色へ合わせた | 画面を 15 ms 間隔で実測（同一スクリプトで修正前後を比較）: 白い背景の表示 **65 ms → 1 フレーム（16 ms）**、色差 **111 → 23**、画面が何も覆わない時間 **151〜203 ms → 83〜114 ms**、ウィンドウ再作成の往復を廃止（`GetWindowRect` が `-32768,-32768` へ移動し、終了後に元の位置へ復帰することを実測）/ ビルド成功（警告 0）/ 全テスト green |
 | 2026-09-21 | No.66。MewUI 版の撮影対象を**全モニター（仮想スクリーン）**へ広げた。1 モニターに限定していたため、カーソルのあるモニターでしか操作できず（別のモニターへ移動してのスクリーン選択 / ウィンドウ選択 / 領域選択ができない）、「自身のウィンドウがいるスクリーンでしか機能しない」状態だった。オーバーレイは仮想スクリーン全面を覆い、画像は `CaptureVirtualScreen` で全モニターを 1 枚として取得する。全モニターを跨ぐウィンドウは論理座標（DIP）の配置が OS に補正される（実測: `y=-1200` → `0`）ため、`IWindowService.SetBounds`（`SetWindowPos`）を新設して物理ピクセルで置き直し、起動時の配置より後（透明な 1 フレーム目）に適用した（`WindowState.Maximized` は 1 モニターへ寄るため廃止）。サイズラベルの `DisplayScale` は選択位置のモニターの実倍率を表示するようにした（1 枚のウィンドウでは倍率が 1 つに定まるため）。未使用になった `CaptureSelectionMath.SelectScreen` を削除した | 実機で確認（モニター 2 = 100% / プライマリ = 125% の混在環境）: オーバーレイが仮想スクリーン全面 `0,-1200 3840x3360` に一致 / **スクリーン選択** → 確定矩形 `(1914, 0, 1920, 1200)`（= モニター 2 の全域）/ **領域選択** → ドラッグした物理矩形と一致する `(2724, 500, 301, 201)`（描画位置・暗転・ラベル・ルーペも撮影で目視確認）/ **ウィンドウ選択** → 置いたウィンドウと一致する `(2624, 425, 500, 350)` / `DisplayScale` がモニター 2 で `100%`、プライマリで `125%` / 追加テスト 1 件（NoOp の `SetBounds`）/ ビルド成功（警告 0）/ 1702 件 green |
+| 2026-09-21 | No.67。セッション層の Core 抽出（39.4）の段 1・段 2 を実施した。**段 1**: 切り出し矩形の計算が Avalonia 版（`CropSession.ComputeCropBounds`）と MewUI 版（`CaptureSelectionMath`）で二重実装されていたため、`CaptureSessionControl.Core` を新設して `CropBoundsMath` へ集約し、両 UI を委譲へ変更した（`CaptureSelectionMath` とそのテストは削除）。**段 2**: `CaptureSettings` / `CaptureResult` を同 Core へ移設し、色型を UI 非依存の `System.Drawing.Color` へ変更した（Avalonia 側は境界で 1 行変換）。`EsPixelRect` に `IsEmpty` を追加した | ビルド成功（警告 0）/ 1710 件 green（29 プロジェクト。移設前 1702 件 − 25 件 + 33 件）/ 新規プロジェクトのテスト 33 件（クランプ・丸め・最小サイズ・閉区間） |
+| 2026-09-21 | No.68。セッション層の Core 抽出の段 3〜6 を実施した。**段 3**: Settings → CaptureSettings の変換（CaptureSettingsMapper）を pp.AvaloniaUI から pp.Core へ移設し、MewUI 版も同じ変換を使えるようにした。**段 4**: セッションの状態管理（再入禁止・完了は 1 回だけ）を CaptureSessionState、結果の単一確定を `CaptureCompletion<T>` として Core へ新設し、Avalonia 版の CropSession と MewUI 版の CaptureOverlayWindow / PreviewCropSession が使うようにした。**段 5**: オーナーウィンドウの退避と復帰（除外の設定 → 画面外へ退避 → 撮影 → 復帰 → 除外の解除）を CaptureOwnerScope と ICaptureOwnerWindow として Core へ集約し、両 UI の 5 行ほどのアダプタへ置き換えた。**段 6**: SnipCaptureUI を CaptureSessionControl.AvaloniaUI へ改名した（案 C。公開型 SnipCapture → CaptureSessionControl、内部型 CaptureSession → SelectionCaptureSession、名前空間 Estable.AvaloniaUI.CaptureSession） | ビルド成功（警告 0）/ 1724 件 green（29 プロジェクト。段 1・2 の 1710 件 + 状態管理 9 件 + 退避手順 5 件）/ 改名後のアンカー検証（リネームした 4 文書の目次がすべて実在の見出しへ解決）/ サンプルの名前空間衝突（CS0118）を Estable.AvaloniaUI.CaptureSession.Sample で解消 |
+| 2026-09-21 | No.69。セッション層の Core 抽出の段 7・段 8a を実施した。**段 7**: 撮影・切り出しの結果を適用するポート `ICaptureTarget`（現在の画像・画像差し替えの通知・切り出しの適用）を Core へ新設し、契約テスト 3 件を追加。**段 8a**: `CaptureSessionControl.MewUI` を新設し、`CaptureOverlayWindow` → `CaptureOverlay`（公開ファサード）/ `ImageView` を移設した。アプリ依存（`Settings` / `AppServices` / `AppLog` / `SettingsColorMath` / `LoupeAppearance`）を除去し、`CaptureSettings`・`CaptureOverlayServices`（サービスと設定の束）・注入 `ILogger` へ置き換え、ルーペ外観の反映はライブラリ内の `ApplyLoupe` として保持した（Avalonia 版の `LoupeAppearance` と同内容）。`ImageDrawMath` は両 UI で共用するため Core へ、`WindowPlacementMath` は MewUI の DIP 変換のため `PlatformFactory.MewUI` へ移設した | ビルド成功（警告 0）/ 1727 件 green（29 プロジェクト）/ `FadeMaskControl.Core` へ `InternalsVisibleTo`（`FadeMaskLabels` の共用）/ 新規プロジェクトの README・SPEC_ExtFunc・SPEC_System を作成 |
+| 2026-09-21 | No.70。セッション層の Core 抽出の段 8b・段 9 を実施し、設計の全段を完了した。**段 8b**: `PreviewCropSession` を `CropOverlay` として `CaptureSessionControl.MewUI` へ移設した（`MainViewModel` → `ICaptureTarget` の実装 `MainViewModelCaptureTarget` / `Settings` → `CaptureSettings` / `AppLog` → 注入 `ILogger` / `AppStyles.ThemeChanged` → ホストが購読し `RefreshAppearance` を呼ぶ）。あわせて **切り出しの `Ctrl+R` を実装**した（MewUI 版には無く、Avalonia 版の `MenuItem.InputGesture` と機能差があった）。キーは `PageContent.OnKeyDown` としてページ固有のショートカットを持たせ、`MainWindow.PreviewKeyDown` から表示中のページへ転送する（非表示のページで発火しない）。**段 9**: `app.MewUI` はページ・共通スタイル・`ICaptureTarget` の実装・`CaptureFlow`（ライブラリのファサード呼び出し）のみを残す状態になった | 実機: `切出し開始: image=1920x1200` → `切出し確定: rect=504,315,782,522` → ルーペのソースが `782x522` へ差し替わり、切り出しが端から端まで動作することを確認。撮影は `[CaptureOverlay] 撮影確定: rect=(1914, 0, 1920, 1200)`（モニター 2 の全域）。移設でロガーを注入し忘れるとビルド・テストは緑のままログだけ消える（実機のログで検出し、`AppLog.CreateLogger` とライブラリ内の LoggerMessage 定義で解消）/ ビルド成功（警告 0）/ 1727 件 green（29 プロジェクト） |

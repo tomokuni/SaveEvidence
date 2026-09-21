@@ -18,7 +18,7 @@
     - [6.2 LoupeRenderer](#62-louperenderer)
     - [6.3 描画責務分割](#63-描画責務分割)
     - [6.4 画像入力とピクセル抽出](#64-画像入力とピクセル抽出)
-    - [6.5 LoupeImageExtractor](#65-loupeimageextractor)
+    - [6.5 LoupeImageExtractor（`LoupeControl.Core`）](#65-loupeimageextractorloupecontrolcore)
     - [6.6 LogMessage](#66-logmessage)
     - [6.7 上位AP（消費側）](#67-上位ap消費側)
   - [7. 依存ルール](#7-依存ルール)

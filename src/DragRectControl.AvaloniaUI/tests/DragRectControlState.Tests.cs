@@ -1,4 +1,3 @@
-using Avalonia;
 using Estable.AvaloniaUI.Platform;
 using Estable.DragRect;
 using Estable.Platform.Coordinate;

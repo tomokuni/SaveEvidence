@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
     <ProjectReference Include="..\..\PlatformFactory.Core\src\PlatformFactory.Core.csproj" />
     <!-- 自動切り出しの矩形検出（LineDetection は UI 非依存） -->
     <ProjectReference Include="..\..\LineDetection\src\LineDetection.csproj" />

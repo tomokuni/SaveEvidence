@@ -1,4 +1,3 @@
-using Estable.Platform.Imaging;
 using SkiaSharp;
 using System.Runtime.Versioning;
 using DrawingBitmap = System.Drawing.Bitmap;

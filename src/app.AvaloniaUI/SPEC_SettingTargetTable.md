@@ -17,7 +17,7 @@
 
 ```text
 app
- ├─ SnipCaptureUI（SnipCapture：キャプチャセッション統括の Facade）
+ ├─ CaptureSessionControl.AvaloniaUI（CaptureSessionControl：キャプチャセッション統括の Facade）
  │    ├─ 画面キャプチャ（ScreenSelect / WindowSelect / AreaSelect）
  │    │    └─ OverlayWindow（全画面オーバーレイ）
  │    │         └─ FadeMaskDragRectControl（SelectionOverlay）
@@ -36,7 +36,7 @@ FadeMaskDragRectControl（_selectionOverlay）
   └─ PlatformFactory（Avalonia アダプタ）／PlatformFactory.Native（サービス実装）／PlatformFactory.Core（抽象・値型）
 ```
 
-- **`SnipCaptureUI` は `CropViewControl` を内包しません**。`StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。
+- **`CaptureSessionControl.AvaloniaUI` は `CropViewControl` を内包しません**。`StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。
 - **`CropViewControl` のインスタンスは `app.AvaloniaUI` が所有**します（`CapturePage.axaml` の `crop:CropViewControl x:Name="CropView"`）。プレビュー表示（`Source` / `CenterAlign` / `ViewportBackground`）は app の責務です。
 - `FadeMaskDragRectControl` は**2 つの場所**で再利用されます（資源分離・再利用）：
   1. `OverlayWindow.SelectionOverlay`：画面キャプチャ（領域選択）用
@@ -46,12 +46,12 @@ FadeMaskDragRectControl（_selectionOverlay）
 ### 2.2 各コントロールが公開する外観プロパティ
 
 外観設定は、階層の各コントロールが**公開 API（`AppearanceSettings` / 個別プロパティ）**として提供する。
-下位コントロールの外観は、`FadeMaskDragRectControl`（→ `FadeMaskDragRectSettings`）→ `CropViewControl` → `SnipCaptureUI`（→ `CaptureSettings`）→ `app.AvaloniaUI` の順に委譲して公開される。
+下位コントロールの外観は、`FadeMaskDragRectControl`（→ `FadeMaskDragRectSettings`）→ `CropViewControl` → `CaptureSessionControl.AvaloniaUI`（→ `CaptureSettings`）→ `app.AvaloniaUI` の順に委譲して公開される。
 
 | コントロール | 公開する外観プロパティ | 備考 |
 | --- | --- | --- |
-| `app.AvaloniaUI` | — | `SnipCaptureUI` の `AppearanceSettings`（`CaptureSettings`）へ `CaptureSettingsMapper` で変換して渡す |
-| `SnipCaptureUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。実行中の Crop セッションへ即時反映 |
+| `app.AvaloniaUI` | — | `CaptureSessionControl.AvaloniaUI` の `AppearanceSettings`（`CaptureSettings`）へ `CaptureSettingsMapper` で変換して渡す |
+| `CaptureSessionControl.AvaloniaUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。実行中の Crop セッションへ即時反映 |
 | `CropViewControl` | `AppearanceSettings`（`FadeMaskDragRectSettings`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `ViewportBackground` / `CenterAlign` / `ZoomView`（`ZoomViewControl`） | 外観は `FadeMaskDragRectControl` へ委譲。DPI スケーリングは個別プロパティ（コードから動的設定） |
 | `ZoomViewControl` | `Background` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観 |
 | `FadeMaskDragRectControl` | `AppearanceSettings`（`FadeMaskDragRectSettings`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `Mode` / `WindowTitle` / `ShowFullOverlay` | 下位（DragRect / FadeMask / Loupe）の外観を一括公開 + DPI スケーリングを個別公開 |
@@ -65,22 +65,22 @@ FadeMaskDragRectControl（_selectionOverlay）
 ```text
 SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
   → Settings（ObservableProperty・変更通知）
-  → MainWindow.ApplySnipCaptureSettings（CaptureSettingsMapper.From で CaptureSettings 生成）
-  → SnipCapture.AppearanceSettings（CaptureSettings・部分更新マージ）
+  → MainWindow.ApplyCaptureSessionSettings（CaptureSettingsMapper.From で CaptureSettings 生成）
+  → CaptureSessionControl.AppearanceSettings（CaptureSettings・部分更新マージ）
   → CropViewControl.AppearanceSettings（FadeMaskDragRectSettings・部分更新マージ）
   → FadeMaskDragRectControl.ApplyAppearance
   → DragRectControl / FadeMaskRenderer / LoupeControl の各プロパティ
 ```
 
 - 設定画面の変更は `Settings` の `PropertyChanged` で **即時反映** される。
-- SnipCaptureUI への反映は `CaptureSettings`（nullable record・部分更新）を介して行い、`null` のメンバーは現在値を維持する。
+- CaptureSessionControl.AvaloniaUI への反映は `CaptureSettings`（nullable record・部分更新）を介して行い、`null` のメンバーは現在値を維持する。
 - テーマ・画像配置・市松模様等、app 内で直接処理する項目は個別の購読で反映される。
 - `PlatformFactory` は共通基盤のため、外観設定の公開対象ではない（参考として記載）。
 
 ## 3. 下位コントロールが公開する外観プロパティと上位での公開有無
 
 本節は、**各コントロールが公開する外観プロパティが、直接上位コントロールで公開されているか**を一覧化する。
-下位コントロールの外観は、`FadeMaskDragRectControl`（→ `FadeMaskDragRectSettings`）→ `CropViewControl` → `SnipCaptureUI`（→ `CaptureSettings`）→ `app.AvaloniaUI` の順に委譲して公開される。
+下位コントロールの外観は、`FadeMaskDragRectControl`（→ `FadeMaskDragRectSettings`）→ `CropViewControl` → `CaptureSessionControl.AvaloniaUI`（→ `CaptureSettings`）→ `app.AvaloniaUI` の順に委譲して公開される。
 各上位コントロールで「直接公開（個別プロパティ）」または「`AppearanceSettings` 経由で公開」かを示す。
 
 ### 3.1 DragRectControl の公開外観プロパティ と FadeMaskDragRectControl での公開有無
@@ -173,13 +173,13 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 - `CropViewControl` は `FadeMaskDragRectControl` の `AppearanceSettings` と DPI スケーリング個別プロパティをそのまま公開する（型を透過）。
 - `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` は `AppearanceSettings` には**含まれず**、個別プロパティで公開される（**コードから動的設定**のため設定画面では設定不可）。
 
-### 3.5 CropViewControl の公開外観プロパティ と SnipCaptureUI での公開有無
+### 3.5 CropViewControl の公開外観プロパティ と CaptureSessionControl.AvaloniaUI での公開有無
 
 `CropViewControl` は自身の公開外観プロパティとして `AppearanceSettings`（`FadeMaskDragRectSettings`）、`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling`、`ViewportBackground`、`CenterAlign` 等を公開する。
-`SnipCaptureUI` は**`CaptureSettings`（`SnipCapture.AppearanceSettings`）**を公開しており、Crop セッション開始時に `CaptureSettings` → `FadeMaskDragRectSettings`（`ToFadeMaskDragRectSettings`）に変換して `CropViewControl.AppearanceSettings` へ設定する。
+`CaptureSessionControl.AvaloniaUI` は**`CaptureSettings`（`CaptureSessionControl.AppearanceSettings`）**を公開しており、Crop セッション開始時に `CaptureSettings` → `FadeMaskDragRectSettings`（`ToFadeMaskDragRectSettings`）に変換して `CropViewControl.AppearanceSettings` へ設定する。
 DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling`）は `CaptureSettings` に含まれず、セッションが個別プロパティ（`cropView.Scaling` 等）で設定する。
 
-| CropViewControl の公開プロパティ | SnipCaptureUI での公開有無 | 設定画面で設定 | 備考 |
+| CropViewControl の公開プロパティ | CaptureSessionControl.AvaloniaUI での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
 | `AppearanceSettings`（`FadeMaskDragRectSettings`） | ✅ `CaptureSettings`（`FadeMaskDragRectSettingsExtensions` で変換） | ✅ | `FadeMaskDragRectSettings` ↔ `CaptureSettings`（全て設定画面で設定可能） |
 | `Scaling` | ✅ `cropView.Scaling`（セッションが設定） | —（コードから動的設定） | DPI スケーリング（Crop は 1.0 固定） |
@@ -190,8 +190,8 @@ DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling
 | `SelectionMode`（`FadeMaskDragRectMode`） | — | — | 選択モード。`CaptureSettings` に含まれず、セッション開始時に `CropSession` が決定 |
 | `ZoomView`（`ZoomViewControl`） | — | — | ズーム・パン操作。セッションが内部利用 |
 
-- `app.AvaloniaUI` の `Settings` → `CaptureSettingsMapper.From` → `SnipCapture.AppearanceSettings`（`CaptureSettings`）が設定される。
-- Capture セッション開始時に、`CaptureSettings` → `ToFadeMaskDragRectSettings` → `CropViewControl.AppearanceSettings`（`FadeMaskDragRectSettings`）と**変換**して設定する（`SnipCapture.AppearanceSettings` はあくまで `CaptureSettings` 型で、`CropViewControl.AppearanceSettings` は `FadeMaskDragRectSettings` 型。型が異なるため変換が必要）。
+- `app.AvaloniaUI` の `Settings` → `CaptureSettingsMapper.From` → `CaptureSessionControl.AppearanceSettings`（`CaptureSettings`）が設定される。
+- Capture セッション開始時に、`CaptureSettings` → `ToFadeMaskDragRectSettings` → `CropViewControl.AppearanceSettings`（`FadeMaskDragRectSettings`）と**変換**して設定する（`CaptureSessionControl.AppearanceSettings` はあくまで `CaptureSettings` 型で、`CropViewControl.AppearanceSettings` は `FadeMaskDragRectSettings` 型。型が異なるため変換が必要）。
 - `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` は `CaptureSettings` に含まれず、セッション（`CropSession`）が個別プロパティで設定する（コードから動的設定）。
 - `ViewportBackground` / `CenterAlign` / `SelectionMode` は `CaptureSettings` に含まれず、`app.AvaloniaUI`（`CapturePage`）が直接制御する。
 

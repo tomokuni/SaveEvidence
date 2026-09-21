@@ -280,7 +280,7 @@ public sealed partial class Settings : ObservableObject
     /// <summary>ルーペ表示モード（起動時の初期表示状態）。</summary>
     /// <remarks>
     /// 0=非表示, 1=表示, 2=自動。<br/>
-    /// 設定画面の UI はなく、起動時デフォルトとして <c>MainWindow.ApplySnipCaptureSettings</c> が
+    /// 設定画面の UI はなく、起動時デフォルトとして <c>MainWindow.ApplyCaptureSessionSettings</c> が
     /// <c>CaptureSettings.LoupeVisible</c>（0 以外 = 表示）へ変換する。<br/>
     /// ルーペの表示モード enum の値とは順序が異なるため、int プロパティとして独立して保持する。<br/>
     /// </remarks>

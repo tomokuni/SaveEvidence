@@ -90,22 +90,18 @@ src/app.MewUI/src/
 ├── Services/
 │   ├── MewUIImageWriter.cs           IImageWriter の実装（SkiaSharp でエンコード）
 │   ├── ImageThumbnailLoader.cs       画像ファイルの縮小デコードとキャッシュ
-│   ├── ImageDrawMath.cs              画像の描画先矩形（Uniform / Fill）
 │   ├── SettingsColorMath.cs          設定の色文字列 ⇔ 色の変換
 │   ├── SettingsJsonContext.cs        設定の JSON ソース生成（Native AOT 対応）
 │   ├── LoupeAppearance.cs            設定のルーペ項目の反映（3 箇所で共用）
-│   ├── CaptureSelectionMath.cs       切り出し矩形のクランプと閉区間化
 │   ├── CaptureFlow.cs                キャプチャの開始と結果の反映
 │   ├── EditHistory.cs                編集履歴（戻す / やり直し）の実行
-│   └── WindowPlacementMath.cs        ウィンドウ配置の DIP ⇔ 物理px 変換と妥当性判定
+│   └── MainViewModelCaptureTarget.cs 切り出しの適用先（ICaptureTarget の実装）
 ├── Logging/
 │   └── AppLog.cs                     ログ定義（LoggerMessage）と Serilog のファクトリ
 └── Views/
     ├── MainWindow.cs                 NavigationView の組み立てとページ切り替え
     ├── PageContent.cs                ページの内容と「表示のたびに実行する処理」
     ├── CapturePage.cs                キャプチャページのレイアウト
-    ├── CaptureOverlayWindow.cs       画面全体のキャプチャ選択オーバーレイ
-    ├── PreviewCropSession.cs         プレビュー内の切り出しセッション
     ├── ConfirmDialog.cs              簡易確認ダイアログ（はい / いいえ。保存の上書き確認）
     ├── ClickableToolTip.cs          ツールヒント付きボタンのクリック登録（MewUI の不具合回避）
     ├── AppStyles.cs                 共通スタイル（ナビ・ツールバー・ウィンドウ操作・サムネイル枠・面のテーマ追従）
@@ -114,7 +110,6 @@ src/app.MewUI/src/
     ├── ThumbnailItem.cs              一覧アイテム（枠 + 影 + ラベル。ホバーの枠色と影を担う）
     ├── UndoPage.cs                   Undo 一覧ページ（サムネイル一覧・表示モード・外部表示）
     ├── SettingsPage.cs               設定ページ（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観）
-    ├── ImageView.cs                  画像を領域いっぱいへ描画するビュー
     ├── ThumbnailView.cs              画像を正方形へ収めるサムネイル表示ビュー
     └── OverlayHost.cs                子を親領域の任意位置へ重ねる領域（ルーペの配置）
 
@@ -123,11 +118,8 @@ tests/
 ├── TestHelper.cs               テスト共通ユーティリティ
 ├── MewUIImageWriter.Tests.cs   保存形式・画素数・引数検証（13 件）
 ├── ImageThumbnailLoader.Tests.cs 縮小デコード・キャッシュ・失敗時の扱い（13 件）
-├── ImageDrawMath.Tests.cs      Uniform / Fill の配置と空の扱い（11 件）
 ├── SettingsColorMath.Tests.cs  色文字列の解析と整形（22 件）
-├── CaptureSelectionMath.Tests.cs モニター選択・クランプ・丸め・閉区間化（25 件）
 ├── AppLog.Tests.cs             ログ定義の書式と IsEnabled 分岐（3 件）
-└── WindowPlacementMath.Tests.cs 座標変換・スケール正規化・妥当性判定（19 件）
 ```
 
 | コンポーネント | 責務 |
@@ -137,8 +129,8 @@ tests/
 | `MainWindow` | ナビパネル（自前の合成。アイコン + ページ名・選択背景）とページ内容の切り替え、タイトルバー（拡張クライアント領域 + ウィンドウボタン）、配置の復元と保存、自動切り出し中の Escape（キャンセル）の処理 |
 | `PageContent` | ページの要素と、表示のたびに実行する処理（設定の再読込・一覧の再構築）の組 |
 | `CapturePage` | ツールバー・クロップビュー・ルーペ・切り出しオーバーレイ・ステータスの配置とコマンド接続。自動切り出しの検出矩形（水色の実線・ホバーで赤）をオーバーレイ表示し、矩形内のダブルクリックで確定、矩形外のダブルクリックでキャンセルする（Escape は `MainWindow` が処理する） |
-| `CaptureOverlayWindow` | 撮影セッション（オーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し）。オーバーレイはタスクバー・Alt+Tab に出さず、左クリック / Enter で確定、Esc / 非アクティブ化でキャンセルする |
-| `PreviewCropSession` | プレビュー内の切り出し（座標変換ポートの管理・確定・キャンセル） |
+| `CaptureOverlay`（`CaptureSessionControl.MewUI`） | 撮影セッション（オーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し）。オーバーレイはタスクバー・Alt+Tab に出さず、左クリック / Enter で確定、Esc / 非アクティブ化でキャンセルする |
+| `CropOverlay`（`CaptureSessionControl.MewUI`） | プレビュー内の切り出し（座標変換ポートの管理・確定・キャンセル）。適用先は `ICaptureTarget` 経由 |
 | `ConfirmDialog` | 簡易確認ダイアログ（はい / いいえ）を表示して選択を返す。`MainWindow` が `MainViewModel.ConfirmOverwriteAsync` へ配線する |
 | `ClickableToolTip` | クリックできるボタンへツールチップとクリック処理をまとめて登録する。MewUI の不具合でツールチップ表示中の押下が取り消されるため、`Click` が発生しなかった押下を `MouseUp` で補完する |
 | `AppStyles` | ナビ・ツールバー・ウィンドウ操作ボタン・サムネイル枠・面（ナビパネル / ステータスバー / プルダウン / 設定カード）の共通スタイル（`StyleName` で適用する `StyleSheet`）とレイアウト値（Avalonia 版と同一）を単一所有する。状態で変化するプロパティとテーマに追従する面の色はローカル値で設定せず本スタイルで与える。テーマの適用（`ApplyTheme`）と、スタイルで表せない値の更新通知（`ThemeChanged`）も本クラスが担う |
@@ -147,18 +139,18 @@ tests/
 | `FolderViewPage` | フォルダ一覧のツールバー・サムネイル一覧・ステータスバー（保存先フォルダを右端へ寄せる） |
 | `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし） |
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。変更の即時保存・テーマの即時適用・ホットキー入力を担う |
-| `ImageView` / `ThumbnailView` | 画像の配置（Fill / Uniform）を担う表示ビュー（配置計算は `ImageDrawMath` が所有） |
+| `ThumbnailView` | 画像の配置（Uniform）を担う表示ビュー（配置計算は `ImageDrawMath`（Core）が所有） |
 | `OverlayHost` | 子を親領域の任意位置へ重ねる Panel（位置は配置フェーズで関数から評価する） |
 | `MewUIImageWriter` | `IImageWriter` の実装。拡張子から保存形式を決めて SkiaSharp でエンコードする |
 | `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ |
-| `ImageDrawMath` | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数） |
+| `ImageDrawMath`（`CaptureSessionControl.Core`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。`Settings` を参照する側に置く） |
 | `LoupeAppearance` | 設定のルーペ項目をルーペコントロールへ反映（プレビュー / 撮影 / 切り出しで共用） |
-| `CaptureSelectionMath` | カーソル下のモニター選択・切り出し矩形のクランプと丸め・閉区間化（純粋関数）。切り出しは「始点・終点のピクセルを含む」閉区間のため、選択矩形（半開区間）へ終点の 1 ピクセルを加える（Avalonia 版と同じ規則） |
+| `CropBoundsMath`（`CaptureSessionControl.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。Avalonia 版と共用する（`CaptureOverlay` / `CropOverlay` が使用） |
 | `CaptureFlow` | キャプチャの開始（多重起動の防止）と結果の反映（Undo 退避 → プレビュー設定） |
 | `EditHistory` | 編集履歴の移動（履歴からの画像の取り出しとプレビューへの差し替え） |
-| `WindowPlacementMath` | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
+| `WindowPlacementMath`（`PlatformFactory.MewUI`） | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
 | `AppLog` | ログ定義と Serilog のファクトリ（Avalonia 版と同一のファイル・書式。`Logging/AppLog.cs`） |
 | `IconLoader` | Avalonia 版と共有する SVG アイコンを Skia でラスタライズし、画像・ウィンドウアイコン（ICO）を生成する（`Icons/IconLoader.cs`） |
 
@@ -293,24 +285,24 @@ classDiagram
     MainWindow ..> MainViewModel : 束縛
     MainWindow ..> ConfirmDialog : 上書き確認の配線
     CapturePage ..> CropViewControl : 配置
-    CapturePage ..> PreviewCropSession : 切り出し
+    CapturePage ..> CropOverlay : 切り出し（CaptureSessionControl.MewUI）
     CapturePage ..> CaptureFlow : 撮影の開始
     CapturePage ..> EditHistory : 履歴の移動
     CapturePage ..> OverlayHost : ルーペの絶対配置
     OverlayHost ..> LoupeControl : 配置
-    PreviewCropSession ..> FadeMaskDragRectControl : 配置（Crop）
-    PreviewCropSession ..> MainViewModel : CropPreviewCommand
-    CaptureOverlayWindow ..> LoupeAppearance : ルーペの外観
-    PreviewCropSession ..> LoupeAppearance : ルーペの外観
-    CapturePage ..> LoupeAppearance : ルーペの外観
+    CropOverlay ..> FadeMaskDragRectControl : 配置（Crop）
+    CropOverlay ..> ICaptureTarget : 切り出しの適用
+    MainViewModelCaptureTarget ..> MainViewModel : CropPreviewCommand
+    MainViewModelCaptureTarget ..> ICaptureTarget : 実装
+    CropOverlay ..> CaptureOverlay : ルーペの外観（ApplyLoupe）
+    CapturePage ..> LoupeAppearance : ルーペの外観（プレビューの常時表示）
     Program ..> SettingsJsonContext : 設定のソース生成
     SettingsService ..> SettingsJsonContext : 型情報の取得
-    CaptureFlow ..> CaptureOverlayWindow : セッションの実行
-    CaptureOverlayWindow ..> ImageView : 下敷きの画像
-    CaptureOverlayWindow ..> FadeMaskDragRectControl : 配置（Area / Screen / Window）
-    CaptureOverlayWindow ..> CaptureSelectionMath : 切り出し矩形
-    CaptureOverlayWindow ..> IElementFinder : 要素の検出
-    CaptureOverlayWindow ..> ICaptureService : 画面の取得
+    CaptureFlow ..> CaptureOverlay : セッションの実行
+    CaptureOverlay ..> ImageView : 下敷きの画像
+    CaptureOverlay ..> FadeMaskDragRectControl : 配置（Area / Screen / Window）
+    CaptureOverlay ..> IElementFinder : 要素の検出
+    CaptureOverlay ..> ICaptureService : 画面の取得
     SettingsPage ..> SettingsColorMath : 色の変換
     SettingsPage ..> ISettingsService : 設定の読み書き
     FolderViewPage ..> ThumbnailView : 配置
@@ -370,7 +362,7 @@ sequenceDiagram
 sequenceDiagram
     participant HK as ホットキー / ボタン
     participant CF as CaptureFlow
-    participant OW as CaptureOverlayWindow
+    participant OW as CaptureOverlay
     participant CS as ICaptureService
     participant OS as オーナーウィンドウ
 
@@ -387,10 +379,11 @@ sequenceDiagram
 ```
 
 ## シーケンス図（プレビューの切り出し）
+
 ```mermaid
 sequenceDiagram
     participant BTN as 切り出しボタン / Enter
-    participant PS as PreviewCropSession
+    participant PS as CropOverlay
     participant CV as CropViewControl
     participant FM as FadeMaskDragRectControl
     participant VM as MainViewModel
@@ -401,9 +394,8 @@ sequenceDiagram
     PS->>FM: SetLoupeSource(PreviewImage)
     Note over FM: ドラッグで選択（座標ラベル・ハンドル・ルーペはコントロールが描画）
     BTN->>PS: Toggle()（選択があれば Confirm）
-    PS->>PS: CaptureSelectionMath.ToPixelRect（画像内へクランプ）
-    PS->>PS: CaptureSelectionMath.ToClosedInterval（終点の 1 ピクセルを含める）
-    PS->>VM: CropPreviewCommand（Undo 退避 → 切り出し → 画像差し替え）
+    PS->>PS: CropBoundsMath.ComputeCropBounds（画像内へクランプ + 閉区間化）
+    PS->>VM: ICaptureTarget.ApplyCrop（Undo 退避 → 切り出し → 画像差し替え）
 ```
 
 ## シーケンス図（フォルダビューページ）
@@ -657,7 +649,6 @@ sequenceDiagram
 | `WindowPlacementMath` | 純粋関数のためヘッドレスで検証する。スケール 0・負値・NaN、画面外判定、四捨五入の境界を含む（19 件） |
 | `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。Uniform / Fill・余白の中央寄せ・空の入力（11 件） |
 | `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。6 / 8 桁・大文字小文字・不正入力・往復変換（22 件） |
-| `CaptureSelectionMath` | 純粋関数のためヘッドレスで検証する。モニターの包含判定・画像外のクランプ・端数の丸め・閉区間化（25 件） |
 | `SettingsService` | ソース生成と反射の書式の一致（既存の設定ファイルとの互換性）を `app.Core.Tests` で検証する（4 件） |
 | `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する（13 件） |
 | `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する（3 件） |

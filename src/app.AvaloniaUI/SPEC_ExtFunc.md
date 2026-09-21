@@ -137,9 +137,9 @@
 | 1 | 表示 | `true` |
 | 2 | 自動 | `true`（0 以外は表示として扱う） |
 
-- 反映経路: `MainWindow.ApplySnipCaptureSettings` がセッション開始前に `CaptureSettings.LoupeVisible`（`LoupeModeValue != 0`）へ変換し、SnipCaptureUI へ渡す
+- 反映経路: `MainWindow.ApplyCaptureSessionSettings` がセッション開始前に `CaptureSettings.LoupeVisible`（`LoupeModeValue != 0`）へ変換し、CaptureSessionControl.AvaloniaUI へ渡す
 - 設定画面にはルーペ表示モードの UI はない（起動時デフォルトとしてのみ使用）
-- キャプチャセッション中のルーペ表示は SnipCaptureUI 側（`LoupePositionMoved` による表示開始等）が制御する
+- キャプチャセッション中のルーペ表示は CaptureSessionControl.AvaloniaUI 側（`LoupePositionMoved` による表示開始等）が制御する
 
 ### 4.6 キーボードショートカット（Ctrl キー）
 
@@ -283,4 +283,4 @@
 | `Information` | `_logger.LogHotKeyReceived` / `LogHotKeyTriggered` | WM_HOTKEY 受信 / 対応するキャプチャ種別 |
 | `Information` | `_logger.LogActivated` / `LogDeactivated` | ウィンドウのアクティブ化 / 非アクティブ化 |
 | `Information` | `_logger.LogStartSelectionMode` / `LogSessionReturned` | キャプチャ開始種別 / セッション戻り値（画像サイズ・矩形） |
-| `Error` | `_logger.LogSettingsApplyError` | 設定変更の SnipCapture 反映で例外 |
+| `Error` | `_logger.LogSettingsApplyError` | 設定変更の CaptureSessionControl 反映で例外 |

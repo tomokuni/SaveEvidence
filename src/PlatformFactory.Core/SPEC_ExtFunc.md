@@ -22,7 +22,7 @@ UI フレームワーク非依存のウィンドウ表示状態。`Avalonia.Cont
 | `WindowSelect` | ウィンドウ選択（カーソル位置の最前面ウィンドウを対象） |
 | `AreaSelect` | 範囲選択（ドラッグで任意矩形） |
 
-UI 実装のキャプチャ UI ライブラリ（`SnipCaptureUI` 等）とホストが共有します。ホストではグローバルホットキーのアクション識別子（`IGlobalHotKeyService<CaptureType>`）としても使用します。
+UI 実装のキャプチャ UI ライブラリ（`CaptureSessionControl.AvaloniaUI` 等）とホストが共有します。ホストではグローバルホットキーのアクション識別子（`IGlobalHotKeyService<CaptureType>`）としても使用します。
 
 ### `HotKeyModifiers`（`[Flags]` enum）
 

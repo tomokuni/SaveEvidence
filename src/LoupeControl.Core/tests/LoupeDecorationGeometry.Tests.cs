@@ -1,4 +1,3 @@
-using Estable.Loupe;
 using Estable.Platform.Geometry;
 using Xunit;
 

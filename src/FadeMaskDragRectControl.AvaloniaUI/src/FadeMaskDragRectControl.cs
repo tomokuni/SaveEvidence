@@ -4,13 +4,10 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
-using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
 using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.Platform.Coordinate;
-using Estable.Platform.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

@@ -47,27 +47,22 @@ src/app.MewUI/
     ├── Services/
     │   ├── MewUIImageWriter.cs        # IImageWriter の MewUI 実装（SkiaSharp でエンコード）
     │   ├── ImageThumbnailLoader.cs    # 画像ファイルの縮小デコードとキャッシュ
-    │   ├── ImageDrawMath.cs           # 画像の描画先矩形（Uniform / Fill）
     │   ├── SettingsColorMath.cs       # 設定の色文字列 ⇔ 色の変換
     │   ├── SettingsJsonContext.cs     # 設定の JSON ソース生成（Native AOT 対応）
     │   ├── LoupeAppearance.cs         # 設定のルーペ項目をルーペへ反映
-    │   ├── CaptureSelectionMath.cs    # 切り出し矩形のクランプと閉区間化
     │   ├── CaptureFlow.cs             # キャプチャの開始と結果の反映
     │   ├── EditHistory.cs             # 編集履歴（戻す / やり直し）の実行
-    │   └── WindowPlacementMath.cs     # ウィンドウ配置の DIP ⇔ 物理px 変換
+    │   └── MainViewModelCaptureTarget.cs # 切り出しの適用先（ICaptureTarget の実装）
     └── Views/
         ├── MainWindow.cs         # ナビパネル（自前の合成）・配置の復元と保存・ウィンドウボタン
         ├── AppStyles.cs          # 共通スタイル（ナビ・ツールバー・ウィンドウ操作・サムネイル枠・テーマ追従の面）
         ├── ClickableToolTip.cs   # ツールヒント付きボタンのクリック登録（MewUI の不具合回避）
         ├── PageContent.cs        # ページの内容と「表示のたびに実行する処理」
         ├── CapturePage.cs        # キャプチャページ（撮影 / 切り出し / ズーム / ルーペ / 履歴）
-        ├── CaptureOverlayWindow.cs # 画面全体のキャプチャ選択オーバーレイ
-        ├── PreviewCropSession.cs   # プレビュー内の切り出しセッション
         ├── ConfirmDialog.cs       # 簡易確認ダイアログ（はい / いいえ。保存の上書き確認）
         ├── FolderViewPage.cs     # フォルダビューページ（サムネイル一覧・表示モード・ソート・更新）
         ├── UndoPage.cs           # Undo 一覧ページ（サムネイル一覧・表示モード・ダブルクリックで外部表示）
         ├── SettingsPage.cs       # 設定ページ（テーマ / 保存 / キャプチャ / ホットキー / 一覧 / 外観）
-        ├── ImageView.cs          # 画像を領域いっぱいへ描画するビュー（キャプチャの下敷き）
         ├── ThumbnailView.cs      # 画像を正方形へ収めるサムネイル表示ビュー
         └── OverlayHost.cs        # 子を親領域の任意位置へ重ねる領域（ルーペの配置）
 └── tests/
@@ -75,10 +70,7 @@ src/app.MewUI/
     ├── TestHelper.cs                    # テスト共通ユーティリティ
     ├── MewUIImageWriter.Tests.cs        # 保存形式・画素数・引数検証（13 件）
     ├── ImageThumbnailLoader.Tests.cs    # 縮小デコード・キャッシュ・失敗時の扱い（13 件）
-    ├── ImageDrawMath.Tests.cs           # Uniform / Fill の配置と空の扱い（11 件）
-    ├── SettingsColorMath.Tests.cs       # 色文字列の解析と整形（22 件）
-    ├── CaptureSelectionMath.Tests.cs    # モニター選択・クランプ・丸め（22 件）
-    └── WindowPlacementMath.Tests.cs     # 座標変換・スケール正規化・画面外判定（19 件）
+    └── SettingsColorMath.Tests.cs       # 色文字列の解析と整形（22 件）
 ```
 
 ## 依存関係（一方向）
@@ -310,7 +302,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 - 出力先: `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持。Serilog）
 - 内容: アプリ起動 / 終了、撮影・切り出しの開始と確定・キャンセル、選択操作（MouseDown / MouseUp / DragStart / KeyDown 等）、ズーム操作（前後のズーム率）、ルーペの状態変更（表示中の選択オーバーレイ）、未処理の例外
 - 未処理の例外は、アプリ全体（`AppDomain`）/ UI スレッド（`Application.DispatcherUnhandledException`）/ 待機されなかったタスク（`TaskScheduler`）の 3 経路を記録します。UI スレッドの例外は記録後に処理済みとして扱い、ウィンドウの表示を維持します（Avalonia 版と同じ）。
-- カテゴリはクラス名（`Program` / `CaptureOverlayWindow` / `PreviewCropSession` / `CapturePage` 等）で、`[DragRect]` / `[FadeMask]` / `[LoupeCtrl]` / `[ZoomIn]` の各ログは各コントロールが出力します。
+- カテゴリはクラス名（`Program` / `CaptureOverlay` / `CropOverlay` / `CapturePage` 等）で、`[DragRect]` / `[FadeMask]` / `[LoupeCtrl]` / `[ZoomIn]` の各ログは各コントロールが出力します。
 
 ## 履歴（戻す / やり直し）
 
@@ -429,6 +421,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File src/app.MewUI/verify-ui.ps1
 > クランプ（`ClampToDomainBounds`）により選択が成立せず、「切り出しが動かない」と誤判定します（実際に誤判定しました）。
 
 ### ウィンドウ配置の保存・復元
+
 | 手順 | 内容 |
 | --- | --- |
 | 1 | 設定の `MainWindowBounds` に既知の値（例 `150, 180 / 900 × 600`）を書き込む |

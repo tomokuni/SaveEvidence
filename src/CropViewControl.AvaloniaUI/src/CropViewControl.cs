@@ -7,12 +7,10 @@ using Avalonia.Media;
 using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable.AvaloniaUI.Loupe;
 using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.AvaloniaUI.ZoomView;
 using Estable.CropView;
 using Estable.FadeMaskDragRect;
 using Estable.Platform.Coordinate;
-using Estable.Platform.Imaging;
 using Microsoft.Extensions.Logging;
 
 namespace Estable.AvaloniaUI.CropView;
@@ -215,12 +213,12 @@ public sealed partial class CropViewControl : Panel
     /// <remarks><see cref="ZoomViewControl.IsFit"/> へ委譲する。ホストは内部 <c>Image.Stretch</c> に依存せず Fit 状態を判定できる。</remarks>
     public bool IsFit => _zoomView.IsFit;
 
-    /// <summary>内包するズーム・パンビューポート（SnipCapture の Crop セッションが座標変換・Fit 状態を利用する）。</summary>
+    /// <summary>内包するズーム・パンビューポート（CaptureSessionControl の Crop セッションが座標変換・Fit 状態を利用する）。</summary>
     /// <remarks>
     /// <see cref="ZoomViewControl"/> を公開する（<c>StartCropAsync</c> の引数として利用するため）。<br/>
     /// ズーム操作（<see cref="ZoomPercent"/> / <see cref="ZoomIn"/> / <see cref="ZoomOut"/> / <see cref="ZoomFit"/>）は本コントロールの公開 API へ委譲済みで、
     /// 通常のホストは <see cref="ZoomView"/> を直接参照する必要はない。<br/>
-    /// SnipCapture の Crop セッション（<see cref="ZoomView"/> の <see cref="ZoomViewControl.IsFit"/> 等）が利用する。
+    /// CaptureSessionControl の Crop セッション（<see cref="ZoomView"/> の <see cref="ZoomViewControl.IsFit"/> 等）が利用する。
     /// </remarks>
     public ZoomViewControl ZoomView => _zoomView;
 

@@ -1,4 +1,3 @@
-using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.Platform;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -146,11 +145,11 @@ internal static partial class AppLog
     // MainWindow（設定・ホットキー・キャプチャ開始）
     // ====================================================================
 
-    /// <summary>設定変更の SnipCapture 反映で例外が発生したことを記録する。</summary>
+    /// <summary>設定変更の CaptureSessionControl 反映で例外が発生したことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="propertyName">変更された設定プロパティ名。</param>
-    [LoggerMessage(LogLevel.Error, "設定変更の SnipCapture 反映で例外が発生: {propertyName}")]
+    [LoggerMessage(LogLevel.Error, "設定変更の CaptureSessionControl 反映で例外が発生: {propertyName}")]
     internal static partial void LogSettingsApplyError(this ILogger logger, Exception ex, string propertyName);
 
     /// <summary>WM_HOTKEY メッセージを受信したことを記録する。</summary>

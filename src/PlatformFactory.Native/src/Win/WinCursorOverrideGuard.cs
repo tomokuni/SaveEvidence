@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using Estable.Platform;
 using Estable.Platform.Geometry;
 
 namespace Estable.Platform.Win;

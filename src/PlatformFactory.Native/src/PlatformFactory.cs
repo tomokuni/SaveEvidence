@@ -1,6 +1,5 @@
 using Estable.Platform.NoOp;
 using Estable.Platform.Win;
-using Estable.Platform;
 using Microsoft.Extensions.Logging;
 
 namespace Estable.Platform;

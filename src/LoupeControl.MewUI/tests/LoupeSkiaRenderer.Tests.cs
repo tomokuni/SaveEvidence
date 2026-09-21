@@ -1,4 +1,3 @@
-using Estable.MewUI.Loupe;
 using Estable.Platform.Geometry;
 using SkiaSharp;
 using Xunit;

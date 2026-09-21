@@ -44,6 +44,9 @@ updates:
       - "/src/ColorPickerControl.AvaloniaUI/sample"
       - "/src/ColorPickerControl.AvaloniaUI/src"
       - "/src/ColorPickerControl.AvaloniaUI/tests"
+      - "/src/CaptureSessionControl.Core/src"
+      - "/src/CaptureSessionControl.Core/tests"
+      - "/src/CaptureSessionControl.MewUI/src"
       - "/src/CropViewControl.AvaloniaUI/src"
       - "/src/CropViewControl.AvaloniaUI/tests"
       - "/src/DragRectControl.AvaloniaUI/sample"
@@ -93,9 +96,9 @@ updates:
       - "/src/LineDetection/sample"
       - "/src/LineDetection/src"
       - "/src/LineDetection/tests"
-      - "/src/SnipCaptureUI/sample"
-      - "/src/SnipCaptureUI/src"
-      - "/src/SnipCaptureUI/tests"
+      - "/src/CaptureSessionControl.AvaloniaUI/sample"
+      - "/src/CaptureSessionControl.AvaloniaUI/src"
+      - "/src/CaptureSessionControl.AvaloniaUI/tests"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 3

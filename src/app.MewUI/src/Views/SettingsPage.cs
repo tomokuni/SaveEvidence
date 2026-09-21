@@ -5,12 +5,8 @@ using Estable.Platform;
 using Estable.SaveEvidence.Enum;
 using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
-using SaveEvidence.MewUI.Icons;
 using SaveEvidence.MewUI.Services;
-using System.Diagnostics;
 using MewUIColor = Aprillz.MewUI.Color;
-using DrawingColor = System.Drawing.Color;
 
 namespace SaveEvidence.MewUI.Views;
 

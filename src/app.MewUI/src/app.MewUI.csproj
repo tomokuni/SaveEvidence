@@ -28,6 +28,10 @@
   <ItemGroup>
     <!-- UI 非依存のコア（設定・ViewModel・画像コンテナ） -->
     <ProjectReference Include="..\..\app.Core\src\app.Core.csproj" />
+    <!-- 撮影・切り出しの共通規則（切り出し矩形の計算） -->
+    <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
+    <!-- MewUI 版の撮影セッション（オーバーレイ・切り出しビュー） -->
+    <ProjectReference Include="..\..\CaptureSessionControl.MewUI\src\CaptureSessionControl.MewUI.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型） -->
     <ProjectReference Include="..\..\PlatformFactory.MewUI\src\PlatformFactory.MewUI.csproj" />
     <!-- ネイティブサービス（キャプチャ・ホットキー等。UI 非依存） -->

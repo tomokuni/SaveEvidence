@@ -116,7 +116,7 @@ SelectionOverlay.Loupe.Source = bitmap;
 
 ## 7. サンプル
 
-- 統合サンプル: `SnipCaptureUI/sample/`（画面キャプチャ・切出しの全体フロー）
+- 統合サンプル: `CaptureSessionControl.AvaloniaUI/sample/`（画面キャプチャ・切出しの全体フロー）
 - 個別サンプル: `DragRectControl/sample/` / `FadeMaskControl/sample/` / `LoupeControl/sample/`
 
 ## 8. ドキュメント

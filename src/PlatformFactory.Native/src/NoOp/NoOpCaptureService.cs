@@ -1,4 +1,3 @@
-using Estable.Platform;
 using Estable.Platform.Geometry;
 using Estable.Platform.Imaging;
 

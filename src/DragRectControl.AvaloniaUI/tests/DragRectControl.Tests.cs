@@ -13,7 +13,6 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
-using Size = Avalonia.Size;
 using Xunit;
 
 namespace Estable.AvaloniaUI.DragRect.Tests;

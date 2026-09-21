@@ -3,7 +3,6 @@ using Avalonia.Media;
 using Estable.AvaloniaUI.Platform;
 using Estable.FadeMask;
 using Estable.Platform.Coordinate;
-using Estable.Platform.Geometry;
 
 namespace Estable.AvaloniaUI.FadeMask;
 

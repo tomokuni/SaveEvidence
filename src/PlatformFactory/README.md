@@ -144,7 +144,7 @@ Win32 / NoOp 実装は `PlatformFactory.Native` が唯一の生成経路とな�
 
 ### 一方向依存
 
-`PlatformFactory`（本プロジェクト）→ `PlatformFactory.Native` → `PlatformFactory.Core` の一方向の階層構造です。上位 AP（DragRectControl / SnipCaptureUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
+`PlatformFactory`（本プロジェクト）→ `PlatformFactory.Native` → `PlatformFactory.Core` の一方向の階層構造です。上位 AP（DragRectControl / CaptureSessionControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
 
 ## 7. サンプル
 

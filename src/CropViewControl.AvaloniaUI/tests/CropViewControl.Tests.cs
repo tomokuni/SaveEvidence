@@ -3,12 +3,10 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
-using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.CropView;
 using Estable.FadeMaskDragRect;
 using Estable.Platform.Geometry;
-using Estable.Platform.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 

@@ -1,11 +1,14 @@
 using Aprillz.MewUI;
+using Estable.MewUI.CaptureSession;
 using Estable.Platform;
+using Estable.SaveEvidence.Services;
+using SaveEvidence.MewUI.Logging;
 
 namespace SaveEvidence.MewUI.Services;
 
 /// <summary>キャプチャ（スクリーン / ウィンドウ / 範囲選択）の開始と結果の反映を担う窓口。</summary>
 /// <remarks>
-/// <b>役割</b>: 撮影 UI（<see cref="Views.CaptureOverlayWindow"/>）を起動し、確定した画像をプレビューへ反映する。<br/>
+/// <b>役割</b>: 撮影 UI（<see cref="CaptureOverlay"/>。CaptureSessionControl.MewUI）を起動し、確定した画像をプレビューへ反映する。<br/>
 /// 呼び出し経路（ツールバーのボタン / グローバルホットキー）は複数あるが、処理は本クラスへ集約する（DRY）。<br/>
 /// <br/>
 /// <b>結果の反映順序</b>:<br/>
@@ -43,7 +46,17 @@ internal static class CaptureFlow
         IsCapturing = true;
         try
         {
-            var image = Views.CaptureOverlayWindow.Capture(services, owner, type);
+            // 撮影セッション（UI 非依存のライブラリ）へ、UI 非依存のサービスと設定を渡す。
+            // 設定の変換は CaptureSettingsMapper（app.Core）が単一所有する。
+            // ログはアプリのログ基盤（AppLog）のロガーを渡し、撮影の開始・確定・キャンセルを同じファイルへ記録する。
+            var overlayServices = new CaptureOverlayServices(
+                PlatformFactory.CreateCaptureService(),
+                PlatformFactory.CreateElementFinder(),
+                PlatformFactory.CreateWindowService(),
+                CaptureSettingsMapper.From(services.Settings.Current, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0),
+                AppLog.CreateLogger(nameof(CaptureOverlay)));
+
+            var image = CaptureOverlay.Capture(owner, type, overlayServices);
             if (image is null)
             {
                 return;

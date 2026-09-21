@@ -12,6 +12,17 @@
     <Project Path="src/app.MewUI/src/app.MewUI.csproj" />
     <Project Path="src/app.MewUI/tests/app.MewUI.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/CaptureSessionControl.Core/" />
+  <Folder Name="/src/CaptureSessionControl.Core/src/">
+    <Project Path="src/CaptureSessionControl.Core/src/CaptureSessionControl.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/CaptureSessionControl.Core/tests/">
+    <Project Path="src/CaptureSessionControl.Core/tests/CaptureSessionControl.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/CaptureSessionControl.MewUI/" />
+  <Folder Name="/src/CaptureSessionControl.MewUI/src/">
+    <Project Path="src/CaptureSessionControl.MewUI/src/CaptureSessionControl.MewUI.csproj" />
+  </Folder>
   <Folder Name="/src/ColorPickerControl.AvaloniaUI/">
     <Project Path="src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj" />
     <Project Path="src/ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj" />
@@ -39,6 +50,7 @@
     <Project Path="src/DragRectControl.MewUI/tests/DragRectControl.MewUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/DragRectControl.MewUI/src/" />
+  <Folder Name="/src/CropViewControl.MewUI/src/" />
   <Folder Name="/src/DragRectControl.AvaloniaUI/">
     <Project Path="src/DragRectControl.AvaloniaUI/sample/DragRectControl.AvaloniaUI.Sample.csproj" />
     <Project Path="src/DragRectControl.AvaloniaUI/src/DragRectControl.AvaloniaUI.csproj" />
@@ -71,6 +83,7 @@
     <Project Path="src/FadeMaskDragRectControl.AvaloniaUI/src/FadeMaskDragRectControl.AvaloniaUI.csproj" />
     <Project Path="src/FadeMaskDragRectControl.AvaloniaUI/tests/FadeMaskDragRectControl.AvaloniaUI.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/FadeMaskDragRectControl.MewUI/src/" />
   <Folder Name="/src/LineDetection/">
     <Project Path="src/LineDetection/sample/LineDetection.Sample.csproj" />
     <Project Path="src/LineDetection/src/LineDetection.csproj" />
@@ -100,6 +113,7 @@
     <Project Path="src/PlatformFactory.MewUI/src/PlatformFactory.MewUI.csproj" />
     <Project Path="src/PlatformFactory.MewUI/tests/PlatformFactory.MewUI.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/PlatformFactory.MewUI/src/" />
   <Folder Name="/src/PlatformFactory.Native/">
     <Project Path="src/PlatformFactory.Native/src/PlatformFactory.Native.csproj" />
     <Project Path="src/PlatformFactory.Native/tests/PlatformFactory.Native.Tests.csproj" />
@@ -108,10 +122,10 @@
     <Project Path="src/PlatformFactory/src/PlatformFactory.csproj" />
     <Project Path="src/PlatformFactory/tests/PlatformFactory.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/SnipCaptureUI/">
-    <Project Path="src/SnipCaptureUI/sample/SnipCaptureUI.Sample.csproj" />
-    <Project Path="src/SnipCaptureUI/src/SnipCaptureUI.csproj" />
-    <Project Path="src/SnipCaptureUI/tests/SnipCaptureUI.Tests.csproj" />
+  <Folder Name="/src/CaptureSessionControl.AvaloniaUI/">
+    <Project Path="src/CaptureSessionControl.AvaloniaUI/sample/CaptureSessionControl.AvaloniaUI.Sample.csproj" />
+    <Project Path="src/CaptureSessionControl.AvaloniaUI/src/CaptureSessionControl.AvaloniaUI.csproj" />
+    <Project Path="src/CaptureSessionControl.AvaloniaUI/tests/CaptureSessionControl.AvaloniaUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/ZoomViewControl.Core/">
     <Project Path="src/ZoomViewControl.Core/src/ZoomViewControl.Core.csproj" />

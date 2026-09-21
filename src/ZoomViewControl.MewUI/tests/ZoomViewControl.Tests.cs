@@ -1,5 +1,4 @@
 using Aprillz.MewUI;
-using Estable.MewUI.ZoomView;
 using Estable.Platform.Geometry;
 using Estable.ZoomView;
 using SkiaSharp;

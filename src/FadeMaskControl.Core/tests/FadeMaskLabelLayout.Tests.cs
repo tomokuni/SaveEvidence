@@ -1,4 +1,3 @@
-using Estable.FadeMask;
 using Estable.Platform.Geometry;
 using Xunit;
 

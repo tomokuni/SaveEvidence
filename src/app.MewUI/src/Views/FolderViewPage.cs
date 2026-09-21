@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using SaveEvidence.MewUI.Logging;
 using SaveEvidence.MewUI.Services;
 using System.Diagnostics;
-using MewUIColor = Aprillz.MewUI.Color;
 
 namespace SaveEvidence.MewUI.Views;
 

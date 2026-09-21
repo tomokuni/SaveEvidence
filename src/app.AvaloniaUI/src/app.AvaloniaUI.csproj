@@ -48,7 +48,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\app.Core\src\app.Core.csproj" />
-    <ProjectReference Include="..\..\SnipCaptureUI\src\SnipCaptureUI.csproj" />
+    <ProjectReference Include="..\..\CaptureSessionControl.AvaloniaUI\src\CaptureSessionControl.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\ColorPickerControl.AvaloniaUI\src\ColorPickerControl.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\PlatformFactory\src\PlatformFactory.csproj" />
   </ItemGroup>

@@ -1,13 +1,13 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Estable.CropView;
-using Estable.Loupe;
+using Estable.MewUI.CaptureSession;
 using Estable.MewUI.CropView;
-using Estable.MewUI.Loupe;
 using Estable.MewUI.ZoomView;
 using Estable.Platform;
 using Estable.Platform.Geometry;
 using Estable.SaveEvidence.Models;
+using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;
 using Microsoft.Extensions.Logging;
 using SaveEvidence.MewUI.Icons;
@@ -23,7 +23,7 @@ namespace SaveEvidence.MewUI.Views;
 /// Avalonia 版 <c>CapturePage.axaml</c> に相当する。<br/>
 /// プレビュー（ズーム・パン・矩形オーバーレイ）・ルーペ（カーソル追従）・切り出し・撮影・履歴操作を担う。<br/>
 /// 書き出し形式の判定は <see cref="MewUIImageWriter"/>、撮影は <see cref="CaptureFlow"/>、
-/// 切り出しは <see cref="PreviewCropSession"/>、履歴は <see cref="EditHistory"/> へ委譲する。
+/// 切り出しは <see cref="CropOverlay"/>、履歴は <see cref="EditHistory"/> へ委譲する。
 /// </remarks>
 internal static class CapturePage
 {
@@ -86,7 +86,7 @@ internal static class CapturePage
     /// 2. プレビューは Star 行に置き、内容領域の残余全体を占めさせる（ズームビュー）。<br/>
     /// 3. プレビューの上へルーペ（カーソル追従）と切り出しのオーバーレイを重ねる。<br/>
     /// 4. 各コマンドは ViewModel へ直接接続する（キャプチャ開始は <see cref="CaptureFlow"/>、切り出しは
-    ///    <see cref="PreviewCropSession"/>、履歴は <see cref="EditHistory"/> へ委譲する）。<br/>
+    ///    <see cref="CropOverlay"/>、履歴は <see cref="EditHistory"/> へ委譲する）。<br/>
     /// 5. 表示のたびの更新は不要（ViewModel の変更通知で追従する）。
     /// </remarks>
     public static PageContent Build(AppServices services)
@@ -352,7 +352,16 @@ internal static class CapturePage
         // （市松模様の背景色はプレビューの生成側で再適用する）
         AppStyles.ThemeChanged += () => RefreshIcons(iconImages);
 
-        return new PageContent(root);
+        return new PageContent(root, OnKeyDown: e =>
+        {
+            // 切り出しの開始・確定・キャンセルを Ctrl+R でも操作できるようにする
+            // （Avalonia 版はメニュー項目の InputGesture が同じ役割を担う）
+            if (e.ControlKey && e.Key == Key.R)
+            {
+                cropSession.Toggle();
+                e.Handled = true;
+            }
+        });
     }
 
     /// <summary>メニューのプルダウン（ツールバーの ☰ から開く）を生成する。</summary>
@@ -364,7 +373,7 @@ internal static class CapturePage
     /// Avalonia 版の <c>MenuFlyout</c> と同じ項目・同じ区切り・同じショートカット表記で並べる。<br/>
     /// ショートカットは表示のみ（Avalonia 版も <c>MenuItem.InputGesture</c> の表示であり、キー操作は受け付けない）。
     /// </remarks>
-    private static Border BuildMenu(MainViewModel viewModel, AppServices services, PreviewCropSession cropSession)
+    private static Border BuildMenu(MainViewModel viewModel, AppServices services, CropOverlay cropSession)
     {
         var panel = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
         Border? menu = null;
@@ -568,10 +577,10 @@ internal static class CapturePage
     /// プレビューは MewUI 版の <see cref="CropViewControl"/> を使う（内部でズームビューを内包し、矩形オーバーレイを重ねる）。<br/>
     /// 自動切り出しの検出矩形（<c>DetectedRects</c>）をオーバーレイとして表示する。<br/>
     /// ルーペは切り出しセッションが所有し、<b>切り出し中のみ</b>カーソルへ追従する（Avalonia 版と同じ）。<br/>
-    /// 切り出しのオーバーレイは最上層に置き、通常は非表示にする（<see cref="PreviewCropSession.Start"/> で表示する）。
+    /// 切り出しのオーバーレイは最上層に置き、通常は非表示にする（<see cref="CropOverlay.Start"/> で表示する）。
     /// </remarks>
     private static FrameworkElement BuildPreview(
-        MainViewModel viewModel, Settings settings, out CropViewControl crop, out PreviewCropSession cropSession)
+        MainViewModel viewModel, Settings settings, out CropViewControl crop, out CropOverlay cropSession)
     {
         crop = new CropViewControl();
 
@@ -673,9 +682,26 @@ internal static class CapturePage
             }
         };
 
-        cropSession = new PreviewCropSession(cropView, viewModel, settings, host);
+        // テーマ変更の購読はホストの責務（切り出しセッションはテーマの通知元を知らない）
+        // ログは切り出しセッション自身のカテゴリで記録する（ページのログと混ざらないようにする）
+        var session = new CropOverlay(
+            cropView,
+            new MainViewModelCaptureTarget(viewModel),
+            CaptureSettingsMapper.From(settings, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0),
+            host,
+            ToDrawingColor(AppStyles.CurrentPageBackground),
+            AppLog.CreateLogger(nameof(CropOverlay)));
+        cropSession = session;
+        AppStyles.ThemeChanged += () => session.RefreshAppearance(ToDrawingColor(AppStyles.CurrentPageBackground));
         return host;
     }
+
+    /// <summary>MewUI の色を System.Drawing の色へ変換する。</summary>
+    /// <param name="color">変換する色。</param>
+    /// <returns>変換した色（A / R / G / B は同一）。</returns>
+    /// <remarks>切り出しセッション（UI 非依存の Core の型を使う）へテーマ色を渡すために使う。</remarks>
+    private static System.Drawing.Color ToDrawingColor(MewUIColor color)
+        => System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
 
     /// <summary>マウスポインタ位置のドメイン座標（画像ピクセル）をステータスバーへ表示する。</summary>
     /// <param name="viewModel">アプリのメイン ViewModel（表示文字列の保持元）。</param>

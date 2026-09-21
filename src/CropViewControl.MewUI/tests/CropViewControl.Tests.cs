@@ -1,6 +1,5 @@
 using Aprillz.MewUI;
 using Estable.CropView;
-using Estable.MewUI.CropView;
 using Estable.MewUI.ZoomView;
 using Estable.Platform.Geometry;
 using SkiaSharp;

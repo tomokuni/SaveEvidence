@@ -7,13 +7,11 @@ using Avalonia.Media;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.DragRect;
-using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
 using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
 using Estable.Platform.Coordinate;
-using Estable.Platform.Imaging;
 using Xunit;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;

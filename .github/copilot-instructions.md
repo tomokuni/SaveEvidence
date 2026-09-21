@@ -230,7 +230,7 @@
 ## このワークスペース/ソリューションに固有の指示
 
 ### プロジェクト構成
-- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / DragRectControl / FadeMaskControl / LoupeControl / SnipCaptureUI / LineDetection / PlatformFactory）と、アプリ本体（`app.AvaloniaUI`）から構成される。
+- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / DragRectControl / FadeMaskControl / LoupeControl / CaptureSessionControl.AvaloniaUI / LineDetection / PlatformFactory）と、アプリ本体（`app.AvaloniaUI`）から構成される。
 - `app.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
 
 ### ドキュメント規約

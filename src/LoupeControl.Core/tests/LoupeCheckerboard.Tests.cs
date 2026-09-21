@@ -1,4 +1,3 @@
-using Estable.Loupe;
 using Xunit;
 
 namespace Estable.Loupe.Tests;

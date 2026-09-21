@@ -1,6 +1,5 @@
 using System.Drawing;
 using System.Runtime.Versioning;
-using Estable.Platform;
 using Estable.Platform.Geometry;
 using Estable.Platform.Imaging;
 using Microsoft.Extensions.Logging;

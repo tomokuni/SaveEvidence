@@ -6,8 +6,6 @@ using Estable.SaveEvidence.ViewModels;
 using Estable.SaveEvidence.Views;
 using Avalonia;
 using Avalonia.Threading;
-using Estable.AvaloniaUI.Platform;
-using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.Platform;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;

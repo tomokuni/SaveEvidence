@@ -1,21 +1,21 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Estable.Platform;
-using Estable.AvaloniaUI.SnipCaptureUI;
+using Estable.AvaloniaUI.CaptureSession;
 using LineDetectionSample.ViewModels;
 
 namespace LineDetectionSample.Views;
 
 /// <summary>「データ作成」ページのコードビハインド。DragRect キャプチャの呼び出しと結果の反映を担う。</summary>
 /// <remarks>
-/// SnipCapture は UI スレッドから呼び出す必要があるため、ボタンイベントから直接呼び出す。<br/>
+/// CaptureSessionControl は UI スレッドから呼び出す必要があるため、ボタンイベントから直接呼び出す。<br/>
 /// キャプチャ結果（画像 + 領域）は <see cref="CreatePageViewModel.ApplyCaptureResult"/> で ViewModel へ渡し、<br/>
 /// 領域内ウィンドウの列挙・正解選択・保存は ViewModel が行う。
 /// </remarks>
 public partial class CreatePage : UserControl
 {
     /// <summary>キャプチャ統括者（Facade）。</summary>
-    private readonly SnipCapture _capture = new(initialSettings: null);
+    private readonly CaptureSessionControl _capture = new(initialSettings: null);
 
     /// <summary>ビューモデル。</summary>
     private CreatePageViewModel? _vm;
@@ -25,7 +25,7 @@ public partial class CreatePage : UserControl
     {
         InitializeComponent();
 
-        // コントロール破棄時に SnipCapture を破棄する
+        // コントロール破棄時に CaptureSessionControl を破棄する
         Unloaded += (_, _) => _capture.Dispose();
     }
 

@@ -5,11 +5,10 @@ using CommunityToolkit.Mvvm.Input;
 using Estable.AvaloniaUI.Platform;
 using Estable.Platform;
 using Estable.AvaloniaUI.Platform.Imaging;
-using Estable.Platform.Imaging;
-using Estable.AvaloniaUI.SnipCaptureUI;
 using LineDetectionSample.Models;
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using Estable.CaptureSession;
 
 namespace LineDetectionSample.ViewModels;
 
@@ -18,7 +17,7 @@ namespace LineDetectionSample.ViewModels;
 /// </summary>
 /// <remarks>
 /// キャプチャの開始（DragRect）は UI スレッドから行う必要があるため、<see cref="Views.MainWindow"/> の
-/// コードビハインドが SnipCapture を呼び、結果（画像 + 領域）を <see cref="ApplyCaptureResult"/> で受け取る。<br/>
+/// コードビハインドが CaptureSessionControl を呼び、結果（画像 + 領域）を <see cref="ApplyCaptureResult"/> で受け取る。<br/>
 /// 領域内ウィンドウ情報の取得（Win32 の <see cref="IElementFinder.ListWindows"/>）と正解選択・保存を本クラスが担う。<br/>
 /// 保存が完了すると <see cref="DatasetSaved"/> を発火する（親 ViewModel が一覧を再読み込みするために使用）。
 /// </remarks>
@@ -67,13 +66,14 @@ public sealed partial class CreatePageViewModel : ObservableObject
     /// </remarks>
     public void ApplyCaptureResult(CaptureResult? result)
     {
-        if (result?.Image is not { } image || result.SourceBounds is not { } bounds)
+        if (result?.Image is not { } image || result.SourceBounds is not { } sourceBounds)
         {
             StatusText = "キャプチャはキャンセルされました。";
             return;
         }
 
-        // キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換する（表示境界）。
+        // キャプチャ結果（コア型）を表示用の Avalonia 型へ変換する（表示境界で 1 回だけ行う）
+        var bounds = sourceBounds.ToAvaloniaPixelRect();
         CapturedImage = image.ToAvaloniaBitmap();
         CaptureBounds = bounds;
         WindowInfos.Clear();

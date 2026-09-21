@@ -1,5 +1,4 @@
 using Estable.CropView;
-using Estable.MewUI.CropView;
 using Estable.Platform.Geometry;
 using SkiaSharp;
 using Xunit;

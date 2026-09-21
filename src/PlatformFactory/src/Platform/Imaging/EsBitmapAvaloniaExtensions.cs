@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using Estable.AvaloniaUI.Platform;
 using Estable.Platform.Imaging;
 using SkiaSharp;
 using Color = System.Drawing.Color;

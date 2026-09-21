@@ -1,5 +1,4 @@
 using Estable.SaveEvidence.Logging;
-using Estable.AvaloniaUI.SnipCaptureUI;
 using Estable.Platform;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

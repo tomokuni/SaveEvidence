@@ -1,5 +1,3 @@
-using Estable.FadeMask;
-using Estable.MewUI.FadeMask;
 using Estable.MewUI.FadeMask.Logging;
 using Estable.Platform.Coordinate;
 using Estable.Platform.Geometry;

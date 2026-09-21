@@ -1,5 +1,4 @@
 using Estable.Platform.NoOp;
-using Estable.Platform;
 using Estable.Platform.Geometry;
 using Xunit;
 

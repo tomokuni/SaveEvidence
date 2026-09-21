@@ -1,6 +1,5 @@
 using Estable.FadeMaskDragRect;
 using Estable.MewUI.FadeMask;
-using Estable.MewUI.FadeMaskDragRect;
 using Estable.Platform.Coordinate;
 using Estable.Platform.Geometry;
 using Aprillz.MewUI;

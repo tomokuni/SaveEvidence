@@ -1,5 +1,3 @@
-using Estable.Platform;
-
 namespace Estable.Platform.NoOp;
 
 /// <summary>プラットフォーム実装が未提供の場合の NoOp 実装（ホットキー機能なし）。</summary>
