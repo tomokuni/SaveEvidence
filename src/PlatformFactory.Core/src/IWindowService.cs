@@ -31,6 +31,17 @@ public interface IWindowService
     /// </remarks>
     bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude);
 
+    /// <summary>ウィンドウの位置とサイズを画面物理ピクセルで指定する。</summary>
+    /// <param name="handle">対象ウィンドウの識別子。</param>
+    /// <param name="bounds">設定する矩形（画面物理ピクセル。負の座標可）。</param>
+    /// <returns>成功した場合は <see langword="true"/>。無効なハンドル・未対応プラットフォームでは <see langword="false"/>。</returns>
+    /// <remarks>
+    /// UI フレームワークの論理座標（DIP）による配置は、全モニターを跨ぐウィンドウでは OS により<br/>
+    /// 作業領域内へ補正される（実測）。物理ピクセルで指定したい場合に本メソッドを使う。<br/>
+    /// ウィンドウは可視領域外（負の大きな座標）へも配置できる。
+    /// </remarks>
+    bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds);
+
     /// <summary>ウィンドウを最前面解除し、非表示にして閉じる（UI ハング時の退避）。</summary>
     /// <param name="handle">対象ウィンドウの識別子。</param>
     /// <remarks>

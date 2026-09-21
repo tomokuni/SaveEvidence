@@ -23,11 +23,11 @@ namespace SaveEvidence.MewUI.Views;
 /// 1 セッションを担い、確定した領域を <see cref="EsBitmap"/> として返す。<br/>
 /// <br/>
 /// <b>全体の流れ</b>:<br/>
-/// 1. 設定に従ってオーナーウィンドウを非表示にする（<c>HideMainWindowOnCapture</c>）。<br/>
+/// 1. 設定に従ってオーナーウィンドウを画面外へ退避する（<c>HideMainWindowOnCapture</c>）。<br/>
 /// 2. 仮想スクリーン（全モニタ）を 1 枚の画像として取得する（<see cref="ICaptureService"/>）。<br/>
-/// 3. 取得した画像を敷いたボーダーレス・最前面のウィンドウを表示する。<br/>
+/// 3. 取得した画像を敷いたボーダーレス・最前面のウィンドウを仮想スクリーン全面へ表示する。<br/>
 /// 4. 選択を確定すると、選択矩形で画像を切り出して返す（Escape はキャンセル）。<br/>
-/// 5. オーナーウィンドウを再表示して元の状態へ戻す。<br/>
+/// 5. オーナーウィンドウを元の位置へ戻す。<br/>
 /// <br/>
 /// <b>座標系</b>: 取得画像のピクセル = 画面物理ピクセル（仮想スクリーン原点が画像の (0, 0)）。<br/>
 /// ドメイン座標（画像ピクセル）とローカル DIP の変換は <see cref="ICoordTransform"/> が担い、<br/>
@@ -56,6 +56,14 @@ internal sealed class CaptureOverlayWindow
     /// <summary>ローカル DIP → 画像ピクセルの倍率。</summary>
     /// <remarks>表示に使うウィンドウの DPI で決まるため、ウィンドウの生成後に <see cref="Show"/> で確定する。</remarks>
     private double _scale = 1.0;
+
+    /// <summary>モニターごとの表示倍率（モニター矩形と DPI スケールの組）。</summary>
+    /// <remarks>
+    /// サイズラベルの表示倍率（DisplayScale）に使う。仮想スクリーン全体を 1 枚のウィンドウで覆うと<br/>
+    /// ウィンドウの倍率は 1 つに定まるため、モニターごとの実倍率は位置から解決する必要がある。<br/>
+    /// セッション中はモニター構成が変わらないため、<see cref="Show"/> で一度だけ解決する。
+    /// </remarks>
+    private IReadOnlyList<(EsPixelRect Bounds, double Scale)> _monitorScales = [];
 
     /// <summary>選択コントロール（暗転マスク + 選択またはハイライトの描画）。</summary>
     private readonly FadeMaskDragRectControl _selector;
@@ -120,50 +128,56 @@ internal sealed class CaptureOverlayWindow
 
     /// <summary>キャプチャのセッションを実行し、確定した領域を返す。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
-    /// <param name="owner">オーナーウィンドウ（非表示・再表示の対象）。</param>
+    /// <param name="owner">オーナーウィンドウ（撮影中は画面外へ退避し、終了後に戻す）。</param>
     /// <param name="type">キャプチャ種別。</param>
     /// <returns>切り出した画像。キャンセル・取得失敗・退化した選択の場合は null。</returns>
     /// <remarks>
-    /// 1. 設定に従ってオーナーをキャプチャ除外に設定し、非表示にする（設定: メインウィンドウを隠す）。<br/>
-    /// 2. カーソルのあるモニターを対象に決め、その領域をキャプチャする（失敗した場合はオーナーを戻して null）。<br/>
+    /// 1. 設定に従ってオーナーをキャプチャ除外に設定し、画面外へ退避する（設定: メインウィンドウを隠す）。<br/>
+    /// 2. 仮想スクリーン（全モニターを包含する領域）を 1 枚の画像として取得する。<br/>
     /// 3. オーバーレイを表示し、確定またはキャンセルまで待つ。<br/>
-    /// 4. オーナーを再表示し、キャプチャ除外を解除して取得画像を破棄し、切り出し結果を返す。<br/>
-    /// <b>自ウィンドウの写り込み防止</b>: 非表示（<c>Hide</c>）は DWM の反映に時間がかかるため、<br/>
-    /// 反映前に取得すると自ウィンドウが半透明の状態で写り込む（実測）。<br/>
-    /// <c>SetCaptureExclusion</c>（<c>WDA_EXCLUDEFROMCAPTURE</c>）は反映を待たずに効くため、<br/>
-    /// これと非表示を併用して取得画像から自ウィンドウを排除する（Avalonia 版と同じ方式）。<br/>
-    /// <b>対象モニター</b>: 全モニターを跨ぐ 1 枚のオーバーレイは OS の配置補正で位置がずれる（実測）ため、<br/>
-    /// カーソルのあるモニターだけを対象にする（一般的なスニッピングツールと同じ挙動）。
+    /// 4. オーナーを元の位置へ戻し、キャプチャ除外を解除して切り出し結果を返す。<br/>
+    /// <b>自ウィンドウの写り込み防止</b>: 撮影の前にウィンドウを画面外へ退避させ、併せて<br/>
+    /// <c>SetCaptureExclusion</c>（<c>WDA_EXCLUDEFROMCAPTURE</c>）を設定する。<br/>
+    /// <b>チラつきの防止</b>: 退避は非表示（<c>Hide</c>）ではなく位置の変更とし、復帰時に<br/>
+    /// ウィンドウを再作成させない（Avalonia 版と同じ方式）。<br/>
+    /// <b>対象範囲</b>: 全モニター（仮想スクリーン）を対象にする。1 モニターに限定すると、<br/>
+    /// カーソルのあるモニターでしか選択できないため（Avalonia 版と同じ挙動）。
     /// </remarks>
     public static EsBitmap? Capture(AppServices services, Window owner, CaptureType type)
     {
         var settings = services.Settings.Current;
-        var wasVisible = owner.IsVisible;
         var windowService = PlatformFactory.CreateWindowService(s_logger);
         var ownerHandle = owner.ToEsPlatformHandle();
+        var savedPosition = owner.Position;
         var excluded = false;
+        var moved = false;
 
-        if (settings.HideMainWindowOnCapture)
+        if (settings.HideMainWindowOnCapture && owner.IsVisible)
         {
-            // 非表示より先にキャプチャ除外を設定する（非表示の反映を待たずに自ウィンドウを排除する）
+            // 撮影より先にキャプチャ除外を設定し、ウィンドウを画面外へ退避する
+            // （撮影画像へ自ウィンドウを写さない）
             excluded = windowService.SetCaptureExclusion(ownerHandle, true);
-            owner.Hide();
 
-            // 非表示がコンポジションへ反映されるまで待つ（ウィンドウ検出が自ウィンドウを拾わないようにする）
-            var delay = (int)Math.Clamp(settings.HideBeforeCaptureDelayMs, 0, 1000);
-            if (delay > 0)
-            {
-                Thread.Sleep(delay);
-            }
+            // 画面外（仮想スクリーン座標の外）へ退避する。負の大きな座標は Windows で
+            // 標準的に使われる「画面外配置」であり、ヒットテスト・検出の対象外になる。
+            owner.MoveTo(OffScreenDip, OffScreenDip);
+            moved = true;
         }
 
         try
         {
-            return CaptureCore(services, owner, type, wasVisible);
+            return CaptureCore(services, owner, type, windowService);
         }
         finally
         {
-            // キャプチャ除外を解除する（解除しないと以後のキャプチャから自ウィンドウが消え続ける）
+            // オーナーを元の位置へ戻してキャプチャ除外を解除する
+            // （解除しないと以後のキャプチャから自ウィンドウが消え続ける）
+            if (moved)
+            {
+                owner.MoveTo(savedPosition.X, savedPosition.Y);
+                owner.Activate();
+            }
+
             if (excluded)
             {
                 windowService.SetCaptureExclusion(ownerHandle, false);
@@ -171,89 +185,109 @@ internal sealed class CaptureOverlayWindow
         }
     }
 
-    /// <summary>オーナーを非表示にした状態でキャプチャ本体を実行する。</summary>
+    /// <summary>オーナーを退避させる画面外の座標（DIP）。</summary>
+    private const double OffScreenDip = -32000;
+
+    /// <summary>透明を解除するまでに待つフレーム数。</summary>
+    /// <remarks>
+    /// 表示直後のフレームはテーマ背景だけで、画像は次のフレームで合成される（実測）。<br/>
+    /// そのため 2 フレーム目（画像が合成されたフレーム）で透明を解除する。
+    /// </remarks>
+    private const int FramesUntilReveal = 2;
+
+    /// <summary>画像の平均色を求める。</summary>
+    /// <param name="image">対象の画像。</param>
+    /// <returns>平均色（不透明）。</returns>
+    /// <remarks>全画素を走査すると時間がかかるため、間引いて標本する（表示までの遅延を作らない）。</remarks>
+    private static Color AverageColor(EsBitmap image)
+    {
+        // ToSKBitmap は内部インスタンスの共有参照を返すため破棄しない
+        var bitmap = image.ToSKBitmap();
+        var step = Math.Max(1, Math.Min(bitmap.Width, bitmap.Height) / 40);
+        long red = 0, green = 0, blue = 0;
+        var count = 0;
+
+        for (var y = 0; y < bitmap.Height; y += step)
+        {
+            for (var x = 0; x < bitmap.Width; x += step)
+            {
+                var pixel = bitmap.GetPixel(x, y);
+                red += pixel.Red;
+                green += pixel.Green;
+                blue += pixel.Blue;
+                count++;
+            }
+        }
+
+        return count == 0
+            ? Color.Black
+            : Color.FromRgb((byte)(red / count), (byte)(green / count), (byte)(blue / count));
+    }
+
+    /// <summary>キャプチャ本体を実行する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
-    /// <param name="owner">オーナーウィンドウ（再表示の対象）。</param>
+    /// <param name="owner">オーナーウィンドウ。</param>
     /// <param name="type">キャプチャ種別。</param>
-    /// <param name="wasVisible">キャプチャ開始前にオーナーが表示されていたかどうか。</param>
+    /// <param name="windowService">ネイティブウィンドウ操作（オーバーレイの物理配置に使用する）。</param>
     /// <returns>切り出した画像。キャンセル・取得失敗・退化した選択の場合は null。</returns>
-    /// <remarks>キャプチャ除外の設定・解除は呼び出し側（<see cref="Capture"/>）が担う。</remarks>
-    private static EsBitmap? CaptureCore(AppServices services, Window owner, CaptureType type, bool wasVisible)
+    /// <remarks>キャプチャ除外の設定・解除とオーナーの退避・復元は呼び出し側（<see cref="Capture"/>）が担う。</remarks>
+    private static EsBitmap? CaptureCore(
+        AppServices services, Window owner, CaptureType type, IWindowService windowService)
     {
         var settings = services.Settings.Current;
-
         var finder = PlatformFactory.CreateElementFinder();
-        var screens = finder.ListScreens();
-        var cursor = PlatformFactory.CreateCursorService().GetCursorScreenPoint();
 
-        // カーソルを含むモニターを対象にする（見つからない場合は先頭のモニター）
-        var target = CaptureSelectionMath.SelectScreen(cursor, [.. screens.Select(static s => s.Bounds)])
-            ?? (screens.Count > 0 ? screens[0].Bounds : new EsPixelRect(0, 0, 0, 0));
-        if (target.Width <= 0 || target.Height <= 0)
-        {
-            Restore(owner, wasVisible);
-            return null;
-        }
-
-        var screen = PlatformFactory.CreateCaptureService().CaptureArea(target);
+        // 全モニターを包含する 1 枚の画像として取得する（Avalonia 版と同じ）。
+        // 1 モニターに限定すると、カーソルのあるモニターでしか選択できない（別のモニターへ
+        // 移動しての選択操作ができない）ため、仮想スクリーン全体を対象にする。
+        var screen = PlatformFactory.CreateCaptureService().CaptureVirtualScreen(out var origin);
         if (screen is null)
         {
-            Restore(owner, wasVisible);
             return null;
         }
 
-        var session = new CaptureOverlayWindow(screen, target, type, settings, finder);
+        // 画像の (0, 0) が仮想スクリーン原点（画面物理座標）に対応する
+        var bounds = new EsPixelRect(origin.X, origin.Y, screen.Width, screen.Height);
+        var session = new CaptureOverlayWindow(screen, bounds, type, settings, finder);
         s_logger.LogCaptureStart(type.ToString());
         try
         {
-            session.Show(owner, settings);
+            session.Show(owner, settings, windowService);
         }
         finally
         {
             screen.Dispose();
-            Restore(owner, wasVisible);
         }
 
         return session._result;
     }
 
-    /// <summary>オーナーウィンドウを元の表示状態へ戻す。</summary>
-    /// <param name="owner">対象のウィンドウ。</param>
-    /// <param name="wasVisible">キャプチャ開始前に表示されていたかどうか。</param>
-    /// <remarks>
-    /// アプリ終了中（オーナーがクローズ済み）にホットキーが届いた場合は復元できない（<c>Show</c> が例外になる）ため、<br/>
-    /// 復元は失敗しても無視する（アプリの終了処理を妨げない）。
-    /// </remarks>
-    private static void Restore(Window owner, bool wasVisible)
-    {
-        if (!wasVisible)
-        {
-            return;
-        }
-
-        try
-        {
-            owner.Show();
-            owner.Activate();
-        }
-        catch (InvalidOperationException)
-        {
-            // オーナーが既に閉じられている（アプリ終了中のホットキー等）場合は復元しない
-        }
-    }
-
     /// <summary>オーバーレイを表示し、確定またはキャンセルまで待つ。</summary>
     /// <param name="owner">オーナーウィンドウ。</param>
     /// <param name="settings">設定（ルーペの外観）。</param>
+    /// <param name="windowService">ネイティブウィンドウ操作（物理ピクセルでの配置に使用する）。</param>
     /// <remarks>
-    /// ウィンドウは仮想スクリーンの位置・サイズ（DIP）でボーダーレス・最前面に表示する。<br/>
+    /// ウィンドウは仮想スクリーンの位置・サイズでボーダーレス・最前面に表示する。<br/>
     /// 確定・キャンセルのいずれでもウィンドウを閉じ、<see cref="ShowDialog"/> の入れ子ループを終わらせる。
     /// </remarks>
-    private void Show(Window owner, Settings settings)
+    private void Show(Window owner, Settings settings, IWindowService windowService)
     {
         ArgumentNullException.ThrowIfNull(owner);
 
         _settings = settings;
+
+        // モニターごとの実倍率を解決する（サイズラベルの DisplayScale 用。構成はセッション中に変わらない）
+        var monitorScales = new List<(EsPixelRect Bounds, double Scale)>();
+        foreach (var screen in PlatformFactory.CreateElementFinder().ListScreens())
+        {
+            var screenScale = DpiHelper.GetDpiForPoint(new Point(screen.Bounds.X, screen.Bounds.Y)) / 96.0;
+            if (screenScale > 0)
+            {
+                monitorScales.Add((screen.Bounds, screenScale));
+            }
+        }
+
+        _monitorScales = monitorScales;
         var content = new Grid().Columns("*").Rows("*");
         content.Add(new ImageView { Source = _screen, IsUniform = false });
 
@@ -262,6 +296,40 @@ internal sealed class CaptureOverlayWindow
             .Borderless()
             .Topmost()
             .Content(content);
+
+        // 透明の間はウィンドウの背景色だけが合成されるため、透明を解除した瞬間の 1 フレームは
+        // 背景色が見える。背景を撮影画像の平均色に合わせて、その差を目立たなくする。
+        window.Background = AverageColor(_screen);
+
+        // ウィンドウは表示時に背景色で塗られるため、そのまま表示すると画像を描くまでの
+        // 数十 ms が背景色の面として見える（実測: 65 ms 表示）。そのため透明な状態で表示し、
+        // 画像が合成されたフレームで透明を解除する。
+        // 物理ピクセルでの配置は起動時の配置より後（1 フレーム目）に行う必要があるため、ここで行う。
+        var revealed = false;
+        var placed = false;
+        var frames = 0;
+        window.Opacity = 0;
+        window.FrameRendered += () =>
+        {
+            frames++;
+
+            if (!placed)
+            {
+                // 全モニターを跨ぐウィンドウは、UI フレームワークの論理座標（DIP）による配置が
+                // OS により作業領域内へ補正される（実測: 仮想スクリーン原点 -1200 が 0 になる）。
+                // そのため表示直後（透明なうち）に物理ピクセルで仮想スクリーン全面へ置き直す。
+                placed = true;
+                windowService.SetBounds(window.ToEsPlatformHandle(), _screenBounds);
+            }
+
+            if (revealed || frames < FramesUntilReveal)
+            {
+                return;
+            }
+
+            revealed = true;
+            window.Opacity = 1;
+        };
 
         // 撮影中の一時的な表示のため、タスクバー・Alt+Tab の一覧には出さない
         // （Avalonia 版は HideFromTaskSwitcher で除外する）
@@ -272,7 +340,8 @@ internal sealed class CaptureOverlayWindow
         window.Padding = Thickness.Zero;
 
         // 位置とサイズの DIP は生成時のスケール（プライマリモニターの DPI）で解釈される（実測）。
-        // 生成直後のちらつきを抑えるため、対象モニター全面のサイズを先に与える
+        // 生成直後のちらつきを抑えるため、仮想スクリーン全体のサイズを先に与える。
+        // 最大化は使わない（OS が 1 モニターへ寄せてしまうため、全モニターを覆えない）。
         var creationScale = DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0;
         window.WindowSize = WindowSize.Resizable(
             WindowPlacementMath.ToDipLength(_screen.Width, creationScale),
@@ -293,13 +362,9 @@ internal sealed class CaptureOverlayWindow
 
         window.Loaded += () =>
         {
-            // 物理サイズは OS（最大化）に任せる。MewUI の DIP → 物理の換算はプライマリモニターの
-            // スケールを使うため、倍率が異なるモニターでは DIP 指定だと物理サイズがモニターと一致しない（実測）。
-            // 最大化なら OS が対象モニターの実サイズへ合わせる。
-            window.WindowState = WindowState.Maximized;
-
             // 画像ピクセル ↔ DIP の倍率は表示に使うウィンドウの DPI で決める
-            // （対象モニターの倍率と異なる場合があるため、実際のウィンドウの DPI を使う）
+            // （ウィンドウのクライアント座標は物理ピクセルで届くため、この倍率で画像ピクセルへ戻せる。
+            //  モニターごとに倍率が異なっても、ウィンドウの倍率は 1 つに定まるため全域で同じ式が使える）
             var scale = DpiHelper.GetDpiForWindow(window.Handle) / 96.0;
             if (scale > 0)
             {
@@ -375,10 +440,10 @@ internal sealed class CaptureOverlayWindow
         overlay.SizeLabelFontSize = settings.SizeLabelFontSize;
 
         // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）
-        // DisplayScale は画面の実表示スケール（DIP → 画像ピクセルの倍率 = モニターの DPI スケール）を表示する
+        // DisplayScale は選択位置のモニターの実表示スケール（DIP → 画像ピクセルの倍率）を表示する
         overlay.SizeLabelTextProvider = () =>
             _selection() is { } rect && settings.SizeLabelVisible
-                ? FadeMaskLabels.FormatSizeLabel(rect, scaling: 1.0, displayScaling: _scale)
+                ? FadeMaskLabels.FormatSizeLabel(rect, scaling: 1.0, displayScaling: DisplayScalingAt(rect))
                 : null;
 
         overlay.SubLines = BuildSubLines(settings, mode);
@@ -553,6 +618,26 @@ internal sealed class CaptureOverlayWindow
             p => new EsPoint(p.X * _scale, p.Y * _scale),
             p => new EsPoint(p.X / _scale, p.Y / _scale),
             () => new EsSize(_screen.Width, _screen.Height));
+
+    /// <summary>選択矩形（ドメイン座標）が属するモニターの表示倍率を返す。</summary>
+    /// <param name="domainRect">選択矩形（画像ピクセル = 仮想スクリーン座標から原点を引いた値）。</param>
+    /// <returns>そのモニターの DPI スケール（1.0 = 100%）。該当が無い場合はウィンドウの倍率。</returns>
+    /// <remarks>ドメイン座標を画面物理座標（原点を加算）へ戻してからモニターを判定する。</remarks>
+    private double DisplayScalingAt(EsRect domainRect)
+    {
+        var x = (int)Math.Round(domainRect.X) + _screenBounds.X;
+        var y = (int)Math.Round(domainRect.Y) + _screenBounds.Y;
+
+        foreach (var (bounds, scale) in _monitorScales)
+        {
+            if (x >= bounds.X && x < bounds.Right && y >= bounds.Y && y < bounds.Bottom)
+            {
+                return scale;
+            }
+        }
+
+        return _scale;
+    }
 
     /// <summary>設定の外観を選択コントロールへ反映する。</summary>
     /// <param name="selector">対象の選択コントロール。</param>

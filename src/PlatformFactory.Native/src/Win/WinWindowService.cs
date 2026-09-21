@@ -70,6 +70,27 @@ internal sealed class WinWindowService : IWindowService
         return success;
     }
 
+    /// <summary>ウィンドウの位置とサイズを画面物理ピクセルで指定する（仕様 2.3）。</summary>
+    /// <param name="handle">対象ウィンドウの識別子。</param>
+    /// <param name="bounds">設定する矩形（画面物理ピクセル。負の座標可）。</param>
+    /// <returns>成功した場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// SetWindowPos により、OS の作業領域補正を受けずに物理ピクセルで配置する。<br/>
+    /// Z オーダーとアクティブ状態は変更しない（<c>SWP_NOZORDER</c> / <c>SWP_NOACTIVATE</c>）。<br/>
+    /// 無効なハンドルの場合は何もしない（false）。<br/>
+    /// </remarks>
+    public bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds)
+    {
+        var nativeHwnd = handle.Handle;
+        if (nativeHwnd == IntPtr.Zero) return false;
+
+        var success = WinNative.SetWindowPos(nativeHwnd, IntPtr.Zero,
+            bounds.X, bounds.Y, bounds.Width, bounds.Height,
+            WinNative.SWP_NOZORDER | WinNative.SWP_NOACTIVATE);
+        _log.LogWindowBoundsChanged(nativeHwnd.ToString("X"), bounds.X, bounds.Y, bounds.Width, bounds.Height, success);
+        return success;
+    }
+
     /// <summary>ウィンドウを最前面解除し、非表示にして閉じる（UI ハング時の退避、仕様 3.6）。</summary>
     /// <param name="handle">対象ウィンドウの識別子。</param>
     /// <remarks>

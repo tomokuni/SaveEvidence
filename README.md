@@ -2,10 +2,12 @@
 
 **画面キャプチャユーティリティ** — 画面の任意領域・ウィンドウをキャプチャし、連番ファイルとして保存します。
 
+![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
+![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?branch=main)
+![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
 ![Avalonia](https://img.shields.io/badge/UI-Avalonia-8D46D6)
 ![MewUI](https://img.shields.io/badge/UI-MewUI-00BFFF)
-![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
 ![License](https://img.shields.io/badge/License-MIT-3DA639)
 
 ---
@@ -258,7 +260,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 ### 4.1 ソースからのビルド
 
 ```powershell
- git clone https://github.com/your-org/SaveEvidence.git
+ git clone https://github.com/tomokuni/SaveEvidence.git
  cd SaveEvidence
  dotnet publish src/app.AvaloniaUI/src/app.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishAot=true -o Publish
 ```

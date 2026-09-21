@@ -38,7 +38,7 @@ graph LR
 | `Win/WinElementFinder.cs` | ウィンドウ / スクリーンの検出と一覧取得（Win32） |
 | `Win/WinCursorOverrideGuard.cs` | WndProc サブクラス化によるカーソル上書き抑止 |
 | `Win/WinCaptureService.cs` | `System.Drawing` + Win32 による画面キャプチャ |
-| `Win/WinWindowService.cs` | タスクスイッチャー非表示・キャプチャ除外・退避 |
+| `Win/WinWindowService.cs` | タスクスイッチャー非表示・キャプチャ除外・位置とサイズの指定・退避 |
 | `Win/WinGlobalHotKeyService.cs` | `RegisterHotKey` + WndProc サブクラス化によるグローバルホットキー |
 | `NoOp/NoOp*.cs` | 他環境向けの安全なフォールバック（シングルトン） |
 | `Imaging/EsBitmapDrawingExtensions.cs` | `System.Drawing.Bitmap` ⇔ `EsBitmap` の変換（Windows 専用） |

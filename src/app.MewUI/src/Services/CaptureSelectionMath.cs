@@ -13,30 +13,6 @@ namespace SaveEvidence.MewUI.Services;
 /// </remarks>
 internal static class CaptureSelectionMath
 {
-    /// <summary>座標を含むスクリーン（モニター）を選択する。</summary>
-    /// <param name="point">判定する座標（画面物理ピクセル）。</param>
-    /// <param name="screens">スクリーンの矩形一覧（画面物理ピクセル）。</param>
-    /// <returns>座標を含むスクリーンの矩形。含むものがない・一覧が空の場合は null。</returns>
-    /// <remarks>
-    /// キャプチャの対象を「カーソルのあるモニター」に限定するために使う。<br/>
-    /// モニターを跨ぐ 1 枚のウィンドウは OS の配置補正（画面外へ出ないよう移動される）で位置がずれるため、<br/>
-    /// オーバーレイは 1 モニター分のサイズに留める。<br/>
-    /// 端（境界）は左端・上端を含み、右端・下端は含めない（半開区間）。隣接するモニターの境界が<br/>
-    /// 二重に一致しないようにするため。複数が重なる不正な入力では最初に見つかったものを返す。
-    /// </remarks>
-    public static EsPixelRect? SelectScreen(EsPixelPoint point, IReadOnlyList<EsPixelRect> screens)
-    {
-        foreach (var screen in screens)
-        {
-            if (point.X >= screen.X && point.X < screen.Right && point.Y >= screen.Y && point.Y < screen.Bottom)
-            {
-                return screen;
-            }
-        }
-
-        return null;
-    }
-
     /// <summary>選択矩形を画像内のピクセル矩形へ変換する。</summary>
     /// <param name="selection">選択矩形（画像ピクセル座標）。</param>
     /// <param name="imageWidth">画像の幅（ピクセル）。0 以下の場合は空を返す。</param>

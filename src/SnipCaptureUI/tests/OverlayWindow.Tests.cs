@@ -54,6 +54,7 @@ public class OverlayWindowTests
     {
         public void HideFromTaskSwitcher(EsPlatformHandle handle) { }
         public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude) => true;
+        public bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds) => true;
         public void EvacuateWindow(EsPlatformHandle handle) { }
     }
 

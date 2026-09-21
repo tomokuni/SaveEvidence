@@ -45,6 +45,21 @@ internal static partial class PlatformLog
     [LoggerMessage(LogLevel.Information, "[WindowService] SetCaptureExclusion: hwnd=0x{Hwnd}, exclude={Exclude}, success={Success}")]
     public static partial void LogCaptureExclusionChanged(this ILogger logger, string hwnd, bool exclude, bool success);
 
+    /// <summary>ウィンドウの位置・サイズを物理ピクセルで変更したことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Information <br/>
+    /// 出力書式: <c>[WindowService] SetBounds: hwnd=0x{Hwnd}, bounds=({X}, {Y}, {Width}, {Height}), success={Success}</c>
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="hwnd">対象ウィンドウのハンドル（16進文字列）。</param>
+    /// <param name="x">矩形の左端（画面物理ピクセル）。</param>
+    /// <param name="y">矩形の上端（画面物理ピクセル）。</param>
+    /// <param name="width">矩形の幅（画面物理ピクセル）。</param>
+    /// <param name="height">矩形の高さ（画面物理ピクセル）。</param>
+    /// <param name="success">API 呼び出しの成否。</param>
+    [LoggerMessage(LogLevel.Information, "[WindowService] SetBounds: hwnd=0x{Hwnd}, bounds=({X}, {Y}, {Width}, {Height}), success={Success}")]
+    public static partial void LogWindowBoundsChanged(this ILogger logger, string hwnd, int x, int y, int width, int height, bool success);
+
     /// <summary>UI ハング時にウィンドウを退避（最前面解除・非表示・WM_CLOSE）したことを記録する。</summary>
     /// <remarks>
     /// LogLevel: Warning <br/>

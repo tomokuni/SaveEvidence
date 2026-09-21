@@ -164,6 +164,12 @@ internal static partial class WinNative
     /// <summary>アクティブ化なしの SetWindowPos フラグ。</summary>
     internal const uint SWP_NOACTIVATE = 0x0010;
 
+    /// <summary>Z オーダーを変更しない SetWindowPos フラグ。</summary>
+    internal const uint SWP_NOZORDER = 0x0004;
+
+    /// <summary>ウィンドウを所有スレッドのメッセージキューに同期させない SetWindowPos フラグ。</summary>
+    internal const uint SWP_ASYNCWINDOWPOS = 0x4000;
+
     // --- キャプチャ除外（SetWindowDisplayAffinity） ---
     /// <summary>キャプチャ除外なし（通常状態）。</summary>
     internal const int WDA_NONE = 0x00000000;

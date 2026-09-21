@@ -25,6 +25,9 @@ internal sealed class NoOpWindowService : IWindowService
     public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude) => false;
 
     /// <inheritdoc/>
+    public bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds) => false;
+
+    /// <inheritdoc/>
     public void EvacuateWindow(EsPlatformHandle handle)
     {
         // 非対応プラットフォーム（Linux / macOS）では何もしない。

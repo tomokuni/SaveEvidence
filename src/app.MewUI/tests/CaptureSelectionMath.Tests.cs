@@ -129,43 +129,4 @@ public class CaptureSelectionMathTests
         Assert.Equal(200, result.Width);
         Assert.Equal(150, result.Height);
     }
-
-    [Fact]
-    public void SelectScreen_座標を含むスクリーンを返す()
-    {
-        // プライマリ (0,0,3840,2160) と その上に並ぶセカンダリ (1914,-1200,1920,1200)
-        EsPixelRect[] screens =
-        [
-            new(0, 0, 3840, 2160),
-            new(1914, -1200, 1920, 1200),
-        ];
-
-        Assert.Equal(screens[0], CaptureSelectionMath.SelectScreen(new EsPixelPoint(100, 100), screens));
-        Assert.Equal(screens[1], CaptureSelectionMath.SelectScreen(new EsPixelPoint(2000, -600), screens));
-    }
-
-    [Fact]
-    public void SelectScreen_左端と上端は含み右端と下端は含めない()
-    {
-        EsPixelRect[] screens = [new(0, 0, 1920, 1080)];
-
-        Assert.NotNull(CaptureSelectionMath.SelectScreen(new EsPixelPoint(0, 0), screens));
-        Assert.NotNull(CaptureSelectionMath.SelectScreen(new EsPixelPoint(1919, 1079), screens));
-        Assert.Null(CaptureSelectionMath.SelectScreen(new EsPixelPoint(1920, 1079), screens));
-        Assert.Null(CaptureSelectionMath.SelectScreen(new EsPixelPoint(1919, 1080), screens));
-    }
-
-    [Fact]
-    public void SelectScreen_どのスクリーンにも含まれなければnullを返す()
-    {
-        EsPixelRect[] screens = [new(0, 0, 1920, 1080)];
-
-        Assert.Null(CaptureSelectionMath.SelectScreen(new EsPixelPoint(-10, 100), screens));
-        Assert.Null(CaptureSelectionMath.SelectScreen(new EsPixelPoint(100, -10), screens));
-        Assert.Null(CaptureSelectionMath.SelectScreen(new EsPixelPoint(5000, 5000), screens));
-    }
-
-    [Fact]
-    public void SelectScreen_一覧が空ならnullを返す()
-        => Assert.Null(CaptureSelectionMath.SelectScreen(new EsPixelPoint(0, 0), []));
 }

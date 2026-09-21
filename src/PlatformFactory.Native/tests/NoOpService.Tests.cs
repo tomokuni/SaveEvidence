@@ -64,6 +64,9 @@ public class NoOpServiceTests
         // キャプチャ除外は常に false
         Assert.False(service.SetCaptureExclusion(handle, true));
         Assert.False(service.SetCaptureExclusion(handle, false));
+
+        // 位置・サイズの指定も常に false（何もしない）
+        Assert.False(service.SetBounds(handle, new EsPixelRect(0, 0, 100, 100)));
     }
 
     // ====================================================================

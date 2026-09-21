@@ -125,6 +125,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | --- | --- | --- |
 | `HideFromTaskSwitcher` | `void HideFromTaskSwitcher(EsPlatformHandle handle)` | タスクバー / Alt+Tab 非表示 |
 | `SetCaptureExclusion` | `bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude)` | キャプチャ除外 / 解除（未対応環境は false） |
+| `SetBounds` | `bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds)` | 位置・サイズを画面物理ピクセルで指定（未対応環境は false。全モニターを跨ぐ配置に使う） |
 | `EvacuateWindow` | `void EvacuateWindow(EsPlatformHandle handle)` | 最前面解除・非表示・クローズ（UI ハング時の退避） |
 
 ### `IElementFinder`（interface）

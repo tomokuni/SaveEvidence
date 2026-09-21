@@ -94,7 +94,7 @@ src/app.MewUI/src/
 │   ├── SettingsColorMath.cs          設定の色文字列 ⇔ 色の変換
 │   ├── SettingsJsonContext.cs        設定の JSON ソース生成（Native AOT 対応）
 │   ├── LoupeAppearance.cs            設定のルーペ項目の反映（3 箇所で共用）
-│   ├── CaptureSelectionMath.cs       対象モニターの選択・切り出し矩形のクランプと閉区間化
+│   ├── CaptureSelectionMath.cs       切り出し矩形のクランプと閉区間化
 │   ├── CaptureFlow.cs                キャプチャの開始と結果の反映
 │   ├── EditHistory.cs                編集履歴（戻す / やり直し）の実行
 │   └── WindowPlacementMath.cs        ウィンドウ配置の DIP ⇔ 物理px 変換と妥当性判定
@@ -308,7 +308,7 @@ classDiagram
     CaptureFlow ..> CaptureOverlayWindow : セッションの実行
     CaptureOverlayWindow ..> ImageView : 下敷きの画像
     CaptureOverlayWindow ..> FadeMaskDragRectControl : 配置（Area / Screen / Window）
-    CaptureOverlayWindow ..> CaptureSelectionMath : 対象モニター・切り出し矩形
+    CaptureOverlayWindow ..> CaptureSelectionMath : 切り出し矩形
     CaptureOverlayWindow ..> IElementFinder : 要素の検出
     CaptureOverlayWindow ..> ICaptureService : 画面の取得
     SettingsPage ..> SettingsColorMath : 色の変換
@@ -376,12 +376,12 @@ sequenceDiagram
 
     HK->>CF: Start(services, type)
     CF->>OW: Capture(services, owner, type)
-    OW->>OS: Hide()（設定時） + 待機
-    OW->>CS: CaptureArea(対象モニターの矩形)
+    OW->>OS: キャプチャ除外 + 画面外へ退避（設定時）
+    OW->>CS: CaptureVirtualScreen(全モニター)
     CS-->>OW: EsBitmap / 失敗時 null
-    OW->>OW: ボーダーレス・最前面のウィンドウを表示（位置・サイズは DIP）
+    OW->>OW: ボーダーレス・最前面のウィンドウを仮想スクリーン全面へ表示（透明 → 画像合成後に解除）
     Note over OW: 範囲選択はドラッグ、スクリーンはカーソル下のモニター、ウィンドウはカーソル下のウィンドウをハイライト
-    OW->>OS: Show() + Activate()（元の表示状態へ戻す）
+    OW->>OS: 元の位置へ戻す + Activate()（元の表示状態へ戻す）
     OW-->>CF: 切り出した EsBitmap / キャンセル時 null
     CF->>CF: Undo へ退避 → 未保存化 → SetPreviewImage → ステータス通知
 ```
@@ -579,7 +579,7 @@ sequenceDiagram
 | 保存先フォルダの列挙に失敗（アクセス拒否等） | 一覧を空にする（ページごと落とさない） |
 | 画像のデコードに失敗（破損・非画像） | その項目のサムネイルを描画しない（項目自体は残す） |
 | 破棄済みの画像を描画しようとした | `ThumbnailView` / `ImageView` が描画を省略する（キャッシュの容量超過で破棄された場合） |
-| 対象モニターを検出できない | キャプチャを開始しない（オーナーの表示状態を戻す） |
+| 対象モニターを検出できない | キャプチャを開始しない（画像の取得に失敗した場合） |
 | 画面の取得に失敗 | キャプチャを開始しない（オーナーの表示状態を戻す） |
 | 選択が退化している（1px 未満） | キャンセルと同じ扱いにする（0 サイズの画像を作らない） |
 | ホットキーの登録に失敗 | そのホットキーのみ無効（他のホットキーと操作は影響を受けない） |
@@ -620,8 +620,9 @@ sequenceDiagram
    `MainViewModel.StartSelectionMode` → `CaptureFlow.Start` へ集約する（開始処理を二重所有しない）。
 13. **ホットキーは初回描画後に登録する**。ウィンドウハンドルとウィンドウプロシージャは表示時に確定し、
    起動時コールバックではサブクラス化が MewUI 側の設定で上書きされて `WM_HOTKEY` を受け取れない（実測）。
-14. **撮影の対象をカーソルのあるモニターへ限定する**。全モニターを跨ぐウィンドウは OS の配置補正で
-   位置がずれる（実測）ため、1 モニター分のウィンドウを使う（一般的なスニッパーと同じ振る舞い）。
+14. **撮影の対象は全モニター（仮想スクリーン）**。1 モニターに限定するとカーソルのある
+    モニターでしか選択できないため、仮想スクリーンを 1 枚の画像とし、オーバーレイで全面を覆う
+    （フレームワークの論理座標による配置は OS に補正されるため、物理ピクセルで置き直す）。
 15. **表示状態と画像の配置を別のビューへ分ける**。`ImageView`（Fill）と `ThumbnailView`（Uniform）は
    サイズ要求が異なるが、配置の計算は `ImageDrawMath` が単一所有する。
 16. **色の変換を専用クラスへ分離する**。設定は色を文字列で保持するため、境界の変換は
@@ -642,7 +643,7 @@ sequenceDiagram
 
 | 項目 | 内容 |
 | --- | --- |
-| 全モニターの同時キャプチャ | 対象はカーソルのあるモニター 1 面（全モニターを跨ぐウィンドウは OS の配置補正で位置がずれるため） |
+| 全モニターの同時キャプチャ | 対象は全モニター（仮想スクリーン）。1 モニターに限定するとカーソルのあるモニターでしか選択できないため |
 | 最大化の復元 | `WindowState` は起動時コールバックで適用するが、最大化前の通常配置は設定へ保存しない |
 | 切り出し中のズーム操作 | オーバーレイが入力を占有するため Ctrl+ホイールを受け付けない |
 | ルーペの追従の実機検証 | `verify-ui.ps1` が枠色（設定由来）の画素数で存在を判定する（カーソル追従のため位置に依存しない走査にした） |
@@ -718,7 +719,10 @@ MewUI のウィンドウは**端から 6 DIP をサイズ変更の判定領域**
 | **`MewUIColor` の 4 引数コンストラクタは A / R / G / B 順**（`(255, 32, 32, 32)` は暗色ではなく「アルファ 32 の赤」になる）。不透明度のつもりで渡すと透ける | 色は `MewUIColor.FromArgb(a, r, g, b)` で組み立てる（`SKColor` は `r, g, b, a` 順のため混同しない） |
 | **Skia キャンバスへ市松模様だけを描くと下地が透明になる**（市松色は既定 30% の半透明のため、後ろの要素が透けて見える） | 市松模様の下地へテーマの背景色を塗る（プレビューは `CheckerBackground`、ルーペは `BackgroundColor`） |
 | **ステータスバーへ独自の背景色を与えると、同じホバー色でも他と違って見える**（背景との明度差でホバーのコントラストが変わる） | ステータスバーの背景はページ背景（`Theme.Palette.ControlBackground`）に統一する |
-| **ウィンドウの非表示（`Hide` = `ShowWindow(SW_HIDE)`）は DWM のコンポジションへ即時反映されない**。直後に `CopyFromScreen` すると、自ウィンドウが**半透明の状態で写り込む**（実測: 写り込み率 65%・待機 50 ms でも再現） | 撮影の前に `IWindowService.SetCaptureExclusion`（`WDA_EXCLUDEFROMCAPTURE`）を設定する（非表示の反映を待たずに効く）。撮影後に解除する |
+| **ウィンドウの非表示（`Hide` = `ShowWindow(SW_HIDE)`）は DWM のコンポジションへ即時反映されない**。直後に `CopyFromScreen` すると、自ウィンドウが**半透明の状態で写り込む**（実測: 写り込み率 65%・待機 50 ms でも再現） | 撮影の前にウィンドウを**画面外へ退避**（`MoveTo`）する。併せて `IWindowService.SetCaptureExclusion` も設定し、撮影後に解除する |
+| **`Hide` と `Show` の往復はウィンドウを再作成させる**（復帰時に一瞬表示 → 非表示 → 再表示のちらつきが出る） | 退避は `Hide` ではなく位置の変更（画面外配置）にし、復帰は位置を戻すだけにする（Avalonia 版と同じ方式） |
+| **ウィンドウは表示時に背景色で塗られる**（`EffectiveOpaqueBackground`）。そのため撮影用オーバーレイをそのまま表示すると、撮影画像を描くまでの数十 ms（実測 65 ms）が背景色の面として見える | オーバーレイを `Opacity = 0` で表示し、`FrameRendered` を数えて画像が合成されたフレームで透明を解除する。背景色は撮影画像の平均色に合わせて差を目立たなくする。（実測: 65 ms → 1 フレーム・色差 111 → 23） |
+| **全モニターを跨ぐウィンドウは、論理座標（DIP）による配置が OS により補正される**（実測: 仮想スクリーン原点の `y=-1200` を指定すると `y=0` に移動される）。また **`WindowState.Maximized` は 1 モニターへ寄せる**（全モニターを覆えない） | 配置は `IWindowService.SetBounds`（`SetWindowPos`）で**物理ピクセル**指定にし、起動時の配置より後（透明な 1 フレーム目）に適用する |
 
 **実測値**: `150, 180 / 900 × 600`（クライアント）を保存 → 復元後の `GetWindowRect` は
 `X=150 Y=180 W=918 H=647`（枠 18 × 47 を加えた値）。クライアント領域は指定どおり `900 × 600` に一致する。
