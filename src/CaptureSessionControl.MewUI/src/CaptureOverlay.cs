@@ -101,7 +101,7 @@ public sealed class CaptureOverlay
         _screenBounds = screenBounds;
         _type = type;
         _settings = settings;
-        _log = log ?? NullLogger.Instance;
+        _log = log.OrNullLogger();
 
         _selector = new FadeMaskDragRectControl { Mode = ToMode(type), Log = _log };
         ApplyAppearance(_selector, settings);
@@ -148,7 +148,7 @@ public sealed class CaptureOverlay
     public static EsBitmap? Capture(Window owner, CaptureType type, CaptureOverlayServices services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        var log = services.Logger ?? NullLogger.Instance;
+        var log = services.Logger.OrNullLogger();
         var settings = services.Settings.ToNonNull();
 
         // オーナーの退避とキャプチャ除外の設定・解除は CaptureOwnerScope（コア）が単一所有する

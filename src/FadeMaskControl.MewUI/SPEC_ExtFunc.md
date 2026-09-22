@@ -27,11 +27,16 @@ FadeMaskControl は、**選択領域以外を暗転**させ、選択領域をハ
 | `Mode` | `FadeMaskRenderMode` | `AreaSelect` | 描画モード（操作ラベルの文言選定・情報ラベルの表示可否） |
 | `ShowFullOverlay` | `bool` | `false` | true の場合は選択が無くても全面を暗転する |
 | `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。DPI 変更で自動更新される |
-| `Scaling` | `double` | 1.0 | 座標変換ポートへ適用する倍率（`Port` が未設定の場合のみ使用。規則はコアが単一所有） |
+| `Scaling` | `double` | 1.0 | 座標変換ポートへ適用する倍率（`SetCoordinateTransform` が未設定の場合のみ使用。規則はコアが単一所有） |
 | `DisplayScaleScaling` | `double` | `Scaling` | サイズラベルの自動生成に使う表示スケール（0 以下は `Scaling` と同値） |
-| `Port` | `ICoordTransform?` | `null` | 論理座標 → DIP の座標変換ポート（設定時は `Scaling` より優先） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を返すデリゲート。null または空文字を返すと矩形から自動生成する |
 | `Log` | `ILogger` | `NullLogger` | 状態変更ログの出力先（null は `NullLogger`） |
+
+#### メソッド
+
+| メソッド | シグネチャ | 説明 |
+| --- | --- | --- |
+| `SetCoordinateTransform` | `void SetCoordinateTransform(ICoordTransform? port)` | 論理座標 → DIP の座標変換ポートを設定する。null の場合は倍率（`Scaling`）からコアが解決する（設定した場合は `Scaling` より優先） |
 
 外観の個別項目（暗転色・枠線・ラベル）は `Appearance`（コアの `FadeMaskAppearance`）が所有します。詳細は「外観（FadeMaskAppearance）」を参照してください。
 
@@ -104,7 +109,7 @@ Avalonia 版と同一の型を共有する（UI 非依存の値型のため、UI
 | 選択矩形 | 終点に +1 する（閉区間。始点・終点のピクセルとも非暗転領域に含める） |
 | ハイライト矩形 | +1 しない（既に全ピクセルを含む閉区間表現のため） |
 
-`Scaling` が 1.0 以外の場合は等倍スケールの座標変換ポートとして適用されます（`Port` が設定されている場合は `Port` を優先）。<br/>
+`Scaling` が 1.0 以外の場合は等倍スケールの座標変換ポートとして適用されます（`SetCoordinateTransform` でポートを設定した場合はそちらを優先）。  
 サイズラベルの表示スケール（DisplayScale）は `DisplayScaleScaling`（Avalonia 版と同名。0 以下は `Scaling` と同値）で指定します。
 
 ## 操作仕様

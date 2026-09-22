@@ -58,7 +58,6 @@ Avalonia 版と同一の解釈になります。
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない） |
 | `SelectionOverlayColorA` / `SelectionOverlayColorB` | `System.Drawing.Color` | 白 / 黒 | ルーペ画像上の選択矩形破線の色（2 色交互） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包するドラッグ選択コントロールとルーペへ伝搬する。null は `NullLogger` へフォールバック。暗転マスクは選択のたびにログを出すため対象外） |
-| `Port` | `ICoordTransform?`（取得のみ） | 等価変換 | 暗転マスクへ適用中の座標変換ポート |
 | `Overlay` | `FadeMaskControl`（取得のみ） | - | 暗転マスク（外観の詳細設定用） |
 | `DragRect` | `DragRectControl`（取得のみ） | - | ドラッグ選択（外観の詳細設定用） |
 | `Loupe` | `LoupeControl`（取得のみ） | - | 拡大鏡（外観の詳細設定用） |
@@ -67,7 +66,7 @@ Avalonia 版と同一の解釈になります。
 
 | メソッド | 説明 |
 | --- | --- |
-| `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定する。null の場合は等価変換（1 ドメインピクセル = 1 DIP・境界なし） |
+| `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定する（ドラッグ選択と暗転マスクへ分配）。null の場合は倍率からコアが解決する |
 | `SetSelection(EsRect)` | 選択状態を外部から設定する（幅・高さのいずれかが 0 以下の場合は選択なし） |
 | `ClearSelection()` | 選択状態をクリアして全面暗転へ戻す |
 | `SetDragRectSelection(EsRect)` | 選択矩形をドラッグ選択コントロールへ復元する（選択変更が暗転マスクへ伝播する） |
@@ -127,7 +126,7 @@ Avalonia 版と同一の解釈になります。
 
 | 条件 | 動作 |
 | --- | --- |
-| `SetCoordinateTransform(null)` | 等価変換（境界なし）を適用する |
+| `SetCoordinateTransform(null)` | 倍率からコアが座標変換を解決する（倍率 1.0 なら等価変換・境界なし） |
 | `SetSelection` にサイズ 0 以下の矩形 | 選択なしとして扱う（例外は発生しない） |
 | ルーペ画像が未設定の状態で `SetLoupePosition` | 中心のみ記録し、表示しない（例外は発生しない） |
 | 未定義の `Mode` を設定 | `WindowSelect` と同じ扱いになる（例外は発生しない） |

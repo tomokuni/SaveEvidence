@@ -9,6 +9,7 @@ SaveEvidence のマルチ UI 対応（Avalonia UI / MewUI）における、共�
 
 - .NET 10 / C# 14
 - SkiaSharp（`EsBitmap` のピクセル操作のみ）
+- Microsoft.Extensions.Logging.Abstractions（`LoggerFallback` のロガー抽象のみ）
 - UI フレームワークは一切参照しない
 
 ## アーキテクチャ
@@ -38,6 +39,7 @@ graph LR
 | `ICursorOverrideGuard.cs` | カーソル上書き抑止の抽象 |
 | `IGlobalHotKeyService.cs` | グローバルホットキー管理の抽象 |
 | `ElementFinderResults.cs` | 要素検出の結果（`readonly record struct`） |
+| `LoggerFallback.cs` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（拡張メソッド `OrNullLogger`） |
 | `Coordinate/ScrollMath.cs` | スクロール範囲・ビューポートサイズの純粋計算 |
 | `Coordinate/DpiScaler.cs` | DIP 値を物理ピクセルへ変換する純粋計算 |
 | `Coordinate/CoordMath.cs`（internal） | 画像レイアウト計算の一元化。`CoordTransform` から利用する |

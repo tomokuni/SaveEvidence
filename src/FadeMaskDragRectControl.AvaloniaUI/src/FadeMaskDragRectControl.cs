@@ -12,6 +12,7 @@ using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Coordinate;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using EsUtil.Platform.Core;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
@@ -165,10 +166,10 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     public ILogger Log
     {
-        get => field ?? NullLogger.Instance;
+        get => field.OrNullLogger();
         set
         {
-            field = value ?? NullLogger.Instance;
+            field = value.OrNullLogger();
             // 内包コントロールへ伝搬する（ルーペの Trace ログ・ドラッグ操作ログをホストのログ基盤へ転送）
             _loupeControl.Log = field;
             _dragRect.Log = field;
@@ -402,7 +403,7 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
-    /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は等価変換。</param>
+    /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は倍率（<see cref="Scaling"/>）からコアが解決する。</param>
     /// <remarks>
     /// DragRect / FadeMask / Loupe の 3 コントロールへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。

@@ -36,7 +36,7 @@ internal sealed class SelectionCaptureSession(
     private const int OffScreenCoordinate = -32000;
 
     /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
-    private readonly ILogger _log = logger ?? NullLogger.Instance;
+    private readonly ILogger _log = logger.OrNullLogger();
 
     /// <summary>表示中の選択オーバーレイウィンドウ（キャンセル用）。</summary>
     private OverlayWindow? _window;

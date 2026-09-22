@@ -59,6 +59,20 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 - `ScaleToPixel(int/double dipValue, double scaling)`: DIP 値を物理ピクセルへ変換（切り上げ・最低 1。浮動小数誤差を吸収）。
 - `LoupeControl` の表示サイズ計算で共用する。
 
+### `LoggerFallback`（static class）
+
+ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー。拡張メソッドとして提供します。
+
+| 種別 | メンバー | シグネチャ | 説明 |
+| --- | --- | --- | --- |
+| 拡張メソッド | `OrNullLogger` | `static ILogger OrNullLogger(this ILogger? logger)` | 指定されたロガーを返す。null の場合は `NullLogger.Instance`（出力なし）を返す |
+
+```csharp
+private readonly ILogger _log = logger.OrNullLogger();   // logger が null でも安全
+```
+
+「ロガー未設定（null）は出力なしとして扱う」規則を単一所有します。各コントロール・サービスは `logger ?? NullLogger.Instance` を自前で書かず本メソッドへ委譲してください。
+
 ### `Geometry.EsPoint`（readonly record struct）
 
 ```csharp

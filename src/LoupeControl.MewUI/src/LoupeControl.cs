@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using MewUIColor = Aprillz.MewUI.Color;
 using static Estable.Loupe.LoupeValueCoercer;
+using EsUtil.Platform.Core;
 
 namespace Estable.MewUI.Loupe;
 
@@ -309,8 +310,8 @@ public sealed class LoupeControl : SkiaCanvasView
     /// </remarks>
     public ILogger Log
     {
-        get => field ?? NullLogger.Instance;
-        set => field = value ?? NullLogger.Instance;
+        get => field.OrNullLogger();
+        set => field = value.OrNullLogger();
     }
 
     /// <summary>ログ用に画像を整形する。</summary>

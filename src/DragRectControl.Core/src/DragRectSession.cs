@@ -37,8 +37,8 @@ internal sealed class DragRectSession
     /// <summary>最後のマウスダウン位置（ドメイン座標。クリック通知・ログ用）。</summary>
     private EsPoint _pressPosition;
 
-    /// <summary>内部ロガー。</summary>
-    private ILogger _log = NullLogger.Instance;
+    /// <summary>内部ロガー（未設定は null。読み取り時に <see cref="LoggerFallback"/> が吸収する）。</summary>
+    private ILogger? _log;
 
     /// <summary>状態管理クラスを初期化する。</summary>
     /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
@@ -59,8 +59,8 @@ internal sealed class DragRectSession
     /// <value>注入されたロガー。null 可（null の場合は <see cref="NullLogger"/> へフォールバックする）。</value>
     public ILogger Log
     {
-        get => _log;
-        set => _log = value ?? NullLogger.Instance;
+        get => _log.OrNullLogger();
+        set => _log = value;
     }
 
     /// <summary>現在の設定（外観・対話パラメータ）。</summary>

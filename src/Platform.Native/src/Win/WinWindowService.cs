@@ -24,7 +24,7 @@ internal sealed class WinWindowService : IWindowService
     /// <param name="logger">ロガー。null の場合は出力なし。</param>
     public WinWindowService(ILogger? logger = null)
     {
-        _log = logger ?? NullLogger.Instance;
+        _log = logger.OrNullLogger();
     }
 
     /// <summary>ウィンドウをタスクバー / Alt+Tab に表示しないよう設定する（選択オーバーレイ用、仕様 2.2）。</summary>

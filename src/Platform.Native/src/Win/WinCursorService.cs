@@ -32,7 +32,7 @@ internal sealed class WinCursorService : ICursorService
     /// </remarks>
     public WinCursorService(ILogger? logger = null)
     {
-        _log = logger ?? NullLogger.Instance;
+        _log = logger.OrNullLogger();
 
         // Win32 の表示カウンタと状態追跡を同期する（初期状態の実態を取得）
         var info = new WinNative.CURSORINFO { cbSize = CursorInfoSize };

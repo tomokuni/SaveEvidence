@@ -140,7 +140,7 @@ classDiagram
         +string WindowTitle
         +FadeMaskRenderMode Mode
         +Func~string?~? SizeLabelOverrideProvider
-        +ICoordTransform? Port
+        +SetCoordinateTransform(port) void
     }
     class DragRectControl {
         <<DragRectControl.MewUI>>
@@ -188,12 +188,12 @@ sequenceDiagram
     Facade->>Drag: IsVisible = true
     Host->>Facade: SetCoordinateTransform(port)
     Facade->>Drag: SetCoordinateTransform(port)
-    Facade->>Overlay: Port = port
+    Facade->>Overlay: SetCoordinateTransform(port)
     Note over Drag: 左ドラッグ（新規選択）
     Drag->>Facade: SelectionStarted
-    Facade->>Overlay: HasSelection = false / SelectionRect = null
+    Facade->>Overlay: HasSelection = false / LogicalSelectionRect = null
     Drag->>Facade: SelectionChanged(rect)
-    Facade->>Overlay: HasSelection = true / SelectionRect = rect
+    Facade->>Overlay: HasSelection = true / LogicalSelectionRect = rect
     Drag->>Facade: LoupePositionMoved(pos)
     Facade->>Facade: 中心を更新し配置を再計算
     Facade->>Host: LoupePositionMoved(pos)

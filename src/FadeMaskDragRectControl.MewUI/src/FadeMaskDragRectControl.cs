@@ -12,6 +12,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
+using EsUtil.Platform.Core;
 
 namespace Estable.MewUI.FadeMaskDragRect;
 
@@ -61,8 +62,9 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>動作モード（既定は範囲選択）。</summary>
     private FadeMaskDragRectMode _mode = FadeMaskDragRectMode.AreaSelect;
 
-    /// <summary>座標変換ポート（Forward = ローカル DIP → ドメイン / Inverse = ドメイン → ローカル DIP）。</summary>
-    private ICoordTransform _port = CoordTransform.Identity;
+    /// <summary>座標変換ポート（Forward = ローカル DIP → ドメイン / Inverse = ドメイン → ローカル DIP）。未設定は null。</summary>
+    /// <remarks>ルーペの配置計算に使う（未設定時は等価変換で代替する）。</remarks>
+    private ICoordTransform? _port;
 
     /// <summary>ルーペ中心（ドメイン座標）。null の場合は表示しない。</summary>
     private EsPoint? _loupeCenter;
@@ -260,10 +262,6 @@ public sealed class FadeMaskDragRectControl : Panel
         }
     }
 
-    /// <summary>暗転マスクの描画に使用する座標変換ポートを取得する。</summary>
-    /// <value>論理座標 → DIP の座標変換ポート。</value>
-    public ICoordTransform? Port => _overlay.Port;
-
     /// <summary>暗転マスクコントロールを取得する（外観の詳細設定用）。</summary>
     /// <value>暗転マスクを描画するコントロール。</value>
     public FadeMaskControl Overlay => _overlay;
@@ -277,17 +275,18 @@ public sealed class FadeMaskDragRectControl : Panel
     public LoupeControl Loupe => _loupe;
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
-    /// <param name="port">座標変換ポート。null の場合は等価変換（1 ドメインピクセル = 1 DIP・境界なし）。</param>
+    /// <param name="port">座標変換ポート。null の場合は <see cref="Scaling"/> 相当の等倍スケール（コアが解決）を使う。</param>
     /// <remarks>
     /// ドラッグ選択と暗転マスクへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。<br/>
-    /// ルーペの表示位置も本ポートで計算するため、配置を再計算する。
+    /// null はそのまま渡す（未設定を倍率で解決する規則はコアが単一所有する）。ルーペの表示位置計算のみ本クラスが行うため、
+    /// その用途では等価変換で代替する。
     /// </remarks>
     public void SetCoordinateTransform(ICoordTransform? port)
     {
-        _port = port ?? CoordTransform.Identity;
-        _dragRect.SetCoordinateTransform(_port);
-        _overlay.Port = _port;
+        _port = port;
+        _dragRect.SetCoordinateTransform(port);
+        _overlay.SetCoordinateTransform(port);
         InvalidateArrange();
     }
 
@@ -302,7 +301,7 @@ public sealed class FadeMaskDragRectControl : Panel
         get => _dragRect.Log;
         set
         {
-            var logger = value ?? NullLogger.Instance;
+            var logger = value.OrNullLogger();
             _dragRect.Log = logger;
             _loupe.Log = logger;
         }
@@ -431,7 +430,8 @@ public sealed class FadeMaskDragRectControl : Panel
             _loupe.RequestedSize,
             parentSize,
             bounds.Width > 0 && bounds.Height > 0,
-            _port.Inverse(domainPos),
+            // ルーペの表示位置は本クラスが計算するため、未設定（null）はここで等価変換として扱う
+            (_port ?? CoordTransform.Identity).Inverse(domainPos),
             _loupeOffset);
 
         _loupe.Arrange(new Rect(bounds.X + position.X, bounds.Y + position.Y, size.Width, size.Height));

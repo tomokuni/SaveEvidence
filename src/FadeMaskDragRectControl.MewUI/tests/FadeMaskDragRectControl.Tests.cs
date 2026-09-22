@@ -1,9 +1,11 @@
 using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
+using Estable.MewUI.FadeMask;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Aprillz.MewUI;
 using SkiaSharp;
+using System.Reflection;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
@@ -347,30 +349,40 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void SetCoordinateTransform_暗転マスクとPortを更新する()
+    public void SetCoordinateTransform_暗転マスクへ伝搬する()
     {
         var control = new FadeMaskDragRectControl();
         var port = CreatePort();
 
         control.SetCoordinateTransform(port);
 
-        Assert.Same(port, control.Port);
-        Assert.Same(port, control.Overlay.Port);
+        // 暗転マスク（内包コントロール）が同じポートを受け取る
+        Assert.Same(port, GetCoordinatePort(control.Overlay));
     }
 
     [Fact]
-    public void SetCoordinateTransform_nullは等価変換になる()
+    public void SetCoordinateTransform_nullは暗転マスクでも未設定になる()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordinateTransform(CreatePort());
 
         control.SetCoordinateTransform(null);
 
-        Assert.NotNull(control.Port);
-        // 等価変換（1 ドメインピクセル = 1 DIP）へ戻る
-        Assert.Equal(new EsPoint(10, 20), control.Port!.Forward(new EsPoint(10, 20)));
-        Assert.Null(control.Port.Bounds);
+        // null（未設定）を倍率から解決する規則はコアが単一所有するため、本クラスは置換せずそのまま渡す
+        Assert.Null(GetCoordinatePort(control.Overlay));
     }
+
+    /// <summary>座標変換ポート（内部保持）をリフレクションで取得する。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <returns>保持している座標変換ポート。未設定の場合は null。</returns>
+    /// <remarks>
+    /// ポートは公開プロパティではなくメソッドで設定し、内包コントロールが内部で保持する（読み取り API を持たない）。<br/>
+    /// 検証は Avalonia 版の複合コントロールテストと同じくリフレクションで行う。
+    /// </remarks>
+    private static ICoordTransform? GetCoordinatePort(FadeMaskControl control)
+        => (ICoordTransform?)typeof(FadeMaskControl)
+            .GetField("_coordinatePort", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(control);
 
     // ====================================================================
     // ルーペ

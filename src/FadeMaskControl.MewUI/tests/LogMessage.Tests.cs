@@ -62,8 +62,8 @@ public class FadeMaskControlLogTests
         var logger = new RecordingLogger();
         control.Log = logger;
 
-        control.Port = new CoordTransform(p => p, p => p, () => new EsSize(100, 100));
-        control.Port = null;
+        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(100, 100)));
+        control.SetCoordinateTransform(null);
 
         Assert.Equal(2, logger.Messages.Count);
         Assert.Equal("[FadeMask] CoordinateTransform: True", logger.Messages[0]);
@@ -78,6 +78,6 @@ public class FadeMaskControlLogTests
 
         control.LogicalSelectionRect = new EsRect(1, 2, 3, 4);
         control.LogicalHighlightRect = new EsRect(1, 2, 3, 4);
-        control.Port = null;
+        control.SetCoordinateTransform(null);
     }
 }

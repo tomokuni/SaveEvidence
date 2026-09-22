@@ -6,6 +6,7 @@ using Estable.AvaloniaUI.ZoomView.Logging;
 using Estable.ZoomView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using EsUtil.Platform.Core;
 
 namespace Estable.AvaloniaUI.ZoomView;
 
@@ -101,8 +102,8 @@ public sealed class ZoomViewControl : Panel
     /// <value>null 可。設定しない場合はログを出力しない。</value>
     public ILogger Log
     {
-        get => field ?? NullLogger.Instance;
-        set => field = value ?? NullLogger.Instance;
+        get => field.OrNullLogger();
+        set => field = value.OrNullLogger();
     }
 
     /// <summary>ZoomViewControl を初期化し、内包する ZoomableView の配線を自己完結させる（既定の設定）。</summary>

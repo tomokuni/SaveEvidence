@@ -91,8 +91,8 @@ classDiagram
         +double RenderScaling
         +double Scaling
         +double DisplayScaleScaling
-        +ICoordTransform? Port
         +Func~string?~? SizeLabelOverrideProvider
+        +SetCoordinateTransform(port) void
         -OnPaintSurface(canvas, info) void
     }
     class FadeMaskSubLine {
@@ -221,8 +221,9 @@ sequenceDiagram
 3. **枠線は穴あけ矩形の内側に描く**。Avalonia 版の `GetBorderRects` をコアへ移したため、見た目は完全に一致する。
 4. **選択は閉区間（+1）、ハイライトは +0**。Avalonia 版と同じ規則をコアが単一所有する。
 5. **入力を持たない**。装飾専用とし、ホストが重ね順とヒットテストを管理する（Avalonia 版と同じ）。
-6. **座標変換は `Port`（推奨）または `Scaling`（等倍スケール専用）で指定する**。`Port` が設定されている場合はそちらを優先し、
+6. **座標変換は `SetCoordinateTransform`（推奨）または `Scaling`（等倍スケール専用）で指定する**。ポートが設定されている場合はそちらを優先し、
    オフセットを含む変換（ズームビューのレターボックス等）でも暗転の穴あけと選択矩形が一致する。
+   設定口は両 UI で同名の `SetCoordinateTransform` に統一する（プロパティでは設定しない）。
 7. **ラベルはコアが配置を、UI が実寸を担う**。テキストの実寸は UI の描画 API でしか測れないため、
    実寸だけを引数で渡し、余白・背景・文字原点・次の行の位置は `FadeMaskLabelLayout` が単一所有する（両 UI の見た目を一致させる）。
 8. **文言はコアが単一所有する**。サイズラベル（`FormatSizeLabel`）・操作ラベル（`GetOperationText`）・情報ラベルの表示判定
@@ -252,7 +253,7 @@ sequenceDiagram
 | レベル | 出力元 |
 | --- | --- |
 | Debug | `LogicalSelectionRect` / `LogicalHighlightRect` の変更（同一値なら出力しない） |
-| Trace | `Port`（座標変換ポート）の設定・解除 |
+| Trace | `SetCoordinateTransform`（座標変換ポート）の設定・解除 |
 
 出力先は `Log` プロパティへ注入します（既定は `NullLogger`）。  
 複合コントロール（`FadeMaskDragRectControl.MewUI`）は選択のたびにログが出るため伝搬せず、必要なら Overlay.Log を直接設定します。

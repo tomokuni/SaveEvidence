@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using Estable.AvaloniaUI.ColorPicker.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using EsUtil.Platform.Core;
 
 namespace Estable.AvaloniaUI.ColorPicker;
 
@@ -197,8 +198,8 @@ public sealed partial class ColorPickerControl : UserControl
     /// </remarks>
     public ILogger Log
     {
-        get => field ?? NullLogger.Instance;
-        set => field = value ?? NullLogger.Instance;
+        get => field.OrNullLogger();
+        set => field = value.OrNullLogger();
     }
 
     // ====================================================================

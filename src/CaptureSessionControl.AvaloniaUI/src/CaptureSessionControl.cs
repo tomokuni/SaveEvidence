@@ -61,7 +61,7 @@ public sealed class CaptureSessionControl : IDisposable
     {
         initialSettings?.Validate();
         _currentSettings = MergeWithDefaults(initialSettings);
-        _log = logger ?? NullLogger.Instance;
+        _log = logger.OrNullLogger();
         _windowService = PlatformFactory.CreateWindowService(_log);
     }
 

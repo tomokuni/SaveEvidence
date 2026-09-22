@@ -94,7 +94,7 @@ internal sealed partial class OverlayWindow : Window
         InitializeComponent();
         _captureType = captureType;
         _onComplete = onComplete;
-        _log = logger ?? NullLogger.Instance;
+        _log = logger.OrNullLogger();
         _windowService = windowService;
         _captureService = captureService;
         _detector = detector;

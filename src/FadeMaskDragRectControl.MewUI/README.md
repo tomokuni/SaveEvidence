@@ -72,9 +72,8 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | `SizeLabelOverrideProvider` | サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
 | `SelectionOverlayColorA` / `SelectionOverlayColorB` | ルーペ画像上の選択矩形破線の色（2 色交互。既定は白 / 黒） |
 | `Log` | 操作ログの出力先（null は `NullLogger`。内包するドラッグ選択コントロールとルーペへ伝搬する） |
-| `Port` | 暗転マスクへ適用中の座標変換ポート |
 | `Overlay` / `DragRect` / `Loupe` | 内包コントロール（外観の詳細設定用） |
-| `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定（null は等価変換） |
+| `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定（ドラッグ選択・暗転マスクへ分配。null の場合は倍率からコアが解決する） |
 | `SetSelection` / `ClearSelection` | 選択状態の外部設定・クリア |
 | `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe` | ルーペの制御 |
 | `RequestConfirm` / `RequestCancel` | Enter / Escape 相当の確定・キャンセル要求 |

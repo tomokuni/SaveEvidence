@@ -7,6 +7,7 @@ using EsUtil.Platform.Core.Geometry;
 using Estable.FadeMask;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using EsUtil.Platform.Core;
 using Rect = Avalonia.Rect;
 
 namespace Estable.AvaloniaUI.FadeMask;
@@ -203,8 +204,8 @@ public class FadeMaskControl : Control
     /// <remarks>C#14 の <c>field</c> キーワードでバッキング フィールドを暗黙定義する。</remarks>
     public ILogger Log
     {
-        get => field ?? NullLogger.Instance;
-        set => field = value ?? NullLogger.Instance;
+        get => field.OrNullLogger();
+        set => field = value.OrNullLogger();
     }
 
     // ====================================================================

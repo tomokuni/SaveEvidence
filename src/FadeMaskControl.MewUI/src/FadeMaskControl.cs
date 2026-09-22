@@ -6,6 +6,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
+using EsUtil.Platform.Core;
 
 namespace Estable.MewUI.FadeMask;
 
@@ -21,10 +22,8 @@ namespace Estable.MewUI.FadeMask;
 /// 記載は <see cref="Appearance"/>（コアの <see cref="FadeMaskAppearance"/>）が、サイズラベルの文言は<br/>
 /// <see cref="SizeLabelOverrideProvider"/> が与える。背景・文字原点・次の行の位置はコアが単一所有する。<br/>
 /// <br/>
-/// <b>Avalonia 版との違い（フレームワーク固有）</b>: 座標変換ポートは <see cref="Port"/> プロパティで設定し<br/>
-/// （Avalonia 版は 3 子コントロールへ一括設定する <c>SetCoordinateTransform</c> メソッド）、<br/>
-/// DPI 追従（<see cref="RenderScaling"/>）と非 ASCII 文言のフォントフォールバック（豆腐防止）を持つ<br/>
-/// （Avalonia 版はコントロールの DIP 座標系・自前のテキスト計量のため不要）。
+/// <b>Avalonia 版との違い（フレームワーク固有）</b>: DPI 追従（<see cref="RenderScaling"/>）と<br/>
+/// 非 ASCII 文言のフォントフォールバック（豆腐防止）を持つ（Avalonia 版はコントロールの DIP 座標系・自前のテキスト計量のため不要）。
 /// </remarks>
 public sealed class FadeMaskControl : SkiaCanvasView
 {
@@ -71,19 +70,9 @@ public sealed class FadeMaskControl : SkiaCanvasView
         MewProperty<double>.Register<FadeMaskControl>(nameof(RenderScaling), 1.0, MewPropertyOptions.AffectsRender);
 
     /// <summary><see cref="Scaling"/> プロパティ（座標変換ポートへ適用する倍率）。</summary>
-    /// <remarks><see cref="Port"/> が設定されている場合は使用しない（等倍スケール専用の簡易指定）。</remarks>
+    /// <remarks><see cref="SetCoordinateTransform"/> でポートを設定した場合は使用しない（等倍スケール専用の簡易指定）。</remarks>
     public static readonly MewProperty<double> ScalingProperty =
         MewProperty<double>.Register<FadeMaskControl>(nameof(Scaling), 1.0, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="Port"/> プロパティ（論理座標 → DIP の座標変換ポート）。</summary>
-    /// <remarks>
-    /// 設定すると <see cref="Scaling"/> より優先され、オフセットを含む変換（ズームビューのレターボックス等）でも<br/>
-    /// 選択矩形と暗転マスクが一致する。null の場合は <see cref="Scaling"/> による等倍スケールを使用する。
-    /// </remarks>
-    public static readonly MewProperty<ICoordTransform?> PortProperty =
-        MewProperty<ICoordTransform?>.Register<FadeMaskControl>(
-            nameof(Port), null, MewPropertyOptions.AffectsRender,
-            changed: static (owner, oldValue, newValue) => owner.Log.LogCoordinateTransform(newValue is not null));
 
     /// <summary>論理座標（ドメイン）の選択矩形を取得または設定する。</summary>
     /// <value>選択矩形。null の場合は穴あけなし。</value>
@@ -171,16 +160,25 @@ public sealed class FadeMaskControl : SkiaCanvasView
         set => SetValue(ScalingProperty, value);
     }
 
-    /// <summary>論理座標 → DIP の座標変換ポートを取得または設定する。</summary>
-    /// <value>座標変換ポート。null の場合は <see cref="Scaling"/> による等倍スケールを使用する。</value>
-    /// <remarks>ポートと倍率の使い分け（ポート優先・無ければ倍率）はコアが単一所有する（Avalonia 版と同じ規則）。</remarks>
-    public ICoordTransform? Port
+    /// <summary>論理座標 → DIP の座標変換ポート。</summary>
+    /// <remarks>null は「未設定」を意味し、コアが <see cref="Scaling"/> から等倍スケールを解決する。</remarks>
+    private ICoordTransform? _coordinatePort;
+
+    /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを設定する。</summary>
+    /// <param name="port">座標変換ポート。null の場合は <see cref="Scaling"/> による等倍スケールを使う。</param>
+    /// <remarks>
+    /// Avalonia 版と同名・同形のメソッドとする（ポート設定はリポジトリ全体でメソッドに統一されている）。<br/>
+    /// null（未設定）を <see cref="Scaling"/> と同値として扱う規則はコア（<c>FadeMaskOverlayGeometry.ResolvePort</c>）が単一所有する<br/>
+    /// （ここで等価変換へ置換するとアプリ側の判断になり、Avalonia 版と規則が二重化する）。
+    /// </remarks>
+    public void SetCoordinateTransform(ICoordTransform? port)
     {
-        get => GetValue(PortProperty);
-        set => SetValue(PortProperty, value);
+        _coordinatePort = port;
+        Log.LogCoordinateTransform(port is not null);
+        InvalidateVisual();
     }
 
-    /// <summary>サイズラベル表示用のスケーリング係数を取得または設定する（マルチスクリーン補正）。</summary>
+    /// <summary>サイズラベル表示用のスケーリング係数を取得または設定する（マルチスクリーン補正）。</summary></summary>
     /// <value>サイズラベルの自動生成に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値が使用される。</value>
     /// <remarks>
     /// サイズラベルの文言をホストが与える場合は使用されない（自動生成のフォールバック時のみ参照する）。<br/>
@@ -215,8 +213,8 @@ public sealed class FadeMaskControl : SkiaCanvasView
     /// <remarks>C#14 の <c>field</c> キーワードでバッキング フィールドを暗黙定義する。</remarks>
     public ILogger Log
     {
-        get => field ?? NullLogger.Instance;
-        set => field = value ?? NullLogger.Instance;
+        get => field.OrNullLogger();
+        set => field = value.OrNullLogger();
     }
 
     /// <summary>暗転オーバーレイコントロールを初期化する。</summary>
@@ -267,7 +265,7 @@ public sealed class FadeMaskControl : SkiaCanvasView
             HasSelection,
             HasHighlight,
             ShowFullOverlay,
-            Port,
+            _coordinatePort,
             Scaling,
             SizeLabelOverrideProvider,
             DisplayScaleScaling));

@@ -14,6 +14,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using static Estable.Loupe.LoupeValueCoercer;
+using EsUtil.Platform.Core;
 
 namespace Estable.AvaloniaUI.Loupe;
 
@@ -614,13 +615,15 @@ public sealed partial class LoupeControl : UserControl
     // ====================================================================
 
     /// <summary>内部ロガー（描画エラーの記録用）。</summary>
+    /// <value>注入されたロガー。null 可（null の場合は <see cref="NullLogger"/> へフォールバックする）。</value>
     public ILogger Log
     {
-        get => _log;
-        set => _log = value ?? NullLogger.Instance;
+        get => _log.OrNullLogger();
+        set => _log = value;
     }
 
-    private ILogger _log = NullLogger.Instance;
+    /// <summary>内部ロガー（未設定は null。読み取り時に <see cref="LoggerFallback"/> が吸収する）。</summary>
+    private ILogger? _log;
 
     // ====================================================================
     // イベント

@@ -8,6 +8,7 @@ using Estable.ZoomView;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
+using EsUtil.Platform.Core;
 
 namespace Estable.MewUI.ZoomView;
 
@@ -146,8 +147,8 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// </remarks>
     public ILogger Log
     {
-        get => field ?? NullLogger.Instance;
-        set => field = value ?? NullLogger.Instance;
+        get => field.OrNullLogger();
+        set => field = value.OrNullLogger();
     }
 
     /// <summary>ズーム率が変更されたときに発火する（実効ズーム率・Fit 状態・ズーム可否を通知する）。</summary>

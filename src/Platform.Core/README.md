@@ -32,6 +32,7 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `Geometry.CoordinateFormatter` | 座標を `(x, y)` 形式の表示文字列へ整形する純粋関数 |
 | `Imaging.EsBitmap` | 複数のビットマップ種別を横断する軽量なユニバーサルビットマップラッパー（BGRA8888・Premul）。内部に `SKBitmap` を唯一所有し、SkiaSharp のみに依存する |
 | `CoordMath`（internal） | 画像レイアウト計算の一元化（`CalculateUniformLayout` / `ComputeImageRenderInfo`）。`CoordTransform` から利用する |
+| `LoggerFallback` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（`logger.OrNullLogger()`）。「ロガー未設定（null）は出力なし」の規則を単一所有し、各コントロール・サービスの `?? NullLogger.Instance` を排除する |
 
 各 UI 実装は、自身の型とコア型を相互変換する Interop 層（例: Avalonia 版の `EsKeyAvaloniaInterop` / `EsWindowStateAvaloniaInterop` / `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop` / `ColorAvaloniaInterop`）を個別に提供します。
 
@@ -46,7 +47,7 @@ Platform.AvaloniaUI（Avalonia アダプタ）/ Platform.Native（OS 実装）
   └──> Platform.Core（本プロジェクト）
 ```
 
-本プロジェクトが UI フレームワークへ依存することはありません。
+本プロジェクトが UI フレームワークへ依存することはありません。外部依存は `SkiaSharp`（`EsBitmap`）と `Microsoft.Extensions.Logging.Abstractions`（`LoggerFallback`）のみです。
 
 ## ビルド
 

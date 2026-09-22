@@ -8,6 +8,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using EsUtil.Platform.Core;
 using DrawingColor = System.Drawing.Color;
 
 namespace Estable.MewUI.CaptureSession;
@@ -79,7 +80,7 @@ public sealed class CropOverlay
         _target = target;
         _settings = settings.ToNonNull();
         _themeBackground = themeBackground;
-        _log = logger ?? NullLogger.Instance;
+        _log = logger.OrNullLogger();
 
         _selector = new FadeMaskDragRectControl
         {

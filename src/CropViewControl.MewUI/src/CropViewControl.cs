@@ -8,6 +8,7 @@ using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
+using EsUtil.Platform.Core;
 
 namespace Estable.MewUI.CropView;
 
@@ -125,7 +126,7 @@ public sealed class CropViewControl : Grid
     public ILogger Log
     {
         get => _zoomView.Log;
-        set => _zoomView.Log = value ?? NullLogger.Instance;
+        set => _zoomView.Log = value.OrNullLogger();
     }
 
     /// <summary>現在のズーム率（%）を取得または設定する。</summary>
