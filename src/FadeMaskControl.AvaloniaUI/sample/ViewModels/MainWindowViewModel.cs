@@ -10,9 +10,9 @@ namespace FadeMaskControl.Sample.ViewModels;
 
 /// <summary>メインウィンドウの ViewModel。</summary>
 /// <remarks>
-/// 暗転マスクの外観はコアの <see cref="FadeMaskAppearance"/> を 1 つの値として保持し、<br/>
-/// 各編集項目（色・サイズ・太さ）の setter が <c>with</c> で部分更新する（<see cref="FadeMaskControl"/> の <c>Appearance</c> へバインド）。<br/>
-/// 描画状態（モード・選択矩形・ハイライト・全面暗転）も個別プロパティとして公開し、AXAML から双方向バインドする。<br/>
+/// コントロールへ渡す設定と描画状態はコアの <see cref="FadeMaskOptions"/>（1 値）として <see cref="Options"/> から公開する（AXAML は 1 本のバインドで足りる）。<br/>
+/// 編集項目（色・サイズ・太さ）は <see cref="Appearance"/> を、モード・選択矩形・ハイライト・全面暗転は個別プロパティを編集し、<br/>
+/// 各 setter が <c>with</c> またはフィールドの更新で <see cref="Options"/> の変更通知を発行する。<br/>
 /// 選択矩形の座標は個別プロパティ（X / Y / W / H）として編集し、論理選択矩形へ反映する。
 /// </remarks>
 public partial class MainWindowViewModel : ObservableObject
@@ -42,8 +42,28 @@ public partial class MainWindowViewModel : ObservableObject
         {
             _appearance = value;
             OnPropertyChanged(nameof(Appearance));
+            OnPropertyChanged(nameof(Options));
         }
     }
+
+    /// <summary>コントロールへ渡す設定と描画状態（コアの <see cref="FadeMaskOptions"/>）。</summary>
+    /// <remarks>
+    /// 編集項目から毎回組み立てる（項目ごとの既定値を持たない。既定値はコアの <see cref="FadeMaskOptions.Default"/> が単一所有する）。<br/>
+    /// 編集項目の setter が本プロパティの変更通知を発行するため、AXAML は <c>Options="{Binding Options}"</c> の 1 本で足りる。<br/>
+    /// DPI スケーリング（<see cref="Scaling"/> / <see cref="DisplayScaleScaling"/>）とサイズラベルの文言プロバイダは<br/>
+    /// <see cref="FadeMaskOptions"/> に含まれないため、別途コントロールへ設定する。
+    /// </remarks>
+    public FadeMaskOptions Options => new()
+    {
+        Appearance = Appearance,
+        Mode = Mode,
+        WindowTitle = WindowTitle,
+        ShowFullOverlay = ShowFullOverlay,
+        LogicalSelectionRect = LogicalSelectionRect?.ToEsRect(),
+        LogicalHighlightRect = LogicalHighlightRect?.ToEsRect(),
+        HasSelection = HasSelection,
+        HasHighlight = HasHighlight,
+    };
 
     /// <summary>暗転オーバーレイの色。</summary>
     public Color OverlayColor
@@ -313,6 +333,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             field = value;
             OnPropertyChanged(nameof(LogicalSelectionRect));
+            OnPropertyChanged(nameof(Options));
         }
     }
 
@@ -329,6 +350,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             field = value;
             OnPropertyChanged(nameof(LogicalHighlightRect));
+            OnPropertyChanged(nameof(Options));
         }
     }
 
@@ -345,6 +367,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             field = value;
             OnPropertyChanged(nameof(HasSelection));
+            OnPropertyChanged(nameof(Options));
         }
     }
 
@@ -361,6 +384,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             field = value;
             OnPropertyChanged(nameof(HasHighlight));
+            OnPropertyChanged(nameof(Options));
         }
     }
 
@@ -377,6 +401,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             field = value;
             OnPropertyChanged(nameof(WindowTitle));
+            OnPropertyChanged(nameof(Options));
         }
     } = "";
 
@@ -393,6 +418,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             field = value;
             OnPropertyChanged(nameof(ShowFullOverlay));
+            OnPropertyChanged(nameof(Options));
         }
     }
 
@@ -409,6 +435,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             field = value;
             OnPropertyChanged(nameof(Mode));
+            OnPropertyChanged(nameof(Options));
         }
     } = FadeMaskRenderMode.AreaSelect;
 

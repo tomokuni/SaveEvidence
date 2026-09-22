@@ -18,19 +18,25 @@ FadeMaskControl は、**選択領域以外を暗転**させ、選択領域をハ
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `LogicalSelectionRect` | `EsRect?` | `null` | 論理座標（ドメイン座標 = 元画像ピクセル）の選択矩形 |
-| `LogicalHighlightRect` | `EsRect?` | `null` | 論理座標のハイライト矩形。選択矩形より優先される |
-| `HasSelection` | `bool` | `false` | true の場合、`LogicalSelectionRect` を穴あけ矩形として使う |
-| `HasHighlight` | `bool` | `false` | true の場合、`LogicalHighlightRect` を穴あけ矩形として使う（選択より優先） |
-| `Appearance` | `FadeMaskAppearance` | コアの既定値 | 外観（暗転色・枠線・ラベル）の単一所有。変更すると自動で再描画される |
-| `WindowTitle` | `string` | `"` | 情報ラベル（3 行目）の文言（ウィンドウ選択時のタイトル） |
-| `Mode` | `FadeMaskRenderMode` | `AreaSelect` | 描画モード（操作ラベルの文言選定・情報ラベルの表示可否） |
-| `ShowFullOverlay` | `bool` | `false` | true の場合は選択が無くても全面を暗転する |
+| `Options` | `FadeMaskOptions`（コア） | コアの既定値 | **設定と描画状態の単一値**（下記）。同じ値の再設定では更新をスキップする |
 | `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。DPI 変更で自動更新される |
 | `Scaling` | `double` | 1.0 | 座標変換ポートへ適用する倍率（`SetCoordinateTransform` が未設定の場合のみ使用。規則はコアが単一所有） |
 | `DisplayScaleScaling` | `double` | `Scaling` | サイズラベルの自動生成に使う表示スケール（0 以下は `Scaling` と同値） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を返すデリゲート。null または空文字を返すと矩形から自動生成する |
 | `Log` | `ILogger` | `NullLogger` | 状態変更ログの出力先（null は `NullLogger`） |
+
+`Options`（コアの `FadeMaskOptions`）の項目:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `Appearance` | `FadeMaskAppearance` | コアの既定値 | 外観（暗転色・枠線・ラベル）の単一所有 |
+| `Mode` | `FadeMaskRenderMode` | `AreaSelect` | 描画モード（操作ラベルの文言選定・情報ラベルの表示可否） |
+| `WindowTitle` | `string` | `""` | 情報ラベル（3 行目）の文言（ウィンドウ選択時のタイトル） |
+| `ShowFullOverlay` | `bool` | `false` | true の場合は選択が無くても全面を暗転する |
+| `LogicalSelectionRect` | `EsRect?` | `null` | 論理座標（ドメイン座標 = 元画像ピクセル）の選択矩形 |
+| `LogicalHighlightRect` | `EsRect?` | `null` | 論理座標のハイライト矩形。選択矩形より優先される |
+| `HasSelection` | `bool` | `false` | true の場合、`LogicalSelectionRect` を穴あけ矩形として使う |
+| `HasHighlight` | `bool` | `false` | true の場合、`LogicalHighlightRect` を穴あけ矩形として使う（選択より優先） |
 
 #### メソッド
 
@@ -38,7 +44,7 @@ FadeMaskControl は、**選択領域以外を暗転**させ、選択領域をハ
 | --- | --- | --- |
 | `SetCoordinateTransform` | `void SetCoordinateTransform(ICoordTransform? port)` | 論理座標 → DIP の座標変換ポートを設定する。null の場合は倍率（`Scaling`）からコアが解決する（設定した場合は `Scaling` より優先） |
 
-外観の個別項目（暗転色・枠線・ラベル）は `Appearance`（コアの `FadeMaskAppearance`）が所有します。詳細は「外観（FadeMaskAppearance）」を参照してください。
+外観の個別項目（暗転色・枠線・ラベル）は `Options.Appearance`（コアの `FadeMaskAppearance`）が所有します。詳細は「外観（FadeMaskAppearance）」を参照してください。
 
 ### 外観（FadeMaskAppearance）
 
@@ -82,8 +88,8 @@ Avalonia 版と同一の型を共有する（UI 非依存の値型のため、UI
 | 状況 | 描画 |
 | --- | --- |
 | 穴あけ矩形あり | 暗転（クライアント矩形から穴あけ矩形を除いた帯 4 領域）+ 枠線（四辺） |
-| 穴あけ矩形なし + `ShowFullOverlay` = true | 暗転（全面のみ）。枠線は描画しない |
-| 穴あけ矩形なし + `ShowFullOverlay` = false | 何も描画しない |
+| 穴あけ矩形なし + `Options.ShowFullOverlay` = true | 暗転（全面のみ）。枠線は描画しない |
+| 穴あけ矩形なし + `Options.ShowFullOverlay` = false | 何も描画しない |
 | 穴あけ矩形がクライアント矩形と交差しない | 全面を暗転する（描画漏れを防ぐ） |
 | 穴あけ矩形がクライアント矩形と同一 | 何も描画しない（暗転領域が 0 になる） |
 
@@ -92,15 +98,15 @@ Avalonia 版と同一の型を共有する（UI 非依存の値型のため、UI
 | 項目 | 仕様 |
 | --- | --- |
 | 位置 | 穴あけ矩形の左端から内側余白（4 DIP）だけ内側、上端から内側余白だけ下 |
-| 行の積み方 | 1 行目はサイズラベル、2 行目は操作ラベル、3 行目は情報ラベルの順（`Appearance.BuildSubLines` が組み立てる）。行間は内側余白 |
+| 行の積み方 | 1 行目はサイズラベル、2 行目は操作ラベル、3 行目は情報ラベルの順（`Options.Appearance.BuildSubLines` が組み立てる）。行間は内側余白 |
 | 背景 | 各行は「文言 + 内側余白 × 2」の矩形を敷く（文字が読めるようにする） |
-| サイズラベルの条件 | `Appearance.ShowSizeLabel` = true かつ穴あけ矩形があるとき（文言は `SizeLabelOverrideProvider` の戻り値。null・空文字なら矩形と `DisplayScaleScaling` から自動生成） |
+| サイズラベルの条件 | `Options.Appearance.ShowSizeLabel` = true かつ穴あけ矩形があるとき（文言は `SizeLabelOverrideProvider` の戻り値。null・空文字なら矩形と `DisplayScaleScaling` から自動生成） |
 | サイズラベルが非表示のとき | サブラインを 1 行目から描画する（繰り上げ） |
 | 日本語の文言 | 字形を持つフォントへ自動フォールバックするため、豆腐（□）にならない |
 
 ### 穴あけ矩形の決定
 
-`HasHighlight` が true なら `LogicalHighlightRect`、そうでなく `HasSelection` が true なら `LogicalSelectionRect`、両方 false なら穴あけなし（全面暗転または描画なし）です。
+`Options.HasHighlight` が true なら `Options.LogicalHighlightRect`、そうでなく `Options.HasSelection` が true なら `Options.LogicalSelectionRect`、両方 false なら穴あけなし（全面暗転または描画なし）です。
 
 ### 論理座標から DIP への変換
 
@@ -133,13 +139,13 @@ Avalonia 版と同一の型を共有する（UI 非依存の値型のため、UI
 
 | 状況 | 挙動 |
 | --- | --- |
-| 穴あけ矩形なし・`ShowFullOverlay` = false | 何も描画しない（例外にしない） |
+| 穴あけ矩形なし・`Options.ShowFullOverlay` = false | 何も描画しない（例外にしない） |
 | 暗転色のアルファが 0 | 暗転を描画しない |
 | 枠線色のアルファが 0 | 枠線を描画しない |
 | 穴あけ矩形がクライアント外 | 全面を暗転する |
 | `SizeLabelOverrideProvider` が null または空文字を返す | 矩形と `DisplayScaleScaling` から自動生成する（空文字でも例外にしない） |
 | 穴あけ矩形なし | ラベルを描画しない（穴あけ位置が無いため） |
-| `Appearance.BuildSubLines` が空を返す | サイズラベルのみ描画する |
+| `Options.Appearance.BuildSubLines` が空を返す | サイズラベルのみ描画する |
 
 ## ログ
 

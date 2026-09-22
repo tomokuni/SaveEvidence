@@ -96,7 +96,7 @@ public class FadeMaskDragRectControlStateTests
         var control = new FadeMaskDragRectControl();
 
         // 既定の設定（コアの既定値）がそのまま子コントロールへ渡される
-        Assert.Equal(FadeMaskDragRectOptions.Default.Overlay, control.Overlay.Appearance);
+        Assert.Equal(FadeMaskDragRectOptions.Default.Overlay, control.Overlay.Options.Appearance);
         Assert.Equal(FadeMaskDragRectOptions.Default.ResolveDragRectOptions(), control.DragRect.Options);
         Assert.Equal(FadeMaskDragRectOptions.Default.Loupe, control.Loupe.Options);
         Assert.Equal(FadeMaskDragRectOptions.Default.LoupeOffset, control.Loupe.PositionOffset);

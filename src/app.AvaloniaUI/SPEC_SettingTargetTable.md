@@ -55,7 +55,7 @@ FadeMaskDragRectControl（_selectionOverlay）
 | `CropViewControl` | `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `ViewportBackground` / `CenterAlign` / `ZoomView`（`ZoomViewControl`） | 設定は `FadeMaskDragRectControl` へ委譲。DPI スケーリングは個別プロパティ（コードから動的設定） |
 | `ZoomViewControl` | `Background` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観 |
 | `FadeMaskDragRectControl` | `Options`（`FadeMaskDragRectOptions`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `Mode` / `WindowTitle` / `ShowFullOverlay` | 下位（DragRect / FadeMask / Loupe）の設定を一括公開（コアの設定値 1 つ）+ DPI スケーリングを個別公開 |
-| `FadeMaskControl` | `Appearance`（`FadeMaskAppearance`）+ 描画状態プロパティ | 外観は 1 つの値、描画状態（選択矩形・ハイライト・全面暗転・モード）は個別プロパティ（いずれも `FadeMaskDragRectOptions` 経由で設定） |
+| `FadeMaskControl` | `Options`（`FadeMaskOptions`）+ `Scaling` / `DisplayScaleScaling` | 設定と描画状態（外観・モード・論理矩形・有効フラグ）は 1 つの値、DPI スケーリングは環境値として個別（いずれも `FadeMaskDragRectControl` 経由で設定される） |
 | `DragRectControl` | `Options`（`DragRectOptions`。枠線・ハンドル・マーカー・座標ラベル・対話パラメータ） | `FadeMaskDragRectOptions.DragRect` から設定（枠線は `Overlay` の値が導出される） |
 | `LoupeControl` | `Options`（`LoupeOptions`。表示サイズ・拡大率・外観）/ `RenderScaling`（DPI 自動取得）/ `PositionOffset` | `FadeMaskDragRectOptions.Loupe` から設定（`RenderScaling` 以外） |
 | `Platform.AvaloniaUI` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。`Platform.Core` 提供）を提供 |
@@ -171,8 +171,8 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `DisplayScaleScaling` | ✅ `DisplayScaleScaling`（個別プロパティ） | —（コードから動的設定） | マルチスクリーン補正 |
 | `LoupeRenderScaling` | ✅ `LoupeRenderScaling`（個別プロパティ） | —（DPI から自動取得） | ルーペ描画スケール |
 | `Mode`（`FadeMaskDragRectMode`） | ✅ `SelectionMode`（`FadeMaskDragRectMode` をそのまま委譲） | — | |
-| `WindowTitle` | — | — | キャプチャセッション（OverlayWindow）専用 |
-| `ShowFullOverlay` | — | — | 描画状態（読み取り専用） |
+| `WindowTitle` | ✅ `WindowTitle`（`Options with { ... }`） | — | キャプチャセッション（OverlayWindow）専用 |
+| `ShowFullOverlay` | ✅ `ShowFullOverlay`（`Options with { ... }`） | — | モードから導出される描画状態（読み取り専用） |
 
 - `CropViewControl` は `FadeMaskDragRectControl` の `Options` と DPI スケーリング個別プロパティをそのまま公開する（型を透過）。
 - `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` は `Options` には**含まれず**、個別プロパティで公開される（**コードから動的設定**のため設定画面では設定不可）。

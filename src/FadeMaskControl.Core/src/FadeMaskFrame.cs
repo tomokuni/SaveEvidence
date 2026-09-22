@@ -4,35 +4,23 @@ using DrawingColor = System.Drawing.Color;
 
 namespace Estable.FadeMask;
 
-/// <summary>暗転マスクの描画入力（設定と状態を 1 つにまとめた値）。</summary>
+/// <summary>暗転マスクの描画入力（設定・状態と、描画時に決まる値を 1 つにまとめた値）。</summary>
 /// <remarks>
 /// UI 層は自 UI の公開プロパティから本値を組み立てて <see cref="FadeMaskFrame.Resolve"/> へ渡すだけで、<br/>
 /// 「どの矩形を暗転するか」「どのラベルを描くか」の判断を持たない（判断はコアが単一所有する）。<br/>
+/// 設定と描画状態は <see cref="FadeMaskOptions"/>（公開値）が単一所有し、本値はそれに<b>描画時に決まる値</b><br/>
+/// （クライアント矩形・座標変換ポート・倍率・文言プロバイダ）を加えたものである。<br/>
 /// 色は UI 非依存の <see cref="DrawingColor"/> を使用する。
 /// </remarks>
-/// <param name="Appearance">外観（暗転色・枠線・ラベル）。</param>
-/// <param name="Mode">描画モード（操作ラベルの文言選定に使用する）。</param>
-/// <param name="WindowTitle">情報ラベル（3 行目）の文言。null 可。</param>
+/// <param name="Options">設定と描画状態（外観・モード・論理矩形・有効フラグ）。</param>
 /// <param name="Client">クライアント矩形（DIP）。</param>
-/// <param name="LogicalSelectionRect">選択矩形（ドメイン座標）。null は選択なし。</param>
-/// <param name="LogicalHighlightRect">ハイライト矩形（ドメイン座標）。null はハイライトなし。</param>
-/// <param name="HasSelection">選択が有効か。</param>
-/// <param name="HasHighlight">ハイライトが有効か（選択より優先する）。</param>
-/// <param name="ShowFullOverlay">穴あけ矩形が無くても全面を暗転するか。</param>
 /// <param name="Port">論理座標 → DIP の座標変換ポート。null の場合は <paramref name="Scaling"/> を等倍スケールとして適用する。</param>
 /// <param name="Scaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
 /// <param name="SizeLabelOverrideProvider">サイズラベルの文言プロバイダ。null 可（未指定・空文字の場合は自動生成する）。</param>
 /// <param name="DisplayScaleScaling">サイズラベルの自動生成に使うスケーリング（0 以下は等倍）。</param>
 internal readonly record struct FadeMaskRequest(
-    FadeMaskAppearance Appearance,
-    FadeMaskRenderMode Mode,
-    string WindowTitle,
+    FadeMaskOptions Options,
     EsRect Client,
-    EsRect? LogicalSelectionRect,
-    EsRect? LogicalHighlightRect,
-    bool HasSelection,
-    bool HasHighlight,
-    bool ShowFullOverlay,
     ICoordTransform? Port,
     double Scaling,
     Func<string?>? SizeLabelOverrideProvider,
@@ -77,22 +65,23 @@ internal readonly record struct FadeMaskFrame(
     /// </remarks>
     public static FadeMaskFrame Resolve(in FadeMaskRequest request)
     {
-        var appearance = request.Appearance;
+        var options = request.Options;
+        var appearance = options.Appearance;
 
         // 穴あけ矩形の決定（論理矩形 + 座標変換ポートを描画時に評価。ポート未指定は倍率または等価変換）
         // 選択矩形は閉区間（+1）で DIP 変換する。ハイライト矩形（スクリーン/ウィンドウ境界）は
         // 既に全ピクセルを含む閉区間表現（PixelRect 由来）のため +1 しない（1px 大きく表示されるのを防ぐ）。
         var port = FadeMaskOverlayGeometry.ResolvePort(request.Port, request.Scaling);
-        var selectionRect = request.LogicalSelectionRect is { } selection
+        var selectionRect = options.LogicalSelectionRect is { } selection
             ? FadeMaskOverlayGeometry.ToDipRect(selection, port)
             : (EsRect?)null;
-        var highlightRect = request.LogicalHighlightRect is { } highlight
+        var highlightRect = options.LogicalHighlightRect is { } highlight
             ? FadeMaskOverlayGeometry.ToDipRect(highlight, port, closedInterval: false)
             : (EsRect?)null;
         var holeRect = FadeMaskOverlayGeometry.ResolveHoleRect(
-            request.HasHighlight, highlightRect, request.HasSelection, selectionRect);
+            options.HasHighlight, highlightRect, options.HasSelection, selectionRect);
 
-        if (!FadeMaskOverlayGeometry.ShouldDrawOverlay(holeRect, request.ShowFullOverlay))
+        if (!FadeMaskOverlayGeometry.ShouldDrawOverlay(holeRect, options.ShowFullOverlay))
         {
             return CreateEmpty(appearance);
         }
@@ -128,7 +117,7 @@ internal readonly record struct FadeMaskFrame(
             hole,
             sizeLabelText,
             sizeLabelStyle,
-            appearance.BuildSubLines(request.Mode, request.WindowTitle));
+            appearance.BuildSubLines(options.Mode, options.WindowTitle));
     }
 
     /// <summary>サイズラベル（1 行目）の文言を決定する。</summary>

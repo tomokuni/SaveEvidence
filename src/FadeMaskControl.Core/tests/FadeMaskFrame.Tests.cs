@@ -47,15 +47,18 @@ public class FadeMaskFrameTests
         Func<string?>? provider = null,
         double displayScale = 1.0)
         => new(
-            appearance ?? new FadeMaskAppearance(),
-            mode,
-            windowTitle,
+            new FadeMaskOptions
+            {
+                Appearance = appearance ?? new FadeMaskAppearance(),
+                Mode = mode,
+                WindowTitle = windowTitle,
+                ShowFullOverlay = showFullOverlay,
+                LogicalSelectionRect = selectionRect,
+                LogicalHighlightRect = highlightRect,
+                HasSelection = hasSelection,
+                HasHighlight = hasHighlight,
+            },
             s_client,
-            selectionRect,
-            highlightRect,
-            hasSelection,
-            hasHighlight,
-            showFullOverlay,
             port,
             scaling,
             provider,

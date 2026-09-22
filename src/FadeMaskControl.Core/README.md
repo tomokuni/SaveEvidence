@@ -11,14 +11,16 @@
 | 型 | 公開 | 責務 |
 | --- | --- | --- |
 | `FadeMaskRenderMode` | `public` | オーバーレイ描画のモード（AreaSelect / ScreenSelect / WindowSelect / Crop） |
+| `FadeMaskOptions` | `public` | **設定と描画状態の単一値**（外観・モード・情報ラベルの文言・全面暗転・選択/ハイライト矩形とその有効フラグ）。UI 層は本値を 1 プロパティとして公開するだけ |
 | `FadeMaskSubLine` | `public` | サイズラベルの下（2 行目以降）に表示する 1 行分の値（文言・フォントサイズ・文字色・背景色） |
 | `FadeMaskAppearance` | `public` | 外観（暗転色・枠線・ラベル）の単一所有と `BuildSubLines`（ラベル行の組立） |
 | `FadeMaskOverlayGeometry` | `internal` | 論理座標 → DIP 変換（閉区間の扱いを含む）・穴あけ矩形の決定・暗転領域（4 帯）の計算・枠線矩形の計算・座標変換ポートの決定（ポート優先・無ければ倍率） |
 | `FadeMaskFrame` | `internal` | **1 フレーム分の描画内容**（暗転領域・枠線・サイズラベルの文言・サブライン）の決定。入力は `FadeMaskRequest` |
+| `FadeMaskRequest` | `internal` | **描画入力**（設定・状態の 1 値 `FadeMaskOptions` + 描画時に決まる値（クライアント矩形・座標変換ポート・倍率・文言プロバイダ）） |
 | `FadeMaskLabels` | `internal` | 情報ラベルの表示判定・操作ラベルの文言・サイズラベルの文言（`FormatSizeLabel`）・表示スケールの解決（`ResolveDisplayScaling`）・サブラインの組み立て（`BuildSubLines`）の単一所有 |
 | `FadeMaskLabelStyle` | `internal` | ラベル 1 行分の外観（フォントサイズ・文字色・背景色）。フレームの受け渡し専用 |
 | `FadeMaskLabelLayout` | `internal` | ラベルの行配置（内側余白 `Padding`・背景矩形・文字の描画原点・次の行の Y 座標）の単一所有 |
-| `LogMessage` | `internal` | 描画状態変更（選択矩形・ハイライト矩形・座標変換ポート）の LoggerMessage 定義（両 UI で同一書式） |
+| `LogMessage` | `internal` | 設定・描画状態の変更の LoggerMessage 定義（矩形の差分検出を含む。両 UI で同一書式） |
 
 `internal` の型は UI 実装（`FadeMaskControl` / `FadeMaskControl.MewUI`）とアプリ（`SaveEvidence.MewUI`）、テストからのみ `InternalsVisibleTo` で参照できます。
 
@@ -26,13 +28,13 @@
 
 ## 層の責務の境界
 
-両 UI（Avalonia / MewUI）は「外観と状態を `FadeMaskRequest` へ詰めて `FadeMaskFrame.Resolve` を呼び、返されたフレームを描く」だけです。
+両 UI（Avalonia / MewUI）は「設定と状態（`FadeMaskOptions`）と描画時の値を `FadeMaskRequest` へ詰めて `FadeMaskFrame.Resolve` を呼び、返されたフレームを描く」だけです。
 
 | 責務 | 所有者 | 内容 |
 | --- | --- | --- |
-| 状態 | UI | 外観（`Appearance`）・選択矩形・ハイライト矩形・有効フラグ・タイトル・モード・全面暗転（フレームワークのプロパティ機構で保持する） |
+| 設定と状態 | UI（値は Core） | 設定・描画状態は `FadeMaskOptions`（コアの値）にまとめ、UI はフレームワークのプロパティ機構（`StyledProperty` / `MewProperty`）で 1 つ保持するだけにする。DPI スケーリング（環境値）・文言プロバイダ・ロガーは UI が個別に持つ |
 | 判断・計算 | Core | 論理矩形 → DIP 変換（選択は閉区間 +1 / ハイライトは +0）・穴あけ矩形の優先順（ハイライト → 選択）・座標変換ポートの決定（ポート優先・無ければ倍率）・透明指定の解決・サイズラベルの文言決定（自動生成含む）・表示スケールの解決・サブラインの組立・枠線矩形・暗転領域・行配置 |
-| 契約 | Core | `FadeMaskRequest`（入力）・`FadeMaskFrame`（描画内容）・`FadeMaskAppearance`（外観）・`FadeMaskSubLine`・`LogMessage`（ログ書式） |
+| 契約 | Core | `FadeMaskOptions`（設定と状態）・`FadeMaskRequest`（描画入力）・`FadeMaskFrame`（描画内容）・`FadeMaskAppearance`（外観）・`FadeMaskSubLine`・`LogMessage`（ログ書式と差分検出） |
 | 描画 | UI | フレームの各項目を自 UI の描画 API へ写す（`FillRectangle` / `DrawRect` / `DrawText` 等） |
 | ホスト結線 | UI | プロパティ機構（`StyledProperty` / `MewProperty`）・DPI 追従・キャンバスのスケーリング・ブラシキャッシュ・テキストの実寸測定とフォント解決 |
 

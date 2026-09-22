@@ -154,12 +154,12 @@ public sealed class FadeMaskDragRectControl : Panel
     // ====================================================================
 
     /// <summary>現在の選択状態（選択矩形の有無）。</summary>
-    /// <remarks>選択状態の真のソースは <see cref="FadeMaskControl"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>DragRect の選択変更（SelectionChanged）から同期される。</remarks>
-    public bool HasSelection => _overlay.HasSelection;
+    /// <remarks>選択状態の真のソースは暗転マスク（<see cref="FadeMaskControl.Options"/> の HasSelection / LogicalSelectionRect）に集約し、<br/>DragRect の選択変更（SelectionChanged）から同期される。</remarks>
+    public bool HasSelection => _overlay.Options.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</summary>
-    /// <remarks>選択状態の真のソースは <see cref="FadeMaskControl"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>DragRect の選択変更（SelectionChanged）から同期される。</remarks>
-    public Rect SelectionRect => _overlay.LogicalSelectionRect ?? default;
+    /// <remarks>選択状態の真のソースは暗転マスク（<see cref="FadeMaskControl.Options"/> の HasSelection / LogicalSelectionRect）に集約し、<br/>DragRect の選択変更（SelectionChanged）から同期される。</remarks>
+    public Rect SelectionRect => _overlay.Options.LogicalSelectionRect?.ToAvaloniaRect() ?? default;
 
     /// <summary>Enter キーまたは RequestConfirm による確定要求イベント（選択確定後のみ発火）。</summary>
     public event EventHandler<FadeMaskDragRectSelectionEventArgs>? ConfirmRequested;
@@ -323,13 +323,18 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="rect">選択矩形（ドメイン座標）。null は選択なし。</param>
     /// <remarks>
     /// <see cref="SetSelection"/> と <see cref="ClearSelection"/> で共用する（重複排除）。<br/>
-    /// 選択状態の真のソースは <see cref="FadeMaskControl"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>
+    /// 選択状態の真のソースは暗転マスク（<see cref="FadeMaskControl.Options"/>）に集約する。<br/>
     /// ルーペ画像上の選択枠（破線）も同期する。DIP 矩形の算出は描画時に行う（レイアウト変化に追従）。
     /// </remarks>
     private void SyncSelection(Rect? rect)
     {
-        _overlay.HasSelection = rect is not null;
-        _overlay.LogicalSelectionRect = rect;
+        // 設定と描画状態は 1 つの値（コアの FadeMaskOptions）が単一所有するため、選択の有無と矩形をまとめて更新する
+        // （1 回の変更通知で再描画される）。
+        _overlay.Options = _overlay.Options with
+        {
+            HasSelection = rect is not null,
+            LogicalSelectionRect = rect?.ToEsRect(),
+        };
         // ルーペ画像上の破線は Bitmap へ焼き込まれているため、選択矩形の変更で再生成を要求する
         // （ドラッグ中の中心変更で発生する要求と同じフレームなら1回の生成へ結合される）。
         _loupeControl.RequestRender();
@@ -419,26 +424,30 @@ public sealed class FadeMaskDragRectControl : Panel
     // ====================================================================
 
     /// <summary>ハイライト矩形（ドメイン座標）。未検出時は null。</summary>
-    /// <remarks><see cref="FadeMaskControl.LogicalHighlightRect"/> へ委譲する（変更は自動で再描画される）。</remarks>
+    /// <remarks><see cref="FadeMaskControl.Options"/>（コアの設定値）へ委譲する（変更は自動で再描画される）。</remarks>
     public Rect? LogicalHighlightRect
     {
-        get => _overlay.LogicalHighlightRect;
-        set => _overlay.LogicalHighlightRect = value;
+        get => _overlay.Options.LogicalHighlightRect?.ToAvaloniaRect();
+        set => _overlay.Options = _overlay.Options with { LogicalHighlightRect = value?.ToEsRect() };
     }
 
     /// <summary>ハイライト表示の有無。</summary>
     public bool HasHighlight
     {
-        get => _overlay.HasHighlight;
-        set => _overlay.HasHighlight = value;
+        get => _overlay.Options.HasHighlight;
+        set => _overlay.Options = _overlay.Options with { HasHighlight = value };
     }
 
     /// <summary>ハイライト対象のウィンドウタイトル（未検出時は空文字）。</summary>
-    public string WindowTitle { get => _overlay.WindowTitle; set => _overlay.WindowTitle = value; }
+    public string WindowTitle
+    {
+        get => _overlay.Options.WindowTitle;
+        set => _overlay.Options = _overlay.Options with { WindowTitle = value };
+    }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
     /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ。</remarks>
-    public bool ShowFullOverlay => _overlay.ShowFullOverlay;
+    public bool ShowFullOverlay => _overlay.Options.ShowFullOverlay;
 
     // ====================================================================
     // 内部実装（設定の分配・状態同期・配線）
@@ -453,7 +462,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void ApplyOptions()
     {
-        _overlay.Appearance = _options.Overlay;
+        // 外観は設定値の 1 つであるため、現在の状態（選択矩形・ハイライト・モード）を保ったまま外観のみを差し替える
+        _overlay.Options = _overlay.Options with { Appearance = _options.Overlay };
         _dragRect.Options = _options.ResolveDragRectOptions();
         _loupeControl.Options = _options.Loupe;
         // 表示位置のオフセットはフレームワーク差（Avalonia 版のルーペは自己配置する）のため、
@@ -474,8 +484,12 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         var state = FadeMaskDragRectModes.Resolve(_mode);
 
-        _overlay.Mode = state.RenderMode;
-        _overlay.ShowFullOverlay = state.ShowFullOverlay;
+        // モードから導出される表示ポリシー（描画モード・全面暗転）は 1 回の変更通知でまとめて適用する
+        _overlay.Options = _overlay.Options with
+        {
+            Mode = state.RenderMode,
+            ShowFullOverlay = state.ShowFullOverlay,
+        };
         _dragRect.IsVisible = state.UsesSelection;
 
         UpdateLoupeVisibility();
@@ -531,12 +545,12 @@ public sealed class FadeMaskDragRectControl : Panel
         // 破線を描くかどうかはモード（コアが単一所有する）と切り出し領域・選択矩形の有無で決まる
         if (FadeMaskDragRectModes.Resolve(_mode).ShowSelectionOverlay
             && e.CaptureTopLeft is { } topLeft
-            && _overlay.LogicalSelectionRect is { } selectionRect)
+            && _overlay.Options.LogicalSelectionRect is { } selectionRect)
         {
             // 破線色（色A / 色B）を 2 つ用意し、交互に塗る（描画はコアが単一所有する）
             FadeMaskDragRectOverlay.DrawSelectionRect(
                 e.Bitmap,
-                selectionRect.ToEsRect(),
+                selectionRect,
                 topLeft.ToEsPoint(),
                 e.Scale,
                 _options.SelectionRectColorA,

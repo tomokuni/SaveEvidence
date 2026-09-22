@@ -107,7 +107,7 @@ parentPanel.Children.Add(overlay);
 | --- | --- | --- |
 | `Options` | `FadeMaskDragRectOptions`（コア） | 設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）の単一値。同じ値の再設定はスキップされる（既定値・項目の対応はコアが単一所有する） |
 | `Mode` | `FadeMaskDragRectMode` | 動作モード。設定時に描画モード・DragRect / Loupe の可視性・全面暗転を一括切替（既定値: `AreaSelect`） |
-| `HasSelection` | `bool` | 選択矩形の有無（選択状態の真のソースは FadeMaskControl） |
+| `HasSelection` | `bool` | 選択矩形の有無（選択状態の真のソースは `FadeMaskControl.Options`） |
 | `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標。未選択時は 0x0 の空矩形） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | サイズラベルを描画時に評価するプロバイダ（`FadeMaskControl` へ委譲） |
 | `LogicalHighlightRect` | `Rect?` | ハイライト矩形（ドメイン座標。未検出時は null。ScreenSelect / WindowSelect 用） |
@@ -203,7 +203,7 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `Estable.Fade
 
 ## 7. モード
 
-| モード | 描画モード（FadeMaskControl.Mode） | DragRect | Loupe | 全面暗転（ShowFullOverlay） | 用途 |
+| モード | 描画モード（`FadeMaskControl.Options.Mode`） | DragRect | Loupe | 全面暗転（`Options.ShowFullOverlay`） | 用途 |
 | --- | --- | --- | --- | --- | --- |
 | `Crop` | `FadeMaskRenderMode.Crop` | 有効 | 有効（LoupePositionMoved で表示開始） | 有効 | プレビュー内の切出し |
 | `AreaSelect` | `FadeMaskRenderMode.AreaSelect` | 有効 | 有効（LoupePositionMoved で表示開始） | 有効 | 全画面オーバーレイの範囲選択 |
@@ -226,7 +226,7 @@ graph TD
     SC -->|"イベント中継"| HOST["ホスト（CropSession / OverlayWindow）"]
 ```
 
-- `SelectionChanged` / `ViewportChanged`: 選択矩形を FadeMask（`LogicalSelectionRect` / `HasSelection`）へ同期し、オーバーレイを再描画。ルーペの選択矩形破線は `Rendered` イベント経由で描画する（破線は Bitmap へ焼き込まれるため、選択矩形の変更で `LoupeControl.RequestRender()` を要求する）。
+- `SelectionChanged` / `ViewportChanged`: 選択矩形を FadeMask（`FadeMaskOptions.LogicalSelectionRect` / `HasSelection`）へ同期し、オーバーレイを再描画。ルーペの選択矩形破線は `Rendered` イベント経由で描画する（破線は Bitmap へ焼き込まれるため、選択矩形の変更で `LoupeControl.RequestRender()` を要求する）。
 - `SelectionStarted` / `SelectionCancelled`: 選択状態をクリア（前の矩形の暗転マスク残留を防止）。
 - `LoupePositionMoved`: ルーペの `CenterPoint` を更新して表示開始（表示位置は座標変換ポートから自己計算）。
 - `ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested`: ホストへ中継。

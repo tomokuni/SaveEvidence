@@ -15,7 +15,7 @@ namespace Estable.AvaloniaUI.FadeMask.Tests;
 /// <summary><see cref="FadeMaskControl"/> の描画テスト（Render の例外なし検証）。</summary>
 /// <remarks>
 /// 対象: <c>FadeMaskControl.cs</c>（Render オーバーライドの描画経路）。<br/>
-/// ヘッドレス不要の公開 API 検証（Log / SetCoordinateTransform / 既定値 / 論理矩形）は
+/// ヘッドレス不要の公開 API 検証（Log / Options / SetCoordinateTransform / 既定値）は
 /// <c>FadeMaskControlStateTests</c> が並列実行する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
@@ -38,23 +38,53 @@ public class FadeMaskTests
     {
         var control = new FadeMaskControl
         {
-            Mode = mode,
+            Options = new FadeMaskOptions { Mode = mode, Appearance = appearance ?? CreateTestAppearance() },
             Scaling = 1.0,
             DisplayScaleScaling = 1.0,
-            Appearance = appearance ?? new FadeMaskAppearance
-            {
-                OverlayColor = Color.FromAColor(150, Colors.Black).ToDrawingColor(),
-                SizeLabelColor = Colors.White.ToDrawingColor(),
-                SizeLabelBackgroundColor = Color.FromAColor(128, Colors.Black).ToDrawingColor(),
-                SizeLabelFontSize = 14.0,
-                BorderColor = Colors.White.ToDrawingColor(),
-                BorderThickness = 2.0,
-            },
         };
         control.Measure(new Size(300, 300));
         control.Arrange(new Rect(0, 0, 300, 300));
         return control;
     }
+
+    /// <summary>テスト用の外観を生成する（枠線・ラベルが判別しやすい値）。</summary>
+    /// <returns>テスト用の外観。</returns>
+    private static FadeMaskAppearance CreateTestAppearance() => new()
+    {
+        OverlayColor = Color.FromAColor(150, Colors.Black).ToDrawingColor(),
+        SizeLabelColor = Colors.White.ToDrawingColor(),
+        SizeLabelBackgroundColor = Color.FromAColor(128, Colors.Black).ToDrawingColor(),
+        SizeLabelFontSize = 14.0,
+        BorderColor = Colors.White.ToDrawingColor(),
+        BorderThickness = 2.0,
+    };
+
+    /// <summary>選択矩形ありの状態にする。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <param name="rect">選択矩形（Avalonia の DIP 座標）。</param>
+    private static void Select(FadeMaskControl control, Rect rect)
+        => control.Options = control.Options with
+        {
+            HasSelection = true,
+            LogicalSelectionRect = rect.ToEsRect(),
+        };
+
+    /// <summary>ハイライト矩形ありの状態にする。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <param name="rect">ハイライト矩形（Avalonia の DIP 座標）。</param>
+    /// <param name="windowTitle">情報ラベルの文言。</param>
+    private static void Highlight(FadeMaskControl control, Rect rect, string windowTitle = "")
+        => control.Options = control.Options with
+        {
+            HasHighlight = true,
+            LogicalHighlightRect = rect.ToEsRect(),
+            WindowTitle = windowTitle,
+        };
+
+    /// <summary>全面暗転ありの状態にする。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    private static void ShowFullOverlay(FadeMaskControl control)
+        => control.Options = control.Options with { ShowFullOverlay = true };
 
     /// <summary>選択矩形ありで例外なく描画することを検証する。</summary>
     [AvaloniaFact]
@@ -62,8 +92,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl();
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(50, 50, 100, 80);
+        Select(control, new Rect(50, 50, 100, 80));
 
         control.Render(ctx);
     }
@@ -74,9 +103,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl(FadeMaskRenderMode.WindowSelect);
-        control.HasHighlight = true;
-        control.LogicalHighlightRect = new Rect(50, 50, 100, 80);
-        control.WindowTitle = "Test Window";
+        Highlight(control, new Rect(50, 50, 100, 80), "Test Window");
 
         control.Render(ctx);
     }
@@ -87,9 +114,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl(FadeMaskRenderMode.WindowSelect);
-        control.HasHighlight = true;
-        control.LogicalHighlightRect = new Rect(25, 25, 50, 40);
-        control.WindowTitle = "Test Window";
+        Highlight(control, new Rect(25, 25, 50, 40), "Test Window");
         control.SetCoordinateTransform(CreateDoubleScalePort());
 
         control.Render(ctx);
@@ -101,8 +126,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl(FadeMaskRenderMode.ScreenSelect);
-        control.HasHighlight = true;
-        control.LogicalHighlightRect = new Rect(50, 50, 100, 80);
+        Highlight(control, new Rect(50, 50, 100, 80));
 
         control.Render(ctx);
     }
@@ -113,8 +137,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl();
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(25, 25, 50, 40);
+        Select(control, new Rect(25, 25, 50, 40));
         // ドメイン = DIP × 2（拡大）→ 矩形は (50,50)-(150,130) に変換される
         control.SetCoordinateTransform(CreateDoubleScalePort());
 
@@ -127,7 +150,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl();
-        control.ShowFullOverlay = true;
+        ShowFullOverlay(control);
         control.SetCoordinateTransform(CreateDoubleScalePort());
 
         control.Render(ctx);
@@ -139,7 +162,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl();
-        control.ShowFullOverlay = true;
+        ShowFullOverlay(control);
 
         control.Render(ctx);
     }
@@ -166,8 +189,7 @@ public class FadeMaskTests
             SizeLabelColor = Colors.Blue.ToDrawingColor(),
             InfoLabelColor = Colors.Lime.ToDrawingColor(),
         });
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(50, 50, 100, 80);
+        Select(control, new Rect(50, 50, 100, 80));
 
         control.Render(ctx);
     }
@@ -178,8 +200,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl();
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(50, 50, 100, 80);
+        Select(control, new Rect(50, 50, 100, 80));
         control.SizeLabelOverrideProvider = () => "Custom: (10, 20)";
 
         control.Render(ctx);
@@ -191,8 +212,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl();
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(50, 50, 100, 80);
+        Select(control, new Rect(50, 50, 100, 80));
         control.SizeLabelOverrideProvider = () => null;
 
         control.Render(ctx);
@@ -204,8 +224,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl(appearance: new FadeMaskAppearance { ShowSizeLabel = false, ShowSubLines = false });
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(50, 50, 100, 80);
+        Select(control, new Rect(50, 50, 100, 80));
         var invoked = false;
         control.SizeLabelOverrideProvider = () => { invoked = true; return "x"; };
 
@@ -220,10 +239,8 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl(FadeMaskRenderMode.WindowSelect);
-        control.HasHighlight = true;
         // 狭いハイライト矩形 + 長いタイトル（矩形の幅を超える文言の描画経路）
-        control.LogicalHighlightRect = new Rect(50, 50, 60, 40);
-        control.WindowTitle = "This is a very long window title that will definitely be truncated";
+        Highlight(control, new Rect(50, 50, 60, 40), "This is a very long window title that will definitely be truncated");
 
         control.Render(ctx);
     }
@@ -236,9 +253,7 @@ public class FadeMaskTests
         var control = CreateControl(
             FadeMaskRenderMode.WindowSelect,
             new FadeMaskAppearance { InfoLabelVisible = false });
-        control.HasHighlight = true;
-        control.LogicalHighlightRect = new Rect(50, 50, 100, 80);
-        control.WindowTitle = "Test Window";
+        Highlight(control, new Rect(50, 50, 100, 80), "Test Window");
 
         control.Render(ctx);
     }
@@ -249,8 +264,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl();
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(50, 50, 100, 80);
+        Select(control, new Rect(50, 50, 100, 80));
 
         control.Render(ctx);
     }
@@ -261,8 +275,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl(appearance: new FadeMaskAppearance { ShowSubLines = false });
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(50, 50, 100, 80);
+        Select(control, new Rect(50, 50, 100, 80));
 
         control.Render(ctx);
     }
@@ -273,8 +286,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl(FadeMaskRenderMode.Crop);
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(50, 50, 100, 80);
+        Select(control, new Rect(50, 50, 100, 80));
 
         control.Render(ctx);
     }
@@ -285,8 +297,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl(appearance: new FadeMaskAppearance { ShowSizeLabel = false });
-        control.HasSelection = true;
-        control.LogicalSelectionRect = new Rect(50, 50, 100, 80);
+        Select(control, new Rect(50, 50, 100, 80));
 
         control.Render(ctx);
     }
@@ -297,9 +308,7 @@ public class FadeMaskTests
     {
         using var ctx = CreateContext();
         var control = CreateControl(FadeMaskRenderMode.WindowSelect);
-        control.HasHighlight = true;
-        control.LogicalHighlightRect = new Rect(50, 50, 100, 80);
-        control.WindowTitle = "Test Window";
+        Highlight(control, new Rect(50, 50, 100, 80), "Test Window");
 
         control.Render(ctx);
     }
@@ -317,9 +326,7 @@ public class FadeMaskTests
                 SubLineBackgroundColor = Colors.DarkGreen.ToDrawingColor(),
                 InfoLabelBackgroundColor = Colors.DarkRed.ToDrawingColor(),
             });
-        control.HasHighlight = true;
-        control.LogicalHighlightRect = new Rect(50, 50, 100, 80);
-        control.WindowTitle = "Test Window";
+        Highlight(control, new Rect(50, 50, 100, 80), "Test Window");
 
         control.Render(ctx);
     }

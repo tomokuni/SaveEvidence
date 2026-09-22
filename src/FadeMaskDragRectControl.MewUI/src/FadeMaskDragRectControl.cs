@@ -167,32 +167,32 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>現在の選択状態（選択矩形の有無）を取得する。</summary>
     /// <value>選択矩形が有効な場合は true。</value>
-    /// <remarks>選択状態の真のソースは暗転マスクコントロールに集約し、ドラッグ選択の変更から同期する。</remarks>
-    public bool HasSelection => _overlay.HasSelection;
+    /// <remarks>選択状態の真のソースは暗転マスクコントロール（<see cref="FadeMaskControl.Options"/>）に集約し、ドラッグ選択の変更から同期する。</remarks>
+    public bool HasSelection => _overlay.Options.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形。未選択時は 0x0 の空矩形。</value>
-    public EsRect SelectionRect => _overlay.LogicalSelectionRect ?? default;
+    public EsRect SelectionRect => _overlay.Options.LogicalSelectionRect ?? default;
 
     /// <summary>ハイライト矩形（ドメイン座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。未検出時は null。選択矩形より優先される。</value>
     public EsRect? LogicalHighlightRect
     {
-        get => _overlay.LogicalHighlightRect;
-        set => _overlay.LogicalHighlightRect = value;
+        get => _overlay.Options.LogicalHighlightRect;
+        set => _overlay.Options = _overlay.Options with { LogicalHighlightRect = value };
     }
 
     /// <summary>ハイライト表示の有無を取得または設定する。</summary>
     /// <value>true の場合は <see cref="LogicalHighlightRect"/> を穴あけ矩形として使う（選択矩形より優先）。</value>
     public bool HasHighlight
     {
-        get => _overlay.HasHighlight;
-        set => _overlay.HasHighlight = value;
+        get => _overlay.Options.HasHighlight;
+        set => _overlay.Options = _overlay.Options with { HasHighlight = value };
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうかを取得する。</summary>
     /// <value>全面暗転する場合は true。モードから導出される読み取り専用の値。</value>
-    public bool ShowFullOverlay => _overlay.ShowFullOverlay;
+    public bool ShowFullOverlay => _overlay.Options.ShowFullOverlay;
 
     /// <summary>ルーペ中心（ドメイン座標）を取得する。</summary>
     /// <value>ルーペ中心。未設定時は null。</value>
@@ -213,8 +213,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>表示の可否はモードと <c>FadeMaskAppearance.InfoLabelVisible</c> からコアが判定する。</remarks>
     public string WindowTitle
     {
-        get => _overlay.WindowTitle;
-        set => _overlay.WindowTitle = value;
+        get => _overlay.Options.WindowTitle;
+        set => _overlay.Options = _overlay.Options with { WindowTitle = value };
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するデリゲートを取得または設定する。</summary>
@@ -433,7 +433,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void ApplyOptions()
     {
-        _overlay.Appearance = _options.Overlay;
+        // 外観は設定値の 1 つであるため、現在の状態（選択矩形・ハイライト・モード）を保ったまま外観のみを差し替える
+        _overlay.Options = _overlay.Options with { Appearance = _options.Overlay };
         _dragRect.Options = _options.ResolveDragRectOptions();
         _loupe.Options = _options.Loupe;
 
@@ -453,8 +454,12 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         var state = FadeMaskDragRectModes.Resolve(_mode);
 
-        _overlay.Mode = state.RenderMode;
-        _overlay.ShowFullOverlay = state.ShowFullOverlay;
+        // モードから導出される表示ポリシー（描画モード・全面暗転）は 1 回の変更通知でまとめて適用する
+        _overlay.Options = _overlay.Options with
+        {
+            Mode = state.RenderMode,
+            ShowFullOverlay = state.ShowFullOverlay,
+        };
         _dragRect.IsVisible = state.UsesSelection;
 
         UpdateLoupeVisibility();
@@ -501,7 +506,7 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         // 破線を描くかどうかはモード（コアが単一所有する）と選択矩形の有無で決まる
         if (!FadeMaskDragRectModes.Resolve(_mode).ShowSelectionOverlay
-            || _overlay.LogicalSelectionRect is not { } selectionRect)
+            || _overlay.Options.LogicalSelectionRect is not { } selectionRect)
         {
             return;
         }
@@ -524,8 +529,13 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void SyncSelection(EsRect? rect)
     {
-        _overlay.HasSelection = rect is not null;
-        _overlay.LogicalSelectionRect = rect;
+        // 設定と描画状態は 1 つの値（コアの FadeMaskOptions）が単一所有するため、選択の有無と矩形をまとめて更新する
+        // （1 回の変更通知で再描画される）。
+        _overlay.Options = _overlay.Options with
+        {
+            HasSelection = rect is not null,
+            LogicalSelectionRect = rect,
+        };
         _loupe.InvalidateVisual();
     }
 

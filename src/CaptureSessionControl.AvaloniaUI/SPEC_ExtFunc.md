@@ -342,7 +342,7 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 4. カーソル上書き抑止（Crop 中の十字カーソル維持）
 5. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポートへ転送する（Ctrl+ホイール = ズーム / 通常ホイール = パン）
 6. **Crop 中の設定変更（`AppearanceSettings` setter）**: `CropSession.ApplySettings` で外観・クリップ設定を再適用（選択状態・ルーペ位置は維持）。キャプチャセッションはモーダル全画面のため対象外
-7. **矩形外クリック・選択キャンセル**: 複合コントロールが `SelectionStarted` / `SelectionCancelled` を購読し、FadeMask の選択状態（`LogicalSelectionRect` / `HasSelection`）をクリアして全面暗転（穴あけなし）に戻す（配線は複合コントロール内で完結）
+7. **矩形外クリック・選択キャンセル**: 複合コントロールが `SelectionStarted` / `SelectionCancelled` を購読し、FadeMask の選択状態（`Options.LogicalSelectionRect` / `Options.HasSelection`）をクリアして全面暗転（穴あけなし）に戻す（配線は複合コントロール内で完結）
 8. 確定（`ConfirmRequested` → `ExecuteCropForSize`）→ 論理 Rect を `PixelRect` で返却
    - キャンセル（`CancelRequested` / `Deactivated`）→ 0x0 の空 `PixelRect`
 

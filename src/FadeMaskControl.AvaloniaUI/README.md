@@ -30,12 +30,12 @@ Avalonia UI 用の選択オーバーレイ描画コントロールです。領�
 
 - 暗転オーバーレイ（穴あけマスク）の描画（穴あけ矩形の外側を暗転）
 - 選択枠線・ラベル（サイズラベル・操作ラベル・情報ラベル）の描画
-- 外観の単一所有（`Appearance` = コアの `FadeMaskAppearance`。暗転色・枠線・ラベルを 1 つの値で設定）
+- 設定と描画状態の単一所有（`Options` = コアの `FadeMaskOptions`。外観・モード・情報ラベルの文言・全面暗転・選択/ハイライト矩形を 1 つの値で設定）
 - **描画判断の単一所有**: どの矩形を暗転するか・枠線を描くか・どのラベルを描くか（サイズラベルの自動生成を含む）はコアの `FadeMaskFrame` が決定し、UI 層は返されたフレームを描くだけ（MewUI 版と同一の結果）
 - **入力の判断を持たない**: 装飾専用のため入力を扱わない（ホストが `IsHitTestVisible = false` で下へ通す）
 - モード別描画（AreaSelect / ScreenSelect / WindowSelect / Crop）に対応
 - Avalonia Binding 対応の StyledProperty（双方向バインド）
-- **座標変換ポート（`SetCoordinateTransform(ICoordTransform?)` + `LogicalSelectionRect`）**: DragRectControl と同方式。論理座標（ドメイン）の選択矩形を描画時に動的評価で DIP 変換（ウィンドウサイズ変更・ズーム・スクロールに追従）
+- **座標変換ポート（`SetCoordinateTransform(ICoordTransform?)` + `Options.LogicalSelectionRect`）**: DragRectControl と同方式。論理座標（ドメイン）の選択矩形を描画時に動的評価で DIP 変換（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **非暗転領域の閉区間描画**: 非暗転領域（穴）は始点・終点の両ピクセルを含む閉区間（暗転領域は含まない）
 
 ## 3. システム要件
@@ -99,10 +99,10 @@ control.InvalidateVisual(); // 再描画を要求（プロパティ変更でも�
 
 ## 6. 描画動作
 
-- **暗転オーバーレイ**: 穴あけ矩形の外側（上・下・左・右）を暗転色で塗りつぶす（穴あけマスク）。穴あけ矩形が無い場合は `ShowFullOverlay` が true のときだけ全面を暗転する
+- **暗転オーバーレイ**: 穴あけ矩形の外側（上・下・左・右）を暗転色で塗りつぶす（穴あけマスク）。穴あけ矩形が無い場合は `Options.ShowFullOverlay` が true のときだけ全面を暗転する
 - **選択枠線**: 穴あけ矩形の四辺を内側に描画する
 - **ラベル**: 穴あけ矩形の左上に「サイズラベル（1 行目）→ 操作ラベル（2 行目）→ 情報ラベル（3 行目）」を縦に積む。サイズラベルが無い場合は繰り上げる
-- **外観の反映**: `Appearance`（`FadeMaskAppearance`）を変更すると自動で再描画される（`AffectsRender`）
+- **設定の反映**: `Options`（コアの `FadeMaskOptions`）を変更すると自動で再描画される（`AffectsRender`。同じ値の再設定では通知しない）
 
 ## 7. サンプル
 

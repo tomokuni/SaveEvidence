@@ -29,7 +29,7 @@
 ```text
 FadeMaskDragRectControl.Core
     ├── Platform.Core（Es* 幾何型 / EsBitmap）
-    ├── FadeMaskControl.Core（FadeMaskRenderMode / FadeMaskAppearance）
+    ├── FadeMaskControl.Core（FadeMaskOptions / FadeMaskRenderMode / FadeMaskAppearance）
     ├── DragRectControl.Core（DragRectOptions）
     └── LoupeControl.Core（LoupeOptions）
 ```

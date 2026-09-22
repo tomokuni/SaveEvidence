@@ -151,7 +151,7 @@ flowchart TB
 | コンポーネント | プロジェクト | 責務 |
 | --- | --- | --- |
 | `DragRectControl` | DragRectControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート） |
-| `FadeMaskControl` | FadeMaskControl | 暗転マスク・選択枠・ラベル・ハイライトの描画（外観は `Appearance`、状態は個別プロパティ） |
+| `FadeMaskControl` | FadeMaskControl | 暗転マスク・選択枠・ラベル・ハイライトの描画（設定と描画状態は `Options` = コアの `FadeMaskOptions` 1 値） |
 | `LoupeControl` | LoupeControl | 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算） |
 
 ### 6.5 公開イベント引数

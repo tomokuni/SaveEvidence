@@ -111,8 +111,8 @@ public class FadeMaskDragRectControlTests
 
         Assert.True(control.HasSelection);
         Assert.Equal(new EsRect(10, 20, 100, 80), control.SelectionRect);
-        Assert.Equal(new EsRect(10, 20, 100, 80), control.Overlay.LogicalSelectionRect);
-        Assert.True(control.Overlay.HasSelection);
+        Assert.Equal(new EsRect(10, 20, 100, 80), control.Overlay.Options.LogicalSelectionRect);
+        Assert.True(control.Overlay.Options.HasSelection);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class FadeMaskDragRectControlTests
         control.SetSelection(new EsRect(10, 20, 0, 80));
 
         Assert.False(control.HasSelection);
-        Assert.Null(control.Overlay.LogicalSelectionRect);
+        Assert.Null(control.Overlay.Options.LogicalSelectionRect);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public class FadeMaskDragRectControlTests
         control.ClearSelection();
 
         Assert.False(control.HasSelection);
-        Assert.False(control.Overlay.HasSelection);
+        Assert.False(control.Overlay.Options.HasSelection);
     }
 
     [Fact]
@@ -161,8 +161,8 @@ public class FadeMaskDragRectControlTests
 
         Assert.True(control.HasHighlight);
         Assert.Equal(new EsRect(1, 2, 3, 4), control.LogicalHighlightRect);
-        Assert.True(control.Overlay.HasHighlight);
-        Assert.Equal(new EsRect(1, 2, 3, 4), control.Overlay.LogicalHighlightRect);
+        Assert.True(control.Overlay.Options.HasHighlight);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.Overlay.Options.LogicalHighlightRect);
     }
 
     // ====================================================================
@@ -206,7 +206,7 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl { WindowTitle = "メモ帳" };
 
-        Assert.Equal("メモ帳", control.Overlay.WindowTitle);
+        Assert.Equal("メモ帳", control.Overlay.Options.WindowTitle);
     }
 
     [Fact]

@@ -66,9 +66,9 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl { Mode = mode };
 
-        Assert.Equal(expectedRenderMode, control.Overlay.Mode);
+        Assert.Equal(expectedRenderMode, control.Overlay.Options.Mode);
         Assert.Equal(expectedDragRectVisible, control.DragRect.IsVisible);
-        Assert.Equal(expectedShowFullOverlay, control.Overlay.ShowFullOverlay);
+        Assert.Equal(expectedShowFullOverlay, control.Overlay.Options.ShowFullOverlay);
     }
 
     // ====================================================================
@@ -149,7 +149,7 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(2.0, control.Overlay.Scaling);
         Assert.Equal(1.5, control.Overlay.DisplayScaleScaling);
         // 外観はコアの FadeMaskAppearance へ 1 つにまとめて反映される（色は UI 非依存の色型）
-        var appearance = control.Overlay.Appearance;
+        var appearance = control.Overlay.Options.Appearance;
         Assert.Equal(Color.FromAColor(128, Colors.DarkBlue).ToDrawingColor(), appearance.OverlayColor);
         Assert.Equal(Colors.Yellow.ToDrawingColor(), appearance.SizeLabelColor);
         Assert.Equal(Color.FromAColor(179, Colors.DarkBlue).ToDrawingColor(), appearance.SizeLabelBackgroundColor);
@@ -314,8 +314,8 @@ public class FadeMaskDragRectControlTests
 
         control.SetSelection(rect);
 
-        Assert.Equal(rect, control.Overlay.LogicalSelectionRect);
-        Assert.True(control.Overlay.HasSelection);
+        Assert.Equal(rect.ToEsRect(), control.Overlay.Options.LogicalSelectionRect);
+        Assert.True(control.Overlay.Options.HasSelection);
     }
 
     [AvaloniaFact]
@@ -325,8 +325,8 @@ public class FadeMaskDragRectControlTests
 
         control.SetSelection(new Rect(0, 0, 0, 0));
 
-        Assert.Null(control.Overlay.LogicalSelectionRect);
-        Assert.False(control.Overlay.HasSelection);
+        Assert.Null(control.Overlay.Options.LogicalSelectionRect);
+        Assert.False(control.Overlay.Options.HasSelection);
     }
 
     [AvaloniaFact]
@@ -337,8 +337,8 @@ public class FadeMaskDragRectControlTests
 
         control.ClearSelection();
 
-        Assert.Null(control.Overlay.LogicalSelectionRect);
-        Assert.False(control.Overlay.HasSelection);
+        Assert.Null(control.Overlay.Options.LogicalSelectionRect);
+        Assert.False(control.Overlay.Options.HasSelection);
     }
 
     // ====================================================================
@@ -354,8 +354,8 @@ public class FadeMaskDragRectControlTests
         // DragRect.SetSelection → SelectionChanged 発火 → 複合コントロールがレンダラーへ同期
         control.DragRect.SetSelection(rect);
 
-        Assert.Equal(rect, control.Overlay.LogicalSelectionRect);
-        Assert.True(control.Overlay.HasSelection);
+        Assert.Equal(rect.ToEsRect(), control.Overlay.Options.LogicalSelectionRect);
+        Assert.True(control.Overlay.Options.HasSelection);
     }
 
     [AvaloniaFact]
@@ -720,7 +720,7 @@ public class FadeMaskDragRectControlTests
 
         Assert.True(control.HasSelection);
         Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionRect);
-        Assert.Equal(new Rect(10, 10, 50, 40), control.Overlay.LogicalSelectionRect);
+        Assert.Equal(new Rect(10, 10, 50, 40).ToEsRect(), control.Overlay.Options.LogicalSelectionRect);
     }
 
     [AvaloniaFact]
@@ -814,7 +814,7 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
         control.DragRect.SetSelection(new Rect(10, 10, 50, 40));
-        Assert.True(control.Overlay.HasSelection);
+        Assert.True(control.Overlay.Options.HasSelection);
 
         // DragRect.SetSelection の再設定（SelectionStarted は発火しない）のため、
         // リフレクションで SelectionStarted イベントを直接発火する（クリアの検証用）
@@ -824,7 +824,7 @@ public class FadeMaskDragRectControlTests
         eventDelegate?.DynamicInvoke(control.DragRect,
             new DragRectPointEventArgs(new Point(0, 0), control.DragRect.CurrentSnapshot));
 
-        Assert.False(control.Overlay.HasSelection);
+        Assert.False(control.Overlay.Options.HasSelection);
     }
 
     [AvaloniaFact]
@@ -832,7 +832,7 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
         control.DragRect.SetSelection(new Rect(10, 10, 50, 40));
-        Assert.True(control.Overlay.HasSelection);
+        Assert.True(control.Overlay.Options.HasSelection);
 
         // リフレクションで SelectionCancelled イベントを直接発火する（クリアの検証用）
         var field = typeof(DragRectControl).GetField(
@@ -840,7 +840,7 @@ public class FadeMaskDragRectControlTests
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
         eventDelegate?.DynamicInvoke(control.DragRect, EventArgs.Empty);
 
-        Assert.False(control.Overlay.HasSelection);
+        Assert.False(control.Overlay.Options.HasSelection);
     }
 
     // ====================================================================
@@ -1062,10 +1062,10 @@ public class FadeMaskDragRectControlTests
         control.DisplayScaleScaling = 1.5;
         control.WindowTitle = "Sample Window";
 
-        Assert.Equal(new Rect(100, 50, 1920, 1080), control.Overlay.LogicalHighlightRect);
-        Assert.True(control.Overlay.HasHighlight);
+        Assert.Equal(new Rect(100, 50, 1920, 1080).ToEsRect(), control.Overlay.Options.LogicalHighlightRect);
+        Assert.True(control.Overlay.Options.HasHighlight);
         Assert.Equal(1.5, control.Overlay.DisplayScaleScaling);
-        Assert.Equal("Sample Window", control.Overlay.WindowTitle);
+        Assert.Equal("Sample Window", control.Overlay.Options.WindowTitle);
         // コントロール経由の getter も検証する（暗転マスクへの委譲）
         Assert.Equal(1.5, control.DisplayScaleScaling);
         Assert.Equal("Sample Window", control.WindowTitle);

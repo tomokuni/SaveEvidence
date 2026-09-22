@@ -46,9 +46,9 @@ FadeMaskControl（MewUI 版）のシステム概要・アーキテクチャ・�
 
 | 層 | 責務 |
 | --- | --- |
-| `FadeMaskControl.Core` | 穴あけ矩形の決定、暗転領域（4 帯）の計算、枠線矩形、論理座標 → DIP 変換、ラベルの行配置と文言の単一所有、サブラインの組み立て（行の文言・順序・表示可否）、**1 フレーム分の描画内容の決定**（`FadeMaskFrame`）、外観の値型、描画状態変更のログ定義 |
+| `FadeMaskControl.Core` | 穴あけ矩形の決定、暗転領域（4 帯）の計算、枠線矩形、論理座標 → DIP 変換、ラベルの行配置と文言の単一所有、サブラインの組み立て（行の文言・順序・表示可否）、**1 フレーム分の描画内容の決定**（`FadeMaskFrame`）、設定と描画状態の値型（`FadeMaskOptions`）、外観の値型、設定・状態変更のログ定義（差分検出を含む） |
 | `FadeMaskControl.MewUI` | コアの計算結果を `SKCanvas` へ描画する。`MewProperty` による入力の受付。DPI の自動追従。テキストの実寸測定とフォントの解決 |
-| ホスト | `LogicalSelectionRect` / `HasSelection` の設定、重ね順の管理、`IsHitTestVisible = false` の設定、ラベルの文言の供給 |
+| ホスト | `Options`（設定と描画状態の 1 値。`with` 式で部分変更）の設定、重ね順の管理、`IsHitTestVisible = false` の設定、ラベルの文言の供給 |
 
 ## コンポーネント構成
 
@@ -80,14 +80,7 @@ classDiagram
         +MeasureContent(size) Size
     }
     class FadeMaskControl {
-        +EsRect? LogicalSelectionRect
-        +EsRect? LogicalHighlightRect
-        +bool HasSelection
-        +bool HasHighlight
-        +FadeMaskAppearance Appearance
-        +string WindowTitle
-        +FadeMaskRenderMode Mode
-        +bool ShowFullOverlay
+        +FadeMaskOptions Options
         +double RenderScaling
         +double Scaling
         +double DisplayScaleScaling
@@ -214,7 +207,8 @@ sequenceDiagram
 
 ## 設計判断
 
-1. **外観は 1 つの値（コアの `FadeMaskAppearance`）が単一所有する**。UI ごとに既定値を持たないため、両 UI の見た目が一致する。
+1. **設定と描画状態は 1 つの値（コアの `FadeMaskOptions`）が単一所有する**。UI は 1 プロパティ（`Options`）として公開するだけで、項目ごとの既定値・描画可否の判断を持たない。変更は 1 回の変更通知で届き、どの項目が変わったかの差分検出（ログ出力）もコアが行う。
+   外観（`Appearance`）の既定値はコアが単一所有するため、両 UI の見た目が一致する。
    透明指定（アルファ 0）の扱いもコアが解決する（UI 層に「アルファ 0 なら描かない」等の判断を持たせない）。
 2. **暗転は「クライアント − 穴」の 4 帯で表現する**。クリッピング（穴あけパス）を使わず矩形の塗り分けにするのは、
    バックエンド差異に依存しない確実な方法であり、Avalonia 版も同じ方式（4 帯）であるため。
@@ -252,7 +246,7 @@ sequenceDiagram
 
 | レベル | 出力元 |
 | --- | --- |
-| Debug | `LogicalSelectionRect` / `LogicalHighlightRect` の変更（同一値なら出力しない） |
+| Debug | `Options` の変更で選択矩形・ハイライト矩形が変わったとき（差分検出はコア。同一値なら出力しない） |
 | Trace | `SetCoordinateTransform`（座標変換ポート）の設定・解除 |
 
 出力先は `Log` プロパティへ注入します（既定は `NullLogger`）。  

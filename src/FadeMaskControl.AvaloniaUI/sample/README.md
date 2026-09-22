@@ -6,10 +6,11 @@
   - [目次](#目次)
   - [1. 概要](#1-概要)
   - [2. 実行方法](#2-実行方法)
+    - [バッチファイル（リリースビルド＆起動）](#バッチファイルリリースビルド起動)
   - [3. 画面構成と操作](#3-画面構成と操作)
   - [4. 使い方（初めての方向け）](#4-使い方初めての方向け)
   - [5. AXAML での利用パターン](#5-axaml-での利用パターン)
-  - [6. 外観（FadeMaskAppearance）について](#6-外観fademaskappearanceについて)
+  - [6. 設定と描画状態（FadeMaskOptions）について](#6-設定と描画状態fademaskoptionsについて)
   - [7. 検証項目（動作確認チェックリスト）](#7-検証項目動作確認チェックリスト)
 
 ---
@@ -20,7 +21,7 @@
 
 - `FadeMaskControl`（`Estable.AvaloniaUI.FadeMask.FadeMaskControl`）を実際に Visual Tree へ配置して動作を確認できます。
 - 暗転オーバーレイ（穴あけマスク）とサイズラベルの描画を確認できます。
-- 公開プロパティ（外観は `Appearance`（コアの `FadeMaskAppearance`）、状態は `LogicalSelectionRect` / `HasSelection` / `HasHighlight` / `WindowTitle` / `Mode` / `ShowFullOverlay` など）のバインドと動的変更を確認できます。色の不透明度は色のアルファに統合されています。
+- 公開プロパティ（設定と描画状態は 1 つの値 `Options`（コアの `FadeMaskOptions`）。外観・モード・論理矩形・有効フラグを含む）のバインドと動的変更を確認できます。DPI スケーリング（`Scaling` / `DisplayScaleScaling`）は環境値として別に渡します。色の不透明度は色のアルファに統合されています。
 
 ## 2. 実行方法
 
@@ -62,7 +63,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ FadeMa
 ## 4. 使い方（初めての方向け）
 
 1. **起動直後**: 初期モード `AreaSelect`・初期選択矩形（50, 40, 220, 160）に応じて、グレー領域の右上部分が暗転（穴あけマスク）されます。
-2. **描画モード（ComboBox）**: 選択するとコントロールの描画状態（`Mode` / `HasHighlight` / `LogicalHighlightRect` / `WindowTitle` / `ShowFullOverlay`）が切り替わります。
+2. **描画モード（ComboBox）**: 選択するとコントロールの設定・状態（`Options.Mode` / `Options.HasHighlight` / `Options.LogicalHighlightRect` / `Options.WindowTitle` / `Options.ShowFullOverlay`）が切り替わります。
    - `AreaSelect`: 選択矩形の穴あけマスク＋サイズラベル＋操作ラベル（既定）
    - `ScreenSelect`: ハイライト矩形＋操作ラベル
    - `WindowSelect`: ハイライト矩形＋操作ラベル＋ウィンドウタイトル（情報ラベル）
@@ -75,10 +76,10 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ FadeMa
 6. **Thickness スライダー**: 選択枠線の太さを変更します（不透明度は色のアルファで表現）。
 7. **サイズラベル**: チェックボックスで表示/非表示、スライダーでフォントサイズを変更します。
 8. **サイズラベル明示指定**: 「明示指定（`SizeLabelOverride`）」テキストボックスに文字列を入力すると、サイズラベルのテキストが明示指定に置き換わります（空文字に戻すと自動生成）。
-9. **スケーリング**: `Scaling` で ドメイン → DIP 変換の基準倍率（座標変換ポートを設定していない場合は矩形の位置・サイズとサイズラベルの換算の両方に反映）、`DisplayScaleScaling` でマルチスクリーン補正（0 は自動 = Scaling と同値）を変更します。
+9. **スケーリング**: `Scaling` でドメイン → DIP 変換の基準倍率（座標変換ポートを設定していない場合は矩形の位置・サイズとサイズラベルの換算の両方に反映）、`DisplayScaleScaling` でマルチスクリーン補正（0 は自動 = Scaling と同値）を変更します。
 10. **情報ラベル**: `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor`（アルファ込み） / `InfoLabelFontSize` を変更できます（ScreenSelect / WindowSelect のハイライト時のみ表示）。
 
-> **補足**: 本サンプルは `Appearance`（外観）と状態プロパティ（`LogicalSelectionRect` / `HasHighlight` 等）を
+> **補足**: 本サンプルは設定と描画状態を 1 つの値（`Options` = コアの `FadeMaskOptions`）として
 > AXAML で直接バインドするため、枠線・ハイライト・ウィンドウタイトルなども確認できます。
 > サイズラベルの文言プロバイダ（デリゲート）のみコードビハインドで設定します。
 
@@ -89,36 +90,38 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ FadeMa
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:fm="clr-namespace:Estable.AvaloniaUI.FadeMask;assembly=FadeMaskControl.AvaloniaUI">
     <Grid Background="LightGray">
-        <fm:FadeMaskControl LogicalSelectionRect="{Binding LogicalSelectionRect}"
-                            HasSelection="True"
-                            Appearance="{Binding Appearance}"/>
+        <fm:FadeMaskControl Options="{Binding Options}"
+                            Scaling="{Binding Scaling}"
+                            DisplayScaleScaling="{Binding DisplayScaleScaling}"/>
     </Grid>
 </Window>
 ```
 
-## 6. 外観（FadeMaskAppearance）について
+## 6. 設定と描画状態（FadeMaskOptions）について
 
-本サンプルは外観を 1 つの値（`FadeMaskControl.Appearance` = コアの `FadeMaskAppearance`）で設定します。
-ViewModel は `Appearance` を保持し、各編集項目（色・サイズ・太さ）の setter が `with` 式で部分更新します。
-モード別の描画（ハイライト・選択矩形・全面暗転・ウィンドウタイトル）は状態プロパティ（`Mode` / `HasHighlight` / `LogicalHighlightRect` / `WindowTitle` / `ShowFullOverlay`）で切り替えます。
+本サンプルは設定と描画状態を 1 つの値（`FadeMaskControl.Options` = コアの `FadeMaskOptions`）で設定します。
+ViewModel は編集項目を保持し、`Options` を組み立てて公開します（編集項目の setter が `Options` の変更通知を発行する）。
 
-外観は StyledProperty のため AXAML でバインドできます。`Func` であるサイズラベルの文言プロバイダのみコードビハインドで設定します。
+外観（`Appearance`）・モード・情報ラベルの文言・全面暗転・選択/ハイライト矩形はすべて `Options` の項目です（レコードのため AXAML でバインドできます）。
+`Func` であるサイズラベルの文言プロバイダのみコードビハインドで設定します。
 
 ```csharp
 var control = new FadeMaskControl
 {
-    Appearance = new FadeMaskAppearance
+    Options = new FadeMaskOptions
     {
-        OverlayColor = Color.FromAColor(150, Colors.Black).ToDrawingColor(),
-        BorderColor = Colors.Red.ToDrawingColor(),
-        BorderThickness = 2,
+        Appearance = new FadeMaskAppearance
+        {
+            OverlayColor = Color.FromAColor(150, Colors.Black).ToDrawingColor(),
+            BorderColor = Colors.Red.ToDrawingColor(),
+            BorderThickness = 2,
+        },
+        Mode = FadeMaskRenderMode.WindowSelect,
+        HasHighlight = true,
+        LogicalHighlightRect = new EsRect(10, 10, 200, 100),
+        WindowTitle = "Sample Window",
     },
-    Mode = FadeMaskRenderMode.WindowSelect,
-    HasHighlight = true,
-    LogicalHighlightRect = new Rect(10, 10, 200, 100),
-    WindowTitle = "Sample Window",
 };
-control.InvalidateVisual(); // 再描画を要求（プロパティ変更でも自動で再描画される）
 ```
 
 ## 7. 検証項目（動作確認チェックリスト）

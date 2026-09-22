@@ -19,7 +19,7 @@ namespace Estable.MewUI.FadeMask;
 /// 下のコントロールへ入力を通す（Avalonia 版と同じ使い方）。<br/>
 /// <br/>
 /// <b>ラベル</b>: サイズラベル（1 行目）とサブライン（2 行目以降）を穴あけ矩形の左上へ縦に積む。<br/>
-/// 記載は <see cref="Appearance"/>（コアの <see cref="FadeMaskAppearance"/>）が、サイズラベルの文言は<br/>
+/// 設定と描画状態は <see cref="Options"/>（コアの <see cref="FadeMaskOptions"/>）が、サイズラベルの文言は<br/>
 /// <see cref="SizeLabelOverrideProvider"/> が与える。背景・文字原点・次の行の位置はコアが単一所有する。<br/>
 /// <br/>
 /// <b>Avalonia 版との違い（フレームワーク固有）</b>: DPI 追従（<see cref="RenderScaling"/>）と<br/>
@@ -27,43 +27,16 @@ namespace Estable.MewUI.FadeMask;
 /// </remarks>
 public sealed class FadeMaskControl : SkiaCanvasView
 {
-    /// <summary><see cref="LogicalSelectionRect"/> プロパティ（論理座標＝ドメイン座標の選択矩形）。</summary>
-    public static readonly MewProperty<EsRect?> LogicalSelectionRectProperty =
-        MewProperty<EsRect?>.Register<FadeMaskControl>(
-            nameof(LogicalSelectionRect), null, MewPropertyOptions.AffectsRender,
-            changed: static (owner, oldValue, newValue) => owner.Log.LogSelectionRectChanged(oldValue, newValue));
-
-    /// <summary><see cref="LogicalHighlightRect"/> プロパティ（論理座標＝ドメイン座標のハイライト矩形）。</summary>
-    public static readonly MewProperty<EsRect?> LogicalHighlightRectProperty =
-        MewProperty<EsRect?>.Register<FadeMaskControl>(
-            nameof(LogicalHighlightRect), null, MewPropertyOptions.AffectsRender,
-            changed: static (owner, oldValue, newValue) => owner.Log.LogHighlightRectChanged(oldValue, newValue));
-
-    /// <summary><see cref="HasSelection"/> プロパティ（選択が有効か）。</summary>
-    public static readonly MewProperty<bool> HasSelectionProperty =
-        MewProperty<bool>.Register<FadeMaskControl>(nameof(HasSelection), false, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="HasHighlight"/> プロパティ（ハイライトが有効か）。</summary>
-    public static readonly MewProperty<bool> HasHighlightProperty =
-        MewProperty<bool>.Register<FadeMaskControl>(nameof(HasHighlight), false, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="Appearance"/> プロパティ（暗転色・枠線・ラベルの外観をまとめた単一の設定値）。</summary>
-    public static readonly MewProperty<FadeMaskAppearance> AppearanceProperty =
-        MewProperty<FadeMaskAppearance>.Register<FadeMaskControl>(
-            nameof(Appearance), new FadeMaskAppearance(), MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="WindowTitle"/> プロパティ（情報ラベルの文言）。</summary>
-    public static readonly MewProperty<string> WindowTitleProperty =
-        MewProperty<string>.Register<FadeMaskControl>(nameof(WindowTitle), "", MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="Mode"/> プロパティ（オーバーレイ描画モード）。</summary>
-    public static readonly MewProperty<FadeMaskRenderMode> ModeProperty =
-        MewProperty<FadeMaskRenderMode>.Register<FadeMaskControl>(
-            nameof(Mode), FadeMaskRenderMode.AreaSelect, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="ShowFullOverlay"/> プロパティ（選択なしでも全面を暗転するか）。</summary>
-    public static readonly MewProperty<bool> ShowFullOverlayProperty =
-        MewProperty<bool>.Register<FadeMaskControl>(nameof(ShowFullOverlay), false, MewPropertyOptions.AffectsRender);
+    /// <summary><see cref="Options"/> プロパティ（設定と描画状態の単一値。外観・モード・論理矩形・有効フラグ）。</summary>
+    /// <remarks>
+    /// 個別に公開していた設定と状態（外観・モード・全面暗転・情報ラベルの文言・選択/ハイライト矩形とその有効フラグ）を<br/>
+    /// 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
+    /// 変更ログはコアのログ定義が単一所有する（変化した項目の判定（差分検出）もコアが行う）。
+    /// </remarks>
+    public static readonly MewProperty<FadeMaskOptions> OptionsProperty =
+        MewProperty<FadeMaskOptions>.Register<FadeMaskControl>(
+            nameof(Options), FadeMaskOptions.Default, MewPropertyOptions.AffectsRender,
+            changed: static (owner, oldValue, newValue) => owner.Log.LogOptionsChanged(oldValue, newValue));
 
     /// <summary><see cref="RenderScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
     public static readonly MewProperty<double> RenderScalingProperty =
@@ -74,70 +47,17 @@ public sealed class FadeMaskControl : SkiaCanvasView
     public static readonly MewProperty<double> ScalingProperty =
         MewProperty<double>.Register<FadeMaskControl>(nameof(Scaling), 1.0, MewPropertyOptions.AffectsRender);
 
-    /// <summary>論理座標（ドメイン）の選択矩形を取得または設定する。</summary>
-    /// <value>選択矩形。null の場合は穴あけなし。</value>
-    public EsRect? LogicalSelectionRect
+    /// <summary>暗転マスクの設定と描画状態（外観・モード・論理矩形・有効フラグ）を取得または設定する。</summary>
+    /// <value>設定と状態の単一値。既定はコアの既定値（<see cref="FadeMaskOptions.Default"/>）。</value>
+    /// <remarks>
+    /// 一部の項目だけを変える場合は <c>Options with { ... }</c> の形で指定する（指定しない項目は現在値を保つ）。<br/>
+    /// 同じ値の再設定では更新をスキップする（コアの値が構造的等価比較のため、変更通知が発生しない）。<br/>
+    /// 変更すると再描画され、選択矩形・ハイライト矩形の変更はログにも出力される（差分検出はコアが行う）。
+    /// </remarks>
+    public FadeMaskOptions Options
     {
-        get => GetValue(LogicalSelectionRectProperty);
-        set => SetValue(LogicalSelectionRectProperty, value);
-    }
-
-    /// <summary>論理座標（ドメイン）のハイライト矩形を取得または設定する。</summary>
-    /// <value>ハイライト矩形。null の場合は穴あけなし。選択矩形より優先される。</value>
-    public EsRect? LogicalHighlightRect
-    {
-        get => GetValue(LogicalHighlightRectProperty);
-        set => SetValue(LogicalHighlightRectProperty, value);
-    }
-
-    /// <summary>選択が有効かどうかを取得または設定する。</summary>
-    /// <value>true の場合、<see cref="LogicalSelectionRect"/> を穴あけ矩形として使う。</value>
-    public bool HasSelection
-    {
-        get => GetValue(HasSelectionProperty);
-        set => SetValue(HasSelectionProperty, value);
-    }
-
-    /// <summary>ハイライトが有効かどうかを取得または設定する。</summary>
-    /// <value>true の場合、<see cref="LogicalHighlightRect"/> を穴あけ矩形として使う（選択矩形より優先）。</value>
-    public bool HasHighlight
-    {
-        get => GetValue(HasHighlightProperty);
-        set => SetValue(HasHighlightProperty, value);
-    }
-
-    /// <summary>暗転マスクの外観（暗転色・枠線・ラベル）を取得または設定する。</summary>
-    /// <value>外観の単一値。既定はコアの既定値（<see cref="FadeMaskAppearance"/>）。</value>
-    /// <remarks>設定（変更）すると自動で再描画される（<c>MewPropertyOptions.AffectsRender</c>）。</remarks>
-    public FadeMaskAppearance Appearance
-    {
-        get => GetValue(AppearanceProperty);
-        set => SetValue(AppearanceProperty, value);
-    }
-
-    /// <summary>ハイライト対象のウィンドウタイトル（情報ラベルの文言）を取得または設定する。</summary>
-    /// <value>ウィンドウタイトル。未検出時は空文字。</value>
-    /// <remarks>表示の可否はモードと <see cref="FadeMaskAppearance.InfoLabelVisible"/> からコアが判定する。</remarks>
-    public string WindowTitle
-    {
-        get => GetValue(WindowTitleProperty);
-        set => SetValue(WindowTitleProperty, value);
-    }
-
-    /// <summary>オーバーレイ描画モードを取得または設定する。</summary>
-    /// <value>描画モード。操作ラベルの文言選定と情報ラベルの表示可否に使用する。</value>
-    public FadeMaskRenderMode Mode
-    {
-        get => GetValue(ModeProperty);
-        set => SetValue(ModeProperty, value);
-    }
-
-    /// <summary>穴あけ矩形が無くても全面を暗転するかどうかを取得または設定する。</summary>
-    /// <value>true の場合は選択が無くても暗転する。</value>
-    public bool ShowFullOverlay
-    {
-        get => GetValue(ShowFullOverlayProperty);
-        set => SetValue(ShowFullOverlayProperty, value);
+        get => GetValue(OptionsProperty);
+        set => SetValue(OptionsProperty, value);
     }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
@@ -151,7 +71,8 @@ public sealed class FadeMaskControl : SkiaCanvasView
     /// <summary>座標変換ポートへ適用する倍率を取得または設定する。</summary>
     /// <value>論理座標（ドメイン）→ DIP の倍率。DPI スケーリングとは独立する。</value>
     /// <remarks>
-    /// マルチスクリーン補正等でホストが設定する（<see cref="Port"/> が未設定の場合のみ使われる）。<br/>
+    /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
+    /// マルチスクリーン補正等でホストが設定する（<see cref="SetCoordinateTransform"/> が未設定の場合のみ使われる）。<br/>
     /// サイズラベル（DisplayScale）の換算係数は <see cref="DisplayScaleScaling"/>。
     /// </remarks>
     public double Scaling
@@ -245,8 +166,9 @@ public sealed class FadeMaskControl : SkiaCanvasView
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
     /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>
-    /// 外観と状態からコアの <see cref="FadeMaskFrame"/> を解決し（暗転領域・枠線・ラベルの判断はコアが持つ）、<br/>
-    /// それを <see cref="FadeMaskSkiaRenderer.Draw"/> へ渡して描画するだけとする（本 UI 層は判断を持たない）。
+    /// 設定・状態（<see cref="Options"/>）と環境値から描画入力を組み立ててコアの <see cref="FadeMaskFrame"/> を解決し<br/>
+    /// （暗転領域・枠線・ラベルの判断はコアが持つ）、それを <see cref="FadeMaskSkiaRenderer.Draw"/> へ渡して描画するだけとする<br/>
+    /// （本 UI 層は判断を持たない）。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
@@ -255,26 +177,19 @@ public sealed class FadeMaskControl : SkiaCanvasView
         var scaling = RenderScaling > 0 ? RenderScaling : 1.0;
         var client = new EsRect(0, 0, info.Width / scaling, info.Height / scaling);
 
-        var frame = FadeMaskFrame.Resolve(new FadeMaskRequest(
-            Appearance,
-            Mode,
-            WindowTitle,
+        var request = new FadeMaskRequest(
+            Options,
             client,
-            LogicalSelectionRect,
-            LogicalHighlightRect,
-            HasSelection,
-            HasHighlight,
-            ShowFullOverlay,
             _coordinatePort,
             Scaling,
             SizeLabelOverrideProvider,
-            DisplayScaleScaling));
+            DisplayScaleScaling);
 
         canvas.Save();
         canvas.Scale((float)scaling);
         try
         {
-            FadeMaskSkiaRenderer.Draw(canvas, frame);
+            FadeMaskSkiaRenderer.Draw(canvas, FadeMaskFrame.Resolve(request));
         }
         finally
         {

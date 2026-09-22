@@ -16,7 +16,7 @@
 | 枠線 | 穴あけ矩形の四辺を内側に描く（コアの `FadeMaskOverlayGeometry.GetBorderRects` が単一所有） |
 | 入力 | **受け取らない**。装飾専用のため入力の判断を持たない（ホストが `IsHitTestVisible = false` にして下のコントロールへ入力を通す） |
 | 描画判断 | どの矩形を暗転するか・枠線を描くか・ラベルをどう組むかは**コア（`FadeMaskFrame`）が単一所有**する。UI は返されたフレームを描くだけ |
-| 外観 | **1 つの値（`Appearance`）で設定する**。既定値はコアの `FadeMaskAppearance` が単一所有し、Avalonia 版と一致する |
+| 外観と状態 | **1 つの値（`Options` = コアの `FadeMaskOptions`）で設定する**。既定値はコアが単一所有し、Avalonia 版と一致する |
 | DPI 追従 | `OnDpiChanged` で表示スケーリング係数を DPI から換算した値（`DpiScaler.ToScaling`）へ自動更新する |
 | 連続再描画 | **無効**。プロパティ変更時にのみ再描画する |
 | ラベル | サイズラベル（1 行目）とサブライン（2 行目以降）を穴あけ矩形の左上へ縦に積む。縦位置の計算は `FadeMaskLabelLayout`（コア）が単一所有する |
@@ -41,14 +41,18 @@ using DrawingColor = System.Drawing.Color;
 var overlay = new FadeMaskControl
 {
     IsHitTestVisible = false,                        // 入力を下へ通す
-    LogicalSelectionRect = new EsRect(100, 80, 320, 240),   // 論理座標（元画像ピクセル）
-    HasSelection = true,
-    // 外観は 1 つの値（コアの FadeMaskAppearance）で設定する（部分変更は with 式）
-    Appearance = new FadeMaskAppearance
+    // 設定と描画状態は 1 つの値（コアの FadeMaskOptions）で設定する（部分変更は with 式）
+    Options = new FadeMaskOptions
     {
-        OverlayColor = DrawingColor.FromArgb(128, 0, 0, 0),
-        BorderColor = DrawingColor.FromArgb(255, 169, 169, 169),
-        BorderThickness = 2,
+        LogicalSelectionRect = new EsRect(100, 80, 320, 240),   // 論理座標（元画像ピクセル）
+        HasSelection = true,
+        // 外観は同じ値の項目（部分変更は with 式）
+        Appearance = new FadeMaskAppearance
+        {
+            OverlayColor = DrawingColor.FromArgb(128, 0, 0, 0),
+            BorderColor = DrawingColor.FromArgb(255, 169, 169, 169),
+            BorderThickness = 2,
+        },
     },
 };
 ```
@@ -58,31 +62,40 @@ var overlay = new FadeMaskControl
 
 ```csharp
 overlay.SizeLabelOverrideProvider = () =>
-    overlay.LogicalSelectionRect is { } rect ? FadeMaskLabels.FormatSizeLabel(rect, scaling: 1.0) : null;
+    overlay.Options.LogicalSelectionRect is { } rect ? FadeMaskLabels.FormatSizeLabel(rect, scaling: 1.0) : null;
 overlay.DisplayScaleScaling = 1.25;   // 自動生成時の DisplayScale（プロバイダを設定する場合は不要）
-overlay.Mode = FadeMaskRenderMode.WindowSelect;
-overlay.WindowTitle = "メモ帳";
+overlay.Options = overlay.Options with
+{
+    Mode = FadeMaskRenderMode.WindowSelect,
+    WindowTitle = "メモ帳",
+};
 ```
 
 ## プロパティ
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `LogicalSelectionRect` | `EsRect?` | `null` | 論理座標（ドメイン）の選択矩形 |
-| `LogicalHighlightRect` | `EsRect?` | `null` | 論理座標のハイライト矩形。選択矩形より優先される |
-| `HasSelection` | `bool` | `false` | true の場合、`LogicalSelectionRect` を穴あけ矩形として使う |
-| `HasHighlight` | `bool` | `false` | true の場合、`LogicalHighlightRect` を穴あけ矩形として使う（選択より優先） |
-| `Appearance` | `FadeMaskAppearance` | コアの既定値 | 外観（暗転色・枠線・ラベル）の単一所有。変更すると自動で再描画される |
-| `WindowTitle` | `string` | `""` | 情報ラベル（3 行目）の文言 |
-| `Mode` | `FadeMaskRenderMode` | `AreaSelect` | 描画モード（操作ラベルの文言選定・情報ラベルの表示可否） |
-| `ShowFullOverlay` | `bool` | `false` | true の場合は選択が無くても全面を暗転する |
+| `Options` | `FadeMaskOptions`（コア） | コアの既定値 | **設定と描画状態の単一値**（下記）。同じ値の再設定では更新をスキップする |
 | `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。DPI 変更で自動更新される |
 | `Scaling` | `double` | 1.0 | 座標変換ポートへ適用する倍率（`SetCoordinateTransform` が未設定の場合のみ使用。使い分けの規則はコアが単一所有） |
 | `DisplayScaleScaling` | `double` | `Scaling` | サイズラベルの自動生成に使う表示スケール（0 以下は `Scaling` と同値） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を返すデリゲート。null または空文字を返すと矩形から自動生成する |
 | `Log` | `ILogger` | `NullLogger` | 状態変更ログの出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
 
-外観の個別項目（暗転色・枠線・ラベル）は `Appearance`（コアの `FadeMaskAppearance`。色は `System.Drawing.Color`）が所有します。
+`Options`（コアの `FadeMaskOptions`）の項目:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `Appearance` | `FadeMaskAppearance` | コアの既定値 | 外観（暗転色・枠線・ラベル）の単一所有 |
+| `Mode` | `FadeMaskRenderMode` | `AreaSelect` | 描画モード（操作ラベルの文言選定・情報ラベルの表示可否） |
+| `WindowTitle` | `string` | `""` | 情報ラベル（3 行目）の文言 |
+| `ShowFullOverlay` | `bool` | `false` | true の場合は選択が無くても全面を暗転する |
+| `LogicalSelectionRect` | `EsRect?` | `null` | 論理座標（ドメイン）の選択矩形 |
+| `LogicalHighlightRect` | `EsRect?` | `null` | 論理座標のハイライト矩形。選択矩形より優先される |
+| `HasSelection` | `bool` | `false` | true の場合、`LogicalSelectionRect` を穴あけ矩形として使う |
+| `HasHighlight` | `bool` | `false` | true の場合、`LogicalHighlightRect` を穴あけ矩形として使う（選択より優先） |
+
+外観の個別項目（暗転色・枠線・ラベル）は `Options.Appearance`（コアの `FadeMaskAppearance`。色は `System.Drawing.Color`）が所有します。
 
 ## メソッド
 

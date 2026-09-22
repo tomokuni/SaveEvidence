@@ -13,18 +13,11 @@
         <TextBlock Text="FadeMaskControl サンプル"
                    FontSize="20" FontWeight="Bold"/>
 
-        <!-- 暗転オーバーレイ（穴あけマスク）の表示領域。外観は 1 つの値（Appearance）、状態は個別プロパティ -->
+        <!-- 暗転オーバーレイ（穴あけマスク）の表示領域。設定と描画状態は 1 つの値（Options）、DPI スケーリングは環境値として別に渡す -->
         <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Padding="4">
             <Grid Width="560" Height="320" Background="LightGray">
                 <fm:FadeMaskControl x:Name="Overlay"
-                                    Appearance="{Binding Appearance}"
-                                    LogicalSelectionRect="{Binding LogicalSelectionRect}"
-                                    LogicalHighlightRect="{Binding LogicalHighlightRect}"
-                                    HasSelection="{Binding HasSelection}"
-                                    HasHighlight="{Binding HasHighlight}"
-                                    WindowTitle="{Binding WindowTitle}"
-                                    Mode="{Binding Mode}"
-                                    ShowFullOverlay="{Binding ShowFullOverlay}"
+                                    Options="{Binding Options}"
                                     Scaling="{Binding Scaling}"
                                     DisplayScaleScaling="{Binding DisplayScaleScaling}"/>
             </Grid>

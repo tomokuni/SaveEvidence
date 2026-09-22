@@ -131,12 +131,8 @@ classDiagram
     }
     class FadeMaskControl {
         <<FadeMaskControl.MewUI>>
-        +EsRect? LogicalSelectionRect
-        +bool HasSelection
+        +FadeMaskOptions Options
         +bool ShowFullOverlay
-        +FadeMaskAppearance Appearance
-        +string WindowTitle
-        +FadeMaskRenderMode Mode
         +Func~string?~? SizeLabelOverrideProvider
         +SetCoordinateTransform(port) void
     }

@@ -45,7 +45,7 @@
 
 - 穴あけ矩形の外側を暗転する穴あけマスクの描画
 - 選択枠線・ラベル（サイズ・操作・情報）の描画
-- 外観の単一所有（`Appearance` = コアの `FadeMaskAppearance`）
+- 設定と描画状態の単一値（`Options` = コアの `FadeMaskOptions`。外観・モード・論理矩形・有効フラグ）
 - モード別描画（AreaSelect / ScreenSelect / WindowSelect / Crop）
 
 ## 3. 外部利用条件
@@ -125,20 +125,27 @@ overlay.InvalidateVisual(); // 再描画を要求（プロパティ変更でも�
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Appearance` | `FadeMaskAppearance` | コアの既定値 | 外観（暗転色・枠線・ラベル）の単一所有。変更すると自動で再描画される |
-| `LogicalSelectionRect` | `Rect?` | `null` | 選択矩形（**ドメイン座標系**）。`SetCoordinateTransform` で設定した座標変換ポートで描画時に DIP へ変換される（ウィンドウサイズ変更・ズーム・スクロールに追従） |
-| `LogicalHighlightRect` | `Rect?` | `null` | ハイライト矩形（WindowSelect / ScreenSelect・**ドメイン座標系**）。選択矩形より優先される |
-| `HasSelection` | `bool` | `false` | 選択が有効か（true のとき `LogicalSelectionRect` を穴あけ矩形にする） |
-| `HasHighlight` | `bool` | `false` | ハイライトが有効か（true のとき `LogicalHighlightRect` を穴あけ矩形にする。選択より優先） |
-| `WindowTitle` | `string` | `""` | 情報ラベル（3 行目）の文言（ハイライト中のウィンドウタイトル） |
-| `Mode` | `FadeMaskRenderMode` | `AreaSelect` | 描画モード（操作ラベルの文言選定・情報ラベルの表示可否） |
-| `ShowFullOverlay` | `bool` | `false` | 穴あけ矩形が無くても全面を暗転する（範囲選択のドラッグ前・切出しの初期状態用） |
-| `Scaling` | `double` | `1.0` | DPI スケーリング係数（ドメイン → DIP の基準倍率） |
-| `DisplayScaleScaling` | `double` | `Scaling` | サイズラベル用スケーリング（マルチスクリーン補正。0 以下は `Scaling` と同値） |
+| `Options` | `FadeMaskOptions`（コア） | コアの既定値 | **設定と描画状態の単一値**（下記）。同じ値の再設定では更新をスキップする（変更通知が発生しない） |
+| `Scaling` | `double` | `1.0` | DPI スケーリング係数（ドメイン → DIP の基準倍率）。環境値のため `Options` には含めない |
+| `DisplayScaleScaling` | `double` | `Scaling` | サイズラベル用スケーリング（マルチスクリーン補正。0 以下は `Scaling` と同値）。環境値のため `Options` には含めない |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルのテキストを描画時に評価するプロバイダ（null・空文字を返した場合は矩形と `DisplayScaleScaling` から自動生成。デリゲートのため AXAML バインド不可） |
 | `Log` | `ILogger` | `NullLogger` | 内部ロガー（null 設定時は `NullLogger` へフォールバック。出力先・レベル制御はホストが所有） |
 
-外観の個別項目（暗転色・枠線・ラベル）は `Appearance` が所有します。
+`Options`（コアの `FadeMaskOptions`）の項目:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `Appearance` | `FadeMaskAppearance` | コアの既定値 | 外観（暗転色・枠線・ラベル）の単一所有 |
+| `Mode` | `FadeMaskRenderMode` | `AreaSelect` | 描画モード（操作ラベルの文言選定・情報ラベルの表示可否） |
+| `WindowTitle` | `string` | `""` | 情報ラベル（3 行目）の文言（ハイライト中のウィンドウタイトル） |
+| `ShowFullOverlay` | `bool` | `false` | 穴あけ矩形が無くても全面を暗転する（範囲選択のドラッグ前・切出しの初期状態用） |
+| `LogicalSelectionRect` | `EsRect?`（コア矩形） | `null` | 選択矩形（**ドメイン座標系**）。`SetCoordinateTransform` で設定した座標変換ポートで描画時に DIP へ変換される |
+| `LogicalHighlightRect` | `EsRect?`（コア矩形） | `null` | ハイライト矩形（WindowSelect / ScreenSelect・**ドメイン座標系**）。選択矩形より優先される |
+| `HasSelection` | `bool` | `false` | 選択が有効か（true のとき `LogicalSelectionRect` を穴あけ矩形にする） |
+| `HasHighlight` | `bool` | `false` | ハイライトが有効か（true のとき `LogicalHighlightRect` を穴あけ矩形にする。選択より優先） |
+
+矩形はコアの幾何型（`EsRect`）で保持するため、Avalonia の `Rect` との変換は境界（1 行）で行います。
+外観の個別項目（暗転色・枠線・ラベル）は `Options.Appearance` が所有します。
 
 ### 5.2 メソッド
 
@@ -199,8 +206,8 @@ overlay.InvalidateVisual(); // 再描画を要求（プロパティ変更でも�
 
 **非暗転領域（穴）は始点・終点の両ピクセルを含む閉区間**、**暗転領域は始点・終点のいずれも含まない**ことを意図する仕様です。
 
-- `LogicalSelectionRect`（ドメイン座標）を DIP へ変換する際は、終点（`Right` / `Bottom`）に +1 してから変換します（`Rect(Inverse(始点), Inverse(終点 + (1, 1)))`）。
-- `LogicalHighlightRect`（ScreenSelect / WindowSelect のスクリーン・ウィンドウ境界）は、検出結果（PixelRect）が最初から**全ピクセルを含む閉区間表現**のため、+1 しません（`closedInterval: false`。+1 すると実際より 1px 大きい枠・サイズラベルになる）。
+- `Options.LogicalSelectionRect`（ドメイン座標）を DIP へ変換する際は、終点（`Right` / `Bottom`）に +1 してから変換します（`Rect(Inverse(始点), Inverse(終点 + (1, 1)))`）。
+- `Options.LogicalHighlightRect`（ScreenSelect / WindowSelect のスクリーン・ウィンドウ境界）は、検出結果（PixelRect）が最初から**全ピクセルを含む閉区間表現**のため、+1 しません（`closedInterval: false`。+1 すると実際より 1px 大きい枠・サイズラベルになる）。
 - 暗転マスクは穴あけ矩形の外側（上・下・左・右）を塗るため、閉区間の矩形を受け取れば自動的に終点ピクセルも非暗転になります（計算はコアの `FadeMaskOverlayGeometry` が単一所有）。
 - これにより、DragRect の選択枠（閉区間描画）・キャプチャ（閉区間 +1）と表示が一致します。
 
@@ -212,7 +219,7 @@ overlay.InvalidateVisual(); // 再描画を要求（プロパティ変更でも�
 | --- | --- | --- | --- | --- |
 | 1 行目 | サイズラベル | `Appearance.ShowSizeLabel` | `SizeLabelOverrideProvider` の戻り値、または矩形と `DisplayScaleScaling` から自動生成した `(L, T) - (R, B),  (W×H), DisplayScale: (n%)` | `SizeLabelFontSize` / `SizeLabelColor` / `SizeLabelBackgroundColor` |
 | 2 行目 | 操作ラベル | `Appearance.ShowSubLines` | モード別の確定・キャンセル方法（Enter / Esc / クリック / ダブルクリック） | `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` |
-| 3 行目 | 情報ラベル | `Appearance.InfoLabelVisible` | WindowSelect のウィンドウタイトル（`WindowTitle`） | `InfoLabelFontSize` / `InfoLabelColor` / `InfoLabelBackgroundColor` |
+| 3 行目 | 情報ラベル | `Options.Appearance.InfoLabelVisible` | WindowSelect のウィンドウタイトル（`Options.WindowTitle`） | `InfoLabelFontSize` / `InfoLabelColor` / `InfoLabelBackgroundColor` |
 
 **背景の合成**: 各行の背景色（`SizeLabelBackgroundColor` / `SubLineBackgroundColor` / `InfoLabelBackgroundColor`）のアルファで不透明度を表す（例: 黒 60% = `#99000000`）。背景色のアルファが 0 の場合は黒 50%（`#80000000`）として描画します（実効色の解決はコアが行います）。
 

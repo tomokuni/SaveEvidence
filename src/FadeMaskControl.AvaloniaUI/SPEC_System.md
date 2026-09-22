@@ -2,12 +2,16 @@
 
 ## 目次
 
-- [FadeMaskControl システム仕様書（SPEC_System）](#fademaskcontrol-システム仕様書spec_system)
+- [FadeMaskControl システム仕様書（SPEC\_System）](#fademaskcontrol-システム仕様書spec_system)
   - [目次](#目次)
   - [1. システム概要](#1-システム概要)
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
+    - [3.1 レイヤー構造](#31-レイヤー構造)
+    - [3.2 依存の方向](#32-依存の方向)
   - [4. 例外処理ポリシー](#4-例外処理ポリシー)
+    - [4.1 基本方針](#41-基本方針)
+    - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
   - [5. コンポーネント図](#5-コンポーネント図)
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 FadeMaskControl](#61-fademaskcontrol)
@@ -19,6 +23,7 @@
   - [8. 描画フロー](#8-描画フロー)
   - [9. ログ](#9-ログ)
     - [9.1 ログ定義一覧](#91-ログ定義一覧)
+  - [10. FadeMaskOptions（コア）](#10-fademaskoptionsコア)
 
 ---
 
@@ -40,7 +45,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | Platform.Core（ICoordTransform / CoordTransform）、FadeMaskControl.Core（外観・ラベルの文言・行配置・暗転幾何・ログ定義） |
+| **依存プロジェクト** | Platform.Core（ICoordTransform / CoordTransform）、FadeMaskControl.Core（設定と状態の値・外観・ラベルの文言・行配置・暗転幾何・ログ定義） |
 
 ## 3. アーキテクチャ
 
@@ -49,14 +54,14 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 ```text
 公開コントロール（FadeMaskControl）
   → 描画ユーティリティ（FadeMaskDrawer）
-  → コア（FadeMaskAppearance / FadeMaskOverlayGeometry / FadeMaskLabels / FadeMaskLabelLayout）
+  → コア（FadeMaskOptions / FadeMaskAppearance / FadeMaskOverlayGeometry / FadeMaskLabels / FadeMaskLabelLayout）
 ```
 
 ### 3.2 依存の方向
 
 - 依存は**一方向の階層構造**（公開コントロール → 描画ユーティリティ → コア）。
-- 描画状態（選択矩形・ハイライト矩形・全面暗転・モード）と外観（`Appearance`）は `FadeMaskControl` に集約する（MewUI 版と同じ構造）。
-- 外観の既定値と `IValueConverter` 相当の変換を持たない（外観はコアの `FadeMaskAppearance` が単一所有）。
+- 設定と描画状態（外観・モード・論理矩形・有効フラグ）はコアの `FadeMaskOptions`（1 値）が単一所有し、`FadeMaskControl` はそれを 1 プロパティ（`Options`）として保持する（MewUI 版と同じ構造）。
+- 外観の既定値と `IValueConverter` 相当の変換を持たない（外観を含む設定と状態はコアの `FadeMaskOptions` が単一所有）。
 - `FadeMaskDrawer` は internal（外部から見えない）。
 - 上位 AP は公開 API（StyledProperty / 公開プロパティ / `SetCoordinateTransform`）のみで連携。
 
@@ -86,14 +91,16 @@ flowchart TB
         Drawer["FadeMaskDrawer<br/>internal static<br/>FadeMaskDrawer.cs"]
         Mode["FadeMaskRenderMode<br/>public enum<br/>FadeMaskControl.Core"]
         App["FadeMaskAppearance<br/>public sealed record<br/>FadeMaskControl.Core"]
+        Opt["FadeMaskOptions<br/>public sealed record<br/>FadeMaskControl.Core"]
         Frame["FadeMaskFrame<br/>internal readonly record struct<br/>FadeMaskControl.Core"]
     end
 
-    UI -->|"Appearance / LogicalSelectionRect / ..."| Ctl
-    Snip -->|"Appearance / HasHighlight / WindowTitle / Mode"| Ctl
+    UI -->|"Options（設定と状態の 1 値） / Scaling / DisplayScaleScaling"| Ctl
+    Snip -->|"Options with { ... }"| Ctl
     Ctl -->|"フレームを解決"| Frame
     Ctl -->|"フレームを描画"| Drawer
-    Ctl --> App
+    Ctl --> Opt
+    Opt --> App
     Frame --> App
     Frame --> Mode
     Drawer --> Frame
@@ -105,9 +112,9 @@ flowchart TB
 
 - **分類**: 公開コントロール（`public class : Control`）
 - **責務**:
-  - 外観（`Appearance`）と描画状態（選択矩形・ハイライト矩形・全面暗転・モード）の保持
-  - 外観と状態をコアの `FadeMaskRequest` へ詰めて `FadeMaskFrame.Resolve` を呼び、返されたフレームを `FadeMaskDrawer` で描画
-- **公開API**: `Appearance` / `LogicalSelectionRect` / `LogicalHighlightRect` / `HasSelection` / `HasHighlight` / `WindowTitle` / `Mode` / `ShowFullOverlay` / `Scaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` / `Log` / `SetCoordinateTransform`
+  - 設定と描画状態（コアの `FadeMaskOptions`）の保持（`Options` 1 プロパティ）
+  - 設定と状態をコアの `FadeMaskRequest` へ詰めて `FadeMaskFrame.Resolve` を呼び、返されたフレームを `FadeMaskDrawer` で描画
+- **公開API**: `Options` / `Scaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` / `Log` / `SetCoordinateTransform`
 - **構成**: 公開 API（StyledProperty・公開プロパティ）と描画実装（静的コンストラクタ・Render オーバーライド・AffectsRender 登録）を単一ファイルに集約（無理な分割はしない）
 - **依存**: FadeMaskDrawer / FadeMaskControl.Core（外観・フレーム解決・ログ定義） / Avalonia
 - **判断を持たない**: 「どの矩形を暗転するか」「枠線を描くか」「どのラベルを描くか」（サイズラベルの自動生成を含む）はコアが単一所有する
@@ -151,7 +158,7 @@ flowchart TB
 ## 7. 依存ルール
 
 - 依存方向は**一方向の階層構造**（公開コントロール → 描画ユーティリティ → コア）。
-- 描画状態（選択矩形・ハイライト矩形・全面暗転・モード）と外観（`Appearance`）の真のソースは `FadeMaskControl` である。
+- 描画状態（選択矩形・ハイライト矩形・全面暗転・モード）と外観を含む設定の真のソースは、コアの `FadeMaskOptions`（`FadeMaskControl.Options`）である。
 - `FadeMaskDrawer` は internal（外部から見えない）。
 - 上位 AP は公開 API（StyledProperty / 公開プロパティ / `SetCoordinateTransform`）のみで連携。
 
@@ -180,6 +187,16 @@ flowchart LR
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
+| `Debug` | `LogMessage.LogOptionsChanged` | `Options` の変更で**変化した矩形のみ**を出力する（差分検出の入口。矩形以外の項目変更は出力しない） |
 | `Debug` | `LogMessage.LogSelectionRectChanged` | 選択矩形（ドメイン座標）の変更（変更前後） |
 | `Debug` | `LogMessage.LogHighlightRectChanged` | ハイライト矩形（ドメイン座標）の変更（変更前後） |
 | `Trace` | `LogMessage.LogCoordinateTransform` | 座標変換ポートの設定 / 解除 |
+
+## 10. FadeMaskOptions（コア）
+
+| 項目 | 内容 |
+| --- | --- |
+| ファイル | `FadeMaskControl.Core/src/FadeMaskOptions.cs`（UI 非依存コア） |
+| 種類 | public sealed record |
+| 責務 | **設定と描画状態の単一値**（外観・モード・情報ラベルの文言・全面暗転・選択/ハイライト矩形とその有効フラグ）の単一所有 |
+| 備考 | 環境値（DPI スケーリング）とホスト結線（文言プロバイダ・ロガー）は含めない。レコード（不変）のため `with` 式で部分変更し、構造的等価比較で衝突判定される（同値再設定は変更通知されない） |
