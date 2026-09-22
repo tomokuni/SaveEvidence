@@ -7,6 +7,11 @@ namespace LoupeControl.Sample.ViewModels;
 /// <param name="Brush">対応するブラシ（null は「なし」= 描画しない）。</param>
 public sealed record BrushOption(string Name, IBrush? Brush)
 {
+    /// <summary>選択肢の色を取得する。</summary>
+    /// <value>単色ブラシの色。「なし」（null）・単色以外のブラシの場合は null。</value>
+    /// <remarks>ルーペの外観は UI 非依存の色型で渡すため、ブラシから色を取り出す。</remarks>
+    public Color? Color => (Brush as ISolidColorBrush)?.Color;
+
     /// <inheritdoc />
     public override string ToString() => Name;
 }

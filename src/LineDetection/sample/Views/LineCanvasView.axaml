@@ -32,20 +32,14 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- ルーペ -->
+            <!-- ルーペ（設定はコードビハインドでコアの単一値 Options として設定する） -->
             <loupe:LoupeControl x:Name="Loupe"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top"
                                 IsHitTestVisible="False"
                                 IsVisible="{Binding IsLoupeVisible}"
                                 Source="{Binding Image}"
-                                CenterPoint="{Binding LoupeCenter}"
-                                RequestedSize="220"
-                                ZoomLevel="4"
-                                CrossColor="#33FF0000"
-                                FrameColor="#CCCCCC"
-                                FrameWidth="1"
-                                ShowCoordLabel="False"/>
+                                CenterPoint="{Binding LoupeCenter}"/>
 
             <!-- 画像が無い場合のプレースホルダー -->
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"

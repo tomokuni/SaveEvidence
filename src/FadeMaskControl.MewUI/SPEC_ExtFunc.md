@@ -126,7 +126,7 @@ Avalonia 版と同一の型を共有する（UI 非依存の値型のため、UI
 
 ## DPI
 
-モニター間の移動で DPI が変わると、`RenderScaling` は `newDpi / 96` へ自動更新されます。
+モニター間の移動で DPI が変わると、`RenderScaling` は DPI から換算した値（DIP 基準 96 DPI。規則は `DpiScaler.ToScaling` が単一所有します）へ自動更新されます。
 キャンバスは DIP 座標で描画されるため、DPI に関わらず同じ見た目になります。
 
 ## エラー時の挙動

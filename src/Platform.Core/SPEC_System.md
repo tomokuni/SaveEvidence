@@ -41,7 +41,8 @@ graph LR
 | `ElementFinderResults.cs` | 要素検出の結果（`readonly record struct`） |
 | `LoggerFallback.cs` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（拡張メソッド `OrNullLogger`） |
 | `Coordinate/ScrollMath.cs` | スクロール範囲・ビューポートサイズの純粋計算 |
-| `Coordinate/DpiScaler.cs` | DIP 値を物理ピクセルへ変換する純粋計算 |
+| `Coordinate/DpiScaler.cs` | DIP 値を物理ピクセルへ変換する純粋計算（DPI 基準値と DPI → スケーリング換算を含む） |
+| `Coordinate/CoordTransformExtensions.cs` | 座標変換ポート未設定（null）を等価変換として解決する |
 | `Coordinate/CoordMath.cs`（internal） | 画像レイアウト計算の一元化。`CoordTransform` から利用する |
 | `Coordinate/ICoordTransform.cs` | 座標系間の変換ポート（`Forward` / `Inverse` / `Bounds`） |
 | `Coordinate/CoordTransform.cs` | 変換ポートの具象実装（`Func` 委譲・`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`） |
@@ -54,6 +55,7 @@ graph LR
 | `Geometry/EsPlatformHandle.cs` | UI フレームワーク非依存のネイティブウィンドウ識別子 |
 | `Geometry/CoordinateFormatter.cs` | 座標の表示文字列を生成する純粋関数 |
 | `Imaging/EsBitmap.cs` | SkiaSharp のみに依存するピクセルコンテナ（BGRA8888・Premul） |
+| `Imaging/SkiaColorInterop.cs` | コアの色型（`System.Drawing.Color`）→ Skia の色型の変換（MewUI 版の描画層 6 箇所が共用） |
 
 ## 例外処理ポリシー
 

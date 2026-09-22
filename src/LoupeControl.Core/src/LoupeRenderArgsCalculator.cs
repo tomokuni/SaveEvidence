@@ -1,49 +1,41 @@
 using Estable.Loupe.Imaging;
-using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
 namespace Estable.Loupe;
 
 /// <summary>ルーペの描画完了時の表示情報計算ロジック（純粋関数）。</summary>
 /// <remarks>
-/// 表示情報（ピクセルサイズ・切り出しサイズ・切り出し左上・スケール）の計算を<br/>
+/// 描画完了の通知に必要な表示情報（切り出し領域の左上とスケール）の計算を<br/>
 /// UI 非依存の純粋関数として提供する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 internal static class LoupeRenderArgsCalculator
 {
     /// <summary>ルーペの表示情報（描画完了イベント引数用）を計算する。</summary>
-    /// <param name="size">ルーペの表示サイズ（一辺・DIP）。</param>
-    /// <param name="renderScaling">表示 DIP を物理ピクセルへ変換するスケーリング係数。</param>
-    /// <param name="zoomLevel">拡大率。</param>
-    /// <param name="center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定時は null。</param>
+    /// <param name="request">描画入力（実際に描画した値を持つ。本メソッドが DIP から再換算しないための契約）。</param>
     /// <returns>
-    /// ピクセルサイズ・切り出し領域の一辺（ドメインピクセル）・切り出し領域の左上（ドメイン座標・中心未設定時は null）・<br/>
-    /// ドメイン座標 → ルーペ画像ピクセル座標の変換係数。
+    /// 切り出し領域の左上（ドメイン座標・中心未設定時は null）と、ドメイン座標 → ルーペ画像ピクセル座標の変換係数。
     /// </returns>
     /// <remarks>
-    /// 切り出し領域の左上計算は <see cref="LoupeImageExtractor.ComputeCaptureTopLeft"/> に委譲する（単一所有・DRY）。
+    /// 描画に使った値（実際に描画した物理ピクセルサイズを含む）を受け取る（本メソッドが DIP から再換算すると、<br/>
+    /// 描画先の領域によるクランプで実際の描画と値がずれ、ホストへ通知する切り出し領域・スケールが食い違うため）。<br/>
+    /// 切り出し領域の左上計算は <see cref="LoupeImageExtractor.ComputeCaptureTopLeft"/> に委譲する（単一所有・DRY）。<br/>
+    /// 物理ピクセルサイズ・切り出し領域の一辺は、ホストが消費しないため結果に含めない（必要な場合はコアの<br/>
+    /// <see cref="LoupePositionCalculator.ResolvePixelSize"/> / <see cref="LoupeImageExtractor.ComputeCaptureSize"/> から直接求める）。
     /// </remarks>
-    public static RenderArgs Compute(
-        double size, double renderScaling, int zoomLevel, EsPoint? center)
+    public static RenderArgs Compute(LoupeRenderRequest request)
     {
-        var pixelSize = DpiScaler.ScaleToPixel(size, renderScaling);
-        var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel);
+        var captureSize = LoupeImageExtractor.ComputeCaptureSize(request.PixelSize, request.ZoomLevel);
 
         return new RenderArgs(
-            pixelSize,
-            captureSize,
-            center is { } c
+            request.Center is { } c
                 ? LoupeImageExtractor.ComputeCaptureTopLeft((int)c.X, (int)c.Y, captureSize)
                 : null,
-            (double)size * zoomLevel / pixelSize);
+            request.ZoomLevel);
     }
 
     /// <summary>ルーペの表示情報（描画完了イベント引数用）。</summary>
-    /// <param name="PixelSize">ルーペの一辺の物理ピクセルサイズ。</param>
-    /// <param name="CaptureSize">切り出し領域の一辺（ドメインピクセル）。</param>
     /// <param name="CaptureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null。</param>
-    /// <param name="Scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    public readonly record struct RenderArgs(
-        int PixelSize, int CaptureSize, EsPoint? CaptureTopLeft, double Scale);
+    /// <param name="Scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値）。</param>
+    public readonly record struct RenderArgs(EsPoint? CaptureTopLeft, double Scale);
 }

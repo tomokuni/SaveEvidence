@@ -27,7 +27,6 @@
   - [9. ログ](#9-ログ)
     - [9.1 ログ定義一覧](#91-ログ定義一覧)
       - [コア（`Estable.DragRect.LogMessage`）](#コアestabledragrectlogmessage)
-      - [UI 層（`Estable.AvaloniaUI.DragRect.Logging.LogMessage`）](#ui-層estableavaloniauidragrectlogginglogmessage)
 
 ---
 
@@ -249,10 +248,10 @@ sequenceDiagram
 
 ## 9. ログ
 
-ログ定義は名前空間で 2 つに分かれる（**同名の `LogMessage`**。拡張メソッド名は重複しないため共存できる）。
-**入力の判断に伴うログ**（マウス操作・キー入力・確定/キャンセル・ズーム要求・設定変更）はコア（`Estable.DragRect.LogMessage`、
-`DragRectControl.Core/src/LogMessage.cs`）、**UI 層の操作のログ**（通常ホイール）は本プロジェクト
-（`Estable.AvaloniaUI.DragRect.Logging.LogMessage`、`src/Logging/LogMessage.cs`）が定義する。
+ログ定義はコア（`Estable.DragRect.LogMessage`、`DragRectControl.Core/src/LogMessage.cs`）が単一所有する
+（入力の判断に伴うログは UI から出せず、後から出すと行の順序が変わるため）。UI 層に固有のログ定義は持たない
+（通常ホイールのスクロールログは、スクロールの実行を連携 `ScrollViewer` または `ScrollRequested` 通知へ委ねる形になり、
+本コントロール内に記録すべき判断が無くなったため削除した）。
 各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する。未設定（null）の場合は `NullLogger` で無出力。
 出力先・レベル制御はホストアプリケーションが所有する（定義のみ）。マウス移動の高頻度ログは行わない（Down 直前・Up 直後の位置のみ `Trace` で記録）。
 
@@ -274,9 +273,3 @@ sequenceDiagram
 | `Trace` | `LogMessage.LogPositionAfterUp` | Up 直後のマウス位置 |
 | `Debug` | `LogMessage.LogZoomRequested` | Ctrl+ホイールによるズーム要求（拡大/縮小） |
 | `Debug` | `LogMessage.LogSettingChanged` | 設定値変更（変更前後） |
-
-#### UI 層（`Estable.AvaloniaUI.DragRect.Logging.LogMessage`）
-
-| レベル | メソッド | 出力内容 |
-| --- | --- | --- |
-| `Trace` | `LogMessage.LogWheelScroll` | 通常ホイールによるスクロール（移動量 / オフセット） |

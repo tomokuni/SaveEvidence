@@ -2,7 +2,7 @@
 
 ## 概要
 
-`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と将来の MewUI 実装が共有する、UI フレームワーク非依存のルーペロジックを提供するライブラリです。SaveEvidence のマルチ UI 対応における「コントロールの Core / UI 分割」のパイロット実装（ティア E）です。
+`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と `LoupeControl.MewUI`（MewUI 実装）が共有する、UI フレームワーク非依存のルーペロジックを提供するライブラリです。SaveEvidence のマルチ UI 対応における「コントロールの Core / UI 分割」のパイロット実装（ティア E）です。
 
 ## 技術スタック
 
@@ -14,23 +14,33 @@
 
 ```mermaid
 graph LR
-  A[LoupeControl<br/>Avalonia 実装] --> B[LoupeControl.Core]
-  C["LoupeControl.MewUI（将来）"] --> B
+  A[LoupeControl.AvaloniaUI<br/>Avalonia 実装] --> B[LoupeControl.Core]
+  C[LoupeControl.MewUI<br/>MewUI 実装] --> B
   B --> D[Platform.Core]
 ```
 
 - `LoupeControl.Core` は UI フレームワークへ依存しません。依存は `Platform.Core` のみです。
-- UI 実装は、コア型と自身の型（`Avalonia.Point` / `Size`）を相互変換します。変換は境界（サービス呼び出し・イベント引数の生成）の 1 行に限定し、UI 側の状態・描画は UI の型のまま維持します。
-- 型はすべて `internal` とし、`InternalsVisibleTo`（`LoupeControl` / `LoupeControl.AvaloniaUI.Tests` / `LoupeControl.Core.Tests`）で UI 実装とテストへ公開します。公開 API を増やさないための方式です（`Platform.Core` の `CoordMath` と同じ）。
+- UI 実装は、コア型と自身の型（`Avalonia.Point` / `Size` / `IBrush`、`SKColor`）を相互変換します。変換は境界（サービス呼び出し・イベント引数の生成・描画）の 1 行に限定し、UI 側の状態・描画は UI の型のまま維持します。
+- 設定（表示サイズ・拡大率・外観）は `LoupeOptions` が単一所有し、UI 層は本型を 1 プロパティとして公開するだけです（設定の既定値・補正も本型が持つ）。外観（装飾の値）は `LoupeAppearance` が単一所有し、UI 層は外観値を保持しません（描画時に読むだけ）。
+- `LoupeOptions` / `LoupeAppearance` のみ `public` とし、それ以外は `internal` として `InternalsVisibleTo`（`LoupeControl.AvaloniaUI` / `LoupeControl.MewUI` / 複合コントロール / 各テスト）で公開します。
 
 ## コンポーネント構成
 
 | ファイル | 内容 |
 | --- | --- |
+| `LoupeOptions.cs` | ルーペの設定（表示サイズ・拡大率・外観）の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`Default` |
+| `LoupeAppearance.cs` | ルーペの外観 12 項目（下地・市松模様・外枠・十字線・中心座標ラベル）の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`ShouldShowCoordLabel`・`Has*`（描画可否） |
 | `LoupeValueCoercer.cs` | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ |
-| `LoupePositionCalculator.cs` | 表示サイズの親領域へのクランプ、表示位置（中心 + オフセット）の計算と親領域内へのクランプ |
-| `LoupeRenderArgsCalculator.cs` | 描画完了イベント引数用の表示情報（ピクセルサイズ / 切り出しサイズ / 切り出し左上 / スケール）の計算と `RenderArgs` 値型 |
-| `Imaging/LoupeImageExtractor.cs` | 切り出し領域の一辺・左上（ドメイン座標）の計算と、`EsBitmap` からの領域切り出し |
+| `LoupeAppearanceScaler.cs` | 外観の寸法値（タイルサイズ・外枠の太さ・ラベル文字サイズ・角丸半径）の物理ピクセル換算（補正は外観の生成時に済んでいるため再補正しない） |
+| `LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）と、UI の DIP 値からの組み立て（`Create`） |
+| `LoupePositionCalculator.cs` | 表示サイズの親領域へのクランプ、表示位置（中心 + オフセット）の計算と親領域内へのクランプ、親サイズ未確定の判断 |
+| `LoupeDecorationGeometry.cs` | 十字線（縦横 2 本）と外枠（4 辺）の描画矩形の計算 |
+| `LoupeLabelLayout.cs` | 中心座標ラベルの余白と、背景矩形・文字原点の計算 |
+| `LoupeCheckerboard.cs` | 市松模様のタイルの明暗判定と、暗色タイルの矩形列挙（`ComputeDarkTileRects`） |
+| `LoupeRenderArgsCalculator.cs` | 描画完了イベント引数用の表示情報（切り出し左上・スケール）の計算と `RenderArgs` 値型 |
+| `LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化 |
+| `LogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有 |
+| `Imaging/LoupeImageExtractor.cs` | 切り出し領域の一辺・左上（ドメイン座標）の計算、`EsBitmap` からの領域切り出し、拡大描画の矩形（`ComputeMagnifiedRects`。引数はビットマップの実寸） |
 
 ## データフロー
 
@@ -41,24 +51,45 @@ sequenceDiagram
   participant PC as Platform.Core
 
   UI->>PC: ICoordTransform.Inverse(center) → EsPoint（親領域 DIP）
-  UI->>Core: LoupePositionCalculator.Compute(size, parentSize, hasParentSize, centerDip, offset)
-  Core-->>UI: EsSize（表示サイズ） / EsPoint（表示位置）
+  UI->>Core: LoupePositionCalculator.ClampSizeToArea(requestedSize, parentSize)
+  Core-->>UI: 表示サイズ（DIP。要素サイズ・描画サイズ・位置クランプで同じ値を使う）
+  UI->>Core: LoupePositionCalculator.ComputePosition(表示サイズ, parentSize, centerDip, offset)
+  Core-->>UI: EsPoint（表示位置）
   UI->>UI: .ToAvaloniaPoint() で RenderTransform へ反映
 
-  UI->>Core: LoupeRenderArgsCalculator.Compute(size, renderScaling, zoomLevel, center)
-  Core->>PC: DpiScaler.ScaleToPixel / LoupeImageExtractor.ComputeCaptureSize
-  Core-->>UI: RenderArgs（PixelSize / CaptureSize / CaptureTopLeft / Scale）
+  UI->>Core: LoupeRenderRequest.Create(center, 表示サイズ, renderScaling, Options)
+  Core-->>UI: 描画入力（物理ピクセルサイズを解決済み。拡大率・外観は Options から取る）
+  UI->>Core: LoupeRenderRequest.Create(center, 表示サイズ, renderScaling, Options, 描画先)
+  Core-->>UI: 物理ピクセルサイズ（描画とイベント通知の両方で使用）
+  UI->>Core: LoupeRenderArgsCalculator.Compute(request)
+  Core->>PC: LoupeImageExtractor.ComputeCaptureSize
+  Core-->>UI: RenderArgs（CaptureTopLeft / Scale）
   UI->>UI: CaptureTopLeft?.ToAvaloniaPoint() でイベント引数へ
 ```
 
 ## 単一所有（Single Source of Truth）
 
-| 計算 | 所有者 |
+| 計算 / 値 | 所有者 |
 | --- | --- |
-| 数値パラメータの安全域とクランプ | `LoupeValueCoercer` |
+| ルーペの設定（表示サイズ・拡大率・外観）とその既定値 | `LoupeOptions` |
+| 設定の数値項目の安全域への補正（生成時） | `LoupeOptions`（`init` アクセサ。規則は `LoupeValueCoercer` が単一所有する） |
+| 設定の変更ログの差分検出（変化した項目だけを出力） | `LogMessage.LogOptionsChanged` |
+| 装飾の外観（色・タイルサイズ・外枠の太さ・ラベル 4 項目）とその既定値 | `LoupeAppearance` |
+| 下地（ベース）色とその既定値 | `LoupeAppearance.BackgroundColor`（描画層が最初に塗る） |
+| 数値パラメータ（スカラー）の安全域とクランプ | `LoupeValueCoercer` |
+| 外観の数値項目の安全域への補正（生成時） | `LoupeAppearance`（`init` アクセサ。規則は `LoupeValueCoercer` が単一所有する） |
+| 描画の可否（アルファ 0 は描画しない） | `LoupeAppearance.Has*` |
+| ラベル表示の可否（設定と中心の有無） | `LoupeAppearance.ShouldShowCoordLabel` |
 | 切り出し領域の一辺（ドメインピクセル） | `Imaging.LoupeImageExtractor.ComputeCaptureSize` |
 | 切り出し領域の左上（中心 → 左上の変換） | `Imaging.LoupeImageExtractor.ComputeCaptureTopLeft` |
+| 拡大描画の矩形（切り出し元・描画先） | `Imaging.LoupeImageExtractor.ComputeMagnifiedRects`（ビットマップの実寸を受け取る） |
+| 表示サイズの親領域へのクランプ | `LoupePositionCalculator.ClampSizeToArea`（要素サイズ・描画サイズ・位置クランプで同じ値を共有する） |
+| 表示位置（中心 + オフセットと親領域内へのクランプ） | `LoupePositionCalculator.ComputePosition`（`Compute` は両者の合成） |
+| 十字線・外枠の矩形 | `LoupeDecorationGeometry` |
+| ラベルの余白・背景矩形・文字原点 | `LoupeLabelLayout` |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
+| 外観の寸法値の物理ピクセル換算（市松タイル・外枠の太さ・ラベル文字サイズ・角丸半径） | `LoupeAppearanceScaler` |
+| ログの書式とレベル、変化判定（同値・同一インスタンスなら出力しない） | `LogMessage` / `LoupeLogFormat` |
 
 `LoupeRenderArgsCalculator` / `LoupeImageExtractor.ExtractRegionAt` / UI 側の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
 
@@ -68,7 +99,7 @@ sequenceDiagram
 
 ## 可視性ポリシー
 
-- すべての型・メンバーは `internal`（`LoupeValueCoercer` の定数も `internal const`）。
+- 外観の公開面（`LoupeAppearance`）のみ `public`。それ以外の型・メンバーは `internal`（`LoupeValueCoercer` の定数も `internal const`）。
 - 可視性の変更（`internal` → `public`）は破壊的な設計変更として扱います。
 
 ## テスト

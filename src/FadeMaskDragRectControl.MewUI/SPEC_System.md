@@ -154,7 +154,7 @@ classDiagram
         <<LoupeControl.MewUI>>
         +EsBitmap? Source
         +EsPoint? CenterPoint
-        +int RequestedSize
+        +LoupeOptions Options
     }
     class FadeMaskDragRectModes {
         <<FadeMaskDragRectControl.Core>>
@@ -233,7 +233,7 @@ sequenceDiagram
     Facade->>Facade: IsVisible = true / InvalidateArrange
     Note over Facade: レイアウト（ArrangeContent）
     Facade->>Facade: centerDip = port.Inverse(domainPos)
-    Facade->>Calc: Compute(RequestedSize, parentSize, centerDip, offset)
+    Facade->>Calc: Compute(Options.RequestedSize, parentSize, centerDip, offset)
     Calc-->>Facade: (size, position)  ※親領域へクランプ済み
     Facade->>Loupe: Arrange(位置・サイズ)
 ```
@@ -246,7 +246,7 @@ ArrangeContent(bounds)                     … bounds はウィンドウ絶対�
   ├─ DragRect.Arrange(bounds)              … 選択矩形も全面（入力はここが受ける）
   └─ ルーペ
        ├─ 非表示（モード不一致・画像未設定・中心未設定）→ サイズ 0 で配置
-       └─ 表示 → Compute(RequestedSize, 親サイズ, port.Inverse(中心), オフセット)
+       └─ 表示 → Compute(Options.RequestedSize, 親サイズ, port.Inverse(中心), オフセット)
                   → Arrange(親原点 + 位置, サイズ)
 ```
 

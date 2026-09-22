@@ -237,7 +237,7 @@ public sealed class DragRectControl : SkiaCanvasView
     protected override void OnDpiChanged(uint oldDpi, uint newDpi)
     {
         base.OnDpiChanged(oldDpi, newDpi);
-        RenderScaling = newDpi / 96.0;
+        RenderScaling = DpiScaler.ToScaling(newDpi);
     }
 
     /// <summary>左ボタン押下時にドラッグを開始する。</summary>

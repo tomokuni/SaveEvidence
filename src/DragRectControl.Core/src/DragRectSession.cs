@@ -115,7 +115,7 @@ internal sealed class DragRectSession
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート。null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
-    public void SetPort(ICoordTransform? port) => _state.Port = port ?? CoordTransform.Identity;
+    public void SetPort(ICoordTransform? port) => _state.Port = port.OrIdentity();
 
     /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
     /// <param name="localDip">ローカル DIP 座標。</param>

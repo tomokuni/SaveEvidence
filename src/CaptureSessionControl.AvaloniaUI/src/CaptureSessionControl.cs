@@ -5,7 +5,6 @@ using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Imaging;
 using Estable.AvaloniaUI.CropView;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Estable.CaptureSession;
 
 namespace Estable.AvaloniaUI.CaptureSession;

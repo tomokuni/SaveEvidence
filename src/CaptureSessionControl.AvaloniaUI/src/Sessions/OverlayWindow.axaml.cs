@@ -9,7 +9,6 @@ using Estable.AvaloniaUI.CaptureSession.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
 using Estable.FadeMaskDragRect;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Estable.CaptureSession;
 
 namespace Estable.AvaloniaUI.CaptureSession;

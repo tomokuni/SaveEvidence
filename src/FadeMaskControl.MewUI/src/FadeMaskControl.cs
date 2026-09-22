@@ -210,7 +210,7 @@ public sealed class FadeMaskControl : SkiaCanvasView
 
     /// <summary>状態変更ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
-    /// <remarks>C#14 の <c>field</c> キーワードでバッキング フィールドを暗黙定義する。</remarks>
+    /// <remarks>C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。</remarks>
     public ILogger Log
     {
         get => field.OrNullLogger();
@@ -237,7 +237,7 @@ public sealed class FadeMaskControl : SkiaCanvasView
     protected override void OnDpiChanged(uint oldDpi, uint newDpi)
     {
         base.OnDpiChanged(oldDpi, newDpi);
-        RenderScaling = newDpi / 96.0;
+        RenderScaling = DpiScaler.ToScaling(newDpi);
     }
 
     /// <summary>暗転マスク・枠線・ラベルを描画する。</summary>

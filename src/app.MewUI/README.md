@@ -49,7 +49,6 @@ src/app.MewUI/
     │   ├── ImageThumbnailLoader.cs    # 画像ファイルの縮小デコードとキャッシュ
     │   ├── SettingsColorMath.cs       # 設定の色文字列 ⇔ 色の変換
     │   ├── SettingsJsonContext.cs     # 設定の JSON ソース生成（Native AOT 対応）
-    │   ├── LoupeAppearance.cs         # 設定のルーペ項目をルーペへ反映
     │   ├── CaptureFlow.cs             # キャプチャの開始と結果の反映
     │   ├── EditHistory.cs             # 編集履歴（戻す / やり直し）の実行
     │   └── MainViewModelCaptureTarget.cs # 切り出しの適用先（ICaptureTarget の実装）

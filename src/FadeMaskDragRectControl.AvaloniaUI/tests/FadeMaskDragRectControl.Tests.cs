@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Estable.AvaloniaUI.DragRect;
@@ -232,12 +233,12 @@ public class FadeMaskDragRectControlTests
         // ルーペ描画スケールは AppearanceSettings の対象外（DPI から自動取得。個別プロパティで設定）
         control.LoupeRenderScaling = 2.0;
 
-        Assert.Equal(150, control.Loupe.RequestedSize);
-        Assert.Equal(3, control.Loupe.ZoomLevel);
+        Assert.Equal(150, control.Loupe.Options.RequestedSize);
+        Assert.Equal(3, control.Loupe.Options.ZoomLevel);
         Assert.Equal(2.0, control.Loupe.RenderScaling);
-        Assert.Equal(Color.FromAColor(204, Colors.Red), ((SolidColorBrush)control.Loupe.CrossColor!).Color);
-        Assert.Equal(10, control.Loupe.CheckerSize);
-        Assert.Equal(4, control.Loupe.FrameWidth);
+        Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Options.Appearance.CrossColor.ToAvaloniaColor());
+        Assert.Equal(10, control.Loupe.Options.Appearance.CheckerSize);
+        Assert.Equal(4, control.Loupe.Options.Appearance.FrameWidth);
         Assert.Equal(30.0, control.Loupe.PositionOffset);
         // 座標ラベル（DragRect / Loupe）
         var options = control.DragRect.Options;
@@ -245,41 +246,48 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(Colors.Yellow, options.CoordLabelColor.ToAvaloniaColor());
         Assert.Equal(Color.FromAColor(179, Colors.DarkGreen), options.CoordLabelBackgroundColor.ToAvaloniaColor());
         Assert.Equal(14.0, options.CoordLabelFontSize);
-        Assert.True(control.Loupe.ShowCoordLabel);
-        Assert.Equal(13.0, control.Loupe.CoordLabelFontSize);
-        Assert.Equal(Color.FromAColor(153, Colors.DarkRed), ((SolidColorBrush)control.Loupe.CoordLabelBackgroundColor!).Color);
+        Assert.True(control.Loupe.Options.Appearance.ShowCoordLabel);
+        Assert.Equal(13.0, control.Loupe.Options.Appearance.CoordLabelFontSize);
+        Assert.Equal(Color.FromAColor(153, Colors.DarkRed), control.Loupe.Options.Appearance.CoordLabelBackgroundColor.ToAvaloniaColor());
     }
 
     [AvaloniaFact]
-    public void AppearanceSettings_同一色の再設定でブラシが共有される()
+    public void AppearanceSettings_同一色の再設定で外観が等価になる()
     {
         var control = new FadeMaskDragRectControl();
         var color = Color.FromAColor(204, Colors.Red);
 
-        // 同じ色を 2 回設定 → ブラシキャッシュのヒットパス（TryGetValue が true）を実行する
+        // 同じ色を 2 回設定 → 外観（コアの値）は等価なまま（再適用で値が変わらない）
         control.AppearanceSettings = new FadeMaskDragRectSettings { CrossColor = color };
-        var first = control.Loupe.CrossColor;
+        var first = control.Loupe.Options.Appearance;
         control.AppearanceSettings = new FadeMaskDragRectSettings { CrossColor = color };
-        var second = control.Loupe.CrossColor;
+        var second = control.Loupe.Options.Appearance;
 
-        Assert.Same(first, second);
+        Assert.Equal(first, second);
     }
 
     [AvaloniaFact]
-    public void AppearanceSettings_ブラシキャッシュ容量超過時も例外なく適用される()
+    public void AppearanceSettings_外観の全色が適用される()
     {
         var control = new FadeMaskDragRectControl();
 
-        // キャッシュ容量（32）を超える 33 色を順次設定し、容量超過時のキャッシュクリア経路を実行する
-        for (int i = 0; i <= 32; i++)
+        control.AppearanceSettings = new FadeMaskDragRectSettings
         {
-            control.AppearanceSettings = new FadeMaskDragRectSettings
-            {
-                CrossColor = Color.FromArgb(255, (byte)i, (byte)(255 - i), (byte)(i * 3)),
-            };
-        }
+            CrossColor = Color.FromAColor(204, Colors.Red),
+            CheckerColorA = Colors.White,
+            CheckerColorB = Colors.Gray,
+            FrameColor = Colors.LightGray,
+            LoupeCoordLabelColor = Colors.Cyan,
+            LoupeCoordLabelBackgroundColor = Color.FromAColor(153, Colors.DarkRed),
+        };
 
-        Assert.NotNull(control.Loupe.CrossColor);
+        var appearance = control.Loupe.Options.Appearance;
+        Assert.Equal(Color.FromAColor(204, Colors.Red), appearance.CrossColor.ToAvaloniaColor());
+        Assert.Equal(Colors.White, appearance.CheckerColorA.ToAvaloniaColor());
+        Assert.Equal(Colors.Gray, appearance.CheckerColorB.ToAvaloniaColor());
+        Assert.Equal(Colors.LightGray, appearance.FrameColor.ToAvaloniaColor());
+        Assert.Equal(Colors.Cyan, appearance.CoordLabelColor.ToAvaloniaColor());
+        Assert.Equal(Color.FromAColor(153, Colors.DarkRed), appearance.CoordLabelBackgroundColor.ToAvaloniaColor());
     }
 
     [AvaloniaFact]
@@ -304,7 +312,7 @@ public class FadeMaskDragRectControlTests
 
         Assert.Equal(5, control.DragRect.Options.MinSelectionSize);           // 未指定 → 現在値維持
         Assert.Equal(Colors.Blue, control.DragRect.Options.BorderColor.ToAvaloniaColor());      // 指定 → 反映
-        Assert.Equal(200, control.Loupe.RequestedSize);               // 指定 → 反映
+        Assert.Equal(200, control.Loupe.Options.RequestedSize);               // 指定 → 反映
         Assert.Equal(30.0, control.Loupe.PositionOffset);             // 未指定 → 現在値維持
         Assert.Equal(200, control.AppearanceSettings.RequestedSize);  // getter は更新後の値を返す
     }
@@ -587,6 +595,124 @@ public class FadeMaskDragRectControlTests
     }
 
     // ====================================================================
+    // ルーペ Bitmap の再生成要求（ホスト側オーバーレイの鮮度）
+    // ====================================================================
+
+    /// <summary>破線色のみを変更した場合でもルーペ Bitmap が再生成される（ホスト側オーバーレイはルーペのプロパティではない）。</summary>
+    /// <remarks>
+    /// 破線色（<c>SelectionRectColorA / B</c>）はルーペの外観（<c>LoupeAppearance</c>）に含まれず、<br/>
+    /// ルーペ Bitmap へホストが描画するオーバーレイの色である。したがって破線色のみの変更では<br/>
+    /// ルーペのプロパティ通知が発生せず、明示的な再生成要求が無いと Bitmap が古い色のまま残る。
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task AppearanceSettings_破線色のみの変更でもルーペが再描画される()
+    {
+        var control = new FadeMaskDragRectControl();
+        var window = new Window { Content = new Panel { Children = { control } } };
+        window.Show();
+        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.SetLoupePosition(new Point(5, 5));
+
+        var rendered = 0;
+        void OnRendered(object? sender, EventArgs e) => rendered++;
+        control.Loupe.Rendered += OnRendered;
+        try
+        {
+            // ルーペの各プロパティを設定値へ一致させ、初期同期の描画を消化してから計測を開始する
+            control.AppearanceSettings = new FadeMaskDragRectSettings { RequestedSize = 200, SelectionRectColorA = Colors.White };
+            await PumpUntilAsync(() => rendered > 0);
+            Assert.True(rendered > 0);
+            await PumpAsync();
+            rendered = 0;
+
+            // 破線色のみの変更（ルーペ自身の外観・サイズ・ズームは不変 → ルーペのプロパティ通知は発生しない）
+            var appearance = control.Loupe.Options.Appearance;
+            control.AppearanceSettings = new FadeMaskDragRectSettings { SelectionRectColorA = Colors.Lime };
+            Assert.Equal(appearance, control.Loupe.Options.Appearance);
+            Assert.Equal(200, control.Loupe.Options.RequestedSize);
+
+            await PumpUntilAsync(() => rendered > 0);
+            Assert.True(rendered > 0, "破線色のみの変更でルーペが再描画されませんでした");
+        }
+        finally
+        {
+            control.Loupe.Rendered -= OnRendered;
+            window.Close();
+        }
+    }
+
+    /// <summary>モード変更で選択矩形破線の表示可否が変わった場合にルーペ Bitmap が再生成される。</summary>
+    /// <remarks>破線の表示可否はモード依存（<c>FadeMaskDragRectModes.UsesDragRect</c>）であり、ルーペのプロパティには現れない。</remarks>
+    [AvaloniaFact]
+    public async Task Mode_破線表示可否の変更でもルーペが再描画される()
+    {
+        var control = new FadeMaskDragRectControl();
+        var window = new Window { Content = new Panel { Children = { control } } };
+        window.Show();
+        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.SetLoupePosition(new Point(5, 5));
+
+        var rendered = 0;
+        void OnRendered(object? sender, EventArgs e) => rendered++;
+        control.Loupe.Rendered += OnRendered;
+        try
+        {
+            await PumpUntilAsync(() => rendered > 0);
+            Assert.True(rendered > 0);
+            await PumpAsync();
+            rendered = 0;
+
+            // 破線を描画しないモード（ScreenSelect）へ変更する
+            control.Mode = FadeMaskDragRectMode.ScreenSelect;
+
+            await PumpUntilAsync(() => rendered > 0);
+            Assert.True(rendered > 0, "破線表示可否の変更でルーペが再描画されませんでした");
+        }
+        finally
+        {
+            control.Loupe.Rendered -= OnRendered;
+            window.Close();
+        }
+    }
+
+    /// <summary>選択矩形のみの変更でもルーペ Bitmap が再生成される（破線は Bitmap へ焼き込まれる）。</summary>
+    /// <remarks>
+    /// 破線は <see cref="LoupeControl.Rendered"/> でルーペ Bitmap へ描画されるため、<br/>
+    /// 選択矩形が変わった場合は中心（ルーペのプロパティ）が変わらなくても再生成が必要になる。
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task SetSelection_選択矩形のみの変更でもルーペが再描画される()
+    {
+        var control = new FadeMaskDragRectControl();
+        var window = new Window { Content = new Panel { Children = { control } } };
+        window.Show();
+        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.SetLoupePosition(new Point(5, 5));
+
+        var rendered = 0;
+        void OnRendered(object? sender, EventArgs e) => rendered++;
+        control.Loupe.Rendered += OnRendered;
+        try
+        {
+            await PumpUntilAsync(() => rendered > 0);
+            Assert.True(rendered > 0);
+            await PumpAsync();
+            rendered = 0;
+
+            // 選択矩形のみの変更（ルーペの中心・外観・サイズは不変）
+            control.SetSelection(new Rect(1, 1, 5, 5));
+
+            await PumpUntilAsync(() => rendered > 0);
+            Assert.True(rendered > 0, "選択矩形のみの変更でルーペが再描画されませんでした");
+        }
+        finally
+        {
+            control.Loupe.Rendered -= OnRendered;
+            window.Close();
+        }
+    }
+
+    // ====================================================================
     // SizeLabelOverrideProvider（レンダラーへの伝搬）
     // ====================================================================
 
@@ -605,6 +731,37 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
     // ヘルパー
     // ====================================================================
+
+    /// <summary>条件が成立するまで Dispatcher をポンプする（上限で打ち切る）。</summary>
+    /// <param name="condition">成立を待つ条件。</param>
+    /// <remarks>
+    /// ルーペの描画は Dispatcher へのポスト（描画フェーズ）と非同期生成で行われるため、<br/>
+    /// 待機中は Dispatcher をポンプして描画ジョブと非同期の継続を進める。上限に達しても例外にはしない。
+    /// </remarks>
+    private static async Task PumpUntilAsync(Func<bool> condition)
+    {
+        for (var i = 0; i < PumpLimit && !condition(); i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Yield();
+        }
+    }
+
+    /// <summary>保留中の描画ジョブを消化する（計測の区切り用）。</summary>
+    private static async Task PumpAsync()
+    {
+        for (var i = 0; i < PumpOnce; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Yield();
+        }
+    }
+
+    /// <summary>Dispatcher をポンプする回数の上限（完了しない場合に無限ループにしない）。</summary>
+    private const int PumpLimit = 200;
+
+    /// <summary>保留中の描画ジョブを消化する回数。</summary>
+    private const int PumpOnce = 8;
 
     /// <summary>コントロールの座標変換ポートをリフレクションで取得する。</summary>
     /// <param name="control">対象のコントロール。</param>

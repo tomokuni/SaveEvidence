@@ -47,7 +47,7 @@ internal static class FadeMaskOverlayGeometry
     /// </remarks>
     public static EsRect ToDipRect(EsRect logical, ICoordTransform? port = null, bool closedInterval = true)
     {
-        var transform = port ?? CoordTransform.Identity;
+        var transform = port.OrIdentity();
         var topLeft = transform.Inverse(new EsPoint(logical.X, logical.Y));
         var bottomRight = transform.Inverse(closedInterval
             ? new EsPoint(logical.Right + 1, logical.Bottom + 1)

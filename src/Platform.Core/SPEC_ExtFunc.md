@@ -56,6 +56,8 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 
 ### `Coordinate.DpiScaler`（static class）
 
+- `StandardDpi`: DIP（デバイス非依存ピクセル）の基準 DPI（`96.0` = 1 ピクセル = 1 DIP）。スケーリング係数の算出と、DIP を 1:1 で描く描画先の DPI が共用する。
+- `ToScaling(double dpi)`: DPI をスケーリング係数（表示 DIP → 物理ピクセル）へ換算する（`StandardDpi` を 1.0 とする倍率）。
 - `ScaleToPixel(int/double dipValue, double scaling)`: DIP 値を物理ピクセルへ変換（切り上げ・最低 1。浮動小数誤差を吸収）。
 - `LoupeControl` の表示サイズ計算で共用する。
 
@@ -72,6 +74,21 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 ```
 
 「ロガー未設定（null）は出力なしとして扱う」規則を単一所有します。各コントロール・サービスは `logger ?? NullLogger.Instance` を自前で書かず本メソッドへ委譲してください。
+
+### `Imaging.SkiaColorInterop`（static class）
+
+コアの色型（`System.Drawing.Color`）を Skia の色型へ変換する共通ヘルパー。拡張メソッドとして提供します。
+
+| 種別 | メンバー | シグネチャ | 説明 |
+| --- | --- | --- | --- |
+| 拡張メソッド | `ToSKColor` | `static SKColor ToSKColor(this Color color)` | コアの色を Skia の色へ変換する（ARGB はそのまま保持） |
+
+```csharp
+paint.Color = info.Background.ToSKColor();   // コアの色型 → Skia
+```
+
+SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。MewUI 版の描画層（`CropSkiaRenderer` / `DragRectSkiaRenderer` / `FadeMaskSkiaRenderer` / `FadeMaskDragRectSkiaRenderer` / `LoupeControl` / `LoupeSkiaRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
+逆方向（Skia → コア）の変換は本番の利用箇所がないため提供しません（YAGNI）。
 
 ### `Geometry.EsPoint`（readonly record struct）
 

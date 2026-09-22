@@ -37,19 +37,19 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 
 - Avalonia Binding 対応の `LoupeControl`
 - `IImage` を受け取る画像入力API
-- 現在対応する画像実装は `Bitmap`
+- 現在対応する画像実装は `Bitmap` / `EsBitmapAvaloniaImage`（`EsBitmap` を内包する `IImage` アダプタ）
 - 1〜64倍の拡大表示
 - 画像範囲外の透明パディング
 - 市松模様の色・タイルサイズ設定
 - 十字線の色設定（不透明度は色のアルファに統合）
-- 中心座標ラベル表示（`(x, y)` 形式・表示/色/背景/フォントサイズ設定可能）
+- 中心座標ラベル表示（`(x, y)` 形式・表示/色/背景/フォントサイズ/角丸設定可能）
 - 外枠の色・太さ設定
 - DIP と物理ピクセルの分離（`RenderScaling`）
-- 非同期のピクセル領域抽出
+- 非同期のルーペ画像生成（切り出し・合成は UI スレッドで実行）
 - 古い描画結果の自動破棄
 - 非表示時の生成Bitmap解放
 - `ILogger` によるエラー通知
-- 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で表示位置・サイズ・拡大率・中心・切り出し左上・スケールを通知。ホスト側のオーバーレイ描画用。線分・選択矩形等の破線はホストが描画済み Bitmap へ直接描く）
+- 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホスト側のオーバーレイ描画用。線分・選択矩形等の破線はホストが描画済み Bitmap へ直接描く）
 - **座標変換ポート（`SetCoordinateTransform(ICoordTransform?)` + `PositionOffset`）**: DragRectControl と同方式。表示位置（`RenderTransform`）と表示サイズ（親パネルでクランプ）をレイアウト時に自己計算（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **`RefreshPosition()`**: パン・ズーム等のレイアウト非変更なビューポート変化時に、表示位置・サイズを再計算（座標変換ポートは呼び出し毎に最新の表示状態を評価）
 
@@ -64,7 +64,7 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 現在はNuGetパッケージではなく、プロジェクト参照で利用します。
 
 ```xml
-<ProjectReference Include="..\LoupeControl\LoupeControl.csproj" />
+<ProjectReference Include="..\LoupeControl.AvaloniaUI\src\LoupeControl.AvaloniaUI.csproj" />
 ```
 
 必要な名前空間:
@@ -92,15 +92,8 @@ using Estable.AvaloniaUI.Loupe;
             IsHitTestVisible="False"
             Source="{Binding SourceImage}"
             CenterPoint="{Binding CenterPoint}"
-            RequestedSize="240"
-            ZoomLevel="4"
-            RenderScaling="1.0"
-            CrossColor="#66FF0000"
-            CheckerSize="8"
-            CheckerColorA="Gray"
-            CheckerColorB="#C0C0C0"
-            FrameColor="LightGray"
-            FrameWidth="2" />
+            Options="{Binding Options}"
+            RenderScaling="1.0" />
     </Canvas>
 </Window>
 ```
@@ -110,6 +103,7 @@ using Estable.AvaloniaUI.Loupe;
 ```csharp
 using Avalonia;
 using Avalonia.Media.Imaging;
+using Estable.Loupe;
 
 public sealed class MainViewModel
 {
@@ -118,6 +112,10 @@ public sealed class MainViewModel
     public Point? CenterPoint { get; set; } = new(400, 300);
 
     public bool IsLoupeVisible { get; set; } = true;
+
+    // 設定（表示サイズ・拡大率・外観）はコアの値 1 つで公開する
+    public LoupeOptions Options { get; set; } =
+        LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 };
 
     private static Bitmap LoadBitmap()
     {
@@ -136,8 +134,7 @@ var loupe = new LoupeControl
 {
     Source = sourceBitmap,
     CenterPoint = new Point(400, 300),
-    RequestedSize = 240,
-    ZoomLevel = 4,
+    Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 },
     IsVisible = true,
     IsHitTestVisible = false,
     ZIndex = 100
@@ -164,9 +161,9 @@ Canvas.SetTop(loupe, 220);
 
 ## 7. サポート外の画像
 
-公開プロパティの型はAvalonia標準の `IImage?` ですが、ピクセル抽出を必要とするため、対応する実体は `Bitmap` と `EsBitmapImage`（`EsBitmap` を内包する `IImage` アダプタ）です。
+公開プロパティの型はAvalonia標準の `IImage?` ですが、ピクセル抽出を必要とするため、対応する実体は `Bitmap` と `EsBitmapAvaloniaImage`（`EsBitmap` を内包する `IImage` アダプタ）です。
 
-`Bitmap` / `EsBitmapImage` 以外の `IImage` を設定した場合は、`NotSupportedException` を発生させ、設定された `ILogger` へ記録します。
+`Bitmap` / `EsBitmapAvaloniaImage` 以外の `IImage` を設定した場合は、`NotSupportedException` を発生させ、設定された `ILogger` へ記録します。
 
 ```csharp
 loupe.Log = logger;
@@ -176,7 +173,7 @@ loupe.Log = logger;
 
 ## 8. 所有権とライフサイクル
 
-- `Source` に設定した元画像（`Bitmap` / `EsBitmapImage`）は利用側が所有します。`LoupeControl` は元画像を破棄しません。
+- `Source` に設定した元画像（`Bitmap` / `EsBitmapAvaloniaImage`）は利用側が所有します。`LoupeControl` は元画像を破棄しません。
 - ルーペ表示用に内部生成したBitmapは `LoupeControl` が所有します。
 - 非表示化、`Clear()`、新しい描画結果の採用時に、古い生成Bitmapを破棄します。
 - 非同期処理で古くなった生成結果も採用せず破棄します。
@@ -184,7 +181,7 @@ loupe.Log = logger;
 ## 9. パフォーマンス
 
 - `Source` や `CenterPoint` の高頻度更新は、利用側で更新間隔を制限することを推奨します。
-- 大きな `RequestedSize` や高い `RenderScaling` は生成Bitmapのサイズと処理負荷を増加させます。
+- 大きな `Options.RequestedSize` や高い `RenderScaling` は生成Bitmapのサイズと処理負荷を増加させます。
 
 ## 10. サンプルアプリケーション
 
@@ -200,7 +197,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 - 画像端から外れた部分の部分的な市松模様
 - ズーム・サイズ・DPIスケール変更
 - 十字線・市松模様・外枠の変更
-- `IsVisible`、`Clear()`、`ForceUpdate()`、`RenderAsync()`
+- `IsVisible`、`Clear()`、`RequestRender()`
 - `Log`（描画エラーの通知先 ILogger 設定例）
 
 詳細は [sample/README.md](sample/README.md) を参照してください。
@@ -216,19 +213,21 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 本コントロールは、UI フレームワーク非依存のロジックを `LoupeControl.Core` へ分離しています（マルチ UI 対応）。
 
 ```text
-LoupeControl/
+LoupeControl.AvaloniaUI/
 ├── src/
-│   ├── LoupeControl.csproj
+│   ├── LoupeControl.AvaloniaUI.csproj
 │   ├── LoupeControl.axaml(.cs) # 公開 UserControl（コードビハインド: 公開API一覧・StyledProperty・公開プロパティ・公開メソッド・非公開実装）
-│   ├── LoupeRenderCoordinator.cs / LoupeRenderPipeline.cs / LoupeSourceResolver.cs / LoupeRenderedEventArgs.cs
-│   ├── Rendering/          # 内部描画層（LoupeRenderer / LoupeBackgroundRenderer / LoupeDecorationRenderer / LoupeImageRenderer）
-│   └── Logging/            # LoggerMessage定義（LogMessage）
+│   ├── LoupeRenderCoordinator.cs   # 再描画のバッチ化（Avalonia の非同期描画向け。UI 固有の機構）
+│   ├── LoupeRenderPipeline.cs      # ソース解決と抽出・描画合成（IImage 型判定と Bitmap の複製は UI 固有）
+│   ├── LoupeSourceResolver.cs      # IImage の対応型判定・破棄済み検出
+│   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知引数（UI 固有）
+│   └── Rendering/          # 内部描画層（LoupeRenderer / LoupeBackgroundRenderer / LoupeDecorationRenderer / LoupeImageRenderer / LoupeBrushes）
 ├── sample/                 # 独立サンプルアプリ（sample/README.md 参照）
 ├── tests/                  # UI 依存の単体テスト（Avalonia ヘッドレス・直列）
 ├── SPEC_ExtFunc.md         # 外部機能仕様書
 └── SPEC_System.md          # システム仕様書
 
-../LoupeControl.Core/       # UI フレームワーク非依存の計算ロジック（数値補正 / 表示位置・サイズ / 切り出し領域 / 描画完了時の表示情報）
+../LoupeControl.Core/       # UI フレームワーク非依存の設定・計算・外観・判断・ログ定義（設定の単一値 / 外観 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 市松模様のタイル / 描画完了時の表示情報）
 ```
 
 ## 13. ライセンス

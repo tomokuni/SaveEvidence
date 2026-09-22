@@ -5,11 +5,9 @@
     <Grid>
         <Image x:Name="PART_Image"
                Stretch="Fill"/>
-        <!-- 中心座標ラベル（ルーペの上端中央に表示。CenterPoint = ドメイン座標を "xy (x, y)" で表示） -->
+        <!-- 中心座標ラベル（ルーペの上端中央に表示。CenterPoint = ドメイン座標を "(x, y)" で表示） -->
+        <!-- 余白（Margin / Padding）と角丸（CornerRadius）はコードビハインドがコアの LoupeLabelLayout / LoupeAppearance から設定する（数値を重複させない） -->
         <Border x:Name="PART_CoordLabel"
-                CornerRadius="2"
-                Margin="2"
-                Padding="4,1"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Top">
             <TextBlock x:Name="PART_CoordText"

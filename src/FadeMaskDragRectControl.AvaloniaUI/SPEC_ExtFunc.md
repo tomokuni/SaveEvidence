@@ -249,6 +249,7 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `Estable.Fade
 | `WindowSelect` | `FadeMaskRenderMode.WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ。クリック確定フローはホストが担う） |
 
 - ルーペの選択矩形破線はモードに応じて `ApplyMode` が有効化する（`Crop` / `AreaSelect` で有効。モード依存設定のため、外観設定の「同じ値スキップ」に左右されない）。描画は `LoupeControl.Rendered` イベントを受けた本コントロール（ホスト側）が行う。
+- 破線の色（`SelectionRectColorA` / `SelectionRectColorB`）と破線の表示可否は、ルーペのプロパティ（`LoupeAppearance` 等）には現れません。したがってこれらが変わった場合（外観設定の適用・モード変更）は `LoupeControl.RequestRender()` でルーペ Bitmap の再生成を要求します（プロパティ通知では再生成されないため）。選択矩形の変更も破線の内容が変わるため同様に要求します。既存 Bitmap を破線だけ書き換える API は提供しません（再生成して `Rendered` で描き直す方式に統一）。
 
 ## 8. 配線（内部で完結する状態同期）
 
@@ -263,7 +264,7 @@ graph TD
     SC -->|"イベント中継"| HOST["ホスト（CropSession / OverlayWindow）"]
 ```
 
-- `SelectionChanged` / `ViewportChanged`: 選択矩形を FadeMask（`LogicalSelectionRect` / `HasSelection`）へ同期し、オーバーレイを再描画。ルーペの選択矩形破線は `Rendered` イベント経由で描画する。
+- `SelectionChanged` / `ViewportChanged`: 選択矩形を FadeMask（`LogicalSelectionRect` / `HasSelection`）へ同期し、オーバーレイを再描画。ルーペの選択矩形破線は `Rendered` イベント経由で描画する（破線は Bitmap へ焼き込まれるため、選択矩形の変更で `LoupeControl.RequestRender()` を要求する）。
 - `SelectionStarted` / `SelectionCancelled`: 選択状態をクリア（前の矩形の暗転マスク残留を防止）。
 - `LoupePositionMoved`: ルーペの `CenterPoint` を更新して表示開始（表示位置は座標変換ポートから自己計算）。
 - `ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested`: ホストへ中継。

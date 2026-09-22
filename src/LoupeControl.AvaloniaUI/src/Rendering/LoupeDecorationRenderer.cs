@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI;
 using Estable.Loupe;
@@ -9,51 +8,52 @@ namespace Estable.AvaloniaUI.Loupe.Rendering;
 /// <summary>ルーペの十字線・外枠を描画します。</summary>
 /// <remarks>
 /// 矩形計算は UI 非依存の <see cref="LoupeDecorationGeometry"/> が単一所有し、<br/>
-/// 本クラスは <see cref="EsRect"/> を Avalonia の矩形へ変換して描画するだけにする（MewUI と共用）。
+/// 本クラスは <see cref="EsRect"/> を Avalonia の矩形へ変換して描画するだけにする（MewUI と共用）。<br/>
+/// 描画の可否（透明な色は描画しない）はコアの <see cref="LoupeAppearance"/> に問い合わせるため、<br/>
+/// 本クラスは判断を持たず、描画入力（<see cref="LoupeRenderRequest"/>）から描くだけにする<br/>
+/// （MewUI 版の描画層と同じ形）。
 /// </remarks>
 internal static class LoupeDecorationRenderer
 {
-    /// <summary>十字線を描画する。</summary>
+    /// <summary>十字線を描画する（拡大中心の十字）。</summary>
     /// <param name="context">描画コンテキスト。</param>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="zoomLevel">拡大率（1〜64）。</param>
-    /// <param name="color">十字線の色（不透明度は色のアルファに統合）。null の場合は描画しない。</param>
-    public static void DrawCrosshair(DrawingContext context, int pixelSize, int zoomLevel, IBrush? color)
+    /// <param name="request">描画入力（物理ピクセルサイズ・拡大率・外観）。</param>
+    /// <remarks>描画の可否は <see cref="LoupeAppearance.HasCrosshair"/>（コア）が単一所有する。</remarks>
+    public static void DrawCrosshair(DrawingContext context, LoupeRenderRequest request)
     {
-        if (color is null) return;
-
-        foreach (var rect in ComputeCrosshairRects(pixelSize, zoomLevel))
+        var appearance = request.Appearance;
+        if (!appearance.HasCrosshair)
         {
-            context.DrawRectangle(color, null, rect);
+            return;
+        }
+
+        var brush = LoupeBrushes.Get(appearance.CrossColor);
+        foreach (var rect in LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel))
+        {
+            context.DrawRectangle(brush, null, rect.ToAvaloniaRect());
         }
     }
 
-    /// <summary>十字線の 2 本の矩形を計算する。</summary>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="zoomLevel">拡大率（1〜64）。</param>
-    /// <returns>十字線の縦・横 2 本の矩形（Avalonia 座標）。</returns>
-    public static IReadOnlyList<Rect> ComputeCrosshairRects(int pixelSize, int zoomLevel)
-        => [.. LoupeDecorationGeometry.ComputeCrosshairRects(pixelSize, zoomLevel).Select(static r => r.ToAvaloniaRect())];
-
-    /// <summary>外枠を描画する。</summary>
+    /// <summary>外枠を描画する（ルーペの四辺）。</summary>
     /// <param name="context">描画コンテキスト。</param>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="color">外枠の色（不透明度は色のアルファに統合）。null の場合は描画しない。</param>
-    /// <param name="width">外枠の太さ（ピクセル）。1 〜 ルーペサイズに正規化される。</param>
-    public static void DrawFrame(DrawingContext context, int pixelSize, IBrush? color, int width)
+    /// <param name="request">描画入力（物理ピクセルサイズ・外観・スケーリング）。</param>
+    /// <remarks>
+    /// 描画の可否は <see cref="LoupeAppearance.HasFrame"/>（コア）が単一所有し、<br/>
+    /// 太さの補正と DIP → 物理ピクセルの換算は <see cref="LoupeAppearanceScaler"/>（コア）が行う。
+    /// </remarks>
+    public static void DrawFrame(DrawingContext context, LoupeRenderRequest request)
     {
-        if (color is null) return;
-
-        foreach (var rect in ComputeFrameRects(pixelSize, width))
+        var appearance = request.Appearance;
+        if (!appearance.HasFrame)
         {
-            context.DrawRectangle(color, null, rect);
+            return;
+        }
+
+        var width = LoupeAppearanceScaler.ScaleFrameWidth(appearance, request.Scaling);
+        var brush = LoupeBrushes.Get(appearance.FrameColor);
+        foreach (var rect in LoupeDecorationGeometry.ComputeFrameRects(request.PixelSize, width))
+        {
+            context.DrawRectangle(brush, null, rect.ToAvaloniaRect());
         }
     }
-
-    /// <summary>外枠の 4 辺の矩形を計算する。</summary>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="width">外枠の太さ（ピクセル）。1 〜 ルーペサイズに正規化される。</param>
-    /// <returns>外枠の上・下・左・右の 4 つの矩形（Avalonia 座標）。</returns>
-    public static IReadOnlyList<Rect> ComputeFrameRects(int pixelSize, int width)
-        => [.. LoupeDecorationGeometry.ComputeFrameRects(pixelSize, width).Select(static r => r.ToAvaloniaRect())];
 }

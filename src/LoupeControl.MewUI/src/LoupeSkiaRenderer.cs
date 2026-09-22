@@ -1,197 +1,227 @@
 using Estable.Loupe;
 using Estable.Loupe.Imaging;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
-using MewUIColor = Aprillz.MewUI.Color;
+using DrawingColor = System.Drawing.Color;
 
 namespace Estable.MewUI.Loupe;
 
-/// <summary>ルーペの描画（市松模様背景 + 拡大画像 + 十字線 + 外枠）を Skia で行うレンダラー。</summary>
+/// <summary>ルーペの描画（市松模様背景 + 拡大画像 + 十字線 + 外枠 + 座標ラベル）を Skia で行うレンダラー。</summary>
 /// <remarks>
-/// UI 非依存コア（<see cref="LoupeImageExtractor"/> / <see cref="LoupeDecorationGeometry"/> /<br/>
-/// <see cref="LoupeCheckerboard"/>）の計算結果を <see cref="SKCanvas"/> へ描画するだけの層。<br/>
-/// Avalonia 版は中間ビットマップ（<c>RenderTargetBitmap</c>）を経由するが、MewUI 版は<br/>
-/// 画面のキャンバスへ直接描画できるため、中間バッファの生成とコピーを行わない。<br/>
+/// 描画の順序と、描画に必要な値の単位はコアの契約（<see cref="LoupeRenderRequest"/>）が単一所有する。<br/>
+/// UI 非依存コア（<see cref="LoupeAppearance"/> / <see cref="LoupeImageExtractor"/> / <see cref="LoupeDecorationGeometry"/> /<br/>
+/// <see cref="LoupeCheckerboard"/> / <see cref="LoupeLabelLayout"/>）の値と計算結果を <see cref="SKCanvas"/> へ描画するだけの層。<br/>
+/// 外観値（色・太さ・タイルサイズ・ラベル）は <see cref="LoupeAppearance"/> が単一所有し、本クラスは保持しない。<br/>
+/// Avalonia 版は中間ビットマップ（<c>RenderTargetBitmap</c>）を経由するが、MewUI 版は画面のキャンバスへ<br/>
+/// 直接描画できるため、中間バッファの生成とコピーを行わない。<br/>
 /// 矩形計算はコアが単一所有するため、両 UI の見た目は一致する（Avalonia 版のレンダラーと等価）。
 /// </remarks>
 internal static class LoupeSkiaRenderer
 {
-    /// <summary>ルーペを描画する（市松模様背景 + 拡大画像 + 十字線 + 外枠）。</summary>
+    /// <summary>ルーペを描画する（市松模様背景 + 拡大画像 + 十字線 + 外枠 + 座標ラベル）。</summary>
     /// <param name="canvas">描画先のキャンバス（左上を原点とする）。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は市松模様のみ。</param>
-    /// <param name="center">拡大中心（元画像ピクセル座標）。null の場合は市松模様のみ。</param>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="zoomLevel">拡大率（1〜64）。</param>
-    /// <param name="crossColor">十字線の色（不透明度は色のアルファに統合）。null の場合は描画しない。</param>
-    /// <param name="checkerSize">市松模様の 1 タイルサイズ（物理ピクセル）。1 未満は 1 に正規化される。</param>
-    /// <param name="checkerColorA">市松模様の色A（明色）。null の場合は透明。</param>
-    /// <param name="checkerColorB">市松模様の色B（暗色）。null の場合は透明。</param>
-    /// <param name="frameColor">外枠の色。null の場合は描画しない。</param>
-    /// <param name="frameWidth">外枠の太さ（物理ピクセル）。1〜ルーペサイズに正規化される。</param>
+    /// <param name="request">描画入力（コア⇔UI の契約。UI が公開プロパティから組み立てる）。</param>
     /// <remarks>
+    /// 0. 下地（ベース色。透明なら描かない）を描画する。<br/>
     /// 1. 市松模様の背景を描画する。<br/>
     /// 2. ソース画像があれば切り出して拡大描画する（切り出しはコアへ委譲。範囲外は透明パディング）。<br/>
     /// 3. 十字線を描画する。<br/>
-    /// 4. 外枠を描画する。
+    /// 4. 外枠を描画する。<br/>
+    /// 5. 座標ラベルを描画する（拡大画像の上へ重ねる）。<br/>
+    /// 外観の DIP 値は描画時に物理ピクセルへ換算する（DPI 差で見た目を変えない）。
     /// </remarks>
-    public static void Render(
-        SKCanvas canvas,
-        EsBitmap? source,
-        EsUtil.Platform.Core.Geometry.EsPoint? center,
-        int pixelSize,
-        int zoomLevel,
-        MewUIColor? crossColor,
-        int checkerSize,
-        MewUIColor? checkerColorA,
-        MewUIColor? checkerColorB,
-        MewUIColor? frameColor,
-        int frameWidth)
+    public static void Render(SKCanvas canvas, EsBitmap? source, LoupeRenderRequest request)
     {
         ArgumentNullException.ThrowIfNull(canvas);
+        ArgumentNullException.ThrowIfNull(request.Appearance);
 
-        DrawCheckerboard(canvas, pixelSize, checkerSize, checkerColorA, checkerColorB);
-        DrawMagnified(canvas, source, center, pixelSize, zoomLevel);
-        DrawCrosshair(canvas, pixelSize, zoomLevel, crossColor);
-        DrawFrame(canvas, pixelSize, frameColor, frameWidth);
+        // 下地（ベース色）→ 市松模様の背景（タイルサイズの補正・DIP → 物理ピクセルの換算はコアが行う）
+        DrawBackground(canvas, request);
+        DrawCheckerboard(canvas, request);
+        DrawMagnified(canvas, source, request);
+        DrawCrosshair(canvas, request);
+        DrawFrame(canvas, request);
+        DrawCoordLabel(canvas, request);
     }
 
-    /// <summary>市松模様の背景を描画する。</summary>
+    /// <summary>下地（ベース色）を表面全体へ描画する。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="checkerSize">1 タイルサイズ（物理ピクセル）。1 未満は 1 に正規化される。</param>
-    /// <param name="colorA">色A（明色）。null の場合は透明。</param>
-    /// <param name="colorB">色B（暗色）。null の場合は透明。</param>
+    /// <param name="request">描画入力（外観）。</param>
     /// <remarks>
-    /// 明色で全面を塗った後、明暗判定（<see cref="LoupeCheckerboard.IsDarkTile"/>）が真のタイルのみを<br/>
-    /// 暗色で上書きする（描画回数を半減）。明色が透明の場合は全面塗りを省略する。
+    /// 市松模様の色は半透明のため、背後の要素（プレビューの画像・画面の平均色等）を透かしたくない場合はホストが不透明色を指定する。<br/>
+    /// 表面全体を塗り替える（透明の場合も前フレームの画素を残さない）ため、キャンバスのクリアを使う。
     /// </remarks>
-    private static void DrawCheckerboard(SKCanvas canvas, int pixelSize, int checkerSize, MewUIColor? colorA, MewUIColor? colorB)
+    private static void DrawBackground(SKCanvas canvas, LoupeRenderRequest request)
+        => canvas.Clear(request.Appearance.BackgroundColor.ToSKColor());
+
+    /// <summary>中心座標ラベルを上端中央へ描画する（拡大画像の上へ重ねる）。</summary>
+    /// <param name="canvas">描画先のキャンバス。</param>
+    /// <param name="request">描画入力（物理ピクセルサイズ・拡大中心・外観・スケーリング）。</param>
+    /// <remarks>
+    /// 描画の可否（<see cref="LoupeAppearance.ShowCoordLabel"/> と中心の有無の組合せ）は
+    /// <see cref="LoupeAppearance.ShouldShowCoordLabel"/>（コア）が単一所有し、本メソッドは結果で描画するだけにする。<br/>
+    /// 余白・背景矩形・文字原点は <see cref="LoupeLabelLayout"/>（コア）が、文字サイズと角丸の物理ピクセル換算は
+    /// <see cref="LoupeAppearanceScaler"/>（コア）が単一所有する。<br/>
+    /// 座標の文字列化は <see cref="CoordinateFormatter"/>（コア）へ委譲する（Avalonia 版と同一の表記）。
+    /// </remarks>
+    private static void DrawCoordLabel(SKCanvas canvas, LoupeRenderRequest request)
     {
-        var size = Math.Max(1, checkerSize);
-
-        using var paint = new SKPaint { IsAntialias = false };
-
-        // 色A（明色）で全面を塗る（暗色タイルの下地）。透明の場合は上書きされないため省略する
-        if (colorA is { } light && light.A > 0)
-        {
-            paint.Color = ToSKColor(light);
-            canvas.DrawRect(new SKRect(0, 0, pixelSize, pixelSize), paint);
-        }
-
-        if (colorB is not { } dark || dark.A == 0)
+        var appearance = request.Appearance;
+        if (!appearance.ShouldShowCoordLabel(request.Center is not null) || request.Center is not { } center)
         {
             return;
         }
 
-        paint.Color = ToSKColor(dark);
+        var text = CoordinateFormatter.Format(center);
+        var fontSize = (float)LoupeAppearanceScaler.ScaleCoordLabelFontSize(appearance, request.Scaling);
 
-        var tiles = (int)Math.Ceiling((double)pixelSize / size);
-        for (var row = 0; row < tiles; row++)
+        using var font = new SKFont(SKTypeface.Default, fontSize);
+        using var textPaint = new SKPaint { IsAntialias = true, Color = appearance.CoordLabelColor.ToSKColor() };
+        using var backgroundPaint = new SKPaint { IsAntialias = false, Color = appearance.CoordLabelBackgroundColor.ToSKColor() };
+
+        var width = font.MeasureText(text, textPaint);
+        var background = LoupeLabelLayout.ComputeBackground(request.PixelSize, width, fontSize, request.Scaling);
+        var rect = ToSKRect(background);
+
+        // 背景の角丸はコアの外観値を使う（半径 0 は四角形として描く）
+        var cornerRadius = LoupeAppearanceScaler.ScaleCoordLabelCornerRadius(appearance, request.Scaling);
+        if (cornerRadius > 0)
         {
-            var y = row * size;
-            for (var col = 0; col < tiles; col++)
-            {
-                if (LoupeCheckerboard.IsDarkTile(col, row))
-                {
-                    canvas.DrawRect(new SKRect(col * size, y, col * size + size, y + size), paint);
-                }
-            }
+            canvas.DrawRoundRect(rect, cornerRadius, cornerRadius, backgroundPaint);
+        }
+        else
+        {
+            canvas.DrawRect(rect, backgroundPaint);
+        }
+
+        var textOrigin = LoupeLabelLayout.ComputeTextOrigin(request.PixelSize, width, request.Scaling);
+        // 文字は左上原点からフォントサイズ分下がった位置がベースラインになる（コアは左上のみを所有する）
+        canvas.DrawText(text, (float)textOrigin.X, (float)textOrigin.Y + fontSize, SKTextAlign.Left, font, textPaint);
+    }
+
+    /// <summary>コアの矩形を Skia の矩形へ変換する。</summary>
+    /// <param name="rect">変換元の矩形（コア座標）。</param>
+    /// <returns>Skia の矩形。</returns>
+    /// <remarks>本レンダラー内で唯一の <see cref="EsRect"/> → <see cref="SKRect"/> 変換点とする（変換式の重複を防ぐ）。</remarks>
+    private static SKRect ToSKRect(EsRect rect) => new((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
+
+    /// <summary>市松模様の背景を描画する。</summary>
+    /// <param name="canvas">描画先のキャンバス。</param>
+    /// <param name="request">描画入力（物理ピクセルサイズ・外観・スケーリング）。</param>
+    /// <remarks>
+    /// 明色で全面を塗った後、暗色タイルのみを上書きする（描画回数を半減）。<br/>
+    /// 描画の可否（アルファ 0 は描画しない）はコアの <see cref="LoupeAppearance.HasCheckerColorA"/> /
+    /// <see cref="LoupeAppearance.HasCheckerColorB"/> の判定を呼び出し側が null で表現し、本メソッドは描画だけを行う。<br/>
+    /// 暗色タイルの位置（タイル数・座標）とタイルサイズの物理ピクセル換算はコアが単一所有する。
+    /// </remarks>
+    private static void DrawCheckerboard(SKCanvas canvas, LoupeRenderRequest request)
+    {
+        var appearance = request.Appearance;
+        var colorA = appearance.HasCheckerColorA ? appearance.CheckerColorA : (DrawingColor?)null;
+        var colorB = appearance.HasCheckerColorB ? appearance.CheckerColorB : (DrawingColor?)null;
+
+        using var paint = new SKPaint { IsAntialias = false };
+
+        // 色A（明色）で全面を塗る（暗色タイルの下地）。透明の場合は上書きされないため省略する
+        if (colorA is { } light)
+        {
+            paint.Color = light.ToSKColor();
+            canvas.DrawRect(new SKRect(0, 0, request.PixelSize, request.PixelSize), paint);
+        }
+
+        if (colorB is not { } dark)
+        {
+            return;
+        }
+
+        paint.Color = dark.ToSKColor();
+
+        // タイルサイズの換算と暗色タイルの位置（タイル数・座標）はコアが単一所有する（本クラスは返された矩形を塗るだけ）
+        foreach (var tile in LoupeCheckerboard.ComputeDarkTileRects(
+            request.PixelSize, LoupeAppearanceScaler.ScaleCheckerSize(appearance, request.Scaling)))
+        {
+            canvas.DrawRect(ToSKRect(tile), paint);
         }
     }
 
     /// <summary>ソース画像を切り出して拡大描画する（ソース／中心が未設定なら何もしない）。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
     /// <param name="source">拡大元の画像。</param>
-    /// <param name="center">拡大中心（元画像ピクセル座標）。</param>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="zoomLevel">拡大率。</param>
+    /// <param name="request">描画入力（物理ピクセルサイズ・拡大率・拡大中心）。</param>
     /// <remarks>
-    /// 切り出しは <see cref="LoupeImageExtractor.ExtractRegionAt"/> へ委譲する（中心 → 左上の変換を単一所有）。<br/>
-    /// 破棄済みのソースは市松模様のみを残して描画を打ち切る（ホストの状態と競合しても例外にしない）。<br/>
+    /// 切り出しの可否（ソースと中心が揃っているか）と切り出し手順は <see cref="LoupeImageExtractor.TryExtractRegionAt"/>（コア）へ委譲する<br/>
+    /// （破棄済みソースの扱いもコアが単一所有し、本メソッドは null なら市松模様のみを残す）。<br/>
+    /// 切り出し元・描画先の矩形はコア（<see cref="LoupeImageExtractor.ComputeMagnifiedRects"/>）が単一所有する（Avalonia 版と同一の倍率）。<br/>
     /// <c>ToSKBitmap()</c> は内部インスタンスの共有参照を返すため破棄しない。
     /// </remarks>
-    private static void DrawMagnified(
-        SKCanvas canvas,
-        EsBitmap? source,
-        EsUtil.Platform.Core.Geometry.EsPoint? center,
-        int pixelSize,
-        int zoomLevel)
+    private static void DrawMagnified(SKCanvas canvas, EsBitmap? source, LoupeRenderRequest request)
     {
-        if (source is null || center is not { } origin)
+        using var region = LoupeImageExtractor.TryExtractRegionAt(source, request);
+        if (region is null)
         {
             return;
         }
 
-        var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel);
+        var (src, dst) = LoupeImageExtractor.ComputeMagnifiedRects(region.Size, request.ZoomLevel);
 
-        EsBitmap? region = null;
-        try
-        {
-            region = LoupeImageExtractor.ExtractRegionAt(source, (int)origin.X, (int)origin.Y, captureSize);
-        }
-        catch (ObjectDisposedException)
-        {
-            // 描画中にソースが破棄された: 市松模様のみを残す
-            return;
-        }
-
-        using (region)
-        {
-            var bitmap = region.ToSKBitmap();
-            var src = new SKRect(0, 0, region.Size.Width, region.Size.Height);
-            var dst = new SKRect(0, 0, src.Width * zoomLevel, src.Height * zoomLevel);
-
-            // 拡大は最近傍（既定）で行い、画素をそのまま拡大表示する
-            canvas.DrawBitmap(bitmap, src, dst);
-        }
+        // 拡大は最近傍（既定）で行い、画素をそのまま拡大表示する
+        canvas.DrawBitmap(region.ToSKBitmap(), ToSKRect(src), ToSKRect(dst));
     }
 
     /// <summary>十字線を描画する。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="zoomLevel">拡大率。</param>
-    /// <param name="color">十字線の色。null の場合は描画しない。</param>
-    private static void DrawCrosshair(SKCanvas canvas, int pixelSize, int zoomLevel, MewUIColor? color)
+    /// <param name="request">描画入力（物理ピクセルサイズ・拡大率・外観）。</param>
+    /// <remarks>
+    /// 矩形の計算はコアが単一所有し、描画の可否（アルファ 0 は描画しない）は
+    /// <see cref="LoupeAppearance.HasCrosshair"/> の判定を呼び出し側が null で表現する。
+    /// </remarks>
+    private static void DrawCrosshair(SKCanvas canvas, LoupeRenderRequest request)
     {
-        if (color is not { } cross)
+        if (!request.Appearance.HasCrosshair)
         {
             return;
         }
 
-        FillRects(canvas, LoupeDecorationGeometry.ComputeCrosshairRects(pixelSize, zoomLevel), ToSKColor(cross));
+        FillRects(
+            canvas,
+            LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel),
+            request.Appearance.CrossColor.ToSKColor());
     }
 
     /// <summary>外枠を描画する。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="color">外枠の色。null の場合は描画しない。</param>
-    /// <param name="width">外枠の太さ（物理ピクセル）。</param>
-    private static void DrawFrame(SKCanvas canvas, int pixelSize, MewUIColor? color, int width)
+    /// <param name="request">描画入力（物理ピクセルサイズ・外観・スケーリング）。</param>
+    /// <remarks>
+    /// 太さの補正と DIP → 物理ピクセルの換算は <see cref="LoupeAppearanceScaler"/>（コア）が単一所有し、<br/>
+    /// 描画の可否（アルファ 0 は描画しない）は <see cref="LoupeAppearance.HasFrame"/> の判定を呼び出し側が表す。
+    /// </remarks>
+    private static void DrawFrame(SKCanvas canvas, LoupeRenderRequest request)
     {
-        if (color is not { } frame)
+        if (!request.Appearance.HasFrame)
         {
             return;
         }
 
-        FillRects(canvas, LoupeDecorationGeometry.ComputeFrameRects(pixelSize, width), ToSKColor(frame));
+        FillRects(
+            canvas,
+            LoupeDecorationGeometry.ComputeFrameRects(
+                request.PixelSize, LoupeAppearanceScaler.ScaleFrameWidth(request.Appearance, request.Scaling)),
+            request.Appearance.FrameColor.ToSKColor());
     }
 
     /// <summary>矩形の一覧を単色で塗りつぶす。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
     /// <param name="rects">塗りつぶす矩形（コア座標）。</param>
     /// <param name="color">塗りつぶしの色。</param>
-    private static void FillRects(SKCanvas canvas, IReadOnlyList<EsUtil.Platform.Core.Geometry.EsRect> rects, SKColor color)
+    private static void FillRects(SKCanvas canvas, IReadOnlyList<EsRect> rects, SKColor color)
     {
         using var paint = new SKPaint { IsAntialias = false, Color = color, Style = SKPaintStyle.Fill };
 
         foreach (var rect in rects)
         {
-            canvas.DrawRect(new SKRect((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom), paint);
+            canvas.DrawRect(ToSKRect(rect), paint);
         }
     }
-
-    /// <summary>MewUI の色を Skia の色へ変換する。</summary>
-    /// <param name="color">変換元の色。</param>
-    /// <returns>Skia の色。</returns>
-    private static SKColor ToSKColor(MewUIColor color) => new(color.R, color.G, color.B, color.A);
 }

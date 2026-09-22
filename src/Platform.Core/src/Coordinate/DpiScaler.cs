@@ -8,6 +8,19 @@ namespace EsUtil.Platform.Core.Coordinate;
 /// </remarks>
 public static class DpiScaler
 {
+    /// <summary>DIP（デバイス非依存ピクセル）の基準 DPI（1 ピクセル = 1 DIP となる DPI）。</summary>
+    /// <remarks>
+    /// スケーリング係数（<see cref="ToScaling"/>）と、DIP を 1:1 で描く描画先（<c>RenderTargetBitmap</c> 等）の DPI が共用する。<br/>
+    /// 各 UI が <c>96</c> を直書きすると、同じ「DIP 基準」の規則が複数箇所へ散る（片方だけ変更される）。
+    /// </remarks>
+    public const double StandardDpi = 96.0;
+
+    /// <summary>DPI をスケーリング係数（表示 DIP → 物理ピクセル）へ換算する。</summary>
+    /// <param name="dpi">DPI（画面・モニターの実効 DPI）。</param>
+    /// <returns>スケーリング係数（<see cref="StandardDpi"/> を 1.0 とする倍率）。</returns>
+    /// <remarks>DPI の変化（モニター間の移動）を <see cref="ScaleToPixel"/> へ渡す倍率へ変換する規則を単一所有する。</remarks>
+    public static double ToScaling(double dpi) => dpi / StandardDpi;
+
     /// <summary>DIP 値をスケーリング係数で物理ピクセルへ変換する（切り上げ・最低 1）。</summary>
     /// <param name="dipValue">変換する DIP 値。</param>
     /// <param name="scaling">スケーリング係数（表示 DIP → 物理ピクセル）。</param>

@@ -25,18 +25,20 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `Coordinate.ICoordTransform` | 2 つの座標系間の変換ポート（順変換・逆変換・境界）。座標は `EsPoint` / `EsSize` |
 | `Coordinate.CoordTransform` | 変換ポートの具象実装（`Func` 委譲）。`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout` / `ImageLayoutScaleX` |
 | `Coordinate.ScrollMath` | スクロール範囲・ビューポートサイズの純粋計算（`MaxOffset` / `ViewportSize`） |
-| `Coordinate.DpiScaler` | DIP 値をスケーリング係数で物理ピクセルへ変換（`ScaleToPixel`。切り上げ・最低 1） |
+| `Coordinate.DpiScaler` | DIP 値をスケーリング係数で物理ピクセルへ変換（`ScaleToPixel`。切り上げ・最低 1）。DPI の基準値（`StandardDpi`）と DPI → スケーリングの換算（`ToScaling`）も単一所有する |
+| `Coordinate.CoordTransformExtensions` | 座標変換ポート未設定（null）を等価変換として解決する（`OrIdentity`）。各コントロール・コアのジオメトリは本規則を自前で書かない |
 | `Geometry.EsPoint` / `EsSize` / `EsVector` / `EsRect` | UI フレームワーク非依存の DIP 相当の幾何値型（`readonly record struct`。`EsRect` は `Right` / `Bottom` を提供） |
 | `Geometry.EsPixelPoint` / `EsPixelRect` | UI フレームワーク非依存の画面物理座標（整数ピクセル） |
 | `Geometry.EsPlatformHandle` | UI フレームワーク非依存のネイティブウィンドウ識別子 |
 | `Geometry.CoordinateFormatter` | 座標を `(x, y)` 形式の表示文字列へ整形する純粋関数 |
 | `Imaging.EsBitmap` | 複数のビットマップ種別を横断する軽量なユニバーサルビットマップラッパー（BGRA8888・Premul）。内部に `SKBitmap` を唯一所有し、SkiaSharp のみに依存する |
+| `Imaging.SkiaColorInterop` | コアの色型（`System.Drawing.Color`）を Skia の色型へ変換する共通ヘルパー（`color.ToSKColor()`）。MewUI 版の描画層（6 箇所）が共用する |
 | `CoordMath`（internal） | 画像レイアウト計算の一元化（`CalculateUniformLayout` / `ComputeImageRenderInfo`）。`CoordTransform` から利用する |
 | `LoggerFallback` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（`logger.OrNullLogger()`）。「ロガー未設定（null）は出力なし」の規則を単一所有し、各コントロール・サービスの `?? NullLogger.Instance` を排除する |
 
 各 UI 実装は、自身の型とコア型を相互変換する Interop 層（例: Avalonia 版の `EsKeyAvaloniaInterop` / `EsWindowStateAvaloniaInterop` / `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop` / `ColorAvaloniaInterop`）を個別に提供します。
 
-**色の表現**: コアの色型は `System.Drawing.Color`（`System.Drawing.Primitives`。共有フレームワーク同梱でクロスプラットフォーム）です。`EsBitmap` のピクセル API もこの型を使用します。
+**色の表現**: コアの色型は `System.Drawing.Color`（`System.Drawing.Primitives`。共有フレームワーク同梱でクロスプラットフォーム）です。`EsBitmap` のピクセル API もこの型を使用します。Skia の描画 API へ渡す場合は `SkiaColorInterop.ToSKColor` を使用します（SkiaSharp は UI フレームワークではないため、本プロジェクトが変換の単一所有を担います）。
 
 サービス抽象の具象実装（Win32 / NoOp）と `PlatformFactory.CreateXxx()` のファクトリは、現在 `Platform.AvaloniaUI`（Avalonia 実装プロジェクト）側にあります。
 

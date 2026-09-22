@@ -3,12 +3,14 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Estable.AvaloniaUI.Loupe;
+using Estable.Loupe;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Imaging;
 using LineDetectionSample.ViewModels;
 using System.ComponentModel;
 using System.Reactive.Linq;
+using DrawingColor = System.Drawing.Color;
 
 namespace LineDetectionSample.Views;
 
@@ -22,7 +24,7 @@ namespace LineDetectionSample.Views;
 /// マウス位置（= ルーペ中心）の右下に表示する。<br/>
 /// ルーペ内の線分オーバーレイ（選択中/ホバー中の線分の破線）は、LoupeControl の <see cref="LoupeControl.Rendered"/> イベントの<br/>
 /// 引数で受け取った Bitmap（WriteableBitmap）に直接破線を描画する（LoupeControl の内部計算を複製しない）。<br/>
-/// ホバー/選択の変化（<see cref="DetectionContext.LoupeOverlayLines"/>）では <see cref="LoupeControl.ForceUpdate"/> で<br/>
+    /// ホバー/選択の変化（<see cref="DetectionContext.LoupeOverlayLines"/>）では <see cref="LoupeControl.RequestRender"/> で<br/>
 /// ルーペを再生成し、新しい Bitmap に破線を再描画する。
 /// </remarks>
 public partial class LineCanvasView : UserControl
@@ -55,6 +57,20 @@ public partial class LineCanvasView : UserControl
         // ルーペの表示位置・サイズを自己計算させる（画像ピクセル座標 → ImageHost ローカル座標のスケーリングポート）
         Loupe.SetCoordinateTransform(CoordTransform.Scale(ImageDisplayScale));
         Loupe.PositionOffset = LoupePositionOffset;
+
+        // 設定はコアの単一値（Options）で指定する（サイズ・拡大率・外観。外観は十字線を 20% の赤、外枠をライトグレー、座標ラベルなしに設定する）
+        Loupe.Options = Loupe.Options with
+        {
+            RequestedSize = 220,
+            ZoomLevel = 4,
+            Appearance = new LoupeAppearance
+            {
+                CrossColor = DrawingColor.FromArgb(0x33, 0xFF, 0x00, 0x00),
+                FrameColor = DrawingColor.FromArgb(0xFF, 0xCC, 0xCC, 0xCC),
+                FrameWidth = 1,
+                ShowCoordLabel = false,
+            },
+        };
 
         // 描画完了イベントでルーペの Bitmap に線分オーバーレイ（破線）を描画する
         Loupe.Rendered += OnLoupeRendered;
@@ -116,14 +132,14 @@ public partial class LineCanvasView : UserControl
     /// <param name="e">プロパティ変更イベント。</param>
     /// <remarks>
     /// 一覧のホバー・クリック・再検出など、ルーペの中心が変わらない経路でも、<br/>
-    /// 破線を描き直すために <see cref="LoupeControl.ForceUpdate"/> でルーペを再生成する<br/>
+    /// 破線を描き直すために <see cref="LoupeControl.RequestRender"/> でルーペを再生成する<br/>
     /// （再生成後に <see cref="OnLoupeRendered"/> が発火し、新しい Bitmap へ破線が描画される）。
     /// </remarks>
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(DetectionContext.LoupeOverlayLines))
         {
-            Loupe.ForceUpdate();
+            Loupe.RequestRender();
         }
     }
 

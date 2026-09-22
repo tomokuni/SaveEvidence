@@ -7,7 +7,6 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Estable.AvaloniaUI.CaptureSession.Logging;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Estable.CaptureSession;
 
 namespace Estable.AvaloniaUI.CaptureSession;

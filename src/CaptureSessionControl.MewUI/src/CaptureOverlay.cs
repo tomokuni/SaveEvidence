@@ -3,6 +3,7 @@ using Aprillz.MewUI.Controls;
 using Estable.CaptureSession;
 using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
+using Estable.Loupe;
 using Estable.MewUI.FadeMaskDragRect;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.Core;
@@ -10,9 +11,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using DrawingColor = System.Drawing.Color;
-using MewUIColor = Aprillz.MewUI.Color;
 
 namespace Estable.MewUI.CaptureSession;
 
@@ -664,46 +663,47 @@ public sealed class CaptureOverlay
     /// <summary>設定のルーペ項目を選択コントロール（内包するルーペ）へ反映する。</summary>
     /// <param name="selector">対象の選択コントロール。</param>
     /// <param name="settings">設定（全メンバー non-null）。</param>
-    /// <param name="checkerBackground">市松模様の下地色（テーマのページ背景色。null の場合は下地を塗らない）。</param>
+    /// <param name="checkerBackground">市松模様の下地色（テーマのページ背景色）。null の場合は白（撮影オーバーレイの既定）。</param>
     /// <remarks>
-    /// 市松色は半透明のため、下地がないと後ろの画像が透ける（撮影オーバーレイは後ろが撮影画像、<br/>
-    /// プレビューの切り出しは後ろがプレビュー画像）。下地色はホストがテーマから解決して渡す。<br/>
+    /// 市松色は半透明のため、下地を塗らないと後ろの要素（撮影画像・画面の平均色・プレビュー画像）が透ける。<br/>
+    /// 下地色はコアの外観（<see cref="LoupeAppearance.BackgroundColor"/>）が単一所有し、ホストが値を決めて渡す。<br/>
     /// ルーペは「撮影オーバーレイ」「プレビューの切り出し」の両方に登場するため、反映内容を本メソッドへ<br/>
-    /// 集約し、UI ごとのずれを防ぐ（Avalonia 版の <c>LoupeAppearance</c> と同内容）。
+    /// 集約し、UI ごとのずれを防ぐ（Avalonia 版の <see cref="LoupeAppearance"/> と同内容）。
     /// </remarks>
     internal static void ApplyLoupe(
         FadeMaskDragRectControl selector, CaptureSettings settings, DrawingColor? checkerBackground = null)
     {
         var loupe = selector.Loupe;
 
-        loupe.ZoomLevel = settings.LoupeZoomLevel!.Value;
-        loupe.RequestedSize = settings.LoupeSize!.Value;
-        loupe.CrossColor = ToMewUIColor(settings.LoupeCrossColor, MewUIColor.FromArgb(102, 255, 0, 0));
-        loupe.FrameColor = ToMewUIColor(settings.LoupeFrameColor, MewUIColor.FromArgb(255, 211, 211, 211));
-        loupe.FrameWidth = settings.LoupeFrameThickness!.Value;
-        loupe.CheckerSize = settings.LoupeCheckerSize!.Value;
-        loupe.CheckerColorA = ToMewUIColor(settings.LoupeCheckerColorA, MewUIColor.Transparent);
-        loupe.CheckerColorB = ToMewUIColor(settings.LoupeCheckerColorB, MewUIColor.Transparent);
-
-        if (checkerBackground is { } background)
+        loupe.Options = new LoupeOptions
         {
-            loupe.BackgroundColor = MewUIColor.FromArgb(background.A, background.R, background.G, background.B);
-        }
-
-        loupe.ShowCoordLabel = settings.LoupeShowCoordLabel!.Value;
-        loupe.CoordLabelColor = ToMewUIColor(settings.LoupeCoordLabelColor, MewUIColor.White);
-        loupe.CoordLabelBackgroundColor = ToMewUIColor(settings.LoupeCoordLabelBackgroundColor, MewUIColor.FromArgb(153, 0, 0, 0));
-        loupe.CoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value;
+            ZoomLevel = settings.LoupeZoomLevel!.Value,
+            RequestedSize = settings.LoupeSize!.Value,
+            Appearance = new LoupeAppearance
+            {
+                BackgroundColor = checkerBackground ?? DrawingColor.White,
+                CrossColor = ToDrawingColor(settings.LoupeCrossColor, DrawingColor.FromArgb(102, 255, 0, 0)),
+                FrameColor = ToDrawingColor(settings.LoupeFrameColor, DrawingColor.FromArgb(255, 211, 211, 211)),
+                FrameWidth = settings.LoupeFrameThickness!.Value,
+                CheckerSize = settings.LoupeCheckerSize!.Value,
+                CheckerColorA = ToDrawingColor(settings.LoupeCheckerColorA, DrawingColor.Transparent),
+                CheckerColorB = ToDrawingColor(settings.LoupeCheckerColorB, DrawingColor.Transparent),
+                ShowCoordLabel = settings.LoupeShowCoordLabel!.Value,
+                CoordLabelColor = ToDrawingColor(settings.LoupeCoordLabelColor, DrawingColor.White),
+                CoordLabelBackgroundColor = ToDrawingColor(settings.LoupeCoordLabelBackgroundColor, DrawingColor.FromArgb(153, 0, 0, 0)),
+                CoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value,
+            },
+        };
 
         // ルーペ画像上の選択矩形破線はルーペコントロールではなく選択コントロールが描画する
         selector.SelectionOverlayColorA = settings.LoupeSelectionRectColorA ?? DrawingColor.White;
         selector.SelectionOverlayColorB = settings.LoupeSelectionRectColorB ?? DrawingColor.Black;
     }
 
-    /// <summary>色を MewUI の色型へ変換する（null の場合は既定色を返す）。</summary>
+    /// <summary>色をコアの色型へ変換する（null の場合は既定色を返す）。</summary>
     /// <param name="color">変換する色（null 可）。</param>
     /// <param name="fallback">null の場合に使用する色。</param>
-    /// <returns>MewUI の色。</returns>
-    private static MewUIColor ToMewUIColor(DrawingColor? color, MewUIColor fallback)
-        => color is { } c ? MewUIColor.FromArgb(c.A, c.R, c.G, c.B) : fallback;
+    /// <returns>コアの色。</returns>
+    private static DrawingColor ToDrawingColor(DrawingColor? color, DrawingColor fallback)
+        => color ?? fallback;
 }

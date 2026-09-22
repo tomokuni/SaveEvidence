@@ -1,69 +1,36 @@
-using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Loupe.Rendering;
+using Estable.Loupe;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using Estable.Loupe.Imaging;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Core.Coordinate;
 
 namespace Estable.AvaloniaUI.Loupe;
 
-/// <summary>ルーペのビットマップ生成パイプライン（ソース解決・切り出し・描画合成）。</summary>
+/// <summary>ルーペのビットマップ生成パイプライン（ソース解決・描画合成）。</summary>
 /// <remarks>
-/// <see cref="LoupeControl"/> の描画オーケストレーションから、ユーザーが入力したソース画像を<br/>
-/// 切り出してルーペ画像（<see cref="EsBitmap"/>）を生成するパイプラインを分離する。<br/>
-/// UI スレッド（<see cref="Dispatcher.UIThread"/>）での描画合成とバックグラウンドでの切り出しを担う。<br/>
-/// <see cref="LoupeControl"/> の状態（<c>Source</c> / <c>CenterPoint</c> / 外観）は引数で受け取る。
+/// <see cref="LoupeControl"/> から、Avalonia のソース画像を解決してルーペ画像（<see cref="EsBitmap"/>）を生成する<br/>
+/// パイプラインを分離する（描画の順序と値の解釈はコアの契約 <see cref="LoupeRenderRequest"/> が単一所有する）。<br/>
+/// <b>UI 固有の責務</b>: Avalonia の <see cref="IImage"/> 型判定と、<see cref="Bitmap"/> → <see cref="EsBitmap"/> の複製、<br/>
+/// 描画の UI スレッドへのディスパッチ。切り出しの可否（ソースと中心）と破棄済みの扱いはコアが単一所有する。
 /// </remarks>
 internal static class LoupeRenderPipeline
 {
-    /// <summary>描画モード（市松模様のみ / ソース画像合成）。</summary>
-    internal enum RenderMode
-    {
-        /// <summary>市松模様のみ（ソースなし・中心未設定・解決不能時）。</summary>
-        CheckerboardOnly,
-        /// <summary>ソース画像を切り出して合成する。</summary>
-        Composite,
-    }
-
-    /// <summary>ソース画像・中心座標から描画モードを決定する（純粋関数）。</summary>
-    /// <param name="source">ルーペのソース画像。</param>
-    /// <param name="center">拡大中心（ドメイン座標）。</param>
-    /// <returns>市松模様のみ（<see cref="RenderMode.CheckerboardOnly"/>）または合成（<see cref="RenderMode.Composite"/>）。</returns>
-    /// <remarks>
-    /// 中心未設定、またはソース画像が対応可能型でない（null 以外の未対応型 / 破棄済み）場合は市松模様のみで描画する。<br/>
-    /// 破棄済み <see cref="Bitmap"/> は <see cref="LoupeSourceResolver.Resolve"/> が検出するが、<br/>
-    /// 本関数では <c>Resolve</c> を呼ばず <see cref="LoupeSourceResolver.IsSourceSupported"/> のみで判定する<br/>
-    /// （解決処理を <see cref="RenderAsync"/> に委譲し、複製ビットマップのリークを防ぐ）。<br/>
-    /// UI 非依存のため <c>[Fact]</c> で並列検証できる。
-    /// </remarks>
-    internal static RenderMode DecideRenderMode(IImage? source, Point? center)
-        => center is not null && LoupeSourceResolver.IsSourceSupported(source)
-            ? RenderMode.Composite
-            : RenderMode.CheckerboardOnly;
-
     /// <summary>画像抽出を非同期に実行し、Avaloniaの描画オブジェクトをUIスレッドで合成する。</summary>
     /// <param name="source">ルーペのソース画像。</param>
-    /// <param name="center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定時は市松模様のみ。</param>
-    /// <param name="pixelSize">ルーペの一辺の物理ピクセルサイズ。</param>
-    /// <param name="zoomLevel">拡大率。</param>
-    /// <param name="crossColor">十字線の色。</param>
-    /// <param name="checkerSize">市松模様の1タイルサイズ（DIP）。</param>
-    /// <param name="checkerColorA">色A（明色）。</param>
-    /// <param name="checkerColorB">色B（暗色）。</param>
-    /// <param name="frameColor">外枠の色。</param>
-    /// <param name="frameWidth">外枠の太さ（DIP）。</param>
-    /// <param name="scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
+    /// <param name="request">描画入力（コア⇔UI の契約。UI が公開プロパティから組み立てる）。</param>
     /// <returns>生成したルーペ画像（<see cref="EsBitmap"/>）。</returns>
     /// <exception cref="NotSupportedException">
     /// <paramref name="source"/> が <see cref="Bitmap"/> / <see cref="EsBitmapAvaloniaImage"/> 以外の場合。
     /// </exception>
-    public static async Task<EsBitmap> RenderAsync(
-        Avalonia.Media.IImage? source, Point? center, int pixelSize, int zoomLevel,
-        IBrush? crossColor, int checkerSize,
-        IBrush? checkerColorA, IBrush? checkerColorB, IBrush? frameColor,
-        int frameWidth, double scaling)
+    /// <remarks>
+    /// 1. 未対応型の判定（<see cref="LoupeSourceResolver.IsSourceSupported"/>）を行い、未対応型は例外にする。<br/>
+    /// 2. 切り出し元の <see cref="EsBitmap"/> を解決する（<see cref="Bitmap"/> は複製、<see cref="EsBitmapAvaloniaImage"/> は共有参照）。<br/>
+    /// 3. 描画（切り出し・拡大・十字線・市松・外枠）は <see cref="LoupeRenderer"/> へ委譲し、UI スレッドで行う<br/>
+    /// （切り出しの可否と破棄済みソースの扱いはコアが単一所有する）。
+    /// </remarks>
+    public static async Task<EsBitmap> RenderAsync(IImage? source, LoupeRenderRequest request)
     {
         // 未対応型の判定は LoupeSourceResolver（単一所有）へ委譲する。
         if (!LoupeSourceResolver.IsSourceSupported(source))
@@ -72,61 +39,17 @@ internal static class LoupeRenderPipeline
                 $"LoupeControl は {source!.GetType().FullName} をサポートしていません。Bitmap または EsBitmapAvaloniaImage を指定してください。");
         }
 
-        var checkerPixelSize = DpiScaler.ScaleToPixel(checkerSize, scaling);
-        var framePixelWidth = DpiScaler.ScaleToPixel(frameWidth, scaling);
-
-        // 画像なし・破棄済み・抽出失敗のいずれでも市松模様のみで描画する（生成経路の一元化）
-        Task<EsBitmap> DrawCheckerboardOnly() =>
-            Dispatcher.UIThread.InvokeAsync(() => LoupeRenderer.DrawLoupeCheckerboardOnly(
-                pixelSize, crossColor, checkerPixelSize,
-                checkerColorA, checkerColorB, frameColor, framePixelWidth), DispatcherPriority.Render).GetTask();
-
-        // 中心未設定・ソース解決不能の場合は市松模様のみで描画する（純粋関数で判定・単一所有）。
-        if (DecideRenderMode(source, center) == RenderMode.CheckerboardOnly)
-        {
-            return await DrawCheckerboardOnly();
-        }
-
-        // 抽出元の EsBitmap を解決する（Bitmap は複製、EsBitmapAvaloniaImage は共有参照。破棄済みは市松模様へフォールバック）
+        // 抽出元の EsBitmap を解決する（Bitmap は複製、EsBitmapAvaloniaImage は共有参照。破棄済みは null）
         var resolved = LoupeSourceResolver.Resolve(source, out var sourceBitmap);
-
-        // 破棄済み Source（DecideRenderMode では型判定のみのため、解決で null になる場合）は市松模様のみで描画する。
-        if (sourceBitmap is null)
-        {
-            return await DrawCheckerboardOnly();
-        }
 
         try
         {
-            var centerPoint = center!.Value;
-            var captureSize = LoupeImageExtractor.ComputeCaptureSize(pixelSize, zoomLevel);
-
-            // 抽出は EsBitmap.Crop（Buffer.MemoryCopy のみ）で軽量なため、UI スレッドで同期実行する。
+            // 切り出し（EsBitmap.Crop = Buffer.MemoryCopy のみで軽量）と合成（RenderTargetBitmap / DrawingContext）は UI スレッドで行う。
             // Task.Run によるバックグラウンド抽出は、マウス移動中の連続再描画でスレッドプールが競合し、
-            // 抽出結果が UI スレッドへ戻る前に次の再描画が要求されて、ルーペ画像が移動停止まで更新されない
-            // （描画が追いつかない）問題を引き起こす。UI スレッドでの同期抽出はこの競合を排除し、確実に追従する。
-            // 破棄済み Source に備え、抽出内で ObjectDisposedException を捕捉する（市松模様へフォールバック）。
-            EsBitmap region;
-            try
-            {
-                region = LoupeImageExtractor.ExtractRegionAt(sourceBitmap, (int)centerPoint.X, (int)centerPoint.Y, captureSize);
-            }
-            catch (ObjectDisposedException)
-            {
-                // 抽出中に Source が破棄された: 市松模様のみで描画する
-                return await DrawCheckerboardOnly();
-            }
-
-            // RenderTargetBitmap生成・DrawingContext操作はUIスレッドに限定する。
-            return await Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                using (region)
-                {
-                    return LoupeRenderer.DrawLoupe(
-                        region, pixelSize, zoomLevel, crossColor,
-                        checkerPixelSize, checkerColorA, checkerColorB, frameColor, framePixelWidth);
-                }
-            }, DispatcherPriority.Render);
+            // 抽出結果が UI スレッドへ戻る前に次の再描画が要求されてルーペ画像が移動停止まで更新されない問題を生む。
+            return await Dispatcher.UIThread.InvokeAsync(
+                () => LoupeRenderer.DrawLoupe(sourceBitmap, request),
+                DispatcherPriority.Render);
         }
         finally
         {

@@ -18,23 +18,16 @@
     - [5.1 プロパティ](#51-プロパティ)
       - [5.1.1 Source](#511-source)
       - [5.1.2 CenterPoint](#512-centerpoint)
-      - [5.1.3 RequestedSize](#513-requestedsize)
+      - [5.1.3 Options（設定の単一値）](#513-options設定の単一値)
       - [5.1.4 RenderScaling](#514-renderscaling)
-      - [5.1.5 座標ラベル](#515-座標ラベル)
-      - [5.1.6 ZoomLevel](#516-zoomlevel)
-      - [5.1.7 CrossColor](#517-crosscolor)
-      - [5.1.8 CheckerSize](#518-checkersize)
-      - [5.1.9 CheckerColorA / CheckerColorB](#519-checkercolora--checkercolorb)
-      - [5.1.10 FrameColor](#5110-framecolor)
-      - [5.1.11 FrameWidth](#5111-framewidth)
-      - [5.1.12 IsVisible](#5112-isvisible)
-      - [5.1.13 Log](#5113-log)
+      - [5.1.5 Appearance（設定の一部）](#515-appearance設定の一部)
+      - [5.1.6 IsVisible](#516-isvisible)
+      - [5.1.7 Log](#517-log)
     - [5.2 メソッド](#52-メソッド)
-      - [5.2.1 RenderAsync](#521-renderasync)
-      - [5.2.2 ForceUpdate](#522-forceupdate)
-      - [5.2.3 Clear](#523-clear)
-      - [5.2.4 SetCoordinateTransform](#524-setcoordinatetransform)
-      - [5.2.5 RefreshPosition](#525-refreshposition)
+      - [5.2.1 RequestRender](#521-requestrender)
+      - [5.2.2 Clear](#522-clear)
+      - [5.2.3 SetCoordinateTransform](#523-setcoordinatetransform)
+      - [5.2.4 RefreshPosition](#524-refreshposition)
     - [5.3 表示位置・サイズの自己計算（座標変換ポート方式）](#53-表示位置サイズの自己計算座標変換ポート方式)
       - [5.3.1 PositionOffset](#531-positionoffset)
     - [5.4 イベント](#54-イベント)
@@ -56,8 +49,8 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| 対象 | `LoupeControl` |
-| プロジェクト | `LoupeControl/LoupeControl.csproj` |
+| 対象 | `LoupeControl.AvaloniaUI`（公開クラスは `LoupeControl`） |
+| プロジェクト | `LoupeControl.AvaloniaUI/src/LoupeControl.AvaloniaUI.csproj` |
 | 名前空間 | `Estable.AvaloniaUI.Loupe` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
@@ -78,7 +71,7 @@
 - 十字線の表示
 - 外枠の表示
 - DPIスケーリングに対応したBitmap生成
-- 非同期の画像抽出
+- 非同期のルーペ画像生成（切り出し・合成は UI スレッドで実行）
 - 古い非同期描画結果を破棄する世代管理
 - 非表示時のBitmap解放
 - 描画エラーの注入ロガーへの記録
@@ -88,10 +81,10 @@
 
 ### 3.1 プロジェクト参照
 
-利用側プロジェクトから `LoupeControl.csproj` を参照します（`LoupeControl.Core` は `LoupeControl` が参照するため、追加の参照は不要です）。
+利用側プロジェクトから `LoupeControl.AvaloniaUI.csproj` を参照します（`LoupeControl.Core` は本プロジェクトが参照するため、追加の参照は不要です）。
 
 ```xml
-<ProjectReference Include="..\LoupeControl\LoupeControl.csproj" />
+<ProjectReference Include="..\LoupeControl.AvaloniaUI\src\LoupeControl.AvaloniaUI.csproj" />
 ```
 
 ### 3.2 必要な名前空間
@@ -132,15 +125,8 @@ panel.Children.Add(loupe);
             IsVisible="{Binding IsLoupeVisible}"
             Source="{Binding SourceImage}"
             CenterPoint="{Binding CenterPoint}"
-            RequestedSize="240"
-            ZoomLevel="4"
-            RenderScaling="1.0"
-            CrossColor="#66FF0000"
-            CheckerSize="8"
-            CheckerColorA="Gray"
-            CheckerColorB="#C0C0C0"
-            FrameColor="LightGray"
-            FrameWidth="2" />
+            Options="{Binding Options}"
+            RenderScaling="1.0" />
     </Canvas>
 </Window>
 ```
@@ -152,8 +138,7 @@ var loupe = new LoupeControl
 {
     Source = sourceBitmap,
     CenterPoint = new Point(400, 300),
-    RequestedSize = 240,
-    ZoomLevel = 4,
+    Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 },
     RenderScaling = 1.0,
     IsHitTestVisible = false,
     IsVisible = true
@@ -174,7 +159,7 @@ public Point? CenterPoint { get; set; } = new(400, 300);
 public bool IsLoupeVisible { get; set; } = true;
 ```
 
-`Source` は `Image.Source` と同じAvaloniaの `IImage?` 型です。ピクセル抽出処理は `Bitmap` と `EsBitmapImage`（`EsBitmap` を内包する `IImage` アダプタ）をサポートします。
+`Source` は `Image.Source` と同じAvaloniaの `IImage?` 型です。ピクセル抽出処理は `Bitmap` と `EsBitmapAvaloniaImage`（`EsBitmap` を内包する `IImage` アダプタ）をサポートします。
 
 ## 5. 公開API
 
@@ -191,11 +176,11 @@ public bool IsLoupeVisible { get; set; } = true;
 | 既定値 | `null` |
 | 用途 | 拡大元画像 |
 | Binding | 対応 |
-| 実装上の対応型 | `Bitmap` / `EsBitmapImage` |
+| 実装上の対応型 | `Bitmap` / `EsBitmapAvaloniaImage` |
 
 `Source` が `null` の場合、画像なしの市松模様を描画します。
 
-`Source` に `Bitmap` 以外の `IImage`（`EsBitmapImage` を除く）を設定した場合、`NotSupportedException` が発生します。例外は `LoupeControl.Log` に記録されます。
+`Source` に `Bitmap` 以外の `IImage`（`EsBitmapAvaloniaImage` を除く）を設定した場合、`NotSupportedException` が発生します。例外は `LoupeControl.Log` に記録されます。
 
 #### 5.1.2 CenterPoint
 
@@ -210,20 +195,29 @@ public bool IsLoupeVisible { get; set; } = true;
 
 画像範囲外の座標も指定できます。抽出領域と画像の重なり部分は画像として表示され、範囲外部分は透明となって市松模様が表示されます。
 
-#### 5.1.3 RequestedSize
+#### 5.1.3 Options（設定の単一値）
 
 | 項目 | 内容 |
 | --- | --- |
-| 型 | `int` |
-| 単位 | DIP 座標系 |
-| 既定値 | `160` |
-| 補正範囲 | `1`〜`4096` |
+| 型 | `LoupeOptions`（コアの `Estable.Loupe`） |
+| 既定値 | `LoupeOptions.Default`（表示サイズ 160 / 拡大率 4 / 外観は `LoupeAppearance` の既定値） |
+| 用途 | ルーペの設定（表示サイズ・拡大率・外観）を 1 つの値で指定する |
 
-ルーペの基本サイズ（ユーザー設定値）を設定します。表示するルーペの幅・高さ（正方形）の元になります。
+```csharp
+loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 };
+```
 
-- **クランプはコントロールが内包**します: 表示サイズは本値（基本サイズ）を `UpdatePosition` が親パネルサイズにクランプして導出します（ホストは基本サイズを設定するだけ）。
-- 親パネル未接続時（配置前・テスト等）は基本サイズがそのまま表示サイズとして使用されます。
-- クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（内部管理）。
+設定の値・既定値・数値項目の安全域への補正は**コアの `LoupeOptions` が単一所有**します（UI 側は既定値も補正の登録も持ちません）。値の設定経路（オブジェクト初期化子・`with` 式・バインディング・逆シリアル化）によらず、範囲内の値だけが保持されます。
+
+| `LoupeOptions` の項目 | 型 | 既定値 | 補正範囲 | 説明 |
+| --- | --- | --- | --- | --- |
+| `RequestedSize` | `int` | `160` | `1`〜`4096` | ルーペの基本サイズ（DIP・一辺） |
+| `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
+| `Appearance` | `LoupeAppearance` | コアの既定値 | 装飾（市松模様・外枠・十字線・中心座標ラベル）の外観 |
+
+**表示サイズ（`RequestedSize`）のクランプはコントロールが内包**します: 表示サイズは本値（基本サイズ）を `UpdatePosition` が親パネルサイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（内部管理）。
+
+**設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。DPI スケーリング係数（`RenderScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
 
 #### 5.1.4 RenderScaling
 
@@ -237,91 +231,49 @@ public bool IsLoupeVisible { get; set; } = true;
 Bitmapの一辺は概ね次の式で決定されます。
 
 ```text
-BitmapSize = ceil(RequestedSize × RenderScaling)
+BitmapSize = ceil(表示サイズ × RenderScaling)
 ```
 
-#### 5.1.5 座標ラベル
+環境値（DPI）のためコアの `LoupeOptions` には含めず、補正（`coerce`）はプロパティが担います（安全域の定義はコアの `LoupeValueCoercer` が単一所有します）。
 
-ルーペ上部に中心座標ラベル（`(x, y)` 形式・ドメイン座標）を表示します。
+#### 5.1.5 Appearance（設定の一部）
+
+装飾（市松模様・外枠・十字線・中心座標ラベル）の外観は **コアの `LoupeAppearance`（`Estable.Loupe`）が単一所有**し、`Options` の一部（`Options.Appearance`）として指定します（UI 側に外観の個別プロパティはありません。両 UI で既定値・意味が一致します）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `ShowCoordLabel` | `bool` | `true` | 座標ラベルの表示有無 |
-| `CoordLabelColor` | `IBrush?` | `White` | 座標ラベルの文字色 |
-| `CoordLabelBackgroundColor` | `IBrush?` | `黒 60%（#99000000）` | 座標ラベルの背景色（不透明度はアルファに統合） |
+| `Options.Appearance` | `LoupeAppearance` | コアの既定値 | 装飾の外観。`with` 式で部分変更する。数値項目はコアの `LoupeAppearance` が生成時に安全域へ補正する |
+
+`LoupeAppearance` の項目（詳細は `LoupeControl.Core` の `SPEC_ExtFunc.md` を参照）:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色。アルファ 0 の場合は描画しない |
+| `BackgroundColor` | `System.Drawing.Color` | 透明 | 下地（ベース）色。市松模様・拡大画像より先に全面へ塗る。背後の要素を透かさない場合は不透明色を指定する（既定は透明 = 背後の要素を透かす） |
+| `CheckerSize` | `int` | `6` | 市松模様の 1 タイルサイズ（DIP。1〜128 に補正） |
+| `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色。アルファ 0 の場合は描画しない |
+| `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色。アルファ 0 の場合は描画しない |
+| `FrameWidth` | `int` | `2` | 外枠の太さ（DIP。1〜64 に補正） |
+| `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
+| `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
+| `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正） |
+| `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-#### 5.1.6 ZoomLevel
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコアの `LoupeLabelLayout` が、角丸（`CoordLabelCornerRadius`）は `LoupeAppearance` が単一所有し、UI 側は同じ値を配置・設定します（AXAML へ外観値を書かない）。
 
-| 項目 | 内容 |
-| --- | --- |
-| 型 | `int` |
-| 既定値 | `4` |
-| 補正範囲 | `1`〜`64` |
+寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時にコアの `LoupeAppearanceScaler` が物理ピクセルへ換算します（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
-拡大倍率です。画像の抽出サイズは次の式で算出されます。
-
-```text
-CaptureSize = ceil(BitmapSize / ZoomLevel)
-```
-
-#### 5.1.7 CrossColor
-
-| 項目 | 内容 |
-| --- | --- |
-| 型 | `IBrush?` |
-| 既定値 | `赤 40%（#66FF0000）` |
-| `null` | 十字線を描画しない |
-
-十字線の色です。不透明度は色のアルファに統合します（例: 赤 40% = `#66FF0000`）。
-
-#### 5.1.8 CheckerSize
-
-| 項目 | 内容 |
-| --- | --- |
-| 型 | `int` |
-| 単位 | DIP 座標系として指定し、描画時にRenderScalingで物理ピクセルへ変換 |
-| 既定値 | `6` |
-| 補正範囲 | `1`〜`128` |
-
-市松模様の1タイルサイズです。
-
-#### 5.1.9 CheckerColorA / CheckerColorB
-
-| 項目 | 内容 |
-| --- | --- |
-| 型 | `IBrush?` |
-| 既定値A | `Gray 30%（#4C808080）` |
-| 既定値B | `Silver 30%（#4CA9A9A9）` |
-| `null` | 該当色を透明として描画 |
-
-#### 5.1.10 FrameColor
-
-| 項目 | 内容 |
-| --- | --- |
-| 型 | `IBrush?` |
-| 既定値 | `Brushes.LightGray` |
-| `null` | 外枠を描画しない |
-
-#### 5.1.11 FrameWidth
-
-| 項目 | 内容 |
-| --- | --- |
-| 型 | `int` |
-| 単位 | DIP 座標系として指定し、描画時にRenderScalingで物理ピクセルへ変換 |
-| 既定値 | `2` |
-| 補正範囲 | `1`〜`64` |
-
-#### 5.1.12 IsVisible
+#### 5.1.6 IsVisible
 
 Avalonia標準の `Visual.IsVisible` を使用します。初期値は `false`（コンストラクタで設定。表示指示は `IsVisible = true` で行う）。
 
 - `true`: ルーペ画像を生成して内部 `Image` に表示
 - `false`: 未実行の再描画を無効化し、現在のBitmapを解放
 
-非表示中に画像・座標・外観を変更しても、Bitmapは生成されません。
+非表示中に画像・座標・設定を変更しても、Bitmapは生成されません。
 
-#### 5.1.13 Log
+#### 5.1.7 Log
 
 | 項目 | 内容 |
 | --- | --- |
@@ -331,33 +283,26 @@ Avalonia標準の `Visual.IsVisible` を使用します。初期値は `false`�
 
 ### 5.2 メソッド
 
-#### 5.2.1 RenderAsync
+#### 5.2.1 RequestRender
 
 ```csharp
-Task RenderAsync()
+void RequestRender()
 ```
 
-現在のプロパティ状態からルーペ画像を非同期に生成します。完了を待機して結果を受け取る場合は、本メソッドを `await` します。
+現在の状態からルーペ画像の再生成を要求します（**プロパティ変更を伴わない再生成要求**）。
 
-`Source` が `Bitmap` / `EsBitmapImage` 以外の `IImage` の場合は `NotSupportedException` がスローされます。
+ホストが `Rendered` でビットマップへオーバーレイを描画する場合、重ねるデータの変化（一覧の選択・外部からの状態変更等）ではプロパティが変わらないため、本メソッドで再生成を要求します。
+
+ルーペのプロパティは値が変わらない設定（同一値の再設定）では変更通知を発行しないため、オーバーレイの元データがルーペのプロパティに現れない場合は本メソッドが唯一の再生成手段です。合成コントロール（`FadeMaskDragRectControl`）は、破線の色（外観設定）・破線の表示可否（モード）・選択矩形の変更時に本メソッドを呼び出します。
+
+生成処理自体は非同期です。完了は `Rendered` イベントで通知されます（戻り値を待つ必要はありません）。プロパティ変更と同じ経路を通るため、複数の要求は 1 フレームに 1 回の生成へ結合されます（呼び出し頻度を気にせず呼べます）。非表示中に呼び出した場合は Bitmap を解放して終了します。
 
 ```csharp
-await loupe.RenderAsync();
+// 一覧の選択が変わったとき（ルーペの中心は変わらないが、破線を描き直したい）
+loupe.RequestRender();
 ```
 
-#### 5.2.2 ForceUpdate
-
-```csharp
-void ForceUpdate()
-```
-
-表示中のルーペ画像生成を開始します。同値設定で変更通知が発生しない場合などに使用します。
-
-生成処理自体は非同期です。完了を待つ必要がある場合は、`RenderAsync()` を使用してください。
-
-非表示中に呼び出した場合、Bitmapを解放して終了します。
-
-#### 5.2.3 Clear
+#### 5.2.2 Clear
 
 ```csharp
 void Clear()
@@ -369,7 +314,7 @@ void Clear()
 loupe.Clear();
 ```
 
-#### 5.2.4 SetCoordinateTransform
+#### 5.2.3 SetCoordinateTransform
 
 ```csharp
 void SetCoordinateTransform(ICoordTransform? port)
@@ -379,7 +324,7 @@ void SetCoordinateTransform(ICoordTransform? port)
 
 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等のレイアウト変化に追従できます。表示位置・サイズは本ポートから自己計算されます（イベント時の DIP キャッシュは使わない）。
 
-#### 5.2.5 RefreshPosition
+#### 5.2.4 RefreshPosition
 
 ```csharp
 void RefreshPosition()
@@ -395,10 +340,10 @@ void RefreshPosition()
 
 | 項目 | 計算方法 |
 | --- | --- |
-| 表示サイズ | 基本サイズ（`RequestedSize`）を親パネルサイズにクランプ（親より大きい場合は縮小） |
+| 表示サイズ | 基本サイズ（`Options.RequestedSize`）を親パネルサイズにクランプ（親より大きい場合は縮小） |
 | 表示位置 | 中心 →（ポート）→ 親パネル DIP → カーソル右下 + `PositionOffset` → 親パネル内にクランプ（`RenderTransform` で反映） |
 
-再評価タイミング: `CenterPoint` 変更 / ポート設定（`SetCoordinateTransform`）/ `PositionOffset` 変更 / `IsVisible` 変更 / レイアウト時（`ArrangeCore` オーバーライド）/ 外部要求（`RefreshPosition`）。
+再評価タイミング: `CenterPoint` 変更 / ポート設定（`SetCoordinateTransform`）/ `PositionOffset` 変更 / `Options` 変更 / `IsVisible` 変更 / レイアウト時（`ArrangeCore` オーバーライド）/ 外部要求（`RefreshPosition`）。
 
 #### 5.3.1 PositionOffset
 
@@ -430,21 +375,19 @@ event EventHandler<LoupeRenderedEventArgs>? Rendered
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
 | `Bitmap` | `EsBitmap` | 描画済みのルーペ画像。イベントハンドラ内でピクセルへオーバーレイを直接描画できる（所有権は `LoupeControl` 側） |
-| `Position` | `Point` | ルーペの表示左上（親パネル内 DIP） |
-| `Size` | `double` | ルーペの表示サイズ（一辺・DIP） |
-| `ZoomLevel` | `int` | 拡大率 |
-| `CenterPoint` | `Point?` | 拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定時は null |
 | `CaptureTopLeft` | `Point?` | 切り出し領域の左上（ドメイン座標）。中心未設定時は null |
-| `Scale` | `double` | ドメイン座標 → ルーペ内容座標（ルーペローカル DIP）の変換係数 |
+| `Scale` | `double` | ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。DPI スケーリングの影響を受けない） |
 
 オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求められます。
+
+通知するのはホストがオーバーレイを描くために必要な最小限（描画済み画像・切り出し領域の左上・スケール）です。表示位置・表示サイズ・拡大率・拡大中心は、描画に必要な値をホストが既に保持しているため通知しません（必要な場合はコントロールの公開プロパティから取得します）。
 
 ```csharp
 loupe.Rendered += (_, e) =>
 {
     if (e.CaptureTopLeft is not { } topLeft) return;
     var local = (ドメイン座標 - topLeft) * e.Scale;
-    // e.Position / e.Size にオーバーレイを配置し、local に線分等を描画する
+    // local の位置へ線分等を e.Bitmap へ描画する（表示はコントロールが反映する）
 };
 ```
 
@@ -468,19 +411,19 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 - `CenterPoint` の変更
 - `Source` の変更
-- 外観プロパティの変更
+- `Options`（設定・外観）の変更
 - `IsVisible = false`
-- `ForceUpdate()` の実行
+- `RequestRender()` の実行
 
-描画エラー（`Source` が未対応の `IImage` 等）は `Log` へ記録され、`RenderAsync()` を直接呼び出した場合は呼び出し元へ例外が返されます。
+描画エラー（`Source` が未対応の `IImage` 等）は `Log` へ記録され、アプリは落ちません（例外は開始側が観測し、呼び出し元へは伝播しません）。
 
 ## 7. ライフサイクルと所有権
 
 ### 7.1 Source の所有権
 
-`Source` に設定した元画像（`Bitmap` / `EsBitmapImage`）の所有権は利用側にあります。
+`Source` に設定した元画像（`Bitmap` / `EsBitmapAvaloniaImage`）の所有権は利用側にあります。
 
-`LoupeControl` は元画像を破棄しません（`EsBitmapImage` を設定した場合も、内包する `EsBitmap` の破棄は利用側に委ねる）。
+`LoupeControl` は元画像を破棄しません（`EsBitmapAvaloniaImage` を設定した場合も、内包する `EsBitmap` の破棄は利用側に委ねる）。
 
 ### 7.2 生成 Bitmap の所有権
 
@@ -497,8 +440,8 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 （座標変換ポート方式。DragRect / FadeMask と同様）。
 
 - 表示位置: `CenterPoint`（ドメイン座標）を `SetCoordinateTransform` で設定したポートで親パネル DIP へ変換し、カーソル右下 + `PositionOffset` + クランプした位置を `RenderTransform` で反映します。
-- 表示サイズ: `RequestedSize`（基本サイズ）を親パネルサイズにクランプして内部管理します（ホストは基本サイズを設定するだけ）。
-- 再評価タイミング: `CenterPoint` 変更 / ポート設定 / `PositionOffset` 変更 / レイアウト時（`ArrangeCore`）/ 外部要求（`RefreshPosition`）。
+- 表示サイズ: `Options.RequestedSize`（基本サイズ）を親パネルサイズにクランプして内部管理します（ホストは基本サイズを設定するだけ）。
+- 再評価タイミング: `CenterPoint` 変更 / ポート設定 / `PositionOffset` 変更 / `Options` 変更 / レイアウト時（`ArrangeCore`）/ 外部要求（`RefreshPosition`）。
 
 上位APでは次の処理を行います。
 
@@ -513,14 +456,21 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 private readonly LoupeControl _loupe = new()
 {
     IsHitTestVisible = false,
-    RequestedSize = 240,
-    ZoomLevel = 4,
-    CrossColor = Brushes.Red,
-    CheckerSize = 8,
-    CheckerColorA = Brushes.White,
-    CheckerColorB = Brushes.LightGray,
-    FrameColor = Brushes.LightGray,
-    FrameWidth = 2
+    // 設定はコアの値を 1 つ設定する（with 式で部分変更する）
+    Options = LoupeOptions.Default with
+    {
+        RequestedSize = 240,
+        ZoomLevel = 4,
+        Appearance = new LoupeAppearance
+        {
+            CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
+            CheckerSize = 8,
+            CheckerColorA = DrawingColor.White,
+            CheckerColorB = DrawingColor.LightGray,
+            FrameColor = DrawingColor.LightGray,
+            FrameWidth = 2,
+        },
+    },
 };
 
 private void InitializeLoupe(Panel panel, Bitmap source)
@@ -537,9 +487,10 @@ private void UpdateLoupe(Point imagePixelPoint, Point displayPoint)
     Canvas.SetTop(_loupe, displayPoint.Y);
 }
 
-private async Task RefreshLoupeAsync()
+private void RefreshLoupe()
 {
-    await _loupe.RenderAsync();
+    // 中心は変わらないが、ビットマップへ重ねる内容が変わった場合に再生成を要求する
+    _loupe.RequestRender();
 }
 ```
 
@@ -549,8 +500,8 @@ private async Task RefreshLoupeAsync()
 - `RenderTargetBitmap` と `DrawingContext` の合成はUIスレッドで実行します。
 - 高頻度更新では、利用側でポインター更新頻度を制限することを推奨します。
 - `Source` に設定した画像は利用側が有効期間を管理してください。
-- 外観プロパティの連続変更は、同一Dispatcher待機中である場合に1回へ集約されます。
-- `ForceUpdate()` は完了待機APIではありません。完了待機が必要な場合は `RenderAsync()` を使用してください。
+- 外観（`Options.Appearance`）の連続変更は、同一Dispatcher待機中である場合に1回へ集約されます。
+- `RequestRender()` は完了待機APIではありません。完了は `Rendered` イベントで通知されます。
 - 外部 `DrawingContext` へルーペを描画するAPIは提供しません。必要な場合も `LoupeControl` をVisual Treeへ配置してください。
 
 ## 11. サンプルアプリケーション
@@ -566,7 +517,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 - `Source` のBinding
 - `CenterPoint` のマウス追従
 - 画像端から外れた部分の部分的な市松模様
-- `ZoomLevel`、`RequestedSize`、`RenderScaling`
-- 十字線・市松模様・外枠の外観変更
-- `IsVisible`、`Clear()`、`ForceUpdate()`、`RenderAsync()`
+- `Options`（`ZoomLevel` / `RequestedSize` / 外観）と `RenderScaling`
+- 十字線・市松模様・外枠の外観変更（`Options.Appearance`）
+- `IsVisible`、`Clear()`、`RequestRender()`
 - `Log`（描画エラーの通知先 ILogger 設定例）

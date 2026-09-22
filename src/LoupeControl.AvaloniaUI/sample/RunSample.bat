@@ -6,14 +6,14 @@ rem ====================================================================
 rem  LoupeControl サンプルアプリケーション（ビルド＆起動）
 rem
 rem  リリースビルド（dotnet build -c Release）を行い、成功したら
-rem  サンプルアプリケーション（LoupeControl.Sample.exe）を起動する。
+rem  サンプルアプリケーション（LoupeControl.AvaloniaUI.Sample.exe）を起動する。
 rem
 rem  使い方:
 rem     RunSample.bat
 rem ====================================================================
 
 set "PROJECT=%~dp0LoupeControl.AvaloniaUI.Sample.csproj"
-set "EXE=%~dp0bin\Release\net10.0\LoupeControl.Sample.exe"
+set "EXE=%~dp0bin\Release\net10.0\LoupeControl.AvaloniaUI.Sample.exe"
 
 echo [1/2] リリースビルドを開始します...
 dotnet build "%PROJECT%" -c Release --nologo

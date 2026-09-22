@@ -64,20 +64,8 @@ public partial class MainWindow : Window
     /// <param name="e">イベント引数。</param>
     private void OnClearClicked(object? sender, RoutedEventArgs e) => Loupe.Clear();
 
-    /// <summary>ForceUpdate() の動作確認（即時再生成）。</summary>
+    /// <summary>RequestRender() の動作確認（プロパティ変更を伴わない再生成要求）。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">イベント引数。</param>
-    private void OnForceUpdateClicked(object? sender, RoutedEventArgs e) => Loupe.ForceUpdate();
-
-    /// <summary>RenderAsync() の動作確認（非同期生成の完了待機）。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">イベント引数。</param>
-    /// <remarks>
-    /// 生成完了を待機できることを確認する（Fire-and-forget の自動再描画との違い）。<br/>
-    /// 完了を await するため、連打しても世代管理により最新の結果のみ表示される。
-    /// </remarks>
-    private async void OnRenderAsyncClicked(object? sender, RoutedEventArgs e)
-    {
-        await Loupe.RenderAsync();
-    }
+    private void OnRequestRenderClicked(object? sender, RoutedEventArgs e) => Loupe.RequestRender();
 }

@@ -1,4 +1,3 @@
-using Estable.AvaloniaUI.DragRect.Logging;
 using Estable.DragRect;
 using Avalonia;
 using Avalonia.Controls;
@@ -457,7 +456,6 @@ public sealed partial class DragRectControl : Control
             double dx = shift ? e.Delta.Y * WheelScrollUnit : e.Delta.X * WheelScrollUnit;
             double dy = shift ? 0 : e.Delta.Y * WheelScrollUnit;
             scrollViewer.Offset = new Vector(scrollViewer.Offset.X + dx, scrollViewer.Offset.Y + dy);
-            Log.LogWheelScroll(dx, dy, scrollViewer.Offset.X, scrollViewer.Offset.Y);
             e.Handled = true;
             return;
         }

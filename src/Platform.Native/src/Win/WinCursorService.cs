@@ -2,7 +2,6 @@ using EsUtil.Platform.Core;
 using System.Runtime.InteropServices;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.Platform.Native.Win;
 

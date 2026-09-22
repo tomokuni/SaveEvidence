@@ -5,7 +5,6 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Native.Imaging;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using DrawingBitmap = System.Drawing.Bitmap;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using RectInt = System.Drawing.Rectangle;

@@ -62,6 +62,15 @@ internal static class LoupeValueCoercer
     /// <summary>座標ラベルのフォントサイズの既定値（DIP）。</summary>
     internal const double CoordLabelFontSizeDefault = 12.0;
 
+    /// <summary>座標ラベルの背景の角丸半径の最小値（ピクセル。0 は角丸なし）。</summary>
+    internal const int CoordLabelCornerRadiusMin = 0;
+
+    /// <summary>座標ラベルの背景の角丸半径の最大値（ピクセル）。</summary>
+    internal const int CoordLabelCornerRadiusMax = 64;
+
+    /// <summary>座標ラベルの背景の角丸半径の既定値（ピクセル）。</summary>
+    internal const int CoordLabelCornerRadiusDefault = 2;
+
     /// <summary>表示サイズ要求値を安全域へ補正する（1〜4096）。</summary>
     /// <param name="value">補正する値（DIP）。</param>
     /// <returns>安全域にクランプした値。</returns>
@@ -93,4 +102,10 @@ internal static class LoupeValueCoercer
     /// <returns>安全域にクランプした値。非有限の場合は既定値。</returns>
     internal static double CoerceCoordLabelFontSize(double value)
         => double.IsFinite(value) ? Math.Clamp(value, CoordLabelFontSizeMin, CoordLabelFontSizeMax) : CoordLabelFontSizeDefault;
+
+    /// <summary>座標ラベルの背景の角丸半径を安全域へ補正する（0〜64）。</summary>
+    /// <param name="value">補正する値（ピクセル。0 は角丸なし）。</param>
+    /// <returns>安全域にクランプした値。</returns>
+    internal static int CoerceCoordLabelCornerRadius(int value)
+        => Math.Clamp(value, CoordLabelCornerRadiusMin, CoordLabelCornerRadiusMax);
 }

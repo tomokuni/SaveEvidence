@@ -6,12 +6,13 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
-using EsUtil.Platform.AvaloniaUI;
+using Estable.Loupe;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
+using DrawingColor = System.Drawing.Color;
 
 namespace Estable.AvaloniaUI.Loupe.Tests;
 
@@ -27,7 +28,7 @@ public class LoupeControlTests
 {
     /// <summary>テスト用の LoupeControl を生成する（ヘッドレスで初期化）。</summary>
     private static LoupeControl CreateControl()
-        => new() { RequestedSize = 100, ZoomLevel = 2, IsVisible = true };
+        => new() { Options = LoupeOptions.Default with { RequestedSize = 100, ZoomLevel = 2 }, IsVisible = true };
 
     // ====================================================================
     // 更新経路（バッチ化）
@@ -40,7 +41,7 @@ public class LoupeControlTests
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
 
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         Assert.NotNull(control.LoupeBitmap);
     }
@@ -56,7 +57,7 @@ public class LoupeControlTests
         control.Source = image;
         control.CenterPoint = new Point(100, 100);
 
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         Assert.NotNull(control.LoupeBitmap);
     }
@@ -71,7 +72,7 @@ public class LoupeControlTests
         control.CenterPoint = new Point(100, 100);
         Assert.Null(control.LoupeBitmap);
 
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
         Assert.NotNull(control.LoupeBitmap);
     }
 
@@ -81,7 +82,7 @@ public class LoupeControlTests
         var control = CreateControl();
 
         control.CenterPoint = new Point(50, 50);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         Assert.NotNull(control.LoupeBitmap);
         Assert.Equal(100, control.LoupeBitmap!.Size.Width);
@@ -94,7 +95,7 @@ public class LoupeControlTests
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
 
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         // center が未設定のため、画像抽出は行わず市松模様のみ描画する
         Assert.NotNull(control.LoupeBitmap);
@@ -125,7 +126,7 @@ public class LoupeControlTests
         Assert.NotNull(field);
         field!.SetValue(control, null);
 
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         // 描画は内部 Image 要素（PART_Image）が null でも完了する（LoupeBitmap は生成される）
         Assert.NotNull(control.LoupeBitmap);
@@ -142,64 +143,44 @@ public class LoupeControlTests
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
         var first = control.LoupeBitmap;
 
         control.CenterPoint = new Point(120, 120);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         Assert.NotNull(control.LoupeBitmap);
         Assert.NotSame(first, control.LoupeBitmap);
     }
 
     [AvaloniaFact]
-    public async Task ForceUpdateでLoupeBitmapが再生成される()
+    public async Task RequestRenderでLoupeBitmapが再生成される()
     {
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
         var first = control.LoupeBitmap;
 
-        control.ForceUpdate();
-
-        // StartRender は fire-and-forget のため、生成完了をポーリングで待つ
-        for (var i = 0; i < 100 && ReferenceEquals(control.LoupeBitmap, first); i++)
-        {
-            Dispatcher.UIThread.RunJobs();
-            await Task.Delay(5);
-        }
+        // プロパティ変更を伴わない再生成要求（生成完了は Rendered で通知される）
+        control.RequestRender();
+        await control.WaitForRenderedAsync();
 
         Assert.NotNull(control.LoupeBitmap);
         Assert.NotSame(first, control.LoupeBitmap);
     }
 
     [AvaloniaFact]
-    public async Task RenderAsyncを再実行するとLoupeBitmapが再生成される()
+    public async Task 設定の変更でLoupeBitmapが再生成される()
     {
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
         var first = control.LoupeBitmap;
 
-        await control.RenderAsync();
-
-        Assert.NotNull(control.LoupeBitmap);
-        Assert.NotSame(first, control.LoupeBitmap);
-    }
-
-    [AvaloniaFact]
-    public async Task 外観プロパティの変更でLoupeBitmapが再生成される()
-    {
-        var control = CreateControl();
-        control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
-        control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
-        var first = control.LoupeBitmap;
-
-        control.ZoomLevel = 4;
-        await control.RenderAsync();
+        control.Options = control.Options with { ZoomLevel = 4 };
+        await control.WaitForRenderedAsync();
 
         Assert.NotNull(control.LoupeBitmap);
         Assert.NotSame(first, control.LoupeBitmap);
@@ -215,7 +196,7 @@ public class LoupeControlTests
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         control.Clear();
 
@@ -229,7 +210,7 @@ public class LoupeControlTests
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         // 表示状態（true）からの遷移でのみ Changed が発火して解放される
         // （AXAML 初期値が false のため、false→false では Changed は発火しない）
@@ -248,9 +229,9 @@ public class LoupeControlTests
 
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        Dispatcher.UIThread.RunJobs();
 
-        await control.RenderAsync();
+        // 非表示のため描画は要求されない（Rendered は発火しない）
+        await control.PumpAsync();
         Assert.Null(control.LoupeBitmap);
         Assert.False(control.IsVisible);
 
@@ -264,11 +245,11 @@ public class LoupeControlTests
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         control.IsVisible = false;
         control.IsVisible = true;
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         Assert.True(control.IsVisible);
         Assert.NotNull(control.LoupeBitmap);
@@ -283,11 +264,11 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.RequestedSize = 0;
-        Assert.Equal(1, control.RequestedSize);
+        control.Options = control.Options with { RequestedSize = 0 };
+        Assert.Equal(1, control.Options.RequestedSize);
 
-        control.RequestedSize = 5000;
-        Assert.Equal(4096, control.RequestedSize);
+        control.Options = control.Options with { RequestedSize = 5000 };
+        Assert.Equal(4096, control.Options.RequestedSize);
     }
 
     [AvaloniaFact]
@@ -295,11 +276,11 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.ZoomLevel = 0;
-        Assert.Equal(1, control.ZoomLevel);
+        control.Options = control.Options with { ZoomLevel = 0 };
+        Assert.Equal(1, control.Options.ZoomLevel);
 
-        control.ZoomLevel = 100;
-        Assert.Equal(64, control.ZoomLevel);
+        control.Options = control.Options with { ZoomLevel = 100 };
+        Assert.Equal(64, control.Options.ZoomLevel);
     }
 
     [AvaloniaFact]
@@ -307,8 +288,9 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.FrameWidth = 0;
-        Assert.Equal(1, control.FrameWidth);
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { FrameWidth = 0 } };
+
+        Assert.Equal(1, control.Options.Appearance.FrameWidth);
     }
 
     // ====================================================================
@@ -316,18 +298,7 @@ public class LoupeControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public async Task SourceがBitmap以外の場合RenderAsyncはNotSupportedExceptionを投げる()
-    {
-        var control = CreateControl();
-        control.Source = new CroppedBitmap(
-            EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(100, 100, Colors.Blue), new PixelRect(0, 0, 50, 50));
-        control.CenterPoint = new Point(25, 25);
-
-        await Assert.ThrowsAsync<NotSupportedException>(() => control.RenderAsync());
-    }
-
-    [AvaloniaFact]
-    public async Task 例外発生時にLogUpdateErrorがログへ記録される()
+    public async Task 未対応の画像型はログへ記録され描画を継続する()
     {
         var control = CreateControl();
         var sink = new TestHelper.ListLogger();
@@ -336,13 +307,14 @@ public class LoupeControlTests
             EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(100, 100, Colors.Blue), new PixelRect(0, 0, 10, 10));
         control.CenterPoint = new Point(5, 5);
 
-        await Assert.ThrowsAsync<NotSupportedException>(() => control.RenderAsync());
+        // 描画の例外（未対応型）はアプリを落とさずログへ記録される（開始側が fire-and-forget で例外を観測する）
+        await control.PumpUntilAsync(() => sink.HasError);
 
         Assert.True(sink.HasError);
     }
 
     [AvaloniaFact]
-    public async Task ForceUpdate_生成失敗時は例外が観測されログへ記録される()
+    public async Task RequestRender_生成失敗時は例外が観測されログへ記録される()
     {
         var control = CreateControl();
         var sink = new TestHelper.ListLogger();
@@ -351,15 +323,9 @@ public class LoupeControlTests
             EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(100, 100, Colors.Blue), new PixelRect(0, 0, 10, 10));
         control.CenterPoint = new Point(5, 5);
 
-        // StartRender（fire-and-forget）経由の生成失敗 → ContinueWith(OnlyOnFaulted) で観測される
-        control.ForceUpdate();
-
-        // 生成失敗の完了をポーリングで待つ（fire-and-forget のため）
-        for (var i = 0; i < 100 && !sink.HasError; i++)
-        {
-            Dispatcher.UIThread.RunJobs();
-            await Task.Delay(5);
-        }
+        // 明示的な再生成要求（RequestRender）経由の生成失敗 → 開始側の例外観測でログへ記録される
+        control.RequestRender();
+        await control.PumpUntilAsync(() => sink.HasError);
 
         Assert.True(sink.HasError);
     }
@@ -369,48 +335,33 @@ public class LoupeControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public async Task RenderAsync実行中に非表示になると生成画像は破棄される()
+    public async Task 生成中に非表示になると生成画像は破棄される()
     {
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
 
-        // 生成（Task.Run での画素抽出）中に非表示へ切り替えると、
-        // Dispatcher 反映時に IsVisible=false のため生成ビットマップは破棄される
-        var task = control.RenderAsync();
+        // 生成（Dispatcher への反映待ち）中に非表示へ切り替えると、
+        // 反映時に IsVisible=false のため生成ビットマップは破棄される
         control.IsVisible = false;
-        await task;
+        await control.PumpAsync();
 
         Assert.Null(control.LoupeBitmap);
         Assert.False(control.IsVisible);
     }
 
     [AvaloniaFact]
-    public void ForceUpdate_非表示時はビットマップを解放する()
+    public void RequestRender_非表示時はビットマップを解放する()
     {
         var control = CreateControl();
         control.IsVisible = false;
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
 
-        control.ForceUpdate();
+        control.RequestRender();
 
         Assert.Null(control.LoupeBitmap);
         Assert.False(control.IsVisible);
-    }
-
-    [AvaloniaFact]
-    public void RenderAsync_非表示時は即座に完了し画像を生成しない()
-    {
-        var control = CreateControl();
-        control.IsVisible = false;
-        control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
-        control.CenterPoint = new Point(100, 100);
-
-        var task = control.RenderAsync();
-
-        Assert.True(task.IsCompleted);
-        Assert.Null(control.LoupeBitmap);
     }
 
     // ====================================================================
@@ -440,34 +391,61 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.CheckerSize = 0;
-        Assert.Equal(1, control.CheckerSize);
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { CheckerSize = 0 } };
+        Assert.Equal(1, control.Options.Appearance.CheckerSize);
 
-        control.CheckerSize = 200;
-        Assert.Equal(128, control.CheckerSize);
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { CheckerSize = 200 } };
+        Assert.Equal(128, control.Options.Appearance.CheckerSize);
     }
 
     [AvaloniaFact]
-    public void 外観プロパティの設定値が保持される()
+    public void 設定の補正は値の生成時に適用される()
     {
         var control = CreateControl();
-        var brush = new SolidColorBrush(Colors.Green);
 
-        control.CrossColor = brush;
-        control.CheckerColorA = brush;
-        control.CheckerColorB = brush;
-        control.FrameColor = brush;
-        control.RenderScaling = 2.0;
-        control.FrameWidth = 3;
-        control.CheckerSize = 5;
+        // プロパティのスタイル値を直接設定する（バインディングと同じ経路。CLR プロパティの setter を通らない）
+        // 数値項目の補正は値の型（LoupeOptions / LoupeAppearance）が生成時に適用するため、
+        // どの設定経路でも範囲内の値だけがコントロールへ渡る（UI 側に補正の登録を要求しない）。
+        control.SetValue(LoupeControl.OptionsProperty, LoupeOptions.Default with
+        {
+            RequestedSize = 100_000,
+            ZoomLevel = 1000,
+            Appearance = new LoupeAppearance { CheckerSize = 1000, FrameWidth = 1000 },
+        });
+        control.SetValue(LoupeControl.RenderScalingProperty, 100.0);
 
-        Assert.Same(brush, control.CrossColor);
-        Assert.Same(brush, control.CheckerColorA);
-        Assert.Same(brush, control.CheckerColorB);
-        Assert.Same(brush, control.FrameColor);
-        Assert.Equal(2.0, control.RenderScaling);
-        Assert.Equal(3, control.FrameWidth);
-        Assert.Equal(5, control.CheckerSize);
+        // 環境値（DPI）の補正はプロパティのメタデータ（coerce）へ登録する
+        Assert.Equal(LoupeValueCoercer.RequestedSizeMax, control.Options.RequestedSize);
+        Assert.Equal(LoupeValueCoercer.ZoomLevelMax, control.Options.ZoomLevel);
+        Assert.Equal(LoupeValueCoercer.RenderScalingMax, control.RenderScaling);
+        Assert.Equal(LoupeValueCoercer.CheckerSizeMax, control.Options.Appearance.CheckerSize);
+        Assert.Equal(LoupeValueCoercer.FrameWidthMax, control.Options.Appearance.FrameWidth);
+    }
+
+    [AvaloniaFact]
+    public void 外観の設定値が保持される()
+    {
+        var control = CreateControl();
+
+        control.Options = control.Options with
+        {
+            Appearance = new LoupeAppearance
+            {
+                CrossColor = DrawingColor.Green,
+                CheckerColorA = DrawingColor.Green,
+                CheckerColorB = DrawingColor.Green,
+                FrameColor = DrawingColor.Green,
+                FrameWidth = 3,
+                CheckerSize = 5,
+            },
+        };
+
+        Assert.Equal(DrawingColor.Green, control.Options.Appearance.CrossColor);
+        Assert.Equal(DrawingColor.Green, control.Options.Appearance.CheckerColorA);
+        Assert.Equal(DrawingColor.Green, control.Options.Appearance.CheckerColorB);
+        Assert.Equal(DrawingColor.Green, control.Options.Appearance.FrameColor);
+        Assert.Equal(3, control.Options.Appearance.FrameWidth);
+        Assert.Equal(5, control.Options.Appearance.CheckerSize);
     }
 
     [AvaloniaFact]
@@ -475,17 +453,18 @@ public class LoupeControlTests
     {
         var control = new LoupeControl();
 
-        Assert.Equal(160, control.RequestedSize);
-        Assert.Equal(4, control.ZoomLevel);
-        Assert.Equal(6, control.CheckerSize);
-        Assert.Equal(2, control.FrameWidth);
+        Assert.Equal(160, control.Options.RequestedSize);
+        Assert.Equal(4, control.Options.ZoomLevel);
         Assert.Equal(1.0, control.RenderScaling);
-        // 十字線の既定は赤 40%（アルファ 102）
-        Assert.Equal(Color.FromAColor(102, Colors.Red), ((ISolidColorBrush)control.CrossColor!).Color);
-        // 市松模様の既定は Gray 30%（#4C808080）/ DarkGray 30%（#4CA9A9A9）（設定画面の現在値）
-        Assert.Equal(Color.FromAColor(0x4C, Colors.Gray), ((ISolidColorBrush)control.CheckerColorA!).Color);
-        Assert.Equal(Color.FromAColor(0x4C, Colors.DarkGray), ((ISolidColorBrush)control.CheckerColorB!).Color);
-        Assert.Same(Brushes.LightGray, control.FrameColor);
+
+        // 外観の既定値はコア（LoupeAppearance）が単一所有する（両 UI で同一）
+        Assert.Equal(new LoupeAppearance(), control.Options.Appearance);
+        Assert.Equal(6, control.Options.Appearance.CheckerSize);
+        Assert.Equal(2, control.Options.Appearance.FrameWidth);
+        Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), control.Options.Appearance.CrossColor);
+        Assert.Equal(DrawingColor.FromArgb(0x4C, 0x80, 0x80, 0x80), control.Options.Appearance.CheckerColorA);
+        Assert.Equal(DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), control.Options.Appearance.CheckerColorB);
+        Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), control.Options.Appearance.FrameColor);
     }
 
     // ====================================================================
@@ -497,19 +476,18 @@ public class LoupeControlTests
     {
         var control = new LoupeControl();
 
-        // ルーペ座標ラベルは既定で表示（設定画面の現在値）
-        Assert.True(control.ShowCoordLabel);
-        Assert.Same(Brushes.White, control.CoordLabelColor);
-        // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(Color.FromAColor(153, Colors.Black), ((SolidColorBrush)control.CoordLabelBackgroundColor!).Color);
-        Assert.Equal(12.0, control.CoordLabelFontSize);
+        // ルーペ座標ラベルは既定で表示（設定画面の現在値）。色はコアの既定値（白 / 黒 60% = #99000000）
+        Assert.True(control.Options.Appearance.ShowCoordLabel);
+        Assert.Equal(DrawingColor.White, control.Options.Appearance.CoordLabelColor);
+        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), control.Options.Appearance.CoordLabelBackgroundColor);
+        Assert.Equal(12.0, control.Options.Appearance.CoordLabelFontSize);
     }
 
     [AvaloniaFact]
     public void 座標ラベルを有効化してCenterPointを設定すると表示される()
     {
         var control = CreateControl();
-        control.ShowCoordLabel = true;
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = true } };
         control.CenterPoint = new Point(123, 456);
 
         // PART_CoordLabel が表示され、テキストが "(123, 456)" になる（ドメイン座標）
@@ -523,7 +501,7 @@ public class LoupeControlTests
     public void 座標ラベル無効時はCenterPointがあっても非表示である()
     {
         var control = CreateControl();
-        control.ShowCoordLabel = false;
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = false } };
         control.CenterPoint = new Point(123, 456);
 
         Assert.NotNull(control.CoordLabelBorder);
@@ -534,22 +512,48 @@ public class LoupeControlTests
     public void 座標ラベルの色とフォントサイズが反映される()
     {
         var control = CreateControl();
-        var color = new SolidColorBrush(Colors.Yellow);
-        var bg = new SolidColorBrush(Color.FromAColor(179, Colors.DarkBlue)); // 暗青 70%
-        control.ShowCoordLabel = true;
-        control.CoordLabelColor = color;
-        control.CoordLabelBackgroundColor = bg;
-        control.CoordLabelFontSize = 16;
+        var bg = DrawingColor.FromArgb(179, 0, 0, 139); // 暗青 70%
+        control.Options = control.Options with
+        {
+            Appearance = control.Options.Appearance with
+            {
+                ShowCoordLabel = true,
+                CoordLabelColor = DrawingColor.Yellow,
+                CoordLabelBackgroundColor = bg,
+                CoordLabelFontSize = 16,
+            },
+        };
         control.CenterPoint = new Point(10, 20);
 
         Assert.NotNull(control.CoordLabelText);
         Assert.Equal(16.0, control.CoordLabelText!.FontSize);
-        Assert.Same(color, control.CoordLabelText.Foreground);
+        // 文字色はコアの色（黄）からブラシへ変換されて反映される
+        Assert.True(control.CoordLabelText.Foreground is SolidColorBrush fg
+            && fg.Color == Color.FromArgb(255, 255, 255, 0));
 
         Assert.NotNull(control.CoordLabelBorder);
         // 背景は色（アルファ込み）がそのまま反映される
         Assert.True(control.CoordLabelBorder!.Background is SolidColorBrush sb
-            && sb.Color == Color.FromAColor(179, Colors.DarkBlue));
+            && sb.Color == Color.FromArgb(179, 0, 0, 139));
+    }
+
+    /// <summary>座標ラベルの角丸がコアの外観値から反映されることを検証する。</summary>
+    /// <remarks>位置（左上）と同じく、外観値は AXAML へ書かずコアの値だけを設定する。</remarks>
+    [AvaloniaFact]
+    public void 座標ラベルの角丸がコアの外観値から反映される()
+    {
+        var control = CreateControl();
+        // 既定はコアの既定値（2）
+        control.CenterPoint = new Point(10, 20);
+        Assert.NotNull(control.CoordLabelBorder);
+        Assert.Equal(LoupeValueCoercer.CoordLabelCornerRadiusDefault, control.CoordLabelBorder!.CornerRadius.TopLeft);
+
+        // 外観を変えると角丸も追従する（0 は角丸なし）
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { CoordLabelCornerRadius = 8 } };
+        Assert.Equal(8, control.CoordLabelBorder.CornerRadius.TopLeft);
+
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { CoordLabelCornerRadius = 0 } };
+        Assert.Equal(0, control.CoordLabelBorder.CornerRadius.TopLeft);
     }
 
     // ====================================================================
@@ -635,7 +639,7 @@ public class LoupeControlTests
     public void 親パネルより大きいRequestedSizeはクランプされる()
     {
         var control = CreateControl();
-        control.RequestedSize = 400; // パネル (300,300) より大きい
+        control.Options = control.Options with { RequestedSize = 400 }; // パネル (300,300) より大きい
         var panel = new Panel { Width = 300, Height = 300 };
         panel.Children.Add(control);
         var window = new Window { Content = panel };
@@ -645,6 +649,32 @@ public class LoupeControlTests
         // 表示サイズは親パネルの最小辺 (300) にクランプされる
         Assert.Equal(300, control.Width);
         Assert.Equal(300, control.Height);
+        window.Close();
+    }
+
+    /// <summary>親パネルへ接続した後に RequestedSize を変更してもクランプが維持されることを検証する。</summary>
+    /// <remarks>
+    /// 表示サイズの決定（クランプと、親未接続時の基本サイズへのフォールバック）は 1 箇所で行う。<br/>
+    /// 複数箇所で書き込むと、要求サイズの変更直後にクランプ前の値で描画される（表示サイズと描画ビットマップが食い違う）。
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task 親パネル接続後のRequestedSize変更でもクランプが維持される()
+    {
+        var control = new LoupeControl { Options = LoupeOptions.Default with { RequestedSize = 400, ZoomLevel = 2 }, IsVisible = true }; // パネル (300,300) より大きい
+        var panel = new Panel { Width = 300, Height = 300 };
+        panel.Children.Add(control);
+        var window = new Window { Content = panel };
+        window.Show();
+        control.CenterPoint = new Point(50, 50);
+        await control.WaitForRenderedAsync();
+        Assert.Equal(300, control.LoupeBitmap!.Size.Width);
+
+        // 接続後にさらに大きい要求へ変更し、レイアウト（Arrange）を待たずに描画する
+        control.Options = control.Options with { RequestedSize = 500 };
+        await control.WaitForRenderedAsync();
+
+        // 表示サイズ（親パネルの 300 DIP）と描画ビットマップの一辺（物理ピクセル）が一致する
+        Assert.Equal(300, control.LoupeBitmap!.Size.Width);
         window.Close();
     }
 
@@ -688,7 +718,7 @@ public class LoupeControlTests
         control.CenterPoint = new Point(100, 100);
         bitmap.Dispose(); // 破棄済み Bitmap（生存検証で ObjectDisposedException）
 
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         // 例外なく完了し、市松模様のみの Bitmap が生成される
         Assert.NotNull(control.LoupeBitmap);
@@ -702,12 +732,10 @@ public class LoupeControlTests
         control.Source = bitmap;
         control.CenterPoint = new Point(100, 100);
 
-        // RenderAsync は生存検証（PixelSize）まで同期実行される。生存検証後に破棄することで、
-        // Task.Run 内の抽出が ObjectDisposedException → region null となり、市松模様のみで描画される。
-        var task = control.RenderAsync();
+        // 描画要求の反映前にソースを破棄すると、ソース解決が破棄済みを検知して切り出しを行わない
+        // （市松模様のみで描画され、例外は描画層へ伝播しない）
         bitmap.Dispose();
-
-        await task;
+        await control.WaitForRenderedAsync();
 
         // 例外なく完了し、市松模様のみの Bitmap が生成される
         Assert.NotNull(control.LoupeBitmap);
@@ -723,7 +751,7 @@ public class LoupeControlTests
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         // Source が破棄済みでないこと（Size 参照で ObjectDisposedException が発生しない）
         Assert.NotNull(control.PART_Image);
@@ -738,7 +766,7 @@ public class LoupeControlTests
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         // Clear で表示用 Bitmap と PART_Image.Source の両方が解放される（破棄済み Bitmap の残留防止）
         control.Clear();
@@ -757,9 +785,9 @@ public class LoupeControlTests
         // 再設定（OldValue が null でない）→ 変更ログの両分岐が実行される
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(50, 50);
-        control.RequestedSize = 120;
+        control.Options = control.Options with { RequestedSize = 120 };
         control.RenderScaling = 1.5;
-        control.ZoomLevel = 8;
+        control.Options = control.Options with { ZoomLevel = 8 };
 
         Assert.NotNull(control.Source);
     }
@@ -779,11 +807,8 @@ public class LoupeControlTests
         control.Source = null;
         control.CenterPoint = null;
 
-        // RequestRender がポストした RenderCore（LogRenderCore）を実行する
-        Dispatcher.UIThread.RunJobs();
-
-        // RenderAsync で LogGenerateAsyncDone を実行する
-        await control.RenderAsync();
+        // 描画を実行して LogRenderCore / LogGenerateAsyncDone を出力する
+        await control.WaitForRenderedAsync();
         Dispatcher.UIThread.RunJobs();
         control.Clear();
     }
@@ -793,33 +818,26 @@ public class LoupeControlTests
     {
         var control = new LoupeControl();
 
-        control.CoordLabelFontSize = double.NaN;
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { CoordLabelFontSize = double.NaN } };
 
-        Assert.Equal(12.0, control.CoordLabelFontSize);
+        Assert.Equal(12.0, control.Options.Appearance.CoordLabelFontSize);
     }
 
     [AvaloniaFact]
-    public void CoordLabelBackgroundColor_nullで黒にフォールバックする()
+    public void CoordLabelBackgroundColor_透明でも例外にならない()
     {
         var control = new LoupeControl();
-        control.ShowCoordLabel = true;
-        control.CoordLabelBackgroundColor = null;
+        control.Options = control.Options with
+        {
+            Appearance = control.Options.Appearance with
+            {
+                ShowCoordLabel = true,
+                CoordLabelBackgroundColor = DrawingColor.FromArgb(0, 0, 0, 0),
+            },
+        };
         control.CenterPoint = new Point(10, 20);
 
-        // null 背景 → 黒で表示される（PART_CoordLabel の Background が設定される）
-        Assert.NotNull(control.CoordLabelBorder);
-        Assert.True(control.CoordLabelBorder!.IsVisible);
-    }
-
-    [AvaloniaFact]
-    public void CoordLabelBackgroundColor_非SolidColorBrushでも例外にならない()
-    {
-        var control = new LoupeControl();
-        control.ShowCoordLabel = true;
-        // IBrush のうち SolidColorBrush 以外（GradientBrush）を設定
-        control.CoordLabelBackgroundColor = new LinearGradientBrush();
-        control.CenterPoint = new Point(10, 20);
-
+        // 透明な背景色でも例外なく描画される（透明ブラシがそのまま設定される）
         Assert.NotNull(control.CoordLabelBorder);
         Assert.True(control.CoordLabelBorder!.IsVisible);
     }
@@ -828,12 +846,18 @@ public class LoupeControlTests
     public void 座標ラベル背景色のブラシは容量超過時も例外なく共有される()
     {
         var control = new LoupeControl();
-        control.ShowCoordLabel = true;
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = true } };
 
-        // ブラシキャッシュ容量（32）を超える 33 色を順次設定し、容量超過時のキャッシュクリア経路を実行する
-        for (int i = 0; i <= 32; i++)
+        // ブラシキャッシュ容量（128）を超える 129 色を順次設定し、容量超過時のキャッシュクリア経路を実行する
+        for (int i = 0; i <= 128; i++)
         {
-            control.CoordLabelBackgroundColor = new SolidColorBrush(Color.FromArgb(255, (byte)i, (byte)(255 - i), (byte)(i * 3)));
+            control.Options = control.Options with
+            {
+                Appearance = control.Options.Appearance with
+                {
+                    CoordLabelBackgroundColor = DrawingColor.FromArgb(255, (byte)i, (byte)(255 - i), (byte)(i * 3)),
+                },
+            };
             control.CenterPoint = new Point(i + 1, 20);
         }
 
@@ -852,7 +876,7 @@ public class LoupeControlTests
         textField!.SetValue(control, null);
 
         // 例外なく完了する
-        control.ShowCoordLabel = true;
+        control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = true } };
         control.CenterPoint = new Point(10, 20);
     }
 
@@ -869,22 +893,38 @@ public class LoupeControlTests
 
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         // RequestedSize=100 / ZoomLevel=2 / RenderScaling=1.0 の場合:
         // pixelSize = ceil(100×1.0) = 100, captureSize = ceil(100/2) = 50
-        // CaptureTopLeft = (100−25, 100−25) = (75, 75), Scale = 100×2/100 = 2.0
+        // CaptureTopLeft = (100−25, 100−25) = (75, 75), Scale = ZoomLevel = 2.0
         Assert.NotNull(args);
         Assert.NotNull(args!.Bitmap);
         Assert.Equal(100, args.Bitmap.Size.Width);
         Assert.Equal(100, args.Bitmap.Size.Height);
-        Assert.Equal(100, args.Size);
-        Assert.Equal(2, args.ZoomLevel);
-        Assert.Equal(new Point(100, 100), args.CenterPoint);
         Assert.Equal(new Point(75, 75), args.CaptureTopLeft);
         Assert.Equal(2.0, args.Scale);
-        // 親パネル未接続（テスト）のため表示位置は既定値 (0,0)
-        Assert.Equal(default, args.Position);
+    }
+
+    [AvaloniaFact]
+    public async Task 描画完了通知のスケールはDisplayScalingに依存しない()
+    {
+        // 破線オーバーレイの位置が DPI でずれないことの回帰テスト。
+        // 描画は切り出し領域を ZoomLevel 倍で描くため、Scale は常に ZoomLevel と同値になる
+        // （DIP 表示サイズを物理ピクセルで割った値ではない）。
+        var control = CreateControl();
+        control.RenderScaling = 1.5;
+        LoupeRenderedEventArgs? args = null;
+        control.Rendered += (_, e) => args = e;
+
+        control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
+        control.CenterPoint = new Point(100, 100);
+        await control.WaitForRenderedAsync();
+
+        Assert.NotNull(args);
+        // RequestedSize=100 / ZoomLevel=2 / RenderScaling=1.5 → pixelSize=150, captureSize=75
+        Assert.Equal(150, args!.Bitmap!.Size.Width);
+        Assert.Equal(2.0, args.Scale);
     }
 
     [AvaloniaFact]
@@ -895,13 +935,11 @@ public class LoupeControlTests
         control.Rendered += (_, e) => args = e;
 
         // CenterPoint 未設定（市松模様のみの描画）でもイベントは発火する
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         Assert.NotNull(args!);
         Assert.NotNull(args.Bitmap);
-        Assert.Null(args.CenterPoint);
         Assert.Null(args.CaptureTopLeft);
-        Assert.Equal(100, args.Size);
     }
 
     [AvaloniaFact]
@@ -910,13 +948,13 @@ public class LoupeControlTests
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         var count = 0;
         control.Rendered += (_, _) => count++;
 
         control.CenterPoint = new Point(120, 120);
-        await control.RenderAsync();
+        await control.WaitForRenderedAsync();
 
         Assert.Equal(1, count);
     }

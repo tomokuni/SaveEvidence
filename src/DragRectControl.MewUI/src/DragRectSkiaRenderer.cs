@@ -1,6 +1,7 @@
 using Estable.DragRect;
 using Estable.DragRect.Selection;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 
@@ -33,7 +34,7 @@ internal static class DragRectSkiaRenderer
             IsAntialias = false,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = (float)borderThickness,
-            Color = ToSKColor(borderColor),
+            Color = borderColor.ToSKColor(),
         };
 
         canvas.DrawRect(ToSKRect(rect), paint);
@@ -57,7 +58,7 @@ internal static class DragRectSkiaRenderer
         {
             IsAntialias = false,
             Style = SKPaintStyle.Fill,
-            Color = ToSKColor(handleColor),
+            Color = handleColor.ToSKColor(),
         };
 
         using var borderPaint = new SKPaint
@@ -65,7 +66,7 @@ internal static class DragRectSkiaRenderer
             IsAntialias = false,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = (float)DragRectAppearance.HandlePenThickness,
-            Color = ToSKColor(borderColor),
+            Color = borderColor.ToSKColor(),
         };
 
         var half = handleSize / 2;
@@ -99,7 +100,7 @@ internal static class DragRectSkiaRenderer
             IsAntialias = false,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = (float)thickness,
-            Color = ToSKColor(color),
+            Color = color.ToSKColor(),
         };
 
         var cx = (float)center.X;
@@ -137,8 +138,8 @@ internal static class DragRectSkiaRenderer
         var text = CoordinateFormatter.Format(domainPos);
 
         using var font = new SKFont(SKTypeface.Default, (float)fontSize);
-        using var textPaint = new SKPaint { IsAntialias = true, Color = ToSKColor(textColor) };
-        using var backgroundPaint = new SKPaint { IsAntialias = false, Color = ToSKColor(backgroundColor) };
+        using var textPaint = new SKPaint { IsAntialias = true, Color = textColor.ToSKColor() };
+        using var backgroundPaint = new SKPaint { IsAntialias = false, Color = backgroundColor.ToSKColor() };
 
         var width = font.MeasureText(text, textPaint);
         var height = (float)fontSize;
@@ -161,5 +162,5 @@ internal static class DragRectSkiaRenderer
     /// <summary>コアの色型を Skia の色へ変換する。</summary>
     /// <param name="color">変換元の色（アルファを含む）。</param>
     /// <returns>Skia の色。</returns>
-    private static SKColor ToSKColor(DrawingColor color) => new(color.R, color.G, color.B, color.A);
+    // ※ 色の変換（コアの色型 → Skia）は Platform.Core の SkiaColorInterop（拡張メソッド）を共用する
 }

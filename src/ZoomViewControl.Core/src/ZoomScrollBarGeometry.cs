@@ -8,7 +8,7 @@ namespace Estable.ZoomView;
 /// <remarks>トラックはスクロール可能な軸にのみ生成される（画像がビューポートに収まる軸には生成しない）。</remarks>
 public readonly record struct ZoomScrollBar(EsRect Track, EsRect Thumb);
 
-/// <summary>ズームビューのオーバーレイ スクロールバーの幾何計算を提供する静的クラス。</summary>
+/// <summary>ズームビューのオーバーレイスクロールバーの幾何計算を提供する静的クラス。</summary>
 /// <remarks>
 /// 画像の表示サイズ・ビューポート・オフセットから、トラックとサムの矩形を算出する。<br/>
 /// UI フレームワークに依存しないコア型のみで計算するため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>

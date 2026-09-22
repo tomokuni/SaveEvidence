@@ -20,21 +20,50 @@ public class LoupeRenderCoordinatorTests
             logRenderCore: _ => { },
             post: action => action()); // Dispatcher を同期実行に置き換え、並列テスト可能にする
 
+    /// <summary>テスト用のコーディネーターと、直近に採番された世代番号を保持するホルダーを生成する。</summary>
+    /// <param name="isVisible">表示状態（モック）。</param>
+    /// <returns>コーディネーターと世代番号の取り出し。</returns>
+    /// <remarks>世代番号は再描画の実行時にのみ採番されるため、テストは再描画を実行して世代番号を得る。</remarks>
+    private static (LoupeRenderCoordinator Coordinator, Func<long> LastGeneration) CreateWithGeneration(bool isVisible)
+    {
+        long generation = 0;
+        var coordinator = new LoupeRenderCoordinator(
+            isVisible: () => isVisible,
+            releaseBitmap: () => { },
+            startRender: g => generation = g,
+            logRenderCore: _ => { },
+            post: action => action());
+
+        return (coordinator, () => generation);
+    }
+
+    /// <summary>再描画を 1 回実行し、採番された世代番号を返す。</summary>
+    /// <param name="coordinator">対象のコーディネーター。</param>
+    /// <param name="lastGeneration">直近に採番された世代番号の取り出し。</param>
+    /// <returns>採番された世代番号。</returns>
+    private static long BeginRender(LoupeRenderCoordinator coordinator, Func<long> lastGeneration)
+    {
+        coordinator.RequestRender();
+        coordinator.RenderCore();
+        return lastGeneration();
+    }
+
     [Fact]
     public void ShouldApply_表示中かつ最新世代ならtrueを返す()
     {
-        var coordinator = Create(isVisible: true);
-        var generation = coordinator.NextGeneration();
+        var (coordinator, lastGeneration) = CreateWithGeneration(isVisible: true);
+        var generation = BeginRender(coordinator, lastGeneration);
 
+        Assert.Equal(1, generation);
         Assert.True(coordinator.ShouldApply(generation));
     }
 
     [Fact]
     public void ShouldApply_古い世代ならfalseを返す()
     {
-        var coordinator = Create(isVisible: true);
-        var old = coordinator.NextGeneration();
-        coordinator.NextGeneration(); // 世代が進む
+        var (coordinator, lastGeneration) = CreateWithGeneration(isVisible: true);
+        var old = BeginRender(coordinator, lastGeneration);
+        BeginRender(coordinator, lastGeneration); // 世代が進む
 
         Assert.False(coordinator.ShouldApply(old));
     }
@@ -42,19 +71,10 @@ public class LoupeRenderCoordinatorTests
     [Fact]
     public void ShouldApply_非表示ならfalseを返す()
     {
-        var coordinator = Create(isVisible: false);
-        var generation = coordinator.NextGeneration();
+        var (coordinator, lastGeneration) = CreateWithGeneration(isVisible: false);
+        var generation = BeginRender(coordinator, lastGeneration);
 
         Assert.False(coordinator.ShouldApply(generation));
-    }
-
-    [Fact]
-    public void NextGeneration_世代番号が順に増える()
-    {
-        var coordinator = Create(isVisible: true);
-
-        Assert.Equal(1, coordinator.NextGeneration());
-        Assert.Equal(2, coordinator.NextGeneration());
     }
 
     [Fact]
@@ -131,5 +151,45 @@ public class LoupeRenderCoordinatorTests
         pending?.Invoke();
 
         Assert.Equal(0, startCount);
+    }
+
+    [Fact]
+    public void CancelAndRelease_要求の破棄と解放を一度に行う()
+    {
+        var releaseCount = 0;
+        var startCount = 0;
+        Action? pending = null;
+        var coordinator = new LoupeRenderCoordinator(
+            isVisible: () => true,
+            releaseBitmap: () => releaseCount++,
+            startRender: _ => startCount++,
+            logRenderCore: _ => { },
+            post: action => pending = action);
+
+        coordinator.RequestRender();
+        coordinator.CancelAndRelease();
+        pending?.Invoke();
+
+        // 保留中の再描画は破棄され、ビットマップは解放される
+        Assert.Equal(1, releaseCount);
+        Assert.Equal(0, startCount);
+    }
+
+    [Fact]
+    public void CancelAndRelease_冪等に繰り返し呼べる()
+    {
+        var releaseCount = 0;
+        var coordinator = new LoupeRenderCoordinator(
+            isVisible: () => false,
+            releaseBitmap: () => releaseCount++,
+            startRender: _ => { },
+            logRenderCore: _ => { },
+            post: action => action());
+
+        // 既に非表示の状態で明示クリアを繰り返しても解放は呼ばれる（解放自体が冪等）
+        coordinator.CancelAndRelease();
+        coordinator.CancelAndRelease();
+
+        Assert.Equal(2, releaseCount);
     }
 }

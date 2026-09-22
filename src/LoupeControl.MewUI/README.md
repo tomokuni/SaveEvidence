@@ -14,8 +14,9 @@
 | --- | --- |
 | 基底クラス | `Aprillz.MewUI.Skia.Controls.SkiaCanvasView`（SkiaSharp で直接描画する） |
 | 中間バッファ | **生成しない**。画面のキャンバスへ直接描画する（Avalonia 版は `RenderTargetBitmap` を経由する） |
+| 描画サイズ | `Options.RequestedSize` × `RenderScaling`（物理ピクセル）。キャンバスより大きい場合はキャンバスに合わせる（クランプ規則はコアが単一所有） |
 | 拡大方式 | 最近傍（画素をそのまま拡大表示する） |
-| DPI 追従 | `OnDpiChanged` で表示スケーリング係数を `newDpi / 96` へ自動更新する（ホストの設定は不要） |
+| DPI 追従 | `OnDpiChanged` で表示スケーリング係数を DPI から換算した値へ自動更新する（換算規則は `DpiScaler.ToScaling` が単一所有。ホストの設定は不要） |
 | 連続再描画 | **無効**。プロパティ変更時にのみ再描画する（静止画のため） |
 | 位置決め | **本コントロールは位置を持たない**。ホストが `LoupePositionCalculator`（コア）で配置する |
 
@@ -30,21 +31,29 @@
 ## 使い方
 
 ```csharp
+using Estable.Loupe;
 using Estable.MewUI.Loupe;
 using EsUtil.Platform.Core.Geometry;
-using MewUIColor = Aprillz.MewUI.Color;
+using DrawingColor = System.Drawing.Color;
 
 var loupe = new LoupeControl
 {
     Source = esBitmap,                       // 拡大元の 100% 画像（コアの EsBitmap）
     CenterPoint = new EsPoint(320, 240),     // 拡大中心（元画像ピクセル座標）
-    RequestedSize = 160,                     // 一辺のサイズ（DIP）
-    ZoomLevel = 4,                           // 拡大率
-    CrossColor = MewUIColor.FromArgb(102, 255, 0, 0),
-    CheckerColorA = MewUIColor.FromArgb(255, 255, 255, 255),
-    CheckerColorB = MewUIColor.FromArgb(255, 192, 192, 192),
-    FrameColor = MewUIColor.FromArgb(255, 0, 0, 0),
-    FrameWidth = 2,
+    // 設定（表示サイズ・拡大率・外観）はコアの値を 1 つ設定する（with 式で部分変更する）
+    Options = LoupeOptions.Default with
+    {
+        RequestedSize = 160,                 // 一辺のサイズ（DIP）
+        ZoomLevel = 4,                       // 拡大率
+        Appearance = new LoupeAppearance
+        {
+            CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
+            CheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255),
+            CheckerColorB = DrawingColor.FromArgb(255, 192, 192, 192),
+            FrameColor = DrawingColor.FromArgb(255, 0, 0, 0),
+            FrameWidth = 2,
+        },
+    },
 };
 ```
 
@@ -53,7 +62,7 @@ var loupe = new LoupeControl
 ```csharp
 // 位置決めはコアの計算を利用する（中心 + オフセット、親領域内へクランプ）
 var (size, position) = LoupePositionCalculator.Compute(
-    requestedSize, parentSize, hasParentSize, centerDip, offset);
+    requestedSize, parentSize, centerDip, offset);
 ```
 
 > **注意**: `LoupePositionCalculator` は `LoupeControl.Core` の `internal` 型です。外部から使用するには
@@ -65,28 +74,43 @@ var (size, position) = LoupePositionCalculator.Compute(
 | --- | --- | --- | --- |
 | `Source` | `EsBitmap?` | `null` | 拡大元の 100% 画像。null の場合は市松模様のみ |
 | `CenterPoint` | `EsPoint?` | `null` | 拡大中心（元画像ピクセル座標）。null の場合は市松模様のみ |
-| `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。1〜4096 に補正 |
+| `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（表示サイズ・拡大率・外観）。`with` 式で部分変更する。数値項目はコアの型が生成時に安全域へ補正する |
 | `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。0.1〜8.0 に補正（非有限は既定値）。DPI 変更で自動更新 |
-| `ZoomLevel` | `int` | 4 | 拡大率。1〜64 に補正 |
-| `CrossColor` | `Color?` | `null` | 十字線の色（不透明度はアルファ）。null は描画しない |
-| `CheckerSize` | `int` | 6 | 市松模様の 1 タイルサイズ（DIP）。1〜128 に補正 |
-| `CheckerColorA` / `CheckerColorB` | `Color?` | `null` | 市松模様の明色 / 暗色。null は透明 |
-| `BackgroundColor` | `Color` | 白（不透明） | 市松模様の下地色。市松模様の色は半透明のため、下地がないと後ろの要素が透ける |
-| `FrameColor` | `Color?` | `null` | 外枠の色。null は描画しない |
-| `FrameWidth` | `int` | 2 | 外枠の太さ（DIP）。1〜64 に補正 |
-| `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否 |
-| `CoordLabelColor` | `Color?` | `null` | 座標ラベルの文字色。null は白 |
-| `CoordLabelBackgroundColor` | `Color?` | `null` | 座標ラベルの背景色。null は黒 60% |
-| `CoordLabelFontSize` | `double` | 12.0 | 座標ラベルのフォントサイズ（DIP）。6〜48 に補正 |
 | `Log` | `ILogger` | `NullLogger` | 設定変更ログと描画例外の出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
 
-`RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
+`Options`（コアの `LoupeOptions`）の項目:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。1〜4096 に補正 |
+| `ZoomLevel` | `int` | 4 | 拡大率。1〜64 に補正 |
+| `Appearance` | `LoupeAppearance` | コアの既定値 | 外観（下地・市松模様・外枠・十字線・中心座標ラベル） |
+
+`Options.Appearance`（コアの `LoupeAppearance`）の項目:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `BackgroundColor` | `System.Drawing.Color` | 透明 | 下地（ベース）色。市松模様・拡大画像より先に表面全体へ塗る。背後の要素を透かさない場合は不透明色を指定する |
+| `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色。アルファ 0 は描画しない |
+| `CheckerSize` | `int` | 6 | 市松模様の 1 タイルサイズ（DIP）。1〜128 に補正 |
+| `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色。アルファ 0 は描画しない |
+| `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色。アルファ 0 は描画しない |
+| `FrameWidth` | `int` | 2 | 外枠の太さ（DIP）。1〜64 に補正 |
+| `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
+| `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
+| `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
+| `CoordLabelFontSize` | `double` | 12.0 | 座標ラベルのフォントサイズ（DIP）。6〜48 に補正 |
+| `CoordLabelCornerRadius` | `int` | 2 | 座標ラベルの背景の角丸半径（DIP）。0〜64 に補正（0 は角丸なし） |
+
+`Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
+
+数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `LoupeValueCoercer`、ログの書式と変化判定はコアの `LogMessage` が単一所有します）。設定（`Options`）と外観（`Options.Appearance`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `RenderScaling` のみ `coerce` を登録します）。
 
 ## イベント
 
 | イベント | 引数 | 説明 |
 | --- | --- | --- |
-| `Rendered` | `LoupeRenderedEventArgs` | 描画完了の通知（描画先キャンバス・一辺の物理ピクセル・拡大率・中心・切り出し領域の左上・スケール）。ホストはハンドラ内でキャンバスへオーバーレイを追加描画できる |
+| `Rendered` | `LoupeRenderedEventArgs` | 描画完了の通知（描画先キャンバス・一辺の物理ピクセル・切り出し領域の左上・スケール）。ホストはハンドラ内でキャンバスへオーバーレイを追加描画できる |
 
 オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求めます（破線の例は `FadeMaskDragRectControl.MewUI`）。
 
@@ -96,7 +120,7 @@ var (size, position) = LoupePositionCalculator.Compute(
 
 | レベル | 出力例 |
 | --- | --- |
-| Debug | `[LoupeCtrl] Setting: ZoomLevel 4 → 8`（Source / CenterPoint / RequestedSize / RenderScaling / ZoomLevel。同一値なら出力しない） |
+| Debug | `[LoupeCtrl] Setting: ZoomLevel 4 → 8`（Source / CenterPoint / RequestedSize / RenderScaling / ZoomLevel。変化判定（同一値・同一インスタンスなら出力しない）はコアのログ定義が単一所有し、UI 層は同値判定を持たない。設定の変更は変化した項目だけを出力する） |
 | Error | `[LoupeCtrl] Update exception`（描画の例外。アプリは継続する） |
 
 Avalonia 版の Trace ログ（再描画パイプライン）は持ちません（MewUI 版は中間ビットマップを作らず同期描画するため）。
@@ -112,10 +136,11 @@ src/LoupeControl.MewUI/
 │   ├── LoupeControl.MewUI.csproj   # net10.0 / MewUI 0.21.1 固定
 │   ├── LoupeControl.cs             # SkiaCanvasView 派生のコントロール
 │   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知（キャンバスと表示情報）
-│   └── LoupeSkiaRenderer.cs        # コアの計算結果を SKCanvas へ描画する層
+│   └── LoupeSkiaRenderer.cs        # コアの計算結果を SKCanvas へ描画する層（市松・画像・十字線・外枠・座標ラベル）
 └── tests/
     ├── LoupeControl.MewUI.Tests.csproj
     ├── TestHelper.cs                   # テスト共通（描画先・画像生成）
+    ├── RecordingLogger.cs              # ログ収集（テスト用）
     ├── LoupeSkiaRenderer.Tests.cs      # 描画結果の画素検証
     ├── LoupeControl.Tests.cs           # プロパティ補正・レイアウト
     └── LoupeRenderedEventArgs.Tests.cs # 描画完了通知の引数
@@ -128,8 +153,10 @@ dotnet build src/LoupeControl.MewUI/src/LoupeControl.MewUI.csproj
 dotnet test src/LoupeControl.MewUI/tests/LoupeControl.MewUI.Tests.csproj
 ```
 
+本プロジェクトは `GenerateDocumentationFile` を有効にし、**存在しないメンバーへの `<see cref>` をビルド警告（CS1574）で検出**します（XML は検証にのみ使い、配布物へは出しません）。
+
 ## 関連ドキュメント
 
 - `../LoupeControl.Core/README.md` — 共有する UI 非依存ロジック
-- `../LoupeControl/README.md` — Avalonia 版ルーペ
+- `../LoupeControl.AvaloniaUI/README.md` — Avalonia 版ルーペ
 - `../app.MewUI/README.md` — 組み込み先のアプリ

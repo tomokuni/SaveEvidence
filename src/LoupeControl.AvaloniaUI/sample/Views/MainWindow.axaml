@@ -115,10 +115,9 @@
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Content="Clear()" Click="OnClearClicked"/>
-                        <Button Content="ForceUpdate()" Click="OnForceUpdateClicked"/>
-                        <Button Content="RenderAsync()" Click="OnRenderAsyncClicked"/>
+                        <Button Content="RequestRender()" Click="OnRequestRenderClicked"/>
                     </StackPanel>
-                    <TextBlock Text="Clear(): 非表示にして Bitmap 解放 / ForceUpdate(): 即時再生成 / RenderAsync(): 非同期生成の完了待機（API 検証用）"
+                    <TextBlock Text="Clear(): 非表示にして Bitmap 解放 / RequestRender(): プロパティ変更を伴わない再生成要求（API 検証用）"
                                FontSize="11" TextWrapping="Wrap" Foreground="Gray"/>
 
                 </StackPanel>
@@ -160,14 +159,7 @@
                                     IsVisible="{Binding IsLoupeVisible, Mode=TwoWay}"
                                     Source="{Binding SourceImage}"
                                     CenterPoint="{Binding CenterPoint}"
-                                    ZoomLevel="{Binding ZoomLevel}"
-                                    RequestedSize="{Binding RequestedSize}"
-                                    CrossColor="{Binding CrossBrush}"
-                                    CheckerSize="{Binding CheckerSize}"
-                                    CheckerColorA="{Binding CheckerColorABrush}"
-                                    CheckerColorB="{Binding CheckerColorBBrush}"
-                                    FrameColor="{Binding FrameBrush}"
-                                    FrameWidth="{Binding FrameWidth}"
+                                    Options="{Binding Options}"
                                     RenderScaling="{Binding RenderScaling}"/>
 
             </Canvas>

@@ -2,6 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Controls;
 using EsUtil.Platform.MewUI;
 using Estable.MewUI.ZoomView.Logging;
+using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Estable.ZoomView;
@@ -59,7 +60,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     public static readonly MewProperty<double> RenderScalingProperty =
         MewProperty<double>.Register<ZoomViewControl>(nameof(RenderScaling), 1.0, MewPropertyOptions.AffectsRender);
 
-    /// <summary><see cref="ShowScrollBars"/> プロパティ（オーバーレイ スクロールバーの表示有無）。</summary>
+    /// <summary><see cref="ShowScrollBars"/> プロパティ（オーバーレイスクロールバーの表示有無）。</summary>
     public static readonly MewProperty<bool> ShowScrollBarsProperty =
         MewProperty<bool>.Register<ZoomViewControl>(nameof(ShowScrollBars), true, MewPropertyOptions.AffectsRender);
 
@@ -141,7 +142,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <summary>ズーム操作ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>
-    /// C#14 の <c>field</c> キーワードでバッキング フィールドを暗黙定義する。<br/>
+    /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
     /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する（呼び出し側で null 判定しない）。<br/>
     /// ズーム操作（⊖⊕ボタン・Ctrl+ホイール）の前後のズーム率を Information で記録する（Avalonia 版と同一の書式）。
     /// </remarks>
@@ -185,7 +186,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
         set => SetValue(RenderScalingProperty, value);
     }
 
-    /// <summary>オーバーレイ スクロールバーを表示するかどうかを取得または設定する。</summary>
+    /// <summary>オーバーレイスクロールバーを表示するかどうかを取得または設定する。</summary>
     /// <value>true（既定）の場合は、画像がビューポートより大きい軸にスクロールバーを表示する。</value>
     /// <remarks>パン・ホイールでも操作できるため、表示はホストの選択とする。</remarks>
     public bool ShowScrollBars
@@ -437,7 +438,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     protected override void OnDpiChanged(uint oldDpi, uint newDpi)
     {
         base.OnDpiChanged(oldDpi, newDpi);
-        RenderScaling = newDpi / 96.0;
+        RenderScaling = DpiScaler.ToScaling(newDpi);
     }
 
     /// <summary>ビューポートのサイズ変更時に Fit 実効倍率のキャッシュを無効化する。</summary>
@@ -656,7 +657,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>ズーム率を現在の表示状態から変更する（ズーム操作の共通処理）。</summary>
     /// <param name="transition">現在のズーム率と Fit 実効倍率から遷移先を求める関数。</param>
-    /// <param name="log">変更前後のズーム率（%）を記録するログ メソッド。</param>
+    /// <param name="log">変更前後のズーム率（%）を記録するログメソッド。</param>
     /// <remarks>遷移先が null（移動不可）の場合は何もしない（ログも出力しない）。</remarks>
     private void ApplyZoomStep(Func<double, double, double?> transition, Action<int, int> log)
     {
@@ -887,7 +888,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
         }
     }
 
-    /// <summary>オーバーレイ スクロールバーを描画する。</summary>
+    /// <summary>オーバーレイスクロールバーを描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
     /// <param name="viewport">ビューポートのサイズ（DIP）。</param>
     /// <remarks>

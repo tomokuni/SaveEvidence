@@ -201,7 +201,7 @@ public class FadeMaskControl : Control
 
     /// <summary>内部ロガーを取得または設定する。</summary>
     /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
-    /// <remarks>C#14 の <c>field</c> キーワードでバッキング フィールドを暗黙定義する。</remarks>
+    /// <remarks>C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。</remarks>
     public ILogger Log
     {
         get => field.OrNullLogger();

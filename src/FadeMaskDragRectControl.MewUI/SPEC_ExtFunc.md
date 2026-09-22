@@ -56,7 +56,7 @@ Avalonia 版と同一の解釈になります。
 | `Appearance` | `FadeMaskAppearance` | コアの既定値 | 暗転マスクの外観（暗転色・枠線・ラベル）の単一値。枠線は選択矩形と共用される |
 | `WindowTitle` | `string` | `""` | 情報ラベル（3 行目）の文言（ウィンドウ選択時） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない） |
-| `SelectionOverlayColorA` / `SelectionOverlayColorB` | `System.Drawing.Color` | 白 / 黒 | ルーペ画像上の選択矩形破線の色（2 色交互） |
+| `SelectionOverlayColorA` / `SelectionOverlayColorB` | `System.Drawing.Color` | 白 / 黒 | ルーペ画像上の選択矩形破線の色（2 色交互）。設定時はルーペの再描画を要求する（破線色はルーペのプロパティには現れないため） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包するドラッグ選択コントロールとルーペへ伝搬する。null は `NullLogger` へフォールバック。暗転マスクは選択のたびにログを出すため対象外） |
 | `Overlay` | `FadeMaskControl`（取得のみ） | - | 暗転マスク（外観の詳細設定用） |
 | `DragRect` | `DragRectControl`（取得のみ） | - | ドラッグ選択（外観の詳細設定用） |
@@ -105,7 +105,7 @@ Avalonia 版と同一の解釈になります。
 - 選択矩形を使わないモード（`ScreenSelect` / `WindowSelect`）では、ドラッグ選択とルーペを非表示にします。
 - ルーペは拡大元画像（`SetLoupeSource`）と中心（`SetLoupePosition`）の両方が設定された場合のみ表示します。
   親領域の外へはみ出す場合は内側へクランプします。
-- ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が単一所有します）。
+- ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が単一所有します）。選択矩形を変更した場合はルーペの再描画を要求します（破線はルーペのプロパティに現れないため）。
 - サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（サブラインは `Appearance` から組み立てる）
   （文言の単一所有は `FadeMaskControl.Core` の `FadeMaskLabels`。表示位置の計算は同コアの `FadeMaskLabelLayout`）。
 

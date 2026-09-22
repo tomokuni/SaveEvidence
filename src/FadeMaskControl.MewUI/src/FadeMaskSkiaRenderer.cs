@@ -1,5 +1,6 @@
 using Estable.FadeMask;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 
@@ -39,7 +40,7 @@ internal static class FadeMaskSkiaRenderer
             {
                 IsAntialias = false,
                 Style = SKPaintStyle.Fill,
-                Color = ToSKColor(frame.OverlayColor),
+                Color = frame.OverlayColor.ToSKColor(),
             };
 
             foreach (var region in frame.OverlayRegions)
@@ -55,7 +56,7 @@ internal static class FadeMaskSkiaRenderer
             {
                 IsAntialias = false,
                 Style = SKPaintStyle.Fill,
-                Color = ToSKColor(frame.BorderColor),
+                Color = frame.BorderColor.ToSKColor(),
             };
 
             foreach (var rect in frame.BorderRects)
@@ -102,12 +103,12 @@ internal static class FadeMaskSkiaRenderer
         SKCanvas canvas, EsPoint origin, string text, double fontSize, DrawingColor textColor, DrawingColor backgroundColor)
     {
         using var font = new SKFont(ResolveTypeface(text), (float)fontSize);
-        using var textPaint = new SKPaint { IsAntialias = true, Color = ToSKColor(textColor) };
+        using var textPaint = new SKPaint { IsAntialias = true, Color = textColor.ToSKColor() };
         using var backgroundPaint = new SKPaint
         {
             IsAntialias = false,
             Style = SKPaintStyle.Fill,
-            Color = ToSKColor(backgroundColor),
+            Color = backgroundColor.ToSKColor(),
         };
 
         var textSize = new EsSize(font.MeasureText(text, textPaint), font.Metrics.Descent - font.Metrics.Ascent);
@@ -180,5 +181,5 @@ internal static class FadeMaskSkiaRenderer
     /// <summary>コアの色を Skia の色へ変換する。</summary>
     /// <param name="color">変換元の色。</param>
     /// <returns>Skia の色。</returns>
-    private static SKColor ToSKColor(DrawingColor color) => new(color.R, color.G, color.B, color.A);
+    // ※ 色の変換（コアの色型 → Skia）は Platform.Core の SkiaColorInterop（拡張メソッド）を共用する
 }

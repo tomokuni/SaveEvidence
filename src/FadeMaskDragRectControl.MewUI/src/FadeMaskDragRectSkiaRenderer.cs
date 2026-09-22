@@ -1,5 +1,6 @@
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 
@@ -36,13 +37,10 @@ internal static class FadeMaskDragRectSkiaRenderer
 
         foreach (var dash in FadeMaskDragRectOverlay.EnumerateDashes(selectionRect, captureTopLeft, scale, pixelSize))
         {
-            paint.Color = ToSKColor(dash.IsColorA ? colorA : colorB);
+            paint.Color = (dash.IsColorA ? colorA : colorB).ToSKColor();
             canvas.DrawRect(new SKRect(dash.X, dash.Y, dash.X + dash.Width, dash.Y + dash.Height), paint);
         }
     }
 
-    /// <summary>コアの色を Skia の色へ変換する。</summary>
-    /// <param name="color">変換元の色。</param>
-    /// <returns>Skia の色。</returns>
-    private static SKColor ToSKColor(DrawingColor color) => new(color.R, color.G, color.B, color.A);
+    // ※ 色の変換（コアの色型 → Skia）は Platform.Core の SkiaColorInterop（拡張メソッド）を共用する
 }

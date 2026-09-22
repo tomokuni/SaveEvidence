@@ -1,7 +1,9 @@
 using Avalonia;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Estable.Loupe;
 using LoupeControl.Sample.Imaging;
+using DrawingColor = System.Drawing.Color;
 
 namespace LoupeControl.Sample.ViewModels;
 
@@ -75,6 +77,7 @@ public sealed class MainWindowViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(ZoomText));
                 OnPropertyChanged(nameof(CoordinateText));
+                OnPropertyChanged(nameof(Options));
             }
         }
     }
@@ -91,6 +94,7 @@ public sealed class MainWindowViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(RequestedSizeText));
                 OnPropertyChanged(nameof(CoordinateText));
+                OnPropertyChanged(nameof(Options));
             }
         }
     }
@@ -193,6 +197,7 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _checkerSize, value))
             {
                 OnPropertyChanged(nameof(CheckerSizeText));
+                OnPropertyChanged(nameof(Options));
             }
         }
     }
@@ -208,6 +213,7 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _frameWidth, value))
             {
                 OnPropertyChanged(nameof(FrameWidthText));
+                OnPropertyChanged(nameof(Options));
             }
         }
     }
@@ -241,13 +247,11 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _crossColorOption, value))
             {
-                OnPropertyChanged(nameof(CrossBrush));
+                OnPropertyChanged(nameof(Options));
             }
         }
     }
 
-    /// <summary>十字線のブラシ。</summary>
-    public IBrush? CrossBrush => CrossColorOption.Brush;
     private BrushOption _checkerColorAOption = BrushOptions.White;
 
     /// <summary>市松模様 A の色選択。</summary>
@@ -258,13 +262,10 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _checkerColorAOption, value))
             {
-                OnPropertyChanged(nameof(CheckerColorABrush));
+                OnPropertyChanged(nameof(Options));
             }
         }
     }
-
-    /// <summary>市松模様 A のブラシ。</summary>
-    public IBrush? CheckerColorABrush => CheckerColorAOption.Brush;
 
     private BrushOption _checkerColorBOption = BrushOptions.CheckerB;
 
@@ -276,13 +277,10 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _checkerColorBOption, value))
             {
-                OnPropertyChanged(nameof(CheckerColorBBrush));
+                OnPropertyChanged(nameof(Options));
             }
         }
     }
-
-    /// <summary>市松模様 B のブラシ。</summary>
-    public IBrush? CheckerColorBBrush => CheckerColorBOption.Brush;
 
     private BrushOption _frameColorOption = BrushOptions.LightGray;
 
@@ -294,13 +292,42 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _frameColorOption, value))
             {
-                OnPropertyChanged(nameof(FrameBrush));
+                OnPropertyChanged(nameof(Options));
             }
         }
     }
 
-    /// <summary>外枠のブラシ。</summary>
-    public IBrush? FrameBrush => FrameColorOption.Brush;
+    /// <summary>ルーペの外観（コアの値。色は UI 非依存の色型で保持する）。</summary>
+    /// <value>選択中の色とサイズから組み立てた外観。依存する選択肢・サイズの変更で再評価される。</value>
+    /// <remarks>外観の既定値・型はコントロール（コアの <see cref="LoupeAppearance"/>）が単一所有する。</remarks>
+    public LoupeAppearance Appearance => new()
+    {
+        CrossColor = ToDrawingColor(CrossColorOption),
+        CheckerSize = CheckerSize,
+        CheckerColorA = ToDrawingColor(CheckerColorAOption),
+        CheckerColorB = ToDrawingColor(CheckerColorBOption),
+        FrameColor = ToDrawingColor(FrameColorOption),
+        FrameWidth = FrameWidth,
+    };
+
+    /// <summary>ルーペの設定（表示サイズ・拡大率・外観。コアの <see cref="LoupeOptions"/> が単一所有する）。</summary>
+    /// <value>現在の設定（コントロールの <c>Options</c> へ一括でバインドする）。</value>
+    /// <remarks>
+    /// 設定を 1 つの値にまとめて公開する（コントロール側の公開プロパティも 1 つである）。<br/>
+    /// 依存する値（拡大率・サイズ・外観の項目）の変更は各 setter が <c>Options</c> の変更を通知する。
+    /// </remarks>
+    public LoupeOptions Options => new()
+    {
+        RequestedSize = RequestedSize,
+        ZoomLevel = ZoomLevel,
+        Appearance = Appearance,
+    };
+
+    /// <summary>色選択肢をコアの色型へ変換する（「なし」はアルファ 0 = 描画しない）。</summary>
+    /// <param name="option">色選択肢。</param>
+    /// <returns>コアの色。</returns>
+    private static DrawingColor ToDrawingColor(BrushOption option)
+        => option.Color is { } color ? DrawingColor.FromArgb(color.A, color.R, color.G, color.B) : DrawingColor.Transparent;
 
     // ====================================================================
     // 表示テキスト

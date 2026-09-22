@@ -1,7 +1,7 @@
 using Estable.CropView;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
-using DrawingColor = System.Drawing.Color;
 
 namespace Estable.MewUI.CropView;
 
@@ -50,13 +50,13 @@ internal static class CropSkiaRenderer
         if (OverlayLineDash.IsDashed(info.Style))
         {
             // 背景色の実線を下層に描く（破線の隙間から見える市松風の下地）
-            paint.Color = ToSKColor(info.Background);
+            paint.Color = info.Background.ToSKColor();
             canvas.DrawRect(inset, paint);
         }
 
         var (dashLength, gapLength) = OverlayLineDash.Get(info.Style);
 
-        paint.Color = ToSKColor(info.Foreground);
+        paint.Color = info.Foreground.ToSKColor();
 
         if (OverlayLineDash.IsDashed(info.Style))
         {
@@ -71,5 +71,5 @@ internal static class CropSkiaRenderer
     /// <summary>コアの色を Skia の色へ変換する。</summary>
     /// <param name="color">変換元の色。</param>
     /// <returns>Skia の色。</returns>
-    private static SKColor ToSKColor(DrawingColor color) => new(color.R, color.G, color.B, color.A);
+    // ※ 色の変換（コアの色型 → Skia）は Platform.Core の SkiaColorInterop（拡張メソッド）を共用する
 }

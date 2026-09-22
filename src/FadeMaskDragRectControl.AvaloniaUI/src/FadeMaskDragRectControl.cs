@@ -8,6 +8,7 @@ using Estable.FadeMaskDragRect;
 using Estable.AvaloniaUI.Loupe;
 using Estable.DragRect;
 using Estable.FadeMask;
+using Estable.Loupe;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Coordinate;
 using Microsoft.Extensions.Logging;
@@ -338,7 +339,10 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>外観設定（DragRect / FadeMask / Loupe の外観）を内包コントロールへ反映する。</summary>
     /// <param name="settings">外観設定（全メンバー non-null）。</param>
     /// <remarks>
-    /// 適用後はオーバーレイと DragRect の再描画を要求する（選択状態・ルーペ表示位置は維持される）。
+    /// 適用後はオーバーレイと DragRect の再描画、およびルーペ Bitmap の再生成を要求する<br/>
+    /// （選択状態・ルーペ表示位置は維持される）。<br/>
+    /// ルーペの再生成は、破線の色（<c>SelectionRectColorA / B</c>）がルーペの外観<br/>
+    /// （<see cref="Estable.Loupe.LoupeAppearance"/>）に含まれず、プロパティ通知では再生成されないため。
     /// </remarks>
     private void ApplyAppearance(FadeMaskDragRectSettings settings)
     {
@@ -382,24 +386,34 @@ public sealed class FadeMaskDragRectControl : Panel
             InfoLabelFontSize = settings.InfoLabelFontSize!.Value,
         };
 
-        // Loupe 外観（LoupeControl の公開外観設定を全て適用）
-        _loupeControl.RequestedSize = settings.RequestedSize!.Value;
-        _loupeControl.ZoomLevel = settings.ZoomLevel!.Value;
-        _loupeControl.CrossColor = GetSharedBrush(settings.CrossColor!.Value);
-        _loupeControl.CheckerSize = settings.CheckerSize!.Value;
-        _loupeControl.CheckerColorA = GetSharedBrush(settings.CheckerColorA!.Value);
-        _loupeControl.CheckerColorB = GetSharedBrush(settings.CheckerColorB!.Value);
-        _loupeControl.FrameColor = GetSharedBrush(settings.FrameColor!.Value);
-        _loupeControl.FrameWidth = settings.FrameWidth!.Value;
+        // Loupe 設定（コアの設定値・外観値を 1 つ組み立てて一括設定する。境界変換はここで行う）
+        _loupeControl.Options = new LoupeOptions
+        {
+            RequestedSize = settings.RequestedSize!.Value,
+            ZoomLevel = settings.ZoomLevel!.Value,
+            Appearance = new LoupeAppearance
+            {
+                CrossColor = settings.CrossColor!.Value.ToDrawingColor(),
+                CheckerSize = settings.CheckerSize!.Value,
+                CheckerColorA = settings.CheckerColorA!.Value.ToDrawingColor(),
+                CheckerColorB = settings.CheckerColorB!.Value.ToDrawingColor(),
+                FrameColor = settings.FrameColor!.Value.ToDrawingColor(),
+                FrameWidth = settings.FrameWidth!.Value,
+                // ルーペ座標ラベル
+                ShowCoordLabel = settings.LoupeShowCoordLabel!.Value,
+                CoordLabelColor = settings.LoupeCoordLabelColor!.Value.ToDrawingColor(),
+                CoordLabelBackgroundColor = settings.LoupeCoordLabelBackgroundColor!.Value.ToDrawingColor(),
+                CoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value,
+            },
+        };
+        // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため設定に含めず、個別に設定する
         _loupeControl.PositionOffset = settings.PositionOffset!.Value;
-        // ルーペ座標ラベル
-        _loupeControl.ShowCoordLabel = settings.LoupeShowCoordLabel!.Value;
-        _loupeControl.CoordLabelColor = GetSharedBrush(settings.LoupeCoordLabelColor!.Value);
-        _loupeControl.CoordLabelBackgroundColor = GetSharedBrush(settings.LoupeCoordLabelBackgroundColor!.Value);
-        _loupeControl.CoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value;
 
         _overlay.InvalidateVisual();
         _dragRect.InvalidateVisual();
+        // ルーペ画像上の選択矩形破線（ホストが Rendered で Bitmap へ描画する）の色も外観変更で変わる。
+        // 破線色はルーペの外観（LoupeAppearance）に含まれないため、ルーペのプロパティ通知では再生成されない。
+        _loupeControl.RequestRender();
     }
 
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
@@ -465,6 +479,9 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         _overlay.HasSelection = rect is not null;
         _overlay.LogicalSelectionRect = rect;
+        // ルーペ画像上の破線は Bitmap へ焼き込まれているため、選択矩形の変更で再生成を要求する
+        // （ドラッグ中の中心変更で発生する要求と同じフレームなら1回の生成へ結合される）。
+        _loupeControl.RequestRender();
     }
 
     /// <summary>ルーペの中心位置（ドメイン座標）を設定して表示を開始する。</summary>
@@ -594,7 +611,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// - 描画モード: FadeMaskRenderMode（Crop / AreaSelect / ScreenSelect / WindowSelect）へ変換する。<br/>
     /// - DragRect / Loupe: Crop / AreaSelect でのみ有効（ScreenSelect / WindowSelect では非表示）。<br/>
-    /// - 全面暗転: Crop / AreaSelect でのみ有効（ScreenSelect / WindowSelect ではハイライトのみ表示）。
+    /// - 全面暗転: Crop / AreaSelect でのみ有効（ScreenSelect / WindowSelect ではハイライトのみ表示）。<br/>
+    /// - ルーペ Bitmap: 選択矩形破線の表示可否がモード依存のため、再生成を要求する（プロパティ通知では再生成されない）。
     /// </remarks>
     private void ApplyMode()
     {
@@ -605,6 +623,8 @@ public sealed class FadeMaskDragRectControl : Panel
         // 選択位置の視覚化用に、ルーペの選択矩形破線オーバーレイをモードに応じて有効化する
         // （描画は Rendered イベント経由でホスト側が行う。モード依存設定のため ApplyMode で管理）。
         _showSelectionOverlay = useDragRect;
+        // 破線の表示可否はルーペのプロパティに現れないため、既存の Bitmap から破線を消す（または描く）ために再生成を要求する
+        _loupeControl.RequestRender();
     }
 
     /// <summary>選択状態をオーバーレイ描画へ反映する（SelectionChanged）。</summary>

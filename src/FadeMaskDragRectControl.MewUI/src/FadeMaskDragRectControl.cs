@@ -411,7 +411,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
     /// <remarks>
     /// ルーペの表示サイズ・位置はコアの <see cref="LoupePositionCalculator.Compute"/> が単一所有する<br/>
-    /// （親領域の最小辺へのクランプ・オフセット・親領域内へのクランプ）。<br/>
+    /// （親領域の最小辺へのクランプ・オフセット・親領域内へのクランプ。親サイズが 0 の場合の扱いもコアが判断する）。<br/>
     /// 非表示（未表示・画像未設定・中心未設定）の場合はサイズ 0 で配置する。
     /// </remarks>
     protected override void ArrangeContent(Rect bounds)
@@ -427,11 +427,10 @@ public sealed class FadeMaskDragRectControl : Panel
 
         var parentSize = new EsSize(bounds.Width, bounds.Height);
         var (size, position) = LoupePositionCalculator.Compute(
-            _loupe.RequestedSize,
+            _loupe.Options.RequestedSize,
             parentSize,
-            bounds.Width > 0 && bounds.Height > 0,
-            // ルーペの表示位置は本クラスが計算するため、未設定（null）はここで等価変換として扱う
-            (_port ?? CoordTransform.Identity).Inverse(domainPos),
+            // ルーペの表示位置は本クラスが計算するため、未設定（null）は等価変換として扱う（規則は共通ヘルパーが単一所有する）
+            _port.OrIdentity().Inverse(domainPos),
             _loupeOffset);
 
         _loupe.Arrange(new Rect(bounds.X + position.X, bounds.Y + position.Y, size.Width, size.Height));
@@ -496,11 +495,15 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>選択状態を暗転マスクへ同期する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。null は選択なし。</param>
-    /// <remarks><see cref="SetSelection"/> と <see cref="ClearSelection"/> で共用する（重複排除）。</remarks>
+    /// <remarks>
+    /// <see cref="SetSelection"/> と <see cref="ClearSelection"/> で共用する（重複排除）。<br/>
+    /// ルーペ画像上の破線は描画のたびに選択矩形から組み立てるため、再描画を要求する（破線はルーペのプロパティに現れない）。
+    /// </remarks>
     private void SyncSelection(EsRect? rect)
     {
         _overlay.HasSelection = rect is not null;
         _overlay.LogicalSelectionRect = rect;
+        _loupe.InvalidateVisual();
     }
 
     /// <summary>ルーペ位置の更新（ドラッグ選択からの通知）を処理する。</summary>

@@ -17,29 +17,25 @@ public class LoupeRenderedEventArgsTests
     {
         using var bitmap = new SKBitmap(new SKImageInfo(32, 32));
         using var canvas = new SKCanvas(bitmap);
-        var center = new EsPoint(10, 20);
         var topLeft = new EsPoint(4, 6);
 
-        var args = new LoupeRenderedEventArgs(canvas, 32, 8, center, topLeft, 2.5);
+        var args = new LoupeRenderedEventArgs(canvas, 32, topLeft, 2.5);
 
         Assert.Same(canvas, args.Canvas);
         Assert.Equal(32, args.PixelSize);
-        Assert.Equal(8, args.ZoomLevel);
-        Assert.Equal(center, args.CenterPoint);
         Assert.Equal(topLeft, args.CaptureTopLeft);
         Assert.Equal(2.5, args.Scale);
     }
 
-    /// <summary>中心が未設定の場合は切り出し左上と中心が null になることを検証する。</summary>
+    /// <summary>中心が未設定の場合は切り出し左上が null になることを検証する。</summary>
     [Fact]
     public void 中心が未設定の場合は切り出し左上がnullになる()
     {
         using var bitmap = new SKBitmap(new SKImageInfo(32, 32));
         using var canvas = new SKCanvas(bitmap);
 
-        var args = new LoupeRenderedEventArgs(canvas, 32, 4, null, null, 1.0);
+        var args = new LoupeRenderedEventArgs(canvas, 32, null, 1.0);
 
-        Assert.Null(args.CenterPoint);
         Assert.Null(args.CaptureTopLeft);
     }
 }

@@ -436,7 +436,7 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordinateTransform(CreatePort());
-        control.Loupe.RequestedSize = 100;
+        control.Loupe.Options = control.Loupe.Options with { RequestedSize = 100 };
         control.LoupeOffset = 20.0;
 
         using var source = CreateSource();
@@ -458,7 +458,7 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordinateTransform(CreatePort());
-        control.Loupe.RequestedSize = 100;
+        control.Loupe.Options = control.Loupe.Options with { RequestedSize = 100 };
         control.LoupeOffset = 20.0;
 
         using var source = CreateSource();
@@ -477,7 +477,7 @@ public class FadeMaskDragRectControlTests
     public void ルーペ_画像未設定では配置しない()
     {
         var control = new FadeMaskDragRectControl();
-        control.Loupe.RequestedSize = 100;
+        control.Loupe.Options = control.Loupe.Options with { RequestedSize = 100 };
 
         control.Measure(new Size(400, 400));
         control.Arrange(new Rect(0, 0, 400, 400));
@@ -489,7 +489,7 @@ public class FadeMaskDragRectControlTests
     public void ルーペ_表示しないモードでは配置しない()
     {
         var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.ScreenSelect };
-        control.Loupe.RequestedSize = 100;
+        control.Loupe.Options = control.Loupe.Options with { RequestedSize = 100 };
         using var source = CreateSource();
         control.SetLoupeSource(source);
         control.SetLoupePosition(new EsPoint(10, 10));

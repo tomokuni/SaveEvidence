@@ -7,7 +7,6 @@ using Estable.MewUI.FadeMaskDragRect;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using EsUtil.Platform.Core;
 using DrawingColor = System.Drawing.Color;
 
