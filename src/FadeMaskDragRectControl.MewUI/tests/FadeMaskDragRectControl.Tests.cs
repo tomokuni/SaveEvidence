@@ -1,5 +1,5 @@
+using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
-using Estable.MewUI.FadeMask;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Aprillz.MewUI;
@@ -88,7 +88,7 @@ public class FadeMaskDragRectControlTests
 
         Assert.True(control.HasSelection);
         Assert.Equal(new EsRect(10, 20, 100, 80), control.SelectionRect);
-        Assert.Equal(new EsRect(10, 20, 100, 80), control.Overlay.SelectionRect);
+        Assert.Equal(new EsRect(10, 20, 100, 80), control.Overlay.LogicalSelectionRect);
         Assert.True(control.Overlay.HasSelection);
     }
 
@@ -100,7 +100,7 @@ public class FadeMaskDragRectControlTests
         control.SetSelection(new EsRect(10, 20, 0, 80));
 
         Assert.False(control.HasSelection);
-        Assert.Null(control.Overlay.SelectionRect);
+        Assert.Null(control.Overlay.LogicalSelectionRect);
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class FadeMaskDragRectControlTests
         Assert.True(control.HasHighlight);
         Assert.Equal(new EsRect(1, 2, 3, 4), control.LogicalHighlightRect);
         Assert.True(control.Overlay.HasHighlight);
-        Assert.Equal(new EsRect(1, 2, 3, 4), control.Overlay.HighlightRect);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.Overlay.LogicalHighlightRect);
     }
 
     // ====================================================================
@@ -147,68 +147,62 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void 枠線の外観は暗転マスクとドラッグ矩形の両方へ反映される()
+    public void 外観は暗転マスクとドラッグ矩形の両方へ反映される()
     {
         var control = new FadeMaskDragRectControl();
 
-        control.BorderColor = DrawingColor.Red;
-        control.BorderThickness = 3.0;
+        control.Appearance = new FadeMaskAppearance
+        {
+            BorderColor = DrawingColor.Red,
+            BorderThickness = 3.0,
+            OverlayColor = DrawingColor.FromArgb(128, 255, 0, 0),
+            ShowSizeLabel = false,
+            SizeLabelFontSize = 18.0,
+            SizeLabelColor = DrawingColor.Yellow,
+            SizeLabelBackgroundColor = DrawingColor.FromArgb(200, 0, 0, 255),
+        };
 
-        Assert.Equal(DrawingColor.Red, control.Overlay.BorderColor);
+        var appearance = control.Overlay.Appearance;
+        Assert.Equal(DrawingColor.Red, appearance.BorderColor);
+        Assert.Equal(3.0, appearance.BorderThickness);
+        Assert.Equal(DrawingColor.FromArgb(128, 255, 0, 0), appearance.OverlayColor);
+        Assert.False(appearance.ShowSizeLabel);
+        Assert.Equal(18.0, appearance.SizeLabelFontSize);
+        Assert.Equal(DrawingColor.Yellow, appearance.SizeLabelColor);
+        Assert.Equal(DrawingColor.FromArgb(200, 0, 0, 255), appearance.SizeLabelBackgroundColor);
+        // 枠線はドラッグ矩形と共用される（見た目の一貫性）
         Assert.Equal(DrawingColor.Red, control.DragRect.Options.BorderColor);
-        Assert.Equal(3.0, control.Overlay.BorderThickness);
         Assert.Equal(3.0, control.DragRect.Options.BorderThickness);
     }
 
     [Fact]
-    public void OverlayColor_暗転マスクへ反映される()
+    public void WindowTitle_暗転マスクへ反映される()
     {
-        var control = new FadeMaskDragRectControl { OverlayColor = DrawingColor.FromArgb(128, 255, 0, 0) };
+        var control = new FadeMaskDragRectControl { WindowTitle = "メモ帳" };
 
-        Assert.Equal(DrawingColor.FromArgb(128, 255, 0, 0), control.Overlay.OverlayColor);
+        Assert.Equal("メモ帳", control.Overlay.WindowTitle);
     }
 
     [Fact]
-    public void ラベルの外観は暗転マスクへ反映される()
-    {
-        var control = new FadeMaskDragRectControl();
-
-        control.ShowSizeLabel = false;
-        control.SizeLabelFontSize = 18.0;
-        control.SizeLabelColor = DrawingColor.Yellow;
-        control.SizeLabelBackgroundColor = DrawingColor.FromArgb(200, 0, 0, 255);
-
-        Assert.False(control.Overlay.ShowSizeLabel);
-        Assert.Equal(18.0, control.Overlay.SizeLabelFontSize);
-        Assert.Equal(DrawingColor.Yellow, control.Overlay.SizeLabelColor);
-        Assert.Equal(DrawingColor.FromArgb(200, 0, 0, 255), control.Overlay.SizeLabelBackgroundColor);
-    }
-
-    [Fact]
-    public void ラベル文言とサブラインは暗転マスクへ反映される()
+    public void ラベル文言は暗転マスクへ反映される()
     {
         var control = new FadeMaskDragRectControl();
         Func<string?> provider = () => "(10, 20) - (30, 40)";
-        var subLines = new[] { new FadeMaskSubLine("確定: Enter", 12, DrawingColor.White) };
 
-        control.SizeLabelTextProvider = provider;
-        control.SubLines = subLines;
+        control.SizeLabelOverrideProvider = provider;
 
-        Assert.Same(provider, control.Overlay.SizeLabelTextProvider);
-        Assert.Same(subLines, control.Overlay.SubLines);
+        Assert.Same(provider, control.Overlay.SizeLabelOverrideProvider);
         // 取得側も同じ値になる（ホストが設定の再適用に使える）
-        Assert.Same(provider, control.SizeLabelTextProvider);
-        Assert.Same(subLines, control.SubLines);
+        Assert.Same(provider, control.SizeLabelOverrideProvider);
     }
 
     [Fact]
-    public void ラベルの既定値_サイズラベルを表示しサブラインなし()
+    public void ラベルの既定値_サイズラベルを表示し文言プロバイダなし()
     {
         var control = new FadeMaskDragRectControl();
 
-        Assert.True(control.ShowSizeLabel);
-        Assert.Null(control.SizeLabelTextProvider);
-        Assert.Null(control.SubLines);
+        Assert.True(control.Overlay.Appearance.ShowSizeLabel);
+        Assert.Null(control.SizeLabelOverrideProvider);
     }
 
     // ====================================================================

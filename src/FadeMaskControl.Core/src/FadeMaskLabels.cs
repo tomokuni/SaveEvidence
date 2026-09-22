@@ -36,6 +36,66 @@ internal static class FadeMaskLabels
         => mode is FadeMaskRenderMode.ScreenSelect or FadeMaskRenderMode.WindowSelect
             ? EnterOperationText
             : DoubleClickOperationText;
+
+    /// <summary>サイズラベルの下に表示するサブライン（操作ラベル + 情報ラベル）を組み立てる。</summary>
+    /// <param name="mode">オーバーレイ描画モード（操作ラベルの文言選定に使用する）。</param>
+    /// <param name="showSubLines">操作ラベルを表示するか。</param>
+    /// <param name="infoLabelVisible">情報ラベルの表示が有効か。</param>
+    /// <param name="windowTitle">ウィンドウタイトル（情報ラベルの文言）。null 可。</param>
+    /// <param name="operationStyle">操作ラベルの外観。</param>
+    /// <param name="infoStyle">情報ラベルの外観。</param>
+    /// <returns>サブラインの一覧（上から順）。表示する行がない場合は空。</returns>
+    /// <remarks>
+    /// 1. 2 行目 = 操作ラベル（モード別の確定・キャンセル方法）。<paramref name="showSubLines"/> で表示可否を制御する。<br/>
+    /// 2. 3 行目 = 情報ラベル（ウィンドウタイトル）。<see cref="ShouldShowInfoLabel"/> の判定に従う。<br/>
+    /// <br/>
+    /// 本メソッドが行の組み立てを単一所有する（両 UI で同一の文言・順序・外観になる）。<br/>
+    /// 呼び出し元は <see cref="FadeMaskAppearance.BuildSubLines"/>（外観の公開面）に集約する。
+    /// </remarks>
+    public static IReadOnlyList<FadeMaskSubLine> BuildSubLines(
+        FadeMaskRenderMode mode,
+        bool showSubLines,
+        bool infoLabelVisible,
+        string windowTitle,
+        FadeMaskLabelStyle operationStyle,
+        FadeMaskLabelStyle infoStyle)
+    {
+        var lines = new List<FadeMaskSubLine>(2);
+
+        if (showSubLines)
+        {
+            lines.Add(ToSubLine(GetOperationText(mode), operationStyle));
+        }
+
+        if (ShouldShowInfoLabel(mode, infoLabelVisible, windowTitle))
+        {
+            lines.Add(ToSubLine(windowTitle, infoStyle));
+        }
+
+        return lines;
+    }
+
+    /// <summary>テキストと外観からサブライン 1 行を生成する。</summary>
+    /// <param name="text">行のテキスト。</param>
+    /// <param name="style">行の外観。</param>
+    /// <returns>生成したサブライン（背景色は実効色へ解決済み）。</returns>
+    /// <remarks>
+    /// 背景色は <see cref="FadeMaskAppearance.ResolveLabelBackground"/> で実効色へ解決する（アルファ 0 は黒 50%）。<br/>
+    /// UI 層は背景色の解決規則を持たず、<see cref="FadeMaskSubLine.BackgroundColor"/> をそのまま描画できる。
+    /// </remarks>
+    private static FadeMaskSubLine ToSubLine(string text, FadeMaskLabelStyle style)
+        => new(text, style.FontSize, style.Color, FadeMaskAppearance.ResolveLabelBackground(style.BackgroundColor));
+    /// <summary>サイズラベルの表示スケール（DisplayScale）の実効値を解決する。</summary>
+    /// <param name="displayScaling">指定された表示スケール。0 以下の場合は <paramref name="scaling"/> を使う。</param>
+    /// <param name="scaling">表示スケール未指定時の代替値（座標換算の倍率）。</param>
+    /// <returns>実効の表示スケール。</returns>
+    /// <remarks>
+    /// 「DisplayScaleScaling が 0 以下の場合は Scaling と同じ値として扱う」という規則を単一所有する。<br/>
+    /// 各 UI の <c>DisplayScaleScaling</c> プロパティと <see cref="FormatSizeLabel"/> が本メソッドを使う（重複排除）。
+    /// </remarks>
+    public static double ResolveDisplayScaling(double displayScaling, double scaling)
+        => displayScaling > 0 ? displayScaling : scaling;
+
     /// <summary>サイズラベルのテキストを生成する（DIP → 物理ピクセル変換）。</summary>
     /// <param name="dipRect">ラベルの対象矩形（DIP 座標）。</param>
     /// <param name="scaling">座標・サイズを物理ピクセルへ換算する係数（1.0=100%, 1.25=125%）。0 以下は 1.0 として扱う。</param>
@@ -50,7 +110,7 @@ internal static class FadeMaskLabels
     public static string FormatSizeLabel(EsRect dipRect, double scaling, double? displayScaling = null)
     {
         var s = scaling > 0 ? scaling : 1.0;
-        var d = displayScaling is > 0 ? displayScaling.Value : s;
+        var d = ResolveDisplayScaling(displayScaling ?? 0, s);
         var left = (int)(dipRect.X * s);
         var top = (int)(dipRect.Y * s);
         var right = (int)(dipRect.Right * s);

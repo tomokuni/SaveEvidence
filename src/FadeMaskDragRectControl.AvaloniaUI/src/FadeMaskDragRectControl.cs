@@ -7,6 +7,7 @@ using Estable.AvaloniaUI.FadeMask;
 using Estable.FadeMaskDragRect;
 using Estable.AvaloniaUI.Loupe;
 using Estable.DragRect;
+using Estable.FadeMask;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Coordinate;
 using Microsoft.Extensions.Logging;
@@ -28,7 +29,7 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// <br/>
 /// <b>内部構造</b>:<br/>
 /// - DragRectControl: ドラッグ選択の本体（ドメイン座標 + 座標変換ポート）。<br/>
-/// - FadeMaskControl + FadeMaskRenderer: 暗転マスク・選択枠・サイズラベル・ハイライトの描画。<br/>
+/// - FadeMaskControl: 暗転マスク・選択枠・サイズラベル・ハイライトの描画。<br/>
 /// - LoupeControl: 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算）。<br/>
 /// <br/>
 /// <b>配線（本クラス内で完結）</b>:<br/>
@@ -45,7 +46,7 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// <br/>
 /// <b>注意点</b>:<br/>
 /// - 本クラスは Panel のサブクラスで、3 つの子コントロールを配置する（各子は ZIndex で重なり順を制御）。<br/>
-/// - 全面暗転（<see cref="FadeMaskRenderer.ShowFullOverlay"/>）は Crop / AreaSelect でのみ有効<br/>
+/// - 全面暗転（<see cref="FadeMaskControl.ShowFullOverlay"/>）は Crop / AreaSelect でのみ有効<br/>
 ///   （ScreenSelect / WindowSelect ではハイライトのみ表示）。<br/>
 /// - ルーペソース（<see cref="SetLoupeSource"/>）はホストが設定する。<br/>
 /// - サイズラベルは <see cref="SizeLabelOverrideProvider"/> で描画時に評価する（Crop のズーム率追従等）。<br/>
@@ -78,7 +79,7 @@ public sealed class FadeMaskDragRectControl : Panel
         return brush;
     }
 
-    /// <summary>暗転マスク描画コントロール（FadeMaskRenderer を ExternalRenderer として適用）。</summary>
+    /// <summary>暗転マスク描画コントロール（描画状態と外観の真のソース）。</summary>
     private readonly FadeMaskControl _overlay = new() { IsHitTestVisible = false, ZIndex = 50, ClipToBounds = true };
 
     /// <summary>ドラッグ選択コントロール（選択矩形・ハンドル・nudge）。</summary>
@@ -86,9 +87,6 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>ルーペコントロール（外観・表示状態の真のソース）。</summary>
     private readonly LoupeControl _loupeControl = new() { ZIndex = 70, IsHitTestVisible = false };
-
-    /// <summary>オーバーレイ描画レンダラー（描画状態の真のソース）。</summary>
-    private readonly FadeMaskRenderer _renderer = new();
 
     /// <summary>動作モード（C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義）。</summary>
     private FadeMaskDragRectMode _mode = FadeMaskDragRectMode.AreaSelect;
@@ -117,9 +115,6 @@ public sealed class FadeMaskDragRectControl : Panel
         Children.Add(_dragRect);
         Children.Add(_loupeControl);
 
-        // 描画委譲（FadeMaskControl の描画を FadeMaskRenderer へ完全委譲。状態の真のソースをレンダラーに集約）
-        _overlay.ExternalRenderer = _renderer;
-
         // ── 配線（DragRect のイベントを状態同期とホスト通知へ変換） ──
         _dragRect.SelectionChanged += OnSelectionChanged;
         _dragRect.SelectionStarted += OnSelectionStarted;
@@ -146,8 +141,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>動作モードを取得または設定する（内包コントロールの有効・無効と描画モードを自動切替）。</summary>
     /// <value><see cref="FadeMaskDragRectMode"/>（Crop / AreaSelect / ScreenSelect / WindowSelect）。既定値は AreaSelect。</value>
     /// <remarks>
-    /// 設定時は <see cref="FadeMaskRenderer.Mode"/>（FadeMaskRenderMode）・<see cref="DragRectControl"/> の可視性・<br/>
-    /// 全面暗転（<see cref="FadeMaskRenderer.ShowFullOverlay"/>）を一括で適用する。<br/>
+    /// 設定時は描画モード（<see cref="FadeMaskRenderMode"/>）・<see cref="DragRectControl"/> の可視性・<br/>
+    /// 全面暗転（<see cref="FadeMaskControl.ShowFullOverlay"/>）を一括で適用する。<br/>
     /// - Crop / AreaSelect: DragRect を表示し、全面暗転を有効化する。<br/>
     /// - ScreenSelect / WindowSelect: DragRect / Loupe を非表示にし、全面暗転を無効化する（ハイライトのみ）。
     /// </remarks>
@@ -184,12 +179,12 @@ public sealed class FadeMaskDragRectControl : Panel
     // ====================================================================
 
     /// <summary>現在の選択状態（選択矩形の有無）。</summary>
-    /// <remarks>選択状態の真のソースは FadeMaskRenderer（HasSelection / LogicalSelectionRect）に集約し、<br/>DragRect の選択変更（SelectionChanged）から同期される。</remarks>
-    public bool HasSelection => _renderer.HasSelection;
+    /// <remarks>選択状態の真のソースは <see cref="FadeMaskControl"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>DragRect の選択変更（SelectionChanged）から同期される。</remarks>
+    public bool HasSelection => _overlay.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</summary>
-    /// <remarks>選択状態の真のソースは FadeMaskRenderer（HasSelection / LogicalSelectionRect）に集約し、<br/>DragRect の選択変更（SelectionChanged）から同期される。</remarks>
-    public Rect SelectionRect => _renderer.LogicalSelectionRect ?? default;
+    /// <remarks>選択状態の真のソースは <see cref="FadeMaskControl"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>DragRect の選択変更（SelectionChanged）から同期される。</remarks>
+    public Rect SelectionRect => _overlay.LogicalSelectionRect ?? default;
 
     /// <summary>Enter キーまたは RequestConfirm による確定要求イベント（選択確定後のみ発火）。</summary>
     public event EventHandler<FadeMaskDragRectSelectionEventArgs>? ConfirmRequested;
@@ -365,24 +360,26 @@ public sealed class FadeMaskDragRectControl : Panel
             CoordLabelFontSize = settings.CoordLabelFontSize!.Value,
         };
 
-        // FadeMask 外観（FadeMaskRenderer へ直接設定。境界変換は座標変換ポートが担う）
-        // 色は不透明度をアルファに統合した値（#AARRGGBB）をそのまま設定する。
-        _renderer.OverlayArgbColor = settings.OverlayColor!.Value;
-        _renderer.TextColor = settings.TextColor!.Value;
-        _renderer.TextBackgroundColor = settings.TextBackgroundColor!.Value;
-        _renderer.FontSize = settings.FontSize!.Value;
-        _renderer.ShowSizeLabel = settings.ShowSizeLabel!.Value;
-        _renderer.BorderColor = settings.BorderColor!.Value;
-        _renderer.BorderThickness = settings.BorderThickness!.Value;
-        _renderer.InfoLabelColor = settings.InfoLabelColor!.Value;
-        _renderer.InfoLabelBackgroundColor = settings.InfoLabelBackgroundColor!.Value;
-        _renderer.InfoLabelFontSize = settings.InfoLabelFontSize!.Value;
-        _renderer.InfoLabelVisible = settings.InfoLabelVisible!.Value;
-        // サブライン（サイズラベルの下の 2 行目以降）
-        _renderer.ShowSubLines = settings.ShowSubLines!.Value;
-        _renderer.SubLineFontSize = settings.SubLineFontSize!.Value;
-        _renderer.SubLineColor = settings.SubLineColor!.Value;
-        _renderer.SubLineBackgroundColor = settings.SubLineBackgroundColor!.Value;
+        // FadeMask 外観（コアの外観値を 1 つ組み立てて一括設定する。境界変換はここで行う）
+        // 色は不透明度をアルファに統合した値（#AARRGGBB）をそのまま設定する（Avalonia 色 → コア色）。
+        _overlay.Appearance = new FadeMaskAppearance
+        {
+            OverlayColor = settings.OverlayColor!.Value.ToDrawingColor(),
+            BorderColor = settings.BorderColor!.Value.ToDrawingColor(),
+            BorderThickness = settings.BorderThickness!.Value,
+            ShowSizeLabel = settings.ShowSizeLabel!.Value,
+            SizeLabelColor = settings.TextColor!.Value.ToDrawingColor(),
+            SizeLabelBackgroundColor = settings.TextBackgroundColor!.Value.ToDrawingColor(),
+            SizeLabelFontSize = settings.FontSize!.Value,
+            ShowSubLines = settings.ShowSubLines!.Value,
+            SubLineColor = settings.SubLineColor!.Value.ToDrawingColor(),
+            SubLineBackgroundColor = settings.SubLineBackgroundColor!.Value.ToDrawingColor(),
+            SubLineFontSize = settings.SubLineFontSize!.Value,
+            InfoLabelVisible = settings.InfoLabelVisible!.Value,
+            InfoLabelColor = settings.InfoLabelColor!.Value.ToDrawingColor(),
+            InfoLabelBackgroundColor = settings.InfoLabelBackgroundColor!.Value.ToDrawingColor(),
+            InfoLabelFontSize = settings.InfoLabelFontSize!.Value,
+        };
 
         // Loupe 外観（LoupeControl の公開外観設定を全て適用）
         _loupeControl.RequestedSize = settings.RequestedSize!.Value;
@@ -431,8 +428,7 @@ public sealed class FadeMaskDragRectControl : Panel
         set
         {
             _sizeLabelOverrideProvider = value;
-            _renderer.SizeLabelOverrideProvider = value;
-            _overlay.InvalidateVisual();
+            _overlay.SizeLabelOverrideProvider = value;
         }
     }
 
@@ -461,14 +457,13 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="rect">選択矩形（ドメイン座標）。null は選択なし。</param>
     /// <remarks>
     /// <see cref="SetSelection"/> と <see cref="ClearSelection"/> で共用する（重複排除）。<br/>
-    /// 選択状態の真のソースは <see cref="FadeMaskRenderer"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>
+    /// 選択状態の真のソースは <see cref="FadeMaskControl"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>
     /// ルーペ画像上の選択枠（破線）も同期する。DIP 矩形の算出は描画時に行う（レイアウト変化に追従）。
     /// </remarks>
     private void SyncSelectionState(Rect? rect)
     {
-        _renderer.HasSelection = rect is not null;
-        _renderer.LogicalSelectionRect = rect;
-        _overlay.InvalidateVisual();
+        _overlay.HasSelection = rect is not null;
+        _overlay.LogicalSelectionRect = rect;
     }
 
     /// <summary>ルーペの中心位置（ドメイン座標）を設定して表示を開始する。</summary>
@@ -522,9 +517,6 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ルーペコントロール（Source 設定・テスト用アクセサ）。</summary>
     internal LoupeControl Loupe => _loupeControl;
 
-    /// <summary>オーバーレイ描画レンダラー（テスト用アクセサ・ハイライト設定用）。</summary>
-    internal FadeMaskRenderer Renderer => _renderer;
-
     /// <summary>FadeMaskControl（オーバーレイ描画コントロール。テスト用アクセサ）。</summary>
     internal FadeMaskControl Overlay => _overlay;
 
@@ -536,49 +528,42 @@ public sealed class FadeMaskDragRectControl : Panel
     // ====================================================================
 
     /// <summary>ハイライト矩形（ドメイン座標）。未検出時は null。</summary>
-    /// <remarks>FadeMaskRenderer.LogicalHighlightRect へ委譲する。設定後は <see cref="InvalidateOverlay"/> で再描画する。</remarks>
+    /// <remarks><see cref="FadeMaskControl.LogicalHighlightRect"/> へ委譲する（変更は自動で再描画される）。</remarks>
     public Rect? LogicalHighlightRect
     {
-        get => _renderer.LogicalHighlightRect;
-        set => _renderer.LogicalHighlightRect = value;
+        get => _overlay.LogicalHighlightRect;
+        set => _overlay.LogicalHighlightRect = value;
     }
 
     /// <summary>ハイライト表示の有無。</summary>
     public bool HasHighlight
     {
-        get => _renderer.HasHighlight;
-        set => _renderer.HasHighlight = value;
-    }
-
-    /// <summary>ハイライト対象のスクリーンインデックス（未検出時は -1）。</summary>
-    public int ScreenIndex
-    {
-        get => _renderer.ScreenIndex;
-        set => _renderer.ScreenIndex = value;
+        get => _overlay.HasHighlight;
+        set => _overlay.HasHighlight = value;
     }
 
     /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）。</summary>
     /// <remarks>
-    /// <see cref="FadeMaskRenderer.Scaling"/> へ委譲する。<br/>
+    /// <see cref="FadeMaskControl.Scaling"/> へ委譲する。<br/>
     /// ユーザー設定ではなく、セッション（Crop は 1.0 / 画面キャプチャはウィンドウのスケーリング）が
     /// <see cref="AppearanceSettings"/> とは独立して設定する（コードから動的設定）。
     /// </remarks>
     public double Scaling
     {
-        get => _renderer.Scaling;
-        set => _renderer.Scaling = value;
+        get => _overlay.Scaling;
+        set => _overlay.Scaling = value;
     }
 
     /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="Scaling"/> と同値）。</summary>
     /// <remarks>
-    /// <see cref="FadeMaskRenderer.DisplayScaleScaling"/> へ委譲する。<br/>
+    /// <see cref="FadeMaskControl.DisplayScaleScaling"/> へ委譲する。<br/>
     /// ユーザー設定ではなく、セッション（OverlayWindow）がハイライト表示のマルチスクリーン補正として
     /// <see cref="AppearanceSettings"/> とは独立して設定する（コードから動的設定）。
     /// </remarks>
     public double DisplayScaleScaling
     {
-        get => _renderer.DisplayScaleScaling;
-        set => _renderer.DisplayScaleScaling = value;
+        get => _overlay.DisplayScaleScaling;
+        set => _overlay.DisplayScaleScaling = value;
     }
 
     /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。</summary>
@@ -594,11 +579,11 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>ハイライト対象のウィンドウタイトル（未検出時は空文字）。</summary>
-    public string WindowTitle { get => _renderer.WindowTitle; set => _renderer.WindowTitle = value; }
+    public string WindowTitle { get => _overlay.WindowTitle; set => _overlay.WindowTitle = value; }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効）。</summary>
     /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ。</remarks>
-    public bool ShowFullOverlay => _renderer.ShowFullOverlay;
+    public bool ShowFullOverlay => _overlay.ShowFullOverlay;
 
     // ====================================================================
     // 内部実装（配線・状態同期）
@@ -612,21 +597,20 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void ApplyMode()
     {
-        _renderer.Mode = FadeMaskDragRectModes.ToRenderMode(_mode);
+        _overlay.Mode = FadeMaskDragRectModes.ToRenderMode(_mode);
         bool useDragRect = FadeMaskDragRectModes.UsesDragRect(_mode);
         _dragRect.IsVisible = useDragRect;
-        _renderer.ShowFullOverlay = useDragRect;
+        _overlay.ShowFullOverlay = useDragRect;
         // 選択位置の視覚化用に、ルーペの選択矩形破線オーバーレイをモードに応じて有効化する
         // （描画は Rendered イベント経由でホスト側が行う。モード依存設定のため ApplyMode で管理）。
         _showSelectionOverlay = useDragRect;
-        _overlay.InvalidateVisual();
     }
 
     /// <summary>選択状態をオーバーレイ描画へ反映する（SelectionChanged）。</summary>
     /// <param name="sender">イベント送信元（DragRectControl）。</param>
     /// <param name="e">選択矩形イベント（Rect はドメイン座標）。</param>
     /// <remarks>
-    /// 選択状態の真のソースは <see cref="FadeMaskRenderer"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>
+    /// 選択状態の真のソースは <see cref="FadeMaskControl"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>
     /// ルーペ画像上の選択枠（破線）も同期する。DIP 矩形の算出は描画時に行う（レイアウト変化に追従）。
     /// </remarks>
     private void OnSelectionChanged(object? sender, SelectionRectEventArgs e)
@@ -681,7 +665,7 @@ public sealed class FadeMaskDragRectControl : Panel
             return;
         }
 
-        if (_renderer.LogicalSelectionRect is { } selectionRect)
+        if (_overlay.LogicalSelectionRect is { } selectionRect)
         {
             var colorA = _currentAppearance.SelectionRectColorA;
             var colorB = _currentAppearance.SelectionRectColorB;

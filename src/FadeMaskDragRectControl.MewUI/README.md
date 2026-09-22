@@ -67,9 +67,9 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | `HasHighlight` / `LogicalHighlightRect` | ハイライト（`ScreenSelect` / `WindowSelect` の穴あけ矩形） |
 | `ShowFullOverlay` | 全面暗転の有無（モードから導出） |
 | `LoupeCenterPoint` / `LoupeOffset` | ルーペ中心（ドメイン座標）と右下オフセット（DIP） |
-| `OverlayColor` / `BorderColor` / `BorderThickness` | 暗転色・枠線（枠線は選択矩形と暗転マスクで共用） |
-| `ShowSizeLabel` / `SizeLabelTextProvider` / `SizeLabelFontSize` / `SizeLabelColor` / `SizeLabelBackgroundColor` | サイズラベル（1 行目）の表示・文言・外観（文言はホストが与える） |
-| `SubLines` | サイズラベルの下に積む行（2 行目以降。`FadeMaskSubLine` の一覧） |
+| `Appearance` | 暗転マスクの外観（暗転色・枠線・ラベル）の単一値。枠線は選択矩形と暗転マスクで共用される |
+| `WindowTitle` | 情報ラベル（3 行目）の文言（ウィンドウ選択時） |
+| `SizeLabelOverrideProvider` | サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
 | `SelectionOverlayColorA` / `SelectionOverlayColorB` | ルーペ画像上の選択矩形破線の色（2 色交互。既定は白 / 黒） |
 | `Log` | 操作ログの出力先（null は `NullLogger`。内包するドラッグ選択コントロールとルーペへ伝搬する） |
 | `Port` | 暗転マスクへ適用中の座標変換ポート |

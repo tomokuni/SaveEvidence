@@ -95,7 +95,7 @@ flowchart TB
     subgraph Dep["内包コントロール（外部プロジェクト）"]
         direction TB
         DR["DragRectControl<br/>Estable.AvaloniaUI.DragRect"]
-        FM["FadeMaskControl + FadeMaskRenderer<br/>Estable.AvaloniaUI.FadeMask"]
+        FM["FadeMaskControl<br/>Estable.AvaloniaUI.FadeMask<br/>（コアの Appearance・幾何を共有）"]
         LC["LoupeControl<br/>Estable.AvaloniaUI.Loupe"]
     end
 
@@ -120,7 +120,7 @@ flowchart TB
 | 責務 | 内包コントロール（DragRect / FadeMask / Loupe）の生成・配置・配線・状態同期と、ホストへの統一インターフェース提供 |
 | 主要メンバー | `Mode` / `AppearanceSettings` / `SetCoordinateTransform` / `SetSelection` / `ClearSelection` / `SetDragRectSelection` / `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `FocusDragRect` / `RequestConfirm` / `RequestCancel` / `AttachScrollViewer` / `NotifyViewportChanged` / `HasSelection` / `SelectionRect` / ハイライト状態（LogicalHighlightRect 等）/ スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling`。`AppearanceSettings` の対象外）/ 公開イベント 4 種（独自引数） |
 | 内部アクセサ（internal） | `Loupe` / `Renderer` / `Overlay` / `DragRect`（自身の Tests のみアクセス可。公開型のカプセル化のため internal 化） |
-| 内部フィールド | `_overlay`（FadeMaskControl）/ `_dragRect`（DragRectControl）/ `_loupeControl`（LoupeControl）/ `_renderer`（FadeMaskRenderer） |
+| 内部フィールド | `_overlay`（FadeMaskControl）/ `_dragRect`（DragRectControl）/ `_loupeControl`（LoupeControl） |
 
 ### 6.2 FadeMaskDragRectMode
 
@@ -145,7 +145,7 @@ flowchart TB
 | コンポーネント | プロジェクト | 責務 |
 | --- | --- | --- |
 | `DragRectControl` | DragRectControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート） |
-| `FadeMaskControl` + `FadeMaskRenderer` | FadeMaskControl | 暗転マスク・選択枠・サイズラベル・ハイライトの描画 |
+| `FadeMaskControl` | FadeMaskControl | 暗転マスク・選択枠・ラベル・ハイライトの描画（外観は `Appearance`、状態は個別プロパティ） |
 | `LoupeControl` | LoupeControl | 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算） |
 
 ### 6.5 公開イベント引数

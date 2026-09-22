@@ -1,4 +1,4 @@
-namespace Estable.MewUI.FadeMask;
+namespace Estable.FadeMask;
 
 /// <summary>暗転マスクのサイズラベルの下に表示する 1 行分の内容（テキスト・フォントサイズ・色）。</summary>
 /// <param name="Text">行のテキスト。</param>
@@ -7,8 +7,9 @@ namespace Estable.MewUI.FadeMask;
 /// <param name="BackgroundColor">背景色（不透明度は色のアルファに統合。アルファ 0 の場合は黒 50% へフォールバック）。</param>
 /// <remarks>
 /// 2 行目以降（操作ラベル・情報ラベル）を行単位で指定するための不変データ。<br/>
-/// 文言の選定（操作ラベル・情報ラベルの表示判定）は <c>FadeMaskLabels</c>（コア）が単一所有し、<br/>
-/// ホストがその結果と設定の色・サイズを組み合わせて本型の一覧を組み立てる。
+/// 文言の選定（操作ラベル・情報ラベルの表示判定）は <see cref="FadeMaskLabels"/> が単一所有し、<br/>
+/// 行の一覧の組み立ては <see cref="FadeMaskLabels.BuildSubLines"/> が担う（両 UI で同一の結果になる）。<br/>
+/// 色は UI 非依存の <see cref="System.Drawing.Color"/> を使用し、各 UI の描画型への変換は境界で行う。
 /// </remarks>
 public sealed record FadeMaskSubLine(
     string Text,

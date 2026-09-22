@@ -60,7 +60,7 @@ public sealed record FadeMaskDragRectSettings
     public double? CoordLabelFontSize { get; init; }
 
     // ====================================================================
-    // FadeMask 外観（FadeMaskRenderer の描画設定）
+    // FadeMask 外観（FadeMaskAppearance の設定）
     // ====================================================================
 
     /// <summary>暗転オーバーレイの色（不透明度は色のアルファに統合。既定は黒 50%）。</summary>

@@ -105,14 +105,14 @@ parentPanel.Children.Add(overlay);
 | 名前 | 型 | 説明 |
 | --- | --- | --- |
 | `Mode` | `FadeMaskDragRectMode` | 動作モード。設定時に描画モード・DragRect / Loupe の可視性・全面暗転を一括切替（既定値: `AreaSelect`） |
-| `HasSelection` | `bool` | 選択矩形の有無（選択状態の真のソースは FadeMaskRenderer） |
+| `HasSelection` | `bool` | 選択矩形の有無（選択状態の真のソースは FadeMaskControl） |
 | `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標。未選択時は 0x0 の空矩形） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | サイズラベルを描画時に評価するプロバイダ（レンダラーへ伝搬） |
 | `LogicalHighlightRect` | `Rect?` | ハイライト矩形（ドメイン座標。未検出時は null。ScreenSelect / WindowSelect 用） |
 | `HasHighlight` | `bool` | ハイライト表示の有無（ScreenSelect / WindowSelect 用） |
-| `ScreenIndex` | `int` | ハイライト対象のスクリーンインデックス（未検出時は -1。ScreenSelect 用） |
-| `Scaling` | `double` | DPI スケーリング係数（`AppearanceSettings` の対象外・コードから動的設定。`FadeMaskRenderer.Scaling` へ委譲） |
-| `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。`AppearanceSettings` の対象外・コードから動的設定。`FadeMaskRenderer.DisplayScaleScaling` へ委譲） |
+
+| `Scaling` | `double` | DPI スケーリング係数（`AppearanceSettings` の対象外・コードから動的設定。`FadeMaskControl.Scaling` へ委譲） |
+| `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。`AppearanceSettings` の対象外・コードから動的設定。`FadeMaskControl.DisplayScaleScaling` へ委譲） |
 | `LoupeRenderScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（`AppearanceSettings` の対象外・DPI から自動取得。`LoupeControl.RenderScaling` へ委譲） |
 | `WindowTitle` | `string` | ハイライト対象のウィンドウタイトル（未検出時は空文字。WindowSelect 用） |
 | `ShowFullOverlay` | `bool` | 全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効。読み取り専用） |
@@ -237,7 +237,7 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `Estable.Fade
 - **ドメイン座標**: ホストが定義する論理座標（Crop: 元画像ピクセル / AreaSelect: 仮想スクリーンピクセル）。
 - **DIP 座標**: コントロールローカル DIP。`SetCoordinateTransform` で注入した `ICoordTransform` が変換します。
 - **追従性**: ズーム・スクロール・ウィンドウサイズ変更などのレイアウト変化に、座標変換が常に追従します。
-- **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します（FadeMaskRenderer.ToDipRect が終点に +1）。
+- **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します（コアの `FadeMaskOverlayGeometry.ToDipRect` が終点に +1）。
 
 ## 7. モード
 
@@ -258,7 +258,7 @@ graph TD
     DR -->|"SelectionStarted / SelectionCancelled"| SC
     DR -->|"LoupePositionMoved"| SC
     DR -->|"ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested"| SC
-    SC -->|"LogicalSelectionRect / HasSelection 同期 + 再描画"| FM["FadeMaskControl + FadeMaskRenderer"]
+    SC -->|"LogicalSelectionRect / HasSelection 同期 + 再描画"| FM["FadeMaskControl（Appearance + 状態）"]
     SC -->|"CenterPoint 更新 + 表示開始"| LC["LoupeControl"]
     SC -->|"イベント中継"| HOST["ホスト（CropSession / OverlayWindow）"]
 ```

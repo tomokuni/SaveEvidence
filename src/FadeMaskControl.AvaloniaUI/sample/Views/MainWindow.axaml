@@ -13,21 +13,26 @@
         <TextBlock Text="FadeMaskControl サンプル"
                    FontSize="20" FontWeight="Bold"/>
 
-        <!-- 暗転オーバーレイ（穴あけマスク）の表示領域 -->
+        <!-- 暗転オーバーレイ（穴あけマスク）の表示領域。外観は 1 つの値（Appearance）、状態は個別プロパティ -->
         <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Padding="4">
             <Grid Width="560" Height="320" Background="LightGray">
                 <fm:FadeMaskControl x:Name="Overlay"
-                                    OverlayColor="{Binding OverlayColor}"
-                                    TextColor="{Binding TextColor}"
-                                    TextBackgroundColor="{Binding TextBackgroundColor}"
-                                    FontSize="{Binding FontSize}"
-                                    ShowSizeLabel="{Binding ShowSizeLabel}"/>
+                                    Appearance="{Binding Appearance}"
+                                    LogicalSelectionRect="{Binding LogicalSelectionRect}"
+                                    LogicalHighlightRect="{Binding LogicalHighlightRect}"
+                                    HasSelection="{Binding HasSelection}"
+                                    HasHighlight="{Binding HasHighlight}"
+                                    WindowTitle="{Binding WindowTitle}"
+                                    Mode="{Binding Mode}"
+                                    ShowFullOverlay="{Binding ShowFullOverlay}"
+                                    Scaling="{Binding Scaling}"
+                                    DisplayScaleScaling="{Binding DisplayScaleScaling}"/>
             </Grid>
         </Border>
 
         <!-- 選択矩形の操作 -->
         <StackPanel Spacing="4">
-            <TextBlock Text="選択矩形（SelectionRect）" FontWeight="SemiBold"/>
+            <TextBlock Text="選択矩形（LogicalSelectionRect）" FontWeight="SemiBold"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock VerticalAlignment="Center" Text="X:"/>
                 <TextBox Width="60" Text="{Binding RectX, UpdateSourceTrigger=PropertyChanged}"/>
@@ -43,7 +48,7 @@
 
         <!-- 暗転オーバーレイの設定 -->
         <StackPanel Spacing="4">
-            <TextBlock Text="暗転オーバーレイ（OverlayColor）" FontWeight="SemiBold"/>
+            <TextBlock Text="暗転オーバーレイ（Appearance.OverlayColor）" FontWeight="SemiBold"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock VerticalAlignment="Center" Text="Opacity:"/>
                 <Slider Width="200" Minimum="0" Maximum="255" Value="{Binding OverlayOpacity}"/>
@@ -53,7 +58,7 @@
 
         <!-- 選択枠線の設定 -->
         <StackPanel Spacing="4">
-            <TextBlock Text="選択枠線（BorderColor / BorderThickness・不透明度は色のアルファ）" FontWeight="SemiBold"/>
+            <TextBlock Text="選択枠線（Appearance.BorderColor / BorderThickness・不透明度は色のアルファ）" FontWeight="SemiBold"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock VerticalAlignment="Center" Text="Thickness:"/>
                 <Slider Width="200" Minimum="0.5" Maximum="8" Value="{Binding BorderThickness}"/>
@@ -62,14 +67,14 @@
 
         <!-- サイズラベルの設定 -->
         <StackPanel Spacing="4">
-            <TextBlock Text="サイズラベル（TextColor / FontSize / ShowSizeLabel）" FontWeight="SemiBold"/>
+            <TextBlock Text="サイズラベル（Appearance.SizeLabelColor / SizeLabelFontSize / ShowSizeLabel）" FontWeight="SemiBold"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <CheckBox VerticalAlignment="Center" Content="サイズラベル表示" IsChecked="{Binding ShowSizeLabel}"/>
                 <TextBlock VerticalAlignment="Center" Text="FontSize:"/>
                 <Slider Width="200" Minimum="8" Maximum="32" Value="{Binding FontSize}"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock VerticalAlignment="Center" Text="明示指定（SizeLabelOverride・空は自動）:"/>
+                <TextBlock VerticalAlignment="Center" Text="明示指定（SizeLabelOverrideProvider・空は自動）:"/>
                 <TextBox Width="260" Text="{Binding SizeLabelOverride, UpdateSourceTrigger=PropertyChanged}"/>
             </StackPanel>
         </StackPanel>
@@ -79,8 +84,8 @@
             <TextBlock Text="スケーリング（Scaling / DisplayScaleScaling）" FontWeight="SemiBold"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock VerticalAlignment="Center" Text="Scaling:"/>
-                <Slider Width="160" Minimum="0.5" Maximum="4" Value="{Binding RendererScaling}"/>
-                <TextBlock VerticalAlignment="Center" Text="{Binding RendererScalingText}"/>
+                <Slider Width="160" Minimum="0.5" Maximum="4" Value="{Binding Scaling}"/>
+                <TextBlock VerticalAlignment="Center" Text="{Binding ScalingText}"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock VerticalAlignment="Center" Text="DisplayScaleScaling:"/>
@@ -93,7 +98,7 @@
 
         <!-- 情報ラベルの設定 -->
         <StackPanel Spacing="4">
-            <TextBlock Text="情報ラベル（InfoLabelVisible / InfoLabelColor / InfoLabelBackgroundColor / InfoLabelFontSize）" FontWeight="SemiBold"/>
+            <TextBlock Text="情報ラベル（Appearance.InfoLabelVisible / InfoLabelColor / InfoLabelBackgroundColor / InfoLabelFontSize）" FontWeight="SemiBold"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <CheckBox VerticalAlignment="Center" Content="情報ラベル表示" IsChecked="{Binding InfoLabelVisible}"/>
                 <TextBlock VerticalAlignment="Center" Text="Color:"/>
@@ -115,7 +120,7 @@
             <ComboBox ItemsSource="{Binding ModeItems}" SelectedIndex="{Binding SelectedModeIndex}"/>
         </StackPanel>
 
-        <TextBlock Text="※ 本サンプルは FadeMaskControl 単体（暗転マスク＋サイズラベル）の描画確認用です。モード（AreaSelect / ScreenSelect / WindowSelect / Crop）に応じた描画の切り替えは FadeMaskRenderer（CaptureSessionControl.AvaloniaUI が使用）で確認できます。"
+        <TextBlock Text="※ 本サンプルは FadeMaskControl 単体（暗転マスク＋ラベル）の描画確認用です。モード（AreaSelect / ScreenSelect / WindowSelect / Crop）に応じた描画と外観の反映を確認できます。"
                    FontSize="11" Opacity="0.7" TextWrapping="Wrap"/>
     </StackPanel>
 </Window>

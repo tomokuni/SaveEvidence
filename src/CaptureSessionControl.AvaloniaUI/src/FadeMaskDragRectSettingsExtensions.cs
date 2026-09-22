@@ -24,7 +24,7 @@ internal static class FadeMaskDragRectSettingsExtensions
     /// <remarks>
     /// DPI スケーリング（<c>Scaling</c> / <c>DisplayScaleScaling</c>）とルーペの描画スケール（<c>RenderScaling</c>）は<br/>
     /// 本変換の対象外（コードから動的設定・DPI から自動取得）のため、個別プロパティ（<c>FadeMaskDragRectControl.Scaling</c> 等）で設定する。<br/>
-    /// サイズラベルの文字色（TextColor）は SizeLabelColor をマッピングする（FadeMaskRenderer の命名に合わせる）。<br/>
+    /// サイズラベルの文字色は CaptureSettings.SizeLabelColor をそのままマッピングする（コアの FadeMaskAppearance.SizeLabelColor と同名）。<br/>
     /// </remarks>
     public static FadeMaskDragRectSettings ToFadeMaskDragRectSettings(
         this CaptureSettings settings, double positionOffset = 20.0)

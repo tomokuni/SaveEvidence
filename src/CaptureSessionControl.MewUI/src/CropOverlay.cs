@@ -3,7 +3,6 @@ using Estable.CaptureSession;
 using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
 using Estable.MewUI.CropView;
-using Estable.MewUI.FadeMask;
 using Estable.MewUI.FadeMaskDragRect;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -268,11 +267,23 @@ public sealed class CropOverlay
     {
         var s = _settings;
 
-        _selector.OverlayColor = s.OverlayColor ?? s_overlayColor;
-
-        // 枠線・ハンドルは設定に従う（Avalonia 版と同じ。既定は DarkGray / 2.0）
-        _selector.BorderColor = s.BorderColor ?? DrawingColor.DarkGray;
-        _selector.BorderThickness = s.BorderThickness!.Value;
+        // 暗転マスクの外観は 1 つの値へ組み立てて一括設定する（枠線はドラッグ矩形と共用される。
+        // 既定は DarkGray / 2.0 で Avalonia 版と同じ）
+        _selector.Appearance = new FadeMaskAppearance
+        {
+            OverlayColor = s.OverlayColor ?? s_overlayColor,
+            BorderColor = s.BorderColor ?? DrawingColor.DarkGray,
+            BorderThickness = s.BorderThickness!.Value,
+            // ラベル（サイズ・操作）は切り出しモードの文言を使う（情報ラベルは表示しない）
+            ShowSizeLabel = s.SizeLabelVisible!.Value,
+            SizeLabelColor = s.SizeLabelColor ?? DrawingColor.White,
+            SizeLabelBackgroundColor = s.TextBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
+            SizeLabelFontSize = s.SizeLabelFontSize!.Value,
+            ShowSubLines = s.ShowSubLines!.Value,
+            SubLineFontSize = s.SubLineFontSize!.Value,
+            SubLineColor = s.SubLineColor ?? DrawingColor.FromArgb(255, 220, 220, 220),
+            SubLineBackgroundColor = s.SubLineBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
+        };
 
         _selector.LoupeOffset = s.LoupeOffset!.Value;
         _selector.DragRect.Options = _selector.DragRect.Options with
@@ -291,28 +302,15 @@ public sealed class CropOverlay
         };
         CaptureOverlay.ApplyLoupe(_selector, s, _themeBackground);
 
-        // ラベル（サイズ・操作）は切り出しモードの文言を使う（情報ラベルは表示しない）
-        var overlay = _selector.Overlay;
-        overlay.ShowSizeLabel = s.SizeLabelVisible!.Value;
-        overlay.SizeLabelColor = s.SizeLabelColor ?? DrawingColor.White;
-        overlay.SizeLabelBackgroundColor = s.TextBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0);
-        overlay.SizeLabelFontSize = s.SizeLabelFontSize!.Value;
-
         // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）
-        overlay.SizeLabelTextProvider = () =>
+        var overlay = _selector.Overlay;
+        overlay.SizeLabelOverrideProvider = () =>
             _selector.HasSelection && s.SizeLabelVisible!.Value
                 ? FadeMaskLabels.FormatSizeLabel(_selector.SelectionRect, scaling: 1.0)
                 : null;
 
-        overlay.SubLines = s.ShowSubLines!.Value
-            ?
-            [
-                new FadeMaskSubLine(
-                    FadeMaskLabels.GetOperationText(FadeMaskRenderMode.Crop),
-                    s.SubLineFontSize!.Value,
-                    s.SubLineColor ?? DrawingColor.FromArgb(255, 220, 220, 220),
-                    s.SubLineBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0)),
-            ]
-            : null;
+        // 描画モードは切り出し（情報ラベルを表示しない）。行の組み立てはコントロールに委ねる
+        overlay.Mode = FadeMaskRenderMode.Crop;
+        overlay.WindowTitle = "";
     }
 }

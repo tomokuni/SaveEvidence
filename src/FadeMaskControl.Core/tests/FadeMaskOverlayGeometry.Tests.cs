@@ -151,6 +151,40 @@ public class FadeMaskOverlayGeometryTests
         Assert.False(FadeMaskOverlayGeometry.ShouldDrawOverlay(null, showFullOverlay: false));
     }
 
+    /// <summary>ポートが指定されている場合はそれが優先されることを検証する。</summary>
+    [Fact]
+    public void ResolvePort_ポート指定時はポートを返す()
+    {
+        var port = CoordTransform.Scale(2.0);
+
+        var result = FadeMaskOverlayGeometry.ResolvePort(port, scaling: 3.0);
+
+        Assert.Same(port, result);
+    }
+
+    /// <summary>ポート未指定の場合は倍率から等倍スケールを生成することを検証する。</summary>
+    [Fact]
+    public void ResolvePort_ポート未指定なら倍率を適用する()
+    {
+        var result = FadeMaskOverlayGeometry.ResolvePort(null, scaling: 2.0);
+
+        Assert.Equal(new EsPoint(20, 40), result.Inverse(new EsPoint(10, 20)));
+    }
+
+    /// <summary>ポート未指定で倍率が 0 以下・等倍の場合は等価変換になることを検証する。</summary>
+    /// <param name="scaling">適用する倍率。</param>
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(-1.0)]
+    [InlineData(1.0)]
+    [InlineData(double.NaN)]
+    public void ResolvePort_倍率が無効なら等価変換になる(double scaling)
+    {
+        var result = FadeMaskOverlayGeometry.ResolvePort(null, scaling);
+
+        Assert.Same(CoordTransform.Identity, result);
+    }
+
     /// <summary>穴あけ矩形がない場合は全面が暗転領域になることを検証する。</summary>
     [Fact]
     public void ComputeOverlayRegions_穴あけ矩形がなければ全面を返す()
@@ -202,5 +236,34 @@ public class FadeMaskOverlayGeometryTests
         var result = FadeMaskOverlayGeometry.ComputeOverlayRegions(client, client);
 
         Assert.Empty(result);
+    }
+
+    /// <summary>穴あけ矩形がクライアント端に接する場合はその辺の帯を生成しないことを検証する。</summary>
+    [Fact]
+    public void ComputeOverlayRegions_穴あけ矩形が上端左端に接する場合は下右のみになる()
+    {
+        var client = new EsRect(0, 0, 100, 100);
+        var hole = new EsRect(0, 0, 40, 40);
+
+        var result = FadeMaskOverlayGeometry.ComputeOverlayRegions(client, hole);
+
+        // 上（Top == 0）と左（Left == 0）は幅・高さが 0 のため生成されない
+        Assert.Equal(2, result.Count);
+        Assert.Equal(new EsRect(0, 40, 100, 60), result[0]); // 下
+        Assert.Equal(new EsRect(40, 0, 60, 40), result[1]); // 右
+    }
+
+    /// <summary>穴あけ矩形がサイズ 0 の場合は全面が暗転領域になることを検証する。</summary>
+    [Fact]
+    public void ComputeOverlayRegions_穴あけ矩形がサイズ0なら全面を返す()
+    {
+        var client = new EsRect(0, 0, 100, 100);
+        var hole = new EsRect(50, 50, 0, 0);
+
+        var result = FadeMaskOverlayGeometry.ComputeOverlayRegions(client, hole);
+
+        // 穴あけ矩形が交差しない（幅・高さ 0）ため、暗転の抜けが生じないよう全面を返す
+        Assert.Single(result);
+        Assert.Equal(client, result[0]);
     }
 }

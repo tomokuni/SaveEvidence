@@ -12,6 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 描画状態変更のログ定義（LoggerMessage ソース生成）をコアが単一所有する（両 UI で同一書式） -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
     <Compile Remove="..\tests\**" />
     <None Remove="..\tests\**" />

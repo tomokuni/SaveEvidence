@@ -12,8 +12,8 @@
   - [4. インストール](#4-インストール)
   - [5. クイックスタート](#5-クイックスタート)
     - [AXAML（依存関係プロパティ描画）](#axaml依存関係プロパティ描画)
-    - [外部レンダラー（モード別描画）](#外部レンダラーモード別描画)
-  - [6. 入力動作](#6-入力動作)
+    - [コード（モード別描画）](#コードモード別描画)
+  - [6. 描画動作](#6-描画動作)
   - [7. サンプル](#7-サンプル)
   - [8. ドキュメント](#8-ドキュメント)
   - [9. アーキテクチャ](#9-アーキテクチャ)
@@ -24,16 +24,17 @@
 
 ## 1. 概要
 
-Avalonia UI 用の選択オーバーレイ描画コントロールです。領域選択時の暗転オーバーレイ（穴あけマスク）・選択枠線・サイズラベルを描画し、モード別の描画（ハイライト・ウィンドウタイトル・スクリーン番号）は `FadeMaskRenderer` が担当します。
+Avalonia UI 用の選択オーバーレイ描画コントロールです。領域選択時の暗転オーバーレイ（穴あけマスク）・選択枠線・ラベル（サイズ・操作・情報）を描画します。外観はコアの `FadeMaskAppearance` が 1 つの値として所有し、選択矩形・ハイライト矩形・全面暗転などの状態を個別プロパティで受け取ります。
 
 ## 2. 機能一覧
 
-- 暗転オーバーレイ（穴あけマスク）の描画（選択矩形の外側を暗転）
-- 選択矩形・選択枠線・サイズラベルの描画
-- 外部レンダラー（`FadeMaskRenderer`）への描画委譲（モード別描画の統一）
+- 暗転オーバーレイ（穴あけマスク）の描画（穴あけ矩形の外側を暗転）
+- 選択枠線・ラベル（サイズラベル・操作ラベル・情報ラベル）の描画
+- 外観の単一所有（`Appearance` = コアの `FadeMaskAppearance`。暗転色・枠線・ラベルを 1 つの値で設定）
+- **描画判断の単一所有**: どの矩形を暗転するか・枠線を描くか・どのラベルを描くか（サイズラベルの自動生成を含む）はコアの `FadeMaskFrame` が決定し、UI 層は返されたフレームを描くだけ（MewUI 版と同一の結果）
+- **入力の判断を持たない**: 装飾専用のため入力を扱わない（ホストが `IsHitTestVisible = false` で下へ通す）
 - モード別描画（AreaSelect / ScreenSelect / WindowSelect / Crop）に対応
 - Avalonia Binding 対応の StyledProperty（双方向バインド）
-- サイズラベル・情報ラベルの表示制御（DPI スケーリング対応）
 - **座標変換ポート（`SetCoordinateTransform(ICoordTransform?)` + `LogicalSelectionRect`）**: DragRectControl と同方式。論理座標（ドメイン）の選択矩形を描画時に動的評価で DIP 変換（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **非暗転領域の閉区間描画**: 非暗転領域（穴）は始点・終点の両ピクセルを含む閉区間（暗転領域は含まない）
 
@@ -67,40 +68,45 @@ using Estable.AvaloniaUI.FadeMask;
         xmlns:fm="clr-namespace:Estable.AvaloniaUI.FadeMask;assembly=FadeMaskControl.AvaloniaUI">
     <Grid Background="LightGray">
         <fm:FadeMaskControl LogicalSelectionRect="{Binding LogicalSelectionRect}"
-                            OverlayColor="#96000000"
-                            BorderColor="Red"
-                            BorderThickness="2"
-                            ShowSizeLabel="True"/>
+                            HasSelection="True"
+                            Appearance="{Binding Appearance}"/>
     </Grid>
 </Window>
 ```
 
-### 外部レンダラー（モード別描画）
+### コード（モード別描画）
 
 ```csharp
-using Estable.AvaloniaUI.FadeMask;
+using EsUtil.Platform.AvaloniaUI;   // ToDrawingColor
+using Estable.FadeMask;             // FadeMaskAppearance / FadeMaskRenderMode
 
-var control = new FadeMaskControl();
-var renderer = new FadeMaskRenderer
+var control = new FadeMaskControl
 {
+    // 外観は 1 つの値（コアの FadeMaskAppearance）で設定する
+    Appearance = new FadeMaskAppearance
+    {
+        OverlayColor = Color.Parse("#96000000").ToDrawingColor(),
+        BorderColor = Colors.Red.ToDrawingColor(),
+        BorderThickness = 2,
+    },
     Mode = FadeMaskRenderMode.WindowSelect,
     HasHighlight = true,
     LogicalHighlightRect = new Rect(10, 10, 200, 100),
     WindowTitle = "Sample Window",
 };
-control.ExternalRenderer = renderer;
-control.InvalidateVisual(); // 再描画を要求
+control.InvalidateVisual(); // 再描画を要求（プロパティ変更でも自動で再描画される）
 ```
 
-## 6. 入力動作
+## 6. 描画動作
 
-- **暗転オーバーレイ**: 選択矩形の外側（上・下・左・右）を暗転色で塗りつぶす（穴あけマスク）
-- **サイズラベル**: 選択矩形の左上に座標・サイズ・表示スケールを表示（`DisplayScaleScaling` 対応）
-- **外部レンダラー委譲**: `ExternalRenderer` 設定時は依存関係プロパティの描画を行わず、レンダラーへ完全委譲
+- **暗転オーバーレイ**: 穴あけ矩形の外側（上・下・左・右）を暗転色で塗りつぶす（穴あけマスク）。穴あけ矩形が無い場合は `ShowFullOverlay` が true のときだけ全面を暗転する
+- **選択枠線**: 穴あけ矩形の四辺を内側に描画する
+- **ラベル**: 穴あけ矩形の左上に「サイズラベル（1 行目）→ 操作ラベル（2 行目）→ 情報ラベル（3 行目）」を縦に積む。サイズラベルが無い場合は繰り上げる
+- **外観の反映**: `Appearance`（`FadeMaskAppearance`）を変更すると自動で再描画される（`AffectsRender`）
 
 ## 7. サンプル
 
-`sample/` に動作確認用のサンプルアプリが含まれています。暗転マスク・サイズラベルの描画と公開プロパティの動的変更を確認できます。
+`sample/` に動作確認用のサンプルアプリが含まれています。暗転マスク・ラベルの描画と公開プロパティの動的変更を確認できます。
 
 ```bash
 dotnet run --project sample/FadeMaskControl.AvaloniaUI.Sample.csproj
@@ -113,27 +119,27 @@ dotnet run --project sample/FadeMaskControl.AvaloniaUI.Sample.csproj
 
 ## 9. アーキテクチャ
 
-公開 API（StyledProperty・公開プロパティ・ExternalRenderer）と描画実装（静的コンストラクタ・Render オーバーライド）は
-`src/FadeMaskControl.cs` に集約します。ファイル分割による無理な分離は避け、暗転マスク・サイズラベルの
-共通描画ロジックのみ `FadeMaskDrawer`（internal）に委譲します。
+公開 API（StyledProperty・公開プロパティ）と描画実装（静的コンストラクタ・Render オーバーライド）は
+`src/FadeMaskControl.cs` に集約します。ファイル分割による無理な分離は避け、描画のみを
+`FadeMaskDrawer`（internal）に委譲します。
 
-- `FadeMaskControl.cs`: 公開 API（StyledProperty・公開プロパティ・ExternalRenderer・公開 API 一覧）＋ 描画実装（Render・AffectsRender 登録）
-- `FadeMaskRenderer.cs`: 公開レンダラー（描画状態の真のソース・モード別描画）
-- `FadeMaskRenderMode.cs`: 公開 enum（描画モード）
-- `FadeMaskDrawer.cs`: 暗転マスク・サイズラベルの共通描画ロジック（internal）
+**判断はコアが持つ**: 「どの矩形を暗転するか」「枠線を描くか」「ラベルをどう組むか」はコアの `FadeMaskFrame` が単一所有します。
+UI 層は外観と状態を `FadeMaskRequest` へ詰めて `FadeMaskFrame.Resolve` を呼び、返されたフレームを描くだけです（判断・既定値の解決を持ちません）。
+同じ判断を MewUI 版も使うため、両 UI の見た目は一致します（テキストの実寸測定と描画 API の写像のみが UI 固有）。
+
+- `FadeMaskControl.cs`: 公開 API（StyledProperty・公開プロパティ）＋ 描画実装（Render・AffectsRender 登録・ログ）
+- `FadeMaskDrawer.cs`: フレーム（暗転領域・枠線・ラベル）の描画（internal。引数の形は MewUI 版の `FadeMaskSkiaRenderer.Draw` と同一）
 
 ## 10. プロジェクト構成
 
 ```text
-FadeMaskControl/
+FadeMaskControl/                     # プロジェクト名: FadeMaskControl.AvaloniaUI
 ├── src/
-│   ├── FadeMaskControl.csproj
-│   ├── FadeMaskControl.cs         # 公開 API（FadeMaskControl: StyledProperty・公開プロパティ・ExternalRenderer・公開 API 一覧）＋ 描画実装
-│   ├── FadeMaskRenderer.cs        # 公開レンダラー（描画状態の真のソース・モード別描画）
-│   ├── FadeMaskRenderMode.cs      # 公開 enum（描画モード）
-│   └── FadeMaskDrawer.cs          # internal 描画ユーティリティ（暗転マスク・サイズラベル）
-├── sample/                        # サンプルアプリ（sample/README.md 参照）
-└── tests/                         # 単体テスト（行・ブランチ 100%）
+│   ├── FadeMaskControl.AvaloniaUI.csproj
+│   ├── FadeMaskControl.cs            # 公開 API（StyledProperty・公開プロパティ）+ 描画実装
+│   └── FadeMaskDrawer.cs             # internal 描画ユーティリティ（フレームの描画）
+├── sample/                           # サンプルアプリ（sample/README.md 参照）
+└── tests/                            # 単体テスト（行・ブランチ 100%）
 ```
 
 ## 11. ライセンス

@@ -1,228 +1,154 @@
 using Avalonia;
+using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Headless.XUnit;
 using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core.Geometry;
+using Estable.FadeMask;
 using Xunit;
+using DrawingColor = System.Drawing.Color;
 
 namespace Estable.AvaloniaUI.FadeMask.Tests;
 
-/// <summary>
-/// <see cref="FadeMaskDrawer"/> の単体テスト（DrawingContext 描画の例外なし検証）。
-/// </summary>
+/// <summary><see cref="FadeMaskDrawer"/> の描画テスト（DrawingContext 描画の例外なし検証）。</summary>
+/// <remarks>
+/// 対象: <c>FadeMaskDrawer.cs</c>（フレームの描画のみ）。<br/>
+/// 「どの矩形を暗転するか」「どのラベルを描くか」の判断はコアの <c>FadeMaskFrame</c> が単一所有するため、<br/>
+/// 本テストは「与えられたフレームを描く」こと（例外なし・ブラシキャッシュの容量管理）のみを検証する。<br/>
+/// フレームの解決（判断）はコアの <c>FadeMaskFrameTests</c> が検証する。
+/// </remarks>
 [Collection("AvaloniaHeadless")]
 public class FadeMaskDrawerTests
 {
+    /// <summary>描画に使う暗転色（赤 50%）。</summary>
+    private static readonly DrawingColor s_overlay = DrawingColor.FromArgb(128, 255, 0, 0);
+
+    /// <summary>描画に使う枠線色（青・不透明）。</summary>
+    private static readonly DrawingColor s_border = DrawingColor.FromArgb(255, 0, 0, 255);
+
     /// <summary>描画コンテキストを生成する。</summary>
+    /// <returns>描画先のコンテキスト。破棄は呼び出し側。</returns>
     private static DrawingContext CreateContext()
     {
-
         var rtb = new RenderTargetBitmap(new PixelSize(300, 300), new Vector(96, 96));
         return rtb.CreateDrawingContext();
     }
 
+    /// <summary>テスト用のフレームを生成する。</summary>
+    /// <param name="overlayRegions">暗転領域。null の場合は空。</param>
+    /// <param name="borderRects">枠線の矩形。null の場合は空。</param>
+    /// <param name="labelAnchor">ラベルの基準矩形。</param>
+    /// <param name="sizeLabelText">サイズラベルの文言。</param>
+    /// <param name="subLines">2 行目以降の行。</param>
+    /// <returns>生成したフレーム。</returns>
+    private static FadeMaskFrame CreateFrame(
+        IReadOnlyList<EsRect>? overlayRegions = null,
+        IReadOnlyList<EsRect>? borderRects = null,
+        EsRect? labelAnchor = null,
+        string? sizeLabelText = null,
+        IReadOnlyList<FadeMaskSubLine>? subLines = null)
+        => new(
+            overlayRegions ?? [],
+            s_overlay,
+            borderRects ?? [],
+            s_border,
+            labelAnchor,
+            sizeLabelText,
+            new FadeMaskLabelStyle(14.0, DrawingColor.White, DrawingColor.FromArgb(128, 0, 0, 0)),
+            subLines ?? []);
+
+    /// <summary>暗転領域と枠線を描画することを検証する。</summary>
     [AvaloniaFact]
-    public void DrawOverlay_選択矩形ありで穴あけマスクを描画する()
+    public void Draw_暗転領域と枠線を描画する()
     {
         using var ctx = CreateContext();
 
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(50, 50, 100, 80),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: false);
+        FadeMaskDrawer.Draw(ctx, CreateFrame(
+            overlayRegions: [new EsRect(0, 0, 300, 50), new EsRect(0, 50, 50, 250)],
+            borderRects: [new EsRect(50, 50, 100, 2), new EsRect(50, 128, 100, 2)]));
     }
 
+    /// <summary>サイズラベルを描画することを検証する。</summary>
     [AvaloniaFact]
-    public void DrawOverlay_サイズラベル自動生成で描画する()
+    public void Draw_サイズラベルを描画する()
     {
         using var ctx = CreateContext();
 
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(50, 50, 100, 80),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: true,
-            scaling: 1.25);
+        FadeMaskDrawer.Draw(ctx, CreateFrame(
+            labelAnchor: new EsRect(50, 50, 100, 80),
+            sizeLabelText: "(50, 50) - (151, 131),  (101×81), DisplayScale: (100%)"));
     }
 
+    /// <summary>サイズラベルの文言が無い場合はサブラインを 1 行目から描画することを検証する。</summary>
     [AvaloniaFact]
-    public void DrawOverlay_サイズラベルオーバーライドで描画する()
+    public void Draw_サイズラベル文言なしならサブラインを繰り上げて描画する()
     {
         using var ctx = CreateContext();
 
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(50, 50, 100, 80),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: true,
-            sizeLabelOverride: "Custom Label");
+        FadeMaskDrawer.Draw(ctx, CreateFrame(
+            labelAnchor: new EsRect(50, 50, 100, 80),
+            sizeLabelText: null,
+            subLines: [new FadeMaskSubLine("ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル", 12.0, DrawingColor.White)]));
     }
 
+    /// <summary>複数のサブラインを縦に積んで描画することを検証する。</summary>
     [AvaloniaFact]
-    public void DrawOverlay_選択矩形なしで全面暗転する()
+    public void Draw_複数のサブラインを描画する()
     {
         using var ctx = CreateContext();
 
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            null,
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: false);
-    }
-
-    [AvaloniaFact]
-    public void DrawOverlay_画面端に接する選択矩形で描画する()
-    {
-        using var ctx = CreateContext();
-
-        // 選択矩形が clientRect 端に接するケース（4辺のうち一部が 0）
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(0, 0, 300, 300),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: true);
-    }
-
-    [AvaloniaFact]
-    public void DrawOverlay_スケーリング0でも例外なく描画する()
-    {
-        using var ctx = CreateContext();
-
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(50, 50, 100, 80),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: true,
-            scaling: 0);
-    }
-
-    [AvaloniaFact]
-    public void DrawOverlay_サブラインありで2行目以降に描画する()
-    {
-        using var ctx = CreateContext();
-
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(50, 50, 100, 80),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: true,
+        FadeMaskDrawer.Draw(ctx, CreateFrame(
+            labelAnchor: new EsRect(50, 50, 100, 80),
+            sizeLabelText: "サイズ",
             subLines:
             [
-                new FadeMaskDrawer.SubLine("Enter / クリック: 確定  Esc: キャンセル", 12.0, Colors.White),
-                new FadeMaskDrawer.SubLine("Test Window", 11.0, Colors.LightGray),
-            ]);
+                new FadeMaskSubLine("Enter / クリック: 確定  Esc: キャンセル", 12.0, DrawingColor.White, DrawingColor.FromArgb(179, 0, 0, 139)),
+                new FadeMaskSubLine("Test Window", 11.0, DrawingColor.LightGray, DrawingColor.FromArgb(77, 139, 0, 0)),
+            ]));
     }
 
+    /// <summary>ラベルの基準矩形が無い場合はラベルを描画しない（例外も出ない）ことを検証する。</summary>
     [AvaloniaFact]
-    public void DrawOverlay_サイズラベル非表示時にサブラインを繰り上げて描画する()
+    public void Draw_ラベル基準がなければ何も描画しない()
     {
         using var ctx = CreateContext();
 
-        // サイズラベル非表示（showSizeLabel: false）でも、サブラインは 1 行目から例外なく描画される
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(50, 50, 100, 80),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: false,
-            subLines:
-            [
-                new FadeMaskDrawer.SubLine("ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル", 12.0, Colors.White),
-            ]);
+        FadeMaskDrawer.Draw(ctx, CreateFrame(
+            labelAnchor: null,
+            sizeLabelText: "サイズ",
+            subLines: [new FadeMaskSubLine("操作ラベル", 12.0, DrawingColor.White)]));
     }
 
+    /// <summary>何も持たないフレームでは何も描画しない（例外も出ない）ことを検証する。</summary>
     [AvaloniaFact]
-    public void DrawOverlay_サブライン空リストでサイズラベルだけ描画する()
+    public void Draw_空のフレームでは何も描画しない()
     {
         using var ctx = CreateContext();
 
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(50, 50, 100, 80),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: true,
-            subLines: []);
+        FadeMaskDrawer.Draw(ctx, CreateFrame());
     }
 
+    /// <summary>ブラシキャッシュ容量超過時も例外なく描画することを検証する。</summary>
     [AvaloniaFact]
-    public void DrawOverlay_背景色指定で1行目とサブラインの背景を描画する()
-    {
-        using var ctx = CreateContext();
-
-        // 1 行目（サイズラベル）の背景色と、サブライン各行の背景色（不透明度はアルファに統合）を個別指定
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(50, 50, 100, 80),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: true,
-            subLines:
-            [
-                new FadeMaskDrawer.SubLine("Enter / クリック: 確定  Esc: キャンセル", 12.0, Colors.White, Color.FromAColor(179, Colors.DarkBlue)),
-                new FadeMaskDrawer.SubLine("Test Window", 11.0, Colors.LightGray, Color.FromAColor(77, Colors.DarkRed)),
-            ],
-            textBgColor: Color.FromAColor(128, Colors.Black));
-    }
-
-    [AvaloniaFact]
-    public void DrawOverlay_サブライン背景色省略時は黒背景になる()
-    {
-        using var ctx = CreateContext();
-
-        // BackgroundColor 省略（デフォルト = 黒 50%）でも例外なく描画される
-        FadeMaskDrawer.DrawOverlay(
-            ctx,
-            new Rect(0, 0, 300, 300),
-            new Rect(50, 50, 100, 80),
-            Color.FromAColor(150, Colors.Black),
-            Colors.White, 14.0,
-            showSizeLabel: true,
-            subLines:
-            [
-                new FadeMaskDrawer.SubLine("操作ラベル", 12.0, Colors.White),
-            ]);
-    }
-
-    [AvaloniaFact]
-    public void DrawOverlay_ブラシキャッシュ容量超過時も例外なく描画する()
+    public void Draw_ブラシキャッシュ容量超過時も例外なく描画する()
     {
         // キャッシュ容量（128）を超える 129 色を順次描画し、容量超過時のキャッシュクリア経路を実行する
         for (int i = 0; i <= FadeMaskDrawer.BrushCacheCapacity; i++)
         {
             using var ctx = CreateContext();
-            var color = Color.FromArgb((byte)(100 + i % 100), (byte)(i * 2), (byte)(255 - i), (byte)(i * 3));
-
-            FadeMaskDrawer.DrawOverlay(
-                ctx,
-                new Rect(0, 0, 300, 300),
-                new Rect(50, 50, 100, 80),
+            var argb = Color.FromArgb((byte)(100 + i % 100), (byte)(i * 2), (byte)(255 - i), (byte)(i * 3));
+            var color = argb.ToDrawingColor();
+            var frame = new FadeMaskFrame(
+                [new EsRect(0, 0, 300, 50)],
                 color,
-                color, 14.0,
-                showSizeLabel: true,
-                subLines:
-                [
-                    new FadeMaskDrawer.SubLine("操作ラベル", 12.0, color, color),
-                ]);
+                [new EsRect(0, 0, 300, 2)],
+                color,
+                new EsRect(50, 50, 100, 80),
+                "サイズ",
+                new FadeMaskLabelStyle(14.0, color, color),
+                [new FadeMaskSubLine("操作ラベル", 12.0, color, color)]);
+
+            FadeMaskDrawer.Draw(ctx, frame);
         }
     }
 }
-

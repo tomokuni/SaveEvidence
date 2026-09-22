@@ -53,15 +53,9 @@ Avalonia 版と同一の解釈になります。
 | `ShowFullOverlay` | `bool`（取得のみ） | `true` | 全面暗転の有無（モードから導出） |
 | `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（ドメイン座標） |
 | `LoupeOffset` | `double` | `20.0` | ルーペの中心からの右下オフセット（DIP） |
-| `OverlayColor` | `System.Drawing.Color` | 暗転マスクの既定（黒 50%） | 暗転の色（不透明度はアルファに統合） |
-| `BorderColor` | `System.Drawing.Color` | 暗転マスクの既定 | 選択枠線の色（選択矩形と暗転マスクで共用） |
-| `BorderThickness` | `double` | 暗転マスクの既定 | 選択枠線の太さ（DIP。選択矩形と暗転マスクで共用） |
-| `ShowSizeLabel` | `bool` | `true` | サイズラベル（1 行目）を表示するか |
-| `SizeLabelTextProvider` | `Func<string?>?` | `null` | サイズラベルの文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない） |
-| `SizeLabelFontSize` | `double` | `14.0` | サイズラベルのフォントサイズ（DIP） |
-| `SizeLabelColor` | `System.Drawing.Color` | 白 | サイズラベルの文字色 |
-| `SizeLabelBackgroundColor` | `System.Drawing.Color` | 黒 60% | サイズラベルの背景色（アルファ 0 の場合は黒 50% へフォールバック） |
-| `SubLines` | `IReadOnlyList<FadeMaskSubLine>?` | `null` | サイズラベルの下に積む行（2 行目以降） |
+| `Appearance` | `FadeMaskAppearance` | コアの既定値 | 暗転マスクの外観（暗転色・枠線・ラベル）の単一値。枠線は選択矩形と共用される |
+| `WindowTitle` | `string` | `""` | 情報ラベル（3 行目）の文言（ウィンドウ選択時） |
+| `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない） |
 | `SelectionOverlayColorA` / `SelectionOverlayColorB` | `System.Drawing.Color` | 白 / 黒 | ルーペ画像上の選択矩形破線の色（2 色交互） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包するドラッグ選択コントロールとルーペへ伝搬する。null は `NullLogger` へフォールバック。暗転マスクは選択のたびにログを出すため対象外） |
 | `Port` | `ICoordTransform?`（取得のみ） | 等価変換 | 暗転マスクへ適用中の座標変換ポート |
@@ -113,7 +107,7 @@ Avalonia 版と同一の解釈になります。
 - ルーペは拡大元画像（`SetLoupeSource`）と中心（`SetLoupePosition`）の両方が設定された場合のみ表示します。
   親領域の外へはみ出す場合は内側へクランプします。
 - ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が単一所有します）。
-- ラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelTextProvider` と `SubLines` で与えます
+- サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（サブラインは `Appearance` から組み立てる）
   （文言の単一所有は `FadeMaskControl.Core` の `FadeMaskLabels`。表示位置の計算は同コアの `FadeMaskLabelLayout`）。
 
 ## 9. Avalonia 版との違い

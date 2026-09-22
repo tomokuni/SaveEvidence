@@ -35,7 +35,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 - **ビューポート変化の追従**: `NotifyViewportChanged()` でパン・ズーム等のビューポート変化を通知（DragRect / FadeMask の再描画 + ルーペ位置再計算。ScrollViewer 連携のスクロールも同じ経路で処理）
 - **選択状態の外部設定**: `SetSelection` / `ClearSelection` / `SetDragRectSelection` で選択矩形を暗転マスクへ同期（ルーペの選択矩形破線は `Rendered` イベント経由で描画）
 - **ルーペ制御**: `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `LoupeCenterPoint` で中心・ソース・後片付けを制御
-- **ハイライト状態**: `LogicalHighlightRect` / `HasHighlight` / `ScreenIndex` / `DisplayScaleScaling` / `WindowTitle` で ScreenSelect / WindowSelect のハイライトを設定
+- **ハイライト状態**: `LogicalHighlightRect` / `HasHighlight` / `DisplayScaleScaling` / `WindowTitle` で ScreenSelect / WindowSelect のハイライトを設定
 - **公開型のカプセル化**: イベント引数は独自型（`FadeMaskDragRectSelectionEventArgs` / `FadeMaskDragRectPointEventArgs`）、内包コントロールへの直接アクセスは internal（公開 API は本コントロールのみ）
 - **Avalonia Binding 対応の StyledProperty**（内包コントロールが公開）
 

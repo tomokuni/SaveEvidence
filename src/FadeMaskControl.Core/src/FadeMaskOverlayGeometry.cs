@@ -14,6 +14,26 @@ internal static class FadeMaskOverlayGeometry
     /// <summary>枠線の太さの下限（DIP。0 以下の指定を無効化する）。</summary>
     private const double BorderThicknessLowerBound = 0.5;
 
+    /// <summary>座標変換ポートを決定する（ポート優先・未指定なら倍率による等倍スケール）。</summary>
+    /// <param name="port">座標変換ポート。指定されている場合はそれをそのまま使う。</param>
+    /// <param name="scaling">倍率。ポート未指定の場合に等倍スケールとして適用する。</param>
+    /// <returns>使用する座標変換ポート。</returns>
+    /// <remarks>
+    /// 「ポートがあればそれを使い、無ければ倍率（0 以下・等倍は等価変換）を使う」という規則を単一所有する。<br/>
+    /// 各 UI はポートと倍率をそのまま渡すだけで、どちらを使うかを判断しない（両 UI で同じ結果になる）。
+    /// </remarks>
+    public static ICoordTransform ResolvePort(ICoordTransform? port, double scaling)
+    {
+        if (port is { } specified)
+        {
+            return specified;
+        }
+
+        return scaling > 0 && scaling != 1.0
+            ? CoordTransform.Scale(scaling)
+            : CoordTransform.Identity;
+    }
+
     /// <summary>論理座標の矩形をポート経由で DIP 矩形へ変換する。</summary>
     /// <param name="logical">論理座標（ドメイン）の矩形。</param>
     /// <param name="port">座標変換ポート。null の場合は等価変換。</param>

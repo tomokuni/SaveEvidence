@@ -45,7 +45,6 @@ internal sealed partial class OverlayWindow
         var detection = _detector.FindScreenUnderCursor(screenPoint);
         SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds) : null;
         SelectionOverlay.HasHighlight = detection.IsDetected;
-        SelectionOverlay.ScreenIndex = detection.IsDetected ? ParseScreenIndex(detection.Title) : -1;
         // サイズラベルの物理ピクセル換算は、ドメイン（画面物理 − Position）を DIP 変換した
         // DomainScale(_scaling) と往復一致するよう _scaling（オーバーレイの表示スケール）を維持する。
         // マルチモニタで異なるスケーリングのスクリーンを選択しても、選択矩形はドメイン（物理ピクセル）
@@ -102,17 +101,6 @@ internal sealed partial class OverlayWindow
         int w = (int)domainRect.Width, h = (int)domainRect.Height;
         int pct = (int)(scaling * 100);
         return $"({l}, {t}) - ({r}, {b}),  ({w}×{h}), DisplayScale: ({pct}%)";
-    }
-
-    /// <summary>検出結果のタイトル（「Screen {インデックス}」形式）からインデックスを取得する。</summary>
-    /// <param name="title">スクリーン検出結果のタイトル。パース不能な場合は null。</param>
-    /// <returns>スクリーンインデックス。パース不能な場合は -1。</returns>
-    private static int ParseScreenIndex(string? title)
-    {
-        // "Screen " のプレフィックスを除去して数値を解析する（短すぎる場合はパース不能）
-        const string prefix = "Screen ";
-        if (title is null || title.Length <= prefix.Length) return -1;
-        return int.TryParse(title.AsSpan(prefix.Length), out var idx) ? idx : -1;
     }
 
     /// <summary>WindowSelect のハイライトを更新する。</summary>

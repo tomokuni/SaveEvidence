@@ -109,22 +109,6 @@ public class OverlayWindowStateTests
         Assert.Equal(2.0, InvokeFindScalingForPoint(new PixelPoint(-100, -100), 2.0, screens));
     }
 
-    [Fact]
-    public void ParseScreenIndex_Screen形式のタイトルからインデックスを取得する()
-    {
-        // 「Screen {インデックス}」形式 → インデックス
-        Assert.Equal(0, InvokeParseScreenIndex("Screen 0"));
-        Assert.Equal(2, InvokeParseScreenIndex("Screen 2"));
-
-        // パース不能 → -1
-        Assert.Equal(-1, InvokeParseScreenIndex(null));
-        Assert.Equal(-1, InvokeParseScreenIndex("NotAScreen"));
-        Assert.Equal(-1, InvokeParseScreenIndex(""));
-        // プレフィックスより短い（"Screen" ちょうど・それ未満）→ -1（範囲外例外にならない）
-        Assert.Equal(-1, InvokeParseScreenIndex("Screen"));
-        Assert.Equal(-1, InvokeParseScreenIndex("Scr"));
-    }
-
     // ====================================================================
     // サイズラベル（ドメイン矩形からの物理サイズ + DisplayScale 生成）
     // ====================================================================
@@ -159,13 +143,6 @@ public class OverlayWindowStateTests
         var method = typeof(OverlayWindow).GetMethod(
             "FindScalingForPoint", BindingFlags.Static | BindingFlags.NonPublic)!;
         return (double)method.Invoke(null, [point, fallback, screens])!;
-    }
-
-    private static int InvokeParseScreenIndex(string? title)
-    {
-        var method = typeof(OverlayWindow).GetMethod(
-            "ParseScreenIndex", BindingFlags.Static | BindingFlags.NonPublic)!;
-        return (int)method.Invoke(null, [title])!;
     }
 
     private static string InvokeFormatDomainSizeLabel(Rect domainRect, double scaling)

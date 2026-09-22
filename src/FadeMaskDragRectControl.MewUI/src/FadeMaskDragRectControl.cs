@@ -1,6 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Estable.DragRect;
+using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
 using Estable.Loupe;
 using Estable.MewUI.DragRect;
@@ -26,13 +27,13 @@ namespace Estable.MewUI.FadeMaskDragRect;
 /// - <see cref="LoupeControl"/>: 拡大鏡（中心 = ドメイン座標、表示位置はコアの計算で本クラスが配置する）。<br/>
 /// <br/>
 /// <b>配線（本クラス内で完結）</b>:<br/>
-/// - 選択矩形の変更 → 暗転マスクの SelectionRect / HasSelection を同期する。<br/>
+/// - 選択矩形の変更 → 暗転マスクの LogicalSelectionRect / HasSelection を同期する。<br/>
 /// - 選択の開始・キャンセル → 暗転マスクの選択状態をクリアする（前の矩形の残留防止）。<br/>
 /// - ルーペ位置の通知 → ルーペの中心を更新し、表示位置を再計算する。<br/>
 /// - 確定・キャンセル・ズーム要求 → ホストへ中継する（独自のイベント引数形式）。<br/>
 /// <br/>
 /// <b>ラベル</b>: サイズラベル（1 行目）とサブライン（2 行目以降）は暗転マスクへ委譲する。<br/>
-/// 文言はホストが <see cref="SizeLabelTextProvider"/> で与える（表示位置はコアの計算が単一所有する）。<br/>
+/// 文言はホストが <see cref="SizeLabelOverrideProvider"/> で与える（表示位置はコアの計算が単一所有する）。<br/>
 /// <br/>
 /// <b>動作モード（<see cref="Mode"/>）</b>:<br/>
 /// - <see cref="FadeMaskDragRectMode.Crop"/> / <see cref="FadeMaskDragRectMode.AreaSelect"/>: 選択矩形 + 暗転マスク + ルーペを有効化する。<br/>
@@ -149,14 +150,14 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形。未選択時は 0x0 の空矩形。</value>
-    public EsRect SelectionRect => _overlay.SelectionRect ?? default;
+    public EsRect SelectionRect => _overlay.LogicalSelectionRect ?? default;
 
     /// <summary>ハイライト矩形（ドメイン座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。未検出時は null。選択矩形より優先される。</value>
     public EsRect? LogicalHighlightRect
     {
-        get => _overlay.HighlightRect;
-        set => _overlay.HighlightRect = value;
+        get => _overlay.LogicalHighlightRect;
+        set => _overlay.LogicalHighlightRect = value;
     }
 
     /// <summary>ハイライト表示の有無を取得または設定する。</summary>
@@ -192,99 +193,45 @@ public sealed class FadeMaskDragRectControl : Panel
         }
     }
 
-    /// <summary>暗転マスクの暗転色を取得または設定する（不透明度はアルファに統合する）。</summary>
-    /// <value>暗転の色。アルファ 0 の場合は暗転しない。</value>
-    public System.Drawing.Color OverlayColor
+    /// <summary>暗転マスクの外観（暗転色・枠線・ラベル）を取得または設定する。</summary>
+    /// <value>外観の単一値。既定はコアの既定値（<see cref="FadeMaskAppearance"/>）。</value>
+    /// <remarks>
+    /// 枠線の色・太さはドラッグ矩形の枠線と共用する（暗転マスクの穴あけ枠と見た目を揃える）。<br/>
+    /// 設定（変更）時は暗転マスクとドラッグ矩形の再描画を要求する。
+    /// </remarks>
+    public FadeMaskAppearance Appearance
     {
-        get => _overlay.OverlayColor;
-        set => _overlay.OverlayColor = value;
-    }
-
-    /// <summary>選択枠線の色を取得または設定する（暗転マスクとドラッグ矩形で共用する）。</summary>
-    /// <value>枠線の色（不透明度はアルファに統合する）。</value>
-    /// <remarks>ドラッグ矩形の枠線と暗転マスクの穴あけ枠を同じ色に揃える（見た目の一貫性）。</remarks>
-    public System.Drawing.Color BorderColor
-    {
-        get => _overlay.BorderColor;
+        get => _overlay.Appearance;
         set
         {
-            _overlay.BorderColor = value;
-            _dragRect.Options = _dragRect.Options with { BorderColor = value };
+            _overlay.Appearance = value;
+            _dragRect.Options = _dragRect.Options with
+            {
+                BorderColor = value.BorderColor,
+                BorderThickness = value.BorderThickness,
+            };
         }
     }
 
-    /// <summary>選択枠線の太さを取得または設定する（DIP）。</summary>
-    /// <value>枠線の太さ（DIP）。</value>
-    public double BorderThickness
+    /// <summary>ハイライト対象のウィンドウタイトル（情報ラベルの文言）を取得または設定する。</summary>
+    /// <value>ウィンドウタイトル。未検出時は空文字。</value>
+    /// <remarks>表示の可否はモードと <see cref="FadeMaskAppearance.InfoLabelVisible"/> からコアが判定する。</remarks>
+    public string WindowTitle
     {
-        get => _overlay.BorderThickness;
-        set
-        {
-            _overlay.BorderThickness = value;
-            _dragRect.Options = _dragRect.Options with { BorderThickness = value };
-        }
-    }
-
-    /// <summary>サイズラベル（1 行目）を表示するかどうかを取得または設定する。</summary>
-    /// <value>表示する場合は true。既定値は true。</value>
-    public bool ShowSizeLabel
-    {
-        get => _overlay.ShowSizeLabel;
-        set => _overlay.ShowSizeLabel = value;
+        get => _overlay.WindowTitle;
+        set => _overlay.WindowTitle = value;
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するデリゲートを取得または設定する。</summary>
     /// <value>描画時に呼び出される関数。null または空文字を返す場合はサイズラベルを描画しない。</value>
     /// <remarks>
     /// ホストは最新の選択状態から文言を生成するクロージャを設定する（例: コアの
-    /// <c>FadeMaskLabels.FormatSizeLabel</c> で選択矩形を整形する）。<br/>
-    /// 設定（変更）時は再描画を要求する。
+    /// <c>FadeMaskLabels.FormatSizeLabel</c> で選択矩形を整形する）。
     /// </remarks>
-    public Func<string?>? SizeLabelTextProvider
+    public Func<string?>? SizeLabelOverrideProvider
     {
-        get => _overlay.SizeLabelTextProvider;
-        set
-        {
-            _overlay.SizeLabelTextProvider = value;
-            _overlay.InvalidateVisual();
-        }
-    }
-
-    /// <summary>サイズラベルのフォントサイズ（DIP）を取得または設定する。</summary>
-    /// <value>フォントサイズ（DIP）。既定値は 14.0。</value>
-    public double SizeLabelFontSize
-    {
-        get => _overlay.SizeLabelFontSize;
-        set => _overlay.SizeLabelFontSize = value;
-    }
-
-    /// <summary>サイズラベルの文字色を取得または設定する。</summary>
-    /// <value>文字色（不透明度はアルファに統合する）。</value>
-    public System.Drawing.Color SizeLabelColor
-    {
-        get => _overlay.SizeLabelColor;
-        set => _overlay.SizeLabelColor = value;
-    }
-
-    /// <summary>サイズラベルの背景色を取得または設定する。</summary>
-    /// <value>背景色（不透明度はアルファに統合する）。アルファ 0 の場合は黒 50% へフォールバックする。</value>
-    public System.Drawing.Color SizeLabelBackgroundColor
-    {
-        get => _overlay.SizeLabelBackgroundColor;
-        set => _overlay.SizeLabelBackgroundColor = value;
-    }
-
-    /// <summary>サイズラベルの下に積む行（2 行目以降）を取得または設定する。</summary>
-    /// <value>行の一覧（上から順に描画する）。null または空の場合はサイズラベルのみ描画する。</value>
-    /// <remarks>設定（変更）時は再描画を要求する。</remarks>
-    public IReadOnlyList<FadeMaskSubLine>? SubLines
-    {
-        get => _overlay.SubLines;
-        set
-        {
-            _overlay.SubLines = value;
-            _overlay.InvalidateVisual();
-        }
+        get => _overlay.SizeLabelOverrideProvider;
+        set => _overlay.SizeLabelOverrideProvider = value;
     }
 
     /// <summary>ルーペ画像上の選択矩形破線の色 A（描画開始色）を取得または設定する。</summary>
@@ -499,13 +446,13 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         bool useDragRect = FadeMaskDragRectModes.UsesDragRect(_mode);
 
+        _overlay.Mode = FadeMaskDragRectModes.ToRenderMode(_mode);
         _overlay.ShowFullOverlay = useDragRect;
         _dragRect.IsVisible = useDragRect;
         _loupe.IsVisible = useDragRect && _loupe.Source is not null;
         // ルーペ画像上の選択矩形破線は、選択矩形を使うモードでのみ描画する（モード依存のため外観設定に依存しない）
         _showSelectionOverlay = useDragRect;
 
-        _overlay.InvalidateVisual();
         _loupe.InvalidateVisual();
         InvalidateArrange();
     }
@@ -538,7 +485,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     internal void DrawSelectionOverlay(SKCanvas canvas, EsPoint captureTopLeft, double scale, int pixelSize)
     {
-        if (!_showSelectionOverlay || _overlay.SelectionRect is not { } selectionRect)
+        if (!_showSelectionOverlay || _overlay.LogicalSelectionRect is not { } selectionRect)
         {
             return;
         }
@@ -553,7 +500,7 @@ public sealed class FadeMaskDragRectControl : Panel
     private void SyncSelection(EsRect? rect)
     {
         _overlay.HasSelection = rect is not null;
-        _overlay.SelectionRect = rect;
+        _overlay.LogicalSelectionRect = rect;
     }
 
     /// <summary>ルーペ位置の更新（ドラッグ選択からの通知）を処理する。</summary>

@@ -109,12 +109,9 @@ classDiagram
         +bool ShowFullOverlay
         +EsPoint? LoupeCenterPoint
         +double LoupeOffset
-        +bool ShowSizeLabel
-        +Func~string?~? SizeLabelTextProvider
-        +double SizeLabelFontSize
-        +Color SizeLabelColor
-        +Color SizeLabelBackgroundColor
-        +IReadOnlyList~FadeMaskSubLine~? SubLines
+        +FadeMaskAppearance Appearance
+        +string WindowTitle
+        +Func~string?~? SizeLabelOverrideProvider
         +Color SelectionOverlayColorA
         +Color SelectionOverlayColorB
         +ILogger Log
@@ -136,12 +133,13 @@ classDiagram
     }
     class FadeMaskControl {
         <<FadeMaskControl.MewUI>>
-        +EsRect? SelectionRect
+        +EsRect? LogicalSelectionRect
         +bool HasSelection
         +bool ShowFullOverlay
-        +bool ShowSizeLabel
-        +Func~string?~? SizeLabelTextProvider
-        +IReadOnlyList~FadeMaskSubLine~? SubLines
+        +FadeMaskAppearance Appearance
+        +string WindowTitle
+        +FadeMaskRenderMode Mode
+        +Func~string?~? SizeLabelOverrideProvider
         +ICoordTransform? Port
     }
     class DragRectControl {
@@ -281,5 +279,5 @@ ArrangeContent(bounds)                     … bounds はウィンドウ絶対�
 
 | 項目 | 状況 |
 | --- | --- |
-| ハイライトのスクリーン番号・ウィンドウタイトル | ホストが `SubLines` で与える（コアの `FadeMaskLabels.ShouldShowInfoLabel` が表示可否を判定する） |
+| ハイライトのウィンドウタイトル | ホストが `WindowTitle` で与える（表示可否はコアの `FadeMaskLabels.ShouldShowInfoLabel` が判定する） |
 | 実ウィンドウへの組み込み | `app.MewUI` のキャプチャフローで配線済み（撮影・切り出しの両方） |

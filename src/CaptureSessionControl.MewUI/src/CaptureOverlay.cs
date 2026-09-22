@@ -3,7 +3,6 @@ using Aprillz.MewUI.Controls;
 using Estable.CaptureSession;
 using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
-using Estable.MewUI.FadeMask;
 using Estable.MewUI.FadeMaskDragRect;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.Core;
@@ -436,64 +435,43 @@ public sealed class CaptureOverlay
         window.ShowDialog(owner);
     }
 
-    /// <summary>サイズラベル・サブライン（操作ラベル・情報ラベル）を選択コントロールへ反映する。</summary>
+    /// <summary>サイズラベル・ラベル（操作ラベル・情報ラベル）を選択コントロールへ反映する。</summary>
     /// <param name="settings">設定。</param>
     /// <param name="mode">オーバーレイ描画モード（操作ラベルの文言選定に使用する）。</param>
     /// <remarks>
     /// 1. サイズラベルはドメイン座標（＝画像ピクセル）で表示するため、テキストは描画のたびに生成する。<br/>
-    /// 2. 操作ラベルの文言は <c>FadeMaskLabels.GetOperationText</c>（コア）が単一所有する。<br/>
-    /// 3. 情報ラベル（ウィンドウタイトル）はスクリーン選択 / ウィンドウ選択でのみ表示する（コアの判定）。<br/>
-    /// 4. 行の組み立てはラベルが変わった時点で行う（タイトルの更新時は本メソッドを呼び直す）。
+    /// 2. サブライン（操作ラベル・情報ラベル）の文言・順序・外観はコアの <c>FadeMaskAppearance.BuildSubLines</c> が単一所有する。<br/>
+    /// 3. 描画モードとウィンドウタイトルをコントロールへ渡し、行の組み立てはコントロールに委ねる（タイトルの更新時に本メソッドを呼び直す）。
     /// </remarks>
     private void ApplyLabels(CaptureSettings settings, FadeMaskRenderMode mode)
     {
         var overlay = _selector.Overlay;
-        overlay.ShowSizeLabel = settings.SizeLabelVisible!.Value;
-        overlay.SizeLabelColor = settings.SizeLabelColor ?? DrawingColor.White;
-        overlay.SizeLabelBackgroundColor = settings.TextBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0);
-        overlay.SizeLabelFontSize = settings.SizeLabelFontSize!.Value;
+        overlay.Appearance = overlay.Appearance with
+        {
+            ShowSizeLabel = settings.SizeLabelVisible!.Value,
+            SizeLabelColor = settings.SizeLabelColor ?? DrawingColor.White,
+            SizeLabelBackgroundColor = settings.TextBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
+            SizeLabelFontSize = settings.SizeLabelFontSize!.Value,
+            ShowSubLines = settings.ShowSubLines!.Value,
+            SubLineFontSize = settings.SubLineFontSize!.Value,
+            SubLineColor = settings.SubLineColor ?? DrawingColor.FromArgb(255, 220, 220, 220),
+            SubLineBackgroundColor = settings.SubLineBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
+            InfoLabelVisible = settings.InfoLabelVisible!.Value,
+            InfoLabelFontSize = settings.InfoLabelFontSize!.Value,
+            InfoLabelColor = settings.InfoLabelColor ?? DrawingColor.White,
+            InfoLabelBackgroundColor = settings.InfoLabelBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
+        };
 
         // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）
         // DisplayScale は選択位置のモニターの実表示スケール（DIP → 画像ピクセルの倍率）を表示する
-        overlay.SizeLabelTextProvider = () =>
+        overlay.SizeLabelOverrideProvider = () =>
             _selection() is { } rect && settings.SizeLabelVisible!.Value
                 ? FadeMaskLabels.FormatSizeLabel(rect, scaling: 1.0, displayScaling: DisplayScalingAt(rect))
                 : null;
 
-        overlay.SubLines = BuildSubLines(settings, mode);
-    }
-
-    /// <summary>サブライン（2 行目以降）を組み立てる。</summary>
-    /// <param name="settings">設定。</param>
-    /// <param name="mode">オーバーレイ描画モード。</param>
-    /// <returns>サブラインの一覧。表示する行がない場合は空。</returns>
-    /// <remarks>
-    /// 2 行目 = 操作ラベル（モード別の確定・キャンセル方法。設定 <c>ShowSubLines</c> で表示可否）。<br/>
-    /// 3 行目 = 情報ラベル（ウィンドウタイトル。モードとタイトルの有無で表示可否をコアが判定する）。
-    /// </remarks>
-    private IReadOnlyList<FadeMaskSubLine> BuildSubLines(CaptureSettings settings, FadeMaskRenderMode mode)
-    {
-        var lines = new List<FadeMaskSubLine>(2);
-
-        if (settings.ShowSubLines!.Value)
-        {
-            lines.Add(new FadeMaskSubLine(
-                FadeMaskLabels.GetOperationText(mode),
-                settings.SubLineFontSize!.Value,
-                settings.SubLineColor ?? DrawingColor.FromArgb(255, 220, 220, 220),
-                settings.SubLineBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0)));
-        }
-
-        if (FadeMaskLabels.ShouldShowInfoLabel(mode, settings.InfoLabelVisible!.Value, _windowTitle))
-        {
-            lines.Add(new FadeMaskSubLine(
-                _windowTitle,
-                settings.InfoLabelFontSize!.Value,
-                settings.InfoLabelColor ?? DrawingColor.White,
-                settings.InfoLabelBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0)));
-        }
-
-        return lines;
+        // 描画モードとウィンドウタイトル（情報ラベルの文言）を渡し、行の組み立てはコントロールに委ねる
+        overlay.Mode = mode;
+        overlay.WindowTitle = _windowTitle;
     }
 
     /// <summary>キャプチャ種別に対応するオーバーレイ描画モードを求める。</summary>
@@ -656,9 +634,13 @@ public sealed class CaptureOverlay
     /// <param name="settings">設定。</param>
     private static void ApplyAppearance(FadeMaskDragRectControl selector, CaptureSettings settings)
     {
-        selector.OverlayColor = settings.OverlayColor ?? DrawingColor.FromArgb(128, 0, 0, 0);
-        selector.BorderColor = settings.BorderColor ?? DrawingColor.DarkGray;
-        selector.BorderThickness = settings.BorderThickness!.Value;
+        // 暗転マスクの外観は 1 つの値へ組み立てて一括設定する（枠線はドラッグ矩形と共用される）
+        selector.Appearance = new FadeMaskAppearance
+        {
+            OverlayColor = settings.OverlayColor ?? DrawingColor.FromArgb(128, 0, 0, 0),
+            BorderColor = settings.BorderColor ?? DrawingColor.DarkGray,
+            BorderThickness = settings.BorderThickness!.Value,
+        };
         selector.LoupeOffset = settings.LoupeOffset!.Value;
         // 指定する項目だけを差し替える（枠線の色・太さは selector 側のプロパティが設定するため現在値を維持する）
         selector.DragRect.Options = selector.DragRect.Options with

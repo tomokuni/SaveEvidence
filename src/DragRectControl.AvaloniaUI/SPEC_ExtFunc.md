@@ -166,7 +166,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `BorderColor` | `Color` | `DarkGray（#FFA9A9A9）` | 選択枠線の色（不透明度は色のアルファに統合） |
-| `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（FadeMaskRenderer / App の既定と一致） |
+| `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（FadeMaskAppearance / App の既定と一致） |
 | `HandleColor` | `Color` | `White` | ドラッグハンドルの色 |
 | `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP 座標系） |
 | `MarkerColor` | `Color` | `White` | nudge 中の十字マーカーの色 |

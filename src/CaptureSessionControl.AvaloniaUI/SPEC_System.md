@@ -101,7 +101,7 @@ flowchart TB
     end
     subgraph FMCInternal["FadeMaskDragRect の内包コントロール（外部からは非公開・internal）"]
         DR["DragRectControl<br/>DragRectControl（選択矩形 UI）"]
-        FM["FadeMaskControl<br/>FadeMaskControl / FadeMaskRenderer<br/>FadeMaskRenderMode"]
+        FM["FadeMaskControl<br/>FadeMaskControl + FadeMaskDrawer<br/>FadeMaskAppearance / FadeMaskRenderMode"]
         LP["LoupeControl<br/>LoupeControl（ルーペ表示）"]
     end
 

@@ -18,34 +18,59 @@ FadeMaskControl は、**選択領域以外を暗転**させ、選択領域をハ
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `SelectionRect` | `EsRect?` | `null` | 論理座標（ドメイン座標 = 元画像ピクセル）の選択矩形 |
-| `HighlightRect` | `EsRect?` | `null` | 論理座標のハイライト矩形。選択矩形より優先される |
-| `HasSelection` | `bool` | `false` | true の場合、`SelectionRect` を穴あけ矩形として使う |
-| `HasHighlight` | `bool` | `false` | true の場合、`HighlightRect` を穴あけ矩形として使う（選択より優先） |
+| `LogicalSelectionRect` | `EsRect?` | `null` | 論理座標（ドメイン座標 = 元画像ピクセル）の選択矩形 |
+| `LogicalHighlightRect` | `EsRect?` | `null` | 論理座標のハイライト矩形。選択矩形より優先される |
+| `HasSelection` | `bool` | `false` | true の場合、`LogicalSelectionRect` を穴あけ矩形として使う |
+| `HasHighlight` | `bool` | `false` | true の場合、`LogicalHighlightRect` を穴あけ矩形として使う（選択より優先） |
+| `Appearance` | `FadeMaskAppearance` | コアの既定値 | 外観（暗転色・枠線・ラベル）の単一所有。変更すると自動で再描画される |
+| `WindowTitle` | `string` | `"` | 情報ラベル（3 行目）の文言（ウィンドウ選択時のタイトル） |
+| `Mode` | `FadeMaskRenderMode` | `AreaSelect` | 描画モード（操作ラベルの文言選定・情報ラベルの表示可否） |
+| `ShowFullOverlay` | `bool` | `false` | true の場合は選択が無くても全面を暗転する |
+| `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。DPI 変更で自動更新される |
+| `Scaling` | `double` | 1.0 | 座標変換ポートへ適用する倍率（`Port` が未設定の場合のみ使用。規則はコアが単一所有） |
+| `DisplayScaleScaling` | `double` | `Scaling` | サイズラベルの自動生成に使う表示スケール（0 以下は `Scaling` と同値） |
+| `Port` | `ICoordTransform?` | `null` | 論理座標 → DIP の座標変換ポート（設定時は `Scaling` より優先） |
+| `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を返すデリゲート。null または空文字を返すと矩形から自動生成する |
+| `Log` | `ILogger` | `NullLogger` | 状態変更ログの出力先（null は `NullLogger`） |
+
+外観の個別項目（暗転色・枠線・ラベル）は `Appearance`（コアの `FadeMaskAppearance`）が所有します。詳細は「外観（FadeMaskAppearance）」を参照してください。
+
+### 外観（FadeMaskAppearance）
+
+名前空間 `Estable.FadeMask`（`FadeMaskControl.Core`）/ レコード `FadeMaskAppearance`（`public sealed`）。
+色は UI 非依存の `System.Drawing.Color` です。変更は `with` 式による部分変更です。
+
+| プロパティ | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
 | `OverlayColor` | `System.Drawing.Color` | 黒 50% | 暗転の色。アルファで不透明度を表す（0 の場合は暗転しない） |
 | `BorderColor` | `System.Drawing.Color` | ダークグレー（不透明） | 枠線の色。アルファで不透明度を表す（0 の場合は枠線を描画しない） |
 | `BorderThickness` | `double` | 2.0 | 枠線の太さ（DIP）。0.5 未満は 0.5 に正規化される |
-| `ShowFullOverlay` | `bool` | `false` | true の場合は選択が無くても全面を暗転する |
-| `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。DPI 変更で自動更新される |
-| `Scaling` | `double` | 1.0 | 座標変換ポートへ適用する倍率（`Port` が未設定の場合のみ使用） |
-| `Port` | `ICoordTransform?` | `null` | 論理座標 → DIP の座標変換ポート（設定時は `Scaling` より優先） |
 | `ShowSizeLabel` | `bool` | `true` | サイズラベル（1 行目）を表示するか |
-| `SizeLabelTextProvider` | `Func<string?>?` | `null` | サイズラベルの文言を返すデリゲート。null または空文字を返すと描画しない |
-| `SizeLabelFontSize` | `double` | 14.0 | サイズラベルのフォントサイズ（DIP） |
 | `SizeLabelColor` | `System.Drawing.Color` | 白 | サイズラベルの文字色 |
-| `SizeLabelBackgroundColor` | `System.Drawing.Color` | 黒 60% | サイズラベルの背景色（アルファ 0 の場合は黒 50% へフォールバック） |
-| `SubLines` | `IReadOnlyList<FadeMaskSubLine>?` | `null` | 2 行目以降の行。`FadeMaskSubLine`（文言・文字サイズ・文字色・背景色）を上から順に積む |
+| `SizeLabelBackgroundColor` | `System.Drawing.Color` | 黒 60% | サイズラベルの背景色（アルファ 0 の場合は黒 50% として描画する） |
+| `SizeLabelFontSize` | `double` | 14.0 | サイズラベルのフォントサイズ（DIP） |
+| `ShowSubLines` | `bool` | `true` | 操作ラベル（2 行目）を表示するか |
+| `SubLineColor` | `System.Drawing.Color` | 薄いグレー | 操作ラベル（2 行目）の文字色 |
+| `SubLineBackgroundColor` | `System.Drawing.Color` | 黒 60% | 操作ラベル（2 行目）の背景色（アルファ 0 の場合は黒 50% として描画する） |
+| `SubLineFontSize` | `double` | 14.0 | 操作ラベル（2 行目）のフォントサイズ（DIP） |
+| `InfoLabelVisible` | `bool` | `true` | 情報ラベル（3 行目）を表示するか（WindowSelect かつタイトル非空のときのみ表示） |
+| `InfoLabelColor` | `System.Drawing.Color` | 白 | 情報ラベル（3 行目）の文字色 |
+| `InfoLabelBackgroundColor` | `System.Drawing.Color` | 黒 60% | 情報ラベル（3 行目）の背景色（アルファ 0 の場合は黒 50% として描画する） |
+| `InfoLabelFontSize` | `double` | 14.0 | 情報ラベル（3 行目）のフォントサイズ（DIP） |
+
+`BuildSubLines(FadeMaskRenderMode mode, string windowTitle)` が、上記の設定からラベルの行（2 行目以降）を組み立てます（文言の選定はコアが単一所有）。
 
 ### サブラインの型
 
-名前空間 `Estable.MewUI.FadeMask` / レコード `FadeMaskSubLine`（`public sealed`）。
+名前空間 `Estable.FadeMask`（`FadeMaskControl.Core`）/ レコード `FadeMaskSubLine`（`public sealed`）。
+Avalonia 版と同一の型を共有する（UI 非依存の値型のため、UI ごとに自前の定義を持たない）。
 
 | メンバー | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Text` | `string` | — | 行の文言 |
 | `FontSize` | `double` | — | フォントサイズ（DIP） |
 | `Color` | `System.Drawing.Color` | — | 文字色 |
-| `BackgroundColor` | `System.Drawing.Color` | 透明 | 背景色（アルファ 0 の場合は黒 50% へフォールバック） |
+| `BackgroundColor` | `System.Drawing.Color` | 透明 | 背景色（`BuildSubLines` が実効色へ解決するため通常は非透明。アルファ 0 は黒 50% になる） |
 
 ## 描画仕様
 
@@ -62,15 +87,15 @@ FadeMaskControl は、**選択領域以外を暗転**させ、選択領域をハ
 | 項目 | 仕様 |
 | --- | --- |
 | 位置 | 穴あけ矩形の左端から内側余白（4 DIP）だけ内側、上端から内側余白だけ下 |
-| 行の積み方 | 1 行目はサイズラベル、2 行目以降は `SubLines` の順。行間は内側余白 |
+| 行の積み方 | 1 行目はサイズラベル、2 行目は操作ラベル、3 行目は情報ラベルの順（`Appearance.BuildSubLines` が組み立てる）。行間は内側余白 |
 | 背景 | 各行は「文言 + 内側余白 × 2」の矩形を敷く（文字が読めるようにする） |
-| サイズラベルの条件 | `ShowSizeLabel` = true かつ `SizeLabelTextProvider` が null でも空文字でもない文字列を返すとき |
-| サイズラベルが非表示のとき | `SubLines` を 1 行目から描画する（繰り上げ） |
+| サイズラベルの条件 | `Appearance.ShowSizeLabel` = true かつ穴あけ矩形があるとき（文言は `SizeLabelOverrideProvider` の戻り値。null・空文字なら矩形と `DisplayScaleScaling` から自動生成） |
+| サイズラベルが非表示のとき | サブラインを 1 行目から描画する（繰り上げ） |
 | 日本語の文言 | 字形を持つフォントへ自動フォールバックするため、豆腐（□）にならない |
 
 ### 穴あけ矩形の決定
 
-`HasHighlight` が true なら `HighlightRect`、そうでなく `HasSelection` が true なら `SelectionRect`、両方 false なら穴あけなし（全面暗転または描画なし）です。
+`HasHighlight` が true なら `LogicalHighlightRect`、そうでなく `HasSelection` が true なら `LogicalSelectionRect`、両方 false なら穴あけなし（全面暗転または描画なし）です。
 
 ### 論理座標から DIP への変換
 
@@ -79,7 +104,8 @@ FadeMaskControl は、**選択領域以外を暗転**させ、選択領域をハ
 | 選択矩形 | 終点に +1 する（閉区間。始点・終点のピクセルとも非暗転領域に含める） |
 | ハイライト矩形 | +1 しない（既に全ピクセルを含む閉区間表現のため） |
 
-`Scaling` が 1.0 以外の場合は等倍スケールの座標変換ポートとして適用されます。
+`Scaling` が 1.0 以外の場合は等倍スケールの座標変換ポートとして適用されます（`Port` が設定されている場合は `Port` を優先）。<br/>
+サイズラベルの表示スケール（DisplayScale）は `DisplayScaleScaling`（Avalonia 版と同名。0 以下は `Scaling` と同値）で指定します。
 
 ## 操作仕様
 
@@ -106,8 +132,9 @@ FadeMaskControl は、**選択領域以外を暗転**させ、選択領域をハ
 | 暗転色のアルファが 0 | 暗転を描画しない |
 | 枠線色のアルファが 0 | 枠線を描画しない |
 | 穴あけ矩形がクライアント外 | 全面を暗転する |
-| `SizeLabelTextProvider` が null または空文字を返す | サイズラベルを描画しない（例外にしない） |
-| `SubLines` が null または 0 件 | サイズラベルのみ描画する |
+| `SizeLabelOverrideProvider` が null または空文字を返す | 矩形と `DisplayScaleScaling` から自動生成する（空文字でも例外にしない） |
+| 穴あけ矩形なし | ラベルを描画しない（穴あけ位置が無いため） |
+| `Appearance.BuildSubLines` が空を返す | サイズラベルのみ描画する |
 
 ## ログ
 

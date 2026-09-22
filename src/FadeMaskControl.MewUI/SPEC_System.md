@@ -46,9 +46,9 @@ FadeMaskControl（MewUI 版）のシステム概要・アーキテクチャ・�
 
 | 層 | 責務 |
 | --- | --- |
-| `FadeMaskControl.Core` | 穴あけ矩形の決定、暗転領域（4 帯）の計算、枠線矩形、論理座標 → DIP 変換、ラベルの行配置と文言の単一所有 |
+| `FadeMaskControl.Core` | 穴あけ矩形の決定、暗転領域（4 帯）の計算、枠線矩形、論理座標 → DIP 変換、ラベルの行配置と文言の単一所有、サブラインの組み立て（行の文言・順序・表示可否）、**1 フレーム分の描画内容の決定**（`FadeMaskFrame`）、外観の値型、描画状態変更のログ定義 |
 | `FadeMaskControl.MewUI` | コアの計算結果を `SKCanvas` へ描画する。`MewProperty` による入力の受付。DPI の自動追従。テキストの実寸測定とフォントの解決 |
-| ホスト | `SelectionRect` / `HasSelection` の設定、重ね順の管理、`IsHitTestVisible = false` の設定、ラベルの文言の供給 |
+| ホスト | `LogicalSelectionRect` / `HasSelection` の設定、重ね順の管理、`IsHitTestVisible = false` の設定、ラベルの文言の供給 |
 
 ## コンポーネント構成
 
@@ -56,7 +56,6 @@ FadeMaskControl（MewUI 版）のシステム概要・アーキテクチャ・�
 src/FadeMaskControl.MewUI/
 ├── src/
 │   ├── FadeMaskControl.cs         MewProperty の定義・DPI 追従・描画の起点
-│   ├── FadeMaskSubLine.cs         2 行目以降の行（文言・文字サイズ・色）
 │   └── FadeMaskSkiaRenderer.cs    暗転（4 帯）・枠線（4 辺）・ラベルの描画
 └── tests/
     ├── TestHelper.cs                 テスト用の描画先（SKBitmap + SKCanvas）と画素数え上げ
@@ -66,8 +65,8 @@ src/FadeMaskControl.MewUI/
 | コンポーネント | 責務 |
 | --- | --- |
 | `FadeMaskControl` | 入力プロパティ（`MewProperty`）の定義、論理座標 → DIP 変換、DPI 変更の追従、`PaintSurface` から描画を開始 |
-| `FadeMaskSubLine` | 2 行目以降の行の値（文言・文字サイズ・文字色・背景色） |
-| `FadeMaskSkiaRenderer` | 暗転の要否判定（コア）→ 帯の描画 → 枠線の描画 → ラベルの描画（フォントの解決・テキストの実寸測定） |
+| `FadeMaskSubLine` | 2 行目以降の行の値（文言・文字サイズ・文字色・背景色）。コア（`FadeMaskControl.Core`）が定義する UI 非依存の値型を、Avalonia 版と共有する |
+| `FadeMaskSkiaRenderer` | フレーム（暗転領域・枠線・ラベル）を Skia の描画 API へ写す（判断を持たない）。フォントの解決・テキストの実寸測定を担う |
 | `RenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -81,38 +80,64 @@ classDiagram
         +MeasureContent(size) Size
     }
     class FadeMaskControl {
-        +EsRect? SelectionRect
-        +EsRect? HighlightRect
+        +EsRect? LogicalSelectionRect
+        +EsRect? LogicalHighlightRect
         +bool HasSelection
         +bool HasHighlight
-        +Color OverlayColor
-        +Color BorderColor
-        +double BorderThickness
+        +FadeMaskAppearance Appearance
+        +string WindowTitle
+        +FadeMaskRenderMode Mode
         +bool ShowFullOverlay
         +double RenderScaling
         +double Scaling
+        +double DisplayScaleScaling
         +ICoordTransform? Port
-        +bool ShowSizeLabel
-        +Func~string?~? SizeLabelTextProvider
-        +double SizeLabelFontSize
-        +Color SizeLabelColor
-        +Color SizeLabelBackgroundColor
-        +IReadOnlyList~FadeMaskSubLine~? SubLines
+        +Func~string?~? SizeLabelOverrideProvider
         -OnPaintSurface(canvas, info) void
-        -CreatePort() ICoordTransform
     }
     class FadeMaskSubLine {
+        <<FadeMaskControl.Core>>
         +string Text
         +double FontSize
         +Color Color
         +Color BackgroundColor
     }
+    class FadeMaskAppearance {
+        <<FadeMaskControl.Core>>
+        +Color OverlayColor
+        +Color BorderColor
+        +double BorderThickness
+        +bool ShowSizeLabel
+        +Color SizeLabelColor
+        +Color SizeLabelBackgroundColor
+        +double SizeLabelFontSize
+        +bool ShowSubLines
+        +Color SubLineColor
+        +Color SubLineBackgroundColor
+        +double SubLineFontSize
+        +bool InfoLabelVisible
+        +Color InfoLabelColor
+        +Color InfoLabelBackgroundColor
+        +double InfoLabelFontSize
+        +BuildSubLines(mode, windowTitle) IReadOnlyList~FadeMaskSubLine~
+    }
     class FadeMaskSkiaRenderer {
-        +Render(canvas, client, holeRect, overlayColor, borderColor, borderThickness, showFullOverlay)$ void
-        +DrawLabels(canvas, anchor, showSizeLabel, sizeLabelText, sizeLabelFontSize, sizeLabelColor, sizeLabelBackgroundColor, subLines)$ void
+        +Draw(canvas, frame)$ void
         -DrawLabelLine(canvas, origin, text, fontSize, textColor, backgroundColor)$ EsPoint
         -ResolveTypeface(text)$ SKTypeface
         -IsAsciiOnly(text)$ bool
+    }
+    class FadeMaskFrame {
+        <<FadeMaskControl.Core>>
+        +IReadOnlyList~EsRect~ OverlayRegions
+        +Color OverlayColor
+        +IReadOnlyList~EsRect~ BorderRects
+        +Color BorderColor
+        +EsRect? LabelAnchor
+        +string? SizeLabelText
+        +FadeMaskLabelStyle SizeLabelStyle
+        +IReadOnlyList~FadeMaskSubLine~ SubLines
+        +Resolve(request)$ FadeMaskFrame
     }
     class FadeMaskOverlayGeometry {
         <<FadeMaskControl.Core>>
@@ -127,6 +152,7 @@ classDiagram
         +ShouldShowInfoLabel(mode, visible, title)$ bool
         +GetOperationText(mode)$ string
         +FormatSizeLabel(rect, scaling, displayScaling)$ string
+        +BuildSubLines(mode, showSubLines, infoLabelVisible, windowTitle, operationStyle, infoStyle)$ IReadOnlyList~FadeMaskSubLine~
     }
     class FadeMaskLabelLayout {
         <<FadeMaskControl.Core>>
@@ -140,10 +166,14 @@ classDiagram
     }
 
     SkiaCanvasView <|-- FadeMaskControl
-    FadeMaskControl ..> FadeMaskSubLine : 2 行目以降を保持
+    FadeMaskControl ..> FadeMaskAppearance : 外観を保持
+    FadeMaskControl ..> FadeMaskFrame : 描画内容を解決
     FadeMaskControl ..> FadeMaskSkiaRenderer : 描画を委譲
-    FadeMaskControl ..> FadeMaskOverlayGeometry : 穴あけ矩形・DIP 変換
-    FadeMaskSkiaRenderer ..> FadeMaskOverlayGeometry : 帯・枠線・判定
+    FadeMaskFrame ..> FadeMaskOverlayGeometry : 穴あけ矩形・DIP 変換・帯・枠線
+    FadeMaskFrame ..> FadeMaskLabels : 文言・行の組立
+    FadeMaskAppearance ..> FadeMaskLabels : 行の組立
+    FadeMaskAppearance ..> FadeMaskSubLine : 行を生成
+    FadeMaskSkiaRenderer ..> FadeMaskFrame : 描画内容を読む
     FadeMaskSkiaRenderer ..> FadeMaskLabelLayout : 背景・文字原点・次の行
     FadeMaskLabels ..> FadeMaskRenderMode : モード判定
 ```
@@ -160,23 +190,18 @@ sequenceDiagram
 
     MW->>F: PaintSurface(canvas, info)
     F->>F: クライアント矩形を算出（物理ピクセル ÷ DPI）
-    F->>C: ToDipRect(SelectionRect / HighlightRect)
-    C-->>F: DIP 矩形
-    F->>C: ResolveHoleRect(HasHighlight, HighlightRect, HasSelection, SelectionRect)
-    C-->>F: 穴あけ矩形
-    F->>R: Render(canvas, client, holeRect, ...)
-    R->>C: ShouldDrawOverlay(holeRect, ShowFullOverlay)
-    alt 描画する
-        R->>C: ComputeOverlayRegions(client, holeRect)
-        R->>SK: DrawRect（帯を暗転）
-        R->>C: GetBorderRects(holeRect, thickness)
+    F->>C: FadeMaskFrame.Resolve(FadeMaskRequest)
+    Note over C: 論理矩形 → DIP 変換（選択は閉区間 +1 / ハイライトは +0）<br/>穴あけ矩形の決定（ハイライト優先）<br/>透明指定の解決・ラベル文言の決定（自動生成含む）
+    C-->>F: フレーム（暗転領域・枠線・ラベル）
+    F->>R: Draw(canvas, frame)
+    alt 描画するものがある
+        R->>SK: DrawRect（暗転領域を塗る）
         R->>SK: DrawRect（枠線 4 辺）
-    else 描画しない
-        R-->>F: 何もしない
+    else 何も無い
+        R-->>F: 何もしない（空のコレクション）
     end
-    alt ラベルを描画する（穴あけ矩形あり）
-        F->>R: DrawLabels(canvas, holeRect, ShowSizeLabel, SizeLabelTextProvider(), ...)
-        loop 各行（サイズラベル → サブライン）
+    alt ラベルを描画する（基準矩形あり）
+        loop 各行（サイズラベル → 操作ラベル → 情報ラベル）
             R->>R: ResolveTypeface(text) / テキストの実寸を測定
             R->>C: ComputeBackground(origin, textSize)
             C-->>R: 背景矩形
@@ -189,8 +214,8 @@ sequenceDiagram
 
 ## 設計判断
 
-1. **コアは幾何のみを所有し、色・太さは UI 側が持つ**。色は `System.Drawing.Color`（コアの色型）で表現できるが、
-   描画の都合（アルファ 0 のスキップ等）は UI 側の関心事とする（Avalonia 版と同じ分担）。
+1. **外観は 1 つの値（コアの `FadeMaskAppearance`）が単一所有する**。UI ごとに既定値を持たないため、両 UI の見た目が一致する。
+   透明指定（アルファ 0）の扱いもコアが解決する（UI 層に「アルファ 0 なら描かない」等の判断を持たせない）。
 2. **暗転は「クライアント − 穴」の 4 帯で表現する**。クリッピング（穴あけパス）を使わず矩形の塗り分けにするのは、
    バックエンド差異に依存しない確実な方法であり、Avalonia 版も同じ方式（4 帯）であるため。
 3. **枠線は穴あけ矩形の内側に描く**。Avalonia 版の `GetBorderRects` をコアへ移したため、見た目は完全に一致する。
@@ -226,8 +251,8 @@ sequenceDiagram
 
 | レベル | 出力元 |
 | --- | --- |
-| Debug | `SelectionRect` / `HighlightRect` の変更（同一値なら出力しない） |
+| Debug | `LogicalSelectionRect` / `LogicalHighlightRect` の変更（同一値なら出力しない） |
 | Trace | `Port`（座標変換ポート）の設定・解除 |
 
-出力先は `Log` プロパティへ注入します（既定は `NullLogger`）。<br/>
-複合コントロール（`FadeMaskDragRectControl.MewUI`）は選択のたびにログが出るため伝搬せず、必要なら <c>Overlay.Log</c> を直接設定します。
+出力先は `Log` プロパティへ注入します（既定は `NullLogger`）。  
+複合コントロール（`FadeMaskDragRectControl.MewUI`）は選択のたびにログが出るため伝搬せず、必要なら Overlay.Log を直接設定します。

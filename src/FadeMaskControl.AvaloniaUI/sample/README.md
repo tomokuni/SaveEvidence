@@ -9,7 +9,7 @@
   - [3. 画面構成と操作](#3-画面構成と操作)
   - [4. 使い方（初めての方向け）](#4-使い方初めての方向け)
   - [5. AXAML での利用パターン](#5-axaml-での利用パターン)
-  - [6. 外部レンダラー（FadeMaskRenderer）について](#6-外部レンダラーfademaskrendererについて)
+  - [6. 外観（FadeMaskAppearance）について](#6-外観fademaskappearanceについて)
   - [7. 検証項目（動作確認チェックリスト）](#7-検証項目動作確認チェックリスト)
 
 ---
@@ -20,7 +20,7 @@
 
 - `FadeMaskControl`（`Estable.AvaloniaUI.FadeMask.FadeMaskControl`）を実際に Visual Tree へ配置して動作を確認できます。
 - 暗転オーバーレイ（穴あけマスク）とサイズラベルの描画を確認できます。
-- 公開プロパティ（`SelectionRect` / `OverlayColor` / `TextColor` / `TextBackgroundColor` / `FontSize` / `ShowSizeLabel`）のバインドと動的変更を確認できます。色の不透明度は色のアルファに統合されています。
+- 公開プロパティ（外観は `Appearance`（コアの `FadeMaskAppearance`）、状態は `LogicalSelectionRect` / `HasSelection` / `HasHighlight` / `WindowTitle` / `Mode` / `ShowFullOverlay` など）のバインドと動的変更を確認できます。色の不透明度は色のアルファに統合されています。
 
 ## 2. 実行方法
 
@@ -53,19 +53,19 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ FadeMa
 | 描画モード（ComboBox） | `AreaSelect` / `ScreenSelect` / `WindowSelect` / `Crop` を選択してモード別描画を切替 |
 | 選択矩形（X / Y / W / H） | テキストボックスで選択矩形の座標・サイズを編集（**数値を入力すると即座に反映**） |
 | 「矩形なし（全面暗転）」ボタン | `SelectionRect` を 0x0 に設定し全面暗転を確認 |
-| 暗転オーバーレイ（Opacity） | スライダーで `OverlayColor` のアルファ値（0〜255）を変更 |
-| 選択枠線（Thickness） | スライダーで外部レンダラー（`ExternalRenderer`）の `BorderThickness` を変更（不透明度は色のアルファで表現） |
-| サイズラベル | `ShowSizeLabel` チェックボックス・`FontSize` スライダー・`SizeLabelOverride` テキストボックス（空は自動生成）で変更 |
+| 暗転オーバーレイ（Opacity） | スライダーで `Appearance.OverlayColor` のアルファ値（0〜255）を変更 |
+| 選択枠線（Thickness） | スライダーで `Appearance.BorderThickness` を変更（不透明度は色のアルファで表現） |
+| サイズラベル | `Appearance.ShowSizeLabel` チェックボックス・`Appearance.SizeLabelFontSize` スライダー・`SizeLabelOverride` テキストボックス（空は自動生成）で変更 |
 | スケーリング | `Scaling` / `DisplayScaleScaling` のスライダー（0 は自動 = Scaling と同値）で変更 |
-| 情報ラベル | `InfoLabelVisible` チェックボックス・`InfoLabelColor`（色コード）・`InfoLabelBackgroundColor`（アルファ込み） / `InfoLabelFontSize` スライダーで変更（ScreenSelect / WindowSelect のハイライト時のみ表示） |
+| 情報ラベル | `Appearance.InfoLabelVisible` チェックボックス・`Appearance.InfoLabelColor`（色コード）・`Appearance.InfoLabelBackgroundColor`（アルファ込み） / `Appearance.InfoLabelFontSize` スライダーで変更（ScreenSelect / WindowSelect のハイライト時のみ表示） |
 
 ## 4. 使い方（初めての方向け）
 
 1. **起動直後**: 初期モード `AreaSelect`・初期選択矩形（50, 40, 220, 160）に応じて、グレー領域の右上部分が暗転（穴あけマスク）されます。
-2. **描画モード（ComboBox）**: 選択すると `FadeMaskRenderer`（`ExternalRenderer`）の描画状態が切り替わります。
-   - `AreaSelect`: 選択矩形の穴あけマスク＋サイズラベル（既定）
-   - `ScreenSelect`: ハイライト矩形＋スクリーン番号ラベル
-   - `WindowSelect`: ハイライト矩形＋ウィンドウタイトルラベル
+2. **描画モード（ComboBox）**: 選択するとコントロールの描画状態（`Mode` / `HasHighlight` / `LogicalHighlightRect` / `WindowTitle` / `ShowFullOverlay`）が切り替わります。
+   - `AreaSelect`: 選択矩形の穴あけマスク＋サイズラベル＋操作ラベル（既定）
+   - `ScreenSelect`: ハイライト矩形＋操作ラベル
+   - `WindowSelect`: ハイライト矩形＋操作ラベル＋ウィンドウタイトル（情報ラベル）
    - `Crop`: 全面暗転＋選択矩形の穴あけ
 3. **X / Y / W / H のテキストボックス**: 数値を入力すると**入力のたびに**選択矩形が更新され、暗転領域（穴あけ位置）とサイズラベルの座標が即座に変化します。
    - 例: X を `100` にすると、穴が右へ移動します。W を `300` にすると、穴が横に広がります。
@@ -75,12 +75,12 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ FadeMa
 6. **Thickness スライダー**: 選択枠線の太さを変更します（不透明度は色のアルファで表現）。
 7. **サイズラベル**: チェックボックスで表示/非表示、スライダーでフォントサイズを変更します。
 8. **サイズラベル明示指定**: 「明示指定（`SizeLabelOverride`）」テキストボックスに文字列を入力すると、サイズラベルのテキストが明示指定に置き換わります（空文字に戻すと自動生成）。
-9. **スケーリング**: `Scaling` で DPI スケーリング係数（サイズラベルの物理ピクセル換算）、`DisplayScaleScaling` でマルチスクリーン補正（0 は自動 = Scaling と同値）を変更します。
+9. **スケーリング**: `Scaling` で ドメイン → DIP 変換の基準倍率（座標変換ポートを設定していない場合は矩形の位置・サイズとサイズラベルの換算の両方に反映）、`DisplayScaleScaling` でマルチスクリーン補正（0 は自動 = Scaling と同値）を変更します。
 10. **情報ラベル**: `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor`（アルファ込み） / `InfoLabelFontSize` を変更できます（ScreenSelect / WindowSelect のハイライト時のみ表示）。
 
-> **補足**: 選択枠線は FadeMaskControl の依存関係プロパティ描画では描画されませんが、
-> 本サンプルは `ExternalRenderer`（FadeMaskRenderer）経由で描画するため、枠線・ハイライト・
-> ウィンドウタイトル・スクリーン番号なども確認できます。
+> **補足**: 本サンプルは `Appearance`（外観）と状態プロパティ（`LogicalSelectionRect` / `HasHighlight` 等）を
+> AXAML で直接バインドするため、枠線・ハイライト・ウィンドウタイトルなども確認できます。
+> サイズラベルの文言プロバイダ（デリゲート）のみコードビハインドで設定します。
 
 ## 5. AXAML での利用パターン
 
@@ -89,32 +89,36 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ FadeMa
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:fm="clr-namespace:Estable.AvaloniaUI.FadeMask;assembly=FadeMaskControl.AvaloniaUI">
     <Grid Background="LightGray">
-        <fm:FadeMaskControl LogicalSelectionRect="{Binding SelectionRect}"
-                            OverlayColor="#96000000"
-                            ShowSizeLabel="True"/>
+        <fm:FadeMaskControl LogicalSelectionRect="{Binding LogicalSelectionRect}"
+                            HasSelection="True"
+                            Appearance="{Binding Appearance}"/>
     </Grid>
 </Window>
 ```
 
-## 6. 外部レンダラー（FadeMaskRenderer）について
+## 6. 外観（FadeMaskAppearance）について
 
-本サンプルは `FadeMaskControl` に `ExternalRenderer`（`FadeMaskRenderer`）を設定して描画します。
-モード別の描画（AreaSelect / ScreenSelect / WindowSelect / Crop のハイライト・選択矩形・全面暗転・ウィンドウタイトル・スクリーン番号）は
-`FadeMaskRenderer` が担当し、描画モードの ComboBox で切り替えられます。
+本サンプルは外観を 1 つの値（`FadeMaskControl.Appearance` = コアの `FadeMaskAppearance`）で設定します。
+ViewModel は `Appearance` を保持し、各編集項目（色・サイズ・太さ）の setter が `with` 式で部分更新します。
+モード別の描画（ハイライト・選択矩形・全面暗転・ウィンドウタイトル）は状態プロパティ（`Mode` / `HasHighlight` / `LogicalHighlightRect` / `WindowTitle` / `ShowFullOverlay`）で切り替えます。
 
-`ExternalRenderer` は CLR プロパティのため XAML バインドできません。コードビハインドで設定します。
+外観は StyledProperty のため AXAML でバインドできます。`Func` であるサイズラベルの文言プロバイダのみコードビハインドで設定します。
 
 ```csharp
-var control = new FadeMaskControl();
-var renderer = new FadeMaskRenderer
+var control = new FadeMaskControl
 {
+    Appearance = new FadeMaskAppearance
+    {
+        OverlayColor = Color.FromAColor(150, Colors.Black).ToDrawingColor(),
+        BorderColor = Colors.Red.ToDrawingColor(),
+        BorderThickness = 2,
+    },
     Mode = FadeMaskRenderMode.WindowSelect,
     HasHighlight = true,
     LogicalHighlightRect = new Rect(10, 10, 200, 100),
     WindowTitle = "Sample Window",
 };
-control.ExternalRenderer = renderer;
-control.InvalidateVisual(); // 再描画を要求
+control.InvalidateVisual(); // 再描画を要求（プロパティ変更でも自動で再描画される）
 ```
 
 ## 7. 検証項目（動作確認チェックリスト）
@@ -126,6 +130,6 @@ control.InvalidateVisual(); // 再描画を要求
 - [ ] `BorderThickness` の変更が枠線に反映される（不透明度は色のアルファで表現）
 - [ ] サイズラベルの表示/非表示・フォントサイズが反映される
 - [ ] `SizeLabelOverride` の明示指定でサイズラベルが置き換わり、空文字で自動生成に戻る
-- [ ] `Scaling` / `DisplayScaleScaling` の変更がサイズラベルの物理ピクセル換算に反映される（0 は自動 = Scaling と同値）
+- [ ] `Scaling` / `DisplayScaleScaling` の変更が矩形の位置・サイズ（ポート未設定時）とサイズラベルの物理ピクセル換算に反映される（0 は自動 = Scaling と同値）
 - [ ] `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor`（アルファ込み） / `InfoLabelFontSize` の変更が情報ラベルに反映される（ScreenSelect / WindowSelect）
 - [ ] X / Y / W / H の編集で選択矩形とラベルの座標表示が更新される

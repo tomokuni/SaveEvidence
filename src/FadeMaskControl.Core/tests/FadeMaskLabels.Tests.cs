@@ -59,6 +59,24 @@ public class FadeMaskLabelsTests
             FadeMaskLabels.GetOperationText(FadeMaskRenderMode.Crop));
     }
 
+    /// <summary>表示スケールが 0 以下の場合は代替値（座標換算の倍率）を使うことを検証する。</summary>
+    /// <param name="displayScaling">指定された表示スケール（無効値）。</param>
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(-1.0)]
+    [InlineData(double.NaN)]
+    public void ResolveDisplayScaling_0以下なら代替値を使う(double displayScaling)
+    {
+        Assert.Equal(1.25, FadeMaskLabels.ResolveDisplayScaling(displayScaling, scaling: 1.25));
+    }
+
+    /// <summary>表示スケールが正の値ならそのまま使うことを検証する。</summary>
+    [Fact]
+    public void ResolveDisplayScaling_正の値ならそのまま使う()
+    {
+        Assert.Equal(2.0, FadeMaskLabels.ResolveDisplayScaling(displayScaling: 2.0, scaling: 1.25));
+    }
+
     /// <summary>サイズラベルが座標・サイズ・表示倍率を物理ピクセルで整形することを検証する。</summary>
     /// <remarks>切り捨てで整数化し、倍率は % で表示する（Avalonia / MewUI で同一の文言）。</remarks>
     [Fact]

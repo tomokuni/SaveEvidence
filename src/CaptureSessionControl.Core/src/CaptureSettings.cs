@@ -35,7 +35,7 @@ namespace Estable.CaptureSession;
 /// <param name="SizeLabelVisible">サイズラベルの表示状態。</param>
 /// <param name="SizeLabelColor">サイズラベルの文字色。</param>
 /// <param name="SizeLabelFontSize">サイズラベルのフォントサイズ。</param>
-/// <param name="SizeLabelOverride">サイズラベルのテキスト明示指定（FadeMaskRenderer.SizeLabelOverride。null = 自動生成）。</param>
+/// <param name="SizeLabelOverride">サイズラベルのテキスト明示指定（FadeMaskControl.SizeLabelOverrideProvider。null = 自動生成）。</param>
 /// <param name="TextBackgroundColor">サイズラベル（1 行目）の背景色（不透明度は色のアルファに統合）。</param>
 /// <param name="InfoLabelVisible">情報ラベルの表示状態。</param>
 /// <param name="InfoLabelColor">情報ラベルの文字色。</param>
@@ -45,7 +45,7 @@ namespace Estable.CaptureSession;
 /// <param name="SubLineFontSize">サブラインのフォントサイズ。</param>
 /// <param name="SubLineColor">サブラインの文字色。</param>
 /// <param name="SubLineBackgroundColor">サブライン（2 行目）の背景色（不透明度は色のアルファに統合）。</param>
-/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskRenderer.DisplayScaleScaling・0 以下は Scaling と同値）。</param>
+/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskControl.DisplayScaleScaling・0 以下は Scaling と同値）。</param>
 /// <remarks>
 /// 全メンバーは nullable とする。<br/>
 /// - 初期設定として使用する場合: null は CaptureSessionControl.AvaloniaUI のデフォルト値として扱う。<br/>

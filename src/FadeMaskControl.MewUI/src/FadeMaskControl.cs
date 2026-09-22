@@ -1,46 +1,44 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Controls;
 using Estable.FadeMask;
-using Estable.MewUI.FadeMask.Logging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
-using DrawingColor = System.Drawing.Color;
 
 namespace Estable.MewUI.FadeMask;
 
 /// <summary>領域外を暗転させ、選択領域をハイライトするオーバーレイコントロール（MewUI 版）。</summary>
 /// <remarks>
 /// Avalonia 版 <c>FadeMaskControl</c> と同じ UI 非依存コア（<c>FadeMaskControl.Core</c>）を使い、<br/>
-/// 描画層のみを <see cref="SkiaCanvasView"/> で実装する。<br/>
+/// 描画層のみを <see cref="SkiaCanvasView"/> で実装する（公開プロパティの名前・意味も Avalonia 版と同一）。<br/>
 /// <br/>
 /// <b>入力しない</b>。本コントロールは装飾専用であり、ホスト側で <c>IsHitTestVisible = false</c> にして<br/>
 /// 下のコントロールへ入力を通す（Avalonia 版と同じ使い方）。<br/>
 /// <br/>
 /// <b>ラベル</b>: サイズラベル（1 行目）とサブライン（2 行目以降）を穴あけ矩形の左上へ縦に積む。<br/>
-/// 文言はホストが <see cref="SizeLabelTextProvider"/> と <see cref="SubLines"/> で与え、<br/>
-/// 背景・文字原点・次の行の位置はコアの <c>FadeMaskLabelLayout</c> が単一所有する。<br/>
-/// 非 ASCII を含む文言は字形を持つフォントへフォールバックするため豆腐（□）にならない。
+/// 記載は <see cref="Appearance"/>（コアの <see cref="FadeMaskAppearance"/>）が、サイズラベルの文言は<br/>
+/// <see cref="SizeLabelOverrideProvider"/> が与える。背景・文字原点・次の行の位置はコアが単一所有する。<br/>
+/// <br/>
+/// <b>Avalonia 版との違い（フレームワーク固有）</b>: 座標変換ポートは <see cref="Port"/> プロパティで設定し<br/>
+/// （Avalonia 版は 3 子コントロールへ一括設定する <c>SetCoordinateTransform</c> メソッド）、<br/>
+/// DPI 追従（<see cref="RenderScaling"/>）と非 ASCII 文言のフォントフォールバック（豆腐防止）を持つ<br/>
+/// （Avalonia 版はコントロールの DIP 座標系・自前のテキスト計量のため不要）。
 /// </remarks>
 public sealed class FadeMaskControl : SkiaCanvasView
 {
-    /// <summary>暗転の既定色（黒 50%）。</summary>
-    private static readonly DrawingColor s_defaultOverlayColor = DrawingColor.FromArgb(128, 0, 0, 0);
-
-    /// <summary>枠線の既定色（ダークグレー・不透明）。</summary>
-    private static readonly DrawingColor s_defaultBorderColor = DrawingColor.FromArgb(255, 169, 169, 169);
-
-    /// <summary><see cref="SelectionRect"/> プロパティ（論理座標＝ドメイン座標の選択矩形）。</summary>
-    public static readonly MewProperty<EsRect?> SelectionRectProperty =
+    /// <summary><see cref="LogicalSelectionRect"/> プロパティ（論理座標＝ドメイン座標の選択矩形）。</summary>
+    public static readonly MewProperty<EsRect?> LogicalSelectionRectProperty =
         MewProperty<EsRect?>.Register<FadeMaskControl>(
-            nameof(SelectionRect), null, MewPropertyOptions.AffectsRender);
+            nameof(LogicalSelectionRect), null, MewPropertyOptions.AffectsRender,
+            changed: static (owner, oldValue, newValue) => owner.Log.LogSelectionRectChanged(oldValue, newValue));
 
-    /// <summary><see cref="HighlightRect"/> プロパティ（論理座標＝ドメイン座標のハイライト矩形）。</summary>
-    public static readonly MewProperty<EsRect?> HighlightRectProperty =
+    /// <summary><see cref="LogicalHighlightRect"/> プロパティ（論理座標＝ドメイン座標のハイライト矩形）。</summary>
+    public static readonly MewProperty<EsRect?> LogicalHighlightRectProperty =
         MewProperty<EsRect?>.Register<FadeMaskControl>(
-            nameof(HighlightRect), null, MewPropertyOptions.AffectsRender);
+            nameof(LogicalHighlightRect), null, MewPropertyOptions.AffectsRender,
+            changed: static (owner, oldValue, newValue) => owner.Log.LogHighlightRectChanged(oldValue, newValue));
 
     /// <summary><see cref="HasSelection"/> プロパティ（選択が有効か）。</summary>
     public static readonly MewProperty<bool> HasSelectionProperty =
@@ -50,19 +48,19 @@ public sealed class FadeMaskControl : SkiaCanvasView
     public static readonly MewProperty<bool> HasHighlightProperty =
         MewProperty<bool>.Register<FadeMaskControl>(nameof(HasHighlight), false, MewPropertyOptions.AffectsRender);
 
-    /// <summary><see cref="OverlayColor"/> プロパティ（暗転の色。不透明度はアルファに統合する）。</summary>
-    public static readonly MewProperty<DrawingColor> OverlayColorProperty =
-        MewProperty<DrawingColor>.Register<FadeMaskControl>(
-            nameof(OverlayColor), s_defaultOverlayColor, MewPropertyOptions.AffectsRender);
+    /// <summary><see cref="Appearance"/> プロパティ（暗転色・枠線・ラベルの外観をまとめた単一の設定値）。</summary>
+    public static readonly MewProperty<FadeMaskAppearance> AppearanceProperty =
+        MewProperty<FadeMaskAppearance>.Register<FadeMaskControl>(
+            nameof(Appearance), new FadeMaskAppearance(), MewPropertyOptions.AffectsRender);
 
-    /// <summary><see cref="BorderColor"/> プロパティ（枠線の色。不透明度はアルファに統合する）。</summary>
-    public static readonly MewProperty<DrawingColor> BorderColorProperty =
-        MewProperty<DrawingColor>.Register<FadeMaskControl>(
-            nameof(BorderColor), s_defaultBorderColor, MewPropertyOptions.AffectsRender);
+    /// <summary><see cref="WindowTitle"/> プロパティ（情報ラベルの文言）。</summary>
+    public static readonly MewProperty<string> WindowTitleProperty =
+        MewProperty<string>.Register<FadeMaskControl>(nameof(WindowTitle), "", MewPropertyOptions.AffectsRender);
 
-    /// <summary><see cref="BorderThickness"/> プロパティ（枠線の太さ・DIP）。</summary>
-    public static readonly MewProperty<double> BorderThicknessProperty =
-        MewProperty<double>.Register<FadeMaskControl>(nameof(BorderThickness), 2.0, MewPropertyOptions.AffectsRender);
+    /// <summary><see cref="Mode"/> プロパティ（オーバーレイ描画モード）。</summary>
+    public static readonly MewProperty<FadeMaskRenderMode> ModeProperty =
+        MewProperty<FadeMaskRenderMode>.Register<FadeMaskControl>(
+            nameof(Mode), FadeMaskRenderMode.AreaSelect, MewPropertyOptions.AffectsRender);
 
     /// <summary><see cref="ShowFullOverlay"/> プロパティ（選択なしでも全面を暗転するか）。</summary>
     public static readonly MewProperty<bool> ShowFullOverlayProperty =
@@ -83,148 +81,28 @@ public sealed class FadeMaskControl : SkiaCanvasView
     /// 選択矩形と暗転マスクが一致する。null の場合は <see cref="Scaling"/> による等倍スケールを使用する。
     /// </remarks>
     public static readonly MewProperty<ICoordTransform?> PortProperty =
-        MewProperty<ICoordTransform?>.Register<FadeMaskControl>(nameof(Port), null, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="ShowSizeLabel"/> プロパティ（サイズラベルを表示するか）。</summary>
-    public static readonly MewProperty<bool> ShowSizeLabelProperty =
-        MewProperty<bool>.Register<FadeMaskControl>(nameof(ShowSizeLabel), true, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="SizeLabelColor"/> プロパティ（サイズラベルの文字色）。</summary>
-    public static readonly MewProperty<DrawingColor> SizeLabelColorProperty =
-        MewProperty<DrawingColor>.Register<FadeMaskControl>(
-            nameof(SizeLabelColor), DrawingColor.White, MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="SizeLabelBackgroundColor"/> プロパティ（サイズラベルの背景色）。</summary>
-    /// <remarks>アルファ 0 の場合は黒 50% へフォールバックする（Avalonia 版と同一）。</remarks>
-    public static readonly MewProperty<DrawingColor> SizeLabelBackgroundColorProperty =
-        MewProperty<DrawingColor>.Register<FadeMaskControl>(
-            nameof(SizeLabelBackgroundColor), DrawingColor.FromArgb(153, 0, 0, 0), MewPropertyOptions.AffectsRender);
-
-    /// <summary><see cref="SizeLabelFontSize"/> プロパティ（サイズラベルのフォントサイズ・DIP）。</summary>
-    public static readonly MewProperty<double> SizeLabelFontSizeProperty =
-        MewProperty<double>.Register<FadeMaskControl>(nameof(SizeLabelFontSize), 14.0, MewPropertyOptions.AffectsRender);
+        MewProperty<ICoordTransform?>.Register<FadeMaskControl>(
+            nameof(Port), null, MewPropertyOptions.AffectsRender,
+            changed: static (owner, oldValue, newValue) => owner.Log.LogCoordinateTransform(newValue is not null));
 
     /// <summary>論理座標（ドメイン）の選択矩形を取得または設定する。</summary>
     /// <value>選択矩形。null の場合は穴あけなし。</value>
-    /// <remarks>設定（変更）時は変更前後をログ出力し、再描画を要求する。</remarks>
-    public EsRect? SelectionRect
+    public EsRect? LogicalSelectionRect
     {
-        get => GetValue(SelectionRectProperty);
-        set
-        {
-            var oldValue = GetValue(SelectionRectProperty);
-            SetValue(SelectionRectProperty, value);
-
-            if (oldValue != value)
-            {
-                Log.LogSelectionRectChanged(FormatRect(oldValue), FormatRect(value));
-            }
-        }
-    }
-
-    /// <summary>サイズラベルを表示するかどうかを取得または設定する。</summary>
-    /// <value>true の場合は穴あけ矩形の左上にサイズラベル（1 行目）を描画する。</value>
-    public bool ShowSizeLabel
-    {
-        get => GetValue(ShowSizeLabelProperty);
-        set => SetValue(ShowSizeLabelProperty, value);
-    }
-
-    /// <summary>サイズラベルの文字色を取得または設定する。</summary>
-    /// <value>文字色（不透明度はアルファに統合する）。</value>
-    public DrawingColor SizeLabelColor
-    {
-        get => GetValue(SizeLabelColorProperty);
-        set => SetValue(SizeLabelColorProperty, value);
-    }
-
-    /// <summary>サイズラベルの背景色を取得または設定する。</summary>
-    /// <value>背景色（不透明度はアルファに統合する）。アルファ 0 の場合は黒 50% へフォールバックする。</value>
-    public DrawingColor SizeLabelBackgroundColor
-    {
-        get => GetValue(SizeLabelBackgroundColorProperty);
-        set => SetValue(SizeLabelBackgroundColorProperty, value);
-    }
-
-    /// <summary>サイズラベルのフォントサイズを取得または設定する。</summary>
-    /// <value>フォントサイズ（DIP）。</value>
-    public double SizeLabelFontSize
-    {
-        get => GetValue(SizeLabelFontSizeProperty);
-        set => SetValue(SizeLabelFontSizeProperty, value);
-    }
-
-    /// <summary>サイズラベルのテキストを提供する関数を取得または設定する。</summary>
-    /// <value>サイズラベルのテキストを返す関数。null または空文字の場合はサイズラベルを描画しない。</value>
-    /// <remarks>
-    /// 座標系はホストが知るため（画面物理ピクセル / 画像ピクセル / DIP）、文言の生成はホストへ委譲する。<br/>
-    /// 描画のたびに評価されるため、ドラッグ中の選択矩形の変化にも追従できる。
-    /// </remarks>
-    public Func<string?>? SizeLabelTextProvider { get; set; }
-
-    /// <summary>サイズラベルの下に表示する行（2 行目以降）を取得または設定する。</summary>
-    /// <value>行の一覧。null または空の場合は描画しない。</value>
-    /// <remarks>
-    /// 操作ラベル（モード別の確定・キャンセル方法）と情報ラベル（ウィンドウタイトル）をホストが組み立てて渡す。<br/>
-    /// 文言の選定は <c>FadeMaskLabels</c>（コア）が単一所有する。
-    /// </remarks>
-    public IReadOnlyList<FadeMaskSubLine>? SubLines { get; set; }
-
-    /// <summary>論理座標 → DIP の座標変換ポートを取得または設定する。</summary>
-    /// <value>座標変換ポート。null の場合は <see cref="Scaling"/> による等倍スケールを使用する。</value>
-    /// <remarks>設定（変更）時は設定状態をログ出力し、再描画を要求する。</remarks>
-    public ICoordTransform? Port
-    {
-        get => GetValue(PortProperty);
-        set
-        {
-            var oldValue = GetValue(PortProperty);
-            SetValue(PortProperty, value);
-
-            if (!ReferenceEquals(oldValue, value))
-            {
-                Log.LogCoordinateTransform(value is not null);
-            }
-        }
+        get => GetValue(LogicalSelectionRectProperty);
+        set => SetValue(LogicalSelectionRectProperty, value);
     }
 
     /// <summary>論理座標（ドメイン）のハイライト矩形を取得または設定する。</summary>
     /// <value>ハイライト矩形。null の場合は穴あけなし。選択矩形より優先される。</value>
-    /// <remarks>設定（変更）時は変更前後をログ出力し、再描画を要求する。</remarks>
-    public EsRect? HighlightRect
+    public EsRect? LogicalHighlightRect
     {
-        get => GetValue(HighlightRectProperty);
-        set
-        {
-            var oldValue = GetValue(HighlightRectProperty);
-            SetValue(HighlightRectProperty, value);
-
-            if (oldValue != value)
-            {
-                Log.LogHighlightRectChanged(FormatRect(oldValue), FormatRect(value));
-            }
-        }
+        get => GetValue(LogicalHighlightRectProperty);
+        set => SetValue(LogicalHighlightRectProperty, value);
     }
-
-    /// <summary>状態変更ログの出力先を取得または設定する。</summary>
-    /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
-    /// <remarks>
-    /// C#14 の <c>field</c> キーワードでバッキング フィールドを暗黙定義する。<br/>
-    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。
-    /// </remarks>
-    public ILogger Log
-    {
-        get => field ?? NullLogger.Instance;
-        set => field = value ?? NullLogger.Instance;
-    }
-
-    /// <summary>ログ用に矩形を整形する。</summary>
-    /// <param name="rect">矩形（未設定は null）。</param>
-    /// <returns><c>(X, Y, Width, Height)</c> 形式の文字列。未設定は <c>null</c>。</returns>
-    private static string FormatRect(EsRect? rect) => rect is { } r ? $"({r.X}, {r.Y}, {r.Width}, {r.Height})" : "null";
 
     /// <summary>選択が有効かどうかを取得または設定する。</summary>
-    /// <value>true の場合、<see cref="SelectionRect"/> を穴あけ矩形として使う。</value>
+    /// <value>true の場合、<see cref="LogicalSelectionRect"/> を穴あけ矩形として使う。</value>
     public bool HasSelection
     {
         get => GetValue(HasSelectionProperty);
@@ -232,35 +110,37 @@ public sealed class FadeMaskControl : SkiaCanvasView
     }
 
     /// <summary>ハイライトが有効かどうかを取得または設定する。</summary>
-    /// <value>true の場合、<see cref="HighlightRect"/> を穴あけ矩形として使う（選択矩形より優先）。</value>
+    /// <value>true の場合、<see cref="LogicalHighlightRect"/> を穴あけ矩形として使う（選択矩形より優先）。</value>
     public bool HasHighlight
     {
         get => GetValue(HasHighlightProperty);
         set => SetValue(HasHighlightProperty, value);
     }
 
-    /// <summary>暗転の色を取得または設定する。</summary>
-    /// <value>暗転の色（アルファで不透明度を表す）。アルファ 0 の場合は暗転しない。</value>
-    public DrawingColor OverlayColor
+    /// <summary>暗転マスクの外観（暗転色・枠線・ラベル）を取得または設定する。</summary>
+    /// <value>外観の単一値。既定はコアの既定値（<see cref="FadeMaskAppearance"/>）。</value>
+    /// <remarks>設定（変更）すると自動で再描画される（<c>MewPropertyOptions.AffectsRender</c>）。</remarks>
+    public FadeMaskAppearance Appearance
     {
-        get => GetValue(OverlayColorProperty);
-        set => SetValue(OverlayColorProperty, value);
+        get => GetValue(AppearanceProperty);
+        set => SetValue(AppearanceProperty, value);
     }
 
-    /// <summary>枠線の色を取得または設定する。</summary>
-    /// <value>枠線の色（アルファで不透明度を表す）。アルファ 0 の場合は枠線を描画しない。</value>
-    public DrawingColor BorderColor
+    /// <summary>ハイライト対象のウィンドウタイトル（情報ラベルの文言）を取得または設定する。</summary>
+    /// <value>ウィンドウタイトル。未検出時は空文字。</value>
+    /// <remarks>表示の可否はモードと <see cref="FadeMaskAppearance.InfoLabelVisible"/> からコアが判定する。</remarks>
+    public string WindowTitle
     {
-        get => GetValue(BorderColorProperty);
-        set => SetValue(BorderColorProperty, value);
+        get => GetValue(WindowTitleProperty);
+        set => SetValue(WindowTitleProperty, value);
     }
 
-    /// <summary>枠線の太さ（DIP）を取得または設定する。</summary>
-    /// <value>枠線の太さ（DIP）。0.5 未満は 0.5 に正規化される。</value>
-    public double BorderThickness
+    /// <summary>オーバーレイ描画モードを取得または設定する。</summary>
+    /// <value>描画モード。操作ラベルの文言選定と情報ラベルの表示可否に使用する。</value>
+    public FadeMaskRenderMode Mode
     {
-        get => GetValue(BorderThicknessProperty);
-        set => SetValue(BorderThicknessProperty, value);
+        get => GetValue(ModeProperty);
+        set => SetValue(ModeProperty, value);
     }
 
     /// <summary>穴あけ矩形が無くても全面を暗転するかどうかを取得または設定する。</summary>
@@ -281,11 +161,62 @@ public sealed class FadeMaskControl : SkiaCanvasView
 
     /// <summary>座標変換ポートへ適用する倍率を取得または設定する。</summary>
     /// <value>論理座標（ドメイン）→ DIP の倍率。DPI スケーリングとは独立する。</value>
-    /// <remarks>マルチスクリーン補正等でホストが設定する（Avalonia 版の <c>Scaling</c> と同じ用途）。</remarks>
+    /// <remarks>
+    /// マルチスクリーン補正等でホストが設定する（<see cref="Port"/> が未設定の場合のみ使われる）。<br/>
+    /// サイズラベル（DisplayScale）の換算係数は <see cref="DisplayScaleScaling"/>。
+    /// </remarks>
     public double Scaling
     {
         get => GetValue(ScalingProperty);
         set => SetValue(ScalingProperty, value);
+    }
+
+    /// <summary>論理座標 → DIP の座標変換ポートを取得または設定する。</summary>
+    /// <value>座標変換ポート。null の場合は <see cref="Scaling"/> による等倍スケールを使用する。</value>
+    /// <remarks>ポートと倍率の使い分け（ポート優先・無ければ倍率）はコアが単一所有する（Avalonia 版と同じ規則）。</remarks>
+    public ICoordTransform? Port
+    {
+        get => GetValue(PortProperty);
+        set => SetValue(PortProperty, value);
+    }
+
+    /// <summary>サイズラベル表示用のスケーリング係数を取得または設定する（マルチスクリーン補正）。</summary>
+    /// <value>サイズラベルの自動生成に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値が使用される。</value>
+    /// <remarks>
+    /// サイズラベルの文言をホストが与える場合は使用されない（自動生成のフォールバック時のみ参照する）。<br/>
+    /// 0 以下を <see cref="Scaling"/> と同値として扱う規則はコア（<c>FadeMaskLabels.ResolveDisplayScaling</c>）が単一所有する。
+    /// </remarks>
+    public double DisplayScaleScaling
+    {
+        get => FadeMaskLabels.ResolveDisplayScaling(field, Scaling);
+        set => field = value;
+    }
+
+    /// <summary>サイズラベルのテキストを提供する関数を取得または設定する。</summary>
+    /// <value>サイズラベルのテキストを返す関数。null または空文字の場合はサイズラベルを描画しない。</value>
+    /// <remarks>
+    /// 座標系はホストが知るため（画面物理ピクセル / 画像ピクセル / DIP）、文言の生成はホストへ委譲する。<br/>
+    /// 描画のたびに評価されるため、ドラッグ中の選択矩形の変化にも追従できる。<br/>
+    /// 文言の生成にはコアの <c>FadeMaskLabels.FormatSizeLabel</c> を使う（両 UI で同じ書式になる）。<br/>
+    /// 設定（変更）時は再描画を要求する（デリゲートは変更通知を持たないため）。
+    /// </remarks>
+    public Func<string?>? SizeLabelOverrideProvider
+    {
+        get => field;
+        set
+        {
+            field = value;
+            InvalidateVisual();
+        }
+    }
+
+    /// <summary>状態変更ログの出力先を取得または設定する。</summary>
+    /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
+    /// <remarks>C#14 の <c>field</c> キーワードでバッキング フィールドを暗黙定義する。</remarks>
+    public ILogger Log
+    {
+        get => field ?? NullLogger.Instance;
+        set => field = value ?? NullLogger.Instance;
     }
 
     /// <summary>暗転オーバーレイコントロールを初期化する。</summary>
@@ -311,70 +242,45 @@ public sealed class FadeMaskControl : SkiaCanvasView
         RenderScaling = newDpi / 96.0;
     }
 
-    /// <summary>暗転オーバーレイと枠線を描画する。</summary>
+    /// <summary>暗転マスク・枠線・ラベルを描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
     /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>
-    /// 穴あけ矩形は論理座標から座標変換ポート経由で DIP へ変換する（選択は閉区間 +1、ハイライトは +0）。
+    /// 外観と状態からコアの <see cref="FadeMaskFrame"/> を解決し（暗転領域・枠線・ラベルの判断はコアが持つ）、<br/>
+    /// それを <see cref="FadeMaskSkiaRenderer.Draw"/> へ渡して描画するだけとする（本 UI 層は判断を持たない）。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
         canvas.Clear(SKColors.Transparent);
 
         var scaling = RenderScaling > 0 ? RenderScaling : 1.0;
-        var viewport = new EsSize(info.Width / scaling, info.Height / scaling);
-        var client = new EsRect(0, 0, viewport.Width, viewport.Height);
+        var client = new EsRect(0, 0, info.Width / scaling, info.Height / scaling);
 
-        var port = CreatePort();
-        var selectionRect = HasSelection && SelectionRect is { } selection
-            ? FadeMaskOverlayGeometry.ToDipRect(selection, port)
-            : (EsRect?)null;
-        var highlightRect = HasHighlight && HighlightRect is { } highlight
-            ? FadeMaskOverlayGeometry.ToDipRect(highlight, port, closedInterval: false)
-            : (EsRect?)null;
-
-        var holeRect = FadeMaskOverlayGeometry.ResolveHoleRect(
-            HasHighlight, highlightRect, HasSelection, selectionRect);
+        var frame = FadeMaskFrame.Resolve(new FadeMaskRequest(
+            Appearance,
+            Mode,
+            WindowTitle,
+            client,
+            LogicalSelectionRect,
+            LogicalHighlightRect,
+            HasSelection,
+            HasHighlight,
+            ShowFullOverlay,
+            Port,
+            Scaling,
+            SizeLabelOverrideProvider,
+            DisplayScaleScaling));
 
         canvas.Save();
         canvas.Scale((float)scaling);
         try
         {
-            FadeMaskSkiaRenderer.Render(
-                canvas, client, holeRect, OverlayColor, BorderColor, BorderThickness, ShowFullOverlay);
-
-            // ラベル（サイズラベル・サブライン）は穴あけ矩形の左上に縦へ積む（穴あけが無い場合は描画しない）
-            if (holeRect is { } labels)
-            {
-                FadeMaskSkiaRenderer.DrawLabels(
-                    canvas,
-                    labels,
-                    ShowSizeLabel,
-                    SizeLabelTextProvider?.Invoke(),
-                    SizeLabelFontSize,
-                    SizeLabelColor,
-                    SizeLabelBackgroundColor,
-                    SubLines);
-            }
+            FadeMaskSkiaRenderer.Draw(canvas, frame);
         }
         finally
         {
             canvas.Restore();
         }
-    }
-
-    /// <summary>座標変換ポートを生成する（<see cref="Port"/> を優先し、未設定の場合は <see cref="Scaling"/> を等倍スケールとして適用する）。</summary>
-    /// <returns>座標変換ポート。</returns>
-    private ICoordTransform CreatePort()
-    {
-        if (Port is { } port)
-        {
-            return port;
-        }
-
-        return Scaling > 0 && Scaling != 1.0
-            ? CoordTransform.Scale(Scaling)
-            : CoordTransform.Identity;
     }
 }

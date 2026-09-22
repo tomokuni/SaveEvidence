@@ -1,48 +1,430 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Rect = Avalonia.Rect;
-using Estable.AvaloniaUI.FadeMask;
 using EsUtil.Platform.AvaloniaUI;
 using Estable.FadeMask;
+using Rect = Avalonia.Rect;
+using DrawingColor = System.Drawing.Color;
 
 namespace FadeMaskControl.Sample.ViewModels;
 
 /// <summary>メインウィンドウの ViewModel。</summary>
 /// <remarks>
-/// FadeMaskControl の公開プロパティ（SelectionRect / OverlayColor / BorderColor /
-/// BorderThickness / TextColor / TextBackgroundColor / FontSize / ShowSizeLabel）を双方向バインドで公開する。<br/>
-/// 色の不透明度は色のアルファに統合する。<br/>
-/// 選択矩形の座標は個別プロパティ（X / Y / W / H）として編集し、<see cref="SelectionRect"/> へ反映する。<br/>
-/// 変更通知とコマンドは CommunityToolkit.Mvvm（<see cref="ObservableObject"/> / <c>[RelayCommand]</c>）で提供する。
+/// 暗転マスクの外観はコアの <see cref="FadeMaskAppearance"/> を 1 つの値として保持し、<br/>
+/// 各編集項目（色・サイズ・太さ）の setter が <c>with</c> で部分更新する（<see cref="FadeMaskControl"/> の <c>Appearance</c> へバインド）。<br/>
+/// 描画状態（モード・選択矩形・ハイライト・全面暗転）も個別プロパティとして公開し、AXAML から双方向バインドする。<br/>
+/// 選択矩形の座標は個別プロパティ（X / Y / W / H）として編集し、論理選択矩形へ反映する。
 /// </remarks>
 public partial class MainWindowViewModel : ObservableObject
 {
+    /// <summary>外観（コアの値。編集項目の setter が <c>with</c> で更新する）。</summary>
+    private FadeMaskAppearance _appearance = new();
+
+    /// <summary>選択矩形（ドメイン座標）。</summary>
     private Rect _selectionRect = new(50, 40, 220, 160);
-    private Color _overlayColor = Color.FromAColor(150, Colors.Black);
-    private Color _borderColor = Colors.Red;
-    private double _borderThickness = 2.0;
-    private Color _textColor = Colors.White;
-    private Color _textBackgroundColor = Color.FromAColor(128, Colors.Black);
-    private double _fontSize = 14.0;
-    private bool _showSizeLabel = true;
+
+    /// <summary>描画モードの選択インデックス。</summary>
     private int _selectedModeIndex;
 
-    /// <summary>選択矩形（FadeMaskControl と双方向バインド）。</summary>
+    /// <summary>サイズラベルの明示指定（空文字は自動生成）。</summary>
+    private string _sizeLabelOverride = "";
+
+    // ====================================================================
+    // 外観（コアの FadeMaskAppearance を単一の値として保持する）
+    // ====================================================================
+
+    /// <summary>暗転マスクの外観（暗転色・枠線・ラベル）。</summary>
+    /// <remarks>各編集項目の setter が本値を部分更新し、<c>Appearance</c> の変更通知でコントロールへ伝わる。</remarks>
+    public FadeMaskAppearance Appearance
+    {
+        get => _appearance;
+        private set
+        {
+            _appearance = value;
+            OnPropertyChanged(nameof(Appearance));
+        }
+    }
+
+    /// <summary>暗転オーバーレイの色。</summary>
+    public Color OverlayColor
+    {
+        get => _appearance.OverlayColor.ToAvaloniaColor();
+        set
+        {
+            UpdateAppearance(a => a with { OverlayColor = value.ToDrawingColor() });
+            OnPropertyChanged(nameof(OverlayColor));
+            OnPropertyChanged(nameof(OverlayOpacity));
+            OnPropertyChanged(nameof(OverlayOpacityText));
+        }
+    }
+
+    /// <summary>暗転オーバーレイのアルファ値（0〜255、編集用）。</summary>
+    public int OverlayOpacity
+    {
+        get => _appearance.OverlayColor.A;
+        set
+        {
+            var alpha = (byte)Math.Clamp(value, 0, 255);
+            var color = _appearance.OverlayColor;
+            UpdateAppearance(a => a with { OverlayColor = DrawingColor.FromArgb(alpha, color.R, color.G, color.B) });
+            OnPropertyChanged(nameof(OverlayOpacity));
+            OnPropertyChanged(nameof(OverlayOpacityText));
+            OnPropertyChanged(nameof(OverlayColor));
+        }
+    }
+
+    /// <summary>暗転オーバーレイのアルファ値の表示テキスト。</summary>
+    public string OverlayOpacityText => $"{(int)(_appearance.OverlayColor.A / 255.0 * 100)}%";
+
+    /// <summary>選択枠線の色。</summary>
+    public Color BorderColor
+    {
+        get => _appearance.BorderColor.ToAvaloniaColor();
+        set
+        {
+            UpdateAppearance(a => a with { BorderColor = value.ToDrawingColor() });
+            OnPropertyChanged(nameof(BorderColor));
+        }
+    }
+
+    /// <summary>選択枠線の太さ（DIP）。</summary>
+    public double BorderThickness
+    {
+        get => _appearance.BorderThickness;
+        set
+        {
+            UpdateAppearance(a => a with { BorderThickness = value });
+            OnPropertyChanged(nameof(BorderThickness));
+        }
+    }
+
+    /// <summary>サイズラベルの文字色。</summary>
+    public Color TextColor
+    {
+        get => _appearance.SizeLabelColor.ToAvaloniaColor();
+        set
+        {
+            UpdateAppearance(a => a with { SizeLabelColor = value.ToDrawingColor() });
+            OnPropertyChanged(nameof(TextColor));
+        }
+    }
+
+    /// <summary>サイズラベルの背景色（不透明度は色のアルファに統合）。</summary>
+    public Color TextBackgroundColor
+    {
+        get => _appearance.SizeLabelBackgroundColor.ToAvaloniaColor();
+        set
+        {
+            UpdateAppearance(a => a with { SizeLabelBackgroundColor = value.ToDrawingColor() });
+            OnPropertyChanged(nameof(TextBackgroundColor));
+            OnPropertyChanged(nameof(TextBackgroundColorText));
+        }
+    }
+
+    /// <summary>サイズラベルの背景色の編集用テキスト（16進コード）。</summary>
+    public string TextBackgroundColorText
+    {
+        get => ToHex(_appearance.SizeLabelBackgroundColor);
+        set
+        {
+            if (Color.TryParse(value, out var c))
+            {
+                TextBackgroundColor = c;
+            }
+        }
+    }
+
+    /// <summary>サイズラベルのフォントサイズ（DIP）。</summary>
+    public double FontSize
+    {
+        get => _appearance.SizeLabelFontSize;
+        set
+        {
+            UpdateAppearance(a => a with { SizeLabelFontSize = value });
+            OnPropertyChanged(nameof(FontSize));
+        }
+    }
+
+    /// <summary>サイズラベルを表示するかどうか。</summary>
+    public bool ShowSizeLabel
+    {
+        get => _appearance.ShowSizeLabel;
+        set
+        {
+            UpdateAppearance(a => a with { ShowSizeLabel = value });
+            OnPropertyChanged(nameof(ShowSizeLabel));
+        }
+    }
+
+    /// <summary>情報ラベルの表示有無。</summary>
+    /// <remarks>情報ラベルは ScreenSelect / WindowSelect のハイライト時のみ表示される。</remarks>
+    public bool InfoLabelVisible
+    {
+        get => _appearance.InfoLabelVisible;
+        set
+        {
+            UpdateAppearance(a => a with { InfoLabelVisible = value });
+            OnPropertyChanged(nameof(InfoLabelVisible));
+        }
+    }
+
+    /// <summary>情報ラベルの文字色。</summary>
+    public Color InfoLabelColor
+    {
+        get => _appearance.InfoLabelColor.ToAvaloniaColor();
+        set
+        {
+            UpdateAppearance(a => a with { InfoLabelColor = value.ToDrawingColor() });
+            OnPropertyChanged(nameof(InfoLabelColor));
+            OnPropertyChanged(nameof(InfoLabelColorText));
+        }
+    }
+
+    /// <summary>情報ラベルの文字色の編集用テキスト（16進コード）。</summary>
+    public string InfoLabelColorText
+    {
+        get => ToHex(_appearance.InfoLabelColor);
+        set
+        {
+            if (Color.TryParse(value, out var c))
+            {
+                InfoLabelColor = c;
+            }
+        }
+    }
+
+    /// <summary>情報ラベルの背景色（不透明度は色のアルファに統合）。</summary>
+    public Color InfoLabelBackgroundColor
+    {
+        get => _appearance.InfoLabelBackgroundColor.ToAvaloniaColor();
+        set
+        {
+            UpdateAppearance(a => a with { InfoLabelBackgroundColor = value.ToDrawingColor() });
+            OnPropertyChanged(nameof(InfoLabelBackgroundColor));
+            OnPropertyChanged(nameof(InfoLabelBackgroundColorText));
+        }
+    }
+
+    /// <summary>情報ラベルの背景色の編集用テキスト（16進コード）。</summary>
+    public string InfoLabelBackgroundColorText
+    {
+        get => ToHex(_appearance.InfoLabelBackgroundColor);
+        set
+        {
+            if (Color.TryParse(value, out var c))
+            {
+                InfoLabelBackgroundColor = c;
+            }
+        }
+    }
+
+    /// <summary>情報ラベルのフォントサイズ（DIP）。</summary>
+    public double InfoLabelFontSize
+    {
+        get => _appearance.InfoLabelFontSize;
+        set
+        {
+            UpdateAppearance(a => a with { InfoLabelFontSize = value });
+            OnPropertyChanged(nameof(InfoLabelFontSize));
+        }
+    }
+
+    /// <summary>外観を部分更新する。</summary>
+    /// <param name="change">現在の外観から新しい外観を作る関数。</param>
+    private void UpdateAppearance(Func<FadeMaskAppearance, FadeMaskAppearance> change) => Appearance = change(_appearance);
+
+    // ====================================================================
+    // 描画状態
+    // ====================================================================
+
+    /// <summary>DPI スケーリング係数（サイズラベルの物理ピクセル換算）。</summary>
+    public double Scaling
+    {
+        get => field;
+        set
+        {
+            if (Math.Abs(field - value) < 0.001)
+            {
+                return;
+            }
+
+            field = value;
+            OnPropertyChanged(nameof(Scaling));
+            OnPropertyChanged(nameof(ScalingText));
+        }
+    } = 1.0;
+
+    /// <summary>DPI スケーリング係数の表示文字列。</summary>
+    public string ScalingText => $"{Scaling:F2}";
+
+    /// <summary>サイズラベル表示用のスケーリング（0 以下は <see cref="Scaling"/> と同値）。</summary>
+    public double DisplayScaleScaling
+    {
+        get => field;
+        set
+        {
+            if (Math.Abs(field - value) < 0.001)
+            {
+                return;
+            }
+
+            field = value;
+            OnPropertyChanged(nameof(DisplayScaleScaling));
+            OnPropertyChanged(nameof(DisplayScaleScalingText));
+        }
+    }
+
+    /// <summary>サイズラベル用スケーリングの表示文字列（0 は自動 = Scaling と同値）。</summary>
+    public string DisplayScaleScalingText =>
+        DisplayScaleScaling > 0 ? $"{DisplayScaleScaling:F2}" : "自動（Scaling と同値）";
+
+    /// <summary>選択矩形（ドメイン座標）。</summary>
     public Rect SelectionRect
     {
         get => _selectionRect;
         set
         {
-            if (_selectionRect == value) return;
+            if (_selectionRect == value)
+            {
+                return;
+            }
+
             _selectionRect = value;
             OnPropertyChanged(nameof(SelectionRect));
             OnPropertyChanged(nameof(RectX));
             OnPropertyChanged(nameof(RectY));
             OnPropertyChanged(nameof(RectWidth));
             OnPropertyChanged(nameof(RectHeight));
-            // 選択矩形の変更をレンダラー（AreaSelect / Crop の穴あけ位置）へ反映する
-            ReflectSelectionRectToRenderer();
+            // 選択矩形の変更を穴あけ位置（AreaSelect / Crop）へ反映する
+            ApplySelectionRect();
+        }
+    }
+
+    /// <summary>論理選択矩形（穴あけ位置。選択を使うモードでのみ設定される）。</summary>
+    public Rect? LogicalSelectionRect
+    {
+        get => field;
+        private set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            OnPropertyChanged(nameof(LogicalSelectionRect));
+        }
+    }
+
+    /// <summary>論理ハイライト矩形（ハイライトを使うモードでのみ設定される）。</summary>
+    public Rect? LogicalHighlightRect
+    {
+        get => field;
+        private set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            OnPropertyChanged(nameof(LogicalHighlightRect));
+        }
+    }
+
+    /// <summary>選択が有効かどうか。</summary>
+    public bool HasSelection
+    {
+        get => field;
+        private set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            OnPropertyChanged(nameof(HasSelection));
+        }
+    }
+
+    /// <summary>ハイライトが有効かどうか。</summary>
+    public bool HasHighlight
+    {
+        get => field;
+        private set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            OnPropertyChanged(nameof(HasHighlight));
+        }
+    }
+
+    /// <summary>情報ラベルに表示するウィンドウタイトル。</summary>
+    public string WindowTitle
+    {
+        get => field;
+        private set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            OnPropertyChanged(nameof(WindowTitle));
+        }
+    } = "";
+
+    /// <summary>選択なしでも全面を暗転するかどうか。</summary>
+    public bool ShowFullOverlay
+    {
+        get => field;
+        private set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            OnPropertyChanged(nameof(ShowFullOverlay));
+        }
+    }
+
+    /// <summary>オーバーレイ描画モード。</summary>
+    public FadeMaskRenderMode Mode
+    {
+        get => field;
+        private set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            OnPropertyChanged(nameof(Mode));
+        }
+    } = FadeMaskRenderMode.AreaSelect;
+
+    /// <summary>サイズラベルの文字列を描画時に生成するプロバイダ（Func のためコードビハインドで設定する）。</summary>
+    public Func<string?>? SizeLabelOverrideProvider =>
+        string.IsNullOrWhiteSpace(_sizeLabelOverride) ? null : () => _sizeLabelOverride;
+
+    /// <summary>サイズラベルの明示指定（空文字は自動生成）。</summary>
+    public string SizeLabelOverride
+    {
+        get => _sizeLabelOverride;
+        set
+        {
+            _sizeLabelOverride = value;
+            OnPropertyChanged(nameof(SizeLabelOverride));
+            OnPropertyChanged(nameof(SizeLabelOverrideProvider));
         }
     }
 
@@ -74,6 +456,32 @@ public partial class MainWindowViewModel : ObservableObject
         set => UpdateRect(h: value);
     }
 
+    /// <summary>描画モードの一覧（表示用）。</summary>
+    public IReadOnlyList<string> ModeItems { get; } =
+        [nameof(FadeMaskRenderMode.AreaSelect), nameof(FadeMaskRenderMode.ScreenSelect), nameof(FadeMaskRenderMode.WindowSelect), nameof(FadeMaskRenderMode.Crop)];
+
+    /// <summary>描画モードの選択インデックス。</summary>
+    /// <remarks>変更時にモード別の描画状態（ハイライト・選択矩形・全面暗転）を切り替える。</remarks>
+    public int SelectedModeIndex
+    {
+        get => _selectedModeIndex;
+        set
+        {
+            if (_selectedModeIndex == value)
+            {
+                return;
+            }
+
+            _selectedModeIndex = value;
+            ApplyMode((FadeMaskRenderMode)value);
+            OnPropertyChanged(nameof(SelectedModeIndex));
+        }
+    }
+
+    /// <summary>選択矩形をクリアするコマンド。</summary>
+    [RelayCommand]
+    private void ClearRect() => SelectionRect = new Rect(0, 0, 0, 0);
+
     /// <summary>選択矩形の編集値を反映する。</summary>
     /// <param name="x">新しい X 座標。null の場合は現在値を維持。</param>
     /// <param name="y">新しい Y 座標。null の場合は現在値を維持。</param>
@@ -95,372 +503,79 @@ public partial class MainWindowViewModel : ObservableObject
         SelectionRect = new Rect(nx, ny, nw, nh);
     }
 
-    /// <summary>選択矩形をクリアするコマンド。</summary>
-    [RelayCommand]
-    private void ClearRect() => SelectionRect = new Rect(0, 0, 0, 0);
-
-    /// <summary>暗転オーバーレイのアルファ値（0〜255、編集用）。</summary>
-    public int OverlayOpacity
+    /// <summary>現在の選択矩形を論理選択矩形（穴あけ位置）へ反映する。</summary>
+    /// <remarks>選択を使わないモード（ScreenSelect / WindowSelect）では選択矩形を反映しない。</remarks>
+    private void ApplySelectionRect()
     {
-        get => _overlayColor.A;
-        set
+        if (Mode is FadeMaskRenderMode.AreaSelect or FadeMaskRenderMode.Crop)
         {
-            _overlayColor = Color.FromAColor((byte)Math.Clamp(value, 0, 255), _overlayColor);
-            // 外部レンダラーへ反映（ExternalRenderer 設定時は FadeMaskControl の StyledProperty が無視されるため）
-            Renderer.OverlayArgbColor = _overlayColor;
-            OnPropertyChanged(nameof(OverlayOpacity));
-            OnPropertyChanged(nameof(OverlayOpacityText));
-            OnPropertyChanged(nameof(OverlayColor));
+            LogicalSelectionRect = _selectionRect.Width > 0 && _selectionRect.Height > 0 ? _selectionRect : null;
         }
     }
 
-    /// <summary>暗転オーバーレイのアルファ値の表示テキスト。</summary>
-    public string OverlayOpacityText => $"{(int)(_overlayColor.A / 255.0 * 100)}%";
-
-    /// <summary>暗転オーバーレイの色。</summary>
-    public Color OverlayColor
-    {
-        get => _overlayColor;
-        set
-        {
-            _overlayColor = value;
-            // 外部レンダラーへ反映（ExternalRenderer 設定時は FadeMaskControl の StyledProperty が無視されるため）
-            Renderer.OverlayArgbColor = value;
-            OnPropertyChanged(nameof(OverlayColor));
-            OnPropertyChanged(nameof(OverlayOpacity));
-            OnPropertyChanged(nameof(OverlayOpacityText));
-        }
-    }
-
-    /// <summary>選択枠線の色。</summary>
-    public Color BorderColor
-    {
-        get => _borderColor;
-        set
-        {
-            _borderColor = value;
-            // 外部レンダラーへ反映（ExternalRenderer 設定時は FadeMaskControl の StyledProperty が無視されるため）
-            Renderer.BorderColor = value;
-            OnPropertyChanged(nameof(BorderColor));
-        }
-    }
-
-    /// <summary>選択枠線の太さ。</summary>
-    public double BorderThickness
-    {
-        get => _borderThickness;
-        set
-        {
-            _borderThickness = value;
-            // 外部レンダラーへ反映（ExternalRenderer 設定時は FadeMaskControl の StyledProperty が無視されるため）
-            Renderer.BorderThickness = value;
-            OnPropertyChanged(nameof(BorderThickness));
-        }
-    }
-
-    /// <summary>ラベルテキストの色。</summary>
-    public Color TextColor
-    {
-        get => _textColor;
-        set
-        {
-            _textColor = value;
-            // 外部レンダラーへ反映（ExternalRenderer 設定時は FadeMaskControl の StyledProperty が無視されるため）
-            Renderer.TextColor = value;
-            OnPropertyChanged(nameof(TextColor));
-        }
-    }
-
-    /// <summary>ラベル背景の色（不透明度は色のアルファに統合）。</summary>
-    public Color TextBackgroundColor
-    {
-        get => _textBackgroundColor;
-        set
-        {
-            _textBackgroundColor = value;
-            // 外部レンダラーへ反映（ExternalRenderer 設定時は FadeMaskControl の StyledProperty が無視されるため）
-            Renderer.TextBackgroundColor = value;
-            OnPropertyChanged(nameof(TextBackgroundColor));
-            OnPropertyChanged(nameof(TextBackgroundColorText));
-        }
-    }
-
-    /// <summary>ラベル背景の色の編集用テキスト（16進コード）。</summary>
-    public string TextBackgroundColorText
-    {
-        get => $"#{_textBackgroundColor.A:X2}{_textBackgroundColor.R:X2}{_textBackgroundColor.G:X2}{_textBackgroundColor.B:X2}";
-        set
-        {
-            if (Color.TryParse(value, out var c))
-            {
-                TextBackgroundColor = c;
-            }
-        }
-    }
-
-    /// <summary>ラベルのフォントサイズ。</summary>
-    public double FontSize
-    {
-        get => _fontSize;
-        set
-        {
-            _fontSize = value;
-            // 外部レンダラーへ反映（ExternalRenderer 設定時は FadeMaskControl の StyledProperty が無視されるため）
-            Renderer.FontSize = value;
-            OnPropertyChanged(nameof(FontSize));
-        }
-    }
-
-    /// <summary>サイズラベルを表示するかどうか。</summary>
-    public bool ShowSizeLabel
-    {
-        get => _showSizeLabel;
-        set
-        {
-            _showSizeLabel = value;
-            // 外部レンダラーへ反映（ExternalRenderer 設定時は FadeMaskControl の StyledProperty が無視されるため）
-            Renderer.ShowSizeLabel = value;
-            OnPropertyChanged(nameof(ShowSizeLabel));
-        }
-    }
-
-    private string _sizeLabelOverride = "";
-
-    /// <summary>サイズラベルのテキスト明示指定（SizeLabelOverride）。空文字は自動生成。</summary>
-    /// <remarks>null の場合は <see cref="SelectionRect"/> から自動生成される。空文字入力は自動生成扱い（null）へ変換する。</remarks>
-    public string SizeLabelOverride
-    {
-        get => _sizeLabelOverride;
-        set
-        {
-            _sizeLabelOverride = value;
-            // 外部レンダラーへ反映（空文字は自動生成扱い。Provider 方式で描画時に評価）
-            Renderer.SizeLabelOverrideProvider = () => string.IsNullOrWhiteSpace(value) ? null : value;
-            OnPropertyChanged(nameof(SizeLabelOverride));
-        }
-    }
-
-    private double _rendererScaling = 1.0;
-
-    /// <summary>DPI スケーリング係数（FadeMaskRenderer.Scaling）。</summary>
-    public double RendererScaling
-    {
-        get => _rendererScaling;
-        set
-        {
-            if (Math.Abs(_rendererScaling - value) < 0.001) return;
-            _rendererScaling = value;
-            // 外部レンダラーへ反映（サイズラベルの物理ピクセル換算）
-            Renderer.Scaling = value;
-            OnPropertyChanged(nameof(RendererScaling));
-            OnPropertyChanged(nameof(RendererScalingText));
-        }
-    }
-
-    /// <summary>DPI スケーリング係数の表示文字列。</summary>
-    public string RendererScalingText => $"{RendererScaling:F2}";
-
-    private double _displayScaleScaling;
-
-    /// <summary>サイズラベル表示用のスケーリング（FadeMaskRenderer.DisplayScaleScaling・マルチスクリーン補正）。0 以下は Scaling と同値。</summary>
-    public double DisplayScaleScaling
-    {
-        get => _displayScaleScaling;
-        set
-        {
-            if (Math.Abs(_displayScaleScaling - value) < 0.001) return;
-            _displayScaleScaling = value;
-            // 外部レンダラーへ反映（0 以下は Scaling と同値扱い）
-            Renderer.DisplayScaleScaling = value;
-            OnPropertyChanged(nameof(DisplayScaleScaling));
-            OnPropertyChanged(nameof(DisplayScaleScalingText));
-        }
-    }
-
-    /// <summary>サイズラベル用スケーリングの表示文字列（0 は自動 = Scaling と同値）。</summary>
-    public string DisplayScaleScalingText =>
-        _displayScaleScaling > 0 ? $"{_displayScaleScaling:F2}" : "自動（Scaling と同値）";
-
-    private bool _infoLabelVisible = true;
-
-    /// <summary>情報ラベルの表示有無（FadeMaskRenderer.InfoLabelVisible）。</summary>
-    /// <remarks>情報ラベルは ScreenSelect / WindowSelect のハイライト時のみ表示される。</remarks>
-    public bool InfoLabelVisible
-    {
-        get => _infoLabelVisible;
-        set
-        {
-            _infoLabelVisible = value;
-            // 外部レンダラーへ反映
-            Renderer.InfoLabelVisible = value;
-            OnPropertyChanged(nameof(InfoLabelVisible));
-        }
-    }
-
-    private Color _infoLabelColor = Colors.White;
-
-    /// <summary>情報ラベルの文字色（FadeMaskRenderer.InfoLabelColor）。</summary>
-    public Color InfoLabelColor
-    {
-        get => _infoLabelColor;
-        set
-        {
-            _infoLabelColor = value;
-            // 外部レンダラーへ反映
-            Renderer.InfoLabelColor = value;
-            OnPropertyChanged(nameof(InfoLabelColor));
-            OnPropertyChanged(nameof(InfoLabelColorText));
-        }
-    }
-
-    /// <summary>情報ラベルの文字色の編集用テキスト（16進コード）。</summary>
-    /// <remarks>TextBox で編集するため、色コード文字列（例: <c>#FFFFFFFF</c>）で公開する。</remarks>
-    public string InfoLabelColorText
-    {
-        get => $"#{_infoLabelColor.A:X2}{_infoLabelColor.R:X2}{_infoLabelColor.G:X2}{_infoLabelColor.B:X2}";
-        set
-        {
-            if (Color.TryParse(value, out var c))
-            {
-                InfoLabelColor = c;
-            }
-        }
-    }
-
-    private Color _infoLabelBackgroundColor = Color.FromAColor(128, Colors.Black);
-
-    /// <summary>情報ラベルの背景色（FadeMaskRenderer.InfoLabelBackgroundColor・不透明度はアルファに統合）。</summary>
-    public Color InfoLabelBackgroundColor
-    {
-        get => _infoLabelBackgroundColor;
-        set
-        {
-            _infoLabelBackgroundColor = value;
-            // 外部レンダラーへ反映
-            Renderer.InfoLabelBackgroundColor = value;
-            OnPropertyChanged(nameof(InfoLabelBackgroundColor));
-            OnPropertyChanged(nameof(InfoLabelBackgroundColorText));
-        }
-    }
-
-    /// <summary>情報ラベルの背景色の編集用テキスト（16進コード）。</summary>
-    public string InfoLabelBackgroundColorText
-    {
-        get => $"#{_infoLabelBackgroundColor.A:X2}{_infoLabelBackgroundColor.R:X2}{_infoLabelBackgroundColor.G:X2}{_infoLabelBackgroundColor.B:X2}";
-        set
-        {
-            if (Color.TryParse(value, out var c))
-            {
-                InfoLabelBackgroundColor = c;
-            }
-        }
-    }
-
-    private double _infoLabelFontSize = 14.0;
-
-    /// <summary>情報ラベルのフォントサイズ（FadeMaskRenderer.InfoLabelFontSize・DIP）。</summary>
-    public double InfoLabelFontSize
-    {
-        get => _infoLabelFontSize;
-        set
-        {
-            _infoLabelFontSize = value;
-            // 外部レンダラーへ反映
-            Renderer.InfoLabelFontSize = value;
-            OnPropertyChanged(nameof(InfoLabelFontSize));
-        }
-    }
-
-    /// <summary>描画モードの一覧（表示用）。</summary>
-    public IReadOnlyList<string> ModeItems { get; } =
-        [nameof(FadeMaskRenderMode.AreaSelect), nameof(FadeMaskRenderMode.ScreenSelect), nameof(FadeMaskRenderMode.WindowSelect), nameof(FadeMaskRenderMode.Crop)];
-
-    /// <summary>外部レンダラー（モード別描画の真のソース。FadeMaskControl.ExternalRenderer へバインド）。</summary>
-    /// <remarks>モード切替（<see cref="SelectedModeIndex"/>）に応じて描画状態を更新する。</remarks>
-    public FadeMaskRenderer Renderer { get; } = new();
-
-    /// <summary>描画モードの選択インデックス。</summary>
-    /// <remarks>変更時に <see cref="Renderer"/> のモードと描画状態を更新する（モード別描画の切り替え）。</remarks>
-    public int SelectedModeIndex
-    {
-        get => _selectedModeIndex;
-        set
-        {
-            if (_selectedModeIndex == value) return;
-            _selectedModeIndex = value;
-            ApplyMode((FadeMaskRenderMode)value);
-            OnPropertyChanged(nameof(SelectedModeIndex));
-        }
-    }
-
-    /// <summary>選択矩形の変更をレンダラー（AreaSelect / Crop の選択矩形）へ反映する。</summary>
-    private void ReflectSelectionRectToRenderer()
-    {
-        // 選択矩形の変更は AreaSelect / Crop モードの描画（穴あけ位置）に反映する
-        if (Renderer.Mode is FadeMaskRenderMode.AreaSelect or FadeMaskRenderMode.Crop)
-        {
-            Renderer.LogicalSelectionRect = SelectionRect.Width > 0 && SelectionRect.Height > 0 ? SelectionRect : null;
-        }
-    }
-
-    /// <summary>モードに応じたレンダラーの描画状態を適用する。</summary>
+    /// <summary>モードに応じた描画状態を適用する。</summary>
     /// <param name="mode">適用する描画モード。</param>
     /// <remarks>
-    /// 各モードの描画要素を <see cref="Renderer"/> へ設定する:<br/>
-    /// - AreaSelect: 選択矩形 + サイズラベル（ルーペ・ハンドルは DragRect の責務のため本サンプルでは表示なし）<br/>
-    /// - ScreenSelect: ハイライト + スクリーン番号ラベル<br/>
-    /// - WindowSelect: ハイライト + ウィンドウタイトルラベル<br/>
+    /// 各モードの描画要素を設定する:<br/>
+    /// - AreaSelect: 選択矩形 + 操作ラベル（ルーペ・ハンドルは DragRect の責務のため本サンプルでは表示なし）<br/>
+    /// - ScreenSelect: ハイライト（+ 操作ラベル）<br/>
+    /// - WindowSelect: ハイライト + ウィンドウタイトル（情報ラベル）<br/>
     /// - Crop: 全面暗転 + 選択矩形
     /// </remarks>
     private void ApplyMode(FadeMaskRenderMode mode)
     {
-        var r = Renderer;
-        r.Mode = mode;
+        Mode = mode;
+
         switch (mode)
         {
             case FadeMaskRenderMode.AreaSelect:
-                r.HasSelection = true;
-                r.LogicalSelectionRect = SelectionRect.Width > 0 && SelectionRect.Height > 0 ? SelectionRect : null;
-                r.HasHighlight = false;
-                r.ShowFullOverlay = false;
-                r.WindowTitle = "";
-                r.ScreenIndex = -1;
+                HasSelection = true;
+                HasHighlight = false;
+                LogicalHighlightRect = null;
+                ShowFullOverlay = false;
+                WindowTitle = "";
+                ApplySelectionRect();
                 break;
 
             case FadeMaskRenderMode.ScreenSelect:
-                r.HasHighlight = true;
-                r.LogicalHighlightRect = new Rect(80, 60, 300, 180);
-                r.ScreenIndex = 1;
-                r.HasSelection = false;
-                r.ShowFullOverlay = false;
-                r.WindowTitle = "";
+                HasSelection = false;
+                LogicalSelectionRect = null;
+                HasHighlight = true;
+                LogicalHighlightRect = new Rect(80, 60, 300, 180);
+                ShowFullOverlay = false;
+                WindowTitle = "";
                 break;
 
             case FadeMaskRenderMode.WindowSelect:
-                r.HasHighlight = true;
-                r.LogicalHighlightRect = new Rect(80, 60, 300, 180);
-                r.WindowTitle = "Sample Window";
-                r.HasSelection = false;
-                r.ShowFullOverlay = false;
-                r.ScreenIndex = -1;
+                HasSelection = false;
+                LogicalSelectionRect = null;
+                HasHighlight = true;
+                LogicalHighlightRect = new Rect(80, 60, 300, 180);
+                ShowFullOverlay = false;
+                WindowTitle = "Sample Window";
                 break;
 
             case FadeMaskRenderMode.Crop:
-                r.HasSelection = true;
-                r.LogicalSelectionRect = SelectionRect.Width > 0 && SelectionRect.Height > 0 ? SelectionRect : null;
-                r.HasHighlight = false;
-                r.ShowFullOverlay = true; // 全面暗転 + 選択矩形
-                r.WindowTitle = "";
-                r.ScreenIndex = -1;
+                HasSelection = true;
+                HasHighlight = false;
+                LogicalHighlightRect = null;
+                ShowFullOverlay = true; // 全面暗転 + 選択矩形
+                WindowTitle = "";
+                ApplySelectionRect();
                 break;
         }
     }
 
+    /// <summary>色を 16 進コード（<c>#AARRGGBB</c>）へ整形する。</summary>
+    /// <param name="color">整形する色。</param>
+    /// <returns><c>#AARRGGBB</c> 形式の文字列。</returns>
+    private static string ToHex(DrawingColor color)
+        => $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+
     /// <summary>MainWindowViewModel を初期化する。</summary>
     public MainWindowViewModel()
     {
-        // 初期モード（AreaSelect）をレンダラーへ反映する
+        // 初期モード（AreaSelect）の描画状態を適用する
         ApplyMode(FadeMaskRenderMode.AreaSelect);
     }
 }
-

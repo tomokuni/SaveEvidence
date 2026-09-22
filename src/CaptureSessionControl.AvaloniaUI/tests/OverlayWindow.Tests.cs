@@ -503,12 +503,11 @@ public class OverlayWindowTests
     {
         var window = CreateWindow(CaptureType.ScreenSelect);
 
-        // 未検出（MockElementFinder は常に default）→ ハイライト無効・ScreenIndex -1
+        // 未検出（MockElementFinder は常に default）→ ハイライト無効
         InvokeUpdateSelectScreenHighlight(window, new EsPixelPoint(100, 100));
 
         Assert.False(window.SelectionOverlay.HasHighlight);
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
-        Assert.Equal(-1, window.SelectionOverlay.ScreenIndex);
     }
 
     [AvaloniaFact]
@@ -529,7 +528,6 @@ public class OverlayWindowTests
 
         Assert.True(window.SelectionOverlay.HasHighlight);
         Assert.Equal(new Rect(100, 50, 1920, 1080), window.SelectionOverlay.LogicalHighlightRect);
-        Assert.Equal(1, window.SelectionOverlay.ScreenIndex);
     }
 
     [AvaloniaFact]

@@ -55,7 +55,7 @@ FadeMaskDragRectControl（_selectionOverlay）
 | `CropViewControl` | `AppearanceSettings`（`FadeMaskDragRectSettings`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `ViewportBackground` / `CenterAlign` / `ZoomView`（`ZoomViewControl`） | 外観は `FadeMaskDragRectControl` へ委譲。DPI スケーリングは個別プロパティ（コードから動的設定） |
 | `ZoomViewControl` | `Background` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観 |
 | `FadeMaskDragRectControl` | `AppearanceSettings`（`FadeMaskDragRectSettings`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `Mode` / `WindowTitle` / `ShowFullOverlay` | 下位（DragRect / FadeMask / Loupe）の外観を一括公開 + DPI スケーリングを個別公開 |
-| `FadeMaskControl` | `ExternalRenderer`（`FadeMaskRenderer`） | 描画は `FadeMaskRenderer` に委譲（外観は `FadeMaskDragRectSettings` 経由） |
+| `FadeMaskControl` | `Appearance`（`FadeMaskAppearance`）+ 描画状態プロパティ | 外観は 1 つの値、描画状態（選択矩形・ハイライト・全面暗転・モード）は個別プロパティ（いずれも `FadeMaskDragRectSettings` 経由で設定） |
 | `DragRectControl` | `BorderColor` / `BorderThickness` / `HandleColor` / `HandleSize` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds` / `MarkerColor` / `MarkerLength` / `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | `FadeMaskDragRectSettings` から `ApplyAppearance` で設定 |
 | `LoupeControl` | `RequestedSize` / `ZoomLevel` / `RenderScaling`（DPI 自動取得）/ `CrossColor` / `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `FrameColor` / `FrameWidth` / `PositionOffset` / `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` / `SelectionRectColorA` / `SelectionRectColorB` | `FadeMaskDragRectSettings` から `ApplyAppearance` で設定（`RenderScaling` 以外） |
 | `Platform.AvaloniaUI` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。`Platform.Core` 提供）を提供 |
@@ -69,7 +69,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
   → CaptureSessionControl.AppearanceSettings（CaptureSettings・部分更新マージ）
   → CropViewControl.AppearanceSettings（FadeMaskDragRectSettings・部分更新マージ）
   → FadeMaskDragRectControl.ApplyAppearance
-  → DragRectControl / FadeMaskRenderer / LoupeControl の各プロパティ
+  → DragRectOptions / FadeMaskAppearance / LoupeControl の各プロパティ
 ```
 
 - 設定画面の変更は `Settings` の `PropertyChanged` で **即時反映** される。
@@ -87,7 +87,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 | DragRectControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
-| `BorderColor` | ✅ `AppearanceSettings.BorderColor` | ✅ | `DragRectControl` と `FadeMaskRenderer.BorderColor` に共通適用 |
+| `BorderColor` | ✅ `AppearanceSettings.BorderColor` | ✅ | `DragRectOptions` と `FadeMaskAppearance.BorderColor` に共通適用 |
 | `BorderThickness` | ✅ `AppearanceSettings.BorderThickness` | ✅ | 同上 |
 | `HandleColor` | ✅ `AppearanceSettings.HandleColor` | ✅ | |
 | `HandleSize` | ✅ `AppearanceSettings.HandleSize` | ✅ | |
@@ -104,16 +104,16 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 - `FadeMaskDragRectControl` は DragRectControl の公開外観プロパティを**全て** `AppearanceSettings`（`FadeMaskDragRectSettings`）経由で公開する。
 - DragRectControl の外観プロパティは**全て**設定画面（`SettingsPage.axaml` の外観設定）で設定可能（✅）。
 
-### 3.2 FadeMaskRenderer の公開外観プロパティ と FadeMaskDragRectControl での公開有無
+### 3.2 FadeMaskAppearance の外観項目 と FadeMaskDragRectControl での公開有無
 
-| FadeMaskRenderer の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
+| FadeMaskAppearance の外観項目 | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
 | `Scaling` | ✅ `Scaling`（個別プロパティ） | —（コードから動的設定） | DPI スケーリング |
 | `DisplayScaleScaling` | ✅ `DisplayScaleScaling`（個別プロパティ） | —（コードから動的設定） | マルチスクリーン補正 |
-| `OverlayArgbColor` | ✅ `AppearanceSettings.OverlayColor` | ✅ | 暗転オーバーレイの色 |
-| `TextColor` | ✅ `AppearanceSettings.TextColor` | ✅ | サイズラベル（1 行目）の文字色 |
-| `TextBackgroundColor` | ✅ `AppearanceSettings.TextBackgroundColor` | ✅ | サイズラベル（1 行目）の背景色 |
-| `FontSize` | ✅ `AppearanceSettings.FontSize` | ✅ | サイズラベルのフォントサイズ |
+| `OverlayColor` | ✅ `AppearanceSettings.OverlayColor` | ✅ | 暗転オーバーレイの色 |
+| `SizeLabelColor` | ✅ `AppearanceSettings.TextColor` | ✅ | サイズラベル（1 行目）の文字色 |
+| `SizeLabelBackgroundColor` | ✅ `AppearanceSettings.TextBackgroundColor` | ✅ | サイズラベル（1 行目）の背景色 |
+| `SizeLabelFontSize` | ✅ `AppearanceSettings.FontSize` | ✅ | サイズラベルのフォントサイズ |
 | `ShowSizeLabel` | ✅ `AppearanceSettings.ShowSizeLabel` | ✅ | サイズラベル表示 |
 | `BorderColor` | ✅ `AppearanceSettings.BorderColor` | ✅ | `DragRectControl.BorderColor` と共通適用 |
 | `BorderThickness` | ✅ `AppearanceSettings.BorderThickness` | ✅ | 同上 |
@@ -127,7 +127,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `SubLineBackgroundColor` | ✅ `AppearanceSettings.SubLineBackgroundColor` | ✅ | |
 | `Mode` | —（`Mode` で公開） | —（セッションで決定） | 描画モード（`FadeMaskDragRectMode` → `FadeMaskRenderMode`） |
 
-- `FadeMaskRenderer` の外観プロパティは、`FadeMaskDragRectControl.AppearanceSettings`（`FadeMaskDragRectSettings`）経由で公開される。
+- `FadeMaskAppearance` の外観項目は、`FadeMaskDragRectControl.AppearanceSettings`（`FadeMaskDragRectSettings`）経由で公開される。
 - `Mode` は `FadeMaskDragRectControl.Mode`（`FadeMaskDragRectMode`）として公開され、`FadeMaskRenderMode` へ変換される。
 - **例外**: `Scaling` / `DisplayScaleScaling` は `AppearanceSettings` の**対象外**で、`FadeMaskDragRectControl.Scaling` / `.DisplayScaleScaling`（個別プロパティ）として公開される。DPI スケーリング・マルチスクリーン補正のため設定画面では設定不可（セッションがコードから動的設定）。
 
@@ -209,10 +209,10 @@ DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| 選択枠の色（不透明度含む） | `CaptureBorderColor` | `DragRectControl.BorderColor` / `FadeMaskRenderer.BorderColor`（アルファ込み） |
-| 選択枠の太さ | `CaptureBorderThickness` | `DragRectControl.BorderThickness` + `FadeMaskRenderer.BorderThickness` |
+| 選択枠の色（不透明度含む） | `CaptureBorderColor` | `DragRectOptions.BorderColor` / `FadeMaskAppearance.BorderColor`（アルファ込み） |
+| 選択枠の太さ | `CaptureBorderThickness` | `DragRectOptions.BorderThickness` + `FadeMaskAppearance.BorderThickness` |
 | 選択矩形の最小サイズ | `MinSelectionSize` | `DragRectControl.MinSelectionSize` |
-| 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `FadeMaskRenderer.OverlayArgbColor`（アルファ込み） |
+| 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `FadeMaskAppearance.OverlayColor`（アルファ込み） |
 | ルーペの拡大率 | `LoupeZoomLevel` | `LoupeControl.ZoomLevel` |
 | ルーペのサイズ | `LoupeSize` | `LoupeControl.RequestedSize` |
 | ルーペのカーソルからのオフセット | `LoupeOffset` | `LoupeControl.PositionOffset` |
@@ -243,9 +243,9 @@ DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling
 | --- | --- | --- |
 | キャプチャ時にメインウィンドウを隠す | `HideMainWindowOnCapture` | `CaptureSettings.HideOwnerWindow` |
 | 非表示後の DWM 反映待機時間 | `HideBeforeCaptureDelayMs` | `CaptureSettings.HideBeforeCaptureDelay`（ミリ秒 → TimeSpan） |
-| キャプチャ枠の色（不透明度含む） | `CaptureBorderColor` | `DragRectControl.BorderColor` / `FadeMaskRenderer.BorderColor`（アルファ込み） |
-| キャプチャ枠の太さ | `CaptureBorderThickness` | `DragRectControl.BorderThickness` + `FadeMaskRenderer.BorderThickness` |
-| 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `FadeMaskRenderer.OverlayArgbColor`（アルファ込み） |
+| キャプチャ枠の色（不透明度含む） | `CaptureBorderColor` | `DragRectOptions.BorderColor` / `FadeMaskAppearance.BorderColor`（アルファ込み） |
+| キャプチャ枠の太さ | `CaptureBorderThickness` | `DragRectOptions.BorderThickness` + `FadeMaskAppearance.BorderThickness` |
+| 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `FadeMaskAppearance.OverlayColor`（アルファ込み） |
 
 - 選択矩形の最小サイズ（`MinSelectionSize`）は「外観設定」（§4）に配置。
 
@@ -301,28 +301,28 @@ DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| 選択矩形のサイズを表示 | `SizeLabelVisible` | `FadeMaskRenderer.ShowSizeLabel`（詳細設定の外に配置） |
-| テキスト色 | `CaptureTextColor` | `FadeMaskRenderer.TextColor`（SizeLabelColor と共用） |
-| 背景色（不透明度含む） | `SizeLabelBackgroundColor` | `FadeMaskRenderer.TextBackgroundColor`（アルファ込み） |
-| フォントサイズ | `SizeLabelFontSize` | `FadeMaskRenderer.FontSize` |
+| 選択矩形のサイズを表示 | `SizeLabelVisible` | `FadeMaskAppearance.ShowSizeLabel`（詳細設定の外に配置） |
+| テキスト色 | `CaptureTextColor` | `FadeMaskAppearance.SizeLabelColor`（キャプチャのテキスト色と共用） |
+| 背景色（不透明度含む） | `SizeLabelBackgroundColor` | `FadeMaskAppearance.SizeLabelBackgroundColor`（アルファ込み） |
+| フォントサイズ | `SizeLabelFontSize` | `FadeMaskAppearance.SizeLabelFontSize` |
 
 ### 10.2 2 行目: 操作ラベル
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| 矩形操作を矩形内に表示 | `ShowSubLines` | `FadeMaskRenderer.ShowSubLines`（詳細設定の外に配置） |
-| テキスト色 | `SubLineColor` | `FadeMaskRenderer.SubLineColor` |
-| 背景色（不透明度含む） | `SubLineBackgroundColor` | `FadeMaskRenderer.SubLineBackgroundColor`（アルファ込み） |
-| フォントサイズ | `SubLineFontSize` | `FadeMaskRenderer.SubLineFontSize` |
+| 矩形操作を矩形内に表示 | `ShowSubLines` | `FadeMaskAppearance.ShowSubLines`（詳細設定の外に配置） |
+| テキスト色 | `SubLineColor` | `FadeMaskAppearance.SubLineColor` |
+| 背景色（不透明度含む） | `SubLineBackgroundColor` | `FadeMaskAppearance.SubLineBackgroundColor`（アルファ込み） |
+| フォントサイズ | `SubLineFontSize` | `FadeMaskAppearance.SubLineFontSize` |
 
 ### 10.3 3 行目: 情報ラベル
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| 選択中のウィンドウのタイトルを表示 | `InfoLabelVisible` | `FadeMaskRenderer.InfoLabelVisible`（詳細設定の外に配置） |
-| テキスト色 | `InfoLabelColor` | `FadeMaskRenderer.InfoLabelColor` |
-| 背景色（不透明度含む） | `InfoLabelBackgroundColor` | `FadeMaskRenderer.InfoLabelBackgroundColor`（アルファ込み） |
-| フォントサイズ | `InfoLabelFontSize` | `FadeMaskRenderer.InfoLabelFontSize` |
+| 選択中のウィンドウのタイトルを表示 | `InfoLabelVisible` | `FadeMaskAppearance.InfoLabelVisible`（詳細設定の外に配置） |
+| テキスト色 | `InfoLabelColor` | `FadeMaskAppearance.InfoLabelColor` |
+| 背景色（不透明度含む） | `InfoLabelBackgroundColor` | `FadeMaskAppearance.InfoLabelBackgroundColor`（アルファ込み） |
+| フォントサイズ | `InfoLabelFontSize` | `FadeMaskAppearance.InfoLabelFontSize` |
 
 ## 11. ホットキー設定
 
@@ -353,6 +353,6 @@ DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling
 設定画面「外観設定」の右上にある **「デフォルト値に戻す」** ボタンで、外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・市松模様・選択矩形内ラベル・座標ラベル）をデフォルト値へ一括復元する。
 
 - 実装: `Settings.ResetAppearanceToDefaults()`（新規インスタンスのフィールド初期化子 = デフォルト値をコピー）
-- デフォルト値は各コントロール（`DragRectControl` / `LoupeControl` / `FadeMaskRenderer`）の既定値と一致させる
+- デフォルト値は各コントロール（`DragRectControl` / `LoupeControl` / `FadeMaskAppearance`）の既定値と一致させる
 - 変更は `PropertyChanged` 購読により自動保存される
 - 外観設定以外（テーマ・保存設定・ホットキー等）は変更されない
