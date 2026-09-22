@@ -52,15 +52,31 @@ Avalonia 版と同一の解釈になります。
 | `LogicalHighlightRect` | `EsRect?` | `null` | ハイライト矩形（ドメイン座標。選択矩形より優先） |
 | `ShowFullOverlay` | `bool`（取得のみ） | `true` | 全面暗転の有無（モードから導出） |
 | `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（ドメイン座標） |
-| `LoupeOffset` | `double` | `20.0` | ルーペの中心からの右下オフセット（DIP） |
-| `Appearance` | `FadeMaskAppearance` | コアの既定値 | 暗転マスクの外観（暗転色・枠線・ラベル）の単一値。枠線は選択矩形と共用される |
+| `Options` | `FadeMaskDragRectOptions`（コア） | `FadeMaskDragRectOptions.Default` | 設定の単一値（下記）。同じ値の再設定はスキップされる |
+| `Scaling` | `double` | `1.0` | ドメイン → DIP 変換の基準倍率（設定には含めない環境値） |
+| `DisplayScaleScaling` | `double` | `0`（`Scaling` と同値） | サイズラベルの DisplayScale 補正（環境値） |
+| `LoupeRenderScaling` | `double` | `1.0` | ルーペの DIP → 物理ピクセル倍率（環境値） |
+
+`Options`（コアの `FadeMaskDragRectOptions`）の項目:
+
+| 項目 | 型 | 説明 |
+| --- | --- | --- |
+| `DragRect` | `DragRectOptions`（コア） | 選択矩形の設定（枠線を除く） |
+| `Overlay` | `FadeMaskAppearance`（コア） | 暗転マスクの外観（暗転色・枠線・ラベル）。枠線は選択矩形と共用される |
+| `Loupe` | `LoupeOptions`（コア） | ルーペの設定（拡大率・表示サイズ・外観。市松模様の下地色も含む） |
+| `SelectionRectColorA` / `SelectionRectColorB` | `System.Drawing.Color` | ルーペ画像上の選択矩形破線の色（2 色交互。既定は白 / 黒） |
+| `LoupeOffset` | `double` | ルーペの中心からの右下オフセット（DIP。既定は 20） |
+| `ResolveDragRectOptions()` | `DragRectOptions` | 選択矩形へ適用する設定を求める（枠線を暗転マスクの外観と揃える） |
+
+文言と環境値（設定値（`Options`）には含めない）:
+
+| プロパティ | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
 | `WindowTitle` | `string` | `""` | 情報ラベル（3 行目）の文言（ウィンドウ選択時） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない） |
-| `SelectionOverlayColorA` / `SelectionOverlayColorB` | `System.Drawing.Color` | 白 / 黒 | ルーペ画像上の選択矩形破線の色（2 色交互）。設定時はルーペの再描画を要求する（破線色はルーペのプロパティには現れないため） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包するドラッグ選択コントロールとルーペへ伝搬する。null は `NullLogger` へフォールバック。暗転マスクは選択のたびにログを出すため対象外） |
-| `Overlay` | `FadeMaskControl`（取得のみ） | - | 暗転マスク（外観の詳細設定用） |
-| `DragRect` | `DragRectControl`（取得のみ） | - | ドラッグ選択（外観の詳細設定用） |
-| `Loupe` | `LoupeControl`（取得のみ） | - | 拡大鏡（外観の詳細設定用） |
+
+内包コントロールへの直接アクセス（`Overlay` / `DragRect` / `Loupe`）は internal（自身のテストのみ）。ホストは `Options` / `Mode` / 文言プロパティの公開 API を使います。
 
 ## 6. メソッド
 
@@ -86,6 +102,7 @@ Avalonia 版と同一の解釈になります。
 | `ConfirmRequested` | `FadeMaskDragRectSelectionEventArgs` | 矩形内ダブルクリック・Enter・`RequestConfirm`（選択確定後のみ） |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel` |
 | `ZoomRequested` | `DragRectZoomRequest` | Ctrl+ホイール（方向と発生位置） |
+| `ScrollRequested` | `DragRectScrollRequest` | 通常ホイール（生の回転量・Shift・発生位置。スクロール先はホストが決める） |
 | `LoupePositionMoved` | `FadeMaskDragRectPointEventArgs` | ドラッグ選択からのルーペ中心の更新（マウス移動・ドラッグ・nudge） |
 
 座標はすべてドメイン座標です。
@@ -105,8 +122,8 @@ Avalonia 版と同一の解釈になります。
 - 選択矩形を使わないモード（`ScreenSelect` / `WindowSelect`）では、ドラッグ選択とルーペを非表示にします。
 - ルーペは拡大元画像（`SetLoupeSource`）と中心（`SetLoupePosition`）の両方が設定された場合のみ表示します。
   親領域の外へはみ出す場合は内側へクランプします。
-- ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が単一所有します）。選択矩形を変更した場合はルーペの再描画を要求します（破線はルーペのプロパティに現れないため）。
-- サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（サブラインは `Appearance` から組み立てる）
+- ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が、描画の可否はコアの `FadeMaskDragRectState.ShowSelectionOverlay` が単一所有する）。選択矩形を変更した場合はルーペの再描画を要求します（破線はルーペのプロパティに現れないため）。
+- サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（サブラインはコアの `FadeMaskAppearance.BuildSubLines` が組み立てる）
   （文言の単一所有は `FadeMaskControl.Core` の `FadeMaskLabels`。表示位置の計算は同コアの `FadeMaskLabelLayout`）。
 
 ## 9. Avalonia 版との違い
@@ -114,11 +131,12 @@ Avalonia 版と同一の解釈になります。
 | 項目 | 差異 |
 | --- | --- |
 | イベント引数の座標 | コア型（`EsPoint` / `EsRect`）で公開する |
-| 外観設定 | `AppearanceSettings` の一括設定は持たない（内包コントロールの個別プロパティで設定する） |
+| 外観設定 | コアの `FadeMaskDragRectOptions` を 1 プロパティ（`Options`）として公開する（Avalonia 版と同じ設定値を使う） |
 | ルーペの位置決め | 本コントロールがコアの計算で配置する（Avalonia 版はルーペ自身が算出する） |
 | ルーペの描画スケール | 自動追従（Avalonia 版は `LoupeRenderScaling` の手動設定が必要） |
 | サイズラベル・情報ラベル・サブライン | 描画する（Avalonia 版は設定 record から自動生成するが、MewUI 版はホストがデリゲートで与える） |
 | ルーペ画像上の選択矩形破線 | 描画する（同じコアの破線幾何を使う。描画先はキャンバスと `EsBitmap` の違い） |
+| ルーペ描画完了の通知 | 本コントロールが内部で受けて破線を描くため、ホストへは中継しない（Avalonia 版は `LoupeRendered` で中継し、ホストがルーペ画像へ直接描く） |
 | `ScrollViewer` の自動連携 | ホストが `NotifyViewportChanged()` を呼ぶ |
 | ログ | `Log` プロパティで同様に伝搬する（書式は Avalonia 版と同一） |
 

@@ -129,7 +129,7 @@ internal sealed partial class OverlayWindow : Window
     /// <remarks>
     /// 複合コントロール（DragRect + FadeMask + Loupe の配線を内包）へモード・外観・座標変換を設定する。<br/>
     /// - モード: キャプチャ種別に応じて描画モード・DragRect / Loupe の有効・無効・全面暗転を一括切替。<br/>
-    /// - 外観: 設定変換（<see cref="FadeMaskDragRectSettingsExtensions.ToFadeMaskDragRectSettings"/>）で一括適用。<br/>
+    /// - 設定: 設定変換（<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）で 1 値へ変換して一括適用。<br/>
     /// - 座標変換: DomainScale（ドメイン = 仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）。
     /// </remarks>
     private void ConfigureSelectionControls(CaptureSettings s)
@@ -145,10 +145,10 @@ internal sealed partial class OverlayWindow : Window
             CaptureType.ScreenSelect => FadeMaskDragRectMode.ScreenSelect,
             _ => FadeMaskDragRectMode.WindowSelect,
         };
-        // 外観設定（DragRect / FadeMask / Loupe を一括適用。設定変換は拡張メソッドに一元化）
-        SelectionOverlay.AppearanceSettings =
-            s.ToFadeMaskDragRectSettings(positionOffset: 20.0);
-        // DPI スケーリング・ルーペ描画スケールは AppearanceSettings の対象外（コードから動的設定）。
+        // 設定を複合コントロールの設定値（1 値）へ変換して一括適用する（変換はコアのマッパーが単一所有する）。
+        // ルーペの市松模様の下地色は塗らない（Avalonia 版は背後に固定背景画像を置くため透明で透かす）
+        SelectionOverlay.Options = s.ToFadeMaskDragRectOptions();
+        // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
         // 画面キャプチャはドメイン = 仮想スクリーンピクセルのため、ウィンドウのスケーリング（_scaling）を設定する。
         SelectionOverlay.Scaling = _scaling;
         SelectionOverlay.DisplayScaleScaling = _scaling;

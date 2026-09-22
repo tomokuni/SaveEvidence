@@ -3,7 +3,6 @@ using Aprillz.MewUI.Controls;
 using Estable.CaptureSession;
 using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
-using Estable.Loupe;
 using Estable.MewUI.FadeMaskDragRect;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.Core;
@@ -103,7 +102,9 @@ public sealed class CaptureOverlay
         _log = log.OrNullLogger();
 
         _selector = new FadeMaskDragRectControl { Mode = ToMode(type), Log = _log };
-        ApplyAppearance(_selector, settings);
+        // 設定はコアのマッパーで 1 値に変換して一括適用する（変換はコアが単一所有する）。
+        // 市松模様の下地は白で塗る（背後に撮影画像があるため、半透明の市松色をそのまま重ねない）
+        _selector.Options = settings.ToFadeMaskDragRectOptions(DrawingColor.White);
 
         if (type is CaptureType.ScreenSelect or CaptureType.WindowSelect)
         {
@@ -360,8 +361,7 @@ public sealed class CaptureOverlay
             WindowPlacementMath.ToDipLength(_screen.Height, creationScale));
 
         _selector.SetLoupeSource(_screen);
-        _selector.LoupeOffset = _settings.LoupeOffset!.Value;
-        ApplyLabels(_settings, mode: ToRenderMode(_type));
+        ApplyLabels(_settings);
         content.Add(_selector);
 
         // 確定・キャンセルは選択コントロールからの要求とウィンドウのキー入力の両方から受け付ける
@@ -434,54 +434,27 @@ public sealed class CaptureOverlay
         window.ShowDialog(owner);
     }
 
-    /// <summary>サイズラベル・ラベル（操作ラベル・情報ラベル）を選択コントロールへ反映する。</summary>
+    /// <summary>サイズラベル・情報ラベルの文言を選択コントロールへ反映する。</summary>
     /// <param name="settings">設定。</param>
-    /// <param name="mode">オーバーレイ描画モード（操作ラベルの文言選定に使用する）。</param>
     /// <remarks>
     /// 1. サイズラベルはドメイン座標（＝画像ピクセル）で表示するため、テキストは描画のたびに生成する。<br/>
-    /// 2. サブライン（操作ラベル・情報ラベル）の文言・順序・外観はコアの <c>FadeMaskAppearance.BuildSubLines</c> が単一所有する。<br/>
-    /// 3. 描画モードとウィンドウタイトルをコントロールへ渡し、行の組み立てはコントロールに委ねる（タイトルの更新時に本メソッドを呼び直す）。
+    /// 2. 外観（サイズラベル・サブライン・情報ラベルの色・サイズ）は設定値の変換
+    ///    （<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）が単一所有するため、本メソッドでは設定しない。<br/>
+    /// 3. 描画モード（操作ラベルの文言選定）は複合コントロールの <see cref="FadeMaskDragRectControl.Mode"/> が単一所有するため本メソッドでは設定しない。<br/>
+    /// 4. ウィンドウタイトルをコントロールへ渡し、行の組み立てはコントロールに委ねる（タイトルの更新時に本メソッドを呼び直す）。
     /// </remarks>
-    private void ApplyLabels(CaptureSettings settings, FadeMaskRenderMode mode)
+    private void ApplyLabels(CaptureSettings settings)
     {
-        var overlay = _selector.Overlay;
-        overlay.Appearance = overlay.Appearance with
-        {
-            ShowSizeLabel = settings.SizeLabelVisible!.Value,
-            SizeLabelColor = settings.SizeLabelColor ?? DrawingColor.White,
-            SizeLabelBackgroundColor = settings.TextBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
-            SizeLabelFontSize = settings.SizeLabelFontSize!.Value,
-            ShowSubLines = settings.ShowSubLines!.Value,
-            SubLineFontSize = settings.SubLineFontSize!.Value,
-            SubLineColor = settings.SubLineColor ?? DrawingColor.FromArgb(255, 220, 220, 220),
-            SubLineBackgroundColor = settings.SubLineBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
-            InfoLabelVisible = settings.InfoLabelVisible!.Value,
-            InfoLabelFontSize = settings.InfoLabelFontSize!.Value,
-            InfoLabelColor = settings.InfoLabelColor ?? DrawingColor.White,
-            InfoLabelBackgroundColor = settings.InfoLabelBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
-        };
-
         // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）
         // DisplayScale は選択位置のモニターの実表示スケール（DIP → 画像ピクセルの倍率）を表示する
-        overlay.SizeLabelOverrideProvider = () =>
+        _selector.SizeLabelOverrideProvider = () =>
             _selection() is { } rect && settings.SizeLabelVisible!.Value
                 ? FadeMaskLabels.FormatSizeLabel(rect, scaling: 1.0, displayScaling: DisplayScalingAt(rect))
                 : null;
 
-        // 描画モードとウィンドウタイトル（情報ラベルの文言）を渡し、行の組み立てはコントロールに委ねる
-        overlay.Mode = mode;
-        overlay.WindowTitle = _windowTitle;
+        // ウィンドウタイトル（情報ラベルの文言）を渡し、行の組み立てはコントロールに委ねる
+        _selector.WindowTitle = _windowTitle;
     }
-
-    /// <summary>キャプチャ種別に対応するオーバーレイ描画モードを求める。</summary>
-    /// <param name="type">キャプチャ種別。</param>
-    /// <returns>オーバーレイ描画モード。</returns>
-    private static FadeMaskRenderMode ToRenderMode(CaptureType type) => type switch
-    {
-        CaptureType.ScreenSelect => FadeMaskRenderMode.ScreenSelect,
-        CaptureType.WindowSelect => FadeMaskRenderMode.WindowSelect,
-        _ => FadeMaskRenderMode.AreaSelect,
-    };
 
     /// <summary>確定して選択領域を切り出す。</summary>
     /// <remarks>
@@ -574,7 +547,7 @@ public sealed class CaptureOverlay
         if (title != _windowTitle)
         {
             _windowTitle = title;
-            ApplyLabels(_settings, ToRenderMode(_type));
+            ApplyLabels(_settings);
             _selector.InvalidateOverlay();
         }
     }
@@ -627,83 +600,4 @@ public sealed class CaptureOverlay
 
         return _scale;
     }
-
-    /// <summary>設定の外観を選択コントロールへ反映する。</summary>
-    /// <param name="selector">対象の選択コントロール。</param>
-    /// <param name="settings">設定。</param>
-    private static void ApplyAppearance(FadeMaskDragRectControl selector, CaptureSettings settings)
-    {
-        // 暗転マスクの外観は 1 つの値へ組み立てて一括設定する（枠線はドラッグ矩形と共用される）
-        selector.Appearance = new FadeMaskAppearance
-        {
-            OverlayColor = settings.OverlayColor ?? DrawingColor.FromArgb(128, 0, 0, 0),
-            BorderColor = settings.BorderColor ?? DrawingColor.DarkGray,
-            BorderThickness = settings.BorderThickness!.Value,
-        };
-        selector.LoupeOffset = settings.LoupeOffset!.Value;
-        // 指定する項目だけを差し替える（枠線の色・太さは selector 側のプロパティが設定するため現在値を維持する）
-        selector.DragRect.Options = selector.DragRect.Options with
-        {
-            HandleColor = settings.HandleColor ?? DrawingColor.White,
-            HandleSize = settings.HandleSize!.Value,
-            HandleHitRadius = settings.HandleHitRadius!.Value,
-            MinSelectionSize = settings.MinSelectionSize!.Value,
-            ClampToDomainBounds = settings.ClampToDomainBounds!.Value,
-            MarkerColor = settings.MarkerColor ?? DrawingColor.White,
-            MarkerLength = settings.MarkerLength!.Value,
-            ShowCoordLabel = settings.ShowCoordLabel!.Value,
-            CoordLabelColor = settings.CoordLabelColor ?? DrawingColor.White,
-            CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
-            CoordLabelFontSize = settings.CoordLabelFontSize!.Value,
-        };
-
-        ApplyLoupe(selector, settings);
-    }
-
-    /// <summary>設定のルーペ項目を選択コントロール（内包するルーペ）へ反映する。</summary>
-    /// <param name="selector">対象の選択コントロール。</param>
-    /// <param name="settings">設定（全メンバー non-null）。</param>
-    /// <param name="checkerBackground">市松模様の下地色（テーマのページ背景色）。null の場合は白（撮影オーバーレイの既定）。</param>
-    /// <remarks>
-    /// 市松色は半透明のため、下地を塗らないと後ろの要素（撮影画像・画面の平均色・プレビュー画像）が透ける。<br/>
-    /// 下地色はコアの外観（<see cref="LoupeAppearance.BackgroundColor"/>）が単一所有し、ホストが値を決めて渡す。<br/>
-    /// ルーペは「撮影オーバーレイ」「プレビューの切り出し」の両方に登場するため、反映内容を本メソッドへ<br/>
-    /// 集約し、UI ごとのずれを防ぐ（Avalonia 版の <see cref="LoupeAppearance"/> と同内容）。
-    /// </remarks>
-    internal static void ApplyLoupe(
-        FadeMaskDragRectControl selector, CaptureSettings settings, DrawingColor? checkerBackground = null)
-    {
-        var loupe = selector.Loupe;
-
-        loupe.Options = new LoupeOptions
-        {
-            ZoomLevel = settings.LoupeZoomLevel!.Value,
-            RequestedSize = settings.LoupeSize!.Value,
-            Appearance = new LoupeAppearance
-            {
-                BackgroundColor = checkerBackground ?? DrawingColor.White,
-                CrossColor = ToDrawingColor(settings.LoupeCrossColor, DrawingColor.FromArgb(102, 255, 0, 0)),
-                FrameColor = ToDrawingColor(settings.LoupeFrameColor, DrawingColor.FromArgb(255, 211, 211, 211)),
-                FrameWidth = settings.LoupeFrameThickness!.Value,
-                CheckerSize = settings.LoupeCheckerSize!.Value,
-                CheckerColorA = ToDrawingColor(settings.LoupeCheckerColorA, DrawingColor.Transparent),
-                CheckerColorB = ToDrawingColor(settings.LoupeCheckerColorB, DrawingColor.Transparent),
-                ShowCoordLabel = settings.LoupeShowCoordLabel!.Value,
-                CoordLabelColor = ToDrawingColor(settings.LoupeCoordLabelColor, DrawingColor.White),
-                CoordLabelBackgroundColor = ToDrawingColor(settings.LoupeCoordLabelBackgroundColor, DrawingColor.FromArgb(153, 0, 0, 0)),
-                CoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value,
-            },
-        };
-
-        // ルーペ画像上の選択矩形破線はルーペコントロールではなく選択コントロールが描画する
-        selector.SelectionOverlayColorA = settings.LoupeSelectionRectColorA ?? DrawingColor.White;
-        selector.SelectionOverlayColorB = settings.LoupeSelectionRectColorB ?? DrawingColor.Black;
-    }
-
-    /// <summary>色をコアの色型へ変換する（null の場合は既定色を返す）。</summary>
-    /// <param name="color">変換する色（null 可）。</param>
-    /// <param name="fallback">null の場合に使用する色。</param>
-    /// <returns>コアの色。</returns>
-    private static DrawingColor ToDrawingColor(DrawingColor? color, DrawingColor fallback)
-        => color ?? fallback;
 }

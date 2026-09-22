@@ -213,7 +213,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | `160` | `1`〜`4096` | ルーペの基本サイズ（DIP・一辺） |
 | `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
-| `Appearance` | `LoupeAppearance` | コアの既定値 | 装飾（市松模様・外枠・十字線・中心座標ラベル）の外観 |
+| `Appearance` | `LoupeAppearance` | コアの既定値 | | 装飾（市松模様・外枠・十字線・中心座標ラベル）の外観 |
 
 **表示サイズ（`RequestedSize`）のクランプはコントロールが内包**します: 表示サイズは本値（基本サイズ）を `UpdatePosition` が親パネルサイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（内部管理）。
 

@@ -12,7 +12,7 @@
   - [4. インストール](#4-インストール)
   - [5. クイックスタート](#5-クイックスタート)
     - [AXAML](#axaml)
-    - [Code-behind（モード・外観・座標ポート設定）](#code-behindモード外観座標ポート設定)
+    - [Code-behind（モード・設定・座標ポート設定）](#code-behindモード設定座標ポート設定)
   - [6. 座標系](#6-座標系)
   - [7. サンプル](#7-サンプル)
   - [8. ドキュメント](#8-ドキュメント)
@@ -30,10 +30,12 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 - **複合構造（Facade / Composite）**: DragRect + FadeMask + Loupe の生成・配置・配線を 1 コントロールに集約
 - **配線の内包**: `SelectionChanged` → 暗転マスク同期、`LoupePositionMoved` → ルーペ中心更新、確定・キャンセル・ズーム要求のホスト通知を内部で完結
 - **モード切替**: `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` で描画モード・DragRect / Loupe の有効・無効・全面暗転を一括切替
-- **外観の一括設定**: `AppearanceSettings` プロパティ（nullable record・部分更新）で DragRect / FadeMask / Loupe の外観を 1 回で設定
+- **設定の一括適用**: `Options` プロパティ（1 つの設定値）で選択矩形 / 暗転マスク / ルーペ / 選択矩形破線を 1 回で適用（既定値・項目の対応・枠線の共用規則はコアが単一所有）
 - **座標変換ポートの一括分配**: `SetCoordinateTransform(ICoordTransform?)` で 3 コントロールへ同一ポートを分配
 - **ビューポート変化の追従**: `NotifyViewportChanged()` でパン・ズーム等のビューポート変化を通知（DragRect / FadeMask の再描画 + ルーペ位置再計算。ScrollViewer 連携のスクロールも同じ経路で処理）
-- **選択状態の外部設定**: `SetSelection` / `ClearSelection` / `SetDragRectSelection` で選択矩形を暗転マスクへ同期（ルーペの選択矩形破線は `Rendered` イベント経由で描画）
+- **選択状態の外部設定**: `SetSelection` / `ClearSelection` / `SetDragRectSelection` で選択矩形を暗転マスクへ同期（ルーペの選択矩形破線は `LoupeRendered` イベント経由で描画）
+- **ルーペ描画完了の通知**: `LoupeRendered` イベントで描画済み Bitmap と切り出し左上・スケールを通知（ホストが外部提供矩形を Bitmap へ直接描画できる）
+- **ログの伝搬**: `Log` プロパティ（`ILogger`）で内包するドラッグ選択コントロールとルーペの操作ログをホストのログ基盤へ転送
 - **ルーペ制御**: `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `LoupeCenterPoint` で中心・ソース・後片付けを制御
 - **ハイライト状態**: `LogicalHighlightRect` / `HasHighlight` / `DisplayScaleScaling` / `WindowTitle` で ScreenSelect / WindowSelect のハイライトを設定
 - **公開型のカプセル化**: イベント引数は独自型（`FadeMaskDragRectSelectionEventArgs` / `FadeMaskDragRectPointEventArgs`）、内包コントロールへの直接アクセスは internal（公開 API は本コントロールのみ）
@@ -75,24 +77,23 @@ using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コ
 </Window>
 ```
 
-### Code-behind（モード・外観・座標ポート設定）
+### Code-behind（モード・設定・座標ポート設定）
 
 ```csharp
 // モード（描画モード・DragRect / Loupe の有効・無効・全面暗転を一括切替）
 SelectionOverlay.Mode = FadeMaskDragRectMode.AreaSelect;
 
-// 外観設定（DragRect / FadeMask / Loupe を一括設定。null メンバーは現在値維持の部分更新）
-SelectionOverlay.AppearanceSettings = new FadeMaskDragRectSettings
-{
-    MinSelectionSize = 6,
-    BorderColor = Colors.White,
-    BorderThickness = 2.0,
-    OverlayColor = Color.FromAColor(77, Colors.Black), // 黒 30%（不透明度は色のアルファに統合）
-    RequestedSize = 200,
-    ZoomLevel = 2,
-});
+// 設定（ホストの設定型からコアの設定値へ変換して 1 回で適用する。変換はコアのマッパーが単一所有）
+SelectionOverlay.Options = captureSettings.ToFadeMaskDragRectOptions();
 
-// DPI スケーリングは AppearanceSettings の対象外（個別プロパティで設定）
+// 一部の項目だけを変える場合はコアの既定値から with 式で組み立てる
+SelectionOverlay.Options = FadeMaskDragRectOptions.Default with
+{
+    Overlay = new FadeMaskAppearance { OverlayColor = System.Drawing.Color.FromArgb(77, 0, 0, 0) }, // 黒 30%
+    Loupe = LoupeOptions.Default with { RequestedSize = 200, ZoomLevel = 2 },
+};
+
+// DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
 SelectionOverlay.Scaling = 1.0;
 SelectionOverlay.LoupeRenderScaling = 1.0;
 
@@ -113,7 +114,7 @@ SelectionOverlay.Loupe.Source = bitmap;
 
 - **ドメイン座標**: 元画像ピクセル（Crop）または仮想スクリーンピクセル（AreaSelect）など、ホストが定義する論理座標。
 - **DIP 座標**: コントロールローカル DIP。`SetCoordinateTransform` で注入した `ICoordTransform` がドメイン ↔ DIP を双方向変換します（描画時に毎回評価され、ズーム・スクロール・ウィンドウサイズ変更に追従）。
-- **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠（`Rendered` イベント経由でホスト側が描画）が一致します。
+- **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠（`LoupeRendered` イベント経由でホスト側が描画）が一致します。
 
 ## 7. サンプル
 
@@ -130,11 +131,12 @@ SelectionOverlay.Loupe.Source = bitmap;
 ## 9. プロジェクト構成
 
 ```text
-FadeMaskDragRectControl/
+FadeMaskDragRectControl.AvaloniaUI/
 ├── src/
-│   ├── FadeMaskDragRect.csproj
-│   ├── FadeMaskDragRectControl.cs      （複合コントロール本体）
-│   └── FadeMaskDragRectSettings.cs     （外観設定 record）
+│   ├── FadeMaskDragRectControl.AvaloniaUI.csproj
+│   ├── FadeMaskDragRectControl.cs              （複合コントロール本体）
+│   ├── FadeMaskDragRectSelectionEventArgs.cs   （確定要求のイベント引数）
+│   └── FadeMaskDragRectPointEventArgs.cs       （ルーペ位置のイベント引数）
 └── tests/
     ├── FadeMaskDragRectControl.AvaloniaUI.Tests.csproj
     ├── TestAppBuilder.cs
@@ -144,15 +146,19 @@ FadeMaskDragRectControl/
 
 ### 9.1 共有コア（`FadeMaskDragRectControl.Core`）
 
-UI 非依存の動作モード・モードから描画設定への写像・ルーペの選択矩形オーバーレイ描画は
-`src/FadeMaskDragRectControl.Core`（名前空間 `Estable.FadeMaskDragRect`）が単一所有します（Avalonia / MewUI で共有）。
+UI 非依存の設定の単一値（`FadeMaskDragRectOptions`）・動作モード・モードから導出する状態・選択矩形の可否判定・
+ルーペの選択矩形オーバーレイ描画は `src/FadeMaskDragRectControl.Core`（名前空間 `Estable.FadeMaskDragRect`）が
+単一所有します（Avalonia / MewUI で共有）。
 
 ```text
 FadeMaskDragRectControl.Core/
 ├── src/
-│   ├── FadeMaskDragRectMode.cs      （動作モード enum。両 UI が同一の型を使用する）
-│   ├── FadeMaskDragRectModes.cs     （モード → 描画設定の写像）
-│   └── FadeMaskDragRectOverlay.cs   （選択矩形の破線オーバーレイ描画）
+│   ├── FadeMaskDragRectMode.cs       （動作モード enum。両 UI が同一の型を使用する）
+│   ├── FadeMaskDragRectModes.cs      （モード → 状態の解決）
+│   ├── FadeMaskDragRectState.cs      （モードから導出される表示可否）
+│   ├── FadeMaskDragRectOptions.cs    （設定の単一値と枠線の共用規則）
+│   ├── FadeMaskDragRectSelection.cs  （選択矩形の可否判定）
+│   └── FadeMaskDragRectOverlay.cs    （選択矩形の破線オーバーレイ描画）
 └── tests/
 ```
 

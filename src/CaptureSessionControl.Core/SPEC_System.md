@@ -101,7 +101,7 @@ flowchart TD
 ## 6. 設計判断
 
 - **切り出し規則を 1 箇所に置く**: Avalonia 版（`CropSession.ComputeCropBounds`）と MewUI 版（`CaptureSelectionMath`）が同じ規則（閉区間 + 端のクランプ）を別々に実装しており、`No.51` で「同じドラッグでも 1 px 異なる」不具合を出した。規則を本プロジェクトへ集約し、両 UI が委譲する。
-- **色は `System.Drawing.Color`**: UI 非依存のプリミティブ（`System.Drawing.Primitives`）で、MewUI のコントロールがそのまま受け取れる。Avalonia 側は境界（`FadeMaskDragRectSettingsExtensions` / `CaptureSettingsMapper`）で 1 行変換する。
+- **色は `System.Drawing.Color`**: UI 非依存のプリミティブ（`System.Drawing.Primitives`）で、MewUI のコントロールがそのまま受け取れる。設定から複合コントロールの設定値（`FadeMaskDragRectOptions`）への変換は本プロジェクトの `FadeMaskDragRectOptionsMapper` が単一所有する（両 UI で同じ変換を使う）reSettingsMapper`）で 1 行変換する。
 - **判定を「クランプ前の値」で行う**: 画像外へ出た選択矩形を「大きい」と誤判定しないため、最小サイズの判定は画像内へクランプする前の値で行う。
 - **丸めは 0.5 を切り上げ**: `Math.Round` の既定（銀行丸め）はピクセル座標の直感に反するため `MidpointRounding.AwayFromZero` を使う。
 

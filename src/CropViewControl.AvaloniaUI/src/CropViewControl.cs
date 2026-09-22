@@ -121,11 +121,12 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.Mode = value;
     }
 
-    /// <summary>領域選択オーバーレイの外観設定（DragRect / FadeMask / Loupe の外観）。<see cref="FadeMaskDragRectControl.AppearanceSettings"/> へ委譲する。</summary>
-    public FadeMaskDragRectSettings AppearanceSettings
+    /// <summary>領域選択オーバーレイの設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）。<see cref="FadeMaskDragRectControl.Options"/> へ委譲する。</summary>
+    /// <value>設定の単一値。既定は <see cref="FadeMaskDragRectOptions.Default"/>。</value>
+    public FadeMaskDragRectOptions SelectionOverlayOptions
     {
-        get => _selectionOverlay.AppearanceSettings;
-        set => _selectionOverlay.AppearanceSettings = value;
+        get => _selectionOverlay.Options;
+        set => _selectionOverlay.Options = value;
     }
 
     /// <summary>DPI スケーリング係数（<see cref="FadeMaskDragRectControl.Scaling"/> へ委譲）。</summary>

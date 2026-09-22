@@ -58,9 +58,9 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 | 判断 | 理由 |
 | --- | --- |
 | 基底を `Panel` にして `ArrangeContent` を自前実装した | 暗転マスクと選択矩形は全面、ルーペは「中心 + オフセット」の絶対配置という異なる配置規則が必要（`Grid` のセル配置では表現できない） |
-| モードの解釈をコア（`FadeMaskDragRectModes`）へ置いた | モードと可視性・全面暗転の対応が UI 間でずれるのを防ぐ（enum の重複定義も解消） |
+| モードの解釈をコア（`FadeMaskDragRectModes`）へ置いた | モードと可視性・ルーペの表示可否・全面暗転の対応が UI 間でずれるのを防ぐ（enum の重複定義も解消） |
 | ルーペの位置決めを本クラスで行う | MewUI のルーペは位置を持たない（描画のみ）ため、親領域サイズ・中心・オフセットから配置する必要がある。計算はコアの `LoupePositionCalculator` を共用する |
-| 外観の一括設定（`AppearanceSettings`）を持たない | 内包コントロールが個別のプロパティを持つため、40 超のメンバーを持つ record を二重に定義する価値がない（YAGNI）。必要な外観のみ本クラスで委譲プロパティを提供する |
+| 設定をコアの単一値（`FadeMaskDragRectOptions`）として公開した | 既定値・項目の対応・子コントロールへの分配規則（枠線の共用等）を UI に持たせない（Avalonia 版と同一の設定値を使うため、見た目も一致する） |
 | イベント引数をコア型で公開した | 内包コントロールのイベント引数と同一の型になり境界変換が不要になる |
 | 暗転マスクへ座標変換ポートを渡すようにした | ズームビューのレターボックス等オフセット付きの変換でも、暗転の穴あけと選択矩形が一致する（等倍スケールのみでは位置がずれる） |
 | ラベルは暗転マスクへ委譲し、本クラスは委譲プロパティのみを持つ | 描画・行配置は `FadeMaskControl.MewUI`（背景・位置はコアの `FadeMaskLabelLayout`）が単一所有するため、重複する実装を持たない |
@@ -85,7 +85,7 @@ src/FadeMaskDragRectControl.MewUI/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `FadeMaskDragRectControl` | 子の生成と重ね合わせ、イベント配線、選択状態の同期、モード適用、ルーペの配置、ラベル・破線色・ログの委譲 |
+| `FadeMaskDragRectControl` | 子の生成と重ね合わせ、イベント配線、選択状態の同期、モード適用、設定の分配、ルーペの配置、ラベル・破線色・ログの委譲 |
 | `FadeMaskDragRectSkiaRenderer` | コアが列挙した破線を 2 色でキャンバスへ描画する |
 | `FadeMaskDragRectSelectionEventArgs` | 確定した選択矩形（ドメイン座標）の通知 |
 | `FadeMaskDragRectPointEventArgs` | ルーペ中心（ドメイン座標）の通知 |
@@ -102,22 +102,19 @@ classDiagram
     }
     class FadeMaskDragRectControl {
         +FadeMaskDragRectMode Mode
+        +FadeMaskDragRectOptions Options
         +bool HasSelection
         +EsRect SelectionRect
         +bool HasHighlight
         +EsRect? LogicalHighlightRect
         +bool ShowFullOverlay
         +EsPoint? LoupeCenterPoint
-        +double LoupeOffset
-        +FadeMaskAppearance Appearance
+        +double Scaling
+        +double DisplayScaleScaling
+        +double LoupeRenderScaling
         +string WindowTitle
         +Func~string?~? SizeLabelOverrideProvider
-        +Color SelectionOverlayColorA
-        +Color SelectionOverlayColorB
         +ILogger Log
-        +FadeMaskControl Overlay
-        +DragRectControl DragRect
-        +LoupeControl Loupe
         +SetCoordinateTransform(port) void
         +SetSelection(rect) void
         +ClearSelection() void
@@ -127,6 +124,7 @@ classDiagram
         +RequestConfirm() void
         +RequestCancel() void
         +NotifyViewportChanged() void
+        -ApplyOptions() void
         -ApplyMode() void
         -SyncSelection(rect) void
         -OnLoupePositionMoved(pos) void
@@ -158,8 +156,17 @@ classDiagram
     }
     class FadeMaskDragRectModes {
         <<FadeMaskDragRectControl.Core>>
-        +ToRenderMode(mode)$ FadeMaskRenderMode
-        +UsesDragRect(mode)$ bool
+        +Resolve(mode)$ FadeMaskDragRectState
+    }
+    class FadeMaskDragRectOptions {
+        <<FadeMaskDragRectControl.Core>>
+        +DragRectOptions DragRect
+        +FadeMaskAppearance Overlay
+        +LoupeOptions Loupe
+        +Color SelectionRectColorA
+        +Color SelectionRectColorB
+        +double LoupeOffset
+        +ResolveDragRectOptions()$ DragRectOptions
     }
     class LoupePositionCalculator {
         <<LoupeControl.Core>>
@@ -171,6 +178,7 @@ classDiagram
     FadeMaskDragRectControl *-- DragRectControl : 選択矩形
     FadeMaskDragRectControl *-- LoupeControl : 拡大鏡
     FadeMaskDragRectControl ..> FadeMaskDragRectModes : モードの解釈
+    FadeMaskDragRectControl ..> FadeMaskDragRectOptions : 設定の分配
     FadeMaskDragRectControl ..> LoupePositionCalculator : ルーペ配置
 ```
 
@@ -212,7 +220,7 @@ sequenceDiagram
 
     Note over Loupe: 描画（市松模様 → 拡大画像 → 十字線 → 外枠 → 座標ラベル）
     Loupe->>Facade: Rendered（キャンバス・一辺のpx・拡大率・中心・切り出し左上・スケール）
-    Facade->>Facade: 破線を描画するかの判定（モード・選択有無・切り出し左上）
+    Facade->>Facade: 破線を描画するかの判定（コアの ShowSelectionOverlay・選択有無・切り出し左上）
     Facade->>Renderer: DrawSelectionRect(canvas, 選択矩形, 切り出し左上, スケール, 一辺のpx, 色A, 色B)
     Renderer->>Core: EnumerateDashes(選択矩形, 切り出し左上, スケール, 一辺のpx)
     Core-->>Renderer: 破線（1 ピクセル厚の矩形と色の種別）

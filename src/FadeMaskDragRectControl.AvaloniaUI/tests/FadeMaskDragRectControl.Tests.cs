@@ -13,6 +13,7 @@ using EsUtil.Platform.AvaloniaUI.Imaging;
 using Estable.FadeMask;
 using Estable.FadeMaskDragRect;
 using Estable.DragRect;
+using Estable.Loupe;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
@@ -21,7 +22,7 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
 
 /// <summary><see cref="FadeMaskDragRectControl"/> の単体テスト（公開 API・配線・状態同期）。</summary>
 /// <remarks>
-/// 対象: <c>FadeMaskDragRectControl.cs</c>（公開 API: Mode / AppearanceSettings / SetCoordinateTransform /<br/>
+/// 対象: <c>FadeMaskDragRectControl.cs</c>（公開 API: Mode / Options / SetCoordinateTransform /<br/>
 /// SetSelection / ClearSelection / SetLoupePosition / イベント中継 / テスト用アクセサ）。<br/>
 /// パブリック API 経由で内包コントロール（DragRect / FadeMask / Loupe）への設定・状態同期・イベント中継を検証する。
 /// </remarks>
@@ -71,120 +72,83 @@ public class FadeMaskDragRectControlTests
     }
 
     // ====================================================================
-    // AppearanceSettings（外観の一括設定・部分更新・getter）
+    // Options（設定の単一値。内包コントロールへの分配）
     // ====================================================================
 
     [AvaloniaFact]
-    public void AppearanceSettings_既定値が全メンバーnon_nullで返る()
+    public void Options_既定はコアの既定値である()
     {
         var control = new FadeMaskDragRectControl();
 
-        var appearance = control.AppearanceSettings;
-
-        Assert.NotNull(appearance.MinSelectionSize);
-        Assert.NotNull(appearance.BorderColor);
-        Assert.NotNull(appearance.BorderThickness);
-        Assert.NotNull(appearance.HandleColor);
-        Assert.NotNull(appearance.HandleSize);
-        Assert.NotNull(appearance.HandleHitRadius);
-        Assert.NotNull(appearance.ClampToDomainBounds);
-        Assert.NotNull(appearance.MarkerColor);
-        Assert.NotNull(appearance.MarkerLength);
-        Assert.NotNull(appearance.OverlayColor);
-        Assert.NotNull(appearance.TextColor);
-        Assert.NotNull(appearance.FontSize);
-        Assert.NotNull(appearance.ShowSizeLabel);
-        Assert.NotNull(appearance.ShowSubLines);
-        Assert.NotNull(appearance.SubLineFontSize);
-        Assert.NotNull(appearance.SubLineColor);
-        Assert.NotNull(appearance.SubLineBackgroundColor);
-        Assert.NotNull(appearance.InfoLabelBackgroundColor);
-        Assert.NotNull(appearance.TextBackgroundColor);
-        Assert.NotNull(appearance.InfoLabelVisible);
-        Assert.NotNull(appearance.InfoLabelColor);
-        Assert.NotNull(appearance.InfoLabelFontSize);
-        Assert.NotNull(appearance.RequestedSize);
-        Assert.NotNull(appearance.ZoomLevel);
-        Assert.NotNull(appearance.CrossColor);
-        Assert.NotNull(appearance.CheckerSize);
-        Assert.NotNull(appearance.CheckerColorA);
-        Assert.NotNull(appearance.CheckerColorB);
-        Assert.NotNull(appearance.FrameColor);
-        Assert.NotNull(appearance.FrameWidth);
-        Assert.NotNull(appearance.SelectionRectColorA);
-        Assert.NotNull(appearance.SelectionRectColorB);
-        Assert.NotNull(appearance.PositionOffset);
-        Assert.NotNull(appearance.ShowCoordLabel);
-        Assert.NotNull(appearance.CoordLabelColor);
-        Assert.NotNull(appearance.CoordLabelBackgroundColor);
-        Assert.NotNull(appearance.CoordLabelFontSize);
-        Assert.NotNull(appearance.LoupeShowCoordLabel);
-        Assert.NotNull(appearance.LoupeCoordLabelColor);
-        Assert.NotNull(appearance.LoupeCoordLabelBackgroundColor);
-        Assert.NotNull(appearance.LoupeCoordLabelFontSize);
+        Assert.Equal(FadeMaskDragRectOptions.Default, control.Options);
     }
 
     [AvaloniaFact]
-    public void AppearanceSettings_DragRectの外観が設定される()
+    public void Options_選択矩形の設定が反映される()
     {
         var control = new FadeMaskDragRectControl();
-        var settings = new FadeMaskDragRectSettings
+        var options = FadeMaskDragRectOptions.Default with
         {
-            MinSelectionSize = 5,
-            BorderColor = Color.FromAColor(102, Colors.Red),
-            BorderThickness = 3.0,
-            HandleColor = Colors.Blue,
-            HandleSize = 12.0,
-            HandleHitRadius = 15.0,
-            ClampToDomainBounds = true,
-            MarkerColor = Colors.Green,
-            MarkerLength = 20.0,
+            DragRect = DragRectOptions.Default with
+            {
+                MinSelectionSize = 5,
+                HandleColor = Color.FromAColor(102, Colors.Red).ToDrawingColor(),
+                BorderThickness = 3.0,
+                HandleSize = 12.0,
+                HandleHitRadius = 15.0,
+                ClampToDomainBounds = true,
+                MarkerColor = Colors.Green.ToDrawingColor(),
+                MarkerLength = 20.0,
+            },
+            Overlay = new FadeMaskAppearance { BorderThickness = 3.0 },
         };
 
-        control.AppearanceSettings = settings;
+        control.Options = options;
 
-        var options = control.DragRect.Options;
-        Assert.Equal(5, options.MinSelectionSize);
-        Assert.Equal(Color.FromAColor(102, Colors.Red), options.BorderColor.ToAvaloniaColor());
-        Assert.Equal(3.0, options.BorderThickness);
-        Assert.Equal(Colors.Blue, options.HandleColor.ToAvaloniaColor());
-        Assert.Equal(12.0, options.HandleSize);
-        Assert.Equal(15.0, options.HandleHitRadius);
-        Assert.True(options.ClampToDomainBounds);
-        Assert.Equal(Colors.Green, options.MarkerColor.ToAvaloniaColor());
-        Assert.Equal(20.0, options.MarkerLength);
+        var applied = control.DragRect.Options;
+        Assert.Equal(5, applied.MinSelectionSize);
+        Assert.Equal(3.0, applied.BorderThickness);
+        Assert.Equal(Color.FromAColor(102, Colors.Red), applied.HandleColor.ToAvaloniaColor());
+        Assert.Equal(12.0, applied.HandleSize);
+        Assert.Equal(15.0, applied.HandleHitRadius);
+        Assert.True(applied.ClampToDomainBounds);
+        Assert.Equal(Colors.Green, applied.MarkerColor.ToAvaloniaColor());
+        Assert.Equal(20.0, applied.MarkerLength);
     }
 
     [AvaloniaFact]
-    public void AppearanceSettings_FadeMaskの外観が設定される()
+    public void Options_暗転マスクの設定が反映される()
     {
         var control = new FadeMaskDragRectControl();
-        var settings = new FadeMaskDragRectSettings
+        var options = FadeMaskDragRectOptions.Default with
         {
-            OverlayColor = Color.FromAColor(128, Colors.DarkBlue), // 暗青 50%
-            TextColor = Colors.Yellow,
-            TextBackgroundColor = Color.FromAColor(179, Colors.DarkBlue), // 暗青 70%
-            FontSize = 18.0,
-            ShowSizeLabel = false,
-            ShowSubLines = false,
-            SubLineFontSize = 13.0,
-            SubLineColor = Colors.Orange,
-            SubLineBackgroundColor = Color.FromAColor(102, Colors.DarkGreen), // 暗緑 40%
-            InfoLabelBackgroundColor = Color.FromAColor(128, Colors.DarkRed), // 暗赤 50%
-            InfoLabelVisible = false,
-            InfoLabelColor = Colors.Cyan,
-            InfoLabelFontSize = 12.0,
+            Overlay = new FadeMaskAppearance
+            {
+                OverlayColor = Color.FromAColor(128, Colors.DarkBlue).ToDrawingColor(), // 暗青 50%
+                SizeLabelColor = Colors.Yellow.ToDrawingColor(),
+                SizeLabelBackgroundColor = Color.FromAColor(179, Colors.DarkBlue).ToDrawingColor(), // 暗青 70%
+                SizeLabelFontSize = 18.0,
+                ShowSizeLabel = false,
+                ShowSubLines = false,
+                SubLineFontSize = 13.0,
+                SubLineColor = Colors.Orange.ToDrawingColor(),
+                SubLineBackgroundColor = Color.FromAColor(102, Colors.DarkGreen).ToDrawingColor(), // 暗緑 40%
+                InfoLabelBackgroundColor = Color.FromAColor(128, Colors.DarkRed).ToDrawingColor(), // 暗赤 50%
+                InfoLabelVisible = false,
+                InfoLabelColor = Colors.Cyan.ToDrawingColor(),
+                InfoLabelFontSize = 12.0,
+            },
         };
 
-        control.AppearanceSettings = settings;
+        control.Options = options;
 
-        // DPI スケーリングは AppearanceSettings の対象外（個別プロパティで設定）
+        // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
         control.Scaling = 2.0;
         control.DisplayScaleScaling = 1.5;
 
         Assert.Equal(2.0, control.Overlay.Scaling);
         Assert.Equal(1.5, control.Overlay.DisplayScaleScaling);
-        // 外観はコアの FadeMaskAppearance へ 1 つにまとめて反映される（色は UI 非依存の色型へ変換）
+        // 外観はコアの FadeMaskAppearance へ 1 つにまとめて反映される（色は UI 非依存の色型）
         var appearance = control.Overlay.Appearance;
         Assert.Equal(Color.FromAColor(128, Colors.DarkBlue).ToDrawingColor(), appearance.OverlayColor);
         Assert.Equal(Colors.Yellow.ToDrawingColor(), appearance.SizeLabelColor);
@@ -202,35 +166,43 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void AppearanceSettings_Loupeの外観が設定される()
+    public void Options_ルーペの設定が反映される()
     {
         var control = new FadeMaskDragRectControl();
-        var settings = new FadeMaskDragRectSettings
+        var options = FadeMaskDragRectOptions.Default with
         {
-            RequestedSize = 150,
-            ZoomLevel = 3,
-            CrossColor = Color.FromAColor(204, Colors.Red), // 赤 80%
-            CheckerSize = 10,
-            CheckerColorA = Colors.Black,
-            CheckerColorB = Colors.White,
-            FrameColor = Colors.Gray,
-            FrameWidth = 4,
-            SelectionRectColorA = Color.FromAColor(204, Colors.White),
-            SelectionRectColorB = Color.FromAColor(204, Colors.Black),
-            PositionOffset = 30.0,
-            ShowCoordLabel = true,
-            CoordLabelColor = Colors.Yellow,
-            CoordLabelBackgroundColor = Color.FromAColor(179, Colors.DarkGreen), // 暗緑 70%
-            CoordLabelFontSize = 14.0,
-            LoupeShowCoordLabel = true,
-            LoupeCoordLabelColor = Colors.Cyan,
-            LoupeCoordLabelBackgroundColor = Color.FromAColor(153, Colors.DarkRed), // 暗赤 60%
-            LoupeCoordLabelFontSize = 13.0,
+            DragRect = DragRectOptions.Default with
+            {
+                ShowCoordLabel = true,
+                CoordLabelColor = Colors.Yellow.ToDrawingColor(),
+                CoordLabelBackgroundColor = Color.FromAColor(179, Colors.DarkGreen).ToDrawingColor(), // 暗緑 70%
+                CoordLabelFontSize = 14.0,
+            },
+            Overlay = new FadeMaskAppearance { BorderThickness = 2.0, BorderColor = Colors.DarkGray.ToDrawingColor() },
+            Loupe = new LoupeOptions
+            {
+                RequestedSize = 150,
+                ZoomLevel = 3,
+                Appearance = new LoupeAppearance
+                {
+                    CrossColor = Color.FromAColor(204, Colors.Red).ToDrawingColor(), // 赤 80%
+                    CheckerSize = 10,
+                    CheckerColorA = Colors.Black.ToDrawingColor(),
+                    CheckerColorB = Colors.White.ToDrawingColor(),
+                    FrameColor = Colors.Gray.ToDrawingColor(),
+                    FrameWidth = 4,
+                    ShowCoordLabel = true,
+                    CoordLabelColor = Colors.Cyan.ToDrawingColor(),
+                    CoordLabelBackgroundColor = Color.FromAColor(153, Colors.DarkRed).ToDrawingColor(), // 暗赤 60%
+                    CoordLabelFontSize = 13.0,
+                },
+            },
+            LoupeOffset = 30.0,
         };
 
-        control.AppearanceSettings = settings;
+        control.Options = options;
 
-        // ルーペ描画スケールは AppearanceSettings の対象外（DPI から自動取得。個別プロパティで設定）
+        // ルーペ描画スケールは設定（Options）の対象外（環境値。個別プロパティで設定）
         control.LoupeRenderScaling = 2.0;
 
         Assert.Equal(150, control.Loupe.Options.RequestedSize);
@@ -239,151 +211,78 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Options.Appearance.CrossColor.ToAvaloniaColor());
         Assert.Equal(10, control.Loupe.Options.Appearance.CheckerSize);
         Assert.Equal(4, control.Loupe.Options.Appearance.FrameWidth);
+        // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため、ルーペのプロパティへ渡される
         Assert.Equal(30.0, control.Loupe.PositionOffset);
         // 座標ラベル（DragRect / Loupe）
-        var options = control.DragRect.Options;
-        Assert.True(options.ShowCoordLabel);
-        Assert.Equal(Colors.Yellow, options.CoordLabelColor.ToAvaloniaColor());
-        Assert.Equal(Color.FromAColor(179, Colors.DarkGreen), options.CoordLabelBackgroundColor.ToAvaloniaColor());
-        Assert.Equal(14.0, options.CoordLabelFontSize);
+        var applied = control.DragRect.Options;
+        Assert.True(applied.ShowCoordLabel);
+        Assert.Equal(Colors.Yellow, applied.CoordLabelColor.ToAvaloniaColor());
+        Assert.Equal(Color.FromAColor(179, Colors.DarkGreen), applied.CoordLabelBackgroundColor.ToAvaloniaColor());
+        Assert.Equal(14.0, applied.CoordLabelFontSize);
         Assert.True(control.Loupe.Options.Appearance.ShowCoordLabel);
         Assert.Equal(13.0, control.Loupe.Options.Appearance.CoordLabelFontSize);
         Assert.Equal(Color.FromAColor(153, Colors.DarkRed), control.Loupe.Options.Appearance.CoordLabelBackgroundColor.ToAvaloniaColor());
     }
 
     [AvaloniaFact]
-    public void AppearanceSettings_同一色の再設定で外観が等価になる()
+    public void Options_選択矩形破線の色は設定から読まれる()
     {
         var control = new FadeMaskDragRectControl();
-        var color = Color.FromAColor(204, Colors.Red);
+        var colorA = Color.FromAColor(204, Colors.Red).ToDrawingColor();
+        var colorB = Color.FromAColor(204, Colors.Blue).ToDrawingColor();
 
-        // 同じ色を 2 回設定 → 外観（コアの値）は等価なまま（再適用で値が変わらない）
-        control.AppearanceSettings = new FadeMaskDragRectSettings { CrossColor = color };
-        var first = control.Loupe.Options.Appearance;
-        control.AppearanceSettings = new FadeMaskDragRectSettings { CrossColor = color };
-        var second = control.Loupe.Options.Appearance;
+        control.Options = FadeMaskDragRectOptions.Default with
+        {
+            SelectionRectColorA = colorA,
+            SelectionRectColorB = colorB,
+        };
 
-        Assert.Equal(first, second);
+        Assert.Equal(colorA, control.Options.SelectionRectColorA);
+        Assert.Equal(colorB, control.Options.SelectionRectColorB);
     }
 
     [AvaloniaFact]
-    public void AppearanceSettings_外観の全色が適用される()
+    public void Options_同じ値の再設定では子へ再適用しない()
     {
         var control = new FadeMaskDragRectControl();
-
-        control.AppearanceSettings = new FadeMaskDragRectSettings
+        var options = FadeMaskDragRectOptions.Default with
         {
-            CrossColor = Color.FromAColor(204, Colors.Red),
-            CheckerColorA = Colors.White,
-            CheckerColorB = Colors.Gray,
-            FrameColor = Colors.LightGray,
-            LoupeCoordLabelColor = Colors.Cyan,
-            LoupeCoordLabelBackgroundColor = Color.FromAColor(153, Colors.DarkRed),
+            Loupe = LoupeOptions.Default with { RequestedSize = 200 },
         };
+        control.Options = options;
+        var appliedBefore = control.Loupe.Options;
 
-        var appearance = control.Loupe.Options.Appearance;
-        Assert.Equal(Color.FromAColor(204, Colors.Red), appearance.CrossColor.ToAvaloniaColor());
-        Assert.Equal(Colors.White, appearance.CheckerColorA.ToAvaloniaColor());
-        Assert.Equal(Colors.Gray, appearance.CheckerColorB.ToAvaloniaColor());
-        Assert.Equal(Colors.LightGray, appearance.FrameColor.ToAvaloniaColor());
-        Assert.Equal(Colors.Cyan, appearance.CoordLabelColor.ToAvaloniaColor());
-        Assert.Equal(Color.FromAColor(153, Colors.DarkRed), appearance.CoordLabelBackgroundColor.ToAvaloniaColor());
+        // 現在値と同じ値を再設定しても、子コントロールへの適用は行われない（適用済みの値が同一のまま）
+        control.Options = options;
+
+        Assert.Same(appliedBefore, control.Loupe.Options);
     }
 
     [AvaloniaFact]
-    public void AppearanceSettings_部分更新でnull以外のみ反映される()
+    public void Options_指定しない項目は現在値を維持する()
     {
         var control = new FadeMaskDragRectControl();
-        // 初期設定
-        control.AppearanceSettings = new FadeMaskDragRectSettings
+        control.Options = FadeMaskDragRectOptions.Default with
         {
-            MinSelectionSize = 5,
-            BorderColor = Colors.Red,
-            RequestedSize = 150,
-            PositionOffset = 30.0,
+            DragRect = DragRectOptions.Default with { MinSelectionSize = 5 },
+            Loupe = LoupeOptions.Default with { RequestedSize = 150 },
+            LoupeOffset = 30.0,
         };
 
-        // 部分更新（BorderColor / RequestedSize のみ指定。他は null = 現在値維持）
-        control.AppearanceSettings = new FadeMaskDragRectSettings
+        // with 式で一部だけを差し替える（指定しない項目は現在値＝既定値を維持する）
+        control.Options = control.Options with
         {
-            BorderColor = Colors.Blue,
-            RequestedSize = 200,
+            DragRect = control.Options.DragRect with { MarkerLength = 24.0 },
+            Overlay = control.Options.Overlay with { BorderThickness = 4.0 },
+            Loupe = control.Options.Loupe with { RequestedSize = 200 },
         };
 
         Assert.Equal(5, control.DragRect.Options.MinSelectionSize);           // 未指定 → 現在値維持
-        Assert.Equal(Colors.Blue, control.DragRect.Options.BorderColor.ToAvaloniaColor());      // 指定 → 反映
+        Assert.Equal(24.0, control.DragRect.Options.MarkerLength);            // 指定 → 反映
+        Assert.Equal(4.0, control.DragRect.Options.BorderThickness);          // 指定 → 反映（枠線は暗転マスクの外観が決める）
         Assert.Equal(200, control.Loupe.Options.RequestedSize);               // 指定 → 反映
-        Assert.Equal(30.0, control.Loupe.PositionOffset);             // 未指定 → 現在値維持
-        Assert.Equal(200, control.AppearanceSettings.RequestedSize);  // getter は更新後の値を返す
-    }
-
-    [AvaloniaFact]
-    public void AppearanceSettings_同じ値の再設定では更新をスキップする()
-    {
-        var control = new FadeMaskDragRectControl();
-        var initial = control.AppearanceSettings;
-
-        // 現在値と同じ値（全メンバー指定）を再設定しても、参照が変わらない（同一値スキップ）
-        var same = new FadeMaskDragRectSettings
-        {
-            MinSelectionSize = initial.MinSelectionSize,
-            BorderColor = initial.BorderColor,
-            BorderThickness = initial.BorderThickness,
-            HandleColor = initial.HandleColor,
-            HandleSize = initial.HandleSize,
-            HandleHitRadius = initial.HandleHitRadius,
-            ClampToDomainBounds = initial.ClampToDomainBounds,
-            MarkerColor = initial.MarkerColor,
-            MarkerLength = initial.MarkerLength,
-            OverlayColor = initial.OverlayColor,
-            TextColor = initial.TextColor,
-            FontSize = initial.FontSize,
-            ShowSizeLabel = initial.ShowSizeLabel,
-            ShowSubLines = initial.ShowSubLines,
-            SubLineFontSize = initial.SubLineFontSize,
-            SubLineColor = initial.SubLineColor,
-            SubLineBackgroundColor = initial.SubLineBackgroundColor,
-            InfoLabelBackgroundColor = initial.InfoLabelBackgroundColor,
-            TextBackgroundColor = initial.TextBackgroundColor,
-            InfoLabelVisible = initial.InfoLabelVisible,
-            InfoLabelColor = initial.InfoLabelColor,
-            InfoLabelFontSize = initial.InfoLabelFontSize,
-            RequestedSize = initial.RequestedSize,
-            ZoomLevel = initial.ZoomLevel,
-            CrossColor = initial.CrossColor,
-            CheckerSize = initial.CheckerSize,
-            CheckerColorA = initial.CheckerColorA,
-            CheckerColorB = initial.CheckerColorB,
-            FrameColor = initial.FrameColor,
-            FrameWidth = initial.FrameWidth,
-            SelectionRectColorA = initial.SelectionRectColorA,
-            SelectionRectColorB = initial.SelectionRectColorB,
-            PositionOffset = initial.PositionOffset,
-            ShowCoordLabel = initial.ShowCoordLabel,
-            CoordLabelColor = initial.CoordLabelColor,
-            CoordLabelBackgroundColor = initial.CoordLabelBackgroundColor,
-            CoordLabelFontSize = initial.CoordLabelFontSize,
-            LoupeShowCoordLabel = initial.LoupeShowCoordLabel,
-            LoupeCoordLabelColor = initial.LoupeCoordLabelColor,
-            LoupeCoordLabelBackgroundColor = initial.LoupeCoordLabelBackgroundColor,
-            LoupeCoordLabelFontSize = initial.LoupeCoordLabelFontSize,
-        };
-        control.AppearanceSettings = same;
-
-        Assert.Same(initial, control.AppearanceSettings);
-    }
-
-    [AvaloniaFact]
-    public void AppearanceSettings_nullは現在値を維持する()
-    {
-        var control = new FadeMaskDragRectControl();
-        control.AppearanceSettings = new FadeMaskDragRectSettings { MinSelectionSize = 7 };
-
-        // すべて null（既定の new インスタンス）→ 何も変更されない
-        control.AppearanceSettings = new FadeMaskDragRectSettings();
-
-        Assert.Equal(7, control.DragRect.Options.MinSelectionSize);
-        Assert.Equal(7, control.AppearanceSettings.MinSelectionSize);
+        Assert.Equal(30.0, control.Loupe.PositionOffset);                     // 未指定 → 現在値維持
+        Assert.Equal(200, control.Options.Loupe.RequestedSize);               // getter は更新後の値を返す
     }
 
     // ====================================================================
@@ -605,7 +504,7 @@ public class FadeMaskDragRectControlTests
     /// ルーペのプロパティ通知が発生せず、明示的な再生成要求が無いと Bitmap が古い色のまま残る。
     /// </remarks>
     [AvaloniaFact]
-    public async Task AppearanceSettings_破線色のみの変更でもルーペが再描画される()
+    public async Task Options_破線色のみの変更でもルーペが再描画される()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
@@ -619,7 +518,11 @@ public class FadeMaskDragRectControlTests
         try
         {
             // ルーペの各プロパティを設定値へ一致させ、初期同期の描画を消化してから計測を開始する
-            control.AppearanceSettings = new FadeMaskDragRectSettings { RequestedSize = 200, SelectionRectColorA = Colors.White };
+            control.Options = control.Options with
+            {
+                Loupe = control.Options.Loupe with { RequestedSize = 200 },
+                SelectionRectColorA = Colors.White.ToDrawingColor(),
+            };
             await PumpUntilAsync(() => rendered > 0);
             Assert.True(rendered > 0);
             await PumpAsync();
@@ -627,7 +530,7 @@ public class FadeMaskDragRectControlTests
 
             // 破線色のみの変更（ルーペ自身の外観・サイズ・ズームは不変 → ルーペのプロパティ通知は発生しない）
             var appearance = control.Loupe.Options.Appearance;
-            control.AppearanceSettings = new FadeMaskDragRectSettings { SelectionRectColorA = Colors.Lime };
+            control.Options = control.Options with { SelectionRectColorA = Colors.Lime.ToDrawingColor() };
             Assert.Equal(appearance, control.Loupe.Options.Appearance);
             Assert.Equal(200, control.Loupe.Options.RequestedSize);
 
@@ -641,10 +544,13 @@ public class FadeMaskDragRectControlTests
         }
     }
 
-    /// <summary>モード変更で選択矩形破線の表示可否が変わった場合にルーペ Bitmap が再生成される。</summary>
-    /// <remarks>破線の表示可否はモード依存（<c>FadeMaskDragRectModes.UsesDragRect</c>）であり、ルーペのプロパティには現れない。</remarks>
+    /// <summary>選択矩形を使わないモードへ変更すると、ルーペの表示が解除されることを検証する。</summary>
+    /// <remarks>
+    /// 破線の表示可否はモード依存（<c>FadeMaskDragRectModes</c>）であり、選択矩形を使わないモードでは<br/>
+    /// ルーペ自体を表示しない（コアが単一所有する判断）。
+    /// </remarks>
     [AvaloniaFact]
-    public async Task Mode_破線表示可否の変更でもルーペが再描画される()
+    public async Task Mode_選択矩形を使わないモードへ変更するとルーペが非表示になる()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
@@ -658,15 +564,14 @@ public class FadeMaskDragRectControlTests
         try
         {
             await PumpUntilAsync(() => rendered > 0);
-            Assert.True(rendered > 0);
-            await PumpAsync();
-            rendered = 0;
+            Assert.True(control.Loupe.IsVisible);
 
             // 破線を描画しないモード（ScreenSelect）へ変更する
             control.Mode = FadeMaskDragRectMode.ScreenSelect;
 
-            await PumpUntilAsync(() => rendered > 0);
-            Assert.True(rendered > 0, "破線表示可否の変更でルーペが再描画されませんでした");
+            // ルーペが非表示になる（以降の描画は発生しない）
+            Assert.False(control.Loupe.IsVisible);
+            Assert.False(control.ShowFullOverlay);
         }
         finally
         {
@@ -1079,6 +984,20 @@ public class FadeMaskDragRectControlTests
         control.SetLoupeSource(bitmap);
 
         Assert.Same(bitmap, control.Loupe.Source);
+    }
+
+    [AvaloniaFact]
+    public void SetLoupeSource_解除すると非表示になる()
+    {
+        var control = new FadeMaskDragRectControl();
+        control.SetLoupeSource(EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent));
+        control.SetLoupePosition(new Point(10, 10));
+        Assert.True(control.Loupe.IsVisible);
+
+        // 拡大元画像を解除すると表示を続けない（表示可否はコアが判断する）
+        control.SetLoupeSource(null);
+
+        Assert.False(control.Loupe.IsVisible);
     }
 
     [AvaloniaFact]

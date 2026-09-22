@@ -97,7 +97,7 @@ flowchart TB
         Ct["CaptureType<br/>public enum"]
     end
     subgraph Dep["外部依存プロジェクト"]
-        FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectSettings<br/>（DragRect + FadeMask + Loupe を内包）"]
+        FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectOptions<br/>（DragRect + FadeMask + Loupe を内包）"]
     end
     subgraph FMCInternal["FadeMaskDragRect の内包コントロール（外部からは非公開・internal）"]
         DR["DragRectControl<br/>DragRectControl（選択矩形 UI）"]
@@ -149,12 +149,12 @@ flowchart TB
 - **分類**: 内部セッションクラス（`internal sealed class`・Primary Constructor）
 - **責務**:
   - 複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe の配線を内包）の配置・ライフサイクル管理
-  - 外観設定の適用: `CaptureSettings` → `FadeMaskDragRectSettings`（拡張メソッドで一元化）→ `AppearanceSettings`（部分更新 + 同一値スキップ）
+  - 設定の適用: `CaptureSettings` → `FadeMaskDragRectOptions`（コアのマッパーで一元化）→ `Options`（同一値スキップ）
   - 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、複合コントロールへ注入
   - カーソル上書き抑止（Crop 中の十字カーソル維持）
   - 確定 → 論理 Rect / キャンセル → 0x0 の空 `PixelRect` を返却
 - **可視性**: internal
-- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectSettings）/ Platform.Native（ICursorOverrideGuard）/ Platform.Core（ICoordTransform / CoordTransform）
+- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectOptions）/ Platform.Native（ICursorOverrideGuard）/ Platform.Core（ICoordTransform / CoordTransform）
 
 ### 6.4 OverlayWindow
 

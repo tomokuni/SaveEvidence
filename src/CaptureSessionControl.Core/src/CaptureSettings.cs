@@ -26,8 +26,8 @@ namespace Estable.CaptureSession;
 /// <param name="LoupeCheckerSize">ルーペの市松模様の一辺のサイズ（ピクセル）。</param>
 /// <param name="LoupeCheckerColorA">ルーペの市松模様の色 A。</param>
 /// <param name="LoupeCheckerColorB">ルーペの市松模様の色 B。</param>
-/// <param name="LoupeSelectionRectColorA">ルーペ画像上の選択矩形破線の色 A（FadeMaskDragRectSettings.SelectionRectColorA・不透明度はアルファに統合）。</param>
-/// <param name="LoupeSelectionRectColorB">ルーペ画像上の選択矩形破線の色 B（FadeMaskDragRectSettings.SelectionRectColorB・不透明度はアルファに統合）。</param>
+/// <param name="LoupeSelectionRectColorA">ルーペ画像上の選択矩形破線の色 A（FadeMaskDragRectOptions.SelectionRectColorA・不透明度はアルファに統合）。</param>
+/// <param name="LoupeSelectionRectColorB">ルーペ画像上の選択矩形破線の色 B（FadeMaskDragRectOptions.SelectionRectColorB・不透明度はアルファに統合）。</param>
 /// <param name="LoupeShowCoordLabel">ルーペの上側に中心座標ラベル（"xy (x, y)"）を表示するか。</param>
 /// <param name="LoupeCoordLabelColor">ルーペ座標ラベルの文字色。</param>
 /// <param name="LoupeCoordLabelBackgroundColor">ルーペ座標ラベルの背景色（不透明度は色のアルファに統合）。</param>

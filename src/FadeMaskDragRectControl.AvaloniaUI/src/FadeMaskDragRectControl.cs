@@ -4,30 +4,34 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Estable.AvaloniaUI.DragRect;
 using Estable.AvaloniaUI.FadeMask;
-using Estable.FadeMaskDragRect;
 using Estable.AvaloniaUI.Loupe;
 using Estable.DragRect;
-using Estable.FadeMask;
-using Estable.Loupe;
+using Estable.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI;
-using EsUtil.Platform.Core.Coordinate;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
+using Microsoft.Extensions.Logging;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
-/// <summary>領域選択の複合コントロール（DragRect + FadeMask + Loupe の組み立て・配線・状態同期を 1 箇所に集約）。</summary>
+/// <summary>領域選択の複合コントロール（選択矩形 + 暗転マスク + ルーペの組み立て・配線・状態同期を 1 箇所に集約）。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: Facade / Composite（内包コントロールの公開 API を統合し、ホストへ統一インターフェースを提供）。<br/>
 /// <br/>
 /// 3 コントロールの生成・座標変換注入・イベント購読・状態同期・後片付けの配線を本クラスに集約し、<br/>
 /// ホストはライフサイクル（生成・配置・後片付け）とモード固有処理（キャプチャ・確定フロー）に専念できる（SRP）。<br/>
 /// <br/>
+/// <b>UI 層の責務（本クラス）</b>: 設定（<see cref="Options"/>）とモード（<see cref="Mode"/>）を内包コントロールへ分配し、<br/>
+/// 入力の受付（内包コントロールが担う）・効果の適用・通知の転送・描画先の選択のみを行う。<br/>
+/// モードごとの可否（選択矩形・ルーペ・全面暗転・破線）はコアの <c>FadeMaskDragRectModes</c> が、<br/>
+/// 選択矩形の可否はコアの <c>FadeMaskDragRectSelection</c> が、枠線の共用規則はコアの<br/>
+/// <see cref="FadeMaskDragRectOptions.ResolveDragRectOptions"/> が単一所有する（UI 層は判断を持たず、コアの結果を割り当てるだけになる）。<br/>
+/// <br/>
 /// <b>公開型のカプセル化</b>: 公開 API は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）の型を<br/>
 /// 参照しない（イベント引数は本クラス独自の <see cref="FadeMaskDragRectSelectionEventArgs"/> / <see cref="FadeMaskDragRectPointEventArgs"/>、<br/>
 /// 状態は <see cref="HasSelection"/> / <see cref="SelectionRect"/> / ハイライトプロパティで提供）。<br/>
-/// 内包コントロールへの直接アクセス（<c>Loupe</c> / <c>Renderer</c> / <c>Overlay</c> / <c>DragRect</c>）は internal（テスト用）。<br/>
+/// 内包コントロールへの直接アクセスは internal（テスト用）であり、ホストは本クラスの公開 API のみを使う。<br/>
 /// <br/>
 /// <b>内部構造</b>:<br/>
 /// - DragRectControl: ドラッグ選択の本体（ドメイン座標 + 座標変換ポート）。<br/>
@@ -38,7 +42,7 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// - SelectionChanged / ViewportChanged → FadeMask の LogicalSelectionRect / HasSelection を同期 + 再描画。<br/>
 /// - SelectionStarted / SelectionCancelled → FadeMask の選択状態をクリア（前の矩形の残留防止）。<br/>
 /// - LoupePositionMoved → Loupe の CenterPoint を更新 + 表示開始。<br/>
-/// - ConfirmRequested / CancelRequested / ZoomRequested → ホストへ中継（独自イベント引数形式）。<br/>
+/// - ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested → ホストへ中継（独自イベント引数形式）。<br/>
 /// <br/>
 /// <b>モード（<see cref="Mode"/>）</b>:<br/>
 /// - <see cref="FadeMaskDragRectMode.Crop"/>: DragRect + FadeMask + Loupe を有効化（プレビュー内切出し・全面暗転）。<br/>
@@ -46,41 +50,15 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// - <see cref="FadeMaskDragRectMode.ScreenSelect"/> / <see cref="FadeMaskDragRectMode.WindowSelect"/>: FadeMask のみ有効化<br/>
 ///   （DragRect / Loupe は無効。ハイライト表示のみで、クリック確定フローはホストが担う）。<br/>
 /// <br/>
-/// <b>注意点</b>:<br/>
-/// - 本クラスは Panel のサブクラスで、3 つの子コントロールを配置する（各子は ZIndex で重なり順を制御）。<br/>
-/// - 全面暗転（<see cref="FadeMaskControl.ShowFullOverlay"/>）は Crop / AreaSelect でのみ有効<br/>
-///   （ScreenSelect / WindowSelect ではハイライトのみ表示）。<br/>
-/// - ルーペソース（<see cref="SetLoupeSource"/>）はホストが設定する。<br/>
-/// - サイズラベルは <see cref="SizeLabelOverrideProvider"/> で描画時に評価する（Crop のズーム率追従等）。<br/>
+/// <b>描画先の選択（フレームワーク差）</b>: ルーペ画像上の選択矩形の破線は、描画完了イベント（<see cref="LoupeRendered"/>）の<br/>
+/// 引数で受け取った Bitmap へ本クラスが直接描く（MewUI 版は描画完了イベントで渡されるキャンバスへ直接描く）。<br/>
+/// 破線の幾何はコアが単一所有するため両 UI の見た目は一致する。<br/>
+/// <br/>
+/// <b>UI 層に残す例外（UI 固有のホスト結線）</b>: 子コントロールの生成・重なり順（ZIndex）・ヒットテストの有無・クランプ・<br/>
+/// フレームワーク固有の描画先（Bitmap / キャンバス / レイアウト要素）は UI 層が担う。
 /// </remarks>
 public sealed class FadeMaskDragRectControl : Panel
 {
-    /// <summary>ブラシキャッシュ（色 → ブラシ。容量制限付き）。</summary>
-    private static readonly Dictionary<Color, SolidColorBrush> s_brushCache = [];
-
-    /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
-    private const int BrushCacheCapacity = 32;
-
-    /// <summary>色に対応するブラシを静的キャッシュから取得する（未登録なら生成して登録）。</summary>
-    /// <param name="color">ブラシの色。</param>
-    /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
-    /// <remarks>容量超過時は全クリアして無制限の増加を防ぐ。</remarks>
-    private static SolidColorBrush GetSharedBrush(Color color)
-    {
-        if (s_brushCache.TryGetValue(color, out var cached))
-        {
-            return cached;
-        }
-
-        var brush = new SolidColorBrush(color);
-        if (s_brushCache.Count >= BrushCacheCapacity)
-        {
-            s_brushCache.Clear();
-        }
-        s_brushCache[color] = brush;
-        return brush;
-    }
-
     /// <summary>暗転マスク描画コントロール（描画状態と外観の真のソース）。</summary>
     private readonly FadeMaskControl _overlay = new() { IsHitTestVisible = false, ZIndex = 50, ClipToBounds = true };
 
@@ -90,23 +68,16 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ルーペコントロール（外観・表示状態の真のソース）。</summary>
     private readonly LoupeControl _loupeControl = new() { ZIndex = 70, IsHitTestVisible = false };
 
+    /// <summary>設定（選択矩形・暗転マスク・ルーペ・選択矩形破線の外観）。</summary>
+    private FadeMaskDragRectOptions _options = FadeMaskDragRectOptions.Default;
+
     /// <summary>動作モード（C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義）。</summary>
     private FadeMaskDragRectMode _mode = FadeMaskDragRectMode.AreaSelect;
-
-    /// <summary>サイズラベルを描画時に評価するプロバイダ（C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義）。</summary>
-    private Func<string?>? _sizeLabelOverrideProvider;
-
-    /// <summary>ルーペに選択矩形の破線オーバーレイを描画するかどうか（モード依存。Crop / AreaSelect でのみ有効）。</summary>
-    private bool _showSelectionOverlay;
-
-    /// <summary>現在の外観設定（バッキングフィールド。全メンバー non-null）。</summary>
-    private FadeMaskDragRectSettings _currentAppearance = new FadeMaskDragRectSettings().ToNonNull();
 
     /// <summary>FadeMaskDragRectControl を初期化する（子コントロールの生成・配置・配線を実施）。</summary>
     /// <remarks>
     /// コンストラクタで内包コントロール（FadeMask / DragRect / Loupe）を生成して子として配置し、<br/>
     /// イベント配線（状態同期・ホストへのイベント中継）を実施する。<br/>
-    /// 全面暗転（ShowFullOverlay）は既定で有効（モードに応じて <see cref="ApplyMode"/> が調整）。<br/>
     /// ルーペは Left/Top アラインメントで配置し、表示位置は座標変換ポートから自己計算する（LoupeControl.UpdatePosition）。
     /// </remarks>
     public FadeMaskDragRectControl()
@@ -128,25 +99,44 @@ public sealed class FadeMaskDragRectControl : Panel
         _dragRect.ZoomRequested += (_, request) => RaiseZoomRequested(request);
         _dragRect.ScrollRequested += (_, request) => RaiseScrollRequested(request);
 
-        // ルーペ描画完了時に選択矩形の破線オーバーレイをホスト側で描画する
-        // （LoupeControl の選択矩形 API は削除済み。描画は Rendered イベント経由で行う）
+        // ルーペ描画完了時に選択矩形の破線オーバーレイを描画する（LoupeControl の選択矩形 API は削除済み）
         _loupeControl.Rendered += OnLoupeRendered;
 
-        // 全面暗転・描画モード・各コントロールの可視性は ApplyMode がモード（既定 AreaSelect）から一括適用する
+        // 設定の既定値を子コントロールへ分配してから、モード（既定 AreaSelect）の状態を適用する
+        ApplyOptions();
         ApplyMode();
     }
 
     // ====================================================================
-    // 公開 API: モード
+    // 公開 API: 設定・モード
     // ====================================================================
+
+    /// <summary>設定（選択矩形・暗転マスク・ルーペ・選択矩形破線の外観）を取得または設定する。</summary>
+    /// <value>設定の単一値。既定は <see cref="FadeMaskDragRectOptions.Default"/>（内包コントロールの既定値）。</value>
+    /// <remarks>
+    /// 一部の項目だけを変える場合は <c>FadeMaskDragRectOptions.Default with { ... }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
+    /// 設定を 1 つの値にまとめているため、内包コントロールへ分配する規則（枠線の共用等）はコアが単一所有する。<br/>
+    /// 同じ値の再設定では更新をスキップする（無駄な再適用を防ぐ）。<br/>
+    /// ホストの設定型（CaptureSettings 等）からの変換は <c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c> が単一所有する。
+    /// </remarks>
+    public FadeMaskDragRectOptions Options
+    {
+        get => _options;
+        set
+        {
+            if (_options == value) return;
+            _options = value;
+            ApplyOptions();
+        }
+    }
 
     /// <summary>動作モードを取得または設定する（内包コントロールの有効・無効と描画モードを自動切替）。</summary>
     /// <value><see cref="FadeMaskDragRectMode"/>（Crop / AreaSelect / ScreenSelect / WindowSelect）。既定値は AreaSelect。</value>
     /// <remarks>
-    /// 設定時は描画モード（<see cref="FadeMaskRenderMode"/>）・<see cref="DragRectControl"/> の可視性・<br/>
-    /// 全面暗転（<see cref="FadeMaskControl.ShowFullOverlay"/>）を一括で適用する。<br/>
-    /// - Crop / AreaSelect: DragRect を表示し、全面暗転を有効化する。<br/>
-    /// - ScreenSelect / WindowSelect: DragRect / Loupe を非表示にし、全面暗転を無効化する（ハイライトのみ）。
+    /// 設定時は描画モード（<c>FadeMaskRenderMode</c>）・<see cref="DragRectControl"/> の可視性・<br/>
+    /// 全面暗転・ルーペの表示可否を一括で適用する（判断はコアの <c>FadeMaskDragRectModes</c> が単一所有する）。<br/>
+    /// - Crop / AreaSelect: 選択矩形とルーペを表示し、全面暗転を有効化する。<br/>
+    /// - ScreenSelect / WindowSelect: 選択矩形 / ルーペを非表示にし、全面暗転を無効化する（ハイライトのみ）。
     /// </remarks>
     public FadeMaskDragRectMode Mode
     {
@@ -159,23 +149,6 @@ public sealed class FadeMaskDragRectControl : Panel
         }
     }
 
-    /// <summary>内部ロガー（内包コントロール（DragRect / Loupe）へ伝搬）。null の場合は出力なし。</summary>
-    /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする。設定時に内包コントロール（<c>DragRectControl</c> / <c>LoupeControl</c>）へ伝搬する。</value>
-    /// <remarks>
-    /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
-    /// 内包コントロールの詳細ログ（ルーペの生成・更新・エラー、ドラッグ操作）をホストのログ基盤（NLog）へ出力するために使用する。
-    /// </remarks>
-    public ILogger Log
-    {
-        get => field.OrNullLogger();
-        set
-        {
-            field = value.OrNullLogger();
-            // 内包コントロールへ伝搬する（ルーペの Trace ログ・ドラッグ操作ログをホストのログ基盤へ転送）
-            _loupeControl.Log = field;
-            _dragRect.Log = field;
-        }
-    }
     // ====================================================================
     // 公開 API: 状態・イベント・操作
     // ====================================================================
@@ -250,171 +223,8 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     // ====================================================================
-    // 公開 API: 設定・座標変換
+    // 公開 API: 環境値・座標変換・ログ
     // ====================================================================
-
-    /// <summary>現在の外観設定（DragRect / FadeMask / Loupe の外観）を取得または設定する。</summary>
-    /// <value>現在有効な外観設定（全メンバー non-null の <see cref="FadeMaskDragRectSettings"/>）。</value>
-    /// <remarks>
-    /// getter は現在有効な値（全メンバー non-null）を返す（メソッドではなくプロパティのため、現在値が常に参照できる）。<br/>
-    /// setter は null メンバーのみ現在値を維持する部分更新。<br/>
-    /// マージ結果が現在の設定と等しい場合（同じ値の再設定）は更新をスキップし、無駄な再適用を防ぐ。<br/>
-    /// 設定後はオーバーレイと DragRect の再描画を要求する（選択状態・ルーペ表示位置は維持される）。<br/>
-    /// ホストの設定型（CaptureSettings 等）から変換した <see cref="FadeMaskDragRectSettings"/> を受け取る（複合コントロールはホストの設定型に依存しない）。
-    /// </remarks>
-    public FadeMaskDragRectSettings AppearanceSettings
-    {
-        get => _currentAppearance;
-        set
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            var merged = MergeAppearance(value, _currentAppearance);
-            // 同じ値が設定された場合は更新しない（record の等値比較。部分更新の入力が全て現在値と一致する場合）
-            if (merged == _currentAppearance) return;
-            _currentAppearance = merged;
-            ApplyAppearance(merged);
-        }
-    }
-
-    /// <summary>null のメンバーを現在値で埋めた設定を生成する（部分更新マージ）。</summary>
-    /// <param name="input">入力設定。null メンバーは <paramref name="current"/> の値が使用される。</param>
-    /// <param name="current">現在の設定（部分更新の維持元。全メンバー non-null）。</param>
-    /// <returns>全メンバー non-null の設定。</returns>
-    /// <remarks>部分更新（null は現在値維持）を実現するためのマージ処理。record の with 式では nullable メンバーごとの分岐が必要なため、本メソッドで一元化する。</remarks>
-    private static FadeMaskDragRectSettings MergeAppearance(FadeMaskDragRectSettings input, FadeMaskDragRectSettings current)
-    {
-        var i = input;
-        var cur = current;
-        return new FadeMaskDragRectSettings
-        {
-            // DragRect 外観
-            MinSelectionSize = i.MinSelectionSize ?? cur.MinSelectionSize,
-            BorderColor = i.BorderColor ?? cur.BorderColor,
-            BorderThickness = i.BorderThickness ?? cur.BorderThickness,
-            HandleColor = i.HandleColor ?? cur.HandleColor,
-            HandleSize = i.HandleSize ?? cur.HandleSize,
-            HandleHitRadius = i.HandleHitRadius ?? cur.HandleHitRadius,
-            ClampToDomainBounds = i.ClampToDomainBounds ?? cur.ClampToDomainBounds,
-            MarkerColor = i.MarkerColor ?? cur.MarkerColor,
-            MarkerLength = i.MarkerLength ?? cur.MarkerLength,
-            // カーソル座標ラベル（DragRect）
-            ShowCoordLabel = i.ShowCoordLabel ?? cur.ShowCoordLabel,
-            CoordLabelColor = i.CoordLabelColor ?? cur.CoordLabelColor,
-            CoordLabelBackgroundColor = i.CoordLabelBackgroundColor ?? cur.CoordLabelBackgroundColor,
-            CoordLabelFontSize = i.CoordLabelFontSize ?? cur.CoordLabelFontSize,
-            // FadeMask 外観
-            OverlayColor = i.OverlayColor ?? cur.OverlayColor,
-            TextColor = i.TextColor ?? cur.TextColor,
-            FontSize = i.FontSize ?? cur.FontSize,
-            ShowSizeLabel = i.ShowSizeLabel ?? cur.ShowSizeLabel,
-            InfoLabelVisible = i.InfoLabelVisible ?? cur.InfoLabelVisible,
-            InfoLabelColor = i.InfoLabelColor ?? cur.InfoLabelColor,
-            InfoLabelFontSize = i.InfoLabelFontSize ?? cur.InfoLabelFontSize,
-            ShowSubLines = i.ShowSubLines ?? cur.ShowSubLines,
-            SubLineFontSize = i.SubLineFontSize ?? cur.SubLineFontSize,
-            SubLineColor = i.SubLineColor ?? cur.SubLineColor,
-            SubLineBackgroundColor = i.SubLineBackgroundColor ?? cur.SubLineBackgroundColor,
-            InfoLabelBackgroundColor = i.InfoLabelBackgroundColor ?? cur.InfoLabelBackgroundColor,
-            TextBackgroundColor = i.TextBackgroundColor ?? cur.TextBackgroundColor,
-            // Loupe 外観
-            RequestedSize = i.RequestedSize ?? cur.RequestedSize,
-            ZoomLevel = i.ZoomLevel ?? cur.ZoomLevel,
-            CrossColor = i.CrossColor ?? cur.CrossColor,
-            CheckerSize = i.CheckerSize ?? cur.CheckerSize,
-            CheckerColorA = i.CheckerColorA ?? cur.CheckerColorA,
-            CheckerColorB = i.CheckerColorB ?? cur.CheckerColorB,
-            FrameColor = i.FrameColor ?? cur.FrameColor,
-            FrameWidth = i.FrameWidth ?? cur.FrameWidth,
-            SelectionRectColorA = i.SelectionRectColorA ?? cur.SelectionRectColorA,
-            SelectionRectColorB = i.SelectionRectColorB ?? cur.SelectionRectColorB,
-            PositionOffset = i.PositionOffset ?? cur.PositionOffset,
-            // ルーペ座標ラベル
-            LoupeShowCoordLabel = i.LoupeShowCoordLabel ?? cur.LoupeShowCoordLabel,
-            LoupeCoordLabelColor = i.LoupeCoordLabelColor ?? cur.LoupeCoordLabelColor,
-            LoupeCoordLabelBackgroundColor = i.LoupeCoordLabelBackgroundColor ?? cur.LoupeCoordLabelBackgroundColor,
-            LoupeCoordLabelFontSize = i.LoupeCoordLabelFontSize ?? cur.LoupeCoordLabelFontSize,
-        };
-    }
-
-    /// <summary>外観設定（DragRect / FadeMask / Loupe の外観）を内包コントロールへ反映する。</summary>
-    /// <param name="settings">外観設定（全メンバー non-null）。</param>
-    /// <remarks>
-    /// 適用後はオーバーレイと DragRect の再描画、およびルーペ Bitmap の再生成を要求する<br/>
-    /// （選択状態・ルーペ表示位置は維持される）。<br/>
-    /// ルーペの再生成は、破線の色（<c>SelectionRectColorA / B</c>）がルーペの外観<br/>
-    /// （<see cref="Estable.Loupe.LoupeAppearance"/>）に含まれず、プロパティ通知では再生成されないため。
-    /// </remarks>
-    private void ApplyAppearance(FadeMaskDragRectSettings settings)
-    {
-        // DragRect 外観・対話パラメータ（設定を 1 つの値へ組み立てて一括設定する。色は UI 非依存の型へ変換する）
-        _dragRect.Options = new DragRectOptions
-        {
-            MinSelectionSize = settings.MinSelectionSize!.Value,
-            BorderColor = settings.BorderColor!.Value.ToDrawingColor(),
-            BorderThickness = settings.BorderThickness!.Value,
-            HandleColor = settings.HandleColor!.Value.ToDrawingColor(),
-            HandleSize = settings.HandleSize!.Value,
-            HandleHitRadius = settings.HandleHitRadius!.Value,
-            ClampToDomainBounds = settings.ClampToDomainBounds!.Value,
-            MarkerColor = settings.MarkerColor!.Value.ToDrawingColor(),
-            MarkerLength = settings.MarkerLength!.Value,
-            // カーソル座標ラベル（DragRect）
-            ShowCoordLabel = settings.ShowCoordLabel!.Value,
-            CoordLabelColor = settings.CoordLabelColor!.Value.ToDrawingColor(),
-            CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor!.Value.ToDrawingColor(),
-            CoordLabelFontSize = settings.CoordLabelFontSize!.Value,
-        };
-
-        // FadeMask 外観（コアの外観値を 1 つ組み立てて一括設定する。境界変換はここで行う）
-        // 色は不透明度をアルファに統合した値（#AARRGGBB）をそのまま設定する（Avalonia 色 → コア色）。
-        _overlay.Appearance = new FadeMaskAppearance
-        {
-            OverlayColor = settings.OverlayColor!.Value.ToDrawingColor(),
-            BorderColor = settings.BorderColor!.Value.ToDrawingColor(),
-            BorderThickness = settings.BorderThickness!.Value,
-            ShowSizeLabel = settings.ShowSizeLabel!.Value,
-            SizeLabelColor = settings.TextColor!.Value.ToDrawingColor(),
-            SizeLabelBackgroundColor = settings.TextBackgroundColor!.Value.ToDrawingColor(),
-            SizeLabelFontSize = settings.FontSize!.Value,
-            ShowSubLines = settings.ShowSubLines!.Value,
-            SubLineColor = settings.SubLineColor!.Value.ToDrawingColor(),
-            SubLineBackgroundColor = settings.SubLineBackgroundColor!.Value.ToDrawingColor(),
-            SubLineFontSize = settings.SubLineFontSize!.Value,
-            InfoLabelVisible = settings.InfoLabelVisible!.Value,
-            InfoLabelColor = settings.InfoLabelColor!.Value.ToDrawingColor(),
-            InfoLabelBackgroundColor = settings.InfoLabelBackgroundColor!.Value.ToDrawingColor(),
-            InfoLabelFontSize = settings.InfoLabelFontSize!.Value,
-        };
-
-        // Loupe 設定（コアの設定値・外観値を 1 つ組み立てて一括設定する。境界変換はここで行う）
-        _loupeControl.Options = new LoupeOptions
-        {
-            RequestedSize = settings.RequestedSize!.Value,
-            ZoomLevel = settings.ZoomLevel!.Value,
-            Appearance = new LoupeAppearance
-            {
-                CrossColor = settings.CrossColor!.Value.ToDrawingColor(),
-                CheckerSize = settings.CheckerSize!.Value,
-                CheckerColorA = settings.CheckerColorA!.Value.ToDrawingColor(),
-                CheckerColorB = settings.CheckerColorB!.Value.ToDrawingColor(),
-                FrameColor = settings.FrameColor!.Value.ToDrawingColor(),
-                FrameWidth = settings.FrameWidth!.Value,
-                // ルーペ座標ラベル
-                ShowCoordLabel = settings.LoupeShowCoordLabel!.Value,
-                CoordLabelColor = settings.LoupeCoordLabelColor!.Value.ToDrawingColor(),
-                CoordLabelBackgroundColor = settings.LoupeCoordLabelBackgroundColor!.Value.ToDrawingColor(),
-                CoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value,
-            },
-        };
-        // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため設定に含めず、個別に設定する
-        _loupeControl.PositionOffset = settings.PositionOffset!.Value;
-
-        _overlay.InvalidateVisual();
-        _dragRect.InvalidateVisual();
-        // ルーペ画像上の選択矩形破線（ホストが Rendered で Bitmap へ描画する）の色も外観変更で変わる。
-        // 破線色はルーペの外観（LoupeAppearance）に含まれないため、ルーペのプロパティ通知では再生成されない。
-        _loupeControl.RequestRender();
-    }
 
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
     /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は倍率（<see cref="Scaling"/>）からコアが解決する。</param>
@@ -430,20 +240,64 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>サイズラベルを描画時に評価するプロバイダを取得または設定する。</summary>
-    /// <value>描画時に呼び出される関数。null の場合は自動生成（FadeMaskDrawer の既定）。</value>
+    /// <value>描画時に呼び出される関数。null の場合は自動生成（コアの既定）を使う。</value>
     /// <remarks>
     /// ホストは最新の選択状態（<see cref="SelectionRect"/> / <see cref="HasSelection"/> 等）からサイズラベル文字列を生成するクロージャを設定する。<br/>
     /// - Crop: 論理座標（元画像ピクセル）+ 実表示ズーム率で生成（レイアウト変化に追従）。<br/>
     /// - 範囲選択（AreaSelect）等: 設定値（<c>CaptureSettings.SizeLabelOverride</c>）を返す。<br/>
-    /// 設定時はレンダラーへ伝搬し、再描画を要求する。
+    /// 設定時は暗転マスクへ伝搬し、再描画を要求する。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
     {
-        get => _sizeLabelOverrideProvider;
+        get => _overlay.SizeLabelOverrideProvider;
+        set => _overlay.SizeLabelOverrideProvider = value;
+    }
+
+    /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）を取得または設定する。</summary>
+    /// <value>スケーリング係数。ドメイン座標がローカル DIP と一致する場合は 1.0。</value>
+    /// <remarks>
+    /// 環境値（ユーザー設定ではない）のため設定（<see cref="Options"/>）には含めず、ホスト（セッション）が与える。<br/>
+    /// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が設定されている場合はそちらが優先される。
+    /// </remarks>
+    public double Scaling
+    {
+        get => _overlay.Scaling;
+        set => _overlay.Scaling = value;
+    }
+
+    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="Scaling"/> と同値）を取得または設定する。</summary>
+    /// <value>サイズラベルの DisplayScale に使う倍率。0 以下は <see cref="Scaling"/> から解決される。</value>
+    /// <remarks>環境値のため設定（<see cref="Options"/>）には含めず、ホスト（セッション）が与える。</remarks>
+    public double DisplayScaleScaling
+    {
+        get => _overlay.DisplayScaleScaling;
+        set => _overlay.DisplayScaleScaling = value;
+    }
+
+    /// <summary>ルーペの DIP → 物理ピクセル倍率を取得または設定する。</summary>
+    /// <value>スケーリング係数（0.1〜8.0）。既定は 1.0。</value>
+    /// <remarks>
+    /// 環境値（DPI）のため設定（<see cref="Options"/>）には含めず、ホスト（<c>MainWindow.DesktopScaling</c> 等）が与える。
+    /// </remarks>
+    public double LoupeRenderScaling
+    {
+        get => _loupeControl.RenderScaling;
+        set => _loupeControl.RenderScaling = value;
+    }
+
+    /// <summary>内部ロガー（内包コントロール（DragRect / Loupe）へ伝搬）。null の場合は出力なし。</summary>
+    /// <value>null を設定した場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> へフォールバックする。設定時に内包コントロールへ伝搬する。</value>
+    /// <remarks>
+    /// 内包コントロールの詳細ログ（ルーペの生成・更新・エラー、ドラッグ操作）をホストのログ基盤へ出力するために使用する。
+    /// </remarks>
+    public ILogger Log
+    {
+        get => _dragRect.Log;
         set
         {
-            _sizeLabelOverrideProvider = value;
-            _overlay.SizeLabelOverrideProvider = value;
+            var logger = value.OrNullLogger();
+            _loupeControl.Log = logger;
+            _dragRect.Log = logger;
         }
     }
 
@@ -455,18 +309,15 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="rect">選択矩形（ドメイン座標）。サイズ 0 以下は選択なし。</param>
     /// <remarks>
     /// ホスト（上位 AP）が選択矩形を外部から設定する際に使用する。<br/>
+    /// 選択として成立するかどうかの判定はコアの <c>FadeMaskDragRectSelection</c> が単一所有する。<br/>
     /// DIP 矩形の算出は描画時に行う（<see cref="SetCoordinateTransform"/> で設定した座標変換ポートが<br/>
     /// 最新のレイアウトから導出する。レイアウト変化に常に追従）。
     /// </remarks>
-    public void SetSelection(Rect rect)
-    {
-        var hasSelection = rect.Width > 0 && rect.Height > 0;
-        SyncSelectionState(hasSelection ? rect : null);
-    }
+    public void SetSelection(Rect rect) => SyncSelection(FadeMaskDragRectSelection.IsUsable(rect.Width, rect.Height) ? rect : null);
 
     /// <summary>選択状態をクリアして全面暗転（穴あけなし）に戻す（新規選択開始・キャンセル時）。</summary>
     /// <remarks>矩形外クリックのドラッグ開始やキャンセル時の FadeMask 残留を防止する（DragRect は非表示でも状態が残るため）。</remarks>
-    public void ClearSelection() => SyncSelectionState(null);
+    public void ClearSelection() => SyncSelection(null);
 
     /// <summary>選択状態を FadeMask レンダラーとルーペへ同期して再描画する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。null は選択なし。</param>
@@ -475,7 +326,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 選択状態の真のソースは <see cref="FadeMaskControl"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>
     /// ルーペ画像上の選択枠（破線）も同期する。DIP 矩形の算出は描画時に行う（レイアウト変化に追従）。
     /// </remarks>
-    private void SyncSelectionState(Rect? rect)
+    private void SyncSelection(Rect? rect)
     {
         _overlay.HasSelection = rect is not null;
         _overlay.LogicalSelectionRect = rect;
@@ -489,7 +340,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordinateTransform"/>）から自己計算する<br/>
     /// （カーソル右下 + オフセット + クランプ）。配置前（Parent 未接続）の呼び出しは無視される。<br/>
-    /// <b>Source 未設定の間は表示しない</b>（未設定の市松模様を防ぐ。Source 設定後に呼び出し直すことで表示される）。
+    /// <b>拡大元画像が未設定の間は表示しない</b>（未設定の市松模様を防ぐ。Source 設定後に呼び出し直すことで表示される）。
     /// </remarks>
     public void SetLoupePosition(Point domainPos)
     {
@@ -497,36 +348,58 @@ public sealed class FadeMaskDragRectControl : Panel
         UpdateLoupePosition(domainPos);
     }
 
-    /// <summary>ルーペの中心位置（ドメイン座標）を設定して表示を開始する（Source 設定済みの場合のみ表示）。</summary>
+    /// <summary>ルーペの中心位置（ドメイン座標）を設定して表示可否を更新する。</summary>
     /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>
     /// <remarks>
     /// <see cref="SetLoupePosition"/> と <see cref="OnLoupePositionMoved"/> で共用する（重複排除）。<br/>
     /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordinateTransform"/>）から自己計算する。<br/>
-    /// <b>Source 未設定の間は表示しない</b>（未設定の市松模様を防ぐ）。
+    /// 表示可否の判断（選択矩形を使うモードでのみ表示する・拡大元画像が未設定なら表示しない）は<br/>
+    /// コアの <c>FadeMaskDragRectState.IsLoupeVisible</c> が単一所有する。
     /// </remarks>
     private void UpdateLoupePosition(Point domainPos)
     {
         // LoupeControl.CenterPoint は StyledProperty（UI 境界）のため、境界で設定する。
         _loupeControl.CenterPoint = domainPos;
-        // Source が設定済みの場合のみ表示する（未設定の市松模様を防ぐ）
-        if (_loupeControl.Source is not null)
-        {
-            _loupeControl.IsVisible = true;
-        }
+        UpdateLoupeVisibility();
     }
 
+    /// <summary>ルーペの表示可否をモード・拡大元画像・中心から更新する。</summary>
+    /// <remarks>表示可否の判断はコアの <c>FadeMaskDragRectState.IsLoupeVisible</c> が単一所有する。</remarks>
+    private void UpdateLoupeVisibility()
+        => _loupeControl.IsVisible = FadeMaskDragRectModes
+            .Resolve(_mode)
+            .IsLoupeVisible(_loupeControl.Source is not null, _loupeControl.CenterPoint is not null);
+
     /// <summary>FadeMask オーバーレイの再描画を要求する。</summary>
-    /// <remarks>レンダラーの状態（Highlight / Selection 等）を変更した後に呼び出す。</remarks>
+    /// <remarks>暗転マスクの状態（Highlight / Selection 等）を変更した後に呼び出す。</remarks>
     public void InvalidateOverlay() => _overlay.InvalidateVisual();
 
     /// <summary>ルーペの拡大元画像（Source）を設定する。</summary>
     /// <param name="source">拡大元画像。null で解除。</param>
-    /// <remarks>LoupeControl.Source へ委譲する（Source 未設定の間はルーペを表示しない市松模様防止のため、<br/>表示開始は <see cref="SetLoupePosition"/> が担う）。</remarks>
-    public void SetLoupeSource(IImage? source) => _loupeControl.Source = source;
+    /// <remarks>
+    /// LoupeControl.Source へ委譲する（Source 未設定の間はルーペを表示しない市松模様防止のため、<br/>
+    /// 表示開始は <see cref="SetLoupePosition"/> が担う）。解除時は表示も解除する。
+    /// </remarks>
+    public void SetLoupeSource(IImage? source)
+    {
+        _loupeControl.Source = source;
 
-    /// <summary>ルーペを非表示にして現在の Bitmap を解放する。</summary>
-    /// <remarks>セッション終了時の後片付けに使用する（LoupeControl.Clear へ委譲）。</remarks>
-    public void ClearLoupe() => _loupeControl.Clear();
+        if (source is null)
+        {
+            // 拡大元画像が無い状態で表示を続けない（次の SetLoupePosition まで非表示）。
+            // 表示可否の判断はコアが単一所有するため、ここでは問い合わせるだけにする。
+            UpdateLoupeVisibility();
+        }
+    }
+
+    /// <summary>ルーペを非表示にして後片付けする（拡大元画像・中心・Bitmap を解放する）。</summary>
+    /// <remarks>セッション終了時の後片付けに使用する（表示状態・中心・拡大元画像をまとめて破棄する）。</remarks>
+    public void ClearLoupe()
+    {
+        _loupeControl.Source = null;
+        _loupeControl.CenterPoint = null;
+        _loupeControl.Clear();
+    }
 
     /// <summary>ルーペ中心（ドメイン座標）。未設定時は null。</summary>
     /// <remarks>ルーペの表示状態の確認（テスト・座標検証）に使用する。</remarks>
@@ -560,69 +433,52 @@ public sealed class FadeMaskDragRectControl : Panel
         set => _overlay.HasHighlight = value;
     }
 
-    /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）。</summary>
-    /// <remarks>
-    /// <see cref="FadeMaskControl.Scaling"/> へ委譲する。<br/>
-    /// ユーザー設定ではなく、セッション（Crop は 1.0 / 画面キャプチャはウィンドウのスケーリング）が
-    /// <see cref="AppearanceSettings"/> とは独立して設定する（コードから動的設定）。
-    /// </remarks>
-    public double Scaling
-    {
-        get => _overlay.Scaling;
-        set => _overlay.Scaling = value;
-    }
-
-    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="Scaling"/> と同値）。</summary>
-    /// <remarks>
-    /// <see cref="FadeMaskControl.DisplayScaleScaling"/> へ委譲する。<br/>
-    /// ユーザー設定ではなく、セッション（OverlayWindow）がハイライト表示のマルチスクリーン補正として
-    /// <see cref="AppearanceSettings"/> とは独立して設定する（コードから動的設定）。
-    /// </remarks>
-    public double DisplayScaleScaling
-    {
-        get => _overlay.DisplayScaleScaling;
-        set => _overlay.DisplayScaleScaling = value;
-    }
-
-    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。</summary>
-    /// <remarks>
-    /// <see cref="LoupeControl.RenderScaling"/> へ委譲する。<br/>
-    /// ユーザー設定ではなく、ウィンドウの DPI スケーリング（<c>MainWindow.DesktopScaling</c>）から
-    /// <see cref="AppearanceSettings"/> とは独立して自動取得する。
-    /// </remarks>
-    public double LoupeRenderScaling
-    {
-        get => _loupeControl.RenderScaling;
-        set => _loupeControl.RenderScaling = value;
-    }
-
     /// <summary>ハイライト対象のウィンドウタイトル（未検出時は空文字）。</summary>
     public string WindowTitle { get => _overlay.WindowTitle; set => _overlay.WindowTitle = value; }
 
-    /// <summary>全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効）。</summary>
+    /// <summary>全面暗転（穴あけなし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
     /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ。</remarks>
     public bool ShowFullOverlay => _overlay.ShowFullOverlay;
 
     // ====================================================================
-    // 内部実装（配線・状態同期）
+    // 内部実装（設定の分配・状態同期・配線）
     // ====================================================================
 
-    /// <summary>モードに応じて内包コントロールの状態（描画モード・可視性・全面暗転）を適用する。</summary>
+    /// <summary>設定を内包コントロールへ分配する。</summary>
     /// <remarks>
-    /// - 描画モード: FadeMaskRenderMode（Crop / AreaSelect / ScreenSelect / WindowSelect）へ変換する。<br/>
-    /// - DragRect / Loupe: Crop / AreaSelect でのみ有効（ScreenSelect / WindowSelect では非表示）。<br/>
-    /// - 全面暗転: Crop / AreaSelect でのみ有効（ScreenSelect / WindowSelect ではハイライトのみ表示）。<br/>
-    /// - ルーペ Bitmap: 選択矩形破線の表示可否がモード依存のため、再生成を要求する（プロパティ通知では再生成されない）。
+    /// 枠線の共用（選択枠線 ＝ 暗転マスクの穴あけ枠）はコアの <see cref="FadeMaskDragRectOptions.ResolveDragRectOptions"/> が解決する。<br/>
+    /// 適用後は暗転マスク・選択矩形の再描画、ルーペの再配置・再生成を要求する（選択状態・ルーペ中心は維持される）。<br/>
+    /// ルーペの再生成は、選択矩形破線の色がルーペの外観（<c>LoupeAppearance</c>）に含まれず、<br/>
+    /// プロパティ通知では再生成されないため。
+    /// </remarks>
+    private void ApplyOptions()
+    {
+        _overlay.Appearance = _options.Overlay;
+        _dragRect.Options = _options.ResolveDragRectOptions();
+        _loupeControl.Options = _options.Loupe;
+        // 表示位置のオフセットはフレームワーク差（Avalonia 版のルーペは自己配置する）のため、
+        // 設定に含まれる値からルーペのプロパティへ個別に渡す
+        _loupeControl.PositionOffset = _options.LoupeOffset;
+
+        _overlay.InvalidateVisual();
+        _dragRect.InvalidateVisual();
+        _loupeControl.RequestRender();
+    }
+
+    /// <summary>モードに応じて内包コントロールの状態（描画モード・可視性・全面暗転・破線）を適用する。</summary>
+    /// <remarks>
+    /// モードと状態の対応はコアの <c>FadeMaskDragRectModes</c> が単一所有する。<br/>
+    /// 選択矩形破線の表示可否もモード依存のため、既存の Bitmap から破線を消す（または描く）ために再生成を要求する。
     /// </remarks>
     private void ApplyMode()
     {
-        _overlay.Mode = FadeMaskDragRectModes.ToRenderMode(_mode);
-        bool useDragRect = FadeMaskDragRectModes.UsesDragRect(_mode);
-        _dragRect.IsVisible = useDragRect;
-        _overlay.ShowFullOverlay = useDragRect;
-        // 選択位置の視覚化用に、ルーペの選択矩形破線オーバーレイをモードに応じて有効化する
-        // （描画は Rendered イベント経由でホスト側が行う。モード依存設定のため ApplyMode で管理）。
-        _showSelectionOverlay = useDragRect;
+        var state = FadeMaskDragRectModes.Resolve(_mode);
+
+        _overlay.Mode = state.RenderMode;
+        _overlay.ShowFullOverlay = state.ShowFullOverlay;
+        _dragRect.IsVisible = state.UsesSelection;
+
+        UpdateLoupeVisibility();
         // 破線の表示可否はルーペのプロパティに現れないため、既存の Bitmap から破線を消す（または描く）ために再生成を要求する
         _loupeControl.RequestRender();
     }
@@ -630,10 +486,6 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>選択状態をオーバーレイ描画へ反映する（SelectionChanged）。</summary>
     /// <param name="sender">イベント送信元（DragRectControl）。</param>
     /// <param name="e">選択矩形イベント（Rect はドメイン座標）。</param>
-    /// <remarks>
-    /// 選択状態の真のソースは <see cref="FadeMaskControl"/>（HasSelection / LogicalSelectionRect）に集約し、<br/>
-    /// ルーペ画像上の選択枠（破線）も同期する。DIP 矩形の算出は描画時に行う（レイアウト変化に追従）。
-    /// </remarks>
     private void OnSelectionChanged(object? sender, SelectionRectEventArgs e)
         => SetSelection(e.Rect);
 
@@ -663,10 +515,6 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>ドラッグが小さすぎてキャンセルされた場合も、FadeMask に矩形が残らないようにする。</remarks>
     private void OnSelectionCancelled(object? sender, EventArgs e) => ClearSelection();
 
-    // ====================================================================
-    // ルーペの選択矩形破線オーバーレイ（Rendered イベント経由・ホスト側描画）
-    // ====================================================================
-
     /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを描画済み Bitmap へ描く。</summary>
     /// <param name="sender">イベント送信元（LoupeControl）。</param>
     /// <param name="e">描画済み Bitmap と表示情報。</param>
@@ -674,28 +522,25 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 選択矩形の破線は <see cref="LoupeControl"/> 内部では描画せず、本クラス（ホスト側）が<br/>
     /// <see cref="LoupeControl.Rendered"/> イベントで通知された <see cref="LoupeRenderedEventArgs.Bitmap"/> へ直接描画する。<br/>
     /// 選択矩形（<see cref="SelectionRect"/> = ドメイン座標）は <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で<br/>
-    /// ルーペ画像ピクセル座標へ変換する。<br/>
-    /// ルーペ破線の色は <see cref="_currentAppearance"/>（<c>SelectionRectColorA / B</c>）を使用する。
+    /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
+    /// 描画しない場合（選択矩形を使わないモード・選択なし・切り出し領域の左上が未設定）でも、<br/>
+    /// ホストへルーペ描画完了を中継する（外部提供矩形の描画用）。
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {
-        if (!_showSelectionOverlay || e.CaptureTopLeft is not { } topLeft)
+        // 破線を描くかどうかはモード（コアが単一所有する）と切り出し領域・選択矩形の有無で決まる
+        if (FadeMaskDragRectModes.Resolve(_mode).ShowSelectionOverlay
+            && e.CaptureTopLeft is { } topLeft
+            && _overlay.LogicalSelectionRect is { } selectionRect)
         {
-            // 選択矩形非表示でも、ホストへルーペ描画完了を中継する（外部提供矩形の描画用）
-            RaiseLoupeRendered(e);
-            return;
-        }
-
-        if (_overlay.LogicalSelectionRect is { } selectionRect)
-        {
-            var colorA = _currentAppearance.SelectionRectColorA;
-            var colorB = _currentAppearance.SelectionRectColorB;
-            if (colorA is not null && colorB is not null)
-            {
-                // 破線色（色A / 色B）を 2 つ用意し、市松風に交互に塗る（描画はコアが単一所有する）
-                FadeMaskDragRectOverlay.DrawSelectionRect(
-                    e.Bitmap, selectionRect.ToEsRect(), topLeft.ToEsPoint(), e.Scale, colorA.Value.ToDrawingColor(), colorB.Value.ToDrawingColor());
-            }
+            // 破線色（色A / 色B）を 2 つ用意し、交互に塗る（描画はコアが単一所有する）
+            FadeMaskDragRectOverlay.DrawSelectionRect(
+                e.Bitmap,
+                selectionRect.ToEsRect(),
+                topLeft.ToEsPoint(),
+                e.Scale,
+                _options.SelectionRectColorA,
+                _options.SelectionRectColorB);
         }
 
         // ホスト（上位 AP）へルーペ描画完了を中継する（外部提供矩形の描画用）
@@ -711,7 +556,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="e">ルーペ中心（ドメイン座標）。</param>
     /// <remarks>
     /// 表示位置・サイズは LoupeControl が座標変換ポートから自己計算する（カーソル右下 + オフセット + クランプ）。<br/>
-    /// <b>Source 未設定の間は表示しない</b>（AreaSelect の背景キャプチャ完了前は Source が null のため、<br/>
+    /// <b>拡大元画像が未設定の間は表示しない</b>（AreaSelect の背景キャプチャ完了前は Source が null のため、<br/>
     /// 表示すると市松模様が見える。Source 設定後の表示開始はホスト（<see cref="SetLoupePosition"/> 経由）が行う）。<br/>
     /// ホストへの通知（<see cref="LoupePositionMoved"/>）は追加制御（Source 設定等）のフックとして発行する。
     /// </remarks>
@@ -735,7 +580,7 @@ public sealed class FadeMaskDragRectControl : Panel
         => CancelRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>ズーム要求イベントを発火する。</summary>
-    /// <param name="zoomIn">ズームインする場合は true。</param>
+    /// <param name="request">ズーム要求（方向と発生位置）。</param>
     private void RaiseZoomRequested(DragRectZoomRequest request)
         => ZoomRequested?.Invoke(this, request);
 

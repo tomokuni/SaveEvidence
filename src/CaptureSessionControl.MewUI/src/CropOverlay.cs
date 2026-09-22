@@ -36,9 +36,6 @@ namespace Estable.MewUI.CaptureSession;
 /// </remarks>
 public sealed class CropOverlay
 {
-    /// <summary>切り出し中の暗転の色（黒 40%）。</summary>
-    private static readonly DrawingColor s_overlayColor = DrawingColor.FromArgb(102, 0, 0, 0);
-
     /// <summary>ロガー（ホストが注入する。null の場合は出力しない）。</summary>
     private readonly ILogger _log;
 
@@ -175,7 +172,7 @@ public sealed class CropOverlay
 
         // 非表示の間に描画済みのキャンバスは再描画されないため、表示後に明示的に無効化する
         _selector.InvalidateOverlay();
-        _selector.DragRect.InvalidateVisual();
+        _selector.NotifyViewportChanged();
 
         // 矢印キーの微調整と Escape を受け取れるよう、選択コントロールへフォーカスを移す
         _selector.FocusDragRect();
@@ -258,59 +255,26 @@ public sealed class CropOverlay
             () => image is null ? null : new EsSize(image.Width, image.Height)));
     }
 
-    /// <summary>設定の外観を選択コントロールへ反映する。</summary>
+    /// <summary>設定を選択コントロールへ反映する。</summary>
     /// <remarks>
-    /// 設定の対応は Avalonia 版の <c>CropSession</c>（<c>ToFadeMaskDragRectSettings</c>）と同じにする（UI ごとに見た目がずれないようにする）。<br/>
-    /// ルーペの外観（拡大率・サイズ・色）は <see cref="CaptureOverlay.ApplyLoupe"/> が単一所有する。
+    /// 設定項目と外観の対応はコアのマッパー（<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）が単一所有する<br/>
+    /// （Avalonia 版の <c>CropSession</c> も同じ変換を使うため、UI ごとに見た目がずれない）。<br/>
+    /// ルーペの市松模様の下地にはテーマの背景色を渡す（プレビュー画像を透かして市松色をそのまま重ねない）。
     /// </remarks>
     private void ApplyAppearance()
     {
         var s = _settings;
 
-        // 暗転マスクの外観は 1 つの値へ組み立てて一括設定する（枠線はドラッグ矩形と共用される。
-        // 既定は DarkGray / 2.0 で Avalonia 版と同じ）
-        _selector.Appearance = new FadeMaskAppearance
-        {
-            OverlayColor = s.OverlayColor ?? s_overlayColor,
-            BorderColor = s.BorderColor ?? DrawingColor.DarkGray,
-            BorderThickness = s.BorderThickness!.Value,
-            // ラベル（サイズ・操作）は切り出しモードの文言を使う（情報ラベルは表示しない）
-            ShowSizeLabel = s.SizeLabelVisible!.Value,
-            SizeLabelColor = s.SizeLabelColor ?? DrawingColor.White,
-            SizeLabelBackgroundColor = s.TextBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
-            SizeLabelFontSize = s.SizeLabelFontSize!.Value,
-            ShowSubLines = s.ShowSubLines!.Value,
-            SubLineFontSize = s.SubLineFontSize!.Value,
-            SubLineColor = s.SubLineColor ?? DrawingColor.FromArgb(255, 220, 220, 220),
-            SubLineBackgroundColor = s.SubLineBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
-        };
-
-        _selector.LoupeOffset = s.LoupeOffset!.Value;
-        _selector.DragRect.Options = _selector.DragRect.Options with
-        {
-            HandleColor = s.HandleColor ?? DrawingColor.White,
-            HandleSize = s.HandleSize!.Value,
-            HandleHitRadius = s.HandleHitRadius!.Value,
-            MinSelectionSize = s.MinSelectionSize!.Value,
-            ClampToDomainBounds = s.ClampToDomainBounds!.Value,
-            MarkerColor = s.MarkerColor ?? DrawingColor.White,
-            MarkerLength = s.MarkerLength!.Value,
-            ShowCoordLabel = s.ShowCoordLabel!.Value,
-            CoordLabelColor = s.CoordLabelColor ?? DrawingColor.White,
-            CoordLabelBackgroundColor = s.CoordLabelBackgroundColor ?? DrawingColor.FromArgb(153, 0, 0, 0),
-            CoordLabelFontSize = s.CoordLabelFontSize!.Value,
-        };
-        CaptureOverlay.ApplyLoupe(_selector, s, _themeBackground);
+        // 設定を 1 値に変換して一括適用する（ラベル文言は描画時に評価するため別途設定する）
+        _selector.Options = s.ToFadeMaskDragRectOptions(_themeBackground);
 
         // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）
-        var overlay = _selector.Overlay;
-        overlay.SizeLabelOverrideProvider = () =>
+        _selector.SizeLabelOverrideProvider = () =>
             _selector.HasSelection && s.SizeLabelVisible!.Value
                 ? FadeMaskLabels.FormatSizeLabel(_selector.SelectionRect, scaling: 1.0)
                 : null;
 
-        // 描画モードは切り出し（情報ラベルを表示しない）。行の組み立てはコントロールに委ねる
-        overlay.Mode = FadeMaskRenderMode.Crop;
-        overlay.WindowTitle = "";
+        // 情報ラベルは切り出しでは表示しない（切り出しはウィンドウ選択ではないため）
+        _selector.WindowTitle = "";
     }
 }

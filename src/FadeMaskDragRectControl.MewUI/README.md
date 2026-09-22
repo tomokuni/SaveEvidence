@@ -25,7 +25,8 @@ using EsUtil.Platform.Core.Geometry;
 var selection = new FadeMaskDragRectControl
 {
     Mode = FadeMaskDragRectMode.Crop,   // プレビュー内の切出し
-    LoupeOffset = 20.0,
+    // 設定はコアの単一値で渡す（範囲選択はオフセット 20、切り出しは設定値）
+    Options = FadeMaskDragRectOptions.Default with { LoupeOffset = 20.0 },
 };
 
 // ドメイン ↔ ローカル DIP の変換ポートを設定する（暗転マスク・選択矩形・ルーペで共用）
@@ -63,16 +64,15 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | メンバー | 説明 |
 | --- | --- |
 | `Mode` | 動作モード（既定は `AreaSelect`） |
+| `Options` | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。コアの `FadeMaskDragRectOptions`） |
 | `HasSelection` / `SelectionRect` | 現在の選択状態（ドメイン座標） |
 | `HasHighlight` / `LogicalHighlightRect` | ハイライト（`ScreenSelect` / `WindowSelect` の穴あけ矩形） |
 | `ShowFullOverlay` | 全面暗転の有無（モードから導出） |
-| `LoupeCenterPoint` / `LoupeOffset` | ルーペ中心（ドメイン座標）と右下オフセット（DIP） |
-| `Appearance` | 暗転マスクの外観（暗転色・枠線・ラベル）の単一値。枠線は選択矩形と暗転マスクで共用される |
+| `LoupeCenterPoint` | ルーペ中心（ドメイン座標） |
 | `WindowTitle` | 情報ラベル（3 行目）の文言（ウィンドウ選択時） |
 | `SizeLabelOverrideProvider` | サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
-| `SelectionOverlayColorA` / `SelectionOverlayColorB` | ルーペ画像上の選択矩形破線の色（2 色交互。既定は白 / 黒） |
+| `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` | DPI スケーリング（設定には含めない環境値。コードから動的設定） |
 | `Log` | 操作ログの出力先（null は `NullLogger`。内包するドラッグ選択コントロールとルーペへ伝搬する） |
-| `Overlay` / `DragRect` / `Loupe` | 内包コントロール（外観の詳細設定用） |
 | `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定（ドラッグ選択・暗転マスクへ分配。null の場合は倍率からコアが解決する） |
 | `SetSelection` / `ClearSelection` | 選択状態の外部設定・クリア |
 | `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe` | ルーペの制御 |
@@ -89,7 +89,7 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | 項目 | Avalonia 版 | MewUI 版 |
 | --- | --- | --- |
 | イベント引数の座標 | Avalonia の `Point` / `Rect` | **コア型の `EsPoint` / `EsRect`** |
-| 外観設定 | `AppearanceSettings`（40 超のメンバーを持つ設定 record）で一括設定 | **内包コントロール（`Overlay` / `DragRect` / `Loupe`）の個別プロパティで設定**（YAGNI） |
+| 外観設定 | コアの `FadeMaskDragRectOptions` を 1 プロパティとして公開する（既定値・分配規則はコアが単一所有） | 同じコアの設定値を 1 プロパティとして公開する（同一の型・同一の既定値） |
 | ルーペの位置決め | ルーペコントロール自身が座標変換ポートから算出 | **本コントロールが `LoupePositionCalculator` で配置**（MewUI のルーペは位置を持たない） |
 | サイズラベル・情報ラベル・サブライン | 描画する | 描画する（文言はコアの `FadeMaskLabels` とホストが与える） |
 | ルーペ画像上の選択矩形破線 | 描画完了イベント経由で描画 | 同じコアの破線幾何を使い、ルーペの `Rendered` で同一のキャンバスへ描画する（見た目は一致） |

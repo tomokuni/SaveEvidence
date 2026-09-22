@@ -292,7 +292,7 @@ classDiagram
     CropOverlay ..> ICaptureTarget : 切り出しの適用
     MainViewModelCaptureTarget ..> MainViewModel : CropPreviewCommand
     MainViewModelCaptureTarget ..> ICaptureTarget : 実装
-    CropOverlay ..> CaptureOverlay : ルーペの外観（ApplyLoupe）
+    CropOverlay ..> CaptureOverlay : 設定の変換（コアの FadeMaskDragRectOptionsMapper）
     CapturePage ..> LoupeAppearance : ルーペの外観（プレビューの常時表示）
     Program ..> SettingsJsonContext : 設定のソース生成
     SettingsService ..> SettingsJsonContext : 型情報の取得

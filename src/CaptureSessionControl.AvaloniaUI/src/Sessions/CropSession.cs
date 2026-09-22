@@ -181,10 +181,9 @@ internal sealed class CropSession(
     private void ConfigureControls()
     {
         var s = _settings;
-        // 外観設定（DragRect / FadeMask / Loupe を一括適用。設定変換は拡張メソッドに一元化）
-        cropView.AppearanceSettings =
-            s.ToFadeMaskDragRectSettings(positionOffset: s.LoupeOffset!.Value);
-        // DPI スケーリング・ルーペ描画スケールは AppearanceSettings の対象外（コードから動的設定）。
+        // 設定を複合コントロールの設定値（1 値）へ変換して一括適用する（変換はコアのマッパーが単一所有する）
+        cropView.SelectionOverlayOptions = s.ToFadeMaskDragRectOptions();
+        // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
         // プレビュー内 Crop はドメイン = 論理座標（元画像ピクセル）のため Scaling は 1.0 固定。
         cropView.Scaling = 1.0;
         cropView.LoupeRenderScaling = s.LoupeRenderScaling!.Value;

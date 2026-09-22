@@ -42,7 +42,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `Source` | `IImage?` | 表示画像。ZoomViewControl とルーペへ伝搬。変更時は Fit 表示にリセット。オーバーレイの可視性は本プロパティでは制御しない（`SetSelectionOverlayVisible` が専任）。`null` に変わるときは選択のみクリア。 |
 | `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（ドメイン座標）。View とルーペの両方へ描画。 |
 | `SelectionMode` | `FadeMaskDragRectMode` | 選択モード（既定 `Crop`）。FadeMaskDragRectControl へ委譲。 |
-| `AppearanceSettings` | `FadeMaskDragRectSettings` | 領域選択オーバーレイの外観設定（DragRect / FadeMask / Loupe）。FadeMaskDragRectControl へ委譲。 |
+| `SelectionOverlayOptions` | `FadeMaskDragRectOptions`（コア） | 領域選択オーバーレイの設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）。FadeMaskDragRectControl へ委譲。 |
 | `Log` | `ILogger` | 内部ロガー（ズームビューポートへ伝搬）。null の場合は NullLogger。 |
 | `Scaling` | `double` | DPI スケーリング係数（`FadeMaskDragRectControl.Scaling` へ委譲。コードから動的設定） |
 | `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（`FadeMaskDragRectControl.DisplayScaleScaling` へ委譲。コードから動的設定） |

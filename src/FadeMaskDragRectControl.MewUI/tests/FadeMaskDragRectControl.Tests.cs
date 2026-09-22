@@ -65,6 +65,27 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(expectedDragRectVisible, control.DragRect.IsVisible);
     }
 
+    /// <summary>拡大元画像と中心があるとき、選択矩形を使うモードでのみルーペを表示することを検証する。</summary>
+    /// <param name="mode">設定する動作モード。</param>
+    /// <param name="expected">ルーペを表示する場合は true。</param>
+    [Theory]
+    [InlineData(FadeMaskDragRectMode.Crop, true)]
+    [InlineData(FadeMaskDragRectMode.AreaSelect, true)]
+    [InlineData(FadeMaskDragRectMode.ScreenSelect, false)]
+    [InlineData(FadeMaskDragRectMode.WindowSelect, false)]
+    public void モード切替_ルーペの表示可否を切り替える(FadeMaskDragRectMode mode, bool expected)
+    {
+        var control = new FadeMaskDragRectControl();
+        control.SetCoordinateTransform(CreatePort());
+        using var source = CreateSource();
+        control.SetLoupeSource(source);
+        control.SetLoupePosition(new EsPoint(5, 6));
+
+        control.Mode = mode;
+
+        Assert.Equal(expected, control.Loupe.IsVisible);
+    }
+
     [Fact]
     public void モード切替_同じ値を設定しても状態は変わらない()
     {
@@ -153,18 +174,21 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
 
-        control.Appearance = new FadeMaskAppearance
+        control.Options = FadeMaskDragRectOptions.Default with
         {
-            BorderColor = DrawingColor.Red,
-            BorderThickness = 3.0,
-            OverlayColor = DrawingColor.FromArgb(128, 255, 0, 0),
-            ShowSizeLabel = false,
-            SizeLabelFontSize = 18.0,
-            SizeLabelColor = DrawingColor.Yellow,
-            SizeLabelBackgroundColor = DrawingColor.FromArgb(200, 0, 0, 255),
+            Overlay = new FadeMaskAppearance
+            {
+                BorderColor = DrawingColor.Red,
+                BorderThickness = 3.0,
+                OverlayColor = DrawingColor.FromArgb(128, 255, 0, 0),
+                ShowSizeLabel = false,
+                SizeLabelFontSize = 18.0,
+                SizeLabelColor = DrawingColor.Yellow,
+                SizeLabelBackgroundColor = DrawingColor.FromArgb(200, 0, 0, 255),
+            },
         };
 
-        var appearance = control.Overlay.Appearance;
+        var appearance = control.Options.Overlay;
         Assert.Equal(DrawingColor.Red, appearance.BorderColor);
         Assert.Equal(3.0, appearance.BorderThickness);
         Assert.Equal(DrawingColor.FromArgb(128, 255, 0, 0), appearance.OverlayColor);
@@ -203,7 +227,7 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
 
-        Assert.True(control.Overlay.Appearance.ShowSizeLabel);
+        Assert.True(control.Options.Overlay.ShowSizeLabel);
         Assert.Null(control.SizeLabelOverrideProvider);
     }
 
@@ -216,8 +240,8 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
 
-        Assert.Equal(DrawingColor.White, control.SelectionOverlayColorA);
-        Assert.Equal(DrawingColor.Black, control.SelectionOverlayColorB);
+        Assert.Equal(DrawingColor.White, control.Options.SelectionRectColorA);
+        Assert.Equal(DrawingColor.Black, control.Options.SelectionRectColorB);
     }
 
     [Fact]
@@ -225,11 +249,14 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
 
-        control.SelectionOverlayColorA = DrawingColor.Yellow;
-        control.SelectionOverlayColorB = DrawingColor.Magenta;
+        control.Options = control.Options with
+        {
+            SelectionRectColorA = DrawingColor.Yellow,
+            SelectionRectColorB = DrawingColor.Magenta,
+        };
 
-        Assert.Equal(DrawingColor.Yellow, control.SelectionOverlayColorA);
-        Assert.Equal(DrawingColor.Magenta, control.SelectionOverlayColorB);
+        Assert.Equal(DrawingColor.Yellow, control.Options.SelectionRectColorA);
+        Assert.Equal(DrawingColor.Magenta, control.Options.SelectionRectColorB);
     }
 
     [Fact]
@@ -278,8 +305,11 @@ public class FadeMaskDragRectControlTests
         using var target = TestHelper.CreateTarget(64, 64);
         var control = new FadeMaskDragRectControl
         {
-            SelectionOverlayColorA = DrawingColor.Red,
-            SelectionOverlayColorB = DrawingColor.Blue,
+            Options = FadeMaskDragRectOptions.Default with
+            {
+                SelectionRectColorA = DrawingColor.Red,
+                SelectionRectColorB = DrawingColor.Blue,
+            },
         };
         control.SetSelection(new EsRect(10, 10, 20, 20));
 
@@ -299,7 +329,10 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
 
         // ログ出力を伴う操作を実行しても例外にならない（既定は NullLogger）
-        control.DragRect.Options = control.DragRect.Options with { ClampToDomainBounds = false };
+        control.Options = control.Options with
+        {
+            DragRect = control.Options.DragRect with { ClampToDomainBounds = false },
+        };
         control.SetSelection(new EsRect(10, 10, 50, 40));
         control.RequestCancel();
     }
@@ -416,6 +449,22 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
+    public void SetLoupeSource_解除すると非表示になる()
+    {
+        var control = new FadeMaskDragRectControl();
+        control.SetCoordinateTransform(CreatePort());
+        using var source = CreateSource();
+        control.SetLoupeSource(source);
+        control.SetLoupePosition(new EsPoint(50, 60));
+        Assert.True(control.Loupe.IsVisible);
+
+        // 拡大元画像を解除すると表示を続けない（表示可否はコアが判断する）
+        control.SetLoupeSource(null);
+
+        Assert.False(control.Loupe.IsVisible);
+    }
+
+    [Fact]
     public void ClearLoupe_画像と中心を破棄する()
     {
         var control = new FadeMaskDragRectControl();
@@ -436,8 +485,11 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordinateTransform(CreatePort());
-        control.Loupe.Options = control.Loupe.Options with { RequestedSize = 100 };
-        control.LoupeOffset = 20.0;
+        control.Options = control.Options with
+        {
+            Loupe = control.Options.Loupe with { RequestedSize = 100 },
+            LoupeOffset = 20.0,
+        };
 
         using var source = CreateSource();
         control.SetLoupeSource(source);
@@ -458,8 +510,11 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordinateTransform(CreatePort());
-        control.Loupe.Options = control.Loupe.Options with { RequestedSize = 100 };
-        control.LoupeOffset = 20.0;
+        control.Options = control.Options with
+        {
+            Loupe = control.Options.Loupe with { RequestedSize = 100 },
+            LoupeOffset = 20.0,
+        };
 
         using var source = CreateSource();
         control.SetLoupeSource(source);
@@ -477,7 +532,7 @@ public class FadeMaskDragRectControlTests
     public void ルーペ_画像未設定では配置しない()
     {
         var control = new FadeMaskDragRectControl();
-        control.Loupe.Options = control.Loupe.Options with { RequestedSize = 100 };
+        control.Options = control.Options with { Loupe = control.Options.Loupe with { RequestedSize = 100 } };
 
         control.Measure(new Size(400, 400));
         control.Arrange(new Rect(0, 0, 400, 400));
@@ -489,7 +544,7 @@ public class FadeMaskDragRectControlTests
     public void ルーペ_表示しないモードでは配置しない()
     {
         var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.ScreenSelect };
-        control.Loupe.Options = control.Loupe.Options with { RequestedSize = 100 };
+        control.Options = control.Options with { Loupe = control.Options.Loupe with { RequestedSize = 100 } };
         using var source = CreateSource();
         control.SetLoupeSource(source);
         control.SetLoupePosition(new EsPoint(10, 10));
