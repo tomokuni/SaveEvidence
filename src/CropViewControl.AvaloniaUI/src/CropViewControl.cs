@@ -312,7 +312,7 @@ public sealed partial class CropViewControl : Panel
     /// <param name="visible">true でオーバーレイを可視化しヒットテストを有効化する。false で非表示かつヒットテストを無効化する。</param>
     /// <remarks>
     /// オーバーレイはプレビュー表示時（キャプチャ完了・画像読込）は非表示で、Crop セッション中のみ表示する。<br/>
-    /// Crop モード（<see cref="SelectionMode"/>）では全面暗転（FadeMask）を描画するため、プレビュー表示時に勝手に表示すると<br/>
+    /// Crop モード（<see cref="SelectionMode"/>）では全面暗転を描画するため、プレビュー表示時に勝手に表示すると<br/>
     /// 「Crop を開始した状態」のような暗転が残る。<see cref="Source"/> 設定では自動表示せず、本メソッドで明示的に制御する。
     /// </remarks>
     public void SetSelectionOverlayVisible(bool visible)

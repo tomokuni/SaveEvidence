@@ -99,7 +99,7 @@ public sealed partial class Settings : ObservableObject
     private string _captureTextColor = "#FFFFFFFF";
 
     /// <summary>キャプチャ時の選択枠の太さ（DIP）を取得または設定する。</summary>
-    /// <remarks>デフォルトはコントロール既定（DragRectControl / FadeMaskAppearance）と一致させる。</remarks>
+    /// <remarks>デフォルトはコントロール既定（DragRectControl / OuterDecoAppearance）と一致させる。</remarks>
     [ObservableProperty]
     private double _captureBorderThickness = 2.0;
 

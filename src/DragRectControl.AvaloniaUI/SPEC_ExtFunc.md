@@ -40,7 +40,8 @@
 - 既存選択のドラッグ移動
 - ドラッグハンドルによるリサイズ
 - 矢印キーによるキーボード微調整（nudge）
-- 選択枠線・ハンドル・始点マーカーの描画
+- ドラッグハンドル・始点マーカー・カーソル座標ラベルの描画
+- 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・サイズ/操作/情報ラベル・ハイライト）の描画（外観・表示ポリシーは `Options` の `Outer*` 項目が単一所有。判断は装飾コアが持つ）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - ドメイン座標系での正確な nudge（矢印キー1回 = ドメイン1Pixel）
 
@@ -93,8 +94,13 @@ var dragRect = new DragRectControl
     // 設定は 1 回でまとめて渡す（同値の再設定では再描画されない）
     Options = DragRectOptions.Default with
     {
-        BorderColor = Colors.White.ToDrawingColor(),
-        BorderThickness = 2.0,
+        // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描くため、枠線の色・太さはその外観へ与える
+        OuterAppearance = DragRectOptions.Default.OuterAppearance with
+        {
+            BorderColor = Colors.White.ToDrawingColor(),
+            BorderThickness = 2.0,
+        },
+        ShowHandles = true,
         HandleColor = Colors.White.ToDrawingColor(),
         HandleSize = 10.0,
         HandleHitRadius = 12.0,
@@ -165,8 +171,13 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `BorderColor` | `Color` | `DarkGray（#FFA9A9A9）` | 選択枠線の色（不透明度は色のアルファに統合） |
-| `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（FadeMaskAppearance / App の既定と一致） |
+| `OuterAppearance` | `OuterDecoAppearance` | 枠線のみ（暗転・ラベルなし） | 選択矩形の外側に描く装飾の外観（暗転色・穴あけ枠の色と太さ・ラベルの体裁）。**枠線の色・太さは本値が単一所有する**（選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なるため、2 つの値に分けると見た目が崩れる） |
+| `OuterRenderMode` | `OuterDecoRenderMode` | `AreaSelect` | 外側の装飾の描画モード（操作ラベルの文言選定に使用） |
+| `OuterWindowTitle` | `string` | `""` | 操作ラベル（情報ラベル）に表示するウィンドウタイトル |
+| `OuterShowFullOverlay` | `bool` | `false` | 穴あけを行わず全面を暗転するかどうか（ハイライトのみを表示するモードで使用） |
+| `OuterHighlightRect` | `EsRect?` | `null` | ハイライトする矩形（ドメイン座標。ホストが与える実行時状態） |
+| `OuterHasHighlight` | `bool` | `false` | ハイライトを描くかどうか |
+| `ShowHandles` | `bool` | `true` | ドラッグハンドルを表示するかどうか（false の場合は枠線と外側の装飾のみを描く） |
 | `HandleColor` | `Color` | `White` | ドラッグハンドルの色 |
 | `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP 座標系） |
 | `MarkerColor` | `Color` | `White` | nudge 中の十字マーカーの色 |
@@ -188,6 +199,8 @@ control.ResetSelection();           // 状態と nudge の初期化
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `CurrentSnapshot` | `DragRectSnapshot` | - | 現在の選択状態のスナップショット（**ポーリング不要の完全状態**）。`State` / `SelectionRect` / `ActiveHandle` / `MousePosition` / `IsMouseDown` / `IsDragging` / `NudgeActive` / `HasSelection` を公開。イベント引数の Snapshot と同一形式。選択状態の判定（確定・キャンセル等の操作分岐）は `CurrentSnapshot.HasSelection` を使用 |
+| `HasSelection` | `bool` | `false` | 選択矩形があるかどうか（スナップショットの生成を伴わない軽量な読み取り。描画のたびに参照する） |
+| `SelectionRect` | `EsRect` | `0x0` | 現在の選択矩形（ドメイン座標。未選択時は 0x0） |
 
 #### 5.1.3 ログ
 
@@ -337,17 +350,21 @@ nudge 中は十字マーカー（`Options.MarkerColor` / `Options.MarkerLength` 
 
 十字マーカーとルーペ中心は、矩形の固定位置（`GetOppositeCorner` で得られる左上等の隅）ではなく**ドラッグ中の操作点（ハンドル / 掴んだ位置 / 終点）**を追従します。これにより、マーカーは常にドラッグ中の操作位置に表示されます。
 
-### 7.5 選択領域の閉区間描画（始点・終点を含む）
+### 7.5 外側の装飾と選択矩形の一致（閉区間の共有）
 
 選択領域は **閉区間（始点・終点の両ピクセルを含む）** を意図する仕様です。
 
-選択矩形はドメイン座標で半開区間（`幅 = 終点 − 始点`、.NET `Rect` と同一）で保持されますが、描画（`Render`）では **終点（`Right` / `Bottom`）に +1 してから** `Inverse` で DIP 変換します。
+選択矩形はドメイン座標で半開区間（`幅 = 終点 − 始点`、.NET `Rect` と同一）で保持されますが、描画では **終点（`Right` / `Bottom`）に +1 してから** `Inverse` で DIP 変換します。
 
 ```text
 描画用 DIP 矩形 = Rect(Inverse(始点), Inverse(終点 + (1, 1)))
 ```
 
-これにより、選択枠線・ドラッグハンドルは終点のピクセルも含む矩形に描画され、FadeMask（非暗転領域）・キャプチャ（閉区間 +1）と一致します。
+ハンドルはこの矩形に対して描画され、**選択枠線は外側の装飾の穴あけ枠**（同じ閉区間 +1 の規則を装飾コアが単一所有する）が描きます。
+どちらも同じ規則を使うため、枠線とハンドルの位置・キャプチャ（閉区間 +1）が一致します。
+
+**注意**: 本コントロールは選択枠線を自分では描画しません（`DragRect` 側で 2 本目を描くと線幅が二重になり見た目が変わるため）。
+枠線を表示するには `Options.OuterAppearance.BorderColor`（アルファ > 0）と `OuterAppearance.BorderThickness` を設定します。
 
 ## 8. ポインター操作
 

@@ -32,12 +32,14 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - 8方向ドラッグハンドルによるリサイズ
 - 矢印キーによる1Pixel単位のキーボード微調整（nudge）
 - ドメイン座標系で正確な nudge（矢印キー1回 = ドメイン1Pixel）
-- 選択枠線・ハンドル・始点マーカーの自己描画
+- ドラッグハンドル・始点マーカーの自己描画
+- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・サイズ/操作/情報ラベル・ハイライト（外観と表示ポリシーは `Options` の `Outer*` 項目が単一所有し、描画内容の判断は装飾コアが持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
+- **ハンドル表示の切替**: `Options.ShowHandles = false` でハンドルを描かず枠線と外側の装飾だけを表示する
 - カーソル座標ラベルの表示（任意設定・`(x, y)` 形式）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - Avalonia Binding 対応の StyledProperty
 - ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
-- **閉区間描画（始点・終点を含む）**: 選択枠・ハンドルは終点（Right/Bottom）に +1 して DIP 変換（FadeMask の非暗転領域・キャプチャの閉区間 +1 と一致）
+- **閉区間描画（始点・終点を含む）**: ハンドルと外側の装飾（穴あけ枠）は終点（Right/Bottom）に +1 して DIP 変換（キャプチャの閉区間 +1 と一致。規則は装飾コアが単一所有）
 - **ホイール操作**: Ctrl+ホイールで `ZoomRequested`（方向と発生位置） / 通常ホイールで `ScrollRequested`（生の回転量）を発火する。連携 ScrollViewer（`AttachScrollViewer`）がある場合は本コントロールがスクロールし、ない場合は上位 AP がスクロール先を決める
 - **薄い UI 層**: 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの状態管理クラス（`DragRectSession`）が担う。本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う
 
@@ -86,7 +88,12 @@ using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize（コア提供）
 var dragRect = new DragRectControl
 {
     // 設定をまとめて 1 回で渡す（同値の再設定では再描画されない）
-    Options = DragRectOptions.Default with { BorderColor = Colors.White.ToDrawingColor(), HandleSize = 10.0 },
+    Options = DragRectOptions.Default with
+    {
+        // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描く
+        OuterAppearance = DragRectOptions.Default.OuterAppearance with { BorderColor = Colors.White.ToDrawingColor() },
+        HandleSize = 10.0,
+    },
 };
 
 // 結果は公開イベントで通知される（マウス・キーイベントを直接処理しない）
@@ -141,7 +148,7 @@ DragRectControl/
 │   ├── DragRectControl.Visual.cs  # ビジュアルツリー接続・ScrollViewer 連携・描画
 │   ├── SelectionRectEventArgs.cs  # 公開イベント引数（選択矩形通知）
 │   ├── DragRectPointEventArgs.cs  # 公開イベント引数（座標通知）
-│   └── Drawing/                   # 内部型（DragRectDrawer）
+│   └── Drawing/                   # 内部型（DragRectDrawer / DragRectOuterDrawer）
 ├── sample/                        # サンプルアプリ（sample/README.md 参照）
 └── tests/                         # 単体テスト（公開 API 経由）
 ```
@@ -156,11 +163,12 @@ DragRectControl.Core/
 │   ├── DragHandle.cs                 # 公開型（ドラッグハンドル種別 enum）
 │   ├── DragRectInteractionState.cs   # 公開型（対話状態 enum）
 │   ├── DragRectSnapshot.cs           # 公開型（状態 Snapshot record。座標は EsRect / EsPoint）
-│   ├── DragRectOptions.cs            # 公開型（外観・対話パラメータの設定値 record）
+│   ├── DragRectOptions.cs            # 公開型（外側の装飾・外観・対話パラメータの設定値 record）
+│   ├── DragRectFrame.cs              # 内部型（選択矩形の外側に描く装飾のフレーム解決。判断は装飾コア）
 │   ├── DragRectSession.cs            # 内部型（状態管理クラス。入力の解釈・通知・効果）
 │   ├── DragRectNotice.cs             # 内部型（コア → UI の通知の種別と値）
 │   ├── DragRectFeedback.cs           # 内部型（コア → UI の効果。カーソル操作を含む）
-│   ├── LogMessage.cs                 # 内部型（入力の判断・ズーム・設定変更の LoggerMessage 定義）
+│   ├── DragRectLogMessage.cs                 # 内部型（入力の判断・ズーム・設定変更の LoggerMessage 定義）
 │   ├── DragRectState.cs              # 内部型（状態保持 + 更新ロジック）
 │   └── Selection/                    # 内部型（SelectionGeometry）
 └── tests/                            # 単体テスト（UI 非依存・並列実行）

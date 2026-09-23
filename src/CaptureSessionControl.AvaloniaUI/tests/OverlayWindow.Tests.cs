@@ -21,7 +21,7 @@ namespace Estable.AvaloniaUI.CaptureSession.Tests;
 /// <summary><see cref="OverlayWindow"/> の単体テスト（回帰検証: 描画反映・背景フィット・座標変換）。</summary>
 /// <remarks>
 /// 過去に発生した実機バグの回帰を検出するためのテストを含む:<br/>
-/// 1. 暗転・枠・テキストが表示されない → レンダラー状態が FadeMaskControl へ反映され、再描画が要求されるか<br/>
+/// 1. 暗転・枠・テキストが表示されない → 外側の装飾（DragRectControl）へ反映され、再描画が要求されるか<br/>
 /// 2. 背景画像が拡大表示される → VirtualScreenImage がウィンドウ（DIP）にフィットするか<br/>
 /// 3. 選択矩形と取得画像がずれる → ドメイン座標 → 画面物理座標の変換が正しいか
 /// </remarks>
@@ -347,8 +347,8 @@ public class OverlayWindowTests
         window.SetVirtualScreen(virtualScreen, default);
 
         // 矩形を設定してから確定要求（Enter キー相当）を発行する
-        // → SetDragRectSelection → ConfirmRequested → OverlayWindow.OnAreaConfirmRequested → CompleteSelection
-        window.SelectionOverlay.SetDragRectSelection(new Rect(2, 2, 3, 3));
+        // → SetSelection → ConfirmRequested → OverlayWindow.OnAreaConfirmRequested → CompleteSelection
+        window.SelectionOverlay.SetSelection(new Rect(2, 2, 3, 3));
         window.SelectionOverlay.RequestConfirm();
 
         // 切り出しはバックグラウンド（Task.Run + Dispatcher.Post）で実行されるため、完了をポーリングで待つ
@@ -419,7 +419,7 @@ public class OverlayWindowTests
         // ドメイン（= ローカル DIP × scaling）でルーペを更新
         window.UpdateLoupe(new Point(2880, 540));
 
-        // 仮想スクリーン原点を減算すると (4800, 540) にずれる（範囲外）ため、ドメイン座標のままであるべき
+        // 仮想スクリーン原点を減算すると (4800, 540) にずれる（範囲側）ため、ドメイン座標のままであるべき
         Assert.Equal(new Point(2880, 540), window.SelectionOverlay.LoupeCenterPoint);
         window.Close();
     }
@@ -644,7 +644,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void OnClickPressed_左ボタン以外は無視される()
+    public void OnClickPressed_左ボタン以側は無視される()
     {
         var finder = new MockElementFinder
         {

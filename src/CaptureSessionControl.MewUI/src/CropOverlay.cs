@@ -1,6 +1,6 @@
 using Aprillz.MewUI.Controls;
 using Estable.CaptureSession;
-using Estable.FadeMask;
+using Estable.DragRect.Decoration;
 using Estable.FadeMaskDragRect;
 using Estable.MewUI.CropView;
 using Estable.MewUI.FadeMaskDragRect;
@@ -271,7 +271,7 @@ public sealed class CropOverlay
         // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）
         _selector.SizeLabelOverrideProvider = () =>
             _selector.HasSelection && s.SizeLabelVisible!.Value
-                ? FadeMaskLabels.FormatSizeLabel(_selector.SelectionRect, scaling: 1.0)
+                ? OuterDecoLabels.FormatSizeLabel(_selector.SelectionRect, scaling: 1.0)
                 : null;
 
         // 情報ラベルは切り出しでは表示しない（切り出しはウィンドウ選択ではないため）

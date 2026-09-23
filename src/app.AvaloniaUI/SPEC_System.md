@@ -221,7 +221,7 @@ flowchart TB
 
 | LogLevel | 対象 | 例 |
 | --- | --- | --- |
-| `Information` | ユーザー操作の主要イベント（低頻度） | キャプチャメニュークリック / ホットキー発火 / キャプチャ開始・戻り値（ズーム変更 % は ZoomViewControl の LogMessage が出力） |
+| `Information` | ユーザー操作の主要イベント（低頻度） | キャプチャメニュークリック / ホットキー発火 / キャプチャ開始・戻り値（ズーム変更 % は ZoomViewControl の ZoomViewLogMessage が出力） |
 | `Error` | 例外・失敗 | 設定変更の CaptureSessionControl 反映で例外 |
 
 詳細は `SPEC_ExtFunc.md` の「8. ログ」を参照。

@@ -7,7 +7,7 @@
 
 - **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `DragRectControl.Core` が単一所有します。
   Avalonia 版と MewUI 版の挙動は同じ計算に基づきます。
-- **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへ枠線・ハンドル・十字マーカー・座標ラベルを描画します。
+- **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへハンドル・十字マーカー・座標ラベル（選択矩形）と、選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）を描画します。
 - **DPI 追従**: `OnDpiChanged` でスケーリング係数を更新し、DIP 座標で描画します（枠線・ハンドルの画面上の大きさを保ちます）。
 - **コア型のイベント引数**: イベントの座標は UI 非依存のコア型（`EsPoint` / `EsRect`）で公開します（境界変換が不要）。
 
@@ -93,8 +93,8 @@ grid.Add(dragRect);     // 選択オーバーレイ（上。入力を受け取�
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `BorderColor` | `System.Drawing.Color` | `#FFA9A9A9` | 選択枠線の色（アルファで不透明度） |
-| `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（DIP） |
+| `OuterAppearance` | `OuterDecoAppearance` | 枠線のみ（暗転・ラベルなし） | 外側の装飾の外観（枠線の色・太さもここが単一所有する。不透明度はアルファ） |
+| `ShowHandles` | `bool` | `true` | ドラッグハンドルの表示可否 |
 | `HandleColor` | `System.Drawing.Color` | 白 | ドラッグハンドルの塗り色 |
 | `HandleSize` | `double` | `10.0` | ハンドルの一辺サイズ（DIP） |
 | `HandleHitRadius` | `double` | `12.0` | ハンドルのヒットテスト半径（DIP） |
@@ -130,23 +130,24 @@ grid.Add(dragRect);     // 選択オーバーレイ（上。入力を受け取�
 dotnet test src/DragRectControl.MewUI/tests/DragRectControl.MewUI.Tests.csproj
 ```
 
-- `DragRectSkiaRenderer.Tests.cs`: 枠線・ハンドル・十字マーカー・座標ラベルの画素検証と配置計算（純粋関数）の検証。
+- `DragRectSkiaRenderer.Tests.cs`: ハンドル・十字マーカー・座標ラベルの画素検証と配置計算（純粋関数）の検証。
+- `DragRectOuterSkiaRenderer.Tests.cs`: 外側の装飾（暗転・穴あけ・枠線・ラベル）の画素検証。
 - `DragRectControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、ビューポート通知、`Log` のフォールバックと設定変更ログ。
-- ログの定義（操作ログ・ズーム要求・設定変更）はコアの `LogMessage` にあり、その検証はコアのテストが行います。
+- ログの定義（操作ログ・ズーム要求・設定変更）はコアの `DragRectLogMessage` にあり、その検証はコアのテストが行います。
 
 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの `DragRectSession` が担うため、その検証は `DragRectControl.Core.Tests` が行います。
 
 ## 操作ログ
 
 `Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。  
-ログはすべてコア（`Estable.DragRect.LogMessage`）が定義し、ロガーはセッションへ伝搬されます。本プロジェクトはログ定義を持ちません。
+ログはすべてコア（`Estable.DragRect.DragRectLogMessage`）が定義し、ロガーはセッションへ伝搬されます。本プロジェクトはログ定義を持ちません。
 
 | レベル | 出力内容 |
 | --- | --- |
 | Debug | MouseDown / MouseUp / Click / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / ZoomRequested / 設定変更 |
 | Trace | MouseDown 直前の位置 / MouseUp 直後の位置 |
 
-定義はすべてコア（`Estable.DragRect.LogMessage`）が持ち、本プロジェクトは定義を持ちません。
+定義はすべてコア（`Estable.DragRect.DragRectLogMessage`）が持ち、本プロジェクトは定義を持ちません。
 
 ## 未対応
 

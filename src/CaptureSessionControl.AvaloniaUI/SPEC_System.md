@@ -47,7 +47,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
 | **依存プロジェクト** | FadeMaskDragRect（複合コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Native（プラットフォームサービス） |
 
-CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）を直接参照しない（公開型のカプセル化。窓口は FadeMaskDragRectControl のみ。推移的依存として各プロジェクトを利用）。
+CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl / LoupeControl）を直接参照しない（公開型のカプセル化。窓口は FadeMaskDragRectControl のみ。推移的依存として各プロジェクトを利用）。
 
 ## 3. アーキテクチャ
 
@@ -57,7 +57,7 @@ CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl /
 公開 Facade（CaptureSessionControl）
   → セッション（SelectionCaptureSession / CropSession）
     → オーバーレイ / 複合コントロール（OverlayWindow / FadeMaskDragRectControl）
-      → 各コントロール（DragRect / FadeMask / Loupe）+ Platform.AvaloniaUI
+      → 各コントロール（DragRect / Loupe）+ Platform.AvaloniaUI
 ```
 
 ### 3.2 依存の方向
@@ -72,7 +72,7 @@ CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl /
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（`Logging/LogMessage.cs`）で出力する。高頻度イベントは Debug、障害は Error / Warning で記録する。
+- ログは LoggerMessage ソース生成（`Logging/CaptureSessionLogMessage.cs`）で出力する。高頻度イベントは Debug、障害は Error / Warning で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -97,11 +97,10 @@ flowchart TB
         Ct["CaptureType<br/>public enum"]
     end
     subgraph Dep["外部依存プロジェクト"]
-        FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectOptions<br/>（DragRect + FadeMask + Loupe を内包）"]
+        FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectOptions<br/>（DragRect（外側の装飾を含む）+ Loupe を内包）"]
     end
     subgraph FMCInternal["FadeMaskDragRect の内包コントロール（外部からは非公開・internal）"]
-        DR["DragRectControl<br/>DragRectControl（選択矩形 UI）"]
-        FM["FadeMaskControl<br/>FadeMaskControl + FadeMaskDrawer<br/>FadeMaskAppearance / FadeMaskRenderMode"]
+        DR["DragRectControl<br/>DragRectControl（選択矩形 UI ＋ 外側の装飾の描画）"]
         LP["LoupeControl<br/>LoupeControl（ルーペ表示）"]
     end
 
@@ -112,7 +111,6 @@ flowchart TB
     OW --> FDR
     CrS --> FDR
     FDR --> DR
-    FDR --> FM
     FDR --> LP
 ```
 
@@ -148,7 +146,7 @@ flowchart TB
 
 - **分類**: 内部セッションクラス（`internal sealed class`・Primary Constructor）
 - **責務**:
-  - 複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe の配線を内包）の配置・ライフサイクル管理
+  - 複合コントロール `FadeMaskDragRectControl`（DragRect（外側の装飾を含む）+ Loupe の配線を内包）の配置・ライフサイクル管理
   - 設定の適用: `CaptureSettings` → `FadeMaskDragRectOptions`（コアのマッパーで一元化）→ `Options`（同一値スキップ）
   - 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、複合コントロールへ注入
   - カーソル上書き抑止（Crop 中の十字カーソル維持）
@@ -180,7 +178,7 @@ flowchart TB
 
 - 依存方向は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール FadeMaskDragRectControl → 各コントロール / Platform.AvaloniaUI）。
 - CaptureSessionControl / セッションは状態を保持せず、状態は複合コントロールと各コントロール / Platform.AvaloniaUI が保持する（薄い統括者・SRP）。
-- DragRect / FadeMask / Loupe の配線は複合コントロールに集約され、セッションは配線コードを持たない（DRY）。
+- DragRect / Loupe の配線は複合コントロールに集約され、セッションは配線コードを持たない（DRY）。
 - セッションへのプラットフォームサービス（ICaptureService / IWindowService / IElementFinder）は注入され、内部で生成しない（DIP）。
 - 上位 AP への通知は Task 返却のみ（コールバック / イベント型 API ではない）。
 - 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）。
@@ -206,7 +204,7 @@ sequenceDiagram
 
 ## 9. ログ
 
-ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
+ログ定義は `Logging/CaptureSessionLogMessage.cs`（LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
 各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogCaptureStart(type)`）。
 `CaptureSessionControl` コンストラクタの `logger` 引数で注入し、null の場合は出力しない（app では NLog へ転送）。
 出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
@@ -235,15 +233,15 @@ sequenceDiagram
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Debug` | `LogMessage.LogCaptureStart` | キャプチャセッション開始（種別） |
-| `Debug` | `LogMessage.LogCaptureCompleted` | キャプチャ確定（矩形） |
-| `Debug` | `LogMessage.LogCaptureCancelled` | キャプチャキャンセル |
-| `Debug` | `LogMessage.LogResult` | キャプチャ結果サイズ（画像サイズ / 矩形） |
-| `Debug` | `LogMessage.LogOverlayConfirm` | オーバーレイ確定要求（Enter / ダブルクリック等） |
-| `Debug` | `LogMessage.LogOverlayCancel` | オーバーレイキャンセル要求（Esc 等） |
-| `Debug` | `LogMessage.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ） |
-| `Trace` | `LogMessage.LogHighlight` | ハイライト検出結果（ScreenSelect / WindowSelect・検出矩形 / タイトル / クラス名。マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用） |
-| `Debug` | `LogMessage.LogCropStart` | Crop セッション開始（元画像サイズ） |
-| `Debug` | `LogMessage.LogCropCompleted` | Crop 確定（切り出し矩形） |
-| `Debug` | `LogMessage.LogCropCancelled` | Crop キャンセル |
-| `Debug` | `LogMessage.LogSettingChanged` | 設定値変更（変更前後） |
+| `Debug` | `CaptureSessionLogMessage.LogCaptureStart` | キャプチャセッション開始（種別） |
+| `Debug` | `CaptureSessionLogMessage.LogCaptureCompleted` | キャプチャ確定（矩形） |
+| `Debug` | `CaptureSessionLogMessage.LogCaptureCancelled` | キャプチャキャンセル |
+| `Debug` | `CaptureSessionLogMessage.LogResult` | キャプチャ結果サイズ（画像サイズ / 矩形） |
+| `Debug` | `CaptureSessionLogMessage.LogOverlayConfirm` | オーバーレイ確定要求（Enter / ダブルクリック等） |
+| `Debug` | `CaptureSessionLogMessage.LogOverlayCancel` | オーバーレイキャンセル要求（Esc 等） |
+| `Debug` | `CaptureSessionLogMessage.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ） |
+| `Trace` | `CaptureSessionLogMessage.LogHighlight` | ハイライト検出結果（ScreenSelect / WindowSelect・検出矩形 / タイトル / クラス名。マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用） |
+| `Debug` | `CaptureSessionLogMessage.LogCropStart` | Crop セッション開始（元画像サイズ） |
+| `Debug` | `CaptureSessionLogMessage.LogCropCompleted` | Crop 確定（切り出し矩形） |
+| `Debug` | `CaptureSessionLogMessage.LogCropCancelled` | Crop キャンセル |
+| `Debug` | `CaptureSessionLogMessage.LogSettingChanged` | 設定値変更（変更前後） |

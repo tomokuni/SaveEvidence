@@ -253,7 +253,7 @@
 
 本プロジェクト（app）のログ定義は `Logging/AppLog.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。
 出力先は Serilog（`%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`、日次ローテーション・7日で自動アーカイブ・削除）で、`AppLog` のファイルシンク構成で制御する。
-（ズーム操作のログは `ZoomViewControl` の `LogMessage` が定義し、`ZoomViewControl.Log` へ注入されたロガーへ出力される）
+（ズーム操作のログは `ZoomViewControl` の `ZoomViewLogMessage` が定義し、`ZoomViewControl.Log` へ注入されたロガーへ出力される）
 
 ### 8.1 LogLevel 設定ポリシー
 

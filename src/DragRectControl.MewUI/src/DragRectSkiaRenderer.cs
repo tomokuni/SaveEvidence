@@ -7,11 +7,12 @@ using DrawingColor = System.Drawing.Color;
 
 namespace Estable.MewUI.DragRect;
 
-/// <summary>ドラッグ矩形の描画（選択枠線・ドラッグハンドル・始点マーカー・カーソル座標ラベル）を Skia で行うレンダラー。</summary>
+/// <summary>ドラッグ矩形の描画（ドラッグハンドル・始点マーカー・カーソル座標ラベル）を Skia で行うレンダラー。</summary>
 /// <remarks>
 /// UI 非依存コア（<see cref="SelectionGeometry"/>）の計算結果を <see cref="SKCanvas"/> へ描画するだけの層。<br/>
 /// Avalonia 版のドロワー（<c>DragRectDrawer</c>）と等価な見た目を、中間ビットマップなしの直接描画で実現する。<br/>
 /// ハンドル位置は <see cref="SelectionGeometry.GetHandlePosition"/> から取得する（コアが単一所有）。<br/>
+/// 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）は <see cref="DragRectOuterSkiaRenderer"/> が担う。<br/>
 /// 座標はすべて DIP で扱い、呼び出し側が DPI スケーリングを適用済みであることを前提とする。
 /// </remarks>
 internal static class DragRectSkiaRenderer
@@ -19,26 +20,6 @@ internal static class DragRectSkiaRenderer
     /// <summary>座標ラベル背景の上下パディング（DIP）。</summary>
     /// <remarks>フォントの描画基準（ベースライン）が UI ごとに異なるため、縦方向の余白は本 UI が持つ。</remarks>
     private const double LabelVerticalPadding = 2.0;
-
-    /// <summary>選択枠線を描画する。</summary>
-    /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
-    /// <param name="rect">選択矩形（DIP）。</param>
-    /// <param name="borderColor">枠線の色（アルファを含む）。</param>
-    /// <param name="borderThickness">枠線の太さ（DIP）。</param>
-    public static void DrawBorder(SKCanvas canvas, EsRect rect, DrawingColor borderColor, double borderThickness)
-    {
-        ArgumentNullException.ThrowIfNull(canvas);
-
-        using var paint = new SKPaint
-        {
-            IsAntialias = false,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = (float)borderThickness,
-            Color = borderColor.ToSKColor(),
-        };
-
-        canvas.DrawRect(ToSKRect(rect), paint);
-    }
 
     /// <summary>ドラッグハンドル（塗り矩形 + 枠線）を描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>

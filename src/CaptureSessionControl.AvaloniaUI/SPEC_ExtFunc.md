@@ -54,9 +54,9 @@
 
 `CaptureSessionControl.AvaloniaUI` は、外部アプリケーションが画面キャプチャと切出しを**単一の API**（`CaptureSessionControl`）で利用できるようにする Facade パターンのライブラリです。
 
-状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と Platform.AvaloniaUI が保持し、
+状態は複合コントロール `FadeMaskDragRectControl`（DragRect（外側の装飾を含む）+ Loupe を内包）と Platform.AvaloniaUI が保持し、
 `CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者です。  
-CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）を直接参照しない（公開型のカプセル化）。
+CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl / LoupeControl）を直接参照しない（公開型のカプセル化）。
 
 次の機能を提供します。
 
@@ -262,7 +262,7 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 | `ShowCoordLabel` | `bool?` | カーソル座標ラベルの表示有無 |
 | `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | `Color?` / `Color?` / `double?` | カーソル座標ラベルの外観 |
 
-**FadeMask 外観（15 項目）**:
+**外側の装飾の外観（15 項目）**:
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
@@ -306,7 +306,7 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 | AreaSelect / ScreenSelect / WindowSelect（`OverlayWindow.CompleteSelection`） | `PixelRect(X, Y, Width + 1, Height + 1)` | 仮想スクリーン Bitmap からの切り出し範囲と `SourceBounds` の両方に適用 |
 | Crop（`CropSession.ExecuteCropForSize`） | `PixelRect(X, Y, Width + 1, Height + 1)` | 画像右端・下端で画像サイズを超えないようクランプ |
 | Crop のサイズラベル | `WH: (幅 + 1, 高さ + 1)` | 閉区間のピクセル数で表示 |
-| 非暗転領域（穴）・DragRect 選択枠（表示） | `Rect(Inverse(始点), Inverse(終点 + (1, 1)))` | FadeMask / DragRect の描画時 DIP 変換で終点に +1。暗転領域は始点・終点のいずれも含まない |
+| 非暗転領域（穴）・DragRect 選択枠（表示） | `Rect(Inverse(始点), Inverse(終点 + (1, 1)))` | DragRect の描画時 DIP 変換で終点に +1。暗転領域は始点・終点のいずれも含まない |
 
 具体例: ドラッグ (10,10) → (50,50) の選択矩形は `Rect(10, 10, 40, 40)`（半開区間 [10,50)）ですが、キャプチャ / 切り出しは **`PixelRect(10, 10, 41, 41)`（[10,50] の 41×41 ピクセル）** になり、表示の非暗転領域も同じ [10,50] の 41×41 ピクセルになります。
 
@@ -329,12 +329,12 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 ### 7.2 StartCropAsync
 
 1. `CropSession` を生成 → `RunAsync`
-2. **複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe の配線を内包）を祖先 Panel に配置**（1 コントロールで完結）
+2. **複合コントロール `FadeMaskDragRectControl`（DragRect（外側の装飾を含む）+ Loupe の配線を内包）を祖先 Panel に配置**（1 コントロールで完結）
    - セッション開始時に `cropView.SetSelectionOverlayVisible(true)` を呼び、領域選択オーバーレイを可視化する
      （プレビュー表示時は非表示のため。Crop セッション中のみ暗転マスクを表示）
    - セッション終了時（確定・キャンセル）に `cropView.SetSelectionOverlayVisible(false)` で非表示 + 選択クリアに戻す
      （キャプチャ完了後・切出し後に Crop モード（暗転）が残るのを防ぐ）
-3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、**複合コントロールの `SetCoordinateTransform` で DragRect / FadeMask / Loupe の全コントロールに一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
+3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、**複合コントロールの `SetCoordinateTransform` で DragRect / Loupe の全コントロールに一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
    - プレビュー状態（ScrollOffset / ZoomPercent）は保持しない（スクロール・ズームは内包する `CropViewControl`（`ZoomViewControl`）が所有）
    - ルーペの表示位置・サイズは LoupeControl が自己計算（カーソル右下 + オフセット + クランプ）
    - DragRect にはプレビューの ScrollViewer を `AttachScrollViewer` で明示注入（スクロール・ズーム検知 + ホイール操作）
@@ -342,7 +342,7 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 4. カーソル上書き抑止（Crop 中の十字カーソル維持）
 5. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポートへ転送する（Ctrl+ホイール = ズーム / 通常ホイール = パン）
 6. **Crop 中の設定変更（`AppearanceSettings` setter）**: `CropSession.ApplySettings` で外観・クリップ設定を再適用（選択状態・ルーペ位置は維持）。キャプチャセッションはモーダル全画面のため対象外
-7. **矩形外クリック・選択キャンセル**: 複合コントロールが `SelectionStarted` / `SelectionCancelled` を購読し、FadeMask の選択状態（`Options.LogicalSelectionRect` / `Options.HasSelection`）をクリアして全面暗転（穴あけなし）に戻す（配線は複合コントロール内で完結）
+7. **矩形外クリック・選択キャンセル**: 複合コントロールが `SelectionStarted` / `SelectionCancelled` を購読し、DragRect の選択状態（`Options.LogicalSelectionRect` / `Options.HasSelection`）をクリアして全面暗転（穴あけなし）に戻す（配線は複合コントロール内で完結）
 8. 確定（`ConfirmRequested` → `ExecuteCropForSize`）→ 論理 Rect を `PixelRect` で返却
    - キャンセル（`CancelRequested` / `Deactivated`）→ 0x0 の空 `PixelRect`
 
@@ -351,6 +351,6 @@ DragRect の選択矩形は半開区間（`幅 = 終点 − 始点`、.NET `Rect
 - `StartCaptureAsync` / `StartCropAsync` は **UI スレッドから呼び出す**こと。
 - 実行中の再呼び出しは `null` を返します（既存セッションを継続）。呼び出し側は null を「進行中のため開始できない」と解釈してください。
 - `Dispose()` 後の公開操作は `ObjectDisposedException` を投げます。
-- `StartCropAsync` の `cropView` は `CropViewControl`（ズーム + 領域選択 + ルーペを内包した複合コントロール）です。オーバーレイ（DragRect / FadeMask / Loupe）は `CropViewControl` 内に配置されるため、祖先への配置は不要です（ズーム・パン・Fit・座標変換は内包する `ZoomViewControl` が単一所有）。
+- `StartCropAsync` の `cropView` は `CropViewControl`（ズーム + 領域選択 + ルーペを内包した複合コントロール）です。オーバーレイ（DragRect / Loupe）は `CropViewControl` 内に配置されるため、祖先への配置は不要です（ズーム・パン・Fit・座標変換は内包する `ZoomViewControl` が単一所有）。
 - `CaptureSettings` の数値メンバーは `Validate()` で範囲チェックされ、範囲外は `ArgumentOutOfRangeException` を投げます。
 - キャプチャ画像へのオーバーレイ写り込みは `IWindowService.SetCaptureExclusion`（Windows 10 2004+）で防止します。それ以前の Windows では写り込みが発生する可能性があります。

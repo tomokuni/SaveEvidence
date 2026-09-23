@@ -29,7 +29,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
-本プロジェクト（FadeMaskDragRect）は、このシステムのうち**領域選択の複合コントロール**（DragRect + FadeMask + Loupe の組み立て・配線・状態同期）を担います。Facade / Composite パターンでホストへ統一インターフェースを提供し、CaptureSessionControl.AvaloniaUI のセッション（OverlayWindow / CropSession）から使用されます。
+本プロジェクト（FadeMaskDragRect）は、このシステムのうち**領域選択の複合コントロール**（DragRect（外側の装飾を含む）+ Loupe の組み立て・配線・状態同期）を担います。Facade / Composite パターンでホストへ統一インターフェースを提供し、CaptureSessionControl.AvaloniaUI のセッション（OverlayWindow / CropSession）から使用されます。
 
 ## 2. 技術スタック
 
@@ -43,7 +43,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | DragRectControl / FadeMaskControl / LoupeControl / Platform.AvaloniaUI |
+| **依存プロジェクト** | DragRectControl / LoupeControl / Platform.AvaloniaUI |
 
 ## 3. アーキテクチャ
 
@@ -51,12 +51,12 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```text
 公開複合コントロール（FadeMaskDragRectControl）
-  → 内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）+ Platform.AvaloniaUI
+  → 内包コントロール（DragRectControl / LoupeControl）+ Platform.AvaloniaUI
 ```
 
 ### 3.2 依存の方向
 
-- 依存は**一方向の階層構造**（FadeMaskDragRectControl → DragRectControl / FadeMaskControl / LoupeControl / Platform.AvaloniaUI）。逆依存なし。
+- 依存は**一方向の階層構造**（FadeMaskDragRectControl → DragRectControl / LoupeControl / Platform.AvaloniaUI）。逆依存なし。
 - 内包コントロールは上位 AP の設定型（CaptureSettings 等）に依存しない（コアの `FadeMaskDragRectOptions` が変換先の境界）。
 - ホスト（上位 AP）は FadeMaskDragRectControl の公開 API のみを使用する（内包コントロールへの直接操作はテスト用アクセサ経由のみ）。
 - 配線・状態同期は本コントロールに集約し、セッションは配線コードを持たない（DRY）。
@@ -67,7 +67,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは内包コントロール（DragRect / FadeMask / Loupe）の LoggerMessage 定義に委譲する（本プロジェクトは配線のみ）。
+- ログは内包コントロール（DragRect / Loupe）の LoggerMessage 定義に委譲する（本プロジェクトは配線のみ）。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -97,15 +97,15 @@ flowchart TB
     end
     subgraph Dep["内包コントロール（外部プロジェクト）"]
         direction TB
-        DR["DragRectControl<br/>Estable.AvaloniaUI.DragRect"]
-        FM["FadeMaskControl<br/>Estable.AvaloniaUI.FadeMask<br/>（コアの Appearance・幾何を共有）"]
+        DR["DragRectControl<br/>Estable.AvaloniaUI.DragRect<br/>（選択矩形の外側の装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）も描画）"]
+
         LC["LoupeControl<br/>Estable.AvaloniaUI.Loupe"]
     end
 
     AP -->|"Mode / Options / SetCoordinateTransform / イベント購読"| Ctl
     Ctl -->|"ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested"| AP
     Ctl --> DR
-    Ctl --> FM
+
     Ctl --> LC
     Ctl ..> Modes : モードの解釈
     Ctl ..> Opt : 設定の分配（枠線の共用）
@@ -122,10 +122,9 @@ flowchart TB
 | ファイル | `FadeMaskDragRectControl.cs` |
 | 基底クラス | `Avalonia.Controls.Panel` |
 | 可視性 | public sealed |
-| 責務 | 内包コントロール（DragRect / FadeMask / Loupe）の生成・配置・配線・状態同期と、ホストへの統一インターフェース提供 |
-| 主要メンバー | `Mode` / `Options` / `SetCoordinateTransform` / `SetSelection` / `ClearSelection` / `SetDragRectSelection` / `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `FocusDragRect` / `RequestConfirm` / `RequestCancel` / `AttachScrollViewer` / `NotifyViewportChanged` / `HasSelection` / `SelectionRect` / ハイライト状態（LogicalHighlightRect 等）/ スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling`。設定（`Options`）の対象外の環境値）/ 公開イベント 6 種（独自引数） |
-| 内部アクセサ（internal） | `Loupe` / `Overlay` / `DragRect`（自身の Tests のみアクセス可。公開型のカプセル化のため internal 化） |
-| 内部フィールド | `_overlay`（FadeMaskControl）/ `_dragRect`（DragRectControl）/ `_loupeControl`（LoupeControl） |
+| 責務 | 内包コントロール（DragRect / Loupe）の生成・配置・配線・状態同期と、ホストへの統一インターフェース提供 |
+| 内部アクセサ（internal） | `Loupe` / `DragRect`（自身の Tests のみアクセス可。公開型のカプセル化のため internal 化） |
+| 内部フィールド | `_dragRect`（DragRectControl）/ `_loupeControl`（LoupeControl） |
 
 ### 6.2 FadeMaskDragRectMode
 
@@ -134,7 +133,7 @@ flowchart TB
 | ファイル | `FadeMaskDragRectControl.Core/src/FadeMaskDragRectMode.cs`（UI 非依存コア。`FadeMaskDragRectControl.Core`） |
 | 種類 | public enum |
 | メンバー | `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` |
-| 責務 | 描画モード（FadeMaskRenderMode）・DragRect / Loupe の可視性・全面暗転の切替指示 |
+| 責務 | 描画モード（OuterDecoRenderMode）・DragRect / Loupe の可視性・全面暗転の切替指示 |
 | 備考 | モードから描画設定への写像はコアの `FadeMaskDragRectModes` が単一所有し、Avalonia / MewUI で共有する |
 
 ### 6.3 FadeMaskDragRectOptions（コア）
@@ -143,15 +142,13 @@ flowchart TB
 | --- | --- |
 | ファイル | `FadeMaskDragRectControl.Core/src/FadeMaskDragRectOptions.cs`（UI 非依存コア） |
 | 種類 | public sealed record |
-| 責務 | 設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）の単一所有。枠線の共用規則（`ResolveDragRectOptions`）も所有する |
 | 備考 | 既定値は各内包コントロールの既定値を参照する（UI 側に既定値の写しを置かない） |
 
 ### 6.4 内包コントロール（外部プロジェクト）
 
 | コンポーネント | プロジェクト | 責務 |
 | --- | --- | --- |
-| `DragRectControl` | DragRectControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート） |
-| `FadeMaskControl` | FadeMaskControl | 暗転マスク・選択枠・ラベル・ハイライトの描画（設定と描画状態は `Options` = コアの `FadeMaskOptions` 1 値） |
+| `DragRectControl` | DragRectControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート）と、選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル・ハイライト）の描画 |
 | `LoupeControl` | LoupeControl | 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算） |
 
 ### 6.5 公開イベント引数
@@ -164,11 +161,11 @@ flowchart TB
 | `FadeMaskDragRectOptions` | Estable.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線） |
 | `ICoordTransform` / `CoordTransform` | Platform.Core | ドメイン ↔ DIP の座標変換ポート |
 
-**公開型のカプセル化**: 公開 API は内包コントロール（DragRectControl / FadeMaskControl / LoupeControl）の型を参照しない（イベント引数は独自型・状態はプロパティで提供）。
+**公開型のカプセル化**: 公開 API は内包コントロール（DragRectControl / LoupeControl）の型を参照しない（イベント引数は独自型・状態はプロパティで提供）。
 
 ## 7. 依存ルール
 
-- `FadeMaskDragRectControl` → `DragRectControl` / `FadeMaskControl` / `LoupeControl` / `Platform.AvaloniaUI` の**一方向依存**（逆依存なし）。
+- `FadeMaskDragRectControl` → `DragRectControl` / `LoupeControl` / `Platform.AvaloniaUI` の**一方向依存**（逆依存なし）。
 - 内包コントロールは上位 AP の設定型（CaptureSettings 等）に依存しない（コアの `FadeMaskDragRectOptions` が変換先の境界）。
 - ホスト（上位 AP）は `FadeMaskDragRectControl` の公開 API のみを使用する（内包コントロールへの直接アクセスは internal 化され、外部からは不可能）。
 
@@ -179,7 +176,7 @@ sequenceDiagram
     participant H as ホスト（CropSession / OverlayWindow）
     participant C as FadeMaskDragRectControl
     participant DR as DragRectControl
-    participant FM as FadeMaskControl + FadeMaskDrawer
+    
     participant LC as LoupeControl
 
     H->>C: Mode 設定
@@ -202,11 +199,11 @@ sequenceDiagram
 
 | 内包イベント | 複合コントロールの処理 | 同期先 |
 | --- | --- | --- |
-| `SelectionChanged` | `SetSelection(e.Rect)` | FadeMask（LogicalSelectionRect / HasSelection）+ 再描画 + ルーペ Bitmap 再生成（`RequestRender`）。ルーペの選択矩形破線は Rendered イベント経由で描画し、描画の可否はコアの `ShowSelectionOverlay` が単一所有する（UI は派生値を保持しない） |
-| `ViewportChanged` / ホスト通知（`NotifyViewportChanged`） | `NotifyViewportChanged()`（再描画 + ルーペ位置再計算） | DragRect + FadeMask 再描画 + Loupe（RefreshPosition）。選択矩形はビューポート変化で不変のため再同期しない |
-| `SelectionStarted` | `ClearSelection()` | FadeMask 選択状態クリア（残留防止） |
-| `SelectionCancelled` | `ClearSelection()` | FadeMask 選択状態クリア（残留防止） |
-| `LoupePositionMoved` | `IsVisible = true` + `CenterPoint` 更新 | Loupe + ホスト通知（`LoupePositionMoved`） |
+| `SelectionChanged` | ルーペの再描画を要求（`RequestRender`） | 選択矩形と外側の装飾は `DragRectControl` がセッションから直接読んで描画する（本クラスは同期しない）。ルーペの選択矩形破線は Rendered イベント経由で描画し、描画の可否はコアの `ShowSelectionOverlay` が単一所有する（UI は派生値を保持しない） |
+| `ViewportChanged` / ホスト通知（`NotifyViewportChanged`） | `NotifyViewportChanged()`（再描画 + ルーペ位置再計算） | DragRect 再描画 + Loupe（RefreshPosition）。選択矩形はビューポート変化で不変のため再同期しない |
+| `SelectionStarted` | （購読しない） | セッションが自身の選択を初期化するため同期不要（外側の装飾はセッションの状態をそのまま読む） |
+| `SelectionCancelled` | （購読しない） | 同上 |
+| `LoupePositionMoved` | `CenterPoint` 更新 + 表示可否の再判定 | Loupe + ホスト通知（`LoupePositionMoved`） |
 | `ConfirmRequested` | ホストへ中継 | ホスト |
 | `CancelRequested` | ホストへ中継 | ホスト |
 | `ZoomRequested` / `ScrollRequested` | ホストへ中継 | ホスト |

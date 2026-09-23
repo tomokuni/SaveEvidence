@@ -339,7 +339,7 @@ public sealed partial class LoupeControl : UserControl
     /// <summary>ログ用に Avalonia 座標をコア座標へ変換する。</summary>
     /// <param name="point">変換する座標。未設定は null。</param>
     /// <returns>コア座標。未設定は null。</returns>
-    /// <remarks>値の書式（<c>(X, Y)</c>）はコア（<c>LogMessage.LogCenterPointChanged</c>）が単一所有する。</remarks>
+    /// <remarks>値の書式（<c>(X, Y)</c>）はコア（<c>LoupeLogMessage.LogCenterPointChanged</c>）が単一所有する。</remarks>
     private static EsPoint? ToEsPoint(Point? point) => point?.ToEsPoint();
 
     // ====================================================================
@@ -494,7 +494,7 @@ public sealed partial class LoupeControl : UserControl
     /// 生成は <see cref="LoupeRenderPipeline.RenderAsync"/> に一元化する（ソース解決・抽出・描画合成）。<br/>
     /// <see cref="Source"/> / <see cref="CenterPoint"/> のいずれかが未設定、または切り出せない場合は市松模様のみを表示する<br/>
     /// （判定はコアの <see cref="LoupeImageExtractor.TryExtractRegionAt"/> が単一所有する）。<br/>
-    /// 例外は <see cref="LogMessage.LogUpdateError"/> で記録し、前回のビットマップを維持する。<br/>
+    /// 例外は <see cref="LoupeLogMessage.LogUpdateError"/> で記録し、前回のビットマップを維持する。<br/>
     /// </remarks>
     private async Task GenerateAsync(long generation)
     {

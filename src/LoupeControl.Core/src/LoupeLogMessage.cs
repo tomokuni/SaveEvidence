@@ -1,0 +1,185 @@
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
+using Microsoft.Extensions.Logging;
+
+namespace Estable.Loupe;
+
+/// <summary>ルーペのログ定義（ソース生成ログ・拡張メソッド）。</summary>
+/// <remarks>
+/// 設定値の変更・描画の例外・再描画の進行は、<b>両 UI で同一のレベル・書式にする必要がある</b>ため<br/>
+/// コアが単一所有する（UI 実装ごとに持つと書式がずれ、片方だけ修正される）。<br/>
+/// 値の文字列化（<c>(X, Y)</c> / <c>Width×Height</c>）も <see cref="LoupeLogFormat"/> が行い、UI 側に整形処理を置かない。<br/>
+/// 「変化したときだけ出力する」判断（同値の再設定・同一画像の再設定）も本クラスが単一所有する（UI 層に同値判定を置かない）。<br/>
+/// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
+/// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、呼び出し側では logger 引数を省略する。<br/>
+/// <see cref="LogRenderCore"/> と <see cref="LogGenerateAsyncDone"/> は中間ビットマップを生成する描画パイプライン<br/>
+/// （Avalonia 版）専用であり、画面へ直接描画する MewUI 版は呼び出さない（定義はログの一貫性のため共通に置く）。
+/// </remarks>
+internal static partial class LoupeLogMessage
+{
+    /// <summary>設定値変更のログ（変更前後）。</summary>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値（整形済み）。</param>
+    /// <param name="newValue">変更後の値（整形済み）。</param>
+    [LoggerMessage(LogLevel.Debug, "[LoupeCtrl] Setting: {Name} {OldValue} → {NewValue}")]
+    public static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
+
+    /// <summary>整数設定値の変更ログ（同値の再設定では出力しない）。</summary>
+    /// <remarks>
+    /// <see cref="LogSettingChanged(ILogger, string, string, string)"/> と同じ書式で出力する。<br/>
+    /// 「変化したときだけ出力する」判断と数値の文字列化を本メソッドが単一所有し、UI 層は値を渡すだけでよい<br/>
+    /// （外観設定の再適用でログが溢れるのを防ぐ規則）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値。</param>
+    /// <param name="newValue">変更後の値。</param>
+    public static void LogSettingChanged(this ILogger logger, string name, int oldValue, int newValue)
+    {
+        if (oldValue == newValue)
+        {
+            return;
+        }
+
+        logger.LogSettingChanged(name, LoupeLogFormat.FormatNumber(oldValue), LoupeLogFormat.FormatNumber(newValue));
+    }
+
+    /// <summary>実数設定値の変更ログ（同値の再設定では出力しない）。</summary>
+    /// <remarks><see cref="LogSettingChanged(ILogger, string, int, int)"/> の実数版（書式・規則とも同一）。</remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値。</param>
+    /// <param name="newValue">変更後の値。</param>
+    public static void LogSettingChanged(this ILogger logger, string name, double oldValue, double newValue)
+    {
+        if (oldValue == newValue)
+        {
+            return;
+        }
+
+        logger.LogSettingChanged(name, LoupeLogFormat.FormatNumber(oldValue), LoupeLogFormat.FormatNumber(newValue));
+    }
+
+    /// <summary>拡大中心（ドメイン座標）の変更ログ（同値の再設定では出力しない）。</summary>
+    /// <remarks>
+    /// LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: CenterPoint {OldValue} → {NewValue}</c><br/>
+    /// 中心はマウス移動のたびに設定されるため、「変化したときだけ出力する」判断を本メソッドが単一所有する<br/>
+    /// （UI 層に同値判定を持たせると、片方の UI だけログが溢れる）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前の拡大中心（未設定は null）。</param>
+    /// <param name="newValue">変更後の拡大中心（未設定は null）。</param>
+    public static void LogCenterPointChanged(this ILogger logger, EsPoint? oldValue, EsPoint? newValue)
+    {
+        if (oldValue == newValue)
+        {
+            return;
+        }
+
+        LogSettingChanged(logger, "CenterPoint", LoupeLogFormat.FormatPoint(oldValue), LoupeLogFormat.FormatPoint(newValue));
+    }
+
+    /// <summary>拡大元画像の変更ログ（同値の再設定では出力しない）。</summary>
+    /// <remarks>
+    /// LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: Source {OldValue} → {NewValue}</c><br/>
+    /// 「別のインスタンスに差し替わったか」の判断（参照の同一性）を本メソッドが単一所有し、<br/>
+    /// UI 層は設定の前後を渡すだけでよい（寸法が同じ別画像への差し替えは変更として記録する）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前の拡大元画像（未設定は null）。</param>
+    /// <param name="newValue">変更後の拡大元画像（未設定は null）。</param>
+    public static void LogSourceChanged(this ILogger logger, EsBitmap? oldValue, EsBitmap? newValue)
+    {
+        if (ReferenceEquals(oldValue, newValue))
+        {
+            return;
+        }
+
+        logger.LogSourceChanged(
+            LoupeLogFormat.DescribeImage(oldValue?.Width, oldValue?.Height),
+            LoupeLogFormat.DescribeImage(newValue?.Width, newValue?.Height));
+    }
+
+    /// <summary>拡大元画像の変更ログ（画像の寸法は各 UI が整形して渡す）。</summary>
+    /// <remarks>
+    /// LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: Source {OldValue} → {NewValue}</c><br/>
+    /// 画像の型は UI ごとに異なる（Avalonia は <c>IImage</c>、MewUI は <see cref="EsUtil.Platform.Core.Imaging.EsBitmap"/>）ため、<br/>
+    /// 寸法の取り出しは各 UI が担い、書式（<see cref="LoupeLogFormat.DescribeImage"/>）と設定名はコアが単一所有する。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前の画像の寸法（未設定は null）。</param>
+    /// <param name="newValue">変更後の画像の寸法（未設定は null）。</param>
+    public static void LogSourceChanged(this ILogger logger, string oldValue, string newValue)
+        => LogSettingChanged(logger, "Source", oldValue, newValue);
+
+    /// <summary>ルーペの基本サイズ（DIP）の変更ログ。</summary>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: RequestedSize {OldValue} → {NewValue}</c></remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前の基本サイズ。</param>
+    /// <param name="newValue">変更後の基本サイズ。</param>
+    public static void LogRequestedSizeChanged(this ILogger logger, int oldValue, int newValue)
+        => LogSettingChanged(logger, "RequestedSize", oldValue, newValue);
+
+    /// <summary>設定（<see cref="LoupeOptions"/>）の変更ログ（変化した項目だけを出力する）。</summary>
+    /// <remarks>
+    /// LogLevel: Debug（項目ごとの書式は個別の変更ログと同一）<br/>
+    /// 設定を 1 つの値へ統合したため、変更された項目の判定（差分検出）を本メソッドが単一所有する<br/>
+    /// （UI 層は変更前後の値を渡すだけで、どの項目が変わったかを判断しない）。<br/>
+    /// <see cref="LoupeAppearance"/> の各項目は変更ログの対象外とする（外観の再適用で設定数ぶんのログが溢れるため）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前の設定。</param>
+    /// <param name="newValue">変更後の設定。</param>
+    public static void LogOptionsChanged(this ILogger logger, LoupeOptions oldValue, LoupeOptions newValue)
+    {
+        // 各項目のログが同値判定を行うため、変化していない項目は出力されない
+        logger.LogRequestedSizeChanged(oldValue.RequestedSize, newValue.RequestedSize);
+        logger.LogZoomLevelChanged(oldValue.ZoomLevel, newValue.ZoomLevel);
+    }
+
+    /// <summary>表示スケーリング係数の変更ログ。</summary>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: RenderScaling {OldValue} → {NewValue}</c></remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前のスケーリング係数。</param>
+    /// <param name="newValue">変更後のスケーリング係数。</param>
+    public static void LogRenderScalingChanged(this ILogger logger, double oldValue, double newValue)
+        => LogSettingChanged(logger, "RenderScaling", oldValue, newValue);
+
+    /// <summary>拡大率の変更ログ。</summary>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: ZoomLevel {OldValue} → {NewValue}</c></remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前の拡大率。</param>
+    /// <param name="newValue">変更後の拡大率。</param>
+    public static void LogZoomLevelChanged(this ILogger logger, int oldValue, int newValue)
+        => LogSettingChanged(logger, "ZoomLevel", oldValue, newValue);
+
+    /// <summary>ルーペ描画の例外エラーログ。</summary>
+    /// <remarks>LogLevel: Error<br/>出力書式: <c>[LoupeCtrl] Update exception</c>（例外スタックトレース付き）</remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="exception">発生した例外。</param>
+    [LoggerMessage(LogLevel.Error, "[LoupeCtrl] Update exception")]
+    public static partial void LogUpdateError(this ILogger logger, Exception exception);
+
+    /// <summary>再描画コアの実行ログ。</summary>
+    /// <remarks>LogLevel: Trace<br/>出力書式: <c>[LoupeCtrl] RenderCore: generation={Generation}</c></remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="generation">描画世代番号。</param>
+    [LoggerMessage(LogLevel.Trace, "[LoupeCtrl] RenderCore: generation={Generation}")]
+    public static partial void LogRenderCore(this ILogger logger, long generation);
+
+    /// <summary>非同期描画の完了・破棄ログ。</summary>
+    /// <remarks>
+    /// LogLevel: Trace<br/>
+    /// 出力書式: <c>[LoupeCtrl] GenerateAsync done: set={Set} disposed={Disposed} visible={Visible} gen={Generation} current={Current}</c>
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="set">生成したビットマップを表示へ反映したかどうか。</param>
+    /// <param name="disposed">古い世代のビットマップとして破棄したかどうか。</param>
+    /// <param name="visible">表示状態。</param>
+    /// <param name="generation">生成したビットマップの世代番号。</param>
+    /// <param name="current">判定時点の最新世代番号。</param>
+    [LoggerMessage(LogLevel.Trace, "[LoupeCtrl] GenerateAsync done: set={Set} disposed={Disposed} visible={Visible} gen={Generation} current={Current}")]
+    public static partial void LogGenerateAsyncDone(this ILogger logger, bool set, bool disposed, bool visible, long generation, long current);
+}

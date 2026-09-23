@@ -1487,13 +1487,23 @@ public class DragRectControlTests
         // 容量超過（全クリア）分岐を実行する（無制限メモリ増加の防止と正しさの両立）
         for (var i = 0; i < DragRectDrawer.BrushCacheCapacity + 1; i++)
         {
-            control.Options = control.Options with { BorderColor = Color.FromRgb((byte)(i % 256), (byte)((i / 256) % 256), 0).ToDrawingColor() };
+            // ハンドルの塗り（ブラシ）とハンドル枠（ペン）の両方のキャッシュ容量を超えさせる
+            var color = Color.FromRgb((byte)(i % 256), (byte)((i / 256) % 256), 0).ToDrawingColor();
+            control.Options = control.Options with
+            {
+                HandleColor = color,
+                OuterAppearance = control.Options.OuterAppearance with { BorderColor = color },
+            };
             control.InvalidateVisual();
             window.CaptureRenderedFrame();
         }
 
         // クリア後に再描画しても例外なく正しく描画される（キャッシュが再構築される）
-        control.Options = control.Options with { BorderColor = Colors.Red.ToDrawingColor() };
+        control.Options = control.Options with
+        {
+            HandleColor = Colors.Red.ToDrawingColor(),
+            OuterAppearance = control.Options.OuterAppearance with { BorderColor = Colors.Red.ToDrawingColor() },
+        };
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
 

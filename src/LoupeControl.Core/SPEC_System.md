@@ -39,7 +39,7 @@ graph LR
 | `LoupeCheckerboard.cs` | 市松模様のタイルの明暗判定と、暗色タイルの矩形列挙（`ComputeDarkTileRects`） |
 | `LoupeRenderArgsCalculator.cs` | 描画完了イベント引数用の表示情報（切り出し左上・スケール）の計算と `RenderArgs` 値型 |
 | `LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化 |
-| `LogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有 |
+| `LoupeLogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有 |
 | `Imaging/LoupeImageExtractor.cs` | 切り出し領域の一辺・左上（ドメイン座標）の計算、`EsBitmap` からの領域切り出し、拡大描画の矩形（`ComputeMagnifiedRects`。引数はビットマップの実寸） |
 
 ## データフロー
@@ -73,7 +73,7 @@ sequenceDiagram
 | --- | --- |
 | ルーペの設定（表示サイズ・拡大率・外観）とその既定値 | `LoupeOptions` |
 | 設定の数値項目の安全域への補正（生成時） | `LoupeOptions`（`init` アクセサ。規則は `LoupeValueCoercer` が単一所有する） |
-| 設定の変更ログの差分検出（変化した項目だけを出力） | `LogMessage.LogOptionsChanged` |
+| 設定の変更ログの差分検出（変化した項目だけを出力） | `LoupeLogMessage.LogOptionsChanged` |
 | 装飾の外観（色・タイルサイズ・外枠の太さ・ラベル 4 項目）とその既定値 | `LoupeAppearance` |
 | 下地（ベース）色とその既定値 | `LoupeAppearance.BackgroundColor`（描画層が最初に塗る） |
 | 数値パラメータ（スカラー）の安全域とクランプ | `LoupeValueCoercer` |
@@ -89,7 +89,7 @@ sequenceDiagram
 | ラベルの余白・背景矩形・文字原点 | `LoupeLabelLayout` |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
 | 外観の寸法値の物理ピクセル換算（市松タイル・外枠の太さ・ラベル文字サイズ・角丸半径） | `LoupeAppearanceScaler` |
-| ログの書式とレベル、変化判定（同値・同一インスタンスなら出力しない） | `LogMessage` / `LoupeLogFormat` |
+| ログの書式とレベル、変化判定（同値・同一インスタンスなら出力しない） | `LoupeLogMessage` / `LoupeLogFormat` |
 
 `LoupeRenderArgsCalculator` / `LoupeImageExtractor.ExtractRegionAt` / UI 側の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
 

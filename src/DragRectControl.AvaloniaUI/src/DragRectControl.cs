@@ -1,4 +1,5 @@
 using Estable.DragRect;
+using Estable.DragRect.Decoration;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -43,6 +44,13 @@ public sealed partial class DragRectControl : Control
 
     /// <summary>選択・ドラッグ・nudge の状態を管理するセッション（入力の解釈と状態遷移の判断を担う）。</summary>
     private readonly DragRectSession _session;
+
+    /// <summary>外部から与えられた座標変換ポート（外側の装飾の描画に使用する。null はコアが <see cref="Scaling"/> から解決する）。</summary>
+    /// <remarks>
+    /// セッションは null を等価変換に置換して保持するため、<b>指定の有無（null かどうか）は本フィールドだけが保持する</b>。<br/>
+    /// この区別が必要なのは、ポート未指定時に倍率（<see cref="Scaling"/>）を使う規則をコアが単一所有するためである。
+    /// </remarks>
+    private ICoordTransform? _coordinatePort;
 
     /// <summary>カーソルサービス（nudge 時のカーソル移動・表示切替。既定実装の解決は UI 側で行う）。</summary>
     private readonly ICursorService _cursor;
@@ -113,7 +121,7 @@ public sealed partial class DragRectControl : Control
     static DragRectControl()
     {
         // 設定（外観を含む）の変更は再描画を要求する
-        AffectsRender<DragRectControl>(OptionsProperty);
+        AffectsRender<DragRectControl>(OptionsProperty, ScalingProperty, DisplayScaleScalingProperty);
 
         // 対話パラメータをセッションへ伝搬する（変更の影響判断・ログはコアが単一所有する）
         OptionsProperty.Changed.AddClassHandler<DragRectControl>(
@@ -187,7 +195,7 @@ public sealed partial class DragRectControl : Control
     /// <remarks>
     /// 本コントロールが属する <see cref="ScrollViewer"/> の <c>ScrollChanged</c>（スクロール・ズーム・
     /// 画像サイズ変更による Extent/Viewport 変化）を検知して発行する。<br/>
-    /// 選択矩形（ドメイン座標）はズーム・スクロールで不変だが、上位（FadeMask 暗転マスク等）は<br/>
+    /// 選択矩形（ドメイン座標）はズーム・スクロールで不変だが、上位（暗転マスクの描画等）は<br/>
     /// ビューポート座標で再描画する必要があるため、現在の選択矩形 + Snapshot を再通知する。<br/>
     /// </remarks>
     public event EventHandler<SelectionRectEventArgs>? ViewportChanged;
@@ -239,13 +247,67 @@ public sealed partial class DragRectControl : Control
     /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="DragRectOptions.Default"/>。</value>
     /// <remarks>
     /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬する。<br/>
-    /// 一部の項目だけを変える場合は <c>DragRectOptions.Default with { BorderThickness = 3.0 }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
+    /// 一部の項目だけを変える場合は <c>DragRectOptions.Default with { ShowHandles = false }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
     /// 色は UI 非依存の <see cref="System.Drawing.Color"/> で受け取り、描画時に Avalonia の色型へ変換する。
     /// </remarks>
     public DragRectOptions Options
     {
         get => GetValue(OptionsProperty);
         set => SetValue(OptionsProperty, value);
+    }
+
+    // ====================================================================
+    // 外側の装飾の描画入力（環境値・ホスト結線・座標変換ポート）
+    // ====================================================================
+
+    /// <summary><see cref="Scaling"/> 依存関係プロパティ。</summary>
+    public static readonly StyledProperty<double> ScalingProperty =
+        AvaloniaProperty.Register<DragRectControl, double>(nameof(Scaling), 1.0);
+
+    /// <summary><see cref="DisplayScaleScaling"/> 依存関係プロパティ。</summary>
+    public static readonly StyledProperty<double> DisplayScaleScalingProperty =
+        AvaloniaProperty.Register<DragRectControl, double>(nameof(DisplayScaleScaling));
+
+    /// <summary>ドメイン → DIP 変換の基準倍率を取得または設定する。</summary>
+    /// <value>ドメイン → DIP 変換の基準倍率。既定は 1.0。</value>
+    /// <remarks>
+    /// <see cref="SetCoordinateTransform"/> でポートを設定した場合は使われない（ポート優先）。<br/>
+    /// ポートと倍率の使い分け（ポート優先・倍率が 0 以下や等倍なら等価変換）はコアが単一所有する。<br/>
+    /// 選択矩形と十字マーカーの描画はセッションのポートのみを使うため本値の影響を受けない
+    /// （本値が影響するのは外側の装飾のサイズラベル・ラベル位置）。
+    /// </remarks>
+    public double Scaling
+    {
+        get => GetValue(ScalingProperty);
+        set => SetValue(ScalingProperty, value);
+    }
+
+    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
+    /// <value>物理ピクセル換算に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値が使用される。</value>
+    /// <remarks>
+    /// マルチスクリーン環境では、選択矩形が存在するスクリーンのスケーリング係数を設定する。<br/>
+    /// 0 以下を <see cref="Scaling"/> と同値として扱う規則はコア（<c>OuterDecoLabels.ResolveDisplayScaling</c>）が単一所有する。
+    /// </remarks>
+    public double DisplayScaleScaling
+    {
+        get => OuterDecoLabels.ResolveDisplayScaling(GetValue(DisplayScaleScalingProperty), Scaling);
+        set => SetValue(DisplayScaleScalingProperty, value);
+    }
+
+    /// <summary>サイズラベルのテキストを描画時に評価するプロバイダを取得または設定する。</summary>
+    /// <value>描画のたびに呼び出される関数。null の場合は暗転マスクの穴あけ矩形から自動生成する。</value>
+    /// <remarks>
+    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
+    /// 設定（変更）時は再描画を要求する。
+    /// </remarks>
+    public Func<string?>? SizeLabelOverrideProvider
+    {
+        get => field;
+        set
+        {
+            field = value;
+            InvalidateVisual();
+        }
     }
 
     // ====================================================================
@@ -261,6 +323,16 @@ public sealed partial class DragRectControl : Control
     /// </remarks>
     public DragRectSnapshot CurrentSnapshot => _session.CreateSnapshot();
 
+    /// <summary>選択矩形があるかどうかを取得する。</summary>
+    /// <value>選択中の場合は true。</value>
+    /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
+    public bool HasSelection => _session.HasSelection;
+
+    /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
+    /// <value>選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</value>
+    /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
+    public EsRect SelectionRect => _session.SelectionRect;
+
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は等価変換。</param>
     /// <remarks>
@@ -272,6 +344,7 @@ public sealed partial class DragRectControl : Control
     /// </remarks>
     public void SetCoordinateTransform(ICoordTransform? port)
     {
+        _coordinatePort = port;
         _session.SetPort(port);
         InvalidateVisual();
     }

@@ -4,7 +4,6 @@ using Estable.DragRect;
 using Estable.FadeMaskDragRect;
 using Estable.Loupe;
 using Estable.MewUI.DragRect;
-using Estable.MewUI.FadeMask;
 using Estable.MewUI.Loupe;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
@@ -18,36 +17,37 @@ namespace Estable.MewUI.FadeMaskDragRect;
 /// <summary>領域選択の複合コントロール（選択矩形 + 暗転マスク + ルーペの組み立て・配線・状態同期を 1 箇所に集約）。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: Facade / Composite（内包コントロールの公開 API を統合し、ホストへ統一インターフェースを提供）。<br/>
-/// 3 コントロールの生成・座標変換注入・イベント購読・状態同期・後片付けの配線を本クラスに集約し、<br/>
+/// 内包コントロールの生成・座標変換注入・イベント購読・状態同期・後片付けの配線を本クラスに集約し、<br/>
 /// ホストはライフサイクル（生成・配置・後片付け）とモード固有処理（キャプチャ・確定フロー）に専念できる（SRP）。<br/>
 /// <br/>
 /// <b>UI 層の責務（本クラス）</b>: 設定（<see cref="Options"/>）とモード（<see cref="Mode"/>）を内包コントロールへ分配し、<br/>
 /// 入力の受付（内包コントロールが担う）・効果の適用・通知の転送・描画先の選択のみを行う。<br/>
 /// モードごとの可否（選択矩形・ルーペ・全面暗転・破線）はコアの <c>FadeMaskDragRectModes</c> が、<br/>
-/// 選択矩形の可否はコアの <c>FadeMaskDragRectSelection</c> が、枠線の共用規則はコアの<br/>
-/// <see cref="FadeMaskDragRectOptions.ResolveDragRectOptions"/> が単一所有する（UI 層は判断を持たず、コアの結果を割り当てるだけになる）。<br/>
+/// 選択矩形の可否はコアの <c>FadeMaskDragRectSelection</c> が単一所有する（UI 層は判断を持たず、コアの結果を割り当てるだけになる）。<br/>
+/// <br/>
+/// <b>選択状態の単一のソース</b>: 選択矩形はドラッグ選択コントロールのセッションが単一所有する。本クラスは選択状態を複製せず、<br/>
+/// 読み取り（<see cref="HasSelection"/> / <see cref="SelectionRect"/>）と設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）を委譲するだけとする。<br/>
 /// <br/>
 /// <b>内部構造</b>:<br/>
 /// - <see cref="DragRectControl"/>: ドラッグ選択の本体（ドメイン座標 + 座標変換ポート）。<br/>
-/// - <see cref="FadeMaskControl"/>: 暗転マスク・選択枠・ハイライトの描画。<br/>
+///   選択矩形の<b>外側に描く装飾</b>（暗転マスク・穴あけ枠・サイズラベル・ハイライト）も本コントロールが描画する。<br/>
 /// - <see cref="LoupeControl"/>: 拡大鏡（中心 = ドメイン座標、表示位置はコアの計算で本クラスが配置する）。<br/>
 /// <br/>
 /// <b>配線（本クラス内で完結）</b>:<br/>
-/// - 選択矩形の変更 → 暗転マスクの LogicalSelectionRect / HasSelection を同期する。<br/>
-/// - 選択の開始・キャンセル → 暗転マスクの選択状態をクリアする（前の矩形の残留防止）。<br/>
+/// - 選択矩形の変更 → ルーペ画像上の破線を描き直すためにルーペを再描画する（選択矩形自体はドラッグ選択コントロールが描く）。<br/>
 /// - ルーペ位置の通知 → ルーペの中心を更新し、表示位置を再計算する。<br/>
 /// - 確定・キャンセル・ズーム要求 → ホストへ中継する（独自のイベント引数形式）。<br/>
 /// <br/>
-/// <b>ラベル</b>: サイズラベル（1 行目）とサブライン（2 行目以降）は暗転マスクへ委譲する。<br/>
+/// <b>ラベル</b>: サイズラベル（1 行目）とサブライン（2 行目以降）は外側の装飾（ドラッグ選択コントロール）へ委譲する。<br/>
 /// 文言はホストが <see cref="SizeLabelOverrideProvider"/> で与える（表示位置はコアの計算が単一所有する）。<br/>
 /// <br/>
 /// <b>動作モード（<see cref="Mode"/>）</b>:<br/>
 /// - <see cref="FadeMaskDragRectMode.Crop"/> / <see cref="FadeMaskDragRectMode.AreaSelect"/>: 選択矩形 + 暗転マスク + ルーペを有効化する。<br/>
-/// - <see cref="FadeMaskDragRectMode.ScreenSelect"/> / <see cref="FadeMaskDragRectMode.WindowSelect"/>: 暗転マスクのみ有効化する<br/>
-///   （ハイライト表示のみで、クリック確定フローはホストが担う）。<br/>
+/// - <see cref="FadeMaskDragRectMode.ScreenSelect"/> / <see cref="FadeMaskDragRectMode.WindowSelect"/>: ハイライトのみを描画し、<br/>
+///   入力を受けない（クリック確定フローはホストが担う）。<br/>
 /// <br/>
 /// <b>座標系</b>: 選択矩形・ルーペ中心はドメイン座標で扱う。ドメイン ↔ ローカル DIP の変換は<br/>
-/// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が担い、暗転マスクとルーペへも同じポートを適用する。<br/>
+/// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が担い、ルーペへも同じポートを適用する。<br/>
 /// <br/>
 /// <b>描画先の選択（フレームワーク差）</b>: ルーペ画像上の選択矩形の破線は、描画完了イベントで通知されたキャンバスへ<br/>
 /// 本クラスが直接描く（Avalonia 版は描画完了イベントをホストへ中継し、ホストがルーペ画像へ描く）。<br/>
@@ -58,10 +58,7 @@ namespace Estable.MewUI.FadeMaskDragRect;
 /// </remarks>
 public sealed class FadeMaskDragRectControl : Panel
 {
-    /// <summary>暗転マスクコントロール（入力は受け取らず、下のコントロールへ通す）。</summary>
-    private readonly FadeMaskControl _overlay = new() { IsHitTestVisible = false };
-
-    /// <summary>ドラッグ選択コントロール（選択矩形・ハンドル・nudge）。</summary>
+    /// <summary>ドラッグ選択コントロール（選択矩形・ハンドル・nudge と、外側の装飾（暗転マスク・枠・ラベル）の描画）。</summary>
     private readonly DragRectControl _dragRect = new() { IsHitTestVisible = true };
 
     /// <summary>ルーペコントロール（表示位置は本クラスが配置する）。</summary>
@@ -84,14 +81,13 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     public FadeMaskDragRectControl()
     {
-        Add(_overlay);
         Add(_dragRect);
         Add(_loupe);
 
-        // ── 配線（DragRect のイベントを状態同期とホスト通知へ変換） ──
-        _dragRect.SelectionChanged += (_, e) => SetSelection(e.Rect);
-        _dragRect.SelectionStarted += (_, _) => ClearSelection();
-        _dragRect.SelectionCancelled += (_, _) => ClearSelection();
+        // ── 配線 ──
+        // 選択矩形の変更は、ルーペ画像上の破線を描き直すためにルーペの再描画を要求する
+        // （選択矩形の描画自体と外側の装飾はドラッグ選択コントロールがセッションから直接読んで描画する）。
+        _dragRect.SelectionChanged += (_, _) => _loupe.InvalidateVisual();
         _dragRect.ViewportChanged += (_, _) => NotifyViewportChanged();
         _dragRect.LoupePositionMoved += (_, e) => OnLoupePositionMoved(e.Point);
         _dragRect.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect);
@@ -101,9 +97,8 @@ public sealed class FadeMaskDragRectControl : Panel
         // ルーペ画像上の選択矩形破線は、ルーペの描画完了直後に同一のキャンバスへ描く
         _loupe.Rendered += OnLoupeRendered;
 
-        // 設定の既定値を子コントロールへ分配してから、モード（既定 AreaSelect）の状態を適用する
+        // 設定の既定値を子コントロールへ分配する（モードの状態適用は ApplyOptions の内部で行われる）
         ApplyOptions();
-        ApplyMode();
     }
 
     /// <summary>Enter キーまたは <see cref="RequestConfirm"/> による確定要求イベント（選択確定後のみ発火する）。</summary>
@@ -167,40 +162,38 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>現在の選択状態（選択矩形の有無）を取得する。</summary>
     /// <value>選択矩形が有効な場合は true。</value>
-    /// <remarks>選択状態の真のソースは暗転マスクコントロール（<see cref="FadeMaskControl.Options"/>）に集約し、ドラッグ選択の変更から同期する。</remarks>
-    public bool HasSelection => _overlay.Options.HasSelection;
+    /// <remarks>選択状態の真のソースはドラッグ選択コントロールのセッションであり、本プロパティはその読み取りを委譲するだけである。</remarks>
+    public bool HasSelection => _dragRect.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形。未選択時は 0x0 の空矩形。</value>
-    public EsRect SelectionRect => _overlay.Options.LogicalSelectionRect ?? default;
+    /// <remarks>選択状態の真のソースはドラッグ選択コントロールのセッションであり、本プロパティはその読み取りを委譲するだけである。</remarks>
+    public EsRect SelectionRect => _dragRect.SelectionRect;
 
     /// <summary>ハイライト矩形（ドメイン座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。未検出時は null。選択矩形より優先される。</value>
     public EsRect? LogicalHighlightRect
     {
-        get => _overlay.Options.LogicalHighlightRect;
-        set => _overlay.Options = _overlay.Options with { LogicalHighlightRect = value };
+        get => _dragRect.Options.OuterHighlightRect;
+        set => _dragRect.Options = _dragRect.Options with { OuterHighlightRect = value };
     }
 
     /// <summary>ハイライト表示の有無を取得または設定する。</summary>
     /// <value>true の場合は <see cref="LogicalHighlightRect"/> を穴あけ矩形として使う（選択矩形より優先）。</value>
     public bool HasHighlight
     {
-        get => _overlay.Options.HasHighlight;
-        set => _overlay.Options = _overlay.Options with { HasHighlight = value };
+        get => _dragRect.Options.OuterHasHighlight;
+        set => _dragRect.Options = _dragRect.Options with { OuterHasHighlight = value };
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうかを取得する。</summary>
     /// <value>全面暗転する場合は true。モードから導出される読み取り専用の値。</value>
-    public bool ShowFullOverlay => _overlay.Options.ShowFullOverlay;
+    public bool ShowFullOverlay => _dragRect.Options.OuterShowFullOverlay;
 
     /// <summary>ルーペ中心（ドメイン座標）を取得する。</summary>
     /// <value>ルーペ中心。未設定時は null。</value>
     /// <remarks>中心の真のソースはルーペコントロールへ集約し、本プロパティはその参照のみを返す。</remarks>
     public EsPoint? LoupeCenterPoint => _loupe.CenterPoint;
-
-    /// <summary>暗転マスクコントロール（テスト用アクセサ。外観・状態は <see cref="Options"/> / 公開プロパティ経由で設定する）。</summary>
-    internal FadeMaskControl Overlay => _overlay;
 
     /// <summary>ドラッグ選択コントロール（テスト用アクセサ。設定は <see cref="Options"/> 経由で設定する）。</summary>
     internal DragRectControl DragRect => _dragRect;
@@ -210,23 +203,23 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>ハイライト対象のウィンドウタイトル（情報ラベルの文言）を取得または設定する。</summary>
     /// <value>ウィンドウタイトル。未検出時は空文字。</value>
-    /// <remarks>表示の可否はモードと <c>FadeMaskAppearance.InfoLabelVisible</c> からコアが判定する。</remarks>
+    /// <remarks>表示の可否はモードと <c>OuterDecoAppearance.InfoLabelVisible</c> からコアが判定する。</remarks>
     public string WindowTitle
     {
-        get => _overlay.Options.WindowTitle;
-        set => _overlay.Options = _overlay.Options with { WindowTitle = value };
+        get => _dragRect.Options.OuterWindowTitle;
+        set => _dragRect.Options = _dragRect.Options with { OuterWindowTitle = value };
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するデリゲートを取得または設定する。</summary>
     /// <value>描画時に呼び出される関数。null または空文字を返す場合はサイズラベルを描画しない。</value>
     /// <remarks>
     /// ホストは最新の選択状態から文言を生成するクロージャを設定する（例: コアの
-    /// <c>FadeMaskLabels.FormatSizeLabel</c> で選択矩形を整形する）。
+    /// <c>OuterDecoLabels.FormatSizeLabel</c> で選択矩形を整形する）。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
     {
-        get => _overlay.SizeLabelOverrideProvider;
-        set => _overlay.SizeLabelOverrideProvider = value;
+        get => _dragRect.SizeLabelOverrideProvider;
+        set => _dragRect.SizeLabelOverrideProvider = value;
     }
 
     /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）を取得または設定する。</summary>
@@ -237,8 +230,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     public double Scaling
     {
-        get => _overlay.Scaling;
-        set => _overlay.Scaling = value;
+        get => _dragRect.Scaling;
+        set => _dragRect.Scaling = value;
     }
 
     /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="Scaling"/> と同値）を取得または設定する。</summary>
@@ -246,8 +239,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>環境値のため設定（<see cref="Options"/>）には含めず、ホストが与える。</remarks>
     public double DisplayScaleScaling
     {
-        get => _overlay.DisplayScaleScaling;
-        set => _overlay.DisplayScaleScaling = value;
+        get => _dragRect.DisplayScaleScaling;
+        set => _dragRect.DisplayScaleScaling = value;
     }
 
     /// <summary>ルーペの DIP → 物理ピクセル倍率を取得または設定する。</summary>
@@ -262,7 +255,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
     /// <param name="port">座標変換ポート。null の場合は <see cref="Scaling"/> 相当の等倍スケール（コアが解決）を使う。</param>
     /// <remarks>
-    /// ドラッグ選択と暗転マスクへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
+    /// ドラッグ選択とルーペへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。<br/>
     /// null はそのまま渡す（未設定を倍率で解決する規則はコアが単一所有する）。ルーペの表示位置計算のみ本クラスが行うため、<br/>
     /// その用途では等価変換で代替する。
@@ -271,16 +264,12 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         _port = port;
         _dragRect.SetCoordinateTransform(port);
-        _overlay.SetCoordinateTransform(port);
         InvalidateArrange();
     }
 
     /// <summary>操作ログの出力先を取得または設定する（内包するコントロールへ伝搬する）。</summary>
     /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
-    /// <remarks>
-    /// ドラッグ選択コントロールとルーペへ伝搬する（Avalonia 版と同じ範囲）。<br/>
-    /// 暗転マスクは選択のたびに状態変更ログを出すため対象外とする（必要なら内包コントロールの <c>Log</c> を直接設定する）。
-    /// </remarks>
+    /// <remarks>ドラッグ選択コントロールとルーペへ伝搬する（Avalonia 版と同じ範囲）。</remarks>
     public ILogger Log
     {
         get => _dragRect.Log;
@@ -298,24 +287,32 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>選択キャンセル要求をドラッグ選択コントロールへ委譲する（Escape キー相当）。</summary>
     public void RequestCancel() => _dragRect.RequestCancel();
 
-    /// <summary>選択矩形をプログラム的に設定する（外部復元・テスト用）。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。</param>
-    /// <remarks>
-    /// ドラッグ選択コントロールへ委譲する。選択変更が発火し、暗転マスクとルーペ表示も同期される。
-    /// </remarks>
-    public void SetDragRectSelection(EsRect rect) => _dragRect.SetSelection(rect);
-
     /// <summary>ドラッグ選択コントロールへフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
     public void FocusDragRect() => _dragRect.Focus();
 
-    /// <summary>選択状態をオーバーレイ描画へ反映する（ホストが選択矩形を外部から設定する場合に使用する）。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。幅または高さが 0 以下の場合は選択なし。</param>
-    /// <remarks>選択として成立するかどうかの判定はコアの <c>FadeMaskDragRectSelection</c> が単一所有する。</remarks>
-    public void SetSelection(EsRect rect) => SyncSelection(FadeMaskDragRectSelection.IsUsable(rect.Width, rect.Height) ? rect : null);
+    /// <summary>選択矩形をプログラム的に設定する（外部復元・テスト用）。</summary>
+    /// <param name="rect">選択矩形（ドメイン座標）。</param>
+    /// <remarks>
+    /// ドラッグ選択コントロールへ委譲する（状態の更新と通知はセッションが担う）。<br/>
+    /// 選択として成立するかどうかの判定はコアの <c>FadeMaskDragRectSelection</c> が単一所有する。<br/>
+    /// 破線（ルーペ画像上の選択枠）は選択変更の通知を受けてルーペが再描画する。
+    /// </remarks>
+    public void SetSelection(EsRect rect)
+    {
+        // 選択として成立しないサイズは選択なしとして扱う（判断はコアが単一所有する）
+        if (FadeMaskDragRectSelection.IsUsable(rect.Width, rect.Height))
+        {
+            _dragRect.SetSelection(rect);
+        }
+        else
+        {
+            ClearSelection();
+        }
+    }
 
     /// <summary>選択状態をクリアして全面暗転（穴あけなし）に戻す。</summary>
-    /// <remarks>新規選択の開始時・キャンセル時に、前の選択矩形が暗転マスクに残らないようにする。</remarks>
-    public void ClearSelection() => SyncSelection(null);
+    /// <remarks>セッションの選択状態と nudge をまとめて初期化する（状態の初期化はセッションが単一所有する）。</remarks>
+    public void ClearSelection() => _dragRect.ResetSelection();
 
     /// <summary>ルーペの中心位置（ドメイン座標）を設定して表示を開始する。</summary>
     /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>
@@ -366,9 +363,9 @@ public sealed class FadeMaskDragRectControl : Panel
         InvalidateArrange();
     }
 
-    /// <summary>暗転マスクの再描画を要求する。</summary>
+    /// <summary>選択オーバーレイ（暗転マスク・ハイライト・選択矩形）の再描画を要求する。</summary>
     /// <remarks>ハイライト等の状態を変更した後に呼び出す。</remarks>
-    public void InvalidateOverlay() => _overlay.InvalidateVisual();
+    public void InvalidateOverlay() => _dragRect.InvalidateVisual();
 
     /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を内包コントロールへ通知する。</summary>
     /// <remarks>
@@ -378,7 +375,6 @@ public sealed class FadeMaskDragRectControl : Panel
     public void NotifyViewportChanged()
     {
         _dragRect.InvalidateVisual();
-        _overlay.InvalidateVisual();
         InvalidateArrange();
     }
 
@@ -391,13 +387,12 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     protected override Size MeasureContent(Size availableSize)
     {
-        _overlay.Measure(availableSize);
         _dragRect.Measure(availableSize);
         _loupe.Measure(availableSize);
         return Size.Empty;
     }
 
-    /// <summary>子コントロールを配置する（暗転マスクとドラッグ選択は全面、ルーペは中心 + オフセット）。</summary>
+    /// <summary>子コントロールを配置する（ドラッグ選択は全面、ルーペは中心 + オフセット）。</summary>
     /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
     /// <remarks>
     /// ルーペの表示サイズ・位置はコアの <see cref="LoupePositionCalculator.Compute"/> が単一所有する<br/>
@@ -406,7 +401,6 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     protected override void ArrangeContent(Rect bounds)
     {
-        _overlay.Arrange(bounds);
         _dragRect.Arrange(bounds);
 
         if (!_loupe.IsVisible || _loupe.CenterPoint is not { } domainPos)
@@ -428,39 +422,50 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>設定を内包コントロールへ分配する。</summary>
     /// <remarks>
-    /// 枠線の共用（選択枠線 ＝ 暗転マスクの穴あけ枠）はコアの <see cref="FadeMaskDragRectOptions.ResolveDragRectOptions"/> が解決する。<br/>
-    /// 適用後は暗転マスク・選択矩形の再描画とルーペの再描画・再配置を要求する（選択状態・ルーペ中心は維持される）。
+    /// ドラッグ選択コントロールの設定は 1 回の代入で分配する（外側の装飾の外観も同じ値が持つ）。<br/>
+    /// ハイライト（ホストが与える実行時状態）は設定値に含まれないため、設定の差し替えで失わないように引き継ぐ。<br/>
+    /// 適用後は選択矩形の再描画とルーペの再描画・再配置を要求する（選択状態・ルーペ中心は維持される）。
     /// </remarks>
     private void ApplyOptions()
     {
-        // 外観は設定値の 1 つであるため、現在の状態（選択矩形・ハイライト・モード）を保ったまま外観のみを差し替える
-        _overlay.Options = _overlay.Options with { Appearance = _options.Overlay };
-        _dragRect.Options = _options.ResolveDragRectOptions();
+        var current = _dragRect.Options;
+        _dragRect.Options = _options.DragRect with
+        {
+            OuterHighlightRect = current.OuterHighlightRect,
+            OuterHasHighlight = current.OuterHasHighlight,
+        };
         _loupe.Options = _options.Loupe;
 
-        _overlay.InvalidateVisual();
+        // モードから導出される描画状態は設定値に含まれないため、設定を適用した後に改めて適用する
+        ApplyMode();
+
         _dragRect.InvalidateVisual();
         // ルーペは描画のたびに選択矩形の破線を組み立てるため、破線色の変更は再描画で反映される
         _loupe.InvalidateVisual();
         InvalidateArrange();
     }
 
-    /// <summary>モードに応じて内包コントロールの状態（可視性・全面暗転・破線）を適用する。</summary>
+    /// <summary>モードに応じて内包コントロールの状態（描画モード・入力の可否・全面暗転・破線）を適用する。</summary>
     /// <remarks>
     /// モードと状態の対応はコアの <c>FadeMaskDragRectModes</c> が単一所有する。<br/>
+    /// 選択矩形を使わないモード（ハイライトのみ）でも暗転マスクを描画するため、
+    /// 可視性ではなく<b>入力の可否</b>（ヒットテスト）を切り替える。<br/>
     /// ルーペ画像上の破線の可否もモード依存のため、既存の描画から破線を消す（または描く）ためにルーペを再描画する。
     /// </remarks>
     private void ApplyMode()
     {
         var state = FadeMaskDragRectModes.Resolve(_mode);
 
-        // モードから導出される表示ポリシー（描画モード・全面暗転）は 1 回の変更通知でまとめて適用する
-        _overlay.Options = _overlay.Options with
+        // モードから導出される描画状態（描画モード・全面暗転・ハンドルの表示可否）は 1 回の変更通知でまとめて適用する
+        _dragRect.Options = _dragRect.Options with
         {
-            Mode = state.RenderMode,
-            ShowFullOverlay = state.ShowFullOverlay,
+            OuterRenderMode = state.RenderMode,
+            OuterShowFullOverlay = state.ShowFullOverlay,
+            ShowHandles = state.UsesSelection,
         };
-        _dragRect.IsVisible = state.UsesSelection;
+
+        // 選択矩形を使わないモードでも暗転マスク（ハイライト）は描画するため、描画は止めず入力だけを止める
+        _dragRect.IsHitTestVisible = state.UsesSelection;
 
         UpdateLoupeVisibility();
         _loupe.InvalidateVisual();
@@ -505,38 +510,19 @@ public sealed class FadeMaskDragRectControl : Panel
     internal void DrawSelectionOverlay(SKCanvas canvas, EsPoint captureTopLeft, double scale, int pixelSize)
     {
         // 破線を描くかどうかはモード（コアが単一所有する）と選択矩形の有無で決まる
-        if (!FadeMaskDragRectModes.Resolve(_mode).ShowSelectionOverlay
-            || _overlay.Options.LogicalSelectionRect is not { } selectionRect)
+        if (!FadeMaskDragRectModes.Resolve(_mode).ShowSelectionOverlay || !_dragRect.HasSelection)
         {
             return;
         }
 
         FadeMaskDragRectSkiaRenderer.DrawSelectionRect(
             canvas,
-            selectionRect,
+            _dragRect.SelectionRect,
             captureTopLeft,
             scale,
             pixelSize,
             _options.SelectionRectColorA,
             _options.SelectionRectColorB);
-    }
-
-    /// <summary>選択状態を暗転マスクへ同期する。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。null は選択なし。</param>
-    /// <remarks>
-    /// <see cref="SetSelection"/> と <see cref="ClearSelection"/> で共用する（重複排除）。<br/>
-    /// ルーペ画像上の破線は描画のたびに選択矩形から組み立てるため、再描画を要求する（破線はルーペのプロパティに現れない）。
-    /// </remarks>
-    private void SyncSelection(EsRect? rect)
-    {
-        // 設定と描画状態は 1 つの値（コアの FadeMaskOptions）が単一所有するため、選択の有無と矩形をまとめて更新する
-        // （1 回の変更通知で再描画される）。
-        _overlay.Options = _overlay.Options with
-        {
-            HasSelection = rect is not null,
-            LogicalSelectionRect = rect,
-        };
-        _loupe.InvalidateVisual();
     }
 
     /// <summary>ルーペ位置の更新（ドラッグ選択からの通知）を処理する。</summary>

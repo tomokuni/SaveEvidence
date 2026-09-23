@@ -14,7 +14,7 @@
 | `LoupePositionCalculator` | `internal` | 同上 + `FadeMaskDragRectControl.MewUI` / `SaveEvidence.MewUI` |
 | `LoupeRenderArgsCalculator` | `internal` | 同上 |
 | `LoupeLabelLayout` | `internal` | 同上 |
-| `LoupeLogFormat` / `LogMessage` | `internal` | 同上 |
+| `LoupeLogFormat` / `LoupeLogMessage` | `internal` | 同上 |
 | `Imaging.LoupeImageExtractor` | `internal` | 同上 |
 
 ## `LoupeOptions`（`Estable.Loupe`・`public sealed record`）
@@ -177,7 +177,7 @@ public static double ClampSizeToArea(double size, EsSize areaSize);
 | `FormatPoint(EsPoint? point)` | `(X, Y)` 形式。未設定は `null` |
 | `DescribeImage(int? width, int? height)` | `Width×Height` 形式。片方でも未設定なら `null` |
 
-## `LogMessage`（`Estable.Loupe`）
+## `LoupeLogMessage`（`Estable.Loupe`）
 
 ルーペのログ定義（`LoggerMessage` ソース生成）を単一所有します。`[LoupeCtrl]` の接頭辞とレベル・書式は両 UI で共通です。
 

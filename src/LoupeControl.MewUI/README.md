@@ -104,7 +104,7 @@ var (size, position) = LoupePositionCalculator.Compute(
 
 `Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
 
-数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `LoupeValueCoercer`、ログの書式と変化判定はコアの `LogMessage` が単一所有します）。設定（`Options`）と外観（`Options.Appearance`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `RenderScaling` のみ `coerce` を登録します）。
+数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `LoupeValueCoercer`、ログの書式と変化判定はコアの `LoupeLogMessage` が単一所有します）。設定（`Options`）と外観（`Options.Appearance`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `RenderScaling` のみ `coerce` を登録します）。
 
 ## イベント
 

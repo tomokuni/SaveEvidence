@@ -40,8 +40,12 @@ Avalonia 版と同一の挙動になります。
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `BorderColor` | `System.Drawing.Color` | `#FFA9A9A9` | 選択枠線の色（不透明度はアルファに統合） |
-| `BorderThickness` | `double` | `2.0` | 選択枠線の太さ（DIP） |
+| `OuterAppearance` | `OuterDecoAppearance` | 枠線のみ（暗転・ラベルなし） | 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）の外観。**枠線の色・太さは本値が単一所有する**（選択枠線と穴あけ枠は同じ矩形に重なるため） |
+| `OuterRenderMode` | `OuterDecoRenderMode` | `AreaSelect` | 外側の装飾の描画モード（操作ラベルの文言選定に使用） |
+| `OuterWindowTitle` | `string` | `""` | 操作ラベル（情報ラベル）に表示するウィンドウタイトル |
+| `OuterShowFullOverlay` | `bool` | `false` | 穴あけを行わず全面を暗転するかどうか |
+| `OuterHighlightRect` / `OuterHasHighlight` | `EsRect?` / `bool` | `null` / `false` | ハイライト矩形（ドメイン座標）とその有効フラグ |
+| `ShowHandles` | `bool` | `true` | ドラッグハンドルを表示するかどうか |
 | `HandleColor` | `System.Drawing.Color` | 白 | ドラッグハンドルの塗り色 |
 | `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP） |
 | `HandleHitRadius` | `double` | `12.0` | ドラッグハンドルのヒットテスト半径（DIP。ドメインへ変換して判定する） |
@@ -147,7 +151,11 @@ var dragRect = new DragRectControl
 {
     Options = DragRectOptions.Default with
     {
-        BorderColor = System.Drawing.Color.FromArgb(255, 0, 120, 215),
+        // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描く
+        OuterAppearance = DragRectOptions.Default.OuterAppearance with
+        {
+            BorderColor = System.Drawing.Color.FromArgb(255, 0, 120, 215),
+        },
         HandleHitRadius = 12.0,
         ShowCoordLabel = true,
     },

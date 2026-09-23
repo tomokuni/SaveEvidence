@@ -46,7 +46,7 @@ public class FadeMaskDragRectOptionsMapperTests
     }
 
     [Fact]
-    public void 変換_枠線は暗転マスクの外観へ入り選択枠線へ導出される()
+    public void 変換_枠線は選択矩形の設定の外側の装飾に入る()
     {
         var settings = CreateSettings() with
         {
@@ -56,11 +56,9 @@ public class FadeMaskDragRectOptionsMapperTests
 
         var options = settings.ToFadeMaskDragRectOptions();
 
-        // 枠線は暗転マスクの外観が単一所有し、選択枠線へ導出される（同じ矩形に重なるため）
-        Assert.Equal(DrawingColor.Red, options.Overlay.BorderColor);
-        Assert.Equal(1.0, options.Overlay.BorderThickness);
-        Assert.Equal(DrawingColor.Red, options.ResolveDragRectOptions().BorderColor);
-        Assert.Equal(1.0, options.ResolveDragRectOptions().BorderThickness);
+        // 枠線は外側の装飾（暗転マスクの穴あけ枠）が単一所有する（選択枠線と重なるため 2 つの値に分けない）
+        Assert.Equal(DrawingColor.Red, options.DragRect.OuterAppearance.BorderColor);
+        Assert.Equal(1.0, options.DragRect.OuterAppearance.BorderThickness);
     }
 
     [Fact]
@@ -83,7 +81,7 @@ public class FadeMaskDragRectOptionsMapperTests
             InfoLabelFontSize = 12.0,
         };
 
-        var appearance = settings.ToFadeMaskDragRectOptions().Overlay;
+        var appearance = settings.ToFadeMaskDragRectOptions().DragRect.OuterAppearance;
 
         Assert.Equal(DrawingColor.FromArgb(128, 0, 0, 255), appearance.OverlayColor);
         Assert.False(appearance.ShowSizeLabel);

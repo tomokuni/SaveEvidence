@@ -56,21 +56,6 @@
     <Project Path="src/DragRectControl.AvaloniaUI/src/DragRectControl.AvaloniaUI.csproj" />
     <Project Path="src/DragRectControl.AvaloniaUI/tests/DragRectControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/FadeMaskControl.Core/">
-    <Project Path="src/FadeMaskControl.Core/src/FadeMaskControl.Core.csproj" />
-    <Project Path="src/FadeMaskControl.Core/tests/FadeMaskControl.Core.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/FadeMaskControl.Core/src/" />
-  <Folder Name="/src/FadeMaskControl.MewUI/">
-    <Project Path="src/FadeMaskControl.MewUI/src/FadeMaskControl.MewUI.csproj" />
-    <Project Path="src/FadeMaskControl.MewUI/tests/FadeMaskControl.MewUI.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/FadeMaskControl.MewUI/src/" />
-  <Folder Name="/src/FadeMaskControl.AvaloniaUI/">
-    <Project Path="src/FadeMaskControl.AvaloniaUI/sample/FadeMaskControl.AvaloniaUI.Sample.csproj" />
-    <Project Path="src/FadeMaskControl.AvaloniaUI/src/FadeMaskControl.AvaloniaUI.csproj" />
-    <Project Path="src/FadeMaskControl.AvaloniaUI/tests/FadeMaskControl.AvaloniaUI.Tests.csproj" />
-  </Folder>
   <Folder Name="/src/FadeMaskDragRectControl.Core/">
     <Project Path="src/FadeMaskDragRectControl.Core/src/FadeMaskDragRectControl.Core.csproj" />
     <Project Path="src/FadeMaskDragRectControl.Core/tests/FadeMaskDragRectControl.Core.Tests.csproj" />

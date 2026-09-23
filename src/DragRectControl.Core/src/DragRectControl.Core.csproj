@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 入力の判断に伴うログ定義（LoggerMessage ソース生成）をコアが所有する -->
+    <!-- 入力の判断と描画状態変更のログ定義（LoggerMessage ソース生成）をコアが所有する -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
   </ItemGroup>
 
@@ -29,6 +29,9 @@
     <InternalsVisibleTo Include="DragRectControl.AvaloniaUI.Tests" />
     <InternalsVisibleTo Include="DragRectControl.MewUI.Tests" />
     <InternalsVisibleTo Include="DragRectControl.Core.Tests" />
+    <!-- MewUI 版の撮影セッションもラベル文言の選定（FadeMaskLabels）を共用する -->
+    <InternalsVisibleTo Include="CaptureSessionControl.MewUI" />
+    <!-- 複合コントロールのコアも装飾の契約（FadeMaskRenderMode）を参照する -->
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.Core" />
   </ItemGroup>
-
 </Project>

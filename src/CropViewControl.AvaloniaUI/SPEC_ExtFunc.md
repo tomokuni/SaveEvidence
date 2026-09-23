@@ -9,6 +9,9 @@
   - [1. 概要](#1-概要)
   - [2. 公開 API](#2-公開-api)
     - [2.1. CropViewControl クラス](#21-cropviewcontrol-クラス)
+      - [2.1.1 プロパティ](#211-プロパティ)
+      - [2.1.2 メソッド](#212-メソッド)
+      - [2.1.3 イベント](#213-イベント)
     - [2.2. OverlayRect 構造体](#22-overlayrect-構造体)
     - [2.3. OverlayLineStyle 列挙型](#23-overlaylinestyle-列挙型)
   - [3. 入力・出力](#3-入力出力)
@@ -130,7 +133,7 @@ new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Or
 - 画像変更時は Fit 表示にリセットされます。
 - 領域選択オーバーレイの可視性とヒットテストは `SetSelectionOverlayVisible` で制御します（Crop セッションの開始・終了時にホストが切替）。`Source` 設定では制御しません。
   - 初期状態（`Source` 未設定）はオーバーレイを不可視（`IsVisible = false`）+ ヒットテスト不可（`IsHitTestVisible = false`）にします。
-    - 画像なしでの選択矩形作成と、Crop モードの全面暗転（FadeMask）で市松模様が暗くならないようにします。
+    - 画像なしでの選択矩形作成と、Crop モードの全面暗転で市松模様が暗くならないようにします。
   - `Source` が `null` に変わるときは**選択のみクリア**します（オーバーレイの表示・ヒットテスト状態は維持。`SetSelectionOverlayVisible` が専任）。
   - プレビュー表示時（キャプチャ完了・画像読込）は、`Source` 設定だけではオーバーレイを自動表示しません。
     - これにより、キャプチャ完了直後に Crop モード（全面暗転）が残るのを防ぎます。

@@ -301,7 +301,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 - 出力先: `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持。Serilog）
 - 内容: アプリ起動 / 終了、撮影・切り出しの開始と確定・キャンセル、選択操作（MouseDown / MouseUp / DragStart / KeyDown 等）、ズーム操作（前後のズーム率）、ルーペの状態変更（表示中の選択オーバーレイ）、未処理の例外
 - 未処理の例外は、アプリ全体（`AppDomain`）/ UI スレッド（`Application.DispatcherUnhandledException`）/ 待機されなかったタスク（`TaskScheduler`）の 3 経路を記録します。UI スレッドの例外は記録後に処理済みとして扱い、ウィンドウの表示を維持します（Avalonia 版と同じ）。
-- カテゴリはクラス名（`Program` / `CaptureOverlay` / `CropOverlay` / `CapturePage` 等）で、`[DragRect]` / `[FadeMask]` / `[LoupeCtrl]` / `[ZoomIn]` の各ログは各コントロールが出力します。
+- カテゴリはクラス名（`Program` / `CaptureOverlay` / `CropOverlay` / `CapturePage` 等）で、`[DragRect]` / `[LoupeCtrl]` / `[ZoomIn]` の各ログは各コントロールが出力します。
 
 ## 履歴（戻す / やり直し）
 

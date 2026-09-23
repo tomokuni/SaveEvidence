@@ -15,6 +15,7 @@
 UI 層（DragRectControl.AvaloniaUI / .MewUI）
   ポインター・キー入力をコア型へ変換して通知 → 返された効果を適用 → 通知を公開イベントへ転送 → 状態を描画
         │ DragRectFeedback（効果: 再描画 / フォーカス / マウスキャプチャ / カーソル操作・形状）
+        │ DragRectFrame.Resolve（選択矩形の外側に描く装飾のフレーム。判断は装飾コアが持つ）
         ▼
 状態層（本プロジェクト）
   DragRectSession  入力の解釈と状態遷移の判断（nudge セッション・ダブルクリックの確定/キャンセル・
@@ -32,7 +33,8 @@ UI 層（公開イベントへ転送）
 | `DragRectInteractionState` | public | 対話状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging） |
 | `DragRectSnapshot` | public | 通知時点の状態の値オブジェクト（`selectionRect` は `EsRect`、`mousePosition` は `EsPoint`） |
 | `DragRectScrollRequest` / `DragRectZoomRequest` | public | ホイール操作の要求（生の回転量・修飾キー・発生位置）。スクロール先とズーム率の決定は転送先（ホスト）が担う |
-| `DragRectOptions` | public | 設定の値オブジェクト（外観 10 項目 + 対話パラメータ 3 項目）。既定値とフォントサイズの補正を単一所有する |
+| `DragRectOptions` | public | 設定の値オブジェクト（外側の装飾 6 項目 + 外観 9 項目 + 対話パラメータ 3 項目）。既定値・装飾の色と太さの所有・フォントサイズの補正を単一所有する |
+| `DragRectFrame` | internal | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル）の描画内容を解決する（セッションの状態 + 外側の装飾の設定 → 装飾コアのフレーム） |
 | `DragRectSession` | internal | **状態管理クラス**。入力の通知を受けて状態を更新し、効果（`DragRectFeedback`）と通知（`DragRectNotice`）を返す |
 | `DragRectNotice` / `DragRectNoticeKind` | internal | コアから UI 層への通知（種別・通知座標・スナップショット） |
 | `DragRectFeedback` / `DragRectCursorAction` | internal | コアから UI 層への効果（再描画・フォーカス・マウスキャプチャ・カーソル操作・カーソル形状） |
@@ -40,9 +42,51 @@ UI 層（公開イベントへ転送）
 | `DragRectAppearance` | internal | 両 UI の描画で共有する外観値（マーカー太さ・ラベル余白・フォントサイズ範囲）とその配置計算・値補正 |
 | `DragCursorKind` | internal | 操作位置に対応するカーソル形状の種別（UI は自 UI のカーソル型へ写像するだけ） |
 | `SelectionGeometry` | internal | 純粋な幾何計算（正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形）・描画対象ハンドル一覧・カーソル種別変換 |
-| `LogMessage` | internal | ログの LoggerMessage 定義（入力の判断・ズーム要求・設定変更）。UI 層は自 UI 固有の操作ログのみを持つ |
+| `DragRectLogMessage` | internal | ログの LoggerMessage 定義（入力の判断・ズーム要求・設定変更）。UI 層は自 UI 固有の操作ログのみを持つ |
 
-名前空間は `Estable.DragRect`（幾何は `Estable.DragRect.Selection`）。アセンブリ名は `DragRectControl.Core`。
+名前空間は `Estable.DragRect`（幾何は `Estable.DragRect.Selection`、装飾は `Estable.DragRect.Decoration`）。アセンブリ名は `DragRectControl.Core`。
+
+## 選択矩形の外側に描く装飾（`Estable.DragRect.Decoration`）
+
+選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル・ハイライト）の契約・外観・幾何・フレーム解決を本プロジェクトが単一所有します。
+
+> **命名**: 名前空間とフォルダは装飾という**カテゴリ**を表す `Decoration` のまま、型の接頭辞 `OuterDeco*` が**外側**であることを表します（将来「内側の装飾」を追加する場合は同じ名前空間へ `InnerDeco*` を足します）。
+
+| 型 | 可視性 | 責務 |
+| --- | --- | --- |
+| `OuterDecoRenderMode` | public | オーバーレイ描画のモード（AreaSelect / ScreenSelect / WindowSelect / Crop）。`DragRectOptions.OuterRenderMode` として公開する |
+| `OuterDecoAppearance` | public | 外観（暗転色・枠線・ラベル）の単一所有。`DragRectOptions.OuterAppearance` として公開する |
+| `OuterDecoOverlayGeometry` | internal | 論理座標 → DIP 変換（閉区間の扱いを含む）・穴あけ矩形の決定・暗転領域（4 帯）の計算・枠線矩形の計算・座標変換ポートの決定（ポート優先・無ければ倍率） |
+| `OuterDecoFrame` | internal | **1 フレーム分の描画内容**（暗転領域・枠線・サイズラベルの文言・サブライン）の決定。入力は `OuterDecoRequest` |
+| `OuterDecoRequest` | internal | **描画入力**（設定と状態の 1 値 `OuterDecoOptions` + 描画時に決まる値（クライアント矩形・座標変換ポート・倍率・文言プロバイダ）） |
+| `OuterDecoOptions` | internal | 設定と描画状態の単一値（外観・モード・情報ラベルの文言・全面暗転・選択/ハイライト矩形とその有効フラグ）。`DragRectFrame` が組み立てる |
+| `OuterDecoLabels` | internal | 情報ラベルの表示判定・操作ラベルの文言・サイズラベルの文言（`FormatSizeLabel`）・表示スケールの解決（`ResolveDisplayScaling`）・サブラインの組み立ての単一所有 |
+| `OuterDecoLabelStyle` | internal | ラベル 1 行分の外観（フォントサイズ・文字色・背景色）。フレームの受け渡し専用 |
+| `OuterDecoLabelLayout` | internal | ラベルの行配置（内側余白 `Padding`・背景矩形・文字の描画原点・次の行の Y 座標）の単一所有 |
+| `OuterDecoSubLine` | internal | サブライン 1 行分の値（文言・フォントサイズ・文字色・背景色） |
+
+選択矩形と選択の有無は**セッションが単一のソース**であり、装飾はそれを受け取って描画内容を決めるだけです（装飾は状態を持ちません）。
+
+### 層の責務の境界（装飾）
+
+UI 層（`DragRectFrame` と両 UI の描画層）は「セッションの状態と `DragRectOptions.Outer*` を `OuterDecoRequest` へ詰めて `OuterDecoFrame.Resolve` を呼び、返されたフレームを描く」だけです。
+
+| 責務 | 所有者 | 内容 |
+| --- | --- | --- |
+| 設定と状態 | 本コア（値） / UI（保持） | 外観と表示ポリシーは `DragRectOptions.Outer*`（公開値）、選択矩形はセッションが持つ。UI はフレームワークのプロパティ機構で保持するだけ |
+| 判断・計算 | 本コア | 論理矩形 → DIP 変換（選択は閉区間 +1 / ハイライトは +0）・穴あけ矩形の優先順（ハイライト → 選択）・座標変換ポートの決定・透明指定の解決・サイズラベルの文言決定・表示スケールの解決・サブラインの組立・枠線矩形・暗転領域（4 帯）・行配置 |
+| 契約 | 本コア | `OuterDecoFrame`（描画内容）・`OuterDecoRequest`（描画入力）・`OuterDecoOptions`（設定と状態） |
+| 描画 | UI | フレームの各項目を自 UI の描画 API へ写す（`FillRectangle` / `DrawRect` / `DrawText` 等） |
+| ホスト結線 | UI | プロパティ機構・DPI 追従・キャンバスのスケーリング・ブラシキャッシュ・テキストの実寸測定とフォント解決 |
+
+UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せません。
+
+1. **空のコレクションのスキップ**（ブラシ生成を避ける性能ガード）
+2. **提示位置の有無**（基準矩形・文言が null なら描かない＝描画の前提条件）
+3. **フレームワーク固有の値の解決**（DPI の 0 以下フォールバック・色型変換）
+4. **テスト計量差の吸収**（`FormattedText` と `SKFont` で行の高さが異なる）
+
+暗転・穴あけ枠・ラベルの描画を行うのは `DragRectControl.AvaloniaUI` の `DragRectOuterDrawer` と `DragRectControl.MewUI` の `DragRectOuterSkiaRenderer` です（本コアは描画 API を持たない）。
 
 ## 依存関係
 
@@ -112,18 +156,28 @@ UI 層が使う共有値・計算（`DragRectAppearance`）:
 8. **設定の適用はコアが判断する**: 設定（`DragRectOptions`）の反映は `ApplyOptions` が担い、対話パラメータの更新・境界外選択の禁止の変化の検出・変更ログ・即時クリップを 1 箇所に集約する（UI 層は「変更通知を渡す」だけになる）。
 9. **効果の適用順もコアが持つ**: 「どの効果をどの順で適用するか」（カーソル操作の順序・フォーカス → カーソル形状 → 再描画）は `DragRectFeedback` が単一所有し、UI 層は自 UI の操作（`Focus` / `InvalidateVisual` / カーソル型への写像）へ接続するだけでよい。
 10. **持続資源の保持もコア**: ロガーは `DragRectSession.Log` が保持し、null を `NullLogger` へ吸収して伝搬する（UI は get/set を委譲するだけ）。
+11. **外側の装飾は選択矩形の設定が単一所有する**: 暗転マスク・穴あけ枠・ラベル（サイズ/操作/情報）の外観と表示ポリシーは `DragRectOptions` の `Outer*` 項目が持ち、枠線の色・太さもそこで単一所有する（選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なるため、2 つの値に分けると見た目が崩れる）。**既定は枠線のみ**（暗転・ラベルは用途依存のため、ホストが設定値で明示的に与える）。
+12. **選択の状態はセッションが単一のソース**: 外側の装飾の穴あけ矩形と選択の有無は設定値ではなくセッションの状態から `DragRectFrame` が導出する（同じデータを 2 箇所に持たない）。
+13. **装飾の契約は本コアが単一所有する**: 暗転マスク・穴あけ枠・ラベルを描くための契約（`OuterDecoFrame` / `OuterDecoRequest` / `OuterDecoOptions`）と幾何は `Estable.DragRect.Decoration` が持ち、UI 層は自 UI の描画 API へ写すだけとする。公開設定として必要なのは `OuterDecoAppearance` と `OuterDecoRenderMode` のみ（`DragRectOptions` の `Outer*` 経由）で、それ以外は `internal` とする。
 
 ## テスト
 
 ```text
 tests/
-├── SelectionGeometry.Tests.cs    # 純粋幾何（17 件）
-├── DragRectState.Tests.cs        # 状態遷移・ヒットテスト・ドラッグ・nudge・境界クリップ（32 件）
-├── DragRectFeedback.Tests.cs     # 効果の適用（カーソル操作・表示上の効果の順序）（6 件）
-├── DragRectSession.Tests.cs      # 入力の解釈・通知・効果・設定の反映・ビューポート通知（52 件）
-├── DragRectAppearance.Tests.cs   # ラベル配置・値補正・ハンドル一覧・カーソル種別（19 件）
-├── DragRectOptions.Tests.cs      # 既定値・部分変更・値補正・等価性（13 件）
-└── LogMessage.Tests.cs           # ログ定義の生成コード（IsEnabled 両パス・書式）（3 件）
+├── SelectionGeometry.Tests.cs        # 純粋幾何（17 件）
+├── DragRectState.Tests.cs            # 状態遷移・ヒットテスト・ドラッグ・nudge・境界クリップ（32 件）
+├── DragRectFeedback.Tests.cs         # 効果の適用（カーソル操作・表示上の効果の順序）（6 件）
+├── DragRectSession.Tests.cs          # 入力の解釈・通知・効果・設定の反映・ビューポート通知（52 件）
+├── DragRectAppearance.Tests.cs       # ラベル配置・値補正・ハンドル一覧・カーソル種別（19 件）
+├── DragRectOptions.Tests.cs          # 既定値・部分変更・値補正・等価性（14 件）
+├── DragRectFrame.Tests.cs            # 外側の装飾のフレーム解決（選択の導出・ハイライト・全面暗転・座標変換・ラベル）（21 件）
+├── OuterDecoOverlayGeometry.Tests.cs  # 穴あけ矩形の決定・暗転領域（4 帯）・枠線矩形・閉区間の DIP 変換（25 件）
+├── OuterDecoFrame.Tests.cs            # フレーム解決（暗転・枠線・ラベル・透明指定・境界値）（29 件）
+├── OuterDecoLabels.Tests.cs           # 操作/情報ラベルの文言・表示判定・サイズラベルの書式（23 件）
+├── OuterDecoAppearance.Tests.cs       # 外観の既定値・部分変更・ラベル背景の実効色（14 件）
+├── OuterDecoLabelLayout.Tests.cs      # ラベルの行配置（余白・背景矩形・文字原点・次の行）（5 件）
+├── OuterDecoOptions.Tests.cs          # 設定と状態の既定値・部分変更・等価性（5 件）
+└── DragRectLogMessage.Tests.cs               # ログ定義の生成コード（IsEnabled 両パス・書式）（3 件）
 ```
 
 ```powershell

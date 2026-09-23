@@ -50,7 +50,7 @@
 ZoomViewControl（本ライブラリ）
   ├── ZoomViewControl（複合コントロール: 遷移決定・適用・内部配線・ZoomChanged による通知）
   ├── ZoomableView（コントロール: パン・ズーム表示）
-  └── Logging/LogMessage（LoggerMessage 定義）
+  └── Logging/ZoomViewLogMessage（LoggerMessage 定義）
   ↓
 ZoomViewControl.Core（UI 非依存）
   ├── ZoomConfig（設定値: ズーム遷移のパラメータ。公開値オブジェクト・検証付き不変値）
@@ -72,7 +72,7 @@ ZoomViewControl.Core（UI 非依存）
 ### 4.1 基本方針
 
 - ライブラリは例外を原則伝播し、上位 AP（app 等）で処理する。
-- ログは LoggerMessage ソース生成（`Logging/LogMessage.cs`）で出力する。ズーム操作の前後 % を Information で記録する。
+- ログは LoggerMessage ソース生成（`Logging/ZoomViewLogMessage.cs`）で出力する。ズーム操作の前後 % を Information で記録する。
 - `ZoomViewControl.Log` へ注入されたロガーへ出力する（未設定時は `NullLogger` で無出力）。
 
 ### 4.2 本プロジェクト固有の例外処理
@@ -92,7 +92,7 @@ flowchart TB
         direction TB
         ZVW["ZoomViewControl<br/>public sealed : Panel<br/>ZoomViewControl.cs（遷移決定・適用・内部配線・ZoomChanged 通知）"]
         ZV["ZoomableView<br/>internal sealed : Panel<br/>ZoomableView.cs（パン・ズームビューポート）"]
-        LG["LogMessage<br/>Logging/LogMessage.cs（LoggerMessage）"]
+        LG["ZoomViewLogMessage<br/>Logging/ZoomViewLogMessage.cs（LoggerMessage）"]
     end
     subgraph Core["ZoomViewControl.Core プロジェクト（UI 非依存）"]
         direction TB
@@ -120,7 +120,7 @@ flowchart TB
 - **責務**: `ZoomableView` を内包し、ズーム率の遷移（⊖⊕ 23 段階 / Ctrl+ホイール ×1.1）・適用・Fit 表示を統括。ズーム要求（`ZoomRequested`）・リサイズ（`SizeChanged`）の配線を自己完結。ズーム率変更・可否は `ZoomChanged` で通知、可否は `CanZoomIn` / `CanZoomOut` で公開。ホストが内部 `ZoomableView` へ到達しないよう、必要な低レベル機能（座標変換・画像表示矩形・ビューポート変化通知・画像コントロール）を Facade として再公開
 - **非公開メンバー**: `ZoomInByWheel` / `ZoomOutByWheel`（Ctrl+ホイールハンドラのみ）/ `PointerPosition`（ズーム中心。Ctrl+ホイールハンドラのみ）/ `ApplyZoom`（可否・イベント通知の反映。ズーム率変更経路が内部的に呼ぶ）/ `ZoomableView`（内包するビューポート。公開しない）
 - **公開 API の詳細**: `SPEC_ExtFunc.md` の 8.1 を参照
-- **依存**: ZoomableView / ZoomConfig / ZoomMath / ZoomTransition / ZoomAvailability（以上 `ZoomViewControl.Core`） / ScrollMath（`Platform.Core`） / LogMessage
+- **依存**: ZoomableView / ZoomConfig / ZoomMath / ZoomTransition / ZoomAvailability（以上 `ZoomViewControl.Core`） / ScrollMath（`Platform.Core`） / ZoomViewLogMessage
 - **ズーム率の単一所有**: ズーム率は内包する `ZoomableView` が所有し、本コントロールは `ZoomPercent`（読み書き）で操作窓口を提供する。遷移パラメータは `ZoomConfig`（公開値オブジェクト）が所有し、ズーム範囲のクランプも本コントロールが行う
 
 ### 6.2 ZoomableView
@@ -156,7 +156,7 @@ flowchart TB
 
 ## 8. ログ
 
-- ログ定義は `Logging/LogMessage.cs`（LoggerMessage ソース生成・`this ILogger` 拡張メソッド）に集約。
+- ログ定義は `Logging/ZoomViewLogMessage.cs`（LoggerMessage ソース生成・`this ILogger` 拡張メソッド）に集約。
 - `ZoomViewControl.Log` プロパティへ注入されたロガーへ出力する。未設定（null）の場合は `NullLogger` で無出力。
 - 出力先・ログレベルはホスト側（上位 AP）のロギング基盤（NLog 等）が決定する（本ライブラリはログ転送のみ）。
 
@@ -164,7 +164,7 @@ flowchart TB
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Information` | `LogMessage.LogZoomIn` | ズームイン（⊖⊕ボタン）の変更前後 % |
-| `Information` | `LogMessage.LogZoomOut` | ズームアウト（⊖⊕ボタン）の変更前後 % |
-| `Information` | `LogMessage.LogZoomInWheel` | Ctrl+ホイールズームインの変更前後 % |
-| `Information` | `LogMessage.LogZoomOutWheel` | Ctrl+ホイールズームアウトの変更前後 % |
+| `Information` | `ZoomViewLogMessage.LogZoomIn` | ズームイン（⊖⊕ボタン）の変更前後 % |
+| `Information` | `ZoomViewLogMessage.LogZoomOut` | ズームアウト（⊖⊕ボタン）の変更前後 % |
+| `Information` | `ZoomViewLogMessage.LogZoomInWheel` | Ctrl+ホイールズームインの変更前後 % |
+| `Information` | `ZoomViewLogMessage.LogZoomOutWheel` | Ctrl+ホイールズームアウトの変更前後 % |

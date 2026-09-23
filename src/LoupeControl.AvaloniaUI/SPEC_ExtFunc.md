@@ -437,7 +437,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 ## 8. 表示位置・サイズの責務
 
 `LoupeControl` は画像生成と内部Image表示に加え、**表示位置・表示サイズを自己計算**します
-（座標変換ポート方式。DragRect / FadeMask と同様）。
+（座標変換ポート方式。DragRect と同様）。
 
 - 表示位置: `CenterPoint`（ドメイン座標）を `SetCoordinateTransform` で設定したポートで親パネル DIP へ変換し、カーソル右下 + `PositionOffset` + クランプした位置を `RenderTransform` で反映します。
 - 表示サイズ: `Options.RequestedSize`（基本サイズ）を親パネルサイズにクランプして内部管理します（ホストは基本サイズを設定するだけ）。

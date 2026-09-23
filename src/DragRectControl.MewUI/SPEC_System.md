@@ -73,21 +73,24 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 ```text
 src/DragRectControl.MewUI/
 ├── src/
-│   ├── DragRectControl.cs          公開 API・入力の受付と効果の適用・カーソル制御・描画の起点
-│   ├── DragRectSkiaRenderer.cs     枠線・ハンドル・十字マーカー・座標ラベルの描画
-│   ├── DragRectPointEventArgs.cs   座標通知のイベント引数
-│   └── SelectionRectEventArgs.cs   選択矩形通知のイベント引数
+│   ├── DragRectControl.cs                 公開 API・入力の受付と効果の適用・カーソル制御・描画の起点
+│   ├── DragRectSkiaRenderer.cs            ハンドル・十字マーカー・座標ラベルの描画
+│   ├── DragRectOuterSkiaRenderer.cs       外側の装飾（暗転マスク・穴あけ枠・ラベル）の描画
+│   ├── DragRectPointEventArgs.cs          座標通知のイベント引数
+│   └── SelectionRectEventArgs.cs          選択矩形通知のイベント引数
 └── tests/
     ├── TestHelper.cs                     テスト用の描画先（SKBitmap + SKCanvas）と画素数え上げ
     ├── RecordingLogger.cs                ログ出力を収集するテスト用 ILogger
     ├── DragRectSkiaRenderer.Tests.cs     描画の検証（6 件）
-    └── DragRectControl.Tests.cs          公開 API・プロパティ・イベントの検証（21 件）
+    ├── DragRectOuterSkiaRenderer.Tests.cs 外側の装飾の描画の検証（画素を実測する）
+    └── DragRectControl.Tests.cs          公開 API・プロパティ・イベントの検証
 ```
 
 | コンポーネント | 責務 |
 | --- | --- |
 | `DragRectControl` | `MewProperty` の定義、入力のドメイン変換とセッションへの通知、返された効果（再描画・フォーカス・マウスキャプチャ・カーソル）の適用、マウスキャプチャの取得/解放、DPI 変更の追従 |
-| `DragRectSkiaRenderer` | 枠線・8 方向ハンドル・十字マーカー・座標ラベルの描画と、ラベル配置の純粋計算 |
+| `DragRectSkiaRenderer` | 8 方向ハンドル・十字マーカー・座標ラベルの描画と、ラベル配置の純粋計算。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため） |
+| `DragRectOuterSkiaRenderer` | 装飾コアの `OuterDecoFrame` を Skia の描画 API へ写す（暗転マスク・枠線・ラベル。判断を持たない）。フォント解決・テキストの実寸測定を担う |
 | `DragRectPointEventArgs` / `SelectionRectEventArgs` | 通知時点の座標（矩形）とスナップショットの組 |
 | `RenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
@@ -151,11 +154,15 @@ classDiagram
         +DragRectCursorAction Cursor / EsPoint CursorDomainPosition
     }
     class DragRectSkiaRenderer {
-        +DrawBorder(canvas, rect, color, thickness)$ void
         +DrawHandles(canvas, rect, size, color, border)$ void
         +DrawStartMarker(canvas, center, color, thickness, size)$ void
         +DrawCoordLabel(canvas, cursor, domain, clientSize, ...)$ void
         +ComputeCoordLabelPosition(cursor, clientSize, w, h)$ EsPoint
+      }
+      class DragRectOuterSkiaRenderer {
+        <<DragRectControl.Core>>
+        +Draw(canvas, frame)$ void
+        +ResolveTypeface(text)$ SKTypeface
       }
       class DragRectAppearance {
           <<DragRectControl.Core>>
@@ -200,7 +207,8 @@ classDiagram
     DragRectControl *-- DragRectSession : 状態管理（入力の解釈）
     DragRectControl ..> DragRectNotice : 通知を公開イベントへ転送
     DragRectControl ..> DragRectFeedback : 効果を適用
-    DragRectControl ..> DragRectSkiaRenderer : 描画を委譲
+    DragRectControl ..> DragRectSkiaRenderer : 描画を委譲（選択矩形）
+    DragRectControl ..> DragRectOuterSkiaRenderer : 描画を委譲（外側の装飾）
     DragRectSession *-- DragRectState : 状態機械
     DragRectSession ..> ICursorService : カーソル操作
     DragRectState ..> SelectionGeometry : 幾何計算
@@ -302,9 +310,11 @@ stateDiagram-v2
 ```text
 OnPaintSurface(canvas, info)
   ├─ canvas.Scale(RenderScaling)                     … DPI の適用（境界 1 箇所）
-  ├─ HasSelection なら
+  ├─ canvas.Clear(透明)                              … 前フレームの描画を残さない
+  ├─ DragRectFrame.Resolve(session, client, ...)     … 外側の装飾のフレーム（判断は装飾コア）
+  │    └─ DragRectOuterSkiaRenderer.Draw             … 暗転マスク・穴あけ枠・ラベル
+  ├─ ShowHandles かつ HasSelection なら
   │    ├─ _session.ToDipRect(SelectionRect)          … Inverse 変換（終点は +1 して閉区間を表現。規則はコア）
-  │    ├─ DragRectSkiaRenderer.DrawBorder            … 枠線
   │    └─ DragRectSkiaRenderer.DrawHandles           … SelectionGeometry から 8 方向の中心を取得
   ├─ NudgeActive かつ CrosshairVisible なら
   │    └─ DragRectSkiaRenderer.DrawStartMarker       … GetMarkerPosition() の位置
@@ -312,7 +322,7 @@ OnPaintSurface(canvas, info)
        └─ DragRectSkiaRenderer.DrawCoordLabel        … CoordinateFormatter（コア）で文字列化
 ```
 
-背景は塗りません（透明のままにして下の画像を透かします）。
+背景は塗りません（透明のままにして下の画像を透かします）。**選択枠線は外側の装飾の穴あけ枠が描きます**（別々に描くと線幅が二重になるため）。
 
 ## エラー処理ポリシー
 
@@ -333,7 +343,7 @@ OnPaintSurface(canvas, info)
    カーソル移動（nudge）の座標変換はこの非対称性を踏まえて実装する。
 4. **スナップショットはドラッグ状態の解除前に生成する**。`EndDrag` の後ではマーカー位置が固定コーナーを返すため、
    nudge 位置は解放処理の冒頭で計算する。
-5. **ストロークの座標は「経路の中心」に描かれる**。太さ 2 の枠線は辺の座標を挟む 2 ピクセル（例: `[x-1, x+1)`）を覆う。
+5. **枠線は 4 辺の塗り（FILL）で描かれる**。装飾コアの `OuterDecoOverlayGeometry.GetBorderRects` が穴あけ矩形の内側に太さ分の帯を 4 本返し、それを塗る（ストロークではないため、太さが半分外側へはみ出さない）。
    描画テストの期待値はこの前提で書く。
 
 ## 未実装（今後の判断）
@@ -342,5 +352,5 @@ OnPaintSurface(canvas, info)
 | --- | --- |
 | `ScrollViewer` の自動連携 | ホストが `NotifyViewportChanged()` を呼ぶ方式で代替 |
 | フォーカス非依存の矢印キー nudge | フォーカス依存で実装（`TopLevel` のキー購読は行わない） |
-| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`Estable.DragRect.LogMessage`）が所有し、書式・レベルとも Avalonia 版と同一） |
+| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`Estable.DragRect.DragRectLogMessage`）が所有し、書式・レベルとも Avalonia 版と同一） |
 | 実ウィンドウへの組み込み | `FadeMaskDragRectControl.MewUI` を経由して配線済み（撮影・切り出しの両方） |

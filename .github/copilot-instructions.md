@@ -230,9 +230,11 @@
 ## このワークスペース/ソリューションに固有の指示
 
 ### プロジェクト構成
-- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / DragRectControl / FadeMaskControl / LoupeControl / CaptureSessionControl.AvaloniaUI / LineDetection）と、プラットフォーム層（Platform.AvaloniaUI / Platform.Core / Platform.MewUI / Platform.Native）、アプリ本体（`app.AvaloniaUI` / `app.MewUI` / `app.Core`）から構成される。
+- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / DragRectControl / LoupeControl / CaptureSessionControl.AvaloniaUI / LineDetection）と、プラットフォーム層（Platform.AvaloniaUI / Platform.Core / Platform.MewUI / Platform.Native）、アプリ本体（`app.AvaloniaUI` / `app.MewUI` / `app.Core`）から構成される。
 - プラットフォーム層は `EsUtil.Platform.*` をルート名前空間とし、`Platform.AvaloniaUI` / `Platform.MewUI` が各 UI のアダプタ、`Platform.Core` が UI 非依存の抽象・値型、`Platform.Native` が Win32 / NoOp 実装と既定実装ファクトリ（`PlatformFactory` クラス）を担う。
 - `app.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
+- `DragRectControl` は選択矩形に加えて「選択矩形の外側に描く装飾」（暗転マスク・穴あけ枠・ラベル・ハイライト）を描画する。外観と表示ポリシーは `DragRectOptions` の `Outer*` 項目が単一所有し、描画内容の判断は `DragRectControl.Core` の `Estable.DragRect.Decoration` が持つ。
+- `Decoration` 系の型はコントロールではなく装飾のコアである（暗転オーバーレイの独立コントロールは `DragRectControl` へ統合済み。別プロジェクトは持たず、`DragRectControl.Core` に同居する）。
 
 ### ドキュメント規約
 - 各プロジェクトに README.md（利用仕様書）・SPEC_ExtFunc.md（外部機能仕様書）・SPEC_System.md（システム仕様書）を置く。

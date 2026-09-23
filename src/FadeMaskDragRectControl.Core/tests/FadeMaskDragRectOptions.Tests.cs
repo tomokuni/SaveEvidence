@@ -1,12 +1,12 @@
 using Estable.DragRect;
-using Estable.FadeMask;
+using Estable.DragRect.Decoration;
 using Estable.Loupe;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
 namespace Estable.FadeMaskDragRect.Tests;
 
-/// <summary><see cref="FadeMaskDragRectOptions"/> の単体テスト（既定値・部分変更・枠線の導出）。</summary>
+/// <summary><see cref="FadeMaskDragRectOptions"/> の単体テスト（既定値・部分変更）。</summary>
 /// <remarks>UI 非依存の値型のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>
 public class FadeMaskDragRectOptionsTests
 {
@@ -16,9 +16,9 @@ public class FadeMaskDragRectOptionsTests
     {
         var options = FadeMaskDragRectOptions.Default;
 
+        // 外側の装飾の外観も選択矩形の設定が単一所有する
         Assert.Equal(DragRectOptions.Default, options.DragRect);
         Assert.Equal(LoupeOptions.Default, options.Loupe);
-        Assert.Equal(new FadeMaskAppearance(), options.Overlay);
         Assert.Equal(DrawingColor.White, options.SelectionRectColorA);
         Assert.Equal(DrawingColor.Black, options.SelectionRectColorB);
         Assert.Equal(20.0, options.LoupeOffset);
@@ -46,41 +46,29 @@ public class FadeMaskDragRectOptionsTests
         Assert.Equal(DrawingColor.Black, changed.SelectionRectColorB);
     }
 
-    /// <summary>枠線が暗転マスクの外観から導出されることを検証する。</summary>
+    /// <summary>外側の装飾の外観が選択矩形の設定に含まれることを検証する。</summary>
     [Fact]
-    public void 枠線導出_暗転マスクの枠線と同じ値になる()
+    public void 外側の装飾_選択矩形の設定が単一所有する()
     {
-        var options = FadeMaskDragRectOptions.Default with
-        {
-            DragRect = DragRectOptions.Default with { BorderColor = DrawingColor.Red, BorderThickness = 1.0 },
-            Overlay = new FadeMaskAppearance { BorderColor = DrawingColor.Lime, BorderThickness = 3.0 },
-        };
+        var appearance = new OuterDecoAppearance { BorderColor = DrawingColor.Lime, BorderThickness = 3.0 };
 
-        var resolved = options.ResolveDragRectOptions();
-
-        Assert.Equal(DrawingColor.Lime, resolved.BorderColor);
-        Assert.Equal(3.0, resolved.BorderThickness);
-    }
-
-    /// <summary>枠線以外の選択矩形の設定が導出で失われないことを検証する。</summary>
-    [Fact]
-    public void 枠線導出_枠線以外の設定は維持される()
-    {
         var options = FadeMaskDragRectOptions.Default with
         {
             DragRect = DragRectOptions.Default with
             {
+                OuterAppearance = appearance,
                 HandleColor = DrawingColor.Orange,
                 MinSelectionSize = 12.0,
                 ClampToDomainBounds = false,
             },
         };
 
-        var resolved = options.ResolveDragRectOptions();
-
-        Assert.Equal(DrawingColor.Orange, resolved.HandleColor);
-        Assert.Equal(12.0, resolved.MinSelectionSize);
-        Assert.False(resolved.ClampToDomainBounds);
+        // 枠線（外側の装飾）と選択矩形の他の設定が同じ 1 つの値に揃う（写し替える導出処理を持たない）
+        Assert.Equal(DrawingColor.Lime, options.DragRect.OuterAppearance.BorderColor);
+        Assert.Equal(3.0, options.DragRect.OuterAppearance.BorderThickness);
+        Assert.Equal(DrawingColor.Orange, options.DragRect.HandleColor);
+        Assert.Equal(12.0, options.DragRect.MinSelectionSize);
+        Assert.False(options.DragRect.ClampToDomainBounds);
     }
 
     /// <summary>等価性が値で判定されることを検証する。</summary>

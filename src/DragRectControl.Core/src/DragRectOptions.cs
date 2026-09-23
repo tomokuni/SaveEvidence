@@ -1,4 +1,6 @@
+using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
+using Estable.DragRect.Decoration;
 
 namespace Estable.DragRect;
 
@@ -7,12 +9,18 @@ namespace Estable.DragRect;
 /// 個別の依存関係プロパティとして公開していた設定を 1 つの値にまとめ、UI 層の公開 API を 1 プロパティへ縮小する。<br/>
 /// 設定の既定値も本型が単一所有する（各 UI 実装は既定値を持たず、本型を UI の色型・プロパティ型へ橋渡しするだけ）。<br/>
 /// <br/>
-/// 設定は 2 つの性格に分かれる:<br/>
-/// - <b>外観</b>: 枠線・ハンドル・十字マーカー・座標ラベルの色とサイズ（描画のみに使用する）。<br/>
+/// 設定は 3 つの性格に分かれる:<br/>
+/// - <b>外観</b>: ハンドル・十字マーカー・座標ラベルの色とサイズ（描画のみに使用する）。<br/>
 /// - <b>対話パラメータ</b>: 最小選択サイズ・ハンドルのヒットテスト半径・境界外選択の禁止（入力の解釈に使用し、セッションへ伝搬する）。<br/>
+/// - <b>外側の装飾（<c>Outer</c> 接頭辞）</b>: 選択矩形の外側に描く暗転マスク・穴あけ枠・ラベルと、その表示ポリシー・ハイライト状態。<br/>
+/// <br/>
+/// <b>外側の装飾は選択矩形の状態を持たない</b>: 選択矩形と選択の有無はセッション（選択の真のソース）から導出するため、<br/>
+/// 本値には持たせない（<see cref="OuterHighlightRect"/> はホストが与えるハイライトのみ）。<br/>
+/// <b>枠線の色・太さは <see cref="OuterAppearance"/> が単一所有する</b>（選択枠線と暗転マスクの穴あけ枠は同一矩形に描かれるため、<br/>
+/// 2 つの値に分けると見た目が崩れる）。
 /// <br/>
 /// <b>既定値</b>: 既定値を持つのは <see cref="Default"/> と <see cref="DragRectOptions()"/> のみである。<br/>
-/// <see cref="Default"/> を基点に部分変更する（<c>DragRectOptions.Default with { BorderThickness = 3.0 }</c>）と、<br/>
+/// <see cref="Default"/> を基点に部分変更する（<c>DragRectOptions.Default with { HandleColor = ... }</c>）と、<br/>
 /// 指定しない項目は既定値を保つ（プロパティ初期化子を持つため、部分指定でもゼロ値にはならない）。<br/>
 /// <br/>
 /// <b>等価性</b>: レコードの値等価性により、同値の設定を再代入しても UI 側の変更通知（再描画）は発生しない。<br/>
@@ -28,16 +36,49 @@ public sealed record DragRectOptions
     public static DragRectOptions Default { get; } = new();
 
     // ----------------------------------------------------------------
+    // 外側の装飾（選択矩形の外側に描く暗転マスク・穴あけ枠・ラベル）
+    // ----------------------------------------------------------------
+
+    /// <summary>外側の装飾の外観。</summary>
+    /// <value>暗転色・穴あけ枠の色と太さ・3 種のラベルの色とフォントサイズ。既定は枠線のみ（暗転とラベルを行わない）。</value>
+    /// <remarks>
+    /// 穴あけ枠は選択矩形の内側に同じ矩形で描かれるため、<b>枠線の色と太さは本値が単一所有する</b>（選択枠線と暗転マスクの枠を別々に持つと重なりの見た目が崩れる）。<br/>
+    /// アルファが 0 の枠線色を指定した場合は枠線を描かない（描画の要否は暗転マスクコアのフレーム解決が判断する）。<br/>
+    /// <b>既定で暗転しない</b>のは、本コントロールが汎用の選択矩形コントロールだからである（暗転・ラベルは用途依存のため、<br/>
+    /// 領域選択・切出しのホストが設定値から明示的に与える）。
+    /// </remarks>
+    public OuterDecoAppearance OuterAppearance { get; init; } = CreateDefaultOuterAppearance();
+
+    /// <summary>外側の装飾の描画モード。</summary>
+    /// <value>モード（操作ラベルの文言選定に使用する）。既定は <see cref="OuterDecoRenderMode.AreaSelect"/>。</value>
+    public OuterDecoRenderMode OuterRenderMode { get; init; } = OuterDecoRenderMode.AreaSelect;
+
+    /// <summary>外側の装飾の操作ラベルに表示するウィンドウタイトル。</summary>
+    /// <value>タイトル（空文字（既定）の場合は操作ラベルへタイトル行を出さない）。</value>
+    public string OuterWindowTitle { get; init; } = "";
+
+    /// <summary>外側の装飾で画面全体を暗転するかどうか。</summary>
+    /// <value>true の場合は穴あけを行わず画面全体を暗転色で塗る。既定は false。</value>
+    /// <remarks>ハイライトのみを表示するモード（全画面の暗転 + ハイライト矩形）で使用する。</remarks>
+    public bool OuterShowFullOverlay { get; init; }
+
+    /// <summary>外側の装飾でハイライトする矩形（ドメイン座標）。</summary>
+    /// <value>ハイライト矩形（null（既定）の場合はハイライトしない）。</value>
+    /// <remarks>ホストが与える値である（選択矩形と異なり本コントロールの操作では変化しない）。</remarks>
+    public EsRect? OuterHighlightRect { get; init; }
+
+    /// <summary>外側の装飾でハイライトを描くかどうか。</summary>
+    /// <value>true の場合に <see cref="OuterHighlightRect"/> をハイライトする。既定は false。</value>
+    public bool OuterHasHighlight { get; init; }
+
+    // ----------------------------------------------------------------
     // 外観（描画のみに使用する）
     // ----------------------------------------------------------------
 
-    /// <summary>選択枠線の色。</summary>
-    /// <value>枠線の色（不透明度は色のアルファに統合）。既定は <c>#FFA9A9A9</c>（DarkGray）。</value>
-    public DrawingColor BorderColor { get; init; } = DrawingColor.FromArgb(0xFF, 169, 169, 169);
-
-    /// <summary>選択枠線の太さ。</summary>
-    /// <value>枠線の太さ（DIP）。既定は 2.0。</value>
-    public double BorderThickness { get; init; } = 2.0;
+    /// <summary>ドラッグハンドルを表示するかどうか。</summary>
+    /// <value>true（既定）の場合は選択中にハンドルを描く。false の場合は枠線と外側の装飾のみを描く。</value>
+    /// <remarks>本値が制御するのはハンドルの表示のみである（外側の装飾と枠線は本値に関係なく描画する）。</remarks>
+    public bool ShowHandles { get; init; } = true;
 
     /// <summary>ドラッグハンドルの塗り色。</summary>
     /// <value>ハンドルの塗り色（不透明度は色のアルファに統合）。既定は白。</value>
@@ -69,7 +110,7 @@ public sealed record DragRectOptions
     public DrawingColor CoordLabelBackgroundColor { get; init; } = DrawingColor.FromArgb(153, 0, 0, 0);
 
     /// <summary>カーソル座標ラベルのフォントサイズ。</summary>
-    /// <value>フォントサイズ（DIP）。6〜48 の範囲へ補正される。既定は 12.0。</value>
+    /// /// <value>フォントサイズ（DIP）。6〜48 の範囲へ補正される。既定は 12.0。</value>
     /// <remarks>非数（NaN / ∞）を指定した場合は既定値へ補正する（補正は本型が単一所有する）。</remarks>
     public double CoordLabelFontSize
     {
@@ -101,4 +142,20 @@ public sealed record DragRectOptions
     /// true へ切り替えた場合は既存の選択矩形を即時に境界内へクリップする（セッションが判断する）。
     /// </remarks>
     public bool ClampToDomainBounds { get; init; } = true;
+
+    /// <summary>既定の外側の装飾（枠線のみ）を生成する。</summary>
+    /// <returns>暗転とラベルを行わず、枠線だけを描く外観。</returns>
+    /// <remarks>
+    /// 枠線の色は本コントロールの従来の既定（DarkGray・太さ 2.0）を保つ（選択矩形の可視性に必要な最小の外観）。<br/>
+    /// 暗転・サイズラベル・サブライン・情報ラベルはモードやホストの用途に依存するため、既定では描かない。
+    /// </remarks>
+    private static OuterDecoAppearance CreateDefaultOuterAppearance() => new()
+    {
+        OverlayColor = DrawingColor.Transparent,
+        BorderColor = DrawingColor.FromArgb(0xFF, 169, 169, 169),
+        BorderThickness = 2.0,
+        ShowSizeLabel = false,
+        ShowSubLines = false,
+        InfoLabelVisible = false,
+    };
 }

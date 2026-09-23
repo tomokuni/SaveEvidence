@@ -149,7 +149,7 @@ Win32 / NoOp 実装は `Platform.Native` が唯一の生成経路となるため
 
 ## 7. サンプル
 
-サンプルアプリケーションはありません（ライブラリプロジェクトのため）。各コントロールプロジェクト（DragRectControl / LoupeControl / FadeMaskControl 等）の sample が本ライブラリを利用しています。
+サンプルアプリケーションはありません（ライブラリプロジェクトのため）。各コントロールプロジェクト（DragRectControl / LoupeControl 等）の sample が本ライブラリを利用しています。
 
 ## 8. ドキュメント
 

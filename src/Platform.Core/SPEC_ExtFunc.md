@@ -87,7 +87,7 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 paint.Color = info.Background.ToSKColor();   // コアの色型 → Skia
 ```
 
-SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。MewUI 版の描画層（`CropSkiaRenderer` / `DragRectSkiaRenderer` / `FadeMaskSkiaRenderer` / `FadeMaskDragRectSkiaRenderer` / `LoupeControl` / `LoupeSkiaRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
+SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。MewUI 版の描画層（`CropSkiaRenderer` / `DragRectSkiaRenderer` / `DragRectOuterSkiaRenderer` / `FadeMaskDragRectSkiaRenderer` / `LoupeControl` / `LoupeSkiaRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
 逆方向（Skia → コア）の変換は本番の利用箇所がないため提供しません（YAGNI）。
 
 ### `Geometry.EsPoint`（readonly record struct）

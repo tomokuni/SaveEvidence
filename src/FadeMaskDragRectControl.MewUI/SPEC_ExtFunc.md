@@ -16,7 +16,7 @@ Avalonia 版と同一の解釈になります。
 | --- | --- |
 | `FadeMaskDragRectControl.Core` | 動作モード（`FadeMaskDragRectMode`）とモードから描画設定への写像 |
 | `DragRectControl.MewUI` / `DragRectControl.Core` | 選択矩形の入力と状態機械 |
-| `FadeMaskControl.MewUI` / `FadeMaskControl.Core` | 暗転マスクの描画 |
+| `DragRectControl.Core` | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル）の契約・外観・幾何・フレーム解決（名前空間 `Estable.DragRect.Decoration`。描画は `DragRectControl` が行う） |
 | `LoupeControl.MewUI` / `LoupeControl.Core` | 拡大鏡の描画と表示位置計算 |
 | `Platform.Core` | コア幾何型・座標変換ポート・画像コンテナ |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `Panel`・`MewProperty`・SkiaSharp |
@@ -62,11 +62,9 @@ Avalonia 版と同一の解釈になります。
 | 項目 | 型 | 説明 |
 | --- | --- | --- |
 | `DragRect` | `DragRectOptions`（コア） | 選択矩形の設定（枠線を除く） |
-| `Overlay` | `FadeMaskAppearance`（コア） | 暗転マスクの外観（暗転色・枠線・ラベル）。枠線は選択矩形と共用される |
 | `Loupe` | `LoupeOptions`（コア） | ルーペの設定（拡大率・表示サイズ・外観。市松模様の下地色も含む） |
 | `SelectionRectColorA` / `SelectionRectColorB` | `System.Drawing.Color` | ルーペ画像上の選択矩形破線の色（2 色交互。既定は白 / 黒） |
 | `LoupeOffset` | `double` | ルーペの中心からの右下オフセット（DIP。既定は 20） |
-| `ResolveDragRectOptions()` | `DragRectOptions` | 選択矩形へ適用する設定を求める（枠線を暗転マスクの外観と揃える） |
 
 文言と環境値（設定値（`Options`）には含めない）:
 
@@ -76,16 +74,15 @@ Avalonia 版と同一の解釈になります。
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包するドラッグ選択コントロールとルーペへ伝搬する。null は `NullLogger` へフォールバック。暗転マスクは選択のたびにログを出すため対象外） |
 
-内包コントロールへの直接アクセス（`Overlay` / `DragRect` / `Loupe`）は internal（自身のテストのみ）。ホストは `Options` / `Mode` / 文言プロパティの公開 API を使います。
+内包コントロールへの直接アクセス（`DragRect` / `Loupe`）は internal（自身のテストのみ）。ホストは `Options` / `Mode` / 文言プロパティの公開 API を使います。
 
 ## 6. メソッド
 
 | メソッド | 説明 |
 | --- | --- |
-| `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定する（ドラッグ選択と暗転マスクへ分配）。null の場合は倍率からコアが解決する |
+| `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定する（ドラッグ選択とルーペへ分配）。null の場合は倍率からコアが解決する |
 | `SetSelection(EsRect)` | 選択状態を外部から設定する（幅・高さのいずれかが 0 以下の場合は選択なし） |
 | `ClearSelection()` | 選択状態をクリアして全面暗転へ戻す |
-| `SetDragRectSelection(EsRect)` | 選択矩形をドラッグ選択コントロールへ復元する（選択変更が暗転マスクへ伝播する） |
 | `SetLoupeSource(EsBitmap?)` | ルーペの拡大元画像を設定する（設定だけでは表示しない） |
 | `SetLoupePosition(EsPoint)` | ルーペ中心（ドメイン座標）を設定して表示を開始する（画像が未設定の間は表示しない） |
 | `ClearLoupe()` | ルーペを非表示にして画像と中心を破棄する |
@@ -123,8 +120,8 @@ Avalonia 版と同一の解釈になります。
 - ルーペは拡大元画像（`SetLoupeSource`）と中心（`SetLoupePosition`）の両方が設定された場合のみ表示します。
   親領域の外へはみ出す場合は内側へクランプします。
 - ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が、描画の可否はコアの `FadeMaskDragRectState.ShowSelectionOverlay` が単一所有する）。選択矩形を変更した場合はルーペの再描画を要求します（破線はルーペのプロパティに現れないため）。
-- サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（サブラインはコアの `FadeMaskAppearance.BuildSubLines` が組み立てる）
-  （文言の単一所有は `FadeMaskControl.Core` の `FadeMaskLabels`。表示位置の計算は同コアの `FadeMaskLabelLayout`）。
+- サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（サブラインはコアの `OuterDecoAppearance.BuildSubLines` が組み立てる）
+  （文言の単一所有は `DragRectControl.Core` の `Estable.DragRect.Decoration` の `OuterDecoLabels`。表示位置の計算は同コアの `OuterDecoLabelLayout`）。
 
 ## 9. Avalonia 版との違い
 

@@ -5,7 +5,7 @@
 
 ## 特徴
 
-- **Facade / Composite**: 3 つの MewUI コントロール（`DragRectControl` / `FadeMaskControl` / `LoupeControl`）を
+- **Facade / Composite**: 2 つの MewUI コントロール（`DragRectControl`（外側の装飾を含む） / `LoupeControl`）を
   重ねて配置し、ホストへ統一インターフェースを提供します。ホストはライフサイクルとモード固有処理に専念できます。
 - **モード切替**: `Mode` を設定するだけで、選択矩形とルーペの可視性・全面暗転が切り替わります
   （モードの解釈は `FadeMaskDragRectControl.Core` が単一所有）。
@@ -77,7 +77,6 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | `SetSelection` / `ClearSelection` | 選択状態の外部設定・クリア |
 | `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe` | ルーペの制御 |
 | `RequestConfirm` / `RequestCancel` | Enter / Escape 相当の確定・キャンセル要求 |
-| `SetDragRectSelection` / `FocusDragRect` | 選択矩形の復元・矢印キー nudge の受付開始 |
 | `NotifyViewportChanged` / `InvalidateOverlay` | ビューポート変化の通知・暗転マスクの再描画要求 |
 
 ## イベント
@@ -91,7 +90,7 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | イベント引数の座標 | Avalonia の `Point` / `Rect` | **コア型の `EsPoint` / `EsRect`** |
 | 外観設定 | コアの `FadeMaskDragRectOptions` を 1 プロパティとして公開する（既定値・分配規則はコアが単一所有） | 同じコアの設定値を 1 プロパティとして公開する（同一の型・同一の既定値） |
 | ルーペの位置決め | ルーペコントロール自身が座標変換ポートから算出 | **本コントロールが `LoupePositionCalculator` で配置**（MewUI のルーペは位置を持たない） |
-| サイズラベル・情報ラベル・サブライン | 描画する | 描画する（文言はコアの `FadeMaskLabels` とホストが与える） |
+| サイズラベル・情報ラベル・サブライン | 描画する | 描画する（文言はコアの `OuterDecoLabels` とホストが与える） |
 | ルーペ画像上の選択矩形破線 | 描画完了イベント経由で描画 | 同じコアの破線幾何を使い、ルーペの `Rendered` で同一のキャンバスへ描画する（見た目は一致） |
 | `ScrollViewer` の自動連携 | `AttachScrollViewer` で購読 | ホストが `NotifyViewportChanged()` を呼ぶ |
 | ログ | `ILogger` を注入して内包コントロールへ伝搬 | `Log` プロパティで同様に伝搬する（書式は同一） |

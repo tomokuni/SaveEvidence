@@ -22,27 +22,6 @@ public class DragRectSkiaRendererTests
     private static readonly SKColor s_transparent = new(0, 0, 0, 0);
 
     // ====================================================================
-    // DrawBorder
-    // ====================================================================
-
-    [Fact]
-    public void DrawBorder_矩形の辺のみを太さ分描画する()
-    {
-        using var target = TestHelper.CreateTarget(120, 120);
-
-        // 矩形 (10,10)-(60,50)・太さ 2 → 辺は [9,11) を覆う（ストロークは経路の中心に描かれる）
-        DragRectSkiaRenderer.DrawBorder(target.Canvas, new EsRect(10, 10, 50, 40), s_white, borderThickness: 2);
-
-        // 内側は描画されない
-        Assert.Equal(s_transparent, target.GetPixel(30, 25));
-        // 左辺・右辺・上辺・下辺が白で描かれる
-        Assert.Equal(SKColors.White, target.GetPixel(9, 25));
-        Assert.Equal(SKColors.White, target.GetPixel(60, 25));
-        Assert.Equal(SKColors.White, target.GetPixel(30, 9));
-        Assert.Equal(SKColors.White, target.GetPixel(30, 49));
-    }
-
-    // ====================================================================
     // DrawHandles
     // ====================================================================
 

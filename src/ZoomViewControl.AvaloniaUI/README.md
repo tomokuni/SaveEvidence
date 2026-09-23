@@ -148,7 +148,7 @@ ZoomViewControl/
 │   ├── ZoomableView.cs         # ScrollViewer 不使用のパン・ズームビューポート
 │   ├── ZoomChangedEventArgs.cs # ズーム変更イベント引数
 │   ├── ZoomRequestedEventArgs.cs
-│   └── Logging/                # ログ定義（LogMessage）
+│   └── Logging/                # ログ定義（ZoomViewLogMessage）
 ├── tests/        # 単体テスト（ZoomViewControl.AvaloniaUI.Tests）
 └── sample/       # サンプルアプリケーション
 

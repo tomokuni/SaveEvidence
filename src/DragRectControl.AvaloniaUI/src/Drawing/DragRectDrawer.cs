@@ -15,7 +15,7 @@ namespace Estable.AvaloniaUI.DragRect.Drawing;
 /// 矩形ドメイン（DragRect）の視覚表現を担当する。<br/>
 /// ハンドル位置は <see cref="Selection.SelectionGeometry.GetHandlePosition"/>（DRY）から取得し、中心に描画する。<br/>
 /// <br/>
-/// 暗転マスク・サイズラベル等の選択オーバーレイ描画は Selection 側（FadeMaskDrawer）が担う。<br/>
+/// 選択矩形の外側に描く装飾（暗転マスク・サイズラベル等）の描画は <see cref="DragRectOuterDrawer"/> が担う。<br/>
 /// <br/>
 /// **適用パターン**: Flyweight（色・太さで決まるブラシ / ペンをキャッシュして再利用）。
 /// </remarks>
@@ -86,20 +86,12 @@ internal static class DragRectDrawer
         cache[key] = value;
     }
 
-    /// <summary>選択枠線を描画する。</summary>
-    /// <param name="context">描画コンテキスト。</param>
-    /// <param name="rect">選択矩形。</param>
-    /// <param name="borderColor">枠線の色（不透明度は色のアルファに統合）。</param>
-    /// <param name="borderThickness">枠線の太さ。</param>
-    public static void DrawBorder(DrawingContext context, Rect rect, Color borderColor, double borderThickness)
-        => context.DrawRectangle(GetPen(borderColor, borderThickness), rect);
-
     /// <summary>ドラッグハンドル（白色矩形＋枠線）を描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>
     /// <param name="rect">選択矩形。</param>
     /// <param name="handleSize">ハンドルの一辺サイズ。</param>
     /// <param name="handleColor">ハンドルの色。デフォルト（透明）は白。</param>
-    /// <param name="borderColor">枠線の色（ハンドル枠に使用）。</param>
+    /// <param name="borderColor">ハンドル枠の色（外側の装飾の枠線色を使う）。</param>
     /// <remarks>
     /// 8方向のハンドル（None / Move を除く）を列挙し、<see cref="Selection.SelectionGeometry.GetHandlePosition"/> から<br/>
     /// 中心位置を取得して描画する。新ハンドル追加時は DragHandle の追加のみで描画が追従する（OCP）。

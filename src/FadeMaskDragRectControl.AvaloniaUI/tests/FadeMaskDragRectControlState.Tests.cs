@@ -1,8 +1,8 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Estable.AvaloniaUI.DragRect;
-using Estable.AvaloniaUI.FadeMask;
 using Estable.AvaloniaUI.Loupe;
+using Estable.DragRect;
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
@@ -23,14 +23,14 @@ public class FadeMaskDragRectControlStateTests
     private static IImage CreateSource() => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
 
     [AvaloniaFact]
-    public void コンストラクタ_内包コントロールが3つ配置される()
+    public void コンストラクタ_内包コントロールが2つ配置される()
     {
         var control = new FadeMaskDragRectControl();
 
-        Assert.Equal(3, control.Children.Count);
-        Assert.IsType<FadeMaskControl>(control.Children[0]);
-        Assert.IsType<DragRectControl>(control.Children[1]);
-        Assert.IsType<LoupeControl>(control.Children[2]);
+        // 選択矩形の外側の装飾（暗転マスク・枠・ラベル）は選択矩形コントロール自身が描画する
+        Assert.Equal(2, control.Children.Count);
+        Assert.IsType<DragRectControl>(control.Children[0]);
+        Assert.IsType<LoupeControl>(control.Children[1]);
     }
 
     // ====================================================================
@@ -96,8 +96,11 @@ public class FadeMaskDragRectControlStateTests
         var control = new FadeMaskDragRectControl();
 
         // 既定の設定（コアの既定値）がそのまま子コントロールへ渡される
-        Assert.Equal(FadeMaskDragRectOptions.Default.Overlay, control.Overlay.Options.Appearance);
-        Assert.Equal(FadeMaskDragRectOptions.Default.ResolveDragRectOptions(), control.DragRect.Options);
+        Assert.Equal(FadeMaskDragRectOptions.Default.DragRect.OuterAppearance, control.DragRect.Options.OuterAppearance);
+        // モードから導出される描画状態（既定は AreaSelect = 全面暗転）だけが設定値と異なる
+        Assert.Equal(
+            FadeMaskDragRectOptions.Default.DragRect with { OuterShowFullOverlay = true },
+            control.DragRect.Options);
         Assert.Equal(FadeMaskDragRectOptions.Default.Loupe, control.Loupe.Options);
         Assert.Equal(FadeMaskDragRectOptions.Default.LoupeOffset, control.Loupe.PositionOffset);
     }
@@ -106,16 +109,19 @@ public class FadeMaskDragRectControlStateTests
     public void 設定_枠線は選択枠線と暗転マスクで共用される()
     {
         var control = new FadeMaskDragRectControl();
-        var overlay = FadeMaskDragRectOptions.Default.Overlay with
+        var overlay = FadeMaskDragRectOptions.Default.DragRect.OuterAppearance with
         {
             BorderColor = System.Drawing.Color.Red,
             BorderThickness = 1.0,
         };
 
-        control.Options = FadeMaskDragRectOptions.Default with { Overlay = overlay };
+        control.Options = FadeMaskDragRectOptions.Default with
+        {
+            DragRect = DragRectOptions.Default with { OuterAppearance = overlay },
+        };
 
         // 選択枠線（DragRect）は暗転マスクの穴あけ枠と重なるため、同じ色・太さになる
-        Assert.Equal(System.Drawing.Color.Red, control.DragRect.Options.BorderColor);
-        Assert.Equal(1.0, control.DragRect.Options.BorderThickness);
+        Assert.Equal(System.Drawing.Color.Red, control.DragRect.Options.OuterAppearance.BorderColor);
+        Assert.Equal(1.0, control.DragRect.Options.OuterAppearance.BorderThickness);
     }
 }

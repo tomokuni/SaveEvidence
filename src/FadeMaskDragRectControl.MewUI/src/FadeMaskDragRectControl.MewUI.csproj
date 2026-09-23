@@ -18,9 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 内包する MewUI コントロール（DragRect + FadeMask + Loupe） -->
+    <!-- 内包する MewUI コントロール（DragRect + Loupe） -->
     <ProjectReference Include="..\..\DragRectControl.MewUI\src\DragRectControl.MewUI.csproj" />
-    <ProjectReference Include="..\..\FadeMaskControl.MewUI\src\FadeMaskControl.MewUI.csproj" />
     <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
     <!-- ルーペの表示位置計算（LoupePositionCalculator） -->
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />

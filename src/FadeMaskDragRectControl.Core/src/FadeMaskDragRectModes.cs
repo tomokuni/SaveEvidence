@@ -1,4 +1,4 @@
-using Estable.FadeMask;
+using Estable.DragRect.Decoration;
 
 namespace Estable.FadeMaskDragRect;
 
@@ -22,11 +22,11 @@ internal static class FadeMaskDragRectModes
     /// <summary>モードに対応する暗転マスクの描画モードを取得する。</summary>
     /// <param name="mode">動作モード。</param>
     /// <returns>暗転マスクの描画モード。</returns>
-    private static FadeMaskRenderMode ToRenderMode(FadeMaskDragRectMode mode) => mode switch
+    private static OuterDecoRenderMode ToRenderMode(FadeMaskDragRectMode mode) => mode switch
     {
-        FadeMaskDragRectMode.Crop => FadeMaskRenderMode.Crop,
-        FadeMaskDragRectMode.AreaSelect => FadeMaskRenderMode.AreaSelect,
-        FadeMaskDragRectMode.ScreenSelect => FadeMaskRenderMode.ScreenSelect,
-        _ => FadeMaskRenderMode.WindowSelect,
+        FadeMaskDragRectMode.Crop => OuterDecoRenderMode.Crop,
+        FadeMaskDragRectMode.AreaSelect => OuterDecoRenderMode.AreaSelect,
+        FadeMaskDragRectMode.ScreenSelect => OuterDecoRenderMode.ScreenSelect,
+        _ => OuterDecoRenderMode.WindowSelect,
     };
 }

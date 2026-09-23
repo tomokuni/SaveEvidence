@@ -1,3 +1,4 @@
+using Estable.DragRect.Decoration;
 using Xunit;
 
 namespace Estable.DragRect.Tests;
@@ -14,9 +15,20 @@ public class DragRectOptionsTests
     {
         var options = DragRectOptions.Default;
 
-        // 枠線は DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）
-        Assert.Equal(System.Drawing.Color.FromArgb(255, 169, 169, 169), options.BorderColor);
-        Assert.Equal(2.0, options.BorderThickness);
+        // 枠線は DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）。外側の装飾の外観が単一所有する
+        Assert.Equal(System.Drawing.Color.FromArgb(255, 169, 169, 169), options.OuterAppearance.BorderColor);
+        Assert.Equal(2.0, options.OuterAppearance.BorderThickness);
+        // 汎用の選択矩形コントロールの既定では暗転せず、ラベルも描かない
+        Assert.Equal(System.Drawing.Color.Transparent, options.OuterAppearance.OverlayColor);
+        Assert.False(options.OuterAppearance.ShowSizeLabel);
+        Assert.False(options.OuterAppearance.ShowSubLines);
+        Assert.False(options.OuterAppearance.InfoLabelVisible);
+        Assert.Equal(OuterDecoRenderMode.AreaSelect, options.OuterRenderMode);
+        Assert.Equal("", options.OuterWindowTitle);
+        Assert.False(options.OuterShowFullOverlay);
+        Assert.Null(options.OuterHighlightRect);
+        Assert.False(options.OuterHasHighlight);
+        Assert.True(options.ShowHandles);
         Assert.Equal(System.Drawing.Color.White, options.HandleColor);
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(System.Drawing.Color.White, options.MarkerColor);
@@ -42,10 +54,10 @@ public class DragRectOptionsTests
     [Fact]
     public void 一部の項目だけを変更しても他の項目は既定値を保つ()
     {
-        var options = DragRectOptions.Default with { BorderThickness = 3.0 };
+        var options = DragRectOptions.Default with { ShowHandles = false };
 
-        Assert.Equal(3.0, options.BorderThickness);
-        Assert.Equal(DragRectOptions.Default.BorderColor, options.BorderColor);
+        Assert.False(options.ShowHandles);
+        Assert.Equal(DragRectOptions.Default.OuterAppearance, options.OuterAppearance);
         Assert.Equal(DragRectOptions.Default.HandleSize, options.HandleSize);
         Assert.Equal(DragRectOptions.Default.CoordLabelFontSize, options.CoordLabelFontSize);
         Assert.Equal(DragRectOptions.Default.MinSelectionSize, options.MinSelectionSize);
@@ -53,10 +65,25 @@ public class DragRectOptionsTests
     }
 
     [Fact]
+    public void 外側の装飾の外観を変更しても他の項目は既定値を保つ()
+    {
+        var options = DragRectOptions.Default with
+        {
+            OuterAppearance = DragRectOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
+        };
+
+        Assert.Equal(3.0, options.OuterAppearance.BorderThickness);
+        Assert.Equal(DragRectOptions.Default.OuterAppearance.BorderColor, options.OuterAppearance.BorderColor);
+        Assert.Equal(DragRectOptions.Default.HandleSize, options.HandleSize);
+        Assert.True(options.ShowHandles);
+    }
+
+    [Fact]
     public void 同名で同値の設定は等価である()
     {
-        var a = DragRectOptions.Default with { BorderColor = System.Drawing.Color.Red, ShowCoordLabel = true };
-        var b = DragRectOptions.Default with { BorderColor = System.Drawing.Color.Red, ShowCoordLabel = true };
+        var appearance = DragRectOptions.Default.OuterAppearance with { BorderColor = System.Drawing.Color.Red };
+        var a = DragRectOptions.Default with { OuterAppearance = appearance, ShowCoordLabel = true };
+        var b = DragRectOptions.Default with { OuterAppearance = appearance, ShowCoordLabel = true };
 
         Assert.Equal(a, b);
         Assert.NotEqual(a, a with { ShowCoordLabel = false });

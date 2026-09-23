@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Estable.CaptureSession;
-using Estable.FadeMask;
+using Estable.DragRect.Decoration;
 using Estable.FadeMaskDragRect;
 using Estable.MewUI.FadeMaskDragRect;
 using EsUtil.Platform.MewUI;
@@ -449,7 +449,7 @@ public sealed class CaptureOverlay
         // DisplayScale は選択位置のモニターの実表示スケール（DIP → 画像ピクセルの倍率）を表示する
         _selector.SizeLabelOverrideProvider = () =>
             _selection() is { } rect && settings.SizeLabelVisible!.Value
-                ? FadeMaskLabels.FormatSizeLabel(rect, scaling: 1.0, displayScaling: DisplayScalingAt(rect))
+                ? OuterDecoLabels.FormatSizeLabel(rect, scaling: 1.0, displayScaling: DisplayScalingAt(rect))
                 : null;
 
         // ウィンドウタイトル（情報ラベルの文言）を渡し、行の組み立てはコントロールに委ねる

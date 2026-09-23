@@ -21,7 +21,7 @@
 | `LoupeCheckerboard` | 市松模様のタイルの明暗判定と、暗色タイルの矩形列挙（`ComputeDarkTileRects`。各 UI が同一のパターンを描画できるようにする） |
 | `LoupeRenderArgsCalculator` | 描画完了イベント引数用の表示情報（切り出し左上 / スケール）の計算。物理ピクセルサイズは実際に描画した値を受け取る |
 | `LoupeLogFormat` | 設定値の変更ログが出力する値の文字列化（`(X, Y)` / `Width×Height` / `null`） |
-| `LogMessage` | ログ定義（設定変更・拡大中心の変更・描画例外・再描画の進行）と書式・変化判定（同値の再設定では出力しない）の単一所有 |
+| `LoupeLogMessage` | ログ定義（設定変更・拡大中心の変更・描画例外・再描画の進行）と書式・変化判定（同値の再設定では出力しない）の単一所有 |
 | `Imaging.LoupeImageExtractor` | 切り出し領域の一辺・左上（ドメイン座標）の計算と、`EsBitmap` からの領域切り出し、切り出し可否を含む取得（`TryExtractRegionAt`）、拡大描画の矩形（`ComputeMagnifiedRects`。引数はビットマップの実寸 `EsBitmap.Size`） |
 
 `LoupeOptions` / `LoupeAppearance` のみ **public** です（ホスト・他プロジェクトが設定を指定するため）。それ以外は `internal` であり、UI 実装（`LoupeControl.AvaloniaUI` / `LoupeControl.MewUI`）・複合コントロール・テストからのみ `InternalsVisibleTo` で参照できます。

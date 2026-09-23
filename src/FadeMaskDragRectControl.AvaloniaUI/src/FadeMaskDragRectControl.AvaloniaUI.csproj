@@ -21,7 +21,6 @@
   <ItemGroup>
     <!-- 複合コントロール（DragRect + FadeMask + Loupe）を構成する内包コントロール -->
     <ProjectReference Include="..\..\DragRectControl.AvaloniaUI\src\DragRectControl.AvaloniaUI.csproj" />
-    <ProjectReference Include="..\..\FadeMaskControl.AvaloniaUI\src\FadeMaskControl.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\LoupeControl.AvaloniaUI\src\LoupeControl.AvaloniaUI.csproj" />
     <!-- 座標変換ポート（ICoordinatePort / CoordinatePort） -->
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />

@@ -67,7 +67,7 @@
 
 ### 選択中のラベル
 
-選択矩形の左上に行を縦に積んで表示します（背景付き。行の配置と文言生成は `../FadeMaskControl.Core` の `FadeMaskLabels` / `FadeMaskLabelLayout` が単一所有）。
+選択矩形の左上に行を縦に積んで表示します（背景付き。行の配置と文言生成は `DragRectControl.Core` の `OuterDecoLabels` / `OuterDecoLabelLayout`（名前空間 `Estable.DragRect.Decoration`）が単一所有）。
 
 | 行 | 内容 | 表示条件 | 設定 |
 | --- | --- | --- | --- |

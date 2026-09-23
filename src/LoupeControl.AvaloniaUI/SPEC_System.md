@@ -19,7 +19,7 @@
     - [6.3 描画責務分割](#63-描画責務分割)
     - [6.4 画像入力とピクセル抽出](#64-画像入力とピクセル抽出)
     - [6.5 LoupeImageExtractor（`LoupeControl.Core`）](#65-loupeimageextractorloupecontrolcore)
-    - [6.6 LogMessage](#66-logmessage)
+    - [6.6 LoupeLogMessage](#66-loupelogmessage)
     - [6.7 上位AP（消費側）](#67-上位ap消費側)
     - [6.8 UI 固有の機構（コアへ移さない）](#68-ui-固有の機構コアへ移さない)
   - [7. 依存ルール](#7-依存ルール)
@@ -77,11 +77,11 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（コアの `LogMessage`。両 UI 分を `LoupeControl.Core` が単一所有する）で出力する。設定変更は Debug、再描画・位置更新は Trace、例外は Error で記録する。
+- ログは LoggerMessage ソース生成（コアの `LoupeLogMessage`。両 UI 分を `LoupeControl.Core` が単一所有する）で出力する。設定変更は Debug、再描画・位置更新は Trace、例外は Error で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
-- `Source` に `Bitmap` / `EsBitmapAvaloniaImage` 以外の `IImage` が設定された場合、`NotSupportedException` を生成し `LogMessage.LogUpdateError` で記録する。
+- `Source` に `Bitmap` / `EsBitmapAvaloniaImage` 以外の `IImage` が設定された場合、`NotSupportedException` を生成し `LoupeLogMessage.LogUpdateError` で記録する。
 - 描画の例外（未対応の画像型等）は `Log` へ記録され、呼び出し元へは伝播しない（開始側が例外を観測する）。
 - 自動再描画の場合は例外を観測済みとして処理し、UI スレッドを未処理例外で終了させない。
 - 非同期生成は世代番号で古い結果を破棄し、解放後の破棄を防止する。
@@ -118,7 +118,7 @@ flowchart TB
         Lay["LoupeLabelLayout<br/>internal static class"]
         Pos["LoupePositionCalculator<br/>internal static class"]
         Args["LoupeRenderArgsCalculator<br/>internal static class"]
-        Log["LogMessage<br/>internal static partial class"]
+        Log["LoupeLogMessage<br/>internal static partial class"]
     end
 
     AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>Options / RenderScaling / RequestRender / Clear"| Ctl
@@ -171,7 +171,7 @@ flowchart TB
     - 座標単位: `Options.RequestedSize` は DIP、レンダラーへ渡すサイズと装飾幅は `RenderScaling` で物理ピクセルへ変換
   - 値の補正: コアの設定値（`LoupeOptions` / `LoupeAppearance`）は型の生成時に補正される（UI は関与しない）。環境値の `RenderScaling` のみ `coerce` コールバックで矯正する
 - **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する表示サイズ・拡大率・外観。UI は設定値を保持しない。色は `System.Drawing.Color` で受け取り描画時にブラシへ変換する））/ 環境（`RenderScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
-- **依存**: LoupeRenderer / LogMessage（コア） / LoupeOptions（コア） / LoupeAppearance（コア） / Avalonia / ILogger
+- **依存**: LoupeRenderer / LoupeLogMessage（コア） / LoupeOptions（コア） / LoupeAppearance（コア） / Avalonia / ILogger
 
 ### 6.2 LoupeRenderer
 
@@ -213,7 +213,7 @@ flowchart TB
 - **公開API**: `ExtractRegionAt`（`EsBitmap` 抽出）/ `TryExtractRegionAt`（切り出しの可否を含む。ソース・中心未設定や破棄済みは `null`）/ `ComputeCaptureSize`（切り出し領域サイズ計算）/ `ComputeCaptureTopLeft`（拡大中心 → 切り出し領域左上計算。`ExtractRegionAt` / `LoupeRenderArgsCalculator` で共用する単一所有）/ `ComputeMagnifiedRects`（切り出し元・描画先の矩形計算。両 UI が共用する拡大倍率の単一所有）
 - **依存**: `Platform.Core`（`EsBitmap` / `EsPoint`）のみ。Avalonia には依存しない
 
-### 6.6 LogMessage
+### 6.6 LoupeLogMessage
 
 - **分類**: 内部静的クラス（`internal static partial class`。所属は `LoupeControl.Core` の `Estable.Loupe`）
 - **責務**: LoggerMessage source generator によるログ定義。**両 UI で同じ書式・レベルにするためコアが単一所有する**

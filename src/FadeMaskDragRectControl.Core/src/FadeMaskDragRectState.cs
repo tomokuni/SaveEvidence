@@ -1,4 +1,4 @@
-using Estable.FadeMask;
+using Estable.DragRect.Decoration;
 
 namespace Estable.FadeMaskDragRect;
 
@@ -11,7 +11,7 @@ namespace Estable.FadeMaskDragRect;
 /// 既定値（<c>default</c>）は「選択矩形を使わない・暗転マスクは WindowSelect」になるため、<br/>
 /// 既定値のまま使うことを避ける目的で生成は <see cref="FadeMaskDragRectModes.Resolve"/> から行う。
 /// </remarks>
-internal readonly record struct FadeMaskDragRectState(bool UsesSelection, FadeMaskRenderMode RenderMode)
+internal readonly record struct FadeMaskDragRectState(bool UsesSelection, OuterDecoRenderMode RenderMode)
 {
     /// <summary>全面暗転（穴あけなし）を表示するかどうかを取得する。</summary>
     /// <value>選択矩形を使うモードでは true（切り出し・領域選択は全面を暗転して穴を開ける）。</value>

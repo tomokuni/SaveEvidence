@@ -28,7 +28,7 @@ internal sealed partial class OverlayWindow
             UpdateSelectScreenHighlight(screenPoint);
         else
             UpdateWindowSelectHighlight(screenPoint);
-        // ハイライト検出結果を FadeMask の描画へ反映する（再描画要求）
+        // ハイライト検出結果を外側の装飾（DragRectControl）の描画へ反映する（再描画要求）
         RequestOverlayRender();
         // ホバー中の枠（ハイライト）を事前切り出しする（確定時の高速化。同じ矩形ならスキップ）
         if (SelectionOverlay.LogicalHighlightRect is { } highlightLogical)
@@ -127,7 +127,7 @@ internal sealed partial class OverlayWindow
 
     /// <summary>画面物理座標の矩形をウィンドウローカル物理ピクセル（ドメイン座標）に変換する。</summary>
     /// <remarks>
-    /// FadeMask の <c>LogicalHighlightRect</c> はドメイン座標（= ウィンドウローカル物理ピクセル）で設定する。<br/>
+    /// 外側の装飾の <c>LogicalHighlightRect</c> はドメイン座標（= ウィンドウローカル物理ピクセル）で設定する。<br/>
     /// 描画時には座標変換ポート（DomainScale）が DIP へ変換する。<br/>
     /// 画面物理座標 → ドメイン: Position を減算する（scaling では割らない）。
     /// </remarks>

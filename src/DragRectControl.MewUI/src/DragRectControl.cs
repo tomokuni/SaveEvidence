@@ -2,6 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
 using Estable.DragRect;
+using Estable.DragRect.Decoration;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.Native;
@@ -52,6 +53,11 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <summary><see cref="RenderScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
     public static readonly MewProperty<double> RenderScalingProperty =
         MewProperty<double>.Register<DragRectControl>(nameof(RenderScaling), 1.0, MewPropertyOptions.AffectsRender);
+
+    /// <summary><see cref="Scaling"/> プロパティ（座標変換ポートへ適用する倍率）。</summary>
+    /// <remarks><see cref="SetCoordinateTransform"/> でポートを設定した場合は使用しない（等倍スケール専用の簡易指定）。</remarks>
+    public static readonly MewProperty<double> ScalingProperty =
+        MewProperty<double>.Register<DragRectControl>(nameof(Scaling), 1.0, MewPropertyOptions.AffectsRender);
 
     /// <summary>選択・ドラッグ・nudge の状態を管理するセッション（入力の解釈と状態遷移の判断を担う）。</summary>
     private readonly DragRectSession _session;
@@ -145,7 +151,7 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="DragRectOptions.Default"/>。</value>
     /// <remarks>
     /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬する。<br/>
-    /// 一部の項目だけを変える場合は <c>DragRectOptions.Default with { BorderThickness = 3.0 }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
+    /// 一部の項目だけを変える場合は <c>DragRectOptions.Default with { ShowHandles = false }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
     /// 色は UI 非依存の <see cref="DrawingColor"/> で受け取り、描画（Skia）への変換は描画層が行う。
     /// </remarks>
     public DragRectOptions Options
@@ -153,6 +159,53 @@ public sealed class DragRectControl : SkiaCanvasView
         get => GetValue(OptionsProperty);
         set => SetValue(OptionsProperty, value);
     }
+
+    /// <summary>座標変換ポートへ適用する倍率を取得または設定する。</summary>
+    /// <value>ドメイン → DIP の倍率。既定は 1.0。</value>
+    /// <remarks>
+    /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
+    /// <see cref="SetCoordinateTransform"/> が未設定の場合のみ使われる（ポート優先）。<br/>
+    /// 選択矩形と十字マーカーの描画はセッションのポートのみを使うため本値の影響を受けない<br/>
+    /// （本値が影響するのは外側の装飾のサイズラベル・ラベル位置）。
+    /// </remarks>
+    public double Scaling
+    {
+        get => GetValue(ScalingProperty);
+        set => SetValue(ScalingProperty, value);
+    }
+
+    /// <summary>サイズラベル表示用のスケーリング係数を取得または設定する（マルチスクリーン補正）。</summary>
+    /// <value>サイズラベルの自動生成に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値が使用される。</value>
+    /// <remarks>0 以下を <see cref="Scaling"/> と同値として扱う規則はコア（<c>OuterDecoLabels.ResolveDisplayScaling</c>）が単一所有する。</remarks>
+    public double DisplayScaleScaling
+    {
+        get => OuterDecoLabels.ResolveDisplayScaling(field, Scaling);
+        set => field = value;
+    }
+
+    /// <summary>サイズラベルのテキストを提供する関数を取得または設定する。</summary>
+    /// <value>サイズラベルのテキストを返す関数。null または空文字の場合は自動生成する。</value>
+    /// <remarks>
+    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
+    /// 描画のたびに評価されるため、ドラッグ中の選択矩形の変化にも追従できる。<br/>
+    /// 設定（変更）時は再描画を要求する。
+    /// </remarks>
+    public Func<string?>? SizeLabelOverrideProvider
+    {
+        get => field;
+        set
+        {
+            field = value;
+            InvalidateVisual();
+        }
+    }
+
+    /// <summary>ドメイン ↔ ローカル DIP の座標変換ポート（null はコアが <see cref="Scaling"/> から解決する）。</summary>
+    /// <remarks>
+    /// セッションは null を等価変換に置換して保持するため、<b>指定の有無（null かどうか）は本フィールドだけが保持する</b>。<br/>
+    /// この区別が必要なのは、ポート未指定時に倍率（<see cref="Scaling"/>）を使う規則をコアが単一所有するためである。
+    /// </remarks>
+    private ICoordTransform? _coordinatePort;
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
     /// <value>スケーリング係数。DPI 変更時に自動更新される。</value>
@@ -165,6 +218,16 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <summary>現在の選択状態のスナップショットを取得する（ポーリング不要の完全状態）。</summary>
     /// <value>State / SelectionRect / ActiveHandle / MousePosition / IsMouseDown / IsDragging / NudgeActive / HasSelection を含むスナップショット。</value>
     public DragRectSnapshot CurrentSnapshot => _session.CreateSnapshot();
+
+    /// <summary>選択矩形があるかどうかを取得する。</summary>
+    /// <value>選択中の場合は true。</value>
+    /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
+    public bool HasSelection => _session.HasSelection;
+
+    /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
+    /// <value>選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</value>
+    /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
+    public EsRect SelectionRect => _session.SelectionRect;
 
     /// <summary>操作ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
@@ -187,6 +250,7 @@ public sealed class DragRectControl : SkiaCanvasView
     /// </remarks>
     public void SetCoordinateTransform(ICoordTransform? port)
     {
+        _coordinatePort = port;
         _session.SetPort(port);
         InvalidateVisual();
     }
@@ -467,13 +531,19 @@ public sealed class DragRectControl : SkiaCanvasView
         };
     }
 
-    /// <summary>選択枠線・ハンドル・十字マーカー・座標ラベルを描画する。</summary>
+    /// <summary>選択矩形の外側に描く装飾・ハンドル・十字マーカー・座標ラベルを描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
+    /// 描画は 2 層に分かれる。<br/>
+    /// - <b>外側の装飾</b>（暗転マスク・穴あけ枠・ラベル）: 装飾コアのフレームを <see cref="DragRectOuterSkiaRenderer.Draw"/> へ渡して描く。<br/>
+    /// - <b>選択矩形そのもの</b>（ドラッグハンドル・始点マーカー・座標ラベル）: <see cref="DragRectSkiaRenderer"/> で描く。<br/>
+    /// <br/>
+    /// 選択枠線は外側の装飾の穴あけ枠（同じ矩形の内側）と重なるため、本コントロールは描画しない<br/>
+    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="DragRectOptions.OuterAppearance"/> が単一所有する。<br/>
     /// セッションの状態（選択矩形・nudge・マウス位置）を読み、DIP へ変換して描画層へ渡すだけである。<br/>
     /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>
-    /// 背景は塗らない（透明のままにして下の画像を透かす）。
+    /// 背景は塗らない（透明のままにして下の画像を透かす）。<br/>    /// 外側の装飾（暗転マスク）は選択の有無に関係なく描画する（ハイライトのみを表示するモードを含む）。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
@@ -484,11 +554,26 @@ public sealed class DragRectControl : SkiaCanvasView
         canvas.Scale((float)scaling);
         try
         {
-            if (_session.HasSelection)
+            // 前フレームの描画（選択矩形・暗転マスク）を残さないため、自分の描画面を消してから描く
+            canvas.Clear(SKColors.Transparent);
+
+            // 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）。
+            // どの矩形を暗転するか・枠線を描くか・ラベルをどう組むかは装飾コアが持つため、本層はフレームを描画 API へ写すだけとする。
+            DragRectOuterSkiaRenderer.Draw(
+                canvas,
+                DragRectFrame.Resolve(
+                    _session,
+                    new EsRect(0, 0, info.Width / scaling, info.Height / scaling),
+                    _coordinatePort,
+                    Scaling,
+                    SizeLabelOverrideProvider,
+                    DisplayScaleScaling));
+
+            if (options.ShowHandles && _session.HasSelection)
             {
                 var dipRect = _session.ToDipRect(_session.SelectionRect);
-                DragRectSkiaRenderer.DrawBorder(canvas, dipRect, options.BorderColor, options.BorderThickness);
-                DragRectSkiaRenderer.DrawHandles(canvas, dipRect, options.HandleSize, options.HandleColor, options.BorderColor);
+                DragRectSkiaRenderer.DrawHandles(
+                    canvas, dipRect, options.HandleSize, options.HandleColor, options.OuterAppearance.BorderColor);
             }
 
             if (_session.NudgeActive && _session.CrosshairVisible)

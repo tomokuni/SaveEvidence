@@ -272,7 +272,7 @@ sequenceDiagram
 
 ## 10. ログ
 
-ログ定義は `Logging/LogMessage.cs`（internal・LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
+ログ定義は `Logging/ColorPickerLogMessage.cs`（internal・LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
 各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogSelectedColorChanged(old, new)`）。
 ログ出力先の `ILogger` は公開プロパティ `Log` で注入する（未設定時は `NullLogger` のため出力なし）。
 出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
@@ -301,11 +301,11 @@ sequenceDiagram
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Debug` | `LogMessage.LogSelectedColorChanged` | 選択色変更（変更前後） |
-| `Debug` | `LogMessage.LogOpenFlyout` | カラーピッカー Flyout を開く（現在の選択色） |
-| `Debug` | `LogMessage.LogFlyoutOk` | Flyout の OK で色確定 |
-| `Debug` | `LogMessage.LogFlyoutCancel` | Flyout のキャンセル |
-| `Trace` | `LogMessage.LogLostFocus` | フォーカス喪失（色と有効性） |
+| `Debug` | `ColorPickerLogMessage.LogSelectedColorChanged` | 選択色変更（変更前後） |
+| `Debug` | `ColorPickerLogMessage.LogOpenFlyout` | カラーピッカー Flyout を開く（現在の選択色） |
+| `Debug` | `ColorPickerLogMessage.LogFlyoutOk` | Flyout の OK で色確定 |
+| `Debug` | `ColorPickerLogMessage.LogFlyoutCancel` | Flyout のキャンセル |
+| `Trace` | `ColorPickerLogMessage.LogLostFocus` | フォーカス喪失（色と有効性） |
 
 ## 11. テスト
 

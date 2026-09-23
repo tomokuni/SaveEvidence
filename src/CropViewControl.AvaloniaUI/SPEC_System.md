@@ -50,7 +50,7 @@ flowchart TB
     subgraph Dep["外部依存"]
         Loupe["LoupeControl"]
         Zoom["ZoomViewControl"]
-        FadeMask["FadeMaskControl / DragRectControl"]
+        DR["DragRectControl（外側の装飾）"]
         Core["CropViewControl.Core<br/>OverlayRect / OverlayLineStyle / OverlayRectRasterizer"]
     end
 
@@ -61,14 +61,14 @@ flowchart TB
     Ctl -->|"矩形定義・破線パターン・ラスタライズ"| Core
     FM --> Loupe
     ZV --> Zoom
-    FM --> FadeMask
+    FM --> DR
 ```
 
 - ホストは `CropViewControl` にのみ依存します（Facade）。
 - 画像表示（`ZoomViewControl`）・領域選択（`FadeMaskDragRectControl`）・矩形描画は本コントロール内で配線されます。
 - 領域選択オーバーレイの可視性とヒットテストは `SetSelectionOverlayVisible` で制御します（Crop セッションの開始・終了時にホストが切替）。`Source` 設定では制御しません。
   - 初期状態（`Source` 未設定）はオーバーレイを不可視（`IsVisible = false`）+ ヒットテスト不可（`IsHitTestVisible = false`）にします（コンストラクタで設定）。
-    - 画像なしでの選択矩形作成を防止し、Crop モードの全面暗転（FadeMask）で市松模様が暗くならないようにします。
+    - 画像なしでの選択矩形作成を防止し、Crop モードの全面暗転で市松模様が暗くならないようにします。
   - `Source` が `null` に変わるときは**選択のみクリア**します（オーバーレイの表示・ヒットテスト状態は維持。`SetSelectionOverlayVisible` が専任）。
   - `Source` が設定されてもオーバーレイは自動では表示しません（プレビュー表示時は非表示）。
     - キャプチャ完了直後に Crop モード（全面暗転）が残るのを防ぐため、Crop セッション開始時に `SetSelectionOverlayVisible(true)` で表示します。

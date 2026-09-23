@@ -28,7 +28,7 @@ namespace Estable.AvaloniaUI.CaptureSession;
 ///   <see cref="ZoomViewControl"/>（ズーム・パン・Fit）へ委譲する（ズーム座標の単一所有）。<br/>
 /// <br/>
 /// プレビュー状態（ScrollOffset / ViewportOrigin / ZoomPercent）は保持しない。<br/>
-/// オーバーレイ（DragRect / FadeMask / Loupe）とズームビューポートは <see cref="CropViewControl"/> 内で<br/>
+/// オーバーレイ（DragRect / Loupe）とズームビューポートは <see cref="CropViewControl"/> 内で<br/>
 /// 同一座標空間に配置されるため、座標変換は「ビューポートDIP ↔ 元画像ピクセル」の 1 段で完結する。
 /// </remarks>
 internal sealed class CropSession(
@@ -63,7 +63,7 @@ internal sealed class CropSession(
     private readonly CaptureCompletion<PixelRect?> _completion = new();
 
     /// <summary>選択矩形が有効かどうか（複合コントロールの選択状態）。ホスト（CaptureSessionControl）の操作分岐用。</summary>
-    /// <remarks>選択状態の真のソースは FadeMask レンダラー（<see cref="CropViewControl.HasSelection"/>）に集約する。</remarks>
+    /// <remarks>選択状態の真のソースは選択矩形コントロール（<see cref="CropViewControl.HasSelection"/>）に集約する。</remarks>
     public bool HasSelection => cropView.HasSelection;
 
     /// <summary>ビューポートDIP ↔ 元画像ピクセルの座標変換ポートを生成する。</summary>

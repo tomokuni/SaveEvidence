@@ -1,4 +1,4 @@
-using Estable.FadeMask;
+using Estable.DragRect.Decoration;
 using Xunit;
 
 namespace Estable.FadeMaskDragRect.Tests;
@@ -11,11 +11,11 @@ public class FadeMaskDragRectModesTests
     /// <param name="mode">動作モード。</param>
     /// <param name="expected">期待する描画モード。</param>
     [Theory]
-    [InlineData(FadeMaskDragRectMode.Crop, FadeMaskRenderMode.Crop)]
-    [InlineData(FadeMaskDragRectMode.AreaSelect, FadeMaskRenderMode.AreaSelect)]
-    [InlineData(FadeMaskDragRectMode.ScreenSelect, FadeMaskRenderMode.ScreenSelect)]
-    [InlineData(FadeMaskDragRectMode.WindowSelect, FadeMaskRenderMode.WindowSelect)]
-    public void 解決_モードに対応する描画モードを返す(FadeMaskDragRectMode mode, FadeMaskRenderMode expected)
+    [InlineData(FadeMaskDragRectMode.Crop, OuterDecoRenderMode.Crop)]
+    [InlineData(FadeMaskDragRectMode.AreaSelect, OuterDecoRenderMode.AreaSelect)]
+    [InlineData(FadeMaskDragRectMode.ScreenSelect, OuterDecoRenderMode.ScreenSelect)]
+    [InlineData(FadeMaskDragRectMode.WindowSelect, OuterDecoRenderMode.WindowSelect)]
+    public void 解決_モードに対応する描画モードを返す(FadeMaskDragRectMode mode, OuterDecoRenderMode expected)
         => Assert.Equal(expected, FadeMaskDragRectModes.Resolve(mode).RenderMode);
 
     /// <summary>選択矩形・全面暗転・破線の可否がモードに対応することを検証する。</summary>
@@ -64,7 +64,7 @@ public class FadeMaskDragRectModesTests
     {
         var state = FadeMaskDragRectModes.Resolve((FadeMaskDragRectMode)999);
 
-        Assert.Equal(FadeMaskRenderMode.WindowSelect, state.RenderMode);
+        Assert.Equal(OuterDecoRenderMode.WindowSelect, state.RenderMode);
         Assert.False(state.UsesSelection);
     }
 }

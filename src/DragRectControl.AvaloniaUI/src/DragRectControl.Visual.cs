@@ -1,6 +1,7 @@
 using Estable.AvaloniaUI.DragRect.Drawing;
 using Estable.DragRect;
 using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.Core.Geometry;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -76,7 +77,7 @@ public sealed partial class DragRectControl
     /// <remarks>
     /// ホスト（上位 AP）が Crop モード等でプレビューの ScrollViewer を明示的に注入する。<br/>
     /// - <c>ScrollChanged</c>（スクロール・ズーム・画像サイズ変更）を購読し、<see cref="ViewportChanged"/> を発行する<br/>
-    ///   （上位の FadeMask 等がビューポート座標で再描画するため・イベント駆動・ポーリングなし）。<br/>
+    ///   （上位の暗転マスク等がビューポート座標で再描画するため・イベント駆動・ポーリングなし）。<br/>
     /// - 本コントロール上のマウスホイールを ScrollViewer へ転送する（Ctrl+ホイールは <see cref="ZoomRequested"/>）。<br/>
     /// 祖先探索は行わない（明示注入が唯一の連携方式・暗黙の依存を排除）。
     /// </remarks>
@@ -102,19 +103,23 @@ public sealed partial class DragRectControl
         => ApplyFeedback(_session.NotifyViewportChanged());
 
     // ====================================================================
-    // 描画（セッションの状態を DragRectDrawer で描く）
+    // 描画（外側の装飾は装飾コアへ、選択矩形は DragRectDrawer へ委譲する）
     // ====================================================================
 
     /// <summary>コントロールを描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>
     /// <remarks>
+    /// 描画は 2 層に分かれる。<br/>
+    /// - <b>外側の装飾</b>（暗転マスク・穴あけ枠・ラベル）: 装飾コアのフレームを <see cref="DragRectOuterDrawer.Draw"/> へ渡して描く。<br/>
+    /// - <b>選択矩形そのもの</b>（ドラッグハンドル・始点マーカー・座標ラベル）: <see cref="Drawing.DragRectDrawer"/> で描く。<br/>
+    /// <br/>
+    /// 選択枠線は外側の装飾の穴あけ枠（同じ矩形の内側）と重なるため本コントロールでは描画しない<br/>
+    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="DragRectOptions.OuterAppearance"/> が単一所有する。<br/>
     /// セッションの状態（選択矩形・nudge・マウス位置）を読み、DIP へ変換して描画層へ渡すだけである。<br/>
-    /// 選択矩形がある場合は枠線（<see cref="Drawing.DragRectDrawer.DrawBorder"/>）と<br/>
-    /// ドラッグハンドル（<see cref="Drawing.DragRectDrawer.DrawHandles"/>）を描画する。<br/>
-    /// 始点マーカー（<see cref="Drawing.DragRectDrawer.DrawStartMarker"/>）は表示中（未選択の nudge 中）に描画する。<br/>
     /// <br/>
     /// <b>ヒットテスト</b>: <see cref="Control"/> は背景が描画されない場合にポインターイベントを受け取れないため、<br/>
     /// 領域全体を透明ブラシで塗ってヒットテスト対象を確保する（選択なしの初期状態でもドラッグを開始できる）。<br/>
+    /// 外側の装飾（暗転マスク）は選択の有無に関係なく描画する（ハイライトのみを表示するモードを含む）。
     /// </remarks>
     public override void Render(DrawingContext context)
     {
@@ -123,16 +128,31 @@ public sealed partial class DragRectControl
         // ヒットテスト領域の確保（透明ブラシ）。選択なしの初期状態でもポインター操作を受けるため。
         context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
 
-        // 選択矩形はドメインピクセルで保持されるため、描画前にローカル DIP に変換する（閉区間 +1 の規則はコアが単一所有）。
-        var dipRect = _session.ToDipRect(_session.SelectionRect);
-        var rect = new Rect(dipRect.X, dipRect.Y, dipRect.Width, dipRect.Height);
         var options = Options;
-        if (_session.HasSelection)
+        var bounds = Bounds;
+
+        // 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）。
+        // どの矩形を暗転するか・枠線を描くか・ラベルをどう組むかは装飾コアが持つため、本層はフレームを描画 API へ写すだけとする。
+        DragRectOuterDrawer.Draw(
+            context,
+            DragRectFrame.Resolve(
+                _session,
+                new EsRect(0, 0, bounds.Width, bounds.Height),
+                _coordinatePort,
+                Scaling,
+                SizeLabelOverrideProvider,
+                DisplayScaleScaling));
+
+        if (options.ShowHandles && _session.HasSelection)
         {
+            // 選択矩形はドメインピクセルで保持されるため、描画前にローカル DIP に変換する（閉区間 +1 の規則はコアが単一所有）。
+            var dipRect = _session.ToDipRect(_session.SelectionRect);
+            var rect = new Rect(dipRect.X, dipRect.Y, dipRect.Width, dipRect.Height);
+
             // 色は UI 非依存の型（System.Drawing.Color）で保持されるため、描画時に Avalonia の色型へ変換する
-            var borderColor = options.BorderColor.ToAvaloniaColor();
-            DragRectDrawer.DrawBorder(context, rect, borderColor, options.BorderThickness);
-            DragRectDrawer.DrawHandles(context, rect, options.HandleSize, options.HandleColor.ToAvaloniaColor(), borderColor);
+            DragRectDrawer.DrawHandles(
+                context, rect, options.HandleSize, options.HandleColor.ToAvaloniaColor(),
+                options.OuterAppearance.BorderColor.ToAvaloniaColor());
         }
 
         // nudge 中はドラッグ中のハンドル位置に十字マーカーを表示する（仕様 4.4）

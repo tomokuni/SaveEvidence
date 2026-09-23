@@ -31,7 +31,7 @@
 
 - **3 種のキャプチャモード**: `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）
 - **切出し（Crop）**: プレビュー画像上の選択矩形で元画像から切り出し範囲を取得
-- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包）と Platform.AvaloniaUI / Platform.Native が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
+- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（DragRect（外側の装飾を含む）+ Loupe を内包）と Platform.AvaloniaUI / Platform.Native が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
 - **Task ベース API**: 結果は `Task` で返却（`await` で直感的に利用）
 - **キャプチャ完了イベント**: `CaptureCompleted`（同期型）で画像変更 → オーナー再表示の順序を保証
 - **イベント駆動**: 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）
@@ -128,8 +128,8 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 ### StartCropAsync
 
 1. `CropSession` を生成 → `RunAsync`
-2. **FadeMaskDragRectControl**（DragRect + FadeMask + Loupe の配線を内包する複合コントロール）を祖先 Panel に配置
-3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordinateTransform` で内包コントロール（DragRect / FadeMask / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
+2. **FadeMaskDragRectControl**（DragRect + Loupe の配線を内包する複合コントロール。暗転マスクは DragRect の外側の装飾）を祖先 Panel に配置
+3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordinateTransform` で内包コントロール（DragRect / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
 4. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する
 5. **ビューポート変化の通知**: ホストがプレビューのパン・ズームを検知したら `NotifyCropViewportChanged()` を呼ぶ（暗転マスク・選択枠・ルーペが追従。ScrollViewer 連携のスクロールも同じ経路で処理）
 6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `PixelRect` で返却 / キャンセル → 0x0 の空 `PixelRect`
@@ -139,9 +139,9 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 | プロジェクト | 利用機能 |
 | --- | --- |
 | `Platform.AvaloniaUI` | `Platform.AvaloniaUI`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` は `Platform.Native`、`ICoordTransform` / `CoordTransform` は `Platform.Core`、`ScreenConverter` は `Platform.AvaloniaUI` |
-| `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（DragRect + FadeMask + Loupe を内包する複合コントロール。公開 API は本コントロールのみ） |
+| `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（DragRect + Loupe を内包する複合コントロール。公開 API は本コントロールのみ） |
 
-CaptureSessionControl.AvaloniaUI は内包コントロール（`DragRectControl` / `FadeMaskControl` / `LoupeControl`）を直接参照しない（窓口は `FadeMaskDragRectControl` のみ。公開型のカプセル化）。
+CaptureSessionControl.AvaloniaUI は内包コントロール（`DragRectControl`（外側の装飾を含む） / `LoupeControl`）を直接参照しない（窓口は `FadeMaskDragRectControl` のみ。公開型のカプセル化）。
 
 ## 8. ドキュメント
 

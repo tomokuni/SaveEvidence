@@ -16,7 +16,7 @@
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `FadeMaskDragRectMode` | public | 動作モード（Crop / AreaSelect / ScreenSelect / WindowSelect） |
-| `FadeMaskDragRectOptions` | public | 設定の単一値（`DragRect` / `Overlay` / `Loupe` / 選択矩形破線の色 / ルーペオフセット）と、枠線の共用規則（`ResolveDragRectOptions`） |
+| `FadeMaskDragRectOptions` | public | 設定の単一値（`DragRect` / `Loupe` / 選択矩形破線の色 / ルーペオフセット）。**外側の装飾の外観も `DragRect.OuterAppearance` が単一所有する**（枠線を 2 箇所に持たない） |
 | `FadeMaskDragRectState` | internal | モードから導出する状態（選択矩形・破線・全面暗転の可否とルーペの表示可否） |
 | `FadeMaskDragRectModes` | internal | モード → 状態の解決（`Resolve`） |
 | `FadeMaskDragRectSelection` | internal | 選択矩形の可否判定（幅・高さが正か） |
@@ -29,8 +29,7 @@
 ```text
 FadeMaskDragRectControl.Core
     ├── Platform.Core（Es* 幾何型 / EsBitmap）
-    ├── FadeMaskControl.Core（FadeMaskOptions / FadeMaskRenderMode / FadeMaskAppearance）
-    ├── DragRectControl.Core（DragRectOptions）
+    ├── DragRectControl.Core（DragRectOptions / DragRectFrame / 選択矩形の外側の装飾（`Estable.DragRect.Decoration`））
     └── LoupeControl.Core（LoupeOptions）
 ```
 
@@ -44,7 +43,8 @@ FadeMaskDragRectOptions options = FadeMaskDragRectOptions.Default with
 {
     Loupe = LoupeOptions.Default with { RequestedSize = 240 },
 };
-DragRectOptions dragRect = options.ResolveDragRectOptions();  // 枠線は Overlay から導出される
+// 選択矩形の設定は外側の装飾（暗転マスク・穴あけ枠・ラベル）の外観も含むため、そのまま 1 回で分配できる
+DragRectOptions dragRect = options.DragRect;
 
 // モード → 状態（表示可否）の解決（両 UI が同じ判断を使う）
 FadeMaskDragRectState state = FadeMaskDragRectModes.Resolve(FadeMaskDragRectMode.Crop);
@@ -60,7 +60,6 @@ FadeMaskDragRectOverlay.DrawSelectionRect(
 
 | メソッド | 用途 |
 | --- | --- |
-| `FadeMaskDragRectOptions.ResolveDragRectOptions()` | 選択矩形へ適用する設定を求める（枠線を暗転マスクの外観と揃える） |
 | `FadeMaskDragRectModes.Resolve(mode)` | モードに対応する状態を返す（未定義値は `WindowSelect` 扱い） |
 | `FadeMaskDragRectState.IsLoupeVisible(hasSource, hasCenter)` | ルーペを表示するか（選択矩形を使うモード・画像あり・中心あり） |
 | `FadeMaskDragRectState.ShowSelectionOverlay` | ルーペ画像上の選択矩形破線を描くか（選択矩形を使うモードのみ）。UI は描画のたびに本値を問い合わせる（派生値を自前で保持しない） |
@@ -69,11 +68,11 @@ FadeMaskDragRectOverlay.DrawSelectionRect(
 
 ## 設計上の約束
 
-1. **設定の単一所有**: 設定値・既定値・内包コントロールへの分配規則（枠線の共用等）は `FadeMaskDragRectOptions` のみが持つ。UI 側に既定値の写しを持たない。
+1. **設定の単一所有**: 設定値・既定値・内包コントロールへの分配規則は `FadeMaskDragRectOptions` のみが持つ。UI 側に既定値の写しを持たない。
 2. **モードの単一所有**: `FadeMaskDragRectMode` は本プロジェクトのみが定義する。各 UI は `Mode` プロパティの型として参照する。
 3. **モード解釈の単一所有**: モードと状態（表示可否）の対応は `FadeMaskDragRectModes` / `FadeMaskDragRectState` のみが持つ。UI 側に `switch` を書かない。
 4. **選択矩形の可否も本プロジェクトが持つ**（UI 側に「幅 > 0」の判定を書かない）。
-5. **選択枠線は暗転マスクの穴あけ枠と共用する**: 同じ矩形に重なるため、`ResolveDragRectOptions` が導出する（UI は導出結果を渡すだけ）。
+5. **枠線は選択矩形の設定が単一所有する**: 選択枠線は暗転マスクの穴あけ枠と重なるため、`DragRect.OuterAppearance` の 1 値だけを持つ（写し替える導出処理を持たない）。
 6. **描画は `EsBitmap` へ直接書く**: UI の描画 API を使わないため、両 UI で共有できる。
 7. **座標はコア型**: `EsRect` / `EsPoint` / `System.Drawing.Color` を使用する（変換は各 UI の境界で 1 行）。
 
@@ -82,7 +81,7 @@ FadeMaskDragRectOverlay.DrawSelectionRect(
 ```text
 tests/
 ├── FadeMaskDragRectModes.Tests.cs      # モードの解決・ルーペ表示可否
-├── FadeMaskDragRectOptions.Tests.cs    # 既定値・部分変更・枠線の導出
+├── FadeMaskDragRectOptions.Tests.cs    # 既定値・部分変更・外側の装飾の単一所有
 ├── FadeMaskDragRectSelection.Tests.cs  # 選択矩形の可否判定
 └── FadeMaskDragRectOverlay.Tests.cs    # 破線描画の画素検証
 ```

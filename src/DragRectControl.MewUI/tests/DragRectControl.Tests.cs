@@ -72,9 +72,10 @@ public class DragRectControlTests
         var control = CreateControl(new CursorServiceSpy());
         var options = control.Options;
 
-        // 枠線の既定は DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）
-        Assert.Equal(DrawingColor.FromArgb(255, 169, 169, 169), options.BorderColor);
-        Assert.Equal(2.0, options.BorderThickness);
+        // 枠線の既定は DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）。外側の装飾の外観が単一所有する
+        Assert.Equal(DrawingColor.FromArgb(255, 169, 169, 169), options.OuterAppearance.BorderColor);
+        Assert.Equal(2.0, options.OuterAppearance.BorderThickness);
+        Assert.True(options.ShowHandles);
         Assert.Equal(DrawingColor.White, options.HandleColor);
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(12.0, options.HandleHitRadius);
@@ -100,8 +101,12 @@ public class DragRectControlTests
 
         control.Options = DragRectOptions.Default with
         {
-            BorderColor = DrawingColor.Red,
-            BorderThickness = 3.0,
+            OuterAppearance = DragRectOptions.Default.OuterAppearance with
+            {
+                BorderColor = DrawingColor.Red,
+                BorderThickness = 3.0,
+            },
+            ShowHandles = false,
             HandleColor = DrawingColor.Blue,
             HandleSize = 14.0,
             MarkerColor = DrawingColor.Yellow,
@@ -112,8 +117,9 @@ public class DragRectControlTests
         };
 
         var options = control.Options;
-        Assert.Equal(DrawingColor.Red, options.BorderColor);
-        Assert.Equal(3.0, options.BorderThickness);
+        Assert.Equal(DrawingColor.Red, options.OuterAppearance.BorderColor);
+        Assert.Equal(3.0, options.OuterAppearance.BorderThickness);
+        Assert.False(options.ShowHandles);
         Assert.Equal(DrawingColor.Blue, options.HandleColor);
         Assert.Equal(14.0, options.HandleSize);
         Assert.Equal(DrawingColor.Yellow, options.MarkerColor);
@@ -402,7 +408,10 @@ public class DragRectControlTests
         control.Log = logger;
 
         // 外観（色・サイズ）の変更は対話パラメータを変えないため、設定変更ログは流れない
-        control.Options = control.Options with { BorderColor = DrawingColor.Red, BorderThickness = 3.0 };
+        control.Options = control.Options with
+        {
+            OuterAppearance = control.Options.OuterAppearance with { BorderColor = DrawingColor.Red, BorderThickness = 3.0 },
+        };
 
         Assert.Empty(logger.Messages);
     }

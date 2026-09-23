@@ -172,11 +172,15 @@ public partial class MainWindow : Window
     {
         DragRect.Options = new DragRectOptions
         {
-            BorderThickness = _vm.BorderThickness,
+            // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描くため、枠線の色・太さはその外観へ与える
+            OuterAppearance = DragRectOptions.Default.OuterAppearance with
+            {
+                BorderColor = _vm.BorderColorOption.Color.ToDrawingColor(),
+                BorderThickness = _vm.BorderThickness,
+            },
             HandleSize = _vm.HandleSize,
             HandleHitRadius = _vm.HandleHitRadius,
             MinSelectionSize = _vm.MinSelectionSize,
-            BorderColor = _vm.BorderColorOption.Color.ToDrawingColor(),
             HandleColor = _vm.HandleColorOption.Color.ToDrawingColor(),
             MarkerColor = _vm.MarkerColorOption.Color.ToDrawingColor(),
             MarkerLength = _vm.MarkerLength,

@@ -37,9 +37,10 @@ public class DragRectControlStateTests
         var control = CreateControl();
         var options = control.Options;
 
-        // 枠線の既定は DarkGray（設定画面の選択枠の色と一致）
-        Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), options.BorderColor.ToAvaloniaColor());
-        Assert.Equal(2.0, options.BorderThickness);
+        // 枠線の既定は DarkGray（設定画面の選択枠の色と一致）。外側の装飾の外観が単一所有する
+        Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), options.OuterAppearance.BorderColor.ToAvaloniaColor());
+        Assert.Equal(2.0, options.OuterAppearance.BorderThickness);
+        Assert.True(options.ShowHandles);
         Assert.Equal(Colors.White, options.HandleColor.ToAvaloniaColor());
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(12.0, options.HandleHitRadius);
@@ -65,8 +66,12 @@ public class DragRectControlStateTests
 
         control.Options = DragRectOptions.Default with
         {
-            BorderColor = Colors.Red.ToDrawingColor(),
-            BorderThickness = 3.0,
+            OuterAppearance = DragRectOptions.Default.OuterAppearance with
+            {
+                BorderColor = Colors.Red.ToDrawingColor(),
+                BorderThickness = 3.0,
+            },
+            ShowHandles = false,
             HandleColor = Colors.Blue.ToDrawingColor(),
             HandleSize = 14.0,
             HandleHitRadius = 20.0,
@@ -82,8 +87,9 @@ public class DragRectControlStateTests
         };
 
         var options = control.Options;
-        Assert.Equal(Colors.Red, options.BorderColor.ToAvaloniaColor());
-        Assert.Equal(3.0, options.BorderThickness);
+        Assert.Equal(Colors.Red, options.OuterAppearance.BorderColor.ToAvaloniaColor());
+        Assert.Equal(3.0, options.OuterAppearance.BorderThickness);
+        Assert.False(options.ShowHandles);
         Assert.Equal(Colors.Blue, options.HandleColor.ToAvaloniaColor());
         Assert.Equal(14.0, options.HandleSize);
         Assert.Equal(20.0, options.HandleHitRadius);

@@ -1,5 +1,5 @@
 using Estable.DragRect;
-using Estable.FadeMask;
+using Estable.DragRect.Decoration;
 using Estable.FadeMaskDragRect;
 using Estable.Loupe;
 using DrawingColor = System.Drawing.Color;
@@ -8,7 +8,7 @@ namespace Estable.CaptureSession;
 
 /// <summary>キャプチャ設定（<see cref="CaptureSettings"/>）から複合コントロールの設定（<see cref="FadeMaskDragRectOptions"/>）への変換。</summary>
 /// <remarks>
-/// 設定項目と外観（選択矩形・暗転マスク・ルーペ・選択矩形破線）の対応を単一所有する。<br/>
+/// 設定項目と外観（選択矩形・外側の装飾（暗転マスク・穴あけ枠・ラベル）・ルーペ・選択矩形破線）の対応を単一所有する。<br/>
 /// 両 UI のホスト（セッション）が本変換を使うため、UI ごとに見た目がずれる余地がない（UI 非依存の型のみで完結する）。<br/>
 /// <br/>
 /// <b>本変換の対象外</b>（ホストが個別に設定する）:<br/>
@@ -22,10 +22,10 @@ public static class FadeMaskDragRectOptionsMapper
     /// <param name="loupeBackground">ルーペの市松模様の下地色。null の場合は透明（背後の要素を透かす）。</param>
     /// <returns>複合コントロールへ一括設定できる設定値。</returns>
     /// <remarks>
-    /// 1. 選択矩形の設定（<see cref="DragRectOptions"/>）を組み立てる。枠線は暗転マスクの穴あけ枠と共用するため<br/>
-    ///    <see cref="FadeMaskAppearance"/> 側へ設定する（<see cref="FadeMaskDragRectOptions.ResolveDragRectOptions"/> が導出する）。<br/>
-    /// 2. 暗転マスクの外観（<see cref="FadeMaskAppearance"/>）を組み立てる。サイズラベルの背景色は<br/>
-    ///    <see cref="CaptureSettings.TextBackgroundColor"/> を対応させる。<br/>
+    /// 1. 選択矩形の設定（<see cref="DragRectOptions"/>）を組み立てる。外側の装飾の外観（<see cref="OuterDecoAppearance"/>）も含める<br/>
+    ///    （枠線を選択枠線と共用するため、2 つの値に分けない）。枠線（<see cref="CaptureSettings.BorderColor"/> /<br/>
+    ///    <see cref="CaptureSettings.BorderThickness"/>）は選択枠線と暗転マスクの穴あけ枠の両方へ同じ値が効く。<br/>
+    /// 2. サイズラベルの背景色は <see cref="CaptureSettings.TextBackgroundColor"/> を対応させる。<br/>
     /// 3. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる。市松模様の下地色は<b>ホストが決めた色</b>を使う<br/>
     ///    （引数 <paramref name="loupeBackground"/>。撮影オーバーレイは白、プレビューの切り出しはテーマ背景色）。<br/>
     /// 4. 選択矩形破線の色とルーペのオフセットを設定する（オフセットは <see cref="CaptureSettings.LoupeOffset"/> を使う）。
@@ -50,25 +50,26 @@ public static class FadeMaskDragRectOptionsMapper
                 CoordLabelColor = settings.CoordLabelColor!.Value,
                 CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor!.Value,
                 CoordLabelFontSize = settings.CoordLabelFontSize!.Value,
-            },
-            Overlay = new FadeMaskAppearance
-            {
-                OverlayColor = settings.OverlayColor!.Value,
-                // 枠線は選択枠線と共用する（DarkGray 等の設定値がそのまま両方に効く）
-                BorderColor = settings.BorderColor!.Value,
-                BorderThickness = settings.BorderThickness!.Value,
-                ShowSizeLabel = settings.SizeLabelVisible!.Value,
-                SizeLabelColor = settings.SizeLabelColor!.Value,
-                SizeLabelBackgroundColor = settings.TextBackgroundColor!.Value,
-                SizeLabelFontSize = settings.SizeLabelFontSize!.Value,
-                ShowSubLines = settings.ShowSubLines!.Value,
-                SubLineColor = settings.SubLineColor!.Value,
-                SubLineBackgroundColor = settings.SubLineBackgroundColor!.Value,
-                SubLineFontSize = settings.SubLineFontSize!.Value,
-                InfoLabelVisible = settings.InfoLabelVisible!.Value,
-                InfoLabelColor = settings.InfoLabelColor!.Value,
-                InfoLabelBackgroundColor = settings.InfoLabelBackgroundColor!.Value,
-                InfoLabelFontSize = settings.InfoLabelFontSize!.Value,
+                // 外側の装飾（暗転マスク・穴あけ枠・ラベル）の外観は選択矩形の設定が持つ
+                // （暗転マスクの穴あけ枠と選択枠線は同じ矩形に重なるため、枠線の色・太さを単一所有する）
+                OuterAppearance = new OuterDecoAppearance
+                {
+                    OverlayColor = settings.OverlayColor!.Value,
+                    BorderColor = settings.BorderColor!.Value,
+                    BorderThickness = settings.BorderThickness!.Value,
+                    ShowSizeLabel = settings.SizeLabelVisible!.Value,
+                    SizeLabelColor = settings.SizeLabelColor!.Value,
+                    SizeLabelBackgroundColor = settings.TextBackgroundColor!.Value,
+                    SizeLabelFontSize = settings.SizeLabelFontSize!.Value,
+                    ShowSubLines = settings.ShowSubLines!.Value,
+                    SubLineColor = settings.SubLineColor!.Value,
+                    SubLineBackgroundColor = settings.SubLineBackgroundColor!.Value,
+                    SubLineFontSize = settings.SubLineFontSize!.Value,
+                    InfoLabelVisible = settings.InfoLabelVisible!.Value,
+                    InfoLabelColor = settings.InfoLabelColor!.Value,
+                    InfoLabelBackgroundColor = settings.InfoLabelBackgroundColor!.Value,
+                    InfoLabelFontSize = settings.InfoLabelFontSize!.Value,
+                },
             },
             Loupe = new LoupeOptions
             {
