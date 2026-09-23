@@ -21,16 +21,12 @@ namespace Estable.AvaloniaUI.Marquee.Drawing;
 /// </remarks>
 internal static class MarqueeDrawer
 {
-    /// <summary>ブラシキャッシュ（色 → ブラシ。Flyweight・容量制限付き）。</summary>
-    /// <remarks>Platform.AvaloniaUI の <see cref="BrushCache"/> へ委譲する（LoupeControl と共用・重複排除・DRY）。</remarks>
-    private static readonly BrushCache s_brushCache = new(BrushCacheCapacity);
-
     /// <summary>ペンキャッシュ（色・太さ → ペン。Flyweight・容量制限付き）。</summary>
     private static readonly ConcurrentDictionary<(Color Color, double Thickness), Pen> s_penCache = new();
 
     /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
-    /// <remarks>テスト（MarqueeControl.AvaloniaUI.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
-    internal const int BrushCacheCapacity = 128;
+    /// <remarks><see cref="MarqueeBrushCache.Capacity"/> が単一所有する（テストが容量超過の分岐を検証するために公開する）。</remarks>
+    internal const int BrushCacheCapacity = MarqueeBrushCache.Capacity;
 
     /// <summary>ペンキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
     /// <remarks>テスト（MarqueeControl.AvaloniaUI.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
@@ -41,7 +37,7 @@ internal static class MarqueeDrawer
     /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
     /// <remarks>容量管理（容量制限・超過時全クリア）は <see cref="BrushCache"/> へ委譲する（単一所有・DRY）。</remarks>
     private static SolidColorBrush GetBrush(Color color)
-        => s_brushCache.GetOrCreate(color);
+        => MarqueeBrushCache.GetBrush(color);
 
     /// <summary>色・太さに対応するペンを取得する（キャッシュ優先・未登録なら生成して登録）。</summary>
     /// <param name="color">ペンの色。</param>

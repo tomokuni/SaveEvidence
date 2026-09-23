@@ -76,14 +76,32 @@ internal static class ZoomScrollBarGeometry
     /// <remarks>サムのドラッグ中に、ポインタ位置から新しいオフセットを求めるために使用する。</remarks>
     public static double ContentOffsetFromThumb(
         double thumbOffset, double trackLength, double thumbLength, double maxContentOffset)
+        => ContentOffsetFromThumbInRange(thumbOffset, trackLength - thumbLength, maxContentOffset);
+
+    /// <summary>サムの可動範囲（トラック長 − サム長）を計算する。</summary>
+    /// <param name="bar">対象のスクロールバー。</param>
+    /// <param name="isVertical">垂直軸の場合は true。</param>
+    /// <returns>サムが移動できる長さ（DIP）。0 未満にはならない。</returns>
+    /// <remarks>トラックの可動長の計算を単一所有する（UI 層に <c>track − thumb</c> を書かない）。</remarks>
+    public static double MovableThumbRange(ZoomScrollBar bar, bool isVertical)
+        => isVertical
+            ? Math.Max(0, bar.Track.Height - bar.Thumb.Height)
+            : Math.Max(0, bar.Track.Width - bar.Thumb.Width);
+
+    /// <summary>サムの可動範囲内の位置（DIP）からコンテンツ座標のオフセットを逆算する。</summary>
+    /// <param name="thumbOffset">サムの左上位置（トラックの可動範囲内の相対位置・DIP）。</param>
+    /// <param name="movableRange">サムの可動範囲（<see cref="MovableThumbRange"/> が返す値・DIP）。</param>
+    /// <param name="maxContentOffset">最大スクロール量（コンテンツ座標）。</param>
+    /// <returns>コンテンツ座標のオフセット。可動範囲を超える場合は両端へクランプする。</returns>
+    public static double ContentOffsetFromThumbInRange(
+        double thumbOffset, double movableRange, double maxContentOffset)
     {
-        var movable = trackLength - thumbLength;
-        if (movable <= 0)
+        if (movableRange <= 0)
         {
             return 0;
         }
 
-        var progress = Math.Clamp(thumbOffset / movable, 0, 1);
+        var progress = Math.Clamp(thumbOffset / movableRange, 0, 1);
         return progress * maxContentOffset;
     }
 

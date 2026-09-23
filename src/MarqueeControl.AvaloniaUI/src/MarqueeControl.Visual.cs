@@ -145,6 +145,10 @@ public sealed partial class MarqueeControl
                 OperationTextProvider,
                 InfoTextProvider));
 
+        // 選択矩形（穴あけ矩形）の内側に描く装飾（塗り・内枠。ハイライト矩形の強調に使う）。
+        // 塗るか・枠線を描くかの判断は装飾コアが持つため、本層はフレームを描画 API へ写すだけとする。
+        MarqueeInnerDrawer.Draw(context, MarqueeFrame.ResolveInner(_session, _coordinatePort, Scaling));
+
         if (options.ShowHandles && _session.HasSelection)
         {
             // 選択矩形はドメインピクセルで保持されるため、描画前にローカル DIP に変換する（閉区間 +1 の規則はコアが単一所有）。

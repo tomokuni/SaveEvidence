@@ -4,8 +4,6 @@ namespace Estable.CaptureSession;
 
 /// <summary>キャプチャの外観および拡大鏡の設定値を保持するレコード型。</summary>
 /// <param name="HideOwnerWindow">キャプチャ時にオーナーウィンドウを非表示にするか。</param>
-/// <param name="LoupeVisible">ルーペの表示状態。</param>
-/// <param name="HideBeforeCaptureDelay">ウィンドウ非表示後の DWM 反映待機時間。</param>
 /// <param name="MinSelectionSize">選択矩形の最小サイズ。単位はモードにより異なる: AreaSelect では物理ピクセル、Crop では論理座標（元画像ピクセル）。</param>
 /// <param name="BorderColor">選択枠線の色（不透明度は色のアルファに統合）。</param>
 /// <param name="BorderThickness">選択枠線の太さ（DIP）。</param>
@@ -32,6 +30,10 @@ namespace Estable.CaptureSession;
 /// <param name="LoupeCoordLabelColor">ルーペ座標ラベルの文字色。</param>
 /// <param name="LoupeCoordLabelBackgroundColor">ルーペ座標ラベルの背景色（不透明度は色のアルファに統合）。</param>
 /// <param name="LoupeCoordLabelFontSize">ルーペ座標ラベルのフォントサイズ。</param>
+/// <param name="ShowCoordLabel">カーソル位置の座標ラベルを表示するか。</param>
+/// <param name="CoordLabelColor">カーソル座標ラベルの文字色。</param>
+/// <param name="CoordLabelBackgroundColor">カーソル座標ラベルの背景色（不透明度は色のアルファに統合）。</param>
+/// <param name="CoordLabelFontSize">カーソル座標ラベルのフォントサイズ。</param>
 /// <param name="SizeLabelVisible">サイズラベルの表示状態。</param>
 /// <param name="SizeLabelColor">サイズラベルの文字色。</param>
 /// <param name="SizeLabelFontSize">サイズラベルのフォントサイズ。</param>
@@ -48,15 +50,13 @@ namespace Estable.CaptureSession;
 /// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（MarqueeControl.DisplayScaleScaling・0 以下は Scaling と同値）。</param>
 /// <remarks>
 /// 全メンバーは nullable とする。<br/>
-/// - 初期設定として使用する場合: null は CaptureSessionControl.AvaloniaUI のデフォルト値として扱う。<br/>
+    /// - 初期設定として使用する場合: null は本クラスの既定値（<see cref="ToNonNull"/> が埋める値）として扱う。<br/>
 /// - 既存インスタンスへの設定適用（Settings プロパティの setter）の場合: null は現在の設定値を維持する（部分更新）。<br/>
 /// 内包コンポーネント（MarqueeControl / LoupeControl）が公開する外観設定を網羅する。<br/>
 /// 実行時状態（選択矩形・ハイライト矩形等）と Source / CenterPoint 等の入力は本型の対象外（セッションが管理）。
 /// </remarks>
 public sealed record CaptureSettings(
     bool? HideOwnerWindow = null,
-    bool? LoupeVisible = null,
-    TimeSpan? HideBeforeCaptureDelay = null,
     int? MinSelectionSize = null,
     Color? BorderColor = null,
     double? BorderThickness = null,
@@ -118,17 +118,14 @@ public sealed record CaptureSettings(
         if (BorderThickness is < 0) throw new ArgumentOutOfRangeException(nameof(BorderThickness), "BorderThickness は 0 以上でなければなりません。");
         if (LoupeOffset is < 0) throw new ArgumentOutOfRangeException(nameof(LoupeOffset), "LoupeOffset は 0 以上でなければなりません。");
         if (LoupeRenderScaling is < 0.1 or > 8.0) throw new ArgumentOutOfRangeException(nameof(LoupeRenderScaling), "LoupeRenderScaling は 0.1〜8.0 でなければなりません。");
-        if (HideBeforeCaptureDelay is { } d && d < TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(HideBeforeCaptureDelay), "HideBeforeCaptureDelay は負の時間を指定できません。");
     }
 
-    /// <summary>null のメンバーを CaptureSessionControl.AvaloniaUI デフォルト値で埋めた non-null 版の設定を生成する。</summary>
+    /// <summary>null のメンバーを本クラスの既定値で埋めた non-null 版の設定を生成する。</summary>
     /// <returns>全メンバーが non-null の設定。</returns>
     /// <remarks>null は「部分更新のための入力」としてのみ使用され、適用時は本メソッドでデフォルト値に置き換える。</remarks>
     public CaptureSettings ToNonNull()
         => new(
             HideOwnerWindow: HideOwnerWindow ?? true,
-            LoupeVisible: LoupeVisible ?? true,
-            HideBeforeCaptureDelay: HideBeforeCaptureDelay ?? TimeSpan.FromMilliseconds(50),
             MinSelectionSize: MinSelectionSize ?? 6,
             BorderColor: BorderColor ?? Color.FromArgb(0xFF, 169, 169, 169),
             BorderThickness: BorderThickness ?? 2.0,

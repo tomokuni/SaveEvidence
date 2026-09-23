@@ -13,23 +13,23 @@
 
 名前空間 `Estable.MewUI.ZoomView` / クラス `ZoomViewControl`（`public sealed`、`SkiaCanvasView` 派生）。
 
+**UI 層は入力の変換・効果の適用・描画・UI 固有のホスト結線のみを担います**（判断・値・計算はコアの `ZoomViewSession` が単一所有し、公開 API はセッションへの委譲です）。
+
 ### プロパティ
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Source` | `EsBitmap?` | `null` | ズーム対象の画像。設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
-| `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。DPI 変更で自動更新される |
-| `ShowScrollBars` | `bool` | `true` | オーバーレイのスクロールバーを表示するか |
-| `ScrollBarThickness` | `double` | MewUI 標準のスクロールバーと同じ太さ（`ThemeMetrics.ScrollBarThickness`。既定 4.0） | スクロールバーの太さ（DIP） |
-| `ScrollBarMargin` | `double` | `8.0` | ビューポート端からの余白（DIP）。ウィンドウのリサイズ判定領域（端から 6 DIP）を避ける値 |
-| `ScrollBarColor` | `SKColor` | 白 63%（A=160） | サムの色（アルファで不透明度を表す） |
-| `ScrollBarTrackColor` | `SKColor` | 白 16%（A=40） | トラックの色（アルファ 0 の場合はトラックを描画しない） |
-| `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。**0 より大きい値のみ設定可能**（0 以下は無視）。設定値は `ZoomConfig` の範囲へクランプされる |
+| `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数（DPI 変更で自動更新される環境値） |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし・スクロールバー表示 | 外観の単一値（コアが単一所有する）。下地色・市松模様（サイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を含む |
+| `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。**0 より大きい値のみ設定可能**（0 以下は無視。Fit へは `ZoomFit()`）。設定値は `ZoomConfig` の範囲へクランプされる |
 | `IsFit` | `bool` | `true` | Fit 表示中かどうか |
 | `CanZoomIn` | `bool` | `false` | ズームイン可能かどうか（画像未設定時は false） |
 | `CanZoomOut` | `bool` | `false` | ズームアウト可能かどうか（画像未設定時は false） |
-| `Offset` | `EsVector` | `default` | パン位置（コンテンツ座標・読み取り専用） |
+| `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（null は出力なし。コアが null を吸収する） |
+
+**外観は `Appearance` の 1 値に統合しました**（旧 `ShowScrollBars` / `ScrollBarThickness` / `ScrollBarMargin` / `ScrollBarColor` / `ScrollBarTrackColor` / `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `BackgroundColor` は削除）。複合コントロール（`CropViewControl.MewUI`）も `Appearance`（`ZoomViewAppearance`）1 値として透過公開します（旧 `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `BackgroundColor` の 4 プロパティは削除し、設定値は `Appearance with { ... }` で組み立てます）。
 
 ### メソッド
 
@@ -38,17 +38,14 @@
 | `ZoomIn()` | 段階レベルを 1 つ進める（移動先がなければ何もしない） |
 | `ZoomOut()` | 段階レベルを 1 つ戻す（移動先がなければ何もしない） |
 | `ZoomFit()` | Fit 表示へ戻す（**Fit へ移行する唯一の経路**） |
-| `SetZoom(double zoomPercent, EsPoint? center = null)` | ズーム率を設定する。0 以下は Fit。`center` を省略するとビューポート中心を維持する |
-| `SetOffset(EsVector offset)` | パン位置を設定する（スクロール範囲へクランプ。同値なら何もしない） |
-| `PanBy(EsVector delta)` | パン位置を移動量だけ加算する |
 | `PanByWheel(EsVector delta, bool shift)` | ホイールの回転量（X/Y）でパンする（1 ノッチ = 48 DIP を実効倍率で除す。Shift 併用は縦回転を横パン） |
 | `ZoomByWheel(bool zoomIn, EsPoint? pointerPosition = null)` | Ctrl+ホイールのズームを適用する（`pointerPosition` はズーム中心。null はビューポート中心） |
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP）。画像未設定時は空の矩形 |
 | `DisplaySize()` | 画像の表示サイズ（ビューポート座標・DIP） |
-| `ViewportToContent(EsPoint)` | ビューポート座標 → コンテンツ座標（オフセット基準） |
-| `ContentToViewport(EsPoint)` | コンテンツ座標 → ビューポート座標（オフセット基準） |
 | `ViewportToContentImage(EsPoint)` | ビューポート座標 → コンテンツ座標（画像表示矩形の原点基準・中央寄せ補正を含む） |
 | `ContentToViewportImage(EsPoint)` | コンテンツ座標 → ビューポート座標（画像表示矩形の原点基準・中央寄せ補正を含む） |
+
+**内部操作（`SetZoom` / `SetOffset` / `PanBy` / `ViewportToContent` / `ContentToViewport` / `Offset`）は公開しません**（判断はコアのセッションが行い、ホストは公開イベントと入力で操作する）。
 
 ### イベント
 
@@ -57,7 +54,9 @@
 | `ZoomChanged` | `ZoomChangedEventArgs` | ズーム率・Fit 状態・ズーム可否を通知する |
 | `ViewportChanged` | `EventArgs` | パン・ズーム・表示サイズの変化を通知する（ホストが重ねたオーバーレイの追従に使う） |
 
-`ZoomChangedEventArgs(double ZoomPercent, bool IsFit, bool CanZoomIn, bool CanZoomOut)`
+`ZoomChangedEventArgs(ZoomState State)`（コアの 4 値を保持する薄い型。`ZoomPercent` / `IsFit` / `CanZoomIn` / `CanZoomOut` を個別プロパティでも参照できる）
+
+設定のカスタマイズはコンストラクタ（`ZoomViewControl(ZoomConfig? config)`）で行います。
 
 ## 座標系
 
@@ -81,7 +80,7 @@
 | トラックのクリック | サムをその位置へ移動する（1 画面ずつのページ送りは行わない） |
 
 スクロールバーは画像がビューポートより大きい軸にのみ表示されます（パン不要の軸には表示しません）。
-表示するかどうかは `ShowScrollBars` で指定します（既定は表示）。
+表示するかどうかは `Appearance.ShowScrollBars` で指定します（既定は表示）。
 
 ## ズーム仕様
 

@@ -13,8 +13,7 @@
     - [4.2 一覧表示](#42-一覧表示)
     - [4.3 Undo 一覧](#43-undo-一覧)
     - [4.4 ラベル設定（キャプチャ・切出し時の左上ラベル）](#44-ラベル設定キャプチャ切出し時の左上ラベル)
-    - [4.5 ルーペ表示モード](#45-ルーペ表示モード)
-    - [4.6 キーボードショートカット（Ctrl キー）](#46-キーボードショートカットctrl-キー)
+    - [4.5 キーボードショートカット（Ctrl キー）](#45-キーボードショートカットctrl-キー)
   - [5. ファイル名テンプレートのバリデーション](#5-ファイル名テンプレートのバリデーション)
     - [5.1 プレースホルダ](#51-プレースホルダ)
     - [5.2 エスケープ](#52-エスケープ)
@@ -127,21 +126,7 @@
 - **背景色**: 色と不透明度を統合した `#AARRGGBB` 形式（例: 黒 60% = `#99000000`）。カラーピッカー（ColorPickerControl）の Flyout で不透明度（アルファ）も設定できる
 - **キャプチャテキストの色の一本化**: キャプチャテキストの色は 1 行目（サイズラベル）の文字色に一本化する（設定キー `CaptureTextColor` は「ラベル設定」の 1 行目へマップ）
 
-### 4.5 ルーペ表示モード
-
-キャプチャ選択画面のルーペ表示は、起動時の初期状態として `Settings.LoupeModeValue` で制御します。
-
-| 値 | 意味 | CaptureSettings.LoupeVisible への変換 |
-| --- | --- | --- |
-| 0 | 非表示（既定） | `false` |
-| 1 | 表示 | `true` |
-| 2 | 自動 | `true`（0 以外は表示として扱う） |
-
-- 反映経路: `MainWindow.ApplyCaptureSessionSettings` がセッション開始前に `CaptureSettings.LoupeVisible`（`LoupeModeValue != 0`）へ変換し、CaptureSessionControl.AvaloniaUI へ渡す
-- 設定画面にはルーペ表示モードの UI はない（起動時デフォルトとしてのみ使用）
-- キャプチャセッション中のルーペ表示は CaptureSessionControl.AvaloniaUI 側（`LoupePositionMoved` による表示開始等）が制御する
-
-### 4.6 キーボードショートカット（Ctrl キー）
+### 4.5 キーボードショートカット（Ctrl キー）
 
 メニューを開かずに効く Ctrl ショートカットを提供します。`Ctrl` とメニュー項目のアクセラレータ文字（`S` / `C` / `V` / `Z` / `Y` / `R`）の組み合わせ、およびズーム（`Ctrl + / Ctrl -`）です。
 
@@ -253,7 +238,7 @@
 
 本プロジェクト（app）のログ定義は `Logging/AppLog.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。
 出力先は Serilog（`%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`、日次ローテーション・7日で自動アーカイブ・削除）で、`AppLog` のファイルシンク構成で制御する。
-（ズーム操作のログは `ZoomViewControl` の `ZoomViewLogMessage` が定義し、`ZoomViewControl.Log` へ注入されたロガーへ出力される）
+（ズーム操作のログはコア（`Estable.ZoomView` の `ZoomLogMessage`）が定義し、`ZoomViewControl.Log` へ注入されたロガーへ出力される）
 
 ### 8.1 LogLevel 設定ポリシー
 

@@ -21,6 +21,7 @@ graph LR
   C["各 *Control.MewUI（将来）"] --> B
   B --> D[Platform.Core]
   B --> E[Aprillz.MewUI.Core]
+  B --> H[Aprillz.MewUI.Skia]
   F["Platform.AvaloniaUI（Avalonia 版）"] --> D
   G["app（Avalonia 版）"] --> F
 ```
@@ -36,6 +37,8 @@ graph LR
 | `EsGeometryMewUIInterop.cs` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / 色（`System.Drawing.Color` ⇔ `Aprillz.MewUI.Color`） |
 | `EsWindowStateMewUIInterop.cs` | `EsWindowState` ⇔ `Aprillz.MewUI.Controls.WindowState` |
 | `EsPlatformHandleMewUIInterop.cs` | `Aprillz.MewUI.Window` → `EsPlatformHandle` |
+| `Imaging/SkiaImageView.cs` | `EsBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生） |
+| `Imaging/SkiaImageRenderer.cs`（internal） | `EsBitmap` を Skia キャンバスへ敷く描画層（画素で検証できる） |
 
 ## 単一所有（Single Source of Truth）
 
@@ -43,6 +46,8 @@ graph LR
 | --- | --- |
 | `EsKey` と MewUI `Key` の別名対応（`Back` ⇔ `Backspace`） | `EsKeyMewUIInterop` の別名表（双方向を 1 つの表から導出し対称性を保つ） |
 | 未定義値のフォールバック判定 | 各 Interop（`Enum.IsDefined`） |
+| 画像の描画手順（クリア・未設定/破棄済みの判定・配置・描画） | `SkiaImageRenderer`（表示ビューは手順を持たない） |
+| 画像を描画先の領域へ配置する矩形の計算 | `Platform.Core` の `ImageDrawMath`（両 UI で共用） |
 
 ## 設計判断
 
@@ -82,6 +87,10 @@ graph LR
 - UI 初期化が不要なため、すべて `[Fact]` で並列実行されます。
 - 回帰検知のための固定値（MewUI のキー数 91、名前が異なるキーは `Backspace` のみ、負サイズのクランプ）を含みます。
   MewUI をアップグレードした際はこれらのテストで破壊的変更を検出します。
+- 画像の描画（`SkiaImageRenderer`）は、コントロールを表示せず `SKBitmap` + `SKCanvas` で画素を直接検証します
+  （塗り分け・余白の透明・未設定／破棄済み／描画先が空の場合の非描画・再描画時のクリア。6 件）。
+- `SkiaImageView` のプロパティは、基底クラスで登録した `MewProperty` を派生クラスのインスタンスでも
+  共有できることを含めて検証します（4 件）。
 
 ## 未実装（今後の判断）
 

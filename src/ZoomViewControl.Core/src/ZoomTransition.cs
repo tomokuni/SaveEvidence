@@ -158,7 +158,7 @@ internal static class ZoomTransition
     /// <param name="hasSource">画像ソースが設定されているか（未設定時は可否を false にする）。</param>
     /// <returns>ズームイン・ズームアウトの可否。</returns>
     /// <remarks>
-    /// <see cref="ZoomViewControl"/> の <c>BuildAvailability</c> を純粋ロジックとして集約する。<br/>
+    /// <see cref="ZoomViewSession"/> の可否確定（遷移可否）を純粋ロジックとして集約する。<br/>
     /// 画像未設定（<paramref name="hasSource"/> = false）時は何れも不可（false）を返す。
     /// </remarks>
     internal static (bool CanZoomIn, bool CanZoomOut) BuildAvailability(
@@ -172,7 +172,7 @@ internal static class ZoomTransition
         return (CanZoomIn(current, fitZoom, config), CanZoomOut(current, fitZoom, config));
     }
 
-    /// <summary>昇順ソート済みの <see cref="IReadOnlyList{T}"/> に対して二分探索を行う（<see cref="Array.BinarySearch{T}"/> と同値の戻り値）。</summary>
+    /// <summary>昇順ソート済みの <see cref="IReadOnlyList{T}"/> に対して二分探索を行う（<see cref="Array.BinarySearch{T}(T[], T)"/> と同値の戻り値）。</summary>
     /// <param name="levels">昇順ソート済みのレベル集合。</param>
     /// <param name="value">探索する値。</param>
     /// <returns>値が見つかった場合はそのインデックス、見つからない場合はビット単位補数（~idx）で挿入位置。</returns>

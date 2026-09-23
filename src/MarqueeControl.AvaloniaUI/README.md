@@ -148,7 +148,7 @@ MarqueeControl/
 │   ├── MarqueeControl.Visual.cs  # ビジュアルツリー接続・ScrollViewer 連携・描画
 │   ├── SelectionRectEventArgs.cs  # 公開イベント引数（選択矩形通知）
 │   ├── MarqueePointEventArgs.cs  # 公開イベント引数（座標通知）
-│   └── Drawing/                   # 内部型（MarqueeDrawer / MarqueeOuterDrawer）
+│   └── Drawing/                   # 内部型（MarqueeDrawer / MarqueeOuterDrawer / MarqueeInnerDrawer / MarqueeBrushCache）
 ├── sample/                        # サンプルアプリ（sample/README.md 参照）
 └── tests/                         # 単体テスト（公開 API 経由）
 ```

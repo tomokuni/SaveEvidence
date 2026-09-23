@@ -77,6 +77,24 @@ public sealed class CoordTransform : ICoordTransform
             () => null);
     }
 
+    /// <summary>ドメイン座標 = ローカル DIP × 倍率 のスケーリングポートを、境界付きで生成する。</summary>
+    /// <param name="factorProvider">DIP → ドメインのスケール倍率を提供する関数（呼び出し毎に評価。0 以下の場合は 1.0 として扱う）。</param>
+    /// <param name="boundsProvider">ドメイン座標の境界（画像サイズ等）を提供する関数（呼び出し毎に評価）。</param>
+    /// <returns>Forward = ローカル DIP → ドメイン（倍率で乗算）、Inverse = ドメイン → ローカル DIP（倍率で除算）のポート。</returns>
+    /// <remarks>
+    /// <see cref="DomainScale(Func{double})"/> と同じ変換に、選択を画像外へ出さないための境界を付けたもの。<br/>
+    /// 境界が必要なホスト（画像を敷くオーバーレイ等）は本オーバーロードを使い、倍率式を自前で書かない。
+    /// </remarks>
+    public static ICoordTransform DomainScale(Func<double> factorProvider, Func<EsSize?> boundsProvider)
+    {
+        static double Scale(double factor) => factor > 0 ? factor : 1.0;
+
+        return new CoordTransform(
+            p => { double s = Scale(factorProvider()); var (x, y) = CoordMath.ScalePoint(p.X, p.Y, 1.0 / s); return new EsPoint(x, y); },
+            p => { double s = Scale(factorProvider()); var (x, y) = CoordMath.ScalePoint(p.X, p.Y, s); return new EsPoint(x, y); },
+            boundsProvider);
+    }
+
     /// <summary>画像レイアウト（レターボックス・スケール）を呼び出し毎に評価する動的ポートを生成する（Forward = DIP→論理）。</summary>
     /// <param name="viewportSizeProvider">表示領域サイズ（DIP）を提供する関数（呼び出し毎に評価）。</param>
     /// <param name="sourceSize">元画像サイズ（ピクセル）。</param>

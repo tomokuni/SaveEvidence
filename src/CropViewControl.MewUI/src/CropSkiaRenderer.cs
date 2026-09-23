@@ -1,42 +1,41 @@
 using Estable.CropView;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 
 namespace Estable.MewUI.CropView;
 
-/// <summary>オーバーレイ矩形（<see cref="OverlayRect"/>）を Skia で描画するレンダラー。</summary>
+/// <summary>オーバーレイ矩形の描画入力（<see cref="OverlayRectFrame"/>）を Skia で描画するレンダラー。</summary>
 /// <remarks>
-/// UI 非依存コアの矩形情報（<see cref="OverlayRect"/>）とダッシュ長（<see cref="OverlayLineDash"/>）を受け取り、<br/>
-/// ビューポート座標の矩形を <see cref="SKCanvas"/> へ描画するだけの層。<br/>
+/// コアが確定した描画入力（配置・太さ・破線の判定と長さ・色）を <see cref="SKCanvas"/> へ写すだけの層であり、<br/>
+/// 式・判断・クランプを持たない（描画手順として「枠を内側へ寄せる」「背景→前景の順に描く」だけを持つ）。<br/>
 /// 実線は前景色の枠のみ、破線は「背景色の実線 → 前景色の破線」の 2 回描画で市松風の視認性を出す<br/>
 /// （Avalonia 版が背景色の下層矩形と前景色の破線矩形を重ねる方式と等価）。<br/>
-/// 座標変換（ドメイン座標 → ビューポート座標）は呼び出し側が済ませている前提とする。
+/// 座標変換（ドメイン座標 → ビューポート座標）と描画入力の組み立ては呼び出し側が済ませている前提とする。
 /// </remarks>
 internal static class CropSkiaRenderer
 {
-    /// <summary>ビューポート座標の矩形を描画する。</summary>
+    /// <summary>描画入力を Skia のキャンバスへ描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
-    /// <param name="rect">描画する矩形（ビューポート座標・DIP）。</param>
-    /// <param name="info">矩形のスタイル（線種・色・太さ）。</param>
+    /// <param name="frame">描画入力（コアが確定した配置・太さ・破線・色）。</param>
     /// <remarks>
-    /// 幅・高さが 0 以下の場合は何も描画しない（早期リターン）。<br/>
-    /// 破線のダッシュ長は <see cref="OverlayLineDash"/>（コア）を単一所有元とする（ルーペのラスタ描画と共有）。
+    /// 描画できる大きさでない場合（幅または高さが 0 以下）は何も描画しない（早期リターン）。<br/>
+    /// 破線の判定とダッシュ長はコア（<see cref="OverlayRectFrame"/>）を単一所有元とする（ルーペのラスタ描画と共有）。
     /// </remarks>
-    public static void RenderRect(SKCanvas canvas, EsRect rect, OverlayRect info)
+    public static void Render(SKCanvas canvas, OverlayRectFrame frame)
     {
         ArgumentNullException.ThrowIfNull(canvas);
 
-        if (rect.Width <= 0 || rect.Height <= 0)
+        if (!frame.HasDrawableSize)
         {
             return;
         }
 
-        var strokeWidth = (float)Math.Max(1, info.Thickness);
-        var skRect = new SKRect((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
+        var bounds = frame.Bounds;
+        var strokeWidth = (float)frame.Thickness;
+        var skRect = new SKRect((float)bounds.X, (float)bounds.Y, (float)bounds.Right, (float)bounds.Bottom);
 
         // 枠線は矩形の内側に描く（Avalonia の Rectangle.Stroke と同じ見た目にする）
-        var half = strokeWidth / 2f;
+        var half = (float)frame.HalfThickness;
         var inset = new SKRect(skRect.Left + half, skRect.Top + half, skRect.Right - half, skRect.Bottom - half);
 
         using var paint = new SKPaint
@@ -47,29 +46,22 @@ internal static class CropSkiaRenderer
             StrokeJoin = SKStrokeJoin.Miter,
         };
 
-        if (OverlayLineDash.IsDashed(info.Style))
+        if (frame.DrawsBackground)
         {
             // 背景色の実線を下層に描く（破線の隙間から見える市松風の下地）
-            paint.Color = info.Background.ToSKColor();
+            paint.Color = frame.Background.ToSKColor();
             canvas.DrawRect(inset, paint);
         }
 
-        var (dashLength, gapLength) = OverlayLineDash.Get(info.Style);
+        paint.Color = frame.Foreground.ToSKColor();
 
-        paint.Color = info.Foreground.ToSKColor();
-
-        if (OverlayLineDash.IsDashed(info.Style))
+        if (frame.IsDashed)
         {
             // 前景色をダッシュで描く（間隔はコアの単一所有値を使う）
-            using var dashEffect = SKPathEffect.CreateDash([(float)dashLength, (float)gapLength], 0f);
+            using var dashEffect = SKPathEffect.CreateDash([(float)frame.DashLength, (float)frame.GapLength], 0f);
             paint.PathEffect = dashEffect;
         }
 
         canvas.DrawRect(inset, paint);
     }
-
-    /// <summary>コアの色を Skia の色へ変換する。</summary>
-    /// <param name="color">変換元の色。</param>
-    /// <returns>Skia の色。</returns>
-    // ※ 色の変換（コアの色型 → Skia）は Platform.Core の SkiaColorInterop（拡張メソッド）を共用する
 }

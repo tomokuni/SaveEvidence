@@ -25,6 +25,27 @@ internal static class ZoomMath
     /// </remarks>
     internal const double WheelScrollUnit = 48.0;
 
+    /// <summary>画像未設定・ビューポート未確定時の Fit 実効倍率（%）のフォールバック。</summary>
+    /// <remarks>
+    /// Fit 実効倍率が確定できない場合でも表示・通知に使える値が必要なため、本値が単一所有する（従来 100%）。<br/>
+    /// UI 層にリテラル 100 を置かない。
+    /// </remarks>
+    internal const double FallbackFitZoomPercent = 100.0;
+
+    /// <summary>ズーム率（%）を倍率へ換算する。</summary>
+    /// <param name="zoomPercent">ズーム率（%）。</param>
+    /// <returns>倍率（1.0 = 100%）。</returns>
+    /// <remarks>
+    /// % と倍率の換算（100 で割る）を単一所有する。UI 層に <c>/ 100.0</c> を置かない。<br/>
+    /// Fit 中（0）は 0 を返す（実効スケールには <see cref="ComputeEffectiveScale"/> を使用する）。
+    /// </remarks>
+    public static double ScaleFromPercent(double zoomPercent) => zoomPercent / 100.0;
+
+    /// <summary>倍率をズーム率（%）へ換算する。</summary>
+    /// <param name="scale">倍率（1.0 = 100%）。</param>
+    /// <returns>ズーム率（%）。</returns>
+    public static double PercentFromScale(double scale) => scale * 100.0;
+
     /// <summary>Fit 表示時の実効スケール（Uniform）を計算する。</summary>
     /// <param name="imageSize">元画像サイズ（ピクセル）。</param>
     /// <param name="viewportSize">ビューポートサイズ（DIP）。</param>

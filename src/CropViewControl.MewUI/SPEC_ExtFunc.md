@@ -13,17 +13,20 @@ CropViewControl は、**画像の表示（拡大・パン・Fit）**と、**外�
 
 名前空間 `Estable.MewUI.CropView` / クラス `CropViewControl`（`public sealed`、`Grid` 派生）。
 
+**UI 層は入力の変換・効果の適用・描画・UI 固有のホスト結線のみを担います**（矩形の配置・太さ・破線・市松の描画可否はコアが単一所有する）。
+
 ### プロパティ
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Source` | `EsBitmap?` | `null` | 表示する画像。設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
-| `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（ドメイン座標 = 元画像ピクセル座標） |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。コアが単一所有する |
+| `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（ドメイン座標 = 元画像ピクセル座標）。null は設定できない |
 | `ZoomView` | `ZoomViewControl` | — | 内包するズームビューポート |
 | `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。**0 より大きい値のみ設定可能**（0 以下は無視） |
-| `IsFit` | `bool` | `true` | Fit 表示中かどうか |
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
+| `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（null の吸収はコアが単一所有する） |
 
 ### メソッド
 
@@ -42,7 +45,6 @@ CropViewControl は、**画像の表示（拡大・パン・Fit）**と、**外�
 
 | イベント | 引数 | 説明 |
 | --- | --- | --- |
-| `RectsChanged` | `EventArgs` | `Rects` の設定で発火する（再描画の要求後） |
 | `ZoomChanged` | `ZoomChangedEventArgs` | ズーム率・Fit 状態・ズーム可否（内包するズームビューから中継） |
 | `ViewportChanged` | `EventArgs` | パン・ズーム・リサイズ（内包するズームビューから中継） |
 

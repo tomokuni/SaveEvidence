@@ -56,10 +56,10 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ Captur
 | 「全画面」ボタン | `StartCaptureAsync(CaptureType.ScreenSelect, ...)` で全画面キャプチャを開始 |
 | 「ウィンドウ選択」ボタン | `StartCaptureAsync(CaptureType.WindowSelect, ...)` でウィンドウ選択を開始 |
 | 「範囲選択（AreaSelect）」ボタン | `StartCaptureAsync(CaptureType.AreaSelect, ...)` で範囲選択を開始（ルーペ付き） |
-| 「プレビューで切出し」ボタン | `StartCropAsync(...)` でプレビュー画像上の切出しを開始 |
+| 「プレビューで切出し」ボタン | `StartCropAsync(...)` でプレビュー画像上の切出しを開始（対象画像は `PreviewCropView.Source`） |
 | 「キャンセル」ボタン | `Cancel()` で進行中セッションをキャンセル |
 | 「確定（Crop のみ有効）」ボタン | `Confirm()` で Crop を現在の選択矩形で確定（Enter キー相当） |
-| 「ルーペを表示」チェックボックス | `LoupeVisible` を ON/OFF（AreaSelect に反映） |
+| 「拡大倍率」スライダー | `LoupeZoomLevel` を変更（AreaSelect に反映） |
 | 「拡大倍率」スライダー | `LoupeZoomLevel` を 1〜16 で変更（AreaSelect に反映） |
 | キャプチャ結果領域 | キャプチャ画像と領域（仮想画面座標）を表示。画像は `CaptureCompleted`（同期イベント）で更新 |
 | Crop プレビュー領域 | グリッド付きダミー画像（640×400）を表示。ドラッグで選択 → Enter / ダブルクリックで確定 |

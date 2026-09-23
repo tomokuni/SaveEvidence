@@ -1,13 +1,14 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Rect = Avalonia.Rect;
+using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.AvaloniaUI.CaptureSession.Logging;
 using Estable.AvaloniaUI.FadeMaskDragRect;
-using Estable.FadeMaskDragRect;
 using Microsoft.Extensions.Logging;
 using Estable.CaptureSession;
 
@@ -29,8 +30,8 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>キャプチャ種別。</summary>
     private readonly CaptureType _captureType;
 
-    /// <summary>キャプチャ完了コールバック（確定・キャンセル・エラー時に呼ばれる）。</summary>
-    private readonly Action<EsBitmap?, PixelRect?> _onComplete;
+    /// <summary>キャプチャ完了コールバック（確定・キャンセル・エラー時に呼ばれる）。切り出し矩形は画面物理座標。</summary>
+    private readonly Action<EsBitmap?, EsPixelRect?> _onComplete;
 
     /// <summary>DPI スケーリング係数（プライマリスクリーン基準）。</summary>
     private readonly double _scaling;
@@ -47,29 +48,38 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>内部ロガー。</summary>
     private readonly ILogger _log;
 
-    /// <summary>完了済みかどうか（volatile: バックグラウンドスレッドからも参照）。</summary>
-    private volatile bool _hasCompleted;
+    /// <summary>セッションの状態（再入禁止・完了は 1 回だけ）。</summary>
+    /// <remarks>
+    /// 「確定とキャンセルの競合」「非アクティブ化とキー入力の重なり」で二重完了にしないための規則は<br/>
+    /// コアの <see cref="CaptureSessionState"/> が単一所有する（UI 側でフラグを手書きしない）。<br/>
+    /// バックグラウンドの完了通知からも触れるため、排他はコアが行う。
+    /// </remarks>
+    private readonly CaptureSessionState _state = new();
 
-    /// <summary>クリック確定型の押下時に固定したハイライト矩形。リリース時に確定する。</summary>
-    private Rect? _clickFixedRect;
+    /// <summary>クリック確定型の押下時に固定したハイライト矩形（固定なしの解放では確定しない）。コアの状態が単一所有する。</summary>
+    private readonly CaptureClickSelection _clickSelection = new();
 
-    /// <summary>仮想スクリーン全体の EsBitmap（全モード共通のキャプチャソース・切り出し元）。</summary>
-    private EsBitmap? _virtualScreenBitmap;
+    /// <summary>仮想スクリーン全体の EsBitmap（全モード共通のキャプチャソース・切り出し元）を取得する。</summary>
+    /// <value>撮影した画像。未取得（背景撮影中・取得失敗）の場合は null。</value>
+    private EsBitmap? VirtualScreenBitmap => _captureImage.Image;
 
-    /// <summary>仮想スクリーンの原点（画面物理座標）。Bitmap 上の座標 = 画面物理座標 − 原点。</summary>
-    private PixelPoint _virtualScreenOrigin;
+    /// <summary>事前切り出し済みのキャッシュ（同一判定・所有権の受け渡し・旧値の破棄をコアが単一所有する）。</summary>
+    private readonly CaptureClipCache _clipCache = new();
 
-    /// <summary>事前切り出し済みの矩形（画面物理座標・閉区間）。キャッシュのキー。</summary>
-    private PixelRect? _cachedClipRect;
+    /// <summary>モニタごとの矩形と実表示倍率（構築時に 1 回だけ解決する）。</summary>
+    private IReadOnlyList<(EsPixelRect Bounds, double Scale)> _monitors = [];
 
-    /// <summary>事前切り出し済みの Bitmap（確定時に再利用。枠の変更がない場合は切り出しをスキップ）。</summary>
-    private EsBitmap? _cachedClipBitmap;
+    /// <summary>ウィンドウが覆う仮想スクリーンの範囲（画面物理ピクセル）。画像未取得時の切り出し範囲の判定に使う。</summary>
+    private EsPixelRect _screenBounds;
 
-    /// <summary>事前切り出しの実行回数（テスト検証用）。</summary>
-    private int _preExtractCount;
+    /// <summary>撮影した画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時の範囲をコアが単一所有する）。</summary>
+    private readonly CaptureImageHolder _captureImage;
+
+    /// <summary>カーソル下の要素のハイライト状態（ドメイン座標への変換・表示名・ログをコアが単一所有する）。</summary>
+    private readonly CaptureHighlightSession _highlight;
 
     /// <summary>事前切り出しの実行回数（テスト検証用アクセサ）。</summary>
-    internal int PreExtractCount => _preExtractCount;
+    internal int PreExtractCount => _clipCache.StoreCount;
 
     /// <summary>OverlayWindow を初期化する。</summary>
     /// <param name="windowService">ネイティブウィンドウ操作（Alt+Tab 非表示・ハング時退避）。</param>
@@ -78,8 +88,9 @@ internal sealed partial class OverlayWindow : Window
     /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="settings">キャプチャ設定（全メンバー non-null）。</param>
     /// <param name="scaling">DPI スケーリング係数。</param>
-    /// <param name="onComplete">キャプチャ完了コールバック。</param>
+    /// <param name="onComplete">キャプチャ完了コールバック（切り出し矩形は画面物理座標）。</param>
     /// <param name="logger">内部ロガー。null の場合は出力なし。</param>
+    /// <remarks>オーバーレイの生成が 1 回の撮影セッションの開始となる（コアの状態へ開始を記録する）。</remarks>
     public OverlayWindow(
         IWindowService windowService,
         ICaptureService captureService,
@@ -87,41 +98,63 @@ internal sealed partial class OverlayWindow : Window
         CaptureType captureType,
         CaptureSettings settings,
         double scaling,
-        Action<EsBitmap?, PixelRect?> onComplete,
+        Action<EsBitmap?, EsPixelRect?> onComplete,
         ILogger? logger = null)
     {
         InitializeComponent();
+        // オーバーレイの生成 = セッション開始（以降の完了は 1 回だけ受け付ける）
+        _state.TryBegin();
         _captureType = captureType;
         _onComplete = onComplete;
         _log = logger.OrNullLogger();
         _windowService = windowService;
         _captureService = captureService;
         _detector = detector;
-        _scaling = scaling > 0 ? scaling : 1.0;
+        // スケーリング係数の正規化（0 以下は基準値）はコアが単一所有する
+        _scaling = DpiScaler.NormalizeScaling(scaling);
 
         var s = settings.ToNonNull();
 
-        // カーソルは AreaSelect のみ十字。WindowSelect / ScreenSelect はデフォルト（矢印）
-        if (captureType == CaptureType.AreaSelect)
+        // 十字カーソルはドラッグで矩形を作る種別（ハイライト型以外 = 範囲選択）で使う
+        // （選択スタイルの判定はコアが単一所有するため、UI は導出値を保持しない）
+        if (!CaptureTypeTraits.IsHighlighted(_captureType))
             Cursor = new Cursor(StandardCursorType.Cross);
 
+        _highlight = new CaptureHighlightSession(_log);
         SetWindowSizeToVirtualScreen();
+        _captureImage = new CaptureImageHolder(_screenBounds);
+        ResolveMonitors();
         ConfigureSelectionControls(s);
         SubscribeToEvents();
     }
 
-    /// <summary>ウィンドウを仮想スクリーン全体（全モニタのバウンディングボックス）に合わせて配置・サイズ変更する。</summary>
+    /// <summary>モニタごとの矩形と実表示倍率を解決する（構成はセッション中に変わらないため 1 回だけ行う）。</summary>
+    /// <remarks>
+    /// サイズラベルの表示倍率は描画のたびに評価されるため、ここで解決した一覧を再利用する<br/>
+    /// （毎回 <c>Screens.All</c> を列挙して配列を作ると、ドラッグ中の再描画ごとに割り当てが発生する）。<br/>
+    /// 判定規則（矩形の中心を含むモニタ）と倍率未確定の除外はコアの <see cref="MonitorScalingMath"/> が単一所有する。
+    /// </remarks>
+    private void ResolveMonitors()
+        => _monitors = MonitorScalingMath.Collect(
+            Screens.All.Select(screen => (screen.Bounds.ToEsPixelRect(), screen.Scaling)));
+
+    /// <summary>ウィンドウを仮想スクリーン全体（全モニタの包含矩形）に合わせて配置・サイズ変更する。</summary>
+    /// <remarks>
+    /// 撮影対象の範囲（全モニタの包含矩形）と「モニタが無ければ撮影しない」という規則は<br/>
+    /// コアの <see cref="CaptureVirtualScreen.ResolveBounds"/> が単一所有する（UI は配置するだけ）。<br/>
+    /// 配置に使った範囲は切り出し範囲の判定（画像未取得時のクランプ）にも使うため保持する。
+    /// </remarks>
     private void SetWindowSizeToVirtualScreen()
     {
-        var screens = Screens.All;
-        if (screens.Count == 0) return;
+        // 包含矩形の計算と空の判定はコアが単一所有する（空の場合は撮影する領域が無い）
+        if (CaptureVirtualScreen.ResolveBounds(
+                Screens.All.Select(screen => screen.Bounds.ToEsPixelRect())) is not { } bounds) return;
 
-        var bounds = screens[0].Bounds;
-        foreach (var screen in screens)
-            bounds = bounds.Union(screen.Bounds);
-        Position = bounds.Position;
-        Width = bounds.Width / _scaling;
-        Height = bounds.Height / _scaling;
+        // 物理ピクセル → DIP の換算は Platform 層の純粋関数（係数の正規化を含む）に委譲する
+        Position = bounds.TopLeft.ToAvaloniaPixelPoint();
+        Width = DpiScaler.ToDip(bounds.Width, _scaling);
+        Height = DpiScaler.ToDip(bounds.Height, _scaling);
+        _screenBounds = bounds;
     }
 
     /// <summary>選択コントロール（FadeMaskDragRectControl）を設定する。</summary>
@@ -130,7 +163,7 @@ internal sealed partial class OverlayWindow : Window
     /// 複合コントロール（Marquee + Loupe の配線を内包）へモード・外観・座標変換を設定する。<br/>
     /// - モード: キャプチャ種別に応じて描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替。<br/>
     /// - 設定: 設定変換（<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）で 1 値へ変換して一括適用。<br/>
-    /// - 座標変換: DomainScale（ドメイン = 仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）。
+    /// - 座標変換: DomainScale（ドメイン = ウィンドウローカル物理ピクセル = ローカル DIP × scaling。画面物理へは Position 加算）。
     /// </remarks>
     private void ConfigureSelectionControls(CaptureSettings s)
     {
@@ -145,61 +178,25 @@ internal sealed partial class OverlayWindow : Window
         // ルーペの市松模様の下地色は塗らない（Avalonia 版は背後に固定背景画像を置くため透明で透かす）
         SelectionOverlay.Options = s.ToFadeMaskDragRectOptions();
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
-        // 画面キャプチャはドメイン = 仮想スクリーンピクセルのため、ウィンドウのスケーリング（_scaling）を設定する。
+        // ドメインはウィンドウローカル物理ピクセル（= ローカル DIP × スケーリング）のため、ウィンドウのスケーリング（_scaling）を設定する。
         SelectionOverlay.Scaling = _scaling;
         SelectionOverlay.DisplayScaleScaling = _scaling;
         SelectionOverlay.LoupeRenderScaling = s.LoupeRenderScaling!.Value;
         // サイズラベル: 選択中の矩形（ドメイン = 画面物理 − Position）と、そのモニタの実スケーリングから
         // 描画時に直接生成する（物理ピクセルはスケーリングに依存しない。DIP 換算の往復誤差を排除）。
-        // ハイライト（ScreenSelect / WindowSelect）・選択（AreaSelect）の順で優先し、未選択は設定値に委ねる。
-        SelectionOverlay.SizeLabelOverrideProvider = () =>
-        {
-            if (SelectionOverlay.LogicalHighlightRect is { } highlight)
-            {
-                return FormatDomainSizeLabel(highlight, GetMonitorScalingForRect(highlight));
-            }
-            if (SelectionOverlay.HasSelection)
-            {
-                var selection = SelectionOverlay.SelectionRect;
-                return FormatDomainSizeLabel(selection, GetMonitorScalingForRect(selection));
-            }
-            return s.SizeLabelOverride;
-        };
+        // 書式と「確定対象が無ければホスト指定の文言を使う」規則はコアが単一所有する。
+        SelectionOverlay.SizeLabelOverrideProvider = () => CaptureLabelTexts.ResolveSizeLabel(
+            ResolveTargetRect(), s.SizeLabelOverride, GetMonitorScalingForRect);
         // 操作ラベル・情報ラベルの文言はホスト（キャプチャ文脈）が与える（汎用コアは文言を持たない）。
-        // モード別の文言と情報ラベルの表示可否は CaptureLabelTexts が単一所有する。
+        // モード別の文言と情報ラベルの表示可否は CaptureLabelTexts が単一所有し、
+        // 情報ラベルに出すウィンドウタイトルはハイライト状態（コアが単一所有する）を参照する。
         SelectionOverlay.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(SelectionOverlay.Mode);
-        SelectionOverlay.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(SelectionOverlay.Mode, _windowTitle);
-        // 選択矩形・ハイライトはドメイン座標（仮想スクリーンピクセル）で設定し、描画時に DIP へ変換する（Marquee と同方式）
+        SelectionOverlay.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(SelectionOverlay.Mode, _highlight.Title);
+        // 選択矩形・ハイライトはドメイン座標（ウィンドウローカル物理ピクセル）で設定し、描画時に DIP へ変換する（Marquee と同方式）
         // DomainScale: Forward = DIP→ドメイン（× scaling）/ Inverse = ドメイン→DIP（÷ scaling）
         // Marquee / Loupe の 2 コントロールへ同一ポートを一括分配する。
         SelectionOverlay.SetCoordinateTransform(CoordTransform.DomainScale(() => _scaling));
     }
-
-    /// <summary>選択状態をオーバーレイ描画へ反映する（AreaSelect 用）。</summary>
-    /// <param name="selectionRect">選択矩形（ドメイン = 仮想スクリーンピクセル）。</param>
-    /// <remarks>単体テストから呼び出し可能（internal）。</remarks>
-    internal void UpdateOverlay(Rect selectionRect)
-    {
-        // ドメイン（仮想スクリーンピクセル）の選択矩形を複合コントロール（Marquee + ルーペ）へ反映する。
-        // DIP 変換（÷ scaling）+ 閉区間（終点 +1）は描画時に座標変換ポート（DomainScale）が行う。
-        SelectionOverlay.SetSelection(selectionRect);
-        // ドラッグ後の枠（選択矩形）を事前切り出しする（確定時の高速化。同じ矩形ならスキップ）。
-        // ドメイン（仮想スクリーンピクセル）はウィンドウ Position 基準のため、画面物理座標へは Position を加算する。
-        if (selectionRect.Width > 0 && selectionRect.Height > 0)
-        {
-            PreExtractClip(DomainToScreenRect(selectionRect, Position));
-        }
-    }
-
-    /// <summary>選択状態をクリアして全面暗転（穴あけなし）に戻す（新規選択開始・キャンセル時）。</summary>
-    /// <remarks>
-    /// 矩形外クリックで新規選択が開始されると Marquee の選択矩形はサイズ 0 になり非表示になるが、<br/>
-    /// ドラッグ開始（SelectionChanged）までは Marquee に前の矩形が残る。<br/>
-    /// ここで選択状態をクリアして全面暗転に戻す（押下直後の暗転マスク残留を防止）。<br/>
-    /// 複合コントロールの <see cref="FadeMaskDragRectControl.ClearSelection"/> へ委譲する。<br/>
-    /// ShowFullOverlay=true のため、選択なしの場合は全面暗転が表示される。
-    /// </remarks>
-    private void ClearSelectionOverlay() => SelectionOverlay.ClearSelection();
 
     /// <summary>選択オーバーレイ（SelectionOverlay）の再描画を要求する。</summary>
     /// <remarks>
@@ -210,67 +207,13 @@ internal sealed partial class OverlayWindow : Window
     /// </remarks>
     internal void RequestOverlayRender() => SelectionOverlay.InvalidateOverlay();
 
-    /// <summary>AreaSelect のドメイン矩形（仮想スクリーンローカル物理ピクセル）を画面物理座標へ変換する。</summary>
-    /// <param name="domainRect">ドメイン矩形（= ウィンドウローカル DIP × scaling）。</param>
-    /// <param name="windowPos">ウィンドウの画面物理位置（= 仮想スクリーン原点）。</param>
-    /// <returns>画面物理座標の矩形。</returns>
+    /// <summary>切り出し元画像の占有範囲（画面物理ピクセル）を取得する。</summary>
+    /// <value>仮想スクリーン画像があればその範囲、未取得（背景撮影中）ならウィンドウが覆う仮想スクリーンの範囲。</value>
     /// <remarks>
-    /// ドメインは既にスケーリング済み（DIP × scaling）のため、<paramref name="windowPos"/> の加算のみで変換する。<br/>
-    /// キャプチャ（<see cref="ICaptureService.CaptureArea"/>）の引数と一致させるために使用する（座標ずれの回帰防止）。
+    /// 切り出し矩形の決定（閉区間化・画像内へのクランプ）はコア（<see cref="CaptureClipMath.ResolveCaptureRect"/>）が単一所有する。<br/>
+    /// 未取得時のフォールバック（どちらの取得経路を使うか）もコアの保持クラスが単一所有する。
     /// </remarks>
-    internal static Rect DomainToScreenRect(Rect domainRect, PixelPoint windowPos)
-        => new(
-            domainRect.X + windowPos.X, domainRect.Y + windowPos.Y,
-            domainRect.Width, domainRect.Height);
-
-    /// <summary>半開区間の矩形（<c>幅 = 終点 − 始点</c>）を閉区間の PixelRect（始点・終点のピクセルを含む）へ変換する。</summary>
-    /// <param name="rect">半開区間の矩形（画面物理座標）。</param>
-    /// <returns>閉区間の PixelRect（幅・高さが +1 された矩形）。</returns>
-    /// <remarks>
-    /// Marquee の矩形は半開区間のため、そのままキャプチャすると終点のピクセルが欠ける。<br/>
-    /// 始点・終点の両ピクセルを切出し対象に含める（閉区間キャプチャ）ために <c>Width / Height を +1</c> する。<br/>
-    /// 単体テストから呼び出し可能（internal）。
-    /// </remarks>
-    internal static PixelRect ToClosedIntervalPixelRect(Rect rect)
-        => new(
-            (int)rect.X, (int)rect.Y,
-            (int)rect.Width + 1, (int)rect.Height + 1);
-
-    /// <summary>キャプチャ種別に応じたキャプチャ矩形（画面物理座標・PixelRect）へ変換する。</summary>
-    /// <param name="captureType">キャプチャ種別。</param>
-    /// <param name="screenRect">選択矩形（画面物理座標）。</param>
-    /// <returns>キャプチャ矩形。</returns>
-    /// <remarks>
-    /// AreaSelect: ドラッグ選択の半開区間を閉区間化（+1）して終点ピクセルまで含める（<see cref="ToClosedIntervalPixelRect"/>）。<br/>
-    /// ScreenSelect / WindowSelect: 画面・ウィンドウの矩形は最初から全ピクセルを含むため、<br/>
-    /// +1 すると画面外（ウィンドウ外）に 1px はみ出す。そのため +1 せずそのまま使用する。<br/>
-    /// 純粋関数のため静的メソッドとする（ヘッドレス不要で単体テスト可能）。
-    /// </remarks>
-    internal static PixelRect ToCapturePixelRect(CaptureType captureType, Rect screenRect)
-        => captureType == CaptureType.AreaSelect
-            ? ToClosedIntervalPixelRect(screenRect)
-            : new PixelRect((int)screenRect.X, (int)screenRect.Y, (int)screenRect.Width, (int)screenRect.Height);
-
-    /// <summary>ルーペを更新する（AreaSelect 用）。</summary>
-    /// <param name="domainPos">ルーペ中心（ドメイン = 仮想スクリーンピクセル）。</param>
-    /// <remarks>
-    /// 表示位置・サイズは LoupeControl が座標変換ポート（SetCoordinateTransform）から<br/>
-    /// 自己計算する（カーソル右下 + オフセット + クランプ）。単体テストから呼び出し可能（internal）。
-    /// </remarks>
-    internal void UpdateLoupe(Point domainPos)
-    {
-        // 仮想スクリーン Bitmap が未取得の間はルーペを表示しない（Source 未設定の市松模様を防ぐ）。
-        // 表示開始は SetVirtualScreen（Source 設定後）が行う（ルーペの IsVisible = true は SetLoupePosition が担う）。
-        if (_virtualScreenBitmap is null) return;
-
-        // ルーペの表示開始と中心更新は複合コントロールへ委譲する（Parent 未接続は無視）。
-        // ソース: ドメイン（仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）は
-        // ウィンドウ Position = 仮想スクリーン原点のため、既に仮想スクリーン Bitmap 上の座標と一致する。
-        // 仮想スクリーン原点（_virtualScreenOrigin）を更に引くとマルチモニタ（原点が (0,0) でない）でずれるため引かない。
-        // ルーペの拡大元画像（Source）は SetVirtualScreen で一度だけ設定済み（EsBitmapAvaloniaImage）のため、
-        // ここでは中心位置の更新のみ行う（MouseMove 毎の全画面コピー生成と破棄済み Bitmap 残留を防ぐ）。
-        SelectionOverlay.SetLoupePosition(domainPos);
-    }
+    private EsPixelRect CaptureImageBounds => _captureImage.Bounds;
 
     // ====================================================================
     // テスト用アクセサ（回帰テストからの検証用）
@@ -282,22 +225,25 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>ウィンドウのイベント購読を設定する。</summary>
     private void SubscribeToEvents()
     {
-        if (_captureType == CaptureType.AreaSelect)
+        if (CaptureTypeTraits.IsHighlighted(_captureType))
+        {
+            // ScreenSelect / WindowSelect: クリック確定フロー（PointerMoved / Pressed / Released）
+            PointerMoved += OnClickMoved;
+            PointerPressed += OnClickPressed;
+            PointerReleased += OnClickReleased;
+            // Enter = 確定 / Esc = キャンセル（キーボード操作）。
+            // 内包する選択オーバーレイ（Marquee）も TopLevel のキーを購読し、Enter / Escape を
+            // 処理済みにする（選択を持たないハイライト型でも常に処理済みにされるため）。
+            // 本ウィンドウが必ず受け取れるよう、Tunnel + handledEventsToo で購読する。
+            AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+        }
+        else
         {
             // AreaSelect: Marquee（複合コントロール内）の確定・キャンセル要求を購読する。
             // Enter/Esc キー（OnTopLevelKeyDown）とダブルクリック（OnPointerPressed）は
             // ConfirmRequested / CancelRequested を発火するため、ここで接続して確定・キャンセルする。
             SelectionOverlay.ConfirmRequested += OnAreaConfirmRequested;
             SelectionOverlay.CancelRequested += OnAreaCancelRequested;
-        }
-        else
-        {
-            // ScreenSelect / WindowSelect: クリック確定フロー（PointerMoved / Pressed / Released）
-            PointerMoved += OnClickMoved;
-            PointerPressed += OnClickPressed;
-            PointerReleased += OnClickReleased;
-            // Enter / Esc キーによる確定・キャンセル（キーボード操作）
-            KeyDown += OnClickKeyDown;
         }
         Opened += OnWindowOpened;
         Deactivated += OnOverlayWindowDeactivated;
@@ -308,48 +254,37 @@ internal sealed partial class OverlayWindow : Window
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">キーイベント。</param>
     /// <remarks>
-    /// - Enter: 現在のカーソル位置で検出される要素（スクリーン / ウィンドウ）を確定する。<br/>
-    /// - Esc: キャプチャをキャンセルする。<br/>
-    /// ハイライト矩形（LogicalHighlightRect）が未設定の場合は Enter を無視する（確定対象なし）。
+    /// どのキーがどの操作かの解釈はコアの <see cref="CaptureKeyActions"/> が単一所有する<br/>
+    /// （確定対象が無い場合の Enter は何もしない。キャンセル扱いにしない）。<br/>
+    /// 確定対象の判定もコア（<see cref="CaptureTypeTraits.ResolveRect"/>）へ委譲する。<br/>
+    /// 確定はハイライト矩形（ドメイン座標）を画面物理座標へ戻して行う。
     /// </remarks>
-    private void OnClickKeyDown(object? sender, KeyEventArgs e)
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape)
+        var target = ResolveTargetRect();
+        switch (CaptureKeyActions.Resolve(e.Key.ToEsKey(), target is not null))
         {
-            CompleteCancelled();
-            e.Handled = true;
-            return;
-        }
-
-        if (e.Key == Key.Enter)
-        {
-            // 現在のカーソル位置で検出される要素を確定する（ハイライト矩形を画面物理座標へ変換）
-            if (SelectionOverlay.LogicalHighlightRect is { } highlightLogical)
-            {
-                var bounds = new Rect(
-                    highlightLogical.X + Position.X,
-                    highlightLogical.Y + Position.Y,
-                    highlightLogical.Width,
-                    highlightLogical.Height);
-                CompleteSelection(bounds);
+            case CaptureKeyAction.Confirm when target is { } rect:
+                CompleteSelection(CaptureClipMath.ToScreenRect(rect, Position.ToEsPixelPoint()));
                 e.Handled = true;
-            }
+                break;
+            case CaptureKeyAction.Cancel:
+                CompleteCancelled();
+                e.Handled = true;
+                break;
         }
     }
 
     /// <summary>AreaSelect の確定要求（Enter キー・ダブルクリック等）を受けてキャプチャを確定する。</summary>
     /// <param name="sender">イベント送信元（FadeMaskDragRectControl）。</param>
-    /// <param name="e">選択矩形イベント（Rect はドメイン = 仮想スクリーンピクセル）。</param>
+    /// <param name="e">選択矩形イベント（Rect はドメイン = ウィンドウローカル物理ピクセル）。</param>
     /// <remarks>
-    /// ドメイン（仮想スクリーンピクセル）の選択矩形を画面物理座標へ変換（Position 加算）して確定する。<br/>
-    /// キャプチャは <see cref="CompleteSelection"/> が仮想スクリーン Bitmap から切り出す。
+    /// ドメイン（ウィンドウローカル物理ピクセル）の選択矩形を画面物理座標へ変換（Position 加算）して確定する。<br/>
+    /// 確定要求の記録と切り出しは <see cref="CompleteSelection"/> が担う。
     /// </remarks>
     private void OnAreaConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
-    {
-        _log.LogOverlayConfirm(e.SelectionRect.ToString());
-        var screenRect = DomainToScreenRect(e.SelectionRect, Position);
-        CompleteSelection(screenRect);
-    }
+        // ドメイン（ウィンドウローカル物理ピクセル）→ 画面物理座標の変換はコアが単一所有する
+        => CompleteSelection(CaptureClipMath.ToScreenRect(e.SelectionRect.ToEsRect(), Position.ToEsPixelPoint()));
 
     /// <summary>AreaSelect のキャンセル要求（Esc キー・ダブルクリック外等）を受けてキャプチャをキャンセルする。</summary>
     /// <param name="sender">イベント送信元（FadeMaskDragRectControl）。</param>

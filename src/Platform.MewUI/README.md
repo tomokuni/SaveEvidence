@@ -15,14 +15,17 @@ Avalonia 版の `Platform.AvaloniaUI` と同じ役割を MewUI 向けに提供�
 | `EsGeometryMewUIInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` ⇔ MewUI の対応型。色（`System.Drawing.Color` ⇔ `Aprillz.MewUI.Color`）の変換も含む |
 | `EsWindowStateMewUIInterop` | `EsWindowState` ⇔ `Aprillz.MewUI.Controls.WindowState` |
 | `EsPlatformHandleMewUIInterop` | `Aprillz.MewUI.Window` → `EsPlatformHandle`（`Window.Handle` は `nint`） |
-| `WindowPlacementMath` | ウィンドウ配置の DIP ⇔ 画面物理ピクセルの変換、スケールの正規化、復元可否の判定（純粋関数。`WindowStartupLocation` / `WindowSize` へ DIP を渡すために使う） |
+| `WindowPlacementMath` | ウィンドウ配置の DIP ⇔ 画面物理ピクセルの変換、スケールの正規化、復元可否の判定（純粋関数。`WindowStartupLocation` / `WindowSize` へ DIP を渡すために使う）。**換算と正規化は `Platform.Core` の `DpiScaler`（両 UI 共通の単一所有者）へ委譲する** |
+| `Imaging.SkiaImageView` | `EsBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生。`Source` を設定するだけで描く） |
+| `Imaging.SkiaImageRenderer`（internal） | `EsBitmap` を Skia キャンバスへ敷く描画層（`SkiaImageView` とその派生が共用。画素で検証できる） |
 
 依存方向:
 
 ```text
 Platform.MewUI（本プロジェクト）
-  └──> Platform.Core（コア型）
+  └──> Platform.Core（コア型・画像の配置計算）
   └──> Aprillz.MewUI.Core（MewUI の型）
+  └──> Aprillz.MewUI.Skia（SkiaCanvasView）
 ```
 
 UI 実装（MewUI ホスト）は本プロジェクトを参照し、境界で 1 行変換します。

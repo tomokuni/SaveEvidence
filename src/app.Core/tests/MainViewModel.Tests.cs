@@ -1,6 +1,7 @@
 using Estable.SaveEvidence.Models;
 using Estable.SaveEvidence.Services;
 using Estable.SaveEvidence.ViewModels;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
@@ -239,5 +240,28 @@ public class MainViewModelTests
 
         Assert.False(vm.IsSaved);
         Assert.True(vm.CanSave);
+    }
+
+    /// <summary>切り出しコマンドの引数型がコア型（<see cref="EsPixelRect"/>）であることを検証する。</summary>
+    /// <remarks>
+    /// <see cref="RelayCommand{T}"/> は引数の型が一致しないと <see cref="ArgumentException"/> を投げる。<br/>
+    /// 切り出しの確定は UI 側で UI 型（例: Avalonia の <c>PixelRect</c>）を生成しやすいため、<br/>
+    /// <b>境界（UI 層）でコア型へ変換してからコマンドへ渡す</b>契約をここで固定する<br/>
+    /// （UI 型をそのまま渡すと切り出しが例外で失敗する）。
+    /// </remarks>
+    [Fact]
+    public void CropPreviewCommand_引数はコア型の矩形のみ受け付ける()
+    {
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
+
+        // コア型（UI 非依存の画面物理矩形）は受け付ける
+        var exception = Record.Exception(() => vm.CropPreviewCommand.Execute(new EsPixelRect(0, 0, 10, 10)));
+        Assert.Null(exception);
+
+        // UI 型（コア型ではない別の構造体）を渡すと例外になる
+        // （境界でコア型へ変換せずに渡した場合の実害を固定する）
+        var uiTypeException = Record.Exception(
+            () => vm.CropPreviewCommand.Execute(new System.Drawing.Rectangle(0, 0, 10, 10)));
+        Assert.IsType<ArgumentException>(uiTypeException);
     }
 }

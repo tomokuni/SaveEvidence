@@ -11,6 +11,7 @@ using SaveEvidence.MewUI.Logging;
 using SaveEvidence.MewUI.Services;
 using SaveEvidence.MewUI.Views;
 using SkiaSharp;
+
 namespace SaveEvidence.MewUI;
 
 /// <summary>SaveEvidence の MewUI 版ホスト。</summary>
@@ -64,8 +65,9 @@ internal static class Program
         // フォルダビューの表示状態（表示モード・ソート順）もコアが保持し、設定へ保存する
         var services = new AppServices(viewModel, settings, undoStack, new FolderViewViewModel());
 
-        // キャプチャの開始は ViewModel のコールバック（ツールバーのボタン）とグローバルホットキーの両方から呼ぶ
-        viewModel.StartSelectionMode = type => CaptureFlow.Start(services, type);
+        // キャプチャの開始は ViewModel のコールバック（ツールバーのボタン）とグローバルホットキーの両方から呼ぶ。
+        // ホットキーの開始経路（StartSelectionMode）は、撮影・切り出しのセッション寿命を所有するページが
+        // Facade を生成した時点で設定する（本ホストは UI 層のオブジェクトを生成しないため、ここでは設定しない）。
 
         // 骨格確認用の仮画像（キャプチャ実装までの暫定）
         viewModel.SetPreviewImage(CreatePlaceholderImage());

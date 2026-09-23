@@ -55,6 +55,8 @@ graph LR
 | `Geometry/EsPlatformHandle.cs` | UI フレームワーク非依存のネイティブウィンドウ識別子 |
 | `Geometry/CoordinateFormatter.cs` | 座標の表示文字列を生成する純粋関数 |
 | `Imaging/EsBitmap.cs` | SkiaSharp のみに依存するピクセルコンテナ（BGRA8888・Premul） |
+| `Imaging/ImageDrawMode.cs` | 画像を描画先の領域へ配置する方法（`Uniform` / `Fill`） |
+| `Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（純粋関数。Skia の `SKRect` を返す） |
 | `Imaging/SkiaColorInterop.cs` | コアの色型（`System.Drawing.Color`）→ Skia の色型の変換（MewUI 版の描画層 6 箇所が共用） |
 
 ## 例外処理ポリシー

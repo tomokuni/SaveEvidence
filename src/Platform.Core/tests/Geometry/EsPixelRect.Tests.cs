@@ -10,7 +10,7 @@ namespace EsUtil.Platform.Core.Tests;
 public class EsPixelRectTests
 {
     // ====================================================================
-    // 境界（Right / Bottom / BottomRight / Center）
+    // 境界（Right / Bottom / TopLeft / BottomRight / Center）
     // ====================================================================
 
     [Fact]
@@ -35,6 +35,24 @@ public class EsPixelRectTests
         var rect = new EsPixelRect(10, 20, 100, 50);
 
         Assert.Equal(new EsPixelPoint(110, 70), rect.BottomRight);
+    }
+
+    [Fact]
+    public void TopLeft_左端と上端を返す()
+    {
+        // 矩形の原点（画像の原点等）を UI が座標を手組みせず取り出せるようにする（BottomRight と対称）
+        var rect = new EsPixelRect(10, 20, 100, 50);
+
+        Assert.Equal(new EsPixelPoint(10, 20), rect.TopLeft);
+    }
+
+    [Fact]
+    public void TopLeft_原点が負値でも座標をそのまま返す()
+    {
+        // マルチモニタ（仮想スクリーン原点が負値）でも原点を取り出せる
+        var rect = new EsPixelRect(-1920, -200, 100, 50);
+
+        Assert.Equal(new EsPixelPoint(-1920, -200), rect.TopLeft);
     }
 
     [Fact]

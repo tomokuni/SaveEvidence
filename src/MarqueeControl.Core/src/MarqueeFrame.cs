@@ -74,4 +74,35 @@ public static class MarqueeFrame
 
         return OuterDecoFrame.Resolve(request);
     }
+
+    /// <summary>穴あけ矩形の内側の装飾の 1 フレーム分の描画内容を解決する。</summary>
+    /// <param name="session">選択の状態を単一所有するセッション（選択矩形・選択の有無・設定を参照する）。</param>
+    /// <param name="port">論理座標 → DIP の座標変換ポート（null 可。null の場合は <paramref name="scaling"/> を等倍スケールとして適用する）。</param>
+    /// <param name="scaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
+    /// <returns>内側の装飾の描画内容（描くものが無い場合は空のフレーム）。</returns>
+    /// <remarks>
+    /// 対象の穴あけ矩形は <see cref="Resolve"/> と同じ規則で決まる（ハイライト優先 → 選択矩形）。<br/>
+    /// 描画の要否（塗り色・枠線色のアルファ）は装飾コアが判断するため、UI 実装は返されたフレームを写すだけでよい。
+    /// </remarks>
+    public static InnerDecoFrame ResolveInner(MarqueeSession session, ICoordTransform? port, double scaling)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        var options = session.Options;
+        var hasSelection = session.HasSelection;
+
+        var request = new InnerDecoRequest(
+            new InnerDecoOptions
+            {
+                Appearance = options.InnerAppearance,
+                LogicalSelectionRect = hasSelection ? session.SelectionRect : null,
+                HasSelection = hasSelection,
+                LogicalHighlightRect = options.OuterHighlightRect,
+                HasHighlight = options.OuterHasHighlight,
+            },
+            port,
+            scaling);
+
+        return InnerDecoFrame.Resolve(request);
+    }
 }

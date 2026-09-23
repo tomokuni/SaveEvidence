@@ -1,6 +1,5 @@
 using System.Globalization;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 
 namespace Estable.Loupe;
 

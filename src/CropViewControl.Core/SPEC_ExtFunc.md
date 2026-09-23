@@ -6,9 +6,10 @@
 
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
-| `OverlayRect` | `public` | 任意 |
+| `OverlayRect` | `public` | 任意（ホストが矩形を設定する契約） |
 | `OverlayLineStyle` | `public` | 任意 |
-| `OverlayLineDash` | `internal` | `CropViewControl` / `CropViewControl.AvaloniaUI.Tests` / `CropViewControl.Core.Tests` |
+| `OverlayRectLayout` / `OverlayRectFrame` | `public` | 任意（UI 実装が描画入力を組み立てる契約） |
+| `OverlayLineDash` | `internal` | `CropViewControl.AvaloniaUI` / 各テスト |
 | `OverlayRectRasterizer` | `internal` | 同上 |
 
 ## `OverlayRect`（構造体）
@@ -26,7 +27,36 @@ public readonly record struct OverlayRect(
 | `Background` | `System.Drawing.Color` | 背景色（透明度を含む）。破線の市松風 2 色目 |
 | `Thickness` | `double` | 枠線の太さ（ピクセル） |
 
-UI 実装の `CropViewControl.Rects` に設定すると、矩形が View（ビューポート）とルーペ画像の両方へ描画されます。
+UI 実装の `CropViewControl.Rects` に設定すると、矩形が View（ビューポート）へ描画されます（Avalonia 版はさらにルーペ画像へも描画します）。
+
+## `OverlayRectLayout`（描画入力の解決）
+
+| メンバー | 説明 |
+| --- | --- |
+| `MinimumThickness` | 枠線の太さの下限（1 ピクセル） |
+| `EffectiveThickness(double thickness)` | 太さを下限以上へ補正する |
+| `ViewportRectFromCorners(EsPoint topLeft, EsPoint bottomRight)` | ビューポート座標の 2 点から矩形を組み立てる（負サイズは 0 へクランプ） |
+| `Resolve(OverlayRect rect, EsPoint topLeft, EsPoint bottomRight)` | 矩形情報を描画入力（`OverlayRectFrame`）へ解決する |
+
+**「どう描くか」の判断（負サイズのクランプ・太さの下限・破線かどうか）は本型が単一所有**します。UI 層はドメイン座標 → ビューポート座標の変換だけを行い、本メソッドへ渡します。
+
+クランプが必要な理由は、縮小・中央寄せで右下が左上を逆転し得るためです（負のサイズを描画先へ渡すと例外になります）。MewUI の値型は負のサイズを 0 へクランプしますが Avalonia は保持するため、本メソッドを通して両 UI の挙動を揃えます。
+
+## `OverlayRectFrame`（描画入力）
+
+| メンバー | 型 | 説明 |
+| --- | --- | --- |
+| `Bounds` | `EsRect` | ビューポート座標（DIP）の矩形。幅・高さは 0 以上へクランプ済み |
+| `Foreground` | `System.Drawing.Color` | 前景色 |
+| `Background` | `System.Drawing.Color` | 背景色（破線のときの下地） |
+| `Thickness` | `double` | 枠線の太さ（下限以上） |
+| `IsDashed` | `bool` | 破線（破線または点線）かどうか |
+| `DashLength` / `GapLength` | `double` | ダッシュ長と間隔（実線は 0） |
+| `HalfThickness` | `double` | 枠線の半幅（矩形の辺の内側へ寄せる量） |
+| `DrawsBackground` | `bool` | 背景色の下地を描くかどうか（破線のときだけ true） |
+| `HasDrawableSize` | `bool` | 幅と高さがともに 0 より大きいかどうか（描画可否） |
+
+UI 層は本値を描画先の型へ写すだけで、式と判断を持ちません。
 
 ## `OverlayLineStyle`（列挙型）
 
@@ -64,7 +94,7 @@ UI 実装の `CropViewControl.Rects` に設定すると、矩形が View（ビ�
 
 ### 線の太さ
 
-- 太さは四捨五入して整数化し、最低 1 ピクセルとします。
+- 太さの下限は `OverlayRectLayout.EffectiveThickness`（1 ピクセル）が単一所有し、本経路はそれを四捨五入して整数化します（ラスタライズ固有の処理）。
 - 半幅（`太さ / 2`）だけ中心の両側へ広げて描画します。範囲外のピクセルは `EsBitmap.TrySetPixel` が無視します。
 
 ## 依存

@@ -8,8 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- MewUI のコア（型・値型）。プラットフォームホストは含まない（本プロジェクトは UI 非依存の変換のみを担う） -->
+    <!-- MewUI のコア（型・値型）と Skia 描画（SkiaCanvasView・SKCanvas）。プラットフォームホストは含まない -->
     <PackageReference Include="Aprillz.MewUI.Core" Version="0.21.1" />
+    <!-- EsBitmap を Skia キャンバスへ描く表示ビュー（SkiaImageView）が SkiaCanvasView を使う -->
+    <PackageReference Include="Aprillz.MewUI.Skia" Version="0.21.1" />
   </ItemGroup>
 
   <ItemGroup>

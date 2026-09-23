@@ -32,7 +32,7 @@ UI 層（公開イベントへ転送）
 | `HitTarget` | public | ヒット対象の種別（8 方向のハンドル + `Move`。`None` は対象なし） |
 | `MarqueeInteractionState` | public | 対話状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging） |
 | `MarqueeSnapshot` | public | 通知時点の状態の値オブジェクト（`selectionRect` は `EsRect`、`mousePosition` は `EsPoint`） |
-| `WheelScrollRequest` / `WheelZoomRequest` | public | ホイール操作の要求（生の回転量・修飾キー・発生位置）。スクロール先とズーム率の決定は転送先（ホスト）が担う |
+| `WheelScrollRequest` / `WheelZoomRequest` | public | ホイール操作の要求（生の回転量・修飾キー・発生位置）。スクロール先とズーム率の決定は転送先（ホスト）が担う。回転量は `DeltaX` / `DeltaY` に加え、ベクターで受け取る API へそのまま渡せる `Delta`（コアの値型）を提供する |
 | `MarqueeOptions` | public | 設定の値オブジェクト（外側の装飾 4 項目 + 外観 9 項目 + 対話パラメータ 3 項目）。既定値・装飾の色と太さの所有・フォントサイズの補正を単一所有する |
 | `MarqueeFrame` | public | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル）の描画内容を解決する（セッションの状態 + 外側の装飾の設定 + 文言プロバイダ → 装飾コアのフレーム） |
 | `MarqueeSession` | public | **状態管理クラス**。入力の通知を受けて状態を更新し、効果（`MarqueeFeedback`）と通知（`MarqueeNotice`）を返す |
@@ -50,11 +50,11 @@ UI 層（公開イベントへ転送）
 
 | 層 | 利用者 | 型 |
 | --- | --- | --- |
-| **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `OuterDecoAppearance` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest` |
-| **2. UI アダプタ契約** | UI 実装（描画層・入力層） | `MarqueeSession` / `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeFrame` / `OuterDecoFrame` / `OuterDecoLabelStyle` / `OuterDecoSubLine` / `OuterDecoLabels`（`FormatSizeLabel` / `ResolveDisplayScaling`）/ `OuterDecoLabelLayout` / `MarqueeAppearance` / `SelectionGeometry` / `MarqueeLogMessage` |
-| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeState`（+ `MarqueeSession.State`）/ `OuterDecoOptions` / `OuterDecoRequest` / `OuterDecoOverlayGeometry` / `OuterDecoFrame.Resolve` / `OuterDecoLabels`（`ShouldShowInfoLabel` / `BuildSubLines`）/ `OuterDecoAppearance`（`BuildSubLines` / `ResolveLabelBackground` / `DefaultLabelBackground`） |
+| **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `OuterDecoAppearance` / `InnerDecoAppearance` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest` |
+| **2. UI アダプタ契約** | UI 実装（描画層・入力層） | `MarqueeSession` / `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeFrame` / `OuterDecoFrame` / `InnerDecoFrame` / `OuterDecoLabelStyle` / `OuterDecoSubLine` / `OuterDecoLabels`（`FormatSizeLabel` / `ResolveDisplayScaling`）/ `OuterDecoLabelLayout` / `MarqueeAppearance` / `SelectionGeometry` / `MarqueeLogMessage` |
+| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeState`（+ `MarqueeSession.State`）/ `OuterDecoOptions` / `OuterDecoRequest` / `InnerDecoOptions` / `InnerDecoRequest` / `DecoGeometry` / `OuterDecoFrame.Resolve` / `InnerDecoFrame.Resolve` / `OuterDecoLabels`（`ShouldShowInfoLabel` / `BuildSubLines`）/ `OuterDecoAppearance`（`BuildSubLines` / `ResolveLabelBackground` / `DefaultLabelBackground`） |
 
-- **層 3 は外部参照 0 件**を実測して絞り込んだ結果です。「フレームの解決（`MarqueeFrame.Resolve`）と描画に必要な値」だけが公開面であり、その組み立てに使う中間契約（`OuterDecoRequest` / `OuterDecoOptions`）と幾何計算は外部に不要です。
+- **層 3 は外部参照 0 件**を実測して絞り込んだ結果です。「フレームの解決（`MarqueeFrame.Resolve` / `ResolveInner`）と描画に必要な値」だけが公開面であり、その組み立てに使う中間契約（`OuterDecoRequest` / `OuterDecoOptions` / `InnerDecoRequest` / `InnerDecoOptions`）と幾何計算は外部に不要です。
 - **層 2 は UI アダプタを自作する場合の契約**です（独自 UI を追加するには、この面だけで完結します）。
 - **層 1 は設定と受け渡しの値**です（`MarqueeSession` を持たない軽い用途でも使えます）。
 - `[EditorBrowsable]` による「見えにくくする」対処はしません。公開面も契約も変わらず（見つけにくくなるだけ）、手段と目的が食い違うためです。**隠すか公開するかの二択**とし、隠す場合は `internal` で除きます。
@@ -109,12 +109,12 @@ UI 層（公開イベントへ転送）
 
 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル・ハイライト）の契約・外観・幾何・フレーム解決を本プロジェクトが単一所有します。
 
-> **命名**: 名前空間とフォルダは装飾という**カテゴリ**を表す `Decoration` のまま、型の接頭辞 `OuterDeco*` が**外側**であることを表します（将来「内側の装飾」を追加する場合は同じ名前空間へ `InnerDeco*` を足します）。
+> **命名**: 名前空間とフォルダは装飾という**カテゴリ**を表す `Decoration` のまま、型の接頭辞 `OuterDeco*` が**外側**、`InnerDeco*` が**内側**であることを表します（穴あけ矩形を挟んだ対の関係）。
 
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `OuterDecoAppearance` | public | 外観（暗転色・枠線・ラベル）の単一所有。`MarqueeOptions.OuterAppearance` として公開する（行の組み立てと背景色の解決は internal） |
-| `OuterDecoOverlayGeometry` | internal | 論理座標 → DIP 変換（閉区間の扱いを含む）・穴あけ矩形の決定・暗転領域（4 帯）の計算・枠線矩形の計算・座標変換ポートの決定（ポート優先・無ければ倍率） |
+| `DecoGeometry` | internal | 暗転と内側の装飾に共通する幾何計算: 論理座標 → DIP 変換（閉区間の扱いを含む）・穴あけ矩形の決定・暗転領域（4 帯）の計算・枠線矩形の計算・座標変換ポートの決定（ポート優先・無ければ倍率） |
 | `OuterDecoFrame` | public | **1 フレーム分の描画内容**（暗転領域・枠線・サイズラベルの文言・サブライン）の決定。**組み立て（`Resolve`）は internal** であり、外部は `MarqueeFrame.Resolve` を使う |
 | `OuterDecoRequest` | internal | **描画入力**（設定と状態の 1 値 `OuterDecoOptions` + 描画時に決まる値（クライアント矩形・座標変換ポート・倍率・3 種の文言プロバイダ）） |
 | `OuterDecoOptions` | internal | 設定と描画状態の単一値（外観・全面暗転・選択/ハイライト矩形とその有効フラグ）。`MarqueeFrame` が組み立てる |
@@ -142,13 +142,13 @@ UI 層（公開イベントへ転送）
 
 ### 層の責務の境界（装飾）
 
-UI 層（両 UI の描画層）は「セッションと `MarqueeOptions.Outer*` と 3 種の文言プロバイダを `MarqueeFrame.Resolve` へ渡し、返されたフレームを描く」だけです（`OuterDecoRequest` / `OuterDecoOptions` の組み立ては `MarqueeFrame` が担う）。
+UI 層（両 UI の描画層）は「セッションと `MarqueeOptions.Outer*` / `InnerAppearance` と 3 種の文言プロバイダを `MarqueeFrame.Resolve` / `ResolveInner` へ渡し、返されたフレームを描く」だけです（`OuterDecoRequest` / `OuterDecoOptions` / `InnerDecoRequest` / `InnerDecoOptions` の組み立ては `MarqueeFrame` が担う）。
 
 | 責務 | 所有者 | 内容 |
 | --- | --- | --- |
-| 設定と状態 | 本コア（値） / UI（保持） | 外観と表示ポリシーは `MarqueeOptions.Outer*`（公開値）、選択矩形はセッションが持つ。UI はフレームワークのプロパティ機構で保持するだけ |
+| 設定と状態 | 本コア（値） / UI（保持） | 外側の外観と表示ポリシーは `MarqueeOptions.Outer*`、内側の外観は `MarqueeOptions.InnerAppearance`（公開値）、選択矩形はセッションが持つ。UI はフレームワークのプロパティ機構で保持するだけ |
 | 判断・計算 | 本コア | 論理矩形 → DIP 変換（選択は閉区間 +1 / ハイライトは +0）・穴あけ矩形の優先順（ハイライト → 選択）・座標変換ポートの決定・透明指定の解決・サイズラベルの文言決定・表示スケールの解決・サブラインの組立・枠線矩形・暗転領域（4 帯）・行配置 |
-| 契約 | 本コア | `OuterDecoFrame`（描画内容）・`MarqueeFrame.Resolve`（公開のエンドポイント。`OuterDecoRequest` / `OuterDecoOptions` は内部契約） |
+| 契約 | 本コア | `OuterDecoFrame` / `InnerDecoFrame`（描画内容）・`MarqueeFrame.Resolve` / `ResolveInner`（公開のエンドポイント。`OuterDecoRequest` / `OuterDecoOptions` / `InnerDecoRequest` / `InnerDecoOptions` は内部契約） |
 | 描画 | UI | フレームの各項目を自 UI の描画 API へ写す（`FillRectangle` / `DrawRect` / `DrawText` 等） |
 | ホスト結線 | UI | プロパティ機構・DPI 追従・キャンバスのスケーリング・ブラシキャッシュ・テキストの実寸測定とフォント解決 |
 
@@ -159,7 +159,7 @@ UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せ�
 3. **フレームワーク固有の値の解決**（DPI の 0 以下フォールバック・色型変換）
 4. **テスト計量差の吸収**（`FormattedText` と `SKFont` で行の高さが異なる）
 
-暗転・穴あけ枠・ラベルの描画を行うのは `MarqueeControl.AvaloniaUI` の `MarqueeOuterDrawer` と `MarqueeControl.MewUI` の `MarqueeOuterSkiaRenderer` です（本コアは描画 API を持たない）。
+暗転・穴あけ枠・ラベルの描画を行うのは `MarqueeControl.AvaloniaUI` の `MarqueeOuterDrawer` と `MarqueeControl.MewUI` の `MarqueeOuterSkiaRenderer`、内側の塗り・内枠の描画は各 UI の `MarqueeInnerDrawer` / `MarqueeInnerSkiaRenderer` です（本コアは描画 API を持たない）。
 
 ## 依存関係
 
@@ -232,6 +232,9 @@ UI 層が使う共有値・計算（`MarqueeAppearance`）:
 11. **外側の装飾は選択矩形の設定が単一所有する**: 暗転マスク・穴あけ枠・ラベル（サイズ/操作/情報）の外観と表示ポリシーは `MarqueeOptions` の `Outer*` 項目が持ち、枠線の色・太さもそこで単一所有する（選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なるため、2 つの値に分けると見た目が崩れる）。**既定は枠線のみ**（暗転・ラベルは用途依存のため、ホストが設定値で明示的に与える）。
 12. **選択の状態はセッションが単一のソース**: 外側の装飾の穴あけ矩形と選択の有無は設定値ではなくセッションの状態から `MarqueeFrame` が導出する（同じデータを 2 箇所に持たない）。
 13. **装飾の契約は本コアが単一所有する**: 暗転マスク・穴あけ枠・ラベルを描画するための契約（公開は `MarqueeFrame` / `OuterDecoFrame` / `OuterDecoLabelStyle` / `OuterDecoSubLine` / `OuterDecoLabelLayout`。組み立てに使う `OuterDecoRequest` / `OuterDecoOptions` と幾何は internal）と幾何は `Estable.Marquee.Decoration` が持ち、UI 層は自 UI の描画 API へ写すだけとする。公開設定は `OuterDecoAppearance`（`MarqueeOptions.OuterAppearance` 経由）のみで、文言はホストがプロバイダで与える（本コアはアプリ固有の文言・モードを持たない）。
+14. **内側の装飾は穴あけ矩形（選択 or ハイライト）の内側を塗る**: 塗り色・内枠色・太さは `InnerDecoAppearance`（`MarqueeOptions.InnerAppearance`）が単一所有し、描画内容は `MarqueeFrame.ResolveInner` → `InnerDecoFrame` が決める（公開は `InnerDecoFrame`。組み立てに使う `InnerDecoRequest` / `InnerDecoOptions` は internal）。**既定はどちらも透明**（汎用の選択矩形コントロールのため、塗りは用途依存）で、アルファ 0 は「描かない」を意味する（判断はフレーム解決が行う）。穴の決定規則と DIP 変換は外側の装飾と `DecoGeometry` を共用するため、内側と外側の枠線が同じ矩形へ重なる。ハイライト矩形を「枠線 + 半透明の塗り」で強調する用途では、外側の枠線色を透明にして内側の装飾だけで表現する（自己完結した強調になる）。
+
+> **Note**: `MarqueeControl.Core` には `SPEC_ExtFunc.md` / `SPEC_System.md` を置かず、公開面・設計を本 README に集約しています（装飾の契約は型の可視性表と上記の各節が仕様を兼ねます）。
 
 ## テスト
 
@@ -244,7 +247,9 @@ tests/
 ├── MarqueeAppearance.Tests.cs       # ラベル配置・値補正・ハンドル一覧・カーソル種別（19 件）
 ├── MarqueeOptions.Tests.cs          # 既定値・部分変更・値補正・等価性（14 件）
 ├── MarqueeFrame.Tests.cs            # 外側の装飾のフレーム解決（選択の導出・ハイライト・全面暗転・座標変換・ラベル）（21 件）
-├── OuterDecoOverlayGeometry.Tests.cs  # 穴あけ矩形の決定・暗転領域（4 帯）・枠線矩形・閉区間の DIP 変換（25 件）
+├── MarqueeFrameInner.Tests.cs        # 内側の装飾のフレーム解決（選択・ハイライト・座標変換）（6 件）
+├── DecoGeometry.Tests.cs             # 穴あけ矩形の決定・暗転領域（4 帯）・枠線矩形・閉区間の DIP 変換（25 件）
+├── InnerDecoFrame.Tests.cs           # 内側のフレーム解決（塗り・内枠・透明指定・境界値）（13 件）
 ├── OuterDecoFrame.Tests.cs            # フレーム解決（暗転・枠線・ラベル・透明指定・境界値）（29 件）
 ├── OuterDecoLabels.Tests.cs           # 操作/情報ラベルの文言・表示判定・サイズラベルの書式（23 件）
 ├── OuterDecoAppearance.Tests.cs       # 外観の既定値・部分変更・ラベル背景の実効色（14 件）

@@ -2,8 +2,8 @@ namespace Estable.CaptureSession;
 
 /// <summary>撮影・切り出しセッションの状態（実行中かどうか・完了済みかどうか）を管理する。</summary>
 /// <remarks>
-/// Avalonia 版（<c>CropSession</c>）と MewUI 版（<c>CaptureOverlayWindow</c> / <c>PreviewCropSession</c>）が<br/>
-/// 同じ規則（再入禁止・完了は 1 回だけ）を別々に実装していたため、コアへ集約する。<br/>
+/// 再入の禁止と「完了は 1 回だけ」の規則は 2 つの UI で共通であり、UI にフラグを書くと片方だけ抜ける。<br/>
+/// そのため本クラスが状態と規則を単一所有する（UI は戻り値を見て分岐するだけ）。<br/>
 /// <br/>
 /// <b>規則</b>:<br/>
 /// 1. 実行中に <see cref="TryBegin"/> を呼ぶと false を返す（既存セッションを継続する）。<br/>

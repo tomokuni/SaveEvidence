@@ -25,7 +25,7 @@
   - [8. 公開 API](#8-公開-api)
     - [8.1 ZoomViewControl](#81-zoomviewcontrol)
     - [8.2 ZoomConfig（設定値）](#82-zoomconfig設定値)
-      - [設定方法（2 通り）](#設定方法2-通り)
+      - [設定方法](#設定方法)
       - [値のガード](#値のガード)
     - [8.3 ZoomChangedEventArgs（イベント引数）](#83-zoomchangedeventargsイベント引数)
   - [9. 制約事項](#9-制約事項)
@@ -37,8 +37,8 @@
 | 項目 | 内容 |
 | --- | --- |
 | 対象 | `ZoomViewControl`（公開コントロール） |
-| プロジェクト | `ZoomViewControl/ZoomViewControl.csproj` |
-| 名前空間 | `Estable.AvaloniaUI.ZoomView` / `Estable.AvaloniaUI.ZoomView.Logging` |
+| プロジェクト | `src/ZoomViewControl.AvaloniaUI/src/ZoomViewControl.AvaloniaUI.csproj` |
+| 名前空間 | `Estable.AvaloniaUI.ZoomView` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主な用途 | 画像プレビューのズームイン・アウト・Fit 表示・ズーム中心維持・パン・スクロールバー |
@@ -198,7 +198,9 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 
 ### 8.1 ZoomViewControl
 
-自己完結型複合コントロール（`public sealed class : Panel`）。内部ビューポートを内包し、ズーム率・遷移・表示を統括する。
+自己完結型複合コントロール（`public sealed class : Panel`）。内部ビューポート（`ZoomableView`）を内包し、  
+公開 API はコアの **`ZoomViewSession` への委譲**である（判断・値・計算はコアが単一所有する）。  
+`Source` / `CenterAlign` は内部ビューポートの表示へ、それ以外はセッションの操作・値へ写す。
 
 | メソッド / プロパティ | シグネチャ | 説明 |
 | --- | --- | --- |
@@ -218,11 +220,14 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ViewportToContentImage` | `Point(Point)` | ビューポート座標 → コンテンツ座標変換（画像表示矩形の原点基準） |
 | `ContentToViewportImage` | `Point(Point)` | コンテンツ座標 → ビューポート座標変換（画像表示矩形の原点基準） |
 | `ImageRectViewport` | `Rect()` | 画像の表示矩形（原点 + サイズ・ビューポート座標） |
-| `Log` | `ILogger` | 内部ロガー。null は `NullLogger` へフォールバック |
-| `MinZoom` | `double`（読み書き） | ズーム率の最小値（固定倍率）。設定時に `ZoomConfig.With` で再構築 |
-| `MaxZoom` | `double`（読み書き） | ズーム率の最大値（固定倍率）。設定時に `ZoomConfig.With` で再構築 |
-| `WheelFactor` | `double`（読み書き） | Ctrl+ホイールのズーム倍率。設定時に `ZoomConfig.With` で再構築 |
-| `ButtonZoomLevels` | `IReadOnlyList<double>`（読み書き） | ⊖⊕ ボタンのズームレベル集合。設定時に `ZoomConfig.With` で再構築 |
+| `Log` | `ILogger` | 内部ロガー。null は `NullLogger` へフォールバック（コアが単一所有する） |
+
+続き（設定のカスタマイズ）:
+
+| 対象 | 説明 |
+| --- | --- |
+| `ZoomViewControl(ZoomConfig config)` | コンストラクタでズーム範囲・倍率・レベル集合を注入する（**設定の唯一のカスタマイズ経路**。旧 `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` プロパティは参照がないため削除した） |
+| `ZoomConfig.Default` / `With` | 既定値と検証付きの部分更新（コア） |
 
 > `CanZoomIn` / `CanZoomOut` は読み取り専用。初期表示時にイベントを待たずにボタン状態を設定したい場合は、これらのプロパティを参照する。
 
@@ -238,15 +243,14 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 | `ButtonZoomLevels` | `IReadOnlyList<double>` | 23 段階 | ⊖⊕ ボタンのズームレベル集合 |
 | `Default` | `ZoomConfig` | 既定値 | 既定の設定 |
 
-#### 設定方法（2 通り）
+#### 設定方法
 
 | 方法 | 記述 | 備考 |
 | --- | --- | --- |
 | コンストラクタ注入 | `new ZoomViewControl(new ZoomConfig(20, 800, 1.2, [...]))` | 生成時に設定（コードのみ・XAML 配置では無引数コンストラクタを使用） |
-| プロパティ設定 | `zoomView.MinZoom = 20;` など | 生成後に設定。`ZoomViewControl` の設定プロパティ（読み書き）経由で `ZoomConfig.With`（検証付き部分更新）が適用される |
 | `ZoomConfig.With` | `With(double? minZoom, double? maxZoom, double? wheelFactor, IReadOnlyList<double>? buttonZoomLevels)` | 一部のプロパティを差し替えた検証付きの新しい `ZoomConfig` を返す（null は現在値維持）。不正な値は `ArgumentException` |
 
-- `ZoomViewControl` の `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` は**読み書き可能プロパティ**。設定するとズーム可否が再計算される。
+- **設定をカスタマイズする経路はコンストラクタ注入のみ**です（旧 `MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` プロパティは参照がなかったため削除しました。設定は生成時に確定し、実行中に変更しません）。
 - `ZoomConfig` は読み取り専用の不変値。プロパティの直接変更はできず、`With` 経由での検証付き部分更新のみ。
 - 既定値（`ZoomConfig.Default`）で動作させる場合は無引数コンストラクタ（`ZoomViewControl()`）を使用する。
 
@@ -258,7 +262,7 @@ scaleY = ビューポート高さ ÷ 元画像高さ
 
 | メンバー | 説明 |
 | --- | --- |
-| `ZoomChangedEventArgs` | `sealed record (double ZoomPercent, bool IsFit, bool CanZoomIn, bool CanZoomOut)`。実効ズーム率・Fit 状態・ズーム可否を通知する |
+| `ZoomChangedEventArgs` | `sealed record(ZoomState State)`。実効ズーム率・Fit 状態・ズーム可否を通知する（コアの `ZoomState` を保持し、各値は個別プロパティでも参照できる） |
 
 ## 9. 制約事項
 

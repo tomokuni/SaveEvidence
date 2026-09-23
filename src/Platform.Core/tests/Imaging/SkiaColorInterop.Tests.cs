@@ -62,4 +62,44 @@ public class SkiaColorInteropTests
         // default(System.Drawing.Color) は RGB も 0 の透明な黒（Color.Transparent の透明な白とは異なる）
         Assert.Equal(new SKColor(0, 0, 0, 0), default(DrawingColor).ToSKColor());
     }
+
+    [Fact]
+    public void ToDrawingColor_ARGBを保持して変換する()
+    {
+        var source = new SKColor(0x12, 0x34, 0x56, 0x80);
+
+        var result = source.ToDrawingColor();
+
+        Assert.Equal(0x80, result.A);
+        Assert.Equal(0x12, result.R);
+        Assert.Equal(0x34, result.G);
+        Assert.Equal(0x56, result.B);
+    }
+
+    [Fact]
+    public void ToDrawingColor_往復しても同じ色になる()
+    {
+        // 境界変換を 2 回通しても成分が欠落しないことを確かめる（Skia ⇔ コアの双方向）。
+        // System.Drawing.Color の等価は名前付き色と ARGB 生成で異なるため、成分で比較する。
+        foreach (var source in new[] { DrawingColor.FromArgb(0, 255, 255, 255), DrawingColor.Red, DrawingColor.FromArgb(0x40, 1, 2, 3) })
+        {
+            var result = source.ToSKColor().ToDrawingColor();
+
+            Assert.Equal(source.A, result.A);
+            Assert.Equal(source.R, result.R);
+            Assert.Equal(source.G, result.G);
+            Assert.Equal(source.B, result.B);
+        }
+    }
+
+    [Fact]
+    public void ToDrawingColor_既定値は透明な黒である()
+    {
+        var result = default(SKColor).ToDrawingColor();
+
+        Assert.Equal(0, result.A);
+        Assert.Equal(0, result.R);
+        Assert.Equal(0, result.G);
+        Assert.Equal(0, result.B);
+    }
 }

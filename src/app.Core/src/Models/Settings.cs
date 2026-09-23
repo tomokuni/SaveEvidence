@@ -113,10 +113,6 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private int _minSelectionSize = 6;
 
-    /// <summary>ウィンドウ非表示後の DWM 反映待機時間（ミリ秒）を取得または設定する。</summary>
-    [ObservableProperty]
-    private double _hideBeforeCaptureDelayMs = 50;
-
     /// <summary>ドラッグハンドルの色を取得または設定する。</summary>
     /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: 白 100% = <c>#FFFFFFFF</c>）。</remarks>
     [ObservableProperty]
@@ -276,16 +272,6 @@ public sealed partial class Settings : ObservableObject
     /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: 黒 60% = <c>#99000000</c>）。</remarks>
     [ObservableProperty]
     private string _subLineBackgroundColor = "#99000000";
-
-    /// <summary>ルーペ表示モード（起動時の初期表示状態）。</summary>
-    /// <remarks>
-    /// 0=非表示, 1=表示, 2=自動。<br/>
-    /// 設定画面の UI はなく、起動時デフォルトとして <c>MainWindow.ApplyCaptureSessionSettings</c> が
-    /// <c>CaptureSettings.LoupeVisible</c>（0 以外 = 表示）へ変換する。<br/>
-    /// ルーペの表示モード enum の値とは順序が異なるため、int プロパティとして独立して保持する。<br/>
-    /// </remarks>
-    [ObservableProperty]
-    private int _loupeModeValue = 0;
 
     /// <summary>プレビュー市松模様の1タイルサイズ（ピクセル、1〜20）を取得または設定する。</summary>
     [ObservableProperty]

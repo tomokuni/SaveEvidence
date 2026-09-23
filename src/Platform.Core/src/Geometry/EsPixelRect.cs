@@ -28,6 +28,11 @@ public readonly record struct EsPixelRect(int X, int Y, int Width, int Height)
     /// <value>右下端の座標（画面物理ピクセル）。</value>
     public EsPixelPoint BottomRight => new(Right, Bottom);
 
+    /// <summary>左上端の座標（左端・上端）を取得する。</summary>
+    /// <value>左上端の座標（画面物理ピクセル）。</value>
+    /// <remarks>矩形の原点（画像の原点等）を取り出すときに、UI が <c>new EsPixelPoint(rect.X, rect.Y)</c> を書かないようにする。</remarks>
+    public EsPixelPoint TopLeft => new(X, Y);
+
     /// <summary>矩形の中心座標を取得する（整数除算）。</summary>
     /// <value>中心の座標（画面物理ピクセル）。</value>
     public EsPixelPoint Center => new(X + Width / 2, Y + Height / 2);

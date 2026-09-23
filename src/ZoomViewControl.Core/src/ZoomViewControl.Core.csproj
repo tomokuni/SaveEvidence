@@ -5,6 +5,11 @@
     <RootNamespace>Estable.ZoomView</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。
+         XML は配布物（bin / publish）へ出さない（検証だけに使う）。 -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,5 +30,4 @@
     <InternalsVisibleTo Include="ZoomViewControl.MewUI.Tests" />
     <InternalsVisibleTo Include="ZoomViewControl.Core.Tests" />
   </ItemGroup>
-
 </Project>

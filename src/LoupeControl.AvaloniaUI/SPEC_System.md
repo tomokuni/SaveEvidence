@@ -19,7 +19,7 @@
     - [6.3 描画責務分割](#63-描画責務分割)
     - [6.4 画像入力とピクセル抽出](#64-画像入力とピクセル抽出)
     - [6.5 LoupeImageExtractor（`LoupeControl.Core`）](#65-loupeimageextractorloupecontrolcore)
-    - [6.6 LoupeLogMessage](#66-loupelogmessage)
+    - [6.6 LoupeLogMessage / LoupeRenderLog](#66-loupelogmessage--louperenderlog)
     - [6.7 上位AP（消費側）](#67-上位ap消費側)
     - [6.8 UI 固有の機構（コアへ移さない）](#68-ui-固有の機構コアへ移さない)
   - [7. 依存ルール](#7-依存ルール)

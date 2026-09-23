@@ -48,11 +48,11 @@ Facade パターンを適用し、内部のズームビューと矩形オーバ�
 
 | 層 | 責務 |
 | --- | --- |
-| `CropViewControl.Core` | 矩形情報（`OverlayRect`）・ダッシュ長（`OverlayLineDash`）の単一所有、ルーペ画像へのラスタライズ |
-| `ZoomViewControl.Core` | ズーム・パンの幾何計算 |
+| `CropViewControl.Core` | 矩形情報（`OverlayRect`）・描画入力の解決（`OverlayRectLayout` / `OverlayRectFrame`）・ダッシュ長（`OverlayLineDash`）の単一所有、ルーペ画像へのラスタライズ |
+| `ZoomViewControl.Core` | ズーム・パンの幾何計算と状態 |
 | `ZoomViewControl.MewUI` | 画像の描画、ズーム・パンの入力、ビューポート変化の通知 |
-| `CropViewControl.MewUI` | 矩形のビューポート座標変換と枠の描画、内包コントロールの公開 API への委譲 |
-| ホスト（`app.MewUI` 等） | `Source` / `Rects` の供給、ズーム操作、イベント購読 |
+| `CropViewControl.MewUI` | ビューポート座標の変換、コア確定値の描画先への写像、子要素の配置、公開 API の委譲 |
+| ホスト（`app.MewUI` 等） | `Source` / `Rects` / `Appearance` / `CenterAlign` の供給、ズーム操作、イベント購読 |
 
 ## コンポーネント構成
 
@@ -61,18 +61,18 @@ src/CropViewControl.MewUI/
 ├── src/
 │   ├── CropViewControl.cs      Facade（ZoomViewControl + RectOverlayCanvas の配置と委譲）
 │   ├── RectOverlayCanvas.cs    透明なオーバーレイ（ドメイン→ビューポート変換）
-│   └── CropSkiaRenderer.cs     矩形 1 つを SKCanvas へ描画（テスト対象）
+│   └── CropSkiaRenderer.cs     コアが確定した描画入力を SKCanvas へ写す（テスト対象）
 └── tests/
     ├── TestHelper.cs                 テスト用の描画先（SKBitmap + SKCanvas）と画像生成
     ├── CropSkiaRenderer.Tests.cs     枠・破線・境界値の画素検証（12 件）
-    └── CropViewControl.Tests.cs      Facade の委譲・イベント・座標変換（12 件）
+    └── CropViewControl.Tests.cs      Facade の委譲・外観・座標変換（15 件）
 ```
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `CropViewControl` | 子要素の配置、`Rects` の保持、公開 API の内包コントロールへの委譲、イベントの中継、ログの伝搬 |
-| `RectOverlayCanvas` | 矩形をドメイン座標からビューポート座標へ変換し、キャンバスへ描画する |
-| `CropSkiaRenderer` | 矩形 1 つを実線または破線（背景色の実線 + 前景色の破線）で描画する |
+| `CropViewControl` | 子要素の配置、`Rects` / `Appearance` の保持と委譲、公開 API の内包コントロールへの委譲、イベントの中継、ログの伝搬 |
+| `RectOverlayCanvas` | 矩形をドメイン座標からビューポート座標へ変換し、コアが確定した描画入力を描画層へ渡す |
+| `CropSkiaRenderer` | 描画入力を実線または破線（背景色の実線 + 前景色の破線）で描画する（式・判断を持たない） |
 
 ## クラス図
 
@@ -85,20 +85,22 @@ classDiagram
     class CropViewControl {
         +EsBitmap? Source
         +bool CenterAlign
+        +ZoomViewAppearance Appearance
         +IReadOnlyList~OverlayRect~ Rects
         +ZoomViewControl ZoomView
         +double ZoomPercent
-        +bool IsFit
         +bool CanZoomIn
         +bool CanZoomOut
         +ILogger Log
         +ZoomIn() void
         +ZoomOut() void
         +ZoomFit() void
+        +PanByWheel(delta, shift) void
+        +ZoomByWheel(zoomIn, p) void
+        +TranslatePositionFrom(element, p) EsPoint
         +ImageRectViewport() EsRect
         +ViewportToContent(p) EsPoint
         +ContentToViewport(p) EsPoint
-        +event RectsChanged
         +event ZoomChanged
         +event ViewportChanged
     }
@@ -107,7 +109,7 @@ classDiagram
         -OnPaintSurface(canvas, info) void
     }
     class CropSkiaRenderer {
-        +RenderRect(canvas, rect, info)$ void
+        +Render(canvas, frame)$ void
     }
     class ZoomViewControl {
         <<ZoomViewControl.MewUI>>
@@ -124,7 +126,7 @@ classDiagram
         +double Thickness
     }
     class OverlayLineDash {
-        <<CropViewControl.Core>>
+        <<internal（CropViewControl.Core）>>
         +Get(style)$ (double, double)
         +IsDashed(style)$ bool
     }
@@ -152,12 +154,12 @@ sequenceDiagram
     H->>C: Rects = [...]
     C->>O: SetRects(rects)
     O->>O: InvalidateVisual()
-    C-->>H: RectsChanged
     O->>SK: canvas.Clear(Transparent) + canvas.Scale(DPI)
     loop 各矩形
         O->>Z: ContentToViewportImage(左上 / 右下)
         Z-->>O: ビューポート座標
-        O->>R: RenderRect(canvas, viewportRect, info)
+        O->>O: OverlayRectLayout.Resolve(rect, 左上, 右下)
+        O->>R: Render(canvas, frame)
         R->>SK: DrawRect（背景色の実線 + 前景色の破線）
     end
 ```
@@ -170,10 +172,11 @@ sequenceDiagram
    重ね合わせることで**入力は下のズームビューが受け取り、描画は上のオーバーレイが担う**という単純な分担になる。
 3. **破線は「背景色の実線 + 前景色の破線」で表現した**。Avalonia 版が下層矩形と破線矩形を重ねる方式と同じであり、
    2 色のダッシュを 1 回の描画で表現する API が Skia にないため。
-4. **ダッシュ長はコアを単一所有元とした**。Avalonia 版のベクター描画・ルーペのラスタ描画・MewUI 版の 3 経路が同じ値を使う。
-5. **枠線は矩形の内側へ描画する**。Avalonia の `Rectangle.Stroke` と同じ見た目にするため（`inset` で半幅ずらす）。
-6. **領域選択オーバーレイを持たない**。ドラッグ選択・暗転マスク・ルーペの複合は `FadeMaskDragRectControl.MewUI` が担うため、本コントロールへ重ねれば済む（依存を増やさず、ホストが構成する。`app.MewUI` の切り出しはこの構成）。
-7. **ログは内包するズームビューへ委譲する**。本コントロール自身はログを持たず、`Log` プロパティをズームビューへ伝搬する（Avalonia 版が `CropViewControl.Log` を内包コントロールへ委譲するのと同じ分担）。
+4. **ダッシュ長と太さの下限はコアを単一所有元とした**。Avalonia 版のベクター描画・ルーペのラスタ描画・MewUI 版の 3 経路が同じ値を使う（`OverlayLineDash` と `OverlayRectLayout.EffectiveThickness`）。
+5. **描画入力の解決（`OverlayRectLayout.Resolve`）をコアへ置いた**。負サイズのクランプ・太さの下限・破線かどうかを UI が持つと、Avalonia と MewUI で見た目がずれる（実例: 一方だけ負サイズをクランプし、他方は太さの下限を持っていた）。
+6. **枠線は矩形の内側へ描画する**。Avalonia の `Rectangle.Stroke` と同じ見た目にするため（`inset` で半幅ずらす）。
+7. **領域選択オーバーレイを持たない**。ドラッグ選択・暗転マスク・ルーペの複合は `FadeMaskDragRectControl.MewUI` が担うため、本コントロールへ重ねれば済む（依存を増やさず、ホストが構成する。`app.MewUI` の切り出しはこの構成）。
+8. **ログは内包するズームビューへ委譲する**。本コントロール自身はログを持たず、`Log` プロパティをズームビューへ伝搬する（Avalonia 版が `CropViewControl.Log` を内包コントロールへ委譲するのと同じ分担）。
 
 ## テスト方針
 
@@ -191,5 +194,5 @@ sequenceDiagram
 | 領域選択オーバーレイ | 対象外。ホストが `FadeMaskDragRectControl.MewUI` を重ねて構成する（`app.MewUI` の切り出しはこの構成） |
 | 選択状態の公開 API | `FadeMaskDragRectControl.MewUI` が担う（本コントロールは矩形オーバーレイのみ） |
 | ルーペへの矩形描画 | `LoupeControl.MewUI` の描画完了イベント（`Rendered`）でキャンバスへ打ち込める（選択矩形の破線は `FadeMaskDragRectControl.MewUI` が実装済み） |
-| スクロールバー連携 | `AttachScrollViewer` 相当（ズームビューのスクロールバー実装に依存する） |
+| スクロールバー連携 | 内包するズームビューが自前でスクロールバーを描画・同期する（Avalonia 版の `ZoomableView` も標準 `ScrollBar` を使うため、ホストからの `ScrollViewer` 注入は行わない） |
 | 選択オーバーレイ上のホイール | ホストが `PanByWheel` / `ZoomByWheel` へ転送する（本コントロールはオーバーレイを含まないため） |

@@ -1,9 +1,13 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Estable.CropView;
+using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using Estable.MewUI.CaptureSession;
 using Estable.MewUI.CropView;
+using Estable.MewUI.Marquee;
 using Estable.MewUI.ZoomView;
+using Estable.ZoomView;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using Estable.SaveEvidence.Models;
@@ -13,7 +17,6 @@ using Microsoft.Extensions.Logging;
 using SaveEvidence.MewUI.Icons;
 using SaveEvidence.MewUI.Logging;
 using SaveEvidence.MewUI.Services;
-using SkiaSharp;
 using MewUIColor = Aprillz.MewUI.Color;
 
 namespace SaveEvidence.MewUI.Views;
@@ -23,7 +26,7 @@ namespace SaveEvidence.MewUI.Views;
 /// Avalonia 版 <c>CapturePage.axaml</c> に相当する。<br/>
 /// プレビュー（ズーム・パン・矩形オーバーレイ）・ルーペ（カーソル追従）・切り出し・撮影・履歴操作を担う。<br/>
 /// 書き出し形式の判定は <see cref="MewUIImageWriter"/>、撮影は <see cref="CaptureFlow"/>、
-/// 切り出しは <see cref="CropOverlay"/>、履歴は <see cref="EditHistory"/> へ委譲する。
+/// 切り出しは <see cref="CaptureSessionControl"/>（Facade）、履歴は <see cref="EditHistory"/> へ委譲する。
 /// </remarks>
 internal static class CapturePage
 {
@@ -54,6 +57,12 @@ internal static class CapturePage
     /// <remarks>アイコンは SVG を指定色でラスタライズするため、テーマ変更時は同じファイルから描き直す。</remarks>
     private sealed record IconImage(Image Image, string File);
 
+    /// <summary>市松模様の明色の既定（設定の色文字列が不正な場合に使う）。</summary>
+    private static readonly System.Drawing.Color s_defaultCheckerColorA = System.Drawing.Color.FromArgb(255, 255, 255, 255);
+
+    /// <summary>市松模様の暗色の既定（設定の色文字列が不正な場合に使う）。</summary>
+    private static readonly System.Drawing.Color s_defaultCheckerColorB = System.Drawing.Color.FromArgb(255, 204, 204, 204);
+
     /// <summary>テーマに合わせてアイコンを描き直す。</summary>
     /// <param name="icons">描き直す対象（<see cref="IconImage"/> の一覧）。</param>
     private static void RefreshIcons(List<IconImage> icons)
@@ -78,6 +87,28 @@ internal static class CapturePage
     /// <summary>自動切り出しの検出矩形の枠線色（ホバー中・赤・不透明。Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropHoverBorder = System.Drawing.Color.FromArgb(255, 255, 59, 48);
 
+    /// <summary>自動切り出しの検出矩形の塗り色（ホバー中・赤 16%。Avalonia 版と同じ）。</summary>
+    private static readonly System.Drawing.Color s_autoCropHoverFill = System.Drawing.Color.FromArgb(40, 255, 59, 48);
+
+    /// <summary>自動切り出しで外側の装飾を使わない外観（ハイライトの枠線は内側の装飾が単一所有する）。</summary>
+    private static readonly OuterDecoAppearance s_hiddenOuterDecoAppearance = new()
+    {
+        OverlayColor = System.Drawing.Color.Transparent,
+        BorderColor = System.Drawing.Color.Transparent,
+        BorderThickness = AutoCropBorderThickness,
+        ShowSizeLabel = false,
+        ShowSubLines = false,
+        InfoLabelVisible = false,
+    };
+
+    /// <summary>自動切り出しのホバー強調（赤色の枠線 + 半透明の塗り）の外観。</summary>
+    private static readonly InnerDecoAppearance s_autoCropHighlightAppearance = new()
+    {
+        FillColor = s_autoCropHoverFill,
+        BorderColor = s_autoCropHoverBorder,
+        BorderThickness = AutoCropBorderThickness,
+    };
+
     /// <summary>ページの内容を生成する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <returns>ページの内容。</returns>
@@ -86,14 +117,17 @@ internal static class CapturePage
     /// 2. プレビューは Star 行に置き、内容領域の残余全体を占めさせる（ズームビュー）。<br/>
     /// 3. プレビューの上へルーペ（カーソル追従）と切り出しのオーバーレイを重ねる。<br/>
     /// 4. 各コマンドは ViewModel へ直接接続する（キャプチャ開始は <see cref="CaptureFlow"/>、切り出しは
-    ///    <see cref="CropOverlay"/>、履歴は <see cref="EditHistory"/> へ委譲する）。<br/>
+    ///    <see cref="CaptureSessionControl"/>（Facade）、履歴は <see cref="EditHistory"/> へ委譲する）。<br/>
     /// 5. 表示のたびの更新は不要（ViewModel の変更通知で追従する）。
     /// </remarks>
     public static PageContent Build(AppServices services)
     {
         var viewModel = services.Main;
         var settings = services.Settings.Current;
-        var preview = BuildPreview(viewModel, settings, out var crop, out var cropSession);
+        var preview = BuildPreview(viewModel, settings, out var crop, out var captureSession);
+
+        // グローバルホットキーからの開始経路も同じ Facade を通す（撮影と切り出しの排他を 1 箇所で効かせる）
+        viewModel.StartSelectionMode = type => CaptureFlow.Start(services, type, captureSession);
 
         // ズーム率の表示はホストの都合（書式）で決まるため、コントロールのイベントから文字列化する
         var zoomText = new ObservableValue<string>(viewModel.ZoomDisplayText);
@@ -140,7 +174,7 @@ internal static class CapturePage
         };
 
         // ── メニュー（☰ の下へ出すプルダウン。Avalonia 版の MenuFlyout に相当）──
-        var menuPanel = BuildMenu(viewModel, services, cropSession);
+        var menuPanel = BuildMenu(viewModel, services, captureSession);
 
         // ── 拡大率メニュー（% 表示のクリックで出す。Avalonia 版のフライアウトに相当）──
         var zoomMenu = BuildZoomMenu(crop);
@@ -184,15 +218,15 @@ internal static class CapturePage
 
         var screenSelect = IconButton(
             "ic_fluent_rectangle_landscape_24_regular.svg", "スクリーン選択キャプチャ",
-            () => CaptureFlow.Start(services, CaptureType.ScreenSelect), iconImages);
+            () => CaptureFlow.Start(services, CaptureType.ScreenSelect, captureSession), iconImages);
         var windowSelect = IconButton(
             "ic_fluent_window_24_regular.svg", "ウィンドウ選択キャプチャ",
-            () => CaptureFlow.Start(services, CaptureType.WindowSelect), iconImages);
+            () => CaptureFlow.Start(services, CaptureType.WindowSelect, captureSession), iconImages);
         var areaSelect = IconButton(
             "ic_fluent_select_object_24_regular.svg", "領域選択キャプチャ",
-            () => CaptureFlow.Start(services, CaptureType.AreaSelect), iconImages);
+            () => CaptureFlow.Start(services, CaptureType.AreaSelect, captureSession), iconImages);
 
-        var cropButton = IconButton("ic_fluent_crop_24_regular.svg", "切り出し（切出しモード開始/終了）", cropSession.Toggle, iconImages);
+        var cropButton = IconButton("ic_fluent_crop_24_regular.svg", "切り出し（切出しモード開始/終了）", captureSession.ToggleCrop, iconImages);
         cropButton.BindIsEnabled(hasImage);
 
         var toolbar = new WrapPanel()
@@ -358,7 +392,7 @@ internal static class CapturePage
             // （Avalonia 版はメニュー項目の InputGesture が同じ役割を担う）
             if (e.ControlKey && e.Key == Key.R)
             {
-                cropSession.Toggle();
+                captureSession.ToggleCrop();
                 e.Handled = true;
             }
         });
@@ -367,13 +401,13 @@ internal static class CapturePage
     /// <summary>メニューのプルダウン（ツールバーの ☰ から開く）を生成する。</summary>
     /// <param name="viewModel">アプリのメイン ViewModel（各コマンドの接続先）。</param>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
-    /// <param name="cropSession">切り出しセッション（切り出しメニューの接続先）。</param>
+    /// <param name="captureSession">撮影・切り出しの Facade（切り出しメニューの接続先）。</param>
     /// <returns>初期状態で非表示のプルダウン。</returns>
     /// <remarks>
     /// Avalonia 版の <c>MenuFlyout</c> と同じ項目・同じ区切り・同じショートカット表記で並べる。<br/>
     /// ショートカットは表示のみ（Avalonia 版も <c>MenuItem.InputGesture</c> の表示であり、キー操作は受け付けない）。
     /// </remarks>
-    private static Border BuildMenu(MainViewModel viewModel, AppServices services, CropOverlay cropSession)
+    private static Border BuildMenu(MainViewModel viewModel, AppServices services, CaptureSessionControl captureSession)
     {
         var panel = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
         Border? menu = null;
@@ -430,11 +464,11 @@ internal static class CapturePage
         Add("Image - 元に戻す", () => EditHistory.Undo(services), viewModel.HasPreviewImage, "Ctrl+Z");
         Add("Image - 元に戻すを取り消す", () => EditHistory.Redo(services), viewModel.HasPreviewImage, "Ctrl+Y");
         AddSeparator();
-        Add("Capture - スクリーン選択", () => CaptureFlow.Start(services, CaptureType.ScreenSelect));
-        Add("Capture - ウィンドウ選択", () => CaptureFlow.Start(services, CaptureType.WindowSelect));
-        Add("Capture - 範囲選択", () => CaptureFlow.Start(services, CaptureType.AreaSelect));
+        Add("Capture - スクリーン選択", () => CaptureFlow.Start(services, CaptureType.ScreenSelect, captureSession));
+        Add("Capture - ウィンドウ選択", () => CaptureFlow.Start(services, CaptureType.WindowSelect, captureSession));
+        Add("Capture - 範囲選択", () => CaptureFlow.Start(services, CaptureType.AreaSelect, captureSession));
         AddSeparator();
-        Add("Crop - 切り出し", cropSession.Toggle, viewModel.CanCopy, "Ctrl+R");
+        Add("Crop - 切り出し", captureSession.ToggleCrop, viewModel.CanCopy, "Ctrl+R");
         Add("Crop - 自動切り出し", () => viewModel.AutoCropWindowCommand.Execute(null), viewModel.CanCopy);
 
         menu = new Border
@@ -571,16 +605,16 @@ internal static class CapturePage
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
     /// <param name="settings">設定（切り出しの外観）。</param>
     /// <param name="crop">生成したクロップビュー（ツールバーから操作するため返す）。</param>
-    /// <param name="cropSession">生成した切り出しセッション（ツールバーのボタンから開始する）。</param>
+    /// <param name="captureSession">生成した撮影・切り出しの Facade（ツールバーのボタン・メニューから開始する）。</param>
     /// <returns>プレビューと切り出しを重ねた要素。</returns>
     /// <remarks>
     /// プレビューは MewUI 版の <see cref="CropViewControl"/> を使う（内部でズームビューを内包し、矩形オーバーレイを重ねる）。<br/>
     /// 自動切り出しの検出矩形（<c>DetectedRects</c>）をオーバーレイとして表示する。<br/>
     /// ルーペは切り出しセッションが所有し、<b>切り出し中のみ</b>カーソルへ追従する（Avalonia 版と同じ）。<br/>
-    /// 切り出しのオーバーレイは最上層に置き、通常は非表示にする（<see cref="CropOverlay.Start"/> で表示する）。
+    /// 切り出しのオーバーレイはセッションの開始時に最上層へ加え、終了時に取り外す（Facade が担う）。
     /// </remarks>
     private static FrameworkElement BuildPreview(
-        MainViewModel viewModel, Settings settings, out CropViewControl crop, out CropOverlay cropSession)
+        MainViewModel viewModel, Settings settings, out CropViewControl crop, out CaptureSessionControl captureSession)
     {
         crop = new CropViewControl();
 
@@ -594,14 +628,47 @@ internal static class CapturePage
             .Columns("*")
             .Rows("*");
 
+        // 自動切り出しのホバー強調（枠線 + 半透明の塗り）を描く装飾専用の Marquee。
+        // 入力を奪わない（IsHitTestVisible = false）ため、ズームビューのホイール・ドラッグ・ホバーはそのまま働く。
+        var autoCropHighlight = new MarqueeControl { IsHitTestVisible = false };
+
+        // ホバー中の検出矩形の強調を更新する（矩形は DIP 座標へ変換して渡す。パン・ズームのたびに位置が変わる）。
+        // 強調の描画は Marquee の内側の装飾（InnerDeco）が単一所有する。
+        void UpdateAutoCropHighlight()
+        {
+            var hovered = viewModel.IsAutoCropActive ? viewModel.HoveredRect : null;
+            if (hovered is not { } target)
+            {
+                autoCropHighlight.Options = MarqueeOptions.Default with { OuterAppearance = s_hiddenOuterDecoAppearance };
+                return;
+            }
+
+            var topLeft = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.X, target.Y));
+            var bottomRight = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.Right, target.Bottom));
+
+            autoCropHighlight.Options = MarqueeOptions.Default with
+            {
+                OuterAppearance = s_hiddenOuterDecoAppearance,
+                OuterHasHighlight = true,
+                OuterHighlightRect = new EsRect(
+                    topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y),
+                InnerAppearance = s_autoCropHighlightAppearance,
+            };
+        }
+
         // 自動切り出しの検出矩形をオーバーレイへ変換する（画像座標 → ドメイン座標）。
-        // ホバー中の矩形は赤で強調する（Avalonia 版と同じ色・実線）
+        // ホバー中の 1 件は CropView 側から外し、Marquee のハイライト（枠線 + 半透明の塗り）で強調する
+        // （両 UI で同じ見た目にするため、塗りも描く）。
         void SyncRects()
         {
-            cropView.Rects = [.. viewModel.DetectedRects.Select(r => new OverlayRect(
-                new EsRect(r.X, r.Y, r.Width, r.Height), OverlayLineStyle.Solid,
-                viewModel.HoveredRect == r ? s_autoCropHoverBorder : s_autoCropBorder,
-                System.Drawing.Color.Transparent, AutoCropBorderThickness))];
+            var hovered = viewModel.IsAutoCropActive ? viewModel.HoveredRect : null;
+            cropView.Rects = [.. viewModel.DetectedRects
+                .Where(r => r != hovered)
+                .Select(r => new OverlayRect(
+                    new EsRect(r.X, r.Y, r.Width, r.Height), OverlayLineStyle.Solid,
+                    s_autoCropBorder, System.Drawing.Color.Transparent, AutoCropBorderThickness))];
+
+            UpdateAutoCropHighlight();
         }
 
         viewModel.PropertyChanged += (_, e) =>
@@ -611,6 +678,7 @@ internal static class CapturePage
                 case nameof(MainViewModel.PreviewImage):
                     cropView.Source = viewModel.PreviewImage;
                     break;
+                case nameof(MainViewModel.IsAutoCropActive):
                 case nameof(MainViewModel.DetectedRects):
                 case nameof(MainViewModel.HoveredRect):
                     SyncRects();
@@ -621,7 +689,11 @@ internal static class CapturePage
         cropView.Source = viewModel.PreviewImage;
         SyncRects();
         ApplyCheckerboard(cropView, settings);
-        host.Children(cropView);
+        cropView.CenterAlign = settings.CenterAlign;
+        host.Children(cropView, autoCropHighlight);
+
+        // パン・ズームでハイライト矩形のビューポート座標が変わるため、ビューポート変化で強調を更新する
+        cropView.ViewportChanged += (_, _) => UpdateAutoCropHighlight();
 
         // テーマが変わったら市松模様の下地色（テーマの背景色）を描き直す
         AppStyles.ThemeChanged += () => ApplyCheckerboard(cropView, settings);
@@ -673,26 +745,50 @@ internal static class CapturePage
             viewModel.CancelAutoCropCommand.Execute(null);
         });
 
-        // 市松模様の色を変えたときにプレビューへ即時反映する
+        // 市松模様の色・中央寄せを変えたときにプレビューへ即時反映する
         settings.PropertyChanged += (_, e) =>
         {
             if (IsCheckerSetting(e.PropertyName))
             {
                 ApplyCheckerboard(cropView, settings);
             }
+            else if (e.PropertyName == nameof(Settings.CenterAlign))
+            {
+                cropView.CenterAlign = settings.CenterAlign;
+            }
         };
 
-        // テーマ変更の購読はホストの責務（切り出しセッションはテーマの通知元を知らない）
-        // ログは切り出しセッション自身のカテゴリで記録する（ページのログと混ざらないようにする）
-        var session = new CropOverlay(
+        // 撮影・切り出しの Facade。撮影と切り出しの排他（同時に 1 つだけ）とセッションの寿命を単一所有する。
+        // ログは Facade 自身のカテゴリで記録する（ページのログと混ざらないようにする）
+        captureSession = new CaptureSessionControl(
             cropView,
             new MainViewModelCaptureTarget(viewModel),
-            CaptureSettingsMapper.From(settings, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0),
             host,
+            CaptureSettingsMapper.From(settings, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0),
             ToDrawingColor(AppStyles.CurrentPageBackground),
-            AppLog.CreateLogger(nameof(CropOverlay)));
-        cropSession = session;
-        AppStyles.ThemeChanged += () => session.RefreshAppearance(ToDrawingColor(AppStyles.CurrentPageBackground));
+            AppLog.CreateLogger(nameof(CaptureSessionControl)));
+
+        // テーマ変更の購読はホストの責務（Facade はテーマの通知元を知らない）
+        // out パラメーターはラムダ内で参照できないため、ローカル変数へコピーして使う
+        var session = captureSession;
+        AppStyles.ThemeChanged += () =>
+            session.UpdateCropThemeColor(ToDrawingColor(AppStyles.CurrentPageBackground));
+
+        // 設定変更を Facade へ即時反映する（部分更新・検証・同値スキップ・適用ログはコアが単一所有する）。
+        // ページは 1 度だけ生成されるため、購読しないと設定画面での変更が切り出し・撮影へ届かない。
+        // 検証（範囲外の値）で例外になっても UI を壊さないよう例外保護付きで行う（Avalonia 版と同じ扱い）。
+        settings.PropertyChanged += (_, e) =>
+        {
+            try
+            {
+                session.AppearanceSettings = CaptureSettingsMapper.From(
+                    settings, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0);
+            }
+            catch (Exception ex)
+            {
+                s_logger.LogSettingsApplyError(ex, e.PropertyName ?? string.Empty);
+            }
+        };
         return host;
     }
 
@@ -780,26 +876,30 @@ internal static class CapturePage
     /// <param name="cropView">対象のクロップビュー。</param>
     /// <param name="settings">設定。</param>
     /// <remarks>
-    /// 色は設定の <c>#AARRGGBB</c> 文字列のため、パースに失敗した場合は黒（透明）として扱う（描画を止めない）。<br/>
-    /// サイズが 0 以下の場合は市松模様を描画しない。<br/>
-    /// 市松模様の色は半透明（既定は 30%）のため、下地を塗る（<see cref="AppStyles.CheckerBackground"/>）。
+    /// 外観はコアの <see cref="ZoomViewAppearance"/> 1 値（既定は <see cref="ZoomViewAppearance.Default"/>）で与える。<br/>
+    /// 色は設定の <c>#AARRGGBB</c> 文字列のため、パースに失敗した場合は既定色として扱う（描画を止めない）。<br/>
+    /// サイズが 0 以下の場合は市松模様を描画しない（描画可否の判定はコアが単一所有する）。<br/>
+    /// 市松模様の色は半透明のため、下地（テーマのページ背景）を塗る。
     /// </remarks>
     private static void ApplyCheckerboard(CropViewControl cropView, Settings settings)
     {
-        cropView.CheckerSize = settings.PreviewCheckerSize;
-        cropView.CheckerColorA = ToSkColor(settings.PreviewCheckerColorA, new SKColor(255, 255, 255, 255));
-        cropView.CheckerColorB = ToSkColor(settings.PreviewCheckerColorB, new SKColor(255, 204, 204, 204));
-
-        // 市松模様の下地（Avalonia 版のページ背景相当。明色は白 / 暗色は黒）
         var background = AppStyles.CurrentPageBackground;
-        cropView.BackgroundColor = new SKColor(background.R, background.G, background.B, background.A);
+
+        // 下地はテーマのページ背景（S / R / G / B の並びは設定の #AARRGGBB と同じ）
+        cropView.Appearance = ZoomViewAppearance.Default with
+        {
+            CheckerSize = settings.PreviewCheckerSize,
+            CheckerColorA = ParseColor(settings.PreviewCheckerColorA, s_defaultCheckerColorA),
+            CheckerColorB = ParseColor(settings.PreviewCheckerColorB, s_defaultCheckerColorB),
+            BackgroundColor = System.Drawing.Color.FromArgb(background.A, background.R, background.G, background.B),
+        };
     }
 
-    /// <summary>設定の色文字列（<c>#AARRGGBB</c>）を Skia の色へ変換する。</summary>
+    /// <summary>設定の色文字列（<c>#AARRGGBB</c>）をコアの色型へ変換する。</summary>
     /// <param name="value">色文字列。</param>
     /// <param name="fallback">パースできない場合の色。</param>
     /// <returns>変換した色。</returns>
-    private static SKColor ToSkColor(string? value, SKColor fallback)
+    private static System.Drawing.Color ParseColor(string? value, System.Drawing.Color fallback)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -807,12 +907,15 @@ internal static class CapturePage
         }
 
         var text = value.TrimStart('#');
-        return uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, null, out var argb)
-            ? new SKColor(
-                (byte)((argb >> 16) & 0xFF),
-                (byte)((argb >> 8) & 0xFF),
-                (byte)(argb & 0xFF),
-                (byte)((argb >> 24) & 0xFF))
-            : fallback;
+        if (!uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, null, out var argb))
+        {
+            return fallback;
+        }
+
+        return System.Drawing.Color.FromArgb(
+            (byte)((argb >> 24) & 0xFF),
+            (byte)((argb >> 16) & 0xFF),
+            (byte)((argb >> 8) & 0xFF),
+            (byte)(argb & 0xFF));
     }
 }

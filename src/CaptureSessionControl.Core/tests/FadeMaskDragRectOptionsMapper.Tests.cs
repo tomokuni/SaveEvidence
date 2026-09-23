@@ -1,4 +1,3 @@
-using Estable.FadeMaskDragRect;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 

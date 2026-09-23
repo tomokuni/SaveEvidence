@@ -39,9 +39,6 @@ public sealed class MainWindowViewModel : ObservableObject
         set => SetProperty(ref _resultText, value);
     }
 
-    /// <summary>ルーペを表示するかどうか（AreaSelect に反映）。</summary>
-    public bool LoupeVisible { get; set; } = true;
-
     /// <summary>ルーペの拡大倍率（AreaSelect に反映）。</summary>
     public int LoupeZoomLevel { get; set; } = 4;
 

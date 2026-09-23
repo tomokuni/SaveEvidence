@@ -195,7 +195,7 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `Estable.Fade
 - **ドメイン座標**: ホストが定義する論理座標（Crop: 元画像ピクセル / AreaSelect: 仮想スクリーンピクセル）。
 - **DIP 座標**: コントロールローカル DIP。`SetCoordinateTransform` で注入した `ICoordTransform` が変換します。
 - **追従性**: ズーム・スクロール・ウィンドウサイズ変更などのレイアウト変化に、座標変換が常に追従します。
-- **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します（コアの `OuterDecoOverlayGeometry.ToDipRect` が終点に +1）。
+- **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します（コアの `DecoGeometry.ToDipRect` が終点に +1）。
 
 ## 7. モード
 

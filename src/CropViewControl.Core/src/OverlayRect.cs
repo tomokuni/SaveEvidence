@@ -11,7 +11,7 @@ namespace Estable.CropView;
 /// <param name="Thickness">枠線の太さ（ピクセル）。</param>
 /// <remarks>
 /// UI 実装（Avalonia / MewUI のクロップビュー）の <c>Rects</c> に設定すると、<br/>
-/// コントロールが矩形を View（ビューポート）とルーペ画像の両方へ描画する。<br/>
+/// コントロールが矩形を View（ビューポート）へ描画する（Avalonia 版はルーペ画像へも描画する）。<br/>
 /// 破線（<see cref="OverlayLineStyle.Dashed"/> / <see cref="OverlayLineStyle.Dotted"/>）の場合は<br/>
 /// <see cref="Foreground"/> と <see cref="Background"/> をダッシュごとに交互に塗る（市松風の視認性）。<br/>
 /// <b>依存分離</b>: 座標は <see cref="EsRect"/>、色は <see cref="DrawingColor"/>（UI フレームワーク非依存）で扱い、<br/>

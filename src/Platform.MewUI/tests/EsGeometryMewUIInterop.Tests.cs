@@ -29,6 +29,16 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
+    public void EsPixelPoint_物理ピクセルの座標をそのまま写す()
+    {
+        // MewUI は DIP と物理ピクセルを同じ型（Point）で表すため、値の変換は行わない
+        // （Avalonia 版の ToAvaloniaPixelPoint と対称）
+        var es = new EsPixelPoint(-1920, 1080);
+
+        Assert.Equal(new MewUIPoint(-1920, 1080), es.ToMewUIPoint());
+    }
+
+    [Fact]
     public void EsSize_往復変換で値が一致する()
     {
         var es = new EsSize(100, 50);

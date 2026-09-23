@@ -1,148 +1,87 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
+using Estable.ZoomView;
 using SkiaSharp;
 using Xunit;
 
 namespace Estable.MewUI.ZoomView.Tests;
 
-/// <summary><see cref="ZoomSkiaRenderer"/> の描画テスト（Skia のビットマップ上で画素を検証する）。</summary>
+/// <summary><see cref="ZoomSkiaRenderer"/>（MewUI の描画層）のテスト。</summary>
 /// <remarks>
-/// Skia のビットマップはウィンドウを必要としないため、UI 初期化なしで並列実行できる。<br/>
-/// 表示矩形の計算はコア（<c>ZoomMath</c>）が単一所有するため、本テストは描画結果（どの位置に何色が出るか）を検証する。
+/// 描画層は「セッションが確定した表示矩形へ画像を 1 回で描く」だけであり、判断・計算を持たない。<br/>
+/// 本テストは実画素を読み、表示矩形（Fit の収まり・パン後の位置）どおりに描かれることを検証する。
 /// </remarks>
 public class ZoomSkiaRendererTests
 {
-    /// <summary>画像がビューポートより小さい場合は中央寄せで描画されることを検証する。</summary>
-    [Fact]
-    public void ComputeImageRect_画像が小さい場合は中央寄せになる()
+    /// <summary>表示条件を確定させたセッションを生成する。</summary>
+    /// <param name="image">ズーム対象の画像。</param>
+    /// <param name="viewportSize">ビューポートの一辺（DIP）。</param>
+    /// <returns>セッション。</returns>
+    private static ZoomViewSession CreateSession(EsBitmap image, double viewportSize)
     {
-        // 画像 400x300、ビューポート 200x200 → Fit スケール = min(0.5, 0.667) = 0.5
-        // 表示サイズ 200x150、中央寄せ原点 = (0, (200-150)/2) = (0, 25)
-        var rect = ZoomSkiaRenderer.ComputeImageRect(
-            new EsSize(400, 300), new EsSize(200, 200), 0, default, centerAlign: true);
-
-        Assert.Equal(0, rect.X);
-        Assert.Equal(25, rect.Y);
-        Assert.Equal(200, rect.Width);
-        Assert.Equal(150, rect.Height);
+        var session = new ZoomViewSession();
+        session.SetViewport(new EsSize(viewportSize, viewportSize));
+        session.SetContent(hasSource: true, new EsSize(image.Width, image.Height));
+        return session;
     }
 
-    /// <summary>中央寄せを無効にすると原点が左上になることを検証する。</summary>
+    /// <summary>Fit 表示で画像がビューポート全体へ描画されることを検証する。</summary>
     [Fact]
-    public void ComputeImageRect_中央寄せ無効なら左上に置く()
+    public void Render_Fitで画像が描画される()
     {
-        var rect = ZoomSkiaRenderer.ComputeImageRect(
-            new EsSize(400, 300), new EsSize(200, 200), 0, default, centerAlign: false);
+        using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
+        var session = CreateSession(image, 200);
+        using var target = TestHelper.CreateTarget(200, 200);
 
-        Assert.Equal(0, rect.X);
-        Assert.Equal(0, rect.Y);
-        Assert.Equal(200, rect.Width);
-        Assert.Equal(150, rect.Height);
+        ZoomSkiaRenderer.Render(target.Canvas, image, session);
+
+        Assert.Equal(SKColors.Red, target.GetPixel(100, 100));
     }
 
-    /// <summary>固定倍率では倍率がそのまま表示サイズへ反映されることを検証する。</summary>
+    /// <summary>画像が未設定の場合は何も描画しないことを検証する。</summary>
     [Fact]
-    public void ComputeImageRect_固定倍率は倍率どおりの表示サイズになる()
+    public void Render_画像なしは何も描画しない()
     {
-        // 画像 100x100、ビューポート 400x400、200% → 表示サイズ 200x200、中央寄せ (100, 100)
-        var rect = ZoomSkiaRenderer.ComputeImageRect(
-            new EsSize(100, 100), new EsSize(400, 400), 200, default, centerAlign: true);
+        var session = new ZoomViewSession();
+        session.SetViewport(new EsSize(100, 100));
+        using var target = TestHelper.CreateTarget(100, 100);
 
-        Assert.Equal(100, rect.X);
-        Assert.Equal(100, rect.Y);
-        Assert.Equal(200, rect.Width);
-        Assert.Equal(200, rect.Height);
+        ZoomSkiaRenderer.Render(target.Canvas, source: null, session);
+
+        Assert.Equal(0, target.GetPixel(50, 50).Alpha);
     }
 
-    /// <summary>画像がビューポートより大きい場合はオフセットでパンすることを検証する。</summary>
+    /// <summary>パン後の表示矩形へ画像が描画されることを検証する。</summary>
+    /// <remarks>表示矩形はコアが確定するため、描画層は矩形どおりに描くだけでよい。</remarks>
     [Fact]
-    public void ComputeImageRect_画像が大きい場合はオフセットでパンする()
+    public void Render_パン後の位置へ描画される()
     {
-        // 画像 400x400、ビューポート 200x200、100% → 表示サイズ 400x400
-        // オフセット (100, 50) → 原点 = (-100, -50)
-        var rect = ZoomSkiaRenderer.ComputeImageRect(
-            new EsSize(400, 400), new EsSize(200, 200), 100, new EsVector(100, 50), centerAlign: true);
+        using var image = TestHelper.CreateBitmap(400, 400, SKColors.Red);
+        var session = CreateSession(image, 200);
+        session.SetZoom(100);
+        // 1 ノッチ（48 DIP）を実効倍率 1.0 で除した 48 コンテンツ座標ぶんパンする
+        session.PanByWheel(new EsVector(0, 1), shift: false);
+        using var target = TestHelper.CreateTarget(200, 200);
 
-        Assert.Equal(-100, rect.X);
-        Assert.Equal(-50, rect.Y);
-        Assert.Equal(400, rect.Width);
-        Assert.Equal(400, rect.Height);
+        ZoomSkiaRenderer.Render(target.Canvas, image, session);
+
+        // オフセット 48 に対して画像は上へ 48 移動するため、y=0 の画素は画像の y=48 になる（全面赤）
+        Assert.Equal(SKColors.Red, target.GetPixel(100, 0));
+        Assert.Equal(SKColors.Red, target.GetPixel(100, 199));
     }
 
-    /// <summary>画像未設定（サイズ 0）の場合は空の矩形になることを検証する。</summary>
+    /// <summary>表示矩形が空（画像サイズ 0）の場合は描画しないことを検証する。</summary>
     [Fact]
-    public void ComputeImageRect_画像サイズが0なら空の矩形になる()
+    public void Render_退化した画像は描画しない()
     {
-        var rect = ZoomSkiaRenderer.ComputeImageRect(default, new EsSize(200, 200), 0, default, centerAlign: true);
+        using var image = TestHelper.CreateBitmap(1, 1, SKColors.Red);
+        var session = new ZoomViewSession();
+        session.SetViewport(new EsSize(100, 100));
+        session.SetContent(hasSource: true, new EsSize(0, 0));
+        using var target = TestHelper.CreateTarget(100, 100);
 
-        Assert.Equal(default, rect);
-    }
+        ZoomSkiaRenderer.Render(target.Canvas, image, session);
 
-    /// <summary>Fit 表示で画像がビューポートの中央に描画されることを検証する。</summary>
-    [Fact]
-    public void Render_Fit表示では画像が中央に描画される()
-    {
-        // 50x50 の赤画像を 100x200 のビューポートへ Fit（= 200%）
-        // → 表示サイズ 100x100、中央寄せ原点 = (0, (200-100)/2) = (0, 50)
-        using var source = TestHelper.CreateBitmap(50, 50, SKColors.Red);
-        using var target = TestHelper.CreateTarget(100, 200);
-
-        ZoomSkiaRenderer.Render(
-            target.Canvas, source, new EsSize(50, 50), new EsSize(100, 200), 0, default, centerAlign: true);
-
-        // 画像は縦方向の中央に描画される
-        Assert.Equal(SKColors.Red, target.GetPixel(50, 100));
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(50, 10));
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(50, 190));
-    }
-
-    /// <summary>固定倍率で画像が中央寄せで描画されることを検証する。</summary>
-    [Fact]
-    public void Render_固定倍率で画像を中央寄せで描画する()
-    {
-        // 10x10 の赤画像を 100%、ビューポート 40x40 → 表示 10x10、中央寄せ原点 (15, 15)
-        using var source = TestHelper.CreateBitmap(10, 10, SKColors.Red);
-        using var target = TestHelper.CreateTarget(40, 40);
-
-        ZoomSkiaRenderer.Render(
-            target.Canvas, source, new EsSize(10, 10), new EsSize(40, 40), 100, default, centerAlign: true);
-
-        Assert.Equal(SKColors.Red, target.GetPixel(20, 20));
-        // 画像の外は描画されない
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(5, 5));
-    }
-
-    /// <summary>オフセットでパンした位置へ描画されることを検証する。</summary>
-    [Fact]
-    public void Render_オフセットでパンした位置へ描画する()
-    {
-        // 100x100 の赤画像を 100%、ビューポート 60x60、オフセット (50, 0) → 原点 (-50, 0)
-        using var source = TestHelper.CreateBitmap(100, 100, SKColors.Red);
-        using var target = TestHelper.CreateTarget(60, 60);
-
-        ZoomSkiaRenderer.Render(
-            target.Canvas, source, new EsSize(100, 100), new EsSize(60, 60), 100, new EsVector(50, 0), centerAlign: true);
-
-        // 画像の左半分（パンで可視化された部分）が描画される
-        Assert.Equal(SKColors.Red, target.GetPixel(5, 5));
-        Assert.Equal(SKColors.Red, target.GetPixel(49, 59));
-    }
-
-    /// <summary>ソースが null の場合は何も描画しないことを検証する。</summary>
-    [Fact]
-    public void Render_ソースがnullなら何も描画しない()
-    {
-        using var target = TestHelper.CreateTarget(40, 40);
-
-        ZoomSkiaRenderer.Render(target.Canvas, null, new EsSize(10, 10), new EsSize(40, 40), 100, default, centerAlign: true);
-
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(5, 5));
-    }
-
-    /// <summary>キャンバスが null の場合は例外になることを検証する。</summary>
-    [Fact]
-    public void Render_キャンバスがnullなら例外()
-    {
-        Assert.Throws<ArgumentNullException>(
-            () => ZoomSkiaRenderer.Render(null!, null, new EsSize(10, 10), new EsSize(40, 40), 100, default, true));
+        Assert.Equal(0, target.GetPixel(50, 50).Alpha);
     }
 }

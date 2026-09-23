@@ -76,6 +76,8 @@ src/MarqueeControl.MewUI/
 │   ├── MarqueeControl.cs                 公開 API・入力の受付と効果の適用・カーソル制御・描画の起点
 │   ├── MarqueeSkiaRenderer.cs            ハンドル・十字マーカー・座標ラベルの描画
 │   ├── MarqueeOuterSkiaRenderer.cs       外側の装飾（暗転マスク・穴あけ枠・ラベル）の描画
+│   ├── MarqueeInnerSkiaRenderer.cs       内側の装飾（穴あけ矩形の塗り・内枠）の描画
+│   ├── MarqueeInnerSkiaRenderer.cs       内側の装飾（穴あけ矩形の塗り・内枠）の描画
 │   ├── MarqueePointEventArgs.cs          座標通知のイベント引数
 │   └── SelectionRectEventArgs.cs          選択矩形通知のイベント引数
 └── tests/
@@ -83,6 +85,8 @@ src/MarqueeControl.MewUI/
     ├── RecordingLogger.cs                ログ出力を収集するテスト用 ILogger
     ├── MarqueeSkiaRenderer.Tests.cs     描画の検証（6 件）
     ├── MarqueeOuterSkiaRenderer.Tests.cs 外側の装飾の描画の検証（画素を実測する）
+    ├── MarqueeInnerSkiaRenderer.Tests.cs 内側の装飾の描画の検証（画素を実測する）
+    ├── MarqueeInnerSkiaRenderer.Tests.cs 内側の装飾の描画の検証（画素を実測する）
     └── MarqueeControl.Tests.cs          公開 API・プロパティ・イベントの検証
 ```
 
@@ -91,6 +95,8 @@ src/MarqueeControl.MewUI/
 | `MarqueeControl` | `MewProperty` の定義、入力のドメイン変換とセッションへの通知、返された効果（再描画・フォーカス・マウスキャプチャ・カーソル）の適用、マウスキャプチャの取得/解放、DPI 変更の追従 |
 | `MarqueeSkiaRenderer` | 8 方向ハンドル・十字マーカー・座標ラベルの描画と、ラベル配置の純粋計算。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため） |
 | `MarqueeOuterSkiaRenderer` | 装飾コアの `OuterDecoFrame` を Skia の描画 API へ写す（暗転マスク・枠線・ラベル。判断を持たない）。フォント解決・テキストの実寸測定を担う |
+| `MarqueeInnerSkiaRenderer` | 装飾コアの `InnerDecoFrame` を Skia の描画 API へ写す（穴あけ矩形の塗り・内枠。判断を持たない） |
+| `MarqueeInnerSkiaRenderer` | 装飾コアの `InnerDecoFrame` を Skia の描画 API へ写す（穴あけ矩形の塗り・内枠。判断を持たない） |
 | `MarqueePointEventArgs` / `SelectionRectEventArgs` | 通知時点の座標（矩形）とスナップショットの組 |
 | `RenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
@@ -164,6 +170,9 @@ classDiagram
         +Draw(canvas, frame)$ void
         +ResolveTypeface(text)$ SKTypeface
       }
+      class MarqueeInnerSkiaRenderer {
+        +Draw(canvas, frame)$ void
+      }
       class MarqueeAppearance {
           <<MarqueeControl.Core>>
           +double MarkerThickness$ const
@@ -209,6 +218,8 @@ classDiagram
     MarqueeControl ..> MarqueeFeedback : 効果を適用
     MarqueeControl ..> MarqueeSkiaRenderer : 描画を委譲（選択矩形）
     MarqueeControl ..> MarqueeOuterSkiaRenderer : 描画を委譲（外側の装飾）
+    MarqueeControl ..> MarqueeInnerSkiaRenderer : 描画を委譲（内側の装飾）
+    MarqueeControl ..> MarqueeInnerSkiaRenderer : 描画を委譲（内側の装飾）
     MarqueeSession *-- MarqueeState : 状態機械
     MarqueeSession ..> ICursorService : カーソル操作
     MarqueeState ..> SelectionGeometry : 幾何計算
@@ -313,6 +324,8 @@ OnPaintSurface(canvas, info)
   ├─ canvas.Clear(透明)                              … 前フレームの描画を残さない
   ├─ MarqueeFrame.Resolve(session, client, ...)     … 外側の装飾のフレーム（判断は装飾コア）
   │    └─ MarqueeOuterSkiaRenderer.Draw             … 暗転マスク・穴あけ枠・ラベル
+  │    └─ MarqueeInnerSkiaRenderer.Draw             … 穴あけ矩形の塗り・内枠
+  │    └─ MarqueeInnerSkiaRenderer.Draw             … 穴あけ矩形の塗り・内枠
   ├─ ShowHandles かつ HasSelection なら
   │    ├─ _session.ToDipRect(SelectionRect)          … Inverse 変換（終点は +1 して閉区間を表現。規則はコア）
   │    └─ MarqueeSkiaRenderer.DrawHandles           … SelectionGeometry から 8 方向の中心を取得
@@ -343,7 +356,7 @@ OnPaintSurface(canvas, info)
    カーソル移動（nudge）の座標変換はこの非対称性を踏まえて実装する。
 4. **スナップショットはドラッグ状態の解除前に生成する**。`EndDrag` の後ではマーカー位置が固定コーナーを返すため、
    nudge 位置は解放処理の冒頭で計算する。
-5. **枠線は 4 辺の塗り（FILL）で描かれる**。装飾コアの `OuterDecoOverlayGeometry.GetBorderRects` が穴あけ矩形の内側に太さ分の帯を 4 本返し、それを塗る（ストロークではないため、太さが半分外側へはみ出さない）。
+5. **枠線は 4 辺の塗り（FILL）で描かれる**。装飾コアの `DecoGeometry.GetBorderRects` が穴あけ矩形の内側に太さ分の帯を 4 本返し、それを塗る（ストロークではないため、太さが半分外側へはみ出さない）。
    描画テストの期待値はこの前提で書く。
 
 ## 未実装（今後の判断）

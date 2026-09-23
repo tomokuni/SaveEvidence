@@ -1,6 +1,7 @@
 using Aprillz.MewUI;
 using Estable.CropView;
 using Estable.MewUI.ZoomView;
+using Estable.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
@@ -45,26 +46,34 @@ public class CropViewControlTests
         var control = new CropViewControl();
 
         Assert.Null(control.Source);
-        Assert.True(control.IsFit);
         Assert.True(control.CenterAlign);
         Assert.Empty(control.Rects);
         Assert.NotNull(control.ZoomView);
         Assert.False(control.CanZoomIn);
         Assert.False(control.CanZoomOut);
+
+        // 外観は内包するズームビューの既定値（コアの単一所有値）をそのまま公開する
+        Assert.Equal(ZoomViewAppearance.Default, control.Appearance);
     }
 
-    /// <summary>Rects の設定が保持され、イベントが発火することを検証する。</summary>
+    /// <summary>Rects の設定が保持されることを検証する。</summary>
     [Fact]
-    public void Rectsを設定するとイベントが発火する()
+    public void Rectsを設定すると保持される()
     {
         var control = CreateLaidOut();
-        var count = 0;
-        control.RectsChanged += (_, _) => count++;
 
         control.Rects = [CreateRect(10, 10, 20, 20)];
 
         Assert.Single(control.Rects);
-        Assert.Equal(1, count);
+    }
+
+    /// <summary>Rects に null を設定すると例外になることを検証する。</summary>
+    [Fact]
+    public void Rectsにnullを設定すると例外になる()
+    {
+        var control = CreateLaidOut();
+
+        Assert.Throws<ArgumentNullException>(() => control.Rects = null!);
     }
 
     /// <summary>Rects が空でも例外にならないことを検証する。</summary>
@@ -88,7 +97,7 @@ public class CropViewControlTests
 
         Assert.Same(image, control.Source);
         Assert.Same(image, control.ZoomView.Source);
-        Assert.True(control.IsFit);
+        Assert.True(control.ZoomView.IsFit);
     }
 
     /// <summary>ズーム操作が内包するズームビューへ委譲されることを検証する。</summary>
@@ -106,7 +115,7 @@ public class CropViewControlTests
         Assert.Equal(50, control.ZoomPercent, 3);
 
         control.ZoomFit();
-        Assert.True(control.IsFit);
+        Assert.True(control.ZoomView.IsFit);
 
         control.ZoomPercent = 100;
         Assert.Equal(100, control.ZoomPercent, 3);
@@ -154,7 +163,7 @@ public class CropViewControlTests
         var count = 0;
         control.ViewportChanged += (_, _) => count++;
 
-        control.ZoomView.SetOffset(new EsVector(10, 10));
+        control.ZoomView.PanByWheel(new EsVector(1, 0), shift: false);
 
         Assert.True(count > 0);
     }
@@ -184,6 +193,23 @@ public class CropViewControlTests
         var control = CreateLaidOut();
 
         Assert.Equal(default, control.ImageRectViewport());
+    }
+
+    /// <summary>外観の設定が内包するズームビューへ委譲されることを検証する。</summary>
+    [Fact]
+    public void Appearanceの設定がズームビューへ委譲される()
+    {
+        var control = CreateLaidOut();
+        var appearance = ZoomViewAppearance.Default with
+        {
+            CheckerSize = 8,
+            BackgroundColor = DrawingColor.FromArgb(255, 16, 16, 16),
+        };
+
+        control.Appearance = appearance;
+
+        Assert.Equal(appearance, control.Appearance);
+        Assert.Equal(appearance, control.ZoomView.Appearance);
     }
 
     /// <summary>CenterAlign の設定が内包するズームビューへ委譲されることを検証する。</summary>

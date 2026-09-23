@@ -1,5 +1,8 @@
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Estable.FadeMaskDragRect;
+using Estable.Marquee.Decoration;
 
 namespace Estable.CaptureSession;
 
@@ -55,4 +58,22 @@ public static class CaptureLabelTexts
     /// </remarks>
     public static string? GetInfoText(FadeMaskDragRectMode mode, string? windowTitle)
         => mode == FadeMaskDragRectMode.WindowSelect ? windowTitle : null;
+
+    /// <summary>サイズラベルの文言を解決する（確定対象が無い場合はホスト指定の文言を使う）。</summary>
+    /// <param name="target">確定対象の矩形（ドメイン座標）。対象が無い場合は null。</param>
+    /// <param name="overrideText">確定対象が無い場合に使う文言（設定の明示指定）。null 可（自動生成に委ねる）。</param>
+    /// <param name="displayScaling">対象矩形の実表示倍率を解決するデリゲート（描画時のみ評価する）。</param>
+    /// <returns>サイズラベルの文言（常に描画側へ渡せる形）。</returns>
+    /// <remarks>
+    /// 「確定対象があれば矩形から生成し、無ければホスト指定の文言を使う」という規則を単一所有する<br/>
+    /// （UI が同じ三項演算を書くと、同じ状態で表示が食い違う）。<br/>
+    /// 矩形は既にドメイン座標（画面物理ピクセル）のため、表示倍率は基準値（DIP と 1:1）で整形する。
+    /// </remarks>
+    public static string? ResolveSizeLabel(EsRect? target, string? overrideText, Func<EsRect, double> displayScaling)
+    {
+        ArgumentNullException.ThrowIfNull(displayScaling);
+        return target is { } rect
+            ? OuterDecoLabels.FormatSizeLabel(rect, DpiScaler.StandardScaling, displayScaling(rect))
+            : overrideText;
+    }
 }

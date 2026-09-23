@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Geometry;
 using Estable.FadeMaskDragRect;
 using Xunit;
 
@@ -78,4 +79,52 @@ public class CaptureLabelTextsTests
     [InlineData(FadeMaskDragRectMode.ScreenSelect)]
     public void GetInfoText_WindowSelect以外はnullを返す(FadeMaskDragRectMode mode)
         => Assert.Null(CaptureLabelTexts.GetInfoText(mode, "メモ帳"));
+
+    // ====================================================================
+    // サイズラベルの文言
+    // ====================================================================
+
+    /// <summary>確定対象がある場合は矩形（ドメイン座標）からラベルを生成することを検証する。</summary>
+    [Fact]
+    public void ResolveSizeLabel_確定対象があれば矩形から生成する()
+    {
+        var label = CaptureLabelTexts.ResolveSizeLabel(
+            new EsRect(0, 0, 100, 50), overrideText: "指定文言", displayScaling: _ => 1.0);
+
+        // 既定の書式（OuterDecoLabels.FormatSizeLabel）で生成される（明示指定は使わない）
+        Assert.NotNull(label);
+        Assert.NotEqual("指定文言", label);
+    }
+
+    /// <summary>確定対象が無い場合はホスト指定の文言を使うことを検証する。</summary>
+    [Fact]
+    public void ResolveSizeLabel_確定対象が無ければホスト指定の文言を返す()
+    {
+        var label = CaptureLabelTexts.ResolveSizeLabel(null, overrideText: "指定文言", displayScaling: _ => 1.0);
+
+        Assert.Equal("指定文言", label);
+    }
+
+    /// <summary>確定対象が無く明示指定も無い場合は null（自動生成に委ねる）を返すことを検証する。</summary>
+    [Fact]
+    public void ResolveSizeLabel_確定対象も明示指定も無ければnullを返す()
+        => Assert.Null(CaptureLabelTexts.ResolveSizeLabel(null, overrideText: null, displayScaling: _ => 1.0));
+
+    /// <summary>表示倍率のデリゲートは確定対象がある場合のみ評価されることを検証する。</summary>
+    [Fact]
+    public void ResolveSizeLabel_表示倍率は確定対象がある場合のみ評価する()
+    {
+        // 無駄な計算（モニター判定）を行わないことを固定する
+        var called = 0;
+
+        CaptureLabelTexts.ResolveSizeLabel(null, overrideText: null, displayScaling: _ => { called++; return 1.0; });
+
+        Assert.Equal(0, called);
+    }
+
+    /// <summary>表示倍率のデリゲートが null の場合は例外を投げることを検証する。</summary>
+    [Fact]
+    public void ResolveSizeLabel_表示倍率がnullなら例外を投げる()
+        => Assert.Throws<ArgumentNullException>(
+            () => CaptureLabelTexts.ResolveSizeLabel(null, overrideText: null, displayScaling: null!));
 }

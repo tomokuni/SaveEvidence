@@ -4,8 +4,8 @@
 
 ## 目的
 
-ズーム表示の計算（Fit 実効倍率・ズーム中心維持・スクロール範囲クランプ・座標変換・段階遷移）は `ZoomViewControl.Core` が単一所有します。
-本プロジェクトはその計算結果を使って **Skia のキャンバスへ画像を描画し、入力を処理する** 層です。
+ズームの**状態と判断**（Fit の表現・実効ズーム率の導出・可否・キャッシュの無効化・遷移の適用・パン・スクロールバー）は `ZoomViewControl.Core` の `ZoomViewSession` が単一所有します。
+本プロジェクトは **Skia のキャンバスへの描画・入力の反映・通知の転送**だけを担い、判断を持ちません。
 そのため Avalonia 版と **同じズーム挙動・同じ設定**（`ZoomConfig`）になります。
 
 ## 特徴
@@ -55,8 +55,9 @@ zoomView.ZoomChanged += (_, e) =>
 };
 ```
 
-> **注意**: `ZoomConfig` は `public` ですが、遷移・幾何計算（`ZoomTransition` / `ZoomMath`）は `internal` です。
-> ホストはコントロールの公開 API（`ZoomIn` / `ZoomPercent` / `ImageRectViewport` 等）を経由して利用します。
+> **注意**: ホストはコントロールの公開 API（`ZoomIn` / `ZoomPercent` / `ImageRectViewport` 等）を経由して利用します。
+> 設定のカスタマイズはコンストラクタ（`ZoomViewControl(ZoomConfig? config)`）で行います（遷移・幾何計算はコアの `internal`）。
+> 外観は `Appearance`（コアの `ZoomViewAppearance`）の 1 値で与えます。
 
 ## プロパティ
 
@@ -64,16 +65,11 @@ zoomView.ZoomChanged += (_, e) =>
 | --- | --- | --- | --- |
 | `Source` | `EsBitmap?` | `null` | ズーム対象の画像。設定すると Fit 表示へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
-| `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。DPI 変更で自動更新 |
-| `ShowScrollBars` | `bool` | `true` | オーバーレイのスクロールバーを表示するか |
-| `ScrollBarThickness` | `double` | MewUI 標準のスクロールバーと同じ太さ（`ThemeMetrics.ScrollBarThickness`。既定 4.0） | スクロールバーの太さ（DIP） |
-| `ScrollBarMargin` | `double` | `8.0` | ビューポート端からの余白（DIP）。ウィンドウのリサイズ判定領域（端から 6 DIP）を避ける値 |
-| `ScrollBarColor` | `SKColor` | 白 63% | サムの色（アルファで不透明度を表す） |
-| `ScrollBarTrackColor` | `SKColor` | 白 16% | トラックの色（アルファ 0 の場合はトラックを描画しない） |
+| `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数（DPI 変更で自動更新される環境値） |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし・スクロールバー表示 | **外観の単一値**（下地色・市松模様（サイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）。コアが単一所有する） |
 | `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。0 より大きい値のみ設定でき、範囲へクランプされる |
 | `IsFit` | `bool` | `true` | Fit 表示中かどうか（`ZoomPercent` は 0 にならないため Fit 判定はこちら） |
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
-| `Offset` | `EsVector` | `default` | パン位置（コンテンツ座標。読み取り専用） |
 | `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
 
 ## メソッド
@@ -82,11 +78,9 @@ zoomView.ZoomChanged += (_, e) =>
 | --- | --- |
 | `ZoomIn()` / `ZoomOut()` | 段階レベルを 1 つ移動する（移動先がなければ何もしない） |
 | `ZoomFit()` | Fit 表示へ戻す（Fit へ移行する唯一の経路） |
-| `SetZoom(zoomPercent, center)` | ズーム率を設定する（中心を維持。0 以下は Fit） |
-| `SetOffset(offset)` / `PanBy(delta)` | パン位置を設定・移動する（スクロール範囲へクランプ） |
+| `PanByWheel(delta, shift)` / `ZoomByWheel(zoomIn, center)` | ホイール入力の反映（コントロールが自ら使う経路。ホストからの転送にも使える） |
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
 | `DisplaySize()` | 画像の表示サイズ（ビューポート座標・DIP） |
-| `ViewportToContent(pos)` / `ContentToViewport(pos)` | オフセット基準の座標変換 |
 | `ViewportToContentImage(pos)` / `ContentToViewportImage(pos)` | 画像表示矩形の原点基準の座標変換（中央寄せ補正を含む） |
 
 ## イベント
@@ -117,14 +111,15 @@ src/ZoomViewControl.MewUI/
 ├── SPEC_System.md           # システム仕様書
 ├── src/
 │   ├── ZoomViewControl.MewUI.csproj  # net10.0 / MewUI 0.21.1 固定
-│   ├── ZoomViewControl.cs            # SkiaCanvasView 派生のコントロール（状態・入力）
-│   ├── ZoomSkiaRenderer.cs           # 表示矩形の計算と SKCanvas への描画
-│   └── ZoomChangedEventArgs.cs       # ズーム率変更イベントの引数
+│   ├── ZoomViewControl.cs            # SkiaCanvasView 派生のコントロール（入力ブリッジ・描画・ホスト結線）
+│   ├── ZoomSkiaRenderer.cs           # コアが確定した表示矩形への描画（判断を持たない）
+│   └── ZoomChangedEventArgs.cs       # ズーム変更イベントの引数（コアの ZoomState を保持する薄い型）
 └── tests/
     ├── ZoomViewControl.MewUI.Tests.csproj
     ├── TestHelper.cs                  # テスト共通（描画先・画像生成）
-    ├── ZoomSkiaRenderer.Tests.cs      # 表示矩形の計算と描画結果の画素検証
-    └── ZoomViewControl.Tests.cs       # ズーム・パン・座標変換
+    ├── RecordingLogger.cs             # ログ収集用の ILogger
+    ├── ZoomSkiaRenderer.Tests.cs      # 描画結果の画素検証（4 件）
+    └── ZoomViewControl.Tests.cs       # 入力の反映・通知の転送・外観・スクロールバー（17 件）
 ```
 
 ## ビルドとテスト
@@ -137,6 +132,6 @@ dotnet test src/ZoomViewControl.MewUI/tests/ZoomViewControl.MewUI.Tests.csproj
 ## 関連ドキュメント
 
 - `../ZoomViewControl.Core/README.md` — 共有する UI 非依存ロジック
-- `../ZoomViewControl/README.md` — Avalonia 版ズームビュー
+- `../ZoomViewControl.AvaloniaUI/README.md` — Avalonia 版ズームビュー
 - `../LoupeControl.MewUI/README.md` — 同じ方式で移植したルーペ
 - `../app.MewUI/README.md` — 組み込み先のアプリ

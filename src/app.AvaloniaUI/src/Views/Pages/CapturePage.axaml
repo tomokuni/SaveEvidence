@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Estable.SaveEvidence.ViewModels;assembly=app.Core"
              xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropViewControl.AvaloniaUI"
+             xmlns:marquee="clr-namespace:Estable.AvaloniaUI.Marquee;assembly=MarqueeControl.AvaloniaUI"
              x:Class="Estable.SaveEvidence.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
@@ -130,14 +131,12 @@
 <crop:CropViewControl x:Name="CropView"
                            Background="Transparent"/>
 
-            <!-- 自動切り出し（LineDetection 検出）の矩形選択オーバーレイ。
-                 CropView と同一セルに重ね、検出矩形は ContentToViewport でビューポート座標へ変換して Canvas に配置する。
-                 矩形の生成・再配置はコードビハインド（UpdateAutoCropOverlay）で行う -->
-            <Canvas x:Name="AutoCropOverlay"
-                    IsHitTestVisible="True"
-                    Background="Transparent"
-                    PointerMoved="OnAutoCropPointerMoved"
-                    PointerPressed="OnAutoCropPointerPressed"/>
+            <!-- 自動切り出し（LineDetection 検出）のホバー強調。
+                 CropView と同一セルに重ね、ホバー中の検出矩形だけを「枠線 + 半透明の塗り」で強調する
+                 （強調の描画は Marquee の内側の装飾 = InnerDeco が単一所有する。矩形の生成はコードビハインド）。
+                 入力を奪わない（IsHitTestVisible=False）ため、ホイールでのズーム・パンとドラッグでのパンは CropView が受ける。 -->
+            <marquee:MarqueeControl x:Name="AutoCropHighlight"
+                                    IsHitTestVisible="False"/>
         </Grid>
 
         <!-- ステータスバー（左: 保存済み/未 | 保存ファイル名 / 右: 拡大率（スライダ + % + フライアウト）） -->

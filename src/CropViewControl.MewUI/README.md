@@ -12,6 +12,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 適用パターン | Facade（ズームビューと矩形オーバーレイを内包し、ホストへ統一インターフェースを提供する） |
+| 層の責務 | UI 層は入力・描画・ホスト結線のみを担い、判断を持たない（矩形のクランプ・太さの下限・市松の描画可否はコアが単一所有する） |
 | 内部構造 | `ZoomViewControl`（画像ビューポート）+ `RectOverlayCanvas`（透明な矩形オーバーレイ）を重ねる |
 | 矩形の描画 | 実線は前景色の枠のみ。破線は「背景色の実線 → 前景色の破線」の 2 回描画で市松風の視認性を出す |
 | 座標変換 | 画像表示矩形の原点基準（Fit 中央寄せの補正を含む）で画像と正確に一致する |
@@ -63,11 +64,12 @@ cropView.ZoomChanged += (_, e) => zoomText.Text = $"{e.ZoomPercent:0}%";
 | --- | --- | --- | --- |
 | `Source` | `EsBitmap?` | `null` | 表示する画像。設定すると Fit 表示へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする |
-| `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（ドメイン座標）。設定すると再描画し `RectsChanged` を発火する |
-| `ZoomView` | `ZoomViewControl` | — | 内包するズームビューポート（座標変換・Fit 状態の利用に使う） |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。コアが単一所有する |
+| `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（ドメイン座標）。設定すると再描画する |
+| `ZoomView` | `ZoomViewControl` | — | 内包するズームビューポート（座標変換・表示サイズの利用に使う） |
 | `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。0 より大きい値のみ設定できる |
-| `IsFit` | `bool` | `true` | Fit 表示中かどうか |
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
+| `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（内包するズームビューへ伝搬する） |
 
 ## メソッド
 
@@ -84,7 +86,6 @@ cropView.ZoomChanged += (_, e) => zoomText.Text = $"{e.ZoomPercent:0}%";
 
 | イベント | 説明 |
 | --- | --- |
-| `RectsChanged` | `Rects` の設定で発火する |
 | `ZoomChanged` | ズーム率・Fit 状態・ズーム可否（内包するズームビューから中継） |
 | `ViewportChanged` | ビューポートの変化（パン・ズーム・リサイズ。内包するズームビューから中継） |
 
@@ -99,12 +100,12 @@ src/CropViewControl.MewUI/
 │   ├── CropViewControl.MewUI.csproj  # net10.0 / MewUI 0.21.1 固定
 │   ├── CropViewControl.cs            # Facade（ズームビュー + 矩形オーバーレイ）
 │   ├── RectOverlayCanvas.cs          # 透明な矩形オーバーレイ（ドメイン→ビューポート変換）
-│   └── CropSkiaRenderer.cs           # 矩形 1 つを SKCanvas へ描画
+│   └── CropSkiaRenderer.cs           # コアが確定した描画入力を SKCanvas へ写す
 └── tests/
     ├── CropViewControl.MewUI.Tests.csproj
     ├── TestHelper.cs                 # テスト共通（描画先・画像生成・画素数え上げ）
     ├── CropSkiaRenderer.Tests.cs     # 枠・破線・境界値の画素検証（12 件）
-    └── CropViewControl.Tests.cs      # Facade の委譲・イベント・座標変換（12 件）
+    └── CropViewControl.Tests.cs      # Facade の委譲・外観・座標変換（15 件）
 ```
 
 ## ビルドとテスト
@@ -117,6 +118,6 @@ dotnet test src/CropViewControl.MewUI/tests/CropViewControl.MewUI.Tests.csproj
 ## 関連ドキュメント
 
 - `../CropViewControl.Core/README.md` — 共有する UI 非依存ロジック
-- `../CropViewControl/README.md` — Avalonia 版クロップビュー
+- `../CropViewControl.AvaloniaUI/README.md` — Avalonia 版クロップビュー
 - `../ZoomViewControl.MewUI/README.md` — 内包するズームビュー
 - `../app.MewUI/README.md` — 組み込み先のアプリ

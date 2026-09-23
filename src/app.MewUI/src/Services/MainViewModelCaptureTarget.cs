@@ -9,7 +9,7 @@ namespace SaveEvidence.MewUI.Services;
 /// <summary><see cref="MainViewModel"/> を切り出しセッションの適用先（<see cref="ICaptureTarget"/>）として公開する。</summary>
 /// <param name="viewModel">アプリのメイン ViewModel。</param>
 /// <remarks>
-/// 切り出しセッション（<c>CaptureSessionControl.MewUI</c> の <c>CropOverlay</c>）はアプリの型を参照しないため、<br/>
+/// 切り出しセッション（<c>CaptureSessionControl.MewUI</c> の <c>CaptureSessionControl</c>）はアプリの型を参照しないため、<br/>
 /// 本アダプタが境界になる。<br/>
 /// - <see cref="CurrentImage"/>: プレビュー画像（切り出しの対象・ルーペのソース）。<br/>
 /// - <see cref="ImageChanged"/>: <c>PreviewImage</c> の変更通知を中継する。<br/>

@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Imaging;
 using Estable.AvaloniaUI.CropView;
@@ -40,11 +42,9 @@ public sealed class CaptureSessionControl : IDisposable
     /// <summary>破棄済みかどうか。</summary>
     private bool _isDisposed;
 
-    /// <summary>進行中のキャプチャセッション（Cancel 用）。</summary>
-    private SelectionCaptureSession? _captureSession;
-
-    /// <summary>進行中の Crop セッション（Cancel 用）。</summary>
-    private CropSession? _cropSession;
+    /// <summary>進行中のセッション（撮影と切り出しで同時に 1 つまで）。</summary>
+    /// <remarks>排他規則（片方が実行中なら他方も開始できない）はコアの <see cref="CaptureSessionSlot{TCapture, TCrop}"/> が単一所有する。</remarks>
+    private readonly CaptureSessionSlot<SelectionCaptureSession, CropSession> _slot = new();
 
     /// <summary>内部ロガー（インスタンス単位。複数インスタンスで混線しない）。</summary>
     private readonly ILogger _log;
@@ -59,7 +59,8 @@ public sealed class CaptureSessionControl : IDisposable
     public CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)
     {
         initialSettings?.Validate();
-        _currentSettings = MergeWithDefaults(initialSettings);
+        // 入力なし（null）は既定値で埋める（規則はコアが単一所有する）
+        _currentSettings = CaptureSettingsMerge.Merge(initialSettings);
         _log = logger.OrNullLogger();
         _windowService = PlatformFactory.CreateWindowService(_log);
     }
@@ -82,15 +83,12 @@ public sealed class CaptureSessionControl : IDisposable
         set
         {
             ThrowIfDisposed();
-            value.Validate();
-            var merged = MergeWithDefaults(value, _currentSettings);
-            // 同じ値が設定された場合は更新しない（record の等値比較。部分更新の入力が全て現在値と一致する場合）
-            if (merged == _currentSettings) return;
-            _currentSettings = merged;
+            // 部分更新のマージ・検証・同値スキップはコアが単一所有する（UI は 45 項目の ?? 連鎖を持たない）
+            if (!CaptureSettingsMerge.Apply(value, ref _currentSettings, _log)) return;
 
             // 実行中の Crop セッションへ最新設定を再適用する（Crop 中の設定変更の即時反映）。
             // キャプチャセッション（OverlayWindow）はモーダル全画面のため、実行中の設定変更は対象外。
-            _cropSession?.ApplySettings(merged);
+            _slot.Crop?.ApplySettings(_currentSettings);
         }
     }
 
@@ -106,10 +104,9 @@ public sealed class CaptureSessionControl : IDisposable
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
-        if (_captureSession is not null) return null; // 再入禁止
 
-        var screens = owner.Screens.All;
-        double scaling = screens.Count > 0 && screens[0].Scaling > 0 ? screens[0].Scaling : 1.0;
+        // 画面の取得は UI 固有、代表スケーリングの解決（未取得は基準値・0 以下の正規化）はコアが単一所有する
+        var scaling = MonitorScalingMath.ResolveScaling(owner.Screens.All.Select(screen => screen.Scaling));
 
         var session = new SelectionCaptureSession(
             _windowService,
@@ -119,64 +116,101 @@ public sealed class CaptureSessionControl : IDisposable
             // キャプチャ完了イベントを公開イベントへ中継する（同期実行 → ホストの画像変更後に再表示）
             onCaptured: result => CaptureCompleted?.Invoke(result),
             _log);
-        _captureSession = session;
+
+        if (!_slot.TryBeginCapture(session))
+        {
+            return null; // 再入禁止（他のセッションが実行中）
+        }
+
         try
         {
             return await session.RunAsync(owner);
         }
         finally
         {
-            _captureSession = null;
+            _slot.EndCapture(session);
         }
     }
 
     /// <summary>切出し（Crop）を開始する。UI スレッドから呼び出すこと。</summary>
-    /// <param name="cropView">切り出しを行う高レベル複合コントロール（ズーム + 領域選択 + ルーペを内包）。</param>
+    /// <param name="cropView">切り出しを行う高レベル複合コントロール（ズーム + 領域選択 + ルーペを内包）。表示中の画像が切り出しの対象になる。</param>
     /// <param name="hostWindow">ホストウィンドウ。</param>
-    /// <param name="sourceImage">元画像（100%キャプチャ画像）。切り出しの論理座標系の基準とルーペ用のソース。</param>
-    /// <returns>確定時は元画像上の切り出し範囲、キャンセル時は 0x0 の空 PixelRect。</returns>
+    /// <returns>確定時は元画像上の切り出し範囲（コア型）、キャンセル時は 0x0 の空矩形。開始できなかった場合は null。</returns>
+    /// <exception cref="ArgumentException"><paramref name="cropView"/> が表示している画像のサイズが 0 の場合。</exception>
     /// <remarks>
+    /// 切り出しの対象画像は <paramref name="cropView"/> が表示している画像（<see cref="CropViewControl.Source"/>）から解決する<br/>
+    /// （画像を別引数で受け取らない。表示している画像と切り出す画像を二重所有しない）。<br/>
+    /// 画像が設定されていない場合と表示アダプタ（<c>EsBitmapAvaloniaImage</c>）以外が設定されている場合は、<br/>
+    /// 開始できなかったことを null の結果で表す（実行中の再呼び出しと同じ表現）。<br/>
+    /// 切り出しの境界（元画像の範囲）は開始時に固定せず、確定時に<b>現在の画像</b>から都度解決する<br/>
+    /// （実行中に画像が差し替わっても、差し替え後の画像の範囲で切り出せる）。<br/>
     /// プレビュー状態（ScrollOffset / ZoomPercent）は引数で受け取らない。<br/>
     /// ズーム・パン・Fit・座標変換は <paramref name="cropView"/> が内包する ZoomViewControl が単一所有する。<br/>
     /// 切出し中のホイール操作（Ctrl+ホイールのズーム・通常ホイールのパン）は <paramref name="cropView"/> が内部で完結する（上位の配線は不要）。<br/>
-    /// 実行中に同一インスタンスへ再呼び出しされた場合は null を返す。
+    /// 実行中に同一インスタンスへ再呼び出しされた場合は完了済みのタスク（結果 null）を返す。<br/>
+    /// 結果の型はコア型（<see cref="EsPixelRect"/>）とし、UI 型は境界より外へ出さない。
     /// </remarks>
-    public Task<PixelRect?> StartCropAsync(
-        CropViewControl cropView, Window hostWindow, EsBitmap sourceImage)
+    public Task<EsPixelRect?> StartCropAsync(CropViewControl cropView, Window hostWindow)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(cropView);
         ArgumentNullException.ThrowIfNull(hostWindow);
-        ArgumentNullException.ThrowIfNull(sourceImage);
-        if (_captureSession is not null || _cropSession is not null) return Task.FromResult<PixelRect?>(null); // 再入禁止
 
-        var sourceImageSize = new Size(sourceImage.Size.Width, sourceImage.Size.Height);
-        if (sourceImageSize.Width <= 0 || sourceImageSize.Height <= 0)
-            throw new ArgumentException("sourceImage のサイズが 0 です。", nameof(sourceImage));
+        // 切り出しの対象は表示中の画像（CropViewControl.Source が単一所有する）
+        if (cropView.CurrentImage() is not { } sourceImage)
+        {
+            return Task.FromResult<EsPixelRect?>(null); // 対象が無い: 開始できなかったことを null で表す
+        }
 
-        var session = new CropSession(cropView, hostWindow, sourceImage, _currentSettings, _log);
-        _cropSession = session;
-        return AwaitCropAsync(session);
+        // 「サイズが 0 の画像は切り出せない」という前提条件はコアが単一所有する
+        CaptureClipMath.ValidateImage(sourceImage, nameof(cropView));
+
+        var session = new CropSession(cropView, hostWindow, _currentSettings, _log);
+        if (!_slot.TryBeginCrop(session))
+        {
+            // 再入禁止（他のセッションが実行中）: 何も起きなかったことを null の結果で表す
+            return Task.FromResult<EsPixelRect?>(null);
+        }
+
+        return AwaitCropAsync(session, sourceImage);
     }
 
     /// <summary>Crop セッションを待機し、完了後に保持を解除する。</summary>
     /// <param name="session">実行中の Crop セッション。</param>
+    /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う）。</param>
     /// <returns>切り出し結果（キャンセル時は 0x0）。</returns>
-    private async Task<PixelRect?> AwaitCropAsync(CropSession session)
+    private async Task<EsPixelRect?> AwaitCropAsync(CropSession session, EsBitmap sourceImage)
     {
         try
         {
-            return await session.RunAsync();
+            return await session.RunAsync(sourceImage);
         }
         finally
         {
-            if (ReferenceEquals(_cropSession, session)) _cropSession = null;
+            _slot.EndCrop(session);
         }
     }
 
-    /// <summary>実行中の Crop セッションに選択矩形があるかどうか。Crop 未実行中は false。</summary>
-    /// <remarks>ホスト（上位 AP）が「確定 / キャンセル」の操作分岐に使用する（矩形あり = 確定 / なし = キャンセル）。</remarks>
-    public bool HasSelection => _cropSession?.HasSelection ?? false;
+    /// <summary>切り出し中かどうかを取得する。</summary>
+    /// <value>切り出しセッションが進行中の場合は true。</value>
+    /// <remarks>
+    /// 「実行中か」の真のソースは排他スロット（コアが単一所有する）である。<br/>
+    /// ホストが自前のフラグ（開始したタスクの有無等）で判定すると、スロットの状態と二重所有になる。
+    /// </remarks>
+    public bool IsCropping => _slot.HasCrop;
+
+    /// <summary>切り出し操作（開始・確定・キャンセル）のうち、いま行うべき操作を取得する。</summary>
+    /// <returns>実行すべき切り出し操作。</returns>
+    /// <remarks>
+    /// どの操作を行うかの判断はコア（<see cref="CropSessionActions.Resolve"/>）が単一所有する<br/>
+    /// （未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）。<br/>
+    /// ホストは戻り値を効果へ写すだけにする（UI ごとに条件を書くと片方だけ変わる）。
+    /// </remarks>
+    public CropSessionAction ResolveCropAction()
+    {
+        ThrowIfDisposed();
+        return CropSessionActions.Resolve(_slot.HasCrop, _slot.HasCropSelection(static crop => crop.HasSelection));
+    }
 
     /// <summary>進行中の操作（StartCaptureAsync / StartCropAsync）をキャンセルする。</summary>
     /// <remarks>
@@ -187,8 +221,7 @@ public sealed class CaptureSessionControl : IDisposable
     public void Cancel()
     {
         ThrowIfDisposed();
-        _captureSession?.Cancel();
-        _cropSession?.Cancel();
+        _slot.CancelAll(static s => s.Cancel(), static s => s.Cancel());
     }
 
     /// <summary>進行中の切出し（Crop）を現在の選択矩形で確定する（Enter キー相当）。</summary>
@@ -199,7 +232,7 @@ public sealed class CaptureSessionControl : IDisposable
     public void Confirm()
     {
         ThrowIfDisposed();
-        _cropSession?.Confirm();
+        _slot.Crop?.Confirm();
     }
 
     /// <summary>実行中の Crop セッションへビューポート（パン・ズーム・表示サイズ）の変化を通知する。</summary>
@@ -211,7 +244,7 @@ public sealed class CaptureSessionControl : IDisposable
     public void NotifyCropViewportChanged()
     {
         ThrowIfDisposed();
-        _cropSession?.NotifyViewportChanged();
+        _slot.Crop?.NotifyViewportChanged();
     }
 
     /// <summary>リソースを解放する。</summary>
@@ -219,8 +252,7 @@ public sealed class CaptureSessionControl : IDisposable
     {
         if (_isDisposed) return;
         _isDisposed = true;
-        _captureSession?.Cancel();
-        _cropSession?.Cancel();
+        _slot.CancelAll(static s => s.Cancel(), static s => s.Cancel());
     }
 
     /// <summary>破棄済みなら例外を投げる。</summary>
@@ -228,64 +260,4 @@ public sealed class CaptureSessionControl : IDisposable
     {
         if (_isDisposed) throw new ObjectDisposedException(nameof(CaptureSessionControl));
     }
-
-    /// <summary>null のメンバーをデフォルト値で埋める（部分更新マージ）。</summary>
-    /// <param name="input">入力設定。null メンバーは <paramref name="current"/> の値またはデフォルト値が使用される。</param>
-    /// <param name="current">現在の設定（部分更新の維持元）。null の場合はデフォルト値のみ。</param>
-    /// <returns>全メンバー non-null の設定。</returns>
-    private static CaptureSettings MergeWithDefaults(CaptureSettings? input, CaptureSettings? current = null)
-    {
-        var def = new CaptureSettings().ToNonNull();
-        var cur = current ?? def;
-        var i = input ?? new CaptureSettings();
-        return new CaptureSettings(
-            HideOwnerWindow: i.HideOwnerWindow ?? cur.HideOwnerWindow,
-            LoupeVisible: i.LoupeVisible ?? cur.LoupeVisible,
-            HideBeforeCaptureDelay: i.HideBeforeCaptureDelay ?? cur.HideBeforeCaptureDelay,
-            MinSelectionSize: i.MinSelectionSize ?? cur.MinSelectionSize,
-            BorderColor: i.BorderColor ?? cur.BorderColor,
-            BorderThickness: i.BorderThickness ?? cur.BorderThickness,
-            OverlayColor: i.OverlayColor ?? cur.OverlayColor,
-            HandleColor: i.HandleColor ?? cur.HandleColor,
-            HandleSize: i.HandleSize ?? cur.HandleSize,
-            HandleHitRadius: i.HandleHitRadius ?? cur.HandleHitRadius,
-            ClampToDomainBounds: i.ClampToDomainBounds ?? cur.ClampToDomainBounds,
-            MarkerColor: i.MarkerColor ?? cur.MarkerColor,
-            MarkerLength: i.MarkerLength ?? cur.MarkerLength,
-            ShowCoordLabel: i.ShowCoordLabel ?? cur.ShowCoordLabel,
-            CoordLabelColor: i.CoordLabelColor ?? cur.CoordLabelColor,
-            CoordLabelBackgroundColor: i.CoordLabelBackgroundColor ?? cur.CoordLabelBackgroundColor,
-            CoordLabelFontSize: i.CoordLabelFontSize ?? cur.CoordLabelFontSize,
-            LoupeSize: i.LoupeSize ?? cur.LoupeSize,
-            LoupeZoomLevel: i.LoupeZoomLevel ?? cur.LoupeZoomLevel,
-            LoupeOffset: i.LoupeOffset ?? cur.LoupeOffset,
-            LoupeRenderScaling: i.LoupeRenderScaling ?? cur.LoupeRenderScaling,
-            LoupeCrossColor: i.LoupeCrossColor ?? cur.LoupeCrossColor,
-            LoupeFrameColor: i.LoupeFrameColor ?? cur.LoupeFrameColor,
-            LoupeFrameThickness: i.LoupeFrameThickness ?? cur.LoupeFrameThickness,
-            LoupeCheckerSize: i.LoupeCheckerSize ?? cur.LoupeCheckerSize,
-            LoupeCheckerColorA: i.LoupeCheckerColorA ?? cur.LoupeCheckerColorA,
-            LoupeCheckerColorB: i.LoupeCheckerColorB ?? cur.LoupeCheckerColorB,
-            LoupeSelectionRectColorA: i.LoupeSelectionRectColorA ?? cur.LoupeSelectionRectColorA,
-            LoupeSelectionRectColorB: i.LoupeSelectionRectColorB ?? cur.LoupeSelectionRectColorB,
-            LoupeShowCoordLabel: i.LoupeShowCoordLabel ?? cur.LoupeShowCoordLabel,
-            LoupeCoordLabelColor: i.LoupeCoordLabelColor ?? cur.LoupeCoordLabelColor,
-            LoupeCoordLabelBackgroundColor: i.LoupeCoordLabelBackgroundColor ?? cur.LoupeCoordLabelBackgroundColor,
-            LoupeCoordLabelFontSize: i.LoupeCoordLabelFontSize ?? cur.LoupeCoordLabelFontSize,
-            SizeLabelVisible: i.SizeLabelVisible ?? cur.SizeLabelVisible,
-            SizeLabelColor: i.SizeLabelColor ?? cur.SizeLabelColor,
-            SizeLabelFontSize: i.SizeLabelFontSize ?? cur.SizeLabelFontSize,
-            SizeLabelOverride: i.SizeLabelOverride ?? cur.SizeLabelOverride,
-            TextBackgroundColor: i.TextBackgroundColor ?? cur.TextBackgroundColor,
-            InfoLabelVisible: i.InfoLabelVisible ?? cur.InfoLabelVisible,
-            InfoLabelColor: i.InfoLabelColor ?? cur.InfoLabelColor,
-            InfoLabelBackgroundColor: i.InfoLabelBackgroundColor ?? cur.InfoLabelBackgroundColor,
-            InfoLabelFontSize: i.InfoLabelFontSize ?? cur.InfoLabelFontSize,
-            ShowSubLines: i.ShowSubLines ?? cur.ShowSubLines,
-            SubLineFontSize: i.SubLineFontSize ?? cur.SubLineFontSize,
-            SubLineColor: i.SubLineColor ?? cur.SubLineColor,
-            SubLineBackgroundColor: i.SubLineBackgroundColor ?? cur.SubLineBackgroundColor,
-            DisplayScaleScaling: i.DisplayScaleScaling ?? cur.DisplayScaleScaling);
-    }
 }
-

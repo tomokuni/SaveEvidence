@@ -339,12 +339,13 @@ public class ZoomViewControlTests
     public void ZoomByWheel_移動できない場合はズーム率を維持する()
     {
         var view = CreatePannableView();
-        view.ZoomPercent = view.MaxZoom;
+        var maxZoom = Estable.ZoomView.ZoomConfig.Default.MaxZoom;
+        view.ZoomPercent = maxZoom;
 
         view.ZoomByWheel(zoomIn: true);
 
         // 上限では移動しない（Fit へも移行しない）
-        Assert.Equal(view.MaxZoom, view.ZoomPercent);
+        Assert.Equal(maxZoom, view.ZoomPercent);
         Assert.False(view.IsFit);
     }
 }

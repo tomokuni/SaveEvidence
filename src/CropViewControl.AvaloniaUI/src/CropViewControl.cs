@@ -87,7 +87,7 @@ public sealed partial class CropViewControl : Panel
         // （ビューポートは兄弟要素のため、オーバーレイが処理済みにしたイベントは届かない）。
         // 回転量から移動量への換算とズーム率の決定はビューポート（ZoomViewControl）が単一所有する。
         _selectionOverlay.ScrollRequested += (_, request) =>
-            _zoomView.PanByWheel(new Vector(request.DeltaX, request.DeltaY), request.Shift);
+            _zoomView.PanByWheel(request.Delta.ToAvaloniaVector(), request.Shift);
         _selectionOverlay.ZoomRequested += (_, request) =>
             _zoomView.ZoomByWheel(request.ZoomIn, ToViewportPosition(request.Position));
 
@@ -137,14 +137,6 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.Scaling = value;
     }
 
-    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正）。<see cref="FadeMaskDragRectControl.DisplayScaleScaling"/> へ委譲する。</summary>
-    /// <remarks>ユーザー設定ではなく、セッションがコードから動的設定する。0 以下は <see cref="Scaling"/> と同値。</remarks>
-    public double DisplayScaleScaling
-    {
-        get => _selectionOverlay.DisplayScaleScaling;
-        set => _selectionOverlay.DisplayScaleScaling = value;
-    }
-
     /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="FadeMaskDragRectControl.LoupeRenderScaling"/> へ委譲する。</summary>
     /// <remarks>ユーザー設定ではなく、ウィンドウの DPI スケーリングから自動取得する。</remarks>
     public double LoupeRenderScaling
@@ -162,10 +154,9 @@ public sealed partial class CropViewControl : Panel
     /// </remarks>
     public IImage? Source
     {
-        get => _source;
+        get => _zoomView.Source;
         set
         {
-            _source = value;
             _zoomView.Source = value;
             UpdateLoupeSource();
             // 画像が null に変わるときは選択状態をクリアする。
@@ -177,10 +168,9 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    private IImage? _source;
-
     /// <summary>ルーペの拡大元画像を <see cref="FadeMaskDragRectControl"/> へ設定する。</summary>
-    private void UpdateLoupeSource() => _selectionOverlay.SetLoupeSource(_source);
+    /// <remarks>真のソースはズームビューポートが持つため、本コントロールはフィールドへ複製せず参照する。</remarks>
+    private void UpdateLoupeSource() => _selectionOverlay.SetLoupeSource(_zoomView.Source);
 
     // ====================================================================
     // 公開 API: 外部提供矩形
@@ -196,9 +186,10 @@ public sealed partial class CropViewControl : Panel
         get => _rects;
         set
         {
+            ArgumentNullException.ThrowIfNull(value);
+
             _rects = value;
             UpdateRectOverlay();
-            RaiseRectOverlayChanged();
         }
     }
 
@@ -228,24 +219,6 @@ public sealed partial class CropViewControl : Panel
     /// <summary>Fit 表示（ウィンドウに合わせて画像を表示）に戻す。</summary>
     /// <remarks><see cref="ZoomViewControl.ZoomFit"/> へ委譲する（ズーム率の単一所有）。<see cref="ZoomIn"/> / <see cref="ZoomOut"/> と対になるズーム操作。</remarks>
     public void ZoomFit() => _zoomView.ZoomFit();
-
-    /// <summary>現在 Fit 表示中かどうか（ズーム率が 0 = 自動）。</summary>
-    /// <value>Fit 表示中なら true。</value>
-    /// <remarks><see cref="ZoomViewControl.IsFit"/> へ委譲する。ホストは内部 <c>Image.Stretch</c> に依存せず Fit 状態を判定できる。</remarks>
-    public bool IsFit => _zoomView.IsFit;
-
-    /// <summary>内包するズーム・パンビューポート（CaptureSessionControl の Crop セッションが座標変換・Fit 状態を利用する）。</summary>
-    /// <remarks>
-    /// <see cref="ZoomViewControl"/> を公開する（<c>StartCropAsync</c> の引数として利用するため）。<br/>
-    /// ズーム操作（<see cref="ZoomPercent"/> / <see cref="ZoomIn"/> / <see cref="ZoomOut"/> / <see cref="ZoomFit"/>）は本コントロールの公開 API へ委譲済みで、
-    /// 通常のホストは <see cref="ZoomView"/> を直接参照する必要はない。<br/>
-    /// CaptureSessionControl の Crop セッション（<see cref="ZoomView"/> の <see cref="ZoomViewControl.IsFit"/> 等）が利用する。
-    /// </remarks>
-    public ZoomViewControl ZoomView => _zoomView;
-
-    // ====================================================================
-    // 公開 API: ズーム（ZoomViewControl へ委譲）
-    // ====================================================================
 
     /// <summary>ズーム率が変更されたときに発火するイベント（<see cref="ZoomViewControl.ZoomChanged"/> へ委譲）。</summary>
     public event EventHandler<ZoomChangedEventArgs>? ZoomChanged
@@ -295,6 +268,10 @@ public sealed partial class CropViewControl : Panel
     /// <summary>領域選択オーバーレイ（テスト用アクセサ。画像なし時のドラッグ無効化の検証用）。</summary>
     internal FadeMaskDragRectControl SelectionOverlay => _selectionOverlay;
 
+    /// <summary>矩形オーバーレイの子要素（テスト用アクセサ。コア確定値の写像を検証する）。</summary>
+    /// <value>矩形 1 件につき 1 つの Panel（破線の場合は背景の下層と前景の上層を含む）。</value>
+    internal IReadOnlyList<Control> RectOverlayChildren => [.. _rectOverlay.Children];
+
     /// <summary>現在の選択状態（選択矩形の有無）。</summary>
     public bool HasSelection => _selectionOverlay.HasSelection;
 
@@ -328,11 +305,6 @@ public sealed partial class CropViewControl : Panel
     /// <summary>座標変換ポートを設定する（内包コントロールへ分配）。</summary>
     /// <param name="port">座標変換ポート。null で等価変換。</param>
     public void SetCoordinateTransform(ICoordTransform? port) => _selectionOverlay.SetCoordinateTransform(port);
-
-    /// <summary>祖先 ScrollViewer を内包 Marquee へ明示注入する（スクロール・ズーム検知 + ホイール操作。Crop 用）。</summary>
-    /// <param name="scrollViewer">連携する ScrollViewer。null で連携解除。</param>
-    /// <remarks><see cref="FadeMaskDragRectControl.AttachScrollViewer"/> へ委譲する。</remarks>
-    public void AttachScrollViewer(ScrollViewer? scrollViewer) => _selectionOverlay.AttachScrollViewer(scrollViewer);
 
     /// <summary>内包 Marquee へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
     /// <remarks><see cref="FadeMaskDragRectControl.FocusMarquee"/> へ委譲する。</remarks>
@@ -396,8 +368,9 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>矩形オーバーレイを再描画する。</summary>
     /// <remarks>
-    /// <see cref="Rects"/> の各矩形を <see cref="ContentToViewport"/>（画像表示矩形の原点基準）でビューポート座標へ変換し、<br/>
-    /// <see cref="_rectOverlay"/>（Canvas）へ <c>Rectangle</c> を配置する。
+    /// <see cref="Rects"/> の各矩形の左上・右下を <see cref="ContentToViewport"/>（画像表示矩形の原点基準）でビューポート座標へ変換し、<br/>
+    /// コア（<see cref="OverlayRectLayout.Resolve"/>）が<b>確定した描画入力</b>を図形要素へ写す。<br/>
+    /// クランプ・太さ補正・破線の判定はコアが単一所有する（本メソッドは式と判断を持たない）。
     /// </remarks>
     private void UpdateRectOverlay()
     {
@@ -412,10 +385,11 @@ public sealed partial class CropViewControl : Panel
             var topLeft = ContentToViewport(new Point(rect.Bounds.X, rect.Bounds.Y));
             var bottomRight = ContentToViewport(new Point(rect.Bounds.Right, rect.Bounds.Bottom));
 
-            var rectElement = CreateRectElement(topLeft, bottomRight, rect);
+            var frame = OverlayRectLayout.Resolve(rect, topLeft.ToEsPoint(), bottomRight.ToEsPoint());
+            var rectElement = CreateRectElement(frame);
 
-            Canvas.SetLeft(rectElement, topLeft.X);
-            Canvas.SetTop(rectElement, topLeft.Y);
+            Canvas.SetLeft(rectElement, frame.Bounds.X);
+            Canvas.SetTop(rectElement, frame.Bounds.Y);
             _rectOverlay.Children.Add(rectElement);
         }
     }
@@ -444,64 +418,46 @@ public sealed partial class CropViewControl : Panel
     // 矩形オーバーレイ作成（破線スタイル・色・幅）
     // ====================================================================
 
-    /// <summary>オーバーレイ矩形の表示要素（Rectangle）を作成する。</summary>
-    /// <param name="topLeft">左上（ビューポート座標）。</param>
-    /// <param name="bottomRight">右下（ビューポート座標）。</param>
-    /// <param name="rect">矩形情報（ドメイン座標・スタイル・色・幅）。</param>
-    /// <returns>作成した Panel（背景色の下層 + 前景色の上層を重ねた要素）。</returns>
+    /// <summary>コアが確定した描画入力からオーバーレイ矩形の表示要素を作成する。</summary>
+    /// <param name="frame">描画入力（コアが確定した配置・太さ・破線の判定と長さ・色）。</param>
+    /// <returns>作成した Panel（破線の場合は背景色の下層 + 前景色の上層を重ねた要素）。</returns>
     /// <remarks>
     /// 破線（<see cref="OverlayLineStyle.Dashed"/> / <see cref="OverlayLineStyle.Dotted"/>）の場合は
     /// 前景色と背景色をダッシュごとに交互に塗る（市松風）。Avalonia の <c>StrokeDashArray</c> は
     /// 単色しか表現できないため、前景色で破線を描き、背景色を下層の別矩形で表現する。<br/>
-    /// ダッシュ長は <see cref="OverlayLineDash"/>（コア）を単一所有元とする（ルーペのラスタ描画と共有）。
+    /// 幅・高さ・太さ・ダッシュ長・描画可否はコア（<see cref="OverlayRectFrame"/>）が確定した値を使う（本メソッドは式を持たない）。
     /// </remarks>
-    private static Panel CreateRectElement(Point topLeft, Point bottomRight, OverlayRect rect)
+    private static Panel CreateRectElement(OverlayRectFrame frame)
     {
-        var isDashed = OverlayLineDash.IsDashed(rect.Style);
-        var (dashLength, gapLength) = OverlayLineDash.Get(rect.Style);
-        var dashArray = new AvaloniaList<double>([dashLength, gapLength]);
-
-        var foreground = new SolidColorBrush(rect.Foreground.ToAvaloniaColor());
-        var background = new SolidColorBrush(rect.Background.ToAvaloniaColor());
-
-        var recWidth = Math.Max(0, bottomRight.X - topLeft.X);
-        var recHeight = Math.Max(0, bottomRight.Y - topLeft.Y);
+        var bounds = frame.Bounds;
 
         // 背景色を下層に、前景色（破線）を上層に重ねる（破線の市松風）。実線は前景色のみ。
         var backgroundElement = new Rectangle
         {
-            Width = recWidth,
-            Height = recHeight,
-            Fill = isDashed ? background : null,
+            Width = bounds.Width,
+            Height = bounds.Height,
+            Fill = frame.DrawsBackground ? new SolidColorBrush(frame.Background.ToAvaloniaColor()) : null,
         };
 
         var foregroundElement = new Rectangle
         {
-            Width = recWidth,
-            Height = recHeight,
-            Stroke = foreground,
-            StrokeThickness = rect.Thickness,
-            StrokeDashArray = isDashed ? dashArray : null,
+            Width = bounds.Width,
+            Height = bounds.Height,
+            Stroke = new SolidColorBrush(frame.Foreground.ToAvaloniaColor()),
+            StrokeThickness = frame.Thickness,
+            StrokeDashArray = frame.IsDashed ? new AvaloniaList<double>([frame.DashLength, frame.GapLength]) : null,
         };
 
         // 2 要素を重ねて返す（背景 → 前景）。Canvas の子として両方を追加するため、親要素としてグルーピングする。
-        var group = new Panel();
+        var group = new Panel
+        {
+            Width = bounds.Width,
+            Height = bounds.Height,
+        };
         group.Children.Add(backgroundElement);
         group.Children.Add(foregroundElement);
-        group.Width = recWidth;
-        group.Height = recHeight;
         return group;
     }
-
-    // ====================================================================
-    // イベント（矩形オーバーレイ変化の通知）
-    // ====================================================================
-
-    /// <summary>外部提供矩形の変化を通知する（ルーペへの矩形描画用フック）。</summary>
-    public event EventHandler? RectsChanged;
-
-    /// <summary><see cref="RectsChanged"/> イベントを発火する。</summary>
-    private void RaiseRectOverlayChanged() => RectsChanged?.Invoke(this, EventArgs.Empty);
 
     // ====================================================================
     // ルーペへの矩形描画（Rendered イベント経由）
@@ -512,11 +468,12 @@ public sealed partial class CropViewControl : Panel
     /// <param name="e">描画済み Bitmap と表示情報。</param>
     /// <remarks>
     /// 外部提供矩形（<see cref="Rects"/>）を <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で<br/>
-    /// ルーペ画像ピクセル座標へ変換し、4 辺を破線（前景色 / 背景色・市松風）で描画する。
+    /// ルーペ画像ピクセル座標へ変換し、4 辺を破線（前景色 / 背景色・市松風）で描画する。<br/>
+    /// 描画範囲の判定は <see cref="OverlayRectRasterizer"/> が行うため、矩形が空でも分岐を持たない。
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {
-        if (Rects.Count == 0 || e.CaptureTopLeft is not { } topLeft)
+        if (e.CaptureTopLeft is not { } topLeft)
         {
             return;
         }

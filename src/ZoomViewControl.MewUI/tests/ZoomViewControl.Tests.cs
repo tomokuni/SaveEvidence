@@ -1,15 +1,18 @@
 using Aprillz.MewUI;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Estable.ZoomView;
 using SkiaSharp;
 using Xunit;
 
 namespace Estable.MewUI.ZoomView.Tests;
 
-/// <summary><see cref="ZoomViewControl"/> のズーム・パン・座標変換のテスト。</summary>
+/// <summary><see cref="ZoomViewControl"/>（MewUI）のテスト。</summary>
 /// <remarks>
-/// MewUI の要素生成とレイアウト（<c>Measure</c> / <c>Arrange</c>）はホスト登録を必要としないため、<br/>
-/// UI を表示せずに検証できる。描画結果の検証は <see cref="ZoomSkiaRendererTests"/> が担う。
+/// 判断・値・計算はコア（<see cref="ZoomViewSession"/>。Core.Tests が全網羅する）が単一所有するため、<br/>
+/// 本テストは <b>UI 層の責務（入力の反映・通知の転送・描画内容）</b>のみを検証する。<br/>
+/// MewUI の要素生成とレイアウト（<c>Measure</c> / <c>Arrange</c>）はホスト登録を必要としないため、UI を表示せずに検証できる。<br/>
+/// 描画結果の検証は <c>ZoomSkiaRenderer.Tests.cs</c> が担う。
 /// </remarks>
 public class ZoomViewControlTests
 {
@@ -28,16 +31,21 @@ public class ZoomViewControlTests
     /// <summary>画像を設定したコントロールを生成する（Fit 表示で開始する）。</summary>
     /// <param name="imageWidth">画像の幅（ピクセル）。</param>
     /// <param name="imageHeight">画像の高さ（ピクセル）。</param>
-    /// <param name="viewportSize">ビューポートの一辺（DIP）。</param>
+    /// <param name="viewportWidth">ビューポートの幅（DIP）。</param>
+    /// <param name="viewportHeight">ビューポートの高さ（DIP）。</param>
     /// <returns>コントロールと画像（画像の破棄は呼び出し側）。</returns>
-    private static (ZoomViewControl Control, EsUtil.Platform.Core.Imaging.EsBitmap Image) CreateWithImage(
-        int imageWidth = 100, int imageHeight = 100, double viewportSize = 200)
+    private static (ZoomViewControl Control, EsBitmap Image) CreateWithImage(
+        int imageWidth = 100, int imageHeight = 100, double viewportWidth = 200, double viewportHeight = 200)
     {
         var image = TestHelper.CreateBitmap(imageWidth, imageHeight, SKColors.Red);
-        var control = CreateLaidOut(viewportSize, viewportSize);
+        var control = CreateLaidOut(viewportWidth, viewportHeight);
         control.Source = image;
         return (control, image);
     }
+
+    // ====================================================================
+    // 既定値・画像設定
+    // ====================================================================
 
     /// <summary>既定値が想定どおりであることを検証する。</summary>
     [Fact]
@@ -45,531 +53,300 @@ public class ZoomViewControlTests
     {
         var control = new ZoomViewControl();
 
-        Assert.Null(control.Source);
+        // 画像なし: Fit・実効ズーム率はフォールバック（100%）・可否は何れも不可
         Assert.True(control.IsFit);
-        Assert.True(control.CenterAlign);
-        Assert.Equal(1.0, control.RenderScaling);
-        Assert.Equal(default, control.Offset);
+        Assert.Equal(100.0, control.ZoomPercent, 6);
         Assert.False(control.CanZoomIn);
         Assert.False(control.CanZoomOut);
-        // スクロールバー（オーバーレイ）の既定
-        Assert.True(control.ShowScrollBars);
-        Assert.Equal(ThemeMetrics.Default.ScrollBarThickness, control.ScrollBarThickness);
-        // ウィンドウのリサイズ判定領域（端から 6 DIP）へ掛からない余白を空ける
-        Assert.True(control.ScrollBarMargin > 6.0, $"余白が小さすぎる: {control.ScrollBarMargin}");
-        Assert.Equal(160, control.ScrollBarColor.Alpha);
-        Assert.Equal(40, control.ScrollBarTrackColor.Alpha);
+        Assert.Equal(0, control.Appearance.CheckerSize); // 市松模様なしが既定
+        Assert.True(control.Appearance.ShowScrollBars);
     }
 
-    /// <summary>スクロールバーの表示設定と外観を変更できることを検証する。</summary>
+    /// <summary>画像を設定すると Fit 表示になることを検証する。</summary>
     [Fact]
-    public void スクロールバーの設定を変更できる()
-    {
-        var control = new ZoomViewControl
-        {
-            ShowScrollBars = false,
-            ScrollBarThickness = 12.0,
-            ScrollBarMargin = 6.0,
-            ScrollBarColor = SKColors.Red,
-            ScrollBarTrackColor = SKColors.Blue,
-        };
-
-        Assert.False(control.ShowScrollBars);
-        Assert.Equal(12.0, control.ScrollBarThickness);
-        Assert.Equal(6.0, control.ScrollBarMargin);
-        Assert.Equal(SKColors.Red, control.ScrollBarColor);
-        Assert.Equal(SKColors.Blue, control.ScrollBarTrackColor);
-    }
-
-    /// <summary>画像を設定すると Fit 表示へリセットされることを検証する。</summary>
-    [Fact]
-    public void 画像を設定するとFit表示へリセットする()
+    public void 画像設定でFit表示になる()
     {
         var (control, image) = CreateWithImage();
-        using (image)
-        {
-            // 固定倍率へ移動してから画像を差し替える
-            control.ZoomPercent = 200;
-            Assert.False(control.IsFit);
+        using var _ = image;
 
-            using var other = TestHelper.CreateBitmap(50, 50, SKColors.Blue);
-            control.Source = other;
-
-            Assert.True(control.IsFit);
-            Assert.Equal(default, control.Offset);
-        }
+        Assert.True(control.IsFit);
+        // 100x100 の画像を 200x200 のビューポートへ Fit → 200%
+        Assert.Equal(200.0, control.ZoomPercent, 3);
     }
 
-    /// <summary>画像未設定では何も表示しない（表示矩形が空）ことを検証する。</summary>
+    /// <summary>実効ズーム率の設定値が設定範囲へクランプされることを検証する。</summary>
     [Fact]
-    public void 画像未設定なら表示矩形が空になる()
+    public void ZoomPercent_設定範囲へクランプする()
     {
-        var control = CreateLaidOut();
-
-        Assert.Equal(default, control.ImageRectViewport());
-        Assert.Equal(default, control.DisplaySize());
-    }
-
-    /// <summary>Fit 表示では表示矩形がビューポートに収まることを検証する。</summary>
-    [Fact]
-    public void Fit表示では表示矩形がビューポートに収まる()
-    {
-        // 100x100 の画像、200x200 のビューポート → Fit = 200%
         var (control, image) = CreateWithImage();
-        using (image)
-        {
-            var rect = control.ImageRectViewport();
+        using var _ = image;
 
-            Assert.True(control.IsFit);
-            Assert.Equal(200, control.ZoomPercent, 3);
-            Assert.Equal(0, rect.X, 3);
-            Assert.Equal(0, rect.Y, 3);
-            Assert.Equal(200, rect.Width, 3);
-            Assert.Equal(200, rect.Height, 3);
-        }
+        control.ZoomPercent = 100000;
+
+        Assert.Equal(ZoomConfig.Default.MaxZoom, control.ZoomPercent, 3);
     }
 
-    /// <summary>Fit 表示ではズームアウトできないことを検証する（Fit が最小相当のとき）。</summary>
+    /// <summary>0 以下の設定は受け付けない（Fit は <see cref="ZoomViewControl.ZoomFit"/> を使用する）ことを検証する。</summary>
     [Fact]
-    public void Fit表示ではズームアウトできない()
+    public void ZoomPercent_0以下は無視する()
     {
-        // 200x200 の画像、100x100 のビューポート → Fit = 50%（MinZoom = 10 より大きい）
-        var image = TestHelper.CreateBitmap(200, 200, SKColors.Red);
-        var control = CreateLaidOut(100, 100);
-        control.Source = image;
-        using (image)
-        {
-            // Fit = 50% はレベル 50 と一致するため、次のレベル（62）へズームインできる
-            Assert.True(control.CanZoomIn);
-            // 50% より小さいレベルは 40 があるためズームアウトできる
-            Assert.True(control.CanZoomOut);
+        var (control, image) = CreateWithImage();
+        using var _ = image;
 
-            control.ZoomOut();
-            Assert.Equal(40, control.ZoomPercent, 3);
-        }
+        control.ZoomPercent = 100;
+        control.ZoomPercent = 0;
+
+        Assert.False(control.IsFit);
+        Assert.Equal(100.0, control.ZoomPercent, 3);
     }
+
+    // ====================================================================
+    // ズーム操作と通知
+    // ====================================================================
 
     /// <summary>ズームイン・アウトが段階レベルへ移動することを検証する。</summary>
     [Fact]
-    public void ズームインとアウトが段階レベルへ移動する()
+    public void ZoomIn_ZoomOut_段階レベルへ移動する()
     {
-        var (control, image) = CreateWithImage(200, 200, 100);
-        using (image)
-        {
-            // Fit = 50% から開始する
-            control.ZoomIn();
-            Assert.Equal(62, control.ZoomPercent, 3);
+        // 200x200 の画像を 100x100 のビューポートへ Fit → 50%
+        var (control, image) = CreateWithImage(200, 200, 100, 100);
+        using var _ = image;
 
-            control.ZoomOut();
-            Assert.Equal(50, control.ZoomPercent, 3);
-        }
+        Assert.Equal(50.0, control.ZoomPercent, 3);
+
+        control.ZoomIn();
+        Assert.Equal(62.0, control.ZoomPercent, 3);
+
+        control.ZoomOut();
+        Assert.Equal(50.0, control.ZoomPercent, 3);
     }
 
-    /// <summary>ズーム率の setter が 0 以下を無視することを検証する。</summary>
-    /// <param name="value">設定する値。</param>
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-10)]
-    public void ZoomPercentは0以下を受け付けない(double value)
-    {
-        var (control, image) = CreateWithImage();
-        using (image)
-        {
-            control.ZoomPercent = value;
-
-            Assert.True(control.IsFit);
-        }
-    }
-
-    /// <summary>ズーム率の setter が設定範囲へクランプされることを検証する。</summary>
+    /// <summary>ズーム操作が <c>ZoomChanged</c> を発火し、4 値が通知されることを検証する。</summary>
     [Fact]
-    public void ZoomPercentは設定範囲へクランプする()
+    public void ZoomIn_ZoomChangedを発火する()
     {
-        var (control, image) = CreateWithImage();
-        using (image)
-        {
-            control.ZoomPercent = 10_000;
-            Assert.Equal(ZoomConfig.Default.MaxZoom, control.ZoomPercent, 3);
+        var (control, image) = CreateWithImage(200, 200, 100, 100);
+        using var _ = image;
 
-            control.ZoomFit();
-            Assert.True(control.IsFit);
-        }
+        ZoomChangedEventArgs? captured = null;
+        control.ZoomChanged += (_, e) => captured = e;
+
+        control.ZoomIn();
+
+        Assert.NotNull(captured);
+        Assert.Equal(62.0, captured.ZoomPercent, 3);
+        Assert.False(captured.IsFit);
+        Assert.True(captured.CanZoomIn);
+        Assert.True(captured.CanZoomOut);
     }
 
-    /// <summary>ズーム率の変更がズーム可否とイベントへ反映されることを検証する。</summary>
+    /// <summary>ズーム操作のログが実効ズーム率（Fit 中は実効倍率）を記録することを検証する。</summary>
+    /// <remarks>
+    /// 内部ズーム率の 0 ではなく、実際に表示されている実効倍率を記録する（コアが単一所有する書式）。
+    /// </remarks>
     [Fact]
-    public void ズーム率の変更がイベントへ反映される()
+    public void ZoomIn_ログに実効ズーム率を記録する()
     {
-        var (control, image) = CreateWithImage();
-        using (image)
-        {
-            ZoomChangedEventArgs? captured = null;
-            control.ZoomChanged += (_, e) => captured = e;
+        var logger = new RecordingLogger();
+        var (control, image) = CreateWithImage(200, 200, 100, 100);
+        using var _ = image;
+        control.Log = logger;
 
-            control.ZoomPercent = 100;
+        control.ZoomIn();
 
-            Assert.NotNull(captured);
-            Assert.Equal(100, captured.ZoomPercent, 3);
-            Assert.False(captured.IsFit);
-            Assert.True(captured.CanZoomIn);
-            Assert.True(captured.CanZoomOut);
-        }
+        Assert.Equal("[ZoomIn] 50% -> 62%", Assert.Single(logger.Messages));
     }
 
     /// <summary>Fit へ戻すとオフセットがリセットされることを検証する。</summary>
     [Fact]
-    public void ZoomFitでFit表示へ戻る()
+    public void ZoomFit_オフセットをリセットする()
     {
-        var (control, image) = CreateWithImage(400, 400, 100);
-        using (image)
-        {
-            control.ZoomPercent = 100;
-            control.SetOffset(new EsVector(100, 100));
-            Assert.NotEqual(default, control.Offset);
+        var (control, image) = CreateWithImage(400, 400, 200, 200);
+        using var _ = image;
 
-            control.ZoomFit();
+        control.ZoomPercent = 200;
+        control.PanByWheel(new EsVector(0, 1), shift: false);
+        Assert.True(control.ImageRectViewport().Y < 0); // パンで画像が上へ移動している
 
-            Assert.True(control.IsFit);
-            Assert.Equal(default, control.Offset);
-        }
-    }
+        control.ZoomFit();
 
-    /// <summary>オフセットがスクロール範囲へクランプされることを検証する。</summary>
-    [Fact]
-    public void オフセットがスクロール範囲へクランプされる()
-    {
-        // 400x400 の画像を 100% で表示、ビューポート 200x200 → 最大オフセットは 200
-        var (control, image) = CreateWithImage(400, 400, 200);
-        using (image)
-        {
-            control.ZoomPercent = 100;
-            control.SetOffset(new EsVector(1000, 1000));
-
-            Assert.Equal(200, control.Offset.X, 3);
-            Assert.Equal(200, control.Offset.Y, 3);
-
-            control.SetOffset(new EsVector(-50, -50));
-
-            Assert.Equal(0, control.Offset.X, 3);
-            Assert.Equal(0, control.Offset.Y, 3);
-        }
-    }
-
-    /// <summary>Fit 表示中はオフセットが原点に固定されることを検証する。</summary>
-    [Fact]
-    public void Fit表示中はオフセットが原点に固定される()
-    {
-        var (control, image) = CreateWithImage(400, 400, 100);
-        using (image)
-        {
-            control.SetOffset(new EsVector(100, 100));
-
-            Assert.True(control.IsFit);
-            Assert.Equal(default, control.Offset);
-        }
-    }
-
-    /// <summary>パンがオフセットへ加算されることを検証する。</summary>
-    [Fact]
-    public void PanByでオフセットが加算される()
-    {
-        var (control, image) = CreateWithImage(400, 400, 200);
-        using (image)
-        {
-            control.ZoomPercent = 100;
-            control.PanBy(new EsVector(30, 40));
-
-            Assert.Equal(30, control.Offset.X, 3);
-            Assert.Equal(40, control.Offset.Y, 3);
-        }
-    }
-
-    /// <summary>画像表示矩形を基準とした座標変換が往復することを検証する。</summary>
-    [Fact]
-    public void 画像基準の座標変換が往復する()
-    {
-        var (control, image) = CreateWithImage(100, 100, 200);
-        using (image)
-        {
-            // Fit = 200%。表示矩形の原点 (0,0)、スケール 2。
-            var content = new EsPoint(25, 30);
-            var viewport = control.ContentToViewportImage(content);
-            var roundTrip = control.ViewportToContentImage(viewport);
-
-            Assert.Equal(50, viewport.X, 3);
-            Assert.Equal(60, viewport.Y, 3);
-            Assert.Equal(content.X, roundTrip.X, 3);
-            Assert.Equal(content.Y, roundTrip.Y, 3);
-        }
-    }
-
-    /// <summary>中央寄せの原点補正が座標変換へ反映されることを検証する。</summary>
-    [Fact]
-    public void 中央寄せの原点補正が座標変換へ反映される()
-    {
-        // 50x50 の画像、100x100 のビューポート → Fit = 200%、中央寄せ原点 (0, 0)
-        // 画像 50x50 は Fit で 100x100 になるため原点は 0
-        var (control, image) = CreateWithImage(50, 50, 100);
-        using (image)
-        {
-            var origin = control.ImageRectViewport();
-
-            Assert.Equal(0, origin.X, 3);
-            Assert.Equal(0, origin.Y, 3);
-            Assert.Equal(100, origin.Width, 3);
-            Assert.Equal(100, origin.Height, 3);
-        }
-    }
-
-    /// <summary>ズーム中心を指定するとそのコンテンツ座標が維持されることを検証する。</summary>
-    [Fact]
-    public void ズーム中心を指定すると中心のコンテンツ座標が維持される()
-    {
-        // 400x400 の画像を 100%（表示 400x400、ビューポート 200x200）で表示
-        var (control, image) = CreateWithImage(400, 400, 200);
-        using (image)
-        {
-            control.ZoomPercent = 100;
-            control.SetOffset(new EsVector(100, 100));
-
-            var center = new EsPoint(100, 100);
-            var before = control.ViewportToContent(center);
-
-            // 中心 (100,100) を維持したまま 200% へズームする
-            control.SetZoom(200, center);
-
-            var after = control.ViewportToContent(center);
-            Assert.Equal(before.X, after.X, 3);
-            Assert.Equal(before.Y, after.Y, 3);
-        }
-    }
-
-    /// <summary>DPI 変更でスケーリング係数が追従することを検証する。</summary>
-    [Fact]
-    public void DPI変更でスケーリング係数が追従する()
-    {
-        var control = new ZoomViewControl();
-        var initial = control.RenderScaling;
-
-        Assert.True(initial > 0);
-    }
-
-    /// <summary>要求サイズが空（親の残余を埋める）であることを検証する。</summary>
-    [Fact]
-    public void 要求サイズが空になる()
-    {
-        var control = new ZoomViewControl();
-
-        control.Measure(new Size(500, 400));
-
-        Assert.Equal(0, control.DesiredSize.Width);
-        Assert.Equal(0, control.DesiredSize.Height);
+        Assert.True(control.IsFit);
+        // Fit では画像（400x400）がビューポート（200x200）へ収まり、原点は 0 に戻る
+        Assert.Equal(0.0, control.ImageRectViewport().Y, 3);
     }
 
     // ====================================================================
-    // ログ
+    // パン
     // ====================================================================
 
-    /// <summary>ログの既定が NullLogger で、ズーム操作が例外にならないことを検証する。</summary>
+    /// <summary>通常ホイールが 1 ノッチ = 48 DIP を実効倍率で除した量だけパンすることを検証する。</summary>
     [Fact]
-    public void Log_既定はNullLoggerでズーム操作が例外にならない()
+    public void PanByWheel_1ノッチは48DIPを実効倍率で除す()
     {
-        var (control, image) = CreateWithImage(200, 200, 100);
-        using (image)
-        {
-            control.ZoomIn();
-            control.ZoomOut();
-        }
-    }
-
-    /// <summary><c>null</c> を設定すると NullLogger へフォールバックすることを検証する。</summary>
-    [Fact]
-    public void Log_null設定はNullLoggerへフォールバックする()
-    {
-        var (control, image) = CreateWithImage(200, 200, 100);
-        using (image)
-        {
-            control.Log = null!;
-
-            control.ZoomIn();
-        }
-    }
-
-    /// <summary>ズームイン・アウトの前後のズーム率が出力されることを検証する。</summary>
-    [Fact]
-    public void Log_ズーム操作の前後のズーム率を出力する()
-    {
-        var (control, image) = CreateWithImage(200, 200, 100);
-        using (image)
-        {
-            var logger = new RecordingLogger();
-            control.Log = logger;
-
-            // Fit = 50% から段階レベル（62%）へ移動する
-            control.ZoomIn();
-
-            Assert.Equal("[ZoomIn] 50% -> 62%", Assert.Single(logger.Messages));
-        }
-    }
-
-    /// <summary>移動できない場合はログを出力しないことを検証する。</summary>
-    [Fact]
-    public void Log_移動できない場合は出力しない()
-    {
-        var (control, image) = CreateWithImage(200, 200, 100);
-        using (image)
-        {
-            // 上限まで移動してから、それ以上ズームインできない状態を作る
-            control.ZoomPercent = ZoomConfig.Default.MaxZoom;
-            Assert.False(control.CanZoomIn);
-
-            var logger = new RecordingLogger();
-            control.Log = logger;
-            control.ZoomIn();
-
-            Assert.Empty(logger.Messages);
-        }
-    }
-
-    // ====================================================================
-    // ホイール操作の公開 API（オーバーレイからの転送用）
-    // ====================================================================
-
-    /// <summary>ホイール操作を検証できるコントロールを生成する（画像 1000x500・ビューポート 400x200・100% 表示）。</summary>
-    /// <returns>コントロールと画像（画像の破棄は呼び出し側）。</returns>
-    private static (ZoomViewControl Control, EsUtil.Platform.Core.Imaging.EsBitmap Image) CreatePannableView()
-    {
-        var image = TestHelper.CreateBitmap(1000, 500, SKColors.Red);
-        var control = CreateLaidOut(400, 200);
-        control.Source = image;
+        var (control, image) = CreateWithImage(400, 400, 200, 200);
+        using var _ = image;
         control.ZoomPercent = 100;
-        return (control, image);
+
+        var before = control.ImageRectViewport();
+        control.PanByWheel(new EsVector(0, 1), shift: false);
+
+        // 実効倍率 1.0 のため 48 コンテンツ座標ぶん移動する（画像は上へ）
+        Assert.Equal(before.Y - 48.0, control.ImageRectViewport().Y, 3);
     }
 
+    /// <summary>Shift 併用のホイールが縦回転を横パンとして扱うことを検証する。</summary>
     [Fact]
-    public void PanByWheel_縦の回転量で表示位置を移動する()
+    public void PanByWheel_Shift併用は横パンになる()
     {
-        var (control, image) = CreatePannableView();
-        using (image)
-        {
-            var before = control.ImageRectViewport();
+        var (control, image) = CreateWithImage(400, 400, 200, 200);
+        using var _ = image;
+        control.ZoomPercent = 100;
 
-            // 1 ノッチ = 48 DIP。実効倍率 1.0 のため表示位置が 48 上へ移動する
-            control.PanByWheel(new EsVector(0, 1), shift: false);
+        var before = control.ImageRectViewport();
+        control.PanByWheel(new EsVector(0, 1), shift: true);
 
-            var after = control.ImageRectViewport();
-            Assert.Equal(before.Y - 48.0, after.Y);
-            Assert.Equal(before.X, after.X);
-        }
+        Assert.Equal(before.X - 48.0, control.ImageRectViewport().X, 3);
+        Assert.Equal(before.Y, control.ImageRectViewport().Y, 3);
     }
 
+    /// <summary>Fit 表示中はパンしても移動しないことを検証する。</summary>
     [Fact]
-    public void PanByWheel_ズーム中は実効倍率で換算する()
+    public void PanByWheel_Fit中は移動しない()
     {
-        var (control, image) = CreatePannableView();
-        using (image)
-        {
-            control.ZoomPercent = 200;
-            var before = control.ImageRectViewport();
+        var (control, image) = CreateWithImage(400, 400, 200, 200);
+        using var _ = image;
 
-            // 実効倍率 2.0 のため 48 DIP ÷ 2 = 24 コンテンツ座標＝画面では 48 DIP 上へ移動する
-            control.PanByWheel(new EsVector(0, 1), shift: false);
+        var before = control.ImageRectViewport();
+        control.PanByWheel(new EsVector(0, 1), shift: false);
 
-            var after = control.ImageRectViewport();
-            Assert.Equal(before.Y - 48.0, after.Y);
-        }
+        Assert.Equal(before, control.ImageRectViewport());
     }
 
+    /// <summary>パンが <c>ViewportChanged</c> を発火することを検証する。</summary>
     [Fact]
-    public void PanByWheel_Shift併用は横へ移動する()
+    public void PanByWheel_ViewportChangedを発火する()
     {
-        var (control, image) = CreatePannableView();
-        using (image)
-        {
-            var before = control.ImageRectViewport();
+        var (control, image) = CreateWithImage(400, 400, 200, 200);
+        using var _ = image;
+        control.ZoomPercent = 100;
 
-            control.PanByWheel(new EsVector(0, 1), shift: true);
+        var count = 0;
+        control.ViewportChanged += (_, _) => count++;
 
-            var after = control.ImageRectViewport();
-            Assert.Equal(before.X - 48.0, after.X);
-            Assert.Equal(before.Y, after.Y);
-        }
+        control.PanByWheel(new EsVector(0, 1), shift: false);
+
+        Assert.True(count > 0);
     }
 
-    [Fact]
-    public void ZoomByWheel_ズームインはWheelFactor倍へ移動する()
-    {
-        var (control, image) = CreatePannableView();
-        using (image)
-        {
-            control.ZoomByWheel(zoomIn: true);
+    // ====================================================================
+    // 表示値・座標変換（コアの値の委譲）
+    // ====================================================================
 
-            // 100% × WheelFactor（1.1）= 110%
-            Assert.Equal(110, control.ZoomPercent);
-        }
+    /// <summary>Fit の表示サイズがビューポートへ収まることを検証する。</summary>
+    [Fact]
+    public void DisplaySize_Fitでビューポートに収まる()
+    {
+        var (control, image) = CreateWithImage(400, 200, 200, 200);
+        using var _ = image;
+
+        var size = control.DisplaySize();
+
+        Assert.True(size.Width <= 200, $"幅: {size.Width}");
+        Assert.True(size.Height <= 200, $"高さ: {size.Height}");
     }
 
+    /// <summary>座標変換（画像表示矩形の原点基準）が往復することを検証する。</summary>
     [Fact]
-    public void ZoomByWheel_ズームアウトはWheelFactor分の1へ移動する()
+    public void 座標変換が往復する()
     {
-        var (control, image) = CreatePannableView();
-        using (image)
-        {
-            control.ZoomByWheel(zoomIn: false);
+        var (control, image) = CreateWithImage(100, 100, 200, 200);
+        using var _ = image;
 
-            // 100% ÷ WheelFactor（1.1）→ 四捨五入して 91%
-            Assert.Equal(91, control.ZoomPercent);
-        }
+        var viewport = control.ContentToViewportImage(new EsPoint(25, 30));
+        var content = control.ViewportToContentImage(viewport);
+
+        Assert.Equal(25.0, content.X, 3);
+        Assert.Equal(30.0, content.Y, 3);
     }
 
+    /// <summary>画像未設定時の表示矩形が空であることを検証する。</summary>
     [Fact]
-    public void ZoomByWheel_指定した位置をズーム中心にする()
+    public void ImageRectViewport_画像なしは空になる()
     {
-        var (control, image) = CreatePannableView();
-        using (image)
-        {
-            // ビューポート座標 (0, 0) をズーム中心にする（原点が固定され、表示矩形の原点は動かない）
-            control.ZoomByWheel(zoomIn: true, new EsPoint(0, 0));
+        var control = CreateLaidOut();
 
-            var after = control.ImageRectViewport();
-            Assert.Equal(110, control.ZoomPercent);
-            Assert.Equal(0.0, after.X, 6);
-            Assert.Equal(0.0, after.Y, 6);
-        }
+        var rect = control.ImageRectViewport();
+
+        Assert.Equal(0, rect.Width);
+        Assert.Equal(0, rect.Height);
     }
 
+    // ====================================================================
+    // 外観（コアの ZoomViewAppearance を渡す窓口）
+    // ====================================================================
+
+    /// <summary>外観の設定がセッションへ反映されることを検証する。</summary>
     [Fact]
-    public void ZoomByWheel_位置を省略するとビューポート中心をズーム中心にする()
+    public void Appearance_セッションへ反映される()
     {
-        var (control, image) = CreatePannableView();
-        using (image)
-        {
-            var before = control.ImageRectViewport();
+        var control = CreateLaidOut();
+        var appearance = ZoomViewAppearance.Default with { CheckerSize = 8, ShowScrollBars = false };
 
-            control.ZoomByWheel(zoomIn: true);
+        control.Appearance = appearance;
 
-            // ビューポート中心 (200, 100) のドメイン座標が不変に保たれる
-            // （中心を固定して 1.1 倍するため、表示矩形の原点は中心から逆算した -20, -10 へ移動する）
-            var after = control.ImageRectViewport();
-            Assert.Equal(110, control.ZoomPercent);
-            Assert.Equal(before.X - 20.0, after.X, 6);
-            Assert.Equal(before.Y - 10.0, after.Y, 6);
-        }
+        Assert.Equal(8, control.Appearance.CheckerSize);
+        Assert.False(control.Appearance.ShowScrollBars);
     }
 
+    /// <summary>外観の市松模様の明色タイル矩形がコアで計算されることを検証する。</summary>
     [Fact]
-    public void ZoomByWheel_移動できない場合はズーム率を維持する()
+    public void Appearance_市松模様の明色タイルを列挙する()
     {
-        var (control, image) = CreatePannableView();
-        using (image)
-        {
-            control.ZoomPercent = ZoomConfig.Default.MaxZoom;
+        var appearance = ZoomViewAppearance.Default with { CheckerSize = 10 };
 
-            control.ZoomByWheel(zoomIn: true);
+        var tiles = appearance.ComputeLightTileRects(new EsSize(25, 25));
 
-            // 上限では移動しない（Fit へも移行しない）
-            Assert.Equal(ZoomConfig.Default.MaxZoom, control.ZoomPercent);
-            Assert.False(control.IsFit);
-        }
+        // 3x3 のタイルのうち明色は (0,0)(0,2)(1,1)(2,0)(2,2) の 5 枚
+        Assert.Equal(5, tiles.Count);
+        Assert.All(tiles, tile => Assert.Equal(10.0, tile.Width, 6));
+    }
+
+    /// <summary>市松模様を無効にすると明色タイルが空になることを検証する。</summary>
+    [Fact]
+    public void Appearance_市松模様なしは明色タイルが空になる()
+    {
+        var appearance = ZoomViewAppearance.Default with { CheckerSize = 0 };
+
+        Assert.Empty(appearance.ComputeLightTileRects(new EsSize(100, 100)));
+    }
+
+    // ====================================================================
+    // スクロールバー（コアの同期値の委譲）
+    // ====================================================================
+
+    /// <summary>画像がビューポートより大きい場合にスクロール可能として同期されることを検証する。</summary>
+    [Fact]
+    public void ScrollMetrics_拡大時はスクロール可能になる()
+    {
+        var (control, image) = CreateWithImage(400, 400, 200, 200);
+        using var _ = image;
+        control.ZoomPercent = 200;
+
+        var horizontal = control.Session.ScrollMetrics(vertical: false);
+        var vertical = control.Session.ScrollMetrics(vertical: true);
+
+        Assert.True(horizontal.IsScrollable);
+        Assert.True(vertical.IsScrollable);
+        Assert.True(horizontal.MaxOffset > 0);
+    }
+
+    /// <summary>Fit 表示ではスクロール不要（スクロールバー非表示）であることを検証する。</summary>
+    [Fact]
+    public void ScrollMetrics_Fit中はスクロール不可になる()
+    {
+        var (control, image) = CreateWithImage(400, 400, 200, 200);
+        using var _ = image;
+
+        Assert.False(control.Session.ScrollMetrics(vertical: true).IsScrollable);
     }
 }

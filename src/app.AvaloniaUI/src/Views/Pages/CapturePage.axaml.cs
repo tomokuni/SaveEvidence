@@ -7,6 +7,7 @@ using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using Estable.AvaloniaUI.CaptureSession;
 using Estable.AvaloniaUI.ZoomView;
+using Estable.CaptureSession;
 using EsUtil.Platform.Core;
 using Estable.SaveEvidence.Icons;
 using Estable.SaveEvidence.Logging;
@@ -20,8 +21,14 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Estable.AvaloniaUI.CropView;
+using Estable.CropView;
+using Estable.Marquee;
+using Estable.Marquee.Decoration;
+using Estable.ZoomView;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using DrawingColor = System.Drawing.Color;
 
 namespace Estable.SaveEvidence.Views.Pages;
 
@@ -51,7 +58,7 @@ public sealed partial class CapturePage : UserControl
     private CaptureSessionControl _captureSessionControl = null!;
 
     /// <summary>進行中の Crop セッションの Task。</summary>
-    private Task<PixelRect?>? _cropTask;
+    private Task<EsPixelRect?>? _cropTask;
 
     // Undo スタック（DI から取得するシングルトン。UndoPage と共有）
     private readonly UndoStack _undoStack = null!;
@@ -143,8 +150,11 @@ public sealed partial class CapturePage : UserControl
         SyncZoomSlider(_viewModel.ZoomPercent);
         UpdateZoomButtonState(CropView.CanZoomIn, CropView.CanZoomOut);
 
-        // マウスポインタ移動でステータスバーの座標表示（ドメイン座標）を更新する
+        // マウスポインタ移動でステータスバーの座標表示（ドメイン座標）と自動切り出しのホバーを更新する
+        // （旧実装は自動切り出し用の Canvas が入力を占有していたため、ホイールでズーム・パンができなかった）
         CropView.PointerMoved += OnImagePointerMoved;
+        CropView.PointerExited += OnImagePointerExited;
+        CropView.PointerPressed += OnImageDoubleClicked;
 
         // ビューポート（パン・ズーム・表示サイズ）の変化を Crop オーバーレイへ通知する
         // （暗転マスク・選択枠・ルーペの追従。ScrollViewer 連携の ScrollChanged に相当する中継）。
@@ -543,8 +553,15 @@ public sealed partial class CapturePage : UserControl
         try
         {
             var settings = _viewModel.Settings;
-            var checkerSize = settings.PreviewCheckerSize;
-            if (checkerSize < 1) checkerSize = 2;
+
+            // 市松模様のタイルサイズ規則（0 以下 = 描かない / 1 は下限へ切り上げ）はコアが単一所有する
+            // （旧実装は本メソッドが 0 を 2 へ読み替えており、MewUI の「0 = 描かない」と意味が食い違っていた）
+            var checkerSize = ZoomViewAppearance.ResolveCheckerTileSize(settings.PreviewCheckerSize);
+            if (checkerSize <= 0)
+            {
+                CropView.ViewportBackground = null;
+                return;
+            }
 
             // 市松模様の色は画像設定（PreviewCheckerColorA / B）から取得する（ルーペと共通）
             var lightColor = Color.Parse(settings.PreviewCheckerColorA);
@@ -685,20 +702,21 @@ public sealed partial class CapturePage : UserControl
 
     private async void OnCropButtonClick(object? sender, RoutedEventArgs e)
     {
-        if (_cropTask is null)
+        // どの操作を行うか（開始 / 確定 / キャンセル）の判断はコア（CropSessionActions）が単一所有する。
+        // ホストは返された操作を効果へ写すだけにする（同じ 3 分岐を UI に書かない）
+        switch (_captureSessionControl.ResolveCropAction())
         {
-            // 未開始 → StartCropAsync を開始
-            await StartCropSessionAsync();
-        }
-        else if (_captureSessionControl.HasSelection)
-        {
-            // 開始済み・矩形あり → 現在の選択矩形で確定
-            _captureSessionControl.Confirm();
-        }
-        else
-        {
-            // 開始済み・矩形なし → キャンセル（矩形選択前にボタンを押した場合の抜け道）
-            CancelCropSession();
+            case CropSessionAction.Start:
+                await StartCropSessionAsync();
+                break;
+            case CropSessionAction.Confirm:
+                // 開始済み・矩形あり → 現在の選択矩形で確定（既に待機しているタスクが完了する）
+                _captureSessionControl.Confirm();
+                break;
+            default:
+                // 開始済み・矩形なし → キャンセル（矩形選択前にボタンを押した場合の抜け道）
+                CancelCropSession();
+                break;
         }
     }
 
@@ -707,40 +725,37 @@ public sealed partial class CapturePage : UserControl
     /// </summary>
     /// <remarks>
     /// StartCropAsync はイベント購読 → モード開始 → 確定待機 → 後片付けを完結して行う。<br/>
-    /// 確定（Enter / ダブルクリック / Confirm）で切り出し範囲、キャンセルで 0x0 の空 PixelRect を返す。<br/>
+    /// 確定（Enter / ダブルクリック / Confirm）で切り出し範囲（コア型）、キャンセルで 0x0 の空矩形を返す。<br/>
+    /// 開始できなかった場合（他のセッションが実行中）は結果 null が即時返る（無駄な待機をしない）。
     /// </remarks>
     private async Task StartCropSessionAsync()
     {
-        var srcBmp = _viewModel.PreviewImage;
-        if (srcBmp is null) return;
-
         // 設定は MainWindow の Settings.PropertyChanged 購読で常に最新のため、ここでは同期しない
         // プレビュー状態（ScrollOffset / ZoomPercent）は CaptureSessionControl.AvaloniaUI が Marquee イベント / 表示状態から導出する
         // 切出し中のホイール操作（Ctrl+ホイールのズーム・通常ホイールのパン）は CropViewControl が内部で完結する
-        // CropSession は EsBitmap を受け取る（内部処理は EsBitmap に統一）。
-        _cropTask = _captureSessionControl.StartCropAsync(CropView, _parentWindow!, srcBmp);
-
-        if (_cropTask is null)
-        {
-            // 再入禁止などで開始できなかった場合
-            return;
-        }
-
+        // 切り出しの対象画像は表示中の画像（CropView.Source）から解決されるため、画像を別引数で渡さない
+        _cropTask = _captureSessionControl.StartCropAsync(CropView, _parentWindow!);
         UpdateCropButtonText();
 
         var result = await _cropTask;
         _cropTask = null;
         UpdateCropButtonText();
 
-        // 確定時のみ切り出しを実行（キャンセル時は 0x0 の空 PixelRect なので無視）
-        if (result is { Width: > 0, Height: > 0 } bounds)
+        // 確定時のみ切り出しを実行する（開始できなかった場合は結果 null、キャンセルは空の矩形。
+        // 空の判定はコアの契約（EsPixelRect.IsEmpty）が単一所有する）
+        if (result is { } bounds && !bounds.IsEmpty)
         {
             ExecuteCropFromBounds(bounds);
         }
     }
 
-    /// <summary>確定した切り出し範囲（論理座標）で画像を切り出す。</summary>
-    private void ExecuteCropFromBounds(PixelRect bounds)
+    /// <summary>確定した切り出し範囲（コア型の画面物理矩形）で画像を切り出す。</summary>
+    /// <param name="bounds">切り出す矩形（コア型。UI 型へ変換せずそのまま適用先へ渡す）。</param>
+    /// <remarks>
+    /// 適用先（<c>CropPreviewCommand</c>）はコア型（<see cref="EsPixelRect"/>）を要求するため、<br/>
+    /// 境界（UI 層）で変換せずコア型のまま渡す（UI 型を渡すと型が一致せず例外になる）。
+    /// </remarks>
+    private void ExecuteCropFromBounds(EsPixelRect bounds)
     {
         var srcBmp = _viewModel.PreviewImage;
         if (srcBmp is null) return;
@@ -752,7 +767,8 @@ public sealed partial class CapturePage : UserControl
 
     private void UpdateCropButtonText()
     {
-        var active = _cropTask is not null;
+        // 「切り出し中か」の真のソースは排他スロット（Facade がコアの規則を適用する）
+        var active = _captureSessionControl.IsCropping;
         if (CropButton is not null)
             ToolTip.SetTip(CropButton, active
                 ? "切り出し（確定して切り抜く）"
@@ -762,7 +778,7 @@ public sealed partial class CapturePage : UserControl
     /// <summary>進行中の Crop セッションをキャンセルする。</summary>
     private void CancelCropSession()
     {
-        if (_cropTask is not null)
+        if (_captureSessionControl.IsCropping)
         {
             _captureSessionControl.Cancel();
             _cropTask = null;
@@ -879,7 +895,7 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>
     /// <see cref="ZoomViewControl.ZoomChanged"/> で通知される可否、または <see cref="ZoomViewControl.CanZoomIn"/> /
     /// <see cref="ZoomViewControl.CanZoomOut"/>（初期表示時の参照）に基づいて、⊖⊕ ボタンの <c>IsEnabled</c> を更新する。<br/>
-    /// 可否は <see cref="ZoomTransition.CanZoomIn"/> / <see cref="ZoomTransition.CanZoomOut"/>（段階遷移仕様）で判定済み。
+    /// 可否はコア（<c>Estable.ZoomView</c> のズーム遷移仕様）で判定済みであり、本クラスは判定を持たない。
     /// </remarks>
     private void UpdateZoomButtonState(bool canZoomIn, bool canZoomOut)
     {
@@ -905,13 +921,15 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>
     /// ビューポート座標 → コンテンツ座標（元画像ピクセル）の変換は CropView が行う。<br/>
     /// 画像外（ビューポートの空き領域）では "-" を表示する。<br/>
-    /// 画像サイズ（ドメイン座標）は <see cref="MainViewModel.ImageSizeDisplayText"/> にバインディングで表示される。
+    /// 画像サイズ（ドメイン座標）は <see cref="MainViewModel.ImageSizeDisplayText"/> にバインディングで表示される。<br/>
+    /// 自動切り出し中は、同じ位置の検出矩形をホバーとして設定する（判定は <see cref="MainViewModel.HitDetectedRect"/> が単一所有する）。
     /// </remarks>
     private void OnImagePointerMoved(object? sender, PointerEventArgs e)
     {
         if (_viewModel.PreviewImage is not { } img)
         {
             _viewModel.PointerDisplayText = "-";
+            UpdateAutoCropHover(null);
             return;
         }
 
@@ -923,6 +941,7 @@ public sealed partial class CapturePage : UserControl
             displayPoint.X >= imageRect.Width || displayPoint.Y >= imageRect.Height)
         {
             _viewModel.PointerDisplayText = "-";
+            UpdateAutoCropHover(null);
             return;
         }
 
@@ -931,6 +950,17 @@ public sealed partial class CapturePage : UserControl
         var x = (int)Math.Clamp(contentPos.X, 0, img.Size.Width - 1);
         var y = (int)Math.Clamp(contentPos.Y, 0, img.Size.Height - 1);
         _viewModel.PointerDisplayText = $"{x}, {y}";
+        UpdateAutoCropHover(new Point(x, y));
+    }
+
+    /// <summary>マウスポインタがプレビュー領域から外れたときに、座標表示と自動切り出しのホバーを消す。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">ポインタイベント。</param>
+    /// <remarks>移動イベントは領域外では発生しないため、ホバー強調の残留を防ぐために本ハンドラを購読する。</remarks>
+    private void OnImagePointerExited(object? sender, PointerEventArgs e)
+    {
+        _viewModel.PointerDisplayText = "-";
+        UpdateAutoCropHover(null);
     }
 
     // ====================================================================
@@ -961,74 +991,97 @@ public sealed partial class CapturePage : UserControl
     // ====================================================================
 
     /// <summary>自動切り出しで検出された矩形の枠線色（通常・水色）。</summary>
-    private static readonly IBrush s_autoCropBrush = new SolidColorBrush(Color.Parse("#00BFFF"));
+    private static readonly DrawingColor s_autoCropBorderColor = DrawingColor.FromArgb(255, 0, 191, 255);
 
     /// <summary>自動切り出しでホバー中の矩形の枠線色（赤色）。</summary>
-    private static readonly IBrush s_autoCropHoverBrush = new SolidColorBrush(Color.Parse("#FF3B30"));
+    private static readonly DrawingColor s_autoCropHoverBorderColor = DrawingColor.FromArgb(255, 255, 59, 48);
+
+    /// <summary>自動切り出しでホバー中の矩形の塗り色（赤色の 16%）。</summary>
+    private static readonly DrawingColor s_autoCropHoverFillColor = DrawingColor.FromArgb(40, 255, 59, 48);
 
     /// <summary>自動切り出しの矩形枠線の太さ（DIP）。</summary>
     private const double AutoCropStrokeThickness = 2.0;
 
-    /// <summary>検出矩形オーバーレイを現在のビューポート状態に合わせて再描画する。</summary>
+    /// <summary>自動切り出しで外側の装飾を使わない外観（ハイライトの枠線は内側の装飾が単一所有する）。</summary>
+    private static readonly OuterDecoAppearance s_hiddenOuterDecoAppearance = new()
+    {
+        OverlayColor = DrawingColor.Transparent,
+        BorderColor = DrawingColor.Transparent,
+        BorderThickness = AutoCropStrokeThickness,
+        ShowSizeLabel = false,
+        ShowSubLines = false,
+        InfoLabelVisible = false,
+    };
+
+    /// <summary>自動切り出しのホバー強調（赤色の枠線 + 半透明の塗り）の外観。</summary>
+    private static readonly InnerDecoAppearance s_autoCropHighlightAppearance = new()
+    {
+        FillColor = s_autoCropHoverFillColor,
+        BorderColor = s_autoCropHoverBorderColor,
+        BorderThickness = AutoCropStrokeThickness,
+    };
+
+    /// <summary>自動切り出しの矩形オーバーレイ（枠線とホバー強調）を現在のビューポート状態に合わせて更新する。</summary>
     /// <remarks>
-    /// <see cref="MainViewModel.DetectedRects"/> の各矩形を <see cref="ContentToViewportDomain"/>（画像表示矩形の原点基準）で
-    /// ビューポート座標へ変換し、<see cref="AutoCropOverlay"/>（Canvas）へ矩形（Rectangle）を配置する。<br/>
-    /// ホバー中の矩形（<see cref="MainViewModel.HoveredRect"/>）は赤色で強調する。
+    /// 1. 検出矩形の枠線は <see cref="CropViewControl.Rects"/> へ<b>ドメイン座標</b>で渡す（座標変換は CropView が単一所有する）。<br/>
+    /// 2. ホバー中の 1 件は <see cref="CropViewControl.Rects"/> から外し、<see cref="AutoCropHighlight"/>（Marquee）の<br/>
+    ///    ハイライト矩形 + 内側の装飾（<see cref="InnerDecoAppearance"/>）で「枠線 + 半透明の塗り」として強調する<br/>
+    ///    （ハイライト矩形は DIP 座標で渡す。Marquee の座標変換ポートは未指定・倍率 1 のため等価変換になる）。<br/>
+    /// 3. 自動切り出しが無効な場合はハイライトを消し、矩形の一覧も空にする。
     /// </remarks>
     private void UpdateAutoCropOverlay()
     {
-        // 自動切り出しモード中のみオーバーレイがポインターイベントを受け取る（通常時は CropView へ素通し）
-        AutoCropOverlay.IsHitTestVisible = _viewModel.IsAutoCropActive;
+        var hovered = _viewModel.IsAutoCropActive ? _viewModel.HoveredRect : null;
 
-        AutoCropOverlay.Children.Clear();
-        if (!_viewModel.IsAutoCropActive || _viewModel.PreviewImage is null)
+        // 検出矩形の枠線（ホバー中の 1 件を除く。ホバー分は Marquee のハイライトが描く）
+        CropView.Rects = _viewModel.IsAutoCropActive
+            ? [.. _viewModel.DetectedRects
+                .Where(rect => rect != hovered)
+                .Select(rect => new OverlayRect(
+                    new EsRect(rect.X, rect.Y, rect.Width, rect.Height), OverlayLineStyle.Solid,
+                    s_autoCropBorderColor, DrawingColor.Transparent, AutoCropStrokeThickness))]
+            : [];
+
+        if (hovered is not { } target)
         {
+            // ハイライトなし（外側の装飾も描かない）
+            AutoCropHighlight.Options = MarqueeOptions.Default with { OuterAppearance = s_hiddenOuterDecoAppearance };
             return;
         }
 
-        foreach (var rect in _viewModel.DetectedRects)
-        {
-            // ドメイン座標 → ビューポート座標へ変換して配置する。
-            // 画像表示矩形の原点を基準に変換する（CropView.ContentToViewport へ委譲）。
-            var topLeft = ContentToViewportDomain(new Point(rect.X, rect.Y));
-            var bottomRight = ContentToViewportDomain(new Point(rect.Right, rect.Bottom));
-            var isHover = _viewModel.HoveredRect == rect;
+        // ハイライト矩形は DIP 座標へ変換して渡す
+        var topLeft = ContentToViewportDomain(new Point(target.X, target.Y));
+        var bottomRight = ContentToViewportDomain(new Point(target.Right, target.Bottom));
 
-            var rectElement = new Avalonia.Controls.Shapes.Rectangle
-            {
-                Width = Math.Max(0, bottomRight.X - topLeft.X),
-                Height = Math.Max(0, bottomRight.Y - topLeft.Y),
-                Stroke = isHover ? s_autoCropHoverBrush : s_autoCropBrush,
-                StrokeThickness = AutoCropStrokeThickness,
-                Fill = isHover ? new SolidColorBrush(Color.FromArgb(40, 255, 59, 48)) : null,
-                Tag = rect,
-            };
-            Canvas.SetLeft(rectElement, topLeft.X);
-            Canvas.SetTop(rectElement, topLeft.Y);
-            AutoCropOverlay.Children.Add(rectElement);
-        }
+        AutoCropHighlight.Options = MarqueeOptions.Default with
+        {
+            OuterAppearance = s_hiddenOuterDecoAppearance,
+            OuterHasHighlight = true,
+            OuterHighlightRect = new EsRect(
+                topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y),
+            InnerAppearance = s_autoCropHighlightAppearance,
+        };
     }
 
-    /// <summary>自動切り出しモード中のマウス移動で、領域内の最小矩形をホバー矩形として設定する。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">ポインタイベント。</param>
+    /// <summary>自動切り出し中に、ポインタ位置（ドメイン座標）の検出矩形をホバーとして設定する。</summary>
+    /// <param name="contentPos">ポインタ位置のドメイン座標（画像外の場合は null）。</param>
     /// <remarks>
-    /// ビューポート座標 → ドメイン座標へ変換し、その座標を含む矩形のうち<b>面積が最小</b>のものを
-    /// <see cref="MainViewModel.HoveredRect"/> に設定する（複数矩形が重なる場合の優先判定）。<br/>
-    /// 矩形の判定は <see cref="MainViewModel.HitDetectedRect"/>（コア）が単一所有する。<br/>
-    /// いずれの矩形にも含まれない場合は null に設定する。
+    /// 矩形の判定（面積が最小のものを選ぶ）は <see cref="MainViewModel.HitDetectedRect"/>（コア）が単一所有する。<br/>
+    /// 値が変化した場合のみ設定する（変更通知経由の再描画を最小限にする）。
     /// </remarks>
-    private void OnAutoCropPointerMoved(object? sender, PointerEventArgs e)
+    private void UpdateAutoCropHover(Point? contentPos)
     {
-        if (!_viewModel.IsAutoCropActive)
+        if (!_viewModel.IsAutoCropActive || contentPos is not { } target)
         {
+            if (_viewModel.HoveredRect is not null)
+            {
+                _viewModel.HoveredRect = null;
+            }
+
             return;
         }
 
-        var viewportPos = e.GetPosition(AutoCropOverlay);
-        var contentPos = ViewportToContentDomain(viewportPos);
-
-        var hovered = _viewModel.HitDetectedRect(contentPos.X, contentPos.Y);
+        var hovered = _viewModel.HitDetectedRect(target.X, target.Y);
         if (_viewModel.HoveredRect != hovered)
         {
             _viewModel.HoveredRect = hovered;
@@ -1042,9 +1095,11 @@ public sealed partial class CapturePage : UserControl
     /// クリック位置（ドメイン座標）を含む矩形のうち<b>面積が最小</b>のものを確定し、
     /// <see cref="MainViewModel.ConfirmAutoCropCommand"/> で切り出す。<br/>
     /// 矩形を含まない領域のダブルクリックは<b>キャンセル</b>とする<br/>
-    /// （切り出しモードの「矩形外クリック: キャンセル」と同じ操作）。
+    /// （切り出しモードの「矩形外クリック: キャンセル」と同じ操作）。<br/>
+    /// 本ハンドラは <see cref="CropViewControl"/> の <c>PointerPressed</c> へ購読するため、<br/>
+    /// ポインター位置の座標系は CropView のローカル DIP である（旧オーバーレイの Canvas と同一領域）。
     /// </remarks>
-    private void OnAutoCropPointerPressed(object? sender, PointerPressedEventArgs e)
+    private void OnImageDoubleClicked(object? sender, PointerPressedEventArgs e)
     {
         if (!_viewModel.IsAutoCropActive)
         {
@@ -1052,13 +1107,13 @@ public sealed partial class CapturePage : UserControl
         }
 
         // ダブルクリックのみ確定・キャンセル（単一クリックでは何もしない）
-        var point = e.GetCurrentPoint(AutoCropOverlay);
+        var point = e.GetCurrentPoint(CropView);
         if (!point.Properties.IsLeftButtonPressed || e.ClickCount < 2)
         {
             return;
         }
 
-        var viewportPos = e.GetPosition(AutoCropOverlay);
+        var viewportPos = e.GetPosition(CropView);
         var contentPos = ViewportToContentDomain(viewportPos);
 
         // 矩形の判定はコア（MainViewModel.HitDetectedRect）が単一所有する

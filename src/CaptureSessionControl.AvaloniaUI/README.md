@@ -37,6 +37,7 @@
 - **イベント駆動**: 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）
 - **再入禁止ガード**: 実行中の再呼び出しは `null` を返す（既存セッションを継続）
 - **部分更新設定**: `CaptureSettings` は全メンバー nullable（null = デフォルト値 or 現在値維持）で部分更新が可能
+- **共通規則の単一所有**: 設定のマージ・実行の排他・モニタ倍率・切り出し範囲・ハイライト状態・キー操作・クリック確定・画像の保持と取得の待ち方・ログ定義は `CaptureSessionControl.Core` が所有し、本 UI は委譲する
 - **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は Platform.Native 経由で注入（テスト可能・プラットフォーム非依存）
 
 ## 3. システム要件
@@ -77,10 +78,10 @@ if (result?.Image is { } image)
 ### 切出し（Crop）
 
 ```csharp
-// プレビューを表示しているコントロールと元画像から切り出し範囲を取得する
+// 切り出しの対象画像は、プレビューが表示している画像（previewControl.Source）から解決される
+// （画像を別引数で渡さない。表示している画像と切り出す画像を二重所有しない）
 // 切り出し中のホイール操作（Ctrl+ホイールのズーム・通常ホイールのパン）は CropViewControl が内部で完結する（上位の配線は不要）
-var cropRect = await capture.StartCropAsync(previewControl, hostWindow, sourceImage,
-    zoomIn => { if (zoomIn) zoomInAction(); else zoomOutAction(); });
+var cropRect = await capture.StartCropAsync(previewControl, hostWindow);
 if (cropRect is { } rect && rect.Width > 0 && rect.Height > 0)
 {
     // rect: 元画像上の切り出し範囲（論理座標。始点・終点のピクセルを含む閉区間）
@@ -92,7 +93,6 @@ if (cropRect is { } rect && rect.Width > 0 && rect.Height > 0)
 ```csharp
 var capture = new CaptureSessionControl(new CaptureSettings
 {
-    LoupeVisible = true,
     LoupeZoomLevel = 4,
     MinSelectionSize = 6,
     BorderColor = System.Drawing.Color.Red,
@@ -114,32 +114,35 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 ### StartCaptureAsync
 
-1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出
+1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出（0 以下は 1.0 へ正規化）
 2. `SelectionCaptureSession` を生成（Platform.AvaloniaUI からサービスを注入）
-3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`）→ 非表示（`HideOwnerWindow`）
+3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`）→ 画面外へ退避（`HideOwnerWindow`。非表示ではなく `Opacity=0` + 位置退避）
 4. **仮想スクリーン全体をバックグラウンド + タイムアウト付きでキャプチャ（全モード共通の切り出し元）**
-5. `OverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示・ウォッチドッグ）
+5. `OverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示）
    - AreaSelect: Marquee ドラッグ選択 + Loupe
    - Screen / WindowSelect: カーソル位置の要素検出 → ハイライト
-6. **枠選択中に事前切り出し**（ホバー時・ドラッグ後。同じ矩形ならスキップ・キャッシュ再利用）
+6. **枠選択中に事前切り出し**（ハイライト型のホバー時。同じ矩形ならスキップ・キャッシュ再利用。事前切り出しの有無はコアの `CaptureTypeTraits.IsHighlighted` で決まる）
 7. **確定時: 事前切り出しキャッシュを再利用**（不一致時のみ切り出し）
 8. 結果を `CaptureResult` で返却 → `CaptureCompleted`（画像変更） → オーナー再表示 → 除外解除
 
 ### StartCropAsync
 
-1. `CropSession` を生成 → `RunAsync`
-2. **FadeMaskDragRectControl**（Marquee + Loupe の配線を内包する複合コントロール。暗転マスクは Marquee の外側の装飾）を祖先 Panel に配置
+1. 切り出しの対象画像は `CropViewControl` が表示している画像（`CropViewControl.Source`）から解決する（画像を引数で受け取らない）。画像が未設定・表示アダプタ（`EsBitmapAvaloniaImage`）以外の場合は開始しない（結果 null）→ 開始できた場合は `CropSession` を生成 → `RunAsync`
+2. **FadeMaskDragRectControl**（Marquee + Loupe の配線を内包する複合コントロール。暗転マスクは Marquee の外側の装飾）を `CropViewControl.Rects` へ配置する
 3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordinateTransform` で内包コントロール（Marquee / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
 4. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する
 5. **ビューポート変化の通知**: ホストがプレビューのパン・ズームを検知したら `NotifyCropViewportChanged()` を呼ぶ（暗転マスク・選択枠・ルーペが追従。ScrollViewer 連携のスクロールも同じ経路で処理）
-6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `PixelRect` で返却 / キャンセル → 0x0 の空 `PixelRect`
+6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `EsPixelRect`（コア型）で返却 / キャンセル → 0x0 の空矩形
+   - 確定時の切り出し範囲は**現在の画像**（確定時点の `CropViewControl.Source`）の範囲へクランプする（実行中に画像が差し替わっても差し替え後の画像で切り出す。画像が消えた場合はキャンセルとして扱う）
 
 ## 7. 依存プロジェクト
 
 | プロジェクト | 利用機能 |
 | --- | --- |
 | `Platform.AvaloniaUI` | `Platform.AvaloniaUI`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` は `Platform.Native`、`ICoordTransform` / `CoordTransform` は `Platform.Core`、`ScreenConverter` は `Platform.AvaloniaUI` |
+| `CropViewControl.AvaloniaUI` | `CropViewControl`（ズーム + 領域選択 + ルーペを内包する高レベル複合コントロール。切り出しの対象） |
 | `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（Marquee + Loupe を内包する複合コントロール。公開 API は本コントロールのみ） |
+| `CaptureSessionControl.Core` | `CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / ログ定義（両 UI 共通の規則。UI 非依存） |
 
 CaptureSessionControl.AvaloniaUI は内包コントロール（`MarqueeControl`（外側の装飾を含む） / `LoupeControl`）を直接参照しない（窓口は `FadeMaskDragRectControl` のみ。公開型のカプセル化）。
 
@@ -157,7 +160,7 @@ CaptureSessionControl.AvaloniaUI/
 │   ├── CaptureSessionControl.cs            # 公開 Facade（統括者。組み立て・配線・ライフサイクル）
 │   └── Sessions/                 # 内部実装（SelectionCaptureSession / CropSession / OverlayWindow）
 ├── sample/                       # サンプルアプリ（sample/README.md 参照）
-└── tests/                        # 単体テスト（79 件）
+└── tests/                        # 単体テスト
 ```
 
 `CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。利用側は `using EsUtil.Platform.Core;` を追加してください。

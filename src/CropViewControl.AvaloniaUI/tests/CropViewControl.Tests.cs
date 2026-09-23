@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -71,6 +72,53 @@ public class CropViewTests
         view.Rects = rects;
 
         Assert.Equal(rects, view.Rects);
+    }
+
+    [AvaloniaFact]
+    public void Rects_破線は背景色の下地とダッシュ配列を持ち太さの下限を適用する()
+    {
+        var view = CreateView();
+
+        // 太さ 0（コアの下限 1 へ補正される）の破線。画像 10x10 を 400x200 へ Fit した倍率は 20 倍
+        view.Rects = [new OverlayRect(new EsRect(10, 10, 50, 40), OverlayLineStyle.Dashed, DrawingColor.Red, DrawingColor.White, 0.0)];
+
+        var group = Assert.IsType<Panel>(Assert.Single(view.RectOverlayChildren));
+        var background = Assert.IsType<Rectangle>(group.Children[0]);
+        var foreground = Assert.IsType<Rectangle>(group.Children[1]);
+
+        Assert.NotNull(background.Fill);
+        Assert.NotNull(foreground.StrokeDashArray);
+        Assert.Equal(1.0, foreground.StrokeThickness);
+        Assert.Equal(1000.0, foreground.Width);
+        Assert.Equal(800.0, foreground.Height);
+        // 左上は画像表示矩形の原点（200x200 を 400x200 へ中央寄せして X のみ 100）+ ドメイン 10 × 20 倍
+        Assert.Equal(300.0, Canvas.GetLeft(group));
+        Assert.Equal(200.0, Canvas.GetTop(group));
+    }
+
+    [AvaloniaFact]
+    public void Rects_実線は背景を塗らずダッシュ配列を持たない()
+    {
+        var view = CreateView();
+        view.Rects = [new OverlayRect(new EsRect(0, 0, 10, 10), OverlayLineStyle.Solid, DrawingColor.Red, DrawingColor.Transparent, 2.0)];
+
+        var group = Assert.IsType<Panel>(Assert.Single(view.RectOverlayChildren));
+        var background = Assert.IsType<Rectangle>(group.Children[0]);
+        var foreground = Assert.IsType<Rectangle>(group.Children[1]);
+
+        Assert.Null(background.Fill);
+        Assert.Null(foreground.StrokeDashArray);
+        Assert.Equal(2.0, foreground.StrokeThickness);
+        Assert.Equal(200.0, foreground.Width);
+    }
+
+    [AvaloniaFact]
+    public void Rects_画像未設定なら矩形オーバーレイを描画しない()
+    {
+        var view = new CropViewControl();
+        view.Rects = [new OverlayRect(new EsRect(0, 0, 10, 10), OverlayLineStyle.Solid, DrawingColor.Red, DrawingColor.Transparent, 2.0)];
+
+        Assert.Empty(view.RectOverlayChildren);
     }
 
     [AvaloniaFact]

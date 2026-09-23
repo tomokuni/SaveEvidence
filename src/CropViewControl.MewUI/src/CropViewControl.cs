@@ -2,13 +2,11 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Estable.CropView;
 using Estable.MewUI.ZoomView;
+using Estable.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using SkiaSharp;
-using EsUtil.Platform.Core;
 
 namespace Estable.MewUI.CropView;
 
@@ -51,9 +49,6 @@ public sealed class CropViewControl : Grid
         Add(_rectOverlay);
     }
 
-    /// <summary>外部提供矩形の変化を通知する（再描画後に発火する）。</summary>
-    public event EventHandler? RectsChanged;
-
     /// <summary>表示する画像（ズーム・パンの対象）を取得または設定する。</summary>
     /// <value>表示する画像。null の場合は何も表示しない。設定すると Fit 表示へリセットする。</value>
     public EsBitmap? Source
@@ -70,50 +65,30 @@ public sealed class CropViewControl : Grid
         set => _zoomView.CenterAlign = value;
     }
 
-    /// <summary>市松模様（画像の透明部分の背景）の 1 タイルの一辺を取得または設定する。</summary>
-    /// <value>1 タイルの一辺（DIP）。0 以下の場合は市松模様を描画しない。</value>
-    /// <remarks>Avalonia 版の <c>ViewportBackground</c>（市松模様ブラシ）に相当する。</remarks>
-    public int CheckerSize
+    /// <summary>画像の下地（市松模様・背景色）の外観を取得または設定する（内包するズームビューの外観の写し）。</summary>
+    /// <value>市松模様の大きさ・2 色と下地色（下地・市松・スクロールバーをコアが単一所有する）。</value>
+    /// <remarks>
+    /// 外観の既定値・描画可否（市松なし・背景が透明）はコアの <see cref="ZoomViewAppearance"/> が単一所有する。<br/>
+    /// Avalonia 版は市松模様をホストが <c>Brush</c> で供給する（自 UI の描画機構に合わせた非対称）。
+    /// </remarks>
+    public ZoomViewAppearance Appearance
     {
-        get => _zoomView.CheckerSize;
-        set => _zoomView.CheckerSize = value;
-    }
-
-    /// <summary>市松模様の明色を取得または設定する。</summary>
-    /// <value>市松模様の色 A（明色）。</value>
-    public SKColor CheckerColorA
-    {
-        get => _zoomView.CheckerColorA;
-        set => _zoomView.CheckerColorA = value;
-    }
-
-    /// <summary>市松模様の暗色を取得または設定する。</summary>
-    /// <value>市松模様の色 B（暗色）。</value>
-    public SKColor CheckerColorB
-    {
-        get => _zoomView.CheckerColorB;
-        set => _zoomView.CheckerColorB = value;
-    }
-
-    /// <summary>市松模様を描画しない場合の背景色を取得または設定する。</summary>
-    /// <value>背景色。市松模様の色が半透明の場合は本色と合成される。</value>
-    public SKColor BackgroundColor
-    {
-        get => _zoomView.BackgroundColor;
-        set => _zoomView.BackgroundColor = value;
+        get => _zoomView.Appearance;
+        set => _zoomView.Appearance = value;
     }
 
     /// <summary>外部提供矩形（ドメイン座標）を取得または設定する。</summary>
     /// <value>ビューポートとルーペへ描画する矩形。空の場合は何も描画しない。</value>
-    /// <remarks>設定すると矩形オーバーレイを再描画し、<see cref="RectsChanged"/> を発火する。</remarks>
+    /// <remarks>設定すると矩形オーバーレイを再描画する。</remarks>
     public IReadOnlyList<OverlayRect> Rects
     {
         get => _rects;
         set
         {
+            ArgumentNullException.ThrowIfNull(value);
+
             _rects = value;
             _rectOverlay.SetRects(value);
-            RectsChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -122,11 +97,11 @@ public sealed class CropViewControl : Grid
     public ZoomViewControl ZoomView => _zoomView;
 
     /// <summary>ズーム操作ログの出力先を取得または設定する（内包するズームビューへ伝搬する）。</summary>
-    /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
+    /// <value>ロガー。null を設定した場合は出力なしとなる（null の吸収はコアが単一所有する）。</value>
     public ILogger Log
     {
         get => _zoomView.Log;
-        set => _zoomView.Log = value.OrNullLogger();
+        set => _zoomView.Log = value;
     }
 
     /// <summary>現在のズーム率（%）を取得または設定する。</summary>
@@ -136,10 +111,6 @@ public sealed class CropViewControl : Grid
         get => _zoomView.ZoomPercent;
         set => _zoomView.ZoomPercent = value;
     }
-
-    /// <summary>現在 Fit 表示中かどうかを取得する。</summary>
-    /// <value>Fit 表示中なら true。</value>
-    public bool IsFit => _zoomView.IsFit;
 
     /// <summary>ズームイン可能かどうかを取得する。</summary>
     /// <value>ズームイン可能なら true。</value>

@@ -5,8 +5,8 @@ namespace Estable.CaptureSession;
 
 /// <summary>撮影中のオーナーウィンドウの退避と復帰を 1 つの操作にまとめる（<see cref="IDisposable"/> で復帰する）。</summary>
 /// <remarks>
-/// Avalonia 版（<c>SelectionCaptureSession</c>）と MewUI 版（<c>CaptureOverlayWindow</c>）が同じ手順を<br/>
-/// 別々に実装していたため、コアへ集約する。<br/>
+/// 撮影中のオーナー退避と復帰の手順は 2 つの UI で共通であり、順序を誤ると自ウィンドウが写り込む。<br/>
+/// そのため本クラスが手順（順序を含む）を単一所有する（UI は同じ手順を書かない）。<br/>
 /// <br/>
 /// <b>手順（順序が重要）</b>:<br/>
 /// 1. キャプチャ除外（<c>WDA_EXCLUDEFROMCAPTURE</c>）を設定する。非表示の DWM 反映を待たずに効くため、<br/>

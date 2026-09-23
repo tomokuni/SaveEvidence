@@ -71,14 +71,41 @@
 
 Win32 の HWND に相当するため、`IWindowService` / `ICursorOverrideGuard` などハンドルを要求するサービスへ MewUI のウィンドウを渡せます。
 
+### `Imaging.SkiaImageView`（class : `SkiaCanvasView`）
+
+`EsBitmap` を親が割り当てた領域へ描画する表示ビュー。撮影画像のオーバーレイ（領域全体へ引き伸ばす）や
+サムネイル（縦横比を保って収める）のように、「1 枚の画像を領域へ敷く」表示を共通化します。
+
+| 種別 | メンバー | シグネチャ | 説明 |
+| --- | --- | --- | --- |
+| プロパティ | `Source` | `EsBitmap? Source { get; set; }` | 表示する画像。null・破棄済みの場合は何も描画しない（余白のみ） |
+| プロパティ | `UniformDraw` | `protected virtual bool UniformDraw { get; }` | 縦横比を保って収めるか（既定は false = 領域全体へ引き伸ばす） |
+
+```csharp
+// 親の領域いっぱいへ撮影画像を敷く（引き伸ばし）
+content.Add(new SkiaImageView { Source = screen });
+
+// 縦横比から大きさを決める表示は、計測を上書きして UniformDraw を true にする
+internal sealed class ThumbnailView : SkiaImageView
+{
+    protected override bool UniformDraw => true;
+    protected override Size MeasureContent(Size availableSize) => ...;
+}
+```
+
+描画手順（透明でクリア → 未設定・破棄済みの判定 → 配置の計算 → 1 回の `DrawBitmap`）は
+`SkiaImageRenderer`（internal）が単一所有し、配置の矩形は `Platform.Core` の `ImageDrawMath` が単一所有します。  
+静止画のため連続再描画は無効化し、`Source` の変更時のみ描画します。
+
 ## 依存
 
 | 依存 | 用途 |
 | --- | --- |
-| `Platform.Core`（`EsUtil.Platform.Core.*`） | コア型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsWindowState` / `EsPlatformHandle`） |
-| `Aprillz.MewUI.Core`（バージョン固定） | MewUI の型（`Key` / `Point` / `Size` / `Vector` / `Rect` / `Color` / `Window` / `WindowState`） |
+| `Platform.Core`（`EsUtil.Platform.Core.*`） | コア型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsWindowState` / `EsPlatformHandle` / `EsBitmap` / `ImageDrawMath`） |
+| `Aprillz.MewUI.Core`（バージョン固定） | MewUI の型（`Key` / `Point` / `Size` / `Vector` / `Rect` / `Color` / `Window` / `WindowState` / `MewProperty`） |
+| `Aprillz.MewUI.Skia`（バージョン固定） | `SkiaCanvasView`（`SkiaImageView` の基底）と `SkiaSharp` の型 |
 
-プラットフォームホスト（`Aprillz.MewUI.Windows` 等）やバックエンドには依存しません（型変換のみを担うため）。
+プラットフォームホスト（`Aprillz.MewUI.Windows` 等）やバックエンドには依存しません（`Skia` パッケージは描画型のみを提供し、ホストを含まないため）。
 
 ## バージョン依存
 

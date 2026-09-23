@@ -1,80 +1,22 @@
 using Avalonia;
 using Rect = Avalonia.Rect;
-using Size = Avalonia.Size;
 using Xunit;
 using Estable.CaptureSession;
 
 namespace Estable.AvaloniaUI.CaptureSession.Tests;
 
-/// <summary>CaptureSessionControl.AvaloniaUI のヘッドレス不要テスト（純粋計算・設定・ライフサイクル）。</summary>
+/// <summary>CaptureSessionControl.AvaloniaUI のヘッドレス不要テスト（設定・ライフサイクル）。</summary>
 /// <remarks>
-/// 対象: <see cref="CropSession.ComputeCropBounds"/>（切り出し範囲計算）と、<see cref="CaptureSessionControl"/> の<br/>
-/// コンストラクタ・<see cref="CaptureSessionControl.AppearanceSettings"/>・<see cref="CaptureSessionControl.Dispose"/>・<br/>
-/// <see cref="CaptureSessionControl.Confirm"/> / <see cref="CaptureSessionControl.Cancel"/>（セッションなし）。<br/>
+/// 対象: <see cref="CaptureSessionControl"/> のコンストラクタ・<see cref="CaptureSessionControl.AppearanceSettings"/>・<br/>
+/// <see cref="CaptureSessionControl.Dispose"/>・<see cref="CaptureSessionControl.Confirm"/> / <see cref="CaptureSessionControl.Cancel"/>（セッションなし）。<br/>
 /// <see cref="CaptureSessionControl"/> のコンストラクタは <c>PlatformFactory.CreateWindowService</c>（ロガー設定のみ・P/Invoke を実行しない）を<br/>
 /// 生成するため、<c>[AvaloniaFact]</c>（ヘッドレス）を必要とせず <c>[Fact]</c> で並列実行できる。<br/>
-/// ヘッドレス必須のテスト（ウィンドウ生成・セッション実行）は <see cref="CaptureSessionControlTests"/> が直列コレクションで検証する。
+/// ヘッドレス必須のテスト（ウィンドウ生成・セッション実行）は <see cref="CaptureSessionControlTests"/> が直列コレクションで検証する。<br/>
+/// 切り出し範囲の計算（閉区間化・クランプ・丸め・最小サイズ）は UI 非依存の純粋関数
+/// <see cref="CropBoundsMath"/> としてコアへ集約したため、<c>CaptureSessionControl.Core.Tests</c> が検証する。
 /// </remarks>
 public class CaptureSessionControlStateTests
 {
-    // ====================================================================
-    // ComputeCropBounds（選択矩形 → 閉区間切り出し範囲）
-    // ====================================================================
-
-    [Fact]
-    public void ComputeCropBounds_閉区間で始点終点のピクセルを含む()
-    {
-        // 選択矩形 (10,10,40,40) = 半開区間 [10,50)。閉区間では [10,50] = 41×41 ピクセル
-        var result = CropSession.ComputeCropBounds(new Rect(10, 10, 40, 40), new Size(100, 100), 1.0);
-
-        Assert.Equal(new PixelRect(10, 10, 41, 41), result);
-    }
-
-    [Fact]
-    public void ComputeCropBounds_画像右端では幅が画像サイズにクランプされる()
-    {
-        // 選択矩形が画像右端 (80,80,20,20) = [80,100)。閉区間では [80,100] = 21 ピクセルだが、
-        // 画像サイズ 100 を超えないよう 20 ピクセルにクランプする
-        var result = CropSession.ComputeCropBounds(new Rect(80, 80, 20, 20), new Size(100, 100), 1.0);
-
-        Assert.Equal(new PixelRect(80, 80, 20, 20), result);
-    }
-
-    [Fact]
-    public void ComputeCropBounds_最小サイズ未満は空を返す()
-    {
-        // 幅・高さが 1 未満（MinSelectionSize の既定値 1.0 未満）→ 空を返す
-        var result = CropSession.ComputeCropBounds(new Rect(10, 10, 0.5, 0.5), new Size(100, 100), 1.0);
-
-        Assert.Equal(default, result);
-    }
-
-    [Fact]
-    public void ComputeCropBounds_負座標は0にクランプする()
-    {
-        // 選択矩形が画像外（負座標）→ 0 にクランプして閉区間で切り出す
-        var result = CropSession.ComputeCropBounds(new Rect(-5, -5, 20, 20), new Size(100, 100), 1.0);
-
-        Assert.Equal(new PixelRect(0, 0, 16, 16), result);
-    }
-
-    [Fact]
-    public void ComputeCropBounds_完全に範囲外なら空を返す()
-    {
-        var result = CropSession.ComputeCropBounds(new Rect(150, 150, 20, 20), new Size(100, 100), 1.0);
-
-        Assert.Equal(default, result);
-    }
-
-    [Fact]
-    public void ComputeCropBounds_最小サイズを指定するとそれ未満を空とみなす()
-    {
-        // MinSelectionSize = 10 の場合、幅 5 は空を返す
-        var result = CropSession.ComputeCropBounds(new Rect(10, 10, 5, 20), new Size(100, 100), 10.0);
-
-        Assert.Equal(default, result);
-    }
-
     // ====================================================================
     // CaptureSessionControl（コンストラクタ・設定・ライフサイクル）
     // ====================================================================
@@ -86,7 +28,7 @@ public class CaptureSessionControlStateTests
 
         Assert.Equal(6, capture.AppearanceSettings.MinSelectionSize);
         Assert.Equal(160, capture.AppearanceSettings.LoupeSize);
-        Assert.True(capture.AppearanceSettings.LoupeVisible);
+        Assert.True(capture.AppearanceSettings.HideOwnerWindow);
     }
 
     [Fact]
@@ -112,7 +54,6 @@ public class CaptureSessionControlStateTests
             MinSelectionSize: current.MinSelectionSize,
             LoupeSize: current.LoupeSize,
             LoupeZoomLevel: current.LoupeZoomLevel,
-            LoupeVisible: current.LoupeVisible,
             BorderColor: current.BorderColor,
             OverlayColor: current.OverlayColor);
         capture.AppearanceSettings = same;

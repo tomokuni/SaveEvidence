@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Platform.MewUI;
@@ -48,15 +49,17 @@ public static class WindowPlacementMath
     /// <param name="physical">画面物理ピクセルの座標。</param>
     /// <param name="scale">DPI スケール係数（1.0 = 96 DPI）。</param>
     /// <returns>DIP の座標。</returns>
+    /// <remarks>成分ごとの換算は <see cref="DpiScaler.ToDip(int, double)"/>（両 UI 共通の単一所有者）へ委譲する。</remarks>
     public static EsPoint ToDipPoint(EsPixelPoint physical, double scale)
-        => new(physical.X / NormalizeScale(scale), physical.Y / NormalizeScale(scale));
+        => new(DpiScaler.ToDip(physical.X, scale), DpiScaler.ToDip(physical.Y, scale));
 
     /// <summary>画面物理ピクセルの長さを DIP の長さへ変換する。</summary>
     /// <param name="physical">画面物理ピクセルの長さ。</param>
     /// <param name="scale">DPI スケール係数（1.0 = 96 DPI）。</param>
     /// <returns>DIP の長さ。</returns>
+    /// <remarks>換算は <see cref="DpiScaler.ToDip(int, double)"/>（両 UI 共通の単一所有者）へ委譲する。</remarks>
     public static double ToDipLength(int physical, double scale)
-        => physical / NormalizeScale(scale);
+        => DpiScaler.ToDip(physical, scale);
 
     /// <summary>物理ピクセルの矩形が復元に使えるかどうかを判定する。</summary>
     /// <param name="bounds">判定する矩形。null 可。</param>
@@ -71,7 +74,9 @@ public static class WindowPlacementMath
     /// <summary>DPI スケール係数を有効値へ正規化する。</summary>
     /// <param name="scale">DPI スケール係数。</param>
     /// <returns>正の値の場合はその値、0 以下または非数の場合は 1.0。</returns>
-    /// <remarks>スケールを取得できない場合（ウィンドウ未生成・API 失敗）に座標が 0 へ潰れるのを防ぐ。</remarks>
-    private static double NormalizeScale(double scale)
-        => double.IsFinite(scale) && scale > 0 ? scale : 1.0;
+    /// <remarks>
+    /// スケールを取得できない場合（ウィンドウ未生成・API 失敗）に座標が 0 へ潰れるのを防ぐ。<br/>
+    /// 判定と基準値は両 UI 共通の <see cref="DpiScaler.NormalizeScaling"/> が単一所有する（本クラスは委譲する）。
+    /// </remarks>
+    private static double NormalizeScale(double scale) => DpiScaler.NormalizeScaling(scale);
 }

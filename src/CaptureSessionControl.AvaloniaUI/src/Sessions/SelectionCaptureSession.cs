@@ -5,7 +5,6 @@ using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.AvaloniaUI.CaptureSession.Logging;
 using Microsoft.Extensions.Logging;
 using Estable.CaptureSession;
 
@@ -28,12 +27,6 @@ internal sealed class SelectionCaptureSession(
     Action<CaptureResult?>? onCaptured = null,
     ILogger? logger = null)
 {
-    /// <summary>背景キャプチャのタイムアウト（ms）。画面キャプチャが DWM 応答不能等でブロックした場合の安全策。</summary>
-    private const int CaptureTimeoutMs = 5000;
-
-    /// <summary>オーナーを退避させる画面外の座標（画面物理ピクセル）。</summary>
-    private const int OffScreenCoordinate = -32000;
-
     /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
     private readonly ILogger _log = logger.OrNullLogger();
 
@@ -41,28 +34,27 @@ internal sealed class SelectionCaptureSession(
     private OverlayWindow? _window;
 
     /// <summary>キャプチャセッションを開始する。UI スレッドから呼び出すこと。</summary>
-    /// <param name="owner">オーナーウィンドウ（キャプチャ除外設定に使用）。</param>
-    /// <param name="showWithOwner">OverlayWindow をオーナー付きで表示するか。</param>
+    /// <param name="owner">オーナーウィンドウ（キャプチャ除外設定・所有ウィンドウとして使用）。</param>
     /// <returns>キャプチャ結果。キャンセル時は 0x0 の空の結果。</returns>
     /// <remarks>
     /// 背景キャプチャは UI スレッドをブロックしないようバックグラウンドで実行する。<br/>
     /// 画面キャプチャは DWM 応答不能時に長時間ブロックする可能性があるため、タイムアウト付きで実行する。<br/>
     /// </remarks>
-    public async Task<CaptureResult?> RunAsync(Window owner, bool showWithOwner = true)
+    public async Task<CaptureResult?> RunAsync(Window owner)
     {
-        var tcs = new TaskCompletionSource<CaptureResult?>();
+        // 結果の単一確定（最初の 1 件だけを採用する）はコアの完了通知が単一所有する
+        var completion = new CaptureCompletion<CaptureResult?>();
         _log.LogCaptureStart(captureType.ToString());
 
         // オーナーの退避とキャプチャ除外の設定・解除は CaptureOwnerScope（コア）が単一所有する
         // （手順: 除外の設定 → 画面外へ退避 → 撮影 → 配置の復帰 → 除外の解除）
         // ネイティブハンドルが無い場合（ヘッドレステスト等）は既定値（0）を渡す（除外は設定されない）
-        var hideOwner = showWithOwner && (settings.HideOwnerWindow ?? true);
+        var hideOwner = settings.HideOwnerWindow!.Value;
         var ownerHandle = owner.TryGetPlatformHandle() is { } handle
             ? handle.ToEsPlatformHandle()
             : default(EsPlatformHandle);
         using var ownerScope = CaptureOwnerScope.Enter(
             windowService, ownerHandle, new OwnerWindowAdapter(owner), hideOwner);
-        var ownerHidden = hideOwner;
 
         // 背景キャプチャをバックグラウンドで開始する（完了を待たずにオーバーレイを表示する = 選択可能までの高速化）。
         // 全モード共通で取得し、確定時にこの Bitmap から切り出す（確定時の再キャプチャなしで高速化）。
@@ -70,54 +62,32 @@ internal sealed class SelectionCaptureSession(
         // 注: origin は out パラメータのためタスク完了後にしか有効にならない（遅延評価で渡す）。
         var origin = default(EsPixelPoint);
         var captureTask = Task.Run(() => captureService.CaptureVirtualScreen(out origin));
-        SetupVirtualScreenContinuation(captureTask, () => origin.ToAvaloniaPixelPoint());
 
         // オーバーレイウィンドウを生成・表示（キャプチャ完了を待たない）
         _window = new OverlayWindow(
             windowService, captureService, elementFinder,
             captureType, settings, scaling,
-            (bitmap, bounds) =>
-            {
-                // キャンセル（null）は 0x0 の空結果として扱う
-                if (bitmap is null || bounds is null)
-                {
-                    // キャンセルは 0x0 の矩形（画像は null のまま）
-                    tcs.TrySetResult(new CaptureResult(null, default(EsPixelRect)));
-                }
-                else
-                {
-                    tcs.TrySetResult(new CaptureResult(bitmap, bounds.Value.ToEsPixelRect()));
-                }
-            },
+            // キャンセル（null）は 0x0 の空結果として扱う（規則はコアの CaptureResult が定める）
+            (bitmap, bounds) => completion.TrySetResult(CaptureResult.From(bitmap, bounds)),
             _log);
 
-        // オーナー非表示時はオーナーなしで表示する（Win32 ではオーナー非表示の所有ウィンドウは
-        // 一緒に非表示になるため。オーバーレイは Topmost のため前面に表示される）
-        if (showWithOwner && !ownerHidden)
-        {
-            _window.Show(owner);
-        }
-        else
-        {
-            _window.Show();
-        }
+        // 背景キャプチャの完了をウィンドウへ反映する継続を登録する。
+        // ウィンドウはローカル変数で渡す（背景スレッドがフィールドを読むと、キャプチャが即完了した場合に
+        // 生成前の null を読んで背景を設定しないまま Bitmap を破棄する競合が起きる）
+        var window = _window;
+        SetupVirtualScreenContinuation(window, captureTask, () => origin.ToAvaloniaPixelPoint());
+
+        _window.Show(owner);
 
         try
         {
-            var result = await tcs.Task;
+            var result = await completion.Task;
+            // 完了の記録（確定は 2 件・キャンセルは 1 件）はコアが単一所有する
+            _log.LogCaptureFinished(result);
             // キャプチャ完了イベントを発行する（同期実行）。
             // C# のイベントは同期型のため、ホストのハンドラ（画像変更）が完了してから
             // 以下の finally（オーナー再表示）が実行される。
             // フロー: APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）
-            if (result is { Image: not null, SourceBounds: { } bounds })
-            {
-                _log.LogCaptureCompleted(bounds.ToString());
-                _log.LogResult(result.Image.Size.Width, result.Image.Size.Height, bounds.ToString());
-            }
-            else
-            {
-                _log.LogCaptureCancelled();
-            }
             onCaptured?.Invoke(result);
             return result;
         }
@@ -158,7 +128,8 @@ internal sealed class SelectionCaptureSession(
 
             // 透明化してから画面外（仮想スクリーンの外）へ退避する
             window.Opacity = 0;
-            window.Position = new PixelPoint(OffScreenCoordinate, OffScreenCoordinate);
+            window.Position = new PixelPoint(
+                CaptureTiming.OwnerOffScreenCoordinate, CaptureTiming.OwnerOffScreenCoordinate);
         }
 
         /// <inheritdoc/>
@@ -176,45 +147,38 @@ internal sealed class SelectionCaptureSession(
     }
 
     /// <summary>背景キャプチャ完了後に、オーバーレイウィンドウへ仮想スクリーン Bitmap を設定する継続処理を登録する。</summary>
+    /// <param name="window">背景を設定するオーバーレイウィンドウ（生成済みのインスタンス）。</param>
     /// <param name="captureTask">仮想スクリーンキャプチャの Task。</param>
     /// <param name="originProvider">仮想スクリーンの原点（タスク完了後に評価される遅延プロバイダ）。</param>
     /// <remarks>
-    /// タイムアウト（<see cref="CaptureTimeoutMs"/>）付きで完了を監視し、<br/>
-    /// 完了時は UI スレッドで <see cref="OverlayWindow.SetVirtualScreen"/> を呼んで背景を設定する。<br/>
-    /// タイムアウト時は設定せず、確定時の <c>CaptureArea</c> フォールバックに委ねる。<br/>
-    /// ウィンドウが既に閉じられた（キャンセル等）場合は Bitmap を破棄する。<br/>
+    /// <b>タイムアウトと未使用結果の破棄はコアの <see cref="CaptureVirtualScreen.AwaitAsync"/> が単一所有する</b><br/>
+    /// （間に合わない場合は設定せず、確定時の <c>CaptureArea</c> フォールバックに委ねる）。<br/>
+    /// 完了時は UI スレッドで <see cref="OverlayWindow.SetVirtualScreen"/> を呼んで背景を設定する（Bitmap 操作は UI スレッド）。<br/>
+    /// ウィンドウが既に閉じられた（キャンセル等）場合はウィンドウ側が Bitmap を破棄する。<br/>
     /// <b>重要</b>: <c>out origin</c> はタスク完了後にしか有効にならないため、<br/>
-    /// 原点はタスク完了後に <paramref name="originProvider"/> で遅延評価する（マルチモニタの座標ずれ防止）。
+    /// 原点はタスク完了後に <paramref name="originProvider"/> で遅延評価する（マルチモニタの座標ずれ防止）。<br/>
+    /// <b>重要</b>: ウィンドウは引数で受け取る（背景スレッドがフィールドを読むと、キャプチャが即完了した場合に<br/>
+    /// 生成前の null を読んで背景を設定しないまま Bitmap を破棄する競合が起きる）。
     /// </remarks>
-    private void SetupVirtualScreenContinuation(Task<EsBitmap?> captureTask, Func<PixelPoint> originProvider)
+    private static void SetupVirtualScreenContinuation(
+        OverlayWindow window, Task<EsBitmap?> captureTask, Func<PixelPoint> originProvider)
     {
         _ = Task.Run(async () =>
         {
-            // タイムアウト監視: キャプチャ完了 or タイムアウトまで待機
-            var done = await Task.WhenAny(captureTask, Task.Delay(CaptureTimeoutMs)).ConfigureAwait(false);
-            if (done != captureTask)
+            // タイムアウト付きで待つ（間に合わなかった結果はコアが破棄する）
+            var bitmap = await CaptureVirtualScreen.AwaitAsync(captureTask).ConfigureAwait(false);
+            if (bitmap is null)
             {
-                // タイムアウト: キャプチャ結果は未使用（完了時に破棄する）
-                _ = captureTask.ContinueWith(t =>
-                {
-                    if (t.IsCompletedSuccessfully) t.Result?.Dispose();
-                }, TaskScheduler.Default);
+                // 時間切れまたは取得失敗: 背景を設定しない（確定時の領域指定キャプチャに委ねる）
                 return;
             }
 
-            var bitmap = captureTask.Result;
             // タスク完了後に原点を評価する（out パラメータが有効になった値）
             var origin = originProvider();
-            if (_window is { } w)
-            {
-                // UI スレッドで背景を設定（Bitmap 操作は UI スレッドで行う）
-                Dispatcher.UIThread.Post(() => w.SetVirtualScreen(bitmap, origin));
-            }
-            else
-            {
-                // ウィンドウが閉じられた（キャンセル等）場合は破棄する
-                bitmap?.Dispose();
-            }
+
+            // UI スレッドで背景を設定（Bitmap 操作は UI スレッドで行う）。
+            // ウィンドウが閉じられていても SetVirtualScreen は安全（破棄はウィンドウが一元管理する）
+            Dispatcher.UIThread.Post(() => window.SetVirtualScreen(bitmap, origin));
         });
     }
 

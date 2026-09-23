@@ -157,6 +157,18 @@ internal static partial class AppLog
     [LoggerMessage(LogLevel.Debug, "切出しキャンセル")]
     public static partial void LogCropCancelled(this ILogger logger);
 
+    /// <summary>設定変更の CaptureSessionControl 反映で例外が発生したことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Error <br/>
+    /// 出力書式: <c>設定変更の CaptureSessionControl 反映で例外が発生: {PropertyName}</c>（例外はスタックトレース込み）<br/>
+    /// 設定の検証（範囲外の値）で例外になっても UI を壊さないため、反映は例外保護付きで行う（Avalonia 版と同じ書式）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="propertyName">変更された設定プロパティ名。</param>
+    [LoggerMessage(LogLevel.Error, "設定変更の CaptureSessionControl 反映で例外が発生: {PropertyName}")]
+    public static partial void LogSettingsApplyError(this ILogger logger, Exception ex, string propertyName);
+
     // ====================================================================
     // フォルダビュー
     // ====================================================================

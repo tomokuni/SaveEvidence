@@ -5,7 +5,7 @@ namespace Estable.CaptureSession.Tests;
 
 /// <summary><see cref="CropBoundsMath"/> の単体テスト（クランプ・丸め・最小サイズ・閉区間）。</summary>
 /// <remarks>
-/// Avalonia 版（<c>CropSession.ComputeCropBounds</c>）と MewUI 版（<c>CaptureSelectionMath</c>）から<br/>
+/// Avalonia 版（<c>CropSession</c>）と MewUI 版（<c>CaptureSelectionMath</c>）から<br/>
 /// 移した境界値テストを 1 箇所へ集約した。<br/>
 /// 選択矩形は画像ピクセル座標で得られるため、画像の外へはみ出す入力・端数の丸め・退化した矩形を固定する。
 /// </remarks>
@@ -131,6 +131,61 @@ public class CropBoundsMathTests
         Assert.Equal(0, result.Y);
         Assert.Equal(200, result.Width);
         Assert.Equal(150, result.Height);
+    }
+
+    [Fact]
+    public void ToClosedInterval_画像サイズ無しはクランプしない()
+    {
+        // 画像サイズを知らない呼び出し（画面全体が切り出し対象と一致する場合等）は +1 のみ行う
+        var result = CropBoundsMath.ToClosedInterval(new EsPixelRect(10, 20, 40, 30));
+
+        Assert.Equal(10, result.X);
+        Assert.Equal(20, result.Y);
+        Assert.Equal(41, result.Width);
+        Assert.Equal(31, result.Height);
+    }
+
+    // ====================================================================
+    // RoundToPixel（丸め規則の単一所有）
+    // ====================================================================
+
+    [Theory]
+    [InlineData(10.4, 10)]
+    [InlineData(10.5, 11)]
+    [InlineData(10.6, 11)]
+    [InlineData(-0.5, -1)]
+    [InlineData(0.0, 0)]
+    public void RoundToPixel_0_5は切り上げる(double value, int expected)
+    {
+        // 銀行丸め（0.5 を偶数へ）にならないこと（ピクセル座標の慣例）
+        Assert.Equal(expected, CropBoundsMath.RoundToPixel(value));
+    }
+
+    [Theory]
+    [InlineData(2.5, 3)]
+    [InlineData(3.5, 4)]
+    [InlineData(4.5, 5)]
+    public void RoundToPixel_偶数へ丸めない(double value, int expected)
+    {
+        // Math.Round の既定（銀行丸め）なら 2.5→2 / 3.5→4 / 4.5→4 になる。AwayFromZero は常に切り上げる
+        Assert.Equal(expected, CropBoundsMath.RoundToPixel(value));
+    }
+
+    [Theory]
+    [InlineData(199, 149, 1, 1)]
+    [InlineData(0, 0, 200, 150)]
+    [InlineData(10, 20, 40, 30)]
+    public void ToClosedInterval_画像サイズ付きは幅高さの上限だけを変える(int x, int y, int width, int height)
+    {
+        // 画像サイズ付きは、画像サイズ無しの結果を画像の端でクランプした値になる（規則を共有している）
+        var size = new EsSize(200, 150);
+        var plain = CropBoundsMath.ToClosedInterval(new EsPixelRect(x, y, width, height));
+        var clamped = CropBoundsMath.ToClosedInterval(new EsPixelRect(x, y, width, height), size);
+
+        Assert.Equal(plain.X, clamped.X);
+        Assert.Equal(plain.Y, clamped.Y);
+        Assert.Equal(Math.Min(plain.Width, Math.Max(0, 200 - x)), clamped.Width);
+        Assert.Equal(Math.Min(plain.Height, Math.Max(0, 150 - y)), clamped.Height);
     }
 
     // ====================================================================

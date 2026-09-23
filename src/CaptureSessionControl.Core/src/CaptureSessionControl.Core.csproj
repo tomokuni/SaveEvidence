@@ -5,12 +5,27 @@
     <RootNamespace>Estable.CaptureSession</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。
+         XML は配布物（bin / publish）へ出さない（検証だけに使う）。 -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Platform.Core: コア幾何型・DPI 変換。FadeMaskDragRectControl.Core: 複合コントロールの設定値（CaptureSettings からの変換先） -->
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
     <ProjectReference Include="..\..\FadeMaskDragRectControl.Core\src\FadeMaskDragRectControl.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ログ定義（LoggerMessage ソース生成）をコアが所有する（両 UI が同じ書式を共有する） -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- internal 型はテストからのみ参照する（公開 API を増やさない） -->
+    <InternalsVisibleTo Include="CaptureSessionControl.Core.Tests" />
   </ItemGroup>
 
   <ItemGroup>

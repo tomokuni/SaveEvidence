@@ -42,7 +42,9 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
   - 破線種類（`OverlayLineStyle`）: `Solid` / `Dashed` / `Dotted`
 - **座標変換**: `ContentToViewport` / `ViewportToContent`（ドメイン ↔ ビューポート座標）
 - **選択モード**: `SelectionMode`（`FadeMaskDragRectMode`）で切替（既定 `Crop`）
-- **イベント**: `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved`（FadeMaskDragRectControl へ委譲）/ `RectsChanged`（外部矩形の変化通知）。領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送する
+- **イベント**: `ZoomChanged` / `ViewportChanged`（ズームビューポートから中継）/ `ConfirmRequested` / `CancelRequested`（領域選択オーバーレイから中継）。領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送する
+
+> **層の責務**: 本コントロールは Facade であり、自身は判断を持ちません。画像表示・領域選択の状態と判断は内包するコントロール（`ZoomViewControl` /`FadeMaskDragRectControl`）とそのコアが単一所有し、本コントロールは子要素の生成・重ね順・入力の転送・コア確定値の描画先への写像を担います。
 
 ## 3. システム要件
 
@@ -55,16 +57,18 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 現在は NuGet パッケージではなく、プロジェクト参照で利用します。
 
 ```xml
-<ProjectReference Include="..\src\CropViewControl.csproj" />
+<ProjectReference Include="..\src\CropViewControl.AvaloniaUI.csproj" />
 ```
 
 必要な名前空間:
 
 ```csharp
 using Estable.AvaloniaUI.CropView;
-using Estable.AvaloniaUI.FadeMaskDragRect; // FadeMaskDragRectMode
-using Estable.CropView;                    // OverlayRect / OverlayLineStyle
-using Avalonia; // Point / Rect
+using Estable.AvaloniaUI.FadeMaskDragRect;   // FadeMaskDragRectMode
+using Estable.CropView;                      // OverlayRect / OverlayLineStyle
+using EsUtil.Platform.Core.Geometry;         // EsRect
+using Avalonia;                              // Point / Rect
+using DrawingColor = System.Drawing.Color;   // コアの色型（Avalonia.Media.Color と衝突するため別名）
 ```
 
 ## 5. クイックスタート
@@ -85,10 +89,10 @@ using Avalonia; // Point / Rect
 // 画像を設定（Fit 表示にリセット）
 CropPreview.Source = bitmap;
 
-// 外部提供矩形（破線・色・幅）を表示（型は UI 非依存の CropViewControl.Core 提供）
+// 外部提供矩形（破線・色・幅）を表示（型は UI 非依存の CropViewControl.Core 提供。色は System.Drawing.Color）
 CropPreview.Rects = new[]
 {
-    new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, Color.Orange, Color.White, 2.0),
+    new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, DrawingColor.Orange, DrawingColor.White, 2.0),
 };
 
 // ズーム操作（拡大・縮小・Fit）
@@ -104,7 +108,7 @@ var viewport = CropPreview.ContentToViewport(new Point(100, 100));
 var content = CropPreview.ViewportToContent(new Point(200, 200));
 
 // 選択イベント
-CropPreview.ConfirmRequested += (_, e) => OnConfirm(e.Rect);
+CropPreview.ConfirmRequested += (_, e) => OnConfirm(e.SelectionRect);
 CropPreview.CancelRequested += (_, _) => OnCancel();
 ```
 
@@ -125,16 +129,17 @@ Crop プレビューを拡大・パン・Fit しながら、ドラッグ選択 �
 矩形オーバーレイの UI 非依存な定義とラスタライズは `CropViewControl.Core` へ分離しています（マルチ UI 対応）。
 
 ```text
-CropViewControl/
+CropViewControl.AvaloniaUI/
 ├── src/
-│   ├── CropViewControl.csproj
+│   ├── CropViewControl.AvaloniaUI.csproj
 │   └── CropViewControl.cs   （高レベル複合コントロール本体）
 └── tests/
     ├── CropViewControl.AvaloniaUI.Tests.csproj
+    ├── AvaloniaHeadlessCollection.cs
     ├── TestAppBuilder.cs
     └── CropViewControl.Tests.cs
 
-../CropViewControl.Core/   （OverlayRect / OverlayLineStyle / OverlayLineDash / OverlayRectRasterizer）
+../CropViewControl.Core/   （OverlayRect / OverlayLineStyle / OverlayRectLayout / OverlayRectFrame / OverlayLineDash / OverlayRectRasterizer）
 ```
 
 ## 9. ライセンス

@@ -75,7 +75,7 @@ public class OverlayWindowTests
     private static OverlayWindow CreateWindow(
         CaptureType captureType = CaptureType.AreaSelect,
         double scaling = 1.0,
-        Action<EsBitmap?, PixelRect?>? onComplete = null,
+        Action<EsBitmap?, EsPixelRect?>? onComplete = null,
         MockCaptureService? captureService = null,
         MockElementFinder? elementFinder = null)
         => new(
@@ -118,44 +118,6 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void UpdateOverlay_選択矩形を選択状態へ反映する()
-    {
-        var window = CreateWindow(CaptureType.AreaSelect, scaling: 1.0);
-
-        // 選択矩形（ドメイン = 仮想スクリーンピクセル）を更新 → 選択状態（暗転マスク・ルーペ）へ反映される
-        window.UpdateOverlay(new Rect(100, 200, 400, 300));
-        Assert.True(window.SelectionOverlay.HasSelection);
-        Assert.Equal(new Rect(100, 200, 400, 300), window.SelectionOverlay.SelectionRect);
-
-        // サイズ 0 の矩形（未選択）→ 選択状態はクリアされる
-        window.UpdateOverlay(new Rect(0, 0, 0, 0));
-        Assert.False(window.SelectionOverlay.HasSelection);
-    }
-
-    [AvaloniaFact]
-    public void UpdateOverlay_選択矩形をドメインのまま選択状態へ反映する()
-    {
-        var window = CreateWindow(scaling: 2.0);
-
-        window.UpdateOverlay(new Rect(100, 200, 400, 300));
-
-        // 選択矩形はドメイン（仮想スクリーンピクセル）のまま設定される。
-        // DIP 変換（÷ scaling）+ 閉区間（終点 +1）は描画時に座標変換ポート（DomainScale）が行う。
-        Assert.Equal(new Rect(100, 200, 400, 300), window.SelectionOverlay.SelectionRect);
-        Assert.True(window.SelectionOverlay.HasSelection);
-    }
-
-    [AvaloniaFact]
-    public void UpdateOverlay_サイズ0の矩形は未選択として反映する()
-    {
-        var window = CreateWindow();
-
-        window.UpdateOverlay(new Rect(0, 0, 0, 0));
-
-        Assert.False(window.SelectionOverlay.HasSelection);
-    }
-
-    [AvaloniaFact]
     public void RequestOverlayRender_例外なく再描画を要求する()
     {
         var window = CreateWindow();
@@ -188,7 +150,7 @@ public class OverlayWindowTests
     {
         var captureService = new MockCaptureService();
         EsBitmap? captured = null;
-        PixelRect? capturedBounds = null;
+        EsPixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
             onComplete: (bmp, bounds) => { captured = bmp; capturedBounds = bounds; },
@@ -201,7 +163,7 @@ public class OverlayWindowTests
 
         // 確定: 選択矩形 (2,2)〜(5,5)（半開区間幅 3）→ 閉区間 (2,2,4,4)
         // 切り出しはバックグラウンド（Task.Run + Dispatcher.Post）で実行されるため、完了をポーリングで待つ
-        window.CompleteSelection(new Avalonia.Rect(2, 2, 3, 3));
+        window.CompleteSelection(new EsRect(2, 2, 3, 3));
         await WaitForCompletionAsync(() => capturedBounds is not null);
 
         // CaptureArea は呼ばれない（仮想スクリーンからの切り出しのみ）
@@ -209,7 +171,7 @@ public class OverlayWindowTests
 
         // 切り出し結果は閉区間の矩形（SourceBounds は画面物理座標）
         Assert.NotNull(capturedBounds);
-        Assert.Equal(new PixelRect(2, 2, 4, 4), capturedBounds);
+        Assert.Equal(new EsPixelRect(2, 2, 4, 4), capturedBounds);
         window.Close();
     }
 
@@ -218,7 +180,7 @@ public class OverlayWindowTests
     {
         var captureService = new MockCaptureService();
         EsBitmap? captured = null;
-        PixelRect? capturedBounds = null;
+        EsPixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
             onComplete: (bmp, bounds) => { captured = bmp; capturedBounds = bounds; },
@@ -227,7 +189,7 @@ public class OverlayWindowTests
 
         // 仮想スクリーンを設定しない（オーバーレイを先に表示した直後 = キャプチャ未完了を模擬）
         // この状態で確定すると、CaptureArea でフォールバックする（バックグラウンド実行）
-        window.CompleteSelection(new Avalonia.Rect(2, 2, 3, 3));
+        window.CompleteSelection(new EsRect(2, 2, 3, 3));
         await WaitForCompletionAsync(() => capturedBounds is not null);
 
         // CaptureArea が呼ばれる（フォールバック）
@@ -235,60 +197,96 @@ public class OverlayWindowTests
 
         // SourceBounds は閉区間の矩形（画面物理座標）
         Assert.NotNull(capturedBounds);
-        Assert.Equal(new PixelRect(2, 2, 4, 4), capturedBounds);
+        Assert.Equal(new EsPixelRect(2, 2, 4, 4), capturedBounds);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task UpdateOverlay_事前切り出しが実行される()
+    public async Task CompleteSelection_マルチモニタの負の原点でも画面物理座標で切り出す()
     {
-        var window = CreateWindow(CaptureType.AreaSelect, scaling: 1.0);
+        // 回帰テスト: 選択矩形（画面物理座標）と切り出し元画像の占有範囲（画面物理座標）は同じ座標空間で
+        // 渡す（画像ローカル座標と混ぜると原点の分だけずれて切り出せなくなる）。
+        var captureService = new MockCaptureService();
+        EsPixelRect? capturedBounds = null;
+        var window = CreateWindow(
+            captureType: CaptureType.WindowSelect, scaling: 1.0,
+            onComplete: (_, bounds) => capturedBounds = bounds, captureService: captureService);
+        window.Show();
+
+        // セカンダリが左・上にある構成（仮想スクリーンの原点が負値）。画像は (0,0)-(99,99) のローカル座標を持つ
+        var virtualScreen = EsBitmap.Create(100, 100);
+        window.SetVirtualScreen(virtualScreen, new PixelPoint(-50, -60));
+
+        // 画面物理座標 (0,0)-(9,9)（画像ローカルでは (50,60)-(59,69)）を確定する
+        window.CompleteSelection(new EsRect(0, 0, 10, 10));
+        await WaitForCompletionAsync(() => capturedBounds is not null);
+
+        // 画面物理座標のまま切り出される（ウィンドウ選択は閉区間化しない）
+        Assert.Equal(new EsPixelRect(0, 0, 10, 10), capturedBounds);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task ホバー_事前切り出しが実行される()
+    {
+        var finder = new MockElementFinder
+        {
+            WindowResult = new ElementFinderResults(new EsPixelRect(2, 2, 3, 3), IsDetected: true, Title: "W"),
+        };
+        var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0, elementFinder: finder);
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
         var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
-        // 枠更新（ドラッグ後の矩形）→ 事前切り出しが実行される（Task.Run + Post のため完了をポーリングで待つ）
-        window.UpdateOverlay(new Rect(2, 2, 3, 3));
+        // ホバー（検出枠の更新）→ 事前切り出しが実行される（Task.Run + Post のため完了をポーリングで待つ）
+        InvokeOnClickMoved(window, CreatePointerMoved(window));
         await WaitForCompletionAsync(() => window.PreExtractCount >= 1);
         Assert.Equal(1, window.PreExtractCount);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task UpdateOverlay_同じ矩形なら事前切り出しをスキップする()
+    public async Task ホバー_同じ矩形なら事前切り出しをスキップする()
     {
-        var window = CreateWindow(CaptureType.AreaSelect, scaling: 1.0);
+        var finder = new MockElementFinder
+        {
+            WindowResult = new ElementFinderResults(new EsPixelRect(2, 2, 3, 3), IsDetected: true, Title: "W"),
+        };
+        var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0, elementFinder: finder);
         window.Show();
 
-        // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
         var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
-        // 同じ矩形で 2 回枠更新 → 事前切り出しは 1 回だけ（2 回目はスキップ）
-        window.UpdateOverlay(new Rect(2, 2, 3, 3));
+        // 同じ矩形で 2 回ホバー → 事前切り出しは 1 回だけ（2 回目はスキップ）
+        InvokeOnClickMoved(window, CreatePointerMoved(window));
         await WaitForCompletionAsync(() => window.PreExtractCount >= 1);
-        window.UpdateOverlay(new Rect(2, 2, 3, 3));
+        InvokeOnClickMoved(window, CreatePointerMoved(window));
 
         Assert.Equal(1, window.PreExtractCount);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task UpdateOverlay_矩形が変われば事前切り出しが再実行される()
+    public async Task ホバー_矩形が変われば事前切り出しが再実行される()
     {
-        var window = CreateWindow(CaptureType.AreaSelect, scaling: 1.0);
+        var finder = new MockElementFinder
+        {
+            WindowResult = new ElementFinderResults(new EsPixelRect(2, 2, 3, 3), IsDetected: true, Title: "W"),
+        };
+        var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0, elementFinder: finder);
         window.Show();
 
-        // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
         var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
-        // 異なる矩形で 2 回枠更新 → 事前切り出しは 2 回
-        window.UpdateOverlay(new Rect(2, 2, 3, 3));
+        // 異なる矩形で 2 回ホバー → 事前切り出しは 2 回
+        InvokeOnClickMoved(window, CreatePointerMoved(window));
         await WaitForCompletionAsync(() => window.PreExtractCount >= 1);
-        window.UpdateOverlay(new Rect(5, 5, 2, 2));
+        finder.WindowResult = new ElementFinderResults(new EsPixelRect(5, 5, 2, 2), IsDetected: true, Title: "W");
+        InvokeOnClickMoved(window, CreatePointerMoved(window));
         await WaitForCompletionAsync(() => window.PreExtractCount >= 2);
 
         Assert.Equal(2, window.PreExtractCount);
@@ -300,31 +298,36 @@ public class OverlayWindowTests
     {
         var captureService = new MockCaptureService();
         EsBitmap? captured = null;
-        PixelRect? capturedBounds = null;
+        EsPixelRect? capturedBounds = null;
+        var finder = new MockElementFinder
+        {
+            WindowResult = new ElementFinderResults(new EsPixelRect(2, 2, 3, 3), IsDetected: true, Title: "W"),
+        };
         var window = CreateWindow(
-            captureType: CaptureType.AreaSelect,
+            captureType: CaptureType.WindowSelect,
             onComplete: (bmp, bounds) => { captured = bmp; capturedBounds = bounds; },
-            captureService: captureService);
+            captureService: captureService,
+            elementFinder: finder);
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
         var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
-        // 枠更新（事前切り出し）→ 完了をポーリングで待つ
-        window.UpdateOverlay(new Rect(2, 2, 3, 3));
+        // ホバー（事前切り出し）→ 完了をポーリングで待つ
+        InvokeOnClickMoved(window, CreatePointerMoved(window));
         await WaitForCompletionAsync(() => window.PreExtractCount >= 1);
         Assert.Equal(1, window.PreExtractCount);
 
         // 確定: 同じ矩形 → 事前切り出しキャッシュを再利用（追加切り出しなし）
-        window.CompleteSelection(new Avalonia.Rect(2, 2, 3, 3));
+        window.CompleteSelection(new EsRect(2, 2, 3, 3));
         await WaitForCompletionAsync(() => captured is not null);
         Assert.Equal(1, window.PreExtractCount); // 確定時は切り出しスキップ
 
         // キャッシュが渡される（null でない）
         Assert.NotNull(captured);
         Assert.NotNull(capturedBounds);
-        Assert.Equal(new PixelRect(2, 2, 4, 4), capturedBounds);
+        Assert.Equal(new EsPixelRect(2, 2, 3, 3), capturedBounds);
         window.Close();
     }
 
@@ -336,7 +339,7 @@ public class OverlayWindowTests
     public async Task AreaSelect_確定要求でキャプチャが確定する()
     {
         EsBitmap? captured = null;
-        PixelRect? capturedBounds = null;
+        EsPixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
             onComplete: (bmp, bounds) => { captured = bmp; capturedBounds = bounds; });
@@ -356,7 +359,7 @@ public class OverlayWindowTests
 
         // 確定された（SourceBounds は閉区間 (2,2,4,4) = 画面物理座標）
         Assert.NotNull(capturedBounds);
-        Assert.Equal(new PixelRect(2, 2, 4, 4), capturedBounds);
+        Assert.Equal(new EsPixelRect(2, 2, 4, 4), capturedBounds);
         window.Close();
     }
 
@@ -364,7 +367,7 @@ public class OverlayWindowTests
     public void AreaSelect_キャンセル要求でキャンセルされる()
     {
         EsBitmap? captured = null;
-        PixelRect? capturedBounds = null;
+        EsPixelRect? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
             onComplete: (bmp, bounds) => { captured = bmp; capturedBounds = bounds; });
@@ -387,42 +390,6 @@ public class OverlayWindowTests
     // ====================================================================
     // ルーペの座標変換（ポインタ位置と表示画像の一致）
     // ====================================================================
-
-    [AvaloniaFact]
-    public void UpdateLoupe_ルーペ中心がドメイン座標と一致する()
-    {
-        var window = CreateWindow(scaling: 1.0);
-        window.Show(); // _loupeControl.Parent の接続に必要
-
-        // 仮想スクリーン Bitmap（3840×1080 = デュアルモニタ相当）を設定
-        var bitmap = EsBitmap.Create(3840, 1080);
-        window.SetVirtualScreen(bitmap, new PixelPoint(-1920, 0));
-
-        // ドメイン（仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）でルーペを更新
-        window.UpdateLoupe(new Point(960, 540));
-
-        // ドメインは既に仮想スクリーン Bitmap 上の座標と一致する（原点を再減算しない）
-        Assert.Equal(new Point(960, 540), window.SelectionOverlay.LoupeCenterPoint);
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void UpdateLoupe_仮想スクリーン原点が非ゼロでもルーペ中心はドメイン座標のままである()
-    {
-        var window = CreateWindow(scaling: 2.0);
-        window.Show(); // _loupeControl.Parent の接続に必要
-
-        // マルチモニタ（プライマリが右側・仮想スクリーン原点が (-1920, 0)）のケース
-        var bitmap = EsBitmap.Create(3840, 1080);
-        window.SetVirtualScreen(bitmap, new PixelPoint(-1920, 0));
-
-        // ドメイン（= ローカル DIP × scaling）でルーペを更新
-        window.UpdateLoupe(new Point(2880, 540));
-
-        // 仮想スクリーン原点を減算すると (4800, 540) にずれる（範囲側）ため、ドメイン座標のままであるべき
-        Assert.Equal(new Point(2880, 540), window.SelectionOverlay.LoupeCenterPoint);
-        window.Close();
-    }
 
     [AvaloniaFact]
     public void SetVirtualScreen_背景とルーペのソースが破棄されず有効に保持される()
@@ -458,6 +425,23 @@ public class OverlayWindowTests
         window.Close();
 
         Assert.Null(window.VirtualScreenImageControl.Source);
+        Assert.True(bitmap.IsDisposed);
+    }
+
+    [AvaloniaFact]
+    public void SetVirtualScreen_Close後に届いた画像はその場で破棄される()
+    {
+        // 回帰テスト: 背景撮影の完了がキャンセル（Close）より遅れた場合の破棄漏れを防ぐ
+        // （差し替え時の旧値の破棄・クローズ後の破棄はコアの保持クラスが単一所有する）。
+        var window = CreateWindow(CaptureType.AreaSelect);
+        window.Show();
+        window.Close();
+
+        var late = EsBitmap.Create(100, 100);
+        window.SetVirtualScreen(late, default);
+
+        Assert.True(late.IsDisposed);
+        Assert.Null(window.VirtualScreenImageControl.Source);
     }
 
     /// <summary>バックグラウンド（Task.Run + Dispatcher.Post）の非同期完了をタイムアウト付きで待つ。</summary>
@@ -487,31 +471,19 @@ public class OverlayWindowTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void ToWindowPixel_画面物理座標からウィンドウローカル物理ピクセルへ変換する()
-    {
-        var window = CreateWindow(CaptureType.ScreenSelect);
-        window.Position = new PixelPoint(100, 50);
-
-        // Position を減算した矩形（scaling では割らない・ドメイン座標）
-        var result = InvokeToWindowPixel(window, new EsPixelRect(200, 150, 800, 600));
-
-        Assert.Equal(new Avalonia.Rect(100, 100, 800, 600), result);
-    }
-
-    [AvaloniaFact]
-    public void UpdateSelectScreenHighlight_未検出時はハイライトをクリアする()
+    public void 検出_画面_未検出時はハイライトをクリアする()
     {
         var window = CreateWindow(CaptureType.ScreenSelect);
 
         // 未検出（MockElementFinder は常に default）→ ハイライト無効
-        InvokeUpdateSelectScreenHighlight(window, new EsPixelPoint(100, 100));
+        InvokeApplyHighlight(window, new EsPixelPoint(100, 100));
 
         Assert.False(window.SelectionOverlay.HasHighlight);
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
     }
 
     [AvaloniaFact]
-    public void UpdateSelectScreenHighlight_検出時はハイライトを反映する()
+    public void 検出_画面_検出時はハイライトを反映する()
     {
         var finder = new MockElementFinder
         {
@@ -524,14 +496,14 @@ public class OverlayWindowTests
         window.Position = new PixelPoint(100, 50);
 
         // 検出（画面物理 (200,100)-(2120,1180)）→ ドメイン（ウィンドウローカル物理）へ変換して反映
-        InvokeUpdateSelectScreenHighlight(window, new EsPixelPoint(500, 500));
+        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
 
         Assert.True(window.SelectionOverlay.HasHighlight);
         Assert.Equal(new Rect(100, 50, 1920, 1080), window.SelectionOverlay.LogicalHighlightRect);
     }
 
     [AvaloniaFact]
-    public void UpdateSelectScreenHighlight_サイズラベル換算はオーバーレイのスケーリングを維持する()
+    public void 検出_画面_サイズラベル換算はオーバーレイのスケーリングを維持する()
     {
         var finder = new MockElementFinder
         {
@@ -545,19 +517,19 @@ public class OverlayWindowTests
 
         // マルチモニタでカーソル位置のスクリーンのスケーリングが異なっても、
         // サイズラベルの物理換算はドメイン（画面物理 − Position）と往復一致するよう _scaling を維持する
-        InvokeUpdateSelectScreenHighlight(window, new EsPixelPoint(500, 500));
+        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
 
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
         window.Close();
     }
 
     [AvaloniaFact]
-    public void UpdateSelectScreenHighlight_未検出時もサイズラベル換算を維持する()
+    public void 検出_画面_未検出時もサイズラベル換算を維持する()
     {
         // 未検出（MockElementFinder は常に default）
         var window = CreateWindow(CaptureType.ScreenSelect, scaling: 2.0);
 
-        InvokeUpdateSelectScreenHighlight(window, new EsPixelPoint(100, 100));
+        InvokeApplyHighlight(window, new EsPixelPoint(100, 100));
 
         // 未検出時も _scaling（2.0）のまま維持される
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
@@ -565,7 +537,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void UpdateWindowSelectHighlight_検出時はハイライトを反映する()
+    public void 検出_ウィンドウ_検出時はハイライトを反映する()
     {
         var finder = new MockElementFinder
         {
@@ -578,7 +550,7 @@ public class OverlayWindowTests
         window.Position = new PixelPoint(100, 50);
 
         // 検出（画面物理 (300,200)-(1100,800)）→ ドメインへ変換して反映
-        InvokeUpdateWindowSelectHighlight(window, new EsPixelPoint(500, 500));
+        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
 
         Assert.True(window.SelectionOverlay.HasHighlight);
         Assert.Equal(new Rect(200, 150, 800, 600), window.SelectionOverlay.LogicalHighlightRect);
@@ -586,7 +558,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void UpdateWindowSelectHighlight_サイズラベル換算はオーバーレイのスケーリングを維持する()
+    public void 検出_ウィンドウ_サイズラベル換算はオーバーレイのスケーリングを維持する()
     {
         var finder = new MockElementFinder
         {
@@ -598,26 +570,14 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.WindowSelect, scaling: 2.0, elementFinder: finder);
 
         // ウィンドウのハイライトでもサイズラベル換算は _scaling を維持する（ScreenSelect と同一）
-        InvokeUpdateWindowSelectHighlight(window, new EsPixelPoint(500, 500));
+        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
 
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
         window.Close();
     }
 
     [AvaloniaFact]
-    public void ToWindowDip_画面物理座標からウィンドウローカルDIPへ変換する()
-    {
-        var window = CreateWindow(CaptureType.ScreenSelect, scaling: 2.0);
-        window.Position = new PixelPoint(100, 50);
-
-        // (画面物理 − Position) / scaling で変換
-        var result = InvokeToWindowDip(window, new EsPixelRect(300, 250, 800, 600));
-
-        Assert.Equal(new Avalonia.Rect(100, 100, 400, 300), result);
-    }
-
-    [AvaloniaFact]
-    public void OnClickPressed_左ボタン押下でハイライトが固定される()
+    public async Task クリック確定_左押下で固定した矩形で解放時に確定する()
     {
         var finder = new MockElementFinder
         {
@@ -626,25 +586,27 @@ public class OverlayWindowTests
                 IsDetected: true,
                 Title: "Sample Window"),
         };
-        var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0, elementFinder: finder);
+        var completed = new List<EsPixelRect?>();
+        var window = CreateWindow(
+            CaptureType.WindowSelect, scaling: 1.0,
+            onComplete: (_, bounds) => completed.Add(bounds), elementFinder: finder);
         window.Show();
-        var pointer = new Pointer(1, PointerType.Mouse, true);
 
-        // 左ボタン押下（クリック確定フロー開始）
-        var e = new PointerPressedEventArgs(
-            window, pointer, window, new Point(10, 10), 0UL,
-            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
-            KeyModifiers.None, 1);
-        InvokeOnClickPressed(window, e);
+        // 押下（ハイライト固定）→ 解放（確定）
+        InvokeOnClickPressed(window, CreatePointerPressed(window, RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed));
+        InvokeOnClickReleased(window, CreatePointerReleased(window));
 
-        // 固定矩形（_clickFixedRect）が設定される（リフレクションで確認）
-        var field = typeof(OverlayWindow).GetField("_clickFixedRect", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        Assert.NotNull(field.GetValue(window));
+        // 確定は Task.Run + Dispatcher.Post で非同期に完了するため、完了を待つ
+        await WaitForCompletionAsync(() => completed.Count > 0);
+
+        // 確定が 1 回実行される（画面物理座標の矩形）
+        Assert.Single(completed);
+        Assert.NotNull(completed[0]);
         window.Close();
     }
 
     [AvaloniaFact]
-    public void OnClickPressed_左ボタン以側は無視される()
+    public async Task クリック確定_右ボタンの押下では固定されない()
     {
         var finder = new MockElementFinder
         {
@@ -653,19 +615,36 @@ public class OverlayWindowTests
                 IsDetected: true,
                 Title: "Sample Window"),
         };
-        var window = CreateWindow(CaptureType.WindowSelect, elementFinder: finder);
+        var completed = new List<EsPixelRect?>();
+        var window = CreateWindow(
+            CaptureType.WindowSelect,
+            onComplete: (_, bounds) => completed.Add(bounds), elementFinder: finder);
         window.Show();
-        var pointer = new Pointer(1, PointerType.Mouse, true);
 
-        // 右ボタン押下 → 無視（_clickFixedRect は設定されない）
-        var e = new PointerPressedEventArgs(
-            window, pointer, window, new Point(10, 10), 0UL,
-            new PointerPointProperties(RawInputModifiers.RightMouseButton, PointerUpdateKind.RightButtonPressed),
-            KeyModifiers.None, 1);
-        InvokeOnClickPressed(window, e);
+        // 右ボタン押下 → 固定されず、解放しても確定しない
+        InvokeOnClickPressed(window, CreatePointerPressed(window, RawInputModifiers.RightMouseButton, PointerUpdateKind.RightButtonPressed));
+        InvokeOnClickReleased(window, CreatePointerReleased(window));
 
-        var field = typeof(OverlayWindow).GetField("_clickFixedRect", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        Assert.Null(field.GetValue(window));
+        await Task.Delay(20);
+        Assert.DoesNotContain(completed, bounds => bounds is not null);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task クリック確定_退化した検出結果は固定されない()
+    {
+        // 未検出（矩形が空）→ 固定しない → 解放しても切り出しを行わない（0 サイズの画像を作らない）
+        var completed = new List<EsPixelRect?>();
+        var window = CreateWindow(
+            CaptureType.WindowSelect,
+            onComplete: (_, bounds) => completed.Add(bounds));
+        window.Show();
+
+        InvokeOnClickPressed(window, CreatePointerPressed(window, RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed));
+        InvokeOnClickReleased(window, CreatePointerReleased(window));
+
+        await Task.Delay(20);
+        Assert.Empty(completed);
         window.Close();
     }
 
@@ -683,7 +662,7 @@ public class OverlayWindowTests
         window.Show();
         var pointer = new Pointer(1, PointerType.Mouse, true);
 
-        // マウス移動 → ハイライト更新（ScreenSelect は UpdateSelectScreenHighlight）
+        // マウス移動 → ハイライト更新（検出関数の呼び分けはコアが単一所有する）
         var e = new PointerEventArgs(
             InputElement.PointerMovedEvent, window, pointer, window, new Point(10, 10), 0UL,
             new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.Other), KeyModifiers.None);
@@ -703,67 +682,113 @@ public class OverlayWindowTests
                 IsDetected: true,
                 Title: "Sample Window"),
         };
-        var completed = new List<PixelRect?>();
+        var completed = new List<EsPixelRect?>();
         var window = CreateWindow(
             CaptureType.WindowSelect, scaling: 1.0,
             onComplete: (_, bounds) => completed.Add(bounds), elementFinder: finder);
         window.Show();
-        var pointer = new Pointer(1, PointerType.Mouse, true);
 
         // 押下（ハイライト固定）→ 解放（確定）
-        var pressed = new PointerPressedEventArgs(
-            window, pointer, window, new Point(10, 10), 0UL,
-            new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
-            KeyModifiers.None, 1);
-        InvokeOnClickPressed(window, pressed);
-
-        // 固定矩形（_clickFixedRect）が設定されているか確認
-        var clickFixed = typeof(OverlayWindow).GetField("_clickFixedRect", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window);
-        Assert.NotNull(clickFixed);
-
-        var released = new PointerReleasedEventArgs(
-            window, pointer, window, new Point(10, 10), 0UL,
-            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
-            KeyModifiers.None, MouseButton.Left);
-        InvokeOnClickReleased(window, released);
+        InvokeOnClickPressed(window, CreatePointerPressed(window, RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed));
+        InvokeOnClickReleased(window, CreatePointerReleased(window));
 
         // 確定は Task.Run + Dispatcher.Post で非同期に完了するため、完了を待つ
-        await WaitForCompletionAsync(() => completed.Count > 0);
+        await WaitForCompletionAsync(() => completed.Any(bounds => bounds is not null));
 
-        // 確定が 1 回実行される（画面物理座標の矩形）
-        Assert.Single(completed);
-        Assert.NotNull(completed[0]);
+        // 固定した矩形（検出結果）で確定する
+        Assert.Equal(new EsPixelRect(300, 200, 800, 600), completed.First(bounds => bounds is not null));
         window.Close();
     }
 
     [AvaloniaFact]
     public void OnClickReleased_固定矩形がなければ確定しない()
     {
-        var completed = new List<PixelRect?>();
+        var completed = new List<EsPixelRect?>();
         var window = CreateWindow(
             CaptureType.WindowSelect,
             onComplete: (_, bounds) => completed.Add(bounds));
         window.Show();
-        var pointer = new Pointer(1, PointerType.Mouse, true);
 
-        // 押下なしで解放 → 確定しない（_clickFixedRect は null）
-        var released = new PointerReleasedEventArgs(
-            window, pointer, window, new Point(10, 10), 0UL,
-            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
-            KeyModifiers.None, MouseButton.Left);
-        InvokeOnClickReleased(window, released);
+        // 押下なしで解放 → 確定しない（固定が無い）
+        InvokeOnClickReleased(window, CreatePointerReleased(window));
 
-        Assert.Empty(completed);
+        Assert.DoesNotContain(completed, bounds => bounds is not null);
+        window.Close();
+    }
+
+    // ====================================================================
+    // ウィンドウのキー操作（Enter = 確定 / Escape = キャンセル）
+    // ====================================================================
+
+    [AvaloniaFact]
+    public void ハイライト型_Escapeでキャンセルされる()
+    {
+        // 回帰: 内包する選択オーバーレイ（Marquee）も TopLevel のキーを購読して処理済みにするため、
+        // ウィンドウが受け取れず Escape でキャンセルできなかった（Tunnel + handledEventsToo で受ける）。
+        var completed = new List<EsPixelRect?>();
+        var window = CreateWindow(
+            CaptureType.WindowSelect,
+            onComplete: (_, bounds) => completed.Add(bounds));
+        window.Show();
+
+        window.RaiseEvent(new KeyEventArgs { Key = Key.Escape, RoutedEvent = InputElement.KeyDownEvent });
+
+        Assert.Single(completed);
+        Assert.Null(completed[0]);
         window.Close();
     }
 
     [AvaloniaFact]
-    public void UpdateWindowSelectHighlight_未検出時はハイライトをクリアする()
+    public async Task ハイライト型_確定対象が無いEnterは何もしない()
+    {
+        // 何も検出していない状態の Enter はキャンセル扱いにしない（コアのキー解釈が単一所有する）
+        var completed = new List<EsPixelRect?>();
+        var window = CreateWindow(
+            CaptureType.WindowSelect,
+            onComplete: (_, bounds) => completed.Add(bounds));
+        window.Show();
+
+        window.RaiseEvent(new KeyEventArgs { Key = Key.Enter, RoutedEvent = InputElement.KeyDownEvent });
+
+        await Task.Delay(20);
+        Assert.DoesNotContain(completed, bounds => bounds is not null);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task ハイライト型_確定対象があるEnterは確定する()
+    {
+        var finder = new MockElementFinder
+        {
+            WindowResult = new ElementFinderResults(
+                new EsPixelRect(300, 200, 800, 600),
+                IsDetected: true,
+                Title: "Sample Window"),
+        };
+        var completed = new List<EsPixelRect?>();
+        var window = CreateWindow(
+            CaptureType.WindowSelect,
+            onComplete: (_, bounds) => completed.Add(bounds), elementFinder: finder);
+        window.Show();
+
+        // ホバー（ハイライトを検出）→ Enter で確定
+        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
+        window.RaiseEvent(new KeyEventArgs { Key = Key.Enter, RoutedEvent = InputElement.KeyDownEvent });
+
+        await WaitForCompletionAsync(() => completed.Any(bounds => bounds is not null));
+
+        // ウィンドウの画面物理位置は既定（0,0）のため、検出矩形がそのままキャプチャ矩形になる（ウィンドウ選択は +1 しない）
+        Assert.Equal(new EsPixelRect(300, 200, 800, 600), completed.First(bounds => bounds is not null));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void 検出_ウィンドウ_未検出時はハイライトをクリアする()
     {
         var window = CreateWindow(CaptureType.WindowSelect);
 
         // 未検出 → ハイライト無効・タイトル空
-        InvokeUpdateWindowSelectHighlight(window, new EsPixelPoint(100, 100));
+        InvokeApplyHighlight(window, new EsPixelPoint(100, 100));
 
         Assert.False(window.SelectionOverlay.HasHighlight);
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
@@ -774,18 +799,18 @@ public class OverlayWindowTests
     // リフレクションヘルパー（private メソッドの直接検証）
     // ====================================================================
 
-    private static Avalonia.Rect InvokeToWindowPixel(OverlayWindow window, EsPixelRect bounds)
+    private static void InvokeApplyHighlight(OverlayWindow window, EsPixelPoint screenPoint)
     {
-        var method = typeof(OverlayWindow).GetMethod(
-            "ToWindowPixel", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        return (Avalonia.Rect)method.Invoke(window, [bounds])!;
-    }
-
-    private static Avalonia.Rect InvokeToWindowDip(OverlayWindow window, EsPixelRect bounds)
-    {
-        var method = typeof(OverlayWindow).GetMethod(
-            "ToWindowDip", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        return (Avalonia.Rect)method.Invoke(window, [bounds])!;
+        // 検出関数の呼び分けはコアが単一所有するため、本ヘルパーは「検出→反映」の 1 経路を呼ぶ
+        var applyMethod = typeof(OverlayWindow).GetMethod(
+            "ApplyHighlight", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var finder = typeof(OverlayWindow)
+            .GetField("_detector", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window) as IElementFinder;
+        var type = typeof(OverlayWindow)
+            .GetField("_captureType", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window) is CaptureType captureType
+                ? captureType
+                : CaptureType.AreaSelect;
+        applyMethod.Invoke(window, [CaptureTypeTraits.FindUnderCursor(finder, type, screenPoint)]);
     }
 
     private static void InvokeOnClickPressed(OverlayWindow window, PointerPressedEventArgs e)
@@ -793,6 +818,31 @@ public class OverlayWindowTests
         var method = typeof(OverlayWindow).GetMethod(
             "OnClickPressed", BindingFlags.Instance | BindingFlags.NonPublic)!;
         method.Invoke(window, [null, e]);
+    }
+
+    /// <summary>指定ウィンドウを対象とするポインタ押下イベントを生成する。</summary>
+    /// <param name="window">対象のウィンドウ。</param>
+    /// <param name="button">押下するボタン。</param>
+    /// <returns>ポインタ押下イベント。</returns>
+    private static PointerPressedEventArgs CreatePointerPressed(
+        OverlayWindow window, RawInputModifiers button, PointerUpdateKind kind)
+    {
+        var pointer = new Pointer(1, PointerType.Mouse, true);
+        return new PointerPressedEventArgs(
+            window, pointer, window, new Point(10, 10), 0UL,
+            new PointerPointProperties(button, kind), KeyModifiers.None, 1);
+    }
+
+    /// <summary>指定ウィンドウを対象とするポインタ解放イベントを生成する。</summary>
+    /// <param name="window">対象のウィンドウ。</param>
+    /// <returns>ポインタ解放イベント。</returns>
+    private static PointerReleasedEventArgs CreatePointerReleased(OverlayWindow window)
+    {
+        var pointer = new Pointer(1, PointerType.Mouse, true);
+        return new PointerReleasedEventArgs(
+            window, pointer, window, new Point(10, 10), 0UL,
+            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased),
+            KeyModifiers.None, MouseButton.Left);
     }
 
     private static void InvokeOnClickMoved(OverlayWindow window, PointerEventArgs e)
@@ -809,18 +859,15 @@ public class OverlayWindowTests
         method.Invoke(window, [null, e]);
     }
 
-    private static void InvokeUpdateSelectScreenHighlight(OverlayWindow window, EsPixelPoint screenPoint)
+    /// <summary>指定ウィンドウを対象とするポインタ移動イベントを生成する。</summary>
+    /// <param name="window">対象のウィンドウ。</param>
+    /// <returns>ポインタ移動イベント。</returns>
+    private static PointerEventArgs CreatePointerMoved(OverlayWindow window)
     {
-        var method = typeof(OverlayWindow).GetMethod(
-            "UpdateSelectScreenHighlight", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        method.Invoke(window, [screenPoint]);
-    }
-
-    private static void InvokeUpdateWindowSelectHighlight(OverlayWindow window, EsPixelPoint screenPoint)
-    {
-        var method = typeof(OverlayWindow).GetMethod(
-            "UpdateWindowSelectHighlight", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        method.Invoke(window, [screenPoint]);
+        var pointer = new Pointer(1, PointerType.Mouse, true);
+        return new PointerEventArgs(
+            InputElement.PointerMovedEvent, window, pointer, window, new Point(10, 10), 0UL,
+            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.Other), KeyModifiers.None);
     }
 }
 

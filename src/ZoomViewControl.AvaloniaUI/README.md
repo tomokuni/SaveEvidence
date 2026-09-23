@@ -26,8 +26,8 @@
 
 画像プレビューのズーム・パン・Fit 表示を提供する独立ライブラリです。
 
-- **ZoomViewControl**: 自己完結型複合コントロール。内部ビューポートを内包し、ズーム率（実効ズーム率）の遷移・適用・Fit 表示・可否を統括。特定コントロールに依存せず、`ZoomChanged` イベントで実効ズーム率・Fit 状態・可否をホストへ通知（表示文字列の生成はホストの責務）
-- **設定（`ZoomConfig`）**: ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をまとめた検証付き不変値（`public`）。コンストラクタ注入または `ZoomViewControl` の設定プロパティ（読み書き）でカスタマイズできる。既定値（`Default`）も用意され、不正な値はガードされる
+- **ZoomViewControl**: 自己完結型複合コントロール。内部ビューポートを内包し、公開 API をコアの `ZoomViewSession`（状態と判断を単一所有）へ委譲する。特定コントロールに依存せず、`ZoomChanged` イベントで実効ズーム率・Fit 状態・可否をホストへ通知（表示文字列の生成はホストの責務）
+- **設定（`ZoomConfig`）**: ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をまとめた検証付き不変値（`public`）。**コンストラクタ注入でカスタマイズする**（旧設定プロパティは参照がないため削除した）。既定値（`Default`）も用意され、不正な値はガードされる
 - 上位 AP は `ZoomViewControl` の `Source` を設定し、`ZoomChanged` を購読するだけで、ズーム計算・表示の詳細は本ライブラリが担います
 
 ## 2. 機能一覧
@@ -76,7 +76,7 @@ using Estable.AvaloniaUI.ZoomView;
 
 #### 設定（ズーム範囲・倍率）
 
-ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）は `ZoomConfig`（検証付き不変値）に集約されます。既定値（`ZoomConfig.Default`）で動作させ、必要に応じて `ZoomViewControl` の設定プロパティ（読み書き）またはコンストラクタ注入でカスタマイズできます。不正な値は `ZoomConfig` がガードします。
+ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）は `ZoomConfig`（検証付き不変値）に集約されます。既定値（`ZoomConfig.Default`）で動作させ、必要に応じて **コンストラクタ注入**（`new ZoomViewControl(config)`）でカスタマイズできます。不正な値は `ZoomConfig` がガードします。
 
 ### 画像の設定とイベント購読
 
@@ -102,7 +102,7 @@ zoomInButton.IsEnabled = zoomView.CanZoomIn;
 zoomOutButton.IsEnabled = zoomView.CanZoomOut;
 ```
 
-> Ctrl+ホイールのズーム要求（`ZoomRequested`）・ビューポートリサイズ（`SizeChanged`）の配線は
+> Ctrl+ホイールのズーム・ビューポートリサイズ・パンの配線は内部ビューポートが自己完結します（セッションへ直接働きかけるため、ホスト側で購読する必要はありません）。
 > `ZoomViewControl` が内部で自己完結するため、ホスト側で購読する必要はありません。
 > ホストは `ZoomChanged`（スライダ・⊖⊕ ボタン同期用）と `ViewportChanged`（オーバーレイ追従用）のみ購読します。
 > 座標変換（`ViewportToContentImage` / `ContentToViewportImage`）・画像表示矩形（`ImageRectViewport`）・
@@ -142,17 +142,18 @@ dotnet run --project sample/ZoomViewControl.AvaloniaUI.Sample.csproj
 本コントロールは、UI フレームワーク非依存のロジックを `ZoomViewControl.Core` へ分離しています（マルチ UI 対応）。
 
 ```text
-ZoomViewControl/
+ZoomViewControl.AvaloniaUI/
 ├── src/          # ライブラリ本体（Avalonia 実装）
-│   ├── ZoomViewControl.cs      # 自己完結型複合コントロール（ズーム遷移・適用・表示を統括）
-│   ├── ZoomableView.cs         # ScrollViewer 不使用のパン・ズームビューポート
-│   ├── ZoomChangedEventArgs.cs # ズーム変更イベント引数
-│   ├── ZoomRequestedEventArgs.cs
-│   └── Logging/                # ログ定義（ZoomViewLogMessage）
+│   ├── ZoomViewControl.cs      # 自己完結型複合コントロール（公開 API の委譲・通知の転送）
+│   ├── ZoomableView.cs         # ScrollViewer 不使用のパン・ズームビューポート（入力ブリッジ・描画の適用）
+│   └── ZoomChangedEventArgs.cs # ズーム変更イベント引数（コアの ZoomState を保持する薄い型）
 ├── tests/        # 単体テスト（ZoomViewControl.AvaloniaUI.Tests）
+│   ├── ZoomViewControl.Tests.cs  # 公開 API・Fit 移行・実効ズーム率
+│   └── ZoomableView.Tests.cs     # 画像配置・Transform・スクロールバー同期・入力ブリッジ
 └── sample/       # サンプルアプリケーション
 
-../ZoomViewControl.Core/        # UI 非依存の計算（ZoomMath / ZoomTransition / ZoomConfig / ZoomAvailability）
+../ZoomViewControl.Core/        # UI 非依存の状態と判断（ZoomViewSession）、設定（ZoomConfig）、
+                                # 契約（ZoomState / ZoomFeedback / ZoomNotice）、外観（ZoomViewAppearance）、ログ
 ```
 
 ## 10. ライセンス

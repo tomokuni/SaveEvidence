@@ -44,8 +44,6 @@
                     <Separator/>
 
                     <TextBlock Text="ルーペ設定（AreaSelect）" FontSize="13" FontWeight="Bold"/>
-                    <CheckBox Content="ルーペを表示（LoupeVisible）" IsChecked="{Binding LoupeVisible, Mode=TwoWay}"
-                              FontSize="11"/>
                     <TextBlock Text="拡大倍率（LoupeZoomLevel）" FontSize="11"/>
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Right" Text="{Binding LoupeZoomLevel}" FontSize="11"/>

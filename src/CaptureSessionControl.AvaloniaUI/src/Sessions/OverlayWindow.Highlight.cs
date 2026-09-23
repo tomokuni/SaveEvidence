@@ -1,11 +1,8 @@
-using Avalonia;
 using Avalonia.Input;
-using Avalonia.Platform;
-using Rect = Avalonia.Rect;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
-using Estable.AvaloniaUI.CaptureSession.Logging;
+using Estable.CaptureSession;
 
 namespace Estable.AvaloniaUI.CaptureSession;
 
@@ -19,152 +16,95 @@ namespace Estable.AvaloniaUI.CaptureSession;
 /// </remarks>
 internal sealed partial class OverlayWindow
 {
-    /// <summary>検出中のウィンドウタイトル（情報ラベルの文言。未検出時は空文字）。</summary>
-    private string _windowTitle = "";
-
     /// <summary>クリック確定型のマウス移動時のハイライト更新。</summary>
     private void OnClickMoved(object? sender, PointerEventArgs e)
     {
         // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
         var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPixelPoint();
-        if (_captureType == CaptureType.ScreenSelect)
-            UpdateSelectScreenHighlight(screenPoint);
-        else
-            UpdateWindowSelectHighlight(screenPoint);
+        // 検出関数の呼び分けはコアが単一所有する
+        var detection = CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint);
+        var highlight = ApplyHighlight(detection);
         // ハイライト検出結果を外側の装飾（MarqueeControl）の描画へ反映する（再描画要求）
         RequestOverlayRender();
-        // ホバー中の枠（ハイライト）を事前切り出しする（確定時の高速化。同じ矩形ならスキップ）
-        if (SelectionOverlay.LogicalHighlightRect is { } highlightLogical)
+        // ホバー中の枠（ハイライト）を事前切り出しする（確定時の高速化。同じ矩形ならコアがスキップする）
+        if (highlight.HasHighlight)
         {
-            // ドメイン（ウィンドウローカル物理ピクセル = 画面物理 − Position）→ 画面物理座標へ変換
-            // （変換は DomainToScreenRect に委譲する。ドメイン + Position の一元化）
-            PreExtractClip(DomainToScreenRect(highlightLogical, Position));
+            PreExtractClip(detection.Bounds);
         }
     }
 
-    /// <summary>ScreenSelect のハイライトを更新する。</summary>
-    private void UpdateSelectScreenHighlight(EsPixelPoint screenPoint)
+    /// <summary>検出結果をハイライトへ反映する。</summary>
+    /// <param name="detection">要素の検出結果。</param>
+    /// <returns>ハイライトの状態（ハイライトの有無・矩形・表示名とその変化）。</returns>
+    /// <remarks>
+    /// スクリーン検出・ウィンドウ検出の双方で同じ反映手順（ハイライト矩形・表示可否・診断ログ）を取る。<br/>
+    /// 矩形のドメイン座標への変換・未検出の正規化・表示名の保持・ログは<br/>
+    /// コアの <see cref="CaptureHighlightSession"/> が単一所有する（本クラスは結果を設定するだけ）。<br/>
+    /// サイズラベルの物理ピクセル換算は、ドメイン（画面物理 − Position）を DIP 変換した DomainScale(_scaling) と<br/>
+    /// 往復一致するよう _scaling（オーバーレイの表示スケール）を維持する（マルチモニタでも往復が一致する）。
+    /// </remarks>
+    private CaptureHighlight ApplyHighlight(ElementFinderResults detection)
     {
-        var detection = _detector.FindScreenUnderCursor(screenPoint);
-        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds) : null;
-        SelectionOverlay.HasHighlight = detection.IsDetected;
-        // サイズラベルの物理ピクセル換算は、ドメイン（画面物理 − Position）を DIP 変換した
-        // DomainScale(_scaling) と往復一致するよう _scaling（オーバーレイの表示スケール）を維持する。
-        // マルチモニタで異なるスケーリングのスクリーンを選択しても、選択矩形はドメイン（物理ピクセル）
-        // のまま保持され、DIP 変換（÷ _scaling）と物理換算（× _scaling）で正しい物理サイズを表示する。
-        _log.LogHighlight("ScreenSelect", detection.IsDetected,
-            detection.IsDetected ? ToWindowPixel(detection.Bounds).ToString() : "",
-            detection.Title ?? "", "");
-    }
-
-    /// <summary>点を含むスクリーンのスケーリング係数を返す（純粋関数）。該当なしはフォールバックを返す。</summary>
-    /// <param name="point">判定する点（画面物理座標）。</param>
-    /// <param name="fallback">該当スクリーンが無い場合のスケーリング係数。</param>
-    /// <param name="screens">スクリーン情報（Bounds と Scaling）。</param>
-    /// <returns>点を含むスクリーンのスケーリング係数。該当なしは <paramref name="fallback"/>。</returns>
-    /// <remarks><see cref="Screen"/> 抽象クラスに依存しないよう、スクリーン情報は <c>(Bounds, Scaling)</c> のタプル列として受け取る。</remarks>
-    private static double FindScalingForPoint(
-        PixelPoint point, double fallback, IEnumerable<(PixelRect Bounds, double Scaling)> screens)
-    {
-        foreach (var (bounds, scaling) in screens)
-        {
-            if (bounds.Contains(point)) return scaling;
-        }
-        return fallback;
+        var highlight = _highlight.Update(_captureType, detection, Position.ToEsPixelPoint());
+        SelectionOverlay.HasHighlight = highlight.HasHighlight;
+        SelectionOverlay.LogicalHighlightRect = highlight.DomainRect is { } rect ? rect.ToAvaloniaRect() : null;
+        return highlight;
     }
 
     /// <summary>ドメイン矩形の中心が含まれるモニタのスケーリング係数を返す（サイズラベルの DisplayScale 表示用）。</summary>
-    /// <param name="domainRect">ドメイン矩形（= 画面物理 − Position。仮想スクリーンピクセル）。</param>
+    /// <param name="domainRect">ドメイン矩形（= 画面物理 − Position。ウィンドウローカル物理ピクセル）。</param>
     /// <returns>矩形中心のモニタのスケーリング係数。該当なしはオーバーレイのスケーリング（<see cref="_scaling"/>）。</returns>
     /// <remarks>
-    /// ドメイン矩形の中心に <see cref="Position"/> を加算して画面物理座標へ戻し、<see cref="FindScalingForPoint"/> で
-    /// モニタを特定する。これにより、マルチモニタ（異なる DPI）でも選択中のモニタの実スケーリングを表示できる。
+    /// ドメイン矩形の中心に <see cref="Position"/> を加算して画面物理座標へ戻し、中心を含むモニタを特定する。<br/>
+    /// 「原点の加算」「中心で判定する」「該当なしはフォールバック」という規則はコア（<see cref="MonitorScalingMath"/>）が単一所有する<br/>
+    /// （UI ごとに判定点がずれると、同じ矩形で表示倍率が食い違う）。<br/>
+    /// モニタ一覧は構築時に 1 回だけ解決したものを再利用する（描画のたびに列挙・配列生成をしない）。
     /// </remarks>
-    private double GetMonitorScalingForRect(Rect domainRect)
-    {
-        var center = new PixelPoint(
-            (int)(domainRect.X + domainRect.Width / 2 + Position.X),
-            (int)(domainRect.Y + domainRect.Height / 2 + Position.Y));
-        return FindScalingForPoint(center, _scaling, Screens.All.Select(s => (s.Bounds, s.Scaling)));
-    }
+    private double GetMonitorScalingForRect(EsRect domainRect)
+        => MonitorScalingMath.ResolveForDomainRect(
+            domainRect, Position.ToEsPixelPoint(), _monitors, _scaling);
 
-    /// <summary>ドメイン矩形からサイズラベルを生成する（物理ピクセル + DisplayScale）。</summary>
-    /// <param name="domainRect">ドメイン矩形（= 画面物理 − Position。物理ピクセル）。</param>
-    /// <param name="scaling">DisplayScale 表示用のスケーリング係数（選択中のモニタの実スケーリング）。</param>
-    /// <returns>"(L, T) - (R, B),  (W×H), DisplayScale: (P%)" 形式のテキスト。</returns>
+    /// <summary>サイズラベルの対象となる確定矩形（ドメイン座標）を解決する。</summary>
+    /// <returns>確定対象の矩形。対象がない場合は null。</returns>
     /// <remarks>
-    /// ドメインは画面物理座標のため、座標・サイズはスケーリングに依存しない物理ピクセルとして直接取得できる。<br/>
-    /// DIP 変換（÷ _scaling）→ 物理換算（× DisplayScaleScaling）の往復誤差（マルチモニタでのサイズ・DisplayScale の
-    /// 不一致）を排除するため、ドメインから直接生成する（単一実装・DRY）。
+    /// 「ハイライト型はハイライト矩形・それ以外は選択矩形」という優先順位はコア（<see cref="CaptureTypeTraits.ResolveRect"/>）が単一所有する。<br/>
+    /// ハイライト矩形はコアのハイライト状態（<see cref="CaptureHighlightSession"/>）から読む<br/>
+    /// （選択コントロールから読み戻すと、同じ値が 2 箇所に存在する）。
     /// </remarks>
-    private static string FormatDomainSizeLabel(Rect domainRect, double scaling)
-    {
-        int l = (int)domainRect.X, t = (int)domainRect.Y;
-        int r = (int)domainRect.Right, b = (int)domainRect.Bottom;
-        int w = (int)domainRect.Width, h = (int)domainRect.Height;
-        int pct = (int)(scaling * 100);
-        return $"({l}, {t}) - ({r}, {b}),  ({w}×{h}), DisplayScale: ({pct}%)";
-    }
-
-    /// <summary>WindowSelect のハイライトを更新する。</summary>
-    private void UpdateWindowSelectHighlight(EsPixelPoint screenPoint)
-    {
-        var detection = _detector.FindWindowUnderCursor(screenPoint);
-        SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds) : null;
-        SelectionOverlay.HasHighlight = detection.IsDetected;
-        _windowTitle = detection.Title ?? "";
-        // サイズラベルの物理ピクセル換算は _scaling（オーバーレイの表示スケール）を維持する
-        // （ScreenSelect と同一。マルチモニタでもドメイン（物理ピクセル）の往復が一致する）。
-        _log.LogHighlight("WindowSelect", detection.IsDetected,
-            detection.IsDetected ? ToWindowPixel(detection.Bounds).ToString() : "",
-            detection.Title ?? "", detection.ClassName ?? "");
-    }
-
-    /// <summary>画面物理座標の矩形をウィンドウローカル DIP に変換する。</summary>
-    private Rect ToWindowDip(EsPixelRect bounds)
-        => new(
-            (bounds.X - Position.X) / _scaling,
-            (bounds.Y - Position.Y) / _scaling,
-            bounds.Width / _scaling,
-            bounds.Height / _scaling);
-
-    /// <summary>画面物理座標の矩形をウィンドウローカル物理ピクセル（ドメイン座標）に変換する。</summary>
-    /// <remarks>
-    /// 外側の装飾の <c>LogicalHighlightRect</c> はドメイン座標（= ウィンドウローカル物理ピクセル）で設定する。<br/>
-    /// 描画時には座標変換ポート（DomainScale）が DIP へ変換する。<br/>
-    /// 画面物理座標 → ドメイン: Position を減算する（scaling では割らない）。
-    /// </remarks>
-    private Rect ToWindowPixel(EsPixelRect bounds)
-        => new(
-            bounds.X - Position.X,
-            bounds.Y - Position.Y,
-            bounds.Width,
-            bounds.Height);
+    private EsRect? ResolveTargetRect()
+        => CaptureTypeTraits.ResolveRect(
+            _captureType,
+            _highlight.DomainRect,
+            SelectionOverlay.HasSelection ? SelectionOverlay.SelectionRect.ToEsRect() : null);
 
     /// <summary>クリック確定型の押下時処理（ハイライトを固定する）。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">ポインタイベント。</param>
+    /// <remarks>
+    /// 固定の規則（退化した検出結果は固定しない・前回の固定を置き換える）はコアの
+    /// <see cref="CaptureClickSelection"/> が単一所有する。<br/>
+    /// 左ボタンのみを確定の対象とする（入力の解釈は UI 固有）。
+    /// </remarks>
     private void OnClickPressed(object? sender, PointerPressedEventArgs e)
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
         // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
         var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPixelPoint();
-        var targetRect = _captureType == CaptureType.ScreenSelect
-            ? _detector.FindScreenUnderCursor(screenPoint).Bounds
-            : _detector.FindWindowUnderCursor(screenPoint).Bounds;
-        if (targetRect.Width <= 0) return;
-        _clickFixedRect = ToWindowDip(targetRect);
+        // 検出関数の呼び分けはコアが単一所有する
+        _clickSelection.Fix(CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint).Bounds);
     }
 
     /// <summary>クリック確定型のリリース時処理（固定したハイライトで確定する）。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">ポインタイベント。</param>
+    /// <remarks>
+    /// 固定した矩形をそのまま確定する（押下時に確定した矩形を DIP へ戻さない）。<br/>
+    /// 固定が無い解放では何もしない（押下を伴わない解放・退化した検出）。
+    /// </remarks>
     private void OnClickReleased(object? sender, PointerReleasedEventArgs e)
     {
-        if (_clickFixedRect is not { } fixedRect) return;
-        _clickFixedRect = null;
-        // 固定矩形（ウィンドウローカル DIP）を画面物理座標へ変換して確定する（× scaling + Position）
-        var bounds = new Rect(
-            fixedRect.X * _scaling + Position.X,
-            fixedRect.Y * _scaling + Position.Y,
-            fixedRect.Width * _scaling,
-            fixedRect.Height * _scaling);
-        CompleteSelection(bounds);
+        if (_clickSelection.Take() is not { } fixedRect) return;
+        // 固定した矩形は画面物理座標のため、そのまま確定する（DIP を経由した往復変換を行わない）
+        CompleteSelection(fixedRect);
     }
 }

@@ -9,7 +9,8 @@ namespace SaveEvidence.MewUI.Services;
 
 /// <summary>キャプチャ（スクリーン / ウィンドウ / 範囲選択）の開始と結果の反映を担う窓口。</summary>
 /// <remarks>
-/// <b>役割</b>: 撮影 UI（<see cref="CaptureOverlay"/>。CaptureSessionControl.MewUI）を起動し、確定した画像をプレビューへ反映する。<br/>
+/// <b>役割</b>: 撮影の実行を Facade（<see cref="CaptureSessionControl"/>。CaptureSessionControl.MewUI）へ委ね、<br/>
+/// 確定した画像をプレビューへ反映する。<br/>
 /// 呼び出し経路（ツールバーのボタン / グローバルホットキー）は複数あるが、処理は本クラスへ集約する（DRY）。<br/>
 /// <br/>
 /// <b>結果の反映順序</b>:<br/>
@@ -31,14 +32,18 @@ internal static class CaptureFlow
     /// <summary>指定された種別のキャプチャを開始し、結果をプレビューへ反映する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <param name="type">キャプチャ種別。</param>
+    /// <param name="captureSession">撮影・切り出しの Facade（排他とセッション寿命の窓口）。</param>
     /// <remarks>
     /// 1. 撮影中・オーナーウィンドウ未取得の場合は何もしない。<br/>
     /// 2. オーバーレイを表示して選択を待つ（確定した領域が返る。キャンセル時は null）。<br/>
     /// 3. 画像が返った場合のみ、Undo への退避 → 未保存化 → プレビュー設定 → ステータス通知を行う。<br/>
-    /// 4. 例外が発生しても撮影中フラグを必ず戻す（以降のキャプチャが起動できなくなるのを防ぐ）。
+    /// 4. 例外が発生しても撮影中フラグを必ず戻す（以降のキャプチャが起動できなくなるのを防ぐ）。<br/>
+    /// <b>切り出し中</b>は Facade が受付を拒否する（コアの排他規則。画像は変更されない）。
     /// </remarks>
-    public static void Start(AppServices services, CaptureType type)
+    public static void Start(AppServices services, CaptureType type, CaptureSessionControl captureSession)
     {
+        ArgumentNullException.ThrowIfNull(captureSession);
+
         if (IsCapturing || Application.Current?.MainWindow is not { } owner)
         {
             return;
@@ -47,17 +52,16 @@ internal static class CaptureFlow
         IsCapturing = true;
         try
         {
-            // 撮影セッション（UI 非依存のライブラリ）へ、UI 非依存のサービスと設定を渡す。
-            // 設定の変換は CaptureSettingsMapper（app.Core）が単一所有する。
+            // 撮影セッション（UI 非依存のライブラリ）へ、UI 非依存のサービスを渡す。
+            // 設定は Facade（CaptureSessionControl）が単一所有するため、ここでは組み立てない。
             // ログはアプリのログ基盤（AppLog）のロガーを渡し、撮影の開始・確定・キャンセルを同じファイルへ記録する。
             var overlayServices = new CaptureOverlayServices(
                 PlatformFactory.CreateCaptureService(),
                 PlatformFactory.CreateElementFinder(),
                 PlatformFactory.CreateWindowService(),
-                CaptureSettingsMapper.From(services.Settings.Current, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0),
-                AppLog.CreateLogger(nameof(CaptureOverlay)));
+                AppLog.CreateLogger(nameof(CaptureSessionControl)));
 
-            var image = CaptureOverlay.Capture(owner, type, overlayServices);
+            var image = captureSession.Capture(owner, type, overlayServices);
             if (image is null)
             {
                 return;

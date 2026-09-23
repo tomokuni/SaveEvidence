@@ -20,9 +20,10 @@
     - [6.4 SelectionGeometry](#64-selectiongeometry)
     - [6.5 MarqueeDrawer](#65-marqueedrawer)
     - [6.6 MarqueeOuterDrawer](#66-marqueeouterdrawer)
-    - [6.7 MarqueeFrame（コア）](#67-marqueeframeコア)
-    - [6.8 HitTarget](#68-hittarget)
-    - [6.9 公開イベント引数](#69-公開イベント引数)
+    - [6.7 MarqueeInnerDrawer](#67-marqueeinnerdrawer)
+    - [6.8 MarqueeFrame（コア）](#68-marqueeframeコア)
+    - [6.9 HitTarget](#69-hittarget)
+    - [6.10 公開イベント引数](#610-公開イベント引数)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
     - [8.1 状態の初期化と破棄（所有権）](#81-状態の初期化と破棄所有権)
@@ -70,7 +71,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 - 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → SelectionGeometry / Platform.AvaloniaUI / Platform.Native / Platform.Core）。
 - MarqueeControl は上位 AP に依存しない（再利用可能）。
 - **判断はコア（`MarqueeSession`）・反映は UI**: nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルはコアが決め、コントロールは効果（`MarqueeFeedback`）を適用するだけにする。
-- 描画は MarqueeDrawer（選択矩形）と MarqueeOuterDrawer（外側の装飾）へ委譲し、状態（選択矩形・nudge）は MarqueeState に集約する。外側の装飾の**判断**は持たず、`MarqueeFrame.Resolve` が返すフレームを描画 API へ写すだけとする。
+- 描画は MarqueeDrawer（選択矩形）と MarqueeOuterDrawer（外側の装飾）と MarqueeInnerDrawer（内側の装飾）へ委譲し、状態（選択矩形・nudge）は MarqueeState に集約する。装飾の**判断**は持たず、`MarqueeFrame.Resolve` / `ResolveInner` が返すフレームを描画 API へ写すだけとする。
 - 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 
@@ -103,13 +104,14 @@ flowchart TB
         Hdl["HitTarget<br/>public enum"]
         Hdl2["MarqueeInteractionState<br/>public enum"]
         Hdl3["MarqueeSnapshot<br/>public record<br/>（EsRect / EsPoint）"]
-        Frm["MarqueeFrame<br/>public static<br/>MarqueeFrame.cs<br/>（外側の装飾のフレーム解決）"]
+        Frm["MarqueeFrame<br/>public static<br/>MarqueeFrame.cs<br/>（外側 / 内側の装飾のフレーム解決）"]
     end
     subgraph DRC2["MarqueeControl プロジェクト (MarqueeControl)"]
         direction TB
         Ctl["MarqueeControl<br/>public sealed<br/>: Control<br/>MarqueeControl.cs（公開 API ＋ 入力 ＋ 描画）"]
         Drw["MarqueeDrawer<br/>internal static<br/>Drawing/MarqueeDrawer.cs"]
         Odr["MarqueeOuterDrawer<br/>internal static<br/>Drawing/MarqueeOuterDrawer.cs<br/>（外側の装飾の描画）"]
+        Idr["MarqueeInnerDrawer<br/>internal static<br/>Drawing/MarqueeInnerDrawer.cs<br/>（内側の装飾の描画）"]
         Evt["SelectionRectEventArgs<br/>MarqueePointEventArgs"]
     end
 
@@ -137,7 +139,7 @@ flowchart TB
   - キーイベント（矢印キー・Escape / Enter）を `EsKey` へ変換してセッションへ通知する。購読は **TopLevel の 1 経路のみ**（フォーカス非依存）
   - セッションが返す効果（カーソル操作・フォーカス・カーソル形状・再描画）を適用する（効果の選択と適用順はコアが単一所有）
   - セッションからの通知を公開イベントへ転送する（判断はしない）
-  - 描画（`Render`）を起動し、セッションの状態を MarqueeDrawer へ、`MarqueeFrame.Resolve` が返した外側の装飾のフレームを MarqueeOuterDrawer へ渡す
+  - 描画（`Render`）を起動し、セッションの状態を MarqueeDrawer へ、`MarqueeFrame.Resolve` / `ResolveInner` が返した外側・内側の装飾のフレームを各描画層へ渡す
   - ホイール操作（Ctrl+ホイールの `ZoomRequested`・通常ホイールの `ScrollRequested` / 連携 ScrollViewer のスクロール）
   - 祖先 ScrollViewer の ScrollChanged 購読（`ViewportChanged` 発行はセッションへ委譲）
   - 設定（外観・対話パラメータ）の保持と、対話パラメータ（`MinSelectionSize` / `ClampToDomainBounds` / `HandleHitRadius`）のセッションへの伝搬
@@ -146,8 +148,8 @@ flowchart TB
   - StyledProperty 3 種: `Options`（不変の設定値 `MarqueeOptions`。外側の装飾 6 項目 + 外観 9 項目 + 対話パラメータ 3 項目を内包） / `Scaling` / `DisplayScaleScaling`
   - プロパティ: `Log`（保持・`NullLogger` へのフォールバック・セッションへの伝搬はコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。デリゲートのため設定値に含めない） / `HasSelection` / `SelectionRect`
   - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `AttachScrollViewer`
-- **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・外側の装飾の描画内容）はコアへ委譲する
-- **依存**: MarqueeSession / MarqueeOptions / MarqueeFeedback / MarqueeNotice / MarqueeDrawer / MarqueeOuterDrawer / MarqueeFrame（MarqueeControl.Core）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ ScreenConverter（Platform.AvaloniaUI）
+- **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・装飾の描画内容）はコアへ委譲する
+- **依存**: MarqueeSession / MarqueeOptions / MarqueeFeedback / MarqueeNotice / MarqueeDrawer / MarqueeOuterDrawer / MarqueeInnerDrawer / MarqueeFrame（MarqueeControl.Core）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ ScreenConverter（Platform.AvaloniaUI）
 
 ### 6.2 MarqueeSession（状態管理クラス）
 
@@ -197,20 +199,28 @@ flowchart TB
 - **特徴**: 装飾コアの `OuterDecoFrame` の各項目を Avalonia の描画 API へ写すだけで、外観値・判断を持たない（どの矩形を暗転するか・枠線を描くか・ラベルをどう組むかは装飾コアが単一所有する）。色 → ブラシは `BrushCache` を共有し、テキストの実寸測定のみ UI 固有（`FormattedText`）
 - **依存**: Avalonia（DrawingContext / FormattedText）/ MarqueeControl.Core（`Estable.Marquee.Decoration` の `OuterDecoFrame` / `OuterDecoLabelLayout`）/ Platform.AvaloniaUI（BrushCache・色変換）
 
-### 6.7 MarqueeFrame（コア）
+### 6.7 MarqueeInnerDrawer
+
+- **分類**: 内部静的クラス（`internal static class`）
+- **責務**: 穴あけ矩形（選択矩形 / ハイライト矩形）の内側に描く装飾（塗り・内枠）の描画
+- **可視性**: internal（外部から見えない）
+- **特徴**: 装飾コアの `InnerDecoFrame` の各項目を Avalonia の描画 API へ写すだけで、外観値・判断を持たない（塗るか・枠線を描くかは装飾コアが単一所有する）。色 → ブラシは外側の装飾と同じキャッシュ（`MarqueeBrushCache`）を共有する
+- **依存**: Avalonia（DrawingContext）/ MarqueControl.Core（`Estable.Marquee.Decoration` の `InnerDecoFrame`）/ Platform.AvaloniaUI（ブラシキャッシュ・色変換）
+
+### 6.8 MarqueeFrame（コア）
 
 - **分類**: 静的クラス（`public static class`・コア提供）
-- **責務**: 選択矩形の外側に描く装飾の描画内容を解決する（セッションの状態 + 外側の装飾の設定 + 文言プロバイダ → 装飾コアのフレーム）
+- **責務**: 装飾（外側 / 内側）の描画内容を解決する（セッションの状態 + 設定 + 文言プロバイダ → 装飾コアのフレーム）
 - **可視性**: public（コア `MarqueeControl.Core` が提供する。外部が UI アダプタを実装できる）
 - **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。暗転・穴あけ枠・ラベルの判断は装飾コアへ委譲する
 
-### 6.8 HitTarget
+### 6.9 HitTarget
 
 - **分類**: 公開 enum
 - **責務**: ドラッグハンドルの種別（ヒットテスト・矩形変形・nudge・描画で共通利用）
 - **可視性**: public（上位 AP がカーソル形状のマッピングに使用するため）
 
-### 6.9 公開イベント引数
+### 6.10 公開イベント引数
 
 - `MarqueeInteractionState` enum（public）: NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging
 - `MarqueeSnapshot` record（public）: State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / IsDragging / NudgeActive / HasSelection。座標は UI 非依存の `EsRect` / `EsPoint`（各 UI の境界で自前の型へ変換する）
@@ -222,7 +232,7 @@ flowchart TB
 - 依存方向は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → SelectionGeometry / Platform.AvaloniaUI / Platform.Core）。
 - MarqueeControl は上位 AP に**依存しない**（再利用可能）。
 - 判断（状態遷移・確定/キャンセル・スナップ・クリック検出）はコアの `MarqueeSession` に集約し、UI 層は効果を適用するだけにする。
-- 描画は MarqueeDrawer（選択矩形）と MarqueeOuterDrawer（外側の装飾）へ委譲し、状態（選択矩形・nudge）は MarqueeState に集約する。外側の装飾の**判断**は持たず、`MarqueeFrame.Resolve` が返すフレームを描画 API へ写すだけとする。
+- 描画は MarqueeDrawer（選択矩形）と MarqueeOuterDrawer（外側の装飾）と MarqueeInnerDrawer（内側の装飾）へ委譲し、状態（選択矩形・nudge）は MarqueeState に集約する。装飾の**判断**は持たず、`MarqueeFrame.Resolve` / `ResolveInner` が返すフレームを描画 API へ写すだけとする。
 - 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 - **キーイベントは 1 経路で受ける**（TopLevel のトンネル購読）。コントロール自身のキーハンドラを持たないため、同一キーの二重処理を防ぐ仕組み（フラグ等）が不要になる。トンネルはルートから下降するため、祖先のバブリングハンドラより先に処理済みにできる。

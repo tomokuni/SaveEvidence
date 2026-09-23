@@ -132,6 +132,7 @@ dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 
 - `MarqueeSkiaRenderer.Tests.cs`: ハンドル・十字マーカー・座標ラベルの画素検証と配置計算（純粋関数）の検証。
 - `MarqueeOuterSkiaRenderer.Tests.cs`: 外側の装飾（暗転・穴あけ・枠線・ラベル）の画素検証。
+- `MarqueeInnerSkiaRenderer.Tests.cs`: 内側の装飾（塗り・内枠）の画素検証。
 - `MarqueeControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、ビューポート通知、`Log` のフォールバックと設定変更ログ。
 - ログの定義（操作ログ・ズーム要求・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います。
 

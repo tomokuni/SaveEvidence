@@ -22,6 +22,12 @@ public static class EsGeometryMewUIInterop
     /// <returns>MewUI の座標。</returns>
     public static MewUIPoint ToMewUIPoint(this EsPoint point) => new(point.X, point.Y);
 
+    /// <summary>画面物理ピクセルの座標を MewUI の座標へ変換する。</summary>
+    /// <param name="point">画面物理ピクセルの座標。</param>
+    /// <returns>MewUI の座標（MewUI は DIP と物理ピクセルを同じ型で表すため、そのまま写すだけになる）。</returns>
+    /// <remarks>DPI 照会（<c>DpiHelper</c> 等）へコア型を渡すために使う（Avalonia 版の <c>ToAvaloniaPixelPoint</c> と対称）。</remarks>
+    public static MewUIPoint ToMewUIPoint(this EsPixelPoint point) => new(point.X, point.Y);
+
     /// <summary>MewUI の座標型を <see cref="EsPoint"/> へ変換する。</summary>
     /// <param name="point">変換元の座標。</param>
     /// <returns>コアの座標。</returns>

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
@@ -106,10 +107,9 @@ public sealed partial class MainWindow : Window
     /// <param name="e">イベント引数。</param>
     private async void OnAreaSelectClicked(object? sender, RoutedEventArgs e)
     {
-        // ルーペ設定を反映する（LoupeVisible / LoupeZoomLevel）
+        // ルーペの拡大倍率を反映する（表示可否はモードとソースの有無から導出されるため設定しない）
         _capture.AppearanceSettings = _capture.AppearanceSettings with
         {
-            LoupeVisible = _vm.LoupeVisible,
             LoupeZoomLevel = _vm.LoupeZoomLevel,
         };
 
@@ -132,17 +132,13 @@ public sealed partial class MainWindow : Window
         }
 
         _vm.AddLog("[App] Crop を開始します（プレビュー上でドラッグ選択 → Enter / ダブルクリックで確定）。");
-        var unified = _previewBitmap.Bitmap;
-        if (unified is null)
-        {
-            _vm.AddLog("[App] プレビュー画像の内部ビットマップがありません。");
-            return;
-        }
 
-        var rect = await _capture.StartCropAsync(PreviewCropView, this, unified);
-        _vm.UpdateCropResult(rect);
-        _vm.AddLog(rect is { Width: > 0, Height: > 0 }
-            ? $"[App] Crop が完了しました: {rect.Value}（元画像ピクセル）"
+        // 切り出しの対象画像は CropView が表示している画像（PreviewCropView.Source）から解決される。
+        // 結果はコア型（EsPixelRect）で返るため、表示用の UI 型へはサンプル側（境界）で変換する
+        var rect = await _capture.StartCropAsync(PreviewCropView, this);
+        _vm.UpdateCropResult(rect?.ToAvaloniaPixelRect());
+        _vm.AddLog(rect is { } bounds && !bounds.IsEmpty
+            ? $"[App] Crop が完了しました: {bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}（元画像ピクセル）"
             : "[App] Crop はキャンセルされました。");
     }
 

@@ -643,7 +643,6 @@ public class MainViewModelStateTests
         // 外観設定以外の値を変更する
         s.FileNameTemplate = "custom_{date}.png";
         s.ThemeMode = ThemeMode.Dark;
-        s.LoupeModeValue = 2;
         s.HideMainWindowOnCapture = false;
 
         s.ResetAppearanceToDefaults();
@@ -651,7 +650,6 @@ public class MainViewModelStateTests
         // 外観設定以外は維持される
         Assert.Equal("custom_{date}.png", s.FileNameTemplate);
         Assert.Equal(ThemeMode.Dark, s.ThemeMode);
-        Assert.Equal(2, s.LoupeModeValue);
         Assert.False(s.HideMainWindowOnCapture);
     }
 }

@@ -164,12 +164,13 @@ MewUI 側のウィンドウプロシージャ設定で上書きされ、`WM_HOTK
 | 操作 | 動作 |
 | --- | --- |
 | 実行 | 検出した矩形を**水色の実線枠**（2 DIP）で表示する（Avalonia 版と同じ） |
-| カーソル移動 | カーソルを含む矩形のうち**面積が最小**のものを**赤色**で強調する |
+| カーソル移動 | カーソルを含む矩形のうち**面積が最小**のものを**赤枠 + 半透明の赤塗り**で強調する（Avalonia 版と同じ。強調は装飾専用の `MarqueeControl` の内側の装飾 = `InnerDeco` が描く） |
 | 矩形内のダブルクリック | その矩形で切り出す（Undo 履歴へ退避し、「切り出し」と同じ経路） |
 | 矩形外のダブルクリック | キャンセルする（検出矩形を消し、画像は変えない） |
 | Escape | キャンセルする（切り出しモードと同じ操作） |
 
 矩形のヒット判定は `MainViewModel.HitDetectedRect`（コア）が単一所有し、両 UI が同じ判定を使います。
+自動切り出し中も**ホイールでズーム・パン**、**ドラッグでパン**ができます（強調を描く `MarqueeControl` は `IsHitTestVisible = false` のため入力を奪いません）。
 
 ## 選択中のラベル
 
@@ -281,6 +282,8 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 
 画像の透明部分とレターボックスは**市松模様**で表示します（Avalonia 版と同じ）。
 サイズ・色 A / 色 B は設定（「外観設定」）の `PreviewCheckerSize` / `PreviewCheckerColorA` / `PreviewCheckerColorB` に追従します。
+外観はコアの `ZoomViewAppearance` 1 値として `CropViewControl.Appearance` へ設定します（設定値から `Appearance with { ... }` を組み立てる）。
+画像の中央寄せ / 左上寄せは設定（「外観設定」）の `CenterAlign` に追従します（`CropViewControl.CenterAlign`）。
 市松模様の色は半透明のため、下地（明色テーマは白・暗色テーマは黒）と合成して表示します（実測で明色 229 / 暗色 199、ダークは明色 73 / 暗色 50）。
 
 ## ルーペ（切り出し中のみ）
@@ -301,7 +304,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 - 出力先: `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持。Serilog）
 - 内容: アプリ起動 / 終了、撮影・切り出しの開始と確定・キャンセル、選択操作（MouseDown / MouseUp / DragStart / KeyDown 等）、ズーム操作（前後のズーム率）、ルーペの状態変更（表示中の選択オーバーレイ）、未処理の例外
 - 未処理の例外は、アプリ全体（`AppDomain`）/ UI スレッド（`Application.DispatcherUnhandledException`）/ 待機されなかったタスク（`TaskScheduler`）の 3 経路を記録します。UI スレッドの例外は記録後に処理済みとして扱い、ウィンドウの表示を維持します（Avalonia 版と同じ）。
-- カテゴリはクラス名（`Program` / `CaptureOverlay` / `CropOverlay` / `CapturePage` 等）で、`[Marquee]` / `[LoupeCtrl]` / `[ZoomIn]` の各ログは各コントロールが出力します。
+- カテゴリはクラス名（`Program` / `CaptureSessionControl` / `CapturePage` 等）で、`[Marquee]` / `[LoupeCtrl]` / `[ZoomIn]` の各ログは各コントロールが出力します。
 
 ## 履歴（戻す / やり直し）
 

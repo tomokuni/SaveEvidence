@@ -5,6 +5,11 @@
     <RootNamespace>Estable.CropView</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。
+         XML は配布物（bin / publish）へ出さない（検証だけに使う）。 -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,10 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
+    <!-- internal 型は使用中のアセンブリとテストにのみ公開する（公開面を増やさない。使わない IVT は残さない） -->
     <InternalsVisibleTo Include="CropViewControl.AvaloniaUI" />
-    <InternalsVisibleTo Include="CropViewControl.MewUI" />
-    <InternalsVisibleTo Include="CropViewControl.AvaloniaUI.Tests" />
     <InternalsVisibleTo Include="CropViewControl.MewUI.Tests" />
     <InternalsVisibleTo Include="CropViewControl.Core.Tests" />
   </ItemGroup>

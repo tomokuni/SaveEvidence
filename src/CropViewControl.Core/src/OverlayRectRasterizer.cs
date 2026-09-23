@@ -9,7 +9,8 @@ namespace Estable.CropView;
 /// ルーペに表示される切り出し済み画像へ、外部提供矩形の枠線を直接打ち込む（ドラッグハンドルを持つ<br/>
 /// UI の図形要素ではルーペ画像へ届かないため、ピクセル単位で描画する）。<br/>
 /// 破線はダッシュごとに前景色と背景色を交互に塗る（市松風の視認性）。<br/>
-/// ダッシュ長は <see cref="OverlayLineDash"/> が単一所有する（UI のベクター描画と共有）。<br/>
+/// ダッシュ長は <see cref="OverlayLineDash"/>、太さの下限は <see cref="OverlayRectLayout.EffectiveThickness"/> が単一所有する<br/>
+/// （UI のベクター描画と共有し、経路ごとに見た目がずれないようにする）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 internal static class OverlayRectRasterizer
@@ -63,7 +64,8 @@ internal static class OverlayRectRasterizer
         double distance = Math.Abs(length);
 
         // 線の太さ（1 ピクセル以上。偶数幅は中心から片側へ寄る）
-        var thickness = Math.Max(1, (int)Math.Round(rect.Thickness));
+        // 下限の規則は OverlayRectLayout.EffectiveThickness が単一所有する（両 UI のベクター描画と共有）
+        var thickness = (int)Math.Round(OverlayRectLayout.EffectiveThickness(rect.Thickness));
         var half = Math.Max(0, thickness / 2);
 
         var isDashed = OverlayLineDash.IsDashed(rect.Style);

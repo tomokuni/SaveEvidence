@@ -4,8 +4,8 @@ namespace Estable.CaptureSession;
 
 /// <summary>切り出し範囲（選択矩形 → 画像内のピクセル矩形）の計算を単一所有する。</summary>
 /// <remarks>
-/// Avalonia 版（<c>CropSession</c>）と MewUI 版（<c>CaptureOverlayWindow</c> / <c>PreviewCropSession</c>）が<br/>
-/// 同じ規則を使うため、計算をコアへ集約する（規則の二重実装を防ぐ）。<br/>
+/// 切り出しの規則（閉区間・クランプ・丸め）は 2 つの UI で共通であり、UI ごとに書くと 1 ピクセルずれる。<br/>
+/// そのため本クラスが計算を単一所有する（UI は本クラスの結果を使うだけ）。<br/>
 /// <br/>
 /// <b>規則</b>:<br/>
 /// 1. 画像サイズが 0 以下なら空を返す。<br/>
@@ -84,18 +84,29 @@ public static class CropBoundsMath
 
     /// <summary>半開区間の矩形を閉区間（始点・終点のピクセルを含む）へ広げる。</summary>
     /// <param name="rect">切り出し矩形（半開区間。幅 = 終点 − 始点）。</param>
+    /// <returns>終点の 1 ピクセルを加えた矩形（画像の端でのクランプは行わない）。</returns>
+    /// <remarks>
+    /// 画像の端でのクランプが不要な場合（切り出し範囲が画像を超えないことが保証されている場合）に使う。<br/>
+    /// 端でのクランプが必要な場合は <see cref="ToClosedInterval(EsPixelRect, EsSize)"/> を使う。
+    /// </remarks>
+    public static EsPixelRect ToClosedInterval(EsPixelRect rect)
+        => new(rect.X, rect.Y, rect.Width + 1, rect.Height + 1);
+
+    /// <summary>半開区間の矩形を閉区間（始点・終点のピクセルを含む）へ広げる（画像の端でクランプする）。</summary>
+    /// <param name="rect">切り出し矩形（半開区間。幅 = 終点 − 始点）。</param>
     /// <param name="imageSize">画像のピクセルサイズ。</param>
     /// <returns>終点の 1 ピクセルを加えた矩形（画像の外へはみ出さないようクランプする）。</returns>
     /// <remarks>画像の右端・下端では画像サイズを超えないようにクランプする。</remarks>
     public static EsPixelRect ToClosedInterval(EsPixelRect rect, EsSize imageSize)
     {
+        var widened = ToClosedInterval(rect);
         var imageWidth = (int)imageSize.Width;
         var imageHeight = (int)imageSize.Height;
         return new EsPixelRect(
-            rect.X,
-            rect.Y,
-            Math.Min(rect.Width + 1, Math.Max(0, imageWidth - rect.X)),
-            Math.Min(rect.Height + 1, Math.Max(0, imageHeight - rect.Y)));
+            widened.X,
+            widened.Y,
+            Math.Min(widened.Width, Math.Max(0, imageWidth - widened.X)),
+            Math.Min(widened.Height, Math.Max(0, imageHeight - widened.Y)));
     }
 
     /// <summary>座標を四捨五入して整数へ直す。</summary>
@@ -103,7 +114,14 @@ public static class CropBoundsMath
     /// <returns>四捨五入した値（0.5 は切り上げ）。</returns>
     /// <remarks>
     /// <see cref="Math.Round(double)"/> の既定は銀行丸め（0.5 を偶数へ）で直感に反するため、<br/>
-    /// ピクセル座標の慣例に合わせて 0.5 は切り上げる（<see cref="MidpointRounding.AwayFromZero"/>）。
+    /// ピクセル座標の慣例に合わせて 0.5 は切り上げる（<see cref="MidpointRounding.AwayFromZero"/>）。<br/>
+    /// 同じ丸めを UI が <c>(int)</c> 切り捨てや既定の <see cref="Math.Round(double)"/> で書くと、<br/>
+    /// 同じ座標が UI ごとに 1 ピクセルずれるため、丸め規則として公開する。
     /// </remarks>
+    public static int RoundToPixel(double value) => Round(value);
+
+    /// <summary>座標を四捨五入して整数へ直す（内部用）。</summary>
+    /// <param name="value">対象の座標。</param>
+    /// <returns>四捨五入した値（0.5 は切り上げ）。</returns>
     private static int Round(double value) => (int)Math.Round(value, MidpointRounding.AwayFromZero);
 }

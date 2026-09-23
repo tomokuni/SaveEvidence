@@ -57,9 +57,13 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 ### `Coordinate.DpiScaler`（static class）
 
 - `StandardDpi`: DIP（デバイス非依存ピクセル）の基準 DPI（`96.0` = 1 ピクセル = 1 DIP）。スケーリング係数の算出と、DIP を 1:1 で描く描画先の DPI が共用する。
+- `StandardScaling`: スケーリング係数の基準値（`1.0` = DIP と物理ピクセルが 1:1）。係数が未確定のときに使う値。
 - `ToScaling(double dpi)`: DPI をスケーリング係数（表示 DIP → 物理ピクセル）へ換算する（`StandardDpi` を 1.0 とする倍率）。
+- `IsValidScaling(double scaling)`: スケーリング係数が有効（描画・変換に使える）かどうかを判定する。**有限の正の値のみ有効**とし、0 以下と非数（NaN / 無限大）は無効とする（乗算で座標が整数の上限へ溢れてウィンドウが壊れるのを防ぐ）。
+- `NormalizeScaling(double scaling)`: スケーリング係数を有効値へ正規化する（無効な値は `StandardScaling`）。
 - `ScaleToPixel(int/double dipValue, double scaling)`: DIP 値を物理ピクセルへ変換（切り上げ・最低 1。浮動小数誤差を吸収）。
-- `LoupeControl` の表示サイズ計算で共用する。
+- `ToDip(int/double physical, double scaling)`: 物理ピクセルを DIP へ変換（`ScaleToPixel` の逆変換。**丸め・最低値の規則は適用しない**）。ウィンドウの位置・サイズを物理ピクセルから DIP へ戻す場面（全モニタの包含矩形をウィンドウへ適用する等）で共用する。
+- `LoupeControl` の表示サイズ計算と、両 UI のウィンドウ配置で共用する。
 
 ### `LoggerFallback`（static class）
 
@@ -87,8 +91,32 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 paint.Color = info.Background.ToSKColor();   // コアの色型 → Skia
 ```
 
-SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。MewUI 版の描画層（`CropSkiaRenderer` / `MarqueeSkiaRenderer` / `MarqueeOuterSkiaRenderer` / `FadeMaskDragRectSkiaRenderer` / `LoupeControl` / `LoupeSkiaRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
+SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。MewUI 版の描画層（`CropSkiaRenderer` / `MarqueeSkiaRenderer` / `MarqueeOuterSkiaRenderer` / `FadeMaskDragRectSkiaRenderer` / `LoupeControl` / `LoupeSkiaRenderer` / `SkiaImageRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
 逆方向（Skia → コア）の変換は本番の利用箇所がないため提供しません（YAGNI）。
+
+### `Imaging.ImageDrawMode`（enum）
+
+画像を描画先の領域へ配置する方法。ブール値の引数で受けると `false` の意味が読めないため、列挙型で表現します。
+
+| メンバー | 意味 |
+| --- | --- |
+| `Fill` | 縦横比を無視して領域全体へ引き伸ばす |
+| `Uniform` | 縦横比を保ち、はみ出さない倍率で中央へ配置する（余白は描画しない） |
+
+### `Imaging.ImageDrawMath`（static class）
+
+画像を描画先の領域へ配置する矩形（`SKRect`）の計算。UI ホストを必要としない純粋関数のため、倍率・中央寄せ・空の扱いをヘッドレスで検証できます。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `ComputeDestination` | `static SKRect ComputeDestination(int sourceWidth, int sourceHeight, int targetWidth, int targetHeight, ImageDrawMode mode)` | 元画像を描画先の領域へ配置する矩形。元画像・描画先のいずれかが 0 以下なら `SKRect.Empty`（描画しない） |
+
+```csharp
+// 親が割り当てた領域（800x600）へ、撮影画像を引き伸ばして敷く
+var dest = ImageDrawMath.ComputeDestination(image.Width, image.Height, 800, 600, ImageDrawMode.Fill);
+```
+
+画像を描く側は UI ごとに異なるため本クラスは計算だけを担い、実際の描画は各 UI の描画層（MewUI 版は `SkiaImageRenderer`）が行います。
 
 ### `Geometry.EsPoint`（readonly record struct）
 
@@ -106,7 +134,7 @@ public readonly record struct EsVector(double X, double Y);
 public readonly record struct EsRect(double X, double Y, double Width, double Height);
 ```
 
-UI フレームワーク非依存のサイズ・ベクター・矩形。相互変換は `EsGeometryAvaloniaInterop` が提供します。`EsRect` は `Right`（`X + Width`）と `Bottom`（`Y + Height`）を提供します。
+UI フレームワーク非依存のサイズ・ベクター・矩形。相互変換は `EsGeometryAvaloniaInterop` が提供します。`EsRect` は `Right`（`X + Width`）・`Bottom`（`Y + Height`）・`IsEmpty`（幅または高さが 0 以下）を提供します。
 
 ### `Geometry.EsPixelPoint` / `Geometry.EsPixelRect`（readonly record struct）
 
@@ -115,7 +143,7 @@ public readonly record struct EsPixelPoint(int X, int Y);
 public readonly record struct EsPixelRect(int X, int Y, int Width, int Height);
 ```
 
-画面の物理ピクセル座標・矩形（DPI スケーリング適用後）。`EsPixelRect` は `Right` / `Bottom` / `BottomRight` / `Center` を提供し、`Contains(EsPixelPoint)`（半開区間）と `Union(EsPixelRect)` を持ちます。
+画面の物理ピクセル座標・矩形（DPI スケーリング適用後）。`EsPixelRect` は `Right` / `Bottom` / `TopLeft` / `BottomRight` / `Center` を提供し、`Contains(EsPixelPoint)`（半開区間）と `Union(EsPixelRect)` を持ちます。`TopLeft` は矩形の原点（画像の原点等）を座標の手組みなしで取り出すために使います。
 
 ### `Geometry.EsPlatformHandle`（readonly record struct）
 
@@ -225,6 +253,7 @@ public readonly record struct ElementFinderResults(
 | `ScrollOffset` | `static ICoordTransform ScrollOffset(Func<EsVector> offsetProvider)` | スクロールオフセット平行移動（Forward = 減算 / Inverse = 加算） |
 | `Scale` | `static ICoordTransform Scale(double factor)` | 原点基準の等方スケーリング（factor ≤ 0 は 1.0 扱い・固定値） |
 | `DomainScale` | `static ICoordTransform DomainScale(Func<double> factorProvider)` | ドメイン = ローカル DIP × 倍率（呼び出し毎評価） |
+| `DomainScale` | `static ICoordTransform DomainScale(Func<double> factorProvider, Func<EsSize?> boundsProvider)` | 同じ変換に境界（画像サイズ等。呼び出し毎評価）を付けたもの |
 | `ImageLayout` | `static ICoordTransform ImageLayout(Func<EsSize> viewportSizeProvider, EsSize sourceSize, Func<bool>? uniformProvider = null)` | 画像レイアウト（レターボックス・スケール）の動的ポート（Bounds = 元画像サイズ） |
 | `ImageLayoutScaleX` | `static double ImageLayoutScaleX(Func<EsSize> viewportSizeProvider, EsSize sourceSize, Func<bool>? uniformProvider = null)` | 画像レイアウトの X スケール（ズーム率導出用） |
 | コンストラクタ | `CoordTransform(Func<EsPoint, EsPoint> forward, Func<EsPoint, EsPoint> inverse, Func<EsSize?> bounds)` | 変換関数を直接注入（座標系は利用側が定義） |

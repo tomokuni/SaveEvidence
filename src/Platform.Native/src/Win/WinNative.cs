@@ -383,7 +383,7 @@ internal static partial class WinNative
     /// <returns>成功した場合は 0（S_OK）。</returns>
     /// <remarks>
     /// ウィンドウの表示・非表示・サイズ変更後に呼ぶと、その変更が画面へ反映されたことを保証できる。<br/>
-    /// キャプチャ前に使用して、非表示状態の残像が写り込むのを防ぐ（仕様 6.2.1 HideBeforeCaptureDelay の補強）。<br/>
+    /// キャプチャ前に使用して、非表示状態の残像が写り込むのを防ぐ（DWM の合成完了を待つ）。<br/>
     /// </remarks>
     [LibraryImport("dwmapi.dll")]
     internal static partial int DwmFlush();

@@ -25,6 +25,10 @@ public class MarqueeOptionsTests
         Assert.False(options.OuterShowFullOverlay);
         Assert.Null(options.OuterHighlightRect);
         Assert.False(options.OuterHasHighlight);
+        // 内側の装飾（穴あけ矩形の内側の塗りと枠線）は既定で描かない（用途依存のためホストが明示的に指定する）
+        Assert.Equal(System.Drawing.Color.Transparent, options.InnerAppearance.FillColor);
+        Assert.Equal(System.Drawing.Color.Transparent, options.InnerAppearance.BorderColor);
+        Assert.Equal(2.0, options.InnerAppearance.BorderThickness);
         Assert.True(options.ShowHandles);
         Assert.Equal(System.Drawing.Color.White, options.HandleColor);
         Assert.Equal(10.0, options.HandleSize);

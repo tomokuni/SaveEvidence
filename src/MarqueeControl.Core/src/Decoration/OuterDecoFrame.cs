@@ -79,23 +79,23 @@ public readonly record struct OuterDecoFrame(
 
         // 穴あけ矩形の決定（論理矩形 + 座標変換ポートを描画時に評価。ポート未指定は倍率または等価変換）
         // 選択矩形は閉区間（+1）で DIP 変換する。ハイライト矩形（既に全ピクセルを含む閉区間表現）は +1 しない。
-        var port = OuterDecoOverlayGeometry.ResolvePort(request.Port, request.Scaling);
+        var port = DecoGeometry.ResolvePort(request.Port, request.Scaling);
         var selectionRect = options.LogicalSelectionRect is { } selection
-            ? OuterDecoOverlayGeometry.ToDipRect(selection, port)
+            ? DecoGeometry.ToDipRect(selection, port)
             : (EsRect?)null;
         var highlightRect = options.LogicalHighlightRect is { } highlight
-            ? OuterDecoOverlayGeometry.ToDipRect(highlight, port, closedInterval: false)
+            ? DecoGeometry.ToDipRect(highlight, port, closedInterval: false)
             : (EsRect?)null;
-        var holeRect = OuterDecoOverlayGeometry.ResolveHoleRect(
+        var holeRect = DecoGeometry.ResolveHoleRect(
             options.HasHighlight, highlightRect, options.HasSelection, selectionRect);
 
-        if (!OuterDecoOverlayGeometry.ShouldDrawOverlay(holeRect, options.ShowFullOverlay))
+        if (!DecoGeometry.ShouldDrawOverlay(holeRect, options.ShowFullOverlay))
         {
             return CreateEmpty(appearance);
         }
 
         var overlayRegions = appearance.OverlayColor.A > 0
-            ? OuterDecoOverlayGeometry.ComputeOverlayRegions(request.Client, holeRect)
+            ? DecoGeometry.ComputeOverlayRegions(request.Client, holeRect)
             : [];
 
         if (holeRect is not { } hole)
@@ -105,7 +105,7 @@ public readonly record struct OuterDecoFrame(
         }
 
         var borderRects = appearance.BorderColor.A > 0
-            ? OuterDecoOverlayGeometry.GetBorderRects(hole, appearance.BorderThickness)
+            ? DecoGeometry.GetBorderRects(hole, appearance.BorderThickness)
             : [];
 
         // サイズラベルのプロバイダは表示時のみ評価する（非表示時の無駄な呼び出しを回避）

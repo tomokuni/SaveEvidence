@@ -18,19 +18,15 @@ namespace Estable.AvaloniaUI.Marquee.Drawing;
 /// </remarks>
 internal static class MarqueeOuterDrawer
 {
-    /// <summary>ブラシキャッシュ（色 → ブラシ。容量制限付き）。</summary>
-    /// <remarks>Platform.AvaloniaUI の <see cref="BrushCache"/> へ委譲する（LoupeControl / MarqueeControl と共用・重複排除・DRY）。</remarks>
-    private static readonly BrushCache s_brushCache = new(BrushCacheCapacity);
-
     /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
-    /// <remarks>テスト（MarqueeControl.AvaloniaUI.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
-    internal const int BrushCacheCapacity = 128;
+    /// <remarks><see cref="MarqueeBrushCache.Capacity"/> が単一所有する（テストが容量超過の分岐を検証するために公開する）。</remarks>
+    internal const int BrushCacheCapacity = MarqueeBrushCache.Capacity;
 
     /// <summary>色に対応するブラシを取得する（キャッシュ優先・未登録なら生成して登録）。</summary>
     /// <param name="color">ブラシの色。</param>
     /// <returns>色に対応する <see cref="SolidColorBrush"/>。</returns>
     private static SolidColorBrush GetBrush(Color color)
-        => s_brushCache.GetOrCreate(color);
+        => MarqueeBrushCache.GetBrush(color);
 
     /// <summary>暗転マスク・枠線・ラベルを描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>

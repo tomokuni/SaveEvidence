@@ -1,16 +1,13 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Size = Avalonia.Size;
 using Estable.CaptureSession;
 using EsUtil.Platform.AvaloniaUI;
-using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.AvaloniaUI.CaptureSession.Logging;
 using Estable.AvaloniaUI.CropView;
 using Estable.AvaloniaUI.FadeMaskDragRect;
 using Microsoft.Extensions.Logging;
@@ -34,24 +31,21 @@ namespace Estable.AvaloniaUI.CaptureSession;
 internal sealed class CropSession(
     CropViewControl cropView,
     Window hostWindow,
-    EsBitmap sourceImage,
     CaptureSettings settings,
     ILogger? logger = null)
 {
     /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
     private readonly ILogger _log = logger.OrNullLogger();
 
-    /// <summary>元画像のピクセルサイズ（論理座標系の範囲）。</summary>
-    private readonly Size _sourceImageSize = new(sourceImage.Size.Width, sourceImage.Size.Height);
-
     /// <summary>カーソル上書き抑止（Crop 中の十字カーソル維持）。</summary>
     private readonly ICursorOverrideGuard _cursorGuard = PlatformFactory.CreateCursorOverrideGuard();
 
-    /// <summary>座標変換ポート（ビューポートDIP ↔ 元画像ピクセル）。一度だけ生成して再利用する。</summary>
-    private readonly ICoordTransform _coordinatePort = CreateCoordinatePort(cropView, sourceImage);
-
-    /// <summary>ルーペソース用の画像アダプタ（<see cref="sourceImage"/> を内包。一度だけ生成して再利用する）。</summary>
-    private readonly EsBitmapAvaloniaImage _loupeSourceImage = new(sourceImage);
+    /// <summary>座標変換ポート（ビューポートDIP ↔ 元画像ピクセル）。</summary>
+    /// <remarks>
+    /// 境界（元画像の範囲）は現在の画像から都度評価するため、生成は 1 度で足りる<br/>
+    /// （ズーム・パン・画像の差し替えのいずれにも追従する）。
+    /// </remarks>
+    private readonly ICoordTransform _coordinatePort = CreateCoordinatePort(cropView);
 
     /// <summary>設定（全メンバー non-null）。実行中に <see cref="ApplySettings"/> で更新できる。</summary>
     private CaptureSettings _settings = settings.ToNonNull();
@@ -60,51 +54,67 @@ internal sealed class CropSession(
     private readonly CaptureSessionState _state = new();
 
     /// <summary>セッション結果の完了通知（確定・キャンセルの最初の 1 件を採用する）。</summary>
-    private readonly CaptureCompletion<PixelRect?> _completion = new();
+    /// <remarks>
+    /// 結果はコア型（<see cref="EsPixelRect"/>）で返す（UI 型は境界より外へ出さない）。<br/>
+    /// ホストは切り出しの適用先（アプリのコマンド）へそのまま渡せる。
+    /// </remarks>
+    private readonly CaptureCompletion<EsPixelRect?> _completion = new();
 
     /// <summary>選択矩形が有効かどうか（複合コントロールの選択状態）。ホスト（CaptureSessionControl）の操作分岐用。</summary>
     /// <remarks>選択状態の真のソースは選択矩形コントロール（<see cref="CropViewControl.HasSelection"/>）に集約する。</remarks>
     public bool HasSelection => cropView.HasSelection;
 
     /// <summary>ビューポートDIP ↔ 元画像ピクセルの座標変換ポートを生成する。</summary>
-    /// <param name="cropView">CropViewControl（ズームビューポートとオーバーレイを内包）。</param>
-    /// <param name="sourceImage">元画像（論理座標系の基準）。</param>
-    /// <returns>Forward = ビューポートDIP → 元画像ピクセル、Inverse = 元画像ピクセル → ビューポートDIP、Bounds = 元画像サイズのポート。</returns>
+    /// <param name="cropView">変換の基準となる複合コントロール。</param>
+    /// <returns>Forward = ビューポートDIP → 元画像ピクセル、Inverse = 元画像ピクセル → ビューポートDIP、Bounds = 現在の画像のサイズのポート。</returns>
     /// <remarks>
     /// 内包する <see cref="ZoomViewControl"/> の座標変換（<see cref="ZoomViewControl.ViewportToContentImage"/> /
     /// <see cref="ZoomViewControl.ContentToViewportImage"/>）を委譲する。これにより、ズーム・パン・Fit・中央寄せの<br/>
-    /// 原点補正を全て内包ビューポートが単一所有し、ホストが変換を重複実装する必要がない（DRY 原則）。
+    /// 原点補正を全て内包ビューポートが単一所有し、ホストが変換を重複実装する必要がない（DRY 原則）。<br/>
+    /// 境界は表示中の画像から都度評価する（切り出しのドメインは <see cref="CropViewImage"/> が単一所有する）。
     /// </remarks>
-    private static ICoordTransform CreateCoordinatePort(CropViewControl cropView, EsBitmap sourceImage)
-    {
-        var size = new EsSize(sourceImage.Size.Width, sourceImage.Size.Height);
-        return new CoordTransform(
+    private static ICoordTransform CreateCoordinatePort(CropViewControl cropView)
+        => new CoordTransform(
             forward: dip => cropView.ViewportToContent(dip.ToAvaloniaPoint()).ToEsPoint(),
             inverse: logical => cropView.ContentToViewport(logical.ToAvaloniaPoint()).ToEsPoint(),
-            bounds: () => size);
-    }
+            bounds: () => cropView.CurrentImage() is { } image ? CaptureClipMath.ImageSize(image) : null);
 
     /// <summary>切出しセッションを実行する（確定待機 → 結果返却）。UI スレッドから呼び出すこと。</summary>
-    /// <returns>確定時は元画像上の切り出し範囲、キャンセル時は 0x0 の空 PixelRect。</returns>
-    public Task<PixelRect?> RunAsync()
+    /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う。呼び出し側が表示中の画像から解決して渡す）。</param>
+    /// <returns>確定時は元画像上の切り出し範囲（コア型）、キャンセル時は 0x0 の空矩形。</returns>
+    /// <remarks>切り出しの境界（元画像の範囲）は開始時のサイズへ固定せず、現在の画像から都度取り出す（表示中の画像が単一所有する）。</remarks>
+    public Task<EsPixelRect?> RunAsync(EsBitmap sourceImage)
     {
         if (!_state.TryBegin())
         {
-            return Task.FromResult<PixelRect?>(null); // 再入禁止
+            return Task.FromResult<EsPixelRect?>(null); // 再入禁止
         }
 
         // 外観・座標変換・ルーペソースを設定する（CropViewControl は既に配置済み。追加・除去はしない）
         ConfigureControls();
         // 領域選択オーバーレイを可視化する（プレビュー表示時は非表示。Crop セッション中のみ表示して暗転を出す）。
         cropView.SetSelectionOverlayVisible(true);
-        _log.LogCropStart((int)_sourceImageSize.Width, (int)_sourceImageSize.Height);
+        // 開始ログのサイズは元画像からコアが取り出す（UI は整数へ丸めない）
+        _log.LogCropStart(sourceImage);
 
         void OnConfirm(Rect logicalRect)
         {
+            // 切り出しの対象は表示中の画像（差し替え後は差し替え後の画像の範囲で切り出す）。
+            // 対象が無い場合は画像が差し替えられた（または破棄された）ため、キャンセルとして扱う
+            if (cropView.CurrentImage() is not { } currentImage)
+            {
+                OnCancel();
+                return;
+            }
+
             if (!_state.TryComplete()) return; // 二重完了を防ぐ
-            var bounds = ExecuteCropForSize(logicalRect);
-            _log.LogCropCompleted(bounds.ToString());
+            // 切り出し範囲の計算（閉区間化・画像内へのクランプ・端数の丸め）はコアが単一所有する
+            var bounds = CropBoundsMath.ComputeCropBounds(
+                logicalRect.ToEsRect(), CaptureClipMath.ImageSize(currentImage), _settings.MinSelectionSize!.Value);
+            // 退化した選択（切り出せない矩形）はキャンセルとして記録する（規則はコアが単一所有する）
+            _log.LogCropFinished(bounds);
             Cleanup();
+            // 退化した選択は空の矩形（0x0）のまま返す（キャンセルと同じ表現。境界で UI 型へ変換する）
             _completion.TrySetResult(bounds);
         }
 
@@ -113,7 +123,8 @@ internal sealed class CropSession(
             if (!_state.TryComplete()) return; // 二重完了を防ぐ
             _log.LogCropCancelled();
             Cleanup();
-            _completion.TrySetResult(default); // 0x0 の空 PixelRect
+            // キャンセルは 0x0 の空矩形で表す（公開契約。null は「開始できなかった」の意味に限定する）
+            _completion.TrySetResult(default(EsPixelRect));
         }
 
         void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionRect);
@@ -184,24 +195,23 @@ internal sealed class CropSession(
         // 設定を複合コントロールの設定値（1 値）へ変換して一括適用する（変換はコアのマッパーが単一所有する）
         cropView.SelectionOverlayOptions = s.ToFadeMaskDragRectOptions();
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
-        // プレビュー内 Crop はドメイン = 論理座標（元画像ピクセル）のため Scaling は 1.0 固定。
-        cropView.Scaling = 1.0;
+        // プレビュー内 Crop はドメイン = 論理座標（元画像ピクセル）のため DIP と 1:1（基準値）にする。
+        cropView.Scaling = DpiScaler.StandardScaling;
         cropView.LoupeRenderScaling = s.LoupeRenderScaling!.Value;
         // サイズラベルも描画時に最新のズーム率から生成する（ズーム率表示の追従）。
-        cropView.SizeLabelOverrideProvider = () =>
-            cropView.HasSelection ? FormatSizeLabel(cropView.SelectionRect) : null;
+        // 書式と「未選択なら描かない」規則はコアが単一所有する。
+        cropView.SizeLabelOverrideProvider = () => CropLabelTexts.ResolveSizeLabel(
+            cropView.HasSelection, cropView.SelectionRect.ToEsRect(), cropView.ZoomPercent);
         // 操作ラベルの文言はホスト（切り出し文脈）が与える（汎用コアは文言を持たない）。
         // 情報ラベルは切り出しでは表示しない（CaptureLabelTexts が切り出しモードで null を返す）。
         cropView.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(cropView.SelectionMode);
         cropView.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(cropView.SelectionMode, null);
         // 座標変換ポート: ドメイン = 論理座標（元画像ピクセル）。ズーム・パン・Fit・中央寄せの原点補正は
-        // 内包する ZoomViewControl が単一所有する（CoordinatePort はそれを委譲）。
+        // 内包する ZoomViewControl が単一所有する（座標変換ポートはそれを委譲）。
         cropView.SetCoordinateTransform(_coordinatePort);
-        // ルーペソース（元画像）。LoupeControl.Source は IImage のため、EsBitmap を内包した IImage
-        // （EsBitmapAvaloniaImage）を設定する（WriteableBitmap を生成しない Skia 直描画。ゼロコピー）。
-        // sourceImage の所有権は呼び出し側にあり、本セッションでは破棄しない（Dispose を呼ばない）。
-        // アダプタはフィールドで一度だけ生成して再利用する（ConfigureControls の複数呼び出しでのリーク・再描画防止）。
-        cropView.SetLoupeSource(_loupeSourceImage);
+        // ルーペのソースは表示中の画像（切り出しの対象と同じ画像。画像の差し替えに追従する）。
+        // 終了時にルーペを解除するため、開始と設定変更のたびに表示中の画像へ結び直す。
+        cropView.SetLoupeSource(cropView.Source);
     }
 
     /// <summary>セッション実行中に最新の設定を再適用する（Crop 中の設定変更の即時反映）。</summary>
@@ -216,53 +226,5 @@ internal sealed class CropSession(
         if (!_state.IsRunning) return;
         _settings = newSettings.ToNonNull();
         ConfigureControls();
-    }
-
-    /// <summary>論理座標の選択矩形からサイズ情報ラベルの文字列を生成する。</summary>
-    /// <param name="rectLogical">論理座標（元画像ピクセル）の選択矩形。</param>
-    /// <returns>サイズ情報ラベル文字列。</returns>
-    /// <remarks>WH は閉区間（始点・終点のピクセルを含む）のピクセル数（<c>幅 + 1</c>）で表示する。</remarks>
-    private string FormatSizeLabel(Rect rectLogical)
-    {
-        int l = (int)rectLogical.X, t = (int)rectLogical.Y;
-        int r = (int)rectLogical.Right, b = (int)rectLogical.Bottom;
-        // ズーム率は内包する ZoomViewControl の実効ズーム率を使用する（元画像ピクセル / DIP の可視倍率）。
-        int displayPct = (int)Math.Round(cropView.ZoomPercent);
-        return $"LT: ({l}, {t}),  RB: ({r}, {b}),  WH: ({r - l + 1}, {b - t + 1}), Zoom: ({displayPct}%)";
-    }
-
-    /// <summary>元画像サイズと選択矩形を指定して切り出し範囲を論理座標（元画像ピクセル）で返す。</summary>
-    /// <param name="logicalRect">選択矩形（ドメイン座標 = 論理座標）。</param>
-    /// <returns>切り出し範囲。最小サイズ未満の場合は 0x0 の空 PixelRect。</returns>
-    /// <remarks>
-    /// 切り出し範囲は閉区間（始点・終点のピクセルを含む）とする。<br/>
-    /// 計算は <see cref="CropBoundsMath.ComputeCropBounds(EsRect, EsSize, double, bool)"/>（コア）が単一所有する<br/>
-    /// （MewUI 版と同じ規則。画像右端・下端のクランプも含む）。<br/>
-    /// 単体テストから呼び出し可能（internal）。
-    /// </remarks>
-    internal PixelRect ExecuteCropForSize(Rect logicalRect)
-        => ComputeCropBounds(logicalRect, _sourceImageSize, _settings.MinSelectionSize!.Value);
-
-    /// <summary>選択矩形（半開区間）を閉区間の切り出し範囲（論理座標）へ変換する（純粋関数）。</summary>
-    /// <param name="logicalRect">選択矩形（ドメイン座標 = 論理座標・半開区間）。</param>
-    /// <param name="sourceImageSize">元画像のピクセルサイズ。</param>
-    /// <param name="minSize">最小サイズ（ドメイン座標）。</param>
-    /// <returns>切り出し範囲。最小サイズ未満・範囲外の場合は 0x0 の空 PixelRect。</returns>
-    /// <remarks>
-    /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。<br/>
-    /// 切り出し範囲は閉区間（始点・終点のピクセルを含む）とする。<br/>
-    /// Marquee の矩形は半開区間（<c>幅 = 終点 − 始点</c>）のため、<c>Width / Height を +1</c> して<br/>
-    /// 終点のピクセルまで切り出す（仕様: 選択矩形の始点・終点は切出し対象に含まれる）。<br/>
-    /// 画像右端・下端では <c>+1</c> が画像サイズを超えないようクランプする。<br/>
-    /// </remarks>
-    internal static PixelRect ComputeCropBounds(Rect logicalRect, Size sourceImageSize, double minSize)
-    {
-        var bounds = CropBoundsMath.ComputeCropBounds(
-            new EsRect(logicalRect.X, logicalRect.Y, logicalRect.Width, logicalRect.Height),
-            new EsSize(sourceImageSize.Width, sourceImageSize.Height),
-            minSize);
-        return bounds.IsEmpty
-            ? default
-            : new PixelRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
     }
 }

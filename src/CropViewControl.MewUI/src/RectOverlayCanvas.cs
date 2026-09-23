@@ -2,6 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Controls;
 using Estable.CropView;
 using Estable.MewUI.ZoomView;
+using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 
@@ -67,7 +68,8 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
     /// ズームビューと同じくキャンバスを DPI スケーリングしてから DIP 座標で描画する。<br/>
-    /// 各矩形の左上・右下をドメイン座標からビューポート座標へ変換して描画する（回転は扱わない）。
+    /// 各矩形の左上・右下をドメイン座標からビューポート座標へ変換し、コア（<see cref="OverlayRectLayout"/>）が<br/>
+    /// 確定した描画入力を描画層へ渡す（クランプ・太さ補正・破線の判定は本メソッドが持たない）。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
@@ -78,7 +80,8 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
             return;
         }
 
-        var scaling = _zoomView.RenderScaling > 0 ? _zoomView.RenderScaling : 1.0;
+        // スケーリング係数の正規化（0 以下は基準値）は DpiScaler が単一所有する
+        var scaling = DpiScaler.NormalizeScaling(_zoomView.RenderScaling);
 
         canvas.Save();
         canvas.Scale((float)scaling);
@@ -89,10 +92,7 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
                 var topLeft = _zoomView.ContentToViewportImage(new EsPoint(rect.Bounds.X, rect.Bounds.Y));
                 var bottomRight = _zoomView.ContentToViewportImage(new EsPoint(rect.Bounds.Right, rect.Bounds.Bottom));
 
-                var viewportRect = new EsRect(
-                    topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
-
-                CropSkiaRenderer.RenderRect(canvas, viewportRect, rect);
+                CropSkiaRenderer.Render(canvas, OverlayRectLayout.Resolve(rect, topLeft, bottomRight));
             }
         }
         finally

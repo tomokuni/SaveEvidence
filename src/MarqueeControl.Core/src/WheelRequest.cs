@@ -13,7 +13,17 @@ namespace Estable.Marquee;
 /// <param name="DeltaY">縦方向の回転量（1 ノッチ = 1.0。正 = 上方向）。</param>
 /// <param name="Shift">Shift 併用かどうか（横スクロールの意図を示す）。</param>
 /// <param name="Position">ホイール操作の発生位置（コントロールローカル DIP）。</param>
-public readonly record struct WheelScrollRequest(double DeltaX, double DeltaY, bool Shift, EsPoint Position);
+public readonly record struct WheelScrollRequest(double DeltaX, double DeltaY, bool Shift, EsPoint Position)
+{
+    /// <summary>回転量を 1 つのベクターとして取得する。</summary>
+    /// <value>横・縦の回転量をまとめたベクター（コアの値型）。</value>
+    /// <remarks>
+    /// 回転量をベクターで受け取る API（ズームビューポートのパン等）へ渡すために使う。<br/>
+    /// <b>コアの型同士の変換は本契約が単一所有する</b>（UI が <c>new EsVector(...)</c> で組み立てると、
+    /// 同じ変換が UI ごとに散る）。
+    /// </remarks>
+    public EsVector Delta => new(DeltaX, DeltaY);
+}
 
 /// <summary>Ctrl+ホイールによるズーム要求（方向と発生位置）。</summary>
 /// <remarks>

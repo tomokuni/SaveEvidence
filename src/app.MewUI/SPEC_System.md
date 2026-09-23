@@ -126,9 +126,8 @@ tests/
 | `AppServices` | 共有するコアオブジェクトの束（DI コンテナを持たないため起動時に生成して渡す） |
 | `MainWindow` | ナビパネル（自前の合成。アイコン + ページ名・選択背景）とページ内容の切り替え、タイトルバー（拡張クライアント領域 + ウィンドウボタン）、配置の復元と保存、自動切り出し中の Escape（キャンセル）の処理 |
 | `PageContent` | ページの要素と、表示のたびに実行する処理（設定の再読込・一覧の再構築）の組 |
-| `CapturePage` | ツールバー・クロップビュー・ルーペ・切り出しオーバーレイ・ステータスの配置とコマンド接続。自動切り出しの検出矩形（水色の実線・ホバーで赤）をオーバーレイ表示し、矩形内のダブルクリックで確定、矩形外のダブルクリックでキャンセルする（Escape は `MainWindow` が処理する） |
-| `CaptureOverlay`（`CaptureSessionControl.MewUI`） | 撮影セッション（オーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し）。オーバーレイはタスクバー・Alt+Tab に出さず、左クリック / Enter で確定、Esc / 非アクティブ化でキャンセルする |
-| `CropOverlay`（`CaptureSessionControl.MewUI`） | プレビュー内の切り出し（座標変換ポートの管理・確定・キャンセル）。適用先は `ICaptureTarget` 経由 |
+| `CapturePage` | ツールバー・クロップビュー・ルーペ・切り出しオーバーレイ・ステータスの配置とコマンド接続。自動切り出しの検出矩形（水色の実線・ホバーで「赤枠 + 半透明の赤塗り」）を `CropViewControl.Rects` と装飾専用の `MarqueeControl`（内側の装飾 = `InnerDeco`）で表示し、矩形内のダブルクリックで確定、矩形外のダブルクリックでキャンセルする（Escape は `MainWindow` が処理する） |
+| `CaptureSessionControl`（`CaptureSessionControl.MewUI`） | 撮影と切り出しの Facade。排他（同時に 1 つだけ）とセッションの寿命を単一所有する。撮影はオーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し、切り出しはプレビュー上の領域選択 → `ICaptureTarget` への適用を行う |
 | `ConfirmDialog` | 簡易確認ダイアログ（はい / いいえ）を表示して選択を返す。`MainWindow` が `MainViewModel.ConfirmOverwriteAsync` へ配線する |
 | `ClickableToolTip` | クリックできるボタンへツールチップとクリック処理をまとめて登録する。MewUI の不具合でツールチップ表示中の押下が取り消されるため、`Click` が発生しなかった押下を `MouseUp` で補完する |
 | `AppStyles` | ナビ・ツールバー・ウィンドウ操作ボタン・サムネイル枠・面（ナビパネル / ステータスバー / プルダウン / 設定カード）の共通スタイル（`StyleName` で適用する `StyleSheet`）とレイアウト値（Avalonia 版と同一）を単一所有する。状態で変化するプロパティとテーマに追従する面の色はローカル値で設定せず本スタイルで与える。テーマの適用（`ApplyTheme`）と、スタイルで表せない値の更新通知（`ThemeChanged`）も本クラスが担う |
@@ -137,16 +136,16 @@ tests/
 | `FolderViewPage` | フォルダ一覧のツールバー・サムネイル一覧・ステータスバー（保存先フォルダを右端へ寄せる） |
 | `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし） |
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。変更の即時保存・テーマの即時適用・ホットキー入力を担う |
-| `ThumbnailView` | 画像の配置（Uniform）を担う表示ビュー（配置計算は `ImageDrawMath`（Core）が所有） |
+| `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `SkiaImageView` が単一所有し、計測と Uniform 指定だけを与える） |
 | `OverlayHost` | 子を親領域の任意位置へ重ねる Panel（位置は配置フェーズで関数から評価する） |
 | `MewUIImageWriter` | `IImageWriter` の実装。拡張子から保存形式を決めて SkiaSharp でエンコードする |
 | `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ |
-| `ImageDrawMath`（`CaptureSessionControl.Core`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。両 UI で共用） |
+| `ImageDrawMath`（`Platform.Core`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。`Settings` を参照する側に置く） |
 | `LoupeAppearance` | 設定のルーペ項目をルーペコントロールへ反映（プレビュー / 撮影 / 切り出しで共用） |
-| `CropBoundsMath`（`CaptureSessionControl.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。Avalonia 版と共用する（`CaptureOverlay` / `CropOverlay` が使用） |
-| `CaptureFlow` | キャプチャの開始（多重起動の防止）と結果の反映（Undo 退避 → プレビュー設定） |
+| `CropBoundsMath`（`CaptureSessionControl.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。Avalonia 版と共用する（`CropSession` が使用） |
+| `CaptureFlow` | キャプチャの開始（ホットキーの連打の防止）と結果の反映（Undo 退避 → プレビュー設定）。排他は Facade（`CaptureSessionControl`）が担う |
 | `EditHistory` | 編集履歴の移動（履歴からの画像の取り出しとプレビューへの差し替え） |
 | `WindowPlacementMath`（`Platform.MewUI`） | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
 | `AppLog` | ログ定義と Serilog のファクトリ（Avalonia 版と同一のファイル・書式。`Logging/AppLog.cs`） |
@@ -245,7 +244,9 @@ classDiagram
     class CropViewControl {
         <<CropViewControl.MewUI>>
         +EsBitmap? Source
+        +ZoomViewAppearance Appearance
         +IReadOnlyList~OverlayRect~ Rects
+        +bool CenterAlign
         +ZoomIn() void
         +ZoomOut() void
         +ZoomFit() void
@@ -283,21 +284,24 @@ classDiagram
     MainWindow ..> MainViewModel : 束縛
     MainWindow ..> ConfirmDialog : 上書き確認の配線
     CapturePage ..> CropViewControl : 配置
-    CapturePage ..> CropOverlay : 切り出し（CaptureSessionControl.MewUI）
+    CapturePage ..> CaptureSessionControl : 撮影と切り出し（CaptureSessionControl.MewUI）
     CapturePage ..> CaptureFlow : 撮影の開始
     CapturePage ..> EditHistory : 履歴の移動
     CapturePage ..> OverlayHost : ルーペの絶対配置
     OverlayHost ..> LoupeControl : 配置
-    CropOverlay ..> FadeMaskDragRectControl : 配置（Crop）
-    CropOverlay ..> ICaptureTarget : 切り出しの適用
+    CaptureSessionControl ..> CropSession : 切り出しセッション
+    CaptureSessionControl ..> CaptureOverlay : 撮影セッション
+    CaptureSessionControl ..> CaptureSessionSlot : 排他の受付
+    CropSession ..> FadeMaskDragRectControl : 配置（Crop）
+    CropSession ..> ICaptureTarget : 切り出しの適用
     MainViewModelCaptureTarget ..> MainViewModel : CropPreviewCommand
     MainViewModelCaptureTarget ..> ICaptureTarget : 実装
-    CropOverlay ..> CaptureOverlay : 設定の変換（コアの FadeMaskDragRectOptionsMapper）
+    CropSession ..> FadeMaskDragRectControl : 設定の変換（コアの FadeMaskDragRectOptionsMapper）
     CapturePage ..> LoupeAppearance : ルーペの外観（プレビューの常時表示）
     Program ..> SettingsJsonContext : 設定のソース生成
     SettingsService ..> SettingsJsonContext : 型情報の取得
-    CaptureFlow ..> CaptureOverlay : セッションの実行
-    CaptureOverlay ..> ImageView : 下敷きの画像
+    CaptureFlow ..> CaptureSessionControl : 撮影の実行
+    CaptureOverlay ..> SkiaImageView : 下敷きの画像
     CaptureOverlay ..> FadeMaskDragRectControl : 配置（Area / Screen / Window）
     CaptureOverlay ..> IElementFinder : 要素の検出
     CaptureOverlay ..> ICaptureService : 画面の取得
@@ -312,8 +316,8 @@ classDiagram
     UndoPage ..> ISettingsService : 表示モードの読み書き
     UndoPage ..> MainViewModel : 現在の画像を参照
     ImageThumbnailLoader ..> EsBitmap : 縮小デコードの結果
-    ThumbnailView ..> ImageDrawMath : 配置計算
-    ImageView ..> ImageDrawMath : 配置計算
+    ThumbnailView --|> SkiaImageView : 計測と Uniform 指定を与える
+    SkiaImageView ..> ImageDrawMath : 配置計算
     CropViewControl ..> MainViewModel : 参照（Source / DetectedRects）
     LoupeControl ..> MainViewModel : 参照（Source / CenterPoint）
     MewUIImageWriter ..|> IImageWriter
@@ -364,8 +368,10 @@ sequenceDiagram
     participant CS as ICaptureService
     participant OS as オーナーウィンドウ
 
-    HK->>CF: Start(services, type)
-    CF->>OW: Capture(services, owner, type)
+    HK->>CF: Start(services, type, captureSession)
+    CF->>OW: Capture(owner, type, services)
+    OW->>OW: CaptureSessionSlot.TryBeginCapture（排他の受付。切り出し中は null を返す）
+
     OW->>OS: キャプチャ除外 + 画面外へ退避（設定時）
     OW->>CS: CaptureVirtualScreen(全モニター)
     CS-->>OW: EsBitmap / 失敗時 null
@@ -381,19 +387,24 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant BTN as 切り出しボタン / Enter
-    participant PS as CropOverlay
+    participant PS as CaptureSessionControl
+    participant CS as CropSession
     participant CV as CropViewControl
     participant FM as FadeMaskDragRectControl
     participant VM as MainViewModel
 
-    BTN->>PS: Toggle()（未開始なら Start）
-    PS->>CV: ImageRectViewport() / DisplaySize()
-    PS->>FM: SetCoordinateTransform（ローカル DIP ⇔ 画像ピクセル）
-    PS->>FM: SetLoupeSource(PreviewImage)
+    BTN->>PS: ToggleCrop()（未開始なら開始）
+    PS->>PS: CaptureSessionSlot.TryBeginCrop（排他の受付。撮影中は開始しない）
+    PS->>CS: 生成 + Start(image)（オーバーレイを表示ツリーへ加える）
+    CS->>CV: ViewportToContent / ContentToViewport（座標変換ポート）
+    CS->>FM: SetCoordinateTransform（ローカル DIP ⇔ 画像ピクセル）
+    CS->>FM: SetLoupeSource(PreviewImage)
     Note over FM: ドラッグで選択（座標ラベル・ハンドル・ルーペはコントロールが描画）
-    BTN->>PS: Toggle()（選択があれば Confirm）
-    PS->>PS: CropBoundsMath.ComputeCropBounds（画像内へクランプ + 閉区間化）
-    PS->>VM: ICaptureTarget.ApplyCrop（Undo 退避 → 切り出し → 画像差し替え）
+    BTN->>PS: ToggleCrop()（選択があれば確定）
+    PS->>CS: Confirm()
+    CS->>CS: CropBoundsMath.ComputeCropBounds（画像内へクランプ + 閉区間化）
+    CS->>PS: Ended（終了の通知）→ 排他の受付を解放
+    CS->>VM: ICaptureTarget.ApplyCrop（Undo 退避 → 切り出し → 画像差し替え）
 ```
 
 ## シーケンス図（フォルダビューページ）
@@ -568,14 +579,14 @@ sequenceDiagram
 | 保存先フォルダが存在しない | 一覧を空にし、ステータスのアイテム数を 0 にする |
 | 保存先フォルダの列挙に失敗（アクセス拒否等） | 一覧を空にする（ページごと落とさない） |
 | 画像のデコードに失敗（破損・非画像） | その項目のサムネイルを描画しない（項目自体は残す） |
-| 破棄済みの画像を描画しようとした | `ThumbnailView` / `ImageView` が描画を省略する（キャッシュの容量超過で破棄された場合） |
+| 破棄済みの画像を描画しようとした | `ThumbnailView` / `SkiaImageView` が描画を省略する（キャッシュの容量超過で破棄された場合） |
 | 対象モニターを検出できない | キャプチャを開始しない（画像の取得に失敗した場合） |
 | 画面の取得に失敗 | キャプチャを開始しない（オーナーの表示状態を戻す） |
 | 選択が退化している（1px 未満） | キャンセルと同じ扱いにする（0 サイズの画像を作らない） |
 | ホットキーの登録に失敗 | そのホットキーのみ無効（他のホットキーと操作は影響を受けない） |
 | 保存先フォルダの参照ダイアログが使えない | 設定を変更しない（手入力での編集は可能） |
 | 設定の色文字列が不正 | 既定色へフォールバックする（描画を落とさない） |
-| キャプチャの多重起動 | `CaptureFlow.IsCapturing` で無視する（ホットキーの連打で重ならない） |
+| キャプチャの多重起動 | `CaptureFlow.IsCapturing` で無視する（ホットキーの連打で重ならない）。切り出し中の撮影は Facade（`CaptureSessionControl`）がコアの `CaptureSessionSlot` で受付を拒否する |
 | オーバーレイの非アクティブ化 | キャンセルとして扱う（最前面のオーバーレイが残り続けるのを防ぐ） |
 | 要素を検出できない位置のクリック | 確定しない（誤クリックで撮影を取りこぼさない。キャンセルは Esc） |
 | 未処理の例外（アプリ全体 / UI スレッド / 未観測タスク） | Critical で記録する。UI スレッドの例外は記録後に処理済みとし、ウィンドウの表示を維持する（`Program.RegisterExceptionLogging`） |
@@ -607,14 +618,15 @@ sequenceDiagram
 11. **サムネイルの読み込みを専用クラスへ分離する**。縮小デコードと容量制限付きキャッシュは
    `ImageThumbnailLoader` が単一所有し、ページは `Load` を呼ぶだけにする（UI なしで検証できる）。
 12. **キャプチャの開始経路を 1 つにする**。ツールバーのボタンとグローバルホットキーは
-   `MainViewModel.StartSelectionMode` → `CaptureFlow.Start` へ集約する（開始処理を二重所有しない）。
+   `MainViewModel.StartSelectionMode` → `CaptureFlow.Start` → Facade（`CaptureSessionControl`）へ集約する（開始処理を二重所有しない）。
 13. **ホットキーは初回描画後に登録する**。ウィンドウハンドルとウィンドウプロシージャは表示時に確定し、
    起動時コールバックではサブクラス化が MewUI 側の設定で上書きされて `WM_HOTKEY` を受け取れない（実測）。
 14. **撮影の対象は全モニター（仮想スクリーン）**。1 モニターに限定するとカーソルのある
     モニターでしか選択できないため、仮想スクリーンを 1 枚の画像とし、オーバーレイで全面を覆う
     （フレームワークの論理座標による配置は OS に補正されるため、物理ピクセルで置き直す）。
-15. **表示状態と画像の配置を別のビューへ分ける**。`ImageView`（Fill）と `ThumbnailView`（Uniform）は
-   サイズ要求が異なるが、配置の計算は `ImageDrawMath` が単一所有する。
+15. **表示状態と画像の配置を別のビューへ分ける**。撮影のオーバーレイ（`CaptureSessionControl.MewUI`）と
+    サムネイル（`ThumbnailView`）は大きさの要求が異なるが、描画は `Platform.MewUI` の `SkiaImageView` が、
+    配置の計算は `ImageDrawMath`（`Platform.Core`）が単一所有する（サムネイルは計測と Uniform 指定だけを加える）。
 16. **色の変換を専用クラスへ分離する**。設定は色を文字列で保持するため、境界の変換は
    `SettingsColorMath` が単一所有し、不正な値は既定色へフォールバックする。
 17. **絶対配置が必要な子は自前の Panel で配置する**。MewUI の `Grid` は整列で位置を決め、`Margin` と
@@ -624,7 +636,11 @@ sequenceDiagram
    同じ設定を同じ対応で反映する必要がある（`LoupeAppearance`）。
 19. **履歴の移動を専用クラスへ分離する**。`EditHistory` が「履歴から取り出してプレビューへ差し替える」
    操作を単一所有し、ツールバーのボタンはこれを呼ぶだけにする。
-20. **設定の JSON はソース生成コンテキストを注入する**。Native AOT / トリミングでは反射ベースの
+20. **設定の変更は Facade へ集約する**。設定（切り出しの外観・最小サイズ等）は `CaptureSessionControl.AppearanceSettings`
+   へ渡し、部分更新・検証・同値スキップ・適用ログはコアが単一所有する。撮影と切り出しが同じ設定を使い、
+   実行中の切り出しセッションへは即時反映される（ページは 1 度だけ生成されるため、購読しないと設定画面での
+   変更が届かない。Avalonia 版の `MainWindow` と同じ配線）。
+21. **設定の JSON はソース生成コンテキストを注入する**。Native AOT / トリミングでは反射ベースの
    シリアル化が成立せず設定が空（`{}`）になる（実測）。コンテキストは `Settings` を参照する側の
    アセンブリに置く必要がある（同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
    書式はソース生成の有無にかかわらず共通とし、設定ファイルの互換性を保つ（実測でバイト単位の一致を確認）。
@@ -645,7 +661,7 @@ sequenceDiagram
 | --- | --- |
 | `MewUIImageWriter` | 実ファイルへ書き出し、`SKCodec` で保存形式を判定して検証する（13 件） |
 | `WindowPlacementMath` | 純粋関数のためヘッドレスで検証する。スケール 0・負値・NaN、画面外判定、四捨五入の境界を含む（19 件） |
-| `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。Uniform / Fill・余白の中央寄せ・空の入力（11 件） |
+| `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。Uniform / Fill・余白の中央寄せ・空の入力（`Platform.Core.Tests` が担う） |
 | `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。6 / 8 桁・大文字小文字・不正入力・往復変換（22 件） |
 | `SettingsService` | ソース生成と反射の書式の一致（既存の設定ファイルとの互換性）を `app.Core.Tests` で検証する（4 件） |
 | `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する（13 件） |
