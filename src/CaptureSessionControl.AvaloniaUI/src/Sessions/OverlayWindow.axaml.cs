@@ -139,12 +139,8 @@ internal sealed partial class OverlayWindow : Window
         // - ScreenSelect / WindowSelect: Marquee のみ有効（ハイライト表示。クリック確定フローは本クラスが担う）
         // 内包コントロール（ルーペ / ドラッグ）の詳細ログ（Trace）をホストのログ基盤へ転送する（不具合調査用）。
         SelectionOverlay.Log = _log;
-        SelectionOverlay.Mode = _captureType switch
-        {
-            CaptureType.AreaSelect => FadeMaskDragRectMode.AreaSelect,
-            CaptureType.ScreenSelect => FadeMaskDragRectMode.ScreenSelect,
-            _ => FadeMaskDragRectMode.WindowSelect,
-        };
+        // モード写像（キャプチャ種別 → 動作モード）はキャプチャコアが単一所有する
+        SelectionOverlay.Mode = CaptureLabelTexts.ToSelectionMode(_captureType);
         // 設定を複合コントロールの設定値（1 値）へ変換して一括適用する（変換はコアのマッパーが単一所有する）。
         // ルーペの市松模様の下地色は塗らない（Avalonia 版は背後に固定背景画像を置くため透明で透かす）
         SelectionOverlay.Options = s.ToFadeMaskDragRectOptions();
@@ -169,6 +165,10 @@ internal sealed partial class OverlayWindow : Window
             }
             return s.SizeLabelOverride;
         };
+        // 操作ラベル・情報ラベルの文言はホスト（キャプチャ文脈）が与える（汎用コアは文言を持たない）。
+        // モード別の文言と情報ラベルの表示可否は CaptureLabelTexts が単一所有する。
+        SelectionOverlay.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(SelectionOverlay.Mode);
+        SelectionOverlay.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(SelectionOverlay.Mode, _windowTitle);
         // 選択矩形・ハイライトはドメイン座標（仮想スクリーンピクセル）で設定し、描画時に DIP へ変換する（Marquee と同方式）
         // DomainScale: Forward = DIP→ドメイン（× scaling）/ Inverse = ドメイン→DIP（÷ scaling）
         // Marquee / Loupe の 2 コントロールへ同一ポートを一括分配する。

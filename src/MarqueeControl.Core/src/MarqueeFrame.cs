@@ -19,7 +19,7 @@ namespace Estable.Marquee;
 /// <see cref="OuterDecoFrame.Resolve(in OuterDecoRequest)"/> が判断する（本クラスは判断を持たない）。<br/>
 /// UI 実装は本メソッドが返すフレームを自 UI の描画 API へ写すだけでよい。
 /// </remarks>
-internal static class MarqueeFrame
+public static class MarqueeFrame
 {
     /// <summary>選択矩形の 1 フレーム分の描画内容（外側の装飾）を解決する。</summary>
     /// <param name="session">選択の状態を単一所有するセッション（選択矩形・選択の有無・設定を参照する）。</param>
@@ -28,12 +28,15 @@ internal static class MarqueeFrame
     /// <param name="scaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
     /// <param name="sizeLabelOverrideProvider">サイズラベルの文言プロバイダ（null 可。未指定・空文字の場合は自動生成する）。</param>
     /// <param name="displayScaleScaling">サイズラベルの自動生成に使うスケーリング（0 以下は等倍）。</param>
+    /// <param name="operationTextProvider">操作ラベル（2 行目）の文言プロバイダ（null 可。未指定・空文字の場合は描かない）。</param>
+    /// <param name="infoTextProvider">情報ラベル（3 行目）の文言プロバイダ（null 可。未指定・空文字の場合は描かない）。</param>
     /// <returns>外側の装飾の描画内容（描くものが無い場合は空のフレーム）。</returns>
     /// <remarks>
-    /// 1. セッションの設定（外側の装飾の外観・モード・タイトル・ハイライト）を取り出す。<br/>
+    /// 1. セッションの設定（外側の装飾の外観・ハイライト）を取り出す。<br/>
     /// 2. 選択に由来する項目（論理選択矩形・選択の有無）をセッションの状態から導出する。<br/>
     /// 3. 装飾コアの入力値を組み立て、フレーム解決（<see cref="OuterDecoFrame.Resolve(in OuterDecoRequest)"/>）へ委譲する。<br/>
     /// <br/>
+    /// 文言（操作ラベル・情報ラベル）はホストがプロバイダで与える（本コアは特定の操作文言を持たない）。<br/>
     /// 本メソッドは引数を検証しない（<paramref name="client"/> の寸法が 0 の場合は空のフレームが返る）。
     /// </remarks>
     public static OuterDecoFrame Resolve(
@@ -42,7 +45,9 @@ internal static class MarqueeFrame
         ICoordTransform? port,
         double scaling,
         Func<string?>? sizeLabelOverrideProvider,
-        double displayScaleScaling)
+        double displayScaleScaling,
+        Func<string?>? operationTextProvider = null,
+        Func<string?>? infoTextProvider = null)
     {
         ArgumentNullException.ThrowIfNull(session);
 
@@ -53,8 +58,6 @@ internal static class MarqueeFrame
             new OuterDecoOptions
             {
                 Appearance = options.OuterAppearance,
-                Mode = options.OuterRenderMode,
-                WindowTitle = options.OuterWindowTitle,
                 ShowFullOverlay = options.OuterShowFullOverlay,
                 LogicalSelectionRect = hasSelection ? session.SelectionRect : null,
                 HasSelection = hasSelection,
@@ -65,6 +68,8 @@ internal static class MarqueeFrame
             port,
             scaling,
             sizeLabelOverrideProvider,
+            operationTextProvider,
+            infoTextProvider,
             displayScaleScaling);
 
         return OuterDecoFrame.Resolve(request);

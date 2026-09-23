@@ -1,4 +1,3 @@
-using Estable.Marquee.Decoration;
 using Xunit;
 
 namespace Estable.FadeMaskDragRect.Tests;
@@ -7,17 +6,6 @@ namespace Estable.FadeMaskDragRect.Tests;
 /// <remarks>純粋な分岐のみのため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>
 public class FadeMaskDragRectModesTests
 {
-    /// <summary>各モードが対応する暗転マスクの描画モードへ変換されることを検証する。</summary>
-    /// <param name="mode">動作モード。</param>
-    /// <param name="expected">期待する描画モード。</param>
-    [Theory]
-    [InlineData(FadeMaskDragRectMode.Crop, OuterDecoRenderMode.Crop)]
-    [InlineData(FadeMaskDragRectMode.AreaSelect, OuterDecoRenderMode.AreaSelect)]
-    [InlineData(FadeMaskDragRectMode.ScreenSelect, OuterDecoRenderMode.ScreenSelect)]
-    [InlineData(FadeMaskDragRectMode.WindowSelect, OuterDecoRenderMode.WindowSelect)]
-    public void 解決_モードに対応する描画モードを返す(FadeMaskDragRectMode mode, OuterDecoRenderMode expected)
-        => Assert.Equal(expected, FadeMaskDragRectModes.Resolve(mode).RenderMode);
-
     /// <summary>選択矩形・全面暗転・破線の可否がモードに対応することを検証する。</summary>
     /// <param name="mode">動作モード。</param>
     /// <param name="expected">選択矩形を使用する場合は true。</param>
@@ -58,13 +46,13 @@ public class FadeMaskDragRectModesTests
             .Resolve(FadeMaskDragRectMode.AreaSelect)
             .IsLoupeVisible(hasSource, hasCenter));
 
-    /// <summary>未定義の値でも例外にならないことを検証する。</summary>
+    /// <summary>未定義の値でも例外にならず選択矩形を使わない扱いになることを検証する。</summary>
     [Fact]
-    public void 解決_未定義の値はWindowSelectとして扱う()
+    public void 解決_未定義の値は選択矩形を使わない扱いになる()
     {
         var state = FadeMaskDragRectModes.Resolve((FadeMaskDragRectMode)999);
 
-        Assert.Equal(OuterDecoRenderMode.WindowSelect, state.RenderMode);
         Assert.False(state.UsesSelection);
+        Assert.False(state.ShowFullOverlay);
     }
 }

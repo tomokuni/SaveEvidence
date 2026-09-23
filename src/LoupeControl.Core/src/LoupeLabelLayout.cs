@@ -5,21 +5,21 @@ namespace Estable.Loupe;
 /// <summary>ルーペの中心座標ラベルの配置計算ロジック（純粋関数）。</summary>
 /// <remarks>
 /// ラベルの余白（ルーペ上端からの距離・背景の内側余白）と、背景矩形・文字原点の計算を単一所有する。<br/>
-/// 両 UI（Avalonia / MewUI）は本クラスの値を用いてラベルを配置する（UI ごとに余白を持つと見た目がずれる）。<br/>
-/// Avalonia 版は戻り値を使わず、レイアウトシステムへ余白（Margin / Padding）として同じ値を渡す<br/>
+/// 各 UI 実装は本クラスの値を用いてラベルを配置する（UI ごとに余白を持つと見た目がずれる）。<br/>
+/// 余白をレイアウト機構へ渡す UI 実装は戻り値を使わず、同じ値を Margin / Padding として渡す<br/>
 /// （宣言的レイアウトと手計算で同じ矩形になることを、本クラスのテストが担保する）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class LoupeLabelLayout
+public static class LoupeLabelLayout
 {
     /// <summary>ルーペ上端からのラベルの余白（DIP）。</summary>
-    internal const double OuterMargin = 2.0;
+    public const double OuterMargin = 2.0;
 
     /// <summary>ラベル背景の左右の内側余白（DIP）。</summary>
-    internal const double PaddingX = 4.0;
+    public const double PaddingX = 4.0;
 
     /// <summary>ラベル背景の上下の内側余白（DIP）。</summary>
-    internal const double PaddingY = 1.0;
+    public const double PaddingY = 1.0;
 
     /// <summary>ラベル背景の矩形を計算する（ルーペ上端中央・物理ピクセル座標）。</summary>
     /// <param name="loupePixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>

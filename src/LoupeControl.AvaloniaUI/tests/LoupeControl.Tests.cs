@@ -807,7 +807,7 @@ public class LoupeControlTests
         control.Source = null;
         control.CenterPoint = null;
 
-        // 描画を実行して LogRenderCore / LogGenerateAsyncDone を出力する
+        // 描画を実行して描画パイプラインのログ（LoupeRenderLog）を出力する
         await control.WaitForRenderedAsync();
         Dispatcher.UIThread.RunJobs();
         control.Clear();

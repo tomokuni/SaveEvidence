@@ -92,4 +92,4 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropOverlay`）の**双方**が同じ対応で反映します（変換はコアの `FadeMaskDragRectOptionsMapper` が単一所有する）。
 UI ごとに固定値（白枠 2 DIP 等）を持たないため、設定を変えるとプレビューの切り出しにも反映されます。
-情報ラベルは `OuterDecoLabels.ShouldShowInfoLabel` が WindowSelect モードに限定するため、切り出しでは表示されません。
+情報ラベルはキャプチャコアの `CaptureLabelTexts.GetInfoText` がウィンドウ選択に限定するため、切り出しでは表示されません。

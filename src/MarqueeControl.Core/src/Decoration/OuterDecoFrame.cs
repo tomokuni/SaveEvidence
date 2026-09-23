@@ -17,13 +17,21 @@ namespace Estable.Marquee.Decoration;
 /// <param name="Port">論理座標 → DIP の座標変換ポート。null の場合は <paramref name="Scaling"/> を等倍スケールとして適用する。</param>
 /// <param name="Scaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
 /// <param name="SizeLabelOverrideProvider">サイズラベルの文言プロバイダ。null 可（未指定・空文字の場合は自動生成する）。</param>
+/// <param name="OperationTextProvider">操作ラベル（2 行目）の文言プロバイダ。null 可（未指定・空文字の場合は行を描かない。ホストが与える）。</param>
+/// <param name="InfoTextProvider">情報ラベル（3 行目）の文言プロバイダ。null 可（未指定・空文字の場合は行を描かない。ホストが与える）。</param>
 /// <param name="DisplayScaleScaling">サイズラベルの自動生成に使うスケーリング（0 以下は等倍）。</param>
+/// <remarks>
+/// 設定と描画状態（<see cref="OuterDecoOptions"/>）は <see cref="MarqueeFrame"/> が組み立てるため、本値は内部契約とする<br/>
+/// （UI 実装は <see cref="MarqueeFrame.Resolve"/> を呼び、本値を直接組み立てない）。
+/// </remarks>
 internal readonly record struct OuterDecoRequest(
     OuterDecoOptions Options,
     EsRect Client,
     ICoordTransform? Port,
     double Scaling,
     Func<string?>? SizeLabelOverrideProvider,
+    Func<string?>? OperationTextProvider,
+    Func<string?>? InfoTextProvider,
     double DisplayScaleScaling);
 
 /// <summary>暗転マスクの 1 フレーム分の描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
@@ -40,7 +48,7 @@ internal readonly record struct OuterDecoRequest(
 /// <param name="SizeLabelText">サイズラベル（1 行目）の文言。null の場合は描かない（常に非空か null）。</param>
 /// <param name="SizeLabelStyle">サイズラベルの外観（背景の実効色を含む）。</param>
 /// <param name="SubLines">サイズラベルの下に積む行（2 行目以降）。空の場合は描かない。</param>
-internal readonly record struct OuterDecoFrame(
+public readonly record struct OuterDecoFrame(
     IReadOnlyList<EsRect> OverlayRegions,
     DrawingColor OverlayColor,
     IReadOnlyList<EsRect> BorderRects,
@@ -61,16 +69,16 @@ internal readonly record struct OuterDecoFrame(
     /// 5. 穴あけ矩形がある場合のみ、サイズラベルの文言（プロバイダ未指定・空文字なら自動生成）と<br/>
     ///    サブライン（<see cref="OuterDecoAppearance.BuildSubLines"/>）を組み立てる。<br/>
     /// <br/>
-    /// ラベル背景の実効色（アルファ 0 を黒 50% として扱う規則）も本メソッドが解決する。
+    /// ラベル背景の実効色（アルファ 0 を黒 50% として扱う規則）も本メソッドが解決する。<br/>
+    /// <b>可視性</b>: UI 実装は <see cref="MarqueeFrame.Resolve"/> を使うため、本メソッドは内部契約とする。
     /// </remarks>
-    public static OuterDecoFrame Resolve(in OuterDecoRequest request)
+    internal static OuterDecoFrame Resolve(in OuterDecoRequest request)
     {
         var options = request.Options;
         var appearance = options.Appearance;
 
         // 穴あけ矩形の決定（論理矩形 + 座標変換ポートを描画時に評価。ポート未指定は倍率または等価変換）
-        // 選択矩形は閉区間（+1）で DIP 変換する。ハイライト矩形（スクリーン/ウィンドウ境界）は
-        // 既に全ピクセルを含む閉区間表現（PixelRect 由来）のため +1 しない（1px 大きく表示されるのを防ぐ）。
+        // 選択矩形は閉区間（+1）で DIP 変換する。ハイライト矩形（既に全ピクセルを含む閉区間表現）は +1 しない。
         var port = OuterDecoOverlayGeometry.ResolvePort(request.Port, request.Scaling);
         var selectionRect = options.LogicalSelectionRect is { } selection
             ? OuterDecoOverlayGeometry.ToDipRect(selection, port)
@@ -117,7 +125,9 @@ internal readonly record struct OuterDecoFrame(
             hole,
             sizeLabelText,
             sizeLabelStyle,
-            appearance.BuildSubLines(options.Mode, options.WindowTitle));
+            appearance.BuildSubLines(
+                request.OperationTextProvider?.Invoke(),
+                request.InfoTextProvider?.Invoke()));
     }
 
     /// <summary>サイズラベル（1 行目）の文言を決定する。</summary>

@@ -101,7 +101,7 @@ public sealed class CaptureOverlay
         _settings = settings;
         _log = log.OrNullLogger();
 
-        _selector = new FadeMaskDragRectControl { Mode = ToMode(type), Log = _log };
+        _selector = new FadeMaskDragRectControl { Mode = CaptureLabelTexts.ToSelectionMode(type), Log = _log };
         // 設定はコアのマッパーで 1 値に変換して一括適用する（変換はコアが単一所有する）。
         // 市松模様の下地は白で塗る（背後に撮影画像があるため、半透明の市松色をそのまま重ねない）
         _selector.Options = settings.ToFadeMaskDragRectOptions(DrawingColor.White);
@@ -117,16 +117,6 @@ public sealed class CaptureOverlay
             _selection = () => _selector.HasSelection ? _selector.SelectionRect : null;
         }
     }
-
-    /// <summary>キャプチャ種別に対応する選択コントロールのモードを求める。</summary>
-    /// <param name="type">キャプチャ種別。</param>
-    /// <returns>選択コントロールのモード。</returns>
-    private static FadeMaskDragRectMode ToMode(CaptureType type) => type switch
-    {
-        CaptureType.ScreenSelect => FadeMaskDragRectMode.ScreenSelect,
-        CaptureType.WindowSelect => FadeMaskDragRectMode.WindowSelect,
-        _ => FadeMaskDragRectMode.AreaSelect,
-    };
 
     /// <summary>キャプチャのセッションを実行し、確定した領域を返す。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
@@ -441,7 +431,8 @@ public sealed class CaptureOverlay
     /// 2. 外観（サイズラベル・サブライン・情報ラベルの色・サイズ）は設定値の変換
     ///    （<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）が単一所有するため、本メソッドでは設定しない。<br/>
     /// 3. 描画モード（操作ラベルの文言選定）は複合コントロールの <see cref="FadeMaskDragRectControl.Mode"/> が単一所有するため本メソッドでは設定しない。<br/>
-    /// 4. ウィンドウタイトルをコントロールへ渡し、行の組み立てはコントロールに委ねる（タイトルの更新時に本メソッドを呼び直す）。
+    /// 4. 操作ラベル・情報ラベルの文言をホスト（キャプチャ文脈）がプロバイダで与える（モード別の文言と情報ラベルの表示可否は
+    ///    <c>CaptureLabelTexts</c> が単一所有する）。タイトルの更新時に本メソッドを呼び直す。
     /// </remarks>
     private void ApplyLabels(CaptureSettings settings)
     {
@@ -452,8 +443,9 @@ public sealed class CaptureOverlay
                 ? OuterDecoLabels.FormatSizeLabel(rect, scaling: 1.0, displayScaling: DisplayScalingAt(rect))
                 : null;
 
-        // ウィンドウタイトル（情報ラベルの文言）を渡し、行の組み立てはコントロールに委ねる
-        _selector.WindowTitle = _windowTitle;
+        // 操作ラベル・情報ラベルの文言はキャプチャコア（CaptureLabelTexts）が単一所有する
+        _selector.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(_selector.Mode);
+        _selector.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(_selector.Mode, _windowTitle);
     }
 
     /// <summary>確定して選択領域を切り出す。</summary>
@@ -541,8 +533,7 @@ public sealed class CaptureOverlay
         _selector.LogicalHighlightRect = found.IsDetected ? ToDomain(found.Bounds) : null;
 
         // 情報ラベル（ウィンドウタイトル）は検出結果に追従させる（見つからない場合は空にして非表示にする）
-        // スクリーン検出時の Title は「Screen {インデックス}」だが、情報ラベルはコアの
-        // ShouldShowInfoLabel がウィンドウ選択に限定して判定するため、スクリーン選択では表示されない
+        // 情報ラベルの表示可否（ウィンドウ選択に限定）は CaptureLabelTexts が単一所有する
         var title = found.IsDetected ? found.Title ?? "" : "";
         if (title != _windowTitle)
         {

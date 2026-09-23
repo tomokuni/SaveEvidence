@@ -24,7 +24,11 @@
 | `LoupeLogMessage` | ログ定義（設定変更・拡大中心の変更・描画例外・再描画の進行）と書式・変化判定（同値の再設定では出力しない）の単一所有 |
 | `Imaging.LoupeImageExtractor` | 切り出し領域の一辺・左上（ドメイン座標）の計算と、`EsBitmap` からの領域切り出し、切り出し可否を含む取得（`TryExtractRegionAt`）、拡大描画の矩形（`ComputeMagnifiedRects`。引数はビットマップの実寸 `EsBitmap.Size`） |
 
-`LoupeOptions` / `LoupeAppearance` のみ **public** です（ホスト・他プロジェクトが設定を指定するため）。それ以外は `internal` であり、UI 実装（`LoupeControl.AvaloniaUI` / `LoupeControl.MewUI`）・複合コントロール・テストからのみ `InternalsVisibleTo` で参照できます。
+**全型が public** です（外部が独自の UI アダプタを実装できるようにするため。他アセンブリへの `InternalsVisibleTo` は持ちません）。
+
+**公開面の性格**: 本プロジェクトの 13 型はすでに「UI アダプタ契約」（描画層が使う計算・契約・ログ）に限定されています。位置計算（`LoupePositionCalculator`）はホスト（他コントロールの配置）も使うため、絞り込める層はありません（`MarqueeControl.Core` にある「外部参照 0 件の内部ヘルパー」に相当する型はありません）。
+
+**UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログは `LoupeControl.AvaloniaUI` にあります）。
 
 ## 依存方向
 

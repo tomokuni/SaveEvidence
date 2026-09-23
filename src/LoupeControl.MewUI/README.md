@@ -65,8 +65,7 @@ var (size, position) = LoupePositionCalculator.Compute(
     requestedSize, parentSize, centerDip, offset);
 ```
 
-> **注意**: `LoupePositionCalculator` は `LoupeControl.Core` の `internal` 型です。外部から使用するには
-> `InternalsVisibleTo` の追加が必要です（本リポジトリの `app.MewUI` はアセンブリ内から使用します）。
+> **注意**: `LoupePositionCalculator` は `LoupeControl.Core` の `public` 型です（汎用コアとして公開されており、`InternalsVisibleTo` は不要です）。
 
 ## プロパティ
 

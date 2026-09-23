@@ -190,6 +190,10 @@ internal sealed class CropSession(
         // サイズラベルも描画時に最新のズーム率から生成する（ズーム率表示の追従）。
         cropView.SizeLabelOverrideProvider = () =>
             cropView.HasSelection ? FormatSizeLabel(cropView.SelectionRect) : null;
+        // 操作ラベルの文言はホスト（切り出し文脈）が与える（汎用コアは文言を持たない）。
+        // 情報ラベルは切り出しでは表示しない（CaptureLabelTexts が切り出しモードで null を返す）。
+        cropView.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(cropView.SelectionMode);
+        cropView.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(cropView.SelectionMode, null);
         // 座標変換ポート: ドメイン = 論理座標（元画像ピクセル）。ズーム・パン・Fit・中央寄せの原点補正は
         // 内包する ZoomViewControl が単一所有する（CoordinatePort はそれを委譲）。
         cropView.SetCoordinateTransform(_coordinatePort);

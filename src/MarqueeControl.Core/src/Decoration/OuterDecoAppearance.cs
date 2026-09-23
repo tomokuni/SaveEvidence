@@ -5,10 +5,10 @@ namespace Estable.Marquee.Decoration;
 /// <summary>暗転マスク（オーバーレイ）の外観をまとめた不変の設定値。</summary>
 /// <remarks>
 /// 暗転・枠線・サイズラベル・サブライン・情報ラベルの外観を 1 つの値として所有する。<br/>
-/// 両 UI（Avalonia / MewUI）は本型を 1 つ公開するだけで外観を設定でき、UI ごとに既定値がずれない。<br/>
+/// 各 UI 実装は本型を 1 つ公開するだけで外観を設定でき、UI ごとに既定値がずれない。<br/>
 /// <br/>
-/// 状態（選択矩形・ハイライト矩形・全面暗転の有無・描画モード・DPI 倍率）は本型に含めない。<br/>
-/// 外観の値のみを持ち、<see cref="BuildSubLines"/> がラベルの行を組み立てる（文言は <see cref="OuterDecoLabels"/> が単一所有する）。<br/>
+/// 状態（選択矩形・ハイライト矩形・全面暗転の有無・DPI 倍率）は本型に含めない。<br/>
+/// 外観の値のみを持ち、<see cref="BuildSubLines"/> がラベルの行を組み立てる（文言はホストが与え、行の組み立ては <see cref="OuterDecoLabels"/> が単一所有する）。<br/>
 /// 色は UI 非依存の <see cref="DrawingColor"/> を使用し、各 UI の色型への変換は境界で行う。
 /// </remarks>
 public sealed record OuterDecoAppearance
@@ -22,7 +22,7 @@ public sealed record OuterDecoAppearance
     public DrawingColor OverlayColor { get; init; } = DrawingColor.FromArgb(128, 0, 0, 0);
 
     /// <summary>選択枠線の色を取得する。</summary>
-    /// <value>アルファを含む色。既定はダークグレー（#FFA9A9A9。設定画面の選択枠の色）。</value>
+    /// <value>アルファを含む色。既定はダークグレー（#FFA9A9A9）。</value>
     public DrawingColor BorderColor { get; init; } = DrawingColor.FromArgb(255, 169, 169, 169);
 
     /// <summary>選択枠線の太さ（DIP）を取得する。</summary>
@@ -54,7 +54,7 @@ public sealed record OuterDecoAppearance
     // ====================================================================
 
     /// <summary>操作ラベル（2 行目）を表示するかどうかを取得する。</summary>
-    /// <value>true の場合はモード別の確定・キャンセル方法を表示する。既定は true。</value>
+    /// <value>true の場合は操作ラベル（ホストが与えた文言）を表示する。既定は true。</value>
     public bool ShowSubLines { get; init; } = true;
 
     /// <summary>操作ラベルの文字色を取得する。</summary>
@@ -74,8 +74,8 @@ public sealed record OuterDecoAppearance
     // ====================================================================
 
     /// <summary>情報ラベル（3 行目）を表示するかどうかを取得する。</summary>
-    /// <value>true の場合はウィンドウ選択時にタイトルを表示する。既定は true。</value>
-    /// <remarks>表示の最終判定は <see cref="OuterDecoLabels.ShouldShowInfoLabel"/>（WindowSelect かつタイトル非空）が行う。</remarks>
+    /// <value>true の場合は情報ラベル（ホストが与えた文言）を表示する。既定は true。</value>
+    /// <remarks>表示の最終判定は <see cref="OuterDecoLabels.ShouldShowInfoLabel"/>（表示が有効かつ文言が非空）が行う。</remarks>
     public bool InfoLabelVisible { get; init; } = true;
 
     /// <summary>情報ラベルの文字色を取得する。</summary>
@@ -111,16 +111,19 @@ public sealed record OuterDecoAppearance
         => color.A == 0 ? DefaultLabelBackground : color;
 
     /// <summary>サイズラベルの下に表示するサブライン（2 行目以降）を組み立てる。</summary>
-    /// <param name="mode">オーバーレイ描画モード（操作ラベルの文言選定に使用する）。</param>
-    /// <param name="windowTitle">ウィンドウタイトル（情報ラベルの文言）。null 可。</param>
+    /// <param name="operationText">操作ラベル（2 行目）の文言。null または空文字の場合は表示しない。</param>
+    /// <param name="infoText">情報ラベル（3 行目）の文言。null または空文字の場合は表示しない。</param>
     /// <returns>サブラインの一覧（上から順）。表示する行がない場合は空。</returns>
     /// <remarks>
-    /// 1. 2 行目 = 操作ラベル（モード別の確定・キャンセル方法）。<see cref="ShowSubLines"/> で表示可否を制御する。<br/>
-    /// 2. 3 行目 = 情報ラベル（ウィンドウタイトル）。<see cref="InfoLabelVisible"/> とモードで表示可否が決まる。<br/>
+    /// 1. 2 行目 = 操作ラベル。<see cref="ShowSubLines"/> と文言の非空で表示可否が決まる。<br/>
+    /// 2. 3 行目 = 情報ラベル。<see cref="InfoLabelVisible"/> と文言の非空で表示可否が決まる。<br/>
     /// <br/>
-    /// 行の文言・順序・表示可否の判定は <see cref="OuterDecoLabels.BuildSubLines"/> が単一所有する（両 UI で同一になる）。<br/>
-    /// 本メソッドは <see cref="OuterDecoFrame"/>（同一アセンブリ）からのみ呼ぶため公開しない。
+    /// <b>文言はホストが与える</b>（本コアは特定の操作文言を持たない）。<br/>
+    /// 行の順序・表示可否・外観の適用は <see cref="OuterDecoLabels.BuildSubLines"/> が単一所有する（両 UI で同一になる）。<br/>
+    /// 本メソッドは <see cref="OuterDecoFrame"/> のフレーム解決から呼ばれる（UI 層は結果を使うだけ）。
     /// </remarks>
-    internal IReadOnlyList<OuterDecoSubLine> BuildSubLines(OuterDecoRenderMode mode, string windowTitle)
-        => OuterDecoLabels.BuildSubLines(mode, ShowSubLines, InfoLabelVisible, windowTitle, OperationStyle, InfoStyle);
+    internal IReadOnlyList<OuterDecoSubLine> BuildSubLines(
+        string? operationText,
+        string? infoText)
+        => OuterDecoLabels.BuildSubLines(operationText, ShowSubLines, InfoLabelVisible, infoText, OperationStyle, InfoStyle);
 }

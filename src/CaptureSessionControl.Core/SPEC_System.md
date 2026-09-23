@@ -43,6 +43,12 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 │  Validate / ToNonNull / （UI 側で部分更新マージ）      │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
+│ CaptureLabelTexts（静的クラス）                        │
+│  ToSelectionMode(CaptureType) FadeMaskDragRectMode    │
+│  GetOperationText(mode) string                        │
+│  GetInfoText(mode, windowTitle) string?               │
+└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
 │ CaptureResult（record）                               │
 │  Image: EsBitmap? / SourceBounds: EsPixelRect?        │
 └──────────────────────────────────────────────────────┘

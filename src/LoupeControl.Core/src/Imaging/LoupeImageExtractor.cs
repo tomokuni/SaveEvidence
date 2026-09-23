@@ -11,7 +11,7 @@ namespace Estable.Loupe.Imaging;
 /// （<see cref="ComputeCaptureSize"/> / <see cref="ComputeCaptureTopLeft"/>）と切り出しの委譲を提供する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class LoupeImageExtractor
+public static class LoupeImageExtractor
 {
     /// <summary>ルーペの一辺（ピクセル）から切り出し領域の一辺（ドメインピクセル）を計算する。</summary>
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>

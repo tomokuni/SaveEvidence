@@ -23,7 +23,7 @@ public class LoupeLogMessageTests
         InvokeAll(logger);
 
         Assert.True(logger.IsEnabled(LogLevel.Trace));
-        Assert.Equal(5, logger.Messages.Count);
+        Assert.Equal(3, logger.Messages.Count);
     }
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
@@ -44,8 +44,6 @@ public class LoupeLogMessageTests
         Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
         Assert.Equal("[LoupeCtrl] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[1]);
         Assert.Equal("[LoupeCtrl] Update exception", logger.Messages[2]);
-        Assert.Equal("[LoupeCtrl] RenderCore: generation=3", logger.Messages[3]);
-        Assert.Equal("[LoupeCtrl] GenerateAsync done: set=True disposed=False visible=True gen=3 current=3", logger.Messages[4]);
     }
 
     /// <summary>拡大中心のログが両 UI 共通の書式（括弧付き座標）で出力されることを検証する。</summary>
@@ -226,7 +224,5 @@ public class LoupeLogMessageTests
         logger.LogSettingChanged("ZoomLevel", "4", "8");
         logger.LogCenterPointChanged(new EsPoint(1.5, 2.5), null);
         logger.LogUpdateError(new InvalidOperationException("test"));
-        logger.LogRenderCore(3);
-        logger.LogGenerateAsyncDone(set: true, disposed: false, visible: true, generation: 3, current: 3);
     }
 }

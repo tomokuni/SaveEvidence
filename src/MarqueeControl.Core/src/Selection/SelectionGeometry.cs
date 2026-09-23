@@ -9,7 +9,7 @@ namespace Estable.Marquee.Selection;
 /// （移植性・テスト容易性。UI 型との相互変換は各 UI 実装の Interop 層が担う）。<br/>
 /// 描画層は本クラスのみに依存し、状態保持クラスへ直接依存しない。
 /// </remarks>
-internal static class SelectionGeometry
+public static class SelectionGeometry
 {
     /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>
     private const double MinSelectionSizeLowerBound = 1.0;

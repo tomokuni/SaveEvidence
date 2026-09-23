@@ -396,7 +396,8 @@ loupe.Rendered += (_, e) =>
 ### 5.5 型
 
 公開型は `LoupeControl` と `LoupeRenderedEventArgs` です。
-描画・画像処理・ログの実装はすべて internal（非公開）です。
+描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`LoupeControl.Core`）の型は public です（外部が UI アダプタを実装できるようにするため）。
+UI 固有のログ（`LoupeRenderLog`）は本プロジェクトの internal です。
 
 #### 5.5.1 LoupeControl
 

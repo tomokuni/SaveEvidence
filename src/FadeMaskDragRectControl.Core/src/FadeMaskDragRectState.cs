@@ -1,17 +1,15 @@
-using Estable.Marquee.Decoration;
-
 namespace Estable.FadeMaskDragRect;
 
-/// <summary>動作モードから導出される内包コントロールの状態（表示の可否と暗転マスクの描画モード）。</summary>
+/// <summary>動作モードから導出される内包コントロールの状態（選択矩形・ルーペを使うかどうか）。</summary>
 /// <param name="UsesSelection">選択矩形・ルーペ・選択矩形の破線を使用するモードかどうか（Crop / AreaSelect）。</param>
-/// <param name="RenderMode">暗転マスクの描画モード。</param>
 /// <remarks>
 /// 「モードから何が有効になるか」の判断を本値が単一所有する。UI 層は本値の各メンバーを内包コントロールへ<br/>
 /// 代入するだけで、モードごとの可否を自前で判定しない（両 UI の挙動が構造的に一致する）。<br/>
-/// 既定値（<c>default</c>）は「選択矩形を使わない・暗転マスクは WindowSelect」になるため、<br/>
-/// 既定値のまま使うことを避ける目的で生成は <see cref="FadeMaskDragRectModes.Resolve"/> から行う。
+/// 描画モードや文言は本値に含めない（描画の内容は装飾コアが、文言はホストが与える）。<br/>
+/// 既定値（<c>default</c>）は「選択矩形を使わない」になるため、既定値のまま使うことを避ける目的で生成は
+/// <see cref="FadeMaskDragRectModes.Resolve"/> から行う。
 /// </remarks>
-internal readonly record struct FadeMaskDragRectState(bool UsesSelection, OuterDecoRenderMode RenderMode)
+internal readonly record struct FadeMaskDragRectState(bool UsesSelection)
 {
     /// <summary>全面暗転（穴あけなし）を表示するかどうかを取得する。</summary>
     /// <value>選択矩形を使うモードでは true（切り出し・領域選択は全面を暗転して穴を開ける）。</value>

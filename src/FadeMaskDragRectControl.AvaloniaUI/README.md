@@ -37,7 +37,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 - **ルーペ描画完了の通知**: `LoupeRendered` イベントで描画済み Bitmap と切り出し左上・スケールを通知（ホストが外部提供矩形を Bitmap へ直接描画できる）
 - **ログの伝搬**: `Log` プロパティ（`ILogger`）で内包するドラッグ選択コントロールとルーペの操作ログをホストのログ基盤へ転送
 - **ルーペ制御**: `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `LoupeCenterPoint` で中心・ソース・後片付けを制御
-- **ハイライト状態**: `LogicalHighlightRect` / `HasHighlight` / `DisplayScaleScaling` / `WindowTitle` で ScreenSelect / WindowSelect のハイライトを設定
+- **ハイライト状態**: `LogicalHighlightRect` / `HasHighlight` / `DisplayScaleScaling` で ScreenSelect / WindowSelect のハイライトを設定
 - **公開型のカプセル化**: イベント引数は独自型（`FadeMaskDragRectSelectionEventArgs` / `FadeMaskDragRectPointEventArgs`）、内包コントロールへの直接アクセスは internal（公開 API は本コントロールのみ）
 - **Avalonia Binding 対応の StyledProperty**（内包コントロールが公開）
 

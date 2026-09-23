@@ -96,14 +96,14 @@ flowchart TB
     end
     subgraph Core["MarqueeControl.Core（UI 非依存）"]
         direction TB
-        Ses["MarqueeSession<br/>internal sealed<br/>MarqueeSession.cs<br/>（状態管理クラス: 入力の解釈 ＋ 通知 ＋ 効果）"]
-        Ntc["MarqueeNotice / MarqueeFeedback<br/>internal<br/>（コア → UI の通知・効果）"]
+        Ses["MarqueeSession<br/>public sealed<br/>MarqueeSession.cs<br/>（状態管理クラス: 入力の解釈 ＋ 通知 ＋ 効果）"]
+        Ntc["MarqueeNotice / MarqueeFeedback<br/>public<br/>（コア → UI の通知・効果）"]
         Stt["MarqueeState<br/>internal sealed<br/>MarqueeState.cs<br/>（状態保持 ＋ 更新ロジック）"]
-        Geo["SelectionGeometry<br/>internal static<br/>Selection/SelectionGeometry.cs"]
+        Geo["SelectionGeometry<br/>public static<br/>Selection/SelectionGeometry.cs"]
         Hdl["HitTarget<br/>public enum"]
         Hdl2["MarqueeInteractionState<br/>public enum"]
         Hdl3["MarqueeSnapshot<br/>public record<br/>（EsRect / EsPoint）"]
-        Frm["MarqueeFrame<br/>internal static<br/>MarqueeFrame.cs<br/>（外側の装飾のフレーム解決）"]
+        Frm["MarqueeFrame<br/>public static<br/>MarqueeFrame.cs<br/>（外側の装飾のフレーム解決）"]
     end
     subgraph DRC2["MarqueeControl プロジェクト (MarqueeControl)"]
         direction TB
@@ -151,34 +151,34 @@ flowchart TB
 
 ### 6.2 MarqueeSession（状態管理クラス）
 
-- **分類**: 内部状態管理クラス（`internal sealed class`・コア提供）
+- **分類**: 状態管理クラス（`public sealed class`・コア提供）
 - **責務**:
   - 入力の通知（`Press` / `Move` / `Release` / `KeyDown` / `NudgeByKey`）を受けて状態を更新する
   - 判断: nudge セッションの開始/終了（カーソル非表示・基点同期）・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセル・エコー移動の抑制・カーソル種別の決定
   - 効果（`MarqueeFeedback`: 再描画・フォーカス・マウスキャプチャ・カーソル操作/形状）を返す
   - 通知（`MarqueeNotice`: 種別・通知座標・スナップショット）を発火する（UI 層は公開イベントへ転送するだけ。ビューポートの変化も `NotifyViewportChanged` で本クラスが通知を組み立てる）
   - 設定（`MarqueeOptions`）の保持と適用（対話パラメータを内部で参照する）
-- **可視性**: internal（外部から見えない）
+- **可視性**: public（コア `MarqueeControl.Core` が提供する。外部が UI アダプタを実装できる）
 - **依存**: MarqueeState / MarqueeOptions / MarqueeNotice / MarqueeFeedback / MarqueeLogMessage / SelectionGeometry / EsKey（Platform.Core）/ ICoordTransform / ICursorService
 - **備考**: **Enter と Return は同一の確定キー**として扱う（Avalonia の `Key` は両者が同値のエイリアスで、名前ベースの相互変換では `Return` が得られるため）
 
 ### 6.3 MarqueeState
 
-- **分類**: 内部状態クラス（`internal sealed class`・コンポジション）
+- **分類**: 内部状態クラス（`internal sealed class`・コンポジション。コア提供）
 - **責務**:
   - 選択矩形・ドラッグ状態・アクティブハンドル・nudge 状態（基点＋累積オフセット）の保持
   - 純粋ロジック: `HitTest` / `StartNewSelection` / `StartDrag` / `UpdateDrag` / `EndDrag` / `Nudge` / `GetOppositeCorner` / `GetInteractionState` / `CreateSnapshot`
   - クリップ（`MarqueeOptions.ClampToDomainBounds` + `Port.Bounds` による境界内制限。境界 Rect 生成は `GetBoundsRect` に一元化）
   - カーソル操作（`ICursorService`）
   - nudge 終了の共通化（`EndNudge`。`Reset` / `SetSelection` / `MarqueeSession` から共用し、カーソル再表示を委譲）
-- **可視性**: internal（外部から見えない）
+- **可視性**: internal（本コントロールはコアの公開 API（`MarqueeSession` / `MarqueeSnapshot` / `MarqueeFrame`）のみを使う。`MarqueeState` は可変プロパティを多数持つため外部に公開しない）
 - **依存**: SelectionGeometry / HitTarget / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）
 
 ### 6.4 SelectionGeometry
 
-- **分類**: 内部静的クラス（`internal static class`）
+- **分類**: 静的クラス（`public static class`・コア提供）
 - **責務**: 選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算）
-- **可視性**: internal（外部から見えない）
+- **可視性**: public（コア提供）
 - **依存**: UI 非依存（`MarqueeControl.Core` の `EsPoint` / `EsRect`）
 
 ### 6.5 MarqueeDrawer
@@ -199,9 +199,9 @@ flowchart TB
 
 ### 6.7 MarqueeFrame（コア）
 
-- **分類**: 内部静的クラス（`internal static class`・コア提供）
-- **責務**: 選択矩形の外側に描く装飾の描画内容を解決する（セッションの状態 + 外側の装飾の設定 → 装飾コアのフレーム）
-- **可視性**: internal（両 UI 実装とテストのみが `InternalsVisibleTo` で参照する）
+- **分類**: 静的クラス（`public static class`・コア提供）
+- **責務**: 選択矩形の外側に描く装飾の描画内容を解決する（セッションの状態 + 外側の装飾の設定 + 文言プロバイダ → 装飾コアのフレーム）
+- **可視性**: public（コア `MarqueeControl.Core` が提供する。外部が UI アダプタを実装できる）
 - **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。暗転・穴あけ枠・ラベルの判断は装飾コアへ委譲する
 
 ### 6.8 HitTarget

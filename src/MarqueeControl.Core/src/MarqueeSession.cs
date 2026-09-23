@@ -26,7 +26,7 @@ namespace Estable.Marquee;
 /// <br/>
 /// 状態機械の保持と純粋計算は <see cref="MarqueeState"/> が担い、本クラスは入力の解釈と通知の組み立てに専念する（単一責任）。<br/>
 /// </remarks>
-internal sealed class MarqueeSession
+public sealed class MarqueeSession
 {
     /// <summary>選択・ドラッグ・nudge の状態と純粋計算。</summary>
     private readonly MarqueeState _state;
@@ -52,8 +52,13 @@ internal sealed class MarqueeSession
     /// <summary>上位（UI 層）へ伝える通知。UI 層は自 UI の公開イベントへ転送する。</summary>
     public event EventHandler<MarqueeNotice>? Notified;
 
-    /// <summary>選択・ドラッグ・nudge の状態（描画用に読み取る。UI 層からの書き換えは想定しない）。</summary>
-    public MarqueeState State => _state;
+    /// <summary>選択・ドラッグ・nudge の状態（本クラスが内部で使用する状態機械）。</summary>
+    /// <value>状態機械。外部は <see cref="CreateSnapshot"/> または各読み取りプロパティを使う。</value>
+    /// <remarks>
+    /// 本プロパティはコア・テストからのみ参照する（状態機械は可変プロパティを持つため、外部からの直接操作を避ける）。<br/>
+    /// ホストと UI 実装は <see cref="CreateSnapshot"/>（<see cref="MarqueeSnapshot"/>）または個別の読み取りプロパティを使う。
+    /// </remarks>
+    internal MarqueeState State => _state;
 
     /// <summary>ロガー。null を設定した場合は出力なし。</summary>
     /// <value>注入されたロガー。null 可（null の場合は <see cref="NullLogger"/> へフォールバックする）。</value>
@@ -132,7 +137,7 @@ internal sealed class MarqueeSession
     /// <returns>ローカル DIP の矩形。</returns>
     /// <remarks>
     /// 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、終点（Right / Bottom）に +1 してから DIP へ変換する<br/>
-    /// （終点のピクセルも枠線・ハンドルに含める。キャプチャの閉区間 +1 と一致）。<br/>
+    /// （終点のピクセルも枠線・ハンドルに含める。外側の装飾の閉区間 +1 と一致）。<br/>
     /// 変換規則は本メソッドが単一所有する（描画層は結果を使うだけ）。
     /// </remarks>
     public EsRect ToDipRect(EsRect domainRect)
@@ -358,7 +363,7 @@ internal sealed class MarqueeSession
     /// Escape はキャンセル要求、Enter は確定要求として扱い、常に処理済みとする。<br/>
     /// それ以外は矢印キーとして <see cref="NudgeByKey"/> へ委譲する。<br/>
     /// 「領域作成後はマウス押下中のみ nudge を許可する」条件も <see cref="NudgeByKey"/> が判断する。<br/>
-    /// <b>Enter と Return は同一のキー</b>として扱う（Avalonia の <c>Key</c> は両者が同値のエイリアスのため、
+    /// <b>Enter と Return は同一のキー</b>として扱う（UI フレームワークの <c>Key</c> は両者が同値のエイリアスのため、
     /// 名前ベースの相互変換では <c>Return</c> が得られ、UI ごとに届く値が異なる）。
     /// </remarks>
     public MarqueeFeedback KeyDown(EsKey key, EsPoint? cursorPosition)

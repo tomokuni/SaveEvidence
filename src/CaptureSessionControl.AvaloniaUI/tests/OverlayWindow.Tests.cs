@@ -582,7 +582,7 @@ public class OverlayWindowTests
 
         Assert.True(window.SelectionOverlay.HasHighlight);
         Assert.Equal(new Rect(200, 150, 800, 600), window.SelectionOverlay.LogicalHighlightRect);
-        Assert.Equal("Sample Window", window.SelectionOverlay.WindowTitle);
+        Assert.Equal("Sample Window", window.SelectionOverlay.InfoTextProvider?.Invoke());
     }
 
     [AvaloniaFact]
@@ -767,7 +767,7 @@ public class OverlayWindowTests
 
         Assert.False(window.SelectionOverlay.HasHighlight);
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
-        Assert.Equal("", window.SelectionOverlay.WindowTitle);
+        Assert.Equal("", window.SelectionOverlay.InfoTextProvider?.Invoke());
     }
 
     // ====================================================================

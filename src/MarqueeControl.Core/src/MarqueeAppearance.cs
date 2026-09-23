@@ -4,13 +4,13 @@ namespace Estable.Marquee;
 
 /// <summary>両 UI の描画で共有する外観値と外観の配置計算を単一所有する（UI 非依存）。</summary>
 /// <remarks>
-/// Avalonia 版と MewUI 版が同じ外観になるよう、値と計算を 1 箇所に集約する（重複排除・DRY）。<br/>
+/// 各 UI 実装が同じ外観になるよう、値と計算を 1 箇所に集約する（重複排除・DRY）。<br/>
 /// <br/>
 /// 本クラスが持たないもの:<br/>
 /// - フォントの実測値（テキストの幅・高さ・縦位置の調整）とラベルの内側余白の縦成分（UI ごとに文字描画の基準が異なるため各 UI が持つ）。<br/>
 /// - 色・太さ・サイズの設定値（利用者が指定するため <see cref="MarqueeOptions"/> が持つ）。<br/>
 /// </remarks>
-internal static class MarqueeAppearance
+public static class MarqueeAppearance
 {
     /// <summary>十字マーカーの線の太さ（DIP）。</summary>
     public const double MarkerThickness = 2.0;

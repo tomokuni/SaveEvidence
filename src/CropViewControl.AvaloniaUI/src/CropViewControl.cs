@@ -352,6 +352,20 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.SizeLabelOverrideProvider = value;
     }
 
+    /// <summary>操作ラベル（2 行目）の文言を描画時に評価するプロバイダ（<see cref="FadeMaskDragRectControl.OperationTextProvider"/> へ委譲）。</summary>
+    public Func<string?>? OperationTextProvider
+    {
+        get => _selectionOverlay.OperationTextProvider;
+        set => _selectionOverlay.OperationTextProvider = value;
+    }
+
+    /// <summary>情報ラベル（3 行目）の文言を描画時に評価するプロバイダ（<see cref="FadeMaskDragRectControl.InfoTextProvider"/> へ委譲）。</summary>
+    public Func<string?>? InfoTextProvider
+    {
+        get => _selectionOverlay.InfoTextProvider;
+        set => _selectionOverlay.InfoTextProvider = value;
+    }
+
     /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知する。</summary>
     /// <remarks><see cref="FadeMaskDragRectControl.NotifyViewportChanged"/> へ委譲する（暗転マスク・選択枠・ルーペの追従）。</remarks>
     public void NotifyViewportChanged() => _selectionOverlay.NotifyViewportChanged();

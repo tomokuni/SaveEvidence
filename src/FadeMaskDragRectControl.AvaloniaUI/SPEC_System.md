@@ -133,7 +133,7 @@ flowchart TB
 | ファイル | `FadeMaskDragRectControl.Core/src/FadeMaskDragRectMode.cs`（UI 非依存コア。`FadeMaskDragRectControl.Core`） |
 | 種類 | public enum |
 | メンバー | `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` |
-| 責務 | 描画モード（OuterDecoRenderMode）・Marquee / Loupe の可視性・全面暗転の切替指示 |
+| 責務 | 子コントロールの可視性（Marquee / Loupe）・全面暗転・破線の切替指示 |
 | 備考 | モードから描画設定への写像はコアの `FadeMaskDragRectModes` が単一所有し、Avalonia / MewUI で共有する |
 
 ### 6.3 FadeMaskDragRectOptions（コア）

@@ -21,8 +21,8 @@ public class OuterDecoFrameTests
 
     /// <summary>テスト用の描画入力を生成する。</summary>
     /// <param name="appearance">外観。null の場合は既定（黒 50% の暗転・白枠）。</param>
-    /// <param name="mode">描画モード。</param>
-    /// <param name="windowTitle">情報ラベルの文言。</param>
+    /// <param name="operationText">操作ラベル（2 行目）の文言。</param>
+    /// <param name="infoText">情報ラベル（3 行目）の文言。</param>
     /// <param name="selectionRect">選択矩形（ドメイン座標）。</param>
     /// <param name="highlightRect">ハイライト矩形（ドメイン座標）。</param>
     /// <param name="hasSelection">選択が有効か。</param>
@@ -35,8 +35,8 @@ public class OuterDecoFrameTests
     /// <returns>生成した描画入力。</returns>
     private static OuterDecoRequest CreateRequest(
         OuterDecoAppearance? appearance = null,
-        OuterDecoRenderMode mode = OuterDecoRenderMode.AreaSelect,
-        string windowTitle = "",
+        string? operationText = null,
+        string? infoText = null,
         EsRect? selectionRect = null,
         EsRect? highlightRect = null,
         bool hasSelection = false,
@@ -50,8 +50,6 @@ public class OuterDecoFrameTests
             new OuterDecoOptions
             {
                 Appearance = appearance ?? new OuterDecoAppearance(),
-                Mode = mode,
-                WindowTitle = windowTitle,
                 ShowFullOverlay = showFullOverlay,
                 LogicalSelectionRect = selectionRect,
                 LogicalHighlightRect = highlightRect,
@@ -62,6 +60,8 @@ public class OuterDecoFrameTests
             port,
             scaling,
             provider,
+            operationText is null ? null : () => operationText,
+            infoText is null ? null : () => infoText,
             displayScale);
 
     // ====================================================================
@@ -346,18 +346,18 @@ public class OuterDecoFrameTests
     public void Resolve_操作ラベルを組み立てる()
     {
         var frame = OuterDecoFrame.Resolve(CreateRequest(
-            mode: OuterDecoRenderMode.Crop, selectionRect: s_selection, hasSelection: true));
+            operationText: "ダブルクリック: 確定", selectionRect: s_selection, hasSelection: true));
 
         var line = Assert.Single(frame.SubLines);
-        Assert.Equal("ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル", line.Text);
+        Assert.Equal("ダブルクリック: 確定", line.Text);
     }
 
-    /// <summary>WindowSelect で情報ラベル（3 行目）が追加されることを検証する。</summary>
+    /// <summary>情報ラベル（3 行目）が追加されることを検証する。</summary>
     [Fact]
-    public void Resolve_WindowSelectで情報ラベルを追加する()
+    public void Resolve_情報ラベルを追加する()
     {
         var frame = OuterDecoFrame.Resolve(CreateRequest(
-            mode: OuterDecoRenderMode.WindowSelect, windowTitle: "メモ帳",
+            operationText: "確定: Enter", infoText: "メモ帳",
             highlightRect: s_selection, hasHighlight: true));
 
         Assert.Equal(2, frame.SubLines.Count);
@@ -371,7 +371,7 @@ public class OuterDecoFrameTests
         var appearance = new OuterDecoAppearance { ShowSubLines = false };
 
         var frame = OuterDecoFrame.Resolve(CreateRequest(
-            appearance, mode: OuterDecoRenderMode.WindowSelect, windowTitle: "メモ帳",
+            appearance, operationText: "確定: Enter", infoText: "メモ帳",
             highlightRect: s_selection, hasHighlight: true));
 
         Assert.Equal("メモ帳", Assert.Single(frame.SubLines).Text);
@@ -383,7 +383,8 @@ public class OuterDecoFrameTests
     {
         var appearance = new OuterDecoAppearance { SubLineBackgroundColor = DrawingColor.FromArgb(0, 0, 0, 0) };
 
-        var frame = OuterDecoFrame.Resolve(CreateRequest(appearance, selectionRect: s_selection, hasSelection: true));
+        var frame = OuterDecoFrame.Resolve(CreateRequest(
+            appearance, operationText: "確定: Enter", selectionRect: s_selection, hasSelection: true));
 
         Assert.Equal(DrawingColor.FromArgb(128, 0, 0, 0), Assert.Single(frame.SubLines).BackgroundColor);
     }

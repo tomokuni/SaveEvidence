@@ -5,71 +5,53 @@ namespace Estable.Marquee.Decoration;
 /// <summary>暗転オーバーレイのラベル表示の判定とテキスト選定（純粋関数）。</summary>
 /// <remarks>
 /// サイズラベルの下に表示するサブライン（操作ラベル・情報ラベル）の決定を単一所有する。<br/>
-/// 各 UI（Avalonia / MewUI）は同じ判定・同じ文言を使う。<br/>
+/// 各 UI 実装は同じ判定・同じ文言を使う。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class OuterDecoLabels
+public static class OuterDecoLabels
 {
-    /// <summary>確定（Enter 系）モードの操作ラベル。</summary>
-    private const string EnterOperationText = "Enter / クリック: 確定  Esc: キャンセル";
-
-    /// <summary>確定（ダブルクリック系）モードの操作ラベル。</summary>
-    private const string DoubleClickOperationText = "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル";
-
-    /// <summary>情報ラベル（ウィンドウタイトル）を表示するかどうかを判定する。</summary>
-    /// <param name="mode">オーバーレイ描画モード。</param>
+    /// <summary>情報ラベルを表示するかどうかを判定する。</summary>
     /// <param name="infoLabelVisible">情報ラベルの表示が有効か。</param>
-    /// <param name="windowTitle">ウィンドウタイトル。</param>
+    /// <param name="infoText">情報ラベルの文言。null または空文字の場合は表示しない。</param>
     /// <returns>情報ラベルを表示する場合は true。</returns>
-    /// <remarks>WindowSelect モードで表示が有効かつウィンドウタイトルが非空の場合のみ表示する。</remarks>
-    public static bool ShouldShowInfoLabel(OuterDecoRenderMode mode, bool infoLabelVisible, string windowTitle)
-        => infoLabelVisible && mode == OuterDecoRenderMode.WindowSelect && !string.IsNullOrEmpty(windowTitle);
-
-    /// <summary>操作ラベル（確定・キャンセル方法）のテキストを選定する。</summary>
-    /// <param name="mode">オーバーレイ描画モード。</param>
-    /// <returns>モードに応じた操作ラベルのテキスト。</returns>
-    /// <remarks>
-    /// 確定操作の文字列は 2 系統（Enter 系 / ダブルクリック系）に集約する。<br/>
-    /// スクリーン選択・ウィンドウ選択は Enter 系、範囲選択・切出しはダブルクリック系とする。
-    /// </remarks>
-    public static string GetOperationText(OuterDecoRenderMode mode)
-        => mode is OuterDecoRenderMode.ScreenSelect or OuterDecoRenderMode.WindowSelect
-            ? EnterOperationText
-            : DoubleClickOperationText;
+    /// <remarks>表示が有効かつ文言が非空の場合のみ表示する（文言を与えるかどうかはホストが決める）。</remarks>
+    internal static bool ShouldShowInfoLabel(bool infoLabelVisible, string? infoText)
+        => infoLabelVisible && !string.IsNullOrEmpty(infoText);
 
     /// <summary>サイズラベルの下に表示するサブライン（操作ラベル + 情報ラベル）を組み立てる。</summary>
-    /// <param name="mode">オーバーレイ描画モード（操作ラベルの文言選定に使用する）。</param>
+    /// <param name="operationText">操作ラベルの文言。null または空文字の場合は表示しない（ホストが与える）。</param>
     /// <param name="showSubLines">操作ラベルを表示するか。</param>
     /// <param name="infoLabelVisible">情報ラベルの表示が有効か。</param>
-    /// <param name="windowTitle">ウィンドウタイトル（情報ラベルの文言）。null 可。</param>
+    /// <param name="infoText">情報ラベルの文言。null または空文字の場合は表示しない（ホストが与える）。</param>
     /// <param name="operationStyle">操作ラベルの外観。</param>
     /// <param name="infoStyle">情報ラベルの外観。</param>
     /// <returns>サブラインの一覧（上から順）。表示する行がない場合は空。</returns>
     /// <remarks>
-    /// 1. 2 行目 = 操作ラベル（モード別の確定・キャンセル方法）。<paramref name="showSubLines"/> で表示可否を制御する。<br/>
-    /// 2. 3 行目 = 情報ラベル（ウィンドウタイトル）。<see cref="ShouldShowInfoLabel"/> の判定に従う。<br/>
+    /// 1. 2 行目 = 操作ラベル。<paramref name="showSubLines"/> と文言の非空で表示可否が決まる。<br/>
+    /// 2. 3 行目 = 情報ラベル。<see cref="ShouldShowInfoLabel"/> の判定に従う。<br/>
     /// <br/>
-    /// 本メソッドが行の組み立てを単一所有する（両 UI で同一の文言・順序・外観になる）。<br/>
+    /// <b>文言はホストが与える</b>: 本クラスは文言を持たない（汎用ライブラリとして特定の操作文言に依存しない）。<br/>
+    /// 本メソッドが行の組み立て・順序・外観の適用を単一所有する（両 UI で同一の結果になる）。<br/>
     /// 呼び出し元は <see cref="OuterDecoAppearance.BuildSubLines"/>（外観の公開面）に集約する。
     /// </remarks>
-    public static IReadOnlyList<OuterDecoSubLine> BuildSubLines(
-        OuterDecoRenderMode mode,
+    internal static IReadOnlyList<OuterDecoSubLine> BuildSubLines(
+        string? operationText,
         bool showSubLines,
         bool infoLabelVisible,
-        string windowTitle,
+        string? infoText,
         OuterDecoLabelStyle operationStyle,
         OuterDecoLabelStyle infoStyle)
     {
         var lines = new List<OuterDecoSubLine>(2);
 
-        if (showSubLines)
+        if (showSubLines && !string.IsNullOrEmpty(operationText))
         {
-            lines.Add(ToSubLine(GetOperationText(mode), operationStyle));
+            lines.Add(ToSubLine(operationText, operationStyle));
         }
 
-        if (ShouldShowInfoLabel(mode, infoLabelVisible, windowTitle))
+        if (ShouldShowInfoLabel(infoLabelVisible, infoText))
         {
-            lines.Add(ToSubLine(windowTitle, infoStyle));
+            lines.Add(ToSubLine(infoText!, infoStyle));
         }
 
         return lines;

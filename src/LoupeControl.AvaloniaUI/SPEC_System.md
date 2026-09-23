@@ -69,7 +69,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 - `LoupeRenderCoordinator`（再描画のバッチ化）と `LoupeSourceResolver`（`IImage` の型判定）は **Avalonia 固有の機構** であり、コアへ移さない（MewUI 版は同期描画のため不要）。
 - 描画可否の判断（非表示なら描画しない・解放する、古い世代は反映しない）と、未実行要求の破棄と解放の手順は **`LoupeRenderCoordinator` が単一所有** する（コントロールは `RequestRender` / `CancelAndRelease` / `ShouldApply` を呼ぶだけ）。
 - 表示方式は LoupeControl 内部の Image.Source に統一し、外部の DrawingContext 描画 API は提供しない。
-- UI 非依存のロジックは `LoupeControl.Core`（`internal` + `InternalsVisibleTo`）へ委譲し、境界でのみコア型（`EsPoint` / `EsSize`）と Avalonia 型を相互変換する（1 行変換）。
+- UI 非依存のロジックは `LoupeControl.Core`（全型 `public`）へ委譲し、境界でのみコア型（`EsPoint` / `EsSize`）と Avalonia 型を相互変換する（1 行変換）。
 
 ## 4. 例外処理ポリシー
 
@@ -109,16 +109,16 @@ flowchart TB
     subgraph Core["LoupeControl.Core プロジェクト (UI 非依存)"]
         direction TB
         Opt["LoupeOptions<br/>public sealed record<br/>（表示サイズ・拡大率・外観）"]
-        Req["LoupeRenderRequest<br/>internal readonly record struct<br/>（1 フレーム分の描画入力）"]
+        Req["LoupeRenderRequest<br/>public readonly record struct<br/>（1 フレーム分の描画入力）"]
         App["LoupeAppearance<br/>public sealed record"]
-        Ext["LoupeImageExtractor<br/>internal static class<br/>Imaging/LoupeImageExtractor.cs"]
-        Coerce["LoupeValueCoercer<br/>internal static class"]
-        Scale["LoupeAppearanceScaler<br/>internal static class"]
-        Geo["LoupeDecorationGeometry / LoupeCheckerboard<br/>internal static class"]
-        Lay["LoupeLabelLayout<br/>internal static class"]
-        Pos["LoupePositionCalculator<br/>internal static class"]
-        Args["LoupeRenderArgsCalculator<br/>internal static class"]
-        Log["LoupeLogMessage<br/>internal static partial class"]
+        Ext["LoupeImageExtractor<br/>public static class<br/>Imaging/LoupeImageExtractor.cs"]
+        Coerce["LoupeValueCoercer<br/>public static class"]
+        Scale["LoupeAppearanceScaler<br/>public static class"]
+        Geo["LoupeDecorationGeometry / LoupeCheckerboard<br/>public static class"]
+        Lay["LoupeLabelLayout<br/>public static class"]
+        Pos["LoupePositionCalculator<br/>public static class"]
+        Args["LoupeRenderArgsCalculator<br/>public static class"]
+        Log["LoupeLogMessage<br/>public static partial class"]
     end
 
     AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>Options / RenderScaling / RequestRender / Clear"| Ctl
@@ -213,11 +213,12 @@ flowchart TB
 - **公開API**: `ExtractRegionAt`（`EsBitmap` 抽出）/ `TryExtractRegionAt`（切り出しの可否を含む。ソース・中心未設定や破棄済みは `null`）/ `ComputeCaptureSize`（切り出し領域サイズ計算）/ `ComputeCaptureTopLeft`（拡大中心 → 切り出し領域左上計算。`ExtractRegionAt` / `LoupeRenderArgsCalculator` で共用する単一所有）/ `ComputeMagnifiedRects`（切り出し元・描画先の矩形計算。両 UI が共用する拡大倍率の単一所有）
 - **依存**: `Platform.Core`（`EsBitmap` / `EsPoint`）のみ。Avalonia には依存しない
 
-### 6.6 LoupeLogMessage
+### 6.6 LoupeLogMessage / LoupeRenderLog
 
-- **分類**: 内部静的クラス（`internal static partial class`。所属は `LoupeControl.Core` の `Estable.Loupe`）
-- **責務**: LoggerMessage source generator によるログ定義。**両 UI で同じ書式・レベルにするためコアが単一所有する**
-- **公開API**: `LogUpdateError`（Error）/ `LogSettingChanged`（Debug。汎用）/ 設定項目ごとの名前付きメソッド（`LogSourceChanged` / `LogCenterPointChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`。**設定名はコアが付与**し、UI 層は値だけを渡す）/ `LogOptionsChanged`（設定 `LoupeOptions` の**変化した項目だけ**を出力）/ `LogRenderCore`（Trace）/ `LogGenerateAsyncDone`（Trace）
+- **分類**: 公開静的クラス（`public static partial class`。所属は `LoupeControl.Core` の `Estable.Loupe`）
+- **責務**: LoggerMessage source generator によるログ定義。**書式・レベルを UI 間で揃えるためコアが単一所有する**
+- **公開API**: `LogUpdateError`（Error）/ `LogSettingChanged`（Debug。汎用）/ 設定項目ごとの名前付きメソッド（`LogSourceChanged` / `LogCenterPointChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`。**設定名はコアが付与**し、UI 層は値だけを渡す）/ `LogOptionsChanged`（設定 `LoupeOptions` の**変化した項目だけ**を出力）
+- **本 UI 固有のログ**: 中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は **本プロジェクトの `LoupeRenderLog`**（`Logging/LoupeRenderLog.cs`・`internal static partial class`）が所有する（コアに UI 固有のログを持たせない）
 - **依存**: Microsoft.Extensions.Logging。値の文字列化はコアの `LoupeLogFormat` が行う
 
 ### 6.7 上位AP（消費側）

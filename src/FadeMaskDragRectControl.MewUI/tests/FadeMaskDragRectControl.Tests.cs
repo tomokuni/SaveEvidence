@@ -206,11 +206,19 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void WindowTitle_暗転マスクへ反映される()
+    public void 文言プロバイダ_選択矩形コントロールへ委譲される()
     {
-        var control = new FadeMaskDragRectControl { WindowTitle = "メモ帳" };
+        var control = new FadeMaskDragRectControl();
+        Func<string?> operation = () => "確定: Enter";
+        Func<string?> info = () => "メモ帳";
 
-        Assert.Equal("メモ帳", control.WindowTitle);
+        control.OperationTextProvider = operation;
+        control.InfoTextProvider = info;
+
+        Assert.Same(operation, control.OperationTextProvider);
+        Assert.Same(info, control.InfoTextProvider);
+        Assert.Same(operation, control.Marquee.OperationTextProvider);
+        Assert.Same(info, control.Marquee.InfoTextProvider);
     }
 
     [Fact]

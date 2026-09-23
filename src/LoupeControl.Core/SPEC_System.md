@@ -22,7 +22,7 @@ graph LR
 - `LoupeControl.Core` は UI フレームワークへ依存しません。依存は `Platform.Core` のみです。
 - UI 実装は、コア型と自身の型（`Avalonia.Point` / `Size` / `IBrush`、`SKColor`）を相互変換します。変換は境界（サービス呼び出し・イベント引数の生成・描画）の 1 行に限定し、UI 側の状態・描画は UI の型のまま維持します。
 - 設定（表示サイズ・拡大率・外観）は `LoupeOptions` が単一所有し、UI 層は本型を 1 プロパティとして公開するだけです（設定の既定値・補正も本型が持つ）。外観（装飾の値）は `LoupeAppearance` が単一所有し、UI 層は外観値を保持しません（描画時に読むだけ）。
-- `LoupeOptions` / `LoupeAppearance` のみ `public` とし、それ以外は `internal` として `InternalsVisibleTo`（`LoupeControl.AvaloniaUI` / `LoupeControl.MewUI` / 複合コントロール / 各テスト）で公開します。
+- `LoupeOptions` / `LoupeAppearance` を含む**全型を `public`** とします（外部が独自の UI アダプタを実装できるようにするため。他アセンブリへの `InternalsVisibleTo` は持ちません）。
 
 ## コンポーネント構成
 
@@ -99,8 +99,9 @@ sequenceDiagram
 
 ## 可視性ポリシー
 
-- 外観の公開面（`LoupeAppearance`）のみ `public`。それ以外の型・メンバーは `internal`（`LoupeValueCoercer` の定数も `internal const`）。
-- 可視性の変更（`internal` → `public`）は破壊的な設計変更として扱います。
+- 全型・メンバーを `public` とします（UI 非依存の汎用ライブラリとして、外部の UI アダプタ実装を可能にするため。`InternalsVisibleTo` は持ちません）。
+- 可視性の変更（`public` → `internal`）は破壊的な設計変更として扱います。
+- **UI 固有のログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログは `LoupeControl.AvaloniaUI` の `LoupeRenderLog`）。
 
 ## テスト
 

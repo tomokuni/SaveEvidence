@@ -10,10 +10,10 @@ namespace Estable.Loupe;
 /// UI 実装が自前で整形すると同じ設定でも書式がずれ（片方だけ修正される）、ログの比較ができなくなる。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class LoupeLogFormat
+public static class LoupeLogFormat
 {
     /// <summary>未設定を表す文字列。</summary>
-    internal const string Null = "null";
+    public const string Null = "null";
 
     /// <summary>拡大中心（ドメイン座標）を文字列化する。</summary>
     /// <param name="point">拡大中心。未設定は null。</param>
@@ -34,9 +34,9 @@ internal static class LoupeLogFormat
     /// <summary>拡大元画像を文字列化する。</summary>
     /// <param name="width">画像の幅（ピクセル）。未設定は null。</param>
     /// <param name="height">画像の高さ（ピクセル）。未設定は null。</param>
-    /// <returns><c>Width×Height</c> 形式の文字列。未設定は <c>null</c>。</returns>
+    /// <returns><c>WidthxHeight</c> 形式の文字列。未設定は <c>null</c>。</returns>
     /// <remarks>
-    /// 画像の型は UI ごとに異なる（Avalonia は <c>IImage</c>、MewUI は <see cref="EsBitmap"/>）ため、<br/>
+    /// 画像の型は UI ごとに異なるため、<br/>
     /// 各 UI が寸法を取り出して本メソッドへ渡す（書式は本メソッドが単一所有する）。
     /// </remarks>
     public static string DescribeImage(int? width, int? height)

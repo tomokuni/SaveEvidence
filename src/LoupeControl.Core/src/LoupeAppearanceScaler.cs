@@ -11,7 +11,7 @@ namespace Estable.Loupe;
 /// （整った値が来ることを型が保証するため、ここで再補正はしない）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class LoupeAppearanceScaler
+public static class LoupeAppearanceScaler
 {
     /// <summary>市松模様の 1 タイルサイズを物理ピクセルへ換算する。</summary>
     /// <param name="appearance">装飾の外観（DIP。安全域へ補正済み）。</param>

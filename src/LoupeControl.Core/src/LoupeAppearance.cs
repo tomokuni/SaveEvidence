@@ -5,7 +5,7 @@ namespace Estable.Loupe;
 /// <summary>ルーペの外観（下地・市松模様・外枠・十字線・中心座標ラベル）をまとめた不変の設定値。</summary>
 /// <remarks>
 /// 描画に使う外観 12 項目を 1 つの値として所有する（Procedure: Flyweight 的な値オブジェクト）。<br/>
-/// 両 UI（Avalonia / MewUI）は本型を 1 つ公開するだけで外観を設定でき、UI ごとに既定値がずれない。<br/>
+/// 各 UI 実装は本型を 1 つ公開するだけで外観を設定でき、UI ごとに既定値がずれない。<br/>
 /// 下地（<see cref="BackgroundColor"/>）も本型が所有するため、キャンバスへ直接描画する UI と<br/>
 /// ウィンドウの上へ重ねる UI のどちらも同じ契約でベース色を指定できる（UI 層に固有のプロパティを置かない）。<br/>
 /// <br/>
@@ -26,7 +26,7 @@ public sealed record LoupeAppearance
     /// <remarks>
     /// 市松模様・拡大画像より先に全面へ塗る色。<br/>
     /// 市松模様の色（<see cref="CheckerColorA"/> / <see cref="CheckerColorB"/>）は半透明のため、<br/>
-    /// 背後の要素（プレビューの画像・画面等）を透かしたくない場合はホストが不透明色を設定する。
+    /// 背後の要素を透かしたくない場合はホストが不透明色を設定する。
     /// </remarks>
     public DrawingColor BackgroundColor { get; init; } = DrawingColor.Transparent;
 
@@ -49,11 +49,11 @@ public sealed record LoupeAppearance
     } = LoupeValueCoercer.CheckerSizeDefault;
 
     /// <summary>市松模様の色A（明色）を取得する。</summary>
-    /// <value>アルファを含む色。既定は Gray 30%（#4C808080。設定画面の市松模様 A と一致）。</value>
+    /// <value>アルファを含む色。既定は Gray 30%（#4C808080）。</value>
     public DrawingColor CheckerColorA { get; init; } = DrawingColor.FromArgb(0x4C, 0x80, 0x80, 0x80);
 
     /// <summary>市松模様の色B（暗色）を取得する。</summary>
-    /// <value>アルファを含む色。既定は DarkGray 30%（#4CA9A9A9。設定画面の市松模様 B と一致）。</value>
+    /// <value>アルファを含む色。既定は DarkGray 30%（#4CA9A9A9）。</value>
     public DrawingColor CheckerColorB { get; init; } = DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9);
 
     // ====================================================================

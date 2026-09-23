@@ -5,58 +5,33 @@ namespace Estable.Marquee.Decoration.Tests;
 
 /// <summary><see cref="OuterDecoLabels"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
-/// ラベル表示の判定と操作テキストの選定のみを検証するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
-/// 文言は各 UI（Avalonia / MewUI）で共用する。
+/// ラベル表示の判定（情報ラベルの表示可否）と、サイズラベルの文言・表示スケールの解決を検証する。<br/>
+/// 文言はホストが与えるため、本テストは判定と書式のみを対象とする。
 /// </remarks>
 public class OuterDecoLabelsTests
 {
-    /// <summary>WindowSelect でタイトルがあり表示有効なら true を返すことを検証する。</summary>
+    /// <summary>表示が有効で文言が非空なら true を返すことを検証する。</summary>
     [Fact]
-    public void ShouldShowInfoLabel_WindowSelectでタイトルがあり表示有効ならtrueを返す()
+    public void ShouldShowInfoLabel_表示有効かつ文言ありならtrueを返す()
     {
-        Assert.True(OuterDecoLabels.ShouldShowInfoLabel(OuterDecoRenderMode.WindowSelect, true, "メモ帳"));
+        Assert.True(OuterDecoLabels.ShouldShowInfoLabel(true, "メモ帳"));
     }
 
-    /// <summary>WindowSelect 以外のモードでは false を返すことを検証する。</summary>
+    /// <summary>表示が無効なら false を返すことを検証する。</summary>
+    [Fact]
+    public void ShouldShowInfoLabel_表示が無効ならfalseを返す()
+    {
+        Assert.False(OuterDecoLabels.ShouldShowInfoLabel(false, "メモ帳"));
+    }
+
+    /// <summary>文言が null または空なら false を返すことを検証する。</summary>
+    /// <param name="infoText">情報ラベルの文言。</param>
     [Theory]
-    [InlineData(OuterDecoRenderMode.AreaSelect)]
-    [InlineData(OuterDecoRenderMode.ScreenSelect)]
-    [InlineData(OuterDecoRenderMode.Crop)]
-    public void ShouldShowInfoLabel_モードがWindowSelect以外ならfalseを返す(OuterDecoRenderMode mode)
+    [InlineData(null)]
+    [InlineData("")]
+    public void ShouldShowInfoLabel_文言が空ならfalseを返す(string? infoText)
     {
-        Assert.False(OuterDecoLabels.ShouldShowInfoLabel(mode, true, "メモ帳"));
-    }
-
-    /// <summary>表示が無効またはタイトルが空なら false を返すことを検証する。</summary>
-    [Fact]
-    public void ShouldShowInfoLabel_表示無効またはタイトル空ならfalseを返す()
-    {
-        Assert.False(OuterDecoLabels.ShouldShowInfoLabel(OuterDecoRenderMode.WindowSelect, false, "メモ帳"));
-        Assert.False(OuterDecoLabels.ShouldShowInfoLabel(OuterDecoRenderMode.WindowSelect, true, ""));
-    }
-
-    /// <summary>スクリーン選択・ウィンドウ選択は Enter 系の操作ラベルを返すことを検証する。</summary>
-    [Fact]
-    public void GetOperationText_ScreenSelectとWindowSelectはEnter系を返す()
-    {
-        Assert.Equal(
-            "Enter / クリック: 確定  Esc: キャンセル",
-            OuterDecoLabels.GetOperationText(OuterDecoRenderMode.ScreenSelect));
-        Assert.Equal(
-            "Enter / クリック: 確定  Esc: キャンセル",
-            OuterDecoLabels.GetOperationText(OuterDecoRenderMode.WindowSelect));
-    }
-
-    /// <summary>範囲選択・切出しはダブルクリック系の操作ラベルを返すことを検証する。</summary>
-    [Fact]
-    public void GetOperationText_AreaSelectとCropはダブルクリック系を返す()
-    {
-        Assert.Equal(
-            "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル",
-            OuterDecoLabels.GetOperationText(OuterDecoRenderMode.AreaSelect));
-        Assert.Equal(
-            "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル",
-            OuterDecoLabels.GetOperationText(OuterDecoRenderMode.Crop));
+        Assert.False(OuterDecoLabels.ShouldShowInfoLabel(true, infoText));
     }
 
     /// <summary>表示スケールが 0 以下の場合は代替値（座標換算の倍率）を使うことを検証する。</summary>

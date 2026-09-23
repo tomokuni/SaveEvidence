@@ -15,7 +15,9 @@ namespace Estable.Marquee;
 /// <br/>
 /// イベント駆動: 状態変更は UI 実装側のコントロールが公開イベントで通知し、本クラスは状態の保持と更新ロジックのみを担う（ポーリング不要）。<br/>
 /// <b>依存分離</b>: コア型（<see cref="EsRect"/> / <see cref="EsPoint"/>）のみに依存し、UI フレームワークへ依存しない。<br/>
-/// カーソル操作（<see cref="ICursorService"/>）も抽象にのみ依存し、未指定の場合は何もしない（UI 実装側が既定実装を解決して渡す）。
+/// カーソル操作（<see cref="ICursorService"/>）も抽象にのみ依存し、未指定の場合は何もしない（UI 実装側が既定実装を解決して渡す）。<br/>
+/// <b>可視性</b>: 本クラスは <see cref="MarqueeSession"/> の内部実装であり、外部が直接操作するとセッションの不変条件が壊れる<br/>
+/// （可変プロパティを多数持つ）。外部は <see cref="MarqueeSnapshot"/> を通して状態を読む。
 /// </remarks>
 internal sealed class MarqueeState
 {

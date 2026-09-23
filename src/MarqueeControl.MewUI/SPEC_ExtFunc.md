@@ -34,6 +34,7 @@ Avalonia 版と同一の挙動になります。
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 外観・対話パラメータをまとめた不変の設定値（コアの `Estable.Marquee.MarqueeOptions`） |
+| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）・操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない）。null または空文字を返す行は描かない |
 | `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と一致）:
@@ -41,8 +42,6 @@ Avalonia 版と同一の挙動になります。
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `OuterAppearance` | `OuterDecoAppearance` | 枠線のみ（暗転・ラベルなし） | 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）の外観。**枠線の色・太さは本値が単一所有する**（選択枠線と穴あけ枠は同じ矩形に重なるため） |
-| `OuterRenderMode` | `OuterDecoRenderMode` | `AreaSelect` | 外側の装飾の描画モード（操作ラベルの文言選定に使用） |
-| `OuterWindowTitle` | `string` | `""` | 操作ラベル（情報ラベル）に表示するウィンドウタイトル |
 | `OuterShowFullOverlay` | `bool` | `false` | 穴あけを行わず全面を暗転するかどうか |
 | `OuterHighlightRect` / `OuterHasHighlight` | `EsRect?` / `bool` | `null` / `false` | ハイライト矩形（ドメイン座標）とその有効フラグ |
 | `ShowHandles` | `bool` | `true` | ドラッグハンドルを表示するかどうか |
@@ -93,7 +92,7 @@ Avalonia 版と同一の挙動になります。
 | `MouseMoved` | `MarqueePointEventArgs` | マウス移動（nudge の有無に関わらず発火） |
 | `LoupePositionMoved` | `MarqueePointEventArgs` | ルーペが表示する中心座標（通常追従はポインタ位置、ドラッグ・nudge 中は動いている側のハンドル位置） |
 | `ViewportChanged` | `SelectionRectEventArgs` | `NotifyViewportChanged()` の呼び出し |
-| `ZoomRequested` | `MarqueeZoomRequest` | Ctrl+ホイール（方向と発生位置） |
+| `ZoomRequested` | `WheelZoomRequest` | Ctrl+ホイール（方向と発生位置） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | 矩形内ダブルクリック・Enter |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel()` |
 

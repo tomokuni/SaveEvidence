@@ -141,7 +141,9 @@ public sealed partial class MarqueeControl
                 _coordinatePort,
                 Scaling,
                 SizeLabelOverrideProvider,
-                DisplayScaleScaling));
+                DisplayScaleScaling,
+                OperationTextProvider,
+                InfoTextProvider));
 
         if (options.ShowHandles && _session.HasSelection)
         {

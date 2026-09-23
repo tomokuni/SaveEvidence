@@ -1,4 +1,3 @@
-using Estable.Marquee.Decoration;
 using Xunit;
 
 namespace Estable.Marquee.Tests;
@@ -23,8 +22,6 @@ public class MarqueeOptionsTests
         Assert.False(options.OuterAppearance.ShowSizeLabel);
         Assert.False(options.OuterAppearance.ShowSubLines);
         Assert.False(options.OuterAppearance.InfoLabelVisible);
-        Assert.Equal(OuterDecoRenderMode.AreaSelect, options.OuterRenderMode);
-        Assert.Equal("", options.OuterWindowTitle);
         Assert.False(options.OuterShowFullOverlay);
         Assert.Null(options.OuterHighlightRect);
         Assert.False(options.OuterHasHighlight);

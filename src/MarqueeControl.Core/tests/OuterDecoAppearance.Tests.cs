@@ -61,24 +61,35 @@ public class OuterDecoAppearanceTests
     {
         var appearance = new OuterDecoAppearance();
 
-        var lines = appearance.BuildSubLines(OuterDecoRenderMode.WindowSelect, "メモ帳");
+        var lines = appearance.BuildSubLines("確定: Enter", "メモ帳");
 
         Assert.Equal(2, lines.Count);
-        Assert.Equal("Enter / クリック: 確定  Esc: キャンセル", lines[0].Text);
+        Assert.Equal("確定: Enter", lines[0].Text);
         Assert.Equal("メモ帳", lines[1].Text);
     }
 
-    /// <summary>操作ラベルの文言がモードで切り替わることを検証する。</summary>
+    /// <summary>操作ラベルの文言はホストが与えた文字列がそのまま使われることを検証する。</summary>
+    /// <param name="operationText">操作ラベルの文言。</param>
     [Theory]
-    [InlineData(OuterDecoRenderMode.ScreenSelect, "Enter / クリック: 確定  Esc: キャンセル")]
-    [InlineData(OuterDecoRenderMode.WindowSelect, "Enter / クリック: 確定  Esc: キャンセル")]
-    [InlineData(OuterDecoRenderMode.AreaSelect, "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル")]
-    [InlineData(OuterDecoRenderMode.Crop, "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル")]
-    public void BuildSubLines_操作ラベルの文言がモードで決まる(OuterDecoRenderMode mode, string expected)
+    [InlineData("確定: Enter")]
+    [InlineData("ダブルクリックで確定")]
+    public void BuildSubLines_操作ラベルの文言はホストが与える(string operationText)
     {
-        var lines = new OuterDecoAppearance().BuildSubLines(mode, "");
+        var lines = new OuterDecoAppearance().BuildSubLines(operationText, "");
 
-        Assert.Equal(expected, Assert.Single(lines).Text);
+        Assert.Equal(operationText, Assert.Single(lines).Text);
+    }
+
+    /// <summary>操作ラベルの文言が空なら行を返さないことを検証する。</summary>
+    /// <param name="operationText">操作ラベルの文言。</param>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void BuildSubLines_操作ラベルの文言が空なら行を返さない(string? operationText)
+    {
+        var lines = new OuterDecoAppearance().BuildSubLines(operationText, "");
+
+        Assert.Empty(lines);
     }
 
     /// <summary>操作ラベルを非表示にすると情報ラベルだけが返ることを検証する。</summary>
@@ -87,7 +98,7 @@ public class OuterDecoAppearanceTests
     {
         var appearance = new OuterDecoAppearance { ShowSubLines = false };
 
-        var lines = appearance.BuildSubLines(OuterDecoRenderMode.WindowSelect, "メモ帳");
+        var lines = appearance.BuildSubLines("確定: Enter", "メモ帳");
 
         Assert.Equal("メモ帳", Assert.Single(lines).Text);
     }
@@ -98,30 +109,30 @@ public class OuterDecoAppearanceTests
     {
         var appearance = new OuterDecoAppearance { InfoLabelVisible = false };
 
-        var lines = appearance.BuildSubLines(OuterDecoRenderMode.WindowSelect, "メモ帳");
+        var lines = appearance.BuildSubLines("確定: Enter", "メモ帳");
 
-        Assert.Equal("Enter / クリック: 確定  Esc: キャンセル", Assert.Single(lines).Text);
+        Assert.Equal("確定: Enter", Assert.Single(lines).Text);
     }
 
-    /// <summary>WindowSelect 以外のモードではウィンドウタイトルを返さないことを検証する。</summary>
+    /// <summary>情報ラベルの文言が空なら行を返さないことを検証する。</summary>
+    /// <param name="infoText">情報ラベルの文言。</param>
     [Theory]
-    [InlineData(OuterDecoRenderMode.AreaSelect)]
-    [InlineData(OuterDecoRenderMode.ScreenSelect)]
-    [InlineData(OuterDecoRenderMode.Crop)]
-    public void BuildSubLines_WindowSelect以外は情報ラベルを返さない(OuterDecoRenderMode mode)
+    [InlineData(null)]
+    [InlineData("")]
+    public void BuildSubLines_情報ラベルの文言が空なら行を返さない(string? infoText)
     {
-        var lines = new OuterDecoAppearance().BuildSubLines(mode, "メモ帳");
+        var lines = new OuterDecoAppearance().BuildSubLines(null, infoText);
 
-        Assert.DoesNotContain(lines, line => line.Text == "メモ帳");
+        Assert.Empty(lines);
     }
 
-    /// <summary>操作ラベルを非表示かつ情報ラベルが対象外のモードでは行が空になることを検証する。</summary>
+    /// <summary>操作ラベルを非表示かつ情報ラベルの文言が空なら行が空になることを検証する。</summary>
     [Fact]
     public void BuildSubLines_表示する行がない場合は空になる()
     {
         var appearance = new OuterDecoAppearance { ShowSubLines = false };
 
-        var lines = appearance.BuildSubLines(OuterDecoRenderMode.Crop, "メモ帳");
+        var lines = appearance.BuildSubLines("確定: Enter", "");
 
         Assert.Empty(lines);
     }
@@ -140,7 +151,7 @@ public class OuterDecoAppearanceTests
             InfoLabelBackgroundColor = DrawingColor.FromArgb(77, 139, 0, 0),
         };
 
-        var lines = appearance.BuildSubLines(OuterDecoRenderMode.WindowSelect, "メモ帳");
+        var lines = appearance.BuildSubLines("確定: Enter", "メモ帳");
 
         Assert.Equal(12.0, lines[0].FontSize);
         Assert.Equal(DrawingColor.Red, lines[0].Color);

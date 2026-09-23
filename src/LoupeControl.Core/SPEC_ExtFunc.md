@@ -1,21 +1,25 @@
 # LoupeControl.Core 外部機能仕様書
 
-`LoupeControl.Core` は UI フレームワーク非依存のルーペロジックと設定（表示サイズ・拡大率・外観）を提供します。公開 API は `LoupeOptions` と `LoupeAppearance` のみであり、それ以外の型は `internal` です（`LoupeControl.*` 実装とテストからのみ参照します）。
+`LoupeControl.Core` は UI フレームワーク非依存のルーペロジックと設定（表示サイズ・拡大率・外観）を提供します。**全型が public** であり、外部が独自の UI アダプタを実装できます（他アセンブリへの `InternalsVisibleTo` は持ちません）。
 
 ## 公開 API の可視性
 
-| 型 | 可視性 | 参照可能なアセンブリ |
+| 型 | 可視性 | 用途 |
 | --- | --- | --- |
-| `LoupeOptions` | `public` | すべて（ホストが設定する） |
-| `LoupeAppearance` | `public` | すべて（設定の一部として、また単体でも外観を指定する） |
-| `LoupeValueCoercer` | `internal` | `LoupeControl.AvaloniaUI` / `LoupeControl.MewUI` / 各テスト |
-| `LoupeAppearanceScaler` | `internal` | 同上 |
-| `LoupeRenderRequest` | `internal` | 同上 |
-| `LoupePositionCalculator` | `internal` | 同上 + `FadeMaskDragRectControl.MewUI` / `SaveEvidence.MewUI` |
-| `LoupeRenderArgsCalculator` | `internal` | 同上 |
-| `LoupeLabelLayout` | `internal` | 同上 |
-| `LoupeLogFormat` / `LoupeLogMessage` | `internal` | 同上 |
-| `Imaging.LoupeImageExtractor` | `internal` | 同上 |
+| `LoupeOptions` | `public` | 設定の単一値（ホストが設定する） |
+| `LoupeAppearance` | `public` | 外観の単一値（設定の一部として、また単体でも外観を指定する） |
+| `LoupeValueCoercer` | `public` | 数値パラメータの既定値・安全域とクランプ |
+| `LoupeAppearanceScaler` | `public` | 外観の寸法値の物理ピクセル換算 |
+| `LoupeRenderRequest` | `public` | 1 フレーム分の描画入力（コア⇔UI の契約） |
+| `LoupePositionCalculator` | `public` | 表示サイズのクランプ・表示位置の計算 |
+| `LoupeRenderArgsCalculator` | `public` | 描画完了通知用の表示情報の計算 |
+| `LoupeLabelLayout` | `public` | 座標ラベルの余白と配置矩形 |
+| `LoupeCheckerboard` | `public` | 市松模様の明暗判定とタイル矩形 |
+| `LoupeDecorationGeometry` | `public` | 十字線・外枠の描画矩形 |
+| `LoupeLogFormat` / `LoupeLogMessage` | `public` | ログの書式と定義（UI 非依存の分） |
+| `Imaging.LoupeImageExtractor` | `public` | 切り出し領域の計算と `EsBitmap` からの切り出し |
+
+**UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
 
 ## `LoupeOptions`（`Estable.Loupe`・`public sealed record`）
 
@@ -193,8 +197,8 @@ public static double ClampSizeToArea(double size, EsSize areaSize);
 | `LogRenderScalingChanged(double, double)` | Debug | `RenderScaling` 版（同値なら出力しない） |
 | `LogZoomLevelChanged(int, int)` | Debug | `ZoomLevel` 版（同値なら出力しない） |
 | `LogUpdateError(Exception)` | Error | `[LoupeCtrl] Update exception` |
-| `LogRenderCore(long generation)` | Trace | `[LoupeCtrl] RenderCore: generation={Generation}`（中間ビットマップを作る描画パイプライン専用） |
-| `LogGenerateAsyncDone(set, disposed, visible, generation, current)` | Trace | `[LoupeCtrl] GenerateAsync done: ...`（同上） |
+
+**UI 固有のログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は `LoupeControl.AvaloniaUI` の `LoupeRenderLog` にあります）。
 
 設定項目ごとの名前付きメソッド（`LogCenterPointChanged` / `LogSourceChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`）は、**設定名・書式・変化判定をコアが単一所有**するために提供します。UI 層は値（と Source の寸法）を渡すだけで、設定名の文字列を持ちません。
 

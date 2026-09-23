@@ -61,14 +61,19 @@ public class MarqueeFrameTests
     /// <param name="scaling">倍率。</param>
     /// <param name="provider">サイズラベルの文言プロバイダ。</param>
     /// <param name="displayScale">サイズラベルの自動生成に使うスケーリング。</param>
+    /// <param name="operationTextProvider">操作ラベルの文言プロバイダ。</param>
+    /// <param name="infoTextProvider">情報ラベルの文言プロバイダ。</param>
     /// <returns>解決したフレーム。</returns>
     private static OuterDecoFrame Resolve(
         MarqueeSession session,
         ICoordTransform? port = null,
         double scaling = 1.0,
         Func<string?>? provider = null,
-        double displayScale = 1.0)
-        => MarqueeFrame.Resolve(session, s_client, port, scaling, provider, displayScale);
+        double displayScale = 1.0,
+        Func<string?>? operationTextProvider = null,
+        Func<string?>? infoTextProvider = null)
+        => MarqueeFrame.Resolve(
+            session, s_client, port, scaling, provider, displayScale, operationTextProvider, infoTextProvider);
 
     // ====================================================================
     // 選択矩形の導出（セッションが単一のソース）
@@ -353,18 +358,16 @@ public class MarqueeFrameTests
             MarqueeOptions.Default with
             {
                 OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White),
-                OuterRenderMode = OuterDecoRenderMode.AreaSelect,
-                OuterWindowTitle = "メモ帳",
             },
             new EsRect(10, 20, 30, 40));
 
-        var frame = Resolve(session);
+        var frame = Resolve(session, operationTextProvider: () => "確定: Enter", infoTextProvider: () => "メモ帳");
 
         Assert.Null(frame.SizeLabelText);
         Assert.Empty(frame.SubLines);
     }
 
-    /// <summary>表示する設定では描画モードとタイトルからサブラインが組み立てられることを検証する。</summary>
+    /// <summary>表示する設定ではプロバイダの文言からサブラインが組み立てられることを検証する。</summary>
     [Fact]
     public void Resolve_サブラインを組み立てる()
     {
@@ -377,16 +380,39 @@ public class MarqueeFrameTests
                     ShowSubLines = true,
                     InfoLabelVisible = true,
                 },
-                OuterRenderMode = OuterDecoRenderMode.WindowSelect,
-                OuterWindowTitle = "メモ帳",
+            },
+            new EsRect(10, 20, 30, 40));
+
+        var frame = Resolve(
+            session,
+            operationTextProvider: () => "確定: Enter",
+            infoTextProvider: () => "メモ帳");
+
+        // 文言はホストが与え、行の組み立て（順序・表示可否）は装飾コア（OuterDecoAppearance.BuildSubLines）が単一所有する
+        Assert.Equal(2, frame.SubLines.Count);
+        Assert.Equal("確定: Enter", frame.SubLines[0].Text);
+        Assert.Equal("メモ帳", frame.SubLines[1].Text);
+    }
+
+    /// <summary>プロバイダ未指定の場合はサブラインを描かないことを検証する。</summary>
+    [Fact]
+    public void Resolve_プロバイダ未指定ならサブラインを描かない()
+    {
+        var session = CreateSession(
+            MarqueeOptions.Default with
+            {
+                OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) with
+                {
+                    ShowSizeLabel = false,
+                    ShowSubLines = true,
+                    InfoLabelVisible = true,
+                },
             },
             new EsRect(10, 20, 30, 40));
 
         var frame = Resolve(session);
 
-        // 文言の組み立ては装飾コア（OuterDecoAppearance.BuildSubLines）が単一所有する
-        Assert.NotEmpty(frame.SubLines);
-        Assert.Contains(frame.SubLines, line => line.Text.Contains("メモ帳", StringComparison.Ordinal));
+        Assert.Empty(frame.SubLines);
     }
 
     // ====================================================================

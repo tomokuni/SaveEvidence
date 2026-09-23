@@ -6,11 +6,11 @@ namespace Estable.Marquee;
 /// <remarks>
 /// 入力に伴う判断（ドラッグ開始・確定・キャンセル・クリック・キー処理）はコアの状態管理クラスが担うため、<br/>
 /// その経過のログ定義もコアが所有する。<br/>
-/// ホイールのズーム要求と設定変更のログは、<b>両 UI で同一の書式・レベルにする必要がある</b>ため同じくコアが所有する<br/>
+/// ホイールのズーム要求と設定変更のログは、<b>各 UI 実装で同一の書式・レベルにする必要がある</b>ため同じくコアが所有する<br/>
 /// （UI 実装ごとに持つと書式がずれる。各 UI は自 UI 固有の操作のログのみを持つ）。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。
 /// </remarks>
-internal static partial class MarqueeLogMessage
+public static partial class MarqueeLogMessage
 {
     /// <summary>ポインター押下（マウス Down）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Marquee] MouseDown: pos=({X}, {Y}) clickCount={ClickCount} hasSelection={HasSelection}</c></remarks>

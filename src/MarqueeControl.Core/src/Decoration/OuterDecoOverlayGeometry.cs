@@ -6,8 +6,10 @@ namespace Estable.Marquee.Decoration;
 /// <summary>暗転オーバーレイの幾何計算（純粋関数）。</summary>
 /// <remarks>
 /// 穴あけ矩形の決定・枠線矩形・論理座標（ドメイン）から DIP への変換を単一所有する。<br/>
-/// 各 UI（Avalonia / MewUI）は返された <see cref="EsRect"/> を自身の描画 API へ渡すだけにする。<br/>
-/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
+/// 各 UI 実装は返された <see cref="EsRect"/> を自身の描画 API へ渡すだけにする。<br/>
+/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
+/// <b>可視性</b>: 描画内容の判断は <see cref="OuterDecoFrame.Resolve"/> が担うため、本クラスは内部実装とする
+/// （UI 実装は返されたフレームを描くだけで、幾何計算を直接呼ばない）。
 /// </remarks>
 internal static class OuterDecoOverlayGeometry
 {
@@ -42,7 +44,7 @@ internal static class OuterDecoOverlayGeometry
     /// <remarks>
     /// 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、<br/>
     /// 終点（Right / Bottom）に +1 してから DIP 変換する（終点のピクセルも非暗転領域に含める）。<br/>
-    /// ハイライト矩形（スクリーン・ウィンドウ境界）は最初から全ピクセルを含む閉区間表現のため、<br/>
+    /// ハイライト矩形（ホストが既に全ピクセルを含む閉区間として与える矩形）は、<br/>
     /// <paramref name="closedInterval"/> を false にして +1 しない（1px 大きく表示されるのを防ぐ）。
     /// </remarks>
     public static EsRect ToDipRect(EsRect logical, ICoordTransform? port = null, bool closedInterval = true)

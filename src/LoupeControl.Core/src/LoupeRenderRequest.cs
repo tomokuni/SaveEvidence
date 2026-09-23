@@ -13,7 +13,7 @@ namespace Estable.Loupe;
 /// - 表示サイズ（設定を UI が親領域・描画先へクランプした DIP）+ `RenderScaling`（環境）→ <see cref="PixelSize"/><br/>
 /// - <see cref="LoupeOptions.ZoomLevel"/>（設定）→ <see cref="ZoomLevel"/>（そのまま）<br/>
 /// - <see cref="LoupeOptions.Appearance"/>（設定）→ <see cref="Appearance"/>（そのまま）<br/>
-/// 拡大元画像は UI ごとに型が異なる（Avalonia は <c>IImage</c>、MewUI は <see cref="EsBitmap"/>）ため本値に含めず、<br/>
+/// 拡大元画像は UI ごとに型が異なるため本値に含めず、<br/>
 /// 描画層が解決した <see cref="EsBitmap"/> を別引数として受け取る（両 UI が同じ手順で本値を組み立てられる）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
@@ -22,7 +22,7 @@ namespace Estable.Loupe;
 /// <param name="ZoomLevel">拡大率（1〜64。1 未満は不可）。</param>
 /// <param name="Appearance">外観（下地・色・寸法・描画可否を単一所有する）。</param>
 /// <param name="Scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
-internal readonly record struct LoupeRenderRequest(
+public readonly record struct LoupeRenderRequest(
     EsPoint? Center,
     int PixelSize,
     int ZoomLevel,

@@ -22,18 +22,5 @@
     <None Remove="..\tests\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
-    <InternalsVisibleTo Include="LoupeControl.AvaloniaUI" />
-    <InternalsVisibleTo Include="LoupeControl.MewUI" />
-    <InternalsVisibleTo Include="LoupeControl.AvaloniaUI.Tests" />
-    <InternalsVisibleTo Include="LoupeControl.MewUI.Tests" />
-    <InternalsVisibleTo Include="LoupeControl.Core.Tests" />
-    <!-- 複合コントロールがルーペの表示位置計算（LoupePositionCalculator）を共用する -->
-    <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI" />
-    <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI.Tests" />
-    <!-- アプリ本体（MewUI 版）もプレビューのルーペ配置で同じ計算を共用する -->
-    <InternalsVisibleTo Include="SaveEvidence.MewUI" />
-  </ItemGroup>
-
+  <!-- internal 型を持たない（全型 public）。他アセンブリへの InternalsVisibleTo は不要。 -->
 </Project>

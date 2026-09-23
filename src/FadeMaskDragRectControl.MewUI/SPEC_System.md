@@ -34,8 +34,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
                    └────────────────┬─────────────────────────┘
                                     ▼
                     ┌────────────────────────────────┐
-                    │ FadeMaskDragRectControl.Core   │  動作モード・写像・破線描画
-                    └────────────────┬───────────────┘
+                    │ FadeMaskDragRectControl.Core   │  動作モード・写像・破線描画                    └────────────────┬───────────────┘
                                      ▼
         ┌──────────────┬──────────────┬──────────────┐
         ▼              ▼              ▼
@@ -48,7 +47,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 
 | 層 | 責務 |
 | --- | --- |
-| `FadeMaskDragRectControl.Core` | 動作モードの定義、モード → 描画設定の写像、ルーペ画像への破線オーバーレイ描画 |
+| `FadeMaskDragRectControl.Core` | 動作モードの定義、モード → 子コントロールの有効・無効の写像、ルーペ画像への破線オーバーレイ描画 |
 | 各コントロールの `*.Core` | 選択矩形の状態機械、選択矩形の外側の装飾（暗転マスク・穴あけ枠・ラベル）の外観・幾何、ルーペの表示位置計算 |
 | `FadeMaskDragRectControl.MewUI` | 内包コントロールの生成・重ね合わせ・イベント配線・状態同期・配置（レイアウト）・ラベル設定の委譲 |
 | ホスト | モードの指定、座標変換ポートの設定、ルーペ画像の供給、ラベル文言の供給、破線色の供給、ログの注入、確定・キャンセル後の後始末 |
@@ -66,7 +65,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 | ラベルは選択矩形コントロールへ委譲し、本クラスは委譲プロパティのみを持つ | 描画・行配置は `MarqueeControl`（背景・位置はコアの `OuterDecoLabelLayout`）が単一所有するため、重複する実装を持たない |
 | ルーペ画像上の破線はルーペの `Rendered` で描画する | MewUI のルーペは中間ビットマップを作らないため、描画先（キャンバス）を受け取れるイベントが必要（破線の幾何はコアが単一所有し、Avalonia 版と同じ見た目になる） |
 | ログはドラッグ選択コントロールとルーペへ伝搬する | 入力操作と表示状態の変化を 1 箇所の設定で有効化できる（Avalonia 版と同じ範囲。外側の装飾の描画もドラッグ選択コントロールが担うため、そのログも同じロガーで出力される） |
-| ラベルの文言はホストが与える | 情報ラベル（ウィンドウタイトル等）はホストしか知らない上、文言の単一所有はコアの `OuterDecoLabels` にある（本クラスで再生成しない） |
+| ラベルの文言はホストが与える | 情報ラベル（ウィンドウタイトル等）はホストしか知らない上、モード別の文言はアプリ固有であるため、本クラスはプロバイダを子へ転送するだけにする（文言の選定はアプリの `CaptureLabelTexts` が単一所有する） |
 
 ## コンポーネント構成
 
@@ -112,7 +111,8 @@ classDiagram
         +double Scaling
         +double DisplayScaleScaling
         +double LoupeRenderScaling
-        +string WindowTitle
+        +Func~string?~? OperationTextProvider
+        +Func~string?~? InfoTextProvider
         +Func~string?~? SizeLabelOverrideProvider
         +ILogger Log
         +SetCoordinateTransform(port) void
@@ -267,5 +267,5 @@ ArrangeContent(bounds)                     … bounds はウィンドウ絶対�
 
 | 項目 | 状況 |
 | --- | --- |
-| ハイライトのウィンドウタイトル | ホストが `WindowTitle` で与える（表示可否はコアの `OuterDecoLabels.ShouldShowInfoLabel` が判定する） |
+| ハイライトのウィンドウタイトル | ホストが `InfoTextProvider` で与える（表示可否はコアの `OuterDecoLabels.ShouldShowInfoLabel` が判定する） |
 | 実ウィンドウへの組み込み | `app.MewUI` のキャプチャフローで配線済み（撮影・切り出しの両方） |

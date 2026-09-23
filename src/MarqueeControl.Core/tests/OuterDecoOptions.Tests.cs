@@ -10,15 +10,13 @@ namespace Estable.Marquee.Decoration.Tests;
 /// </remarks>
 public class OuterDecoOptionsTests
 {
-    /// <summary>既定値がコアの既定（外観・モード・選択なし）であることを検証する。</summary>
+    /// <summary>既定値がコアの既定（外観・選択なし）であることを検証する。</summary>
     [Fact]
     public void Default_コアの既定値を持つ()
     {
         var options = OuterDecoOptions.Default;
 
         Assert.Equal(new OuterDecoAppearance(), options.Appearance);
-        Assert.Equal(OuterDecoRenderMode.AreaSelect, options.Mode);
-        Assert.Equal("", options.WindowTitle);
         Assert.False(options.ShowFullOverlay);
         Assert.Null(options.LogicalSelectionRect);
         Assert.Null(options.LogicalHighlightRect);
@@ -41,8 +39,6 @@ public class OuterDecoOptionsTests
         var options = OuterDecoOptions.Default with
         {
             Appearance = appearance,
-            Mode = OuterDecoRenderMode.WindowSelect,
-            WindowTitle = "メモ帳",
             ShowFullOverlay = true,
             LogicalSelectionRect = new EsRect(10, 20, 30, 40),
             LogicalHighlightRect = new EsRect(1, 2, 3, 4),
@@ -51,8 +47,6 @@ public class OuterDecoOptionsTests
         };
 
         Assert.Same(appearance, options.Appearance);
-        Assert.Equal(OuterDecoRenderMode.WindowSelect, options.Mode);
-        Assert.Equal("メモ帳", options.WindowTitle);
         Assert.True(options.ShowFullOverlay);
         Assert.Equal(new EsRect(10, 20, 30, 40), options.LogicalSelectionRect);
         Assert.Equal(new EsRect(1, 2, 3, 4), options.LogicalHighlightRect);
@@ -60,7 +54,7 @@ public class OuterDecoOptionsTests
         Assert.True(options.HasHighlight);
 
         // 既定の値は変更されない（不変）
-        Assert.Equal(OuterDecoRenderMode.AreaSelect, OuterDecoOptions.Default.Mode);
+        Assert.False(OuterDecoOptions.Default.ShowFullOverlay);
         Assert.Null(OuterDecoOptions.Default.LogicalSelectionRect);
     }
 

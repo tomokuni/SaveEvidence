@@ -23,6 +23,7 @@
 - **外観・動作設定**（`CaptureSettings`）: 全メンバー nullable の record。null は「デフォルト値」または「現在値維持（部分更新）」を表し、`Validate` / `ToNonNull` を提供する
 - **キャプチャ結果**（`CaptureResult`）: `EsBitmap?`（画像）と `EsPixelRect?`（仮想スクリーン座標の領域）の組
 - **複合コントロールの設定変換**（`FadeMaskDragRectOptionsMapper`）: `CaptureSettings` → `FadeMaskDragRectOptions`（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）の対応を単一所有する（両 UI のホストが同じ変換を使う）
+- **ラベル文言の単一所有**（`CaptureLabelTexts`）: キャプチャ種別→動作モードの写像と、操作ラベル（確定・キャンセル方法）・情報ラベル（ウィンドウタイトル）の文言を単一所有する（汎用コントロールは文言を持たず、ホストがプロバイダで与える）
 - **切り出し結果の適用先**（`ICaptureTarget`）: 撮影・切り出しの結果をアプリ側へ渡すポート（現在の画像・画像差し替えの通知・切り出しの適用）。アプリのドメイン操作（Undo 退避・未保存化・ステータス通知）は実装側に残す- **画像の配置計算**（`ImageDrawMath`）: 画像を描画先の領域へ配置する矩形（Uniform = 縦横比を保って中央 / Fill = 引き伸ばし）- **UI 非依存**: Avalonia / MewUI のどちらの型も参照しない（色は `System.Drawing.Color`、座標は `Es*` 型）
 
 ## 3. 依存プロジェクト

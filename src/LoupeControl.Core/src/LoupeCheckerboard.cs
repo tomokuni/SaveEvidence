@@ -4,10 +4,10 @@ namespace Estable.Loupe;
 
 /// <summary>ルーペの市松模様のタイル配置ロジック（純粋関数）。</summary>
 /// <remarks>
-/// 市松模様の明暗判定とタイルの矩形を単一所有し、各 UI（Avalonia / MewUI）が同一のパターンを描画できるようにする。<br/>
+/// 市松模様の明暗判定とタイルの矩形を単一所有し、各 UI 実装が同一のパターンを描画できるようにする。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class LoupeCheckerboard
+public static class LoupeCheckerboard
 {
     /// <summary>指定したタイルが暗色（色B）かどうかを判定する。</summary>
     /// <param name="col">タイルの列インデックス（左から 0 始まり）。</param>

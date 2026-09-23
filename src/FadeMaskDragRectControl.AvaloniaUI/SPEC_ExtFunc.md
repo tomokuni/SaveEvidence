@@ -115,7 +115,7 @@ parentPanel.Children.Add(overlay);
 | `Scaling` | `double` | DPI スケーリング係数（設定（`Options`）の対象外・環境値。`MarqueeControl.Scaling` へ委譲） |
 | `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。設定（`Options`）の対象外・環境値。`MarqueeControl.DisplayScaleScaling` へ委譲） |
 | `LoupeRenderScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（設定（`Options`）の対象外・DPI から自動取得。`LoupeControl.RenderScaling` へ委譲） |
-| `WindowTitle` | `string` | ハイライト対象のウィンドウタイトル（未検出時は空文字。WindowSelect 用） |
+| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言を描画時に評価するプロバイダ（文言はホストが与える。`WindowTitle` は廃止し `InfoTextProvider` へ統合） |
 | `ShowFullOverlay` | `bool` | 全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効。読み取り専用） |
 | `LoupeCenterPoint` | `Point?` | ルーペ中心（ドメイン座標。未設定時は null） |
 | `Log` | `ILogger` | 操作ログの出力先（null は `NullLogger` へフォールバック。内包するドラッグ選択コントロールとルーペへ伝搬する） |
@@ -143,8 +143,8 @@ parentPanel.Children.Add(overlay);
 | --- | --- | --- |
 | `ConfirmRequested` | `EventHandler<FadeMaskDragRectSelectionEventArgs>` | 確定要求（Marquee の Enter / ダブルクリック / `RequestConfirm`。選択確定後のみ発火） |
 | `CancelRequested` | `EventHandler` | キャンセル要求（Marquee の Escape / `RequestCancel`） |
-| `ZoomRequested` | `EventHandler<MarqueeZoomRequest>` | Ctrl+ホイールによるズーム要求（方向と発生位置。Crop 用） |
-| `ScrollRequested` | `EventHandler<MarqueeScrollRequest>` | 通常ホイールによるスクロール要求（生の回転量・Shift・発生位置。Crop 用） |
+| `ZoomRequested` | `EventHandler<WheelZoomRequest>` | Ctrl+ホイールによるズーム要求（方向と発生位置。Crop 用） |
+| `ScrollRequested` | `EventHandler<WheelScrollRequest>` | 通常ホイールによるスクロール要求（生の回転量・Shift・発生位置。Crop 用） |
 | `LoupePositionMoved` | `EventHandler<FadeMaskDragRectPointEventArgs>` | ルーペ中心の更新通知（ドメイン座標。ホストの追加制御用フック） |
 | `LoupeRendered` | `EventHandler<LoupeRenderedEventArgs>` | ルーペ描画完了の通知（描画済み Bitmap と切り出し左上・スケール。ホストが Bitmap へ外部提供矩形（破線等）を直接描く用。`LoupeControl.Rendered` を中継する） |
 
@@ -199,12 +199,14 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `Estable.Fade
 
 ## 7. モード
 
-| モード | 描画モード（`Marquee.Options.OuterRenderMode`） | Marquee | Loupe | 全面暗転（`Options.Marquee.OuterShowFullOverlay`） | 用途 |
-| --- | --- | --- | --- | --- | --- |
-| `Crop` | `OuterDecoRenderMode.Crop` | 有効 | 有効（LoupePositionMoved で表示開始） | 有効 | プレビュー内の切出し |
-| `AreaSelect` | `OuterDecoRenderMode.AreaSelect` | 有効 | 有効（LoupePositionMoved で表示開始） | 有効 | 全画面オーバーレイの範囲選択 |
-| `ScreenSelect` | `OuterDecoRenderMode.ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ。クリック確定フローはホストが担う） |
-| `WindowSelect` | `OuterDecoRenderMode.WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ。クリック確定フローはホストが担う） |
+| モード | Marquee | Loupe | 全面暗転（`Options.Marquee.OuterShowFullOverlay`） | 用途 |
+| --- | --- | --- | --- | --- |
+| `Crop` | 有効 | 有効（LoupePositionMoved で表示開始） | 有効 | プレビュー内の切出し |
+| `AreaSelect` | 有効 | 有効（LoupePositionMoved で表示開始） | 有効 | 全画面オーバーレイの範囲選択 |
+| `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ。クリック確定フローはホストが担う） |
+| `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ。クリック確定フローはホストが担う） |
+
+- **モードが決めるのは子コントロールの有効・無効と全面暗転のみ**です（暗転マスクの描画内容は外観が決め、文言はホストがプロバイダで与えます）。判断はコアの `FadeMaskDragRectModes.Resolve` が単一所有します。
 
 - ルーペの選択矩形破線はモードに応じて有効になる（`Crop` / `AreaSelect` で有効）。描画の可否はコアの `FadeMaskDragRectState.ShowSelectionOverlay` が単一所有し、描画時に問い合わせる（UI は派生値を保持しない）。描画は `LoupeControl.Rendered` イベントを受けた本コントロール（ホスト側）が行う。
 - 破線の色（`Options.SelectionRectColorA` / `SelectionRectColorB`）と破線の表示可否は、ルーペのプロパティ（`LoupeAppearance` 等）には現れません。したがってこれらが変わった場合（設定の適用・モード変更）は `LoupeControl.RequestRender()` でルーペ Bitmap の再生成を要求します（プロパティ通知では再生成されないため）。選択矩形の変更も破線の内容が変わるため同様に要求します。既存 Bitmap を破線だけ書き換える API は提供しません（再生成して `Rendered` で描き直す方式に統一）。

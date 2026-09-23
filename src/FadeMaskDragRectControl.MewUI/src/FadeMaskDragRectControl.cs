@@ -201,13 +201,22 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ルーペコントロール（テスト用アクセサ。配置の検証に使用する）。</summary>
     internal LoupeControl Loupe => _loupe;
 
-    /// <summary>ハイライト対象のウィンドウタイトル（情報ラベルの文言）を取得または設定する。</summary>
-    /// <value>ウィンドウタイトル。未検出時は空文字。</value>
-    /// <remarks>表示の可否はモードと <c>OuterDecoAppearance.InfoLabelVisible</c> からコアが判定する。</remarks>
-    public string WindowTitle
+    /// <summary>操作ラベル（2 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
+    /// <value>描画時に呼び出される関数。null または空文字を返す場合は操作ラベルを描画しない。</value>
+    /// <remarks>文言はホストが与える（汎用コアは特定の操作文言を持たない）。設定時は選択矩形コントロールへ伝搬する。</remarks>
+    public Func<string?>? OperationTextProvider
     {
-        get => _marquee.Options.OuterWindowTitle;
-        set => _marquee.Options = _marquee.Options with { OuterWindowTitle = value };
+        get => _marquee.OperationTextProvider;
+        set => _marquee.OperationTextProvider = value;
+    }
+
+    /// <summary>情報ラベル（3 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
+    /// <value>描画時に呼び出される関数。null または空文字を返す場合は情報ラベルを描画しない。</value>
+    /// <remarks>文言はホストが与える（汎用コアは特定の情報文言を持たない）。設定時は選択矩形コントロールへ伝搬する。</remarks>
+    public Func<string?>? InfoTextProvider
+    {
+        get => _marquee.InfoTextProvider;
+        set => _marquee.InfoTextProvider = value;
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するデリゲートを取得または設定する。</summary>
@@ -456,10 +465,9 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         var state = FadeMaskDragRectModes.Resolve(_mode);
 
-        // モードから導出される描画状態（描画モード・全面暗転・ハンドルの表示可否）は 1 回の変更通知でまとめて適用する
+        // モードから導出される描画状態（全面暗転・ハンドルの表示可否）は 1 回の変更通知でまとめて適用する
         _marquee.Options = _marquee.Options with
         {
-            OuterRenderMode = state.RenderMode,
             OuterShowFullOverlay = state.ShowFullOverlay,
             ShowHandles = state.UsesSelection,
         };

@@ -9,7 +9,7 @@ namespace Estable.Loupe;
 /// 座標変換（<c>ICoordTransform.Inverse</c>）は呼び出し側で行い、本クラスは変換後（DIP）の座標を受け取る。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
 /// </remarks>
-internal static class LoupePositionCalculator
+public static class LoupePositionCalculator
 {
     /// <summary>サイズを提示領域の最小辺へクランプする（領域サイズが未確定の場合はクランプしない）。</summary>
     /// <param name="size">クランプするサイズ（正の値）。</param>

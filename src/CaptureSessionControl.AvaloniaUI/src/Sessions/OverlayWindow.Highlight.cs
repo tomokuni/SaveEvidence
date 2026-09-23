@@ -19,6 +19,9 @@ namespace Estable.AvaloniaUI.CaptureSession;
 /// </remarks>
 internal sealed partial class OverlayWindow
 {
+    /// <summary>検出中のウィンドウタイトル（情報ラベルの文言。未検出時は空文字）。</summary>
+    private string _windowTitle = "";
+
     /// <summary>クリック確定型のマウス移動時のハイライト更新。</summary>
     private void OnClickMoved(object? sender, PointerEventArgs e)
     {
@@ -109,7 +112,7 @@ internal sealed partial class OverlayWindow
         var detection = _detector.FindWindowUnderCursor(screenPoint);
         SelectionOverlay.LogicalHighlightRect = detection.IsDetected ? ToWindowPixel(detection.Bounds) : null;
         SelectionOverlay.HasHighlight = detection.IsDetected;
-        SelectionOverlay.WindowTitle = detection.Title ?? "";
+        _windowTitle = detection.Title ?? "";
         // サイズラベルの物理ピクセル換算は _scaling（オーバーレイの表示スケール）を維持する
         // （ScreenSelect と同一。マルチモニタでもドメイン（物理ピクセル）の往復が一致する）。
         _log.LogHighlight("WindowSelect", detection.IsDetected,

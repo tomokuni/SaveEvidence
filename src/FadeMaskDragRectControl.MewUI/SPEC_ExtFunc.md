@@ -14,7 +14,7 @@ Avalonia 版と同一の解釈になります。
 
 | 参照 | 用途 |
 | --- | --- |
-| `FadeMaskDragRectControl.Core` | 動作モード（`FadeMaskDragRectMode`）とモードから描画設定への写像 |
+| `FadeMaskDragRectControl.Core` | 動作モード（`FadeMaskDragRectMode`）と、モードから子コントロールの有効・無効（選択矩形を使うか）への写像 |
 | `MarqueeControl.MewUI` / `MarqueeControl.Core` | 選択矩形の入力と状態機械 |
 | `MarqueeControl.Core` | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル）の契約・外観・幾何・フレーム解決（名前空間 `Estable.Marquee.Decoration`。描画は `MarqueeControl` が行う） |
 | `LoupeControl.MewUI` / `LoupeControl.Core` | 拡大鏡の描画と表示位置計算 |
@@ -70,8 +70,7 @@ Avalonia 版と同一の解釈になります。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `WindowTitle` | `string` | `""` | 情報ラベル（3 行目）の文言（ウィンドウ選択時） |
-| `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない） |
+| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | ラベル文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない。文言はホストが与える） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包するドラッグ選択コントロールとルーペへ伝搬する。null は `NullLogger` へフォールバック。暗転マスクは選択のたびにログを出すため対象外） |
 
 内包コントロールへの直接アクセス（`Marquee` / `Loupe`）は internal（自身のテストのみ）。ホストは `Options` / `Mode` / 文言プロパティの公開 API を使います。
@@ -98,8 +97,8 @@ Avalonia 版と同一の解釈になります。
 | --- | --- | --- |
 | `ConfirmRequested` | `FadeMaskDragRectSelectionEventArgs` | 矩形内ダブルクリック・Enter・`RequestConfirm`（選択確定後のみ） |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel` |
-| `ZoomRequested` | `MarqueeZoomRequest` | Ctrl+ホイール（方向と発生位置） |
-| `ScrollRequested` | `MarqueeScrollRequest` | 通常ホイール（生の回転量・Shift・発生位置。スクロール先はホストが決める） |
+| `ZoomRequested` | `WheelZoomRequest` | Ctrl+ホイール（方向と発生位置） |
+| `ScrollRequested` | `WheelScrollRequest` | 通常ホイール（生の回転量・Shift・発生位置。スクロール先はホストが決める） |
 | `LoupePositionMoved` | `FadeMaskDragRectPointEventArgs` | ドラッグ選択からのルーペ中心の更新（マウス移動・ドラッグ・nudge） |
 
 座標はすべてドメイン座標です。

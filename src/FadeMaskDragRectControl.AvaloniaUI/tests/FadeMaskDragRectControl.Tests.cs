@@ -57,16 +57,15 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaTheory]
-    [InlineData(FadeMaskDragRectMode.Crop, OuterDecoRenderMode.Crop, true, true)]
-    [InlineData(FadeMaskDragRectMode.AreaSelect, OuterDecoRenderMode.AreaSelect, true, true)]
-    [InlineData(FadeMaskDragRectMode.ScreenSelect, OuterDecoRenderMode.ScreenSelect, false, false)]
-    [InlineData(FadeMaskDragRectMode.WindowSelect, OuterDecoRenderMode.WindowSelect, false, false)]
-    public void Mode_描画モードと入力の可否と全面暗転が切り替わる(
-        FadeMaskDragRectMode mode, OuterDecoRenderMode expectedRenderMode, bool expectedMarqueeInteractive, bool expectedShowFullOverlay)
+    [InlineData(FadeMaskDragRectMode.Crop, true, true)]
+    [InlineData(FadeMaskDragRectMode.AreaSelect, true, true)]
+    [InlineData(FadeMaskDragRectMode.ScreenSelect, false, false)]
+    [InlineData(FadeMaskDragRectMode.WindowSelect, false, false)]
+    public void Mode_入力の可否と全面暗転が切り替わる(
+        FadeMaskDragRectMode mode, bool expectedMarqueeInteractive, bool expectedShowFullOverlay)
     {
         var control = new FadeMaskDragRectControl { Mode = mode };
 
-        Assert.Equal(expectedRenderMode, control.Marquee.Options.OuterRenderMode);
         // 選択矩形を使わないモードでも暗転マスク（ハイライト）を描画するため、描画は止めず入力だけを止める
         Assert.Equal(expectedMarqueeInteractive, control.Marquee.IsHitTestVisible);
         Assert.True(control.Marquee.IsVisible);
@@ -679,21 +678,22 @@ public class FadeMaskDragRectControlTests
     /// <returns>設定されている座標変換ポート。</returns>
     /// <remarks>
     /// Marquee はポートをコアの状態管理クラス（セッション）が保持するため、<c>_session.State.Port</c> を辿る。<br/>
+    /// <c>State</c> と <c>Port</c> は内部契約（テストとコアのみが参照する）ため、非公開メンバーも含めて解決する。<br/>
     /// 他のコントロール（Loupe）は自前の <c>_coordinatePort</c> フィールドを保持する。
     /// </remarks>
     private static ICoordTransform GetCoordinatePort(Control control)
     {
-        var sessionField = control.GetType().GetField(
-            "_session", BindingFlags.NonPublic | BindingFlags.Instance);
+        var anyInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+        var sessionField = control.GetType().GetField("_session", anyInstance);
         if (sessionField is not null)
         {
             var session = sessionField.GetValue(control)!;
-            var state = session.GetType().GetProperty("State")!.GetValue(session)!;
-            return (ICoordTransform)state.GetType().GetProperty("Port")!.GetValue(state)!;
+            var state = session.GetType().GetProperty("State", anyInstance)!.GetValue(session)!;
+            return (ICoordTransform)state.GetType().GetProperty("Port", anyInstance)!.GetValue(state)!;
         }
 
-        var field = control.GetType().GetField(
-            "_coordinatePort", BindingFlags.NonPublic | BindingFlags.Instance);
+        var field = control.GetType().GetField("_coordinatePort", anyInstance);
         return (ICoordTransform)field!.GetValue(control)!;
     }
 
@@ -1024,21 +1024,33 @@ public class FadeMaskDragRectControlTests
         // 未設定時: 既定値
         Assert.Null(control.LogicalHighlightRect);
         Assert.False(control.HasHighlight);
-        Assert.Equal("", control.WindowTitle);
 
         // 設定時: 外側の装飾（MarqueeControl）へ反映される
         control.LogicalHighlightRect = new Rect(100, 50, 1920, 1080);
         control.HasHighlight = true;
         control.DisplayScaleScaling = 1.5;
-        control.WindowTitle = "Sample Window";
 
         Assert.Equal(new Rect(100, 50, 1920, 1080), control.LogicalHighlightRect);
         Assert.True(control.HasHighlight);
         Assert.Equal(1.5, control.DisplayScaleScaling);
-        Assert.Equal("Sample Window", control.WindowTitle);
         // コントロール経由の getter も検証する（暗転マスクへの委譲）
         Assert.Equal(1.5, control.DisplayScaleScaling);
-        Assert.Equal("Sample Window", control.WindowTitle);
+    }
+
+    [AvaloniaFact]
+    public void 文言プロバイダ_選択矩形コントロールへ委譲される()
+    {
+        var control = new FadeMaskDragRectControl();
+        Func<string?> operation = () => "確定: Enter";
+        Func<string?> info = () => "メモ帳";
+
+        control.OperationTextProvider = operation;
+        control.InfoTextProvider = info;
+
+        Assert.Same(operation, control.OperationTextProvider);
+        Assert.Same(info, control.InfoTextProvider);
+        Assert.Same(operation, control.Marquee.OperationTextProvider);
+        Assert.Same(info, control.Marquee.InfoTextProvider);
     }
 
     [AvaloniaFact]

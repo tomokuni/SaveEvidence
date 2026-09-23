@@ -13,7 +13,7 @@ namespace Estable.Marquee;
 /// - <see cref="Horizontal"/>: 中左 / 中右（左右）<br/>
 /// - <see cref="Move"/>: 矩形内（移動）
 /// </remarks>
-internal enum MarqueeCursorKind
+public enum MarqueeCursorKind
 {
     /// <summary>ハンドル外（既定の矢印）。</summary>
     Default,

@@ -274,7 +274,9 @@ public sealed class CropOverlay
                 ? OuterDecoLabels.FormatSizeLabel(_selector.SelectionRect, scaling: 1.0)
                 : null;
 
-        // 情報ラベルは切り出しでは表示しない（切り出しはウィンドウ選択ではないため）
-        _selector.WindowTitle = "";
+        // 操作ラベル・情報ラベルの文言はキャプチャコア（CaptureLabelTexts）が単一所有する。
+        // 情報ラベルは切り出しでは表示しない（GetInfoText が切り出しモードで null を返す）。
+        _selector.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(_selector.Mode);
+        _selector.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(_selector.Mode, null);
     }
 }

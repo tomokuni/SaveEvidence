@@ -45,17 +45,9 @@ public sealed record MarqueeOptions
     /// 穴あけ枠は選択矩形の内側に同じ矩形で描かれるため、<b>枠線の色と太さは本値が単一所有する</b>（選択枠線と暗転マスクの枠を別々に持つと重なりの見た目が崩れる）。<br/>
     /// アルファが 0 の枠線色を指定した場合は枠線を描かない（描画の要否は暗転マスクコアのフレーム解決が判断する）。<br/>
     /// <b>既定で暗転しない</b>のは、本コントロールが汎用の選択矩形コントロールだからである（暗転・ラベルは用途依存のため、<br/>
-    /// 領域選択・切出しのホストが設定値から明示的に与える）。
+    /// 用途に応じてホストが設定値から明示的に与える）。
     /// </remarks>
     public OuterDecoAppearance OuterAppearance { get; init; } = CreateDefaultOuterAppearance();
-
-    /// <summary>外側の装飾の描画モード。</summary>
-    /// <value>モード（操作ラベルの文言選定に使用する）。既定は <see cref="OuterDecoRenderMode.AreaSelect"/>。</value>
-    public OuterDecoRenderMode OuterRenderMode { get; init; } = OuterDecoRenderMode.AreaSelect;
-
-    /// <summary>外側の装飾の操作ラベルに表示するウィンドウタイトル。</summary>
-    /// <value>タイトル（空文字（既定）の場合は操作ラベルへタイトル行を出さない）。</value>
-    public string OuterWindowTitle { get; init; } = "";
 
     /// <summary>外側の装飾で画面全体を暗転するかどうか。</summary>
     /// <value>true の場合は穴あけを行わず画面全体を暗転色で塗る。既定は false。</value>
@@ -147,7 +139,7 @@ public sealed record MarqueeOptions
     /// <returns>暗転とラベルを行わず、枠線だけを描く外観。</returns>
     /// <remarks>
     /// 枠線の色は本コントロールの従来の既定（DarkGray・太さ 2.0）を保つ（選択矩形の可視性に必要な最小の外観）。<br/>
-    /// 暗転・サイズラベル・サブライン・情報ラベルはモードやホストの用途に依存するため、既定では描かない。
+    /// 暗転・サイズラベル・サブライン・情報ラベルは用途に依存するため、既定では描かない。
     /// </remarks>
     private static OuterDecoAppearance CreateDefaultOuterAppearance() => new()
     {

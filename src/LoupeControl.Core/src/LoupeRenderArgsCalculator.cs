@@ -9,7 +9,7 @@ namespace Estable.Loupe;
 /// UI 非依存の純粋関数として提供する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class LoupeRenderArgsCalculator
+public static class LoupeRenderArgsCalculator
 {
     /// <summary>ルーペの表示情報（描画完了イベント引数用）を計算する。</summary>
     /// <param name="request">描画入力（実際に描画した値を持つ。本メソッドが DIP から再換算しないための契約）。</param>

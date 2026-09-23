@@ -166,14 +166,13 @@ control.ResetSelection();           // 状態と nudge の初期化
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 外観・対話パラメータをまとめた設定。変更すると再描画され、対話パラメータはセッションへ伝搬する |
+| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）・操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない）。null または空文字を返す行は描かない |
 
 `MarqueeOptions` の項目（既定値は本型が単一所有する。すべて `init` のみで不変）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `OuterAppearance` | `OuterDecoAppearance` | 枠線のみ（暗転・ラベルなし） | 選択矩形の外側に描く装飾の外観（暗転色・穴あけ枠の色と太さ・ラベルの体裁）。**枠線の色・太さは本値が単一所有する**（選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なるため、2 つの値に分けると見た目が崩れる） |
-| `OuterRenderMode` | `OuterDecoRenderMode` | `AreaSelect` | 外側の装飾の描画モード（操作ラベルの文言選定に使用） |
-| `OuterWindowTitle` | `string` | `""` | 操作ラベル（情報ラベル）に表示するウィンドウタイトル |
 | `OuterShowFullOverlay` | `bool` | `false` | 穴あけを行わず全面を暗転するかどうか（ハイライトのみを表示するモードで使用） |
 | `OuterHighlightRect` | `EsRect?` | `null` | ハイライトする矩形（ドメイン座標。ホストが与える実行時状態） |
 | `OuterHasHighlight` | `bool` | `false` | ハイライトを描くかどうか |
@@ -236,8 +235,8 @@ control.ResetSelection();           // 状態と nudge の初期化
 | `MouseDoubleClicked` | `MarqueePointEventArgs` | ダブルクリック検出（ドメイン座標） |
 | `MouseMoved` | `MarqueePointEventArgs` | マウス移動ごとのポインタ位置（ドメイン座標） |
 | `LoupePositionMoved` | `MarqueePointEventArgs` | ドラッグ・nudge 中のルーペ中心位置（ドメイン座標。リサイズ: アクティブハンドル点 / 移動: 掴んだマウス位置 / 新規選択・nudge: 終点） |
-| `ZoomRequested` | `EventHandler<MarqueeZoomRequest>` | Ctrl+ホイールによるズーム要求（方向と発生位置。ズームの実処理は上位 AP） |
-| `ScrollRequested` | `EventHandler<MarqueeScrollRequest>` | 通常ホイールによるスクロール要求（生の回転量・Shift・発生位置。連携 ScrollViewer がある場合は発火せず本コントロールがスクロールする） |
+| `ZoomRequested` | `EventHandler<WheelZoomRequest>` | Ctrl+ホイールによるズーム要求（方向と発生位置。ズームの実処理は上位 AP） |
+| `ScrollRequested` | `EventHandler<WheelScrollRequest>` | 通常ホイールによるスクロール要求（生の回転量・Shift・発生位置。連携 ScrollViewer がある場合は発火せず本コントロールがスクロールする） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | Enter キーによる確定要求 |
 | `CancelRequested` | `EventArgs` | Escape キーによるキャンセル要求 |
 
@@ -247,7 +246,12 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 公開型は `MarqueeControl` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` とイベント引数（`SelectionRectEventArgs` / `MarqueePointEventArgs`）です。
 `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`MarqueeControl.Core`、名前空間 `Estable.Marquee`）が単一所有し、各 UI 実装で共有します。
-内部実装（状態・入力の解釈（状態管理クラス）・純粋計算・描画）はすべて internal（非公開）です。
+コア（`MarqueeControl.Core`）の公開型は 2 層です（内部契約（状態機械・描画入力の組み立て・幾何）は internal）。
+
+- **ホスト設定**: `MarqueeOptions` / `OuterDecoAppearance` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest`
+- **UI アダプタ契約**: `MarqueeSession` / `MarqueeFeedback` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeFrame` / `OuterDecoFrame` / `OuterDecoLabelStyle` / `OuterDecoSubLine` / `OuterDecoLabels` / `OuterDecoLabelLayout` / `MarqueeAppearance` / `SelectionGeometry` / `MarqueeLogMessage`
+
+本プロジェクトの内部実装（描画等）も internal です。詳細はコアの `README.md` の「公開面の階層」を参照してください。
 
 #### 5.4.1 MarqueeControl（`MarqueeControl.cs`）
 

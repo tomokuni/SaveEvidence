@@ -7,6 +7,7 @@
 | 型 | 種別 | 役割 |
 | --- | --- | --- |
 | `CropBoundsMath` | 静的クラス | 切り出し矩形の計算（純粋関数） |
+| `CaptureLabelTexts` | 静的クラス | キャプチャ種別→動作モードの写像と、ラベル文言（操作ラベル・情報ラベル）の単一所有 |
 | `CaptureSettings` | record | 外観・動作設定（全メンバー nullable） |
 | `CaptureResult` | record | キャプチャ結果（画像と領域） |
 | `ICaptureTarget` | インターフェイス | 切り出し結果の適用先（アプリ側が実装するポート） |
@@ -14,7 +15,25 @@
 
 名前空間は `Estable.CaptureSession` です。
 
-## 2. CropBoundsMath
+## 2. CaptureLabelTexts
+
+キャプチャ固有のラベル文言とモード写像を単一所有します。選択矩形の複合コントロールは汎用化により固有の文言を持たないため、ホスト（両 UI のセッション）が本クラスの値をプロバイダで与えます。
+
+| メソッド | シグネチャ | 内容 |
+| --- | --- | --- |
+| `ToSelectionMode` | `FadeMaskDragRectMode ToSelectionMode(CaptureType captureType)` | キャプチャ種別（全画面 / ウィンドウ / 範囲）→ 動作モード。未定義の種別は範囲選択として扱う（切出しは対象外） |
+| `GetOperationText` | `string GetOperationText(FadeMaskDragRectMode mode)` | 操作ラベル（確定・キャンセル方法）。スクリーン選択・ウィンドウ選択は Enter 系、範囲選択・切出しはダブルクリック系（常に非空） |
+| `GetInfoText` | `string? GetInfoText(FadeMaskDragRectMode mode, string? windowTitle)` | 情報ラベルの文言。ウィンドウ選択のみウィンドウタイトルを返し、他モードは null（描画しない） |
+
+### 2.1 規則
+
+| # | 規則 |
+| --- | --- |
+| 1 | モード写像は `CaptureType` の 3 種別を全て扱い、未定義値は範囲選択へフォールバックする |
+| 2 | 操作ラベルの文言は 2 系統（Enter 系 / ダブルクリック系）に集約する |
+| 3 | 情報ラベルはウィンドウ選択でのみ意味を持つため、他モードでは null を返す（表示可否の最終判定（設定）は描画側） |
+
+## 3. CropBoundsMath
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
@@ -22,7 +41,7 @@
 | `ToPixelRect` | `EsPixelRect ToPixelRect(EsRect selection, EsSize imageSize)` | 半開区間のまま画像内の整数矩形へ変換（クランプ・四捨五入） |
 | `ToClosedInterval` | `EsPixelRect ToClosedInterval(EsPixelRect rect, EsSize imageSize)` | 終点の 1 ピクセルを加える（画像の端でクランプ） |
 
-### 2.1 規則
+### 3.1 規則
 
 | # | 規則 |
 | --- | --- |
@@ -32,14 +51,14 @@
 | 4 | 幅・高さが 1 ピクセル未満の場合は空を返す |
 | 5 | `closedInterval` が true の場合は終点の 1 ピクセルを加える（画像の右端・下端でクランプ） |
 
-### 2.2 使い分け
+### 3.2 使い分け
 
 | 用途 | `closedInterval` |
 | --- | --- |
 | 範囲選択（ドラッグ）の切り出し | `true`（始点・終点のピクセルを含む） |
 | スクリーン選択・ウィンドウ選択の切り出し | `false`（検出結果が全ピクセルを含むため加算しない） |
 
-## 3. CaptureSettings
+## 4. CaptureSettings
 
 外観・動作設定を保持します。**全メンバーが nullable** で、用途により null の意味が異なります。
 
@@ -71,7 +90,7 @@
 
 **色は `System.Drawing.Color`** です（UI 非依存のため）。`Validate` が検証する範囲は `MinSelectionSize` / `HandleSize` / `HandleHitRadius` / `MarkerLength` / `LoupeSize` / `LoupeZoomLevel` / `LoupeFrameThickness` / `LoupeCheckerSize`（1 以上）、`BorderThickness` / `LoupeOffset`（0 以上）、`LoupeRenderScaling`（0.1〜8.0）、`HideBeforeCaptureDelay`（負の値不可）です。
 
-## 4. CaptureResult
+## 5. CaptureResult
 
 | メンバー | 型 | 内容 |
 | --- | --- | --- |

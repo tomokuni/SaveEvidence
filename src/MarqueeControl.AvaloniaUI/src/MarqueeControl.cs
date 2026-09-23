@@ -310,6 +310,38 @@ public sealed partial class MarqueeControl : Control
         }
     }
 
+    /// <summary>操作ラベル（2 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
+    /// <value>描画のたびに呼び出される関数。null または空文字を返す場合は操作ラベルを描かない。</value>
+    /// <remarks>
+    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
+    /// 文言はホストが与える（汎用コアは特定の操作文言を持たない）。設定（変更）時は再描画を要求する。
+    /// </remarks>
+    public Func<string?>? OperationTextProvider
+    {
+        get => field;
+        set
+        {
+            field = value;
+            InvalidateVisual();
+        }
+    }
+
+    /// <summary>情報ラベル（3 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
+    /// <value>描画のたびに呼び出される関数。null または空文字を返す場合は情報ラベルを描かない。</value>
+    /// <remarks>
+    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
+    /// 文言はホストが与える（汎用コアは特定の情報文言を持たない）。設定（変更）時は再描画を要求する。
+    /// </remarks>
+    public Func<string?>? InfoTextProvider
+    {
+        get => field;
+        set
+        {
+            field = value;
+            InvalidateVisual();
+        }
+    }
+
     // ====================================================================
     // 公開操作 API
     // ====================================================================

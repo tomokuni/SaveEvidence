@@ -7,7 +7,7 @@ namespace Estable.Marquee;
 /// UI 層は本種別を自 UI の公開イベントへ転送するだけである（判断はコアが済ませている）。<br/>
 /// 種別と公開イベントの対応は各 UI 実装の転送処理が持つ。<br/>
 /// </remarks>
-internal enum MarqueeNoticeKind
+public enum MarqueeNoticeKind
 {
     /// <summary>新規選択のドラッグ開始（始点の決定）。</summary>
     SelectionStarted,
@@ -58,4 +58,4 @@ internal enum MarqueeNoticeKind
 /// <param name="Kind">通知の種別。</param>
 /// <param name="Position">通知時点の座標（ドメイン座標）。点座標を持たない通知では既定値。</param>
 /// <param name="Snapshot">通知時点の状態スナップショット。</param>
-internal sealed record MarqueeNotice(MarqueeNoticeKind Kind, EsPoint Position, MarqueeSnapshot Snapshot);
+public sealed record MarqueeNotice(MarqueeNoticeKind Kind, EsPoint Position, MarqueeSnapshot Snapshot);

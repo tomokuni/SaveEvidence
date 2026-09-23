@@ -8,14 +8,13 @@ namespace Estable.Loupe;
 /// <remarks>
 /// 設定値の変更・描画の例外・再描画の進行は、<b>両 UI で同一のレベル・書式にする必要がある</b>ため<br/>
 /// コアが単一所有する（UI 実装ごとに持つと書式がずれ、片方だけ修正される）。<br/>
-/// 値の文字列化（<c>(X, Y)</c> / <c>Width×Height</c>）も <see cref="LoupeLogFormat"/> が行い、UI 側に整形処理を置かない。<br/>
+/// 値の文字列化（<c>(X, Y)</c> / <c>WidthxHeight</c>）も <see cref="LoupeLogFormat"/> が行い、UI 側に整形処理を置かない。<br/>
 /// 「変化したときだけ出力する」判断（同値の再設定・同一画像の再設定）も本クラスが単一所有する（UI 層に同値判定を置かない）。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、呼び出し側では logger 引数を省略する。<br/>
-/// <see cref="LogRenderCore"/> と <see cref="LogGenerateAsyncDone"/> は中間ビットマップを生成する描画パイプライン<br/>
-/// （Avalonia 版）専用であり、画面へ直接描画する MewUI 版は呼び出さない（定義はログの一貫性のため共通に置く）。
+/// <b>UI 固有のログは各 UI プロジェクトが所有する</b>（中間ビットマップを生成する描画パイプライン固有のログ等）。
 /// </remarks>
-internal static partial class LoupeLogMessage
+public static partial class LoupeLogMessage
 {
     /// <summary>設定値変更のログ（変更前後）。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
@@ -105,7 +104,7 @@ internal static partial class LoupeLogMessage
     /// <summary>拡大元画像の変更ログ（画像の寸法は各 UI が整形して渡す）。</summary>
     /// <remarks>
     /// LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: Source {OldValue} → {NewValue}</c><br/>
-    /// 画像の型は UI ごとに異なる（Avalonia は <c>IImage</c>、MewUI は <see cref="EsUtil.Platform.Core.Imaging.EsBitmap"/>）ため、<br/>
+    /// 画像の型は UI ごとに異なるため、<br/>
     /// 寸法の取り出しは各 UI が担い、書式（<see cref="LoupeLogFormat.DescribeImage"/>）と設定名はコアが単一所有する。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
@@ -161,25 +160,4 @@ internal static partial class LoupeLogMessage
     /// <param name="exception">発生した例外。</param>
     [LoggerMessage(LogLevel.Error, "[LoupeCtrl] Update exception")]
     public static partial void LogUpdateError(this ILogger logger, Exception exception);
-
-    /// <summary>再描画コアの実行ログ。</summary>
-    /// <remarks>LogLevel: Trace<br/>出力書式: <c>[LoupeCtrl] RenderCore: generation={Generation}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    /// <param name="generation">描画世代番号。</param>
-    [LoggerMessage(LogLevel.Trace, "[LoupeCtrl] RenderCore: generation={Generation}")]
-    public static partial void LogRenderCore(this ILogger logger, long generation);
-
-    /// <summary>非同期描画の完了・破棄ログ。</summary>
-    /// <remarks>
-    /// LogLevel: Trace<br/>
-    /// 出力書式: <c>[LoupeCtrl] GenerateAsync done: set={Set} disposed={Disposed} visible={Visible} gen={Generation} current={Current}</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    /// <param name="set">生成したビットマップを表示へ反映したかどうか。</param>
-    /// <param name="disposed">古い世代のビットマップとして破棄したかどうか。</param>
-    /// <param name="visible">表示状態。</param>
-    /// <param name="generation">生成したビットマップの世代番号。</param>
-    /// <param name="current">判定時点の最新世代番号。</param>
-    [LoggerMessage(LogLevel.Trace, "[LoupeCtrl] GenerateAsync done: set={Set} disposed={Disposed} visible={Visible} gen={Generation} current={Current}")]
-    public static partial void LogGenerateAsyncDone(this ILogger logger, bool set, bool disposed, bool visible, long generation, long current);
 }

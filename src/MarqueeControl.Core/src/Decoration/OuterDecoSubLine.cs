@@ -9,9 +9,9 @@ namespace Estable.Marquee.Decoration;
 /// 2 行目以降（操作ラベル・情報ラベル）を行単位で指定するための不変データ。<br/>
 /// 文言の選定（操作ラベル・情報ラベルの表示判定）は <see cref="OuterDecoLabels"/> が単一所有し、<br/>
 /// 行の一覧の組み立ては <see cref="OuterDecoLabels.BuildSubLines"/> が担う（両 UI で同一の結果になる）。<br/>
-/// <b>可視性</b>: 本値は <see cref="OuterDecoAppearance.BuildSubLines"/> の戻り値として UI の描画層だけが読むため、本値を公開しない。
+/// <b>用途</b>: 本値は <see cref="OuterDecoAppearance.BuildSubLines"/> の戻り値として描画層が読む（保持・加工はしない）。
 /// </remarks>
-internal sealed record OuterDecoSubLine(
+public sealed record OuterDecoSubLine(
     string Text,
     double FontSize,
     System.Drawing.Color Color,

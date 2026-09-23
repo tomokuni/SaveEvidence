@@ -11,7 +11,7 @@ namespace Estable.Marquee;
 /// <see cref="MarqueeInteractionState.Dragging"/> / <see cref="MarqueeInteractionState.DraggingNudging"/> の場合に true（明示的に保持し、導出を不要にする）。<br/>
 /// <see cref="NudgeActive"/> は nudge（矢印キー微調整）中かどうか。ホストが nudge 中の表示切替等に使用できる。<br/>
 /// コア型（<see cref="EsRect"/> / <see cref="EsPoint"/>）のみに依存し、UI フレームワークへ依存しない（各 UI 実装の境界で変換する）。<br/>
-/// 値セマンティクスで比較できる record として定義する（生成は <see cref="Selection.MarqueeState.CreateSnapshot"/>）。<br/>
+/// 値セマンティクスで比較できる record として定義する（生成は <see cref="MarqueeState.CreateSnapshot"/>）。<br/>
 /// 項目の並びは「要約 → 主要データ → 位置 → 操作フラグ」の順（可読性のため）。
 /// </remarks>
 /// <param name="State">対話状態（State パターン）。</param>

@@ -9,7 +9,7 @@ namespace Estable.Marquee.Decoration;
 /// 余白・背景矩形・次の行の位置は本クラスが単一所有する（両 UI の見た目を一致させる）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class OuterDecoLabelLayout
+public static class OuterDecoLabelLayout
 {
     /// <summary>ラベルの内側余白（DIP）。</summary>
     public const double Padding = 4.0;
@@ -25,7 +25,7 @@ internal static class OuterDecoLabelLayout
     /// <summary>ラベル文字の描画原点を計算する。</summary>
     /// <param name="origin">ラベル行の原点（背景の左上）。</param>
     /// <returns>文字の描画原点（左へ内側余白 × 2、上へ内側余白）。</returns>
-    /// <remarks>横方向の余白を 2 倍にするのは Avalonia 版の描画と同一の見た目にするため。</remarks>
+    /// <remarks>横方向の余白を 2 倍にするのは、各 UI 実装で同一の見た目にするため。</remarks>
     public static EsPoint ComputeTextOrigin(EsPoint origin)
         => new(origin.X + Padding * 2, origin.Y + Padding);
 

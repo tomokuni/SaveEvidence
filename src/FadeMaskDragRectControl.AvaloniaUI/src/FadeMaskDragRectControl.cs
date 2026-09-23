@@ -125,11 +125,12 @@ public sealed class FadeMaskDragRectControl : Panel
         }
     }
 
-    /// <summary>動作モードを取得または設定する（内包コントロールの有効・無効と描画モードを自動切替）。</summary>
+    /// <summary>動作モードを取得または設定する（内包コントロールの有効・無効と全面暗転を自動切替）。</summary>
     /// <value><see cref="FadeMaskDragRectMode"/>（Crop / AreaSelect / ScreenSelect / WindowSelect）。既定値は AreaSelect。</value>
     /// <remarks>
-    /// 設定時は描画モード（<c>OuterDecoRenderMode</c>）・<see cref="MarqueeControl"/> の可視性・<br/>
-    /// 全面暗転・ルーペの表示可否を一括で適用する（判断はコアの <c>FadeMaskDragRectModes</c> が単一所有する）。<br/>
+    /// 設定時は <see cref="MarqueeControl"/> の可視性・全面暗転・ルーペの表示可否を一括で適用する<br/>
+    /// （判断はコアの <c>FadeMaskDragRectModes</c> が単一所有する）。ラベル文言はモードに依存しない<br/>
+    /// （ホストがプロバイダで与える）。<br/>
     /// - Crop / AreaSelect: 選択矩形とルーペを表示し、全面暗転を有効化する。<br/>
     /// - ScreenSelect / WindowSelect: 選択矩形 / ルーペを非表示にし、全面暗転を無効化する（ハイライトのみ）。
     /// </remarks>
@@ -408,11 +409,22 @@ public sealed class FadeMaskDragRectControl : Panel
         set => _marquee.Options = _marquee.Options with { OuterHasHighlight = value };
     }
 
-    /// <summary>ハイライト対象のウィンドウタイトル（未検出時は空文字）。</summary>
-    public string WindowTitle
+    /// <summary>操作ラベル（2 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
+    /// <value>描画時に呼び出される関数。null または空文字を返す場合は操作ラベルを描画しない。</value>
+    /// <remarks>文言はホストが与える（汎用コアは特定の操作文言を持たない）。設定時は選択矩形コントロールへ伝搬する。</remarks>
+    public Func<string?>? OperationTextProvider
     {
-        get => _marquee.Options.OuterWindowTitle;
-        set => _marquee.Options = _marquee.Options with { OuterWindowTitle = value };
+        get => _marquee.OperationTextProvider;
+        set => _marquee.OperationTextProvider = value;
+    }
+
+    /// <summary>情報ラベル（3 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
+    /// <value>描画時に呼び出される関数。null または空文字を返す場合は情報ラベルを描画しない。</value>
+    /// <remarks>文言はホストが与える（汎用コアは特定の情報文言を持たない）。設定時は選択矩形コントロールへ伝搬する。</remarks>
+    public Func<string?>? InfoTextProvider
+    {
+        get => _marquee.InfoTextProvider;
+        set => _marquee.InfoTextProvider = value;
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
@@ -462,10 +474,9 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         var state = FadeMaskDragRectModes.Resolve(_mode);
 
-        // モードから導出される描画状態（描画モード・全面暗転・ハンドルの表示可否）は 1 回の変更通知でまとめて適用する
+        // モードから導出される描画状態（全面暗転・ハンドルの表示可否）は 1 回の変更通知でまとめて適用する
         _marquee.Options = _marquee.Options with
         {
-            OuterRenderMode = state.RenderMode,
             OuterShowFullOverlay = state.ShowFullOverlay,
             ShowHandles = state.UsesSelection,
         };
