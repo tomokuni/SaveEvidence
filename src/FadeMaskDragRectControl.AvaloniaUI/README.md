@@ -23,17 +23,17 @@
 
 ## 1. 概要
 
-Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ選択（`DragRectControl`。暗転マスクはその**外側の装飾**として描画される）・拡大鏡（`LoupeControl`）の**組み立て・配線・状態同期を 1 箇所に集約**し、ホスト（上位 AP）へ統一インターフェースを提供します。ホストはライフサイクルとモード固有処理に専念できます。
+Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ選択（`MarqueeControl`。暗転マスクはその**外側の装飾**として描画される）・拡大鏡（`LoupeControl`）の**組み立て・配線・状態同期を 1 箇所に集約**し、ホスト（上位 AP）へ統一インターフェースを提供します。ホストはライフサイクルとモード固有処理に専念できます。
 
 ## 2. 機能一覧
 
-- **複合構造（Facade / Composite）**: DragRect（外側の装飾を含む）+ Loupe の生成・配置・配線を 1 コントロールに集約
+- **複合構造（Facade / Composite）**: Marquee（外側の装飾を含む）+ Loupe の生成・配置・配線を 1 コントロールに集約
 - **配線の内包**: `SelectionChanged` → 暗転マスク同期、`LoupePositionMoved` → ルーペ中心更新、確定・キャンセル・ズーム要求のホスト通知を内部で完結
-- **モード切替**: `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` で描画モード・DragRect / Loupe の有効・無効・全面暗転を一括切替
+- **モード切替**: `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` で描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替
 - **設定の一括適用**: `Options` プロパティ（1 つの設定値）で選択矩形 / 暗転マスク / ルーペ / 選択矩形破線を 1 回で適用（既定値・項目の対応・枠線の共用規則はコアが単一所有）
 - **座標変換ポートの一括分配**: `SetCoordinateTransform(ICoordTransform?)` で 2 コントロールへ同一ポートを分配
-- **ビューポート変化の追従**: `NotifyViewportChanged()` でパン・ズーム等のビューポート変化を通知（DragRect の再描画 + ルーペ位置再計算。ScrollViewer 連携のスクロールも同じ経路で処理）
-- **選択状態の外部設定**: `SetSelection` / `ClearSelection` で選択矩形を設定（選択状態の単一のソースは `DragRectControl` のセッションであり、本コントロールはその読み取りと委譲のみを行う。ルーペの選択矩形破線は `LoupeRendered` イベント経由で描画）
+- **ビューポート変化の追従**: `NotifyViewportChanged()` でパン・ズーム等のビューポート変化を通知（Marquee の再描画 + ルーペ位置再計算。ScrollViewer 連携のスクロールも同じ経路で処理）
+- **選択状態の外部設定**: `SetSelection` / `ClearSelection` で選択矩形を設定（選択状態の単一のソースは `MarqueeControl` のセッションであり、本コントロールはその読み取りと委譲のみを行う。ルーペの選択矩形破線は `LoupeRendered` イベント経由で描画）
 - **ルーペ描画完了の通知**: `LoupeRendered` イベントで描画済み Bitmap と切り出し左上・スケールを通知（ホストが外部提供矩形を Bitmap へ直接描画できる）
 - **ログの伝搬**: `Log` プロパティ（`ILogger`）で内包するドラッグ選択コントロールとルーペの操作ログをホストのログ基盤へ転送
 - **ルーペ制御**: `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `LoupeCenterPoint` で中心・ソース・後片付けを制御
@@ -80,7 +80,7 @@ using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コ
 ### Code-behind（モード・設定・座標ポート設定）
 
 ```csharp
-// モード（描画モード・DragRect / Loupe の有効・無効・全面暗転を一括切替）
+// モード（描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替）
 SelectionOverlay.Mode = FadeMaskDragRectMode.AreaSelect;
 
 // 設定（ホストの設定型からコアの設定値へ変換して 1 回で適用する。変換はコアのマッパーが単一所有）
@@ -97,7 +97,7 @@ SelectionOverlay.Options = FadeMaskDragRectOptions.Default with
 SelectionOverlay.Scaling = 1.0;
 SelectionOverlay.LoupeRenderScaling = 1.0;
 
-// 座標変換ポート（ドメイン = 仮想スクリーンピクセル。DragRect / Loupe へ一括分配）
+// 座標変換ポート（ドメイン = 仮想スクリーンピクセル。Marquee / Loupe へ一括分配）
 SelectionOverlay.SetCoordinateTransform(CoordTransform.DomainScale(() => scaling));
 
 // イベント（配線は内部で完結。確定・キャンセル・ズーム要求のみ購読）
@@ -119,7 +119,7 @@ SelectionOverlay.Loupe.Source = bitmap;
 ## 7. サンプル
 
 - 統合サンプル: `CaptureSessionControl.AvaloniaUI/sample/`（画面キャプチャ・切出しの全体フロー）
-- 個別サンプル: `DragRectControl.AvaloniaUI/sample/` / `LoupeControl.AvaloniaUI/sample/`
+- 個別サンプル: `MarqueeControl.AvaloniaUI/sample/` / `LoupeControl.AvaloniaUI/sample/`
 
 ## 8. ドキュメント
 

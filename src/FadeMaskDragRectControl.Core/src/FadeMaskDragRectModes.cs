@@ -1,4 +1,4 @@
-using Estable.DragRect.Decoration;
+using Estable.Marquee.Decoration;
 
 namespace Estable.FadeMaskDragRect;
 

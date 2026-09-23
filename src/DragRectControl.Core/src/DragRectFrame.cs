@@ -19,7 +19,7 @@ namespace Estable.DragRect;
 /// <see cref="OuterDecoFrame.Resolve(in OuterDecoRequest)"/> が判断する（本クラスは判断を持たない）。<br/>
 /// UI 実装は本メソッドが返すフレームを自 UI の描画 API へ写すだけでよい。
 /// </remarks>
-internal static class DragRectFrame
+internal static class MarqueeFrame
 {
     /// <summary>選択矩形の 1 フレーム分の描画内容（外側の装飾）を解決する。</summary>
     /// <param name="session">選択の状態を単一所有するセッション（選択矩形・選択の有無・設定を参照する）。</param>
@@ -37,7 +37,7 @@ internal static class DragRectFrame
     /// 本メソッドは引数を検証しない（<paramref name="client"/> の寸法が 0 の場合は空のフレームが返る）。
     /// </remarks>
     public static OuterDecoFrame Resolve(
-        DragRectSession session,
+        MarqueeSession session,
         EsRect client,
         ICoordTransform? port,
         double scaling,

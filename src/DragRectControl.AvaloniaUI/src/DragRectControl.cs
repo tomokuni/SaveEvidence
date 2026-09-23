@@ -1,5 +1,5 @@
-using Estable.DragRect;
-using Estable.DragRect.Decoration;
+using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -11,12 +11,12 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Estable.AvaloniaUI.DragRect;
+namespace Estable.AvaloniaUI.Marquee;
 
 /// <summary>リサイズ可能なドラッグ矩形の UI コントロール（Avalonia 版）。</summary>
 /// <remarks>
 /// <b>層の構成</b>: 選択・ドラッグ・nudge の判断は UI 非依存の状態管理クラス（<c>DragRectControl.Core</c> の
-/// <see cref="DragRectSession"/>）が担い、本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
+/// <see cref="MarqueeSession"/>）が担い、本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
 /// <br/>
 /// 本クラスの責務:<br/>
 /// 1. ポインター / キー / ホイール入力をコア型（<see cref="EsPoint"/> / <see cref="EsKey"/>）へ変換してセッションへ通知する。<br/>
@@ -30,20 +30,20 @@ namespace Estable.AvaloniaUI.DragRect;
 /// <see cref="ConfirmRequested"/> / <see cref="CancelRequested"/> イベントを購読して利用する。<br/>
 /// <br/>
 /// 外観・対話パラメータの設定は 1 つの依存関係プロパティ（<see cref="Options"/>）で公開し、外部バインディングで制御できる<br/>
-/// （色の不透明度は色のアルファに統合。設定値の既定値と範囲補正はコアの <see cref="DragRectOptions"/> が単一所有する）。<br/>
+/// （色の不透明度は色のアルファに統合。設定値の既定値と範囲補正はコアの <see cref="MarqueeOptions"/> が単一所有する）。<br/>
 /// 対話パラメータ（最小選択サイズ・境界外選択の禁止・ハンドルのヒットテスト半径）はセッションへ伝搬し、判断はセッションが行う。<br/>
 /// ログは <see cref="Log"/> プロパティで注入する（デフォルトは <see cref="NullLogger"/>）。<br/>
 /// <br/>
 /// 選択矩形の変更は <see cref="SelectionChanged"/> イベントで外部（上位 Mediator）に通知する。
 /// </remarks>
-public sealed partial class DragRectControl : Control
+public sealed partial class MarqueeControl : Control
 {
     // ====================================================================
     // 内部状態（コンポジション）
     // ====================================================================
 
     /// <summary>選択・ドラッグ・nudge の状態を管理するセッション（入力の解釈と状態遷移の判断を担う）。</summary>
-    private readonly DragRectSession _session;
+    private readonly MarqueeSession _session;
 
     /// <summary>外部から与えられた座標変換ポート（外側の装飾の描画に使用する。null はコアが <see cref="Scaling"/> から解決する）。</summary>
     /// <remarks>
@@ -88,13 +88,13 @@ public sealed partial class DragRectControl : Control
     // コンストラクタ
     // ====================================================================
 
-    /// <summary><see cref="DragRectControl"/> の新しいインスタンスを初期化します（AXAML および既定構成向け）。</summary>
+    /// <summary><see cref="MarqueeControl"/> の新しいインスタンスを初期化します（AXAML および既定構成向け）。</summary>
     /// <remarks>
     /// カーソル操作はデフォルトの Win32 実装（<c>WinCursorService</c>。生成は <see cref="PlatformFactory.CreateCursorService"/>）で動作する。<br/>
     /// nudge 後の再描画要求は本コントロール自身の <see cref="Control.InvalidateVisual"/> に配線し、<br/>
     /// 矢印キーを受け取れるようフォーカス可能にする（自己完結・ホスト依存なし）。<br/>
     /// </remarks>
-    public DragRectControl()
+    public MarqueeControl()
         : this(null)
     {
     }
@@ -105,11 +105,11 @@ public sealed partial class DragRectControl : Control
     /// カーソルサービスの既定実装（Win32）の解決は UI 側で行い、コア（状態管理クラス）は抽象のみに依存する。<br/>
     /// コアからの通知は公開イベントへ転送し、設定（<see cref="Options"/>）をセッションへ伝搬する。
     /// </remarks>
-    public DragRectControl(ICursorService? cursorService)
+    public MarqueeControl(ICursorService? cursorService)
     {
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
-        _session = new DragRectSession(_cursor, Options);
+        _session = new MarqueeSession(_cursor, Options);
         _session.Notified += OnSessionNotified;
     }
 
@@ -118,14 +118,14 @@ public sealed partial class DragRectControl : Control
     /// 外観の変更は <see cref="Visual.AffectsRender{T}"/> により再描画を要求する。<br/>
     /// 対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬し、判断はセッションが行う。
     /// </remarks>
-    static DragRectControl()
+    static MarqueeControl()
     {
         // 設定（外観を含む）の変更は再描画を要求する
-        AffectsRender<DragRectControl>(OptionsProperty, ScalingProperty, DisplayScaleScalingProperty);
+        AffectsRender<MarqueeControl>(OptionsProperty, ScalingProperty, DisplayScaleScalingProperty);
 
         // 対話パラメータをセッションへ伝搬する（変更の影響判断・ログはコアが単一所有する）
-        OptionsProperty.Changed.AddClassHandler<DragRectControl>(
-            static (c, e) => c.ApplyFeedback(c._session.ApplyOptions(e.GetNewValue<DragRectOptions>())));
+        OptionsProperty.Changed.AddClassHandler<MarqueeControl>(
+            static (c, e) => c.ApplyFeedback(c._session.ApplyOptions(e.GetNewValue<MarqueeOptions>())));
     }
 
     // ====================================================================
@@ -135,7 +135,7 @@ public sealed partial class DragRectControl : Control
     /// <summary>内部ロガー（null の場合は出力なし）。</summary>
     /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</value>
     /// <remarks>
-    /// 保持とフォールバック、セッションへの伝搬はコア（<see cref="DragRectSession.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
+    /// 保持とフォールバック、セッションへの伝搬はコア（<see cref="MarqueeSession.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
     /// 入力の判断に伴うログはセッションが同じロガーで出力する。
     /// </remarks>
     public ILogger Log
@@ -149,7 +149,7 @@ public sealed partial class DragRectControl : Control
     // ====================================================================
 
     /// <summary>ドラッグの始点が決定されたときに発生するイベント（新規選択のドラッグ開始。座標は DIP）。</summary>
-    public event EventHandler<DragRectPointEventArgs>? SelectionStarted;
+    public event EventHandler<MarqueePointEventArgs>? SelectionStarted;
 
     /// <summary>選択矩形が変更されたときに発生するイベント（上位 Mediator への通知）。</summary>
     public event EventHandler<SelectionRectEventArgs>? SelectionChanged;
@@ -161,20 +161,20 @@ public sealed partial class DragRectControl : Control
     public event EventHandler? SelectionCancelled;
 
     /// <summary>ポインター押下（左ボタン）時に発生するイベント（ドメイン座標）。</summary>
-    public event EventHandler<DragRectPointEventArgs>? MouseDown;
+    public event EventHandler<MarqueePointEventArgs>? MouseDown;
 
     /// <summary>ポインター解放（左ボタン）時に発生するイベント（ドメイン座標）。</summary>
-    public event EventHandler<DragRectPointEventArgs>? MouseUp;
+    public event EventHandler<MarqueePointEventArgs>? MouseUp;
 
     /// <summary>クリック（ドラッグ移動なしの押下→解放）時に発生するイベント（ドメイン座標）。</summary>
-    public event EventHandler<DragRectPointEventArgs>? MouseClicked;
+    public event EventHandler<MarqueePointEventArgs>? MouseClicked;
 
     /// <summary>ポインターのダブルクリックが検出されたときに発生するイベント（汎用公開。直接の消費者なし）。</summary>
     /// <remarks>
     /// 確定/キャンセルの判定は DragRect 自身が行う（矩形内 = <see cref="ConfirmRequested"/> / 矩形外 = <see cref="CancelRequested"/>）。<br/>
     /// 本イベントは「ダブルクリックが発生した事実」を汎用的に通知する（座標はドメイン）。
     /// </remarks>
-    public event EventHandler<DragRectPointEventArgs>? MouseDoubleClicked;
+    public event EventHandler<MarqueePointEventArgs>? MouseDoubleClicked;
 
     /// <summary>マウスポインタの位置を通知するイベント（ドメイン座標）。</summary>
     /// <remarks>
@@ -182,14 +182,14 @@ public sealed partial class DragRectControl : Control
     /// 要素検出・ルーペ追従等の汎用用途に使用する（名前は Avalonia の
     /// <see cref="InputElement.PointerMoved"/>（RoutedEvent）と衝突しないよう付けた）。<br/>
     /// </remarks>
-    public event EventHandler<DragRectPointEventArgs>? MouseMoved;
+    public event EventHandler<MarqueePointEventArgs>? MouseMoved;
 
     /// <summary>ルーペが表示する中心座標を通知するイベント（ドメイン座標）。</summary>
     /// <remarks>
     /// nudge 前後関係なく通知する（通常追従: <see cref="OnPointerMoved"/> / nudge 後: nudge 処理）。<br/>
     /// 上位（ホスト）は nudge 中かどうかを判断せず、この座標でルーペを更新するだけである。
     /// </remarks>
-    public event EventHandler<DragRectPointEventArgs>? LoupePositionMoved;
+    public event EventHandler<MarqueePointEventArgs>? LoupePositionMoved;
 
     /// <summary>ビューポート（ズーム・スクロール）が変化したときに発生するイベント。</summary>
     /// <remarks>
@@ -204,9 +204,9 @@ public sealed partial class DragRectControl : Control
     /// <remarks>
     /// <see cref="OnPointerWheelChanged"/> から発火する（転送先の有無に関わらず常に通知する）。<br/>
     /// ズームの実処理（ズーム率管理・表示の変更）は上位 AP が実施する（本コントロールは要求のみ通知）。<br/>
-    /// <see cref="DragRectZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
+    /// <see cref="WheelZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
     /// </remarks>
-    public event EventHandler<DragRectZoomRequest>? ZoomRequested;
+    public event EventHandler<WheelZoomRequest>? ZoomRequested;
 
     /// <summary>通常ホイール（Ctrl なし）によるスクロール要求イベント（生の回転量・修飾キー・発生位置）。</summary>
     /// <remarks>
@@ -215,7 +215,7 @@ public sealed partial class DragRectControl : Control
     /// スクロール先（祖先 ScrollViewer・ズームビューポートのパン等）の決定は上位 AP が実施する。<br/>
     /// 選択矩形はドメイン座標で不変のため、本操作は選択状態を変更しない（ビューの操作）。
     /// </remarks>
-    public event EventHandler<DragRectScrollRequest>? ScrollRequested;
+    public event EventHandler<WheelScrollRequest>? ScrollRequested;
 
     /// <summary>Enter キーによる確定要求イベント（選択確定後のみ発火。ドラッグ中は発火しない）。</summary>
     /// <remarks>
@@ -238,19 +238,19 @@ public sealed partial class DragRectControl : Control
     /// <summary><see cref="Options"/> 依存関係プロパティ（外観・対話パラメータをまとめた設定）。</summary>
     /// <remarks>
     /// 個別に公開していた設定（外観 10 項目・対話パラメータ 3 項目）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
-    /// 設定値は不変（<see cref="DragRectOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。
+    /// 設定値は不変（<see cref="MarqueeOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。
     /// </remarks>
-    public static readonly StyledProperty<DragRectOptions> OptionsProperty =
-        AvaloniaProperty.Register<DragRectControl, DragRectOptions>(nameof(Options), defaultValue: DragRectOptions.Default);
+    public static readonly StyledProperty<MarqueeOptions> OptionsProperty =
+        AvaloniaProperty.Register<MarqueeControl, MarqueeOptions>(nameof(Options), defaultValue: MarqueeOptions.Default);
 
     /// <summary>外観・対話パラメータをまとめた設定を取得または設定する。</summary>
-    /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="DragRectOptions.Default"/>。</value>
+    /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬する。<br/>
     /// 一部の項目だけを変える場合は <c>DragRectOptions.Default with { ShowHandles = false }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
     /// 色は UI 非依存の <see cref="System.Drawing.Color"/> で受け取り、描画時に Avalonia の色型へ変換する。
     /// </remarks>
-    public DragRectOptions Options
+    public MarqueeOptions Options
     {
         get => GetValue(OptionsProperty);
         set => SetValue(OptionsProperty, value);
@@ -262,11 +262,11 @@ public sealed partial class DragRectControl : Control
 
     /// <summary><see cref="Scaling"/> 依存関係プロパティ。</summary>
     public static readonly StyledProperty<double> ScalingProperty =
-        AvaloniaProperty.Register<DragRectControl, double>(nameof(Scaling), 1.0);
+        AvaloniaProperty.Register<MarqueeControl, double>(nameof(Scaling), 1.0);
 
     /// <summary><see cref="DisplayScaleScaling"/> 依存関係プロパティ。</summary>
     public static readonly StyledProperty<double> DisplayScaleScalingProperty =
-        AvaloniaProperty.Register<DragRectControl, double>(nameof(DisplayScaleScaling));
+        AvaloniaProperty.Register<MarqueeControl, double>(nameof(DisplayScaleScaling));
 
     /// <summary>ドメイン → DIP 変換の基準倍率を取得または設定する。</summary>
     /// <value>ドメイン → DIP 変換の基準倍率。既定は 1.0。</value>
@@ -316,12 +316,12 @@ public sealed partial class DragRectControl : Control
 
     /// <summary>現在の選択状態のスナップショット（ポーリング不要の完全状態）。</summary>
     /// <remarks>
-    /// <see cref="DragRectSnapshot"/> の全項目（State / SelectionRect / ActiveHandle / MousePosition /<br/>
+    /// <see cref="MarqueeSnapshot"/> の全項目（State / SelectionRect / ActiveHandle / MousePosition /<br/>
     /// IsMouseDown / IsDragging / NudgeActive / HasSelection）を公開する。ホスト（上位 AP）はイベント引数の<br/>
     /// Snapshot と同一形式で現在の状態を取得できる（状態のポーリングは本プロパティで完結）。<br/>
-    /// 選択状態の判定（確定・キャンセル等の操作分岐）は <see cref="DragRectSnapshot.HasSelection"/> を使用する。
+    /// 選択状態の判定（確定・キャンセル等の操作分岐）は <see cref="MarqueeSnapshot.HasSelection"/> を使用する。
     /// </remarks>
-    public DragRectSnapshot CurrentSnapshot => _session.CreateSnapshot();
+    public MarqueeSnapshot CurrentSnapshot => _session.CreateSnapshot();
 
     /// <summary>選択矩形があるかどうかを取得する。</summary>
     /// <value>選択中の場合は true。</value>
@@ -383,10 +383,10 @@ public sealed partial class DragRectControl : Control
     /// <summary>コア（状態管理クラス）が返す効果を画面へ適用する。</summary>
     /// <param name="feedback">適用する効果（カーソル操作・フォーカス・カーソル形状・再描画）。</param>
     /// <remarks>
-    /// 適用する効果の選択・順序はコア（<see cref="DragRectFeedback.ApplyCursor"/> / <see cref="DragRectFeedback.ApplyVisual"/>）が<br/>
+    /// 適用する効果の選択・順序はコア（<see cref="MarqueeFeedback.ApplyCursor"/> / <see cref="MarqueeFeedback.ApplyVisual"/>）が<br/>
     /// 単一所有する（本層は自 UI の操作へ接続するだけ）。
     /// </remarks>
-    private void ApplyFeedback(DragRectFeedback feedback)
+    private void ApplyFeedback(MarqueeFeedback feedback)
     {
         feedback.ApplyCursor(_cursor, ToScreen);
         feedback.ApplyVisual(() => Focus(), InvalidateVisual, ApplyCursorShape);
@@ -399,56 +399,56 @@ public sealed partial class DragRectControl : Control
     /// 転送のみを担う（確定/キャンセルの判断・状態の更新はコアが済ませている）。<br/>
     /// 各 UI のイベント引数の型（Avalonia の <see cref="Rect"/> / <see cref="Point"/>）へ境界変換する。
     /// </remarks>
-    private void OnSessionNotified(object? sender, DragRectNotice notice)
+    private void OnSessionNotified(object? sender, MarqueeNotice notice)
     {
         switch (notice.Kind)
         {
             // 選択（始点・変更・確定・キャンセル）
-            case DragRectNoticeKind.SelectionStarted: SelectionStarted?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.SelectionChanged: SelectionChanged?.Invoke(this, ToRectArgs(notice)); break;
-            case DragRectNoticeKind.SelectionCompleted: SelectionCompleted?.Invoke(this, ToRectArgs(notice)); break;
-            case DragRectNoticeKind.SelectionCancelled: SelectionCancelled?.Invoke(this, EventArgs.Empty); break;
+            case MarqueeNoticeKind.SelectionStarted: SelectionStarted?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.SelectionChanged: SelectionChanged?.Invoke(this, ToRectArgs(notice)); break;
+            case MarqueeNoticeKind.SelectionCompleted: SelectionCompleted?.Invoke(this, ToRectArgs(notice)); break;
+            case MarqueeNoticeKind.SelectionCancelled: SelectionCancelled?.Invoke(this, EventArgs.Empty); break;
 
             // ポインター（押下・解放・クリック・ダブルクリック・移動）
-            case DragRectNoticeKind.MouseDown: MouseDown?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.MouseUp: MouseUp?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.MouseClicked: MouseClicked?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.MouseDoubleClicked: MouseDoubleClicked?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.MouseMoved: MouseMoved?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.MouseDown: MouseDown?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.MouseUp: MouseUp?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.MouseClicked: MouseClicked?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.MouseDoubleClicked: MouseDoubleClicked?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.MouseMoved: MouseMoved?.Invoke(this, ToPointArgs(notice)); break;
 
             // ルーペ・ビューポート・確定要求・キャンセル要求
-            case DragRectNoticeKind.LoupePositionMoved: LoupePositionMoved?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.ViewportChanged: ViewportChanged?.Invoke(this, ToRectArgs(notice)); break;
-            case DragRectNoticeKind.ConfirmRequested: ConfirmRequested?.Invoke(this, ToRectArgs(notice)); break;
-            case DragRectNoticeKind.CancelRequested: CancelRequested?.Invoke(this, EventArgs.Empty); break;
+            case MarqueeNoticeKind.LoupePositionMoved: LoupePositionMoved?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.ViewportChanged: ViewportChanged?.Invoke(this, ToRectArgs(notice)); break;
+            case MarqueeNoticeKind.ConfirmRequested: ConfirmRequested?.Invoke(this, ToRectArgs(notice)); break;
+            case MarqueeNoticeKind.CancelRequested: CancelRequested?.Invoke(this, EventArgs.Empty); break;
         }
     }
 
     /// <summary>通知を点座標のイベント引数へ変換する。</summary>
     /// <param name="notice">通知。</param>
     /// <returns>通知座標（DIP）とスナップショットを含むイベント引数。</returns>
-    private static DragRectPointEventArgs ToPointArgs(DragRectNotice notice)
+    private static MarqueePointEventArgs ToPointArgs(MarqueeNotice notice)
         => new(notice.Position.ToAvaloniaPoint(), notice.Snapshot);
 
     /// <summary>通知を選択矩形のイベント引数へ変換する。</summary>
     /// <param name="notice">通知。</param>
     /// <returns>選択矩形（DIP）とスナップショットを含むイベント引数。</returns>
-    private static SelectionRectEventArgs ToRectArgs(DragRectNotice notice)
+    private static SelectionRectEventArgs ToRectArgs(MarqueeNotice notice)
         => new(notice.Snapshot.SelectionRect.ToAvaloniaRect(), notice.Snapshot);
 
     /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
     /// <param name="kind">カーソル形状の種別（コア提供）。</param>
     /// <remarks>種別と自 UI のカーソルの対応のみを持つ（どのハンドルが同じカーソルになるかはコアが判断済み）。</remarks>
-    private void ApplyCursorShape(DragCursorKind kind)
+    private void ApplyCursorShape(MarqueeCursorKind kind)
     {
         // 標準カーソルは Lazy で遅延共有する（ポインター移動毎の生成を排除しつつ、初回アクセスで ICursorFactory を解決）
         Cursor = kind switch
         {
-            DragCursorKind.DiagonalNWSE => s_topLeftCornerCursor.Value,
-            DragCursorKind.DiagonalNESW => s_topRightCornerCursor.Value,
-            DragCursorKind.Vertical => s_sizeNorthSouthCursor.Value,
-            DragCursorKind.Horizontal => s_sizeWestEastCursor.Value,
-            DragCursorKind.Move => s_sizeAllCursor.Value,
+            MarqueeCursorKind.DiagonalNWSE => s_topLeftCornerCursor.Value,
+            MarqueeCursorKind.DiagonalNESW => s_topRightCornerCursor.Value,
+            MarqueeCursorKind.Vertical => s_sizeNorthSouthCursor.Value,
+            MarqueeCursorKind.Horizontal => s_sizeWestEastCursor.Value,
+            MarqueeCursorKind.Move => s_sizeAllCursor.Value,
             _ => Cursor.Default,
         };
     }
@@ -516,7 +516,7 @@ public sealed partial class DragRectControl : Control
         if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
             Log.LogZoomRequested(e.Delta.Y > 0);
-            ZoomRequested?.Invoke(this, new DragRectZoomRequest(e.Delta.Y > 0, e.GetPosition(this).ToEsPoint()));
+            ZoomRequested?.Invoke(this, new WheelZoomRequest(e.Delta.Y > 0, e.GetPosition(this).ToEsPoint()));
             e.Handled = true;
             return;
         }
@@ -534,7 +534,7 @@ public sealed partial class DragRectControl : Control
         }
 
         // 転送先が無い場合は回転量をそのまま通知する（スクロール量の解釈は転送先が単一所有する）
-        ScrollRequested?.Invoke(this, new DragRectScrollRequest(e.Delta.X, e.Delta.Y, shift, e.GetPosition(this).ToEsPoint()));
+        ScrollRequested?.Invoke(this, new WheelScrollRequest(e.Delta.X, e.Delta.Y, shift, e.GetPosition(this).ToEsPoint()));
         e.Handled = true;
     }
 

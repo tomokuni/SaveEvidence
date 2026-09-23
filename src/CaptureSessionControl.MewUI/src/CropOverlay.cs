@@ -1,6 +1,6 @@
 using Aprillz.MewUI.Controls;
 using Estable.CaptureSession;
-using Estable.DragRect.Decoration;
+using Estable.Marquee.Decoration;
 using Estable.FadeMaskDragRect;
 using Estable.MewUI.CropView;
 using Estable.MewUI.FadeMaskDragRect;
@@ -175,7 +175,7 @@ public sealed class CropOverlay
         _selector.NotifyViewportChanged();
 
         // 矢印キーの微調整と Escape を受け取れるよう、選択コントロールへフォーカスを移す
-        _selector.FocusDragRect();
+        _selector.FocusMarquee();
     }
 
     /// <summary>切り出しを終了する（選択を破棄してオーバーレイを隠す）。</summary>

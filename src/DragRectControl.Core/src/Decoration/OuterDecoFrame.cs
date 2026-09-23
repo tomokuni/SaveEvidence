@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.DragRect.Decoration;
+namespace Estable.Marquee.Decoration;
 
 /// <summary>暗転マスクの描画入力（設定・状態と、描画時に決まる値を 1 つにまとめた値）。</summary>
 /// <remarks>

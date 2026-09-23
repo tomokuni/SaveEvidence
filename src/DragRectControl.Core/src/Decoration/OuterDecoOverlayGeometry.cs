@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.DragRect.Decoration;
+namespace Estable.Marquee.Decoration;
 
 /// <summary>暗転オーバーレイの幾何計算（純粋関数）。</summary>
 /// <remarks>

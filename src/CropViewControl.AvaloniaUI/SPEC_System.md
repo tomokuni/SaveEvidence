@@ -50,7 +50,7 @@ flowchart TB
     subgraph Dep["外部依存"]
         Loupe["LoupeControl"]
         Zoom["ZoomViewControl"]
-        DR["DragRectControl（外側の装飾）"]
+        DR["MarqueeControl（外側の装飾）"]
         Core["CropViewControl.Core<br/>OverlayRect / OverlayLineStyle / OverlayRectRasterizer"]
     end
 

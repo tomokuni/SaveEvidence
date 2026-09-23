@@ -39,7 +39,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
                                      ▼
         ┌──────────────┬──────────────┬──────────────┐
         ▼              ▼              ▼
- DragRectControl  LoupeControl     Platform.Core
+ MarqueeControl  LoupeControl     Platform.Core
     .Core            .Core            .Core
 （選択の状態機械・外側の装飾の外観と幾何）（ルーペの表示位置計算）（幾何・変換）
 ```
@@ -63,7 +63,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 | 設定をコアの単一値（`FadeMaskDragRectOptions`）として公開した | 既定値・項目の対応・子コントロールへの分配規則を UI に持たせない（Avalonia 版と同一の設定値を使うため、見た目も一致する） |
 | イベント引数をコア型で公開した | 内包コントロールのイベント引数と同一の型になり境界変換が不要になる |
 | 選択矩形コントロールへ座標変換ポートを渡すようにした | ズームビューのレターボックス等オフセット付きの変換でも、外側の装飾の穴あけと選択矩形が一致する（等倍スケールのみでは位置がずれる） |
-| ラベルは選択矩形コントロールへ委譲し、本クラスは委譲プロパティのみを持つ | 描画・行配置は `DragRectControl`（背景・位置はコアの `OuterDecoLabelLayout`）が単一所有するため、重複する実装を持たない |
+| ラベルは選択矩形コントロールへ委譲し、本クラスは委譲プロパティのみを持つ | 描画・行配置は `MarqueeControl`（背景・位置はコアの `OuterDecoLabelLayout`）が単一所有するため、重複する実装を持たない |
 | ルーペ画像上の破線はルーペの `Rendered` で描画する | MewUI のルーペは中間ビットマップを作らないため、描画先（キャンバス）を受け取れるイベントが必要（破線の幾何はコアが単一所有し、Avalonia 版と同じ見た目になる） |
 | ログはドラッグ選択コントロールとルーペへ伝搬する | 入力操作と表示状態の変化を 1 箇所の設定で有効化できる（Avalonia 版と同じ範囲。外側の装飾の描画もドラッグ選択コントロールが担うため、そのログも同じロガーで出力される） |
 | ラベルの文言はホストが与える | 情報ラベル（ウィンドウタイトル等）はホストしか知らない上、文言の単一所有はコアの `OuterDecoLabels` にある（本クラスで再生成しない） |
@@ -128,8 +128,8 @@ classDiagram
         -ApplyMode() void
         -OnLoupePositionMoved(pos) void
     }
-    class DragRectControl {
-        <<DragRectControl.MewUI>>
+    class MarqueeControl {
+        <<MarqueeControl.MewUI>>
         +SetCoordinateTransform(port) void
         +SetSelection(rect) void
         +ConfirmRequested
@@ -148,7 +148,7 @@ classDiagram
     }
     class FadeMaskDragRectOptions {
         <<FadeMaskDragRectControl.Core>>
-        +DragRectOptions DragRect
+        +MarqueeOptions Marquee
         +LoupeOptions Loupe
         +Color SelectionRectColorA
         +Color SelectionRectColorB
@@ -160,7 +160,7 @@ classDiagram
     }
 
     Panel <|-- FadeMaskDragRectControl
-    FadeMaskDragRectControl *-- DragRectControl : 選択矩形
+    FadeMaskDragRectControl *-- MarqueeControl : 選択矩形
     FadeMaskDragRectControl *-- LoupeControl : 拡大鏡
     FadeMaskDragRectControl ..> FadeMaskDragRectModes : モードの解釈
     FadeMaskDragRectControl ..> FadeMaskDragRectOptions : 設定の分配
@@ -173,7 +173,7 @@ classDiagram
 sequenceDiagram
     participant Host as ホスト
     participant Facade as FadeMaskDragRectControl
-    participant Drag as DragRectControl
+    participant Drag as MarqueeControl
 
     Host->>Facade: Mode = Crop
     Facade->>Drag: OuterShowFullOverlay = true / ShowHandles = true
@@ -231,7 +231,7 @@ sequenceDiagram
 
 ```text
 ArrangeContent(bounds)                     … bounds はウィンドウ絶対座標（DIP）
-  ├─ DragRect.Arrange(bounds)              … 選択矩形と外側の装飾は全面（入力もここが受ける）
+  ├─ Marquee.Arrange(bounds)              … 選択矩形と外側の装飾は全面（入力もここが受ける）
   └─ ルーペ
        ├─ 非表示（モード不一致・画像未設定・中心未設定）→ サイズ 0 で配置
        └─ 表示 → Compute(Options.RequestedSize, 親サイズ, port.Inverse(中心), オフセット)

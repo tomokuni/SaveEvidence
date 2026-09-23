@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace DragRectControl.Sample.ViewModels;
+namespace MarqueeControl.Sample.ViewModels;
 
 /// <summary>色選択コンボボックス用の選択肢。</summary>
 /// <param name="Name">表示名。</param>

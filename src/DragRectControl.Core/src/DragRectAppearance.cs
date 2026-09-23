@@ -8,9 +8,9 @@ namespace Estable.DragRect;
 /// <br/>
 /// 本クラスが持たないもの:<br/>
 /// - フォントの実測値（テキストの幅・高さ・縦位置の調整）とラベルの内側余白の縦成分（UI ごとに文字描画の基準が異なるため各 UI が持つ）。<br/>
-/// - 色・太さ・サイズの設定値（利用者が指定するため <see cref="DragRectOptions"/> が持つ）。<br/>
+/// - 色・太さ・サイズの設定値（利用者が指定するため <see cref="MarqueeOptions"/> が持つ）。<br/>
 /// </remarks>
-internal static class DragRectAppearance
+internal static class MarqueeAppearance
 {
     /// <summary>十字マーカーの線の太さ（DIP）。</summary>
     public const double MarkerThickness = 2.0;

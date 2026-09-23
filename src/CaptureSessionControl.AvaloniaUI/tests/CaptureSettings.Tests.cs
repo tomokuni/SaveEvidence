@@ -15,7 +15,7 @@ public class CaptureSettingsTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeSize: 0).Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeZoomLevel: 0).Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeOffset: -1).Validate());
-        // 追加メンバー（DragRect / Loupe 外観）の範囲チェック
+        // 追加メンバー（Marquee / Loupe 外観）の範囲チェック
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(HandleSize: 0).Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(HandleHitRadius: 0).Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(MarkerLength: 0).Validate());

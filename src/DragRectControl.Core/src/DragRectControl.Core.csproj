@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.DragRect</RootNamespace>
+    <RootNamespace>Estable.Marquee</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -24,11 +24,11 @@
 
   <ItemGroup>
     <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
-    <InternalsVisibleTo Include="DragRectControl.AvaloniaUI" />
-    <InternalsVisibleTo Include="DragRectControl.MewUI" />
-    <InternalsVisibleTo Include="DragRectControl.AvaloniaUI.Tests" />
-    <InternalsVisibleTo Include="DragRectControl.MewUI.Tests" />
-    <InternalsVisibleTo Include="DragRectControl.Core.Tests" />
+    <InternalsVisibleTo Include="MarqueeControl.AvaloniaUI" />
+    <InternalsVisibleTo Include="MarqueeControl.MewUI" />
+    <InternalsVisibleTo Include="MarqueeControl.AvaloniaUI.Tests" />
+    <InternalsVisibleTo Include="MarqueeControl.MewUI.Tests" />
+    <InternalsVisibleTo Include="MarqueeControl.Core.Tests" />
     <!-- MewUI 版の撮影セッションもラベル文言の選定（FadeMaskLabels）を共用する -->
     <InternalsVisibleTo Include="CaptureSessionControl.MewUI" />
     <!-- 複合コントロールのコアも装飾の契約（FadeMaskRenderMode）を参照する -->

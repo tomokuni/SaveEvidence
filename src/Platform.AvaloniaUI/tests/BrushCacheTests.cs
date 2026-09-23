@@ -9,7 +9,7 @@ namespace EsUtil.Platform.AvaloniaUI.Tests;
 /// 色 → ブラシの容量制限付きキャッシュのみを検証するため、<br/>
 /// Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）に依存せず <c>[Fact]</c> で並列実行する。<br/>
 /// <c>SolidColorBrush</c> の生成は UI スレッド非依存（<see cref="StringToBrushConverter"/> と同様）である。<br/>
-/// <see cref="LoupeControl"/> / <see cref="DragRectControl"/> で共用する。
+/// <see cref="LoupeControl"/> / <see cref="MarqueeControl"/> で共用する。
 /// </remarks>
 public class BrushCacheTests
 {

@@ -1,5 +1,5 @@
-using Estable.AvaloniaUI.DragRect.Drawing;
-using Estable.DragRect;
+using Estable.AvaloniaUI.Marquee.Drawing;
+using Estable.Marquee;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
 using Avalonia;
@@ -8,7 +8,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 
-namespace Estable.AvaloniaUI.DragRect;
+namespace Estable.AvaloniaUI.Marquee;
 
 /// <summary>
 /// DragRectControl のビジュアルツリー接続・ScrollViewer 連携・描画処理（partial 分割）。
@@ -16,10 +16,10 @@ namespace Estable.AvaloniaUI.DragRect;
 /// <remarks>
 /// ビジュアルツリー接続時に TopLevel のキーイベントを購読し、切断時に解除する。<br/>
 /// 連携 ScrollViewer（スクロール・ズーム検知）は明示注入のみで設定する（暗黙の祖先探索は行わない）。<br/>
-/// 描画は <see cref="Drawing.DragRectDrawer"/> に委譲し、座標変換（ドメイン → DIP）はセッションのポートに問い合わせる
+/// 描画は <see cref="Drawing.MarqueeDrawer"/> に委譲し、座標変換（ドメイン → DIP）はセッションのポートに問い合わせる
 /// （描画はセッションの状態と <see cref="Options"/> を読むだけで、判断を持たない）。
 /// </remarks>
-public sealed partial class DragRectControl
+public sealed partial class MarqueeControl
 {
     // ====================================================================
     // ビジュアルツリー接続・切断（ScrollViewer 購読）
@@ -110,11 +110,11 @@ public sealed partial class DragRectControl
     /// <param name="context">描画コンテキスト。</param>
     /// <remarks>
     /// 描画は 2 層に分かれる。<br/>
-    /// - <b>外側の装飾</b>（暗転マスク・穴あけ枠・ラベル）: 装飾コアのフレームを <see cref="DragRectOuterDrawer.Draw"/> へ渡して描く。<br/>
+    /// - <b>外側の装飾</b>（暗転マスク・穴あけ枠・ラベル）: 装飾コアのフレームを <see cref="MarqueeOuterDrawer.Draw"/> へ渡して描く。<br/>
     /// - <b>選択矩形そのもの</b>（ドラッグハンドル・始点マーカー・座標ラベル）: <see cref="Drawing.DragRectDrawer"/> で描く。<br/>
     /// <br/>
     /// 選択枠線は外側の装飾の穴あけ枠（同じ矩形の内側）と重なるため本コントロールでは描画しない<br/>
-    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="DragRectOptions.OuterAppearance"/> が単一所有する。<br/>
+    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="MarqueeOptions.OuterAppearance"/> が単一所有する。<br/>
     /// セッションの状態（選択矩形・nudge・マウス位置）を読み、DIP へ変換して描画層へ渡すだけである。<br/>
     /// <br/>
     /// <b>ヒットテスト</b>: <see cref="Control"/> は背景が描画されない場合にポインターイベントを受け取れないため、<br/>
@@ -133,9 +133,9 @@ public sealed partial class DragRectControl
 
         // 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）。
         // どの矩形を暗転するか・枠線を描くか・ラベルをどう組むかは装飾コアが持つため、本層はフレームを描画 API へ写すだけとする。
-        DragRectOuterDrawer.Draw(
+        MarqueeOuterDrawer.Draw(
             context,
-            DragRectFrame.Resolve(
+            MarqueeFrame.Resolve(
                 _session,
                 new EsRect(0, 0, bounds.Width, bounds.Height),
                 _coordinatePort,
@@ -150,7 +150,7 @@ public sealed partial class DragRectControl
             var rect = new Rect(dipRect.X, dipRect.Y, dipRect.Width, dipRect.Height);
 
             // 色は UI 非依存の型（System.Drawing.Color）で保持されるため、描画時に Avalonia の色型へ変換する
-            DragRectDrawer.DrawHandles(
+            MarqueeDrawer.DrawHandles(
                 context, rect, options.HandleSize, options.HandleColor.ToAvaloniaColor(),
                 options.OuterAppearance.BorderColor.ToAvaloniaColor());
         }
@@ -159,16 +159,16 @@ public sealed partial class DragRectControl
         if (_session.NudgeActive && _session.CrosshairVisible)
         {
             var markerDip = _session.ToDip(_session.MarkerPosition);
-            DragRectDrawer.DrawStartMarker(
+            MarqueeDrawer.DrawStartMarker(
                 context, markerDip.ToAvaloniaPoint(), options.MarkerColor.ToAvaloniaColor(),
-                DragRectAppearance.MarkerThickness, options.MarkerLength / 2);
+                MarqueeAppearance.MarkerThickness, options.MarkerLength / 2);
         }
 
         // カーソルの右側にカーソルのドメイン座標ラベル（"(x, y)"）を表示する
         if (options.ShowCoordLabel)
         {
             var cursorDip = _session.ToDip(_session.LastMousePosition);
-            DragRectDrawer.DrawCoordLabel(
+            MarqueeDrawer.DrawCoordLabel(
                 context, cursorDip.ToAvaloniaPoint(), _session.LastMousePosition.ToAvaloniaPoint(), Bounds.Size,
                 options.CoordLabelColor.ToAvaloniaColor(), options.CoordLabelBackgroundColor.ToAvaloniaColor(),
                 options.CoordLabelFontSize);

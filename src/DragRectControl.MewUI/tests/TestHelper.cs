@@ -1,6 +1,6 @@
 using SkiaSharp;
 
-namespace Estable.MewUI.DragRect.Tests;
+namespace Estable.MewUI.Marquee.Tests;
 
 /// <summary>テストで共用するユーティリティ。</summary>
 internal static class TestHelper

@@ -19,7 +19,7 @@ namespace Estable.DragRect;
 /// <b>枠線の色・太さは <see cref="OuterAppearance"/> が単一所有する</b>（選択枠線と暗転マスクの穴あけ枠は同一矩形に描かれるため、<br/>
 /// 2 つの値に分けると見た目が崩れる）。
 /// <br/>
-/// <b>既定値</b>: 既定値を持つのは <see cref="Default"/> と <see cref="DragRectOptions()"/> のみである。<br/>
+/// <b>既定値</b>: 既定値を持つのは <see cref="Default"/> と <see cref="MarqueeOptions()"/> のみである。<br/>
 /// <see cref="Default"/> を基点に部分変更する（<c>DragRectOptions.Default with { HandleColor = ... }</c>）と、<br/>
 /// 指定しない項目は既定値を保つ（プロパティ初期化子を持つため、部分指定でもゼロ値にはならない）。<br/>
 /// <br/>
@@ -28,12 +28,12 @@ namespace Estable.DragRect;
 /// <b>色の型</b>: UI 非依存の <see cref="DrawingColor"/>（アルファで不透明度を表す）を使用する。<br/>
 /// 各 UI の色型への変換は境界（UI 層）で 1 行行う。
 /// </remarks>
-public sealed record DragRectOptions
+public sealed record MarqueeOptions
 {
     /// <summary>すべての項目を既定値にした設定。</summary>
     /// <value>既定の外観・対話パラメータ（各 UI のプロパティの初期値）。</value>
     /// <remarks>部分変更の基点として使用する（<c>Default with { ... }</c>）。</remarks>
-    public static DragRectOptions Default { get; } = new();
+    public static MarqueeOptions Default { get; } = new();
 
     // ----------------------------------------------------------------
     // 外側の装飾（選択矩形の外側に描く暗転マスク・穴あけ枠・ラベル）
@@ -115,8 +115,8 @@ public sealed record DragRectOptions
     public double CoordLabelFontSize
     {
         get => field;
-        init => field = DragRectAppearance.CoerceCoordLabelFontSize(value);
-    } = DragRectAppearance.CoordLabelFontSizeDefault;
+        init => field = MarqueeAppearance.CoerceCoordLabelFontSize(value);
+    } = MarqueeAppearance.CoordLabelFontSizeDefault;
 
     // ----------------------------------------------------------------
     // 対話パラメータ（入力の解釈に使用し、セッションへ伝搬する）

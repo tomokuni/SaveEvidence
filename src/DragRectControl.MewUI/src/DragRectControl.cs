@@ -1,8 +1,8 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
-using Estable.DragRect;
-using Estable.DragRect.Decoration;
+using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.Native;
@@ -13,11 +13,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.DragRect;
+namespace Estable.MewUI.Marquee;
 
 /// <summary>リサイズ可能なドラッグ矩形のコントロール（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版と同じ UI 非依存の状態管理クラス（<c>DragRectControl.Core</c> の <see cref="DragRectSession"/>）を使い、<br/>
+/// Avalonia 版と同じ UI 非依存の状態管理クラス（<c>DragRectControl.Core</c> の <see cref="MarqueeSession"/>）を使い、<br/>
 /// 本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
 /// <br/>
 /// <b>座標系</b>:<br/>
@@ -37,37 +37,37 @@ namespace Estable.MewUI.DragRect;
 /// - ドラッグ中はマウスキャプチャを行う（コントロール外への移動でもイベントを受け取る）。<br/>
 /// - ログ出力は <see cref="Log"/> プロパティで注入する（デフォルトは <see cref="NullLogger"/>。Avalonia 版と同一の書式）。
 /// </remarks>
-public sealed class DragRectControl : SkiaCanvasView
+public sealed class MarqueeControl : SkiaCanvasView
 {
     /// <summary><see cref="Options"/> プロパティ（外観・対話パラメータをまとめた設定）。</summary>
     /// <remarks>
     /// 個別に公開していた設定（外観 10 項目・対話パラメータ 3 項目）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
-    /// 設定値は不変（<see cref="DragRectOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。<br/>
+    /// 設定値は不変（<see cref="MarqueeOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。<br/>
     /// 対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬し、判断と変更ログはコアが単一所有する。
     /// </remarks>
-    public static readonly MewProperty<DragRectOptions> OptionsProperty =
-        MewProperty<DragRectOptions>.Register<DragRectControl>(
-            nameof(Options), DragRectOptions.Default, MewPropertyOptions.AffectsRender,
+    public static readonly MewProperty<MarqueeOptions> OptionsProperty =
+        MewProperty<MarqueeOptions>.Register<MarqueeControl>(
+            nameof(Options), MarqueeOptions.Default, MewPropertyOptions.AffectsRender,
             changed: static (owner, _, newValue) => owner.ApplyFeedback(owner._session.ApplyOptions(newValue)));
 
     /// <summary><see cref="RenderScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
     public static readonly MewProperty<double> RenderScalingProperty =
-        MewProperty<double>.Register<DragRectControl>(nameof(RenderScaling), 1.0, MewPropertyOptions.AffectsRender);
+        MewProperty<double>.Register<MarqueeControl>(nameof(RenderScaling), 1.0, MewPropertyOptions.AffectsRender);
 
     /// <summary><see cref="Scaling"/> プロパティ（座標変換ポートへ適用する倍率）。</summary>
     /// <remarks><see cref="SetCoordinateTransform"/> でポートを設定した場合は使用しない（等倍スケール専用の簡易指定）。</remarks>
     public static readonly MewProperty<double> ScalingProperty =
-        MewProperty<double>.Register<DragRectControl>(nameof(Scaling), 1.0, MewPropertyOptions.AffectsRender);
+        MewProperty<double>.Register<MarqueeControl>(nameof(Scaling), 1.0, MewPropertyOptions.AffectsRender);
 
     /// <summary>選択・ドラッグ・nudge の状態を管理するセッション（入力の解釈と状態遷移の判断を担う）。</summary>
-    private readonly DragRectSession _session;
+    private readonly MarqueeSession _session;
 
     /// <summary>カーソルサービス（nudge のカーソル非表示・移動）。</summary>
     /// <remarks>既定実装（Win32）の解決は本 UI 層が行う（コアは抽象と <see langword="null"/> のみを扱う）。</remarks>
     private readonly ICursorService _cursor;
 
     /// <summary>ドラッグ矩形コントロールを既定構成で初期化する。</summary>
-    public DragRectControl()
+    public MarqueeControl()
         : this(null)
     {
     }
@@ -80,11 +80,11 @@ public sealed class DragRectControl : SkiaCanvasView
     /// 矢印キーの nudge はフォーカスを必要とする（Avalonia 版の TopLevel 購読によるフォーカス非依存とは異なる）。<br/>
     /// コアからの通知は公開イベントへ転送し、設定（<see cref="Options"/>）をセッションへ伝搬する。
     /// </remarks>
-    public DragRectControl(ICursorService? cursorService)
+    public MarqueeControl(ICursorService? cursorService)
     {
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
-        _session = new DragRectSession(_cursor, Options);
+        _session = new MarqueeSession(_cursor, Options);
         _session.Notified += OnSessionNotified;
 
         ContinuousAnimation = false;
@@ -130,16 +130,16 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <summary>Ctrl+ホイールによるズーム要求時に発火する（方向と発生位置）。</summary>
     /// <remarks>
     /// ズームの実処理（画像サイズ変更・ズーム率管理）は上位 AP が実施する（本コントロールは要求のみ通知する）。<br/>
-    /// <see cref="DragRectZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
+    /// <see cref="WheelZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
     /// </remarks>
-    public event EventHandler<DragRectZoomRequest>? ZoomRequested;
+    public event EventHandler<WheelZoomRequest>? ZoomRequested;
 
     /// <summary>通常ホイール（Ctrl なし）によるスクロール要求時に発火する（生の回転量・修飾キー・発生位置）。</summary>
     /// <remarks>
     /// スクロール先（ズームビューポートのパン等）の決定は上位 AP が実施する（本コントロールは回転量のみ通知する）。<br/>
     /// 選択矩形はドメイン座標で不変のため、本操作は選択状態を変更しない（ビューの操作）。
     /// </remarks>
-    public event EventHandler<DragRectScrollRequest>? ScrollRequested;
+    public event EventHandler<WheelScrollRequest>? ScrollRequested;
 
     /// <summary>Enter キーによる確定要求時に発火する（選択確定後のみ。ドラッグ中は発火しない）。</summary>
     public event EventHandler<SelectionRectEventArgs>? ConfirmRequested;
@@ -148,13 +148,13 @@ public sealed class DragRectControl : SkiaCanvasView
     public event EventHandler? CancelRequested;
 
     /// <summary>外観・対話パラメータをまとめた設定を取得または設定する。</summary>
-    /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="DragRectOptions.Default"/>。</value>
+    /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬する。<br/>
     /// 一部の項目だけを変える場合は <c>DragRectOptions.Default with { ShowHandles = false }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
     /// 色は UI 非依存の <see cref="DrawingColor"/> で受け取り、描画（Skia）への変換は描画層が行う。
     /// </remarks>
-    public DragRectOptions Options
+    public MarqueeOptions Options
     {
         get => GetValue(OptionsProperty);
         set => SetValue(OptionsProperty, value);
@@ -217,7 +217,7 @@ public sealed class DragRectControl : SkiaCanvasView
 
     /// <summary>現在の選択状態のスナップショットを取得する（ポーリング不要の完全状態）。</summary>
     /// <value>State / SelectionRect / ActiveHandle / MousePosition / IsMouseDown / IsDragging / NudgeActive / HasSelection を含むスナップショット。</value>
-    public DragRectSnapshot CurrentSnapshot => _session.CreateSnapshot();
+    public MarqueeSnapshot CurrentSnapshot => _session.CreateSnapshot();
 
     /// <summary>選択矩形があるかどうかを取得する。</summary>
     /// <value>選択中の場合は true。</value>
@@ -232,7 +232,7 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <summary>操作ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>
-    /// 保持とフォールバック、セッションへの伝搬はコア（<see cref="DragRectSession.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
+    /// 保持とフォールバック、セッションへの伝搬はコア（<see cref="MarqueeSession.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
     /// 入力の判断に伴うログはセッションが同じロガーで出力する。
     /// </remarks>
     public ILogger Log
@@ -371,12 +371,12 @@ public sealed class DragRectControl : SkiaCanvasView
         if (e.ControlKey)
         {
             Log.LogZoomRequested(e.Delta.Y > 0);
-            ZoomRequested?.Invoke(this, new DragRectZoomRequest(e.Delta.Y > 0, e.GetPosition(this).ToEsPoint()));
+            ZoomRequested?.Invoke(this, new WheelZoomRequest(e.Delta.Y > 0, e.GetPosition(this).ToEsPoint()));
             e.Handled = true;
             return;
         }
 
-        ScrollRequested?.Invoke(this, new DragRectScrollRequest(e.Delta.X, e.Delta.Y, e.ShiftKey, e.GetPosition(this).ToEsPoint()));
+        ScrollRequested?.Invoke(this, new WheelScrollRequest(e.Delta.X, e.Delta.Y, e.ShiftKey, e.GetPosition(this).ToEsPoint()));
         e.Handled = true;
     }
 
@@ -463,10 +463,10 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <summary>コア（状態管理クラス）が返す効果を画面へ適用する。</summary>
     /// <param name="feedback">適用する効果（カーソル操作・フォーカス・カーソル形状・再描画）。</param>
     /// <remarks>
-    /// 適用する効果の選択・順序はコア（<see cref="DragRectFeedback.ApplyCursor"/> / <see cref="DragRectFeedback.ApplyVisual"/>）が<br/>
+    /// 適用する効果の選択・順序はコア（<see cref="MarqueeFeedback.ApplyCursor"/> / <see cref="MarqueeFeedback.ApplyVisual"/>）が<br/>
     /// 単一所有する（本層は自 UI の操作へ接続するだけ。マウスキャプチャはハンドラ側で行う）。
     /// </remarks>
-    private void ApplyFeedback(DragRectFeedback feedback)
+    private void ApplyFeedback(MarqueeFeedback feedback)
     {
         feedback.ApplyCursor(_cursor, ToScreen);
         feedback.ApplyVisual(() => Focus(), InvalidateVisual, ApplyCursorShape);
@@ -479,38 +479,38 @@ public sealed class DragRectControl : SkiaCanvasView
     /// 転送のみを担う（確定/キャンセルの判断・状態の更新はコアが済ませている）。<br/>
     /// 本 UI は押下・解放の公開イベントを持たない（基底 <c>UIElement</c> の同名メンバーがサービスを提供済みのため）。
     /// </remarks>
-    private void OnSessionNotified(object? sender, DragRectNotice notice)
+    private void OnSessionNotified(object? sender, MarqueeNotice notice)
     {
         switch (notice.Kind)
         {
             // 選択（始点・変更・確定・キャンセル）
-            case DragRectNoticeKind.SelectionStarted: SelectionStarted?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.SelectionChanged: SelectionChanged?.Invoke(this, ToRectArgs(notice)); break;
-            case DragRectNoticeKind.SelectionCompleted: SelectionCompleted?.Invoke(this, ToRectArgs(notice)); break;
-            case DragRectNoticeKind.SelectionCancelled: SelectionCancelled?.Invoke(this, EventArgs.Empty); break;
+            case MarqueeNoticeKind.SelectionStarted: SelectionStarted?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.SelectionChanged: SelectionChanged?.Invoke(this, ToRectArgs(notice)); break;
+            case MarqueeNoticeKind.SelectionCompleted: SelectionCompleted?.Invoke(this, ToRectArgs(notice)); break;
+            case MarqueeNoticeKind.SelectionCancelled: SelectionCancelled?.Invoke(this, EventArgs.Empty); break;
 
             // ポインター（クリック・ダブルクリック・移動）
-            case DragRectNoticeKind.MouseClicked: MouseClicked?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.MouseDoubleClicked: MouseDoubleClicked?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.MouseMoved: MouseMoved?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.MouseClicked: MouseClicked?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.MouseDoubleClicked: MouseDoubleClicked?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.MouseMoved: MouseMoved?.Invoke(this, ToPointArgs(notice)); break;
 
             // ルーペ・ビューポート・確定要求・キャンセル要求
-            case DragRectNoticeKind.LoupePositionMoved: LoupePositionMoved?.Invoke(this, ToPointArgs(notice)); break;
-            case DragRectNoticeKind.ViewportChanged: ViewportChanged?.Invoke(this, ToRectArgs(notice)); break;
-            case DragRectNoticeKind.ConfirmRequested: ConfirmRequested?.Invoke(this, ToRectArgs(notice)); break;
-            case DragRectNoticeKind.CancelRequested: CancelRequested?.Invoke(this, EventArgs.Empty); break;
+            case MarqueeNoticeKind.LoupePositionMoved: LoupePositionMoved?.Invoke(this, ToPointArgs(notice)); break;
+            case MarqueeNoticeKind.ViewportChanged: ViewportChanged?.Invoke(this, ToRectArgs(notice)); break;
+            case MarqueeNoticeKind.ConfirmRequested: ConfirmRequested?.Invoke(this, ToRectArgs(notice)); break;
+            case MarqueeNoticeKind.CancelRequested: CancelRequested?.Invoke(this, EventArgs.Empty); break;
         }
     }
 
     /// <summary>通知を点座標のイベント引数へ変換する。</summary>
     /// <param name="notice">通知。</param>
     /// <returns>通知座標（ドメイン座標）とスナップショットを含むイベント引数。</returns>
-    private static DragRectPointEventArgs ToPointArgs(DragRectNotice notice) => new(notice.Position, notice.Snapshot);
+    private static DragRectPointEventArgs ToPointArgs(MarqueeNotice notice) => new(notice.Position, notice.Snapshot);
 
     /// <summary>通知を選択矩形のイベント引数へ変換する。</summary>
     /// <param name="notice">通知。</param>
     /// <returns>選択矩形（ドメイン座標）とスナップショットを含むイベント引数。</returns>
-    private static SelectionRectEventArgs ToRectArgs(DragRectNotice notice) => new(notice.Snapshot.SelectionRect, notice.Snapshot);
+    private static SelectionRectEventArgs ToRectArgs(MarqueeNotice notice) => new(notice.Snapshot.SelectionRect, notice.Snapshot);
 
     /// <summary>カーソル形状をハンドル種別に応じて更新する。</summary>
     /// <param name="handle">カーソル形状の基になるハンドル種別。</param>
@@ -518,15 +518,15 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
     /// <param name="kind">カーソル形状の種別（コア提供）。</param>
     /// <remarks>種別と自 UI のカーソルの対応のみを持つ（どのハンドルが同じカーソルになるかはコアが判断済み）。</remarks>
-    private void ApplyCursorShape(DragCursorKind kind)
+    private void ApplyCursorShape(MarqueeCursorKind kind)
     {
         Cursor = kind switch
         {
-            DragCursorKind.DiagonalNWSE => CursorType.SizeNWSE,
-            DragCursorKind.DiagonalNESW => CursorType.SizeNESW,
-            DragCursorKind.Vertical => CursorType.SizeNS,
-            DragCursorKind.Horizontal => CursorType.SizeWE,
-            DragCursorKind.Move => CursorType.SizeAll,
+            MarqueeCursorKind.DiagonalNWSE => CursorType.SizeNWSE,
+            MarqueeCursorKind.DiagonalNESW => CursorType.SizeNESW,
+            MarqueeCursorKind.Vertical => CursorType.SizeNS,
+            MarqueeCursorKind.Horizontal => CursorType.SizeWE,
+            MarqueeCursorKind.Move => CursorType.SizeAll,
             _ => null,
         };
     }
@@ -536,11 +536,11 @@ public sealed class DragRectControl : SkiaCanvasView
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
     /// 描画は 2 層に分かれる。<br/>
-    /// - <b>外側の装飾</b>（暗転マスク・穴あけ枠・ラベル）: 装飾コアのフレームを <see cref="DragRectOuterSkiaRenderer.Draw"/> へ渡して描く。<br/>
-    /// - <b>選択矩形そのもの</b>（ドラッグハンドル・始点マーカー・座標ラベル）: <see cref="DragRectSkiaRenderer"/> で描く。<br/>
+    /// - <b>外側の装飾</b>（暗転マスク・穴あけ枠・ラベル）: 装飾コアのフレームを <see cref="MarqueeOuterSkiaRenderer.Draw"/> へ渡して描く。<br/>
+    /// - <b>選択矩形そのもの</b>（ドラッグハンドル・始点マーカー・座標ラベル）: <see cref="MarqueeSkiaRenderer"/> で描く。<br/>
     /// <br/>
     /// 選択枠線は外側の装飾の穴あけ枠（同じ矩形の内側）と重なるため、本コントロールは描画しない<br/>
-    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="DragRectOptions.OuterAppearance"/> が単一所有する。<br/>
+    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="MarqueeOptions.OuterAppearance"/> が単一所有する。<br/>
     /// セッションの状態（選択矩形・nudge・マウス位置）を読み、DIP へ変換して描画層へ渡すだけである。<br/>
     /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>
     /// 背景は塗らない（透明のままにして下の画像を透かす）。<br/>    /// 外側の装飾（暗転マスク）は選択の有無に関係なく描画する（ハイライトのみを表示するモードを含む）。
@@ -559,9 +559,9 @@ public sealed class DragRectControl : SkiaCanvasView
 
             // 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）。
             // どの矩形を暗転するか・枠線を描くか・ラベルをどう組むかは装飾コアが持つため、本層はフレームを描画 API へ写すだけとする。
-            DragRectOuterSkiaRenderer.Draw(
+            MarqueeOuterSkiaRenderer.Draw(
                 canvas,
-                DragRectFrame.Resolve(
+                MarqueeFrame.Resolve(
                     _session,
                     new EsRect(0, 0, info.Width / scaling, info.Height / scaling),
                     _coordinatePort,
@@ -572,22 +572,22 @@ public sealed class DragRectControl : SkiaCanvasView
             if (options.ShowHandles && _session.HasSelection)
             {
                 var dipRect = _session.ToDipRect(_session.SelectionRect);
-                DragRectSkiaRenderer.DrawHandles(
+                MarqueeSkiaRenderer.DrawHandles(
                     canvas, dipRect, options.HandleSize, options.HandleColor, options.OuterAppearance.BorderColor);
             }
 
             if (_session.NudgeActive && _session.CrosshairVisible)
             {
                 var markerDip = _session.ToDip(_session.MarkerPosition);
-                DragRectSkiaRenderer.DrawStartMarker(
-                    canvas, markerDip, options.MarkerColor, DragRectAppearance.MarkerThickness, options.MarkerLength / 2);
+                MarqueeSkiaRenderer.DrawStartMarker(
+                    canvas, markerDip, options.MarkerColor, MarqueeAppearance.MarkerThickness, options.MarkerLength / 2);
             }
 
             if (options.ShowCoordLabel)
             {
                 var cursorDip = _session.ToDip(_session.LastMousePosition);
                 var clientSize = new EsSize(info.Width / scaling, info.Height / scaling);
-                DragRectSkiaRenderer.DrawCoordLabel(
+                MarqueeSkiaRenderer.DrawCoordLabel(
                     canvas, cursorDip, _session.LastMousePosition, clientSize,
                     options.CoordLabelColor, options.CoordLabelBackgroundColor, options.CoordLabelFontSize);
             }

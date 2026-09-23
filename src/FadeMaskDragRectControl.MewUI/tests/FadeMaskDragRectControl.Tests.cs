@@ -1,7 +1,7 @@
-using Estable.DragRect;
-using Estable.DragRect.Decoration;
+using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using Estable.FadeMaskDragRect;
-using Estable.MewUI.DragRect;
+using Estable.MewUI.Marquee;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Aprillz.MewUI;
@@ -15,7 +15,7 @@ namespace Estable.MewUI.FadeMaskDragRect.Tests;
 /// <summary><see cref="FadeMaskDragRectControl"/>（MewUI 版の複合コントロール）の単体テスト。</summary>
 /// <remarks>
 /// ウィンドウを必要としない範囲（モード切替・状態同期・配線・配置計算）を検証する。<br/>
-/// マウス・キー入力はウィンドウを必要とするため、内包コントロールのテスト（<c>DragRectControl.MewUI.Tests</c>）に委ねる。
+/// マウス・キー入力はウィンドウを必要とするため、内包コントロールのテスト（<c>MarqueeControl.MewUI.Tests</c>）に委ねる。
 /// </remarks>
 public class FadeMaskDragRectControlTests
 {
@@ -44,28 +44,28 @@ public class FadeMaskDragRectControlTests
         Assert.False(control.HasHighlight);
         Assert.Null(control.LogicalHighlightRect);
         Assert.True(control.ShowFullOverlay);
-        Assert.True(control.DragRect.IsVisible);
+        Assert.True(control.Marquee.IsVisible);
         Assert.Null(control.LoupeCenterPoint);
     }
 
     /// <summary>モードに応じて選択矩形・ルーペの可視性と全面暗転が切り替わることを検証する。</summary>
     /// <param name="mode">設定する動作モード。</param>
     /// <param name="expectedShowFullOverlay">全面暗転の期待値。</param>
-    /// <param name="expectedDragRectVisible">選択矩形の可視性の期待値。</param>
+    /// <param name="expectedMarqueeVisible">選択矩形の可視性の期待値。</param>
     [Theory]
     [InlineData(FadeMaskDragRectMode.Crop, true, true)]
     [InlineData(FadeMaskDragRectMode.AreaSelect, true, true)]
     [InlineData(FadeMaskDragRectMode.ScreenSelect, false, false)]
     [InlineData(FadeMaskDragRectMode.WindowSelect, false, false)]
     public void モード切替_選択矩形の可視性と全面暗転を切り替える(
-        FadeMaskDragRectMode mode, bool expectedShowFullOverlay, bool expectedDragRectVisible)
+        FadeMaskDragRectMode mode, bool expectedShowFullOverlay, bool expectedMarqueeVisible)
     {
         var control = new FadeMaskDragRectControl { Mode = mode };
 
         Assert.Equal(expectedShowFullOverlay, control.ShowFullOverlay);
         // 選択矩形を使わないモードでも暗転マスク（ハイライト）を描画するため、描画は止めず入力だけを止める
-        Assert.Equal(expectedDragRectVisible, control.DragRect.IsHitTestVisible);
-        Assert.True(control.DragRect.IsVisible);
+        Assert.Equal(expectedMarqueeVisible, control.Marquee.IsHitTestVisible);
+        Assert.True(control.Marquee.IsVisible);
     }
 
     /// <summary>拡大元画像と中心があるとき、選択矩形を使うモードでのみルーペを表示することを検証する。</summary>
@@ -177,7 +177,7 @@ public class FadeMaskDragRectControlTests
 
         control.Options = FadeMaskDragRectOptions.Default with
         {
-            DragRect = DragRectOptions.Default with
+            Marquee = MarqueeOptions.Default with
             {
                 OuterAppearance = new OuterDecoAppearance
                 {
@@ -192,7 +192,7 @@ public class FadeMaskDragRectControlTests
             },
         };
 
-        var appearance = control.Options.DragRect.OuterAppearance;
+        var appearance = control.Options.Marquee.OuterAppearance;
         Assert.Equal(DrawingColor.Red, appearance.BorderColor);
         Assert.Equal(3.0, appearance.BorderThickness);
         Assert.Equal(DrawingColor.FromArgb(128, 255, 0, 0), appearance.OverlayColor);
@@ -201,8 +201,8 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(DrawingColor.Yellow, appearance.SizeLabelColor);
         Assert.Equal(DrawingColor.FromArgb(200, 0, 0, 255), appearance.SizeLabelBackgroundColor);
         // 設定は選択矩形コントロールへ 1 回の代入で分配される（外側の装飾の枠線と選択矩形が同じ値を持つ）
-        Assert.Equal(DrawingColor.Red, control.DragRect.Options.OuterAppearance.BorderColor);
-        Assert.Equal(3.0, control.DragRect.Options.OuterAppearance.BorderThickness);
+        Assert.Equal(DrawingColor.Red, control.Marquee.Options.OuterAppearance.BorderColor);
+        Assert.Equal(3.0, control.Marquee.Options.OuterAppearance.BorderThickness);
     }
 
     [Fact]
@@ -232,7 +232,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
 
         // 汎用の選択矩形コントロールの既定はラベルを描かない（ラベルの有無は設定値で与える）
-        Assert.False(control.Options.DragRect.OuterAppearance.ShowSizeLabel);
+        Assert.False(control.Options.Marquee.OuterAppearance.ShowSizeLabel);
         Assert.Null(control.SizeLabelOverrideProvider);
     }
 
@@ -336,7 +336,7 @@ public class FadeMaskDragRectControlTests
         // ログ出力を伴う操作を実行しても例外にならない（既定は NullLogger）
         control.Options = control.Options with
         {
-            DragRect = control.Options.DragRect with { ClampToDomainBounds = false },
+            Marquee = control.Options.Marquee with { ClampToDomainBounds = false },
         };
         control.SetSelection(new EsRect(10, 10, 50, 40));
         control.RequestCancel();
@@ -347,13 +347,13 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
 
-        Assert.Same(control.DragRect.Log, control.Log);
+        Assert.Same(control.Marquee.Log, control.Log);
 
         control.Log = null!;
 
         // null は NullLogger へフォールバックし、内包コントロールと同一のインスタンスを共有する
         Assert.NotNull(control.Log);
-        Assert.Same(control.DragRect.Log, control.Log);
+        Assert.Same(control.Marquee.Log, control.Log);
     }
 
     [Fact]
@@ -366,7 +366,7 @@ public class FadeMaskDragRectControlTests
 
         // 入力とルーペは同一のロガーを共有する（ホストは 1 箇所の設定で済む）
         Assert.Same(logger, control.Log);
-        Assert.Same(logger, control.DragRect.Log);
+        Assert.Same(logger, control.Marquee.Log);
         Assert.Same(logger, control.Loupe.Log);
     }
 
@@ -379,7 +379,7 @@ public class FadeMaskDragRectControlTests
         control.Log = logger;
 
         // 選択矩形コントロールはドラッグ操作と外側の装飾の描画を担うため、ログも同じ範囲へ伝搬する
-        Assert.Same(logger, control.DragRect.Log);
+        Assert.Same(logger, control.Marquee.Log);
     }
 
     // ====================================================================
@@ -395,7 +395,7 @@ public class FadeMaskDragRectControlTests
         control.SetCoordinateTransform(port);
 
         // 選択矩形コントロール（内包コントロール）が同じポートを受け取る
-        Assert.Same(port, GetCoordinatePort(control.DragRect));
+        Assert.Same(port, GetCoordinatePort(control.Marquee));
     }
 
     [Fact]
@@ -407,7 +407,7 @@ public class FadeMaskDragRectControlTests
         control.SetCoordinateTransform(null);
 
         // null（未設定）を倍率から解決する規則はコアが単一所有するため、本クラスは置換せずそのまま渡す
-        Assert.Null(GetCoordinatePort(control.DragRect));
+        Assert.Null(GetCoordinatePort(control.Marquee));
     }
 
     /// <summary>座標変換ポート（内部保持）をリフレクションで取得する。</summary>
@@ -417,8 +417,8 @@ public class FadeMaskDragRectControlTests
     /// ポートは公開プロパティではなくメソッドで設定し、内包コントロールが内部で保持する（読み取り API を持たない）。<br/>
     /// 検証は Avalonia 版の複合コントロールテストと同じくリフレクションで行う。
     /// </remarks>
-    private static ICoordTransform? GetCoordinatePort(DragRectControl control)
-        => (ICoordTransform?)typeof(DragRectControl)
+    private static ICoordTransform? GetCoordinatePort(MarqueeControl control)
+        => (ICoordTransform?)typeof(MarqueeControl)
             .GetField("_coordinatePort", BindingFlags.NonPublic | BindingFlags.Instance)!
             .GetValue(control);
 

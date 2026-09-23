@@ -1,7 +1,7 @@
 using Avalonia;
-using Estable.DragRect;
+using Estable.Marquee;
 
-namespace Estable.AvaloniaUI.DragRect;
+namespace Estable.AvaloniaUI.Marquee;
 
 /// <summary>選択矩形に関する通知のイベント引数。</summary>
 /// <remarks>
@@ -11,11 +11,11 @@ namespace Estable.AvaloniaUI.DragRect;
 /// </remarks>
 /// <param name="rect">通知対象の矩形（ドメイン座標）。</param>
 /// <param name="snapshot">通知時点のスナップショット。</param>
-public sealed class SelectionRectEventArgs(Rect rect, DragRectSnapshot snapshot) : EventArgs
+public sealed class SelectionRectEventArgs(Rect rect, MarqueeSnapshot snapshot) : EventArgs
 {
     /// <summary>通知対象の矩形（ドメイン座標）。</summary>
     public Rect Rect { get; } = rect;
 
     /// <summary>通知時点のスナップショット（状態・選択矩形・アクティブハンドル・マウス位置・操作フラグ）。</summary>
-    public DragRectSnapshot Snapshot { get; } = snapshot;
+    public MarqueeSnapshot Snapshot { get; } = snapshot;
 }

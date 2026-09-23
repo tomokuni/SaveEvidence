@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Estable.DragRect.Tests;
 
-/// <summary><see cref="DragRectOptions"/> の単体テスト（既定値・部分変更・値補正・等価性）。</summary>
+/// <summary><see cref="MarqueeOptions"/> の単体テスト（既定値・部分変更・値補正・等価性）。</summary>
 /// <remarks>
 /// 設定の既定値と補正は本型が単一所有するため、両 UI のプロパティの既定値・補正は本テストで担保する。<br/>
 /// 色は UI 非依存の <see cref="System.Drawing.Color"/> で比較する。
@@ -13,7 +13,7 @@ public class DragRectOptionsTests
     [Fact]
     public void 既定値が両UIの期待値と一致する()
     {
-        var options = DragRectOptions.Default;
+        var options = MarqueeOptions.Default;
 
         // 枠線は DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）。外側の装飾の外観が単一所有する
         Assert.Equal(System.Drawing.Color.FromArgb(255, 169, 169, 169), options.OuterAppearance.BorderColor);
@@ -47,43 +47,43 @@ public class DragRectOptionsTests
     public void newとDefaultは等価である()
     {
         // プロパティ初期化子で既定値が入るため、暗黙の new() でも Default と等しくなる
-        Assert.Equal(DragRectOptions.Default, new DragRectOptions());
-        Assert.Equal(DragRectOptions.Default.GetHashCode(), new DragRectOptions().GetHashCode());
+        Assert.Equal(MarqueeOptions.Default, new MarqueeOptions());
+        Assert.Equal(MarqueeOptions.Default.GetHashCode(), new MarqueeOptions().GetHashCode());
     }
 
     [Fact]
     public void 一部の項目だけを変更しても他の項目は既定値を保つ()
     {
-        var options = DragRectOptions.Default with { ShowHandles = false };
+        var options = MarqueeOptions.Default with { ShowHandles = false };
 
         Assert.False(options.ShowHandles);
-        Assert.Equal(DragRectOptions.Default.OuterAppearance, options.OuterAppearance);
-        Assert.Equal(DragRectOptions.Default.HandleSize, options.HandleSize);
-        Assert.Equal(DragRectOptions.Default.CoordLabelFontSize, options.CoordLabelFontSize);
-        Assert.Equal(DragRectOptions.Default.MinSelectionSize, options.MinSelectionSize);
+        Assert.Equal(MarqueeOptions.Default.OuterAppearance, options.OuterAppearance);
+        Assert.Equal(MarqueeOptions.Default.HandleSize, options.HandleSize);
+        Assert.Equal(MarqueeOptions.Default.CoordLabelFontSize, options.CoordLabelFontSize);
+        Assert.Equal(MarqueeOptions.Default.MinSelectionSize, options.MinSelectionSize);
         Assert.True(options.ClampToDomainBounds);
     }
 
     [Fact]
     public void 外側の装飾の外観を変更しても他の項目は既定値を保つ()
     {
-        var options = DragRectOptions.Default with
+        var options = MarqueeOptions.Default with
         {
-            OuterAppearance = DragRectOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
+            OuterAppearance = MarqueeOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
         };
 
         Assert.Equal(3.0, options.OuterAppearance.BorderThickness);
-        Assert.Equal(DragRectOptions.Default.OuterAppearance.BorderColor, options.OuterAppearance.BorderColor);
-        Assert.Equal(DragRectOptions.Default.HandleSize, options.HandleSize);
+        Assert.Equal(MarqueeOptions.Default.OuterAppearance.BorderColor, options.OuterAppearance.BorderColor);
+        Assert.Equal(MarqueeOptions.Default.HandleSize, options.HandleSize);
         Assert.True(options.ShowHandles);
     }
 
     [Fact]
     public void 同名で同値の設定は等価である()
     {
-        var appearance = DragRectOptions.Default.OuterAppearance with { BorderColor = System.Drawing.Color.Red };
-        var a = DragRectOptions.Default with { OuterAppearance = appearance, ShowCoordLabel = true };
-        var b = DragRectOptions.Default with { OuterAppearance = appearance, ShowCoordLabel = true };
+        var appearance = MarqueeOptions.Default.OuterAppearance with { BorderColor = System.Drawing.Color.Red };
+        var a = MarqueeOptions.Default with { OuterAppearance = appearance, ShowCoordLabel = true };
+        var b = MarqueeOptions.Default with { OuterAppearance = appearance, ShowCoordLabel = true };
 
         Assert.Equal(a, b);
         Assert.NotEqual(a, a with { ShowCoordLabel = false });
@@ -100,7 +100,7 @@ public class DragRectOptionsTests
     [InlineData(12.0, 12.0)]
     public void CoordLabelFontSizeは安全域へ補正される(double value, double expected)
     {
-        var options = DragRectOptions.Default with { CoordLabelFontSize = value };
+        var options = MarqueeOptions.Default with { CoordLabelFontSize = value };
 
         Assert.Equal(expected, options.CoordLabelFontSize);
     }
@@ -108,7 +108,7 @@ public class DragRectOptionsTests
     [Fact]
     public void 設定は不変である()
     {
-        var options = DragRectOptions.Default;
+        var options = MarqueeOptions.Default;
         var changed = options with { MinSelectionSize = 20.0 };
 
         // with は新しい値を作る（元の値は変わらない）

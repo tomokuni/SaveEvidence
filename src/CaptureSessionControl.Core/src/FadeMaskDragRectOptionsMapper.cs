@@ -1,5 +1,5 @@
-using Estable.DragRect;
-using Estable.DragRect.Decoration;
+using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using Estable.FadeMaskDragRect;
 using Estable.Loupe;
 using DrawingColor = System.Drawing.Color;
@@ -22,7 +22,7 @@ public static class FadeMaskDragRectOptionsMapper
     /// <param name="loupeBackground">ルーペの市松模様の下地色。null の場合は透明（背後の要素を透かす）。</param>
     /// <returns>複合コントロールへ一括設定できる設定値。</returns>
     /// <remarks>
-    /// 1. 選択矩形の設定（<see cref="DragRectOptions"/>）を組み立てる。外側の装飾の外観（<see cref="OuterDecoAppearance"/>）も含める<br/>
+    /// 1. 選択矩形の設定（<see cref="MarqueeOptions"/>）を組み立てる。外側の装飾の外観（<see cref="OuterDecoAppearance"/>）も含める<br/>
     ///    （枠線を選択枠線と共用するため、2 つの値に分けない）。枠線（<see cref="CaptureSettings.BorderColor"/> /<br/>
     ///    <see cref="CaptureSettings.BorderThickness"/>）は選択枠線と暗転マスクの穴あけ枠の両方へ同じ値が効く。<br/>
     /// 2. サイズラベルの背景色は <see cref="CaptureSettings.TextBackgroundColor"/> を対応させる。<br/>
@@ -37,7 +37,7 @@ public static class FadeMaskDragRectOptionsMapper
 
         return new FadeMaskDragRectOptions
         {
-            DragRect = new DragRectOptions
+            Marquee = new MarqueeOptions
             {
                 MinSelectionSize = settings.MinSelectionSize!.Value,
                 HandleColor = settings.HandleColor!.Value,

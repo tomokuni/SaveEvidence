@@ -1,5 +1,5 @@
-using Estable.DragRect;
-using Estable.DragRect.Decoration;
+using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using Estable.Loupe;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
@@ -17,7 +17,7 @@ public class FadeMaskDragRectOptionsTests
         var options = FadeMaskDragRectOptions.Default;
 
         // 外側の装飾の外観も選択矩形の設定が単一所有する
-        Assert.Equal(DragRectOptions.Default, options.DragRect);
+        Assert.Equal(MarqueeOptions.Default, options.Marquee);
         Assert.Equal(LoupeOptions.Default, options.Loupe);
         Assert.Equal(DrawingColor.White, options.SelectionRectColorA);
         Assert.Equal(DrawingColor.Black, options.SelectionRectColorB);
@@ -54,7 +54,7 @@ public class FadeMaskDragRectOptionsTests
 
         var options = FadeMaskDragRectOptions.Default with
         {
-            DragRect = DragRectOptions.Default with
+            Marquee = MarqueeOptions.Default with
             {
                 OuterAppearance = appearance,
                 HandleColor = DrawingColor.Orange,
@@ -64,11 +64,11 @@ public class FadeMaskDragRectOptionsTests
         };
 
         // 枠線（外側の装飾）と選択矩形の他の設定が同じ 1 つの値に揃う（写し替える導出処理を持たない）
-        Assert.Equal(DrawingColor.Lime, options.DragRect.OuterAppearance.BorderColor);
-        Assert.Equal(3.0, options.DragRect.OuterAppearance.BorderThickness);
-        Assert.Equal(DrawingColor.Orange, options.DragRect.HandleColor);
-        Assert.Equal(12.0, options.DragRect.MinSelectionSize);
-        Assert.False(options.DragRect.ClampToDomainBounds);
+        Assert.Equal(DrawingColor.Lime, options.Marquee.OuterAppearance.BorderColor);
+        Assert.Equal(3.0, options.Marquee.OuterAppearance.BorderThickness);
+        Assert.Equal(DrawingColor.Orange, options.Marquee.HandleColor);
+        Assert.Equal(12.0, options.Marquee.MinSelectionSize);
+        Assert.False(options.Marquee.ClampToDomainBounds);
     }
 
     /// <summary>等価性が値で判定されることを検証する。</summary>

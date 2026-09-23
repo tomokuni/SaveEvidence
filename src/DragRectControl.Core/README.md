@@ -46,6 +46,40 @@ UI 層（公開イベントへ転送）
 
 名前空間は `Estable.DragRect`（幾何は `Estable.DragRect.Selection`、装飾は `Estable.DragRect.Decoration`）。アセンブリ名は `DragRectControl.Core`。
 
+## 名前の由来と一般的な呼称
+
+`DragRect` は**操作**（ドラッグで矩形を描く）に由来する名前です。役割は「矩形領域の選択と表示」であり、`ScreenSelect` / `WindowSelect` のようにドラッグしないモードも含むため、名前が責務を覆い切っていません。
+
+この動作・部品を指す一般的な呼称は次のとおりです（改名する場合の候補）。
+
+| 層 | 一般的な呼称 | 実例 |
+| --- | --- | --- |
+| 動作 | marquee selection / rubber-band selection | Photoshop の矩形マーキー、Qt `QRubberBand`、Windows Explorer のラバーバンド選択 |
+| コントロール | rect tracker | MFC `CRectTracker`（「8 個のハンドル付き矩形を移動・リサイズする」＝本コントロールと同じ責務） |
+| 用途 | region selector | ShareX / Snipaste / Greenshot の領域キャプチャ |
+| 部品 | resize handle / grip / thumb | WPF `Thumb`、Win32 のリサイズグリップ |
+| 部品（キー微調整） | nudge | VS / Figma（本コントロールは既にこの用語を使用） |
+
+改名の候補と評価（**未実施。公開 API の破壊的変更のため判断待ち**）:
+
+判定は**使用中のバージョン**のアセンブリ（Avalonia 12.1.3 / MewUI 0.21.1 / WinForms = `Microsoft.WindowsDesktop.App` 10.0.12 / WinUI3 = Windows App SDK 1.8 / .NET 10 BCL）のメタデータから**型定義テーブル**を読んで行った（文字列走査だけでは古いキャッシュ `avalonia/0.10.0` を拾って誤判定し、`ProgressBarStyle.Marquee` のような**列挙メンバーを型と誤認**する）。
+
+| 候補 | 長さ | 型名の衝突（実測） | 評価 |
+| --- | --- | --- | --- |
+| `Marquee` | 7 | **なし**（WinForms / WinUI3 / Avalonia / MewUI / .NET 10 BCL の**すべてで 0 件**。`MarqueeControl` 等の派生名も 0 件） | 動作の標準語。短い。**推奨** |
+| `Region` | 6 | **あり**（`System.Drawing.Region`。WinForms 版は `using System.Drawing;` が必須のため実衝突する） | 最短級だが WinForms 追加時に衝突する |
+| `Area` | 4 | なし | 最短。汎用すぎて意味が弱い |
+| `RubberBand` | 10 | 型は 0 件。ただし Avalonia に `_isRubberBanding` / `RubberBandFactor` / `RubberBandReturnDuration`（伸縮スクロール）があり、**同一フレームワーク内で別の意味に使われている** | Qt の標準語。長い |
+| `RegionSelect` | 12 | なし | 役割を最も明確に表す。長い |
+| `RectTracker` | 11 | なし | MFC の系譜で Windows では最も正確。`Tracker` が状態管理クラスと紛らわしい |
+| `Selector` / `Thumb` | — | **あり**（`Avalonia.Styling.Selector` / `System.Drawing`・`System.Windows.Forms`・`Microsoft.UI.Xaml.Controls.Primitives.Thumb`） | 使用不可 |
+
+**`Marquee` の「進行バー」の連想について**: WinForms には `ProgressBarStyle.Marquee` / `ProgressBar.MarqueeAnimationSpeed` / `MarqueePaused` という**メンバー**があり、WinUI3 には `Marquee` を含むメンバーが**存在しない**（不確定表示は `IsIndeterminate`）。C# では**メンバー名は型名と衝突しない**（`ProgressBarStyle.Marquee` は型で修飾して使う）ため、`MarqueeControl` / `MarqueeOptions` 等の型名に影響はない。
+
+改名する場合は型 20 種・コード参照約 1,700 箇所・ドキュメント約 1,070 箇所の更新を伴う（テキスト一括置換ではなく LSP の改名を使う）。名前空間は既存の `Estable.Loupe` → `LoupeControl` と同じ「名前空間 = 概念、型 = 概念 + 役割」の形になる。
+
+**併せて確認したこと（将来の WinForms / WinUI3 版に向けて）**: 本リポジトリの現在の**公開型 111 種は WinForms / WinUI3 / Avalonia / MewUI / BCL のいずれとも衝突しない**。UI を追加するときに注意するのは型名ではなく、色型（WinUI3 は `Windows.UI.Color`）とコントロール基底（WinForms は `System.Windows.Forms.Control`）の境界変換である。
+
 ## 選択矩形の外側に描く装飾（`Estable.DragRect.Decoration`）
 
 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル・ハイライト）の契約・外観・幾何・フレーム解決を本プロジェクトが単一所有します。

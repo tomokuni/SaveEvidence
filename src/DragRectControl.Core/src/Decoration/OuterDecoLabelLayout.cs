@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.DragRect.Decoration;
+namespace Estable.Marquee.Decoration;
 
 /// <summary>暗転オーバーレイのラベル（サイズラベル・サブライン）のレイアウト計算（純粋関数）。</summary>
 /// <remarks>

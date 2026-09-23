@@ -6,10 +6,10 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
-using DragRectControl.Sample.Logging;
-using DragRectControl.Sample.ViewModels;
-using Estable.AvaloniaUI.DragRect;
-using Estable.DragRect;
+using MarqueeControl.Sample.Logging;
+using MarqueeControl.Sample.ViewModels;
+using Estable.AvaloniaUI.Marquee;
+using Estable.Marquee;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
@@ -17,7 +17,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using System.Collections.Specialized;
 
-namespace DragRectControl.Sample.Views;
+namespace MarqueeControl.Sample.Views;
 
 /// <summary>メインウィンドウ。DragRectControl のイベント購読・設定反映・座標ポート設定を担う。</summary>
 /// <remarks>
@@ -170,10 +170,10 @@ public partial class MainWindow : Window
     /// <summary>ViewModel の設定プロパティを DragRectControl へ反映する。</summary>
     private void ApplyControlSettings()
     {
-        DragRect.Options = new DragRectOptions
+        DragRect.Options = new MarqueeOptions
         {
             // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描くため、枠線の色・太さはその外観へ与える
-            OuterAppearance = DragRectOptions.Default.OuterAppearance with
+            OuterAppearance = MarqueeOptions.Default.OuterAppearance with
             {
                 BorderColor = _vm.BorderColorOption.Color.ToDrawingColor(),
                 BorderThickness = _vm.BorderThickness,
@@ -228,7 +228,7 @@ public partial class MainWindow : Window
     /// <summary>ドラッグの始点が決定されたときの処理。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">座標イベント引数。</param>
-    private void OnSelectionStarted(object? sender, DragRectPointEventArgs e)
+    private void OnSelectionStarted(object? sender, MarqueePointEventArgs e)
         => _vm.AddLog($"[Event] SelectionStarted: ({e.Point.X:F0}, {e.Point.Y:F0})");
 
     /// <summary>選択が確定したときの処理。</summary>
@@ -252,25 +252,25 @@ public partial class MainWindow : Window
     /// <summary>左ボタン押下時の処理。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">座標イベント引数。</param>
-    private void OnMouseDown(object? sender, DragRectPointEventArgs e)
+    private void OnMouseDown(object? sender, MarqueePointEventArgs e)
         => _vm.AddLog($"[Event] MouseDown: ({e.Point.X:F0}, {e.Point.Y:F0})");
 
     /// <summary>左ボタン解放時の処理。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">座標イベント引数。</param>
-    private void OnMouseUp(object? sender, DragRectPointEventArgs e)
+    private void OnMouseUp(object? sender, MarqueePointEventArgs e)
         => _vm.AddLog($"[Event] MouseUp: ({e.Point.X:F0}, {e.Point.Y:F0})");
 
     /// <summary>クリック（ドラッグ移動なしの押下→解放）時の処理。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">座標イベント引数。</param>
-    private void OnMouseClicked(object? sender, DragRectPointEventArgs e)
+    private void OnMouseClicked(object? sender, MarqueePointEventArgs e)
         => _vm.AddLog($"[Event] MouseClicked: ({e.Point.X:F0}, {e.Point.Y:F0})");
 
     /// <summary>ダブルクリック検出時の処理（汎用公開。確定/キャンセルは DragRectControl 自身が判定し ConfirmRequested / CancelRequested で通知する）。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ダブルクリックイベント引数。</param>
-    private void OnMouseDoubleClicked(object? sender, DragRectPointEventArgs e)
+    private void OnMouseDoubleClicked(object? sender, MarqueePointEventArgs e)
     {
         _vm.AddLog($"[Event] MouseDoubleClicked: ({e.Point.X:F0}, {e.Point.Y:F0})");
     }
@@ -279,13 +279,13 @@ public partial class MainWindow : Window
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">座標イベント引数。</param>
     /// <remarks>マウス移動ごとに発火するため、ログは抑制してデバッグ用途のみにする。</remarks>
-    private void OnMouseMoved(object? sender, DragRectPointEventArgs e)
+    private void OnMouseMoved(object? sender, MarqueePointEventArgs e)
         => _vm.AddLog($"[Event] MouseMoved: ({e.Point.X:F0}, {e.Point.Y:F0})");
 
     /// <summary>nudge 後のルーペ中心位置要求の処理。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">座標イベント引数。</param>
-    private void OnLoupePositionMoved(object? sender, DragRectPointEventArgs e)
+    private void OnLoupePositionMoved(object? sender, MarqueePointEventArgs e)
         => _vm.AddLog($"[Event] LoupePositionMoved: ({e.Point.X:F0}, {e.Point.Y:F0})");
 
     /// <summary>Enter キーによる確定要求の処理（選択破棄はコントロールが実施済み）。</summary>
@@ -335,7 +335,7 @@ public partial class MainWindow : Window
     /// <summary>固定の選択矩形を設定する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">イベント引数。</param>
-    /// <remarks>外部からの復元（<see cref="DragRectControl.SetSelection"/>）の動作確認。</remarks>
+    /// <remarks>外部からの復元（<see cref="MarqueeControl.SetSelection"/>）の動作確認。</remarks>
     private void OnSetFixedClicked(object? sender, RoutedEventArgs e)
     {
         DragRect.SetSelection(new Rect(250, 180, 500, 360));
@@ -346,7 +346,7 @@ public partial class MainWindow : Window
     /// <summary>確定要求（Enter キーと同じ条件）を発行する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">イベント引数。</param>
-    /// <remarks>プログラムからの確定要求（<see cref="DragRectControl.RequestConfirm"/>）の動作確認。</remarks>
+    /// <remarks>プログラムからの確定要求（<see cref="MarqueeControl.RequestConfirm"/>）の動作確認。</remarks>
     private void OnConfirmClicked(object? sender, RoutedEventArgs e)
     {
         DragRect.RequestConfirm();
@@ -356,7 +356,7 @@ public partial class MainWindow : Window
     /// <summary>キャンセル要求（Escape キーと同じ条件）を発行する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">イベント引数。</param>
-    /// <remarks>プログラムからのキャンセル要求（<see cref="DragRectControl.RequestCancel"/>）の動作確認。</remarks>
+    /// <remarks>プログラムからのキャンセル要求（<see cref="MarqueeControl.RequestCancel"/>）の動作確認。</remarks>
     private void OnCancelClicked(object? sender, RoutedEventArgs e)
     {
         DragRect.RequestCancel();

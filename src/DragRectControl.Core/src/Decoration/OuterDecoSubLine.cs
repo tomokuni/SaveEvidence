@@ -1,4 +1,4 @@
-namespace Estable.DragRect.Decoration;
+namespace Estable.Marquee.Decoration;
 
 /// <summary>暗転マスクのサイズラベルの下に表示する 1 行分の内容（テキスト・フォントサイズ・色）。</summary>
 /// <param name="Text">行のテキスト。</param>

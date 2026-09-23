@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.DragRect.Decoration.Tests;
+namespace Estable.Marquee.Decoration.Tests;
 
 /// <summary><see cref="OuterDecoFrame"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

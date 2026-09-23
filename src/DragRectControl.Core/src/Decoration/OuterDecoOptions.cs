@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.DragRect.Decoration;
+namespace Estable.Marquee.Decoration;
 
 /// <summary>暗転マスクの設定と描画状態を 1 つにまとめた不変の値。</summary>
 /// <remarks>
@@ -14,7 +14,7 @@ namespace Estable.DragRect.Decoration;
 /// <b>選択矩形の扱い</b>: <see cref="LogicalSelectionRect"/> はドメイン座標（元画像ピクセル / 仮想スクリーンピクセル）で与える。<br/>
 /// 論理座標 → DIP の変換は描画時（座標変換ポート）に行うため、レイアウト変化に自動で追従する。<br/>
 /// <br/>
-/// <b>可視性</b>: 本値は <see cref="DragRectFrame"/>（同一アセンブリ）が組み立てるため、本値を公開しない<br/>
+/// <b>可視性</b>: 本値は <see cref="MarqueeFrame"/>（同一アセンブリ）が組み立てるため、本値を公開しない<br/>
 /// （選択矩形コントロールの公開設定は <c>DragRectOptions.Outer*</c> が担う）。
 /// </remarks>
 internal sealed record OuterDecoOptions

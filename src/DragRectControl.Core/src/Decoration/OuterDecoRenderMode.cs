@@ -1,4 +1,4 @@
-namespace Estable.DragRect.Decoration;
+namespace Estable.Marquee.Decoration;
 
 /// <summary>オーバーレイ描画のモード（描画要素の切り替えに使用する）。</summary>
 /// <remarks>

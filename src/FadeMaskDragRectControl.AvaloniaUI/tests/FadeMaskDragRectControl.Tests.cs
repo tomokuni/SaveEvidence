@@ -7,12 +7,12 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
-using Estable.AvaloniaUI.DragRect;
+using Estable.AvaloniaUI.Marquee;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using Estable.DragRect.Decoration;
+using Estable.Marquee.Decoration;
 using Estable.FadeMaskDragRect;
-using Estable.DragRect;
+using Estable.Marquee;
 using Estable.Loupe;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -24,7 +24,7 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
 /// <remarks>
 /// 対象: <c>FadeMaskDragRectControl.cs</c>（公開 API: Mode / Options / SetCoordinateTransform /<br/>
 /// SetSelection / ClearSelection / SetLoupePosition / イベント中継 / テスト用アクセサ）。<br/>
-/// パブリック API 経由で内包コントロール（DragRect / Loupe）への設定・状態同期・イベント中継を検証する。
+/// パブリック API 経由で内包コントロール（Marquee / Loupe）への設定・状態同期・イベント中継を検証する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class FadeMaskDragRectControlTests
@@ -40,7 +40,7 @@ public class FadeMaskDragRectControlTests
 
         // 選択矩形（外側の装飾の描画も担う）とルーペが子として配置される
         Assert.Equal(2, control.Children.Count);
-        Assert.Contains(control.DragRect, control.Children);
+        Assert.Contains(control.Marquee, control.Children);
         Assert.Contains(control.Loupe, control.Children);
     }
 
@@ -62,14 +62,14 @@ public class FadeMaskDragRectControlTests
     [InlineData(FadeMaskDragRectMode.ScreenSelect, OuterDecoRenderMode.ScreenSelect, false, false)]
     [InlineData(FadeMaskDragRectMode.WindowSelect, OuterDecoRenderMode.WindowSelect, false, false)]
     public void Mode_描画モードと入力の可否と全面暗転が切り替わる(
-        FadeMaskDragRectMode mode, OuterDecoRenderMode expectedRenderMode, bool expectedDragRectInteractive, bool expectedShowFullOverlay)
+        FadeMaskDragRectMode mode, OuterDecoRenderMode expectedRenderMode, bool expectedMarqueeInteractive, bool expectedShowFullOverlay)
     {
         var control = new FadeMaskDragRectControl { Mode = mode };
 
-        Assert.Equal(expectedRenderMode, control.DragRect.Options.OuterRenderMode);
+        Assert.Equal(expectedRenderMode, control.Marquee.Options.OuterRenderMode);
         // 選択矩形を使わないモードでも暗転マスク（ハイライト）を描画するため、描画は止めず入力だけを止める
-        Assert.Equal(expectedDragRectInteractive, control.DragRect.IsHitTestVisible);
-        Assert.True(control.DragRect.IsVisible);
+        Assert.Equal(expectedMarqueeInteractive, control.Marquee.IsHitTestVisible);
+        Assert.True(control.Marquee.IsVisible);
         Assert.Equal(expectedShowFullOverlay, control.ShowFullOverlay);
     }
 
@@ -91,10 +91,10 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var options = FadeMaskDragRectOptions.Default with
         {
-            DragRect = DragRectOptions.Default with
+            Marquee = MarqueeOptions.Default with
             {
                 MinSelectionSize = 5,
-                OuterAppearance = DragRectOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
+                OuterAppearance = MarqueeOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
                 HandleColor = Color.FromAColor(102, Colors.Red).ToDrawingColor(),
                 HandleSize = 12.0,
                 HandleHitRadius = 15.0,
@@ -106,7 +106,7 @@ public class FadeMaskDragRectControlTests
 
         control.Options = options;
 
-        var applied = control.DragRect.Options;
+        var applied = control.Marquee.Options;
         Assert.Equal(5, applied.MinSelectionSize);
         Assert.Equal(3.0, applied.OuterAppearance.BorderThickness);
         Assert.Equal(Color.FromAColor(102, Colors.Red), applied.HandleColor.ToAvaloniaColor());
@@ -123,7 +123,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var options = FadeMaskDragRectOptions.Default with
         {
-            DragRect = DragRectOptions.Default with
+            Marquee = MarqueeOptions.Default with
             {
                 OuterAppearance = new OuterDecoAppearance
                 {
@@ -153,7 +153,7 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(2.0, control.Scaling);
         Assert.Equal(1.5, control.DisplayScaleScaling);
         // 外観はコアの OuterDecoAppearance へ 1 つにまとめて反映される（色は UI 非依存の色型）
-        var appearance = control.DragRect.Options.OuterAppearance;
+        var appearance = control.Marquee.Options.OuterAppearance;
         Assert.Equal(Color.FromAColor(128, Colors.DarkBlue).ToDrawingColor(), appearance.OverlayColor);
         Assert.Equal(Colors.Yellow.ToDrawingColor(), appearance.SizeLabelColor);
         Assert.Equal(Color.FromAColor(179, Colors.DarkBlue).ToDrawingColor(), appearance.SizeLabelBackgroundColor);
@@ -175,7 +175,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var options = FadeMaskDragRectOptions.Default with
         {
-            DragRect = DragRectOptions.Default with
+            Marquee = MarqueeOptions.Default with
             {
                 ShowCoordLabel = true,
                 CoordLabelColor = Colors.Yellow.ToDrawingColor(),
@@ -216,8 +216,8 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(4, control.Loupe.Options.Appearance.FrameWidth);
         // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため、ルーペのプロパティへ渡される
         Assert.Equal(30.0, control.Loupe.PositionOffset);
-        // 座標ラベル（DragRect / Loupe）
-        var applied = control.DragRect.Options;
+        // 座標ラベル（Marquee / Loupe）
+        var applied = control.Marquee.Options;
         Assert.True(applied.ShowCoordLabel);
         Assert.Equal(Colors.Yellow, applied.CoordLabelColor.ToAvaloniaColor());
         Assert.Equal(Color.FromAColor(179, Colors.DarkGreen), applied.CoordLabelBackgroundColor.ToAvaloniaColor());
@@ -267,7 +267,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         control.Options = FadeMaskDragRectOptions.Default with
         {
-            DragRect = DragRectOptions.Default with { MinSelectionSize = 5 },
+            Marquee = MarqueeOptions.Default with { MinSelectionSize = 5 },
             Loupe = LoupeOptions.Default with { RequestedSize = 150 },
             LoupeOffset = 30.0,
         };
@@ -275,17 +275,17 @@ public class FadeMaskDragRectControlTests
         // with 式で一部だけを差し替える（指定しない項目は現在値＝既定値を維持する）
         control.Options = control.Options with
         {
-            DragRect = control.Options.DragRect with
+            Marquee = control.Options.Marquee with
             {
                 MarkerLength = 24.0,
-                OuterAppearance = control.Options.DragRect.OuterAppearance with { BorderThickness = 4.0 },
+                OuterAppearance = control.Options.Marquee.OuterAppearance with { BorderThickness = 4.0 },
             },
             Loupe = control.Options.Loupe with { RequestedSize = 200 },
         };
 
-        Assert.Equal(5, control.DragRect.Options.MinSelectionSize);           // 未指定 → 現在値維持
-        Assert.Equal(24.0, control.DragRect.Options.MarkerLength);            // 指定 → 反映
-        Assert.Equal(4.0, control.DragRect.Options.OuterAppearance.BorderThickness); // 指定 → 反映
+        Assert.Equal(5, control.Marquee.Options.MinSelectionSize);           // 未指定 → 現在値維持
+        Assert.Equal(24.0, control.Marquee.Options.MarkerLength);            // 指定 → 反映
+        Assert.Equal(4.0, control.Marquee.Options.OuterAppearance.BorderThickness); // 指定 → 反映
         Assert.Equal(200, control.Loupe.Options.RequestedSize);               // 指定 → 反映
         Assert.Equal(30.0, control.Loupe.PositionOffset);                     // 未指定 → 現在値維持
         Assert.Equal(200, control.Options.Loupe.RequestedSize);               // getter は更新後の値を返す
@@ -303,8 +303,8 @@ public class FadeMaskDragRectControlTests
 
         control.SetCoordinateTransform(port);
 
-        Assert.Same(port, GetCoordinatePort(control.DragRect));
-        Assert.Same(port, GetCoordinatePort(control.DragRect));
+        Assert.Same(port, GetCoordinatePort(control.Marquee));
+        Assert.Same(port, GetCoordinatePort(control.Marquee));
         Assert.Same(port, GetCoordinatePort(control.Loupe));
     }
 
@@ -348,7 +348,7 @@ public class FadeMaskDragRectControlTests
     }
 
     // ====================================================================
-    // 配線（DragRect のイベント → 状態同期・ホスト通知）
+    // 配線（Marquee のイベント → 状態同期・ホスト通知）
     // ====================================================================
 
     [AvaloniaFact]
@@ -357,18 +357,18 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var rect = new Rect(20, 30, 100, 80);
 
-        // DragRect.SetSelection → SelectionChanged 発火 → 複合コントロールがレンダラーへ同期
-        control.DragRect.SetSelection(rect);
+        // Marquee.SetSelection → SelectionChanged 発火 → 複合コントロールがレンダラーへ同期
+        control.Marquee.SetSelection(rect);
 
         Assert.Equal(rect, control.SelectionRect);
         Assert.True(control.HasSelection);
     }
 
     [AvaloniaFact]
-    public void ConfirmRequested_DragRectの確定要求が中継される()
+    public void ConfirmRequested_Marqueeの確定要求が中継される()
     {
         var control = new FadeMaskDragRectControl();
-        control.DragRect.SetSelection(new Rect(10, 10, 50, 40));
+        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
         Rect? confirmed = null;
         control.ConfirmRequested += (_, e) => confirmed = e.SelectionRect;
 
@@ -381,21 +381,21 @@ public class FadeMaskDragRectControlTests
     public void ConfirmRequested_購読者がいない場合は中継されない()
     {
         var control = new FadeMaskDragRectControl();
-        control.DragRect.SetSelection(new Rect(10, 10, 50, 40));
+        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
 
         // リフレクションで ConfirmRequested を直接発火する（購読者なし → ?.Invoke の null 分岐）
-        var field = typeof(DragRectControl).GetField(
+        var field = typeof(MarqueeControl).GetField(
             "ConfirmRequested", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        eventDelegate?.DynamicInvoke(control.DragRect,
-            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
+        eventDelegate?.DynamicInvoke(control.Marquee,
+            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.Marquee.CurrentSnapshot));
 
         // 例外なく完了する
         Assert.True(true);
     }
 
     [AvaloniaFact]
-    public void CancelRequested_DragRectのキャンセル要求が中継される()
+    public void CancelRequested_Marqueeのキャンセル要求が中継される()
     {
         var control = new FadeMaskDragRectControl();
         int cancelled = 0;
@@ -412,10 +412,10 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
 
         // リフレクションで CancelRequested を直接発火する（購読者なし → ?.Invoke の null 分岐）
-        var field = typeof(DragRectControl).GetField(
+        var field = typeof(MarqueeControl).GetField(
             "CancelRequested", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        eventDelegate?.DynamicInvoke(control.DragRect, EventArgs.Empty);
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
+        eventDelegate?.DynamicInvoke(control.Marquee, EventArgs.Empty);
 
         // 例外なく完了する
         Assert.True(true);
@@ -425,15 +425,15 @@ public class FadeMaskDragRectControlTests
     public void ZoomRequested_ズーム要求が中継される()
     {
         var control = new FadeMaskDragRectControl();
-        DragRectZoomRequest? received = null;
+        WheelZoomRequest? received = null;
         control.ZoomRequested += (_, request) => received = request;
 
-        // DragRect の ZoomRequested は通常の .NET イベント（Ctrl+ホイールで発火）のため、
+        // Marquee の ZoomRequested は通常の .NET イベント（Ctrl+ホイールで発火）のため、
         // リフレクションでバッキングフィールドを取得して直接発火する（中継の検証用）。
-        var field = typeof(DragRectControl).GetField(
+        var field = typeof(MarqueeControl).GetField(
             "ZoomRequested", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        eventDelegate?.DynamicInvoke(control.DragRect, new DragRectZoomRequest(true, new EsPoint(10, 20)));
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
+        eventDelegate?.DynamicInvoke(control.Marquee, new WheelZoomRequest(true, new EsPoint(10, 20)));
 
         Assert.NotNull(received);
         Assert.True(received!.Value.ZoomIn);
@@ -444,14 +444,14 @@ public class FadeMaskDragRectControlTests
     public void ScrollRequested_スクロール要求が中継される()
     {
         var control = new FadeMaskDragRectControl();
-        DragRectScrollRequest? received = null;
+        WheelScrollRequest? received = null;
         control.ScrollRequested += (_, request) => received = request;
 
-        // DragRect の ScrollRequested をリフレクションで直接発火する（中継の検証用）。
-        var field = typeof(DragRectControl).GetField(
+        // Marquee の ScrollRequested をリフレクションで直接発火する（中継の検証用）。
+        var field = typeof(MarqueeControl).GetField(
             "ScrollRequested", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        eventDelegate?.DynamicInvoke(control.DragRect, new DragRectScrollRequest(0, 1, true, new EsPoint(30, 40)));
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
+        eventDelegate?.DynamicInvoke(control.Marquee, new WheelScrollRequest(0, 1, true, new EsPoint(30, 40)));
 
         Assert.NotNull(received);
         Assert.Equal(1.0, received!.Value.DeltaY);
@@ -465,10 +465,10 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
 
         // リフレクションで ZoomRequested を直接発火する（購読者なし → ?.Invoke の null 分岐）
-        var field = typeof(DragRectControl).GetField(
+        var field = typeof(MarqueeControl).GetField(
             "ZoomRequested", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        eventDelegate?.DynamicInvoke(control.DragRect, new DragRectZoomRequest(true, new EsPoint(0, 0)));
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
+        eventDelegate?.DynamicInvoke(control.Marquee, new WheelZoomRequest(true, new EsPoint(0, 0)));
 
         // 例外なく完了する
         Assert.True(true);
@@ -678,7 +678,7 @@ public class FadeMaskDragRectControlTests
     /// <param name="control">対象のコントロール。</param>
     /// <returns>設定されている座標変換ポート。</returns>
     /// <remarks>
-    /// DragRect はポートをコアの状態管理クラス（セッション）が保持するため、<c>_session.State.Port</c> を辿る。<br/>
+    /// Marquee はポートをコアの状態管理クラス（セッション）が保持するため、<c>_session.State.Port</c> を辿る。<br/>
     /// 他のコントロール（Loupe）は自前の <c>_coordinatePort</c> フィールドを保持する。
     /// </remarks>
     private static ICoordTransform GetCoordinatePort(Control control)
@@ -710,14 +710,14 @@ public class FadeMaskDragRectControlTests
         Assert.False(control.HasSelection);
         Assert.Equal(default, control.SelectionRect);
 
-        // 選択時: HasSelection = true かつ矩形が同期される（DragRect.SetSelection → SelectionChanged → 同期）
-        control.DragRect.SetSelection(new Rect(10, 10, 50, 40));
+        // 選択時: HasSelection = true かつ矩形が同期される（Marquee.SetSelection → SelectionChanged → 同期）
+        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
         Assert.True(control.HasSelection);
         Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionRect);
     }
 
     [AvaloniaFact]
-    public void SetDragRectSelection_DragRectの選択状態を設定して同期される()
+    public void SetSelection_Marqueeの選択状態を設定して同期される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -730,12 +730,12 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void AttachScrollViewer_DragRectへ明示注入される()
+    public void AttachScrollViewer_Marqueeへ明示注入される()
     {
         var control = new FadeMaskDragRectControl();
         var scrollViewer = new ScrollViewer();
 
-        // 例外なく設定できる（DragRect.AttachScrollViewer へ委譲）
+        // 例外なく設定できる（Marquee.AttachScrollViewer へ委譲）
         control.AttachScrollViewer(scrollViewer);
         control.AttachScrollViewer(null);
     }
@@ -753,7 +753,7 @@ public class FadeMaskDragRectControlTests
     public void NotifyViewportChanged_選択状態を維持したまま再描画を要求する()
     {
         var control = new FadeMaskDragRectControl();
-        control.DragRect.SetSelection(new Rect(10, 10, 50, 40));
+        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
 
         // ビューポート（パン・ズーム）変化の通知 → 例外なく再描画・再計算できる
         control.NotifyViewportChanged();
@@ -767,15 +767,15 @@ public class FadeMaskDragRectControlTests
     public void ViewportChanged_イベントで選択状態を維持したまま再描画が要求される()
     {
         var control = new FadeMaskDragRectControl();
-        control.DragRect.SetSelection(new Rect(10, 10, 50, 40));
+        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
 
-        // DragRect の ViewportChanged を発火（ScrollViewer 連携の ScrollChanged → ViewportChanged の模擬）。
+        // Marquee の ViewportChanged を発火（ScrollViewer 連携の ScrollChanged → ViewportChanged の模擬）。
         // 配線は NotifyViewportChanged に統合されている（選択状態の再同期は行わず、再描画のみ要求）
-        var field = typeof(DragRectControl).GetField(
+        var field = typeof(MarqueeControl).GetField(
             "ViewportChanged", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        eventDelegate?.DynamicInvoke(control.DragRect,
-            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
+        eventDelegate?.DynamicInvoke(control.Marquee,
+            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.Marquee.CurrentSnapshot));
 
         // 選択状態は維持される（再描画要求のみ）
         Assert.True(control.HasSelection);
@@ -786,7 +786,7 @@ public class FadeMaskDragRectControlTests
     public void ViewportChanged_イベントでルーペ位置が再計算される()
     {
         var control = new FadeMaskDragRectControl();
-        control.DragRect.SetSelection(new Rect(10, 10, 50, 40));
+        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
 
         // ルーペの表示位置計算（UpdatePosition）は親 Panel 接続 + IsVisible が条件のため、
         // ウィンドウに配置してツリーへ接続し、AXAML 既定（IsVisible=False）を明示的に表示へ切り替えてから中心を設定する
@@ -797,12 +797,12 @@ public class FadeMaskDragRectControlTests
         var before = control.Loupe.RenderTransform;
         Assert.NotNull(before); // 接続後に CenterPoint 設定の位置計算で RenderTransform が生成される
 
-        // DragRect の ViewportChanged を発火（ScrollViewer 連携のスクロール変化の模擬）
-        var field = typeof(DragRectControl).GetField(
+        // Marquee の ViewportChanged を発火（ScrollViewer 連携のスクロール変化の模擬）
+        var field = typeof(MarqueeControl).GetField(
             "ViewportChanged", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        eventDelegate?.DynamicInvoke(control.DragRect,
-            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.DragRect.CurrentSnapshot));
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
+        eventDelegate?.DynamicInvoke(control.Marquee,
+            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.Marquee.CurrentSnapshot));
 
         // ルーペ表示位置が再計算される（NotifyViewportChanged → Loupe.RefreshPosition 経由で RenderTransform が更新される。
         // TranslateTransform は同一インスタンスの値更新のため Same で検証）
@@ -816,7 +816,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void LoupePositionMoved_DragRectのルーペ位置更新が中継される()
+    public void LoupePositionMoved_Marqueeのルーペ位置更新が中継される()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
@@ -827,11 +827,11 @@ public class FadeMaskDragRectControlTests
         control.LoupePositionMoved += (_, e) => received = e;
 
         // リフレクションで LoupePositionMoved イベントを直接発火する（中継の検証用）
-        var field = typeof(DragRectControl).GetField(
+        var field = typeof(MarqueeControl).GetField(
             "LoupePositionMoved", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        var args = new DragRectPointEventArgs(new Point(100, 200), control.DragRect.CurrentSnapshot);
-        eventDelegate?.DynamicInvoke(control.DragRect, args);
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
+        var args = new MarqueePointEventArgs(new Point(100, 200), control.Marquee.CurrentSnapshot);
+        eventDelegate?.DynamicInvoke(control.Marquee, args);
 
         // ルーペ中心が更新され、ホストへ独自イベント引数（位置）で中継される
         Assert.Equal(new Point(100, 200), control.Loupe.CenterPoint);
@@ -848,11 +848,11 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
 
         // リフレクションで LoupePositionMoved イベントを直接発火する（購読者なし → ?.Invoke の null 分岐）
-        var field = typeof(DragRectControl).GetField(
+        var field = typeof(MarqueeControl).GetField(
             "LoupePositionMoved", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.DragRect);
-        var args = new DragRectPointEventArgs(new Point(100, 200), control.DragRect.CurrentSnapshot);
-        eventDelegate?.DynamicInvoke(control.DragRect, args);
+        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
+        var args = new MarqueePointEventArgs(new Point(100, 200), control.Marquee.CurrentSnapshot);
+        eventDelegate?.DynamicInvoke(control.Marquee, args);
 
         // 購読者がいないため例外なく完了する（ルーペ中心は更新されるが表示はしない）
         Assert.Equal(new Point(100, 200), control.Loupe.CenterPoint);
@@ -895,9 +895,9 @@ public class FadeMaskDragRectControlTests
             // 矩形外クリック（ポインター押下 → 新規選択開始 = SelectionStarted 発火）で選択状態がクリアされる。
             // 押下位置 (300,200) は選択矩形 (10,10,50,40) の外側ハンドル帯（HandleHitRadius=12）からも離れている
             var pointer = CreatePointer();
-            var pressed = new PointerPressedEventArgs(control.DragRect, pointer, window,
-                ToScreenPoint(control.DragRect, new Point(300, 200)), 0UL, LeftPressed(), KeyModifiers.None, 1);
-            control.DragRect.RaiseEvent(pressed);
+            var pressed = new PointerPressedEventArgs(control.Marquee, pointer, window,
+                ToScreenPoint(control.Marquee, new Point(300, 200)), 0UL, LeftPressed(), KeyModifiers.None, 1);
+            control.Marquee.RaiseEvent(pressed);
 
             Assert.False(control.HasSelection);
             // 選択矩形の位置はセッションが保持するため、選択としての有効性は HasSelection で判定する
@@ -919,17 +919,17 @@ public class FadeMaskDragRectControlTests
         {
             // 新規選択ドラッグ（3px 移動 = MinSelectionSize 未満 → キャンセル = SelectionCancelled 発火）
             var pointer = CreatePointer();
-            var pressed = new PointerPressedEventArgs(control.DragRect, pointer, window,
-                ToScreenPoint(control.DragRect, new Point(20, 20)), 0UL, LeftPressed(), KeyModifiers.None, 1);
-            control.DragRect.RaiseEvent(pressed);
+            var pressed = new PointerPressedEventArgs(control.Marquee, pointer, window,
+                ToScreenPoint(control.Marquee, new Point(20, 20)), 0UL, LeftPressed(), KeyModifiers.None, 1);
+            control.Marquee.RaiseEvent(pressed);
             // ドラッグ中（SelectionChanged で選択状態が設定される）
-            var moved = new PointerEventArgs(InputElement.PointerMovedEvent, control.DragRect, pointer, window,
-                ToScreenPoint(control.DragRect, new Point(23, 23)), 0UL, LeftPressed(), KeyModifiers.None);
-            control.DragRect.RaiseEvent(moved);
+            var moved = new PointerEventArgs(InputElement.PointerMovedEvent, control.Marquee, pointer, window,
+                ToScreenPoint(control.Marquee, new Point(23, 23)), 0UL, LeftPressed(), KeyModifiers.None);
+            control.Marquee.RaiseEvent(moved);
             // 解放（3px = MinSelectionSize 未満 → SelectionCancelled 発火 → 選択状態クリア）
-            var released = new PointerReleasedEventArgs(control.DragRect, pointer, window,
-                ToScreenPoint(control.DragRect, new Point(23, 23)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left);
-            control.DragRect.RaiseEvent(released);
+            var released = new PointerReleasedEventArgs(control.Marquee, pointer, window,
+                ToScreenPoint(control.Marquee, new Point(23, 23)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left);
+            control.Marquee.RaiseEvent(released);
 
             Assert.False(control.HasSelection);
             // 選択矩形の位置はセッションが保持するため、選択としての有効性は HasSelection で判定する
@@ -942,7 +942,7 @@ public class FadeMaskDragRectControlTests
     }
 
     // ====================================================================
-    // SetLoupeSource / ClearLoupe / LoupeCenterPoint / FocusDragRect
+    // SetLoupeSource / ClearLoupe / LoupeCenterPoint / FocusMarquee
     // ====================================================================
 
     [AvaloniaFact]
@@ -1001,14 +1001,14 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void FocusDragRect_DragRectへフォーカスを設定する()
+    public void FocusMarquee_Marqueeへフォーカスを設定する()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = control };
         window.Show();
 
         // 例外なくフォーカスを設定できる（ヘッドレス環境では IsKeyboardFocusWithin の検証は省略）
-        control.FocusDragRect();
+        control.FocusMarquee();
         window.Close();
     }
 
@@ -1026,7 +1026,7 @@ public class FadeMaskDragRectControlTests
         Assert.False(control.HasHighlight);
         Assert.Equal("", control.WindowTitle);
 
-        // 設定時: 外側の装飾（DragRectControl）へ反映される
+        // 設定時: 外側の装飾（MarqueeControl）へ反映される
         control.LogicalHighlightRect = new Rect(100, 50, 1920, 1080);
         control.HasHighlight = true;
         control.DisplayScaleScaling = 1.5;

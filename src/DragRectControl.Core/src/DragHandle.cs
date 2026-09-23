@@ -5,7 +5,7 @@ namespace Estable.DragRect;
 /// ヒットテスト・矩形変形・nudge・描画で共通利用する。<br/>
 /// 上位（撮影フロー等）がカーソル形状のマッピングに使用するため public で公開する。
 /// </remarks>
-public enum DragHandle
+public enum HitTarget
 {
     /// <summary>なし。</summary>
     None,

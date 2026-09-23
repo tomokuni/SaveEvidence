@@ -1,18 +1,18 @@
 using DrawingColor = System.Drawing.Color;
-using Estable.DragRect;
+using Estable.Marquee;
 using Estable.Loupe;
 
 namespace Estable.FadeMaskDragRect;
 
 /// <summary>領域選択の複合コントロール（選択矩形 + 暗転マスク + ルーペ）の設定を 1 つにまとめた不変の値。</summary>
 /// <remarks>
-/// 内包するコントロールが公開する設定（<see cref="DragRectOptions"/> / <see cref="LoupeOptions"/>）と、<br/>
+/// 内包するコントロールが公開する設定（<see cref="MarqueeOptions"/> / <see cref="LoupeOptions"/>）と、<br/>
 /// 複合コントロール固有の設定（選択矩形破線の色・ルーペのオフセット）をまとめて所有する。<br/>
 /// UI 層は本値を 1 プロパティとして公開するだけであり、既定値・項目の対応・子コントロールへの分配規則を持たない<br/>
 /// （値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず同じ結果になる）。<br/>
 /// <br/>
 /// <b>外側の装飾も選択矩形の設定が単一所有する</b>: 暗転マスク・穴あけ枠・ラベル（サイズ・操作・情報）の外観は<br/>
-/// 選択矩形コントロールの <see cref="DragRectOptions.OuterAppearance"/> が持ち、本値では別項目にしない<br/>
+/// 選択矩形コントロールの <see cref="MarqueeOptions.OuterAppearance"/> が持ち、本値では別項目にしない<br/>
 /// （選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なって描画されるため、2 つの値に分けると見た目が崩れる）。<br/>
 /// <br/>
 /// <b>実行時状態</b>（選択矩形・ハイライト矩形・ルーペ中心・拡大元画像）と<b>環境値</b>（DPI スケーリング）は<br/>
@@ -21,14 +21,14 @@ namespace Estable.FadeMaskDragRect;
 public sealed record FadeMaskDragRectOptions
 {
     /// <summary>既定の設定を取得する。</summary>
-    /// <value>各内包コントロールの既定値（<see cref="DragRectOptions.Default"/> / <see cref="LoupeOptions.Default"/>）と複合コントロール固有の既定値。</value>
+    /// <value>各内包コントロールの既定値（<see cref="MarqueeOptions.Default"/> / <see cref="LoupeOptions.Default"/>）と複合コントロール固有の既定値。</value>
     /// <remarks>既定値は各コア型が単一所有する（UI 層・ホストに既定値の写しを置かない）。</remarks>
     public static FadeMaskDragRectOptions Default { get; } = new();
 
     /// <summary>選択矩形の設定を取得する（外側の装飾の外観を含む）。</summary>
-    /// <value>選択矩形の外観・対話パラメータと、外側の装飾（暗転マスク・穴あけ枠・ラベル）の外観・表示ポリシー。既定は <see cref="DragRectOptions.Default"/>。</value>
+    /// <value>選択矩形の外観・対話パラメータと、外側の装飾（暗転マスク・穴あけ枠・ラベル）の外観・表示ポリシー。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>設定は 1 回の代入で子コントロールへ分配される（項目ごとの写し替えを行わない）。</remarks>
-    public DragRectOptions DragRect { get; init; } = DragRectOptions.Default;
+    public MarqueeOptions Marquee { get; init; } = MarqueeOptions.Default;
 
     /// <summary>ルーペの設定を取得する（拡大率・表示サイズ・外観）。</summary>
     /// <value>ルーペの設定。既定は <see cref="LoupeOptions.Default"/>。</value>

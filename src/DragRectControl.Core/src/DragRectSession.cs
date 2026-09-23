@@ -10,7 +10,7 @@ namespace Estable.DragRect;
 /// <summary>DragRect の対話（選択・ドラッグ・nudge）の状態を管理し、入力を通知されて状態を更新する状態管理クラス（Mediator パターン: 入力と状態の仲介）。</summary>
 /// <remarks>
 /// 提供機能: UI 層から入力（ポインター押下・移動・解放・ホイール以外のキー）を通知されると、状態を更新し、<br/>
-/// 「上位へ伝える通知（<see cref="Notified"/>）」と「画面へ反映する効果（<see cref="DragRectFeedback"/>）」を返す。<br/>
+/// 「上位へ伝える通知（<see cref="Notified"/>）」と「画面へ反映する効果（<see cref="MarqueeFeedback"/>）」を返す。<br/>
 /// <br/>
 /// 責務の境界:<br/>
 /// - 本クラス: 入力の解釈と状態遷移の判断（nudge セッションの開始・終了、ダブルクリックの確定/キャンセル、<br/>
@@ -24,12 +24,12 @@ namespace Estable.DragRect;
 /// カーソルサービス（<see cref="ICursorService"/>）の抽象にのみ依存し、UI フレームワークへ依存しない。<br/>
 /// UI 側の概念（マウスボタン・キー種別・コントロールへのフォーカス・画面座標）は、UI 層が本クラスの入出力へ変換する。<br/>
 /// <br/>
-/// 状態機械の保持と純粋計算は <see cref="DragRectState"/> が担い、本クラスは入力の解釈と通知の組み立てに専念する（単一責任）。<br/>
+/// 状態機械の保持と純粋計算は <see cref="MarqueeState"/> が担い、本クラスは入力の解釈と通知の組み立てに専念する（単一責任）。<br/>
 /// </remarks>
-internal sealed class DragRectSession
+internal sealed class MarqueeSession
 {
     /// <summary>選択・ドラッグ・nudge の状態と純粋計算。</summary>
-    private readonly DragRectState _state;
+    private readonly MarqueeState _state;
 
     /// <summary>マウスダウンからアップまでの間にドラッグ移動（選択状態の変化）が発生したかどうか（クリック検出用）。</summary>
     private bool _dragPerformed;
@@ -42,18 +42,18 @@ internal sealed class DragRectSession
 
     /// <summary>状態管理クラスを初期化する。</summary>
     /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
-    /// <param name="options">初期設定。null 可（null の場合は <see cref="DragRectOptions.Default"/>）。</param>
-    public DragRectSession(ICursorService? cursor, DragRectOptions? options = null)
+    /// <param name="options">初期設定。null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
+    public MarqueeSession(ICursorService? cursor, MarqueeOptions? options = null)
     {
-        _state = new DragRectState(cursor);
-        Options = options ?? DragRectOptions.Default;
+        _state = new MarqueeState(cursor);
+        Options = options ?? MarqueeOptions.Default;
     }
 
     /// <summary>上位（UI 層）へ伝える通知。UI 層は自 UI の公開イベントへ転送する。</summary>
-    public event EventHandler<DragRectNotice>? Notified;
+    public event EventHandler<MarqueeNotice>? Notified;
 
     /// <summary>選択・ドラッグ・nudge の状態（描画用に読み取る。UI 層からの書き換えは想定しない）。</summary>
-    public DragRectState State => _state;
+    public MarqueeState State => _state;
 
     /// <summary>ロガー。null を設定した場合は出力なし。</summary>
     /// <value>注入されたロガー。null 可（null の場合は <see cref="NullLogger"/> へフォールバックする）。</value>
@@ -64,9 +64,9 @@ internal sealed class DragRectSession
     }
 
     /// <summary>現在の設定（外観・対話パラメータ）。</summary>
-    /// <value>反映済みの設定。既定は <see cref="DragRectOptions.Default"/>。</value>
+    /// <value>反映済みの設定。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>本クラスは対話パラメータのみを使用する（外観は UI 層が描画時に読む）。</remarks>
-    public DragRectOptions Options { get; private set; } = DragRectOptions.Default;
+    public MarqueeOptions Options { get; private set; } = MarqueeOptions.Default;
 
     /// <summary>選択矩形の最小サイズ（ドメイン座標）。</summary>
     /// <value>ドメイン座標での最小サイズ。ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる。</value>
@@ -111,7 +111,7 @@ internal sealed class DragRectSession
     /// <summary>公開イベント用の状態スナップショットを生成する。</summary>
     /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。null の場合は直近の位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・操作フラグを含むスナップショット。</returns>
-    public DragRectSnapshot CreateSnapshot(EsPoint? mousePosition = null) => _state.CreateSnapshot(mousePosition);
+    public MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null) => _state.CreateSnapshot(mousePosition);
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート。null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
@@ -158,24 +158,24 @@ internal sealed class DragRectSession
     /// 4. ヒットしない場合は新規選択を開始する。<br/>
     /// ハンドルが無い場合も <c>DragStart: handle=None</c> として記録する（新規選択のドラッグ開始も同じ経過として扱う）。
     /// </remarks>
-    public DragRectFeedback Press(EsPoint position, int clickCount)
+    public MarqueeFeedback Press(EsPoint position, int clickCount)
     {
         _state.IsMouseDown = true;
         Log.LogPositionBeforeDown(position.X, position.Y);
         Log.LogMouseDown(position.X, position.Y, clickCount, _state.HasSelection);
 
         // nudge 中は nudge 位置を押下位置として扱い、ポインターを再表示する（nudge 位置と押下位置のずれを防ぐ）
-        var cursor = DragRectCursorAction.None;
+        var cursor = MarqueeCursorAction.None;
         if (_state.NudgeActive)
         {
             position = _state.StartPoint;
-            if (_state.EndNudge()) { cursor = DragRectCursorAction.Show; }
-            NotifyAt(DragRectNoticeKind.LoupePositionMoved, position);
+            if (_state.EndNudge()) { cursor = MarqueeCursorAction.Show; }
+            NotifyAt(MarqueeNoticeKind.LoupePositionMoved, position);
         }
 
         _pressPosition = position;
         _dragPerformed = false;
-        NotifyAt(DragRectNoticeKind.MouseDown, position);
+        NotifyAt(MarqueeNoticeKind.MouseDown, position);
 
         if (clickCount >= 2)
         {
@@ -184,7 +184,7 @@ internal sealed class DragRectSession
 
         var handle = _state.HitTest(position, ToDomainRadius());
         Log.LogDragStart(handle.ToString(), position.X, position.Y);
-        var feedback = new DragRectFeedback
+        var feedback = new MarqueeFeedback
         {
             Redraw = true,
             RequestFocus = true,
@@ -192,7 +192,7 @@ internal sealed class DragRectSession
             Cursor = cursor,
         };
 
-        if (handle != DragHandle.None)
+        if (handle != HitTarget.None)
         {
             _state.StartDrag(handle, position);
 
@@ -200,23 +200,23 @@ internal sealed class DragRectSession
             // （ポインター・矩形の角・ルーペを一体にする）。ドラッグ基準点もハンドル点に揃えることで、
             // スナップ後の最初の移動がハンドル点からの差分として正しく矩形へ反映される。
             // 移動（Move）は掴んだ位置を維持するのが自然なためスナップしない。
-            if (handle != DragHandle.Move)
+            if (handle != HitTarget.Move)
             {
                 var handlePosition = SelectionGeometry.GetHandlePosition(_state.SelectionRect, handle);
                 _state.DragStartPoint = handlePosition;
                 _state.LastMousePosition = handlePosition;
                 feedback = feedback with
                 {
-                    Cursor = cursor | DragRectCursorAction.MoveTo,
+                    Cursor = cursor | MarqueeCursorAction.MoveTo,
                     CursorDomainPosition = handlePosition,
                 };
-                NotifyAt(DragRectNoticeKind.LoupePositionMoved, handlePosition);
+                NotifyAt(MarqueeNoticeKind.LoupePositionMoved, handlePosition);
             }
         }
         else
         {
             _state.StartNewSelection(position);
-            NotifyAt(DragRectNoticeKind.SelectionStarted, position);
+            NotifyAt(MarqueeNoticeKind.SelectionStarted, position);
         }
 
         return feedback;
@@ -233,7 +233,7 @@ internal sealed class DragRectSession
     /// 4. ドラッグ中は選択矩形を更新し、変更通知とルーペ位置（動いている側のハンドル）を通知する。<br/>
     /// 5. ドラッグ中でなければホバー位置をルーペ位置として通知する。
     /// </remarks>
-    public DragRectFeedback Move(EsPoint position)
+    public MarqueeFeedback Move(EsPoint position)
     {
         var hitRadius = ToDomainRadius();
 
@@ -241,15 +241,15 @@ internal sealed class DragRectSession
         if (_state.SuppressEchoAt is { } echoPosition && SelectionGeometry.IsNear(position, echoPosition, hitRadius))
         {
             _state.SuppressEchoAt = null;
-            return new DragRectFeedback
+            return new MarqueeFeedback
             {
                 UpdateCursorShape = true,
                 CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
             };
         }
 
-        NotifyAt(DragRectNoticeKind.MouseMoved, position);
-        var cursor = new DragRectFeedback
+        NotifyAt(MarqueeNoticeKind.MouseMoved, position);
+        var cursor = new MarqueeFeedback
         {
             UpdateCursorShape = true,
             CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
@@ -271,12 +271,12 @@ internal sealed class DragRectSession
             {
                 _dragPerformed = true;
             }
-            NotifyState(DragRectNoticeKind.SelectionChanged);
-            NotifyAt(DragRectNoticeKind.LoupePositionMoved, _state.GetMarkerPosition());
+            NotifyState(MarqueeNoticeKind.SelectionChanged);
+            NotifyAt(MarqueeNoticeKind.LoupePositionMoved, _state.GetMarkerPosition());
         }
         else
         {
-            NotifyAt(DragRectNoticeKind.LoupePositionMoved, position);
+            NotifyAt(MarqueeNoticeKind.LoupePositionMoved, position);
         }
 
         return cursor with { Redraw = true };
@@ -292,10 +292,10 @@ internal sealed class DragRectSession
     /// 3. nudge 中だった場合はカーソルを nudge 位置へ戻して再表示し、その位置への直後の移動（エコー）を抑制する。<br/>
     /// nudge 位置はドラッグ終了処理の前に求める（終了処理がドラッグ状態を解除するため、後から求めると固定コーナーを返す）。
     /// </remarks>
-    public DragRectFeedback Release(EsPoint position)
+    public MarqueeFeedback Release(EsPoint position)
     {
         _state.IsMouseDown = false;
-        NotifyAt(DragRectNoticeKind.MouseUp, position);
+        NotifyAt(MarqueeNoticeKind.MouseUp, position);
         Log.LogMouseUp(position.X, position.Y, _state.IsDragging, _state.HasSelection);
         Log.LogPositionAfterUp(position.X, position.Y);
 
@@ -313,34 +313,34 @@ internal sealed class DragRectSession
             if (cancelled)
             {
                 _state.Reset();
-                NotifyEmpty(DragRectNoticeKind.SelectionCancelled);
+                NotifyEmpty(MarqueeNoticeKind.SelectionCancelled);
             }
             else
             {
-                NotifyState(DragRectNoticeKind.SelectionCompleted);
+                NotifyState(MarqueeNoticeKind.SelectionCompleted);
             }
         }
 
         if (wasDragging && !_dragPerformed)
         {
             Log.LogClick(pressPosition.X, pressPosition.Y);
-            NotifyAt(DragRectNoticeKind.MouseClicked, pressPosition);
+            NotifyAt(MarqueeNoticeKind.MouseClicked, pressPosition);
         }
 
-        var feedback = new DragRectFeedback { Redraw = true };
+        var feedback = new MarqueeFeedback { Redraw = true };
         if (wasNudging)
         {
             // nudge 中にユーザーが物理マウスを動かしても、カーソルは nudge 位置へ戻してから再表示する
             // （nudge から解放までのマウス移動はキャンセルする。SetCursorScreenPoint は再表示前に行う）
-            if (_state.EndNudge()) { feedback = feedback with { Cursor = DragRectCursorAction.Show }; }
-            NotifyAt(DragRectNoticeKind.LoupePositionMoved, nudgePosition);
+            if (_state.EndNudge()) { feedback = feedback with { Cursor = MarqueeCursorAction.Show }; }
+            NotifyAt(MarqueeNoticeKind.LoupePositionMoved, nudgePosition);
             _state.SuppressEchoAt = nudgePosition;
 
             // カーソルは nudge 位置（ハンドル上）にあるため、ハンドルに応じた形状へ即時更新する
             // （マウスを動かすまで移動イベントが発火せず、形状が更新されないため）
             feedback = feedback with
             {
-                Cursor = feedback.Cursor | DragRectCursorAction.MoveTo,
+                Cursor = feedback.Cursor | MarqueeCursorAction.MoveTo,
                 CursorDomainPosition = nudgePosition,
                 UpdateCursorShape = true,
                 CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(nudgePosition, ToDomainRadius())),
@@ -361,7 +361,7 @@ internal sealed class DragRectSession
     /// <b>Enter と Return は同一のキー</b>として扱う（Avalonia の <c>Key</c> は両者が同値のエイリアスのため、
     /// 名前ベースの相互変換では <c>Return</c> が得られ、UI ごとに届く値が異なる）。
     /// </remarks>
-    public DragRectFeedback KeyDown(EsKey key, EsPoint? cursorPosition)
+    public MarqueeFeedback KeyDown(EsKey key, EsPoint? cursorPosition)
     {
         if (key == EsKey.Escape)
         {
@@ -397,7 +397,7 @@ internal sealed class DragRectSession
     /// 6. 1 ドメインピクセル単位の整数加算で矩形を更新し、変更通知とルーペ位置を通知する。<br/>
     /// nudge 中（2 回目以降）は基点を再同期しない（座標変換の丸め誤差・スクロール追従で移動が相殺されるのを防ぐ）。
     /// </remarks>
-    public DragRectFeedback NudgeByKey(EsKey key, EsPoint? cursorPosition)
+    public MarqueeFeedback NudgeByKey(EsKey key, EsPoint? cursorPosition)
     {
         if (_state.HasSelection && !_state.IsMouseDown)
         {
@@ -428,7 +428,7 @@ internal sealed class DragRectSession
             _state.StartPoint = _state.LastMousePosition;
         }
 
-        var feedback = new DragRectFeedback { Handled = true, Redraw = true };
+        var feedback = new MarqueeFeedback { Handled = true, Redraw = true };
         if (!_state.NudgeActive)
         {
             _state.NudgeActive = true;
@@ -436,21 +436,21 @@ internal sealed class DragRectSession
             _state.NudgeBase = _state.HasSelection ? _state.GetOppositeCorner(_state.SelectionRect) : _state.StartPoint;
             _state.NudgeOffsetX = 0;
             _state.NudgeOffsetY = 0;
-            feedback = feedback with { Cursor = DragRectCursorAction.Hide };
+            feedback = feedback with { Cursor = MarqueeCursorAction.Hide };
         }
 
         // nudge 適用（ドメイン座標の整数加算のみ。浮動小数の誤差を累積しない）
         _state.NudgeOffsetX += (int)dx;
         _state.NudgeOffsetY += (int)dy;
         _state.Nudge(dx, dy, MinSelectionSize, ClampToDomainBounds);
-        NotifyState(DragRectNoticeKind.SelectionChanged);
+        NotifyState(MarqueeNoticeKind.SelectionChanged);
 
         // カーソルを動かしている側のハンドル（マーカー位置）へ合わせる
         var marker = _state.GetMarkerPosition();
-        NotifyAt(DragRectNoticeKind.LoupePositionMoved, marker);
+        NotifyAt(MarqueeNoticeKind.LoupePositionMoved, marker);
         return feedback with
         {
-            Cursor = feedback.Cursor | DragRectCursorAction.MoveTo,
+            Cursor = feedback.Cursor | MarqueeCursorAction.MoveTo,
             CursorDomainPosition = marker,
         };
     }
@@ -461,9 +461,9 @@ internal sealed class DragRectSession
     /// nudge 中の状態破棄（フォーカス喪失・ビジュアルツリーからの切断）で使用する。<br/>
     /// nudge 中でない場合は何もしない（<c>default</c> を返す）。
     /// </remarks>
-    public DragRectFeedback EndNudge()
+    public MarqueeFeedback EndNudge()
         => _state.EndNudge()
-            ? new DragRectFeedback { Redraw = true, Cursor = DragRectCursorAction.Show }
+            ? new MarqueeFeedback { Redraw = true, Cursor = MarqueeCursorAction.Show }
             : default;
 
     // ====================================================================
@@ -477,20 +477,20 @@ internal sealed class DragRectSession
     /// <see cref="ClampToDomainBounds"/> が有効な場合は、はみ出す矩形を境界内へクリップしてから設定する<br/>
     /// （外部からの復元でも「画像外の選択を禁止」を尊重する）。設定後は選択変更を通知する。
     /// </remarks>
-    public DragRectFeedback SetSelection(EsRect rect)
+    public MarqueeFeedback SetSelection(EsRect rect)
     {
         var selectionRect = ClampToDomainBounds ? _state.ClipRectToBounds(rect) : rect;
         _state.SetSelection(selectionRect);
-        NotifyState(DragRectNoticeKind.SelectionChanged);
-        return new DragRectFeedback { Redraw = true };
+        NotifyState(MarqueeNoticeKind.SelectionChanged);
+        return new MarqueeFeedback { Redraw = true };
     }
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
     /// <returns>UI 層が適用する効果（再描画）。</returns>
-    public DragRectFeedback Reset()
+    public MarqueeFeedback Reset()
     {
         _state.Reset();
-        return new DragRectFeedback { Redraw = true };
+        return new MarqueeFeedback { Redraw = true };
     }
 
     /// <summary>確定要求を処理する（Enter キー・ダブルクリック・ホストからの API 呼び出しと同じ経路）。</summary>
@@ -499,7 +499,7 @@ internal sealed class DragRectSession
     /// ドラッグ中は無視し、選択確定後のみ確定要求を通知する（通知時点の選択矩形を含む）。<br/>
     /// 確定後は選択状態をクリアする（確定後の再ドラッグ・再確定を防ぐ）。
     /// </remarks>
-    public DragRectFeedback RequestConfirm()
+    public MarqueeFeedback RequestConfirm()
     {
         if (_state.IsDragging || !_state.HasSelection)
         {
@@ -507,15 +507,15 @@ internal sealed class DragRectSession
         }
 
         Log.LogConfirmRequested(FormatRect(_state.SelectionRect));
-        NotifyState(DragRectNoticeKind.ConfirmRequested);
+        NotifyState(MarqueeNoticeKind.ConfirmRequested);
         _state.Reset();
-        return new DragRectFeedback { Redraw = true };
+        return new MarqueeFeedback { Redraw = true };
     }
 
     /// <summary>キャンセル要求を処理する（Escape キー・枠外ダブルクリック・ホストからの API 呼び出しと同じ経路）。</summary>
     /// <returns>UI 層が適用する効果（選択を破棄した場合は再描画）。</returns>
     /// <remarks>ドラッグ中または選択ありの場合は選択を破棄した後にキャンセル要求を通知する。</remarks>
-    public DragRectFeedback RequestCancel()
+    public MarqueeFeedback RequestCancel()
     {
         Log.LogCancelRequested();
         var redraw = false;
@@ -524,8 +524,8 @@ internal sealed class DragRectSession
             _state.Reset();
             redraw = true;
         }
-        NotifyEmpty(DragRectNoticeKind.CancelRequested);
-        return new DragRectFeedback { Redraw = redraw };
+        NotifyEmpty(MarqueeNoticeKind.CancelRequested);
+        return new MarqueeFeedback { Redraw = redraw };
     }
 
     /// <summary>ドメイン境界外の選択の禁止設定の変更を現在の選択矩形へ適用する。</summary>
@@ -534,13 +534,13 @@ internal sealed class DragRectSession
     /// 設定が ON に切り替わった瞬間に、既存の選択矩形を境界内へクリップして即時反映する（ドラッグ開始を待たない）。<br/>
     /// クリップで矩形が変更された場合のみ選択変更を通知する。
     /// </remarks>
-    public DragRectFeedback ApplyClampToBounds()
+    public MarqueeFeedback ApplyClampToBounds()
     {
         if (_state.ClampSelectionToBounds())
         {
-            NotifyState(DragRectNoticeKind.SelectionChanged);
+            NotifyState(MarqueeNoticeKind.SelectionChanged);
         }
-        return new DragRectFeedback { Redraw = true };
+        return new MarqueeFeedback { Redraw = true };
     }
 
     /// <summary>ビューポート（ズーム・スクロール）の変化を通知する。</summary>
@@ -550,13 +550,13 @@ internal sealed class DragRectSession
     /// 再描画する必要があるため、現在の選択矩形 + スナップショットを再通知する（状態は変更しない）。<br/>
     /// 通知の組み立てはコアが単一所有するため、UI 層は呼び出すだけでよい。
     /// </remarks>
-    public DragRectFeedback NotifyViewportChanged()
+    public MarqueeFeedback NotifyViewportChanged()
     {
-        NotifyState(DragRectNoticeKind.ViewportChanged);
-        return new DragRectFeedback { Redraw = true };
+        NotifyState(MarqueeNoticeKind.ViewportChanged);
+        return new MarqueeFeedback { Redraw = true };
     }
 
-    /// <summary>設定（<see cref="DragRectOptions"/>）を反映する。</summary>
+    /// <summary>設定（<see cref="MarqueeOptions"/>）を反映する。</summary>
     /// <param name="options">反映する設定（null 不可）。</param>
     /// <returns>UI 層が適用する効果（境界外選択の禁止が変化した場合のみ再描画）。</returns>
     /// <remarks>
@@ -566,7 +566,7 @@ internal sealed class DragRectSession
     /// <br/>
     /// 同値の設定を再適用しても効果・ログを発生させない（UI 層は変更内容を確認せず委譲できる）。
     /// </remarks>
-    public DragRectFeedback ApplyOptions(DragRectOptions options)
+    public MarqueeFeedback ApplyOptions(MarqueeOptions options)
     {
         // ログと即時クリップは「境界外選択の禁止」が実際に変化した場合のみ行う
         bool clampChanged = ClampToDomainBounds != options.ClampToDomainBounds;
@@ -578,7 +578,7 @@ internal sealed class DragRectSession
         }
 
         Log.LogSettingChanged(
-            nameof(DragRectOptions.ClampToDomainBounds),
+            nameof(MarqueeOptions.ClampToDomainBounds),
             (!options.ClampToDomainBounds).ToString(),
             options.ClampToDomainBounds.ToString());
         return ApplyClampToBounds();
@@ -587,14 +587,14 @@ internal sealed class DragRectSession
     /// <summary>対話を終了する（ビジュアルツリーからの切断・ウィンドウクローズ）。</summary>
     /// <returns>UI 層が適用する効果（再描画。nudge 中だった場合はカーソルの再表示）。</returns>
     /// <remarks>nudge を終了して選択状態を初期化する（nudge 中のポインター非表示を残留させない）。</remarks>
-    public DragRectFeedback Detach()
+    public MarqueeFeedback Detach()
     {
         var showed = _state.EndNudge();
         _state.Reset();
-        return new DragRectFeedback
+        return new MarqueeFeedback
         {
             Redraw = true,
-            Cursor = showed ? DragRectCursorAction.Show : DragRectCursorAction.None,
+            Cursor = showed ? MarqueeCursorAction.Show : MarqueeCursorAction.None,
         };
     }
 
@@ -608,25 +608,25 @@ internal sealed class DragRectSession
     /// <returns>UI 層が適用する効果。</returns>
     /// <remarks>
     /// ドラッグ処理は行わない（ダブルクリックは確定/キャンセルの操作として扱う）。<br/>
-    /// 確定した場合は <see cref="DragRectState.Reset"/> により選択を破棄するため再描画を要求する。
+    /// 確定した場合は <see cref="MarqueeState.Reset"/> により選択を破棄するため再描画を要求する。
     /// </remarks>
-    private DragRectFeedback DoubleClick(EsPoint position, DragRectCursorAction cursor)
+    private MarqueeFeedback DoubleClick(EsPoint position, MarqueeCursorAction cursor)
     {
         var inside = _state.HasSelection && _state.SelectionRect.Contains(position);
         Log.LogDoubleClick(position.X, position.Y, inside);
-        NotifyAt(DragRectNoticeKind.MouseDoubleClicked, position);
+        NotifyAt(MarqueeNoticeKind.MouseDoubleClicked, position);
 
         if (inside)
         {
             Log.LogConfirmRequested(FormatRect(_state.SelectionRect));
-            NotifyAt(DragRectNoticeKind.ConfirmRequested, position);
+            NotifyAt(MarqueeNoticeKind.ConfirmRequested, position);
             _state.Reset();
-            return new DragRectFeedback { Redraw = true, Cursor = cursor };
+            return new MarqueeFeedback { Redraw = true, Cursor = cursor };
         }
 
         Log.LogCancelRequested();
-        NotifyEmpty(DragRectNoticeKind.CancelRequested);
-        return new DragRectFeedback { Cursor = cursor };
+        NotifyEmpty(MarqueeNoticeKind.CancelRequested);
+        return new MarqueeFeedback { Cursor = cursor };
     }
 
     /// <summary>DIP 半径をドメイン半径へ変換する（ヒットテスト用）。</summary>
@@ -652,16 +652,16 @@ internal sealed class DragRectSession
     /// <summary>点座標付きの通知を発火する（スナップショットのマウス位置も指定座標とする）。</summary>
     /// <param name="kind">通知の種別。</param>
     /// <param name="position">通知する座標（ドメイン座標）。</param>
-    private void NotifyAt(DragRectNoticeKind kind, EsPoint position)
-        => Notified?.Invoke(this, new DragRectNotice(kind, position, _state.CreateSnapshot(position)));
+    private void NotifyAt(MarqueeNoticeKind kind, EsPoint position)
+        => Notified?.Invoke(this, new MarqueeNotice(kind, position, _state.CreateSnapshot(position)));
 
     /// <summary>現在のマウス位置で通知を発火する（選択矩形の変更・確定など、通知座標を持たない通知）。</summary>
     /// <param name="kind">通知の種別。</param>
-    private void NotifyState(DragRectNoticeKind kind)
-        => Notified?.Invoke(this, new DragRectNotice(kind, _state.LastMousePosition, _state.CreateSnapshot()));
+    private void NotifyState(MarqueeNoticeKind kind)
+        => Notified?.Invoke(this, new MarqueeNotice(kind, _state.LastMousePosition, _state.CreateSnapshot()));
 
     /// <summary>座標を持たない通知を発火する（キャンセルなど）。</summary>
     /// <param name="kind">通知の種別。</param>
-    private void NotifyEmpty(DragRectNoticeKind kind)
-        => Notified?.Invoke(this, new DragRectNotice(kind, default, _state.CreateSnapshot()));
+    private void NotifyEmpty(MarqueeNoticeKind kind)
+        => Notified?.Invoke(this, new MarqueeNotice(kind, default, _state.CreateSnapshot()));
 }

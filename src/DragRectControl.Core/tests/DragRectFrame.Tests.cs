@@ -6,7 +6,7 @@ using DrawingColor = System.Drawing.Color;
 
 namespace Estable.DragRect.Tests;
 
-/// <summary><see cref="DragRectFrame"/> のテスト（UI 非依存・並列実行）。</summary>
+/// <summary><see cref="MarqueeFrame"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 選択矩形の<b>外側に描く装飾</b>（暗転マスク・穴あけ枠・ラベル）の描画内容の解決を検証する。<br/>
 /// 選択矩形そのものの図形判断は装飾コア（<c>OuterDecoFrame</c>）が単一所有するため、<br/>
@@ -24,9 +24,9 @@ public class DragRectFrameTests
     /// <param name="options">設定。null の場合は既定。</param>
     /// <param name="selection">設定する選択矩形（ドメイン座標）。null の場合は設定しない。</param>
     /// <returns>生成したセッション。</returns>
-    private static DragRectSession CreateSession(DragRectOptions? options = null, EsRect? selection = null)
+    private static MarqueeSession CreateSession(MarqueeOptions? options = null, EsRect? selection = null)
     {
-        var session = new DragRectSession(null, options ?? DragRectOptions.Default);
+        var session = new MarqueeSession(null, options ?? MarqueeOptions.Default);
         if (selection is { } rect)
         {
             session.SetSelection(rect);
@@ -63,12 +63,12 @@ public class DragRectFrameTests
     /// <param name="displayScale">サイズラベルの自動生成に使うスケーリング。</param>
     /// <returns>解決したフレーム。</returns>
     private static OuterDecoFrame Resolve(
-        DragRectSession session,
+        MarqueeSession session,
         ICoordTransform? port = null,
         double scaling = 1.0,
         Func<string?>? provider = null,
         double displayScale = 1.0)
-        => DragRectFrame.Resolve(session, s_client, port, scaling, provider, displayScale);
+        => MarqueeFrame.Resolve(session, s_client, port, scaling, provider, displayScale);
 
     // ====================================================================
     // 選択矩形の導出（セッションが単一のソース）
@@ -78,7 +78,7 @@ public class DragRectFrameTests
     [Fact]
     public void Resolve_選択矩形の4辺が暗転領域と枠線になる()
     {
-        var session = CreateSession(DragRectOptions.Default with { OuterAppearance = VisibleDecoration() }, s_selection);
+        var session = CreateSession(MarqueeOptions.Default with { OuterAppearance = VisibleDecoration() }, s_selection);
 
         var frame = Resolve(session);
 
@@ -92,7 +92,7 @@ public class DragRectFrameTests
     [Fact]
     public void Resolve_選択なしなら空のフレームを返す()
     {
-        var session = CreateSession(DragRectOptions.Default with { OuterAppearance = VisibleDecoration() });
+        var session = CreateSession(MarqueeOptions.Default with { OuterAppearance = VisibleDecoration() });
 
         var frame = Resolve(session);
 
@@ -106,7 +106,7 @@ public class DragRectFrameTests
     public void Resolve_ハンドル非表示でも枠線を描く()
     {
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 ShowHandles = false,
                 OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White),
@@ -125,7 +125,7 @@ public class DragRectFrameTests
     public void Resolve_選択矩形が無効なサイズなら空のフレームを返す()
     {
         var session = CreateSession(
-            DragRectOptions.Default with { OuterAppearance = VisibleDecoration() },
+            MarqueeOptions.Default with { OuterAppearance = VisibleDecoration() },
             new EsRect(10, 20, 0, 40));
 
         var frame = Resolve(session);
@@ -144,7 +144,7 @@ public class DragRectFrameTests
     {
         var highlight = new EsRect(10, 20, 30, 40);
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 OuterAppearance = VisibleDecoration(),
                 OuterHighlightRect = highlight,
@@ -163,7 +163,7 @@ public class DragRectFrameTests
     public void Resolve_選択なしでもハイライトを穴あけに使う()
     {
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 OuterAppearance = VisibleDecoration(),
                 OuterHighlightRect = new EsRect(10, 20, 30, 40),
@@ -181,7 +181,7 @@ public class DragRectFrameTests
     public void Resolve_ハイライト矩形があっても無効なら使わない()
     {
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 OuterAppearance = VisibleDecoration(),
                 OuterHighlightRect = new EsRect(10, 20, 30, 40),
@@ -198,7 +198,7 @@ public class DragRectFrameTests
     public void Resolve_全面暗転なら全面を塗る()
     {
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 OuterAppearance = VisibleDecoration(),
                 OuterShowFullOverlay = true,
@@ -234,7 +234,7 @@ public class DragRectFrameTests
     public void Resolve_枠線が透明なら描かない()
     {
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 OuterAppearance = CreateAppearance(DrawingColor.FromArgb(128, 0, 0, 0), DrawingColor.Transparent),
             },
@@ -255,7 +255,7 @@ public class DragRectFrameTests
     public void Resolve_座標変換ポートを適用する()
     {
         var session = CreateSession(
-            DragRectOptions.Default with { OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) },
+            MarqueeOptions.Default with { OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) },
             new EsRect(10, 20, 30, 40));
 
         var frame = Resolve(session, port: CoordTransform.Scale(2.0));
@@ -269,7 +269,7 @@ public class DragRectFrameTests
     public void Resolve_ポート未指定なら倍率を適用する()
     {
         var session = CreateSession(
-            DragRectOptions.Default with { OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) },
+            MarqueeOptions.Default with { OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) },
             new EsRect(10, 20, 30, 40));
 
         var frame = Resolve(session, scaling: 2.0);
@@ -282,7 +282,7 @@ public class DragRectFrameTests
     public void Resolve_ポートと倍率はポートが優先される()
     {
         var session = CreateSession(
-            DragRectOptions.Default with { OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) },
+            MarqueeOptions.Default with { OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) },
             new EsRect(10, 20, 30, 40));
 
         var frame = Resolve(session, port: CoordTransform.Scale(3.0), scaling: 2.0);
@@ -299,7 +299,7 @@ public class DragRectFrameTests
     public void Resolve_倍率が無効なら等価変換になる(double scaling)
     {
         var session = CreateSession(
-            DragRectOptions.Default with { OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) },
+            MarqueeOptions.Default with { OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) },
             new EsRect(10, 20, 30, 40));
 
         var frame = Resolve(session, scaling: scaling);
@@ -316,7 +316,7 @@ public class DragRectFrameTests
     public void Resolve_サイズラベルのプロバイダを使う()
     {
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) with { ShowSizeLabel = true },
             },
@@ -332,7 +332,7 @@ public class DragRectFrameTests
     public void Resolve_プロバイダ未指定なら文言を自動生成する()
     {
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) with { ShowSizeLabel = true },
             },
@@ -350,7 +350,7 @@ public class DragRectFrameTests
     public void Resolve_ラベル非表示ならサブラインも持たない()
     {
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White),
                 OuterRenderMode = OuterDecoRenderMode.AreaSelect,
@@ -369,7 +369,7 @@ public class DragRectFrameTests
     public void Resolve_サブラインを組み立てる()
     {
         var session = CreateSession(
-            DragRectOptions.Default with
+            MarqueeOptions.Default with
             {
                 OuterAppearance = CreateAppearance(DrawingColor.Transparent, DrawingColor.White) with
                 {
@@ -396,5 +396,5 @@ public class DragRectFrameTests
     /// <summary>セッションが null の場合は例外になることを検証する。</summary>
     [Fact]
     public void Resolve_セッションがnullなら例外()
-        => Assert.Throws<ArgumentNullException>(() => DragRectFrame.Resolve(null!, s_client, null, 1.0, null, 1.0));
+        => Assert.Throws<ArgumentNullException>(() => MarqueeFrame.Resolve(null!, s_client, null, 1.0, null, 1.0));
 }

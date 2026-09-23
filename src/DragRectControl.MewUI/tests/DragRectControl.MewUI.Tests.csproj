@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.MewUI.DragRect.Tests</RootNamespace>
+    <RootNamespace>Estable.MewUI.Marquee.Tests</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\DragRectControl.MewUI.csproj" />
+    <ProjectReference Include="..\src\MarqueeControl.MewUI.csproj" />
   </ItemGroup>
 
 </Project>

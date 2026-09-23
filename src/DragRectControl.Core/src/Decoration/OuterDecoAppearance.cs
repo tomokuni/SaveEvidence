@@ -1,6 +1,6 @@
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.DragRect.Decoration;
+namespace Estable.Marquee.Decoration;
 
 /// <summary>暗転マスク（オーバーレイ）の外観をまとめた不変の設定値。</summary>
 /// <remarks>

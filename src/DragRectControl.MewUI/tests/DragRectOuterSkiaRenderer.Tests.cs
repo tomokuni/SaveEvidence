@@ -1,19 +1,19 @@
 using EsUtil.Platform.Core.Geometry;
-using Estable.DragRect.Decoration;
+using Estable.Marquee.Decoration;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.DragRect.Tests;
+namespace Estable.MewUI.Marquee.Tests;
 
-/// <summary><see cref="DragRectOuterSkiaRenderer"/> の描画テスト（Skia のビットマップ上で画素を検証する）。</summary>
+/// <summary><see cref="MarqueeOuterSkiaRenderer"/> の描画テスト（Skia のビットマップ上で画素を検証する）。</summary>
 /// <remarks>
 /// 対象: <c>DragRectOuterSkiaRenderer.cs</c>（フレームの描画のみ）。<br/>
 /// Skia のビットマップはウィンドウを必要としないため、UI 初期化なしで並列実行できる。<br/>
 /// 「どの矩形を暗転するか」「どのラベルを描くか」の判断はコアの <c>OuterDecoFrame</c> が単一所有するため、<br/>
 /// 本テストは「与えられたフレームを描く」ことと、UI 固有のフォント解決のみを検証する。
 /// </remarks>
-public class DragRectOuterSkiaRendererTests
+public class MarqueeOuterSkiaRendererTests
 {
     /// <summary>描画に使う暗転色（赤 50%）。</summary>
     private static readonly DrawingColor s_overlay = DrawingColor.FromArgb(128, 255, 0, 0);
@@ -56,7 +56,7 @@ public class DragRectOuterSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(100, 100);
 
-        DragRectOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
+        MarqueeOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
             overlayRegions: [new EsRect(0, 0, 100, 30), new EsRect(0, 30, 20, 70)]));
 
         Assert.Equal(s_overlayPixel, target.GetPixel(50, 10));
@@ -71,7 +71,7 @@ public class DragRectOuterSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(50, 50);
 
-        DragRectOuterSkiaRenderer.Draw(target.Canvas, CreateFrame());
+        MarqueeOuterSkiaRenderer.Draw(target.Canvas, CreateFrame());
 
         Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(25, 25));
     }
@@ -82,7 +82,7 @@ public class DragRectOuterSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(100, 100);
 
-        DragRectOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
+        MarqueeOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
             borderRects: [new EsRect(20, 30, 40, 2)]));
 
         Assert.Equal(SKColors.Blue, target.GetPixel(40, 30));
@@ -95,7 +95,7 @@ public class DragRectOuterSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(200, 100);
 
-        DragRectOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
+        MarqueeOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
             labelAnchor: new EsRect(10, 10, 180, 80), sizeLabelText: "ABC"));
 
         // 背景は基準矩形の上端 + 内側余白から始まる（左上は透明のまま）
@@ -112,7 +112,7 @@ public class DragRectOuterSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(200, 100);
 
-        DragRectOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
+        MarqueeOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
             labelAnchor: new EsRect(10, 10, 180, 80), sizeLabelText: null));
 
         Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(12, 16));
@@ -127,8 +127,8 @@ public class DragRectOuterSkiaRendererTests
         var anchor = new EsRect(10, 10, 180, 80);
         var subLines = new[] { new OuterDecoSubLine("SUB", 12, DrawingColor.White, DrawingColor.Blue) };
 
-        DragRectOuterSkiaRenderer.Draw(withSize.Canvas, CreateFrame(labelAnchor: anchor, sizeLabelText: "ABC", subLines: subLines));
-        DragRectOuterSkiaRenderer.Draw(withoutSize.Canvas, CreateFrame(labelAnchor: anchor, sizeLabelText: null, subLines: subLines));
+        MarqueeOuterSkiaRenderer.Draw(withSize.Canvas, CreateFrame(labelAnchor: anchor, sizeLabelText: "ABC", subLines: subLines));
+        MarqueeOuterSkiaRenderer.Draw(withoutSize.Canvas, CreateFrame(labelAnchor: anchor, sizeLabelText: null, subLines: subLines));
 
         // 文言なし側は 1 行目の位置にサブラインの背景が来る
         Assert.Equal(SKColors.Blue, withoutSize.GetPixel(12, 16));
@@ -149,7 +149,7 @@ public class DragRectOuterSkiaRendererTests
             new OuterDecoSubLine("TWO", 12, DrawingColor.White, DrawingColor.Lime),
         };
 
-        DragRectOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
+        MarqueeOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
             labelAnchor: new EsRect(10, 10, 180, 180), sizeLabelText: null, subLines: subLines));
 
         var firstBlueY = FindFirstColorY(target, SKColors.Blue);
@@ -164,7 +164,7 @@ public class DragRectOuterSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(200, 100);
 
-        DragRectOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
+        MarqueeOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
             labelAnchor: null,
             sizeLabelText: "ABC",
             subLines: [new OuterDecoSubLine("SUB", 12, DrawingColor.White, DrawingColor.Blue)]));
@@ -179,7 +179,7 @@ public class DragRectOuterSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(200, 100);
 
-        DragRectOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
+        MarqueeOuterSkiaRenderer.Draw(target.Canvas, CreateFrame(
             labelAnchor: new EsRect(10, 10, 180, 80), sizeLabelText: "ABC",
             sizeLabelBackgroundColor: DrawingColor.FromArgb(128, 0, 0, 255)));
 
@@ -190,7 +190,7 @@ public class DragRectOuterSkiaRendererTests
     [Fact]
     public void Draw_キャンバスがnullなら例外()
     {
-        Assert.Throws<ArgumentNullException>(() => DragRectOuterSkiaRenderer.Draw(null!, CreateFrame()));
+        Assert.Throws<ArgumentNullException>(() => MarqueeOuterSkiaRenderer.Draw(null!, CreateFrame()));
     }
 
     /// <summary>ASCII のみの文字列を判定できることを検証する。</summary>
@@ -205,14 +205,14 @@ public class DragRectOuterSkiaRendererTests
     [InlineData("Aあ", false)]
     public void IsAsciiOnly_文字種を判定する(string text, bool expected)
     {
-        Assert.Equal(expected, DragRectOuterSkiaRenderer.IsAsciiOnly(text));
+        Assert.Equal(expected, MarqueeOuterSkiaRenderer.IsAsciiOnly(text));
     }
 
     /// <summary>ASCII のみのテキストは既定のフォントで描画することを検証する。</summary>
     [Fact]
     public void ResolveTypeface_ASCIIのみなら既定のフォントを使う()
     {
-        Assert.Same(SKTypeface.Default, DragRectOuterSkiaRenderer.ResolveTypeface("(10, 20) - (30, 40)"));
+        Assert.Same(SKTypeface.Default, MarqueeOuterSkiaRenderer.ResolveTypeface("(10, 20) - (30, 40)"));
     }
 
     /// <summary>日本語を含むテキストは字形を持つフォントへフォールバックすることを検証する。</summary>
@@ -223,7 +223,7 @@ public class DragRectOuterSkiaRendererTests
         Assert.SkipUnless(
             SKFontManager.Default.MatchCharacter('あ') is not null, "日本語のフォントがインストールされていない");
 
-        var typeface = DragRectOuterSkiaRenderer.ResolveTypeface("確定");
+        var typeface = MarqueeOuterSkiaRenderer.ResolveTypeface("確定");
 
         Assert.NotSame(SKTypeface.Default, typeface);
         Assert.NotEqual(0, typeface.GetGlyph('確'));

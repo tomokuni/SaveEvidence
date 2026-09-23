@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace DragRectControl.Sample.ViewModels;
+namespace MarqueeControl.Sample.ViewModels;
 
 /// <summary>メインウィンドウのビューモデル。</summary>
 /// <remarks>

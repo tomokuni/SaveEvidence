@@ -1,11 +1,11 @@
-using Estable.DragRect;
+using Estable.Marquee;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.DragRect.Tests;
+namespace Estable.MewUI.Marquee.Tests;
 
 /// <summary>テストで使用するカーソルサービスのスパイ（呼び出しを記録する）。</summary>
 /// <remarks>位置の取得・移動は記録のみ行い、表示切替の呼び出し履歴を検証に使用する。</remarks>
@@ -34,28 +34,28 @@ internal sealed class CursorServiceSpy : ICursorService
     public void ShowCursor(bool show) => ShowCalls.Add(show);
 }
 
-/// <summary><see cref="DragRectControl"/>（MewUI 版）の単体テスト（公開 API 経由の状態・イベント検証）。</summary>
+/// <summary><see cref="MarqueeControl"/>（MewUI 版）の単体テスト（公開 API 経由の状態・イベント検証）。</summary>
 /// <remarks>
 /// コントロールの生成とプロパティ設定・公開メソッドのみを検証するため、ウィンドウ表示を必要としない。<br/>
 /// 入力（マウス・キー）はウィンドウを必要とするため、公開 API 経由で検証できる範囲に限定する。<br/>
 /// カーソルサービスはスパイを注入する（Win32 実装を生成しない）。
 /// </remarks>
-public class DragRectControlTests
+public class MarqueeControlTests
 {
     /// <summary>テスト用の DragRectControl を生成する。</summary>
     /// <param name="cursor">カーソルサービスのスパイ。</param>
     /// <returns>生成したコントロール。</returns>
-    private static DragRectControl CreateControl(CursorServiceSpy cursor)
+    private static MarqueeControl CreateControl(CursorServiceSpy cursor)
         => new(cursor) { Width = 200, Height = 200, Options = TestOptions };
 
     /// <summary>テスト用の設定（最小サイズを 10 にしてドラッグ判定をしやすくする）。</summary>
-    private static DragRectOptions TestOptions
-        => DragRectOptions.Default with { HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
+    private static MarqueeOptions TestOptions
+        => MarqueeOptions.Default with { HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
 
     /// <summary>ドメイン境界 200x200 を持つコントロールを生成する。</summary>
     /// <param name="cursor">カーソルサービスのスパイ。</param>
     /// <returns>座標変換ポートを設定したコントロール。</returns>
-    private static DragRectControl CreateBounded(CursorServiceSpy cursor)
+    private static MarqueeControl CreateBounded(CursorServiceSpy cursor)
     {
         var control = CreateControl(cursor);
         control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
@@ -91,7 +91,7 @@ public class DragRectControlTests
         Assert.Equal(1.0, control.RenderScaling);
 
         // 設定を指定しない場合の既定値はコアの DragRectOptions.Default と一致する
-        Assert.Equal(DragRectOptions.Default, new DragRectControl().Options);
+        Assert.Equal(MarqueeOptions.Default, new MarqueeControl().Options);
     }
 
     [Fact]
@@ -99,9 +99,9 @@ public class DragRectControlTests
     {
         var control = CreateControl(new CursorServiceSpy());
 
-        control.Options = DragRectOptions.Default with
+        control.Options = MarqueeOptions.Default with
         {
-            OuterAppearance = DragRectOptions.Default.OuterAppearance with
+            OuterAppearance = MarqueeOptions.Default.OuterAppearance with
             {
                 BorderColor = DrawingColor.Red,
                 BorderThickness = 3.0,
@@ -158,9 +158,9 @@ public class DragRectControlTests
 
         var snapshot = control.CurrentSnapshot;
 
-        Assert.Equal(DragRectInteractionState.NoSelection, snapshot.State);
+        Assert.Equal(MarqueeInteractionState.NoSelection, snapshot.State);
         Assert.Equal(default, snapshot.SelectionRect);
-        Assert.Equal(DragHandle.None, snapshot.ActiveHandle);
+        Assert.Equal(HitTarget.None, snapshot.ActiveTarget);
         Assert.False(snapshot.HasSelection);
         Assert.False(snapshot.IsDragging);
         Assert.False(snapshot.IsMouseDown);
@@ -175,7 +175,7 @@ public class DragRectControlTests
         control.SetSelection(new EsRect(10, 10, 50, 40));
 
         var snapshot = control.CurrentSnapshot;
-        Assert.Equal(DragRectInteractionState.Selected, snapshot.State);
+        Assert.Equal(MarqueeInteractionState.Selected, snapshot.State);
         Assert.Equal(new EsRect(10, 10, 50, 40), snapshot.SelectionRect);
         Assert.True(snapshot.HasSelection);
     }
@@ -197,7 +197,7 @@ public class DragRectControlTests
         Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Rect);
         // Snapshot はイベント引数の矩形と同一の選択矩形（ドメイン座標）を保持する
         Assert.Equal(new EsRect(10, 10, 50, 40), raised.Snapshot.SelectionRect);
-        Assert.Equal(DragRectInteractionState.Selected, raised.Snapshot.State);
+        Assert.Equal(MarqueeInteractionState.Selected, raised.Snapshot.State);
     }
 
     [Fact]
@@ -259,7 +259,7 @@ public class DragRectControlTests
         control.ResetSelection();
 
         Assert.False(control.CurrentSnapshot.HasSelection);
-        Assert.Equal(DragRectInteractionState.NoSelection, control.CurrentSnapshot.State);
+        Assert.Equal(MarqueeInteractionState.NoSelection, control.CurrentSnapshot.State);
     }
 
     // ====================================================================
@@ -336,7 +336,7 @@ public class DragRectControlTests
 
         Assert.NotNull(raised);
         Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Rect);
-        Assert.Equal(DragRectInteractionState.Selected, raised.Snapshot.State);
+        Assert.Equal(MarqueeInteractionState.Selected, raised.Snapshot.State);
     }
 
     [Fact]

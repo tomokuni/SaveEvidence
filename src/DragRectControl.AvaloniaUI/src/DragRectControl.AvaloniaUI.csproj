@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.AvaloniaUI.DragRect</RootNamespace>
+    <RootNamespace>Estable.AvaloniaUI.Marquee</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -15,14 +15,14 @@
 
   <ItemGroup>
     <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
-    <InternalsVisibleTo Include="DragRectControl.AvaloniaUI.Tests" />
+    <InternalsVisibleTo Include="MarqueeControl.AvaloniaUI.Tests" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- 共有プラットフォーム抽象（カーソル操作: ICursorService / WinCursorService） -->
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
     <!-- UI 非依存のコア（選択幾何・状態機械） -->
-    <ProjectReference Include="..\..\DragRectControl.Core\src\DragRectControl.Core.csproj" />
+    <ProjectReference Include="..\..\MarqueeControl.Core\src\MarqueeControl.Core.csproj" />
   </ItemGroup>
 
 </Project>

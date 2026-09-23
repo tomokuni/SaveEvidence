@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Estable.CaptureSession;
-using Estable.DragRect.Decoration;
+using Estable.Marquee.Decoration;
 using Estable.FadeMaskDragRect;
 using Estable.MewUI.FadeMaskDragRect;
 using EsUtil.Platform.MewUI;

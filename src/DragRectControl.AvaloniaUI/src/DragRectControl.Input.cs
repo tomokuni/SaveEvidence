@@ -4,7 +4,7 @@ using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.AvaloniaUI.DragRect;
+namespace Estable.AvaloniaUI.Marquee;
 
 /// <summary>
 /// DragRectControl のキーボード入力処理（partial 分割）。
@@ -14,7 +14,7 @@ namespace Estable.AvaloniaUI.DragRect;
 /// 矢印キー nudge・Escape のキャンセル・Enter の確定の判断（許可条件を含む）はコアが行う。<br/>
 /// キーボード（矢印キー nudge）はフォーカス非依存（TopLevel のキー購読）のため、コントロールにフォーカスがなくても動作する。
 /// </remarks>
-public sealed partial class DragRectControl
+public sealed partial class MarqueeControl
 {
     // ====================================================================
     // キーボード（矢印キー nudge・Escape/Enter の確定/キャンセル）

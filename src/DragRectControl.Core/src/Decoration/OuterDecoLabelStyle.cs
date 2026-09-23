@@ -1,4 +1,4 @@
-namespace Estable.DragRect.Decoration;
+namespace Estable.Marquee.Decoration;
 
 /// <summary>暗転マスクのラベル 1 行分の外観（フォントサイズ・文字色・背景色）。</summary>
 /// <remarks>

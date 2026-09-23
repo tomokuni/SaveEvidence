@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 内包する MewUI コントロール（DragRect + Loupe） -->
-    <ProjectReference Include="..\..\DragRectControl.MewUI\src\DragRectControl.MewUI.csproj" />
+    <!-- 内包する MewUI コントロール（Marquee + Loupe） -->
+    <ProjectReference Include="..\..\MarqueeControl.MewUI\src\MarqueeControl.MewUI.csproj" />
     <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
     <!-- ルーペの表示位置計算（LoupePositionCalculator） -->
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />

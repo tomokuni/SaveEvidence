@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Estable.DragRect.Tests;
 
-/// <summary><see cref="DragRectLogMessage"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
+/// <summary><see cref="MarqueeLogMessage"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>
 /// ログ定義は internal のため、<see cref="RecordingLogger"/>（IsEnabled=true）と<br/>
 /// <see cref="NullLogger"/>（IsEnabled=false）の両方で全メソッドを直接呼び、<br/>
@@ -56,17 +56,17 @@ public class DragRectLogMessageTests
     /// <param name="logger">ロガー。</param>
     private static void InvokeAll(ILogger logger)
     {
-        DragRectLogMessage.LogMouseDown(logger, 10, 20, 1, false);
-        DragRectLogMessage.LogMouseUp(logger, 10, 20, true, true);
-        DragRectLogMessage.LogClick(logger, 10, 20);
-        DragRectLogMessage.LogDoubleClick(logger, 10, 20, true);
-        DragRectLogMessage.LogPositionBeforeDown(logger, 10, 20);
-        DragRectLogMessage.LogPositionAfterUp(logger, 10, 20);
-        DragRectLogMessage.LogDragStart(logger, "Move", 10, 20);
-        DragRectLogMessage.LogKeyDown(logger, "Left", true);
-        DragRectLogMessage.LogConfirmRequested(logger, "(10, 20, 30, 40)");
-        DragRectLogMessage.LogCancelRequested(logger);
-        DragRectLogMessage.LogZoomRequested(logger, true);
-        DragRectLogMessage.LogSettingChanged(logger, "MinSelectionSize", "3", "5");
+        MarqueeLogMessage.LogMouseDown(logger, 10, 20, 1, false);
+        MarqueeLogMessage.LogMouseUp(logger, 10, 20, true, true);
+        MarqueeLogMessage.LogClick(logger, 10, 20);
+        MarqueeLogMessage.LogDoubleClick(logger, 10, 20, true);
+        MarqueeLogMessage.LogPositionBeforeDown(logger, 10, 20);
+        MarqueeLogMessage.LogPositionAfterUp(logger, 10, 20);
+        MarqueeLogMessage.LogDragStart(logger, "Move", 10, 20);
+        MarqueeLogMessage.LogKeyDown(logger, "Left", true);
+        MarqueeLogMessage.LogConfirmRequested(logger, "(10, 20, 30, 40)");
+        MarqueeLogMessage.LogCancelRequested(logger);
+        MarqueeLogMessage.LogZoomRequested(logger, true);
+        MarqueeLogMessage.LogSettingChanged(logger, "MinSelectionSize", "3", "5");
     }
 }

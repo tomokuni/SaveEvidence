@@ -87,7 +87,7 @@ public sealed partial class LoupeControl : UserControl
             logRenderCore: generation => Log.LogRenderCore(generation));
 
     // ====================================================================
-    // 座標変換ポート（DragRectControl と同方式）
+    // 座標変換ポート（MarqueeControl と同方式）
     // ====================================================================
 
     /// <summary>論理座標（ドメイン）↔ 親パネル DIP の座標変換ポート（未設定は null。使用時に等価変換を適用する）。</summary>
@@ -118,7 +118,7 @@ public sealed partial class LoupeControl : UserControl
     /// <summary>論理座標（ドメイン）↔ 親パネル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Inverse = 論理→親パネルDIP）。null の場合は等価変換。</param>
     /// <remarks>
-    /// DragRectControl と同様に、外部から与えたポートで表示位置（<see cref="Visual.RenderTransform"/>）と<br/>
+    /// MarqueeControl と同様に、外部から与えたポートで表示位置（<see cref="Visual.RenderTransform"/>）と<br/>
     /// 表示サイズ（親パネルサイズによるクランプ）を計算する。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等の<br/>
     /// レイアウト変化に追従できる（イベント時の DIP キャッシュは使わない）。<br/>

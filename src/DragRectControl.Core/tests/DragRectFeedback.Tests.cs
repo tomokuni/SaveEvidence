@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Estable.DragRect.Tests;
 
-/// <summary><see cref="DragRectFeedback"/> の単体テスト（UI 層へ要求する効果の適用）。</summary>
+/// <summary><see cref="MarqueeFeedback"/> の単体テスト（UI 層へ要求する効果の適用）。</summary>
 /// <remarks>
 /// 効果の選択・適用順はコアが単一所有するため、UI 実装に依存せずここで検証する。<br/>
 /// 適用先（カーソルサービス・自 UI の操作）はデリゲートとして渡し、呼び出し順を記録して検証する。
@@ -15,9 +15,9 @@ public class DragRectFeedbackTests
     {
         var cursor = new CursorServiceSpy();
         // 3 つの操作をまとめて要求する（nudge の終了と同じ組み合わせ）
-        var feedback = new DragRectFeedback
+        var feedback = new MarqueeFeedback
         {
-            Cursor = DragRectCursorAction.MoveTo | DragRectCursorAction.Hide | DragRectCursorAction.Show,
+            Cursor = MarqueeCursorAction.MoveTo | MarqueeCursorAction.Hide | MarqueeCursorAction.Show,
             CursorDomainPosition = new EsPoint(10, 20),
         };
 
@@ -31,7 +31,7 @@ public class DragRectFeedbackTests
     public void ApplyCursor_操作が無ければ何もしない()
     {
         var cursor = new CursorServiceSpy();
-        var feedback = new DragRectFeedback();
+        var feedback = new MarqueeFeedback();
 
         feedback.ApplyCursor(cursor, _ => new EsPixelPoint(999, 999));
 
@@ -41,11 +41,11 @@ public class DragRectFeedbackTests
     [Fact]
     public void ApplyVisual_フォーカスしてからカーソル形状と再描画を適用する()
     {
-        var feedback = new DragRectFeedback
+        var feedback = new MarqueeFeedback
         {
             RequestFocus = true,
             UpdateCursorShape = true,
-            CursorKind = DragCursorKind.DiagonalNWSE,
+            CursorKind = MarqueeCursorKind.DiagonalNWSE,
             Redraw = true,
         };
         var applied = new List<string>();
@@ -61,7 +61,7 @@ public class DragRectFeedbackTests
     [Fact]
     public void ApplyVisual_要求されていない効果は適用しない()
     {
-        var feedback = new DragRectFeedback { Redraw = true };
+        var feedback = new MarqueeFeedback { Redraw = true };
         var applied = new List<string>();
 
         feedback.ApplyVisual(
@@ -75,7 +75,7 @@ public class DragRectFeedbackTests
     [Fact]
     public void ApplyVisual_効果が無ければ何も適用しない()
     {
-        var feedback = new DragRectFeedback();
+        var feedback = new MarqueeFeedback();
         var applied = new List<string>();
 
         feedback.ApplyVisual(
@@ -89,22 +89,22 @@ public class DragRectFeedbackTests
     [Fact]
     public void ApplyVisual_カーソル形状の種別を渡す()
     {
-        var applied = new List<DragCursorKind>();
+        var applied = new List<MarqueeCursorKind>();
         // 各ハンドル種別がそのまま渡ることを確認する（写像は UI 層の責務）
         foreach (var kind in new[]
                  {
-                     DragCursorKind.Default, DragCursorKind.DiagonalNWSE, DragCursorKind.DiagonalNESW,
-                     DragCursorKind.Vertical, DragCursorKind.Horizontal, DragCursorKind.Move,
+                     MarqueeCursorKind.Default, MarqueeCursorKind.DiagonalNWSE, MarqueeCursorKind.DiagonalNESW,
+                     MarqueeCursorKind.Vertical, MarqueeCursorKind.Horizontal, MarqueeCursorKind.Move,
                  })
         {
-            new DragRectFeedback { UpdateCursorShape = true, CursorKind = kind }
+            new MarqueeFeedback { UpdateCursorShape = true, CursorKind = kind }
                 .ApplyVisual(() => { }, () => { }, applied.Add);
         }
 
         Assert.Equal(
             [
-                DragCursorKind.Default, DragCursorKind.DiagonalNWSE, DragCursorKind.DiagonalNESW,
-                DragCursorKind.Vertical, DragCursorKind.Horizontal, DragCursorKind.Move,
+                MarqueeCursorKind.Default, MarqueeCursorKind.DiagonalNWSE, MarqueeCursorKind.DiagonalNESW,
+                MarqueeCursorKind.Vertical, MarqueeCursorKind.Horizontal, MarqueeCursorKind.Move,
             ],
             applied);
     }

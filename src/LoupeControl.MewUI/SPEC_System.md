@@ -245,7 +245,7 @@ sequenceDiagram
 | --- | --- |
 | 座標変換ポート | Avalonia 版の `SetCoordinateTransform` 相当（ホストが `LoupePositionCalculator` を使う形で代替中） |
 | 再生成の要求メソッド | `Clear` / `RequestRender` 相当（現在はプロパティ変更で自動再描画） |
-| 座標ラベル以外の文字描画 | 日本語のフォントフォールバック（ラベルは `DragRectControl.MewUI`（選択矩形の外側の装飾）側で対応済み。本コントロールの座標ラベルは数値のみのため未適用） |
+| 座標ラベル以外の文字描画 | 日本語のフォントフォールバック（ラベルは `MarqueeControl.MewUI`（選択矩形の外側の装飾）側で対応済み。本コントロールの座標ラベルは数値のみのため未適用） |
 
 ## ログ
 

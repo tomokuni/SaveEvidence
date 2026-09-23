@@ -99,7 +99,7 @@ public sealed partial class Settings : ObservableObject
     private string _captureTextColor = "#FFFFFFFF";
 
     /// <summary>キャプチャ時の選択枠の太さ（DIP）を取得または設定する。</summary>
-    /// <remarks>デフォルトはコントロール既定（DragRectControl / OuterDecoAppearance）と一致させる。</remarks>
+    /// <remarks>デフォルトはコントロール既定（MarqueeControl / OuterDecoAppearance）と一致させる。</remarks>
     [ObservableProperty]
     private double _captureBorderThickness = 2.0;
 
@@ -144,7 +144,7 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private double _markerLength = 16.0;
 
-    /// <summary>カーソルの右側にカーソルのドメイン座標ラベル（"xy (x, y)"）を表示するか（DragRect）。</summary>
+    /// <summary>カーソルの右側にカーソルのドメイン座標ラベル（"xy (x, y)"）を表示するか（Marquee）。</summary>
     [ObservableProperty]
     private bool _showCoordLabel;
 
@@ -342,7 +342,7 @@ public sealed partial class Settings : ObservableObject
         InfoLabelColor = d.InfoLabelColor;
         InfoLabelBackgroundColor = d.InfoLabelBackgroundColor;
         InfoLabelFontSize = d.InfoLabelFontSize;
-        // カーソル位置の座標ラベル（DragRect）
+        // カーソル位置の座標ラベル（Marquee）
         CoordLabelColor = d.CoordLabelColor;
         CoordLabelBackgroundColor = d.CoordLabelBackgroundColor;
         CoordLabelFontSize = d.CoordLabelFontSize;

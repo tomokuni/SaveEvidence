@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using DragRectControl.Sample.Views;
+using MarqueeControl.Sample.Views;
 
-namespace DragRectControl.Sample;
+namespace MarqueeControl.Sample;
 
 /// <summary>Avalonia アプリケーション本体。</summary>
 public sealed partial class App : Application

@@ -56,7 +56,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 ### 3.2 依存の方向
 
 - 依存は**一方向の階層構造**（本プロジェクト → Native → Core）。
-- 上位 AP（`DragRectControl` / `CaptureSessionControl.AvaloniaUI` / `app.AvaloniaUI`）は本プロジェクトを参照すれば、
+- 上位 AP（`MarqueeControl` / `CaptureSessionControl.AvaloniaUI` / `app.AvaloniaUI`）は本プロジェクトを参照すれば、
   サービス抽象・コア値型・既定実装・Avalonia アダプタをすべて利用できる。
 - 本プロジェクトは「Avalonia の型に依存するもの」だけを置く。UI 非依存の型は Core / Native 側に置く。
 
@@ -71,7 +71,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 ```mermaid
 flowchart TB
     subgraph Host["上位AP（消費側）"]
-        DR["DragRectControl<br/>ICursorService / ScreenConverter"]
+        DR["MarqueeControl<br/>ICursorService / ScreenConverter"]
         SC["CaptureSessionControl.AvaloniaUI<br/>ICaptureService / IWindowService / IElementFinder"]
         AP["app 等<br/>PlatformFactory.CreateXxx / EsBitmap"]
     end

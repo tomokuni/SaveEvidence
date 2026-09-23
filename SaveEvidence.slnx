@@ -41,20 +41,20 @@
     <Project Path="src/CropViewControl.AvaloniaUI/src/CropViewControl.AvaloniaUI.csproj" />
     <Project Path="src/CropViewControl.AvaloniaUI/tests/CropViewControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/DragRectControl.Core/">
-    <Project Path="src/DragRectControl.Core/src/DragRectControl.Core.csproj" />
-    <Project Path="src/DragRectControl.Core/tests/DragRectControl.Core.Tests.csproj" />
+  <Folder Name="/src/MarqueeControl.Core/">
+    <Project Path="src/MarqueeControl.Core/src/MarqueeControl.Core.csproj" />
+    <Project Path="src/MarqueeControl.Core/tests/MarqueeControl.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/DragRectControl.MewUI/">
-    <Project Path="src/DragRectControl.MewUI/src/DragRectControl.MewUI.csproj" />
-    <Project Path="src/DragRectControl.MewUI/tests/DragRectControl.MewUI.Tests.csproj" />
+  <Folder Name="/src/MarqueeControl.MewUI/">
+    <Project Path="src/MarqueeControl.MewUI/src/MarqueeControl.MewUI.csproj" />
+    <Project Path="src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/DragRectControl.MewUI/src/" />
+  <Folder Name="/src/MarqueeControl.MewUI/src/" />
   <Folder Name="/src/CropViewControl.MewUI/src/" />
-  <Folder Name="/src/DragRectControl.AvaloniaUI/">
-    <Project Path="src/DragRectControl.AvaloniaUI/sample/DragRectControl.AvaloniaUI.Sample.csproj" />
-    <Project Path="src/DragRectControl.AvaloniaUI/src/DragRectControl.AvaloniaUI.csproj" />
-    <Project Path="src/DragRectControl.AvaloniaUI/tests/DragRectControl.AvaloniaUI.Tests.csproj" />
+  <Folder Name="/src/MarqueeControl.AvaloniaUI/">
+    <Project Path="src/MarqueeControl.AvaloniaUI/sample/MarqueeControl.AvaloniaUI.Sample.csproj" />
+    <Project Path="src/MarqueeControl.AvaloniaUI/src/MarqueeControl.AvaloniaUI.csproj" />
+    <Project Path="src/MarqueeControl.AvaloniaUI/tests/MarqueeControl.AvaloniaUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/FadeMaskDragRectControl.Core/">
     <Project Path="src/FadeMaskDragRectControl.Core/src/FadeMaskDragRectControl.Core.csproj" />

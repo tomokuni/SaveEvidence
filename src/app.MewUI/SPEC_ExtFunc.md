@@ -67,7 +67,7 @@
 
 ### 選択中のラベル
 
-選択矩形の左上に行を縦に積んで表示します（背景付き。行の配置と文言生成は `DragRectControl.Core` の `OuterDecoLabels` / `OuterDecoLabelLayout`（名前空間 `Estable.DragRect.Decoration`）が単一所有）。
+選択矩形の左上に行を縦に積んで表示します（背景付き。行の配置と文言生成は `MarqueeControl.Core` の `OuterDecoLabels` / `OuterDecoLabelLayout`（名前空間 `Estable.Marquee.Decoration`）が単一所有）。
 
 | 行 | 内容 | 表示条件 | 設定 |
 | --- | --- | --- | --- |
@@ -121,7 +121,7 @@
 | --- | --- |
 | 出力先 | `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持） |
 | 書式 | `{時刻} [{レベル}] [{カテゴリ}] {メッセージ}`（Avalonia 版と同一） |
-| カテゴリ | 出力元のクラス名（`Program` / `CaptureOverlayWindow` / `PreviewCropSession` / `DragRectControl` 等） |
+| カテゴリ | 出力元のクラス名（`Program` / `CaptureOverlayWindow` / `PreviewCropSession` / `MarqueeControl` 等） |
 | 内容 | アプリ起動・終了 / 撮影の開始・確定・キャンセル / 切り出しの開始・確定・キャンセル / 選択操作（MouseDown・MouseUp・DragStart・KeyDown 等） / ズーム操作（前後のズーム率） / ルーペの状態変更（表示中の選択オーバーレイ） / 未処理の例外（Critical。アプリ全体・UI スレッド・待機されなかったタスクの 3 経路） |
 | 失敗時 | ログ出力の失敗でアプリの動作を止めない（Serilog の既定動作） |
 

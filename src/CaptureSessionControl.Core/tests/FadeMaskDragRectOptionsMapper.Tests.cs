@@ -31,18 +31,18 @@ public class FadeMaskDragRectOptionsMapperTests
         };
 
         var options = settings.ToFadeMaskDragRectOptions();
-        var dragRect = options.DragRect;
+        var marquee = options.Marquee;
 
-        Assert.Equal(5, dragRect.MinSelectionSize);
-        Assert.Equal(DrawingColor.Blue, dragRect.HandleColor);
-        Assert.Equal(12.0, dragRect.HandleSize);
-        Assert.Equal(15.0, dragRect.HandleHitRadius);
-        Assert.False(dragRect.ClampToDomainBounds);
-        Assert.Equal(DrawingColor.Green, dragRect.MarkerColor);
-        Assert.Equal(20.0, dragRect.MarkerLength);
-        Assert.True(dragRect.ShowCoordLabel);
-        Assert.Equal(DrawingColor.Yellow, dragRect.CoordLabelColor);
-        Assert.Equal(14.0, dragRect.CoordLabelFontSize);
+        Assert.Equal(5, marquee.MinSelectionSize);
+        Assert.Equal(DrawingColor.Blue, marquee.HandleColor);
+        Assert.Equal(12.0, marquee.HandleSize);
+        Assert.Equal(15.0, marquee.HandleHitRadius);
+        Assert.False(marquee.ClampToDomainBounds);
+        Assert.Equal(DrawingColor.Green, marquee.MarkerColor);
+        Assert.Equal(20.0, marquee.MarkerLength);
+        Assert.True(marquee.ShowCoordLabel);
+        Assert.Equal(DrawingColor.Yellow, marquee.CoordLabelColor);
+        Assert.Equal(14.0, marquee.CoordLabelFontSize);
     }
 
     [Fact]
@@ -57,8 +57,8 @@ public class FadeMaskDragRectOptionsMapperTests
         var options = settings.ToFadeMaskDragRectOptions();
 
         // 枠線は外側の装飾（暗転マスクの穴あけ枠）が単一所有する（選択枠線と重なるため 2 つの値に分けない）
-        Assert.Equal(DrawingColor.Red, options.DragRect.OuterAppearance.BorderColor);
-        Assert.Equal(1.0, options.DragRect.OuterAppearance.BorderThickness);
+        Assert.Equal(DrawingColor.Red, options.Marquee.OuterAppearance.BorderColor);
+        Assert.Equal(1.0, options.Marquee.OuterAppearance.BorderThickness);
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class FadeMaskDragRectOptionsMapperTests
             InfoLabelFontSize = 12.0,
         };
 
-        var appearance = settings.ToFadeMaskDragRectOptions().DragRect.OuterAppearance;
+        var appearance = settings.ToFadeMaskDragRectOptions().Marquee.OuterAppearance;
 
         Assert.Equal(DrawingColor.FromArgb(128, 0, 0, 255), appearance.OverlayColor);
         Assert.False(appearance.ShowSizeLabel);

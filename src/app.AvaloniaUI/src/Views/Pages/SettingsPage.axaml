@@ -370,7 +370,7 @@
                                            Minimum="8" Maximum="32" Increment="1"
                                            Grid.Row="33" Grid.Column="2" MinWidth="120"/>
 
-                            <!-- カーソル位置の座標ラベル（DragRect） -->
+                            <!-- カーソル位置の座標ラベル（Marquee） -->
                             <!-- カテゴリ区切りの薄い水平線 -->
                             <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
                                     Height="1" Margin="0,0,0,8" VerticalAlignment="Top"

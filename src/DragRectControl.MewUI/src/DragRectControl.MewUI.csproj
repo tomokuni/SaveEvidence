@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.MewUI.DragRect</RootNamespace>
-    <AssemblyName>DragRectControl.MewUI</AssemblyName>
+    <RootNamespace>Estable.MewUI.Marquee</RootNamespace>
+    <AssemblyName>MarqueeControl.MewUI</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- MewUI は API が安定化中（0.x）。破壊的変更を避けるためバージョンを固定する。 -->
@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <!-- UI 非依存の選択幾何・状態機械（Core）とコア幾何型を参照する -->
-    <ProjectReference Include="..\..\DragRectControl.Core\src\DragRectControl.Core.csproj" />
+    <ProjectReference Include="..\..\MarqueeControl.Core\src\MarqueeControl.Core.csproj" />
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
   </ItemGroup>
 
@@ -38,7 +38,7 @@
 
   <ItemGroup>
     <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
-    <InternalsVisibleTo Include="DragRectControl.MewUI.Tests" />
+    <InternalsVisibleTo Include="MarqueeControl.MewUI.Tests" />
   </ItemGroup>
 
 </Project>

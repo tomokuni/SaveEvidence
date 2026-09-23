@@ -7,7 +7,7 @@ namespace EsUtil.Platform.AvaloniaUI.Imaging;
 /// <remarks>
 /// <see cref="Color"/> をキーに <see cref="SolidColorBrush"/> を共有し、容量超過時は全クリアして<br/>
 /// 無制限のメモリ増加を防ぐ。<br/>
-/// <see cref="LoupeControl"/> / <see cref="DragRectControl"/> の描画で共用する（重複排除・DRY）。<br/>
+/// <see cref="LoupeControl"/> / <see cref="MarqueeControl"/> の描画で共用する（重複排除・DRY）。<br/>
 /// UI スレッドに依存しないため <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public sealed class BrushCache

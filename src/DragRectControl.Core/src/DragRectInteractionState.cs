@@ -11,7 +11,7 @@ namespace Estable.DragRect;
 /// - <see cref="Selected"/>: 領域あり（選択確定後）<br/>
 /// - <see cref="SelectedNudging"/>: 領域の Nudge 中（選択確定後のキーボード微調整）
 /// </remarks>
-public enum DragRectInteractionState
+public enum MarqueeInteractionState
 {
     /// <summary>領域なし（初期状態）。</summary>
     NoSelection,

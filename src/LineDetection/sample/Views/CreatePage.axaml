@@ -13,9 +13,9 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Spacing="10">
 
-                    <TextBlock Text="スクリーンから DragRect で領域を選択し、領域内のウィンドウから正解を選択して保存します。"
+                    <TextBlock Text="スクリーンから Marquee で領域を選択し、領域内のウィンドウから正解を選択して保存します。"
                                FontSize="11" TextWrapping="Wrap"/>
-                    <Button Content="キャプチャ開始（DragRect）" Click="OnCaptureClicked" HorizontalAlignment="Stretch"
+                    <Button Content="キャプチャ開始（Marquee）" Click="OnCaptureClicked" HorizontalAlignment="Stretch"
                             ToolTip.Tip="スクリーン上でドラッグして領域を選択します。Enter / ダブルクリックで確定、Esc でキャンセル。"/>
                     <Button Content="保存（PNG + JSON）" Command="{Binding SaveCommand}"
                             HorizontalAlignment="Stretch" IsEnabled="{Binding CanSave}"/>

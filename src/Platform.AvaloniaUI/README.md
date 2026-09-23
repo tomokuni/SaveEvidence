@@ -145,11 +145,11 @@ Win32 / NoOp 実装は `Platform.Native` が唯一の生成経路となるため
 
 ### 一方向依存
 
-`Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Native` → `Platform.Core` の一方向の階層構造です。上位 AP（DragRectControl / CaptureSessionControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
+`Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Native` → `Platform.Core` の一方向の階層構造です。上位 AP（MarqueeControl / CaptureSessionControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
 
 ## 7. サンプル
 
-サンプルアプリケーションはありません（ライブラリプロジェクトのため）。各コントロールプロジェクト（DragRectControl / LoupeControl 等）の sample が本ライブラリを利用しています。
+サンプルアプリケーションはありません（ライブラリプロジェクトのため）。各コントロールプロジェクト（MarqueeControl / LoupeControl 等）の sample が本ライブラリを利用しています。
 
 ## 8. ドキュメント
 

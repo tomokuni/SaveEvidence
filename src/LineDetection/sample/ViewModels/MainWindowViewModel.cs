@@ -13,7 +13,7 @@ public enum AppPage
     /// <summary>データ検証（選択した dataset 画像を照合）。</summary>
     VerifyLines,
 
-    /// <summary>データ作成（DragRect キャプチャ → 正解選択 → 保存）。</summary>
+    /// <summary>データ作成（Marquee キャプチャ → 正解選択 → 保存）。</summary>
     DatasetCreate,
 
     /// <summary>データ全検証（dataset の全画像を一括照合）。</summary>

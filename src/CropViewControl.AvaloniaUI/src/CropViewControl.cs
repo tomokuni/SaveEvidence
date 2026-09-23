@@ -329,14 +329,14 @@ public sealed partial class CropViewControl : Panel
     /// <param name="port">座標変換ポート。null で等価変換。</param>
     public void SetCoordinateTransform(ICoordTransform? port) => _selectionOverlay.SetCoordinateTransform(port);
 
-    /// <summary>祖先 ScrollViewer を内包 DragRect へ明示注入する（スクロール・ズーム検知 + ホイール操作。Crop 用）。</summary>
+    /// <summary>祖先 ScrollViewer を内包 Marquee へ明示注入する（スクロール・ズーム検知 + ホイール操作。Crop 用）。</summary>
     /// <param name="scrollViewer">連携する ScrollViewer。null で連携解除。</param>
     /// <remarks><see cref="FadeMaskDragRectControl.AttachScrollViewer"/> へ委譲する。</remarks>
     public void AttachScrollViewer(ScrollViewer? scrollViewer) => _selectionOverlay.AttachScrollViewer(scrollViewer);
 
-    /// <summary>内包 DragRect へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
-    /// <remarks><see cref="FadeMaskDragRectControl.FocusDragRect"/> へ委譲する。</remarks>
-    public void FocusDragRect() => _selectionOverlay.FocusDragRect();
+    /// <summary>内包 Marquee へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
+    /// <remarks><see cref="FadeMaskDragRectControl.FocusMarquee"/> へ委譲する。</remarks>
+    public void FocusMarquee() => _selectionOverlay.FocusMarquee();
 
     /// <summary>ルーペの拡大元画像を設定する（<see cref="FadeMaskDragRectControl.SetLoupeSource"/> へ委譲）。</summary>
     /// <param name="source">ルーペの拡大元画像。null でルーペをクリア。</param>

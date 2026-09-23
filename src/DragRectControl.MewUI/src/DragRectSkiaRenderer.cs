@@ -1,21 +1,21 @@
-using Estable.DragRect;
-using Estable.DragRect.Selection;
+using Estable.Marquee;
+using Estable.Marquee.Selection;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.DragRect;
+namespace Estable.MewUI.Marquee;
 
 /// <summary>ドラッグ矩形の描画（ドラッグハンドル・始点マーカー・カーソル座標ラベル）を Skia で行うレンダラー。</summary>
 /// <remarks>
 /// UI 非依存コア（<see cref="SelectionGeometry"/>）の計算結果を <see cref="SKCanvas"/> へ描画するだけの層。<br/>
 /// Avalonia 版のドロワー（<c>DragRectDrawer</c>）と等価な見た目を、中間ビットマップなしの直接描画で実現する。<br/>
 /// ハンドル位置は <see cref="SelectionGeometry.GetHandlePosition"/> から取得する（コアが単一所有）。<br/>
-/// 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）は <see cref="DragRectOuterSkiaRenderer"/> が担う。<br/>
+/// 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）は <see cref="MarqueeOuterSkiaRenderer"/> が担う。<br/>
 /// 座標はすべて DIP で扱い、呼び出し側が DPI スケーリングを適用済みであることを前提とする。
 /// </remarks>
-internal static class DragRectSkiaRenderer
+internal static class MarqueeSkiaRenderer
 {
     /// <summary>座標ラベル背景の上下パディング（DIP）。</summary>
     /// <remarks>フォントの描画基準（ベースライン）が UI ごとに異なるため、縦方向の余白は本 UI が持つ。</remarks>
@@ -29,7 +29,7 @@ internal static class DragRectSkiaRenderer
     /// <param name="borderColor">ハンドル枠の色（アルファを含む）。</param>
     /// <remarks>
     /// 8 方向のハンドル（None / Move を除く）を列挙し、<see cref="SelectionGeometry.GetHandlePosition"/> から<br/>
-    /// 中心位置を取得して描画する。ハンドルの追加時は <see cref="DragHandle"/> の追加のみで描画が追従する。
+    /// 中心位置を取得して描画する。ハンドルの追加時は <see cref="HitTarget"/> の追加のみで描画が追従する。
     /// </remarks>
     public static void DrawHandles(SKCanvas canvas, EsRect rect, double handleSize, DrawingColor handleColor, DrawingColor borderColor)
     {
@@ -46,7 +46,7 @@ internal static class DragRectSkiaRenderer
         {
             IsAntialias = false,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = (float)DragRectAppearance.HandlePenThickness,
+            StrokeWidth = (float)MarqueeAppearance.HandlePenThickness,
             Color = borderColor.ToSKColor(),
         };
 
@@ -102,7 +102,7 @@ internal static class DragRectSkiaRenderer
     /// <param name="fontSize">ラベルのフォントサイズ（DIP）。</param>
     /// <remarks>
     /// 1. 座標は <see cref="CoordinateFormatter"/>（コア）で "(x, y)" 形式へ文字列化する（Avalonia 版と同一の表記）。<br/>
-    /// 2. ラベル配置（カーソル右側 + はみ出しクランプ）はコアの <see cref="DragRectAppearance.ComputeCoordLabelPosition"/> へ委譲する。<br/>
+    /// 2. ラベル配置（カーソル右側 + はみ出しクランプ）はコアの <see cref="MarqueeAppearance.ComputeCoordLabelPosition"/> へ委譲する。<br/>
     /// 3. 背景を塗ってから文字を描画する。
     /// </remarks>
     public static void DrawCoordLabel(
@@ -124,15 +124,15 @@ internal static class DragRectSkiaRenderer
 
         var width = font.MeasureText(text, textPaint);
         var height = (float)fontSize;
-        var labelWidth = width + (float)(DragRectAppearance.LabelPadding * 2);
+        var labelWidth = width + (float)(MarqueeAppearance.LabelPadding * 2);
         var labelHeight = height + (float)(LabelVerticalPadding * 2);
 
-        var position = DragRectAppearance.ComputeCoordLabelPosition(cursorDip, clientSize, labelWidth, labelHeight);
+        var position = MarqueeAppearance.ComputeCoordLabelPosition(cursorDip, clientSize, labelWidth, labelHeight);
         var left = (float)position.X;
         var top = (float)position.Y;
 
         canvas.DrawRect(new SKRect(left, top, left + labelWidth, top + labelHeight), backgroundPaint);
-        canvas.DrawText(text, left + (float)DragRectAppearance.LabelPadding, top + (float)LabelVerticalPadding + height, SKTextAlign.Left, font, textPaint);
+        canvas.DrawText(text, left + (float)MarqueeAppearance.LabelPadding, top + (float)LabelVerticalPadding + height, SKTextAlign.Left, font, textPaint);
     }
 
     /// <summary>コア幾何型の矩形を Skia の矩形へ変換する。</summary>

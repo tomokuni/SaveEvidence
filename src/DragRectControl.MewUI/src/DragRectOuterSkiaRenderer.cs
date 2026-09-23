@@ -1,10 +1,10 @@
-using Estable.DragRect.Decoration;
+using Estable.Marquee.Decoration;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.DragRect;
+namespace Estable.MewUI.Marquee;
 
 /// <summary>選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）を Skia で描画するレンダラー。</summary>
 /// <remarks>
@@ -13,9 +13,9 @@ namespace Estable.MewUI.DragRect;
 /// 本クラスはフレームの各項目を <see cref="SKCanvas"/> の描画 API へ写すだけとする（外観値・判断を持たない）。<br/>
 /// テキストの実寸測定とフォント解決のみ UI 固有であり、行の配置はコア（<see cref="OuterDecoLabelLayout"/>）が単一所有する。<br/>
 /// 座標はすべて DIP で扱い、呼び出し側が DPI スケーリングを適用済みであることを前提とする。<br/>
-/// 選択矩形そのもの（枠線・ドラッグハンドル・始点マーカー・座標ラベル）は <see cref="DragRectSkiaRenderer"/> が担う。
+/// 選択矩形そのもの（枠線・ドラッグハンドル・始点マーカー・座標ラベル）は <see cref="MarqueeSkiaRenderer"/> が担う。
 /// </remarks>
-internal static class DragRectOuterSkiaRenderer
+internal static class MarqueeOuterSkiaRenderer
 {
     /// <summary>非 ASCII（日本語等）を含むテキスト用の予備フォント（初回のみ解決する）。</summary>
     private static SKTypeface? s_fallbackTypeface;

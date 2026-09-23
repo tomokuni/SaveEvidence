@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace DragRectControl.Sample;
+namespace MarqueeControl.Sample;
 
 /// <summary>アプリケーションのエントリポイント。</summary>
 internal static class Program

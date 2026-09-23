@@ -2,9 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Estable.AvaloniaUI.DragRect;
+using Estable.AvaloniaUI.Marquee;
 using Estable.AvaloniaUI.Loupe;
-using Estable.DragRect;
+using Estable.Marquee;
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
@@ -26,7 +26,7 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// モードごとの可否（選択矩形・ルーペ・全面暗転・破線）はコアの <c>FadeMaskDragRectModes</c> が、<br/>
 /// 選択矩形の可否はコアの <c>FadeMaskDragRectSelection</c> が単一所有する（UI 層は判断を持たず、コアの結果を割り当てるだけになる）。<br/>
 /// <br/>
-/// <b>公開型のカプセル化</b>: 公開 API は内包コントロール（DragRectControl / LoupeControl）の型を<br/>
+/// <b>公開型のカプセル化</b>: 公開 API は内包コントロール（MarqueeControl / LoupeControl）の型を<br/>
 /// 参照しない（イベント引数は本クラス独自の <see cref="FadeMaskDragRectSelectionEventArgs"/> / <see cref="FadeMaskDragRectPointEventArgs"/>、<br/>
 /// 状態は <see cref="HasSelection"/> / <see cref="SelectionRect"/> / ハイライトプロパティで提供）。<br/>
 /// 内包コントロールへの直接アクセスは internal（テスト用）であり、ホストは本クラスの公開 API のみを使う。<br/>
@@ -35,7 +35,7 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// 読み取り（<see cref="HasSelection"/> / <see cref="SelectionRect"/>）と設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）を委譲するだけとする。<br/>
 /// <br/>
 /// <b>内部構造</b>:<br/>
-/// - DragRectControl: ドラッグ選択の本体（ドメイン座標 + 座標変換ポート）。<br/>
+/// - MarqueeControl: ドラッグ選択の本体（ドメイン座標 + 座標変換ポート）。<br/>
 ///   選択矩形の<b>外側に描く装飾</b>（暗転マスク・穴あけ枠・サイズラベル・ハイライト）も本コントロールが描画する。<br/>
 /// - LoupeControl: 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算）。<br/>
 /// <br/>
@@ -45,8 +45,8 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 /// - ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested → ホストへ中継（独自イベント引数形式）。<br/>
 /// <br/>
 /// <b>モード（<see cref="Mode"/>）</b>:<br/>
-/// - <see cref="FadeMaskDragRectMode.Crop"/>: DragRect + Loupe を有効化（プレビュー内切出し・全面暗転）。<br/>
-/// - <see cref="FadeMaskDragRectMode.AreaSelect"/>: DragRect + Loupe を有効化（全画面領域選択・全面暗転）。<br/>
+/// - <see cref="FadeMaskDragRectMode.Crop"/>: Marquee + Loupe を有効化（プレビュー内切出し・全面暗転）。<br/>
+/// - <see cref="FadeMaskDragRectMode.AreaSelect"/>: Marquee + Loupe を有効化（全画面領域選択・全面暗転）。<br/>
 /// - <see cref="FadeMaskDragRectMode.ScreenSelect"/> / <see cref="FadeMaskDragRectMode.WindowSelect"/>: ハイライトのみを描画し、<br/>
 ///   入力を受けない（Loupe も無効。クリック確定フローはホストが担う）。<br/>
 /// <br/>
@@ -60,7 +60,7 @@ namespace Estable.AvaloniaUI.FadeMaskDragRect;
 public sealed class FadeMaskDragRectControl : Panel
 {
     /// <summary>ドラッグ選択コントロール（選択矩形・ハンドル・nudge と、外側の装飾（暗転マスク・枠・ラベル）の描画）。</summary>
-    private readonly DragRectControl _dragRect = new() { IsHitTestVisible = true, ZIndex = 60, ClipToBounds = true };
+    private readonly MarqueeControl _marquee = new() { IsHitTestVisible = true, ZIndex = 60, ClipToBounds = true };
 
     /// <summary>ルーペコントロール（外観・表示状態の真のソース）。</summary>
     private readonly LoupeControl _loupeControl = new() { ZIndex = 70, IsHitTestVisible = false };
@@ -73,7 +73,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>FadeMaskDragRectControl を初期化する（子コントロールの生成・配置・配線を実施）。</summary>
     /// <remarks>
-    /// コンストラクタで内包コントロール（DragRect / Loupe）を生成して子として配置し、<br/>
+    /// コンストラクタで内包コントロール（Marquee / Loupe）を生成して子として配置し、<br/>
     /// イベント配線（状態同期・ホストへのイベント中継）を実施する。<br/>
     /// ルーペは Left/Top アラインメントで配置し、表示位置は座標変換ポートから自己計算する（LoupeControl.UpdatePosition）。
     /// </remarks>
@@ -81,19 +81,19 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         _loupeControl.HorizontalAlignment = HorizontalAlignment.Left;
         _loupeControl.VerticalAlignment = VerticalAlignment.Top;
-        Children.Add(_dragRect);
+        Children.Add(_marquee);
         Children.Add(_loupeControl);
 
         // ── 配線 ──
         // 選択矩形の変更は、ルーペ画像上の破線を描き直すためにルーペの再生成を要求する
         // （選択矩形の描画自体と外側の装飾は選択矩形コントロールがセッションから直接読んで描画する）。
-        _dragRect.SelectionChanged += OnSelectionChanged;
-        _dragRect.ViewportChanged += OnViewportChanged;
-        _dragRect.LoupePositionMoved += OnLoupePositionMoved;
-        _dragRect.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect);
-        _dragRect.CancelRequested += (_, _) => RaiseCancelRequested();
-        _dragRect.ZoomRequested += (_, request) => RaiseZoomRequested(request);
-        _dragRect.ScrollRequested += (_, request) => RaiseScrollRequested(request);
+        _marquee.SelectionChanged += OnSelectionChanged;
+        _marquee.ViewportChanged += OnViewportChanged;
+        _marquee.LoupePositionMoved += OnLoupePositionMoved;
+        _marquee.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect);
+        _marquee.CancelRequested += (_, _) => RaiseCancelRequested();
+        _marquee.ZoomRequested += (_, request) => RaiseZoomRequested(request);
+        _marquee.ScrollRequested += (_, request) => RaiseScrollRequested(request);
 
         // ルーペ描画完了時に選択矩形の破線オーバーレイを描画する（LoupeControl の選択矩形 API は削除済み）
         _loupeControl.Rendered += OnLoupeRendered;
@@ -128,7 +128,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>動作モードを取得または設定する（内包コントロールの有効・無効と描画モードを自動切替）。</summary>
     /// <value><see cref="FadeMaskDragRectMode"/>（Crop / AreaSelect / ScreenSelect / WindowSelect）。既定値は AreaSelect。</value>
     /// <remarks>
-    /// 設定時は描画モード（<c>OuterDecoRenderMode</c>）・<see cref="DragRectControl"/> の可視性・<br/>
+    /// 設定時は描画モード（<c>OuterDecoRenderMode</c>）・<see cref="MarqueeControl"/> の可視性・<br/>
     /// 全面暗転・ルーペの表示可否を一括で適用する（判断はコアの <c>FadeMaskDragRectModes</c> が単一所有する）。<br/>
     /// - Crop / AreaSelect: 選択矩形とルーペを表示し、全面暗転を有効化する。<br/>
     /// - ScreenSelect / WindowSelect: 選択矩形 / ルーペを非表示にし、全面暗転を無効化する（ハイライトのみ）。
@@ -150,11 +150,11 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>現在の選択状態（選択矩形の有無）。</summary>
     /// <remarks>選択状態の真のソースは選択矩形コントロールのセッションであり、本プロパティはその読み取りを委譲するだけである。</remarks>
-    public bool HasSelection => _dragRect.HasSelection;
+    public bool HasSelection => _marquee.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</summary>
     /// <remarks>選択状態の真のソースは選択矩形コントロールのセッションであり、本プロパティはその読み取りを委譲するだけである。</remarks>
-    public Rect SelectionRect => _dragRect.SelectionRect.ToAvaloniaRect();
+    public Rect SelectionRect => _marquee.SelectionRect.ToAvaloniaRect();
 
     /// <summary>Enter キーまたは RequestConfirm による確定要求イベント（選択確定後のみ発火）。</summary>
     public event EventHandler<FadeMaskDragRectSelectionEventArgs>? ConfirmRequested;
@@ -163,11 +163,11 @@ public sealed class FadeMaskDragRectControl : Panel
     public event EventHandler? CancelRequested;
 
     /// <summary>Ctrl+ホイールによるズーム要求イベント（方向と発生位置）。Crop 用。</summary>
-    public event EventHandler<DragRectZoomRequest>? ZoomRequested;
+    public event EventHandler<WheelZoomRequest>? ZoomRequested;
 
     /// <summary>通常ホイール（Ctrl なし）によるスクロール要求イベント（生の回転量・修飾キー・発生位置）。Crop 用。</summary>
     /// <remarks>スクロール先（接続先 ScrollViewer・ズームビューポートのパン等）の決定はホストが実施する。</remarks>
-    public event EventHandler<DragRectScrollRequest>? ScrollRequested;
+    public event EventHandler<WheelScrollRequest>? ScrollRequested;
 
     /// <summary>ルーペ中心の更新イベント（ドメイン座標。ホストの追加制御用フック）。</summary>
     public event EventHandler<FadeMaskDragRectPointEventArgs>? LoupePositionMoved;
@@ -180,24 +180,24 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     public event EventHandler<LoupeRenderedEventArgs>? LoupeRendered;
 
-    /// <summary>選択確定要求を DragRect へ委譲する（Enter キー相当）。</summary>
-    public void RequestConfirm() => _dragRect.RequestConfirm();
+    /// <summary>選択確定要求を Marquee へ委譲する（Enter キー相当）。</summary>
+    public void RequestConfirm() => _marquee.RequestConfirm();
 
-    /// <summary>選択キャンセル要求を DragRect へ委譲する（Escape キー相当）。</summary>
-    public void RequestCancel() => _dragRect.RequestCancel();
+    /// <summary>選択キャンセル要求を Marquee へ委譲する（Escape キー相当）。</summary>
+    public void RequestCancel() => _marquee.RequestCancel();
 
     /// <summary>選択矩形をプログラム的に設定する（外部復元・テスト用）。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <remarks>
-    /// DragRectControl.SetSelection へ委譲する。SelectionChanged が発火し、ルーペ画像上の破線も追従する。<br/>
-    /// マウス操作による選択（DragRect 自身が状態を管理）とは独立した、外部からの復元用 API。<br/>
+    /// MarqueeControl.SetSelection へ委譲する。SelectionChanged が発火し、ルーペ画像上の破線も追従する。<br/>
+    /// マウス操作による選択（Marquee 自身が状態を管理）とは独立した、外部からの復元用 API。<br/>
     /// 選択として成立するかどうかの判定はコアの <c>FadeMaskDragRectSelection</c> が単一所有する。
     /// </remarks>
     public void SetSelection(Rect rect)
     {
         if (FadeMaskDragRectSelection.IsUsable(rect.Width, rect.Height))
         {
-            _dragRect.SetSelection(rect);
+            _marquee.SetSelection(rect);
         }
         else
         {
@@ -207,27 +207,27 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>選択状態をクリアして全面暗転（穴あけなし）に戻す。</summary>
     /// <remarks>セッションの選択状態と nudge をまとめて初期化する（状態の初期化はセッションが単一所有する）。</remarks>
-    public void ClearSelection() => _dragRect.ResetSelection();
+    public void ClearSelection() => _marquee.ResetSelection();
 
-    /// <summary>DragRect へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
-    /// <remarks>DragRect はフォーカス時に自身の OnKeyDown で矢印キーを処理するため、セッション開始時に呼び出す。</remarks>
-    public void FocusDragRect() => _dragRect.Focus();
+    /// <summary>Marquee へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
+    /// <remarks>Marquee はフォーカス時に自身の OnKeyDown で矢印キーを処理するため、セッション開始時に呼び出す。</remarks>
+    public void FocusMarquee() => _marquee.Focus();
 
-    /// <summary>祖先 ScrollViewer を DragRect へ明示注入する（スクロール・ズーム検知 + ホイール操作。Crop 用）。</summary>
+    /// <summary>祖先 ScrollViewer を Marquee へ明示注入する（スクロール・ズーム検知 + ホイール操作。Crop 用）。</summary>
     /// <param name="scrollViewer">連携する ScrollViewer。null で連携解除。</param>
-    public void AttachScrollViewer(ScrollViewer? scrollViewer) => _dragRect.AttachScrollViewer(scrollViewer);
+    public void AttachScrollViewer(ScrollViewer? scrollViewer) => _marquee.AttachScrollViewer(scrollViewer);
 
     /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を内包コントロールへ通知する。</summary>
     /// <remarks>
     /// ビューポート実装（ScrollViewer / RenderTransform ベース等）に依存せず、ホスト（上位 AP）が<br/>
     /// ビューポート変化を検知した際に本メソッドで中継する（ScrollViewer 連携の <c>ScrollChanged</c> 経由の<br/>
-    /// <see cref="DragRectControl.ViewportChanged"/> も本メソッドへ統合される）。<br/>
-    /// DragRect（選択矩形と外側の装飾）の再描画と、ルーペ表示位置の再計算を要求する。<br/>
+    /// <see cref="MarqueeControl.ViewportChanged"/> も本メソッドへ統合される）。<br/>
+    /// Marquee（選択矩形と外側の装飾）の再描画と、ルーペ表示位置の再計算を要求する。<br/>
     /// 座標変換ポートは呼び出し毎に最新の表示状態を評価するため、再描画だけで追従する。
     /// </remarks>
     public void NotifyViewportChanged()
     {
-        _dragRect.InvalidateVisual();
+        _marquee.InvalidateVisual();
         _loupeControl.RefreshPosition();
     }
 
@@ -238,12 +238,12 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
     /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は倍率（<see cref="Scaling"/>）からコアが解決する。</param>
     /// <remarks>
-    /// DragRect / Loupe の 2 コントロールへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
+    /// Marquee / Loupe の 2 コントロールへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。
     /// </remarks>
     public void SetCoordinateTransform(ICoordTransform? port)
     {
-        _dragRect.SetCoordinateTransform(port);
+        _marquee.SetCoordinateTransform(port);
         _loupeControl.SetCoordinateTransform(port);
     }
 
@@ -257,8 +257,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
     {
-        get => _dragRect.SizeLabelOverrideProvider;
-        set => _dragRect.SizeLabelOverrideProvider = value;
+        get => _marquee.SizeLabelOverrideProvider;
+        set => _marquee.SizeLabelOverrideProvider = value;
     }
 
     /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）を取得または設定する。</summary>
@@ -269,8 +269,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     public double Scaling
     {
-        get => _dragRect.Scaling;
-        set => _dragRect.Scaling = value;
+        get => _marquee.Scaling;
+        set => _marquee.Scaling = value;
     }
 
     /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="Scaling"/> と同値）を取得または設定する。</summary>
@@ -278,8 +278,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>環境値のため設定（<see cref="Options"/>）には含めず、ホスト（セッション）が与える。</remarks>
     public double DisplayScaleScaling
     {
-        get => _dragRect.DisplayScaleScaling;
-        set => _dragRect.DisplayScaleScaling = value;
+        get => _marquee.DisplayScaleScaling;
+        set => _marquee.DisplayScaleScaling = value;
     }
 
     /// <summary>ルーペの DIP → 物理ピクセル倍率を取得または設定する。</summary>
@@ -293,19 +293,19 @@ public sealed class FadeMaskDragRectControl : Panel
         set => _loupeControl.RenderScaling = value;
     }
 
-    /// <summary>内部ロガー（内包コントロール（DragRect / Loupe）へ伝搬）。null の場合は出力なし。</summary>
+    /// <summary>内部ロガー（内包コントロール（Marquee / Loupe）へ伝搬）。null の場合は出力なし。</summary>
     /// <value>null を設定した場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> へフォールバックする。設定時に内包コントロールへ伝搬する。</value>
     /// <remarks>
     /// 内包コントロールの詳細ログ（ルーペの生成・更新・エラー、ドラッグ操作）をホストのログ基盤へ出力するために使用する。
     /// </remarks>
     public ILogger Log
     {
-        get => _dragRect.Log;
+        get => _marquee.Log;
         set
         {
             var logger = value.OrNullLogger();
             _loupeControl.Log = logger;
-            _dragRect.Log = logger;
+            _marquee.Log = logger;
         }
     }
 
@@ -350,7 +350,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>選択オーバーレイ（暗転マスク・ハイライト・選択矩形）の再描画を要求する。</summary>
     /// <remarks>ハイライト等の状態を変更した後に呼び出す。</remarks>
-    public void InvalidateOverlay() => _dragRect.InvalidateVisual();
+    public void InvalidateOverlay() => _marquee.InvalidateVisual();
 
     /// <summary>ルーペの拡大元画像（Source）を設定する。</summary>
     /// <param name="source">拡大元画像。null で解除。</param>
@@ -387,7 +387,7 @@ public sealed class FadeMaskDragRectControl : Panel
     internal LoupeControl Loupe => _loupeControl;
 
     /// <summary>選択矩形コントロール（テスト用アクセサ）。</summary>
-    internal DragRectControl DragRect => _dragRect;
+    internal MarqueeControl Marquee => _marquee;
 
     // ====================================================================
     // 公開 API: ハイライト状態（ScreenSelect / WindowSelect 用）
@@ -397,27 +397,27 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>選択矩形コントロールの設定（外側の装飾）へ委譲する（変更は自動で再描画される）。</remarks>
     public Rect? LogicalHighlightRect
     {
-        get => _dragRect.Options.OuterHighlightRect?.ToAvaloniaRect();
-        set => _dragRect.Options = _dragRect.Options with { OuterHighlightRect = value?.ToEsRect() };
+        get => _marquee.Options.OuterHighlightRect?.ToAvaloniaRect();
+        set => _marquee.Options = _marquee.Options with { OuterHighlightRect = value?.ToEsRect() };
     }
 
     /// <summary>ハイライト表示の有無。</summary>
     public bool HasHighlight
     {
-        get => _dragRect.Options.OuterHasHighlight;
-        set => _dragRect.Options = _dragRect.Options with { OuterHasHighlight = value };
+        get => _marquee.Options.OuterHasHighlight;
+        set => _marquee.Options = _marquee.Options with { OuterHasHighlight = value };
     }
 
     /// <summary>ハイライト対象のウィンドウタイトル（未検出時は空文字）。</summary>
     public string WindowTitle
     {
-        get => _dragRect.Options.OuterWindowTitle;
-        set => _dragRect.Options = _dragRect.Options with { OuterWindowTitle = value };
+        get => _marquee.Options.OuterWindowTitle;
+        set => _marquee.Options = _marquee.Options with { OuterWindowTitle = value };
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
     /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ。</remarks>
-    public bool ShowFullOverlay => _dragRect.Options.OuterShowFullOverlay;
+    public bool ShowFullOverlay => _marquee.Options.OuterShowFullOverlay;
 
     // ====================================================================
     // 内部実装（設定の分配・モードの適用・配線）
@@ -433,8 +433,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void ApplyOptions()
     {
-        var current = _dragRect.Options;
-        _dragRect.Options = _options.DragRect with
+        var current = _marquee.Options;
+        _marquee.Options = _options.Marquee with
         {
             OuterHighlightRect = current.OuterHighlightRect,
             OuterHasHighlight = current.OuterHasHighlight,
@@ -447,7 +447,7 @@ public sealed class FadeMaskDragRectControl : Panel
         // モードから導出される描画状態は設定値に含まれないため、設定を適用した後に改めて適用する
         ApplyMode();
 
-        _dragRect.InvalidateVisual();
+        _marquee.InvalidateVisual();
         _loupeControl.RequestRender();
     }
 
@@ -463,7 +463,7 @@ public sealed class FadeMaskDragRectControl : Panel
         var state = FadeMaskDragRectModes.Resolve(_mode);
 
         // モードから導出される描画状態（描画モード・全面暗転・ハンドルの表示可否）は 1 回の変更通知でまとめて適用する
-        _dragRect.Options = _dragRect.Options with
+        _marquee.Options = _marquee.Options with
         {
             OuterRenderMode = state.RenderMode,
             OuterShowFullOverlay = state.ShowFullOverlay,
@@ -471,7 +471,7 @@ public sealed class FadeMaskDragRectControl : Panel
         };
 
         // 選択矩形を使わないモードでも暗転マスク（ハイライト）は描画するため、描画は止めず入力だけを止める
-        _dragRect.IsHitTestVisible = state.UsesSelection;
+        _marquee.IsHitTestVisible = state.UsesSelection;
 
         UpdateLoupeVisibility();
         // 破線の表示可否はルーペのプロパティに現れないため、既存の Bitmap から破線を消す（または描く）ために再生成を要求する
@@ -479,7 +479,7 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>選択矩形の変更時に、ルーペ画像上の破線を描き直すために再生成を要求する（SelectionChanged）。</summary>
-    /// <param name="sender">イベント送信元（DragRectControl）。</param>
+    /// <param name="sender">イベント送信元（MarqueeControl）。</param>
     /// <param name="e">選択矩形イベント（Rect はドメイン座標）。</param>
     /// <remarks>
     /// 選択矩形の描画そのものは選択矩形コントロールがセッションから直接読んで行うため、本クラスでの同期は不要である。<br/>
@@ -488,8 +488,8 @@ public sealed class FadeMaskDragRectControl : Panel
     private void OnSelectionChanged(object? sender, SelectionRectEventArgs e)
         => _loupeControl.RequestRender();
 
-    /// <summary>ビューポート変化（DragRect の ViewportChanged = ScrollViewer 連携）を内包コントロールへ反映する。</summary>
-    /// <param name="sender">イベント送信元（DragRectControl）。</param>
+    /// <summary>ビューポート変化（Marquee の ViewportChanged = ScrollViewer 連携）を内包コントロールへ反映する。</summary>
+    /// <param name="sender">イベント送信元（MarqueeControl）。</param>
     /// <param name="e">選択矩形イベント（Rect はドメイン座標）。</param>
     /// <remarks>
     /// <see cref="NotifyViewportChanged"/> と同じ処理を実行する（ScrollViewer 連携とホスト通知を単一経路に統合）。<br/>
@@ -514,12 +514,12 @@ public sealed class FadeMaskDragRectControl : Panel
         // 破線を描くかどうかはモード（コアが単一所有する）と切り出し領域・選択矩形の有無で決まる
         if (FadeMaskDragRectModes.Resolve(_mode).ShowSelectionOverlay
             && e.CaptureTopLeft is { } topLeft
-            && _dragRect.HasSelection)
+            && _marquee.HasSelection)
         {
             // 破線色（色A / 色B）を 2 つ用意し、交互に塗る（描画はコアが単一所有する）
             FadeMaskDragRectOverlay.DrawSelectionRect(
                 e.Bitmap,
-                _dragRect.SelectionRect,
+                _marquee.SelectionRect,
                 topLeft.ToEsPoint(),
                 e.Scale,
                 _options.SelectionRectColorA,
@@ -535,7 +535,7 @@ public sealed class FadeMaskDragRectControl : Panel
     private void RaiseLoupeRendered(LoupeRenderedEventArgs e) => LoupeRendered?.Invoke(this, e);
 
     /// <summary>ルーペ更新（LoupePositionMoved）。中心はドメイン座標のまま LoupeControl に設定する。</summary>
-    /// <param name="sender">イベント送信元（DragRectControl）。</param>
+    /// <param name="sender">イベント送信元（MarqueeControl）。</param>
     /// <param name="e">ルーペ中心（ドメイン座標）。</param>
     /// <remarks>
     /// 表示位置・サイズは LoupeControl が座標変換ポートから自己計算する（カーソル右下 + オフセット + クランプ）。<br/>
@@ -543,7 +543,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 表示すると市松模様が見える。Source 設定後の表示開始はホスト（<see cref="SetLoupePosition"/> 経由）が行う）。<br/>
     /// ホストへの通知（<see cref="LoupePositionMoved"/>）は追加制御（Source 設定等）のフックとして発行する。
     /// </remarks>
-    private void OnLoupePositionMoved(object? sender, DragRectPointEventArgs e)
+    private void OnLoupePositionMoved(object? sender, MarqueePointEventArgs e)
     {
         UpdateLoupePosition(e.Point);
         RaiseLoupePositionMoved(e.Point);
@@ -564,12 +564,12 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>ズーム要求イベントを発火する。</summary>
     /// <param name="request">ズーム要求（方向と発生位置）。</param>
-    private void RaiseZoomRequested(DragRectZoomRequest request)
+    private void RaiseZoomRequested(WheelZoomRequest request)
         => ZoomRequested?.Invoke(this, request);
 
     /// <summary><see cref="ScrollRequested"/> を発火する。</summary>
     /// <param name="request">スクロール要求（生の回転量と修飾キー）。</param>
-    private void RaiseScrollRequested(DragRectScrollRequest request)
+    private void RaiseScrollRequested(WheelScrollRequest request)
         => ScrollRequested?.Invoke(this, request);
 
     /// <summary>ルーペ中心更新イベントを発火する。</summary>
@@ -581,12 +581,12 @@ public sealed class FadeMaskDragRectControl : Panel
     // レイアウト
     // ====================================================================
 
-    /// <summary>子コントロール（DragRect / Loupe）をパネル全面へ配置する。</summary>
+    /// <summary>子コントロール（Marquee / Loupe）をパネル全面へ配置する。</summary>
     /// <param name="finalSize">パネルの最終サイズ。</param>
     /// <returns>パネルの最終サイズ。</returns>
     /// <remarks>
     /// 全子コントロールを同一矩形（パネル全面）に Arrange する。<br/>
-    /// DragRect は Stretch で全面に広がり、Loupe は Left/Top アラインメントで<br/>
+    /// Marquee は Stretch で全面に広がり、Loupe は Left/Top アラインメントで<br/>
     /// 自身の Width/Height（座標変換ポートから算出）に配置される（重なり順は ZIndex で制御）。
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)

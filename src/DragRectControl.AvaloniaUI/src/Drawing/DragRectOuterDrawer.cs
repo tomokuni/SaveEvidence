@@ -3,10 +3,10 @@ using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Geometry;
-using Estable.DragRect.Decoration;
+using Estable.Marquee.Decoration;
 using System.Globalization;
 
-namespace Estable.AvaloniaUI.DragRect.Drawing;
+namespace Estable.AvaloniaUI.Marquee.Drawing;
 
 /// <summary>選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）を描画する静的クラス。</summary>
 /// <remarks>
@@ -14,9 +14,9 @@ namespace Estable.AvaloniaUI.DragRect.Drawing;
 /// 「どの矩形を暗転するか」「枠線を描くか」「ラベルをどう組むか」の判断は装飾コアの <see cref="OuterDecoFrame"/> が持つため、<br/>
 /// 本クラスはフレームの各項目を Avalonia の描画 API へ写すだけとする（外観値・判断を持たない）。<br/>
 /// テキストの実寸測定のみ UI 固有（<see cref="FormattedText"/>）であり、行の配置はコアが単一所有する。<br/>
-/// 選択矩形そのもの（枠線・ドラッグハンドル・始点マーカー・座標ラベル）は <see cref="DragRectDrawer"/> が担う。
+/// 選択矩形そのもの（枠線・ドラッグハンドル・始点マーカー・座標ラベル）は <see cref="MarqueeDrawer"/> が担う。
 /// </remarks>
-internal static class DragRectOuterDrawer
+internal static class MarqueeOuterDrawer
 {
     /// <summary>ブラシキャッシュ（色 → ブラシ。容量制限付き）。</summary>
     /// <remarks>Platform.AvaloniaUI の <see cref="BrushCache"/> へ委譲する（LoupeControl / DragRectControl と共用・重複排除・DRY）。</remarks>

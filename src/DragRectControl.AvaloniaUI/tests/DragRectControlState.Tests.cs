@@ -1,5 +1,5 @@
 using EsUtil.Platform.AvaloniaUI;
-using Estable.DragRect;
+using Estable.Marquee;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Avalonia.Media;
@@ -7,25 +7,25 @@ using Rect = Avalonia.Rect;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Estable.AvaloniaUI.DragRect.Tests;
+namespace Estable.AvaloniaUI.Marquee.Tests;
 
-/// <summary><see cref="DragRectControl"/> のヘッドレス不要テスト（状態・設定・イベント通知の純粋 API 検証）。</summary>
+/// <summary><see cref="MarqueeControl"/> のヘッドレス不要テスト（状態・設定・イベント通知の純粋 API 検証）。</summary>
 /// <remarks>
-/// コントロール生成・プロパティ設定・<see cref="DragRectControl.SetSelection"/> / <see cref="DragRectControl.ResetSelection"/> /
-/// <see cref="DragRectControl.RequestConfirm"/> / <see cref="DragRectControl.RequestCancel"/> のみを検証するため、
+/// コントロール生成・プロパティ設定・<see cref="MarqueeControl.SetSelection"/> / <see cref="MarqueeControl.ResetSelection"/> /
+/// <see cref="MarqueeControl.RequestConfirm"/> / <see cref="MarqueeControl.RequestCancel"/> のみを検証するため、
 /// Avalonia ヘッドレス実行（Dispatcher / ウィンドウ表示）を必要としない。<br/>
 /// 並列実行を妨げないよう <c>[Fact]</c> で検証する（ヘッドレス必須のポインター・キーイベントテストは
 /// <c>DragRectControlTests</c> が直列コレクションで検証する）。
 /// </remarks>
-public class DragRectControlStateTests
+public class MarqueeControlStateTests
 {
     /// <summary>テスト用の DragRectControl を生成する。</summary>
-    private static DragRectControl CreateControl()
+    private static MarqueeControl CreateControl()
         => new() { Width = 200, Height = 200, Options = TestOptions };
 
     /// <summary>テスト用の設定（最小サイズを 10 にしてドラッグ判定をしやすくする）。</summary>
-    private static DragRectOptions TestOptions
-        => DragRectOptions.Default with { HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
+    private static MarqueeOptions TestOptions
+        => MarqueeOptions.Default with { HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
 
     // ====================================================================
     // 依存プロパティのデフォルト値
@@ -56,7 +56,7 @@ public class DragRectControlStateTests
         Assert.NotNull(control.Log);
 
         // 設定を指定しない場合の既定値はコアの DragRectOptions.Default と一致する
-        Assert.Equal(DragRectOptions.Default, new DragRectControl().Options);
+        Assert.Equal(MarqueeOptions.Default, new MarqueeControl().Options);
     }
 
     [Fact]
@@ -64,9 +64,9 @@ public class DragRectControlStateTests
     {
         var control = CreateControl();
 
-        control.Options = DragRectOptions.Default with
+        control.Options = MarqueeOptions.Default with
         {
-            OuterAppearance = DragRectOptions.Default.OuterAppearance with
+            OuterAppearance = MarqueeOptions.Default.OuterAppearance with
             {
                 BorderColor = Colors.Red.ToDrawingColor(),
                 BorderThickness = 3.0,
@@ -114,9 +114,9 @@ public class DragRectControlStateTests
 
         // 未選択時: State=NoSelection / SelectionRect=0x0 / HasSelection=false / IsDragging=false / NudgeActive=false
         var snap0 = control.CurrentSnapshot;
-        Assert.Equal(DragRectInteractionState.NoSelection, snap0.State);
+        Assert.Equal(MarqueeInteractionState.NoSelection, snap0.State);
         Assert.Equal(default, snap0.SelectionRect);
-        Assert.Equal(DragHandle.None, snap0.ActiveHandle);
+        Assert.Equal(HitTarget.None, snap0.ActiveTarget);
         Assert.False(snap0.HasSelection);
         Assert.False(snap0.IsDragging);
         Assert.False(snap0.IsMouseDown);
@@ -125,7 +125,7 @@ public class DragRectControlStateTests
         // 選択時: State=Selected / SelectionRect 反映 / HasSelection=true
         control.SetSelection(new Rect(10, 10, 50, 40));
         var snap1 = control.CurrentSnapshot;
-        Assert.Equal(DragRectInteractionState.Selected, snap1.State);
+        Assert.Equal(MarqueeInteractionState.Selected, snap1.State);
         Assert.Equal(new EsRect(10, 10, 50, 40), snap1.SelectionRect);
         Assert.True(snap1.HasSelection);
         Assert.False(snap1.IsDragging);
@@ -136,18 +136,18 @@ public class DragRectControlStateTests
     public void DragRectSnapshot_HasSelection_幅か高さが0ならfalseを返す()
     {
         // Width>0 かつ Height=0（幅のみの矩形は選択として無効）
-        var snap1 = new DragRectSnapshot(DragRectInteractionState.Selected, new EsRect(0, 0, 100, 0), DragHandle.None, default, false, false, false);
+        var snap1 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 100, 0), HitTarget.None, default, false, false, false);
         Assert.False(snap1.HasSelection);
 
         // Width=0 かつ Height>0（高さのみの矩形は選択として無効）
-        var snap2 = new DragRectSnapshot(DragRectInteractionState.Selected, new EsRect(0, 0, 0, 100), DragHandle.None, default, false, false, false);
+        var snap2 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 0, 100), HitTarget.None, default, false, false, false);
         Assert.False(snap2.HasSelection);
     }
 
     [Fact]
     public void DragRectSnapshot_MousePositionが取得できる()
     {
-        var snap = new DragRectSnapshot(DragRectInteractionState.Selected, default, DragHandle.None, new EsPoint(5, 7), false, false, false);
+        var snap = new MarqueeSnapshot(MarqueeInteractionState.Selected, default, HitTarget.None, new EsPoint(5, 7), false, false, false);
 
         Assert.Equal(new EsPoint(5, 7), snap.MousePosition);
     }
@@ -285,9 +285,9 @@ public class DragRectControlStateTests
         // Snapshot はイベント引数の Rect と同一の選択矩形（ドメイン座標）を保持する
         Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Snapshot.SelectionRect);
         // 選択復元後はハンドルなし（新規選択・移動・未選択時は None）
-        Assert.Equal(DragHandle.None, raised.Snapshot.ActiveHandle);
+        Assert.Equal(HitTarget.None, raised.Snapshot.ActiveTarget);
         // 選択確定後の状態は Selected
-        Assert.Equal(DragRectInteractionState.Selected, raised.Snapshot.State);
+        Assert.Equal(MarqueeInteractionState.Selected, raised.Snapshot.State);
         // マウスボタンは押下中ではない
         Assert.False(raised.Snapshot.IsMouseDown);
     }
@@ -330,7 +330,7 @@ public class DragRectControlStateTests
         control.RequestConfirm();
 
         Assert.False(control.CurrentSnapshot.HasSelection);
-        Assert.Equal(DragRectInteractionState.NoSelection, control.CurrentSnapshot.State);
+        Assert.Equal(MarqueeInteractionState.NoSelection, control.CurrentSnapshot.State);
     }
 
     [Fact]

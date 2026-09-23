@@ -28,7 +28,7 @@ internal sealed partial class OverlayWindow
             UpdateSelectScreenHighlight(screenPoint);
         else
             UpdateWindowSelectHighlight(screenPoint);
-        // ハイライト検出結果を外側の装飾（DragRectControl）の描画へ反映する（再描画要求）
+        // ハイライト検出結果を外側の装飾（MarqueeControl）の描画へ反映する（再描画要求）
         RequestOverlayRender();
         // ホバー中の枠（ハイライト）を事前切り出しする（確定時の高速化。同じ矩形ならスキップ）
         if (SelectionOverlay.LogicalHighlightRect is { } highlightLogical)

@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace DragRectControl.Sample.ViewModels;
+namespace MarqueeControl.Sample.ViewModels;
 
 /// <summary>色選択肢の一覧を提供する。</summary>
 public static class ColorOptions

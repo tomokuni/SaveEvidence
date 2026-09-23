@@ -13,10 +13,10 @@ using Estable.CaptureSession;
 namespace LineDetectionSample.ViewModels;
 
 /// <summary>
-/// 「データ作成」ページの ViewModel。評価用データ作成（DragRect キャプチャ → 正解ウィンドウ選択 → 保存）を統括する。
+/// 「データ作成」ページの ViewModel。評価用データ作成（Marquee キャプチャ → 正解ウィンドウ選択 → 保存）を統括する。
 /// </summary>
 /// <remarks>
-/// キャプチャの開始（DragRect）は UI スレッドから行う必要があるため、<see cref="Views.MainWindow"/> の
+/// キャプチャの開始（Marquee）は UI スレッドから行う必要があるため、<see cref="Views.MainWindow"/> の
 /// コードビハインドが CaptureSessionControl を呼び、結果（画像 + 領域）を <see cref="ApplyCaptureResult"/> で受け取る。<br/>
 /// 領域内ウィンドウ情報の取得（Win32 の <see cref="IElementFinder.ListWindows"/>）と正解選択・保存を本クラスが担う。<br/>
 /// 保存が完了すると <see cref="DatasetSaved"/> を発火する（親 ViewModel が一覧を再読み込みするために使用）。
@@ -44,7 +44,7 @@ public sealed partial class CreatePageViewModel : ObservableObject
 
     /// <summary>ステータスバーの表示テキスト。</summary>
     [ObservableProperty]
-    private string _statusText = "「キャプチャ開始」でスクリーンから DragRect します。";
+    private string _statusText = "「キャプチャ開始」でスクリーンから Marquee します。";
 
     /// <summary>最後に保存したファイルのパス（表示用）。</summary>
     [ObservableProperty]

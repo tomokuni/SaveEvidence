@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Estable.DragRect.Tests;
 
-/// <summary><see cref="DragRectSession"/> の単体テスト（入力の解釈・状態遷移の判断・通知・効果）。</summary>
+/// <summary><see cref="MarqueeSession"/> の単体テスト（入力の解釈・状態遷移の判断・通知・効果）。</summary>
 /// <remarks>
 /// UI 層から切り出した判断（nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・<br/>
 /// クリック検出・最小サイズによるキャンセル・エコー移動の抑制・カーソル種別）を、UI フレームワークなしで検証する。<br/>
@@ -17,10 +17,10 @@ public class DragRectSessionTests
     /// <summary>セッションと通知の収集先を生成する。</summary>
     /// <param name="cursor">カーソルサービス。null 可。</param>
     /// <returns>セッションと収集した通知のリスト。</returns>
-    private static DragRectSession CreateSession(ICursorService? cursor, out List<DragRectNotice> notices)
+    private static MarqueeSession CreateSession(ICursorService? cursor, out List<MarqueeNotice> notices)
     {
-        var session = new DragRectSession(cursor) { Log = NullLogger.Instance };
-        var collected = new List<DragRectNotice>();
+        var session = new MarqueeSession(cursor) { Log = NullLogger.Instance };
+        var collected = new List<MarqueeNotice>();
         session.Notified += (_, notice) => collected.Add(notice);
         notices = collected;
         return session;
@@ -30,7 +30,7 @@ public class DragRectSessionTests
     /// <param name="cursor">カーソルサービス。null 可。</param>
     /// <param name="notices">収集した通知のリスト。</param>
     /// <returns>境界 200x200 のセッション。</returns>
-    private static DragRectSession CreateBoundedSession(ICursorService? cursor, out List<DragRectNotice> notices)
+    private static MarqueeSession CreateBoundedSession(ICursorService? cursor, out List<MarqueeNotice> notices)
     {
         var session = CreateSession(cursor, out notices);
         session.SetPort(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
@@ -40,14 +40,14 @@ public class DragRectSessionTests
     /// <summary>通知種別の一覧を取得する。</summary>
     /// <param name="notices">通知のリスト。</param>
     /// <returns>通知種別の一覧。</returns>
-    private static List<DragRectNoticeKind> Kinds(List<DragRectNotice> notices)
+    private static List<MarqueeNoticeKind> Kinds(List<MarqueeNotice> notices)
         => [.. notices.Select(n => n.Kind)];
 
     /// <summary>指定種別の最初の通知を取得する。</summary>
     /// <param name="notices">通知のリスト。</param>
     /// <param name="kind">通知種別。</param>
     /// <returns>一致する通知。</returns>
-    private static DragRectNotice Find(List<DragRectNotice> notices, DragRectNoticeKind kind)
+    private static MarqueeNotice Find(List<MarqueeNotice> notices, MarqueeNoticeKind kind)
         => notices.First(n => n.Kind == kind);
 
     // ====================================================================
@@ -64,7 +64,7 @@ public class DragRectSessionTests
         Assert.True(session.IsDragging);
         Assert.False(session.HasSelection);
         Assert.Equal(new EsRect(10, 10, 0, 0), session.SelectionRect);
-        Assert.Equal([DragRectNoticeKind.MouseDown, DragRectNoticeKind.SelectionStarted], Kinds(notices));
+        Assert.Equal([MarqueeNoticeKind.MouseDown, MarqueeNoticeKind.SelectionStarted], Kinds(notices));
         Assert.True(feedback.Redraw);
         Assert.True(feedback.RequestFocus);
         Assert.True(feedback.CaptureMouse);
@@ -82,9 +82,9 @@ public class DragRectSessionTests
         // スナップ: ドラッグ基準点とマウス位置がハンドル点（150, 130）になり、カーソルもそこへ移動する
         Assert.Equal(new EsPoint(150, 130), session.State.DragStartPoint);
         Assert.Equal(new EsPoint(150, 130), session.LastMousePosition);
-        Assert.True(feedback.Cursor.HasFlag(DragRectCursorAction.MoveTo));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
         Assert.Equal(new EsPoint(150, 130), feedback.CursorDomainPosition);
-        Assert.Equal(DragRectNoticeKind.LoupePositionMoved, notices[^1].Kind);
+        Assert.Equal(MarqueeNoticeKind.LoupePositionMoved, notices[^1].Kind);
         Assert.Equal(new EsPoint(150, 130), notices[^1].Position);
     }
 
@@ -97,7 +97,7 @@ public class DragRectSessionTests
         // 矩形内（中心）を押下する → 移動（Move）
         var feedback = session.Press(new EsPoint(100, 90), clickCount: 1);
 
-        Assert.False(feedback.Cursor.HasFlag(DragRectCursorAction.MoveTo));
+        Assert.False(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
         Assert.Equal(new EsPoint(100, 90), session.State.DragStartPoint);
     }
 
@@ -111,7 +111,7 @@ public class DragRectSessionTests
         var feedback = session.Press(new EsPoint(100, 90), clickCount: 2);
 
         Assert.Equal(
-            [DragRectNoticeKind.MouseDown, DragRectNoticeKind.MouseDoubleClicked, DragRectNoticeKind.ConfirmRequested],
+            [MarqueeNoticeKind.MouseDown, MarqueeNoticeKind.MouseDoubleClicked, MarqueeNoticeKind.ConfirmRequested],
             Kinds(notices));
         Assert.False(session.HasSelection);
         Assert.True(feedback.Redraw);
@@ -128,7 +128,7 @@ public class DragRectSessionTests
         var feedback = session.Press(new EsPoint(10, 10), clickCount: 2);
 
         Assert.Equal(
-            [DragRectNoticeKind.MouseDown, DragRectNoticeKind.MouseDoubleClicked, DragRectNoticeKind.CancelRequested],
+            [MarqueeNoticeKind.MouseDown, MarqueeNoticeKind.MouseDoubleClicked, MarqueeNoticeKind.CancelRequested],
             Kinds(notices));
         Assert.True(session.HasSelection);
         Assert.False(feedback.Redraw);
@@ -147,8 +147,8 @@ public class DragRectSessionTests
         var feedback = session.Press(session.State.StartPoint, clickCount: 1);
 
         Assert.False(session.NudgeActive);
-        Assert.True(feedback.Cursor.HasFlag(DragRectCursorAction.Show));
-        Assert.Equal([DragRectNoticeKind.LoupePositionMoved, DragRectNoticeKind.MouseDown, DragRectNoticeKind.SelectionStarted], Kinds(notices));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
+        Assert.Equal([MarqueeNoticeKind.LoupePositionMoved, MarqueeNoticeKind.MouseDown, MarqueeNoticeKind.SelectionStarted], Kinds(notices));
     }
 
     // ====================================================================
@@ -166,7 +166,7 @@ public class DragRectSessionTests
 
         Assert.Equal(new EsRect(10, 10, 40, 40), session.SelectionRect);
         Assert.Equal(
-            [DragRectNoticeKind.MouseMoved, DragRectNoticeKind.SelectionChanged, DragRectNoticeKind.LoupePositionMoved],
+            [MarqueeNoticeKind.MouseMoved, MarqueeNoticeKind.SelectionChanged, MarqueeNoticeKind.LoupePositionMoved],
             Kinds(notices));
         Assert.True(feedback.Redraw);
         Assert.True(feedback.UpdateCursorShape);
@@ -181,7 +181,7 @@ public class DragRectSessionTests
 
         session.Move(new EsPoint(50, 30));
 
-        var loupe = Find(notices, DragRectNoticeKind.LoupePositionMoved);
+        var loupe = Find(notices, MarqueeNoticeKind.LoupePositionMoved);
         Assert.Equal(new EsPoint(50, 30), loupe.Position);
     }
 
@@ -197,9 +197,9 @@ public class DragRectSessionTests
         session.Release(new EsPoint(60, 60));
 
         // 矩形は 0x0 のためキャンセルされたうえで、クリックとして通知される
-        Assert.Contains(DragRectNoticeKind.SelectionCancelled, Kinds(notices));
-        Assert.Contains(DragRectNoticeKind.MouseClicked, Kinds(notices));
-        Assert.True(notices.Single(n => n.Kind == DragRectNoticeKind.MouseClicked).Position == new EsPoint(60, 60));
+        Assert.Contains(MarqueeNoticeKind.SelectionCancelled, Kinds(notices));
+        Assert.Contains(MarqueeNoticeKind.MouseClicked, Kinds(notices));
+        Assert.True(notices.Single(n => n.Kind == MarqueeNoticeKind.MouseClicked).Position == new EsPoint(60, 60));
     }
 
     [Fact]
@@ -212,8 +212,8 @@ public class DragRectSessionTests
 
         session.Release(new EsPoint(80, 80));
 
-        Assert.Contains(DragRectNoticeKind.SelectionCompleted, Kinds(notices));
-        Assert.DoesNotContain(DragRectNoticeKind.MouseClicked, Kinds(notices));
+        Assert.Contains(MarqueeNoticeKind.SelectionCompleted, Kinds(notices));
+        Assert.DoesNotContain(MarqueeNoticeKind.MouseClicked, Kinds(notices));
     }
 
     [Fact]
@@ -249,7 +249,7 @@ public class DragRectSessionTests
 
         // 2 回目: 抑制は解除済みで通知される
         session.Move(nudgePosition);
-        Assert.Contains(DragRectNoticeKind.MouseMoved, Kinds(notices));
+        Assert.Contains(MarqueeNoticeKind.MouseMoved, Kinds(notices));
     }
 
     // ====================================================================
@@ -267,8 +267,8 @@ public class DragRectSessionTests
 
         session.Release(new EsPoint(15, 15));
 
-        Assert.Contains(DragRectNoticeKind.SelectionCancelled, Kinds(notices));
-        Assert.DoesNotContain(DragRectNoticeKind.SelectionCompleted, Kinds(notices));
+        Assert.Contains(MarqueeNoticeKind.SelectionCancelled, Kinds(notices));
+        Assert.DoesNotContain(MarqueeNoticeKind.SelectionCompleted, Kinds(notices));
         Assert.False(session.HasSelection);
         Assert.False(session.IsDragging);
     }
@@ -283,9 +283,9 @@ public class DragRectSessionTests
 
         session.Release(new EsPoint(80, 80));
 
-        Assert.Equal(DragRectNoticeKind.MouseUp, notices[0].Kind);
-        Assert.Contains(DragRectNoticeKind.SelectionCompleted, Kinds(notices));
-        Assert.Equal(new EsRect(10, 10, 70, 70), Find(notices, DragRectNoticeKind.SelectionCompleted).Snapshot.SelectionRect);
+        Assert.Equal(MarqueeNoticeKind.MouseUp, notices[0].Kind);
+        Assert.Contains(MarqueeNoticeKind.SelectionCompleted, Kinds(notices));
+        Assert.Equal(new EsRect(10, 10, 70, 70), Find(notices, MarqueeNoticeKind.SelectionCompleted).Snapshot.SelectionRect);
         Assert.False(session.IsDragging);
     }
 
@@ -302,9 +302,9 @@ public class DragRectSessionTests
         var feedback = session.Release(new EsPoint(500, 500));
 
         Assert.False(session.NudgeActive);
-        Assert.True(feedback.Cursor.HasFlag(DragRectCursorAction.MoveTo));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
         Assert.Equal(nudgePosition, feedback.CursorDomainPosition);
-        Assert.True(feedback.Cursor.HasFlag(DragRectCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
         Assert.True(feedback.UpdateCursorShape);
         Assert.Equal(nudgePosition, session.State.SuppressEchoAt);
     }
@@ -324,7 +324,7 @@ public class DragRectSessionTests
 
         Assert.True(feedback.Handled);
         Assert.True(feedback.Redraw);
-        Assert.Equal([DragRectNoticeKind.CancelRequested], Kinds(notices));
+        Assert.Equal([MarqueeNoticeKind.CancelRequested], Kinds(notices));
         Assert.False(session.HasSelection);
     }
 
@@ -340,7 +340,7 @@ public class DragRectSessionTests
         var feedback = session.KeyDown(key, null);
 
         Assert.True(feedback.Handled);
-        Assert.Equal([DragRectNoticeKind.ConfirmRequested], Kinds(notices));
+        Assert.Equal([MarqueeNoticeKind.ConfirmRequested], Kinds(notices));
         Assert.False(session.HasSelection);
     }
 
@@ -366,12 +366,12 @@ public class DragRectSessionTests
 
         Assert.True(feedback.Handled);
         Assert.True(feedback.Redraw);
-        Assert.True(feedback.Cursor.HasFlag(DragRectCursorAction.Hide));
-        Assert.True(feedback.Cursor.HasFlag(DragRectCursorAction.MoveTo));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Hide));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
         Assert.True(session.NudgeActive);
         Assert.True(session.CrosshairVisible);
-        Assert.Contains(DragRectNoticeKind.SelectionChanged, Kinds(notices));
-        Assert.Contains(DragRectNoticeKind.LoupePositionMoved, Kinds(notices));
+        Assert.Contains(MarqueeNoticeKind.SelectionChanged, Kinds(notices));
+        Assert.Contains(MarqueeNoticeKind.LoupePositionMoved, Kinds(notices));
     }
 
     [Fact]
@@ -458,7 +458,7 @@ public class DragRectSessionTests
 
         Assert.False(session.NudgeActive);
         Assert.True(feedback.Redraw);
-        Assert.True(feedback.Cursor.HasFlag(DragRectCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
         // nudge 開始時のカーソル非表示は効果（Hide）として UI 層が適用するため、ここでは再表示のみが記録される
         Assert.Equal([true], cursor.ShowCalls);
     }
@@ -471,7 +471,7 @@ public class DragRectSessionTests
         var feedback = session.EndNudge();
 
         Assert.False(feedback.Redraw);
-        Assert.Equal(DragRectCursorAction.None, feedback.Cursor);
+        Assert.Equal(MarqueeCursorAction.None, feedback.Cursor);
     }
 
     [Fact]
@@ -489,7 +489,7 @@ public class DragRectSessionTests
         Assert.False(session.HasSelection);
         Assert.False(session.IsDragging);
         Assert.True(feedback.Redraw);
-        Assert.True(feedback.Cursor.HasFlag(DragRectCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
     }
 
     // ====================================================================
@@ -505,7 +505,7 @@ public class DragRectSessionTests
 
         Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionRect);
         Assert.True(session.HasSelection);
-        Assert.Equal([DragRectNoticeKind.SelectionChanged], Kinds(notices));
+        Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
     }
 
@@ -557,7 +557,7 @@ public class DragRectSessionTests
         var feedback = session.RequestConfirm();
 
         var notice = Assert.Single(notices);
-        Assert.Equal(DragRectNoticeKind.ConfirmRequested, notice.Kind);
+        Assert.Equal(MarqueeNoticeKind.ConfirmRequested, notice.Kind);
         Assert.Equal(new EsRect(50, 50, 100, 80), notice.Snapshot.SelectionRect);
         Assert.False(session.HasSelection);
         Assert.True(feedback.Redraw);
@@ -595,7 +595,7 @@ public class DragRectSessionTests
 
         var feedback = session.RequestCancel();
 
-        Assert.Equal([DragRectNoticeKind.CancelRequested], Kinds(notices));
+        Assert.Equal([MarqueeNoticeKind.CancelRequested], Kinds(notices));
         Assert.False(session.HasSelection);
         Assert.True(feedback.Redraw);
     }
@@ -607,7 +607,7 @@ public class DragRectSessionTests
 
         var feedback = session.RequestCancel();
 
-        Assert.Equal([DragRectNoticeKind.CancelRequested], Kinds(notices));
+        Assert.Equal([MarqueeNoticeKind.CancelRequested], Kinds(notices));
         Assert.False(feedback.Redraw);
     }
 
@@ -623,7 +623,7 @@ public class DragRectSessionTests
         var feedback = session.ApplyClampToBounds();
 
         Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionRect);
-        Assert.Equal([DragRectNoticeKind.SelectionChanged], Kinds(notices));
+        Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
     }
 
@@ -648,7 +648,7 @@ public class DragRectSessionTests
     {
         var session = CreateSession(null, out _);
 
-        session.ApplyOptions(new DragRectOptions
+        session.ApplyOptions(new MarqueeOptions
         {
             MinSelectionSize = 20.0,
             HandleHitRadius = 30.0,
@@ -709,7 +709,7 @@ public class DragRectSessionTests
         var feedback = session.NotifyViewportChanged();
 
         var notice = Assert.Single(notices);
-        Assert.Equal(DragRectNoticeKind.ViewportChanged, notice.Kind);
+        Assert.Equal(MarqueeNoticeKind.ViewportChanged, notice.Kind);
         Assert.Equal(new EsRect(10, 20, 30, 40), notice.Snapshot.SelectionRect);
         Assert.True(feedback.Redraw);
     }
@@ -722,7 +722,7 @@ public class DragRectSessionTests
         var feedback = session.NotifyViewportChanged();
 
         var notice = Assert.Single(notices);
-        Assert.Equal(DragRectNoticeKind.ViewportChanged, notice.Kind);
+        Assert.Equal(MarqueeNoticeKind.ViewportChanged, notice.Kind);
         Assert.False(notice.Snapshot.HasSelection);
         Assert.True(feedback.Redraw);
     }
@@ -755,7 +755,7 @@ public class DragRectSessionTests
         var feedback = session.ApplyOptions(session.Options with { ClampToDomainBounds = true });
 
         Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionRect);
-        Assert.Equal([DragRectNoticeKind.SelectionChanged], Kinds(notices));
+        Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
         Assert.Equal("[DragRect] Setting: ClampToDomainBounds False → True", Assert.Single(logger.Messages));
     }
@@ -763,9 +763,9 @@ public class DragRectSessionTests
     [Fact]
     public void ApplyOptions_初期設定をコンストラクタで受け取る()
     {
-        var session = new DragRectSession(
+        var session = new MarqueeSession(
             null,
-            new DragRectOptions { MinSelectionSize = 25.0, HandleHitRadius = 40.0, ClampToDomainBounds = false })
+            new MarqueeOptions { MinSelectionSize = 25.0, HandleHitRadius = 40.0, ClampToDomainBounds = false })
         {
             Log = NullLogger.Instance,
         };
@@ -778,9 +778,9 @@ public class DragRectSessionTests
     [Fact]
     public void ApplyOptions_設定を省略すると既定値を使用する()
     {
-        var session = new DragRectSession(null) { Log = NullLogger.Instance };
+        var session = new MarqueeSession(null) { Log = NullLogger.Instance };
 
-        Assert.Equal(DragRectOptions.Default, session.Options);
+        Assert.Equal(MarqueeOptions.Default, session.Options);
         Assert.Equal(6.0, session.MinSelectionSize);
         Assert.Equal(12.0, session.HandleHitRadius);
         Assert.True(session.ClampToDomainBounds);
@@ -820,12 +820,12 @@ public class DragRectSessionTests
 
         // 角から 5 ドメイン離れた位置はヒットする（ドメイン半径 6 以内）
         var hit = session.Press(new EsPoint(150 + 5, 130 + 5), clickCount: 1);
-        Assert.True(hit.Cursor.HasFlag(DragRectCursorAction.MoveTo));
+        Assert.True(hit.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
 
         // 角から 20 ドメイン離れた位置はハンドルにヒットしない（矩形外のため新規選択）
         session.Reset();
         session.SetSelection(new EsRect(50, 50, 100, 80));
         var miss = session.Press(new EsPoint(150 + 20, 130 + 20), clickCount: 1);
-        Assert.False(miss.Cursor.HasFlag(DragRectCursorAction.MoveTo));
+        Assert.False(miss.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
     }
 }

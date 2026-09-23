@@ -34,7 +34,7 @@ internal static class CaptureSettingsMapper
             ClampToDomainBounds: settings.ClampToDomainBounds,
             MarkerColor: ParseColor(settings.MarkerColor),
             MarkerLength: settings.MarkerLength,
-            // カーソル座標ラベル（DragRect）
+            // カーソル座標ラベル（Marquee）
             ShowCoordLabel: settings.ShowCoordLabel,
             CoordLabelColor: ParseColor(settings.CoordLabelColor),
             CoordLabelBackgroundColor: ParseColor(settings.CoordLabelBackgroundColor),

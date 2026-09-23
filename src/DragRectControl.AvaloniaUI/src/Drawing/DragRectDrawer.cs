@@ -1,25 +1,25 @@
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using Estable.DragRect;
-using Estable.DragRect.Selection;
+using Estable.Marquee;
+using Estable.Marquee.Selection;
 using EsUtil.Platform.Core.Geometry;
 using Avalonia;
 using Avalonia.Media;
 using System.Collections.Concurrent;
 using System.Globalization;
 
-namespace Estable.AvaloniaUI.DragRect.Drawing;
+namespace Estable.AvaloniaUI.Marquee.Drawing;
 
 /// <summary>リサイズ可能なドラッグ矩形の描画（選択枠線・ドラッグハンドル・始点マーカー・カーソル座標ラベル）を提供する静的クラス。</summary>
 /// <remarks>
 /// 矩形ドメイン（DragRect）の視覚表現を担当する。<br/>
 /// ハンドル位置は <see cref="Selection.SelectionGeometry.GetHandlePosition"/>（DRY）から取得し、中心に描画する。<br/>
 /// <br/>
-/// 選択矩形の外側に描く装飾（暗転マスク・サイズラベル等）の描画は <see cref="DragRectOuterDrawer"/> が担う。<br/>
+/// 選択矩形の外側に描く装飾（暗転マスク・サイズラベル等）の描画は <see cref="MarqueeOuterDrawer"/> が担う。<br/>
 /// <br/>
 /// **適用パターン**: Flyweight（色・太さで決まるブラシ / ペンをキャッシュして再利用）。
 /// </remarks>
-internal static class DragRectDrawer
+internal static class MarqueeDrawer
 {
     /// <summary>ブラシキャッシュ（色 → ブラシ。Flyweight・容量制限付き）。</summary>
     /// <remarks>Platform.AvaloniaUI の <see cref="BrushCache"/> へ委譲する（LoupeControl と共用・重複排除・DRY）。</remarks>
@@ -62,7 +62,7 @@ internal static class DragRectDrawer
     }
     /// <summary>描画対象のハンドル種別（8 方向。None / Move を除く）。</summary>
     /// <remarks>一覧はコア（<see cref="SelectionGeometry.DirectionalHandles"/>）が単一所有する。</remarks>
-    private static DragHandle[] HandleTypes => SelectionGeometry.DirectionalHandles;
+    private static HitTarget[] HandleTypes => SelectionGeometry.DirectionalHandles;
 
     /// <summary>容量制限付きキャッシュへ値を登録する（超過時は全クリアしてから登録）。</summary>
     /// <typeparam name="TKey">キャッシュのキー型。</typeparam>
@@ -99,7 +99,7 @@ internal static class DragRectDrawer
     public static void DrawHandles(DrawingContext context, Rect rect, double handleSize, Color handleColor, Color borderColor)
     {
         var handleFill = GetBrush(handleColor == default ? Colors.White : handleColor);
-        var handlePen = GetPen(borderColor, DragRectAppearance.HandlePenThickness);
+        var handlePen = GetPen(borderColor, MarqueeAppearance.HandlePenThickness);
         double hs = handleSize;
         double hh = hs / 2;
 
@@ -164,11 +164,11 @@ internal static class DragRectDrawer
             fontSize,
             GetBrush(textColor));
 
-        var pad = DragRectAppearance.LabelPadding;
+        var pad = MarqueeAppearance.LabelPadding;
         var w = ft.Width + pad * 2;
         var h = ft.Height + pad * 2;
         // ラベル配置（カーソル右側 + クランプ）はコアの純粋関数へ委譲する
-        var labelPos = DragRectAppearance.ComputeCoordLabelPosition(
+        var labelPos = MarqueeAppearance.ComputeCoordLabelPosition(
             cursorDip.ToEsPoint(), clientSize.ToEsSize(), w, h).ToAvaloniaPoint();
 
         // 不透明度は bgColor のアルファに統合済み（SolidColorBrush がアルファを反映する）

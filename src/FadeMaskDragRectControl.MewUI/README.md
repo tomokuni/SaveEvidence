@@ -5,7 +5,7 @@
 
 ## 特徴
 
-- **Facade / Composite**: 2 つの MewUI コントロール（`DragRectControl`（外側の装飾を含む） / `LoupeControl`）を
+- **Facade / Composite**: 2 つの MewUI コントロール（`MarqueeControl`（外側の装飾を含む） / `LoupeControl`）を
   重ねて配置し、ホストへ統一インターフェースを提供します。ホストはライフサイクルとモード固有処理に専念できます。
 - **モード切替**: `Mode` を設定するだけで、選択矩形とルーペの可視性・全面暗転が切り替わります
   （モードの解釈は `FadeMaskDragRectControl.Core` が単一所有）。

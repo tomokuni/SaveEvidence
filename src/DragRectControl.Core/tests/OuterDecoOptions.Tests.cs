@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.DragRect.Decoration.Tests;
+namespace Estable.Marquee.Decoration.Tests;
 
 /// <summary><see cref="OuterDecoOptions"/>（設定と描画状態の単一値）の単体テスト。</summary>
 /// <remarks>

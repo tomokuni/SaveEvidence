@@ -10,7 +10,7 @@ namespace Estable.DragRect;
 /// （UI 実装ごとに持つと書式がずれる。各 UI は自 UI 固有の操作のログのみを持つ）。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。
 /// </remarks>
-internal static partial class DragRectLogMessage
+internal static partial class MarqueeLogMessage
 {
     /// <summary>ポインター押下（マウス Down）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[DragRect] MouseDown: pos=({X}, {Y}) clickCount={ClickCount} hasSelection={HasSelection}</c></remarks>

@@ -1,4 +1,4 @@
-using Estable.DragRect.Decoration;
+using Estable.Marquee.Decoration;
 using Xunit;
 
 namespace Estable.FadeMaskDragRect.Tests;

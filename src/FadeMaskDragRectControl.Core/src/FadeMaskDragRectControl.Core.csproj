@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
-    <!-- 動作モードから FadeMaskRenderMode への変換、および設定の単一値（DragRectOptions / FadeMaskAppearance / LoupeOptions）の集約のため -->
-    <ProjectReference Include="..\..\DragRectControl.Core\src\DragRectControl.Core.csproj" />
+    <!-- 動作モードから FadeMaskRenderMode への変換、および設定の単一値（MarqueeOptions / FadeMaskAppearance / LoupeOptions）の集約のため -->
+    <ProjectReference Include="..\..\MarqueeControl.Core\src\MarqueeControl.Core.csproj" />
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
   </ItemGroup>
 

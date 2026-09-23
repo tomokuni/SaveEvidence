@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.DragRect.Tests</RootNamespace>
+    <RootNamespace>Estable.Marquee.Tests</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\DragRectControl.Core.csproj" />
+    <ProjectReference Include="..\src\MarqueeControl.Core.csproj" />
   </ItemGroup>
 
 </Project>

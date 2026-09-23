@@ -47,7 +47,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
 | **依存プロジェクト** | FadeMaskDragRect（複合コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Native（プラットフォームサービス） |
 
-CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl / LoupeControl）を直接参照しない（公開型のカプセル化。窓口は FadeMaskDragRectControl のみ。推移的依存として各プロジェクトを利用）。
+CaptureSessionControl.AvaloniaUI は内包コントロール（MarqueeControl / LoupeControl）を直接参照しない（公開型のカプセル化。窓口は FadeMaskDragRectControl のみ。推移的依存として各プロジェクトを利用）。
 
 ## 3. アーキテクチャ
 
@@ -57,7 +57,7 @@ CaptureSessionControl.AvaloniaUI は内包コントロール（DragRectControl /
 公開 Facade（CaptureSessionControl）
   → セッション（SelectionCaptureSession / CropSession）
     → オーバーレイ / 複合コントロール（OverlayWindow / FadeMaskDragRectControl）
-      → 各コントロール（DragRect / Loupe）+ Platform.AvaloniaUI
+      → 各コントロール（Marquee / Loupe）+ Platform.AvaloniaUI
 ```
 
 ### 3.2 依存の方向
@@ -97,10 +97,10 @@ flowchart TB
         Ct["CaptureType<br/>public enum"]
     end
     subgraph Dep["外部依存プロジェクト"]
-        FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectOptions<br/>（DragRect（外側の装飾を含む）+ Loupe を内包）"]
+        FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectOptions<br/>（Marquee（外側の装飾を含む）+ Loupe を内包）"]
     end
     subgraph FMCInternal["FadeMaskDragRect の内包コントロール（外部からは非公開・internal）"]
-        DR["DragRectControl<br/>DragRectControl（選択矩形 UI ＋ 外側の装飾の描画）"]
+        DR["MarqueeControl<br/>MarqueeControl（選択矩形 UI ＋ 外側の装飾の描画）"]
         LP["LoupeControl<br/>LoupeControl（ルーペ表示）"]
     end
 
@@ -146,7 +146,7 @@ flowchart TB
 
 - **分類**: 内部セッションクラス（`internal sealed class`・Primary Constructor）
 - **責務**:
-  - 複合コントロール `FadeMaskDragRectControl`（DragRect（外側の装飾を含む）+ Loupe の配線を内包）の配置・ライフサイクル管理
+  - 複合コントロール `FadeMaskDragRectControl`（Marquee（外側の装飾を含む）+ Loupe の配線を内包）の配置・ライフサイクル管理
   - 設定の適用: `CaptureSettings` → `FadeMaskDragRectOptions`（コアのマッパーで一元化）→ `Options`（同一値スキップ）
   - 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、複合コントロールへ注入
   - カーソル上書き抑止（Crop 中の十字カーソル維持）
@@ -178,7 +178,7 @@ flowchart TB
 
 - 依存方向は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール FadeMaskDragRectControl → 各コントロール / Platform.AvaloniaUI）。
 - CaptureSessionControl / セッションは状態を保持せず、状態は複合コントロールと各コントロール / Platform.AvaloniaUI が保持する（薄い統括者・SRP）。
-- DragRect / Loupe の配線は複合コントロールに集約され、セッションは配線コードを持たない（DRY）。
+- Marquee / Loupe の配線は複合コントロールに集約され、セッションは配線コードを持たない（DRY）。
 - セッションへのプラットフォームサービス（ICaptureService / IWindowService / IElementFinder）は注入され、内部で生成しない（DIP）。
 - 上位 AP への通知は Task 返却のみ（コールバック / イベント型 API ではない）。
 - 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）。

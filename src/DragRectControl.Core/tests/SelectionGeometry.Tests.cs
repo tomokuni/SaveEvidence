@@ -1,8 +1,8 @@
-using Estable.DragRect.Selection;
+using Estable.Marquee.Selection;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.DragRect.Tests;
+namespace Estable.Marquee.Tests;
 
 /// <summary><see cref="SelectionGeometry"/> の単体テスト（純粋な幾何計算）。</summary>
 /// <remarks>
@@ -37,15 +37,15 @@ public class SelectionGeometryTests
     {
         var rect = new EsRect(10, 20, 100, 80); // Right=110 Bottom=100 Center=(60,60)
 
-        Assert.Equal(new EsPoint(10, 20), SelectionGeometry.GetHandlePosition(rect, DragHandle.TopLeft));
-        Assert.Equal(new EsPoint(60, 20), SelectionGeometry.GetHandlePosition(rect, DragHandle.TopCenter));
-        Assert.Equal(new EsPoint(110, 20), SelectionGeometry.GetHandlePosition(rect, DragHandle.TopRight));
-        Assert.Equal(new EsPoint(10, 60), SelectionGeometry.GetHandlePosition(rect, DragHandle.MiddleLeft));
-        Assert.Equal(new EsPoint(110, 60), SelectionGeometry.GetHandlePosition(rect, DragHandle.MiddleRight));
-        Assert.Equal(new EsPoint(10, 100), SelectionGeometry.GetHandlePosition(rect, DragHandle.BottomLeft));
-        Assert.Equal(new EsPoint(60, 100), SelectionGeometry.GetHandlePosition(rect, DragHandle.BottomCenter));
-        Assert.Equal(new EsPoint(110, 100), SelectionGeometry.GetHandlePosition(rect, DragHandle.BottomRight));
-        Assert.Equal(new EsPoint(60, 60), SelectionGeometry.GetHandlePosition(rect, DragHandle.Move));
+        Assert.Equal(new EsPoint(10, 20), SelectionGeometry.GetHandlePosition(rect, HitTarget.TopLeft));
+        Assert.Equal(new EsPoint(60, 20), SelectionGeometry.GetHandlePosition(rect, HitTarget.TopCenter));
+        Assert.Equal(new EsPoint(110, 20), SelectionGeometry.GetHandlePosition(rect, HitTarget.TopRight));
+        Assert.Equal(new EsPoint(10, 60), SelectionGeometry.GetHandlePosition(rect, HitTarget.MiddleLeft));
+        Assert.Equal(new EsPoint(110, 60), SelectionGeometry.GetHandlePosition(rect, HitTarget.MiddleRight));
+        Assert.Equal(new EsPoint(10, 100), SelectionGeometry.GetHandlePosition(rect, HitTarget.BottomLeft));
+        Assert.Equal(new EsPoint(60, 100), SelectionGeometry.GetHandlePosition(rect, HitTarget.BottomCenter));
+        Assert.Equal(new EsPoint(110, 100), SelectionGeometry.GetHandlePosition(rect, HitTarget.BottomRight));
+        Assert.Equal(new EsPoint(60, 60), SelectionGeometry.GetHandlePosition(rect, HitTarget.Move));
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class SelectionGeometryTests
     {
         var rect = new EsRect(10, 20, 100, 80);
 
-        Assert.Equal(rect.BottomRight, SelectionGeometry.GetHandlePosition(rect, (DragHandle)999));
+        Assert.Equal(rect.BottomRight, SelectionGeometry.GetHandlePosition(rect, (HitTarget)999));
     }
 
     // ====================================================================
@@ -120,7 +120,7 @@ public class SelectionGeometryTests
         // 左下方向へはみ出した矩形（Move 中）→ 境界内へシフト
         var rect = new EsRect(180, 80, 50, 40); // Right=230 Bottom=120
 
-        var result = SelectionGeometry.ClampRectToBounds(rect, bounds, DragHandle.Move);
+        var result = SelectionGeometry.ClampRectToBounds(rect, bounds, HitTarget.Move);
 
         Assert.Equal(new EsRect(150, 60, 50, 40), result); // サイズは維持・シフトのみ
     }
@@ -132,7 +132,7 @@ public class SelectionGeometryTests
         // TopLeft ハンドルが左端・上端を超える → 固定角（右下）を維持し、左・上のみクランプ
         var rect = new EsRect(-20, -10, 100, 80); // Right=80 Bottom=70
 
-        var result = SelectionGeometry.ClampRectToBounds(rect, bounds, DragHandle.TopLeft);
+        var result = SelectionGeometry.ClampRectToBounds(rect, bounds, HitTarget.TopLeft);
 
         Assert.Equal(new EsRect(0, 0, 80, 70), result);
     }
@@ -145,7 +145,7 @@ public class SelectionGeometryTests
     public void ComputeDragRect_TopLeftハンドルで変形する()
     {
         // 元矩形 (10,20,100,80)、TopLeft を (dx=30, dy=10) 移動 → l=40, t=30, r=110, b=100 → (40,30,70,70)
-        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 30, 10, DragHandle.TopLeft, 10);
+        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 30, 10, HitTarget.TopLeft, 10);
         Assert.Equal(new EsRect(40, 30, 70, 70), result);
     }
 
@@ -155,16 +155,16 @@ public class SelectionGeometryTests
         var rect = new EsRect(10, 20, 100, 80);
 
         // TopCenter は上辺のみ、MiddleLeft は左辺のみを動かす
-        Assert.Equal(new EsRect(10, 30, 100, 70), SelectionGeometry.ComputeDragRect(rect, 0, 10, DragHandle.TopCenter, 10));
-        Assert.Equal(new EsRect(20, 20, 90, 80), SelectionGeometry.ComputeDragRect(rect, 10, 0, DragHandle.MiddleLeft, 10));
-        Assert.Equal(new EsRect(10, 20, 110, 80), SelectionGeometry.ComputeDragRect(rect, 10, 0, DragHandle.MiddleRight, 10));
-        Assert.Equal(new EsRect(10, 20, 100, 90), SelectionGeometry.ComputeDragRect(rect, 0, 10, DragHandle.BottomCenter, 10));
+        Assert.Equal(new EsRect(10, 30, 100, 70), SelectionGeometry.ComputeDragRect(rect, 0, 10, HitTarget.TopCenter, 10));
+        Assert.Equal(new EsRect(20, 20, 90, 80), SelectionGeometry.ComputeDragRect(rect, 10, 0, HitTarget.MiddleLeft, 10));
+        Assert.Equal(new EsRect(10, 20, 110, 80), SelectionGeometry.ComputeDragRect(rect, 10, 0, HitTarget.MiddleRight, 10));
+        Assert.Equal(new EsRect(10, 20, 100, 90), SelectionGeometry.ComputeDragRect(rect, 0, 10, HitTarget.BottomCenter, 10));
     }
 
     [Fact]
     public void ComputeDragRect_Moveで全体を平行移動する()
     {
-        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 5, -10, DragHandle.Move, 10);
+        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 5, -10, HitTarget.Move, 10);
         Assert.Equal(new EsRect(15, 10, 100, 80), result);
     }
 
@@ -172,7 +172,7 @@ public class SelectionGeometryTests
     public void ComputeDragRect_反対側までドラッグすると矩形が反転される()
     {
         // TopLeft を右へ移動し l > r になる → 反転（正規化）
-        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 200, 0, DragHandle.TopLeft, 10);
+        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 200, 0, HitTarget.TopLeft, 10);
         // l=210, r=110 → x1=110, x2=210
         Assert.Equal(new EsRect(110, 20, 100, 80), result);
     }
@@ -181,7 +181,7 @@ public class SelectionGeometryTests
     public void ComputeDragRect_最小サイズ未満は拡張される()
     {
         // BottomRight を (dx=-95, dy=-95): r=15, b=5, l=10, t=20 → x1=10,x2=15(幅5)→最小10へ、y1=5,y2=20(高さ15)維持
-        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), -95, -95, DragHandle.BottomRight, 10);
+        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), -95, -95, HitTarget.BottomRight, 10);
         Assert.Equal(new EsRect(10, 5, 10, 15), result);
     }
 
@@ -189,7 +189,7 @@ public class SelectionGeometryTests
     public void ComputeDragRect_最小サイズの指定が1未満でも1に補正される()
     {
         // 最小サイズ 0 の指定は下限 1.0 に補正され、幅・高さは 1 未満にならない
-        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 0.2, 0.2), 0, 0, DragHandle.Move, 0);
+        var result = SelectionGeometry.ComputeDragRect(new EsRect(10, 20, 0.2, 0.2), 0, 0, HitTarget.Move, 0);
 
         Assert.Equal(1.0, result.Width);
         Assert.Equal(1.0, result.Height);

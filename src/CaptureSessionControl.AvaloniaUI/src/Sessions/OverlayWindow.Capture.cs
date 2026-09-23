@@ -27,7 +27,7 @@ internal sealed partial class OverlayWindow
         {
             _windowService.HideFromTaskSwitcher(selfHandle.ToEsPlatformHandle());
         }
-        // ルーペの表示はマウス移動（DragRect の LoupePositionMoved）が行う。
+        // ルーペの表示はマウス移動（Marquee の LoupePositionMoved）が行う。
         // ここで中央に表示するとポインタから遠くに描画され、Source 未設定の市松模様も見えるため表示しない。
     }
 

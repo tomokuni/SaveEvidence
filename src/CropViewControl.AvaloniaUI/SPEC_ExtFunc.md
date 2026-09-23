@@ -74,10 +74,10 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `void SetCoordinateTransform(ICoordTransform? port)` | 座標変換ポートを設定（内包コントロールへ分配）。 |
 | `void RequestConfirm()` | 選択確定要求（FadeMaskDragRectControl へ委譲）。 |
 | `void RequestCancel()` | 選択キャンセル要求（FadeMaskDragRectControl へ委譲）。 |
-| `void FocusDragRect()` | 内包 DragRect へフォーカスを設定（矢印キー nudge の受付開始）。 |
+| `void FocusMarquee()` | 内包 Marquee へフォーカスを設定（矢印キー nudge の受付開始）。 |
 | `void SetLoupeSource(IImage? source)` | ルーペの拡大元画像を設定（null でルーペをクリア）。 |
 | `void ClearLoupe()` | ルーペのソースをクリア（FadeMaskDragRectControl へ委譲）。 |
-| `void AttachScrollViewer(ScrollViewer? scrollViewer)` | 祖先 ScrollViewer を内包 DragRect へ明示注入（スクロール・ズーム検知 + ホイール操作。Crop 用）。 |
+| `void AttachScrollViewer(ScrollViewer? scrollViewer)` | 祖先 ScrollViewer を内包 Marquee へ明示注入（スクロール・ズーム検知 + ホイール操作。Crop 用）。 |
 | `void NotifyViewportChanged()` | ビューポート（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知。 |
 | `Rect ImageRectViewport()` | 画像の表示矩形（ビューポート座標）を取得。 |
 | `Point ContentToViewport(Point contentPos)` | ドメイン座標 → ビューポート座標へ変換。 |

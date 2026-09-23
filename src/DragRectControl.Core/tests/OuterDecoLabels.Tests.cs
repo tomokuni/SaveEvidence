@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.DragRect.Decoration.Tests;
+namespace Estable.Marquee.Decoration.Tests;
 
 /// <summary><see cref="OuterDecoLabels"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

@@ -1,7 +1,7 @@
 using BindingFlags = System.Reflection.BindingFlags;
-using Estable.AvaloniaUI.DragRect.Drawing;
+using Estable.AvaloniaUI.Marquee.Drawing;
 using EsUtil.Platform.AvaloniaUI;
-using Estable.DragRect;
+using Estable.Marquee;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -15,29 +15,29 @@ using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Xunit;
 
-namespace Estable.AvaloniaUI.DragRect.Tests;
+namespace Estable.AvaloniaUI.Marquee.Tests;
 
-/// <summary><see cref="DragRectControl"/> の単体テスト（公開 API 経由の選択・ドラッグ・nudge・イベント検証）。</summary>
+/// <summary><see cref="MarqueeControl"/> の単体テスト（公開 API 経由の選択・ドラッグ・nudge・イベント検証）。</summary>
 /// <remarks>
 /// DragRectControl と同一の公開 API を持つことを前提に、公開 API 経由で動作を検証する。<br/>
-/// 内部実装（<see cref="DragRectState"/>）の詳細は状態を直接参照しない（カプセル化維持）。<br/>
+/// 内部実装（<see cref="MarqueeState"/>）の詳細は状態を直接参照しない（カプセル化維持）。<br/>
 /// マウスイベントは <c>RaiseEvent</c> で発火し、座標はコントロールローカル DIP をドメインへ変換して処理される。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
-public class DragRectControlTests
+public class MarqueeControlTests
 {
     /// <summary>テスト用の DragRectControl を生成する。</summary>
-    private static DragRectControl CreateControl()
+    private static MarqueeControl CreateControl()
         => new() { Width = 200, Height = 200, Options = TestOptions };
 
     /// <summary>カーソルサービスを注入してテスト用の DragRectControl を生成する。</summary>
     /// <param name="cursorService">カーソルサービス（GetCursorScreenPoint が固定位置を返すモック）。</param>
-    private static DragRectControl CreateControl(ICursorService? cursorService)
+    private static MarqueeControl CreateControl(ICursorService? cursorService)
         => new(cursorService) { Width = 200, Height = 200, Options = TestOptions };
 
     /// <summary>テスト用の設定（最小サイズを 10 にしてドラッグ判定をしやすくする）。</summary>
-    private static DragRectOptions TestOptions
-        => DragRectOptions.Default with { HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
+    private static MarqueeOptions TestOptions
+        => MarqueeOptions.Default with { HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
 
     /// <summary>固定位置を返すカーソルサービスのモック。</summary>
     /// <param name="screenPoint">GetCursorScreenPoint が返す初期の画面物理座標。</param>
@@ -101,7 +101,7 @@ public class DragRectControlTests
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None));
 
         var snap = control.CurrentSnapshot;
-        Assert.Equal(DragRectInteractionState.Dragging, snap.State);
+        Assert.Equal(MarqueeInteractionState.Dragging, snap.State);
         Assert.True(snap.IsDragging);
         Assert.True(snap.IsMouseDown);
         Assert.True(snap.HasSelection);
@@ -131,9 +131,9 @@ public class DragRectControlTests
         // ドラッグ中の矩形（ドメイン座標）が Snapshot に含まれる
         Assert.Equal(new EsRect(20, 20, 60, 60), duringDrag!.Snapshot.SelectionRect);
         // 新規選択ドラッグ中はハンドルなし（None）
-        Assert.Equal(DragHandle.None, duringDrag.Snapshot.ActiveHandle);
+        Assert.Equal(HitTarget.None, duringDrag.Snapshot.ActiveTarget);
         // ドラッグ中の状態は Dragging
-        Assert.Equal(DragRectInteractionState.Dragging, duringDrag.Snapshot.State);
+        Assert.Equal(MarqueeInteractionState.Dragging, duringDrag.Snapshot.State);
         // マウスボタンは押下中
         Assert.True(duringDrag.Snapshot.IsMouseDown);
 
@@ -158,11 +158,11 @@ public class DragRectControlTests
 
         Assert.NotNull(duringResize);
         // リサイズドラッグ中はアクティブハンドルが TopLeft
-        Assert.Equal(DragHandle.TopLeft, duringResize!.Snapshot.ActiveHandle);
+        Assert.Equal(HitTarget.TopLeft, duringResize!.Snapshot.ActiveTarget);
         // リサイズ後の矩形（ドメイン座標）が Snapshot に含まれる
         Assert.Equal(new EsRect(30, 30, 120, 100), duringResize.Snapshot.SelectionRect);
         // リサイズドラッグ中の状態は Dragging
-        Assert.Equal(DragRectInteractionState.Dragging, duringResize.Snapshot.State);
+        Assert.Equal(MarqueeInteractionState.Dragging, duringResize.Snapshot.State);
 
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(30, 30)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
         window.Close();
@@ -279,7 +279,7 @@ public class DragRectControlTests
         window.Content = scrollViewer;
 
         // Attach 前は未購読
-        var field = typeof(DragRectControl).GetField("_attachedScrollViewer", BindingFlags.NonPublic | BindingFlags.Instance);
+        var field = typeof(MarqueeControl).GetField("_attachedScrollViewer", BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.Null(field!.GetValue(control));
 
         // Attach すると購読される（フィールドに設定される）
@@ -327,7 +327,7 @@ public class DragRectControlTests
         control.AttachScrollViewer(scrollViewer);
         var zoomIn = false;
         var zoomOut = false;
-        DragRectZoomRequest last = default;
+        WheelZoomRequest last = default;
         control.ZoomRequested += (_, request) =>
         {
             last = request;
@@ -357,7 +357,7 @@ public class DragRectControlTests
     {
         var control = CreateControl();
         var window = Show(control);
-        DragRectScrollRequest? received = null;
+        WheelScrollRequest? received = null;
         control.ScrollRequested += (_, request) => received = request;
 
         // ScrollViewer 未設定 → 回転量と発生位置を上位APへ通知する（スクロール先の決定は上位）
@@ -1467,7 +1467,7 @@ public class DragRectControlTests
     public void サイズ0のコントロールでも座標ラベル描画が実行される()
     {
         // クライアントサイズ 0 の描画（DrawCoordLabel のクランプ分岐: サイズ 0 はクランプしない）
-        var control = new DragRectControl { Width = 0, Height = 0, Options = DragRectOptions.Default with { ShowCoordLabel = true } };
+        var control = new MarqueeControl { Width = 0, Height = 0, Options = MarqueeOptions.Default with { ShowCoordLabel = true } };
         var window = Show(control);
 
         control.InvalidateVisual();
@@ -1485,7 +1485,7 @@ public class DragRectControlTests
 
         // ブラシ/ペンキャッシュの容量（BrushCacheCapacity）を超える色で描画を繰り返し、
         // 容量超過（全クリア）分岐を実行する（無制限メモリ増加の防止と正しさの両立）
-        for (var i = 0; i < DragRectDrawer.BrushCacheCapacity + 1; i++)
+        for (var i = 0; i < MarqueeDrawer.BrushCacheCapacity + 1; i++)
         {
             // ハンドルの塗り（ブラシ）とハンドル枠（ペン）の両方のキャッシュ容量を超えさせる
             var color = Color.FromRgb((byte)(i % 256), (byte)((i / 256) % 256), 0).ToDrawingColor();

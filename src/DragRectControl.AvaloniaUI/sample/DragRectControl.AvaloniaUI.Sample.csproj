@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RootNamespace>DragRectControl.Sample</RootNamespace>
+    <RootNamespace>MarqueeControl.Sample</RootNamespace>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\DragRectControl.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\src\MarqueeControl.AvaloniaUI.csproj" />
   </ItemGroup>
 
 </Project>

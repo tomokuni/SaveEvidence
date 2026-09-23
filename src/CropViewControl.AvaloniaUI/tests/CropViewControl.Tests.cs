@@ -7,9 +7,9 @@ using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using Estable.AvaloniaUI.DragRect;
+using Estable.AvaloniaUI.Marquee;
 using Estable.CropView;
-using Estable.DragRect;
+using Estable.Marquee;
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
@@ -118,7 +118,7 @@ public class CropViewTests
     {
         var view = new CropViewControl();
 
-        // 画像なし（初期状態 Source = null）のとき、領域選択（DragRect）はヒットテスト不可かつ不可視
+        // 画像なし（初期状態 Source = null）のとき、領域選択（Marquee）はヒットテスト不可かつ不可視
         // （Crop モードの全面暗転が市松模様を暗くしないよう、オーバーレイごと非表示にする）。
         Assert.Null(view.Source);
         Assert.False(view.SelectionOverlay.IsHitTestVisible);
@@ -225,7 +225,7 @@ public class CropViewTests
         var before = view.ViewportToContent(new Point(0, 0));
 
         // オーバーレイが受けたホイール（通常）はビューポートのパンへ転送される
-        RaiseOverlayEvent(view, "ScrollRequested", new DragRectScrollRequest(0, 1, Shift: false, new EsPoint(0, 0)));
+        RaiseOverlayEvent(view, "ScrollRequested", new WheelScrollRequest(0, 1, Shift: false, new EsPoint(0, 0)));
 
         // 1 ノッチ（48 DIP）を実効倍率（2.0）で除した 24 コンテンツ座標ぶん移動する
         // （ホイール上 = オフセット増加 = 画像が上へ移動し、左上に見えるコンテンツ座標は +24 になる）
@@ -240,7 +240,7 @@ public class CropViewTests
         var view = CreatePannableView();
         var before = view.ViewportToContent(new Point(0, 0));
 
-        RaiseOverlayEvent(view, "ScrollRequested", new DragRectScrollRequest(0, 1, Shift: true, new EsPoint(0, 0)));
+        RaiseOverlayEvent(view, "ScrollRequested", new WheelScrollRequest(0, 1, Shift: true, new EsPoint(0, 0)));
 
         var after = view.ViewportToContent(new Point(0, 0));
         Assert.Equal(before.X + 24.0, after.X);
@@ -258,7 +258,7 @@ public class CropViewTests
         view.Arrange(new Rect(0, 0, 400, 200));
 
         // Fit 表示（等倍。ビューポートと画像が同サイズ）から WheelFactor 倍（1.1）へ移動する
-        RaiseOverlayEvent(view, "ZoomRequested", new DragRectZoomRequest(ZoomIn: true, new EsPoint(0, 0)));
+        RaiseOverlayEvent(view, "ZoomRequested", new WheelZoomRequest(ZoomIn: true, new EsPoint(0, 0)));
 
         Assert.Equal(110, view.ZoomPercent);
     }
@@ -270,7 +270,7 @@ public class CropViewTests
         var centerBefore = view.ViewportToContent(new Point(0, 0));
 
         // ビューポート座標 (0, 0) をズーム中心にする（オーバーレイとビューポートは同一領域のため座標は一致する）
-        RaiseOverlayEvent(view, "ZoomRequested", new DragRectZoomRequest(ZoomIn: true, new EsPoint(0, 0)));
+        RaiseOverlayEvent(view, "ZoomRequested", new WheelZoomRequest(ZoomIn: true, new EsPoint(0, 0)));
 
         // ズーム中心のコンテンツ座標は不変に保たれる
         Assert.Equal(centerBefore, view.ViewportToContent(new Point(0, 0)));
@@ -297,8 +297,8 @@ public class CropViewTests
     /// <summary>選択オーバーレイ内のドラッグ矩形コントロール（実際にホイールを受け取る要素）を取得する。</summary>
     /// <param name="view">対象のコントロール。</param>
     /// <returns>ドラッグ矩形コントロール。</returns>
-    private static DragRectControl FindDragRect(CropViewControl view)
-        => view.SelectionOverlay.Children.OfType<DragRectControl>().Single();
+    private static MarqueeControl FindMarquee(CropViewControl view)
+        => view.SelectionOverlay.Children.OfType<MarqueeControl>().Single();
 
     /// <summary>ホイールイベントを生成する。</summary>
     /// <param name="source">イベントの発生元。</param>
@@ -331,8 +331,8 @@ public class CropViewTests
         view.SetSelectionOverlayVisible(true);
 
         // オーバーレイ内のドラッグ矩形（ヒットテスト対象）へ実際の Ctrl+ホイールを配送する
-        var dragRect = FindDragRect(view);
-        dragRect.RaiseEvent(CreateWheel(dragRect, window, KeyModifiers.Control, 1));
+        var marquee = FindMarquee(view);
+        marquee.RaiseEvent(CreateWheel(marquee, window, KeyModifiers.Control, 1));
 
         // Fit（等倍）から WheelFactor 倍（1.1）へ移動する
         Assert.Equal(110, view.ZoomPercent);
@@ -354,8 +354,8 @@ public class CropViewTests
         view.SetSelectionOverlayVisible(true);
         var before = view.ImageRectViewport();
 
-        var dragRect = FindDragRect(view);
-        dragRect.RaiseEvent(CreateWheel(dragRect, window, KeyModifiers.None, 1));
+        var marquee = FindMarquee(view);
+        marquee.RaiseEvent(CreateWheel(marquee, window, KeyModifiers.None, 1));
 
         // 1 ノッチ（48 DIP）ぶん表示位置が上へ移動する
         var after = view.ImageRectViewport();

@@ -19,7 +19,7 @@ namespace Estable.AvaloniaUI.CaptureSession;
 /// 3 種類のキャプチャモード（全画面 / ウィンドウ選択 / 範囲選択）に対応する。<br/>
 /// <br/>
 /// 状態は持たない（選択矩形・ハイライトは複合コントロール <see cref="FadeMaskDragRectControl"/> が保持）。<br/>
-/// - AreaSelect: 複合コントロール（DragRect + Loupe）でドラッグ選択し、ルーペで拡大表示する。<br/>
+/// - AreaSelect: 複合コントロール（Marquee + Loupe）でドラッグ選択し、ルーペで拡大表示する。<br/>
 /// - ScreenSelect / WindowSelect: ウィンドウの Pointer イベントから <see cref="IElementFinder"/> で検出し、<br/>
 ///   複合コントロールのハイライト状態（LogicalHighlightRect / HasHighlight 等）に設定する。<br/>
 /// 確定フロー（非表示 → DWM 待機 → キャプチャ）は本クラスが直接行う（<see cref="ICaptureService"/> に委譲）。
@@ -127,16 +127,16 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>選択コントロール（FadeMaskDragRectControl）を設定する。</summary>
     /// <param name="s">キャプチャ設定（全メンバー non-null）。</param>
     /// <remarks>
-    /// 複合コントロール（DragRect + Loupe の配線を内包）へモード・外観・座標変換を設定する。<br/>
-    /// - モード: キャプチャ種別に応じて描画モード・DragRect / Loupe の有効・無効・全面暗転を一括切替。<br/>
+    /// 複合コントロール（Marquee + Loupe の配線を内包）へモード・外観・座標変換を設定する。<br/>
+    /// - モード: キャプチャ種別に応じて描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替。<br/>
     /// - 設定: 設定変換（<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）で 1 値へ変換して一括適用。<br/>
     /// - 座標変換: DomainScale（ドメイン = 仮想スクリーンピクセル = ウィンドウローカル DIP × scaling）。
     /// </remarks>
     private void ConfigureSelectionControls(CaptureSettings s)
     {
-        // モード（描画モード・DragRect / Loupe の有効・無効・全面暗転を一括切替）
-        // - AreaSelect: DragRect + Loupe 有効（全面暗転 + 選択矩形 + ルーペ）
-        // - ScreenSelect / WindowSelect: DragRect のみ有効（ハイライト表示。クリック確定フローは本クラスが担う）
+        // モード（描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替）
+        // - AreaSelect: Marquee + Loupe 有効（全面暗転 + 選択矩形 + ルーペ）
+        // - ScreenSelect / WindowSelect: Marquee のみ有効（ハイライト表示。クリック確定フローは本クラスが担う）
         // 内包コントロール（ルーペ / ドラッグ）の詳細ログ（Trace）をホストのログ基盤へ転送する（不具合調査用）。
         SelectionOverlay.Log = _log;
         SelectionOverlay.Mode = _captureType switch
@@ -169,9 +169,9 @@ internal sealed partial class OverlayWindow : Window
             }
             return s.SizeLabelOverride;
         };
-        // 選択矩形・ハイライトはドメイン座標（仮想スクリーンピクセル）で設定し、描画時に DIP へ変換する（DragRect と同方式）
+        // 選択矩形・ハイライトはドメイン座標（仮想スクリーンピクセル）で設定し、描画時に DIP へ変換する（Marquee と同方式）
         // DomainScale: Forward = DIP→ドメイン（× scaling）/ Inverse = ドメイン→DIP（÷ scaling）
-        // DragRect / Loupe の 2 コントロールへ同一ポートを一括分配する。
+        // Marquee / Loupe の 2 コントロールへ同一ポートを一括分配する。
         SelectionOverlay.SetCoordinateTransform(CoordTransform.DomainScale(() => _scaling));
     }
 
@@ -180,7 +180,7 @@ internal sealed partial class OverlayWindow : Window
     /// <remarks>単体テストから呼び出し可能（internal）。</remarks>
     internal void UpdateOverlay(Rect selectionRect)
     {
-        // ドメイン（仮想スクリーンピクセル）の選択矩形を複合コントロール（DragRect + ルーペ）へ反映する。
+        // ドメイン（仮想スクリーンピクセル）の選択矩形を複合コントロール（Marquee + ルーペ）へ反映する。
         // DIP 変換（÷ scaling）+ 閉区間（終点 +1）は描画時に座標変換ポート（DomainScale）が行う。
         SelectionOverlay.SetSelection(selectionRect);
         // ドラッグ後の枠（選択矩形）を事前切り出しする（確定時の高速化。同じ矩形ならスキップ）。
@@ -193,8 +193,8 @@ internal sealed partial class OverlayWindow : Window
 
     /// <summary>選択状態をクリアして全面暗転（穴あけなし）に戻す（新規選択開始・キャンセル時）。</summary>
     /// <remarks>
-    /// 矩形外クリックで新規選択が開始されると DragRect の選択矩形はサイズ 0 になり非表示になるが、<br/>
-    /// ドラッグ開始（SelectionChanged）までは DragRect に前の矩形が残る。<br/>
+    /// 矩形外クリックで新規選択が開始されると Marquee の選択矩形はサイズ 0 になり非表示になるが、<br/>
+    /// ドラッグ開始（SelectionChanged）までは Marquee に前の矩形が残る。<br/>
     /// ここで選択状態をクリアして全面暗転に戻す（押下直後の暗転マスク残留を防止）。<br/>
     /// 複合コントロールの <see cref="FadeMaskDragRectControl.ClearSelection"/> へ委譲する。<br/>
     /// ShowFullOverlay=true のため、選択なしの場合は全面暗転が表示される。
@@ -227,7 +227,7 @@ internal sealed partial class OverlayWindow : Window
     /// <param name="rect">半開区間の矩形（画面物理座標）。</param>
     /// <returns>閉区間の PixelRect（幅・高さが +1 された矩形）。</returns>
     /// <remarks>
-    /// DragRect の矩形は半開区間のため、そのままキャプチャすると終点のピクセルが欠ける。<br/>
+    /// Marquee の矩形は半開区間のため、そのままキャプチャすると終点のピクセルが欠ける。<br/>
     /// 始点・終点の両ピクセルを切出し対象に含める（閉区間キャプチャ）ために <c>Width / Height を +1</c> する。<br/>
     /// 単体テストから呼び出し可能（internal）。
     /// </remarks>
@@ -284,7 +284,7 @@ internal sealed partial class OverlayWindow : Window
     {
         if (_captureType == CaptureType.AreaSelect)
         {
-            // AreaSelect: DragRect（複合コントロール内）の確定・キャンセル要求を購読する。
+            // AreaSelect: Marquee（複合コントロール内）の確定・キャンセル要求を購読する。
             // Enter/Esc キー（OnTopLevelKeyDown）とダブルクリック（OnPointerPressed）は
             // ConfirmRequested / CancelRequested を発火するため、ここで接続して確定・キャンセルする。
             SelectionOverlay.ConfirmRequested += OnAreaConfirmRequested;

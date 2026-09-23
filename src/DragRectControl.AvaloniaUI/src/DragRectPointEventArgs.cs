@@ -1,7 +1,7 @@
 using Avalonia;
-using Estable.DragRect;
+using Estable.Marquee;
 
-namespace Estable.AvaloniaUI.DragRect;
+namespace Estable.AvaloniaUI.Marquee;
 
 /// <summary>座標に関する通知のイベント引数。</summary>
 /// <remarks>
@@ -11,11 +11,11 @@ namespace Estable.AvaloniaUI.DragRect;
 /// </remarks>
 /// <param name="point">通知対象の座標（ドメイン座標）。</param>
 /// <param name="snapshot">通知時点のスナップショット。</param>
-public sealed class DragRectPointEventArgs(Point point, DragRectSnapshot snapshot) : EventArgs
+public sealed class MarqueePointEventArgs(Point point, MarqueeSnapshot snapshot) : EventArgs
 {
     /// <summary>通知対象の座標（ドメイン座標）。</summary>
     public Point Point { get; } = point;
 
     /// <summary>通知時点のスナップショット（状態・選択矩形・アクティブハンドル・マウス位置・操作フラグ）。</summary>
-    public DragRectSnapshot Snapshot { get; } = snapshot;
+    public MarqueeSnapshot Snapshot { get; } = snapshot;
 }

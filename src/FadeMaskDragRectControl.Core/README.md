@@ -16,7 +16,7 @@
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `FadeMaskDragRectMode` | public | 動作モード（Crop / AreaSelect / ScreenSelect / WindowSelect） |
-| `FadeMaskDragRectOptions` | public | 設定の単一値（`DragRect` / `Loupe` / 選択矩形破線の色 / ルーペオフセット）。**外側の装飾の外観も `DragRect.OuterAppearance` が単一所有する**（枠線を 2 箇所に持たない） |
+| `FadeMaskDragRectOptions` | public | 設定の単一値（`Marquee` / `Loupe` / 選択矩形破線の色 / ルーペオフセット）。**外側の装飾の外観も `Marquee.OuterAppearance` が単一所有する**（枠線を 2 箇所に持たない） |
 | `FadeMaskDragRectState` | internal | モードから導出する状態（選択矩形・破線・全面暗転の可否とルーペの表示可否） |
 | `FadeMaskDragRectModes` | internal | モード → 状態の解決（`Resolve`） |
 | `FadeMaskDragRectSelection` | internal | 選択矩形の可否判定（幅・高さが正か） |
@@ -29,7 +29,7 @@
 ```text
 FadeMaskDragRectControl.Core
     ├── Platform.Core（Es* 幾何型 / EsBitmap）
-    ├── DragRectControl.Core（DragRectOptions / DragRectFrame / 選択矩形の外側の装飾（`Estable.DragRect.Decoration`））
+    ├── MarqueeControl.Core（MarqueeOptions / MarqueeFrame / 選択矩形の外側の装飾（`Estable.Marquee.Decoration`））
     └── LoupeControl.Core（LoupeOptions）
 ```
 
@@ -44,7 +44,7 @@ FadeMaskDragRectOptions options = FadeMaskDragRectOptions.Default with
     Loupe = LoupeOptions.Default with { RequestedSize = 240 },
 };
 // 選択矩形の設定は外側の装飾（暗転マスク・穴あけ枠・ラベル）の外観も含むため、そのまま 1 回で分配できる
-DragRectOptions dragRect = options.DragRect;
+MarqueeOptions marquee = options.Marquee;
 
 // モード → 状態（表示可否）の解決（両 UI が同じ判断を使う）
 FadeMaskDragRectState state = FadeMaskDragRectModes.Resolve(FadeMaskDragRectMode.Crop);
@@ -72,7 +72,7 @@ FadeMaskDragRectOverlay.DrawSelectionRect(
 2. **モードの単一所有**: `FadeMaskDragRectMode` は本プロジェクトのみが定義する。各 UI は `Mode` プロパティの型として参照する。
 3. **モード解釈の単一所有**: モードと状態（表示可否）の対応は `FadeMaskDragRectModes` / `FadeMaskDragRectState` のみが持つ。UI 側に `switch` を書かない。
 4. **選択矩形の可否も本プロジェクトが持つ**（UI 側に「幅 > 0」の判定を書かない）。
-5. **枠線は選択矩形の設定が単一所有する**: 選択枠線は暗転マスクの穴あけ枠と重なるため、`DragRect.OuterAppearance` の 1 値だけを持つ（写し替える導出処理を持たない）。
+5. **枠線は選択矩形の設定が単一所有する**: 選択枠線は暗転マスクの穴あけ枠と重なるため、`Marquee.OuterAppearance` の 1 値だけを持つ（写し替える導出処理を持たない）。
 6. **描画は `EsBitmap` へ直接書く**: UI の描画 API を使わないため、両 UI で共有できる。
 7. **座標はコア型**: `EsRect` / `EsPoint` / `System.Drawing.Color` を使用する（変換は各 UI の境界で 1 行）。
 

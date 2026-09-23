@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.AvaloniaUI.DragRect.Tests;
+namespace Estable.AvaloniaUI.Marquee.Tests;
 
 /// <summary>Avalonia ヘッドレステストの直列化用コレクション定義。</summary>
 /// <remarks>

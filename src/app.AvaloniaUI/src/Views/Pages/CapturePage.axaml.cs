@@ -715,7 +715,7 @@ public sealed partial class CapturePage : UserControl
         if (srcBmp is null) return;
 
         // 設定は MainWindow の Settings.PropertyChanged 購読で常に最新のため、ここでは同期しない
-        // プレビュー状態（ScrollOffset / ZoomPercent）は CaptureSessionControl.AvaloniaUI が DragRect イベント / 表示状態から導出する
+        // プレビュー状態（ScrollOffset / ZoomPercent）は CaptureSessionControl.AvaloniaUI が Marquee イベント / 表示状態から導出する
         // 切出し中のホイール操作（Ctrl+ホイールのズーム・通常ホイールのパン）は CropViewControl が内部で完結する
         // CropSession は EsBitmap を受け取る（内部処理は EsBitmap に統一）。
         _cropTask = _captureSessionControl.StartCropAsync(CropView, _parentWindow!, srcBmp);

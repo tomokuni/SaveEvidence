@@ -4,14 +4,14 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
-using Estable.AvaloniaUI.DragRect.Drawing;
-using Estable.DragRect.Decoration;
+using Estable.AvaloniaUI.Marquee.Drawing;
+using Estable.Marquee.Decoration;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.AvaloniaUI.DragRect.Tests;
+namespace Estable.AvaloniaUI.Marquee.Tests;
 
-/// <summary><see cref="DragRectOuterDrawer"/> の描画テスト（DrawingContext 描画の例外なし検証）。</summary>
+/// <summary><see cref="MarqueeOuterDrawer"/> の描画テスト（DrawingContext 描画の例外なし検証）。</summary>
 /// <remarks>
 /// 対象: <c>DragRectOuterDrawer.cs</c>（フレームの描画のみ）。<br/>
 /// 「どの矩形を暗転するか」「どのラベルを描くか」の判断はコアの <c>OuterDecoFrame</c> が単一所有するため、<br/>
@@ -19,7 +19,7 @@ namespace Estable.AvaloniaUI.DragRect.Tests;
 /// フレームの解決（判断）はコアの <c>OuterDecoFrameTests</c> が検証する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
-public class DragRectOuterDrawerTests
+public class MarqueeOuterDrawerTests
 {
     /// <summary>描画に使う暗転色（赤 50%）。</summary>
     private static readonly DrawingColor s_overlay = DrawingColor.FromArgb(128, 255, 0, 0);
@@ -64,7 +64,7 @@ public class DragRectOuterDrawerTests
     {
         using var ctx = CreateContext();
 
-        DragRectOuterDrawer.Draw(ctx, CreateFrame(
+        MarqueeOuterDrawer.Draw(ctx, CreateFrame(
             overlayRegions: [new EsRect(0, 0, 300, 50), new EsRect(0, 50, 50, 250)],
             borderRects: [new EsRect(50, 50, 100, 2), new EsRect(50, 128, 100, 2)]));
     }
@@ -75,7 +75,7 @@ public class DragRectOuterDrawerTests
     {
         using var ctx = CreateContext();
 
-        DragRectOuterDrawer.Draw(ctx, CreateFrame(
+        MarqueeOuterDrawer.Draw(ctx, CreateFrame(
             labelAnchor: new EsRect(50, 50, 100, 80),
             sizeLabelText: "(50, 50) - (151, 131),  (101×81), DisplayScale: (100%)"));
     }
@@ -86,7 +86,7 @@ public class DragRectOuterDrawerTests
     {
         using var ctx = CreateContext();
 
-        DragRectOuterDrawer.Draw(ctx, CreateFrame(
+        MarqueeOuterDrawer.Draw(ctx, CreateFrame(
             labelAnchor: new EsRect(50, 50, 100, 80),
             sizeLabelText: null,
             subLines: [new OuterDecoSubLine("ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル", 12.0, DrawingColor.White)]));
@@ -98,7 +98,7 @@ public class DragRectOuterDrawerTests
     {
         using var ctx = CreateContext();
 
-        DragRectOuterDrawer.Draw(ctx, CreateFrame(
+        MarqueeOuterDrawer.Draw(ctx, CreateFrame(
             labelAnchor: new EsRect(50, 50, 100, 80),
             sizeLabelText: "サイズ",
             subLines:
@@ -114,7 +114,7 @@ public class DragRectOuterDrawerTests
     {
         using var ctx = CreateContext();
 
-        DragRectOuterDrawer.Draw(ctx, CreateFrame(
+        MarqueeOuterDrawer.Draw(ctx, CreateFrame(
             labelAnchor: null,
             sizeLabelText: "サイズ",
             subLines: [new OuterDecoSubLine("操作ラベル", 12.0, DrawingColor.White)]));
@@ -126,7 +126,7 @@ public class DragRectOuterDrawerTests
     {
         using var ctx = CreateContext();
 
-        DragRectOuterDrawer.Draw(ctx, CreateFrame());
+        MarqueeOuterDrawer.Draw(ctx, CreateFrame());
     }
 
     /// <summary>ブラシキャッシュ容量超過時も例外なく描画することを検証する。</summary>
@@ -134,7 +134,7 @@ public class DragRectOuterDrawerTests
     public void Draw_ブラシキャッシュ容量超過時も例外なく描画する()
     {
         // キャッシュ容量（128）を超える 129 色を順次描画し、容量超過時のキャッシュクリア経路を実行する
-        for (int i = 0; i <= DragRectOuterDrawer.BrushCacheCapacity; i++)
+        for (int i = 0; i <= MarqueeOuterDrawer.BrushCacheCapacity; i++)
         {
             using var ctx = CreateContext();
             var argb = Color.FromArgb((byte)(100 + i % 100), (byte)(i * 2), (byte)(255 - i), (byte)(i * 3));
@@ -149,7 +149,7 @@ public class DragRectOuterDrawerTests
                 new OuterDecoLabelStyle(14.0, color, color),
                 [new OuterDecoSubLine("操作ラベル", 12.0, color, color)]);
 
-            DragRectOuterDrawer.Draw(ctx, frame);
+            MarqueeOuterDrawer.Draw(ctx, frame);
         }
     }
 }

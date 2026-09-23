@@ -1,10 +1,10 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.DragRect.Selection;
+namespace Estable.Marquee.Selection;
 
 /// <summary>選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算・ドラッグ変形・境界クリップ）を提供する静的クラス。</summary>
 /// <remarks>
-/// 状態を持たない純粋関数のみを提供し、状態管理（<see cref="DragRectState"/>）と描画層（UI 実装側）から共通利用する（DRY 原則・疎結合）。<br/>
+/// 状態を持たない純粋関数のみを提供し、状態管理（<see cref="MarqueeState"/>）と描画層（UI 実装側）から共通利用する（DRY 原則・疎結合）。<br/>
 /// コア型（<see cref="EsRect"/> / <see cref="EsPoint"/> / <see cref="EsSize"/>）のみに依存し、UI フレームワークへ依存しない<br/>
 /// （移植性・テスト容易性。UI 型との相互変換は各 UI 実装の Interop 層が担う）。<br/>
 /// 描画層は本クラスのみに依存し、状態保持クラスへ直接依存しない。
@@ -14,29 +14,29 @@ internal static class SelectionGeometry
     /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>
     private const double MinSelectionSizeLowerBound = 1.0;
 
-    /// <summary>描画対象の 8 方向ハンドル（<see cref="DragHandle.None"/> / <see cref="DragHandle.Move"/> を除く）。</summary>
+    /// <summary>描画対象の 8 方向ハンドル（<see cref="HitTarget.None"/> / <see cref="HitTarget.Move"/> を除く）。</summary>
     /// <remarks>
-    /// 列挙順は <see cref="DragHandle"/> の宣言順。描画層は本配列を走査してハンドルを描く（ハンドル一覧の単一所有）。<br/>
+    /// 列挙順は <see cref="HitTarget"/> の宣言順。描画層は本配列を走査してハンドルを描く（ハンドル一覧の単一所有）。<br/>
     /// 変更しないこと（共有の静的配列）。
     /// </remarks>
-    public static readonly DragHandle[] DirectionalHandles =
-        [.. Enum.GetValues<DragHandle>().Where(static h => h is not (DragHandle.None or DragHandle.Move))];
+    public static readonly HitTarget[] DirectionalHandles =
+        [.. Enum.GetValues<HitTarget>().Where(static h => h is not (HitTarget.None or HitTarget.Move))];
 
     /// <summary>ハンドル種別をカーソル形状の種別へ変換する。</summary>
     /// <param name="handle">ハンドル種別。</param>
-    /// <returns>カーソル形状の種別。ハンドル外（<see cref="DragHandle.None"/>）の場合は <see cref="DragCursorKind.Default"/>。</returns>
+    /// <returns>カーソル形状の種別。ハンドル外（<see cref="HitTarget.None"/>）の場合は <see cref="MarqueeCursorKind.Default"/>。</returns>
     /// <remarks>
     /// 「どのハンドルが同じカーソル形状になるか」を単一所有する（各 UI は自 UI のカーソル型へ写像するだけ）。<br/>
     /// 左上と右下、右上と左下は同じ斜めカーソルになる（対角のハンドルは同じ向きの図形で表す）。
     /// </remarks>
-    public static DragCursorKind ToCursorKind(DragHandle handle) => handle switch
+    public static MarqueeCursorKind ToCursorKind(HitTarget handle) => handle switch
     {
-        DragHandle.TopLeft or DragHandle.BottomRight => DragCursorKind.DiagonalNWSE,
-        DragHandle.TopRight or DragHandle.BottomLeft => DragCursorKind.DiagonalNESW,
-        DragHandle.TopCenter or DragHandle.BottomCenter => DragCursorKind.Vertical,
-        DragHandle.MiddleLeft or DragHandle.MiddleRight => DragCursorKind.Horizontal,
-        DragHandle.Move => DragCursorKind.Move,
-        _ => DragCursorKind.Default,
+        HitTarget.TopLeft or HitTarget.BottomRight => MarqueeCursorKind.DiagonalNWSE,
+        HitTarget.TopRight or HitTarget.BottomLeft => MarqueeCursorKind.DiagonalNESW,
+        HitTarget.TopCenter or HitTarget.BottomCenter => MarqueeCursorKind.Vertical,
+        HitTarget.MiddleLeft or HitTarget.MiddleRight => MarqueeCursorKind.Horizontal,
+        HitTarget.Move => MarqueeCursorKind.Move,
+        _ => MarqueeCursorKind.Default,
     };
 
     /// <summary>始点と終点から正規化された矩形を生成する。</summary>
@@ -58,17 +58,17 @@ internal static class SelectionGeometry
     /// ハンドル位置はヒットテスト・nudge のカーソル追従先・描画（ハンドル矩形の中心）で共通利用する（DRY 原則）。<br/>
     /// 描画側は本メソッドからハンドル中心位置を取得し、ハンドルサイズ分を展開して描画する。<br/>
     /// </remarks>
-    public static EsPoint GetHandlePosition(EsRect rect, DragHandle handle) => handle switch
+    public static EsPoint GetHandlePosition(EsRect rect, HitTarget handle) => handle switch
     {
-        DragHandle.TopLeft => rect.TopLeft,
-        DragHandle.TopCenter => new EsPoint(rect.Center.X, rect.Y),
-        DragHandle.TopRight => rect.TopRight,
-        DragHandle.MiddleLeft => new EsPoint(rect.X, rect.Center.Y),
-        DragHandle.MiddleRight => new EsPoint(rect.Right, rect.Center.Y),
-        DragHandle.BottomLeft => rect.BottomLeft,
-        DragHandle.BottomCenter => new EsPoint(rect.Center.X, rect.Bottom),
-        DragHandle.BottomRight => rect.BottomRight,
-        DragHandle.Move => rect.Center,
+        HitTarget.TopLeft => rect.TopLeft,
+        HitTarget.TopCenter => new EsPoint(rect.Center.X, rect.Y),
+        HitTarget.TopRight => rect.TopRight,
+        HitTarget.MiddleLeft => new EsPoint(rect.X, rect.Center.Y),
+        HitTarget.MiddleRight => new EsPoint(rect.Right, rect.Center.Y),
+        HitTarget.BottomLeft => rect.BottomLeft,
+        HitTarget.BottomCenter => new EsPoint(rect.Center.X, rect.Bottom),
+        HitTarget.BottomRight => rect.BottomRight,
+        HitTarget.Move => rect.Center,
         _ => rect.BottomRight,
     };
 
@@ -109,17 +109,17 @@ internal static class SelectionGeometry
     /// <param name="handle">アクティブなハンドル。</param>
     /// <returns>境界内に収めた矩形。</returns>
     /// <remarks>
-    /// <see cref="DragHandle.Move"/> の場合は矩形全体が境界内に収まるようにシフトする（サイズは維持）。<br/>
+    /// <see cref="HitTarget.Move"/> の場合は矩形全体が境界内に収まるようにシフトする（サイズは維持）。<br/>
     /// それ以外のハンドル変形は固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限する。
     /// </remarks>
-    public static EsRect ClampRectToBounds(EsRect rect, EsRect bounds, DragHandle handle)
+    public static EsRect ClampRectToBounds(EsRect rect, EsRect bounds, HitTarget handle)
     {
         double l = rect.X;
         double t = rect.Y;
         double r = rect.Right;
         double b = rect.Bottom;
 
-        if (handle == DragHandle.Move)
+        if (handle == HitTarget.Move)
         {
             double shiftX = l < bounds.X ? bounds.X - l : (r > bounds.Right ? bounds.Right - r : 0);
             double shiftY = t < bounds.Y ? bounds.Y - t : (b > bounds.Bottom ? bounds.Bottom - b : 0);
@@ -164,7 +164,7 @@ internal static class SelectionGeometry
     /// ハンドルを反対側までドラッグした場合（l&gt;r または t&gt;b）、矩形を反転（正規化）する。<br/>
     /// 最小サイズは幅・高さが <paramref name="minSize"/> 未満にならないよう保証する。
     /// </remarks>
-    public static EsRect ComputeDragRect(EsRect original, double dx, double dy, DragHandle handle, double minSize)
+    public static EsRect ComputeDragRect(EsRect original, double dx, double dy, HitTarget handle, double minSize)
     {
         double l = original.X;
         double t = original.Y;
@@ -173,15 +173,15 @@ internal static class SelectionGeometry
 
         switch (handle)
         {
-            case DragHandle.TopLeft: l += dx; t += dy; break;
-            case DragHandle.TopCenter: t += dy; break;
-            case DragHandle.TopRight: r += dx; t += dy; break;
-            case DragHandle.MiddleLeft: l += dx; break;
-            case DragHandle.MiddleRight: r += dx; break;
-            case DragHandle.BottomLeft: l += dx; b += dy; break;
-            case DragHandle.BottomCenter: b += dy; break;
-            case DragHandle.BottomRight: r += dx; b += dy; break;
-            case DragHandle.Move: l += dx; t += dy; r += dx; b += dy; break;
+            case HitTarget.TopLeft: l += dx; t += dy; break;
+            case HitTarget.TopCenter: t += dy; break;
+            case HitTarget.TopRight: r += dx; t += dy; break;
+            case HitTarget.MiddleLeft: l += dx; break;
+            case HitTarget.MiddleRight: r += dx; break;
+            case HitTarget.BottomLeft: l += dx; b += dy; break;
+            case HitTarget.BottomCenter: b += dy; break;
+            case HitTarget.BottomRight: r += dx; b += dy; break;
+            case HitTarget.Move: l += dx; t += dy; r += dx; b += dy; break;
         }
 
         double x1 = Math.Min(l, r);

@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.DragRect.Decoration;
+namespace Estable.Marquee.Decoration;
 
 /// <summary>暗転オーバーレイのラベル表示の判定とテキスト選定（純粋関数）。</summary>
 /// <remarks>

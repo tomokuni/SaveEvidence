@@ -30,7 +30,7 @@ app
            └─ FadeMaskDragRectControl（_selectionOverlay）
 
 FadeMaskDragRectControl（_selectionOverlay）
-  ├─ DragRectControl
+  ├─ MarqueeControl
   ├─ LoupeControl
   └─ Platform.AvaloniaUI（Avalonia アダプタ）／Platform.Native（サービス実装）／Platform.Core（抽象・値型）
 ```
@@ -53,8 +53,8 @@ FadeMaskDragRectControl（_selectionOverlay）
 | `CaptureSessionControl.AvaloniaUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。実行中の Crop セッションへ即時反映 |
 | `CropViewControl` | `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `ViewportBackground` / `CenterAlign` / `ZoomView`（`ZoomViewControl`） | 設定は `FadeMaskDragRectControl` へ委譲。DPI スケーリングは個別プロパティ（コードから動的設定） |
 | `ZoomViewControl` | `Background` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観 |
-| `FadeMaskDragRectControl` | `Options`（`FadeMaskDragRectOptions`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `Mode` / `WindowTitle` / `ShowFullOverlay` | 下位（DragRect（外側の装飾を含む） / Loupe）の設定を一括公開（コアの設定値 1 つ）+ DPI スケーリングを個別公開 |
-| `DragRectControl` | `Options`（`DragRectOptions`。外側の装飾の外観・表示ポリシー・ハンドル・マーカー・座標ラベル・対話パラメータ） | `FadeMaskDragRectOptions.DragRect` から設定（枠線は `OuterAppearance` が単一所有する） |
+| `FadeMaskDragRectControl` | `Options`（`FadeMaskDragRectOptions`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `Mode` / `WindowTitle` / `ShowFullOverlay` | 下位（Marquee（外側の装飾を含む） / Loupe）の設定を一括公開（コアの設定値 1 つ）+ DPI スケーリングを個別公開 |
+| `MarqueeControl` | `Options`（`MarqueeOptions`。外側の装飾の外観・表示ポリシー・ハンドル・マーカー・座標ラベル・対話パラメータ） | `FadeMaskDragRectOptions.Marquee` から設定（枠線は `OuterAppearance` が単一所有する） |
 | `LoupeControl` | `Options`（`LoupeOptions`。表示サイズ・拡大率・外観）/ `RenderScaling`（DPI 自動取得）/ `PositionOffset` | `FadeMaskDragRectOptions.Loupe` から設定（`RenderScaling` 以外） |
 | `Platform.AvaloniaUI` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。`Platform.Core` 提供）を提供 |
 
@@ -67,7 +67,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
   → CaptureSessionControl.AppearanceSettings（CaptureSettings・部分更新マージ）
   → CropViewControl.SelectionOverlayOptions（ToFadeMaskDragRectOptions で変換した FadeMaskDragRectOptions）
   → FadeMaskDragRectControl.Options（設定値の分配）
-  → Options.DragRect / Options.DragRect.OuterAppearance / Options.Loupe → 内包コントロールの各設定値
+  → Options.Marquee / Options.Marquee.OuterAppearance / Options.Loupe → 内包コントロールの各設定値
 ```
 
 - 設定画面の変更は `Settings` の `PropertyChanged` で **即時反映** される。
@@ -81,26 +81,26 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 下位コントロールの設定は、`FadeMaskDragRectControl`（→ `FadeMaskDragRectOptions`）→ `CropViewControl` → `CaptureSessionControl.AvaloniaUI`（→ `CaptureSettings`）→ `app.AvaloniaUI` の順に委譲して公開される。
 各上位コントロールで「直接公開（個別プロパティ）」または「`Options` 経由で公開」かを示す。
 
-### 3.1 DragRectControl の公開外観プロパティと FadeMaskDragRectControl での公開有無
+### 3.1 MarqueeControl の公開外観プロパティと FadeMaskDragRectControl での公開有無
 
-| DragRectControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
+| MarqueeControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
-| `BorderColor` | ✅ `Options.DragRect.OuterAppearance.BorderColor` | ✅ | `DragRectOptions.OuterAppearance` が単一所有する（選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なる） |
-| `BorderThickness` | ✅ `Options.DragRect.OuterAppearance.BorderThickness` | ✅ | 同上 |
-| `HandleColor` | ✅ `Options.DragRect.HandleColor` | ✅ | |
-| `HandleSize` | ✅ `Options.DragRect.HandleSize` | ✅ | |
-| `HandleHitRadius` | ✅ `Options.DragRect.HandleHitRadius` | ✅ | |
-| `MinSelectionSize` | ✅ `Options.DragRect.MinSelectionSize` | ✅ | |
-| `ClampToDomainBounds` | ✅ `Options.DragRect.ClampToDomainBounds` | ✅ | |
-| `MarkerColor` | ✅ `Options.DragRect.MarkerColor` | ✅ | |
-| `MarkerLength` | ✅ `Options.DragRect.MarkerLength` | ✅ | |
-| `ShowCoordLabel` | ✅ `Options.DragRect.ShowCoordLabel` | ✅ | カーソル座標ラベルの表示有無 |
-| `CoordLabelColor` | ✅ `Options.DragRect.CoordLabelColor` | ✅ | |
-| `CoordLabelBackgroundColor` | ✅ `Options.DragRect.CoordLabelBackgroundColor` | ✅ | |
-| `CoordLabelFontSize` | ✅ `Options.DragRect.CoordLabelFontSize` | ✅ | |
+| `BorderColor` | ✅ `Options.Marquee.OuterAppearance.BorderColor` | ✅ | `MarqueeOptions.OuterAppearance` が単一所有する（選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なる） |
+| `BorderThickness` | ✅ `Options.Marquee.OuterAppearance.BorderThickness` | ✅ | 同上 |
+| `HandleColor` | ✅ `Options.Marquee.HandleColor` | ✅ | |
+| `HandleSize` | ✅ `Options.Marquee.HandleSize` | ✅ | |
+| `HandleHitRadius` | ✅ `Options.Marquee.HandleHitRadius` | ✅ | |
+| `MinSelectionSize` | ✅ `Options.Marquee.MinSelectionSize` | ✅ | |
+| `ClampToDomainBounds` | ✅ `Options.Marquee.ClampToDomainBounds` | ✅ | |
+| `MarkerColor` | ✅ `Options.Marquee.MarkerColor` | ✅ | |
+| `MarkerLength` | ✅ `Options.Marquee.MarkerLength` | ✅ | |
+| `ShowCoordLabel` | ✅ `Options.Marquee.ShowCoordLabel` | ✅ | カーソル座標ラベルの表示有無 |
+| `CoordLabelColor` | ✅ `Options.Marquee.CoordLabelColor` | ✅ | |
+| `CoordLabelBackgroundColor` | ✅ `Options.Marquee.CoordLabelBackgroundColor` | ✅ | |
+| `CoordLabelFontSize` | ✅ `Options.Marquee.CoordLabelFontSize` | ✅ | |
 
-- `FadeMaskDragRectControl` は DragRectControl の公開設定を**全て** `Options.DragRect`（`DragRectOptions`）経由で公開する（枠線も `Options.DragRect.OuterAppearance` が単一所有する）。
-- DragRectControl の外観プロパティは**全て**設定画面（`SettingsPage.axaml` の外観設定）で設定可能（✅）。
+- `FadeMaskDragRectControl` は MarqueeControl の公開設定を**全て** `Options.Marquee`（`MarqueeOptions`）経由で公開する（枠線も `Options.Marquee.OuterAppearance` が単一所有する）。
+- MarqueeControl の外観プロパティは**全て**設定画面（`SettingsPage.axaml` の外観設定）で設定可能（✅）。
 
 ### 3.2 OuterDecoAppearance の外観項目と FadeMaskDragRectControl での公開有無
 
@@ -108,24 +108,24 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | --- | --- | --- | --- |
 | `Scaling` | ✅ `Scaling`（個別プロパティ） | —（コードから動的設定） | DPI スケーリング |
 | `DisplayScaleScaling` | ✅ `DisplayScaleScaling`（個別プロパティ） | —（コードから動的設定） | マルチスクリーン補正 |
-| `OverlayColor` | ✅ `Options.DragRect.OuterAppearance.OverlayColor` | ✅ | 暗転オーバーレイの色 |
-| `SizeLabelColor` | ✅ `Options.DragRect.OuterAppearance.SizeLabelColor` | ✅ | サイズラベル（1 行目）の文字色 |
-| `SizeLabelBackgroundColor` | ✅ `Options.DragRect.OuterAppearance.SizeLabelBackgroundColor` | ✅ | サイズラベル（1 行目）の背景色 |
-| `SizeLabelFontSize` | ✅ `Options.DragRect.OuterAppearance.SizeLabelFontSize` | ✅ | サイズラベルのフォントサイズ |
-| `ShowSizeLabel` | ✅ `Options.DragRect.OuterAppearance.ShowSizeLabel` | ✅ | サイズラベル表示 |
-| `BorderColor` | ✅ `Options.DragRect.OuterAppearance.BorderColor` | ✅ | `DragRectControl.Options.BorderColor` と共通適用（導出） |
-| `BorderThickness` | ✅ `Options.DragRect.OuterAppearance.BorderThickness` | ✅ | 同上 |
-| `InfoLabelColor` | ✅ `Options.DragRect.OuterAppearance.InfoLabelColor` | ✅ | |
-| `InfoLabelBackgroundColor` | ✅ `Options.DragRect.OuterAppearance.InfoLabelBackgroundColor` | ✅ | |
-| `InfoLabelFontSize` | ✅ `Options.DragRect.OuterAppearance.InfoLabelFontSize` | ✅ | |
-| `InfoLabelVisible` | ✅ `Options.DragRect.OuterAppearance.InfoLabelVisible` | ✅ | 情報ラベル表示 |
-| `ShowSubLines` | ✅ `Options.DragRect.OuterAppearance.ShowSubLines` | ✅ | サブライン表示 |
-| `SubLineFontSize` | ✅ `Options.DragRect.OuterAppearance.SubLineFontSize` | ✅ | |
-| `SubLineColor` | ✅ `Options.DragRect.OuterAppearance.SubLineColor` | ✅ | |
-| `SubLineBackgroundColor` | ✅ `Options.DragRect.OuterAppearance.SubLineBackgroundColor` | ✅ | |
+| `OverlayColor` | ✅ `Options.Marquee.OuterAppearance.OverlayColor` | ✅ | 暗転オーバーレイの色 |
+| `SizeLabelColor` | ✅ `Options.Marquee.OuterAppearance.SizeLabelColor` | ✅ | サイズラベル（1 行目）の文字色 |
+| `SizeLabelBackgroundColor` | ✅ `Options.Marquee.OuterAppearance.SizeLabelBackgroundColor` | ✅ | サイズラベル（1 行目）の背景色 |
+| `SizeLabelFontSize` | ✅ `Options.Marquee.OuterAppearance.SizeLabelFontSize` | ✅ | サイズラベルのフォントサイズ |
+| `ShowSizeLabel` | ✅ `Options.Marquee.OuterAppearance.ShowSizeLabel` | ✅ | サイズラベル表示 |
+| `BorderColor` | ✅ `Options.Marquee.OuterAppearance.BorderColor` | ✅ | `MarqueeControl.Options.BorderColor` と共通適用（導出） |
+| `BorderThickness` | ✅ `Options.Marquee.OuterAppearance.BorderThickness` | ✅ | 同上 |
+| `InfoLabelColor` | ✅ `Options.Marquee.OuterAppearance.InfoLabelColor` | ✅ | |
+| `InfoLabelBackgroundColor` | ✅ `Options.Marquee.OuterAppearance.InfoLabelBackgroundColor` | ✅ | |
+| `InfoLabelFontSize` | ✅ `Options.Marquee.OuterAppearance.InfoLabelFontSize` | ✅ | |
+| `InfoLabelVisible` | ✅ `Options.Marquee.OuterAppearance.InfoLabelVisible` | ✅ | 情報ラベル表示 |
+| `ShowSubLines` | ✅ `Options.Marquee.OuterAppearance.ShowSubLines` | ✅ | サブライン表示 |
+| `SubLineFontSize` | ✅ `Options.Marquee.OuterAppearance.SubLineFontSize` | ✅ | |
+| `SubLineColor` | ✅ `Options.Marquee.OuterAppearance.SubLineColor` | ✅ | |
+| `SubLineBackgroundColor` | ✅ `Options.Marquee.OuterAppearance.SubLineBackgroundColor` | ✅ | |
 | `Mode` | —（`Mode` で公開） | —（セッションで決定） | 描画モード（`FadeMaskDragRectMode` → `OuterDecoRenderMode`） |
 
-- `OuterDecoAppearance` の外観項目は、`FadeMaskDragRectControl.Options.DragRect.OuterAppearance`（`OuterDecoAppearance`）経由で公開される。
+- `OuterDecoAppearance` の外観項目は、`FadeMaskDragRectControl.Options.Marquee.OuterAppearance`（`OuterDecoAppearance`）経由で公開される。
 - `Mode` は `FadeMaskDragRectControl.Mode`（`FadeMaskDragRectMode`）として公開され、`OuterDecoRenderMode` へ変換される。
 - **例外**: `Scaling` / `DisplayScaleScaling` は設定（`Options`）の**対象外**の環境値で、`FadeMaskDragRectControl.Scaling` / `.DisplayScaleScaling`（個別プロパティ）として公開される。DPI スケーリング・マルチスクリーン補正のため設定画面では設定不可（セッションがコードから動的設定）。
 
@@ -159,7 +159,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 ### 3.4 FadeMaskDragRectControl の公開外観プロパティと CropViewControl での公開有無
 
-`FadeMaskDragRectControl` は下位コントロール（DragRect / Loupe）の設定を「`Options`（`FadeMaskDragRectOptions`）」として一括公開する。
+`FadeMaskDragRectControl` は下位コントロール（Marquee / Loupe）の設定を「`Options`（`FadeMaskDragRectOptions`）」として一括公開する。
 `CropViewControl` では、これを**そのまま `SelectionOverlayOptions` として委譲**し、DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling`）は**個別プロパティとして委譲**する。
 
 | FadeMaskDragRectControl の公開プロパティ | CropViewControl での公開有無 | 設定画面で設定 | 備考 |
@@ -211,9 +211,9 @@ DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| 選択枠の色（不透明度含む） | `CaptureBorderColor` | `DragRectOptions.BorderColor` / `OuterDecoAppearance.BorderColor`（アルファ込み） |
-| 選択枠の太さ | `CaptureBorderThickness` | `DragRectOptions.BorderThickness` + `OuterDecoAppearance.BorderThickness` |
-| 選択矩形の最小サイズ | `MinSelectionSize` | `DragRectControl.MinSelectionSize` |
+| 選択枠の色（不透明度含む） | `CaptureBorderColor` | `MarqueeOptions.BorderColor` / `OuterDecoAppearance.BorderColor`（アルファ込み） |
+| 選択枠の太さ | `CaptureBorderThickness` | `MarqueeOptions.BorderThickness` + `OuterDecoAppearance.BorderThickness` |
+| 選択矩形の最小サイズ | `MinSelectionSize` | `MarqueeControl.MinSelectionSize` |
 | 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `OuterDecoAppearance.OverlayColor`（アルファ込み） |
 | ルーペの拡大率 | `LoupeZoomLevel` | `LoupeControl.Options.ZoomLevel` |
 | ルーペのサイズ | `LoupeSize` | `LoupeControl.Options.RequestedSize` |
@@ -245,8 +245,8 @@ DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling
 | --- | --- | --- |
 | キャプチャ時にメインウィンドウを隠す | `HideMainWindowOnCapture` | `CaptureSettings.HideOwnerWindow` |
 | 非表示後の DWM 反映待機時間 | `HideBeforeCaptureDelayMs` | `CaptureSettings.HideBeforeCaptureDelay`（ミリ秒 → TimeSpan） |
-| キャプチャ枠の色（不透明度含む） | `CaptureBorderColor` | `DragRectOptions.BorderColor` / `OuterDecoAppearance.BorderColor`（アルファ込み） |
-| キャプチャ枠の太さ | `CaptureBorderThickness` | `DragRectOptions.BorderThickness` + `OuterDecoAppearance.BorderThickness` |
+| キャプチャ枠の色（不透明度含む） | `CaptureBorderColor` | `MarqueeOptions.BorderColor` / `OuterDecoAppearance.BorderColor`（アルファ込み） |
+| キャプチャ枠の太さ | `CaptureBorderThickness` | `MarqueeOptions.BorderThickness` + `OuterDecoAppearance.BorderThickness` |
 | 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `OuterDecoAppearance.OverlayColor`（アルファ込み） |
 
 - 選択矩形の最小サイズ（`MinSelectionSize`）は「外観設定」（§4）に配置。
@@ -255,16 +255,16 @@ DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| 画像外の選択を禁止 | `ClampToDomainBounds` | `DragRectControl.ClampToDomainBounds` |
-| カーソル位置の座標を表示 | `ShowCoordLabel` | `DragRectControl.ShowCoordLabel`（外観設定のラベル設定カテゴリに配置） |
-| ハンドルの色 | `HandleColor` | `DragRectControl.HandleColor` |
-| ハンドルのサイズ | `HandleSize` | `DragRectControl.HandleSize` |
-| ハンドル判定半径 | `HandleHitRadius` | `DragRectControl.HandleHitRadius` |
-| マーカーの色 | `MarkerColor` | `DragRectControl.MarkerColor` |
-| マーカーの長さ | `MarkerLength` | `DragRectControl.MarkerLength` |
-| 座標ラベルのテキスト色 | `CoordLabelColor` | `DragRectControl.CoordLabelColor` |
-| 座標ラベルの背景色（不透明度含む） | `CoordLabelBackgroundColor` | `DragRectControl.CoordLabelBackgroundColor`（アルファ込み） |
-| 座標ラベルのフォントサイズ | `CoordLabelFontSize` | `DragRectControl.CoordLabelFontSize` |
+| 画像外の選択を禁止 | `ClampToDomainBounds` | `MarqueeControl.ClampToDomainBounds` |
+| カーソル位置の座標を表示 | `ShowCoordLabel` | `MarqueeControl.ShowCoordLabel`（外観設定のラベル設定カテゴリに配置） |
+| ハンドルの色 | `HandleColor` | `MarqueeControl.HandleColor` |
+| ハンドルのサイズ | `HandleSize` | `MarqueeControl.HandleSize` |
+| ハンドル判定半径 | `HandleHitRadius` | `MarqueeControl.HandleHitRadius` |
+| マーカーの色 | `MarkerColor` | `MarqueeControl.MarkerColor` |
+| マーカーの長さ | `MarkerLength` | `MarqueeControl.MarkerLength` |
+| 座標ラベルのテキスト色 | `CoordLabelColor` | `MarqueeControl.CoordLabelColor` |
+| 座標ラベルの背景色（不透明度含む） | `CoordLabelBackgroundColor` | `MarqueeControl.CoordLabelBackgroundColor`（アルファ込み） |
+| 座標ラベルのフォントサイズ | `CoordLabelFontSize` | `MarqueeControl.CoordLabelFontSize` |
 
 - 座標ラベルの外観（色・背景・フォント）は外観設定（詳細・折り畳みなし）内に配置（不透明度は色のアルファに統合済み）。
 
@@ -355,6 +355,6 @@ DPI スケーリング（`Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling
 設定画面「外観設定」の右上にある **「デフォルト値に戻す」** ボタンで、外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・市松模様・選択矩形内ラベル・座標ラベル）をデフォルト値へ一括復元する。
 
 - 実装: `Settings.ResetAppearanceToDefaults()`（新規インスタンスのフィールド初期化子 = デフォルト値をコピー）
-- デフォルト値は各コントロール（`DragRectControl` / `LoupeControl` / `OuterDecoAppearance`）の既定値と一致させる
+- デフォルト値は各コントロール（`MarqueeControl` / `LoupeControl` / `OuterDecoAppearance`）の既定値と一致させる
 - 変更は `PropertyChanged` 購読により自動保存される
 - 外観設定以外（テーマ・保存設定・ホットキー等）は変更されない

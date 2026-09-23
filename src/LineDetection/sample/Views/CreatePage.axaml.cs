@@ -6,7 +6,7 @@ using LineDetectionSample.ViewModels;
 
 namespace LineDetectionSample.Views;
 
-/// <summary>「データ作成」ページのコードビハインド。DragRect キャプチャの呼び出しと結果の反映を担う。</summary>
+/// <summary>「データ作成」ページのコードビハインド。Marquee キャプチャの呼び出しと結果の反映を担う。</summary>
 /// <remarks>
 /// CaptureSessionControl は UI スレッドから呼び出す必要があるため、ボタンイベントから直接呼び出す。<br/>
 /// キャプチャ結果（画像 + 領域）は <see cref="CreatePageViewModel.ApplyCaptureResult"/> で ViewModel へ渡し、<br/>
@@ -38,7 +38,7 @@ public partial class CreatePage : UserControl
         _vm = DataContext as CreatePageViewModel;
     }
 
-    /// <summary>スクリーンから DragRect で領域選択キャプチャを開始し、データ作成ページへ反映する。</summary>
+    /// <summary>スクリーンから Marquee で領域選択キャプチャを開始し、データ作成ページへ反映する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">イベント引数。</param>
     /// <remarks>
@@ -58,7 +58,7 @@ public partial class CreatePage : UserControl
             return;
         }
 
-        _vm.StatusText = "スクリーン上で DragRect しています（Enter / ダブルクリックで確定、Esc でキャンセル）...";
+        _vm.StatusText = "スクリーン上で Marquee しています（Enter / ダブルクリックで確定、Esc でキャンセル）...";
         var result = await _capture.StartCaptureAsync(CaptureType.AreaSelect, owner);
         _vm.ApplyCaptureResult(result);
     }

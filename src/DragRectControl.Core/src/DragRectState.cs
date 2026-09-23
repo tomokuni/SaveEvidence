@@ -17,7 +17,7 @@ namespace Estable.DragRect;
 /// <b>依存分離</b>: コア型（<see cref="EsRect"/> / <see cref="EsPoint"/>）のみに依存し、UI フレームワークへ依存しない。<br/>
 /// カーソル操作（<see cref="ICursorService"/>）も抽象にのみ依存し、未指定の場合は何もしない（UI 実装側が既定実装を解決して渡す）。
 /// </remarks>
-internal sealed class DragRectState
+internal sealed class MarqueeState
 {
     /// <summary>選択矩形（ドメイン座標）。未選択時は 0x0。</summary>
     public EsRect SelectionRect { get; set; }
@@ -38,7 +38,7 @@ internal sealed class DragRectState
     public bool IsMouseDown { get; set; }
 
     /// <summary>アクティブなドラッグハンドル（リサイズ中）。None は新規選択・移動。</summary>
-    public DragHandle ActiveHandle { get; set; }
+    public HitTarget ActiveHandle { get; set; }
 
     /// <summary>ドラッグ開始時の矩形（移動・リサイズの基準）。</summary>
     public EsRect DragStartRect { get; set; }
@@ -72,7 +72,7 @@ internal sealed class DragRectState
 
     /// <summary>DragRectState を初期化する。</summary>
     /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
-    public DragRectState(ICursorService? cursor)
+    public MarqueeState(ICursorService? cursor)
     {
         Cursor = cursor;
     }
@@ -80,25 +80,25 @@ internal sealed class DragRectState
     /// <summary>現在の対話状態（公開イベントの Snapshot 用）を算出する。</summary>
     /// <returns>対話状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging）。</returns>
     /// <remarks>上位の描画モード判定用に、nudge・ドラッグ・選択の各状態を合成した状態を返す。</remarks>
-    public DragRectInteractionState GetInteractionState()
+    public MarqueeInteractionState GetInteractionState()
     {
         // 優先順位: nudge 状態を最優先で合成し、次にドラッグ/選択状態を判定する
         if (NudgeActive)
         {
-            return HasSelection ? DragRectInteractionState.SelectedNudging
-                : IsDragging ? DragRectInteractionState.DraggingNudging
-                : DragRectInteractionState.StartPointNudging;
+            return HasSelection ? MarqueeInteractionState.SelectedNudging
+                : IsDragging ? MarqueeInteractionState.DraggingNudging
+                : MarqueeInteractionState.StartPointNudging;
         }
 
-        return IsDragging ? DragRectInteractionState.Dragging
-            : HasSelection ? DragRectInteractionState.Selected
-            : DragRectInteractionState.NoSelection;
+        return IsDragging ? MarqueeInteractionState.Dragging
+            : HasSelection ? MarqueeInteractionState.Selected
+            : MarqueeInteractionState.NoSelection;
     }
 
     /// <summary>公開イベント用のスナップショットを生成する。</summary>
     /// <param name="mousePosition">通知時点のマウス位置（ドメイン座標）。省略時は最終位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・ボタン状態・ドラッグ状態・nudge 状態を含むスナップショット。</returns>
-    public DragRectSnapshot CreateSnapshot(EsPoint? mousePosition = null)
+    public MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null)
         => new(
             GetInteractionState(),
             SelectionRect,
@@ -121,7 +121,7 @@ internal sealed class DragRectState
         LastMousePosition = default;
         IsDragging = false;
         IsMouseDown = false;
-        ActiveHandle = DragHandle.None;
+        ActiveHandle = HitTarget.None;
         DragStartRect = default;
         DragStartPoint = default;
         NudgeBase = default;
@@ -140,7 +140,7 @@ internal sealed class DragRectState
         EndNudge();
         SelectionRect = rect;
         IsDragging = false;
-        ActiveHandle = DragHandle.None;
+        ActiveHandle = HitTarget.None;
     }
 
     /// <summary>nudge 中ならカーソルを再表示して nudge 状態を終了する。</summary>
@@ -162,27 +162,27 @@ internal sealed class DragRectState
     /// <summary>指定座標がどのドラッグハンドルに当たるかを判定する。</summary>
     /// <param name="pos">判定する座標（ドメイン座標）。</param>
     /// <param name="hitRadius">ヒットテスト半径（ドメイン座標）。</param>
-    /// <returns>ヒットしたハンドル種別。選択矩形が空の場合は常に <see cref="DragHandle.None"/>。</returns>
+    /// <returns>ヒットしたハンドル種別。選択矩形が空の場合は常に <see cref="HitTarget.None"/>。</returns>
     /// <remarks>
     /// ハンドル位置は <see cref="SelectionGeometry.GetHandlePosition"/> から取得し、各ハンドルへの距離判定でヒットを確定する（ハンドル位置計算の DRY）。<br/>
     /// 判定順は「角（4 方向）→ 辺（4 方向）→ 矩形内（Move）」で、角が辺より優先される。
     /// </remarks>
-    public DragHandle HitTest(EsPoint pos, double hitRadius)
+    public HitTarget HitTest(EsPoint pos, double hitRadius)
     {
         var r = SelectionRect;
-        if (!HasSelection) return DragHandle.None;
+        if (!HasSelection) return HitTarget.None;
 
         // 8 方向のハンドル位置を列挙してヒット判定する（角優先 → 辺 → Move の順）
-        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.TopLeft), hitRadius)) return DragHandle.TopLeft;
-        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.TopRight), hitRadius)) return DragHandle.TopRight;
-        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.BottomLeft), hitRadius)) return DragHandle.BottomLeft;
-        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.BottomRight), hitRadius)) return DragHandle.BottomRight;
-        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.TopCenter), hitRadius)) return DragHandle.TopCenter;
-        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.BottomCenter), hitRadius)) return DragHandle.BottomCenter;
-        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.MiddleLeft), hitRadius)) return DragHandle.MiddleLeft;
-        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, DragHandle.MiddleRight), hitRadius)) return DragHandle.MiddleRight;
-        if (r.Contains(pos)) return DragHandle.Move;
-        return DragHandle.None;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, HitTarget.TopLeft), hitRadius)) return HitTarget.TopLeft;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, HitTarget.TopRight), hitRadius)) return HitTarget.TopRight;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, HitTarget.BottomLeft), hitRadius)) return HitTarget.BottomLeft;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, HitTarget.BottomRight), hitRadius)) return HitTarget.BottomRight;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, HitTarget.TopCenter), hitRadius)) return HitTarget.TopCenter;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, HitTarget.BottomCenter), hitRadius)) return HitTarget.BottomCenter;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, HitTarget.MiddleLeft), hitRadius)) return HitTarget.MiddleLeft;
+        if (SelectionGeometry.IsNear(pos, SelectionGeometry.GetHandlePosition(r, HitTarget.MiddleRight), hitRadius)) return HitTarget.MiddleRight;
+        if (r.Contains(pos)) return HitTarget.Move;
+        return HitTarget.None;
     }
 
     /// <summary>新規選択のドラッグを開始する。</summary>
@@ -192,7 +192,7 @@ internal sealed class DragRectState
         StartPoint = startPos;
         SelectionRect = new EsRect(startPos.X, startPos.Y, 0, 0);
         IsDragging = true;
-        ActiveHandle = DragHandle.None;
+        ActiveHandle = HitTarget.None;
         DragStartPoint = startPos;
         DragStartRect = SelectionRect;
         LastMousePosition = startPos;
@@ -201,7 +201,7 @@ internal sealed class DragRectState
     /// <summary>既存ハンドルによるリサイズ/移動のドラッグを開始する。</summary>
     /// <param name="handle">アクティブにするハンドル。</param>
     /// <param name="pos">現在のマウス位置（ドメイン座標）。</param>
-    public void StartDrag(DragHandle handle, EsPoint pos)
+    public void StartDrag(HitTarget handle, EsPoint pos)
     {
         ActiveHandle = handle;
         IsDragging = true;
@@ -224,7 +224,7 @@ internal sealed class DragRectState
     {
         var bounds = GetBoundsRect(clampToBounds);
 
-        if (ActiveHandle != DragHandle.None)
+        if (ActiveHandle != HitTarget.None)
         {
             // ハンドルによるリサイズ/移動（変形・クリップは SelectionGeometry へ委譲・単一所有）
             double dx = currentPos.X - DragStartPoint.X;
@@ -254,7 +254,7 @@ internal sealed class DragRectState
     public void EndDrag()
     {
         IsDragging = false;
-        ActiveHandle = DragHandle.None;
+        ActiveHandle = HitTarget.None;
     }
 
     /// <summary>キーボード微調整（カーソルキー 1 回分）を適用する。</summary>
@@ -273,7 +273,7 @@ internal sealed class DragRectState
     {
         var bounds = GetBoundsRect(clampToBounds);
 
-        if (ActiveHandle != DragHandle.None)
+        if (ActiveHandle != HitTarget.None)
         {
             // ハンドルドラッグ中 → ハンドル方向にリサイズ（変形・クリップは SelectionGeometry へ委譲・単一所有）
             var rect = SelectionGeometry.ComputeDragRect(SelectionRect, dx, dy, ActiveHandle, minSize);
@@ -322,9 +322,9 @@ internal sealed class DragRectState
         // ハンドル操作中:
         // - リサイズ（8 方向）: ドラッグ中のハンドル位置（ポインタ・矩形の角・ルーペを一体にする）
         // - 移動（Move）: 掴んだ位置（マウス位置）を追従（ルーペが矩形中心に飛ばず、マウスポインタに追従する）
-        if (ActiveHandle != DragHandle.None)
+        if (ActiveHandle != HitTarget.None)
         {
-            return ActiveHandle == DragHandle.Move
+            return ActiveHandle == HitTarget.Move
                 ? LastMousePosition
                 : SelectionGeometry.GetHandlePosition(SelectionRect, ActiveHandle);
         }

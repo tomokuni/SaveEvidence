@@ -21,7 +21,7 @@ namespace Estable.AvaloniaUI.CaptureSession.Tests;
 /// <summary><see cref="OverlayWindow"/> の単体テスト（回帰検証: 描画反映・背景フィット・座標変換）。</summary>
 /// <remarks>
 /// 過去に発生した実機バグの回帰を検出するためのテストを含む:<br/>
-/// 1. 暗転・枠・テキストが表示されない → 外側の装飾（DragRectControl）へ反映され、再描画が要求されるか<br/>
+/// 1. 暗転・枠・テキストが表示されない → 外側の装飾（MarqueeControl）へ反映され、再描画が要求されるか<br/>
 /// 2. 背景画像が拡大表示される → VirtualScreenImage がウィンドウ（DIP）にフィットするか<br/>
 /// 3. 選択矩形と取得画像がずれる → ドメイン座標 → 画面物理座標の変換が正しいか
 /// </remarks>
@@ -375,7 +375,7 @@ public class OverlayWindowTests
         window.SetVirtualScreen(virtualScreen, default);
 
         // キャンセル要求（Esc キー相当）を発行する
-        // → DragRect.RequestCancel → CancelRequested → OverlayWindow.OnAreaCancelRequested → CompleteCancelled
+        // → Marquee.RequestCancel → CancelRequested → OverlayWindow.OnAreaCancelRequested → CompleteCancelled
         window.SelectionOverlay.RequestCancel();
 
         // キャンセルされた（null 結果）

@@ -14,9 +14,9 @@ namespace Estable.AvaloniaUI.CaptureSession;
 /// IDisposable を実装する。Dispose 後は全ての公開操作が ObjectDisposedException を投げる。<br/>
 /// StartCaptureAsync / StartCropAsync 実行中に同一インスタンスへ再呼び出しされた場合は無視する（既存のセッションを継続）。<br/>
 /// <br/>
-    /// <b>薄い統括者</b>: 状態は DragRectControl / LoupeControl / PlatformFactory が保持し、<br/>
+    /// <b>薄い統括者</b>: 状態は MarqueeControl / LoupeControl / PlatformFactory が保持し、<br/>
 /// 本クラスは「組み立て・配線・ライフサイクル」のみを担う。<br/>
-/// - プレビュー状態（CropPreviewState）は持たない（スクロールは DragRect イベント / TranslatePoint から取得）。<br/>
+/// - プレビュー状態（CropPreviewState）は持たない（スクロールは Marquee イベント / TranslatePoint から取得）。<br/>
 /// - 座標変換は Estable.Media の <see cref="ICoordTransform"/>（<see cref="CoordTransform"/> ファクトリ:
 ///   <c>ImageLayout</c> / <c>ScrollOffset</c> / <c>Compose</c> 等）に委譲する。<br/>
 /// <br/>
@@ -69,7 +69,7 @@ public sealed class CaptureSessionControl : IDisposable
     /// 設定時は null メンバーのみ現在値を維持し、それ以外を反映する（部分更新）。<br/>
     /// 設定適用時に検証を行い、範囲外の値は ArgumentOutOfRangeException を投げる。<br/>
     /// マージ結果が現在の設定と等しい場合（同じ値の再設定）は更新をスキップし、無駄な再計算・再配布を防ぐ。<br/>
-    /// 設定はセッション開始時に各ライブラリ（DragRect / Loupe）へ反映される。<br/>
+    /// 設定はセッション開始時に各ライブラリ（Marquee / Loupe）へ反映される。<br/>
     /// さらに、実行中の Crop セッションには <see cref="CropSession.ApplySettings"/> で即時反映される（Crop 中の設定変更対応）。
     /// </remarks>
     public CaptureSettings AppearanceSettings
@@ -193,7 +193,7 @@ public sealed class CaptureSessionControl : IDisposable
 
     /// <summary>進行中の切出し（Crop）を現在の選択矩形で確定する（Enter キー相当）。</summary>
     /// <remarks>
-    /// Crop 実行中のみ有効。選択確定時のみ DragRect の <see cref="DragRectControl.RequestConfirm"/> に委譲する。<br/>
+    /// Crop 実行中のみ有効。選択確定時のみ Marquee の <see cref="MarqueeControl.RequestConfirm"/> に委譲する。<br/>
     /// Capture 実行中 / 操作なしでは何もしない（Capture の確定はユーザー操作で完結する）。
     /// </remarks>
     public void Confirm()

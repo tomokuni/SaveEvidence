@@ -15,8 +15,8 @@ Avalonia 版と同一の解釈になります。
 | 参照 | 用途 |
 | --- | --- |
 | `FadeMaskDragRectControl.Core` | 動作モード（`FadeMaskDragRectMode`）とモードから描画設定への写像 |
-| `DragRectControl.MewUI` / `DragRectControl.Core` | 選択矩形の入力と状態機械 |
-| `DragRectControl.Core` | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル）の契約・外観・幾何・フレーム解決（名前空間 `Estable.DragRect.Decoration`。描画は `DragRectControl` が行う） |
+| `MarqueeControl.MewUI` / `MarqueeControl.Core` | 選択矩形の入力と状態機械 |
+| `MarqueeControl.Core` | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル）の契約・外観・幾何・フレーム解決（名前空間 `Estable.Marquee.Decoration`。描画は `MarqueeControl` が行う） |
 | `LoupeControl.MewUI` / `LoupeControl.Core` | 拡大鏡の描画と表示位置計算 |
 | `Platform.Core` | コア幾何型・座標変換ポート・画像コンテナ |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `Panel`・`MewProperty`・SkiaSharp |
@@ -61,7 +61,7 @@ Avalonia 版と同一の解釈になります。
 
 | 項目 | 型 | 説明 |
 | --- | --- | --- |
-| `DragRect` | `DragRectOptions`（コア） | 選択矩形の設定（枠線を除く） |
+| `Marquee` | `MarqueeOptions`（コア） | 選択矩形の設定（枠線を除く） |
 | `Loupe` | `LoupeOptions`（コア） | ルーペの設定（拡大率・表示サイズ・外観。市松模様の下地色も含む） |
 | `SelectionRectColorA` / `SelectionRectColorB` | `System.Drawing.Color` | ルーペ画像上の選択矩形破線の色（2 色交互。既定は白 / 黒） |
 | `LoupeOffset` | `double` | ルーペの中心からの右下オフセット（DIP。既定は 20） |
@@ -74,7 +74,7 @@ Avalonia 版と同一の解釈になります。
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベルの文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包するドラッグ選択コントロールとルーペへ伝搬する。null は `NullLogger` へフォールバック。暗転マスクは選択のたびにログを出すため対象外） |
 
-内包コントロールへの直接アクセス（`DragRect` / `Loupe`）は internal（自身のテストのみ）。ホストは `Options` / `Mode` / 文言プロパティの公開 API を使います。
+内包コントロールへの直接アクセス（`Marquee` / `Loupe`）は internal（自身のテストのみ）。ホストは `Options` / `Mode` / 文言プロパティの公開 API を使います。
 
 ## 6. メソッド
 
@@ -88,7 +88,7 @@ Avalonia 版と同一の解釈になります。
 | `ClearLoupe()` | ルーペを非表示にして画像と中心を破棄する |
 | `RequestConfirm()` | 確定要求を処理する（Enter キー相当） |
 | `RequestCancel()` | キャンセル要求を処理する（Escape キー相当） |
-| `FocusDragRect()` | ドラッグ選択へフォーカスを設定する（矢印キー nudge の受付開始） |
+| `FocusMarquee()` | Marquee 選択へフォーカスを設定する（矢印キー nudge の受付開始） |
 | `NotifyViewportChanged()` | ビューポートの変化を通知する（再描画とルーペ位置の再計算を要求） |
 | `InvalidateOverlay()` | 暗転マスクの再描画を要求する |
 
@@ -98,8 +98,8 @@ Avalonia 版と同一の解釈になります。
 | --- | --- | --- |
 | `ConfirmRequested` | `FadeMaskDragRectSelectionEventArgs` | 矩形内ダブルクリック・Enter・`RequestConfirm`（選択確定後のみ） |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel` |
-| `ZoomRequested` | `DragRectZoomRequest` | Ctrl+ホイール（方向と発生位置） |
-| `ScrollRequested` | `DragRectScrollRequest` | 通常ホイール（生の回転量・Shift・発生位置。スクロール先はホストが決める） |
+| `ZoomRequested` | `MarqueeZoomRequest` | Ctrl+ホイール（方向と発生位置） |
+| `ScrollRequested` | `MarqueeScrollRequest` | 通常ホイール（生の回転量・Shift・発生位置。スクロール先はホストが決める） |
 | `LoupePositionMoved` | `FadeMaskDragRectPointEventArgs` | ドラッグ選択からのルーペ中心の更新（マウス移動・ドラッグ・nudge） |
 
 座標はすべてドメイン座標です。
@@ -121,7 +121,7 @@ Avalonia 版と同一の解釈になります。
   親領域の外へはみ出す場合は内側へクランプします。
 - ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が、描画の可否はコアの `FadeMaskDragRectState.ShowSelectionOverlay` が単一所有する）。選択矩形を変更した場合はルーペの再描画を要求します（破線はルーペのプロパティに現れないため）。
 - サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（サブラインはコアの `OuterDecoAppearance.BuildSubLines` が組み立てる）
-  （文言の単一所有は `DragRectControl.Core` の `Estable.DragRect.Decoration` の `OuterDecoLabels`。表示位置の計算は同コアの `OuterDecoLabelLayout`）。
+  （文言の単一所有は `MarqueeControl.Core` の `Estable.Marquee.Decoration` の `OuterDecoLabels`。表示位置の計算は同コアの `OuterDecoLabelLayout`）。
 
 ## 9. Avalonia 版との違い
 

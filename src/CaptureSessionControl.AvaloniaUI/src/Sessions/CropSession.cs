@@ -28,7 +28,7 @@ namespace Estable.AvaloniaUI.CaptureSession;
 ///   <see cref="ZoomViewControl"/>（ズーム・パン・Fit）へ委譲する（ズーム座標の単一所有）。<br/>
 /// <br/>
 /// プレビュー状態（ScrollOffset / ViewportOrigin / ZoomPercent）は保持しない。<br/>
-/// オーバーレイ（DragRect / Loupe）とズームビューポートは <see cref="CropViewControl"/> 内で<br/>
+/// オーバーレイ（Marquee / Loupe）とズームビューポートは <see cref="CropViewControl"/> 内で<br/>
 /// 同一座標空間に配置されるため、座標変換は「ビューポートDIP ↔ 元画像ピクセル」の 1 段で完結する。
 /// </remarks>
 internal sealed class CropSession(
@@ -143,13 +143,13 @@ internal sealed class CropSession(
 
         // カーソル上書き抑制（WM_SETCURSOR による十字カーソルの上書き防止）
         _cursorGuard.Attach(hostWindow);
-        cropView.FocusDragRect();
+        cropView.FocusMarquee();
 
         return _completion.Task;
     }
 
     /// <summary>進行中の切出しセッションをプログラム的にキャンセルする。</summary>
-    /// <remarks>DragRect にキャンセル要求を委譲する（選択破棄 + CancelRequested 発火 → OnCancelEvent 経由で完了）。</remarks>
+    /// <remarks>Marquee にキャンセル要求を委譲する（選択破棄 + CancelRequested 発火 → OnCancelEvent 経由で完了）。</remarks>
     public void Cancel()
     {
         if (!_state.IsRunning) return;
@@ -157,7 +157,7 @@ internal sealed class CropSession(
     }
 
     /// <summary>進行中の切出しセッションを現在の選択矩形で確定する（Enter キー相当）。</summary>
-    /// <remarks>DragRect に確定要求を委譲する（選択確定時のみ ConfirmRequested 発火 → OnConfirmEvent 経由で完了）。</remarks>
+    /// <remarks>Marquee に確定要求を委譲する（選択確定時のみ ConfirmRequested 発火 → OnConfirmEvent 経由で完了）。</remarks>
     public void Confirm()
     {
         if (!_state.IsRunning) return;
@@ -167,7 +167,7 @@ internal sealed class CropSession(
     /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化をオーバーレイへ通知する（ホストからの呼び出し）。</summary>
     /// <remarks>
     /// ビューポート実装（ScrollViewer / RenderTransform ベース等）に依存せず、ホスト（上位 AP）が<br/>
-    /// ビューポート変化を検知した際に本メソッドで中継する（ScrollViewer 連携の DragRect の ViewportChanged と同等）。<br/>
+    /// ビューポート変化を検知した際に本メソッドで中継する（ScrollViewer 連携の Marquee の ViewportChanged と同等）。<br/>
     /// 暗転マスク・選択枠・ルーペの再描画・再計算を要求する。座標変換ポートは動的評価のため再描画だけで追従する。
     /// </remarks>
     public void NotifyViewportChanged()
@@ -247,7 +247,7 @@ internal sealed class CropSession(
     /// <remarks>
     /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。<br/>
     /// 切り出し範囲は閉区間（始点・終点のピクセルを含む）とする。<br/>
-    /// DragRect の矩形は半開区間（<c>幅 = 終点 − 始点</c>）のため、<c>Width / Height を +1</c> して<br/>
+    /// Marquee の矩形は半開区間（<c>幅 = 終点 − 始点</c>）のため、<c>Width / Height を +1</c> して<br/>
     /// 終点のピクセルまで切り出す（仕様: 選択矩形の始点・終点は切出し対象に含まれる）。<br/>
     /// 画像右端・下端では <c>+1</c> が画像サイズを超えないようクランプする。<br/>
     /// </remarks>
