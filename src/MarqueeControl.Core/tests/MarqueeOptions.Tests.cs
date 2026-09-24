@@ -14,21 +14,8 @@ public class MarqueeOptionsTests
     {
         var options = MarqueeOptions.Default;
 
-        // 枠線は DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）。外側の装飾の外観が単一所有する
-        Assert.Equal(System.Drawing.Color.FromArgb(255, 169, 169, 169), options.OuterAppearance.BorderColor);
-        Assert.Equal(2.0, options.OuterAppearance.BorderThickness);
-        // 汎用の選択矩形コントロールの既定では暗転せず、ラベルも描かない
-        Assert.Equal(System.Drawing.Color.Transparent, options.OuterAppearance.OverlayColor);
-        Assert.False(options.OuterAppearance.ShowSizeLabel);
-        Assert.False(options.OuterAppearance.ShowSubLines);
-        Assert.False(options.OuterAppearance.InfoLabelVisible);
-        Assert.False(options.OuterShowFullOverlay);
-        Assert.Null(options.OuterHighlightRect);
-        Assert.False(options.OuterHasHighlight);
-        // 内側の装飾（穴あけ矩形の内側の塗りと枠線）は既定で描かない（用途依存のためホストが明示的に指定する）
-        Assert.Equal(System.Drawing.Color.Transparent, options.InnerAppearance.FillColor);
-        Assert.Equal(System.Drawing.Color.Transparent, options.InnerAppearance.BorderColor);
-        Assert.Equal(2.0, options.InnerAppearance.BorderThickness);
+        // ハンドルの枠線は装飾の枠線と同じ見た目（DarkGray #FFA9A9A9）を既定にする
+        Assert.Equal(System.Drawing.Color.FromArgb(255, 169, 169, 169), options.HandleBorderColor);
         Assert.True(options.ShowHandles);
         Assert.Equal(System.Drawing.Color.White, options.HandleColor);
         Assert.Equal(10.0, options.HandleSize);
@@ -58,7 +45,7 @@ public class MarqueeOptionsTests
         var options = MarqueeOptions.Default with { ShowHandles = false };
 
         Assert.False(options.ShowHandles);
-        Assert.Equal(MarqueeOptions.Default.OuterAppearance, options.OuterAppearance);
+        Assert.Equal(MarqueeOptions.Default.HandleBorderColor, options.HandleBorderColor);
         Assert.Equal(MarqueeOptions.Default.HandleSize, options.HandleSize);
         Assert.Equal(MarqueeOptions.Default.CoordLabelFontSize, options.CoordLabelFontSize);
         Assert.Equal(MarqueeOptions.Default.MinSelectionSize, options.MinSelectionSize);
@@ -66,15 +53,12 @@ public class MarqueeOptionsTests
     }
 
     [Fact]
-    public void 外側の装飾の外観を変更しても他の項目は既定値を保つ()
+    public void ハンドルの枠線色を変更しても他の項目は既定値を保つ()
     {
-        var options = MarqueeOptions.Default with
-        {
-            OuterAppearance = MarqueeOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
-        };
+        var options = MarqueeOptions.Default with { HandleBorderColor = System.Drawing.Color.Red };
 
-        Assert.Equal(3.0, options.OuterAppearance.BorderThickness);
-        Assert.Equal(MarqueeOptions.Default.OuterAppearance.BorderColor, options.OuterAppearance.BorderColor);
+        Assert.Equal(System.Drawing.Color.Red, options.HandleBorderColor);
+        Assert.Equal(MarqueeOptions.Default.HandleColor, options.HandleColor);
         Assert.Equal(MarqueeOptions.Default.HandleSize, options.HandleSize);
         Assert.True(options.ShowHandles);
     }
@@ -82,9 +66,8 @@ public class MarqueeOptionsTests
     [Fact]
     public void 同名で同値の設定は等価である()
     {
-        var appearance = MarqueeOptions.Default.OuterAppearance with { BorderColor = System.Drawing.Color.Red };
-        var a = MarqueeOptions.Default with { OuterAppearance = appearance, ShowCoordLabel = true };
-        var b = MarqueeOptions.Default with { OuterAppearance = appearance, ShowCoordLabel = true };
+        var a = MarqueeOptions.Default with { HandleBorderColor = System.Drawing.Color.Red, ShowCoordLabel = true };
+        var b = MarqueeOptions.Default with { HandleBorderColor = System.Drawing.Color.Red, ShowCoordLabel = true };
 
         Assert.Equal(a, b);
         Assert.NotEqual(a, a with { ShowCoordLabel = false });

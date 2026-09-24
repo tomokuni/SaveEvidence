@@ -130,7 +130,7 @@ flowchart TB
 | --- | --- |
 | `EsBitmapAvaloniaExtensions` | `EsBitmap`（Core）の Avalonia 向け生成・変換・ピクセル操作拡張 |
 | `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ（Skia 直描画・所有権を保持） |
-| `BrushCache` | 色に対応するブラシの容量制限付きキャッシュ（スレッド安全） |
+| `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（スレッド安全。容量超過時は全体をクリア） |
 | `ColorExtensions` | C# 14 静的拡張メンバー `FromAColor`（基準色＋不透明度から色を生成） |
 
 - **可視性**: public

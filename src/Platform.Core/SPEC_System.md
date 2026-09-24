@@ -40,7 +40,7 @@ graph LR
 | `IGlobalHotKeyService.cs` | グローバルホットキー管理の抽象 |
 | `ElementFinderResults.cs` | 要素検出の結果（`readonly record struct`） |
 | `LoggerFallback.cs` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（拡張メソッド `OrNullLogger`） |
-| `Coordinate/ScrollMath.cs` | スクロール範囲・ビューポートサイズの純粋計算 |
+| `Coordinate/ScrollMath.cs` | スクロール範囲・ビューポートサイズの純粋計算とホイール 1 段のスクロール量（`WheelScrollUnit`） |
 | `Coordinate/DpiScaler.cs` | DIP 値を物理ピクセルへ変換する純粋計算（DPI 基準値と DPI → スケーリング換算を含む） |
 | `Coordinate/CoordTransformExtensions.cs` | 座標変換ポート未設定（null）を等価変換として解決する |
 | `Coordinate/CoordMath.cs`（internal） | 画像レイアウト計算の一元化。`CoordTransform` から利用する |
@@ -58,6 +58,10 @@ graph LR
 | `Imaging/ImageDrawMode.cs` | 画像を描画先の領域へ配置する方法（`Uniform` / `Fill`） |
 | `Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（純粋関数。Skia の `SKRect` を返す） |
 | `Imaging/SkiaColorInterop.cs` | コアの色型（`System.Drawing.Color`）→ Skia の色型の変換（MewUI 版の描画層 6 箇所が共用） |
+| `Imaging/SkiaGeometryInterop.cs` | コアの幾何型（`EsRect` / `EsPoint`）→ Skia の幾何型の変換と、Skia の整数サイズ → コアのサイズの変換（`ToEsSize`） |
+| `Imaging/SkiaFill.cs` | Skia の矩形塗り（`Rect` / `Rects` / `RoundRect`）の単一所有 |
+| `Imaging/SkiaLabel.cs` | Skia のラベル 1 件（背景 → 文字の順序）の描画の単一所有 |
+| `Imaging/SkiaText.cs` | Skia のテキスト描画（フォント解決・実寸測定・描画）の単一所有 |
 
 ## 例外処理ポリシー
 

@@ -5,9 +5,10 @@
 
 ## 特徴
 
-- **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `MarqueeControl.Core` が単一所有します。
+- **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `MarqueeControl.Core` が単一所有します（UI 層は公開ファサード `Marquee` だけを参照し、内部の状態機械・フレーム解決には触れません）。
   Avalonia 版と MewUI 版の挙動は同じ計算に基づきます。
-- **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへハンドル・十字マーカー・座標ラベル（選択矩形）と、選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）を描画します。
+- **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへハンドル・十字マーカー（選択矩形）と、選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・枠線）を描画します。
+- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベルの**文言・外観・配置の計算は Core が単一所有**し、実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。操作・情報ラベルはアプリ固有の付加情報のためホストが自前で描く。
 - **DPI 追従**: `OnDpiChanged` でスケーリング係数を更新し、DIP 座標で描画します（枠線・ハンドルの画面上の大きさを保ちます）。
 - **コア型のイベント引数**: イベントの座標は UI 非依存のコア型（`EsPoint` / `EsRect`）で公開します（境界変換が不要）。
 
@@ -43,6 +44,13 @@ marquee.SelectionChanged += (_, e) => Console.WriteLine($"選択: {e.Rect}");
 marquee.LoupePositionMoved += (_, e) => UpdateLoupe(e.Point);
 marquee.SelectionCompleted += (_, e) => Capture(e.Rect);
 
+// 3.5 文字（ラベル・座標ラベル）を描く（テキストの実寸測定が必要なためホストが描く）
+marquee.Rendered += (_, e) =>
+{
+    // 図形（装飾・ハンドル・マーカー）はコントロールが描く。
+    // 文字は Content.Layers の順に従い、UI 層が配置したテキスト要素が表示する。
+};
+
 // 4. 外部状態から選択を復元する（境界外は自動でクリップされる）
 marquee.SetSelection(new EsRect(100, 100, 400, 300));
 ```
@@ -66,7 +74,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | 矢印キー | nudge（1 ドメインピクセル単位の微調整。カーソルを非表示にして十字マーカーを表示） |
 | Enter | 確定要求（`ConfirmRequested`） |
 | Escape | キャンセル要求（`CancelRequested`） |
-| Ctrl + ホイール | ズーム要求（`ZoomRequested`。方向と発生位置） |
+| Ctrl + ホイール | ズーム要求（`ZoomRequested`。方向と発生位置）。解釈は組み込みの層（`MarqueeControl.CoreForControl`）が単一所有する |
 | ホイール（Ctrl なし） | スクロール要求（`ScrollRequested`。回転量・Shift・発生位置。スクロール先はホストが決める） |
 
 矢印キーの nudge は本コントロールにフォーカスがある場合のみ動作します（マウス押下時に自動でフォーカスを取得します）。
@@ -76,24 +84,25 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | 項目 | Avalonia 版 | MewUI 版 |
 | --- | --- | --- |
 | イベント引数の座標 | Avalonia の `Point` / `Rect` | **コア型の `EsPoint` / `EsRect`** |
-| マウスダウン・アップのイベント | `MouseDown` / `MouseUp` | **持たない**（基底 `UIElement` の同名メンバーが同じ情報を提供するため、本コントロールでは公開しない） |
+| マウスダウン・アップのイベント | `MouseDown` / `MouseUp` | **持たない**（生のポインター入力はホストが自 UI のイベントで観測するため） |
 | ビューポート変化 | `AttachScrollViewer` で `ScrollViewer` を自動購読 | **`NotifyViewportChanged()` をホストが呼ぶ** |
 | nudge のキー入力 | フォーカス非依存（`TopLevel` を購読） | フォーカス依存（本コントロールにフォーカスがある場合のみ） |
-| ログ | `ILogger` を注入して出力 | `Log` プロパティで同様に出力する（書式・レベルは同一。通常ホイールのスクロールログのみ持たない） |
+| ログ | `ILogger` を注入して出力 | `Log` プロパティで同様に出力する（書式・レベルは同一） |
 | 描画 | 中間ビットマップ経由 | キャンバスへ直接描画 |
+| | 文字（ラベル・座標ラベル）の表示 | UI 層が配置したテキスト要素（`Border` + `TextBlock`）。図形は `Rendered` の `Content.Layers` の順にコントロールが描く |
 
 ## 主なプロパティ
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 外観・対話パラメータをまとめた設定（コアの `Estable.Marquee.MarqueeOptions`） |
+| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた設定（コアの `Estable.Marquee.MarqueeOptions`） |
+| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | 装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定（装飾層の `Estable.Marquee.Decoration.MarqueeDecoOptions`） |
 | `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と同一）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `OuterAppearance` | `OuterDecoAppearance` | 枠線のみ（暗転・ラベルなし） | 外側の装飾の外観（枠線の色・太さもここが単一所有する。不透明度はアルファ） |
 | `ShowHandles` | `bool` | `true` | ドラッグハンドルの表示可否 |
 | `HandleColor` | `System.Drawing.Color` | 白 | ドラッグハンドルの塗り色 |
 | `HandleSize` | `double` | `10.0` | ハンドルの一辺サイズ（DIP） |
@@ -105,7 +114,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `CoordLabelColor` / `CoordLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | ラベルの文字色と背景色 |
 | `CoordLabelFontSize` | `double` | `12.0` | ラベルのフォントサイズ（6〜48 に補正） |
 
-色は UI 非依存の `System.Drawing.Color` で指定します。設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
+色は UI 非依存の `System.Drawing.Color` で指定します。設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueeDecoOptions.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
 
 ## 主なメソッド
 
@@ -115,14 +124,18 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `SetSelection(EsRect)` | 選択矩形を復元する（`Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
 | `RequestConfirm()` / `RequestCancel()` | Enter / Escape と同じ条件で確定・キャンセルを要求する |
-| `NotifyViewportChanged()` | ビューポートの変化を通知する（`ViewportChanged` を発火） |
+| `NotifyViewportChanged()` | ビューポートの変化を通知する（現在の状態の再通知と再描画を要求。通知の組み立てはコントロール化の層の `MarqueeViewportNotifier` が担う） |
 | `CurrentSnapshot` | 現在の状態のスナップショット（`MarqueeSnapshot`） |
 
 ## イベント
 
 `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` /
-`MouseClicked` / `MouseDoubleClicked` / `MouseMoved` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ScrollRequested` /
-`ConfirmRequested` / `CancelRequested`
+`LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ScrollRequested` /
+`ConfirmRequested` / `CancelRequested` / `Rendered`
+
+**生のポインター入力（Mouse 系）の公開イベントは持ちません**（ホストは自 UI の入力イベントを使います。押下状態は `CurrentSnapshot.IsMouseDown`）。
+
+`Rendered` は描画完了の通知です（描画のたびに発火し、引数の `Content` に装飾・ハンドル・マーカー・ラベルと層の順序が含まれます）。コントロールの描画中に発火するため、ハンドラ内で描画を完了させます。
 
 ## テスト
 
@@ -130,31 +143,32 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 ```
 
-- `MarqueeSkiaRenderer.Tests.cs`: ハンドル・十字マーカー・座標ラベルの画素検証と配置計算（純粋関数）の検証。
-- `MarqueeOuterSkiaRenderer.Tests.cs`: 外側の装飾（暗転・穴あけ・枠線・ラベル）の画素検証。
+- `MarqueeSkiaRenderer.Tests.cs`: ハンドル・十字マーカーの画素検証。
+- `MarqueeOuterSkiaRenderer.Tests.cs`: 外側の装飾（暗転・枠線）の画素検証（文字は描かないことの検証を含む）。
 - `MarqueeInnerSkiaRenderer.Tests.cs`: 内側の装飾（塗り・内枠）の画素検証。
+  - `MarqueeSizeLabel.Tests.cs` / `MarqueeCoordLabel.Tests.cs` / `MarqueeLabelLayoutPlan.Tests.cs`: ラベルの文言・外観・配置矩形の検証。
 - `MarqueeControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、ビューポート通知、`Log` のフォールバックと設定変更ログ。
-- ログの定義（操作ログ・ズーム要求・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います。
+- ログの定義（操作ログ・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います（ズーム要求のログは組み込みの層の `MarqueeWheelLogMessage` が所有し、`MarqueeControl.CoreForControl.Tests` が検証します）。
 
-入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの `MarqueeSession` が担うため、その検証は `MarqueeControl.Core.Tests` が行います。
+入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアが担うため、その検証は `MarqueeControl.Core.Tests` が行います。
 
 ## 操作ログ
 
 `Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。  
-ログはすべてコア（`Estable.Marquee.MarqueeLogMessage`）が定義し、ロガーはセッションへ伝搬されます。本プロジェクトはログ定義を持ちません。
+ログはコア（`Estable.Marquee.MarqueeLogMessage`）と組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。本プロジェクトはログ定義を持ちません。
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | MouseDown / MouseUp / Click / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / ZoomRequested / 設定変更 |
+| Debug | MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / ZoomRequested / 設定変更 |
 | Trace | MouseDown 直前の位置 / MouseUp 直後の位置 |
 
-定義はすべてコア（`Estable.Marquee.MarqueeLogMessage`）が持ち、本プロジェクトは定義を持ちません。
+定義はコア（`Estable.Marquee.MarqueeLogMessage`）と組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）が持ち、本プロジェクトは定義を持ちません。
 
 ## 未対応
 
 - `ScrollViewer` の自動連携（ホストが `NotifyViewportChanged()` を呼ぶ）。
 - フォーカス非依存の矢印キー nudge。
-- 通常ホイールのスクロールログ（スクロールの実処理はホストが担うため、Avalonia 版の `LogWheelScroll` に相当する出力を持たない）。
+  - 文字（ラベル・座標ラベル）の要素配置（UI 層の責務。配置矩形は `MarqueeLabelLayoutPlan` が求める）。
 
 ## ライセンス
 

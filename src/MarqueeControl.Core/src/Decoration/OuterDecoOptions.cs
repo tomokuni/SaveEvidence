@@ -14,8 +14,8 @@ namespace Estable.Marquee.Decoration;
 /// <b>選択矩形の扱い</b>: <see cref="LogicalSelectionRect"/> はドメイン座標（ホストが定める座標系）で与える。<br/>
 /// 論理座標 → DIP の変換は描画時（座標変換ポート）に行うため、レイアウト変化に自動で追従する。<br/>
 /// <br/>
-/// <b>組み立て</b>: 本値は <see cref="MarqueeFrame"/> が組み立てて <see cref="OuterDecoRequest"/> へ渡す<br/>
-/// （選択矩形コントロールの公開設定は <c>MarqueeOptions.Outer*</c> が担う）。<br/>
+/// <b>組み立て</b>: 本値はコアのフレーム解決が組み立てて <see cref="OuterDecoRequest"/> へ渡す<br/>
+/// （選択矩形コントロールの公開設定は <see cref="MarqueeDecoOptions"/> が担う）。<br/>
 /// <b>可視性</b>: 外部（ホスト・UI 実装）は本値を組み立てないため内部契約とする。
 /// </remarks>
 internal sealed record OuterDecoOptions

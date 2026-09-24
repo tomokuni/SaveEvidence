@@ -45,6 +45,10 @@
     <Project Path="src/MarqueeControl.Core/src/MarqueeControl.Core.csproj" />
     <Project Path="src/MarqueeControl.Core/tests/MarqueeControl.Core.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/MarqueeControl.CoreForControl/">
+    <Project Path="src/MarqueeControl.CoreForControl/src/MarqueeControl.CoreForControl.csproj" />
+    <Project Path="src/MarqueeControl.CoreForControl/tests/MarqueeControl.CoreForControl.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/MarqueeControl.MewUI/">
     <Project Path="src/MarqueeControl.MewUI/src/MarqueeControl.MewUI.csproj" />
     <Project Path="src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj" />
@@ -78,7 +82,10 @@
     <Project Path="src/LoupeControl.Core/src/LoupeControl.Core.csproj" />
     <Project Path="src/LoupeControl.Core/tests/LoupeControl.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/LoupeControl.Core/src/" />
+  <Folder Name="/src/LoupeControl.CoreForControl/">
+    <Project Path="src/LoupeControl.CoreForControl/src/LoupeControl.CoreForControl.csproj" />
+    <Project Path="src/LoupeControl.CoreForControl/tests/LoupeControl.CoreForControl.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/LoupeControl.MewUI/">
     <Project Path="src/LoupeControl.MewUI/src/LoupeControl.MewUI.csproj" />
     <Project Path="src/LoupeControl.MewUI/tests/LoupeControl.MewUI.Tests.csproj" />

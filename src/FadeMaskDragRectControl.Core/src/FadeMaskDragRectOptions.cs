@@ -1,5 +1,6 @@
 using DrawingColor = System.Drawing.Color;
 using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using Estable.Loupe;
 
 namespace Estable.FadeMaskDragRect;
@@ -11,9 +12,9 @@ namespace Estable.FadeMaskDragRect;
 /// UI 層は本値を 1 プロパティとして公開するだけであり、既定値・項目の対応・子コントロールへの分配規則を持たない<br/>
 /// （値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず同じ結果になる）。<br/>
 /// <br/>
-/// <b>外側の装飾も選択矩形の設定が単一所有する</b>: 暗転マスク・穴あけ枠・ラベル（サイズ・操作・情報）の外観は<br/>
-/// 選択矩形コントロールの <see cref="MarqueeOptions.OuterAppearance"/> が持ち、本値では別項目にしない<br/>
-/// （選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なって描画されるため、2 つの値に分けると見た目が崩れる）。<br/>
+/// <b>装飾は別の値が単一所有する</b>: 暗転マスク・穴あけ枠・ラベル（サイズ・操作・情報）の外観は<br/>
+/// <see cref="Deco"/>（<see cref="MarqueeDecoOptions"/>）が持ち、選択の設定（<see cref="Marquee"/>）とは分けている<br/>
+/// （装飾は選択コントロール単体の概念ではなく、コントロールを撮影オーバーレイ等へ組み込むときの表示のため）。<br/>
 /// <br/>
 /// <b>実行時状態</b>（選択矩形・ハイライト矩形・ルーペ中心・拡大元画像）と<b>環境値</b>（DPI スケーリング）は<br/>
 /// 本値に含めない（モード・ホストの結線・DPI から決まる値のため）。
@@ -21,14 +22,19 @@ namespace Estable.FadeMaskDragRect;
 public sealed record FadeMaskDragRectOptions
 {
     /// <summary>既定の設定を取得する。</summary>
-    /// <value>各内包コントロールの既定値（<see cref="MarqueeOptions.Default"/> / <see cref="LoupeOptions.Default"/>）と複合コントロール固有の既定値。</value>
-    /// <remarks>既定値は各コア型が単一所有する（UI 層・ホストに既定値の写しを置かない）。</remarks>
+    /// <value>各内包コントロールの既定値（<see cref="MarqueeOptions.Default"/> / <see cref="MarqueeDecoOptions.Default"/> / <see cref="LoupeOptions.Default"/>）と複合コントロール固有の既定値。</value>
+    /// <remarks>既定値は各コア層の型が単一所有する（UI 層・ホストに既定値の写しを置かない）。</remarks>
     public static FadeMaskDragRectOptions Default { get; } = new();
 
-    /// <summary>選択矩形の設定を取得する（外側の装飾の外観を含む）。</summary>
-    /// <value>選択矩形の外観・対話パラメータと、外側の装飾（暗転マスク・穴あけ枠・ラベル）の外観・表示ポリシー。既定は <see cref="MarqueeOptions.Default"/>。</value>
+    /// <summary>選択矩形の設定を取得する（選択の判断に使う項目のみ）。</summary>
+    /// <value>選択矩形の外観・対話パラメータ。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>設定は 1 回の代入で子コントロールへ分配される（項目ごとの写し替えを行わない）。</remarks>
     public MarqueeOptions Marquee { get; init; } = MarqueeOptions.Default;
+
+    /// <summary>装飾（暗転マスク・穴あけ枠・ラベル）の設定を取得する。</summary>
+    /// <value>装飾の外観・表示ポリシー・ハイライト。既定は <see cref="MarqueeDecoOptions.Default"/>。</value>
+    /// <remarks>選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なって描画されるため、枠線の色・太さは本値（外側の装飾の外観）が単一所有する。</remarks>
+    public MarqueeDecoOptions Deco { get; init; } = MarqueeDecoOptions.Default;
 
     /// <summary>ルーペの設定を取得する（拡大率・表示サイズ・外観）。</summary>
     /// <value>ルーペの設定。既定は <see cref="LoupeOptions.Default"/>。</value>

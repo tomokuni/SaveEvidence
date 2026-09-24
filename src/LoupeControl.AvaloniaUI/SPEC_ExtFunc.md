@@ -75,7 +75,7 @@
 - 古い非同期描画結果を破棄する世代管理
 - 非表示時のBitmap解放
 - 描画エラーの注入ロガーへの記録
-- 描画完了通知イベント（`Rendered`・表示情報付きオーバーレイ描画用）
+- 描画完了通知イベント（`Rendered`・表示情報付きオーバーレイ描画用。中心座標ラベルの契約も含む）
 
 ## 3. 外部利用条件
 
@@ -215,7 +215,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
 | `Appearance` | `LoupeAppearance` | コアの既定値 | | 装飾（市松模様・外枠・十字線・中心座標ラベル）の外観 |
 
-**表示サイズ（`RequestedSize`）のクランプはコントロールが内包**します: 表示サイズは本値（基本サイズ）を `UpdatePosition` が親パネルサイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（内部管理）。
+**表示サイズ（`RequestedSize`）のクランプはコア（ファサード）が内包**します: 表示サイズはコアが本値（基本サイズ）を親領域サイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
 **設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。DPI スケーリング係数（`RenderScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
 
@@ -260,7 +260,7 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正） |
 | `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコアの `LoupeLabelLayout` が、角丸（`CoordLabelCornerRadius`）は `LoupeAppearance` が単一所有し、UI 側は同じ値を配置・設定します（AXAML へ外観値を書かない）。
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeAppearance` が単一所有します。**文字の描画はコントロールではなくホストが行います**（描画完了イベント `Rendered` の `CoordLabel` をルーペ画像（`EsBitmap`）へ描く。配置はコアの `LoupeCoordLabel.ComputeFrame`、実寸測定は `Platform.Core` の `SkiaText.Measure`、描画順は `SkiaLabel.Draw` が単一所有する）。
 
 寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時にコアの `LoupeAppearanceScaler` が物理ピクセルへ換算します（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 

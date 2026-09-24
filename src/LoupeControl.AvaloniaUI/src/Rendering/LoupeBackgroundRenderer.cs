@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
+using EsUtil.Platform.AvaloniaUI;
 using Estable.Loupe;
 
 namespace Estable.AvaloniaUI.Loupe.Rendering;
@@ -30,7 +31,7 @@ internal static class LoupeBackgroundRenderer
         if (appearance.HasCheckerColorA)
         {
             context.DrawRectangle(
-                LoupeBrushes.Get(appearance.CheckerColorA), null, new Rect(0, 0, request.PixelSize, request.PixelSize));
+                LoupeBrushes.Get(appearance.CheckerColorA), null, request.SurfaceBounds.ToAvaloniaRect());
         }
 
         if (!appearance.HasCheckerColorB)
@@ -43,7 +44,7 @@ internal static class LoupeBackgroundRenderer
         var checkerSize = LoupeAppearanceScaler.ScaleCheckerSize(appearance, request.Scaling);
         foreach (var tile in LoupeCheckerboard.ComputeDarkTileRects(request.PixelSize, checkerSize))
         {
-            context.DrawRectangle(brush, null, new Rect(tile.X, tile.Y, tile.Width, tile.Height));
+            context.DrawRectangle(brush, null, tile.ToAvaloniaRect());
         }
     }
 }

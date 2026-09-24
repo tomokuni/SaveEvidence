@@ -7,9 +7,12 @@ namespace Estable.Loupe;
 /// <remarks>
 /// 描画完了の通知に必要な表示情報（切り出し領域の左上とスケール）の計算を<br/>
 /// UI 非依存の純粋関数として提供する。<br/>
-/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
+/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
+/// 描画完了通知の解決は公開ファサード <see cref="Loupe.ResolveNotification"/> が本計算を吸収して提供する。<br/>
+/// <b>外部公開しない</b>: 利用者（UI 実装・ホスト）はファサードの戻り値（<see cref="LoupeRenderNotification"/>）を使うため、
+/// 計算の内部手順は本アセンブリと単体テストに限定する。
 /// </remarks>
-public static class LoupeRenderArgsCalculator
+internal static class LoupeRenderArgsCalculator
 {
     /// <summary>ルーペの表示情報（描画完了イベント引数用）を計算する。</summary>
     /// <param name="request">描画入力（実際に描画した値を持つ。本メソッドが DIP から再換算しないための契約）。</param>
@@ -34,8 +37,8 @@ public static class LoupeRenderArgsCalculator
             request.ZoomLevel);
     }
 
-    /// <summary>ルーペの表示情報（描画完了イベント引数用）。</summary>
+    /// <summary>ルーペの表示情報（<see cref="Loupe.ResolveNotification"/> が公開契約へ詰め替える内部結果）。</summary>
     /// <param name="CaptureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null。</param>
     /// <param name="Scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値）。</param>
-    public readonly record struct RenderArgs(EsPoint? CaptureTopLeft, double Scale);
+    internal readonly record struct RenderArgs(EsPoint? CaptureTopLeft, double Scale);
 }

@@ -4,12 +4,20 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Estable.AvaloniaUI.Marquee;
 using Estable.AvaloniaUI.Loupe;
+using Estable.Loupe;
 using Estable.Marquee;
+using Estable.Marquee.Decoration;
+using Estable.Marquee.CoreForControl;
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
+using SkiaSharp;
+using System.Globalization;
+using DrawingColor = System.Drawing.Color;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
 
@@ -70,6 +78,28 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>動作モード（C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義）。</summary>
     private FadeMaskDragRectMode _mode = FadeMaskDragRectMode.AreaSelect;
 
+    /// <summary>付加情報ラベルの背景色（黒 60%）。</summary>
+    private static readonly DrawingColor s_labelBackground = DrawingColor.FromArgb(153, 0, 0, 0);
+
+    /// <summary>操作ラベル（確定・キャンセル方法）の文字色。</summary>
+    private static readonly DrawingColor s_subLineColor = DrawingColor.FromArgb(255, 220, 220, 220);
+
+    /// <summary>情報ラベル（ウィンドウタイトル）の文字色。</summary>
+    private static readonly DrawingColor s_infoColor = DrawingColor.White;
+
+    /// <summary>操作ラベル（アプリ固有の付加情報）の文言を描画時に生成するデリゲート。</summary>
+    /// <value>描画のたびに評価される関数。null または空文字を返す場合は描かない。</value>
+    /// <remarks>
+    /// 文言はアプリ固有（選択コントロールの概念ではない）ため、コアは関知しない<br/>
+    /// （本クラスが文言の取得と描画を行い、<c>CaptureLabelTexts</c> 等が文言を単一所有する）。
+    /// </remarks>
+    public Func<string?>? OperationTextProvider { get; set; }
+
+    /// <summary>情報ラベル（ウィンドウタイトル）の文言を描画時に生成するデリゲート。</summary>
+    /// <value>描画のたびに評価される関数。null または空文字を返す場合は描かない。</value>
+    /// <remarks>文言はアプリ固有のため、コアは関知しない（本クラスが取得と描画を行う）。</remarks>
+    public Func<string?>? InfoTextProvider { get; set; }
+
     /// <summary>FadeMaskDragRectControl を初期化する（子コントロールの生成・配置・配線を実施）。</summary>
     /// <remarks>
     /// コンストラクタで内包コントロール（Marquee / Loupe）を生成して子として配置し、<br/>
@@ -93,6 +123,10 @@ public sealed class FadeMaskDragRectControl : Panel
         _marquee.CancelRequested += (_, _) => RaiseCancelRequested();
         _marquee.ZoomRequested += (_, request) => RaiseZoomRequested(request);
         _marquee.ScrollRequested += (_, request) => RaiseScrollRequested(request);
+
+        // 文字（サイズラベル・操作ラベル・情報ラベル・座標ラベル）はテキストの実寸測定が必要なため、
+        // 選択矩形コントロールは描かずに描画完了を通知する。ホスト（本クラス）が文字を描く。
+        _marquee.Rendered += OnMarqueeRendered;
 
         // ルーペ描画完了時に選択矩形の破線オーバーレイを描画する（LoupeControl の選択矩形 API は削除済み）
         _loupeControl.Rendered += OnLoupeRendered;
@@ -394,41 +428,23 @@ public sealed class FadeMaskDragRectControl : Panel
     // ====================================================================
 
     /// <summary>ハイライト矩形（ドメイン座標）。未検出時は null。</summary>
-    /// <remarks>選択矩形コントロールの設定（外側の装飾）へ委譲する（変更は自動で再描画される）。</remarks>
+    /// <remarks>選択矩形コントロールの装飾の設定へ委譲する（変更は自動で再描画される）。</remarks>
     public Rect? LogicalHighlightRect
     {
-        get => _marquee.Options.OuterHighlightRect?.ToAvaloniaRect();
-        set => _marquee.Options = _marquee.Options with { OuterHighlightRect = value?.ToEsRect() };
+        get => _marquee.DecoOptions.OuterHighlightRect?.ToAvaloniaRect();
+        set => _marquee.DecoOptions = _marquee.DecoOptions with { OuterHighlightRect = value?.ToEsRect() };
     }
 
     /// <summary>ハイライト表示の有無。</summary>
     public bool HasHighlight
     {
-        get => _marquee.Options.OuterHasHighlight;
-        set => _marquee.Options = _marquee.Options with { OuterHasHighlight = value };
-    }
-
-    /// <summary>操作ラベル（2 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
-    /// <value>描画時に呼び出される関数。null または空文字を返す場合は操作ラベルを描画しない。</value>
-    /// <remarks>文言はホストが与える（汎用コアは特定の操作文言を持たない）。設定時は選択矩形コントロールへ伝搬する。</remarks>
-    public Func<string?>? OperationTextProvider
-    {
-        get => _marquee.OperationTextProvider;
-        set => _marquee.OperationTextProvider = value;
-    }
-
-    /// <summary>情報ラベル（3 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
-    /// <value>描画時に呼び出される関数。null または空文字を返す場合は情報ラベルを描画しない。</value>
-    /// <remarks>文言はホストが与える（汎用コアは特定の情報文言を持たない）。設定時は選択矩形コントロールへ伝搬する。</remarks>
-    public Func<string?>? InfoTextProvider
-    {
-        get => _marquee.InfoTextProvider;
-        set => _marquee.InfoTextProvider = value;
+        get => _marquee.DecoOptions.OuterHasHighlight;
+        set => _marquee.DecoOptions = _marquee.DecoOptions with { OuterHasHighlight = value };
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
     /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ。</remarks>
-    public bool ShowFullOverlay => _marquee.Options.OuterShowFullOverlay;
+    public bool ShowFullOverlay => _marquee.DecoOptions.OuterShowFullOverlay;
 
     // ====================================================================
     // 内部実装（設定の分配・モードの適用・配線）
@@ -444,8 +460,9 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void ApplyOptions()
     {
-        var current = _marquee.Options;
-        _marquee.Options = _options.Marquee with
+        var current = _marquee.DecoOptions;
+        _marquee.Options = _options.Marquee;
+        _marquee.DecoOptions = _options.Deco with
         {
             OuterHighlightRect = current.OuterHighlightRect,
             OuterHasHighlight = current.OuterHasHighlight,
@@ -474,11 +491,8 @@ public sealed class FadeMaskDragRectControl : Panel
         var state = FadeMaskDragRectModes.Resolve(_mode);
 
         // モードから導出される描画状態（全面暗転・ハンドルの表示可否）は 1 回の変更通知でまとめて適用する
-        _marquee.Options = _marquee.Options with
-        {
-            OuterShowFullOverlay = state.ShowFullOverlay,
-            ShowHandles = state.UsesSelection,
-        };
+        _marquee.DecoOptions = _marquee.DecoOptions with { OuterShowFullOverlay = state.ShowFullOverlay };
+        _marquee.Options = _marquee.Options with { ShowHandles = state.UsesSelection };
 
         // 選択矩形を使わないモードでも暗転マスク（ハイライト）は描画するため、描画は止めず入力だけを止める
         _marquee.IsHitTestVisible = state.UsesSelection;
@@ -508,6 +522,83 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void OnViewportChanged(object? sender, SelectionRectEventArgs e) => NotifyViewportChanged();
 
+    /// <summary>描画完了時にホスト固有の付加情報（操作ラベル・情報ラベル）を描画する。</summary>
+    /// <param name="sender">イベント送信元（選択矩形コントロール）。</param>
+    /// <param name="e">描画コンテキストと描画内容。</param>
+    /// <remarks>
+    /// サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。<br/>
+    /// <b>操作ラベル・情報ラベルは選択コントロールの概念ではない</b>（アプリ固有の付加情報）ため、<br/>
+    /// 本クラス（ホスト）が文言の生成と描画を行い、コアは関知しない。<br/>
+    /// 本ハンドラはコントロールの子要素（ラベル）より後に呼ばれるため、付加情報はラベルより前面に置かれる。
+    /// </remarks>
+    private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
+    {
+        // 付加情報を重ねる基準は穴あけ矩形（選択またはハイライトの領域）の左上である
+        if (e.Content.HoleRect is not { } hole)
+        {
+            return;
+        }
+
+        var y = hole.Y;
+
+        // サイズラベルが描かれている場合はその下へ積む（重なりを避ける）
+        if (e.Content.SizeLabel is { } sizeLabel)
+        {
+            y += MarqueeAppearance.SizeLabelPadding * 2 + sizeLabel.FontSize;
+        }
+
+        var lines = new List<(string Text, double FontSize, DrawingColor Color, DrawingColor Background)>();
+        if (OperationTextProvider?.Invoke() is { Length: > 0 } operation)
+        {
+            lines.Add((operation, MarqueeOptions.SizeLabelFontSizeDefault, s_subLineColor, s_labelBackground));
+        }
+
+        if (InfoTextProvider?.Invoke() is { Length: > 0 } info)
+        {
+            lines.Add((info, MarqueeOptions.SizeLabelFontSizeDefault, s_infoColor, s_labelBackground));
+        }
+
+        foreach (var line in lines)
+        {
+            DrawHostLabel(e.Context, hole.X, y, line.Text, line.FontSize, line.Color, line.Background);
+            y += line.FontSize + MarqueeAppearance.SizeLabelPadding * 2;
+        }
+    }
+
+    /// <summary>ホスト固有のラベル 1 行（背景 + 文字）を描く。</summary>
+    /// <param name="context">描画コンテキスト（<c>Render</c> の実行中のみ有効）。</param>
+    /// <param name="x">ラベルの左端（DIP）。</param>
+    /// <param name="y">ラベルの上端（DIP）。</param>
+    /// <param name="text">文言。</param>
+    /// <param name="fontSize">フォントサイズ（DIP）。</param>
+    /// <param name="color">文字色。</param>
+    /// <param name="background">背景色。</param>
+    /// <remarks>
+    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（両者の見た目を揃える）。<br/>
+    /// テキストの実寸測定と描画は本クラス（ホスト）が行う（コアは文字を描かない）。
+    /// </remarks>
+    private static void DrawHostLabel(
+        DrawingContext context, double x, double y, string text, double fontSize, DrawingColor color, DrawingColor background)
+    {
+        var formatted = new FormattedText(
+            text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, fontSize,
+            s_hostLabelBrushes.GetOrCreate(color.ToAvaloniaColor()));
+
+        var padding = MarqueeAppearance.SizeLabelPadding;
+        context.FillRectangle(
+            s_hostLabelBrushes.GetOrCreate(background.ToAvaloniaColor()),
+            new Rect(x - padding, y, formatted.Width + padding * 2, formatted.Height + padding * 2));
+        context.DrawText(formatted, new Point(x, y + padding));
+    }
+
+    /// <summary>ホスト固有ラベルのブラシを共有する容量制限付きキャッシュ。</summary>
+    /// <remarks>
+    /// 描画のたびにブラシを生成するとポインター移動中の負荷が増えるため、プラットフォーム層の<br/>
+    /// 容量制限付きキャッシュを共用する（本クラスのラベルは色数が少ないため上限に達しない）。\n
+    /// </remarks>
+    private static readonly CapacityLimitedCache<Color, SolidColorBrush> s_hostLabelBrushes =
+        new(static color => new SolidColorBrush(color));
+
     /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを描画済み Bitmap へ描く。</summary>
     /// <param name="sender">イベント送信元（LoupeControl）。</param>
     /// <param name="e">描画済み Bitmap と表示情報。</param>
@@ -516,6 +607,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <see cref="LoupeControl.Rendered"/> イベントで通知された <see cref="LoupeRenderedEventArgs.Bitmap"/> へ直接描画する。<br/>
     /// 選択矩形（<see cref="SelectionRect"/> = ドメイン座標）は <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で<br/>
     /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
+    /// <b>中心座標ラベルはルーペコントロールが描く</b>（ホストもラベル要素を配置する側になったため、破線だけを描く）。<br/>
     /// 描画しない場合（選択矩形を使わないモード・選択なし・切り出し領域の左上が未設定）でも、<br/>
     /// ホストへルーペ描画完了を中継する（外部提供矩形の描画用）。
     /// </remarks>

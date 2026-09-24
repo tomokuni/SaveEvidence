@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Estable.CaptureSession;
-using Estable.FadeMaskDragRect;
 using Estable.MewUI.FadeMaskDragRect;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.MewUI.Imaging;

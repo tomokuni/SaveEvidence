@@ -44,10 +44,9 @@ internal sealed class CursorServiceSpy : ICursorService
 public class MarqueeStateTests
 {
     /// <summary>ドメイン境界 200x200 を持つ状態を生成する（境界クリップ検証用）。</summary>
-    /// <param name="cursor">カーソルサービス。null 可。</param>
     /// <returns>境界 200x200 の状態。</returns>
-    private static MarqueeState CreateBounded(ICursorService? cursor = null)
-        => new(cursor) { Port = new CoordTransform(p => p, p => p, () => new EsSize(200, 200)) };
+    private static MarqueeState CreateBounded()
+        => new() { Port = new CoordTransform(p => p, p => p, () => new EsSize(200, 200)) };
 
     /// <summary>ドメイン境界 200x200 と指定の選択矩形を持つ状態を生成する（境界クリップ検証用）。</summary>
     /// <param name="selectionRect">初期の選択矩形（ドメイン座標）。</param>
@@ -66,7 +65,7 @@ public class MarqueeStateTests
     [Fact]
     public void GetInteractionState_nudgeと選択とドラッグの組合せで状態を合成する()
     {
-        var state = new MarqueeState(null);
+        var state = new MarqueeState();
 
         // 未選択・非ドラッグ・非 nudge
         Assert.Equal(MarqueeInteractionState.NoSelection, state.GetInteractionState());
@@ -84,7 +83,7 @@ public class MarqueeStateTests
     [Fact]
     public void GetInteractionState_nudge中はドラッグと選択より優先される()
     {
-        var state = new MarqueeState(null) { NudgeActive = true };
+        var state = new MarqueeState() { NudgeActive = true };
 
         // 未選択・非ドラッグ → 始点決め nudge
         Assert.Equal(MarqueeInteractionState.StartPointNudging, state.GetInteractionState());
@@ -105,7 +104,7 @@ public class MarqueeStateTests
     [Fact]
     public void CreateSnapshot_現在の状態を全項目で返す()
     {
-        var state = new MarqueeState(null)
+        var state = new MarqueeState()
         {
             SelectionRect = new EsRect(10, 10, 50, 40),
             ActiveTarget = HitTarget.TopRight,
@@ -131,7 +130,7 @@ public class MarqueeStateTests
     [Fact]
     public void CreateSnapshot_マウス位置を明示指定できる()
     {
-        var state = new MarqueeState(null) { LastMousePosition = new EsPoint(1, 1) };
+        var state = new MarqueeState() { LastMousePosition = new EsPoint(1, 1) };
 
         var snapshot = state.CreateSnapshot(new EsPoint(100, 200));
 
@@ -154,7 +153,7 @@ public class MarqueeStateTests
     [Fact]
     public void HitTest_未選択は常にNoneを返す()
     {
-        var state = new MarqueeState(null);
+        var state = new MarqueeState();
 
         Assert.Equal(HitTarget.None, state.HitTest(new EsPoint(0, 0), 12.0));
     }
@@ -162,7 +161,7 @@ public class MarqueeStateTests
     [Fact]
     public void HitTest_角は辺より優先され矩形内はMoveを返す()
     {
-        var state = new MarqueeState(null) { SelectionRect = new EsRect(10, 20, 100, 80) };
+        var state = new MarqueeState() { SelectionRect = new EsRect(10, 20, 100, 80) };
 
         // 角（左上・右下）
         Assert.Equal(HitTarget.TopLeft, state.HitTest(new EsPoint(11, 21), 12.0));
@@ -185,7 +184,7 @@ public class MarqueeStateTests
     [Fact]
     public void StartNewSelection_始点を保持し0x0の矩形でドラッグを開始する()
     {
-        var state = new MarqueeState(null);
+        var state = new MarqueeState();
 
         state.StartNewSelection(new EsPoint(10, 20));
 
@@ -200,7 +199,7 @@ public class MarqueeStateTests
     [Fact]
     public void UpdateDrag_新規選択は始点と現在位置から矩形を作成する()
     {
-        var state = new MarqueeState(null);
+        var state = new MarqueeState();
         state.StartNewSelection(new EsPoint(10, 20));
 
         state.UpdateDrag(new EsPoint(60, 80), 10.0, clampToBounds: false);
@@ -212,7 +211,7 @@ public class MarqueeStateTests
     [Fact]
     public void UpdateDrag_ハンドル変形は開始時の矩形を基準にする()
     {
-        var state = new MarqueeState(null) { SelectionRect = new EsRect(10, 20, 100, 80) };
+        var state = new MarqueeState() { SelectionRect = new EsRect(10, 20, 100, 80) };
         state.StartDrag(HitTarget.BottomRight, new EsPoint(110, 100));
 
         state.UpdateDrag(new EsPoint(130, 130), 10.0, clampToBounds: false);
@@ -248,7 +247,7 @@ public class MarqueeStateTests
     [Fact]
     public void EndDrag_ドラッグ状態とハンドルを解除する()
     {
-        var state = new MarqueeState(null) { SelectionRect = new EsRect(10, 20, 100, 80) };
+        var state = new MarqueeState() { SelectionRect = new EsRect(10, 20, 100, 80) };
         state.StartDrag(HitTarget.TopLeft, new EsPoint(10, 20));
 
         state.EndDrag();
@@ -266,7 +265,7 @@ public class MarqueeStateTests
     [Fact]
     public void Nudge_未選択は始点を移動する()
     {
-        var state = new MarqueeState(null) { StartPoint = new EsPoint(10, 20) };
+        var state = new MarqueeState() { StartPoint = new EsPoint(10, 20) };
 
         state.Nudge(3, -4, 10.0, clampToBounds: false);
 
@@ -277,7 +276,7 @@ public class MarqueeStateTests
     [Fact]
     public void Nudge_選択確定後は終点を移動する()
     {
-        var state = new MarqueeState(null)
+        var state = new MarqueeState()
         {
             StartPoint = new EsPoint(10, 20),
             SelectionRect = new EsRect(10, 20, 50, 40),
@@ -293,7 +292,7 @@ public class MarqueeStateTests
     [Fact]
     public void Nudge_ハンドル中はリサイズし次のUpdateDragの基準を更新する()
     {
-        var state = new MarqueeState(null) { SelectionRect = new EsRect(10, 20, 100, 80) };
+        var state = new MarqueeState() { SelectionRect = new EsRect(10, 20, 100, 80) };
         state.StartDrag(HitTarget.BottomRight, new EsPoint(110, 100));
 
         state.Nudge(4, 6, 10.0, clampToBounds: false);
@@ -325,7 +324,7 @@ public class MarqueeStateTests
     [Fact]
     public void GetOppositeCorner_始点と反対側の隅を返す()
     {
-        var state = new MarqueeState(null) { StartPoint = new EsPoint(10, 20) };
+        var state = new MarqueeState() { StartPoint = new EsPoint(10, 20) };
 
         Assert.Equal(new EsPoint(60, 60), state.GetOppositeCorner(new EsRect(10, 20, 50, 40)));
     }
@@ -333,7 +332,7 @@ public class MarqueeStateTests
     [Fact]
     public void GetMarkerPosition_未選択は始点を返す()
     {
-        var state = new MarqueeState(null);
+        var state = new MarqueeState();
         state.StartPoint = new EsPoint(10, 20);
 
         Assert.Equal(new EsPoint(10, 20), state.GetMarkerPosition());
@@ -342,7 +341,7 @@ public class MarqueeStateTests
     [Fact]
     public void GetMarkerPosition_新規選択ドラッグ中は終点を返す()
     {
-        var state = new MarqueeState(null);
+        var state = new MarqueeState();
         state.StartPoint = new EsPoint(10, 20);
         state.IsDragging = true;
         state.SelectionRect = new EsRect(10, 20, 50, 40); // 始点 (10,20)、終点 (60,60)
@@ -353,7 +352,7 @@ public class MarqueeStateTests
     [Fact]
     public void GetMarkerPosition_リサイズハンドル中はハンドル位置を返す()
     {
-        var state = new MarqueeState(null);
+        var state = new MarqueeState();
         state.SelectionRect = new EsRect(10, 20, 100, 80);
         state.ActiveTarget = HitTarget.TopRight;
 
@@ -363,7 +362,7 @@ public class MarqueeStateTests
     [Fact]
     public void GetMarkerPosition_移動ハンドル中はマウス位置を返す()
     {
-        var state = new MarqueeState(null);
+        var state = new MarqueeState();
         state.SelectionRect = new EsRect(10, 20, 100, 80);
         state.ActiveTarget = HitTarget.Move;
         state.LastMousePosition = new EsPoint(45, 67);
@@ -378,7 +377,7 @@ public class MarqueeStateTests
     [Fact]
     public void Reset_全状態を初期化する()
     {
-        var state = new MarqueeState(null)
+        var state = new MarqueeState()
         {
             SelectionRect = new EsRect(10, 20, 50, 40),
             StartPoint = new EsPoint(1, 2),
@@ -400,14 +399,13 @@ public class MarqueeStateTests
     }
 
     [Fact]
-    public void Reset_nudge中はカーソルを再表示する()
+    public void Reset_nudge中はnudge状態を終了する()
     {
-        var cursor = new CursorServiceSpy();
-        var state = new MarqueeState(cursor) { NudgeActive = true, NudgeOffsetX = 3, NudgeOffsetY = 4 };
+        var state = new MarqueeState { NudgeActive = true, NudgeOffsetX = 3, NudgeOffsetY = 4 };
 
         state.Reset();
 
-        Assert.Equal([true], cursor.ShowCalls);
+        Assert.False(state.NudgeActive);
         Assert.Equal(0, state.NudgeOffsetX);
         Assert.Equal(0, state.NudgeOffsetY);
     }
@@ -415,7 +413,7 @@ public class MarqueeStateTests
     [Fact]
     public void SetSelection_矩形を復元しドラッグ状態を解除する()
     {
-        var state = new MarqueeState(null) { SelectionRect = new EsRect(0, 0, 10, 10) };
+        var state = new MarqueeState() { SelectionRect = new EsRect(0, 0, 10, 10) };
         state.StartDrag(HitTarget.TopLeft, new EsPoint(0, 0));
 
         state.SetSelection(new EsRect(30, 40, 50, 60));
@@ -426,36 +424,35 @@ public class MarqueeStateTests
     }
 
     [Fact]
-    public void SetSelection_nudge中はカーソルを再表示する()
+    public void SetSelection_nudge中はnudge状態を終了する()
     {
-        var cursor = new CursorServiceSpy();
-        var state = new MarqueeState(cursor) { NudgeActive = true };
+        var state = new MarqueeState { NudgeActive = true };
 
         state.SetSelection(new EsRect(30, 40, 50, 60));
 
-        Assert.Equal([true], cursor.ShowCalls);
+        Assert.Equal(new EsRect(30, 40, 50, 60), state.SelectionRect);
         Assert.False(state.NudgeActive);
     }
 
     [Fact]
-    public void Reset_nudge中でもカーソル未指定なら例外なく完了する()
+    public void EndNudge_nudge中はnudge状態を終了し報告する()
     {
-        var state = new MarqueeState(null) { NudgeActive = true };
+        var state = new MarqueeState { NudgeActive = true, NudgeOffsetX = 3, NudgeOffsetY = 4 };
 
-        state.Reset();
+        var ended = state.EndNudge();
 
+        Assert.True(ended);
         Assert.False(state.NudgeActive);
+        Assert.Equal(0, state.NudgeOffsetX);
+        Assert.Equal(0, state.NudgeOffsetY);
     }
 
     [Fact]
-    public void Reset_nudge中でなければカーソルを操作しない()
+    public void EndNudge_nudge中でなければ何もしない()
     {
-        var cursor = new CursorServiceSpy();
-        var state = new MarqueeState(cursor);
+        var state = new MarqueeState();
 
-        state.Reset();
-
-        Assert.Empty(cursor.ShowCalls);
+        Assert.False(state.EndNudge());
     }
 
     // ====================================================================
@@ -495,7 +492,7 @@ public class MarqueeStateTests
     [Fact]
     public void ClipRectToBounds_境界が未設定なら元の矩形を返す()
     {
-        var state = new MarqueeState(null);
+        var state = new MarqueeState();
         var rect = new EsRect(-50, -30, 300, 260);
 
         Assert.Equal(rect, state.ClipRectToBounds(rect));

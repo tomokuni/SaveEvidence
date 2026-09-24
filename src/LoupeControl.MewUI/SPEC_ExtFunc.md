@@ -6,7 +6,7 @@
 ## 概要
 
 ルーペ（拡大鏡）は、**拡大元の 100% 画像**と**拡大中心（元画像ピクセル座標）**を受け取り、
-市松模様の背景・拡大画像・十字線・外枠・座標ラベルを描画するコントロールです。
+市松模様の背景・拡大画像・十字線・外枠を描画するコントロールです（中心座標ラベルは文字の描画をホストが担います）。
 
 **Avalonia 版 `LoupeControl` と同じ UI 非依存コア（`LoupeControl.Core`）を使うため、設定値と見た目は両 UI で一致します。**
 
@@ -61,7 +61,8 @@
 | 3 | 拡大画像 | `Source` と `CenterPoint` がある場合のみ。切り出し領域の外は透明（下地の市松模様が見える） |
 | 4 | 十字線 | 中央の縦横 2 本（幅は拡大率と同じ物理ピクセル） |
 | 5 | 外枠 | 四辺（`Options.Appearance.FrameWidth` の太さ） |
-| 6 | 座標ラベル | 上端中央（余白はコアの `LoupeLabelLayout` が単一所有）。`CenterPoint` を `(x, y)` 形式で表示する |
+
+中心座標ラベルの文字はコントロールが描かず、描画完了イベント（`Rendered`）の `CoordLabel` をホストがキャンバスへ描きます（上記の後ろに重なります。配置はコアの `LoupeCoordLabel.ComputeFrame`、実寸測定は `Platform.Core` の `SkiaText.Measure`、描画順は `SkiaLabel.Draw` が単一所有します）。
 
 ### サイズの決定
 
@@ -102,6 +103,8 @@
 
 `Rendered` イベントは、ルーペを描画した直後（同一フレーム内）に引数 `LoupeRenderedEventArgs` で通知します。ホストはハンドラ内で描画先キャンバスへ追加描画（選択矩形の破線等のオーバーレイ）を行えます。
 
+中心座標ラベルの**文字はコントロールが描きません**。`LoupeRenderedEventArgs.CoordLabel`（文言・寸法・配置の計算元を含む契約）を渡すので、ホストがキャンバスへ描きます（配置はコアの `LoupeCoordLabel.ComputeFrame`、実寸測定は `Platform.Core` の `SkiaText.Measure`、描画順は `SkiaLabel.Draw` が単一所有するため、ホストは実測と描画の呼び出しだけを行います）。
+
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `Canvas` | `SKCanvas` | ルーペを描画したキャンバス（座標系はルーペ画像のピクセル） |
@@ -109,7 +112,7 @@
 | `CaptureTopLeft` | `EsPoint?` | 切り出し領域の左上（ドメイン座標）。中心未設定時は null（オーバーレイを描画できない） |
 | `Scale` | `double` | ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。DPI スケーリングの影響を受けない） |
 
-描画入力（`LoupeRenderRequest`）の組み立てはコア（`LoupeRenderRequest.Create`）が単一所有し、コントロールは公開プロパティから渡すだけです。
+描画入力（`LoupeRenderRequest`）の組み立てはコアのファサード（`Loupe.CreateRequest`）が単一所有し、コントロールは現在の状態を渡すだけです。
 
 オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求めます（切り出し領域と倍率の計算は Avalonia 版と同じコアの計算を共有します）。
 
@@ -132,5 +135,5 @@ Avalonia 版の再描画パイプライン（RequestRender / RenderCore / Genera
 
 | 項目 | 状況 |
 | --- | --- |
-| 座標変換ポート（`SetCoordinateTransform`） | 未実装（位置計算はホストが `LoupePositionCalculator` で行う） |
+| 座標変換ポート（`SetCoordinateTransform`） | 実装済み（`Inverse` = ドメイン → 親領域 DIP。表示位置の計算はコアのファサードが行い、コントロールは本ポートをファサードへ渡す） |
 | 再生成の要求メソッド（`Clear` / `RequestRender`） | 未実装（プロパティ変更で自動再描画される） |

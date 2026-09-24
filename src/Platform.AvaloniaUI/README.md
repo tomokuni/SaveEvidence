@@ -35,7 +35,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 - **ネイティブ実装とファクトリ**: `PlatformFactory.CreateXxx()` と Win32 / NoOp 実装は `Platform.Native` が提供
 - **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPixelPoint`・`EsPixelRect`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
 - **カーソル抑止の仲介**: `CursorOverrideGuardAvaloniaExtensions.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲）
-- **画像ユーティリティ**: `EsBitmap`（`Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage` アダプタ（`EsBitmapAvaloniaImage`）、ブラシキャッシュ（`BrushCache`）
+- **画像ユーティリティ**: `EsBitmap`（`Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage` アダプタ（`EsBitmapAvaloniaImage`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
 - **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
 
 ## 3. システム要件
@@ -59,7 +59,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 
 ```csharp
 using EsUtil.Platform.AvaloniaUI;          // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
-using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / BrushCache
+using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache
 using EsUtil.Platform.Core;                     // サービス抽象 / コア値型
 using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
@@ -165,7 +165,7 @@ Platform.AvaloniaUI/
 │   └── Platform/
 │       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
 │       ├── Coordinate/             # ScreenConverter（Avalonia の TopLevel に依存するため本プロジェクトに残す）
-│       ├── Imaging/                # 画像アダプタ（EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / BrushCache）
+│       ├── Imaging/                # 画像アダプタ（EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache）
 │       └── Interop/                # コア型との相互変換（EsKeyAvaloniaInterop / EsWindowStateAvaloniaInterop / EsGeometryAvaloniaInterop / EsPlatformHandleAvaloniaInterop / ColorAvaloniaInterop / CursorOverrideGuardAvaloniaExtensions）
 └── tests/                          # 単体テスト
 ```

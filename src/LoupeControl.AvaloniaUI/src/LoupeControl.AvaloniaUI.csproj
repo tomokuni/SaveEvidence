@@ -21,6 +21,8 @@
   <ItemGroup>
     <!-- UI 非依存の純粋ロジック（Core）と座標変換ポートを参照する -->
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
+    <!-- コントロール化のための再描画スケジューリング（実行キューへのポストを注入して使う） -->
+    <ProjectReference Include="..\..\LoupeControl.CoreForControl\src\LoupeControl.CoreForControl.csproj" />
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 

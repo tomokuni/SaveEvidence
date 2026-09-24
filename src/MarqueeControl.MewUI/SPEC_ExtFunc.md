@@ -14,7 +14,7 @@ Avalonia 版と同一の挙動になります。
 
 | 参照 | 用途 |
 | --- | --- |
-| `MarqueeControl.Core` | 選択幾何（`SelectionGeometry`）・状態機械（`MarqueeState`）・状態管理クラス（`MarqueeSession`）・公開型（`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`） |
+| `MarqueeControl.Core` | 選択幾何（`SelectionGeometry`）・状態機械（`MarqueeState`）・**公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`）。状態管理クラス（`MarqueeSession`）とフレーム解決（`MarqueeFrame`）は internal（ファサードの内部実装） |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Native` | カーソルサービスの既定実装（Win32 / NoOp） |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `SkiaCanvasView`・`MewProperty`・SkiaSharp 描画 |
@@ -33,17 +33,15 @@ Avalonia 版と同一の挙動になります。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 外観・対話パラメータをまとめた不変の設定値（コアの `Estable.Marquee.MarqueeOptions`） |
-| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）・操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない）。null または空文字を返す行は描かない |
+| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた不変の設定値（コアの `Estable.Marquee.MarqueeOptions`） |
+| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定**（装飾層の `Estable.Marquee.Decoration.MarqueeDecoOptions`） |
+| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）・操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。保持と評価は装飾層が行う）。null または空文字を返す行は描かない |
 | `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と一致）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `OuterAppearance` | `OuterDecoAppearance` | 枠線のみ（暗転・ラベルなし） | 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）の外観。**枠線の色・太さは本値が単一所有する**（選択枠線と穴あけ枠は同じ矩形に重なるため） |
-| `OuterShowFullOverlay` | `bool` | `false` | 穴あけを行わず全面を暗転するかどうか |
-| `OuterHighlightRect` / `OuterHasHighlight` | `EsRect?` / `bool` | `null` / `false` | ハイライト矩形（ドメイン座標）とその有効フラグ |
 | `ShowHandles` | `bool` | `true` | ドラッグハンドルを表示するかどうか |
 | `HandleColor` | `System.Drawing.Color` | 白 | ドラッグハンドルの塗り色 |
 | `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP） |
@@ -60,7 +58,7 @@ Avalonia 版と同一の挙動になります。
 設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
 同値の設定を再適用しても再描画・ログは発生しません。
 外観（色・サイズ）と対話パラメータ（`HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）は同じ設定値に含まれますが、
-後者だけがセッションへ伝搬します（判断と変更ログはコアが単一所有する）。
+後者だけがファサードへ伝搬します（判断と変更ログはコアが単一所有する）。
 
 ## 5. メソッド
 
@@ -71,7 +69,7 @@ Avalonia 版と同一の挙動になります。
 | `ResetSelection()` | - | 選択状態と nudge 状態を初期化する（nudge 中だった場合はカーソルを再表示する） |
 | `RequestConfirm()` | - | 確定要求を処理する（Enter と同じ条件）。ドラッグ中・未選択では何もしない |
 | `RequestCancel()` | - | キャンセル要求を処理する（Escape と同じ条件）。選択を破棄した後にイベントを発火する |
-| `NotifyViewportChanged()` | - | ビューポートの変化を通知する（`ViewportChanged` を発火し再描画する） |
+| `NotifyViewportChanged()` | - | ビューポートの変化を通知する（現在の状態の再通知と再描画。通知の組み立てはコントロール化の層の `MarqueeViewportNotifier` が担う） |
 
 ## 6. プロパティ（取得のみ）
 
@@ -87,16 +85,35 @@ Avalonia 版と同一の挙動になります。
 | `SelectionChanged` | `SelectionRectEventArgs` | 選択矩形の変更（ドラッグ中・nudge 中・外部復元・境界クリップ） |
 | `SelectionCompleted` | `SelectionRectEventArgs` | ドラッグ終了による選択の確定 |
 | `SelectionCancelled` | `EventArgs` | 小さすぎる矩形での終了 |
-| `MouseClicked` | `MarqueePointEventArgs` | ドラッグ移動なしの押下→解放 |
-| `MouseDoubleClicked` | `MarqueePointEventArgs` | ダブルクリックの検出 |
-| `MouseMoved` | `MarqueePointEventArgs` | マウス移動（nudge の有無に関わらず発火） |
+| `LoupePositionMoved` | `MarqueePointEventArgs` | ルーペが表示する中心座標 |
 | `LoupePositionMoved` | `MarqueePointEventArgs` | ルーペが表示する中心座標（通常追従はポインタ位置、ドラッグ・nudge 中は動いている側のハンドル位置） |
 | `ViewportChanged` | `SelectionRectEventArgs` | `NotifyViewportChanged()` の呼び出し |
-| `ZoomRequested` | `WheelZoomRequest` | Ctrl+ホイール（方向と発生位置） |
+| `ZoomRequested` | `WheelZoomRequest` | Ctrl+ホイール（方向と発生位置。解釈は組み込みの層が単一所有する） |
+| `ScrollRequested` | `WheelScrollRequest` | 通常ホイール（回転量・Shift・発生位置。解釈は組み込みの層が単一所有する） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | 矩形内ダブルクリック・Enter |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel()` |
+| `Rendered` | `MarqueeRenderedEventArgs` | 描画完了の通知（描画のたびに発火）。`Canvas`（DPI スケーリング済み・描画中のみ有効）と描画内容（`Content` = `MarqueeDrawContent`。図形と文字の契約）を渡す |
 
 座標系はすべてドメイン座標です。
+
+### 7.1 文字（ラベル・座標ラベル）の描画
+
+ラベル（サイズ・操作・情報）とカーソル座標ラベルの**文言・行の選定・配置はコアが単一所有**しますが、**実寸測定が必要な文字の描画はホストが担います**（コントロール自身は文字を描きません）。
+描画完了時に `Rendered` が発火するため、ホストはそのハンドラで描きます。
+
+```csharp
+using Estable.MewUI.Marquee;
+
+// ラベル・座標ラベルの文字を描く（コアの契約に従って背景と文字を描く共通実装）
+marquee.Rendered += (_, e) =>
+{
+    // 図形（装飾・ハンドル・マーカー）はコントロールが描く。
+    // 文字は Content.Layers の順に従い、UI 層が配置したテキスト要素が表示する。
+};
+```
+
+- `Rendered` はコントロールの描画中に発火します。ハンドラ内で描画を完了させてください（キャンバスを保持しない）。
+- `e.Canvas` は DPI スケーリング適用済みのため、ホストは DIP 座標で描けます。
 
 ## 8. 操作仕様
 
@@ -112,6 +129,7 @@ Avalonia 版と同一の挙動になります。
 | Escape | `CancelRequested` を発火する（選択があれば破棄する） |
 | Ctrl + ホイール | `ZoomRequested` を発火する（方向と発生位置。ズームの実処理はホスト） |
 | ホイール（Ctrl なし） | `ScrollRequested` を発火する（回転量・Shift・発生位置。スクロール先とスクロール量の解釈はホスト） |
+| （解釈の所有者） | Ctrl の判定とログは組み込みの層（`MarqueeControl.CoreForControl` の `MarqueeWheelInterpreter`）が単一所有し、本コントロールは要求を公開イベントへ転送するだけ |
 
 ### 制限
 
@@ -130,7 +148,8 @@ Avalonia 版と同一の挙動になります。
 | マウスダウン・アップのイベント | 持たない（基底 `UIElement` の同名メンバーが同じ情報を提供するため、本コントロールでは公開しない） |
 | ビューポート変化 | ホストが `NotifyViewportChanged()` を呼ぶ（Avalonia 版は `AttachScrollViewer` で `ScrollViewer` を購読） |
 | nudge のキー入力 | フォーカス依存（Avalonia 版は `TopLevel` を購読してフォーカス非依存） |
-| ログ | `Log` プロパティで `ILogger` を注入して出力する（書式・レベルは Avalonia 版と同一。通常ホイールのスクロールログのみ持たない） |
+| ログ | `Log` プロパティで `ILogger` を注入して出力する（書式・レベルは Avalonia 版と同一） |
+| 文字（ラベル・座標ラベル）の描画 | ホストが `Rendered` の `SKCanvas` へ描く（UI 層のラベル要素 を提供） |
 
 ## 9.5 ログ
 
@@ -138,7 +157,7 @@ Avalonia 版と同一の挙動になります。
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | `MouseDown`（位置・クリック数・選択有無）/ `MouseUp`（位置・ドラッグ有無・選択有無）/ `Click` / `DoubleClick`（矩形内か）/ `DragStart`（ハンドル・位置）/ `KeyDown`（キー・処理有無）/ `ConfirmRequested`（矩形）/ `CancelRequested` / `ZoomRequested` / `Setting`（`Options.ClampToDomainBounds` の変更前後） |
+| Debug | `MouseDown`（位置・クリック数・選択有無）/ `MouseUp`（位置・ドラッグ有無・選択有無）/ `DoubleClick`（矩形内か）/ `DragStart`（ハンドル・位置）/ `KeyDown`（キー・処理有無）/ `ConfirmRequested`（矩形）/ `CancelRequested` / `ZoomRequested` / `Setting`（`Options.ClampToDomainBounds` の変更前後） |
 | Trace | `MouseDown 直前の位置` / `MouseUp 直後の位置` |
 
 マウス移動の高頻度ログは出力しません（押下直前・解放直後の位置のみ記録します）。

@@ -10,7 +10,7 @@ namespace Estable.Marquee;
 /// カーソルの表示残留・原点飛びを防ぐためこの順序を守る必要がある。
 /// </remarks>
 [Flags]
-public enum MarqueeCursorAction
+internal enum MarqueeCursorAction
 {
     /// <summary>操作なし。</summary>
     None = 0,
@@ -32,8 +32,10 @@ public enum MarqueeCursorAction
 /// カーソル操作の適用は UI 非依存（<see cref="ICursorService"/> と画面座標の変換関数のみで完結する）ため、
 /// 本レコードの <see cref="ApplyCursor"/> が単一所有する（両 UI で同一の手順・順序になる）。<br/>
 /// 濃い既定値（<see cref="Handled"/> 以外は false）を持つため、効果が無い通知では <c>default</c> を返せる。<br/>
+/// <br/>
+/// <b>可視性</b>: 本値の適用はファサード（<see cref="Marquee"/>）が単一所有し、UI 層は値を受け取らないため internal とする。
 /// </remarks>
-public readonly record struct MarqueeFeedback
+internal readonly record struct MarqueeFeedback
 {
     /// <summary>入力が処理されたかどうか（UI 層は自 UI の「処理済み」フラグへ設定する）。</summary>
     public bool Handled { get; init; }

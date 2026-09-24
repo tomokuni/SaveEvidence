@@ -3,25 +3,28 @@ using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
 using Estable.Marquee;
 using Estable.Marquee.Decoration;
+using Estable.Marquee.CoreForControl;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.MewUI;
-using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.MewUI;
+using EsUtil.Platform.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
+using MarqueeFacade = Estable.Marquee.Marquee;
 
 namespace Estable.MewUI.Marquee;
 
 /// <summary>リサイズ可能なドラッグ矩形のコントロール（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版と同じ UI 非依存の状態管理クラス（<c>MarqueeControl.Core</c> の <see cref="MarqueeSession"/>）を使い、<br/>
+/// Avalonia 版と同じ UI 非依存のコアのファサード（<c>MarqueeControl.Core</c> の <see cref="MarqueeFacade"/>）を使い、<br/>
 /// 本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
 /// <br/>
 /// <b>座標系</b>:<br/>
-/// - ドメイン座標 = 選択対象（画像ピクセル・仮想スクリーンピクセル等）。セッションはこの座標で動作する。<br/>
+/// - ドメイン座標 = 選択対象（画像ピクセル・仮想スクリーンピクセル等）。コアはこの座標で動作する。<br/>
 /// - ローカル DIP = 本コントロールのローカル座標。入力と描画はこの座標で行い、境界でポート（<see cref="ICoordTransform"/>）により変換する。<br/>
 /// <br/>
 /// <b>操作</b>:<br/>
@@ -37,30 +40,71 @@ namespace Estable.MewUI.Marquee;
 /// - ドラッグ中はマウスキャプチャを行う（コントロール外への移動でもイベントを受け取る）。<br/>
 /// - ログ出力は <see cref="Log"/> プロパティで注入する（デフォルトは <see cref="NullLogger"/>。Avalonia 版と同一の書式）。
 /// </remarks>
-public sealed class MarqueeControl : SkiaCanvasView
+public sealed class MarqueeControl : Panel
 {
     /// <summary><see cref="Options"/> プロパティ（外観・対話パラメータをまとめた設定）。</summary>
     /// <remarks>
     /// 個別に公開していた設定（外観 10 項目・対話パラメータ 3 項目）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
     /// 設定値は不変（<see cref="MarqueeOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。<br/>
-    /// 対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬し、判断と変更ログはコアが単一所有する。
+    /// 対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はファサードへ伝搬し、判断と変更ログはコアが単一所有する。
     /// </remarks>
     public static readonly MewProperty<MarqueeOptions> OptionsProperty =
         MewProperty<MarqueeOptions>.Register<MarqueeControl>(
             nameof(Options), MarqueeOptions.Default, MewPropertyOptions.AffectsRender,
-            changed: static (owner, _, newValue) => owner.ApplyFeedback(owner._session.ApplyOptions(newValue)));
+            changed: static (owner, _, newValue) => owner._marquee.Options = newValue);
+
+    /// <summary><see cref="DecoOptions"/> プロパティ（装飾の設定）。</summary>
+    /// <remarks>
+    /// 装飾は選択コントロール単体の概念ではなく組み込み先の表示であるため、選択の設定（<see cref="Options"/>）とは別の値にしている。<br/>
+    /// 設定値は不変（<see cref="MarqueeDecoOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。
+    /// </remarks>
+    public static readonly MewProperty<MarqueeDecoOptions> DecoOptionsProperty =
+        MewProperty<MarqueeDecoOptions>.Register<MarqueeControl>(
+            nameof(DecoOptions), MarqueeDecoOptions.Default, MewPropertyOptions.AffectsRender,
+            changed: static (owner, _, newValue) => owner._marquee.DecoOptions = newValue);
 
     /// <summary><see cref="RenderScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
     public static readonly MewProperty<double> RenderScalingProperty =
-        MewProperty<double>.Register<MarqueeControl>(nameof(RenderScaling), 1.0, MewPropertyOptions.AffectsRender);
+        MewProperty<double>.Register<MarqueeControl>(nameof(RenderScaling), DpiScaler.StandardScaling, MewPropertyOptions.AffectsRender);
 
     /// <summary><see cref="Scaling"/> プロパティ（座標変換ポートへ適用する倍率）。</summary>
     /// <remarks><see cref="SetCoordinateTransform"/> でポートを設定した場合は使用しない（等倍スケール専用の簡易指定）。</remarks>
     public static readonly MewProperty<double> ScalingProperty =
-        MewProperty<double>.Register<MarqueeControl>(nameof(Scaling), 1.0, MewPropertyOptions.AffectsRender);
+        MewProperty<double>.Register<MarqueeControl>(
+            nameof(Scaling), MarqueeFacade.DefaultScaling, MewPropertyOptions.AffectsRender,
+            changed: static (owner, _, newValue) => owner._marquee.Scaling = newValue);
 
-    /// <summary>選択・ドラッグ・nudge の状態を管理するセッション（入力の解釈と状態遷移の判断を担う）。</summary>
-    private readonly MarqueeSession _session;
+    /// <summary>コアのファサード（入力の解釈・状態遷移の判断・描画内容の解決・設定の窓口）。</summary>
+    private readonly MarqueeFacade _marquee;
+
+    /// <summary>図形（装飾・ハンドル・始点マーカー）を描画する内部キャンバス。</summary>
+    /// <remarks>
+    /// <b>描画順を構造で保証する</b>: 本パネルが図形用キャンバスを先に、ラベル要素を後に子として持つため、<br/>
+    /// ラベルは常に図形より後に描かれる（コアの「ラベルは最上位」契約が構造で成り立つ）。<br/>
+    /// 入力は本パネルが受ける（本キャンバスはヒットテスト対象外）。
+    /// </remarks>
+    private readonly ShapeCanvas _shapes;
+
+    /// <summary>ラベル要素（背景 + テキスト）を保持する。要素数は層の有無に追従する。</summary>
+    private readonly List<Border> _labelElements = [];
+
+    /// <summary>コアが要求する効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。</summary>
+    private readonly IMarqueeEffects _effects;
+
+    /// <summary>ホイール入力を解釈してビューポート操作の要求（ズーム / スクロール）を出す補助。</summary>
+    /// <remarks>
+    /// ファサードへ接続し、ホイールの解釈（Ctrl = ズーム・連携先への適用）は<br/>
+    /// <c>MarqueeControl.CoreForControl</c> が単一所有する<br/>
+    /// （本層は修飾キーの真偽と回転量を渡し、要求を公開イベントへ転送するだけ）。
+    /// </remarks>
+    private readonly MarqueeWheelInterpreter _wheel;
+
+    /// <summary>ビューポート（パン・ズーム）の変化を再通知する補助。</summary>
+    /// <remarks>
+    /// 「ビューポートの変化 = 現状態の再通知 + 再描画」というビューポート連携の規則は<br/>
+    /// <c>MarqueeControl.CoreForControl</c> が単一所有する（本層は自 UI の公開イベントへ転送するだけ）。
+    /// </remarks>
+    private readonly MarqueeViewportNotifier _viewport;
 
     /// <summary>カーソルサービス（nudge のカーソル非表示・移動）。</summary>
     /// <remarks>既定実装（Win32）の解決は本 UI 層が行う（コアは抽象と <see langword="null"/> のみを扱う）。</remarks>
@@ -78,20 +122,54 @@ public sealed class MarqueeControl : SkiaCanvasView
     /// 静止画として扱い連続再描画を無効化する（選択の変更時のみ再描画する）。<br/>
     /// フォーカスを失った時点で nudge を終了する（カーソルの非表示残留を防ぐ）。<br/>
     /// 矢印キーの nudge はフォーカスを必要とする（Avalonia 版の TopLevel 購読によるフォーカス非依存とは異なる）。<br/>
-    /// コアからの通知は公開イベントへ転送し、設定（<see cref="Options"/>）をセッションへ伝搬する。
+    /// コアからの通知は公開イベントへ転送し、設定（<see cref="Options"/>）をファサードへ伝搬する。
     /// </remarks>
     public MarqueeControl(ICursorService? cursorService)
     {
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
-        _session = new MarqueeSession(_cursor, Options);
-        _session.Notified += OnSessionNotified;
+        _effects = new Effects(this);
+        _marquee = new MarqueeFacade(_effects, _cursor, Options);
+        // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
+        _marquee.Scaling = GetValue(ScalingProperty);
+        _marquee.Notified += OnNotified;
+        // 装飾の設定はコアが単一所有する（本層は公開プロパティをコアへ委譲するだけ）
+        _marquee.DecoOptions = GetValue(DecoOptionsProperty);
+        // ホイール要求（ズーム / スクロール）の解釈はコントロール化の層が単一所有する（本層は自 UI の公開イベントへ転送するだけ）
+        _wheel = new MarqueeWheelInterpreter(_marquee);
+        _wheel.ZoomRequested += (_, request) => ZoomRequested?.Invoke(this, request);
+        _wheel.ScrollRequested += (_, request) => ScrollRequested?.Invoke(this, request);
+        // ビューポート変化の通知（再通知 + 再描画）もコントロール化の層が単一所有する
+        _viewport = new MarqueeViewportNotifier(_marquee, _effects);
+        _viewport.ViewportChanged += (_, snapshot) => ViewportChanged?.Invoke(this, ToRectArgs(snapshot));
 
-        ContinuousAnimation = false;
-        PaintSurface += OnPaintSurface;
+        // 図形は専用の子キャンバスが描く（ラベル要素より先に子として加えるため、常にラベルの下になる）
+        _shapes = new ShapeCanvas(this) { IsHitTestVisible = false };
+        Add(_shapes);
 
         // フォーカスを失ったら nudge を終了する（カーソル非表示の残留防止）
         this.OnLostFocus(EndNudge);
+    }
+
+    /// <summary>図形（装飾・ハンドル・始点マーカー）だけを描画する内部 Skia キャンバス。</summary>
+    /// <remarks>
+    /// 親（<see cref="MarqueeControl"/>）の描画内容を読んで描くだけであり、判断を持たない。<br/>
+    /// 連続再描画を無効化し、親からの要求（選択・設定の変更）があるときだけ描き直す。
+    /// </remarks>
+    private sealed class ShapeCanvas : SkiaCanvasView
+    {
+        /// <summary>描画内容の取得元（親コントロール）。</summary>
+        private readonly MarqueeControl _owner;
+
+        /// <summary>描画先の親を指定して初期化する。</summary>
+        /// <param name="owner">描画内容の取得元（親コントロール）。</param>
+        public ShapeCanvas(MarqueeControl owner)
+        {
+            _owner = owner;
+            // 静止画として扱う（選択・設定の変更時のみ再描画する）
+            ContinuousAnimation = false;
+            PaintSurface += _owner.OnPaintSurface;
+        }
     }
 
     /// <summary>ドラッグの始点が決定されたときに発火する（新規選択のドラッグ開始。座標はドメイン座標）。</summary>
@@ -105,16 +183,6 @@ public sealed class MarqueeControl : SkiaCanvasView
 
     /// <summary>領域がキャンセルされたときに発火する（枠外ダブルクリック・小さすぎる矩形等）。</summary>
     public event EventHandler? SelectionCancelled;
-
-    /// <summary>クリック（ドラッグ移動なしの押下→解放）時に発火する（ドメイン座標）。</summary>
-    public event EventHandler<MarqueePointEventArgs>? MouseClicked;
-
-    /// <summary>ポインターのダブルクリックが検出されたときに発火する（確定/キャンセルの判定は本コントロールが行う）。</summary>
-    public event EventHandler<MarqueePointEventArgs>? MouseDoubleClicked;
-
-    /// <summary>マウスポインタの位置を通知する（ドメイン座標。nudge の有無に関わらず移動のたびに発火する）。</summary>
-    /// <remarks>要素検出・ルーペ追従等の汎用用途に使用する。</remarks>
-    public event EventHandler<MarqueePointEventArgs>? MouseMoved;
 
     /// <summary>ルーペが表示する中心座標を通知する（ドメイン座標）。</summary>
     /// <remarks>通常追従ではポインタ位置、ドラッグ・nudge 中は動いている側のハンドル位置を通知する。</remarks>
@@ -130,6 +198,8 @@ public sealed class MarqueeControl : SkiaCanvasView
     /// <summary>Ctrl+ホイールによるズーム要求時に発火する（方向と発生位置）。</summary>
     /// <remarks>
     /// ズームの実処理（画像サイズ変更・ズーム率管理）は上位 AP が実施する（本コントロールは要求のみ通知する）。<br/>
+    /// 「Ctrl+ホイール = ズーム」という解釈はコントロール化の層（<c>MarqueeControl.CoreForControl</c>）が単一所有する<br/>
+    /// （選択コントロールをビューポートへ組み込むときにだけ必要な規則のため）。<br/>
     /// <see cref="WheelZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
     /// </remarks>
     public event EventHandler<WheelZoomRequest>? ZoomRequested;
@@ -147,10 +217,20 @@ public sealed class MarqueeControl : SkiaCanvasView
     /// <summary>Escape キーによるキャンセル要求時に発火する（選択の破棄は本コントロールが実施済み）。</summary>
     public event EventHandler? CancelRequested;
 
+    /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント。</summary>
+    /// <remarks>
+    /// 本コントロールは文字（ラベル・座標ラベル）を描かない。テキストの実寸測定は描画 API に依存するため、<br/>
+    /// 「どの文言をどこへ描くか」はコアが決め、実際の描画はホストが本イベントで行う（<see cref="MarqueeLabelRenderer"/> を使うとよい）。<br/>
+    /// 契約は文字に限定せず**描画内容全体**（<see cref="MarqueeRenderedEventArgs.Content"/>）を渡すため、ホストは文字以外の上書きもできる。<br/>
+    /// <b>描画中に発火する</b>ため、ハンドラ内で描画を完了させること（キャンバスを保持しない）。<br/>
+    /// 描画のたびに発火する（文字の有無は <c>Content.HasText</c> で判定できる）。
+    /// </remarks>
+    public event EventHandler<MarqueeRenderedEventArgs>? Rendered;
+
     /// <summary>外観・対話パラメータをまとめた設定を取得または設定する。</summary>
     /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
-    /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はセッションへ伝搬する。<br/>
+    /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はファサードへ伝搬する。<br/>
     /// 一部の項目だけを変える場合は <c>MarqueeOptions.Default with { ShowHandles = false }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
     /// 色は UI 非依存の <see cref="DrawingColor"/> で受け取り、描画（Skia）への変換は描画層が行う。
     /// </remarks>
@@ -160,12 +240,24 @@ public sealed class MarqueeControl : SkiaCanvasView
         set => SetValue(OptionsProperty, value);
     }
 
+    /// <summary>装飾（暗転マスク・穴あけ枠・ラベル）の設定を取得または設定する。</summary>
+    /// <value>装飾の設定（暗転色・枠線・ラベル・ハイライト・内側の塗り）。既定は <see cref="MarqueeDecoOptions.Default"/>。</value>
+    /// <remarks>
+    /// 一部の項目だけを変える場合は <c>MarqueeDecoOptions.Default with { ... }</c> の形式で指定する（指定しない項目は既定値を保つ）。<br/>
+    /// 色は UI 非依存の <see cref="DrawingColor"/> で受け取り、描画（Skia）への変換は描画層が行う。
+    /// </remarks>
+    public MarqueeDecoOptions DecoOptions
+    {
+        get => GetValue(DecoOptionsProperty);
+        set => SetValue(DecoOptionsProperty, value);
+    }
+
     /// <summary>座標変換ポートへ適用する倍率を取得または設定する。</summary>
     /// <value>ドメイン → DIP の倍率。既定は 1.0。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
     /// <see cref="SetCoordinateTransform"/> が未設定の場合のみ使われる（ポート優先）。<br/>
-    /// 選択矩形と十字マーカーの描画はセッションのポートのみを使うため本値の影響を受けない<br/>
+    /// 選択矩形と十字マーカーの描画はファサードの座標変換ポートのみを使うため本値の影響を受けない<br/>
     /// （本値が影響するのは外側の装飾のサイズラベル・ラベル位置）。
     /// </remarks>
     public double Scaling
@@ -175,69 +267,34 @@ public sealed class MarqueeControl : SkiaCanvasView
     }
 
     /// <summary>サイズラベル表示用のスケーリング係数を取得または設定する（マルチスクリーン補正）。</summary>
-    /// <value>サイズラベルの自動生成に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値が使用される。</value>
-    /// <remarks>0 以下を <see cref="Scaling"/> と同値として扱う規則はコア（<c>OuterDecoLabels.ResolveDisplayScaling</c>）が単一所有する。</remarks>
+    /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値が使用される。</value>
+    /// <remarks>0 以下を <see cref="Scaling"/> と同値として扱う規則はコア（<see cref="MarqueeFacade.DisplayScaleScaling"/>）が単一所有する。</remarks>
     public double DisplayScaleScaling
     {
-        get => OuterDecoLabels.ResolveDisplayScaling(field, Scaling);
-        set => field = value;
+        get => _marquee.DisplayScaleScaling;
+        set
+        {
+            _marquee.DisplayScaleScaling = value;
+            InvalidateVisual();
+        }
     }
 
     /// <summary>サイズラベルのテキストを提供する関数を取得または設定する。</summary>
     /// <value>サイズラベルのテキストを返す関数。null または空文字の場合は自動生成する。</value>
     /// <remarks>
-    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
-    /// 描画のたびに評価されるため、ドラッグ中の選択矩形の変化にも追従できる。<br/>
-    /// 設定（変更）時は再描画を要求する。
+    /// デリゲート（ホスト結線）のため <see cref="DecoOptions"/> には含めない（値の等価比較の対象外にするため）。<br/>
+    /// 保持と再描画の要求はコア（<see cref="MarqueeFacade.SizeLabelOverrideProvider"/>）が単一所有する。<br/>
+    /// <b>操作ラベル・情報ラベルは本コントロールの概念ではない</b>（アプリ固有の付加情報）ため、ホストが自前で描く。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
     {
-        get => field;
+        get => _marquee.SizeLabelOverrideProvider;
         set
         {
-            field = value;
+            _marquee.SizeLabelOverrideProvider = value;
             InvalidateVisual();
         }
     }
-
-    /// <summary>操作ラベル（2 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数。null または空文字を返す場合は操作ラベルを描かない。</value>
-    /// <remarks>
-    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
-    /// 文言はホストが与える（汎用コアは特定の操作文言を持たない）。設定（変更）時は再描画を要求する。
-    /// </remarks>
-    public Func<string?>? OperationTextProvider
-    {
-        get => field;
-        set
-        {
-            field = value;
-            InvalidateVisual();
-        }
-    }
-
-    /// <summary>情報ラベル（3 行目）の文言を描画時に評価するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数。null または空文字を返す場合は情報ラベルを描かない。</value>
-    /// <remarks>
-    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
-    /// 文言はホストが与える（汎用コアは特定の情報文言を持たない）。設定（変更）時は再描画を要求する。
-    /// </remarks>
-    public Func<string?>? InfoTextProvider
-    {
-        get => field;
-        set
-        {
-            field = value;
-            InvalidateVisual();
-        }
-    }
-
-    /// <summary>ドメイン ↔ ローカル DIP の座標変換ポート（null はコアが <see cref="Scaling"/> から解決する）。</summary>
-    /// <remarks>
-    /// セッションは null を等価変換に置換して保持するため、<b>指定の有無（null かどうか）は本フィールドだけが保持する</b>。<br/>
-    /// この区別が必要なのは、ポート未指定時に倍率（<see cref="Scaling"/>）を使う規則をコアが単一所有するためである。
-    /// </remarks>
-    private ICoordTransform? _coordinatePort;
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
     /// <value>スケーリング係数。DPI 変更時に自動更新される。</value>
@@ -249,28 +306,28 @@ public sealed class MarqueeControl : SkiaCanvasView
 
     /// <summary>現在の選択状態のスナップショットを取得する（ポーリング不要の完全状態）。</summary>
     /// <value>State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / IsDragging / NudgeActive / HasSelection を含むスナップショット。</value>
-    public MarqueeSnapshot CurrentSnapshot => _session.CreateSnapshot();
+    public MarqueeSnapshot CurrentSnapshot => _marquee.CreateSnapshot();
 
     /// <summary>選択矩形があるかどうかを取得する。</summary>
     /// <value>選択中の場合は true。</value>
     /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
-    public bool HasSelection => _session.HasSelection;
+    public bool HasSelection => _marquee.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</value>
     /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
-    public EsRect SelectionRect => _session.SelectionRect;
+    public EsRect SelectionRect => _marquee.SelectionRect;
 
     /// <summary>操作ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>
-    /// 保持とフォールバック、セッションへの伝搬はコア（<see cref="MarqueeSession.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
-    /// 入力の判断に伴うログはセッションが同じロガーで出力する。
+    /// 保持とフォールバック、ファサードへの伝搬はコア（<see cref="MarqueeFacade.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
+    /// 入力の判断に伴うログはコアが同じロガーで出力する。
     /// </remarks>
     public ILogger Log
     {
-        get => _session.Log;
-        set => _session.Log = value;
+        get => _marquee.Log;
+        set => _marquee.Log = value;
     }
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
@@ -278,53 +335,126 @@ public sealed class MarqueeControl : SkiaCanvasView
     /// <remarks>
     /// ホスト（上位 AP）がモードに応じた変換ポートを設定する（範囲選択: 仮想スクリーンピクセル / 切出し: 元画像ピクセル）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
-    /// 設定すると描画（選択矩形・ハンドル・十字線）へ即時反映する。
+    /// 保持と、ポート未指定時に倍率（<see cref="Scaling"/>）を使う規則はコアが単一所有する（本層は委譲するだけ）。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordTransform? port)
-    {
-        _coordinatePort = port;
-        _session.SetPort(port);
-        InvalidateVisual();
-    }
+    public void SetCoordinateTransform(ICoordTransform? port) => _marquee.SetCoordinateTransform(port);
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <remarks>
-    /// 状態の更新と通知はセッションが担う（<see cref="ClampToDomainBounds"/> が有効な場合は境界内へクリップしてから設定する）。<br/>
+    /// 状態の更新と通知はコア（ファサード）が担う（<see cref="ClampToDomainBounds"/> が有効な場合は境界内へクリップしてから設定する）。<br/>
     /// 設定後は <see cref="SelectionChanged"/> が発火し、再描画される。
     /// </remarks>
-    public void SetSelection(EsRect rect) => ApplyFeedback(_session.SetSelection(rect));
+    public void SetSelection(EsRect rect) => _marquee.SetSelection(rect);
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
-    /// <remarks>nudge 中だった場合はカーソルを再表示する（非表示残留の防止。状態の初期化はセッションが担う）。</remarks>
-    public void ResetSelection() => ApplyFeedback(_session.Reset());
+    /// <remarks>nudge 中だった場合はカーソルを再表示する（非表示残留の防止。状態の初期化はコアが担う）。</remarks>
+    public void ResetSelection() => _marquee.ResetSelection();
 
     /// <summary>キャンセル要求を処理する（Escape キーと同じ条件）。</summary>
     /// <remarks>
     /// ドラッグ中 / 選択ありの場合は選択を破棄した後に <see cref="CancelRequested"/> を発火する。<br/>
     /// モード差分（キャンセル後の後始末）は上位が本イベントを購読して行う。
     /// </remarks>
-    public void RequestCancel() => ApplyFeedback(_session.RequestCancel());
+    public void RequestCancel() => _marquee.RequestCancel();
 
     /// <summary>確定要求を処理する（Enter キーと同じ条件）。</summary>
     /// <remarks>
     /// ドラッグ中は無視し、選択確定後のみ <see cref="ConfirmRequested"/> を発火する。<br/>
     /// 確定後に選択状態をクリアする（確定後の再ドラッグ・再確定を防ぐ）。
     /// </remarks>
-    public void RequestConfirm() => ApplyFeedback(_session.RequestConfirm());
+    public void RequestConfirm() => _marquee.RequestConfirm();
 
     /// <summary>ビューポートの変化を通知する（<see cref="ViewportChanged"/> を発火する）。</summary>
     /// <remarks>
     /// 本コントロールは <c>ScrollViewer</c> の自動連携を行わないため、ホスト（上位 AP）が<br/>
-    /// ズーム・スクロール・画像サイズ変更の検知時に呼ぶ（暗転マスク等の再描画トリガー）。
+    /// ズーム・スクロール・画像サイズ変更の検知時に呼ぶ（暗転マスク等の再描画トリガー）。<br/>
+    /// 「変化の再通知 + 再描画」の手順はコントロール化の層（<c>MarqueeViewportNotifier</c>）が単一所有する。
     /// </remarks>
-    public void NotifyViewportChanged() => ApplyFeedback(_session.NotifyViewportChanged());
+    public void NotifyViewportChanged() => _viewport.Notify();
 
     /// <summary>要求サイズを返す（親の残余を埋める）。</summary>
-    /// <param name="availableSize">親から提示された利用可能サイズ（使用しない）。</param>
+    /// <param name="availableSize">親から提示された利用可能サイズ。</param>
     /// <returns>常に <c>Size.Empty</c>。</returns>
     /// <remarks>選択オーバーレイは下の画像と同じ領域を占めるため、自身の要求サイズを持たない。</remarks>
-    protected override Size MeasureContent(Size availableSize) => Size.Empty;
+    protected override Size MeasureContent(Size availableSize)
+    {
+        // 子（図形のキャンバスとラベル要素）へ利用可能サイズを伝搬する
+        _shapes.Measure(availableSize);
+        foreach (var element in _labelElements)
+        {
+            element.Measure(availableSize);
+        }
+
+        return Size.Empty;
+    }
+
+    /// <summary>子（図形のキャンバス・ラベル要素）を配置する。</summary>
+    /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
+    /// <remarks>
+    /// <b>位置はコアが決める</b>: ラベルの配置は <see cref="MarqueeLabelLayoutPlan"/>（コントロール化の層）が<br/>
+    /// 実寸から求めた矩形をそのまま使い、本クラスは要素を <see cref="Arrange"/> するだけである。<br/>
+    /// MewUI は <c>Margin</c> による絶対配置が反映されないため、配置フェーズで明示的に位置を確定させる。<br/>
+    /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。
+    /// </remarks>
+    protected override void ArrangeContent(Rect bounds)
+    {
+        // 図形のキャンバスは親領域全体を埋める
+        _shapes.Arrange(bounds);
+
+        var content = _marquee.ResolveContent(bounds.Size.ToEsSize());
+        var elements = MarqueeLabelLayoutPlan.Resolve(content, SkiaText.Measure);
+
+        SyncLabelElements(elements.Count);
+        for (var i = 0; i < elements.Count; i++)
+        {
+            var element = elements[i];
+            ApplyLabelElement(_labelElements[i], element);
+            _labelElements[i].Arrange(new Rect(
+                bounds.X + element.Bounds.X, bounds.Y + element.Bounds.Y, element.Bounds.Width, element.Bounds.Height));
+        }
+    }
+
+    /// <summary>ラベル要素の数を描くラベルの数に合わせる。</summary>
+    /// <param name="count">必要な要素数。</param>
+    /// <remarks>余分な要素は子から外し、不足分は生成して子へ追加する（描画のたびに呼ばれる）。</remarks>
+    private void SyncLabelElements(int count)
+    {
+        while (_labelElements.Count > count)
+        {
+            var last = _labelElements[^1];
+            _labelElements.RemoveAt(_labelElements.Count - 1);
+            Remove(last);
+        }
+
+        while (_labelElements.Count < count)
+        {
+            var border = new Border().Child(new TextBlock());
+            _labelElements.Add(border);
+            Add(border);
+        }
+    }
+
+    /// <summary>ラベル要素の内容と体裁をコアの指示に合わせる。</summary>
+    /// <param name="border">更新する要素（背景）。</param>
+    /// <param name="element">コア（CoreForControl）が解決した配置指示。</param>
+    /// <remarks>
+    /// 背景色はコアが実効色（アルファ 0 を黒 50% として解決済み）で渡す。<br/>
+    /// サイズラベル・カーソル座標ラベルはいずれも角丸なしの矩形のため、角丸は設定しない。
+    /// </remarks>
+    private static void ApplyLabelElement(Border border, in MarqueeLabelElement element)
+    {
+        // 本体は配置でサイズを確定するため、要素には内側余白だけを与える
+        border.Padding(element.PaddingX, element.PaddingY);
+        border.Background = element.BackgroundColor.ToMewUIColor();
+
+        if (border.Child is TextBlock text)
+        {
+            text.Text = element.Text;
+            text.FontSize = element.FontSize;
+            text.Foreground = element.TextColor.ToMewUIColor();
+        }
+    }
 
     /// <summary>DPI の変更時に表示スケーリング係数を追従させる。</summary>
     /// <param name="oldDpi">変更前の DPI。</param>
@@ -339,7 +469,7 @@ public sealed class MarqueeControl : SkiaCanvasView
     /// <summary>左ボタン押下時にドラッグを開始する。</summary>
     /// <param name="e">マウスの情報。</param>
     /// <remarks>
-    /// 押下位置をドメイン座標へ変換してセッションへ通知する（ダブルクリックの確定/キャンセル・nudge の終了・<br/>
+    /// 押下位置をドメイン座標へ変換してコア（ファサード）へ通知する（ダブルクリックの確定/キャンセル・nudge の終了・<br/>
     /// ハンドルのスナップはコアの判断に従う）。<br/>
     /// ドラッグ中はポインターがコントロール外へ出ても移動イベントを受け取れるようマウスキャプチャを取得する。
     /// </remarks>
@@ -352,63 +482,49 @@ public sealed class MarqueeControl : SkiaCanvasView
             return;
         }
 
-        var feedback = _session.Press(ToDomain(e.GetPosition(this)), e.ClickCount);
-        if (feedback.CaptureMouse)
-        {
-            CaptureMouse(true);
-        }
-
         e.Handled = true;
-        ApplyFeedback(feedback);
+        _marquee.Press(ToDomain(e.GetPosition(this)), e.ClickCount);
     }
 
     /// <summary>ドラッグ中のマウス移動を処理する。</summary>
     /// <param name="e">マウスの情報。</param>
     /// <remarks>
-    /// 押下位置をドメイン座標へ変換してセッションへ通知する。<br/>
+    /// 押下位置をドメイン座標へ変換してコア（ファサード）へ通知する。<br/>
     /// ドラッグの適用・nudge 中のエコー移動の抑制・カーソル形状の決定はコアの判断に従う。
     /// </remarks>
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        ApplyFeedback(_session.Move(ToDomain(e.GetPosition(this))));
+        _marquee.Move(ToDomain(e.GetPosition(this)));
     }
 
     /// <summary>左ボタン解放時にドラッグを終了する。</summary>
     /// <param name="e">マウスの情報。</param>
     /// <remarks>
-    /// 押下位置をドメイン座標へ変換してセッションへ通知し、マウスキャプチャを解放する。<br/>
+    /// 押下位置をドメイン座標へ変換してコア（ファサード）へ通知し、マウスキャプチャを解放する。<br/>
     /// 最小サイズによるキャンセル・確定・クリック検出・nudge の終了はコアの判断に従う。
     /// </remarks>
     protected override void OnMouseUp(MouseEventArgs e)
     {
         base.OnMouseUp(e);
 
-        CaptureMouse(false);
-        ApplyFeedback(_session.Release(ToDomain(e.GetPosition(this))));
         e.Handled = true;
+        _marquee.Release(ToDomain(e.GetPosition(this)));
     }
 
     /// <summary>ホイールでズーム要求・スクロール要求を行う。</summary>
     /// <param name="e">ホイールの情報。</param>
     /// <remarks>
     /// Ctrl+ホイールは <see cref="ZoomRequested"/>（ズームの実処理は上位 AP）、それ以外は <see cref="ScrollRequested"><br/>
-    /// （スクロールの実処理は上位 AP）を発火する。回転量はそのまま通知し、スクロール量の解釈は転送先が単一所有する。<br/>
-    /// ホイールはビューの操作であり選択矩形の状態を変えないため UI 層が担う。
+    /// （スクロールの実処理は上位 AP）を発火する。回転量はそのまま通知し、解釈（Ctrl の判定・連携先への適用・ログ）は<br/>
+    /// コントロール化の層（<c>MarqueeControl.CoreForControl</c> の <see cref="MarqueeWheelInterpreter"/>）が単一所有する。<br/>
+    /// ホイールはビューの操作であり選択矩形の状態を変えない。
     /// </remarks>
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
         base.OnMouseWheel(e);
 
-        if (e.ControlKey)
-        {
-            Log.LogZoomRequested(e.Delta.Y > 0);
-            ZoomRequested?.Invoke(this, new WheelZoomRequest(e.Delta.Y > 0, e.GetPosition(this).ToEsPoint()));
-            e.Handled = true;
-            return;
-        }
-
-        ScrollRequested?.Invoke(this, new WheelScrollRequest(e.Delta.X, e.Delta.Y, e.ShiftKey, e.GetPosition(this).ToEsPoint()));
+        _wheel.Handle(e.ControlKey, e.ShiftKey, e.Delta.X, e.Delta.Y, e.GetPosition(this).ToEsPoint());
         e.Handled = true;
     }
 
@@ -424,9 +540,7 @@ public sealed class MarqueeControl : SkiaCanvasView
     {
         base.OnKeyDown(e);
 
-        var feedback = _session.KeyDown(e.Key.ToEsKey(), CurrentCursorDomainPosition());
-        ApplyFeedback(feedback);
-        e.Handled = feedback.Handled || e.Handled;
+        e.Handled = _marquee.KeyDown(e.Key.ToEsKey(), CurrentCursorDomainPosition()) || e.Handled;
     }
 
     /// <summary>現在のカーソル位置（ドメイン座標）を取得する。</summary>
@@ -443,18 +557,48 @@ public sealed class MarqueeControl : SkiaCanvasView
         }
 
         var screen = _cursor.GetCursorScreenPoint();
-        var local = window.ScreenToClient(new Point(screen.X, screen.Y));
-        return _session.ToDomain(new EsPoint(local.X, local.Y));
+        var local = window.ScreenToClient(screen.ToMewUIPoint());
+        return _marquee.ToDomain(local.ToEsPoint());
     }
 
     /// <summary>nudge を終了し、マウスポインターを再表示する。</summary>
     /// <remarks>フォーカス喪失時に呼び出し、nudge 中の非表示ポインターを復元する。</remarks>
-    private void EndNudge() => ApplyFeedback(_session.EndNudge());
+    private void EndNudge() => _marquee.EndNudge();
 
     /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
     /// <param name="localDip">ローカル DIP 座標。</param>
     /// <returns>ドメイン座標。</returns>
-    private EsPoint ToDomain(Point localDip) => _session.ToDomain(new EsPoint(localDip.X, localDip.Y));
+    private EsPoint ToDomain(Point localDip) => _marquee.ToDomain(localDip.ToEsPoint());
+
+    /// <summary>コア（ファサード）が要求する効果を本コントロールへ適用する実装。</summary>
+    /// <remarks>
+    /// 効果の適用順序（フォーカス → カーソル形状 → 再描画）はコアが単一所有するため、<br/>
+    /// 本実装は呼ばれた順に自 UI の操作へ接続するだけでよい（判断を持たない）。<br/>
+    /// コアは <see cref= "IMarqueeEffects"/> のみに依存し、UI フレームワークを知らない。
+    /// </remarks>
+    private sealed class Effects(MarqueeControl owner) : IMarqueeEffects
+    {
+        /// <summary>フォーカスを取得する（矢印キー nudge の受け付け開始）。</summary>
+        public void RequestFocus() => owner.Focus();
+
+        /// <summary>再描画を要求する。</summary>
+        public void RequestRedraw() => owner.InvalidateVisual();
+
+        /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
+        /// <param name="kind">カーソル形状の種別（コア提供）。</param>
+        public void SetCursorShape(MarqueeCursorKind kind) => owner.ApplyCursorShape(kind);
+
+        /// <summary>ポインターキャプチャを取得または解放する。</summary>
+        /// <param name="capture">true = 取得 / false = 解放。</param>
+        /// <remarks>ドラッグ中にポインターがコントロール外へ出ても移動イベントを受け取れるようにする。</remarks>
+        public void SetPointerCapture(bool capture) => owner.CaptureMouse(capture);
+
+        /// <summary>ドメイン座標を画面物理座標へ変換する。</summary>
+        /// <param name="domainPoint">ドメイン座標。</param>
+        /// <returns>画面物理座標。ウィンドウを特定できない場合は既定値。</returns>
+        public EsPixelPoint ToScreenPoint(EsPoint domainPoint)
+            => owner.ToScreen(domainPoint);
+    }
 
     /// <summary>ドメイン座標を画面物理座標へ変換する。</summary>
     /// <param name="domainPos">ドメイン座標。</param>
@@ -467,9 +611,9 @@ public sealed class MarqueeControl : SkiaCanvasView
             return default;
         }
 
-        var localDip = _session.ToDip(domainPos);
-        var screen = window.ClientToScreen(new Point(localDip.X, localDip.Y));
-        return new EsPixelPoint((int)Math.Round(screen.X), (int)Math.Round(screen.Y));
+        var localDip = _marquee.ToDip(domainPos);
+        var screen = window.ClientToScreen(localDip.ToMewUIPoint());
+        return screen.ToEsPixelPoint();
     }
 
     /// <summary>マウスキャプチャを取得または解放する。</summary>
@@ -492,26 +636,14 @@ public sealed class MarqueeControl : SkiaCanvasView
         }
     }
 
-    /// <summary>コア（状態管理クラス）が返す効果を画面へ適用する。</summary>
-    /// <param name="feedback">適用する効果（カーソル操作・フォーカス・カーソル形状・再描画）。</param>
-    /// <remarks>
-    /// 適用する効果の選択・順序はコア（<see cref="MarqueeFeedback.ApplyCursor"/> / <see cref="MarqueeFeedback.ApplyVisual"/>）が<br/>
-    /// 単一所有する（本層は自 UI の操作へ接続するだけ。マウスキャプチャはハンドラ側で行う）。
-    /// </remarks>
-    private void ApplyFeedback(MarqueeFeedback feedback)
-    {
-        feedback.ApplyCursor(_cursor, ToScreen);
-        feedback.ApplyVisual(() => Focus(), InvalidateVisual, ApplyCursorShape);
-    }
-
     /// <summary>コアからの通知を公開イベントへ転送する（判断はしない）。</summary>
-    /// <param name="sender">送信元（セッション）。</param>
+    /// <param name="sender">送信元（ファサード）。</param>
     /// <param name="notice">通知の種別・座標・スナップショット。</param>
     /// <remarks>
     /// 転送のみを担う（確定/キャンセルの判断・状態の更新はコアが済ませている）。<br/>
     /// 本 UI は押下・解放の公開イベントを持たない（基底 <c>UIElement</c> の同名メンバーがサービスを提供済みのため）。
     /// </remarks>
-    private void OnSessionNotified(object? sender, MarqueeNotice notice)
+    private void OnNotified(object? sender, MarqueeNotice notice)
     {
         switch (notice.Kind)
         {
@@ -521,14 +653,9 @@ public sealed class MarqueeControl : SkiaCanvasView
             case MarqueeNoticeKind.SelectionCompleted: SelectionCompleted?.Invoke(this, ToRectArgs(notice)); break;
             case MarqueeNoticeKind.SelectionCancelled: SelectionCancelled?.Invoke(this, EventArgs.Empty); break;
 
-            // ポインター（クリック・ダブルクリック・移動）
-            case MarqueeNoticeKind.MouseClicked: MouseClicked?.Invoke(this, ToPointArgs(notice)); break;
-            case MarqueeNoticeKind.MouseDoubleClicked: MouseDoubleClicked?.Invoke(this, ToPointArgs(notice)); break;
-            case MarqueeNoticeKind.MouseMoved: MouseMoved?.Invoke(this, ToPointArgs(notice)); break;
-
-            // ルーペ・ビューポート・確定要求・キャンセル要求
-            case MarqueeNoticeKind.LoupePositionMoved: LoupePositionMoved?.Invoke(this, ToPointArgs(notice)); break;
-            case MarqueeNoticeKind.ViewportChanged: ViewportChanged?.Invoke(this, ToRectArgs(notice)); break;
+            // ルーペ（追従位置）・確定要求・キャンセル要求
+            // コアは追従位置を汎用名（MarkerPositionMoved）で通知するため、ホスト向けの名前（ルーペ中心）へ写像する
+            case MarqueeNoticeKind.MarkerPositionMoved: LoupePositionMoved?.Invoke(this, ToPointArgs(notice)); break;
             case MarqueeNoticeKind.ConfirmRequested: ConfirmRequested?.Invoke(this, ToRectArgs(notice)); break;
             case MarqueeNoticeKind.CancelRequested: CancelRequested?.Invoke(this, EventArgs.Empty); break;
         }
@@ -542,11 +669,14 @@ public sealed class MarqueeControl : SkiaCanvasView
     /// <summary>通知を選択矩形のイベント引数へ変換する。</summary>
     /// <param name="notice">通知。</param>
     /// <returns>選択矩形（ドメイン座標）とスナップショットを含むイベント引数。</returns>
-    private static SelectionRectEventArgs ToRectArgs(MarqueeNotice notice) => new(notice.Snapshot.SelectionRect, notice.Snapshot);
+    private static SelectionRectEventArgs ToRectArgs(MarqueeNotice notice) => ToRectArgs(notice.Snapshot);
 
-    /// <summary>カーソル形状をハンドル種別に応じて更新する。</summary>
-    /// <param name="handle">カーソル形状の基になるハンドル種別。</param>
-    /// <remarks>ハンドル上ではリサイズ方向に応じたカーソル、枠内では移動カーソル、それ以外は既定カーソルを表示する。</remarks>
+    /// <summary>スナップショットを選択矩形のイベント引数へ変換する（コアの通知を経由しない通知用）。</summary>
+    /// <param name="snapshot">通知時点の状態スナップショット。</param>
+    /// <returns>選択矩形とスナップショットを含むイベント引数。</returns>
+    private static SelectionRectEventArgs ToRectArgs(MarqueeSnapshot snapshot)
+        => new(snapshot.SelectionRect, snapshot);
+
     /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
     /// <param name="kind">カーソル形状の種別（コア提供）。</param>
     /// <remarks>種別と自 UI のカーソルの対応のみを持つ（どのハンドルが同じカーソルになるかはコアが判断済み）。</remarks>
@@ -563,24 +693,21 @@ public sealed class MarqueeControl : SkiaCanvasView
         };
     }
 
-    /// <summary>選択矩形の外側に描く装飾・ハンドル・十字マーカー・座標ラベルを描画する。</summary>
+    /// <summary>選択矩形の外側に描く装飾・ハンドル・十字マーカーを描画し、文字はホストへ委ねる。</summary>
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
-    /// 描画は 2 層に分かれる。<br/>
-    /// - <b>外側の装飾</b>（暗転マスク・穴あけ枠・ラベル）: 装飾コアのフレームを <see cref="MarqueeOuterSkiaRenderer.Draw"/> へ渡して描く。<br/>
-    /// - <b>選択矩形そのもの</b>（ドラッグハンドル・始点マーカー・座標ラベル）: <see cref="MarqueeSkiaRenderer"/> で描く。<br/>
+    /// <b>描画順はコアが単一所有する</b>: <see cref="MarqueeDrawContent.Layers"/> の順に層を処理する。<br/>
+    /// 図形の層は描画 API へ写し、<b>ラベルの層は描かない</b>（ラベルは本パネルの子要素が描くため、常に最上位になる）。<br/>
     /// <br/>
-    /// 選択枠線は外側の装飾の穴あけ枠（同じ矩形の内側）と重なるため、本コントロールは描画しない<br/>
-    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="MarqueeOptions.OuterAppearance"/> が単一所有する。<br/>
-    /// セッションの状態（選択矩形・nudge・マウス位置）を読み、DIP へ変換して描画層へ渡すだけである。<br/>
+    /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なるため本クラスでは描画しない<br/>
+    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="MarqueeDecoOptions.OuterAppearance"/> が単一所有する。<br/>
     /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>
-    /// 背景は塗らない（透明のままにして下の画像を透かす）。<br/>    /// 外側の装飾（暗転マスク）は選択の有無に関係なく描画する（ハイライトのみを表示するモードを含む）。
+    /// 背景は塗らない（透明のままにして下の画像を透かす）。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
-        var scaling = RenderScaling > 0 ? RenderScaling : 1.0;
-        var options = Options;
+        var scaling = DpiScaler.NormalizeScaling(RenderScaling);
 
         canvas.Save();
         canvas.Scale((float)scaling);
@@ -589,46 +716,38 @@ public sealed class MarqueeControl : SkiaCanvasView
             // 前フレームの描画（選択矩形・暗転マスク）を残さないため、自分の描画面を消してから描く
             canvas.Clear(SKColors.Transparent);
 
-            // 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）。
-            // どの矩形を暗転するか・枠線を描くか・ラベルをどう組むかは装飾コアが持つため、本層はフレームを描画 API へ写すだけとする。
-            MarqueeOuterSkiaRenderer.Draw(
-                canvas,
-                MarqueeFrame.Resolve(
-                    _session,
-                    new EsRect(0, 0, info.Width / scaling, info.Height / scaling),
-                    _coordinatePort,
-                    Scaling,
-                    SizeLabelOverrideProvider,
-                    DisplayScaleScaling,
-                    OperationTextProvider,
-                    InfoTextProvider));
+            // 描画内容（装飾・選択矩形・ラベル）はコアが 1 値で解決する。
+            // 本層は「描くかどうか」を判断せず、層の順に従って描画 API へ写すだけとする。
+            var clientSize = DpiScaler.ToDip(info.Size.ToEsSize(), scaling);
+            var content = _marquee.ResolveContent(clientSize);
 
-            // 選択矩形（穴あけ矩形）の内側に描く装飾（塗り・内枠。ハイライト矩形の強調に使う）。
-            // 塗るか・枠線を描くかの判断は装飾コアが持つため、本層はフレームを描画 API へ写すだけとする。
-            MarqueeInnerSkiaRenderer.Draw(canvas, MarqueeFrame.ResolveInner(_session, _coordinatePort, Scaling));
-
-            if (options.ShowHandles && _session.HasSelection)
+            foreach (var layer in content.Layers)
             {
-                var dipRect = _session.ToDipRect(_session.SelectionRect);
-                MarqueeSkiaRenderer.DrawHandles(
-                    canvas, dipRect, options.HandleSize, options.HandleColor, options.OuterAppearance.BorderColor);
+                switch (layer)
+                {
+                    case MarqueeDrawLayer.Decoration:
+                        MarqueeOuterSkiaRenderer.Draw(canvas, content.Decoration);
+                        MarqueeInnerSkiaRenderer.Draw(canvas, content.InnerDecoration);
+                        break;
+
+                    case MarqueeDrawLayer.Handles when content.Handles is { } handles:
+                        MarqueeSkiaRenderer.DrawHandles(
+                            canvas, handles.Rect, handles.HandleSize, handles.FillColor, handles.BorderColor);
+                        break;
+
+                    case MarqueeDrawLayer.Marker when content.Marker is { } marker:
+                        MarqueeSkiaRenderer.DrawStartMarker(canvas, marker.Center, marker.Color, marker.Thickness, marker.Size);
+                        break;
+
+                    // ラベルは本パネルの子要素（Border + TextBlock）が描く（常に最上位になる）
+                    case MarqueeDrawLayer.SizeLabel:
+                    case MarqueeDrawLayer.CoordLabel:
+                        break;
+                }
             }
 
-            if (_session.NudgeActive && _session.CrosshairVisible)
-            {
-                var markerDip = _session.ToDip(_session.MarkerPosition);
-                MarqueeSkiaRenderer.DrawStartMarker(
-                    canvas, markerDip, options.MarkerColor, MarqueeAppearance.MarkerThickness, options.MarkerLength / 2);
-            }
-
-            if (options.ShowCoordLabel)
-            {
-                var cursorDip = _session.ToDip(_session.LastMousePosition);
-                var clientSize = new EsSize(info.Width / scaling, info.Height / scaling);
-                MarqueeSkiaRenderer.DrawCoordLabel(
-                    canvas, cursorDip, _session.LastMousePosition, clientSize,
-                    options.CoordLabelColor, options.CoordLabelBackgroundColor, options.CoordLabelFontSize);
-            }
+            // 描画完了をホストへ通知する（操作・情報ラベルなどホスト固有の付加情報を描くための入口）。
+            Rendered?.Invoke(this, new MarqueeRenderedEventArgs(canvas, content));
         }
         finally
         {

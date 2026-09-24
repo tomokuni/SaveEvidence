@@ -54,7 +54,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```text
 公開コントロール（LoupeControl）
-  → 描画オーケストレーション（LoupeRenderCoordinator / LoupeRenderPipeline / LoupeSourceResolver）※ UI 固有の機構
+  → 描画オーケストレーション（LoupeRenderPipeline / LoupeSourceResolver）※ UI 固有の機構
   → レンダリング（LoupeRenderer + 背景 / 画像 / 装飾レンダラー）
   → Core（LoupeControl.Core: 外観 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 市松模様 / 描画完了時の表示情報 / ログ定義）
 ```
@@ -66,7 +66,8 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 - 色の境界変換（設定文字列 → コアの色型）は上位AP 側で行い、LoupeControl 内に文字列解析を持ち込まない（外観は `System.Drawing.Color` として受け取る）。
 - 描画は LoupeRenderer へ委譲し、LoupeControl は状態（DP）とライフサイクル（Bitmap 生成 / 解放）に専念する。
 - 描画の可否（アルファ 0）・切り出しの可否・タイルサイズの補正はコアが判定・所有し、本プロジェクトはその結果で描画する。
-- `LoupeRenderCoordinator`（再描画のバッチ化）と `LoupeSourceResolver`（`IImage` の型判定）は **Avalonia 固有の機構** であり、コアへ移さない（MewUI 版は同期描画のため不要）。
+- `LoupeSourceResolver`（`IImage` の型判定）と中間ビットマップを生成するパイプラインは **Avalonia 固有の機構** であり、コアへ移さない（MewUI 版は同期描画のため不要）。
+- 再描画のバッチ化（`LoupeRenderCoordinator`）は UI フレームワークに依存しないため **`LoupeControl.CoreForControl`（組み込みの層）** が所有する（実行キューと優先度は UI が `post` コールバックで注入する）。
 - 描画可否の判断（非表示なら描画しない・解放する、古い世代は反映しない）と、未実行要求の破棄と解放の手順は **`LoupeRenderCoordinator` が単一所有** する（コントロールは `RequestRender` / `CancelAndRelease` / `ShouldApply` を呼ぶだけ）。
 - 表示方式は LoupeControl 内部の Image.Source に統一し、外部の DrawingContext 描画 API は提供しない。
 - UI 非依存のロジックは `LoupeControl.Core`（全型 `public`）へ委譲し、境界でのみコア型（`EsPoint` / `EsSize`）と Avalonia 型を相互変換する（1 行変換）。
@@ -96,7 +97,7 @@ flowchart TB
     subgraph LC["LoupeControl.AvaloniaUI プロジェクト (LoupeControl.AvaloniaUI)"]
         direction TB
         Ctl["LoupeControl<br/>public sealed partial<br/>: UserControl<br/>LoupeControl.axaml / LoupeControl.axaml.cs"]
-        Coh["LoupeRenderCoordinator<br/>internal sealed class<br/>（再描画のバッチ化）"]
+        Coh["LoupeRenderCoordinator<br/>public sealed class<br/>（再描画のバッチ化。定義は LoupeControl.CoreForControl）"]
         Pip["LoupeRenderPipeline<br/>internal static class<br/>（ソース解決と描画合成）"]
         Src["LoupeSourceResolver<br/>internal static class<br/>（IImage の型判定・破棄済み検出）"]
         Rdr["LoupeRenderer<br/>internal static class<br/>Rendering/LoupeRenderer.cs"]
@@ -115,9 +116,9 @@ flowchart TB
         Coerce["LoupeValueCoercer<br/>public static class"]
         Scale["LoupeAppearanceScaler<br/>public static class"]
         Geo["LoupeDecorationGeometry / LoupeCheckerboard<br/>public static class"]
-        Lay["LoupeLabelLayout<br/>public static class"]
-        Pos["LoupePositionCalculator<br/>public static class"]
-        Args["LoupeRenderArgsCalculator<br/>public static class"]
+        Lay["LoupeLabelLayout<br/>internal static class"]
+        Pos["Loupe（公開ファサード）<br/>public sealed class<br/>Loupe.cs / LoupeLayout / LoupeRenderNotification"]
+        Args["LoupePositionCalculator / LoupeRenderArgsCalculator<br/>internal static class<br/>（ファサードが内部で使う）"]
         Log["LoupeLogMessage<br/>public static partial class"]
     end
 
@@ -161,13 +162,13 @@ flowchart TB
 - **分類**: 公開コントロール（`public sealed partial class LoupeControl : UserControl`）
 - **責務**:
   - 状態管理: 4 個の StyledProperty（`Source: IImage?` / `CenterPoint` / 設定 `Options` / 環境値 `RenderScaling`）
-  - 座標ラベル: 余白・角丸・文字サイズ・色はコア（`LoupeLabelLayout` / `LoupeAppearance`）の値をコードビハインドで設定し、AXAML には外観値を書かない
-    - **要素で描く理由（UI 層の例外）**: Avalonia ヘッドレスでは `RenderTargetBitmap` の画素を検証できないため、ビットマップへ焼き込むとラベルの描画をテストできない。レイアウトシステム（`Border` / `TextBlock`）に描かせると要素のプロパティとして検証できる（MewUI 版は Skia のキャンバスへ描画して画素を検証する）
+- 座標ラベル: **コントロールは描かない**。文言・寸法・配置の計算元はコア （`LoupeCoordLabel` / `LoupeAppearanceScaler`。配置の内部手順は internal の `LoupeLabelLayout`）が単一所有し、描画完了イベント（`Rendered`）の `CoordLabel` でホストへ渡す（ホストがルーペ画像へ描く。実寸測定は `Platform.Core` の `SkiaText`、描画順は `SkiaLabel` が単一所有する）
+    - **ホストが描く理由**: テキストの実寸測定は描画 API 依存であり、コントロールの描画サイクル外（ホストの任意のタイミング）で描けるようにするため
     - ライフサイクル: 世代管理付き非同期ビットマップ生成と解放（`ReleaseBitmap`）
   - 表示制御: 標準プロパティ `IsVisible` で表示・非表示を指示（表示時=再生成要求（非同期・1 フレームに 1 回の生成へ結合）、非表示時=未実行要求の破棄と解放）
     - 再描画のバッチ化: `Dispatcher.UIThread.Post` で複数プロパティ変更を1フレーム1回の再描画に結合
     - 非同期生成: 切り出しと合成（`RenderTargetBitmap` / `DrawingContext`）は UI スレッドで行い（バックグラウンド抽出（`Task.Run`）は使わない。連続再描画時にスレッドプールが競合し、移動中の追従が止まるため）、古い世代の結果は採用せず破棄する
-    - 表示サイズ・位置: `UpdatePosition` が唯一の書き込み元。親パネルのサイズ（未接続は領域未確定＝クランプなし）で `LoupePositionCalculator.ClampSizeToArea` が求めた表示サイズを要素（`Width` / `Height`）と `_displaySize` へ反映し、表示中は位置を `LoupePositionCalculator.ComputePosition` で求めて `RenderTransform` へ反映する。クランプは 1 回だけ行い、要素サイズ・描画サイズ・位置クランプで同じ値を使う
+    - 表示サイズ・位置: `UpdatePosition` がコアのファサード `Loupe.ResolveLayout` を呼び、返された `LoupeLayout`（表示サイズと表示位置）を要素（`Width` / `Height`）と `RenderTransform` へ写すだけである（クランプ・オフセット・親領域へのクランプはコアが単一所有し、`UpdatePosition` は表示サイズの唯一の反映元になる）
     - 座標単位: `Options.RequestedSize` は DIP、レンダラーへ渡すサイズと装飾幅は `RenderScaling` で物理ピクセルへ変換
   - 値の補正: コアの設定値（`LoupeOptions` / `LoupeAppearance`）は型の生成時に補正される（UI は関与しない）。環境値の `RenderScaling` のみ `coerce` コールバックで矯正する
 - **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する表示サイズ・拡大率・外観。UI は設定値を保持しない。色は `System.Drawing.Color` で受け取り描画時にブラシへ変換する））/ 環境（`RenderScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
@@ -178,7 +179,7 @@ flowchart TB
 - **分類**: 内部静的クラス（`internal static class`）
 - **責務**: ルーペ Bitmap の合成描画（市松模様 → 拡大画像 → 十字線 → 外枠）
 - **公開API**: `DrawLoupe(source, request)`（引数はコアの描画契約 `LoupeRenderRequest` と解決済みのソース。外観値・換算値を保持しない。切り出せない場合は市松模様のみを描画する）
-- **特徴**: 外観の色はコアの色型で受け取り、`LoupeBrushes`（容量制限付きの `BrushCache` へ委譲）でブラシを共有する。描画の可否（アルファ 0）はコアが判定する。市松タイル・外枠の太さはコアの `LoupeAppearanceScaler` が物理ピクセルへ換算する（DIP の見た目を DPI に依存させない）。描画層へは契約（`LoupeRenderRequest`）を渡し、各層がコアへ問い合わせる（呼び出し側で可否を判定して null を渡す形にはしない）。
+- **特徴**: 外観の色はコアの色型で受け取り、`LoupeBrushes`（容量制限付きの `CapacityLimitedCache<TKey, TValue>` へ委譲）でブラシを共有する。描画の可否（アルファ 0）はコアが判定する。市松タイル・外枠の太さはコアの `LoupeAppearanceScaler` が物理ピクセルへ換算する（DIP の見た目を DPI に依存させない）。描画層へは契約（`LoupeRenderRequest`）を渡し、各層がコアへ問い合わせる（呼び出し側で可否を判定して null を渡す形にはしない）。
 - **依存**: LoupeAppearance（コア） / LoupeAppearanceScaler（コア） / LoupeImageExtractor（コア）
 
 ### 6.3 描画責務分割
@@ -186,7 +187,7 @@ flowchart TB
 - `LoupeBackgroundRenderer`: 市松模様の背景描画。明暗判定はコアの `LoupeCheckerboard`、描画の可否は `LoupeAppearance.HasCheckerColor*`、タイルサイズの物理ピクセル換算はコアの `LoupeAppearanceScaler` へ委譲する（描画入力 `LoupeRenderRequest` を受け取る）。
 - `LoupeImageRenderer`: ソースの切り出しと拡大描画。切り出しの可否はコアの `LoupeImageExtractor.TryExtractRegionAt`、切り出し元・描画先の矩形はコアの `LoupeImageExtractor.ComputeMagnifiedRects`（引数はビットマップの実寸 `EsBitmap.Size`）へ委譲する。
 - `LoupeDecorationRenderer`: 十字線と外枠の描画。描画の可否は `LoupeAppearance.HasCrosshair` / `HasFrame`、矩形の計算はコアの `LoupeDecorationGeometry`、太さの換算は `LoupeAppearanceScaler` へ委譲する。
-- `LoupeBrushes`: コアの色型 → 共有ブラシの変換と容量制限付きキャッシュの単一所有（コントロールの座標ラベルと描画層 3 層が共用する）。
+- `LoupeBrushes`: コアの色型 → 共有ブラシの変換と容量制限付きキャッシュの単一所有（描画層が共用する）。
 - 描画層は**描画入力（`LoupeRenderRequest`）を受け取り、描画の可否・値の単位・幾何をコアへ問い合わせて描くだけ**にする（MewUI 版の描画層と同じ形。外観値は保持しない）。
 - 描画する層の集合と順序（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠）は `LoupeRenderer` が単一所有する。
 - `LoupeRenderer`: 上記3層を合成し、生成したBitmapを返すオーケストレーター。
@@ -194,7 +195,7 @@ flowchart TB
 > 十字線・外枠の矩形計算、市松模様の明暗判定とタイルサイズの換算、拡大描画の矩形計算は `LoupeControl.Core` が単一所有します（MewUI 版と共用）。
 > 本プロジェクトは返された `EsRect` を Avalonia の矩形へ変換して描画するだけです。
 
-> **通知契約の縮小**: `LoupeRenderedEventArgs` はホストがオーバーレイを描くのに必要な最小限（描画済み Bitmap・切り出し左上・スケール）のみを通知します。表示位置・表示サイズ・拡大率・拡大中心は、消費側が存在しないため削除しました（必要になればコントロールの公開プロパティから取得できます）。
+> **通知契約**: `LoupeRenderedEventArgs` はホストがオーバーレイ・文字を描くのに必要な値（描画済み Bitmap・切り出し左上・スケール・中心座標ラベルの契約 `CoordLabel`）を通知します。表示位置・表示サイズ・拡大率・拡大中心は、消費側が存在しないため削除しました（必要になればコントロールの公開プロパティから取得できます）。
 
 ### 6.4 画像入力とピクセル抽出
 
@@ -210,7 +211,7 @@ flowchart TB
 - **分類**: 内部静的クラス（`internal static class`）
 - **所属**: `LoupeControl.Core` プロジェクト（名前空間 `Estable.Loupe.Imaging`）
 - **責務**: 元画像（`EsBitmap`）からの領域切り出し（範囲外は透明パディング）を `EsBitmap` として提供する
-- **公開API**: `ExtractRegionAt`（`EsBitmap` 抽出）/ `TryExtractRegionAt`（切り出しの可否を含む。ソース・中心未設定や破棄済みは `null`）/ `ComputeCaptureSize`（切り出し領域サイズ計算）/ `ComputeCaptureTopLeft`（拡大中心 → 切り出し領域左上計算。`ExtractRegionAt` / `LoupeRenderArgsCalculator` で共用する単一所有）/ `ComputeMagnifiedRects`（切り出し元・描画先の矩形計算。両 UI が共用する拡大倍率の単一所有）
+- **公開API**: `ExtractRegionAt`（`EsBitmap` 抽出）/ `TryExtractRegionAt`（切り出しの可否を含む。ソース・中心未設定や破棄済みは `null`）/ `ComputeCaptureSize`（切り出し領域サイズ計算）/ `ComputeCaptureTopLeft`（拡大中心 → 切り出し領域左上計算。`ExtractRegionAt` とコアの描画完了通知の解決で共用する単一所有）/ `ComputeMagnifiedRects`（切り出し元・描画先の矩形計算。両 UI が共用する拡大倍率の単一所有）
 - **依存**: `Platform.Core`（`EsBitmap` / `EsPoint`）のみ。Avalonia には依存しない
 
 ### 6.6 LoupeLogMessage / LoupeRenderLog
@@ -228,7 +229,7 @@ flowchart TB
 
 ### 6.8 UI 固有の機構（コアへ移さない）
 
-- `LoupeRenderCoordinator`: 再描画要求のバッチ化（`Dispatcher.UIThread` へのポストで 1 フレーム 1 回に結合）、表示中の判定と世代番号による古い結果の破棄、未実行要求の破棄と解放の手順を単一所有する（Avalonia の Dispatcher に依存するため UI 固有。MewUI 版は同期描画のため不要）。
+- `LoupeRenderCoordinator`: 再描画要求のバッチ化（実行キューへのポストで 1 フレーム 1 回に結合）、表示中の判定と世代番号による古い結果の破棄、未実行要求の破棄と解放の手順を単一所有する。定義は `LoupeControl.CoreForControl`（組み込みの層）にあり、UI フレームワークに依存しない（Avalonia 固有の実行キューと優先度は `post: action => Dispatcher.UIThread.Post(action, DispatcherPriority.Render)` として注入する）。
 - `LoupeRenderPipeline`: Avalonia の `IImage` を切り出し元（`EsBitmap`）へ解決し、描画（`LoupeRenderer.DrawLoupe`）を UI スレッドで実行する。`IImage` の型判定と `Bitmap` → `EsBitmap` の複製が UI 固有。
 - `LoupeSourceResolver`: `IImage` の対応型判定（`Bitmap` / `EsBitmapAvaloniaImage`）・破棄済みの検出・ソース寸法のログ用表現を単一所有する（UI スレッドに依存しない純粋関数）。
 
@@ -256,7 +257,7 @@ sequenceDiagram
 
     AP->>Ctl: IsVisible = true / Source / CenterPoint 変更
     Ctl->>Ctl: RequestRender（Dispatcher ポストで 1 回に結合）
-    Ctl->>Ctl: LoupeRenderRequest.Create（公開プロパティから描画契約を組み立てる）
+    Ctl->>Ctl: Loupe.CreateRequest（コアのファサードが描画契約を組み立てる）
     Ctl->>Pl: RenderAsync(source, request)
     Pl->>Sr: IsSourceSupported(source)（未対応型は例外）/ Resolve(source)
     Sr-->>Pl: 切り出し元 EsBitmap（Bitmap は複製・共有参照はそのまま）

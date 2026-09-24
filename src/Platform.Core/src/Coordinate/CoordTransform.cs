@@ -59,7 +59,7 @@ public sealed class CoordTransform : ICoordTransform
             () => null);
     }
 
-    /// <summary>ドメイン座標 = ローカル DIP × 倍率 のスケーリングポートを生成する（Forward = DIP→ドメインの乗算）。</summary>
+    /// <summary>ドメイン座標 = ローカル DIP × 倍率のスケーリングポートを生成する（Forward = DIP→ドメインの乗算）。</summary>
     /// <param name="factorProvider">DIP → ドメインのスケール倍率を提供する関数（呼び出し毎に評価。0 以下の場合は 1.0 として扱う）。</param>
     /// <returns>Forward = ローカル DIP → ドメイン（倍率で乗算）、Inverse = ドメイン → ローカル DIP（倍率で除算）のポート。</returns>
     /// <remarks>
@@ -77,7 +77,7 @@ public sealed class CoordTransform : ICoordTransform
             () => null);
     }
 
-    /// <summary>ドメイン座標 = ローカル DIP × 倍率 のスケーリングポートを、境界付きで生成する。</summary>
+    /// <summary>ドメイン座標 = ローカル DIP × 倍率のスケーリングポートを、境界付きで生成する。</summary>
     /// <param name="factorProvider">DIP → ドメインのスケール倍率を提供する関数（呼び出し毎に評価。0 以下の場合は 1.0 として扱う）。</param>
     /// <param name="boundsProvider">ドメイン座標の境界（画像サイズ等）を提供する関数（呼び出し毎に評価）。</param>
     /// <returns>Forward = ローカル DIP → ドメイン（倍率で乗算）、Inverse = ドメイン → ローカル DIP（倍率で除算）のポート。</returns>

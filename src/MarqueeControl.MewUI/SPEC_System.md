@@ -9,7 +9,7 @@ MarqueeControl（MewUI 版）のシステム概要・アーキテクチャ・依
 
 コアが担う範囲（選択矩形の正規化・ハンドル位置・ヒットテスト・ドラッグ変形・nudge・境界クリップ・対話状態の合成に加えて、
 nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルの判断）は
-両 UI で完全に共通であり、本プロジェクトは入力をコアへ通知し、返された効果を適用して結果をキャンバスへ描画します。
+両 UI で完全に共通であり、本プロジェクトは入力をコア（公開ファサード `Marquee`）へ通知し、返された効果を適用して結果をキャンバスへ描画します。
 
 ## 技術スタック
 
@@ -52,8 +52,8 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 
 | 層 | 責務 |
 | --- | --- |
-| `MarqueeControl.Core` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成（効果の適用順、ビューポート変化の通知、ログの保持を含む）** |
-| `MarqueeControl.MewUI` | 入力（マウス・キー・ホイール）をコア型へ変換してセッションへ通知する、返された効果（再描画・フォーカス・マウスキャプチャ・カーソル形状/操作）を適用する、通知を公開イベントへ転送する、状態を `SKCanvas` へ描画する、DPI の追従 |
+| `MarqueeControl.Core` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成（効果の適用順、ビューポート変化の通知、ホイールの解釈、ログの保持を含む）**。公開ファサード `Marquee` を唯一の窓口とし、状態機械とフレーム解決は内部契約（`internal`）とする |
+| `MarqueeControl.MewUI` | 入力（マウス・キー・ホイール）をコア型へ変換してファサードへ通知する、`IMarqueeEffects` を実装して要求された効果（再描画・フォーカス・マウスキャプチャ・カーソル形状/操作）を適用する、通知を公開イベントへ転送する、描画内容を `SKCanvas` へ写す、DPI の追従 |
 | ホスト | 座標変換ポートの設定、選択の復元・確定・キャンセル、重ね順の管理、ビューポート変化の通知 |
 
 ### 設計判断
@@ -61,43 +61,45 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 | 判断 | 理由 |
 | --- | --- |
 | 状態機械（`MarqueeState`）と入力の判断（`MarqueeSession`）をコアに置き、UI 側は入力の変換と効果の適用のみを行う | 本コントロールの本体は「状態遷移 + 幾何 + 入力の解釈」であり、UI に残すと MewUI 版で丸ごと書き直しになる |
+| コアの操作を公開ファサード `Marquee` に一本化し、状態機械とフレーム解決を `internal` にする | 操作の入口が 1 つになり、UI 層がコアの内部契約へ踏み込む余地がなくなる（両 UI で同じ窓口を使う） |
 | イベント引数をコア型（`EsPoint` / `EsRect`）で公開する | コアの状態機械と同一の型になり境界変換が不要になる。MewUI の `Rect` は負のサイズを 0 にクランプするため、`EsRect` のほうが安全 |
 | カーソルサービスの既定実装の解決を UI 層で行う | コアは `Platform.Native` を参照できない（循環参照）。コアは抽象と `null` のみを扱う |
 | `SkiaCanvasView`（`Control` 系）を基底にする | 画像の上へ重ねるオーバーレイであり、子要素を持たない。背景を塗らないため下の画像が透ける |
 | `ScrollViewer` を自動購読しない | MewUI 版の画面構成（`Grid` 重ね合わせ）では祖先探索の前提が異なる。ビューポート変化はホストが `NotifyViewportChanged()` で通知する |
 | マウスダウン・アップのイベントを公開しない | `UIElement` が同名メンバー（＝同じ情報を提供するイベント）を持つため、本コントロールでは公開しない（重複を避ける） |
-| ログの出力先を持つ | 入力を持つコントロールは操作ログが必要（上位 AP はドラッグ・nudge 用のキー・マウスイベントを直接検出しないため）。既定は `NullLogger` で、ホストが `Log` プロパティで注入する（保持・フォールバック・セッションへの伝搬はコアが単一所有する） |
+| ログの出力先を持つ | 入力を持つコントロールは操作ログが必要（上位 AP はドラッグ・nudge 用のキー・マウスイベントを直接検出しないため）。既定は `NullLogger` で、ホストが `Log` プロパティで注入する（保持・フォールバック・ファサードへの伝搬はコアが単一所有する） |
 
 ## コンポーネント構成
 
 ```text
 src/MarqueeControl.MewUI/
 ├── src/
-│   ├── MarqueeControl.cs                 公開 API・入力の受付と効果の適用・カーソル制御・描画の起点
-│   ├── MarqueeSkiaRenderer.cs            ハンドル・十字マーカー・座標ラベルの描画
-│   ├── MarqueeOuterSkiaRenderer.cs       外側の装飾（暗転マスク・穴あけ枠・ラベル）の描画
+│   ├── MarqueeControl.cs                 公開 API・入力の受付と効果の適用・カーソル制御・描画の起点（文字はホストへ委ねる）
+│   ├── MarqueeSkiaRenderer.cs            ハンドル・十字マーカーの描画
+│   ├── MarqueeOuterSkiaRenderer.cs       外側の装飾（暗転マスク・穴あけ枠）の描画
 │   ├── MarqueeInnerSkiaRenderer.cs       内側の装飾（穴あけ矩形の塗り・内枠）の描画
-│   ├── MarqueeInnerSkiaRenderer.cs       内側の装飾（穴あけ矩形の塗り・内枠）の描画
+│   ├── ラベルの要素配置（ArrangeOverride）           公開（ホスト向け）: ラベル・座標ラベルの文字描画の共通実装
+│   ├── MarqueeRenderedEventArgs.cs        描画完了通知のイベント引数（文字はホストが描く）
 │   ├── MarqueePointEventArgs.cs          座標通知のイベント引数
 │   └── SelectionRectEventArgs.cs          選択矩形通知のイベント引数
 └── tests/
     ├── TestHelper.cs                     テスト用の描画先（SKBitmap + SKCanvas）と画素数え上げ
     ├── RecordingLogger.cs                ログ出力を収集するテスト用 ILogger
-    ├── MarqueeSkiaRenderer.Tests.cs     描画の検証（6 件）
+    ├── MarqueeSkiaRenderer.Tests.cs     描画の検証
     ├── MarqueeOuterSkiaRenderer.Tests.cs 外側の装飾の描画の検証（画素を実測する）
     ├── MarqueeInnerSkiaRenderer.Tests.cs 内側の装飾の描画の検証（画素を実測する）
-    ├── MarqueeInnerSkiaRenderer.Tests.cs 内側の装飾の描画の検証（画素を実測する）
+    ├── ラベル要素配置のテスト     ラベル・座標ラベルの文字描画の検証（画素を実測する）
     └── MarqueeControl.Tests.cs          公開 API・プロパティ・イベントの検証
 ```
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `MarqueeControl` | `MewProperty` の定義、入力のドメイン変換とセッションへの通知、返された効果（再描画・フォーカス・マウスキャプチャ・カーソル）の適用、マウスキャプチャの取得/解放、DPI 変更の追従 |
-| `MarqueeSkiaRenderer` | 8 方向ハンドル・十字マーカー・座標ラベルの描画と、ラベル配置の純粋計算。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため） |
-| `MarqueeOuterSkiaRenderer` | 装飾コアの `OuterDecoFrame` を Skia の描画 API へ写す（暗転マスク・枠線・ラベル。判断を持たない）。フォント解決・テキストの実寸測定を担う |
-| `MarqueeInnerSkiaRenderer` | 装飾コアの `InnerDecoFrame` を Skia の描画 API へ写す（穴あけ矩形の塗り・内枠。判断を持たない） |
-| `MarqueeInnerSkiaRenderer` | 装飾コアの `InnerDecoFrame` を Skia の描画 API へ写す（穴あけ矩形の塗り・内枠。判断を持たない） |
-| `MarqueePointEventArgs` / `SelectionRectEventArgs` | 通知時点の座標（矩形）とスナップショットの組 |
+| `MarqueeControl` | `MewProperty` の定義、入力のドメイン変換とファサードへの通知、`IMarqueeEffects` の実装（効果の適用）、マウスキャプチャの取得/解放、DPI 変更の追従、描画内容の写像と文字の委譲（`Rendered`） |
+| `MarqueeSkiaRenderer` | 8 方向ハンドル・十字マーカーの描画。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため）。**座標ラベルも描かない**（ホストが描く） |
+| `MarqueeOuterSkiaRenderer` | 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）の `OuterDecoFrame` を Skia の描画 API へ写す（暗転マスク・枠線。判断を持たない）。**ラベル（文字）は描かない**（ホストが描く） |
+| `MarqueeInnerSkiaRenderer` | 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）の `InnerDecoFrame` を Skia の描画 API へ写す（穴あけ矩形の塗り・内枠。判断を持たない） |
+| UI 層のラベル要素 | 描画内容のうち文字（ラベル・座標ラベル）を Skia で描く（ホスト向けの共通実装）。文言・外観と描画順（`MarqueeDrawContent.Layers`）は Core が単一所有し、実寸から配置矩形を求める写像は `MarqueeLabelLayoutPlan` が単一所有する |
+| `MarqueePointEventArgs` / `SelectionRectEventArgs` / `MarqueeRenderedEventArgs` | 通知時点の座標（矩形）とスナップショットの組・描画完了（描画先と描画内容の契約） |
 | `RenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -127,22 +129,38 @@ classDiagram
         +RequestCancel() void
         +NotifyViewportChanged() void
         -OnPaintSurface(canvas, info) void
-        -OnSessionNotified(sender, notice) void
-        -ApplyFeedback(feedback) void
-        -ApplyCursorShape(handle) void
-        -EndNudge() void
+        -OnNotified(sender, notice) void
+        -ToScreen(domainPos) EsPixelPoint
         -CaptureMouse(capture) void
-        -ToDipRect(rect) EsRect
+    }
+    class Marquee {
+        <<MarqueeControl.Core / 公開ファサード>>
+        +Press(pos, clickCount) void
+        +Move(pos) void
+        +Release(pos) void
+        +KeyDown(key, cursorPos) bool
+        +EndNudge() void
+        +SetSelection(rect) void
+        +RequestConfirm() / RequestCancel() void
+        +NotifyViewportChanged() void
+        +SetCoordinateTransform(port) void
+        +ResolveContent(clientSize) MarqueeDrawContent
+        +Notified
+    }
+    class IMarqueeEffects {
+        <<MarqueeControl.Core / UI が実装>>
+        +RequestFocus() / RequestRedraw()
+        +SetCursorShape(kind) / SetPointerCapture(capture)
+        +ToScreenPoint(domainPoint) EsPixelPoint
     }
     class MarqueeSession {
-        <<MarqueeControl.Core>>
+        <<internal / MarqueeControl.Core>>
         +Press(pos, clickCount) MarqueeFeedback
         +Move(pos) MarqueeFeedback
         +Release(pos) MarqueeFeedback
         +KeyDown(key, cursorPos) MarqueeFeedback
         +NudgeByKey(key, cursorPos) MarqueeFeedback
         +EndNudge() MarqueeFeedback
-        +Detach() MarqueeFeedback
         +SetSelection(rect) MarqueeFeedback
         +SetPort(port) void
         +Notified EventHandler~MarqueeNotice~
@@ -154,7 +172,7 @@ classDiagram
         +MarqueeSnapshot Snapshot
     }
     class MarqueeFeedback {
-        <<MarqueeControl.Core>>
+        <<internal / MarqueeControl.Core>>
         +bool Handled / Redraw / RequestFocus / CaptureMouse
         +bool UpdateCursorShape / MarqueeCursorKind CursorKind
         +MarqueeCursorAction Cursor / EsPoint CursorDomainPosition
@@ -162,13 +180,14 @@ classDiagram
     class MarqueeSkiaRenderer {
         +DrawHandles(canvas, rect, size, color, border)$ void
         +DrawStartMarker(canvas, center, color, thickness, size)$ void
-        +DrawCoordLabel(canvas, cursor, domain, clientSize, ...)$ void
-        +ComputeCoordLabelPosition(cursor, clientSize, w, h)$ EsPoint
       }
       class MarqueeOuterSkiaRenderer {
         <<MarqueeControl.Core>>
         +Draw(canvas, frame)$ void
-        +ResolveTypeface(text)$ SKTypeface
+      }
+      class ラベル要素の配置 {
+        <<public（ホスト向け）>>
+        +Draw(canvas, content)$ void
       }
       class MarqueeInnerSkiaRenderer {
         +Draw(canvas, frame)$ void
@@ -213,12 +232,13 @@ classDiagram
     }
 
     SkiaCanvasView <|-- MarqueeControl
-    MarqueeControl *-- MarqueeSession : 状態管理（入力の解釈）
-    MarqueeControl ..> MarqueeNotice : 通知を公開イベントへ転送
-    MarqueeControl ..> MarqueeFeedback : 効果を適用
+    MarqueeControl *-- Marquee : 操作の唯一の窓口（公開ファサード）
+    MarqueeControl ..> IMarqueeEffects : 実装（effects の適用先）
+    Marquee *-- MarqueeSession : 状態管理（入力の解釈）
+    Marquee ..> MarqueeNotice : 通知を UI へ転送（UI は公開イベントへ）
+    Marquee ..> MarqueeFeedback : 効果を IMarqueeEffects 経由で適用
     MarqueeControl ..> MarqueeSkiaRenderer : 描画を委譲（選択矩形）
     MarqueeControl ..> MarqueeOuterSkiaRenderer : 描画を委譲（外側の装飾）
-    MarqueeControl ..> MarqueeInnerSkiaRenderer : 描画を委譲（内側の装飾）
     MarqueeControl ..> MarqueeInnerSkiaRenderer : 描画を委譲（内側の装飾）
     MarqueeSession *-- MarqueeState : 状態機械
     MarqueeSession ..> ICursorService : カーソル操作
@@ -232,32 +252,37 @@ classDiagram
 sequenceDiagram
     participant Host as ホスト
     participant Ctl as MarqueeControl
+    participant Fac as Marquee（コアのファサード）
     participant Ses as MarqueeSession
     participant St as MarqueeState
     participant Cur as ICursorService
 
     Host->>Ctl: SetCoordinateTransform(port)
-    Ctl->>Ses: SetPort(port)
+    Ctl->>Fac: SetCoordinateTransform(port)
+    Fac->>Ses: SetPort(port)
     Note over Ctl: 左ボタン押下
     Ctl->>Ctl: ToDomain(e.GetPosition)
-    Ctl->>Ses: Press(pos, clickCount)
+    Ctl->>Fac: Press(pos, clickCount)
+    Fac->>Ses: Press
     Ses->>St: HitTest / StartNewSelection / StartDrag
     alt ハンドルなし
-        Ses-->>Ctl: 通知（SelectionStarted）
+        Fac-->>Ctl: 通知（SelectionStarted）
         Ctl->>Host: SelectionStarted
     else ハンドルあり
-        Ses-->>Ctl: 効果（MoveTo: ハンドル点）
-        Ctl->>Cur: SetCursorScreenPoint(ToScreen(handlePos))
+        Fac-->>Ctl: 効果（MoveTo: ハンドル点）を IMarqueeEffects 経由で適用
+        Ctl->>Cur: SetCursorScreenPoint(ToScreenPoint(handlePos))
     end
-    Ctl->>Ctl: CaptureMouse(true)（効果のCaptureMouseが真のとき）
+    Fac-->>Ctl: 効果（CaptureMouse）→ SetPointerCapture(true)
     loop ドラッグ中
-        Ctl->>Ses: Move(pos)
+        Ctl->>Fac: Move(pos)
+        Fac->>Ses: Move
         Ses->>St: UpdateDrag(pos, Options.MinSelectionSize, Options.ClampToDomainBounds)
         Ctl->>Host: SelectionChanged / LoupePositionMoved
     end
     Note over Ctl: 左ボタン解放
-    Ctl->>Ctl: CaptureMouse(false)
-    Ctl->>Ses: Release(pos)
+    Ctl->>Fac: Release(pos)
+    Fac-->>Ctl: 効果（SetPointerCapture(false)）
+    Fac->>Ses: Release
     alt 最小サイズ未満
         Ses->>St: Reset()
         Ctl->>Host: SelectionCancelled
@@ -273,26 +298,28 @@ sequenceDiagram
 sequenceDiagram
     participant Host as ホスト
     participant Ctl as MarqueeControl
-    participant Ses as MarqueeSession
+    participant Fac as Marquee（コアのファサード）
     participant Cur as ICursorService
     participant St as MarqueeState
 
     Note over Ctl: 矢印キー押下（フォーカス保持時）
     Ctl->>Cur: GetCursorScreenPoint()
     Ctl->>Ctl: ScreenToClient → ドメイン座標（基点の記録）
-    Ctl->>Ses: KeyDown(EsKey, cursorPosition)
+    Ctl->>Fac: KeyDown(EsKey, cursorPosition)
+    Fac->>Ses: KeyDown
     alt nudge 未開始
         Ses->>St: NudgeActive = true / CrosshairVisible = true
-        Ses-->>Ctl: 効果（Hide: カーソル非表示）
+        Fac-->>Ctl: 効果（Hide: カーソル非表示）を IMarqueeEffects 経由で適用
         Ctl->>Cur: ShowCursor(false)
     end
     Ses->>St: Nudge(dx, dy, Options.MinSelectionSize, Options.ClampToDomainBounds)
-    Ses-->>Ctl: 効果（MoveTo: マーカー位置）
+    Fac-->>Ctl: 効果（MoveTo: マーカー位置）
     Ctl->>Host: SelectionChanged / LoupePositionMoved
-    Ctl->>Cur: SetCursorScreenPoint(ToScreen(marker))
+    Ctl->>Cur: SetCursorScreenPoint(ToScreenPoint(marker))
     Note over Ctl: マウス操作またはフォーカス喪失
-    Ctl->>Ses: EndNudge()
-    Ses-->>Ctl: 効果（Show: カーソル再表示）
+    Ctl->>Fac: EndNudge()
+    Fac->>Ses: EndNudge
+    Fac-->>Ctl: 効果（Show: カーソル再表示）
     Ctl->>Cur: ShowCursor(true)
     Ses->>St: NudgeActive = false
 ```
@@ -322,20 +349,18 @@ stateDiagram-v2
 OnPaintSurface(canvas, info)
   ├─ canvas.Scale(RenderScaling)                     … DPI の適用（境界 1 箇所）
   ├─ canvas.Clear(透明)                              … 前フレームの描画を残さない
-  ├─ MarqueeFrame.Resolve(session, client, ...)     … 外側の装飾のフレーム（判断は装飾コア）
-  │    └─ MarqueeOuterSkiaRenderer.Draw             … 暗転マスク・穴あけ枠・ラベル
+  ├─ Marquee.ResolveContent(clientSize)              … 描画内容 1 値（判断はコア。内部で MarqueeFrame が解決。サイズのみを渡し原点は常に 0）
+  │    └─ MarqueeOuterSkiaRenderer.Draw             … 外側の装飾（暗転マスク・枠線）
   │    └─ MarqueeInnerSkiaRenderer.Draw             … 穴あけ矩形の塗り・内枠
-  │    └─ MarqueeInnerSkiaRenderer.Draw             … 穴あけ矩形の塗り・内枠
-  ├─ ShowHandles かつ HasSelection なら
-  │    ├─ _session.ToDipRect(SelectionRect)          … Inverse 変換（終点は +1 して閉区間を表現。規則はコア）
-  │    └─ MarqueeSkiaRenderer.DrawHandles           … SelectionGeometry から 8 方向の中心を取得
-  ├─ NudgeActive かつ CrosshairVisible なら
-  │    └─ MarqueeSkiaRenderer.DrawStartMarker       … GetMarkerPosition() の位置
-  └─ Options.ShowCoordLabel なら
-       └─ MarqueeSkiaRenderer.DrawCoordLabel        … CoordinateFormatter（コア）で文字列化
+  ├─ content.Handles があれば
+  │    └─ MarqueeSkiaRenderer.DrawHandles           … 8 方向の中心は SelectionGeometry（コア）が単一所有
+  ├─ content.Marker があれば
+  │    └─ MarqueeSkiaRenderer.DrawStartMarker       … nudge 中の十字マーカー
+  └─ content.HasText なら
+       └─ Rendered（ホスト）                         … UI 層が配置したテキスト要素がラベルを表示する
 ```
 
-背景は塗りません（透明のままにして下の画像を透かします）。**選択枠線は外側の装飾の穴あけ枠が描きます**（別々に描くと線幅が二重になるため）。
+背景は塗りません（透明のままにして下の画像を透かします）。**選択枠線は外側の装飾の穴あけ枠が描きます**（別々に描くと線幅が二重になるため）。**文字（ラベル・座標ラベル）はホストが描きます**（テキストの実寸測定は描画 API 依存のため。コントロールは描画完了を `Rendered` で通知するだけ。契約は描画内容全体であるため、ホストは文字以外の上書きもできます）。
 
 ## エラー処理ポリシー
 
@@ -348,8 +373,9 @@ OnPaintSurface(canvas, info)
 
 ## 実装上の注意（実測・設計から得た知見）
 
-1. **`UIElement` は `MouseDown` / `MouseUp` メンバーを持つ**。同名の公開イベントを定義すると `CS0108`（メンバーの隠蔽）になるため、
-   基底 `UIElement` が同名メンバー（`MouseDown` / `MouseUp`）を持ち、同じ情報を提供するため、本コントロールでは公開しない（重複を避ける）。
+1. **生のポインター入力（Mouse 系）は公開イベント化しない**。押下・解放・クリック・移動は入力そのものであり、ホストは自 UI の入力イベントで観測できる（押下状態は `CurrentSnapshot.IsMouseDown`）。
+   参考として、MewUI の基底 `UIElement` は `MouseDown` / `MouseUp` を CLR イベントとして持つため、派生コントロールが同名の公開イベントを宣言すると `CS0108`（メンバーの隠蔽）になる（`new` を付けても同名の別物が並ぶ）。
+   なお **基底のイベントは `Handled` を立てても止まらない**（`UIElement.OnMouseDown` は `Handled` を見ずに発火する。実測で確認）。
 2. **MewUI の `Rect` / `Size` は負のサイズを 0 にクランプする**。コアは `EsRect` を使うため影響を受けないが、
    MewUI 型へ変換する場合は値が変わりうる（本コントロールはイベント引数も `EsRect` で公開して回避する）。
 3. **`MouseEventArgs.ScreenPosition` は画面座標（デバイスピクセル）**、**`Window.Position` / `ClientToScreen` の入力は DIP** である。
@@ -365,5 +391,5 @@ OnPaintSurface(canvas, info)
 | --- | --- |
 | `ScrollViewer` の自動連携 | ホストが `NotifyViewportChanged()` を呼ぶ方式で代替 |
 | フォーカス非依存の矢印キー nudge | フォーカス依存で実装（`TopLevel` のキー購読は行わない） |
-| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`Estable.Marquee.MarqueeLogMessage`）が所有し、書式・レベルとも Avalonia 版と同一） |
+| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`Estable.Marquee.MarqueeLogMessage`）が所有し、ズーム要求のログは組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）が所有する。書式・レベルとも Avalonia 版と同一） |
 | 実ウィンドウへの組み込み | `FadeMaskDragRectControl.MewUI` を経由して配線済み（撮影・切り出しの両方） |

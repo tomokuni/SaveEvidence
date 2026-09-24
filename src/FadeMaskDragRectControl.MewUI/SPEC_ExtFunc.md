@@ -16,7 +16,8 @@ Avalonia 版と同一の解釈になります。
 | --- | --- |
 | `FadeMaskDragRectControl.Core` | 動作モード（`FadeMaskDragRectMode`）と、モードから子コントロールの有効・無効（選択矩形を使うか）への写像 |
 | `MarqueeControl.MewUI` / `MarqueeControl.Core` | 選択矩形の入力と状態機械 |
-| `MarqueeControl.Core` | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル）の契約・外観・幾何・フレーム解決（名前空間 `Estable.Marquee.Decoration`。描画は `MarqueeControl` が行う） |
+| `MarqueeControl.CoreForControl` | ホイール要求（`WheelZoomRequest` / `WheelScrollRequest`）の中継で型を参照する（解釈は内包コントロールが組み込みの層へ委ねる） |
+| `MarqueeControl.Core`（`Decoration` 名前空間） | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ラベル）の設定・外観・幾何・描画内容の解決（名前空間 `Estable.Marquee.Decoration`。描画は `MarqueeControl` が行う） |
 | `LoupeControl.MewUI` / `LoupeControl.Core` | 拡大鏡の描画と表示位置計算 |
 | `Platform.Core` | コア幾何型・座標変換ポート・画像コンテナ |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `Panel`・`MewProperty`・SkiaSharp |
@@ -119,8 +120,8 @@ Avalonia 版と同一の解釈になります。
 - ルーペは拡大元画像（`SetLoupeSource`）と中心（`SetLoupePosition`）の両方が設定された場合のみ表示します。
   親領域の外へはみ出す場合は内側へクランプします。
 - ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が、描画の可否はコアの `FadeMaskDragRectState.ShowSelectionOverlay` が単一所有する）。選択矩形を変更した場合はルーペの再描画を要求します（破線はルーペのプロパティに現れないため）。
-- サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（サブラインはコアの `OuterDecoAppearance.BuildSubLines` が組み立てる）
-  （文言の単一所有は `MarqueeControl.Core` の `Estable.Marquee.Decoration` の `OuterDecoLabels`。表示位置の計算は同コアの `OuterDecoLabelLayout`）。
+- サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（ラベルの行の組み立ては装飾層の `MarqueeLabelLayoutPlan.Resolve` が行う）
+（文言の単一所有は `MarqueeControl.Core` の `Decoration` 名前空間。行の配置は同層の `MarqueeLabelLayoutPlan.Resolve`。文字の描画はホストが `Rendered` で行う）。
 
 ## 9. Avalonia 版との違い
 

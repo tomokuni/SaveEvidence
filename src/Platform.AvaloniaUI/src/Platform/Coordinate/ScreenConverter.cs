@@ -50,15 +50,16 @@ public static class ScreenConverter
 
     /// <summary>ローカル DIP ↔ 画面物理ピクセル変換ポートを生成する。</summary>
     /// <param name="origin">ローカル座標系の原点の画面物理座標（例: 親パネルの画面上位置・ウィンドウ位置）。</param>
-    /// <param name="renderScaling">DIP → 物理のスケーリング（<see cref="TopLevel.RenderScaling"/>。0 以下の場合は 1.0 として扱う）。</param>
+    /// <param name="renderScaling">DIP → 物理のスケーリング（<see cref="TopLevel.RenderScaling"/>）。</param>
     /// <returns>Forward = 物理→DIP、Inverse = DIP→物理のポート。</returns>
     /// <remarks>
     /// <c>Forward(p) = (p - origin) / renderScaling</c>、<c>Inverse(p) = p × renderScaling + origin</c> を提供する。<br/>
-    /// <see cref="TopLevel"/> 由来のスケーリングと原点を持つ座標変換を <see cref="ICoordTransform"/> として集約する。
+    /// <see cref="TopLevel"/> 由来のスケーリングと原点を持つ座標変換を <see cref="ICoordTransform"/> として集約する。<br/>
+    /// 無効なスケーリング（0 以下・非数）は基準値へ正規化する（規則は <see cref="DpiScaler.NormalizeScaling"/> が単一所有する）。
     /// </remarks>
     internal static ICoordTransform CreateDipPort(PixelPoint origin, double renderScaling)
     {
-        double s = renderScaling > 0 ? renderScaling : 1.0;
+        double s = DpiScaler.NormalizeScaling(renderScaling);
         return new CoordTransform(
             p => new EsPoint((p.X - origin.X) / s, (p.Y - origin.Y) / s),
             p => new EsPoint(p.X * s + origin.X, p.Y * s + origin.Y),

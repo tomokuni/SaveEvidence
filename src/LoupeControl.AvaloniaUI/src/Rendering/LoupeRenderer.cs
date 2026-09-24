@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Imaging;
@@ -74,6 +75,6 @@ internal static class LoupeRenderer
 
         ctx.DrawRectangle(
             LoupeBrushes.Get(appearance.BackgroundColor), null,
-            new Rect(0, 0, request.PixelSize, request.PixelSize));
+            request.SurfaceBounds.ToAvaloniaRect());
     }
 }

@@ -18,7 +18,7 @@
 | 拡大方式 | 最近傍（画素をそのまま拡大表示する） |
 | DPI 追従 | `OnDpiChanged` で表示スケーリング係数を DPI から換算した値へ自動更新する（換算規則は `DpiScaler.ToScaling` が単一所有。ホストの設定は不要） |
 | 連続再描画 | **無効**。プロパティ変更時にのみ再描画する（静止画のため） |
-| 位置決め | **本コントロールは位置を持たない**。ホストが `LoupePositionCalculator`（コア）で配置する |
+| 位置決め | **本コントロールは位置を持たない**。ホストが `ResolveLayout`（コアのファサード）の結果で配置する |
 
 ## インストール（プロジェクト参照）
 
@@ -60,12 +60,15 @@ var loupe = new LoupeControl
 `Source` と `CenterPoint` を更新すると自動的に再描画されます（`InvalidateVisual`）。表示位置はホストが決めます。
 
 ```csharp
-// 位置決めはコアの計算を利用する（中心 + オフセット、親領域内へクランプ）
-var (size, position) = LoupePositionCalculator.Compute(
-    requestedSize, parentSize, centerDip, offset);
+// 位置決めはコアのファサードが計算する（中心 + オフセット、親領域内へクランプ）
+var layout = loupe.ResolveLayout(parentSize);
+if (layout.Position is { } position)
+{
+    loupe.Arrange(new Rect(x + position.X, y + position.Y, layout.DisplaySize, layout.DisplaySize));
+}
 ```
 
-> **注意**: `LoupePositionCalculator` は `LoupeControl.Core` の `public` 型です（汎用コアとして公開されており、`InternalsVisibleTo` は不要です）。
+> **注意**: `ResolveLayout` はコアのファサード（`LoupeControl.Core` の `Loupe`、`public` 型）の API です（汎用コアとして公開されており、`InternalsVisibleTo` は不要です）。
 
 ## プロパティ
 
@@ -109,7 +112,7 @@ var (size, position) = LoupePositionCalculator.Compute(
 
 | イベント | 引数 | 説明 |
 | --- | --- | --- |
-| `Rendered` | `LoupeRenderedEventArgs` | 描画完了の通知（描画先キャンバス・一辺の物理ピクセル・切り出し領域の左上・スケール）。ホストはハンドラ内でキャンバスへオーバーレイを追加描画できる |
+| `Rendered` | `LoupeRenderedEventArgs` | 描画完了の通知（描画先キャンバス・一辺の物理ピクセル・切り出し領域の左上・スケール・中心座標ラベルの契約）。ホストはハンドラ内でキャンバスへオーバーレイやラベルの文字を追加描画できる |
 
 オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求めます（破線の例は `FadeMaskDragRectControl.MewUI`）。
 
@@ -134,8 +137,9 @@ src/LoupeControl.MewUI/
 ├── src/
 │   ├── LoupeControl.MewUI.csproj   # net10.0 / MewUI 0.21.1 固定
 │   ├── LoupeControl.cs             # SkiaCanvasView 派生のコントロール
-│   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知（キャンバスと表示情報）
-│   └── LoupeSkiaRenderer.cs        # コアの計算結果を SKCanvas へ描画する層（市松・画像・十字線・外枠・座標ラベル）
+│   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知（キャンバスと表示情報・文字の契約）
+│   ├── LoupeSkiaRenderer.cs        # コアの計算結果を SKCanvas へ描画する層（市松・画像・十字線・外枠）
+│   └── LoupeRenderedEventArgs.cs   # 描画完了の通知（キャンバスと表示情報・文字の契約）
 └── tests/
     ├── LoupeControl.MewUI.Tests.csproj
     ├── TestHelper.cs                   # テスト共通（描画先・画像生成）

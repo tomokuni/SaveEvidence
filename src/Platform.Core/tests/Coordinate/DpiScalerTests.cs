@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
 namespace EsUtil.Platform.Core.Tests;
@@ -134,5 +135,21 @@ public class DpiScalerTests
     {
         // 双方向の変換は対称性を保つ（片方向だけ正規化・丸めが異なると、ウィンドウの位置・サイズがずれる）
         Assert.Equal(200.0, DpiScaler.ToDip(DpiScaler.ScaleToPixel(200, scaling), scaling));
+    }
+
+    [Fact]
+    public void ToDip_サイズは成分ごとに換算する()
+    {
+        var result = DpiScaler.ToDip(new EsSize(125, 250), 1.25);
+
+        Assert.Equal(new EsSize(100, 200), result);
+    }
+
+    [Fact]
+    public void ToDip_サイズでも切り上げと最低1の規則を適用しない()
+    {
+        var result = DpiScaler.ToDip(new EsSize(0, 1), 1.25);
+
+        Assert.Equal(new EsSize(0, 0.8), result);
     }
 }

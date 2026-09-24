@@ -1,5 +1,4 @@
 using Estable.Marquee.Selection;
-using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
@@ -15,7 +14,7 @@ namespace Estable.Marquee;
 /// <br/>
 /// イベント駆動: 状態変更は UI 実装側のコントロールが公開イベントで通知し、本クラスは状態の保持と更新ロジックのみを担う（ポーリング不要）。<br/>
 /// <b>依存分離</b>: コア型（<see cref="EsRect"/> / <see cref="EsPoint"/>）のみに依存し、UI フレームワークへ依存しない。<br/>
-/// カーソル操作（<see cref="ICursorService"/>）も抽象にのみ依存し、未指定の場合は何もしない（UI 実装側が既定実装を解決して渡す）。<br/>
+/// カーソルの表示切替（nudge 中の非表示・終了時の再表示）は<b>効果</b>としてセッションが UI 層へ要求するため、本クラスはカーソル API を知らない。<br/>
 /// <b>可視性</b>: 本クラスは <see cref="MarqueeSession"/> の内部実装であり、外部が直接操作するとセッションの不変条件が壊れる<br/>
 /// （可変プロパティを多数持つ）。外部は <see cref="MarqueeSnapshot"/> を通して状態を読む。
 /// </remarks>
@@ -69,16 +68,6 @@ internal sealed class MarqueeState
     /// <summary>nudge 終了（カーソル位置移動）直後のエコー移動イベントの抑制位置（ドメイン座標）。null は抑制なし。</summary>
     public EsPoint? SuppressEchoAt { get; set; }
 
-    /// <summary>カーソルサービス（nudge 時のカーソル移動・表示切替）。null はカーソル操作なし。</summary>
-    public ICursorService? Cursor { get; }
-
-    /// <summary>MarqueeState を初期化する。</summary>
-    /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
-    public MarqueeState(ICursorService? cursor)
-    {
-        Cursor = cursor;
-    }
-
     /// <summary>現在の対話状態（公開イベントの Snapshot 用）を算出する。</summary>
     /// <returns>対話状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging）。</returns>
     /// <remarks>上位の描画モード判定用に、nudge・ドラッグ・選択の各状態を合成した状態を返す。</remarks>
@@ -112,7 +101,7 @@ internal sealed class MarqueeState
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
     /// <remarks>
-    /// nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。<br/>
+    /// nudge 中だった場合は nudge 状態を終了する（カーソルの再表示はセッションが効果として要求する）。<br/>
     /// nudge の終了処理は <see cref="EndNudge"/> に委譲する（重複排除）。
     /// </remarks>
     public void Reset()
@@ -134,7 +123,7 @@ internal sealed class MarqueeState
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <remarks>
-    /// nudge 中だった場合はマウスポインターを再表示する（非表示残留防止）。<br/>
+    /// nudge 中だった場合は nudge 状態を終了する（カーソルの再表示はセッションが効果として要求する）。<br/>
     /// nudge の終了処理は <see cref="EndNudge"/> に委譲する（重複排除）。
     /// </remarks>
     public void SetSelection(EsRect rect)
@@ -145,11 +134,12 @@ internal sealed class MarqueeState
         ActiveTarget = HitTarget.None;
     }
 
-    /// <summary>nudge 中ならカーソルを再表示して nudge 状態を終了する。</summary>
-    /// <returns>nudge 中だった場合は true。</returns>
+    /// <summary>nudge 状態を終了する。</summary>
+    /// <returns>nudge 中だった場合は true（カーソルの再表示が必要かどうかの判定材料）。</returns>
     /// <remarks>
-    /// nudge 中（カーソル非表示）のまま状態を破棄・復元すると、カーソルが非表示のまま残るため再表示する。<br/>
-    /// 本クラス内（<see cref="Reset"/> / <see cref="SetSelection"/>）と、入力の判断を担う状態管理クラスの双方から利用する（DRY）。
+    /// 本メソッドは状態のみを更新する（カーソルの再表示は効果としてセッションが UI 層へ要求する）。<br/>
+    /// 戻り値は「nudge 中だった」の報告であり、本クラス内（<see cref="Reset"/> / <see cref="SetSelection"/>）と、
+    /// 入力の判断を担う状態管理クラスの双方から利用する（DRY）。
     /// </remarks>
     public bool EndNudge()
     {
@@ -157,7 +147,6 @@ internal sealed class MarqueeState
         NudgeActive = false;
         NudgeOffsetX = 0;
         NudgeOffsetY = 0;
-        Cursor?.ShowCursor(true);
         return true;
     }
 
@@ -309,21 +298,21 @@ internal sealed class MarqueeState
     public EsPoint GetOppositeCorner(EsRect rect)
         => SelectionGeometry.GetOppositeCorner(rect, StartPoint);
 
-    /// <summary>十字マーカー・ルーペが追従する位置（ドメイン座標）を取得する。</summary>
+    /// <summary>十字マーカーが追従する位置（ドメイン座標）を取得する。</summary>
     /// <returns>ドラッグ中のハンドル位置（ドメイン座標）。</returns>
     /// <remarks>
-    /// ドラッグ・nudge はカーソルを動かしながら矩形を変形するため、十字マーカー・ルーペは「動いている側のハンドル」を追従する:<br/>
+    /// ドラッグ・nudge はカーソルを動かしながら矩形を変形するため、十字マーカーは「動いている側のハンドル」を追従する:<br/>
     /// 1. ハンドル操作中（リサイズ）: アクティブハンドルの現在位置。<br/>
     /// 2. ハンドル操作中（移動）: 掴んだ位置（マウス位置）を追従する（矩形中心へ飛ばないようにする）。<br/>
     /// 3. 新規選択ドラッグ中・nudge: 終点（クリップ・最小サイズ保証後の矩形の角）。<br/>
     /// 4. 未選択（始点決め nudge）: 始点。<br/>
-    /// 固定コーナー（<see cref="GetOppositeCorner"/>）ではなく動いている側を返すことで、マーカー・ルーペが固定位置に留まる問題を解消する。
+    /// 固定コーナー（<see cref="GetOppositeCorner"/>）ではなく動いている側を返すことで、マーカーが固定位置に留まる問題を解消する。
     /// </remarks>
     public EsPoint GetMarkerPosition()
     {
         // ハンドル操作中:
-        // - リサイズ（8 方向）: ドラッグ中のハンドル位置（ポインタ・矩形の角・ルーペを一体にする）
-        // - 移動（Move）: 掴んだ位置（マウス位置）を追従（ルーペが矩形中心に飛ばず、マウスポインタに追従する）
+        // - リサイズ（8 方向）: ドラッグ中のハンドル位置（ポインタ・矩形の角・追従位置を一体にする）
+        // - 移動（Move）: 掴んだ位置（マウス位置）を追従（追従位置が矩形中心に飛ばず、マウスポインタに追従する）
         if (ActiveTarget != HitTarget.None)
         {
             return ActiveTarget == HitTarget.Move

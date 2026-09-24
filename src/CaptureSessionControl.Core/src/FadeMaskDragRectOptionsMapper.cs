@@ -22,13 +22,14 @@ public static class FadeMaskDragRectOptionsMapper
     /// <param name="loupeBackground">ルーペの市松模様の下地色。null の場合は透明（背後の要素を透かす）。</param>
     /// <returns>複合コントロールへ一括設定できる設定値。</returns>
     /// <remarks>
-    /// 1. 選択矩形の設定（<see cref="MarqueeOptions"/>）を組み立てる。外側の装飾の外観（<see cref="OuterDecoAppearance"/>）も含める<br/>
-    ///    （枠線を選択枠線と共用するため、2 つの値に分けない）。枠線（<see cref="CaptureSettings.BorderColor"/> /<br/>
-    ///    <see cref="CaptureSettings.BorderThickness"/>）は選択枠線と暗転マスクの穴あけ枠の両方へ同じ値が効く。<br/>
-    /// 2. サイズラベルの背景色は <see cref="CaptureSettings.TextBackgroundColor"/> を対応させる。<br/>
-    /// 3. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる。市松模様の下地色は<b>ホストが決めた色</b>を使う<br/>
+    /// 1. 選択矩形の設定（<see cref="MarqueeOptions"/>）を組み立てる（選択の判断に必要な項目のみ。装飾は含まない）。<br/>
+    /// 2. 装飾の設定（<see cref="MarqueeDecoOptions"/>）を組み立てる。枠線（<see cref="CaptureSettings.BorderColor"/> /<br/>
+    ///    <see cref="CaptureSettings.BorderThickness"/>）は装飾の外枠（暗転マスクの穴あけ枠）とハンドルの枠線の<br/>
+    ///    両方へ同じ値を割り当てる（同じ矩形に重なるため、見た目を揃える）。<br/>
+    /// 3. サイズラベルの背景色は <see cref="CaptureSettings.TextBackgroundColor"/> を対応させる。<br/>
+    /// 4. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる。市松模様の下地色は<b>ホストが決めた色</b>を使う<br/>
     ///    （引数 <paramref name="loupeBackground"/>。撮影オーバーレイは白、プレビューの切り出しはテーマ背景色）。<br/>
-    /// 4. 選択矩形破線の色とルーペのオフセットを設定する（オフセットは <see cref="CaptureSettings.LoupeOffset"/> を使う）。
+    /// 5. 選択矩形破線の色とルーペのオフセットを設定する（オフセットは <see cref="CaptureSettings.LoupeOffset"/> を使う）。
     /// </remarks>
     public static FadeMaskDragRectOptions ToFadeMaskDragRectOptions(
         this CaptureSettings settings, DrawingColor? loupeBackground = null)
@@ -41,6 +42,7 @@ public static class FadeMaskDragRectOptionsMapper
             {
                 MinSelectionSize = settings.MinSelectionSize!.Value,
                 HandleColor = settings.HandleColor!.Value,
+                HandleBorderColor = settings.BorderColor!.Value,
                 HandleSize = settings.HandleSize!.Value,
                 HandleHitRadius = settings.HandleHitRadius!.Value,
                 ClampToDomainBounds = settings.ClampToDomainBounds!.Value,
@@ -50,25 +52,21 @@ public static class FadeMaskDragRectOptionsMapper
                 CoordLabelColor = settings.CoordLabelColor!.Value,
                 CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor!.Value,
                 CoordLabelFontSize = settings.CoordLabelFontSize!.Value,
-                // 外側の装飾（暗転マスク・穴あけ枠・ラベル）の外観は選択矩形の設定が持つ
-                // （暗転マスクの穴あけ枠と選択枠線は同じ矩形に重なるため、枠線の色・太さを単一所有する）
+                // サイズラベルは選択コアが単一所有する（穴あけ矩形の左上に表示する位置と寸法のラベル）
+                ShowSizeLabel = settings.SizeLabelVisible!.Value,
+                SizeLabelColor = settings.SizeLabelColor!.Value,
+                SizeLabelBackgroundColor = settings.TextBackgroundColor!.Value,
+                SizeLabelFontSize = settings.SizeLabelFontSize!.Value,
+            },
+            Deco = new MarqueeDecoOptions
+            {
+                // 暗転マスクの穴あけ枠と選択枠線は同じ矩形に重なるため、枠線の色・太さを装飾が単一所有する
+                // （サイズ・操作・情報ラベルは装飾の概念ではない。操作・情報ラベルはホストが自前で描く）
                 OuterAppearance = new OuterDecoAppearance
                 {
                     OverlayColor = settings.OverlayColor!.Value,
                     BorderColor = settings.BorderColor!.Value,
                     BorderThickness = settings.BorderThickness!.Value,
-                    ShowSizeLabel = settings.SizeLabelVisible!.Value,
-                    SizeLabelColor = settings.SizeLabelColor!.Value,
-                    SizeLabelBackgroundColor = settings.TextBackgroundColor!.Value,
-                    SizeLabelFontSize = settings.SizeLabelFontSize!.Value,
-                    ShowSubLines = settings.ShowSubLines!.Value,
-                    SubLineColor = settings.SubLineColor!.Value,
-                    SubLineBackgroundColor = settings.SubLineBackgroundColor!.Value,
-                    SubLineFontSize = settings.SubLineFontSize!.Value,
-                    InfoLabelVisible = settings.InfoLabelVisible!.Value,
-                    InfoLabelColor = settings.InfoLabelColor!.Value,
-                    InfoLabelBackgroundColor = settings.InfoLabelBackgroundColor!.Value,
-                    InfoLabelFontSize = settings.InfoLabelFontSize!.Value,
                 },
             },
             Loupe = new LoupeOptions

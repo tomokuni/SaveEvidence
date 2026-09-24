@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using static Estable.Loupe.LoupeValueCoercer;
+using LoupeFacade = Estable.Loupe.Loupe;
 
 namespace Estable.MewUI.Loupe;
 
@@ -22,13 +23,13 @@ namespace Estable.MewUI.Loupe;
 /// <b>環境</b>: <see cref="RenderScaling"/>（DPI 追従）。<br/>
 /// <b>描画</b>: 中間ビットマップを生成せず、画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
 /// 数値の安全域への補正は <see cref="LoupeOptions"/> / <see cref="LoupeAppearance"/>（コア）が、描画サイズの決定は<br/>
-/// <see cref="LoupePositionCalculator.ResolvePixelSize"/>（コア）が、外観の寸法値（タイルサイズ・外枠の太さ・ラベル文字サイズ）と<br/>
+/// <see cref="LoupeFacade.CreateRequest"/>（コア）が、外観の寸法値（タイルサイズ・外枠の太さ・ラベル文字サイズ）と<br/>
 /// 下地の描画可否は <see cref="LoupeAppearanceScaler"/> / <see cref="LoupeAppearance"/>（コア）が単一所有する。<br/>
 /// <br/>
 /// <b>ホスト側の操作</b>: <see cref="Source"/> を設定して <see cref="CenterPoint"/> を現在位置へ更新すると、<br/>
 /// ルーペがその位置を拡大表示する（描画はプロパティ変更で自動的に無効化される）。<br/>
 /// <b>座標ラベル</b>: 表示可否は <see cref="LoupeAppearance.ShouldShowCoordLabel"/>（コア）が判断し、<br/>
-/// 余白と位置は <see cref="LoupeLabelLayout"/>（コア）が単一所有する。
+/// 余白と位置はコアの <c>LoupeLabelLayout</c>（コア内部）が単一所有する。
 /// </remarks>
 public sealed class LoupeControl : SkiaCanvasView
 {
@@ -44,7 +45,12 @@ public sealed class LoupeControl : SkiaCanvasView
     public static readonly MewProperty<EsPoint?> CenterPointProperty =
         MewProperty<EsPoint?>.Register<LoupeControl>(
             nameof(CenterPoint), null, MewPropertyOptions.AffectsRender,
-            changed: static (o, oldValue, newValue) => o.Log.LogCenterPointChanged(oldValue, newValue));
+            changed: static (o, oldValue, newValue) =>
+            {
+                o.Log.LogCenterPointChanged(oldValue, newValue);
+                // 拡大中心はコア（ファサード）が単一所有する（表示位置・描画入力の計算元）
+                o._loupe.CenterPoint = newValue;
+            });
 
     /// <summary><see cref="Options"/> プロパティ（表示サイズ・拡大率・外観。コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
     /// <remarks>
@@ -58,7 +64,12 @@ public sealed class LoupeControl : SkiaCanvasView
         MewProperty<LoupeOptions>.Register<LoupeControl>(
             nameof(Options), LoupeOptions.Default,
             MewPropertyOptions.AffectsRender | MewPropertyOptions.AffectsLayout,
-            changed: static (o, oldValue, newValue) => o.Log.LogOptionsChanged(oldValue, newValue));
+            changed: static (o, oldValue, newValue) =>
+            {
+                o.Log.LogOptionsChanged(oldValue, newValue);
+                // 表示サイズ（要求サイズ）と拡大率・外観はコア（ファサード）が単一所有する（表示レイアウトと描画入力の計算元）
+                o._loupe.Options = newValue;
+            });
 
     /// <summary><see cref="RenderScaling"/> プロパティ（表示 DIP → 物理ピクセルのスケーリング係数）。</summary>
     /// <remarks>
@@ -68,8 +79,21 @@ public sealed class LoupeControl : SkiaCanvasView
     public static readonly MewProperty<double> RenderScalingProperty =
         MewProperty<double>.Register<LoupeControl>(
             nameof(RenderScaling), RenderScalingDefault, MewPropertyOptions.AffectsRender,
-            changed: static (o, oldValue, newValue) => o.Log.LogRenderScalingChanged(oldValue, newValue),
+            changed: static (o, oldValue, newValue) =>
+            {
+                o.Log.LogRenderScalingChanged(oldValue, newValue);
+                // 描画入力（物理ピクセル）の計算元はコア（ファサード）が単一所有する
+                o._loupe.RenderScaling = newValue;
+            },
             coerce: static (_, value) => CoerceRenderScaling(value));
+
+    /// <summary>コアのファサード（表示レイアウト・描画入力・通知内容の解決と設定の窓口）。</summary>
+    /// <remarks>
+    /// 表示サイズ・描画入力・座標ラベル・表示位置の計算はすべてファサードが単一所有する<br/>
+    /// （本コントロールは公開プロパティで受け取った値を転送し、返された値を描画・配置へ使うだけ）。<br/>
+    /// フィールド初期化子で生成する（プロパティ変更のコールバックから参照できるようにするため）。
+    /// </remarks>
+    private readonly LoupeFacade _loupe = new();
 
     /// <summary>拡大元の 100% 画像を取得または設定する。</summary>
     /// <value>拡大元の画像。null の場合は市松模様のみを表示する。</value>
@@ -108,6 +132,43 @@ public sealed class LoupeControl : SkiaCanvasView
         set => SetValue(RenderScalingProperty, value);
     }
 
+    /// <summary>ルーペ中心からの右下オフセット（DIP）を取得または設定する。</summary>
+    /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。既定は 0。</value>
+    /// <remarks>
+    /// 保持と位置のクランプはコア（ファサード）が単一所有する。<br/>
+    /// 本コントロールは位置を持たない（ホストが <see cref="ResolveLayout"/> の結果で配置する）ため、設定時は再配置を要求する。
+    /// </remarks>
+    public double PositionOffset
+    {
+        get => _loupe.PositionOffset;
+        set
+        {
+            _loupe.PositionOffset = value;
+            InvalidateArrange();
+        }
+    }
+
+    /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
+    /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。null の場合は等価変換。</param>
+    /// <remarks>
+    /// 保持と、未設定（null）を等価変換として扱う規則はコア（ファサード）が単一所有する。<br/>
+    /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化に追従する（設定時は再配置を要求する）。
+    /// </remarks>
+    public void SetCoordinateTransform(ICoordTransform? port)
+    {
+        _loupe.SetCoordinateTransform(port);
+        InvalidateArrange();
+    }
+
+    /// <summary>親領域のサイズから表示レイアウト（表示サイズ・表示位置）を解決する。</summary>
+    /// <param name="parentSize">親領域のサイズ（DIP）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
+    /// <returns>表示レイアウト（表示サイズと表示位置。拡大中心未設定時は位置が null）。</returns>
+    /// <remarks>
+    /// 本コントロールは位置を持たないため、ホストが本メソッドの結果で配置する（クランプ・オフセットの規則はコアが単一所有する）。<br/>
+    /// 描画サイズも同じ値から決まる（描画ビットマップと配置サイズを一致させる）。
+    /// </remarks>
+    public LoupeLayout ResolveLayout(EsSize parentSize) => _loupe.ResolveLayout(parentSize);
+
     /// <summary>ルーペコントロールを初期化する。</summary>
     /// <remarks>
     /// 静的画像を描画するため連続再描画を無効化し、キャンバスの描画イベントを購読する。
@@ -145,7 +206,7 @@ public sealed class LoupeControl : SkiaCanvasView
     /// <remarks>
     /// <see cref="SkiaCanvasView"/> は既定で <c>Size.Empty</c>（親の残余を埋める）を返すが、<br/>
     /// ルーペは一辺が <see cref="LoupeOptions.RequestedSize"/> の正方形であるため、自身の要求サイズを返す。<br/>
-    /// 表示位置はホストが <c>LoupePositionCalculator</c>（コア）で計算して配置する（本コントロールは位置を持たない）。
+    /// 表示位置はホストが <see cref="ResolveLayout"/>（コアの計算）の結果で配置する（本コントロールは位置を持たない）。
     /// </remarks>
     protected override Size MeasureContent(Size availableSize) => new(Options.RequestedSize, Options.RequestedSize);
 
@@ -170,14 +231,15 @@ public sealed class LoupeControl : SkiaCanvasView
     /// <remarks>
     /// 描画入力（コア⇔UI の契約。<see cref="LoupeRenderRequest"/>）を自 UI の公開プロパティから組み立てて描画層へ渡す<br/>
     /// （DIP → 物理ピクセルの換算と描画先へのクランプはコアが単一所有する）。<br/>
-    /// 描画の順序と内容（下地・市松模様・拡大画像・十字線・外枠・座標ラベル）は <see cref="LoupeSkiaRenderer"/> が所有する。
+    /// 描画の順序と内容（下地・市松模様・拡大画像・十字線・外枠）は <see cref="LoupeSkiaRenderer"/> が所有する。<br/>
+    /// 中心座標ラベルの文字はテキストの実寸測定が必要なため描画せず、描画完了イベント（<see cref="Rendered"/>）でホストへ委ねる。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
         // 描画先の表面サイズを渡し、下地の塗りとクランプをコアの契約で解決する。
-        // 表示サイズは本コントロールが自己配置しない（ホストが配置する）ため、要求サイズをそのまま渡す
-        var canvasSize = new EsSize(info.Width, info.Height);
-        var request = LoupeRenderRequest.Create(CenterPoint, Options.RequestedSize, RenderScaling, Options, canvasSize);
+        // 表示サイズは本コントロールが自己配置しない（ホストが配置する）ため、要求サイズ（未配置時はコアがクランプしない）を使う。
+        var canvasSize = info.Size.ToEsSize();
+        var request = _loupe.CreateRequest(canvasSize);
 
         try
         {
@@ -195,16 +257,16 @@ public sealed class LoupeControl : SkiaCanvasView
 
     /// <summary><see cref="Rendered"/> イベントを発火する（描画完了と表示情報を通知する）。</summary>
     /// <param name="canvas">ルーペを描画したキャンバス。</param>
-    /// <param name="request">実際に描画した描画入力（通知する切り出し領域・スケールの算出元）。</param>
+    /// <param name="request">実際に描画した描画入力（通知する切り出し領域・スケール・ラベルの算出元）。</param>
     /// <remarks>
-    /// 切り出し領域の左上とスケールはコア（<see cref="LoupeRenderArgsCalculator"/>）が単一所有する（実際に描画した値から求める）。<br/>
+    /// 切り出し領域の左上・スケール・座標ラベルの契約はコア（<see cref="LoupeFacade.ResolveNotification"/>）が単一所有する。<br/>
     /// 中心が未設定の場合は <see cref="LoupeRenderedEventArgs.CaptureTopLeft"/> が null になり、ホストはオーバーレイを描画できない。
     /// </remarks>
     private void RaiseRendered(SKCanvas canvas, LoupeRenderRequest request)
     {
-        var args = LoupeRenderArgsCalculator.Compute(request);
+        var notification = _loupe.ResolveNotification(request);
 
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
-            canvas, request.PixelSize, args.CaptureTopLeft, args.Scale));
+            canvas, request.PixelSize, notification.CaptureTopLeft, notification.Scale, notification.CoordLabel));
     }
 }

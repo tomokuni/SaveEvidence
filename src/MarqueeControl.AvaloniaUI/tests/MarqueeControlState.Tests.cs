@@ -1,5 +1,6 @@
 using EsUtil.Platform.AvaloniaUI;
 using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Avalonia.Media;
@@ -37,9 +38,10 @@ public class MarqueeControlStateTests
         var control = CreateControl();
         var options = control.Options;
 
-        // 枠線の既定は DarkGray（設定画面の選択枠の色と一致）。外側の装飾の外観が単一所有する
-        Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), options.OuterAppearance.BorderColor.ToAvaloniaColor());
-        Assert.Equal(2.0, options.OuterAppearance.BorderThickness);
+        // ハンドルの枠線の既定は装飾の枠線と同じ DarkGray（設定画面の選択枠の色と一致）
+        Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), options.HandleBorderColor.ToAvaloniaColor());
+        // 装飾の既定は暗転する（単体の選択矩形コントロールとして暗転マスクを描く）
+        Assert.Equal(2.0, control.DecoOptions.OuterAppearance.BorderThickness);
         Assert.True(options.ShowHandles);
         Assert.Equal(Colors.White, options.HandleColor.ToAvaloniaColor());
         Assert.Equal(10.0, options.HandleSize);
@@ -66,13 +68,9 @@ public class MarqueeControlStateTests
 
         control.Options = MarqueeOptions.Default with
         {
-            OuterAppearance = MarqueeOptions.Default.OuterAppearance with
-            {
-                BorderColor = Colors.Red.ToDrawingColor(),
-                BorderThickness = 3.0,
-            },
             ShowHandles = false,
             HandleColor = Colors.Blue.ToDrawingColor(),
+            HandleBorderColor = Colors.Red.ToDrawingColor(),
             HandleSize = 14.0,
             HandleHitRadius = 20.0,
             MinSelectionSize = 5.0,
@@ -85,10 +83,18 @@ public class MarqueeControlStateTests
             CoordLabelBackgroundColor = Color.FromAColor(128, Colors.DarkGreen).ToDrawingColor(),
             CoordLabelFontSize = 14.0,
         };
+        control.DecoOptions = MarqueeDecoOptions.Default with
+        {
+            OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
+            {
+                BorderColor = Colors.Red.ToDrawingColor(),
+                BorderThickness = 3.0,
+            },
+        };
 
         var options = control.Options;
-        Assert.Equal(Colors.Red, options.OuterAppearance.BorderColor.ToAvaloniaColor());
-        Assert.Equal(3.0, options.OuterAppearance.BorderThickness);
+        Assert.Equal(Colors.Red, options.HandleBorderColor.ToAvaloniaColor());
+        Assert.Equal(3.0, control.DecoOptions.OuterAppearance.BorderThickness);
         Assert.False(options.ShowHandles);
         Assert.Equal(Colors.Blue, options.HandleColor.ToAvaloniaColor());
         Assert.Equal(14.0, options.HandleSize);

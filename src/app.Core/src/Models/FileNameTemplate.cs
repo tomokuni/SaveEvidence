@@ -46,11 +46,16 @@ public sealed partial class FileNameTemplate
     /// テンプレート内の数値はそのまま使用される（事前に IncrementRightmostNumber で更新済みであること）。
     /// </summary>
     /// <param name="template">テンプレート文字列</param>
+    /// <param name="now">置換に使う日時。null（既定）の場合は現在日時を使う。</param>
     /// <returns>生成されたファイル名</returns>
-    public static string Generate(string template)
+    /// <remarks>
+    /// 日時を引数で受け取るのは、呼び出し側が時刻を固定して結果を再現できるようにするためである<br/>
+    /// （本番の呼び出しは現在日時を使い、テストは固定値を渡して秒の境界に依存しない）。
+    /// </remarks>
+    public static string Generate(string template, DateTime? now = null)
     {
-        var now = DateTime.Now;
-        return ReplacePlaceholders(template, t => now.ToString(t.Format));
+        var timestamp = now ?? DateTime.Now;
+        return ReplacePlaceholders(template, t => timestamp.ToString(t.Format));
     }
 
     /// <summary>

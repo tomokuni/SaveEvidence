@@ -94,15 +94,15 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | --- | --- |
 | `HideOwnerWindow` | 撮影中にオーナーウィンドウを画面外へ退避するか |
 | `MinSelectionSize` | 選択矩形のドラッグ中の最小サイズ（`MarqueeOptions.MinSelectionSize` へ反映。切り出しの可否は選択操作そのものが判定する） |
-| `BorderColor` / `BorderThickness` / `OverlayColor` | 選択枠と暗転の外観（`OuterDecoAppearance` へ反映。枠線は選択矩形と共用） |
+| `BorderColor` / `BorderThickness` / `OverlayColor` | 選択枠と暗転の外観（装飾層の `OuterDecoAppearance` へ反映。枠線は選択矩形と共用） |
 | `HandleColor` / `HandleSize` / `HandleHitRadius` | ドラッグハンドル |
 | `MarkerColor` / `MarkerLength` | 微調整時の十字マーカー |
 | `ClampToDomainBounds` | 画像外の選択を禁止するか |
 | （ホイール操作） | 選択オーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する。ズーム率・パン量の決定は `CropViewControl` が単一所有する |
 | `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | カーソル位置の座標ラベル |
-| `SizeLabelVisible` / `SizeLabelColor` / `TextBackgroundColor` / `SizeLabelFontSize` | サイズラベル（`OuterDecoAppearance` の SizeLabel 系へ反映。**表示可否は描画側が単一所有する**ため UI は文言だけを渡す） |
-| `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル。`OuterDecoAppearance` の InfoLabel 系へ反映） |
-| `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | 操作ラベル（サブライン。`OuterDecoAppearance` の SubLine 系へ反映） |
+| `SizeLabelVisible` / `SizeLabelColor` / `TextBackgroundColor` / `SizeLabelFontSize` | サイズラベル（装飾層の `OuterDecoAppearance` の SizeLabel 系へ反映。**表示可否は描画側が単一所有する**ため UI は文言だけを渡す） |
+| `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル。装飾層の `OuterDecoAppearance` の InfoLabel 系へ反映） |
+| `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | 操作ラベル（サブライン。装飾層の `OuterDecoAppearance` の SubLine 系へ反映） |
 | `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` / `LoupeCrossColor` / `LoupeFrameColor` / `LoupeFrameThickness` | ルーペ |
 | `LoupeCheckerSize` / `LoupeCheckerColorA` / `LoupeCheckerColorB` | ルーペの市松模様 |
 | `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | ルーペ画像上の選択矩形破線 |

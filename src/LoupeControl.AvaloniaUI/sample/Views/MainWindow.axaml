@@ -108,7 +108,7 @@
                                        Value="{Binding SelectionRectHeight, Mode=TwoWay}" Width="110"/>
                     </StackPanel>
 
-                    <TextBlock Text="※ 選択矩形の破線オーバーレイはホスト側（Rendered イベント）で描画されます。"
+                    <TextBlock Text="※ 中心座標ラベルはホスト側（Rendered イベント）で描画されます。"
                                FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
 
                     <Separator/>

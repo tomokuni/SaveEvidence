@@ -1,7 +1,9 @@
 using BindingFlags = System.Reflection.BindingFlags;
-using Estable.AvaloniaUI.Marquee.Drawing;
 using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using Estable.Marquee;
+using Estable.Marquee.Decoration;
+using Estable.Marquee.CoreForControl;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -465,37 +467,18 @@ public class MarqueeControlTests
     }
 
     [AvaloniaFact]
-    public void ドラッグ移動なしの押下解放はMouseClickedを発火する()
-    {
-        var control = CreateControl();
-        var window = Show(control);
-        var pointer = CreatePointer();
-        var clicked = false;
-        control.MouseClicked += (_, _) => clicked = true;
-
-        control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(20, 20)), 0UL, LeftPressed(), KeyModifiers.None, 1));
-        control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(20, 20)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
-
-        Assert.True(clicked);
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void ダブルクリックでMouseDoubleClickedと確定要求が発火する()
+    public void ダブルクリックで確定要求が発火する()
     {
         var control = CreateControl();
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
-        var doubleClicked = false;
         var confirmed = false;
-        control.MouseDoubleClicked += (_, _) => doubleClicked = true;
         control.ConfirmRequested += (_, _) => confirmed = true;
 
         // 矩形内のダブルクリック（ClickCount=2）→ 確定要求
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None, 2));
 
-        Assert.True(doubleClicked);
         Assert.True(confirmed);
         window.Close();
     }
@@ -1027,6 +1010,30 @@ public class MarqueeControlTests
     }
 
     [AvaloniaFact]
+    public void フォーカス喪失でnudgeが終了しカーソルが再表示される()
+    {
+        var mock = new MockCursorService(default);
+        var control = CreateControl(mock);
+        // フォーカスを移す先のコントロール（実際のフォーカス変更で LostFocus を発生させる）
+        var other = new Button { Width = 20, Height = 20 };
+        var window = new Window { Content = new StackPanel { Children = { control, other } } };
+        window.Show();
+        var pointer = CreatePointer();
+
+        // ドラッグ開始 → nudge（カーソル非表示）
+        control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(10, 10)), 0UL, LeftPressed(), KeyModifiers.None, 1));
+        control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
+        Assert.False(mock.Visible);
+
+        // フォーカスが別のコントロールへ移る → nudge 終了（nudge を継続できない文脈でカーソルを隠したままにしない）
+        other.Focus();
+
+        Assert.False(control.CurrentSnapshot.NudgeActive);
+        Assert.True(mock.Visible);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void nudge中にウィンドウを閉じるとカーソルが再表示される()
     {
         var mock = new MockCursorService(default);
@@ -1483,16 +1490,16 @@ public class MarqueeControlTests
         var window = Show(control);
         control.SetSelection(new Rect(20, 20, 100, 80));
 
-        // ブラシ/ペンキャッシュの容量（BrushCacheCapacity）を超える色で描画を繰り返し、
+        // ブラシ/ペンキャッシュの容量（CapacityLimitedCache の既定容量）を超える色で描画を繰り返し、
         // 容量超過（全クリア）分岐を実行する（無制限メモリ増加の防止と正しさの両立）
-        for (var i = 0; i < MarqueeDrawer.BrushCacheCapacity + 1; i++)
+        for (var i = 0; i < CapacityLimitedCache<Color, SolidColorBrush>.DefaultCapacity + 1; i++)
         {
             // ハンドルの塗り（ブラシ）とハンドル枠（ペン）の両方のキャッシュ容量を超えさせる
             var color = Color.FromRgb((byte)(i % 256), (byte)((i / 256) % 256), 0).ToDrawingColor();
-            control.Options = control.Options with
+            control.Options = control.Options with { HandleColor = color, HandleBorderColor = color };
+            control.DecoOptions = control.DecoOptions with
             {
-                HandleColor = color,
-                OuterAppearance = control.Options.OuterAppearance with { BorderColor = color },
+                OuterAppearance = control.DecoOptions.OuterAppearance with { BorderColor = color },
             };
             control.InvalidateVisual();
             window.CaptureRenderedFrame();
@@ -1502,7 +1509,11 @@ public class MarqueeControlTests
         control.Options = control.Options with
         {
             HandleColor = Colors.Red.ToDrawingColor(),
-            OuterAppearance = control.Options.OuterAppearance with { BorderColor = Colors.Red.ToDrawingColor() },
+            HandleBorderColor = Colors.Red.ToDrawingColor(),
+        };
+        control.DecoOptions = control.DecoOptions with
+        {
+            OuterAppearance = control.DecoOptions.OuterAppearance with { BorderColor = Colors.Red.ToDrawingColor() },
         };
         control.InvalidateVisual();
         window.CaptureRenderedFrame();

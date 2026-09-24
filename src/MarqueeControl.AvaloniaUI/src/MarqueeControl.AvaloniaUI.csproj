@@ -23,6 +23,8 @@
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
     <!-- UI 非依存のコア（選択幾何・状態機械） -->
     <ProjectReference Include="..\..\MarqueeControl.Core\src\MarqueeControl.Core.csproj" />
+    <!-- コントロール化のための転送規則（ホイール要求の解釈） -->
+    <ProjectReference Include="..\..\MarqueeControl.CoreForControl\src\MarqueeControl.CoreForControl.csproj" />
   </ItemGroup>
 
 </Project>

@@ -50,6 +50,17 @@ public class LoupeRenderRequestTests
         Assert.Equal(160, request.PixelSize);
     }
 
+    /// <summary>描画先の全領域が原点 0 の正方形になることを検証する。</summary>
+    [Fact]
+    public void SurfaceBounds_物理ピクセルサイズの正方形を原点0で返す()
+    {
+        var request = LoupeRenderRequest.Create(new EsPoint(3, 4), 100, 1.25, new LoupeOptions());
+
+        // 下地・市松模様は描画先の全面へ描くため、矩形は契約が単一所有する（UI 側で組み立てない）
+        Assert.Equal(125, request.PixelSize);
+        Assert.Equal(new EsRect(0, 0, 125, 125), request.SurfaceBounds);
+    }
+
     /// <summary>中心・拡大率・外観・スケーリングがそのまま保持されることを検証する。</summary>
     [Fact]
     public void Create_入力値をそのまま保持する()

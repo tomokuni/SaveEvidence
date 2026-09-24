@@ -32,15 +32,25 @@ public class MainViewModelStateTests
     // ファイル名テンプレートの日時プレースホルダ（{yyyy}/{MM}/{dd}/{HH}/{mm}/{ss}）
     // ====================================================================
 
+    /// <summary>検証に使う固定日時（秒の境界に依存しないよう、テストは本値を注入する）。</summary>
+    private static readonly DateTime s_now = new(2026, 3, 4, 5, 6, 7, DateTimeKind.Local);
+
     [Fact]
-    public void Generate_日時個別プレースホルダを現在日時に置換する()
+    public void Generate_日時個別プレースホルダを指定日時に置換する()
+    {
+        var name = FileNameTemplate.Generate("img_{yyyy}-{MM}-{dd}_{HH}-{mm}-{ss}.png", s_now);
+
+        Assert.Equal("img_2026-03-04_05-06-07.png", name);
+    }
+
+    [Fact]
+    public void Generate_日時を省略すると現在日時を使う()
     {
         var before = DateTime.Now;
         var name = FileNameTemplate.Generate("img_{yyyy}-{MM}-{dd}_{HH}-{mm}-{ss}.png");
         var after = DateTime.Now;
 
-        // 生成されたファイル名から値を抽出して、置換前後の現在時刻の範囲内であることを確認する
-        // （秒単位の境界で失敗しないよう、前後 1 秒の許容を持つ）
+        // 既定（now 指定なし）は現在日時を使う。秒単位の境界で失敗しないよう前後 1 秒の許容を持つ
         Assert.Matches(@"^img_(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})\.png$", name);
 
         var parsed = DateTime.ParseExact(
@@ -48,19 +58,15 @@ public class MainViewModelStateTests
             "yyyy-MM-dd_HH-mm-ss",
             System.Globalization.CultureInfo.InvariantCulture);
 
-        Assert.True(parsed >= before.AddSeconds(-1), $"生成値 {parsed:O} が開始時刻 {before:O} より前");
-        Assert.True(parsed <= after.AddSeconds(1), $"生成値 {parsed:O} が終了時刻 {after:O} より後");
+        Assert.InRange(parsed, before.AddSeconds(-1), after.AddSeconds(1));
     }
 
     [Fact]
     public void Generate_従来のdateとtimeプレースホルダと併用できる()
     {
-        var now = DateTime.Now;
-        var name = FileNameTemplate.Generate("s_{date}_{yyyy}_{time}_{HH}_{mm}_{ss}.png");
+        var name = FileNameTemplate.Generate("s_{date}_{yyyy}_{time}_{HH}_{mm}_{ss}.png", s_now);
 
-        Assert.Equal(
-            $"s_{now:yyyyMMdd}_{now:yyyy}_{now:HHmmss}_{now:HH}_{now:mm}_{now:ss}.png",
-            name);
+        Assert.Equal("s_20260304_2026_050607_05_06_07.png", name);
     }
 
     [Fact]
@@ -74,9 +80,9 @@ public class MainViewModelStateTests
     public void Generate_エスケープの中括弧はリテラルとして解決される()
     {
         // {{ は {、}} は } に解決される（プレースホルダとして誤置換されない）
-        var name = FileNameTemplate.Generate("{{date}}_{time}.png");
+        var name = FileNameTemplate.Generate("{{date}}_{time}.png", s_now);
 
-        Assert.Equal($"{{date}}_{DateTime.Now:HHmmss}.png", name);
+        Assert.Equal("{date}_050607.png", name);
     }
 
     [Fact]
@@ -91,20 +97,16 @@ public class MainViewModelStateTests
     [Fact]
     public void Generate_中括弧内のトークンは組み合わせて置換される()
     {
-        var now = DateTime.Now;
-
         // { } 内で複数のトークンを自由に組み合わせられる（yyyyMMdd / HHmm 等）
-        Assert.Equal($"abcd{{e}}f{now:yyyyMMdd}-{now:HHmm}", FileNameTemplate.Generate("abcd{{e}}f{yyyyMMdd}-{HHmm}"));
-        Assert.Equal($"{now:yyyy}年{now:MM}月{now:dd}日", FileNameTemplate.Generate("{yyyy}年{MM}月{dd}日"));
+        Assert.Equal("abcd{e}f20260304-0506", FileNameTemplate.Generate("abcd{{e}}f{yyyyMMdd}-{HHmm}", s_now));
+        Assert.Equal("2026年03月04日", FileNameTemplate.Generate("{yyyy}年{MM}月{dd}日", s_now));
     }
 
     [Fact]
     public void Generate_未定義トークンはそのまま残る()
     {
-        var now = DateTime.Now;
-
         // 定義外のトークン（example 等）は置換されず、中括弧が外れてそのまま出力される
-        Assert.Equal($"example{now:yyyyMMdd}", FileNameTemplate.Generate("{example}{yyyyMMdd}"));
+        Assert.Equal("example20260304", FileNameTemplate.Generate("{example}{yyyyMMdd}", s_now));
     }
 
     [Fact]

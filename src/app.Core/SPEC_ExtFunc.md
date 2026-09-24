@@ -80,9 +80,11 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsPixelRect` 
 
 | メソッド | 説明 |
 | --- | --- |
-| `Generate(string template)` | テンプレートから実際のファイル名を生成する（`{ }` 内の日時トークンを現在日時へ置換） |
+| `Generate(string template, DateTime? now = null)` | テンプレートから実際のファイル名を生成する（`{ }` 内の日時トークンを置換する。`now` を省略すると現在日時を使う） |
 | `IncrementRightmostNumber(string text)` | 右端の数値連続を +1 する（桁数を維持。`decimal` で扱えない桁数は `BigInteger`） |
 | `IsValidTemplate(string template, out string? errorMessage)` | ファイル名として使用可能かを検証する（使用不可文字を検出） |
+
+日時を引数（`now`）で受け取るのは、呼び出し側が時刻を固定して結果を再現できるようにするためです（本番の呼び出しは現在日時を使います）。
 
 ### テンプレートの書式
 

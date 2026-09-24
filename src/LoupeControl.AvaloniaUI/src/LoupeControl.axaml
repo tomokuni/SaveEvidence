@@ -1,19 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Estable.AvaloniaUI.Loupe.LoupeControl">
-    <!-- ルーペ画像表示領域（外枠はビットマップ自体に描画済み）+ 座標ラベル（ルーペの上側にオーバーレイ） -->
-    <Grid>
-        <Image x:Name="PART_Image"
-               Stretch="Fill"/>
-        <!-- 中心座標ラベル（ルーペの上端中央に表示。CenterPoint = ドメイン座標を "(x, y)" で表示） -->
-        <!-- 余白（Margin / Padding）と角丸（CornerRadius）はコードビハインドがコアの LoupeLabelLayout / LoupeAppearance から設定する（数値を重複させない） -->
-        <Border x:Name="PART_CoordLabel"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top">
-            <TextBlock x:Name="PART_CoordText"
-                       Text=""
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
-        </Border>
-    </Grid>
+    <!-- ルーペ画像表示領域（外枠・市松模様・十字線はビットマップ自体に描画済み） -->
+    <!-- 中心座標ラベルの文字は本コントロールが描かない。描画完了イベント（Rendered）でホストが描く -->
+    <Image x:Name="PART_Image"
+           Stretch="Fill"/>
 </UserControl>

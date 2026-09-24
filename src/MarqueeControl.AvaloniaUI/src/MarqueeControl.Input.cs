@@ -3,6 +3,7 @@ using Avalonia.Input;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
+using MarqueeFacade = Estable.Marquee.Marquee;
 
 namespace Estable.AvaloniaUI.Marquee;
 
@@ -10,7 +11,7 @@ namespace Estable.AvaloniaUI.Marquee;
 /// MarqueeControl のキーボード入力処理（partial 分割）。
 /// </summary>
 /// <remarks>
-/// キー入力をコア型（<see cref="EsKey"/>）へ変換してセッションへ通知し、返された効果を適用するだけである。<br/>
+/// キー入力をコア型（<see cref="EsKey"/>）へ変換してコア（ファサード）へ通知し、返された効果を適用するだけである。<br/>
 /// 矢印キー nudge・Escape のキャンセル・Enter の確定の判断（許可条件を含む）はコアが行う。<br/>
 /// キーボード（矢印キー nudge）はフォーカス非依存（TopLevel のキー購読）のため、コントロールにフォーカスがなくても動作する。
 /// </remarks>
@@ -25,16 +26,29 @@ public sealed partial class MarqueeControl
     /// <param name="e">キーイベント。</param>
     /// <remarks>
     /// キーをコア型（<see cref="EsKey"/>）へ変換して通知し、返された効果（再描画・カーソル操作）を適用するだけである。<br/>
-    /// 矢印キー nudge・Escape のキャンセル・Enter の確定の判断（許可条件を含む）はコアが行う。<br/>
+    /// 矢印キー nudge・Escape のキャンセル・Enter の確定の判断（許可条件を含む）はコア（<see cref="MarqueeFacade.KeyDown"/>）が行う。<br/>
     /// コントロール自身のキーハンドラを持たず、本購読だけがキーを受け取る（キーの配送を 1 経路にして二重処理を防ぐ）。<br/>
     /// トンネルで購読するためルートから下降する順に届き、祖先（祖先コンテナ等）のバブリング処理より先に処理済みにできる。<br/>
     /// <c>|| e.Handled</c> は、先に誰かが処理済みにしたフラグを false へ戻さないため。
     /// </remarks>
     private void OnTopLevelKeyDown(object? sender, KeyEventArgs e)
     {
-        var feedback = _session.KeyDown(e.Key.ToEsKey(), CurrentCursorDomainPosition());
-        ApplyFeedback(feedback);
-        e.Handled = feedback.Handled || e.Handled;
+        e.Handled = _marquee.KeyDown(e.Key.ToEsKey(), CurrentCursorDomainPosition()) || e.Handled;
+    }
+
+    /// <summary>フォーカスを失ったときに nudge を終了する。</summary>
+    /// <param name="e">フォーカスイベント。</param>
+    /// <remarks>
+    /// nudge 中はカーソルを非表示にするため、nudge を継続できない文脈（フォーカス喪失）では終了して再表示する
+    /// （非表示残留の防止。判断はコアの <see cref="MarqueeFacade.EndNudge"/> が単一所有する）。<br/>
+    /// 本コントロールは矢印キーを TopLevel から購読するため、フォーカス移動後もキーを受け取り続ける。
+    /// 「カーソルを隠したまま操作対象を離れる」状態を作らないため、MewUI 版と同じ契機で終了する。<br/>
+    /// ウィンドウの非アクティブ化（Alt+Tab 等）はビジュアルツリーの接続時の購読（<c>Deactivated</c>）が扱う。
+    /// </remarks>
+    protected override void OnLostFocus(FocusChangedEventArgs e)
+    {
+        base.OnLostFocus(e);
+        _marquee.EndNudge();
     }
 
     /// <summary>現在のカーソル位置（ドメイン座標）を取得する。</summary>
@@ -51,7 +65,7 @@ public sealed partial class MarqueeControl
         }
 
         var screenPoint = _cursor.GetCursorScreenPoint();
-        var localDip = ScreenConverter.CreateVisualDipPort(this).Forward(new EsPoint(screenPoint.X, screenPoint.Y));
-        return _session.ToDomain(localDip);
+        var localDip = ScreenConverter.CreateVisualDipPort(this).Forward(screenPoint.ToEsPoint());
+        return _marquee.ToDomain(localDip);
     }
 }

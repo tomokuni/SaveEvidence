@@ -1,6 +1,6 @@
-using Estable.Marquee.Decoration;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using Estable.Marquee.Decoration;
 using SkiaSharp;
 
 namespace Estable.MewUI.Marquee;
@@ -31,36 +31,10 @@ internal static class MarqueeInnerSkiaRenderer
         // ---- 穴あけ矩形の内側の塗り（半透明を許容する） ----
         if (frame.FillRect is { } fill)
         {
-            using var fillPaint = new SKPaint
-            {
-                IsAntialias = false,
-                Style = SKPaintStyle.Fill,
-                Color = frame.FillColor.ToSKColor(),
-            };
-
-            canvas.DrawRect(ToSKRect(fill), fillPaint);
+            SkiaFill.Rect(canvas, fill, frame.FillColor);
         }
 
         // ---- 穴あけ矩形の内側の枠線（四辺・矩形の内側） ----
-        if (frame.BorderRects.Count > 0)
-        {
-            using var borderPaint = new SKPaint
-            {
-                IsAntialias = false,
-                Style = SKPaintStyle.Fill,
-                Color = frame.BorderColor.ToSKColor(),
-            };
-
-            foreach (var rect in frame.BorderRects)
-            {
-                canvas.DrawRect(ToSKRect(rect), borderPaint);
-            }
-        }
+        SkiaFill.Rects(canvas, frame.BorderRects, frame.BorderColor);
     }
-
-    /// <summary>コアの矩形を Skia の矩形へ変換する。</summary>
-    /// <param name="rect">コアの矩形（DIP）。</param>
-    /// <returns>Skia の矩形。</returns>
-    private static SKRect ToSKRect(EsRect rect)
-        => new((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
 }

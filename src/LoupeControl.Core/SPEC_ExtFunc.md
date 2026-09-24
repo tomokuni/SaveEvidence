@@ -1,25 +1,60 @@
 # LoupeControl.Core 外部機能仕様書
 
-`LoupeControl.Core` は UI フレームワーク非依存のルーペロジックと設定（表示サイズ・拡大率・外観）を提供します。**全型が public** であり、外部が独自の UI アダプタを実装できます（他アセンブリへの `InternalsVisibleTo` は持ちません）。
+`LoupeControl.Core` は UI フレームワーク非依存のルーペロジックと設定（表示サイズ・拡大率・外観）を提供します。**操作の唯一の窓口は公開ファサード `Loupe`** であり、UI 層とホストは本型だけを参照します（外部が独自の UI アダプタを実装できるよう、必要な型は public です）。
+
+**ファサードの実装詳細（配置計算・描画引数の計算・ラベル配置）は internal です**（単体テストにのみ `InternalsVisibleTo` で公開します。利用者はファサードの戻り値を使うため、内部手順を参照する必要がありません）。
+
+**コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.CoreForControl` が所有します**（本プロジェクトはルーペの見た目と計算に限定します）。
 
 ## 公開 API の可視性
 
 | 型 | 可視性 | 用途 |
 | --- | --- | --- |
+| `Loupe` | `public` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決、描画入力の生成、通知内容の解決 |
+| `LoupeLayout` | `public` | 表示レイアウトの値（表示サイズ（DIP）と表示位置。配置しない場合は位置が null） |
+| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール・座標ラベルの契約） |
 | `LoupeOptions` | `public` | 設定の単一値（ホストが設定する） |
 | `LoupeAppearance` | `public` | 外観の単一値（設定の一部として、また単体でも外観を指定する） |
 | `LoupeValueCoercer` | `public` | 数値パラメータの既定値・安全域とクランプ |
 | `LoupeAppearanceScaler` | `public` | 外観の寸法値の物理ピクセル換算 |
 | `LoupeRenderRequest` | `public` | 1 フレーム分の描画入力（コア⇔UI の契約） |
-| `LoupePositionCalculator` | `public` | 表示サイズのクランプ・表示位置の計算 |
-| `LoupeRenderArgsCalculator` | `public` | 描画完了通知用の表示情報の計算 |
-| `LoupeLabelLayout` | `public` | 座標ラベルの余白と配置矩形 |
+| `LoupeCoordLabel` | `public` | 中心座標ラベルの描画契約（文言・寸法・色・配置の計算）。文字はホストが描く |
 | `LoupeCheckerboard` | `public` | 市松模様の明暗判定とタイル矩形 |
 | `LoupeDecorationGeometry` | `public` | 十字線・外枠の描画矩形 |
 | `LoupeLogFormat` / `LoupeLogMessage` | `public` | ログの書式と定義（UI 非依存の分） |
 | `Imaging.LoupeImageExtractor` | `public` | 切り出し領域の計算と `EsBitmap` からの切り出し |
 
+**internal（本アセンブリと単体テストのみ）**: `LoupePositionCalculator`（表示サイズ・位置の計算）/ `LoupeRenderArgsCalculator`（描画完了通知用の表示情報の計算と `RenderArgs`）/ `LoupeLabelLayout`（ラベルの余白と配置矩形）。いずれもファサード（`Loupe.ResolveLayout` / `Loupe.ResolveNotification` / `LoupeCoordLabel.ComputeFrame`）が吸収して提供します。
+
 **UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
+
+## `Loupe`（`Estable.Loupe`・`public sealed class`）
+
+ルーペの**操作の唯一の窓口**（適用パターン: Facade）。UI 層とホストは本型だけを参照し、配置計算・描画引数の計算は internal のため外部からは直接呼べません。
+
+| メンバー | 説明 |
+| --- | --- |
+| `Loupe(LoupeOptions? options = null)` | 生成（設定を省略した場合は `LoupeOptions.Default`） |
+| `Options` | 設定（表示サイズ・拡大率・外観）の読み書き |
+| `RenderScaling` | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。補正は `LoupeValueCoercer` が単一所有する） |
+| `CenterPoint` | 拡大中心（ドメイン座標）。未設定（null）は市松模様のみを描画し、配置も行わない |
+| `PositionOffset` | 拡大中心からの右下オフセット（DIP） |
+| `DisplaySize` | 実際の表示サイズ（DIP。要求サイズを親領域の最小辺へクランプ済み） |
+| `SetCoordinateTransform(port)` | ドメイン ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換） |
+| `ResolveLayout(parentSize)` | 親領域サイズから表示レイアウト（`LoupeLayout`）を解決する（拡大中心未設定時は位置が null） |
+| `CreateRequest(availableSize = null)` | 描画 1 フレーム分の入力（`LoupeRenderRequest`）の生成（DIP → 物理ピクセルの換算と描画先へのクランプを含む） |
+| `ResolveNotification(request)` | 実際に描画した入力から描画完了通知の内容（`LoupeRenderNotification`）を解決する |
+
+**本型が単一所有するもの**: 表示サイズの決定（唯一の書き込み元）・表示位置の決定（中心 ＋ オフセット ＋ 親領域内へのクランプ）・描画入力の組み立て・通知内容の解決。
+
+```csharp
+var loupe = new Loupe(options) { CenterPoint = cursorDomain, RenderScaling = 1.25 };
+loupe.SetCoordinateTransform(port);
+
+var layout = loupe.ResolveLayout(parentSize);          // 表示サイズ + 表示位置（配置はしない場合は Position が null）
+var request = loupe.CreateRequest(canvasSize);         // 描画入力（物理ピクセルを解決済み）
+var notification = loupe.ResolveNotification(request); // 切り出し左上・スケール・座標ラベル
+```
 
 ## `LoupeOptions`（`Estable.Loupe`・`public sealed record`）
 
@@ -125,52 +160,15 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 | `ZoomLevel` | `int` | 拡大率（1〜64。`LoupeOptions.ZoomLevel` の補正済みの値） |
 | `Appearance` | `LoupeAppearance` | 外観（下地・色・寸法・描画可否。`LoupeOptions.Appearance` の値） |
 | `Scaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数 |
+| `SurfaceBounds` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。下地・市松模様を全面へ描くために契約が単一所有する（UI 層は矩形を組み立てない） |
 
 | メソッド | 説明 |
 | --- | --- |
-| `Create(center, displaySize, renderScaling, options, availableSize = null)` | UI 層が保持する DIP 値（表示サイズ）と設定から描画入力を組み立てる。表示サイズを物理ピクセルへ換算し、描画先の領域が指定された場合はそれへクランプする（規則は `LoupePositionCalculator.ResolvePixelSize` が単一所有する） |
+| `Create(center, displaySize, renderScaling, options, availableSize = null)` | UI 層が保持する DIP 値（表示サイズ）と設定から描画入力を組み立てる。表示サイズを物理ピクセルへ換算し、描画先の領域が指定された場合はそれへクランプする（規則はコア内部が単一所有する） |
 
 表示サイズは `Options.RequestedSize` ではなく、UI 層が親領域・描画先へクランプした後の値を渡します（クランプの基準（親パネル / 描画先の表面）は UI ごとに異なるため、値の決定は UI 層が担います）。
 
 拡大元画像は UI ごとに型が異なる（Avalonia は `IImage`、MewUI は `EsBitmap`）ため本値に含めず、描画層が解決した `EsBitmap` を別引数として渡します（両 UI が同じ手順で本値を組み立てられます）。
-
-## `LoupePositionCalculator`（`Estable.Loupe`）
-
-```csharp
-public static (EsSize Size, EsPoint Position) Compute(
-    double requestedSize, EsSize parentSize, EsPoint centerDip, double offset);
-public static EsPoint ComputePosition(
-    double displaySize, EsSize parentSize, EsPoint centerDip, double offset);
-public static double ClampSizeToArea(double size, EsSize areaSize);
-```
-
-- `Size`: 基本サイズを親領域の最小辺へクランプした正方形サイズ（幅 = 高さ）。
-- `Position`: 中心（変換後の親領域 DIP 座標）+ `offset` を親領域内（`0` 〜 `親サイズ - Size`）へクランプした左上座標。
-- 親領域の幅または高さが 0 以下（レイアウト前・親未接続）のときはクランプを行いません（判断は本メソッドが単一所有する）。
-- 座標変換（`ICoordTransform.Inverse`）は呼び出し側が行い、本メソッドは変換後の DIP 座標を受け取ります。
-
-| メンバー | 説明 |
-| --- | --- |
-| `Compute(requestedSize, parentSize, centerDip, offset)` | 表示サイズと表示位置を計算する（上記。`ClampSizeToArea` と `ComputePosition` を合成する） |
-| `ComputePosition(displaySize, parentSize, centerDip, offset)` | 表示位置（左上）を計算する。`displaySize` はクランプ済みの表示サイズを渡す（要素のサイズと位置のクランプで同じ値を使う） |
-| `ClampSizeToArea(size, areaSize)` | サイズを提示領域の最小辺へクランプする。領域の幅または高さが 0 以下の場合はクランプしない（未確定として扱う）。単位は呼び出し側が揃える（DIP / 物理ピクセル） |
-| `ResolvePixelSize(size, renderScaling, availableSize = null)` | 表示サイズ（DIP）から描画に使う物理ピクセルサイズを求める（切り上げ・最低 1、領域指定時はクランプ）。描画とイベント通知で同じ値を使うために単一所有する |
-
-`ClampSizeToArea` は「領域より大きい場合は領域に合わせる」規則を単一所有し、`Compute`（親パネル DIP）と `ResolvePixelSize`（描画の物理ピクセル）が共用します（描画層は `ResolvePixelSize` を呼び、直接は使わない）。`ResolvePixelSize` は DIP → 物理ピクセルの換算とクランプをまとめて行い、両 UI の描画とイベント通知が同じピクセルサイズを使います。
-
-表示サイズを要素（`Width` / `Height`）へ先に反映する必要がある UI は `Compute` ではなく `ClampSizeToArea` と `ComputePosition` を個別に呼びます（クランプを 2 回計算すると丸めの違いで要素が親領域からはみ出しうるため、同じ値を共有します）。
-
-## `LoupeLabelLayout`（`Estable.Loupe`）
-
-中心座標ラベルの余白と位置を単一所有します。Avalonia 版はレイアウトシステムへ同じ余白（`Margin` / `Padding`）を渡し、MewUI 版は計算結果（背景矩形・文字原点）を使います。
-
-| メンバー | 値 / 説明 |
-| --- | --- |
-| `OuterMargin` | `2.0`（ルーペ上端からの余白・DIP） |
-| `PaddingX` | `4.0`（背景の左右内側余白・DIP） |
-| `PaddingY` | `1.0`（背景の上下内側余白・DIP） |
-| `ComputeBackground(double loupePixelSize, double textWidth, double fontSize, double scaling)` | ラベル背景の矩形（物理ピクセル）。幅 = 文字幅 + `PaddingX`×2×`scaling`、高さ = フォントサイズ + `PaddingY`×2×`scaling` |
-| `ComputeTextOrigin(double loupePixelSize, double textWidth, double scaling)` | 文字列の左上（物理ピクセル）。水平はルーペ中央へセンタリング、垂直は `OuterMargin`×`scaling` |
 
 ## `LoupeLogFormat`（`Estable.Loupe`）
 
@@ -201,25 +199,6 @@ public static double ClampSizeToArea(double size, EsSize areaSize);
 **UI 固有のログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は `LoupeControl.AvaloniaUI` の `LoupeRenderLog` にあります）。
 
 設定項目ごとの名前付きメソッド（`LogCenterPointChanged` / `LogSourceChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`）は、**設定名・書式・変化判定をコアが単一所有**するために提供します。UI 層は値（と Source の寸法）を渡すだけで、設定名の文字列を持ちません。
-
-## `LoupeRenderArgsCalculator`（`Estable.Loupe`）
-
-```csharp
-public static RenderArgs Compute(LoupeRenderRequest request);
-
-public readonly record struct RenderArgs(EsPoint? CaptureTopLeft, double Scale);
-```
-
-| メンバー | 説明 |
-| --- | --- |
-| `CaptureTopLeft` | 切り出し領域の左上（ドメイン座標）。中心が `null` のときは `null` |
-| `Scale` | ドメイン座標 → ルーペ画像ピクセル座標の変換係数（**拡大率と同値**）。破線オーバーレイの位置を DPI に依存させない |
-
-引数は**実際に描画した描画入力**（`LoupeRenderRequest`）です（本メソッドが DIP から再換算すると、描画先の領域によるクランプで実際の描画と値がずれ、ホストへ通知する切り出し領域が食い違うため）。
-
-通知内容はホストが実際に消費する値（切り出し領域の左上とスケール）だけに絞ります。物理ピクセルサイズ・切り出し領域の一辺はホストが使わないため結果に含めず、必要な場合は `LoupePositionCalculator.ResolvePixelSize` / `LoupeImageExtractor.ComputeCaptureSize` から直接求めます。
-
-`Scale` は拡大率と同値です。描画は切り出し領域（`ComputeCaptureSize` のドメインピクセル）を `zoomLevel` 倍で描くため、変換係数は DIP 表示サイズや物理ピクセル数、切り出しサイズの切り上げに依存しません。
 
 ## `Imaging.LoupeImageExtractor`（`Estable.Loupe.Imaging`）
 

@@ -2,8 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Estable.AvaloniaUI.Loupe;
+using Estable.Loupe;
+using EsUtil.Platform.Core.Imaging;
 using LoupeControl.Sample.Logging;
 using LoupeControl.Sample.ViewModels;
+using SkiaSharp;
 
 namespace LoupeControl.Sample.Views;
 
@@ -31,6 +35,9 @@ public partial class MainWindow : Window
         // 描画エラーの通知先として ILogger を設定する（デバッグ出力へ転送）
         Loupe.Log = new DebugLogger();
 
+        // 文字（中心座標ラベル）はコントロールが描かないため、描画完了イベントでホストが描く
+        Loupe.Rendered += OnLoupeRendered;
+
         // ルーペをカーソルの右下（+24 DIP）へ配置する。
         // 配置は LoupeControl.UpdatePosition（RenderTransform）が担い、ホスト側の Canvas.SetLeft/Top とは
         // 競合しない（Canvas.SetLeft/Top は LoupeControl の RenderTransform と加算され、ルーペが右下に
@@ -57,6 +64,28 @@ public partial class MainWindow : Window
 
         // 画像範囲へクランプしない（画像外も中心として許容し、距離に応じた部分市松を表示する）
         _vm.CenterPoint = new Point(pos.X, pos.Y);
+    }
+
+    /// <summary>描画完了時に中心座標ラベルの文字を描画する。</summary>
+    /// <param name="sender">イベント送信元（LoupeControl）。</param>
+    /// <param name="e">描画済み Bitmap と表示情報（中心座標ラベルの契約を含む）。</param>
+    /// <remarks>
+    /// 文字の描画はホストの責務である（テキストの実寸測定は描画 API 依存のため）。<br/>
+    /// 配置はコアの <see cref="LoupeCoordLabel.ComputeFrame"/> が、描画順はプラットフォーム層の
+    /// <see cref="SkiaLabel.Draw"/> が単一所有するため、本ハンドラは実測と描画先の用意だけを行う。
+    /// </remarks>
+    private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
+    {
+        if (e.CoordLabel is not { } coordLabel)
+        {
+            return;
+        }
+
+        var frame = coordLabel.ComputeFrame(SkiaText.Measure(coordLabel.Text, coordLabel.FontSize));
+        using var canvas = new SKCanvas(e.Bitmap.ToSKBitmap());
+        SkiaLabel.Draw(
+            canvas, frame.Background, coordLabel.BackgroundColor, coordLabel.Text, frame.TextOrigin,
+            coordLabel.FontSize, coordLabel.TextColor, coordLabel.CornerRadius);
     }
 
     /// <summary>Clear() の動作確認（非表示にして Bitmap を解放）。</summary>

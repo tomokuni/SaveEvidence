@@ -46,26 +46,28 @@ public class FadeMaskDragRectOptionsTests
         Assert.Equal(DrawingColor.Black, changed.SelectionRectColorB);
     }
 
-    /// <summary>外側の装飾の外観が選択矩形の設定に含まれることを検証する。</summary>
+    /// <summary>装飾の外観が装飾の設定に含まれることを検証する。</summary>
     [Fact]
-    public void 外側の装飾_選択矩形の設定が単一所有する()
+    public void 装飾_選択矩形の設定とは別の値が単一所有する()
     {
         var appearance = new OuterDecoAppearance { BorderColor = DrawingColor.Lime, BorderThickness = 3.0 };
 
         var options = FadeMaskDragRectOptions.Default with
         {
+            Deco = MarqueeDecoOptions.Default with { OuterAppearance = appearance },
             Marquee = MarqueeOptions.Default with
             {
-                OuterAppearance = appearance,
+                HandleBorderColor = appearance.BorderColor,
                 HandleColor = DrawingColor.Orange,
                 MinSelectionSize = 12.0,
                 ClampToDomainBounds = false,
             },
         };
 
-        // 枠線（外側の装飾）と選択矩形の他の設定が同じ 1 つの値に揃う（写し替える導出処理を持たない）
-        Assert.Equal(DrawingColor.Lime, options.Marquee.OuterAppearance.BorderColor);
-        Assert.Equal(3.0, options.Marquee.OuterAppearance.BorderThickness);
+        // 枠線（装飾）は装飾の設定が持ち、選択の設定は選択の判断に必要な項目だけを持つ
+        Assert.Equal(DrawingColor.Lime, options.Deco.OuterAppearance.BorderColor);
+        Assert.Equal(3.0, options.Deco.OuterAppearance.BorderThickness);
+        Assert.Equal(DrawingColor.Lime, options.Marquee.HandleBorderColor);
         Assert.Equal(DrawingColor.Orange, options.Marquee.HandleColor);
         Assert.Equal(12.0, options.Marquee.MinSelectionSize);
         Assert.False(options.Marquee.ClampToDomainBounds);

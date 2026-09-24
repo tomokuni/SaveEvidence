@@ -468,7 +468,7 @@ public class LoupeControlTests
     }
 
     // ====================================================================
-    // 座標ラベル（ルーペの上側に中心座標を表示）
+    // 座標ラベルの契約（文字はホストが描くため、コントロールは契約を通知する）
     // ====================================================================
 
     [AvaloniaFact]
@@ -484,76 +484,89 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
-    public void 座標ラベルを有効化してCenterPointを設定すると表示される()
+    public async Task 座標ラベルを有効化してCenterPointを設定すると契約が通知される()
     {
         var control = CreateControl();
+        LoupeRenderedEventArgs? args = null;
+        control.Rendered += (_, e) => args = e;
+
         control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = true } };
         control.CenterPoint = new Point(123, 456);
+        await control.WaitForRenderedAsync();
 
-        // PART_CoordLabel が表示され、テキストが "(123, 456)" になる（ドメイン座標）
-        Assert.NotNull(control.CoordLabelBorder);
-        Assert.True(control.CoordLabelBorder!.IsVisible);
-        Assert.NotNull(control.CoordLabelText);
-        Assert.Equal("(123, 456)", control.CoordLabelText!.Text);
+        // 文言はコアの CoordinateFormatter が単一所有する（コントロールは表示しない）
+        Assert.NotNull(args?.CoordLabel);
+        Assert.Equal("(123, 456)", args!.CoordLabel!.Value.Text);
     }
 
     [AvaloniaFact]
-    public void 座標ラベル無効時はCenterPointがあっても非表示である()
+    public async Task 座標ラベル無効時はCenterPointがあっても契約がnullになる()
     {
         var control = CreateControl();
+        LoupeRenderedEventArgs? args = null;
+        control.Rendered += (_, e) => args = e;
+
         control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = false } };
         control.CenterPoint = new Point(123, 456);
+        await control.WaitForRenderedAsync();
 
-        Assert.NotNull(control.CoordLabelBorder);
-        Assert.False(control.CoordLabelBorder!.IsVisible);
+        Assert.Null(args!.CoordLabel);
     }
 
     [AvaloniaFact]
-    public void 座標ラベルの色とフォントサイズが反映される()
+    public async Task 座標ラベルの色とフォントサイズが契約へ反映される()
     {
         var control = CreateControl();
-        var bg = DrawingColor.FromArgb(179, 0, 0, 139); // 暗青 70%
+        LoupeRenderedEventArgs? args = null;
+        control.Rendered += (_, e) => args = e;
+
+        var background = DrawingColor.FromArgb(179, 0, 0, 139); // 暗青 70%
         control.Options = control.Options with
         {
             Appearance = control.Options.Appearance with
             {
                 ShowCoordLabel = true,
                 CoordLabelColor = DrawingColor.Yellow,
-                CoordLabelBackgroundColor = bg,
+                CoordLabelBackgroundColor = background,
                 CoordLabelFontSize = 16,
             },
         };
         control.CenterPoint = new Point(10, 20);
+        await control.WaitForRenderedAsync();
 
-        Assert.NotNull(control.CoordLabelText);
-        Assert.Equal(16.0, control.CoordLabelText!.FontSize);
-        // 文字色はコアの色（黄）からブラシへ変換されて反映される
-        Assert.True(control.CoordLabelText.Foreground is SolidColorBrush fg
-            && fg.Color == Color.FromArgb(255, 255, 255, 0));
-
-        Assert.NotNull(control.CoordLabelBorder);
-        // 背景は色（アルファ込み）がそのまま反映される
-        Assert.True(control.CoordLabelBorder!.Background is SolidColorBrush sb
-            && sb.Color == Color.FromArgb(179, 0, 0, 139));
+        // フォントサイズはコアが物理ピクセルへ換算する（RenderScaling = 1 のため DIP と同値）
+        Assert.NotNull(args?.CoordLabel);
+        var label = args!.CoordLabel!.Value;
+        Assert.Equal(16.0, label.FontSize);
+        Assert.Equal(DrawingColor.Yellow, label.TextColor);
+        Assert.Equal(background, label.BackgroundColor);
     }
 
-    /// <summary>座標ラベルの角丸がコアの外観値から反映されることを検証する。</summary>
-    /// <remarks>位置（左上）と同じく、外観値は AXAML へ書かずコアの値だけを設定する。</remarks>
+    /// <summary>座標ラベルの角丸がコアの外観値から契約へ反映されることを検証する。</summary>
+    /// <remarks>角丸の物理ピクセル換算（0 は四角形のまま保持する）はコアの <c>LoupeAppearanceScaler</c> が単一所有する。</remarks>
     [AvaloniaFact]
-    public void 座標ラベルの角丸がコアの外観値から反映される()
+    public async Task 座標ラベルの角丸がコアの外観値から契約へ反映される()
     {
         var control = CreateControl();
-        // 既定はコアの既定値（2）
+        LoupeRenderedEventArgs? args = null;
+        control.Rendered += (_, e) => args = e;
+
+        // 既定はコアの既定値
         control.CenterPoint = new Point(10, 20);
-        Assert.NotNull(control.CoordLabelBorder);
-        Assert.Equal(LoupeValueCoercer.CoordLabelCornerRadiusDefault, control.CoordLabelBorder!.CornerRadius.TopLeft);
+        await control.WaitForRenderedAsync();
+        Assert.Equal(LoupeValueCoercer.CoordLabelCornerRadiusDefault, args!.CoordLabel!.Value.CornerRadius);
 
-        // 外観を変えると角丸も追従する（0 は角丸なし）
+        // 外観を変えると契約も追従する
         control.Options = control.Options with { Appearance = control.Options.Appearance with { CoordLabelCornerRadius = 8 } };
-        Assert.Equal(8, control.CoordLabelBorder.CornerRadius.TopLeft);
+        control.CenterPoint = new Point(11, 20);
+        await control.WaitForRenderedAsync();
+        Assert.Equal(8, args!.CoordLabel!.Value.CornerRadius);
 
+        // 0 は角丸なし（四角形）として保持される（最低 1 へ切り上げない）
         control.Options = control.Options with { Appearance = control.Options.Appearance with { CoordLabelCornerRadius = 0 } };
-        Assert.Equal(0, control.CoordLabelBorder.CornerRadius.TopLeft);
+        control.CenterPoint = new Point(12, 20);
+        await control.WaitForRenderedAsync();
+        Assert.Equal(0, args!.CoordLabel!.Value.CornerRadius);
     }
 
     // ====================================================================
@@ -822,67 +835,6 @@ public class LoupeControlTests
 
         Assert.Equal(12.0, control.Options.Appearance.CoordLabelFontSize);
     }
-
-    [AvaloniaFact]
-    public void CoordLabelBackgroundColor_透明でも例外にならない()
-    {
-        var control = new LoupeControl();
-        control.Options = control.Options with
-        {
-            Appearance = control.Options.Appearance with
-            {
-                ShowCoordLabel = true,
-                CoordLabelBackgroundColor = DrawingColor.FromArgb(0, 0, 0, 0),
-            },
-        };
-        control.CenterPoint = new Point(10, 20);
-
-        // 透明な背景色でも例外なく描画される（透明ブラシがそのまま設定される）
-        Assert.NotNull(control.CoordLabelBorder);
-        Assert.True(control.CoordLabelBorder!.IsVisible);
-    }
-
-    [AvaloniaFact]
-    public void 座標ラベル背景色のブラシは容量超過時も例外なく共有される()
-    {
-        var control = new LoupeControl();
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = true } };
-
-        // ブラシキャッシュ容量（128）を超える 129 色を順次設定し、容量超過時のキャッシュクリア経路を実行する
-        for (int i = 0; i <= 128; i++)
-        {
-            control.Options = control.Options with
-            {
-                Appearance = control.Options.Appearance with
-                {
-                    CoordLabelBackgroundColor = DrawingColor.FromArgb(255, (byte)i, (byte)(255 - i), (byte)(i * 3)),
-                },
-            };
-            control.CenterPoint = new Point(i + 1, 20);
-        }
-
-        Assert.NotNull(control.CoordLabelBorder);
-        Assert.True(control.CoordLabelBorder!.IsVisible);
-    }
-
-    [AvaloniaFact]
-    public void UpdateCoordLabel_PART要素がnullでも例外にならない()
-    {
-        var control = CreateControl();
-        // PART_CoordLabel / PART_CoordText を null にして防御分岐をカバーする
-        var labelField = typeof(LoupeControl).GetField("PART_CoordLabel", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        var textField = typeof(LoupeControl).GetField("PART_CoordText", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        labelField!.SetValue(control, null);
-        textField!.SetValue(control, null);
-
-        // 例外なく完了する
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = true } };
-        control.CenterPoint = new Point(10, 20);
-    }
-
-    // ====================================================================
-    // Rendered イベント（描画完了通知・Bitmap 受け渡し）
-    // ====================================================================
 
     [AvaloniaFact]
     public async Task 描画完了でRenderedイベントが発火し描画済みBitmapと表示情報を通知する()

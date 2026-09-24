@@ -13,6 +13,7 @@ using EsUtil.Platform.AvaloniaUI.Imaging;
 using Estable.Marquee.Decoration;
 using Estable.FadeMaskDragRect;
 using Estable.Marquee;
+using Estable.Marquee.CoreForControl;
 using Estable.Loupe;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -93,7 +94,7 @@ public class FadeMaskDragRectControlTests
             Marquee = MarqueeOptions.Default with
             {
                 MinSelectionSize = 5,
-                OuterAppearance = MarqueeOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
+                HandleBorderColor = System.Drawing.Color.Red,
                 HandleColor = Color.FromAColor(102, Colors.Red).ToDrawingColor(),
                 HandleSize = 12.0,
                 HandleHitRadius = 15.0,
@@ -101,13 +102,18 @@ public class FadeMaskDragRectControlTests
                 MarkerColor = Colors.Green.ToDrawingColor(),
                 MarkerLength = 20.0,
             },
+            Deco = MarqueeDecoOptions.Default with
+            {
+                OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
+            },
         };
 
         control.Options = options;
 
         var applied = control.Marquee.Options;
         Assert.Equal(5, applied.MinSelectionSize);
-        Assert.Equal(3.0, applied.OuterAppearance.BorderThickness);
+        Assert.Equal(System.Drawing.Color.Red, applied.HandleBorderColor);
+        Assert.Equal(3.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
         Assert.Equal(Color.FromAColor(102, Colors.Red), applied.HandleColor.ToAvaloniaColor());
         Assert.Equal(12.0, applied.HandleSize);
         Assert.Equal(15.0, applied.HandleHitRadius);
@@ -117,28 +123,26 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void Options_外側の装飾の外観が反映される()
+    public void Options_装飾とサイズラベルの外観が反映される()
     {
         var control = new FadeMaskDragRectControl();
         var options = FadeMaskDragRectOptions.Default with
         {
+            // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する
             Marquee = MarqueeOptions.Default with
+            {
+                ShowSizeLabel = false,
+                SizeLabelColor = Colors.Yellow.ToDrawingColor(),
+                SizeLabelBackgroundColor = Color.FromAColor(179, Colors.DarkBlue).ToDrawingColor(), // 暗青 70%
+                SizeLabelFontSize = 18.0,
+            },
+            Deco = MarqueeDecoOptions.Default with
             {
                 OuterAppearance = new OuterDecoAppearance
                 {
                     OverlayColor = Color.FromAColor(128, Colors.DarkBlue).ToDrawingColor(), // 暗青 50%
-                    SizeLabelColor = Colors.Yellow.ToDrawingColor(),
-                    SizeLabelBackgroundColor = Color.FromAColor(179, Colors.DarkBlue).ToDrawingColor(), // 暗青 70%
-                    SizeLabelFontSize = 18.0,
-                    ShowSizeLabel = false,
-                    ShowSubLines = false,
-                    SubLineFontSize = 13.0,
-                    SubLineColor = Colors.Orange.ToDrawingColor(),
-                    SubLineBackgroundColor = Color.FromAColor(102, Colors.DarkGreen).ToDrawingColor(), // 暗緑 40%
-                    InfoLabelBackgroundColor = Color.FromAColor(128, Colors.DarkRed).ToDrawingColor(), // 暗赤 50%
-                    InfoLabelVisible = false,
-                    InfoLabelColor = Colors.Cyan.ToDrawingColor(),
-                    InfoLabelFontSize = 12.0,
+                    BorderColor = Colors.Red.ToDrawingColor(),
+                    BorderThickness = 3.0,
                 },
             },
         };
@@ -151,21 +155,19 @@ public class FadeMaskDragRectControlTests
 
         Assert.Equal(2.0, control.Scaling);
         Assert.Equal(1.5, control.DisplayScaleScaling);
-        // 外観はコアの OuterDecoAppearance へ 1 つにまとめて反映される（色は UI 非依存の色型）
-        var appearance = control.Marquee.Options.OuterAppearance;
+
+        // 選択の設定（サイズラベル）はコアの MarqueeOptions へ反映される
+        var marquee = control.Marquee.Options;
+        Assert.False(marquee.ShowSizeLabel);
+        Assert.Equal(Colors.Yellow.ToDrawingColor(), marquee.SizeLabelColor);
+        Assert.Equal(Color.FromAColor(179, Colors.DarkBlue).ToDrawingColor(), marquee.SizeLabelBackgroundColor);
+        Assert.Equal(18.0, marquee.SizeLabelFontSize);
+
+        // 装飾の外観（暗転と枠線）は OuterDecoAppearance へ 1 つにまとめて反映される（色は UI 非依存の色型）
+        var appearance = control.Marquee.DecoOptions.OuterAppearance;
         Assert.Equal(Color.FromAColor(128, Colors.DarkBlue).ToDrawingColor(), appearance.OverlayColor);
-        Assert.Equal(Colors.Yellow.ToDrawingColor(), appearance.SizeLabelColor);
-        Assert.Equal(Color.FromAColor(179, Colors.DarkBlue).ToDrawingColor(), appearance.SizeLabelBackgroundColor);
-        Assert.Equal(18.0, appearance.SizeLabelFontSize);
-        Assert.False(appearance.ShowSizeLabel);
-        Assert.False(appearance.ShowSubLines);
-        Assert.Equal(13.0, appearance.SubLineFontSize);
-        Assert.Equal(Colors.Orange.ToDrawingColor(), appearance.SubLineColor);
-        Assert.Equal(Color.FromAColor(102, Colors.DarkGreen).ToDrawingColor(), appearance.SubLineBackgroundColor);
-        Assert.Equal(Color.FromAColor(128, Colors.DarkRed).ToDrawingColor(), appearance.InfoLabelBackgroundColor);
-        Assert.False(appearance.InfoLabelVisible);
-        Assert.Equal(Colors.Cyan.ToDrawingColor(), appearance.InfoLabelColor);
-        Assert.Equal(12.0, appearance.InfoLabelFontSize);
+        Assert.Equal(Colors.Red.ToDrawingColor(), appearance.BorderColor);
+        Assert.Equal(3.0, appearance.BorderThickness);
     }
 
     [AvaloniaFact]
@@ -274,17 +276,17 @@ public class FadeMaskDragRectControlTests
         // with 式で一部だけを差し替える（指定しない項目は現在値＝既定値を維持する）
         control.Options = control.Options with
         {
-            Marquee = control.Options.Marquee with
+            Marquee = control.Options.Marquee with { MarkerLength = 24.0 },
+            Deco = control.Options.Deco with
             {
-                MarkerLength = 24.0,
-                OuterAppearance = control.Options.Marquee.OuterAppearance with { BorderThickness = 4.0 },
+                OuterAppearance = control.Options.Deco.OuterAppearance with { BorderThickness = 4.0 },
             },
             Loupe = control.Options.Loupe with { RequestedSize = 200 },
         };
 
         Assert.Equal(5, control.Marquee.Options.MinSelectionSize);           // 未指定 → 現在値維持
         Assert.Equal(24.0, control.Marquee.Options.MarkerLength);            // 指定 → 反映
-        Assert.Equal(4.0, control.Marquee.Options.OuterAppearance.BorderThickness); // 指定 → 反映
+        Assert.Equal(4.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness); // 指定 → 反映
         Assert.Equal(200, control.Loupe.Options.RequestedSize);               // 指定 → 反映
         Assert.Equal(30.0, control.Loupe.PositionOffset);                     // 未指定 → 現在値維持
         Assert.Equal(200, control.Options.Loupe.RequestedSize);               // getter は更新後の値を返す
@@ -295,14 +297,13 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SetCoordinateTransform_3コントロールへ同一ポートが分配される()
+    public void SetCoordinateTransform_内包コントロールへ同一ポートが分配される()
     {
         var control = new FadeMaskDragRectControl();
         var port = CoordTransform.Identity;
 
         control.SetCoordinateTransform(port);
 
-        Assert.Same(port, GetCoordinatePort(control.Marquee));
         Assert.Same(port, GetCoordinatePort(control.Marquee));
         Assert.Same(port, GetCoordinatePort(control.Loupe));
     }
@@ -675,26 +676,17 @@ public class FadeMaskDragRectControlTests
 
     /// <summary>コントロールの座標変換ポートをリフレクションで取得する。</summary>
     /// <param name="control">対象のコントロール。</param>
-    /// <returns>設定されている座標変換ポート。</returns>
+    /// <returns>設定されている座標変換ポート。未設定の場合は null。</returns>
     /// <remarks>
-    /// Marquee はポートをコアの状態管理クラス（セッション）が保持するため、<c>_session.State.Port</c> を辿る。<br/>
-    /// <c>State</c> と <c>Port</c> は内部契約（テストとコアのみが参照する）ため、非公開メンバーも含めて解決する。<br/>
-    /// 他のコントロール（Loupe）は自前の <c>_coordinatePort</c> フィールドを保持する。
+    /// ポートはコアのファサード（<c>Marquee</c> / <c>Loupe</c>）が単一所有し、コントロールはファサードへ委譲するだけである。<br/>
+    /// 検証ではコントロールが保持するファサード（<c>_marquee</c> / <c>_loupe</c>）の内部フィールドをリフレクションで辿る。
     /// </remarks>
-    private static ICoordTransform GetCoordinatePort(Control control)
+    private static ICoordTransform? GetCoordinatePort(Control control)
     {
         var anyInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-
-        var sessionField = control.GetType().GetField("_session", anyInstance);
-        if (sessionField is not null)
-        {
-            var session = sessionField.GetValue(control)!;
-            var state = session.GetType().GetProperty("State", anyInstance)!.GetValue(session)!;
-            return (ICoordTransform)state.GetType().GetProperty("Port", anyInstance)!.GetValue(state)!;
-        }
-
-        var field = control.GetType().GetField("_coordinatePort", anyInstance);
-        return (ICoordTransform)field!.GetValue(control)!;
+        var type = control.GetType();
+        var facade = (type.GetField("_marquee", anyInstance) ?? type.GetField("_loupe", anyInstance))!.GetValue(control)!;
+        return (ICoordTransform?)facade.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(facade);
     }
 
     // ====================================================================
@@ -1038,7 +1030,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void 文言プロバイダ_選択矩形コントロールへ委譲される()
+    public void 文言プロバイダ_ホストが保持する()
     {
         var control = new FadeMaskDragRectControl();
         Func<string?> operation = () => "確定: Enter";
@@ -1047,10 +1039,10 @@ public class FadeMaskDragRectControlTests
         control.OperationTextProvider = operation;
         control.InfoTextProvider = info;
 
+        // 操作・情報ラベルはアプリ固有の付加情報のため、ホスト（本クラス）が保持して描画する
+        // （選択コントロールの概念ではないため、コアへは伝搬しない）
         Assert.Same(operation, control.OperationTextProvider);
         Assert.Same(info, control.InfoTextProvider);
-        Assert.Same(operation, control.Marquee.OperationTextProvider);
-        Assert.Same(info, control.Marquee.InfoTextProvider);
     }
 
     [AvaloniaFact]

@@ -96,9 +96,6 @@ internal static class CapturePage
         OverlayColor = System.Drawing.Color.Transparent,
         BorderColor = System.Drawing.Color.Transparent,
         BorderThickness = AutoCropBorderThickness,
-        ShowSizeLabel = false,
-        ShowSubLines = false,
-        InfoLabelVisible = false,
     };
 
     /// <summary>自動切り出しのホバー強調（赤色の枠線 + 半透明の塗り）の外観。</summary>
@@ -639,14 +636,17 @@ internal static class CapturePage
             var hovered = viewModel.IsAutoCropActive ? viewModel.HoveredRect : null;
             if (hovered is not { } target)
             {
-                autoCropHighlight.Options = MarqueeOptions.Default with { OuterAppearance = s_hiddenOuterDecoAppearance };
+                // ハイライトなし（外側の装飾も描かない。サイズラベルも表示しない）
+                autoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
+                autoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with { OuterAppearance = s_hiddenOuterDecoAppearance };
                 return;
             }
 
             var topLeft = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.X, target.Y));
             var bottomRight = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.Right, target.Bottom));
 
-            autoCropHighlight.Options = MarqueeOptions.Default with
+            autoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
+            autoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with
             {
                 OuterAppearance = s_hiddenOuterDecoAppearance,
                 OuterHasHighlight = true,

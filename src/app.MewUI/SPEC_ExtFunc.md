@@ -67,7 +67,7 @@
 
 ### 選択中のラベル
 
-選択矩形の左上に行を縦に積んで表示します（背景付き。行の配置は `MarqueeControl.Core` の `OuterDecoLabelLayout`（名前空間 `Estable.Marquee.Decoration`）が単一所有し、文言は `CaptureLabelTexts`（`CaptureSessionControl.Core`）が与えます）。
+選択矩形の左上に行を縦に積んで表示します（背景付き。行の配置は `MarqueeControl.Core`（`Decoration` 名前空間）  の `Decoration` 名前空間（`MarqueeLabelLayoutPlan`）が単一所有し、文言は `CaptureLabelTexts`（`CaptureSessionControl.Core`）が与えます）。
 
 | 行 | 内容 | 表示条件 | 設定 |
 | --- | --- | --- | --- |

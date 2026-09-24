@@ -17,7 +17,7 @@
     - [5.1 ScreenConverter](#51-screenconverter)
     - [5.2 相互変換（Interop）](#52-相互変換interop)
     - [5.3 ColorExtensions（C# 14 静的拡張メンバー）](#53-colorextensionsc-14-静的拡張メンバー)
-    - [5.4 EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / BrushCache](#54-esbitmapavaloniaextensions--esbitmapavaloniaimage--brushcache)
+    - [5.4 EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache](#54-esbitmapavaloniaextensions--esbitmapavaloniaimage--capacitylimitedcache)
     - [5.5 型一覧](#55-型一覧)
   - [6. 座標系](#6-座標系)
   - [7. 制約事項](#7-制約事項)
@@ -66,7 +66,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 
 ```csharp
 using EsUtil.Platform.AvaloniaUI;          // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
-using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / BrushCache
+using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache
 using EsUtil.Platform.Core;                     // サービス抽象 / コア値型
 using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
@@ -157,7 +157,7 @@ ICoordTransform dipPort = ScreenConverter.CreateVisualDipPort(control);
 | --- | --- | --- |
 | `FromAColor` | `static Color FromAColor(byte alpha, Color baseColor)` | 基準色（名前付き色等）と不透明度から色を生成する（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%）。RGB 直指定より可読性が高い |
 
-### 5.4 EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / BrushCache
+### 5.4 EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache
 
 `EsBitmap`（`Platform.Core` 提供）を Avalonia へ適合させます。
 
@@ -176,13 +176,22 @@ ICoordTransform dipPort = ScreenConverter.CreateVisualDipPort(control);
 | 型 | 説明 |
 | --- | --- |
 | `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ。`Draw` は Skia 直描画（`WriteableBitmap` を生成しない）。`Dispose` で内包を解放 |
-| `BrushCache` | 色に対応するブラシの容量制限付きキャッシュ（`GetOrCreate` / `Count` / `MaxCapacity`。スレッド安全） |
+| `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。スレッド安全。値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
+
+```csharp
+// 色 → ブラシの共有（描画のたびに生成しない）
+private static readonly CapacityLimitedCache<Color, SolidColorBrush> s_cache =
+    new(static color => new SolidColorBrush(color));
+var brush = s_cache.GetOrCreate(color);
+```
+
+容量管理（しきい値・超過時の全クリア）を本型が単一所有するため、利用側（ブラシ・ペンのキャッシュ）は容量の判定を持ちません。
 
 ### 5.5 型一覧
 
 公開型は `ScreenConverter` / `EsKeyAvaloniaInterop` / `EsWindowStateAvaloniaInterop` /
 `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop` / `ColorAvaloniaInterop` / `CursorOverrideGuardAvaloniaExtensions` /
-`ColorExtensions` / `EsBitmapAvaloniaImage` / `EsBitmapAvaloniaExtensions` / `BrushCache` です。
+`ColorExtensions` / `EsBitmapAvaloniaImage` / `EsBitmapAvaloniaExtensions` / `CapacityLimitedCache<TKey, TValue>` です。
 
 インターフェース・コア値型・`CoordTransform`・`EsBitmap` は `Platform.Core`、
 `PlatformFactory.CreateXxx()` と Win32 / NoOp 実装・`EsBitmapDrawingExtensions` は `Platform.Native` が提供します。

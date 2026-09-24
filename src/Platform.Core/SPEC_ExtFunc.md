@@ -63,7 +63,8 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 - `NormalizeScaling(double scaling)`: スケーリング係数を有効値へ正規化する（無効な値は `StandardScaling`）。
 - `ScaleToPixel(int/double dipValue, double scaling)`: DIP 値を物理ピクセルへ変換（切り上げ・最低 1。浮動小数誤差を吸収）。
 - `ToDip(int/double physical, double scaling)`: 物理ピクセルを DIP へ変換（`ScaleToPixel` の逆変換。**丸め・最低値の規則は適用しない**）。ウィンドウの位置・サイズを物理ピクセルから DIP へ戻す場面（全モニタの包含矩形をウィンドウへ適用する等）で共用する。
-- `LoupeControl` の表示サイズ計算と、両 UI のウィンドウ配置で共用する。
+- `ToDip(EsSize physicalSize, double scaling)`: 物理ピクセルのサイズを DIP のサイズへ変換する（成分ごとの換算を上記 `ToDip` へ委譲する）。コア型同士の換算を UI 側で組み立てないための入口。
+- `LoupeControl` の表示サイズ計算と、両 UI のウィンドウ配置・サイズ換算で共用する。
 
 ### `LoggerFallback`（static class）
 
@@ -93,6 +94,67 @@ paint.Color = info.Background.ToSKColor();   // コアの色型 → Skia
 
 SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。MewUI 版の描画層（`CropSkiaRenderer` / `MarqueeSkiaRenderer` / `MarqueeOuterSkiaRenderer` / `FadeMaskDragRectSkiaRenderer` / `LoupeControl` / `LoupeSkiaRenderer` / `SkiaImageRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
 逆方向（Skia → コア）の変換は本番の利用箇所がないため提供しません（YAGNI）。
+
+### `Imaging.SkiaGeometryInterop`（static class）
+
+コアの幾何型を Skia の幾何型へ変換する共通ヘルパー。拡張メソッドとして提供します。
+
+| 種別 | メンバー | シグネチャ | 説明 |
+| --- | --- | --- | --- |
+| 拡張メソッド | `ToSKRect` | `static SKRect ToSKRect(this EsRect rect)` | コアの矩形を Skia の矩形（左上と右下）へ変換する。負のサイズもそのまま保持する |
+| 拡張メソッド | `ToEsSize` | `static EsSize ToEsSize(this SKSizeI size)` | Skia の整数サイズ（描画先の表面サイズ等）をコアのサイズへ変換する |
+
+MewUI 版の描画層が共用し、同じ変換の複製を各コントロールへ置きません。
+
+### `Imaging.SkiaFill`（static class）
+
+Skia の矩形塗り（単色）を単一所有するヘルパーです。
+`new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill, Color = ... }` という同一の塗りを各描画層・ホストが繰り返し書かないよう、塗りの生成と描画を本クラスに集約します。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `Rect` | `static void Rect(SKCanvas canvas, EsRect rect, DrawingColor color)` | 矩形を塗る |
+| `Rects` | `static void Rects(SKCanvas canvas, IReadOnlyList<EsRect> rects, DrawingColor color)` | 複数の矩形を同じ色で塗る（ペイントを 1 つだけ生成する。空の一覧は何もしない） |
+| `RoundRect` | `static void RoundRect(SKCanvas canvas, EsRect rect, double cornerRadius, DrawingColor color)` | 角丸矩形を塗る（半径 0 以下は四角形） |
+
+```csharp
+SkiaFill.Rects(canvas, frame.BorderRects, frame.BorderColor);   // 4 辺を同じ色で塗る
+```
+
+線（ストローク）と文字は各所有者（描画層 / `SkiaText`）が持ち、本クラスは塗りのみを扱います。
+
+### `Imaging.SkiaLabel`（static class）
+
+Skia のラベル 1 件（背景 + 文字）の描画順を単一所有するヘルパーです。
+「背景を塗ってから文字を描く」順序は <code>SkiaFill</code> と <code>SkiaText</code> の呼び出し順そのものであり、各 UI・各ホストが書くと重なりがずれうるため本クラスへ集約します。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `Draw` | `static void Draw(SKCanvas canvas, EsRect background, DrawingColor backgroundColor, string text, EsPoint textOrigin, double fontSize, DrawingColor textColor, double cornerRadius = 0)` | 背景（角丸 0 以下は四角形）を塗ってから文字を左上原点で描く |
+
+```csharp
+SkiaLabel.Draw(canvas, frame.Background, line.BackgroundColor, line.Text, frame.TextOrigin, line.FontSize, line.Color);
+```
+
+テキストの実寸測定と配置の計算（余白・行送り・クランプ）は各コントロールのコアが単一所有します。
+
+### `Imaging.SkiaText`（static class）
+
+Skia のテキスト描画（フォント解決・実寸測定・描画）を単一所有するヘルパーです。
+テキストの実寸は描画 API でしか測れないため、測定と描画を本クラスに集約します。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `ResolveTypeface` | `static SKTypeface ResolveTypeface(string text)` | フォントを解決する。非 ASCII（日本語等）を含む場合は字形を持つフォントへフォールバックする（豆腐を防ぐ） |
+| `Measure` | `static EsSize Measure(string text, double fontSize)` | テキストの実寸（幅・行高）を測定する（行高はフォントの `Descent - Ascent`） |
+| `Draw` | `static void Draw(SKCanvas canvas, string text, double left, double top, double fontSize, DrawingColor color)` | テキストを左上原点で描画する |
+
+```csharp
+var size = SkiaText.Measure("確定", 14);          // EsSize（幅・行高）
+SkiaText.Draw(canvas, "確定", 8, 8, 14, label.TextColor);
+```
+
+レイアウト規則（余白・行送り・配置）は各コントロールのコアが単一所有し、本クラスは描画のプリミティブのみを提供します（MewUI 版の描画層と、両 UI の文字描画が共用します）。矩形の塗りは `SkiaFill` が単一所有します。
 
 ### `Imaging.ImageDrawMode`（enum）
 
@@ -143,7 +205,7 @@ public readonly record struct EsPixelPoint(int X, int Y);
 public readonly record struct EsPixelRect(int X, int Y, int Width, int Height);
 ```
 
-画面の物理ピクセル座標・矩形（DPI スケーリング適用後）。`EsPixelRect` は `Right` / `Bottom` / `TopLeft` / `BottomRight` / `Center` を提供し、`Contains(EsPixelPoint)`（半開区間）と `Union(EsPixelRect)` を持ちます。`TopLeft` は矩形の原点（画像の原点等）を座標の手組みなしで取り出すために使います。
+画面の物理ピクセル座標・矩形（DPI スケーリング適用後）。`EsPixelRect` は `Right` / `Bottom` / `TopLeft` / `BottomRight` / `Center` を提供し、`Contains(EsPixelPoint)`（半開区間）と `Union(EsPixelRect)` を持ちます。`TopLeft` は矩形の原点（画像の原点等）を座標の手組みなしで取り出すために使います。`EsPixelPoint.ToEsPoint()` は小数を扱う `EsPoint` への変換で、UI が成分を書き写さないよう本型が単一所有します。
 
 ### `Geometry.EsPlatformHandle`（readonly record struct）
 

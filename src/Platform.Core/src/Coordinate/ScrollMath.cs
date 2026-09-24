@@ -10,6 +10,14 @@ namespace EsUtil.Platform.Core.Coordinate;
 /// </remarks>
 public static class ScrollMath
 {
+    /// <summary>通常ホイール 1 段あたりのスクロール量（DIP）。</summary>
+    /// <value>ホイールの回転量 1 を DIP の移動量へ換算する係数。</value>
+    /// <remarks>
+    /// OS のホイール 1 段は 3 行（行の高さにより変動する）をスクロールするが、<br/>
+    /// キャンバスのパンでは「見た目の移動量」を優先して固定値を用いる（全 UI・全ホイール経路で同じ値を使う）。
+    /// </remarks>
+    public const double WheelScrollUnit = 48.0;
+
     /// <summary>スクロール範囲の最大オフセット（コンテンツ座標）を計算する。</summary>
     /// <param name="contentSize">コンテンツサイズ（コンテンツ座標）。</param>
     /// <param name="viewportSize">ビューポートサイズ（表示座標）。</param>
@@ -29,7 +37,7 @@ public static class ScrollMath
     /// <param name="viewportSize">ビューポートサイズ（表示座標）。</param>
     /// <param name="scale">スケール（倍率 / 100）。</param>
     /// <returns>コンテンツ座標での表示範囲。</returns>
-    /// <remarks>サムサイズ = ビューポート / コンテンツ × トラック長 の計算に使用する。</remarks>
+    /// <remarks>サムサイズ = ビューポート / コンテンツ × トラック長の計算に使用する。</remarks>
     public static double ViewportSize(double viewportSize, double scale)
     {
         scale = scale > 0 ? scale : 1;

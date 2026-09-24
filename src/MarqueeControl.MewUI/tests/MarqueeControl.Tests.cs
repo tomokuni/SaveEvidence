@@ -1,4 +1,7 @@
+using Aprillz.MewUI;
+using Aprillz.MewUI.Controls;
 using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -72,9 +75,10 @@ public class MarqueeControlTests
         var control = CreateControl(new CursorServiceSpy());
         var options = control.Options;
 
-        // 枠線の既定は DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）。外側の装飾の外観が単一所有する
-        Assert.Equal(DrawingColor.FromArgb(255, 169, 169, 169), options.OuterAppearance.BorderColor);
-        Assert.Equal(2.0, options.OuterAppearance.BorderThickness);
+        // ハンドルの枠線の既定は装飾の枠線と同じ DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）
+        Assert.Equal(DrawingColor.FromArgb(255, 169, 169, 169), options.HandleBorderColor);
+        // 装飾の既定は枠線と暗転を描く
+        Assert.Equal(2.0, control.DecoOptions.OuterAppearance.BorderThickness);
         Assert.True(options.ShowHandles);
         Assert.Equal(DrawingColor.White, options.HandleColor);
         Assert.Equal(10.0, options.HandleSize);
@@ -101,13 +105,9 @@ public class MarqueeControlTests
 
         control.Options = MarqueeOptions.Default with
         {
-            OuterAppearance = MarqueeOptions.Default.OuterAppearance with
-            {
-                BorderColor = DrawingColor.Red,
-                BorderThickness = 3.0,
-            },
             ShowHandles = false,
             HandleColor = DrawingColor.Blue,
+            HandleBorderColor = DrawingColor.Red,
             HandleSize = 14.0,
             MarkerColor = DrawingColor.Yellow,
             MarkerLength = 24.0,
@@ -115,10 +115,18 @@ public class MarqueeControlTests
             CoordLabelColor = DrawingColor.Cyan,
             CoordLabelBackgroundColor = DrawingColor.FromArgb(128, 0, 100, 0),
         };
+        control.DecoOptions = MarqueeDecoOptions.Default with
+        {
+            OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
+            {
+                BorderColor = DrawingColor.Red,
+                BorderThickness = 3.0,
+            },
+        };
 
         var options = control.Options;
-        Assert.Equal(DrawingColor.Red, options.OuterAppearance.BorderColor);
-        Assert.Equal(3.0, options.OuterAppearance.BorderThickness);
+        Assert.Equal(DrawingColor.Red, options.HandleBorderColor);
+        Assert.Equal(3.0, control.DecoOptions.OuterAppearance.BorderThickness);
         Assert.False(options.ShowHandles);
         Assert.Equal(DrawingColor.Blue, options.HandleColor);
         Assert.Equal(14.0, options.HandleSize);
@@ -408,10 +416,7 @@ public class MarqueeControlTests
         control.Log = logger;
 
         // 外観（色・サイズ）の変更は対話パラメータを変えないため、設定変更ログは流れない
-        control.Options = control.Options with
-        {
-            OuterAppearance = control.Options.OuterAppearance with { BorderColor = DrawingColor.Red, BorderThickness = 3.0 },
-        };
+        control.Options = control.Options with { HandleBorderColor = DrawingColor.Red };
 
         Assert.Empty(logger.Messages);
     }
@@ -427,5 +432,70 @@ public class MarqueeControlTests
         control.RequestConfirm();
 
         Assert.Contains("[Marquee] ConfirmRequested: rect=(10, 10, 50, 40)", logger.Messages);
+    }
+
+    // ====================================================================
+    // 基底 UIElement のマウスイベント（本 UI 固有の公開面）
+    // ====================================================================
+
+    /// <summary>基底 <c>MouseDown</c> は処理済み（<c>Handled</c>）でも通知されることを検証する。</summary>
+    /// <remarks>
+    /// 本コントロールは押下・解放の公開イベントを持たない（基底 <c>UIElement</c> が同名のイベントを提供するため）。<br/>
+    /// 基底の <c>OnMouseDown</c> は <c>Handled</c> を見ずに <c>MouseDown</c> を発火する（実装を実測で確認した）ため、<br/>
+    /// 本コントロールが処理済みにしてもホストの購読者は呼ばれる。<br/>
+    /// <b>本番のコントロールでは検証できない</b>: <c>MouseEventArgs.GetPosition</c> がウィンドウ接続を要求するため、<br/>
+    /// 配送の規則だけを検証用の最小コントロールで実測する。
+    /// </remarks>
+    [Fact]
+    public void 基底のMouseDownはHandledでも通知される()
+    {
+        var probe = new MouseEventProbe();
+        var raised = 0;
+        probe.MouseDown += _ => raised++;
+
+        var e = CreateMouseArgs(leftButton: true);
+        probe.RaiseDown(e);
+        e.Handled = true;
+        probe.RaiseDown(e);
+
+        Assert.Equal(2, raised);
+    }
+
+    /// <summary>基底 <c>MouseUp</c> も処理済み（<c>Handled</c>）でも通知されることを検証する。</summary>
+    [Fact]
+    public void 基底のMouseUpはHandledでも通知される()
+    {
+        var probe = new MouseEventProbe();
+        var raised = 0;
+        probe.MouseUp += _ => raised++;
+
+        var e = CreateMouseArgs(leftButton: true);
+        probe.RaiseUp(e);
+        e.Handled = true;
+        probe.RaiseUp(e);
+
+        Assert.Equal(2, raised);
+    }
+
+    /// <summary>検証用のマウスイベント引数を生成する。</summary>
+    /// <param name="leftButton">左ボタンが押下されたか。</param>
+    /// <returns>生成したイベント引数。</returns>
+    private static MouseEventArgs CreateMouseArgs(bool leftButton)
+        => new(default, default, MouseButton.Left, leftButton, false, false, clickCount: 1, ModifierKeys.None);
+
+    /// <summary>基底 <see cref="UIElement"/> のマウスイベント配送を実測するための検証用コントロール。</summary>
+    /// <remarks>
+    /// 本番のコントロールは座標変換（<c>GetPosition</c>）でウィンドウを要求するため、<br/>
+    /// 配送の規則だけを切り出して検証する（保護メソッドを公開して呼び出す）。
+    /// </remarks>
+    private sealed class MouseEventProbe : Control
+    {
+        /// <summary>保護された <c>OnMouseDown</c> を呼び出す。</summary>
+        /// <param name="e">イベント引数。</param>
+        public void RaiseDown(MouseEventArgs e) => OnMouseDown(e);
+
+        /// <summary>保護された <c>OnMouseUp</c> を呼び出す。</summary>
+        /// <param name="e">イベント引数。</param>
+        public void RaiseUp(MouseEventArgs e) => OnMouseUp(e);
     }
 }

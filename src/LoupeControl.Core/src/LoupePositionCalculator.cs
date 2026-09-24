@@ -8,8 +8,10 @@ namespace Estable.Loupe;
 /// 表示サイズの親領域へのクランプと、表示位置（中心 + オフセット、親領域内へのクランプ）を計算する。<br/>
 /// 座標変換（<c>ICoordTransform.Inverse</c>）は呼び出し側で行い、本クラスは変換後（DIP）の座標を受け取る。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
+/// <b>外部公開しない</b>: 利用者（UI 実装・ホスト）はファサード <see cref="Loupe.ResolveLayout"/> を使うため、
+/// 配置の内部手順は本アセンブリと単体テストに限定する。
 /// </remarks>
-public static class LoupePositionCalculator
+internal static class LoupePositionCalculator
 {
     /// <summary>サイズを提示領域の最小辺へクランプする（領域サイズが未確定の場合はクランプしない）。</summary>
     /// <param name="size">クランプするサイズ（正の値）。</param>

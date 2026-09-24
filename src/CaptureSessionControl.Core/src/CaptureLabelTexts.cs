@@ -2,6 +2,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Estable.FadeMaskDragRect;
+using Estable.Marquee;
 using Estable.Marquee.Decoration;
 
 namespace Estable.CaptureSession;
@@ -73,7 +74,7 @@ public static class CaptureLabelTexts
     {
         ArgumentNullException.ThrowIfNull(displayScaling);
         return target is { } rect
-            ? OuterDecoLabels.FormatSizeLabel(rect, DpiScaler.StandardScaling, displayScaling(rect))
+            ? MarqueeSizeLabel.Format(rect, DpiScaler.StandardScaling, displayScaling(rect))
             : overrideText;
     }
 }

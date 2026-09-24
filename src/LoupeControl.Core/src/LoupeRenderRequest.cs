@@ -29,6 +29,22 @@ public readonly record struct LoupeRenderRequest(
     LoupeAppearance Appearance,
     double Scaling)
 {
+    /// <summary>描画先の全領域（ルーペの一辺が作る正方形）を取得する。</summary>
+    /// <value>左上を原点（0, 0）とし、幅・高さが <see cref="PixelSize"/> の矩形（物理ピクセル）。</value>
+    /// <remarks>
+    /// 下地・市松模様は描画先の全面へ描くため、各 UI の描画層が矩形を組み立てないよう契約が単一所有する<br/>
+    /// （描画先の原点は常に 0 であり、UI 側で組み立てると原点の取り違えが生じる）。
+    /// </remarks>
+    public EsRect SurfaceBounds => new(0, 0, PixelSize, PixelSize);
+
+    /// <summary>ルーペの一辺の表示サイズ（DIP）を取得する。</summary>
+    /// <value>実際に描画する表面の DIP 換算値（<see cref="PixelSize"/> ÷ <see cref="Scaling"/>）。</value>
+    /// <remarks>
+    /// 中心座標ラベルの配置基準である（ラベルは DIP で配置し、描画時に物理ピクセルへ換算される）。<br/>
+    /// 描画先の領域でクランプされた後の値になるため、<see cref="Loupe.RenderScaling"/> の変更や親領域の縮小に追従する。
+    /// </remarks>
+    public double DisplaySize => Scaling > 0 ? PixelSize / Scaling : PixelSize;
+
     /// <summary>UI 層が保持する DIP 値から描画入力を組み立てる。</summary>
     /// <param name="center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定は null。</param>
     /// <param name="displaySize">ルーペの表示サイズ（DIP。一辺）。</param>

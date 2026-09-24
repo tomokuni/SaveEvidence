@@ -3,6 +3,7 @@ using Avalonia.Media;
 using Estable.AvaloniaUI.Marquee;
 using Estable.AvaloniaUI.Loupe;
 using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
@@ -96,20 +97,20 @@ public class FadeMaskDragRectControlStateTests
         var control = new FadeMaskDragRectControl();
 
         // 既定の設定（コアの既定値）がそのまま子コントロールへ渡される
-        Assert.Equal(FadeMaskDragRectOptions.Default.Marquee.OuterAppearance, control.Marquee.Options.OuterAppearance);
+        Assert.Equal(FadeMaskDragRectOptions.Default.Deco.OuterAppearance, control.Marquee.DecoOptions.OuterAppearance);
         // モードから導出される描画状態（既定は AreaSelect = 全面暗転）だけが設定値と異なる
         Assert.Equal(
-            FadeMaskDragRectOptions.Default.Marquee with { OuterShowFullOverlay = true },
-            control.Marquee.Options);
+            FadeMaskDragRectOptions.Default.Deco with { OuterShowFullOverlay = true },
+            control.Marquee.DecoOptions);
         Assert.Equal(FadeMaskDragRectOptions.Default.Loupe, control.Loupe.Options);
         Assert.Equal(FadeMaskDragRectOptions.Default.LoupeOffset, control.Loupe.PositionOffset);
     }
 
     [AvaloniaFact]
-    public void 設定_枠線は選択枠線と暗転マスクで共用される()
+    public void 設定_枠線はハンドル枠と暗転マスクで共用される()
     {
         var control = new FadeMaskDragRectControl();
-        var overlay = FadeMaskDragRectOptions.Default.Marquee.OuterAppearance with
+        var overlay = FadeMaskDragRectOptions.Default.Deco.OuterAppearance with
         {
             BorderColor = System.Drawing.Color.Red,
             BorderThickness = 1.0,
@@ -117,11 +118,13 @@ public class FadeMaskDragRectControlStateTests
 
         control.Options = FadeMaskDragRectOptions.Default with
         {
-            Marquee = MarqueeOptions.Default with { OuterAppearance = overlay },
+            Marquee = MarqueeOptions.Default with { HandleBorderColor = overlay.BorderColor },
+            Deco = MarqueeDecoOptions.Default with { OuterAppearance = overlay },
         };
 
-        // 選択枠線（Marquee）は暗転マスクの穴あけ枠と重なるため、同じ色・太さになる
-        Assert.Equal(System.Drawing.Color.Red, control.Marquee.Options.OuterAppearance.BorderColor);
-        Assert.Equal(1.0, control.Marquee.Options.OuterAppearance.BorderThickness);
+        // 選択枠線（装飾の穴あけ枠）とハンドルの枠線は同じ矩形に重なるため、同じ色・太さになる
+        Assert.Equal(System.Drawing.Color.Red, control.Marquee.DecoOptions.OuterAppearance.BorderColor);
+        Assert.Equal(1.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
+        Assert.Equal(System.Drawing.Color.Red, control.Marquee.Options.HandleBorderColor);
     }
 }

@@ -1,5 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
-
 namespace Estable.CaptureSession;
 
 /// <summary>セッションの排他スロット（同時に 1 つだけ実行できるセッションの受付）を単一所有する。</summary>

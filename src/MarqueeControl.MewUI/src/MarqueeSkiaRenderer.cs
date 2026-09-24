@@ -7,20 +7,18 @@ using DrawingColor = System.Drawing.Color;
 
 namespace Estable.MewUI.Marquee;
 
-/// <summary>ドラッグ矩形の描画（ドラッグハンドル・始点マーカー・カーソル座標ラベル）を Skia で行うレンダラー。</summary>
+/// <summary>ドラッグ矩形の描画（ドラッグハンドル・始点マーカー）を Skia で行うレンダラー。</summary>
 /// <remarks>
 /// UI 非依存コア（<see cref="SelectionGeometry"/>）の計算結果を <see cref="SKCanvas"/> へ描画するだけの層。<br/>
 /// Avalonia 版のドロワー（<c>MarqueeDrawer</c>）と等価な見た目を、中間ビットマップなしの直接描画で実現する。<br/>
 /// ハンドル位置は <see cref="SelectionGeometry.GetHandlePosition"/> から取得する（コアが単一所有）。<br/>
-/// 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）は <see cref="MarqueeOuterSkiaRenderer"/> が担う。<br/>
+/// 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠）は <see cref="MarqueeOuterSkiaRenderer"/> が担う。<br/>
+/// <b>文字（ラベル・座標ラベル）は本クラスが描かない</b>: テキストの実寸測定が必要なため、描画完了時にホストへ通知し<br/>
+/// <see cref="MarqueeLabelRenderer"/> が描く（文字の描画をホストの責務とする）。<br/>
 /// 座標はすべて DIP で扱い、呼び出し側が DPI スケーリングを適用済みであることを前提とする。
 /// </remarks>
 internal static class MarqueeSkiaRenderer
 {
-    /// <summary>座標ラベル背景の上下パディング（DIP）。</summary>
-    /// <remarks>フォントの描画基準（ベースライン）が UI ごとに異なるため、縦方向の余白は本 UI が持つ。</remarks>
-    private const double LabelVerticalPadding = 2.0;
-
     /// <summary>ドラッグハンドル（塗り矩形 + 枠線）を描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
     /// <param name="rect">選択矩形（DIP）。</param>
@@ -29,7 +27,9 @@ internal static class MarqueeSkiaRenderer
     /// <param name="borderColor">ハンドル枠の色（アルファを含む）。</param>
     /// <remarks>
     /// 8 方向のハンドル（None / Move を除く）を列挙し、<see cref="SelectionGeometry.GetHandlePosition"/> から<br/>
-    /// 中心位置を取得して描画する。ハンドルの追加時は <see cref="HitTarget"/> の追加のみで描画が追従する。
+    /// 中心位置を取得して描画する。ハンドルの追加時は <see cref="HitTarget"/> の追加のみで描画が追従する。<br/>
+    /// <b>ペイントは 2 つ（塗り・枠）を 8 個のハンドルで共有する</b>（ハンドルの矩形は列挙時に決まるため、<br/>
+    /// 矩形の一覧を作って <see cref="SkiaFill"/> へ渡すと、ポインター移動毎の一覧生成が増える）。
     /// </remarks>
     public static void DrawHandles(SKCanvas canvas, EsRect rect, double handleSize, DrawingColor handleColor, DrawingColor borderColor)
     {
@@ -91,57 +91,4 @@ internal static class MarqueeSkiaRenderer
         canvas.DrawLine(cx - half, cy, cx + half, cy, paint);
         canvas.DrawLine(cx, cy - half, cx, cy + half, paint);
     }
-
-    /// <summary>カーソルの右側にカーソルのドメイン座標ラベル（"(x, y)"）を描画する。</summary>
-    /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
-    /// <param name="cursorDip">カーソルのローカル DIP 座標。</param>
-    /// <param name="domainPos">カーソルのドメイン座標（表示する値）。</param>
-    /// <param name="clientSize">描画領域のサイズ（はみ出しクランプ用・DIP）。</param>
-    /// <param name="textColor">ラベルの文字色（アルファを含む）。</param>
-    /// <param name="backgroundColor">ラベルの背景色（アルファを含む）。</param>
-    /// <param name="fontSize">ラベルのフォントサイズ（DIP）。</param>
-    /// <remarks>
-    /// 1. 座標は <see cref="CoordinateFormatter"/>（コア）で "(x, y)" 形式へ文字列化する（Avalonia 版と同一の表記）。<br/>
-    /// 2. ラベル配置（カーソル右側 + はみ出しクランプ）はコアの <see cref="MarqueeAppearance.ComputeCoordLabelPosition"/> へ委譲する。<br/>
-    /// 3. 背景を塗ってから文字を描画する。
-    /// </remarks>
-    public static void DrawCoordLabel(
-        SKCanvas canvas,
-        EsPoint cursorDip,
-        EsPoint domainPos,
-        EsSize clientSize,
-        DrawingColor textColor,
-        DrawingColor backgroundColor,
-        double fontSize)
-    {
-        ArgumentNullException.ThrowIfNull(canvas);
-
-        var text = CoordinateFormatter.Format(domainPos);
-
-        using var font = new SKFont(SKTypeface.Default, (float)fontSize);
-        using var textPaint = new SKPaint { IsAntialias = true, Color = textColor.ToSKColor() };
-        using var backgroundPaint = new SKPaint { IsAntialias = false, Color = backgroundColor.ToSKColor() };
-
-        var width = font.MeasureText(text, textPaint);
-        var height = (float)fontSize;
-        var labelWidth = width + (float)(MarqueeAppearance.LabelPadding * 2);
-        var labelHeight = height + (float)(LabelVerticalPadding * 2);
-
-        var position = MarqueeAppearance.ComputeCoordLabelPosition(cursorDip, clientSize, labelWidth, labelHeight);
-        var left = (float)position.X;
-        var top = (float)position.Y;
-
-        canvas.DrawRect(new SKRect(left, top, left + labelWidth, top + labelHeight), backgroundPaint);
-        canvas.DrawText(text, left + (float)MarqueeAppearance.LabelPadding, top + (float)LabelVerticalPadding + height, SKTextAlign.Left, font, textPaint);
-    }
-
-    /// <summary>コア幾何型の矩形を Skia の矩形へ変換する。</summary>
-    /// <param name="rect">変換元の矩形（DIP）。</param>
-    /// <returns>Skia の矩形。</returns>
-    private static SKRect ToSKRect(EsRect rect) => new((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
-
-    /// <summary>コアの色型を Skia の色へ変換する。</summary>
-    /// <param name="color">変換元の色（アルファを含む）。</param>
-    /// <returns>Skia の色。</returns>
-    // ※ 色の変換（コアの色型 → Skia）は Platform.Core の SkiaColorInterop（拡張メソッド）を共用する
 }

@@ -20,32 +20,29 @@ namespace Estable.Marquee;
 /// 座標系:<br/>
 /// 選択矩形・nudge はドメイン座標で扱う。UI 層は入力座標を <see cref="ToDomain"/> で変換し、描画座標を <see cref="ToDip"/> で得る。<br/>
 /// <br/>
-/// 依存分離: コア型（<see cref="EsRect"/> / <see cref="EsPoint"/> / <see cref="EsKey"/>）と座標変換ポート（<see cref="ICoordTransform"/>）・<br/>
-/// カーソルサービス（<see cref="ICursorService"/>）の抽象にのみ依存し、UI フレームワークへ依存しない。<br/>
+/// 依存分離: コア型（<see cref="EsRect"/> / <see cref="EsPoint"/> / <see cref="EsKey"/>）と座標変換ポート（<see cref="ICoordTransform"/>）の<br/>
+/// 抽象にのみ依存し、UI フレームワークへ依存しない。<br/>
+/// カーソル操作（nudge 中の非表示・終了時の再表示）は効果（<see cref="MarqueeCursorAction"/>）として UI 層へ要求するだけで、本クラスはカーソル API を知らない。<br/>
 /// UI 側の概念（マウスボタン・キー種別・コントロールへのフォーカス・画面座標）は、UI 層が本クラスの入出力へ変換する。<br/>
 /// <br/>
 /// 状態機械の保持と純粋計算は <see cref="MarqueeState"/> が担い、本クラスは入力の解釈と通知の組み立てに専念する（単一責任）。<br/>
+/// <br/>
+/// <b>可視性</b>: 本クラスは公開ファサード <see cref="Marquee"/> の内部実装であるため internal とする<br/>
+/// （UI 層・ホストは <see cref="Marquee"/> を通して操作する）。
 /// </remarks>
-public sealed class MarqueeSession
+internal sealed class MarqueeSession
 {
     /// <summary>選択・ドラッグ・nudge の状態と純粋計算。</summary>
     private readonly MarqueeState _state;
-
-    /// <summary>マウスダウンからアップまでの間にドラッグ移動（選択状態の変化）が発生したかどうか（クリック検出用）。</summary>
-    private bool _dragPerformed;
-
-    /// <summary>最後のマウスダウン位置（ドメイン座標。クリック通知・ログ用）。</summary>
-    private EsPoint _pressPosition;
 
     /// <summary>内部ロガー（未設定は null。読み取り時に <see cref="LoggerFallback"/> が吸収する）。</summary>
     private ILogger? _log;
 
     /// <summary>状態管理クラスを初期化する。</summary>
-    /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
-    public MarqueeSession(ICursorService? cursor, MarqueeOptions? options = null)
+    public MarqueeSession(MarqueeOptions? options = null)
     {
-        _state = new MarqueeState(cursor);
+        _state = new MarqueeState();
         Options = options ?? MarqueeOptions.Default;
     }
 
@@ -109,7 +106,7 @@ public sealed class MarqueeSession
     /// <value>直近のマウス位置。未移動時は既定値。</value>
     public EsPoint LastMousePosition => _state.LastMousePosition;
 
-    /// <summary>十字マーカー・ルーペが追従する位置（ドメイン座標）。</summary>
+    /// <summary>十字マーカーが追従する位置（ドメイン座標）。</summary>
     /// <value>ドラッグ中のハンドル位置・新規選択中の終点・未選択時の始点。</value>
     public EsPoint MarkerPosition => _state.GetMarkerPosition();
 
@@ -174,13 +171,10 @@ public sealed class MarqueeSession
         if (_state.NudgeActive)
         {
             position = _state.StartPoint;
-            if (_state.EndNudge()) { cursor = MarqueeCursorAction.Show; }
-            NotifyAt(MarqueeNoticeKind.LoupePositionMoved, position);
+            _state.EndNudge();
+            cursor = MarqueeCursorAction.Show;
+            NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, position);
         }
-
-        _pressPosition = position;
-        _dragPerformed = false;
-        NotifyAt(MarqueeNoticeKind.MouseDown, position);
 
         if (clickCount >= 2)
         {
@@ -201,8 +195,8 @@ public sealed class MarqueeSession
         {
             _state.StartDrag(handle, position);
 
-            // リサイズハンドル（8 方向）ではポインターをハンドル点へスナップし、ルーペ中心もハンドル点へ揃える
-            // （ポインター・矩形の角・ルーペを一体にする）。ドラッグ基準点もハンドル点に揃えることで、
+            // リサイズハンドル（8 方向）ではポインターをハンドル点へスナップし、追従位置もハンドル点へ揃える
+            // （ポインター・矩形の角・追従位置を一体にする）。ドラッグ基準点もハンドル点に揃えることで、
             // スナップ後の最初の移動がハンドル点からの差分として正しく矩形へ反映される。
             // 移動（Move）は掴んだ位置を維持するのが自然なためスナップしない。
             if (handle != HitTarget.Move)
@@ -215,7 +209,7 @@ public sealed class MarqueeSession
                     Cursor = cursor | MarqueeCursorAction.MoveTo,
                     CursorDomainPosition = handlePosition,
                 };
-                NotifyAt(MarqueeNoticeKind.LoupePositionMoved, handlePosition);
+                NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, handlePosition);
             }
         }
         else
@@ -235,8 +229,8 @@ public sealed class MarqueeSession
     /// 1. nudge 終了直後のエコー移動は、選択矩形を上書きせずカーソル形状のみ更新する（抑制は 1 回で解除する）。<br/>
     /// 2. マウス位置を通知し、カーソル形状を更新する。<br/>
     /// 3. nudge 中は選択矩形・マウス位置を更新しない（エコー移動で nudge の結果が戻るのを防ぐ）。<br/>
-    /// 4. ドラッグ中は選択矩形を更新し、変更通知とルーペ位置（動いている側のハンドル）を通知する。<br/>
-    /// 5. ドラッグ中でなければホバー位置をルーペ位置として通知する。
+    /// 4. ドラッグ中は選択矩形を更新し、変更通知と追従位置（動いている側のハンドル）を通知する。<br/>
+    /// 5. ドラッグ中でなければホバー位置を追従位置として通知する。
     /// </remarks>
     public MarqueeFeedback Move(EsPoint position)
     {
@@ -253,14 +247,13 @@ public sealed class MarqueeSession
             };
         }
 
-        NotifyAt(MarqueeNoticeKind.MouseMoved, position);
         var cursor = new MarqueeFeedback
         {
             UpdateCursorShape = true,
             CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
         };
 
-        // nudge 中はエコー移動で選択矩形・マウス位置を上書きしない（解放時のルーペ位置が実マウス位置へ飛ぶのを防ぐ）
+        // nudge 中はエコー移動で選択矩形・マウス位置を上書きしない（解放時の追従位置が実マウス位置へ飛ぶのを防ぐ）
         if (_state.NudgeActive)
         {
             return cursor;
@@ -271,17 +264,12 @@ public sealed class MarqueeSession
         if (_state.IsDragging)
         {
             _state.UpdateDrag(position, MinSelectionSize, ClampToDomainBounds);
-            // 押下中の移動で矩形が変化した場合はドラッグ発生とする（ドラッグ移動なしの押下→解放をクリックとして検出する）
-            if (_state.SelectionRect != _state.DragStartRect)
-            {
-                _dragPerformed = true;
-            }
             NotifyState(MarqueeNoticeKind.SelectionChanged);
-            NotifyAt(MarqueeNoticeKind.LoupePositionMoved, _state.GetMarkerPosition());
+            NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, _state.GetMarkerPosition());
         }
         else
         {
-            NotifyAt(MarqueeNoticeKind.LoupePositionMoved, position);
+            NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, position);
         }
 
         return cursor with { Redraw = true };
@@ -293,20 +281,17 @@ public sealed class MarqueeSession
     /// <remarks>
     /// 処理フロー:<br/>
     /// 1. ドラッグ中だった場合はドラッグを終了し、最小サイズ未満なら選択を破棄してキャンセル、それ以外は確定を通知する。<br/>
-    /// 2. ドラッグ移動なしの押下→解放だった場合はクリックを通知する。<br/>
-    /// 3. nudge 中だった場合はカーソルを nudge 位置へ戻して再表示し、その位置への直後の移動（エコー）を抑制する。<br/>
+    /// 2. nudge 中だった場合はカーソルを nudge 位置へ戻して再表示し、その位置への直後の移動（エコー）を抑制する。<br/>
     /// nudge 位置はドラッグ終了処理の前に求める（終了処理がドラッグ状態を解除するため、後から求めると固定コーナーを返す）。
     /// </remarks>
     public MarqueeFeedback Release(EsPoint position)
     {
         _state.IsMouseDown = false;
-        NotifyAt(MarqueeNoticeKind.MouseUp, position);
         Log.LogMouseUp(position.X, position.Y, _state.IsDragging, _state.HasSelection);
         Log.LogPositionAfterUp(position.X, position.Y);
 
         var wasDragging = _state.IsDragging;
         var wasNudging = _state.NudgeActive;
-        var pressPosition = _pressPosition;
         var nudgePosition = wasNudging ? _state.GetMarkerPosition() : default;
 
         if (wasDragging)
@@ -326,19 +311,16 @@ public sealed class MarqueeSession
             }
         }
 
-        if (wasDragging && !_dragPerformed)
-        {
-            Log.LogClick(pressPosition.X, pressPosition.Y);
-            NotifyAt(MarqueeNoticeKind.MouseClicked, pressPosition);
-        }
-
         var feedback = new MarqueeFeedback { Redraw = true };
         if (wasNudging)
         {
+            // nudge の状態は最小サイズ未満のキャンセル経路（状態の初期化）で既に解除されている場合があるため、
+            // 「nudge 中だった」の記録で再表示を要求する（カーソルの非表示残留を防ぐ）。
             // nudge 中にユーザーが物理マウスを動かしても、カーソルは nudge 位置へ戻してから再表示する
             // （nudge から解放までのマウス移動はキャンセルする。SetCursorScreenPoint は再表示前に行う）
-            if (_state.EndNudge()) { feedback = feedback with { Cursor = MarqueeCursorAction.Show }; }
-            NotifyAt(MarqueeNoticeKind.LoupePositionMoved, nudgePosition);
+            _state.EndNudge();
+            feedback = feedback with { Cursor = MarqueeCursorAction.Show };
+            NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, nudgePosition);
             _state.SuppressEchoAt = nudgePosition;
 
             // カーソルは nudge 位置（ハンドル上）にあるため、ハンドルに応じた形状へ即時更新する
@@ -399,7 +381,7 @@ public sealed class MarqueeSession
     /// 3. 押下時点のカーソル位置を記録する（基点の精度向上。未移動時に基点が原点になり飛ぶのを防ぐ）。<br/>
     /// 4. 未選択・未ドラッグで nudge セッション開始時のみ基点をカーソル位置へ同期する。<br/>
     /// 5. nudge セッションを開始する（カーソル非表示・十字マーカー表示）。<br/>
-    /// 6. 1 ドメインピクセル単位の整数加算で矩形を更新し、変更通知とルーペ位置を通知する。<br/>
+    /// 6. 1 ドメインピクセル単位の整数加算で矩形を更新し、変更通知と追従位置を通知する。<br/>
     /// nudge 中（2 回目以降）は基点を再同期しない（座標変換の丸め誤差・スクロール追従で移動が相殺されるのを防ぐ）。
     /// </remarks>
     public MarqueeFeedback NudgeByKey(EsKey key, EsPoint? cursorPosition)
@@ -452,7 +434,7 @@ public sealed class MarqueeSession
 
         // カーソルを動かしている側のハンドル（マーカー位置）へ合わせる
         var marker = _state.GetMarkerPosition();
-        NotifyAt(MarqueeNoticeKind.LoupePositionMoved, marker);
+        NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, marker);
         return feedback with
         {
             Cursor = feedback.Cursor | MarqueeCursorAction.MoveTo,
@@ -463,13 +445,10 @@ public sealed class MarqueeSession
     /// <summary>nudge を終了する（カーソルを再表示する）。</summary>
     /// <returns>UI 層が適用する効果（nudge 中だった場合は再描画とカーソルの再表示）。</returns>
     /// <remarks>
-    /// nudge 中の状態破棄（フォーカス喪失・ビジュアルツリーからの切断）で使用する。<br/>
+    /// nudge 中の状態破棄（フォーカス喪失）で使用する。<br/>
     /// nudge 中でない場合は何もしない（<c>default</c> を返す）。
     /// </remarks>
-    public MarqueeFeedback EndNudge()
-        => _state.EndNudge()
-            ? new MarqueeFeedback { Redraw = true, Cursor = MarqueeCursorAction.Show }
-            : default;
+    public MarqueeFeedback EndNudge() => WithNudgeEnded(default);
 
     // ====================================================================
     // 外部（ホスト）からの操作
@@ -477,29 +456,32 @@ public sealed class MarqueeSession
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
-    /// <returns>UI 層が適用する効果（再描画）。</returns>
+    /// <returns>UI 層が適用する効果（再描画。nudge 中だった場合はカーソルの再表示）。</returns>
     /// <remarks>
     /// <see cref="ClampToDomainBounds"/> が有効な場合は、はみ出す矩形を境界内へクリップしてから設定する<br/>
     /// （外部からの復元でも「画像外の選択を禁止」を尊重する）。設定後は選択変更を通知する。
     /// </remarks>
     public MarqueeFeedback SetSelection(EsRect rect)
     {
+        // 選択の復元は nudge 状態を解除するため、解除の判定は復元より前に行う（カーソルの再表示を落とさない）
+        var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
         var selectionRect = ClampToDomainBounds ? _state.ClipRectToBounds(rect) : rect;
         _state.SetSelection(selectionRect);
         NotifyState(MarqueeNoticeKind.SelectionChanged);
-        return new MarqueeFeedback { Redraw = true };
+        return feedback;
     }
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
-    /// <returns>UI 層が適用する効果（再描画）。</returns>
+    /// <returns>UI 層が適用する効果（再描画。nudge 中だった場合はカーソルの再表示）。</returns>
     public MarqueeFeedback Reset()
     {
+        var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
         _state.Reset();
-        return new MarqueeFeedback { Redraw = true };
+        return feedback;
     }
 
     /// <summary>確定要求を処理する（Enter キー・ダブルクリック・ホストからの API 呼び出しと同じ経路）。</summary>
-    /// <returns>UI 層が適用する効果（確定した場合は再描画）。</returns>
+    /// <returns>UI 層が適用する効果（確定した場合は再描画。nudge 中だった場合はカーソルの再表示）。</returns>
     /// <remarks>
     /// ドラッグ中は無視し、選択確定後のみ確定要求を通知する（通知時点の選択矩形を含む）。<br/>
     /// 確定後は選択状態をクリアする（確定後の再ドラッグ・再確定を防ぐ）。
@@ -513,24 +495,26 @@ public sealed class MarqueeSession
 
         Log.LogConfirmRequested(FormatRect(_state.SelectionRect));
         NotifyState(MarqueeNoticeKind.ConfirmRequested);
+        var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
         _state.Reset();
-        return new MarqueeFeedback { Redraw = true };
+        return feedback;
     }
 
     /// <summary>キャンセル要求を処理する（Escape キー・枠外ダブルクリック・ホストからの API 呼び出しと同じ経路）。</summary>
-    /// <returns>UI 層が適用する効果（選択を破棄した場合は再描画）。</returns>
+    /// <returns>UI 層が適用する効果（選択を破棄した場合または nudge 中だった場合は再描画。nudge 中だった場合はカーソルの再表示）。</returns>
     /// <remarks>ドラッグ中または選択ありの場合は選択を破棄した後にキャンセル要求を通知する。</remarks>
     public MarqueeFeedback RequestCancel()
     {
         Log.LogCancelRequested();
-        var redraw = false;
+        // キャンセルは nudge も終了させる（nudge 位置の十字マーカーとカーソル非表示を残留させない）
+        var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = false });
         if (_state.IsDragging || _state.HasSelection)
         {
             _state.Reset();
-            redraw = true;
+            feedback = feedback with { Redraw = true };
         }
         NotifyEmpty(MarqueeNoticeKind.CancelRequested);
-        return new MarqueeFeedback { Redraw = redraw };
+        return feedback;
     }
 
     /// <summary>ドメイン境界外の選択の禁止設定の変更を現在の選択矩形へ適用する。</summary>
@@ -545,19 +529,6 @@ public sealed class MarqueeSession
         {
             NotifyState(MarqueeNoticeKind.SelectionChanged);
         }
-        return new MarqueeFeedback { Redraw = true };
-    }
-
-    /// <summary>ビューポート（ズーム・スクロール）の変化を通知する。</summary>
-    /// <returns>UI 層が適用する効果（再描画）。</returns>
-    /// <remarks>
-    /// 選択矩形（ドメイン座標）はズーム・スクロールで変わらないが、上位（暗転マスク等）はビューポート座標で<br/>
-    /// 再描画する必要があるため、現在の選択矩形 + スナップショットを再通知する（状態は変更しない）。<br/>
-    /// 通知の組み立てはコアが単一所有するため、UI 層は呼び出すだけでよい。
-    /// </remarks>
-    public MarqueeFeedback NotifyViewportChanged()
-    {
-        NotifyState(MarqueeNoticeKind.ViewportChanged);
         return new MarqueeFeedback { Redraw = true };
     }
 
@@ -589,23 +560,22 @@ public sealed class MarqueeSession
         return ApplyClampToBounds();
     }
 
-    /// <summary>対話を終了する（ビジュアルツリーからの切断・ウィンドウクローズ）。</summary>
-    /// <returns>UI 層が適用する効果（再描画。nudge 中だった場合はカーソルの再表示）。</returns>
-    /// <remarks>nudge を終了して選択状態を初期化する（nudge 中のポインター非表示を残留させない）。</remarks>
-    public MarqueeFeedback Detach()
-    {
-        var showed = _state.EndNudge();
-        _state.Reset();
-        return new MarqueeFeedback
-        {
-            Redraw = true,
-            Cursor = showed ? MarqueeCursorAction.Show : MarqueeCursorAction.None,
-        };
-    }
-
     // ====================================================================
     // 内部ヘルパー
     // ====================================================================
+
+    /// <summary>nudge 中なら nudge を終了し、カーソルの再表示と再描画を効果に加える。</summary>
+    /// <param name="feedback">nudge 終了前の効果。</param>
+    /// <returns>nudge 中だった場合は再描画とカーソル再表示を加えた効果。nudge 中でなければ元の効果。</returns>
+    /// <remarks>
+    /// カーソルの再表示は本メソッドが単一所有する（状態は状態のみを更新し、画面への反映は効果として UI 層へ要求する）。<br/>
+    /// nudge 状態を解除する操作（<see cref="MarqueeState.Reset"/> / <see cref="MarqueeState.SetSelection"/>）より<b>前に</b>呼ぶ<br/>
+    /// （解除後は「nudge 中だったか」を判定できず、カーソルが非表示のまま残留する）。
+    /// </remarks>
+    private MarqueeFeedback WithNudgeEnded(in MarqueeFeedback feedback)
+        => _state.EndNudge()
+            ? feedback with { Redraw = true, Cursor = feedback.Cursor | MarqueeCursorAction.Show }
+            : feedback;
 
     /// <summary>ダブルクリックを処理する（選択矩形の内側なら確定、外側ならキャンセル）。</summary>
     /// <param name="position">ダブルクリック位置（ドメイン座標）。</param>
@@ -619,7 +589,6 @@ public sealed class MarqueeSession
     {
         var inside = _state.HasSelection && _state.SelectionRect.Contains(position);
         Log.LogDoubleClick(position.X, position.Y, inside);
-        NotifyAt(MarqueeNoticeKind.MouseDoubleClicked, position);
 
         if (inside)
         {

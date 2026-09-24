@@ -2,15 +2,16 @@ using Microsoft.Extensions.Logging;
 
 namespace Estable.Marquee;
 
-/// <summary>Marquee の操作（入力の判断・ホイール・設定変更）が出力する LoggerMessage 定義（ソース生成ログ）。</summary>
+/// <summary>Marquee の操作（入力の判断・設定変更）が出力する LoggerMessage 定義（ソース生成ログ）。</summary>
 /// <remarks>
 /// 入力に伴う判断（ドラッグ開始・確定・キャンセル・クリック・キー処理）はコアの状態管理クラスが担うため、<br/>
 /// その経過のログ定義もコアが所有する。<br/>
-/// ホイールのズーム要求と設定変更のログは、<b>各 UI 実装で同一の書式・レベルにする必要がある</b>ため同じくコアが所有する<br/>
-/// （UI 実装ごとに持つと書式がずれる。各 UI は自 UI 固有の操作のログのみを持つ）。<br/>
-/// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。
+/// <b>ホイール要求のログは本層が所有しない</b>（ズーム・スクロールはコントロール化のための要求であり、<br/>
+/// <c>MarqueeControl.CoreForControl</c> の <c>MarqueeWheelLogMessage</c> が単一所有する）。<br/>
+/// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
+/// <b>可視性</b>: 本定義を呼ぶのはコアの状態機械だけであり、UI 層・ホストはロガー（<see cref="Marquee.Log"/>）を渡すだけでよいため internal とする。
 /// </remarks>
-public static partial class MarqueeLogMessage
+internal static partial class MarqueeLogMessage
 {
     /// <summary>ポインター押下（マウス Down）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Marquee] MouseDown: pos=({X}, {Y}) clickCount={ClickCount} hasSelection={HasSelection}</c></remarks>
@@ -31,14 +32,6 @@ public static partial class MarqueeLogMessage
     /// <param name="hasSelection">選択矩形の有無。</param>
     [LoggerMessage(LogLevel.Debug, "[Marquee] MouseUp: pos=({X}, {Y}) wasDragging={WasDragging} hasSelection={HasSelection}")]
     public static partial void LogMouseUp(this ILogger logger, double x, double y, bool wasDragging, bool hasSelection);
-
-    /// <summary>クリック（ドラッグ移動なしの押下→解放）のログ。</summary>
-    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Marquee] Click: pos=({X}, {Y})</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    /// <param name="x">ドメイン座標 X。</param>
-    /// <param name="y">ドメイン座標 Y。</param>
-    [LoggerMessage(LogLevel.Debug, "[Marquee] Click: pos=({X}, {Y})")]
-    public static partial void LogClick(this ILogger logger, double x, double y);
 
     /// <summary>ダブルクリックのログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Marquee] DoubleClick: pos=({X}, {Y}) inside={Inside}</c></remarks>
@@ -94,13 +87,6 @@ public static partial class MarqueeLogMessage
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     [LoggerMessage(LogLevel.Debug, "[Marquee] CancelRequested")]
     public static partial void LogCancelRequested(this ILogger logger);
-
-    /// <summary>Ctrl+ホイールによるズーム要求のログ。</summary>
-    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Marquee] ZoomRequested: zoomIn={ZoomIn}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
-    [LoggerMessage(LogLevel.Debug, "[Marquee] ZoomRequested: zoomIn={ZoomIn}")]
-    public static partial void LogZoomRequested(this ILogger logger, bool zoomIn);
 
     /// <summary>設定値変更のログ（変更前後）。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Marquee] Setting: {Name} {OldValue} → {NewValue}</c></remarks>

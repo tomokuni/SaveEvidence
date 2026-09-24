@@ -20,7 +20,7 @@ public class MarqueeLogMessageTests
         InvokeAll(logger);
 
         Assert.True(logger.IsEnabled(LogLevel.Trace));
-        Assert.Equal(12, logger.Messages.Count);
+        Assert.Equal(10, logger.Messages.Count);
     }
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
@@ -40,16 +40,14 @@ public class MarqueeLogMessageTests
 
         Assert.Equal("[Marquee] MouseDown: pos=(10, 20) clickCount=1 hasSelection=False", logger.Messages[0]);
         Assert.Equal("[Marquee] MouseUp: pos=(10, 20) wasDragging=True hasSelection=True", logger.Messages[1]);
-        Assert.Equal("[Marquee] Click: pos=(10, 20)", logger.Messages[2]);
-        Assert.Equal("[Marquee] DoubleClick: pos=(10, 20) inside=True", logger.Messages[3]);
-        Assert.Equal("[Marquee] MouseDown 直前の位置: pos=(10, 20)", logger.Messages[4]);
-        Assert.Equal("[Marquee] MouseUp 直後の位置: pos=(10, 20)", logger.Messages[5]);
-        Assert.Equal("[Marquee] DragStart: handle=Move pos=(10, 20)", logger.Messages[6]);
-        Assert.Equal("[Marquee] KeyDown: key=Left handled=True", logger.Messages[7]);
-        Assert.Equal("[Marquee] ConfirmRequested: rect=(10, 20, 30, 40)", logger.Messages[8]);
-        Assert.Equal("[Marquee] CancelRequested", logger.Messages[9]);
-        Assert.Equal("[Marquee] ZoomRequested: zoomIn=True", logger.Messages[10]);
-        Assert.Equal("[Marquee] Setting: MinSelectionSize 3 → 5", logger.Messages[11]);
+        Assert.Equal("[Marquee] DoubleClick: pos=(10, 20) inside=True", logger.Messages[2]);
+        Assert.Equal("[Marquee] MouseDown 直前の位置: pos=(10, 20)", logger.Messages[3]);
+        Assert.Equal("[Marquee] MouseUp 直後の位置: pos=(10, 20)", logger.Messages[4]);
+        Assert.Equal("[Marquee] DragStart: handle=Move pos=(10, 20)", logger.Messages[5]);
+        Assert.Equal("[Marquee] KeyDown: key=Left handled=True", logger.Messages[6]);
+        Assert.Equal("[Marquee] ConfirmRequested: rect=(10, 20, 30, 40)", logger.Messages[7]);
+        Assert.Equal("[Marquee] CancelRequested", logger.Messages[8]);
+        Assert.Equal("[Marquee] Setting: MinSelectionSize 3 → 5", logger.Messages[9]);
     }
 
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>
@@ -58,7 +56,6 @@ public class MarqueeLogMessageTests
     {
         MarqueeLogMessage.LogMouseDown(logger, 10, 20, 1, false);
         MarqueeLogMessage.LogMouseUp(logger, 10, 20, true, true);
-        MarqueeLogMessage.LogClick(logger, 10, 20);
         MarqueeLogMessage.LogDoubleClick(logger, 10, 20, true);
         MarqueeLogMessage.LogPositionBeforeDown(logger, 10, 20);
         MarqueeLogMessage.LogPositionAfterUp(logger, 10, 20);
@@ -66,7 +63,6 @@ public class MarqueeLogMessageTests
         MarqueeLogMessage.LogKeyDown(logger, "Left", true);
         MarqueeLogMessage.LogConfirmRequested(logger, "(10, 20, 30, 40)");
         MarqueeLogMessage.LogCancelRequested(logger);
-        MarqueeLogMessage.LogZoomRequested(logger, true);
         MarqueeLogMessage.LogSettingChanged(logger, "MinSelectionSize", "3", "5");
     }
 }

@@ -1,3 +1,4 @@
+using Estable.Marquee.Decoration;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
@@ -55,9 +56,11 @@ public class FadeMaskDragRectOptionsMapperTests
 
         var options = settings.ToFadeMaskDragRectOptions();
 
-        // 枠線は外側の装飾（暗転マスクの穴あけ枠）が単一所有する（選択枠線と重なるため 2 つの値に分けない）
-        Assert.Equal(DrawingColor.Red, options.Marquee.OuterAppearance.BorderColor);
-        Assert.Equal(1.0, options.Marquee.OuterAppearance.BorderThickness);
+        // 枠線は装飾（暗転マスクの穴あけ枠）が単一所有する（選択枠線と重なるため 2 つの値に分けない）
+        Assert.Equal(DrawingColor.Red, options.Deco.OuterAppearance.BorderColor);
+        Assert.Equal(1.0, options.Deco.OuterAppearance.BorderThickness);
+        // ハンドルの枠線も同じ色に揃える（同じ矩形に重なる）
+        Assert.Equal(DrawingColor.Red, options.Marquee.HandleBorderColor);
     }
 
     [Fact]
@@ -66,35 +69,33 @@ public class FadeMaskDragRectOptionsMapperTests
         var settings = CreateSettings() with
         {
             OverlayColor = DrawingColor.FromArgb(128, 0, 0, 255),
+        };
+
+        var options = settings.ToFadeMaskDragRectOptions();
+
+        // 装飾は暗転と枠線のみを所有する（ラベルはサイズラベルが選択コア、操作・情報ラベルはホストが担う）
+        // 枠線（色・太さ）は「枠線は選択矩形の設定の外側の装飾に入る」のテストが検証する
+        Assert.Equal(DrawingColor.FromArgb(128, 0, 0, 255), options.Deco.OuterAppearance.OverlayColor);
+    }
+
+    [Fact]
+    public void 変換_サイズラベルの設定が選択コアへ反映される()
+    {
+        var settings = CreateSettings() with
+        {
             SizeLabelVisible = false,
             SizeLabelColor = DrawingColor.Yellow,
             TextBackgroundColor = DrawingColor.FromArgb(179, 0, 0, 255),
             SizeLabelFontSize = 18.0,
-            ShowSubLines = false,
-            SubLineFontSize = 13.0,
-            SubLineColor = DrawingColor.Orange,
-            SubLineBackgroundColor = DrawingColor.FromArgb(102, 0, 100, 0),
-            InfoLabelVisible = false,
-            InfoLabelColor = DrawingColor.Cyan,
-            InfoLabelBackgroundColor = DrawingColor.FromArgb(128, 100, 0, 0),
-            InfoLabelFontSize = 12.0,
         };
 
-        var appearance = settings.ToFadeMaskDragRectOptions().Marquee.OuterAppearance;
+        var marquee = settings.ToFadeMaskDragRectOptions().Marquee;
 
-        Assert.Equal(DrawingColor.FromArgb(128, 0, 0, 255), appearance.OverlayColor);
-        Assert.False(appearance.ShowSizeLabel);
-        Assert.Equal(DrawingColor.Yellow, appearance.SizeLabelColor);
-        Assert.Equal(DrawingColor.FromArgb(179, 0, 0, 255), appearance.SizeLabelBackgroundColor);
-        Assert.Equal(18.0, appearance.SizeLabelFontSize);
-        Assert.False(appearance.ShowSubLines);
-        Assert.Equal(13.0, appearance.SubLineFontSize);
-        Assert.Equal(DrawingColor.Orange, appearance.SubLineColor);
-        Assert.Equal(DrawingColor.FromArgb(102, 0, 100, 0), appearance.SubLineBackgroundColor);
-        Assert.False(appearance.InfoLabelVisible);
-        Assert.Equal(DrawingColor.Cyan, appearance.InfoLabelColor);
-        Assert.Equal(DrawingColor.FromArgb(128, 100, 0, 0), appearance.InfoLabelBackgroundColor);
-        Assert.Equal(12.0, appearance.InfoLabelFontSize);
+        // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する
+        Assert.False(marquee.ShowSizeLabel);
+        Assert.Equal(DrawingColor.Yellow, marquee.SizeLabelColor);
+        Assert.Equal(DrawingColor.FromArgb(179, 0, 0, 255), marquee.SizeLabelBackgroundColor);
+        Assert.Equal(18.0, marquee.SizeLabelFontSize);
     }
 
     [Fact]

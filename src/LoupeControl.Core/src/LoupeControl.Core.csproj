@@ -22,5 +22,11 @@
     <None Remove="..\tests\**" />
   </ItemGroup>
 
-  <!-- internal 型を持たない（全型 public）。他アセンブリへの InternalsVisibleTo は不要。 -->
+  <ItemGroup>
+    <!-- 配置・描画引数の内部手順（LoupePositionCalculator / LoupeRenderArgsCalculator / LoupeLabelLayout）は、
+         ファサード（Loupe）の実装詳細であり、単体テストにのみ公開する（UI 実装・ホストは参照しない）。 -->
+    <InternalsVisibleTo Include="LoupeControl.Core.Tests" />
+  </ItemGroup>
+
+  <!-- 状態機械は持たない（公開面はファサードとその契約）。他アセンブリへの InternalsVisibleTo はテストのみ。 -->
 </Project>

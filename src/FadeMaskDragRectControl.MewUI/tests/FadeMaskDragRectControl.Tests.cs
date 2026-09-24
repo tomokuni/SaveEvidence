@@ -177,36 +177,43 @@ public class FadeMaskDragRectControlTests
 
         control.Options = FadeMaskDragRectOptions.Default with
         {
-            Marquee = MarqueeOptions.Default with
+            Deco = MarqueeDecoOptions.Default with
             {
                 OuterAppearance = new OuterDecoAppearance
                 {
                     BorderColor = DrawingColor.Red,
                     BorderThickness = 3.0,
                     OverlayColor = DrawingColor.FromArgb(128, 255, 0, 0),
-                    ShowSizeLabel = false,
-                    SizeLabelFontSize = 18.0,
-                    SizeLabelColor = DrawingColor.Yellow,
-                    SizeLabelBackgroundColor = DrawingColor.FromArgb(200, 0, 0, 255),
                 },
+            },
+            // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する
+            Marquee = MarqueeOptions.Default with
+            {
+                HandleBorderColor = DrawingColor.Red,
+                ShowSizeLabel = false,
+                SizeLabelFontSize = 18.0,
+                SizeLabelColor = DrawingColor.Yellow,
+                SizeLabelBackgroundColor = DrawingColor.FromArgb(200, 0, 0, 255),
             },
         };
 
-        var appearance = control.Options.Marquee.OuterAppearance;
+        var appearance = control.Options.Deco.OuterAppearance;
         Assert.Equal(DrawingColor.Red, appearance.BorderColor);
         Assert.Equal(3.0, appearance.BorderThickness);
         Assert.Equal(DrawingColor.FromArgb(128, 255, 0, 0), appearance.OverlayColor);
-        Assert.False(appearance.ShowSizeLabel);
-        Assert.Equal(18.0, appearance.SizeLabelFontSize);
-        Assert.Equal(DrawingColor.Yellow, appearance.SizeLabelColor);
-        Assert.Equal(DrawingColor.FromArgb(200, 0, 0, 255), appearance.SizeLabelBackgroundColor);
-        // 設定は選択矩形コントロールへ 1 回の代入で分配される（外側の装飾の枠線と選択矩形が同じ値を持つ）
-        Assert.Equal(DrawingColor.Red, control.Marquee.Options.OuterAppearance.BorderColor);
-        Assert.Equal(3.0, control.Marquee.Options.OuterAppearance.BorderThickness);
+
+        // 設定は子コントロールへ分配される（装飾の枠線は装飾の設定、ハンドルの枠線とサイズラベルは選択の設定が持つ）
+        Assert.Equal(DrawingColor.Red, control.Marquee.DecoOptions.OuterAppearance.BorderColor);
+        Assert.Equal(3.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
+        Assert.Equal(DrawingColor.Red, control.Marquee.Options.HandleBorderColor);
+        Assert.False(control.Marquee.Options.ShowSizeLabel);
+        Assert.Equal(18.0, control.Marquee.Options.SizeLabelFontSize);
+        Assert.Equal(DrawingColor.Yellow, control.Marquee.Options.SizeLabelColor);
+        Assert.Equal(DrawingColor.FromArgb(200, 0, 0, 255), control.Marquee.Options.SizeLabelBackgroundColor);
     }
 
     [Fact]
-    public void 文言プロバイダ_選択矩形コントロールへ委譲される()
+    public void 文言プロバイダ_ホストが保持する()
     {
         var control = new FadeMaskDragRectControl();
         Func<string?> operation = () => "確定: Enter";
@@ -215,10 +222,10 @@ public class FadeMaskDragRectControlTests
         control.OperationTextProvider = operation;
         control.InfoTextProvider = info;
 
+        // 操作・情報ラベルはアプリ固有の付加情報のため、ホスト（本クラス）が保持して描画する
+        // （選択コントロールの概念ではないため、コアへは伝搬しない）
         Assert.Same(operation, control.OperationTextProvider);
         Assert.Same(info, control.InfoTextProvider);
-        Assert.Same(operation, control.Marquee.OperationTextProvider);
-        Assert.Same(info, control.Marquee.InfoTextProvider);
     }
 
     [Fact]
@@ -235,12 +242,13 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ラベルの既定値_サイズラベルを表示せず文言プロバイダも未設定()
+    public void ラベルの既定値_サイズラベルは表示でプロバイダ未設定なら自動生成になる()
     {
         var control = new FadeMaskDragRectControl();
 
-        // 汎用の選択矩形コントロールの既定はラベルを描かない（ラベルの有無は設定値で与える）
-        Assert.False(control.Options.Marquee.OuterAppearance.ShowSizeLabel);
+        // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する。<br/>
+        // 文言プロバイダ未設定のため穴あけ矩形から自動生成される
+        Assert.True(control.Marquee.Options.ShowSizeLabel);
         Assert.Null(control.SizeLabelOverrideProvider);
     }
 
@@ -418,17 +426,19 @@ public class FadeMaskDragRectControlTests
         Assert.Null(GetCoordinatePort(control.Marquee));
     }
 
-    /// <summary>座標変換ポート（内部保持）をリフレクションで取得する。</summary>
+    /// <summary>座標変換ポート（コアのファサードが内部保持）をリフレクションで取得する。</summary>
     /// <param name="control">対象のコントロール。</param>
     /// <returns>保持している座標変換ポート。未設定の場合は null。</returns>
     /// <remarks>
-    /// ポートは公開プロパティではなくメソッドで設定し、内包コントロールが内部で保持する（読み取り API を持たない）。<br/>
+    /// ポートは公開プロパティではなくメソッドで設定し、コアのファサード（<c>Marquee</c>）が内部で保持する（読み取り API を持たない）。<br/>
     /// 検証は Avalonia 版の複合コントロールテストと同じくリフレクションで行う。
     /// </remarks>
     private static ICoordTransform? GetCoordinatePort(MarqueeControl control)
-        => (ICoordTransform?)typeof(MarqueeControl)
-            .GetField("_coordinatePort", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(control);
+    {
+        var anyInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        var facade = typeof(MarqueeControl).GetField("_marquee", anyInstance)!.GetValue(control)!;
+        return (ICoordTransform?)facade.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(facade);
+    }
 
     // ====================================================================
     // ルーペ

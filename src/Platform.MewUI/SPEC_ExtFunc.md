@@ -38,6 +38,8 @@
 | メソッド | 説明 |
 | --- | --- |
 | `ToMewUIPoint(this EsPoint)` / `ToEsPoint(this Aprillz.MewUI.Point)` | 2 次元座標 |
+| `ToEsPixelPoint(this Aprillz.MewUI.Point)` | 画面物理ピクセルの座標（整数）へ変換する（小数を四捨五入する規則を本メソッドが単一所有する） |
+| `ToMewUIPoint(this EsPixelPoint)` | 画面物理ピクセルの座標から MewUI の座標へ（DPI 照会等へ渡す用） |
 | `ToMewUISize(this EsSize)` / `ToEsSize(this Aprillz.MewUI.Size)` | サイズ |
 | `ToMewUIVector(this EsVector)` / `ToEsVector(this Aprillz.MewUI.Vector)` | ベクター |
 | `ToMewUIRect(this EsRect)` / `ToEsRect(this Aprillz.MewUI.Rect)` | 矩形 |

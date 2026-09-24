@@ -471,13 +471,13 @@ sequenceDiagram
     participant OS as MewUI（マウス入力）
     participant CP as CapturePage
     participant OH as OverlayHost
-    participant LP as LoupePositionCalculator
+    participant LP as Loupe.ResolveLayout（コア）
     participant LV as LoupeControl
 
     OS->>CP: MouseMove（プレビューのローカル DIP）
     CP->>CP: 画像ピクセルへ変換し、画像内へクランプして CenterPoint にする
     CP->>OH: Place(サイズ, 位置を求める関数)
-    OH->>LP: Compute(親サイズ, カーソル + オフセット)
+    OH->>LP: ResolveLayout(親サイズ)
     LP-->>OH: 位置（オフセット適用・親領域内へクランプ）
     OH->>LV: Arrange（親の絶対座標 + 位置）
     Note over OH: 位置は配置フェーズで評価するため、最新のカーソル位置が反映される

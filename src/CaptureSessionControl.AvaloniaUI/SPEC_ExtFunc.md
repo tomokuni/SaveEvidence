@@ -249,7 +249,6 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 | --- | --- | --- |
 | `HideOwnerWindow` | `bool?` | キャプチャ時にオーナーウィンドウを画面外へ退避するか（非表示ではなく `Opacity=0` + 画面外配置） |
 
-
 **Marquee 外観（13 項目）**:
 
 | メンバー | 型 | 説明 |

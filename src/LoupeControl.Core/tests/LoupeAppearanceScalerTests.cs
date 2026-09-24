@@ -5,7 +5,8 @@ namespace Estable.Loupe.Tests;
 /// <summary><see cref="LoupeAppearanceScaler"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 外観値（DIP）の物理ピクセル換算のみを検証するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
-/// 両 UI（Avalonia / MewUI）は本換算結果を使う（UI ごとに換算すると DPI で見た目がずれる）。
+/// 両 UI（Avalonia / MewUI）は本換算結果を使う（UI ごとに換算すると DPI で見た目がずれる）。<br/>
+/// 中心座標ラベルは DIP のまま UI 要素として配置するため、本クラスの対象外である。
 /// </remarks>
 public class LoupeAppearanceScalerTests
 {
@@ -48,24 +49,5 @@ public class LoupeAppearanceScalerTests
         Assert.Equal(1, LoupeAppearanceScaler.ScaleFrameWidth(new LoupeAppearance { FrameWidth = 0 }, 1.0));
         // FrameWidth=1000 → 外観が最大 64 へ補正 → 2 倍で 128 ピクセル
         Assert.Equal(128, LoupeAppearanceScaler.ScaleFrameWidth(new LoupeAppearance { FrameWidth = 1000 }, 2.0));
-    }
-
-    /// <summary>座標ラベルのフォントサイズがスケーリング係数に追従することを検証する。</summary>
-    [Fact]
-    public void ScaleCoordLabelFontSize_スケーリング係数に追従する()
-    {
-        Assert.Equal(12.0, LoupeAppearanceScaler.ScaleCoordLabelFontSize(new LoupeAppearance(), 1.0));
-        Assert.Equal(15.0, LoupeAppearanceScaler.ScaleCoordLabelFontSize(new LoupeAppearance { CoordLabelFontSize = 12.0 }, 1.25));
-        Assert.Equal(24.0, LoupeAppearanceScaler.ScaleCoordLabelFontSize(new LoupeAppearance { CoordLabelFontSize = 12.0 }, 2.0));
-    }
-
-    /// <summary>安全域外の指定が型で補正済みの値として換算されることを検証する。</summary>
-    [Fact]
-    public void ScaleCoordLabelFontSize_安全域外の指定も補正済みの値で換算する()
-    {
-        // 0 → 外観が最小 6 へ補正 → 1.5 倍で 9
-        Assert.Equal(9.0, LoupeAppearanceScaler.ScaleCoordLabelFontSize(new LoupeAppearance { CoordLabelFontSize = 0 }, 1.5));
-        // 非有限は外観が既定値 12 へ補正 → 2 倍で 24
-        Assert.Equal(24.0, LoupeAppearanceScaler.ScaleCoordLabelFontSize(new LoupeAppearance { CoordLabelFontSize = double.NaN }, 2.0));
     }
 }

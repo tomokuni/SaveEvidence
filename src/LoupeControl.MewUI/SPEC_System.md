@@ -52,7 +52,7 @@ Avalonia 版と MewUI 版の間に依存はありません（互いを参照し�
 | --- | --- |
 | `LoupeControl.Core` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・外枠の矩形計算、市松模様の明暗判定、外観（下地含む）の単一所有 |
 | `LoupeControl.MewUI` | コアの計算結果を `SKCanvas` へ描画する。`MewProperty` による入力の受付。DPI の自動追従 |
-| ホスト（`app.MewUI` 等） | `Source` / `CenterPoint` の設定、表示位置の決定（コアの `LoupePositionCalculator` を利用） |
+| ホスト（`app.MewUI` 等） | `Source` / `CenterPoint` の設定、表示位置の決定（コアのファサード `ResolveLayout` を利用） |
 
 ## コンポーネント構成
 
@@ -60,20 +60,20 @@ Avalonia 版と MewUI 版の間に依存はありません（互いを参照し�
 src/LoupeControl.MewUI/
 ├── src/
 │   ├── LoupeControl.cs          MewProperty の定義・DPI 追従・描画の起点
-│   └── LoupeSkiaRenderer.cs     コアの計算結果を SKCanvas へ描画する（市松・画像・十字線・外枠・座標ラベル）
+│   ├── LoupeSkiaRenderer.cs     コアの計算結果を SKCanvas へ描画する（市松・画像・十字線・外枠）
+│   └── LoupeRenderedEventArgs.cs  描画完了の通知引数（文字はホストが描く）
 └── tests/
     ├── TestHelper.cs                テスト用の描画先（SKBitmap + SKCanvas）・画像生成・setter を経由しない設定
     ├── RecordingLogger.cs           ログ収集
     ├── LoupeSkiaRenderer.Tests.cs   描画結果の画素検証（下地・市松模様・拡大画像・十字線・外枠・例外）
-    ├── LoupeCoordLabelCornerRadiusTests.cs  座標ラベルの角丸の画素検証
     ├── LoupeRenderedEventArgs.Tests.cs      イベント引数の保持
     └── LoupeControl.Tests.cs        プロパティ補正・レイアウト・全設定経路の補正・ログ・要求サイズ
 ```
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、`PaintSurface` から描画を開始（描画の順序と内容は描画層が所有） |
-| `LoupeSkiaRenderer` | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠 → 座標ラベルの順に描画する（コアの描画契約 `LoupeRenderRequest` と、矩形計算・外観の物理ピクセル換算 `LoupeAppearanceScaler` をそのまま使用）。描画の順序は描画層が単一所有し、コントロールは `Render` を呼ぶだけ |
+| `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、`PaintSurface` から描画を開始（描画の順序と内容は描画層が所有）。文字は描かず、`Rendered` でホストへ委ねる（`LoupeCoordLabel.Resolve` の結果を渡す） |
+| `LoupeSkiaRenderer` | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画する（コアの描画契約 `LoupeRenderRequest` と、矩形計算・外観の物理ピクセル換算 `LoupeAppearanceScaler` をそのまま使用）。描画の順序は描画層が単一所有し、コントロールは `Render` を呼ぶだけ。**中心座標ラベルの文字は描かない**（ホストが描く） |
 | `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -146,8 +146,17 @@ classDiagram
         +ScaleFrameWidth(appearance, scaling) int$
         +ScaleCoordLabelFontSize(appearance, scaling) double$
     }
+    class Loupe {
+        <<LoupeControl.Core / 公開ファサード>>
+        +Options / RenderScaling / CenterPoint / PositionOffset
+        +DisplaySize double
+        +SetCoordinateTransform(port) void
+        +ResolveLayout(parentSize) LoupeLayout
+        +CreateRequest(availableSize) LoupeRenderRequest
+        +ResolveNotification(request) LoupeRenderNotification
+    }
     class LoupePositionCalculator {
-        <<LoupeControl.Core>>
+        <<LoupeControl.Core / internal>>
         +Compute(requestedSize, parentSize, centerDip, offset)$ (EsSize, EsPoint)
         +ClampSizeToArea(size, areaSize) double$
         +ComputePosition(displaySize, parentSize, centerDip, offset)$ EsPoint
@@ -159,16 +168,17 @@ classDiagram
     }
 
     SkiaCanvasView <|-- LoupeControl
+    LoupeControl *-- Loupe : 操作の唯一の窓口（公開ファサード）
     LoupeControl ..> LoupeSkiaRenderer : 描画を委譲
-    LoupeControl ..> LoupeOptions : 設定の単一値
+    Loupe ..> LoupeOptions : 設定の単一値
     LoupeSkiaRenderer ..> LoupeCheckerboard : 明暗判定
     LoupeSkiaRenderer ..> LoupeDecorationGeometry : 矩形
     LoupeSkiaRenderer ..> LoupeImageExtractor : 切り出し・拡大矩形
     LoupeSkiaRenderer ..> LoupeAppearanceScaler : 外観の物理ピクセル換算
     LoupeControl ..> LoupeValueCoercer : 値の補正（プロパティ登録の coerce）
-    LoupeControl ..> LoupePositionCalculator : 描画サイズの解決
-    LoupeControl ..> LoupeAppearanceScaler : ラベル文字サイズの換算
-    LoupeControl ..> CoordinateFormatter : ラベル文字列
+    Loupe ..> LoupePositionCalculator : 表示レイアウト・描画サイズ・描画入力の解決
+    LoupeSkiaRenderer ..> LoupeAppearanceScaler : ラベル文字サイズの換算
+    Loupe ..> CoordinateFormatter : ラベル文字列
 ```
 
 ## シーケンス図（描画）
@@ -182,7 +192,7 @@ sequenceDiagram
     participant SK as SkiaSharp
 
     MW->>LC: PaintSurface(canvas, info)
-    LC->>LC: LoupeRenderRequest.Create（公開プロパティから描画契約を組み立てる。物理ピクセルサイズは Options.RequestedSize × RenderScaling をキャンバスへクランプして解決する）
+    LC->>LC: Loupe.CreateRequest（コアのファサードが描画契約を組み立てる。物理ピクセルサイズは DisplaySize × RenderScaling をキャンバスへクランプして解決する）
     LC->>R: Render(canvas, Source, request)
     R->>SK: 下地（Options.Appearance.BackgroundColor）を表面全体へ塗る
     R->>C: ComputeDarkTileRects(pixelSize, tileSize)
@@ -217,14 +227,14 @@ sequenceDiagram
    描画の可否（アルファ 0）とラベルの余白もコアが判断・所有するため、両 UI の見た目が一致する
    （従来は Avalonia が既定で十字線を描き MewUI は描かないという既定値のドリフトがあった）。
 5. **位置を持たない**。表示位置は「親領域サイズ」「中心座標」「オフセット」に依存するホスト側の関心事であり、
-   計算はコアの `LoupePositionCalculator` が単一所有する。コントロールは入力と描画のみを担う。
+   計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有する。コントロールは入力と描画のみを担う。
 6. **DPI を自動追従させる**。`OnDpiChanged` で `RenderScaling` を更新し、ホストが DPI を扱わずに済むようにした。
 7. **`Options` はレイアウトにも影響する**。`MeasureContent` が要求サイズを返すため、
 プロパティへ `MewPropertyOptions.AffectsLayout` を付与して再測定を促す（未付与では変更が反映されない）。
 描画サイズは `Options.RequestedSize` × `RenderScaling` を物理ピクセルへ換算し、キャンバスより大きい場合はキャンバスに合わせる
-   （「領域へクランプする」規則と DIP → 物理ピクセルの換算はコアの `LoupePositionCalculator.ResolvePixelSize` が単一所有し、Avalonia 版の親パネルへのクランプと同じ規則を使う）。
+   （「領域へクランプする」規則と DIP → 物理ピクセルの換算はコアのファサード（`Loupe.ResolveLayout` / `Loupe.CreateRequest`）が単一所有し、Avalonia 版の親パネルへのクランプと同じ規則を使う）。
 8. **静的画像では連続再描画を無効化する**。`ContinuousAnimation` を `false` にし、プロパティ変更時のみ再描画する。
-9. **座標ラベルはキャンバスへ描画する**。Avalonia 版は同じラベルをレイアウト要素（`Border` / `TextBlock`）で描く（あちらはヘッドレスでビットマップの画素を検証できないため、要素のプロパティとして検証できる方式を採る）。描画方式の差であり、位置・余白・角丸・文字サイズはコア（`LoupeLabelLayout` / `LoupeAppearanceScaler`）が単一所有するため見た目は一致する。
+9. **座標ラベルの文字はホストが描く**（両 UI 共通）。文言・表示可否・寸法換算・配置はコア（`LoupeCoordLabel` / `LoupeAppearanceScaler`。配置の内部手順は internal の `LoupeLabelLayout`）が単一所有し、コントロールは描画完了時に `Rendered` の `CoordLabel` で渡す。ホストは `SkiaText.Measure` と `SkiaLabel.Draw`（`Platform.Core`）で描く（テキストの実寸測定は描画 API 依存のため、コントロールの描画サイクルに閉じ込めない）。Avalonia 版も同じ契約を使い、描画先が `EsBitmap`（Skia）である点だけが異なる。
 10. **値の補正と変更ログはプロパティの登録が所有する**。`MewProperty.Register` の `coerce` / `changed` へ渡すため、
    setter を経由しない設定（バインディング等）でも安全域が保たれ、変更が記録される
    （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。規則と書式はコアが単一所有する）。
@@ -243,7 +253,7 @@ sequenceDiagram
 
 | 項目 | 内容 |
 | --- | --- |
-| 座標変換ポート | Avalonia 版の `SetCoordinateTransform` 相当（ホストが `LoupePositionCalculator` を使う形で代替中） |
+| 座標変換ポート | 実装済み（`SetCoordinateTransform`。ホストが設定し、コントロールはファサードへ転送する。Avalonia 版と同じ API） |
 | 再生成の要求メソッド | `Clear` / `RequestRender` 相当（現在はプロパティ変更で自動再描画） |
 | 座標ラベル以外の文字描画 | 日本語のフォントフォールバック（ラベルは `MarqueeControl.MewUI`（選択矩形の外側の装飾）側で対応済み。本コントロールの座標ラベルは数値のみのため未適用） |
 

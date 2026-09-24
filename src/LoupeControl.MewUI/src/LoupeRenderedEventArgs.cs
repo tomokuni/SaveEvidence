@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
+using Estable.Loupe;
 using SkiaSharp;
 
 namespace Estable.MewUI.Loupe;
@@ -7,7 +8,8 @@ namespace Estable.MewUI.Loupe;
 /// <remarks>
 /// <see cref="LoupeControl.Rendered"/> イベントの引数。<br/>
 /// MewUI 版のルーペは中間ビットマップを作らず画面のキャンバスへ直接描画するため、<br/>
-/// ホスト側はイベントハンドラ内で <see cref="Canvas"/> へ追加描画（オーバーレイ等）を行う。<br/>
+/// ホスト側はイベントハンドラ内で <see cref="Canvas"/> へ追加描画（オーバーレイ・文字等）を行う。<br/>
+/// <b>座標ラベルの文字はホストが描く</b>（<see cref="CoordLabel"/> の契約に従い、テキストの実寸測定と描画を行う。実測は <c>Platform.Core</c> の <c>SkiaText</c>、描画順は <c>SkiaLabel</c> が単一所有する）。<br/>
 /// 座標系は次のとおり:<br/>
 /// - <see cref="Canvas"/>: ルーペの描画先（1 ピクセル = ルーペ画像の 1 ピクセル）<br/>
 /// - <see cref="CaptureTopLeft"/>: ドメイン座標（元画像ピクセル座標）<br/>
@@ -23,12 +25,14 @@ public sealed class LoupeRenderedEventArgs : EventArgs
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="captureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    public LoupeRenderedEventArgs(SKCanvas canvas, int pixelSize, EsPoint? captureTopLeft, double scale)
+    /// <param name="coordLabel">中心座標ラベルの描画契約。非表示の設定または中心未設定時は null。</param>
+    public LoupeRenderedEventArgs(SKCanvas canvas, int pixelSize, EsPoint? captureTopLeft, double scale, LoupeCoordLabel? coordLabel = null)
     {
         Canvas = canvas;
         PixelSize = pixelSize;
         CaptureTopLeft = captureTopLeft;
         Scale = scale;
+        CoordLabel = coordLabel;
     }
 
     /// <summary>ルーペを描画したキャンバスを取得する。</summary>
@@ -47,4 +51,12 @@ public sealed class LoupeRenderedEventArgs : EventArgs
     /// <summary>ドメイン座標 → ルーペ画像ピクセル座標の変換係数を取得する。</summary>
     /// <value>変換係数（拡大率と同値。DPI スケーリングの影響を受けない）。</value>
     public double Scale { get; }
+
+    /// <summary>中心座標ラベルの描画契約（文言・色・寸法・配置の計算元）を取得する。</summary>
+    /// <value>ラベルを描く場合の契約。非表示の設定または中心未設定時は null。</value>
+    /// <remarks>
+    /// 文字はホストが描く（テキストの実寸測定は描画 API 依存のため）。<br/>
+    /// 寸法（フォントサイズ・角丸）は物理ピクセル、配置は <see cref="LoupeCoordLabel.ComputeFrame"/> が求める。
+    /// </remarks>
+    public LoupeCoordLabel? CoordLabel { get; }
 }

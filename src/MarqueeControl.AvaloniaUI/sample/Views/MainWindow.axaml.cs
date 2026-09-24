@@ -10,6 +10,7 @@ using MarqueeControl.Sample.Logging;
 using MarqueeControl.Sample.ViewModels;
 using Estable.AvaloniaUI.Marquee;
 using Estable.Marquee;
+using Estable.Marquee.Decoration;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
@@ -73,16 +74,14 @@ public partial class MainWindow : Window
         Marquee.SelectionStarted += OnSelectionStarted;
         Marquee.SelectionCompleted += OnSelectionCompleted;
         Marquee.SelectionCancelled += OnSelectionCancelled;
-        Marquee.MouseDown += OnMouseDown;
-        Marquee.MouseUp += OnMouseUp;
-        Marquee.MouseClicked += OnMouseClicked;
-        Marquee.MouseDoubleClicked += OnMouseDoubleClicked;
-        Marquee.MouseMoved += OnMouseMoved;
         Marquee.LoupePositionMoved += OnLoupePositionMoved;
         // Escape / Enter の自己処理（確定・キャンセル要求）とズーム・スクロール検知も購読する
         Marquee.ConfirmRequested += OnConfirmRequested;
         Marquee.CancelRequested += OnCancelRequested;
         Marquee.ViewportChanged += OnViewportChanged;
+
+        // 文字（サイズラベル・座標ラベル）はコントロールが描かないため、描画完了イベントでホストが描く
+        Marquee.Rendered += OnMarqueeRendered;
 
         // ViewModel のコントロール設定を MarqueeControl へ反映する
         _vm.PropertyChanged += OnViewModelPropertyChanged;
@@ -170,18 +169,24 @@ public partial class MainWindow : Window
     /// <summary>ViewModel の設定プロパティを MarqueeControl へ反映する。</summary>
     private void ApplyControlSettings()
     {
-        Marquee.Options = new MarqueeOptions
+        // 選択枠線は装飾（暗転マスクの穴あけ枠）が描くため、枠線の色・太さは装飾の外観へ与える
+        // （ハンドルの枠線も同じ色に揃える。両者は同じ矩形に重なる）
+        var borderColor = _vm.BorderColorOption.Color.ToDrawingColor();
+        Marquee.DecoOptions = MarqueeDecoOptions.Default with
         {
-            // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描くため、枠線の色・太さはその外観へ与える
-            OuterAppearance = MarqueeOptions.Default.OuterAppearance with
+            OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
             {
-                BorderColor = _vm.BorderColorOption.Color.ToDrawingColor(),
+                BorderColor = borderColor,
                 BorderThickness = _vm.BorderThickness,
             },
+        };
+        Marquee.Options = new MarqueeOptions
+        {
             HandleSize = _vm.HandleSize,
             HandleHitRadius = _vm.HandleHitRadius,
             MinSelectionSize = _vm.MinSelectionSize,
             HandleColor = _vm.HandleColorOption.Color.ToDrawingColor(),
+            HandleBorderColor = borderColor,
             MarkerColor = _vm.MarkerColorOption.Color.ToDrawingColor(),
             MarkerLength = _vm.MarkerLength,
             ClampToDomainBounds = _vm.ClampToDomainBounds,
@@ -249,39 +254,6 @@ public partial class MainWindow : Window
         _vm.AddLog("[Event] SelectionCancelled");
     }
 
-    /// <summary>左ボタン押下時の処理。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">座標イベント引数。</param>
-    private void OnMouseDown(object? sender, MarqueePointEventArgs e)
-        => _vm.AddLog($"[Event] MouseDown: ({e.Point.X:F0}, {e.Point.Y:F0})");
-
-    /// <summary>左ボタン解放時の処理。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">座標イベント引数。</param>
-    private void OnMouseUp(object? sender, MarqueePointEventArgs e)
-        => _vm.AddLog($"[Event] MouseUp: ({e.Point.X:F0}, {e.Point.Y:F0})");
-
-    /// <summary>クリック（ドラッグ移動なしの押下→解放）時の処理。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">座標イベント引数。</param>
-    private void OnMouseClicked(object? sender, MarqueePointEventArgs e)
-        => _vm.AddLog($"[Event] MouseClicked: ({e.Point.X:F0}, {e.Point.Y:F0})");
-
-    /// <summary>ダブルクリック検出時の処理（汎用公開。確定/キャンセルは MarqueeControl 自身が判定し ConfirmRequested / CancelRequested で通知する）。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">ダブルクリックイベント引数。</param>
-    private void OnMouseDoubleClicked(object? sender, MarqueePointEventArgs e)
-    {
-        _vm.AddLog($"[Event] MouseDoubleClicked: ({e.Point.X:F0}, {e.Point.Y:F0})");
-    }
-
-    /// <summary>マウス移動ごとのポインタ位置の処理。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">座標イベント引数。</param>
-    /// <remarks>マウス移動ごとに発火するため、ログは抑制してデバッグ用途のみにする。</remarks>
-    private void OnMouseMoved(object? sender, MarqueePointEventArgs e)
-        => _vm.AddLog($"[Event] MouseMoved: ({e.Point.X:F0}, {e.Point.Y:F0})");
-
     /// <summary>nudge 後のルーペ中心位置要求の処理。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">座標イベント引数。</param>
@@ -312,6 +284,19 @@ public partial class MainWindow : Window
     /// <param name="e">選択矩形イベント引数（現在の選択矩形 + Snapshot）。</param>
     private void OnViewportChanged(object? sender, SelectionRectEventArgs e)
         => _vm.AddLog($"[Event] ViewportChanged: X={e.Rect.X:F0}, Y={e.Rect.Y:F0}, W={e.Rect.Width:F0}, H={e.Rect.Height:F0}");
+
+    /// <summary>描画完了時にホスト固有の付加情報を描画する。</summary>
+    /// <param name="sender">イベント送信元（MarqueeControl）。</param>
+    /// <param name="e">描画コンテキストとコアが解決した描画内容。</param>
+    /// <remarks>
+    /// サイズラベルとカーソル座標ラベルはコントロールがテキスト要素として配置するため、本ハンドラは何もしない。<br/>
+    /// ホスト固有の付加情報（操作ラベル等）を描く場合は本ハンドラで <see cref="MarqueeRenderedEventArgs.Content"/> の<br/>
+    /// <see cref="MarqueeDrawContent.HoleRect"/> を基準に描く。
+    /// </remarks>
+    private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
+    {
+        _vm.AddLog($"[Event] Rendered: HasText={e.Content.HasText}, Layers={e.Content.Layers.Count}");
+    }
 
     /// <summary>選択面の押下時に MarqueeControl へフォーカスを渡す。</summary>
     /// <param name="sender">イベント送信元。</param>

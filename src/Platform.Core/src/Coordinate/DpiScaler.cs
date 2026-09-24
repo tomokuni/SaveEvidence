@@ -1,3 +1,5 @@
+using EsUtil.Platform.Core.Geometry;
+
 namespace EsUtil.Platform.Core.Coordinate;
 
 /// <summary>DIP 値をスケーリング係数で物理ピクセルへ変換する計算ロジック（純粋関数）。</summary>
@@ -84,4 +86,16 @@ public static class DpiScaler
     /// <param name="scaling">スケーリング係数（表示 DIP → 物理ピクセル）。0 以下は基準値へ正規化する。</param>
     /// <returns>DIP の長さ。</returns>
     /// <remarks>丸めを行わない（切り上げ・最低 1 の規則は物理ピクセルへ変換する方向のものであり、逆方向には適用しない）。</remarks>
-    public static double ToDip(double physical, double scaling) => physical / NormalizeScaling(scaling);}
+    public static double ToDip(double physical, double scaling) => physical / NormalizeScaling(scaling);
+
+    /// <summary>物理ピクセルのサイズを DIP のサイズへ変換する（<see cref="ScaleToPixel(int, double)"/> の逆変換）。</summary>
+    /// <param name="physicalSize">変換する物理ピクセルのサイズ。</param>
+    /// <param name="scaling">スケーリング係数（表示 DIP → 物理ピクセル）。0 以下は基準値へ正規化する。</param>
+    /// <returns>DIP のサイズ。</returns>
+    /// <remarks>
+    /// 成分ごとの換算は <see cref="ToDip(double, double)"/>（単一所有者）へ委譲する（両 UI で同じ丸め規則になる）。<br/>
+    /// コア型同士の換算を UI 側で組み立てないよう、サイズ型の入口を本クラスが提供する。
+    /// </remarks>
+    public static EsSize ToDip(EsSize physicalSize, double scaling)
+        => new(ToDip(physicalSize.Width, scaling), ToDip(physicalSize.Height, scaling));
+}

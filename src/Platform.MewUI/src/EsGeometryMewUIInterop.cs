@@ -33,6 +33,13 @@ public static class EsGeometryMewUIInterop
     /// <returns>コアの座標。</returns>
     public static EsPoint ToEsPoint(this MewUIPoint point) => new(point.X, point.Y);
 
+    /// <summary>MewUI の座標型を画面物理ピクセルの座標（整数）へ変換する。</summary>
+    /// <param name="point">変換元の座標（画面物理の小数値）。</param>
+    /// <returns>四捨五入した画面物理ピクセルの座標。</returns>
+    /// <remarks>丸め規則を本メソッドが単一所有し、UI 側に <c>(int)Math.Round(...)</c> を書かせない。</remarks>
+    public static EsPixelPoint ToEsPixelPoint(this MewUIPoint point)
+        => new((int)Math.Round(point.X), (int)Math.Round(point.Y));
+
     /// <summary><see cref="EsSize"/> を MewUI のサイズ型へ変換する。</summary>
     /// <param name="size">変換元のサイズ。</param>
     /// <returns>MewUI のサイズ。</returns>

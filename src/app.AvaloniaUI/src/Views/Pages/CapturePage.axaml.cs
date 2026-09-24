@@ -1008,9 +1008,6 @@ public sealed partial class CapturePage : UserControl
         OverlayColor = DrawingColor.Transparent,
         BorderColor = DrawingColor.Transparent,
         BorderThickness = AutoCropStrokeThickness,
-        ShowSizeLabel = false,
-        ShowSubLines = false,
-        InfoLabelVisible = false,
     };
 
     /// <summary>自動切り出しのホバー強調（赤色の枠線 + 半透明の塗り）の外観。</summary>
@@ -1044,8 +1041,9 @@ public sealed partial class CapturePage : UserControl
 
         if (hovered is not { } target)
         {
-            // ハイライトなし（外側の装飾も描かない）
-            AutoCropHighlight.Options = MarqueeOptions.Default with { OuterAppearance = s_hiddenOuterDecoAppearance };
+            // ハイライトなし（外側の装飾も描かない。サイズラベルも表示しない）
+            AutoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
+            AutoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with { OuterAppearance = s_hiddenOuterDecoAppearance };
             return;
         }
 
@@ -1053,7 +1051,8 @@ public sealed partial class CapturePage : UserControl
         var topLeft = ContentToViewportDomain(new Point(target.X, target.Y));
         var bottomRight = ContentToViewportDomain(new Point(target.Right, target.Bottom));
 
-        AutoCropHighlight.Options = MarqueeOptions.Default with
+        AutoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
+        AutoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with
         {
             OuterAppearance = s_hiddenOuterDecoAppearance,
             OuterHasHighlight = true,

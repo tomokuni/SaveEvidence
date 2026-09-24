@@ -1,108 +1,226 @@
-using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Estable.Marquee.Decoration;
 
 namespace Estable.Marquee;
 
-/// <summary>選択矩形の 1 フレーム分の描画内容を解決する静的クラス。</summary>
+/// <summary>選択矩形コントロールの 1 フレーム分の描画内容（選択矩形・装飾・ラベル）を解決する静的クラス。</summary>
 /// <remarks>
-/// 本コントロールは「選択矩形そのもの（枠線・ハンドル・マーカー・座標ラベル）」と、<br/>
-/// 「選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・ラベル）」の 2 つを描く。後者の描画内容は<br/>
-/// 装飾コア（<see cref="OuterDecoFrame"/>）が単一所有するため、本クラスは両者を橋渡しする。<br/>
+/// <b>描画順はコアが単一所有する</b>: 本クラスが <see cref="MarqueeDrawContent.Layers"/> を組み立てるため、<br/>
+/// UI 層は層の順序・有無を判断しない（ラベルは必ず最後 = 常に最上位）。<br/>
 /// <br/>
-/// <b>選択矩形はセッションが単一所有する</b>: 装飾の穴あけ矩形と選択の有無は、設定値ではなくセッションの状態から導出する。<br/>
-/// このため装飾コアの入力値（<see cref="OuterDecoOptions"/>）を本クラスで組み立て、<br/>
-/// 選択に由来する項目（<c>LogicalSelectionRect</c> / <c>HasSelection</c>）だけをセッションの状態で埋める<br/>
-/// （外側の装飾の設定値には選択の状態を持たせない）。<br/>
+/// <b>描くかどうかの判断はすべて本クラスが持つ</b>: 設定（非表示）・選択なし・nudge 中・透明色・穴あけ矩形なしなどを解決し、<br/>
+/// UI 層は値を持つ項目を反映するだけでよい。<br/>
 /// <br/>
-/// <b>描画内容の判断は装飾コアが持つ</b>: どの矩形を暗転するか・枠線を描くか・ラベルをどう組むかは<br/>
-/// <see cref="OuterDecoFrame.Resolve(in OuterDecoRequest)"/> が判断する（本クラスは判断を持たない）。<br/>
-/// UI 実装は本メソッドが返すフレームを自 UI の描画 API へ写すだけでよい。
+/// <b>テキストの実寸は描画 API 依存</b>: コアは「どこへ何を描くか」だけを返し、実測と要素の配置は UI 層が行う。<br/>
+/// <br/>
+/// <b>可視性</b>: 本クラスは公開ファサード <see cref="Marquee"/> の内部実装であるため internal とする<br/>
+/// （UI 層・ホストは <see cref="Marquee.ResolveContent"/> を通して描画内容を得る）。
 /// </remarks>
-public static class MarqueeFrame
+internal static class MarqueeFrame
 {
-    /// <summary>選択矩形の 1 フレーム分の描画内容（外側の装飾）を解決する。</summary>
-    /// <param name="session">選択の状態を単一所有するセッション（選択矩形・選択の有無・設定を参照する）。</param>
-    /// <param name="client">クライアント矩形（DIP。UI 実装の描画領域）。</param>
-    /// <param name="port">論理座標 → DIP の座標変換ポート（null 可。null の場合は <paramref name="scaling"/> を等倍スケールとして適用する）。</param>
-    /// <param name="scaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
-    /// <param name="sizeLabelOverrideProvider">サイズラベルの文言プロバイダ（null 可。未指定・空文字の場合は自動生成する）。</param>
-    /// <param name="displayScaleScaling">サイズラベルの自動生成に使うスケーリング（0 以下は等倍）。</param>
-    /// <param name="operationTextProvider">操作ラベル（2 行目）の文言プロバイダ（null 可。未指定・空文字の場合は描かない）。</param>
-    /// <param name="infoTextProvider">情報ラベル（3 行目）の文言プロバイダ（null 可。未指定・空文字の場合は描かない）。</param>
-    /// <returns>外側の装飾の描画内容（描くものが無い場合は空のフレーム）。</returns>
+    /// <summary>1 フレーム分の描画内容を解決する。</summary>
+    /// <param name="request">描画入力（設定・状態と描画時に決まる値）。</param>
+    /// <returns>描画内容（描くものが無い項目は空・null）。</returns>
     /// <remarks>
-    /// 1. セッションの設定（外側の装飾の外観・ハイライト）を取り出す。<br/>
-    /// 2. 選択に由来する項目（論理選択矩形・選択の有無）をセッションの状態から導出する。<br/>
-    /// 3. 装飾コアの入力値を組み立て、フレーム解決（<see cref="OuterDecoFrame.Resolve(in OuterDecoRequest)"/>）へ委譲する。<br/>
+    /// 処理フロー:<br/>
+    /// 1. 装飾（暗転マスク・穴あけ枠・内側の塗り）を解決する。<br/>
+    /// 2. 選択矩形そのもの（ハンドル・始点マーカー）を解決する。<br/>
+    /// 3. ラベル（サイズ・カーソル座標）を解決する。<br/>
+    /// 4. 描く層だけを順序どおりに並べる（ラベルは最後 = 常に最上位）。<br/>
     /// <br/>
-    /// 文言（操作ラベル・情報ラベル）はホストがプロバイダで与える（本コアは特定の操作文言を持たない）。<br/>
-    /// 本メソッドは引数を検証しない（<paramref name="client"/> の寸法が 0 の場合は空のフレームが返る）。
+    /// 描画順は <see cref="MarqueeDrawLayer"/> の宣言順ではなく<b>本メソッドの意図</b>で決める<br/>
+    /// （列挙に層を追加しても描画順が勝手に変わらないようにするため、明示的に組み立てる）。
     /// </remarks>
-    public static OuterDecoFrame Resolve(
-        MarqueeSession session,
-        EsRect client,
-        ICoordTransform? port,
-        double scaling,
-        Func<string?>? sizeLabelOverrideProvider,
-        double displayScaleScaling,
-        Func<string?>? operationTextProvider = null,
-        Func<string?>? infoTextProvider = null)
+    public static MarqueeDrawContent ResolveContent(in MarqueeFrameRequest request)
     {
-        ArgumentNullException.ThrowIfNull(session);
+        var hasSelection = request.HasSelection;
+        var selectionRect = request.SelectionRect;
 
-        var options = session.Options;
-        var hasSelection = session.HasSelection;
-
-        var request = new OuterDecoRequest(
+        var decoration = OuterDecoFrame.Resolve(new OuterDecoRequest(
             new OuterDecoOptions
             {
-                Appearance = options.OuterAppearance,
-                ShowFullOverlay = options.OuterShowFullOverlay,
-                LogicalSelectionRect = hasSelection ? session.SelectionRect : null,
+                Appearance = request.DecoOptions.OuterAppearance,
+                ShowFullOverlay = request.DecoOptions.OuterShowFullOverlay,
+                LogicalSelectionRect = selectionRect,
                 HasSelection = hasSelection,
-                LogicalHighlightRect = options.OuterHighlightRect,
-                HasHighlight = options.OuterHasHighlight,
+                LogicalHighlightRect = request.DecoOptions.OuterHighlightRect,
+                HasHighlight = request.DecoOptions.OuterHasHighlight,
             },
-            client,
-            port,
-            scaling,
-            sizeLabelOverrideProvider,
-            operationTextProvider,
-            infoTextProvider,
-            displayScaleScaling);
+            request.ClientSize,
+            request.Port,
+            request.Scaling));
 
-        return OuterDecoFrame.Resolve(request);
-    }
-
-    /// <summary>穴あけ矩形の内側の装飾の 1 フレーム分の描画内容を解決する。</summary>
-    /// <param name="session">選択の状態を単一所有するセッション（選択矩形・選択の有無・設定を参照する）。</param>
-    /// <param name="port">論理座標 → DIP の座標変換ポート（null 可。null の場合は <paramref name="scaling"/> を等倍スケールとして適用する）。</param>
-    /// <param name="scaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
-    /// <returns>内側の装飾の描画内容（描くものが無い場合は空のフレーム）。</returns>
-    /// <remarks>
-    /// 対象の穴あけ矩形は <see cref="Resolve"/> と同じ規則で決まる（ハイライト優先 → 選択矩形）。<br/>
-    /// 描画の要否（塗り色・枠線色のアルファ）は装飾コアが判断するため、UI 実装は返されたフレームを写すだけでよい。
-    /// </remarks>
-    public static InnerDecoFrame ResolveInner(MarqueeSession session, ICoordTransform? port, double scaling)
-    {
-        ArgumentNullException.ThrowIfNull(session);
-
-        var options = session.Options;
-        var hasSelection = session.HasSelection;
-
-        var request = new InnerDecoRequest(
+        var innerDecoration = InnerDecoFrame.Resolve(new InnerDecoRequest(
             new InnerDecoOptions
             {
-                Appearance = options.InnerAppearance,
-                LogicalSelectionRect = hasSelection ? session.SelectionRect : null,
+                Appearance = request.DecoOptions.InnerAppearance,
+                LogicalSelectionRect = selectionRect,
                 HasSelection = hasSelection,
-                LogicalHighlightRect = options.OuterHighlightRect,
-                HasHighlight = options.OuterHasHighlight,
+                LogicalHighlightRect = request.DecoOptions.OuterHighlightRect,
+                HasHighlight = request.DecoOptions.OuterHasHighlight,
             },
-            port,
-            scaling);
+            request.Port,
+            request.Scaling));
 
-        return InnerDecoFrame.Resolve(request);
+        var handles = ResolveHandles(request);
+        var marker = ResolveMarker(request);
+
+        // 穴あけ矩形は装飾・内側の装飾・サイズラベルで同じ値を使うため 1 回だけ計算する
+        var hole = DecoGeometry.ResolveHoleRectDip(
+            request.DecoOptions.OuterHasHighlight,
+            request.DecoOptions.OuterHighlightRect,
+            request.HasSelection,
+            request.SelectionRect,
+            request.Port,
+            request.Scaling);
+
+        var sizeLabel = ResolveSizeLabel(request, hole);
+        var coordLabel = ResolveCoordLabel(request);
+
+        return new MarqueeDrawContent(
+            decoration,
+            innerDecoration,
+            hole,
+            handles,
+            marker,
+            sizeLabel,
+            coordLabel,
+            ResolveLayers(hasSelection, marker, sizeLabel, coordLabel));
     }
+
+    /// <summary>描く層だけを描画順に並べる。</summary>
+    /// <param name="hasSelection">選択が有効かどうか。</param>
+    /// <param name="marker">始点マーカー。null の場合は層を含めない。</param>
+    /// <param name="sizeLabel">サイズラベル。null の場合は層を含めない。</param>
+    /// <param name="coordLabel">カーソル座標ラベル。null の場合は層を含めない。</param>
+    /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
+    /// <remarks>
+    /// 装飾は常に含める（描くものが無い場合は各項目が空であり、UI 層の分岐を増やさない）。<br/>
+    /// ラベルは必ず末尾へ置き、常に最上位に表示する。
+    /// </remarks>
+    private static IReadOnlyList<MarqueeDrawLayer> ResolveLayers(
+        bool hasSelection, MarqueeMarker? marker, MarqueeSizeLabel? sizeLabel, MarqueeCoordLabel? coordLabel)
+    {
+        var layers = new List<MarqueeDrawLayer>(5) { MarqueeDrawLayer.Decoration };
+
+        if (hasSelection)
+        {
+            layers.Add(MarqueeDrawLayer.Handles);
+        }
+
+        if (marker is not null)
+        {
+            layers.Add(MarqueeDrawLayer.Marker);
+        }
+
+        // ラベルは常に最上位（選択矩形・マーカーより後に描く）
+        if (sizeLabel is not null)
+        {
+            layers.Add(MarqueeDrawLayer.SizeLabel);
+        }
+
+        if (coordLabel is not null)
+        {
+            layers.Add(MarqueeDrawLayer.CoordLabel);
+        }
+
+        return layers;
+    }
+
+    /// <summary>ドラッグハンドルの描画内容を解決する。</summary>
+    /// <param name="request">描画入力。</param>
+    /// <returns>ハンドルの描画内容。非表示の設定または選択なしの場合は null。</returns>
+    /// <remarks>ハンドル枠の色は独立した設定値である（装飾の枠線色とは別の値であり、ホストが同じ色を割り当てる）。</remarks>
+    private static MarqueeHandles? ResolveHandles(in MarqueeFrameRequest request)
+    {
+        var options = request.Options;
+        if (!options.ShowHandles || !request.HasSelection || request.SelectionRect is not { } rect)
+        {
+            return null;
+        }
+
+        return new MarqueeHandles(
+            ToDipRect(rect, request),
+            options.HandleSize,
+            MarqueeAppearance.ResolveHandleColor(options.HandleColor),
+            options.HandleBorderColor);
+    }
+
+    /// <summary>始点マーカー（十字線）の描画内容を解決する。</summary>
+    /// <param name="request">描画入力。</param>
+    /// <returns>マーカーの描画内容。nudge 中でない（または十字線が可視でない）場合は null。</returns>
+    private static MarqueeMarker? ResolveMarker(in MarqueeFrameRequest request)
+    {
+        if (!request.MarkerActive)
+        {
+            return null;
+        }
+
+        var options = request.Options;
+        return new MarqueeMarker(
+            ToDip(request.MarkerPosition, request),
+            options.MarkerColor,
+            MarqueeAppearance.MarkerThickness,
+            options.MarkerLength / 2);
+    }
+
+    /// <summary>サイズラベルの描画内容を解決する。</summary>
+    /// <param name="request">描画入力。</param>
+    /// <param name="hole">穴あけ矩形（DIP）。選択もハイライトも無い場合は null。</param>
+    /// <returns>サイズラベルの描画内容。非表示の設定または穴あけ矩形なしの場合は null。</returns>
+    /// <remarks>
+    /// 基準点は穴あけ矩形の左上である（装飾と同じ規則で決まる）。<br/>
+    /// 文言はプロバイダ優先であり、未指定・空文字の場合はコアが矩形から自動生成する。
+    /// </remarks>
+    private static MarqueeSizeLabel? ResolveSizeLabel(in MarqueeFrameRequest request, EsRect? hole)
+    {
+        if (!request.Options.ShowSizeLabel || hole is not { } holeRect)
+        {
+            return null;
+        }
+
+        var options = request.Options;
+        var overrideText = request.SizeLabelOverrideProvider?.Invoke();
+        var text = string.IsNullOrEmpty(overrideText)
+            ? MarqueeSizeLabel.Format(holeRect, request.DisplayScaleScaling)
+            : overrideText;
+
+        return new MarqueeSizeLabel(
+            text, holeRect.TopLeft, options.SizeLabelFontSize, options.SizeLabelColor, options.SizeLabelBackgroundColor);
+    }
+
+    /// <summary>カーソル座標ラベルの描画内容を解決する。</summary>
+    /// <param name="request">描画入力。</param>
+    /// <returns>座標ラベルの描画内容。非表示の設定の場合は null。</returns>
+    /// <remarks>文言はコア（<see cref="CoordinateFormatter"/>）が文字列化し、配置は描画時に実寸から決まる。</remarks>
+    private static MarqueeCoordLabel? ResolveCoordLabel(in MarqueeFrameRequest request)
+    {
+        var options = request.Options;
+        if (!options.ShowCoordLabel)
+        {
+            return null;
+        }
+
+        return new MarqueeCoordLabel(
+            CoordinateFormatter.Format(request.MousePosition),
+            ToDip(request.MousePosition, request),
+            request.ClientSize,
+            options.CoordLabelFontSize,
+            options.CoordLabelColor,
+            options.CoordLabelBackgroundColor);
+    }
+
+    /// <summary>論理座標の点を DIP へ変換する。</summary>
+    /// <param name="point">論理座標の点。</param>
+    /// <param name="request">描画入力（座標変換ポート・倍率）。</param>
+    /// <returns>DIP 座標の点。</returns>
+    private static EsPoint ToDip(EsPoint point, in MarqueeFrameRequest request)
+        => DecoGeometry.ResolvePort(request.Port, request.Scaling).Inverse(point);
+
+    /// <summary>論理座標の矩形を DIP へ変換する（閉区間として終点を +1 する）。</summary>
+    /// <param name="rect">論理座標の矩形。</param>
+    /// <param name="request">描画入力（座標変換ポート・倍率）。</param>
+    /// <returns>DIP 座標の矩形。</returns>
+    private static EsRect ToDipRect(EsRect rect, in MarqueeFrameRequest request)
+        => DecoGeometry.ToDipRect(rect, DecoGeometry.ResolvePort(request.Port, request.Scaling));
 }

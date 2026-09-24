@@ -38,7 +38,7 @@ internal sealed record InnerDecoOptions
 
 /// <summary>穴あけ矩形の内側の装飾の描画入力（設定・状態と、描画時に決まる値を 1 つにまとめた値）。</summary>
 /// <remarks>
-/// UI 実装は <see cref="MarqueeFrame.ResolveInner"/> を呼び、本値を直接組み立てない（内部契約）。<br/>
+/// UI 実装は <c>Marquee.ResolveContent</c> を呼び、本値を直接組み立てない（内部契約）。<br/>
 /// クライアント矩形は不要である（内側の装飾は穴あけ矩形そのものへ描くため、描画領域による切り分けを行わない）。
 /// </remarks>
 /// <param name="Options">設定と描画状態（外観・論理矩形・有効フラグ）。</param>
@@ -76,7 +76,7 @@ public readonly record struct InnerDecoFrame(
     /// <br/>
     /// 論理矩形 → DIP の変換は外側の装飾と同一の規則（選択は閉区間 +1 / ハイライトは +0）を使うため、<br/>
     /// 外側の枠線と内側の枠線が同じ矩形へ重なる。<br/>
-    /// <b>可視性</b>: UI 実装は <see cref="MarqueeFrame.ResolveInner"/> を使うため、本メソッドは内部契約とする。
+    /// <b>可視性</b>: UI 実装は <c>Marquee.ResolveContent</c> を使うため、本メソッドは内部契約とする。
     /// </remarks>
     internal static InnerDecoFrame Resolve(in InnerDecoRequest request)
     {
