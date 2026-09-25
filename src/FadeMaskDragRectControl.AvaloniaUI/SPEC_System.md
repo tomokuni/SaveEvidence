@@ -97,9 +97,9 @@ flowchart TB
     end
     subgraph Dep["内包コントロール（外部プロジェクト）"]
         direction TB
-        DR["MarqueeControl<br/>Estable.AvaloniaUI.Marquee<br/>（選択矩形の外側の装飾（暗転マスク・穴あけ枠・ハイライト）も描画）"]
+        DR["MarqueeControl<br/>EsUtil.SaveEvidence.Marquee.AvaloniaUI<br/>（選択矩形の外側の装飾（暗転マスク・穴あけ枠・ハイライト）も描画）"]
 
-        LC["LoupeControl<br/>Estable.AvaloniaUI.Loupe"]
+        LC["LoupeControl<br/>EsUtil.SaveEvidence.Loupe.AvaloniaUI"]
     end
 
     AP -->|"Mode / Options / SetCoordinateTransform / イベント購読"| Ctl
@@ -157,8 +157,8 @@ flowchart TB
 | --- | --- | --- |
 | `FadeMaskDragRectSelectionEventArgs` | 本プロジェクト | 確定要求イベントの引数（`SelectionRect: Rect`（ドメイン座標）） |
 | `FadeMaskDragRectPointEventArgs` | 本プロジェクト | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
-| `FadeMaskDragRectMode` | Estable.FadeMaskDragRect（コア） | 動作モード（描画モード・可視性・全面暗転の切替） |
-| `FadeMaskDragRectOptions` | Estable.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線） |
+| `FadeMaskDragRectMode` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 動作モード（描画モード・可視性・全面暗転の切替） |
+| `FadeMaskDragRectOptions` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線） |
 | `ICoordTransform` / `CoordTransform` | Platform.Core | ドメイン ↔ DIP の座標変換ポート |
 
 **公開型のカプセル化**: 公開 API は内包コントロール（MarqueeControl / LoupeControl）の型を参照しない（イベント引数は独自型・状態はプロパティで提供）。

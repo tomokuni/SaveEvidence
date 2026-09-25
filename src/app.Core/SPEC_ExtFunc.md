@@ -1,6 +1,6 @@
 # app.Core 外部機能仕様書
 
-`app.Core` は UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供します。名前空間は `app.AvaloniaUI` と同一の `Estable.SaveEvidence.*` です。
+`app.Core` は UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供します。名前空間は `app.AvaloniaUI` と同一の `EsUtil.SaveEvidence.*` です。
 
 ## 公開 API の可視性
 
@@ -12,7 +12,7 @@
 | `Services.IImageWriter` | `public` | 任意 |
 | `Services.EsPixelRectJsonConverter` | `internal` | `SaveEvidence` / `app.AvaloniaUI.Tests` / `app.Core.Tests` |
 | `Models.CapacityLimitedCache` | `internal` | `SaveEvidence` / `app.AvaloniaUI.Tests` / `app.Core.Tests` |
-| `Models.ImageFileExtensions` | `internal` | `SaveEvidence` / `SaveEvidence.MewUI` / `app.AvaloniaUI.Tests` / `app.Core.Tests` / `app.MewUI.Tests` |
+| `Models.ImageFileExtensions` | `internal` | `SaveEvidence` / `EsUtil.SaveEvidence.MewUI` / `app.AvaloniaUI.Tests` / `app.Core.Tests` / `app.MewUI.Tests` |
 | `ViewModels.ViewModeDisplay` | `internal` | 同上 |
 | `ViewModels.FolderViewViewModel` / `ViewModels.UndoViewModel` / `ViewModels.MainViewModel` | `public` | 任意 |
 
@@ -221,7 +221,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | 依存 | 用途 |
 | --- | --- |
 | `Platform.Core`（`EsUtil.Platform.Core.*`） | `EsBitmap`（画像の保持・切出し）・`EsPixelRect` / `EsPoint`（座標）・`HotKeySetting` / `HotKeyModifiers` / `EsKey`（ホットキー解析）・`EsWindowState`（設定モデル）・`CaptureType`（キャプチャ種別） |
-| `LineDetection`（`Estable.LineDetection`） | 窓枠の自動検出（`LogicLineDetector`）と矩形復元（`LineRectangleReconstructor`） |
+| `LineDetection`（`EsUtil.SaveEvidence.LineDetection`） | 窓枠の自動検出（`LogicLineDetector`）と矩形復元（`LineRectangleReconstructor`） |
 | `CommunityToolkit.Mvvm` | `ObservableObject` / `[RelayCommand]` / `[ObservableProperty]` |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。

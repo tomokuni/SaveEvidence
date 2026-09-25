@@ -1,7 +1,7 @@
 using Avalonia.Media;
-using Estable.Marquee;
+using EsUtil.Feature.MarqueeCore;
 
-namespace Estable.AvaloniaUI.Marquee;
+namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
 /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント引数。</summary>
 /// <remarks>

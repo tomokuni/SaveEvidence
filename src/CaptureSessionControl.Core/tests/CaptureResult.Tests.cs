@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureResult"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>「キャンセルは 0x0 の空結果として返す」規則（<see cref="CaptureResult.From"/>）を固定する。</remarks>

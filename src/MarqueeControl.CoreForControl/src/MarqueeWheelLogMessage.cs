@@ -1,15 +1,16 @@
 using Microsoft.Extensions.Logging;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
-namespace Estable.Marquee.CoreForControl;
+namespace EsUtil.SaveEvidence.Marquee.CoreForControl;
 
 /// <summary>ホイール要求（コントロール化）が出力する LoggerMessage 定義（ソース生成ログ）。</summary>
 /// <remarks>
 /// ズーム要求のログは、<b>両 UI で同一の書式・レベルにする必要がある</b>ため本層が単一所有する<br/>
 /// （UI 実装ごとに持つと書式がずれ、片方だけ修正される）。<br/>
-/// ロガーはコアのファサード（<see cref="Marquee.Log"/>）から取得し、ホストのログ基盤（ファイル出力・レベル制御）を共用する。<br/>
+/// ロガーはコアのファサード（<see cref="MarqueeFacade.Log"/>）から取得し、ホストのログ基盤（ファイル出力・レベル制御）を共用する。<br/>
 /// ログ基盤はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、呼び出し側では logger 引数を省略する。<br/>
-/// <b>外部公開しない</b>: ホストはロガーを <see cref="Marquee.Log"/> へ渡すだけでよく、ログ定義名を参照する必要はない。
+/// <b>外部公開しない</b>: ホストはロガーを <see cref="MarqueeFacade.Log"/> へ渡すだけでよく、ログ定義名を参照する必要はない。
 /// </remarks>
 internal static partial class MarqueeWheelLogMessage
 {

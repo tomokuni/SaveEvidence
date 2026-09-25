@@ -3,16 +3,16 @@ using Aprillz.MewUI.Skia.Interop;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Imaging;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
 using Microsoft.Extensions.Logging;
-using SaveEvidence.MewUI.Logging;
-using SaveEvidence.MewUI.Services;
-using SaveEvidence.MewUI.Views;
+using EsUtil.SaveEvidence.MewUI.Logging;
+using EsUtil.SaveEvidence.MewUI.Services;
+using EsUtil.SaveEvidence.MewUI.Views;
 using SkiaSharp;
 
-namespace SaveEvidence.MewUI;
+namespace EsUtil.SaveEvidence.MewUI;
 
 /// <summary>SaveEvidence の MewUI 版ホスト。</summary>
 /// <remarks>

@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 
-namespace Estable.MewUI.Loupe;
+namespace EsUtil.SaveEvidence.Loupe.MewUI;
 
 /// <summary>ルーペの描画完了時に上位へ通知する描画先と表示情報。</summary>
 /// <remarks>

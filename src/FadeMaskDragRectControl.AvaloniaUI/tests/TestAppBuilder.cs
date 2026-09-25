@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Headless;
-using Estable.AvaloniaUI.FadeMaskDragRect.Tests;
+using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 
 [assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
 
-namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 
 /// <summary>Avalonia ヘッドレステストのアプリケーションビルダー（アセンブリ属性方式）。</summary>
 /// <remarks>

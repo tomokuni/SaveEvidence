@@ -1,13 +1,13 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.Marquee.CoreForControl;
-using Estable.Marquee.Rendering;
-using Estable.FadeMaskDragRect;
-using Estable.Loupe;
-using Estable.MewUI.Marquee;
-using Estable.MewUI.Loupe;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.Marquee.CoreForControl;
+using EsUtil.SaveEvidence.Marquee.Rendering;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Marquee.MewUI;
+using EsUtil.SaveEvidence.Loupe.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -17,7 +17,7 @@ using DrawingColor = System.Drawing.Color;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 
-namespace Estable.MewUI.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 
 /// <summary>領域選択の複合コントロール（選択矩形 + 暗転マスク + ルーペの組み立て・配線・状態同期を 1 箇所に集約）。</summary>
 /// <remarks>

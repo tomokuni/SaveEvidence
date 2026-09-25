@@ -1,10 +1,10 @@
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.FadeMaskDragRect;
-using Estable.Loupe;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.Feature.LoupeCore;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャ設定（<see cref="CaptureSettings"/>）から複合コントロールの設定（<see cref="FadeMaskDragRectOptions"/>）への変換。</summary>
 /// <remarks>

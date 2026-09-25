@@ -2,12 +2,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
-using Estable.SaveEvidence.Enum;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
+using EsUtil.SaveEvidence.Enum;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary><see cref="SettingsService"/> の JSON 書式（ソース生成と反射の互換性）の単体テスト。</summary>
 /// <remarks>

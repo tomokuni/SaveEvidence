@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace Estable.AvaloniaUI.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 
 /// <summary>選択矩形イベントの引数（ドメイン座標の選択矩形）。</summary>
 /// <remarks>

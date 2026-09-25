@@ -2,7 +2,7 @@ using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI;
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorString"/> の単体テスト。</summary>
 /// <remarks>

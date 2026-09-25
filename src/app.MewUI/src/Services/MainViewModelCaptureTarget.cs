@@ -1,10 +1,10 @@
 using System.ComponentModel;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.ViewModels;
 
-namespace SaveEvidence.MewUI.Services;
+namespace EsUtil.SaveEvidence.MewUI.Services;
 
 /// <summary><see cref="MainViewModel"/> を切り出しセッションの適用先（<see cref="ICaptureTarget"/>）として公開する。</summary>
 /// <param name="viewModel">アプリのメイン ViewModel。</param>

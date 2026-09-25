@@ -4,7 +4,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>ColorView（カラーピッカー）テーマのアプリケーションへの自動適用を管理する。</summary>
 /// <remarks>

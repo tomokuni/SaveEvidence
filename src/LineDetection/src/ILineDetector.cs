@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.LineDetection;
+namespace EsUtil.SaveEvidence.LineDetection;
 
 /// <summary>辺（線分）検出器の共通インターフェース。</summary>
 public interface ILineDetector

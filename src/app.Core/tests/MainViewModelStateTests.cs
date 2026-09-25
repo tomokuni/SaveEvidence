@@ -1,14 +1,14 @@
-using Estable.LineDetection;
+using EsUtil.SaveEvidence.LineDetection;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.SaveEvidence.Enum;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.Enum;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.ViewModels;
 using Xunit;
-using MockSettingsService = Estable.SaveEvidence.Tests.MainViewModelTests.MockSettingsService;
-using MockImageWriter = Estable.SaveEvidence.Tests.MainViewModelTests.MockImageWriter;
+using MockSettingsService = EsUtil.SaveEvidence.Tests.MainViewModelTests.MockSettingsService;
+using MockImageWriter = EsUtil.SaveEvidence.Tests.MainViewModelTests.MockImageWriter;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary>MainViewModel / FileNameTemplate の純粋ロジック（UI 非依存）の単体テスト。</summary>
 /// <remarks>

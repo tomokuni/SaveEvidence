@@ -1,10 +1,10 @@
-using Estable.SaveEvidence.Logging;
+using EsUtil.SaveEvidence.Logging;
 using EsUtil.Platform.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary><see cref="AppLog"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>

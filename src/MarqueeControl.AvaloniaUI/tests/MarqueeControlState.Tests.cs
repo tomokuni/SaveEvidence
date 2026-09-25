@@ -1,6 +1,6 @@
 using EsUtil.Platform.AvaloniaUI;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Avalonia.Media;
@@ -8,7 +8,7 @@ using Rect = Avalonia.Rect;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Estable.AvaloniaUI.Marquee.Tests;
+namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI.Tests;
 
 /// <summary><see cref="MarqueeControl"/> のヘッドレス不要テスト（状態・設定・イベント通知の純粋 API 検証）。</summary>
 /// <remarks>

@@ -31,8 +31,8 @@
 ## 使い方
 
 ```csharp
-using Estable.Loupe;
-using Estable.MewUI.Loupe;
+using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Loupe.MewUI;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 

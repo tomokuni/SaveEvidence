@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペのログ定義（ソース生成ログ・拡張メソッド）。</summary>
 /// <remarks>

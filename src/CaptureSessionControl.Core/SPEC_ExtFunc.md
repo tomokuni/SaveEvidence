@@ -40,7 +40,7 @@
 | `ICaptureOwnerWindow` | インターフェイス | 撮影時に退避するオーナーウィンドウ（各 UI が実装するポート） |
 | `ImageColorMath` | 静的クラス | 画像の平均色（標本間引き）。描画の背景色の決定に使う |
 
-名前空間は `Estable.CaptureSession` です。
+名前空間は `EsUtil.SaveEvidence.CaptureSession` です。
 
 ## 2. 層の責務の境界
 

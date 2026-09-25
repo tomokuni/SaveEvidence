@@ -51,7 +51,7 @@ CaptureSessionControl.MewUI
 
 ```csharp
 using Aprillz.MewUI;
-using Estable.MewUI.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession.MewUI;
 using EsUtil.Platform.Core;
 
 // 撮影・切り出しの Facade を生成する（切り出しの対象とオーバーレイを重ねる領域はホストが用意する）
@@ -73,7 +73,7 @@ session.ToggleCrop();
 session.AppearanceSettings = changed;
 ```
 
-`CaptureSettings` は `CaptureSessionControl.Core`（名前空間 `Estable.CaptureSession`）が提供します。ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。アプリの `Settings` → `CaptureSettings` の変換は `app.Core` の `CaptureSettingsMapper` が担います）。
+`CaptureSettings` は `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します。ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。アプリの `Settings` → `CaptureSettings` の変換は `app.Core` の `CaptureSettingsMapper` が担います）。
 
 ## 5. ドキュメント
 

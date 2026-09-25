@@ -1,7 +1,7 @@
-using Estable.Marquee;
+using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.MewUI.Marquee;
+namespace EsUtil.SaveEvidence.Marquee.MewUI;
 
 /// <summary>座標に関する通知のイベント引数（MewUI 版）。</summary>
 /// <remarks>

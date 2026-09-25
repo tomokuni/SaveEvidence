@@ -5,7 +5,7 @@ using System.Reflection;
 using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI;
 
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>色文字列（色名 or 16進 + 不透明度%）の解析・整形・正規化を提供するユーティリティ。</summary>
 /// <remarks>

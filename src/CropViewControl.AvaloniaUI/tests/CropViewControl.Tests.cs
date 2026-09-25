@@ -8,16 +8,16 @@ using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using Estable.AvaloniaUI.Marquee;
-using Estable.CropView;
-using Estable.Marquee;
-using Estable.Marquee.CoreForControl;
-using Estable.FadeMaskDragRect;
+using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
+using EsUtil.SaveEvidence.CropView;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.SaveEvidence.Marquee.CoreForControl;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.AvaloniaUI.CropView.Tests;
+namespace EsUtil.SaveEvidence.CropView.AvaloniaUI.Tests;
 
 /// <summary><see cref="CropViewControl"/> の単体テスト（公開 API・座標変換・矩形オーバーレイ）。</summary>
 /// <remarks>

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>設定の適用を記録するログ定義。</summary>
 /// <remarks>

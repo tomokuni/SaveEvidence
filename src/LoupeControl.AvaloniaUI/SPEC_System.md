@@ -18,7 +18,7 @@
     - [6.2 LoupeRenderer（LoupeControl.Rendering）](#62-louperendererloupecontrolrendering)
     - [6.3 描画責務分割](#63-描画責務分割)
     - [6.4 画像入力とピクセル抽出](#64-画像入力とピクセル抽出)
-    - [6.5 LoupeImageExtractor（`Feature.LoupeCore`）](#65-loupeimageextractorloupecontrolcore)
+    - [6.5 LoupeImageExtractor（`Feature.LoupeCore`）](#65-loupeimageextractorfeatureloupecore)
     - [6.6 LoupeLogMessage / LoupeRenderLog](#66-loupelogmessage--louperenderlog)
     - [6.7 上位AP（消費側）](#67-上位ap消費側)
     - [6.8 UI 固有の機構（コアへ移さない）](#68-ui-固有の機構コアへ移さない)
@@ -39,7 +39,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | 項目 | 内容 |
 | --- | --- |
 | **プロジェクト** | `LoupeControl.AvaloniaUI` |
-| **ルート名前空間** | `Estable.AvaloniaUI.Loupe` |
+| **ルート名前空間** | `EsUtil.SaveEvidence.Loupe.AvaloniaUI` |
 | **言語** | C# 14（.NET 10.0） |
 | **UI フレームワーク** | Avalonia UI 12.1（StyledProperty / DrawingContext / RenderTargetBitmap / IBrush） |
 | **ターゲットフレームワーク** | net10.0 |
@@ -196,14 +196,14 @@ flowchart TB
 ### 6.5 LoupeImageExtractor（`Feature.LoupeCore`）
 
 - **分類**: 内部静的クラス（`internal static class`）
-- **所属**: `Feature.LoupeCore` プロジェクト（名前空間 `Estable.Loupe.Imaging`）
+- **所属**: `Feature.LoupeCore` プロジェクト（名前空間 `EsUtil.Feature.LoupeCore.Imaging`）
 - **責務**: 元画像（`EsBitmap`）からの領域切り出し（範囲外は透明パディング）を `EsBitmap` として提供する
 - **公開API**: `TryExtractRegionAt`（切り出しの可否を含む。ソース・中心未設定や破棄済みは `null`）/ `ComputeMagnifiedRects`（切り出し元・描画先の矩形計算。両 UI が共用する拡大倍率の単一所有）。切り出しの内部手順（`ComputeCaptureSize` / `ComputeCaptureTopLeft` / `ExtractRegionAt`）は **internal**
 - **依存**: `Platform.Core`（`EsBitmap` / `EsPoint`）のみ。Avalonia には依存しない
 
 ### 6.6 LoupeLogMessage / LoupeRenderLog
 
-- **分類**: 公開静的クラス（`public static partial class`。所属は `Feature.LoupeCore` の `Estable.Loupe`）
+- **分類**: 公開静的クラス（`public static partial class`。所属は `Feature.LoupeCore` の `EsUtil.Feature.LoupeCore`）
 - **責務**: LoggerMessage source generator によるログ定義。**書式・レベルを UI 間で揃えるためコアが単一所有する**
 - **公開API**: `LogUpdateError`（Error）/ `LogSettingChanged`（Debug。汎用）/ 設定項目ごとの名前付きメソッド（`LogSourceChanged` / `LogCenterPointChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`。**設定名はコアが付与**し、UI 層は値だけを渡す）/ `LogOptionsChanged`（設定 `LoupeOptions` の**変化した項目だけ**を出力）
 - **本 UI 固有のログ**: 中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は **本プロジェクトの `LoupeRenderLog`**（`Logging/LoupeRenderLog.cs`・`internal static partial class`）が所有する（コアに UI 固有のログを持たせない）

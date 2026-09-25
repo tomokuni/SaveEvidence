@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-namespace Estable.SaveEvidence.Models;
+namespace EsUtil.SaveEvidence.Models;
 
 /// <summary>
 /// ファイル名テンプレート文字列を解析し、実際の保存ファイル名を生成するユーティリティクラス。

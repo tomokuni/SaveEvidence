@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Marquee.Selection;
+namespace EsUtil.Feature.MarqueeCore.Selection;
 
 /// <summary>選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算・ドラッグ変形・境界クリップ）を提供する静的クラス。</summary>
 /// <remarks>

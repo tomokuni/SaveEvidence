@@ -18,7 +18,7 @@
 
 `ZoomViewControl/sample/` にある **ZoomViewControl 動作確認用の独立したサンプルアプリケーション**です。
 
-- `ZoomViewControl`（`Estable.AvaloniaUI.ZoomView.ZoomViewControl`）を実際に配置して、ズーム・パン・Fit 表示の動作を確認できます。
+- `ZoomViewControl`（`EsUtil.SaveEvidence.ZoomView.AvaloniaUI.ZoomViewControl`）を実際に配置して、ズーム・パン・Fit 表示の動作を確認できます。
 - `ZoomViewControl` は自己完結型複合コントロールで、ボタン・スライダ・Ctrl+ホイールのズーム操作を統括します。
 - **画面左側の設定パネル**でコントロールに対する設定（ズーム率・中央寄せ/左上寄せ・画像選択）を行います。
 - テスト画像（グラデーション＋グリッド＋マーカー）を生成して初期表示します。画像ファイルを開いて差し替えることもできます。
@@ -41,7 +41,7 @@ dotnet run -c Release --project sample/ZoomViewControl.AvaloniaUI.Sample.csproj
 `sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
 
 ```text
-RunSample.bat  →  リリースビルド（dotnet build -c Release）→ ZoomViewControl.Sample.exe を起動
+RunSample.bat  →  リリースビルド（dotnet build -c Release）→ EsUtil.SaveEvidence.ZoomView.Sample.exe を起動
 ```
 
 > 本サンプルは 独立したプロジェクトです。

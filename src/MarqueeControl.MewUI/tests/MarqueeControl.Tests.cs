@@ -1,14 +1,14 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.Marquee.Tests;
+namespace EsUtil.SaveEvidence.Marquee.MewUI.Tests;
 
 /// <summary>テストで使用するカーソルサービスのスパイ（呼び出しを記録する）。</summary>
 /// <remarks>位置の取得・移動は記録のみ行い、表示切替の呼び出し履歴を検証に使用する。</remarks>

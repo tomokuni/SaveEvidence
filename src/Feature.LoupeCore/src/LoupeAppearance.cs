@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの外観（下地・市松模様・外枠・十字線・中心座標ラベル）をまとめた不変の設定値。</summary>
 /// <remarks>

@@ -1,8 +1,8 @@
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -11,7 +11,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Estable.SaveEvidence.Views.Pages;
+namespace EsUtil.SaveEvidence.Views.Pages;
 
 /// <summary>
 /// アプリケーション設定ページ。

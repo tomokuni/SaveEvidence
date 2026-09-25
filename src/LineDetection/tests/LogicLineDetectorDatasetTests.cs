@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Xunit;
 
-namespace Estable.LineDetection.Tests;
+namespace EsUtil.SaveEvidence.LineDetection.Tests;
 
 /// <summary>LogicLineDetector が dataset の画像を正しく検出できることを検証する。</summary>
 /// <remarks>

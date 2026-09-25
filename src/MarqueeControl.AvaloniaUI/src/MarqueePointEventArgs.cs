@@ -1,7 +1,7 @@
 using Avalonia;
-using Estable.Marquee;
+using EsUtil.Feature.MarqueeCore;
 
-namespace Estable.AvaloniaUI.Marquee;
+namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
 /// <summary>座標に関する通知のイベント引数。</summary>
 /// <remarks>

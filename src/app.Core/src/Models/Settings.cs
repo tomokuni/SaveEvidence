@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
-using Estable.SaveEvidence.Enum;
+using EsUtil.SaveEvidence.Enum;
 
-namespace Estable.SaveEvidence.Models;
+namespace EsUtil.SaveEvidence.Models;
 
 /// <summary>
 /// アプリケーションの設定を表すデータモデル（変更通知対応）。

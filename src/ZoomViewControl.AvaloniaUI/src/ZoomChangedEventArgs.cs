@@ -1,6 +1,6 @@
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.ZoomView;
 
-namespace Estable.AvaloniaUI.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
 
 /// <summary>ズーム率変更イベントの引数。</summary>
 /// <remarks>

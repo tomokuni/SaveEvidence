@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>ズームのログが出力する値の文字列化を単一所有する静的クラス。</summary>
 /// <remarks>

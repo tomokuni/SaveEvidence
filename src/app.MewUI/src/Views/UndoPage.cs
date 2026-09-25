@@ -1,13 +1,13 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Imaging;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
-using SaveEvidence.MewUI.Services;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.MewUI.Services;
 using System.Diagnostics;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>Undo / Redo 履歴の画像を一覧表示するページ（MewUI 版）。</summary>
 /// <remarks>

@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace LoupeControl.Sample;
+namespace EsUtil.SaveEvidence.Loupe.Sample;
 
 /// <summary>アプリケーションのエントリポイント。</summary>
 internal static class Program

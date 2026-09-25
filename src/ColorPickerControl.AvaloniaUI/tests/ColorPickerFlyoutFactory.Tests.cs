@@ -7,7 +7,7 @@ using EsUtil.Platform.AvaloniaUI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorPickerFlyoutFactory"/> の単体テスト（OK / キャンセル動作・初期色）。</summary>
 /// <remarks>

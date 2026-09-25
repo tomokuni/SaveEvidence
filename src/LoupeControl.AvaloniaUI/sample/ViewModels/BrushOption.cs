@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace LoupeControl.Sample.ViewModels;
+namespace EsUtil.SaveEvidence.Loupe.Sample.ViewModels;
 
 /// <summary>色選択コンボボックス用の選択肢。</summary>
 /// <param name="Name">表示名。</param>

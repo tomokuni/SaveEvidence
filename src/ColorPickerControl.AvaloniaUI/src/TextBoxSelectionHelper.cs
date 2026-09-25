@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>ビジュアルツリー内の <see cref="TextBox"/> の検索とテキスト選択の解除を行うユーティリティ。</summary>
 /// <remarks>

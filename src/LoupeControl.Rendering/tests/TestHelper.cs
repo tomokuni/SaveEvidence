@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 
-namespace Estable.Loupe.Rendering.Tests;
+namespace EsUtil.SaveEvidence.Loupe.Rendering.Tests;
 
 /// <summary>テストで共用するユーティリティ（UI 非依存の描画ポートで描画結果を検証する）。</summary>
 /// <remarks>

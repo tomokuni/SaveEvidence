@@ -30,7 +30,7 @@ public static class W {
 [void][W]::SetProcessDpiAwarenessContext([IntPtr](-4))
 
 $repo = 'D:\Dev\Repos\GitHub\SaveEvidence'
-$exe = Join-Path $repo 'src\app.MewUI\src\bin\Debug\net10.0-windows\SaveEvidence.MewUI.exe'
+$exe = Join-Path $repo 'src\app.MewUI\src\bin\Debug\net10.0-windows\EsUtil.SaveEvidence.MewUI.exe'
 # 検証の出力は .work へ置く（リポジトリの作業ツリーを汚さない。.work は .gitignore 済み）
 $outDir = Join-Path $repo '.work\mewui-verify'
 if (-not (Test-Path $outDir)) { [void](New-Item -ItemType Directory -Path $outDir -Force) }

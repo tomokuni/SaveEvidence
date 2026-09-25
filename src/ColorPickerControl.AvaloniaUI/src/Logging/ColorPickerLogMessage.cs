@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Estable.AvaloniaUI.ColorPicker.Logging;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Logging;
 
 /// <summary>ColorPickerControl の LoggerMessage 定義（ソース生成ログ）。</summary>
 /// <remarks>

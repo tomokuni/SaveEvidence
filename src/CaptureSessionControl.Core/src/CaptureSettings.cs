@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャの外観および拡大鏡の設定値を保持するレコード型。</summary>
 /// <param name="HideOwnerWindow">キャプチャ時にオーナーウィンドウを非表示にするか。</param>

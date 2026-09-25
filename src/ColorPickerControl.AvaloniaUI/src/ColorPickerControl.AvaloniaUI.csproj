@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Estable.AvaloniaUI.ColorPicker</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.ColorPicker.AvaloniaUI</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

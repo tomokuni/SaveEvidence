@@ -2,7 +2,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>カーソル下の要素の検出結果を選択オーバーレイへ反映するための状態を表す。</summary>
 /// <param name="DomainRect">ハイライト矩形（ドメイン座標 = 画像ローカル物理ピクセル）。未検出の場合は null（<b>null が「ハイライトなし」を意味する</b>）。</param>

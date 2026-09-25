@@ -51,7 +51,7 @@
 | --- | --- |
 | 対象 | `LoupeControl.AvaloniaUI`（公開クラスは `LoupeControl`） |
 | プロジェクト | `LoupeControl.AvaloniaUI/src/LoupeControl.AvaloniaUI.csproj` |
-| 名前空間 | `Estable.AvaloniaUI.Loupe` |
+| 名前空間 | `EsUtil.SaveEvidence.Loupe.AvaloniaUI` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要基底クラス | `Avalonia.Controls.Panel`（コードのみ。AXAML を持たない） |
@@ -93,7 +93,7 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Estable.AvaloniaUI.Loupe;
+using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 ```
 
 ### 3.3 Visual Treeへの配置
@@ -119,7 +119,7 @@ panel.Children.Add(loupe);
 
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
-        xmlns:loupe="clr-namespace:Estable.AvaloniaUI.Loupe;assembly=LoupeControl.AvaloniaUI">
+        xmlns:loupe="clr-namespace:EsUtil.SaveEvidence.Loupe.AvaloniaUI;assembly=LoupeControl.AvaloniaUI">
     <Canvas>
         <loupe:LoupeControl
             IsVisible="{Binding IsLoupeVisible}"
@@ -199,7 +199,7 @@ public bool IsLoupeVisible { get; set; } = true;
 
 | 項目 | 内容 |
 | --- | --- |
-| 型 | `LoupeOptions`（コアの `Estable.Loupe`） |
+| 型 | `LoupeOptions`（コアの `EsUtil.Feature.LoupeCore`） |
 | 既定値 | `LoupeOptions.Default`（表示サイズ 160 / 拡大率 4 / 外観は `LoupeAppearance` の既定値） |
 | 用途 | ルーペの設定（表示サイズ・拡大率・外観）を 1 つの値で指定する |
 
@@ -244,7 +244,7 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 
 #### 5.1.5 Appearance（設定の一部）
 
-装飾（市松模様・外枠・十字線・中心座標ラベル）の外観は **コアの `LoupeAppearance`（`Estable.Loupe`）が単一所有**し、`Options` の一部（`Options.Appearance`）として指定します（UI 側に外観の個別プロパティはありません。両 UI で既定値・意味が一致します）。
+装飾（市松模様・外枠・十字線・中心座標ラベル）の外観は **コアの `LoupeAppearance`（`EsUtil.Feature.LoupeCore`）が単一所有**し、`Options` の一部（`Options.Appearance`）として指定します（UI 側に外観の個別プロパティはありません。両 UI で既定値・意味が一致します）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |

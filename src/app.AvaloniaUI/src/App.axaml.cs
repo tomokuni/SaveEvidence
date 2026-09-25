@@ -1,13 +1,13 @@
 using System.ComponentModel;
-using Estable.SaveEvidence.Enum;
-using Estable.SaveEvidence.Views;
+using EsUtil.SaveEvidence.Enum;
+using EsUtil.SaveEvidence.Views;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Estable.SaveEvidence;
+namespace EsUtil.SaveEvidence;
 
 /// <summary>
 /// Avalonia アプリケーションのエントリポイント。
@@ -20,7 +20,7 @@ namespace Estable.SaveEvidence;
 public sealed partial class App : Application
 {
     /// <summary>
-    /// XAML の読み込み。Estable.SaveEvidence.axaml で定義されたリソースとスタイルを適用する。
+    /// XAML の読み込み。EsUtil.SaveEvidence.axaml で定義されたリソースとスタイルを適用する。
     /// </summary>
     public override void Initialize()
     {

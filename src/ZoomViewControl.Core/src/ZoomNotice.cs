@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>ズームセッションから UI 層へ送る通知の種別。</summary>
 /// <remarks>UI 層は自 UI の公開イベントへ転送するだけにする（判断を持たない）。</remarks>

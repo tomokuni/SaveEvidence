@@ -1,7 +1,7 @@
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.ViewModels;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary><see cref="ViewModeDisplay"/> の単体テスト（表示モードの名前・範囲補正・件数テキスト）。</summary>
 /// <remarks>

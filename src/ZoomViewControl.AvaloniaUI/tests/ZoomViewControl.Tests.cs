@@ -4,7 +4,7 @@ using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
 
-namespace Estable.AvaloniaUI.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI.Tests;
 
 /// <summary>
 /// <see cref="ZoomViewControl"/>（自己完結型複合コントロール）の回帰テスト。
@@ -339,7 +339,7 @@ public class ZoomViewControlTests
     public void ZoomByWheel_移動できない場合はズーム率を維持する()
     {
         var view = CreatePannableView();
-        var maxZoom = Estable.ZoomView.ZoomConfig.Default.MaxZoom;
+        var maxZoom = EsUtil.SaveEvidence.ZoomView.ZoomConfig.Default.MaxZoom;
         view.ZoomPercent = maxZoom;
 
         view.ZoomByWheel(zoomIn: true);

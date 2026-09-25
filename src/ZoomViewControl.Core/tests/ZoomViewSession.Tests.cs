@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.Tests;
 
 /// <summary><see cref="ZoomViewSession"/> のテスト（状態・判断・キャッシュ・契約）。</summary>
 /// <remarks>

@@ -1,12 +1,12 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Controls;
-using Estable.CropView;
-using Estable.MewUI.ZoomView;
+using EsUtil.SaveEvidence.CropView;
+using EsUtil.SaveEvidence.ZoomView.MewUI;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 
-namespace Estable.MewUI.CropView;
+namespace EsUtil.SaveEvidence.CropView.MewUI;
 
 /// <summary>外部提供矩形のオーバーレイを描画するキャンバス（ズームビューの上へ重ねる）。</summary>
 /// <remarks>

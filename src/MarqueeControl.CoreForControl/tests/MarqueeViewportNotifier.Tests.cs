@@ -1,8 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
-using Estable.Marquee;
+using EsUtil.Feature.MarqueeCore;
 using Xunit;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
-namespace Estable.Marquee.CoreForControl.Tests;
+namespace EsUtil.SaveEvidence.Marquee.CoreForControl.Tests;
 
 /// <summary><see cref="MarqueeViewportNotifier"/>（ビューポート変化の通知と再描画要求）の単体テスト。</summary>
 /// <remarks>
@@ -16,10 +17,10 @@ public class MarqueeViewportNotifierTests
     /// <param name="marquee">生成したコアの公開ファサード。</param>
     /// <returns>通知クラスと、通知されたスナップショットの収集先。</returns>
     private static (MarqueeViewportNotifier Notifier, List<MarqueeSnapshot> Snapshots) CreateNotifier(
-        out EffectsSpy effects, out Marquee marquee)
+        out EffectsSpy effects, out MarqueeFacade marquee)
     {
         effects = new EffectsSpy();
-        marquee = new Marquee(new StubMarqueeRenderer(), effects);
+        marquee = new MarqueeFacade(new StubMarqueeRenderer(), effects);
         var notifier = new MarqueeViewportNotifier(marquee, effects);
         var snapshots = new List<MarqueeSnapshot>();
         notifier.ViewportChanged += (_, snapshot) => snapshots.Add(snapshot);
@@ -80,7 +81,7 @@ public class MarqueeViewportNotifierTests
     [Fact]
     public void 生成_引数がnullなら例外を投げる()
     {
-        var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
+        var marquee = new MarqueeFacade(new StubMarqueeRenderer(), new EffectsSpy());
 
         Assert.Throws<ArgumentNullException>(() => new MarqueeViewportNotifier(null!, new EffectsSpy()));
         Assert.Throws<ArgumentNullException>(() => new MarqueeViewportNotifier(marquee, null!));

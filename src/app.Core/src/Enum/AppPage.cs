@@ -1,4 +1,4 @@
-namespace Estable.SaveEvidence.Enum;
+namespace EsUtil.SaveEvidence.Enum;
 
 /// <summary>メインウィンドウのナビゲーションページを表す列挙型。</summary>
 /// <remarks>

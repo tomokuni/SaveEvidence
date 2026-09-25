@@ -17,7 +17,7 @@
 | --- | --- |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `Estable.Marquee.Rendering` |
+| ルート名前空間 | `EsUtil.SaveEvidence.Marquee.Rendering` |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
 | テスト | xUnit v3（UI 初期化不要。描画は Skia のビットマップ上で画素検証する） |
 

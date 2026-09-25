@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using MewUIColor = Aprillz.MewUI.Color;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>一覧（フォルダビュー / Undo 一覧）のサムネイル 1 件分の要素を組み立てる。</summary>
 /// <remarks>

@@ -2,12 +2,12 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.LineDetection;
+using EsUtil.SaveEvidence.LineDetection;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Native.Imaging;
 using System.Collections.ObjectModel;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>
 /// 線分検出・データ検証ページで共有する「検出コンテキスト」。

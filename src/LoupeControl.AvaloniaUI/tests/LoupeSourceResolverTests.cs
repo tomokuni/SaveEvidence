@@ -3,7 +3,7 @@ using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace Estable.AvaloniaUI.Loupe.Tests;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI.Tests;
 
 /// <summary><see cref="LoupeSourceResolver"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

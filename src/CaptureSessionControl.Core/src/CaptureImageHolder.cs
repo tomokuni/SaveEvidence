@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>撮影した画像（仮想スクリーン）の保持と所有権を単一所有する。</summary>
 /// <remarks>

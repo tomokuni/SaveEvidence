@@ -1,4 +1,4 @@
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>スクロールバー 1 軸分の同期値（最大オフセット・表示範囲・スクロール可否）を表す値オブジェクト。</summary>
 /// <param name="MaxOffset">スクロール範囲の最大オフセット（コンテンツ座標）。</param>

@@ -1,7 +1,9 @@
+using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
-namespace Estable.Marquee.CoreForControl;
+namespace EsUtil.SaveEvidence.Marquee.CoreForControl;
 
 /// <summary>ホイールによるスクロールの適用先（ビューポート実装の抽象）。</summary>
 /// <remarks>
@@ -44,7 +46,7 @@ internal static class WheelScrollDelta
 
 /// <summary>ホイール入力を解釈し、ビューポート操作の要求（ズーム / スクロール）として通知する（コントロール化のための転送規則）。</summary>
 /// <remarks>
-/// <b>位置付け</b>: コアの公開ファサード（<see cref="Marquee"/>）へホイール入力を橋渡しする補助クラスである。<br/>
+/// <b>位置付け</b>: コアの公開ファサード（<see cref="MarqueeFacade"/>）へホイール入力を橋渡しする補助クラスである。<br/>
 /// <br/>
 /// <b>なぜ Core 層ではなく CoreForControl 層にあるか</b>: 「Ctrl+ホイール = ズーム」は選択（マーキー）の判断ではなく、<br/>
 /// 選択コントロールを<b>ビューポートへ組み込む</b>ときにだけ必要な規則である。単体で使う Marquee には<br/>
@@ -67,9 +69,9 @@ public sealed class MarqueeWheelInterpreter
     /// <summary>ログの出力先（ズーム要求の記録）を取得するコアの窓口。</summary>
     /// <remarks>
     /// ロガーはコアのファサードが保持するため、本クラスは自前のロガーを持たない<br/>
-    /// （ホストは <see cref="Marquee.Log"/> を 1 回設定するだけで、選択のログとホイール要求のログの両方が同じ基盤へ出る）。
+    /// （ホストは <see cref="MarqueeFacade.Log"/> を 1 回設定するだけで、選択のログとホイール要求のログの両方が同じ基盤へ出る）。
     /// </remarks>
-    private readonly Marquee _marquee;
+    private readonly MarqueeFacade _marquee;
 
     /// <summary>連携するスクロールの適用先（null = 未連携。未連携時はスクロールを要求として通知する）。</summary>
     private IWheelScrollTarget? _scrollTarget;
@@ -77,7 +79,7 @@ public sealed class MarqueeWheelInterpreter
     /// <summary>ホイール入力を解釈して要求を出す補助を初期化する。</summary>
     /// <param name="marquee">コアの公開ファサード（ロガーの保持元）。null 不可。</param>
     /// <exception cref="ArgumentNullException"><paramref name="marquee"/> が null の場合。</exception>
-    public MarqueeWheelInterpreter(Marquee marquee)
+    public MarqueeWheelInterpreter(MarqueeFacade marquee)
     {
         ArgumentNullException.ThrowIfNull(marquee);
         _marquee = marquee;

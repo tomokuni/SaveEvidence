@@ -2,10 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Estable.AvaloniaUI.ColorPicker.Logging;
+using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Logging;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>カラーピッカー（ColorView）を格納した Flyout を構築するファクトリ。</summary>
 /// <remarks>

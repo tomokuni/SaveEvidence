@@ -1,8 +1,8 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
-using Estable.Loupe;
-using Estable.Loupe.Rendering;
+using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Loupe.Rendering;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -12,10 +12,10 @@ using EsUtil.Platform.MewUI.Labels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
-using static Estable.Loupe.LoupeValueCoercer;
-using LoupeFacade = Estable.Loupe.Loupe;
+using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
+using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 
-namespace Estable.MewUI.Loupe;
+namespace EsUtil.SaveEvidence.Loupe.MewUI;
 
 /// <summary>拡大鏡（ルーペ）コントロール（MewUI 版）。</summary>
 /// <remarks>

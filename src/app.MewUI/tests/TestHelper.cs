@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 
-namespace SaveEvidence.MewUI.Tests;
+namespace EsUtil.SaveEvidence.MewUI.Tests;
 
 /// <summary>テストで共用するユーティリティ。</summary>
 internal static class TestHelper

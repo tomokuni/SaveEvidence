@@ -1,10 +1,10 @@
 using System.Text.Json;
 using EsUtil.Platform.Core.Geometry;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary><see cref="EsPixelRectJsonConverter"/> の単体テスト（設定ファイルの JSON 互換）。</summary>
 /// <remarks>

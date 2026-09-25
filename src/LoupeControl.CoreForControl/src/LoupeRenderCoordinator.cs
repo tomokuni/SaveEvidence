@@ -1,4 +1,4 @@
-namespace Estable.Loupe.CoreForControl;
+namespace EsUtil.SaveEvidence.Loupe.CoreForControl;
 
 /// <summary>ルーペの再描画要求を実行キューへのポストでバッチ化する（1 フレームに 1 回）。</summary>
 /// <remarks>

@@ -1,6 +1,6 @@
 # CropView システム仕様書
 
-本仕様書は、`Estable.AvaloniaUI.CropView`（CropView ライブラリ）の**システム概要・アーキテクチャ・内部設計**を定義します。
+本仕様書は、`EsUtil.SaveEvidence.CropView.AvaloniaUI`（CropView ライブラリ）の**システム概要・アーキテクチャ・内部設計**を定義します。
 
 ## 目次
 
@@ -94,7 +94,7 @@ flowchart TB
 - `CropViewControl.cs` → `Platform.AvaloniaUI`（座標変換ポート `ICoordTransform` は `Platform.Core` 提供 / `EsBitmap` は `Platform.Core` 提供 / 色の相互変換は `ColorAvaloniaInterop`）/ `Microsoft.Extensions.Logging`（`ILogger`）
 - `OverlayRect.cs` → `Platform.Core`（`EsRect`）。色は `System.Drawing.Color`（UI 非依存）
 - `OverlayRectRasterizer.cs` → `Platform.Core`（`EsBitmap` / `EsPoint`）。Avalonia には依存しない
-- `OverlayLineStyle.cs` → `Estable` 非依存（純粋 enum）
+- `OverlayLineStyle.cs` → `EsUtil` 非依存（純粋 enum）
 
 依存方向は **CropViewControl → CropViewControl.Core → Platform.Core** の一方向です。
 

@@ -1,10 +1,10 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using Estable.FadeMaskDragRect;
-using Estable.Marquee;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.Feature.MarqueeCore;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャの選択 UI が表示するラベル文言（操作ラベル・情報ラベル）と言葉の選定を単一所有する。</summary>
 /// <remarks>

@@ -7,9 +7,9 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.ZoomView;
 
-namespace Estable.AvaloniaUI.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
 
 /// <summary>パン・ズーム可能な画像表示ビューポート（Avalonia 実装）。</summary>
 /// <remarks>

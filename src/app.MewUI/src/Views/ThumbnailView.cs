@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI.Imaging;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>画像をアスペクト比を保って領域いっぱいへ収める表示ビュー（MewUI 版）。</summary>
 /// <remarks>

@@ -2,11 +2,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:cp="clr-namespace:Estable.AvaloniaUI.ColorPicker;assembly=ColorPickerControl.AvaloniaUI"
+        xmlns:cp="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;assembly=ColorPickerControl.AvaloniaUI"
         mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="900"
-        x:Class="ColorPickerControl.Sample.Views.MainWindow"
+        x:Class="EsUtil.SaveEvidence.ColorPicker.Sample.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        xmlns:vm="clr-namespace:ColorPickerControl.Sample.ViewModels"
+        xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ColorPicker.Sample.ViewModels"
         Title="ColorPickerControl サンプル"
         Width="450" Height="780">
     <Window.Resources>

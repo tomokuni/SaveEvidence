@@ -3,7 +3,7 @@ using Serilog;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する。
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace SaveEvidence.MewUI.Logging;
+namespace EsUtil.SaveEvidence.MewUI.Logging;
 
 /// <summary>app.MewUI プロジェクトのトレースログ定義（LoggerMessage ソース生成・拡張メソッド）。</summary>
 /// <remarks>

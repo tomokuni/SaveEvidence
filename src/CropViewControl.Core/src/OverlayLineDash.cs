@@ -1,4 +1,4 @@
-namespace Estable.CropView;
+namespace EsUtil.SaveEvidence.CropView;
 
 /// <summary>オーバーレイ矩形の枠線スタイルに対応するダッシュ長を単一所有する。</summary>
 /// <remarks>

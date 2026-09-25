@@ -1,9 +1,9 @@
 using Avalonia;
 using Rect = Avalonia.Rect;
 using Xunit;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 
-namespace Estable.AvaloniaUI.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Tests;
 
 /// <summary>CaptureSessionControl.AvaloniaUI のヘッドレス不要テスト（設定・ライフサイクル）。</summary>
 /// <remarks>

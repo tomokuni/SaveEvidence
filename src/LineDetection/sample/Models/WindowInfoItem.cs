@@ -1,7 +1,7 @@
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace LineDetectionSample.Models;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.Models;
 
 /// <summary>領域内ウィンドウの一覧表示アイテム（GUI で正解を選択するための行）。</summary>
 /// <remarks>

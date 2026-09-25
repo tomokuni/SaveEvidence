@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using SaveEvidence.MewUI.Logging;
+using EsUtil.SaveEvidence.MewUI.Logging;
 using Xunit;
 
-namespace SaveEvidence.MewUI.Tests;
+namespace EsUtil.SaveEvidence.MewUI.Tests;
 
 /// <summary><see cref="AppLog"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>

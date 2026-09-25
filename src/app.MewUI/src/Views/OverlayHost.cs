@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Geometry;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>子コントロールを親領域の任意の位置へ重ねる領域（親の残余全体を占める）。</summary>
 /// <remarks>

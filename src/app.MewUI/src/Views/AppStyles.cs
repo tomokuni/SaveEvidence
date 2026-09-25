@@ -1,10 +1,10 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using Estable.SaveEvidence.Enum;
-using SaveEvidence.MewUI.Icons;
+using EsUtil.SaveEvidence.Enum;
+using EsUtil.SaveEvidence.MewUI.Icons;
 using MewUIColor = Aprillz.MewUI.Color;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>アプリ共通のスタイル（ナビパネル・ツールバー・ウィンドウ操作ボタン）を定義する。</summary>
 /// <remarks>

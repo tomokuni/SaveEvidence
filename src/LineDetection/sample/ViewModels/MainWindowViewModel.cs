@@ -2,7 +2,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>ナビゲーションのページ。</summary>
 public enum AppPage

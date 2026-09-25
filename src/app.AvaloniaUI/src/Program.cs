@@ -1,9 +1,9 @@
 using System.Reflection;
-using Estable.SaveEvidence.Logging;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
-using Estable.SaveEvidence.Views;
+using EsUtil.SaveEvidence.Logging;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.Views;
 using Avalonia;
 using Avalonia.Threading;
 using EsUtil.Platform.Core;
@@ -11,7 +11,7 @@ using EsUtil.Platform.Native;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
-namespace Estable.SaveEvidence;
+namespace EsUtil.SaveEvidence;
 
 /// <summary>
 /// アプリケーションのエントリポイント。

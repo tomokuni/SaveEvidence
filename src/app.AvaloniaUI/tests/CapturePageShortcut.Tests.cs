@@ -1,8 +1,8 @@
-using Estable.SaveEvidence.Views.Pages;
+using EsUtil.SaveEvidence.Views.Pages;
 using Avalonia.Input;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary><see cref="CapturePage.IsCtrlShortcut"/> の単体テスト。</summary>
 /// <remarks>

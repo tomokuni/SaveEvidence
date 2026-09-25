@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの数値パラメータの安全域への補正ロジック（純粋関数）。</summary>
 /// <remarks>

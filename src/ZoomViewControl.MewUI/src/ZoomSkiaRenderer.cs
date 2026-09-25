@@ -1,8 +1,8 @@
 using EsUtil.Platform.Core.Imaging;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.ZoomView;
 using SkiaSharp;
 
-namespace Estable.MewUI.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView.MewUI;
 
 /// <summary>ズーム画像の描画層（MewUI 実装）。</summary>
 /// <remarks>

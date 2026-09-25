@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Marquee.Decoration;
+namespace EsUtil.Feature.MarqueeCore.Decoration;
 
 /// <summary>選択矩形（穴あけ矩形）の内側に描く装飾の外観。</summary>
 /// <remarks>

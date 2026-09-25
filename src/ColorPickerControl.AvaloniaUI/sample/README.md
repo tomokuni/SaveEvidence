@@ -18,7 +18,7 @@
 
 `ColorPickerControl/sample/` にある **ColorPickerControl 動作確認用の独立したサンプルアプリケーション**です。
 
-- `ColorPickerControl`（`Estable.AvaloniaUI.ColorPicker.ColorPickerControl`）を実際に Visual Tree へ配置して動作を確認できます。
+- `ColorPickerControl`（`EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.ColorPickerControl`）を実際に Visual Tree へ配置して動作を確認できます。
 - 色名 / 16進コードのテキスト入力、ドロップダウン選択、カラーピッカー（ColorView Flyout）の動作を確認できます。
 - 公開プロパティ（`SelectedColor` / `ColorSortMode` / `HighlightBorderOnError` / `ComboBoxMinWidth` / `ComboBoxMaxWidth` / `ComboBoxWidth` / `ComboBoxPadding` / `ComboBoxMargin`）のバインドと動的変更を確認できます。
 - バリデーション状態（`HasValidationError` / `ValidationErrorMessage`）の読み取りを確認できます。
@@ -40,7 +40,7 @@ dotnet run -c Release --project sample/ColorPickerControl.AvaloniaUI.Sample.cspr
 `sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
 
 ```text
-RunSample.bat  →  リリースビルド（dotnet build -c Release）→ ColorPickerControl.Sample.exe を起動
+RunSample.bat  →  リリースビルド（dotnet build -c Release）→ EsUtil.SaveEvidence.ColorPicker.Sample.exe を起動
 ```
 
 > 本サンプルは独立したプロジェクトです。
@@ -80,7 +80,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ ColorP
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:cp="clr-namespace:Estable.AvaloniaUI.ColorPicker;assembly=ColorPickerControl.AvaloniaUI">
+        xmlns:cp="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;assembly=ColorPickerControl.AvaloniaUI">
     <StackPanel>
         <cp:ColorPickerControl SelectedColor="{Binding BorderColor, Mode=TwoWay}"
                                ColorSortMode="ByHue"

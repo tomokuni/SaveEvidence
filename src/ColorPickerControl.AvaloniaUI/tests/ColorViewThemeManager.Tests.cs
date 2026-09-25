@@ -6,7 +6,7 @@ using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorViewThemeManager"/> の単体テスト（テーマ適用・明示指定の優先・二重適用防止）。</summary>
 /// <remarks>

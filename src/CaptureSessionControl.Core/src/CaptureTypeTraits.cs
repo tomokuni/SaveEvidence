@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャ種別（<see cref="CaptureType"/>）の性質を単一所有する。</summary>
 /// <remarks>

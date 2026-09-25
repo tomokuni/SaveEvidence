@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.Marquee.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests;
 
 /// <summary>テストで使用するカーソルサービスのスパイ（呼び出しを記録する）。</summary>
 /// <remarks>位置の取得・移動は未使用のため記録のみ行い、表示切替の呼び出し履歴を検証に使用する。</remarks>

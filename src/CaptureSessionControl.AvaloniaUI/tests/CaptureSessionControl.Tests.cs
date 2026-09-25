@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Rect = Avalonia.Rect;
-using Estable.AvaloniaUI.CropView;
+using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
@@ -9,9 +9,9 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 
-namespace Estable.AvaloniaUI.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Tests;
 
 /// <summary><see cref="CaptureSessionControl"/> の単体テスト（設定・ライフサイクル・再入ガード）。</summary>
 [Collection("AvaloniaHeadless")]

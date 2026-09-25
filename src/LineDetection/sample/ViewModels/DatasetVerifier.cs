@@ -1,10 +1,10 @@
 using Avalonia.Media.Imaging;
-using Estable.LineDetection;
+using EsUtil.SaveEvidence.LineDetection;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Native.Imaging;
 using System.Text.Json;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>データ検証の共通ロジックを提供する静的ユーティリティ。</summary>
 /// <remarks>

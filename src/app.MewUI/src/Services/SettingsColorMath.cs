@@ -2,7 +2,7 @@ using System.Globalization;
 using MewUIColor = Aprillz.MewUI.Color;
 using DrawingColor = System.Drawing.Color;
 
-namespace SaveEvidence.MewUI.Services;
+namespace EsUtil.SaveEvidence.MewUI.Services;
 
 /// <summary>設定に保存する色文字列（<c>#AARRGGBB</c>）と MewUI / System.Drawing の色の相互変換。</summary>
 /// <remarks>

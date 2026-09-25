@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャ操作の結果を表すレコード型。</summary>
 /// <param name="Image">キャプチャした画像。エラー時は null。</param>

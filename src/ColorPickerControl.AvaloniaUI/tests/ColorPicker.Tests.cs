@@ -10,7 +10,7 @@ using Avalonia.VisualTree;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorPickerControl"/> の単体テスト（公開プロパティ・バリデーション・ソート・イベント）。</summary>
 /// <remarks>

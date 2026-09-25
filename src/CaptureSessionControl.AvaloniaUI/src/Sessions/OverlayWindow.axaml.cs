@@ -8,11 +8,11 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.AvaloniaUI.FadeMaskDragRect;
+using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using Microsoft.Extensions.Logging;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 
-namespace Estable.AvaloniaUI.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 
 /// <summary>画面キャプチャ用の切り取りオーバーレイウィンドウ（UI 部品）。</summary>
 /// <remarks>

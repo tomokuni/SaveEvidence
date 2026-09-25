@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Estable.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.Tests;
 
 /// <summary>ログ出力を収集するテスト用 <see cref="ILogger"/> 実装。</summary>
 /// <remarks>

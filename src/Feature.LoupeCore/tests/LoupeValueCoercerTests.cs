@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.Loupe.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary><see cref="LoupeValueCoercer"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

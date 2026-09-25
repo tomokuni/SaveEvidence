@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.LineDetection.Tests;
+namespace EsUtil.SaveEvidence.LineDetection.Tests;
 
 /// <summary><see cref="LineRectangleReconstructor"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

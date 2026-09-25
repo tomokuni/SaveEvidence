@@ -10,7 +10,7 @@
 
 中心座標ラベルの配置指示（実寸 → 要素の配置矩形の写像）は、描画の手順と同じ層である UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeLabelPlan`）が単一所有します（本層は関知しません）。実寸測定と要素の配置は UI 層が行います。
 
-## `LoupeRenderCoordinator`（`Estable.Loupe.CoreForControl`・`public sealed class`）
+## `LoupeRenderCoordinator`（`EsUtil.SaveEvidence.Loupe.CoreForControl`・`public sealed class`）
 
 ルーペの再描画要求をまとめ、実行キューへのポストを 1 回に結合します。UI フレームワークに依存しないため、UI 層が実行キューと優先度を注入します。
 

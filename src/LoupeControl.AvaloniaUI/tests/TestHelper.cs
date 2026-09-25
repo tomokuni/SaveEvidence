@@ -2,7 +2,7 @@ using Avalonia.Threading;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
-namespace Estable.AvaloniaUI.Loupe.Tests;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI.Tests;
 
 /// <summary>テスト用の共通ヘルパー。</summary>
 public static class TestHelper

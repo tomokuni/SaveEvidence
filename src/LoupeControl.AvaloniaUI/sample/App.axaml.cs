@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using LoupeControl.Sample.Views;
+using EsUtil.SaveEvidence.Loupe.Sample.Views;
 
-namespace LoupeControl.Sample;
+namespace EsUtil.SaveEvidence.Loupe.Sample;
 
 /// <summary>Avalonia アプリケーション本体。</summary>
 public sealed partial class App : Application

@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>仮想スクリーン画像の取得（バックグラウンド実行）を待つ手順を単一所有する。</summary>
 /// <remarks>

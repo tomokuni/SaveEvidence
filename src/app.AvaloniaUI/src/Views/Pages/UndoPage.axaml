@@ -1,9 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:Estable.SaveEvidence.ViewModels;assembly=app.Core"
-             xmlns:controls="clr-namespace:Estable.SaveEvidence.Controls"
-             xmlns:local="clr-namespace:Estable.SaveEvidence.Views.Pages"
-             x:Class="Estable.SaveEvidence.Views.Pages.UndoPage"
+             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=app.Core"
+             xmlns:controls="clr-namespace:EsUtil.SaveEvidence.Controls"
+             xmlns:local="clr-namespace:EsUtil.SaveEvidence.Views.Pages"
+             x:Class="EsUtil.SaveEvidence.Views.Pages.UndoPage"
              x:DataType="vm:UndoViewModel">
     <UserControl.Styles>
         <!-- ホバー中は枠をハイライトし、影を表示しない（擬似クラスによる状態変化はスタイルでのみ表現可能） -->

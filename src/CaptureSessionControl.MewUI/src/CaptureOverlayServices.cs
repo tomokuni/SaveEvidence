@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.MewUI.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 
 /// <summary>撮影セッションが必要とするサービスの束。</summary>
 /// <param name="Capture">画面キャプチャ（仮想スクリーンの取得）。</param>

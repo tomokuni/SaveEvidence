@@ -1,8 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:LineDetectionSample.ViewModels"
-             xmlns:loupe="clr-namespace:Estable.AvaloniaUI.Loupe;assembly=LoupeControl.AvaloniaUI"
-             x:Class="LineDetectionSample.Views.LineCanvasView"
+             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.LineDetection.Sample.ViewModels"
+             xmlns:loupe="clr-namespace:EsUtil.SaveEvidence.Loupe.AvaloniaUI;assembly=LoupeControl.AvaloniaUI"
+             x:Class="EsUtil.SaveEvidence.LineDetection.Sample.Views.LineCanvasView"
              x:DataType="vm:DetectionContext">
 
     <Viewbox Stretch="Uniform" StretchDirection="DownOnly">

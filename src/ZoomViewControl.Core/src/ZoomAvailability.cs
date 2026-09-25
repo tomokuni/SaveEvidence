@@ -1,4 +1,4 @@
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>ズーム操作の可否（ズームイン・ズームアウト）を表す値オブジェクト。</summary>
 /// <param name="CanZoomIn">ズームイン可能かどうか。</param>

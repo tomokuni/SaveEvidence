@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace ZoomViewControl.Sample;
+namespace EsUtil.SaveEvidence.ZoomView.Sample;
 
 /// <summary>アプリケーションのエントリポイント。</summary>
 internal static class Program

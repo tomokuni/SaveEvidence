@@ -1,18 +1,18 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.AvaloniaUI.CropView;
-using Estable.AvaloniaUI.FadeMaskDragRect;
+using EsUtil.SaveEvidence.CropView.AvaloniaUI;
+using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.AvaloniaUI.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 
 /// <summary>切出し（Crop）セッション（CropViewControl のライフサイクル管理と確定・キャンセル処理）。</summary>
 /// <remarks>

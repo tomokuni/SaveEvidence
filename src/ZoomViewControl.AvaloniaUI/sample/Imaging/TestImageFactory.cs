@@ -2,7 +2,7 @@ using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 
-namespace ZoomViewControl.Sample.Imaging;
+namespace EsUtil.SaveEvidence.ZoomView.Sample.Imaging;
 
 /// <summary>ズーム・パン動作確認用テスト画像を生成する。</summary>
 public static class TestImageFactory

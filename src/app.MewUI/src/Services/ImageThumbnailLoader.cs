@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using EsUtil.Platform.Core.Imaging;
-using Estable.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Models;
 using SkiaSharp;
 
-namespace SaveEvidence.MewUI.Services;
+namespace EsUtil.SaveEvidence.MewUI.Services;
 
 /// <summary>画像ファイルを縮小してサムネイル用の <see cref="EsBitmap"/> として読み込むローダー。</summary>
 /// <remarks>

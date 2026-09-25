@@ -1,7 +1,7 @@
 using System.Globalization;
 using Avalonia.Data.Converters;
 
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>保存値（#AARRGGBB）と画面表示テキスト（{色}+{不透明度%}）を相互変換する双方向コンバーター。</summary>
 /// <remarks>

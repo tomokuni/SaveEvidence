@@ -9,7 +9,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `CaptureSessionControl` | sealed クラス（Facade） | 撮影と切り出しの窓口。排他（同時に 1 つだけ）とセッションの寿命を単一所有する |
 | `CaptureOverlayServices` | sealed record | 撮影が必要とするサービスの束（設定は含まない） |
 
-名前空間は `Estable.MewUI.CaptureSession` です。
+名前空間は `EsUtil.SaveEvidence.CaptureSession.MewUI` です。
 
 `CaptureOverlay`（撮影セッション）と `CropSession`（切り出しセッション）は `internal` です
 （1 セッション = 1 インスタンスであり、生成・実行・破棄・排他の受付は Facade が担います）。

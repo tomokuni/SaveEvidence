@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>設定（<see cref="CaptureSettings"/>）の部分更新マージを単一所有する。</summary>
 /// <remarks>

@@ -22,7 +22,7 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）と将来の MewUI �
 ```
 
 - `app.Core` は UI フレームワークへ依存しません。
-- `app.Core` の名前空間は `app.AvaloniaUI` と同一（`Estable.SaveEvidence.*`）です。アセンブリのみが異なるため、`app.AvaloniaUI` 側の `using` を変更せずに移設できます。
+- `app.Core` の名前空間は `app.AvaloniaUI` と同一（`EsUtil.SaveEvidence.*`）です。アセンブリのみが異なるため、`app.AvaloniaUI` 側の `using` を変更せずに移設できます。
 - `internal` 型（`CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay`）は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `app.AvaloniaUI.Tests` / `app.Core.Tests` / `app.MewUI.Tests`）で UI 実装とテストへ公開します。
 
 ## コンポーネント構成
@@ -156,7 +156,7 @@ sequenceDiagram
 
 併せて以下を実施しました。
 
-- `LineDetection` の名前空間を `Estable.AvaloniaUI.LineDetection` → `Estable.LineDetection` へ変更（UI 非依存のため）
+- `LineDetection` の名前空間は `EsUtil.SaveEvidence.LineDetection`（旧名 `Estable.AvaloniaUI.LineDetection`。UI 非依存のため）
 - `app.AvaloniaUI` の `MainWindow`（View）が `EsBitmap` ⇔ `Avalonia.Bitmap` の境界変換を担当
 - `app.AvaloniaUI` の `Program.cs` で `IImageWriter`（`AvaloniaImageWriter`）を DI 登録
 - `app.AvaloniaUI` の `LineDetection` 直接参照を削除（`app.Core` 経由の推移的参照へ）

@@ -30,7 +30,7 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）および将来の M
 
 ## 名前空間
 
-本プロジェクトは UI 非依存ですが、**名前空間は `app.AvaloniaUI` と同一（`Estable.SaveEvidence.*`）** です。アセンブリのみが異なるため、`app.AvaloniaUI` 側の `using` を変更せずに移設できます。
+本プロジェクトは UI 非依存ですが、**名前空間は `app.AvaloniaUI` と同一（`EsUtil.SaveEvidence.*`）** です。アセンブリのみが異なるため、`app.AvaloniaUI` 側の `using` を変更せずに移設できます。
 
 ## 設定ファイルの互換性
 

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.Marquee.Rendering.Tests</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.Marquee.Rendering.Tests</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>

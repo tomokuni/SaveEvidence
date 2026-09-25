@@ -67,7 +67,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 **UI 非依存の汎用ライブラリ**として、特定のアプリ・UI 実装に依存しません（文言・モード等のアプリ固有情報を持ちません）。
 
-名前空間は `Estable.Marquee`（幾何は `Estable.Marquee.Selection`、装飾は `Estable.Marquee.Decoration`）。アセンブリ名は `Feature.MarqueeCore`。
+名前空間は `EsUtil.Feature.MarqueeCore`（幾何は `EsUtil.Feature.MarqueeCore.Selection`、装飾は `EsUtil.Feature.MarqueeCore.Decoration`）。アセンブリ名は `Feature.MarqueeCore`。
 
 ## 名前の由来と一般的な呼称
 
@@ -113,7 +113,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 ## 選択矩形の外側に描く装飾（`Decoration` 名前空間）
 
-**装飾（暗転マスク・穴あけ枠・ハイライト・穴の内側の塗り）は Core 内のサブ概念**（`src/Decoration/`・名前空間 `Estable.Marquee.Decoration`）です。コントロールを**撮影オーバーレイ等へ組み込むときにだけ必要になる表示**であり、選択矩形コントロール単体の責務ではありません（Core でも `Selection/` と対になるサブ概念として同居させ、別プロジェクトには分けません）。
+**装飾（暗転マスク・穴あけ枠・ハイライト・穴の内側の塗り）は Core 内のサブ概念**（`src/Decoration/`・名前空間 `EsUtil.Feature.MarqueeCore.Decoration`）です。コントロールを**撮影オーバーレイ等へ組み込むときにだけ必要になる表示**であり、選択矩形コントロール単体の責務ではありません（Core でも `Selection/` と対になるサブ概念として同居させ、別プロジェクトには分けません）。
 
 装飾の設定（`MarqueeDecoOptions`）は本コアが単一所有し、**装飾の描画内容（暗転領域・枠線・塗り）の解決と描画の可否の判断は `MarqueeFrame` が担います**（結果型 `OuterDecoFrame` / `InnerDecoFrame` は描画に必要な値だけを持つ純粋データであり、判断を持ちません）。**描画順もコア（`MarqueeFrame`）が指示します**。
 

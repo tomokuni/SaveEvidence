@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.CropView.Tests;
+namespace EsUtil.SaveEvidence.CropView.Tests;
 
 /// <summary><see cref="OverlayLineDash"/> の仕様テスト（破線パターンの単一所有）。</summary>
 /// <remarks>

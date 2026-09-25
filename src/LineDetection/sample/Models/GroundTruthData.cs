@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace LineDetectionSample.Models;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.Models;
 
 /// <summary>評価用データの保存形式（JSON シリアライズ用の不変データ）。</summary>
 /// <remarks>

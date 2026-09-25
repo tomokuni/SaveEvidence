@@ -1,8 +1,8 @@
 using EsUtil.Platform.Core.Geometry;
-using Estable.SaveEvidence.Layout;
+using EsUtil.SaveEvidence.Layout;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary><see cref="BottomAlignWrapLayout"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

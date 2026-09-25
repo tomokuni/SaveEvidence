@@ -1,6 +1,6 @@
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.ZoomView;
 
-namespace Estable.MewUI.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView.MewUI;
 
 /// <summary>ズーム率変更イベントの引数（MewUI 版）。</summary>
 /// <remarks>

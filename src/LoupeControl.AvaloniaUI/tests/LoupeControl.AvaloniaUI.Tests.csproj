@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.AvaloniaUI.LoupeControl.Tests</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.Loupe.AvaloniaUI.Tests</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

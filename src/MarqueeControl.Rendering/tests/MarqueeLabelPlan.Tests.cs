@@ -1,9 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
-using Estable.Marquee;
+using EsUtil.Feature.MarqueeCore;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Marquee.Rendering.Tests;
+namespace EsUtil.SaveEvidence.Marquee.Rendering.Tests;
 
 /// <summary><see cref="MarqueeLabelPlan"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
 /// <remarks>

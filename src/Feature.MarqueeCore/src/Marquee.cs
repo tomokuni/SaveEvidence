@@ -2,10 +2,10 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.Marquee.Decoration;
+using EsUtil.Feature.MarqueeCore.Decoration;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>Marquee（ドラッグ矩形の選択）の操作を UI 層・ホストへ提供するファサード。</summary>
 /// <remarks>

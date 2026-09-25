@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.MewUI.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 
 /// <summary>ポインター位置イベントの引数（ドメイン座標の位置）。</summary>
 /// <remarks>

@@ -1,6 +1,6 @@
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 
 /// <summary>ホスト固有の付加情報（操作ラベル・情報ラベル）の外観を 1 つにまとめた不変の値。</summary>
 /// <remarks>

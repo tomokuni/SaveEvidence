@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>切り出し範囲（選択矩形 → 画像内のピクセル矩形）の計算を単一所有する。</summary>
 /// <remarks>

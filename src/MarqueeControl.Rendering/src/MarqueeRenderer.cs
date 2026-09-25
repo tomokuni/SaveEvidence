@@ -1,8 +1,10 @@
+using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.Marquee.Selection;
+using EsUtil.Feature.MarqueeCore.Selection;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
-namespace Estable.Marquee.Rendering;
+namespace EsUtil.SaveEvidence.Marquee.Rendering;
 
 /// <summary>選択矩形コントロールの描画内容を描画ポートへ写すレンダラ（UI フレームワーク非依存）。</summary>
 /// <remarks>
@@ -11,7 +13,7 @@ namespace Estable.Marquee.Rendering;
 /// <b>位置付け</b>: 「どう描くか」を単一所有する描画側の中核である。コアが決めた描画内容<br/>
 /// （<see cref="MarqueeDrawContent"/>）を受け取り、描画ポート（<see cref="IEsCanvas"/>）へ写すだけであり、<br/>
 /// 「描くかどうか」「どの順に描くか」「どの色・寸法か」の判断は一切持たない。<br/>
-/// ファサード（<see cref="Marquee.Renderer"/>）へ設定して使う（差し替える場合は <see cref="IMarqueeRenderer"/> を実装した別の型を設定する）。<br/>
+/// ファサード（<see cref="MarqueeFacade.Renderer"/>）へ設定して使う（差し替える場合は <see cref="IMarqueeRenderer"/> を実装した別の型を設定する）。<br/>
 /// <br/>
 /// <b>描画順はコアが単一所有する</b>: <see cref="MarqueeDrawContent.Layers"/> の順に層を処理する。<br/>
 /// <b>ラベルは UI 要素が描く</b>: ラベル（サイズ・カーソル座標）は <see cref="ResolveLabels"/>（内部では<br/>

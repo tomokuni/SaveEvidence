@@ -1,8 +1,10 @@
+using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.Loupe.Imaging;
+using EsUtil.Feature.LoupeCore.Imaging;
+using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 
-namespace Estable.Loupe.Rendering;
+namespace EsUtil.SaveEvidence.Loupe.Rendering;
 
 /// <summary>ルーペの描画内容を描画ポートへ写すレンダラ（UI フレームワーク非依存）。</summary>
 /// <remarks>
@@ -11,7 +13,7 @@ namespace Estable.Loupe.Rendering;
 /// <b>位置付け</b>: 「どう描くか」を単一所有する描画側の中核である。コアが決めた描画入力<br/>
 /// （<see cref="LoupeRenderRequest"/>）と層の順序（<see cref="LoupeRenderNotification.Layers"/>）を受け取り、<br/>
 /// 描画ポート（<see cref="IEsCanvas"/>）へ写すだけである（外観値・判断を保持しない）。<br/>
-/// ファサード（<see cref="Loupe.Renderer"/>）へ設定して使う（差し替える場合は <see cref="ILoupeRenderer"/> を実装した別の型を設定する）。<br/>
+/// ファサード（<see cref="LoupeFacade.Renderer"/>）へ設定して使う（差し替える場合は <see cref="ILoupeRenderer"/> を実装した別の型を設定する）。<br/>
 /// <br/>
 /// <b>前提</b>: 描く単位は<b>物理ピクセル</b>である（<see cref="LoupeRenderRequest.PixelSize"/> が作る正方形が描画面）。<br/>
 /// DIP → 物理ピクセルの換算はコア（<see cref="LoupeAppearanceScaler" /> / <see cref="LoupePositionCalculator" />）が済ませている。<br/>

@@ -1,8 +1,8 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using Estable.Marquee.Decoration;
+using EsUtil.Feature.MarqueeCore.Decoration;
 
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>選択矩形コントロールの 1 フレーム分の描画内容（選択矩形・装飾・ラベル）を解決する静的クラス。</summary>
 /// <remarks>

@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.CropView.Tests;
+namespace EsUtil.SaveEvidence.CropView.Tests;
 
 /// <summary><see cref="OverlayRectRasterizer"/> の単体テスト（4 辺のラスタライズ・破線・太さ）。</summary>
 /// <remarks>

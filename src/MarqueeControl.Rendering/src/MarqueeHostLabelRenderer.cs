@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Marquee.Rendering;
+namespace EsUtil.SaveEvidence.Marquee.Rendering;
 
 /// <summary>ホストが描く付加情報ラベル（操作ラベル・情報ラベル）を描画ポートへ写すレンダラ。</summary>
 /// <remarks>

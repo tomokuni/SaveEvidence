@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Estable.MewUI.Loupe.Tests;
+namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
 
 /// <summary>ログ出力を収集するテスト用 <see cref="ILogger"/> 実装。</summary>
 /// <remarks>

@@ -1,7 +1,7 @@
-using Estable.Marquee;
+using EsUtil.Feature.MarqueeCore;
 using SkiaSharp;
 
-namespace Estable.MewUI.Marquee;
+namespace EsUtil.SaveEvidence.Marquee.MewUI;
 
 /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント引数。</summary>
 /// <remarks>

@@ -32,7 +32,7 @@
 ## 使い方
 
 ```csharp
-using Estable.MewUI.ZoomView;
+using EsUtil.SaveEvidence.ZoomView.MewUI;
 using EsUtil.Platform.Core.Imaging;
 
 var zoomView = new ZoomViewControl

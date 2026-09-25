@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using MarqueeControl.Sample.Views;
+using EsUtil.SaveEvidence.Marquee.Sample.Views;
 
-namespace MarqueeControl.Sample;
+namespace EsUtil.SaveEvidence.Marquee.Sample;
 
 /// <summary>Avalonia アプリケーション本体。</summary>
 public sealed partial class App : Application

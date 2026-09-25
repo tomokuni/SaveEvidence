@@ -59,7 +59,7 @@
 必要な名前空間:
 
 ```csharp
-using Estable.AvaloniaUI.ZoomView;
+using EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
 ```
 
 ## 5. クイックスタート
@@ -69,7 +69,7 @@ using Estable.AvaloniaUI.ZoomView;
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:zoom="clr-namespace:Estable.AvaloniaUI.ZoomView;assembly=ZoomViewControl.AvaloniaUI">
+        xmlns:zoom="clr-namespace:EsUtil.SaveEvidence.ZoomView.AvaloniaUI;assembly=ZoomViewControl.AvaloniaUI">
     <zoom:ZoomViewControl x:Name="ZoomView" Background="#FF2B2B2B"/>
 </Window>
 ```

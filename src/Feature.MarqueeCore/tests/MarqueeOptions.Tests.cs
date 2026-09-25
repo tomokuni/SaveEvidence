@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace Estable.Marquee.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests;
 
 /// <summary><see cref="MarqueeOptions"/> の単体テスト（既定値・部分変更・値補正・等価性）。</summary>
 /// <remarks>

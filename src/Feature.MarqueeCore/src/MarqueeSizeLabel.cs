@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>サイズラベル（穴あけ矩形の位置と寸法）の描画契約。</summary>
 /// <param name="Text">表示する文言（<see cref="Format"/> が生成する。ホストが上書きした場合はその文字列）。</param>

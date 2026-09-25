@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>Marquee イベントのスナップショット（通知時点の状態・選択矩形・アクティブハンドル・マウス位置・操作フラグ）。</summary>
 /// <remarks>

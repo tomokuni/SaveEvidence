@@ -2,11 +2,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Estable.AvaloniaUI.Loupe.Logging;
-using Estable.Loupe;
-using Estable.Loupe.CoreForControl;
-using Estable.Loupe.Imaging;
-using Estable.Loupe.Rendering;
+using EsUtil.SaveEvidence.Loupe.AvaloniaUI.Logging;
+using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Loupe.CoreForControl;
+using EsUtil.Feature.LoupeCore.Imaging;
+using EsUtil.SaveEvidence.Loupe.Rendering;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Labels;
 using EsUtil.Platform.AvaloniaUI.Imaging;
@@ -17,10 +17,10 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Globalization;
-using static Estable.Loupe.LoupeValueCoercer;
-using LoupeFacade = Estable.Loupe.Loupe;
+using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
+using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 
-namespace Estable.AvaloniaUI.Loupe;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 
 /// <summary>拡大鏡（ルーペ）コントロール。</summary>
 /// <remarks>

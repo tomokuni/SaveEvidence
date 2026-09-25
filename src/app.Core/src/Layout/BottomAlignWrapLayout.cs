@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.SaveEvidence.Layout;
+namespace EsUtil.SaveEvidence.Layout;
 
 /// <summary>折り返しパネルの行高さ・下端揃えの配置計算（純粋関数・UI 非依存）。</summary>
 /// <remarks>

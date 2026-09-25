@@ -1,7 +1,7 @@
 using System.Globalization;
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorDisplayConverter"/> の単体テスト。</summary>
 /// <remarks>

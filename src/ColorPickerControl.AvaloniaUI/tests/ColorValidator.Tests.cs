@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorValidator"/> の単体テスト（純粋演算・並列実行）。</summary>
 /// <remarks>

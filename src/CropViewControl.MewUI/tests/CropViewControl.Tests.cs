@@ -1,13 +1,13 @@
 using Aprillz.MewUI;
-using Estable.CropView;
-using Estable.MewUI.ZoomView;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.CropView;
+using EsUtil.SaveEvidence.ZoomView.MewUI;
+using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.CropView.Tests;
+namespace EsUtil.SaveEvidence.CropView.MewUI.Tests;
 
 /// <summary><see cref="CropViewControl"/> の Facade としてのテスト。</summary>
 /// <remarks>

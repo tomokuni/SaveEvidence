@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Headless;
-using Estable.AvaloniaUI.CaptureSession.Tests;
+using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Tests;
 
 [assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
 
-namespace Estable.AvaloniaUI.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Tests;
 
 /// <summary>Avalonia ヘッドレステストのアプリケーションビルダー（アセンブリ属性方式）。</summary>
 /// <remarks>

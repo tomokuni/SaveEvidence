@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.Marquee.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests;
 
 /// <summary><see cref="MarqueeFeedback"/> の単体テスト（UI 層へ要求する効果の適用）。</summary>
 /// <remarks>

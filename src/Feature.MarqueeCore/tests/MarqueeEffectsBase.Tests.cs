@@ -2,7 +2,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.Marquee.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests;
 
 /// <summary><see cref="MarqueeEffectsBase"/> の単体テスト（効果の既定実装）。</summary>
 /// <remarks>

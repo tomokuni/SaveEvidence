@@ -1,7 +1,7 @@
 using Avalonia.Headless.XUnit;
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorPickerControl"/> の非公開実装（Logic）の単体テスト（バリデーション状態）。</summary>
 /// <remarks>

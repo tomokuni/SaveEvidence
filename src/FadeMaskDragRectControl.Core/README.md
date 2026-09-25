@@ -23,7 +23,7 @@
 | `FadeMaskDragRectSelection` | internal | 選択矩形の可否判定（幅・高さが正か） |
 | `FadeMaskDragRectOverlay` | internal | 選択矩形の 4 辺を 2 色の破線で描画する。破線の幾何は `EnumerateDashes` が単一所有し、`DrawSelectionRect` が `EsBitmap`（ルーペ画像）へ描く |
 
-名前空間は `Estable.FadeMaskDragRect`。アセンブリ名は `FadeMaskDragRectControl.Core`。
+名前空間は `EsUtil.SaveEvidence.FadeMaskDragRect`。アセンブリ名は `FadeMaskDragRectControl.Core`。
 
 ## 依存関係
 

@@ -5,7 +5,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
-using Estable.Loupe;
+using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
@@ -15,7 +15,7 @@ using System.Globalization;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.AvaloniaUI.Loupe.Tests;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI.Tests;
 
 /// <summary>
 /// <see cref="LoupeControl"/> の単体テスト（Source / CenterPoint の Binding 方式・バッチ化・表示分離・範囲補正）。

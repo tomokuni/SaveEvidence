@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.MewUI.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 
 /// <summary>選択矩形イベントの引数（イベント引数、ドメイン座標の選択矩形）。</summary>
 /// <remarks>

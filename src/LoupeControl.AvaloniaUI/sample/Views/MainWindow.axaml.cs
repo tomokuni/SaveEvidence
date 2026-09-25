@@ -2,11 +2,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Estable.AvaloniaUI.Loupe;
-using LoupeControl.Sample.Logging;
-using LoupeControl.Sample.ViewModels;
+using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
+using EsUtil.SaveEvidence.Loupe.Sample.Logging;
+using EsUtil.SaveEvidence.Loupe.Sample.ViewModels;
 
-namespace LoupeControl.Sample.Views;
+namespace EsUtil.SaveEvidence.Loupe.Sample.Views;
 
 /// <summary>メインウィンドウ。マウス追従とルーペ配置を担う。</summary>
 /// <remarks>

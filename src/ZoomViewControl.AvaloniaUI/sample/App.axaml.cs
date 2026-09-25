@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using ZoomViewControl.Sample.Views;
+using EsUtil.SaveEvidence.ZoomView.Sample.Views;
 
-namespace ZoomViewControl.Sample;
+namespace EsUtil.SaveEvidence.ZoomView.Sample;
 
 /// <summary>Avalonia アプリケーション本体。</summary>
 public sealed partial class App : Application

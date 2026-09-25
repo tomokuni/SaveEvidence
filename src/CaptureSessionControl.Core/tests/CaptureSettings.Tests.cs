@@ -1,7 +1,7 @@
 using System.Drawing;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureSettings"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

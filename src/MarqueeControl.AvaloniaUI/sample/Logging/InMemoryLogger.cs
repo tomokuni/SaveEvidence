@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging;
 
-namespace MarqueeControl.Sample.Logging;
+namespace EsUtil.SaveEvidence.Marquee.Sample.Logging;
 
 /// <summary>サンプル画面のログ表示領域へ出力する ILogger 実装。</summary>
 /// <remarks>
 /// アプリ本体のファイルログ（NLog等）の代わりに、UI上のログ一覧へ表示するためのメモリ内ロガー。<br/>
-/// <see cref="Estable.AvaloniaUI.Marquee.MarqueeControl.Log"/> に設定すると、コントロール内部の操作ログを画面で確認できる。<br/>
+/// <see cref="EsUtil.SaveEvidence.Marquee.AvaloniaUI.MarqueeControl.Log"/> に設定すると、コントロール内部の操作ログを画面で確認できる。<br/>
 /// </remarks>
 public sealed class InMemoryLogger(Action<string> onLog) : ILogger
 {

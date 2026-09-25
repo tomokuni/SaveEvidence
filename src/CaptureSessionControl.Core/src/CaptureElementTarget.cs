@@ -1,4 +1,4 @@
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>カーソル下の要素を検出する対象。</summary>
 /// <remarks>

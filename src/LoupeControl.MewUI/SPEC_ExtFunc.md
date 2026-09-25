@@ -12,7 +12,7 @@
 
 ## 公開 API
 
-名前空間 `Estable.MewUI.Loupe` / クラス `LoupeControl`（`public sealed`、`Panel` 派生。図形は子の `SkiaCanvasView` が描画する）。
+名前空間 `EsUtil.SaveEvidence.Loupe.MewUI` / クラス `LoupeControl`（`public sealed`、`Panel` 派生。図形は子の `SkiaCanvasView` が描画する）。
 
 ### プロパティ
 

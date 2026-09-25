@@ -1,9 +1,9 @@
 using EsUtil.Platform.Core.Imaging;
 using OpenCvSharp;
 using Point = EsUtil.Platform.Core.Geometry.EsPoint;
-using static Estable.LineDetection.LineSegmentMath;
+using static EsUtil.SaveEvidence.LineDetection.LineSegmentMath;
 
-namespace Estable.LineDetection;
+namespace EsUtil.SaveEvidence.LineDetection;
 
 /// <summary>ロジック方式: Canny エッジ + HoughLinesP による水平・垂直の辺検出。</summary>
 /// <remarks>

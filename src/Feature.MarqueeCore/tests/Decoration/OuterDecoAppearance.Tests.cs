@@ -1,9 +1,9 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-using Estable.Marquee.Decoration;
+using EsUtil.Feature.MarqueeCore.Decoration;
 
-namespace Estable.Marquee.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests;
 
 /// <summary><see cref="OuterDecoAppearance"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using LineDetectionSample.Views;
+using EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
-namespace LineDetectionSample;
+namespace EsUtil.SaveEvidence.LineDetection.Sample;
 
 /// <summary>Avalonia アプリケーション本体。</summary>
 public sealed partial class App : Application

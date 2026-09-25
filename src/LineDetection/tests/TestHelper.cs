@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using OpenCvSharp;
 
-namespace Estable.LineDetection.Tests;
+namespace EsUtil.SaveEvidence.LineDetection.Tests;
 
 /// <summary>テスト用の共通ヘルパー。</summary>
 /// <remarks>

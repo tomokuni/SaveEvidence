@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 
 /// <summary>ルーペ画像上へ選択矩形の破線オーバーレイを描画する静的クラス。</summary>
 /// <remarks>

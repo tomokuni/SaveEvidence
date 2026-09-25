@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
 using SystemEnum = System.Enum;
 
-namespace Estable.SaveEvidence.Models;
+namespace EsUtil.SaveEvidence.Models;
 
 /// <summary>ホットキー文字列を解析する静的ユーティリティ。</summary>
 /// <remarks>

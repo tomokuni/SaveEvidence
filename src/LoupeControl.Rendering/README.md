@@ -94,7 +94,7 @@ LoupeControl.Rendering
 
 **UI フレームワークへ依存しません**。UI 固有の描画 API は `IEsCanvas` の実装が担います。
 
-名前空間は `Estable.Loupe.Rendering`。アセンブリ名は `LoupeControl.Rendering`。
+名前空間は `EsUtil.SaveEvidence.Loupe.Rendering`。アセンブリ名は `LoupeControl.Rendering`。
 
 ## テスト
 

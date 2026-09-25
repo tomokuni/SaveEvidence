@@ -6,11 +6,11 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
-using MarqueeControl.Sample.Logging;
-using MarqueeControl.Sample.ViewModels;
-using Estable.AvaloniaUI.Marquee;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
+using EsUtil.SaveEvidence.Marquee.Sample.Logging;
+using EsUtil.SaveEvidence.Marquee.Sample.ViewModels;
+using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
@@ -18,7 +18,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using System.Collections.Specialized;
 
-namespace MarqueeControl.Sample.Views;
+namespace EsUtil.SaveEvidence.Marquee.Sample.Views;
 
 /// <summary>メインウィンドウ。MarqueeControl のイベント購読・設定反映・座標ポート設定を担う。</summary>
 /// <remarks>

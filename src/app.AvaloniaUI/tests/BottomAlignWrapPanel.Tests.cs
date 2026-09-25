@@ -1,10 +1,10 @@
-using Estable.SaveEvidence.Controls;
+using EsUtil.SaveEvidence.Controls;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary>
 /// <see cref="BottomAlignWrapPanel"/> の委譲確認テスト（Control の Measure / Arrange が

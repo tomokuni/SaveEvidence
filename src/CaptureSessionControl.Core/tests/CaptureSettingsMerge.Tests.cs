@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureSettingsMerge"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

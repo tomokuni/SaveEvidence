@@ -4,7 +4,7 @@ using Serilog;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する。
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace Estable.SaveEvidence.Logging;
+namespace EsUtil.SaveEvidence.Logging;
 
 /// <summary>
 /// app プロジェクトのトレースログ定義（LoggerMessage ソース生成・拡張メソッド）。

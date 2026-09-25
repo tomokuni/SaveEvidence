@@ -2,7 +2,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureTypeTraits"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

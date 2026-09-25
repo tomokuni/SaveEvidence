@@ -1,4 +1,4 @@
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>ズーム遷移の設定（不変値・検証付き）。</summary>
 /// <remarks>

@@ -2,7 +2,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>仮想スクリーン画像からの切り出し計算（純粋関数）を単一所有する。</summary>
 /// <remarks>

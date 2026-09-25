@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Marquee.Decoration;
+namespace EsUtil.Feature.MarqueeCore.Decoration;
 
 /// <summary>暗転マスクの 1 フレーム分の描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
 /// <remarks>

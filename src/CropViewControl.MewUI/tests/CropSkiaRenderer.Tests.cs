@@ -1,10 +1,10 @@
-using Estable.CropView;
+using EsUtil.SaveEvidence.CropView;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.CropView.Tests;
+namespace EsUtil.SaveEvidence.CropView.MewUI.Tests;
 
 /// <summary><see cref="CropSkiaRenderer"/> の描画テスト（Skia のビットマップ上で画素を検証する）。</summary>
 /// <remarks>

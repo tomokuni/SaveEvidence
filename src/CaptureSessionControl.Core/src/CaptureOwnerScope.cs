@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>撮影中のオーナーウィンドウの退避と復帰を 1 つの操作にまとめる（<see cref="IDisposable"/> で復帰する）。</summary>
 /// <remarks>

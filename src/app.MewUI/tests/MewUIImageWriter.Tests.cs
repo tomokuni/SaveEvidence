@@ -1,8 +1,8 @@
-using SaveEvidence.MewUI.Services;
+using EsUtil.SaveEvidence.MewUI.Services;
 using SkiaSharp;
 using Xunit;
 
-namespace SaveEvidence.MewUI.Tests;
+namespace EsUtil.SaveEvidence.MewUI.Tests;
 
 /// <summary><see cref="MewUIImageWriter"/> のテスト。</summary>
 public sealed class MewUIImageWriterTests

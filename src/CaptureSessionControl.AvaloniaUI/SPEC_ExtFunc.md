@@ -44,7 +44,7 @@
 | --- | --- |
 | 対象 | `CaptureSessionControl.AvaloniaUI` |
 | プロジェクト | `CaptureSessionControl.AvaloniaUI/CaptureSessionControl.AvaloniaUI.csproj` |
-| 名前空間 | `Estable.AvaloniaUI.CaptureSession` |
+| 名前空間 | `EsUtil.SaveEvidence.CaptureSession.AvaloniaUI` |
 | 対象フレームワーク | `net10.0-windows10.0.17763.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要設計パターン | Facade（CaptureSessionControl）/ セッション（SelectionCaptureSession / CropSession）/ 薄い統括者 |
@@ -78,7 +78,7 @@ CaptureSessionControl.AvaloniaUI は内包コントロール（MarqueeControl / 
 ### 3.2 必要な名前空間
 
 ```csharp
-using Estable.AvaloniaUI.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 ```
 
 ### 3.3 スレッド要件
@@ -219,7 +219,7 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 
 ### 5.4 型
 
-公開型は `CaptureSessionControl`（本プロジェクト）と、コア公開型の `CaptureType`（`EsUtil.Platform.Core`）・`CaptureSettings` / `CaptureResult`（`Estable.CaptureSession`。`CaptureSessionControl.Core`。UI フレームワーク非依存の共通基盤が提供）です。
+公開型は `CaptureSessionControl`（本プロジェクト）と、コア公開型の `CaptureType`（`EsUtil.Platform.Core`）・`CaptureSettings` / `CaptureResult`（`EsUtil.SaveEvidence.CaptureSession`。`CaptureSessionControl.Core`。UI フレームワーク非依存の共通基盤が提供）です。
 
 #### 5.4.1 CaptureSessionControl
 

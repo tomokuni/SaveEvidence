@@ -1,8 +1,8 @@
-using Estable.Marquee.Selection;
+using EsUtil.Feature.MarqueeCore.Selection;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>選択・ドラッグ・nudge の状態を保持し、状態遷移の操作と読み取りを提供する内部クラス。</summary>
 /// <remarks>

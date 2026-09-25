@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.SaveEvidence.Services;
+namespace EsUtil.SaveEvidence.Services;
 
 /// <summary><see cref="EsPixelRect"/> の JSON コンバーター（読み取り専用プロパティ対応）。</summary>
 /// <remarks>

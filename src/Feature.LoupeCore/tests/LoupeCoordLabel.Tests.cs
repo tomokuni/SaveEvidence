@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Loupe.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary><see cref="LoupeCoordLabel"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

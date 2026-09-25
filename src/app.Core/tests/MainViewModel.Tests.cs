@@ -1,11 +1,11 @@
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary>
 /// MainViewModel の画像保存（SaveImageAsync）と保存済み状態（IsSaved / CanSave）の単体テスト。

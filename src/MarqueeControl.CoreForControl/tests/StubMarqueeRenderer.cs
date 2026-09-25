@@ -1,8 +1,8 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.Marquee;
+using EsUtil.Feature.MarqueeCore;
 
-namespace Estable.Marquee.CoreForControl.Tests;
+namespace EsUtil.SaveEvidence.Marquee.CoreForControl.Tests;
 
 /// <summary>テストで使用する描画実装のスタブ（描画しない）。</summary>
 /// <remarks>

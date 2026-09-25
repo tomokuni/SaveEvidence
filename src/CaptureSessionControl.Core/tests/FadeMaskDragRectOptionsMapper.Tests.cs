@@ -1,8 +1,8 @@
-using Estable.Marquee.Decoration;
+using EsUtil.Feature.MarqueeCore.Decoration;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="FadeMaskDragRectOptionsMapper"/> の単体テスト（設定項目と外観の対応）。</summary>
 /// <remarks>UI 非依存の変換のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>

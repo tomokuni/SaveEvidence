@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>簡易確認ダイアログ（はい / いいえ）を表示する静的ヘルパー（MewUI 版）。</summary>
 /// <remarks>

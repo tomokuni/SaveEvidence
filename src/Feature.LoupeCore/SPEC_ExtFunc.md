@@ -29,7 +29,7 @@
 
 **UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
 
-## `Loupe`（`Estable.Loupe`・`public sealed class`）
+## `Loupe`（`EsUtil.Feature.LoupeCore`・`public sealed class`）
 
 ルーペの**操作の唯一の窓口**（適用パターン: Facade）。UI 層とホストは本型だけを参照し、配置計算・描画引数の計算は internal のため外部からは直接呼べません。
 
@@ -49,7 +49,7 @@
 
 **本型が単一所有するもの**: 表示レイアウトの解決（表示サイズのクランプと表示位置の決定）・描画入力の組み立て・通知内容の解決・描画実装の保持。
 
-### `ILoupeRenderer` のメンバー（`Estable.Loupe`・`public interface`）
+### `ILoupeRenderer` のメンバー（`EsUtil.Feature.LoupeCore`・`public interface`）
 
 | メンバー | 説明 |
 | --- | --- |
@@ -68,7 +68,7 @@ var notification = loupe.ResolveNotification(request); // 切り出し左上・�
 var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベルを UI 要素として配置する場合
 ```
 
-## `LoupeOptions`（`Estable.Loupe`・`public sealed record`）
+## `LoupeOptions`（`EsUtil.Feature.LoupeCore`・`public sealed record`）
 
 ルーペの設定（表示サイズ・拡大率・外観）を 1 つの値として所有します。両 UI は本型を 1 プロパティとして公開するだけであり、UI ごとに既定値がずれたり設定プロパティが増えたりしません。
 
@@ -88,7 +88,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 
 **含めない値**: 拡大元画像・拡大中心（マウス移動ごとに変わるデータ）、DPI スケーリング係数（環境値）、表示位置のオフセット（UI 固有のホスト結線）。これらは UI の個別プロパティとして公開します（1 つの値へまとめると、中心の更新のたびに外観を含む値全体を組み立て直すことになります）。
 
-## `LoupeAppearance`（`Estable.Loupe`・`public sealed record`）
+## `LoupeAppearance`（`EsUtil.Feature.LoupeCore`・`public sealed record`）
 
 ルーペの外観 12 項目を 1 つの値として所有します。両 UI は本型を 1 つ公開するだけで外観を設定でき、UI ごとに既定値がずれません。色は UI 非依存の `System.Drawing.Color` です。
 
@@ -118,7 +118,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 
 状態（拡大元画像・拡大中心・拡大率・基本サイズ・スケーリング係数・表示オフセット）は本型に含めません。
 
-## `LoupeValueCoercer`（`Estable.Loupe`）
+## `LoupeValueCoercer`（`EsUtil.Feature.LoupeCore`）
 
 ルーペの数値パラメータの既定値と安全域を単一所有し、範囲外の値をクランプします。
 
@@ -146,7 +146,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 | `CoerceCoordLabelFontSize(double)` | ラベル文字サイズを 6〜48 へクランプ。非有限値は既定値（安全域と規則は `EsLabelMetrics`（`Platform.Core`）が単一所有し、本メソッドは既定値を添えて委譲する） |
 | `CoerceCoordLabelCornerRadius(int)` | ラベルの角丸半径を 0〜64 へクランプ（0 は角丸なし） |
 
-## `LoupeAppearanceScaler`（`Estable.Loupe`）
+## `LoupeAppearanceScaler`（`EsUtil.Feature.LoupeCore`）
 
 外観の寸法値（DIP）を描画に使う物理ピクセルへ換算する規則を単一所有します。安全域への補正は `LoupeAppearance`（生成時）が済ませているため再補正はせず、描画層は返された値だけを使います。
 
@@ -159,7 +159,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 
 UI 層が `CheckerSize * scaling` のような式を自前で書かないための型です（片方の UI だけ換算が抜けると、DPI ≠ 100% で両 UI の見た目がずれます）。
 
-## `LoupeRenderRequest`（`Estable.Loupe`）
+## `LoupeRenderRequest`（`EsUtil.Feature.LoupeCore`）
 
 1 フレーム分の描画入力（**コア⇔UI の契約**）です。UI 層は自 UI の公開プロパティから本値を組み立てて描画層・コアの計算へ渡すだけで、描画に必要な値の単位と組み立て順を持ちません。
 
@@ -182,7 +182,7 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 
 拡大元画像は UI ごとに型が異なる（Avalonia は `IImage`、MewUI は `EsBitmap`）ため本値に含めず、描画層が解決した `EsBitmap` を別引数として渡します（両 UI が同じ手順で本値を組み立てられます）。
 
-## `LoupeLogFormat`（`Estable.Loupe`）
+## `LoupeLogFormat`（`EsUtil.Feature.LoupeCore`）
 
 | メンバー | 説明 |
 | --- | --- |
@@ -191,7 +191,7 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 
 `FormatNumber` / `FormatPoint` はログ定義（`LoupeLogMessage`）の内部手順のため **internal** です（UI は数値をそのまま渡せる `LogSettingChanged` 系を使います）。
 
-## `LoupeLogMessage`（`Estable.Loupe`）
+## `LoupeLogMessage`（`EsUtil.Feature.LoupeCore`）
 
 ルーペのログ定義（`LoggerMessage` ソース生成）を単一所有します。`[LoupeCtrl]` の接頭辞とレベル・書式は両 UI で共通です。
 
@@ -212,7 +212,7 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 
 設定項目ごとの名前付きメソッド（`LogCenterPointChanged` / `LogSourceChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`）は、**設定名・書式・変化判定をコアが単一所有**するために提供します。UI 層は値（と Source の寸法）を渡すだけで、設定名の文字列を持ちません。
 
-## `Imaging.LoupeImageExtractor`（`Estable.Loupe.Imaging`）
+## `Imaging.LoupeImageExtractor`（`EsUtil.Feature.LoupeCore.Imaging`）
 
 | メソッド | 説明 |
 | --- | --- |

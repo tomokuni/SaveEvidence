@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorValidation.Determine"/> の純粋ロジックテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

@@ -1,10 +1,10 @@
-using Estable.Loupe.Imaging;
+using EsUtil.Feature.LoupeCore.Imaging;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using SizeInt = System.Drawing.Size;
 
-namespace Estable.Loupe.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary><see cref="LoupeImageExtractor"/> の単体テスト（切り出し領域サイズ計算・領域切り出し）。</summary>
 /// <remarks>

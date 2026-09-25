@@ -2,9 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using LineDetectionSample.ViewModels;
+using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
-namespace LineDetectionSample.Views;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
 /// <summary>メインウィンドウ。ナビゲーションで選択されたページ（線分検出・データ検証・データ作成）を表示する。</summary>
 /// <remarks>

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.AvaloniaUI.ZoomView</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.ZoomView.AvaloniaUI</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>

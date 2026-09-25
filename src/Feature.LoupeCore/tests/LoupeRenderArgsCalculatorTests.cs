@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.Loupe.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary><see cref="LoupeRenderArgsCalculator"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

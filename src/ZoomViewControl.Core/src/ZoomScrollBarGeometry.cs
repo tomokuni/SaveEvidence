@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>スクロールバー 1 本（トラックとサム）の矩形。</summary>
 /// <param name="Track">トラックの矩形（ビューポート座標・DIP）。</param>

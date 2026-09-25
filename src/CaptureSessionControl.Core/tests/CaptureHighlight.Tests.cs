@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureHighlightSession"/> / <see cref="CaptureHighlight"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

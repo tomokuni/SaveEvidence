@@ -1,8 +1,11 @@
-namespace Estable.Marquee.CoreForControl;
+using EsUtil.Feature.MarqueeCore;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
+
+namespace EsUtil.SaveEvidence.Marquee.CoreForControl;
 
 /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を上位へ通知する（コントロール化のための転送規則）。</summary>
 /// <remarks>
-/// <b>位置付け</b>: コアの公開ファサード（<see cref="Marquee"/>）へビューポートの変化を橋渡しする補助クラスである。<br/>
+/// <b>位置付け</b>: コアの公開ファサード（<see cref="MarqueeFacade"/>）へビューポートの変化を橋渡しする補助クラスである。<br/>
 /// <br/>
 /// <b>なぜ Core 層ではなく CoreForControl 層にあるか</b>: ビューポートは選択コントロールを<b>他の UI へ組み込む</b>ときに<br/>
 /// 初めて存在する概念である（単体で使う Marquee にはビューポートもスクロールも無い）。<br/>
@@ -17,7 +20,7 @@ namespace Estable.Marquee.CoreForControl;
 public sealed class MarqueeViewportNotifier
 {
     /// <summary>通知に載せる状態の取得元（コアの公開ファサード）。</summary>
-    private readonly Marquee _marquee;
+    private readonly MarqueeFacade _marquee;
 
     /// <summary>再描画の要求先（UI 層が実装する効果の窓口）。</summary>
     private readonly IMarqueeEffects _effects;
@@ -26,7 +29,7 @@ public sealed class MarqueeViewportNotifier
     /// <param name="marquee">コアの公開ファサード（状態スナップショットの取得元）。null 不可。</param>
     /// <param name="effects">再描画の要求先（UI 層が実装する効果）。null 不可。</param>
     /// <exception cref="ArgumentNullException"><paramref name="marquee"/> または <paramref name="effects"/> が null の場合。</exception>
-    public MarqueeViewportNotifier(Marquee marquee, IMarqueeEffects effects)
+    public MarqueeViewportNotifier(MarqueeFacade marquee, IMarqueeEffects effects)
     {
         ArgumentNullException.ThrowIfNull(marquee);
         ArgumentNullException.ThrowIfNull(effects);

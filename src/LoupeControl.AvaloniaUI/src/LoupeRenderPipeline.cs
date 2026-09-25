@@ -2,12 +2,12 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using Estable.Loupe;
+using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.AvaloniaUI.Loupe;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 
 /// <summary>ルーペのビットマップ生成パイプライン（ソース解決・描画の合成）。</summary>
 /// <remarks>

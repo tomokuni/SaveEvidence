@@ -236,7 +236,7 @@ src/app.Core/
 ```
 
 `app.Core` の型を AXAML から参照する場合は、名前空間が `app.AvaloniaUI` と同一のため
-`xmlns:vm="clr-namespace:Estable.SaveEvidence.ViewModels;assembly=app.Core"` のように **`assembly=` の指定が必要**です。
+`xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=app.Core"` のように **`assembly=` の指定が必要**です。
 
 ## 17. ライセンス
 

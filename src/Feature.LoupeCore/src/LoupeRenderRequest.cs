@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの 1 フレーム分の描画入力（コア⇔UI の契約）。</summary>
 /// <remarks>

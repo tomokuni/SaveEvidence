@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace ColorPickerControl.Sample.Views;
+namespace EsUtil.SaveEvidence.ColorPicker.Sample.Views;
 
 /// <summary>メインウィンドウ。</summary>
 /// <remarks>

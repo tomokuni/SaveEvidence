@@ -2,12 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Estable.AvaloniaUI.Marquee;
-using Estable.AvaloniaUI.Loupe;
-using Estable.Marquee;
-using Estable.Marquee.CoreForControl;
-using Estable.Marquee.Rendering;
-using Estable.FadeMaskDragRect;
+using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
+using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.SaveEvidence.Marquee.CoreForControl;
+using EsUtil.SaveEvidence.Marquee.Rendering;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
@@ -17,7 +17,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.AvaloniaUI.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 
 /// <summary>領域選択の複合コントロール（選択矩形 + 暗転マスク + ルーペの組み立て・配線・状態同期を 1 箇所に集約）。</summary>
 /// <remarks>

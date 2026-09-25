@@ -1,9 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.Marquee.Decoration;
+using EsUtil.Feature.MarqueeCore.Decoration;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>ドラッグハンドルの描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
 /// <param name="Rect">選択矩形（DIP。ハンドルの中心はこの矩形の辺・角から求める）。</param>

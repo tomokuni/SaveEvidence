@@ -1,10 +1,11 @@
+using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Geometry;
-using Estable.Marquee.Decoration;
+using EsUtil.Feature.MarqueeCore.Decoration;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Marquee.Rendering.Tests;
+namespace EsUtil.SaveEvidence.Marquee.Rendering.Tests;
 
 /// <summary><see cref="MarqueeRenderer"/> の描画テスト（描画ポートの画素を検証する）。</summary>
 /// <remarks>

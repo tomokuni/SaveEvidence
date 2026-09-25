@@ -1,9 +1,9 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using static Estable.Loupe.LoupeValueCoercer;
+using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの表示レイアウト（DIP。表示サイズと表示位置）。</summary>
 /// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。親領域の最小辺へクランプ済み）。</param>

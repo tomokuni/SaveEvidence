@@ -1,7 +1,7 @@
 using Avalonia;
-using Estable.Marquee;
+using EsUtil.Feature.MarqueeCore;
 
-namespace Estable.AvaloniaUI.Marquee;
+namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
 /// <summary>選択矩形に関する通知のイベント引数。</summary>
 /// <remarks>

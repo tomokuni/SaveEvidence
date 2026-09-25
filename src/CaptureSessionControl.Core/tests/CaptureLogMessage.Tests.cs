@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureLogMessage"/> / <see cref="CaptureLogFormat"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>ログの書式（プレフィックス・項目名）と、ロガー未設定でも安全に呼べることを固定する。</remarks>

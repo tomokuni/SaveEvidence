@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.MewUI.CropView</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.CropView.MewUI</RootNamespace>
     <AssemblyName>CropViewControl.MewUI</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

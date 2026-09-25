@@ -3,7 +3,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.Runtime.InteropServices;
 
-namespace LineDetectionSample.Imaging;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.Imaging;
 
 /// <summary>Win32 クリップボードから画像（CF_DIB）を読み取るユーティリティ。</summary>
 /// <remarks>

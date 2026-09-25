@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.AvaloniaUI.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI.Tests;
 
 /// <summary>Avalonia ヘッドレステストの直列化用コレクション定義。</summary>
 /// <remarks>

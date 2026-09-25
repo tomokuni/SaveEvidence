@@ -2,7 +2,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 
-namespace ZoomViewControl.Sample.ViewModels;
+namespace EsUtil.SaveEvidence.ZoomView.Sample.ViewModels;
 
 /// <summary>
 /// メイン画面の ViewModel。ZoomViewControl の状態（ズーム率・表示テキスト・中央寄せ）を表示用に保持する。

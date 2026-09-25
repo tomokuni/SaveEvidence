@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Globalization;
 using Avalonia.Data.Converters;
 
-namespace Estable.SaveEvidence.Converters;
+namespace EsUtil.SaveEvidence.Converters;
 
 /// <summary>enum 値を <see cref="System.ComponentModel.DescriptionAttribute"/> の表示名へ変換するコンバーター。</summary>
 /// <remarks>

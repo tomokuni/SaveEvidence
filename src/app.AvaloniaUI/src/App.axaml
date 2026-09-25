@@ -1,6 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Estable.SaveEvidence.App">
+             x:Class="EsUtil.SaveEvidence.App">
     <Application.Resources>
         <ResourceDictionary>
             <!-- フォルダビューのサムネイル影（Fluent テーマに BoxShadows の標準リソースがないため、

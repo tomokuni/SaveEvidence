@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace MarqueeControl.Sample.ViewModels;
+namespace EsUtil.SaveEvidence.Marquee.Sample.ViewModels;
 
 /// <summary>色選択コンボボックス用の選択肢。</summary>
 /// <param name="Name">表示名。</param>

@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの中心座標ラベル（表示する文言と配置に必要な値）を表す描画契約。</summary>
 /// <param name="Text">表示する文言（<c>(x, y)</c> 形式。コアが文字列化する）。</param>

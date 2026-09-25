@@ -1,8 +1,8 @@
-using Estable.CropView;
+using EsUtil.SaveEvidence.CropView;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 
-namespace Estable.MewUI.CropView;
+namespace EsUtil.SaveEvidence.CropView.MewUI;
 
 /// <summary>オーバーレイ矩形の描画入力（<see cref="OverlayRectFrame"/>）を Skia で描画するレンダラー。</summary>
 /// <remarks>

@@ -30,7 +30,7 @@ CaptureSessionControl.Core（共通規則: 切り出し矩形・設定・状態�
 Platform.Core（Es* 型 / サービス抽象）
 ```
 
-本プロジェクトは **`app.Core`（`Estable.SaveEvidence`）を参照しません**（参照するとアプリのコアへ依存し、ライブラリとして成立しないため）。
+本プロジェクトは **`app.Core`（`EsUtil.SaveEvidence`）を参照しません**（参照するとアプリのコアへ依存し、ライブラリとして成立しないため）。
 
 ### 3.2 コンポーネントの構成
 
@@ -168,7 +168,7 @@ sequenceDiagram
 | **`WindowState.Maximized` は 1 モニターへ寄せる**（全モニターを覆えない） | 最大化は使わず、物理ピクセルで仮想スクリーン全面を指定する |
 | **ウィンドウは表示時に背景色で塗られる**（画像を描くまで数十 ms の空白） | 透明で表示し、2 フレーム目で解除する（背景は画像の平均色） |
 | **`Hide` と `Show` の往復はウィンドウを再作成させる** | 退避は位置の変更にし、復帰は位置を戻すだけにする |
-| **`MarqueeSizeLabel` は `Feature.MarqueeCore`（`Estable.Marquee`）、`MarqueeLabelPlan` は `MarqueeControl.Rendering`（`Estable.Marquee.Rendering`）で `public`** | 汎用コアと描画層として公開する（`InternalsVisibleTo` は不要） |
+| **`MarqueeSizeLabel` は `Feature.MarqueeCore`（`EsUtil.Feature.MarqueeCore`）、`MarqueeLabelPlan` は `MarqueeControl.Rendering`（`EsUtil.SaveEvidence.Marquee.Rendering`）で `public`** | 汎用コアと描画層として公開する（`InternalsVisibleTo` は不要） |
 
 ## 7. 検証
 

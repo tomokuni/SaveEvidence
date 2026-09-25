@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.MewUI.Marquee</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.Marquee.MewUI</RootNamespace>
     <AssemblyName>MarqueeControl.MewUI</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

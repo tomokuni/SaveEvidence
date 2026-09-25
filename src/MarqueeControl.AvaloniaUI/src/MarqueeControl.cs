@@ -1,7 +1,7 @@
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.Marquee.CoreForControl;
-using Estable.Marquee.Rendering;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.Marquee.CoreForControl;
+using EsUtil.SaveEvidence.Marquee.Rendering;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -14,9 +14,9 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using MarqueeFacade = Estable.Marquee.Marquee;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
-namespace Estable.AvaloniaUI.Marquee;
+namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
 /// <summary>リサイズ可能なドラッグ矩形の UI コントロール（Avalonia 版）。</summary>
 /// <remarks>

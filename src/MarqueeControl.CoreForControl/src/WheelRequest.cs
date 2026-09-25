@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Marquee.CoreForControl;
+namespace EsUtil.SaveEvidence.Marquee.CoreForControl;
 
 /// <summary>通常ホイール（Ctrl なし）によるスクロール要求（生の回転量・修飾キー・発生位置）。</summary>
 /// <remarks>

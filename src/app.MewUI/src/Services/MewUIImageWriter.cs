@@ -1,16 +1,16 @@
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 
-namespace SaveEvidence.MewUI.Services;
+namespace EsUtil.SaveEvidence.MewUI.Services;
 
 /// <summary>MewUI 版の画像書き込みサービス。</summary>
 /// <remarks>
-/// <see cref="Estable.SaveEvidence.Services.IImageWriter"/> は UI 実装側がエンコードを担う契約。<br/>
+/// <see cref="EsUtil.SaveEvidence.Services.IImageWriter"/> は UI 実装側がエンコードを担う契約。<br/>
 /// MewUI は <c>SkiaCanvasView</c> で SkiaSharp を直接扱えるため、エンコードも SkiaSharp で行う。<br/>
 /// 保存形式は拡張子から判別する（判別できない場合は PNG）。<br/>
 /// 画質は形式が対応する場合に適用する（PNG では無視される）。
 /// </remarks>
-internal sealed class MewUIImageWriter : Estable.SaveEvidence.Services.IImageWriter
+internal sealed class MewUIImageWriter : EsUtil.SaveEvidence.Services.IImageWriter
 {
     /// <summary>エンコード品質（0〜100）。非可逆形式に適用する。</summary>
     private const int EncodeQuality = 100;

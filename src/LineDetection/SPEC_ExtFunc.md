@@ -1,6 +1,6 @@
 # LineDetection 外部機能仕様書
 
-本仕様書は、`Estable.LineDetection`（LineDetection ライブラリ）の**外部機能仕様・公開 API 仕様**を定義します。
+本仕様書は、`EsUtil.SaveEvidence.LineDetection`（LineDetection ライブラリ）の**外部機能仕様・公開 API 仕様**を定義します。
 
 ## 目次
 
@@ -33,7 +33,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 ## 2. 公開 API
 
-名前空間: `Estable.LineDetection`（UI 非依存。旧名 `Estable.AvaloniaUI.LineDetection`）
+名前空間: `EsUtil.SaveEvidence.LineDetection`（UI 非依存。旧名 `Estable.AvaloniaUI.LineDetection`）
 
 ### 2.1. LineOrientation 列挙型
 

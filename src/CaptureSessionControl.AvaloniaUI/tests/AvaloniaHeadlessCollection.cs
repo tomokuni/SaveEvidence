@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.AvaloniaUI.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Tests;
 
 /// <summary>Avalonia ヘッドレステストの直列化用コレクション定義。</summary>
 /// <remarks>

@@ -2,7 +2,7 @@ using Avalonia.Media.Imaging;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.SaveEvidence.Services;
+namespace EsUtil.SaveEvidence.Services;
 
 /// <summary><see cref="IImageWriter"/> の本番実装（Avalonia Skia で画像をエンコードして保存する）。</summary>
 /// <remarks>

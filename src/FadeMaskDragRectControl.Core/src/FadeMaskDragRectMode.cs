@@ -1,4 +1,4 @@
-namespace Estable.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 
 /// <summary>領域選択の複合コントロールの動作モード（描画モードと子コントロールの可視性を決定）。</summary>
 /// <remarks>

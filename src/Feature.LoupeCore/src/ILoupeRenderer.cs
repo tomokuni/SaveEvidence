@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>Loupe の描画内容（何を描くか）を描画面（どう描くか）へ写す実装の契約。</summary>
 /// <remarks>

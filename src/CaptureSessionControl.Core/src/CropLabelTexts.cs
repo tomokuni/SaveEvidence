@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>切り出し（プレビュー内の Crop）のサイズ情報ラベルの文言を単一所有する。</summary>
 /// <remarks>

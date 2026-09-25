@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Coordinate;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの外観値（DIP）を描画に使う物理ピクセルへ換算する計算ロジック（純粋関数）。</summary>
 /// <remarks>

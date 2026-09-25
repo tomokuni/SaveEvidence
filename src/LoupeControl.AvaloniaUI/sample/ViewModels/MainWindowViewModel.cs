@@ -1,11 +1,11 @@
 using Avalonia;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.Loupe;
-using LoupeControl.Sample.Imaging;
+using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Loupe.Sample.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace LoupeControl.Sample.ViewModels;
+namespace EsUtil.SaveEvidence.Loupe.Sample.ViewModels;
 
 /// <summary>メインウィンドウのビューモデル。</summary>
 /// <remarks>

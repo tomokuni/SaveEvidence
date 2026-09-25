@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureClipCache"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>同一判定・所有権の受け渡し・旧値の破棄順序を固定する。</remarks>

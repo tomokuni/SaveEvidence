@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace LineDetectionSample;
+namespace EsUtil.SaveEvidence.LineDetection.Sample;
 
 /// <summary>アプリケーションのエントリポイント。</summary>
 internal static class Program

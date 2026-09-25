@@ -1,10 +1,10 @@
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.Loupe;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.LoupeCore;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.Tests;
 
 /// <summary><see cref="FadeMaskDragRectOptions"/> の単体テスト（既定値・部分変更）。</summary>
 /// <remarks>UI 非依存の値型のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>

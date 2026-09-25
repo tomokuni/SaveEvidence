@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="MonitorScalingMath"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>判定点（矩形の中心）とフォールバックの規則を固定する。</remarks>

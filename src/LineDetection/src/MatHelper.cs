@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using EsUtil.Platform.Core.Imaging;
 using OpenCvSharp;
 
-namespace Estable.LineDetection;
+namespace EsUtil.SaveEvidence.LineDetection;
 
 /// <summary>EsBitmap ↔ Mat 変換のヘルパー。</summary>
 /// <remarks>OpenCV 依存を内部に閉じ込める（本クラスだけが <c>OpenCvSharp</c> を参照する）。</remarks>

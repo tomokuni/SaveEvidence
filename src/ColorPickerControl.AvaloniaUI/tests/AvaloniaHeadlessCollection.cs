@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary>Avalonia ヘッドレステストの直列化用コレクション定義。</summary>
 /// <remarks>

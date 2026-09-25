@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.MewUI.Loupe</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.Loupe.MewUI</RootNamespace>
     <AssemblyName>LoupeControl.MewUI</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

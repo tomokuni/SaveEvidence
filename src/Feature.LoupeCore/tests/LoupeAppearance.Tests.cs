@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Loupe.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary><see cref="LoupeAppearance"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

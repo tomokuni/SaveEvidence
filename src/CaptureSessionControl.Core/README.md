@@ -62,7 +62,7 @@ CaptureSessionControl.Core
 ## 4. クイックスタート
 
 ```csharp
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.Platform.Core.Geometry;
 
 // 選択矩形（画像ピクセル・半開区間）から切り出し範囲を求める

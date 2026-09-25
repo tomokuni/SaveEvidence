@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>モニターの表示倍率（サイズラベルの DisplayScale）を解決する純粋関数。</summary>
 /// <remarks>

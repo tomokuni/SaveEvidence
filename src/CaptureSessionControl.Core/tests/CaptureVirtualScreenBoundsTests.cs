@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureVirtualScreen.ResolveBounds"/> の仕様テスト（撮影対象の範囲）。</summary>
 /// <remarks>

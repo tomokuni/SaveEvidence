@@ -1,8 +1,8 @@
-using Estable.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Models;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary><see cref="UndoStack"/> の単体テスト（Undo / Redo の動作確認）。</summary>
 /// <remarks>

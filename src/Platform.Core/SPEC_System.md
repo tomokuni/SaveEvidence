@@ -104,7 +104,7 @@ graph LR
 
 ### コア型の命名
 
-コア型には **`Es`（Estable の略）接頭辞**を付けます（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` /
+コア型には **`Es`（`EsUtil` の略）接頭辞**を付けます（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` /
 `EsPixelPoint` / `EsPixelRect` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap` / `EsLabelFrame` /
 `EsLabelElement` / `EsLabelLayout` / `EsLabelMetrics` / `EsLabelDefaults` / `IEsLabel` / `IEsRectWalker` / `IntMath` / `EsRectMath` /
 `EsSizeMath` / `IEsCanvas` / `SkiaEsCanvas`）。

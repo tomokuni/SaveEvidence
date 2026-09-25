@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>ズームビューの状態（ズーム率・オフセット・設定・表示条件）を保持し、入力の解釈と判断を単一所有する状態管理クラス。</summary>
 /// <remarks>

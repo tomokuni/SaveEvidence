@@ -17,7 +17,7 @@
 | --- | --- |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `Estable.Marquee`（幾何は `Estable.Marquee.Selection`、装飾は `Estable.Marquee.Decoration`） |
+| ルート名前空間 | `EsUtil.Feature.MarqueeCore`（幾何は `EsUtil.Feature.MarqueeCore.Selection`、装飾は `EsUtil.Feature.MarqueeCore.Decoration`） |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
 | テスト | xUnit v3（UI 初期化不要。`InternalsVisibleTo` で `internal` を検証する） |
 

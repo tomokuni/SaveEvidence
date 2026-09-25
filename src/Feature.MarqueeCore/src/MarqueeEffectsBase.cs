@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>Marquee が要求する効果の既定実装（すべて何もしない）。</summary>
 /// <remarks>

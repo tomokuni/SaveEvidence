@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace Estable.AvaloniaUI.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 
 /// <summary>ポインター位置イベントの引数（ドメイン座標の位置）。</summary>
 /// <remarks>

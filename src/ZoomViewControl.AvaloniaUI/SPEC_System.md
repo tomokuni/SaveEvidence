@@ -71,7 +71,7 @@ ZoomViewControl.Core（UI 非依存）
 ### 4.1 基本方針
 
 - ライブラリは例外を原則伝播し、上位 AP（app 等）で処理する。
-- ログは LoggerMessage ソース生成で出力する。**定義はコア（`Estable.ZoomView` の `ZoomLogMessage`）が単一所有**し、ズーム操作の前後 % を Information で記録する（書式は両 UI で同一）。
+- ログは LoggerMessage ソース生成で出力する。**定義はコア（`EsUtil.SaveEvidence.ZoomView` の `ZoomLogMessage`）が単一所有**し、ズーム操作の前後 % を Information で記録する（書式は両 UI で同一）。
 - `ZoomViewControl.Log` へ注入されたロガーへ出力する（未設定時は `NullLogger` で無出力）。
 
 ### 4.2 本プロジェクト固有の例外処理
@@ -115,7 +115,7 @@ flowchart TB
 - **責務**: 内部ビューポート（`ZoomableView`）を生成し、公開 API をセッション（`ZoomViewSession`）へ委譲する。セッションの通知（`ZoomChanged` / `ViewportChanged`）を自 UI の公開イベントへ転送し、ホストが内部ビューポートへ到達する必要をなくす
 - **非公開メンバー**: `Session`（内部ビューポートが所有するセッションへの参照。公開 API の実体） / `ZoomableView`（内包するビューポート） / `OnSessionNotified`（通知の転送）
 - **公開 API の詳細**: `SPEC_ExtFunc.md` の 8.1 を参照
-- **依存**: `Estable.ZoomView`（`ZoomViewSession` / `ZoomConfig` / `ZoomNotice` / `ZoomState`） / Platform.Core（`EsVector` / `EsPoint`）と Platform.AvaloniaUI（相互変換）
+- **依存**: `EsUtil.SaveEvidence.ZoomView`（`ZoomViewSession` / `ZoomConfig` / `ZoomNotice` / `ZoomState`） / Platform.Core（`EsVector` / `EsPoint`）と Platform.AvaloniaUI（相互変換）
 - **状態と判断の所有者**: `ZoomViewSession`（コア）。本コントロールは値の委譲と通知の転送のみを行う
 
 ### 6.2 ZoomableView
@@ -126,11 +126,11 @@ flowchart TB
   - ScrollViewer を使用しない（RenderTransform ベース）。ScrollViewer のレイアウト処理によるオフセット上書きが原理的に発生しない
   - 描画位置 = 実効スケール × (コンテンツ座標 − オフセット)。値（スケール・オフセット・中央寄せ補正）はコアが確定する
   - 見た目（スクロールバーの太さ 10 DIP）は標準 `ScrollBar` 固有であり、コアの外観（`ZoomViewAppearance`）は参照しない
-- **依存**: `Estable.ZoomView`（`ZoomViewSession` / `ZoomFeedback` / `ZoomNotice`） / Platform.AvaloniaUI（相互変換）
+- **依存**: `EsUtil.SaveEvidence.ZoomView`（`ZoomViewSession` / `ZoomFeedback` / `ZoomNotice`） / Platform.AvaloniaUI（相互変換）
 
 ### 6.3 ZoomViewControl.Core の型（UI 非依存）
 
-すべて UI 非依存プロジェクト（名前空間 `Estable.ZoomView`）が提供する。
+すべて UI 非依存プロジェクト（名前空間 `EsUtil.SaveEvidence.ZoomView`）が提供する。
 
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
@@ -160,7 +160,7 @@ flowchart TB
 
 ## 8. ログ
 
-- ログ定義は **コア（`Estable.ZoomView` の `ZoomLogMessage`）が単一所有**する（書式を両 UI で揃えるため。本プロジェクトに `Logging/` は持たない）。
+- ログ定義は **コア（`EsUtil.SaveEvidence.ZoomView` の `ZoomLogMessage`）が単一所有**する（書式を両 UI で揃えるため。本プロジェクトに `Logging/` は持たない）。
 - `ZoomViewControl.Log` プロパティへ注入されたロガーへ出力する。未設定（null）の場合は `NullLogger` で無出力（null の吸収はコアが単一所有する）。
 - 出力先・ログレベルはホスト側（上位 AP）のロギング基盤（Serilog 等）が決定する（本ライブラリはログ定義のみ）。
 

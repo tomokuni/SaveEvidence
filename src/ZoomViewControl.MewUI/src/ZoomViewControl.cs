@@ -5,11 +5,11 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.ZoomView;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 
-namespace Estable.MewUI.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView.MewUI;
 
 /// <summary>ズーム・パン可能な画像表示コントロール（MewUI 実装。Skia のキャンバスへ直接描画する）。</summary>
 /// <remarks>

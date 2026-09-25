@@ -14,7 +14,7 @@
 | `MarqueeWheelLogMessage` | `internal` | ズーム要求のログ定義（`ILogger` 拡張メソッド。ホストは定義名を参照しない） |
 | `MarqueeViewportNotifier` | `public` | ビューポート変化の再通知（現在の状態スナップショット）と再描画の要求 |
 
-## `MarqueeWheelInterpreter`（`Estable.Marquee.CoreForControl`・`public sealed class`）
+## `MarqueeWheelInterpreter`（`EsUtil.SaveEvidence.Marquee.CoreForControl`・`public sealed class`）
 
 ホイール入力を解釈し、ズーム要求の通知・連携先へのスクロール適用・スクロール要求の通知を行います。
 
@@ -47,7 +47,7 @@ wheel.AttachScrollTarget(new ScrollViewerTarget(scrollViewer));   // 連携先�
 wheel.Handle(controlKey: true, shiftKey: false, deltaX: 0, deltaY: 1, new EsPoint(30, 40));
 ```
 
-## `IWheelScrollTarget`（`Estable.Marquee.CoreForControl`・`public interface`）
+## `IWheelScrollTarget`（`EsUtil.SaveEvidence.Marquee.CoreForControl`・`public interface`）
 
 | メンバー | 説明 |
 | --- | --- |
@@ -55,20 +55,20 @@ wheel.Handle(controlKey: true, shiftKey: false, deltaX: 0, deltaY: 1, new EsPoin
 
 回転量 → 移動量の換算は `WheelScrollDelta` が済ませているため、実装は受け取った移動量を自身のスクロール位置へ加算するだけで済みます。
 
-## `WheelScrollDelta`（`Estable.Marquee.CoreForControl`・`internal static class`）
+## `WheelScrollDelta`（`EsUtil.SaveEvidence.Marquee.CoreForControl`・`internal static class`）
 
 | メンバー | 説明 |
 | --- | --- |
 | `Offset(double deltaX, double deltaY, bool shift)` | 回転量と修飾キーから移動量（DIP）を求める。1 ノッチ = `ScrollMath.WheelScrollUnit`（48 DIP）。Shift 併用時は縦の回転量を横の移動量として扱う |
 
-## `WheelZoomRequest`（`Estable.Marquee.CoreForControl`・`public readonly record struct`）
+## `WheelZoomRequest`（`EsUtil.SaveEvidence.Marquee.CoreForControl`・`public readonly record struct`）
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `ZoomIn` | `bool` | true = ズームイン / false = ズームアウト |
 | `Position` | `EsPoint` | ホイール操作の発生位置（コントロールローカル DIP）。ズーム中心に使える |
 
-## `WheelScrollRequest`（`Estable.Marquee.CoreForControl`・`public readonly record struct`）
+## `WheelScrollRequest`（`EsUtil.SaveEvidence.Marquee.CoreForControl`・`public readonly record struct`）
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
@@ -80,7 +80,7 @@ wheel.Handle(controlKey: true, shiftKey: false, deltaX: 0, deltaY: 1, new EsPoin
 
 `Delta` は**コアの型同士の変換を本契約が単一所有する**ためのメンバーです（UI が `new EsVector(...)` を書くと、同じ変換が UI ごとに散ります）。
 
-## `MarqueeViewportNotifier`（`Estable.Marquee.CoreForControl`・`public sealed class`）
+## `MarqueeViewportNotifier`（`EsUtil.SaveEvidence.Marquee.CoreForControl`・`public sealed class`）
 
 ビューポート（パン・ズーム・表示サイズ）の変化を上位へ通知します。
 
@@ -99,7 +99,7 @@ viewport.ViewportChanged += (_, snapshot) => ViewportChanged?.Invoke(this, new S
 viewport.Notify();   // 変化を検知したら呼ぶ
 ```
 
-## `MarqueeWheelLogMessage`（`Estable.Marquee.CoreForControl`・`internal static partial class`）
+## `MarqueeWheelLogMessage`（`EsUtil.SaveEvidence.Marquee.CoreForControl`・`internal static partial class`）
 
 | メンバー | 説明 |
 | --- | --- |

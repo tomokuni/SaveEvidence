@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Estable.Loupe.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary>ログ出力を収集するテスト用 <see cref="ILogger"/> 実装。</summary>
 /// <remarks>

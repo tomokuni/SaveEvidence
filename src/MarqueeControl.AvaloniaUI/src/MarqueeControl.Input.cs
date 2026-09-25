@@ -3,9 +3,9 @@ using Avalonia.Input;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
-using MarqueeFacade = Estable.Marquee.Marquee;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
-namespace Estable.AvaloniaUI.Marquee;
+namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
 /// <summary>
 /// MarqueeControl のキーボード入力処理（partial 分割）。

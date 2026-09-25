@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.Loupe.CoreForControl.Tests;
+namespace EsUtil.SaveEvidence.Loupe.CoreForControl.Tests;
 
 /// <summary><see cref="LoupeRenderCoordinator"/> の単体テスト（再描画バッチ化・世代番号管理）。</summary>
 /// <remarks>

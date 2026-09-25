@@ -2,7 +2,7 @@ using BindingFlags = System.Reflection.BindingFlags;
 using Avalonia.Media;
 using Xunit;
 
-namespace Estable.AvaloniaUI.ColorPicker.Tests;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorEntry"/> の単体テスト（全色一覧・ソート・表示名・辞書）。</summary>
 /// <remarks>

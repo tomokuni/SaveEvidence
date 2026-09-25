@@ -1,25 +1,25 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using Estable.CropView;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.MewUI.CaptureSession;
-using Estable.MewUI.CropView;
-using Estable.MewUI.Marquee;
-using Estable.MewUI.ZoomView;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.CropView;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.CaptureSession.MewUI;
+using EsUtil.SaveEvidence.CropView.MewUI;
+using EsUtil.SaveEvidence.Marquee.MewUI;
+using EsUtil.SaveEvidence.ZoomView.MewUI;
+using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
 using Microsoft.Extensions.Logging;
-using SaveEvidence.MewUI.Icons;
-using SaveEvidence.MewUI.Logging;
-using SaveEvidence.MewUI.Services;
+using EsUtil.SaveEvidence.MewUI.Icons;
+using EsUtil.SaveEvidence.MewUI.Logging;
+using EsUtil.SaveEvidence.MewUI.Services;
 using MewUIColor = Aprillz.MewUI.Color;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>キャプチャページ（MewUI 版）。</summary>
 /// <remarks>

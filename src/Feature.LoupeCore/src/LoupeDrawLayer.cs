@@ -1,4 +1,4 @@
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの UI 層が処理する層（描画順の契約）。</summary>
 /// <remarks>

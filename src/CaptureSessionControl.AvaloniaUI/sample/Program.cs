@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace Estable.AvaloniaUI.CaptureSession.Sample;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sample;
 
 /// <summary>アプリケーションのエントリポイント。</summary>
 internal static class Program

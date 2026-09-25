@@ -1,8 +1,8 @@
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
 
-namespace SaveEvidence.MewUI;
+namespace EsUtil.SaveEvidence.MewUI;
 
 /// <summary>アプリ全体で共有するコアオブジェクト（MewUI 版のサービス束）。</summary>
 /// <param name="Main">アプリのメイン ViewModel（プレビュー・コマンド）。</param>

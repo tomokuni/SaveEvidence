@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Imaging;
 
-namespace SaveEvidence.MewUI.Services;
+namespace EsUtil.SaveEvidence.MewUI.Services;
 
 /// <summary>プレビュー画像の編集履歴（Undo / Redo）の操作を担う窓口。</summary>
 /// <remarks>

@@ -1,8 +1,8 @@
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
-using Estable.AvaloniaUI.CropView;
+using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 
-namespace Estable.AvaloniaUI.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 
 /// <summary>切り出しの対象画像（<see cref="CropViewControl"/> が表示している画像）を取り出す窓口。</summary>
 /// <remarks>

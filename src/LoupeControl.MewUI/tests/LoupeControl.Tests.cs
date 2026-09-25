@@ -1,13 +1,13 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using Estable.Loupe;
+using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.Loupe.Tests;
+namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
 
 /// <summary><see cref="LoupeControl"/> のプロパティとレイアウトのテスト。</summary>
 /// <remarks>

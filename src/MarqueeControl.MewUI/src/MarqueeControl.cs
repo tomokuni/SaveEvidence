@@ -1,10 +1,10 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.Marquee.CoreForControl;
-using Estable.Marquee.Rendering;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.Marquee.CoreForControl;
+using EsUtil.SaveEvidence.Marquee.Rendering;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -16,9 +16,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
-using MarqueeFacade = Estable.Marquee.Marquee;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
-namespace Estable.MewUI.Marquee;
+namespace EsUtil.SaveEvidence.Marquee.MewUI;
 
 /// <summary>リサイズ可能なドラッグ矩形のコントロール（MewUI 版）。</summary>
 /// <remarks>

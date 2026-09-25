@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.Tests;
 
 /// <summary><see cref="ZoomScrollBarGeometry"/> の単体テスト（スクロールバーの配置計算）。</summary>
 /// <remarks>純粋計算のみのため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>

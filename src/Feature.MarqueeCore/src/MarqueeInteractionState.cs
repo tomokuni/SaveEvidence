@@ -1,4 +1,4 @@
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>Marquee の対話状態（State パターン: 上位への通知状態）。</summary>
 /// <remarks>

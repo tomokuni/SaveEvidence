@@ -1,5 +1,5 @@
-using Estable.Marquee.CoreForControl;
-using Estable.Marquee.Rendering;
+using EsUtil.SaveEvidence.Marquee.CoreForControl;
+using EsUtil.SaveEvidence.Marquee.Rendering;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Geometry;
@@ -10,7 +10,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 
-namespace Estable.AvaloniaUI.Marquee;
+namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
 /// <summary>
 /// MarqueeControl のビジュアルツリー接続・ScrollViewer 連携・描画処理（partial 分割）。

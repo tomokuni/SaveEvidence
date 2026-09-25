@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャオーバーレイ（全画面ウィンドウ）のキー操作で実行する内容を表す。</summary>
 /// <remarks>

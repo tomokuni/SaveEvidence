@@ -1,10 +1,10 @@
-using Estable.FadeMaskDragRect;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 
 /// <summary>選択矩形の破線オーバーレイを Skia のキャンバスへ描画するレンダラー。</summary>
 /// <remarks>

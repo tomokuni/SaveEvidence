@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Marquee.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests;
 
 /// <summary><see cref="MarqueeSizeLabel"/> の単体テスト（文言の書式と配置・体裁）。</summary>
 /// <remarks>

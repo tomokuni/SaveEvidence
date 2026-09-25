@@ -1,8 +1,8 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.LineDetection;
+using EsUtil.SaveEvidence.LineDetection;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>「線分検出」ページの ViewModel。クリップボードの画像からウィンドウ枠となる辺（線分）を検出する。</summary>
 /// <remarks>

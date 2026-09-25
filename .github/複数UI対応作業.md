@@ -22,7 +22,7 @@ SaveEvidence の UI（Avalonia UI）からコアロジックを分離し、複�
     - [5.5 `ICoordTransform` / `CoordTransform` の Core 移設（ティア D）](#55-icoordtransform--coordtransform-の-core-移設ティア-d)
     - [5.6 プラットフォーム値型の導入とサービス抽象の Core 移設（ティア D）](#56-プラットフォーム値型の導入とサービス抽象の-core-移設ティア-d)
     - [5.7 テストとドキュメント](#57-テストとドキュメント)
-    - [5.8 `Feature.LoupeCore` の新設（ティア E / 1 コントロールで PoC）](#58-loupecontrolcore-の新設ティア-e--1-コントロールで-poc)
+    - [5.8 `Feature.LoupeCore` の新設（ティア E / 1 コントロールで PoC）](#58-featureloupecore-の新設ティア-e--1-コントロールで-poc)
     - [5.9 検証](#59-検証)
     - [5.10 移設時に得た注意点](#510-移設時に得た注意点)
   - [6. 詳細（ティア D / サービス抽象・プラットフォーム値型の Core 化）](#6-詳細ティア-d--サービス抽象プラットフォーム値型の-core-化)

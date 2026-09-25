@@ -46,7 +46,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | 項目 | 内容 |
 | --- | --- |
 | **プロジェクト** | `ColorPickerControl` |
-| **ルート名前空間** | `Estable.AvaloniaUI.ColorPicker` |
+| **ルート名前空間** | `EsUtil.SaveEvidence.ColorPicker.AvaloniaUI` |
 | **言語** | C# 14（.NET 10.0） |
 | **UI フレームワーク** | Avalonia UI 12.1（UserControl / ComboBox / ColorView / Flyout） |
 | **ターゲットフレームワーク** | net10.0 |

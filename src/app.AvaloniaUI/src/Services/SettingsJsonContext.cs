@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using Estable.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Models;
 
-namespace Estable.SaveEvidence.Services;
+namespace EsUtil.SaveEvidence.Services;
 
 /// <summary>設定（<see cref="Settings"/>）の JSON ソース生成コンテキスト。</summary>
 /// <remarks>

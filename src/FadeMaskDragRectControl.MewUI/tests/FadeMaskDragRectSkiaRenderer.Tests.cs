@@ -3,7 +3,7 @@ using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI.Tests;
 
 /// <summary><see cref="FadeMaskDragRectSkiaRenderer"/>（選択矩形破線オーバーレイ）の描画テスト。</summary>
 /// <remarks>

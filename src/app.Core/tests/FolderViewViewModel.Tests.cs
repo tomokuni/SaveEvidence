@@ -1,7 +1,7 @@
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.ViewModels;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary>
 /// FolderViewViewModel（フォルダビューの表示モード・ソート状態）の単体テスト。

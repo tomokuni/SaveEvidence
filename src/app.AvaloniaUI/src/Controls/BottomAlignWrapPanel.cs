@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
 using EsUtil.Platform.Core.Geometry;
-using Estable.SaveEvidence.Layout;
+using EsUtil.SaveEvidence.Layout;
 
-namespace Estable.SaveEvidence.Controls;
+namespace EsUtil.SaveEvidence.Controls;
 
 /// <summary>横方向に折り返し、各行内で子要素を下端揃えするパネル。</summary>
 /// <remarks>

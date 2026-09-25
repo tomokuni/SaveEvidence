@@ -1,6 +1,6 @@
 # CropView 外部機能仕様書
 
-本仕様書は、`Estable.AvaloniaUI.CropView`（CropView ライブラリ）の**外部機能仕様・公開 API 仕様**を定義します。
+本仕様書は、`EsUtil.SaveEvidence.CropView.AvaloniaUI`（CropView ライブラリ）の**外部機能仕様・公開 API 仕様**を定義します。
 
 ## 目次
 
@@ -33,7 +33,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 ## 2. 公開 API
 
-名前空間: `Estable.AvaloniaUI.CropView`
+名前空間: `EsUtil.SaveEvidence.CropView.AvaloniaUI`
 
 ### 2.1. CropViewControl クラス
 
@@ -64,7 +64,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 | メソッド | 説明 |
 | --- | --- |
-| `void ZoomIn()` | ズームイン（段階遷移。遷移の規則はコア（`Estable.ZoomView`）が単一所有する）。 |
+| `void ZoomIn()` | ズームイン（段階遷移。遷移の規則はコア（`EsUtil.SaveEvidence.ZoomView`）が単一所有する）。 |
 | `void ZoomOut()` | ズームアウト（段階遷移。同上）。 |
 | `void ZoomFit()` | Fit 表示（ウィンドウに合わせて表示）に戻す（`ZoomIn` / `ZoomOut` と対になるズーム操作）。 |
 | `void SetSelection(Rect rect)` | 選択状態を外部から設定（FadeMaskDragRectControl へ委譲）。 |
@@ -92,7 +92,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 ### 2.2. OverlayRect 構造体
 
-外部提供矩形の描画情報（不変レコード構造体）。UI 非依存の `CropViewControl.Core`（名前空間 `Estable.CropView`）が提供する。
+外部提供矩形の描画情報（不変レコード構造体）。UI 非依存の `CropViewControl.Core`（名前空間 `EsUtil.SaveEvidence.CropView`）が提供する。
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |

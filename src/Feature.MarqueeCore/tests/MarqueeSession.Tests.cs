@@ -4,7 +4,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Estable.Marquee.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests;
 
 /// <summary><see cref="MarqueeSession"/> の単体テスト（入力の解釈・状態遷移の判断・通知・効果）。</summary>
 /// <remarks>

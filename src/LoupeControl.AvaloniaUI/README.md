@@ -74,7 +74,7 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Estable.AvaloniaUI.Loupe;
+using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 ```
 
 ## 5. クイックスタート
@@ -84,7 +84,7 @@ using Estable.AvaloniaUI.Loupe;
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:loupe="clr-namespace:Estable.AvaloniaUI.Loupe;assembly=LoupeControl.AvaloniaUI">
+        xmlns:loupe="clr-namespace:EsUtil.SaveEvidence.Loupe.AvaloniaUI;assembly=LoupeControl.AvaloniaUI">
     <Canvas>
         <Image Source="{Binding SourceImage}" />
 
@@ -104,7 +104,7 @@ using Estable.AvaloniaUI.Loupe;
 ```csharp
 using Avalonia;
 using Avalonia.Media.Imaging;
-using Estable.Loupe;
+using EsUtil.Feature.LoupeCore;
 
 public sealed class MainViewModel
 {

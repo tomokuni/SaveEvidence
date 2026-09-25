@@ -1,8 +1,8 @@
-using Estable.Marquee.Selection;
+using EsUtil.Feature.MarqueeCore.Selection;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.Marquee.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests;
 
 /// <summary><see cref="SelectionGeometry"/> の単体テスト（純粋な幾何計算）。</summary>
 /// <remarks>

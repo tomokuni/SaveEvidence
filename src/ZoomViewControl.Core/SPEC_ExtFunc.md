@@ -19,7 +19,7 @@
 | `ZoomAvailability` | `internal` | 同上 |
 | `ZoomScrollBarGeometry` | `internal` | 同上 |
 
-名前空間はすべて `Estable.ZoomView` です。
+名前空間はすべて `EsUtil.SaveEvidence.ZoomView` です。
 
 ## `ZoomViewSession`（状態管理クラス）
 

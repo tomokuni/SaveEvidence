@@ -1,11 +1,11 @@
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.ViewModels;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using MockSettingsService = Estable.SaveEvidence.Tests.MainViewModelTests.MockSettingsService;
-using MockImageWriter = Estable.SaveEvidence.Tests.MainViewModelTests.MockImageWriter;
+using MockSettingsService = EsUtil.SaveEvidence.Tests.MainViewModelTests.MockSettingsService;
+using MockImageWriter = EsUtil.SaveEvidence.Tests.MainViewModelTests.MockImageWriter;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary>自動切り出し（LineDetection 矩形検出）の統合テスト。</summary>
 /// <remarks>

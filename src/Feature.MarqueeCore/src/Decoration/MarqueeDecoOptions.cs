@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Marquee.Decoration;
+namespace EsUtil.Feature.MarqueeCore.Decoration;
 
 /// <summary>選択矩形の外側・内側に描く装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定をまとめた不変の値。</summary>
 /// <remarks>

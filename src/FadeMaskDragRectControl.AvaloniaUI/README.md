@@ -58,7 +58,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 必要な名前空間:
 
 ```csharp
-using Estable.AvaloniaUI.FadeMaskDragRect;
+using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
 ```
 
@@ -69,7 +69,7 @@ using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コ
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:fdr="clr-namespace:Estable.AvaloniaUI.FadeMaskDragRect;assembly=FadeMaskDragRectControl.AvaloniaUI">
+        xmlns:fdr="clr-namespace:EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;assembly=FadeMaskDragRectControl.AvaloniaUI">
     <Grid>
         <Image x:Name="VirtualScreen" Stretch="Fill" />
         <fdr:FadeMaskDragRectControl x:Name="SelectionOverlay" />
@@ -151,7 +151,7 @@ FadeMaskDragRectControl.AvaloniaUI/
 ### 9.1 共有コア（`FadeMaskDragRectControl.Core`）
 
 UI 非依存の設定の単一値（`FadeMaskDragRectOptions`）・動作モード・モードから導出する状態・選択矩形の可否判定・
-ルーペの選択矩形オーバーレイ描画は `src/FadeMaskDragRectControl.Core`（名前空間 `Estable.FadeMaskDragRect`）が
+ルーペの選択矩形オーバーレイ描画は `src/FadeMaskDragRectControl.Core`（名前空間 `EsUtil.SaveEvidence.FadeMaskDragRect`）が
 単一所有します（Avalonia / MewUI で共有）。
 
 ```text

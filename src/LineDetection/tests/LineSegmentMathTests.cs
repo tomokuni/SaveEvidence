@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.LineDetection.Tests;
+namespace EsUtil.SaveEvidence.LineDetection.Tests;
 
 /// <summary><see cref="LineSegmentMath"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

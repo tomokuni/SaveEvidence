@@ -1,10 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:Estable.SaveEvidence.ViewModels;assembly=app.Core"
-             xmlns:enum="using:Estable.SaveEvidence.Enum"
-             xmlns:converters="clr-namespace:Estable.SaveEvidence.Converters"
-             xmlns:controls="clr-namespace:Estable.AvaloniaUI.ColorPicker;assembly=ColorPickerControl.AvaloniaUI"
-             x:Class="Estable.SaveEvidence.Views.Pages.SettingsPage"
+             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=app.Core"
+             xmlns:enum="using:EsUtil.SaveEvidence.Enum"
+             xmlns:converters="clr-namespace:EsUtil.SaveEvidence.Converters"
+             xmlns:controls="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;assembly=ColorPickerControl.AvaloniaUI"
+             x:Class="EsUtil.SaveEvidence.Views.Pages.SettingsPage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
         <converters:EnumToDisplayNameConverter x:Key="EnumToDisplayNameConverter"/>

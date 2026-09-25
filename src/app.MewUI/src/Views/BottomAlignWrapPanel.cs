@@ -1,9 +1,9 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Geometry;
-using Estable.SaveEvidence.Layout;
+using EsUtil.SaveEvidence.Layout;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>横方向に折り返し、各行内で子要素を下端揃えするパネル（MewUI 版）。</summary>
 /// <remarks>

@@ -2,17 +2,17 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Estable.AvaloniaUI.Loupe;
-using Estable.Loupe;
+using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
+using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Imaging;
-using LineDetectionSample.ViewModels;
+using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 using System.ComponentModel;
 using System.Reactive.Linq;
 using DrawingColor = System.Drawing.Color;
 
-namespace LineDetectionSample.Views;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
 /// <summary>画像 + 線分オーバーレイ + ルーペの共通表示ビュー（線分検出・データ検証ページで共有）。</summary>
 /// <remarks>

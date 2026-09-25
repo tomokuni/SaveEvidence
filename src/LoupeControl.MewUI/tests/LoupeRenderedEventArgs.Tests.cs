@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 
-namespace Estable.MewUI.Loupe.Tests;
+namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
 
 /// <summary><see cref="LoupeRenderedEventArgs"/>（ルーペの描画完了通知）のテスト。</summary>
 /// <remarks>

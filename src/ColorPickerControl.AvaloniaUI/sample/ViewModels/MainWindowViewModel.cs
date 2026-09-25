@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.AvaloniaUI.ColorPicker;
+using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
-namespace ColorPickerControl.Sample.ViewModels;
+namespace EsUtil.SaveEvidence.ColorPicker.Sample.ViewModels;
 
 /// <summary>メインウィンドウの ViewModel。</summary>
 /// <remarks>

@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Headless;
-using Estable.LineDetection.Tests;
+using EsUtil.SaveEvidence.LineDetection.Tests;
 
 [assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
 
-namespace Estable.LineDetection.Tests;
+namespace EsUtil.SaveEvidence.LineDetection.Tests;
 
 /// <summary>Avalonia ヘッドレステストのアプリケーションビルダー（アセンブリ属性方式）。</summary>
 /// <remarks>

@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.LineDetection;
+namespace EsUtil.SaveEvidence.LineDetection;
 
 /// <summary>線分（辺）の向き。</summary>
 public enum LineOrientation

@@ -1,4 +1,4 @@
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>ズームセッションから UI 層へ返す効果（UI が適用する操作）。</summary>
 /// <remarks>

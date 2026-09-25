@@ -2,9 +2,9 @@ using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 
-namespace Estable.AvaloniaUI.CaptureSession.Sample.ViewModels;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sample.ViewModels;
 
 /// <summary>メインウィンドウのビューモデル。</summary>
 /// <remarks>

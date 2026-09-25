@@ -1,7 +1,7 @@
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>ズームビューの外観（下地・市松模様・スクロールバー）をまとめた不変の設定値。</summary>
 /// <remarks>

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.AvaloniaUI.ColorPicker.Tests</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

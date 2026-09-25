@@ -1,9 +1,9 @@
-using SaveEvidence.MewUI.Services;
+using EsUtil.SaveEvidence.MewUI.Services;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using MewUIColor = Aprillz.MewUI.Color;
 
-namespace SaveEvidence.MewUI.Tests;
+namespace EsUtil.SaveEvidence.MewUI.Tests;
 
 /// <summary><see cref="SettingsColorMath"/> の単体テスト（色文字列の解析と整形）。</summary>
 /// <remarks>

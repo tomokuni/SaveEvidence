@@ -1,10 +1,10 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.LineDetection;
+using EsUtil.SaveEvidence.LineDetection;
 using EsUtil.Platform.AvaloniaUI;
 using Point = Avalonia.Point;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>検出された辺（線分）の表示アイテム（画像オーバーレイ + 一覧の両方で使用）。</summary>
 /// <remarks>

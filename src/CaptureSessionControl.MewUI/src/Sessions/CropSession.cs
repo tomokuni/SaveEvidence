@@ -1,8 +1,8 @@
 using Aprillz.MewUI.Controls;
-using Estable.CaptureSession;
-using Estable.FadeMaskDragRect;
-using Estable.MewUI.CropView;
-using Estable.MewUI.FadeMaskDragRect;
+using EsUtil.SaveEvidence.CaptureSession;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.SaveEvidence.CropView.MewUI;
+using EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -10,7 +10,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 
 /// <summary>プレビュー画像の切り出し（Crop）セッション（MewUI 版）。</summary>
 /// <remarks>

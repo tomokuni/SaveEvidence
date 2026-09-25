@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
-using Estable.Marquee.Decoration;
+using EsUtil.Feature.MarqueeCore.Decoration;
 
-namespace Estable.Marquee.Rendering;
+namespace EsUtil.SaveEvidence.Marquee.Rendering;
 
 /// <summary>選択矩形（穴あけ矩形）の内側に描く装飾（塗り・内枠）を描画ポートへ写すレンダラ。</summary>
 /// <remarks>

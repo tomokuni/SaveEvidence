@@ -6,10 +6,10 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Native.Imaging;
-using ZoomViewControl.Sample.Imaging;
-using ZoomViewControl.Sample.ViewModels;
+using EsUtil.SaveEvidence.ZoomView.Sample.Imaging;
+using EsUtil.SaveEvidence.ZoomView.Sample.ViewModels;
 
-namespace ZoomViewControl.Sample.Views;
+namespace EsUtil.SaveEvidence.ZoomView.Sample.Views;
 
 /// <summary>メインウィンドウ。ZoomViewControl の ZoomViewControl（自己完結型複合コントロール）の動作確認を担う。</summary>
 /// <remarks>

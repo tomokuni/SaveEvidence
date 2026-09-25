@@ -3,10 +3,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using EsUtil.Platform.Core;
-using Estable.SaveEvidence.Enum;
-using Estable.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Enum;
+using EsUtil.SaveEvidence.Models;
 
-namespace Estable.SaveEvidence.Services;
+namespace EsUtil.SaveEvidence.Services;
 
 /// <summary>JSON ファイルによる設定管理を提供する。</summary>
 /// <remarks>

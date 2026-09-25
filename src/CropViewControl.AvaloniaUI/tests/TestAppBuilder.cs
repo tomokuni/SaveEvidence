@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Headless;
-using Estable.AvaloniaUI.CropView.Tests;
+using EsUtil.SaveEvidence.CropView.AvaloniaUI.Tests;
 
 [assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
 
-namespace Estable.AvaloniaUI.CropView.Tests;
+namespace EsUtil.SaveEvidence.CropView.AvaloniaUI.Tests;
 
 /// <summary>Avalonia ヘッドレステストのアプリケーションビルダー（アセンブリ属性方式）。</summary>
 /// <remarks>

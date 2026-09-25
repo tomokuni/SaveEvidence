@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Estable.AvaloniaUI.ColorPicker"
-             x:Class="Estable.AvaloniaUI.ColorPicker.ColorPickerControl"
+             xmlns:local="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI"
+             x:Class="EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.ColorPickerControl"
              x:Name="PART_Root"
              x:CompileBindings="False">
     <UserControl.Resources>

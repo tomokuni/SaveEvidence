@@ -1,4 +1,4 @@
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>色のバリデーション状態（エラーの有無・メッセージ）を純粋に決定するロジック。</summary>
 /// <remarks>

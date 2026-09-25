@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.Tests;
 
 /// <summary>
 /// ZoomConfig（ズーム遷移の設定・検証付き不変値）の仕様テスト。

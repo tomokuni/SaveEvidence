@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.AvaloniaUI.FadeMaskDragRect</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

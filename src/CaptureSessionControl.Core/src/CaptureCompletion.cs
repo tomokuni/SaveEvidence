@@ -1,4 +1,4 @@
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>セッションの結果（確定・キャンセル）を 1 回だけ確定させる完了通知。</summary>
 /// <typeparam name="TResult">セッションの結果の型。</typeparam>

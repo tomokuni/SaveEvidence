@@ -1,14 +1,14 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using Estable.CropView;
-using Estable.MewUI.ZoomView;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.CropView;
+using EsUtil.SaveEvidence.ZoomView.MewUI;
+using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.MewUI.CropView;
+namespace EsUtil.SaveEvidence.CropView.MewUI;
 
 /// <summary>画像表示（拡大・パン・Fit）と外部提供矩形のオーバーレイを統合した高レベル複合コントロール（MewUI 版）。</summary>
 /// <remarks>

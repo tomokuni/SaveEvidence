@@ -1,9 +1,9 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.LineDetection;
+using EsUtil.SaveEvidence.LineDetection;
 using System.Collections.ObjectModel;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>「データ検証」ページの ViewModel。選択した dataset 画像を検出し、正解データ（GroundTruth）と照合する。</summary>
 /// <remarks>

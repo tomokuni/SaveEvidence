@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>クリック確定（押下で固定・解放で確定）の状態と判断を単一所有する。</summary>
 /// <remarks>

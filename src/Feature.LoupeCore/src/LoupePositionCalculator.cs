@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの表示位置・サイズ計算ロジック（純粋関数）。</summary>
 /// <remarks>

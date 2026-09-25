@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Marquee.Decoration;
+namespace EsUtil.Feature.MarqueeCore.Decoration;
 
 /// <summary>暗転マスク（オーバーレイ）の外観をまとめた不変の設定値。</summary>
 /// <remarks>

@@ -1,9 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
-using Estable.Loupe;
+using EsUtil.Feature.LoupeCore;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Loupe.Rendering.Tests;
+namespace EsUtil.SaveEvidence.Loupe.Rendering.Tests;
 
 /// <summary><see cref="LoupeLabelPlan"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
 /// <remarks>

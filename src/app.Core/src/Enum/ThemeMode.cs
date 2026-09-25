@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Estable.SaveEvidence.Enum;
+namespace EsUtil.SaveEvidence.Enum;
 
 /// <summary>アプリ全体のテーマモード。</summary>
 /// <remarks><c>RequestedThemeVariant</c> へ反映される。<c>System</c> は OS の設定に追従する。</remarks>

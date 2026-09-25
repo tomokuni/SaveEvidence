@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureTiming"/> と <see cref="CropSessionActions"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>両 UI が同じ方針値と操作決定を使うことを固定する。</remarks>

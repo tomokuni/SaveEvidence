@@ -11,7 +11,7 @@ CropViewControl は、**画像の表示（拡大・パン・Fit）**と、**外�
 
 ## 公開 API
 
-名前空間 `Estable.MewUI.CropView` / クラス `CropViewControl`（`public sealed`、`Grid` 派生）。
+名前空間 `EsUtil.SaveEvidence.CropView.MewUI` / クラス `CropViewControl`（`public sealed`、`Grid` 派生）。
 
 **UI 層は入力の変換・効果の適用・描画・UI 固有のホスト結線のみを担います**（矩形の配置・太さ・破線・市松の描画可否はコアが単一所有する）。
 

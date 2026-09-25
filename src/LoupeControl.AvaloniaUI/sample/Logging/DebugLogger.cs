@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace LoupeControl.Sample.Logging;
+namespace EsUtil.SaveEvidence.Loupe.Sample.Logging;
 
 /// <summary>デバッグ出力とログファイルへログを転送する <see cref="ILogger"/> 実装（LoupeControl.Log の設定例）。</summary>
 /// <remarks>

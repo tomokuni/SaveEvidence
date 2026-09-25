@@ -1,11 +1,11 @@
 using Aprillz.MewUI;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.ZoomView;
 using SkiaSharp;
 using Xunit;
 
-namespace Estable.MewUI.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.MewUI.Tests;
 
 /// <summary><see cref="ZoomViewControl"/>（MewUI）のテスト。</summary>
 /// <remarks>

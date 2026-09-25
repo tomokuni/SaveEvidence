@@ -63,9 +63,9 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 必要な名前空間:
 
 ```csharp
-using Estable.AvaloniaUI.CropView;
-using Estable.AvaloniaUI.FadeMaskDragRect;   // FadeMaskDragRectMode
-using Estable.CropView;                      // OverlayRect / OverlayLineStyle
+using EsUtil.SaveEvidence.CropView.AvaloniaUI;
+using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;   // FadeMaskDragRectMode
+using EsUtil.SaveEvidence.CropView;                      // OverlayRect / OverlayLineStyle
 using EsUtil.Platform.Core.Geometry;         // EsRect
 using Avalonia;                              // Point / Rect
 using DrawingColor = System.Drawing.Color;   // コアの色型（Avalonia.Media.Color と衝突するため別名）
@@ -78,7 +78,7 @@ using DrawingColor = System.Drawing.Color;   // コアの色型（Avalonia.Media
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropViewControl.AvaloniaUI">
+        xmlns:crop="clr-namespace:EsUtil.SaveEvidence.CropView.AvaloniaUI;assembly=CropViewControl.AvaloniaUI">
     <crop:CropViewControl x:Name="CropPreview" />
 </Window>
 ```

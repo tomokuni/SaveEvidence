@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CropBoundsMath"/> の単体テスト（クランプ・丸め・最小サイズ・閉区間）。</summary>
 /// <remarks>

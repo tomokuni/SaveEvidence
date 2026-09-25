@@ -2,7 +2,7 @@ using Avalonia.Media.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace Estable.LineDetection.Tests;
+namespace EsUtil.SaveEvidence.LineDetection.Tests;
 
 /// <summary>LogicLineDetector が EsBitmap 入力を正しく検出できることを検証する。</summary>
 /// <remarks>

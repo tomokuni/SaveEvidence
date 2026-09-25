@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Marquee.Decoration;
+namespace EsUtil.Feature.MarqueeCore.Decoration;
 
 /// <summary>穴あけ矩形と、その矩形を扱うときの閉区間の指定。</summary>
 /// <param name="Rect">穴あけ矩形（座標系は呼び出し側の契約に従う）。</param>

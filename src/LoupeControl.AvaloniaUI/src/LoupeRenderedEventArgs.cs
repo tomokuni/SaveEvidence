@@ -1,7 +1,7 @@
 using Avalonia;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.AvaloniaUI.Loupe;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 
 /// <summary>ルーペの描画完了時に上位へ通知する描画結果と表示情報。</summary>
 /// <remarks>

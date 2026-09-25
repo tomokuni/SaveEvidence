@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの設定（表示サイズ・拡大率・外観）をまとめた不変の値オブジェクト。</summary>
 /// <remarks>

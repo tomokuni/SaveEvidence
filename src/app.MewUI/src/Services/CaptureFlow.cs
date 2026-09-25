@@ -1,11 +1,11 @@
 using Aprillz.MewUI;
-using Estable.MewUI.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Native;
-using Estable.SaveEvidence.Services;
-using SaveEvidence.MewUI.Logging;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.MewUI.Logging;
 
-namespace SaveEvidence.MewUI.Services;
+namespace EsUtil.SaveEvidence.MewUI.Services;
 
 /// <summary>キャプチャ（スクリーン / ウィンドウ / 範囲選択）の開始と結果の反映を担う窓口。</summary>
 /// <remarks>

@@ -7,19 +7,19 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
-using Estable.AvaloniaUI.Marquee;
+using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using Estable.Marquee.Decoration;
-using Estable.FadeMaskDragRect;
-using Estable.Marquee;
-using Estable.Marquee.CoreForControl;
-using Estable.Loupe;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.SaveEvidence.Marquee.CoreForControl;
+using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 
 /// <summary><see cref="FadeMaskDragRectControl"/> の単体テスト（公開 API・配線・状態同期）。</summary>
 /// <remarks>

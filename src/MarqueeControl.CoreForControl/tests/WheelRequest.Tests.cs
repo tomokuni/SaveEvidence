@@ -2,7 +2,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.Marquee.CoreForControl.Tests;
+namespace EsUtil.SaveEvidence.Marquee.CoreForControl.Tests;
 
 /// <summary>ホイール要求（<see cref="WheelScrollRequest"/> / <see cref="WheelZoomRequest"/>）の仕様テスト。</summary>
 /// <remarks>

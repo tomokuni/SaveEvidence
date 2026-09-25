@@ -5,11 +5,11 @@ using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
-using Estable.AvaloniaUI.CaptureSession.Sample.ViewModels;
+using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sample.ViewModels;
 using System.Collections.Specialized;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 
-namespace Estable.AvaloniaUI.CaptureSession.Sample.Views;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sample.Views;
 
 /// <summary>メインウィンドウ。CaptureSessionControl の呼び出し・結果反映・Crop プレビューを担う。</summary>
 /// <remarks>

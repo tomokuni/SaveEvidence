@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:LineDetectionSample.ViewModels"
-             x:Class="LineDetectionSample.Views.VerifyAllPage"
+             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.LineDetection.Sample.ViewModels"
+             x:Class="EsUtil.SaveEvidence.LineDetection.Sample.Views.VerifyAllPage"
              x:DataType="vm:VerifyAllPageViewModel">
 
     <DockPanel>

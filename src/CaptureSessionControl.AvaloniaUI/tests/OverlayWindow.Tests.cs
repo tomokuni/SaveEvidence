@@ -9,14 +9,14 @@ using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.FadeMaskDragRect;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
 using BindingFlags = System.Reflection.BindingFlags;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 
-namespace Estable.AvaloniaUI.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Tests;
 
 /// <summary><see cref="OverlayWindow"/> の単体テスト（回帰検証: 描画反映・背景フィット・座標変換）。</summary>
 /// <remarks>

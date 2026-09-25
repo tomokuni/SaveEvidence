@@ -2,7 +2,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureOwnerScope"/> の単体テスト（退避の順序・復帰・除外の解除・条件分岐）。</summary>
 public class CaptureOwnerScopeTests

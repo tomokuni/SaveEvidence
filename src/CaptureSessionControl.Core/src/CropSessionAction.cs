@@ -1,4 +1,4 @@
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>切り出しセッションの操作（ツールバーの 1 ボタンで開始・確定・キャンセルを切り替える）を表す。</summary>
 /// <remarks>

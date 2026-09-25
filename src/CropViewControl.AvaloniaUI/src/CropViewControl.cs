@@ -4,17 +4,17 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Estable.AvaloniaUI.FadeMaskDragRect;
-using Estable.AvaloniaUI.Loupe;
+using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
+using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI;
-using Estable.AvaloniaUI.ZoomView;
-using Estable.CropView;
-using Estable.FadeMaskDragRect;
+using EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
+using EsUtil.SaveEvidence.CropView;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.AvaloniaUI.CropView;
+namespace EsUtil.SaveEvidence.CropView.AvaloniaUI;
 
 /// <summary>
 /// 画像表示（拡大・パン・Fit）と領域選択（ドラッグ・暗転・ルーペ）を統合した高レベル複合コントロール。

@@ -34,8 +34,8 @@ Avalonia 版と同一の挙動になります。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた不変の設定値（コアの `Estable.Marquee.MarqueeOptions`） |
-| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定**（装飾層の `Estable.Marquee.Decoration.MarqueeDecoOptions`） |
+| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた不変の設定値（コアの `EsUtil.Feature.MarqueeCore.MarqueeOptions`） |
+| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定**（装飾層の `EsUtil.Feature.MarqueeCore.Decoration.MarqueeDecoOptions`） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。操作・情報ラベルの文言も同様にホストが与える |
 | `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
 | `Renderer` | `IMarqueeRenderer` | `MarqueeRenderer.Default` | 描画の実装（**描画の差し替え**。null 不可）。設定すると再描画とラベル要素の再配置を要求する（描画先は `SkiaEsCanvas` が担う） |
@@ -104,7 +104,7 @@ Avalonia 版と同一の挙動になります。
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます。
 
 ```csharp
-using Estable.MewUI.Marquee;
+using EsUtil.SaveEvidence.Marquee.MewUI;
 
 // 付加情報（操作・情報ラベル）を自前で描く。
 // サイズ・座標ラベルはコントロールがテキスト要素として表示する（図形もコントロールが描く）。

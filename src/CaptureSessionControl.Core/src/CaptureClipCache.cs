@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>撮影の確定時に使う切り出し画像の事前キャッシュ（状態と判断）を単一所有する。</summary>
 /// <remarks>

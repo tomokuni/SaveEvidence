@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.Tests;
 
 /// <summary><see cref="ZoomViewAppearance"/> の仕様テスト（外観の単一所有と市松模様のタイル規則）。</summary>
 /// <remarks>

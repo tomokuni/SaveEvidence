@@ -24,8 +24,8 @@ MewUI は API が安定化中（0.x）のため、パッケージのバージョ
 ## 使い方
 
 ```csharp
-using Estable.Marquee;
-using Estable.MewUI.Marquee;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
@@ -96,8 +96,8 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた設定（コアの `Estable.Marquee.MarqueeOptions`） |
-| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | 装飾（暗転マスク・穴あけ枠・ハイライト）の設定（`Estable.Marquee.Decoration.MarqueeDecoOptions`） |
+| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた設定（コアの `EsUtil.Feature.MarqueeCore.MarqueeOptions`） |
+| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | 装飾（暗転マスク・穴あけ枠・ハイライト）の設定（`EsUtil.Feature.MarqueeCore.Decoration.MarqueeDecoOptions`） |
 | `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と同一）:
@@ -154,14 +154,14 @@ dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 ## 操作ログ
 
 `Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。  
-ログはコア（`Estable.Marquee.MarqueeLogMessage`）と組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。本プロジェクトはログ定義を持ちません。
+ログはコア（`EsUtil.Feature.MarqueeCore.MarqueeLogMessage`）と組み込みの層（`EsUtil.SaveEvidence.Marquee.CoreForControl.MarqueeWheelLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。本プロジェクトはログ定義を持ちません。
 
 | レベル | 出力内容 |
 | --- | --- |
 | Debug | MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / ZoomRequested / 設定変更 |
 | Trace | MouseDown 直前の位置 / MouseUp 直後の位置 |
 
-定義はコア（`Estable.Marquee.MarqueeLogMessage`）と組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）が持ち、本プロジェクトは定義を持ちません。
+定義はコア（`EsUtil.Feature.MarqueeCore.MarqueeLogMessage`）と組み込みの層（`EsUtil.SaveEvidence.Marquee.CoreForControl.MarqueeWheelLogMessage`）が持ち、本プロジェクトは定義を持ちません。
 
 ## 未対応
 

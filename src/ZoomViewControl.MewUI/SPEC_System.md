@@ -241,7 +241,7 @@ sequenceDiagram
 ## ログ
 
 ズーム操作の前後のズーム率（%）を Information で記録します（Avalonia 版と同一の書式・レベル）。
-**ログ定義はコア（`Estable.ZoomView` の `ZoomLogMessage`）が単一所有**し、変更前の値は実効ズーム率（Fit 中は実効倍率）を記録します（丸めは `ZoomLogFormat.Percent`）。
+**ログ定義はコア（`EsUtil.SaveEvidence.ZoomView` の `ZoomLogMessage`）が単一所有**し、変更前の値は実効ズーム率（Fit 中は実効倍率）を記録します（丸めは `ZoomLogFormat.Percent`）。
 
 | 出力元 | ログ |
 | --- | --- |

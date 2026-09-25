@@ -1,14 +1,14 @@
-using Estable.SaveEvidence.Icons;
+using EsUtil.SaveEvidence.Icons;
 using Avalonia.Headless.XUnit;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary>
 /// IconLoader（埋め込み SVG からアイコン生成）の単体テスト。
 /// </summary>
 /// <remarks>
-/// Estable.SaveEvidence.csproj の <c>AvaloniaResource</c> で埋め込まれた SVG が<br/>
+/// EsUtil.SaveEvidence.csproj の <c>AvaloniaResource</c> で埋め込まれた SVG が<br/>
 /// <c>avares://</c> で正しく読み込めることを検証する（アセンブリ名の解決を含む）。
 /// </remarks>
 [Collection("AvaloniaHeadless")]

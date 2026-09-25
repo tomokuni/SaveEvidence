@@ -1,14 +1,14 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using Estable.AvaloniaUI.Marquee;
-using Estable.AvaloniaUI.Loupe;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.FadeMaskDragRect;
+using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
+using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
 
-namespace Estable.AvaloniaUI.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 
 /// <summary><see cref="FadeMaskDragRectControl"/> の単体テスト（生成・モードから導出される状態・設定の初期適用）。</summary>
 /// <remarks>

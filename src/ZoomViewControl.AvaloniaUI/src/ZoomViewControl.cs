@@ -3,10 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.ZoomView;
 using Microsoft.Extensions.Logging;
 
-namespace Estable.AvaloniaUI.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
 
 /// <summary>ズーム・パン可能な画像表示コントロール（Avalonia 実装。自己完結型の複合コントロール）。</summary>
 /// <remarks>

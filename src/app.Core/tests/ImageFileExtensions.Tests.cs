@@ -1,7 +1,7 @@
-using Estable.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Models;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary><see cref="ImageFileExtensions"/> の単体テスト（拡張子判定の境界）。</summary>
 /// <remarks>

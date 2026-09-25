@@ -1,4 +1,4 @@
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>撮影中に画面から隠す対象（オーナーウィンドウ）を抽象化する。</summary>
 /// <remarks>

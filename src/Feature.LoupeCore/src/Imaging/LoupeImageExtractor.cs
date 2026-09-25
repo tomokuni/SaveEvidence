@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Imaging;
 using RectInt = System.Drawing.Rectangle;
 using SizeInt = System.Drawing.Size;
 
-namespace Estable.Loupe.Imaging;
+namespace EsUtil.Feature.LoupeCore.Imaging;
 
 /// <summary>ルーペの切り出し領域の幾何計算と領域切り出しを提供する。</summary>
 /// <remarks>

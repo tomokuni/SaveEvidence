@@ -1,4 +1,4 @@
-namespace Estable.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 
 /// <summary>動作モード（<see cref="FadeMaskDragRectMode"/>）から導出される状態を提供する静的クラス。</summary>
 /// <remarks>

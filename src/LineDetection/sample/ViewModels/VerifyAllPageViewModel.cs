@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Estable.LineDetection;
+using EsUtil.SaveEvidence.LineDetection;
 using System.Collections.ObjectModel;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>「データ全検証」ページの ViewModel。dataset の全画像を一括検証し、正解データ（GroundTruth）と照合する。</summary>
 /// <remarks>

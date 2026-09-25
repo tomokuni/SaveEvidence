@@ -11,7 +11,7 @@
 
 ## 公開 API
 
-名前空間 `Estable.MewUI.ZoomView` / クラス `ZoomViewControl`（`public sealed`、`SkiaCanvasView` 派生）。
+名前空間 `EsUtil.SaveEvidence.ZoomView.MewUI` / クラス `ZoomViewControl`（`public sealed`、`SkiaCanvasView` 派生）。
 
 **UI 層は入力の変換・効果の適用・描画・UI 固有のホスト結線のみを担います**（判断・値・計算はコアの `ZoomViewSession` が単一所有し、公開 API はセッションへの委譲です）。
 

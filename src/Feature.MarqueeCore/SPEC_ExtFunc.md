@@ -28,7 +28,7 @@
 
 可視性は public のみを記載します（`internal` は [SPEC_System](SPEC_System.md) の可視性ポリシーを参照）。
 
-### `Estable.Marquee`
+### `EsUtil.Feature.MarqueeCore`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -47,13 +47,13 @@
 | `MarqueeCursorKind` | enum | カーソル形状の種別（`Default` / `DiagonalNWSE` / `DiagonalNESW` / `Vertical` / `Horizontal` / `Move`） |
 | `MarqueeInteractionState` | enum | 対話状態（`NoSelection` / `StartPointNudging` / `Dragging` / `DraggingNudging` / `Selected` / `SelectedNudging`） |
 
-### `Estable.Marquee.Selection`
+### `EsUtil.Feature.MarqueeCore.Selection`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `SelectionGeometry` | static class | 純粋な幾何計算とハンドル関連の変換 |
 
-### `Estable.Marquee.Decoration`
+### `EsUtil.Feature.MarqueeCore.Decoration`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |

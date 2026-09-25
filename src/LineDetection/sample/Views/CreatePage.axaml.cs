@@ -1,10 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using EsUtil.Platform.Core;
-using Estable.AvaloniaUI.CaptureSession;
-using LineDetectionSample.ViewModels;
+using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
+using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
-namespace LineDetectionSample.Views;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
 /// <summary>「データ作成」ページのコードビハインド。Marquee キャプチャの呼び出しと結果の反映を担う。</summary>
 /// <remarks>

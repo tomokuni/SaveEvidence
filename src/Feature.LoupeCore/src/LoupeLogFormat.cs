@@ -1,7 +1,7 @@
 using System.Globalization;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペのログへ出力する値の文字列化（純粋関数）。</summary>
 /// <remarks>

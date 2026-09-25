@@ -1,6 +1,6 @@
 using SkiaSharp;
 
-namespace Estable.MewUI.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI.Tests;
 
 /// <summary>テストで共用するユーティリティ。</summary>
 internal static class TestHelper

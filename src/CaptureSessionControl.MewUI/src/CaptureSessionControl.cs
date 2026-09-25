@@ -1,14 +1,14 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using Estable.CaptureSession;
-using Estable.MewUI.CropView;
+using EsUtil.SaveEvidence.CaptureSession;
+using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 
 /// <summary>撮影と切り出しのセッションを統括する Facade（MewUI 版）。</summary>
 /// <remarks>

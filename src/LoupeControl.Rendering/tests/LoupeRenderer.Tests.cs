@@ -1,11 +1,11 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.Loupe;
+using EsUtil.Feature.LoupeCore;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.Loupe.Rendering.Tests;
+namespace EsUtil.SaveEvidence.Loupe.Rendering.Tests;
 
 /// <summary><see cref="LoupeRenderer"/> の描画テスト（描画ポートの画素を検証する）。</summary>
 /// <remarks>

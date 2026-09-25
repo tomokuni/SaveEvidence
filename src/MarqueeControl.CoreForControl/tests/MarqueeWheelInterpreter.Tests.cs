@@ -1,10 +1,11 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
-using Estable.Marquee;
+using EsUtil.Feature.MarqueeCore;
 using Microsoft.Extensions.Logging;
 using Xunit;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
-namespace Estable.Marquee.CoreForControl.Tests;
+namespace EsUtil.SaveEvidence.Marquee.CoreForControl.Tests;
 
 /// <summary>テストで使用する効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）のスパイ。</summary>
 /// <remarks>本テストはホイールの解釈と適用のみを検証するため、効果は再描画の回数を数える以外は何もしない最小実装とする。</remarks>
@@ -53,7 +54,7 @@ public class MarqueeWheelInterpreterTests
     private static (MarqueeWheelInterpreter Wheel, List<WheelZoomRequest> Zooms, List<WheelScrollRequest> Scrolls) CreateWheel(
         ILogger? logger = null)
     {
-        var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
+        var marquee = new MarqueeFacade(new StubMarqueeRenderer(), new EffectsSpy());
         if (logger is not null)
         {
             marquee.Log = logger;
@@ -224,7 +225,7 @@ public class MarqueeWheelInterpreterTests
     [Fact]
     public void Handle_購読者も連携先も無い場合は何も起きない()
     {
-        var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
+        var marquee = new MarqueeFacade(new StubMarqueeRenderer(), new EffectsSpy());
         var wheel = new MarqueeWheelInterpreter(marquee);
 
         // 例外なく完了する（通知は null 条件付き）
@@ -235,7 +236,7 @@ public class MarqueeWheelInterpreterTests
     [Fact]
     public void Handle_ロガー未設定でも安全に動作する()
     {
-        var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
+        var marquee = new MarqueeFacade(new StubMarqueeRenderer(), new EffectsSpy());
         var wheel = new MarqueeWheelInterpreter(marquee);
 
         // ロガーはコアのファサードが NullLogger へ吸収する

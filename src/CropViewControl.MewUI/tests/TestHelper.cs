@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 
-namespace Estable.MewUI.CropView.Tests;
+namespace EsUtil.SaveEvidence.CropView.MewUI.Tests;
 
 /// <summary>テストで共用するユーティリティ。</summary>
 internal static class TestHelper

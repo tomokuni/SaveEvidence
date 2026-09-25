@@ -1,4 +1,4 @@
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>色の並び替えモード。</summary>
 public enum ColorSortMode

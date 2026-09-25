@@ -6,10 +6,10 @@ using Avalonia.Input.Raw;
 using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Geometry;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.ZoomView;
 using Xunit;
 
-namespace Estable.AvaloniaUI.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI.Tests;
 
 /// <summary><see cref="ZoomableView"/>（内部ビューポート）のテスト。</summary>
 /// <remarks>

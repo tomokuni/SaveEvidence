@@ -38,7 +38,7 @@
 | --- | --- |
 | 対象 | `ZoomViewControl`（公開コントロール） |
 | プロジェクト | `src/ZoomViewControl.AvaloniaUI/src/ZoomViewControl.AvaloniaUI.csproj` |
-| 名前空間 | `Estable.AvaloniaUI.ZoomView` |
+| 名前空間 | `EsUtil.SaveEvidence.ZoomView.AvaloniaUI` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主な用途 | 画像プレビューのズームイン・アウト・Fit 表示・ズーム中心維持・パン・スクロールバー |
@@ -67,13 +67,13 @@
 ### 3.2 必要な名前空間
 
 ```csharp
-using Estable.AvaloniaUI.ZoomView;
+using EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
 ```
 
-`ZoomConfig` を使用する場合は、UI 非依存の共有ライブラリである `Estable.ZoomView` になります。
+`ZoomConfig` を使用する場合は、UI 非依存の共有ライブラリである `EsUtil.SaveEvidence.ZoomView` になります。
 
 ```csharp
-using Estable.ZoomView;   // ZoomConfig
+using EsUtil.SaveEvidence.ZoomView;   // ZoomConfig
 ```
 
 ## 4. 基本的な使用方法

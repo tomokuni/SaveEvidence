@@ -2,13 +2,13 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.Core.Geometry;
-using Estable.SaveEvidence.Enum;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
-using SaveEvidence.MewUI.Icons;
+using EsUtil.SaveEvidence.Enum;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.MewUI.Icons;
 using MewUIColor = Aprillz.MewUI.Color;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>アプリのメインウィンドウ（MewUI 版）。</summary>
 /// <remarks>

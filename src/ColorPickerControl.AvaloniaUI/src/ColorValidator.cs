@@ -1,4 +1,4 @@
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>色文字列（色名 / #RRGGBB / #AARRGGBB / +{n}% 形式）の妥当性を検証するユーティリティ。</summary>
 /// <remarks>

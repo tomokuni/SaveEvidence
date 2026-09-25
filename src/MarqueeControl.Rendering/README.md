@@ -94,7 +94,7 @@ MarqueeControl.Rendering
 
 **UI フレームワークへ依存しません**（Avalonia / MewUI の型を参照しない）。UI 固有の描画 API は `IEsCanvas` の実装（各 UI プロジェクト・プラットフォーム層）が担う。
 
-名前空間は `Estable.Marquee.Rendering`。アセンブリ名は `MarqueeControl.Rendering`。
+名前空間は `EsUtil.SaveEvidence.Marquee.Rendering`。アセンブリ名は `MarqueeControl.Rendering`。
 
 ## テスト
 

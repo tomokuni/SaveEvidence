@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureCompletion{TResult}"/> の単体テスト（単一確定と待機）。</summary>
 public class CaptureCompletionTests

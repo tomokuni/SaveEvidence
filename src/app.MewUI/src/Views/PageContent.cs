@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 
-namespace SaveEvidence.MewUI.Views;
+namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>ナビゲーションの 1 ページ分の内容と、表示されるたびに実行する処理。</summary>
 /// <param name="Content">ページの内容（<c>NavigationView</c> の内容として表示する要素）。</param>

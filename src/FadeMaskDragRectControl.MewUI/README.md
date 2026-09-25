@@ -17,8 +17,8 @@
 ## 使い方
 
 ```csharp
-using Estable.FadeMaskDragRect;
-using Estable.MewUI.FadeMaskDragRect;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 

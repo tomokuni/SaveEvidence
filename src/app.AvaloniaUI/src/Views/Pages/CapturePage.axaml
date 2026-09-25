@@ -1,9 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:Estable.SaveEvidence.ViewModels;assembly=app.Core"
-             xmlns:crop="clr-namespace:Estable.AvaloniaUI.CropView;assembly=CropViewControl.AvaloniaUI"
-             xmlns:marquee="clr-namespace:Estable.AvaloniaUI.Marquee;assembly=MarqueeControl.AvaloniaUI"
-             x:Class="Estable.SaveEvidence.Views.Pages.CapturePage"
+             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=app.Core"
+             xmlns:crop="clr-namespace:EsUtil.SaveEvidence.CropView.AvaloniaUI;assembly=CropViewControl.AvaloniaUI"
+             xmlns:marquee="clr-namespace:EsUtil.SaveEvidence.Marquee.AvaloniaUI;assembly=MarqueeControl.AvaloniaUI"
+             x:Class="EsUtil.SaveEvidence.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
         <!-- スライダのツマミ（サム）サイズを小さくする（Fluent テーマの既定 20px → 10px） -->

@@ -1,7 +1,7 @@
-using Estable.Loupe.Imaging;
+using EsUtil.Feature.LoupeCore.Imaging;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの装飾（十字線・外枠）の矩形計算ロジック（純粋関数）。</summary>
 /// <remarks>

@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>データ検証の結果 1 件分（画像 1 枚の検証結果）。</summary>
 /// <param name="Name">データ名（画像ファイル名・拡張子なし）。</param>

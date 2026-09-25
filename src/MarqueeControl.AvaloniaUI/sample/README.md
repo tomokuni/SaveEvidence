@@ -21,7 +21,7 @@
 
 `MarqueeControl/sample/` にある **MarqueeControl 動作確認用の独立したサンプルアプリケーション**です。
 
-- `MarqueeControl`（`Estable.AvaloniaUI.Marquee.MarqueeControl`）を実際に Visual Tree へ配置して動作を確認できます。
+- `MarqueeControl`（`EsUtil.SaveEvidence.Marquee.AvaloniaUI.MarqueeControl`）を実際に Visual Tree へ配置して動作を確認できます。
 - マウスドラッグによる新規選択、選択矩形の移動・リサイズ（8方向ハンドル）を確認できます。
 - 矢印キーによる nudge（ドメイン 1Pixel 移動）を確認できます。
 - ダブルクリック検出（選択内=確定 / 外=キャンセル）を確認できます。

@@ -62,7 +62,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 
 ```csharp
 using Avalonia;
-using Estable.AvaloniaUI.Marquee;
+using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize（コア提供）
 ```
@@ -74,7 +74,7 @@ using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize（コア提供）
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:marquee="clr-namespace:Estable.AvaloniaUI.Marquee;assembly=MarqueeControl.AvaloniaUI">
+        xmlns:marquee="clr-namespace:EsUtil.SaveEvidence.Marquee.AvaloniaUI;assembly=MarqueeControl.AvaloniaUI">
     <Canvas>
         <marquee:MarqueeControl x:Name="SelectionOverlay" />
     </Canvas>

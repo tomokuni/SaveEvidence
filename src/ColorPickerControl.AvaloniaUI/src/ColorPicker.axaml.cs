@@ -4,12 +4,12 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using Estable.AvaloniaUI.ColorPicker.Logging;
+using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using EsUtil.Platform.Core;
 
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>色選択コンボボックスとカラーピッカーを統合した再利用可能コントロール。</summary>
 /// <remarks>

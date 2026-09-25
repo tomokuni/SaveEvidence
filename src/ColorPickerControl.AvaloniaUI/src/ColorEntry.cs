@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace Estable.AvaloniaUI.ColorPicker;
+namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>色名と色を表す文字列の組を表すレコード。</summary>
 /// <param name="Name">色の英語名（例: "Red"）。</param>

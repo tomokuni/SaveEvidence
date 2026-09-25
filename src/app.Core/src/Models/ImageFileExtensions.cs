@@ -1,4 +1,4 @@
-namespace Estable.SaveEvidence.Models;
+namespace EsUtil.SaveEvidence.Models;
 
 /// <summary>画像ファイルの拡張子判定（フォルダビューの一覧抽出で共用する）。</summary>
 /// <remarks>

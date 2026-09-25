@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="ImageColorMath"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>標本間引きの規則と、空画像のフォールバックを固定する。</remarks>

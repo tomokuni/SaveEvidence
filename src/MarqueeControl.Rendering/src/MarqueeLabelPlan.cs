@@ -1,11 +1,13 @@
+using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
-namespace Estable.Marquee.Rendering;
+namespace EsUtil.SaveEvidence.Marquee.Rendering;
 
 /// <summary>コアの描画内容から、ラベル要素の配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>
-/// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。コア（<see cref="Marquee.ResolveLabels"/>）は<br/>
+/// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。コア（<see cref="MarqueeFacade.ResolveLabels"/>）は<br/>
 /// 文言・外観・層の順序を決めるが、実際の配置矩形はテキストの実寸に依存するため、<br/>
 /// 実寸測定（描画 API 依存）を UI から受け取って要素の矩形へ変換する。<br/>
 /// 体裁は <see cref="EsLabelLayout"/> と <see cref="EsLabelElement"/> が単一所有する。<br/>

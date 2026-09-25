@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureSessionState"/> の単体テスト（再入禁止・単一完了・後片付け）。</summary>
 public class CaptureSessionStateTests

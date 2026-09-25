@@ -1,4 +1,4 @@
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>セッションの排他スロット（同時に 1 つだけ実行できるセッションの受付）を単一所有する。</summary>
 /// <remarks>

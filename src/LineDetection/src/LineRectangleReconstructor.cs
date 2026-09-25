@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.LineDetection;
+namespace EsUtil.SaveEvidence.LineDetection;
 
 /// <summary>検出された線分（<see cref="LineDetectionResult"/>）から矩形（ウィンドウの 4 辺）を復元する純粋ロジック。</summary>
 /// <remarks>

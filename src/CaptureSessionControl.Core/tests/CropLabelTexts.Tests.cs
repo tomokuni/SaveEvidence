@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CropLabelTexts"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>切り出し固有の書式（閉区間のピクセル数とズーム率）と、未選択時の表示可否を固定する。</remarks>

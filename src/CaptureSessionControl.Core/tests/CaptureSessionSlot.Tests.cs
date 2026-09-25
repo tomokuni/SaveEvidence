@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureSessionSlot{TResult, TCrop}"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>「同時に実行できるのは 1 つだけ」という排他規則と、古いセッションの終了で保持を消さない規則を固定する。</remarks>

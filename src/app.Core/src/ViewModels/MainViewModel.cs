@@ -1,14 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Estable.LineDetection;
+using EsUtil.SaveEvidence.LineDetection;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Estable.SaveEvidence.Enum;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
+using EsUtil.SaveEvidence.Enum;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
 
-namespace Estable.SaveEvidence.ViewModels;
+namespace EsUtil.SaveEvidence.ViewModels;
 
 /// <summary>
 /// メイン画面の ViewModel。CommunityToolkit.Mvvm ソースジェネレーターにより、
@@ -130,7 +130,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <remarks>
     /// 対応プレースホルダ: <c>{MyPictures}</c> → <see cref="Environment.SpecialFolder.MyPictures"/>。<br/>
     /// 大文字小文字は区別しない（<c>{mypictures}</c> も展開する）。<br/>
-    /// テスト（Estable.SaveEvidence.Tests）から検証するため public 静的メソッドとする。
+    /// テスト（EsUtil.SaveEvidence.Tests）から検証するため public 静的メソッドとする。
     /// </remarks>
     public static string ResolveSaveFolderPath(string path)
         => string.IsNullOrEmpty(path)

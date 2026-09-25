@@ -5,32 +5,32 @@ using Rect = Avalonia.Rect;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
-using Estable.AvaloniaUI.CaptureSession;
-using Estable.AvaloniaUI.ZoomView;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
+using EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
+using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.Platform.Core;
-using Estable.SaveEvidence.Icons;
-using Estable.SaveEvidence.Logging;
-using Estable.SaveEvidence.Models;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.Icons;
+using EsUtil.SaveEvidence.Logging;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Estable.AvaloniaUI.CropView;
-using Estable.CropView;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.ZoomView;
+using EsUtil.SaveEvidence.CropView.AvaloniaUI;
+using EsUtil.SaveEvidence.CropView;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.SaveEvidence.Views.Pages;
+namespace EsUtil.SaveEvidence.Views.Pages;
 
 /// <summary>
 /// 画像プレビュー・切出し・ズーム・ルーペ機能を提供するキャプチャページ。
@@ -895,7 +895,7 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>
     /// <see cref="ZoomViewControl.ZoomChanged"/> で通知される可否、または <see cref="ZoomViewControl.CanZoomIn"/> /
     /// <see cref="ZoomViewControl.CanZoomOut"/>（初期表示時の参照）に基づいて、⊖⊕ ボタンの <c>IsEnabled</c> を更新する。<br/>
-    /// 可否はコア（<c>Estable.ZoomView</c> のズーム遷移仕様）で判定済みであり、本クラスは判定を持たない。
+    /// 可否はコア（<c>EsUtil.SaveEvidence.ZoomView</c> のズーム遷移仕様）で判定済みであり、本クラスは判定を持たない。
     /// </remarks>
     private void UpdateZoomButtonState(bool canZoomIn, bool canZoomOut)
     {

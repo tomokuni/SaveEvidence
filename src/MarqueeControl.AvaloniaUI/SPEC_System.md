@@ -30,8 +30,8 @@
     - [8.1 状態の初期化と破棄（所有権）](#81-状態の初期化と破棄所有権)
   - [9. ログ](#9-ログ)
     - [9.1 ログ定義一覧](#91-ログ定義一覧)
-      - [コア（`Estable.Marquee.MarqueeLogMessage`）](#コアestablemarqueemarqueelogmessage)
-      - [組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）](#組み込みの層establemarqueecoreforcontrolmarqueewheellogmessage)
+- [コア（`EsUtil.Feature.MarqueeCore.MarqueeLogMessage`）](#コアesutilfeaturemarqueecoremarqueelogmessage)
+- [組み込みの層（`EsUtil.SaveEvidence.Marquee.CoreForControl.MarqueeWheelLogMessage`）](#組み込みの層esutilsaveevidencemarqueecoreforcontrolmarqueewheellogmessage)
 
 ---
 
@@ -46,7 +46,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | 項目 | 内容 |
 | --- | --- |
 | **プロジェクト** | `MarqueeControl` |
-| **ルート名前空間** | `Estable.AvaloniaUI.Marquee` |
+| **ルート名前空間** | `EsUtil.SaveEvidence.Marquee.AvaloniaUI` |
 | **言語** | C# 14（.NET 10.0） |
 | **UI フレームワーク** | Avalonia UI 12.1（Control / StyledProperty / DrawingContext） |
 | **ターゲットフレームワーク** | net10.0 |
@@ -87,7 +87,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成で出力する。操作イベントは Debug、Down 直前 / Up 直後の位置・ホイールは Trace で記録する。選択の判断に伴うログ定義はコア（名前空間 `Estable.Marquee` の `MarqueeLogMessage`）が、ズーム要求のログ定義は組み込みの層（`MarqueeControl.CoreForControl` の `MarqueeWheelLogMessage`）が単一所有し、本プロジェクトはログ定義を持たない
+- ログは LoggerMessage ソース生成で出力する。操作イベントは Debug、Down 直前 / Up 直後の位置・ホイールは Trace で記録する。選択の判断に伴うログ定義はコア（名前空間 `EsUtil.Feature.MarqueeCore` の `MarqueeLogMessage`）が、ズーム要求のログ定義は組み込みの層（`MarqueeControl.CoreForControl` の `MarqueeWheelLogMessage`）が単一所有し、本プロジェクトはログ定義を持たない
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -219,7 +219,7 @@ flowchart TB
 - **責務**: 選択矩形の外側に描く装飾のうち**非文字の項目**（暗転マスク・穴あけ枠）の描画
 - **可視性**: public（UI 実装・独自コントロールの作者が参照する）
 - **特徴**: 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `OuterDecoFrame` の各項目を描画ポート `IEsCanvas` へ写すだけで、外観値・判断を持たない（どの矩形を暗転するか・枠線を描くかは装飾層が単一所有する）。**文字（サイズ・座標ラベル）は描かない**（コントロールがテキスト要素として表示する）
-- **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`Estable.Marquee.Decoration` の `OuterDecoFrame`）
+- **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`EsUtil.Feature.MarqueeCore.Decoration` の `OuterDecoFrame`）
 
 ### 6.6.1 ラベルの要素配置（文字の表示）
 
@@ -235,7 +235,7 @@ flowchart TB
 - **責務**: 穴あけ矩形（選択矩形 / ハイライト矩形）の内側に描く装飾（塗り・内枠）の描画
 - **可視性**: public（UI 実装・独自コントロールの作者が参照する）
 - **特徴**: 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `InnerDecoFrame` の各項目を描画ポート `IEsCanvas` へ写すだけで、外観値・判断を持たない（塗るか・枠線を描くかは装飾層が単一所有する）
-- **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`Estable.Marquee.Decoration` の `InnerDecoFrame`）
+- **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`EsUtil.Feature.MarqueeCore.Decoration` の `InnerDecoFrame`）
 
 ### 6.8 MarqueeFrame（コア）
 
@@ -324,7 +324,7 @@ sequenceDiagram
 
 ## 9. ログ
 
-ログ定義はコア（`Estable.Marquee.MarqueeLogMessage`、`Feature.MarqueeCore/src/MarqueeLogMessage.cs`）と、組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）が単一所有する
+ログ定義はコア（`EsUtil.Feature.MarqueeCore.MarqueeLogMessage`、`Feature.MarqueeCore/src/MarqueeLogMessage.cs`）と、組み込みの層（`EsUtil.SaveEvidence.Marquee.CoreForControl.MarqueeWheelLogMessage`）が単一所有する
 （入力の判断に伴うログは UI から出せず、後から出すと行の順序が変わるため）。UI 層に固有のログ定義は持たない
 （通常ホイールのスクロールログは、スクロールの実行を連携 `ScrollViewer` または `ScrollRequested` 通知へ委ねる形になり、
 本コントロール内に記録すべき判断が無くなったため削除した）。
@@ -333,7 +333,7 @@ sequenceDiagram
 
 ### 9.1 ログ定義一覧
 
-#### コア（`Estable.Marquee.MarqueeLogMessage`）
+#### コア（`EsUtil.Feature.MarqueeCore.MarqueeLogMessage`）
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
@@ -348,7 +348,7 @@ sequenceDiagram
 | `Trace` | `MarqueeLogMessage.LogPositionAfterUp` | Up 直後のマウス位置 |
 | `Debug` | `MarqueeLogMessage.LogSettingChanged` | 設定値変更（変更前後） |
 
-#### 組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）
+#### 組み込みの層（`EsUtil.SaveEvidence.Marquee.CoreForControl.MarqueeWheelLogMessage`）
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |

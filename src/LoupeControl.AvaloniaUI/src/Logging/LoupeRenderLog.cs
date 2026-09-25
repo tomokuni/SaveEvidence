@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Estable.AvaloniaUI.Loupe.Logging;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI.Logging;
 
 /// <summary>ルーペの描画パイプライン（中間ビットマップの生成と世代管理）に固有のログ定義。</summary>
 /// <remarks>

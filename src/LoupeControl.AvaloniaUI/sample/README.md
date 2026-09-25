@@ -17,7 +17,7 @@
 
 `LoupeControl.AvaloniaUI/sample/` にある **LoupeControl 動作確認用の独立したサンプルアプリケーション**です。
 
-- `LoupeControl`（`Estable.AvaloniaUI.Loupe.LoupeControl`）を実際に配置して動作を確認できます。
+- `LoupeControl`（`EsUtil.SaveEvidence.Loupe.AvaloniaUI.LoupeControl`）を実際に配置して動作を確認できます。
 - テスト画像（グラデーション＋グリッド＋マーカー）を生成し、マウス追従で拡大表示します。
 - 外観設定（拡大率・サイズ・十字線・市松模様・外枠・描画スケール）をスライダー/コンボボックスで変更できます。
 - `LoupeControl` をVisual Treeへ配置し、内部の `Image` 要素で表示します。

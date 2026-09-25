@@ -1,11 +1,11 @@
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Estable.Loupe;
+using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Native.Imaging;
 
-namespace Estable.AvaloniaUI.Loupe;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 
 /// <summary>ルーペのソース画像（<see cref="Bitmap"/> / <see cref="EsBitmapAvaloniaImage"/>）から切り出し元の解決ロジック（純粋関数）。</summary>
 /// <remarks>

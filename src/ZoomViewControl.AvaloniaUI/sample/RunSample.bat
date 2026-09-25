@@ -6,14 +6,14 @@ rem ====================================================================
 rem  ZoomViewControl サンプルアプリケーション（ビルド＆起動）
 rem
 rem  リリースビルド（dotnet build -c Release）を行い、成功したら
-rem  サンプルアプリケーション（ZoomViewControl.Sample.exe）を起動する。
+rem  サンプルアプリケーション（EsUtil.SaveEvidence.ZoomView.Sample.exe）を起動する。
 rem
 rem  使い方:
 rem     RunSample.bat
 rem ====================================================================
 
 set "PROJECT=%~dp0ZoomViewControl.AvaloniaUI.Sample.csproj"
-set "EXE=%~dp0bin\Release\net10.0\ZoomViewControl.Sample.exe"
+set "EXE=%~dp0bin\Release\net10.0\EsUtil.SaveEvidence.ZoomView.Sample.exe"
 
 echo [1/2] リリースビルドを開始します...
 dotnet build "%PROJECT%" -c Release --nologo

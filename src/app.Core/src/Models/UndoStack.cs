@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.SaveEvidence.Models;
+namespace EsUtil.SaveEvidence.Models;
 
 /// <summary>
 /// 画像の Undo / Redo スタックを管理する。

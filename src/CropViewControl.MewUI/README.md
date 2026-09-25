@@ -32,8 +32,8 @@
 ## 使い方
 
 ```csharp
-using Estable.CropView;
-using Estable.MewUI.CropView;
+using EsUtil.SaveEvidence.CropView;
+using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.Platform.Core.Geometry;
 
 var cropView = new CropViewControl

@@ -1,8 +1,8 @@
 using EsUtil.Platform.Core;
-using Estable.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Models;
 using Xunit;
 
-namespace Estable.SaveEvidence.Tests;
+namespace EsUtil.SaveEvidence.Tests;
 
 /// <summary><see cref="HotKeyParser"/> の単体テスト（ホットキー文字列の解析・UI 非依存・並列実行）。</summary>
 /// <remarks>

@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Estable.SaveEvidence.ViewModels;
+namespace EsUtil.SaveEvidence.ViewModels;
 
 /// <summary>
 /// Undo 一覧ページのステータスバー表示のための ViewModel。

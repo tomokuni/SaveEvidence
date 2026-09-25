@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using Aprillz.MewUI;
-using Estable.SaveEvidence.Models;
+using EsUtil.SaveEvidence.Models;
 using SkiaSharp;
 
-namespace SaveEvidence.MewUI.Icons;
+namespace EsUtil.SaveEvidence.MewUI.Icons;
 
 /// <summary>Icons フォルダの Fluent アイコン（SVG）からパス形状と画像を生成するヘルパー（MewUI 版）。</summary>
 /// <remarks>
@@ -24,7 +24,7 @@ internal static partial class IconLoader
     private const int CacheCapacity = 48;
 
     /// <summary>埋め込みリソースの論理名プレフィックス。</summary>
-    private const string ResourcePrefix = "SaveEvidence.MewUI.Icons.";
+    private const string ResourcePrefix = "EsUtil.SaveEvidence.MewUI.Icons.";
 
     /// <summary>生成済み画像のキャッシュ（ファイル名・サイズ・色で一意）。</summary>
     private static readonly ConcurrentDictionary<(string File, int Size, uint Argb), ImageSource> s_cache = new();

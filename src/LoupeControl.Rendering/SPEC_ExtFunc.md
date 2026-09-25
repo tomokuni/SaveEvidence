@@ -18,11 +18,11 @@
 
 ## 2. 公開 API 一覧
 
-### `Estable.Loupe.Rendering`
+### `EsUtil.SaveEvidence.Loupe.Rendering`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeRenderer` | sealed class | 描画手順の単一所有者（`ILoupeRenderer`（`Estable.Loupe`）の**既定実装**）。`Default` で唯一のインスタンスを共有する |
+| `LoupeRenderer` | sealed class | 描画手順の単一所有者（`ILoupeRenderer`（`EsUtil.Feature.LoupeCore`）の**既定実装**）。`Default` で唯一のインスタンスを共有する |
 | `LoupeLabelPlan` | static class | ラベル要素の配置指示の解決 |
 
 ### `LoupeRenderer` のメンバー（`ILoupeRenderer` の実装）

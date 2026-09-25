@@ -25,7 +25,7 @@
 | --- | --- |
 | 対象 | `MarqueeControl` |
 | プロジェクト | `MarqueeControl/MarqueeControl.csproj` |
-| 名前空間 | `Estable.AvaloniaUI.Marquee` |
+| 名前空間 | `EsUtil.SaveEvidence.Marquee.AvaloniaUI` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要基底クラス | `Avalonia.Controls.Control` |
@@ -58,7 +58,7 @@
 
 ```csharp
 using Avalonia;
-using Estable.AvaloniaUI.Marquee;
+using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 ```
 
 座標ポート（`ICoordTransform`）を使用する場合は、`Platform.Core` の名前空間も必要です。
@@ -74,7 +74,7 @@ using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize
 
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
-        xmlns:marquee="clr-namespace:Estable.AvaloniaUI.Marquee;assembly=MarqueeControl.AvaloniaUI">
+        xmlns:marquee="clr-namespace:EsUtil.SaveEvidence.Marquee.AvaloniaUI;assembly=MarqueeControl.AvaloniaUI">
     <Canvas>
         <marquee:MarqueeControl x:Name="SelectionOverlay" />
     </Canvas>
@@ -134,7 +134,7 @@ marquee.CancelRequested += (_, _) => CancelSelection();
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます（引数の `Content` に装飾・穴あけ矩形・ハンドル・マーカー・サイズラベル・座標ラベル・層の順序が含まれます）。
 
 ```csharp
-using Estable.AvaloniaUI.Marquee;
+using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
 // 文字は UI 層が配置したテキスト要素が表示する（図形のみコントロールが描く）
 marquee.Rendered += (_, e) =>
@@ -182,7 +182,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 #### 5.1.1 設定（`Options`）
 
-外観・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `Estable.Marquee.MarqueeOptions`）にまとめて公開し、`Options` プロパティ 1 つで設定します。
+外観・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `EsUtil.Feature.MarqueeCore.MarqueeOptions`）にまとめて公開し、`Options` プロパティ 1 つで設定します。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -270,14 +270,14 @@ marquee.Renderer = MyMarqueeRenderer.Instance;   // 描画手順の差し替え
 ### 5.4 型
 
 公開型は `MarqueeControl` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` とイベント引数（`SelectionRectEventArgs` / `MarqueePointEventArgs`）です。
-`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.MarqueeCore`、名前空間 `Estable.Marquee`）が単一所有し、各 UI 実装で共有します。
+`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.MarqueeCore`、名前空間 `EsUtil.Feature.MarqueeCore`）が単一所有し、各 UI 実装で共有します。
 コア（`Feature.MarqueeCore`）の公開型は 2 層です（内部契約（状態機械・描画入力の組み立て・幾何）は internal）。
 
 - **ホスト設定**: `MarqueeOptions` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest`
 - **公開ファサード（操作の唯一の窓口）**: `Marquee`（操作・設定・効果の適用・描画内容の解決）/ `IMarqueeEffects`（効果の適用先）/ `MarqueeEffectsBase`（効果の既定実装。必要な効果だけを override できる）
 - **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` / `MarqueeSizeLabel` / `SelectionGeometry`
 
-**装飾（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は Core 内のサブ概念**（`src/Decoration/`・名前空間 `Estable.Marquee.Decoration`）が単一所有します（/ `MarqueeDecoOptions` / `MarqueeDrawContent` / `OuterDecoFrame` / `InnerDecoFrame` / `MarqueeSizeLabel` / `MarqueeCoordLabel`）。本コントロールは `DecoOptions` で設定し、`Rendered` で装飾の描画内容を渡します。**描画するラベルの一覧と描画順はコア（`MarqueeDrawLayer`）が、実寸 → 配置矩形の写像は描画層**（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が単一所有し、実寸測定だけを UI 層が与えます。
+**装飾（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は Core 内のサブ概念**（`src/Decoration/`・名前空間 `EsUtil.Feature.MarqueeCore.Decoration`）が単一所有します（/ `MarqueeDecoOptions` / `MarqueeDrawContent` / `OuterDecoFrame` / `InnerDecoFrame` / `MarqueeSizeLabel` / `MarqueeCoordLabel`）。本コントロールは `DecoOptions` で設定し、`Rendered` で装飾の描画内容を渡します。**描画するラベルの一覧と描画順はコア（`MarqueeDrawLayer`）が、実寸 → 配置矩形の写像は描画層**（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が単一所有し、実寸測定だけを UI 層が与えます。
 
 効果（`MarqueeFeedback` / `MarqueeCursorAction`）とログ定義（`MarqueeLogMessage`）はコアの内部契約（internal）であり、本プロジェクトは参照しません（適用はファサード、記録は状態機械が行います）。
 

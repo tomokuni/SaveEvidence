@@ -1,11 +1,11 @@
-using Estable.Marquee.Selection;
+using EsUtil.Feature.MarqueeCore.Selection;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>Marquee の対話（選択・ドラッグ・nudge）の状態を管理し、入力を通知されて状態を更新する状態管理クラス（Mediator パターン: 入力と状態の仲介）。</summary>
 /// <remarks>

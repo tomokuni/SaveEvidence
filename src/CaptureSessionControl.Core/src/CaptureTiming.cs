@@ -1,4 +1,4 @@
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>撮影セッションが使う時間・座標の方針値を単一所有する。</summary>
 /// <remarks>

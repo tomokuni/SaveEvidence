@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Estable.ZoomView.Tests;
+namespace EsUtil.SaveEvidence.ZoomView.Tests;
 
 /// <summary><see cref="ZoomLogMessage"/> / <see cref="ZoomLogFormat"/> のテスト（書式・レベル・丸め）。</summary>
 /// <remarks>

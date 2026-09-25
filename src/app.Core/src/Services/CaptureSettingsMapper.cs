@@ -1,7 +1,7 @@
-using Estable.SaveEvidence.Models;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.Models;
+using EsUtil.SaveEvidence.CaptureSession;
 
-namespace Estable.SaveEvidence.Services;
+namespace EsUtil.SaveEvidence.Services;
 
 /// <summary>Settings → CaptureSettings の変換を提供する。</summary>
 /// <remarks>

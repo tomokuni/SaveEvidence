@@ -44,7 +44,7 @@
 | --- | --- |
 | 対象 | `ColorPickerControl` |
 | プロジェクト | `ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj` |
-| 名前空間 | `Estable.AvaloniaUI.ColorPicker` |
+| 名前空間 | `EsUtil.SaveEvidence.ColorPicker.AvaloniaUI` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要基底クラス | `Avalonia.Controls.UserControl` |
@@ -73,7 +73,7 @@
 ### 3.2 必要な名前空間
 
 ```csharp
-using Estable.AvaloniaUI.ColorPicker;
+using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 ```
 
 ### 3.3 Visual Treeへの配置
@@ -82,7 +82,7 @@ using Estable.AvaloniaUI.ColorPicker;
 
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
-        xmlns:cp="clr-namespace:Estable.AvaloniaUI.ColorPicker;assembly=ColorPickerControl.AvaloniaUI">
+        xmlns:cp="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;assembly=ColorPickerControl.AvaloniaUI">
     <StackPanel>
         <cp:ColorPickerControl x:Name="BorderColorPicker"
                                SelectedColor="{Binding BorderColor, Mode=TwoWay}"

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
-    <RootNamespace>Estable.AvaloniaUI.CaptureSession</RootNamespace>
+    <RootNamespace>EsUtil.SaveEvidence.CaptureSession.AvaloniaUI</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

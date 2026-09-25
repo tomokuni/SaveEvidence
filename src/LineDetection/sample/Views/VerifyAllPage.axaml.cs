@@ -1,7 +1,7 @@
 using Avalonia.Controls;
-using LineDetectionSample.ViewModels;
+using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
-namespace LineDetectionSample.Views;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
 /// <summary>「データ全検証」ページのコードビハインド。ページ表示時に全画像の検証を自動実行する。</summary>
 /// <remarks>

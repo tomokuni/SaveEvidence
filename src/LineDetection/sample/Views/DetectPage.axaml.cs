@@ -1,10 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
-using LineDetectionSample.Imaging;
-using LineDetectionSample.ViewModels;
+using EsUtil.SaveEvidence.LineDetection.Sample.Imaging;
+using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
-namespace LineDetectionSample.Views;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
 /// <summary>「線分検出」ページのコードビハインド。検出結果リストのホバー・クリックと、クリップボード貼り付けを担う。</summary>
 /// <remarks>

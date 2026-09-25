@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Estable.SaveEvidence</RootNamespace>
-    <StartupObject>Estable.SaveEvidence.Program</StartupObject>
+    <RootNamespace>EsUtil.SaveEvidence</RootNamespace>
+    <StartupObject>EsUtil.SaveEvidence.Program</StartupObject>
     <AnalysisLevel>latest</AnalysisLevel>
     <NoWarn>$(NoWarn);CA2101;SYSLIB1051;SYSLIB1054;MVVMTK0042;AVLN3001</NoWarn>
     <AssemblyName>SaveEvidence</AssemblyName>

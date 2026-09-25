@@ -1,7 +1,7 @@
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.FadeMaskDragRect;
-using Estable.MewUI.Marquee;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Aprillz.MewUI;
@@ -11,7 +11,7 @@ using System.Reflection;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.MewUI.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI.Tests;
 
 /// <summary><see cref="FadeMaskDragRectControl"/>（MewUI 版の複合コントロール）の単体テスト。</summary>
 /// <remarks>

@@ -64,7 +64,7 @@
 ### 3.2 必要な名前空間
 
 ```csharp
-using Estable.AvaloniaUI.FadeMaskDragRect;
+using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize / EsVector（コア提供）
 ```
@@ -152,7 +152,7 @@ parentPanel.Children.Add(overlay);
 | 名前 | 種類 | 説明 |
 | --- | --- | --- |
 | `FadeMaskDragRectMode` | enum | 動作モード（`Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect`） |
-| `FadeMaskDragRectOptions` | record（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）。`Estable.FadeMaskDragRect` |
+| `FadeMaskDragRectOptions` | record（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）。`EsUtil.SaveEvidence.FadeMaskDragRect` |
 | `FadeMaskDragRectSelectionEventArgs` | record | 確定要求イベントの引数（`SelectionRect: Rect`（ドメイン座標）） |
 | `FadeMaskDragRectPointEventArgs` | record | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
 
@@ -162,7 +162,7 @@ parentPanel.Children.Add(overlay);
 
 #### 5.4.1 FadeMaskDragRectMode
 
-UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `Estable.FadeMaskDragRect`）が単一所有する。
+UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `EsUtil.SaveEvidence.FadeMaskDragRect`）が単一所有する。
 モードから描画設定への写像もコア（`FadeMaskDragRectModes`）が持ち、Avalonia / MewUI で共有する。
 
 | 値 | 説明 |

@@ -92,4 +92,4 @@ sequenceDiagram
 | `DrawRectToLoupe` / `DrawRectEdge` / `StampPixel`（`CropViewControl` の private static） | `OverlayRectRasterizer` へ統合（`Point` → `EsPoint`、`Avalonia.Media.Color` → `System.Drawing.Color`） |
 | 破線パターン（ベクター側 `CreateRectElement` とラスタ側 `DrawRectEdge` に二重定義） | `OverlayLineDash` へ一元化し、両経路が参照する |
 
-`OverlayRect` は `CropViewControl.Rects` の型として公開されており、利用箇所は UI 実装とそのテストに加え、ホスト（`app.AvaloniaUI` / `app.MewUI`）が検出矩形の枠線を描く用途でも使用します。このため名前空間は UI 非依存の `Estable.CropView` へ統一しました。
+`OverlayRect` は `CropViewControl.Rects` の型として公開されており、利用箇所は UI 実装とそのテストに加え、ホスト（`app.AvaloniaUI` / `app.MewUI`）が検出矩形の枠線を描く用途でも使用します。このため名前空間は UI 非依存の `EsUtil.SaveEvidence.CropView` へ統一しました。

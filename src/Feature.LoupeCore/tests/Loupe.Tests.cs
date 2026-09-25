@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace Estable.Loupe.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary><see cref="Loupe"/>（公開ファサード）の単体テスト（表示レイアウト・描画入力・通知内容・設定）。</summary>
 /// <remarks>

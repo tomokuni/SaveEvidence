@@ -1,4 +1,4 @@
-namespace Estable.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 
 /// <summary>動作モードから導出される内包コントロールの状態（選択矩形・ルーペを使うかどうか）。</summary>
 /// <param name="UsesSelection">選択矩形・ルーペ・選択矩形の破線を使用するモードかどうか（Crop / AreaSelect）。</param>

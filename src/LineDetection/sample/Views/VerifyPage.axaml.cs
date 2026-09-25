@@ -1,8 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input;
-using LineDetectionSample.ViewModels;
+using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
-namespace LineDetectionSample.Views;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
 /// <summary>「データ検証」ページのコードビハインド。検出結果リストのホバー・クリックを担う。</summary>
 /// <remarks>

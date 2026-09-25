@@ -1,7 +1,7 @@
-using Estable.Loupe.Imaging;
+using EsUtil.Feature.LoupeCore.Imaging;
 using EsUtil.Platform.Core.Geometry;
 
-namespace Estable.Loupe;
+namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの描画完了時の表示情報計算ロジック（純粋関数）。</summary>
 /// <remarks>

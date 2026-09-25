@@ -1,6 +1,6 @@
-using Estable.LineDetection;
+using EsUtil.SaveEvidence.LineDetection;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>検出方式の選択肢（表示名 + 検出器インスタンス）。</summary>
 public sealed class LineDetectorOption

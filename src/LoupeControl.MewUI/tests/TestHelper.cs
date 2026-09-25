@@ -4,7 +4,7 @@ using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 
-namespace Estable.MewUI.Loupe.Tests;
+namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
 
 /// <summary>テストで共用するユーティリティ。</summary>
 internal static class TestHelper

@@ -5,12 +5,12 @@ using CommunityToolkit.Mvvm.Input;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Native;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using LineDetectionSample.Models;
+using EsUtil.SaveEvidence.LineDetection.Sample.Models;
 using System.Collections.ObjectModel;
 using System.Text.Json;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 
-namespace LineDetectionSample.ViewModels;
+namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>
 /// 「データ作成」ページの ViewModel。評価用データ作成（Marquee キャプチャ → 正解ウィンドウ選択 → 保存）を統括する。

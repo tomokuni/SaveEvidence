@@ -1,4 +1,4 @@
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>撮影・切り出しセッションの状態（実行中かどうか・完了済みかどうか）を管理する。</summary>
 /// <remarks>

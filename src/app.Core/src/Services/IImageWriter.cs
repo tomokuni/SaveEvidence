@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Imaging;
 
-namespace Estable.SaveEvidence.Services;
+namespace EsUtil.SaveEvidence.Services;
 
 /// <summary>画像（EsBitmap）をファイルへ書き込むサービスインターフェース。</summary>
 /// <remarks>

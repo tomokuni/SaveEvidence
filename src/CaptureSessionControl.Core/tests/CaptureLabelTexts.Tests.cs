@@ -1,9 +1,9 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
-using Estable.FadeMaskDragRect;
+using EsUtil.SaveEvidence.FadeMaskDragRect;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureLabelTexts"/> の単体テスト（モード写像・操作ラベル・情報ラベル）。</summary>
 /// <remarks>

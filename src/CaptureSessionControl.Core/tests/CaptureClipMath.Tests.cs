@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace Estable.CaptureSession.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="CaptureClipMath"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>画面物理座標 → 画像ローカル座標の変換と、切り出しのフォールバック規則を固定する。</remarks>

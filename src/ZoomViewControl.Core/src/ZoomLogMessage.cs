@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Estable.ZoomView;
+namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>ズーム操作のログ定義（LoggerMessage ソース生成・拡張メソッド）。</summary>
 /// <remarks>

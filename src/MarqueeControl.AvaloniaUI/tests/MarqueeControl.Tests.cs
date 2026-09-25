@@ -1,9 +1,9 @@
 using BindingFlags = System.Reflection.BindingFlags;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.Marquee.CoreForControl;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.Marquee.CoreForControl;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -18,7 +18,7 @@ using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Xunit;
 
-namespace Estable.AvaloniaUI.Marquee.Tests;
+namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI.Tests;
 
 /// <summary><see cref="MarqueeControl"/> の単体テスト（公開 API 経由の選択・ドラッグ・nudge・イベント検証）。</summary>
 /// <remarks>

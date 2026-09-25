@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using ColorPickerControl.Sample.ViewModels;
-using ColorPickerControl.Sample.Views;
+using EsUtil.SaveEvidence.ColorPicker.Sample.ViewModels;
+using EsUtil.SaveEvidence.ColorPicker.Sample.Views;
 
-namespace ColorPickerControl.Sample;
+namespace EsUtil.SaveEvidence.ColorPicker.Sample;
 
 /// <summary>サンプルアプリケーションの Application 定義。</summary>
 /// <remarks>

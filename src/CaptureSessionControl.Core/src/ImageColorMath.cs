@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace Estable.CaptureSession;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>画像の色を要約する純粋関数（平均色の算出）。</summary>
 /// <remarks>

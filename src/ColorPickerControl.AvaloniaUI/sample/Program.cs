@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace ColorPickerControl.Sample;
+namespace EsUtil.SaveEvidence.ColorPicker.Sample;
 
 /// <summary>ColorPickerControl サンプルアプリケーションのエントリポイント。</summary>
 internal static class Program

@@ -1,6 +1,6 @@
 # CropViewControl.Core 外部機能仕様書
 
-`CropViewControl.Core` は UI フレームワーク非依存の矩形オーバーレイ定義とラスタライズを提供します。名前空間はすべて `Estable.CropView` です。
+`CropViewControl.Core` は UI フレームワーク非依存の矩形オーバーレイ定義とラスタライズを提供します。名前空間はすべて `EsUtil.SaveEvidence.CropView` です。
 
 ## 公開 API の可視性
 

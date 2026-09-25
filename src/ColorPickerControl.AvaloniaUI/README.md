@@ -56,7 +56,7 @@ Avalonia UI 用の色選択コントロールです。色名/16進コード入�
 必要な名前空間:
 
 ```csharp
-using Estable.AvaloniaUI.ColorPicker;
+using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 ```
 
 ## 5. クイックスタート
@@ -66,7 +66,7 @@ using Estable.AvaloniaUI.ColorPicker;
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:cp="clr-namespace:Estable.AvaloniaUI.ColorPicker;assembly=ColorPickerControl.AvaloniaUI">
+        xmlns:cp="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;assembly=ColorPickerControl.AvaloniaUI">
     <cp:ColorPickerControl SelectedColor="{Binding BorderColor, Mode=TwoWay}"
                            ColorSortMode="ByHue"
                            HighlightBorderOnError="True"
@@ -77,7 +77,7 @@ using Estable.AvaloniaUI.ColorPicker;
 ### Code-behind
 
 ```csharp
-using Estable.AvaloniaUI.ColorPicker;
+using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 var colorPicker = new ColorPickerControl
 {

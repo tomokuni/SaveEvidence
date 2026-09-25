@@ -19,11 +19,11 @@
 
 ## 2. 公開 API 一覧
 
-### `Estable.Marquee.Rendering`
+### `EsUtil.SaveEvidence.Marquee.Rendering`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `MarqueeRenderer` | sealed class | 描画手順の単一所有者（`IMarqueeRenderer`（`Estable.Marquee`）の**既定実装**）。`Default` で唯一のインスタンスを共有する |
+| `MarqueeRenderer` | sealed class | 描画手順の単一所有者（`IMarqueeRenderer`（`EsUtil.Feature.MarqueeCore`）の**既定実装**）。`Default` で唯一のインスタンスを共有する |
 | `MarqueeOuterRenderer` | static class | 選択矩形の外側の装飾の描画 |
 | `MarqueeInnerRenderer` | static class | 穴あけ矩形の内側の装飾の描画 |
 | `MarqueeLabelPlan` | static class | ラベル要素の配置指示の解決 |

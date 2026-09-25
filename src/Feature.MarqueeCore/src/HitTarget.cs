@@ -1,4 +1,4 @@
-namespace Estable.Marquee;
+namespace EsUtil.Feature.MarqueeCore;
 
 /// <summary>ドラッグハンドルの種別。</summary>
 /// <remarks>

@@ -1,9 +1,9 @@
 using DrawingColor = System.Drawing.Color;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
-using Estable.Loupe;
+using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.LoupeCore;
 
-namespace Estable.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 
 /// <summary>領域選択の複合コントロール（選択矩形 + 暗転マスク + ルーペ）の設定を 1 つにまとめた不変の値。</summary>
 /// <remarks>

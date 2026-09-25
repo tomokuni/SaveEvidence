@@ -1,15 +1,15 @@
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using Estable.AvaloniaUI.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Native.Imaging;
-using Estable.SaveEvidence.Enum;
-using Estable.SaveEvidence.Icons;
-using Estable.SaveEvidence.Logging;
-using Estable.SaveEvidence.Services;
-using Estable.SaveEvidence.ViewModels;
+using EsUtil.SaveEvidence.Enum;
+using EsUtil.SaveEvidence.Icons;
+using EsUtil.SaveEvidence.Logging;
+using EsUtil.SaveEvidence.Services;
+using EsUtil.SaveEvidence.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -19,9 +19,9 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
-using Estable.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession;
 
-namespace Estable.SaveEvidence.Views;
+namespace EsUtil.SaveEvidence.Views;
 
 /// <summary>
 /// SaveEvidence アプリケーションのメインウィンドウ。
