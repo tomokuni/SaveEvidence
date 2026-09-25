@@ -12,10 +12,10 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）および将来の M
 | --- | --- | --- |
 | `Enum.AppPage` | `public` | ナビゲーションページの識別子 |
 | `Enum.ThemeMode` | `public` | テーマモード（`Description` 属性で表示名を保持） |
-| `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。ウィンドウ位置は `EsPixelRect`、状態は `EsWindowState` で保持 |
+| `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。ウィンドウ位置は `EsRectInt`、状態は `EsWindowState` で保持 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
 | `Services.IImageWriter` | `public` | 画像（`EsBitmap`）のファイル書き込みの抽象。具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードする |
-| `Services.EsPixelRectJsonConverter` | `internal` | `EsPixelRect` の JSON コンバーター（`X` / `Y` / `Width` / `Height` のみを読み書き） |
+| `Services.EsRectIntJsonConverter` | `internal` | `EsRectInt` の JSON コンバーター（`X` / `Y` / `Width` / `Height` のみを読み書き） |
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
 | `Models.UndoStack` | `public` | 画像の Undo / Redo スタック（`EsBitmap` のクローンを保持。最大 5 段） |
 | `Models.HotKeyParser` | `public` | ホットキー文字列（"Ctrl + Shift + Q" 等）の解析 |
@@ -34,7 +34,7 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）および将来の M
 
 ## 設定ファイルの互換性
 
-`EsPixelRect` は専用の JSON コンバーター（`EsPixelRectJsonConverter`）が `X` / `Y` / `Width` / `Height` のみを読み書きし、`EsWindowState` は enum の名前で書き出すため、**移設前（`Avalonia.PixelRect` / `Avalonia.Controls.WindowState`）と同一の JSON 形式**になります。既存の `settings.json` はそのまま読み込めます。
+`EsRectInt` は専用の JSON コンバーター（`EsRectIntJsonConverter`）が `X` / `Y` / `Width` / `Height` のみを読み書きし、`EsWindowState` は enum の名前で書き出すため、**移設前（`Avalonia.PixelRect` / `Avalonia.Controls.WindowState`）と同一の JSON 形式**になります。既存の `settings.json` はそのまま読み込めます。
 
 ### トリミング / Native AOT 対応
 

@@ -16,7 +16,7 @@ public static class MonitorScalingMath
     /// <summary>モニター矩形とその表示倍率の組。</summary>
     /// <param name="Bounds">モニターの矩形（画面物理ピクセル）。</param>
     /// <param name="Scale">モニターの表示倍率（1.0 = 100%）。</param>
-    public readonly record struct MonitorInfo(EsPixelRect Bounds, double Scale);
+    public readonly record struct MonitorInfo(EsRectInt Bounds, double Scale);
 
     /// <summary>画面のスケーリング一覧から正規化済みのスケーリングを解決する。</summary>
     /// <param name="scalings">画面のスケーリング一覧（UI の画面情報の順序を保つ）。</param>
@@ -43,10 +43,10 @@ public static class MonitorScalingMath
     /// 「未確定は除外する」という規則を単一所有する（UI ごとに <c>IsValidScaling</c> で絞るかどうかが食い違っていた）。<br/>
     /// セッション中はモニター構成が変わらないため、呼び出し側は 1 回だけ呼んで結果を再利用する。
     /// </remarks>
-    public static IReadOnlyList<(EsPixelRect Bounds, double Scale)> Collect(
-        IEnumerable<(EsPixelRect Bounds, double Scale)> monitors)
+    public static IReadOnlyList<(EsRectInt Bounds, double Scale)> Collect(
+        IEnumerable<(EsRectInt Bounds, double Scale)> monitors)
     {
-        var collected = new List<(EsPixelRect Bounds, double Scale)>();
+        var collected = new List<(EsRectInt Bounds, double Scale)>();
         foreach (var monitor in monitors)
         {
             if (DpiScaler.IsValidScaling(monitor.Scale))
@@ -69,7 +69,7 @@ public static class MonitorScalingMath
     /// 中心がどのモニターにも含まれない場合（モニター構成が変わった等）は <paramref name="fallback"/> を返す。
     /// </remarks>
     public static double ResolveForRect(
-        EsPixelRect target, IReadOnlyList<(EsPixelRect Bounds, double Scale)> monitors, double fallback)
+        EsRectInt target, IReadOnlyList<(EsRectInt Bounds, double Scale)> monitors, double fallback)
     {
         if (monitors.Count == 0)
         {
@@ -101,10 +101,10 @@ public static class MonitorScalingMath
     /// （各 UI が原点の加算と丸めを書くと、UI ごとに判定点が 1 ピクセルずれる）。
     /// </remarks>
     public static double ResolveForDomainRect(
-        EsRect domainRect, EsPixelPoint origin,
-        IReadOnlyList<(EsPixelRect Bounds, double Scale)> monitors, double fallback)
+        EsRect domainRect, EsPointInt origin,
+        IReadOnlyList<(EsRectInt Bounds, double Scale)> monitors, double fallback)
         => ResolveForRect(
-            new EsPixelRect(
+            new EsRectInt(
                 (int)Math.Round(domainRect.X, MidpointRounding.AwayFromZero) + origin.X,
                 (int)Math.Round(domainRect.Y, MidpointRounding.AwayFromZero) + origin.Y,
                 (int)Math.Round(domainRect.Width, MidpointRounding.AwayFromZero),

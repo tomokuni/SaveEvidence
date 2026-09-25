@@ -2,12 +2,12 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Native.Imaging;
 using SkiaSharp;
 using Color = System.Drawing.Color;
 using AvaloniaColor = Avalonia.Media.Color;
-using PointInt = System.Drawing.Point;
 
 namespace EsUtil.Platform.AvaloniaUI.Imaging;
 
@@ -193,7 +193,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <returns>取得した Avalonia Color。範囲外は IndexOutOfRangeException。</returns>
     public static AvaloniaColor GetPixel(this EsBitmap bitmap, PixelPoint point)
     {
-        var color = bitmap.GetPixel(new PointInt(point.X, point.Y));
+        var color = bitmap.GetPixel(new EsPointInt(point.X, point.Y));
         return AvaloniaColor.FromArgb(color.A, color.R, color.G, color.B);
     }
 
@@ -202,7 +202,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <param name="point">座標（ピクセル）。</param>
     /// <param name="color">設定する Avalonia Color。アルファ乗算して書き込む。</param>
     public static void SetPixel(this EsBitmap bitmap, PixelPoint point, AvaloniaColor color)
-        => bitmap.SetPixel(new PointInt(point.X, point.Y), Color.FromArgb(color.A, color.R, color.G, color.B));
+        => bitmap.SetPixel(new EsPointInt(point.X, point.Y), Color.FromArgb(color.A, color.R, color.G, color.B));
 
     /// <summary>指定座標（ピクセル）へ Avalonia Color を書き込む（範囲外は無視）。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>

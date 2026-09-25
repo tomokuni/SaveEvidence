@@ -13,9 +13,9 @@ public class CaptureVirtualScreenBoundsTests
     [Fact]
     public void ResolveBounds_単一モニタは自身の矩形を返す()
     {
-        var result = CaptureVirtualScreen.ResolveBounds([new EsPixelRect(0, 0, 1920, 1080)]);
+        var result = CaptureVirtualScreen.ResolveBounds([new EsRectInt(0, 0, 1920, 1080)]);
 
-        Assert.Equal(new EsPixelRect(0, 0, 1920, 1080), result);
+        Assert.Equal(new EsRectInt(0, 0, 1920, 1080), result);
     }
 
     [Fact]
@@ -24,12 +24,12 @@ public class CaptureVirtualScreenBoundsTests
         // 左（負座標）と右下にモニタがある構成
         var result = CaptureVirtualScreen.ResolveBounds(
         [
-            new EsPixelRect(-1920, 0, 1920, 1080),
-            new EsPixelRect(0, 0, 1920, 1080),
-            new EsPixelRect(1920, 200, 1280, 1024),
+            new EsRectInt(-1920, 0, 1920, 1080),
+            new EsRectInt(0, 0, 1920, 1080),
+            new EsRectInt(1920, 200, 1280, 1024),
         ]);
 
-        Assert.Equal(new EsPixelRect(-1920, 0, 5120, 1224), result);
+        Assert.Equal(new EsRectInt(-1920, 0, 5120, 1224), result);
     }
 
     [Fact]
@@ -38,11 +38,11 @@ public class CaptureVirtualScreenBoundsTests
         // セカンダリが上（負の Y）にある構成
         var result = CaptureVirtualScreen.ResolveBounds(
         [
-            new EsPixelRect(0, 0, 3840, 2160),
-            new EsPixelRect(0, -1200, 1920, 1200),
+            new EsRectInt(0, 0, 3840, 2160),
+            new EsRectInt(0, -1200, 1920, 1200),
         ]);
 
-        Assert.Equal(new EsPixelRect(0, -1200, 3840, 3360), result);
+        Assert.Equal(new EsRectInt(0, -1200, 3840, 3360), result);
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class CaptureVirtualScreenBoundsTests
     public void ResolveBounds_入力を変更しない()
     {
         // 引数の列挙を 1 度だけ辿る（複数回の列挙で結果が変わらない実装にする）
-        var screens = new List<EsPixelRect>
+        var screens = new List<EsRectInt>
         {
             new(-1920, 0, 1920, 1080),
             new(0, 0, 1920, 1080),

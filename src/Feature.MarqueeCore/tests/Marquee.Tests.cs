@@ -35,7 +35,7 @@ internal sealed class EffectsSpy : IMarqueeEffects
     public void SetPointerCapture(bool capture) => Calls.Add($"capture:{capture}");
 
     /// <inheritdoc/>
-    public EsPixelPoint ToScreenPoint(EsPoint domainPoint)
+    public EsPointInt ToScreenPoint(EsPoint domainPoint)
         => new((int)domainPoint.X * ScreenScale, (int)domainPoint.Y * ScreenScale);
 }
 
@@ -228,7 +228,7 @@ public class MarqueeTests
         marquee.Press(new EsPoint(148, 128), clickCount: 1);
 
         // 画面物理座標は効果の座標変換（2 倍）で求まる
-        Assert.Equal(new EsPixelPoint(300, 260), cursor.CursorPoint);
+        Assert.Equal(new EsPointInt(300, 260), cursor.CursorPoint);
     }
 
     [Fact]

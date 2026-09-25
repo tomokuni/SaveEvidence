@@ -49,7 +49,7 @@ internal sealed partial class OverlayWindow
     /// <summary>選択を確定してキャプチャする（選択矩形が整数 = クリック確定の検出矩形）。</summary>
     /// <param name="screenRect">選択矩形（画面物理座標 = 仮想スクリーン原点基準）。</param>
     /// <remarks>浮動小数版と同じ規則を適用する（コアに整数版の入口があり、 UI は型を広げない）。</remarks>
-    private void CompleteSelection(EsPixelRect screenRect)
+    private void CompleteSelection(EsRectInt screenRect)
     {
         _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
         CompleteSelectionCore(CaptureClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds));
@@ -64,7 +64,7 @@ internal sealed partial class OverlayWindow
     /// キャッシュ不一致はバックグラウンドで切り出す（ピクセルコピーで UI スレッドをブロックしない）。<br/>
     /// Bitmap 上の座標 = 画面物理座標 − 仮想スクリーンの原点（コアの保持クラスが保持する）。
     /// </remarks>
-    private void CompleteSelectionCore(EsPixelRect captureRect)
+    private void CompleteSelectionCore(EsRectInt captureRect)
     {
         // 完了は 1 回だけ受け付ける（確定とキャンセルの競合で二重完了にしない。規則はコアが単一所有する）
         if (!_state.TryComplete()) return;
@@ -120,7 +120,7 @@ internal sealed partial class OverlayWindow
     /// 切り出しはバックグラウンド（Task.Run）で実行する（UI スレッドをブロックしない）。<br/>
     /// Bitmap 上の座標 = 画面物理座標 − 仮想スクリーンの原点（コアの保持クラスが保持する）。
     /// </remarks>
-    private void PreExtractClip(EsPixelRect screenRect)
+    private void PreExtractClip(EsRectInt screenRect)
     {
         // 切り出し矩形（画面物理座標）: 種別に応じた閉区間化・画像内へのクランプはコアが単一所有する
         var captureRect = CaptureClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds);
@@ -185,9 +185,9 @@ internal sealed partial class OverlayWindow
     public void SetVirtualScreen(EsBitmap? bitmap, PixelPoint origin)
     {
         // 差し替え時の旧値の破棄・クローズ後の破棄はコアが単一所有する
-        if (!_captureImage.Set(bitmap, origin.ToEsPixelPoint())) return;
+        if (!_captureImage.Set(bitmap, origin.ToEsPointInt())) return;
 
-        _log.LogVirtualScreen(origin.ToEsPixelPoint(), bitmap);
+        _log.LogVirtualScreen(origin.ToEsPointInt(), bitmap);
         // 固定背景画像（VirtualScreenImage）とルーペの拡大元画像（Source）へ同一の EsBitmapAvaloniaImage を設定する。
         // WriteableBitmap を生成せず、EsBitmap を内包した IImage（EsBitmapAvaloniaImage）を Source に設定する
         // （Skia 直描画・ゼロコピー。破棄はコアの保持クラスの Dispose が一元管理する）。

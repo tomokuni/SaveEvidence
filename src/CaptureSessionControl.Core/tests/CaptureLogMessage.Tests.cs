@@ -44,7 +44,7 @@ public class CaptureLogMessageTests
         var logger = new RecordingLogger();
         using var image = EsBitmap.Create(20, 10);
 
-        logger.LogCaptureFinished(new CaptureResult(image, new EsPixelRect(1, 2, 20, 10)));
+        logger.LogCaptureFinished(new CaptureResult(image, new EsRectInt(1, 2, 20, 10)));
 
         Assert.Equal(2, logger.Messages.Count);
         Assert.Equal("[CaptureSession] CaptureCompleted: bounds=1,2,20,10", logger.Messages[0]);
@@ -88,7 +88,7 @@ public class CaptureLogMessageTests
     {
         var logger = new RecordingLogger();
 
-        logger.LogCropFinished(new EsPixelRect(10, 20, 30, 40));
+        logger.LogCropFinished(new EsRectInt(10, 20, 30, 40));
 
         Assert.Equal("[CaptureSession] CropCompleted: bounds=10,20,30,40", Assert.Single(logger.Messages));
     }
@@ -132,17 +132,17 @@ public class CaptureLogMessageTests
         using var image = EsBitmap.Create(1, 1);
 
         logger.LogCaptureStart("AreaSelect");
-        logger.LogCaptureFinished(new CaptureResult(image, new EsPixelRect(0, 0, 1, 1)));
+        logger.LogCaptureFinished(new CaptureResult(image, new EsRectInt(0, 0, 1, 1)));
         logger.LogCaptureFinished(null);
         logger.LogCropStart(image);
-        logger.LogCropFinished(new EsPixelRect(0, 0, 1, 1));
+        logger.LogCropFinished(new EsRectInt(0, 0, 1, 1));
         logger.LogCropFinished(default);
         logger.LogCropCancelled();
         logger.LogSettingApplied();
         logger.LogConfirmRequested("0,0,1,1");
         logger.LogCancelRequested();
-        logger.LogVirtualScreen(new EsPixelPoint(0, 0), image);
-        logger.LogVirtualScreen(new EsPixelPoint(1, 1), null);
+        logger.LogVirtualScreen(new EsPointInt(0, 0), image);
+        logger.LogVirtualScreen(new EsPointInt(1, 1), null);
         logger.LogHighlight("AreaSelect", true, "0,0,1,1", "t", "c");
     }
 
@@ -152,7 +152,7 @@ public class CaptureLogMessageTests
         var logger = new RecordingLogger();
         using var bitmap = EsBitmap.Create(3840, 2160);
 
-        logger.LogVirtualScreen(new EsPixelPoint(-1920, -200), bitmap);
+        logger.LogVirtualScreen(new EsPointInt(-1920, -200), bitmap);
 
         Assert.Equal("[CaptureSession] VirtualScreen: origin=(-1920, -200) size=3840x2160", Assert.Single(logger.Messages));
     }
@@ -163,7 +163,7 @@ public class CaptureLogMessageTests
         // 「未取得は 0」という正規化をコアが単一所有する（呼び出し側で null 判定を書かない）
         var logger = new RecordingLogger();
 
-        logger.LogVirtualScreen(new EsPixelPoint(10, 20), null);
+        logger.LogVirtualScreen(new EsPointInt(10, 20), null);
 
         Assert.Equal("[CaptureSession] VirtualScreen: origin=(10, 20) size=0x0", Assert.Single(logger.Messages));
     }
@@ -209,7 +209,7 @@ public class CaptureLogMessageTests
     [Fact]
     public void CaptureLogFormat_Rect_PixelRectをx_y_w_hで整形する()
     {
-        Assert.Equal("10,20,30,40", CaptureLogFormat.Rect(new EsPixelRect(10, 20, 30, 40)));
+        Assert.Equal("10,20,30,40", CaptureLogFormat.Rect(new EsRectInt(10, 20, 30, 40)));
     }
 
     [Fact]
@@ -217,7 +217,7 @@ public class CaptureLogMessageTests
     {
         // 「未検出は空文字」という正規化を単一所有する
         Assert.Equal("", CaptureLogFormat.RectOrEmpty(null));
-        Assert.Equal("10,20,30,40", CaptureLogFormat.RectOrEmpty(new EsPixelRect(10, 20, 30, 40)));
+        Assert.Equal("10,20,30,40", CaptureLogFormat.RectOrEmpty(new EsRectInt(10, 20, 30, 40)));
     }
 
     [Fact]

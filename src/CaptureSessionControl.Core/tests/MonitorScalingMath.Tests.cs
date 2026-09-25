@@ -9,16 +9,16 @@ namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 public class MonitorScalingMathTests
 {
     /// <summary>検証に使うモニター構成（左 100%、右 150%）。</summary>
-    private static readonly (EsPixelRect Bounds, double Scale)[] s_dualMonitors =
+    private static readonly (EsRectInt Bounds, double Scale)[] s_dualMonitors =
     [
-        (new EsPixelRect(0, 0, 1920, 1080), 1.0),
-        (new EsPixelRect(1920, 0, 2560, 1440), 1.5),
+        (new EsRectInt(0, 0, 1920, 1080), 1.0),
+        (new EsRectInt(1920, 0, 2560, 1440), 1.5),
     ];
 
     [Fact]
     public void ResolveForRect_中心を含むモニターの倍率を返す()
     {
-        var target = new EsPixelRect(100, 100, 400, 300);
+        var target = new EsRectInt(100, 100, 400, 300);
 
         Assert.Equal(1.0, MonitorScalingMath.ResolveForRect(target, s_dualMonitors, fallback: 9.9));
     }
@@ -56,32 +56,32 @@ public class MonitorScalingMathTests
     public void Collect_倍率が未確定のモニターを除外する()
     {
         // 倍率 0 以下は未確定として扱い、判定に使うと表示倍率が 0 倍になるため除外する
-        var monitors = new (EsPixelRect Bounds, double Scale)[]
+        var monitors = new (EsRectInt Bounds, double Scale)[]
         {
-            (new EsPixelRect(0, 0, 1920, 1080), 1.0),
-            (new EsPixelRect(1920, 0, 2560, 1440), 0),
-            (new EsPixelRect(4480, 0, 2560, 1440), -1.5),
+            (new EsRectInt(0, 0, 1920, 1080), 1.0),
+            (new EsRectInt(1920, 0, 2560, 1440), 0),
+            (new EsRectInt(4480, 0, 2560, 1440), -1.5),
         };
 
         var result = MonitorScalingMath.Collect(monitors);
 
         Assert.Single(result);
-        Assert.Equal(new EsPixelRect(0, 0, 1920, 1080), result[0].Bounds);
+        Assert.Equal(new EsRectInt(0, 0, 1920, 1080), result[0].Bounds);
     }
 
     [Fact]
     public void Collect_入力の順序を保つ()
     {
-        var monitors = new (EsPixelRect Bounds, double Scale)[]
+        var monitors = new (EsRectInt Bounds, double Scale)[]
         {
-            (new EsPixelRect(1920, 0, 2560, 1440), 1.5),
-            (new EsPixelRect(0, 0, 1920, 1080), 1.0),
+            (new EsRectInt(1920, 0, 2560, 1440), 1.5),
+            (new EsRectInt(0, 0, 1920, 1080), 1.0),
         };
 
         var result = MonitorScalingMath.Collect(monitors);
 
-        Assert.Equal(new EsPixelRect(1920, 0, 2560, 1440), result[0].Bounds);
-        Assert.Equal(new EsPixelRect(0, 0, 1920, 1080), result[1].Bounds);
+        Assert.Equal(new EsRectInt(1920, 0, 2560, 1440), result[0].Bounds);
+        Assert.Equal(new EsRectInt(0, 0, 1920, 1080), result[1].Bounds);
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public class MonitorScalingMathTests
     [Fact]
     public void ResolveForRect_右側のモニターに中心がある場合はその倍率を返す()
     {
-        var target = new EsPixelRect(2400, 100, 400, 300);
+        var target = new EsRectInt(2400, 100, 400, 300);
 
         Assert.Equal(1.5, MonitorScalingMath.ResolveForRect(target, s_dualMonitors, fallback: 9.9));
     }
@@ -102,7 +102,7 @@ public class MonitorScalingMathTests
     public void ResolveForRect_境界を跨ぐ矩形は中心のモニターで決まる()
     {
         // 左上が左モニター・右下が右モニター。中心が右モニターに入る
-        var target = new EsPixelRect(1900, 0, 100, 100);
+        var target = new EsRectInt(1900, 0, 100, 100);
 
         Assert.Equal(1.5, MonitorScalingMath.ResolveForRect(target, s_dualMonitors, fallback: 9.9));
     }
@@ -110,7 +110,7 @@ public class MonitorScalingMathTests
     [Fact]
     public void ResolveForRect_どのモニターにも含まれない場合はフォールバックを返す()
     {
-        var target = new EsPixelRect(-5000, -5000, 100, 100);
+        var target = new EsRectInt(-5000, -5000, 100, 100);
 
         Assert.Equal(9.9, MonitorScalingMath.ResolveForRect(target, s_dualMonitors, fallback: 9.9));
     }
@@ -118,7 +118,7 @@ public class MonitorScalingMathTests
     [Fact]
     public void ResolveForRect_モニターが空の場合はフォールバックを返す()
     {
-        var target = new EsPixelRect(0, 0, 100, 100);
+        var target = new EsRectInt(0, 0, 100, 100);
 
         Assert.Equal(2.0, MonitorScalingMath.ResolveForRect(target, [], fallback: 2.0));
     }
@@ -127,7 +127,7 @@ public class MonitorScalingMathTests
     public void ResolveForRect_幅と高さが0でも中心で判定する()
     {
         // 幅・高さ 0 の矩形（点）でも判定できる
-        var target = new EsPixelRect(2000, 500, 0, 0);
+        var target = new EsRectInt(2000, 500, 0, 0);
 
         Assert.Equal(1.5, MonitorScalingMath.ResolveForRect(target, s_dualMonitors, fallback: 9.9));
     }
@@ -143,7 +143,7 @@ public class MonitorScalingMathTests
         var domain = new EsRect(100, 100, 400, 300);
 
         var result = MonitorScalingMath.ResolveForDomainRect(
-            domain, new EsPixelPoint(1920, 0), s_dualMonitors, fallback: 9.9);
+            domain, new EsPointInt(1920, 0), s_dualMonitors, fallback: 9.9);
 
         Assert.Equal(1.5, result);
     }

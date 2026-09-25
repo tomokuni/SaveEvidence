@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <b>スレッド</b>: 背景の切り出し結果は UI スレッドで反映する想定だが、受け取りと破棄が競合しないよう内部で排他する。
 /// </remarks>
 /// <param name="fallbackBounds">画像が未取得の間に使う占有範囲（画面物理ピクセル。ウィンドウが覆う範囲）。</param>
-public sealed class CaptureImageHolder(EsPixelRect fallbackBounds) : IDisposable
+public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
 {
     /// <summary>状態を保護するゲート。</summary>
     private readonly object _gate = new();
@@ -28,7 +28,7 @@ public sealed class CaptureImageHolder(EsPixelRect fallbackBounds) : IDisposable
     private EsBitmap? _image;
 
     /// <summary>画像の原点（画面物理ピクセル）。</summary>
-    private EsPixelPoint _origin;
+    private EsPointInt _origin;
 
     /// <summary>破棄済みかどうか。</summary>
     private bool _disposed;
@@ -48,7 +48,7 @@ public sealed class CaptureImageHolder(EsPixelRect fallbackBounds) : IDisposable
 
     /// <summary>画像の原点（画面物理ピクセル）を取得する。</summary>
     /// <value>画像の左上が対応する画面物理座標。画像が未取得の場合は既定値。</value>
-    public EsPixelPoint Origin
+    public EsPointInt Origin
     {
         get
         {
@@ -65,7 +65,7 @@ public sealed class CaptureImageHolder(EsPixelRect fallbackBounds) : IDisposable
     /// 背景撮影が完了する前に確定された場合でも切り出し範囲をクランプできるよう、<br/>
     /// 未取得の間はフォールバック範囲（ウィンドウが覆う仮想スクリーンの範囲）を返す。
     /// </remarks>
-    public EsPixelRect Bounds
+    public EsRectInt Bounds
     {
         get
         {
@@ -83,7 +83,7 @@ public sealed class CaptureImageHolder(EsPixelRect fallbackBounds) : IDisposable
     /// <param name="origin">画像の原点（画面物理ピクセル）。</param>
     /// <returns>保持した場合は true。破棄済みのため受け付けなかった場合は false（渡された画像はその場で破棄する）。</returns>
     /// <remarks>破棄済みの場合に画像をその場で破棄するのは、背景撮影の完了がウィンドウの後片付けより遅れた場合の破棄漏れを防ぐためである。</remarks>
-    public bool Set(EsBitmap? image, EsPixelPoint origin)
+    public bool Set(EsBitmap? image, EsPointInt origin)
     {
         EsBitmap? replaced;
         bool accepted;

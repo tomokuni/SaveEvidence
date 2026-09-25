@@ -15,7 +15,7 @@ namespace EsUtil.Platform.Core;
 /// <see cref="IElementFinder"/> の実装が返す。
 /// </remarks>
 public readonly record struct ElementFinderResults(
-    EsPixelRect Bounds,
+    EsRectInt Bounds,
     bool IsDetected,
     string? Title = null,
     EsPlatformHandle? Handle = null,

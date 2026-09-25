@@ -845,7 +845,7 @@ internal static class CapturePage
     /// 3. 表示座標をドメイン座標（元画像ピクセル）へ変換し、<see cref="MainViewModel.HitDetectedRect"/> へ委譲する<br/>
     ///    （矩形の判定はコアが単一所有する）。
     /// </remarks>
-    private static EsPixelRect? FindAutoCropHit(MainViewModel viewModel, ZoomViewControl view, EsPoint cursorDip)
+    private static EsRectInt? FindAutoCropHit(MainViewModel viewModel, ZoomViewControl view, EsPoint cursorDip)
     {
         if (viewModel.PreviewImage is not { } image)
         {

@@ -14,8 +14,8 @@ public class CaptureClickSelectionTests
     {
         var selection = new CaptureClickSelection();
 
-        Assert.True(selection.Fix(new EsPixelRect(10, 20, 30, 40)));
-        Assert.Equal(new EsPixelRect(10, 20, 30, 40), selection.Take());
+        Assert.True(selection.Fix(new EsRectInt(10, 20, 30, 40)));
+        Assert.Equal(new EsRectInt(10, 20, 30, 40), selection.Take());
     }
 
     [Theory]
@@ -27,7 +27,7 @@ public class CaptureClickSelectionTests
         // 退化した矩形を固定すると、解放時に空の切り出しを確定することになる
         var selection = new CaptureClickSelection();
 
-        Assert.False(selection.Fix(new EsPixelRect(x, y, width, height)));
+        Assert.False(selection.Fix(new EsRectInt(x, y, width, height)));
         Assert.Null(selection.Take());
     }
 
@@ -44,9 +44,9 @@ public class CaptureClickSelectionTests
     {
         // 取り出しは 1 回限り（同じ押下で 2 回確定しない）
         var selection = new CaptureClickSelection();
-        selection.Fix(new EsPixelRect(1, 2, 3, 4));
+        selection.Fix(new EsRectInt(1, 2, 3, 4));
 
-        Assert.Equal(new EsPixelRect(1, 2, 3, 4), selection.Take());
+        Assert.Equal(new EsRectInt(1, 2, 3, 4), selection.Take());
         Assert.Null(selection.Take());
     }
 
@@ -54,10 +54,10 @@ public class CaptureClickSelectionTests
     public void Fix_再押下では前回の固定を置き換える()
     {
         var selection = new CaptureClickSelection();
-        selection.Fix(new EsPixelRect(1, 2, 3, 4));
-        selection.Fix(new EsPixelRect(5, 6, 7, 8));
+        selection.Fix(new EsRectInt(1, 2, 3, 4));
+        selection.Fix(new EsRectInt(5, 6, 7, 8));
 
-        Assert.Equal(new EsPixelRect(5, 6, 7, 8), selection.Take());
+        Assert.Equal(new EsRectInt(5, 6, 7, 8), selection.Take());
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class CaptureClickSelectionTests
     {
         // 古い固定が解放時に確定されるのを防ぐ（固定は常に最後の押下の結果になる）
         var selection = new CaptureClickSelection();
-        selection.Fix(new EsPixelRect(1, 2, 3, 4));
+        selection.Fix(new EsRectInt(1, 2, 3, 4));
 
         Assert.False(selection.Fix(default));
         Assert.Null(selection.Take());

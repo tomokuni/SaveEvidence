@@ -45,7 +45,7 @@ public static partial class CaptureLogMessage
 
     /// <summary>撮影セッションの確定を記録する。</summary>
     /// <param name="logger">ロガー。</param>
-    /// <param name="bounds">確定した領域（<see cref="CaptureLogFormat.Rect(EsPixelRect)"/> の出力）。</param>
+    /// <param name="bounds">確定した領域（<see cref="CaptureLogFormat.Rect(EsRectInt)"/> の出力）。</param>
     /// <remarks>ログレベル: Debug。出力書式: <c>[CaptureSession] CaptureCompleted: bounds={Bounds}</c></remarks>
     [LoggerMessage(EventId = 2, Level = LogLevel.Debug,
         Message = "[CaptureSession] CaptureCompleted: bounds={Bounds}")]
@@ -83,7 +83,7 @@ public static partial class CaptureLogMessage
     /// （UI が空判定とログの呼び分けを書くと、同じ操作で UI ごとに異なるログになる）。<br/>
     /// 確定: <c>[CaptureSession] CropCompleted: bounds=…</c> / キャンセル: <c>[CaptureSession] CropCancelled</c>
     /// </remarks>
-    public static void LogCropFinished(this ILogger logger, EsPixelRect bounds)
+    public static void LogCropFinished(this ILogger logger, EsRectInt bounds)
     {
         if (bounds.IsEmpty)
         {
@@ -113,7 +113,7 @@ public static partial class CaptureLogMessage
     /// <param name="logger">ロガー。</param>
     /// <param name="width">画像の幅（ピクセル）。</param>
     /// <param name="height">画像の高さ（ピクセル）。</param>
-    /// <param name="bounds">撮影領域（<see cref="CaptureLogFormat.Rect(EsPixelRect)"/> の出力）。</param>
+    /// <param name="bounds">撮影領域（<see cref="CaptureLogFormat.Rect(EsRectInt)"/> の出力）。</param>
     /// <remarks>ログレベル: Debug。出力書式: <c>[CaptureSession] Result: bitmap={Width}x{Height} bounds={Bounds}</c></remarks>
     [LoggerMessage(EventId = 8, Level = LogLevel.Debug,
         Message = "[CaptureSession] Result: bitmap={Width}x{Height} bounds={Bounds}")]
@@ -142,7 +142,7 @@ public static partial class CaptureLogMessage
     /// ログレベル: Debug。出力書式: <c>[CaptureSession] VirtualScreen: origin=({X}, {Y}) size={Width}x{Height}</c><br/>
     /// 「未取得は 0」という正規化を単一所有する（呼び出し側で null 判定を書かない）。
     /// </remarks>
-    public static void LogVirtualScreen(this ILogger logger, EsPixelPoint origin, EsBitmap? bitmap)
+    public static void LogVirtualScreen(this ILogger logger, EsPointInt origin, EsBitmap? bitmap)
         => LogVirtualScreenCore(logger, origin.X, origin.Y, bitmap?.Width ?? 0, bitmap?.Height ?? 0);
 
     /// <summary>仮想スクリーンの原点とサイズを記録する（内部用）。</summary>

@@ -33,7 +33,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 - **画面座標変換**: `ScreenConverter`（コントロールローカル DIP ↔ 画面物理。Avalonia の `TopLevel` に依存するため本プロジェクトに残す）
 - **座標変換ポート**: `ICoordTransform` / `CoordTransform` は UI フレームワーク非依存のコア型として `Platform.Core` が提供
 - **ネイティブ実装とファクトリ**: `PlatformFactory.CreateXxx()` と Win32 / NoOp 実装は `Platform.Native` が提供
-- **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPixelPoint`・`EsPixelRect`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
+- **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPointInt`・`EsRectInt`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
 - **カーソル抑止の仲介**: `CursorOverrideGuardAvaloniaExtensions.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲）
 - **画像ユーティリティ**: `EsBitmap`（`Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
 - **描画アダプタ**: `AvaloniaCanvas`（`Platform.Core` の描画ポート `IEsCanvas` を `DrawingContext` へ適合させる。塗り・枠線・ラベル・画像の描画を写す） アダプタ（`EsBitmapAvaloniaImage`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
@@ -66,7 +66,7 @@ using EsUtil.Platform.Core;                     // サービス抽象 / コア�
 using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
 using EsUtil.Platform.Core.Coordinate;          // ICoordTransform / CoordTransform
-using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPixelPoint / EsPixelRect / EsPlatformHandle
+using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt / EsPlatformHandle
 ```
 
 ## 5. クイックスタート
@@ -77,10 +77,10 @@ UI フレームワーク非依存のコア型と Avalonia の型を相互変換�
 
 ```csharp
 using EsUtil.Platform.AvaloniaUI;   // 相互変換拡張
-using EsUtil.Platform.Core.Geometry;    // EsPoint / EsPixelRect 等
+using EsUtil.Platform.Core.Geometry;    // EsPoint / EsRectInt 等
 
 // Avalonia → コア（サービス抽象へ渡すとき）
-EsPixelRect rect = captureRect.ToEsPixelRect();
+EsRectInt rect = captureRect.ToEsRectInt();
 EsPlatformHandle handle = window.TryGetPlatformHandle().ToEsPlatformHandle();
 EsPoint point = avaloniaPoint.ToEsPoint();
 

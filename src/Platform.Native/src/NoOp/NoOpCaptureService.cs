@@ -17,10 +17,10 @@ internal sealed class NoOpCaptureService : ICaptureService
     public static NoOpCaptureService Instance { get; } = new();
 
     /// <inheritdoc/>
-    public EsBitmap? CaptureArea(EsPixelRect bounds) => null;
+    public EsBitmap? CaptureArea(EsRectInt bounds) => null;
 
     /// <inheritdoc/>
-    public EsBitmap? CaptureVirtualScreen(out EsPixelPoint origin)
+    public EsBitmap? CaptureVirtualScreen(out EsPointInt origin)
     {
         origin = default;
         return null;

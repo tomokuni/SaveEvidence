@@ -55,7 +55,7 @@ public static class CaptureTypeTraits
     /// 呼び分けると、同じ分岐がホバー・押下などの入力経路ごとに複製される）。
     /// </remarks>
     public static ElementFinderResults FindUnderCursor(
-        IElementFinder? finder, CaptureType captureType, EsPixelPoint screenPoint)
+        IElementFinder? finder, CaptureType captureType, EsPointInt screenPoint)
         => finder is not { } target ? default
             : GetElementTarget(captureType) == CaptureElementTarget.Screen
                 ? target.FindScreenUnderCursor(screenPoint)

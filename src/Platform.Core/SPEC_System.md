@@ -49,8 +49,9 @@ graph LR
 | `Geometry/EsSize.cs` | UI フレームワーク非依存の 2 次元サイズ（`readonly record struct`） |
 | `Geometry/EsVector.cs` | UI フレームワーク非依存の 2 次元ベクター（`readonly record struct`） |
 | `Geometry/EsRect.cs` | UI フレームワーク非依存の矩形（`readonly record struct`） |
-| `Geometry/EsPixelPoint.cs` | UI フレームワーク非依存の画面物理座標（整数ピクセル） |
-| `Geometry/EsPixelRect.cs` | UI フレームワーク非依存の画面物理矩形（整数ピクセル。`Contains` / `Union` / `Center`） |
+| `Geometry/EsPointInt.cs` | UI フレームワーク非依存の整数座標（`EsPoint` の整数版） |
+| `Geometry/EsSizeInt.cs` | UI フレームワーク非依存の整数サイズ（`EsSize` の整数版。`IsEmpty`） |
+| `Geometry/EsRectInt.cs` | UI フレームワーク非依存の整数矩形（`EsRect` の整数版。`Contains` / `Union` / `Center`） |
 | `Geometry/EsPlatformHandle.cs` | UI フレームワーク非依存のネイティブウィンドウ識別子 |
 | `Geometry/CoordinateFormatter.cs` | 座標の表示文字列を生成する純粋関数 |
 | `Imaging/EsBitmap.cs` | 自前のピクセルバッファを所有するピクセルコンテナ（BGRA8888・Premul。外部パッケージに依存しない） |
@@ -90,8 +91,12 @@ graph LR
 ### コア型の命名
 
 コア型には **`Es`（`EsUtil` の略）接頭辞**を付けます（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` /
-`EsPixelPoint` / `EsPixelRect` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap` / `IEsRectWalker` / `IntMath` / `EsRectMath` /
-`EsSizeMath`）。
+`EsPointInt` / `EsSizeInt` / `EsRectInt` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap` / `IEsRectWalker` / `IntMath` /
+`EsRectMath` / `EsSizeMath`）。
+
+**整数版の型は `Es` + 型名 + `Int`** とします（`EsPoint` / `EsSize` / `EsRect` の整数版が `EsPointInt` / `EsSizeInt` /
+`EsRectInt`）。整数であることは「画面物理ピクセル」を意味しない（画像ピクセルも整数である）ため、単位が読む側に
+必要な箇所はドキュメントに明記します。
 
 ## ライセンス
 

@@ -40,7 +40,7 @@ internal sealed class MainViewModelCaptureTarget : ICaptureTarget
     /// 切り出しの適用は <c>CropPreviewCommand</c> へ委譲する（Undo 履歴への退避・未保存化・画像差し替えが<br/>
     /// キャプチャページと共通の経路になる）。
     /// </remarks>
-    public void ApplyCrop(EsPixelRect bounds) => _viewModel.CropPreviewCommand.Execute(bounds);
+    public void ApplyCrop(EsRectInt bounds) => _viewModel.CropPreviewCommand.Execute(bounds);
 
     /// <summary>ViewModel のプロパティ変更を切り出しセッション向けのイベントへ変換する。</summary>
     /// <param name="sender">通知元。</param>

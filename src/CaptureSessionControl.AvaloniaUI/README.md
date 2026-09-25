@@ -132,7 +132,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordinateTransform` で内包コントロール（Marquee / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
 4. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する
 5. **ビューポート変化の通知**: ホストがプレビューのパン・ズームを検知したら `NotifyCropViewportChanged()` を呼ぶ（暗転マスク・選択枠・ルーペが追従。ScrollViewer 連携のスクロールも同じ経路で処理）
-6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `EsPixelRect`（コア型）で返却 / キャンセル → 0x0 の空矩形
+6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `EsRectInt`（コア型）で返却 / キャンセル → 0x0 の空矩形
    - 確定時の切り出し範囲は**現在の画像**（確定時点の `CropViewControl.Source`）の範囲へクランプする（実行中に画像が差し替わっても差し替え後の画像で切り出す。画像が消えた場合はキャンセルとして扱う）
 
 ## 7. 依存プロジェクト

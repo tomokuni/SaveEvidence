@@ -446,7 +446,7 @@ internal sealed class MainWindow
             Math.Max(MinWindowSize.Height, WindowPlacementMath.ToDipLength(bounds.Height, scale)),
             MinWindowSize.Width, MinWindowSize.Height);
 
-        var position = WindowPlacementMath.ToDipPoint(new EsPixelPoint(bounds.X, bounds.Y), scale);
+        var position = WindowPlacementMath.ToDipPoint(new EsPointInt(bounds.X, bounds.Y), scale);
         window.StartManualPosition(position.X, position.Y);
     }
 
@@ -467,7 +467,7 @@ internal sealed class MainWindow
         var size = WindowPlacementMath.ToPhysicalPixelSize(
             new EsSize(window.ClientSize.Width, window.ClientSize.Height), scale);
 
-        settingsService.Current.MainWindowBounds = new EsPixelRect(position.X, position.Y, size.Width, size.Height);
+        settingsService.Current.MainWindowBounds = new EsRectInt(position.X, position.Y, size.Width, size.Height);
         settingsService.Current.MainWindowState = window.WindowState.ToEsWindowState();
 
         // ナビパネルの開閉は変更時に保存済みのため、ここでは配置と状態のみを保存する

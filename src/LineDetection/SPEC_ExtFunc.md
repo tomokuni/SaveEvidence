@@ -97,7 +97,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 | メソッド | 戻り値 | 説明 |
 | --- | --- | --- |
-| `Reconstruct(IReadOnlyList<LineDetectionResult> results)` | `IReadOnlyList<EsPixelRect>` | 線分から矩形（ウィンドウの 4 辺）の候補を復元する（画像座標・閉区間）。 |
+| `Reconstruct(IReadOnlyList<LineDetectionResult> results)` | `IReadOnlyList<EsRectInt>` | 線分から矩形（ウィンドウの 4 辺）の候補を復元する（画像座標・閉区間）。 |
 
 - 4 辺が矩形を構成する組み合わせのみを候補にします（左右の垂直線が矩形の縦範囲を覆い、上下の水平線が矩形の横範囲を覆うこと）。
 - 同一座標の線分は 1 本に統合し、範囲（垂直線は Y・水平線は X の最小〜最大）を合併します（断片化した辺を 1 本として扱う）。

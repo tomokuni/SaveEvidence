@@ -137,7 +137,7 @@ public sealed class SettingsService : ISettingsService
             // enum は名前で保存する。AOT 対応のためジェネリック版を使う（型ごとに指定する）。
             Converters =
             {
-                new EsPixelRectJsonConverter(),
+                new EsRectIntJsonConverter(),
                 new JsonStringEnumConverter<HotKeyModifiers>(),
                 new JsonStringEnumConverter<EsKey>(),
                 new JsonStringEnumConverter<EsWindowState>(),

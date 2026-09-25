@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Models;
 /// <c>[ObservableProperty]</c> 属性により自動的に変更通知を発行する。<br/>
 /// 永続化ロジックは一切含まず、読み書きは <see cref="Services.SettingsService"/> を介して行う。<br/>
 /// <b>依存分離</b>: UI フレームワークの型（<c>Avalonia.PixelRect</c> / <c>WindowState</c>）ではなく、<br/>
-/// UI 非依存の <see cref="EsPixelRect"/> / <see cref="EsWindowState"/> で保持する。<br/>
+/// UI 非依存の <see cref="EsRectInt"/> / <see cref="EsWindowState"/> で保持する。<br/>
 /// </remarks>
 public sealed partial class Settings : ObservableObject
 {
@@ -41,7 +41,7 @@ public sealed partial class Settings : ObservableObject
     /// <summary>MainWindow のウィンドウ位置・サイズを取得または設定する。</summary>
     /// <remarks>画面物理座標（整数ピクセル）。UI 実装側で自 UI の型へ変換して使用する。</remarks>
     [ObservableProperty]
-    private EsPixelRect? _mainWindowBounds;
+    private EsRectInt? _mainWindowBounds;
 
     /// <summary>MainWindow のウィンドウ状態を取得または設定する。</summary>
     [ObservableProperty]

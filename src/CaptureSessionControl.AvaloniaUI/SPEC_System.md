@@ -172,7 +172,7 @@ flowchart TB
   - 設定の適用: `CaptureSettings` → `FadeMaskDragRectOptions`（コアのマッパーで一元化）→ `Options`（同一値スキップ）
   - 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、複合コントロールへ注入
   - カーソル上書き抑止（Crop 中の十字カーソル維持）
-  - 確定 → 論理 Rect（`CropBoundsMath.ComputeCropBounds` で閉区間化） / キャンセル → 0x0 の空矩形を返却（いずれもコア型 `EsPixelRect`）
+  - 確定 → 論理 Rect（`CropBoundsMath.ComputeCropBounds` で閉区間化） / キャンセル → 0x0 の空矩形を返却（いずれもコア型 `EsRectInt`）
   - サイズラベルの文言生成（`CropLabelTexts` に委譲）
 - **可視性**: internal
 - **依存**: CropViewControl / FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectOptions）/ Platform.Native（ICursorOverrideGuard）/ Platform.Core（ICoordTransform / CoordTransform）/ CropBoundsMath / CropLabelTexts
@@ -244,7 +244,7 @@ sequenceDiagram
     Fac->>S: セッション生成（サービス注入・設定適用）
     S->>OW: オーバーレイ表示 / コントロール配置
     OW-->>S: 確定（クリック / Enter） or キャンセル（非アクティブ化）
-    S-->>Fac: CaptureResult / EsPixelRect を返却
+    S-->>Fac: CaptureResult / EsRectInt を返却
     Fac-->>AP: Task 完了（結果）
     AP->>Fac: Cancel()（進行中のセッションをキャンセル）
     AP->>Fac: Dispose()（リソース解放）

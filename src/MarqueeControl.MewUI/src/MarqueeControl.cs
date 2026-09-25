@@ -635,7 +635,7 @@ public sealed class MarqueeControl : Panel
         /// <summary>ドメイン座標を画面物理座標へ変換する。</summary>
         /// <param name="domainPoint">ドメイン座標。</param>
         /// <returns>画面物理座標。ウィンドウを特定できない場合は既定値。</returns>
-        public override EsPixelPoint ToScreenPoint(EsPoint domainPoint)
+        public override EsPointInt ToScreenPoint(EsPoint domainPoint)
             => owner.ToScreen(domainPoint);
     }
 
@@ -643,7 +643,7 @@ public sealed class MarqueeControl : Panel
     /// <param name="domainPos">ドメイン座標。</param>
     /// <returns>画面物理座標。ウィンドウを特定できない場合は default。</returns>
     /// <remarks>カーソルの移動（nudge）に使用する。変換できない場合は原点へカーソルが飛ぶため、呼び出し側は nudge 中のウィンドウ表示を前提とする。</remarks>
-    private EsPixelPoint ToScreen(EsPoint domainPos)
+    private EsPointInt ToScreen(EsPoint domainPos)
     {
         if (FindVisualRoot() is not Window window)
         {
@@ -652,7 +652,7 @@ public sealed class MarqueeControl : Panel
 
         var localDip = _marquee.ToDip(domainPos);
         var screen = window.ClientToScreen(localDip.ToMewUIPoint());
-        return screen.ToEsPixelPoint();
+        return screen.ToEsPointInt();
     }
 
     /// <summary>マウスキャプチャを取得または解放する。</summary>

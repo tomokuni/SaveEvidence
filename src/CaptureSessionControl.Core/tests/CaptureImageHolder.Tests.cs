@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 public class CaptureImageHolderTests
 {
     /// <summary>検証で使うフォールバック範囲。</summary>
-    private static readonly EsPixelRect s_fallback = new(-1920, -200, 3840, 2160);
+    private static readonly EsRectInt s_fallback = new(-1920, -200, 3840, 2160);
 
     /// <summary>検証用の画像を生成する。</summary>
     /// <param name="width">幅。</param>
@@ -26,11 +26,11 @@ public class CaptureImageHolderTests
         using var holder = new CaptureImageHolder(s_fallback);
         using var image = CreateImage(10, 20);
 
-        Assert.True(holder.Set(image, new EsPixelPoint(100, 50)));
+        Assert.True(holder.Set(image, new EsPointInt(100, 50)));
 
         Assert.Same(image, holder.Image);
-        Assert.Equal(new EsPixelPoint(100, 50), holder.Origin);
-        Assert.Equal(new EsPixelRect(100, 50, 10, 20), holder.Bounds);
+        Assert.Equal(new EsPointInt(100, 50), holder.Origin);
+        Assert.Equal(new EsRectInt(100, 50, 10, 20), holder.Bounds);
     }
 
     [Fact]
@@ -48,9 +48,9 @@ public class CaptureImageHolderTests
     {
         using var holder = new CaptureImageHolder(s_fallback);
         using var image = CreateImage(10, 20);
-        holder.Set(image, new EsPixelPoint(1, 2));
+        holder.Set(image, new EsPointInt(1, 2));
 
-        Assert.True(holder.Set(null, new EsPixelPoint(3, 4)));
+        Assert.True(holder.Set(null, new EsPointInt(3, 4)));
 
         Assert.Null(holder.Image);
         Assert.Equal(s_fallback, holder.Bounds);
@@ -64,13 +64,13 @@ public class CaptureImageHolderTests
         var first = CreateImage(10, 20);
         using var second = CreateImage(30, 40);
 
-        holder.Set(first, new EsPixelPoint(0, 0));
-        holder.Set(second, new EsPixelPoint(5, 6));
+        holder.Set(first, new EsPointInt(0, 0));
+        holder.Set(second, new EsPointInt(5, 6));
 
         Assert.True(first.IsDisposed);
         Assert.False(second.IsDisposed);
         Assert.Same(second, holder.Image);
-        Assert.Equal(new EsPixelRect(5, 6, 30, 40), holder.Bounds);
+        Assert.Equal(new EsRectInt(5, 6, 30, 40), holder.Bounds);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class CaptureImageHolderTests
     {
         var holder = new CaptureImageHolder(s_fallback);
         var image = CreateImage(10, 20);
-        holder.Set(image, new EsPixelPoint(0, 0));
+        holder.Set(image, new EsPointInt(0, 0));
 
         holder.Dispose();
 
@@ -95,7 +95,7 @@ public class CaptureImageHolderTests
         holder.Dispose();
         var late = CreateImage(10, 20);
 
-        Assert.False(holder.Set(late, new EsPixelPoint(0, 0)));
+        Assert.False(holder.Set(late, new EsPointInt(0, 0)));
 
         Assert.True(late.IsDisposed);
         Assert.Null(holder.Image);

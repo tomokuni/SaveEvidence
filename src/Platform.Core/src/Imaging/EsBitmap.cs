@@ -1,8 +1,6 @@
 using System.Runtime.InteropServices;
+using EsUtil.Platform.Core.Geometry;
 using Color = System.Drawing.Color;
-using PointInt = System.Drawing.Point;
-using RectInt = System.Drawing.Rectangle;
-using SizeInt = System.Drawing.Size;
 
 namespace EsUtil.Platform.Core.Imaging;
 
@@ -48,7 +46,7 @@ public sealed class EsBitmap : IDisposable
     {
         Width = width;
         Height = height;
-        Size = new SizeInt(width, height);
+        Size = new EsSizeInt(width, height);
         Stride = width * BytesPerPixel;
 
         var byteCount = (long)Stride * height;
@@ -100,7 +98,7 @@ public sealed class EsBitmap : IDisposable
     /// <summary>指定矩形サイズの空のビットマップ（BGRA8888・全ピクセル透明）を生成する。</summary>
     /// <param name="size">サイズ（幅・高さを使用）。</param>
     /// <returns>生成されたビットマップ。</returns>
-    public static EsBitmap Create(SizeInt size)
+    public static EsBitmap Create(EsSizeInt size)
         => Create(size.Width, size.Height);
 
     /// <summary>指定サイズのビットマップ（BGRA8888）を生成し、全ピクセルを指定色で塗りつぶす。</summary>
@@ -123,7 +121,7 @@ public sealed class EsBitmap : IDisposable
     /// <param name="size">サイズ（幅・高さを使用）。</param>
     /// <param name="color">塗りつぶし色。</param>
     /// <returns>生成されたビットマップ（全ピクセルが指定色）。</returns>
-    public static EsBitmap Create(SizeInt size, Color color)
+    public static EsBitmap Create(EsSizeInt size, Color color)
         => Create(size.Width, size.Height, color);
 
     // ====================================================================
@@ -137,7 +135,7 @@ public sealed class EsBitmap : IDisposable
     public int Height { get; init; }
 
     /// <summary>幅・高さ（ピクセル）。</summary>
-    public SizeInt Size { get; init; }
+    public EsSizeInt Size { get; init; }
 
     /// <summary>ピクセルデータ先頭アドレス（BGRA8888）。ピクセルを持たない場合は 0。</summary>
     public nint Address { get; init; }
@@ -166,7 +164,7 @@ public sealed class EsBitmap : IDisposable
     /// <summary>指定座標のピクセルを取得する。</summary>
     /// <param name="point">座標（ピクセル）。</param>
     /// <returns>取得した色（<see cref="Color"/>）。範囲外は IndexOutOfRangeException。</returns>
-    public Color GetPixel(PointInt point)
+    public Color GetPixel(EsPointInt point)
     {
         var (b, g, r, a) = GetPixel(point.X, point.Y);
         return Color.FromArgb(a, r, g, b);
@@ -192,7 +190,7 @@ public sealed class EsBitmap : IDisposable
     /// <summary>指定座標のピクセルを設定する。</summary>
     /// <param name="point">座標（ピクセル）。</param>
     /// <param name="color">設定する色。</param>
-    public void SetPixel(PointInt point, Color color)
+    public void SetPixel(EsPointInt point, Color color)
         => SetPixel(point.X, point.Y, color.B, color.G, color.R, color.A);
 
     /// <summary>指定座標のピクセルを色で設定する（範囲外は無視）。</summary>
@@ -335,6 +333,6 @@ public sealed class EsBitmap : IDisposable
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>
-    public EsBitmap Crop(RectInt rect)
+    public EsBitmap Crop(EsRectInt rect)
         => Crop(rect.X, rect.Y, rect.Width, rect.Height);
 }

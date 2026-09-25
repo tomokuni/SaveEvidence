@@ -1,5 +1,5 @@
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using RectInt = System.Drawing.Rectangle;
 using Xunit;
 
 namespace EsUtil.Platform.Core.Tests;
@@ -61,6 +61,40 @@ public class EsBitmapTests
     }
 
     [Fact]
+    public void Create_サイズ指定のオーバーロードは寸法をそのまま使う()
+    {
+        using var bmp = EsBitmap.Create(new EsSizeInt(6, 8));
+
+        Assert.Equal(6, bmp.Size.Width);
+        Assert.Equal(8, bmp.Size.Height);
+        // サイズはコアの独自型（整数版）で公開される
+        Assert.Equal(new EsSizeInt(6, 8), bmp.Size);
+    }
+
+    [Fact]
+    public void Create_サイズと色のオーバーロードは全ピクセルを塗りつぶす()
+    {
+        var color = System.Drawing.Color.FromArgb(255, 0, 0, 255); // 青・不透明
+        using var bmp = EsBitmap.Create(new EsSizeInt(4, 4), color);
+
+        var px = bmp.GetPixel(2, 2);
+        Assert.Equal((byte)255, px.B);
+        Assert.Equal((byte)255, px.A);
+    }
+
+    /// <summary>0 サイズ（空）で生成しても例外にならず、ピクセルを持たないことを検証する。</summary>
+    [Fact]
+    public void Create_空のサイズなら例外にならない()
+    {
+        using var bmp = EsBitmap.Create(new EsSizeInt(0, 0));
+
+        Assert.True(bmp.Size.IsEmpty);
+        Assert.Equal(0, bmp.Address);
+        // Clear も例外にならない（ピクセルを持たないため）
+        bmp.Clear(System.Drawing.Color.Red);
+    }
+
+    [Fact]
     public void Dispose_二重破棄しても例外にならない()
     {
         var bmp = Create();
@@ -94,6 +128,27 @@ public class EsBitmapTests
         Assert.Equal((byte)0, px.G);
         Assert.Equal((byte)0, px.R);
         Assert.Equal((byte)0, px.A);
+    }
+
+    /// <summary>座標型（<see cref="EsPointInt" />）のオーバーロードが成分オーバーロードと一致することを検証する。</summary>
+    [Fact]
+    public void GetSetPixel_座標型のオーバーロードは成分と一致する()
+    {
+        using var bmp = Create();
+        bmp.SetPixel(new EsPointInt(1, 2), System.Drawing.Color.FromArgb(255, 30, 20, 10));
+
+        var (b, g, r, a) = bmp.GetPixel(1, 2);
+        Assert.Equal((byte)10, b);
+        Assert.Equal((byte)20, g);
+        Assert.Equal((byte)30, r);
+        Assert.Equal((byte)255, a);
+
+        // 座標型のオーバーロードは色型（Color）を返す（成分は同じ）
+        var color = bmp.GetPixel(new EsPointInt(1, 2));
+        Assert.Equal((byte)10, color.B);
+        Assert.Equal((byte)20, color.G);
+        Assert.Equal((byte)30, color.R);
+        Assert.Equal((byte)255, color.A);
     }
 
     [Fact]
@@ -179,7 +234,7 @@ public class EsBitmapTests
         using var src = Create(10, 10);
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
-        using var result = src.Crop(new RectInt(2, 2, 4, 4));
+        using var result = src.Crop(new EsRectInt(2, 2, 4, 4));
 
         Assert.Equal(4, result.Size.Width);
         Assert.Equal(4, result.Size.Height);
@@ -192,7 +247,7 @@ public class EsBitmapTests
     {
         using var src = Create(10, 10);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new RectInt(0, 0, 0, 4)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new EsRectInt(0, 0, 0, 4)));
     }
 
     [Fact]
@@ -200,7 +255,7 @@ public class EsBitmapTests
     {
         using var src = Create(10, 10);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new RectInt(0, 0, 4, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => src.Crop(new EsRectInt(0, 0, 4, 0)));
     }
 
     [Fact]
@@ -210,7 +265,7 @@ public class EsBitmapTests
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
         // 矩形が右端を超える場合、コピーできる部分のみコピーし、範囲外は透明（0）のまま
-        using var result = src.Crop(new RectInt(8, 0, 10, 10));
+        using var result = src.Crop(new EsRectInt(8, 0, 10, 10));
 
         Assert.Equal(10, result.Size.Width);
         Assert.Equal(10, result.Size.Height);
@@ -227,7 +282,7 @@ public class EsBitmapTests
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
         // 矩形がソースと交差しない場合でも、要求サイズの全透明ビットマップを返す
-        using var result = src.Crop(new RectInt(20, 20, 5, 5));
+        using var result = src.Crop(new EsRectInt(20, 20, 5, 5));
 
         Assert.Equal(5, result.Size.Width);
         Assert.Equal(5, result.Size.Height);
@@ -243,7 +298,7 @@ public class EsBitmapTests
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
         // 矩形の左上がソースの外（負）の場合、外側は透明のまま、重なる部分は位置関係を保ってコピーする
-        using var result = src.Crop(new RectInt(-3, -3, 10, 10));
+        using var result = src.Crop(new EsRectInt(-3, -3, 10, 10));
 
         Assert.Equal(10, result.Size.Width);
         Assert.Equal(10, result.Size.Height);
@@ -262,7 +317,7 @@ public class EsBitmapTests
         src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
 
         // 要求矩形がソースと全く重ならない（左上が負で大きく外れる）場合も、要求サイズの全透明を返す
-        using var result = src.Crop(new RectInt(-20, -20, 5, 5));
+        using var result = src.Crop(new EsRectInt(-20, -20, 5, 5));
 
         Assert.Equal(5, result.Size.Width);
         Assert.Equal(5, result.Size.Height);
@@ -276,6 +331,6 @@ public class EsBitmapTests
         var src = Create(10, 10);
         src.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => src.Crop(new RectInt(0, 0, 4, 4)));
+        Assert.Throws<ObjectDisposedException>(() => src.Crop(new EsRectInt(0, 0, 4, 4)));
     }
 }

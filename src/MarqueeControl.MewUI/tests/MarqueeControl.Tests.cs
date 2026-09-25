@@ -18,16 +18,16 @@ internal sealed class CursorServiceSpy : ICursorService
     public List<bool> ShowCalls { get; } = [];
 
     /// <summary>カーソル位置の設定履歴（呼び出し順）。</summary>
-    public List<EsPixelPoint> MovedCalls { get; } = [];
+    public List<EsPointInt> MovedCalls { get; } = [];
 
     /// <summary><see cref="ICursorService.GetCursorScreenPoint"/> の戻り値。</summary>
-    public EsPixelPoint CursorPoint { get; set; }
+    public EsPointInt CursorPoint { get; set; }
 
     /// <inheritdoc/>
-    public EsPixelPoint GetCursorScreenPoint() => CursorPoint;
+    public EsPointInt GetCursorScreenPoint() => CursorPoint;
 
     /// <inheritdoc/>
-    public void SetCursorScreenPoint(EsPixelPoint point)
+    public void SetCursorScreenPoint(EsPointInt point)
     {
         CursorPoint = point;
         MovedCalls.Add(point);

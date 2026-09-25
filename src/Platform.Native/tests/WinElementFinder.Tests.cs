@@ -100,7 +100,7 @@ public class WinElementFinderTests
         // 全モニターの外側の位置（左上に大きく負の位置）を未検出にする
         var left = screens.Min(s => s.Bounds.X);
         var top = screens.Min(s => s.Bounds.Y);
-        var outside = new EsPixelPoint(left - 10000, top - 10000);
+        var outside = new EsPointInt(left - 10000, top - 10000);
 
         var result = finder.FindScreenUnderCursor(outside);
 

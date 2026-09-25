@@ -57,7 +57,7 @@ public partial class SettingsServiceJsonTests
     public void 直列化_ウィンドウ矩形は4項目のみで保存される()
     {
         var settings = CreateSettings();
-        settings.MainWindowBounds = new EsPixelRect(150, 180, 900, 600);
+        settings.MainWindowBounds = new EsRectInt(150, 180, 900, 600);
 
         var json = Serialize(settings, TestSettingsJsonContext.Default);
 
@@ -92,7 +92,7 @@ public partial class SettingsServiceJsonTests
     {
         var settings = new Settings
         {
-            MainWindowBounds = new EsPixelRect(150, 180, 900, 600),
+            MainWindowBounds = new EsRectInt(150, 180, 900, 600),
             ThemeMode = ThemeMode.Dark,
             MainWindowState = EsWindowState.Normal,
             SelectScreenHotKey = new HotKeySetting(HotKeyModifiers.Control | HotKeyModifiers.Shift, EsKey.Q),

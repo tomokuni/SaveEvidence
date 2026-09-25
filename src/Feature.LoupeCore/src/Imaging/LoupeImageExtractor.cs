@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using RectInt = System.Drawing.Rectangle;
-using SizeInt = System.Drawing.Size;
+
 
 namespace EsUtil.Feature.LoupeCore.Imaging;
 
@@ -51,7 +50,7 @@ public static class LoupeImageExtractor
     /// （最大 <c>zoomLevel - 1</c> 物理ピクセル。切り出し領域の実寸が <paramref name="zoomLevel"/> で割り切れない場合）。<br/>
     /// はみ出した部分は描画先のクリップに任せる（切り捨てると拡大の倍率が整数でなくなり、画素がぼやける）。
     /// </remarks>
-    public static (EsRect Source, EsRect Destination) ComputeMagnifiedRects(SizeInt captureSize, int zoomLevel)
+    public static (EsRect Source, EsRect Destination) ComputeMagnifiedRects(EsSizeInt captureSize, int zoomLevel)
         => (new EsRect(0, 0, captureSize.Width, captureSize.Height),
             new EsRect(0, 0, captureSize.Width * zoomLevel, captureSize.Height * zoomLevel));
 
@@ -62,14 +61,14 @@ public static class LoupeImageExtractor
     /// <param name="size">切り出す領域の一辺のサイズ（ピクセル）。正の値。</param>
     /// <returns>切り出された新しいビットマップ（<paramref name="size"/> × <paramref name="size"/>）。範囲外部分は透明。破棄は呼び出し側。</returns>
     /// <remarks>
-    /// <see cref="EsBitmap.Crop(RectInt)"/> へ委譲する（中心座標 → 左上座標へ変換）。<br/>
+    /// <see cref="EsBitmap.Crop(EsRectInt)"/> へ委譲する（中心座標 → 左上座標へ変換）。<br/>
     /// 画像端では透明パディングとなり、市松模様が透ける。<br/>
     /// 左上変換は <see cref="ComputeCaptureTopLeft"/> に委譲する（切り出し領域左上計算の単一所有）。
     /// </remarks>
     internal static EsBitmap ExtractRegionAt(EsBitmap source, int centerX, int centerY, int size)
     {
         var topLeft = ComputeCaptureTopLeft(centerX, centerY, size);
-        return source.Crop(new RectInt((int)topLeft.X, (int)topLeft.Y, size, size));
+        return source.Crop(new EsRectInt((int)topLeft.X, (int)topLeft.Y, size, size));
     }
 
     /// <summary>拡大表示用の領域を切り出す（描画できない状態では null を返す）。</summary>

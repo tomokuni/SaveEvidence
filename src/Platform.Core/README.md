@@ -15,8 +15,8 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `EsWindowState` | UI フレームワーク非依存のウィンドウ表示状態（列挙型）。メンバー名は `Avalonia.Controls.WindowState` と同一にし、設定ファイルのシリアライズ互換性を保つ |
 | `HotKeyModifiers` | ホットキーの修飾キー（Alt / Control / Shift / Windows）を表すフラグ列挙型 |
 | `HotKeySetting` | 修飾キーとキーの組合せを表す値オブジェクト（record）。`ToString()` で "Ctrl + Shift + Q" 形式を返す |
-| `ICaptureService` | 画面領域のキャプチャ（画像は `EsBitmap`、座標は `EsPixelRect`） |
-| `ICursorService` | OS カーソルの位置取得・移動・表示切替（座標は `EsPixelPoint`） |
+| `ICaptureService` | 画面領域のキャプチャ（画像は `EsBitmap`、座標は `EsRectInt`） |
+| `ICursorService` | OS カーソルの位置取得・移動・表示切替（座標は `EsPointInt`） |
 | `IWindowService` | ネイティブウィンドウ操作（タスクスイッチャー非表示・キャプチャ除外・退避。識別子は `EsPlatformHandle`） |
 | `IElementFinder` | 指定位置のウィンドウ / スクリーン検出と一覧取得 |
 | `ICursorOverrideGuard` | 選択操作中のカーソル上書き抑止 |
@@ -28,7 +28,7 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `Coordinate.DpiScaler` | DIP 値をスケーリング係数で物理ピクセルへ変換（`ScaleToPixel`。切り上げ・最低 1）と、その逆変換（`ToDip`（数値 / `EsSize`）。丸めなし）。DPI の基準値（`StandardDpi`）・DPI → スケーリングの換算（`ToScaling`）・係数の有効判定（`IsValidScaling`。**非数も無効**）と正規化（`NormalizeScaling`）も単一所有する |
 | `Coordinate.CoordTransformExtensions` | 座標変換ポート未設定（null）を等価変換として解決する（`OrIdentity`）。各コントロール・コアのジオメトリは本規則を自前で書かない |
 | `Geometry.EsPoint` / `EsSize` / `EsVector` / `EsRect` | UI フレームワーク非依存の DIP 相当の幾何値型（`readonly record struct`。`EsRect` は `Right` / `Bottom` を提供） |
-| `Geometry.EsPixelPoint` / `EsPixelRect` | UI フレームワーク非依存の画面物理座標（整数ピクセル） |
+| `Geometry.EsPointInt` / `EsSizeInt` / `EsRectInt` | UI フレームワーク非依存の**整数版**の幾何値型（`EsPoint` / `EsSize` / `EsRect` の整数版。画面物理ピクセル座標・画像ピクセル座標・矩形に使う） |
 | `Geometry.EsPlatformHandle` | UI フレームワーク非依存のネイティブウィンドウ識別子 |
 | `Geometry.CoordinateFormatter` | 座標を `(x, y)` 形式の表示文字列へ整形する純粋関数 |
 | `Geometry.EsRectMath` | 矩形の辺とクランプの計算（枠線の内側 4 辺・四隅の包絡矩形による領域内クランプ。純粋関数）。コントロールを問わず同じ式を使う（選択矩形の枠線とルーペの外枠、選択のドメイン境界とルーペの位置クランプ） |

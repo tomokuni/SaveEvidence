@@ -53,10 +53,10 @@ internal sealed class WinCursorService : ICursorService
     /// <summary>現在のカーソル位置を画面物理座標で取得する。</summary>
     /// <returns>現在のカーソル位置（画面物理座標）。</returns>
     /// <remarks>WM_SETCURSOR 等の OS イベント外でカーソルの絶対位置が必要な場合に使用する。</remarks>
-    public EsPixelPoint GetCursorScreenPoint()
+    public EsPointInt GetCursorScreenPoint()
     {
         WinNative.GetCursorPos(out var pt);
-        return new EsPixelPoint(pt.X, pt.Y);
+        return new EsPointInt(pt.X, pt.Y);
     }
 
     // ====================================================================
@@ -65,7 +65,7 @@ internal sealed class WinCursorService : ICursorService
 
     /// <summary>カーソルを画面物理座標に移動する。</summary>
     /// <param name="point">移動先の画面物理座標。</param>
-    public void SetCursorScreenPoint(EsPixelPoint point)
+    public void SetCursorScreenPoint(EsPointInt point)
         => WinNative.SetCursorPos(point.X, point.Y);
 
     // ====================================================================

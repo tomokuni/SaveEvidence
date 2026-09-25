@@ -59,7 +59,7 @@ internal sealed class SelectionCaptureSession(
         // 全モード共通で取得し、確定時にこの Bitmap から切り出す（確定時の再キャプチャなしで高速化）。
         // キャプチャ完了前に確定された場合は OverlayWindow.ExtractClip が CaptureArea でフォールバックする。
         // 注: origin は out パラメータのためタスク完了後にしか有効にならない（遅延評価で渡す）。
-        var origin = default(EsPixelPoint);
+        var origin = default(EsPointInt);
         var captureTask = Task.Run(() => captureService.CaptureVirtualScreen(out origin));
 
         // オーバーレイウィンドウを生成・表示（キャプチャ完了を待たない）

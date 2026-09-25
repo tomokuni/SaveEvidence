@@ -10,7 +10,7 @@
 | `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoStack` / `Models.HotKeyParser` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
-| `Services.EsPixelRectJsonConverter` | `internal` | `SaveEvidence` / `app.AvaloniaUI.Tests` / `app.Core.Tests` |
+| `Services.EsRectIntJsonConverter` | `internal` | `SaveEvidence` / `app.AvaloniaUI.Tests` / `app.Core.Tests` |
 | `Models.CapacityLimitedCache` | `internal` | `SaveEvidence` / `app.AvaloniaUI.Tests` / `app.Core.Tests` |
 | `Models.ImageFileExtensions` | `internal` | `SaveEvidence` / `EsUtil.SaveEvidence.MewUI` / `app.AvaloniaUI.Tests` / `app.Core.Tests` / `app.MewUI.Tests` |
 | `ViewModels.ViewModeDisplay` | `internal` | 同上 |
@@ -28,11 +28,11 @@
 
 アプリケーションの設定を表すデータモデルです（`ObservableObject` を継承し、`[ObservableProperty]` で変更通知を発行）。
 
-UI フレームワークの型ではなく、UI 非依存の型（`EsPixelRect` / `EsWindowState`）で保持します。永続化ロジックは含まず、読み書きは `Services.SettingsService` を介します。
+UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / `EsWindowState`）で保持します。永続化ロジックは含まず、読み書きは `Services.SettingsService` を介します。
 
 | プロパティ（抜粋） | 型 | 説明 |
 | --- | --- | --- |
-| `MainWindowBounds` | `EsPixelRect?` | MainWindow の位置・サイズ（画面物理座標） |
+| `MainWindowBounds` | `EsRectInt?` | MainWindow の位置・サイズ（画面物理座標） |
 | `MainWindowState` | `EsWindowState` | MainWindow のウィンドウ状態 |
 | `SelectScreenHotKey` / `WindowSelectHotKey` / `AreaSelectHotKey` | `HotKeySetting` | グローバルホットキー |
 | `FileNameTemplate` / `SaveFolderPath` | `string` | ファイル名テンプレート・保存先フォルダ |
@@ -58,9 +58,9 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsPixelRect` 
 
 > **トリミング / Native AOT**: コンテキストを注入しないと設定が空（`{}`）になります。コンテキストは `Settings` を参照する側のアセンブリに置いてください（同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
 
-## `Services.EsPixelRectJsonConverter`（内部・クラス）
+## `Services.EsRectIntJsonConverter`（内部・クラス）
 
-`EsPixelRect` は読み取り専用プロパティ（`Right` 等）を持つため、専用コンバーターで `X` / `Y` / `Width` / `Height` のみを読み書きします。
+`EsRectInt` は読み取り専用プロパティ（`Right` 等）を持つため、専用コンバーターで `X` / `Y` / `Width` / `Height` のみを読み書きします。
 
 - 読み込み時に欠落したプロパティは 0、未知のプロパティは無視します。
 - JSON 形式は移設前（`Avalonia.PixelRect` 用コンバーター）と同一で、既存の設定ファイルをそのまま読み込めます。
@@ -183,8 +183,8 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `PreviewImage` | `EsBitmap?` | プレビュー画像（所有権は本 ViewModel。差し替え時に旧画像を破棄） |
 | `Settings` | `Settings` | 設定オブジェクト（`ISettingsService.Current`） |
 | `HasPreviewImage` / `CanCopy` / `CanSave` / `CanPaste` | `bool` | 各操作の可否（コマンドの `CanExecute`） |
-| `DetectedRects` | `IReadOnlyList<EsPixelRect>` | 自動切り出しで検出した矩形候補群（画像座標・面積昇順・最大 256 件） |
-| `HoveredRect` | `EsPixelRect?` | ホバー中の矩形（面積最小） |
+| `DetectedRects` | `IReadOnlyList<EsRectInt>` | 自動切り出しで検出した矩形候補群（画像座標・面積昇順・最大 256 件） |
+| `HoveredRect` | `EsRectInt?` | ホバー中の矩形（面積最小） |
 | `IsAutoCropActive` | `bool` | 自動切り出しモード中かどうか |
 | `StatusMessage` / `ZoomDisplayText` / `PointerDisplayText` | `string` | 画面表示用テキスト |
 | `IsSaved` / `SavedFileName` / `SaveStatusText` | `bool` / `string` | 保存済み状態 |
@@ -201,7 +201,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | --- | --- |
 | `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る） |
 | `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。同名時は `ConfirmOverwriteAsync`） |
-| `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsPixelRect`） |
+| `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`） |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`） |
 | `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。両 UI のホバー強調と確定・キャンセル判定が共用する |
 | `CopyToClipboard()` / `PasteFromClipboard()` | クリップボード操作（実体はコールバックへ委譲） |
@@ -220,7 +220,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 | 依存 | 用途 |
 | --- | --- |
-| `Platform.Core`（`EsUtil.Platform.Core.*`） | `EsBitmap`（画像の保持・切出し）・`EsPixelRect` / `EsPoint`（座標）・`HotKeySetting` / `HotKeyModifiers` / `EsKey`（ホットキー解析）・`EsWindowState`（設定モデル）・`CaptureType`（キャプチャ種別） |
+| `Platform.Core`（`EsUtil.Platform.Core.*`） | `EsBitmap`（画像の保持・切出し）・`EsRectInt` / `EsPoint`（座標）・`HotKeySetting` / `HotKeyModifiers` / `EsKey`（ホットキー解析）・`EsWindowState`（設定モデル）・`CaptureType`（キャプチャ種別） |
 | `LineDetection`（`EsUtil.SaveEvidence.LineDetection`） | 窓枠の自動検出（`LogicLineDetector`）と矩形復元（`LineRectangleReconstructor`） |
 | `CommunityToolkit.Mvvm` | `ObservableObject` / `[RelayCommand]` / `[ObservableProperty]` |
 

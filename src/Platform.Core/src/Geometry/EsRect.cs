@@ -22,7 +22,7 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
     /// <summary>幅または高さが 0 以下（切り出せる範囲・描画できる面積が無い）かどうかを取得する。</summary>
     /// <value>幅または高さが 0 以下の場合は true。</value>
     /// <remarks>
-    /// 整数矩形の <see cref="EsPixelRect.IsEmpty"/> と同じ判定を提供する<br/>
+    /// 整数矩形の <see cref="EsRectInt.IsEmpty"/> と同じ判定を提供する<br/>
     /// （UI が <c>Width &gt; 0 &amp;&amp; Height &gt; 0</c> を書くと、同じ意味の判定が 0 以下の比較として散る）。
     /// </remarks>
     public bool IsEmpty => Width <= 0 || Height <= 0;

@@ -53,35 +53,35 @@ public class EsGeometryAvaloniaInteropTests
     }
 
     // ====================================================================
-    // 画面物理座標（EsPixelPoint / EsPixelRect）
+    // 画面物理座標（EsPointInt / EsRectInt）
     // ====================================================================
 
     [Fact]
-    public void EsPixelPoint_往復変換で値が一致する()
+    public void EsPointInt_往復変換で値が一致する()
     {
-        var es = new EsPixelPoint(123, 456);
+        var es = new EsPointInt(123, 456);
 
         Assert.Equal(new PixelPoint(123, 456), es.ToAvaloniaPixelPoint());
-        Assert.Equal(es, new PixelPoint(123, 456).ToEsPixelPoint());
+        Assert.Equal(es, new PixelPoint(123, 456).ToEsPointInt());
     }
 
     [Fact]
-    public void EsPixelPoint_負の座標も変換できる()
+    public void EsPointInt_負の座標も変換できる()
     {
         // プライマリモニタが (0,0) にないマルチモニタ構成を模擬する
-        var es = new EsPixelPoint(-1920, -100);
+        var es = new EsPointInt(-1920, -100);
 
         Assert.Equal(new PixelPoint(-1920, -100), es.ToAvaloniaPixelPoint());
-        Assert.Equal(es, new PixelPoint(-1920, -100).ToEsPixelPoint());
+        Assert.Equal(es, new PixelPoint(-1920, -100).ToEsPointInt());
     }
 
     [Fact]
-    public void EsPixelRect_往復変換で値が一致する()
+    public void EsRectInt_往復変換で値が一致する()
     {
-        var es = new EsPixelRect(10, 20, 1920, 1080);
+        var es = new EsRectInt(10, 20, 1920, 1080);
 
         Assert.Equal(new PixelRect(10, 20, 1920, 1080), es.ToAvaloniaPixelRect());
-        Assert.Equal(es, new PixelRect(10, 20, 1920, 1080).ToEsPixelRect());
+        Assert.Equal(es, new PixelRect(10, 20, 1920, 1080).ToEsRectInt());
     }
 
     // ====================================================================

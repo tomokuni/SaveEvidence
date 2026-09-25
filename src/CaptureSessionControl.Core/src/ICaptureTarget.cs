@@ -35,5 +35,5 @@ public interface ICaptureTarget
     /// 実装側は受け取った範囲で画像を切り出して差し替えるだけでよい。<br/>
     /// Undo 履歴への退避・未保存化・ステータス通知は実装側の責務とする（アプリのドメイン操作のため）。
     /// </remarks>
-    void ApplyCrop(EsPixelRect bounds);
+    void ApplyCrop(EsRectInt bounds);
 }

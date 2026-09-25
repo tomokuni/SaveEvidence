@@ -7,7 +7,7 @@ namespace EsUtil.Platform.MewUI;
 /// <remarks>
 /// <para>
 /// MewUI のウィンドウ位置・サイズは DIP で扱われるが、設定（アプリの <c>Settings.MainWindowBounds</c>）は<br/>
-/// UI 非依存の画面物理ピクセル（<see cref="EsPixelRect"/>）で保持する。<br/>
+/// UI 非依存の画面物理ピクセル（<see cref="EsRectInt"/>）で保持する。<br/>
 /// 本クラスがその変換を単一所有し、往復の誤差と丸めの規則を 1 箇所に閉じる。
 /// </para>
 /// <para>
@@ -21,10 +21,10 @@ public static class WindowPlacementMath
     /// <param name="scale">DPI スケール係数（1.0 = 96 DPI）。1 以下の場合は有効値として扱わない。</param>
     /// <returns>画面物理ピクセルの座標（四捨五入）。</returns>
     /// <remarks>DPI スケールは 1 未満（縮小表示）もあり得るため、0 以下だけを無効として扱う。</remarks>
-    public static EsPixelPoint ToPhysicalPixelPoint(EsPoint dip, double scale)
+    public static EsPointInt ToPhysicalPixelPoint(EsPoint dip, double scale)
     {
         var factor = NormalizeScale(scale);
-        return new EsPixelPoint(
+        return new EsPointInt(
             (int)Math.Round(dip.X * factor),
             (int)Math.Round(dip.Y * factor));
     }
@@ -35,7 +35,7 @@ public static class WindowPlacementMath
     /// <returns>画面物理ピクセルのサイズ（四捨五入・最小 1）。</returns>
     /// <remarks>
     /// ウィンドウの幅・高さが 0 になると復元できないため、最小 1 にクランプする。<br/>
-    /// 戻り値は設定が使う整数型（<c>System.Drawing.Size</c>）とする（<see cref="EsPixelRect"/> へそのまま渡せる）。
+    /// 戻り値は設定が使う整数型（<c>System.Drawing.Size</c>）とする（<see cref="EsRectInt"/> へそのまま渡せる）。
     /// </remarks>
     public static System.Drawing.Size ToPhysicalPixelSize(EsSize dip, double scale)
     {
@@ -50,7 +50,7 @@ public static class WindowPlacementMath
     /// <param name="scale">DPI スケール係数（1.0 = 96 DPI）。</param>
     /// <returns>DIP の座標。</returns>
     /// <remarks>成分ごとの換算は <see cref="DpiScaler.ToDip(int, double)"/>（両 UI 共通の単一所有者）へ委譲する。</remarks>
-    public static EsPoint ToDipPoint(EsPixelPoint physical, double scale)
+    public static EsPoint ToDipPoint(EsPointInt physical, double scale)
         => new(DpiScaler.ToDip(physical.X, scale), DpiScaler.ToDip(physical.Y, scale));
 
     /// <summary>画面物理ピクセルの長さを DIP の長さへ変換する。</summary>
@@ -68,7 +68,7 @@ public static class WindowPlacementMath
     /// 幅・高さが 0 以下の値（壊れた設定ファイル・手編集の誤り）では復元しない<br/>
     /// （0 サイズのウィンドウが作られて操作不能になるのを防ぐ）。
     /// </remarks>
-    public static bool IsUsable(EsPixelRect? bounds)
+    public static bool IsUsable(EsRectInt? bounds)
         => bounds is { Width: > 0, Height: > 0 };
 
     /// <summary>DPI スケール係数を有効値へ正規化する。</summary>

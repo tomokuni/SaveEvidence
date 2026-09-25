@@ -98,7 +98,7 @@ public class CaptureOwnerScopeTests
             return CanExclude;
         }
 
-        public bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds) => true;
+        public bool SetBounds(EsPlatformHandle handle, EsRectInt bounds) => true;
 
         public void EvacuateWindow(EsPlatformHandle handle) => log.Add("evacuate");
     }

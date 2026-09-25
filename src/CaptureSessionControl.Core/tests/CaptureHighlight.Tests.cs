@@ -34,7 +34,7 @@ public class CaptureHighlightTests
     /// <param name="title">表示名。</param>
     /// <param name="className">クラス名。</param>
     /// <returns>検出結果。</returns>
-    private static ElementFinderResults Detected(EsPixelRect bounds, string? title = "Sample", string? className = "Notepad")
+    private static ElementFinderResults Detected(EsRectInt bounds, string? title = "Sample", string? className = "Notepad")
         => new(bounds, IsDetected: true, Title: title, ClassName: className);
 
     [Fact]
@@ -43,7 +43,7 @@ public class CaptureHighlightTests
         var session = new CaptureHighlightSession();
 
         var result = session.Update(
-            CaptureType.WindowSelect, Detected(new EsPixelRect(2020, 100, 800, 600)), new EsPixelPoint(1920, 0));
+            CaptureType.WindowSelect, Detected(new EsRectInt(2020, 100, 800, 600)), new EsPointInt(1920, 0));
 
         Assert.NotNull(result.DomainRect);
         Assert.Equal(new EsRect(100, 100, 800, 600), result.DomainRect);
@@ -69,9 +69,9 @@ public class CaptureHighlightTests
     {
         var session = new CaptureHighlightSession();
 
-        var first = session.Update(CaptureType.WindowSelect, Detected(new EsPixelRect(0, 0, 10, 10), "A"), default);
-        var same = session.Update(CaptureType.WindowSelect, Detected(new EsPixelRect(20, 20, 10, 10), "A"), default);
-        var changed = session.Update(CaptureType.WindowSelect, Detected(new EsPixelRect(20, 20, 10, 10), "B"), default);
+        var first = session.Update(CaptureType.WindowSelect, Detected(new EsRectInt(0, 0, 10, 10), "A"), default);
+        var same = session.Update(CaptureType.WindowSelect, Detected(new EsRectInt(20, 20, 10, 10), "A"), default);
+        var changed = session.Update(CaptureType.WindowSelect, Detected(new EsRectInt(20, 20, 10, 10), "B"), default);
 
         Assert.True(first.TitleChanged);  // 初期値（空文字）からの変化
         Assert.False(same.TitleChanged);  // 同じ表示名
@@ -82,7 +82,7 @@ public class CaptureHighlightTests
     public void Update_未検出でタイトルが空へ戻る変化を返す()
     {
         var session = new CaptureHighlightSession();
-        session.Update(CaptureType.WindowSelect, Detected(new EsPixelRect(0, 0, 10, 10), "A"), default);
+        session.Update(CaptureType.WindowSelect, Detected(new EsRectInt(0, 0, 10, 10), "A"), default);
 
         var result = session.Update(CaptureType.WindowSelect, default, default);
 
@@ -107,7 +107,7 @@ public class CaptureHighlightTests
         var logger = new RecordingLogger();
         var session = new CaptureHighlightSession(logger);
 
-        session.Update(CaptureType.WindowSelect, Detected(new EsPixelRect(2020, 100, 800, 600)), new EsPixelPoint(1920, 0));
+        session.Update(CaptureType.WindowSelect, Detected(new EsRectInt(2020, 100, 800, 600)), new EsPointInt(1920, 0));
 
         Assert.Equal(
             "[CaptureSession] Highlight: type=WindowSelect detected=True rect=100,100,800,600 title=Sample class=Notepad",

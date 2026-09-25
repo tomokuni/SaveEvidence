@@ -117,7 +117,7 @@ flowchart TB
 | --- | --- |
 | `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（名前ベース変換。Avalonia の `Key` は `PageUp` / `Prior` 等の別名で同値を持つため数値変換しない） |
 | `EsWindowStateAvaloniaInterop` | `EsWindowState` ⇔ `Avalonia.Controls.WindowState`（名前ベース変換。メンバー数が 4 と少ないため `Enum.IsDefined` で未定義値を検出し `Normal` へフォールバックする） |
-| `EsGeometryAvaloniaInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPixelPoint` / `EsPixelRect` ⇔ Avalonia の対応型 |
+| `EsGeometryAvaloniaInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` ⇔ Avalonia の対応型 |
 | `EsPlatformHandleAvaloniaInterop` | `Avalonia.Platform.IPlatformHandle` ⇔ `EsPlatformHandle` |
 | `ColorAvaloniaInterop` | `Avalonia.Media.Color` ⇔ `System.Drawing.Color`（コアの色型。`System.Drawing.Primitives` は共有フレームワーク同梱のため Windows 専用ではない） |
 | `CursorOverrideGuardAvaloniaExtensions` | `ICursorOverrideGuard.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲） |

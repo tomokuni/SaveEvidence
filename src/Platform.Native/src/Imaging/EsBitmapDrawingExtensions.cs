@@ -3,7 +3,7 @@ using System.Runtime.Versioning;
 using DrawingBitmap = System.Drawing.Bitmap;
 using DrawingImageLockMode = System.Drawing.Imaging.ImageLockMode;
 using DrawingPixelFormat = System.Drawing.Imaging.PixelFormat;
-using RectInt = System.Drawing.Rectangle;
+using DrawingRect = System.Drawing.Rectangle;
 
 namespace EsUtil.Platform.Native.Imaging;
 
@@ -30,7 +30,7 @@ public static class EsBitmapDrawingExtensions
         var h = bitmap.Height;
         // コアのビットマップを直接確保する（Skia を経由しない。ストライドは幅×4 で固定）
         var buffer = EsBitmap.Create(w, h);
-        var data = bitmap.LockBits(new RectInt(0, 0, w, h), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
+        var data = bitmap.LockBits(new DrawingRect(0, 0, w, h), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
             var dstStride = buffer.Stride;
@@ -74,7 +74,7 @@ public static class EsBitmapDrawingExtensions
         var width = bitmap.Size.Width;
         var height = bitmap.Size.Height;
         var sd = new DrawingBitmap(width, height, DrawingPixelFormat.Format32bppPArgb);
-        var data = sd.LockBits(new RectInt(0, 0, width, height), DrawingImageLockMode.WriteOnly, DrawingPixelFormat.Format32bppPArgb);
+        var data = sd.LockBits(new DrawingRect(0, 0, width, height), DrawingImageLockMode.WriteOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
             var srcStride = bitmap.Stride;

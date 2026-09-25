@@ -37,7 +37,7 @@ public static class LineRectangleReconstructor
 
     /// <summary>検出された線分から矩形（ウィンドウの 4 辺）の候補を復元する。</summary>
     /// <param name="results">検出された線分一覧。</param>
-    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsPixelRect"/>。面積昇順・最大 <see cref="MaxCandidates"/> 件）。</returns>
+    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsRectInt"/>。面積昇順・最大 <see cref="MaxCandidates"/> 件）。</returns>
     /// <remarks>
     /// 垂直 2 本・水平 2 本が揃わない場合は復元できない（空リストを返す）。<br/>
     /// 幅・高さが 1 未満（同一座標のペア）のものは除外する。<br/>
@@ -49,7 +49,7 @@ public static class LineRectangleReconstructor
     /// 5. 面積昇順で返す（上限を超える分は切り捨てる）<br/>
     /// 「検出→矩形復元」の責務を <see cref="LogicLineDetector"/>（検出）から分離し、単一所有（DRY）とする。
     /// </remarks>
-    public static IReadOnlyList<EsPixelRect> Reconstruct(IReadOnlyList<LineDetectionResult> results)
+    public static IReadOnlyList<EsRectInt> Reconstruct(IReadOnlyList<LineDetectionResult> results)
     {
         var verticals = BuildSpans(results, LineOrientation.Vertical);
         var horizontals = BuildSpans(results, LineOrientation.Horizontal);
@@ -60,7 +60,7 @@ public static class LineRectangleReconstructor
             return [];
         }
 
-        var rects = new List<EsPixelRect>();
+        var rects = new List<EsRectInt>();
 
         for (var i = 0; i < verticals.Count - 1; i++)
         {
@@ -116,7 +116,7 @@ public static class LineRectangleReconstructor
                             continue;
                         }
 
-                        rects.Add(new EsPixelRect(left.Coord, spans[a].Coord, width, height));
+                        rects.Add(new EsRectInt(left.Coord, spans[a].Coord, width, height));
 
                         // 1 つの垂直線ペアからの生成数にも上限を設ける（表のように全水平線が範囲を覆う画像での爆発を防ぐ）
                         if (++generated >= MaxCandidatesPerPair)
@@ -147,11 +147,11 @@ public static class LineRectangleReconstructor
     /// <summary>矩形の面積（ピクセル数）を求める。</summary>
     /// <param name="rect">対象の矩形。</param>
     /// <returns>面積（幅 × 高さ）。桁あふれを避けるため 64 ビットで計算する。</returns>
-    private static long Area(EsPixelRect rect) => (long)rect.Width * rect.Height;
+    private static long Area(EsRectInt rect) => (long)rect.Width * rect.Height;
 
     /// <summary>候補を面積の小さい順に <see cref="MaxCandidates"/> 件まで間引く。</summary>
     /// <param name="rects">対象の候補一覧（このリストを直接書き換える）。</param>
-    private static void TrimCandidates(List<EsPixelRect> rects)
+    private static void TrimCandidates(List<EsRectInt> rects)
     {
         rects.Sort(static (x, y) => Area(x).CompareTo(Area(y)));
         rects.RemoveRange(MaxCandidates, rects.Count - MaxCandidates);

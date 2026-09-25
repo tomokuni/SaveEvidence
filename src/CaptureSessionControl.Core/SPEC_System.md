@@ -114,7 +114,7 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ CaptureResult（record）                               │
-│  Image: EsBitmap? / SourceBounds: EsPixelRect?        │
+│  Image: EsBitmap? / SourceBounds: EsRectInt?        │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -123,68 +123,68 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 ```mermaid
 classDiagram
     class CropBoundsMath {
-        +ComputeCropBounds(EsRect, EsSize, double, bool) EsPixelRect
-        +ToPixelRect(EsRect, EsSize) EsPixelRect
-        +ToClosedInterval(EsPixelRect) EsPixelRect
-        +ToClosedInterval(EsPixelRect, EsSize) EsPixelRect
+        +ComputeCropBounds(EsRect, EsSize, double, bool) EsRectInt
+        +ToPixelRect(EsRect, EsSize) EsRectInt
+        +ToClosedInterval(EsRectInt) EsRectInt
+        +ToClosedInterval(EsRectInt, EsSize) EsRectInt
         +RoundToPixel(double) int
     }
     class CaptureTypeTraits {
         +IsHighlighted(CaptureType) bool
         +UsesClosedInterval(CaptureType) bool
         +GetElementTarget(CaptureType) CaptureElementTarget
-        +FindUnderCursor(IElementFinder, CaptureType, EsPixelPoint) ElementFinderResults
+        +FindUnderCursor(IElementFinder, CaptureType, EsPointInt) ElementFinderResults
         +ResolveRect(CaptureType, EsRect, EsRect) EsRect?
     }
     class CaptureClipMath {
-        +ResolveCaptureRect(CaptureType, EsRect, EsPixelRect) EsPixelRect
-        +ResolveCaptureRect(CaptureType, EsPixelRect, EsPixelRect) EsPixelRect
+        +ResolveCaptureRect(CaptureType, EsRect, EsRectInt) EsRectInt
+        +ResolveCaptureRect(CaptureType, EsRectInt, EsRectInt) EsRectInt
         +ImageSize(EsBitmap) EsSize
-        +ImageBounds(EsBitmap, EsPixelPoint) EsPixelRect
+        +ImageBounds(EsBitmap, EsPointInt) EsRectInt
         +ValidateImage(EsBitmap, string)
-        +ToLocalRect(EsPixelRect, EsPixelPoint) EsPixelRect
-        +ToScreenRect(EsRect, EsPixelPoint) EsRect
-        +ToScreenRect(EsPixelRect, EsPixelPoint) EsPixelRect
-        +Extract(EsBitmap, EsPixelPoint, EsPixelRect) EsBitmap?
+        +ToLocalRect(EsRectInt, EsPointInt) EsRectInt
+        +ToScreenRect(EsRect, EsPointInt) EsRect
+        +ToScreenRect(EsRectInt, EsPointInt) EsRectInt
+        +Extract(EsBitmap, EsPointInt, EsRectInt) EsBitmap?
     }
     class CaptureHighlightSession {
         +EsRect? DomainRect
         +string Title
-        +Update(CaptureType, ElementFinderResults, EsPixelPoint) CaptureHighlight
+        +Update(CaptureType, ElementFinderResults, EsPointInt) CaptureHighlight
     }
     class CaptureKeyActions {
         +Resolve(EsKey, bool) CaptureKeyAction
     }
     class CaptureClickSelection {
-        +Fix(EsPixelRect) bool
-        +Take() EsPixelRect?
+        +Fix(EsRectInt) bool
+        +Take() EsRectInt?
     }
     class CaptureResult {
         +EsBitmap? Image
-        +EsPixelRect? SourceBounds
-        +From(EsBitmap, EsPixelRect) CaptureResult
+        +EsRectInt? SourceBounds
+        +From(EsBitmap, EsRectInt) CaptureResult
     }
     class CaptureHighlight {
         +EsRect? DomainRect
         +bool TitleChanged
     }
     class MonitorScalingMath {
-        +ResolveForRect(EsPixelRect, IReadOnlyList, double) double
-        +ResolveForDomainRect(EsRect, EsPixelPoint, IReadOnlyList, double) double
+        +ResolveForRect(EsRectInt, IReadOnlyList, double) double
+        +ResolveForDomainRect(EsRect, EsPointInt, IReadOnlyList, double) double
         +Collect(IEnumerable) IReadOnlyList
         +ResolveScaling(IEnumerable) double
     }
     class CaptureClipCache {
-        +HasCached(EsPixelRect) bool
-        +Take(EsPixelRect) EsBitmap?
-        +Store(EsPixelRect, EsBitmap)
+        +HasCached(EsRectInt) bool
+        +Take(EsRectInt) EsBitmap?
+        +Store(EsRectInt, EsBitmap)
         +Dispose()
     }
     class CaptureImageHolder {
         +EsBitmap? Image
-        +EsPixelPoint Origin
-        +EsPixelRect Bounds
-        +Set(EsBitmap, EsPixelPoint) bool
+        +EsPointInt Origin
+        +EsRectInt Bounds
+        +Set(EsBitmap, EsPointInt) bool
         +Dispose()
     }
     class CaptureVirtualScreen {
@@ -231,8 +231,8 @@ classDiagram
     CaptureSettingsMerge ..> CaptureSettings : マージ
     CaptureSessionState ..> CaptureSessionSlot : 状態を担う
     CaptureOwnerScope ..> ICaptureOwnerWindow : 退避と復帰
-    CropBoundsMath ..> EsPixelRect : 生成
-    CaptureResult ..> EsPixelRect : 保持
+    CropBoundsMath ..> EsRectInt : 生成
+    CaptureResult ..> EsRectInt : 保持
 ```
 
 ## 4. 処理フロー

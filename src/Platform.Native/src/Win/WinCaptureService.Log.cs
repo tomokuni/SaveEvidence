@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using RectInt = System.Drawing.Rectangle;
+using DrawingRect = System.Drawing.Rectangle;
 
 namespace EsUtil.Platform.Native.Win;
 
@@ -34,7 +34,7 @@ internal static partial class WinCaptureServiceLog
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="bounds">キャプチャ矩形。</param>
     [LoggerMessage(LogLevel.Debug, "[CaptureService] CaptureSdBitmap: bounds={Bounds}")]
-    internal static partial void LogCaptureSdBitmap(this ILogger logger, RectInt bounds);
+    internal static partial void LogCaptureSdBitmap(this ILogger logger, DrawingRect bounds);
 
     /// <summary>画面領域キャプチャ完了のデバッグログ。</summary>
     /// <remarks>

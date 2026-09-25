@@ -15,10 +15,10 @@ internal sealed class NoOpCursorService : ICursorService
     public static NoOpCursorService Instance { get; } = new();
 
     /// <inheritdoc/>
-    public EsPixelPoint GetCursorScreenPoint() => default;
+    public EsPointInt GetCursorScreenPoint() => default;
 
     /// <inheritdoc/>
-    public void SetCursorScreenPoint(EsPixelPoint point)
+    public void SetCursorScreenPoint(EsPointInt point)
     {
     }
 

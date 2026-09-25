@@ -28,7 +28,7 @@ internal sealed partial class OverlayWindow : Window
     private readonly CaptureType _captureType;
 
     /// <summary>キャプチャ完了コールバック（確定・キャンセル・エラー時に呼ばれる）。切り出し矩形は画面物理座標。</summary>
-    private readonly Action<EsBitmap?, EsPixelRect?> _onComplete;
+    private readonly Action<EsBitmap?, EsRectInt?> _onComplete;
 
     /// <summary>DPI スケーリング係数（プライマリスクリーン基準）。</summary>
     private readonly double _scaling;
@@ -64,10 +64,10 @@ internal sealed partial class OverlayWindow : Window
     private readonly CaptureClipCache _clipCache = new();
 
     /// <summary>モニタごとの矩形と実表示倍率（構築時に 1 回だけ解決する）。</summary>
-    private IReadOnlyList<(EsPixelRect Bounds, double Scale)> _monitors = [];
+    private IReadOnlyList<(EsRectInt Bounds, double Scale)> _monitors = [];
 
     /// <summary>ウィンドウが覆う仮想スクリーンの範囲（画面物理ピクセル）。画像未取得時の切り出し範囲の判定に使う。</summary>
-    private EsPixelRect _screenBounds;
+    private EsRectInt _screenBounds;
 
     /// <summary>撮影した画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時の範囲をコアが単一所有する）。</summary>
     private readonly CaptureImageHolder _captureImage;
@@ -95,7 +95,7 @@ internal sealed partial class OverlayWindow : Window
         CaptureType captureType,
         CaptureSettings settings,
         double scaling,
-        Action<EsBitmap?, EsPixelRect?> onComplete,
+        Action<EsBitmap?, EsRectInt?> onComplete,
         ILogger? logger = null)
     {
         InitializeComponent();
@@ -133,7 +133,7 @@ internal sealed partial class OverlayWindow : Window
     /// </remarks>
     private void ResolveMonitors()
         => _monitors = MonitorScalingMath.Collect(
-            Screens.All.Select(screen => (screen.Bounds.ToEsPixelRect(), screen.Scaling)));
+            Screens.All.Select(screen => (screen.Bounds.ToEsRectInt(), screen.Scaling)));
 
     /// <summary>ウィンドウを仮想スクリーン全体（全モニタの包含矩形）に合わせて配置・サイズ変更する。</summary>
     /// <remarks>
@@ -145,7 +145,7 @@ internal sealed partial class OverlayWindow : Window
     {
         // 包含矩形の計算と空の判定はコアが単一所有する（空の場合は撮影する領域が無い）
         if (CaptureVirtualScreen.ResolveBounds(
-                Screens.All.Select(screen => screen.Bounds.ToEsPixelRect())) is not { } bounds) return;
+                Screens.All.Select(screen => screen.Bounds.ToEsRectInt())) is not { } bounds) return;
 
         // 物理ピクセル → DIP の換算は Platform 層の純粋関数（係数の正規化を含む）に委譲する
         Position = bounds.TopLeft.ToAvaloniaPixelPoint();
@@ -210,7 +210,7 @@ internal sealed partial class OverlayWindow : Window
     /// 切り出し矩形の決定（閉区間化・画像内へのクランプ）はコア（<see cref="CaptureClipMath.ResolveCaptureRect"/>）が単一所有する。<br/>
     /// 未取得時のフォールバック（どちらの取得経路を使うか）もコアの保持クラスが単一所有する。
     /// </remarks>
-    private EsPixelRect CaptureImageBounds => _captureImage.Bounds;
+    private EsRectInt CaptureImageBounds => _captureImage.Bounds;
 
     // ====================================================================
     // テスト用アクセサ（回帰テストからの検証用）
@@ -262,7 +262,7 @@ internal sealed partial class OverlayWindow : Window
         switch (CaptureKeyActions.Resolve(e.Key.ToEsKey(), target is not null))
         {
             case CaptureKeyAction.Confirm when target is { } rect:
-                CompleteSelection(CaptureClipMath.ToScreenRect(rect, Position.ToEsPixelPoint()));
+                CompleteSelection(CaptureClipMath.ToScreenRect(rect, Position.ToEsPointInt()));
                 e.Handled = true;
                 break;
             case CaptureKeyAction.Cancel:
@@ -281,7 +281,7 @@ internal sealed partial class OverlayWindow : Window
     /// </remarks>
     private void OnAreaConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
         // ドメイン（ウィンドウローカル物理ピクセル）→ 画面物理座標の変換はコアが単一所有する
-        => CompleteSelection(CaptureClipMath.ToScreenRect(e.SelectionRect.ToEsRect(), Position.ToEsPixelPoint()));
+        => CompleteSelection(CaptureClipMath.ToScreenRect(e.SelectionRect.ToEsRect(), Position.ToEsPointInt()));
 
     /// <summary>AreaSelect のキャンセル要求（Esc キー・ダブルクリック外等）を受けてキャプチャをキャンセルする。</summary>
     /// <param name="sender">イベント送信元（FadeMaskDragRectControl）。</param>

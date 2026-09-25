@@ -15,11 +15,11 @@ internal sealed class NoOpElementFinder : IElementFinder
     public static NoOpElementFinder Instance { get; } = new();
 
     /// <inheritdoc/>
-    public ElementFinderResults FindWindowUnderCursor(EsPixelPoint screenPoint)
+    public ElementFinderResults FindWindowUnderCursor(EsPointInt screenPoint)
         => new(default, false);
 
     /// <inheritdoc/>
-    public ElementFinderResults FindScreenUnderCursor(EsPixelPoint screenPoint)
+    public ElementFinderResults FindScreenUnderCursor(EsPointInt screenPoint)
         => new(default, false);
 
     /// <inheritdoc/>

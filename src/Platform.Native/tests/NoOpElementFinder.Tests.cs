@@ -18,8 +18,8 @@ public class NoOpElementFinderBehaviorTests
     {
         var finder = NoOpElementFinder.Instance;
 
-        Assert.False(finder.FindWindowUnderCursor(new EsPixelPoint(500, 500)).IsDetected);
-        Assert.False(finder.FindScreenUnderCursor(new EsPixelPoint(500, 500)).IsDetected);
+        Assert.False(finder.FindWindowUnderCursor(new EsPointInt(500, 500)).IsDetected);
+        Assert.False(finder.FindScreenUnderCursor(new EsPointInt(500, 500)).IsDetected);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class NoOpElementFinderBehaviorTests
 
         // Handle を設定した結果（ウィンドウ検出時）を構築できる
         var result = new ElementFinderResults(
-            new EsPixelRect(10, 10, 100, 80),
+            new EsRectInt(10, 10, 100, 80),
             IsDetected: true,
             Title: "Test Window",
             Handle: handle);
@@ -66,7 +66,7 @@ public class NoOpElementFinderBehaviorTests
 
         // クラス名を設定した結果（ウィンドウ検出時。デスクトップ除外の検証用）を構築できる
         var result = new ElementFinderResults(
-            new EsPixelRect(10, 10, 100, 80),
+            new EsRectInt(10, 10, 100, 80),
             IsDetected: true,
             Title: "Test Window",
             Handle: handle,
@@ -74,7 +74,7 @@ public class NoOpElementFinderBehaviorTests
 
         Assert.Equal("CabinetWClass", result.ClassName);
         // 省略時は null（後方互換）
-        var without = new ElementFinderResults(new EsPixelRect(0, 0, 10, 10), IsDetected: true);
+        var without = new ElementFinderResults(new EsRectInt(0, 0, 10, 10), IsDetected: true);
         Assert.Null(without.ClassName);
     }
 }

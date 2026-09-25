@@ -10,9 +10,9 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// UI フレームワークに依存しない規則であるため、本クラスが単一所有する。<br/>
 /// <br/>
 /// <b>規則</b>:<br/>
-/// 1. <see cref="HasCached(EsPixelRect)"/> は「同じ矩形なら同じ画像になる」ため再切り出しをスキップする判断を与える。<br/>
-/// 2. <see cref="Take(EsPixelRect)"/> は一致するキャッシュを<b>所有権ごと</b>返す（以降の <see cref="Dispose"/> で破棄されない）。<br/>
-/// 3. <see cref="Store(EsPixelRect, EsBitmap)"/> は<b>新しい画像を入れてから旧値を破棄する</b>（同一インスタンスの取り違えを避ける）。<br/>
+/// 1. <see cref="HasCached(EsRectInt)"/> は「同じ矩形なら同じ画像になる」ため再切り出しをスキップする判断を与える。<br/>
+/// 2. <see cref="Take(EsRectInt)"/> は一致するキャッシュを<b>所有権ごと</b>返す（以降の <see cref="Dispose"/> で破棄されない）。<br/>
+/// 3. <see cref="Store(EsRectInt, EsBitmap)"/> は<b>新しい画像を入れてから旧値を破棄する</b>（同一インスタンスの取り違えを避ける）。<br/>
 /// 4. <see cref="Dispose"/> で保持中の画像を破棄する（複数回呼んでも安全）。<br/>
 /// <br/>
 /// <b>スレッド</b>: 切り出しはバックグラウンドで行い、結果の反映は UI スレッドで行う想定のため、内部で排他する。
@@ -23,7 +23,7 @@ public sealed class CaptureClipCache : IDisposable
     private readonly object _gate = new();
 
     /// <summary>キャッシュ済みの切り出し矩形（未キャッシュの場合は null）。</summary>
-    private EsPixelRect? _rect;
+    private EsRectInt? _rect;
 
     /// <summary>キャッシュ済みの切り出し画像（未キャッシュの場合は null）。</summary>
     private EsBitmap? _bitmap;
@@ -53,7 +53,7 @@ public sealed class CaptureClipCache : IDisposable
     /// <param name="captureRect">判定する切り出し矩形（画面物理ピクセル・閉区間）。</param>
     /// <returns>同じ矩形で画像を保持している場合は true（再切り出しは不要）。</returns>
     /// <remarks>矩形のみで判定する（同じ矩形なら切り出し結果も同じ画像になる）。</remarks>
-    public bool HasCached(EsPixelRect captureRect)
+    public bool HasCached(EsRectInt captureRect)
     {
         lock (_gate)
         {
@@ -68,7 +68,7 @@ public sealed class CaptureClipCache : IDisposable
     /// 取り出した画像は以降 <see cref="Dispose"/> では破棄されない（呼び出し側が所有する）。<br/>
     /// 同じ矩形で <see cref="Take"/> を 2 回呼ぶと 2 回目は null になる（二重破棄を防ぐ）。
     /// </remarks>
-    public EsBitmap? Take(EsPixelRect captureRect)
+    public EsBitmap? Take(EsRectInt captureRect)
     {
         lock (_gate)
         {
@@ -91,7 +91,7 @@ public sealed class CaptureClipCache : IDisposable
     /// 破棄済みの場合は渡された画像を破棄する（呼び出し側の後片付けを不要にする）。<br/>
     /// 格納できるのは 1 件のみで、置き換え時に旧値を破棄する。
     /// </remarks>
-    public void Store(EsPixelRect captureRect, EsBitmap? bitmap)
+    public void Store(EsRectInt captureRect, EsBitmap? bitmap)
     {
         if (bitmap is null)
         {

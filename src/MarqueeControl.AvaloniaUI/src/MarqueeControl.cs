@@ -574,8 +574,8 @@ public sealed partial class MarqueeControl : Panel
         /// <summary>ドメイン座標を画面物理座標へ変換する（カーソル移動用）。</summary>
         /// <param name="domainPoint">ドメイン座標。</param>
         /// <returns>画面物理座標（UI 非依存のコア型）。</returns>
-        public override EsPixelPoint ToScreenPoint(EsPoint domainPoint)
-            => ScreenConverter.LocalDipToScreen(owner, owner._marquee.ToDip(domainPoint).ToAvaloniaPoint()).ToEsPixelPoint();
+        public override EsPointInt ToScreenPoint(EsPoint domainPoint)
+            => ScreenConverter.LocalDipToScreen(owner, owner._marquee.ToDip(domainPoint).ToAvaloniaPoint()).ToEsPointInt();
     }
 
     /// <summary>コアからの通知を公開イベントへ転送する（判断はしない）。</summary>

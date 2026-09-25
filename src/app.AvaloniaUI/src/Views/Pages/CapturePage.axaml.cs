@@ -59,7 +59,7 @@ public sealed partial class CapturePage : UserControl
     private CaptureSessionControl _captureSessionControl = null!;
 
     /// <summary>進行中の Crop セッションの Task。</summary>
-    private Task<EsPixelRect?>? _cropTask;
+    private Task<EsRectInt?>? _cropTask;
 
     // Undo スタック（DI から取得するシングルトン。UndoPage と共有）
     private readonly UndoStack _undoStack = null!;
@@ -743,7 +743,7 @@ public sealed partial class CapturePage : UserControl
         UpdateCropButtonText();
 
         // 確定時のみ切り出しを実行する（開始できなかった場合は結果 null、キャンセルは空の矩形。
-        // 空の判定はコアの契約（EsPixelRect.IsEmpty）が単一所有する）
+        // 空の判定はコアの契約（EsRectInt.IsEmpty）が単一所有する）
         if (result is { } bounds && !bounds.IsEmpty)
         {
             ExecuteCropFromBounds(bounds);
@@ -753,10 +753,10 @@ public sealed partial class CapturePage : UserControl
     /// <summary>確定した切り出し範囲（コア型の画面物理矩形）で画像を切り出す。</summary>
     /// <param name="bounds">切り出す矩形（コア型。UI 型へ変換せずそのまま適用先へ渡す）。</param>
     /// <remarks>
-    /// 適用先（<c>CropPreviewCommand</c>）はコア型（<see cref="EsPixelRect"/>）を要求するため、<br/>
+    /// 適用先（<c>CropPreviewCommand</c>）はコア型（<see cref="EsRectInt"/>）を要求するため、<br/>
     /// 境界（UI 層）で変換せずコア型のまま渡す（UI 型を渡すと型が一致せず例外になる）。
     /// </remarks>
-    private void ExecuteCropFromBounds(EsPixelRect bounds)
+    private void ExecuteCropFromBounds(EsRectInt bounds)
     {
         var srcBmp = _viewModel.PreviewImage;
         if (srcBmp is null) return;

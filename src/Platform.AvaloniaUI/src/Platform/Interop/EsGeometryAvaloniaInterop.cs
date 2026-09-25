@@ -50,23 +50,23 @@ public static class EsGeometryAvaloniaInterop
     /// <returns>コアの矩形。</returns>
     public static EsRect ToEsRect(this Rect rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
 
-    /// <summary><see cref="EsPixelPoint"/> を Avalonia の画面物理座標型へ変換する。</summary>
+    /// <summary><see cref="EsPointInt"/> を Avalonia の画面物理座標型へ変換する。</summary>
     /// <param name="point">変換元の画面物理座標。</param>
     /// <returns>Avalonia の画面物理座標。</returns>
-    public static PixelPoint ToAvaloniaPixelPoint(this EsPixelPoint point) => new(point.X, point.Y);
+    public static PixelPoint ToAvaloniaPixelPoint(this EsPointInt point) => new(point.X, point.Y);
 
-    /// <summary>Avalonia の画面物理座標型を <see cref="EsPixelPoint"/> へ変換する。</summary>
+    /// <summary>Avalonia の画面物理座標型を <see cref="EsPointInt"/> へ変換する。</summary>
     /// <param name="point">変換元の画面物理座標。</param>
     /// <returns>コアの画面物理座標。</returns>
-    public static EsPixelPoint ToEsPixelPoint(this PixelPoint point) => new(point.X, point.Y);
+    public static EsPointInt ToEsPointInt(this PixelPoint point) => new(point.X, point.Y);
 
-    /// <summary><see cref="EsPixelRect"/> を Avalonia の画面物理矩形型へ変換する。</summary>
+    /// <summary><see cref="EsRectInt"/> を Avalonia の画面物理矩形型へ変換する。</summary>
     /// <param name="rect">変換元の画面物理矩形。</param>
     /// <returns>Avalonia の画面物理矩形。</returns>
-    public static PixelRect ToAvaloniaPixelRect(this EsPixelRect rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
+    public static PixelRect ToAvaloniaPixelRect(this EsRectInt rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
 
-    /// <summary>Avalonia の画面物理矩形型を <see cref="EsPixelRect"/> へ変換する。</summary>
+    /// <summary>Avalonia の画面物理矩形型を <see cref="EsRectInt"/> へ変換する。</summary>
     /// <param name="rect">変換元の画面物理矩形。</param>
     /// <returns>コアの画面物理矩形。</returns>
-    public static EsPixelRect ToEsPixelRect(this PixelRect rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
+    public static EsRectInt ToEsRectInt(this PixelRect rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
 }

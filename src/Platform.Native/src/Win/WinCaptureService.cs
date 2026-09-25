@@ -7,7 +7,7 @@ using EsUtil.Platform.Native.Imaging;
 using Microsoft.Extensions.Logging;
 using DrawingBitmap = System.Drawing.Bitmap;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
-using RectInt = System.Drawing.Rectangle;
+using DrawingRect = System.Drawing.Rectangle;
 
 namespace EsUtil.Platform.Native.Win;
 
@@ -18,7 +18,7 @@ namespace EsUtil.Platform.Native.Win;
 /// P/Invoke 呼び出しは <c>WinNative</c> に委譲する。<br/>
 /// <see cref="ICaptureService"/> の実装であり、テスト時のモックに備える。<br/>
 /// Windows 固有の型（System.Drawing.Bitmap / Rectangle / IntPtr）は本クラス（Win 実装）の内部に閉じ、<br/>
-/// 公開 API（<see cref="ICaptureService"/>）は UI 非依存の型（<see cref="EsBitmap"/> / <see cref="EsPixelRect"/>）のみを使用する。<br/>
+/// 公開 API（<see cref="ICaptureService"/>）は UI 非依存の型（<see cref="EsBitmap"/> / <see cref="EsRectInt"/>）のみを使用する。<br/>
 /// 生成は <see cref="PlatformFactory.CreateCaptureService"/> が唯一の経路（Windows のみ）。<br/>
 /// System.Drawing は Windows 専用のため、本クラスは <see cref="SupportedOSPlatformAttribute"/> で Windows に限定する。<br/>
 /// 継承不可。<br/>
@@ -40,11 +40,11 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     /// 内部で System.Drawing（CopyFromScreen）を使用してキャプチャし、<see cref="EsBitmap"/> へ変換する。<br/>
     /// <see cref="EsBitmap"/>（SKBitmap 内部）の生成はスレッド非依存のため、<br/>
     /// CopyFromScreen（GDI 同期コール）と同一のバックグラウンドスレッドで実行可能である。<br/>
-    /// 公開 API は UI 非依存の型（<see cref="EsBitmap"/> / <see cref="EsPixelRect"/>）のみを使用する。<br/>
+    /// 公開 API は UI 非依存の型（<see cref="EsBitmap"/> / <see cref="EsRectInt"/>）のみを使用する。<br/>
     /// </remarks>
-    public EsBitmap? CaptureArea(EsPixelRect bounds)
+    public EsBitmap? CaptureArea(EsRectInt bounds)
     {
-        var sdRect = new RectInt(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        var sdRect = new DrawingRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         using var sdBmp = CaptureSdBitmap(sdRect);
         return sdBmp.ToEsBitmap();
     }
@@ -57,15 +57,15 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     /// 全モニタを包含する矩形を 1 回の CopyFromScreen でキャプチャする。<br/>
     /// 境界取得とキャプチャはスレッド非依存のため、バックグラウンドスレッドから安全に実行できる。<br/>
     /// </remarks>
-    public EsBitmap? CaptureVirtualScreen(out EsPixelPoint origin)
+    public EsBitmap? CaptureVirtualScreen(out EsPointInt origin)
     {
         // Win32 の仮想スクリーン境界（全モニタのバウンディングボックス）を取得
         var (vx, vy, vw, vh) = WinNative.GetVirtualScreenBounds();
-        origin = new EsPixelPoint(vx, vy);
+        origin = new EsPointInt(vx, vy);
         if (vw <= 0 || vh <= 0) return null;
 
         _log.LogVirtualScreenBounds(vx, vy, vw, vh);
-        return CaptureArea(new EsPixelRect(vx, vy, vw, vh));
+        return CaptureArea(new EsRectInt(vx, vy, vw, vh));
     }
 
     /// <summary>指定された画面領域を System.Drawing.Bitmap としてキャプチャする（内部ヘルパー）。</summary>
@@ -77,7 +77,7 @@ internal sealed partial class WinCaptureService(ILogger? logger = null) : ICaptu
     /// <c>Format32bppPArgb</c>（アルファ乗算済み・不透明）で生成し、<see cref="EsBitmapDrawingExtensions.ToEsBitmap(System.Drawing.Bitmap)"/>
     /// が PArgb を直接読み取れるようにする（アルファ強制不要）。
     /// </remarks>
-    private DrawingBitmap CaptureSdBitmap(RectInt bounds)
+    private DrawingBitmap CaptureSdBitmap(DrawingRect bounds)
     {
         _log.LogCaptureSdBitmap(bounds);
         var bitmap = new DrawingBitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppPArgb);

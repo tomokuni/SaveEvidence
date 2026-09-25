@@ -22,7 +22,7 @@ public readonly record struct CaptureHighlight(EsRect? DomainRect, bool TitleCha
 /// <br/>
 /// <b>所有する判断</b>:<br/>
 /// 1. 未検出時の正規化（矩形は null・表示名は空文字。検出矩形を使わない）。<br/>
-/// 2. 画面物理座標 → ドメイン座標の変換（画像の原点を減算する。<see cref="CaptureClipMath.ToLocalRect(EsPixelRect, EsPixelPoint)"/> へ委譲）。<br/>
+/// 2. 画面物理座標 → ドメイン座標の変換（画像の原点を減算する。<see cref="CaptureClipMath.ToLocalRect(EsRectInt, EsPointInt)"/> へ委譲）。<br/>
 /// 3. 表示名の変化の判定（情報ラベルの再描画に必要な最小限の判断。UI ごとの文字列比較を書かせない）。<br/>
 /// 4. 検出結果のログ（<see cref="CaptureLogMessage.LogHighlight"/>。両 UI で同じ事象を同じ書式で記録する）。<br/>
 /// <br/>
@@ -57,7 +57,7 @@ public sealed class CaptureHighlightSession(ILogger? logger = null)
     /// 4. 検出結果をログへ記録する（未検出も含めて記録する）。<br/>
     /// マウス移動ごとに呼ばれるため、割り当て（配列・リスト・文字列整形）を行わない。
     /// </remarks>
-    public CaptureHighlight Update(CaptureType captureType, ElementFinderResults detection, EsPixelPoint imageOrigin)
+    public CaptureHighlight Update(CaptureType captureType, ElementFinderResults detection, EsPointInt imageOrigin)
     {
         var local = detection.IsDetected
             ? CaptureClipMath.ToLocalRect(detection.Bounds, imageOrigin)

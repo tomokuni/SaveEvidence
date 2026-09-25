@@ -13,20 +13,20 @@ public class CaptureResultTests
     {
         using var image = EsBitmap.Create(10, 20);
 
-        var result = CaptureResult.From(image, new EsPixelRect(1, 2, 10, 20));
+        var result = CaptureResult.From(image, new EsRectInt(1, 2, 10, 20));
 
         Assert.Same(image, result.Image);
-        Assert.Equal(new EsPixelRect(1, 2, 10, 20), result.SourceBounds);
+        Assert.Equal(new EsRectInt(1, 2, 10, 20), result.SourceBounds);
     }
 
     [Fact]
     public void From_画像が無ければ領域0x0の空結果にする()
     {
         // キャンセルは「画像 null・領域 0x0」で表す（null ではなく 0x0 の空矩形を与える）
-        var result = CaptureResult.From(null, new EsPixelRect(1, 2, 10, 20));
+        var result = CaptureResult.From(null, new EsRectInt(1, 2, 10, 20));
 
         Assert.Null(result.Image);
-        Assert.Equal<EsPixelRect?>(new EsPixelRect(0, 0, 0, 0), result.SourceBounds);
+        Assert.Equal<EsRectInt?>(new EsRectInt(0, 0, 0, 0), result.SourceBounds);
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class CaptureResultTests
         var result = CaptureResult.From(image, null);
 
         Assert.Null(result.Image);
-        Assert.Equal<EsPixelRect?>(new EsPixelRect(0, 0, 0, 0), result.SourceBounds);
+        Assert.Equal<EsRectInt?>(new EsRectInt(0, 0, 0, 0), result.SourceBounds);
     }
 
     [Fact]
@@ -46,6 +46,6 @@ public class CaptureResultTests
         var result = CaptureResult.From(null, null);
 
         Assert.Null(result.Image);
-        Assert.Equal<EsPixelRect?>(new EsPixelRect(0, 0, 0, 0), result.SourceBounds);
+        Assert.Equal<EsRectInt?>(new EsRectInt(0, 0, 0, 0), result.SourceBounds);
     }
 }

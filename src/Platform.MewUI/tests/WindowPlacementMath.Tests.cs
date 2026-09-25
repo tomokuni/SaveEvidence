@@ -110,7 +110,7 @@ public sealed class WindowPlacementMathTests
     public void ToDipPoint_スケールで割る(
         int x, int y, double scale, double expectedX, double expectedY)
     {
-        var result = WindowPlacementMath.ToDipPoint(new EsPixelPoint(x, y), scale);
+        var result = WindowPlacementMath.ToDipPoint(new EsPointInt(x, y), scale);
 
         Assert.Equal(expectedX, result.X, 6);
         Assert.Equal(expectedY, result.Y, 6);
@@ -119,7 +119,7 @@ public sealed class WindowPlacementMathTests
     [Fact]
     public void ToDipPoint_無効なスケールは1として扱う()
     {
-        var result = WindowPlacementMath.ToDipPoint(new EsPixelPoint(100, 200), 0);
+        var result = WindowPlacementMath.ToDipPoint(new EsPointInt(100, 200), 0);
 
         Assert.Equal(100, result.X);
         Assert.Equal(200, result.Y);
@@ -151,7 +151,7 @@ public sealed class WindowPlacementMathTests
     [Fact]
     public void IsUsable_幅と高さが正ならtrueを返す()
     {
-        Assert.True(WindowPlacementMath.IsUsable(new EsPixelRect(10, 20, 1200, 800)));
+        Assert.True(WindowPlacementMath.IsUsable(new EsRectInt(10, 20, 1200, 800)));
     }
 
     /// <summary>幅または高さが 0 以下の場合は復元しないことを検証する。</summary>
@@ -159,9 +159,9 @@ public sealed class WindowPlacementMathTests
     [Fact]
     public void IsUsable_幅か高さが0以下ならfalseを返す()
     {
-        Assert.False(WindowPlacementMath.IsUsable(new EsPixelRect(10, 20, 0, 800)));
-        Assert.False(WindowPlacementMath.IsUsable(new EsPixelRect(10, 20, 1200, 0)));
-        Assert.False(WindowPlacementMath.IsUsable(new EsPixelRect(10, 20, -100, -50)));
+        Assert.False(WindowPlacementMath.IsUsable(new EsRectInt(10, 20, 0, 800)));
+        Assert.False(WindowPlacementMath.IsUsable(new EsRectInt(10, 20, 1200, 0)));
+        Assert.False(WindowPlacementMath.IsUsable(new EsRectInt(10, 20, -100, -50)));
     }
 
     [Fact]

@@ -19,7 +19,7 @@ internal sealed partial class OverlayWindow
     private void OnClickMoved(object? sender, PointerEventArgs e)
     {
         // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
-        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPixelPoint();
+        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPointInt();
         // 検出関数の呼び分けはコアが単一所有する
         var detection = CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint);
         var highlight = ApplyHighlight(detection);
@@ -44,7 +44,7 @@ internal sealed partial class OverlayWindow
     /// </remarks>
     private CaptureHighlight ApplyHighlight(ElementFinderResults detection)
     {
-        var highlight = _highlight.Update(_captureType, detection, Position.ToEsPixelPoint());
+        var highlight = _highlight.Update(_captureType, detection, Position.ToEsPointInt());
         // 未検出は null で表す（null が「ハイライトしない」を意味する）
         SelectionOverlay.LogicalHighlightRect = highlight.DomainRect is { } rect ? rect.ToAvaloniaRect() : null;
         return highlight;
@@ -61,7 +61,7 @@ internal sealed partial class OverlayWindow
     /// </remarks>
     private double GetMonitorScalingForRect(EsRect domainRect)
         => MonitorScalingMath.ResolveForDomainRect(
-            domainRect, Position.ToEsPixelPoint(), _monitors, _scaling);
+            domainRect, Position.ToEsPointInt(), _monitors, _scaling);
 
     /// <summary>サイズラベルの対象となる確定矩形（ドメイン座標）を解決する。</summary>
     /// <returns>確定対象の矩形。対象がない場合は null。</returns>
@@ -88,7 +88,7 @@ internal sealed partial class OverlayWindow
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
         // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
-        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPixelPoint();
+        var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPointInt();
         // 検出関数の呼び分けはコアが単一所有する
         _clickSelection.Fix(CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint).Bounds);
     }

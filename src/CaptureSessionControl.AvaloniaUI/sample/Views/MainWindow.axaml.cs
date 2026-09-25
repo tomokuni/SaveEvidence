@@ -133,7 +133,7 @@ public sealed partial class MainWindow : Window
         _vm.AddLog("[App] Crop を開始します（プレビュー上でドラッグ選択 → Enter / ダブルクリックで確定）。");
 
         // 切り出しの対象画像は CropView が表示している画像（PreviewCropView.Source）から解決される。
-        // 結果はコア型（EsPixelRect）で返るため、表示用の UI 型へはサンプル側（境界）で変換する
+        // 結果はコア型（EsRectInt）で返るため、表示用の UI 型へはサンプル側（境界）で変換する
         var rect = await _capture.StartCropAsync(PreviewCropView, this);
         _vm.UpdateCropResult(rect?.ToAvaloniaPixelRect());
         _vm.AddLog(rect is { } bounds && !bounds.IsEmpty

@@ -33,13 +33,13 @@ public class OverlayWindowTests
         /// <summary>CaptureArea の呼び出し回数（確定時の再キャプチャが廃止されたことの検証用）。</summary>
         public int CaptureAreaCallCount { get; private set; }
 
-        public EsBitmap? CaptureArea(EsPixelRect bounds)
+        public EsBitmap? CaptureArea(EsRectInt bounds)
         {
             CaptureAreaCallCount++;
             return null;
         }
 
-        public EsBitmap? CaptureVirtualScreen(out EsPixelPoint origin)
+        public EsBitmap? CaptureVirtualScreen(out EsPointInt origin)
         {
             origin = default;
             return null;
@@ -51,7 +51,7 @@ public class OverlayWindowTests
     {
         public void HideFromTaskSwitcher(EsPlatformHandle handle) { }
         public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude) => true;
-        public bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds) => true;
+        public bool SetBounds(EsPlatformHandle handle, EsRectInt bounds) => true;
         public void EvacuateWindow(EsPlatformHandle handle) { }
     }
 
@@ -64,8 +64,8 @@ public class OverlayWindowTests
         /// <summary>ウィンドウ検出の結果（既定は未検出）。</summary>
         public ElementFinderResults WindowResult { get; set; }
 
-        public ElementFinderResults FindWindowUnderCursor(EsPixelPoint screenPoint) => WindowResult;
-        public ElementFinderResults FindScreenUnderCursor(EsPixelPoint screenPoint) => ScreenResult;
+        public ElementFinderResults FindWindowUnderCursor(EsPointInt screenPoint) => WindowResult;
+        public ElementFinderResults FindScreenUnderCursor(EsPointInt screenPoint) => ScreenResult;
         public IReadOnlyList<ElementFinderResults> ListScreens() => [];
         public IReadOnlyList<ElementFinderResults> ListWindows() => [];
     }
@@ -74,7 +74,7 @@ public class OverlayWindowTests
     private static OverlayWindow CreateWindow(
         CaptureType captureType = CaptureType.AreaSelect,
         double scaling = 1.0,
-        Action<EsBitmap?, EsPixelRect?>? onComplete = null,
+        Action<EsBitmap?, EsRectInt?>? onComplete = null,
         MockCaptureService? captureService = null,
         MockElementFinder? elementFinder = null)
         => new(
@@ -149,7 +149,7 @@ public class OverlayWindowTests
     {
         var captureService = new MockCaptureService();
         EsBitmap? captured = null;
-        EsPixelRect? capturedBounds = null;
+        EsRectInt? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
             onComplete: (bmp, bounds) => { captured = bmp; capturedBounds = bounds; },
@@ -170,7 +170,7 @@ public class OverlayWindowTests
 
         // 切り出し結果は閉区間の矩形（SourceBounds は画面物理座標）
         Assert.NotNull(capturedBounds);
-        Assert.Equal(new EsPixelRect(2, 2, 4, 4), capturedBounds);
+        Assert.Equal(new EsRectInt(2, 2, 4, 4), capturedBounds);
         window.Close();
     }
 
@@ -179,7 +179,7 @@ public class OverlayWindowTests
     {
         var captureService = new MockCaptureService();
         EsBitmap? captured = null;
-        EsPixelRect? capturedBounds = null;
+        EsRectInt? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
             onComplete: (bmp, bounds) => { captured = bmp; capturedBounds = bounds; },
@@ -196,7 +196,7 @@ public class OverlayWindowTests
 
         // SourceBounds は閉区間の矩形（画面物理座標）
         Assert.NotNull(capturedBounds);
-        Assert.Equal(new EsPixelRect(2, 2, 4, 4), capturedBounds);
+        Assert.Equal(new EsRectInt(2, 2, 4, 4), capturedBounds);
         window.Close();
     }
 
@@ -206,7 +206,7 @@ public class OverlayWindowTests
         // 回帰テスト: 選択矩形（画面物理座標）と切り出し元画像の占有範囲（画面物理座標）は同じ座標空間で
         // 渡す（画像ローカル座標と混ぜると原点の分だけずれて切り出せなくなる）。
         var captureService = new MockCaptureService();
-        EsPixelRect? capturedBounds = null;
+        EsRectInt? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.WindowSelect, scaling: 1.0,
             onComplete: (_, bounds) => capturedBounds = bounds, captureService: captureService);
@@ -221,7 +221,7 @@ public class OverlayWindowTests
         await WaitForCompletionAsync(() => capturedBounds is not null);
 
         // 画面物理座標のまま切り出される（ウィンドウ選択は閉区間化しない）
-        Assert.Equal(new EsPixelRect(0, 0, 10, 10), capturedBounds);
+        Assert.Equal(new EsRectInt(0, 0, 10, 10), capturedBounds);
         window.Close();
     }
 
@@ -230,7 +230,7 @@ public class OverlayWindowTests
     {
         var finder = new MockElementFinder
         {
-            WindowResult = new ElementFinderResults(new EsPixelRect(2, 2, 3, 3), IsDetected: true, Title: "W"),
+            WindowResult = new ElementFinderResults(new EsRectInt(2, 2, 3, 3), IsDetected: true, Title: "W"),
         };
         var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0, elementFinder: finder);
         window.Show();
@@ -251,7 +251,7 @@ public class OverlayWindowTests
     {
         var finder = new MockElementFinder
         {
-            WindowResult = new ElementFinderResults(new EsPixelRect(2, 2, 3, 3), IsDetected: true, Title: "W"),
+            WindowResult = new ElementFinderResults(new EsRectInt(2, 2, 3, 3), IsDetected: true, Title: "W"),
         };
         var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0, elementFinder: finder);
         window.Show();
@@ -273,7 +273,7 @@ public class OverlayWindowTests
     {
         var finder = new MockElementFinder
         {
-            WindowResult = new ElementFinderResults(new EsPixelRect(2, 2, 3, 3), IsDetected: true, Title: "W"),
+            WindowResult = new ElementFinderResults(new EsRectInt(2, 2, 3, 3), IsDetected: true, Title: "W"),
         };
         var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0, elementFinder: finder);
         window.Show();
@@ -284,7 +284,7 @@ public class OverlayWindowTests
         // 異なる矩形で 2 回ホバー → 事前切り出しは 2 回
         InvokeOnClickMoved(window, CreatePointerMoved(window));
         await WaitForCompletionAsync(() => window.PreExtractCount >= 1);
-        finder.WindowResult = new ElementFinderResults(new EsPixelRect(5, 5, 2, 2), IsDetected: true, Title: "W");
+        finder.WindowResult = new ElementFinderResults(new EsRectInt(5, 5, 2, 2), IsDetected: true, Title: "W");
         InvokeOnClickMoved(window, CreatePointerMoved(window));
         await WaitForCompletionAsync(() => window.PreExtractCount >= 2);
 
@@ -297,10 +297,10 @@ public class OverlayWindowTests
     {
         var captureService = new MockCaptureService();
         EsBitmap? captured = null;
-        EsPixelRect? capturedBounds = null;
+        EsRectInt? capturedBounds = null;
         var finder = new MockElementFinder
         {
-            WindowResult = new ElementFinderResults(new EsPixelRect(2, 2, 3, 3), IsDetected: true, Title: "W"),
+            WindowResult = new ElementFinderResults(new EsRectInt(2, 2, 3, 3), IsDetected: true, Title: "W"),
         };
         var window = CreateWindow(
             captureType: CaptureType.WindowSelect,
@@ -326,7 +326,7 @@ public class OverlayWindowTests
         // キャッシュが渡される（null でない）
         Assert.NotNull(captured);
         Assert.NotNull(capturedBounds);
-        Assert.Equal(new EsPixelRect(2, 2, 3, 3), capturedBounds);
+        Assert.Equal(new EsRectInt(2, 2, 3, 3), capturedBounds);
         window.Close();
     }
 
@@ -338,7 +338,7 @@ public class OverlayWindowTests
     public async Task AreaSelect_確定要求でキャプチャが確定する()
     {
         EsBitmap? captured = null;
-        EsPixelRect? capturedBounds = null;
+        EsRectInt? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
             onComplete: (bmp, bounds) => { captured = bmp; capturedBounds = bounds; });
@@ -358,7 +358,7 @@ public class OverlayWindowTests
 
         // 確定された（SourceBounds は閉区間 (2,2,4,4) = 画面物理座標）
         Assert.NotNull(capturedBounds);
-        Assert.Equal(new EsPixelRect(2, 2, 4, 4), capturedBounds);
+        Assert.Equal(new EsRectInt(2, 2, 4, 4), capturedBounds);
         window.Close();
     }
 
@@ -366,7 +366,7 @@ public class OverlayWindowTests
     public void AreaSelect_キャンセル要求でキャンセルされる()
     {
         EsBitmap? captured = null;
-        EsPixelRect? capturedBounds = null;
+        EsRectInt? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
             onComplete: (bmp, bounds) => { captured = bmp; capturedBounds = bounds; });
@@ -475,7 +475,7 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.ScreenSelect);
 
         // 未検出（MockElementFinder は常に default）→ ハイライト無効
-        InvokeApplyHighlight(window, new EsPixelPoint(100, 100));
+        InvokeApplyHighlight(window, new EsPointInt(100, 100));
 
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
     }
@@ -486,7 +486,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             ScreenResult = new ElementFinderResults(
-                new EsPixelRect(200, 100, 1920, 1080),
+                new EsRectInt(200, 100, 1920, 1080),
                 IsDetected: true,
                 Title: "Screen 1"),
         };
@@ -494,7 +494,7 @@ public class OverlayWindowTests
         window.Position = new PixelPoint(100, 50);
 
         // 検出（画面物理 (200,100)-(2120,1180)）→ ドメイン（ウィンドウローカル物理）へ変換して反映
-        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
+        InvokeApplyHighlight(window, new EsPointInt(500, 500));
 
         Assert.NotNull(window.SelectionOverlay.LogicalHighlightRect);
         Assert.Equal(new Rect(100, 50, 1920, 1080), window.SelectionOverlay.LogicalHighlightRect);
@@ -506,7 +506,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             ScreenResult = new ElementFinderResults(
-                new EsPixelRect(200, 100, 1920, 1080),
+                new EsRectInt(200, 100, 1920, 1080),
                 IsDetected: true,
                 Title: "Screen 1"),
         };
@@ -515,7 +515,7 @@ public class OverlayWindowTests
 
         // マルチモニタでカーソル位置のスクリーンのスケーリングが異なっても、
         // サイズラベルの物理換算はドメイン（画面物理 − Position）と往復一致するよう _scaling を維持する
-        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
+        InvokeApplyHighlight(window, new EsPointInt(500, 500));
 
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
         window.Close();
@@ -527,7 +527,7 @@ public class OverlayWindowTests
         // 未検出（MockElementFinder は常に default）
         var window = CreateWindow(CaptureType.ScreenSelect, scaling: 2.0);
 
-        InvokeApplyHighlight(window, new EsPixelPoint(100, 100));
+        InvokeApplyHighlight(window, new EsPointInt(100, 100));
 
         // 未検出時も _scaling（2.0）のまま維持される
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
@@ -540,7 +540,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new EsPixelRect(300, 200, 800, 600),
+                new EsRectInt(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
@@ -548,7 +548,7 @@ public class OverlayWindowTests
         window.Position = new PixelPoint(100, 50);
 
         // 検出（画面物理 (300,200)-(1100,800)）→ ドメインへ変換して反映
-        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
+        InvokeApplyHighlight(window, new EsPointInt(500, 500));
 
         Assert.NotNull(window.SelectionOverlay.LogicalHighlightRect);
         Assert.Equal(new Rect(200, 150, 800, 600), window.SelectionOverlay.LogicalHighlightRect);
@@ -561,14 +561,14 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new EsPixelRect(300, 200, 800, 600),
+                new EsRectInt(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
         var window = CreateWindow(CaptureType.WindowSelect, scaling: 2.0, elementFinder: finder);
 
         // ウィンドウのハイライトでもサイズラベル換算は _scaling を維持する（ScreenSelect と同一）
-        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
+        InvokeApplyHighlight(window, new EsPointInt(500, 500));
 
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
         window.Close();
@@ -580,11 +580,11 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new EsPixelRect(300, 200, 800, 600),
+                new EsRectInt(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
-        var completed = new List<EsPixelRect?>();
+        var completed = new List<EsRectInt?>();
         var window = CreateWindow(
             CaptureType.WindowSelect, scaling: 1.0,
             onComplete: (_, bounds) => completed.Add(bounds), elementFinder: finder);
@@ -609,11 +609,11 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new EsPixelRect(300, 200, 800, 600),
+                new EsRectInt(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
-        var completed = new List<EsPixelRect?>();
+        var completed = new List<EsRectInt?>();
         var window = CreateWindow(
             CaptureType.WindowSelect,
             onComplete: (_, bounds) => completed.Add(bounds), elementFinder: finder);
@@ -632,7 +632,7 @@ public class OverlayWindowTests
     public async Task クリック確定_退化した検出結果は固定されない()
     {
         // 未検出（矩形が空）→ 固定しない → 解放しても切り出しを行わない（0 サイズの画像を作らない）
-        var completed = new List<EsPixelRect?>();
+        var completed = new List<EsRectInt?>();
         var window = CreateWindow(
             CaptureType.WindowSelect,
             onComplete: (_, bounds) => completed.Add(bounds));
@@ -652,7 +652,7 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             ScreenResult = new ElementFinderResults(
-                new EsPixelRect(200, 100, 1920, 1080),
+                new EsRectInt(200, 100, 1920, 1080),
                 IsDetected: true,
                 Title: "Screen 1"),
         };
@@ -676,11 +676,11 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new EsPixelRect(300, 200, 800, 600),
+                new EsRectInt(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
-        var completed = new List<EsPixelRect?>();
+        var completed = new List<EsRectInt?>();
         var window = CreateWindow(
             CaptureType.WindowSelect, scaling: 1.0,
             onComplete: (_, bounds) => completed.Add(bounds), elementFinder: finder);
@@ -694,14 +694,14 @@ public class OverlayWindowTests
         await WaitForCompletionAsync(() => completed.Any(bounds => bounds is not null));
 
         // 固定した矩形（検出結果）で確定する
-        Assert.Equal(new EsPixelRect(300, 200, 800, 600), completed.First(bounds => bounds is not null));
+        Assert.Equal(new EsRectInt(300, 200, 800, 600), completed.First(bounds => bounds is not null));
         window.Close();
     }
 
     [AvaloniaFact]
     public void OnClickReleased_固定矩形がなければ確定しない()
     {
-        var completed = new List<EsPixelRect?>();
+        var completed = new List<EsRectInt?>();
         var window = CreateWindow(
             CaptureType.WindowSelect,
             onComplete: (_, bounds) => completed.Add(bounds));
@@ -723,7 +723,7 @@ public class OverlayWindowTests
     {
         // 回帰: 内包する選択オーバーレイ（Marquee）も TopLevel のキーを購読して処理済みにするため、
         // ウィンドウが受け取れず Escape でキャンセルできなかった（Tunnel + handledEventsToo で受ける）。
-        var completed = new List<EsPixelRect?>();
+        var completed = new List<EsRectInt?>();
         var window = CreateWindow(
             CaptureType.WindowSelect,
             onComplete: (_, bounds) => completed.Add(bounds));
@@ -740,7 +740,7 @@ public class OverlayWindowTests
     public async Task ハイライト型_確定対象が無いEnterは何もしない()
     {
         // 何も検出していない状態の Enter はキャンセル扱いにしない（コアのキー解釈が単一所有する）
-        var completed = new List<EsPixelRect?>();
+        var completed = new List<EsRectInt?>();
         var window = CreateWindow(
             CaptureType.WindowSelect,
             onComplete: (_, bounds) => completed.Add(bounds));
@@ -759,24 +759,24 @@ public class OverlayWindowTests
         var finder = new MockElementFinder
         {
             WindowResult = new ElementFinderResults(
-                new EsPixelRect(300, 200, 800, 600),
+                new EsRectInt(300, 200, 800, 600),
                 IsDetected: true,
                 Title: "Sample Window"),
         };
-        var completed = new List<EsPixelRect?>();
+        var completed = new List<EsRectInt?>();
         var window = CreateWindow(
             CaptureType.WindowSelect,
             onComplete: (_, bounds) => completed.Add(bounds), elementFinder: finder);
         window.Show();
 
         // ホバー（ハイライトを検出）→ Enter で確定
-        InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
+        InvokeApplyHighlight(window, new EsPointInt(500, 500));
         window.RaiseEvent(new KeyEventArgs { Key = Key.Enter, RoutedEvent = InputElement.KeyDownEvent });
 
         await WaitForCompletionAsync(() => completed.Any(bounds => bounds is not null));
 
         // ウィンドウの画面物理位置は既定（0,0）のため、検出矩形がそのままキャプチャ矩形になる（ウィンドウ選択は +1 しない）
-        Assert.Equal(new EsPixelRect(300, 200, 800, 600), completed.First(bounds => bounds is not null));
+        Assert.Equal(new EsRectInt(300, 200, 800, 600), completed.First(bounds => bounds is not null));
         window.Close();
     }
 
@@ -786,7 +786,7 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.WindowSelect);
 
         // 未検出 → ハイライト無効・タイトル空
-        InvokeApplyHighlight(window, new EsPixelPoint(100, 100));
+        InvokeApplyHighlight(window, new EsPointInt(100, 100));
 
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
         Assert.Equal("", window.SelectionOverlay.InfoTextProvider?.Invoke());
@@ -796,7 +796,7 @@ public class OverlayWindowTests
     // リフレクションヘルパー（private メソッドの直接検証）
     // ====================================================================
 
-    private static void InvokeApplyHighlight(OverlayWindow window, EsPixelPoint screenPoint)
+    private static void InvokeApplyHighlight(OverlayWindow window, EsPointInt screenPoint)
     {
         // 検出関数の呼び分けはコアが単一所有するため、本ヘルパーは「検出→反映」の 1 経路を呼ぶ
         var applyMethod = typeof(OverlayWindow).GetMethod(

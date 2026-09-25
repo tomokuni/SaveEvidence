@@ -14,7 +14,7 @@ namespace EsUtil.Platform.Core;
 /// 公開 API は UI フレームワーク非依存である:<br/>
 /// - 画像は <see cref="EsBitmap"/>（ピクセルコンテナ）で受け渡しする（System.Drawing 型は公開しない）。<br/>
 ///   <see cref="EsBitmap"/> は SKBitmap を内部に持つため、バックグラウンドスレッドからも安全に生成できる。<br/>
-/// - 座標は画面物理ピクセルのコア型（<see cref="EsPixelRect"/> / <see cref="EsPixelPoint"/>）で受け渡しする。<br/>
+/// - 座標は画面物理ピクセルのコア型（<see cref="EsRectInt"/> / <see cref="EsPointInt"/>）で受け渡しする。<br/>
 /// <br/>
 /// 具象実装ではなく本インターフェイスへ依存させることで、テスト時のモックが可能になる（DIP）。
 /// </remarks>
@@ -27,7 +27,7 @@ public interface ICaptureService
     /// <see cref="EsBitmap"/>（SKBitmap 内部）の生成はスレッド非依存のため、<br/>
     /// 画面キャプチャ（GDI 同期コール等）と同一のバックグラウンドスレッドで実行可能である。<br/>
     /// </remarks>
-    EsBitmap? CaptureArea(EsPixelRect bounds);
+    EsBitmap? CaptureArea(EsRectInt bounds);
 
     /// <summary>仮想スクリーン（全モニタを包含する領域）全体を 1 回のキャプチャで取得する。</summary>
     /// <param name="origin">仮想スクリーンの原点（全モニタのバウンディングボックス左上、画面物理座標。プライマリモニタが (0,0) にない場合は負値）。</param>
@@ -38,5 +38,5 @@ public interface ICaptureService
     /// <see cref="EsBitmap"/>（SKBitmap 内部）の生成はスレッド非依存のため、<br/>
     /// 画面キャプチャ（GDI 同期コール等）と同一のバックグラウンドスレッドで実行可能である。<br/>
     /// </remarks>
-    EsBitmap? CaptureVirtualScreen(out EsPixelPoint origin);
+    EsBitmap? CaptureVirtualScreen(out EsPointInt origin);
 }

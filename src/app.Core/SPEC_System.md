@@ -41,7 +41,7 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）と将来の MewUI �
 | `Services/ISettingsService.cs` | `public interface` | 設定管理サービスの抽象 |
 | `Services/IImageWriter.cs` | `public interface` | 画像（`EsBitmap`）のファイル書き込みの抽象 |
 | `Services/SettingsService.cs` | `public sealed class` | JSON ファイルによる設定管理（反射 / ソース生成の両対応） |
-| `Services/EsPixelRectJsonConverter.cs` | `internal sealed class` | `EsPixelRect` の JSON コンバーター |
+| `Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
 | `ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モードの表示文字列変換 |
 | `ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | フォルダビューの表示モード・ソート状態 |
 | `ViewModels/UndoViewModel.cs` | `public sealed partial class` | Undo 一覧の表示モード状態 |
@@ -55,7 +55,7 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）と将来の MewUI �
 | ファイル名テンプレートの書式と使用不可文字の検証 | `FileNameTemplate` |
 | キャッシュの容量管理（上限超過時の全クリアと `IDisposable` の破棄） | `CapacityLimitedCache` |
 | フォルダビューの一覧に含める画像の拡張子 | `ImageFileExtensions`（両 UI のフォルダビューが委譲） |
-| 設定の永続化形式（JSON の構造・enum の文字列表現） | `SettingsService`（`EsPixelRectJsonConverter` + enum のジェネリック変換器） |
+| 設定の永続化形式（JSON の構造・enum の文字列表現） | `SettingsService`（`EsRectIntJsonConverter` + enum のジェネリック変換器） |
 | プレビュー画像の所有権とライフサイクル（差し替え時の破棄順序） | `MainViewModel`（`OnPreviewImageChanging` / `OnPreviewImageChanged`） |
 
 ## UI 依存の注入（依存性逆転）
@@ -91,16 +91,16 @@ sequenceDiagram
 ## 可視性ポリシー
 
 - `AppPage` / `ThemeMode` / `Settings` / `FileNameTemplate` / `UndoStack` / `HotKeyParser` / `ISettingsService` / `SettingsService` / `FolderViewViewModel` / `UndoViewModel` は `public`（`app.AvaloniaUI` と MewUI ホストが共有する契約）。
-- `CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay` / `EsPixelRectJsonConverter` は `internal`。`internal` → `public` の変更は破壊的な設計変更として扱います。
+- `CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay` / `EsRectIntJsonConverter` は `internal`。`internal` → `public` の変更は破壊的な設計変更として扱います。
 
 ## 設定ファイルの互換性
 
 | 項目 | 移設前 | 移設後 | JSON 表現 |
 | --- | --- | --- | --- |
-| ウィンドウ位置・サイズ | `Avalonia.PixelRect?` | `EsPixelRect?` | `{"X":..,"Y":..,"Width":..,"Height":..}`（変更なし） |
+| ウィンドウ位置・サイズ | `Avalonia.PixelRect?` | `EsRectInt?` | `{"X":..,"Y":..,"Width":..,"Height":..}`（変更なし） |
 | ウィンドウ状態 | `Avalonia.Controls.WindowState` | `EsWindowState` | `"Normal"` 等の名前（変更なし） |
 
-`EsPixelRect` は専用コンバーター、`EsWindowState` は `JsonStringEnumConverter` により、移設前と同一の JSON 形式で読み書きされるため、**既存の `settings.json` はそのまま読み込める**。
+`EsRectInt` は専用コンバーター、`EsWindowState` は `JsonStringEnumConverter` により、移設前と同一の JSON 形式で読み書きされるため、**既存の `settings.json` はそのまま読み込める**。
 
 ## テスト
 
@@ -129,10 +129,10 @@ sequenceDiagram
 
 | ファイル | 移行内容 |
 | --- | --- |
-| `Models/Settings.cs` | `Avalonia.PixelRect?` → `EsPixelRect?`（`MainWindowBounds`）、`Avalonia.Controls.WindowState` → `EsWindowState`（`MainWindowState`） |
+| `Models/Settings.cs` | `Avalonia.PixelRect?` → `EsRectInt?`（`MainWindowBounds`）、`Avalonia.Controls.WindowState` → `EsWindowState`（`MainWindowState`） |
 | `Services/ISettingsService.cs` | そのまま移設（`Settings` に依存するため第二段階で実施） |
-| `Services/SettingsService.cs` | そのまま移設（使用するコンバーターを `EsPixelRectJsonConverter` へ変更） |
-| `Services/PixelRectConverter.cs` | `EsPixelRectJsonConverter` へ改名し、`EsPixelRect` 用へ変更（JSON 形式は同一） |
+| `Services/SettingsService.cs` | そのまま移設（使用するコンバーターを `EsRectIntJsonConverter` へ変更） |
+| `Services/PixelRectConverter.cs` | `EsRectIntJsonConverter` へ改名し、`EsRectInt` 用へ変更（JSON 形式は同一） |
 
 併せて `Platform.Core` に `EsWindowState`、`Platform.AvaloniaUI` に `EsWindowStateAvaloniaInterop` を追加しました。
 
@@ -145,8 +145,8 @@ sequenceDiagram
 併せて以下を実施しました。
 
 - `CaptureType`（キャプチャ種別）を `CaptureSessionControl.AvaloniaUI` から `Platform.Core`（`EsUtil.Platform.Core`）へ移設
-- `LineDetection` の `LineDetectionResult` / `LineRectangleReconstructor` を `EsPoint` / `EsPixelRect` 化（`LineDetection` が UI 非依存に）
-- `MainViewModel` の画像座標の矩形を `Avalonia.PixelRect` → `EsPixelRect` へ変更（本体の移設は次段階）
+- `LineDetection` の `LineDetectionResult` / `LineRectangleReconstructor` を `EsPoint` / `EsRectInt` 化（`LineDetection` が UI 非依存に）
+- `MainViewModel` の画像座標の矩形を `Avalonia.PixelRect` → `EsRectInt` へ変更（本体の移設は次段階）
 
 ### 第四段階（`MainViewModel` の移設）
 

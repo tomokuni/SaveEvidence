@@ -218,11 +218,11 @@ classDiagram
         +GetRedoHistory() IReadOnlyList~EsBitmap~
     }
     class WindowPlacementMath {
-        +ToPhysicalPixelPoint(EsPoint, scale)$ EsPixelPoint
+        +ToPhysicalPixelPoint(EsPoint, scale)$ EsPointInt
         +ToPhysicalPixelSize(EsSize, scale)$ Size
-        +ToDipPoint(EsPixelPoint, scale)$ EsPoint
+        +ToDipPoint(EsPointInt, scale)$ EsPoint
         +ToDipLength(int, scale)$ double
-        +IsUsable(EsPixelRect?)$ bool
+        +IsUsable(EsRectInt?)$ bool
         +NormalizeScale(double)$ double
     }
     class LoupeControl {
@@ -521,7 +521,7 @@ sequenceDiagram
     W->>MW: Position / ClientSize
     MW-->>W: 物理px
     W->>W: WindowPlacementMath.ToPhysicalPixelPoint / Size
-    W->>C: Current.MainWindowBounds = EsPixelRect
+    W->>C: Current.MainWindowBounds = EsRectInt
     W->>C: Current.MainWindowState = Normal / Maximized
     W->>C: Current.IsNavigationExpanded = IsPaneOpen
     W->>C: settings.Save()

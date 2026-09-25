@@ -146,9 +146,9 @@ public sealed class CaptureSessionControl : IDisposable
     /// ズーム・パン・Fit・座標変換は <paramref name="cropView"/> が内包する ZoomViewControl が単一所有する。<br/>
     /// 切出し中のホイール操作（Ctrl+ホイールのズーム・通常ホイールのパン）は <paramref name="cropView"/> が内部で完結する（上位の配線は不要）。<br/>
     /// 実行中に同一インスタンスへ再呼び出しされた場合は完了済みのタスク（結果 null）を返す。<br/>
-    /// 結果の型はコア型（<see cref="EsPixelRect"/>）とし、UI 型は境界より外へ出さない。
+    /// 結果の型はコア型（<see cref="EsRectInt"/>）とし、UI 型は境界より外へ出さない。
     /// </remarks>
-    public Task<EsPixelRect?> StartCropAsync(CropViewControl cropView, Window hostWindow)
+    public Task<EsRectInt?> StartCropAsync(CropViewControl cropView, Window hostWindow)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(cropView);
@@ -157,7 +157,7 @@ public sealed class CaptureSessionControl : IDisposable
         // 切り出しの対象は表示中の画像（CropViewControl.Source が単一所有する）
         if (cropView.CurrentImage() is not { } sourceImage)
         {
-            return Task.FromResult<EsPixelRect?>(null); // 対象が無い: 開始できなかったことを null で表す
+            return Task.FromResult<EsRectInt?>(null); // 対象が無い: 開始できなかったことを null で表す
         }
 
         // 「サイズが 0 の画像は切り出せない」という前提条件はコアが単一所有する
@@ -167,7 +167,7 @@ public sealed class CaptureSessionControl : IDisposable
         if (!_slot.TryBeginCrop(session))
         {
             // 再入禁止（他のセッションが実行中）: 何も起きなかったことを null の結果で表す
-            return Task.FromResult<EsPixelRect?>(null);
+            return Task.FromResult<EsRectInt?>(null);
         }
 
         return AwaitCropAsync(session, sourceImage);
@@ -177,7 +177,7 @@ public sealed class CaptureSessionControl : IDisposable
     /// <param name="session">実行中の Crop セッション。</param>
     /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う）。</param>
     /// <returns>切り出し結果（キャンセル時は 0x0）。</returns>
-    private async Task<EsPixelRect?> AwaitCropAsync(CropSession session, EsBitmap sourceImage)
+    private async Task<EsRectInt?> AwaitCropAsync(CropSession session, EsBitmap sourceImage)
     {
         try
         {

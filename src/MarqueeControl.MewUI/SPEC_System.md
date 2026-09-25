@@ -115,7 +115,7 @@ classDiagram
         +NotifyViewportChanged() void
         -OnPaintSurface(canvas, info) void
         -OnNotified(sender, notice) void
-        -ToScreen(domainPos) EsPixelPoint
+        -ToScreen(domainPos) EsPointInt
         -CaptureMouse(capture) void
     }
     class Marquee {
@@ -135,7 +135,7 @@ classDiagram
         <<Feature.MarqueeCore / UI が実装>>
         +RequestFocus() / RequestRedraw()
         +SetCursorShape(kind) / SetPointerCapture(capture)
-        +ToScreenPoint(domainPoint) EsPixelPoint
+        +ToScreenPoint(domainPoint) EsPointInt
     }
     class MarqueeSession {
         <<internal / Feature.MarqueeCore>>
@@ -230,7 +230,7 @@ classDiagram
     }
     class ICursorService {
         <<Platform.Core>>
-        +GetCursorScreenPoint() EsPixelPoint
+        +GetCursorScreenPoint() EsPointInt
         +SetCursorScreenPoint(point) void
         +ShowCursor(show) void
     }

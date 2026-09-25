@@ -24,14 +24,14 @@ public static class CaptureVirtualScreen
     /// 前提条件を単一所有する（UI がループを書くと、空のときに 0×0 のウィンドウを作る等の差が出る）。<br/>
     /// 座標は画面物理ピクセル（プライマリモニタが (0, 0) にない場合は負値を含む）。
     /// </remarks>
-    public static EsPixelRect? ResolveBounds(IEnumerable<EsPixelRect>? screenBounds)
+    public static EsRectInt? ResolveBounds(IEnumerable<EsRectInt>? screenBounds)
     {
         if (screenBounds is null)
         {
             return null;
         }
 
-        EsPixelRect? union = null;
+        EsRectInt? union = null;
         foreach (var bounds in screenBounds)
         {
             union = union is { } current ? current.Union(bounds) : bounds;

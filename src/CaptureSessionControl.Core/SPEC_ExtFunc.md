@@ -79,11 +79,11 @@
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `ComputeCropBounds` | `EsPixelRect ComputeCropBounds(EsRect selection, EsSize imageSize, double minSelectionSize, bool closedInterval = true)` | 選択矩形から切り出し範囲を求める。切り出せない場合は `IsEmpty` が true の矩形 |
+| `ComputeCropBounds` | `EsRectInt ComputeCropBounds(EsRect selection, EsSize imageSize, double minSelectionSize, bool closedInterval = true)` | 選択矩形から切り出し範囲を求める。切り出せない場合は `IsEmpty` が true の矩形 |
 | `RoundToPixel` | `int RoundToPixel(double value)` | 座標を四捨五入して整数へ直す（0.5 は切り上げ。詳細は 7.17） |
-| `ToPixelRect` | `EsPixelRect ToPixelRect(EsRect selection, EsSize imageSize)` | 半開区間のまま画像内の整数矩形へ変換（クランプ・四捨五入） |
-| `ToClosedInterval` | `EsPixelRect ToClosedInterval(EsPixelRect rect)` | 終点の 1 ピクセルを加える（`+1` のみ。クランプはしない） |
-| `ToClosedInterval` | `EsPixelRect ToClosedInterval(EsPixelRect rect, EsSize imageSize)` | 終点の 1 ピクセルを加える（画像の端でクランプ） |
+| `ToPixelRect` | `EsRectInt ToPixelRect(EsRect selection, EsSize imageSize)` | 半開区間のまま画像内の整数矩形へ変換（クランプ・四捨五入） |
+| `ToClosedInterval` | `EsRectInt ToClosedInterval(EsRectInt rect)` | 終点の 1 ピクセルを加える（`+1` のみ。クランプはしない） |
+| `ToClosedInterval` | `EsRectInt ToClosedInterval(EsRectInt rect, EsSize imageSize)` | 終点の 1 ピクセルを加える（画像の端でクランプ） |
 
 ### 4.1 規則
 
@@ -140,13 +140,13 @@
 | メンバー | 型 | 内容 |
 | --- | --- | --- |
 | `Image` | `EsBitmap?` | キャプチャした画像。キャンセル時は null |
-| `SourceBounds` | `EsPixelRect?` | キャプチャした領域（仮想スクリーン座標）。キャンセル時は 0x0 |
+| `SourceBounds` | `EsRectInt?` | キャプチャした領域（仮想スクリーン座標）。キャンセル時は 0x0 |
 
 `Image` と `SourceBounds` は常に同時に null または同時に非 null になります。`SourceBounds` は複数モニターを包含する座標空間のため、プライマリモニターが (0, 0) にない場合は負値になり得ます。
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `From` | `CaptureResult From(EsBitmap? image, EsPixelRect? bounds)` | 切り出し結果と領域から結果を生成する。**キャンセル（画像または領域が無い）は画像 null・領域 0x0 の空結果へ正規化する**（UI が null 判定を書かない） |
+| `From` | `CaptureResult From(EsBitmap? image, EsRectInt? bounds)` | 切り出し結果と領域から結果を生成する。**キャンセル（画像または領域が無い）は画像 null・領域 0x0 の空結果へ正規化する**（UI が null 判定を書かない） |
 
 ## 7. 補助 API
 
@@ -159,16 +159,16 @@
 | `IsHighlighted` | `bool IsHighlighted(CaptureType captureType)` | 選択矩形を検出対象のハイライトとして描く種別（スクリーン選択・ウィンドウ選択）かどうか。**選択スタイル（ハイライト型 / ドラッグ型）の分区を単一所有する**ため、UI は十字カーソルの要否・ルーペの利用・確定操作の配線を本結果から導く |
 | `UsesClosedInterval` | `bool UsesClosedInterval(CaptureType captureType)` | 切り出しで終点の 1 ピクセルを加える種別（範囲選択のみ）かどうか |
 | `GetElementTarget` | `CaptureElementTarget GetElementTarget(CaptureType captureType)` | カーソル下から検出する対象（スクリーン選択は画面、他はウィンドウ） |
-| `FindUnderCursor` | `ElementFinderResults FindUnderCursor(IElementFinder? finder, CaptureType captureType, EsPixelPoint screenPoint)` | カーソル下の要素を検出する。**検出関数の呼び分けを単一所有する**（`finder` が null の場合は未検出）。ホバー・押下の各経路で同じ分岐を書かない |
+| `FindUnderCursor` | `ElementFinderResults FindUnderCursor(IElementFinder? finder, CaptureType captureType, EsPointInt screenPoint)` | カーソル下の要素を検出する。**検出関数の呼び分けを単一所有する**（`finder` が null の場合は未検出）。ホバー・押下の各経路で同じ分岐を書かない |
 | `ResolveRect` | `EsRect? ResolveRect(CaptureType captureType, EsRect? highlightRect, EsRect? selectionRect)` | 確定対象の矩形を解決する（ハイライト型はハイライト矩形、それ以外は選択矩形）。UI は未検出・未選択を null へ正規化して渡す |
 
 ### 7.2 MonitorScalingMath
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `ResolveForRect` | `double ResolveForRect(EsPixelRect target, IReadOnlyList<(EsPixelRect Bounds, double Scale)> monitors, double fallback)` | 対象矩形の**中心**を含むモニタの表示倍率を返す。どのモニタにも含まれない場合は `fallback` |
-| `ResolveForDomainRect` | `double ResolveForDomainRect(EsRect domainRect, EsPixelPoint origin, IReadOnlyList<(EsPixelRect Bounds, double Scale)> monitors, double fallback)` | ドメイン座標（画像ピクセル）の矩形を画面物理座標へ戻してから中心を含むモニタの表示倍率を返す。**原点の加算**も単一所有する（各 UI が書くと判定点が 1 ピクセルずれる） |
-| `Collect` | `IReadOnlyList<(EsPixelRect Bounds, double Scale)> Collect(IEnumerable<(EsPixelRect Bounds, double Scale)> monitors)` | 判定に使うモニタ一覧を整える（**表示倍率が未確定（0 以下）のモニタを除外する**。入力の順序は保つ） |
+| `ResolveForRect` | `double ResolveForRect(EsRectInt target, IReadOnlyList<(EsRectInt Bounds, double Scale)> monitors, double fallback)` | 対象矩形の**中心**を含むモニタの表示倍率を返す。どのモニタにも含まれない場合は `fallback` |
+| `ResolveForDomainRect` | `double ResolveForDomainRect(EsRect domainRect, EsPointInt origin, IReadOnlyList<(EsRectInt Bounds, double Scale)> monitors, double fallback)` | ドメイン座標（画像ピクセル）の矩形を画面物理座標へ戻してから中心を含むモニタの表示倍率を返す。**原点の加算**も単一所有する（各 UI が書くと判定点が 1 ピクセルずれる） |
+| `Collect` | `IReadOnlyList<(EsRectInt Bounds, double Scale)> Collect(IEnumerable<(EsRectInt Bounds, double Scale)> monitors)` | 判定に使うモニタ一覧を整える（**表示倍率が未確定（0 以下）のモニタを除外する**。入力の順序は保つ） |
 | `ResolveScaling` | `double ResolveScaling(IEnumerable<double> scalings)` | 画面のスケーリング一覧から**先頭の値**を解決する（未確定は基準値へ正規化。画面が 1 枚も無い場合は基準値） |
 
 対象矩形の判定は中心 1 点で行います（左上で判定すると、モニタをまたぐ矩形で主モニタと異なる倍率を拾います）。倍率未確定の除外を UI ごとに書くと、同じ環境で判定結果が変わります。
@@ -224,10 +224,10 @@
 | `LogCaptureFinished(CaptureResult? result)` | 撮影セッションの終了。確定は `CaptureCompleted` → `Result` の 2 件（順序を含めて単一所有）、キャンセル（`result` が null または画像が null）は `CaptureCancelled` の 1 件 |
 | `LogConfirmRequested(string rect)` | 選択の確定要求（Enter・ダブルクリック等。診断用） |
 | `LogCancelRequested()` | 選択のキャンセル要求（Esc・非アクティブ化等。診断用） |
-| `LogVirtualScreen(EsPixelPoint origin, EsBitmap? bitmap)` | 仮想スクリーンの原点とサイズ（診断用）。**画像未取得はサイズ 0** へ正規化する |
+| `LogVirtualScreen(EsPointInt origin, EsBitmap? bitmap)` | 仮想スクリーンの原点とサイズ（診断用）。**画像未取得はサイズ 0** へ正規化する |
 | `LogHighlight(string captureType, bool detected, string rect, string title, string className)` | ハイライトの検出結果（Trace。診断用。`CaptureHighlightSession` が呼ぶ） |
 | `LogCropStart(EsBitmap image)` | 切り出しの開始（元画像サイズ） |
-| `LogCropFinished(EsPixelRect bounds)` | 切り出しセッションの終了。**退化した選択（空の矩形）はキャンセルとして記録する**（UI が空判定とログの呼び分けを書かない） |
+| `LogCropFinished(EsRectInt bounds)` | 切り出しセッションの終了。**退化した選択（空の矩形）はキャンセルとして記録する**（UI が空判定とログの呼び分けを書かない） |
 | `LogCropCancelled()` | 切り出しのキャンセル（Esc・非アクティブ化・ウィンドウクローズ等） |
 | `LogSettingApplied()` | 設定の適用（変化時の 1 回のみ。同値の適用はログを出さない） |
 
@@ -235,22 +235,22 @@
 
 | メソッド | 内容 |
 | --- | --- |
-| `CaptureLogFormat.Rect(EsPixelRect)` / `CaptureLogFormat.Rect(EsRect)` | 矩形を `"X,Y,Width,Height"` の 1 行へ整形する |
-| `CaptureLogFormat.RectOrEmpty(EsPixelRect?)` | 未検出（null）を空文字へ正規化する |
+| `CaptureLogFormat.Rect(EsRectInt)` / `CaptureLogFormat.Rect(EsRect)` | 矩形を `"X,Y,Width,Height"` の 1 行へ整形する |
+| `CaptureLogFormat.RectOrEmpty(EsRectInt?)` | 未検出（null）を空文字へ正規化する |
 | `CaptureLogFormat.Text(string?)` | 未取得（null）の文字列を空文字へ正規化する（タイトル・クラス名） |
 
 ### 7.9 CaptureClipMath
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `ResolveCaptureRect` | `EsPixelRect ResolveCaptureRect(CaptureType captureType, EsRect screenRect, EsPixelRect imageBounds)` | 選択矩形（画面物理座標）から切り出し矩形（画面物理座標）を求める。**確定時の切り出し矩形を決める唯一の入口**（種別ごとの閉区間化・画像内へのクランプ・端数の丸めを組み合わせる）。切り出せない場合は `IsEmpty` |
-| `ResolveCaptureRect`（整数版） | `EsPixelRect ResolveCaptureRect(CaptureType captureType, EsPixelRect screenRect, EsPixelRect imageBounds)` | クリック確定・ホバーの検出矩形（整数）向けの同じ規則の入口（UI が整数矩形を浮動小数矩形へ広げないため） |
+| `ResolveCaptureRect` | `EsRectInt ResolveCaptureRect(CaptureType captureType, EsRect screenRect, EsRectInt imageBounds)` | 選択矩形（画面物理座標）から切り出し矩形（画面物理座標）を求める。**確定時の切り出し矩形を決める唯一の入口**（種別ごとの閉区間化・画像内へのクランプ・端数の丸めを組み合わせる）。切り出せない場合は `IsEmpty` |
+| `ResolveCaptureRect`（整数版） | `EsRectInt ResolveCaptureRect(CaptureType captureType, EsRectInt screenRect, EsRectInt imageBounds)` | クリック確定・ホバーの検出矩形（整数）向けの同じ規則の入口（UI が整数矩形を浮動小数矩形へ広げないため） |
 | `ImageSize` | `EsSize ImageSize(EsBitmap image)` | 画像のピクセルサイズ（コアの値型）。コアの型同士の変換を UI に書かせない |
-| `ImageBounds` | `EsPixelRect ImageBounds(EsBitmap image, EsPixelPoint origin)` | 画像の占有範囲（原点とサイズ。切り出しのクランプ境界になる） |
+| `ImageBounds` | `EsRectInt ImageBounds(EsBitmap image, EsPointInt origin)` | 画像の占有範囲（原点とサイズ。切り出しのクランプ境界になる） |
 | `ValidateImage` | `void ValidateImage(EsBitmap image, string paramName)` | 画像が切り出せる（サイズが正）ことを検証する。**幅・高さが 0 以下の場合は `ArgumentException`** |
-| `ToLocalRect` | `EsPixelRect ToLocalRect(EsPixelRect captureRect, EsPixelPoint origin)` / `EsRect ToLocalRect(EsRect captureRect, EsPixelPoint origin)` | 画面物理座標の矩形を画像ローカル座標（画面物理 − 原点）へ変換する |
-| `ToScreenRect` | `EsRect ToScreenRect(EsRect localRect, EsPixelPoint origin)` / `EsPixelRect ToScreenRect(EsPixelRect localRect, EsPixelPoint origin)` | 画像ローカル座標の矩形を画面物理座標へ変換する（`ToLocalRect` の逆変換。双方向の対称性を保つ） |
-| `Extract` | `EsBitmap? Extract(EsBitmap? virtualScreen, EsPixelPoint origin, EsPixelRect captureRect)` | 仮想スクリーン画像から切り出し矩形の領域を取り出す。**未取得・破棄済みの場合は null**（呼び出し側が領域指定のキャプチャへフォールバックする。破棄は例外にしない） |
+| `ToLocalRect` | `EsRectInt ToLocalRect(EsRectInt captureRect, EsPointInt origin)` / `EsRect ToLocalRect(EsRect captureRect, EsPointInt origin)` | 画面物理座標の矩形を画像ローカル座標（画面物理 − 原点）へ変換する |
+| `ToScreenRect` | `EsRect ToScreenRect(EsRect localRect, EsPointInt origin)` / `EsRectInt ToScreenRect(EsRectInt localRect, EsPointInt origin)` | 画像ローカル座標の矩形を画面物理座標へ変換する（`ToLocalRect` の逆変換。双方向の対称性を保つ） |
+| `Extract` | `EsBitmap? Extract(EsBitmap? virtualScreen, EsPointInt origin, EsRectInt captureRect)` | 仮想スクリーン画像から切り出し矩形の領域を取り出す。**未取得・破棄済みの場合は null**（呼び出し側が領域指定のキャプチャへフォールバックする。破棄は例外にしない） |
 
 `ResolveCaptureRect` は最小サイズを判定しません（選択操作そのものの可否は `MarqueeOptions.MinSelectionSize` が持ち、検出矩形は小さい要素も切り出し対象にする）。
 
@@ -264,16 +264,16 @@
 
 | メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
-| `Set` | `bool Set(EsBitmap? image, EsPixelPoint origin)` | 画像と原点を保持する（**旧い画像を破棄する**）。**破棄済みの場合は受け付けず、渡された画像をその場で破棄して false** を返す |
-| `Image` / `Origin` | `EsBitmap?` / `EsPixelPoint` | 保持している画像と原点（未取得は null・既定値） |
-| `Bounds` | `EsPixelRect` | 画像の占有範囲。**未取得の場合はコンストラクタで指定したフォールバック範囲**（背景撮影完了前でも切り出し範囲をクランプできる） |
+| `Set` | `bool Set(EsBitmap? image, EsPointInt origin)` | 画像と原点を保持する（**旧い画像を破棄する**）。**破棄済みの場合は受け付けず、渡された画像をその場で破棄して false** を返す |
+| `Image` / `Origin` | `EsBitmap?` / `EsPointInt` | 保持している画像と原点（未取得は null・既定値） |
+| `Bounds` | `EsRectInt` | 画像の占有範囲。**未取得の場合はコンストラクタで指定したフォールバック範囲**（背景撮影完了前でも切り出し範囲をクランプできる） |
 | `Dispose` | `void Dispose()` | 保持している画像を破棄する（複数回呼んでも安全。以降の `Set` は渡された画像をその場で破棄する） |
 
 ### 7.11 CaptureVirtualScreen
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `ResolveBounds` | `EsPixelRect? ResolveBounds(IEnumerable<EsPixelRect>? screenBounds)` | 撮影対象の範囲（全モニタの包含矩形）を求める。**モニタが無い場合は null**（撮影する領域が無い） |
+| `ResolveBounds` | `EsRectInt? ResolveBounds(IEnumerable<EsRectInt>? screenBounds)` | 撮影対象の範囲（全モニタの包含矩形）を求める。**モニタが無い場合は null**（撮影する領域が無い） |
 | `AwaitAsync` | `Task<EsBitmap?> AwaitAsync(Task<EsBitmap?> captureTask, TimeSpan? timeout = null)` | 仮想スクリーンの取得をタイムアウト付きで待つ。**間に合わない場合は null を返し、遅れて完了した結果を破棄する**（既定の待ち時間は `CaptureTiming.ScreenCaptureTimeout`） |
 
 ### 7.12 CaptureClipCache
@@ -282,9 +282,9 @@
 
 | メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
-| `HasCached` | `bool HasCached(EsPixelRect captureRect)` | 同じ矩形の画像を保持しているか（再切り出しのスキップ判断） |
-| `Take` | `EsBitmap? Take(EsPixelRect captureRect)` | 一致する画像を**所有権ごと**取り出す（以降の `Dispose` で破棄されない）。一致しない場合は null |
-| `Store` | `void Store(EsPixelRect captureRect, EsBitmap? bitmap)` | 切り出した画像を格納する。**旧いキャッシュを破棄してから**置き換える。破棄済みの場合は渡された画像をその場で破棄する |
+| `HasCached` | `bool HasCached(EsRectInt captureRect)` | 同じ矩形の画像を保持しているか（再切り出しのスキップ判断） |
+| `Take` | `EsBitmap? Take(EsRectInt captureRect)` | 一致する画像を**所有権ごと**取り出す（以降の `Dispose` で破棄されない）。一致しない場合は null |
+| `Store` | `void Store(EsRectInt captureRect, EsBitmap? bitmap)` | 切り出した画像を格納する。**旧いキャッシュを破棄してから**置き換える。破棄済みの場合は渡された画像をその場で破棄する |
 | `HasBitmap` / `StoreCount` | `bool` / `int` | 保持の有無・実際に格納した回数（スキップ判断の検証用） |
 | `Dispose` | `void Dispose()` | 保持中の画像を破棄する（複数回呼んでも安全） |
 
@@ -296,7 +296,7 @@
 
 | メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
-| `Update` | `CaptureHighlight Update(CaptureType captureType, ElementFinderResults detection, EsPixelPoint imageOrigin)` | 検出結果を反映する（ドメイン座標への変換・未検出の正規化・表示名の変化の判定・診断ログの記録） |
+| `Update` | `CaptureHighlight Update(CaptureType captureType, ElementFinderResults detection, EsPointInt imageOrigin)` | 検出結果を反映する（ドメイン座標への変換・未検出の正規化・表示名の変化の判定・診断ログの記録） |
 | `DomainRect` | `EsRect?` | 直前に検出したハイライト矩形（ドメイン座標 = 画像ローカル物理ピクセル）。未検出時は null（確定対象の有無の判定も兼ねる） |
 | `Title` | `string` | 直前に検出した要素の表示名（未検出時は空文字）。情報ラベルの文言プロバイダが参照する |
 
@@ -319,8 +319,8 @@ UI 層は戻り値を選択コントロールへ設定するだけにし、座�
 
 | メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
-| `Fix` | `bool Fix(EsPixelRect target)` | 押下時に確定対象を固定する。退化した矩形（幅・高さが 0 以下）は固定せず、前回の固定も破棄する |
-| `Take` | `EsPixelRect? Take()` | 解放時に固定した矩形を取り出す（1 回限り）。固定が無い場合は null（確定しない） |
+| `Fix` | `bool Fix(EsRectInt target)` | 押下時に確定対象を固定する。退化した矩形（幅・高さが 0 以下）は固定せず、前回の固定も破棄する |
+| `Take` | `EsRectInt? Take()` | 解放時に固定した矩形を取り出す（1 回限り）。固定が無い場合は null（確定しない） |
 
 ### 7.15 CropSessionActions
 

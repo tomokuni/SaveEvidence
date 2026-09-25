@@ -30,7 +30,7 @@ public sealed class LineRectangleReconstructorTests
         var rects = LineRectangleReconstructor.Reconstruct(results);
 
         var rect = Assert.Single(rects);
-        Assert.Equal(new EsPixelRect(100, 50, 200, 150), rect);
+        Assert.Equal(new EsRectInt(100, 50, 200, 150), rect);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public sealed class LineRectangleReconstructorTests
         var rects = LineRectangleReconstructor.Reconstruct(results);
 
         var rect = Assert.Single(rects);
-        Assert.Equal(new EsPixelRect(100, 50, 200, 150), rect);
+        Assert.Equal(new EsRectInt(100, 50, 200, 150), rect);
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public sealed class LineRectangleReconstructorTests
         };
 
         var rect = Assert.Single(LineRectangleReconstructor.Reconstruct(results));
-        Assert.Equal(new EsPixelRect(100, 50, 200, 150), rect);
+        Assert.Equal(new EsRectInt(100, 50, 200, 150), rect);
     }
 
     [Fact]

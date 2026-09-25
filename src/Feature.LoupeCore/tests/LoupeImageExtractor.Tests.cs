@@ -2,7 +2,6 @@ using EsUtil.Feature.LoupeCore.Imaging;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
-using SizeInt = System.Drawing.Size;
 
 namespace EsUtil.Feature.LoupeCore.Tests;
 
@@ -48,7 +47,7 @@ public class LoupeImageExtractorTests
     public void ComputeMagnifiedRects_切り出し元は等倍で描画先は拡大率倍になる(
         int captureSize, int zoomLevel, int expectedDestination)
     {
-        var (source, destination) = LoupeImageExtractor.ComputeMagnifiedRects(new SizeInt(captureSize, captureSize), zoomLevel);
+        var (source, destination) = LoupeImageExtractor.ComputeMagnifiedRects(new EsSizeInt(captureSize, captureSize), zoomLevel);
 
         // 切り出し元は左上原点の切り出しサイズ、描画先は左上原点の拡大率倍
         Assert.Equal(new EsRect(0, 0, captureSize, captureSize), source);

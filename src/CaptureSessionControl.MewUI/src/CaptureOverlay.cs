@@ -57,7 +57,7 @@ internal sealed class CaptureOverlay
     private EsBitmap? _screen;
 
     /// <summary>取得対象のスクリーンの矩形（画面物理ピクセル）。<see cref="Run"/> の冒頭で設定する。</summary>
-    private EsPixelRect _screenBounds;
+    private EsRectInt _screenBounds;
 
     /// <summary>取得したスクリーン画像を取得する。</summary>
     /// <value>撮影した仮想スクリーンの画像。</value>
@@ -77,7 +77,7 @@ internal sealed class CaptureOverlay
     /// ウィンドウの倍率は 1 つに定まるため、モニターごとの実倍率は位置から解決する必要がある。<br/>
     /// セッション中はモニター構成が変わらないため、<see cref="Show"/> で一度だけ解決する。
     /// </remarks>
-    private IReadOnlyList<(EsPixelRect Bounds, double Scale)> _monitorScales = [];
+    private IReadOnlyList<(EsRectInt Bounds, double Scale)> _monitorScales = [];
 
     /// <summary>選択コントロール（暗転マスク + 選択またはハイライトの描画）。</summary>
     private readonly FadeMaskDragRectControl _selector;
@@ -487,7 +487,7 @@ internal sealed class CaptureOverlay
     /// <summary>選択領域を切り出す（選択矩形は画面物理座標の整数 = クリック確定の検出矩形）。</summary>
     /// <param name="screenRect">選択矩形（画面物理座標）。</param>
     /// <remarks>浮動小数版と同じ規則を適用する（コアに整数版の入口があり、UI は型を広げない）。</remarks>
-    private void ConfirmScreen(EsPixelRect screenRect)
+    private void ConfirmScreen(EsRectInt screenRect)
     {
         _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
         CompleteCapture(CaptureClipMath.ResolveCaptureRect(_type, screenRect, _screenBounds));
@@ -496,7 +496,7 @@ internal sealed class CaptureOverlay
     /// <summary>解決済みの切り出し矩形でキャプチャを完了する。</summary>
     /// <param name="pixels">切り出し矩形（画面物理座標・閉区間済み）。空の場合はキャンセルとして完了する。</param>
     /// <remarks>切り出し結果の所有権は呼び出し側へ移す（仮想スクリーン画像はセッション終了時に破棄される）。</remarks>
-    private void CompleteCapture(EsPixelRect pixels)
+    private void CompleteCapture(EsRectInt pixels)
     {
         if (pixels.IsEmpty)
         {
@@ -557,7 +557,7 @@ internal sealed class CaptureOverlay
     /// 矩形のドメイン座標への変換・未検出の正規化・表示名の保持・ログはコア
     /// （<see cref="CaptureHighlightSession"/>）が単一所有する（本クラスは結果を設定するだけ）。
     /// </remarks>
-    private void Highlight(EsPixelPoint screenPoint)
+    private void Highlight(EsPointInt screenPoint)
     {
         // 検出関数の呼び分けはコアが単一所有する（本メソッドはハイライト型のときだけ呼ばれる）
         var found = CaptureTypeTraits.FindUnderCursor(_finder, _type, screenPoint);
@@ -582,7 +582,7 @@ internal sealed class CaptureOverlay
     /// 丸めはコア（<see cref="CropBoundsMath.RoundToPixel"/>）が単一所有する<br/>
     /// （既定の <see cref="Math.Round(double)"/> は銀行丸めで、座標の四捨五入と 1 ピクセルずれる）。
     /// </remarks>
-    private static EsPixelPoint ToScreenPoint(Point position)
+    private static EsPointInt ToScreenPoint(Point position)
         => new(CropBoundsMath.RoundToPixel(position.X), CropBoundsMath.RoundToPixel(position.Y));
 
     /// <summary>選択コントロールへ注入する座標変換ポートを生成する。</summary>

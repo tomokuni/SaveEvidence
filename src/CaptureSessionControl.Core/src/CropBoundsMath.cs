@@ -22,14 +22,14 @@ public static class CropBoundsMath
     /// <param name="imageSize">画像のピクセルサイズ。</param>
     /// <param name="minSelectionSize">選択矩形の最小サイズ（画像ピクセル）。これ未満は空を返す。</param>
     /// <param name="closedInterval">true の場合は閉区間（終点の 1 ピクセルを含む）。false の場合は半開区間のまま。</param>
-    /// <returns>切り出し範囲。切り出せない場合は <c>default</c>（<see cref="EsPixelRect.IsEmpty"/> が true）。</returns>
+    /// <returns>切り出し範囲。切り出せない場合は <c>default</c>（<see cref="EsRectInt.IsEmpty"/> が true）。</returns>
     /// <remarks>
     /// ドラッグ選択の矩形は半開区間（幅 = 終点 − 始点）だが、アプリの仕様は「始点・終点のピクセルを<br/>
     /// 切り出し対象に含める（閉区間）」である。一方、スクリーン選択・ウィンドウ選択のハイライト矩形は<br/>
     /// 検出結果が全ピクセルを含むため加算しない（<paramref name="closedInterval"/> = false）。<br/>
     /// 最小サイズの判定は画像内へクランプする前の値で行う（画像外へ出た選択を「大きい」と誤判定しない）。
     /// </remarks>
-    public static EsPixelRect ComputeCropBounds(
+    public static EsRectInt ComputeCropBounds(
         EsRect selection, EsSize imageSize, double minSelectionSize, bool closedInterval = true)
     {
         if (imageSize.Width <= 0 || imageSize.Height <= 0)
@@ -60,7 +60,7 @@ public static class CropBoundsMath
     /// 2. 左右・上下をそれぞれ四捨五入（0.5 は切り上げ）して整数へ直し、画像の範囲へクランプする。<br/>
     /// 3. 幅・高さが 1 ピクセル未満なら空を返す。
     /// </remarks>
-    public static EsPixelRect ToPixelRect(EsRect selection, EsSize imageSize)
+    public static EsRectInt ToPixelRect(EsRect selection, EsSize imageSize)
     {
         var imageWidth = (int)imageSize.Width;
         var imageHeight = (int)imageSize.Height;
@@ -79,7 +79,7 @@ public static class CropBoundsMath
             return default;
         }
 
-        return new EsPixelRect(left, top, right - left, bottom - top);
+        return new EsRectInt(left, top, right - left, bottom - top);
     }
 
     /// <summary>半開区間の矩形を閉区間（始点・終点のピクセルを含む）へ広げる。</summary>
@@ -87,9 +87,9 @@ public static class CropBoundsMath
     /// <returns>終点の 1 ピクセルを加えた矩形（画像の端でのクランプは行わない）。</returns>
     /// <remarks>
     /// 画像の端でのクランプが不要な場合（切り出し範囲が画像を超えないことが保証されている場合）に使う。<br/>
-    /// 端でのクランプが必要な場合は <see cref="ToClosedInterval(EsPixelRect, EsSize)"/> を使う。
+    /// 端でのクランプが必要な場合は <see cref="ToClosedInterval(EsRectInt, EsSize)"/> を使う。
     /// </remarks>
-    public static EsPixelRect ToClosedInterval(EsPixelRect rect)
+    public static EsRectInt ToClosedInterval(EsRectInt rect)
         => new(rect.X, rect.Y, rect.Width + 1, rect.Height + 1);
 
     /// <summary>半開区間の矩形を閉区間（始点・終点のピクセルを含む）へ広げる（画像の端でクランプする）。</summary>
@@ -97,12 +97,12 @@ public static class CropBoundsMath
     /// <param name="imageSize">画像のピクセルサイズ。</param>
     /// <returns>終点の 1 ピクセルを加えた矩形（画像の外へはみ出さないようクランプする）。</returns>
     /// <remarks>画像の右端・下端では画像サイズを超えないようにクランプする。</remarks>
-    public static EsPixelRect ToClosedInterval(EsPixelRect rect, EsSize imageSize)
+    public static EsRectInt ToClosedInterval(EsRectInt rect, EsSize imageSize)
     {
         var widened = ToClosedInterval(rect);
         var imageWidth = (int)imageSize.Width;
         var imageHeight = (int)imageSize.Height;
-        return new EsPixelRect(
+        return new EsRectInt(
             widened.X,
             widened.Y,
             Math.Min(widened.Width, Math.Max(0, imageWidth - widened.X)),

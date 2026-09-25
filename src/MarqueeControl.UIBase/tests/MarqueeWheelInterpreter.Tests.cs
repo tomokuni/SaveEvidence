@@ -26,7 +26,7 @@ internal sealed class EffectsSpy : IMarqueeEffects
     public void SetPointerCapture(bool capture) { }
 
     /// <inheritdoc/>
-    public EsPixelPoint ToScreenPoint(EsPoint domainPoint) => default;
+    public EsPointInt ToScreenPoint(EsPoint domainPoint) => default;
 }
 
 /// <summary>テストで使用するスクロールの適用先（呼び出しを記録する）。</summary>

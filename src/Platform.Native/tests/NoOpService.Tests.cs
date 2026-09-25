@@ -29,7 +29,7 @@ public class NoOpServiceTests
         var service = NoOpCursorService.Instance;
 
         // 例外なく完了する
-        service.SetCursorScreenPoint(new EsPixelPoint(10, 20));
+        service.SetCursorScreenPoint(new EsPointInt(10, 20));
         service.ShowCursor(true);
         service.ShowCursor(false);
     }
@@ -43,7 +43,7 @@ public class NoOpServiceTests
     {
         var service = NoOpCaptureService.Instance;
 
-        Assert.Null(service.CaptureArea(new EsPixelRect(0, 0, 100, 100)));
+        Assert.Null(service.CaptureArea(new EsRectInt(0, 0, 100, 100)));
         Assert.Null(service.CaptureVirtualScreen(out var origin));
         Assert.Equal(default, origin);
     }
@@ -66,7 +66,7 @@ public class NoOpServiceTests
         Assert.False(service.SetCaptureExclusion(handle, false));
 
         // 位置・サイズの指定も常に false（何もしない）
-        Assert.False(service.SetBounds(handle, new EsPixelRect(0, 0, 100, 100)));
+        Assert.False(service.SetBounds(handle, new EsRectInt(0, 0, 100, 100)));
     }
 
     // ====================================================================

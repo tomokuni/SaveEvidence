@@ -230,7 +230,7 @@ src/app.Core/
 ├── src/
 │   ├── Enum/          # AppPage / ThemeMode
 │   ├── Models/        # Settings / FileNameTemplate / UndoStack / HotKeyParser / CapacityLimitedCache
-│   ├── Services/      # ISettingsService / SettingsService / IImageWriter / EsPixelRectJsonConverter
+│   ├── Services/      # ISettingsService / SettingsService / IImageWriter / EsRectIntJsonConverter
 │   └── ViewModels/    # MainViewModel / FolderViewViewModel / UndoViewModel / ViewModeDisplay
 └── tests/             # UI 初期化不要の単体テスト（app.Core.Tests・並列実行）
 ```

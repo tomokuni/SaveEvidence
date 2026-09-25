@@ -151,9 +151,9 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
 | `Image` | `EsBitmap?` | キャプチャした画像（キャンセル時 null。破棄は呼び出し側） |
-| `SourceBounds` | `EsPixelRect?` | キャプチャした領域（**画面物理 Pixel** の仮想画面座標） |
+| `SourceBounds` | `EsRectInt?` | キャプチャした領域（**画面物理 Pixel** の仮想画面座標） |
 
-- キャンセル時: `Image` は null、`SourceBounds` は 0x0（`EsPixelRect(0, 0, 0, 0)`）
+- キャンセル時: `Image` は null、`SourceBounds` は 0x0（`EsRectInt(0, 0, 0, 0)`）
 - 成功時: 両方 non-null
 
 `SourceBounds` は仮想画面座標（複数モニターを包含する座標空間）のため、プライマリモニターが (0,0) にない場合 X / Y は負値になり得ます。
@@ -166,7 +166,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 | --- | --- | --- |
 | コンストラクタ | `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)` | インスタンスを生成。設定値が許容範囲外なら `ArgumentOutOfRangeException` |
 | `StartCaptureAsync` | `Task<CaptureResult?> StartCaptureAsync(CaptureType type, Window owner)` | 選択キャプチャを開始。実行中は null / キャンセル時は 0x0 の空結果 |
-| `StartCropAsync` | `Task<EsPixelRect?> StartCropAsync(CropViewControl cropView, Window hostWindow)` | 切出しを開始。戻り値は元画像上の切り出し範囲（**コア型** `EsPixelRect`。UI 型は境界より外へ出さない）。キャンセル・退化した選択は 0x0 の空矩形、開始できなかった場合は null（他のセッションが実行中 / 表示中の画像が無い）。切り出しの対象画像は `cropView.Source`（表示中の画像）から解決し、確定時の範囲は**現在の画像**の範囲へクランプする（画像を引数で受け取らない）。Crop 中のズーム・パン（ホイール）は `cropView` が内部で完結するため、上位のズーム配線は不要（`CropViewControl.ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` は従来どおり使用できる） |
+| `StartCropAsync` | `Task<EsRectInt?> StartCropAsync(CropViewControl cropView, Window hostWindow)` | 切出しを開始。戻り値は元画像上の切り出し範囲（**コア型** `EsRectInt`。UI 型は境界より外へ出さない）。キャンセル・退化した選択は 0x0 の空矩形、開始できなかった場合は null（他のセッションが実行中 / 表示中の画像が無い）。切り出しの対象画像は `cropView.Source`（表示中の画像）から解決し、確定時の範囲は**現在の画像**の範囲へクランプする（画像を引数で受け取らない）。Crop 中のズーム・パン（ホイール）は `cropView` が内部で完結するため、上位のズーム配線は不要（`CropViewControl.ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` は従来どおり使用できる） |
 | `Cancel` | `void Cancel()` | 進行中セッションをキャンセル（Capture: オーバーレイを閉じる / Crop: 0x0 で完了） |
 | `Confirm` | `void Confirm()` | Crop を現在の選択矩形で確定（Enter キー相当。`CropViewControl.RequestConfirm` に委譲） |
 | `ResolveCropAction` | `CropSessionAction ResolveCropAction()` | 切り出し操作（開始 / 確定 / キャンセル）のうちいま行うべき操作を返す。判断はコア（`CropSessionActions.Resolve`: 未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）が単一所有し、**ホストは戻り値を効果へ写すだけ**にする（同じ条件を UI に書かない） |
@@ -312,7 +312,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 
 種別ごとの適用有無はコアの `CaptureTypeTraits.UsesClosedInterval` が単一所有します（AreaSelect のみ true）。
 
-具体例: ドラッグ (10,10) → (50,50) の選択矩形は `Rect(10, 10, 40, 40)`（半開区間 [10,50)）ですが、切り出しは **`EsPixelRect(10, 10, 41, 41)`（[10,50] の 41×41 ピクセル）** になります。
+具体例: ドラッグ (10,10) → (50,50) の選択矩形は `Rect(10, 10, 40, 40)`（半開区間 [10,50)）ですが、切り出しは **`EsRectInt(10, 10, 41, 41)`（[10,50] の 41×41 ピクセル）** になります。
 
 ## 7. 動作フロー
 
@@ -348,7 +348,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 5. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポートへ転送する（Ctrl+ホイール = ズーム / 通常ホイール = パン）
 6. **Crop 中の設定変更（`AppearanceSettings` setter）**: `CropSession.ApplySettings` で外観・クリップ設定を再適用（選択状態・ルーペ位置は維持）。キャプチャセッションはモーダル全画面のため対象外
 7. **矩形外クリック・選択キャンセル**: 複合コントロールが `SelectionStarted` / `SelectionCancelled` を購読し、Marquee の選択状態（`Options.LogicalSelectionRect` / `Options.HasSelection`）をクリアして全面暗転（穴あけなし）に戻す（配線は複合コントロール内で完結）
-8. 確定（`ConfirmRequested` → `CropBoundsMath.ComputeCropBounds`）→ 切り出し範囲をコア型 `EsPixelRect` で返却
+8. 確定（`ConfirmRequested` → `CropBoundsMath.ComputeCropBounds`）→ 切り出し範囲をコア型 `EsRectInt` で返却
    - 切り出し範囲は**現在の画像**（確定時点の `CropViewControl.Source`）の範囲へクランプする（開始時のサイズで固定しない。実行中に画像が差し替わっても差し替え後の画像で切り出す）
    - キャンセル（`CancelRequested` / `Deactivated`）→ 0x0 の空矩形
    - 退化した選択（画像外・最小サイズ未満）→ 0x0 の空矩形（確定と同じ経路でキャンセルとして記録する）

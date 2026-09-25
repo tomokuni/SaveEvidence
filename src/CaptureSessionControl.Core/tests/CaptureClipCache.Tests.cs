@@ -16,9 +16,9 @@ public class CaptureClipCacheTests
     public void Store_格納した矩形と画像を保持する()
     {
         using var cache = new CaptureClipCache();
-        cache.Store(new EsPixelRect(10, 20, 41, 31), CreateImage());
+        cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
 
-        Assert.True(cache.HasCached(new EsPixelRect(10, 20, 41, 31)));
+        Assert.True(cache.HasCached(new EsRectInt(10, 20, 41, 31)));
         Assert.True(cache.HasBitmap);
     }
 
@@ -26,11 +26,11 @@ public class CaptureClipCacheTests
     public void HasCached_矩形が異なる場合はfalseを返す()
     {
         using var cache = new CaptureClipCache();
-        cache.Store(new EsPixelRect(10, 20, 41, 31), CreateImage());
+        cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
 
         // 1 ピクセルでも違えば同じ画像にならないため再切り出しする
-        Assert.False(cache.HasCached(new EsPixelRect(11, 20, 41, 31)));
-        Assert.False(cache.HasCached(new EsPixelRect(10, 20, 40, 31)));
+        Assert.False(cache.HasCached(new EsRectInt(11, 20, 41, 31)));
+        Assert.False(cache.HasCached(new EsRectInt(10, 20, 40, 31)));
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class CaptureClipCacheTests
     {
         using var cache = new CaptureClipCache();
 
-        Assert.False(cache.HasCached(new EsPixelRect(0, 0, 1, 1)));
+        Assert.False(cache.HasCached(new EsRectInt(0, 0, 1, 1)));
         Assert.False(cache.HasBitmap);
     }
 
@@ -46,9 +46,9 @@ public class CaptureClipCacheTests
     public void Take_一致する画像を返して以降のDisposeで破棄しない()
     {
         using var cache = new CaptureClipCache();
-        cache.Store(new EsPixelRect(10, 20, 41, 31), CreateImage());
+        cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
 
-        var taken = cache.Take(new EsPixelRect(10, 20, 41, 31));
+        var taken = cache.Take(new EsRectInt(10, 20, 41, 31));
 
         Assert.NotNull(taken);
         Assert.False(cache.HasBitmap); // 所有権が移っている
@@ -63,9 +63,9 @@ public class CaptureClipCacheTests
     public void Take_矩形が異なる場合はnullを返してキャッシュを維持する()
     {
         using var cache = new CaptureClipCache();
-        cache.Store(new EsPixelRect(10, 20, 41, 31), CreateImage());
+        cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
 
-        Assert.Null(cache.Take(new EsPixelRect(99, 99, 1, 1)));
+        Assert.Null(cache.Take(new EsRectInt(99, 99, 1, 1)));
         Assert.True(cache.HasBitmap); // 一致しない取り出しでは失われない
     }
 
@@ -73,11 +73,11 @@ public class CaptureClipCacheTests
     public void Take_2回目はnullを返す()
     {
         using var cache = new CaptureClipCache();
-        cache.Store(new EsPixelRect(10, 20, 41, 31), CreateImage());
+        cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
 
-        using var first = cache.Take(new EsPixelRect(10, 20, 41, 31));
+        using var first = cache.Take(new EsRectInt(10, 20, 41, 31));
 
-        Assert.Null(cache.Take(new EsPixelRect(10, 20, 41, 31)));
+        Assert.Null(cache.Take(new EsRectInt(10, 20, 41, 31)));
     }
 
     [Fact]
@@ -85,23 +85,23 @@ public class CaptureClipCacheTests
     {
         using var cache = new CaptureClipCache();
         var old = CreateImage();
-        cache.Store(new EsPixelRect(0, 0, 1, 1), old);
+        cache.Store(new EsRectInt(0, 0, 1, 1), old);
 
-        cache.Store(new EsPixelRect(5, 5, 2, 2), CreateImage());
+        cache.Store(new EsRectInt(5, 5, 2, 2), CreateImage());
 
         Assert.True(old.IsDisposed);
-        Assert.True(cache.HasCached(new EsPixelRect(5, 5, 2, 2)));
+        Assert.True(cache.HasCached(new EsRectInt(5, 5, 2, 2)));
     }
 
     [Fact]
     public void Store_nullは無視して現在のキャッシュを維持する()
     {
         using var cache = new CaptureClipCache();
-        cache.Store(new EsPixelRect(10, 20, 41, 31), CreateImage());
+        cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
 
-        cache.Store(new EsPixelRect(99, 99, 1, 1), null);
+        cache.Store(new EsRectInt(99, 99, 1, 1), null);
 
-        Assert.True(cache.HasCached(new EsPixelRect(10, 20, 41, 31)));
+        Assert.True(cache.HasCached(new EsRectInt(10, 20, 41, 31)));
     }
 
     [Fact]
@@ -109,8 +109,8 @@ public class CaptureClipCacheTests
     {
         using var cache = new CaptureClipCache();
 
-        cache.Store(new EsPixelRect(0, 0, 1, 1), CreateImage());
-        cache.Store(new EsPixelRect(1, 1, 1, 1), CreateImage());
+        cache.Store(new EsRectInt(0, 0, 1, 1), CreateImage());
+        cache.Store(new EsRectInt(1, 1, 1, 1), CreateImage());
 
         Assert.Equal(2, cache.StoreCount);
     }
@@ -122,7 +122,7 @@ public class CaptureClipCacheTests
         cache.Dispose();
         var bitmap = CreateImage();
 
-        cache.Store(new EsPixelRect(0, 0, 1, 1), bitmap);
+        cache.Store(new EsRectInt(0, 0, 1, 1), bitmap);
 
         // 保持しない（破棄漏れを防ぐ）ため、呼び出し側の後片付けは不要
         Assert.True(bitmap.IsDisposed);
@@ -133,7 +133,7 @@ public class CaptureClipCacheTests
     public void Dispose_複数回呼んでも安全である()
     {
         var cache = new CaptureClipCache();
-        cache.Store(new EsPixelRect(0, 0, 1, 1), CreateImage());
+        cache.Store(new EsRectInt(0, 0, 1, 1), CreateImage());
 
         cache.Dispose();
         cache.Dispose();
@@ -146,7 +146,7 @@ public class CaptureClipCacheTests
     {
         var cache = new CaptureClipCache();
         var bitmap = CreateImage();
-        cache.Store(new EsPixelRect(0, 0, 1, 1), bitmap);
+        cache.Store(new EsRectInt(0, 0, 1, 1), bitmap);
 
         cache.Dispose();
 

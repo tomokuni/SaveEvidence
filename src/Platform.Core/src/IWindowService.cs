@@ -40,7 +40,7 @@ public interface IWindowService
     /// 作業領域内へ補正される（実測）。物理ピクセルで指定したい場合に本メソッドを使う。<br/>
     /// ウィンドウは可視領域外（負の大きな座標）へも配置できる。
     /// </remarks>
-    bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds);
+    bool SetBounds(EsPlatformHandle handle, EsRectInt bounds);
 
     /// <summary>ウィンドウを最前面解除し、非表示にして閉じる（UI ハング時の退避）。</summary>
     /// <param name="handle">対象ウィンドウの識別子。</param>

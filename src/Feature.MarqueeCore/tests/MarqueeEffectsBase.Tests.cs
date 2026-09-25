@@ -68,15 +68,15 @@ public class MarqueeEffectsBaseTests
         public List<bool> Visibility { get; } = [];
 
         /// <summary>現在のカーソル位置（画面物理座標）。</summary>
-        public EsPixelPoint Current { get; private set; }
+        public EsPointInt Current { get; private set; }
 
         /// <summary>カーソル位置を取得する。</summary>
         /// <returns>現在のカーソル位置。</returns>
-        public EsPixelPoint GetCursorScreenPoint() => Current;
+        public EsPointInt GetCursorScreenPoint() => Current;
 
         /// <summary>カーソル位置を設定する。</summary>
         /// <param name="screenPoint">設定する位置（画面物理座標）。</param>
-        public void SetCursorScreenPoint(EsPixelPoint screenPoint) => Current = screenPoint;
+        public void SetCursorScreenPoint(EsPointInt screenPoint) => Current = screenPoint;
 
         /// <summary>カーソルの表示を切り替える。</summary>
         /// <param name="visible">表示する場合は true。</param>

@@ -276,7 +276,7 @@ public sealed partial class MainWindow : Window
     /// <summary>ウィンドウ位置・サイズを保存する。</summary>
     private void SaveWindowBounds()
     {
-        _settingsService.Current.MainWindowBounds = new EsPixelRect(
+        _settingsService.Current.MainWindowBounds = new EsRectInt(
             Position.X, Position.Y, (int)Width, (int)Height);
 
         _settingsService.Current.MainWindowState = WindowState.ToEsWindowState();

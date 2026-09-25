@@ -5,7 +5,7 @@ using Xunit;
 using DrawingBitmap = System.Drawing.Bitmap;
 using DrawingImageLockMode = System.Drawing.Imaging.ImageLockMode;
 using DrawingPixelFormat = System.Drawing.Imaging.PixelFormat;
-using RectInt = System.Drawing.Rectangle;
+using DrawingRect = System.Drawing.Rectangle;
 
 namespace EsUtil.Platform.Native.Tests;
 
@@ -24,7 +24,7 @@ public class EsBitmapSystemDrawingTests
     private static DrawingBitmap CreateSolidDrawingBitmap(int width, int height, byte b, byte g, byte r, byte a)
     {
         var bitmap = new DrawingBitmap(width, height, DrawingPixelFormat.Format32bppPArgb);
-        var data = bitmap.LockBits(new RectInt(0, 0, width, height), DrawingImageLockMode.WriteOnly, DrawingPixelFormat.Format32bppPArgb);
+        var data = bitmap.LockBits(new DrawingRect(0, 0, width, height), DrawingImageLockMode.WriteOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
             unsafe
@@ -78,7 +78,7 @@ public class EsBitmapSystemDrawingTests
         using var bmp = EsBitmap.Create(4, 4);
         bmp.SetPixel(0, 0, b: 255, g: 0, r: 0, a: 128);
         using var sd = bmp.ToDrawingBitmap();
-        var data = sd.LockBits(new RectInt(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
+        var data = sd.LockBits(new DrawingRect(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
             unsafe
@@ -104,7 +104,7 @@ public class EsBitmapSystemDrawingTests
         using var sd = bmp.ToDrawingBitmap();
         Assert.Equal(bmp.Size.Width, sd.Width);
         Assert.Equal(bmp.Size.Height, sd.Height);
-        var data = sd.LockBits(new RectInt(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
+        var data = sd.LockBits(new DrawingRect(0, 0, 1, 1), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
             unsafe

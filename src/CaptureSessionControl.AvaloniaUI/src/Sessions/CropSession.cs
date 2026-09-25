@@ -57,10 +57,10 @@ internal sealed class CropSession(
 
     /// <summary>セッション結果の完了通知（確定・キャンセルの最初の 1 件を採用する）。</summary>
     /// <remarks>
-    /// 結果はコア型（<see cref="EsPixelRect"/>）で返す（UI 型は境界より外へ出さない）。<br/>
+    /// 結果はコア型（<see cref="EsRectInt"/>）で返す（UI 型は境界より外へ出さない）。<br/>
     /// ホストは切り出しの適用先（アプリのコマンド）へそのまま渡せる。
     /// </remarks>
-    private readonly CaptureCompletion<EsPixelRect?> _completion = new();
+    private readonly CaptureCompletion<EsRectInt?> _completion = new();
 
     /// <summary>選択矩形が有効かどうか（複合コントロールの選択状態）。ホスト（CaptureSessionControl）の操作分岐用。</summary>
     /// <remarks>選択状態の真のソースは選択矩形コントロール（<see cref="CropViewControl.HasSelection"/>）に集約する。</remarks>
@@ -85,11 +85,11 @@ internal sealed class CropSession(
     /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う。呼び出し側が表示中の画像から解決して渡す）。</param>
     /// <returns>確定時は元画像上の切り出し範囲（コア型）、キャンセル時は 0x0 の空矩形。</returns>
     /// <remarks>切り出しの境界（元画像の範囲）は開始時のサイズへ固定せず、現在の画像から都度取り出す（表示中の画像が単一所有する）。</remarks>
-    public Task<EsPixelRect?> RunAsync(EsBitmap sourceImage)
+    public Task<EsRectInt?> RunAsync(EsBitmap sourceImage)
     {
         if (!_state.TryBegin())
         {
-            return Task.FromResult<EsPixelRect?>(null); // 再入禁止
+            return Task.FromResult<EsRectInt?>(null); // 再入禁止
         }
 
         // 外観・座標変換・ルーペソースを設定する（CropViewControl は既に配置済み。追加・除去はしない）
@@ -126,7 +126,7 @@ internal sealed class CropSession(
             _log.LogCropCancelled();
             Cleanup();
             // キャンセルは 0x0 の空矩形で表す（公開契約。null は「開始できなかった」の意味に限定する）
-            _completion.TrySetResult(default(EsPixelRect));
+            _completion.TrySetResult(default(EsRectInt));
         }
 
         void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionRect);

@@ -18,11 +18,11 @@ public class CaptureTargetContractTests
         var notifications = 0;
         target.ImageChanged += (_, _) => notifications++;
 
-        target.ApplyCrop(new EsPixelRect(10, 20, 30, 40));
+        target.ApplyCrop(new EsRectInt(10, 20, 30, 40));
 
         // セッションは本通知でルーペのソースと座標変換を更新する
         Assert.Equal(1, notifications);
-        Assert.Equal(new EsPixelRect(10, 20, 30, 40), target.AppliedBounds);
+        Assert.Equal(new EsRectInt(10, 20, 30, 40), target.AppliedBounds);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class CaptureTargetContractTests
         public EsBitmap? Image { get; init; }
 
         /// <summary>適用された切り出し範囲。</summary>
-        public EsPixelRect? AppliedBounds { get; private set; }
+        public EsRectInt? AppliedBounds { get; private set; }
 
         /// <inheritdoc/>
         public EsBitmap? CurrentImage => Image;
@@ -58,7 +58,7 @@ public class CaptureTargetContractTests
         public event EventHandler? ImageChanged;
 
         /// <inheritdoc/>
-        public void ApplyCrop(EsPixelRect bounds)
+        public void ApplyCrop(EsRectInt bounds)
         {
             AppliedBounds = bounds;
             ImageChanged?.Invoke(this, EventArgs.Empty);

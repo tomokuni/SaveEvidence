@@ -19,8 +19,8 @@ public class CaptureSessionControlTests
     /// <summary>キャプチャサービスのモック。</summary>
     private sealed class MockCaptureService : ICaptureService
     {
-        public EsBitmap? CaptureArea(EsPixelRect bounds) => null;
-        public EsBitmap? CaptureVirtualScreen(out EsPixelPoint origin)
+        public EsBitmap? CaptureArea(EsRectInt bounds) => null;
+        public EsBitmap? CaptureVirtualScreen(out EsPointInt origin)
         {
             origin = default;
             return null;
@@ -32,15 +32,15 @@ public class CaptureSessionControlTests
     {
         public void HideFromTaskSwitcher(EsPlatformHandle handle) { }
         public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude) => true;
-        public bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds) => true;
+        public bool SetBounds(EsPlatformHandle handle, EsRectInt bounds) => true;
         public void EvacuateWindow(EsPlatformHandle handle) { }
     }
 
     /// <summary>要素検出のモック（常に未検出）。</summary>
     private sealed class MockElementFinder : IElementFinder
     {
-        public ElementFinderResults FindWindowUnderCursor(EsPixelPoint screenPoint) => default;
-        public ElementFinderResults FindScreenUnderCursor(EsPixelPoint screenPoint) => default;
+        public ElementFinderResults FindWindowUnderCursor(EsPointInt screenPoint) => default;
+        public ElementFinderResults FindScreenUnderCursor(EsPointInt screenPoint) => default;
         public IReadOnlyList<ElementFinderResults> ListScreens() => [];
         public IReadOnlyList<ElementFinderResults> ListWindows() => [];
     }
@@ -71,7 +71,7 @@ public class CaptureSessionControlTests
         var window = new Window();
 
         // 画像なし（Source 未設定）では開始できないことを null の結果で表す（実行中の再呼び出しと同じ表現）
-        EsPixelRect? result = await capture.StartCropAsync(new CropViewControl(), window);
+        EsRectInt? result = await capture.StartCropAsync(new CropViewControl(), window);
 
         Assert.Null(result);
         Assert.False(capture.IsCropping);
@@ -290,7 +290,7 @@ public class CaptureSessionControlTests
     /// <summary>切り出しの確定がコア型の矩形で返り、UI 型へ変換せずに切り出しコマンドへ渡せることを検証する。</summary>
     /// <remarks>
     /// 確定の結果を UI 型（Avalonia の <c>PixelRect</c>）で返すと、ホストが切り出しコマンド（コア型
-    /// <see cref="EsPixelRect"/> を要求する）へ渡す際に型が一致せず例外になる。<br/>
+    /// <see cref="EsRectInt"/> を要求する）へ渡す際に型が一致せず例外になる。<br/>
     /// 境界（UI 層）では UI 型へ変換するだけで、<b>境界より内側はコア型で引き回す</b>契約をここで固定する。
     /// </remarks>
     [AvaloniaFact]
@@ -312,7 +312,7 @@ public class CaptureSessionControlTests
         cropView.RequestConfirm();
 
         // コア型で受ける（UI 型ならここでコンパイルできない＝境界の外へ UI 型を出さない）
-        EsPixelRect? result = await task;
+        EsRectInt? result = await task;
 
         Assert.NotNull(result);
         Assert.False(result!.Value.IsEmpty);
@@ -336,7 +336,7 @@ public class CaptureSessionControlTests
         Assert.NotNull(task);
 
         capture.Cancel();
-        EsPixelRect? result = await task;
+        EsRectInt? result = await task;
 
         Assert.NotNull(result);
         Assert.True(result!.Value.IsEmpty);
@@ -370,11 +370,11 @@ public class CaptureSessionControlTests
         cropView.Source = new EsBitmapAvaloniaImage(CreateBitmap(40, 40));
 
         cropView.RequestConfirm();
-        EsPixelRect? result = await task;
+        EsRectInt? result = await task;
 
         // 差し替え後の画像（40x40）へクランプされた矩形が返る（開始時の 100x100 固定ではない）
         Assert.NotNull(result);
-        Assert.Equal(new EsPixelRect(0, 0, 40, 40), result!.Value);
+        Assert.Equal(new EsRectInt(0, 0, 40, 40), result!.Value);
 
         window.Close();
     }

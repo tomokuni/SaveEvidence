@@ -19,13 +19,13 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 public sealed class CaptureClickSelection
 {
     /// <summary>押下時に固定した矩形（画面物理ピクセル。未固定の場合は null）。</summary>
-    private EsPixelRect? _fixed;
+    private EsRectInt? _fixed;
 
     /// <summary>押下時に確定対象を固定する。</summary>
     /// <param name="target">固定する矩形（画面物理ピクセル）。</param>
     /// <returns>固定した場合は true。退化した矩形（幅・高さが 0 以下）の場合は false（固定しない）。</returns>
     /// <remarks>退化した矩形を固定すると、解放時に空の切り出しを確定することになるため受け付けない。</remarks>
-    public bool Fix(EsPixelRect target)
+    public bool Fix(EsRectInt target)
     {
         _fixed = target.IsEmpty ? null : target;
         return _fixed is not null;
@@ -34,7 +34,7 @@ public sealed class CaptureClickSelection
     /// <summary>解放時に固定した矩形を取り出す（取り出し後は未固定に戻る）。</summary>
     /// <returns>固定した矩形（画面物理ピクセル）。固定が無い場合は null。</returns>
     /// <remarks>取り出しは 1 回限りとする（同じ押下で 2 回確定しない）。</remarks>
-    public EsPixelRect? Take()
+    public EsRectInt? Take()
     {
         var target = _fixed;
         _fixed = null;

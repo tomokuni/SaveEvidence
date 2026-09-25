@@ -65,7 +65,7 @@ public class CaptureTypeTraitsTests
     {
         var finder = new RecordingElementFinder();
 
-        CaptureTypeTraits.FindUnderCursor(finder, CaptureType.ScreenSelect, new EsPixelPoint(10, 20));
+        CaptureTypeTraits.FindUnderCursor(finder, CaptureType.ScreenSelect, new EsPointInt(10, 20));
 
         Assert.Equal(1, finder.ScreenCalls);
         Assert.Equal(0, finder.WindowCalls);
@@ -78,7 +78,7 @@ public class CaptureTypeTraitsTests
     {
         var finder = new RecordingElementFinder();
 
-        CaptureTypeTraits.FindUnderCursor(finder, type, new EsPixelPoint(10, 20));
+        CaptureTypeTraits.FindUnderCursor(finder, type, new EsPointInt(10, 20));
 
         Assert.Equal(0, finder.ScreenCalls);
         Assert.Equal(1, finder.WindowCalls);
@@ -87,7 +87,7 @@ public class CaptureTypeTraitsTests
     [Fact]
     public void FindUnderCursor_検出サービスが無い場合は未検出を返す()
     {
-        var result = CaptureTypeTraits.FindUnderCursor(null, CaptureType.ScreenSelect, new EsPixelPoint(10, 20));
+        var result = CaptureTypeTraits.FindUnderCursor(null, CaptureType.ScreenSelect, new EsPointInt(10, 20));
 
         Assert.False(result.IsDetected);
         Assert.Equal(default, result.Bounds);
@@ -98,15 +98,15 @@ public class CaptureTypeTraitsTests
     {
         var finder = new RecordingElementFinder
         {
-            Result = new ElementFinderResults(new EsPixelRect(1, 2, 3, 4), IsDetected: true, Title: "T"),
+            Result = new ElementFinderResults(new EsRectInt(1, 2, 3, 4), IsDetected: true, Title: "T"),
         };
 
-        var result = CaptureTypeTraits.FindUnderCursor(finder, CaptureType.WindowSelect, new EsPixelPoint(10, 20));
+        var result = CaptureTypeTraits.FindUnderCursor(finder, CaptureType.WindowSelect, new EsPointInt(10, 20));
 
         Assert.True(result.IsDetected);
         Assert.Equal("T", result.Title);
         // カーソル位置がそのまま検出サービスへ渡る（座標変換は呼び出し側の責務）
-        Assert.Equal(new EsPixelPoint(10, 20), finder.LastPoint);
+        Assert.Equal(new EsPointInt(10, 20), finder.LastPoint);
     }
 
     // ====================================================================
@@ -152,10 +152,10 @@ public class CaptureTypeTraitsTests
         public int WindowCalls { get; private set; }
 
         /// <summary>最後に渡されたカーソル位置。</summary>
-        public EsPixelPoint LastPoint { get; private set; }
+        public EsPointInt LastPoint { get; private set; }
 
         /// <inheritdoc/>
-        public ElementFinderResults FindWindowUnderCursor(EsPixelPoint screenPoint)
+        public ElementFinderResults FindWindowUnderCursor(EsPointInt screenPoint)
         {
             WindowCalls++;
             LastPoint = screenPoint;
@@ -163,7 +163,7 @@ public class CaptureTypeTraitsTests
         }
 
         /// <inheritdoc/>
-        public ElementFinderResults FindScreenUnderCursor(EsPixelPoint screenPoint)
+        public ElementFinderResults FindScreenUnderCursor(EsPointInt screenPoint)
         {
             ScreenCalls++;
             LastPoint = screenPoint;

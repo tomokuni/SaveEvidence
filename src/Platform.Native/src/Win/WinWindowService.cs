@@ -78,7 +78,7 @@ internal sealed class WinWindowService : IWindowService
     /// Z オーダーとアクティブ状態は変更しない（<c>SWP_NOZORDER</c> / <c>SWP_NOACTIVATE</c>）。<br/>
     /// 無効なハンドルの場合は何もしない（false）。<br/>
     /// </remarks>
-    public bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds)
+    public bool SetBounds(EsPlatformHandle handle, EsRectInt bounds)
     {
         var nativeHwnd = handle.Handle;
         if (nativeHwnd == IntPtr.Zero) return false;

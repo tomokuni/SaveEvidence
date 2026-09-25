@@ -31,7 +31,7 @@ public class WinCursorServiceTests
         var service = new WinCursorService();
         var before = service.GetCursorScreenPoint();
 
-        service.SetCursorScreenPoint(new EsPixelPoint(before.X + 5, before.Y + 5));
+        service.SetCursorScreenPoint(new EsPointInt(before.X + 5, before.Y + 5));
 
         var after = service.GetCursorScreenPoint();
         // ヘッドレス環境ではカーソル移動が OS に完全には同期されない場合があるため、

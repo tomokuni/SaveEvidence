@@ -242,7 +242,7 @@ public class MainViewModelTests
         Assert.True(vm.CanSave);
     }
 
-    /// <summary>切り出しコマンドの引数型がコア型（<see cref="EsPixelRect"/>）であることを検証する。</summary>
+    /// <summary>切り出しコマンドの引数型がコア型（<see cref="EsRectInt"/>）であることを検証する。</summary>
     /// <remarks>
     /// <see cref="RelayCommand{T}"/> は引数の型が一致しないと <see cref="ArgumentException"/> を投げる。<br/>
     /// 切り出しの確定は UI 側で UI 型（例: Avalonia の <c>PixelRect</c>）を生成しやすいため、<br/>
@@ -255,7 +255,7 @@ public class MainViewModelTests
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
         // コア型（UI 非依存の画面物理矩形）は受け付ける
-        var exception = Record.Exception(() => vm.CropPreviewCommand.Execute(new EsPixelRect(0, 0, 10, 10)));
+        var exception = Record.Exception(() => vm.CropPreviewCommand.Execute(new EsRectInt(0, 0, 10, 10)));
         Assert.Null(exception);
 
         // UI 型（コア型ではない別の構造体）を渡すと例外になる

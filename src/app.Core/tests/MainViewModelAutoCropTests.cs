@@ -201,16 +201,16 @@ public sealed class MainViewModelAutoCropTests
             // 外側（10,10,200,200）と内側（50,50,50,50）が重なる
             DetectedRects =
             [
-                new EsPixelRect(10, 10, 200, 200),
-                new EsPixelRect(50, 50, 50, 50),
+                new EsRectInt(10, 10, 200, 200),
+                new EsRectInt(50, 50, 50, 50),
             ],
         };
 
         // 内側の矩形に含まれる座標は内側（面積が最小）を返す
-        Assert.Equal(new EsPixelRect(50, 50, 50, 50), vm.HitDetectedRect(60, 60));
+        Assert.Equal(new EsRectInt(50, 50, 50, 50), vm.HitDetectedRect(60, 60));
 
         // 内側の外・外側の中は外側を返す
-        Assert.Equal(new EsPixelRect(10, 10, 200, 200), vm.HitDetectedRect(20, 20));
+        Assert.Equal(new EsRectInt(10, 10, 200, 200), vm.HitDetectedRect(20, 20));
     }
 
     /// <summary>検出矩形のヒット判定が矩形の外側では null を返すことを検証する。</summary>
@@ -220,7 +220,7 @@ public sealed class MainViewModelAutoCropTests
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
-            DetectedRects = [new EsPixelRect(100, 100, 50, 50)],
+            DetectedRects = [new EsRectInt(100, 100, 50, 50)],
         };
 
         Assert.Null(vm.HitDetectedRect(99, 120));   // 左外
@@ -229,8 +229,8 @@ public sealed class MainViewModelAutoCropTests
         Assert.Null(vm.HitDetectedRect(120, 151));  // 下外
 
         // 境界（閉区間）は含む
-        Assert.Equal(new EsPixelRect(100, 100, 50, 50), vm.HitDetectedRect(100, 100));
-        Assert.Equal(new EsPixelRect(100, 100, 50, 50), vm.HitDetectedRect(150, 150));
+        Assert.Equal(new EsRectInt(100, 100, 50, 50), vm.HitDetectedRect(100, 100));
+        Assert.Equal(new EsRectInt(100, 100, 50, 50), vm.HitDetectedRect(150, 150));
     }
 
     /// <summary>検出矩形が無い場合はヒット判定が null を返すことを検証する。</summary>
@@ -253,7 +253,7 @@ public sealed class MainViewModelAutoCropTests
         var beforeSize = vm.PreviewImage!.Size.Width;
 
         // 画像の一部（左上 100x100）を切り出す
-        var bounds = new EsPixelRect(0, 0, 100, 100);
+        var bounds = new EsRectInt(0, 0, 100, 100);
         vm.ConfirmAutoCropCommand.Execute(bounds);
 
         Assert.False(vm.IsAutoCropActive);

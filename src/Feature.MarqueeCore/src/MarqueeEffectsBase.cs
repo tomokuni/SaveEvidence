@@ -60,5 +60,5 @@ public abstract class MarqueeEffectsBase : IMarqueeEffects
     /// 実カーソルを動かす nudge（<see cref="ICursorService"/> を渡した場合）だけが必要とする。<br/>
     /// カーソルサービスを渡さない場合は呼ばれない。
     /// </remarks>
-    public virtual EsPixelPoint ToScreenPoint(EsPoint domainPoint) => default;
+    public virtual EsPointInt ToScreenPoint(EsPoint domainPoint) => default;
 }

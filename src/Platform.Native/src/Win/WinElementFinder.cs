@@ -16,7 +16,7 @@ internal sealed class WinElementFinder : IElementFinder
     /// <summary>クラス名取得バッファのサイズ（文字数）。</summary>
     private const int ClassNameBufferSize = 256;
 
-    private IReadOnlyList<EsPixelRect>? _screenBounds;
+    private IReadOnlyList<EsRectInt>? _screenBounds;
 
     /// <summary>全ディスプレイモニターの矩形（画面物理座標）を列挙する（自己完結）。</summary>
     /// <returns>各モニターの矩形リスト。</returns>
@@ -24,19 +24,19 @@ internal sealed class WinElementFinder : IElementFinder
     /// Win32 の <c>EnumDisplayMonitors</c> で全モニターを列挙する（Avalonia の TopLevel 非依存）。<br/>
     /// 列挙に失敗した場合は空リストを返す（フォールバック）。
     /// </remarks>
-    private IReadOnlyList<EsPixelRect> EnumerateMonitorBounds()
+    private IReadOnlyList<EsRectInt> EnumerateMonitorBounds()
         => _screenBounds ??= EnumerateMonitorBoundsCore();
 
-    private static IReadOnlyList<EsPixelRect> EnumerateMonitorBoundsCore()
+    private static IReadOnlyList<EsRectInt> EnumerateMonitorBoundsCore()
     {
-        var bounds = new List<EsPixelRect>();
+        var bounds = new List<EsRectInt>();
         WinNative.EnumDisplayMonitors(
             IntPtr.Zero, IntPtr.Zero, (_, _, lprcMonitor, _) =>
             {
                 if (lprcMonitor != IntPtr.Zero)
                 {
                     var rect = Marshal.PtrToStructure<WinNative.RECT>(lprcMonitor);
-                    bounds.Add(new EsPixelRect(rect.Left, rect.Top, rect.Width, rect.Height));
+                    bounds.Add(new EsRectInt(rect.Left, rect.Top, rect.Width, rect.Height));
                 }
                 return true;
             }, IntPtr.Zero);
@@ -51,7 +51,7 @@ internal sealed class WinElementFinder : IElementFinder
     /// 除外条件（自プロセス・不可視・無効・最小化・0x0・タスクバー/デスクトップ）は <see cref="IsEligibleWindow"/> で適用し、<br/>
     /// ホットパスで毎回全列挙しないよう、最初の一致で列挙を早期終了する。
     /// </remarks>
-    public ElementFinderResults FindWindowUnderCursor(EsPixelPoint screenPoint)
+    public ElementFinderResults FindWindowUnderCursor(EsPointInt screenPoint)
     {
         var selfPid = WinNative.GetCurrentProcessId();
         ElementFinderResults result = default;
@@ -104,7 +104,7 @@ internal sealed class WinElementFinder : IElementFinder
     /// <see cref="ListScreens"/>（全スクリーン一覧）を列挙し、<paramref name="screenPoint"/> を含む最初の<br/>
     /// スクリーンを採用する。スクリーン境界は Win32 の <c>EnumDisplayMonitors</c> から自己解決する。
     /// </remarks>
-    public ElementFinderResults FindScreenUnderCursor(EsPixelPoint screenPoint)
+    public ElementFinderResults FindScreenUnderCursor(EsPointInt screenPoint)
         => ListScreens().FirstOrDefault(r => r.Bounds.Contains(screenPoint));
 
     /// <summary>全スクリーンの一覧を返す（仮想スクリーンの1枚画像に対するスナップショット管理用）。</summary>
@@ -130,7 +130,7 @@ internal sealed class WinElementFinder : IElementFinder
     /// <remarks>
     /// 全スクリーンを1枚の画像（仮想スクリーン）として取得した際に、その画像内のウィンドウ境界を<br/>
     /// 座標系（画像ローカル）で特定するための一覧を返す。<br/>
-    /// <see cref="FindWindowUnderCursor(EsPixelPoint)"/> と同じ除外条件（自プロセス・不可視・無効・最小化・<br/>
+    /// <see cref="FindWindowUnderCursor(EsPointInt)"/> と同じ除外条件（自プロセス・不可視・無効・最小化・<br/>
     /// 0x0サイズ・タスクバー/デスクトップ）を適用する。
     /// </remarks>
     public IReadOnlyList<ElementFinderResults> ListWindows()
@@ -207,7 +207,7 @@ internal sealed class WinElementFinder : IElementFinder
     /// <see cref="WinNative.TryGetVisibleRect"/> に委譲する（<see cref="WinCaptureService"/> と共用・単一所有）。<br/>
     /// インターフェイスからは公開せず、<see cref="FindWindowUnderCursor"/> の内部実装として使用する。
     /// </remarks>
-    internal bool TryGetWindowVisibleRect(EsPlatformHandle handle, out EsPixelRect rect)
+    internal bool TryGetWindowVisibleRect(EsPlatformHandle handle, out EsRectInt rect)
     {
         if (!WinNative.TryGetVisibleRect(handle.Handle, out var nativeRect))
         {
@@ -215,7 +215,7 @@ internal sealed class WinElementFinder : IElementFinder
             return false;
         }
 
-        rect = new EsPixelRect(nativeRect.Left, nativeRect.Top, nativeRect.Width, nativeRect.Height);
+        rect = new EsRectInt(nativeRect.Left, nativeRect.Top, nativeRect.Width, nativeRect.Height);
         return true;
     }
 

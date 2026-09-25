@@ -186,14 +186,15 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
 
 UI フレームワーク非依存のサイズ・ベクター・矩形。相互変換は `EsGeometryAvaloniaInterop` が提供します。`EsRect` は `Right`（`X + Width`）・`Bottom`（`Y + Height`）・`IsEmpty`（幅または高さが 0 以下）を提供します。
 
-### `Geometry.EsPixelPoint` / `Geometry.EsPixelRect`（readonly record struct）
+### `Geometry.EsPointInt` / `Geometry.EsSizeInt` / `Geometry.EsRectInt`（readonly record struct）
 
 ```csharp
-public readonly record struct EsPixelPoint(int X, int Y);
-public readonly record struct EsPixelRect(int X, int Y, int Width, int Height);
+public readonly record struct EsPointInt(int X, int Y);
+public readonly record struct EsSizeInt(int Width, int Height);
+public readonly record struct EsRectInt(int X, int Y, int Width, int Height);
 ```
 
-画面の物理ピクセル座標・矩形（DPI スケーリング適用後）。`EsPixelRect` は `Right` / `Bottom` / `TopLeft` / `BottomRight` / `Center` を提供し、`Contains(EsPixelPoint)`（半開区間）と `Union(EsPixelRect)` を持ちます。`TopLeft` は矩形の原点（画像の原点等）を座標の手組みなしで取り出すために使います。`EsPixelPoint.ToEsPoint()` は小数を扱う `EsPoint` への変換で、UI が成分を書き写さないよう本型が単一所有します。
+`EsPoint` / `EsSize` / `EsRect` の**整数版**（画面物理ピクセル座標・画像ピクセル座標とその矩形・寸法に使用する）。`EsRectInt` は `Right` / `Bottom` / `TopLeft` / `BottomRight` / `Center` を提供し、`Contains(EsPointInt)`（半開区間）と `Union(EsRectInt)` を持ちます。`TopLeft` は矩形の原点（画像の原点等）を座標の手組みなしで取り出すために使います。`EsPointInt.ToEsPoint()` は小数を扱う `EsPoint` への変換で、UI が成分を書き写さないよう本型が単一所有します。
 
 ### `Geometry.EsPlatformHandle`（readonly record struct）
 
@@ -213,8 +214,8 @@ public readonly record struct EsPlatformHandle(nint Handle, string? Descriptor =
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `CaptureArea` | `EsBitmap? CaptureArea(EsPixelRect bounds)` | 指定画面領域（画面物理座標）をキャプチャ。失敗時は null |
-| `CaptureVirtualScreen` | `EsBitmap? CaptureVirtualScreen(out EsPixelPoint origin)` | 仮想スクリーン全体を 1 回でキャプチャ |
+| `CaptureArea` | `EsBitmap? CaptureArea(EsRectInt bounds)` | 指定画面領域（画面物理座標）をキャプチャ。失敗時は null |
+| `CaptureVirtualScreen` | `EsBitmap? CaptureVirtualScreen(out EsPointInt origin)` | 仮想スクリーン全体を 1 回でキャプチャ |
 
 ### `ICursorService`（interface）
 
@@ -222,8 +223,8 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `GetCursorScreenPoint` | `EsPixelPoint GetCursorScreenPoint()` | 現在のカーソル位置を画面物理座標で取得 |
-| `SetCursorScreenPoint` | `void SetCursorScreenPoint(EsPixelPoint point)` | カーソルを画面物理座標へ移動 |
+| `GetCursorScreenPoint` | `EsPointInt GetCursorScreenPoint()` | 現在のカーソル位置を画面物理座標で取得 |
+| `SetCursorScreenPoint` | `void SetCursorScreenPoint(EsPointInt point)` | カーソルを画面物理座標へ移動 |
 | `ShowCursor` | `void ShowCursor(bool show)` | マウスポインターの表示/非表示を切替 |
 
 ### `IWindowService`（interface）
@@ -234,7 +235,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | --- | --- | --- |
 | `HideFromTaskSwitcher` | `void HideFromTaskSwitcher(EsPlatformHandle handle)` | タスクバー / Alt+Tab 非表示 |
 | `SetCaptureExclusion` | `bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude)` | キャプチャ除外 / 解除（未対応環境は false） |
-| `SetBounds` | `bool SetBounds(EsPlatformHandle handle, EsPixelRect bounds)` | 位置・サイズを画面物理ピクセルで指定（未対応環境は false。全モニターを跨ぐ配置に使う） |
+| `SetBounds` | `bool SetBounds(EsPlatformHandle handle, EsRectInt bounds)` | 位置・サイズを画面物理ピクセルで指定（未対応環境は false。全モニターを跨ぐ配置に使う） |
 | `EvacuateWindow` | `void EvacuateWindow(EsPlatformHandle handle)` | 最前面解除・非表示・クローズ（UI ハング時の退避） |
 
 ### `IElementFinder`（interface）
@@ -243,8 +244,8 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `FindWindowUnderCursor` | `ElementFinderResults FindWindowUnderCursor(EsPixelPoint screenPoint)` | 指定位置の最前面ウィンドウを検出 |
-| `FindScreenUnderCursor` | `ElementFinderResults FindScreenUnderCursor(EsPixelPoint screenPoint)` | 指定位置が含まれるスクリーンを検出 |
+| `FindWindowUnderCursor` | `ElementFinderResults FindWindowUnderCursor(EsPointInt screenPoint)` | 指定位置の最前面ウィンドウを検出 |
+| `FindScreenUnderCursor` | `ElementFinderResults FindScreenUnderCursor(EsPointInt screenPoint)` | 指定位置が含まれるスクリーンを検出 |
 | `ListScreens` | `IReadOnlyList<ElementFinderResults> ListScreens()` | 全スクリーン一覧 |
 | `ListWindows` | `IReadOnlyList<ElementFinderResults> ListWindows()` | 全ウィンドウ一覧 |
 
@@ -273,7 +274,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 
 ```csharp
 public readonly record struct ElementFinderResults(
-    EsPixelRect Bounds,
+    EsRectInt Bounds,
     bool IsDetected,
     string? Title = null,
     EsPlatformHandle? Handle = null,
@@ -317,8 +318,8 @@ public readonly record struct ElementFinderResults(
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
 | 生成 | `Create` | `static EsBitmap Create(int width, int height)` | 指定サイズの空ビットマップ（BGRA8888・Premul）を生成 |
-| 生成 | `Create` | `static EsBitmap Create(Size size)` | 指定サイズの空ビットマップを生成 |
-| 生成 | `Create` | `static EsBitmap Create(int width, int height, Color color)` / `static EsBitmap Create(Size size, Color color)` | 指定サイズのビットマップを全ピクセル指定色で生成 |
+| 生成 | `Create` | `static EsBitmap Create(EsSizeInt size)` | 指定サイズの空ビットマップを生成 |
+| 生成 | `Create` | `static EsBitmap Create(int width, int height, Color color)` / `static EsBitmap Create(EsSizeInt size, Color color)` | 指定サイズのビットマップを全ピクセル指定色で生成 |
 
 **Skia との相互変換**（`ToSKBitmap` / `ToEsBitmap`）は SkiaSharp へ依存するため [`Platform.Skia`](../Platform.Skia/README.md) の `EsBitmapSkiaExtensions` が提供します（`ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製。所有権はコア側に残ります）。
 
@@ -327,18 +328,18 @@ public readonly record struct ElementFinderResults(
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
 | プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（ピクセル） |
-| プロパティ | `Size` | `Size` | 幅・高さ（ピクセル。System.Drawing.Size） |
-| プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（パディング含む） |
+| プロパティ | `Size` | `EsSizeInt` | 幅・高さ（ピクセル。コアの整数サイズ型） |
+| プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（**常に 幅 × 4**。パディングなし） |
 | プロパティ | `Address` | `nint` | ピクセルデータ先頭アドレス（BGRA8888） |
 | プロパティ | `IsDisposed` | `bool` | 破棄済みか |
 | ピクセル | `GetPixel` | `(byte B, byte G, byte R, byte A) GetPixel(int x, int y)` | 指定座標の BGRA（アルファ乗算済み）を取得。範囲外は `IndexOutOfRangeException` |
-| ピクセル | `GetPixel` | `Color GetPixel(Point point)` | 指定座標の BGRA を `System.Drawing.Color` で取得 |
+| ピクセル | `GetPixel` | `Color GetPixel(EsPointInt point)` | 指定座標の BGRA を `System.Drawing.Color` で取得 |
 | ピクセル | `SetPixel` | `void SetPixel(int x, int y, byte b, byte g, byte r, byte a)` | 指定座標の BGRA（アルファ乗算済み）を設定 |
-| ピクセル | `SetPixel` | `void SetPixel(Point point, Color color)` | 指定座標へ `System.Drawing.Color` を設定 |
+| ピクセル | `SetPixel` | `void SetPixel(EsPointInt point, Color color)` | 指定座標へ `System.Drawing.Color` を設定 |
 | ピクセル | `TrySetPixel` | `bool TrySetPixel(int x, int y, Color color)` | 指定座標へ色を設定（範囲外は `false`） |
 | ピクセル | `Clear` | `void Clear(byte b, byte g, byte r, byte a)` / `void Clear(Color color)` | 全ピクセルを指定色で塗りつぶし |
 | その他 | `Clone` | `EsBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
-| その他 | `Crop` | `EsBitmap Crop(Rectangle rect)` / `EsBitmap Crop(int x, int y, int width, int height)` | 指定矩形領域を切り出す（ソース範囲外は透明パディング。位置関係は保たれる） |
+| その他 | `Crop` | `EsBitmap Crop(EsRectInt rect)` / `EsBitmap Crop(int x, int y, int width, int height)` | 指定矩形領域を切り出す（ソース範囲外は透明パディング。位置関係は保たれる） |
 | その他 | `Dispose` | `void Dispose()` | ピクセルバッファを解放（二重呼び出しは無害） |
 | その他 | `ThrowIfDisposed` | `void ThrowIfDisposed()` | 破棄済みなら `ObjectDisposedException` を送出 |
 

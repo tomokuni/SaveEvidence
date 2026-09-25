@@ -152,14 +152,14 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isAutoCropActive;
 
-    /// <summary>自動切り出しで検出された矩形候補群（画像座標 <see cref="EsPixelRect"/>・閉区間・面積昇順）。</summary>
+    /// <summary>自動切り出しで検出された矩形候補群（画像座標 <see cref="EsRectInt"/>・閉区間・面積昇順）。</summary>
     /// <value>4 辺が矩形を構成する候補のみ。座標の重複は統合し、最大 256 件に制限される。</value>
     [ObservableProperty]
-    private IReadOnlyList<EsPixelRect> _detectedRects = [];
+    private IReadOnlyList<EsRectInt> _detectedRects = [];
 
     /// <summary>現在ホバー中の矩形（複数矩形内にある場合は最も面積の小さいもの）。なければ null。</summary>
     [ObservableProperty]
-    private EsPixelRect? _hoveredRect;
+    private EsRectInt? _hoveredRect;
 
     /// <summary>ステータスメッセージ（自動切り出しの検出結果・案内）。</summary>
     [ObservableProperty]
@@ -328,9 +328,9 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>指定された範囲でプレビュー画像を切り出す。</summary>
-    /// <param name="bounds">切り出す矩形領域（画像座標 <see cref="EsPixelRect"/>）</param>
+    /// <param name="bounds">切り出す矩形領域（画像座標 <see cref="EsRectInt"/>）</param>
     [RelayCommand]
-    private void CropPreview(EsPixelRect bounds)
+    private void CropPreview(EsRectInt bounds)
         => ApplyPixelEdit(srcData => srcData.Crop(bounds.X, bounds.Y, bounds.Width, bounds.Height));
 
     /// <summary>プレビュー画像を LineDetection で検出し、ウィンドウ矩形の候補を表示する。</summary>
@@ -365,12 +365,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>検出された線分から矩形（ウィンドウの 4 辺）の候補を復元する。</summary>
     /// <param name="results">検出された線分一覧。</param>
-    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsPixelRect"/>。面積昇順・最大 256 件）。</returns>
+    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsRectInt"/>。面積昇順・最大 256 件）。</returns>
     /// <remarks>
     /// 線分→矩形復元のロジックは <see cref="LineRectangleReconstructor"/>（純粋クラス）へ委譲する（単一所有・DRY）。<br/>
     /// 本メソッドはホストからの呼び出し窓口（アプリ固有の委譲）として維持する。
     /// </remarks>
-    internal static IReadOnlyList<EsPixelRect> TryReconstructRects(IReadOnlyList<LineDetectionResult> results)
+    internal static IReadOnlyList<EsRectInt> TryReconstructRects(IReadOnlyList<LineDetectionResult> results)
         => LineRectangleReconstructor.Reconstruct(results);
 
     /// <summary>指定座標（画像ピクセル）を含む自動切り出しの検出矩形を求める。</summary>
@@ -383,9 +383,9 @@ public sealed partial class MainViewModel : ObservableObject
     /// 各辺は<b>閉区間</b>として扱う（右端・下端のピクセルも矩形に含める）。<br/>
     /// 判定を UI 側で重複実装しないよう、本メソッドを単一の所有者とする（両 UI が呼び出す）。
     /// </remarks>
-    public EsPixelRect? HitDetectedRect(double x, double y)
+    public EsRectInt? HitDetectedRect(double x, double y)
     {
-        EsPixelRect? hit = null;
+        EsRectInt? hit = null;
         var hitArea = long.MaxValue;
 
         foreach (var rect in DetectedRects)
@@ -407,9 +407,9 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>確定したウィンドウ矩形でプレビュー画像を切り出す。</summary>
-    /// <param name="bounds">確定した矩形領域（画像座標 <see cref="EsPixelRect"/>）。</param>
+    /// <param name="bounds">確定した矩形領域（画像座標 <see cref="EsRectInt"/>）。</param>
     [RelayCommand]
-    private void ConfirmAutoCrop(EsPixelRect bounds)
+    private void ConfirmAutoCrop(EsRectInt bounds)
     {
         if (bounds.Width <= 0 || bounds.Height <= 0)
         {

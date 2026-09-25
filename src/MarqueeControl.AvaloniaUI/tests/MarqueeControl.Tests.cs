@@ -43,22 +43,22 @@ public class MarqueeControlTests
 
     /// <summary>固定位置を返すカーソルサービスのモック。</summary>
     /// <param name="screenPoint">GetCursorScreenPoint が返す初期の画面物理座標。</param>
-    private sealed class MockCursorService(EsPixelPoint screenPoint) : ICursorService
+    private sealed class MockCursorService(EsPointInt screenPoint) : ICursorService
     {
         /// <summary>カーソル位置（画面物理座標）。テストから変更可能。</summary>
-        public EsPixelPoint Position { get; set; } = screenPoint;
+        public EsPointInt Position { get; set; } = screenPoint;
 
         /// <summary>カーソルの表示状態（ShowCursor の呼び出し結果）。</summary>
         public bool Visible { get; set; } = true;
 
         /// <summary>SetCursorScreenPoint で最後に設定された画面物理座標。</summary>
-        public EsPixelPoint? LastSetPoint { get; private set; }
+        public EsPointInt? LastSetPoint { get; private set; }
 
         /// <summary>現在のカーソル位置（画面物理座標）。</summary>
-        public EsPixelPoint GetCursorScreenPoint() => Position;
+        public EsPointInt GetCursorScreenPoint() => Position;
 
         /// <summary>カーソルを画面物理座標へ移動する。</summary>
-        public void SetCursorScreenPoint(EsPixelPoint point) => LastSetPoint = point;
+        public void SetCursorScreenPoint(EsPointInt point) => LastSetPoint = point;
 
         /// <summary>マウスポインターの表示 / 非表示切替。</summary>
         public void ShowCursor(bool show) => Visible = show;
@@ -1110,7 +1110,7 @@ public class MarqueeControlTests
         // ローカル DIP (300,200) に対応する画面物理座標をモックのカーソル位置として設定する
         // （HandleArrowKey 内の逆変換（画面物理 → ローカル DIP）が (300,200) に一致する）
         var screenPt = ScreenConverter.LocalDipToScreen(control, new Point(300, 200));
-        mock.Position = screenPt.ToEsPixelPoint();
+        mock.Position = screenPt.ToEsPointInt();
 
         var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
@@ -1133,7 +1133,7 @@ public class MarqueeControlTests
         window.Show();
 
         // 1 回目の nudge セッション: カーソル位置 (300,200) から Right → (301,200)
-        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(300, 200)).ToEsPixelPoint();
+        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(300, 200)).ToEsPointInt();
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
         // nudge 終了（マウス Up。StartPoint は (301,200) のまま残る）
@@ -1144,7 +1144,7 @@ public class MarqueeControlTests
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
         // 2 回目の nudge セッション: ユーザーがマウスを (800,600) へ移動してから Right を押す
-        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(800, 600)).ToEsPixelPoint();
+        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(800, 600)).ToEsPointInt();
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
         // 基点は古い nudge 位置 (301,200) ではなく、新しいカーソル位置 (800,600) に同期される
@@ -1166,7 +1166,7 @@ public class MarqueeControlTests
         window.Show();
 
         // カーソル位置 (300,200) に固定（2 回目以降の再評価でも同じ位置を返す = 移動を相殺する）
-        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(300, 200)).ToEsPixelPoint();
+        mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(300, 200)).ToEsPointInt();
 
         var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
@@ -1289,7 +1289,7 @@ public class MarqueeControlTests
 
         Assert.True(mock.Visible);
         Assert.NotNull(mock.LastSetPoint);
-        Assert.Equal(nudgeScreenPos.ToEsPixelPoint(), mock.LastSetPoint!.Value);
+        Assert.Equal(nudgeScreenPos.ToEsPointInt(), mock.LastSetPoint!.Value);
         window.Close();
     }
 
@@ -1313,7 +1313,7 @@ public class MarqueeControlTests
         // （実コードの ToScreen（LocalDipToScreen）と同じ変換で期待値を求める）
         var snapScreenPos = ScreenConverter.LocalDipToScreen(control, new Point(80, 80));
         Assert.NotNull(mock.LastSetPoint);
-        Assert.Equal(snapScreenPos.ToEsPixelPoint(), mock.LastSetPoint!.Value);
+        Assert.Equal(snapScreenPos.ToEsPointInt(), mock.LastSetPoint!.Value);
         window.Close();
     }
 

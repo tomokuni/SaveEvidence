@@ -19,19 +19,19 @@ public static class CaptureClipMath
     /// <param name="origin">仮想スクリーン画像の原点（画面物理ピクセル。画像の左上が対応する座標）。</param>
     /// <returns>画像ローカル座標の矩形。</returns>
     /// <remarks>画像ローカル座標 = 画面物理座標 − 原点。原点が負値（プライマリ以外が左・上）でも同じ式で扱える。</remarks>
-    public static EsPixelRect ToLocalRect(EsPixelRect captureRect, EsPixelPoint origin)
+    public static EsRectInt ToLocalRect(EsRectInt captureRect, EsPointInt origin)
         => new(
             captureRect.X - origin.X,
             captureRect.Y - origin.Y,
             captureRect.Width,
             captureRect.Height);
 
-    /// <summary>画像ローカル座標の矩形を画面物理座標へ変換する（<see cref="ToLocalRect(EsRect, EsPixelPoint)"/> の逆変換）。</summary>
+    /// <summary>画像ローカル座標の矩形を画面物理座標へ変換する（<see cref="ToLocalRect(EsRect, EsPointInt)"/> の逆変換）。</summary>
     /// <param name="localRect">画像ローカル座標の矩形。</param>
     /// <param name="origin">画像の原点（画面物理ピクセル）。</param>
     /// <returns>画面物理座標の矩形。</returns>
     /// <remarks>ドメイン（画像ローカル）で保持している選択矩形を画面物理座標へ戻すときに使う（双方向の対称性を保つ）。</remarks>
-    public static EsRect ToScreenRect(EsRect localRect, EsPixelPoint origin)
+    public static EsRect ToScreenRect(EsRect localRect, EsPointInt origin)
         => new(
             localRect.X + origin.X,
             localRect.Y + origin.Y,
@@ -43,19 +43,19 @@ public static class CaptureClipMath
     /// <param name="origin">画像の原点（画面物理ピクセル）。</param>
     /// <returns>画像ローカル座標の矩形。</returns>
     /// <remarks>選択矩形（浮動小数）を画像ローカル座標へ戻して描画へ渡すときに使う。</remarks>
-    public static EsRect ToLocalRect(EsRect captureRect, EsPixelPoint origin)
+    public static EsRect ToLocalRect(EsRect captureRect, EsPointInt origin)
         => new(
             captureRect.X - origin.X,
             captureRect.Y - origin.Y,
             captureRect.Width,
             captureRect.Height);
 
-    /// <summary>画像ローカル座標の整数矩形を画面物理座標へ変換する（<see cref="ToLocalRect(EsPixelRect, EsPixelPoint)"/> の逆変換）。</summary>
+    /// <summary>画像ローカル座標の整数矩形を画面物理座標へ変換する（<see cref="ToLocalRect(EsRectInt, EsPointInt)"/> の逆変換）。</summary>
     /// <param name="localRect">画像ローカル座標の矩形（整数ピクセル）。</param>
     /// <param name="origin">画像の原点（画面物理ピクセル）。</param>
     /// <returns>画面物理座標の矩形。</returns>
     /// <remarks>画面物理座標へ戻す計算を UI ごとに書かないよう、整数版の対称な変換として提供する。</remarks>
-    public static EsPixelRect ToScreenRect(EsPixelRect localRect, EsPixelPoint origin)
+    public static EsRectInt ToScreenRect(EsRectInt localRect, EsPointInt origin)
         => new(
             localRect.X + origin.X,
             localRect.Y + origin.Y,
@@ -76,7 +76,7 @@ public static class CaptureClipMath
     /// 原点が負値（仮想スクリーンの左上がプライマリより外側）でも同じ式で扱える。<br/>
     /// 占有範囲は切り出しのクランプ境界になるため、UI が幅・高さを組み立てないよう本メソッドが単一所有する。
     /// </remarks>
-    public static EsPixelRect ImageBounds(EsBitmap image, EsPixelPoint origin)
+    public static EsRectInt ImageBounds(EsBitmap image, EsPointInt origin)
         => new(origin.X, origin.Y, image.Width, image.Height);
 
     /// <summary>切り出し元の画像が切り出せる（サイズが正）であることを検証する。</summary>
@@ -99,12 +99,12 @@ public static class CaptureClipMath
     /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="screenRect">選択矩形（画面物理座標・整数ピクセル）。</param>
     /// <param name="imageBounds">切り出し元画像の占有範囲（画面物理座標）。原点が負値でもよい。</param>
-    /// <returns>切り出し矩形（画面物理ピクセル）。切り出せない場合は <see cref="EsPixelRect.IsEmpty"/> が true。</returns>
+    /// <returns>切り出し矩形（画面物理ピクセル）。切り出せない場合は <see cref="EsRectInt.IsEmpty"/> が true。</returns>
     /// <remarks>
     /// 検出矩形（クリック確定・ホバー）は整数で与えられるため、浮動小数版と同じ規則を適用する本オーバーロードを提供する<br/>
     /// （UI が整数矩形を浮動小数矩形へ広げる変換を書かないため）。
     /// </remarks>
-    public static EsPixelRect ResolveCaptureRect(CaptureType captureType, EsPixelRect screenRect, EsPixelRect imageBounds)
+    public static EsRectInt ResolveCaptureRect(CaptureType captureType, EsRectInt screenRect, EsRectInt imageBounds)
         => ResolveCaptureRect(
             captureType,
             new EsRect(screenRect.X, screenRect.Y, screenRect.Width, screenRect.Height),
@@ -114,7 +114,7 @@ public static class CaptureClipMath
     /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="screenRect">選択矩形（画面物理座標）。</param>
     /// <param name="imageBounds">切り出し元画像の占有範囲（画面物理座標）。原点が負値でもよい。</param>
-    /// <returns>切り出し矩形（画面物理ピクセル）。切り出せない場合は <see cref="EsPixelRect.IsEmpty"/> が true。</returns>
+    /// <returns>切り出し矩形（画面物理ピクセル）。切り出せない場合は <see cref="EsRectInt.IsEmpty"/> が true。</returns>
     /// <remarks>
     /// 1. 選択矩形を画像ローカル座標へ変換する（原点の減算）。<br/>
     /// 2. ドラッグ選択（<see cref="CaptureType.AreaSelect"/>）は半開区間を閉区間化して終点のピクセルを含める。<br/>
@@ -126,7 +126,7 @@ public static class CaptureClipMath
     /// 検出矩形は要素の大きさであり、小さい要素も切り出し対象とする）。<br/>
     /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
     /// </remarks>
-    public static EsPixelRect ResolveCaptureRect(CaptureType captureType, EsRect screenRect, EsPixelRect imageBounds)
+    public static EsRectInt ResolveCaptureRect(CaptureType captureType, EsRect screenRect, EsRectInt imageBounds)
     {
         var origin = imageBounds.TopLeft;
         var local = CropBoundsMath.ComputeCropBounds(
@@ -150,7 +150,7 @@ public static class CaptureClipMath
     /// 「破棄済みは切り出せない」規則を本クラスが単一所有し、UI が例外を捕まえない）。<br/>
     /// 取り出した画像の所有権は呼び出し側へ移る。
     /// </remarks>
-    public static EsBitmap? Extract(EsBitmap? virtualScreen, EsPixelPoint origin, EsPixelRect captureRect)
+    public static EsBitmap? Extract(EsBitmap? virtualScreen, EsPointInt origin, EsRectInt captureRect)
     {
         if (virtualScreen is not { } source || source.IsDisposed)
         {

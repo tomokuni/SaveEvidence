@@ -46,7 +46,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 | 機能 | 提供元 |
 | --- | --- |
 | サービス抽象（`ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>`） | `Platform.Core` |
-| コア値型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPixelPoint` / `EsPixelRect` / `EsPlatformHandle` 等） | `Platform.Core` |
+| コア値型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` / `EsPlatformHandle` 等） | `Platform.Core` |
 | 座標変換ポート（`ICoordTransform` / `CoordTransform`）・`ScrollMath` / `DpiScaler` / `CoordinateFormatter` | `Platform.Core` |
 | 画像コンテナ（`EsBitmap`） | `Platform.Core` |
 | 既定実装のファクトリ（`PlatformFactory.CreateXxx()`）・Win32 / NoOp 実装・System.Drawing 変換 | `Platform.Native`（本プロジェクトから参照される） |
@@ -72,7 +72,7 @@ using EsUtil.Platform.Core;                     // サービス抽象 / コア�
 using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
 using EsUtil.Platform.Core.Coordinate;          // ICoordTransform / CoordTransform
-using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPixelPoint / EsPixelRect / EsPlatformHandle
+using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt / EsPlatformHandle
 ```
 
 ## 4. 基本的な使用方法
@@ -84,8 +84,8 @@ UI フレームワーク非依存のコア型と Avalonia の型を相互変換�
 
 ```csharp
 // Avalonia → コア
-EsPixelRect rect = captureRect.ToEsPixelRect();
-EsPixelPoint origin = pixelPoint.ToEsPixelPoint();
+EsRectInt rect = captureRect.ToEsRectInt();
+EsPointInt origin = pixelPoint.ToEsPointInt();
 EsPlatformHandle handle = window.TryGetPlatformHandle().ToEsPlatformHandle();
 EsPoint point = avaloniaPoint.ToEsPoint();
 EsSize size = bounds.Size.ToEsSize();
@@ -147,7 +147,7 @@ ICoordTransform dipPort = ScreenConverter.CreateVisualDipPort(control);
 | --- | --- |
 | `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（`ToAvaloniaKey()` / `ToEsKey()`。数値ではなく名前で変換） |
 | `EsWindowStateAvaloniaInterop` | `EsWindowState` ⇔ `Avalonia.Controls.WindowState`（名前で変換。未定義値は `Normal` へフォールバック） |
-| `EsGeometryAvaloniaInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPixelPoint` / `EsPixelRect` ⇔ Avalonia の対応型 |
+| `EsGeometryAvaloniaInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` ⇔ Avalonia の対応型 |
 | `EsPlatformHandleAvaloniaInterop` | `Avalonia.Platform.IPlatformHandle` ⇔ `EsPlatformHandle`（null はハンドル値 0 に変換） |
 | `ColorAvaloniaInterop` | `Avalonia.Media.Color` ⇔ `System.Drawing.Color`（コアの色型。ARGB をそのまま保持） |
 | `CursorOverrideGuardAvaloniaExtensions` | `ICursorOverrideGuard.Attach(this ICursorOverrideGuard, TopLevel)` |
@@ -224,7 +224,7 @@ new MarqueeRenderer(MarqueePaint.Default).DrawShapes(new AvaloniaCanvas(ctx), co
 | --- | --- | --- |
 | ドメイン座標 | `EsPoint` / `EsRect` | 選択状態・nudge・イベント通知（上位 AP が定義） |
 | コントロールローカル DIP | `EsPoint` / `EsSize`（描画時は Avalonia 型） | マウス入力・描画（Avalonia 論理座標） |
-| 画面物理 Pixel | `EsPixelPoint` / `EsPixelRect` | カーソル操作・キャプチャ・画面変換 |
+| 画面物理 Pixel | `EsPointInt` / `EsRectInt` | カーソル操作・キャプチャ・画面変換 |
 
 - ドメイン ↔ DIP の変換は `ICoordTransform`（`Platform.Core`）が担います。
 - ローカル DIP ↔ 画面物理の変換は `ScreenConverter`（本プロジェクト）が担います。

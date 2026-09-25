@@ -103,7 +103,7 @@ public class CropBoundsMathTests
     [Fact]
     public void ToClosedInterval_終点の1ピクセルを加える()
     {
-        var result = CropBoundsMath.ToClosedInterval(new EsPixelRect(10, 20, 40, 30), new EsSize(400, 300));
+        var result = CropBoundsMath.ToClosedInterval(new EsRectInt(10, 20, 40, 30), new EsSize(400, 300));
 
         Assert.Equal(10, result.X);
         Assert.Equal(20, result.Y);
@@ -114,7 +114,7 @@ public class CropBoundsMathTests
     [Fact]
     public void ToClosedInterval_右端下端の1ピクセルは画像サイズを超えない()
     {
-        var result = CropBoundsMath.ToClosedInterval(new EsPixelRect(199, 149, 1, 1), new EsSize(200, 150));
+        var result = CropBoundsMath.ToClosedInterval(new EsRectInt(199, 149, 1, 1), new EsSize(200, 150));
 
         Assert.Equal(199, result.X);
         Assert.Equal(149, result.Y);
@@ -125,7 +125,7 @@ public class CropBoundsMathTests
     [Fact]
     public void ToClosedInterval_画像全体の選択は画像サイズを維持する()
     {
-        var result = CropBoundsMath.ToClosedInterval(new EsPixelRect(0, 0, 200, 150), new EsSize(200, 150));
+        var result = CropBoundsMath.ToClosedInterval(new EsRectInt(0, 0, 200, 150), new EsSize(200, 150));
 
         Assert.Equal(0, result.X);
         Assert.Equal(0, result.Y);
@@ -137,7 +137,7 @@ public class CropBoundsMathTests
     public void ToClosedInterval_画像サイズ無しはクランプしない()
     {
         // 画像サイズを知らない呼び出し（画面全体が切り出し対象と一致する場合等）は +1 のみ行う
-        var result = CropBoundsMath.ToClosedInterval(new EsPixelRect(10, 20, 40, 30));
+        var result = CropBoundsMath.ToClosedInterval(new EsRectInt(10, 20, 40, 30));
 
         Assert.Equal(10, result.X);
         Assert.Equal(20, result.Y);
@@ -179,8 +179,8 @@ public class CropBoundsMathTests
     {
         // 画像サイズ付きは、画像サイズ無しの結果を画像の端でクランプした値になる（規則を共有している）
         var size = new EsSize(200, 150);
-        var plain = CropBoundsMath.ToClosedInterval(new EsPixelRect(x, y, width, height));
-        var clamped = CropBoundsMath.ToClosedInterval(new EsPixelRect(x, y, width, height), size);
+        var plain = CropBoundsMath.ToClosedInterval(new EsRectInt(x, y, width, height));
+        var clamped = CropBoundsMath.ToClosedInterval(new EsRectInt(x, y, width, height), size);
 
         Assert.Equal(plain.X, clamped.X);
         Assert.Equal(plain.Y, clamped.Y);
@@ -198,7 +198,7 @@ public class CropBoundsMathTests
         // 選択矩形 (10,10,40,40) = 半開区間 [10,50)。閉区間では [10,50] = 41×41 ピクセル
         var result = CropBoundsMath.ComputeCropBounds(new EsRect(10, 10, 40, 40), new EsSize(100, 100), 1.0);
 
-        Assert.Equal(new EsPixelRect(10, 10, 41, 41), result);
+        Assert.Equal(new EsRectInt(10, 10, 41, 41), result);
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public class CropBoundsMathTests
         // 画像サイズ 100 を超えないよう 20 ピクセルにクランプする
         var result = CropBoundsMath.ComputeCropBounds(new EsRect(80, 80, 20, 20), new EsSize(100, 100), 1.0);
 
-        Assert.Equal(new EsPixelRect(80, 80, 20, 20), result);
+        Assert.Equal(new EsRectInt(80, 80, 20, 20), result);
     }
 
     [Fact]
@@ -226,7 +226,7 @@ public class CropBoundsMathTests
         // 選択矩形が画像外（負座標）→ 0 にクランプして閉区間で切り出す
         var result = CropBoundsMath.ComputeCropBounds(new EsRect(-5, -5, 20, 20), new EsSize(100, 100), 1.0);
 
-        Assert.Equal(new EsPixelRect(0, 0, 16, 16), result);
+        Assert.Equal(new EsRectInt(0, 0, 16, 16), result);
     }
 
     [Fact]
@@ -253,7 +253,7 @@ public class CropBoundsMathTests
         var result = CropBoundsMath.ComputeCropBounds(
             new EsRect(10, 10, 40, 40), new EsSize(100, 100), 1.0, closedInterval: false);
 
-        Assert.Equal(new EsPixelRect(10, 10, 40, 40), result);
+        Assert.Equal(new EsRectInt(10, 10, 40, 40), result);
     }
 
     [Fact]
