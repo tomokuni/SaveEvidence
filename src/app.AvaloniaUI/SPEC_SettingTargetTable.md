@@ -66,7 +66,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
   → Settings（ObservableProperty・変更通知）
   → MainWindow.ApplyCaptureSessionSettings（CaptureSettingsMapper.From で CaptureSettings 生成）
   → CaptureSessionControl.AppearanceSettings（CaptureSettings・部分更新マージ）
-  → CropViewControl.SelectionOverlayOptions（ToFadeMaskDragRectOptions で変換した FadeMaskDragRectOptions）+ SelectionOverlayMarqueePaint / SelectionOverlayLoupePaint（CapturePaintMapper で組み立てた色）
+  → CropViewControl.SelectionOverlayOptions（ToFadeMaskDragRectOptions で変換した FadeMaskDragRectOptions）+ SelectionOverlayMarqueePaint / SelectionOverlayLoupePaint（`CaptureSessionControl.UIBase` の CapturePaintMapper で組み立てた色）
   → FadeMaskDragRectControl.Options（設定値の分配）/ .MarqueePaint / .LoupePaint
   → Options.Marquee / Options.Deco（寸法・表示可否）/ Options.Loupe / Options.Labels → 内包コントロールの各設定値
   → MarqueeControl.Paint / LoupeControl.Paint（描画にだけ必要な色）
@@ -74,7 +74,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 - 設定画面の変更は `Settings` の `PropertyChanged` で **即時反映** される。
 - CaptureSessionControl.AvaloniaUI への反映は `CaptureSettings`（nullable record・部分更新）を介して行い、`null` のメンバーは現在値を維持する。
-- **色はコアの設定値（`FadeMaskDragRectOptions`）に含まれない**。UI 層のホスト（`CropSession`）が `CapturePaintMapper` で `CaptureSettings` から `MarqueePaint` / `LoupePaint` を組み立て、コントロールの `MarqueePaint` / `LoupePaint` プロパティへ設定する（Core → UIBase の逆流を作らないため）。
+- **色はコアの設定値（`FadeMaskDragRectOptions`）に含まれない**。UI 間で共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が `CaptureSettings` から `MarqueePaint` / `LoupePaint` を組み立て、ホスト（`CropSession` / `CaptureOverlay`）がコントロールの `MarqueePaint` / `LoupePaint` プロパティへ設定する（Core → UIBase の逆流を作らないため）。
 - テーマ・画像配置・市松模様等、app 内で直接処理する項目は個別の購読で反映される。
 - `Platform.AvaloniaUI` は共通基盤のため、外観設定の公開対象ではない（参考として記載）。
 
@@ -137,7 +137,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `Options.ZoomLevel` | ✅ `Options.Loupe.ZoomLevel` | ✅ | 拡大倍率 |
 | `RenderScaling` | ✅ `LoupeRenderScaling`（個別プロパティ） | —（DPI から自動取得） | DIP → 物理ピクセル倍率 |
 | `Paint.CrossColor` | ✅ `LoupePaint.CrossColor` | ✅ | 十字線色 |
-| `Paint.BackgroundColor` | —（設定なし） | — | 下地（ベース）色。ホスト（`CapturePaintMapper`）が透明またはテーマ背景色を設定し、設定画面では設定しない |
+| `Paint.BackgroundColor` | —（設定なし） | — | 下地（ベース）色。ホスト（`CaptureSessionControl.UIBase` の `CapturePaintMapper`）が透明またはテーマ背景色を設定し、設定画面では設定しない |
 | `Options.Metrics.CheckerSize` | ✅ `Options.Loupe.Metrics.CheckerSize` | ✅ | 市松模様タイルサイズ |
 | `Paint.CheckerColorA` | ✅ `LoupePaint.CheckerColorA` | ✅ | |
 | `Paint.CheckerColorB` | ✅ `LoupePaint.CheckerColorB` | ✅ | |
@@ -178,13 +178,13 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 ### 3.5 CropViewControl の公開外観プロパティと CaptureSessionControl.AvaloniaUI での公開有無
 
 `CropViewControl` は自身の公開設定として `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）、`Scaling` / `LoupeRenderScaling`、`ViewportBackground`、`CenterAlign` 等を公開する。
-`CaptureSessionControl.AvaloniaUI` は**`CaptureSettings`（`CaptureSessionControl.AppearanceSettings`）**を公開しており、Crop セッション開始時に `CaptureSettings` → `FadeMaskDragRectOptions`（`ToFadeMaskDragRectOptions`。コアのマッパー。**寸法・表示可否のみ**）と `MarqueePaint` / `LoupePaint`（`CapturePaintMapper`。**描画にだけ必要な色**）へ変換して `CropViewControl.SelectionOverlayOptions` / `SelectionOverlayMarqueePaint` / `SelectionOverlayLoupePaint` へ設定する。
+`CaptureSessionControl.AvaloniaUI` は**`CaptureSettings`（`CaptureSessionControl.AppearanceSettings`）**を公開しており、Crop セッション開始時に `CaptureSettings` → `FadeMaskDragRectOptions`（`ToFadeMaskDragRectOptions`。コアのマッパー。**寸法・表示可否のみ**）と `MarqueePaint` / `LoupePaint`（`CaptureSessionControl.UIBase` の `CapturePaintMapper`。**描画にだけ必要な色**）へ変換して `CropViewControl.SelectionOverlayOptions` / `SelectionOverlayMarqueePaint` / `SelectionOverlayLoupePaint` へ設定する。
 DPI スケーリング（`Scaling` / `LoupeRenderScaling`）は `CaptureSettings` に含まれず、セッションが個別プロパティ（`cropView.Scaling` 等）で設定する。
 
 | CropViewControl の公開プロパティ | CaptureSessionControl.AvaloniaUI での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
 | `SelectionOverlayOptions`（`FadeMaskDragRectOptions`） | ✅ `CaptureSettings`（コアのマッパーで変換） | ✅ | `CaptureSettings` → `FadeMaskDragRectOptions`（寸法・表示可否。全て設定画面で設定可能） |
-| `SelectionOverlayMarqueePaint` / `SelectionOverlayLoupePaint`（`MarqueePaint` / `LoupePaint`） | ✅ `CaptureSettings`（UI 層の `CapturePaintMapper` で組み立て） | ✅ | **色はコアのマッパーでは写像しない**（Core → UIBase の逆流を作らないため、描画層の色は UI 層のホストが組み立てる） |
+| `SelectionOverlayMarqueePaint` / `SelectionOverlayLoupePaint`（`MarqueePaint` / `LoupePaint`） | ✅ `CaptureSettings`（`CaptureSessionControl.UIBase` の `CapturePaintMapper` で組み立て） | ✅ | **色はコアのマッパーでは写像しない**（Core → UIBase の逆流を作らないため、描画層の色は UI 層のホストが組み立てる） |
 | `Scaling` | ✅ `cropView.Scaling`（セッションが設定） | —（コードから動的設定） | DPI スケーリング（Crop は 1.0 固定） |
 | `LoupeRenderScaling` | ✅ `cropView.LoupeRenderScaling`（セッションが設定） | —（DPI から自動取得） | ルーペ描画スケール（`CaptureSettings.LoupeRenderScaling` 由来） |
 | `ViewportBackground` | — | ✅（`Settings.PreviewCheckerColorA/B` / `PreviewCheckerSize`） | プレビュー背景（市松模様）。`app.AvaloniaUI` 側（`CapturePage`）で直接設定 |

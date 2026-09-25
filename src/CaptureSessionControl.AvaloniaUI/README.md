@@ -158,7 +158,6 @@ CaptureSessionControl.AvaloniaUI/
 ├── src/
 │   ├── CaptureSessionControl.AvaloniaUI.csproj      # ライブラリプロジェクト（Avalonia.Desktop / Logging.Abstractions）
 │   ├── CaptureSessionControl.cs            # 公開 Facade（統括者。組み立て・配線・ライフサイクル）
-│   ├── CapturePaintMapper.cs               # 設定から描画にだけ必要な色（MarqueePaint / LoupePaint）を組み立てる
 │   └── Sessions/                 # 内部実装（SelectionCaptureSession / CropSession / OverlayWindow）
 ├── sample/                       # サンプルアプリ（sample/README.md 参照）
 └── tests/                        # 単体テスト
@@ -167,6 +166,8 @@ CaptureSessionControl.AvaloniaUI/
 `CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。利用側は `using EsUtil.Platform.Core;` を追加してください。
 
 `CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。利用側は `using EsUtil.SaveEvidence.CaptureSession;` を追加してください。**色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
+
+設定から描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）への写像は、両 UI が共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。利用側は `using EsUtil.SaveEvidence.CaptureSession.UIBase;` を追加してください。
 
 ## 10. ライセンス
 

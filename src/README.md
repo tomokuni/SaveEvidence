@@ -8,7 +8,7 @@
 ```mermaid
 flowchart TB
     APP["アプリ層<br/>app.AvaloniaUI / app.MewUI（+ app.Core の ViewModel・Model）<br/>CaptureSessionControl.*（撮影セッション）"]
-    CTRL["コントロール層<br/>XxxControl.Core / .UIBase / .AvaloniaUI / .MewUI<br/>（ZoomView / CropView / CaptureSession / FadeMaskDragRect は Core と UI のみ）"]
+    CTRL["コントロール層<br/>XxxControl.Core / .UIBase / .AvaloniaUI / .MewUI<br/>（ZoomView / CropView は Core と UI のみ）"]
     PLAT["プラットフォーム層<br/>Platform.Core（UI 非依存の値型・抽象・描画ポート）<br/>Platform.AvaloniaUI / Platform.MewUI（UI アダプタ）<br/>Platform.Native（Win32 / NoOp 実装）"]
     APP --> CTRL
     APP --> PLAT
@@ -37,7 +37,7 @@ UIBase は `Platform.Core` も参照します（描画ポート・実寸測定�
 | 層 | 置くもの | 置かないもの | 依存先 | Marquee の例 |
 | --- | --- | --- | --- | --- |
 | **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・コア⇔UI の契約・ログ定義 | 描画 API の呼び出し・UI フレームワークの型・組み込み先の概念 | `Platform.Core` | `Marquee`（ファサード）/ `MarqueeSession` / `MarqueeFrame` / `MarqueeOptions` / `IMarqueeRenderer`（契約） |
-| **UIBase** | コントロール化に必要な処理（組み込み規則）と描画手順（層の順序に従った描画 API の呼び出し）・描画にだけ必要な色（`MarqueePaint` / `LoupePaint`） | コア単体でも成立する判断（選択・表示レイアウト）・UI フレームワークの型 | `Core` / `Platform.Core` | `MarqueeRenderer` / `MarqueePaint` / `MarqueeLabelPlan` / `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` |
+| **UIBase** | コントロール化に必要な処理（組み込み規則）と描画手順（層の順序に従った描画 API の呼び出し）・描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）・設定と描画の設定を結ぶ写像（両 UI で共有する） | コア単体でも成立する判断（選択・表示レイアウト）・UI フレームワークの型 | `Core` / `Platform.Core` | `MarqueeRenderer` / `MarqueePaint` / `MarqueeLabelPlan` / `MarqueeWheelInterpreter` / `CapturePaintMapper` |
 | **UI** | 入力イベントの受付とコア型への変換・効果の適用・通知の公開イベントへの転送・描画先の用意・ラベル要素の配置 | 判断・計算・既定値（コアが単一所有する）・複数 UI で共有できる手順 | `Core` / `UIBase` / `Platform.*` | `MarqueeControl` / `Effects` / `AvaloniaCanvas` の適合 |
 
 **UIBase の中の 2 つの関心事**: 実装上は同じアセンブリに置きますが、帰属の基準は別です。
@@ -84,11 +84,13 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 | `LoupeControl` | あり | あり（描画手順 + 組み込み規則。組み込み規則は AvaloniaUI のみが使う） | AvaloniaUI / MewUI |
 | `ZoomViewControl` | あり | なし（UI 層が描く） | AvaloniaUI / MewUI |
 | `CropViewControl` | あり | なし | AvaloniaUI / MewUI |
-| `CaptureSessionControl` | あり | なし | AvaloniaUI / MewUI |
+| `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。描画手順は持たない） | AvaloniaUI / MewUI |
 | `FadeMaskDragRectControl` | あり | なし（内包する Marquee / Loupe の UIBase を使う） | AvaloniaUI / MewUI |
 | `ColorPickerControl` | なし（UI のみ） | なし | AvaloniaUI |
 
 `LoupeControl` の組み込み規則（`LoupeRenderCoordinator`）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。同じ必要が生じた時点で注入できます。
+
+`CaptureSessionControl.UIBase` は**描画手順を持たない例外的な UIBase** です（設定 → 色の写像だけを持ちます）。写像元がセッションの設定型（`CaptureSettings`）、写像先が描画層の色（`MarqueePaint` / `LoupePaint`）という**2 つの層にまたがる**ため、コアにも（Core → UIBase の逆流になる）再利用ライブラリにも置けません。両 UI のホストが同じ写像を使うことを保証するために本層を置いています（詳細は [`CaptureSessionControl.UIBase`](CaptureSessionControl.UIBase/README.md)）。
 
 `LineDetection` は画像処理ライブラリであり、本 3 層には含めません（`Platform.Core` のみに依存します）。
 
@@ -98,6 +100,9 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 | --- | --- | --- |
 | Marquee | [`Feature.MarqueeCore`](Feature.MarqueeCore/README.md) | [`MarqueeControl.UIBase`](MarqueeControl.UIBase/README.md) |
 | Loupe | [`Feature.LoupeCore`](Feature.LoupeCore/README.md) | [`LoupeControl.UIBase`](LoupeControl.UIBase/README.md) |
+| CaptureSession | [`CaptureSessionControl.Core`](CaptureSessionControl.Core/README.md) | [`CaptureSessionControl.UIBase`](CaptureSessionControl.UIBase/README.md) |
+
+複合コントロール（FadeMaskDragRect）は内包する Marquee / Loupe の層を参照してください（コアは [`FadeMaskDragRectControl.Core`](FadeMaskDragRectControl.Core/README.md)）。
 
 UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [`MarqueeControl.MewUI`](MarqueeControl.MewUI/README.md) / [`LoupeControl.AvaloniaUI`](LoupeControl.AvaloniaUI/README.md) / [`LoupeControl.MewUI`](LoupeControl.MewUI/README.md)、
 プラットフォーム層は [`Platform.Core`](Platform.Core/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) / [`Platform.Native`](Platform.Native/README.md) を参照してください。

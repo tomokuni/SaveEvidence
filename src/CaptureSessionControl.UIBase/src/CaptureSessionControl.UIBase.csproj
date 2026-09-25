@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EsUtil.SaveEvidence.CaptureSession.UIBase</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。
+         XML は配布物（bin / publish）へ出さない（検証だけに使う）。 -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 写像元の設定型（CaptureSettings）。本層はセッションの設定に依存するため、
+         再利用ライブラリ（FadeMaskDragRectControl.UIBase)ではなくセッション側の共有層に置く。 -->
+    <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
+    <!-- 写像先の色（MarqueePaint / LoupePaint）。描画の設定は UI 非依存の型のため本層で共有できる
+         （コアから描画の設定を参照すると Core → UIBase の逆流になる）。 -->
+    <ProjectReference Include="..\..\MarqueeControl.UIBase\src\MarqueeControl.UIBase.csproj" />
+    <ProjectReference Include="..\..\LoupeControl.UIBase\src\LoupeControl.UIBase.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 写像は両 UI のホストとテストからのみ参照する（公開 API を増やさない） -->
+    <InternalsVisibleTo Include="CaptureSessionControl.AvaloniaUI" />
+    <InternalsVisibleTo Include="CaptureSessionControl.MewUI" />
+    <InternalsVisibleTo Include="CaptureSessionControl.UIBase.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+</Project>

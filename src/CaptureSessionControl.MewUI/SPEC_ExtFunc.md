@@ -110,7 +110,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 ### 4.1 適用先
 
-上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropSession`）が同じマッピングで反映します。**寸法・表示可否**はコアの `FadeMaskDragRectOptionsMapper` が単一所有し、**描画にだけ必要な色**は UI 層のホストの `CapturePaintMapper`（`MarqueePaint` / `LoupePaint` を組み立ててコントロールの `MarqueePaint` / `LoupePaint` プロパティへ設定する）が担います。
+上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropSession`）が同じマッピングで反映します。**寸法・表示可否**はコアの `FadeMaskDragRectOptionsMapper` が単一所有し、**描画にだけ必要な色**は UI 間で共有する `CaptureSessionControl.UIBase` の `CapturePaintMapper`（`MarqueePaint` / `LoupePaint` を組み立ててコントロールの `MarqueePaint` / `LoupePaint` プロパティへ設定する）が担います。
 ただし、切り出しはプレビューの表示に合わせる必要があるため、次の項目は撮影専用です。
 
 | 項目 | 理由 |

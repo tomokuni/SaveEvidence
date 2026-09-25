@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using EsUtil.SaveEvidence.CaptureSession;
+using EsUtil.SaveEvidence.CaptureSession.UIBase;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Native;

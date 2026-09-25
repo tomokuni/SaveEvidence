@@ -35,6 +35,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
+    <!-- 設定 → 色の写像（両 UI で同じ写像を使う） -->
+    <ProjectReference Include="..\..\CaptureSessionControl.UIBase\src\CaptureSessionControl.UIBase.csproj" />
     <ProjectReference Include="..\..\CropViewControl.AvaloniaUI\src\CropViewControl.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>

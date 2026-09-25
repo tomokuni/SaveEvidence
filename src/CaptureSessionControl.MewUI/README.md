@@ -86,7 +86,6 @@ session.AppearanceSettings = changed;
 src/
 │   ├── CaptureSessionControl.MewUI.csproj  # ライブラリ（net10.0-windows）
 │   ├── CaptureSessionControl.cs            # Facade（公開 API。撮影と切り出しの窓口）
-│   ├── CapturePaintMapper.cs               # 設定から描画にだけ必要な色（MarqueePaint / LoupePaint）を組み立てる
 │   ├── CaptureOverlay.cs                   # 撮影セッション（internal。1 セッション = 1 インスタンス）
 │   ├── Sessions/CropSession.cs             # 切り出しセッション（internal。1 セッション = 1 インスタンス）
 │   ├── CaptureOverlayServices.cs           # サービス（キャプチャ・検出・ウィンドウ・ロガー）の束（公開 record）
@@ -94,6 +93,8 @@ src/
 ```
 
 本プロジェクトは UI 操作（描画・入力・ウィンドウ）のみを持ち、共通規則は `CaptureSessionControl.Core` のテストで検証します（本プロジェクトにテストプロジェクトは置きません）。
+
+設定から描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）への写像は、両 UI が共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。
 
 ## 7. ライセンス
 

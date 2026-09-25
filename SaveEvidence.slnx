@@ -23,6 +23,13 @@
   <Folder Name="/src/CaptureSessionControl.MewUI/src/">
     <Project Path="src/CaptureSessionControl.MewUI/src/CaptureSessionControl.MewUI.csproj" />
   </Folder>
+  <Folder Name="/src/CaptureSessionControl.UIBase/" />
+  <Folder Name="/src/CaptureSessionControl.UIBase/src/">
+    <Project Path="src/CaptureSessionControl.UIBase/src/CaptureSessionControl.UIBase.csproj" />
+  </Folder>
+  <Folder Name="/src/CaptureSessionControl.UIBase/tests/">
+    <Project Path="src/CaptureSessionControl.UIBase/tests/CaptureSessionControl.UIBase.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/ColorPickerControl.AvaloniaUI/">
     <Project Path="src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj" />
     <Project Path="src/ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj" />
@@ -60,6 +67,7 @@
     <Project Path="src/LoupeControl.UIBase/src/LoupeControl.UIBase.csproj" />
     <Project Path="src/LoupeControl.UIBase/tests/LoupeControl.UIBase.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/LoupeControl.UIBase/src/" />
   <Folder Name="/src/MarqueeControl.AvaloniaUI/">
     <Project Path="src/MarqueeControl.AvaloniaUI/sample/MarqueeControl.AvaloniaUI.Sample.csproj" />
     <Project Path="src/MarqueeControl.AvaloniaUI/src/MarqueeControl.AvaloniaUI.csproj" />
@@ -112,6 +120,7 @@
     <Project Path="src/Platform.Native/src/Platform.Native.csproj" />
     <Project Path="src/Platform.Native/tests/Platform.Native.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/MarqueeControl.UIBase/src/" />
   <Folder Name="/src/Platform.AvaloniaUI/">
     <Project Path="src/Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj" />
     <Project Path="src/Platform.AvaloniaUI/tests/Platform.AvaloniaUI.Tests.csproj" />
