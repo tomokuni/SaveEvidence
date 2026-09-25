@@ -114,8 +114,8 @@ public class LoupeMetricsTests
     [Fact]
     public void ラベルに使う座標は文字列化される()
     {
-        // ラベル文言はコアの CoordinateFormatter が単一所有する（寸法は文言を持たない）
-        var text = CoordinateFormatter.Format(new EsPoint(123, 456));
+        // ラベル文言はコアの EsPoint.Format が単一所有する（寸法は文言を 持たない）
+        var text = new EsPoint(123, 456).Format();
 
         Assert.Equal("(123, 456)", text);
     }

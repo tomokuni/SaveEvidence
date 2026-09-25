@@ -491,7 +491,7 @@ public class LoupeControlTests
 
         Layout(control);
 
-        // 文言はコアの CoordinateFormatter が単一所有する（本コントロールは要素へ写すだけ）
+        // 文言はコアの EsPoint.Format が単一所有する（本コントロールは要 素へ写すだけ）
         Assert.Equal("(123, 456)", LabelText(control));
     }
 

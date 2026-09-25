@@ -126,7 +126,7 @@ flowchart TB
     Ctl -->|"RenderAsync（描画入力）"| Pip
     Pip --> Src
     Ctl -->|"Coerce（RenderScaling）"| Coerce
-    Ctl -->|"EsSizeMath.ClampToArea / ComputePosition"| Pos
+    Ctl -->|"EsSize.ClampToArea / ComputePosition"| Pos
     Ctl -->|"Create（描画入力の組み立て。設定を渡す）"| Req
     Ctl -->|"Compute(表示情報)"| Args
     Ctl -->|"設定（表示サイズ・拡大率・寸法）"| Opt

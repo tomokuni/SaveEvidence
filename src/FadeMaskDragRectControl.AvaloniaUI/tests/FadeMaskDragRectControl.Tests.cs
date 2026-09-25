@@ -503,7 +503,7 @@ public class FadeMaskDragRectControlTests
         var label = Assert.Single(control.Loupe.Children.OfType<Border>());
         var text = Assert.IsType<TextBlock>(label.Child);
 
-        // 文言はコアの CoordinateFormatter が単一所有する
+        // 文言はコアの EsPoint.Format が単一所有する
         Assert.Equal("(50, 60)", text.Text);
         Assert.True(label.Width > 0);
         Assert.True(label.Height > 0);

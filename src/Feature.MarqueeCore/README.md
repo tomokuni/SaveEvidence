@@ -122,7 +122,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 装飾の設定（寸法・描画可否・ハイライト・内側） | `Decoration` の `MarqueeDecoOptions` | 枠線の太さ（`OuterAppearance` / `InnerAppearance`）・描画可否の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）・ハイライト矩形 |
 | 装飾の描画内容と描画の可否の判断 | `MarqueeFrame`（`ResolveOuterDecoration` / `ResolveInnerDecoration`） | 暗転領域・枠線矩形・塗り矩形（可否は `MarqueeDecoOptions` の明示フラグ。**アルファ 0 を「描かない」の代用にしない**）。**穴あけ矩形は 1 回だけ解決して外側・内側・サイズラベルへ同じ値を渡す** |
 | サイズラベル（穴あけ矩形の位置と寸法） | `MarqueeSizeLabel` / `MarqueeOptions`（本コア） | 文言（`Format`）・フォントサイズ・基準点（穴あけ矩形の左上・DIP）。体裁は `EsLabelLayout`、色は `MarqueePaint`（描画層）が単一所有する |
-| カーソル座標ラベル | `MarqueeCoordLabel` / `MarqueeOptions`（本コア） | 文言（`CoordinateFormatter`）・配置（`ComputeFrame`）。要素への写像は `IEsLabel.ToElement`（Platform.Core）、色は `MarqueePaint`（描画層）が単一所有する |
+| カーソル座標ラベル | `MarqueeCoordLabel` / `MarqueeOptions`（本コア） | 文言 （`EsPoint.Format`）・配置（`ComputeFrame`）。要素への写像は `IEsLabel.ToElement`（Platform.Core）、色は `MarqueePaint`（描画層）が単一所有する |
 | 装飾・ハンドル・マーカー・ラベルの色 | `MarqueePaint`（描画層 `MarqueeControl.UIBase`） | `OverlayColor` / `OuterBorderColor` / `InnerFillColor` / `InnerBorderColor` / `HandleColor` / `HandleBorderColor` / `MarkerColor` / `SizeLabelColor` / `SizeLabelBackgroundColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` |
 | 操作ラベル・情報ラベル | **ホスト**（アプリ固有の付加情報） | 文言の生成と描画。コアは表示可否も含めて関知しない |
 | 選択矩形・選択の有無のソース | 本コア（`Marquee.Session` 経由） | 装飾は参照のみ（複製しない） |

@@ -33,10 +33,9 @@ public static class LoupeDecorationGeometry
     /// <param name="width">外枠の太さ（ピクセル）。1〜ルーペサイズに正規化される。</param>
     /// <returns>外枠の上・下・左・右の 4 つの矩形。</returns>
     /// <remarks>
-    /// 辺の矩形の計算は <see cref="EsRectMath.ComputeInnerEdges"/> が単一所有する（選択矩形の枠線と同じ式）。<br/>
+    /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（選択矩形の枠線と同じ式）。<br/>
     /// 太さの下限のみ本メソッドが決める（外枠は 1 ピクセル未満では描けない）。
     /// </remarks>
     public static IReadOnlyList<EsRect> ComputeFrameRects(int pixelSize, int width)
-        => EsRectMath.ComputeInnerEdges(
-            new EsRect(0, 0, pixelSize, pixelSize), Math.Clamp(width, 1, pixelSize));
+        => new EsRect(0, 0, pixelSize, pixelSize).ComputeInnerEdges(Math.Clamp(width, 1, pixelSize));
 }

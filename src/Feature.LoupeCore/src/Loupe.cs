@@ -146,7 +146,7 @@ public sealed class Loupe
     /// </remarks>
     public LoupeLayout ResolveLayout(EsSize parentSize)
     {
-        var size = EsSizeMath.ClampToArea(Options.RequestedSize, parentSize);
+        var size = parentSize.ClampToArea(Options.RequestedSize);
 
         if (CenterPoint is not { } center)
         {
@@ -213,7 +213,7 @@ public sealed class Loupe
     /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
     /// <returns>配置するラベル要素（1 要素）。中心未設定または非表示の設定の場合は空。</returns>
     /// <remarks>
-    /// 文言（<see cref="CoordinateFormatter"/>）・表示可否（<see cref="LoupeMetrics.ShouldShowCoordLabel"/>）・<br/>
+    /// 文言（<see cref="EsPoint.Format(int)"/>）・表示可否（<see cref="LoupeMetrics.ShouldShowCoordLabel"/>）・<br/>
     /// 配置（<see cref="EsLabelLayout"/>）はコアが単一所有し、通知から要素への写像（実寸の反映）は<br/>
     /// <see cref="Renderer"/>（描画実装）へ委譲する。<br/>
     /// 表示サイズは要素の大きさ（＝ <see cref="ResolveLayout"/> の結果）を渡す<br/>

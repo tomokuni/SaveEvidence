@@ -35,7 +35,7 @@ public readonly record struct MarqueeMarker(
 /// <param name="ClientSize">描画領域のサイズ（DIP。はみ出しのクランプに使う。0 以下の軸はクランプしない）。</param>
 /// <param name="FontSize">フォントサイズ（DIP）。</param>
 /// <remarks>
-/// 文言（<see cref="CoordinateFormatter"/>）と配置（<see cref="EsLabelLayout"/> と <see cref="MarqueeOptions.CoordLabelOffset"/>）は<br/>
+/// 文言（<see cref="EsPoint.Format(int)"/>）と配置（<see cref="EsLabelLayout"/> と <see cref="MarqueeOptions.CoordLabelOffset"/>）は<br/>
 /// コアが単一所有する。<br/>
 /// <b>色は含まない</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c>）が単一所有する。<br/>
 /// <b>文字の描画は UI 層が担う</b>: テキストの実寸は描画 API でしか測れないため、<br/>

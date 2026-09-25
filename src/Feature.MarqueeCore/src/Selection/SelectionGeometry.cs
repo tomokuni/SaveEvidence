@@ -146,9 +146,9 @@ public static class SelectionGeometry
     /// <param name="rect">クリップする矩形（ドメイン座標）。</param>
     /// <param name="bounds">ドメイン境界のサイズ。</param>
     /// <returns>境界内に収めた矩形。</returns>
-    /// <remarks>四隅の包絡矩形を取る手順は <see cref="EsRectMath.ClampToArea"/> が単一所有する（ルーペの位置と同じ規則）。</remarks>
+    /// <remarks>四隅の包絡矩形を取る手順は <see cref="EsRect.ClampToArea(EsSize)"/> が単一所有する（ルーペの位置と同じ規則）。</remarks>
     internal static EsRect ClampRectToDomainBounds(EsRect rect, EsSize bounds)
-        => EsRectMath.ClampToArea(rect, bounds);
+        => rect.ClampToArea(bounds);
 
     /// <summary>ドラッグハンドル操作による矩形の変形を計算する。</summary>
     /// <param name="original">ドラッグ開始時の矩形。</param>

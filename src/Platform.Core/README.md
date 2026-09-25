@@ -27,12 +27,10 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `Coordinate.ScrollMath` | スクロール範囲・ビューポートサイズの純粋計算（`MaxOffset` / `ViewportSize`）とホイール 1 段のスクロール量（`WheelScrollUnit`） |
 | `Coordinate.DpiScaler` | DIP 値をスケーリング係数で物理ピクセルへ変換（`ScaleToPixel`。切り上げ・最低 1）と、その逆変換（`ToDip`（数値 / `EsSize`）。丸めなし）。DPI の基準値（`StandardDpi`）・DPI → スケーリングの換算（`ToScaling`）・係数の有効判定（`IsValidScaling`。**非数も無効**）と正規化（`NormalizeScaling`）も単一所有する |
 | `Coordinate.CoordTransformExtensions` | 座標変換ポート未設定（null）を等価変換として解決する（`OrIdentity`）。各コントロール・コアのジオメトリは本規則を自前で書かない |
-| `Geometry.EsPoint` / `EsSize` / `EsVector` / `EsRect` | UI フレームワーク非依存の DIP 相当の幾何値型（`readonly record struct`。`EsRect` は `Right` / `Bottom` を提供） |
+| `Geometry.EsPoint` / `EsSize` / `EsVector` / `EsRect` | UI フレームワーク非依存の DIP 相当の幾何値型（`readonly record struct`）。**座標ラベルの文言は `EsPoint.Format`**（`(x, y)` 形式。小数点以下の桁数を指定できる）、**領域の判定とクランプは `EsSize`**（`HasArea` / `ClampToArea` / `ClampOffset`）、**枠線の内側 4 辺と領域内クランプは `EsRect`**（`ComputeInnerEdges` / `ClampToArea`）が単一所有する（コントロールを問わず同じ式を使う。選択矩形の枠線とルーペの外枠、選択のドメイン境界とルーペの位置クランプ） |
 | `Geometry.EsPointInt` / `EsSizeInt` / `EsRectInt` | UI フレームワーク非依存の**整数版**の幾何値型（`EsPoint` / `EsSize` / `EsRect` の整数版。画面物理ピクセル座標・画像ピクセル座標・矩形に使う） |
-| `Geometry.EsPlatformHandle` | UI フレームワーク非依存のネイティブウィンドウ識別子 |
-| `Geometry.CoordinateFormatter` | 座標を `(x, y)` 形式の表示文字列へ整形する純粋関数 |
-| `Geometry.EsRectMath` | 矩形の辺とクランプの計算（枠線の内側 4 辺・四隅の包絡矩形による領域内クランプ。純粋関数）。コントロールを問わず同じ式を使う（選択矩形の枠線とルーペの外枠、選択のドメイン境界とルーペの位置クランプ） |
-| `Geometry.EsSizeMath` | 領域の判定とクランプの計算（`HasArea`＝幅・高さとも正か、サイズを領域の最小辺へクランプ、位置を領域内へクランプ。**領域が未確定ならクランプしない**規則を単一所有する） |
+| `Geometry.EsAxis` | レイアウト計算で扱う軸（`X` / `Y`）。軸を `bool` で指定しないための列挙型 |
+| `EsPlatformHandle` | UI フレームワーク非依存のネイティブウィンドウ識別子（座標・寸法ではないため `Geometry` ではなくルート直下） |
 | `Geometry.IntMath` | 整数の丸め計算（切り上げ除算 `CeilDiv`。余りを 1 区画として数える規則の単一所有） |
 | `Imaging.EsBitmap` | 複数のビットマップ種別を横断する軽量なユニバーサルビットマップラッパー（BGRA8888・Premul）。**自前のピクセルバッファ（`NativeMemory.AlignedAlloc` の 64 バイト整列）を所有**し、外部パッケージに依存しない（Skia との相互変換は [`Platform.Skia`](../Platform.Skia/README.md) が担う） |
 | `Imaging.ImageDrawMode` | 画像を描画先の領域へ配置する方法（縦横比を保つ `Uniform` / 領域全体へ引き伸ばす `Fill`） |

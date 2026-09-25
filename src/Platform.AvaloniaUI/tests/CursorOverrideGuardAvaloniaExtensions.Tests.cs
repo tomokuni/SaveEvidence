@@ -10,7 +10,7 @@ namespace EsUtil.Platform.AvaloniaUI.Tests;
 /// </summary>
 /// <remarks>
 /// <see cref="TopLevel"/> を生成するため、Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）で直列実行する。<br/>
-/// コア側の <see cref="ICursorOverrideGuard.Attach(EsUtil.Platform.Core.Geometry.EsPlatformHandle)"/> のテストは
+/// コア側の <see cref="ICursorOverrideGuard.Attach(EsPlatformHandle)"/> のテストは
 /// <c>Platform.Native.Tests</c> が担う。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
@@ -38,7 +38,7 @@ public class CursorOverrideGuardAvaloniaExtensionsTests
         public bool IsAttached => false;
 
         /// <inheritdoc/>
-        public void Attach(EsUtil.Platform.Core.Geometry.EsPlatformHandle handle) => AttachCalled = true;
+        public void Attach(EsPlatformHandle handle) => AttachCalled = true;
 
         /// <inheritdoc/>
         public void Dispose()

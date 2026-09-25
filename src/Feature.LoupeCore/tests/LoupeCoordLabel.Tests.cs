@@ -35,7 +35,7 @@ public class LoupeCoordLabelTests
 
         var label = LoupeCoordLabel.Resolve(100, new EsPoint(123, 456), metrics);
 
-        // 文言の書式はコアの CoordinateFormatter が単一所有する
+        // 文言の書式はコアの EsPoint.Format が単一所有する
         Assert.NotNull(label);
         Assert.Equal("(123, 456)", label.Value.Text);
     }

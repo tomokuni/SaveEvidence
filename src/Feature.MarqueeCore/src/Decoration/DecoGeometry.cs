@@ -74,11 +74,11 @@ internal static class DecoGeometry
     /// <param name="thickness">枠線の太さ（DIP）。0.5 未満は 0.5 に正規化される。</param>
     /// <returns>上・下・左・右の順の枠線矩形（4 個）。</returns>
     /// <remarks>
-    /// 辺の矩形の計算は <see cref="EsRectMath.ComputeInnerEdges"/> が単一所有する（ルーペの外枠と同じ式）。<br/>
+    /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの外枠と同じ式）。<br/>
     /// 太さの下限のみ本メソッドが決める（選択枠は細い線でも視認できる必要がある）。
     /// </remarks>
     public static IReadOnlyList<EsRect> GetBorderRects(EsRect rect, double thickness)
-        => EsRectMath.ComputeInnerEdges(rect, Math.Max(BorderThicknessLowerBound, thickness));
+        => rect.ComputeInnerEdges(Math.Max(BorderThicknessLowerBound, thickness));
 
     /// <summary>穴あけ矩形（暗転オーバーレイで穴をあける領域）と閉区間の指定を決定する。</summary>
     /// <param name="highlightRect">ハイライト矩形。null の場合はハイライトなし。</param>

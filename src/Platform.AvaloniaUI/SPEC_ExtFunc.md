@@ -47,7 +47,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 | --- | --- |
 | サービス抽象（`ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>`） | `Platform.Core` |
 | コア値型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` / `EsPlatformHandle` 等） | `Platform.Core` |
-| 座標変換ポート（`ICoordTransform` / `CoordTransform`）・`ScrollMath` / `DpiScaler` / `CoordinateFormatter` | `Platform.Core` |
+| 座標変換ポート（`ICoordTransform` / `CoordTransform`）・`ScrollMath` / `DpiScaler` | `Platform.Core` |
 | 画像コンテナ（`EsBitmap`） | `Platform.Core` |
 | 既定実装のファクトリ（`PlatformFactory.CreateXxx()`）・Win32 / NoOp 実装・System.Drawing 変換 | `Platform.Native`（本プロジェクトから参照される） |
 | **画面座標変換（`ScreenConverter`）・相互変換（Interop）・画像／幾何アダプタ** | **本プロジェクト** |

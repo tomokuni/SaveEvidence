@@ -66,31 +66,9 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 - `ToDip(EsSize physicalSize, double scaling)`: 物理ピクセルのサイズを DIP のサイズへ変換する（成分ごとの換算を上記 `ToDip` へ委譲する）。コア型同士の換算を UI 側で組み立てないための入口。
 - `LoupeControl` の表示サイズ計算と、両 UI のウィンドウ配置・サイズ換算で共用する。
 
-### `Geometry.EsRectMath`（static class）
+### `Geometry.EsAxis`（enum）
 
-矩形の辺とクランプを単一所有する純粋関数です。
-「矩形の内側に太さ分の 4 辺を取る」「矩形を領域内へ収める」はコントロールに依存しない規則であり、各コアが個別に書くと同じ意味の式が散らばります（片方だけ端の扱いを変えると同じ矩形から違う結果になる）。
-
-| メンバー | シグネチャ | 説明 |
-| --- | --- | --- |
-| `ComputeInnerEdges` | `static IReadOnlyList<EsRect> ComputeInnerEdges(EsRect rect, double thickness)` | 上・下・左・右の順の辺の矩形（4 個）。左右の高さは負にならず 0 にクランプする。太さの下限正規化は行わない（用途で異なるため呼び出し側が行う） |
-| `ClampToArea` | `static EsRect ClampToArea(EsRect rect, EsSize area)` | 四隅を領域（左上を原点・指定サイズ）内へ個別にクランプし、その包絡矩形を返す（負の辺は 0） |
-
-```csharp
-// 選択矩形の枠線（マーキー）とルーペの外枠（Loupe）が同じ式を共用する
-var edges = EsRectMath.ComputeInnerEdges(hole, Math.Max(0.5, borderThickness));
-```
-
-### `Geometry.EsSizeMath`（static class）
-
-領域の判定とクランプを単一所有する純粋関数です。
-「レイアウト前の領域（幅・高さが 0）ではクランプしない」という判定を各コア・各 UI が書くと、同じ意味の述語が散らばり、片方だけが要素を勝手に動かします。
-
-| メンバー | シグネチャ | 説明 |
-| --- | --- | --- |
-| `HasArea` | `static bool HasArea(EsSize area)` | 幅・高さとも 0 より大きい場合に true（レイアウト前・親未接続の領域は false） |
-| `ClampToArea` | `static double ClampToArea(double size, EsSize area)` | サイズを領域の最小辺へクランプする。領域が未確定の場合はクランプしない |
-| `ClampOffsetToArea` | `static double ClampOffsetToArea(double offset, double areaLength, double size)` | 1 軸分の位置を `0〜領域の長さ − サイズ` へクランプする（領域の長さが 0 以下ならクランプしない。対象が収まらない場合は 0） |
+レイアウト計算で扱う軸（`X` = 幅 / `Y` = 高さ）です。軸を `bool` で渡すと `true` が横か縦か読めなくなるため、列挙型で指定します。
 
 ### `Geometry.IntMath`（static class）
 
@@ -176,6 +154,14 @@ public readonly record struct EsPoint(double X, double Y);
 
 UI フレームワーク非依存の 2 次元座標。Avalonia 版の相互変換は `Platform.AvaloniaUI` の `EsGeometryAvaloniaInterop` が提供します。
 
+座標ラベルの文言は `Format(int decimals = 0)` が単一所有します（`(x, y)` 形式。`decimals` で小数点以下の桁数を 0〜15 から指定し、既定は 0 = 整数へ丸め）。`ToString()` はレコードの診断表現のままです（デバッガー・ログ・テストの失敗表示から小数を消さないため）。
+
+```csharp
+// カーソル座標ラベル（マーキー）・中心座標ラベル（ルーペ）が同じ書式を共用する
+var text = mousePosition.Format();      // "(123, 456)"
+var precise = mousePosition.Format(2);  // "(123.40, 456.70)"
+```
+
 ### `Geometry.EsSize` / `Geometry.EsVector` / `Geometry.EsRect`（readonly record struct）
 
 ```csharp
@@ -184,7 +170,27 @@ public readonly record struct EsVector(double X, double Y);
 public readonly record struct EsRect(double X, double Y, double Width, double Height);
 ```
 
-UI フレームワーク非依存のサイズ・ベクター・矩形。相互変換は `EsGeometryAvaloniaInterop` が提供します。`EsRect` は `Right`（`X + Width`）・`Bottom`（`Y + Height`）・`IsEmpty`（幅または高さが 0 以下）を提供します。
+UI フレームワーク非依存のサイズ・ベクター・矩形。相互変換は `EsGeometryAvaloniaInterop` が提供します。
+
+`EsRect` は `Right`（`X + Width`）・`Bottom`（`Y + Height`）・`IsEmpty`（幅または高さが 0 以下）に加え、コントロールに依存しない 2 つの規則を単一所有します（各コアが個別に書くと同じ意味の式が散らばり、片方だけ端の扱いを変えると同じ矩形から違う結果になる）。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `ComputeInnerEdges` | `IReadOnlyList<EsRect> ComputeInnerEdges(double thickness)` | 上・下・左・右の順の辺の矩形（4 個）。左右の高さは負にならず 0 にクランプする。太さの下限正規化は行わない（用途で異なるため呼び出し側が行う） |
+| `ClampToArea` | `EsRect ClampToArea(EsSize area)` | 四隅を領域（左上を原点・指定サイズ）内へ個別にクランプし、その包絡矩形を返す（負の辺は 0） |
+
+```csharp
+// 選択矩形の枠線（マーキー）とルーペの外枠（Loupe）が同じ式を共用する
+var edges = hole.ComputeInnerEdges(Math.Max(0.5, borderThickness));
+```
+
+`EsSize` は「レイアウト前の領域（幅・高さが 0）ではクランプしない」という規則を単一所有します（各コア・各 UI が書くと、同じ意味の述語が散らばり、片方だけが要素を勝手に動かす）。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `HasArea` | `bool HasArea { get; }` | 幅・高さとも 0 より大きい場合に true（レイアウト前・親未接続の領域は false） |
+| `ClampToArea` | `double ClampToArea(double size)` | サイズを領域の最小辺へクランプする。領域が未確定の場合はクランプしない |
+| `ClampOffset` | `double ClampOffset(double offset, double size, EsAxis axis)` | 1 軸分の位置を `0〜領域の長さ − サイズ` へクランプする（対象の軸の長さが 0 以下ならクランプしない。対象が収まらない場合は 0） |
 
 ### `Geometry.EsPointInt` / `Geometry.EsSizeInt` / `Geometry.EsRectInt`（readonly record struct）
 
@@ -196,17 +202,13 @@ public readonly record struct EsRectInt(int X, int Y, int Width, int Height);
 
 `EsPoint` / `EsSize` / `EsRect` の**整数版**（画面物理ピクセル座標・画像ピクセル座標とその矩形・寸法に使用する）。`EsRectInt` は `Right` / `Bottom` / `TopLeft` / `BottomRight` / `Center` を提供し、`Contains(EsPointInt)`（半開区間）と `Union(EsRectInt)` を持ちます。`TopLeft` は矩形の原点（画像の原点等）を座標の手組みなしで取り出すために使います。`EsPointInt.ToEsPoint()` は小数を扱う `EsPoint` への変換で、UI が成分を書き写さないよう本型が単一所有します。
 
-### `Geometry.EsPlatformHandle`（readonly record struct）
+### `EsPlatformHandle`（readonly record struct）
 
 ```csharp
 public readonly record struct EsPlatformHandle(nint Handle, string? Descriptor = null);
 ```
 
-ネイティブウィンドウ識別子（Win32: HWND 等）。`IsValid`（ハンドル値が 0 以外か）を提供します。
-
-### `Geometry.CoordinateFormatter`（static class）
-
-- `Format(EsPoint point)`: 座標を `(x, y)` 形式の文字列へ整形する（`F0` で整数に丸める）。
+ネイティブウィンドウ識別子（Win32: HWND 等）。`IsValid`（ハンドル値が 0 以外か）を提供します。座標・寸法ではないためルート名前空間（`EsUtil.Platform.Core`）にあります。
 
 ### `ICaptureService`（interface）
 

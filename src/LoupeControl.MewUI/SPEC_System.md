@@ -174,9 +174,9 @@ classDiagram
         +ComputePosition(displaySize, parentSize, centerDip, offset)$ EsPoint
         +ResolvePixelSize(size, renderScaling, availableSize) int$
     }
-    class CoordinateFormatter {
+    class EsPoint {
         <<Platform.Core>>
-        +Format(point) string$
+        +Format(decimals) string$
     }
 
     SkiaCanvasView <|-- ShapeCanvas
@@ -193,7 +193,7 @@ classDiagram
     LoupeRenderer ..> LoupeMetricsScaler : 寸法の物理ピクセル換算
     LoupeControl ..> LoupeValueCoercer : 値の補正（プロパティ登録の coerce）
     Loupe ..> LoupePositionCalculator : 表示レイアウト・描画サイズ・描画入力の解決
-    Loupe ..> CoordinateFormatter : ラベル文字列
+    Loupe ..> EsPoint : ラベル文字列（Format）
 ```
 
 ## シーケンス図（描画）

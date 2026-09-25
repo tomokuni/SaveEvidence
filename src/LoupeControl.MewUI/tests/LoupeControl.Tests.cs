@@ -174,7 +174,7 @@ public class LoupeControlTests
         control.CenterPoint = new EsPoint(12, 34);
         Layout(control);
 
-        // 文言はコアの CoordinateFormatter が単一所有する（本コントロールは要素へ写すだけ）
+        // 文言はコアの EsPoint.Format が単一所有する（本コントロールは要 素へ写すだけ）
         Assert.Equal("(12, 34)", LabelText(control));
 
         // 幅は実測値（本コントロールが Skia で測ってコアへ渡す）と内側余白から決まる

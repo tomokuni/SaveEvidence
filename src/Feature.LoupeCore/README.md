@@ -24,7 +24,7 @@
 | `LoupeMetricsScaler` | 寸法値（市松模様のタイルサイズ・外枠の太さ）を描画に使う物理ピクセルへ換算（安全域への補正は `LoupeMetrics` の生成時に済んでいるため再補正しない）。描画層は換算結果を使うだけ。**中心座標ラベルは本型の対象外**（ラベルは DIP で配置するため換算を必要としない） |
 | `LoupeRenderRequest` | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層は自 UI の公開プロパティから本値を組み立てて描画層・コアの計算へ渡すだけで、描画に必要な値の単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を持たない |
 | `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`）。**表示はコントロールが行う**（`Border` + `TextBlock` の要素として配置する）ため、実寸測定だけを UI が行い本値へ渡す（測定は描画 API 依存）。体裁（背景・文字原点）は `EsLabelLayout`（Platform.Core）が単一所有し、要素への写像は `EsLabelExtensions.ToElement`（拡張メソッド。色は引数で受け取る）が単一所有する |
-| `LoupePositionCalculator`（**internal**） | 表示位置（中心 + オフセット）の計算と親領域内へのクランプ（`ComputePosition`。親サイズが未確定の場合の判定も含む）・描画に使う物理ピクセルサイズの解決（`ResolvePixelSize`。表示サイズのクランプは `EsSizeMath.ClampToArea` へ委譲する）。表示サイズを要素へ先に反映する UI はファサードの `ResolveLayout` を使う（内部手順はファサードの実装詳細のため外部に公開しない） |
+| `LoupePositionCalculator`（**internal**） | 表示位置（中心 + オフセット）の計算と親領域内へのクランプ（`ComputePosition`。親サイズが未確定の場合の判定も含む ）・描画に使う物理ピクセルサイズの解決（`ResolvePixelSize`。表示サイズのクランプは `EsSize.ClampToArea` へ委譲する）。表示サイズを要素へ先に反映する UI はファサードの `ResolveLayout` を使う（内部手順はファサードの実装詳細のため外部に公 開しない） |
 | `LoupeDecorationGeometry` | 十字線（縦横 2 本）と外枠（4 辺）の描画矩形の計算（描画層 `LoupeControl.UIBase` の `LoupeRenderer` が返された `EsRect` を描画ポートへ渡すだけ） |
 | `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位）。描画の実行は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が担い、`LoupeRenderNotification.Layers` を先頭から処理するだけである（順序を判断しない） |
 | `LoupeCheckerboard` | 市松模様のタイルの明暗判定と、暗色タイルの**列挙子**（`ComputeDarkTiles`）。タイル数は描画先の大きさに比例して増えるため、リストを確保せずに列挙する（各 UI が同一のパターンを描画できるようにする） |

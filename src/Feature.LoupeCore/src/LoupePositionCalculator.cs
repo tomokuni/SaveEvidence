@@ -20,14 +20,12 @@ internal static class LoupePositionCalculator
     /// <returns>描画に使う一辺の物理ピクセルサイズ（切り上げ・最低 1、領域指定時はクランプ済み）。</returns>
     /// <remarks>
     /// 「表示サイズを物理ピクセルへ換算し、描画先より大きい場合は描画先に合わせる」手順を単一所有する。<br/>
-    /// 換算は <see cref="DpiScaler.ScaleToPixel(double, double)"/>、クランプは <see cref="EsSizeMath.ClampToArea"/> へ委譲する。<br/>
-    /// 描画と描画引数（イベント通知）が同じ値を使うため、UI 層は本メソッドの結果を両方へ渡す<br/>
+    /// 換算は <see cref="DpiScaler.ScaleToPixel(double, double)"/>、クランプは <see cref="EsSize.ClampToArea(double)"/> へ委譲する。<br/>
+    /// 描画と描画引数（イベント通知）が同じ値を使うため、UI 層は本メソッドの結 果を両方へ渡す<br/>
     /// （それぞれの計算で値がずれると、ホストへ通知する切り出し領域と実際の描画が食い違う）。
     /// </remarks>
     public static int ResolvePixelSize(double size, double renderScaling, EsSize? availableSize = null)
-        => (int)EsSizeMath.ClampToArea(
-            DpiScaler.ScaleToPixel(size, renderScaling),
-            availableSize ?? default);
+        => (int)availableSize.GetValueOrDefault().ClampToArea(DpiScaler.ScaleToPixel(size, renderScaling));
 
     /// <summary>ルーペの表示位置（左上）を計算する（オフセット加算・親領域内へのクランプ）。</summary>
     /// <param name="displaySize">ルーペの表示サイズ（DIP・一辺。クランプ済みの値を渡す）。</param>
@@ -38,8 +36,8 @@ internal static class LoupePositionCalculator
     /// <remarks>
     /// 表示位置は中心（DIP）+ オフセットとし、親領域サイズ内にクランプする。<br/>
     /// 親領域のサイズが未確定（幅または高さが 0 以下 = レイアウト前・親未接続）の場合はクランプしない<br/>
-    /// （「親サイズが確定しているか」の判定は <see cref="EsSizeMath.HasArea"/>、クランプは<br/>
-    /// <see cref="EsSizeMath.ClampOffsetToArea"/> が単一所有する）。<br/>
+    /// （「親サイズが確定しているか」の判定は <see cref="EsSize.HasArea"/> 、クランプは<br/>
+    /// <see cref="EsSize.ClampOffset(double, double, EsAxis)"/> が単一所有する）。<br/>
     /// 表示サイズはクランプ済みの値を渡す（要素のサイズと位置のクランプで同じ値を使い、<br/>
     /// 別々にクランプすると丸めの違いで要素が親領域からはみ出しうる）。
     /// </remarks>
@@ -47,13 +45,13 @@ internal static class LoupePositionCalculator
     {
         double mx = centerDip.X + offset;
         double my = centerDip.Y + offset;
-        if (!EsSizeMath.HasArea(parentSize))
+        if (!parentSize.HasArea)
         {
             return new EsPoint(mx, my);
         }
 
         return new EsPoint(
-            EsSizeMath.ClampOffsetToArea(mx, parentSize.Width, displaySize),
-            EsSizeMath.ClampOffsetToArea(my, parentSize.Height, displaySize));
+            parentSize.ClampOffset(mx, displaySize, EsAxis.X),
+            parentSize.ClampOffset(my, displaySize, EsAxis.Y));
     }
 }

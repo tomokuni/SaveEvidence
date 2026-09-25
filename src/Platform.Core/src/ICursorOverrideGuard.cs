@@ -1,5 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
-
 namespace EsUtil.Platform.Core;
 
 /// <summary>ホストウィンドウの「カーソル上書き抑止」を抽象化するインターフェイス。</summary>

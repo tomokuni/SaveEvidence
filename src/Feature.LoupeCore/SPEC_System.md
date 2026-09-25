@@ -62,7 +62,7 @@ sequenceDiagram
   participant PC as Platform.Core
 
   UI->>Fac: ResolveLayout(parentSize)
-  Fac->>Core: EsSizeMath.ClampToArea(requestedSize, parentSize)
+  Fac->>Core: parentSize.ClampToArea(requestedSize)
   Core-->>Fac: 表示サイズ（DIP。要素サイズ・描画サイズ・位置クランプで同じ値を使う）
   Fac->>PC: ICoordTransform.Inverse(center) → EsPoint（親領域 DIP）
   Fac->>Core: LoupePositionCalculator.ComputePosition(表示サイズ, parentSize, centerDip, offset)
@@ -99,11 +99,11 @@ sequenceDiagram
 | 切り出し領域の一辺（ドメインピクセル） | `Imaging.LoupeImageExtractor.ComputeCaptureSize`（internal。切り上げは `Platform.Core` の `IntMath.CeilDiv`） |
 | 切り出し領域の左上（中心 → 左上の変換） | `Imaging.LoupeImageExtractor.ComputeCaptureTopLeft`（internal） |
 | 拡大描画の矩形（切り出し元・描画先） | `Imaging.LoupeImageExtractor.ComputeMagnifiedRects`（ビットマップの実寸を受け取る） |
-| 表示サイズの親領域へのクランプと表示サイズの決定 | `Loupe.ResolveLayout`（規則は `Platform.Core` の `EsSizeMath.ClampToArea`。状態を保持しないため、親領域のサイズを引数で受ける） |
-| 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（規則は internal の `LoupePositionCalculator.ComputePosition`。親サイズ未確定の判定は `EsSizeMath.HasArea`） |
+| 表示サイズの親領域へのクランプと表示サイズの決定 | `Loupe.ResolveLayout`（規則は `Platform.Core` の `EsSize.ClampToArea`。状態を保持しないため、親領域のサイズを引数で受ける） |
+| 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（規則は internal の `LoupePositionCalculator.ComputePosition`。親サイズ未確 定の判定は `EsSize.HasArea`） |
 | 描画入力（物理ピクセルサイズ）の組み立てと描画先へのクランプ | `Loupe.CreateRequest`（規則は internal の `LoupePositionCalculator.ResolvePixelSize`） |
 | 描画完了通知の内容（切り出し左上・スケール・層の順序） | `Loupe.ResolveNotification`（規則は internal の `LoupeRenderArgsCalculator`。層の一覧は `Loupe` が静的共有する） |
-| 中心座標ラベルの契約（文言・寸法）と表示可否 | `LoupeCoordLabel.Resolve`（文言は `CoordinateFormatter`、表示可否は `LoupeMetrics.ShouldShowCoordLabel`） |
+| 中心座標ラベルの契約（文言・寸法）と表示可否 | `LoupeCoordLabel.Resolve`（文言は `EsPoint.Format`、表示可否は `LoupeMetrics.ShouldShowCoordLabel`） |
 | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0） | `EsLabelDefaults`（`Platform.Core`。マーキーと共有） |
 | 十字線・外枠の矩形 | `LoupeDecorationGeometry` |
 | ラベルの余白・背景矩形・文字原点 | `EsLabelLayout`（`Platform.Core`。内側余白の既定値は `EsLabelLayout.Padding`）。コアは使用する余白・オフセットだけを指定し、利用者は `LoupeCoordLabel.ComputeFrame` を使う |

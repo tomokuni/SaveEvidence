@@ -1,5 +1,6 @@
-using EsUtil.Platform.Native.NoOp;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Native.NoOp;
 using Xunit;
 
 namespace EsUtil.Platform.Native.Tests;

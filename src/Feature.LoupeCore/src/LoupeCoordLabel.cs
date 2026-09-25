@@ -10,7 +10,7 @@ namespace EsUtil.Feature.LoupeCore;
 /// <param name="FontSize">フォントサイズ（DIP）。</param>
 /// <param name="CornerRadius">背景の角丸半径（DIP。0 は四角形）。</param>
 /// <remarks>
-/// 文言（<see cref="CoordinateFormatter"/>）・表示可否（<see cref="LoupeMetrics.ShouldShowCoordLabel"/>）・<br/>
+/// 文言（<see cref="EsPoint.Format(int)"/>）・表示可否（<see cref="LoupeMetrics.ShouldShowCoordLabel"/>）・<br/>
 /// 配置（<see cref="EsLabelLayout"/>）はコアが単一所有する。<br/>
 /// <b>色は持たない</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>LoupePaint</c>）が単一所有する。<br/>
 /// <b>文字の描画は UI 層が担う</b>: テキストの実寸は描画 API でしか測れないため、<br/>
@@ -38,7 +38,7 @@ public readonly record struct LoupeCoordLabel(
     /// <returns>ラベルの描画契約。中心が未設定または非表示の設定の場合は null。</returns>
     /// <remarks>
     /// 1. 表示可否を <see cref="LoupeMetrics.ShouldShowCoordLabel"/> で判定する（中心が未設定なら null）。<br/>
-    /// 2. 文言は <see cref="CoordinateFormatter"/> で文字列化する。<br/>
+    /// 2. 文言は <see cref="EsPoint.Format(int)"/> で文字列化する。<br/>
     /// 3. 寸法は設定（DIP）をそのまま使う（物理ピクセルへの換算は描画時に行う）。<br/>
     /// <br/>
     /// 表示サイズは要素の大きさを受け取る（描画の物理ピクセルから逆算すると、丸めにより要素と背景がずれる）。
@@ -51,7 +51,7 @@ public readonly record struct LoupeCoordLabel(
         }
 
         return new LoupeCoordLabel(
-            CoordinateFormatter.Format(centerPoint),
+            centerPoint.Format(),
             displaySize,
             metrics.CoordLabelFontSize,
             metrics.CoordLabelCornerRadius);

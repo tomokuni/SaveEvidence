@@ -270,7 +270,7 @@ internal static class MarqueeFrame
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
     /// <returns>座標ラベルの描画内容。非表示の設定の場合は null。</returns>
     /// <remarks>
-    /// 文言はコア（<see cref="CoordinateFormatter"/>）が文字列化し、配置は描画時に実寸から決まる。<br/>
+    /// 文言はコア（<see cref="EsPoint.Format(int)"/>）が文字列化し、配置は描画 時に実寸から決まる。<br/>
     /// 色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
     private static MarqueeCoordLabel? ResolveCoordLabel(in MarqueeFrameRequest request, ICoordTransform port)
@@ -281,7 +281,7 @@ internal static class MarqueeFrame
         }
 
         return new MarqueeCoordLabel(
-            CoordinateFormatter.Format(request.MousePosition),
+            request.MousePosition.Format(),
             port.Inverse(request.MousePosition),
             request.ClientSize,
             request.Options.CoordLabelFontSize);

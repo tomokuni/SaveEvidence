@@ -1,5 +1,5 @@
 using Avalonia.Platform;
-using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.Platform.AvaloniaUI;
 

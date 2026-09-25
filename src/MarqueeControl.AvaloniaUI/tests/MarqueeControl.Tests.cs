@@ -1558,7 +1558,7 @@ public class MarqueeControlTests
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 40)), 0UL, LeftPressed(), KeyModifiers.None));
         await PumpLayoutAsync(control);
 
-        // 文言はコアの CoordinateFormatter が単一所有する
+        // 文言はコアの EsPoint.Format が単一所有する
         Assert.Contains("(50, 40)", LabelTexts(control));
 
         // 続けて移動すると要素の文言が追従する（配置の無効化が効いている）

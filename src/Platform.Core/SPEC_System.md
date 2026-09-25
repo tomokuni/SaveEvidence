@@ -45,21 +45,19 @@ graph LR
 | `Coordinate/CoordMath.cs`（internal） | 画像レイアウト計算の一元化。`CoordTransform` から利用する |
 | `Coordinate/ICoordTransform.cs` | 座標系間の変換ポート（`Forward` / `Inverse` / `Bounds`） |
 | `Coordinate/CoordTransform.cs` | 変換ポートの具象実装（`Func` 委譲・`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`） |
-| `Geometry/EsPoint.cs` | UI フレームワーク非依存の 2 次元座標（`readonly record struct`） |
-| `Geometry/EsSize.cs` | UI フレームワーク非依存の 2 次元サイズ（`readonly record struct`） |
+| `Geometry/EsPoint.cs` | UI フレームワーク非依存の 2 次元座標（`readonly record struct`）。座標ラベルの文言（`Format`）を単一所有する |
+| `Geometry/EsSize.cs` | UI フレームワーク非依存の 2 次元サイズ（`readonly record struct`。領域の確定判定 `HasArea` とクランプ `ClampToArea` / `ClampOffset`） |
 | `Geometry/EsVector.cs` | UI フレームワーク非依存の 2 次元ベクター（`readonly record struct`） |
-| `Geometry/EsRect.cs` | UI フレームワーク非依存の矩形（`readonly record struct`） |
+| `Geometry/EsRect.cs` | UI フレームワーク非依存の矩形（`readonly record struct`。枠線の内側 4 辺 `ComputeInnerEdges` と領域内クランプ `ClampToArea`） |
 | `Geometry/EsPointInt.cs` | UI フレームワーク非依存の整数座標（`EsPoint` の整数版） |
 | `Geometry/EsSizeInt.cs` | UI フレームワーク非依存の整数サイズ（`EsSize` の整数版。`IsEmpty`） |
 | `Geometry/EsRectInt.cs` | UI フレームワーク非依存の整数矩形（`EsRect` の整数版。`Contains` / `Union` / `Center`） |
-| `Geometry/EsPlatformHandle.cs` | UI フレームワーク非依存のネイティブウィンドウ識別子 |
-| `Geometry/CoordinateFormatter.cs` | 座標の表示文字列を生成する純粋関数 |
+| `Geometry/EsAxis.cs` | レイアウト計算で扱う軸（`X` / `Y`）。軸を `bool` で指定しないための列挙型 |
+| `EsPlatformHandle.cs` | UI フレームワーク非依存のネイティブウィンドウ識別子（座標・寸法ではないため `Geometry` に置かない） |
 | `Imaging/EsBitmap.cs` | 自前のピクセルバッファを所有するピクセルコンテナ（BGRA8888・Premul。外部パッケージに依存しない） |
 | `Imaging/ImageDrawMode.cs` | 画像を描画先の領域へ配置する方法（`Uniform` / `Fill`） |
 | `Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（純粋関数。Skia の `SKRect` を返す） |
 | `Geometry/IEsRectWalker.cs` | 矩形の列を確保なしで走査する列挙子（構造体）の契約 |
-| `Geometry/EsRectMath.cs` | 矩形の辺（枠線の内側 4 辺）と領域内クランプの単一所有 |
-| `Geometry/EsSizeMath.cs` | 領域の確定判定と、サイズ・位置の領域内クランプの単一所有 |
 | `Geometry/IntMath.cs` | 整数の切り上げ除算の単一所有 |
 | `Imaging/DrawingColorExtensions.cs` | 描画色の可視判定（アルファが 0 より大きいか）の単一所有 |
 
@@ -91,8 +89,8 @@ graph LR
 ### コア型の命名
 
 コア型には **`Es`（`EsUtil` の略）接頭辞**を付けます（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` /
-`EsPointInt` / `EsSizeInt` / `EsRectInt` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap` / `IEsRectWalker` / `IntMath` /
-`EsRectMath` / `EsSizeMath`）。
+`EsPointInt` / `EsSizeInt` / `EsRectInt` / `EsAxis` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap` / `IEsRectWalker` /
+`IntMath`）。
 
 **整数版の型は `Es` + 型名 + `Int`** とします（`EsPoint` / `EsSize` / `EsRect` の整数版が `EsPointInt` / `EsSizeInt` /
 `EsRectInt`）。整数であることは「画面物理ピクセル」を意味しない（画像ピクセルも整数である）ため、単位が読む側に

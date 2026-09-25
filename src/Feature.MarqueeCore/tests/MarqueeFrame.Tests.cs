@@ -173,7 +173,7 @@ public class MarqueeFrameTests
 
         Assert.True(content.CoordLabel is not null);
         var label = content.CoordLabel.Value;
-        // 文言の書式はコアの CoordinateFormatter が単一所有する
+        // 文言の書式はコアの EsPoint.Format が単一所有する
         Assert.Equal("(40, 60)", label.Text);
         Assert.Equal(16, label.FontSize);
         Assert.Equal(new EsSize(300, 300), label.ClientSize);
