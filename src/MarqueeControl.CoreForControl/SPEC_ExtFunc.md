@@ -13,8 +13,6 @@
 | `WheelScrollRequest` | `public` | 通常ホイールによるスクロール要求（回転量・Shift・発生位置・ベクター変換） |
 | `MarqueeWheelLogMessage` | `internal` | ズーム要求のログ定義（`ILogger` 拡張メソッド。ホストは定義名を参照しない） |
 | `MarqueeViewportNotifier` | `public` | ビューポート変化の再通知（現在の状態スナップショット）と再描画の要求 |
-| `MarqueeLabelLayoutPlan` | `public` | 描画するラベル（サイズラベルとカーソル座標ラベル）を 1 つの一覧へまとめる（順序の単一所有） |
-| `MarqueeLabelElement` | `public` | ラベル 1 件の配置指示（配置矩形・文字原点・文言・寸法・色・角丸） |
 
 ## `MarqueeWheelInterpreter`（`Estable.Marquee.CoreForControl`・`public sealed class`）
 
@@ -109,29 +107,6 @@ viewport.Notify();   // 変化を検知したら呼ぶ
 
 書式とレベルは両 UI で共通です（UI 実装ごとに持つと書式がずれ、片方だけ修正されます）。
 
-## `MarqueeLabelLayoutPlan` / `MarqueeLabelElement`（`Estable.Marquee.CoreForControl`）
+## ラベル計画（描画層）
 
-描画するラベル（サイズラベルとカーソル座標ラベル）を 1 つの一覧へまとめます。
-
-文言・外観・順序はコア（`MarqueeDrawContent.SizeLabel` / `CoordLabel` と `Layers`）が単一所有し、本層は**実寸から要素の配置矩形を求める写像**だけを担います（テキスト要素を置く側が配置を持たないため、両 UI の見た目が一致します）。
-
-| メンバー | 説明 |
-| --- | --- |
-| `MarqueeLabelLayoutPlan.Resolve(in MarqueeDrawContent content, Func<string, double, EsSize> measureText)` | 配置するラベル要素の一覧を**順序どおり**（サイズラベル → カーソル座標ラベル）で返す。`measureText` は描画 API で測定した実寸を返す関数。どちらも無い場合は空（一覧を生成しない）。null は `ArgumentNullException` |
-| `MarqueeLabelElement.Bounds` | 要素を置く矩形（DIP） |
-| `MarqueeLabelElement.TextOrigin` | 文字の描画原点（左上・DIP。要素の内側余白の算出に使う） |
-| `MarqueeLabelElement.Text` / `FontSize` / `TextColor` | 文言・フォントサイズ（DIP）・文字色 |
-| `MarqueeLabelElement.BackgroundColor` / `CornerRadius` | 背景色（実効色へ解決済み）・背景の角丸半径（DIP。0 は四角形） |
-| `MarqueeLabelElement.PaddingX` / `PaddingY` | 要素の左・上の内側余白（`TextOrigin` と `Bounds` の差） |
-
-- **順序の単一所有**: 「サイズラベルを置き、最後にカーソル座標ラベルを重ねる」順は本クラスが決めます。後から置く座標ラベルが手前に来ます。
-- **両種のラベルを同じ型へ揃える**: サイズラベル（`MarqueeSizeLabel`）と座標ラベル（`MarqueeCoordLabel`）は形が同じでも別の型であり、従来は各 UI が 2 種類の配置計算と描画呼び出しを持っていました（本クラスが写像を単一所有します）。
-- **描画するものが無い場合は一覧を生成しません**: 描画のたびに呼ばれるため空の確保を行いません（空の一覧を返します）。
-- **実処理は UI 層**: 文字の実寸測定（描画 API 依存）を行い、返された配置へテキスト要素を置きます（背景を塗ってから文字を描く順序が必要な UI は `Platform.Core` の `SkiaLabel` を使います）。
-
-```csharp
-foreach (var item in MarqueeLabelLayoutPlan.Resolve(content, MeasureText))
-{
-    DrawLabel(item);
-}
-```
+サイズラベルとカーソル座標ラベルの一覧・順序と、実寸 → 配置矩形の写像は、描画の手順と同じ層である UI 非依存の描画層（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が単一所有します（本層は関知しません）。実寸測定と要素の配置は UI 層が行います。

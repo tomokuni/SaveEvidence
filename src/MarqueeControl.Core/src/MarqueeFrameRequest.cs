@@ -7,8 +7,7 @@ namespace Estable.Marquee;
 /// <param name="Options">選択矩形の設定（ハンドル・十字マーカー・カーソル座標ラベルの外観）。</param>
 /// <param name="DecoOptions">装飾（暗転マスク・穴あけ枠・内側の塗り）の設定。</param>
 /// <param name="ClientSize">描画領域のサイズ（DIP。原点は常に 0）。</param>
-/// <param name="SelectionRect">選択矩形（ドメイン座標）。選択なしの場合は null。</param>
-/// <param name="HasSelection">選択が有効かどうか。</param>
+/// <param name="SelectionRect">選択矩形（ドメイン座標）。選択なしの場合は null（<b>null が「選択なし」を意味する</b>）。</param>
 /// <param name="MarkerActive">始点マーカー（十字線）を描くかどうか（nudge 中かつ十字線が可視の場合に true）。</param>
 /// <param name="MarkerPosition">始点マーカーの中心（ドメイン座標）。</param>
 /// <param name="MousePosition">直近のマウス位置（ドメイン座標。カーソル座標ラベルの基準）。</param>
@@ -26,7 +25,6 @@ internal readonly record struct MarqueeFrameRequest(
     Decoration.MarqueeDecoOptions DecoOptions,
     EsSize ClientSize,
     EsRect? SelectionRect,
-    bool HasSelection,
     bool MarkerActive,
     EsPoint MarkerPosition,
     EsPoint MousePosition,

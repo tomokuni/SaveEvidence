@@ -130,7 +130,7 @@ marquee.CancelRequested += (_, _) => CancelSelection();
 
 #### 4.2.1 ラベル（文字）の表示
 
-サイズラベルとカーソル座標ラベルの**文言・外観・順序は Core が単一所有**し、`MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が実寸から配置矩形を求める写像を単一所有します。コントロールは `Border` + `TextBlock` を子要素として置き（自 UI の API で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のためホストが `Rendered` のハンドラで自前で描きます。
+サイズラベルとカーソル座標ラベルの**文言・外観は Core が単一所有**し、描画層（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が実寸から配置矩形を求める写像を単一所有します。コントロールは `Border` + `TextBlock` を子要素として置き（自 UI の API で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のためホストが `Rendered` のハンドラで自前で描きます。
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます（引数の `Content` に装飾・穴あけ矩形・ハンドル・マーカー・サイズラベル・座標ラベル・層の順序が含まれます）。
 
 ```csharp
@@ -215,7 +215,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `CurrentSnapshot` | `MarqueeSnapshot` | - | 現在の選択状態のスナップショット（**ポーリング不要の完全状態**）。`State` / `SelectionRect` / `ActiveTarget` / `MousePosition` / `IsMouseDown` / `IsDragging` / `NudgeActive` / `HasSelection` を公開。イベント引数の Snapshot と同一形式。選択状態の判定（確定・キャンセル等の操作分岐）は `CurrentSnapshot.HasSelection` を使用 |
+| `CurrentSnapshot` | `MarqueeSnapshot` | - | 現在の選択状態のスナップショット（**ポーリング不要の完全状態**。`readonly record struct`）。`State` / `SelectionRect` / `ActiveTarget` / `MousePosition` / `IsMouseDown` / `NudgeActive` / `HasSelection` を公開。イベント引数の Snapshot と同一形式。選択状態の判定（確定・キャンセル等の操作分岐）は `CurrentSnapshot.HasSelection` を使用 |
 | `HasSelection` | `bool` | `false` | 選択矩形があるかどうか（スナップショットの生成を伴わない軽量な読み取り。描画のたびに参照する） |
 | `SelectionRect` | `EsRect` | `0x0` | 現在の選択矩形（ドメイン座標。未選択時は 0x0） |
 
@@ -224,6 +224,16 @@ control.ResetSelection();           // 状態と nudge の初期化
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
 | `Log` | `ILogger` | 操作ログ用ロガー（既定は `NullLogger`。出力先・レベル制御はホストアプリケーションが所有） |
+
+#### 5.1.4 描画
+
+| プロパティ | 型 | 説明 |
+| --- | --- | --- |
+| `Renderer` | `IMarqueeRenderer` | 描画の実装（**描画の差し替え**。既定は描画層の `MarqueeRenderer.Default`。null 不可）。設定するとコア（ファサード）へ伝搬し、再描画とラベル要素の再配置を要求する（描画先は `AvaloniaCanvas` が担うため、描画手順だけを交換できる） |
+
+```csharp
+marquee.Renderer = MyMarqueeRenderer.Instance;   // 描画手順の差し替え
+```
 
 ### 5.2 メソッド
 
@@ -264,14 +274,14 @@ control.ResetSelection();           // 状態と nudge の初期化
 コア（`MarqueeControl.Core`）の公開型は 2 層です（内部契約（状態機械・描画入力の組み立て・幾何）は internal）。
 
 - **ホスト設定**: `MarqueeOptions` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest`
-- **公開ファサード（操作の唯一の窓口）**: `Marquee`（操作・設定・効果の適用・描画内容の解決）/ `IMarqueeEffects`（効果の適用先）
-- **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` / `MarqueeAppearance` / `SelectionGeometry`
+- **公開ファサード（操作の唯一の窓口）**: `Marquee`（操作・設定・効果の適用・描画内容の解決）/ `IMarqueeEffects`（効果の適用先）/ `MarqueeEffectsBase`（効果の既定実装。必要な効果だけを override できる）
+- **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` / `MarqueeSizeLabel` / `SelectionGeometry`
 
-**装飾（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は Core 内のサブ概念**（`src/Decoration/`・名前空間 `Estable.Marquee.Decoration`）が単一所有します（/ `MarqueeDecoOptions` / `MarqueeDrawContent` / `OuterDecoFrame` / `InnerDecoFrame` / `MarqueeSizeLabel` / `MarqueeCoordLabel`）。本コントロールは `DecoOptions` で設定し、`Rendered` で装飾の描画内容を渡します。**描画するラベルの一覧と描画順は組み込みの層**（`MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan`）が単一所有し、実寸測定だけを UI 層が与えます。
+**装飾（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は Core 内のサブ概念**（`src/Decoration/`・名前空間 `Estable.Marquee.Decoration`）が単一所有します（/ `MarqueeDecoOptions` / `MarqueeDrawContent` / `OuterDecoFrame` / `InnerDecoFrame` / `MarqueeSizeLabel` / `MarqueeCoordLabel`）。本コントロールは `DecoOptions` で設定し、`Rendered` で装飾の描画内容を渡します。**描画するラベルの一覧と描画順はコア（`MarqueeDrawLayer`）が、実寸 → 配置矩形の写像は描画層**（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が単一所有し、実寸測定だけを UI 層が与えます。
 
 効果（`MarqueeFeedback` / `MarqueeCursorAction`）とログ定義（`MarqueeLogMessage`）はコアの内部契約（internal）であり、本プロジェクトは参照しません（適用はファサード、記録は状態機械が行います）。
 
-本プロジェクトの内部実装（描画等）も internal です。詳細はコアの `README.md` の「公開面の階層」を参照してください。
+描画の手順（層の順序と描画ポートへの写し方）は UI 非依存の描画層（`MarqueeControl.Rendering` の `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan`）が単一所有し、本コントロールは描画ポートのアダプタ（`AvaloniaCanvas`）とラベル要素の配置を担います。本プロジェクトの内部実装も internal です。
 
 #### 5.4.1 MarqueeControl（`MarqueeControl.cs`）
 
@@ -283,7 +293,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 | 型 | 説明 |
 | --- | --- |
 | `MarqueeInteractionState` enum | 操作状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging）。コアが所有 |
-| `MarqueeSnapshot` record | 状態 Snapshot（State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / IsDragging / NudgeActive。`HasSelection` は導出プロパティ）。値セマンティクスで比較可能。**`SelectionRect` は `EsRect`、`MousePosition` は `EsPoint`**（UI 非依存） |
+| `MarqueeSnapshot` readonly record struct | 状態 Snapshot（State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive。`HasSelection` は導出プロパティ）。値セマンティクスで比較可能。**`SelectionRect` は `EsRect`、`MousePosition` は `EsPoint`**（UI 非依存）。ドラッグ中かどうかは `State`（`Dragging` / `DraggingNudging`）で判定する |
 | `SelectionRectEventArgs` | 選択矩形通知（`Rect` は Avalonia 型・ドメイン座標系。`Snapshot` を同梱） |
 | `MarqueePointEventArgs` | 座標通知（`Point` は Avalonia 型・ドメイン座標系。`Snapshot` を同梱） |
 | `MarqueeRenderedEventArgs` | 描画完了通知（`Context` = `DrawingContext`（描画中のみ有効）/ `Content` = `MarqueeDrawContent`（装飾・穴あけ矩形・ハンドル・マーカー・サイズラベル・座標ラベル・層の順序）） |
@@ -373,7 +383,7 @@ nudge 中は十字マーカー（`Options.MarkerColor` / `Options.MarkerLength` 
 | 新規選択ドラッグ中・nudge | 終点（ドラッグ中の位置） |
 | 未選択（始点決め nudge） | 始点 |
 
-十字マーカーとルーペ中心は、矩形の固定位置（`GetOppositeCorner` で得られる左上等の隅）ではなく**ドラッグ中の操作点（ハンドル / 掴んだ位置 / 終点）**を追従します。これにより、マーカーは常にドラッグ中の操作位置に表示されます。
+十字マーカーとルーペ中心は、矩形の固定位置（`SelectionGeometry.GetOppositeCorner` で得られる左上等の隅）ではなく**ドラッグ中の操作点（ハンドル / 掴んだ位置 / 終点）**を追従します。これにより、マーカーは常にドラッグ中の操作位置に表示されます。
 
 ### 7.5 外側の装飾と選択矩形の一致（閉区間の共有）
 

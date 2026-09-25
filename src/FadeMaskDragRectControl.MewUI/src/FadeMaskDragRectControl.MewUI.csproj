@@ -23,7 +23,7 @@
     <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
     <!-- ホイール要求（ズーム / スクロール）の中継で型を直接参照する -->
     <ProjectReference Include="..\..\MarqueeControl.CoreForControl\src\MarqueeControl.CoreForControl.csproj" />
-    <!-- ルーペの表示位置計算（LoupePositionCalculator） -->
+    <!-- 表示位置の計算（LoupePositionCalculator）と表示情報の契約（LoupeLayout） -->
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
     <!-- UI 非依存の動作モード・選択矩形オーバーレイ描画 -->
     <ProjectReference Include="..\..\FadeMaskDragRectControl.Core\src\FadeMaskDragRectControl.Core.csproj" />

@@ -5,8 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace Estable.CaptureSession;
 
 /// <summary>カーソル下の要素の検出結果を選択オーバーレイへ反映するための状態を表す。</summary>
-/// <param name="HasHighlight">ハイライト（検出）があるかどうか。</param>
-/// <param name="DomainRect">ハイライト矩形（ドメイン座標 = 画像ローカル物理ピクセル）。未検出の場合は null。</param>
+/// <param name="DomainRect">ハイライト矩形（ドメイン座標 = 画像ローカル物理ピクセル）。未検出の場合は null（<b>null が「ハイライトなし」を意味する</b>）。</param>
 /// <param name="TitleChanged">直前の検出と比べて表示名が変わったかどうか。</param>
 /// <remarks>
 /// UI 層は本値を選択コントロールへ設定するだけにし、座標変換・空文字への正規化・変化の判定を書かない。<br/>
@@ -14,7 +13,7 @@ namespace Estable.CaptureSession;
 /// 直前の状態（矩形・表示名）は <see cref="CaptureHighlightSession"/> が保持する<br/>
 /// （本値は 1 回の更新の結果であり、更新後の状態はセッションのプロパティから読む）。
 /// </remarks>
-public readonly record struct CaptureHighlight(bool HasHighlight, EsRect? DomainRect, bool TitleChanged);
+public readonly record struct CaptureHighlight(EsRect? DomainRect, bool TitleChanged);
 
 /// <summary>ハイライト（スクリーン選択 / ウィンドウ選択）の状態・判断・ログを単一所有する。</summary>
 /// <remarks>
@@ -27,7 +26,8 @@ public readonly record struct CaptureHighlight(bool HasHighlight, EsRect? Domain
 /// 3. 表示名の変化の判定（情報ラベルの再描画に必要な最小限の判断。UI ごとの文字列比較を書かせない）。<br/>
 /// 4. 検出結果のログ（<see cref="CaptureLogMessage.LogHighlight"/>。両 UI で同じ事象を同じ書式で記録する）。<br/>
 /// <br/>
-/// <b>状態</b>は「直前の表示名」のみを持つ（ハイライト矩形は選択コントロールが保持し、本クラスは複製しない）。
+/// <b>ハイライトの有無は <see cref="DomainRect"/> の null が表す</b>（有効フラグを別に持たない）。<br/>
+/// <b>状態</b>は「直前の表示名」とハイライト矩形を持ち、矩形の複製を選択コントロールへ渡す。
 /// </remarks>
 /// <param name="logger">内部ログの転送先。null の場合はログを出力しない。</param>
 public sealed class CaptureHighlightSession(ILogger? logger = null)
@@ -49,7 +49,7 @@ public sealed class CaptureHighlightSession(ILogger? logger = null)
     /// <param name="captureType">キャプチャ種別（ログとドメイン変換に使う）。</param>
     /// <param name="detection">検出結果（画面物理座標）。</param>
     /// <param name="imageOrigin">切り出し元画像の原点（画面物理ピクセル）。</param>
-    /// <returns>ハイライトの有無・ドメイン座標のハイライト矩形と、表示名の変化の有無。</returns>
+    /// <returns>ドメイン座標のハイライト矩形（未検出の場合は null）と、表示名の変化の有無。</returns>
     /// <remarks>
     /// 1. 検出できていない場合は矩形を null・表示名を空文字へ正規化する。<br/>
     /// 2. 検出できている場合は検出矩形をドメイン座標へ変換する。<br/>
@@ -72,6 +72,6 @@ public sealed class CaptureHighlightSession(ILogger? logger = null)
             CaptureLogFormat.RectOrEmpty(detection.IsDetected ? local : null),
             title, CaptureLogFormat.Text(detection.ClassName));
 
-        return new CaptureHighlight(detection.IsDetected, DomainRect, titleChanged);
+        return new CaptureHighlight(DomainRect, titleChanged);
     }
 }

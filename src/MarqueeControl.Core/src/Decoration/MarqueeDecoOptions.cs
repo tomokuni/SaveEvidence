@@ -12,7 +12,8 @@ namespace Estable.Marquee.Decoration;
 /// そのため本型は選択コア（<c>MarqueeControl.Core</c>）ではなく本層が所有する（選択の判断はコア、装飾は本層）。<br/>
 /// <br/>
 /// <b>状態（選択矩形・ハイライト矩形）は持たない</b>: 選択矩形はコアのセッションが単一所有し、<br/>
-/// ハイライト矩形はホストが与える実行時状態として <see cref="OuterHighlightRect"/> / <see cref="OuterHasHighlight"/> に持つ。<br/>
+/// ハイライト矩形はホストが与える実行時状態として <see cref="OuterHighlightRect"/> に持つ<br/>
+/// （null が「ハイライトしない」を意味する）。<br/>
 /// <br/>
 /// <b>色の型</b>: UI 非依存の <see cref="System.Drawing.Color"/>（アルファで不透明度を表す）を使用し、<br/>
 /// 各 UI の色型への変換は境界（UI 層）で 1 行行う。
@@ -39,13 +40,12 @@ public sealed record MarqueeDecoOptions
     public bool OuterShowFullOverlay { get; init; }
 
     /// <summary>ハイライトする矩形（ドメイン座標）。</summary>
-    /// <value>ハイライト矩形（null（既定）の場合はハイライトしない）。</value>
-    /// <remarks>ホストが与える値である（選択矩形と異なり選択コントロールの操作では変化しない）。</remarks>
+    /// <value>ハイライト矩形。null（既定）の場合はハイライトしない。</value>
+    /// <remarks>
+    /// ホストが与える値である（選択矩形と異なり選択コントロールの操作では変化しない）。<br/>
+    /// <b>null が「ハイライトしない」を意味する</b>（有効フラグは持たない。ハイライトをやめる場合は null にする）。
+    /// </remarks>
     public EsRect? OuterHighlightRect { get; init; }
-
-    /// <summary>ハイライトを描くかどうか。</summary>
-    /// <value>true の場合に <see cref="OuterHighlightRect"/> をハイライトする。既定は false。</value>
-    public bool OuterHasHighlight { get; init; }
 
     /// <summary>内側の装飾（穴あけ矩形の内側の塗りと枠線）の外観。</summary>
     /// <value>塗り色・枠線色・太さ。既定はどちらも透明（描かない）。</value>

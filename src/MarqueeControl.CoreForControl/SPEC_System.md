@@ -19,21 +19,16 @@
 
 ### 依存方向（一方向を厳守）
 
+層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
+
 ```text
-┌──────────────────────────────┐      ┌──────────────────────────────┐
-│ MarqueeControl.AvaloniaUI    │      │ MarqueeControl.MewUI         │
-│ （Avalonia の入力・描画）    │      │ （MewUI の入力・描画）       │
-└───────────────┬──────────────┘      └───────────────┬──────────────┘
-                │                                     │
-                └───────────────┬─────────────────────┘
-                                ▼
-                ┌──────────────────────────────┐
-                │ MarqueeControl.CoreForControl│  ホイール要求の解釈・連携先への適用・ログ（単一所有）
-                └───────────────┬──────────────┘
-                                ▼
-                ┌──────────────────────────────┐
-                │ MarqueeControl.Core          │  選択の判断・状態・描画内容（独立可能なコア）
-                └──────────────────────────────┘
+UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
+  入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
+    ├──> MarqueeControl.Rendering   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
+    ├──> MarqueeControl.CoreForControl ← 本プロジェクト   組み込み先がある場合にだけ必要な規則
+    └──> MarqueeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+           └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
+※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
 
 ### 責務の分担
@@ -56,7 +51,6 @@
 | 連携スクロールの適用を本層が持つ（適用先は抽象） | 「1 ノッチ = 48 DIP」「Shift で横」は UI をまたいで同じ規則であり、*回転量から移動量への換算と適用の順序* を UI ごとに書かせない。UI 固有の型は `IWheelScrollTarget` へ適合させて吸収する |
 | 連携先が無い場合は要求として通知する | スクロール先（ズームビューポートのパン等）が UI 側に無い場合、勝手に捨てずホストへ委ねる（振る舞いを後方互換に保つ） |
 | ビューポート変化の通知を Core ではなく本層に置く | ビューポートは組み込み先に存在する概念であり、単体で使う Marquee には存在しない。コアに置くと、コアが「他のコントロール（ビューポート）の語彙」を持つことになる |
-| ラベルの配置指示を本層に置く | サイズラベルとカーソル座標ラベルを「1 つの一覧にまとめて順に置く」ことは、文字を UI 要素として配置するコントロールでだけ必要な手順である（単体で使う Marquee には要素という概念が無い）。実寸測定は描画 API 依存のため、測定だけをデリゲートで受け取る |
 
 ## コンポーネント構成
 
@@ -66,16 +60,13 @@ src/MarqueeControl.CoreForControl/
 │   ├── MarqueeWheelInterpreter.cs   ホイール入力の解釈・通知・連携先への適用（唯一のロジック）
 │   │                                （同ファイル内: `IWheelScrollTarget` / `WheelScrollDelta`（internal））
 │   ├── MarqueeViewportNotifier.cs   ビューポート変化の再通知（スナップショット + 再描画）
-│   ├── MarqueeLabelLayoutPlan.cs      ラベルの描画項目の一覧（描画順の単一所有）
-│   │                                （同ファイル内: `MarqueeLabelElement`）
 │   ├── WheelRequest.cs              要求の値型（WheelZoomRequest / WheelScrollRequest）
 │   └── MarqueeWheelLogMessage.cs    ズーム要求のログ定義（LoggerMessage ソース生成。internal）
 └── tests/
     ├── RecordingLogger.cs           ログ出力を収集するテスト用 ILogger
     ├── MarqueeWheelInterpreter.Tests.cs 解釈・通知・連携先への適用・ログの検証
     ├── WheelRequest.Tests.cs        要求の値の検証
-    ├── MarqueeViewportNotifier.Tests.cs ビューポート変化の通知の検証
-    └── MarqueeLabelLayoutPlan.Tests.cs ラベル描画項目の解決の検証
+    └── MarqueeViewportNotifier.Tests.cs ビューポート変化の通知の検証
 ```
 
 | コンポーネント | 責務 |
@@ -86,7 +77,6 @@ src/MarqueeControl.CoreForControl/
 | `WheelZoomRequest` / `WheelScrollRequest` | 要求の値（方向・回転量・修飾キー・発生位置）。`WheelScrollRequest.Delta` がコア型同士の変換を単一所有する |
 | `MarqueeWheelLogMessage` | ズーム要求のログ定義（書式・レベル） |
 | `MarqueeViewportNotifier` | ビューポート変化の再通知（現在の状態スナップショット）と再描画の要求。選択の状態は変更しない |
-| `MarqueeLabelLayoutPlan` / `MarqueeLabelElement` | サイズラベルとカーソル座標ラベルを同じ型へ揃え、順序（サイズラベル → 座標ラベル）を単一所有する。実寸測定だけをデリゲートで受け取り、要素の配置矩形を返す |
 
 ## データフロー（ホイール操作）
 
@@ -128,7 +118,7 @@ sequenceDiagram
 | ロガーの保持と null の吸収 | コアのファサード（`Marquee.Log`） |
 | 1 ノッチあたりの移動量（48 DIP） | `Platform.Core` の `ScrollMath.WheelScrollUnit` |
 | ズーム率の決定と表示の適用 | 受け手（ホスト。ズームビューポート） |
-| ラベルの一覧・順序・要素の配置矩形の写像 | `MarqueeLabelLayoutPlan.Resolve` |
+| ラベルの一覧・順序・要素の配置矩形の写像 | 描画層の `MarqueeLabelPlan.Resolve`（`MarqueeControl.Rendering`。本層は関知しない） |
 | テキストの実寸測定と描画 API の呼び出し | UI 層（ホスト） |
 
 ## 例外処理ポリシー

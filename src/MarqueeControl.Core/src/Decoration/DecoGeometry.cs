@@ -3,6 +3,15 @@ using EsUtil.Platform.Core.Geometry;
 
 namespace Estable.Marquee.Decoration;
 
+/// <summary>穴あけ矩形と、その矩形を扱うときの閉区間の指定。</summary>
+/// <param name="Rect">穴あけ矩形（座標系は呼び出し側の契約に従う）。</param>
+/// <param name="ClosedInterval">閉区間（終点 +1）として扱うか。選択矩形は true、ハイライト矩形は false。</param>
+/// <remarks>
+/// 「どちらの矩形を穴として優先するか」と「その矩形の終点を +1 するか」は同じ判断であるため 1 つの値として返す<br/>
+/// （呼び出し側が優先順位を再判定すると、規則が 2 箇所へ分かれる）。
+/// </remarks>
+internal readonly record struct HoleRect(EsRect Rect, bool ClosedInterval);
+
 /// <summary>装飾（選択矩形の外側・内側）に共通する幾何計算（純粋関数）。</summary>
 /// <remarks>
 /// 穴あけ矩形の決定・枠線矩形・論理座標（ドメイン）から DIP への変換を単一所有する。<br/>
@@ -33,7 +42,7 @@ internal static class DecoGeometry
             return specified;
         }
 
-        return scaling > 0 && scaling != 1.0
+        return DpiScaler.IsValidScaling(scaling) && scaling != 1.0
             ? CoordTransform.Scale(scaling)
             : CoordTransform.Identity;
     }
@@ -65,60 +74,44 @@ internal static class DecoGeometry
     /// <param name="thickness">枠線の太さ（DIP）。0.5 未満は 0.5 に正規化される。</param>
     /// <returns>上・下・左・右の順の枠線矩形（4 個）。</returns>
     /// <remarks>
-    /// 各辺は矩形の内側に描く（上辺は Y、下辺は Bottom − t、左右は内側に t 幅）。<br/>
-    /// 高さ・幅が負にならないよう 0 でクランプする。
+    /// 辺の矩形の計算は <see cref="EsRectMath.ComputeInnerEdges"/> が単一所有する（ルーペの外枠と同じ式）。<br/>
+    /// 太さの下限のみ本メソッドが決める（選択枠は細い線でも視認できる必要がある）。
     /// </remarks>
     public static IReadOnlyList<EsRect> GetBorderRects(EsRect rect, double thickness)
-    {
-        var t = Math.Max(BorderThicknessLowerBound, thickness);
-        return
-        [
-            new EsRect(rect.X, rect.Y, rect.Width, t),                                                  // 上
-            new EsRect(rect.X, rect.Bottom - t, rect.Width, t),                                         // 下
-            new EsRect(rect.X, rect.Y + t, t, Math.Max(0, rect.Height - 2 * t)),                        // 左
-            new EsRect(rect.Right - t, rect.Y + t, t, Math.Max(0, rect.Height - 2 * t)),                // 右
-        ];
-    }
+        => EsRectMath.ComputeInnerEdges(rect, Math.Max(BorderThicknessLowerBound, thickness));
 
-    /// <summary>穴あけ矩形（暗転オーバーレイで穴をあける領域）を決定する。</summary>
-    /// <param name="hasHighlight">ハイライトが有効か。</param>
-    /// <param name="highlightRect">ハイライト矩形（DIP）。null の場合は無効。</param>
-    /// <param name="hasSelection">選択が有効か。</param>
-    /// <param name="selectionRect">選択矩形（DIP）。null の場合は無効。</param>
-    /// <returns>穴あけ矩形。ハイライト優先・次に選択矩形。ハイライト/選択が無効の場合は null。</returns>
-    public static EsRect? ResolveHoleRect(
-        bool hasHighlight, EsRect? highlightRect, bool hasSelection, EsRect? selectionRect)
-        => hasHighlight ? highlightRect
-            : hasSelection ? selectionRect
+    /// <summary>穴あけ矩形（暗転オーバーレイで穴をあける領域）と閉区間の指定を決定する。</summary>
+    /// <param name="highlightRect">ハイライト矩形。null の場合はハイライトなし。</param>
+    /// <param name="selectionRect">選択矩形。null の場合は選択なし。</param>
+    /// <returns>穴あけ矩形と閉区間の指定。どちらも null の場合は null。</returns>
+    /// <remarks>
+    /// <b>矩形の有無は null が表す</b>: 有効フラグを別に持つと「フラグは true だが矩形が無い」という<br/>
+    /// 意味の無い状態を表現でき、設定経路によって扱いが変わる（矩形を 1 つに絞ることで不可能にする）。<br/>
+    /// <b>終点の扱いは矩形の種類で決まる</b>: 選択矩形は閉区間（終点のピクセルも含む）、<br/>
+    /// ハイライト矩形はホストが既に全ピクセルを含む閉区間として与えるため +1 しない。
+    /// </remarks>
+    public static HoleRect? ResolveHoleRect(EsRect? highlightRect, EsRect? selectionRect)
+        => highlightRect is { } highlight ? new HoleRect(highlight, ClosedInterval: false)
+            : selectionRect is { } selection ? new HoleRect(selection, ClosedInterval: true)
             : null;
 
     /// <summary>論理座標の矩形から穴あけ矩形（DIP）を決定する。</summary>
-    /// <param name="hasHighlight">ハイライトが有効か。</param>
-    /// <param name="logicalHighlightRect">ハイライト矩形（論理座標）。null の場合は無効。</param>
-    /// <param name="hasSelection">選択が有効か。</param>
-    /// <param name="logicalSelectionRect">選択矩形（論理座標）。null の場合は無効。</param>
-    /// <param name="port">論理座標 → DIP の座標変換ポート。null の場合は <paramref name="scaling"/> を等倍スケールとして適用する。</param>
-    /// <param name="scaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
-    /// <returns>穴あけ矩形（DIP）。ハイライト・選択とも無効の場合は null。</returns>
+    /// <param name="logicalHighlightRect">ハイライト矩形（論理座標）。null の場合はハイライトなし。</param>
+    /// <param name="logicalSelectionRect">選択矩形（論理座標）。null の場合は選択なし。</param>
+    /// <param name="port">論理座標 → DIP の座標変換ポート。null の場合は等価変換。</param>
+    /// <returns>穴あけ矩形（DIP）。どちらも null の場合は null。</returns>
     /// <remarks>
-    /// DIP 変換の規則（選択は閉区間 +1、ハイライトは +0）と優先順（ハイライト → 選択）を単一所有する。<br/>
-    /// 装飾の枠線・内側の塗り・サイズラベルが同じ穴あけ矩形を使うため、各所が個別に変換すると矩形がずれる。
+    /// 優先順（ハイライト → 選択）と終点の扱い（選択は閉区間 +1、ハイライトは +0）は
+    /// <see cref="ResolveHoleRect"/> が単一所有し、<b>選ばれた矩形だけを DIP 変換する</b>（両方を変換して片方を捨てない）。<br/>
+    /// 装飾の枠線・内側の塗り・サイズラベルが同じ穴あけ矩形を使うため、各所が個別に変換すると矩形がずれる<br/>
+    /// （呼び出し側は本メソッドを 1 回だけ呼び、結果を各項目へ渡す）。<br/>
+    /// ポートの解決（<see cref="ResolvePort"/>）も呼び出し側が 1 回だけ行う（処理の多重実行を避ける）。
     /// </remarks>
     public static EsRect? ResolveHoleRectDip(
-        bool hasHighlight, EsRect? logicalHighlightRect,
-        bool hasSelection, EsRect? logicalSelectionRect,
-        ICoordTransform? port, double scaling)
-    {
-        var transform = ResolvePort(port, scaling);
-        var selectionRect = logicalSelectionRect is { } selection
-            ? ToDipRect(selection, transform)
-            : (EsRect?)null;
-        var highlightRect = logicalHighlightRect is { } highlight
-            ? ToDipRect(highlight, transform, closedInterval: false)
-            : (EsRect?)null;
-
-        return ResolveHoleRect(hasHighlight, highlightRect, hasSelection, selectionRect);
-    }
+        EsRect? logicalHighlightRect, EsRect? logicalSelectionRect, ICoordTransform? port)
+        => ResolveHoleRect(logicalHighlightRect, logicalSelectionRect) is { } hole
+            ? ToDipRect(hole.Rect, port, hole.ClosedInterval)
+            : null;
 
     /// <summary>暗転オーバーレイを描画するかどうかを判定する。</summary>
     /// <param name="holeRect">穴あけ矩形（DIP）。null の場合は全面暗転を検討する。</param>

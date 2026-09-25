@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
 namespace Estable.Marquee.Decoration;
@@ -23,10 +24,20 @@ public sealed record OuterDecoAppearance
     public DrawingColor OverlayColor { get; init; } = DrawingColor.FromArgb(128, 0, 0, 0);
 
     /// <summary>選択枠線の色を取得する。</summary>
-    /// <value>アルファを含む色。既定はダークグレー（#FFA9A9A9）。</value>
-    public DrawingColor BorderColor { get; init; } = DrawingColor.FromArgb(255, 169, 169, 169);
+    /// <value>アルファを含む色。既定はダークグレー（#FFA9A9A9。ハンドル枠と共通）。</value>
+    public DrawingColor BorderColor { get; init; } = MarqueeOptions.DefaultHandleBorderColor;
 
     /// <summary>選択枠線の太さ（DIP）を取得する。</summary>
     /// <value>枠線の太さ（DIP）。既定は 2.0。</value>
     public double BorderThickness { get; init; } = 2.0;
+
+    /// <summary>暗転マスクを描画するかどうかを取得する。</summary>
+    /// <value>暗転色のアルファが 0 でない場合は true。false の場合は塗りを省略できる。</value>
+    /// <remarks>アルファ 0 を描画しない扱いにする判断は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する。</remarks>
+    public bool HasOverlay => OverlayColor.IsVisible();
+
+    /// <summary>選択枠線を描画するかどうかを取得する。</summary>
+    /// <value>枠線色のアルファが 0 でない場合は true。false の場合は枠の生成を省略できる。</value>
+    /// <remarks>アルファ 0 を描画しない扱いにする判断は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する。</remarks>
+    public bool HasBorder => BorderColor.IsVisible();
 }

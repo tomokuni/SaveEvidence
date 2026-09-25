@@ -42,7 +42,6 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(FadeMaskDragRectMode.AreaSelect, control.Mode);
         Assert.False(control.HasSelection);
         Assert.Equal(default, control.SelectionRect);
-        Assert.False(control.HasHighlight);
         Assert.Null(control.LogicalHighlightRect);
         Assert.True(control.ShowFullOverlay);
         Assert.True(control.Marquee.IsVisible);
@@ -155,16 +154,14 @@ public class FadeMaskDragRectControlTests
     [Fact]
     public void ハイライト_設定と取得が委譲される()
     {
-        var control = new FadeMaskDragRectControl
-        {
-            HasHighlight = true,
-            LogicalHighlightRect = new EsRect(1, 2, 3, 4),
-        };
+        var control = new FadeMaskDragRectControl { LogicalHighlightRect = new EsRect(1, 2, 3, 4) };
 
-        Assert.True(control.HasHighlight);
         Assert.Equal(new EsRect(1, 2, 3, 4), control.LogicalHighlightRect);
-        Assert.True(control.HasHighlight);
-        Assert.Equal(new EsRect(1, 2, 3, 4), control.LogicalHighlightRect);
+
+        // ハイライトの有無は矩形の null が表す（null にすると穴あけ矩形として使われない）
+        control.LogicalHighlightRect = null;
+
+        Assert.Null(control.LogicalHighlightRect);
     }
 
     // ====================================================================

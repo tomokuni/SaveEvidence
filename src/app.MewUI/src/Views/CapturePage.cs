@@ -649,7 +649,6 @@ internal static class CapturePage
             autoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with
             {
                 OuterAppearance = s_hiddenOuterDecoAppearance,
-                OuterHasHighlight = true,
                 OuterHighlightRect = new EsRect(
                     topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y),
                 InnerAppearance = s_autoCropHighlightAppearance,

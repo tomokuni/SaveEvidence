@@ -50,7 +50,7 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 - 非表示時の生成Bitmap解放
 - `ILogger` によるエラー通知
 - 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホスト側のオーバーレイ描画用。線分・選択矩形等の破線はホストが描画済み Bitmap へ直接描く）
-- 中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（文言・表示可否・配置はコア、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有）
+- 中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（文言・表示可否はコア、実寸 → 配置矩形の写像は描画層（`LoupeControl.Rendering` の `LoupeLabelPlan`）、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有）
 - **座標変換ポート（`SetCoordinateTransform(ICoordTransform?)` + `PositionOffset`）**: MarqueeControl と同方式。表示位置（`RenderTransform`）と表示サイズ（親パネルでクランプ）をレイアウト時に自己計算（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **`RefreshPosition()`**: パン・ズーム等のレイアウト非変更なビューポート変化時に、表示位置・サイズを再計算（座標変換ポートは呼び出し毎に最新の表示状態を評価）
 
@@ -211,7 +211,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 
 ## 12. プロジェクト構成
 
-本コントロールは、UI フレームワーク非依存のロジックを `LoupeControl.Core` へ分離しています（マルチ UI 対応）。
+本コントロールは、UI フレームワーク非依存のロジックを `LoupeControl.Core` へ、描画の手順を `LoupeControl.Rendering` へ分離しています（マルチ UI 対応）。層構成（Core / Rendering / CoreForControl / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 LoupeControl.AvaloniaUI/
@@ -219,10 +219,10 @@ LoupeControl.AvaloniaUI/
 │   ├── LoupeControl.AvaloniaUI.csproj
 │   ├── LoupeControl.cs         # 公開 Panel（コードのみ。AXAML を持たない。公開API一覧・StyledProperty・公開プロパティ・公開メソッド・ラベル要素の配置・非公開実装）
 │   ├── [CoreForControl] LoupeRenderCoordinator.cs   # 再描画のバッチ化（LoupeControl.CoreForControl が単所有。実行キューは UI が注入する）
-│   ├── LoupeRenderPipeline.cs      # ソース解決と抽出・描画合成（IImage 型判定と Bitmap の複製は UI 固有）
+│   ├── LoupeRenderPipeline.cs      # ソース解決と描画の起動（IImage 型判定と Bitmap の複製は UI 固有。描画先は AvaloniaCanvas）
 │   ├── LoupeSourceResolver.cs      # IImage の対応型判定・破棄済み検出
 │   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知引数（UI 固有。中心座標ラベルはコントロールが表示する）
-│   └── Rendering/          # 内部描画層（LoupeRenderer / LoupeBackgroundRenderer / LoupeDecorationRenderer / LoupeImageRenderer / LoupeBrushes）
+│   └── （ラベル要素の適用は Platform.AvaloniaUI の EsLabelElementHost へ委譲する）
 ├── sample/                 # 独立サンプルアプリ（sample/README.md 参照）
 ├── tests/                  # UI 依存の単体テスト（Avalonia ヘッドレス・直列）
 ├── SPEC_ExtFunc.md         # 外部機能仕様書

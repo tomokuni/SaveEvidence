@@ -13,7 +13,7 @@ namespace Estable.Marquee.Tests;
 /// 1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・ラベル・層の順序）の解決を検証する。<br/>
 /// UI 実装は <see cref="MarqueeDrawContent.Layers"/> の順に各層を反映するだけであり、<br/>
 /// 「描くかどうか」「どの順に描くか」の判断がコアにあることを本テストが担保する。<br/>
-/// 装飾のフレーム単体（暗転領域・枠線）は <see cref="OuterDecoFrameTests"/> が検証する。
+/// 装飾の判断（穴あけ矩形・暗転領域・枠線）もフレームの一部であるため本テストが検証する。
 /// </remarks>
 public class MarqueeFrameTests
 {
@@ -58,8 +58,7 @@ public class MarqueeFrameTests
             decoOptions ?? MarqueeDecoOptions.Default,
             s_clientSize,
             session.HasSelection ? session.SelectionRect : null,
-            session.HasSelection,
-            session.NudgeActive && session.CrosshairVisible,
+            session.NudgeActive,
             session.MarkerPosition,
             session.LastMousePosition,
             port,
@@ -90,6 +89,7 @@ public class MarqueeFrameTests
         var handles = content.Handles.Value;
         Assert.Equal(new EsRect(50, 50, 101, 81), handles.Rect);
         Assert.Equal(12, handles.HandleSize);
+        Assert.Equal(MarqueeOptions.HandleBorderThickness, handles.BorderThickness);
         Assert.Equal(DrawingColor.Red, handles.FillColor);
         Assert.Equal(DrawingColor.Blue, handles.BorderColor);
     }
@@ -161,7 +161,7 @@ public class MarqueeFrameTests
         Assert.True(content.Marker is not null);
         var marker = content.Marker.Value;
         Assert.Equal(DrawingColor.Yellow, marker.Color);
-        Assert.Equal(MarqueeAppearance.MarkerThickness, marker.Thickness);
+        Assert.Equal(2.0, marker.Thickness);
         // 設定は全長のため、描画内容は半幅（全長 / 2）になる
         Assert.Equal(10, marker.Size);
     }
@@ -287,11 +287,7 @@ public class MarqueeFrameTests
     public void ResolveContent_ハイライトのサイズラベルはハイライト矩形を使う()
     {
         var session = CreateSession(selection: s_selection);
-        var deco = MarqueeDecoOptions.Default with
-        {
-            OuterHasHighlight = true,
-            OuterHighlightRect = new EsRect(10, 20, 30, 40),
-        };
+        var deco = MarqueeDecoOptions.Default with { OuterHighlightRect = new EsRect(10, 20, 30, 40) };
 
         var content = ResolveContent(session, deco);
 
@@ -365,6 +361,18 @@ public class MarqueeFrameTests
         Assert.Empty(content.Decoration.BorderRects);
     }
 
+    /// <summary>同じ組合せの層の一覧は事前生成したものを共有することを検証する（描画のたびの確保をしない）。</summary>
+    [Fact]
+    public void ResolveContent_同じ組合せの層の一覧を共有する()
+    {
+        var session = CreateSession(selection: s_selection);
+
+        var first = ResolveContent(session);
+        var second = ResolveContent(session);
+
+        Assert.Same(first.Layers, second.Layers);
+    }
+
     // ====================================================================
     // 装飾の統合（1 値で返す）
     // ====================================================================
@@ -411,6 +419,259 @@ public class MarqueeFrameTests
 
         Assert.NotNull(content.InnerDecoration.FillRect);
         Assert.Equal(DrawingColor.FromArgb(40, 255, 0, 0), content.InnerDecoration.FillColor);
+    }
+
+    // ====================================================================
+    // 穴あけ矩形と暗転領域（外側の装飾）
+    // ====================================================================
+
+    /// <summary>選択矩形が穴あけ矩形（閉区間 +1）になり、4 辺が暗転領域になることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_選択矩形の4辺が暗転領域になる()
+    {
+        var content = ResolveContent(CreateSession(selection: s_selection));
+
+        // 選択は閉区間（終点 +1）で DIP 変換される
+        Assert.Equal(new EsRect(50, 50, 101, 81), content.HoleRect);
+        Assert.Equal(4, content.Decoration.OverlayRegions.Count);
+        Assert.Equal(4, content.Decoration.BorderRects.Count);
+    }
+
+    /// <summary>ハイライト矩形が選択矩形より優先されることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_ハイライトが選択より優先される()
+    {
+        var highlight = new EsRect(10, 20, 30, 40);
+        var deco = MarqueeDecoOptions.Default with { OuterHighlightRect = highlight };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco);
+
+        // ハイライト矩形は終点 +0（既に閉区間表現）
+        Assert.Equal(highlight, content.HoleRect);
+    }
+
+    /// <summary>ハイライト矩形を null にすると、穴あけ矩形が選択矩形へ戻ることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_ハイライトを解除すると選択矩形へ戻る()
+    {
+        var session = CreateSession(selection: s_selection);
+        var withHighlight = MarqueeDecoOptions.Default with { OuterHighlightRect = new EsRect(10, 20, 30, 40) };
+
+        // ハイライト中はハイライト矩形、解除後は選択矩形（閉区間 +1）が穴あけ矩形になる
+        Assert.Equal(new EsRect(10, 20, 30, 40), ResolveContent(session, withHighlight).HoleRect);
+        Assert.Equal(
+            new EsRect(50, 50, 101, 81),
+            ResolveContent(session, MarqueeDecoOptions.Default with { OuterHighlightRect = null }).HoleRect);
+    }
+
+    /// <summary>穴あけ矩形も全面暗転も無い場合は穴あけも枠線も無いことを検証する。</summary>
+    [Fact]
+    public void ResolveContent_穴あけも全面暗転も無ければ空になる()
+    {
+        var content = ResolveContent(CreateSession());
+
+        Assert.Null(content.HoleRect);
+        Assert.Empty(content.Decoration.OverlayRegions);
+        Assert.Empty(content.Decoration.BorderRects);
+    }
+
+    /// <summary>暗転色が透明なら暗転領域を生成しないことを検証する。</summary>
+    [Fact]
+    public void ResolveContent_暗転色が透明なら暗転領域を生成しない()
+    {
+        var deco = MarqueeDecoOptions.Default with
+        {
+            OuterAppearance = new OuterDecoAppearance { OverlayColor = DrawingColor.Transparent },
+        };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco);
+
+        Assert.Empty(content.Decoration.OverlayRegions);
+        // 枠線は穴あけ矩形があるため生成される
+        Assert.NotEmpty(content.Decoration.BorderRects);
+    }
+
+    /// <summary>枠線色が透明なら枠線矩形を生成しないことを検証する。</summary>
+    [Fact]
+    public void ResolveContent_枠線色が透明なら枠線矩形を生成しない()
+    {
+        var deco = MarqueeDecoOptions.Default with
+        {
+            OuterAppearance = new OuterDecoAppearance { BorderColor = DrawingColor.Transparent },
+        };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco);
+
+        Assert.NotEmpty(content.Decoration.OverlayRegions);
+        Assert.Empty(content.Decoration.BorderRects);
+    }
+
+    /// <summary>外側の枠線が穴あけ矩形の内側 4 辺になり、太さが外観から引き継がれることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_外側の枠線は穴の内側4辺になる()
+    {
+        var deco = MarqueeDecoOptions.Default with
+        {
+            OuterAppearance = new OuterDecoAppearance { BorderThickness = 4.0 },
+        };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco);
+
+        // 穴あけ矩形（50, 50, 101, 81）の内側に太さ 4 の 4 辺
+        Assert.Equal(4, content.Decoration.BorderRects.Count);
+        Assert.Equal(new EsRect(50, 50, 101, 4), content.Decoration.BorderRects[0]);      // 上
+        Assert.Equal(new EsRect(50, 127, 101, 4), content.Decoration.BorderRects[1]);     // 下
+        Assert.Equal(new EsRect(50, 54, 4, 73), content.Decoration.BorderRects[2]);       // 左
+        Assert.Equal(new EsRect(147, 54, 4, 73), content.Decoration.BorderRects[3]);      // 右
+    }
+
+    /// <summary>枠線の太さが下限（0.5）へ正規化されることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_枠線の太さは下限へ正規化される()
+    {
+        var deco = MarqueeDecoOptions.Default with
+        {
+            OuterAppearance = new OuterDecoAppearance { BorderThickness = 0 },
+        };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco);
+
+        Assert.Equal(new EsRect(50, 50, 101, 0.5), content.Decoration.BorderRects[0]);
+    }
+
+    /// <summary>座標変換ポートが穴あけ矩形へ適用されることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_穴あけ矩形へ座標変換ポートを適用する()
+    {
+        var deco = MarqueeDecoOptions.Default with { OuterHighlightRect = new EsRect(10, 20, 30, 40) };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco, CoordTransform.Scale(2.0));
+
+        Assert.Equal(new EsRect(20, 40, 60, 80), content.HoleRect);
+    }
+
+    /// <summary>ポート未指定の場合は倍率が等倍スケールとして穴あけ矩形へ適用されることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_ポート未指定なら倍率を穴あけ矩形へ適用する()
+    {
+        var deco = MarqueeDecoOptions.Default with { OuterHighlightRect = new EsRect(10, 20, 30, 40) };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco, scaling: 2.0);
+
+        Assert.Equal(new EsRect(20, 40, 60, 80), content.HoleRect);
+    }
+
+    /// <summary>倍率が 0 以下・等倍の場合は等価変換（座標が変わらない）になることを検証する。</summary>
+    /// <param name="scaling">適用する倍率。</param>
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(-1.0)]
+    [InlineData(1.0)]
+    public void ResolveContent_倍率が無効なら等価変換になる(double scaling)
+    {
+        var deco = MarqueeDecoOptions.Default with { OuterHighlightRect = new EsRect(10, 20, 30, 40) };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco, scaling: scaling);
+
+        Assert.Equal(new EsRect(10, 20, 30, 40), content.HoleRect);
+    }
+
+    // ====================================================================
+    // 穴あけ矩形の内側の装飾
+    // ====================================================================
+
+    /// <summary>既定の内側の装飾は何も描かないことを検証する（塗り・内枠は用途依存）。</summary>
+    [Fact]
+    public void ResolveContent_既定の内側の装飾は何も描かない()
+    {
+        var content = ResolveContent(CreateSession(selection: s_selection));
+
+        Assert.Null(content.InnerDecoration.FillRect);
+        Assert.Empty(content.InnerDecoration.BorderRects);
+    }
+
+    /// <summary>選択矩形の内側が塗られ、閉区間（+1）で変換されることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_選択矩形の内側を塗る()
+    {
+        var content = ResolveContent(CreateSession(selection: s_selection), VisibleInnerDecoration());
+
+        Assert.Equal(new EsRect(50, 50, 101, 81), content.InnerDecoration.FillRect);
+    }
+
+    /// <summary>ハイライト矩形の内側を塗る場合は終点を加算しないことを検証する。</summary>
+    [Fact]
+    public void ResolveContent_ハイライトの内側は終点を加算しない()
+    {
+        var highlight = new EsRect(10, 20, 30, 40);
+        var deco = VisibleInnerDecoration() with { OuterHighlightRect = highlight };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco);
+
+        Assert.Equal(highlight, content.InnerDecoration.FillRect);
+    }
+
+    /// <summary>塗り色が透明なら塗らず、枠線だけを生成することを検証する。</summary>
+    [Fact]
+    public void ResolveContent_塗り色が透明なら塗らない()
+    {
+        var deco = MarqueeDecoOptions.Default with
+        {
+            InnerAppearance = new InnerDecoAppearance { FillColor = DrawingColor.Transparent, BorderColor = DrawingColor.White },
+        };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco);
+
+        Assert.Null(content.InnerDecoration.FillRect);
+        Assert.NotEmpty(content.InnerDecoration.BorderRects);
+    }
+
+    /// <summary>内側の枠線は穴あけ矩形の内側 4 辺になり、外側の枠線と同じ矩形へ重なることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_内側の枠線は外側と同じ矩形になる()
+    {
+        var deco = VisibleInnerDecoration() with
+        {
+            OuterAppearance = new OuterDecoAppearance { BorderThickness = 2.0 },
+        };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco);
+
+        Assert.Equal(4, content.InnerDecoration.BorderRects.Count);
+        Assert.Equal(content.Decoration.BorderRects, content.InnerDecoration.BorderRects);
+    }
+
+    /// <summary>内側の塗り・枠線を描く設定を生成する（ハイライト矩形なし）。</summary>
+    /// <returns>塗りと内枠を描く設定。</returns>
+    private static MarqueeDecoOptions VisibleInnerDecoration()
+        => MarqueeDecoOptions.Default with
+        {
+            InnerAppearance = new InnerDecoAppearance
+            {
+                FillColor = DrawingColor.FromArgb(40, 255, 59, 48),
+                BorderColor = DrawingColor.FromArgb(255, 255, 59, 48),
+            },
+        };
+
+    // ====================================================================
+    // 内側の装飾の色の引き継ぎ
+    // ====================================================================
+
+    /// <summary>内側の塗り色・枠線色が外観のとおり引き継がれることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_内側の色は外観を引き継ぐ()
+    {
+        var fill = DrawingColor.FromArgb(40, 1, 2, 3);
+        var border = DrawingColor.FromArgb(255, 4, 5, 6);
+        var deco = MarqueeDecoOptions.Default with
+        {
+            InnerAppearance = new InnerDecoAppearance { FillColor = fill, BorderColor = border },
+        };
+
+        var content = ResolveContent(CreateSession(selection: s_selection), deco);
+
+        Assert.Equal(fill, content.InnerDecoration.FillColor);
+        Assert.Equal(border, content.InnerDecoration.BorderColor);
     }
 
     // ====================================================================

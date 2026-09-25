@@ -110,8 +110,7 @@ parentPanel.Children.Add(overlay);
 | `HasSelection` | `bool` | 選択矩形の有無（選択状態の真のソースは Core の `Marquee` ファサード） |
 | `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標。未選択時は 0x0 の空矩形） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | サイズラベルを描画時に評価するプロバイダ（`MarqueeControl` へ委譲） |
-| `LogicalHighlightRect` | `Rect?` | ハイライト矩形（ドメイン座標。未検出時は null。ScreenSelect / WindowSelect 用） |
-| `HasHighlight` | `bool` | ハイライト表示の有無（ScreenSelect / WindowSelect 用） |
+| `LogicalHighlightRect` | `Rect?` | ハイライト矩形（ドメイン座標。未検出時は null。**null が「ハイライトなし」を意味する**。ScreenSelect / WindowSelect 用） |
 | `Scaling` | `double` | DPI スケーリング係数（設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
 | `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
 | `LoupeRenderScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（設定（`Options`）の対象外・DPI から自動取得。`LoupeControl.RenderScaling` へ委譲） |

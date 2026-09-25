@@ -7,7 +7,10 @@ namespace Estable.Marquee.Selection;
 /// 状態を持たない純粋関数のみを提供し、状態管理（<see cref="MarqueeState"/>）と描画層（UI 実装側）から共通利用する（DRY 原則・疎結合）。<br/>
 /// コア型（<see cref="EsRect"/> / <see cref="EsPoint"/> / <see cref="EsSize"/>）のみに依存し、UI フレームワークへ依存しない<br/>
 /// （移植性・テスト容易性。UI 型との相互変換は各 UI 実装の Interop 層が担う）。<br/>
-/// 描画層は本クラスのみに依存し、状態保持クラスへ直接依存しない。
+/// <br/>
+/// <b>可視性</b>: 描画層が使うのはハンドル一覧（<see cref="DirectionalHandles"/>）とハンドル位置（<see cref="GetHandlePosition"/>）だけであり、<br/>
+/// それ以外（ドラッグ変形・境界クランプ・ヒットテスト）は状態機械の内部手順であるため internal とする<br/>
+/// （利用側はファサード <see cref="Marquee"/> を通す。使わないメンバーを公開しない）。
 /// </remarks>
 public static class SelectionGeometry
 {
@@ -16,10 +19,10 @@ public static class SelectionGeometry
 
     /// <summary>描画対象の 8 方向ハンドル（<see cref="HitTarget.None"/> / <see cref="HitTarget.Move"/> を除く）。</summary>
     /// <remarks>
-    /// 列挙順は <see cref="HitTarget"/> の宣言順。描画層は本配列を走査してハンドルを描く（ハンドル一覧の単一所有）。<br/>
-    /// 変更しないこと（共有の静的配列）。
+    /// 列挙順は <see cref="HitTarget"/> の宣言順。描画層は本一覧を走査してハンドルを描く（ハンドル一覧の単一所有）。<br/>
+    /// 読み取り専用の一覧として公開する（共有の一覧を呼び出し側が書き換えない）。
     /// </remarks>
-    public static readonly HitTarget[] DirectionalHandles =
+    public static IReadOnlyList<HitTarget> DirectionalHandles { get; } =
         [.. Enum.GetValues<HitTarget>().Where(static h => h is not (HitTarget.None or HitTarget.Move))];
 
     /// <summary>ハンドル種別をカーソル形状の種別へ変換する。</summary>
@@ -29,7 +32,7 @@ public static class SelectionGeometry
     /// 「どのハンドルが同じカーソル形状になるか」を単一所有する（各 UI は自 UI のカーソル型へ写像するだけ）。<br/>
     /// 左上と右下、右上と左下は同じ斜めカーソルになる（対角のハンドルは同じ向きの図形で表す）。
     /// </remarks>
-    public static MarqueeCursorKind ToCursorKind(HitTarget handle) => handle switch
+    internal static MarqueeCursorKind ToCursorKind(HitTarget handle) => handle switch
     {
         HitTarget.TopLeft or HitTarget.BottomRight => MarqueeCursorKind.DiagonalNWSE,
         HitTarget.TopRight or HitTarget.BottomLeft => MarqueeCursorKind.DiagonalNESW,
@@ -43,7 +46,7 @@ public static class SelectionGeometry
     /// <param name="start">始点。</param>
     /// <param name="end">終点。</param>
     /// <returns>常に Width, Height が正の矩形。</returns>
-    public static EsRect CreateFromPoints(EsPoint start, EsPoint end)
+    internal static EsRect CreateFromPoints(EsPoint start, EsPoint end)
         => new(
             Math.Min(start.X, end.X),
             Math.Min(start.Y, end.Y),
@@ -77,7 +80,7 @@ public static class SelectionGeometry
     /// <param name="p2">2点目。</param>
     /// <param name="radius">判定半径。</param>
     /// <returns>半径以内の場合は true。</returns>
-    public static bool IsNear(EsPoint p1, EsPoint p2, double radius)
+    internal static bool IsNear(EsPoint p1, EsPoint p2, double radius)
         => Math.Abs(p1.X - p2.X) <= radius && Math.Abs(p1.Y - p2.Y) <= radius;
 
     /// <summary>矩形の「始点でない方の隅」（終点）を取得する。</summary>
@@ -89,7 +92,7 @@ public static class SelectionGeometry
     /// Y も同様に下辺（Bottom）または上辺（Y）を終点とする。<br/>
     /// nudge の終点移動・基点更新で共通利用する（DRY 原則）。<br/>
     /// </remarks>
-    public static EsPoint GetOppositeCorner(EsRect rect, EsPoint startPoint)
+    internal static EsPoint GetOppositeCorner(EsRect rect, EsPoint startPoint)
         => new(
             Math.Abs(startPoint.X - rect.X) < 0.001 ? rect.Right : rect.X,
             Math.Abs(startPoint.Y - rect.Y) < 0.001 ? rect.Bottom : rect.Y);
@@ -98,7 +101,7 @@ public static class SelectionGeometry
     /// <param name="p">クリップする点。</param>
     /// <param name="bounds">クリップ範囲。</param>
     /// <returns>境界内に収めた点。</returns>
-    public static EsPoint ClampPointToBounds(EsPoint p, EsRect bounds)
+    internal static EsPoint ClampPointToBounds(EsPoint p, EsRect bounds)
         => new(
             Math.Clamp(p.X, bounds.X, bounds.Right),
             Math.Clamp(p.Y, bounds.Y, bounds.Bottom));
@@ -112,7 +115,7 @@ public static class SelectionGeometry
     /// <see cref="HitTarget.Move"/> の場合は矩形全体が境界内に収まるようにシフトする（サイズは維持）。<br/>
     /// それ以外のハンドル変形は固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限する。
     /// </remarks>
-    public static EsRect ClampRectToBounds(EsRect rect, EsRect bounds, HitTarget handle)
+    internal static EsRect ClampRectToBounds(EsRect rect, EsRect bounds, HitTarget handle)
     {
         double l = rect.X;
         double t = rect.Y;
@@ -143,15 +146,9 @@ public static class SelectionGeometry
     /// <param name="rect">クリップする矩形（ドメイン座標）。</param>
     /// <param name="bounds">ドメイン境界のサイズ。</param>
     /// <returns>境界内に収めた矩形。</returns>
-    /// <remarks>矩形の四隅を境界内にクリップし、その包絡矩形（bounding box）を返す（外部復元・設定変更時の即時適用用）。</remarks>
-    public static EsRect ClampRectToDomainBounds(EsRect rect, EsSize bounds)
-    {
-        var l = Math.Clamp(rect.X, 0, bounds.Width);
-        var t = Math.Clamp(rect.Y, 0, bounds.Height);
-        var r = Math.Clamp(rect.Right, 0, bounds.Width);
-        var b = Math.Clamp(rect.Bottom, 0, bounds.Height);
-        return new EsRect(l, t, Math.Max(0, r - l), Math.Max(0, b - t));
-    }
+    /// <remarks>四隅の包絡矩形を取る手順は <see cref="EsRectMath.ClampToArea"/> が単一所有する（ルーペの位置と同じ規則）。</remarks>
+    internal static EsRect ClampRectToDomainBounds(EsRect rect, EsSize bounds)
+        => EsRectMath.ClampToArea(rect, bounds);
 
     /// <summary>ドラッグハンドル操作による矩形の変形を計算する。</summary>
     /// <param name="original">ドラッグ開始時の矩形。</param>
@@ -164,7 +161,7 @@ public static class SelectionGeometry
     /// ハンドルを反対側までドラッグした場合（l&gt;r または t&gt;b）、矩形を反転（正規化）する。<br/>
     /// 最小サイズは幅・高さが <paramref name="minSize"/> 未満にならないよう保証する。
     /// </remarks>
-    public static EsRect ComputeDragRect(EsRect original, double dx, double dy, HitTarget handle, double minSize)
+    internal static EsRect ComputeDragRect(EsRect original, double dx, double dy, HitTarget handle, double minSize)
     {
         double l = original.X;
         double t = original.Y;

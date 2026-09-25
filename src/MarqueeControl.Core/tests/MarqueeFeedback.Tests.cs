@@ -6,7 +6,7 @@ namespace Estable.Marquee.Tests;
 /// <summary><see cref="MarqueeFeedback"/> の単体テスト（UI 層へ要求する効果の適用）。</summary>
 /// <remarks>
 /// 効果の選択・適用順はコアが単一所有するため、UI 実装に依存せずここで検証する。<br/>
-/// 適用先（カーソルサービス・自 UI の操作）はデリゲートとして渡し、呼び出し順を記録して検証する。
+/// 適用先は <see cref="IMarqueeEffects"/> のスパイ（<see cref="EffectsSpy"/>）とカーソルサービスのスパイに記録し、呼び出し順を検証する。
 /// </remarks>
 public class MarqueeFeedbackTests
 {
@@ -21,9 +21,9 @@ public class MarqueeFeedbackTests
             CursorDomainPosition = new EsPoint(10, 20),
         };
 
-        feedback.ApplyCursor(cursor, p => new EsPixelPoint((int)p.X * 2, (int)p.Y * 2));
+        feedback.ApplyCursor(cursor, new EffectsSpy());
 
-        // 適用順は「移動 → 非表示 → 再表示」（変換関数の結果も引数として渡る）
+        // 適用順は「移動 → 非表示 → 再表示」（画面座標への変換は効果が担う）
         Assert.Equal(["move:20,40", "show:False", "show:True"], cursor.Calls);
     }
 
@@ -33,7 +33,7 @@ public class MarqueeFeedbackTests
         var cursor = new CursorServiceSpy();
         var feedback = new MarqueeFeedback();
 
-        feedback.ApplyCursor(cursor, _ => new EsPixelPoint(999, 999));
+        feedback.ApplyCursor(cursor, new EffectsSpy());
 
         Assert.Empty(cursor.Calls);
     }
@@ -48,48 +48,39 @@ public class MarqueeFeedbackTests
             CursorKind = MarqueeCursorKind.DiagonalNWSE,
             Redraw = true,
         };
-        var applied = new List<string>();
+        var effects = new EffectsSpy();
 
-        feedback.ApplyVisual(
-            () => applied.Add("focus"),
-            () => applied.Add("redraw"),
-            kind => applied.Add($"cursor:{kind}"));
+        feedback.ApplyVisual(effects);
 
-        Assert.Equal(["focus", "cursor:DiagonalNWSE", "redraw"], applied);
+        Assert.Equal(["focus", "cursor:DiagonalNWSE", "redraw"], effects.Calls);
     }
 
     [Fact]
     public void ApplyVisual_要求されていない効果は適用しない()
     {
         var feedback = new MarqueeFeedback { Redraw = true };
-        var applied = new List<string>();
+        var effects = new EffectsSpy();
 
-        feedback.ApplyVisual(
-            () => applied.Add("focus"),
-            () => applied.Add("redraw"),
-            kind => applied.Add($"cursor:{kind}"));
+        feedback.ApplyVisual(effects);
 
-        Assert.Equal(["redraw"], applied);
+        Assert.Equal(["redraw"], effects.Calls);
     }
 
     [Fact]
     public void ApplyVisual_効果が無ければ何も適用しない()
     {
         var feedback = new MarqueeFeedback();
-        var applied = new List<string>();
+        var effects = new EffectsSpy();
 
-        feedback.ApplyVisual(
-            () => applied.Add("focus"),
-            () => applied.Add("redraw"),
-            kind => applied.Add($"cursor:{kind}"));
+        feedback.ApplyVisual(effects);
 
-        Assert.Empty(applied);
+        Assert.Empty(effects.Calls);
     }
 
     [Fact]
     public void ApplyVisual_カーソル形状の種別を渡す()
     {
-        var applied = new List<MarqueeCursorKind>();
+        var effects = new EffectsSpy();
         // 各ハンドル種別がそのまま渡ることを確認する（写像は UI 層の責務）
         foreach (var kind in new[]
                  {
@@ -97,15 +88,14 @@ public class MarqueeFeedbackTests
                      MarqueeCursorKind.Vertical, MarqueeCursorKind.Horizontal, MarqueeCursorKind.Move,
                  })
         {
-            new MarqueeFeedback { UpdateCursorShape = true, CursorKind = kind }
-                .ApplyVisual(() => { }, () => { }, applied.Add);
+            new MarqueeFeedback { UpdateCursorShape = true, CursorKind = kind }.ApplyVisual(effects);
         }
 
         Assert.Equal(
             [
-                MarqueeCursorKind.Default, MarqueeCursorKind.DiagonalNWSE, MarqueeCursorKind.DiagonalNESW,
-                MarqueeCursorKind.Vertical, MarqueeCursorKind.Horizontal, MarqueeCursorKind.Move,
+                "cursor:Default", "cursor:DiagonalNWSE", "cursor:DiagonalNESW",
+                "cursor:Vertical", "cursor:Horizontal", "cursor:Move",
             ],
-            applied);
+            effects.Calls);
     }
 }

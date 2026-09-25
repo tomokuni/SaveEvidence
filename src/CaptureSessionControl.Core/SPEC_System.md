@@ -83,7 +83,7 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 ┌──────────────────────────────────────────────────────┐
 │ ハイライトの状態と判断（クラス）                          │
 │  CaptureHighlightSession: Update（検出→状態の導出） / Title / DomainRect │
-│  CaptureHighlight: HasHighlight / DomainRect / TitleChanged            │
+│  CaptureHighlight: DomainRect / TitleChanged                            │
 │  CaptureClickSelection: Fix（押下で固定） / Take（解放で取り出し）    │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
@@ -165,7 +165,6 @@ classDiagram
         +From(EsBitmap, EsPixelRect) CaptureResult
     }
     class CaptureHighlight {
-        +bool HasHighlight
         +EsRect? DomainRect
         +bool TitleChanged
     }

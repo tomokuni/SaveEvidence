@@ -22,6 +22,7 @@
 | `CenterPoint` | `EsPoint?` | `null` | — | 拡大中心（元画像ピクセル座標）。null の場合は市松模様のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 下表のとおり | 設定（表示サイズ・拡大率・外観）。`with` 式で部分変更する |
 | `RenderScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。設定には含めない） |
+| `Renderer` | `ILoupeRenderer` | `LoupeRenderer.Default` | — | 描画の実装（**描画の差し替え**。null 不可）。設定すると再生成とラベル要素の再配置を要求する |
 
 `Options`（コアの `LoupeOptions`。UI 非依存の値）の項目:
 
@@ -103,7 +104,7 @@
 
 `Rendered` イベントは、ルーペを描画した直後（同一フレーム内）に引数 `LoupeRenderedEventArgs` で通知します。ホストはハンドラ内で描画先キャンバスへ追加描画（選択矩形の破線等のオーバーレイ）を行えます。
 
-中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言・寸法・表示可否はコア（`LoupeCoordLabel`）が、実寸からの配置は `LoupeLabelLayoutPlan`（`LoupeControl.CoreForControl`）が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
+中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言・寸法・表示可否はコア（`LoupeCoordLabel`）が、実寸からの配置は描画層（`LoupeControl.Rendering` の `LoupeLabelPlan`）が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |

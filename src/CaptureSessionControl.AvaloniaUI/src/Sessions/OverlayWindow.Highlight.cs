@@ -27,7 +27,7 @@ internal sealed partial class OverlayWindow
         // ハイライト検出結果を外側の装飾（MarqueeControl）の描画へ反映する（再描画要求）
         RequestOverlayRender();
         // ホバー中の枠（ハイライト）を事前切り出しする（確定時の高速化。同じ矩形ならコアがスキップする）
-        if (highlight.HasHighlight)
+        if (highlight.DomainRect is not null)
         {
             PreExtractClip(detection.Bounds);
         }
@@ -46,7 +46,7 @@ internal sealed partial class OverlayWindow
     private CaptureHighlight ApplyHighlight(ElementFinderResults detection)
     {
         var highlight = _highlight.Update(_captureType, detection, Position.ToEsPixelPoint());
-        SelectionOverlay.HasHighlight = highlight.HasHighlight;
+        // 未検出は null で表す（null が「ハイライトしない」を意味する）
         SelectionOverlay.LogicalHighlightRect = highlight.DomainRect is { } rect ? rect.ToAvaloniaRect() : null;
         return highlight;
     }

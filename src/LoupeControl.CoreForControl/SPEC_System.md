@@ -18,16 +18,17 @@
 
 ### 依存方向（一方向を厳守）
 
+層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
+
 ```text
-┌──────────────────────────────┐      ┌──────────────────────────────┐
-│ LoupeControl.AvaloniaUI      │      │ LoupeControl.MewUI           │
-│ （Avalonia の入力・描画）    │      │ （MewUI の入力・描画）       │
-└───────────────┬──────────────┘      └──────────────────────────────┘
-                │  （post コールバックを注入）
-                ▼
-┌──────────────────────────────┐
-│ LoupeControl.CoreForControl  │  再描画のスケジューリング（バッチ化・世代番号）
-└──────────────────────────────┘
+UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
+  入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
+    ├──> LoupeControl.Rendering   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
+    ├──> LoupeControl.CoreForControl ← 本プロジェクト   組み込み先がある場合にだけ必要な規則
+    └──> LoupeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+           └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
+※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
+※ 本層を使うのは LoupeControl.AvaloniaUI のみ（MewUI は中間ビットマップを持たず同期描画するため不要）。
 ```
 
 MewUI 版は現状コーディネーターを使いません（中間ビットマップを持たずキャンバスへ直接描画するため、再描画のバッチ化が不要）。同じ必要が生じた時点で本層のコーディネーターを注入できます。
@@ -55,11 +56,9 @@ MewUI 版は現状コーディネーターを使いません（中間ビット�
 ```text
 src/LoupeControl.CoreForControl/
 ├── src/
-│   ├── LoupeRenderCoordinator.cs        再描画のスケジューリング（ファサード層）
-│   └── LoupeLabelLayoutPlan.cs          中心座標ラベルの配置指示（実寸 → 要素の配置矩形）
+│   └── LoupeRenderCoordinator.cs        再描画のスケジューリング（ファサード層）
 └── tests/
-    ├── LoupeRenderCoordinator.Tests.cs  バッチ化・世代番号・適用判定・破棄と解放の検証
-    └── LoupeLabelLayoutPlan.Tests.cs    配置指示の解決の検証
+    └── LoupeRenderCoordinator.Tests.cs  バッチ化・世代番号・適用判定・破棄と解放の検証
 ```
 
 | コンポーネント | 責務 |
@@ -102,7 +101,7 @@ sequenceDiagram
 | 再描画の世代番号と、古い結果を破棄する判断 | `LoupeRenderCoordinator.RenderCore` / `ShouldApply` |
 | 要求の破棄とビットマップ解放の手順 | `LoupeRenderCoordinator.CancelAndRelease` |
 | 実行キューと優先度 | UI 層（`post` コールバックの実装） |
-| 描画の内容（切り出し・拡大・市松・十字線・外枠） | `LoupeControl.Core` / UI 層の描画層 |
+| 描画の内容（切り出し・拡大・市松・十字線・外枠） | `LoupeControl.Core` と描画層（`LoupeControl.Rendering` の `LoupeRenderer`） |
 
 ## 例外処理ポリシー
 

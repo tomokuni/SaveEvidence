@@ -45,6 +45,7 @@
     <Project Path="src/MarqueeControl.Core/src/MarqueeControl.Core.csproj" />
     <Project Path="src/MarqueeControl.Core/tests/MarqueeControl.Core.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/MarqueeControl.Core/src/" />
   <Folder Name="/src/MarqueeControl.CoreForControl/">
     <Project Path="src/MarqueeControl.CoreForControl/src/MarqueeControl.CoreForControl.csproj" />
     <Project Path="src/MarqueeControl.CoreForControl/tests/MarqueeControl.CoreForControl.Tests.csproj" />
@@ -55,6 +56,10 @@
   </Folder>
   <Folder Name="/src/MarqueeControl.MewUI/src/" />
   <Folder Name="/src/CropViewControl.MewUI/src/" />
+  <Folder Name="/src/LoupeControl.Rendering/">
+    <Project Path="src/LoupeControl.Rendering/src/LoupeControl.Rendering.csproj" />
+    <Project Path="src/LoupeControl.Rendering/tests/LoupeControl.Rendering.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/MarqueeControl.AvaloniaUI/">
     <Project Path="src/MarqueeControl.AvaloniaUI/sample/MarqueeControl.AvaloniaUI.Sample.csproj" />
     <Project Path="src/MarqueeControl.AvaloniaUI/src/MarqueeControl.AvaloniaUI.csproj" />
@@ -82,6 +87,7 @@
     <Project Path="src/LoupeControl.Core/src/LoupeControl.Core.csproj" />
     <Project Path="src/LoupeControl.Core/tests/LoupeControl.Core.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/LoupeControl.Core/src/" />
   <Folder Name="/src/LoupeControl.CoreForControl/">
     <Project Path="src/LoupeControl.CoreForControl/src/LoupeControl.CoreForControl.csproj" />
     <Project Path="src/LoupeControl.CoreForControl/tests/LoupeControl.CoreForControl.Tests.csproj" />
@@ -109,6 +115,10 @@
   <Folder Name="/src/Platform.Native/">
     <Project Path="src/Platform.Native/src/Platform.Native.csproj" />
     <Project Path="src/Platform.Native/tests/Platform.Native.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/MarqueeControl.Rendering/">
+    <Project Path="src/MarqueeControl.Rendering/src/MarqueeControl.Rendering.csproj" />
+    <Project Path="src/MarqueeControl.Rendering/tests/MarqueeControl.Rendering.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Platform.AvaloniaUI/">
     <Project Path="src/Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj" />

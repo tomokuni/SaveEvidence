@@ -15,6 +15,7 @@ Avalonia 版と同一の挙動になります。
 | 参照 | 用途 |
 | --- | --- |
 | `MarqueeControl.Core` | 選択幾何（`SelectionGeometry`）・状態機械（`MarqueeState`）・**公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`）。状態管理クラス（`MarqueeSession`）とフレーム解決（`MarqueeFrame`）は internal（ファサードの内部実装） |
+| `MarqueeControl.Rendering` | 描画の手順（`MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）とラベル計画（`MarqueeLabelPlan`）。描画先は描画ポート（`IEsCanvas`）であり、本 UI は `SkiaEsCanvas`（Platform.Core）を適合させる |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Native` | カーソルサービスの既定実装（Win32 / NoOp） |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `SkiaCanvasView`・`MewProperty`・SkiaSharp 描画 |
@@ -37,6 +38,7 @@ Avalonia 版と同一の挙動になります。
 | `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定**（装飾層の `Estable.Marquee.Decoration.MarqueeDecoOptions`） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。操作・情報ラベルの文言も同様にホストが与える |
 | `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
+| `Renderer` | `IMarqueeRenderer` | `MarqueeRenderer.Default` | 描画の実装（**描画の差し替え**。null 不可）。設定すると再描画とラベル要素の再配置を要求する（描画先は `SkiaEsCanvas` が担う） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と一致）:
 
@@ -75,7 +77,7 @@ Avalonia 版と同一の挙動になります。
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `CurrentSnapshot` | `MarqueeSnapshot` | 現在の状態（State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / IsDragging / NudgeActive / HasSelection） |
+| `CurrentSnapshot` | `MarqueeSnapshot` | 現在の状態（State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。`readonly record struct`） |
 
 ## 7. イベント
 
@@ -98,7 +100,7 @@ Avalonia 版と同一の挙動になります。
 
 ### 7.1 ラベル（文字）の表示
 
-サイズラベルとカーソル座標ラベルの**文言・外観・順序はコアが単一所有**し、実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有します。コントロールは `Border` + `TextBlock` を子要素として置き（`SkiaText.Measure` で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Rendered` のハンドラで `Options.Labels` の外観に従って描きます。
+サイズラベルとカーソル座標ラベルの**文言・外観はコアが単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が単一所有します。コントロールは `Border` + `TextBlock` を子要素として置き（`SkiaText.Measure` で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Rendered` のハンドラで `Options.Labels` の外観に従って描きます。
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます。
 
 ```csharp
@@ -149,7 +151,7 @@ marquee.Rendered += (_, e) =>
 | ビューポート変化 | ホストが `NotifyViewportChanged()` を呼ぶ（Avalonia 版は `AttachScrollViewer` で `ScrollViewer` を購読） |
 | nudge のキー入力 | フォーカス依存（Avalonia 版は `TopLevel` を購読してフォーカス非依存） |
 | ログ | `Log` プロパティで `ILogger` を注入して出力する（書式・レベルは Avalonia 版と同一） |
-| 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言・外観・順序はコア、実寸測定は `SkiaText.Measure`、配置は `MarqueeLabelLayoutPlan`） |
+| 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言・外観はコア、実寸測定は `SkiaText.Measure`、配置は描画層 `MarqueeControl.Rendering` の `MarqueeLabelPlan`） |
 
 ## 9.5 ログ
 

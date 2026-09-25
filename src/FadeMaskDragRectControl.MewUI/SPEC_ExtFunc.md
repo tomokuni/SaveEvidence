@@ -49,8 +49,7 @@ Avalonia 版と同一の解釈になります。
 | `Mode` | `FadeMaskDragRectMode` | `AreaSelect` | 動作モード（可視性と全面暗転を一括切替） |
 | `HasSelection` | `bool`（取得のみ） | `false` | 選択矩形が有効か |
 | `SelectionRect` | `EsRect`（取得のみ） | 空矩形 | 選択矩形（ドメイン座標。未選択時は 0x0） |
-| `HasHighlight` | `bool` | `false` | ハイライトを穴あけ矩形として使うか |
-| `LogicalHighlightRect` | `EsRect?` | `null` | ハイライト矩形（ドメイン座標。選択矩形より優先） |
+| `LogicalHighlightRect` | `EsRect?` | `null` | ハイライト矩形（ドメイン座標。**null はハイライトなし**。選択矩形より優先） |
 | `ShowFullOverlay` | `bool`（取得のみ） | `true` | 全面暗転の有無（モードから導出） |
 | `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（ドメイン座標） |
 | `Options` | `FadeMaskDragRectOptions`（コア） | `FadeMaskDragRectOptions.Default` | 設定の単一値（下記）。同じ値の再設定はスキップされる |
@@ -121,7 +120,7 @@ Avalonia 版と同一の解釈になります。
   親領域の外へはみ出す場合は内側へクランプします。
 - ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が、描画の可否はコアの `FadeMaskDragRectState.ShowSelectionOverlay` が単一所有する）。選択矩形を変更した場合はルーペの再描画を要求します（破線はルーペのプロパティに現れないため）。
 - サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（指定しない場合の既定の文言はコアの `MarqueeSizeLabel.Format` が単一所有する）。
-- サイズラベルとカーソル座標ラベルは選択矩形コントロールが**テキスト要素（`Border` + `TextBlock`）として配置**します（実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan.Resolve` が単一所有する）。操作・情報ラベルはアプリ固有の付加情報のため、本コントロールが `Options.Labels` の外観に従って描きます（文言は `CaptureLabelTexts` が与える）。
+- サイズラベルとカーソル座標ラベルは選択矩形コントロールが**テキスト要素（`Border` + `TextBlock`）として配置**します（実寸から配置矩形を求める写像は描画層 `MarqueeControl.Rendering` の `MarqueeLabelPlan.Resolve` が単一所有する）。操作・情報ラベルはアプリ固有の付加情報のため、本コントロールが `Options.Labels` の外観に従って描きます（文言は `CaptureLabelTexts` が与える）。
 
 ## 9. Avalonia 版との違い
 

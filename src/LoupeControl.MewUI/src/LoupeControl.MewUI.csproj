@@ -23,9 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- UI 非依存の純粋ロジック（Core）と、コントロール化のためのラベル配置計画（CoreForControl） -->
+    <!-- UI 非依存の純粋ロジック（Core） -->
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
-    <ProjectReference Include="..\..\LoupeControl.CoreForControl\src\LoupeControl.CoreForControl.csproj" />
+    <!-- 描画の手順（層の順序と描画ポートへの写し）を単一所有する UI 非依存の描画層 -->
+    <ProjectReference Include="..\..\LoupeControl.Rendering\src\LoupeControl.Rendering.csproj" />
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
     <!-- コアの色型 → MewUI の色型へ変換する Interop（色変換の単一所有者） -->
     <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />

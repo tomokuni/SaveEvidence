@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
@@ -12,18 +13,15 @@ namespace Estable.Loupe.Tests;
 /// </remarks>
 public class LoupeCoordLabelTests
 {
-    /// <summary>テスト用の描画入力を生成する。</summary>
-    /// <param name="center">拡大中心。null の場合は未設定。</param>
+    /// <summary>テストで使用する拡大中心。</summary>
+    private static readonly EsPoint s_center = new(8, 8);
+
+    /// <summary>テスト用のラベルを解決する（拡大中心は既定の座標）。</summary>
+    /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP）。</param>
     /// <param name="appearance">外観。null の場合は既定。</param>
-    /// <param name="pixelSize">ルーペの一辺（物理ピクセル）。</param>
-    /// <param name="scaling">スケーリング係数。</param>
-    /// <returns>生成した描画入力。</returns>
-    private static LoupeRenderRequest CreateRequest(
-        EsPoint? center = null,
-        LoupeAppearance? appearance = null,
-        int pixelSize = 100,
-        double scaling = 1.0)
-        => new(center ?? new EsPoint(8, 8), pixelSize, 1, appearance ?? new LoupeAppearance(), scaling);
+    /// <returns>解決したラベル（描かない場合は null）。</returns>
+    private static LoupeCoordLabel? Resolve(double displaySize = 100, LoupeAppearance? appearance = null)
+        => LoupeCoordLabel.Resolve(displaySize, s_center, appearance ?? new LoupeAppearance());
 
     // ====================================================================
     // Resolve（表示可否・文言・寸法）
@@ -40,7 +38,7 @@ public class LoupeCoordLabelTests
             CoordLabelBackgroundColor = DrawingColor.FromArgb(200, 1, 2, 3),
         };
 
-        var label = LoupeCoordLabel.Resolve(CreateRequest(new EsPoint(123, 456), appearance));
+        var label = LoupeCoordLabel.Resolve(100, new EsPoint(123, 456), appearance);
 
         // 文言の書式はコアの CoordinateFormatter が単一所有する
         Assert.NotNull(label);
@@ -53,7 +51,7 @@ public class LoupeCoordLabelTests
     [Fact]
     public void Resolve_中心未設定ならnull()
     {
-        Assert.Null(LoupeCoordLabel.Resolve(CreateRequest(center: null) with { Center = null }));
+        Assert.Null(LoupeCoordLabel.Resolve(100, null, new LoupeAppearance()));
     }
 
     /// <summary>表示しない設定の場合は中心があっても null になることを検証する。</summary>
@@ -62,7 +60,7 @@ public class LoupeCoordLabelTests
     {
         var appearance = new LoupeAppearance { ShowCoordLabel = false };
 
-        Assert.Null(LoupeCoordLabel.Resolve(CreateRequest(appearance: appearance)));
+        Assert.Null(Resolve(appearance: appearance));
     }
 
     /// <summary>フォントサイズと角丸が設定（DIP）のまま引き継がれることを検証する。</summary>
@@ -71,7 +69,7 @@ public class LoupeCoordLabelTests
     {
         var appearance = new LoupeAppearance { CoordLabelFontSize = 14, CoordLabelCornerRadius = 3 };
 
-        var label = LoupeCoordLabel.Resolve(CreateRequest(appearance: appearance, scaling: 2.0));
+        var label = Resolve(appearance: appearance);
 
         Assert.NotNull(label);
         // 物理ピクセルへの換算は描画時に行うため、契約は DIP の値のまま
@@ -79,16 +77,16 @@ public class LoupeCoordLabelTests
         Assert.Equal(3, label.Value.CornerRadius);
     }
 
-    /// <summary>ルーペの一辺が DIP の表示サイズとして契約に引き継がれることを検証する。</summary>
+    /// <summary>表示サイズは渡された DIP 値がそのまま使われることを検証する。</summary>
     [Theory]
-    [InlineData(220, 1.0, 220.0)]
-    [InlineData(220, 2.0, 110.0)]
-    public void Resolve_表示サイズをDIPで引き継ぐ(int pixelSize, double scaling, double expected)
+    [InlineData(220.0)]
+    [InlineData(110.5)]
+    public void Resolve_表示サイズをそのまま使う(double displaySize)
     {
-        var label = LoupeCoordLabel.Resolve(CreateRequest(pixelSize: pixelSize, scaling: scaling));
+        var label = Resolve(displaySize: displaySize);
 
-        // 物理ピクセルを DIP へ換算した値（PixelSize / Scaling）になる
-        Assert.Equal(expected, Assert.NotNull(label).DisplaySize);
+        // 表示サイズは要素の大きさ（DIP）をそのまま使う（物理ピクセルからの逆算は行わない）
+        Assert.Equal(displaySize, Assert.NotNull(label).DisplaySize);
     }
 
     /// <summary>角丸 0（角丸なし）はそのまま保持されることを検証する。</summary>
@@ -97,7 +95,7 @@ public class LoupeCoordLabelTests
     {
         var appearance = new LoupeAppearance { CoordLabelCornerRadius = 0 };
 
-        var label = LoupeCoordLabel.Resolve(CreateRequest(appearance: appearance));
+        var label = Resolve(appearance: appearance);
 
         // 角丸なしは「描かない」ではなく「四角形として描く」指定のため、切り上げない
         Assert.Equal(0, Assert.NotNull(label).CornerRadius);
@@ -107,7 +105,7 @@ public class LoupeCoordLabelTests
     // ComputeFrame（配置）
     // ====================================================================
 
-    /// <summary>背景と文字の原点がコアのレイアウト計算と一致することを検証する。</summary>
+    /// <summary>背景と文字の原点が、文字の実寸と余白から決まることを検証する。</summary>
     [Fact]
     public void ComputeFrame_背景と文字の原点を返す()
     {
@@ -116,12 +114,12 @@ public class LoupeCoordLabelTests
 
         var frame = label.ComputeFrame(textSize);
 
-        // 背景と文字原点は LoupeLabelLayout が単一所有する（余白・上端からの距離・中央寄せ）
-        Assert.Equal(LoupeLabelLayout.ComputeBackground(100, 40, 12), frame.Background);
-        Assert.Equal(LoupeLabelLayout.ComputeTextOrigin(100, 40), frame.TextOrigin);
-        // 文字は背景の内側へ余白分だけ入る
-        Assert.Equal(LoupeLabelLayout.PaddingX, frame.TextOrigin.X - frame.Background.X);
-        Assert.Equal(frame.Background.Y, frame.TextOrigin.Y);
+        // 背景は文字の実寸へ左右 4 / 上下 1 を加えた大きさ（48 x 16）で、領域（100）の中央（(100 - 48) / 2 = 26）
+        Assert.Equal(new EsRect(26, 2, 48, 16), frame.Background);
+        // 文字は背景の内側へ余白分だけ入る（四方の余白が等しい）
+        Assert.Equal(new EsPoint(30, 3), frame.TextOrigin);
+        Assert.Equal(4.0, frame.TextOrigin.X - frame.Background.X);
+        Assert.Equal(1.0, frame.TextOrigin.Y - frame.Background.Y);
     }
 
     /// <summary>表示サイズ（DIP）が配置の基準になることを検証する。</summary>
@@ -134,10 +132,27 @@ public class LoupeCoordLabelTests
         var wideFrame = wide.ComputeFrame(new EsSize(40, 14));
         var narrowFrame = narrow.ComputeFrame(new EsSize(40, 14));
 
-        // 水平位置はルーペ中央（(サイズ - 文字幅) / 2）になる
-        Assert.Equal(80.0, wideFrame.TextOrigin.X);
-        Assert.Equal(30.0, narrowFrame.TextOrigin.X);
+        // 文字の中心が領域の中央に一致する
+        Assert.Equal(100.0, wideFrame.TextOrigin.X + 40 / 2);
+        Assert.Equal(50.0, narrowFrame.TextOrigin.X + 40 / 2);
         // 上端の余白は表示サイズに依存しない
         Assert.Equal(wideFrame.TextOrigin.Y, narrowFrame.TextOrigin.Y);
+    }
+
+    /// <summary>UI 要素へ写す際に、コアの配置と外観がそのまま伝わることを検証する。</summary>
+    [Fact]
+    public void ToElement_配置と外観を要素の指示へ写す()
+    {
+        var label = new LoupeCoordLabel("(8, 8)", 100, 12, 2, DrawingColor.White, DrawingColor.Black);
+
+        var element = label.ToElement(new EsSize(40, 14));
+
+        Assert.Equal(new EsRect(26, 2, 48, 16), element.Bounds);
+        Assert.Equal(new EsPoint(30, 3), element.TextOrigin);
+        Assert.Equal("(8, 8)", element.Text);
+        Assert.Equal(12, element.FontSize);
+        Assert.Equal(2, element.CornerRadius);
+        Assert.Equal(DrawingColor.White, element.TextColor);
+        Assert.Equal(DrawingColor.Black, element.BackgroundColor);
     }
 }

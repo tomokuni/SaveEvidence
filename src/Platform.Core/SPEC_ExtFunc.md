@@ -66,6 +66,44 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 - `ToDip(EsSize physicalSize, double scaling)`: 物理ピクセルのサイズを DIP のサイズへ変換する（成分ごとの換算を上記 `ToDip` へ委譲する）。コア型同士の換算を UI 側で組み立てないための入口。
 - `LoupeControl` の表示サイズ計算と、両 UI のウィンドウ配置・サイズ換算で共用する。
 
+### `Geometry.EsRectMath`（static class）
+
+矩形の辺とクランプを単一所有する純粋関数です。
+「矩形の内側に太さ分の 4 辺を取る」「矩形を領域内へ収める」はコントロールに依存しない規則であり、各コアが個別に書くと同じ意味の式が散らばります（片方だけ端の扱いを変えると同じ矩形から違う結果になる）。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `ComputeInnerEdges` | `static IReadOnlyList<EsRect> ComputeInnerEdges(EsRect rect, double thickness)` | 上・下・左・右の順の辺の矩形（4 個）。左右の高さは負にならず 0 にクランプする。太さの下限正規化は行わない（用途で異なるため呼び出し側が行う） |
+| `ClampToArea` | `static EsRect ClampToArea(EsRect rect, EsSize area)` | 四隅を領域（左上を原点・指定サイズ）内へ個別にクランプし、その包絡矩形を返す（負の辺は 0） |
+
+```csharp
+// 選択矩形の枠線（マーキー）とルーペの外枠（Loupe）が同じ式を共用する
+var edges = EsRectMath.ComputeInnerEdges(hole, Math.Max(0.5, borderThickness));
+```
+
+### `Geometry.EsSizeMath`（static class）
+
+領域の判定とクランプを単一所有する純粋関数です。
+「レイアウト前の領域（幅・高さが 0）ではクランプしない」という判定を各コア・各 UI が書くと、同じ意味の述語が散らばり、片方だけが要素を勝手に動かします。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `HasArea` | `static bool HasArea(EsSize area)` | 幅・高さとも 0 より大きい場合に true（レイアウト前・親未接続の領域は false） |
+| `ClampToArea` | `static double ClampToArea(double size, EsSize area)` | サイズを領域の最小辺へクランプする。領域が未確定の場合はクランプしない |
+| `ClampOffsetToArea` | `static double ClampOffsetToArea(double offset, double areaLength, double size)` | 1 軸分の位置を `0〜領域の長さ − サイズ` へクランプする（領域の長さが 0 以下ならクランプしない。対象が収まらない場合は 0） |
+
+### `Geometry.IntMath`（static class）
+
+整数の丸め計算を単一所有する純粋関数です。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `CeilDiv` | `static int CeilDiv(int value, int divisor)` | 切り上げ除算（余りを 1 区画として数える）。除数は 1 以上を前提とする |
+
+```csharp
+var tileCount = IntMath.CeilDiv(pixelSize, tileSize);   // 余りを 1 タイルとして数える
+```
+
 ### `LoggerFallback`（static class）
 
 ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー。拡張メソッドとして提供します。
@@ -92,7 +130,7 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 paint.Color = info.Background.ToSKColor();   // コアの色型 → Skia
 ```
 
-SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。MewUI 版の描画層（`CropSkiaRenderer` / `MarqueeSkiaRenderer` / `MarqueeOuterSkiaRenderer` / `FadeMaskDragRectSkiaRenderer` / `LoupeControl` / `LoupeSkiaRenderer` / `SkiaImageRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
+SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。各 UI の描画層（`CropSkiaRenderer` / `MarqueeControl.Rendering` / `LoupeControl.Rendering` / `FadeMaskDragRectSkiaRenderer` / `SkiaEsCanvas` / `AvaloniaCanvas` / `SkiaImageRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
 逆方向（Skia → コア）の変換は本番の利用箇所がないため提供しません（YAGNI）。
 
 ### `Imaging.SkiaGeometryInterop`（static class）
@@ -115,13 +153,156 @@ Skia の矩形塗り（単色）を単一所有するヘルパーです。
 | --- | --- | --- |
 | `Rect` | `static void Rect(SKCanvas canvas, EsRect rect, DrawingColor color)` | 矩形を塗る |
 | `Rects` | `static void Rects(SKCanvas canvas, IReadOnlyList<EsRect> rects, DrawingColor color)` | 複数の矩形を同じ色で塗る（ペイントを 1 つだけ生成する。空の一覧は何もしない） |
+| `Rects<TWalker>` | `static void Rects<TWalker>(SKCanvas canvas, TWalker rects, DrawingColor color) where TWalker : struct, IEsRectWalker<TWalker>` | 列挙子（構造体）が返す矩形を同じ色で塗る。**リストを確保せず、ボックス化もしない**（要素数が描画先の大きさに比例して増える列に使う） |
 | `RoundRect` | `static void RoundRect(SKCanvas canvas, EsRect rect, double cornerRadius, DrawingColor color)` | 角丸矩形を塗る（半径 0 以下は四角形） |
 
 ```csharp
 SkiaFill.Rects(canvas, frame.BorderRects, frame.BorderColor);   // 4 辺を同じ色で塗る
+SkiaFill.Rects(canvas, tiles, color);                           // 市松模様のタイル（列挙子。リスト確保なし）
 ```
 
 線（ストローク）と文字は各所有者（描画層 / `SkiaText`）が持ち、本クラスは塗りのみを扱います。
+
+### `Imaging.IEsRectWalker<TSelf>`（interface）
+
+矩形の列を確保なしで走査する列挙子（構造体）が実装する契約です。
+
+| メンバー | 説明 |
+| --- | --- |
+| `bool MoveNext()` | 次の矩形へ進む |
+| `EsRect Current { get; }` | 現在の矩形 |
+
+- 実装者は `GetEnumerator() => this` を公開します（`foreach` が構造体の列挙子をボックス化せずに使えるようにするため）。
+- **列挙は 1 回だけ**が契約です（実装が内部に走査位置を持つため）。
+
+### `Imaging.IEsCanvas`（interface）
+
+描画内容を描画面へ写す**即時描画ポート**です。「何を描くか」を決めるコア側の描画層（`MarqueeControl.Rendering` / `LoupeControl.Rendering`）は本ポートだけを呼び、各 UI が自 UI の描画 API を本ポートへ適合させます（描画手順はコア側の 1 実装に集約され、UI の追加・描画方式の変更はアダプタの実装だけで済みます）。
+
+| メンバー | 説明 |
+| --- | --- |
+| `Clear(EsRect surface, DrawingColor color)` | 描画面の全体を指定色で置き換える（描画面の矩形は「描画面全体」の宣言） |
+| `FillRect(EsRect rect, DrawingColor color)` | 矩形を塗る |
+| `FillRects(IReadOnlyList<EsRect> rects, DrawingColor color)` | 複数の矩形を同じ色で塗る（空の一覧は何もしない） |
+| `FillRects<TWalker>(TWalker rects, DrawingColor color)` | 列挙子が返す矩形を塗る（リストを確保せず、ボックス化もしない） |
+| `FillRoundRect(EsRect rect, double cornerRadius, DrawingColor color)` | 角丸矩形を塗る（半径 0 は四角形） |
+| `StrokeRect(EsRect rect, DrawingColor color, double thickness)` | 矩形の枠線を描く（線は辺の上に中心を置く） |
+| `DrawLine(EsPoint from, EsPoint to, DrawingColor color, double thickness)` | 線分を描く |
+| `DrawLabel(EsRect background, DrawingColor backgroundColor, string text, EsPoint textOrigin, double fontSize, DrawingColor textColor, double cornerRadius)` | ラベル 1 件を描く（**「背景 → 文字」の順序は本メソッドの契約**） |
+| `DrawImage(EsBitmap image, EsRect source, EsRect destination)` | 画像の一部を描画先の矩形へ描く（補間は実装依存。画像は破棄しない） |
+| `EsSize MeasureText(string text, double fontSize)` | テキストの実寸を測定する |
+
+- 座標系は実装が定めます（例: マーキーは DIP、ルーペは物理ピクセル）。単位の換算はアダプタの利用側が行います。
+- `DrawLabel` をポートに含める理由は**描画順の単一所有**です（呼び出し側が 2 メソッドへ分けて呼ぶと重なりが崩れ、実装ごとに順序が変わる）。
+- クリップ・不透明度・破線は含めません（現行の描画に不要。YAGNI）。
+
+### `Imaging.SkiaEsCanvas`（sealed class : IEsCanvas）
+
+`SKCanvas` を `IEsCanvas` へ適合させるアダプタです。描画の実行は `SkiaFill` / `SkiaText` / `SkiaLabel` へ委譲します（「背景を塗ってから文字を描く」順序の単一所有を保つ）。Skia のキャンバスを取得できる UI は本クラスをそのまま使えます。
+
+| メンバー | 説明 |
+| --- | --- |
+| `SkiaEsCanvas(SKCanvas canvas)` | 描画先を指定して生成する（`canvas` が null なら `ArgumentNullException`）。本クラスはキャンバスを所有しない |
+| `Clear(EsRect surface, DrawingColor color)` | `SKCanvas.Clear` へ委譲する（セーブレイヤーの描画面全体を塗り替えるため、矩形より広い範囲を消去しうる） |
+
+### `Imaging.EsLabelFrame` / `Imaging.EsLabelElement`（readonly record struct）
+
+ラベル 1 件の配置と、UI 要素として配置するための指示です。
+
+| 型 / メンバー | 説明 |
+| --- | --- |
+| `EsLabelFrame(EsRect Background, EsPoint TextOrigin)` | ラベルの配置（背景矩形と文字の描画原点） |
+| `EsLabelElement` | 要素を置く矩形・文字原点・文言・フォントサイズ・文字色・背景色・角丸半径 |
+| `EsLabelElement.PaddingX` / `PaddingY` | 要素の左・上の内側余白（`TextOrigin` と `Bounds` の差） |
+| `EsLabelElement.Create(EsLabelFrame, string, double, DrawingColor, DrawingColor, double = 0)` | コアの配置と外観から要素の配置指示を組み立てる写像 |
+
+ラベルを持つコントロール（マーキー・ルーペ）は本型を共用します（コアが同じ型を 2 つ持たない）。
+
+### `Imaging.IEsLabel`（interface）
+
+ラベル 1 件の描画契約です（「背景付きの 1 行テキスト」という共通の形）。
+文言と外観はコアが単一所有し、配置はテキストの実寸に依存するため実寸測定（描画 API 依存）は UI 層が行います。
+
+| メンバー | 説明 |
+| --- | --- |
+| `string Text { get; }` | 表示する文言 |
+| `double FontSize { get; }` | フォントサイズ（DIP。補正済み） |
+| `DrawingColor TextColor { get; }` | 文字色 |
+| `DrawingColor BackgroundColor { get; }` | 背景色（アルファ 0 は透明） |
+| `double CornerRadius { get; }` | 背景の角丸半径（DIP）。既定は 0（四角形）で、角丸を持つラベルだけ実装する |
+| `EsLabelFrame ComputeFrame(EsSize textSize)` | テキストの実寸から配置（背景矩形・文字の原点）を求める |
+
+寸法表示（マーキーのサイズラベル）・座標表示（マーキーのカーソル座標・ルーペの中心座標）・付加情報（ホストの操作/情報ラベル）が同じ契約を実装します。
+
+### `Imaging.EsLabelExtensions`（static class）
+
+ラベル契約から UI 要素の配置指示を求める拡張メソッドです。
+
+| 種別 | メンバー | シグネチャ | 説明 |
+| --- | --- | --- | --- |
+| 拡張メソッド | `ToElement` | `static EsLabelElement ToElement(this IEsLabel label, EsSize textSize)` | 配置（`ComputeFrame`）と外観の写像（`EsLabelElement.Create`）を合成する |
+
+```csharp
+var element = label.ToElement(measureText(label.Text, label.FontSize));   // UI は要素を置くだけ
+```
+
+各ラベル型が同じ組み立てを書くと写し漏れ（色・角丸・フォントサイズ）で見た目がずれるため、写像を 1 箇所に集約します（拡張メソッドなので呼び出し側は `label.ToElement(...)` のままで使えます）。
+
+### `Imaging.DrawingColorExtensions`（static class）
+
+描画色の判定を提供する拡張メソッドです。
+
+| 種別 | メンバー | シグネチャ | 説明 |
+| --- | --- | --- | --- |
+| 拡張メソッド | `IsVisible` | `static bool IsVisible(this DrawingColor color)` | アルファが 0 より大きい場合に true（**アルファ 0 は「描かない」**を意味する） |
+
+```csharp
+public bool HasOverlay => OverlayColor.IsVisible();   // 透明なら描かない
+```
+
+各外観型（暗転・枠線・塗り・十字線・市松模様）が `color.A > 0` を書くと、同じ意味の判定が散らばり、片方だけが不可視の描画要求を UI へ届けます。
+
+### `Imaging.EsLabelLayout`（static class）
+
+ラベルの体裁（内側余白・行送り・配置基準）を単一所有する純粋関数です。
+「背景は文字の実寸へ内側余白を加えた大きさ」「文字は背景の内側余白だけ空けて置く」「縦積みの行送り」はコントロールに依存しない規則であり、各コアが個別に書くと見た目がずれます。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `Padding` | `const double Padding = 4.0` | **全ラベル共通の内側余白の既定値**（コントロールとホストが同じ値を使う） |
+| `ComputeBox` | `static EsRect ComputeBox(EsPoint textOrigin, EsSize textSize, double paddingX, double paddingY)` | 文字の左上原点を基準に、背景矩形を求める（四方へ内側余白を加える） |
+| `ComputeBoxAtAnchor` | `static EsRect ComputeBoxAtAnchor(EsPoint anchor, EsSize textSize, double paddingX, double paddingY)` | 基準点を背景の左上に置き、背景矩形を求める |
+| `ComputeOffsetTextOrigin` | `static EsPoint ComputeOffsetTextOrigin(EsPoint anchor, double paddingX, double paddingY)` | 基準点から、文字の左上原点を求める |
+| `ComputeCursorLabelBox` | `static EsRect ComputeCursorLabelBox(EsPoint cursor, EsSize areaSize, EsSize textSize, double paddingX, double paddingY, double offset)` | カーソル位置を基準に背景矩形を求める（右下へオフセットし、描画領域内へクランプする。領域の軸が 0 以下ならクランプしない） |
+| `ComputeTopCenterBox` | `static EsRect ComputeTopCenterBox(double areaWidth, EsSize textSize, double paddingX, double paddingY, double topMargin)` | 領域の上端中央に置く背景矩形を求める（水平位置は背景の幅でセンタリングする） |
+| `NextTop` | `static double NextTop(double top, double lineHeight, double paddingY)` | 縦積みしたラベルの次の行の上端（現在の行の高さ + 内側余白 × 2） |
+
+- **背景の左上と文字の原点は同じ基準点を使います**: `ComputeBoxAtAnchor` で求めた背景の左上と `ComputeOffsetTextOrigin` の結果は同じ余白だけずれます（背景の四方の余白が等しい）。
+- **行送り ≠ 背景の下端ではありません**: 基準点（アンカー）が背景の左上であるため、文字の実寸とフォントサイズが一致する場合に**背景の下端と次の行の上端が一致**します（重なりも隙間も無い）。
+- **テキストの実寸測定は呼び出し側**が行います（描画 API 依存のため本クラスでは測れない）。
+
+### `Imaging.EsLabelMetrics`（static class）
+
+ラベルのフォントサイズの安全域（6〜48）と「非数は既定値」の規則を単一所有する純粋関数です。
+
+| メンバー | 説明 |
+| --- | --- |
+| `FontSizeMin` / `FontSizeMax` | 安全域（6.0 / 48.0） |
+| `CoerceFontSize(double value, double defaultValue)` | 6〜48 へ補正する。非有限（NaN / ∞）は `defaultValue` |
+
+ラベルごとに既定値だけが異なるため、既定値は引数で受けます（ラベルごとに補正式を書くと、片方だけが非数を素通しする余地が生じます）。
+
+### `Imaging.EsLabelDefaults`（static class）
+
+ラベル（サイズ・中心座標）の**既定の見た目**を単一所有する定数クラスです。同じ画面に並ぶラベルの色と大きさをコントロール間で揃えるため、各コントロールの設定型（`MarqueeOptions` / `LoupeAppearance`）は本値を参照します（同じ色のリテラルを各設定型へ書かない）。
+
+| メンバー | 型 / 値 | 説明 |
+| --- | --- | --- |
+| `TextColor` | `DrawingColor` | 文字色の既定値（白） |
+| `BackgroundColor` | `DrawingColor` | 背景色の既定値（黒 60% = `#99000000`）。下の画像を完全には隠さない濃度 |
+| `FontSize` | `double`（12.0） | フォントサイズの既定値（DIP）。安全域は `EsLabelMetrics` が単一所有する |
+
+サイズラベルのフォントサイズ（14.0）のように**コントロール固有の既定値**は各設定型が持ちます（本値は共有する基準のみ）。
 
 ### `Imaging.SkiaLabel`（static class）
 
@@ -154,7 +335,7 @@ var size = SkiaText.Measure("確定", 14);          // EsSize（幅・行高）
 SkiaText.Draw(canvas, "確定", 8, 8, 14, label.TextColor);
 ```
 
-レイアウト規則（余白・行送り・配置）は各コントロールのコアが単一所有し、本クラスは描画のプリミティブのみを提供します（MewUI 版の描画層と、両 UI の文字描画が共用します）。矩形の塗りは `SkiaFill` が単一所有します。
+レイアウト規則（余白・行送り・配置）のうち**コントロールに依存しない分**は `EsLabelLayout` が単一所有し、本クラスは描画のプリミティブのみを提供します（MewUI 版の描画層と、両 UI の文字描画が共用します）。矩形の塗りは `SkiaFill` が単一所有します。
 
 ### `Imaging.ImageDrawMode`（enum）
 

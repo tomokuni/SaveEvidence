@@ -70,18 +70,6 @@ internal sealed class MarqueeSession
     /// <remarks>本クラスは対話パラメータのみを使用する（外観は UI 層が描画時に読む）。</remarks>
     public MarqueeOptions Options { get; private set; } = MarqueeOptions.Default;
 
-    /// <summary>選択矩形の最小サイズ（ドメイン座標）。</summary>
-    /// <value>ドメイン座標での最小サイズ。ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる。</value>
-    public double MinSelectionSize => Options.MinSelectionSize;
-
-    /// <summary>ドメイン境界外の選択を禁止するかどうか。</summary>
-    /// <value>true の場合は選択をドメイン境界内に制限する。false の場合は境界外も選択できる。</value>
-    public bool ClampToDomainBounds => Options.ClampToDomainBounds;
-
-    /// <summary>ドラッグハンドルのヒットテスト半径（DIP）。</summary>
-    /// <value>DIP 座標での半径。ドメイン座標への換算は内部で行う（ズームしても画面上の大きさが一定になる）。</value>
-    public double HandleHitRadius => Options.HandleHitRadius;
-
     /// <summary>現在の選択矩形（ドメイン座標）。</summary>
     /// <value>選択矩形。未選択時は 0x0。</value>
     public EsRect SelectionRect => _state.SelectionRect;
@@ -98,10 +86,6 @@ internal sealed class MarqueeSession
     /// <value>nudge 中の場合は true。</value>
     public bool NudgeActive => _state.NudgeActive;
 
-    /// <summary>nudge 中に十字マーカーを表示するかどうか。</summary>
-    /// <value>表示する場合は true。</value>
-    public bool CrosshairVisible => _state.CrosshairVisible;
-
     /// <summary>直近のマウス位置（ドメイン座標。カーソル座標ラベルの描画に使用する）。</summary>
     /// <value>直近のマウス位置。未移動時は既定値。</value>
     public EsPoint LastMousePosition => _state.LastMousePosition;
@@ -117,7 +101,7 @@ internal sealed class MarqueeSession
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート。null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
-    public void SetPort(ICoordTransform? port) => _state.Port = port.OrIdentity();
+    public void SetPort(ICoordTransform? port) => _state.SetPort(port.OrIdentity());
 
     /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
     /// <param name="localDip">ローカル DIP 座標。</param>
@@ -128,21 +112,6 @@ internal sealed class MarqueeSession
     /// <param name="domain">ドメイン座標。</param>
     /// <returns>ローカル DIP 座標。</returns>
     public EsPoint ToDip(EsPoint domain) => _state.Port.Inverse(domain);
-
-    /// <summary>選択矩形（ドメイン座標）を閉区間としてローカル DIP 矩形へ変換する（描画用）。</summary>
-    /// <param name="domainRect">選択矩形（ドメイン座標）。</param>
-    /// <returns>ローカル DIP の矩形。</returns>
-    /// <remarks>
-    /// 選択領域は閉区間（始点・終点とも含む）を意図する仕様のため、終点（Right / Bottom）に +1 してから DIP へ変換する<br/>
-    /// （終点のピクセルも枠線・ハンドルに含める。外側の装飾の閉区間 +1 と一致）。<br/>
-    /// 変換規則は本メソッドが単一所有する（描画層は結果を使うだけ）。
-    /// </remarks>
-    public EsRect ToDipRect(EsRect domainRect)
-    {
-        var topLeft = ToDip(domainRect.TopLeft);
-        var bottomRight = ToDip(new EsPoint(domainRect.Right + 1, domainRect.Bottom + 1));
-        return new EsRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
-    }
 
     // ====================================================================
     // 入力の通知（UI 層 → コア）
@@ -162,7 +131,7 @@ internal sealed class MarqueeSession
     /// </remarks>
     public MarqueeFeedback Press(EsPoint position, int clickCount)
     {
-        _state.IsMouseDown = true;
+        _state.BeginPress();
         Log.LogPositionBeforeDown(position.X, position.Y);
         Log.LogMouseDown(position.X, position.Y, clickCount, _state.HasSelection);
 
@@ -187,7 +156,7 @@ internal sealed class MarqueeSession
         {
             Redraw = true,
             RequestFocus = true,
-            CaptureMouse = true,
+            Capture = MarqueeCaptureAction.Capture,
             Cursor = cursor,
         };
 
@@ -202,8 +171,7 @@ internal sealed class MarqueeSession
             if (handle != HitTarget.Move)
             {
                 var handlePosition = SelectionGeometry.GetHandlePosition(_state.SelectionRect, handle);
-                _state.DragStartPoint = handlePosition;
-                _state.LastMousePosition = handlePosition;
+                _state.SnapToHandle(handlePosition);
                 feedback = feedback with
                 {
                     Cursor = cursor | MarqueeCursorAction.MoveTo,
@@ -237,9 +205,8 @@ internal sealed class MarqueeSession
         var hitRadius = ToDomainRadius();
 
         // nudge 終了（カーソル移動）に伴うエコー移動をスキップする（消費したら解除する）
-        if (_state.SuppressEchoAt is { } echoPosition && SelectionGeometry.IsNear(position, echoPosition, hitRadius))
+        if (_state.ConsumeSuppressedEcho(position, hitRadius))
         {
-            _state.SuppressEchoAt = null;
             return new MarqueeFeedback
             {
                 UpdateCursorShape = true,
@@ -259,11 +226,11 @@ internal sealed class MarqueeSession
             return cursor;
         }
 
-        _state.LastMousePosition = position;
+        _state.SetMousePosition(position);
 
         if (_state.IsDragging)
         {
-            _state.UpdateDrag(position, MinSelectionSize, ClampToDomainBounds);
+            _state.UpdateDrag(position, Options.MinSelectionSize, Options.ClampToDomainBounds);
             NotifyState(MarqueeNoticeKind.SelectionChanged);
             NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, _state.GetMarkerPosition());
         }
@@ -286,7 +253,7 @@ internal sealed class MarqueeSession
     /// </remarks>
     public MarqueeFeedback Release(EsPoint position)
     {
-        _state.IsMouseDown = false;
+        _state.EndPress();
         Log.LogMouseUp(position.X, position.Y, _state.IsDragging, _state.HasSelection);
         Log.LogPositionAfterUp(position.X, position.Y);
 
@@ -296,8 +263,8 @@ internal sealed class MarqueeSession
 
         if (wasDragging)
         {
-            var cancelled = _state.SelectionRect.Width < MinSelectionSize
-                || _state.SelectionRect.Height < MinSelectionSize;
+            var cancelled = _state.SelectionRect.Width < Options.MinSelectionSize
+                || _state.SelectionRect.Height < Options.MinSelectionSize;
             _state.EndDrag();
 
             if (cancelled)
@@ -311,7 +278,7 @@ internal sealed class MarqueeSession
             }
         }
 
-        var feedback = new MarqueeFeedback { Redraw = true };
+        var feedback = new MarqueeFeedback { Redraw = true, Capture = MarqueeCaptureAction.Release };
         if (wasNudging)
         {
             // nudge の状態は最小サイズ未満のキャンセル経路（状態の初期化）で既に解除されている場合があるため、
@@ -321,7 +288,7 @@ internal sealed class MarqueeSession
             _state.EndNudge();
             feedback = feedback with { Cursor = MarqueeCursorAction.Show };
             NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, nudgePosition);
-            _state.SuppressEchoAt = nudgePosition;
+            _state.SuppressEcho(nudgePosition);
 
             // カーソルは nudge 位置（ハンドル上）にあるため、ハンドルに応じた形状へ即時更新する
             // （マウスを動かすまで移動イベントが発火せず、形状が更新されないため）
@@ -406,30 +373,17 @@ internal sealed class MarqueeSession
 
         if (cursorPosition is { } current)
         {
-            _state.LastMousePosition = current;
-        }
-
-        // 未選択・未ドラッグの nudge では基点を現在のカーソル位置へ同期する（nudge セッションの開始時のみ）
-        if (!_state.HasSelection && !_state.IsDragging && !_state.NudgeActive)
-        {
-            _state.StartPoint = _state.LastMousePosition;
+            _state.SetMousePosition(current);
         }
 
         var feedback = new MarqueeFeedback { Handled = true, Redraw = true };
-        if (!_state.NudgeActive)
+        if (_state.BeginNudge())
         {
-            _state.NudgeActive = true;
-            _state.CrosshairVisible = true;
-            _state.NudgeBase = _state.HasSelection ? _state.GetOppositeCorner(_state.SelectionRect) : _state.StartPoint;
-            _state.NudgeOffsetX = 0;
-            _state.NudgeOffsetY = 0;
             feedback = feedback with { Cursor = MarqueeCursorAction.Hide };
         }
 
         // nudge 適用（ドメイン座標の整数加算のみ。浮動小数の誤差を累積しない）
-        _state.NudgeOffsetX += (int)dx;
-        _state.NudgeOffsetY += (int)dy;
-        _state.Nudge(dx, dy, MinSelectionSize, ClampToDomainBounds);
+        _state.Nudge(dx, dy, Options.MinSelectionSize, Options.ClampToDomainBounds);
         NotifyState(MarqueeNoticeKind.SelectionChanged);
 
         // カーソルを動かしている側のハンドル（マーカー位置）へ合わせる
@@ -458,14 +412,14 @@ internal sealed class MarqueeSession
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <returns>UI 層が適用する効果（再描画。nudge 中だった場合はカーソルの再表示）。</returns>
     /// <remarks>
-    /// <see cref="ClampToDomainBounds"/> が有効な場合は、はみ出す矩形を境界内へクリップしてから設定する<br/>
+    /// <see cref="MarqueeOptions.ClampToDomainBounds"/> が有効な場合は、はみ出す矩形を境界内へクリップしてから設定する<br/>
     /// （外部からの復元でも「画像外の選択を禁止」を尊重する）。設定後は選択変更を通知する。
     /// </remarks>
     public MarqueeFeedback SetSelection(EsRect rect)
     {
         // 選択の復元は nudge 状態を解除するため、解除の判定は復元より前に行う（カーソルの再表示を落とさない）
         var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
-        var selectionRect = ClampToDomainBounds ? _state.ClipRectToBounds(rect) : rect;
+        var selectionRect = Options.ClampToDomainBounds ? _state.ClipRectToBounds(rect) : rect;
         _state.SetSelection(selectionRect);
         NotifyState(MarqueeNoticeKind.SelectionChanged);
         return feedback;
@@ -545,7 +499,7 @@ internal sealed class MarqueeSession
     public MarqueeFeedback ApplyOptions(MarqueeOptions options)
     {
         // ログと即時クリップは「境界外選択の禁止」が実際に変化した場合のみ行う
-        bool clampChanged = ClampToDomainBounds != options.ClampToDomainBounds;
+        bool clampChanged = Options.ClampToDomainBounds != options.ClampToDomainBounds;
         Options = options;
 
         if (!clampChanged)
@@ -613,9 +567,9 @@ internal sealed class MarqueeSession
     {
         var port = _state.Port;
         var origin = port.Forward(default);
-        var offset = port.Forward(new EsPoint(HandleHitRadius, 0));
+        var offset = port.Forward(new EsPoint(Options.HandleHitRadius, 0));
         var radius = Math.Abs(offset.X - origin.X);
-        return radius < 0.001 ? HandleHitRadius : radius;
+        return radius < 0.001 ? Options.HandleHitRadius : radius;
     }
 
     /// <summary>ログ用に選択矩形を整形する。</summary>

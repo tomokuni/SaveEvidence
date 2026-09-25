@@ -7,8 +7,8 @@
 | 型 | 可視性 | 用途 |
 | --- | --- | --- |
 | `LoupeRenderCoordinator` | `public` | 再描画要求のバッチ化（1 フレームに 1 回）と世代番号管理 |
-| `LoupeLabelLayoutPlan` | `public` | 中心座標ラベルの配置指示（実寸から要素の配置矩形を求める写像）。文字は描かず、UI 要素を置く側へ指示を返す |
-| `LoupeLabelElement` | `public` | ラベル 1 件の配置指示（配置矩形・文字原点・文言・寸法・色・角丸） |
+
+中心座標ラベルの配置指示（実寸 → 要素の配置矩形の写像）は、描画の手順と同じ層である UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeLabelPlan`）が単一所有します（本層は関知しません）。実寸測定と要素の配置は UI 層が行います。
 
 ## `LoupeRenderCoordinator`（`Estable.Loupe.CoreForControl`・`public sealed class`）
 

@@ -36,7 +36,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト（外観と表示ポリシーは `DecoOptions`（`MarqueeControl.Core` の `Decoration` 名前空間の `MarqueeDecoOptions`）が単一所有し、描画内容の判断は Core（`Decoration`）が持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
 - **ハンドル表示の切替**: `Options.ShowHandles = false` でハンドルを描かず枠線と外側の装飾だけを表示する
 - カーソル座標ラベルの表示（任意設定・`(x, y)` 形式）
-- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベル（`MarqueeCoordLabel`）の**文言・外観・順序は Core が単一所有**し、実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`FormattedText`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
+- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベル（`MarqueeCoordLabel`）の**文言・外観は Core が単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`FormattedText`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - Avalonia Binding 対応の StyledProperty
 - ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
@@ -156,21 +156,23 @@ dotnet run --project sample/MarqueeControl.AvaloniaUI.Sample.csproj
 ```text
 MarqueeControl/
 ├── src/
-│   ├── MarqueeControl.csproj     # 独立プロジェクト（Platform.AvaloniaUI + MarqueeControl.Core + MarqueeControl.Core を参照）
-│   ├── MarqueeControl.cs         # 公開 API + 効果の適用 + 通知の転送 + ポインター入力 + 描画
+│   ├── MarqueeControl.csproj     # 独立プロジェクト（MarqueeControl.Core + MarqueeControl.Rendering + Platform.AvaloniaUI を参照）
+│   ├── MarqueeControl.cs         # 公開 API + 効果の適用 + 通知の転送 + ポインター入力 + 描画の起動
 │   ├── MarqueeControl.Input.cs   # キーボード入力（フォーカス非依存。コア型 EsKey への変換と通知）
-│   └── MarqueeControl.Visual.cs     内部: `Content.Layers` の順に図形を描き、ラベル要素を配置する
+│   └── MarqueeControl.Visual.cs     内部: `Content.Layers` の順に図形を描くよう描画層（MarqueeRenderer）へ渡し、ラベル要素を配置する
 │   ├── SelectionRectEventArgs.cs  # 公開イベント引数（選択矩形通知）
 │   ├── MarqueePointEventArgs.cs  # 公開イベント引数（座標通知）
 │   ├── MarqueeRenderedEventArgs.cs  # 公開イベント引数（描画完了。描画コンテキストと描画内容を通知する）
-│   └── Drawing/                   # 内部型（MarqueeDrawer / MarqueeOuterDrawer / MarqueeInnerDrawer / MarqueeBrushCache）
+│   └── （ラベル要素の適用は Platform.AvaloniaUI の EsLabelElementHost へ委譲する）
 ├── sample/                        # サンプルアプリ（sample/README.md 参照）
 └── tests/                         # 単体テスト（公開 API 経由）
 ```
 
-### 9.1 共有コア（`MarqueeControl.Core`）
+### 9.1 共有コア（`MarqueeControl.Core`）と描画層（`MarqueeControl.Rendering`）
 
-UI 非依存の幾何計算・状態機械・入力の解釈は `src/MarqueeControl.Core` が単一所有します（Avalonia / MewUI で共有）。
+UI 非依存の幾何計算・状態機械・入力の解釈は `src/MarqueeControl.Core` が単一所有し、描画の手順（層の順序と描画ポートへの写し方）は `src/MarqueeControl.Rendering` が単一所有します（Avalonia / MewUI で共有）。UI 層はアダプタ（`AvaloniaCanvas` など）とラベル要素の配置を担います。
+
+本コントロールの層構成（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 MarqueeControl.Core/

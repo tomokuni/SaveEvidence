@@ -17,9 +17,15 @@ public static class LoupeImageExtractor
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="zoomLevel">拡大率（1〜64）。</param>
     /// <returns>切り出し領域の一辺（ドメインピクセル。切り上げ）。</returns>
-    /// <remarks>切り出し・十字線位置・選択矩形変換の各所で共用する（単一所有）。</remarks>
-    public static int ComputeCaptureSize(int pixelSize, int zoomLevel)
-        => (int)Math.Ceiling((double)pixelSize / zoomLevel);
+    /// <remarks>
+    /// 切り出し・十字線位置・選択矩形変換の各所で共用する（単一所有）。<br/>
+    /// <b>切り上げ</b>るのは、拡大で埋めきれない余り（最大 <c>zoomLevel - 1</c> ピクセル）を<br/>
+    /// 透明パディングで補うためである（切り捨てるとルーペの右端・下端が埋まらない）。<br/>
+    /// 切り上げの計算は <see cref="IntMath.CeilDiv"/> が単一所有し、<br/>
+    /// 切り上げの規則は <see cref="ComputeMagnifiedRects"/> と対で意味を持つ（描画先は切り上げた領域の倍率）。
+    /// </remarks>
+    internal static int ComputeCaptureSize(int pixelSize, int zoomLevel)
+        => IntMath.CeilDiv(pixelSize, zoomLevel);
 
     /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）を計算する。</summary>
     /// <param name="centerX">拡大中心のX座標（元画像ピクセル）。</param>
@@ -30,7 +36,7 @@ public static class LoupeImageExtractor
     /// <see cref="ExtractRegionAt"/> の中心 → 左上変換と、描画完了イベントの切り出し領域左上計算を単一所有する（DRY）。<br/>
     /// 中心座標の整数化（<c>(int)</c>）は <see cref="ExtractRegionAt"/> と同一の丸めで一致させる。
     /// </remarks>
-    public static EsPoint ComputeCaptureTopLeft(int centerX, int centerY, int size)
+    internal static EsPoint ComputeCaptureTopLeft(int centerX, int centerY, int size)
         => new(centerX - size / 2, centerY - size / 2);
 
     /// <summary>切り出した領域をルーペ領域へ拡大描画するときの矩形（切り出し元・描画先）を計算する。</summary>
@@ -40,7 +46,10 @@ public static class LoupeImageExtractor
     /// <remarks>
     /// 「切り出した領域を左上原点から <paramref name="zoomLevel"/> 倍の大きさで描く」規則を単一所有する。<br/>
     /// 拡大の倍率と描画先の大きさの関係は、両 UI で同じでなければ拡大画像の見た目がずれる<br/>
-    /// （切り出し領域の算出は <see cref="ComputeCaptureSize"/> が単一所有する）。
+    /// （切り出し領域の算出は <see cref="ComputeCaptureSize"/> が単一所有する）。<br/>
+    /// <b>描画先は <see cref="ComputeCaptureSize"/> の切り上げ分だけ表面より大きくなりうる</b><br/>
+    /// （最大 <c>zoomLevel - 1</c> 物理ピクセル。切り出し領域の実寸が <paramref name="zoomLevel"/> で割り切れない場合）。<br/>
+    /// はみ出した部分は描画先のクリップに任せる（切り捨てると拡大の倍率が整数でなくなり、画素がぼやける）。
     /// </remarks>
     public static (EsRect Source, EsRect Destination) ComputeMagnifiedRects(SizeInt captureSize, int zoomLevel)
         => (new EsRect(0, 0, captureSize.Width, captureSize.Height),
@@ -57,7 +66,7 @@ public static class LoupeImageExtractor
     /// 画像端では透明パディングとなり、市松模様が透ける。<br/>
     /// 左上変換は <see cref="ComputeCaptureTopLeft"/> に委譲する（切り出し領域左上計算の単一所有）。
     /// </remarks>
-    public static EsBitmap ExtractRegionAt(EsBitmap source, int centerX, int centerY, int size)
+    internal static EsBitmap ExtractRegionAt(EsBitmap source, int centerX, int centerY, int size)
     {
         var topLeft = ComputeCaptureTopLeft(centerX, centerY, size);
         return source.Crop(new RectInt((int)topLeft.X, (int)topLeft.Y, size, size));

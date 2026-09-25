@@ -478,7 +478,6 @@ public class OverlayWindowTests
         // 未検出（MockElementFinder は常に default）→ ハイライト無効
         InvokeApplyHighlight(window, new EsPixelPoint(100, 100));
 
-        Assert.False(window.SelectionOverlay.HasHighlight);
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
     }
 
@@ -498,7 +497,7 @@ public class OverlayWindowTests
         // 検出（画面物理 (200,100)-(2120,1180)）→ ドメイン（ウィンドウローカル物理）へ変換して反映
         InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
 
-        Assert.True(window.SelectionOverlay.HasHighlight);
+        Assert.NotNull(window.SelectionOverlay.LogicalHighlightRect);
         Assert.Equal(new Rect(100, 50, 1920, 1080), window.SelectionOverlay.LogicalHighlightRect);
     }
 
@@ -552,7 +551,7 @@ public class OverlayWindowTests
         // 検出（画面物理 (300,200)-(1100,800)）→ ドメインへ変換して反映
         InvokeApplyHighlight(window, new EsPixelPoint(500, 500));
 
-        Assert.True(window.SelectionOverlay.HasHighlight);
+        Assert.NotNull(window.SelectionOverlay.LogicalHighlightRect);
         Assert.Equal(new Rect(200, 150, 800, 600), window.SelectionOverlay.LogicalHighlightRect);
         Assert.Equal("Sample Window", window.SelectionOverlay.InfoTextProvider?.Invoke());
     }
@@ -668,7 +667,7 @@ public class OverlayWindowTests
             new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.Other), KeyModifiers.None);
         InvokeOnClickMoved(window, e);
 
-        Assert.True(window.SelectionOverlay.HasHighlight);
+        Assert.NotNull(window.SelectionOverlay.LogicalHighlightRect);
         window.Close();
     }
 
@@ -790,7 +789,6 @@ public class OverlayWindowTests
         // 未検出 → ハイライト無効・タイトル空
         InvokeApplyHighlight(window, new EsPixelPoint(100, 100));
 
-        Assert.False(window.SelectionOverlay.HasHighlight);
         Assert.Null(window.SelectionOverlay.LogicalHighlightRect);
         Assert.Equal("", window.SelectionOverlay.InfoTextProvider?.Invoke());
     }

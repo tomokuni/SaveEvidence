@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Estable.Marquee.Decoration;
 using Microsoft.Extensions.Logging;
 
@@ -18,14 +19,17 @@ namespace Estable.Marquee;
 /// - セッション（入力の解釈と状態遷移の判断）の生成と保持<br/>
 /// - 環境値の保持（座標変換ポート・倍率）と、ポート未指定時に倍率を使う規則の適用<br/>
 /// - 効果（フォーカス・カーソル操作・カーソル形状・ポインターキャプチャ・再描画）の適用<br/>
-/// - 1 フレーム分の描画内容の解決（描くかどうかの判断）<br/>
+/// - 1 フレーム分の描画内容の解決（描くかどうかの判断）と、描画実装（<see cref="IMarqueeRenderer"/>）の保持<br/>
 /// <br/>
 /// <b>本クラスが持つもの</b>: 選択の判断・状態・描画内容（選択矩形・装飾・ラベル）と描画順の契約、<br/>
 /// 装飾の設定の保持、ラベルの文言プロバイダの保持。<br/>
 /// <br/>
 /// <b>UI 層の責務</b>: 入力イベントの受付と座標変換（<see cref="ToDomain"/> / <see cref="ToDip"/>）、<br/>
 /// <see cref="IMarqueeEffects"/> の実装、通知（<see cref="Notified"/>）の公開イベントへの転送、<br/>
-/// 返された描画内容の反映（図形は自 UI の描画 API、文字はテキスト要素の配置）。<b>描画順はコアの指示に従う</b>。<br/>
+/// 返された描画内容の反映（図形は <see cref="Renderer"/> へ委譲、文字はテキスト要素の配置）。<b>描画順はコアの指示に従う</b>。<br/>
+/// <br/>
+/// <b>描画の差し替え</b>: 描画は <see cref="IMarqueeRenderer"/> の実装へ委譲する（<see cref="Renderer"/> で差し替え可能）。<br/>
+/// コアは描画層を参照しないため、実装は注入で受け取る（コンストラクタで必須）。<br/>
 /// <br/>
 /// <b>依存分離</b>: UI 非依存のコア型（<see cref="EsPoint"/> / <see cref="EsRect"/> / <see cref="EsKey"/>）と<br/>
 /// 抽象（<see cref="ICursorService"/> / <see cref="ICoordTransform"/> / <see cref="IMarqueeEffects"/>）にのみ依存する。<br/>
@@ -35,6 +39,9 @@ public sealed class Marquee
 {
     /// <summary>入力の解釈と状態遷移の判断を担うセッション（コア内部の状態機械）。</summary>
     private readonly MarqueeSession _session;
+
+    /// <summary>描画内容を描画面へ写す描画実装（既定は描画層の <c>MarqueeRenderer.Default</c>）。</summary>
+    private IMarqueeRenderer _renderer;
 
     /// <summary>効果（フォーカス・再描画・カーソル操作）の適用先（UI 層が実装する）。</summary>
     private readonly IMarqueeEffects _effects;
@@ -48,9 +55,6 @@ public sealed class Marquee
     /// この区別が必要なのは、ポート未指定時に倍率（<see cref="Scaling"/>）を使う規則をコアが単一所有するためである。
     /// </remarks>
     private ICoordTransform? _coordinatePort;
-
-    /// <summary>現在の設定（外観・対話パラメータ）。</summary>
-    private MarqueeOptions _options = MarqueeOptions.Default;
 
     /// <summary>現在の装飾の設定（暗転マスク・穴あけ枠・枠線・内側の塗り）。</summary>
     private MarqueeDecoOptions _decoOptions = MarqueeDecoOptions.Default;
@@ -66,25 +70,52 @@ public sealed class Marquee
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
     private double _scaling = DefaultScaling;
 
+    /// <summary>サイズラベルの文言プロバイダ（null = 未指定。未指定時はコアが自動生成する）。</summary>
+    private Func<string?>? _sizeLabelOverrideProvider;
+
     /// <summary>ファサードを初期化する。</summary>
+    /// <param name="renderer">描画の実装（既定実装は描画層の <c>MarqueeRenderer.Default</c>）。null 不可。</param>
     /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。null 不可。</param>
     /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
-    /// <exception cref="ArgumentNullException"><paramref name="effects"/> が null の場合。</exception>
-    public Marquee(IMarqueeEffects effects, ICursorService? cursor = null, MarqueeOptions? options = null)
+    /// <exception cref="ArgumentNullException"><paramref name="renderer"/> または <paramref name="effects"/> が null の場合。</exception>
+    public Marquee(
+        IMarqueeRenderer renderer,
+        IMarqueeEffects effects,
+        ICursorService? cursor = null,
+        MarqueeOptions? options = null)
     {
+        ArgumentNullException.ThrowIfNull(renderer);
         ArgumentNullException.ThrowIfNull(effects);
 
+        _renderer = renderer;
         _effects = effects;
         _cursor = cursor;
-        _options = options ?? MarqueeOptions.Default;
-        _session = new MarqueeSession(_options);
+        _session = new MarqueeSession(options ?? MarqueeOptions.Default);
         _session.Notified += OnSessionNotified;
     }
 
     /// <summary>上位（UI 層）へ伝える通知。UI 層は自 UI の公開イベントへ転送する。</summary>
     /// <remarks>通知の種別と公開イベントの対応は UI 層が持ち、判断（確定・キャンセル等）は本クラスが済ませている。</remarks>
     public event EventHandler<MarqueeNotice>? Notified;
+
+    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。</summary>
+    /// <value>現在の描画実装。既定は <see cref="IMarqueeRenderer"/> の既定実装。</value>
+    /// <remarks>
+    /// 設定すると再描画を要求する（同値の再設定では何も起こらない）。<br/>
+    /// 描画先（<see cref="IEsCanvas"/> の実装）と描画手順（本プロパティ）の両方を差し替えできる。<br/>
+    /// null は受け付けない（設定の有無で描画可否が変わると、UI の描画経路に分岐が生まれるため）。
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
+    public IMarqueeRenderer Renderer
+    {
+        get => _renderer;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SetAndRedraw(ref _renderer, value);
+        }
+    }
 
     /// <summary>ロガー。null を設定した場合は出力なし。</summary>
     /// <value>注入されたロガー。null 可（null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> へフォールバックする）。</value>
@@ -103,12 +134,8 @@ public sealed class Marquee
     /// </remarks>
     public MarqueeOptions Options
     {
-        get => _options;
-        set
-        {
-            _options = value;
-            Apply(_session.ApplyOptions(value));
-        }
+        get => _session.Options;
+        set => Apply(_session.ApplyOptions(value));
     }
 
     /// <summary>ポート未指定時に適用する倍率。</summary>
@@ -122,12 +149,7 @@ public sealed class Marquee
     public double Scaling
     {
         get => _scaling;
-        set
-        {
-            if (_scaling == value) return;
-            _scaling = value;
-            _effects.RequestRedraw();
-        }
+        set => SetAndRedraw(ref _scaling, value);
     }
 
     /// <summary>装飾（暗転マスク・穴あけ枠・枠線・内側の塗り）の設定。</summary>
@@ -139,12 +161,7 @@ public sealed class Marquee
     public MarqueeDecoOptions DecoOptions
     {
         get => _decoOptions;
-        set
-        {
-            if (_decoOptions == value) return;
-            _decoOptions = value;
-            _effects.RequestRedraw();
-        }
+        set => SetAndRedraw(ref _decoOptions, value);
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するプロバイダ。</summary>
@@ -155,12 +172,8 @@ public sealed class Marquee
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
     {
-        get => field;
-        set
-        {
-            field = value;
-            _effects.RequestRedraw();
-        }
+        get => _sizeLabelOverrideProvider;
+        set => SetAndRedraw(ref _sizeLabelOverrideProvider, value);
     }
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
@@ -169,12 +182,7 @@ public sealed class Marquee
     public double DisplayScaleScaling
     {
         get => MarqueeSizeLabel.ResolveDisplayScaling(_displayScaleScaling, _scaling);
-        set
-        {
-            if (_displayScaleScaling == value) return;
-            _displayScaleScaling = value;
-            _effects.RequestRedraw();
-        }
+        set => SetAndRedraw(ref _displayScaleScaling, value);
     }
 
     /// <summary>選択矩形があるかどうか。</summary>
@@ -193,15 +201,6 @@ public sealed class Marquee
     // ====================================================================
     // 環境値（座標変換ポート・座標変換）
     // ====================================================================
-
-    /// <summary>ホストが設定した座標変換ポートを取得する。</summary>
-    /// <returns>設定されたポート。未設定の場合は null（等価変換として扱われる）。</returns>
-    /// <remarks>
-    /// 選択コアと同じ座標空間で描く必要がある層（装飾など）へ、設定の有無を判別できる形で公開する<br/>
-    /// （装飾は「ポートが無ければ倍率を使う」規則を持つため、等価変換に置換した値では判別できない）。<br/>
-    /// 設定は <see cref="SetCoordinateTransform"/> に統一する（同じく本メソッドの対として提供する）。
-    /// </remarks>
-    public ICoordTransform? GetCoordinateTransform() => _coordinatePort;
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート。null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
@@ -249,13 +248,9 @@ public sealed class Marquee
     /// <param name="position">解放位置（ドメイン座標）。</param>
     /// <remarks>
     /// 最小サイズによるキャンセル・確定・クリックの検出・nudge の終了はセッションが単一所有する。<br/>
-    /// ドラッグの終了に伴い、ポインターキャプチャを解放する（取得していない UI では何もしない）。
+    /// ドラッグの終了に伴うポインターキャプチャの解放もセッションが要求する（取得と解放が同じ経路になる）。
     /// </remarks>
-    public void Release(EsPoint position)
-    {
-        Apply(_session.Release(position));
-        _effects.SetPointerCapture(false);
-    }
+    public void Release(EsPoint position) => Apply(_session.Release(position));
 
     /// <summary>キー入力を通知する（Escape のキャンセル・Enter の確定・矢印キーの微調整）。</summary>
     /// <param name="key">押下されたキー。</param>
@@ -323,14 +318,27 @@ public sealed class Marquee
             _decoOptions,
             clientSize,
             _session.HasSelection ? _session.SelectionRect : null,
-            _session.HasSelection,
-            _session.NudgeActive && _session.CrosshairVisible,
+            _session.NudgeActive,
             _session.MarkerPosition,
             _session.LastMousePosition,
             _coordinatePort,
             _scaling,
             SizeLabelOverrideProvider,
             DisplayScaleScaling));
+
+    /// <summary>ラベル要素の配置指示を描画順に解決する（UI 要素として配置する UI 用）。</summary>
+    /// <param name="content">配置の基準にする描画内容（同じフレームの <see cref="ResolveContent"/> の結果）。</param>
+    /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
+    /// <returns>配置するラベル要素の一覧（サイズラベル → カーソル座標ラベルの順）。どちらも無い場合は空。</returns>
+    /// <remarks>
+    /// 描画内容を引数で受け取る（本メソッドが <see cref="ResolveContent"/> を呼び直すと、1 フレームで同じ解決が 2 回走る）。<br/>
+    /// UI 層は 1 フレーム分の描画内容を保持し、図形の描画と本メソッドの両方へ同じ値を渡す。<br/>
+    /// 要素への写像は <see cref="Renderer"/>（描画実装）へ委譲する<br/>
+    /// （どのラベルを・どの順に・どの体裁で描くかはコアが単一所有し、実寸の反映だけが描画実装の責務である）。
+    /// </remarks>
+    public IReadOnlyList<EsLabelElement> ResolveLabels(
+        in MarqueeDrawContent content, Func<string, double, EsSize> measureText)
+        => _renderer.ResolveLabels(content, measureText);
 
     // ====================================================================
     // 内部ヘルパー
@@ -340,20 +348,21 @@ public sealed class Marquee
     /// <param name="feedback">適用する効果（カーソル操作・フォーカス・カーソル形状・再描画・キャプチャ）。</param>
     /// <remarks>
     /// 適用の順序（カーソル操作 → フォーカス → カーソル形状 → 再描画）はコア（<see cref="MarqueeFeedback"/>）が単一所有する。<br/>
-    /// カーソルサービス未指定（null）の場合はカーソル操作を適用しない（UI 初期化なしの検証を可能にする）。
+    /// カーソルサービス未指定（null）の場合はカーソル操作を適用しない（UI 初期化なしの検証を可能にする）。<br/>
+    /// 効果はデリゲートではなく <see cref="IMarqueeEffects"/> へ直接適用する（入力イベントのたびにデリゲートを生成しない）。
     /// </remarks>
     private void Apply(in MarqueeFeedback feedback)
     {
         if (_cursor is { } cursor)
         {
-            feedback.ApplyCursor(cursor, _effects.ToScreenPoint);
+            feedback.ApplyCursor(cursor, _effects);
         }
 
-        feedback.ApplyVisual(_effects.RequestFocus, _effects.RequestRedraw, _effects.SetCursorShape);
+        feedback.ApplyVisual(_effects);
 
-        if (feedback.CaptureMouse)
+        if (feedback.Capture != MarqueeCaptureAction.None)
         {
-            _effects.SetPointerCapture(true);
+            _effects.SetPointerCapture(feedback.Capture == MarqueeCaptureAction.Capture);
         }
     }
 
@@ -361,4 +370,23 @@ public sealed class Marquee
     /// <param name="sender">送信元（セッション）。</param>
     /// <param name="notice">通知（種別・座標・スナップショット）。</param>
     private void OnSessionNotified(object? sender, MarqueeNotice notice) => Notified?.Invoke(this, notice);
+
+    /// <summary>新しい値を保持し、変化があれば再描画を要求する。</summary>
+    /// <typeparam name="T">値の型。</typeparam>
+    /// <param name="field">保持先のフィールド。</param>
+    /// <param name="value">設定する値。</param>
+    /// <remarks>
+    /// 「同値なら何もしない（再描画も要求しない）」という規則を単一所有する<br/>
+    /// （各プロパティが同じ数行を書くと、片方だけ同値判定が抜けて再描画が溢れる）。
+    /// </remarks>
+    private void SetAndRedraw<T>(ref T field, T value)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value))
+        {
+            return;
+        }
+
+        field = value;
+        _effects.RequestRedraw();
+    }
 }

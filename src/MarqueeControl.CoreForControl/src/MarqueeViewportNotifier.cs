@@ -1,5 +1,3 @@
-using Estable.Marquee;
-
 namespace Estable.Marquee.CoreForControl;
 
 /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を上位へ通知する（コントロール化のための転送規則）。</summary>

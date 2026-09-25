@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
 namespace Estable.Marquee.Decoration;
@@ -34,4 +35,14 @@ public sealed record InnerDecoAppearance
     /// <value>枠線の太さ（DIP）。既定は 2.0。</value>
     /// <remarks>0.5 未満は 0.5 へ正規化される（規則は幾何計算が単一所有する）。</remarks>
     public double BorderThickness { get; init; } = 2.0;
+
+    /// <summary>穴あけ矩形の内側を塗るかどうかを取得する。</summary>
+    /// <value>塗り色のアルファが 0 でない場合は true。false の場合は塗りを省略できる。</value>
+    /// <remarks>アルファ 0 を描画しない扱いにする判断は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する。</remarks>
+    public bool HasFill => FillColor.IsVisible();
+
+    /// <summary>穴あけ矩形の内側に枠線を描くかどうかを取得する。</summary>
+    /// <value>枠線色のアルファが 0 でない場合は true。false の場合は枠の生成を省略できる。</value>
+    /// <remarks>アルファ 0 を描画しない扱いにする判断は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する。</remarks>
+    public bool HasBorder => BorderColor.IsVisible();
 }

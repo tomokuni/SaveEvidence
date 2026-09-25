@@ -4,27 +4,28 @@
 
 **ファサードの実装詳細（配置計算・描画引数の計算・ラベル配置）は internal です**（単体テストにのみ `InternalsVisibleTo` で公開します。利用者はファサードの戻り値を使うため、内部手順を参照する必要がありません）。
 
-**コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.CoreForControl` が所有します**（本プロジェクトはルーペの見た目と計算に限定します）。
+**コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.CoreForControl` が所有します**（本プロジェクトはルーペの見た目と計算に限定します）。**描画の手順は `LoupeControl.Rendering` が所有し**（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠。描画先は `IEsCanvas`）、本プロジェクトは描画 API を持ちません。
 
 ## 公開 API の可視性
 
 | 型 | 可視性 | 用途 |
 | --- | --- | --- |
-| `Loupe` | `public` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決、描画入力の生成、通知内容の解決 |
+| `Loupe` | `public` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決、描画入力の生成、通知内容の解決、描画実装の保持 |
+| `ILoupeRenderer` | `public` | 描画内容を描画面へ写す実装の契約（**描画の差し替え点**。既定実装は描画層の `LoupeRenderer`） |
 | `LoupeLayout` | `public` | 表示レイアウトの値（表示サイズ（DIP）と表示位置。配置しない場合は位置が null） |
-| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール・中心座標ラベルの契約。`Layers` は描く層とその順序を持ち、**描画順はコアが単一所有する**（ラベルは必ず末尾 = 常に最上位）） |
+| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール・中心座標ラベルの契約。`Layers` は描く層とその順序を持ち、**描画順はコアが単一所有する**（ラベルは必ず末尾 = 常に最上位））。描画の実行は UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が担う |
 | `LoupeOptions` | `public` | 設定の単一値（ホストが設定する） |
 | `LoupeAppearance` | `public` | 外観の単一値（設定の一部として、また単体でも外観を指定する） |
 | `LoupeValueCoercer` | `public` | 数値パラメータの既定値・安全域とクランプ |
 | `LoupeAppearanceScaler` | `public` | 外観の寸法値の物理ピクセル換算 |
 | `LoupeRenderRequest` | `public` | 1 フレーム分の描画入力（コア⇔UI の契約） |
 | `LoupeCoordLabel` | `public` | 中心座標ラベルの描画契約（文言・DIP の寸法・色・配置の計算）。表示はコントロールがテキスト要素として行う |
-| `LoupeCheckerboard` | `public` | 市松模様の明暗判定とタイル矩形 |
+| `LoupeCheckerboard` | `public` | 市松模様の明暗判定とタイル矩形の**列挙子**（`ComputeDarkTiles`。リストを確保しない） |
 | `LoupeDecorationGeometry` | `public` | 十字線・外枠の描画矩形 |
 | `LoupeLogFormat` / `LoupeLogMessage` | `public` | ログの書式と定義（UI 非依存の分） |
 | `Imaging.LoupeImageExtractor` | `public` | 切り出し領域の計算と `EsBitmap` からの切り出し |
 
-**internal（本アセンブリと単体テストのみ）**: `LoupePositionCalculator`（表示サイズ・位置の計算）/ `LoupeRenderArgsCalculator`（描画完了通知用の表示情報の計算と `RenderArgs`）/ `LoupeLabelLayout`（ラベルの余白と配置矩形）。いずれもファサード（`Loupe.ResolveLayout` / `Loupe.ResolveNotification` / `LoupeCoordLabel.ComputeFrame`）が吸収して提供します。
+**internal（本アセンブリと単体テストのみ）**: `LoupePositionCalculator`（表示サイズ・位置の計算）/ `LoupeRenderArgsCalculator`（描画完了通知用の表示情報の計算と `RenderArgs`）。いずれもファサード（`Loupe.ResolveLayout` / `Loupe.ResolveNotification`）が吸収して提供します。
 
 **UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
 
@@ -34,26 +35,37 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `Loupe(LoupeOptions? options = null)` | 生成（設定を省略した場合は `LoupeOptions.Default`） |
+| `Loupe(ILoupeRenderer renderer, LoupeOptions? options = null)` | 生成（設定を省略した場合は `LoupeOptions.Default`）。`renderer` は null 不可（本コアは描画層を参照できないため、描画実装は必須引数で注入する） |
 | `Options` | 設定（表示サイズ・拡大率・外観）の読み書き |
 | `RenderScaling` | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。補正は `LoupeValueCoercer` が単一所有する） |
 | `CenterPoint` | 拡大中心（ドメイン座標）。未設定（null）は市松模様のみを描画し、配置も行わない |
 | `PositionOffset` | 拡大中心からの右下オフセット（DIP） |
-| `DisplaySize` | 実際の表示サイズ（DIP。要求サイズを親領域の最小辺へクランプ済み） |
 | `SetCoordinateTransform(port)` | ドメイン ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換） |
-| `ResolveLayout(parentSize)` | 親領域サイズから表示レイアウト（`LoupeLayout`）を解決する（拡大中心未設定時は位置が null） |
-| `CreateRequest(availableSize = null)` | 描画 1 フレーム分の入力（`LoupeRenderRequest`）の生成（DIP → 物理ピクセルの換算と描画先へのクランプを含む） |
+| `ResolveLayout(parentSize)` | 親領域サイズから表示レイアウト（`LoupeLayout` = 表示サイズ + 位置）を解決する（拡大中心未設定時は位置が null）。**状態を変更しない**（親領域のサイズを保持しないため、値をいつ解決したかに依存しない） |
+| `CreateRequest(displaySize, availableSize = null)` | 描画 1 フレーム分の入力（`LoupeRenderRequest`）の生成（DIP → 物理ピクセルの換算と描画先へのクランプを含む）。表示サイズは呼び出し側が渡す（`ResolveLayout` の結果、または描画先の表面から導出した DIP） |
 | `ResolveNotification(request)` | 実際に描画した入力から描画完了通知の内容（`LoupeRenderNotification`）を解決する |
+| `Renderer` | 描画の実装（`ILoupeRenderer`）の取得・設定（**描画の差し替え**。null 不可。設定後の再描画は UI 層が要求する） |
+| `ResolveLabels(displaySize, measureText)` | 中心座標ラベルの配置指示（`EsLabelElement`）の解決（UI 要素として配置する UI 用）。表示サイズは要素の大きさ（`ResolveLayout` の結果）を渡す（描画の物理ピクセルから逆算しない） |
 
-**本型が単一所有するもの**: 表示サイズの決定（唯一の書き込み元）・表示位置の決定（中心 ＋ オフセット ＋ 親領域内へのクランプ）・描画入力の組み立て・通知内容の解決。
+**本型が単一所有するもの**: 表示レイアウトの解決（表示サイズのクランプと表示位置の決定）・描画入力の組み立て・通知内容の解決・描画実装の保持。
+
+### `ILoupeRenderer` のメンバー（`Estable.Loupe`・`public interface`）
+
+| メンバー | 説明 |
+| --- | --- |
+| `DrawShapes(canvas, source, in request, in notification)` | 図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く（**中心座標ラベルの層は描かない**。ラベルは UI の要素が描く） |
+| `ResolveLabels(coordLabel, measureText)` | 中心座標ラベルの配置指示（`EsLabelElement`）を解決する（UI 要素として配置する UI 用） |
+
+描く層とその順序はコアが単一所有し（`LoupeRenderNotification.Layers`）、実装は順序を判断しません。拡大元画像は UI ごとに型が異なるため引数で受け取ります（描画の契約には含めません）。本コアは描画層（`LoupeControl.Rendering`）を参照できないため、既定実装（`LoupeRenderer.Default`）は利用者が渡します。
 
 ```csharp
-var loupe = new Loupe(options) { CenterPoint = cursorDomain, RenderScaling = 1.25 };
+var loupe = new Loupe(LoupeRenderer.Default, options) { CenterPoint = cursorDomain, RenderScaling = 1.25 };
 loupe.SetCoordinateTransform(port);
 
 var layout = loupe.ResolveLayout(parentSize);          // 表示サイズ + 表示位置（配置はしない場合は Position が null）
-var request = loupe.CreateRequest(canvasSize);         // 描画入力（物理ピクセルを解決済み）
-var notification = loupe.ResolveNotification(request); // 切り出し左上・スケール・座標ラベル
+var request = loupe.CreateRequest(layout.DisplaySize, canvasSize); // 描画入力（物理ピクセルを解決済み）
+var notification = loupe.ResolveNotification(request); // 切り出し左上・スケール・層の順序
+var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベルを UI 要素として配置する場合
 ```
 
 ## `LoupeOptions`（`Estable.Loupe`・`public sealed record`）
@@ -90,9 +102,9 @@ var notification = loupe.ResolveNotification(request); // 切り出し左上・�
 | `FrameWidth` | `int` | `2` | 外枠の太さ（DIP）。安全域 1〜64 |
 | `CrossColor` | `DrawingColor` | 赤 40%（`#66FF0000`） | 十字線の色 |
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示可否 |
-| `CoordLabelColor` | `DrawingColor` | 白 | ラベルの文字色 |
-| `CoordLabelBackgroundColor` | `DrawingColor` | 黒 60%（`#99000000`） | ラベルの背景色 |
-| `CoordLabelFontSize` | `double` | `12.0` | ラベルのフォントサイズ（DIP）。安全域 6〜48 |
+| `CoordLabelColor` | `DrawingColor` | 白 | ラベルの文字色（`EsLabelDefaults.TextColor` = `Platform.Core`） |
+| `CoordLabelBackgroundColor` | `DrawingColor` | 黒 60%（`#99000000`） | ラベルの背景色（`EsLabelDefaults.BackgroundColor` = `Platform.Core`） |
+| `CoordLabelFontSize` | `double` | `12.0` | ラベルのフォントサイズ（DIP）。安全域 6〜48。既定値は `EsLabelDefaults.FontSize`（`Platform.Core`） |
 | `CoordLabelCornerRadius` | `int` | `2` | ラベルの背景の角丸半径（DIP）。安全域 0〜64（0 は角丸なし） |
 
 `record` のため `with` 式による部分変更と値の等価比較ができます。
@@ -131,7 +143,7 @@ var notification = loupe.ResolveNotification(request); // 切り出し左上・�
 | `CoerceRenderScaling(double)` | スケーリング係数を 0.1〜8.0 へクランプ。非有限値は `RenderScalingDefault` |
 | `CoerceCheckerSize(int)` | 市松模様の 1 タイルサイズを 1〜128 へクランプ |
 | `CoerceFrameWidth(int)` | 外枠の太さを 1〜64 へクランプ |
-| `CoerceCoordLabelFontSize(double)` | ラベル文字サイズを 6〜48 へクランプ。非有限値は既定値 |
+| `CoerceCoordLabelFontSize(double)` | ラベル文字サイズを 6〜48 へクランプ。非有限値は既定値（安全域と規則は `EsLabelMetrics`（`Platform.Core`）が単一所有し、本メソッドは既定値を添えて委譲する） |
 | `CoerceCoordLabelCornerRadius(int)` | ラベルの角丸半径を 0〜64 へクランプ（0 は角丸なし） |
 
 ## `LoupeAppearanceScaler`（`Estable.Loupe`）
@@ -142,8 +154,8 @@ var notification = loupe.ResolveNotification(request); // 切り出し左上・�
 | --- | --- |
 | `ScaleCheckerSize(LoupeAppearance, double scaling)` | 市松模様の 1 タイルサイズを物理ピクセルへ換算（切り上げ・最低 1）。`CheckerSize` は 1〜128 へ補正してから換算 |
 | `ScaleFrameWidth(LoupeAppearance, double scaling)` | 外枠の太さを物理ピクセルへ換算（切り上げ・最低 1）。`FrameWidth` は 1〜64 へ補正してから換算 |
-| `ScaleCoordLabelFontSize(LoupeAppearance, double scaling)` | ラベル文字サイズを物理ピクセルへ換算（実数のまま。描画 API へそのまま渡せるため切り上げない） |
-| `ScaleCoordLabelCornerRadius(LoupeAppearance, double scaling)` | ラベルの角丸半径を物理ピクセルへ換算。補正後の値が 0 の場合は 0（角丸なし）のまま返す（他の寸法値と異なり最低 1 へ切り上げない） |
+
+**中心座標ラベルは本型の対象外です**（「ラベル文字サイズ・角丸半径を換算する」という記述は過去のもので、実装は持ちません）。ラベルは DIP で配置するため、物理ピクセルへの換算を必要としません（テキスト要素として配置され、描画 API 側がスケーリングを扱います）。
 
 UI 層が `CheckerSize * scaling` のような式を自前で書かないための型です（片方の UI だけ換算が抜けると、DPI ≠ 100% で両 UI の見た目がずれます）。
 
@@ -166,7 +178,7 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 | --- | --- |
 | `Create(center, displaySize, renderScaling, options, availableSize = null)` | UI 層が保持する DIP 値（表示サイズ）と設定から描画入力を組み立てる。表示サイズを物理ピクセルへ換算し、描画先の領域が指定された場合はそれへクランプする（規則はコア内部が単一所有する） |
 
-表示サイズは `Options.RequestedSize` ではなく、UI 層が親領域・描画先へクランプした後の値を渡します（クランプの基準（親パネル / 描画先の表面）は UI ごとに異なるため、値の決定は UI 層が担います）。
+表示サイズは `Options.RequestedSize` ではなく、親領域でクランプした後の値を渡します（クランプの基準が親パネルか描画先の表面かで異なるため、値の決定は呼び出し側が担います）。
 
 拡大元画像は UI ごとに型が異なる（Avalonia は `IImage`、MewUI は `EsBitmap`）ため本値に含めず、描画層が解決した `EsBitmap` を別引数として渡します（両 UI が同じ手順で本値を組み立てられます）。
 
@@ -174,10 +186,10 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 
 | メンバー | 説明 |
 | --- | --- |
-| `Null` | `"null"`（未設定の表記） |
-| `FormatNumber(int)` / `FormatNumber(double)` | 数値を現在のカルチャに依存しない表記へ変換する（ログを環境非依存にする） |
-| `FormatPoint(EsPoint? point)` | `(X, Y)` 形式。未設定は `null` |
-| `DescribeImage(int? width, int? height)` | `Width×Height` 形式。片方でも未設定なら `null` |
+| `Null` | `"null"`（未設定の表記。UI も使う） |
+| `DescribeImage(int? width, int? height)` | `Width×Height` 形式。片方でも未設定なら `null`（UI も使う） |
+
+`FormatNumber` / `FormatPoint` はログ定義（`LoupeLogMessage`）の内部手順のため **internal** です（UI は数値をそのまま渡せる `LogSettingChanged` 系を使います）。
 
 ## `LoupeLogMessage`（`Estable.Loupe`）
 
@@ -204,11 +216,10 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 
 | メソッド | 説明 |
 | --- | --- |
-| `ComputeCaptureSize(int pixelSize, int zoomLevel)` | ルーペの一辺（物理ピクセル）から切り出し領域の一辺（ドメインピクセル）を計算（切り上げ）。切り出し・十字線位置・選択矩形変換で共用 |
-| `ComputeCaptureTopLeft(int centerX, int centerY, int size)` | 拡大中心から切り出し領域の左上（ドメイン座標）を計算 |
-| `ExtractRegionAt(EsBitmap source, int centerX, int centerY, int size)` | 指定位置を中心とする正方形領域を切り出す。ソース範囲外は透明パディング。戻り値の破棄は呼び出し側 |
 | `TryExtractRegionAt(EsBitmap? source, LoupeRenderRequest request)` | 拡大表示用の領域を切り出す。**切り出しの可否を単一所有**し、ソース・中心の未設定や破棄済み（`ObjectDisposedException`）は `null` を返す（例外を描画層へ伝播させない） |
 | `ComputeMagnifiedRects(SizeInt captureSize, int zoomLevel)` | 切り出した領域をルーペ領域へ拡大描画するときの矩形（切り出し元＝左上原点の切り出しサイズ、描画先＝左上原点の `zoomLevel` 倍）を計算する。引数はビットマップの実寸（`EsBitmap.Size`）をそのまま渡す（UI 層で型変換しない）。**拡大倍率と描画先の大きさの関係を単一所有**し、両 UI が同じ拡大結果になるようにする |
+
+`ComputeCaptureSize` / `ComputeCaptureTopLeft` / `ExtractRegionAt` は切り出しの内部手順のため **internal** です（利用者はファサードと `TryExtractRegionAt` / `ComputeMagnifiedRects` を使います）。
 
 ## 依存
 

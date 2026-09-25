@@ -11,25 +11,25 @@ namespace Estable.Loupe;
 /// <remarks>
 /// <see cref="Position"/> が null になるのは、拡大中心が未設定の場合である<br/>
 /// （「配置しない」の判断をコアが単一所有し、UI 層はセルフサイズの反映だけを行う）。<br/>
-/// 配置をホストが行う UI では <see cref="Position"/> をそのまま配置に使う。
+/// 配置をホストが行う UI では <see cref="Position"/> をそのまま配置に使う。<br/>
+/// <b><see cref="DisplaySize"/> は整数化しない</b>: 要素のサイズ（幅・高さ）と描画入力は同じ値でなければならず、<br/>
+/// 途中で切り捨てると同じ表示サイズを求める 2 経路が最大 1 DIP ずれる（描画ビットマップと要素の大きさが食い違う）。
 /// </remarks>
-public readonly record struct LoupeLayout(int DisplaySize, EsPoint? Position);
+public readonly record struct LoupeLayout(double DisplaySize, EsPoint? Position);
 
 /// <summary>ルーペの描画完了時に通知する表示情報（UI 層が描画に必要とする値）。</summary>
 /// <param name="CaptureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null。</param>
 /// <param name="Scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値）。</param>
-/// <param name="CoordLabel">中心座標ラベルの描画契約。非表示の設定または中心未設定時は null。</param>
 /// <param name="Layers">描く層とその順序（<b>描画順はコアが単一所有する</b>）。先頭から順に処理する。</param>
 /// <remarks>
-/// UI 層は <see cref="Layers"/> の順に各層を処理し、図形は自 UI の描画 API へ写し、
-/// 中心座標ラベルはテキスト要素を配置する（ラベルは必ず最後 = 常に最上位）。<br/>
-/// 切り出し領域・スケールの計算元は <see cref="LoupeRenderArgsCalculator"/> が、座標ラベルの契約は<br/>
-/// <see cref="LoupeCoordLabel.Resolve"/> が単一所有し、本値はそれらを 1 つにまとめた通知用の値である。
+/// UI 層は <see cref="Layers"/> の順に各層を処理し、図形は自 UI の描画 API へ写す。<br/>
+/// 中心座標ラベルは <see cref="Layers"/> の最後の層であり、UI のテキスト要素が描く（描画実装は当該の層を描かない。<br/>
+/// ラベル要素は親より後に描かれるため常に最上位になる）。<br/>
+/// 切り出し領域・スケールは <see cref="LoupeRenderArgsCalculator"/> が、層の順序はコアが単一所有する。
 /// </remarks>
 public readonly record struct LoupeRenderNotification(
     EsPoint? CaptureTopLeft,
     double Scale,
-    LoupeCoordLabel? CoordLabel,
     IReadOnlyList<LoupeDrawLayer> Layers);
 
 /// <summary>Loupe（拡大鏡）の操作を UI 層・ホストへ提供するファサード。</summary>
@@ -45,6 +45,10 @@ public readonly record struct LoupeRenderNotification(
 /// - 表示位置の決定（拡大中心 ＋ オフセット ＋ 親領域内へのクランプ）<br/>
 /// - 描画入力（<see cref="LoupeRenderRequest"/>）の組み立て（DIP → 物理ピクセルの換算と描画先へのクランプ）<br/>
 /// - 描画完了通知の内容（切り出し領域・スケール・座標ラベル）の解決<br/>
+/// - 描画実装（<see cref="ILoupeRenderer"/>）の保持<br/>
+/// <br/>
+/// <b>描画の差し替え</b>: 描画は <see cref="ILoupeRenderer"/> の実装へ委譲する（<see cref="Renderer"/> で差し替え可能）。<br/>
+/// コアは描画層を参照しないため、実装は注入で受け取る（コンストラクタで必須）。<br/>
 /// <br/>
 /// <b>UI 層の責務</b>: 拡大元画像の解決（UI ごとに型が異なる）、描画の実行（ビットマップ合成・キャンバス描画）、<br/>
 /// 再描画のバッチ化（UI のディスパッチャー）、公開プロパティ・公開イベントへの写像。<br/>
@@ -58,16 +62,38 @@ public sealed class Loupe
     /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は等価変換として扱う）。</summary>
     private ICoordTransform? _coordinatePort;
 
-    /// <summary>UI 層が通知した親領域サイズ（null = 未通知。未通知の場合はクランプしない）。</summary>
-    /// <remarks>
-    /// 「親領域が未確定ならクランプしない」の判断は <see cref="LoupePositionCalculator.ClampSizeToArea"/> が単一所有する。<br/>
-    /// 配置を行わない UI（ホストが配置する）は親領域を通知せず、要求サイズをそのまま表示サイズとして使う。
-    /// </remarks>
-    private EsSize? _parentSize;
+    /// <summary>描画内容を描画面へ写す描画実装（既定は描画層の <c>LoupeRenderer.Default</c>）。</summary>
+    private ILoupeRenderer _renderer;
 
     /// <summary>ファサードを初期化する。</summary>
+    /// <param name="renderer">描画の実装（既定実装は描画層の <c>LoupeRenderer.Default</c>）。null 不可。</param>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="LoupeOptions.Default"/>）。</param>
-    public Loupe(LoupeOptions? options = null) => Options = options ?? LoupeOptions.Default;
+    /// <exception cref="ArgumentNullException"><paramref name="renderer"/> が null の場合。</exception>
+    public Loupe(ILoupeRenderer renderer, LoupeOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(renderer);
+
+        _renderer = renderer;
+        Options = options ?? LoupeOptions.Default;
+    }
+
+    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。</summary>
+    /// <value>現在の描画実装。既定は <see cref="ILoupeRenderer"/> の既定実装。</value>
+    /// <remarks>
+    /// 描画先（<see cref="IEsCanvas"/> の実装）と描画手順（本プロパティ）の両方を差し替えできる。<br/>
+    /// 設定後の再描画は UI 層が要求する（本クラスは再描画のトリガーを持たない）。<br/>
+    /// null は受け付けない（設定の有無で描画可否が変わると、UI の描画経路に分岐が生まれるため）。
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
+    public ILoupeRenderer Renderer
+    {
+        get => _renderer;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _renderer = value;
+        }
+    }
 
     /// <summary>ルーペの設定（表示サイズ・拡大率・外観）。</summary>
     /// <value>設定の単一値。既定は <see cref="LoupeOptions.Default"/>。</value>
@@ -98,11 +124,6 @@ public sealed class Loupe
     /// <remarks>表示位置をカーソルから離して配置するためのホスト指定値である（位置のクランプはコアが行う）。</remarks>
     public double PositionOffset { get; set; }
 
-    /// <summary>ルーペの一辺の表示サイズ（DIP。要求サイズを親領域の最小辺へクランプ済み）。</summary>
-    /// <value>表示サイズ（DIP）。親領域が未通知の場合は <see cref="LoupeOptions.RequestedSize"/> のまま。</value>
-    /// <remarks>要素サイズ（Width / Height）と描画ビットマップは本値を基準に揃える（クランプは 1 回だけ行う）。</remarks>
-    public double DisplaySize => LoupePositionCalculator.ClampSizeToArea(Options.RequestedSize, _parentSize ?? default);
-
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。null の場合は等価変換。</param>
     /// <remarks>
@@ -123,74 +144,74 @@ public sealed class Loupe
     /// </remarks>
     public LoupeLayout ResolveLayout(EsSize parentSize)
     {
-        _parentSize = parentSize;
-        var size = DisplaySize;
+        var size = EsSizeMath.ClampToArea(Options.RequestedSize, parentSize);
 
         if (CenterPoint is not { } center)
         {
-            return new LoupeLayout((int)size, null);
+            return new LoupeLayout(size, null);
         }
 
         var centerDip = _coordinatePort.OrIdentity().Inverse(center);
         return new LoupeLayout(
-            (int)size,
+            size,
             LoupePositionCalculator.ComputePosition(size, parentSize, centerDip, PositionOffset));
     }
 
     /// <summary>現在の状態から描画 1 フレーム分の入力を生成する。</summary>
-    /// <param name="availableSize">描画先の領域サイズ。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
+    /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP。通常は <see cref="ResolveLayout"/> の結果）。</param>
+    /// <param name="availableSize">描画先の領域サイズ（物理ピクセル）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
     /// <returns>描画入力（物理ピクセルサイズ・拡大率・外観・スケーリングを解決済み）。</returns>
     /// <remarks>
-    /// DIP（表示サイズ・スケーリング）から物理ピクセルへの換算と、描画先の領域へのクランプは <see cref="LoupeRenderRequest"/> が単一所有する。<br/>
+    /// 表示サイズは呼び出し側が決めて渡す（親領域へのクランプは <see cref="ResolveLayout"/> が、<br/>
+    /// 実際の描画面からの導出は描画先を知る UI 層が担う）。本クラスは親領域のサイズを保持しない<br/>
+    /// （保持すると「クランプの基準」が暗黙の状態になり、値をいつ解決したかに依存する）。<br/>
+    /// DIP → 物理ピクセルの換算と描画先の領域へのクランプは <see cref="LoupeRenderRequest.Create"/> が単一所有する。<br/>
     /// 描画と通知（<see cref="ResolveNotification"/>）が同じ値を使うため、UI 層は本メソッドの結果を両方へ渡す。
     /// </remarks>
-    public LoupeRenderRequest CreateRequest(EsSize? availableSize = null)
-        => LoupeRenderRequest.Create(CenterPoint, DisplaySize, RenderScaling, Options, availableSize);
+    public LoupeRenderRequest CreateRequest(double displaySize, EsSize? availableSize = null)
+        => LoupeRenderRequest.Create(CenterPoint, displaySize, RenderScaling, Options, availableSize);
 
     /// <summary>実際に描画した入力から描画完了通知の内容を解決する。</summary>
     /// <param name="request">実際に描画した描画入力（<see cref="CreateRequest"/> の結果）。</param>
-    /// <returns>切り出し領域の左上・スケール・座標ラベルの契約・描画層の順序。</returns>
+    /// <returns>切り出し領域の左上・スケール・描画層の順序。</returns>
     /// <remarks>
     /// 描画に使った値を受け取る（本メソッドが DIP から再換算すると、描画先の領域によるクランプで実際の描画と値が食い違うため）。<br/>
-    /// 座標ラベルの表示可否・文言・配置はコアが単一所有する。<br/>
-    /// <b>描画順もコアが単一所有する</b>: 層の順序は <see cref="ResolveLayers"/> が決める（ラベルは最後 = 常に最上位）。
+    /// <b>描画順もコアが単一所有する</b>: 層の一覧は固定であり（<see cref="s_layers"/>）、中心座標ラベルは常に最後（最上位）である。
     /// </remarks>
     public LoupeRenderNotification ResolveNotification(in LoupeRenderRequest request)
     {
         var args = LoupeRenderArgsCalculator.Compute(request);
-        var coordLabel = LoupeCoordLabel.Resolve(request);
 
-        return new LoupeRenderNotification(
-            args.CaptureTopLeft, args.Scale, coordLabel, ResolveLayers(request, coordLabel));
+        return new LoupeRenderNotification(args.CaptureTopLeft, args.Scale, s_layers);
     }
 
-    /// <summary>描く層だけを描画順に並べる。</summary>
-    /// <param name="request">描画入力（外観）。</param>
-    /// <param name="coordLabel">中心座標ラベル。null の場合は層を含めない。</param>
-    /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
+    /// <summary>中心座標ラベルの配置指示を解決する（UI 要素として配置する UI 用）。</summary>
+    /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP。通常は <see cref="ResolveLayout"/> の結果）。</param>
+    /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
+    /// <returns>配置するラベル要素（1 要素）。中心未設定または非表示の設定の場合は空。</returns>
     /// <remarks>
-    /// 描画可否（透明色は描かない・切り出せない場合は画像を描かない）はコアが判定するが、<br/>
-    /// 拡大画像は「描けるかどうか」がソース（UI ごとに型が異なる）にも依存するため、<br/>
-    /// 層としては常に含め、描画側がソース未解決なら何もしない（順序の判断だけをコアが持つ）。<br/>
-    /// 中心座標ラベルは必ず末尾へ置き、常に最上位に表示する。
+    /// 文言（<see cref="CoordinateFormatter"/>）・表示可否（<see cref="LoupeAppearance.ShouldShowCoordLabel"/>）・<br/>
+    /// 配置（<see cref="EsLabelLayout"/>）はコアが単一所有し、通知から要素への写像（実寸の反映）は<br/>
+    /// <see cref="Renderer"/>（描画実装）へ委譲する。<br/>
+    /// 表示サイズは要素の大きさ（＝ <see cref="ResolveLayout"/> の結果）を渡す<br/>
+    /// （描画の物理ピクセルから逆算すると、丸めにより要素と背景が 1 DIP ずれうる）。
     /// </remarks>
-    private static IReadOnlyList<LoupeDrawLayer> ResolveLayers(in LoupeRenderRequest request, LoupeCoordLabel? coordLabel)
-    {
-        // 明示的に組み立てる（列挙に層を追加しても描画順が勝手に変わらないようにするため）
-        var layers = new List<LoupeDrawLayer>(6)
-        {
-            LoupeDrawLayer.Background,
-            LoupeDrawLayer.Checkerboard,
-            LoupeDrawLayer.Image,
-            LoupeDrawLayer.Crosshair,
-            LoupeDrawLayer.Frame,
-        };
+    public IReadOnlyList<EsLabelElement> ResolveLabels(double displaySize, Func<string, double, EsSize> measureText)
+        => _renderer.ResolveLabels(LoupeCoordLabel.Resolve(displaySize, CenterPoint, Options.Appearance), measureText);
 
-        if (coordLabel is not null)
-        {
-            layers.Add(LoupeDrawLayer.CoordLabel);
-        }
-
-        return layers;
-    }
+    /// <summary>描く層とその順序（中心座標ラベルは必ず最後 = 常に最上位）。</summary>
+    /// <remarks>
+    /// 図形の層の順序は固定であり、層の有無で変わらないため 1 つの一覧を共有する（描画のたびの確保を避ける）。<br/>
+    /// 中心座標ラベルは UI のテキスト要素が描くため、描画実装は当該の層を描かない<br/>
+    /// （一覧に含めるのは「ラベルが最上位である」という契約の表現である）。
+    /// </remarks>
+    private static readonly IReadOnlyList<LoupeDrawLayer> s_layers =
+    [
+        LoupeDrawLayer.Background,
+        LoupeDrawLayer.Checkerboard,
+        LoupeDrawLayer.Image,
+        LoupeDrawLayer.Crosshair,
+        LoupeDrawLayer.Frame,
+        LoupeDrawLayer.CoordLabel,
+    ];
 }

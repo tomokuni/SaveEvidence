@@ -99,13 +99,12 @@ public class MarqueeControlTests
         var window = Show(control);
         var pointer = CreatePointer();
 
-        // 新規選択ドラッグ中（押下 → 移動）: State=Dragging / IsDragging=true
+        // 新規選択ドラッグ中（押下 → 移動）: State=Dragging / ボタン押下中
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(10, 10)), 0UL, LeftPressed(), KeyModifiers.None, 1));
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None));
 
         var snap = control.CurrentSnapshot;
         Assert.Equal(MarqueeInteractionState.Dragging, snap.State);
-        Assert.True(snap.IsDragging);
         Assert.True(snap.IsMouseDown);
         Assert.True(snap.HasSelection);
 
@@ -1446,7 +1445,7 @@ public class MarqueeControlTests
         var control = CreateControl();
         var window = Show(control);
 
-        // 選択矩形を作成して描画（枠線 + 8 方向ハンドルが MarqueeDrawer で描画される）
+        // 選択矩形を作成して描画（枠線 + 8 方向ハンドルが描画される）
         control.SetSelection(new Rect(20, 20, 100, 80));
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
@@ -1577,6 +1576,35 @@ public class MarqueeControlTests
         await PumpLayoutAsync(control);
 
         Assert.Contains("(80, 70)", LabelTexts(control));
+        window.Close();
+    }
+
+    /// <summary>1 フレーム分の描画内容は 1 回だけ解決されることを検証する。</summary>
+    /// <remarks>
+    /// 図形の描画（描画フェーズ）とラベルの配置（配置フェーズ）が同じ描画内容を共有しないと、<br/>
+    /// 選択矩形・装飾・ラベル文言の解決と確保が 1 フレームで 2 回走る。<br/>
+    /// サイズラベルの文言プロバイダは <see cref="Marquee.ResolveContent"/> が 1 回だけ評価するため、<br/>
+    /// その呼び出し回数が 1 フレームの解決回数になる（選択がありサイズラベルを表示する場合のみ評価される）。
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task 描画内容は1フレームにつき1回だけ解決される()
+    {
+        var control = CreateControl();
+        var window = Show(control);
+        control.SetSelection(new Rect(20, 20, 60, 60));
+
+        var resolves = 0;
+        control.SizeLabelOverrideProvider = () =>
+        {
+            resolves++;
+            return "S";
+        };
+
+        await PumpLayoutAsync(control);
+        window.CaptureRenderedFrame();
+        await PumpLayoutAsync(control);
+
+        Assert.Equal(1, resolves);
         window.Close();
     }
 }

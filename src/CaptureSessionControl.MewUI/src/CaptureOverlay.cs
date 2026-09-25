@@ -558,7 +558,7 @@ internal sealed class CaptureOverlay
         var found = CaptureTypeTraits.FindUnderCursor(_finder, _type, screenPoint);
         var highlight = _highlight.Update(_type, found, _screenBounds.TopLeft);
 
-        _selector.HasHighlight = highlight.HasHighlight;
+        // 未検出は null で表す（null が「ハイライトしない」を意味する）
         _selector.LogicalHighlightRect = highlight.DomainRect;
 
         // 情報ラベル（ウィンドウタイトル）の文言は描画時に評価されるため、表示名が変わった場合だけ再描画を要求する

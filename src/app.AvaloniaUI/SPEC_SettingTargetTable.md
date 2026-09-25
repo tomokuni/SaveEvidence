@@ -87,7 +87,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | MarqueeControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
 | `HandleBorderColor`（ハンドルの枠線色） | ✅ `Options.Marquee.HandleBorderColor` / `Options.Deco.OuterAppearance.BorderColor`（同じ値） | ✅ | `MarqueeDecoOptions.OuterAppearance`（装飾層）が枠線の色を単一所有し、ホストが同じ値をハンドルの枠線へも割り当てる（選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なる） |
-| （枠線の太さ） | ✅ `Options.Deco.OuterAppearance.BorderThickness` | ✅ | 装飾層が単一所有する。ハンドルの枠線太さは `MarqueeAppearance.HandlePenThickness`（コアの定数） |
+| （枠線の太さ） | ✅ `Options.Deco.OuterAppearance.BorderThickness` | ✅ | 装飾層が単一所有する。ハンドルの枠線太さは `MarqueeOptions.HandleBorderThickness`（コアの定数。`MarqueeHandles.BorderThickness` として描画層へ渡る） |
 | `HandleColor` | ✅ `Options.Marquee.HandleColor` | ✅ | |
 | `HandleSize` | ✅ `Options.Marquee.HandleSize` | ✅ | |
 | `HandleHitRadius` | ✅ `Options.Marquee.HandleHitRadius` | ✅ | |
@@ -205,7 +205,7 @@ DPI スケーリング（`Scaling` / `LoupeRenderScaling`）は `CaptureSettings
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
 | 選択枠の色（不透明度含む） | `CaptureBorderColor` | `MarqueeOptions.HandleBorderColor` / `OuterDecoAppearance.BorderColor`（アルファ込み） |
-| 選択枠の太さ | `CaptureBorderThickness` | `OuterDecoAppearance.BorderThickness`（装飾が単一所有する。ハンドルの枠線太さは `MarqueeAppearance.HandlePenThickness`） |
+| 選択枠の太さ | `CaptureBorderThickness` | `OuterDecoAppearance.BorderThickness`（装飾が単一所有する。ハンドルの枠線太さは `MarqueeOptions.HandleBorderThickness`） |
 | 選択矩形の最小サイズ | `MinSelectionSize` | `MarqueeOptions.MinSelectionSize` |
 | 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `OuterDecoAppearance.OverlayColor`（アルファ込み） |
 | ルーペの拡大率 | `LoupeZoomLevel` | `LoupeControl.Options.ZoomLevel` |
@@ -238,7 +238,7 @@ DPI スケーリング（`Scaling` / `LoupeRenderScaling`）は `CaptureSettings
 | --- | --- | --- |
 | キャプチャ時にメインウィンドウを隠す | `HideMainWindowOnCapture` | `CaptureSettings.HideOwnerWindow` |
 | キャプチャ枠の色（不透明度含む） | `CaptureBorderColor` | `MarqueeOptions.HandleBorderColor` / `OuterDecoAppearance.BorderColor`（アルファ込み） |
-| キャプチャ枠の太さ | `CaptureBorderThickness` | `OuterDecoAppearance.BorderThickness`（装飾が単一所有する。ハンドルの枠線太さは `MarqueeAppearance.HandlePenThickness`） |
+| キャプチャ枠の太さ | `CaptureBorderThickness` | `OuterDecoAppearance.BorderThickness`（装飾が単一所有する。ハンドルの枠線太さは `MarqueeOptions.HandleBorderThickness`） |
 | 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `OuterDecoAppearance.OverlayColor`（アルファ込み） |
 
 - 選択矩形の最小サイズ（`MinSelectionSize`）は「外観設定」（§4）に配置。

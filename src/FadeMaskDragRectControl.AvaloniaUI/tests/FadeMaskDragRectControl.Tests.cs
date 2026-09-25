@@ -1042,15 +1042,12 @@ public class FadeMaskDragRectControlTests
 
         // 未設定時: 既定値
         Assert.Null(control.LogicalHighlightRect);
-        Assert.False(control.HasHighlight);
 
         // 設定時: 外側の装飾（MarqueeControl）へ反映される
         control.LogicalHighlightRect = new Rect(100, 50, 1920, 1080);
-        control.HasHighlight = true;
         control.DisplayScaleScaling = 1.5;
 
         Assert.Equal(new Rect(100, 50, 1920, 1080), control.LogicalHighlightRect);
-        Assert.True(control.HasHighlight);
         Assert.Equal(1.5, control.DisplayScaleScaling);
         // コントロール経由の getter も検証する（暗転マスクへの委譲）
         Assert.Equal(1.5, control.DisplayScaleScaling);

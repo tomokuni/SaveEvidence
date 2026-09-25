@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
 namespace Estable.Loupe;
@@ -32,8 +33,8 @@ public sealed record LoupeAppearance
 
     /// <summary>下地を塗るかどうかを取得する。</summary>
     /// <value>下地のアルファが 0 でない場合は true。false の場合は塗りを省略できる。</value>
-    /// <remarks>アルファ 0 を描画しない扱いにする判断は本型が単一所有する（UI 層に持たせない）。</remarks>
-    public bool HasBackground => BackgroundColor.A > 0;
+    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
+    public bool HasBackground => BackgroundColor.IsVisible();
 
     // ====================================================================
     // 市松模様
@@ -83,20 +84,23 @@ public sealed record LoupeAppearance
 
     /// <summary>十字線を描画するかどうかを取得する。</summary>
     /// <value>十字線の色のアルファが 0 でない場合は true。</value>
-    /// <remarks>アルファ 0 を描画しない扱いにする判断は本型が単一所有する（UI 層に持たせない）。</remarks>
-    public bool HasCrosshair => CrossColor.A > 0;
+    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
+    public bool HasCrosshair => CrossColor.IsVisible();
 
     /// <summary>外枠を描画するかどうかを取得する。</summary>
     /// <value>外枠の色のアルファが 0 でない場合は true。</value>
-    public bool HasFrame => FrameColor.A > 0;
+    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
+    public bool HasFrame => FrameColor.IsVisible();
 
     /// <summary>市松模様の明色で下地を塗るかどうかを取得する。</summary>
     /// <value>色Aのアルファが 0 でない場合は true。false の場合は塗りを省略できる。</value>
-    public bool HasCheckerColorA => CheckerColorA.A > 0;
+    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
+    public bool HasCheckerColorA => CheckerColorA.IsVisible();
 
     /// <summary>市松模様の暗色タイルを描画するかどうかを取得する。</summary>
     /// <value>色Bのアルファが 0 でない場合は true。</value>
-    public bool HasCheckerColorB => CheckerColorB.A > 0;
+    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
+    public bool HasCheckerColorB => CheckerColorB.IsVisible();
 
     // ====================================================================
     // 中心座標ラベル
@@ -108,11 +112,11 @@ public sealed record LoupeAppearance
 
     /// <summary>中心座標ラベルの文字色を取得する。</summary>
     /// <value>アルファを含む色。既定は白。</value>
-    public DrawingColor CoordLabelColor { get; init; } = DrawingColor.White;
+    public DrawingColor CoordLabelColor { get; init; } = EsLabelDefaults.TextColor;
 
     /// <summary>中心座標ラベルの背景色を取得する。</summary>
     /// <value>アルファを含む色。既定は黒 60%（#99000000）。</value>
-    public DrawingColor CoordLabelBackgroundColor { get; init; } = DrawingColor.FromArgb(153, 0, 0, 0);
+    public DrawingColor CoordLabelBackgroundColor { get; init; } = EsLabelDefaults.BackgroundColor;
 
     /// <summary>中心座標ラベルのフォントサイズ（DIP）を取得する。</summary>
     /// <value>フォントサイズ（DIP）。既定は 12.0。設定時は 6〜48 へ補正される（非有限値は既定値）。</value>

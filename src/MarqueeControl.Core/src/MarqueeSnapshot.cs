@@ -7,27 +7,24 @@ namespace Estable.Marquee;
 /// 各イベント引数（選択矩形イベント / 位置イベント）に含まれ、上位は Marquee の状態をポーリングせずイベントだけで状態を把握できる。<br/>
 /// <see cref="SelectionRect"/> は選択矩形（ドメイン座標）。ドラッグ中はドラッグ中の矩形、nudge 中は nudge 適用後の矩形。<br/>
 /// <see cref="ActiveTarget"/> はアクティブなドラッグハンドル。新規選択・移動・未選択時は <see cref="HitTarget.None"/>。<br/>
-/// <see cref="IsDragging"/> はドラッグ中かどうか（新規選択・移動・リサイズのいずれか）。<see cref="State"/> が
-/// <see cref="MarqueeInteractionState.Dragging"/> / <see cref="MarqueeInteractionState.DraggingNudging"/> の場合に true（明示的に保持し、導出を不要にする）。<br/>
+/// ドラッグ中かどうかは <see cref="State"/>（<see cref="MarqueeInteractionState.Dragging"/> / <see cref="MarqueeInteractionState.DraggingNudging"/>）で判定できる（同じ真実を 2 つ持たない）。<br/>
 /// <see cref="NudgeActive"/> は nudge（矢印キー微調整）中かどうか。ホストが nudge 中の表示切替等に使用できる。<br/>
 /// コア型（<see cref="EsRect"/> / <see cref="EsPoint"/>）のみに依存し、UI フレームワークへ依存しない（各 UI 実装の境界で変換する）。<br/>
-/// 値セマンティクスで比較できる record として定義する（生成は <see cref="MarqueeState.CreateSnapshot"/>）。<br/>
+/// <b>値型</b>である: ポインター移動のたびに通知するためヒープ確保を避ける（値セマンティクスで比較できる）。<br/>
 /// 項目の並びは「要約 → 主要データ → 位置 → 操作フラグ」の順（可読性のため）。
 /// </remarks>
-/// <param name="State">対話状態（State パターン）。</param>
+/// <param name="State">対話状態（nudge・ドラッグ・選択の合成）。</param>
 /// <param name="SelectionRect">選択矩形（ドメイン座標）。ドラッグ中の場合はドラッグ中の矩形。</param>
 /// <param name="ActiveTarget">アクティブなドラッグハンドル。None はハンドルなし（新規選択・移動・未選択）。</param>
 /// <param name="MousePosition">通知時点のマウス位置（ドメイン座標）。</param>
 /// <param name="IsMouseDown">マウスボタン（左）が押下中かどうか。</param>
-/// <param name="IsDragging">ドラッグ中（新規選択・移動・リサイズ）かどうか。</param>
 /// <param name="NudgeActive">nudge（矢印キー微調整）中かどうか。</param>
-public sealed record MarqueeSnapshot(
+public readonly record struct MarqueeSnapshot(
     MarqueeInteractionState State,
     EsRect SelectionRect,
     HitTarget ActiveTarget,
     EsPoint MousePosition,
     bool IsMouseDown,
-    bool IsDragging,
     bool NudgeActive)
 {
     /// <summary>選択矩形が有効かどうか（幅・高さが 0 より大きい選択状態）。</summary>

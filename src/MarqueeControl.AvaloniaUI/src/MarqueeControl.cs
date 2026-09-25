@@ -1,11 +1,13 @@
 using Estable.Marquee;
 using Estable.Marquee.Decoration;
 using Estable.Marquee.CoreForControl;
+using Estable.Marquee.Rendering;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Labels;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Coordinate;
@@ -127,7 +129,7 @@ public sealed partial class MarqueeControl : Panel
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
         _effects = new Effects(this);
-        _marquee = new MarqueeFacade(_effects, _cursor, Options);
+        _marquee = new MarqueeFacade(MarqueeRenderer.Default, _effects, _cursor, Options);
         // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
         _marquee.Scaling = GetValue(ScalingProperty);
         _marquee.Notified += OnNotified;
@@ -146,8 +148,10 @@ public sealed partial class MarqueeControl : Panel
         // Panel は Render をシールするため自前で描けず、また子として持つことでラベル要素（後から追加する子）が
         // 必ず図形より後に描かれ「ラベルは常に最上位」というコアの描画順契約が構造で保証される。
         Children.Add(new ShapeLayer(this));
+        _labelHost = new EsLabelElementHost(this);
     }
-
+    /// <summary>ラベル要素（背景 + テキスト）を子として同期するホスト（コアの配置指示を写す）。</summary>
+    private readonly EsLabelElementHost _labelHost;
     /// <summary>図形（装飾・ハンドル・始点マーカー）だけを描画する子コントロール。</summary>
     /// <remarks>
     /// 親（<see cref="MarqueeControl"/>）の描画内容を読んで描くだけであり、判断を持たない。<br/>
@@ -196,6 +200,65 @@ public sealed partial class MarqueeControl : Panel
         DisplayScaleScalingProperty.Changed.AddClassHandler<MarqueeControl>(
             static (c, e) => c._marquee.DisplayScaleScaling = e.GetNewValue<double>());
     }
+
+    // ====================================================================
+    // 描画
+    // ====================================================================
+
+    /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
+    /// <value>現在の描画実装。既定は <see cref="MarqueeRenderer.Default"/>。</value>
+    /// <remarks>
+    /// 保持と再描画の要求はコアのファサード（<see cref="MarqueeFacade.Renderer"/>）が単一所有する（本層は委譲するだけ）。<br/>
+    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
+    public IMarqueeRenderer Renderer
+    {
+        get => _marquee.Renderer;
+        set => _marquee.Renderer = value;
+    }
+
+    // ====================================================================
+    // 1 フレーム分の描画内容（1 フレーム = 1 回だけ解決する）
+    // ====================================================================
+
+    /// <summary>直近に解決した描画内容（null = 未解決）。</summary>
+    private MarqueeDrawContent? _frame;
+
+    /// <summary>直近に解決した描画内容の基準サイズ（DIP）。</summary>
+    private EsSize _frameSize;
+
+    /// <summary>1 フレーム分の描画内容を解決して保持する（同じ基準サイズでは再解決しない）。</summary>
+    /// <param name="clientSize">描画領域のサイズ（DIP。UI 実装の描画先のサイズ）。</param>
+    /// <returns>そのフレームの描画内容。</returns>
+    /// <remarks>
+    /// 図形の描画（<c>RenderShapes</c>）とラベルの配置（<c>ArrangeOverride</c>）が同じ描画内容を使う。<br/>
+    /// 解決を 2 回行うと、選択矩形・装飾・ラベル文言の解決と確保が 1 フレームで重複する。<br/>
+    /// 状態が変わると <see cref="InvalidateFrame"/> が破棄し、次の解決で最新の状態を反映する。
+    /// </remarks>
+    private MarqueeDrawContent ResolveFrame(EsSize clientSize)
+    {
+        if (_frame is not { } cached || _frameSize != clientSize)
+        {
+            cached = _marquee.ResolveContent(clientSize);
+            _frame = cached;
+            _frameSize = clientSize;
+        }
+
+        return cached;
+    }
+
+    /// <summary>保持している描画内容を取得する（未解決の場合のみ解決する）。</summary>
+    /// <param name="clientSize">描画領域のサイズ（DIP。未解決時の解決にだけ使う）。</param>
+    /// <returns>そのフレームの描画内容。</returns>
+    /// <remarks>
+    /// 描画フェーズ（<c>RenderShapes</c>）は配置フェーズが解決した値をそのまま使う<br/>
+    /// （配置と描画で基準サイズが丸めによりわずかに違っても、1 フレームの解決を 2 回にしない）。
+    /// </remarks>
+    private MarqueeDrawContent CurrentFrame(EsSize clientSize) => _frame ?? ResolveFrame(clientSize);
+
+    /// <summary>保持している描画内容を破棄する（次の解決で最新の状態を反映する）。</summary>
+    private void InvalidateFrame() => _frame = null;
 
     // ====================================================================
     // ログ
@@ -281,7 +344,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント。</summary>
     /// <remarks>
     /// 本コントロールは文字（ラベル・座標ラベル）を描かない。テキストの実寸測定は描画 API に依存するため、<br/>
-    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<see cref="MarqueeLabelLayoutPlan"/>）。<br/>
+    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<see cref="MarqueeLabelPlan"/>）。<br/>
     /// 契約は文字に限定せず**描画内容全体**（<see cref="MarqueeRenderedEventArgs.Content"/>）を渡すため、ホストは文字以外の上書きもできる。<br/>
     /// <b>描画中に発火する</b>ため、ハンドラ内で描画を完了させること（コンテキストを保持しない）。<br/>
     /// 描画のたびに発火する（文字の有無は <c>Content.HasText</c> で判定できる）。
@@ -459,36 +522,35 @@ public sealed partial class MarqueeControl : Panel
     /// <remarks>
     /// 効果の適用順序（フォーカス → カーソル形状 → 再描画）はコアが単一所有するため、<br/>
     /// 本実装は呼ばれた順に自 UI の操作へ接続するだけでよい（判断を持たない）。<br/>
+    /// <see cref="MarqueeEffectsBase"/> を継承し、本 UI が必要とする効果だけを override する<br/>
+    /// （ポインターキャプチャは Avalonia が押下で暗黙にキャプチャするため実装しない）。<br/>
     /// コアは <see cref="IMarqueeEffects"/> のみに依存し、UI フレームワークを知らない。
     /// </remarks>
-    private sealed class Effects(MarqueeControl owner) : IMarqueeEffects
+    private sealed class Effects(MarqueeControl owner) : MarqueeEffectsBase
     {
         /// <summary>フォーカスを取得する（矢印キー nudge の受け付け開始）。</summary>
-        public void RequestFocus() => owner.Focus();
+        public override void RequestFocus() => owner.Focus();
 
         /// <summary>再描画を要求する。</summary>
-        /// <remarks>ラベル（サイズ・カーソル座標）はテキスト要素であり、配置は配置フェーズで書き換えるため、再描画と併せて配置も無効化する。</remarks>
-        public void RequestRedraw()
+        /// <remarks>
+        /// ラベル（サイズ・カーソル座標）はテキスト要素であり、配置は配置フェーズで書き換えるため、再描画と併せて配置も無効化する。<br/>
+        /// 保持している描画内容も破棄する（状態の変化を次の解決へ反映させる）。
+        /// </remarks>
+        public override void RequestRedraw()
         {
+            owner.InvalidateFrame();
             owner.InvalidateVisual();
             owner.InvalidateArrange();
         }
 
         /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
         /// <param name="kind">カーソル形状の種別（コア提供）。</param>
-        public void SetCursorShape(MarqueeCursorKind kind) => owner.ApplyCursorShape(kind);
-
-        /// <summary>ポインターキャプチャを取得または解放する。</summary>
-        /// <param name="capture">true = 取得 / false = 解放。</param>
-        /// <remarks>Avalonia はポインター押下で暗黙にキャプチャするため何もしない（明示操作は不要）。</remarks>
-        public void SetPointerCapture(bool capture)
-        {
-        }
+        public override void SetCursorShape(MarqueeCursorKind kind) => owner.ApplyCursorShape(kind);
 
         /// <summary>ドメイン座標を画面物理座標へ変換する（カーソル移動用）。</summary>
         /// <param name="domainPoint">ドメイン座標。</param>
         /// <returns>画面物理座標（UI 非依存のコア型）。</returns>
-        public EsPixelPoint ToScreenPoint(EsPoint domainPoint)
+        public override EsPixelPoint ToScreenPoint(EsPoint domainPoint)
             => ScreenConverter.LocalDipToScreen(owner, owner._marquee.ToDip(domainPoint).ToAvaloniaPoint()).ToEsPixelPoint();
     }
 

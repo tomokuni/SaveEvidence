@@ -49,6 +49,29 @@ public static class SkiaFill
         }
     }
 
+    /// <summary>複数の矩形を同じ色で塗る（列挙子を 1 つだけ生成し、矩形のリストは確保しない）。</summary>
+    /// <typeparam name="TWalker">実装する列挙子自身の型（構造体）。</typeparam>
+    /// <param name="canvas">描画先のキャンバス。</param>
+    /// <param name="rects">塗る矩形を列挙する列挙子（呼び出しごとに先頭から列挙する）。</param>
+    /// <param name="color">塗り色（不透明度はアルファ）。</param>
+    /// <remarks>
+    /// 要素数が描画先の大きさに比例して増える列（市松模様のタイル等）で使う<br/>
+    /// （<see cref="Rects(SKCanvas, IReadOnlyList{EsRect}, DrawingColor)"/> は要素数分のリストを要求するため、<br/>
+    /// 列挙子で受けることでヒープ確保をゼロにする。制約付きジェネリックなのでボックス化もしない）。
+    /// </remarks>
+    public static void Rects<TWalker>(SKCanvas canvas, TWalker rects, DrawingColor color)
+        where TWalker : struct, IEsRectWalker<TWalker>
+    {
+        ArgumentNullException.ThrowIfNull(canvas);
+
+        using var paint = new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill, Color = color.ToSKColor() };
+
+        while (rects.MoveNext())
+        {
+            canvas.DrawRect(rects.Current.ToSKRect(), paint);
+        }
+    }
+
     /// <summary>角丸矩形を塗る（半径 0 の場合は四角形）。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
     /// <param name="rect">塗る矩形（コア座標）。</param>

@@ -131,6 +131,8 @@ flowchart TB
 | `EsBitmapAvaloniaExtensions` | `EsBitmap`（Core）の Avalonia 向け生成・変換・ピクセル操作拡張 |
 | `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ（Skia 直描画・所有権を保持） |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（スレッド安全。容量超過時は全体をクリア） |
+| `AvaloniaCanvas` | `EsUtil.Platform.Core.Imaging.IEsCanvas`（描画ポート）を Avalonia の `DrawingContext` へ適合させるアダプタ。ブラシとペンを容量制限付きで共有し、`Clear` は渡された矩形の塗りで代用する |
+| `Labels/EsLabelElementHost` | コアが解決したラベル要素（`EsLabelElement`）を親パネルの子要素（`Border` + `TextBlock`）として同期するホスト。寸法・位置・色はコアの指示を使い、色 → ブラシの容量制限付きキャッシュを単一所有する |
 | `ColorExtensions` | C# 14 静的拡張メンバー `FromAColor`（基準色＋不透明度から色を生成） |
 
 - **可視性**: public

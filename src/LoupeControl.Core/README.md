@@ -8,53 +8,61 @@
 
 **操作の唯一の窓口は公開ファサード `Loupe`** です。UI 層とホストは本型だけを参照し、表示レイアウト・描画入力・通知内容の解決を本型へ委ねます（個々の計算クラスはファサードの内部実装として使われます）。
 
+**描画は契約（`ILoupeRenderer`）で受け取り、差し替えられます**。本コアは描画 API を持たず描画層も参照できない（依存の向きは `Core` → 描画層の一方向）。既定実装は描画層（`LoupeControl.Rendering` の `LoupeRenderer.Default`）が提供し、コンストラクタで注入します。
+
 ## 収録する型
 
 | 型 | 責務 |
 | --- | --- |
-| `Loupe` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、描画完了通知の内容解決（`ResolveNotification`）、座標変換ポートの設定（`SetCoordinateTransform`） |
+| `Loupe` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、描画完了通知の内容解決（`ResolveNotification`）、座標変換ポートの設定（`SetCoordinateTransform`）、描画実装の保持（`Renderer`。差し替え可能） |
+| `ILoupeRenderer` | 描画内容（何を描くか）を描画面（どう描くか）へ写す実装の契約（**描画の差し替え点**）。既定実装は描画層の `LoupeRenderer`（`LoupeRenderer.Default`）。本コアは描画 API を持たず、実装を注入で受ける |
 | `LoupeLayout` | 表示レイアウトの値（表示サイズ（DIP）と表示位置（親領域 DIP）。配置しない場合は位置が null）。ファサードの結果として UI・ホストへ渡す |
-| `LoupeRenderNotification` | 描画完了通知の値（切り出し左上・スケール・中心座標ラベルの契約・**描く層の順序**）。切り出し領域とスケールは `LoupeRenderArgsCalculator`（内部）、ラベルは `LoupeCoordLabel.Resolve`、層は `Loupe.ResolveNotification` が単一所有する |
+| `LoupeRenderNotification` | 描画完了通知の値（切り出し左上・スケール・**描く層の順序**）。切り出し領域とスケールは `LoupeRenderArgsCalculator`（内部）、層は `Loupe.ResolveNotification` が単一所有する |
 | `LoupeOptions` | ルーペの設定（表示サイズ・拡大率・外観）を 1 つの値として所有（**public**）。既定値・数値項目の安全域への補正（生成時。値の設定経路によらず範囲内の値だけが保持される）を持つ。UI 層は本型を 1 プロパティとして公開するだけ |
 | `LoupeAppearance` | ルーペの外観（下地・市松模様・外枠・十字線・中心座標ラベル）12 項目の単一所有（**public**）。既定値・数値項目の安全域への補正（生成時）・描画可否の判定（アルファ 0 は描画しない）・ラベル表示の判定（`ShouldShowCoordLabel`）を持つ |
 | `LoupeValueCoercer` | ルーペの数値パラメータ（表示サイズ / 拡大率 / スケーリング / 市松模様 / 外枠 / ラベル文字サイズ / ラベルの角丸）の既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ |
-| `LoupeAppearanceScaler` | 外観の寸法値（市松模様のタイルサイズ・外枠の太さ・座標ラベルのフォントサイズ・角丸半径）を描画に使う物理ピクセルへ換算（安全域への補正は外観の生成時に済んでいるため再補正しない）。描画層は換算結果を使うだけ |
+| `LoupeAppearanceScaler` | 外観の寸法値（市松模様のタイルサイズ・外枠の太さ）を描画に使う物理ピクセルへ換算（安全域への補正は外観の生成時に済んでいるため再補正しない）。描画層は換算結果を使うだけ。**中心座標ラベルは本型の対象外**（ラベルは DIP で配置するため換算を必要としない） |
 | `LoupeRenderRequest` | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層は自 UI の公開プロパティから本値を組み立てて描画層・コアの計算へ渡すだけで、描画に必要な値の単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を持たない |
-| `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法・色）と配置の計算（`ComputeFrame`）。**表示はコントロールが行う**（`Border` + `TextBlock` の要素として配置する）ため、実寸測定だけを UI が行い本値へ渡す（測定は描画 API 依存） |
-| `LoupePositionCalculator`（**internal**） | 表示サイズの親領域へのクランプ（`ClampSizeToArea`）・表示位置（中心 + オフセット）の計算と親領域内へのクランプ（`ComputePosition`。親サイズが未確定の場合の判断も含む）・両者を合成した計算（`Compute`）・描画に使う物理ピクセルサイズの解決（`ResolvePixelSize`）。表示サイズを要素へ先に反映する UI はファサードの `ResolveLayout` を使う（内部手順はファサードの実装詳細のため外部に公開しない） |
-| `LoupeDecorationGeometry` | 十字線（縦横 2 本）と外枠（4 辺）の描画矩形の計算（各 UI は返された `EsRect` を自身の描画 API へ渡すだけ） |
-| `LoupeLabelLayout`（**internal**） | 中心座標ラベルの余白（上端からの距離・内側余白）と、背景矩形・文字原点の計算（両 UI で同じ位置にラベル要素を置く）。利用者は `LoupeCoordLabel.ComputeFrame` だけを使う |
-| `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位）。UI 層は `LoupeRenderNotification.Layers` を先頭から処理するだけで、順序を判断しない |
-| `LoupeCheckerboard` | 市松模様のタイルの明暗判定と、暗色タイルの矩形列挙（`ComputeDarkTileRects`。各 UI が同一のパターンを描画できるようにする） |
+| `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法・色）と配置の計算（`ComputeFrame`）。**表示はコントロールが行う**（`Border` + `TextBlock` の要素として配置する）ため、実寸測定だけを UI が行い本値へ渡す（測定は描画 API 依存）。体裁（背景・文字原点）は `EsLabelLayout`（Platform.Core）が単一所有し、要素への写像は `IEsLabel.ToElement`（拡張メソッド）が単一所有する |
+| `LoupePositionCalculator`（**internal**） | 表示位置（中心 + オフセット）の計算と親領域内へのクランプ（`ComputePosition`。親サイズが未確定の場合の判定も含む）・描画に使う物理ピクセルサイズの解決（`ResolvePixelSize`。表示サイズのクランプは `EsSizeMath.ClampToArea` へ委譲する）。表示サイズを要素へ先に反映する UI はファサードの `ResolveLayout` を使う（内部手順はファサードの実装詳細のため外部に公開しない） |
+| `LoupeDecorationGeometry` | 十字線（縦横 2 本）と外枠（4 辺）の描画矩形の計算（描画層 `LoupeControl.Rendering` の `LoupeRenderer` が返された `EsRect` を描画ポートへ渡すだけ） |
+| `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位）。描画の実行は UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が担い、`LoupeRenderNotification.Layers` を先頭から処理するだけである（順序を判断しない） |
+| `LoupeCheckerboard` | 市松模様のタイルの明暗判定と、暗色タイルの**列挙子**（`ComputeDarkTiles`）。タイル数は描画先の大きさに比例して増えるため、リストを確保せずに列挙する（各 UI が同一のパターンを描画できるようにする） |
 | `LoupeRenderArgsCalculator`（**internal**） | 描画完了イベント引数用の表示情報（切り出し左上 / スケール）の計算。物理ピクセルサイズは実際に描画した値を受け取る。利用者はファサードの `ResolveNotification` だけを使う |
 | `LoupeLogFormat` | 設定値の変更ログが出力する値の文字列化（`(X, Y)` / `Width×Height` / `null`） |
 | `LoupeLogMessage` | ログ定義（設定変更・拡大中心の変更・描画例外・再描画の進行）と書式・変化判定（同値の再設定では出力しない）の単一所有 |
 | `Imaging.LoupeImageExtractor` | 切り出し領域の一辺・左上（ドメイン座標）の計算と、`EsBitmap` からの領域切り出し、切り出し可否を含む取得（`TryExtractRegionAt`）、拡大描画の矩形（`ComputeMagnifiedRects`。引数はビットマップの実寸 `EsBitmap.Size`） |
 
-**全型が public** です（外部が独自の UI アダプタを実装できるようにするため。他アセンブリへの `InternalsVisibleTo` は持ちません）。
-
 **公開面の性格**: 本プロジェクトの型はすでに「UI アダプタ契約」（描画層・ホストが使う計算・契約・ログ）に限定されています。操作の入口はファサード（`Loupe`）に一本化し、表示サイズの決定（唯一の書き込み元を持つ規則）・表示位置・描画入力・通知内容の解決は本型が単一所有します（個々の計算クラスはファサードの内部で使われます）。
+
+**大部分の型は public** です（外部が独自の UI アダプタを実装できるようにするため）。内部手順（配置計算・描画引数の計算）は **internal** とし、単体テストにのみ `InternalsVisibleTo`（`LoupeControl.Core.Tests`）で公開します。
 
 **UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログは `LoupeControl.AvaloniaUI` にあります）。
 
 ## 依存方向
 
+層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
+
 ```text
-LoupeControl.AvaloniaUI（Avalonia 実装） / LoupeControl.MewUI （コントロール化の処理は LoupeControl.CoreForControl）
-  └──> LoupeControl.Core（本プロジェクト）
-         └──> Platform.Core（コア幾何型・静的計算）
+UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
+  入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
+    ├──> LoupeControl.Rendering   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
+    ├──> LoupeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
+    └──> LoupeControl.Core ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+           └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
+※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
 
 本プロジェクトが UI フレームワークへ依存することはありません。外部パッケージへの直接依存もありません（`Platform.Core` 経由で SkiaSharp を参照します）。
 
-**コントロール化にだけ必要な処理は `LoupeControl.CoreForControl` が所有します**（再描画要求のバッチ化・世代番号管理）。本プロジェクトはルーペの見た目と計算（どのアセンブリでも同じ結果になる部分）に限定します。
+**コントロール化にだけ必要な処理は `LoupeControl.CoreForControl` が所有します**（再描画要求のバッチ化・世代番号管理）。**描画の手順は `LoupeControl.Rendering` が所有します**（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠を層の順に描く。描画先は `IEsCanvas`）。本プロジェクトはルーペの見た目と計算（どのアセンブリでも同じ結果になる部分）に限定し、描画 API を持ちません。
 
 ## 層の責務の境界
 
 | 層 | 責務 |
 | --- | --- |
 | Core（本プロジェクト） | 設定・外観の値とその既定値・補正、状態の判断、両 UI 共通の計算、コア⇔UI の契約（描画入力・描画完了通知）、公開ファサード（`Loupe` = 操作の唯一の窓口）、ログ定義 |
-| UI 層（`LoupeControl.*`） | 状態（拡大元画像・拡大中心）の保持と設定（`Options`）の保持、**ファサードへの委譲**（表示レイアウト・描画入力・通知内容の解決）、フレームワーク固有の描画とホスト結線 |
+| UI 層（`LoupeControl.*`） | 状態（拡大元画像・拡大中心）の保持と設定（`Options`）の保持、**ファサードへの委譲**（表示レイアウト・描画入力・通知内容の解決）、描画層（`LoupeRenderer`）への描画の委譲、描画ポートの適合（`AvaloniaCanvas` / `SkiaEsCanvas`）とラベル要素の配置、ホスト結線 |
 
 UI 層に残してよい分岐は 4 種のみです（それ以外の判断はコアへ移します）。
 
@@ -75,11 +83,11 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 
 **設定と状態（データ）は区別します**。マウス移動ごとに変わる拡大元画像・拡大中心は個別プロパティのままです（設定に含めると、中心の更新のたびに外観を含む値全体を組み立て直すことになります）。DPI スケーリング係数（環境値）と表示位置のオフセット（UI 固有のホスト結線）も設定に含めません。
 
-**表示サイズ（クランプ済み）の決定はコアのファサードが単一所有します**。要求サイズを親領域の最小辺へクランプする規則と、その結果を保持する場所（`Loupe.DisplaySize`）は 1 箇所です。UI 層は `ResolveLayout` の結果を要素サイズ・描画入力・配置へ写すだけです（複数箇所でクランプすると、要求サイズの変更直後にクランプ前の値で描画され、要素サイズと描画ビットマップが食い違います）。
+**表示サイズ（クランプ済み）の決定はコアのファサードが単一所有します**。要求サイズを親領域の最小辺へクランプする規則は `Loupe.ResolveLayout` の 1 箇所です（親領域のサイズを引数で受けるため、クランプの基準をコアが保持しません）。UI 層は `ResolveLayout` の結果を要素サイズ・描画入力・配置へ写すだけです（複数箇所でクランプすると、要求サイズの変更直後にクランプ前の値で描画され、要素サイズと描画ビットマップが食い違います）。
 
 **操作の入口は公開ファサード（`Loupe`）に一本化します**。UI 層とホストは本型だけを参照し、表示レイアウトの解決（`ResolveLayout`）・描画入力の生成（`CreateRequest`）・通知内容の解決（`ResolveNotification`）を本型へ委ねます（MewUI 版のホストも位置計算のために計算クラスを直接呼ばず、コントロールの `ResolveLayout` を経由します）。
 
-**下地色（`LoupeAppearance.BackgroundColor`）は外観が単一所有します**。市松模様の色は半透明のため、背後の要素を透かしたくない場合はホストが不透明色を指定します（既定は透明 = 透かす）。**キャンバスへ直接描画する UI（MewUI）とウィンドウの上へ重ねる UI（Avalonia）のどちらも同じ外観値で指定でき、UI 層に固有の下地プロパティを持ちません**。塗る処理と描画順は描画層が単一所有します。
+**下地色（`LoupeAppearance.BackgroundColor`）は外観が単一所有します**。市松模様の色は半透明のため、背後の要素を透かしたくない場合はホストが不透明色を指定します（既定は透明 = 透かす）。**キャンバスへ直接描画する UI（MewUI）とウィンドウの上へ重ねる UI（Avalonia）のどちらも同じ外観値で指定でき、UI 層に固有の下地プロパティを持ちません**。塗る処理と描画順は UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が単一所有します。
 
 ## 座標型
 
@@ -97,7 +105,7 @@ dotnet build src/LoupeControl.Core/src/LoupeControl.Core.csproj
 
 ## テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、すべて `[Fact]` で並列実行されます。
+`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます（**合計 176 件**。`[Theory]` は展開後のケース数）。
 
 ```powershell
 dotnet test src/LoupeControl.Core/tests/LoupeControl.Core.Tests.csproj

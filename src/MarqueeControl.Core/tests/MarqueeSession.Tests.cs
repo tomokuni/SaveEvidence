@@ -65,7 +65,7 @@ public class MarqueeSessionTests
         Assert.Equal([MarqueeNoticeKind.SelectionStarted], Kinds(notices));
         Assert.True(feedback.Redraw);
         Assert.True(feedback.RequestFocus);
-        Assert.True(feedback.CaptureMouse);
+        Assert.Equal(MarqueeCaptureAction.Capture, feedback.Capture);
     }
 
     [Fact]
@@ -78,12 +78,15 @@ public class MarqueeSessionTests
         var feedback = session.Press(new EsPoint(148, 128), clickCount: 1);
 
         // スナップ: ドラッグ基準点とマウス位置がハンドル点（150, 130）になり、カーソルもそこへ移動する
-        Assert.Equal(new EsPoint(150, 130), session.State.DragStartPoint);
         Assert.Equal(new EsPoint(150, 130), session.LastMousePosition);
         Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
         Assert.Equal(new EsPoint(150, 130), feedback.CursorDomainPosition);
         Assert.Equal(MarqueeNoticeKind.MarkerPositionMoved, notices[^1].Kind);
         Assert.Equal(new EsPoint(150, 130), notices[^1].Position);
+
+        // 基準点がハンドル点へ揃っているため、ハンドル点への移動では矩形が変わらない
+        session.Move(new EsPoint(150, 130));
+        Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionRect);
     }
 
     [Fact]
@@ -92,11 +95,14 @@ public class MarqueeSessionTests
         var session = CreateSession(out _);
         session.SetSelection(new EsRect(50, 50, 100, 80));
 
-        // 矩形内（中心）を押下する → 移動（Move）
-        var feedback = session.Press(new EsPoint(100, 90), clickCount: 1);
+        // 矩形内（中心からずれた位置）を押下する → 移動（Move）
+        var feedback = session.Press(new EsPoint(70, 70), clickCount: 1);
 
         Assert.False(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
-        Assert.Equal(new EsPoint(100, 90), session.State.DragStartPoint);
+
+        // スナップしないため、押下位置からの移動量がそのまま矩形へ反映される
+        session.Move(new EsPoint(80, 80));
+        Assert.Equal(new EsRect(60, 60, 100, 80), session.SelectionRect);
     }
 
     [Fact]
@@ -270,7 +276,13 @@ public class MarqueeSessionTests
         Assert.Equal(nudgePosition, feedback.CursorDomainPosition);
         Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
         Assert.True(feedback.UpdateCursorShape);
-        Assert.Equal(nudgePosition, session.State.SuppressEchoAt);
+
+        // 抑制: nudge 位置へのエコー移動は矩形を上書きしない（通知も発生しない）
+        var rectBefore = session.SelectionRect;
+        notices.Clear();
+        session.Move(nudgePosition);
+        Assert.Empty(notices);
+        Assert.Equal(rectBefore, session.SelectionRect);
     }
 
     // ====================================================================
@@ -333,7 +345,6 @@ public class MarqueeSessionTests
         Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Hide));
         Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
         Assert.True(session.NudgeActive);
-        Assert.True(session.CrosshairVisible);
         Assert.Contains(MarqueeNoticeKind.SelectionChanged, Kinds(notices));
         Assert.Contains(MarqueeNoticeKind.MarkerPositionMoved, Kinds(notices));
     }
@@ -661,10 +672,9 @@ public class MarqueeSessionTests
             ClampToDomainBounds = false,
         });
 
-        Assert.Equal(20.0, session.MinSelectionSize);
-        Assert.Equal(30.0, session.HandleHitRadius);
-        Assert.False(session.ClampToDomainBounds);
         Assert.Equal(20.0, session.Options.MinSelectionSize);
+        Assert.Equal(30.0, session.Options.HandleHitRadius);
+        Assert.False(session.Options.ClampToDomainBounds);
     }
 
     [Fact]
@@ -730,9 +740,9 @@ public class MarqueeSessionTests
             Log = NullLogger.Instance,
         };
 
-        Assert.Equal(25.0, session.MinSelectionSize);
-        Assert.Equal(40.0, session.HandleHitRadius);
-        Assert.False(session.ClampToDomainBounds);
+        Assert.Equal(25.0, session.Options.MinSelectionSize);
+        Assert.Equal(40.0, session.Options.HandleHitRadius);
+        Assert.False(session.Options.ClampToDomainBounds);
     }
 
     [Fact]
@@ -741,9 +751,9 @@ public class MarqueeSessionTests
         var session = new MarqueeSession(null) { Log = NullLogger.Instance };
 
         Assert.Equal(MarqueeOptions.Default, session.Options);
-        Assert.Equal(6.0, session.MinSelectionSize);
-        Assert.Equal(12.0, session.HandleHitRadius);
-        Assert.True(session.ClampToDomainBounds);
+        Assert.Equal(6.0, session.Options.MinSelectionSize);
+        Assert.Equal(12.0, session.Options.HandleHitRadius);
+        Assert.True(session.Options.ClampToDomainBounds);
     }
 
     // ====================================================================

@@ -3,11 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Estable.AvaloniaUI.Loupe.Logging;
-using Estable.AvaloniaUI.Loupe.Rendering;
 using Estable.Loupe;
 using Estable.Loupe.CoreForControl;
 using Estable.Loupe.Imaging;
+using Estable.Loupe.Rendering;
 using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Labels;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
@@ -31,7 +32,7 @@ namespace Estable.AvaloniaUI.Loupe;
 /// 中心周辺領域を切り出して拡大描画する（Binding 方式）。<br/>
 /// 表示は内部の <see cref="Image"/> 要素へ生成Bitmapを設定する方式に統一する。<br/>
 /// <br/>
-/// <b>描画の委譲</b>: 描画（抽出→拡大→十字線→市松→外枠）は <see cref="LoupeRenderer"/> に委譲し、<br/>
+/// <b>描画の委譲</b>: 描画（抽出→拡大→十字線→市松→外枠）の手順は UI 非依存の描画層（<c>LoupeControl.Rendering</c>）が<br/>
 /// 本コントロールは状態（DP）とライフサイクル（ビットマップ生成/解放）に専念する。<br/>
 /// <br/>
 /// <b>再描画のバッチ化</b>: 複数プロパティの連続変更は <see cref="Dispatcher"/> へのポストにより<br/>
@@ -80,6 +81,7 @@ public sealed class LoupeControl : Panel
         // ルーペ画像を表示する子要素を最初に加える（子は親より後に描かれるため、ラベル要素より下になる）
         _image = new Image { Stretch = Stretch.Fill, IsHitTestVisible = false };
         Children.Add(_image);
+        _labelHost = new EsLabelElementHost(this);
 
         // 初期状態は非表示（表示指示は IsVisible=true で行う）
         IsVisible = false;
@@ -112,7 +114,7 @@ public sealed class LoupeControl : Panel
     /// （本コントロールは自 UI の公開プロパティで受け取った値を転送し、返された値を反映するだけ）。<br/>
     /// フィールド初期化子で生成する（AXAML の初期化でプロパティ変更が発火しても参照できるようにするため）。
     /// </remarks>
-    private readonly LoupeFacade _loupe = new();
+    private readonly LoupeFacade _loupe = new(LoupeRenderer.Default);
 
     /// <summary>表示位置（RenderTransform）のインスタンス（座標更新時は値を書き換えて再利用する）。</summary>
     private readonly TranslateTransform _positionTransform = new();
@@ -120,8 +122,8 @@ public sealed class LoupeControl : Panel
     /// <summary>ルーペ画像を表示する子要素（生成ビットマップを <see cref="Image.Source"/> へ設定する）。</summary>
     private readonly Image _image;
 
-    /// <summary>ラベル要素（背景 + テキスト）を保持する。要素数はラベルの有無に追従する。</summary>
-    private readonly List<Border> _labelElements = [];
+    /// <summary>ラベル要素（背景 + テキスト）を子として同期するホスト（コアの配置指示を写す）。</summary>
+    private readonly EsLabelElementHost _labelHost;
 
     /// <summary>テキストの実寸測定に使うブラシ（測定には色が影響しないため固定で共有する。外観値ではない）。</summary>
     private static readonly SolidColorBrush s_measureBrush = new(Colors.White);
@@ -180,7 +182,7 @@ public sealed class LoupeControl : Panel
         var parent = Parent as Panel;
 
         // 親領域未接続（配置前・テスト等）はクランプの基準が無いためクランプされない（規則はコアが単一所有する）
-        var layout = _loupe.ResolveLayout(parent?.Bounds.Size.ToEsSize() ?? default);
+        var layout = _loupe.ResolveLayout(ParentAreaSize);
 
         // 表示サイズは要素サイズ・描画サイズ（物理ピクセルへの換算元）で同じ値を使う
         // （別々にクランプすると丸めの違いで要素が親領域からはみ出しうる）
@@ -215,69 +217,18 @@ public sealed class LoupeControl : Panel
     /// <param name="finalSize">本コントロールへ割り当てられたサイズ（DIP）。</param>
     /// <returns>割り当てサイズ。</returns>
     /// <remarks>
-    /// <b>位置はコアが決める</b>: コアの描画内容から得た配置（<see cref="LoupeLabelLayoutPlan"/>）に従って<br/>
-    /// ラベル要素を配置するだけであり、本クラスは位置の計算を持たない。<br/>
-    /// ラベル要素は <see cref="Panel.Children"/> の末尾へ置く（子は親より後に描かれるため、ラベルは常に最上位になる）。
+    /// <b>位置はコアが決める</b>: コアの配置指示（<see cref="LoupeLabelPlan"/>）に従ってラベル要素を配置するだけであり、<br/>
+    /// 本クラスは位置の計算を持たない。要素は <see cref="Panel.Children"/> の末尾へ置かれるため常に最上位になる。<br/>
+    /// 配置指示（実寸 → 配置矩形の写像）は描画実装（<see cref="LoupeFacade.Renderer"/>。既定実装は
+    /// <see cref="LoupeLabelPlan"/> へ委譲）が単一所有し、要素への写像は UI 共通のホストが単一所有する。<br/>
+    /// 実寸は自 UI の描画 API（<see cref="FormattedText"/>）で測って渡す（コアは実寸から背景の大きさ・中央寄せの位置を計算する）。
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
-        // 配置の基準は実際に描画する領域（親から割り当てられたサイズ）である（コアは実寸から配置を求める）
-        UpdateLabelElements(_loupe.CreateRequest(finalSize.ToEsSize()));
+        // 表示サイズは要素の大きさ（親から割り当てられたサイズ）である（ラベルの水平位置の基準になる）
+        _labelHost.Sync(_loupe.ResolveLabels(finalSize.Width, MeasureText));
 
         return base.ArrangeOverride(finalSize);
-    }
-
-    /// <summary>コアの描画内容に合わせてラベル要素を追加・更新する。</summary>
-    /// <param name="request">コアが解決した描画入力（レイアウトの基準になる）。</param>
-    /// <remarks>
-    /// 実寸は自 UI の描画 API（<see cref="FormattedText"/>）で測ってコアへ渡す<br/>
-    /// （コアは実寸から背景の大きさ・中央寄せの位置を計算する）。
-    /// </remarks>
-    private void UpdateLabelElements(in LoupeRenderRequest request)
-    {
-        var notification = _loupe.ResolveNotification(request);
-        var elements = LoupeLabelLayoutPlan.Resolve(notification, MeasureText);
-
-        while (_labelElements.Count > elements.Count)
-        {
-            var last = _labelElements[^1];
-            _labelElements.RemoveAt(_labelElements.Count - 1);
-            Children.Remove(last);
-        }
-
-        while (_labelElements.Count < elements.Count)
-        {
-            var border = new Border { Child = new TextBlock { TextWrapping = TextWrapping.NoWrap } };
-            _labelElements.Add(border);
-            Children.Add(border);
-        }
-
-        for (var i = 0; i < elements.Count; i++)
-        {
-            ApplyLabelElement(_labelElements[i], elements[i]);
-        }
-    }
-
-    /// <summary>ラベル要素の内容と配置をコアの指示に合わせる。</summary>
-    /// <param name="border">更新する要素（背景）。</param>
-    /// <param name="element">コア（CoreForControl）が解決した配置指示。</param>
-    private static void ApplyLabelElement(Border border, in LoupeLabelElement element)
-    {
-        border.Background = LoupeBrushes.Get(element.BackgroundColor);
-        border.CornerRadius = new CornerRadius(element.CornerRadius);
-        border.Padding = new Thickness(element.PaddingX, element.PaddingY);
-        border.Width = element.Bounds.Width;
-        border.Height = element.Bounds.Height;
-        border.Margin = new Thickness(element.Bounds.X, element.Bounds.Y, 0, 0);
-        border.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
-        border.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
-
-        if (border.Child is TextBlock text)
-        {
-            text.Text = element.Text;
-            text.FontSize = element.FontSize;
-            text.Foreground = LoupeBrushes.Get(element.TextColor);
-        }
     }
 
     /// <summary>テキストの実寸を測定する（描画 API でしか測れない値）。</summary>
@@ -390,12 +341,10 @@ public sealed class LoupeControl : Panel
     // 公開プロパティ（設定・環境）
     // ====================================================================
 
-    /// <summary>実際の表示サイズ（DIP。クランプ済みの値）。</summary>
-    /// <remarks>
-    /// 値の決定（<see cref="LoupeOptions.RequestedSize"/> を親領域の最小辺へクランプする規則）はコアのファサードが単一所有する。<br/>
-    /// 要素サイズ（Width / Height）も同じ値から <see cref="UpdatePosition"/> が設定する（描画ビットマップと必ず一致する）。
-    /// </remarks>
-    private double DisplaySize => _loupe.DisplaySize;
+    /// <summary>レイアウト（クランプ）の基準になる親パネルのサイズ。</summary>
+    /// <value>親パネルのサイズ（DIP）。親が未接続（配置前・テスト等）の場合は 0x0（クランプしない）。</value>
+    /// <remarks>親のサイズが確定しているかの判定とクランプはコア（<see cref="LoupeFacade.ResolveLayout"/>）が単一所有する。</remarks>
+    private EsSize ParentAreaSize => (Parent as Panel)?.Bounds.Size.ToEsSize() ?? default;
 
     /// <summary>ルーペの設定（表示サイズ・拡大率・外観）を取得または設定する。</summary>
     /// <value>設定の単一値。既定はコアの既定値（<see cref="LoupeOptions.Default"/>）。</value>
@@ -417,6 +366,26 @@ public sealed class LoupeControl : Panel
     {
         get => GetValue(RenderScalingProperty);
         set => SetValue(RenderScalingProperty, value);
+    }
+
+    /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
+    /// <value>現在の描画実装。既定は <see cref="LoupeRenderer.Default"/>。</value>
+    /// <remarks>
+    /// 保持はコアのファサード（<see cref="LoupeFacade.Renderer"/>）が単一所有する。<br/>
+    /// 変更すると再生成（<see cref="RequestRender"/>）とラベル要素の再配置を要求する<br/>
+    /// （ラベルの文言・寸法は描画実装が解決するため）。<br/>
+    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
+    public ILoupeRenderer Renderer
+    {
+        get => _loupe.Renderer;
+        set
+        {
+            _loupe.Renderer = value;
+            RequestRender();
+            InvalidateArrange();
+        }
     }
 
     /// <summary>ログ用に Avalonia 座標をコア座標へ変換する。</summary>
@@ -576,12 +545,12 @@ public sealed class LoupeControl : Panel
     {
         try
         {
-            // 描画入力（コア⇔UI の契約）はコアのファサードが自 UI の公開プロパティの写しから組み立てる
-            // （DIP 換算・クランプはコアが単一所有する）
-            var request = _loupe.CreateRequest();
+            // 描画入力（コア⇔UI の契約）は現在のレイアウト（親領域でのクランプ結果）から組み立てる
+            // （描画入力の値・単位・換算はコアが単一所有する。開始時に固定しない）
+            var request = _loupe.CreateRequest(_loupe.ResolveLayout(ParentAreaSize).DisplaySize);
             var notification = _loupe.ResolveNotification(request);
 
-            var bitmap = await LoupeRenderPipeline.RenderAsync(Source, request, notification.Layers);
+            var bitmap = await LoupeRenderPipeline.RenderAsync(_loupe.Renderer, Source, request, notification);
 
             // 描画反映（SetLoupeBitmap）は描画フェーズ（Render 優先度）で実行する。
             // マウス移動中の連続再描画では、既定の Normal 優先度の継続が入力イベント（Input 優先度）に

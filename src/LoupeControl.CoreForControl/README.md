@@ -13,14 +13,20 @@
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `LoupeRenderCoordinator` | public | 再描画要求のバッチ化（1 フレームに 1 回）と世代番号管理。表示状態・ビットマップ解放・描画開始・実行キューへのポストをコールバックで受け取る |
-| `LoupeLabelLayoutPlan` / `LoupeLabelElement` | public | 中心座標ラベルの配置指示（配置矩形・文字原点・文言・寸法・色・角丸）を実寸から解決する。**文字は描かず、UI 要素として置くための指示を返す**（実寸測定だけを UI 層が行う） |
 
 ## 依存方向
 
+層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
+
 ```text
-LoupeControl.AvaloniaUI / LoupeControl.MewUI（UI 層）
-  └──> LoupeControl.CoreForControl（本プロジェクト。コントロール化のスケジューリング）
-         （依存パッケージ・プロジェクト参照は持たない）
+UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
+  入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
+    ├──> LoupeControl.Rendering   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
+    ├──> LoupeControl.CoreForControl ← 本プロジェクト   組み込み先がある場合にだけ必要な規則
+    └──> LoupeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+           └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
+※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
+※ 本層を使うのは LoupeControl.AvaloniaUI のみ（MewUI は中間ビットマップを持たず同期描画するため不要）。
 ```
 
 本プロジェクトは UI フレームワークへ依存しません（Avalonia / MewUI の型を参照しません）。`Dispatcher.UIThread` 等の実行キューは UI 層が `post` コールバックとして注入します。
@@ -53,8 +59,7 @@ _coordinator.CancelAndRelease();   // 非表示遷移・明示クリア（要求
 
 ```text
 tests/
-├── LoupeRenderCoordinator.Tests.cs # バッチ化・世代番号・適用判定・破棄と解放・防御分岐（12 件）
-└── LoupeLabelLayoutPlan.Tests.cs   # ラベル要素の配置指示の解決（ラベルなし・ラベル 1 件・配置・測定の呼ばれ方・引数の検証）（5 件）
+└── LoupeRenderCoordinator.Tests.cs # バッチ化・世代番号・適用判定・破棄と解放・防御分岐（12 件）
 ```
 
 ```powershell

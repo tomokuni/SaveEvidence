@@ -30,6 +30,8 @@
     <ProjectReference Include="..\..\MarqueeControl.Core\src\MarqueeControl.Core.csproj" />
     <!-- コントロール化のための転送規則（ホイール要求の解釈） -->
     <ProjectReference Include="..\..\MarqueeControl.CoreForControl\src\MarqueeControl.CoreForControl.csproj" />
+    <!-- 描画の手順（層の順序と描画ポートへの写し）を単一所有する UI 非依存の描画層 -->
+    <ProjectReference Include="..\..\MarqueeControl.Rendering\src\MarqueeControl.Rendering.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,11 +4,13 @@ using Aprillz.MewUI.Skia.Controls;
 using Estable.Marquee;
 using Estable.Marquee.Decoration;
 using Estable.Marquee.CoreForControl;
+using Estable.Marquee.Rendering;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
+using EsUtil.Platform.MewUI.Labels;
 using EsUtil.Platform.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -85,8 +87,8 @@ public sealed class MarqueeControl : Panel
     /// </remarks>
     private readonly ShapeCanvas _shapes;
 
-    /// <summary>ラベル要素（背景 + テキスト）を保持する。要素数は層の有無に追従する。</summary>
-    private readonly List<Border> _labelElements = [];
+    /// <summary>ラベル要素（背景 + テキスト）を子として同期するホスト（コアの配置指示を写す）。</summary>
+    private readonly EsLabelElementHost _labelHost;
 
     /// <summary>コアが要求する効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。</summary>
     private readonly IMarqueeEffects _effects;
@@ -129,7 +131,7 @@ public sealed class MarqueeControl : Panel
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
         _effects = new Effects(this);
-        _marquee = new MarqueeFacade(_effects, _cursor, Options);
+        _marquee = new MarqueeFacade(MarqueeRenderer.Default, _effects, _cursor, Options);
         // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
         _marquee.Scaling = GetValue(ScalingProperty);
         _marquee.Notified += OnNotified;
@@ -146,6 +148,7 @@ public sealed class MarqueeControl : Panel
         // 図形は専用の子キャンバスが描く（ラベル要素より先に子として加えるため、常にラベルの下になる）
         _shapes = new ShapeCanvas(this) { IsHitTestVisible = false };
         Add(_shapes);
+        _labelHost = new EsLabelElementHost(this);
 
         // フォーカスを失ったら nudge を終了する（カーソル非表示の残留防止）
         this.OnLostFocus(EndNudge);
@@ -220,7 +223,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント。</summary>
     /// <remarks>
     /// 本コントロールは文字（ラベル・座標ラベル）を描かない。テキストの実寸測定は描画 API に依存するため、<br/>
-    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<see cref="MarqueeLabelLayoutPlan"/>）。<br/>
+    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<see cref="MarqueeLabelPlan"/>）。<br/>
     /// 契約は文字に限定せず**描画内容全体**（<see cref="MarqueeRenderedEventArgs.Content"/>）を渡すため、ホストは文字以外の上書きもできる。<br/>
     /// <b>描画中に発火する</b>ため、ハンドラ内で描画を完了させること（キャンバスを保持しない）。<br/>
     /// 描画のたびに発火する（文字の有無は <c>Content.HasText</c> で判定できる）。
@@ -318,6 +321,19 @@ public sealed class MarqueeControl : Panel
     /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
     public EsRect SelectionRect => _marquee.SelectionRect;
 
+    /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
+    /// <value>現在の描画実装。既定は <see cref="MarqueeRenderer.Default"/>。</value>
+    /// <remarks>
+    /// 保持と再描画の要求はコアのファサード（<see cref="MarqueeFacade.Renderer"/>）が単一所有する（本層は委譲するだけ）。<br/>
+    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
+    public IMarqueeRenderer Renderer
+    {
+        get => _marquee.Renderer;
+        set => _marquee.Renderer = value;
+    }
+
     /// <summary>操作ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>
@@ -381,18 +397,57 @@ public sealed class MarqueeControl : Panel
     {
         // 子（図形のキャンバスとラベル要素）へ利用可能サイズを伝搬する
         _shapes.Measure(availableSize);
-        foreach (var element in _labelElements)
-        {
-            element.Measure(availableSize);
-        }
+        _labelHost.Measure(availableSize);
 
         return Size.Empty;
     }
 
+    // ====================================================================
+    // 1 フレーム分の描画内容（1 フレーム = 1 回だけ解決する）
+    // ====================================================================
+
+    /// <summary>直近に解決した描画内容（null = 未解決）。</summary>
+    private MarqueeDrawContent? _frame;
+
+    /// <summary>直近に解決した描画内容の基準サイズ（DIP）。</summary>
+    private EsSize _frameSize;
+
+    /// <summary>1 フレーム分の描画内容を解決して保持する（同じ基準サイズでは再解決しない）。</summary>
+    /// <param name="clientSize">描画領域のサイズ（DIP。DIP 換算済みの描画先サイズ）。</param>
+    /// <returns>そのフレームの描画内容。</returns>
+    /// <remarks>
+    /// 図形の描画（<c>OnPaintSurface</c>）とラベルの配置（<c>ArrangeContent</c>）が同じ描画内容を使う。<br/>
+    /// 解決を 2 回行うと、選択矩形・装飾・ラベル文言の解決と確保が 1 フレームで重複する。<br/>
+    /// 状態が変わると <see cref="InvalidateFrame"/> が破棄し、次の解決で最新の状態を反映する。
+    /// </remarks>
+    private MarqueeDrawContent ResolveFrame(EsSize clientSize)
+    {
+        if (_frame is not { } cached || _frameSize != clientSize)
+        {
+            cached = _marquee.ResolveContent(clientSize);
+            _frame = cached;
+            _frameSize = clientSize;
+        }
+
+        return cached;
+    }
+
+    /// <summary>保持している描画内容を取得する（未解決の場合のみ解決する）。</summary>
+    /// <param name="clientSize">描画領域のサイズ（DIP。未解決時の解決にだけ使う）。</param>
+    /// <returns>そのフレームの描画内容。</returns>
+    /// <remarks>
+    /// 描画フェーズ（<c>OnPaintSurface</c>）は配置フェーズが解決した値をそのまま使う<br/>
+    /// （配置と描画で基準サイズが丸めによりわずかに違っても、1 フレームの解決を 2 回にしない）。
+    /// </remarks>
+    private MarqueeDrawContent CurrentFrame(EsSize clientSize) => _frame ?? ResolveFrame(clientSize);
+
+    /// <summary>保持している描画内容を破棄する（次の解決で最新の状態を反映する）。</summary>
+    private void InvalidateFrame() => _frame = null;
+
     /// <summary>子（図形のキャンバス・ラベル要素）を配置する。</summary>
     /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
     /// <remarks>
-    /// <b>位置はコアが決める</b>: ラベルの配置は <see cref="MarqueeLabelLayoutPlan"/>（コントロール化の層）が<br/>
+    /// <b>位置はコアが決める</b>: ラベルの配置は <see cref="MarqueeLabelPlan"/>（描画層）が<br/>
     /// 実寸から求めた矩形をそのまま使い、本クラスは要素を <c>Arrange</c> するだけである。<br/>
     /// MewUI は <c>Margin</c> による絶対配置が反映されないため、配置フェーズで明示的に位置を確定させる。<br/>
     /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。
@@ -402,58 +457,9 @@ public sealed class MarqueeControl : Panel
         // 図形のキャンバスは親領域全体を埋める
         _shapes.Arrange(bounds);
 
-        var content = _marquee.ResolveContent(bounds.Size.ToEsSize());
-        var elements = MarqueeLabelLayoutPlan.Resolve(content, SkiaText.Measure);
-
-        SyncLabelElements(elements.Count);
-        for (var i = 0; i < elements.Count; i++)
-        {
-            var element = elements[i];
-            ApplyLabelElement(_labelElements[i], element);
-            _labelElements[i].Arrange(new Rect(
-                bounds.X + element.Bounds.X, bounds.Y + element.Bounds.Y, element.Bounds.Width, element.Bounds.Height));
-        }
-    }
-
-    /// <summary>ラベル要素の数を描くラベルの数に合わせる。</summary>
-    /// <param name="count">必要な要素数。</param>
-    /// <remarks>余分な要素は子から外し、不足分は生成して子へ追加する（描画のたびに呼ばれる）。</remarks>
-    private void SyncLabelElements(int count)
-    {
-        while (_labelElements.Count > count)
-        {
-            var last = _labelElements[^1];
-            _labelElements.RemoveAt(_labelElements.Count - 1);
-            Remove(last);
-        }
-
-        while (_labelElements.Count < count)
-        {
-            var border = new Border().Child(new TextBlock());
-            _labelElements.Add(border);
-            Add(border);
-        }
-    }
-
-    /// <summary>ラベル要素の内容と体裁をコアの指示に合わせる。</summary>
-    /// <param name="border">更新する要素（背景）。</param>
-    /// <param name="element">コア（CoreForControl）が解決した配置指示。</param>
-    /// <remarks>
-    /// 背景色はコアが実効色（アルファ 0 を黒 50% として解決済み）で渡す。<br/>
-    /// サイズラベル・カーソル座標ラベルはいずれも角丸なしの矩形のため、角丸は設定しない。
-    /// </remarks>
-    private static void ApplyLabelElement(Border border, in MarqueeLabelElement element)
-    {
-        // 本体は配置でサイズを確定するため、要素には内側余白だけを与える
-        border.Padding(element.PaddingX, element.PaddingY);
-        border.Background = element.BackgroundColor.ToMewUIColor();
-
-        if (border.Child is TextBlock text)
-        {
-            text.Text = element.Text;
-            text.FontSize = element.FontSize;
-            text.Foreground = element.TextColor.ToMewUIColor();
-        }
+        // 描画内容は本フェーズで 1 回だけ解決し、図形の描画（OnPaintSurface）と共有する
+        var elements = _marquee.ResolveLabels(ResolveFrame(bounds.Size.ToEsSize()), SkiaText.Measure);
+        _labelHost.Sync(elements, bounds);
     }
 
     /// <summary>DPI の変更時に表示スケーリング係数を追従させる。</summary>
@@ -574,34 +580,39 @@ public sealed class MarqueeControl : Panel
     /// <remarks>
     /// 効果の適用順序（フォーカス → カーソル形状 → 再描画）はコアが単一所有するため、<br/>
     /// 本実装は呼ばれた順に自 UI の操作へ接続するだけでよい（判断を持たない）。<br/>
+    /// <see cref="MarqueeEffectsBase"/> を継承し、本 UI が必要とする効果だけを override する。<br/>
     /// コアは <see cref= "IMarqueeEffects"/> のみに依存し、UI フレームワークを知らない。
     /// </remarks>
-    private sealed class Effects(MarqueeControl owner) : IMarqueeEffects
+    private sealed class Effects(MarqueeControl owner) : MarqueeEffectsBase
     {
         /// <summary>フォーカスを取得する（矢印キー nudge の受け付け開始）。</summary>
-        public void RequestFocus() => owner.Focus();
+        public override void RequestFocus() => owner.Focus();
 
         /// <summary>再描画を要求する。</summary>
-        /// <remarks>ラベル（サイズ・カーソル座標）はテキスト要素であり、配置は配置フェーズで書き換えるため、再描画と併せて配置も無効化する。</remarks>
-        public void RequestRedraw()
+        /// <remarks>
+        /// ラベル（サイズ・カーソル座標）はテキスト要素であり、配置は配置フェーズで書き換えるため、再描画と併せて配置も無効化する。<br/>
+        /// 保持している描画内容も破棄する（状態の変化を次の解決へ反映させる）。
+        /// </remarks>
+        public override void RequestRedraw()
         {
+            owner.InvalidateFrame();
             owner.InvalidateVisual();
             owner.InvalidateArrange();
         }
 
         /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
         /// <param name="kind">カーソル形状の種別（コア提供）。</param>
-        public void SetCursorShape(MarqueeCursorKind kind) => owner.ApplyCursorShape(kind);
+        public override void SetCursorShape(MarqueeCursorKind kind) => owner.ApplyCursorShape(kind);
 
         /// <summary>ポインターキャプチャを取得または解放する。</summary>
         /// <param name="capture">true = 取得 / false = 解放。</param>
         /// <remarks>ドラッグ中にポインターがコントロール外へ出ても移動イベントを受け取れるようにする。</remarks>
-        public void SetPointerCapture(bool capture) => owner.CaptureMouse(capture);
+        public override void SetPointerCapture(bool capture) => owner.CaptureMouse(capture);
 
         /// <summary>ドメイン座標を画面物理座標へ変換する。</summary>
         /// <param name="domainPoint">ドメイン座標。</param>
         /// <returns>画面物理座標。ウィンドウを特定できない場合は既定値。</returns>
-        public EsPixelPoint ToScreenPoint(EsPoint domainPoint)
+        public override EsPixelPoint ToScreenPoint(EsPoint domainPoint)
             => owner.ToScreen(domainPoint);
     }
 
@@ -702,11 +713,10 @@ public sealed class MarqueeControl : Panel
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
-    /// <b>描画順はコアが単一所有する</b>: <see cref="MarqueeDrawContent.Layers"/> の順に層を処理する。<br/>
-    /// 図形の層は描画 API へ写し、<b>ラベルの層は描かない</b>（ラベルは本パネルの子要素が描くため、常に最上位になる）。<br/>
-    /// <br/>
-    /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なるため本クラスでは描画しない<br/>
-    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="MarqueeDecoOptions.OuterAppearance"/> が単一所有する。<br/>
+    /// <b>描画の手順は UI 非依存のレンダラが単一所有する</b>: 描画内容（装飾・選択矩形・ラベル）はコアが 1 値で解決し、<br/>
+    /// 層の順序と描画 API への写し方は <see cref="MarqueeRenderer"/>（<c>MarqueeControl.Rendering</c>）が担う。<br/>
+    /// 本メソッドは自 UI の描画面をレンダラへ渡すだけである（<b>ラベルは本パネルの子要素が描く</b>ため図形の層のみ）。<br/>
+    /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なる（別々に描くと線幅が二重になる）。<br/>
     /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>
     /// 背景は塗らない（透明のままにして下の画像を透かす）。
     /// </remarks>
@@ -721,35 +731,11 @@ public sealed class MarqueeControl : Panel
             // 前フレームの描画（選択矩形・暗転マスク）を残さないため、自分の描画面を消してから描く
             canvas.Clear(SKColors.Transparent);
 
-            // 描画内容（装飾・選択矩形・ラベル）はコアが 1 値で解決する。
-            // 本層は「描くかどうか」を判断せず、層の順に従って描画 API へ写すだけとする。
-            var clientSize = DpiScaler.ToDip(info.Size.ToEsSize(), scaling);
-            var content = _marquee.ResolveContent(clientSize);
+            // 描画内容は配置フェーズ（ArrangeContent）が解決した値を共有する（未解決の場合のみ本メソッドが解決する）
+            var content = CurrentFrame(DpiScaler.ToDip(info.Size.ToEsSize(), scaling));
 
-            foreach (var layer in content.Layers)
-            {
-                switch (layer)
-                {
-                    case MarqueeDrawLayer.Decoration:
-                        MarqueeOuterSkiaRenderer.Draw(canvas, content.Decoration);
-                        MarqueeInnerSkiaRenderer.Draw(canvas, content.InnerDecoration);
-                        break;
-
-                    case MarqueeDrawLayer.Handles when content.Handles is { } handles:
-                        MarqueeSkiaRenderer.DrawHandles(
-                            canvas, handles.Rect, handles.HandleSize, handles.FillColor, handles.BorderColor);
-                        break;
-
-                    case MarqueeDrawLayer.Marker when content.Marker is { } marker:
-                        MarqueeSkiaRenderer.DrawStartMarker(canvas, marker.Center, marker.Color, marker.Thickness, marker.Size);
-                        break;
-
-                    // ラベルは本パネルの子要素（Border + TextBlock）が描く（常に最上位になる）
-                    case MarqueeDrawLayer.SizeLabel:
-                    case MarqueeDrawLayer.CoordLabel:
-                        break;
-                }
-            }
+            // 図形の層を描く（ラベルは本パネルの子要素が描くため、レンダラはラベルを描かない）
+            _marquee.Renderer.DrawShapes(new SkiaEsCanvas(canvas), content);
 
             // 描画完了をホストへ通知する（操作・情報ラベルなどホスト固有の付加情報を描くための入口）。
             Rendered?.Invoke(this, new MarqueeRenderedEventArgs(canvas, content));

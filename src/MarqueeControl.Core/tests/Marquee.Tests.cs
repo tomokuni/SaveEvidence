@@ -55,7 +55,7 @@ public class MarqueeTests
     private static Marquee CreateMarquee(ICursorService? cursor, out EffectsSpy effects, MarqueeOptions? options = null)
     {
         effects = new EffectsSpy();
-        return new Marquee(effects, cursor, options) { Log = NullLogger.Instance };
+        return new Marquee(new StubMarqueeRenderer(), effects, cursor, options) { Log = NullLogger.Instance };
     }
 
     // ====================================================================
@@ -63,9 +63,15 @@ public class MarqueeTests
     // ====================================================================
 
     [Fact]
+    public void 生成_描画実装がnullなら例外を投げる()
+    {
+        Assert.Throws<ArgumentNullException>(() => new Marquee(null!, new EffectsSpy()));
+    }
+
+    [Fact]
     public void 生成_効果がnullなら例外を投げる()
     {
-        Assert.Throws<ArgumentNullException>(() => new Marquee(null!));
+        Assert.Throws<ArgumentNullException>(() => new Marquee(new StubMarqueeRenderer(), null!));
     }
 
     [Fact]
@@ -76,6 +82,101 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out _, options);
 
         Assert.Same(options, marquee.Options);
+    }
+
+    // ====================================================================
+    // 描画の差し替え（Strategy）
+    // ====================================================================
+
+    [Fact]
+    public void 生成_注入した描画実装を保持する()
+    {
+        var renderer = new StubMarqueeRenderer();
+
+        var marquee = new Marquee(renderer, new EffectsSpy());
+
+        Assert.Same(renderer, marquee.Renderer);
+    }
+
+    [Fact]
+    public void 描画実装を差し替えると再描画する()
+    {
+        var effects = new EffectsSpy();
+        var marquee = new Marquee(new StubMarqueeRenderer(), effects);
+        var before = effects.RedrawCount;
+
+        marquee.Renderer = new StubMarqueeRenderer();
+
+        Assert.True(effects.RedrawCount > before, "描画実装の差し替えで再描画が要求されていない");
+    }
+
+    [Fact]
+    public void 描画実装が同じなら再描画しない()
+    {
+        var effects = new EffectsSpy();
+        var renderer = new StubMarqueeRenderer();
+        var marquee = new Marquee(renderer, effects);
+        var before = effects.RedrawCount;
+
+        marquee.Renderer = renderer;
+
+        Assert.Equal(before, effects.RedrawCount);
+    }
+
+    [Fact]
+    public void 描画実装にnullは設定できない()
+    {
+        var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
+
+        Assert.Throws<ArgumentNullException>(() => marquee.Renderer = null!);
+    }
+
+    [Fact]
+    public void ResolveLabels_は設定された描画実装へ委譲する()
+    {
+        var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
+        var replacement = new StubMarqueeRenderer { Elements = [] };
+        marquee.Renderer = replacement;
+        var content = marquee.ResolveContent(new EsSize(120, 80));
+
+        var elements = marquee.ResolveLabels(content, static (_, _) => new EsSize(10, 10));
+
+        Assert.Empty(elements);
+        Assert.Equal(1, replacement.ResolveLabelsCalls);
+    }
+
+    /// <summary>効果を何もしない実装（確保量の計測に使う）。</summary>
+    private sealed class NoOpEffects : MarqueeEffectsBase
+    {
+    }
+
+    /// <summary>ポインター移動の処理がヒープを確保しないことを検証する。</summary>
+    /// <remarks>
+    /// ポインター移動は操作中に連続して発生するため、通知・スナップショットを値型にして確保を避ける<br/>
+    /// （デリゲートの生成も行わない）。計測は <see cref="GC.GetAllocatedBytesForCurrentThread"/> で行う。
+    /// </remarks>
+    [Fact]
+    public void Move_ポインター移動はヒープを確保しない()
+    {
+        var marquee = new Marquee(new StubMarqueeRenderer(), new NoOpEffects());
+        marquee.SetSelection(new EsRect(10, 10, 100, 80));
+        marquee.Press(new EsPoint(50, 50), 1);
+        marquee.Move(new EsPoint(51, 51));
+
+        for (var i = 0; i < 100; i++)
+        {
+            marquee.Move(new EsPoint(60 + i, 60));
+        }
+
+        GC.Collect();
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1000; i++)
+        {
+            marquee.Move(new EsPoint(60 + i, 60));
+        }
+
+        var perCall = (GC.GetAllocatedBytesForCurrentThread() - before) / 1000.0;
+        Assert.True(perCall <= 16, $"ポインター移動 1 回の確保が {perCall} バイト（16 バイト以下を期待）");
     }
 
     [Fact]
@@ -244,26 +345,6 @@ public class MarqueeTests
 
         Assert.Equal(2.0, marquee.Scaling);
         Assert.Equal(1, effects.RedrawCount);
-    }
-
-    [Fact]
-    public void GetCoordinateTransform_未設定はnullを返す()
-    {
-        var marquee = CreateMarquee(null, out _);
-
-        // 装飾など同じ座標空間で描く層が「設定の有無」を判別できるようにする（等価変換へ置換しない）
-        Assert.Null(marquee.GetCoordinateTransform());
-    }
-
-    [Fact]
-    public void GetCoordinateTransform_設定したポートを返す()
-    {
-        var marquee = CreateMarquee(null, out _);
-        var port = CoordTransform.Scale(2.0);
-
-        marquee.SetCoordinateTransform(port);
-
-        Assert.Same(port, marquee.GetCoordinateTransform());
     }
 
     // ====================================================================

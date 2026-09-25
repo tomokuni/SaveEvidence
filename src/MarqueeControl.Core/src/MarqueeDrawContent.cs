@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Estable.Marquee.Decoration;
 using DrawingColor = System.Drawing.Color;
 
@@ -7,15 +8,17 @@ namespace Estable.Marquee;
 /// <summary>ドラッグハンドルの描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
 /// <param name="Rect">選択矩形（DIP。ハンドルの中心はこの矩形の辺・角から求める）。</param>
 /// <param name="HandleSize">ハンドルの一辺サイズ（DIP）。</param>
+/// <param name="BorderThickness">ハンドル枠の線の太さ（DIP）。</param>
 /// <param name="FillColor">ハンドルの塗り色（未指定は白へ解決済み）。</param>
 /// <param name="BorderColor">ハンドル枠の色（外側の装飾の枠線色）。</param>
 /// <remarks>
 /// ハンドルの中心位置（8 方向）は <see cref="Selection.SelectionGeometry.GetHandlePosition"/> が単一所有するため、<br/>
-/// 描画側は本値を渡して描くだけとする。
+/// 描画側は本値を渡して描くだけとする（線の太さを描画層が定数で持つと、コアの外観設定と非対称になる）。
 /// </remarks>
 public readonly record struct MarqueeHandles(
     EsRect Rect,
     double HandleSize,
+    double BorderThickness,
     DrawingColor FillColor,
     DrawingColor BorderColor);
 
@@ -38,9 +41,11 @@ public readonly record struct MarqueeMarker(
 /// <param name="TextColor">文字色。</param>
 /// <param name="BackgroundColor">背景色（不透明度は色のアルファに統合）。</param>
 /// <remarks>
-/// 文言（<see cref="CoordinateFormatter"/>）と配置（<see cref="MarqueeAppearance"/>）はコアが単一所有する。<br/>
+/// 文言（<see cref="CoordinateFormatter"/>）と配置（<see cref="EsLabelLayout"/> と <see cref="MarqueeOptions.CoordLabelOffset"/>）は<br/>
+/// コアが単一所有する。<br/>
 /// <b>文字の描画は UI 層が担う</b>: テキストの実寸は描画 API でしか測れないため、<br/>
-/// UI 層が実寸を <see cref="ComputeFrame"/> へ渡し、返された配置へテキスト要素を置く。<br/>
+/// UI 層が実寸を <see cref="ComputeFrame"/> へ渡し、返された配置へテキスト要素を置く<br/>
+/// （要素への写像は <see cref="EsLabelExtensions.ToElement"/> が単一所有する）。<br/>
 /// <b>単位は DIP</b>である。
 /// </remarks>
 public readonly record struct MarqueeCoordLabel(
@@ -49,22 +54,23 @@ public readonly record struct MarqueeCoordLabel(
     EsSize ClientSize,
     double FontSize,
     DrawingColor TextColor,
-    DrawingColor BackgroundColor)
+    DrawingColor BackgroundColor) : IEsLabel
 {
     /// <summary>テキストの実寸からラベルの配置（背景矩形・文字の描画原点）を求める。</summary>
     /// <param name="textSize">テキストの実寸（描画 API で測定した値・DIP）。</param>
     /// <returns>ラベルの配置（カーソルの右側へ置き、描画領域の端ではみ出す場合は領域内へクランプする）。</returns>
-    /// <remarks>背景の大きさは <see cref="MarqueeAppearance.ComputeCoordLabelBackground"/> が、位置は<br/>
-    /// <see cref="MarqueeAppearance.ComputeCoordLabelPosition"/> が単一所有する。</remarks>
-    public MarqueeLabelFrame ComputeFrame(EsSize textSize)
+    /// <remarks>
+    /// 背景の大きさ・位置・文字の原点は <see cref="EsLabelLayout"/> が単一所有する。<br/>
+    /// 内側余白はサイズラベルと共通の <see cref="EsLabelLayout.Padding"/> を使う。<br/>
+    /// カーソルからの離隔（<see cref="MarqueeOptions.CoordLabelOffset"/>）は本コントロール固有の値である。
+    /// </remarks>
+    public EsLabelFrame ComputeFrame(EsSize textSize)
     {
-        var background = MarqueeAppearance.ComputeCoordLabelBackground(textSize);
-        var position = MarqueeAppearance.ComputeCoordLabelPosition(
-            CursorDip, ClientSize, background.Width, background.Height);
-
-        return new MarqueeLabelFrame(
-            new EsRect(position.X, position.Y, background.Width, background.Height),
-            new EsPoint(position.X + MarqueeAppearance.LabelPadding, position.Y + MarqueeAppearance.LabelPadding));
+        var box = EsLabelLayout.ComputeCursorLabelBox(
+            CursorDip, ClientSize, textSize,
+            EsLabelLayout.Padding, EsLabelLayout.Padding, MarqueeOptions.CoordLabelOffset);
+        return new EsLabelFrame(
+            box, EsLabelLayout.ComputeOffsetTextOrigin(box.TopLeft, EsLabelLayout.Padding, EsLabelLayout.Padding));
     }
 }
 

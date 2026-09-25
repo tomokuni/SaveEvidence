@@ -201,7 +201,7 @@ sequenceDiagram
 | 内包イベント | 複合コントロールの処理 | 同期先 |
 | --- | --- | --- |
 | `SelectionChanged` | ルーペの再描画を要求（`RequestRender`） | 選択矩形と外側の装飾は `MarqueeControl` がセッションから直接読んで描画する（本クラスは同期しない）。ルーペの選択矩形破線は Rendered イベント経由で描画し、描画の可否はコアの `ShowSelectionOverlay` が単一所有する（UI は派生値を保持しない） |
-| `Rendered`（選択矩形コントロール） | 付加情報（操作・情報ラベル）を描く | 描画内容全体（`Content`）を受け取り、付加情報を描く。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**（文言・順序はコアが、配置矩形は `MarqueeLabelLayoutPlan` が単一所有する） |
+| `Rendered`（選択矩形コントロール） | 付加情報（操作・情報ラベル）を描く | 描画内容全体（`Content`）を受け取り、付加情報を描く。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**（文言はコアが、配置矩形は描画層 `MarqueeControl.Rendering` の `MarqueeLabelPlan` が単一所有する） |
 | `Rendered`（ルーペ） | 破線を描く（中心座標ラベルはコントロールが表示する） | 選択矩形の破線。ラベルの寸法・配置はコアが単一所有する |
 | `ViewportChanged` / ホスト通知（`NotifyViewportChanged`） | `NotifyViewportChanged()`（再描画 + ルーペ位置再計算） | Marquee 再描画 + Loupe（RefreshPosition）。選択矩形はビューポート変化で不変のため再同期しない |
 | `SelectionStarted` | （購読しない） | セッションが自身の選択を初期化するため同期不要（外側の装飾はセッションの状態をそのまま読む） |

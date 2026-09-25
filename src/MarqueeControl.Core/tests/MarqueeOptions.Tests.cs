@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
 namespace Estable.Marquee.Tests;
@@ -99,5 +100,49 @@ public class MarqueeOptionsTests
         Assert.Equal(6.0, options.MinSelectionSize);
         Assert.Equal(20.0, changed.MinSelectionSize);
         Assert.NotEqual(options, changed);
+    }
+
+    // ====================================================================
+    // 外観値の解決・補正（生成時に適用する）
+    // ====================================================================
+
+    [Theory]
+    [InlineData(double.NaN, 14.0)]
+    [InlineData(double.PositiveInfinity, 14.0)]
+    [InlineData(1.0, 6.0)]
+    [InlineData(100.0, 48.0)]
+    [InlineData(14.0, 14.0)]
+    public void SizeLabelFontSizeは安全域へ補正される(double value, double expected)
+    {
+        var options = MarqueeOptions.Default with { SizeLabelFontSize = value };
+
+        Assert.Equal(expected, options.SizeLabelFontSize);
+    }
+
+    [Fact]
+    public void HandleColor_未指定の色は白へ解決される()
+    {
+        // 全成分 0 の色はハンドルが見えなくなるため、生成時に白へ解決する
+        Assert.Equal(System.Drawing.Color.White, (MarqueeOptions.Default with { HandleColor = System.Drawing.Color.Empty }).HandleColor);
+        Assert.Equal(System.Drawing.Color.White, (MarqueeOptions.Default with { HandleColor = System.Drawing.Color.FromArgb(0, 0, 0, 0) }).HandleColor);
+    }
+
+    [Fact]
+    public void HandleColor_指定された色はそのまま保持する()
+    {
+        var options = MarqueeOptions.Default with { HandleColor = System.Drawing.Color.FromArgb(128, 255, 0, 0) };
+
+        // 不透明度を含めて保持する（アルファを落とさない）
+        Assert.Equal(System.Drawing.Color.FromArgb(128, 255, 0, 0), options.HandleColor);
+    }
+
+    [Fact]
+    public void ラベルの体裁定数はコアが単一所有する()
+    {
+        // 内側余白は全ラベル共通の規則（Platform.Core の EsLabelLayout）が単一所有する。
+        // 本型はコントロール固有の値（カーソルとラベルの距離）だけを公開する。
+        Assert.Equal(4.0, EsLabelLayout.Padding);
+        Assert.Equal(8.0, MarqueeOptions.CoordLabelOffset);
+        Assert.Equal(1.5, MarqueeOptions.HandleBorderThickness);
     }
 }

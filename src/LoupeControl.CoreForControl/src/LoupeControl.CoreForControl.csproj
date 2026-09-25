@@ -12,11 +12,4 @@
     <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- ラベルの配置指示（LoupeLabelLayoutPlan）がコアの通知契約（LoupeRenderNotification）を入力に取るため、
-         コアを参照する。再描画のスケジューリング（LoupeRenderCoordinator）は参照を持たない。 -->
-    <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
-    <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
-  </ItemGroup>
-
 </Project>

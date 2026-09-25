@@ -23,6 +23,8 @@
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
     <!-- コントロール化のための再描画スケジューリング（実行キューへのポストを注入して使う） -->
     <ProjectReference Include="..\..\LoupeControl.CoreForControl\src\LoupeControl.CoreForControl.csproj" />
+    <!-- 描画の手順（層の順序と描画ポートへの写し）を単一所有する UI 非依存の描画層 -->
+    <ProjectReference Include="..\..\LoupeControl.Rendering\src\LoupeControl.Rendering.csproj" />
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 

@@ -16,7 +16,10 @@ public static class LoupeDecorationGeometry
     /// <param name="zoomLevel">拡大率（1〜64）。</param>
     /// <returns>十字線の縦・横 2 本の矩形。</returns>
     /// <remarks>
-    /// 切り出し領域の一辺（ブロック数）の計算は <see cref="LoupeImageExtractor.ComputeCaptureSize"/> へ委譲する（単一所有）。
+    /// 切り出し領域の一辺（ブロック数）の計算は <see cref="LoupeImageExtractor.ComputeCaptureSize"/> へ委譲する（単一所有）。<br/>
+    /// 交点は「切り出した領域を等倍で並べたときの中央のブロック」の左上へ合わせる（<c>blocks / 2</c> の切り捨て）。<br/>
+    /// 切り出し領域の一辺は切り上げのため、<b>拡大率が偶数でない場合は交点が表面の中央から最大 1 ブロックずれる</b><br/>
+    /// （切り捨てをやめると、奇数倍率で交点が画素境界から外れて十字線がぼやける）。
     /// </remarks>
     public static IReadOnlyList<EsRect> ComputeCrosshairRects(int pixelSize, int zoomLevel)
     {
@@ -29,16 +32,11 @@ public static class LoupeDecorationGeometry
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="width">外枠の太さ（ピクセル）。1〜ルーペサイズに正規化される。</param>
     /// <returns>外枠の上・下・左・右の 4 つの矩形。</returns>
+    /// <remarks>
+    /// 辺の矩形の計算は <see cref="EsRectMath.ComputeInnerEdges"/> が単一所有する（選択矩形の枠線と同じ式）。<br/>
+    /// 太さの下限のみ本メソッドが決める（外枠は 1 ピクセル未満では描けない）。
+    /// </remarks>
     public static IReadOnlyList<EsRect> ComputeFrameRects(int pixelSize, int width)
-    {
-        var frame = Math.Clamp(width, 1, pixelSize);
-        var inner = Math.Max(0, pixelSize - frame * 2);
-        return
-        [
-            new EsRect(0, 0, pixelSize, frame),
-            new EsRect(0, pixelSize - frame, pixelSize, frame),
-            new EsRect(0, frame, frame, inner),
-            new EsRect(pixelSize - frame, frame, frame, inner),
-        ];
-    }
+        => EsRectMath.ComputeInnerEdges(
+            new EsRect(0, 0, pixelSize, pixelSize), Math.Clamp(width, 1, pixelSize));
 }

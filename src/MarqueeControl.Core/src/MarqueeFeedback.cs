@@ -25,6 +25,23 @@ internal enum MarqueeCursorAction
     Show = 4,
 }
 
+/// <summary>コア（入力の解釈）が UI 層へ要求するポインターキャプチャの操作。</summary>
+/// <remarks>
+/// 取得（<see cref="Capture"/>）と解放（<see cref="Release"/>）は同じ経路（<see cref="MarqueeFeedback"/>）で要求する<br/>
+/// （片方だけを入力ハンドラへ直接書くと、取得の条件と解放の条件が別々の場所になる）。
+/// </remarks>
+internal enum MarqueeCaptureAction
+{
+    /// <summary>操作なし（キャプチャの状態を変えない）。</summary>
+    None = 0,
+
+    /// <summary>ポインターをキャプチャする（ドラッグ開始）。</summary>
+    Capture = 1,
+
+    /// <summary>ポインターのキャプチャを解放する（ドラッグ終了）。</summary>
+    Release = 2,
+}
+
 /// <summary>1 回の入力通知に対して UI 層が適用する表示上の効果（状態を持たない指示）。</summary>
 /// <remarks>
 /// コアは状態の更新と通知（<see cref="MarqueeNotice"/>）だけを行い、画面への反映方法（再描画・フォーカス・カーソル）は
@@ -46,12 +63,12 @@ internal readonly record struct MarqueeFeedback
     /// <summary>フォーカスを取得するかどうか。</summary>
     public bool RequestFocus { get; init; }
 
-    /// <summary>マウスキャプチャを取得するかどうか。</summary>
+    /// <summary>ポインターキャプチャの操作（なし・取得・解放）。</summary>
     /// <remarks>
     /// キャプチャを明示的に行う必要がある UI（ポインターがコントロール外へ出てもドラッグを継続したい実装）が使用する。<br/>
-    /// ポインターを暗黙にキャプチャする UI では無視してよい（使用しない場合は常に false として扱える）。
+    /// ポインターを暗黙にキャプチャする UI では無視してよい（使用しない場合は常に <see cref="MarqueeCaptureAction.None"/> として扱える）。
     /// </remarks>
-    public bool CaptureMouse { get; init; }
+    public MarqueeCaptureAction Capture { get; init; }
 
     /// <summary>カーソル形状を更新するかどうか。</summary>
     public bool UpdateCursorShape { get; init; }
@@ -67,16 +84,16 @@ internal readonly record struct MarqueeFeedback
 
     /// <summary>要求されたカーソル操作を適用する。</summary>
     /// <param name="cursor">カーソルサービス。</param>
-    /// <param name="toScreen">ドメイン座標を画面物理座標へ変換する関数（UI 層が提供する）。</param>
+    /// <param name="effects">画面座標への変換を担う効果（UI 層が実装する）。</param>
     /// <remarks>
     /// 適用順は「移動 → 非表示 → 再表示」に固定する（nudge の終了では移動してから再表示する必要がある）。<br/>
     /// 画面座標の変換のみ UI 層に委ね、それ以外（どの操作をどの順で行うか）はコアが単一所有する。
     /// </remarks>
-    public void ApplyCursor(ICursorService cursor, Func<EsPoint, EsPixelPoint> toScreen)
+    public void ApplyCursor(ICursorService cursor, IMarqueeEffects effects)
     {
         if (Cursor.HasFlag(MarqueeCursorAction.MoveTo))
         {
-            cursor.SetCursorScreenPoint(toScreen(CursorDomainPosition));
+            cursor.SetCursorScreenPoint(effects.ToScreenPoint(CursorDomainPosition));
         }
 
         if (Cursor.HasFlag(MarqueeCursorAction.Hide))
@@ -91,28 +108,27 @@ internal readonly record struct MarqueeFeedback
     }
 
     /// <summary>要求された表示上の効果（フォーカス・カーソル形状・再描画）を適用する。</summary>
-    /// <param name="requestFocus">フォーカスを取得する操作（UI 層が提供する）。</param>
-    /// <param name="invalidateVisual">再描画を要求する操作（UI 層が提供する）。</param>
-    /// <param name="setCursorShape">カーソル形状を設定する操作（UI 層が自 UI のカーソル型へ写像する）。</param>
+    /// <param name="effects">効果の適用先（UI 層が実装する）。</param>
     /// <remarks>
     /// 適用順は「フォーカス → カーソル形状 → 再描画」に固定する（再描画を最後にして確定後の状態を 1 回で描く）。<br/>
-    /// どの効果をどの順で適用するかはコアが単一所有し、UI 層は自 UI の操作へ接続するだけにする。
+    /// どの効果をどの順で適用するかはコアが単一所有し、UI 層は自 UI の操作へ接続するだけにする。<br/>
+    /// 効果の適用先をデリゲートで受け取らない（入力イベントのたびにデリゲートを生成しない）。
     /// </remarks>
-    public void ApplyVisual(Action requestFocus, Action invalidateVisual, Action<MarqueeCursorKind> setCursorShape)
+    public void ApplyVisual(IMarqueeEffects effects)
     {
         if (RequestFocus)
         {
-            requestFocus();
+            effects.RequestFocus();
         }
 
         if (UpdateCursorShape)
         {
-            setCursorShape(CursorKind);
+            effects.SetCursorShape(CursorKind);
         }
 
         if (Redraw)
         {
-            invalidateVisual();
+            effects.RequestRedraw();
         }
     }
 }

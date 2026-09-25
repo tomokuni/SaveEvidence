@@ -1,9 +1,13 @@
+using EsUtil.Platform.Core.Imaging;
+
 namespace Estable.Loupe;
 
 /// <summary>ルーペの数値パラメータの安全域への補正ロジック（純粋関数）。</summary>
 /// <remarks>
 /// ルーペの数値プロパティ（表示サイズ・拡大率・スケーリング・市松模様・外枠・ラベル文字サイズ）の<br/>
 /// 既定値と安全域（最小・最大）を単一所有し、範囲外の値をクランプする純粋関数を提供する。<br/>
+/// ラベルのフォントサイズの安全域は、他のコントロールと共通の規則のため <see cref="EsLabelMetrics"/> が単一所有する<br/>
+/// （本クラスは <see cref="CoordLabelFontSizeDefault"/> を添えて委譲するだけ）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
 /// </remarks>
 public static class LoupeValueCoercer
@@ -54,13 +58,15 @@ public static class LoupeValueCoercer
     public const int FrameWidthDefault = 2;
 
     /// <summary>座標ラベルのフォントサイズの最小値（DIP）。</summary>
-    public const double CoordLabelFontSizeMin = 6;
+    /// <remarks>ラベルのフォントサイズの安全域は両コントロールで共通のため、値は <see cref="EsLabelMetrics"/> が単一所有する。</remarks>
+    public const double CoordLabelFontSizeMin = EsLabelMetrics.FontSizeMin;
 
     /// <summary>座標ラベルのフォントサイズの最大値（DIP）。</summary>
-    public const double CoordLabelFontSizeMax = 48;
+    /// <remarks>ラベルのフォントサイズの安全域は両コントロールで共通のため、値は <see cref="EsLabelMetrics"/> が単一所有する。</remarks>
+    public const double CoordLabelFontSizeMax = EsLabelMetrics.FontSizeMax;
 
     /// <summary>座標ラベルのフォントサイズの既定値（DIP）。</summary>
-    public const double CoordLabelFontSizeDefault = 12.0;
+    public const double CoordLabelFontSizeDefault = EsLabelDefaults.FontSize;
 
     /// <summary>座標ラベルの背景の角丸半径の最小値（ピクセル。0 は角丸なし）。</summary>
     public const int CoordLabelCornerRadiusMin = 0;
@@ -100,8 +106,9 @@ public static class LoupeValueCoercer
     /// <summary>座標ラベルのフォントサイズを安全域へ補正する（6〜48。非有限は既定値）。</summary>
     /// <param name="value">補正する値（DIP）。</param>
     /// <returns>安全域にクランプした値。非有限の場合は既定値。</returns>
+    /// <remarks>安全域と「非数は既定値」の規則は <see cref="EsLabelMetrics"/> が単一所有する（他のラベルと同じ規則）。</remarks>
     public static double CoerceCoordLabelFontSize(double value)
-        => double.IsFinite(value) ? Math.Clamp(value, CoordLabelFontSizeMin, CoordLabelFontSizeMax) : CoordLabelFontSizeDefault;
+        => EsLabelMetrics.CoerceFontSize(value, CoordLabelFontSizeDefault);
 
     /// <summary>座標ラベルの背景の角丸半径を安全域へ補正する（0〜64）。</summary>
     /// <param name="value">補正する値（ピクセル。0 は角丸なし）。</param>

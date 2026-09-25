@@ -1,9 +1,9 @@
-using Estable.AvaloniaUI.Marquee.Drawing;
-using Estable.Marquee;
-using Estable.Marquee.Decoration;
 using Estable.Marquee.CoreForControl;
+using Estable.Marquee.Rendering;
 using EsUtil.Platform.AvaloniaUI;
+using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -18,7 +18,7 @@ namespace Estable.AvaloniaUI.Marquee;
 /// <remarks>
 /// ビジュアルツリー接続時に TopLevel のキーイベントを購読し、切断時に解除する。<br/>
 /// 連携 ScrollViewer（スクロール・ズーム検知）は明示注入のみで設定する（暗黙の祖先探索は行わない）。<br/>
-/// 描画は <see cref="Drawing.MarqueeDrawer"/> に委譲し、座標変換（ドメイン → DIP）はファサードの座標変換ポートに問い合わせる
+/// 描画は UI 非依存のレンダラ（<see cref="MarqueeRenderer"/>）に委譲し、座標変換（ドメイン → DIP）はファサードの座標変換ポートに問い合わせる
 /// （描画はコアが解決した描画内容と <see cref="Options"/> を読むだけで、判断を持たない）。
 /// </remarks>
 public sealed partial class MarqueeControl
@@ -160,51 +160,26 @@ public sealed partial class MarqueeControl
     private void OnWindowDeactivated(object? sender, EventArgs e) => _marquee.EndNudge();
 
     // ====================================================================
-    // 描画（外側の装飾は装飾コアへ、選択矩形は MarqueeDrawer へ委譲する）
+    // 描画（描画内容の解決と描画先の用意だけを行い、手順は描画層へ委譲する）
     // ====================================================================
 
     /// <summary>図形（装飾・ハンドル・始点マーカー）を描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>
     /// <remarks>
-    /// <b>描画順はコアが単一所有する</b>: <see cref="MarqueeDrawContent.Layers"/> の順に層を処理する。<br/>
-    /// 図形の層は描画 API へ写し、<b>ラベルの層は描かない</b><br/>
-    /// （ラベルは <see cref="Border"/> + <see cref="TextBlock"/> の子要素として配置され、子は親より後に描かれるため常に最上位になる）。<br/>
-    /// <br/>
-    /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なるため本コントロールでは描画しない<br/>
-    /// （別々に描くと線幅が二重になり見た目が変わる）。枠線の色と太さは <see cref="MarqueeDecoOptions.OuterAppearance"/> が単一所有する。
+    /// <b>描画の手順は UI 非依存のレンダラが単一所有する</b>: 層の順序と描画 API への写し方は<br/>
+    /// <see cref="MarqueeRenderer"/>（<c>MarqueeControl.Rendering</c>）が担う。本メソッドは自 UI の描画面を渡すだけである。<br/>
+    /// <b>ラベルは <see cref="Border"/> + <see cref="TextBlock"/> の子要素として配置する</b>ため図形の層だけを描く<br/>
+    /// （子は親より後に描かれるため常に最上位になる）。<br/>
+    /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なるため描画しない（別々に描くと線幅が二重になる）。
     /// </remarks>
     internal void RenderShapes(DrawingContext context)
     {
         // 描画コンテキストの原点は常に自コントロールの左上（0, 0）であるため、親座標（Bounds.X/Y）は渡さない。
-        var clientSize = Bounds.Size.ToEsSize();
-        var content = _marquee.ResolveContent(clientSize);
+        // 描画内容は配置フェーズが解決した値を共有する（未解決の場合のみ本メソッドが解決する）。
+        var content = CurrentFrame(Bounds.Size.ToEsSize());
 
-        foreach (var layer in content.Layers)
-        {
-            switch (layer)
-            {
-                case MarqueeDrawLayer.Decoration:
-                    MarqueeOuterDrawer.Draw(context, content.Decoration);
-                    MarqueeInnerDrawer.Draw(context, content.InnerDecoration);
-                    break;
-
-                case MarqueeDrawLayer.Handles when content.Handles is { } handles:
-                    MarqueeDrawer.DrawHandles(
-                        context, handles.Rect.ToAvaloniaRect(), handles.HandleSize,
-                        handles.FillColor.ToAvaloniaColor(), handles.BorderColor.ToAvaloniaColor());
-                    break;
-
-                case MarqueeDrawLayer.Marker when content.Marker is { } marker:
-                    MarqueeDrawer.DrawStartMarker(
-                        context, marker.Center.ToAvaloniaPoint(), marker.Color.ToAvaloniaColor(), marker.Thickness, marker.Size);
-                    break;
-
-                // ラベルは子要素（Border + TextBlock）が描く（親より後に描かれるため常に最上位になる）
-                case MarqueeDrawLayer.SizeLabel:
-                case MarqueeDrawLayer.CoordLabel:
-                    break;
-            }
-        }
+        // 図形の層を描く（ラベルは子要素が描くため、レンダラはラベルを描かない）
+        _marquee.Renderer.DrawShapes(new AvaloniaCanvas(context), content);
 
         // 描画完了をホストへ通知する（操作・情報ラベルなどホスト固有の付加情報を描くための入口）。
         Rendered?.Invoke(this, new MarqueeRenderedEventArgs(context, content));
@@ -214,76 +189,22 @@ public sealed partial class MarqueeControl
     // ラベル（テキスト要素として配置する）
     // ====================================================================
 
-    /// <summary>ラベル要素（背景 + テキスト）を保持する。要素数は層の有無に追従する。</summary>
-    private readonly List<Border> _labelElements = [];
-
     /// <summary>子要素の配置を確定し、ラベル要素を追加・更新する。</summary>
     /// <param name="finalSize">本コントロールへ割り当てられたサイズ（DIP）。</param>
     /// <returns>割り当てサイズ。</returns>
     /// <remarks>
-    /// <b>描画順はコアが単一所有する</b>: コアの描画内容から得た配置（<see cref="MarqueeLabelLayoutPlan"/>）に従って<br/>
+    /// <b>描画順はコアが単一所有する</b>: コアの描画内容から得た配置（<see cref="MarqueeLabelPlan"/>）に従って<br/>
     /// ラベル要素を <see cref="Avalonia.Visual.Bounds"/> へ配置するだけであり、位置の計算を持たない。<br/>
     /// 要素は <see cref="Avalonia.Controls.Panel.Children"/> の末尾へ置く（子は親より後に描かれるため、ラベルは常に最上位になる）。
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
-        UpdateLabelElements(_marquee.ResolveContent(finalSize.ToEsSize()));
+        // 描画内容は本フェーズで 1 回だけ解決し、図形の描画（RenderShapes）と共有する。
+        // 配置指示（実寸 → 配置矩形の写像）は描画実装（Marquee.Renderer）が単一所有し、
+        // 要素への写像は UI 共通のホストが単一所有する（本層は測定関数を与えるだけである）。
+        _labelHost.Sync(_marquee.ResolveLabels(ResolveFrame(finalSize.ToEsSize()), MeasureText));
 
         return base.ArrangeOverride(finalSize);
-    }
-
-    /// <summary>コアの描画内容に合わせてラベル要素を追加・更新する。</summary>
-    /// <param name="content">コアが解決した描画内容（文言・外観・層の順序を持つ）。</param>
-    /// <remarks>
-    /// 実寸測定は <see cref="TextBlock"/> に任せる（要素自身が測る）ため、測定関数は「0」を返す。<br/>
-    /// これにより配置はコアの余白規則（<c>PaddingX</c> / <c>PaddingY</c>）と要素の実寸だけから決まり、<br/>
-    /// コアの計算（実寸を前提としたクランプ）は座標ラベルの位置決めにだけ使われる。
-    /// </remarks>
-    private void UpdateLabelElements(in MarqueeDrawContent content)
-    {
-        var elements = MarqueeLabelLayoutPlan.Resolve(content, MeasureText);
-
-        while (_labelElements.Count > elements.Count)
-        {
-            var last = _labelElements[^1];
-            _labelElements.RemoveAt(_labelElements.Count - 1);
-            Children.Remove(last);
-        }
-
-        while (_labelElements.Count < elements.Count)
-        {
-            var border = new Border();
-            border.Child = new TextBlock { TextWrapping = TextWrapping.NoWrap };
-            _labelElements.Add(border);
-            Children.Add(border);
-        }
-
-        for (var i = 0; i < elements.Count; i++)
-        {
-            ApplyLabelElement(_labelElements[i], elements[i]);
-        }
-    }
-
-    /// <summary>ラベル要素の内容と配置をコアの指示に合わせる。</summary>
-    /// <param name="border">更新する要素（背景）。</param>
-    /// <param name="element">コア（CoreForControl）が解決した配置指示。</param>
-    private static void ApplyLabelElement(Border border, in MarqueeLabelElement element)
-    {
-        border.Background = Drawing.MarqueeBrushCache.GetBrush(element.BackgroundColor.ToAvaloniaColor());
-        border.CornerRadius = new CornerRadius(element.CornerRadius);
-        border.Padding = new Thickness(element.PaddingX, element.PaddingY);
-        border.Width = element.Bounds.Width;
-        border.Height = element.Bounds.Height;
-        border.Margin = new Thickness(element.Bounds.X, element.Bounds.Y, 0, 0);
-        border.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
-        border.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
-
-        if (border.Child is TextBlock text)
-        {
-            text.Text = element.Text;
-            text.FontSize = element.FontSize;
-            text.Foreground = Drawing.MarqueeBrushCache.GetBrush(element.TextColor.ToAvaloniaColor());
-        }
     }
 
     /// <summary>テキストの実寸を測定する（<see cref="TextBlock"/> 自身に測らせるため 0 を返す）。</summary>

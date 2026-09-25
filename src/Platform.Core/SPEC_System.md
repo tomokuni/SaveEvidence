@@ -59,39 +59,56 @@ graph LR
 | `Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（純粋関数。Skia の `SKRect` を返す） |
 | `Imaging/SkiaColorInterop.cs` | コアの色型（`System.Drawing.Color`）→ Skia の色型の変換（MewUI 版の描画層 6 箇所が共用） |
 | `Imaging/SkiaGeometryInterop.cs` | コアの幾何型（`EsRect` / `EsPoint`）→ Skia の幾何型の変換と、Skia の整数サイズ → コアのサイズの変換（`ToEsSize`） |
-| `Imaging/SkiaFill.cs` | Skia の矩形塗り（`Rect` / `Rects` / `RoundRect`）の単一所有 |
+| `Imaging/IEsCanvas.cs` | 描画内容を描画面へ写す即時描画ポート（UI フレームワーク非依存） |
+| `Imaging/SkiaEsCanvas.cs` | `SKCanvas` を `IEsCanvas` へ適合させるアダプタ（描画は `SkiaFill` / `SkiaText` / `SkiaLabel` へ委譲） |
+| `Imaging/SkiaFill.cs` | Skia の矩形塗り（`Rect` / `Rects` / `RoundRect`）の単一所有（`Rects` は一覧と列挙子の 2 経路） |
 | `Imaging/SkiaLabel.cs` | Skia のラベル 1 件（背景 → 文字の順序）の描画の単一所有 |
 | `Imaging/SkiaText.cs` | Skia のテキスト描画（フォント解決・実寸測定・描画）の単一所有 |
+| `Geometry/IEsRectWalker.cs` | 矩形の列を確保なしで走査する列挙子（構造体）の契約 |
+| `Geometry/EsRectMath.cs` | 矩形の辺（枠線の内側 4 辺）と領域内クランプの単一所有 |
+| `Geometry/EsSizeMath.cs` | 領域の確定判定と、サイズ・位置の領域内クランプの単一所有 |
+| `Geometry/IntMath.cs` | 整数の切り上げ除算の単一所有 |
+| `Imaging/EsLabelFrame.cs` | ラベル 1 件の配置（背景矩形・文字原点） |
+| `Imaging/EsLabelElement.cs` | ラベル 1 件を UI 要素として配置するための指示と、コアの配置からの写像 |
+| `Imaging/IEsLabel.cs` | ラベル 1 件の描画契約（文言・寸法・色と実寸からの配置計算） |
+| `Imaging/EsLabelExtensions.cs` | ラベル契約から UI 要素の配置指示を求める拡張メソッド（写像の単一所有） |
+| `Imaging/DrawingColorExtensions.cs` | 描画色の可視判定（アルファが 0 より大きいか）の単一所有 |
+| `Imaging/EsLabelLayout.cs` | ラベルの体裁（内側余白（`Padding`）・文字原点・配置とクランプ・行送り）の単一所有 |
+| `Imaging/EsLabelMetrics.cs` | ラベルのフォントサイズの安全域と補正の単一所有 |
+| `Imaging/EsLabelDefaults.cs` | ラベルの既定の見た目（文字色・背景色・フォントサイズ）の単一所有（コントロールの設定型が参照する） |
+
+### ラベル体裁を本プロジェクトが所有する理由
+
+「背景 = 文字の実寸 + 内側余白 × 2」「文字の原点 = 背景の左上 + 内側余白」「縦積みの行送り」は、**特定のコントロールに依存しない体裁の規則**です。
+各コントロールのコアが個別に書くと、同じ見た目を作る式が複数箇所へ散り（余白の適用漏れ・非対称な余白）、UI ごとに見た目がずれます。
+またフォントサイズの安全域（6〜48）は、ラベルを持つコントロールで共通の規則です。
+
+これらは UI フレームワークにも特定のコントロールにも依存しないため、各コントロールから最も近い共有層である本プロジェクト（`Imaging`）が単一所有します。
 
 ## 例外処理ポリシー
 
 本プロジェクトは値型・列挙型と純粋計算で構成されます。例外は `EsBitmap` の引数検証（`ArgumentOutOfRangeException`）と破棄後アクセス（`ObjectDisposedException`）のみです。
 
-## 移行の経緯
+## 設計判断（UI 非依存の境界）
 
-従来 `Platform.AvaloniaUI` プロジェクト内にあった以下の型は、UI フレームワーク（Avalonia）の型を保持していたため、本プロジェクトへ切り出しました。
+本プロジェクトの型は、UI フレームワークの型を保持しないことを境界の条件としています。
 
-| 型 | 移行前の依存 |
+| 判断 | 内容 |
 | --- | --- |
-| `HotKeySetting` / `HotKeyModifiers` | `Avalonia.Input.Key` |
-| `EsKey` | （新設。`Avalonia.Input.Key` と同名のメンバーを持つ） |
-| `ScrollMath` / `DpiScaler` / `CoordMath` | なし（`double` のみ） |
-| `CoordinateFormatter` | `Avalonia.Point` → `EsPoint` へ変更 |
-| `ICoordTransform` / `CoordTransform` | `Avalonia.Point` / `Size` / `Vector` → `EsPoint` / `EsSize` / `EsVector` へ変更 |
-| `EsBitmap` | なし（System.Drawing プリミティブと SkiaSharp のみ。移設当初の名前は `PbBitmap`） |
-| `ICaptureService` / `ICursorService` / `IElementFinder` | `Avalonia.PixelRect` / `PixelPoint` → `EsPixelRect` / `EsPixelPoint` へ変更 |
-| `IWindowService` / `ElementFinderResults` | `Avalonia.Platform.IPlatformHandle` → `EsPlatformHandle` へ変更 |
-| `ICursorOverrideGuard` | `Attach(TopLevel)` → `Attach(EsPlatformHandle)` へ変更（`TopLevel` からの取得は Avalonia 側の拡張メソッド `Attach(this ICursorOverrideGuard, TopLevel)` が担う） |
-| `IGlobalHotKeyService<T>` | なし（`IntPtr` と `HotKeySetting` のみ） |
-
-これにより、`app.AvaloniaUI` の設定モデルや各コントロールの純粋ロジック、将来の MewUI 実装からも UI フレームワーク非依存のまま利用できます。
-Avalonia 側は相互変換（`EsKeyAvaloniaInterop` / `EsGeometryAvaloniaInterop`）と `EsBitmap` アダプタ（`EsBitmapAvaloniaExtensions` / `EsBitmapAvaloniaImage`）を提供します。
+| キーとウィンドウ状態 | `Avalonia.Input.Key` / `Avalonia.Controls.WindowState` と**メンバー名を一致**させ、名前ベースの変換で相互変換する（既存の設定ファイルをそのまま読み込める） |
+| 座標・寸法 | `Avalonia.Point` / `Size` / `Vector` → `EsPoint` / `EsSize` / `EsVector` へ統一し、UI 境界で 1 行変換する |
+| 色 | `System.Drawing.Color`（共有フレームワーク同梱でクロスプラットフォーム。`System.Drawing.Common` ではない）を使い、UI の色型への変換は境界で行う |
+| Skia の描画プリミティブ | SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が単一所有する |
+| ラベル体裁 | コントロールに依存しない体裁の規則は本プロジェクトが単一所有する（マーキーとルーペが同じ規則を共用する） |
+| ロガー未設定 | `LoggerFallback.OrNullLogger()` が単一所有し、各所の `?? NullLogger.Instance` を排除する |
 
 ### コア型の命名
 
 コア型には **`Es`（Estable の略）接頭辞**を付けます（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` /
-`EsPixelPoint` / `EsPixelRect` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap`）。
+`EsPixelPoint` / `EsPixelRect` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap` / `EsLabelFrame` /
+`EsLabelElement` / `EsLabelLayout` / `EsLabelMetrics` / `EsLabelDefaults` / `IEsLabel` / `IEsRectWalker` / `IntMath` / `EsRectMath` /
+`EsSizeMath` / `IEsCanvas` / `SkiaEsCanvas`）。
 
-画像コンテナは移設当初 `PbBitmap`（Pb = Premultiplied）でしたが、型名がピクセル形式という実装の詳細を表していたため、
-他のコア型と揃えて `EsBitmap` へ改名しました（`EsBitmapAvaloniaExtensions` / `EsBitmapAvaloniaImage` /
-`EsBitmapDrawingExtensions` も同様）。
+## ライセンス
+
+MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

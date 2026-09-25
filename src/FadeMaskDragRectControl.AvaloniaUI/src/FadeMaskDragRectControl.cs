@@ -6,14 +6,15 @@ using Estable.AvaloniaUI.Marquee;
 using Estable.AvaloniaUI.Loupe;
 using Estable.Marquee;
 using Estable.Marquee.CoreForControl;
+using Estable.Marquee.Rendering;
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
-using System.Globalization;
 using DrawingColor = System.Drawing.Color;
 
 namespace Estable.AvaloniaUI.FadeMaskDragRect;
@@ -416,18 +417,14 @@ public sealed class FadeMaskDragRectControl : Panel
     // ====================================================================
 
     /// <summary>ハイライト矩形（ドメイン座標）。未検出時は null。</summary>
-    /// <remarks>選択矩形コントロールの装飾の設定へ委譲する（変更は自動で再描画される）。</remarks>
+    /// <remarks>
+    /// 選択矩形コントロールの装飾の設定へ委譲する（変更は自動で再描画される）。<br/>
+    /// <b>null が「ハイライトしない」を意味する</b>（有効フラグは持たない。ハイライトをやめる場合は null にする）。
+    /// </remarks>
     public Rect? LogicalHighlightRect
     {
         get => _marquee.DecoOptions.OuterHighlightRect?.ToAvaloniaRect();
         set => _marquee.DecoOptions = _marquee.DecoOptions with { OuterHighlightRect = value?.ToEsRect() };
-    }
-
-    /// <summary>ハイライト表示の有無。</summary>
-    public bool HasHighlight
-    {
-        get => _marquee.DecoOptions.OuterHasHighlight;
-        set => _marquee.DecoOptions = _marquee.DecoOptions with { OuterHasHighlight = value };
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
@@ -450,11 +447,7 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         var current = _marquee.DecoOptions;
         _marquee.Options = _options.Marquee;
-        _marquee.DecoOptions = _options.Deco with
-        {
-            OuterHighlightRect = current.OuterHighlightRect,
-            OuterHasHighlight = current.OuterHasHighlight,
-        };
+        _marquee.DecoOptions = _options.Deco with { OuterHighlightRect = current.OuterHighlightRect };
         _loupeControl.Options = _options.Loupe;
         // 表示位置のオフセットはフレームワーク差（Avalonia 版のルーペは自己配置する）のため、
         // 設定に含まれる値からルーペのプロパティへ個別に渡す
@@ -534,7 +527,7 @@ public sealed class FadeMaskDragRectControl : Panel
         // サイズラベルが描かれている場合はその下へ積む（重なりを避ける。行送りはコアが単一所有する）
         if (e.Content.SizeLabel is { } sizeLabel)
         {
-            y = MarqueeAppearance.NextLabelTop(y, sizeLabel.FontSize);
+            y = EsLabelLayout.NextTop(y, sizeLabel.FontSize, EsLabelLayout.Padding);
         }
 
         // 表示可否はホストが判定する（設定スイッチと文言の有無の両方が成立したときだけ描く）
@@ -543,7 +536,7 @@ public sealed class FadeMaskDragRectControl : Panel
             DrawHostLabel(
                 e.Context, hole.X, y, operation,
                 labels.OperationFontSize, labels.OperationColor, labels.OperationBackgroundColor);
-            y = MarqueeAppearance.NextLabelTop(y, labels.OperationFontSize);
+            y = EsLabelLayout.NextTop(y, labels.OperationFontSize, EsLabelLayout.Padding);
         }
 
         if (labels.ShowInfoLabel && InfoTextProvider?.Invoke() is { Length: > 0 } info)
@@ -563,32 +556,21 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="color">文字色。</param>
     /// <param name="background">背景色。</param>
     /// <remarks>
-    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（体裁はコアが単一所有する）。<br/>
-    /// テキストの実寸測定と描画は本クラス（ホスト）が行う（コアは文字を描かない）。
+    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（体裁は描画層が単一所有する）。<br/>
+    /// テキストの実寸測定と描画は描画ポート（本 UI では <see cref="AvaloniaCanvas"/>）が担う。<br/>
+    /// 付加情報ラベルはアプリ固有の情報だが、体裁は共通の規則（<c>MarqueeHostLabelRenderer</c>）を使う
+    /// （両 UI で同じ組み立てを書かない）。
     /// </remarks>
     private static void DrawHostLabel(
         DrawingContext context, double x, double y, string text, double fontSize, DrawingColor color, DrawingColor background)
-    {
-        var formatted = new FormattedText(
-            text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, fontSize,
-            s_hostLabelBrushes.GetOrCreate(color.ToAvaloniaColor()));
-
-        // 体裁（内側余白）はコアが単一所有する（MewUI ホストと同じ組み立てに揃える）
-        var textOrigin = new EsPoint(x, y + MarqueeAppearance.SizeLabelPadding);
-        context.FillRectangle(
-            s_hostLabelBrushes.GetOrCreate(background.ToAvaloniaColor()),
-            MarqueeAppearance.ComputeHostLabelBackground(
-                textOrigin, new EsSize(formatted.Width, formatted.Height)).ToAvaloniaRect());
-        context.DrawText(formatted, textOrigin.ToAvaloniaPoint());
-    }
-
-    /// <summary>ホスト固有ラベルのブラシを共有する容量制限付きキャッシュ。</summary>
-    /// <remarks>
-    /// 描画のたびにブラシを生成するとポインター移動中の負荷が増えるため、プラットフォーム層の<br/>
-    /// 容量制限付きキャッシュを共用する（本クラスのラベルは色数が少ないため上限に達しない）。\n
-    /// </remarks>
-    private static readonly CapacityLimitedCache<Color, SolidColorBrush> s_hostLabelBrushes =
-        new(static color => new SolidColorBrush(color));
+        => MarqueeHostLabelRenderer.Draw(
+            new AvaloniaCanvas(context),
+            new EsPoint(x, y),
+            text,
+            fontSize,
+            color,
+            background,
+            EsLabelLayout.Padding);
 
     /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを描画済み Bitmap へ描く。</summary>
     /// <param name="sender">イベント送信元（LoupeControl）。</param>

@@ -118,13 +118,12 @@ public class MarqueeControlStateTests
     {
         var control = CreateControl();
 
-        // 未選択時: State=NoSelection / SelectionRect=0x0 / HasSelection=false / IsDragging=false / NudgeActive=false
+        // 未選択時: State=NoSelection / SelectionRect=0x0 / HasSelection=false / NudgeActive=false
         var snap0 = control.CurrentSnapshot;
         Assert.Equal(MarqueeInteractionState.NoSelection, snap0.State);
         Assert.Equal(default, snap0.SelectionRect);
         Assert.Equal(HitTarget.None, snap0.ActiveTarget);
         Assert.False(snap0.HasSelection);
-        Assert.False(snap0.IsDragging);
         Assert.False(snap0.IsMouseDown);
         Assert.False(snap0.NudgeActive);
 
@@ -134,7 +133,6 @@ public class MarqueeControlStateTests
         Assert.Equal(MarqueeInteractionState.Selected, snap1.State);
         Assert.Equal(new EsRect(10, 10, 50, 40), snap1.SelectionRect);
         Assert.True(snap1.HasSelection);
-        Assert.False(snap1.IsDragging);
         Assert.False(snap1.NudgeActive);
     }
 
@@ -142,18 +140,18 @@ public class MarqueeControlStateTests
     public void MarqueeSnapshot_HasSelection_幅か高さが0ならfalseを返す()
     {
         // Width>0 かつ Height=0（幅のみの矩形は選択として無効）
-        var snap1 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 100, 0), HitTarget.None, default, false, false, false);
+        var snap1 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 100, 0), HitTarget.None, default, false, false);
         Assert.False(snap1.HasSelection);
 
         // Width=0 かつ Height>0（高さのみの矩形は選択として無効）
-        var snap2 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 0, 100), HitTarget.None, default, false, false, false);
+        var snap2 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 0, 100), HitTarget.None, default, false, false);
         Assert.False(snap2.HasSelection);
     }
 
     [Fact]
     public void MarqueeSnapshot_MousePositionが取得できる()
     {
-        var snap = new MarqueeSnapshot(MarqueeInteractionState.Selected, default, HitTarget.None, new EsPoint(5, 7), false, false, false);
+        var snap = new MarqueeSnapshot(MarqueeInteractionState.Selected, default, HitTarget.None, new EsPoint(5, 7), false, false);
 
         Assert.Equal(new EsPoint(5, 7), snap.MousePosition);
     }

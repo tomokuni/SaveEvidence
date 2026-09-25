@@ -170,7 +170,6 @@ public class MarqueeControlTests
         Assert.Equal(default, snapshot.SelectionRect);
         Assert.Equal(HitTarget.None, snapshot.ActiveTarget);
         Assert.False(snapshot.HasSelection);
-        Assert.False(snapshot.IsDragging);
         Assert.False(snapshot.IsMouseDown);
         Assert.False(snapshot.NudgeActive);
     }
@@ -498,4 +497,29 @@ public class MarqueeControlTests
         /// <param name="e">イベント引数。</param>
         public void RaiseUp(MouseEventArgs e) => OnMouseUp(e);
     }
-}
+    /// <summary>1 フレーム分の描画内容は 1 回だけ解決されることを検証する。</summary>
+    /// <remarks>
+    /// 配置と描画で同じ描画内容を共有しないと、選択矩形・装飾・ラベル文言の解決と確保が 1 フレームで 2 回走る。<br/>
+    /// サイズラベルの文言プロバイダは <see cref="MarqueeFacade.ResolveContent"/> が 1 回だけ評価するため、<br/>
+    /// その呼び出し回数が 1 フレームの解決回数になる（選択がありサイズラベルを表示する場合のみ評価される）。<br/>
+    /// 同じ基準サイズで配置を繰り返しても再解決しない（状態が変わった場合だけ再解決する）。
+    /// </remarks>
+    [Fact]
+    public void 描画内容は1フレームにつき1回だけ解決される()
+    {
+        var cursor = new CursorServiceSpy();
+        var control = CreateControl(cursor);
+        control.SetSelection(new EsRect(20, 20, 60, 60));
+
+        var resolves = 0;
+        control.SizeLabelOverrideProvider = () =>
+        {
+            resolves++;
+            return "S";
+        };
+
+        control.Arrange(new Rect(0, 0, 200, 200));
+        control.Arrange(new Rect(0, 0, 200, 200));
+
+        Assert.Equal(1, resolves);
+    }}

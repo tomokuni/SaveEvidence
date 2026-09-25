@@ -3,6 +3,7 @@ using Aprillz.MewUI.Controls;
 using Estable.Marquee;
 using Estable.Marquee.Decoration;
 using Estable.Marquee.CoreForControl;
+using Estable.Marquee.Rendering;
 using Estable.FadeMaskDragRect;
 using Estable.Loupe;
 using Estable.MewUI.Marquee;
@@ -174,19 +175,11 @@ public sealed class FadeMaskDragRectControl : Panel
     public EsRect SelectionRect => _marquee.SelectionRect;
 
     /// <summary>ハイライト矩形（ドメイン座標）を取得または設定する。</summary>
-    /// <value>ハイライト矩形。未検出時は null。選択矩形より優先される。</value>
+    /// <value>ハイライト矩形。未検出時は null（<b>null が「ハイライトしない」を意味する</b>）。選択矩形より優先される。</value>
     public EsRect? LogicalHighlightRect
     {
         get => _marquee.DecoOptions.OuterHighlightRect;
         set => _marquee.DecoOptions = _marquee.DecoOptions with { OuterHighlightRect = value };
-    }
-
-    /// <summary>ハイライト表示の有無を取得または設定する。</summary>
-    /// <value>true の場合は <see cref="LogicalHighlightRect"/> を穴あけ矩形として使う（選択矩形より優先）。</value>
-    public bool HasHighlight
-    {
-        get => _marquee.DecoOptions.OuterHasHighlight;
-        set => _marquee.DecoOptions = _marquee.DecoOptions with { OuterHasHighlight = value };
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうかを取得する。</summary>
@@ -440,11 +433,7 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         var current = _marquee.DecoOptions;
         _marquee.Options = _options.Marquee;
-        _marquee.DecoOptions = _options.Deco with
-        {
-            OuterHighlightRect = current.OuterHighlightRect,
-            OuterHasHighlight = current.OuterHasHighlight,
-        };
+        _marquee.DecoOptions = _options.Deco with { OuterHighlightRect = current.OuterHighlightRect };
         _loupe.Options = _options.Loupe;
         // 表示位置のオフセットは設定に含まれる値からルーペへ渡す（保持と位置の計算はコアが単一所有する）
         _loupe.PositionOffset = _options.LoupeOffset;
@@ -514,7 +503,7 @@ public sealed class FadeMaskDragRectControl : Panel
         // サイズラベルが描かれている場合はその下へ積む（重なりを避ける。行送りはコアが単一所有する）
         if (e.Content.SizeLabel is { } sizeLabel)
         {
-            y = MarqueeAppearance.NextLabelTop(y, sizeLabel.FontSize);
+            y = EsLabelLayout.NextTop(y, sizeLabel.FontSize, EsLabelLayout.Padding);
         }
 
         // 表示可否はホストが判定する（設定スイッチと文言の有無の両方が成立したときだけ描く）
@@ -523,7 +512,7 @@ public sealed class FadeMaskDragRectControl : Panel
             DrawHostLabel(
                 e.Canvas, hole.X, y, operation,
                 labels.OperationFontSize, labels.OperationColor, labels.OperationBackgroundColor);
-            y = MarqueeAppearance.NextLabelTop(y, labels.OperationFontSize);
+            y = EsLabelLayout.NextTop(y, labels.OperationFontSize, EsLabelLayout.Padding);
         }
 
         if (labels.ShowInfoLabel && InfoTextProvider?.Invoke() is { Length: > 0 } info)
@@ -543,25 +532,21 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="color">文字色。</param>
     /// <param name="background">背景色。</param>
     /// <remarks>
-    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（体裁はコアが単一所有する）。<br/>
-    /// テキストの実寸測定と描画は本クラス（ホスト）が行う（コアは文字を描かない）。
+    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（体裁は描画層が単一所有する）。<br/>
+    /// テキストの実寸測定と描画は描画ポート（本 UI では <see cref="SkiaEsCanvas"/>）が担う。<br/>
+    /// 付加情報ラベルはアプリ固有の情報だが、体裁は共通の規則（<c>MarqueeHostLabelRenderer</c>）を使う
+    /// （両 UI で同じ組み立てを書かない）。
     /// </remarks>
     private static void DrawHostLabel(
         SKCanvas canvas, double x, double y, string text, double fontSize, DrawingColor color, DrawingColor background)
-    {
-        var size = SkiaText.Measure(text, fontSize);
-        var textOrigin = new EsPoint(x, y + MarqueeAppearance.SizeLabelPadding);
-
-        // 体裁（内側余白）はコアが単一所有し、「背景を塗ってから文字を描く」順序は SkiaLabel（Platform.Core）が単一所有する
-        SkiaLabel.Draw(
-            canvas,
-            MarqueeAppearance.ComputeHostLabelBackground(textOrigin, size),
-            background,
+        => MarqueeHostLabelRenderer.Draw(
+            new SkiaEsCanvas(canvas),
+            new EsPoint(x, y),
             text,
-            textOrigin,
             fontSize,
-            color);
-    }
+            color,
+            background,
+            EsLabelLayout.Padding);
 
     /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを同一のキャンバスへ描画する。</summary>
     /// <param name="sender">イベント送信元（ルーペコントロール）。</param>

@@ -19,7 +19,7 @@ public class MarqueeViewportNotifierTests
         out EffectsSpy effects, out Marquee marquee)
     {
         effects = new EffectsSpy();
-        marquee = new Marquee(effects);
+        marquee = new Marquee(new StubMarqueeRenderer(), effects);
         var notifier = new MarqueeViewportNotifier(marquee, effects);
         var snapshots = new List<MarqueeSnapshot>();
         notifier.ViewportChanged += (_, snapshot) => snapshots.Add(snapshot);
@@ -80,7 +80,7 @@ public class MarqueeViewportNotifierTests
     [Fact]
     public void 生成_引数がnullなら例外を投げる()
     {
-        var marquee = new Marquee(new EffectsSpy());
+        var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
 
         Assert.Throws<ArgumentNullException>(() => new MarqueeViewportNotifier(null!, new EffectsSpy()));
         Assert.Throws<ArgumentNullException>(() => new MarqueeViewportNotifier(marquee, null!));

@@ -18,7 +18,9 @@
     - [5.2 相互変換（Interop）](#52-相互変換interop)
     - [5.3 ColorExtensions（C# 14 静的拡張メンバー）](#53-colorextensionsc-14-静的拡張メンバー)
     - [5.4 EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache](#54-esbitmapavaloniaextensions--esbitmapavaloniaimage--capacitylimitedcache)
-    - [5.5 型一覧](#55-型一覧)
+- [5.5 AvaloniaCanvas](#55-avaloniacanvas)
+- [5.6 型一覧](#56-型一覧)
+    - [5.6 型一覧](#56-型一覧)
   - [6. 座標系](#6-座標系)
   - [7. 制約事項](#7-制約事項)
 
@@ -175,7 +177,7 @@ ICoordTransform dipPort = ScreenConverter.CreateVisualDipPort(control);
 
 | 型 | 説明 |
 | --- | --- |
-| `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ。`Draw` は Skia 直描画（`WriteableBitmap` を生成しない）。`Dispose` で内包を解放 |
+| `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ。`Draw` は Skia 直描画（`WriteableBitmap`` を生成しない）。`Dispose` で内包を解放 |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。スレッド安全。値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
 
 ```csharp
@@ -187,11 +189,32 @@ var brush = s_cache.GetOrCreate(color);
 
 容量管理（しきい値・超過時の全クリア）を本型が単一所有するため、利用側（ブラシ・ペンのキャッシュ）は容量の判定を持ちません。
 
-### 5.5 型一覧
+### 5.5 AvaloniaCanvas
+
+`EsUtil.Platform.Core.Imaging.IEsCanvas`（UI 非依存の描画ポート）を Avalonia の `DrawingContext` へ適合させるアダプタです。
+コア側の描画層（`MarqueeControl.Rendering` / `LoupeControl.Rendering`）が本ポートだけを呼ぶため、Avalonia 側は本クラスを渡すだけで描画できます。
+
+| メンバー | 説明 |
+| --- | --- |
+| `AvaloniaCanvas(DrawingContext context)` | 描画先を指定して生成する（`context` が null なら `ArgumentNullException`） |
+| `Clear(EsRect surface, DrawingColor color)` | `DrawingContext` に全面消去の API が無いため、渡された矩形を塗って代用する |
+| `FillRect` / `FillRects` / `FillRoundRect` | 矩形・角丸矩形を塗る（ブラシは容量制限付きで共有） |
+| `StrokeRect` / `DrawLine` | 枠線・線分を描く（ペンは容量制限付きで共有） |
+| `DrawLabel(...)` | 背景を塗ってから文字を描く（**順序は本メソッドが保証する**） |
+| `DrawImage(EsBitmap, EsRect, EsRect)` | `ToAvaloniaBitmap` で変換して描く（変換した複製は本メソッドが破棄する） |
+| `MeasureText(string, double)` | `FormattedText` で実寸を測る |
+
+```csharp
+using var ctx = renderTargetBitmap.CreateDrawingContext();
+MarqueeRenderer.Default.DrawShapes(new AvaloniaCanvas(ctx), content);
+```
+
+### 5.6 型一覧
 
 公開型は `ScreenConverter` / `EsKeyAvaloniaInterop` / `EsWindowStateAvaloniaInterop` /
 `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop` / `ColorAvaloniaInterop` / `CursorOverrideGuardAvaloniaExtensions` /
-`ColorExtensions` / `EsBitmapAvaloniaImage` / `EsBitmapAvaloniaExtensions` / `CapacityLimitedCache<TKey, TValue>` です。
+`ColorExtensions` / `EsBitmapAvaloniaImage` / `EsBitmapAvaloniaExtensions` / `AvaloniaCanvas` /
+`CapacityLimitedCache<TKey, TValue>` / `EsLabelElementHost` です。
 
 インターフェース・コア値型・`CoordTransform`・`EsBitmap` は `Platform.Core`、
 `PlatformFactory.CreateXxx()` と Win32 / NoOp 実装・`EsBitmapDrawingExtensions` は `Platform.Native` が提供します。

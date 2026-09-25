@@ -216,4 +216,63 @@ public class SelectionGeometryTests
 
         Assert.Equal(new EsRect(200, 100, 0, 0), result);
     }
+
+    // ====================================================================
+    // DirectionalHandles（描画対象のハンドル一覧）
+    // ====================================================================
+
+    [Fact]
+    public void DirectionalHandles_8方向のみを宣言順で持つ()
+    {
+        // None / Move を除く 8 方向
+        Assert.Equal(
+            [
+                HitTarget.TopLeft, HitTarget.TopCenter, HitTarget.TopRight,
+                HitTarget.MiddleLeft, HitTarget.MiddleRight,
+                HitTarget.BottomLeft, HitTarget.BottomCenter, HitTarget.BottomRight,
+            ],
+            SelectionGeometry.DirectionalHandles);
+    }
+
+    // ====================================================================
+    // ToCursorKind（ハンドル → カーソル形状の種別）
+    // ====================================================================
+
+    [Fact]
+    public void ToCursorKind_対角と辺のハンドルが同じ種別へ解決する()
+    {
+        // 対角のハンドルは同じ向きのカーソル（左上 = 右下 / 右上 = 左下）
+        Assert.Equal(MarqueeCursorKind.DiagonalNWSE, SelectionGeometry.ToCursorKind(HitTarget.TopLeft));
+        Assert.Equal(MarqueeCursorKind.DiagonalNWSE, SelectionGeometry.ToCursorKind(HitTarget.BottomRight));
+        Assert.Equal(MarqueeCursorKind.DiagonalNESW, SelectionGeometry.ToCursorKind(HitTarget.TopRight));
+        Assert.Equal(MarqueeCursorKind.DiagonalNESW, SelectionGeometry.ToCursorKind(HitTarget.BottomLeft));
+
+        // 辺のハンドルは向きごとのカーソル
+        Assert.Equal(MarqueeCursorKind.Vertical, SelectionGeometry.ToCursorKind(HitTarget.TopCenter));
+        Assert.Equal(MarqueeCursorKind.Vertical, SelectionGeometry.ToCursorKind(HitTarget.BottomCenter));
+        Assert.Equal(MarqueeCursorKind.Horizontal, SelectionGeometry.ToCursorKind(HitTarget.MiddleLeft));
+        Assert.Equal(MarqueeCursorKind.Horizontal, SelectionGeometry.ToCursorKind(HitTarget.MiddleRight));
+
+        // 矩形内は移動
+        Assert.Equal(MarqueeCursorKind.Move, SelectionGeometry.ToCursorKind(HitTarget.Move));
+    }
+
+    [Fact]
+    public void ToCursorKind_ハンドル外は既定の種別を返す()
+        => Assert.Equal(MarqueeCursorKind.Default, SelectionGeometry.ToCursorKind(HitTarget.None));
+
+    [Fact]
+    public void ToCursorKind_全ハンドルが既定以外の種別へ解決する()
+    {
+        // None 以外の全ハンドルが Default 以外へ解決する（マッピング漏れの検出）
+        foreach (var handle in Enum.GetValues<HitTarget>())
+        {
+            if (handle == HitTarget.None)
+            {
+                continue;
+            }
+
+            Assert.NotEqual(MarqueeCursorKind.Default, SelectionGeometry.ToCursorKind(handle));
+        }
+    }
 }

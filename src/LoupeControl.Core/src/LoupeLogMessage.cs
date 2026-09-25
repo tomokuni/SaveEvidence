@@ -1,3 +1,4 @@
+using System.Globalization;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
@@ -23,12 +24,12 @@ public static partial class LoupeLogMessage
     /// <param name="oldValue">変更前の値（整形済み）。</param>
     /// <param name="newValue">変更後の値（整形済み）。</param>
     [LoggerMessage(LogLevel.Debug, "[LoupeCtrl] Setting: {Name} {OldValue} → {NewValue}")]
-    public static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
+    internal static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
 
     /// <summary>整数設定値の変更ログ（同値の再設定では出力しない）。</summary>
     /// <remarks>
     /// <see cref="LogSettingChanged(ILogger, string, string, string)"/> と同じ書式で出力する。<br/>
-    /// 「変化したときだけ出力する」判断と数値の文字列化を本メソッドが単一所有し、UI 層は値を渡すだけでよい<br/>
+    /// 「変化したときだけ出力する」判断と数値の文字列化は <see cref="LogSettingChangedIfChanged"/> が単一所有する<br/>
     /// （外観設定の再適用でログが溢れるのを防ぐ規則）。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
@@ -36,14 +37,7 @@ public static partial class LoupeLogMessage
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
     public static void LogSettingChanged(this ILogger logger, string name, int oldValue, int newValue)
-    {
-        if (oldValue == newValue)
-        {
-            return;
-        }
-
-        logger.LogSettingChanged(name, LoupeLogFormat.FormatNumber(oldValue), LoupeLogFormat.FormatNumber(newValue));
-    }
+        => logger.LogSettingChangedIfChanged(name, oldValue, newValue);
 
     /// <summary>実数設定値の変更ログ（同値の再設定では出力しない）。</summary>
     /// <remarks><see cref="LogSettingChanged(ILogger, string, int, int)"/> の実数版（書式・規則とも同一）。</remarks>
@@ -52,13 +46,30 @@ public static partial class LoupeLogMessage
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
     public static void LogSettingChanged(this ILogger logger, string name, double oldValue, double newValue)
+        => logger.LogSettingChangedIfChanged(name, oldValue, newValue);
+
+    /// <summary>数値設定値の変更ログ（同値の再設定では出力しない）の本体。</summary>
+    /// <typeparam name="T">数値の型（整数・実数）。</typeparam>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値。</param>
+    /// <param name="newValue">変更後の値。</param>
+    /// <remarks>
+    /// 「同値なら出力しない」判定と、カルチャに依存しない数値の文字列化を単一所有する<br/>
+    /// （整数版・実数版が同じ規則を別々に持つと、片方だけ非カルチャ非依存のまま残る）。
+    /// </remarks>
+    private static void LogSettingChangedIfChanged<T>(this ILogger logger, string name, T oldValue, T newValue)
+        where T : struct, IEquatable<T>, IFormattable
     {
-        if (oldValue == newValue)
+        if (oldValue.Equals(newValue))
         {
             return;
         }
 
-        logger.LogSettingChanged(name, LoupeLogFormat.FormatNumber(oldValue), LoupeLogFormat.FormatNumber(newValue));
+        logger.LogSettingChanged(
+            name,
+            oldValue.ToString(format: null, CultureInfo.InvariantCulture),
+            newValue.ToString(format: null, CultureInfo.InvariantCulture));
     }
 
     /// <summary>拡大中心（ドメイン座標）の変更ログ（同値の再設定では出力しない）。</summary>

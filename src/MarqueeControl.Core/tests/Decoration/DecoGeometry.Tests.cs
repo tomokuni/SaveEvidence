@@ -100,34 +100,40 @@ public class DecoGeometryTests
         Assert.Equal(0, result[3].Height);
     }
 
-    /// <summary>ハイライトが有効ならハイライト矩形を優先することを検証する。</summary>
+    /// <summary>ハイライト矩形があればハイライト矩形を優先することを検証する。</summary>
     [Fact]
-    public void ResolveHoleRect_ハイライト有効時はハイライト矩形を優先する()
+    public void ResolveHoleRect_ハイライトがあればハイライト矩形を優先する()
     {
         var highlight = new EsRect(1, 2, 3, 4);
         var selection = new EsRect(10, 20, 30, 40);
 
-        var result = DecoGeometry.ResolveHoleRect(true, highlight, true, selection);
+        var result = DecoGeometry.ResolveHoleRect(highlight, selection);
 
-        Assert.Equal(highlight, result);
+        Assert.NotNull(result);
+        Assert.Equal(highlight, result.Value.Rect);
+        // ハイライト矩形はホストが閉区間として与えるため、終点を +1 しない
+        Assert.False(result.Value.ClosedInterval);
     }
 
-    /// <summary>ハイライトが無効で選択が有効なら選択矩形を返すことを検証する。</summary>
+    /// <summary>ハイライトが無く選択だけがある場合は選択矩形を閉区間として返すことを検証する。</summary>
     [Fact]
-    public void ResolveHoleRect_ハイライト無効で選択有効時は選択矩形を返す()
+    public void ResolveHoleRect_ハイライトが無ければ選択矩形を返す()
     {
         var selection = new EsRect(10, 20, 30, 40);
 
-        var result = DecoGeometry.ResolveHoleRect(false, null, true, selection);
+        var result = DecoGeometry.ResolveHoleRect(null, selection);
 
-        Assert.Equal(selection, result);
+        Assert.NotNull(result);
+        Assert.Equal(selection, result.Value.Rect);
+        // 選択矩形は閉区間（終点のピクセルも含む）として扱う
+        Assert.True(result.Value.ClosedInterval);
     }
 
-    /// <summary>ハイライトと選択の両方が無効なら null を返すことを検証する。</summary>
+    /// <summary>どちらも null なら null を返すことを検証する。</summary>
     [Fact]
-    public void ResolveHoleRect_両方無効ならnullを返す()
+    public void ResolveHoleRect_両方nullならnullを返す()
     {
-        var result = DecoGeometry.ResolveHoleRect(false, null, false, null);
+        var result = DecoGeometry.ResolveHoleRect(null, null);
 
         Assert.Null(result);
     }

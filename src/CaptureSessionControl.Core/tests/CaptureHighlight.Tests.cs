@@ -45,7 +45,7 @@ public class CaptureHighlightTests
         var result = session.Update(
             CaptureType.WindowSelect, Detected(new EsPixelRect(2020, 100, 800, 600)), new EsPixelPoint(1920, 0));
 
-        Assert.True(result.HasHighlight);
+        Assert.NotNull(result.DomainRect);
         Assert.Equal(new EsRect(100, 100, 800, 600), result.DomainRect);
         Assert.Equal("Sample", session.Title);
         Assert.Equal(new EsRect(100, 100, 800, 600), session.DomainRect);
@@ -59,7 +59,6 @@ public class CaptureHighlightTests
 
         var result = session.Update(CaptureType.WindowSelect, default, default);
 
-        Assert.False(result.HasHighlight);
         Assert.Null(result.DomainRect);
         Assert.Equal("", session.Title);
         Assert.Null(session.DomainRect);
