@@ -234,16 +234,6 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>文言はアプリ固有のため、コアは関知しない（本クラスが取得と描画を行う）。</remarks>
     public Func<string?>? InfoTextProvider { get; set; }
 
-    /// <summary>付加情報ラベルの背景色（黒 60%）。</summary>
-    private static readonly DrawingColor s_labelBackground = DrawingColor.FromArgb(153, 0, 0, 0);
-
-    /// <summary>操作ラベル（確定・キャンセル方法）の文字色。</summary>
-    private static readonly DrawingColor s_subLineColor = DrawingColor.FromArgb(255, 220, 220, 220);
-
-    /// <summary>情報ラベル（ウィンドウタイトル）の文字色。</summary>
-    private static readonly DrawingColor s_infoColor = DrawingColor.White;
-
-
     /// <summary>サイズラベルの文言を描画時に評価するデリゲートを取得または設定する。</summary>
     /// <value>描画時に呼び出される関数。null または空文字を返す場合はサイズラベルを描画しない。</value>
     /// <remarks>
