@@ -357,7 +357,8 @@ OnPaintSurface(canvas, info)
   ├─ canvas.Scale(RenderScaling)                     … DPI の適用（境界 1 箇所）
   ├─ canvas.Clear(透明)                              … 前フレームの描画を残さない
   ├─ Marquee.ResolveContent(clientSize)              … 描画内容 1 値（判断はコア。内部で MarqueeFrame が解決。サイズのみを渡し原点は常に 0）
-  └─ Renderer.DrawShapes(new SkiaEsCanvas(canvas), content)   … 描画の手順はファサードが保持する描画実装（既定は描画層）が単一所有
+  └─ 自 UI の描画実装（MarqueeRendererMewUI）があれば Draw(canvas, content)、なければ Marquee.Draw(new SkiaEsCanvas(canvas), content)
+       （層の順序はコアの MarqueeRendererBase が、色は UIBase の MarqueeRenderer が単一所有する）
        ├─ MarqueeOuterRenderer.Draw                 … 外側の装飾（暗転マスク・枠線）
        ├─ MarqueeInnerRenderer.Draw                 … 穴あけ矩形の塗り・内枠
        ├─ content.Handles があれば                  … 8 方向の中心は SelectionGeometry（コア）が単一所有

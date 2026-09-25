@@ -15,11 +15,11 @@
 
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
-| ルーペの描画（図形） | `ILoupeRenderer.DrawShapes`（既定実装は描画層の `LoupeRenderer`） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く） |
+| ルーペの描画（図形） | `Loupe.Draw`（コアの入口）/ `ILoupeRenderer.DrawShapes`（契約） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く）。層の順序はコアの `LoupeRendererBase` が単一所有し、起動は `Loupe.Draw` に一本化する |
 | ラベル要素の配置 | `ILoupeRenderer.ResolveLabels`（既定実装は `LoupeLabelPlan.Resolve` へ委譲） | 実寸（描画 API の測定値）からラベル要素の配置指示（`EsLabelElement`）を解決する |
 | 描画に使う色 | `LoupePaint` | 下地・市松模様・外枠・十字線・中心座標ラベルの色と「描くかどうか」の述語（`Has*`）を単一所有する |
 
-#### 前提条件
+#### 1.1.1 前提条件
 
 - 描画先は `IEsCanvas`（`EsUtil.Platform.Core.Imaging`）です。Skia は `SkiaEsCanvas`、Avalonia の `DrawingContext` は `AvaloniaCanvas`（`Platform.AvaloniaUI`）を使います。
 - 描画の単位は**物理ピクセル**です（`LoupeRenderRequest.PixelSize` が作る正方形が描画面）。DIP → 物理ピクセルの換算はコアが済ませています。
@@ -35,7 +35,7 @@
 | 世代番号による古い結果の破棄 | `LoupeRenderCoordinator.ShouldApply` | 非同期に生成した描画結果が最新世代かどうかを判定する |
 | 要求の破棄と解放 | `LoupeRenderCoordinator.CancelAndRelease` | 保留中の要求を破棄し、保持しているビットマップを解放する（非表示遷移・明示クリア） |
 
-#### 前提条件
+#### 1.2.1 前提条件
 
 - 実行キューと優先度は UI 層が `post` コールバックとして注入します（本層はフレームワーク固有の API を知りません）。
 - 表示状態・ビットマップの解放・描画の開始もコールバックで受け取ります（本層はコントロールの状態とリソースを保持しません）。

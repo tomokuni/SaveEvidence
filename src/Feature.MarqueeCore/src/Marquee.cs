@@ -40,7 +40,7 @@ public sealed class Marquee
     /// <summary>入力の解釈と状態遷移の判断を担うセッション（コア内部の状態機械）。</summary>
     private readonly MarqueeSession _session;
 
-    /// <summary>描画内容を描画面へ写す描画実装（既定は描画層の <c>MarqueeRenderer.Default</c>）。</summary>
+    /// <summary>描画内容を描画面へ写す描画実装（既定は描画層の <c>MarqueeRenderer</c>。色はインスタンス状態として渡す）。</summary>
     private IMarqueeRenderer _renderer;
 
     /// <summary>効果（フォーカス・再描画・カーソル操作）の適用先（UI 層が実装する）。</summary>
@@ -74,7 +74,7 @@ public sealed class Marquee
     private Func<string?>? _sizeLabelOverrideProvider;
 
     /// <summary>ファサードを初期化する。</summary>
-    /// <param name="renderer">描画の実装（既定実装は描画層の <c>MarqueeRenderer.Default</c>）。null 不可。</param>
+    /// <param name="renderer">描画の実装（既定実装は描画層の <c>MarqueeRenderer</c>。色はインスタンス状態として渡す）。null 不可。</param>
     /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。null 不可。</param>
     /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
@@ -325,6 +325,25 @@ public sealed class Marquee
             _scaling,
             SizeLabelOverrideProvider,
             DisplayScaleScaling));
+
+    /// <summary>解決済みの描画内容を描画面へ描く（描画起動の唯一の入口）。</summary>
+    /// <param name="canvas">描画先の描画ポート（UI 層が自 UI の描画面を適合させて渡す）。null 不可。</param>
+    /// <param name="content">描く内容（同じフレームの <see cref="ResolveContent"/> の結果）。</param>
+    /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
+    /// <remarks>
+    /// <b>描画は本メソッドを通してのみ起動する</b>: UI 層が <see cref="Renderer"/> を直接呼ぶと、<br/>
+    /// 描画実装の差し替え（<see cref="Renderer"/> の設定）と描画内容の単一所有が二重経路になる。<br/>
+    /// 本メソッドを経由させることで、描画の起動・順序（<see cref="MarqueeRendererBase.DrawShapes"/>）・<br/>
+    /// 差し替えのすべてがコアの単一所有になる。<br/>
+    /// <b>描画面の寿命と消去は UI 層が所有する</b>（前フレームの残像の除去は本メソッドでは行わない）。<br/>
+    /// 描画内容を引数で受け取る（本メソッドが <see cref="ResolveContent"/> を呼び直すと 1 フレームで解決が 2 回走る）。
+    /// </remarks>
+    public void Draw(IEsCanvas canvas, in MarqueeDrawContent content)
+    {
+        ArgumentNullException.ThrowIfNull(canvas);
+
+        _renderer.DrawShapes(canvas, content);
+    }
 
     /// <summary>ラベル要素の配置指示を描画順に解決する（UI 要素として配置する UI 用）。</summary>
     /// <param name="content">配置の基準にする描画内容（同じフレームの <see cref="ResolveContent"/> の結果）。</param>

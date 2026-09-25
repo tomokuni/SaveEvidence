@@ -128,7 +128,7 @@ public sealed partial class MarqueeControl : Panel
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
         _effects = new Effects(this);
-        _marquee = new MarqueeFacade(new MarqueeRenderer(MarqueePaint.Default), _effects, _cursor, Options);
+        _marquee = new MarqueeFacade(new MarqueeRendererAvaloniaUI(MarqueePaint.Default), _effects, _cursor, Options);
         // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
         _marquee.Scaling = GetValue(ScalingProperty);
         _marquee.Notified += OnNotified;
@@ -185,9 +185,9 @@ public sealed partial class MarqueeControl : Panel
         // 設定（外観・装飾を含む）の変更は再描画を要求する
         AffectsRender<MarqueeControl>(OptionsProperty, DecoOptionsProperty, ScalingProperty);
 
-        // 色（描画にだけ必要な設定）の変更は描画実装を差し替える（色は描画実装が単一所有する）
+        // 色（描画にだけ必要な設定）の変更は本 UI の描画実装を差し替える（色は描画実装が単一所有する）
         PaintProperty.Changed.AddClassHandler<MarqueeControl>(
-            static (o, e) => o._marquee.Renderer = new MarqueeRenderer(e.GetNewValue<MarqueePaint>()));
+            static (o, e) => o._marquee.Renderer = new MarqueeRendererAvaloniaUI(e.GetNewValue<MarqueePaint>()));
 
         // 対話パラメータをファサードへ伝搬する（変更の影響判断・ログはコアが単一所有する）
         OptionsProperty.Changed.AddClassHandler<MarqueeControl>(

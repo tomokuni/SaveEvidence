@@ -46,7 +46,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-│ **依存プロジェクト** | `Feature.LoupeCore`（UI 非依存の計算ロジック）/ `LoupeControl.UIBase`（描画の手順・ラベル計画）/ `Platform.AvaloniaUI`（コア型の相互変換・画像コンテナ・`AvaloniaCanvas`） |
+| **依存プロジェクト** | `Feature.LoupeCore`（UI 非依存の計算ロジック）/ `LoupeControl.UIBase`（描画の手順・ラベル計画）/ `Platform.AvaloniaUI`（コア型の相互変換・画像コンテナ・`AvaloniaCanvas`） |
 
 ## 3. アーキテクチャ
 

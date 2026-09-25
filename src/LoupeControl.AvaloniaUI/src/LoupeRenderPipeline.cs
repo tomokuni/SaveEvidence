@@ -6,6 +6,7 @@ using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Imaging;
+using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 
@@ -23,7 +24,7 @@ internal static class LoupeRenderPipeline
     private static readonly Vector s_dpi = new(DpiScaler.StandardDpi, DpiScaler.StandardDpi);
 
     /// <summary>画像抽出を非同期に実行し、Avaloniaの描画オブジェクトをUIスレッドで合成する。</summary>
-    /// <param name="renderer">描画の実装（ファサードが保持する戦略）。null 不可。</param>
+    /// <param name="loupe">ルーペのファサード（描画実装を保持する。描画の起動は本型の入口 `Draw` を使う）。null 不可。</param>
     /// <param name="source">ルーペのソース画像。</param>
     /// <param name="request">描画入力（コアと UI の契約。UI が公開プロパティから組み立てる）。</param>
     /// <param name="notification">コアが解決した通知（描く層とその順序を持つ）。</param>
@@ -38,7 +39,7 @@ internal static class LoupeRenderPipeline
     /// （切り出しの可否と破棄済みソースの扱いはコアが単一所有する）。
     /// </remarks>
     public static async Task<EsBitmap> RenderAsync(
-        ILoupeRenderer renderer, IImage? source, LoupeRenderRequest request, LoupeRenderNotification notification)
+        LoupeFacade loupe, IImage? source, LoupeRenderRequest request, LoupeRenderNotification notification)
     {
         // 未対応型の判定は LoupeSourceResolver（単一所有）へ委譲する。
         if (!LoupeSourceResolver.IsSourceSupported(source))
@@ -56,7 +57,7 @@ internal static class LoupeRenderPipeline
             // Task.Run によるバックグラウンド抽出は、マウス移動中の連続再描画でスレッドプールが競合し、
             // 抽出結果が UI スレッドへ戻る前に次の再描画が要求されてルーペ画像が移動停止まで更新されない問題を生む。
             return await Dispatcher.UIThread.InvokeAsync(
-                () => Rasterize(renderer, sourceBitmap, request, notification),
+                () => Rasterize(loupe, sourceBitmap, request, notification),
                 DispatcherPriority.Render);
         }
         finally
@@ -70,7 +71,7 @@ internal static class LoupeRenderPipeline
     }
 
     /// <summary>描画の手順を描画実装へ委譲し、結果を <see cref="EsBitmap"/> として返す。</summary>
-    /// <param name="renderer">描画の実装（ファサードが保持する戦略）。</param>
+    /// <param name="loupe">ルーペのファサード（描画実装を保持する。描画の起動は本型の入口 `Draw` を使う）。</param>
     /// <param name="source">拡大元の画像。</param>
     /// <param name="request">描画入力（物理ピクセルサイズ・外観・拡大中心）。</param>
     /// <param name="notification">コアが解決した通知（描く層とその順序を持つ）。</param>
@@ -80,13 +81,22 @@ internal static class LoupeRenderPipeline
     /// 描画面の適合（<see cref="AvaloniaCanvas"/>）を介して描画の手順（層の順序・写し方）を描画実装へ委譲する。
     /// </remarks>
     private static EsBitmap Rasterize(
-        ILoupeRenderer renderer, EsBitmap? source, in LoupeRenderRequest request, in LoupeRenderNotification notification)
+        LoupeFacade loupe, EsBitmap? source, in LoupeRenderRequest request, in LoupeRenderNotification notification)
     {
         var bitmap = new RenderTargetBitmap(new PixelSize(request.PixelSize, request.PixelSize), s_dpi);
 
         using (var context = bitmap.CreateDrawingContext())
         {
-            renderer.DrawShapes(new AvaloniaCanvas(context), source, request, notification);
+            // 本 UI の描画実装なら描画面を適合させて描く（層の順序と起動はコアが単一所有する）
+            if (loupe.Renderer is LoupeRendererAvaloniaUI uiRenderer)
+            {
+                uiRenderer.Draw(context, source, in request, in notification);
+            }
+            else
+            {
+                // 描画実装が差し替えられている場合はコアの入口から描く
+                loupe.Draw(new AvaloniaCanvas(context), source, in request, in notification);
+            }
         }
 
         return bitmap.ToEsBitmap();

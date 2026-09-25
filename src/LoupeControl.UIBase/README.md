@@ -107,19 +107,27 @@ public void SetCenter(EsPoint domainPoint)
     InvalidateVisual();
 }
 
-// 3. 描画（描画入力の生成はコア、描画の手順は LoupeRenderer）
+// 3. 描画（描画入力の生成と描画の起動はコア、色は LoupeRenderer）
 protected override void Render(DrawingContext context)
 {
     var canvas = new AvaloniaCanvas(context);
     var request = _loupe.CreateRequest(layout.DisplaySize);  // DIP → 物理 px と描画先のクランプ
     var notification = _loupe.ResolveNotification(request); // 切り出し領域・スケール・層の順序
-    _loupe.Renderer.DrawShapes(canvas, _source, request, notification);
+    // 自 UI の描画実装（LoupeRenderer~UI）があればそれを使い、差し替えられていればコアの入口を使う
+    if (_loupe.Renderer is LoupeRendererAvaloniaUI uiRenderer)
+    {
+        uiRenderer.Draw(context, _source, in request, in notification);
+    }
+    else
+    {
+        _loupe.Draw(canvas, _source, in request, in notification);
+    }
 }
 ```
 
-- ラベルを要素として配置する UI は 3 で `DrawShapes` を呼び、`ResolveLabels`（既定実装は `LoupeLabelPlan.Resolve`）の結果を要素へ写す。
+- ラベルを要素として配置する UI は 3 の描画後、`ResolveLabels`（既定実装は `LoupeLabelPlan.Resolve`）の結果を要素へ写す。
 - 表示位置（左上）が必要なら `Loupe.ResolveLayout(parentSize)` を使う（親領域へ収めるクランプはコアが単一所有する）。
-- 拡大元画像は UI ごとに型が異なるため契約（`LoupeRenderRequest`）に含めません。UI が `EsBitmap` を解決して `DrawShapes` へ渡します。
+- 拡大元画像は UI ごとに型が異なるため契約（`LoupeRenderRequest`）に含めませ ん。UI が `EsBitmap` を解決して描画へ渡します。
 
 再描画のバッチ化が必要な場合（中間ビットマップを非同期生成する UI）は次のように使います。
 

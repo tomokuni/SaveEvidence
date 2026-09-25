@@ -15,11 +15,11 @@
 
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
-| 描画内容の描画（図形） | `IMarqueeRenderer.DrawShapes`（既定実装 `MarqueeRenderer`） | 装飾・ハンドル・始点マーカーを描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く。色は `MarqueePaint` から引く） |
+| 描画内容の描画（図形） | `Marquee.Draw`（コアの入口）/ `IMarqueeRenderer.DrawShapes`（契約） | 装飾・ハンドル・始点マーカーを描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く。色は `MarqueePaint` から引く）。層の順序はコアの `MarqueeRendererBase` が単一所有し、起動は `Marquee.Draw` に一本化する |
 | ラベル要素の配置 | `IMarqueeRenderer.ResolveLabels`（既定実装は `MarqueeLabelPlan.Resolve` へ委譲） | 実寸（描画 API の測定値）からラベル要素の配置指示（`EsLabelElement`）を解決する（色は `MarqueePaint` から写す） |
 | ホスト付加情報ラベルの描画 | `MarqueeHostLabelRenderer.Draw` | ホストが与えた文言を、サイズラベルと同じ体裁（内側余白・背景 → 文字の順序）で描く |
 
-#### 前提条件
+#### 1.1.1 前提条件
 
 - 描画先は `IEsCanvas`（`EsUtil.Platform.Core.Imaging`）です。Skia のキャンバスを使う場合は `SkiaEsCanvas`、Avalonia の `DrawingContext` を使う場合は `AvaloniaCanvas`（`Platform.AvaloniaUI`）を使います。
 - 描画の単位は**アダプタの座標系**に従います（マーキーは DIP、ルーペは物理ピクセル）。単位の換算（DPI スケーリング）はアダプタの利用側が行います。
@@ -34,7 +34,7 @@
 | 連携先へのスクロール適用 | `MarqueeWheelInterpreter.AttachScrollTarget` + `IWheelScrollTarget` | 回転量を移動量（DIP）へ換算し、UI 層が適合させた適用先へ渡す（1 ノッチ = 48 DIP・Shift で横） |
 | ビューポート変化の再通知 | `MarqueeViewportNotifier` | 現在の状態スナップショットの通知と再描画の要求（選択の状態は変更しない） |
 
-#### 前提条件
+#### 1.2.1 前提条件
 
 - ホイールの解釈は修飾キーの真偽と回転量だけを受け取ります（UI 型に依存しない）。
 - ズーム率の決定・表示の適用・スクロール先の決定は**受け手（ホスト）**が行います（本層はビューの状態を保持しません）。

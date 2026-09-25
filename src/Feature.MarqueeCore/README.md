@@ -189,7 +189,7 @@ marquee.SetSelection(rect);                                   // 選択の復元
 
 // 描画（1 フレーム分の描画内容。描くかどうかの判断はコア）
 var content = marquee.ResolveContent(clientSize);             // 値を持つ項目を自 UI の描画 API へ写すだけ
-marquee.Renderer.DrawShapes(canvas, content);                 // 描画の実行は描画実装（既定は MarqueeRenderer）へ委譲する
+marquee.Draw(canvas, content);                                 // 描画の起動はコアの入口（描画実装へ委譲する）
 var elements = marquee.ResolveLabels(content, measureText);    // ラベルを UI 要素として配置する場合はこちら（同じフレームの描画内容を渡す）
 
 // 通知（公開イベントへ転送する）

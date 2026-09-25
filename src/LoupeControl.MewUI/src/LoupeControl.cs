@@ -113,7 +113,7 @@ public sealed class LoupeControl : Panel
             changed: static (o, oldValue, newValue) =>
             {
                 // 色は描画実装が単一所有するため、新しい色の描画実装へ差し替える
-                o._loupe.Renderer = new LoupeRenderer(newValue);
+                o._loupe.Renderer = new LoupeRendererMewUI(newValue);
                 // 中心座標ラベルの色も描画実装が与えるため、ラベル要素を配置し直す
                 o.InvalidateArrange();
             });
@@ -124,7 +124,7 @@ public sealed class LoupeControl : Panel
     /// （本コントロールは公開プロパティで受け取った値を転送し、返された値を描画・配置へ使うだけ）。<br/>
     /// フィールド初期化子で生成する（プロパティ変更のコールバックから参照できるようにするため）。
     /// </remarks>
-    private readonly LoupeFacade _loupe = new(new LoupeRenderer(LoupePaint.Default));
+    private readonly LoupeFacade _loupe = new(new LoupeRendererMewUI(LoupePaint.Default));
 
     /// <summary>図形（背景・市松模様・拡大画像・十字線・外枠）を描画する内部キャンバス。</summary>
     /// <remarks>
@@ -370,7 +370,16 @@ public sealed class LoupeControl : Panel
         try
         {
             // 描画の手順（層の順序と描画 API への写し）はファサードが保持するレンダラ（LoupeControl.UIBase）が単一所有する
-            _loupe.Renderer.DrawShapes(new SkiaEsCanvas(canvas), Source, request, notification);
+            // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序と起動はコアが単一所有する）
+            if (_loupe.Renderer is LoupeRendererMewUI uiRenderer)
+            {
+                uiRenderer.Draw(canvas, Source, in request, in notification);
+            }
+            else
+            {
+                // 描画実装が差し替えられている場合はコアの入口から描く
+                _loupe.Draw(new SkiaEsCanvas(canvas), Source, in request, in notification);
+            }
         }
         catch (Exception ex)
         {

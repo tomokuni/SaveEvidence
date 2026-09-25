@@ -15,7 +15,8 @@ namespace EsUtil.Feature.LoupeCore;
 /// <b>差し替えの方法</b>: 描画ポート（<see cref="IEsCanvas"/>）の実装を変えれば描画先（UI フレームワーク・描画方式）を、<br/>
 /// 本契約の実装を変えれば描画手順そのものを差し替えられる。<see cref="Loupe.Renderer"/> へ設定するだけで反映される。<br/>
 /// <br/>
-/// <b>実装の提供元</b>: 既定実装は描画層（<c>LoupeControl.UIBase</c> の <c>LoupeRenderer.Default</c>）にあり、<br/>
+/// <b>実装の提供元</b>: 既定実装は描画層（<c>LoupeControl.UIBase</c> の <c>LoupeRenderer</c>）にあり、<br/>
+/// 色はその実装のインスタンス状態として渡すため、本契約にも本コアにも色の型は現れない。<br/>
 /// コアは本契約だけを定義して実装を注入で受ける（コアは描画層を参照できない）。<br/>
 /// <br/>
 /// <b>拡大元画像は引数で受ける</b>: 拡大元の型は UI に依存する（UI が解決する）ため、描画の契約に含めない。<br/>

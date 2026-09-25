@@ -113,7 +113,7 @@ public sealed class LoupeControl : Panel
     /// （本コントロールは自 UI の公開プロパティで受け取った値を転送し、返された値を反映するだけ）。<br/>
     /// フィールド初期化子で生成する（AXAML の初期化でプロパティ変更が発火しても参照できるようにするため）。
     /// </remarks>
-    private readonly LoupeFacade _loupe = new(new LoupeRenderer(LoupePaint.Default));
+    private readonly LoupeFacade _loupe = new(new LoupeRendererAvaloniaUI(LoupePaint.Default));
 
     /// <summary>表示位置（RenderTransform）のインスタンス（座標更新時は値を書き換えて再利用する）。</summary>
     private readonly TranslateTransform _positionTransform = new();
@@ -290,7 +290,7 @@ public sealed class LoupeControl : Panel
         // 色（描画にだけ必要な設定）の変更は描画実装を差し替える（色は描画実装が単一所有する）
         PaintProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            o._loupe.Renderer = new LoupeRenderer(e.GetNewValue<LoupePaint>());
+            o._loupe.Renderer = new LoupeRendererAvaloniaUI(e.GetNewValue<LoupePaint>());
             o.RequestRender();
             // 中心座標ラベルの色も描画実装が与えるため、ラベル要素を配置し直す
             o.InvalidateArrange();
@@ -577,7 +577,7 @@ public sealed class LoupeControl : Panel
             var request = _loupe.CreateRequest(_loupe.ResolveLayout(ParentAreaSize).DisplaySize);
             var notification = _loupe.ResolveNotification(request);
 
-            var bitmap = await LoupeRenderPipeline.RenderAsync(_loupe.Renderer, Source, request, notification);
+            var bitmap = await LoupeRenderPipeline.RenderAsync(_loupe, Source, request, notification);
 
             // 描画反映（SetLoupeBitmap）は描画フェーズ（Render 優先度）で実行する。
             // マウス移動中の連続再描画では、既定の Normal 優先度の継続が入力イベント（Input 優先度）に

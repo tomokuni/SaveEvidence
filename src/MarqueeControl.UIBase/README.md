@@ -125,15 +125,17 @@ private readonly Marquee _marquee = new(new MarqueeRenderer(MarqueePaint.Default
 protected override void OnPointerPressed(PointerPressedEventArgs e)
     => _marquee.Press(e.GetPosition(this).ToDomain(), e.ClickCount);
 
-// 4. 描画（描画内容の解決はコア、描画の手順は描画実装）
+// 4. 描画（描画内容の解決と描画の起動はコア、色は UIBase の MarqueeRenderer）
 protected override void Render(DrawingContext context)
 {
     var size = Bounds.Size.ToEsSize();
-    _marquee.Renderer.DrawShapes(new AvaloniaCanvas(context), _marquee.ResolveContent(size));
+    var content = _marquee.ResolveContent(size);
+    _marquee.Draw(new AvaloniaCanvas(context), in content);
 }
 ```
 
-- ラベルを要素として配置する UI は 4 で `DrawShapes` を呼び、`MarqueeLabelPlan.Resolve`（色は `Paint` の `MarqueePaint` から引かれる）の結果を要素へ写す。
+- 自 UI の描画実装（`MarqueeRenderer~UI`）を使う場合も、起動はコアの `Marquee.Draw` に一本化する（本 UI の型なら `Draw(context, in content)` へ委譲する）。
+- ラベルを要素として配置する UI は 4 の後、`MarqueeLabelPlan.Resolve`（色は `Paint` の `MarqueePaint` から引かれる）の結果を要素へ写す。
 - ホスト固有の付加情報ラベルは `MarqueeHostLabelRenderer.Draw` で体裁を揃えて描く。
 - 座標変換（ドメイン ⇔ DIP）は `Marquee.SetCoordinateTransform` へ注入する（未指定は等倍）。
 

@@ -62,11 +62,11 @@ public sealed class Loupe
     /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は等価変換として扱う）。</summary>
     private ICoordTransform? _coordinatePort;
 
-    /// <summary>描画内容を描画面へ写す描画実装（既定は描画層の <c>LoupeRenderer.Default</c>）。</summary>
+    /// <summary>描画内容を描画面へ写す描画実装（既定は描画層の <c>LoupeRenderer</c>。色はインスタンス状態として渡す）。</summary>
     private ILoupeRenderer _renderer;
 
     /// <summary>ファサードを初期化する。</summary>
-    /// <param name="renderer">描画の実装（既定実装は描画層の <c>LoupeRenderer.Default</c>）。null 不可。</param>
+    /// <param name="renderer">描画の実装（既定実装は描画層の <c>LoupeRenderer</c>。色はインスタンス状態として渡す）。null 不可。</param>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="LoupeOptions.Default"/>）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="renderer"/> が null の場合。</exception>
     public Loupe(ILoupeRenderer renderer, LoupeOptions? options = null)
@@ -183,6 +183,27 @@ public sealed class Loupe
         var args = LoupeRenderArgsCalculator.Compute(request);
 
         return new LoupeRenderNotification(args.CaptureTopLeft, args.Scale, s_layers);
+    }
+
+    /// <summary>描画内容を描画面へ描く（描画起動の唯一の入口）。</summary>
+    /// <param name="canvas">描画先の描画ポート（UI 層が自 UI の描画面を適合させて渡す）。null 不可。</param>
+    /// <param name="source">拡大元の 100% 画像。null の場合は市松模様のみを描く。</param>
+    /// <param name="request">描画入力（コアと UI の契約）。</param>
+    /// <param name="notification">コアが解決した通知（層の順序を持つ）。</param>
+    /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
+    /// <remarks>
+    /// <b>描画は本メソッドを通してのみ起動する</b>: UI 層が <see cref="Renderer"/> を直接呼ぶと、<br/>
+    /// 描画実装の差し替え（<see cref="Renderer"/> の設定）と層の順序の単一所有が二重経路になる。<br/>
+    /// 本メソッドを経由させることで、描画の起動・順序（<c>LoupeRendererBase.DrawShapes</c>）・<br/>
+    /// 差し替えのすべてがコアの単一所有になる。<br/>
+    /// 描画面の確保（フレームワーク固有の機構）は UI 層が所有する。
+    /// </remarks>
+    public void Draw(
+        IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeRenderNotification notification)
+    {
+        ArgumentNullException.ThrowIfNull(canvas);
+
+        _renderer.DrawShapes(canvas, source, in request, in notification);
     }
 
     /// <summary>中心座標ラベルの配置指示を解決する（UI 要素として配置する UI 用）。</summary>
