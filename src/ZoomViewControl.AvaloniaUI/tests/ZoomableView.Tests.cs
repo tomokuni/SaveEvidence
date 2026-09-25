@@ -2,11 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Input.Raw;
 using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.ZoomView;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI.Tests;

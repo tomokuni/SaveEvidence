@@ -1,7 +1,4 @@
-using Avalonia;
-using Rect = Avalonia.Rect;
 using Xunit;
-using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Tests;
 

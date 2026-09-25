@@ -11,7 +11,6 @@ using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.Feature.LoupeCore;

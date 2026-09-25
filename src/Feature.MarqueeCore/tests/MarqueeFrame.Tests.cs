@@ -2,7 +2,6 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
-using DrawingColor = System.Drawing.Color;
 
 using EsUtil.Feature.MarqueeCore.Decoration;
 

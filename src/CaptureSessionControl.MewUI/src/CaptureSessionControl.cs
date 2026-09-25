@@ -1,9 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;

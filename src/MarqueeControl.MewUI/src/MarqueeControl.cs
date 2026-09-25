@@ -7,7 +7,6 @@ using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.MewUI.Labels;
 using EsUtil.Platform.Native;
@@ -15,7 +14,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
-using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Platform.Skia;
 
 

@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using EsUtil.SaveEvidence.LineDetection;
 using System.Collections.ObjectModel;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;

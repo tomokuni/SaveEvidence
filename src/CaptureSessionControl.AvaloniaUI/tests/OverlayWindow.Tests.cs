@@ -14,7 +14,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
 using BindingFlags = System.Reflection.BindingFlags;
-using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Tests;
 

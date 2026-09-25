@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sample.ViewModels;
 

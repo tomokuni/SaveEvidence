@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;

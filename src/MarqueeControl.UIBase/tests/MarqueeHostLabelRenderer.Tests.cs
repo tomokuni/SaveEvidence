@@ -2,7 +2,6 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Common.Imaging;
 
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;

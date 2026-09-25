@@ -34,30 +34,17 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `Geometry.EsRectMath` | 矩形の辺とクランプの計算（枠線の内側 4 辺・四隅の包絡矩形による領域内クランプ。純粋関数）。コントロールを問わず同じ式を使う（選択矩形の枠線とルーペの外枠、選択のドメイン境界とルーペの位置クランプ） |
 | `Geometry.EsSizeMath` | 領域の判定とクランプの計算（`HasArea`＝幅・高さとも正か、サイズを領域の最小辺へクランプ、位置を領域内へクランプ。**領域が未確定ならクランプしない**規則を単一所有する） |
 | `Geometry.IntMath` | 整数の丸め計算（切り上げ除算 `CeilDiv`。余りを 1 区画として数える規則の単一所有） |
-| `Imaging.EsBitmap` | 複数のビットマップ種別を横断する軽量なユニバーサルビットマップラッパー（BGRA8888・Premul）。内部に `SKBitmap` を唯一所有し、SkiaSharp のみに依存する |
+| `Imaging.EsBitmap` | 複数のビットマップ種別を横断する軽量なユニバーサルビットマップラッパー（BGRA8888・Premul）。**自前のピクセルバッファ（`NativeMemory.AlignedAlloc` の 64 バイト整列）を所有**し、外部パッケージに依存しない（Skia との相互変換は [`Platform.Skia`](../Platform.Skia/README.md) が担う） |
 | `Imaging.ImageDrawMode` | 画像を描画先の領域へ配置する方法（縦横比を保つ `Uniform` / 領域全体へ引き伸ばす `Fill`） |
 | `Imaging.ImageDrawMath` | 画像を描画先の領域へ配置する矩形の計算（純粋関数）。UI ごとに異なる描画側は本クラスの結果を使う |
-| `Imaging.SkiaColorInterop` | コアの色型（`System.Drawing.Color`）を Skia の色型へ変換する共通ヘルパー（`color.ToSKColor()`）。MewUI 版の描画層（6 箇所）が共用する |
-| `Imaging.SkiaGeometryInterop` | コアの幾何型（`EsRect` / `EsPoint`）を Skia の幾何型へ変換する共通ヘルパー（`rect.ToSKRect()`）。Skia の整数サイズからコアのサイズへの逆変換（`ToEsSize`）も持つ |
-| `Imaging.IEsCanvas` | 描画内容を描画面へ写す即時描画ポート（UI フレームワーク非依存）。コア側の描画層は本ポートだけを呼び、各 UI が自 UI の描画 API を適合させる |
-| `Imaging.SkiaEsCanvas` | `SKCanvas` を `IEsCanvas` へ適合させるアダプタ（Skia のキャンバスを取得できる UI がそのまま使える）。描画の実行は `SkiaFill` / `SkiaText` / `SkiaLabel` へ委譲する |
-| `Imaging.SkiaFill` | Skia の矩形塗り（`Rect` / `Rects` / `RoundRect`）の単一所有。描画層とホストの文字描画が共用する。`Rects` は一覧（`IReadOnlyList<EsRect>`）と、リストを確保しない列挙子（`IEsRectWalker<TSelf>`）の 2 経路を持つ |
-| `Imaging.SkiaLabel` | Skia のラベル 1 件（背景 → 文字の順序。背景の角丸に対応）の単一所有。両 UI のラベル描画が共用する |
-| `Imaging.SkiaText` | Skia のテキスト描画（フォント解決（非 ASCII は字形を持つフォントへフォールバック）・実寸測定・描画）の単一所有。描画層とホストの文字描画が共用する |
 | `Geometry.IEsRectWalker<TSelf>` | 矩形の列を確保なしで走査する列挙子（構造体）が実装する契約。ボックス化もリスト確保もせずに描画へ渡すために使う |
-| `Imaging.EsLabelFrame` / `EsLabelElement` | ラベル 1 件の配置（背景矩形・文字原点）と、UI 要素として配置するための指示（配置矩形・文字原点・文言・寸法・色・角丸）。**コアの配置を UI 要素へ写す写像を単一所有する** |
-| `Imaging.EsLabelLayout` | ラベルの体裁（背景 = 文字の実寸 + 内側余白 × 2、文字原点、カーソル基準の配置と領域内へのクランプ、上端中央の配置、行送り）の単一所有（純粋関数）。**全ラベル共通の内側余白は `Padding` 定数**として公開し、コントロールとホストが同じ値を使う |
-| `Imaging.EsLabelMetrics` | ラベルのフォントサイズの安全域（6〜48）と「非数は既定値」の補正の単一所有（純粋関数） |
-| `Imaging.EsLabelDefaults` | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0）の単一所有。**色**は描画の設定（`MarqueePaint` / `LoupePaint`）が、**フォントサイズ**はマーキー・ルーペの設定型が本値を参照する（同じ色のリテラルを各設定型へ書かない） |
-| `Imaging.IEsLabel` | ラベル 1 件の描画契約（文言・フォントサイズ・角丸と、実寸から配置を求める `ComputeFrame`。**色は持たない**）。寸法表示・座標表示・付加情報ラベルが同じ形を共有する |
-| `Imaging.EsLabelExtensions` | ラベル契約から UI 要素の配置指示を求める拡張メソッド（`IEsLabel.ToElement`。**文字色と背景色は引数で受ける**）。配置と外観の写像を単一所有し、各ラベル型の写し漏れを防ぐ |
 | `Imaging.DrawingColorExtensions` | 描画色の判定（`IsVisible`＝アルファが 0 より大きいか）。「アルファ 0 は描かない」の判定を単一所有する |
 | `CoordMath`（internal） | 画像レイアウト計算の一元化（`CalculateUniformLayout` / `ComputeImageRenderInfo`）。`CoordTransform` から利用する |
 | `LoggerFallback` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（`logger.OrNullLogger()`）。「ロガー未設定（null）は出力なし」の規則を単一所有し、各コントロール・サービスの `?? NullLogger.Instance` を排除する |
 
 各 UI 実装は、自身の型とコア型を相互変換する Interop 層（例: Avalonia 版の `EsKeyAvaloniaInterop` / `EsWindowStateAvaloniaInterop` / `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop` / `ColorAvaloniaInterop`）を個別に提供します。
 
-**色の表現**: コアの色型は `System.Drawing.Color`（`System.Drawing.Primitives`。共有フレームワーク同梱でクロスプラットフォーム）です。`EsBitmap` のピクセル API もこの型を使用します。Skia の描画 API へ渡す場合は `SkiaColorInterop.ToSKColor` を使用します（SkiaSharp は UI フレームワークではないため、本プロジェクトが変換の単一所有を担います）。
+**色の表現**: コアの色型は `System.Drawing.Color`（`System.Drawing.Primitives`。共有フレームワーク同梱でクロスプラットフォーム）です。`EsBitmap` のピクセル API もこの型を使用します。Skia の描画 API へ渡す場合の変換（`ToSKColor`）は [`Platform.Skia`](../Platform.Skia/README.md) が単一所有します。
 
 サービス抽象の具象実装（Win32 / NoOp）と `PlatformFactory.CreateXxx()` のファクトリは、現在 `Platform.AvaloniaUI`（Avalonia 実装プロジェクト）側にあります。
 

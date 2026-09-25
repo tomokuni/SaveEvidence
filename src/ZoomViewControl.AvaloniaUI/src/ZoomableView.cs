@@ -7,7 +7,6 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.ZoomView;
 
 namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
 

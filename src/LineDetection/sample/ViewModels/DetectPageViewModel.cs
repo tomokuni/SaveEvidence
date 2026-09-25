@@ -1,6 +1,5 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using EsUtil.SaveEvidence.LineDetection;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 

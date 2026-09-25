@@ -11,7 +11,6 @@ using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
-using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;

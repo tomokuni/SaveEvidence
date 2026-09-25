@@ -7,7 +7,6 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sample.ViewModels;
 using System.Collections.Specialized;
-using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sample.Views;
 

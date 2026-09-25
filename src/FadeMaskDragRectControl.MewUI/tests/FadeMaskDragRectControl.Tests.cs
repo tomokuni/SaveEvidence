@@ -1,6 +1,5 @@
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;

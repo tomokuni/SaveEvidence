@@ -1,5 +1,4 @@
 using Avalonia.Media.Imaging;
-using EsUtil.SaveEvidence.LineDetection;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Native.Imaging;
 using System.Text.Json;

@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore;
 using Microsoft.Extensions.Logging;

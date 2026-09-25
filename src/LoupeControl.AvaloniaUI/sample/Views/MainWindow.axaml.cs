@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.Sample.Logging;
 using EsUtil.SaveEvidence.Loupe.Sample.ViewModels;
 

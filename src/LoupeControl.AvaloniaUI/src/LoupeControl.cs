@@ -18,7 +18,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using System.Globalization;
 using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
-using EsUtil.SaveEvidence.Common.Imaging;
 
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;

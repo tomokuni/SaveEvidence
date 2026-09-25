@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
@@ -7,7 +6,6 @@ using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 

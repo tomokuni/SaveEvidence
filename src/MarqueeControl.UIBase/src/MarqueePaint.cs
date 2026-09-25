@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Common.Imaging;
 

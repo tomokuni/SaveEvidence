@@ -2,7 +2,6 @@ using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;

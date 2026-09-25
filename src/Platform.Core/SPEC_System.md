@@ -8,8 +8,7 @@ SaveEvidence のマルチ UI 対応（Avalonia UI / MewUI）における、共�
 ## 技術スタック
 
 - .NET 10 / C# 14
-- SkiaSharp（`EsBitmap` のピクセル操作のみ）
-- Microsoft.Extensions.Logging.Abstractions（`LoggerFallback` のロガー抽象のみ）
+- Microsoft.Extensions.Logging.Abstractions（`LoggerFallback` のロガー抽象のみ。Microsoft 公式パッケージ）
 - UI フレームワークは一切参照しない
 
 ## アーキテクチャ
@@ -54,28 +53,14 @@ graph LR
 | `Geometry/EsPixelRect.cs` | UI フレームワーク非依存の画面物理矩形（整数ピクセル。`Contains` / `Union` / `Center`） |
 | `Geometry/EsPlatformHandle.cs` | UI フレームワーク非依存のネイティブウィンドウ識別子 |
 | `Geometry/CoordinateFormatter.cs` | 座標の表示文字列を生成する純粋関数 |
-| `Imaging/EsBitmap.cs` | SkiaSharp のみに依存するピクセルコンテナ（BGRA8888・Premul） |
+| `Imaging/EsBitmap.cs` | 自前のピクセルバッファを所有するピクセルコンテナ（BGRA8888・Premul。外部パッケージに依存しない） |
 | `Imaging/ImageDrawMode.cs` | 画像を描画先の領域へ配置する方法（`Uniform` / `Fill`） |
 | `Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（純粋関数。Skia の `SKRect` を返す） |
-| `Imaging/SkiaColorInterop.cs` | コアの色型（`System.Drawing.Color`）→ Skia の色型の変換（MewUI 版の描画層 6 箇所が共用） |
-| `Imaging/SkiaGeometryInterop.cs` | コアの幾何型（`EsRect` / `EsPoint`）→ Skia の幾何型の変換と、Skia の整数サイズ → コアのサイズの変換（`ToEsSize`） |
-| `Imaging/IEsCanvas.cs` | 描画内容を描画面へ写す即時描画ポート（UI フレームワーク非依存） |
-| `Imaging/SkiaEsCanvas.cs` | `SKCanvas` を `IEsCanvas` へ適合させるアダプタ（描画は `SkiaFill` / `SkiaText` / `SkiaLabel` へ委譲） |
-| `Imaging/SkiaFill.cs` | Skia の矩形塗り（`Rect` / `Rects` / `RoundRect`）の単一所有（`Rects` は一覧と列挙子の 2 経路） |
-| `Imaging/SkiaLabel.cs` | Skia のラベル 1 件（背景 → 文字の順序）の描画の単一所有 |
-| `Imaging/SkiaText.cs` | Skia のテキスト描画（フォント解決・実寸測定・描画）の単一所有 |
 | `Geometry/IEsRectWalker.cs` | 矩形の列を確保なしで走査する列挙子（構造体）の契約 |
 | `Geometry/EsRectMath.cs` | 矩形の辺（枠線の内側 4 辺）と領域内クランプの単一所有 |
 | `Geometry/EsSizeMath.cs` | 領域の確定判定と、サイズ・位置の領域内クランプの単一所有 |
 | `Geometry/IntMath.cs` | 整数の切り上げ除算の単一所有 |
-| `Imaging/EsLabelFrame.cs` | ラベル 1 件の配置（背景矩形・文字原点） |
-| `Imaging/EsLabelElement.cs` | ラベル 1 件を UI 要素として配置するための指示と、コアの配置からの写像 |
-| `Imaging/IEsLabel.cs` | ラベル 1 件の描画契約（文言・寸法・色と実寸からの配置計算） |
-| `Imaging/EsLabelExtensions.cs` | ラベル契約から UI 要素の配置指示を求める拡張メソッド（写像の単一所有） |
 | `Imaging/DrawingColorExtensions.cs` | 描画色の可視判定（アルファが 0 より大きいか）の単一所有 |
-| `Imaging/EsLabelLayout.cs` | ラベルの体裁（内側余白（`Padding`）・文字原点・配置とクランプ・行送り）の単一所有 |
-| `Imaging/EsLabelMetrics.cs` | ラベルのフォントサイズの安全域と補正の単一所有 |
-| `Imaging/EsLabelDefaults.cs` | ラベルの既定の見た目（文字色・背景色・フォントサイズ）の単一所有（コントロールの設定型が参照する） |
 
 ### ラベル体裁を本プロジェクトが所有する理由
 
@@ -98,16 +83,15 @@ graph LR
 | キーとウィンドウ状態 | `Avalonia.Input.Key` / `Avalonia.Controls.WindowState` と**メンバー名を一致**させ、名前ベースの変換で相互変換する（既存の設定ファイルをそのまま読み込める） |
 | 座標・寸法 | `Avalonia.Point` / `Size` / `Vector` → `EsPoint` / `EsSize` / `EsVector` へ統一し、UI 境界で 1 行変換する |
 | 色 | `System.Drawing.Color`（共有フレームワーク同梱でクロスプラットフォーム。`System.Drawing.Common` ではない）を使い、UI の色型への変換は境界で行う |
-| Skia の描画プリミティブ | SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が単一所有する |
-| ラベル体裁 | コントロールに依存しない体裁の規則は本プロジェクトが単一所有する（マーキーとルーペが同じ規則を共用する） |
+| Skia の描画プリミティブ | SkiaSharp は外部パッケージであるため、Skia に依存する型（描画ポートの適合・ビットマップの相互変換・テキスト測定）は `Platform.Skia` が単一所有する（本プロジェクトは SkiaSharp を参照しない） |
+| ラベル体裁・描画ポート | ソリューション固有の共有契約は `Common` が単一所有する（本プロジェクトは参照される側であり、`Common` を参照しない） |
 | ロガー未設定 | `LoggerFallback.OrNullLogger()` が単一所有し、各所の `?? NullLogger.Instance` を排除する |
 
 ### コア型の命名
 
 コア型には **`Es`（`EsUtil` の略）接頭辞**を付けます（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` /
-`EsPixelPoint` / `EsPixelRect` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap` / `EsLabelFrame` /
-`EsLabelElement` / `EsLabelLayout` / `EsLabelMetrics` / `EsLabelDefaults` / `IEsLabel` / `IEsRectWalker` / `IntMath` / `EsRectMath` /
-`EsSizeMath` / `IEsCanvas` / `SkiaEsCanvas`）。
+`EsPixelPoint` / `EsPixelRect` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap` / `IEsRectWalker` / `IntMath` / `EsRectMath` /
+`EsSizeMath`）。
 
 ## ライセンス
 

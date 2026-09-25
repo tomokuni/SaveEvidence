@@ -1,4 +1,3 @@
-using EsUtil.Feature.MarqueeCore.Decoration;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 

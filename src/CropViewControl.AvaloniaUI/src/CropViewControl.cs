@@ -10,7 +10,6 @@ using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
-using EsUtil.SaveEvidence.CropView;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;

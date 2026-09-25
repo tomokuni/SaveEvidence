@@ -1,6 +1,5 @@
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;

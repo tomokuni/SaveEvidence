@@ -2,9 +2,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
 

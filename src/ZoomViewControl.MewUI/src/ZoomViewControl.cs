@@ -5,7 +5,6 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
-using EsUtil.SaveEvidence.ZoomView;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using EsUtil.Platform.Skia;

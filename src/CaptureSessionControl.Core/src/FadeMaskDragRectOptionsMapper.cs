@@ -3,7 +3,6 @@ using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.Core.Imaging;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.CaptureSession;
 
