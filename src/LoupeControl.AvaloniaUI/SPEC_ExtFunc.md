@@ -81,7 +81,7 @@
 
 ### 3.1 プロジェクト参照
 
-利用側プロジェクトから `LoupeControl.AvaloniaUI.csproj` を参照します（`LoupeControl.Core` は本プロジェクトが参照するため、追加の参照は不要です）。
+利用側プロジェクトから `LoupeControl.AvaloniaUI.csproj` を参照します（`Feature.LoupeCore` は本プロジェクトが参照するため、追加の参照は不要です）。
 
 ```xml
 <ProjectReference Include="..\LoupeControl.AvaloniaUI\src\LoupeControl.AvaloniaUI.csproj" />
@@ -250,7 +250,7 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 | --- | --- | --- | --- |
 | `Options.Appearance` | `LoupeAppearance` | コアの既定値 | 装飾の外観。`with` 式で部分変更する。数値項目はコアの `LoupeAppearance` が生成時に安全域へ補正する |
 
-`LoupeAppearance` の項目（詳細は `LoupeControl.Core` の `SPEC_ExtFunc.md` を参照）:
+`LoupeAppearance` の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -402,7 +402,7 @@ loupe.Rendered += (_, e) =>
 ### 5.5 型
 
 公開型は `LoupeControl` と `LoupeRenderedEventArgs` です。
-描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`LoupeControl.Core`）と描画層（`LoupeControl.Rendering` の `LoupeRenderer` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順は描画層が単一所有し、本プロジェクトは描画ポート（`AvaloniaCanvas`）とラベル要素の配置を担います。
+描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.Rendering` の `LoupeRenderer` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順は描画層が単一所有し、本プロジェクトは描画ポート（`AvaloniaCanvas`）とラベル要素の配置を担います。
 UI 固有のログ（`LoupeRenderLog`）は本プロジェクトの internal です。
 
 #### 5.5.1 LoupeControl

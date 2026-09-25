@@ -79,7 +79,7 @@ app.MewUI ──> app.Core ──> Platform.Core / LineDetection
     │                              │
     ├──> Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
     ├──> Platform.Native（キャプチャ等。UI 非依存）
-    ├──> LoupeControl.MewUI ──> LoupeControl.Core（UI 非依存のルーペロジック）
+    ├──> LoupeControl.MewUI ──> Feature.LoupeCore（UI 非依存のルーペロジック）
     └──> CropViewControl.MewUI ──> ZoomViewControl.MewUI / CropViewControl.Core（画像表示と矩形オーバーレイ）
 ```
 

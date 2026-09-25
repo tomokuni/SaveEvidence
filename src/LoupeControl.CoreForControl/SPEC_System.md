@@ -4,7 +4,7 @@
 
 `LoupeControl.CoreForControl` は、ルーペコントロール（`LoupeControl`）を**他の UI コントロールへ組み込むときにだけ必要な処理**を担う層です。具体的には「再描画要求のバッチ化と世代番号管理」だけを持ちます。
 
-`LoupeControl.Core`（表示レイアウト・描画入力・通知内容）と UI 層（フレームワーク固有の入力・描画・実行キュー）の間に位置し、両者が共有する**再描画のスケジューリング**を 1 箇所に集約します。UI フレームワークへ依存しないため、ヘッドレス実行なしで `[Fact]` 並列検証できます。
+`Feature.LoupeCore`（表示レイアウト・描画入力・通知内容）と UI 層（フレームワーク固有の入力・描画・実行キュー）の間に位置し、両者が共有する**再描画のスケジューリング**を 1 箇所に集約します。UI フレームワークへ依存しないため、ヘッドレス実行なしで `[Fact]` 並列検証できます。
 
 ## 技術スタック
 
@@ -25,7 +25,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> LoupeControl.Rendering   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
     ├──> LoupeControl.CoreForControl ← 本プロジェクト   組み込み先がある場合にだけ必要な規則
-    └──> LoupeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ※ 本層を使うのは LoupeControl.AvaloniaUI のみ（MewUI は中間ビットマップを持たず同期描画するため不要）。
@@ -37,7 +37,7 @@ MewUI 版は現状コーディネーターを使いません（中間ビット�
 
 | 層 | 責務 |
 | --- | --- |
-| `LoupeControl.Core` | 表示レイアウト・描画入力・通知内容の解決・ログ定義 |
+| `Feature.LoupeCore` | 表示レイアウト・描画入力・通知内容の解決・ログ定義 |
 | **本プロジェクト** | **再描画要求のバッチ化（1 フレーム 1 回）・世代番号管理・古い結果の破棄判定** |
 | `LoupeControl.*UI` | フレームワークの入力・描画・実行キュー（`post`）の提供、ビットマップの生成と解放 |
 | ホスト | 表示開始・拡大元画像の供給（中心座標ラベルはコントロールがテキスト要素として表示する） |
@@ -101,7 +101,7 @@ sequenceDiagram
 | 再描画の世代番号と、古い結果を破棄する判断 | `LoupeRenderCoordinator.RenderCore` / `ShouldApply` |
 | 要求の破棄とビットマップ解放の手順 | `LoupeRenderCoordinator.CancelAndRelease` |
 | 実行キューと優先度 | UI 層（`post` コールバックの実装） |
-| 描画の内容（切り出し・拡大・市松・十字線・外枠） | `LoupeControl.Core` と描画層（`LoupeControl.Rendering` の `LoupeRenderer`） |
+| 描画の内容（切り出し・拡大・市松・十字線・外枠） | `Feature.LoupeCore` と描画層（`LoupeControl.Rendering` の `LoupeRenderer`） |
 
 ## 例外処理ポリシー
 

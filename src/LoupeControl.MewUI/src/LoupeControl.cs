@@ -19,7 +19,7 @@ namespace Estable.MewUI.Loupe;
 
 /// <summary>拡大鏡（ルーペ）コントロール（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版 <c>LoupeControl</c> と同一の UI 非依存コア（<c>LoupeControl.Core</c>）を使い、<br/>
+/// Avalonia 版 <c>LoupeControl</c> と同一の UI 非依存コア（<c>Feature.LoupeCore</c>）を使い、<br/>
 /// 描画層のみを <see cref="SkiaCanvasView"/> で実装する（同じ設定・同じ見た目になる）。<br/>
 /// <br/>
 /// <b>入力</b>: <see cref="Source"/>（拡大元の 100% 画像）と <see cref="CenterPoint"/>（元画像ピクセル座標）。<br/>

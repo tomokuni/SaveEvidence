@@ -1,10 +1,10 @@
 # MarqueeControl.CoreForControl
 
-`MarqueeControl.Core`（マーキー選択の UI 非依存コア）を**他の UI コントロールへ組み込むときにだけ必要な処理**を置く層です。`MarqueeControl.AvaloniaUI` / `MarqueeControl.MewUI` が共有します。
+`Feature.MarqueeCore`（マーキー選択の UI 非依存コア）を**他の UI コントロールへ組み込むときにだけ必要な処理**を置く層です。`MarqueeControl.AvaloniaUI` / `MarqueeControl.MewUI` が共有します。
 
 ## 目的
 
-- コア（`MarqueeControl.Core`）を将来そのまま別プロジェクトへ独立できるよう、**選択（マーキー）の判断ではない処理をコアへ入れない**。
+- コア（`Feature.MarqueeCore`）を将来そのまま別プロジェクトへ独立できるよう、**選択（マーキー）の判断ではない処理をコアへ入れない**。
 - 「組み込み先（ビューポート）との連携規則」を UI をまたいで 1 箇所に集約する（UI ごとに書くと片方だけ変わる）。
 - UI フレームワークには依存しない（修飾キーの真偽と回転量だけを受け取り、適用先と通知先は抽象・コールバックで受け取る）ため、ヘッドレス実行なしで `[Fact]` 並列検証できる。
 - UI 層が使う面は `public`、本層の内部手順は `internal`（単体テストにのみ `InternalsVisibleTo` で公開する）。ファイル名はクラス名と一致させる（`MarqueeWheelInterpreter.cs`）。
@@ -30,7 +30,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> MarqueeControl.Rendering   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
     ├──> MarqueeControl.CoreForControl ← 本プロジェクト   組み込み先がある場合にだけ必要な規則
-    └──> MarqueeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
@@ -46,7 +46,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `MarqueeViewportNotifier` | 使う（`ScrollChanged` を購読） | 使う（ホストが `NotifyViewportChanged` を呼ぶ） | 契機は UI ごとに異なるが、規則は共通 |
 | `WheelScrollDelta` / `MarqueeWheelLogMessage`（internal） | 参照しない | 参照しない | 本層の内部手順（適用先は換算済みの移動量を受け取る） |
 
-**UI フレームワークによって未使用になる型が存在します**（`IWheelScrollTarget` は適用先を持つ UI だけが使う）。これは「抽象として複数の UI で共用できる処理を本層へ置き、必要とする UI だけが実装・利用する」設計の帰結であり、コア（`MarqueeControl.Core`）の公開面には影響しません。
+**UI フレームワークによって未使用になる型が存在します**（`IWheelScrollTarget` は適用先を持つ UI だけが使う）。これは「抽象として複数の UI で共用できる処理を本層へ置き、必要とする UI だけが実装・利用する」設計の帰結であり、コア（`Feature.MarqueeCore`）の公開面には影響しません。
 
 ## Core との境界（なぜズームを Core に置かないか）
 
@@ -54,7 +54,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 | 関心事 | 所有者 | 理由 |
 | --- | --- | --- |
-| 選択の判断（ドラッグ・nudge・確定/キャンセル・スナップ・最小サイズ） | `MarqueeControl.Core` | コントロールが何であっても変わらない（独立した部品の本体） |
+| 選択の判断（ドラッグ・nudge・確定/キャンセル・スナップ・最小サイズ） | `Feature.MarqueeCore` | コントロールが何であっても変わらない（独立した部品の本体） |
 | ホイール要求（Ctrl = ズーム / それ以外 = スクロール）とそのログ | 本プロジェクト | 組み込み先（ビューポート）が存在して初めて意味を持つ |
 | 連携先へのスクロール適用（回転量 → 移動量の換算と適用先への加算） | 本プロジェクト | 「1 ノッチ = 48 DIP」「Shift で横」は UI をまたいで同じ規則である |
 | ビューポート変化の再通知（現在の状態スナップショット + 再描画） | 本プロジェクト | ビューポートが存在して初めて意味を持つ（単体の Marquee にはビューポートもズームも無い） |

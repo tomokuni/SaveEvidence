@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Estable.Loupe</RootNamespace>
+    <RootNamespace>Estable.Marquee</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。
@@ -17,10 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 配置・描画引数の内部手順（LoupePositionCalculator / LoupeRenderArgsCalculator）は、
-         ファサード（Loupe）の実装詳細であり、単体テストにのみ公開する（UI 実装・ホストは参照しない）。 -->
-    <InternalsVisibleTo Include="LoupeControl.Core.Tests" />
+    <!-- 入力の判断と描画状態変更のログ定義（LoggerMessage ソース生成）をコアが所有する -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
   </ItemGroup>
 
-  <!-- 状態機械は持たない（公開面はファサードとその契約）。他アセンブリへの InternalsVisibleTo はテストのみ。 -->
+  <ItemGroup>
+    <!-- 内部契約（状態機械・描画入力・幾何計算）はコアの単体テストからのみ参照する。
+         UI 実装とホストが使う公開面（設定・通知・フレーム・描画計算）は public のため IVT 不要。 -->
+    <InternalsVisibleTo Include="Feature.MarqueeCore.Tests" />
+  </ItemGroup>
 </Project>

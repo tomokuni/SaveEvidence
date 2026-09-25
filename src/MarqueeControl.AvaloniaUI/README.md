@@ -1,6 +1,6 @@
 # MarqueeControl
 
-> プロジェクト名: `MarqueeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `MarqueeControl.Core`、MewUI 版は `MarqueeControl.MewUI` にあります。
+> プロジェクト名: `MarqueeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `Feature.MarqueeCore`、MewUI 版は `MarqueeControl.MewUI` にあります。
 
 ## 目次
 
@@ -33,7 +33,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - 矢印キーによる1Pixel単位のキーボード微調整（nudge）
 - ドメイン座標系で正確な nudge（矢印キー1回 = ドメイン1Pixel）
 - ドラッグハンドル・始点マーカーの自己描画
-- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト（外観と表示ポリシーは `DecoOptions`（`MarqueeControl.Core` の `Decoration` 名前空間の `MarqueeDecoOptions`）が単一所有し、描画内容の判断は Core（`Decoration`）が持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
+- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト（外観と表示ポリシーは `DecoOptions`（`Feature.MarqueeCore` の `Decoration` 名前空間の `MarqueeDecoOptions`）が単一所有し、描画内容の判断は Core（`Decoration`）が持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
 - **ハンドル表示の切替**: `Options.ShowHandles = false` でハンドルを描かず枠線と外側の装飾だけを表示する
 - カーソル座標ラベルの表示（任意設定・`(x, y)` 形式）
 - **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベル（`MarqueeCoordLabel`）の**文言・外観は Core が単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`FormattedText`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
@@ -156,7 +156,7 @@ dotnet run --project sample/MarqueeControl.AvaloniaUI.Sample.csproj
 ```text
 MarqueeControl/
 ├── src/
-│   ├── MarqueeControl.csproj     # 独立プロジェクト（MarqueeControl.Core + MarqueeControl.Rendering + Platform.AvaloniaUI を参照）
+│   ├── MarqueeControl.csproj     # 独立プロジェクト（Feature.MarqueeCore + MarqueeControl.Rendering + Platform.AvaloniaUI を参照）
 │   ├── MarqueeControl.cs         # 公開 API + 効果の適用 + 通知の転送 + ポインター入力 + 描画の起動
 │   ├── MarqueeControl.Input.cs   # キーボード入力（フォーカス非依存。コア型 EsKey への変換と通知）
 │   └── MarqueeControl.Visual.cs     内部: `Content.Layers` の順に図形を描くよう描画層（MarqueeRenderer）へ渡し、ラベル要素を配置する
@@ -168,14 +168,14 @@ MarqueeControl/
 └── tests/                         # 単体テスト（公開 API 経由）
 ```
 
-### 9.1 共有コア（`MarqueeControl.Core`）と描画層（`MarqueeControl.Rendering`）
+### 9.1 共有コア（`Feature.MarqueeCore`）と描画層（`MarqueeControl.Rendering`）
 
-UI 非依存の幾何計算・状態機械・入力の解釈は `src/MarqueeControl.Core` が単一所有し、描画の手順（層の順序と描画ポートへの写し方）は `src/MarqueeControl.Rendering` が単一所有します（Avalonia / MewUI で共有）。UI 層はアダプタ（`AvaloniaCanvas` など）とラベル要素の配置を担います。
+UI 非依存の幾何計算・状態機械・入力の解釈は `src/Feature.MarqueeCore` が単一所有し、描画の手順（層の順序と描画ポートへの写し方）は `src/MarqueeControl.Rendering` が単一所有します（Avalonia / MewUI で共有）。UI 層はアダプタ（`AvaloniaCanvas` など）とラベル要素の配置を担います。
 
 本コントロールの層構成（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
-MarqueeControl.Core/
+Feature.MarqueeCore/
 ├── src/
 │   ├── HitTarget.cs                 # 公開型（ドラッグハンドル種別 enum）
 │   ├── MarqueeInteractionState.cs   # 公開型（対話状態 enum）
@@ -193,7 +193,7 @@ MarqueeControl.Core/
 └── tests/                            # 単体テスト（UI 非依存・並列実行）
 ```
 
-### 9.2 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）
+### 9.2 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）
 
 選択矩形の**外側・内側に描く装飾**（暗転マスク・穴あけ枠・ラベル・ハイライト・塗り）は、選択矩形コントロール単体の概念ではないため Core 内のサブ概念として同居します（`MarqueeDecoOptions`（設定）/ `MarqueeDrawContent`（描画内容）。詳細は同プロジェクトの `README.md`）。
 

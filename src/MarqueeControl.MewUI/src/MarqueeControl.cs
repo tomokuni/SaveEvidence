@@ -22,7 +22,7 @@ namespace Estable.MewUI.Marquee;
 
 /// <summary>リサイズ可能なドラッグ矩形のコントロール（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版と同じ UI 非依存のコアのファサード（<c>MarqueeControl.Core</c> の <see cref="MarqueeFacade"/>）を使い、<br/>
+/// Avalonia 版と同じ UI 非依存のコアのファサード（<c>Feature.MarqueeCore</c> の <see cref="MarqueeFacade"/>）を使い、<br/>
 /// 本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
 /// <br/>
 /// <b>座標系</b>:<br/>

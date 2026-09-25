@@ -1,6 +1,6 @@
 # MarqueeControl.CoreForControl 外部機能仕様書
 
-`MarqueeControl.CoreForControl` は、`MarqueeControl.Core`（選択の判断）を**他の UI コントロールへ組み込むときにだけ必要な処理**を提供します。UI 層が使う型は public、本層の内部手順は internal です（単体テストにのみ `InternalsVisibleTo` で公開します）。
+`MarqueeControl.CoreForControl` は、`Feature.MarqueeCore`（選択の判断）を**他の UI コントロールへ組み込むときにだけ必要な処理**を提供します。UI 層が使う型は public、本層の内部手順は internal です（単体テストにのみ `InternalsVisibleTo` で公開します）。
 
 ## 公開 API の可視性
 

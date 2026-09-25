@@ -4,7 +4,7 @@ MarqueeControl（MewUI 版）のシステム概要・アーキテクチャ・依
 
 ## システム概要
 
-`MarqueeControl.MewUI` は、Avalonia 版 `MarqueeControl` と**同一の UI 非依存コア（`MarqueeControl.Core`）と描画層（`MarqueeControl.Rendering`）**を使い、
+`MarqueeControl.MewUI` は、Avalonia 版 `MarqueeControl` と**同一の UI 非依存コア（`Feature.MarqueeCore`）と描画層（`MarqueeControl.Rendering`）**を使い、
 入力の受付・効果の適用・通知の転送・描画ポートの適合のみを MewUI（SkiaSharp）で実装したドラッグ矩形コントロールです。
 
 コアが担う範囲（選択矩形の正規化・ハンドル位置・ヒットテスト・ドラッグ変形・nudge・境界クリップ・対話状態の合成に加えて、
@@ -34,7 +34,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> MarqueeControl.Rendering   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
     ├──> MarqueeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
-    └──> MarqueeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ※ 本コントロール（UI 層）は Platform.Native（Win32 実装）と Platform.MewUI も参照する。
@@ -44,7 +44,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 | 層 | 責務 |
 | --- | --- |
-| `MarqueeControl.Core` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成（効果の適用順、ビューポート変化の通知、ホイールの解釈、ログの保持を含む）**。公開ファサード `Marquee` を唯一の窓口とし、状態機械とフレーム解決は内部契約（`internal`）とする |
+| `Feature.MarqueeCore` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成（効果の適用順、ビューポート変化の通知、ホイールの解釈、ログの保持を含む）**。公開ファサード `Marquee` を唯一の窓口とし、状態機械とフレーム解決は内部契約（`internal`）とする |
 | `MarqueeControl.Rendering` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
 | `MarqueeControl.MewUI` | 入力（マウス・キー・ホイール）をコア型へ変換してファサードへ通知する、`IMarqueeEffects` を実装して要求された効果（再描画・フォーカス・マウスキャプチャ・カーソル形状/操作）を適用する、通知を公開イベントへ転送する、描画内容を描画層（`MarqueeRenderer`）へ渡す（描画先は `SkiaEsCanvas`）、DPI の追従 |
 | ホスト | 座標変換ポートの設定、選択の復元・確定・キャンセル、重ね順の管理、ビューポート変化の通知 |
@@ -81,8 +81,8 @@ src/MarqueeControl.MewUI/
 | --- | --- |
 | `MarqueeControl` | `MewProperty` の定義、入力のドメイン変換とファサードへの通知、`IMarqueeEffects` の実装（効果の適用）、マウスキャプチャの取得/解放、DPI 変更の追従、描画内容の描画層（`MarqueeRenderer`）への委譲、子要素（図形キャンバス・ラベル要素）の計測と配置、付加情報の描画機会の通知（`Rendered`） |
 | `MarqueeRenderer`（描画層） | 描画内容を層の順に描画ポートへ写す。`DrawShapes`（図形）は本コントロールが呼ぶ。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため）。**サイズ・座標ラベルも描かない**（コントロールがテキスト要素として表示する） |
-| `MarqueeOuterRenderer`（描画層） | 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）の `OuterDecoFrame` を描画ポートへ写す（暗転マスク・枠線。判断を持たない）。**ラベル（サイズ・座標）は描かない**（コントロールがテキスト要素として表示する） |
-| `MarqueeInnerRenderer`（描画層） | 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）の `InnerDecoFrame` を描画ポートへ写す（穴あけ矩形の塗り・内枠。判断を持たない） |
+| `MarqueeOuterRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `OuterDecoFrame` を描画ポートへ写す（暗転マスク・枠線。判断を持たない）。**ラベル（サイズ・座標）は描かない**（コントロールがテキスト要素として表示する） |
+| `MarqueeInnerRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `InnerDecoFrame` を描画ポートへ写す（穴あけ矩形の塗り・内枠。判断を持たない） |
 | UI 層のラベル要素 | 親パネルの子要素（`Border` + `TextBlock`）として中心座標・サイズラベルを配置する。文言・外観と順序（`MarqueeDrawContent.Layers`）は Core が単一所有し、実寸から配置矩形を求める写像は `MarqueeLabelPlan`（描画層）が単一所有する |
 | `MarqueePointEventArgs` / `SelectionRectEventArgs` / `MarqueeRenderedEventArgs` | 通知時点の座標（矩形）とスナップショットの組・描画完了（描画先と描画内容の契約） |
 
@@ -118,7 +118,7 @@ classDiagram
         -CaptureMouse(capture) void
     }
     class Marquee {
-        <<MarqueeControl.Core / 公開ファサード>>
+        <<Feature.MarqueeCore / 公開ファサード>>
         +Press(pos, clickCount) void
         +Move(pos) void
         +Release(pos) void
@@ -131,13 +131,13 @@ classDiagram
         +Notified
     }
     class IMarqueeEffects {
-        <<MarqueeControl.Core / UI が実装>>
+        <<Feature.MarqueeCore / UI が実装>>
         +RequestFocus() / RequestRedraw()
         +SetCursorShape(kind) / SetPointerCapture(capture)
         +ToScreenPoint(domainPoint) EsPixelPoint
     }
     class MarqueeSession {
-        <<internal / MarqueeControl.Core>>
+        <<internal / Feature.MarqueeCore>>
         +Press(pos, clickCount) MarqueeFeedback
         +Move(pos) MarqueeFeedback
         +Release(pos) MarqueeFeedback
@@ -149,13 +149,13 @@ classDiagram
         +Notified EventHandler~MarqueeNotice~
     }
     class MarqueeNotice {
-        <<MarqueeControl.Core>>
+        <<Feature.MarqueeCore>>
         +MarqueeNoticeKind Kind
         +EsPoint Position
         +MarqueeSnapshot Snapshot
     }
     class MarqueeFeedback {
-        <<internal / MarqueeControl.Core>>
+        <<internal / Feature.MarqueeCore>>
         +bool Handled / Redraw / RequestFocus
         +bool UpdateCursorShape / MarqueeCursorKind CursorKind
         +MarqueeCursorAction Cursor / EsPoint CursorDomainPosition
@@ -181,7 +181,7 @@ classDiagram
         +Draw(canvas, frame)$ void
       }
       class MarqueeOptions {
-          <<MarqueeControl.Core>>
+          <<Feature.MarqueeCore>>
           +double HandleSize
           +DrawingColor HandleColor / HandleBorderColor
           +double CoordLabelFontSize / SizeLabelFontSize
@@ -198,7 +198,7 @@ classDiagram
         +NextTop(top, lineHeight, paddingY)$ double
     }
     class MarqueeState {
-        <<MarqueeControl.Core>>
+        <<Feature.MarqueeCore>>
         +EsRect SelectionRect
         +ICoordTransform Port
         +GetInteractionState() MarqueeInteractionState
@@ -213,7 +213,7 @@ classDiagram
         +ClampSelectionToBounds() bool
     }
     class SelectionGeometry {
-        <<MarqueeControl.Core>>
+        <<Feature.MarqueeCore>>
         +GetHandlePosition(rect, handle)$ EsPoint
         +IsNear(p1, p2, radius)$ bool
         +ComputeDragRect(...)$ EsRect

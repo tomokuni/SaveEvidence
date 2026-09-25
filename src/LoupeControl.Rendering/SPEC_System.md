@@ -32,7 +32,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> LoupeControl.Rendering ← 本プロジェクト   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
     ├──> LoupeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
-    └──> LoupeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```

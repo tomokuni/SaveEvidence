@@ -154,7 +154,7 @@ classDiagram
         +double LoupeOffset
     }
     class Loupe {
-        <<LoupeControl.Core / 公開ファサード>>
+        <<Feature.LoupeCore / 公開ファサード>>
         +ResolveLayout(parentSize) LoupeLayout
     }
 

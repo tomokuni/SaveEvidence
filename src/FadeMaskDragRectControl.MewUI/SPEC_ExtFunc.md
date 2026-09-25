@@ -15,10 +15,10 @@ Avalonia 版と同一の解釈になります。
 | 参照 | 用途 |
 | --- | --- |
 | `FadeMaskDragRectControl.Core` | 動作モード（`FadeMaskDragRectMode`）と、モードから子コントロールの有効・無効（選択矩形を使うか）への写像 |
-| `MarqueeControl.MewUI` / `MarqueeControl.Core` | 選択矩形の入力と状態機械 |
+| `MarqueeControl.MewUI` / `Feature.MarqueeCore` | 選択矩形の入力と状態機械 |
 | `MarqueeControl.CoreForControl` | ホイール要求（`WheelZoomRequest` / `WheelScrollRequest`）の中継で型を参照する（解釈は内包コントロールが組み込みの層へ委ねる） |
-| `MarqueeControl.Core`（`Decoration` 名前空間） | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の設定・外観・幾何・描画内容の解決（名前空間 `Estable.Marquee.Decoration`。描画は `MarqueeControl` が行う） |
-| `LoupeControl.MewUI` / `LoupeControl.Core` | 拡大鏡の描画と表示位置計算 |
+| `Feature.MarqueeCore`（`Decoration` 名前空間） | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の設定・外観・幾何・描画内容の解決（名前空間 `Estable.Marquee.Decoration`。描画は `MarqueeControl` が行う） |
+| `LoupeControl.MewUI` / `Feature.LoupeCore` | 拡大鏡の描画と表示位置計算 |
 | `Platform.Core` | コア幾何型・座標変換ポート・画像コンテナ |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `Panel`・`MewProperty`・SkiaSharp |
 

@@ -4,11 +4,11 @@
 
 ## 目的
 
-- **「どう描くか」を 1 箇所に集約する**。コア（`MarqueeControl.Core`）は「何を描くか（判断とデータ）」だけを決め、描画 API の呼び出し手順は本層が単一所有する。
-- **描画を差し替えられる**。描画先は `IEsCanvas`（`Platform.Core`、UI 非依存の描画ポート）であり、描画手順は `IMarqueeRenderer`（`MarqueeControl.Core` の契約）を実装した型で置き換えられる（ファサードの `Marquee.Renderer` へ設定する）。UI の追加・描画方式の変更はポートまたは実装の差し替えだけで済む。
+- **「どう描くか」を 1 箇所に集約する**。コア（`Feature.MarqueeCore`）は「何を描くか（判断とデータ）」だけを決め、描画 API の呼び出し手順は本層が単一所有する。
+- **描画を差し替えられる**。描画先は `IEsCanvas`（`Platform.Core`、UI 非依存の描画ポート）であり、描画手順は `IMarqueeRenderer`（`Feature.MarqueeCore` の契約）を実装した型で置き換えられる（ファサードの `Marquee.Renderer` へ設定する）。UI の追加・描画方式の変更はポートまたは実装の差し替えだけで済む。
 - **UI 実装を薄くする**。UI 層は描画内容の解決と描画先（描画ポート）の用意だけを行い、描画 API の呼び出し手順は本層が持つ。
 - **UI 初期化なしで描画を検証できる**。描画の実行は Skia（`SkiaEsCanvas`）で行うため、ウィンドウなしの画素テストが書ける（`tests/`）。
-- UI フレームワークへ依存しない（参照は `MarqueeControl.Core` と `Platform.Core` のみ）。
+- UI フレームワークへ依存しない（参照は `Feature.MarqueeCore` と `Platform.Core` のみ）。
 
 ## 層の分担
 
@@ -19,7 +19,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> MarqueeControl.Rendering ← 本プロジェクト   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
     ├──> MarqueeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
-    └──> MarqueeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
@@ -50,7 +50,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 差し替えたいもの | 方法 |
 | --- | --- |
 | **描画先（UI フレームワーク）** | `IEsCanvas` を実装する（例: `SkiaEsCanvas`（Skia）/ `AvaloniaCanvas`（Avalonia の `DrawingContext`））。**描画手順はそのまま使える** |
-| **描画手順そのもの** | `IMarqueeRenderer`（`MarqueeControl.Core`）を実装した型を作り、ファサードの `Marquee.Renderer` へ設定する（本層の `MarqueeRenderer` を使わなくてもよい） |
+| **描画手順そのもの** | `IMarqueeRenderer`（`Feature.MarqueeCore`）を実装した型を作り、ファサードの `Marquee.Renderer` へ設定する（本層の `MarqueeRenderer` を使わなくてもよい） |
 | **色・寸法** | `MarqueeOptions`（設定）と `MarqueeDecoOptions`（装飾）を変える（描画層は値を保持しない） |
 
 ## 独自のコントロールへ組み込む（最小実装）
@@ -88,7 +88,7 @@ protected override void Render(DrawingContext context)
 
 ```text
 MarqueeControl.Rendering
-    ├── MarqueeControl.Core（描画内容の契約・選択の判断）
+    ├── Feature.MarqueeCore（描画内容の契約・選択の判断）
     └── Platform.Core（IEsCanvas・Es* 値型・SkiaEsCanvas・EsLabelLayout）
 ```
 

@@ -4,7 +4,7 @@
 
 `MarqueeControl.CoreForControl` は、選択コントロール（`MarqueeControl`）を**他の UI コントロールへ組み込むときにだけ必要な処理**を担う層です。具体的には「ホイール入力を解釈して、ズーム要求の通知・連携先へのスクロール適用・スクロール要求の通知を行う」処理と、「ビューポート（パン・ズーム）の変化を上位へ再通知する」処理を持ちます。
 
-`MarqueeControl.Core`（選択の判断・状態・描画内容）と UI 層（フレームワーク固有の入力・描画）の間に位置し、両者が共有する**組み込みの転送規則**を 1 箇所に集約します。UI フレームワークへ依存しないため、ヘッドレス実行なしで `[Fact]` 並列検証できます。
+`Feature.MarqueeCore`（選択の判断・状態・描画内容）と UI 層（フレームワーク固有の入力・描画）の間に位置し、両者が共有する**組み込みの転送規則**を 1 箇所に集約します。UI フレームワークへ依存しないため、ヘッドレス実行なしで `[Fact]` 並列検証できます。
 
 ## 技術スタック
 
@@ -13,7 +13,7 @@
 | 対象フレームワーク | .NET 10（`net10.0`） |
 | 言語 | C# 14 |
 | ログ | `Microsoft.Extensions.Logging.Abstractions`（LoggerMessage ソース生成・`ILogger` 拡張メソッド） |
-| 依存元 | `MarqueeControl.Core`（公開ファサード `Marquee`） / `Platform.Core`（`EsPoint` / `EsVector`） |
+| 依存元 | `Feature.MarqueeCore`（公開ファサード `Marquee`） / `Platform.Core`（`EsPoint` / `EsVector`） |
 
 ## アーキテクチャ
 
@@ -26,7 +26,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> MarqueeControl.Rendering   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
     ├──> MarqueeControl.CoreForControl ← 本プロジェクト   組み込み先がある場合にだけ必要な規則
-    └──> MarqueeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
@@ -35,7 +35,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 | 層 | 責務 |
 | --- | --- |
-| `MarqueeControl.Core` | 選択の判断（ドラッグ・nudge・確定/キャンセル・スナップ・最小サイズ）・状態・描画内容の解決・ログ定義（選択の判断に伴うもの） |
+| `Feature.MarqueeCore` | 選択の判断（ドラッグ・nudge・確定/キャンセル・スナップ・最小サイズ）・状態・描画内容の解決・ログ定義（選択の判断に伴うもの） |
 | **本プロジェクト** | **ホイール入力の解釈（Ctrl = ズーム / それ以外 = スクロール）**・要求の通知・**連携先へのスクロール適用（回転量 → 移動量の換算を含む）**・ズーム要求のログ定義・**ビューポート変化の再通知（スナップショット + 再描画）** |
 | `MarqueeControl.*UI` | フレームワークの入力イベントから修飾キーと回転量を取り出して `Handle` を呼ぶ、要求を公開イベントへ転送する、**自 UI のスクロール機構を `IWheelScrollTarget` へ適合させて注入する** |
 | ホスト | 要求の実処理（ズーム率の決定・表示の適用・スクロール先の決定） |

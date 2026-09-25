@@ -41,11 +41,11 @@
     <Project Path="src/CropViewControl.AvaloniaUI/src/CropViewControl.AvaloniaUI.csproj" />
     <Project Path="src/CropViewControl.AvaloniaUI/tests/CropViewControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/MarqueeControl.Core/">
-    <Project Path="src/MarqueeControl.Core/src/MarqueeControl.Core.csproj" />
-    <Project Path="src/MarqueeControl.Core/tests/MarqueeControl.Core.Tests.csproj" />
+  <Folder Name="/src/Feature.MarqueeCore/">
+    <Project Path="src/Feature.MarqueeCore/src/Feature.MarqueeCore.csproj" />
+    <Project Path="src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/MarqueeControl.Core/src/" />
+  <Folder Name="/src/Feature.MarqueeCore/src/" />
   <Folder Name="/src/MarqueeControl.CoreForControl/">
     <Project Path="src/MarqueeControl.CoreForControl/src/MarqueeControl.CoreForControl.csproj" />
     <Project Path="src/MarqueeControl.CoreForControl/tests/MarqueeControl.CoreForControl.Tests.csproj" />
@@ -83,11 +83,11 @@
     <Project Path="src/LineDetection/src/LineDetection.csproj" />
     <Project Path="src/LineDetection/tests/LineDetection.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/LoupeControl.Core/">
-    <Project Path="src/LoupeControl.Core/src/LoupeControl.Core.csproj" />
-    <Project Path="src/LoupeControl.Core/tests/LoupeControl.Core.Tests.csproj" />
+  <Folder Name="/src/Feature.LoupeCore/">
+    <Project Path="src/Feature.LoupeCore/src/Feature.LoupeCore.csproj" />
+    <Project Path="src/Feature.LoupeCore/tests/Feature.LoupeCore.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/LoupeControl.Core/src/" />
+  <Folder Name="/src/Feature.LoupeCore/src/" />
   <Folder Name="/src/LoupeControl.CoreForControl/">
     <Project Path="src/LoupeControl.CoreForControl/src/LoupeControl.CoreForControl.csproj" />
     <Project Path="src/LoupeControl.CoreForControl/tests/LoupeControl.CoreForControl.Tests.csproj" />

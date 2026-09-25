@@ -5,7 +5,7 @@ namespace Estable.AvaloniaUI.Loupe.Logging;
 /// <summary>ルーペの描画パイプライン（中間ビットマップの生成と世代管理）に固有のログ定義。</summary>
 /// <remarks>
 /// 非同期に中間ビットマップを生成して表示へ反映する描画方式（Avalonia 版）に固有のログである。<br/>
-/// 画面へ直接描画する MewUI 版には対応する処理が無いため、汎用コア（<c>LoupeControl.Core</c>）ではなく<br/>
+/// 画面へ直接描画する MewUI 版には対応する処理が無いため、汎用コア（<c>Feature.LoupeCore</c>）ではなく<br/>
 /// 本 UI プロジェクトが所有する（汎用コアに UI 固有のログを持たせない）。<br/>
 /// カテゴリは他 UI のログと同じ <c>[LoupeCtrl]</c> に揃える。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、呼び出し側では logger 引数を省略する。

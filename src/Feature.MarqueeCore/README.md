@@ -1,4 +1,4 @@
-# MarqueeControl.Core
+# Feature.MarqueeCore
 
 `MarqueeControl`（マーキー選択＝ドラッグで矩形を選び、移動・リサイズできるコントロール）の**UI 非依存の状態層**です。Avalonia 版と MewUI 版が同じ状態管理・ロジックを共有します。
 
@@ -20,7 +20,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> MarqueeControl.Rendering   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
     ├──> MarqueeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
-    └──> MarqueeControl.Core ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.MarqueeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
@@ -67,7 +67,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 **UI 非依存の汎用ライブラリ**として、特定のアプリ・UI 実装に依存しません（文言・モード等のアプリ固有情報を持ちません）。
 
-名前空間は `Estable.Marquee`（幾何は `Estable.Marquee.Selection`、装飾は `Estable.Marquee.Decoration`）。アセンブリ名は `MarqueeControl.Core`。
+名前空間は `Estable.Marquee`（幾何は `Estable.Marquee.Selection`、装飾は `Estable.Marquee.Decoration`）。アセンブリ名は `Feature.MarqueeCore`。
 
 ## 名前の由来と一般的な呼称
 
@@ -154,7 +154,7 @@ UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せ�
 ## 依存関係
 
 ```text
-MarqueeControl.Core
+Feature.MarqueeCore
     ├── Platform.Core（Es* 幾何型 / EsKey / ICoordTransform / ICursorService）
     └── Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成のみ）
 ```
@@ -271,7 +271,7 @@ tests/
 件数は `[Theory]` を展開したケース数（合計 267 件）です。
 
 ```powershell
-dotnet test src/MarqueeControl.Core/tests/MarqueeControl.Core.Tests.csproj
+dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj
 ```
 
 ## ライセンス

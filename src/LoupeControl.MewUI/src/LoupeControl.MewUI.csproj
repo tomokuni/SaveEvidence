@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <!-- UI 非依存の純粋ロジック（Core） -->
-    <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
+    <ProjectReference Include="..\..\Feature.LoupeCore\src\Feature.LoupeCore.csproj" />
     <!-- 描画の手順（層の順序と描画ポートへの写し）を単一所有する UI 非依存の描画層 -->
     <ProjectReference Include="..\..\LoupeControl.Rendering\src\LoupeControl.Rendering.csproj" />
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />

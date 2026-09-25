@@ -48,7 +48,7 @@ internal static class WheelScrollDelta
 /// <br/>
 /// <b>なぜ Core 層ではなく CoreForControl 層にあるか</b>: 「Ctrl+ホイール = ズーム」は選択（マーキー）の判断ではなく、<br/>
 /// 選択コントロールを<b>ビューポートへ組み込む</b>ときにだけ必要な規則である。単体で使う Marquee には<br/>
-/// ズームもスクロールも存在しないため、Core 層（<c>MarqueeControl.Core</c>）には置かず本層が単一所有する。<br/>
+/// ズームもスクロールも存在しないため、Core 層（<c>Feature.MarqueeCore</c>）には置かず本層が単一所有する。<br/>
 /// UI フレームワークには依存しない（修飾キーの真偽と回転量だけを受け取る）ため、UI 初期化なしの <c>[Fact]</c> で検証できる。<br/>
 /// <br/>
 /// <b>責務</b>:<br/>

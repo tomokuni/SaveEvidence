@@ -1,11 +1,11 @@
 # MarqueeControl.MewUI
 
-`MarqueeControl`（リサイズ可能なドラッグ矩形）の **MewUI 版**です。Avalonia 版と同一の UI 非依存コア（`MarqueeControl.Core`）と描画層（`MarqueeControl.Rendering`）を使い、
+`MarqueeControl`（リサイズ可能なドラッグ矩形）の **MewUI 版**です。Avalonia 版と同一の UI 非依存コア（`Feature.MarqueeCore`）と描画層（`MarqueeControl.Rendering`）を使い、
 入力の受付と効果の適用・カーソル制御・描画ポートの適合のみを MewUI で実装しています。層構成（Core / Rendering / CoreForControl / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ## 特徴
 
-- **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `MarqueeControl.Core` が単一所有します（UI 層は公開ファサード `Marquee` だけを参照し、内部の状態機械・フレーム解決には触れません）。
+- **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `Feature.MarqueeCore` が単一所有します（UI 層は公開ファサード `Marquee` だけを参照し、内部の状態機械・フレーム解決には触れません）。
   Avalonia 版と MewUI 版の挙動は同じ計算に基づきます。
 - **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへ直接描画します。ハンドル・十字マーカー・外側/内側の装飾（暗転マスク・穴あけ枠・塗り・内枠）の描画手順は UI 非依存の描画層（`MarqueeControl.Rendering`）が単一所有し、キャンバスの適合は `SkiaEsCanvas`（Platform.Core）が担います。
 - **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベル（`MarqueeCoordLabel`）の**文言・外観は Core が単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`SkiaText.Measure`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
@@ -149,7 +149,7 @@ dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 - `MarqueeControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、ビューポート通知、`Log` のフォールバックと設定変更ログ。
 - ログの定義（操作ログ・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います（ズーム要求のログは組み込みの層の `MarqueeWheelLogMessage` が所有し、`MarqueeControl.CoreForControl.Tests` が検証します）。
 
-入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアが担うため、その検証は `MarqueeControl.Core.Tests` が行います。
+入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアが担うため、その検証は `Feature.MarqueeCore.Tests` が行います。
 
 ## 操作ログ
 

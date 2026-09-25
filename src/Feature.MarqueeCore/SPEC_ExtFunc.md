@@ -1,4 +1,4 @@
-# MarqueeControl.Core 外部機能仕様書
+# Feature.MarqueeCore 外部機能仕様書
 
 `MarqueeControl`（ドラッグで矩形を選び、移動・リサイズできるコントロール）の **UI 非依存の状態層**が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト）から見える情報のみを記載し、内部実装の詳細は記載しません。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
 

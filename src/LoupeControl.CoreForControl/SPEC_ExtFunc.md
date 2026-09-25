@@ -1,6 +1,6 @@
 # LoupeControl.CoreForControl 外部機能仕様書
 
-`LoupeControl.CoreForControl` は、`LoupeControl.Core`（ルーペの見た目・計算）を**他の UI コントロールへ組み込むときにだけ必要な処理**を提供します。**全型が public** です（`InternalsVisibleTo` は持ちません）。
+`LoupeControl.CoreForControl` は、`Feature.LoupeCore`（ルーペの見た目・計算）を**他の UI コントロールへ組み込むときにだけ必要な処理**を提供します。**全型が public** です（`InternalsVisibleTo` は持ちません）。
 
 ## 公開 API の可視性
 

@@ -18,7 +18,7 @@
     - [6.2 LoupeRenderer（LoupeControl.Rendering）](#62-louperendererloupecontrolrendering)
     - [6.3 描画責務分割](#63-描画責務分割)
     - [6.4 画像入力とピクセル抽出](#64-画像入力とピクセル抽出)
-    - [6.5 LoupeImageExtractor（`LoupeControl.Core`）](#65-loupeimageextractorloupecontrolcore)
+    - [6.5 LoupeImageExtractor（`Feature.LoupeCore`）](#65-loupeimageextractorloupecontrolcore)
     - [6.6 LoupeLogMessage / LoupeRenderLog](#66-loupelogmessage--louperenderlog)
     - [6.7 上位AP（消費側）](#67-上位ap消費側)
     - [6.8 UI 固有の機構（コアへ移さない）](#68-ui-固有の機構コアへ移さない)
@@ -46,7 +46,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-│ **依存プロジェクト** | `LoupeControl.Core`（UI 非依存の計算ロジック）/ `LoupeControl.Rendering`（描画の手順・ラベル計画）/ `Platform.AvaloniaUI`（コア型の相互変換・画像コンテナ・`AvaloniaCanvas`） |
+│ **依存プロジェクト** | `Feature.LoupeCore`（UI 非依存の計算ロジック）/ `LoupeControl.Rendering`（描画の手順・ラベル計画）/ `Platform.AvaloniaUI`（コア型の相互変換・画像コンテナ・`AvaloniaCanvas`） |
 
 ## 3. アーキテクチャ
 
@@ -56,12 +56,12 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 公開コントロール（LoupeControl）
   → 描画オーケストレーション（LoupeRenderPipeline / LoupeSourceResolver）※ UI 固有の機構
   → レンダリング（描画層 LoupeControl.Rendering の LoupeRenderer。描画先は AvaloniaCanvas が適合させる）
-  → Core（LoupeControl.Core: 外観 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル計画 / 市松模様 / 描画完了時の表示情報 / ログ定義）
+  → Core（Feature.LoupeCore: 外観 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル計画 / 市松模様 / 描画完了時の表示情報 / ログ定義）
 ```
 
 ### 3.2 依存の方向
 
-- 依存は**一方向の階層構造**（LoupeControl → LoupeControl.Rendering → LoupeControl.Core → Platform.Core）。双方向依存・具象依存なし。
+- 依存は**一方向の階層構造**（LoupeControl → LoupeControl.Rendering → Feature.LoupeCore → Platform.Core）。双方向依存・具象依存なし。
 - LoupeControl は上位 AP に依存しない（再利用可能）。
 - 色の境界変換（設定文字列 → コアの色型）は上位AP 側で行い、LoupeControl 内に文字列解析を持ち込まない（外観は `System.Drawing.Color` として受け取る）。
 - 描画の手順は描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が単一所有し、本コントロールは描画ポート（`AvaloniaCanvas`）とラベル要素の配置、状態（DP）とライフサイクル（Bitmap 生成 / 解放）を担う。
@@ -70,7 +70,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 - 再描画のバッチ化（`LoupeRenderCoordinator`）は UI フレームワークに依存しないため **`LoupeControl.CoreForControl`（組み込みの層）** が所有する（実行キューと優先度は UI が `post` コールバックで注入する）。
 - 描画可否の判断（非表示なら描画しない・解放する、古い世代は反映しない）と、未実行要求の破棄と解放の手順は **`LoupeRenderCoordinator` が単一所有** する（コントロールは `RequestRender` / `CancelAndRelease` / `ShouldApply` を呼ぶだけ）。
 - 表示方式は LoupeControl 内部の Image.Source に統一し、外部の DrawingContext 描画 API は提供しない。
-- UI 非依存のロジックは `LoupeControl.Core`（全型 `public`）へ委譲し、境界でのみコア型（`EsPoint` / `EsSize`）と Avalonia 型を相互変換する（1 行変換）。
+- UI 非依存のロジックは `Feature.LoupeCore`（全型 `public`）へ委譲し、境界でのみコア型（`EsPoint` / `EsSize`）と Avalonia 型を相互変換する（1 行変換）。
 
 ## 4. 例外処理ポリシー
 
@@ -78,7 +78,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（コアの `LoupeLogMessage`。両 UI 分を `LoupeControl.Core` が単一所有する）で出力する。設定変更は Debug、再描画・位置更新は Trace、例外は Error で記録する。
+- ログは LoggerMessage ソース生成（コアの `LoupeLogMessage`。両 UI 分を `Feature.LoupeCore` が単一所有する）で出力する。設定変更は Debug、再描画・位置更新は Trace、例外は Error で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -105,7 +105,7 @@ flowchart TB
         Brs["EsLabelElementHost<br/>public sealed class<br/>Platform.AvaloniaUI.Labels<br/>（コアの指示をラベル要素へ写す）"]
         Evt["LoupeRenderedEventArgs<br/>public sealed class<br/>LoupeRenderedEventArgs.cs"]
     end
-    subgraph Core["LoupeControl.Core プロジェクト (UI 非依存)"]
+    subgraph Core["Feature.LoupeCore プロジェクト (UI 非依存)"]
         direction TB
         Opt["LoupeOptions<br/>public sealed record<br/>（表示サイズ・拡大率・外観）"]
         Req["LoupeRenderRequest<br/>public readonly record struct<br/>（1 フレーム分の描画入力）"]
@@ -170,7 +170,7 @@ flowchart TB
 - **責務**: ルーペ Bitmap の合成描画（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠）を描画ポート `IEsCanvas` へ写す（**描画手順の単一所有者**）
 - **公開API**: `DrawShapes(canvas, source, request, notification)`（図形の層のみ。**ラベルの層は描かない**）/ `ResolveLabels(coordLabel, measureText)`（要素の配置指示）。引数はコアの描画契約 `LoupeRenderRequest` と `LoupeRenderNotification`（層の順序）、および解決済みのソース。外観値・換算値を保持しない（切り出せない場合は市松模様のみを描画する）
 - **特徴**: 描画の可否（アルファ 0）はコアが判定する。市松タイル・外枠の太さはコアの `LoupeAppearanceScaler` が物理ピクセルへ換算する（DIP の見た目を DPI に依存させない）。描画層へは契約（`LoupeRenderRequest`）を渡し、各層がコアへ問い合わせる（呼び出し側で可否を判定して null を渡す形にはしない）
-- **依存**: Platform.Core（`IEsCanvas`）/ LoupeControl.Core（`LoupeRenderRequest` / `LoupeAppearance` / `LoupeAppearanceScaler` / `LoupeImageExtractor`）
+- **依存**: Platform.Core（`IEsCanvas`）/ Feature.LoupeCore（`LoupeRenderRequest` / `LoupeAppearance` / `LoupeAppearanceScaler` / `LoupeImageExtractor`）
 
 ### 6.3 描画責務分割
 
@@ -179,7 +179,7 @@ flowchart TB
 - 描画先は UI 非依存の描画ポート `IEsCanvas` であり、本プロジェクトでは `AvaloniaCanvas`（`Platform.AvaloniaUI`）が `DrawingContext` を適合させる。
 - `EsLabelElementHost`（`Platform.AvaloniaUI.Labels`）: コアの配置指示（`EsLabelElement`）をラベル要素（`Border` + `TextBlock`）へ写すホスト。色 → 共有ブラシの変換と容量制限付きキャッシュも本型が単一所有する（本コントロールとマーキーが共用する）。
 
-> 十字線・外枠の矩形計算、市松模様の明暗判定とタイルサイズの換算、拡大描画の矩形計算は `LoupeControl.Core` が単一所有します（MewUI 版と共用）。
+> 十字線・外枠の矩形計算、市松模様の明暗判定とタイルサイズの換算、拡大描画の矩形計算は `Feature.LoupeCore` が単一所有します（MewUI 版と共用）。
 > 本プロジェクトは `AvaloniaCanvas` の適合と要素の配置を担います。
 
 > **通知契約**: `LoupeRenderedEventArgs` はホストがオーバーレイを描くのに必要な値（描画済み Bitmap・切り出し左上・スケール）を通知します。中心座標ラベルはコントロールがテキスト要素として表示するため含みません。表示位置・表示サイズ・拡大率・拡大中心は、消費側が存在しないため削除しました（必要になればコントロールの公開プロパティから取得できます）。
@@ -193,17 +193,17 @@ flowchart TB
 - `Bitmap` / `EsBitmapAvaloniaImage` 以外の `IImage` は `NotSupportedException` が発生する。
 - 切り出し（`EsBitmap.Crop`）と合成（`RenderTargetBitmap` / `DrawingContext`）は UI スレッドで行う（バックグラウンド抽出は連続再描画時にスレッドプールが競合し、移動中の追従が止まるため行わない）。一時 `RenderTargetBitmap` は描画直後に破棄する。
 
-### 6.5 LoupeImageExtractor（`LoupeControl.Core`）
+### 6.5 LoupeImageExtractor（`Feature.LoupeCore`）
 
 - **分類**: 内部静的クラス（`internal static class`）
-- **所属**: `LoupeControl.Core` プロジェクト（名前空間 `Estable.Loupe.Imaging`）
+- **所属**: `Feature.LoupeCore` プロジェクト（名前空間 `Estable.Loupe.Imaging`）
 - **責務**: 元画像（`EsBitmap`）からの領域切り出し（範囲外は透明パディング）を `EsBitmap` として提供する
 - **公開API**: `TryExtractRegionAt`（切り出しの可否を含む。ソース・中心未設定や破棄済みは `null`）/ `ComputeMagnifiedRects`（切り出し元・描画先の矩形計算。両 UI が共用する拡大倍率の単一所有）。切り出しの内部手順（`ComputeCaptureSize` / `ComputeCaptureTopLeft` / `ExtractRegionAt`）は **internal**
 - **依存**: `Platform.Core`（`EsBitmap` / `EsPoint`）のみ。Avalonia には依存しない
 
 ### 6.6 LoupeLogMessage / LoupeRenderLog
 
-- **分類**: 公開静的クラス（`public static partial class`。所属は `LoupeControl.Core` の `Estable.Loupe`）
+- **分類**: 公開静的クラス（`public static partial class`。所属は `Feature.LoupeCore` の `Estable.Loupe`）
 - **責務**: LoggerMessage source generator によるログ定義。**書式・レベルを UI 間で揃えるためコアが単一所有する**
 - **公開API**: `LogUpdateError`（Error）/ `LogSettingChanged`（Debug。汎用）/ 設定項目ごとの名前付きメソッド（`LogSourceChanged` / `LogCenterPointChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`。**設定名はコアが付与**し、UI 層は値だけを渡す）/ `LogOptionsChanged`（設定 `LoupeOptions` の**変化した項目だけ**を出力）
 - **本 UI 固有のログ**: 中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は **本プロジェクトの `LoupeRenderLog`**（`Logging/LoupeRenderLog.cs`・`internal static partial class`）が所有する（コアに UI 固有のログを持たせない）
@@ -222,11 +222,11 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。LoupeControl（UI）→ LoupeControl.Rendering / LoupeControl.CoreForControl / LoupeControl.Core → Platform.Core（Rendering と CoreForControl は兄弟で互いに依存しない）。双方向依存・具象依存なし。
+- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。LoupeControl（UI）→ LoupeControl.Rendering / LoupeControl.CoreForControl / Feature.LoupeCore → Platform.Core（Rendering と CoreForControl は兄弟で互いに依存しない）。双方向依存・具象依存なし。
 - LoupeControl は上位AP に**依存しない**（再利用可能）。
 - 色の境界変換（string → IBrush）は上位AP 側で行い、LoupeControl 内に文字列解析を持ち込まない。
 - 描画の手順は描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が単一所有し、本コントロールは描画ポート（`AvaloniaCanvas`）とラベル要素の配置、状態（DP）とライフサイクル（Bitmap 生成/解放）を担う。
-- UI 非依存の計算ロジック・設定・外観・ログ定義は `LoupeControl.Core` が単一所有し、UI 側は境界でコア型へ 1 行変換して委譲する。
+- UI 非依存の計算ロジック・設定・外観・ログ定義は `Feature.LoupeCore` が単一所有し、UI 側は境界でコア型へ 1 行変換して委譲する。
 - **UI 層は設定値・外観値を保持しない**（`Options`（コアの `LoupeOptions`）を 1 つ公開し、描画時に読むだけ）。
 - 表示方式は `LoupeControl` 内部の `Image.Source` に統一し、外部の `DrawingContext` 描画APIは提供しない。
 - 複数の依存関係プロパティを連続設定した場合、Dispatcher上の保留中再描画要求は `_renderQueued` により1件へ集約される。

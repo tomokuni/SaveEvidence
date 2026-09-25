@@ -4,7 +4,7 @@
 
 ## システム概要
 
-`LoupeControl.MewUI` は、Avalonia 版 `LoupeControl` と**同一の UI 非依存コア（`LoupeControl.Core`）と描画層（`LoupeControl.Rendering`）** を使い、
+`LoupeControl.MewUI` は、Avalonia 版 `LoupeControl` と**同一の UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.Rendering`）** を使い、
 描画ポートの適合（`SkiaEsCanvas`）と入力の受付のみを MewUI（SkiaSharp）で実装したルーペコントロールです。
 
 コアが担う範囲（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は両 UI で完全に共通であり、
@@ -33,19 +33,19 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> LoupeControl.Rendering   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
     ├──> LoupeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
-    └──> LoupeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
 
 Avalonia 版と MewUI 版の間に依存はありません（互いを参照しません）。
-両者に共通する計算は必ず `LoupeControl.Core` を経由します。
+両者に共通する計算は必ず `Feature.LoupeCore` を経由します。
 
 ### 責務の分担
 
 | 層 | 責務 |
 | --- | --- |
-| `LoupeControl.Core` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・外枠の矩形計算、市松模様の明暗判定、外観（下地含む）と描画入力（`LoupeRenderRequest`）の単一所有 |
+| `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・外枠の矩形計算、市松模様の明暗判定、外観（下地含む）と描画入力（`LoupeRenderRequest`）の単一所有 |
 | `LoupeControl.Rendering` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
 | `LoupeControl.MewUI` | コアの描画入力を描画層（`LoupeRenderer`）へ渡し、描画ポート `SkiaEsCanvas` を適合させる。`MewProperty` による入力の受付。DPI の自動追従 |
 | ホスト（`app.MewUI` 等） | `Source` / `CenterPoint` の設定、表示位置の決定（コアのファサード `ResolveLayout` を利用） |
@@ -98,13 +98,13 @@ classDiagram
         +PaintSurface
     }
     class LoupeOptions {
-        <<LoupeControl.Core>>
+        <<Feature.LoupeCore>>
         +int RequestedSize
         +int ZoomLevel
         +LoupeAppearance Appearance
     }
     class LoupeAppearance {
-        <<LoupeControl.Core>>
+        <<Feature.LoupeCore>>
         +Color BackgroundColor
         +Color CrossColor
         +Color CheckerColorA
@@ -122,27 +122,27 @@ classDiagram
         +ResolveLabels(coordLabel, measureText) EsLabelElement[]$
     }
     class LoupeValueCoercer {
-        <<LoupeControl.Core>>
+        <<Feature.LoupeCore>>
         +CoerceRequestedSize(v) int$
         +CoerceZoomLevel(v) int$
         +CoerceRenderScaling(v) double$
     }
     class LoupeDecorationGeometry {
-        <<LoupeControl.Core>>
+        <<Feature.LoupeCore>>
         +ComputeCrosshairRects(pixelSize, zoomLevel)$ IReadOnlyList~EsRect~
         +ComputeFrameRects(pixelSize, width)$ IReadOnlyList~EsRect~
     }
     class LoupeCheckerboard {
-        <<LoupeControl.Core>>
+        <<Feature.LoupeCore>>
         +ComputeDarkTiles(pixelSize, tileSize)$ DarkTiles（構造体の列挙子）
     }
     class LoupeImageExtractor {
-        <<LoupeControl.Core>>
+        <<Feature.LoupeCore>>
         +ComputeMagnifiedRects(captureSize, zoomLevel) (EsRect, EsRect)$
         +TryExtractRegionAt(source, request) EsBitmap?
     }
     class LoupeAppearanceScaler {
-        <<LoupeControl.Core>>
+        <<Feature.LoupeCore>>
         +ScaleCheckerSize(appearance, scaling) int$
         +ScaleFrameWidth(appearance, scaling) int$
     }
@@ -152,7 +152,7 @@ classDiagram
         +ComputeOffsetTextOrigin(anchor, paddingX, paddingY)$ EsPoint
     }
     class Loupe {
-        <<LoupeControl.Core / 公開ファサード>>
+        <<Feature.LoupeCore / 公開ファサード>>
         +Options / RenderScaling / CenterPoint / PositionOffset
         +SetCoordinateTransform(port) void
         +ResolveLayout(parentSize) LoupeLayout
@@ -161,7 +161,7 @@ classDiagram
         +ResolveLabels(displaySize, measureText) EsLabelElement[]
     }
     class LoupePositionCalculator {
-        <<LoupeControl.Core / internal>>
+        <<Feature.LoupeCore / internal>>
         +ComputePosition(displaySize, parentSize, centerDip, offset)$ EsPoint
         +ResolvePixelSize(size, renderScaling, availableSize) int$
     }
@@ -192,7 +192,7 @@ sequenceDiagram
     participant MW as MewUI
     participant LC as LoupeControl
     participant R as LoupeRenderer（描画層）
-    participant C as LoupeControl.Core
+    participant C as Feature.LoupeCore
     participant SK as SkiaSharp
 
     MW->>LC: PaintSurface(canvas, info)
@@ -249,7 +249,7 @@ sequenceDiagram
 | --- | --- |
 | `LoupeRenderer`（描画層） | `SKBitmap` + `SKCanvas`（`SkiaEsCanvas` 経由）へ実際に描画し、**画素を実測**して検証する（ウィンドウ不要で並列実行できる。検証は `LoupeControl.Rendering` のテストが担う） |
 | `LoupeControl` | `MewProperty` の補正・既定値・要求サイズを検証する（MewUI の要素生成はホスト登録を要しない） |
-| コアロジック | `LoupeControl.Core.Tests` が担保する（本プロジェクトでは再検証しない） |
+| コアロジック | `Feature.LoupeCore.Tests` が担保する（本プロジェクトでは再検証しない） |
 | アプリ組み込み | `app.MewUI/verify-ui.ps1` が実機の画素を実測して検証する |
 
 ## 未実装・今後の対応

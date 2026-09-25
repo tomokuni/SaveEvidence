@@ -1,4 +1,4 @@
-# LoupeControl.Core
+# Feature.LoupeCore
 
 `LoupeControl.AvaloniaUI`（Avalonia UI 実装）と `LoupeControl.MewUI`（MewUI 実装）が共有する、**UI フレームワーク非依存のルーペロジック**を提供するプロジェクトです。
 
@@ -35,7 +35,7 @@
 
 **公開面の性格**: 本プロジェクトの型はすでに「UI アダプタ契約」（描画層・ホストが使う計算・契約・ログ）に限定されています。操作の入口はファサード（`Loupe`）に一本化し、表示サイズの決定（唯一の書き込み元を持つ規則）・表示位置・描画入力・通知内容の解決は本型が単一所有します（個々の計算クラスはファサードの内部で使われます）。
 
-**大部分の型は public** です（外部が独自の UI アダプタを実装できるようにするため）。内部手順（配置計算・描画引数の計算）は **internal** とし、単体テストにのみ `InternalsVisibleTo`（`LoupeControl.Core.Tests`）で公開します。
+**大部分の型は public** です（外部が独自の UI アダプタを実装できるようにするため）。内部手順（配置計算・描画引数の計算）は **internal** とし、単体テストにのみ `InternalsVisibleTo`（`Feature.LoupeCore.Tests`）で公開します。
 
 **UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログは `LoupeControl.AvaloniaUI` にあります）。
 
@@ -48,7 +48,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> LoupeControl.Rendering   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
     ├──> LoupeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
-    └──> LoupeControl.Core ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.LoupeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
@@ -98,7 +98,7 @@ UI 実装側は、境界（サービス呼び出し・イベント引数の生�
 ## ビルド
 
 ```powershell
-dotnet build src/LoupeControl.Core/src/LoupeControl.Core.csproj
+dotnet build src/Feature.LoupeCore/src/Feature.LoupeCore.csproj
 ```
 
 ループ系の 3 プロジェクト（Core / AvaloniaUI / MewUI）は `GenerateDocumentationFile` を有効にし、**存在しないメンバーへの `<see cref>` をビルド警告（CS1574）で検出**します（メンバー改名・削除でドキュメントが腐るのを防ぐ）。XML は検証にのみ使い、配布物（`bin` / `publish`）へは出しません（`CopyDocumentationFileToOutputDirectory=false`）。公開メンバーの未記載（CS1591）は対象外です。
@@ -108,5 +108,5 @@ dotnet build src/LoupeControl.Core/src/LoupeControl.Core.csproj
 `tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます（**合計 176 件**。`[Theory]` は展開後のケース数）。
 
 ```powershell
-dotnet test src/LoupeControl.Core/tests/LoupeControl.Core.Tests.csproj
+dotnet test src/Feature.LoupeCore/tests/Feature.LoupeCore.Tests.csproj
 ```

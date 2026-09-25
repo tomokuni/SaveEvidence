@@ -7,14 +7,14 @@
 リサイズ可能なドラッグ矩形のコントロール（MewUI 版）です。画像やスクリーンの上へ重ねて使用し、
 マウスドラッグ・矢印キーで選択矩形を作成・変形します。
 
-選択矩形・ドラッグ・nudge のロジックは UI 非依存コア（`MarqueeControl.Core`）が単一所有し、
+選択矩形・ドラッグ・nudge のロジックは UI 非依存コア（`Feature.MarqueeCore`）が単一所有し、
 Avalonia 版と同一の挙動になります。
 
 ## 2. 依存関係
 
 | 参照 | 用途 |
 | --- | --- |
-| `MarqueeControl.Core` | 選択幾何（`SelectionGeometry`）・状態機械（`MarqueeState`）・**公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`）。状態管理クラス（`MarqueeSession`）とフレーム解決（`MarqueeFrame`）は internal（ファサードの内部実装） |
+| `Feature.MarqueeCore` | 選択幾何（`SelectionGeometry`）・状態機械（`MarqueeState`）・**公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`）。状態管理クラス（`MarqueeSession`）とフレーム解決（`MarqueeFrame`）は internal（ファサードの内部実装） |
 | `MarqueeControl.Rendering` | 描画の手順（`MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）とラベル計画（`MarqueeLabelPlan`）。描画先は描画ポート（`IEsCanvas`）であり、本 UI は `SkiaEsCanvas`（Platform.Core）を適合させる |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Native` | カーソルサービスの既定実装（Win32 / NoOp） |

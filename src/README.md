@@ -88,8 +88,8 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 
 | コントロール | Core | Rendering | CoreForControl |
 | --- | --- | --- | --- |
-| Marquee | [`MarqueeControl.Core`](MarqueeControl.Core/README.md) | [`MarqueeControl.Rendering`](MarqueeControl.Rendering/README.md) | [`MarqueeControl.CoreForControl`](MarqueeControl.CoreForControl/README.md) |
-| Loupe | [`LoupeControl.Core`](LoupeControl.Core/README.md) | [`LoupeControl.Rendering`](LoupeControl.Rendering/README.md) | [`LoupeControl.CoreForControl`](LoupeControl.CoreForControl/README.md) |
+| Marquee | [`Feature.MarqueeCore`](Feature.MarqueeCore/README.md) | [`MarqueeControl.Rendering`](MarqueeControl.Rendering/README.md) | [`MarqueeControl.CoreForControl`](MarqueeControl.CoreForControl/README.md) |
+| Loupe | [`Feature.LoupeCore`](Feature.LoupeCore/README.md) | [`LoupeControl.Rendering`](LoupeControl.Rendering/README.md) | [`LoupeControl.CoreForControl`](LoupeControl.CoreForControl/README.md) |
 
 UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [`MarqueeControl.MewUI`](MarqueeControl.MewUI/README.md) / [`LoupeControl.AvaloniaUI`](LoupeControl.AvaloniaUI/README.md) / [`LoupeControl.MewUI`](LoupeControl.MewUI/README.md)、
 プラットフォーム層は [`Platform.Core`](Platform.Core/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) / [`Platform.Native`](Platform.Native/README.md) を参照してください。

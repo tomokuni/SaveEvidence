@@ -233,10 +233,10 @@
 - SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / MarqueeControl / LoupeControl / CaptureSessionControl.AvaloniaUI / LineDetection）と、UI 非依存の描画層（MarqueeControl.Rendering / LoupeControl.Rendering）、プラットフォーム層（Platform.AvaloniaUI / Platform.Core / Platform.MewUI / Platform.Native）、アプリ本体（`app.AvaloniaUI` / `app.MewUI` / `app.Core`）から構成される。
 - プラットフォーム層は `EsUtil.Platform.*` をルート名前空間とし、`Platform.AvaloniaUI` / `Platform.MewUI` が各 UI のアダプタ、`Platform.Core` が UI 非依存の抽象・値型、`Platform.Native` が Win32 / NoOp 実装と既定実装ファクトリ（`PlatformFactory` クラス）を担う。
 - `app.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
-- `MarqueeControl` は選択矩形に加えて「選択矩形の外側に描く装飾」（暗転マスク・穴あけ枠・ハイライト・内側の塗り）を描画する。外観と表示ポリシーは `MarqueeControl.Core` の `Decoration` 名前空間の `MarqueeDecoOptions` が単一所有し、描画内容の判断は `Marquee.ResolveContent` が持つ（装飾は Core 内のサブ概念であり、別プロジェクトを持たない）。
+- `MarqueeControl` は選択矩形に加えて「選択矩形の外側に描く装飾」（暗転マスク・穴あけ枠・ハイライト・内側の塗り）を描画する。外観と表示ポリシーは `Feature.MarqueeCore` の `Decoration` 名前空間の `MarqueeDecoOptions` が単一所有し、描画内容の判断は `Marquee.ResolveContent` が持つ（装飾は Core 内のサブ概念であり、別プロジェクトを持たない）。
 - **ラベルは Core が文言と描画順を決め、UI 層がテキスト要素を配置する**（サイズラベル・カーソル座標ラベル・Loupe 中心座標ラベル）。描画層（`MarqueeControl.Rendering` の `MarqueeLabelPlan` / `LoupeControl.Rendering` の `LoupeLabelPlan`）が「実寸 → 要素の配置矩形」の写像を単一所有し、UI は `Border` + `TextBlock` を子として置く。**ラベルは常に最上位**（`*DrawLayer` の最後の層であり、子要素は親の描画より後に描かれる）。
 - **操作・情報ラベル（確定方法・ウィンドウタイトル等）はアプリ固有の付加情報**であり選択コントロールの概念ではない。Core は関知せず、ホストが文言生成（`CaptureLabelTexts`）と描画を行う。
-- `Decoration` 系の型はコントロールではなく装飾のコアである（暗転オーバーレイの独立コントロールは `MarqueeControl` へ統合済み。別プロジェクトは持たず、`MarqueeControl.Core` に同居する）。
+- `Decoration` 系の型はコントロールではなく装飾のコアである（暗転オーバーレイの独立コントロールは `MarqueeControl` へ統合済み。別プロジェクトは持たず、`Feature.MarqueeCore` に同居する）。
 
 ### ドキュメント規約
 - 各プロジェクトに README.md（利用仕様書）・SPEC_ExtFunc.md（外部機能仕様書）・SPEC_System.md（システム仕様書）を置く。

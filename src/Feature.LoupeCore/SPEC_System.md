@@ -1,4 +1,4 @@
-# LoupeControl.Core システム仕様書
+# Feature.LoupeCore システム仕様書
 
 ## 概要
 
@@ -16,7 +16,7 @@
 graph LR
   A[LoupeControl.AvaloniaUI<br/>Avalonia 実装] --> R[LoupeControl.Rendering<br/>描画の手順とラベル計画]
   M[LoupeControl.MewUI<br/>MewUI 実装] --> R
-  R --> B[LoupeControl.Core]
+  R --> B[Feature.LoupeCore]
   A --> C[LoupeControl.CoreForControl<br/>コントロール化のスケジューリング]
   C[LoupeControl.CoreForControl<br/>コントロール化のスケジューリング] --> B
   B --> D[Platform.Core]
@@ -24,12 +24,12 @@ graph LR
 
 層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
 
-- `LoupeControl.Core` は UI フレームワークへ依存しません。依存は `Platform.Core` のみです。
+- `Feature.LoupeCore` は UI フレームワークへ依存しません。依存は `Platform.Core` のみです。
 - **描画の手順は UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が単一所有します**（描画先は `Platform.Core` の `IEsCanvas`。本プロジェクトは描画 API を持ちません）。
 - **コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.CoreForControl` が所有します**（同層も UI フレームワークに依存せず、実行キューは UI がコールバックで注入します）。
 - UI 実装は、コア型と自身の型（`Avalonia.Point` / `Size` / `IBrush`、`SKColor`）を相互変換します。変換は境界（サービス呼び出し・イベント引数の生成・描画）の 1 行に限定し、UI 側の状態・描画は UI の型のまま維持します。
 - 設定（表示サイズ・拡大率・外観）は `LoupeOptions` が単一所有し、UI 層は本型を 1 プロパティとして公開するだけです（設定の既定値・補正も本型が持つ）。外観（装飾の値）は `LoupeAppearance` が単一所有し、UI 層は外観値を保持しません（描画時に読むだけ）。
-- `LoupeOptions` / `LoupeAppearance` を含む**大部分の型を `public`** とします（外部が独自の UI アダプタを実装できるようにするため）。内部手順（配置計算・描画引数の計算）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`LoupeControl.Core.Tests`）で公開します。
+- `LoupeOptions` / `LoupeAppearance` を含む**大部分の型を `public`** とします（外部が独自の UI アダプタを実装できるようにするため）。内部手順（配置計算・描画引数の計算）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.LoupeCore.Tests`）で公開します。
 - コントロール化に必要な型（`LoupeRenderCoordinator`）は `LoupeControl.CoreForControl` が `public` として提供します。
 
 ## コンポーネント構成
@@ -58,7 +58,7 @@ graph LR
 sequenceDiagram
   participant UI as LoupeControl（UI 実装）
   participant Fac as Loupe（コアのファサード）
-  participant Core as LoupeControl.Core
+  participant Core as Feature.LoupeCore
   participant PC as Platform.Core
 
   UI->>Fac: ResolveLayout(parentSize)
@@ -124,7 +124,7 @@ sequenceDiagram
 
 ## テスト
 
-- `src/LoupeControl.Core/tests`（`LoupeControl.Core.Tests`）が本プロジェクトのテストを持ちます。
+- `src/Feature.LoupeCore/tests`（`Feature.LoupeCore.Tests`）が本プロジェクトのテストを持ちます。
 - UI 初期化が不要なため、`[Fact]` / `[Theory]`（`AvaloniaFact` ではない）で並列実行されます。
 - UI 依存の検証（コントロール生成・描画・`StyledProperty` の coerce 経由の反映・イベント発火）は `LoupeControl.AvaloniaUI.Tests`（Avalonia ヘッドレス・直列）が担います。
 

@@ -20,7 +20,7 @@ namespace Estable.AvaloniaUI.Marquee;
 
 /// <summary>リサイズ可能なドラッグ矩形の UI コントロール（Avalonia 版）。</summary>
 /// <remarks>
-/// <b>層の構成</b>: 選択・ドラッグ・nudge の判断は UI 非依存のコアのファサード（<c>MarqueeControl.Core</c> の
+/// <b>層の構成</b>: 選択・ドラッグ・nudge の判断は UI 非依存のコアのファサード（<c>Feature.MarqueeCore</c> の
 /// <see cref="MarqueeFacade"/>）が担い、本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
 /// <br/>
 /// 本クラスの責務:<br/>

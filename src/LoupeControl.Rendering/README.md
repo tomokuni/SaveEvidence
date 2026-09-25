@@ -4,11 +4,11 @@
 
 ## 目的
 
-- **「どう描くか」を 1 箇所に集約する**。コア（`LoupeControl.Core`）は「何を描くか（判断とデータ）」だけを決め、描画 API の呼び出し手順は本層が単一所有する。
-- **描画を差し替えられる**。描画先は `IEsCanvas`（`Platform.Core`、UI 非依存の描画ポート）であり、描画手順は `ILoupeRenderer`（`LoupeControl.Core` の契約）を実装した型で置き換えられる（ファサードの `Loupe.Renderer` へ設定する）。UI の追加・描画方式の変更はポートまたは実装の差し替えだけで済む。
+- **「どう描くか」を 1 箇所に集約する**。コア（`Feature.LoupeCore`）は「何を描くか（判断とデータ）」だけを決め、描画 API の呼び出し手順は本層が単一所有する。
+- **描画を差し替えられる**。描画先は `IEsCanvas`（`Platform.Core`、UI 非依存の描画ポート）であり、描画手順は `ILoupeRenderer`（`Feature.LoupeCore` の契約）を実装した型で置き換えられる（ファサードの `Loupe.Renderer` へ設定する）。UI の追加・描画方式の変更はポートまたは実装の差し替えだけで済む。
 - **UI 実装を薄くする**。UI 層は描画内容の解決と描画先（描画ポート）の用意だけを行い、描画 API の呼び出し手順は本層が持つ。
 - **UI 初期化なしで描画を検証できる**。描画の実行は Skia（`SkiaEsCanvas`）で行うため、ウィンドウなしの画素テストが書ける（`tests/`）。
-- UI フレームワークへ依存しない（参照は `LoupeControl.Core` と `Platform.Core` のみ）。
+- UI フレームワークへ依存しない（参照は `Feature.LoupeCore` と `Platform.Core` のみ）。
 
 ## 層の分担
 
@@ -19,7 +19,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> LoupeControl.Rendering ← 本プロジェクト   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
     ├──> LoupeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
-    └──> LoupeControl.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
@@ -51,7 +51,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | 差し替えたいもの | 方法 |
 | --- | --- |
 | **描画先（UI フレームワーク）** | `IEsCanvas` を実装する（例: `SkiaEsCanvas`（Skia）/ `AvaloniaCanvas`（Avalonia の `DrawingContext`））。**描画手順はそのまま使える** |
-| **描画手順そのもの** | `ILoupeRenderer`（`LoupeControl.Core`）を実装した型を作り、ファサードの `Loupe.Renderer` へ設定する（本層の `LoupeRenderer` を使わなくてもよい） |
+| **描画手順そのもの** | `ILoupeRenderer`（`Feature.LoupeCore`）を実装した型を作り、ファサードの `Loupe.Renderer` へ設定する（本層の `LoupeRenderer` を使わなくてもよい） |
 | **色・寸法・拡大率** | `LoupeOptions`（設定）と `LoupeAppearance`（外観）を変える（描画層は値を保持しない） |
 
 ## 独自のコントロールへ組み込む（最小実装）
@@ -88,7 +88,7 @@ protected override void Render(DrawingContext context)
 
 ```text
 LoupeControl.Rendering
-    ├── LoupeControl.Core（描画入力・通知・外観・切り出しの計算）
+    ├── Feature.LoupeCore（描画入力・通知・外観・切り出しの計算）
     └── Platform.Core（IEsCanvas・Es* 値型・SkiaEsCanvas・EsLabelLayout）
 ```
 

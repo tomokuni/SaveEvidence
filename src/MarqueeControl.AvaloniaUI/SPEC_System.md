@@ -53,7 +53,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | MarqueeControl.Core（公開ファサード・描画内容）/ MarqueeControl.Rendering（描画の手順・ラベル計画）/ Platform.AvaloniaUI（ScreenConverter・`AvaloniaCanvas`）/ Platform.Native（ICursorService）/ Platform.Core（ICoordTransform / CoordTransform） |
+| **依存プロジェクト** | Feature.MarqueeCore（公開ファサード・描画内容）/ MarqueeControl.Rendering（描画の手順・ラベル計画）/ Platform.AvaloniaUI（ScreenConverter・`AvaloniaCanvas`）/ Platform.Native（ICursorService）/ Platform.Core（ICoordTransform / CoordTransform） |
 
 ## 3. アーキテクチャ
 
@@ -101,7 +101,7 @@ flowchart TB
     subgraph Host["上位AP（消費側）"]
         AP["上位AP<br/>イベント購読・座標ポート設定・配置"]
     end
-    subgraph Core["MarqueeControl.Core（UI 非依存）"]
+    subgraph Core["Feature.MarqueeCore（UI 非依存）"]
         direction TB
         Fac["Marquee<br/>public sealed<br/>Marquee.cs<br/>（公開ファサード = 操作の唯一の窓口）"]
         Eff["IMarqueeEffects<br/>public interface<br/>（UI へ要求する効果の適用先）"]
@@ -171,7 +171,7 @@ flowchart TB
   - プロパティ: `Log`（保持・`NullLogger` へのフォールバックはコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。デリゲートのため設定値に含めない） / `HasSelection` / `SelectionRect`
   - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `AttachScrollViewer`
 - **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画の起動のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・装飾の描画内容）と描画の手順はコアと描画層へ委譲する
-- **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeDrawContent （MarqueeControl.Core）/ MarqueeRenderer / MarqueeOuterRenderer / MarqueeInnerRenderer / MarqueeLabelPlan（MarqueeControl.Rendering）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ AvaloniaCanvas・ScreenConverter（Platform.AvaloniaUI）
+- **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeDrawContent （Feature.MarqueeCore）/ MarqueeRenderer / MarqueeOuterRenderer / MarqueeInnerRenderer / MarqueeLabelPlan（MarqueeControl.Rendering）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ AvaloniaCanvas・ScreenConverter（Platform.AvaloniaUI）
 
 ### 6.2 Marquee（公開ファサード・コア）
 
@@ -203,7 +203,7 @@ flowchart TB
 - **分類**: 静的クラス（`public static class`・コア提供）
 - **責務**: 選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算）
 - **可視性**: public（コア提供）
-- **依存**: UI 非依存（`MarqueeControl.Core` の `EsPoint` / `EsRect`）
+- **依存**: UI 非依存（`Feature.MarqueeCore` の `EsPoint` / `EsRect`）
 
 ### 6.5 MarqueeRenderer（MarqueeControl.Rendering）
 
@@ -211,15 +211,15 @@ flowchart TB
 - **責務**: 描画内容（`MarqueeDrawContent`）を描画ポート `IEsCanvas` へ写す（**描画手順の単一所有者**）
 - **可視性**: public（UI 実装・独自コントロールの作者が参照する）
 - **特徴**: `DrawShapes`（図形の層のみ。**ラベルの層は描かない**（UI の要素が描く））/ `ResolveLabels`（要素の配置指示）を提供する。外観値（ハンドル枠の太さは描画契約の `MarqueeHandles.BorderThickness`）と描画対象のハンドル一覧はコア（`SelectionGeometry.DirectionalHandles`。読み取り専用の一覧）を参照する。**ハンドルの塗り色はコアが解決済み**（未指定は白へ解決されるため、本層にフォールバックを置かない）。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため。2 本目を描くと線幅が二重になる）
-- **依存**: Platform.Core（`IEsCanvas`）/ MarqueeControl.Core（`MarqueeDrawContent` / `SelectionGeometry`）
+- **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`MarqueeDrawContent` / `SelectionGeometry`）
 
 ### 6.6 MarqueeOuterRenderer（MarqueeControl.Rendering）
 
 - **分類**: 公開静的クラス（`public static class`。所属は UI 非依存の描画層 `MarqueeControl.Rendering`）
 - **責務**: 選択矩形の外側に描く装飾のうち**非文字の項目**（暗転マスク・穴あけ枠）の描画
 - **可視性**: public（UI 実装・独自コントロールの作者が参照する）
-- **特徴**: 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）の `OuterDecoFrame` の各項目を描画ポート `IEsCanvas` へ写すだけで、外観値・判断を持たない（どの矩形を暗転するか・枠線を描くかは装飾層が単一所有する）。**文字（サイズ・座標ラベル）は描かない**（コントロールがテキスト要素として表示する）
-- **依存**: Platform.Core（`IEsCanvas`）/ MarqueeControl.Core（`Estable.Marquee.Decoration` の `OuterDecoFrame`）
+- **特徴**: 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `OuterDecoFrame` の各項目を描画ポート `IEsCanvas` へ写すだけで、外観値・判断を持たない（どの矩形を暗転するか・枠線を描くかは装飾層が単一所有する）。**文字（サイズ・座標ラベル）は描かない**（コントロールがテキスト要素として表示する）
+- **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`Estable.Marquee.Decoration` の `OuterDecoFrame`）
 
 ### 6.6.1 ラベルの要素配置（文字の表示）
 
@@ -227,15 +227,15 @@ flowchart TB
 - **責務**: コアの描画内容のうち**ラベル**（サイズ・カーソル座標）をテキスト要素（`Border` + `TextBlock`）として配置する
 - **可視性**: 非公開（ホストは `Rendered` の `Content` を参照できる）
 - **特徴**: 文言・外観はコアが単一所有し、実寸からの配置矩形（一覧と順序）は描画層（`MarqueeControl.Rendering` の `MarqueeLabelPlan`）が単一所有する。本実装は実寸測定（`FormattedText`）と要素への反映のみを持つ。要素の適用（色・余白・配置）とブラシの容量制限付きキャッシュは `EsLabelElementHost`（`Platform.AvaloniaUI.Labels`）が単一所有する
-- **依存**: Avalonia（`FormattedText` / テキスト要素）/ MarqueeControl.Rendering（`MarqueeLabelPlan`）/ MarqueeControl.Core（装飾と座標ラベルの描画契約）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
+- **依存**: Avalonia（`FormattedText` / テキスト要素）/ MarqueeControl.Rendering（`MarqueeLabelPlan`）/ Feature.MarqueeCore（装飾と座標ラベルの描画契約）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
 
 ### 6.7 MarqueeInnerRenderer（MarqueeControl.Rendering）
 
 - **分類**: 公開静的クラス（`public static class`。所属は UI 非依存の描画層 `MarqueeControl.Rendering`）
 - **責務**: 穴あけ矩形（選択矩形 / ハイライト矩形）の内側に描く装飾（塗り・内枠）の描画
 - **可視性**: public（UI 実装・独自コントロールの作者が参照する）
-- **特徴**: 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）の `InnerDecoFrame` の各項目を描画ポート `IEsCanvas` へ写すだけで、外観値・判断を持たない（塗るか・枠線を描くかは装飾層が単一所有する）
-- **依存**: Platform.Core（`IEsCanvas`）/ MarqueeControl.Core（`Estable.Marquee.Decoration` の `InnerDecoFrame`）
+- **特徴**: 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `InnerDecoFrame` の各項目を描画ポート `IEsCanvas` へ写すだけで、外観値・判断を持たない（塗るか・枠線を描くかは装飾層が単一所有する）
+- **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`Estable.Marquee.Decoration` の `InnerDecoFrame`）
 
 ### 6.8 MarqueeFrame（コア）
 
@@ -324,7 +324,7 @@ sequenceDiagram
 
 ## 9. ログ
 
-ログ定義はコア（`Estable.Marquee.MarqueeLogMessage`、`MarqueeControl.Core/src/MarqueeLogMessage.cs`）と、組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）が単一所有する
+ログ定義はコア（`Estable.Marquee.MarqueeLogMessage`、`Feature.MarqueeCore/src/MarqueeLogMessage.cs`）と、組み込みの層（`Estable.Marquee.CoreForControl.MarqueeWheelLogMessage`）が単一所有する
 （入力の判断に伴うログは UI から出せず、後から出すと行の順序が変わるため）。UI 層に固有のログ定義は持たない
 （通常ホイールのスクロールログは、スクロールの実行を連携 `ScrollViewer` または `ScrollRequested` 通知へ委ねる形になり、
 本コントロール内に記録すべき判断が無くなったため削除した）。

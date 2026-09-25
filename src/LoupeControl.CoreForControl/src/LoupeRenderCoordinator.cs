@@ -7,7 +7,7 @@ namespace Estable.Loupe.CoreForControl;
 /// ポスト・表示状態・ビットマップ解放・描画開始はすべてコールバックで受け取るため、UI コントロールに依存しない<br/>
 /// （UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる）。<br/>
 /// 位置付け: コントロール化（ビューポートへの組み込み）にだけ必要になる処理であるため、<br/>
-/// コア（<c>LoupeControl.Core</c>）には置かない。<br/>
+/// コア（<c>Feature.LoupeCore</c>）には置かない。<br/>
 /// <b>描画の開始はコールバック</b>である: 中間ビットマップを生成するか画面のキャンバスへ直接描くかは UI ごとに異なる。
 /// </remarks>
 public sealed class LoupeRenderCoordinator

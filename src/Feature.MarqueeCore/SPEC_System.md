@@ -1,4 +1,4 @@
-# MarqueeControl.Core システム仕様書
+# Feature.MarqueeCore システム仕様書
 
 `MarqueeControl`（ドラッグで矩形を選び、移動・リサイズできるコントロール）の **UI 非依存の状態層**の構造・依存・例外処理・コンポーネント構成を記載します。外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
 
@@ -7,7 +7,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 選択矩形の幾何計算・状態機械・入力の解釈（判断）を 1 箇所に集約し、UI ごとの実装差から切り離す |
-| 提供形態 | クラスライブラリ（`MarqueeControl.Core.dll`） |
+| 提供形態 | クラスライブラリ（`Feature.MarqueeCore.dll`） |
 | 想定利用者 | UI 実装（`MarqueeControl.AvaloniaUI` / `MarqueeControl.MewUI`）・それらを組み込むホストアプリケーション |
 | 汎用性 | 特定のアプリ・UI に依存しない。別コントロールの語彙を持たない（将来そのまま別プロジェクトへ独立できる） |
 
@@ -32,7 +32,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> MarqueeControl.Rendering   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
     ├──> MarqueeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
-    └──> MarqueeControl.Core ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
+    └──> Feature.MarqueeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
 ※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
 ```
@@ -151,7 +151,7 @@ stateDiagram-v2
 
 ## 7. 可視性ポリシー
 
-- 外部が使わない型・メンバーは `internal` とし、単体テストにのみ `InternalsVisibleTo`（`MarqueeControl.Core.Tests`）で公開します。
+- 外部が使わない型・メンバーは `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.MarqueeCore.Tests`）で公開します。
 - `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。
 - **層 3（内部ヘルパー）は外部参照 0 件を実測して絞り込んだ結果**です。UI 実装が参照するのは `Marquee`・描画契約・列挙型・`SelectionGeometry`・`MarqueeOptions`・`MarqueeDecoOptions` のみです。
 
@@ -164,7 +164,7 @@ stateDiagram-v2
 | 合計 | 260 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
-dotnet test src/MarqueeControl.Core/tests/MarqueeControl.Core.Tests.csproj
+dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj
 ```
 
 ## 9. ライセンス

@@ -15,7 +15,7 @@
   <ItemGroup>
     <!-- 描画側は「何を描くか」を知るためにコアを参照し、「どう描くか」を描画ポート（Platform.Core）へ委ねる。
          UI フレームワークは参照しない（UI はアダプタとして本層を参照する）。 -->
-    <ProjectReference Include="..\..\MarqueeControl.Core\src\MarqueeControl.Core.csproj" />
+    <ProjectReference Include="..\..\Feature.MarqueeCore\src\Feature.MarqueeCore.csproj" />
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
   </ItemGroup>
 

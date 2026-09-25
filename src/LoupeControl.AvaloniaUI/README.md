@@ -1,6 +1,6 @@
 # LoupeControl
 
-> プロジェクト名: `LoupeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `LoupeControl.Core`、MewUI 版は `LoupeControl.MewUI` にあります。
+> プロジェクト名: `LoupeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `Feature.LoupeCore`、MewUI 版は `LoupeControl.MewUI` にあります。
 
 ## 目次
 
@@ -211,7 +211,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 
 ## 12. プロジェクト構成
 
-本コントロールは、UI フレームワーク非依存のロジックを `LoupeControl.Core` へ、描画の手順を `LoupeControl.Rendering` へ分離しています（マルチ UI 対応）。層構成（Core / Rendering / CoreForControl / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
+本コントロールは、UI フレームワーク非依存のロジックを `Feature.LoupeCore` へ、描画の手順を `LoupeControl.Rendering` へ分離しています（マルチ UI 対応）。層構成（Core / Rendering / CoreForControl / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 LoupeControl.AvaloniaUI/
@@ -228,7 +228,7 @@ LoupeControl.AvaloniaUI/
 ├── SPEC_ExtFunc.md         # 外部機能仕様書
 └── SPEC_System.md          # システム仕様書
 
-../LoupeControl.Core/       # UI フレームワーク非依存の設定・計算・外観・判断・ログ定義（設定の単一値 / 外観 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 市松模様のタイル / 描画完了時の表示情報）
+../Feature.LoupeCore/       # UI フレームワーク非依存の設定・計算・外観・判断・ログ定義（設定の単一値 / 外観 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 市松模様のタイル / 描画完了時の表示情報）
 ```
 
 ## 13. ライセンス

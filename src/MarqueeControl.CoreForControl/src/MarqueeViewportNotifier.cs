@@ -6,7 +6,7 @@ namespace Estable.Marquee.CoreForControl;
 /// <br/>
 /// <b>なぜ Core 層ではなく CoreForControl 層にあるか</b>: ビューポートは選択コントロールを<b>他の UI へ組み込む</b>ときに<br/>
 /// 初めて存在する概念である（単体で使う Marquee にはビューポートもスクロールも無い）。<br/>
-/// Core 層（<c>MarqueeControl.Core</c>）には置かず本層が単一所有する。<br/>
+/// Core 層（<c>Feature.MarqueeCore</c>）には置かず本層が単一所有する。<br/>
 /// UI フレームワークには依存しない（通知の受け手はコールバックで受け取る）ため、UI 初期化なしの <c>[Fact]</c> で検証できる。<br/>
 /// <br/>
 /// <b>責務</b>: ビューポートの変化を「現在の状態スナップショットの通知」と「再描画の要求」へ変換する。<br/>
