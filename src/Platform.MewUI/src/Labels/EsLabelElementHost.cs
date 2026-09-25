@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.MewUI;
 
 namespace EsUtil.Platform.MewUI.Labels;
 

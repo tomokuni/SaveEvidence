@@ -4,18 +4,15 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.SaveEvidence.Loupe.UIBase;
-using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 
@@ -163,7 +160,7 @@ public sealed class FadeMaskDragRectControl : Panel
         {
             if (_mode == value) return;
             _mode = value;
-            ApplyMode();
+            ApplyOptions();
         }
     }
 
@@ -460,53 +457,36 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     // ====================================================================
-    // 内部実装（設定の分配・モードの適用・配線）
+    // 内部実装（設定の分配・配線）
     // ====================================================================
 
-    /// <summary>設定を内包コントロールへ分配する。</summary>
+    /// <summary>設定とモードを内包コントロールへ分配する。</summary>
     /// <remarks>
-    /// 選択矩形コントロールの設定は 1 回の代入で分配する（外側の装飾の外観も同じ値が持つ）。<br/>
-    /// ハイライト（ホストが与える実行時状態）は設定値に含まれないため、設定の差し替えで失わないように引き継ぐ。<br/>
+    /// 値の決定（設定の写しとモードから導出する項目の上書き）は <see cref="FadeMaskDragRectChildValues"/>（本層）が<br/>
+    /// 単一所有する（モードの解釈はコアが単一所有する）。<br/>
+    /// ハイライト（ホストが与える実行時状態）は設定値に含まれないため、現在値を渡して引き継ぐ。<br/>
     /// 適用後は選択矩形の再描画、ルーペの再配置・再生成を要求する（選択状態・ルーペ中心は維持される）。<br/>
     /// ルーペの再生成は、選択矩形破線の色がルーペの外観（<c>LoupeMetrics</c>）に含まれず、<br/>
     /// プロパティ通知では再生成されないため。
     /// </remarks>
     private void ApplyOptions()
     {
-        var current = _marquee.DecoOptions;
-        _marquee.Options = _options.Marquee;
-        _marquee.DecoOptions = _options.Deco with { OuterHighlightRect = current.OuterHighlightRect };
-        _loupeControl.Options = _options.Loupe;
+        // ハイライト矩形は実行時状態のため、現在値を渡して引き継ぐ（設定の差し替えで失わない）
+        var values = FadeMaskDragRectChildValues.Resolve(_options, _mode, _marquee.DecoOptions.OuterHighlightRect);
+
+        _marquee.Options = values.Marquee;
+        _marquee.DecoOptions = values.Deco;
+        _loupeControl.Options = values.Loupe;
         // 表示位置のオフセットはフレームワーク差（Avalonia 版のルーペは自己配置する）のため、
         // 設定に含まれる値からルーペのプロパティへ個別に渡す
-        _loupeControl.PositionOffset = _options.LoupeOffset;
-
-        // モードから導出される描画状態は設定値に含まれないため、設定を適用した後に改めて適用する
-        ApplyMode();
-
-        _marquee.InvalidateVisual();
-        _loupeControl.RequestRender();
-    }
-
-    /// <summary>モードに応じて内包コントロールの状態（描画モード・入力の可否・全面暗転・破線）を適用する。</summary>
-    /// <remarks>
-    /// モードと状態の対応はコアの <c>FadeMaskDragRectModes</c> が単一所有する。<br/>
-    /// 選択矩形を使わないモード（ハイライトのみ）でも暗転マスクを描画するため、
-    /// 可視性ではなく<b>入力の可否</b>（ヒットテスト）を切り替える。<br/>
-    /// 選択矩形破線の表示可否もモード依存のため、既存の Bitmap から破線を消す（または描く）ために再生成を要求する。
-    /// </remarks>
-    private void ApplyMode()
-    {
-        var state = FadeMaskDragRectModes.Resolve(_mode);
-
-        // モードから導出される描画状態（全面暗転・ハンドルの表示可否）は 1 回の変更通知でまとめて適用する
-        _marquee.DecoOptions = _marquee.DecoOptions with { OuterShowFullOverlay = state.ShowFullOverlay };
-        _marquee.Options = _marquee.Options with { ShowHandles = state.UsesSelection };
+        _loupeControl.PositionOffset = values.LoupeOffset;
 
         // 選択矩形を使わないモードでも暗転マスク（ハイライト）は描画するため、描画は止めず入力だけを止める
-        _marquee.IsHitTestVisible = state.UsesSelection;
+        _marquee.IsHitTestVisible = values.IsHitTestVisible;
 
         UpdateLoupeVisibility();
+
+        _marquee.InvalidateVisual();
         // 破線の表示可否はルーペのプロパティに現れないため、既存の Bitmap から破線を消す（または描く）ために再生成を要求する
         _loupeControl.RequestRender();
     }
@@ -537,68 +517,17 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。<br/>
     /// <b>操作ラベル・情報ラベルは選択コントロールの概念ではない</b>（アプリ固有の付加情報）ため、<br/>
-    /// 本クラス（ホスト）が文言の生成と描画を行い、コアは関知しない。<br/>
-    /// 外観（表示可否・寸法・色）は設定（<see cref="FadeMaskDragRectOptions.Labels"/>）が単一所有する。<br/>
+    /// 本クラス（ホスト）が文言の生成を、<see cref="FadeMaskHostLabelRenderer"/>（本層）が描画を行う。<br/>
+    /// 積み上げの位置と表示可否の判断は描画層が単一所有する（本クラスは描画ポートを用意して文言を渡すだけである）。<br/>
     /// 本ハンドラはコントロールの子要素（ラベル）より後に呼ばれるため、付加情報はラベルより前面に置かれる。
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
-    {
-        // 付加情報を重ねる基準は穴あけ矩形（選択またはハイライトの領域）の左上である
-        if (e.Content.HoleRect is not { } hole)
-        {
-            return;
-        }
-
-        var labels = _options.Labels;
-        var y = hole.Y;
-
-        // サイズラベルが描かれている場合はその下へ積む（重なりを避ける。行送りはコアが単一所有する）
-        if (e.Content.SizeLabel is { } sizeLabel)
-        {
-            y = EsLabelLayout.NextTop(y, sizeLabel.FontSize, EsLabelLayout.Padding);
-        }
-
-        // 表示可否はホストが判定する（設定スイッチと文言の有無の両方が成立したときだけ描く）
-        if (labels.ShowOperationLabel && OperationTextProvider?.Invoke() is { Length: > 0 } operation)
-        {
-            DrawHostLabel(
-                e.Context, hole.X, y, operation,
-                labels.OperationFontSize, labels.OperationColor, labels.OperationBackgroundColor);
-            y = EsLabelLayout.NextTop(y, labels.OperationFontSize, EsLabelLayout.Padding);
-        }
-
-        if (labels.ShowInfoLabel && InfoTextProvider?.Invoke() is { Length: > 0 } info)
-        {
-            DrawHostLabel(
-                e.Context, hole.X, y, info,
-                labels.InfoFontSize, labels.InfoColor, labels.InfoBackgroundColor);
-        }
-    }
-
-    /// <summary>ホスト固有のラベル 1 行（背景 + 文字）を描く。</summary>
-    /// <param name="context">描画コンテキスト（<c>Render</c> の実行中のみ有効）。</param>
-    /// <param name="x">ラベルの左端（DIP）。</param>
-    /// <param name="y">ラベルの上端（DIP）。</param>
-    /// <param name="text">文言。</param>
-    /// <param name="fontSize">フォントサイズ（DIP）。</param>
-    /// <param name="color">文字色。</param>
-    /// <param name="background">背景色。</param>
-    /// <remarks>
-    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（体裁は描画層が単一所有する）。<br/>
-    /// テキストの実寸測定と描画は描画ポート（本 UI では <see cref="AvaloniaCanvas"/>）が担う。<br/>
-    /// 付加情報ラベルはアプリ固有の情報だが、体裁は共通の規則（<c>MarqueeHostLabelRenderer</c>）を使う
-    /// （両 UI で同じ組み立てを書かない）。
-    /// </remarks>
-    private static void DrawHostLabel(
-        DrawingContext context, double x, double y, string text, double fontSize, DrawingColor color, DrawingColor background)
-        => MarqueeHostLabelRenderer.Draw(
-            new AvaloniaCanvas(context),
-            new EsPoint(x, y),
-            text,
-            fontSize,
-            color,
-            background,
-            EsLabelLayout.Padding);
+        => FadeMaskHostLabelRenderer.Draw(
+            new AvaloniaCanvas(e.Context),
+            e.Content,
+            _options.Labels,
+            OperationTextProvider?.Invoke(),
+            InfoTextProvider?.Invoke());
 
     /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを描画済み Bitmap へ描く。</summary>
     /// <param name="sender">イベント送信元（LoupeControl）。</param>

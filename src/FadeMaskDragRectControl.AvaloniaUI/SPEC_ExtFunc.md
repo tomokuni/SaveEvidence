@@ -50,8 +50,9 @@
 - 選択状態の暗転マスク・ルーペへの同期
 - 確定・キャンセル・ズーム要求のホスト通知
 - モード別の描画モード・可視性・全面暗転の一括切替
-- 設定の一括適用（コアの `FadeMaskDragRectOptions`）
+- 設定の一括適用（コアの `FadeMaskDragRectOptions`。値の解決は UIBase の `FadeMaskDragRectChildValues`）
 - 色の一括適用（描画層（UIBase）の `MarqueePaint` / `LoupePaint`）
+- 付加情報ラベル（操作・情報）の描画（描画層（UIBase）の `FadeMaskHostLabelRenderer`。文言はホストが生成する）
 - 座標変換ポートの一括分配
 
 ## 3. 外部利用条件

@@ -59,10 +59,10 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 | 基底を `Panel` にして `ArrangeContent` を自前実装した | 暗転マスクと選択矩形は全面、ルーペは「中心 + オフセット」の絶対配置という異なる配置規則が必要（`Grid` のセル配置では表現できない） |
 | モードの解釈をコア（`FadeMaskDragRectModes`）へ置いた | モードと可視性・ルーペの表示可否・全面暗転の対応が UI 間でずれるのを防ぐ（enum の重複定義も解消） |
 | ルーペの位置決めを本クラスで行う | MewUI のルーペは位置を持たない（描画のみ）ため、親領域サイズ・中心・オフセットから配置する必要がある。計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有し、本クラスは結果を Arrange へ渡すだけにする |
-| 設定をコアの単一値（`FadeMaskDragRectOptions`）として公開した | 既定値・項目の対応・子コントロールへの分配規則を UI に持たせない（Avalonia 版と同一の設定値を使うため、見た目も一致する）。色はコアの計算に入らない（描画にだけ必要）ためコアの設定値に含めず、UIBase の `MarqueePaint` / `LoupePaint` を別プロパティで与える |
+| 設定をコアの単一値（`FadeMaskDragRectOptions`）として公開した | 既定値・項目の対応・子コントロールへの分配規則を UI に持たせない（Avalonia 版と同一の設定値を使うため、見た目も一致する）。値の解決（設定とモードからの写し）は UIBase の `FadeMaskDragRectChildValues` が単一所有し、本クラスは代入するだけである。色はコアの計算に入らない（描画にだけ必要）ためコアの設定値に含めず、UIBase の `MarqueePaint` / `LoupePaint` を別プロパティで与える |
 | イベント引数をコア型で公開した | 内包コントロールのイベント引数と同一の型になり境界変換が不要になる |
 | 選択矩形コントロールへ座標変換ポートを渡すようにした | ズームビューのレターボックス等オフセット付きの変換でも、外側の装飾の穴あけと選択矩形が一致する（等倍スケールのみでは位置がずれる） |
-| 付加情報（操作・情報ラベル）は本クラス（ホスト）が描く | サイズ・カーソル座標ラベルは選択矩形コントロールがテキスト要素として表示する（実寸から配置矩形を求める写像は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan.Resolve` が単一所有する）。操作・情報ラベルは選択コントロールの概念ではないため、本クラスが `FadeMaskDragRectOptions.Labels` の外観に従って描く |
+| 付加情報（操作・情報ラベル）はホストが文言を生成し、描画は UIBase が行う | サイズ・カーソル座標ラベルは選択矩形コントロールがテキスト要素として表示する（実寸から配置矩形を求める写像は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan.Resolve` が単一所有する）。操作・情報ラベルは選択コントロールの概念ではないため、ホストが `FadeMaskDragRectOptions.Labels` の外観に従って文言を生成し、積み上げ（位置・表示可否）は描画層 `FadeMaskDragRectControl.UIBase` の `FadeMaskHostLabelRenderer` が単一所有する |
 | ルーペ画像上の破線はルーペの `Rendered` で描画する | MewUI のルーペは中間ビットマップを作らないため、描画先（キャンバス）を受け取れるイベントが必要（破線の幾何はコアが単一所有し、Avalonia 版と同じ見た目になる。中心座標ラベルはルーペコントロールがテキスト要素として表示する） |
 | ログはドラッグ選択コントロールとルーペへ伝搬する | 入力操作と表示状態の変化を 1 箇所の設定で有効化できる（Avalonia 版と同じ範囲。外側の装飾の描画もドラッグ選択コントロールが担うため、そのログも同じロガーで出力される） |
 | ラベルの文言はホストが与える | 情報ラベル（ウィンドウタイトル等）はホストしか知らない上、モード別の文言はアプリ固有であるため、本クラスはプロバイダを子へ転送するだけにする（文言の選定はアプリの `CaptureLabelTexts` が単一所有する） |
@@ -126,7 +126,6 @@ classDiagram
         +RequestCancel() void
         +NotifyViewportChanged() void
         -ApplyOptions() void
-        -ApplyMode() void
         -OnLoupePositionMoved(pos) void
     }
     class MarqueeControl {

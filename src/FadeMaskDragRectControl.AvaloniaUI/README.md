@@ -174,6 +174,24 @@ FadeMaskDragRectControl.Core/
 └── tests/
 ```
 
+### 9.2 UI 間の共有層（`FadeMaskDragRectControl.UIBase`）
+
+「設定とモードから子コントロールへ適用する値の解決」と「付加情報ラベル（操作・情報）の描画」は
+`src/FadeMaskDragRectControl.UIBase`（名前空間 `EsUtil.SaveEvidence.FadeMaskDragRect.UIBase`）が単一所有します
+（Avalonia / MewUI で共有。片方の UI だけ分配規則が変わる余地をなくすため）。
+
+```text
+FadeMaskDragRectControl.UIBase/
+├── src/
+│   ├── FadeMaskDragRectChildValues.cs    （設定とモードから子コントロールへ適用する値の解決）
+│   └── FadeMaskHostLabelRenderer.cs      （付加情報ラベルの積み上げと描画）
+└── tests/
+```
+
+本コントロールは、解決された値を子コントロールへ代入し、描画ポートを用意して文言を渡すだけです
+（ラベルの体裁は `MarqueeControl.UIBase` の `MarqueeHostLabelRenderer`、行送りは `Platform.Core` の
+`EsLabelLayout` が単一所有します）。
+
 ## 10. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

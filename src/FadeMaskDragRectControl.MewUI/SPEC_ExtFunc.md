@@ -15,6 +15,7 @@ Avalonia 版と同一の解釈になります。
 | 参照 | 用途 |
 | --- | --- |
 | `FadeMaskDragRectControl.Core` | 動作モード（`FadeMaskDragRectMode`）と、モードから子コントロールの有効・無効（選択矩形を使うか）への写像 |
+| `FadeMaskDragRectControl.UIBase` | 設定とモードから子コントロールへ適用する値の解決（`FadeMaskDragRectChildValues`）と、付加情報ラベルの描画（`FadeMaskHostLabelRenderer`） |
 | `MarqueeControl.MewUI` / `Feature.MarqueeCore` | 選択矩形の入力と状態機械 |
 | `MarqueeControl.UIBase` | ホイール要求（`WheelZoomRequest` / `WheelScrollRequest`）の中継で型を参照する（解釈は内包コントロールが組み込みの層へ委ねる） |
 | `MarqueeControl.UIBase` / `LoupeControl.UIBase` | 描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）の型 |
@@ -124,7 +125,7 @@ Avalonia 版と同一の解釈になります。
   親領域の外へはみ出す場合は内側へクランプします。
 - ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が、描画の可否はコアの `FadeMaskDragRectState.ShowSelectionOverlay` が単一所有する）。選択矩形を変更した場合はルーペの再描画を要求します（破線はルーペのプロパティに現れないため）。
 - サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（指定しない場合の既定の文言はコアの `MarqueeSizeLabel.Format` が単一所有する）。
-- サイズラベルとカーソル座標ラベルは選択矩形コントロールが**テキスト要素（`Border` + `TextBlock`）として配置**します（実寸から配置矩形を求める写像は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan.Resolve` が単一所有する）。操作・情報ラベルはアプリ固有の付加情報のため、本コントロールが `Options.Labels` の外観に従って描きます（文言は `CaptureLabelTexts` が与える）。
+- サイズラベルとカーソル座標ラベルは選択矩形コントロールが**テキスト要素（`Border` + `TextBlock`）として配置**します（実寸から配置矩形を求める写像は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan.Resolve` が単一所有する）。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Options.Labels` の外観に従って文言を生成し、描画は UIBase の `FadeMaskHostLabelRenderer` が行います（積み上げの位置と表示可否も同層が単一所有する）。
 
 ## 9. Avalonia 版との違い
 

@@ -24,6 +24,8 @@
     <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
     <InternalsVisibleTo Include="FadeMaskDragRectControl.AvaloniaUI" />
     <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI" />
+    <!-- 設定とモードから子コントロールの値を解決する共有層（internal の Modes / State を参照する） -->
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.UIBase" />
     <InternalsVisibleTo Include="FadeMaskDragRectControl.AvaloniaUI.Tests" />
     <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI.Tests" />
     <InternalsVisibleTo Include="FadeMaskDragRectControl.Core.Tests" />

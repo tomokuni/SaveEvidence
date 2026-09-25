@@ -1,4 +1,3 @@
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;

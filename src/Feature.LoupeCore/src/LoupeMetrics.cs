@@ -1,5 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
-
 namespace EsUtil.Feature.LoupeCore;
 
 /// <summary>ルーペの寸法（市松模様のタイル・外枠の太さ・中心座標ラベルの寸法）をまとめた不変の設定値。</summary>
