@@ -14,23 +14,23 @@
 
 ```mermaid
 graph LR
-  A[LoupeControl.AvaloniaUI<br/>Avalonia 実装] --> R[LoupeControl.Rendering<br/>描画の手順とラベル計画]
+  A[LoupeControl.AvaloniaUI<br/>Avalonia 実装] --> R[LoupeControl.UIBase<br/>描画の手順とラベル計画]
   M[LoupeControl.MewUI<br/>MewUI 実装] --> R
   R --> B[Feature.LoupeCore]
-  A --> C[LoupeControl.CoreForControl<br/>コントロール化のスケジューリング]
-  C[LoupeControl.CoreForControl<br/>コントロール化のスケジューリング] --> B
+  A --> C[LoupeControl.UIBase<br/>コントロール化のスケジューリング]
+  C[LoupeControl.UIBase<br/>コントロール化のスケジューリング] --> B
   B --> D[Platform.Core]
 ```
 
-層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
+層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 
 - `Feature.LoupeCore` は UI フレームワークへ依存しません。依存は `Platform.Core` のみです。
-- **描画の手順は UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が単一所有します**（描画先は `Platform.Core` の `IEsCanvas`。本プロジェクトは描画 API を持ちません）。
-- **コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.CoreForControl` が所有します**（同層も UI フレームワークに依存せず、実行キューは UI がコールバックで注入します）。
+- **描画の手順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有します**（描画先は `Platform.Core` の `IEsCanvas`。本プロジェクトは描画 API を持ちません）。
+- **コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.UIBase` が所有します**（同層も UI フレームワークに依存せず、実行キューは UI がコールバックで注入します）。
 - UI 実装は、コア型と自身の型（`Avalonia.Point` / `Size` / `IBrush`、`SKColor`）を相互変換します。変換は境界（サービス呼び出し・イベント引数の生成・描画）の 1 行に限定し、UI 側の状態・描画は UI の型のまま維持します。
 - 設定（表示サイズ・拡大率・外観）は `LoupeOptions` が単一所有し、UI 層は本型を 1 プロパティとして公開するだけです（設定の既定値・補正も本型が持つ）。外観（装飾の値）は `LoupeAppearance` が単一所有し、UI 層は外観値を保持しません（描画時に読むだけ）。
 - `LoupeOptions` / `LoupeAppearance` を含む**大部分の型を `public`** とします（外部が独自の UI アダプタを実装できるようにするため）。内部手順（配置計算・描画引数の計算）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.LoupeCore.Tests`）で公開します。
-- コントロール化に必要な型（`LoupeRenderCoordinator`）は `LoupeControl.CoreForControl` が `public` として提供します。
+- コントロール化に必要な型（`LoupeRenderCoordinator`）は `LoupeControl.UIBase` が `public` として提供します。
 
 ## コンポーネント構成
 
@@ -110,7 +110,7 @@ sequenceDiagram
 | 外観の寸法値の物理ピクセル換算（市松タイル・外枠の太さ・ラベル文字サイズ・角丸半径） | `LoupeAppearanceScaler` |
 | ログの書式とレベル、変化判定（同値・同一インスタンスなら出力しない） | `LoupeLogMessage` / `LoupeLogFormat` |
 
-`LoupeRenderArgsCalculator` / `LoupeImageExtractor.ExtractRegionAt`（internal）/ 描画層（`LoupeControl.Rendering`）の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
+`LoupeRenderArgsCalculator` / `LoupeImageExtractor.ExtractRegionAt`（internal）/ 描画層（`LoupeControl.UIBase`）の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
 
 ## 例外処理ポリシー
 
@@ -136,8 +136,8 @@ sequenceDiagram
 | --- | --- |
 | 座標・寸法の型 | コア（`EsUtil.Platform.Core.Geometry`）の `EsPoint` / `EsSize` / `EsRect` を使い、UI 型は境界で 1 行変換する |
 | 画像の型 | 拡大元画像は UI ごとに型が異なるため契約（`LoupeRenderRequest`）に含めず、描画層が解決した `EsBitmap` を別引数で受け取る |
-| 文字の描画 | コアは文言・外観・配置の基準だけを持ち、実寸 → 配置矩形の写像は描画層（`LoupeControl.Rendering` の `LoupeLabelPlan`）が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため） |
-| 再描画のバッチ化 | UI のディスパッチャーに依存するため `LoupeControl.CoreForControl` が単一所有する（コアは同期計算のみ） |
+| 文字の描画 | コアは文言・外観・配置の基準だけを持ち、実寸 → 配置矩形の写像は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため） |
+| 再描画のバッチ化 | UI のディスパッチャーに依存するため `LoupeControl.UIBase` が単一所有する（コアは同期計算のみ） |
 | 色 | UI 非依存の `System.Drawing.Color` を使い、UI の色型への変換は境界で行う |
 | 切り出し領域の左上 | `ExtractRegionAt` と描画完了通知の 2 経路で重複する計算を `LoupeImageExtractor.ComputeCaptureTopLeft`（internal）が単一所有する（切り出しと通知が同じ規則を使う） |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「文字原点 = 背景の左上 + 内側余白」「行送り」は特定のコントロールに依存しない規則のため、`Platform.Core` の `EsLabelLayout` が単一所有する（マーキーとルーペが同じ規則を共用する） |

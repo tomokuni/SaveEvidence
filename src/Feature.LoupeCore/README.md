@@ -8,7 +8,7 @@
 
 **操作の唯一の窓口は公開ファサード `Loupe`** です。UI 層とホストは本型だけを参照し、表示レイアウト・描画入力・通知内容の解決を本型へ委ねます（個々の計算クラスはファサードの内部実装として使われます）。
 
-**描画は契約（`ILoupeRenderer`）で受け取り、差し替えられます**。本コアは描画 API を持たず描画層も参照できない（依存の向きは `Core` → 描画層の一方向）。既定実装は描画層（`LoupeControl.Rendering` の `LoupeRenderer.Default`）が提供し、コンストラクタで注入します。
+**描画は契約（`ILoupeRenderer`）で受け取り、差し替えられます**。本コアは描画 API を持たず描画層も参照できない（依存の向きは `Core` → 描画層の一方向）。既定実装は描画層（`LoupeControl.UIBase` の `LoupeRenderer.Default`）が提供し、コンストラクタで注入します。
 
 ## 収録する型
 
@@ -25,8 +25,8 @@
 | `LoupeRenderRequest` | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層は自 UI の公開プロパティから本値を組み立てて描画層・コアの計算へ渡すだけで、描画に必要な値の単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を持たない |
 | `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法・色）と配置の計算（`ComputeFrame`）。**表示はコントロールが行う**（`Border` + `TextBlock` の要素として配置する）ため、実寸測定だけを UI が行い本値へ渡す（測定は描画 API 依存）。体裁（背景・文字原点）は `EsLabelLayout`（Platform.Core）が単一所有し、要素への写像は `IEsLabel.ToElement`（拡張メソッド）が単一所有する |
 | `LoupePositionCalculator`（**internal**） | 表示位置（中心 + オフセット）の計算と親領域内へのクランプ（`ComputePosition`。親サイズが未確定の場合の判定も含む）・描画に使う物理ピクセルサイズの解決（`ResolvePixelSize`。表示サイズのクランプは `EsSizeMath.ClampToArea` へ委譲する）。表示サイズを要素へ先に反映する UI はファサードの `ResolveLayout` を使う（内部手順はファサードの実装詳細のため外部に公開しない） |
-| `LoupeDecorationGeometry` | 十字線（縦横 2 本）と外枠（4 辺）の描画矩形の計算（描画層 `LoupeControl.Rendering` の `LoupeRenderer` が返された `EsRect` を描画ポートへ渡すだけ） |
-| `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位）。描画の実行は UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が担い、`LoupeRenderNotification.Layers` を先頭から処理するだけである（順序を判断しない） |
+| `LoupeDecorationGeometry` | 十字線（縦横 2 本）と外枠（4 辺）の描画矩形の計算（描画層 `LoupeControl.UIBase` の `LoupeRenderer` が返された `EsRect` を描画ポートへ渡すだけ） |
+| `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位）。描画の実行は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が担い、`LoupeRenderNotification.Layers` を先頭から処理するだけである（順序を判断しない） |
 | `LoupeCheckerboard` | 市松模様のタイルの明暗判定と、暗色タイルの**列挙子**（`ComputeDarkTiles`）。タイル数は描画先の大きさに比例して増えるため、リストを確保せずに列挙する（各 UI が同一のパターンを描画できるようにする） |
 | `LoupeRenderArgsCalculator`（**internal**） | 描画完了イベント引数用の表示情報（切り出し左上 / スケール）の計算。物理ピクセルサイズは実際に描画した値を受け取る。利用者はファサードの `ResolveNotification` だけを使う |
 | `LoupeLogFormat` | 設定値の変更ログが出力する値の文字列化（`(X, Y)` / `Width×Height` / `null`） |
@@ -41,21 +41,21 @@
 
 ## 依存方向
 
-層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
+層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> LoupeControl.Rendering   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
-    ├──> LoupeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
+    ├──> LoupeControl.UIBase   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
+    ├──> LoupeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.LoupeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
-※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
+※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```
 
 本プロジェクトが UI フレームワークへ依存することはありません。外部パッケージへの直接依存もありません（`Platform.Core` 経由で SkiaSharp を参照します）。
 
-**コントロール化にだけ必要な処理は `LoupeControl.CoreForControl` が所有します**（再描画要求のバッチ化・世代番号管理）。**描画の手順は `LoupeControl.Rendering` が所有します**（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠を層の順に描く。描画先は `IEsCanvas`）。本プロジェクトはルーペの見た目と計算（どのアセンブリでも同じ結果になる部分）に限定し、描画 API を持ちません。
+**コントロール化にだけ必要な処理は `LoupeControl.UIBase` が所有します**（再描画要求のバッチ化・世代番号管理）。**描画の手順は `LoupeControl.UIBase` が所有します**（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠を層の順に描く。描画先は `IEsCanvas`）。本プロジェクトはルーペの見た目と計算（どのアセンブリでも同じ結果になる部分）に限定し、描画 API を持ちません。
 
 ## 層の責務の境界
 
@@ -87,7 +87,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 
 **操作の入口は公開ファサード（`Loupe`）に一本化します**。UI 層とホストは本型だけを参照し、表示レイアウトの解決（`ResolveLayout`）・描画入力の生成（`CreateRequest`）・通知内容の解決（`ResolveNotification`）を本型へ委ねます（MewUI 版のホストも位置計算のために計算クラスを直接呼ばず、コントロールの `ResolveLayout` を経由します）。
 
-**下地色（`LoupeAppearance.BackgroundColor`）は外観が単一所有します**。市松模様の色は半透明のため、背後の要素を透かしたくない場合はホストが不透明色を指定します（既定は透明 = 透かす）。**キャンバスへ直接描画する UI（MewUI）とウィンドウの上へ重ねる UI（Avalonia）のどちらも同じ外観値で指定でき、UI 層に固有の下地プロパティを持ちません**。塗る処理と描画順は UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が単一所有します。
+**下地色（`LoupeAppearance.BackgroundColor`）は外観が単一所有します**。市松模様の色は半透明のため、背後の要素を透かしたくない場合はホストが不透明色を指定します（既定は透明 = 透かす）。**キャンバスへ直接描画する UI（MewUI）とウィンドウの上へ重ねる UI（Avalonia）のどちらも同じ外観値で指定でき、UI 層に固有の下地プロパティを持ちません**。塗る処理と描画順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有します。
 
 ## 座標型
 

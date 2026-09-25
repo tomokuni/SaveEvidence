@@ -11,7 +11,7 @@ using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.SaveEvidence.CropView;
 using EsUtil.Feature.MarqueeCore;
-using EsUtil.SaveEvidence.Marquee.CoreForControl;
+using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;

@@ -14,7 +14,7 @@ namespace EsUtil.Feature.MarqueeCore;
 /// <b>差し替えの方法</b>: 描画ポート（<see cref="IEsCanvas"/>）の実装を変えれば描画先（UI フレームワーク・描画方式）を、<br/>
 /// 本契約の実装を変えれば描画手順そのものを差し替えられる。<see cref="Marquee.Renderer"/> へ設定するだけで反映される。<br/>
 /// <br/>
-/// <b>実装の提供元</b>: 既定実装は描画層（<c>MarqueeControl.Rendering</c> の <c>MarqueeRenderer.Default</c>）にある。<br/>
+/// <b>実装の提供元</b>: 既定実装は描画層（<c>MarqueeControl.UIBase</c> の <c>MarqueeRenderer.Default</c>）にある。<br/>
 /// コアは描画層を参照できないため、本契約だけを定義して実装を注入で受ける（依存の向きは一方向に保たれる）。<br/>
 /// <br/>
 /// <b>ラベルは UI 要素が描く</b>: ラベル（サイズラベル・カーソル座標ラベル）は <see cref="ResolveLabels"/> で配置指示を返し、<br/>

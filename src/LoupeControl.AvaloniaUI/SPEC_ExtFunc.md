@@ -266,7 +266,7 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正） |
 | `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeAppearance` が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.Rendering` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeAppearance` が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
 寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時にコアの `LoupeAppearanceScaler` が物理ピクセルへ換算します（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
@@ -402,7 +402,7 @@ loupe.Rendered += (_, e) =>
 ### 5.5 型
 
 公開型は `LoupeControl` と `LoupeRenderedEventArgs` です。
-描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.Rendering` の `LoupeRenderer` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順は描画層が単一所有し、本プロジェクトは描画ポート（`AvaloniaCanvas`）とラベル要素の配置を担います。
+描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase` の `LoupeRenderer` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順は描画層が単一所有し、本プロジェクトは描画ポート（`AvaloniaCanvas`）とラベル要素の配置を担います。
 UI 固有のログ（`LoupeRenderLog`）は本プロジェクトの internal です。
 
 #### 5.5.1 LoupeControl

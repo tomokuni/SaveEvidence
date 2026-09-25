@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
 using EsUtil.Feature.LoupeCore;
-using EsUtil.SaveEvidence.Loupe.Rendering;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -340,7 +340,7 @@ public sealed class LoupeControl : Panel
 
         try
         {
-            // 描画の手順（層の順序と描画 API への写し）はファサードが保持するレンダラ（LoupeControl.Rendering）が単一所有する
+            // 描画の手順（層の順序と描画 API への写し）はファサードが保持するレンダラ（LoupeControl.UIBase）が単一所有する
             _loupe.Renderer.DrawShapes(new SkiaEsCanvas(canvas), Source, request, notification);
         }
         catch (Exception ex)

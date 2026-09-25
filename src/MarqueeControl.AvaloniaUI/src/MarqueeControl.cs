@@ -1,7 +1,6 @@
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.SaveEvidence.Marquee.CoreForControl;
-using EsUtil.SaveEvidence.Marquee.Rendering;
+using EsUtil.SaveEvidence.Marquee.UIBase;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -25,7 +24,7 @@ namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 /// <br/>
 /// 本クラスの責務:<br/>
 /// 1. ポインター / キー入力をコア型（<see cref="EsPoint"/> / <see cref="EsKey"/>）へ変換してコア（ファサード）へ通知する<br/>
-///    （ホイールはコントロール化の層（<c>MarqueeControl.CoreForControl</c>）へ通知し、ビューポート操作の要求として受け取る）。<br/>
+///    （ホイールはコントロール化の層（<c>MarqueeControl.UIBase</c>）へ通知し、ビューポート操作の要求として受け取る）。<br/>
 /// 2. コアが返す効果（再描画・フォーカス・カーソル操作）を適用する。<br/>
 /// 3. コアからの通知を公開イベントへ転送する（判断はしない）。<br/>
 /// 4. コアが解決した描画内容を描画する（枠線・ハンドル・十字マーカー。計算は描画層へ委譲）。<br/>
@@ -60,7 +59,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>ホイール入力を解釈してビューポート操作の要求（ズーム / スクロール）を出す補助。</summary>
     /// <remarks>
     /// 本クラスはファサードへ接続し、ホイールの解釈（Ctrl = ズーム・連携先への適用）は<br/>
-    /// <c>MarqueeControl.CoreForControl</c> が単一所有する<br/>
+    /// <c>MarqueeControl.UIBase</c> が単一所有する<br/>
     /// （本層は修飾キーの真偽と回転量を渡し、要求を公開イベントへ転送するだけ）。
     /// </remarks>
     private readonly MarqueeWheelInterpreter _wheel;
@@ -68,7 +67,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>ビューポート（パン・ズーム）の変化を再通知する補助。</summary>
     /// <remarks>
     /// 「ビューポートの変化 = 現状態の再通知 + 再描画」というビューポート連携の規則は<br/>
-    /// <c>MarqueeControl.CoreForControl</c> が単一所有する（本層は自 UI の公開イベントへ転送するだけ）。
+    /// <c>MarqueeControl.UIBase</c> が単一所有する（本層は自 UI の公開イベントへ転送するだけ）。
     /// </remarks>
     private readonly MarqueeViewportNotifier _viewport;
 
@@ -312,7 +311,7 @@ public sealed partial class MarqueeControl : Panel
     /// <remarks>
     /// <see cref="OnPointerWheelChanged"/> から発火する（転送先の有無に関わらず常に通知する）。<br/>
     /// ズームの実処理（ズーム率管理・表示の変更）は上位 AP が実施する（本コントロールは要求のみ通知）。<br/>
-    /// 「Ctrl+ホイール = ズーム」という解釈はコントロール化の層（<c>MarqueeControl.CoreForControl</c>）が単一所有する<br/>
+    /// 「Ctrl+ホイール = ズーム」という解釈はコントロール化の層（<c>MarqueeControl.UIBase</c>）が単一所有する<br/>
     /// （選択コントロールをビューポートへ組み込むときにだけ必要な規則のため）。<br/>
     /// <see cref="WheelZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
     /// </remarks>

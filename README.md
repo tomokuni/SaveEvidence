@@ -413,7 +413,7 @@ SaveEvidence は、Avalonia UI 上で CommunityToolkit.Mvvm を使用した MVVM
 
 ## 7.1 コントロールライブラリの層構成
 
-キャプチャ・切り出し画面のコントロールは、UI 非依存のコアを Avalonia / MewUI で共有する層構成（Core / Rendering / CoreForControl / UI）を採っています。層の依存の向きと「どこに何を置くか」は [`src/README.md`](src/README.md) を参照してください。
+キャプチャ・切り出し画面のコントロールは、UI 非依存のコアを Avalonia / MewUI で共有する層構成（Core / UIBase / UI）を採っています。層の依存の向きと「どこに何を置くか」は [`src/README.md`](src/README.md) を参照してください。
 
 ---
 

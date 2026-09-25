@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
 /// <summary><see cref="LoupeControl"/> のプロパティとレイアウトのテスト。</summary>
 /// <remarks>
 /// MewUI の要素生成はプラットフォームホストの登録を必要としないため、UI を表示せずに検証できる。<br/>
-/// 描画結果の検証は <c>LoupeControl.Rendering</c> のテストが担う。
+/// 描画結果の検証は <c>LoupeControl.UIBase</c> のテストが担う。
 /// </remarks>
 public class LoupeControlTests
 {
@@ -214,7 +214,7 @@ public class LoupeControlTests
         Assert.Equal("(3, 4)", LabelText(control));
     }
 
-    /// <summary>外観を設定できることを検証する（描画は <c>LoupeControl.Rendering</c> のテストが検証する）。</summary>
+    /// <summary>外観を設定できることを検証する（描画は <c>LoupeControl.UIBase</c> のテストが検証する）。</summary>
     [Fact]
     public void 外観を設定できる()
     {

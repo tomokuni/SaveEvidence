@@ -4,7 +4,7 @@
 
 **ファサードの実装詳細（配置計算・描画引数の計算・ラベル配置）は internal です**（単体テストにのみ `InternalsVisibleTo` で公開します。利用者はファサードの戻り値を使うため、内部手順を参照する必要がありません）。
 
-**コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.CoreForControl` が所有します**（本プロジェクトはルーペの見た目と計算に限定します）。**描画の手順は `LoupeControl.Rendering` が所有し**（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠。描画先は `IEsCanvas`）、本プロジェクトは描画 API を持ちません。
+**コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.UIBase` が所有します**（本プロジェクトはルーペの見た目と計算に限定します）。**描画の手順は `LoupeControl.UIBase` が所有し**（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠。描画先は `IEsCanvas`）、本プロジェクトは描画 API を持ちません。
 
 ## 公開 API の可視性
 
@@ -13,7 +13,7 @@
 | `Loupe` | `public` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決、描画入力の生成、通知内容の解決、描画実装の保持 |
 | `ILoupeRenderer` | `public` | 描画内容を描画面へ写す実装の契約（**描画の差し替え点**。既定実装は描画層の `LoupeRenderer`） |
 | `LoupeLayout` | `public` | 表示レイアウトの値（表示サイズ（DIP）と表示位置。配置しない場合は位置が null） |
-| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール・中心座標ラベルの契約。`Layers` は描く層とその順序を持ち、**描画順はコアが単一所有する**（ラベルは必ず末尾 = 常に最上位））。描画の実行は UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が担う |
+| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール・中心座標ラベルの契約。`Layers` は描く層とその順序を持ち、**描画順はコアが単一所有する**（ラベルは必ず末尾 = 常に最上位））。描画の実行は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が担う |
 | `LoupeOptions` | `public` | 設定の単一値（ホストが設定する） |
 | `LoupeAppearance` | `public` | 外観の単一値（設定の一部として、また単体でも外観を指定する） |
 | `LoupeValueCoercer` | `public` | 数値パラメータの既定値・安全域とクランプ |
@@ -56,7 +56,7 @@
 | `DrawShapes(canvas, source, in request, in notification)` | 図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く（**中心座標ラベルの層は描かない**。ラベルは UI の要素が描く） |
 | `ResolveLabels(coordLabel, measureText)` | 中心座標ラベルの配置指示（`EsLabelElement`）を解決する（UI 要素として配置する UI 用） |
 
-描く層とその順序はコアが単一所有し（`LoupeRenderNotification.Layers`）、実装は順序を判断しません。拡大元画像は UI ごとに型が異なるため引数で受け取ります（描画の契約には含めません）。本コアは描画層（`LoupeControl.Rendering`）を参照できないため、既定実装（`LoupeRenderer.Default`）は利用者が渡します。
+描く層とその順序はコアが単一所有し（`LoupeRenderNotification.Layers`）、実装は順序を判断しません。拡大元画像は UI ごとに型が異なるため引数で受け取ります（描画の契約には含めません）。本コアは描画層（`LoupeControl.UIBase`）を参照できないため、既定実装（`LoupeRenderer.Default`）は利用者が渡します。
 
 ```csharp
 var loupe = new Loupe(LoupeRenderer.Default, options) { CenterPoint = cursorDomain, RenderScaling = 1.25 };

@@ -1,5 +1,4 @@
-using EsUtil.SaveEvidence.Marquee.CoreForControl;
-using EsUtil.SaveEvidence.Marquee.Rendering;
+using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Geometry;
@@ -167,7 +166,7 @@ public sealed partial class MarqueeControl
     /// <param name="context">描画コンテキスト。</param>
     /// <remarks>
     /// <b>描画の手順は UI 非依存のレンダラが単一所有する</b>: 層の順序と描画 API への写し方は<br/>
-    /// <see cref="MarqueeRenderer"/>（<c>MarqueeControl.Rendering</c>）が担う。本メソッドは自 UI の描画面を渡すだけである。<br/>
+    /// <see cref="MarqueeRenderer"/>（<c>MarqueeControl.UIBase</c>）が担う。本メソッドは自 UI の描画面を渡すだけである。<br/>
     /// <b>ラベルは <see cref="Border"/> + <see cref="TextBlock"/> の子要素として配置する</b>ため図形の層だけを描く<br/>
     /// （子は親より後に描かれるため常に最上位になる）。<br/>
     /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なるため描画しない（別々に描くと線幅が二重になる）。

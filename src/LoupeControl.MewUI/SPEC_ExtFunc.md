@@ -104,7 +104,7 @@
 
 `Rendered` イベントは、ルーペを描画した直後（同一フレーム内）に引数 `LoupeRenderedEventArgs` で通知します。ホストはハンドラ内で描画先キャンバスへ追加描画（選択矩形の破線等のオーバーレイ）を行えます。
 
-中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言・寸法・表示可否はコア（`LoupeCoordLabel`）が、実寸からの配置は描画層（`LoupeControl.Rendering` の `LoupeLabelPlan`）が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
+中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言・寸法・表示可否はコア（`LoupeCoordLabel`）が、実寸からの配置は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |

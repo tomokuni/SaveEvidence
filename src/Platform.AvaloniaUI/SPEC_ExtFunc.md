@@ -192,7 +192,7 @@ var brush = s_cache.GetOrCreate(color);
 ### 5.5 AvaloniaCanvas
 
 `EsUtil.Platform.Core.Imaging.IEsCanvas`（UI 非依存の描画ポート）を Avalonia の `DrawingContext` へ適合させるアダプタです。
-コア側の描画層（`MarqueeControl.Rendering` / `LoupeControl.Rendering`）が本ポートだけを呼ぶため、Avalonia 側は本クラスを渡すだけで描画できます。
+コア側の描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）が本ポートだけを呼ぶため、Avalonia 側は本クラスを渡すだけで描画できます。
 
 | メンバー | 説明 |
 | --- | --- |

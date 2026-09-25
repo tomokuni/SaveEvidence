@@ -4,7 +4,7 @@ MarqueeControl（MewUI 版）のシステム概要・アーキテクチャ・依
 
 ## システム概要
 
-`MarqueeControl.MewUI` は、Avalonia 版 `MarqueeControl` と**同一の UI 非依存コア（`Feature.MarqueeCore`）と描画層（`MarqueeControl.Rendering`）**を使い、
+`MarqueeControl.MewUI` は、Avalonia 版 `MarqueeControl` と**同一の UI 非依存コア（`Feature.MarqueeCore`）と描画層（`MarqueeControl.UIBase`）**を使い、
 入力の受付・効果の適用・通知の転送・描画ポートの適合のみを MewUI（SkiaSharp）で実装したドラッグ矩形コントロールです。
 
 コアが担う範囲（選択矩形の正規化・ハンドル位置・ヒットテスト・ドラッグ変形・nudge・境界クリップ・対話状態の合成に加えて、
@@ -18,7 +18,7 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 | 対象フレームワーク | .NET 10（`net10.0`） |
 | 言語 | C# 14 |
 | UI フレームワーク | MewUI（`Aprillz.MewUI.Skia` **0.21.1 固定**） |
-| 描画 | SkiaSharp（描画層 `MarqueeControl.Rendering` が描画ポート `SkiaEsCanvas` 経由で描く） |
+| 描画 | SkiaSharp（描画層 `MarqueeControl.UIBase` が描画ポート `SkiaEsCanvas` 経由で描く） |
 | 基底コントロール | `Aprillz.MewUI.Skia.Controls.SkiaCanvasView` |
 | プロパティシステム | `MewProperty<T>`（`MewPropertyOptions.AffectsRender`） |
 | カーソル操作 | `ICursorService`（`Platform.Native` の Win32 実装） |
@@ -27,16 +27,16 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 
 ### 依存方向（一方向を厳守）
 
-層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
+層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> MarqueeControl.Rendering   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
-    ├──> MarqueeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
+    ├──> MarqueeControl.UIBase   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
+    ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
-※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
+※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ※ 本コントロール（UI 層）は Platform.Native（Win32 実装）と Platform.MewUI も参照する。
 ```
 
@@ -45,7 +45,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 層 | 責務 |
 | --- | --- |
 | `Feature.MarqueeCore` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成（効果の適用順、ビューポート変化の通知、ホイールの解釈、ログの保持を含む）**。公開ファサード `Marquee` を唯一の窓口とし、状態機械とフレーム解決は内部契約（`internal`）とする |
-| `MarqueeControl.Rendering` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
+| `MarqueeControl.UIBase` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
 | `MarqueeControl.MewUI` | 入力（マウス・キー・ホイール）をコア型へ変換してファサードへ通知する、`IMarqueeEffects` を実装して要求された効果（再描画・フォーカス・マウスキャプチャ・カーソル形状/操作）を適用する、通知を公開イベントへ転送する、描画内容を描画層（`MarqueeRenderer`）へ渡す（描画先は `SkiaEsCanvas`）、DPI の追従 |
 | ホスト | 座標変換ポートの設定、選択の復元・確定・キャンセル、重ね順の管理、ビューポート変化の通知 |
 
@@ -162,13 +162,13 @@ classDiagram
         +MarqueeCaptureAction Capture
     }
     class MarqueeRenderer {
-        <<MarqueeControl.Rendering / 描画層（IMarqueeRenderer の既定実装）>>
+        <<MarqueeControl.UIBase / 描画層（IMarqueeRenderer の既定実装）>>
         +Default MarqueeRenderer$
         +DrawShapes(canvas, content)$ void
         +ResolveLabels(content, measureText) EsLabelElement[]$
     }
       class MarqueeOuterRenderer {
-        <<MarqueeControl.Rendering / 描画層>>
+        <<MarqueeControl.UIBase / 描画層>>
         +Draw(canvas, frame)$ void
       }
       class ラベル要素の配置 {
@@ -177,7 +177,7 @@ classDiagram
         +ApplyLabelElement(border, element)$ void
       }
       class MarqueeInnerRenderer {
-        <<MarqueeControl.Rendering / 描画層>>
+        <<MarqueeControl.UIBase / 描画層>>
         +Draw(canvas, frame)$ void
       }
       class MarqueeOptions {
@@ -387,5 +387,5 @@ OnPaintSurface(canvas, info)
 | --- | --- |
 | `ScrollViewer` の自動連携 | ホストが `NotifyViewportChanged()` を呼ぶ方式で代替 |
 | フォーカス非依存の矢印キー nudge | フォーカス依存で実装（`TopLevel` のキー購読は行わない） |
-| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`EsUtil.Feature.MarqueeCore.MarqueeLogMessage`）が所有し、ズーム要求のログは組み込みの層（`EsUtil.SaveEvidence.Marquee.CoreForControl.MarqueeWheelLogMessage`）が所有する。書式・レベルとも Avalonia 版と同一） |
+| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`EsUtil.Feature.MarqueeCore.MarqueeLogMessage`）が所有し、ズーム要求のログは組み込みの層（`EsUtil.SaveEvidence.Marquee.UIBase.MarqueeWheelLogMessage`）が所有する。書式・レベルとも Avalonia 版と同一） |
 | 実ウィンドウへの組み込み | `FadeMaskDragRectControl.MewUI` を経由して配線済み（撮影・切り出しの両方） |

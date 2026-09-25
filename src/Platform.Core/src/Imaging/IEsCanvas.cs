@@ -6,7 +6,7 @@ namespace EsUtil.Platform.Core.Imaging;
 /// <summary>描画内容を描画面へ写す即時描画ポート（UI フレームワーク非依存）。</summary>
 /// <remarks>
 /// <b>位置付け</b>: 「何を描くか」を決めるコアと「どう描くか」を担う UI の境界である。<br/>
-/// コア側（<c>MarqueeControl.Rendering</c> / <c>LoupeControl.Rendering</c>）は本ポートだけを呼び、<br/>
+/// コア側（<c>MarqueeControl.UIBase</c> / <c>LoupeControl.UIBase</c>）は本ポートだけを呼び、<br/>
 /// 各 UI は自 UI の描画 API を本ポートへ適合させる（アダプタ）。<br/>
 /// これにより描画の手順はコア側の 1 実装に集約され、UI の追加・描画方式の差し替えはアダプタの実装だけで済む。<br/>
 /// <br/>

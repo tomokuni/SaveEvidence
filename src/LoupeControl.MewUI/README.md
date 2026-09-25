@@ -1,12 +1,12 @@
 # LoupeControl.MewUI
 
-`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.Rendering`）** を使い、描画ポートの適合（`SkiaEsCanvas`）と入力の受付のみを **MewUI** で実装したルーペ（拡大鏡）コントロールです。
+`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase`）** を使い、描画ポートの適合（`SkiaEsCanvas`）と入力の受付のみを **MewUI** で実装したルーペ（拡大鏡）コントロールです。
 
 ## 目的
 
-ルーペのロジック（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は `Feature.LoupeCore` が単一所有し、描画の手順は UI 非依存の描画層（`LoupeControl.Rendering` の `LoupeRenderer`）が単一所有します。
+ルーペのロジック（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は `Feature.LoupeCore` が単一所有し、描画の手順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有します。
 本プロジェクトはその計算結果を描画ポート `SkiaEsCanvas`（Platform.Core）経由で **Skia のキャンバスへ描画させるだけ** の層です。
-そのため Avalonia 版と**同じ設定・同じ見た目**になり、設定ファイル（`%LOCALAPPDATA%\SaveEvidence\settings.json`）も両 UI で共用できます。層構成（Core / Rendering / CoreForControl / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
+そのため Avalonia 版と**同じ設定・同じ見た目**になり、設定ファイル（`%LOCALAPPDATA%\SaveEvidence\settings.json`）も両 UI で共用できます。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ## 特徴
 
@@ -158,6 +158,6 @@ dotnet test src/LoupeControl.MewUI/tests/LoupeControl.MewUI.Tests.csproj
 ## 関連ドキュメント
 
 - `../Feature.LoupeCore/README.md` — 共有する UI 非依存ロジック
-- `../LoupeControl.Rendering/README.md` — 共有する UI 非依存の描画層
+- `../LoupeControl.UIBase/README.md` — 共有する UI 非依存の描画層
 - `../LoupeControl.AvaloniaUI/README.md` — Avalonia 版ルーペ
 - `../app.MewUI/README.md` — 組み込み先のアプリ

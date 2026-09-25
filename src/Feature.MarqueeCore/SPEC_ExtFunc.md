@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 選択操作の状態機械 | `Marquee` | 押下・移動・解放・キー入力を通知すると、状態遷移の判断（nudge の開始/終了・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセル・エコー移動の抑制）を行い、効果と通知を返す |
 | 描画内容の解決 | `Marquee.ResolveContent` | 描画領域のサイズを渡すと、1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・サイズラベル・カーソル座標ラベルと描画順）を返す。「描くかどうか」の判断はすべてコアが下す |
-| 描画の実行（差し替え可能） | `IMarqueeRenderer` / `Marquee.Renderer` | 描画内容を描画面へ写す実装を注入する（既定実装は描画層 `MarqueeControl.Rendering` の `MarqueeRenderer.Default`）。実装を差し替えれば描画手順を、描画ポート（`IEsCanvas`）の実装を差し替えれば描画先を変えられる |
+| 描画の実行（差し替え可能） | `IMarqueeRenderer` / `Marquee.Renderer` | 描画内容を描画面へ写す実装を注入する（既定実装は描画層 `MarqueeControl.UIBase` の `MarqueeRenderer.Default`）。実装を差し替えれば描画手順を、描画ポート（`IEsCanvas`）の実装を差し替えれば描画先を変えられる |
 | 効果の適用 | `IMarqueeEffects` | フォーカス・再描画・カーソル操作・カーソル形状・ポインターキャプチャ・画面座標変換の要求を UI 実装が受ける（不要なメンバーの空実装は `MarqueeEffectsBase` を継承すれば省略できる） |
 | 通知 | `Marquee.Notified` | 選択の開始/変更/確定/キャンセル・追従位置の移動・確定/キャンセル要求を `MarqueeNotice` で通知する |
 | 外部からの状態操作 | `Marquee` | 選択の復元・対話状態の初期化・確定/キャンセルの要求を API から実行できる |
@@ -132,7 +132,7 @@
 | `DrawShapes(IEsCanvas, in MarqueeDrawContent)` | 図形の層（装飾・ハンドル・始点マーカー）を描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く） |
 | `ResolveLabels(in MarqueeDrawContent, Func<string,double,EsSize>)` | ラベル要素の配置指示（`EsLabelElement`）を描画順に解決する（UI 要素として配置する UI 用） |
 
-描画順はコアが単一所有し（`MarqueeDrawContent.Layers`）、実装は順序を判断しません。本コアは描画層（`MarqueeControl.Rendering`）を参照できないため、既定実装（`MarqueeRenderer.Default`）は利用者が渡します。
+描画順はコアが単一所有し（`MarqueeDrawContent.Layers`）、実装は順序を判断しません。本コアは描画層（`MarqueeControl.UIBase`）を参照できないため、既定実装（`MarqueeRenderer.Default`）は利用者が渡します。
 
 ### `MarqueeNoticeKind` の値
 
@@ -189,9 +189,9 @@
 
 ## 5. 制限事項
 
-- ホイール操作（Ctrl+ズーム / スクロール）は本コアに含みません（`MarqueeControl.CoreForControl` が単一所有します）。
-- ビューポートの変化の通知は本コアに含みません（`MarqueeControl.CoreForControl` が単一所有します）。
-- 描画 API は提供しません（描画の手順は UI 非依存の描画層 `MarqueeControl.Rendering` が単一所有し、描画先は `Platform.Core` の `IEsCanvas` です。描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`SelectionGeometry`）を参照します）。
+- ホイール操作（Ctrl+ズーム / スクロール）は本コアに含みません（`MarqueeControl.UIBase` が単一所有します）。
+- ビューポートの変化の通知は本コアに含みません（`MarqueeControl.UIBase` が単一所有します）。
+- 描画 API は提供しません（描画の手順は UI 非依存の描画層 `MarqueeControl.UIBase` が単一所有し、描画先は `Platform.Core` の `IEsCanvas` です。描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`SelectionGeometry`）を参照します）。
 - 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。ホストが文言の生成と描画を行います（体裁の計算は `EsLabelLayout` を共用できます）。
 
 ## 6. ライセンス

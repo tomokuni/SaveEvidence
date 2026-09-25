@@ -130,7 +130,7 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 paint.Color = info.Background.ToSKColor();   // コアの色型 → Skia
 ```
 
-SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。各 UI の描画層（`CropSkiaRenderer` / `MarqueeControl.Rendering` / `LoupeControl.Rendering` / `FadeMaskDragRectSkiaRenderer` / `SkiaEsCanvas` / `AvaloniaCanvas` / `SkiaImageRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
+SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、`EsBitmap` と同じ層（本プロジェクト）が変換を単一所有します。各 UI の描画層（`CropSkiaRenderer` / `MarqueeControl.UIBase` / `LoupeControl.UIBase` / `FadeMaskDragRectSkiaRenderer` / `SkiaEsCanvas` / `AvaloniaCanvas` / `SkiaImageRenderer`）が共用し、同じ変換の複製を各コントロールへ置きません。  
 逆方向（Skia → コア）の変換は本番の利用箇所がないため提供しません（YAGNI）。
 
 ### `Imaging.SkiaGeometryInterop`（static class）
@@ -177,7 +177,7 @@ SkiaFill.Rects(canvas, tiles, color);                           // 市松模様�
 
 ### `Imaging.IEsCanvas`（interface）
 
-描画内容を描画面へ写す**即時描画ポート**です。「何を描くか」を決めるコア側の描画層（`MarqueeControl.Rendering` / `LoupeControl.Rendering`）は本ポートだけを呼び、各 UI が自 UI の描画 API を本ポートへ適合させます（描画手順はコア側の 1 実装に集約され、UI の追加・描画方式の変更はアダプタの実装だけで済みます）。
+描画内容を描画面へ写す**即時描画ポート**です。「何を描くか」を決めるコア側の描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）は本ポートだけを呼び、各 UI が自 UI の描画 API を本ポートへ適合させます（描画手順はコア側の 1 実装に集約され、UI の追加・描画方式の変更はアダプタの実装だけで済みます）。
 
 | メンバー | 説明 |
 | --- | --- |

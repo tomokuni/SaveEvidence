@@ -4,9 +4,8 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI.Logging;
 using EsUtil.Feature.LoupeCore;
-using EsUtil.SaveEvidence.Loupe.CoreForControl;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Feature.LoupeCore.Imaging;
-using EsUtil.SaveEvidence.Loupe.Rendering;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Labels;
 using EsUtil.Platform.AvaloniaUI.Imaging;
@@ -32,7 +31,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// 中心周辺領域を切り出して拡大描画する（Binding 方式）。<br/>
 /// 表示は内部の <see cref="Image"/> 要素へ生成Bitmapを設定する方式に統一する。<br/>
 /// <br/>
-/// <b>描画の委譲</b>: 描画（抽出→拡大→十字線→市松→外枠）の手順は UI 非依存の描画層（<c>LoupeControl.Rendering</c>）が<br/>
+/// <b>描画の委譲</b>: 描画（抽出→拡大→十字線→市松→外枠）の手順は UI 非依存の描画層（<c>LoupeControl.UIBase</c>）が<br/>
 /// 本コントロールは状態（DP）とライフサイクル（ビットマップ生成/解放）に専念する。<br/>
 /// <br/>
 /// <b>再描画のバッチ化</b>: 複数プロパティの連続変更は <see cref="Dispatcher"/> へのポストにより<br/>

@@ -7,7 +7,7 @@ namespace EsUtil.Platform.Core.Tests;
 
 /// <summary><see cref="EsLabelElement"/> のテスト（コアの配置から UI 要素の配置指示への写像）。</summary>
 /// <remarks>
-/// 各コントロールの CoreForControl 層が同じ写像を書くと写し漏れで見た目がずれるため、<br/>
+/// 各コントロールの UIBase 層が同じ写像を書くと写し漏れで見た目がずれるため、<br/>
 /// 写像が値と余白の導出を正しく行うことを固定する。
 /// </remarks>
 public class EsLabelElementTests

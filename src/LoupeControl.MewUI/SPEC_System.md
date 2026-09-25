@@ -4,7 +4,7 @@
 
 ## システム概要
 
-`LoupeControl.MewUI` は、Avalonia 版 `LoupeControl` と**同一の UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.Rendering`）** を使い、
+`LoupeControl.MewUI` は、Avalonia 版 `LoupeControl` と**同一の UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase`）** を使い、
 描画ポートの適合（`SkiaEsCanvas`）と入力の受付のみを MewUI（SkiaSharp）で実装したルーペコントロールです。
 
 コアが担う範囲（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は両 UI で完全に共通であり、
@@ -18,7 +18,7 @@
 | 対象フレームワーク | .NET 10（`net10.0`） |
 | 言語 | C# 14 |
 | UI フレームワーク | MewUI（`Aprillz.MewUI.Skia` **0.21.1 固定**） |
-| 描画 | SkiaSharp（描画層 `LoupeControl.Rendering` が描画ポート `SkiaEsCanvas` 経由で描く） |
+| 描画 | SkiaSharp（描画層 `LoupeControl.UIBase` が描画ポート `SkiaEsCanvas` 経由で描く） |
 | 基底コントロール | `Aprillz.MewUI.Controls.Panel`（図形は子の `SkiaCanvasView` が描画する） |
 | プロパティシステム | `MewProperty<T>`（`MewPropertyOptions.AffectsRender` / `AffectsLayout`） |
 
@@ -26,16 +26,16 @@
 
 ### 依存方向（一方向を厳守）
 
-層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
+層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> LoupeControl.Rendering   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
-    ├──> LoupeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
+    ├──> LoupeControl.UIBase   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
+    ├──> LoupeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
-※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
+※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```
 
 Avalonia 版と MewUI 版の間に依存はありません（互いを参照しません）。
@@ -46,7 +46,7 @@ Avalonia 版と MewUI 版の間に依存はありません（互いを参照し�
 | 層 | 責務 |
 | --- | --- |
 | `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・外枠の矩形計算、市松模様の明暗判定、外観（下地含む）と描画入力（`LoupeRenderRequest`）の単一所有 |
-| `LoupeControl.Rendering` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
+| `LoupeControl.UIBase` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
 | `LoupeControl.MewUI` | コアの描画入力を描画層（`LoupeRenderer`）へ渡し、描画ポート `SkiaEsCanvas` を適合させる。`MewProperty` による入力の受付。DPI の自動追従 |
 | ホスト（`app.MewUI` 等） | `Source` / `CenterPoint` の設定、表示位置の決定（コアのファサード `ResolveLayout` を利用） |
 
@@ -116,7 +116,7 @@ classDiagram
         +ShouldShowCoordLabel(hasCenter) bool
     }
     class LoupeRenderer {
-        <<LoupeControl.Rendering / 描画層（ILoupeRenderer の既定実装）>>
+        <<LoupeControl.UIBase / 描画層（ILoupeRenderer の既定実装）>>
         +Default LoupeRenderer$
         +DrawShapes(canvas, source, request, notification)$ void
         +ResolveLabels(coordLabel, measureText) EsLabelElement[]$
@@ -225,7 +225,7 @@ sequenceDiagram
    MewUI 版は `SkiaCanvasView` のキャンバスへ直接描画する（コピーとメモリ確保を排除）。
 2. **拡大は最近傍で行う**。ルーペは画素をそのまま拡大する用途であり、補間すると画素が判別できなくなる。
 3. **装飾矩形と市松模様の明暗判定はコアが単一所有する**。両 UI で同じ見た目を保証するため、
-   Avalonia 版と MewUI 版は同じコアの計算を使う（描画の手順そのものも UI 非依存の描画層 `LoupeControl.Rendering` が共有する）。
+   Avalonia 版と MewUI 版は同じコアの計算を使う（描画の手順そのものも UI 非依存の描画層 `LoupeControl.UIBase` が共有する）。
 4. **設定（表示サイズ・拡大率・外観）はコアの `LoupeOptions` が単一所有する**。UI 層は `Options` を 1 つ公開して描画時に読むだけであり、既定値・数値項目の補正もコアが持つ。
    描画の可否（アルファ 0）とラベルの余白もコアが判断・所有するため、両 UI の見た目が一致する
    （従来は Avalonia が既定で十字線を描き MewUI は描かないという既定値のドリフトがあった）。
@@ -237,7 +237,7 @@ sequenceDiagram
 描画サイズは `Options.RequestedSize` × `RenderScaling` を物理ピクセルへ換算し、キャンバスより大きい場合はキャンバスに合わせる
    （「領域へクランプする」規則と DIP → 物理ピクセルの換算はコアのファサード（`Loupe.ResolveLayout` / `Loupe.CreateRequest`）が単一所有し、Avalonia 版の親パネルへのクランプと同じ規則を使う）。
 8. **静的画像では連続再描画を無効化する**。`ContinuousAnimation` を `false` にし、プロパティ変更時のみ再描画する。
-9. **座標ラベルはコントロールがテキスト要素として表示する**（両 UI 共通）。文言・表示可否はコア（`LoupeCoordLabel`。体裁は Platform.Core の `EsLabelLayout`）が単一所有し、コントロールは `LoupeLabelPlan`（描画層 `LoupeControl.Rendering`）へ自 UI の実寸（`SkiaText.Measure`）を渡して要素を配置する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）。Avalonia 版も同じ契約を使い、測定 API（`FormattedText`）だけが異なる。
+9. **座標ラベルはコントロールがテキスト要素として表示する**（両 UI 共通）。文言・表示可否はコア（`LoupeCoordLabel`。体裁は Platform.Core の `EsLabelLayout`）が単一所有し、コントロールは `LoupeLabelPlan`（描画層 `LoupeControl.UIBase`）へ自 UI の実寸（`SkiaText.Measure`）を渡して要素を配置する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）。Avalonia 版も同じ契約を使い、測定 API（`FormattedText`）だけが異なる。
 10. **値の補正と変更ログはプロパティの登録が所有する**。`MewProperty.Register` の `coerce` / `changed` へ渡すため、
    setter を経由しない設定（バインディング等）でも安全域が保たれ、変更が記録される
    （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。規則と書式はコアが単一所有する）。
@@ -247,7 +247,7 @@ sequenceDiagram
 
 | 対象 | 方針 |
 | --- | --- |
-| `LoupeRenderer`（描画層） | `SKBitmap` + `SKCanvas`（`SkiaEsCanvas` 経由）へ実際に描画し、**画素を実測**して検証する（ウィンドウ不要で並列実行できる。検証は `LoupeControl.Rendering` のテストが担う） |
+| `LoupeRenderer`（描画層） | `SKBitmap` + `SKCanvas`（`SkiaEsCanvas` 経由）へ実際に描画し、**画素を実測**して検証する（ウィンドウ不要で並列実行できる。検証は `LoupeControl.UIBase` のテストが担う） |
 | `LoupeControl` | `MewProperty` の補正・既定値・要求サイズを検証する（MewUI の要素生成はホスト登録を要しない） |
 | コアロジック | `Feature.LoupeCore.Tests` が担保する（本プロジェクトでは再検証しない） |
 | アプリ組み込み | `app.MewUI/verify-ui.ps1` が実機の画素を実測して検証する |

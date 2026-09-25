@@ -45,7 +45,7 @@ public readonly record struct EsLabelElement(
     /// <returns>要素の配置指示。</returns>
     /// <remarks>
     /// コアの配置（<see cref="EsLabelFrame"/>）を要素の配置指示へ写す写像を単一所有する<br/>
-    /// （各コントロールの CoreForControl 層が同じ写像を書くと、写し漏れで見た目がずれる）。
+    /// （各コントロールの UIBase 層が同じ写像を書くと、写し漏れで見た目がずれる）。
     /// </remarks>
     public static EsLabelElement Create(
         EsLabelFrame frame, string text, double fontSize, DrawingColor textColor, DrawingColor backgroundColor, double cornerRadius = 0)

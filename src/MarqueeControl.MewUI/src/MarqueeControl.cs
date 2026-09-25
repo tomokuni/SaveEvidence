@@ -3,8 +3,7 @@ using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.SaveEvidence.Marquee.CoreForControl;
-using EsUtil.SaveEvidence.Marquee.Rendering;
+using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -96,7 +95,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>ホイール入力を解釈してビューポート操作の要求（ズーム / スクロール）を出す補助。</summary>
     /// <remarks>
     /// ファサードへ接続し、ホイールの解釈（Ctrl = ズーム・連携先への適用）は<br/>
-    /// <c>MarqueeControl.CoreForControl</c> が単一所有する<br/>
+    /// <c>MarqueeControl.UIBase</c> が単一所有する<br/>
     /// （本層は修飾キーの真偽と回転量を渡し、要求を公開イベントへ転送するだけ）。
     /// </remarks>
     private readonly MarqueeWheelInterpreter _wheel;
@@ -104,7 +103,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>ビューポート（パン・ズーム）の変化を再通知する補助。</summary>
     /// <remarks>
     /// 「ビューポートの変化 = 現状態の再通知 + 再描画」というビューポート連携の規則は<br/>
-    /// <c>MarqueeControl.CoreForControl</c> が単一所有する（本層は自 UI の公開イベントへ転送するだけ）。
+    /// <c>MarqueeControl.UIBase</c> が単一所有する（本層は自 UI の公開イベントへ転送するだけ）。
     /// </remarks>
     private readonly MarqueeViewportNotifier _viewport;
 
@@ -201,7 +200,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>Ctrl+ホイールによるズーム要求時に発火する（方向と発生位置）。</summary>
     /// <remarks>
     /// ズームの実処理（画像サイズ変更・ズーム率管理）は上位 AP が実施する（本コントロールは要求のみ通知する）。<br/>
-    /// 「Ctrl+ホイール = ズーム」という解釈はコントロール化の層（<c>MarqueeControl.CoreForControl</c>）が単一所有する<br/>
+    /// 「Ctrl+ホイール = ズーム」という解釈はコントロール化の層（<c>MarqueeControl.UIBase</c>）が単一所有する<br/>
     /// （選択コントロールをビューポートへ組み込むときにだけ必要な規則のため）。<br/>
     /// <see cref="WheelZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
     /// </remarks>
@@ -523,7 +522,7 @@ public sealed class MarqueeControl : Panel
     /// <remarks>
     /// Ctrl+ホイールは <see cref="ZoomRequested"/>（ズームの実処理は上位 AP）、それ以外は <see cref="ScrollRequested"/><br/>
     /// （スクロールの実処理は上位 AP）を発火する。回転量はそのまま通知し、解釈（Ctrl の判定・連携先への適用・ログ）は<br/>
-    /// コントロール化の層（<c>MarqueeControl.CoreForControl</c> の <see cref="MarqueeWheelInterpreter"/>）が単一所有する。<br/>
+    /// コントロール化の層（<c>MarqueeControl.UIBase</c> の <see cref="MarqueeWheelInterpreter"/>）が単一所有する。<br/>
     /// ホイールはビューの操作であり選択矩形の状態を変えない。
     /// </remarks>
     protected override void OnMouseWheel(MouseWheelEventArgs e)
@@ -714,7 +713,7 @@ public sealed class MarqueeControl : Panel
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
     /// <b>描画の手順は UI 非依存のレンダラが単一所有する</b>: 描画内容（装飾・選択矩形・ラベル）はコアが 1 値で解決し、<br/>
-    /// 層の順序と描画 API への写し方は <see cref="MarqueeRenderer"/>（<c>MarqueeControl.Rendering</c>）が担う。<br/>
+    /// 層の順序と描画 API への写し方は <see cref="MarqueeRenderer"/>（<c>MarqueeControl.UIBase</c>）が担う。<br/>
     /// 本メソッドは自 UI の描画面をレンダラへ渡すだけである（<b>ラベルは本パネルの子要素が描く</b>ため図形の層のみ）。<br/>
     /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なる（別々に描くと線幅が二重になる）。<br/>
     /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>

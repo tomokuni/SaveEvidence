@@ -25,21 +25,21 @@
 
 ### 3.1 依存方向（一方向）
 
-層の全体像（Core / Rendering / CoreForControl / UI）は [`src/README.md`](../README.md) を参照してください。
+層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> MarqueeControl.Rendering   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
-    ├──> MarqueeControl.CoreForControl   組み込み先がある場合にだけ必要な規則
+    ├──> MarqueeControl.UIBase   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
+    ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
-※ Rendering と CoreForControl の間に依存はない（兄弟）。Core は Rendering / CoreForControl を参照しない。
+※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```
 
 - 上位層は下位層のみを参照します（逆参照なし）。
 - 本コアは UI フレームワークを参照しません。装飾（暗転マスク等）は**本コア内のサブ概念**として同居します（別プロジェクトに分けません）。
-- 本コアは描画 API を持ちません。描画の手順は UI 非依存の描画層（`MarqueeControl.Rendering`）が単一所有し、描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`SelectionGeometry.DirectionalHandles`（読み取り専用の一覧）等）を参照します。
+- 本コアは描画 API を持ちません。描画の手順は UI 非依存の描画層（`MarqueeControl.UIBase`）が単一所有し、描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`SelectionGeometry.DirectionalHandles`（読み取り専用の一覧）等）を参照します。
 - **本コアは描画層を参照しません**（依存の向きは `Core` → `Rendering` の一方向）。描画の実行は契約（`IMarqueeRenderer`）経由で受け取り、既定実装（`MarqueeRenderer.Default`）は利用者がコンストラクタで注入します。
 
 ### 3.2 データフロー（入力 → 描画）
@@ -133,7 +133,7 @@ stateDiagram-v2
 | 装飾の描画可否（透明色） | `OuterDecoAppearance.Has*` / `InnerDecoAppearance.Has*` |
 | サイズラベルの文言（`Format`）と自動生成 | `MarqueeSizeLabel` / `MarqueeFrame.ResolveSizeLabel` |
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。デリゲートを生成しない） |
-| 描画 API の呼び出し（層の順序と写し方） | 描画層 `MarqueeControl.Rendering`（`MarqueeRenderer` 等）。本コアは `IMarqueeRenderer` 経由で委譲する（実装は注入。本コアは描画層を参照しない） |
+| 描画 API の呼び出し（層の順序と写し方） | 描画層 `MarqueeControl.UIBase`（`MarqueeRenderer` 等）。本コアは `IMarqueeRenderer` 経由で委譲する（実装は注入。本コアは描画層を参照しない） |
 | 描画実装の保持と差し替え | `Marquee.Renderer`（同値の再設定では再描画しない規則も本クラスが単一所有する） |
 | 入力の判断に伴うログ | `MarqueeLogMessage` |
 
