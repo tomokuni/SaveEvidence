@@ -26,4 +26,8 @@
          UI 実装とホストが使う公開面（設定・通知・フレーム・描画計算）は public のため IVT 不要。 -->
     <InternalsVisibleTo Include="Feature.MarqueeCore.Tests" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\src\Common.csproj" />
+  </ItemGroup>
+
 </Project>

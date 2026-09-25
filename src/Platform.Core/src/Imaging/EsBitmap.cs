@@ -1,4 +1,4 @@
-using SkiaSharp;
+using System.Runtime.InteropServices;
 using Color = System.Drawing.Color;
 using PointInt = System.Drawing.Point;
 using RectInt = System.Drawing.Rectangle;
@@ -8,52 +8,77 @@ namespace EsUtil.Platform.Core.Imaging;
 
 /// <summary>複数のビットマップ種別を横断して扱う軽量なユニバーサルビットマップラッパー（コア）。</summary>
 /// <remarks>
-/// <b>設計</b>: 本型は内部表現（<see cref="SKBitmap"/> BGRA8888・Premul）と、ビットマップ種別に依存しない
-/// ピクセル操作のみを提供する。<br/>
-/// Avalonia / System.Drawing / WPF 依存の生成・変換（<c>Create</c> / <c>From～</c> / <c>To～</c>）は
-/// <see cref="BitmapDrawingExtensions"/>（<c>extension(EsBitmap)</c>）が担う。<br/>
+/// <b>設計</b>: 本型は自前のピクセルバッファ（アンマネージド）だけを所有し、ビットマップ種別に依存しない
+/// ピクセル操作のみを提供する。外部パッケージへ依存しない（UI 非依存・可搬の判定基準を満たす）。<br/>
+/// UI ごとの生成・変換（Avalonia / System.Drawing / Skia）は各プラットフォーム層の拡張が担う
+/// （Skia は <c>Platform.Skia</c> の <c>EsBitmapSkiaExtensions</c>）。<br/>
+/// <br/>
+/// <b>メモリ確保</b>: <see cref="NativeMemory.AlignedAlloc"/> で 64 バイト整列して確保し、確保直後に全領域を 0 で初期化する
+/// （透明 = 全成分 0 が「描かれていない」の表現であるため）。整列は<b>確保の基底アドレスのみ</b>に適用し、
+/// <see cref="Stride"/> は <c>幅 × 4</c>（パディングなし）とする（行も整列させるとストライドが変わり、
+/// ピクセル形式を共有する他の実装の期待値を壊す）。<br/>
 /// <br/>
 /// <b>ピクセル形式</b>: BGRA8888（アルファ乗算済み、System.Drawing の Format32bppPArgb 相当）。<br/>
-/// <b>所有権</b>: 内部 SKBitmap の所有権は本型が保持する。<br/>
+/// <see cref="Clear(byte, byte, byte, byte)"/> は<b>与えられた成分をそのまま書き込む</b>（乗算済みへの変換は行わない）。<br/>
+/// <b>所有権</b>: ピクセルバッファの所有権は本型が保持し、<see cref="Dispose"/> で解放する。<br/>
 /// <b>スレッド安全性</b>: 静的共有状態を持たないため各インスタンスは独立して並列利用できるが、
-/// 単一インスタンスへの同時ピクセル操作は直列化すること（<see cref="SKBitmap"/> はスレッドセーフではない）。
+/// 単一インスタンスへの同時ピクセル操作は直列化すること。
 /// </remarks>
 public sealed class EsBitmap : IDisposable
 {
     /// <summary>1 ピクセルあたりのバイト数（BGRA8888）。</summary>
     private const int BytesPerPixel = 4;
 
-    private readonly SKBitmap _bitmap;
+    /// <summary>確保するバッファの整列バイト数（SIMD・GPU 転送の要件を満たす）。</summary>
+    private const int AlignmentBytes = 64;
+
+    /// <summary>ピクセルバッファの先頭アドレス（0 は未確保）。</summary>
+    private nint _buffer;
 
     private bool _disposed;
 
-    /// <summary>内部 SKBitmap からラッパーを構築する（所有権を譲り受ける）。</summary>
-    /// <param name="bitmap">内部表現となる SKBitmap（BGRA8888・Premul）。所有権が本型へ移る。</param>
+    /// <summary>指定サイズのピクセルバッファを確保して初期化する（全ピクセル透明）。</summary>
+    /// <param name="width">幅（ピクセル）。0 以上。</param>
+    /// <param name="height">高さ（ピクセル）。0 以上。</param>
     /// <remarks>
-    /// ピクセルポインタ・ストライド・寸法はビットマップ生成後に不変のため、<br/>
-    /// 構築時に一度だけ取得して読み取り専用プロパティへ設定する（<see cref="GetPixel"/> / <see cref="SetPixel"/> の
-    /// ホットパスで毎回のネイティブ呼び出し・プロパティ評価を排除）。<br/>
-    /// <c>init</c> アクセサにより、初期化後は再設定できない（読み取り専用）。
+    /// ストライドは <c>幅 × 4</c>（パディングなし）である。ストライドを本来の値に固定することで、<br/>
+    /// ピクセル形式を共有する他の実装（Skia の <c>RowBytes</c> も <c>幅 × 4</c>）とコピー手順が一致する。
     /// </remarks>
-    internal EsBitmap(SKBitmap bitmap)
+    private unsafe EsBitmap(int width, int height)
     {
-        _bitmap = bitmap;
-        Address = bitmap.GetPixels();
-        Stride = bitmap.RowBytes;
-        Width = bitmap.Width;
-        Height = bitmap.Height;
-        Size = new SizeInt(Width, Height);
+        Width = width;
+        Height = height;
+        Size = new SizeInt(width, height);
+        Stride = width * BytesPerPixel;
+
+        var byteCount = (long)Stride * height;
+        if (byteCount == 0)
+        {
+            Address = 0;
+            return;
+        }
+
+        _buffer = (nint)NativeMemory.AlignedAlloc((nuint)byteCount, AlignmentBytes);
+        // 透明（全成分 0）で初期化する（未描画領域を「描かれていない」として扱うため）
+        NativeMemory.Clear((void*)_buffer, (nuint)byteCount);
+        Address = _buffer;
     }
 
     // ====================================================================
     // 解放
     // ====================================================================
 
-    /// <summary>内部 SKBitmap を解放する。</summary>
-    public void Dispose()
+    /// <summary>ピクセルバッファを解放する。</summary>
+    public unsafe void Dispose()
     {
         if (_disposed) return;
-        _bitmap.Dispose();
+
+        if (_buffer != 0)
+        {
+            NativeMemory.AlignedFree((void*)_buffer);
+            _buffer = 0;
+        }
+
         _disposed = true;
     }
 
@@ -65,27 +90,27 @@ public sealed class EsBitmap : IDisposable
     // 生成・変換
     // ====================================================================
 
-    /// <summary>指定サイズの空のビットマップ（BGRA8888・Premul）を生成する。</summary>
-    /// <param name="width">幅（ピクセル）。正の値。</param>
-    /// <param name="height">高さ（ピクセル）。正の値。</param>
+    /// <summary>指定サイズの空のビットマップ（BGRA8888・全ピクセル透明）を生成する。</summary>
+    /// <param name="width">幅（ピクセル）。0 以上。</param>
+    /// <param name="height">高さ（ピクセル）。0 以上。</param>
     /// <returns>生成されたビットマップ。</returns>
     public static EsBitmap Create(int width, int height)
-        => new(new SKBitmap(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul)));
+        => new(width, height);
 
-    /// <summary>指定矩形サイズの空のビットマップ（BGRA8888・Premul）を生成する。</summary>
+    /// <summary>指定矩形サイズの空のビットマップ（BGRA8888・全ピクセル透明）を生成する。</summary>
     /// <param name="size">サイズ（幅・高さを使用）。</param>
     /// <returns>生成されたビットマップ。</returns>
     public static EsBitmap Create(SizeInt size)
         => Create(size.Width, size.Height);
 
-    /// <summary>指定サイズのビットマップ（BGRA8888・Premul）を生成し、全ピクセルを指定色で塗りつぶす。</summary>
-    /// <param name="width">幅（ピクセル）。正の値。</param>
-    /// <param name="height">高さ（ピクセル）。正の値。</param>
-    /// <param name="color">塗りつぶし色（BGRA。アルファ乗算済み）。</param>
+    /// <summary>指定サイズのビットマップ（BGRA8888）を生成し、全ピクセルを指定色で塗りつぶす。</summary>
+    /// <param name="width">幅（ピクセル）。0 以上。</param>
+    /// <param name="height">高さ（ピクセル）。0 以上。</param>
+    /// <param name="color">塗りつぶし色。</param>
     /// <returns>生成されたビットマップ（全ピクセルが指定色）。</returns>
     /// <remarks>
     /// <see cref="Create(int, int)"/> で生成後に <see cref="Clear(Color)"/> を呼ぶのと等価。<br/>
-    /// 生成と一括塗りつぶしを1回で行う（テスト・サンプルで多用する単色 Bitmap 生成を簡便にする）。
+    /// 生成と一括塗りつぶしを 1 回で行う（テスト・サンプルで多用する単色 Bitmap 生成を簡便にする）。
     /// </remarks>
     public static EsBitmap Create(int width, int height, Color color)
     {
@@ -94,33 +119,12 @@ public sealed class EsBitmap : IDisposable
         return bitmap;
     }
 
-    /// <summary>指定矩形サイズのビットマップ（BGRA8888・Premul）を生成し、全ピクセルを指定色で塗りつぶす。</summary>
+    /// <summary>指定矩形サイズのビットマップ（BGRA8888）を生成し、全ピクセルを指定色で塗りつぶす。</summary>
     /// <param name="size">サイズ（幅・高さを使用）。</param>
-    /// <param name="color">塗りつぶし色（BGRA。アルファ乗算済み）。</param>
+    /// <param name="color">塗りつぶし色。</param>
     /// <returns>生成されたビットマップ（全ピクセルが指定色）。</returns>
     public static EsBitmap Create(SizeInt size, Color color)
         => Create(size.Width, size.Height, color);
-
-    /// <summary>SKBitmap からラッパーを生成する（引数の所有権を譲り受ける）。</summary>
-    /// <param name="bitmap">内部表現となる SKBitmap（BGRA8888・Premul）。</param>
-    /// <returns>生成されたビットマップ。</returns>
-    /// <remarks>
-    /// 引数はアルファ乗算済み BGRA8888 であること。<br/>
-    /// 戻り値の破棄時に引数の SKBitmap も Dispose される（所有権が移る）。
-    /// </remarks>
-    public static EsBitmap FromSKBitmap(SKBitmap bitmap) => new(bitmap);
-
-    /// <summary>内部 SKBitmap を返す（呼び出し側で Dispose しないこと）。</summary>
-    /// <returns>内部 SKBitmap（共有参照）。</returns>
-    /// <remarks>
-    /// 本型はコア（ピクセル操作）に該当するため、拡張クラスではなく本型に内包する。<br/>
-    /// 内部インスタンスをそのまま返すため、呼び出し側で Dispose しないこと（所有権は本型が保持）。
-    /// </remarks>
-    public SKBitmap ToSKBitmap()
-    {
-        ThrowIfDisposed();
-        return _bitmap;
-    }
 
     // ====================================================================
     // 基本プロパティ
@@ -135,10 +139,10 @@ public sealed class EsBitmap : IDisposable
     /// <summary>幅・高さ（ピクセル）。</summary>
     public SizeInt Size { get; init; }
 
-    /// <summary>ピクセルデータ先頭アドレス（BGRA8888）。</summary>
+    /// <summary>ピクセルデータ先頭アドレス（BGRA8888）。ピクセルを持たない場合は 0。</summary>
     public nint Address { get; init; }
 
-    /// <summary>1 ラインあたりのバイト数（パディングを含む）。</summary>
+    /// <summary>1 ラインあたりのバイト数（パディングなし。常に <c>幅 × 4</c>）。</summary>
     public int Stride { get; init; }
 
     /// <summary>破棄済みかどうか。</summary>
@@ -148,7 +152,7 @@ public sealed class EsBitmap : IDisposable
     // ピクセル操作
     // ====================================================================
 
-    /// <summary>指定座標のピクセルを BGRA（アルファ乗算済み）で取得する。</summary>
+    /// <summary>指定座標のピクセルを BGRA で取得する。</summary>
     /// <param name="x">X 座標（ピクセル）。</param>
     /// <param name="y">Y 座標（ピクセル）。</param>
     /// <returns>(B, G, R, A) のタプル。範囲外は IndexOutOfRangeException。</returns>
@@ -159,7 +163,7 @@ public sealed class EsBitmap : IDisposable
         return (p[0], p[1], p[2], p[3]);
     }
 
-    /// <summary>指定座標のピクセルを BGRA（アルファ乗算済み）で取得する。</summary>
+    /// <summary>指定座標のピクセルを取得する。</summary>
     /// <param name="point">座標（ピクセル）。</param>
     /// <returns>取得した色（<see cref="Color"/>）。範囲外は IndexOutOfRangeException。</returns>
     public Color GetPixel(PointInt point)
@@ -168,7 +172,7 @@ public sealed class EsBitmap : IDisposable
         return Color.FromArgb(a, r, g, b);
     }
 
-    /// <summary>指定座標のピクセルを BGRA（アルファ乗算済み）で設定する。</summary>
+    /// <summary>指定座標のピクセルを BGRA で設定する。</summary>
     /// <param name="x">X 座標（ピクセル）。</param>
     /// <param name="y">Y 座標（ピクセル）。</param>
     /// <param name="b">青成分（0〜255）。</param>
@@ -185,7 +189,7 @@ public sealed class EsBitmap : IDisposable
         p[3] = a;
     }
 
-    /// <summary>指定座標のピクセルを BGRA（アルファ乗算済み）で設定する。</summary>
+    /// <summary>指定座標のピクセルを設定する。</summary>
     /// <param name="point">座標（ピクセル）。</param>
     /// <param name="color">設定する色。</param>
     public void SetPixel(PointInt point, Color color)
@@ -217,10 +221,20 @@ public sealed class EsBitmap : IDisposable
     /// <param name="g">緑成分（0〜255）。</param>
     /// <param name="r">赤成分（0〜255）。</param>
     /// <param name="a">アルファ成分（0〜255）。</param>
-    public void Clear(byte b, byte g, byte r, byte a)
+    /// <remarks>与えられた成分をそのまま書き込む（乗算済みへの変換は行わない）。</remarks>
+    public unsafe void Clear(byte b, byte g, byte r, byte a)
     {
         ThrowIfDisposed();
-        _bitmap.Erase(new SKColor(r, g, b, a));
+
+        if (_buffer == 0)
+        {
+            return;
+        }
+
+        // BGRA の並びをそのまま uint として書き込む（成分の入れ替えをしない）
+        var pattern = (uint)(b | (g << 8) | (r << 16) | (a << 24));
+        var span = new Span<uint>((void*)_buffer, Stride * Height / BytesPerPixel);
+        span.Fill(pattern);
     }
 
     /// <summary>全ピクセルを指定色で塗りつぶす。</summary>
@@ -230,10 +244,17 @@ public sealed class EsBitmap : IDisposable
 
     /// <summary>本ビットマップの複製を生成する。</summary>
     /// <returns>独立した複製（所有権は呼び出し側）。</returns>
-    public EsBitmap Clone()
+    public unsafe EsBitmap Clone()
     {
         ThrowIfDisposed();
-        return new EsBitmap(_bitmap.Copy());
+
+        var result = Create(Width, Height);
+        if (_buffer != 0)
+        {
+            Buffer.MemoryCopy((void*)_buffer, (void*)result.Address, result.Stride * result.Height, Stride * Height);
+        }
+
+        return result;
     }
 
     /// <summary>画像から指定された矩形領域を切り出す。</summary>
@@ -244,7 +265,7 @@ public sealed class EsBitmap : IDisposable
     /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="width"/> / <paramref name="height"/> が0以下。</exception>
     /// <remarks>
-    /// デスティネーションは事前にゼロ初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
+    /// デスティネーションは生成時に 0 で初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
     /// 左上がソースの外（負）の場合も、要求矩形とソースの位置関係を保ってコピーする<br/>
     /// （内容を左上へ詰めない。画像外の領域が透明のまま残る）。<br/>
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
@@ -310,7 +331,7 @@ public sealed class EsBitmap : IDisposable
     /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="rect"/> の幅・高さが0以下。</exception>
     /// <remarks>
-    /// デスティネーションは事前にゼロ初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
+    /// デスティネーションは生成時に 0 で初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>

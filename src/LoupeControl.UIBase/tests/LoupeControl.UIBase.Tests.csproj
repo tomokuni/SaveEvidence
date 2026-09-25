@@ -22,4 +22,8 @@
     <ProjectReference Include="..\src\LoupeControl.UIBase.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
+  </ItemGroup>
+
 </Project>

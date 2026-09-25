@@ -1,5 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.Feature.LoupeCore.Tests;
 

@@ -1,6 +1,8 @@
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.ZoomView;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.ZoomView.MewUI;
 
@@ -30,3 +32,4 @@ internal static class ZoomSkiaRenderer
         canvas.DrawBitmap(source.ToSKBitmap(), src, dst);
     }
 }
+

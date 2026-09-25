@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Models;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.MewUI.Services;
 
@@ -105,7 +107,7 @@ internal static class ImageThumbnailLoader
             bitmap = resized;
         }
 
-        return EsBitmap.FromSKBitmap(bitmap);
+        return bitmap.ToEsBitmap();
     }
 
     /// <summary>縮小後に目標とする寸法を求める。</summary>
@@ -145,3 +147,4 @@ internal static class ImageThumbnailLoader
             new SKImageInfo(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Premul),
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
 }
+

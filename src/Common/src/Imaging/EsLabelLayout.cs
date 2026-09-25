@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.SaveEvidence.Common.Imaging;
 
 /// <summary>ラベルの体裁（内側余白・行送り・配置基準）を単一所有する計算ロジック（純粋関数）。</summary>
 /// <remarks>

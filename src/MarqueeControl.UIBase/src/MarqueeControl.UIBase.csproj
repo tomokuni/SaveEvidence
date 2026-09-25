@@ -31,4 +31,8 @@
     <InternalsVisibleTo Include="MarqueeControl.UIBase.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\src\Common.csproj" />
+  </ItemGroup>
+
 </Project>

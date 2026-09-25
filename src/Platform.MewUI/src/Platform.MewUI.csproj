@@ -29,4 +29,13 @@
     <InternalsVisibleTo Include="Platform.MewUI.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\src\Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Skia への依存を閉じ込めた層（SkiaEsCanvas / EsBitmap の Skia 相互変換） -->
+    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
+  </ItemGroup>
+
 </Project>

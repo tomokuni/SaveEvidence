@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.SaveEvidence.Common.Imaging;
 
 /// <summary>ラベル契約（<see cref="IEsLabel"/>）から UI 要素の配置指示を求める拡張メソッド。</summary>
 /// <remarks>

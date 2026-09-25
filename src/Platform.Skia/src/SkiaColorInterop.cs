@@ -1,7 +1,8 @@
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.Core.Imaging;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.Platform.Skia;
 
 /// <summary>コアの色型（<see cref="DrawingColor"/>）と Skia の色型の相互変換。</summary>
 /// <remarks>

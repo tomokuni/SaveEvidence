@@ -2,6 +2,8 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.Feature.LoupeCore;
 

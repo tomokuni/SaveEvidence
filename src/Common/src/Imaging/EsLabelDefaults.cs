@@ -1,6 +1,6 @@
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.SaveEvidence.Common.Imaging;
 
 /// <summary>ラベル（サイズ・座標）の体裁の既定値（コアの全コントロールで共有する）。</summary>
 /// <remarks>

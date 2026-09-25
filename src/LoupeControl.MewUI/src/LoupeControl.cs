@@ -14,6 +14,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
+using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Platform.Skia;
+
+
 
 namespace EsUtil.SaveEvidence.Loupe.MewUI;
 

@@ -3,6 +3,8 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
 
@@ -34,7 +36,7 @@ internal static class TestHelper
         var bitmap = new SKBitmap(size, size);
         bitmap.Erase(color);
 
-        return EsBitmap.FromSKBitmap(bitmap);
+        return bitmap.ToEsBitmap();
     }
 
     /// <summary>元画像の中央を区別できるテスト画像を生成する（中心 1 画素のみ別色）。</summary>
@@ -49,6 +51,7 @@ internal static class TestHelper
         bitmap.Erase(background);
         bitmap.SetPixel(size / 2, size / 2, center);
 
-        return EsBitmap.FromSKBitmap(bitmap);
+        return bitmap.ToEsBitmap();
     }
 }
+

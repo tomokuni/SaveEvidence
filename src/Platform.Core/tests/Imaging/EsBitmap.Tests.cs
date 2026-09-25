@@ -1,6 +1,5 @@
 using EsUtil.Platform.Core.Imaging;
 using RectInt = System.Drawing.Rectangle;
-using SkiaSharp;
 using Xunit;
 
 namespace EsUtil.Platform.Core.Tests;
@@ -29,7 +28,8 @@ public class EsBitmapTests
         using var bmp = Create(6, 8);
         Assert.Equal(6, bmp.Size.Width);
         Assert.Equal(8, bmp.Size.Height);
-        Assert.True(bmp.Stride >= 6 * 4);
+        // ストライドは幅×4 で固定される（行パディングなし。整列は確保の基底のみ）
+        Assert.Equal(6 * 4, bmp.Stride);
         Assert.False(bmp.IsDisposed);
     }
 
@@ -167,72 +167,6 @@ public class EsBitmapTests
         var px = clone.GetPixel(0, 0);
         Assert.Equal((byte)1, px.B);
         Assert.Equal((byte)128, px.A);
-    }
-
-    // ====================================================================
-    // SKBitmap 変換
-    // ====================================================================
-
-    [Fact]
-    public void ToSKBitmap_内部インスタンスを返す()
-    {
-        using var bmp = Create();
-        var sk = bmp.ToSKBitmap();
-        Assert.NotNull(sk);
-        Assert.Equal(SKColorType.Bgra8888, sk.ColorType);
-        Assert.Equal(SKAlphaType.Premul, sk.AlphaType);
-    }
-
-    [Fact]
-    public void FromSKBitmap_所有権を譲り受け破棄に連動する()
-    {
-        var sk = new SKBitmap(new SKImageInfo(4, 4, SKColorType.Bgra8888, SKAlphaType.Premul));
-        var bmp = EsBitmap.FromSKBitmap(sk);
-        Assert.Equal(4, bmp.Size.Width);
-        bmp.Dispose();
-        Assert.True(bmp.IsDisposed);
-    }
-
-    [Fact]
-    public void FromSKBitmap_部分透明アルファを保持する()
-    {
-        // SKBitmap に直接ピクセルを書き、EsBitmap 経由で値を検証する。
-        // （内部が SKBitmap のため、Avalonia ヘッドレス初期化に依存せず検証できる）
-        var sk = new SKBitmap(new SKImageInfo(4, 4, SKColorType.Bgra8888, SKAlphaType.Premul));
-        unsafe
-        {
-            var ptr = (byte*)sk.GetPixels();
-            // 50% アルファの青
-            ptr[0] = 255; // B
-            ptr[1] = 0;   // G
-            ptr[2] = 0;   // R
-            ptr[3] = 128; // A
-        }
-
-        using var bmp = EsBitmap.FromSKBitmap(sk);
-        var px = bmp.GetPixel(0, 0);
-        Assert.Equal((byte)255, px.B);
-        Assert.Equal((byte)0, px.G);
-        Assert.Equal((byte)0, px.R);
-        Assert.Equal((byte)128, px.A);
-    }
-
-    [Fact]
-    public void ヘッドレス不要でアルファ付きピクセルを往復させる()
-    {
-        // SKBitmap を内部に持つ EsBitmap は、Avalonia ヘッドレス初期化に依存せず
-        // アルファ付きピクセルデータを SKBitmap 経由の往復で保持できることを検証する。
-        using var bmp = EsBitmap.Create(3, 3);
-        bmp.SetPixel(2, 1, b: 10, g: 20, r: 30, a: 64);
-
-        using var sk = bmp.ToSKBitmap();
-        using var roundTripped = EsBitmap.FromSKBitmap(sk.Copy());
-
-        var px = roundTripped.GetPixel(2, 1);
-        Assert.Equal((byte)10, px.B);
-        Assert.Equal((byte)20, px.G);
-        Assert.Equal((byte)30, px.R);
-        Assert.Equal((byte)64, px.A);
     }
 
     // ====================================================================

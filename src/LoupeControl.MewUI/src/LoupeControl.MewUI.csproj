@@ -43,4 +43,12 @@
     <InternalsVisibleTo Include="LoupeControl.MewUI.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\src\Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
+  </ItemGroup>
+
 </Project>

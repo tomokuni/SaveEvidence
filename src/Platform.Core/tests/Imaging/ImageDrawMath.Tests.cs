@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Imaging;
-using SkiaSharp;
 using Xunit;
 
 namespace EsUtil.Platform.Core.Tests;
@@ -17,8 +16,8 @@ public class ImageDrawMathTests
         // 400x200 の画像を 100x100 の領域へ収める → 100x50（上下に 25 の余白）
         var rect = ImageDrawMath.ComputeDestination(400, 200, 100, 100, ImageDrawMode.Uniform);
 
-        Assert.Equal(0f, rect.Left);
-        Assert.Equal(25f, rect.Top);
+        Assert.Equal(0f, rect.X);
+        Assert.Equal(25f, rect.Y);
         Assert.Equal(100f, rect.Right);
         Assert.Equal(75f, rect.Bottom);
     }
@@ -29,8 +28,8 @@ public class ImageDrawMathTests
         // 200x400 の画像を 100x100 の領域へ収める → 50x100（左右に 25 の余白）
         var rect = ImageDrawMath.ComputeDestination(200, 400, 100, 100, ImageDrawMode.Uniform);
 
-        Assert.Equal(25f, rect.Left);
-        Assert.Equal(0f, rect.Top);
+        Assert.Equal(25f, rect.X);
+        Assert.Equal(0f, rect.Y);
         Assert.Equal(75f, rect.Right);
         Assert.Equal(100f, rect.Bottom);
     }
@@ -40,8 +39,8 @@ public class ImageDrawMathTests
     {
         var rect = ImageDrawMath.ComputeDestination(1920, 1080, 960, 540, ImageDrawMode.Uniform);
 
-        Assert.Equal(0f, rect.Left);
-        Assert.Equal(0f, rect.Top);
+        Assert.Equal(0f, rect.X);
+        Assert.Equal(0f, rect.Y);
         Assert.Equal(960f, rect.Right);
         Assert.Equal(540f, rect.Bottom);
     }
@@ -51,8 +50,8 @@ public class ImageDrawMathTests
     {
         var rect = ImageDrawMath.ComputeDestination(400, 200, 100, 100, ImageDrawMode.Fill);
 
-        Assert.Equal(0f, rect.Left);
-        Assert.Equal(0f, rect.Top);
+        Assert.Equal(0f, rect.X);
+        Assert.Equal(0f, rect.Y);
         Assert.Equal(100f, rect.Right);
         Assert.Equal(100f, rect.Bottom);
     }
@@ -77,8 +76,8 @@ public class ImageDrawMathTests
         // 40x20 の画像を 200x200 の領域へ Uniform で収める → 200x100（拡大はされる）
         var rect = ImageDrawMath.ComputeDestination(40, 20, 200, 200, ImageDrawMode.Uniform);
 
-        Assert.Equal(0f, rect.Left);
-        Assert.Equal(50f, rect.Top);
+        Assert.Equal(0f, rect.X);
+        Assert.Equal(50f, rect.Y);
         Assert.Equal(200f, rect.Right);
         Assert.Equal(150f, rect.Bottom);
     }
@@ -89,8 +88,8 @@ public class ImageDrawMathTests
         // 1000x500 の画像を 100x100 の領域へ収める → 100x50（縮小して中央へ）
         var rect = ImageDrawMath.ComputeDestination(1000, 500, 100, 100, ImageDrawMode.Uniform);
 
-        Assert.Equal(0f, rect.Left);
-        Assert.Equal(25f, rect.Top);
+        Assert.Equal(0f, rect.X);
+        Assert.Equal(25f, rect.Y);
         Assert.Equal(100f, rect.Right);
         Assert.Equal(75f, rect.Bottom);
     }
@@ -101,10 +100,10 @@ public class ImageDrawMathTests
         // 余白が割り切れない場合でも、上下（左右）の余白が等分される（中央寄せの対称性）
         var rect = ImageDrawMath.ComputeDestination(300, 100, 100, 100, ImageDrawMode.Uniform);
 
-        Assert.Equal(0f, rect.Left);
+        Assert.Equal(0f, rect.X);
         Assert.Equal(100f, rect.Right);
-        // 高さは 100/3（単精度の端数を含む）のため、中心と高さで検証する
-        Assert.Equal(50.0, (rect.Top + rect.Bottom) / 2.0, 4);
-        Assert.Equal(100.0 / 3.0, rect.Bottom - rect.Top, 4);
+        // 高さは 100/3（端数を含む）のため、中心と高さで検証する
+        Assert.Equal(50.0, (rect.Y + rect.Bottom) / 2.0, 4);
+        Assert.Equal(100.0 / 3.0, rect.Bottom - rect.Y, 4);
     }
 }

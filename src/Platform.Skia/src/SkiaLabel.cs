@@ -1,8 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.Core.Imaging;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.Platform.Skia;
 
 /// <summary>Skia のラベル 1 件（背景 + 文字）の描画順を単一所有する。</summary>
 /// <remarks>

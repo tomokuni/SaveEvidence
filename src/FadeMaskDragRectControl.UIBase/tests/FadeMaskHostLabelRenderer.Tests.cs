@@ -4,6 +4,8 @@ using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
 

@@ -15,6 +15,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
+using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Platform.Skia;
+
+
 
 namespace EsUtil.SaveEvidence.Marquee.MewUI;
 

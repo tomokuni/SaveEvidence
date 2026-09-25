@@ -1,9 +1,8 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.Platform.Skia.Tests;
 
 /// <summary><see cref="SkiaGeometryInterop"/> の変換のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

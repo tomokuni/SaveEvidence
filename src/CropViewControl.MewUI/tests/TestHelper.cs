@@ -1,5 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.CropView.MewUI.Tests;
 
@@ -17,7 +19,7 @@ internal static class TestHelper
         var bitmap = new SKBitmap(width, height);
         bitmap.Erase(color);
 
-        return EsBitmap.FromSKBitmap(bitmap);
+        return bitmap.ToEsBitmap();
     }
 
     /// <summary>描画先（キャンバスとその画素を読む手段）を生成する。</summary>
@@ -90,3 +92,4 @@ internal sealed class RenderTarget : IDisposable
         _bitmap.Dispose();
     }
 }
+

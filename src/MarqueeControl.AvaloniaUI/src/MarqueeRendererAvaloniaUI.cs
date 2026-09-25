@@ -2,6 +2,8 @@ using Avalonia.Media;
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 

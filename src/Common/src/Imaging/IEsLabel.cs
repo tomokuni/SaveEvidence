@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.SaveEvidence.Common.Imaging;
 
 /// <summary>ラベル 1 件の描画契約（文言・外観と、実寸から配置を求める契約）。</summary>
 /// <remarks>

@@ -2,6 +2,8 @@ using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase;
 

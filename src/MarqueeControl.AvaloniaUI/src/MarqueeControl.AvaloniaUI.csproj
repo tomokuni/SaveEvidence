@@ -32,4 +32,8 @@
     <ProjectReference Include="..\..\MarqueeControl.UIBase\src\MarqueeControl.UIBase.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\src\Common.csproj" />
+  </ItemGroup>
+
 </Project>

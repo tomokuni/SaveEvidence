@@ -44,4 +44,8 @@
     <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -2,6 +2,8 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary><see cref="LoupeCoordLabel"/> のテスト（UI 非依存・並列実行）。</summary>
@@ -148,3 +150,4 @@ public class LoupeCoordLabelTests
         Assert.Equal(DrawingColor.Black, element.BackgroundColor);
     }
 }
+

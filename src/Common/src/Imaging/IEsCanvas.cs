@@ -1,7 +1,8 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.SaveEvidence.Common.Imaging;
 
 /// <summary>描画内容を描画面へ写す即時描画ポート（UI フレームワーク非依存）。</summary>
 /// <remarks>
@@ -15,7 +16,7 @@ namespace EsUtil.Platform.Core.Imaging;
 /// <b>描画順</b>: 呼び出し順に上書きする（半透明は重ね塗りになる）。<br/>
 /// <b>破棄</b>: 本ポートは描画面を所有しない（アダプタが保持する描画面の寿命に従う）。<br/>
 /// <b>例外</b>: 引数の不正は <see cref="ArgumentNullException"/> 等を投げてよい（実装の任意）。<br/>
-/// UI フレームワークに依存しないため、テストでは Skia のビットマップ（<see cref="SkiaEsCanvas"/>）を使い、<br/>
+/// UI フレームワークに依存しないため、テストでは Skia のビットマップ（<c>SkiaEsCanvas</c>）を使い、<br/>
 /// UI 初期化とウィンドウなしで描画結果の画素を検証できる。
 /// </remarks>
 public interface IEsCanvas

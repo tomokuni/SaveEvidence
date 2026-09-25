@@ -22,4 +22,8 @@
     <ProjectReference Include="..\src\LoupeControl.MewUI.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
+  </ItemGroup>
+
 </Project>

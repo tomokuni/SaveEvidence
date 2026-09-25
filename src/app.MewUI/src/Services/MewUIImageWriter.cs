@@ -1,5 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.MewUI.Services;
 
@@ -60,3 +62,4 @@ internal sealed class MewUIImageWriter : EsUtil.SaveEvidence.Services.IImageWrit
         return s_formats.TryGetValue(extension, out var format) ? format : SKEncodedImageFormat.Png;
     }
 }
+

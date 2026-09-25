@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EsUtil.SaveEvidence.Common</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。 -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 幾何値型（EsPoint / EsSize / EsRect）のみに依存する（UI フレームワーク・外部パッケージには依存しない） -->
+    <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="Common.Tests" />
+  </ItemGroup>
+
+</Project>

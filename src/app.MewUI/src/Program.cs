@@ -11,6 +11,8 @@ using EsUtil.SaveEvidence.MewUI.Logging;
 using EsUtil.SaveEvidence.MewUI.Services;
 using EsUtil.SaveEvidence.MewUI.Views;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.MewUI;
 
@@ -176,6 +178,7 @@ internal static class Program
             null, SKShaderTileMode.Clamp);
         canvas.DrawRect(new SKRect(0, 0, 320, 180), paint);
 
-        return EsBitmap.FromSKBitmap(bitmap);
+        return bitmap.ToEsBitmap();
     }
 }
+

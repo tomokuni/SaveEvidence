@@ -1,7 +1,8 @@
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
+using EsUtil.Platform.Core.Imaging;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.Platform.Skia;
 
 /// <summary>コアの幾何型と Skia の幾何型の相互変換。</summary>
 /// <remarks>

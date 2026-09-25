@@ -1,6 +1,8 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.Feature.MarqueeCore;
 

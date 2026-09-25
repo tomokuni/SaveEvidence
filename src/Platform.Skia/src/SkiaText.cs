@@ -1,8 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.Core.Imaging;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.Platform.Skia;
 
 /// <summary>Skia のテキスト描画（フォント解決・実寸測定・描画）を単一所有する。</summary>
 /// <remarks>

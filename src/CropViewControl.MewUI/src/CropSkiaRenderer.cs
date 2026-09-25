@@ -1,6 +1,8 @@
 using EsUtil.SaveEvidence.CropView;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.CropView.MewUI;
 
@@ -65,3 +67,4 @@ internal static class CropSkiaRenderer
         canvas.DrawRect(inset, paint);
     }
 }
+

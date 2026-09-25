@@ -1,6 +1,8 @@
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
 

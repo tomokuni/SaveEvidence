@@ -1,7 +1,7 @@
-using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Common.Imaging;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.SaveEvidence.Common.Tests;
 
 /// <summary><see cref="EsLabelMetrics"/> のフォントサイズ補正テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

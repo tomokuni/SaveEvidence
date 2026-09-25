@@ -1,5 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.Feature.MarqueeCore.Tests;
 

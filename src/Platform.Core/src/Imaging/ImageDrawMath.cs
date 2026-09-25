@@ -1,4 +1,4 @@
-using SkiaSharp;
+using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Platform.Core.Imaging;
 
@@ -18,34 +18,32 @@ public static class ImageDrawMath
     /// <param name="targetWidth">描画先の幅。</param>
     /// <param name="targetHeight">描画先の高さ。</param>
     /// <param name="mode">配置方法（縦横比を保つ / 領域全体へ引き伸ばす）。</param>
-    /// <returns>描画先の矩形。元画像または描画先が空の場合は <see cref="SKRect.Empty"/>。</returns>
+    /// <returns>描画先の矩形。元画像または描画先が空の場合は空の矩形（<see cref="EsRect.IsEmpty"/> が真）。</returns>
     /// <remarks>
-    /// 1. 元画像・描画先のいずれかが 0 以下なら <see cref="SKRect.Empty"/> を返す。<br/>
+    /// 1. 元画像・描画先のいずれかが 0 以下なら空の矩形を返す。<br/>
     /// 2. <see cref="ImageDrawMode.Fill"/> は描画先の全域（左上を原点）を返す。<br/>
-    /// 3. <see cref="ImageDrawMode.Uniform"/> は幅・高さそれぞれの倍率の小さい方を採用し、中央へ寄せる。
+    /// 3. <see cref="ImageDrawMode.Uniform"/> は幅・高さそれぞれの倍率の小さい方を採用し、中央へ寄せる。<br/>
+    /// <br/>
+    /// 戻り値は UI 非依存の <see cref="EsRect"/> である（各 UI が自 UI の矩形型へ変換する）。
     /// </remarks>
-    public static SKRect ComputeDestination(
+    public static EsRect ComputeDestination(
         int sourceWidth, int sourceHeight, int targetWidth, int targetHeight, ImageDrawMode mode)
     {
         if (sourceWidth <= 0 || sourceHeight <= 0 || targetWidth <= 0 || targetHeight <= 0)
         {
-            return SKRect.Empty;
+            return default;
         }
 
         if (mode == ImageDrawMode.Fill)
         {
-            return new SKRect(0, 0, targetWidth, targetHeight);
+            return new EsRect(0, 0, targetWidth, targetHeight);
         }
 
         // 縦横比を保つため、幅・高さそれぞれの倍率の小さい方（Uniform）を採用する
         var scale = Math.Min((double)targetWidth / sourceWidth, (double)targetHeight / sourceHeight);
-        var width = (float)(sourceWidth * scale);
-        var height = (float)(sourceHeight * scale);
+        var width = sourceWidth * scale;
+        var height = sourceHeight * scale;
 
-        return new SKRect(
-            (targetWidth - width) / 2,
-            (targetHeight - height) / 2,
-            (targetWidth + width) / 2,
-            (targetHeight + height) / 2);
+        return new EsRect((targetWidth - width) / 2, (targetHeight - height) / 2, width, height);
     }
 }

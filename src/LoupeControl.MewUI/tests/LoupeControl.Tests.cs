@@ -7,6 +7,8 @@ using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
 

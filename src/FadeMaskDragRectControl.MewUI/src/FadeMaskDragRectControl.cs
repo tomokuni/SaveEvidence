@@ -13,6 +13,8 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 

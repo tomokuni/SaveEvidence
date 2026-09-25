@@ -1,8 +1,10 @@
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Common.Imaging;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.Platform.Skia;
 
 /// <summary><see cref="SKCanvas"/> を <see cref="IEsCanvas"/> へ適合させるアダプタ。</summary>
 /// <remarks>

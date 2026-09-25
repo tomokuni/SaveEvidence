@@ -1,4 +1,4 @@
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.SaveEvidence.Common.Imaging;
 
 /// <summary>ラベルのフォントサイズの安全域と補正を単一所有する（純粋関数）。</summary>
 /// <remarks>

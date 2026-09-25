@@ -4,6 +4,8 @@ using Avalonia.Media;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.Platform.AvaloniaUI.Imaging;
 

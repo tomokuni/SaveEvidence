@@ -1,5 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.Platform.MewUI.Imaging;
 
@@ -47,6 +49,7 @@ internal static class SkiaImageRenderer
         }
 
         // ToSKBitmap は内部インスタンスの共有参照を返すため破棄しない
-        canvas.DrawBitmap(bitmap.ToSKBitmap(), destination);
+        canvas.DrawBitmap(bitmap.ToSKBitmap(), destination.ToSKRect());
     }
 }
+

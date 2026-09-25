@@ -1,5 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase;
 
@@ -14,7 +16,8 @@ public static class MarqueeOuterRenderer
 {
     /// <summary>暗転マスク・枠線を描く。</summary>
     /// <param name="canvas">描画先の描画ポート。null 不可。</param>
-    /// <param name="frame">描画内容（コアが決定した値）。</param>
+    /// <param name="frame">描画内容（コアが決定した値）。</param>
+
     /// <param name="paint">描画に使う色（描画にだけ必要な設定。本層が単一所有する）。null 不可。</param>
     /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
     /// <remarks>

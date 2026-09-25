@@ -1,5 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
 

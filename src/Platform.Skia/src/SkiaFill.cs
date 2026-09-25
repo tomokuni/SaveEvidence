@@ -1,8 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.Core.Imaging;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.Platform.Skia;
 
 /// <summary>Skia の矩形塗り（単色・不透明前提）を単一所有する。</summary>
 /// <remarks>

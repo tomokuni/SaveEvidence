@@ -1,9 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Common.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.SaveEvidence.Common.Tests;
 
 /// <summary><see cref="EsLabelElement"/> のテスト（コアの配置から UI 要素の配置指示への写像）。</summary>
 /// <remarks>

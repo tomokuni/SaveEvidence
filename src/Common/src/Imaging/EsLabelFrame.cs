@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Platform.Core.Imaging;
+namespace EsUtil.SaveEvidence.Common.Imaging;
 
 /// <summary>ラベル 1 件の配置（背景矩形と文字の描画原点）を表す値オブジェクト。</summary>
 /// <param name="Background">背景の矩形（DIP。呼び出し側の座標系に従う）。</param>

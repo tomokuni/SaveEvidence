@@ -1,6 +1,8 @@
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
+using EsUtil.Platform.Skia;
+
 
 namespace EsUtil.SaveEvidence.MewUI.Tests;
 
@@ -17,7 +19,7 @@ internal static class TestHelper
         var bitmap = new SKBitmap(width, height);
         bitmap.Erase(SKColors.CornflowerBlue);
 
-        return EsBitmap.FromSKBitmap(bitmap);
+        return bitmap.ToEsBitmap();
     }
 
     /// <summary>一時ファイルのパスを作る（ファイルは作成しない）。</summary>
@@ -82,3 +84,4 @@ internal sealed class RecordingLogger : ILogger
         Messages.Add(formatter(state, exception));
     }
 }
+

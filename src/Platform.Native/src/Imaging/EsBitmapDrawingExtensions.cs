@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Imaging;
-using SkiaSharp;
 using System.Runtime.Versioning;
 using DrawingBitmap = System.Drawing.Bitmap;
 using DrawingImageLockMode = System.Drawing.Imaging.ImageLockMode;
@@ -29,17 +28,18 @@ public static class EsBitmapDrawingExtensions
     {
         var w = bitmap.Width;
         var h = bitmap.Height;
-        var buffer = new SKBitmap(new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul));
+        // コアのビットマップを直接確保する（Skia を経由しない。ストライドは幅×4 で固定）
+        var buffer = EsBitmap.Create(w, h);
         var data = bitmap.LockBits(new RectInt(0, 0, w, h), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
-            var dstStride = buffer.RowBytes;
+            var dstStride = buffer.Stride;
             var srcStride = data.Stride;
             var rowBytes = Math.Min(dstStride, srcStride);
             var totalBytes = rowBytes * h;
             unsafe
             {
-                var dst = (byte*)buffer.GetPixels();
+                var dst = (byte*)buffer.Address;
                 var src = (byte*)data.Scan0;
                 if (srcStride == dstStride)
                 {
@@ -54,8 +54,8 @@ public static class EsBitmapDrawingExtensions
                     }
                 }
             }
-            // コアの公開ファクトリへ委譲（SKBitmap の所有権を移す）
-            return EsBitmap.FromSKBitmap(buffer);
+
+            return buffer;
         }
         finally
         {

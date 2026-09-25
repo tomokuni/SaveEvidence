@@ -14,6 +14,8 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
+using EsUtil.SaveEvidence.Common.Imaging;
+
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
