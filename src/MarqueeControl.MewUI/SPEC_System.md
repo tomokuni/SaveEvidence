@@ -45,7 +45,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 層 | 責務 |
 | --- | --- |
 | `Feature.MarqueeCore` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成（効果の適用順、ビューポート変化の通知、ホイールの解釈、ログの保持を含む）**。公開ファサード `Marquee` を唯一の窓口とし、状態機械とフレーム解決は内部契約（`internal`）とする |
-| `MarqueeControl.UIBase` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
+| `MarqueeControl.UIBase` | 色（`MarqueePaint`）と描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
 | `MarqueeControl.MewUI` | 入力（マウス・キー・ホイール）をコア型へ変換してファサードへ通知する、`IMarqueeEffects` を実装して要求された効果（再描画・フォーカス・マウスキャプチャ・カーソル形状/操作）を適用する、通知を公開イベントへ転送する、描画内容を描画層（`MarqueeRenderer`）へ渡す（描画先は `SkiaEsCanvas`）、DPI の追従 |
 | ホスト | 座標変換ポートの設定、選択の復元・確定・キャンセル、重ね順の管理、ビューポート変化の通知 |
 
@@ -80,10 +80,10 @@ src/MarqueeControl.MewUI/
 | コンポーネント | 責務 |
 | --- | --- |
 | `MarqueeControl` | `MewProperty` の定義、入力のドメイン変換とファサードへの通知、`IMarqueeEffects` の実装（効果の適用）、マウスキャプチャの取得/解放、DPI 変更の追従、描画内容の描画層（`MarqueeRenderer`）への委譲、子要素（図形キャンバス・ラベル要素）の計測と配置、付加情報の描画機会の通知（`Rendered`） |
-| `MarqueeRenderer`（描画層） | 描画内容を層の順に描画ポートへ写す。`DrawShapes`（図形）は本コントロールが呼ぶ。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため）。**サイズ・座標ラベルも描かない**（コントロールがテキスト要素として表示する） |
-| `MarqueeOuterRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `OuterDecoFrame` を描画ポートへ写す（暗転マスク・枠線。判断を持たない）。**ラベル（サイズ・座標）は描かない**（コントロールがテキスト要素として表示する） |
-| `MarqueeInnerRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `InnerDecoFrame` を描画ポートへ写す（穴あけ矩形の塗り・内枠。判断を持たない） |
-| UI 層のラベル要素 | 親パネルの子要素（`Border` + `TextBlock`）として中心座標・サイズラベルを配置する。文言・外観と順序（`MarqueeDrawContent.Layers`）は Core が単一所有し、実寸から配置矩形を求める写像は `MarqueeLabelPlan`（描画層）が単一所有する |
+| `MarqueeRenderer`（描画層） | 描画内容を層の順に描画ポートへ写す。色は `MarqueePaint`（生成時に注入）から引く。`DrawShapes`（図形）は本コントロールが呼ぶ。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため）。**サイズ・座標ラベルも描かない**（コントロールがテキスト要素として表示する） |
+| `MarqueeOuterRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `OuterDecoFrame` を描画ポートへ写す（暗転マスク・枠線。色は引数の `MarqueePaint` から引く）。**ラベル（サイズ・座標）は描かない**（コントロールがテキスト要素として表示する） |
+| `MarqueeInnerRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `InnerDecoFrame` を描画ポートへ写す（穴あけ矩形の塗り・内枠。色は引数の `MarqueePaint` から引く） |
+| UI 層のラベル要素 | 親パネルの子要素（`Border` + `TextBlock`）として中心座標・サイズラベルを配置する。文言・寸法と順序（`MarqueeDrawContent.Layers`）は Core が、色は `MarqueePaint`（描画層）が単一所有し、実寸から配置矩形を求める写像は `MarqueeLabelPlan`（描画層）が単一所有する |
 | `MarqueePointEventArgs` / `SelectionRectEventArgs` / `MarqueeRenderedEventArgs` | 通知時点の座標（矩形）とスナップショットの組・描画完了（描画先と描画内容の契約） |
 
 ## クラス図
@@ -104,6 +104,7 @@ classDiagram
     }
     class MarqueeControl {
         +MarqueeOptions Options
+        +MarqueePaint Paint
         +double RenderScaling
         +MarqueeSnapshot CurrentSnapshot
         +SetCoordinateTransform(port) void
@@ -162,10 +163,18 @@ classDiagram
         +MarqueeCaptureAction Capture
     }
     class MarqueeRenderer {
-        <<MarqueeControl.UIBase / 描画層（IMarqueeRenderer の既定実装）>>
-        +Default MarqueeRenderer$
+        <<MarqueeControl.UIBase / 描画層（MarqueeRendererBase の派生）>>
+        +MarqueeRenderer(paint) void
         +DrawShapes(canvas, content)$ void
         +ResolveLabels(content, measureText) EsLabelElement[]$
+    }
+    class MarqueePaint {
+        <<MarqueeControl.UIBase / 描画層>>
+        +DrawingColor HandleColor / HandleBorderColor / MarkerColor
+        +DrawingColor SizeLabelColor / SizeLabelBackgroundColor
+        +DrawingColor CoordLabelColor / CoordLabelBackgroundColor
+        +DrawingColor OverlayColor / OuterBorderColor
+        +DrawingColor InnerFillColor / InnerBorderColor
     }
       class MarqueeOuterRenderer {
         <<MarqueeControl.UIBase / 描画層>>
@@ -183,7 +192,6 @@ classDiagram
       class MarqueeOptions {
           <<Feature.MarqueeCore>>
           +double HandleSize
-          +DrawingColor HandleColor / HandleBorderColor
           +double CoordLabelFontSize / SizeLabelFontSize
           +double HandleHitRadius / MinSelectionSize
           +bool ClampToDomainBounds
@@ -237,6 +245,8 @@ classDiagram
     MarqueeControl ..> MarqueeRenderer : 描画を委譲（図形。SkiaEsCanvas 経由）
     MarqueeRenderer ..> MarqueeOuterRenderer : 委譲（外側の装飾）
     MarqueeRenderer ..> MarqueeInnerRenderer : 委譲（内側の装飾）
+    MarqueeControl ..> MarqueePaint : 色の設定（Paint）
+    MarqueeRenderer ..> MarqueePaint : 色を保持
     MarqueeSession *-- MarqueeState : 状態機械
     MarqueeSession ..> ICursorService : カーソル操作
     MarqueeState ..> SelectionGeometry : 幾何計算

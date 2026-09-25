@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.MarqueeCore.Decoration;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Feature.MarqueeCore;
 
@@ -9,27 +8,23 @@ namespace EsUtil.Feature.MarqueeCore;
 /// <param name="Rect">選択矩形（DIP。ハンドルの中心はこの矩形の辺・角から求める）。</param>
 /// <param name="HandleSize">ハンドルの一辺サイズ（DIP）。</param>
 /// <param name="BorderThickness">ハンドル枠の線の太さ（DIP）。</param>
-/// <param name="FillColor">ハンドルの塗り色（未指定は白へ解決済み）。</param>
-/// <param name="BorderColor">ハンドル枠の色（外側の装飾の枠線色）。</param>
 /// <remarks>
 /// ハンドルの中心位置（8 方向）は <see cref="Selection.SelectionGeometry.GetHandlePosition"/> が単一所有するため、<br/>
-/// 描画側は本値を渡して描くだけとする（線の太さを描画層が定数で持つと、コアの外観設定と非対称になる）。
+/// 描画側は本値を渡して描くだけとする（線の太さを描画層が定数で持つと、コアの寸法設定と非対称になる）。<br/>
+/// <b>色は含まない</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c>）が単一所有する。
 /// </remarks>
 public readonly record struct MarqueeHandles(
     EsRect Rect,
     double HandleSize,
-    double BorderThickness,
-    DrawingColor FillColor,
-    DrawingColor BorderColor);
+    double BorderThickness);
 
 /// <summary>始点マーカー（十字線）の描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
 /// <param name="Center">十字線の中心（DIP）。</param>
-/// <param name="Color">十字線の色。</param>
 /// <param name="Thickness">十字線の太さ（DIP）。</param>
 /// <param name="Size">十字線の半幅（DIP）。</param>
+/// <remarks><b>色は含まない</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c>）が単一所有する。</remarks>
 public readonly record struct MarqueeMarker(
     EsPoint Center,
-    DrawingColor Color,
     double Thickness,
     double Size);
 
@@ -38,11 +33,10 @@ public readonly record struct MarqueeMarker(
 /// <param name="CursorDip">カーソルのローカル DIP 座標（ラベルはこの右側へ置く）。</param>
 /// <param name="ClientSize">描画領域のサイズ（DIP。はみ出しのクランプに使う。0 以下の軸はクランプしない）。</param>
 /// <param name="FontSize">フォントサイズ（DIP）。</param>
-/// <param name="TextColor">文字色。</param>
-/// <param name="BackgroundColor">背景色（不透明度は色のアルファに統合）。</param>
 /// <remarks>
 /// 文言（<see cref="CoordinateFormatter"/>）と配置（<see cref="EsLabelLayout"/> と <see cref="MarqueeOptions.CoordLabelOffset"/>）は<br/>
 /// コアが単一所有する。<br/>
+/// <b>色は含まない</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c>）が単一所有する。<br/>
 /// <b>文字の描画は UI 層が担う</b>: テキストの実寸は描画 API でしか測れないため、<br/>
 /// UI 層が実寸を <see cref="ComputeFrame"/> へ渡し、返された配置へテキスト要素を置く<br/>
 /// （要素への写像は <see cref="EsLabelExtensions.ToElement"/> が単一所有する）。<br/>
@@ -52,9 +46,7 @@ public readonly record struct MarqueeCoordLabel(
     string Text,
     EsPoint CursorDip,
     EsSize ClientSize,
-    double FontSize,
-    DrawingColor TextColor,
-    DrawingColor BackgroundColor) : IEsLabel
+    double FontSize) : IEsLabel
 {
     /// <summary>テキストの実寸からラベルの配置（背景矩形・文字の描画原点）を求める。</summary>
     /// <param name="textSize">テキストの実寸（描画 API で測定した値・DIP）。</param>

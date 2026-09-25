@@ -33,10 +33,11 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - 矢印キーによる1Pixel単位のキーボード微調整（nudge）
 - ドメイン座標系で正確な nudge（矢印キー1回 = ドメイン1Pixel）
 - ドラッグハンドル・始点マーカーの自己描画
-- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト（外観と表示ポリシーは `DecoOptions`（`Feature.MarqueeCore` の `Decoration` 名前空間の `MarqueeDecoOptions`）が単一所有し、描画内容の判断は Core（`Decoration`）が持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
+- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト（**表示ポリシーと寸法**は `DecoOptions`（`Feature.MarqueeCore` の `Decoration` 名前空間の `MarqueeDecoOptions`）が、**色**は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有し、描画内容の判断は Core（`Decoration`）が持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
 - **ハンドル表示の切替**: `Options.ShowHandles = false` でハンドルを描かず枠線と外側の装飾だけを表示する
+- **色の設定（`Paint`）**: ハンドル・十字マーカー・ラベル・装飾の色は**描画にだけ必要な設定**のためコアには含めず、描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有する。`Paint` プロパティで指定し（既定は `MarqueePaint.Default`）、部分変更は `Paint = MarqueePaint.Default with { ... }` で行う（指定しない色は既定値を保つ）。**描くかどうかは色のアルファではなく `DecoOptions` の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）が決める**
 - カーソル座標ラベルの表示（任意設定・`(x, y)` 形式）
-- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベル（`MarqueeCoordLabel`）の**文言・外観は Core が単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`FormattedText`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
+- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベル（`MarqueeCoordLabel`）の**文言・寸法は Core が、色は描画層の `MarqueePaint` が単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`FormattedText`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - Avalonia Binding 対応の StyledProperty
 - ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
@@ -62,9 +63,13 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 
 ```csharp
 using Avalonia;
+using Avalonia.Media;                        // Colors
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
-using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
-using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize（コア提供）
+using EsUtil.Feature.MarqueeCore;            // MarqueeOptions
+using EsUtil.Feature.MarqueeCore.Decoration; // MarqueeDecoOptions
+using EsUtil.SaveEvidence.Marquee.UIBase;    // MarqueePaint
+using EsUtil.Platform.Core.Coordinate;       // ICoordTransform / CoordTransform（コア提供）
+using EsUtil.Platform.Core.Geometry;         // EsPoint / EsSize（コア提供）
 ```
 
 ## 5. クイックスタート
@@ -81,7 +86,7 @@ using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize（コア提供）
 </Window>
 ```
 
-外観・対話パラメータは 1 つの設定値（`Options`）にまとまっているため、AXAML の属性では指定せずコード（またはバインディング）から設定します。
+外観・表示可否・対話パラメータは設定値（`Options` / `DecoOptions`）、色は描画の設定値（`Paint`）にまとまっているため、AXAML の属性では指定せずコード（またはバインディング）から設定します。
 
 ### Code-behind（設定・イベント購読・座標ポート設定）
 
@@ -94,11 +99,19 @@ var marquee = new MarqueeControl
         HandleSize = 10.0,
     },
 
-    // 装飾（暗転マスク・穴あけ枠・ラベル）は別の設定値が単一所有する
+    // 色（描画にだけ必要な設定）は描画層の 1 値が単一所有する
+    Paint = MarqueePaint.Default with
+    {
+        // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描く（色はここで与える）
+        OuterBorderColor = Colors.White.ToDrawingColor(),
+    },
+
+    // 装飾（暗転マスク・穴あけ枠）の表示可否と寸法は別の設定値が単一所有する
     DecoOptions = MarqueeDecoOptions.Default with
     {
-        // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描く
-        OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with { BorderColor = Colors.White.ToDrawingColor() },
+        ShowOverlay = true,
+        ShowOuterBorder = true,
+        OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with { BorderThickness = 2.0 },
     },
 };
 
@@ -170,7 +183,7 @@ MarqueeControl/
 
 ### 9.1 共有コア（`Feature.MarqueeCore`）と描画層（`MarqueeControl.UIBase`）
 
-UI 非依存の幾何計算・状態機械・入力の解釈は `src/Feature.MarqueeCore` が単一所有し、描画の手順（層の順序と描画ポートへの写し方）は `src/MarqueeControl.UIBase` が単一所有します（Avalonia / MewUI で共有）。UI 層はアダプタ（`AvaloniaCanvas` など）とラベル要素の配置を担います。
+UI 非依存の幾何計算・状態機械・入力の解釈は `src/Feature.MarqueeCore` が単一所有し、描画の手順（層の順序と描画ポートへの写し方）と色（`MarqueePaint`）は `src/MarqueeControl.UIBase` が単一所有します（Avalonia / MewUI で共有）。UI 層はアダプタ（`AvaloniaCanvas` など）とラベル要素の配置を担います。
 
 本コントロールの層構成（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 
@@ -180,7 +193,7 @@ Feature.MarqueeCore/
 │   ├── HitTarget.cs                 # 公開型（ドラッグハンドル種別 enum）
 │   ├── MarqueeInteractionState.cs   # 公開型（対話状態 enum）
 │   ├── MarqueeSnapshot.cs           # 公開型（状態 Snapshot record。座標は EsRect / EsPoint）
-│   ├── MarqueeOptions.cs            # 公開型（外観・対話パラメータの設定値 record）
+│   ├── MarqueeOptions.cs            # 公開型（寸法・表示可否・対話パラメータの設定値 record）
 │   ├── Marquee.cs                   # 公開ファサード（操作の唯一の窓口。設定・効果の適用・描画内容の解決）
 │   ├── IMarqueeEffects.cs           # コアが要求する効果の適用先（UI 層が実装する）
 │   ├── MarqueeFrame.cs              # 内部型（選択矩形の描画内容のフレーム解決。ファサードからのみ使う）
@@ -195,7 +208,7 @@ Feature.MarqueeCore/
 
 ### 9.2 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）
 
-選択矩形の**外側・内側に描く装飾**（暗転マスク・穴あけ枠・ラベル・ハイライト・塗り）は、選択矩形コントロール単体の概念ではないため Core 内のサブ概念として同居します（`MarqueeDecoOptions`（設定）/ `MarqueeDrawContent`（描画内容）。詳細は同プロジェクトの `README.md`）。
+選択矩形の**外側・内側に描く装飾**（暗転マスク・穴あけ枠・ラベル・ハイライト・塗り）は、選択矩形コントロール単体の概念ではないため Core 内のサブ概念として同居します（`MarqueeDecoOptions`（設定）/ `MarqueeDrawContent`（描画内容）。詳細は同プロジェクトの `README.md`）。**色は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有します**（装飾の設定は表示可否と寸法だけを持ちます）。
 
 ## 10. ライセンス
 

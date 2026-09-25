@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Imaging;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Feature.MarqueeCore;
 
@@ -20,23 +19,18 @@ namespace EsUtil.Feature.MarqueeCore;
 /// 同じアセンブリの別フォルダ（<c>Decoration</c> の <c>MarqueeDecoOptions</c>）が単一所有する。<br/>
 /// <br/>
 /// <b>既定値</b>: 既定値を持つのは <see cref="Default"/> と <see cref="MarqueeOptions()"/> のみである。<br/>
-/// <see cref="Default"/> を基点に部分変更する（<c>MarqueeOptions.Default with { HandleColor = ... }</c>）と、<br/>
+/// <see cref="Default"/> を基点に部分変更する（<c>MarqueeOptions.Default with { HandleSize = ... }</c>）と、<br/>
 /// 指定しない項目は既定値を保つ（プロパティ初期化子を持つため、部分指定でもゼロ値にはならない）。<br/>
 /// <br/>
 /// <b>等価性</b>: レコードの値等価性により、同値の設定を再代入しても UI 側の変更通知（再描画）は発生しない。<br/>
 /// <br/>
-/// <b>色の型</b>: UI 非依存の <see cref="DrawingColor"/>（アルファで不透明度を表す）を使用する。<br/>
-/// 各 UI の色型への変換は境界（UI 層）で 1 行行う。
+/// <b>色は含まない</b>: 色は<b>描画にだけ必要な設定</b>であり、描画の設定（<c>MarqueePaint</c>。UIBase が単一所有する）が持つ。<br/>
+/// 本型は寸法・表示可否・対話パラメータ（計算に必要な値）だけを持つ。
 /// </remarks>
 public sealed record MarqueeOptions
 {
-    /// <summary>ハンドルの枠線色の既定値（ダークグレー）。</summary>
-    /// <value>アルファを含む色。装飾の枠線（穴あけ枠）と共通の見た目である。</value>
-    /// <remarks>装飾の枠線（<c>OuterDecoAppearance.BorderColor</c>）と重なるため、既定値を共有する（同じ色を 2 箇所へ書かない）。</remarks>
-    internal static readonly DrawingColor DefaultHandleBorderColor = DrawingColor.FromArgb(255, 169, 169, 169);
-
     /// <summary>すべての項目を既定値にした設定。</summary>
-    /// <value>既定の外観・対話パラメータ（各 UI のプロパティの初期値）。</value>
+    /// <value>既定の寸法・表示可否・対話パラメータ（各 UI のプロパティの初期値）。</value>
     /// <remarks>部分変更の基点として使用する（<c>Default with { ... }</c>）。</remarks>
     public static MarqueeOptions Default { get; } = new();
 
@@ -48,32 +42,6 @@ public sealed record MarqueeOptions
     /// <value>true（既定）の場合は選択中にハンドルを描く。false の場合は枠線と十字マーカーのみを描く。</value>
     public bool ShowHandles { get; init; } = true;
 
-    /// <summary>ドラッグハンドルの塗り色。</summary>
-    /// <value>ハンドルの塗り色（不透明度は色のアルファに統合）。既定は白。</value>
-    /// <remarks>
-    /// 未指定（<see cref="DrawingColor.Empty"/> 等の全成分 0）を指定した場合は白へ解決する<br/>
-    /// （ハンドルが見えなくなるため）。解決は本型の生成時に適用し、範囲・補正の規則を UI 層へ持ち込まない。
-    /// </remarks>
-    public DrawingColor HandleColor
-    {
-        get => field;
-        init => field = ResolveHandleColor(value);
-    } = DrawingColor.White;
-
-    /// <summary>指定されたハンドル塗り色を描画に使う色へ解決する。</summary>
-    /// <param name="color">設定された塗り色。</param>
-    /// <returns>描画に使う塗り色。未指定（全成分 0）の場合は白。</returns>
-    private static DrawingColor ResolveHandleColor(DrawingColor color)
-        => color.ToArgb() == 0 ? DrawingColor.White : color;
-
-    /// <summary>ドラッグハンドルの枠線色。</summary>
-    /// <value>ハンドルの枠線色（不透明度は色のアルファに統合）。既定はダークグレー（<c>#FFA9A9A9</c>）。</value>
-    /// <remarks>
-    /// 装飾の枠線（穴あけ枠）と同じ矩形に重なるため、見た目を揃える場合はホストが同じ色を割り当てる<br/>
-    /// （既定値は両層で同じダークグレーであり、単体で使う場合の見た目は変わらない）。
-    /// </remarks>
-    public DrawingColor HandleBorderColor { get; init; } = DefaultHandleBorderColor;
-
     /// <summary>ドラッグハンドルの一辺サイズ。</summary>
     /// <value>ハンドルの一辺サイズ（DIP）。既定は 10.0。</value>
     public double HandleSize { get; init; } = 10.0;
@@ -83,10 +51,6 @@ public sealed record MarqueeOptions
     /// <remarks>塗りの中に隠れない細さでありながら、拡大表示でも輪郭が判別できる太さである。</remarks>
     public const double HandleBorderThickness = 1.5;
 
-    /// <summary>十字マーカーの色。</summary>
-    /// <value>十字マーカーの色（不透明度は色のアルファに統合）。既定は白。</value>
-    public DrawingColor MarkerColor { get; init; } = DrawingColor.White;
-
     /// <summary>十字マーカーの全長。</summary>
     /// <value>十字マーカーの全長（DIP）。中心から両端までの半幅はこの 1/2。既定は 16.0。</value>
     public double MarkerLength { get; init; } = 16.0;
@@ -94,14 +58,6 @@ public sealed record MarqueeOptions
     /// <summary>カーソル座標ラベルを表示するかどうか。</summary>
     /// <value>true の場合はマウス位置のドメイン座標をカーソルの右側に表示する。既定は false。</value>
     public bool ShowCoordLabel { get; init; }
-
-    /// <summary>カーソル座標ラベルの文字色。</summary>
-    /// <value>ラベルの文字色（不透明度は色のアルファに統合）。既定は白。</value>
-    public DrawingColor CoordLabelColor { get; init; } = EsLabelDefaults.TextColor;
-
-    /// <summary>カーソル座標ラベルの背景色。</summary>
-    /// <value>ラベルの背景色（不透明度は色のアルファに統合）。既定は黒 60%（<c>#99000000</c>）。</value>
-    public DrawingColor CoordLabelBackgroundColor { get; init; } = EsLabelDefaults.BackgroundColor;
 
     /// <summary>カーソル座標ラベルのフォントサイズ。</summary>
     /// <value>フォントサイズ（DIP）。6〜48 の範囲へ補正される。既定は 12.0。</value>
@@ -125,14 +81,6 @@ public sealed record MarqueeOptions
     /// <value>true（既定）の場合は穴あけ矩形の左上に位置と寸法を表示する。false の場合は描かない。</value>
     /// <remarks>他のラベル（操作・情報）はホストが自前で描くため、本設定には含まれない。</remarks>
     public bool ShowSizeLabel { get; init; } = true;
-
-    /// <summary>サイズラベルの文字色。</summary>
-    /// <value>ラベルの文字色（不透明度は色のアルファに統合）。既定は白。</value>
-    public DrawingColor SizeLabelColor { get; init; } = EsLabelDefaults.TextColor;
-
-    /// <summary>サイズラベルの背景色。</summary>
-    /// <value>ラベルの背景色（不透明度は色のアルファに統合）。既定は黒 60%（<c>#99000000</c>）。</value>
-    public DrawingColor SizeLabelBackgroundColor { get; init; } = EsLabelDefaults.BackgroundColor;
 
     /// <summary>サイズラベルのフォントサイズ。</summary>
     /// <value>フォントサイズ（DIP）。6〜48 の範囲へ補正される。既定は 14.0。</value>

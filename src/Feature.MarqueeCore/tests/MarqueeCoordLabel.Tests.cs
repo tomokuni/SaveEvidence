@@ -14,7 +14,7 @@ namespace EsUtil.Feature.MarqueeCore.Tests;
 public class MarqueeCoordLabelTests
 {
     private static MarqueeCoordLabel CreateLabel(EsPoint cursor, EsSize clientSize, double fontSize = 12.0)
-        => new("(100, 50)", cursor, clientSize, fontSize, DrawingColor.White, DrawingColor.Black);
+        => new("(100, 50)", cursor, clientSize, fontSize);
 
     [Fact]
     public void ComputeFrame_カーソルの右側へオフセットして配置する()
@@ -68,9 +68,9 @@ public class MarqueeCoordLabelTests
     public void ToElement_配置と外観を要素の指示へ写す()
     {
         var label = new MarqueeCoordLabel(
-            "(100, 50)", new EsPoint(100, 50), new EsSize(800, 600), 12.0, DrawingColor.White, DrawingColor.Black);
+            "(100, 50)", new EsPoint(100, 50), new EsSize(800, 600), 12.0);
 
-        var element = label.ToElement(new EsSize(120, 24), label.TextColor, label.BackgroundColor);
+        var element = label.ToElement(new EsSize(120, 24), DrawingColor.White, DrawingColor.Black);
 
         Assert.Equal(new EsRect(108, 58, 128, 32), element.Bounds);
         Assert.Equal(new EsPoint(112, 62), element.TextOrigin);

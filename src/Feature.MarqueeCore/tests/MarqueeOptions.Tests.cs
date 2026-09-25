@@ -15,17 +15,11 @@ public class MarqueeOptionsTests
     {
         var options = MarqueeOptions.Default;
 
-        // ハンドルの枠線は装飾の枠線と同じ見た目（DarkGray #FFA9A9A9）を既定にする
-        Assert.Equal(System.Drawing.Color.FromArgb(255, 169, 169, 169), options.HandleBorderColor);
+        // 色は描画にだけ必要な設定のため本型は持たない（描画層の MarqueePaint が単一所有する）
         Assert.True(options.ShowHandles);
-        Assert.Equal(System.Drawing.Color.White, options.HandleColor);
         Assert.Equal(10.0, options.HandleSize);
-        Assert.Equal(System.Drawing.Color.White, options.MarkerColor);
         Assert.Equal(16.0, options.MarkerLength);
         Assert.False(options.ShowCoordLabel);
-        Assert.Equal(System.Drawing.Color.White, options.CoordLabelColor);
-        // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(System.Drawing.Color.FromArgb(153, 0, 0, 0), options.CoordLabelBackgroundColor);
         Assert.Equal(12.0, options.CoordLabelFontSize);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(6.0, options.MinSelectionSize);
@@ -46,7 +40,6 @@ public class MarqueeOptionsTests
         var options = MarqueeOptions.Default with { ShowHandles = false };
 
         Assert.False(options.ShowHandles);
-        Assert.Equal(MarqueeOptions.Default.HandleBorderColor, options.HandleBorderColor);
         Assert.Equal(MarqueeOptions.Default.HandleSize, options.HandleSize);
         Assert.Equal(MarqueeOptions.Default.CoordLabelFontSize, options.CoordLabelFontSize);
         Assert.Equal(MarqueeOptions.Default.MinSelectionSize, options.MinSelectionSize);
@@ -54,21 +47,19 @@ public class MarqueeOptionsTests
     }
 
     [Fact]
-    public void ハンドルの枠線色を変更しても他の項目は既定値を保つ()
+    public void ハンドルのサイズを変更しても他の項目は既定値を保つ()
     {
-        var options = MarqueeOptions.Default with { HandleBorderColor = System.Drawing.Color.Red };
+        var options = MarqueeOptions.Default with { HandleSize = 20 };
 
-        Assert.Equal(System.Drawing.Color.Red, options.HandleBorderColor);
-        Assert.Equal(MarqueeOptions.Default.HandleColor, options.HandleColor);
-        Assert.Equal(MarqueeOptions.Default.HandleSize, options.HandleSize);
+        Assert.Equal(20, options.HandleSize);
         Assert.True(options.ShowHandles);
     }
 
     [Fact]
     public void 同名で同値の設定は等価である()
     {
-        var a = MarqueeOptions.Default with { HandleBorderColor = System.Drawing.Color.Red, ShowCoordLabel = true };
-        var b = MarqueeOptions.Default with { HandleBorderColor = System.Drawing.Color.Red, ShowCoordLabel = true };
+        var a = MarqueeOptions.Default with { HandleSize = 12.0, ShowCoordLabel = true };
+        var b = MarqueeOptions.Default with { HandleSize = 12.0, ShowCoordLabel = true };
 
         Assert.Equal(a, b);
         Assert.NotEqual(a, a with { ShowCoordLabel = false });
@@ -103,7 +94,7 @@ public class MarqueeOptionsTests
     }
 
     // ====================================================================
-    // 外観値の解決・補正（生成時に適用する）
+    // 寸法値の補正（生成時に適用する）
     // ====================================================================
 
     [Theory]
@@ -120,20 +111,11 @@ public class MarqueeOptionsTests
     }
 
     [Fact]
-    public void HandleColor_未指定の色は白へ解決される()
+    public void HandleSize_指定された値をそのまま保持する()
     {
-        // 全成分 0 の色はハンドルが見えなくなるため、生成時に白へ解決する
-        Assert.Equal(System.Drawing.Color.White, (MarqueeOptions.Default with { HandleColor = System.Drawing.Color.Empty }).HandleColor);
-        Assert.Equal(System.Drawing.Color.White, (MarqueeOptions.Default with { HandleColor = System.Drawing.Color.FromArgb(0, 0, 0, 0) }).HandleColor);
-    }
+        var options = MarqueeOptions.Default with { HandleSize = 12.5 };
 
-    [Fact]
-    public void HandleColor_指定された色はそのまま保持する()
-    {
-        var options = MarqueeOptions.Default with { HandleColor = System.Drawing.Color.FromArgb(128, 255, 0, 0) };
-
-        // 不透明度を含めて保持する（アルファを落とさない）
-        Assert.Equal(System.Drawing.Color.FromArgb(128, 255, 0, 0), options.HandleColor);
+        Assert.Equal(12.5, options.HandleSize);
     }
 
     [Fact]

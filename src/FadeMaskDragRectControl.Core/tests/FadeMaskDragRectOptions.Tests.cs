@@ -68,25 +68,20 @@ public class FadeMaskDragRectOptionsTests
     [Fact]
     public void 装飾_選択矩形の設定とは別の値が単一所有する()
     {
-        var appearance = new OuterDecoAppearance { BorderColor = DrawingColor.Lime, BorderThickness = 3.0 };
+        var appearance = new OuterDecoAppearance { BorderThickness = 3.0 };
 
         var options = FadeMaskDragRectOptions.Default with
         {
             Deco = MarqueeDecoOptions.Default with { OuterAppearance = appearance },
             Marquee = MarqueeOptions.Default with
             {
-                HandleBorderColor = appearance.BorderColor,
-                HandleColor = DrawingColor.Orange,
                 MinSelectionSize = 12.0,
                 ClampToDomainBounds = false,
             },
         };
 
-        // 枠線（装飾）は装飾の設定が持ち、選択の設定は選択の判断に必要な項目だけを持つ
-        Assert.Equal(DrawingColor.Lime, options.Deco.OuterAppearance.BorderColor);
+        // 枠線の寸法（装飾）は装飾の設定が持ち、選択の設定は選択の判断に必要な項目だけを持つ
         Assert.Equal(3.0, options.Deco.OuterAppearance.BorderThickness);
-        Assert.Equal(DrawingColor.Lime, options.Marquee.HandleBorderColor);
-        Assert.Equal(DrawingColor.Orange, options.Marquee.HandleColor);
         Assert.Equal(12.0, options.Marquee.MinSelectionSize);
         Assert.False(options.Marquee.ClampToDomainBounds);
     }

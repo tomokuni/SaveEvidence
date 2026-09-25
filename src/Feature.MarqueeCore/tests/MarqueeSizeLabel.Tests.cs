@@ -17,7 +17,7 @@ public class MarqueeSizeLabelTests
     private static readonly DrawingColor s_background = DrawingColor.FromArgb(153, 0, 0, 0);
 
     private static MarqueeSizeLabel CreateLabel(string text = "(0, 0) - (50, 14),  (50×14)", EsPoint? anchor = null, double fontSize = 14.0)
-        => new(text, anchor ?? new EsPoint(0, 30), fontSize, s_text, s_background);
+        => new(text, anchor ?? new EsPoint(0, 30), fontSize);
 
     // ====================================================================
     // ComputeFrame（配置）

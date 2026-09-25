@@ -435,6 +435,18 @@ public sealed class FadeMaskDragRectControl : Panel
     // 公開 API: 描画に使う色
     // ====================================================================
 
+    /// <summary>選択矩形コントロールの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
+    /// <value>色の単一値。既定は <see cref="MarqueePaint.Default"/>。</value>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
+    /// 内包する選択矩形コントロールへそのまま転送する。
+    /// </remarks>
+    public MarqueePaint MarqueePaint
+    {
+        get => _marquee.Paint;
+        set => _marquee.Paint = value;
+    }
+
     /// <summary>ルーペの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
     /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
     /// <remarks>

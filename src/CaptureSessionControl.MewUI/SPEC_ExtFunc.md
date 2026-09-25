@@ -94,23 +94,23 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | --- | --- |
 | `HideOwnerWindow` | 撮影中にオーナーウィンドウを画面外へ退避するか |
 | `MinSelectionSize` | 選択矩形のドラッグ中の最小サイズ（`MarqueeOptions.MinSelectionSize` へ反映。切り出しの可否は選択操作そのものが判定する） |
-| `BorderColor` / `BorderThickness` / `OverlayColor` | 選択枠と暗転の外観（装飾層の `OuterDecoAppearance` へ反映。枠線は選択矩形と共用） |
-| `HandleColor` / `HandleSize` / `HandleHitRadius` | ドラッグハンドル |
-| `MarkerColor` / `MarkerLength` | 微調整時の十字マーカー |
+| `BorderColor` / `BorderThickness` / `OverlayColor` | 選択枠と暗転の外観（枠線の太さは装飾の寸法（`Deco.OuterAppearance`）へ、色は描画層の `MarqueePaint`（`OuterBorderColor` / `OverlayColor`）へ反映。枠線は選択矩形と共用） |
+| `HandleColor` / `HandleSize` / `HandleHitRadius` | ドラッグハンドル（寸法は選択矩形の設定、色は描画層の `MarqueePaint.HandleColor` へ反映） |
+| `MarkerColor` / `MarkerLength` | 微調整時の十字マーカー（寸法は選択矩形の設定、色は描画層の `MarqueePaint.MarkerColor` へ反映） |
 | `ClampToDomainBounds` | 画像外の選択を禁止するか |
 | （ホイール操作） | 選択オーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する。ズーム率・パン量の決定は `CropViewControl` が単一所有する |
-| `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | カーソル位置の座標ラベル |
-| `SizeLabelVisible` / `SizeLabelColor` / `TextBackgroundColor` / `SizeLabelFontSize` | サイズラベル（装飾層の `OuterDecoAppearance` の SizeLabel 系へ反映。**表示可否は描画側が単一所有する**ため UI は文言だけを渡す） |
-| `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル。装飾層の `OuterDecoAppearance` の InfoLabel 系へ反映） |
-| `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | 操作ラベル（サブライン。装飾層の `OuterDecoAppearance` の SubLine 系へ反映） |
-| `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` / `LoupeCrossColor` / `LoupeFrameColor` / `LoupeFrameThickness` | ルーペ |
-| `LoupeCheckerSize` / `LoupeCheckerColorA` / `LoupeCheckerColorB` | ルーペの市松模様 |
-| `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | ルーペ画像上の選択矩形破線 |
-| `LoupeShowCoordLabel` / `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | ルーペの中心座標ラベル |
+| `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | カーソル位置の座標ラベル（表示可否・フォントサイズは選択矩形の設定、色は描画層の `MarqueePaint` へ反映） |
+| `SizeLabelVisible` / `SizeLabelColor` / `TextBackgroundColor` / `SizeLabelFontSize` | サイズラベル（表示可否・フォントサイズは選択矩形の設定、色は描画層の `MarqueePaint` へ反映。**文言はホストが単一所有する**） |
+| `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル。`FadeMaskDragRectLabelOptions`（ホストが描く付加情報ラベルの外観）へ反映） |
+| `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | 操作ラベル（サブライン。`FadeMaskDragRectLabelOptions` へ反映） |
+| `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` / `LoupeCrossColor` / `LoupeFrameColor` / `LoupeFrameThickness` | ルーペ（サイズ・倍率・オフセットは `LoupeOptions`、外枠の太さは `LoupeOptions.Metrics.FrameWidth`、色は描画層の `LoupePaint` へ反映） |
+| `LoupeCheckerSize` / `LoupeCheckerColorA` / `LoupeCheckerColorB` | ルーペの市松模様（タイルサイズは `LoupeOptions.Metrics.CheckerSize`、色は描画層の `LoupePaint` へ反映。下地色はホストが与える） |
+| `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | ルーペ画像上の選択矩形破線（選択矩形破線の色（`FadeMaskDragRectOptions`）へ反映） |
+| `LoupeShowCoordLabel` / `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | ルーペの中心座標ラベル（表示可否・フォントサイズは `LoupeOptions.Metrics`、色は描画層の `LoupePaint` へ反映） |
 
 ### 4.1 適用先
 
-上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropSession`）が同じマッピング（コアの `FadeMaskDragRectOptionsMapper` が単一所有する）で反映します。
+上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropSession`）が同じマッピングで反映します。**寸法・表示可否**はコアの `FadeMaskDragRectOptionsMapper` が単一所有し、**描画にだけ必要な色**は UI 層のホストの `CapturePaintMapper`（`MarqueePaint` / `LoupePaint` を組み立ててコントロールの `MarqueePaint` / `LoupePaint` プロパティへ設定する）が担います。
 ただし、切り出しはプレビューの表示に合わせる必要があるため、次の項目は撮影専用です。
 
 | 項目 | 理由 |

@@ -29,14 +29,14 @@ public class MarqueeRendererTests
     /// <summary>塗られていない画素（透明）。</summary>
     private static readonly SKColor s_transparent = new(0, 0, 0, 0);
 
-    /// <summary>検証対象（既定の描画実装）。</summary>
-    private static readonly MarqueeRenderer s_renderer = MarqueeRenderer.Default;
+    /// <summary>検証対象（描画の手順を所有する基底実装）。色は本テストが与える。</summary>
+    private static readonly MarqueeRenderer s_renderer = new(CreatePaint());
 
     /// <summary>空の装飾フレーム（描くものが無い）。</summary>
-    private static OuterDecoFrame EmptyOuter => new([], s_red, [], s_blue);
+    private static OuterDecoFrame EmptyOuter => new([], []);
 
     /// <summary>空の内側装飾フレーム（描くものが無い）。</summary>
-    private static InnerDecoFrame EmptyInner => new(null, s_green, [], s_blue);
+    private static InnerDecoFrame EmptyInner => new(null, []);
 
     // ====================================================================
     // ハンドル
@@ -96,7 +96,7 @@ public class MarqueeRendererTests
     public void DrawShapes_始点マーカーの十字線を描く()
     {
         using var target = TestHelper.CreateTarget(80, 80);
-        var marker = new MarqueeMarker(new EsPoint(40, 40), s_white, Thickness: 2, Size: 8);
+        var marker = new MarqueeMarker(new EsPoint(40, 40), Thickness: 2, Size: 8);
         var content = CreateContent(handles: null, marker: marker, layer: MarqueeDrawLayer.Marker);
 
         s_renderer.DrawShapes(target.Canvas, content);
@@ -119,8 +119,8 @@ public class MarqueeRendererTests
     {
         using var target = TestHelper.CreateTarget(100, 60);
         var decoration = new OuterDecoFrame(
-            [new EsRect(0, 0, 100, 10)], s_red,
-            [new EsRect(10, 10, 80, 4)], s_blue);
+            [new EsRect(0, 0, 100, 10)],
+            [new EsRect(10, 10, 80, 4)]);
         var content = CreateContent(decoration: decoration, layer: MarqueeDrawLayer.Decoration);
 
         s_renderer.DrawShapes(target.Canvas, content);
@@ -138,8 +138,8 @@ public class MarqueeRendererTests
     {
         using var target = TestHelper.CreateTarget(100, 60);
         var inner = new InnerDecoFrame(
-            new EsRect(20, 20, 20, 20), s_green,
-            [new EsRect(20, 20, 20, 2)], s_blue);
+            new EsRect(20, 20, 20, 20),
+            [new EsRect(20, 20, 20, 2)]);
         var content = CreateContent(inner: inner, layer: MarqueeDrawLayer.Decoration);
 
         s_renderer.DrawShapes(target.Canvas, content);
@@ -170,8 +170,7 @@ public class MarqueeRendererTests
     {
         using var target = TestHelper.CreateTarget(120, 60);
         var content = CreateContent(
-            sizeLabel: new MarqueeSizeLabel(
-                "W", new EsPoint(10, 10), 14.0, s_white, DrawingColor.FromArgb(255, 0, 0, 0)),
+            sizeLabel: new MarqueeSizeLabel("W", new EsPoint(10, 10), 14.0),
             layer: MarqueeDrawLayer.SizeLabel);
 
         s_renderer.DrawShapes(target.Canvas, content);
@@ -196,13 +195,12 @@ public class MarqueeRendererTests
     public void ResolveLabels_はMarqueeLabelPlanへ委譲する()
     {
         var content = CreateContent(
-            sizeLabel: new MarqueeSizeLabel(
-                "W", new EsPoint(10, 10), 14.0, DrawingColor.White, DrawingColor.FromArgb(255, 0, 0, 0)),
+            sizeLabel: new MarqueeSizeLabel("W", new EsPoint(10, 10), 14.0),
             layer: MarqueeDrawLayer.SizeLabel);
         static EsSize Measure(string text, double fontSize) => new(text.Length * 6 + fontSize, 16);
 
         var viaRenderer = s_renderer.ResolveLabels(content, Measure);
-        var viaPlan = MarqueeLabelPlan.Resolve(content, Measure);
+        var viaPlan = MarqueeLabelPlan.Resolve(content, CreatePaint(), Measure);
 
         Assert.Equal(viaPlan, viaRenderer);
     }
@@ -213,9 +211,23 @@ public class MarqueeRendererTests
 
     /// <summary>テスト用のハンドル描画内容を生成する。</summary>
     /// <param name="rect">選択矩形（DIP）。</param>
-    /// <returns>塗り白・枠線赤・太さ 1.5 のハンドル。</returns>
+    /// <returns>大きさ 10・枠線の太さ 1.5 のハンドル。</returns>
     private static MarqueeHandles CreateHandles(EsRect rect)
-        => new(rect, HandleSize: 10, BorderThickness: 1.5, s_white, s_red);
+        => new(rect, HandleSize: 10, BorderThickness: 1.5);
+
+    /// <summary>描画に使う色を生成する（本テストは色ごとの画素を検証する）。</summary>
+    /// <returns>ハンドル白／枠線赤・マーカー白・暗転赤・穴あけ枠青・内側の塗り緑の色。</returns>
+    private static MarqueePaint CreatePaint()
+        => new()
+        {
+            HandleColor = s_white,
+            HandleBorderColor = s_red,
+            MarkerColor = s_white,
+            OverlayColor = s_red,
+            OuterBorderColor = s_blue,
+            InnerFillColor = s_green,
+            InnerBorderColor = s_blue,
+        };
 
     /// <summary>テスト用の描画内容を生成する（対象の層だけを積む）。</summary>
     /// <param name="handles">ハンドル。</param>

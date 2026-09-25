@@ -20,7 +20,7 @@
       - [5.1.2 CenterPoint](#512-centerpoint)
       - [5.1.3 Options（設定の単一値）](#513-options設定の単一値)
       - [5.1.4 RenderScaling](#514-renderscaling)
-      - [5.1.5 Appearance（設定の一部）](#515-appearance設定の一部)
+      - [5.1.5 Metrics（寸法）と Paint（色）](#515-metrics寸法と-paint色)
       - [5.1.6 IsVisible](#516-isvisible)
       - [5.1.7 Log](#517-log)
     - [5.2 メソッド](#52-メソッド)
@@ -200,8 +200,8 @@ public bool IsLoupeVisible { get; set; } = true;
 | 項目 | 内容 |
 | --- | --- |
 | 型 | `LoupeOptions`（コアの `EsUtil.Feature.LoupeCore`） |
-| 既定値 | `LoupeOptions.Default`（表示サイズ 160 / 拡大率 4 / 外観は `LoupeMetrics` の既定値） |
-| 用途 | ルーペの設定（表示サイズ・拡大率・外観）を 1 つの値で指定する |
+| 既定値 | `LoupeOptions.Default`（表示サイズ 160 / 拡大率 4 / 寸法は `LoupeMetrics` の既定値） |
+| 用途 | ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値で指定する |
 
 ```csharp
 loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 };
@@ -213,13 +213,13 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | `160` | `1`〜`4096` | ルーペの基本サイズ（DIP・一辺） |
 | `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
-| `Appearance` | `LoupeMetrics` | コアの既定値 | | 装飾（市松模様・外枠・十字線・中心座標ラベル）の外観 |
+| `Metrics` | `LoupeMetrics` | コアの既定値 | | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否。**色は含まない**（色は `Paint` プロパティが単一所有する） |
 
 **表示サイズ（`RequestedSize`）のクランプはコア（ファサード）が内包**します: 表示サイズはコアが本値（基本サイズ）を親領域サイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
 **設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。DPI スケーリング係数（`RenderScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
 
-**描画の差し替え**: `Renderer`（`ILoupeRenderer`。既定は描画層の `LoupeRenderer.Default`。null 不可）で描画の実装を差し替えられます（描画先は `AvaloniaCanvas` が担うため、描画手順だけを交換できます）。設定すると再生成とラベル要素の再配置を要求します。
+**描画の差し替え**: `Renderer`（`ILoupeRenderer`。既定は描画層の `LoupeRenderer`（色は `Paint` の値で生成）。null 不可）で描画の実装を差し替えられます（描画先は `AvaloniaCanvas` が担うため、描画手順だけを交換できます）。設定すると再生成とラベル要素の再配置を要求します。
 
 ```csharp
 loupe.Renderer = MyLoupeRenderer.Instance;   // 描画手順の差し替え
@@ -242,31 +242,37 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 
 環境値（DPI）のためコアの `LoupeOptions` には含めず、補正（`coerce`）はプロパティが担います（安全域の定義はコアの `LoupeValueCoercer` が単一所有します）。
 
-#### 5.1.5 Appearance（設定の一部）
+#### 5.1.5 Metrics（寸法）と Paint（色）
 
-装飾（市松模様・外枠・十字線・中心座標ラベル）の外観は **コアの `LoupeMetrics`（`EsUtil.Feature.LoupeCore`）が単一所有**し、`Options` の一部（`Options.Appearance`）として指定します（UI 側に外観の個別プロパティはありません。両 UI で既定値・意味が一致します）。
+ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否は **コアの `LoupeMetrics`（`EsUtil.Feature.LoupeCore`）が単一所有**し、`Options` の一部（`Options.Metrics`）として指定します（両 UI で既定値・意味が一致します）。**色は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアは色の値を決定せず、描画可否の判定にも使いません）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options.Appearance` | `LoupeMetrics` | コアの既定値 | 装飾の外観。`with` 式で部分変更する。数値項目はコアの `LoupeMetrics` が生成時に安全域へ補正する |
+| `Options.Metrics` | `LoupeMetrics` | コアの既定値 | ルーペの寸法とラベル表示の可否。`with` 式で部分変更する。数値項目はコアの `LoupeMetrics` が生成時に安全域へ補正する |
+| `Paint` | `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupePaint.Default` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）。`LoupePaint.Default with { ... }` で部分変更する |
 
-`LoupeMetrics` の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
+`Options.Metrics`（コアの `LoupeMetrics`）の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色。アルファ 0 の場合は描画しない |
-| `BackgroundColor` | `System.Drawing.Color` | 透明 | 下地（ベース）色。市松模様・拡大画像より先に全面へ塗る。背後の要素を透かさない場合は不透明色を指定する（既定は透明 = 背後の要素を透かす） |
 | `CheckerSize` | `int` | `6` | 市松模様の 1 タイルサイズ（DIP。1〜128 に補正） |
-| `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色。アルファ 0 の場合は描画しない |
-| `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色。アルファ 0 の場合は描画しない |
 | `FrameWidth` | `int` | `2` | 外枠の太さ（DIP。1〜64 に補正） |
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
-| `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
-| `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正） |
 | `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeMetrics` が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
+`Paint`（`LoupePaint`。詳細は `LoupeControl.UIBase` の `SPEC_ExtFunc.md` を参照）の項目:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `BackgroundColor` | `System.Drawing.Color` | 透明 | 下地（ベース）色。市松模様・拡大画像より先に全面へ塗る。背後の要素を透かさない場合は不透明色を指定する（既定は透明 = 背後の要素を透かす） |
+| `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色。アルファ 0 の場合は描画しない |
+| `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色。アルファ 0 の場合は描画しない |
+| `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色。アルファ 0 の場合は描画しない |
+| `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
+| `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
+
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeMetrics` が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。**ラベルの色は `Paint`（`CoordLabelColor` / `CoordLabelBackgroundColor`）が単一所有します**。
 
 寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時にコアの `LoupeMetricsScaler` が物理ピクセルへ換算します（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
@@ -402,7 +408,7 @@ loupe.Rendered += (_, e) =>
 ### 5.5 型
 
 公開型は `LoupeControl` と `LoupeRenderedEventArgs` です。
-描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase` の `LoupeRenderer` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順は描画層が単一所有し、本プロジェクトは描画ポート（`AvaloniaCanvas`）とラベル要素の配置を担います。
+描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase` の `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順と色は描画層が単一所有し、本プロジェクトは描画ポート（`AvaloniaCanvas`）とラベル要素の配置を担います。
 UI 固有のログ（`LoupeRenderLog`）は本プロジェクトの internal です。
 
 #### 5.5.1 LoupeControl
@@ -418,7 +424,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 - `CenterPoint` の変更
 - `Source` の変更
-- `Options`（設定・外観）の変更
+- `Options`（設定・寸法）または `Paint`（色）の変更
 - `IsVisible = false`
 - `RequestRender()` の実行
 
@@ -464,19 +470,23 @@ private readonly LoupeControl _loupe = new()
 {
     IsHitTestVisible = false,
     // 設定はコアの値を 1 つ設定する（with 式で部分変更する）
+    // 寸法はコアの Options.Metrics、色は Paint（LoupePaint）へ指定する
     Options = LoupeOptions.Default with
     {
         RequestedSize = 240,
         ZoomLevel = 4,
-        Appearance = new LoupeMetrics
+        Metrics = new LoupeMetrics
         {
-            CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
             CheckerSize = 8,
-            CheckerColorA = DrawingColor.White,
-            CheckerColorB = DrawingColor.LightGray,
-            FrameColor = DrawingColor.LightGray,
             FrameWidth = 2,
         },
+    },
+    Paint = LoupePaint.Default with
+    {
+        CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
+        CheckerColorA = DrawingColor.White,
+        CheckerColorB = DrawingColor.LightGray,
+        FrameColor = DrawingColor.LightGray,
     },
 };
 
@@ -507,7 +517,7 @@ private void RefreshLoupe()
 - `RenderTargetBitmap` と `DrawingContext` の合成はUIスレッドで実行します。
 - 高頻度更新では、利用側でポインター更新頻度を制限することを推奨します。
 - `Source` に設定した画像は利用側が有効期間を管理してください。
-- 外観（`Options.Appearance`）の連続変更は、同一Dispatcher待機中である場合に1回へ集約されます。
+- 色（`Paint`）・寸法（`Options.Metrics`）の連続変更は、同一Dispatcher待機中である場合に1回へ集約されます。
 - `RequestRender()` は完了待機APIではありません。完了は `Rendered` イベントで通知されます。
 - 外部 `DrawingContext` へルーペを描画するAPIは提供しません。必要な場合も `LoupeControl` をVisual Treeへ配置してください。
 
@@ -524,7 +534,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 - `Source` のBinding
 - `CenterPoint` のマウス追従
 - 画像端から外れた部分の部分的な市松模様
-- `Options`（`ZoomLevel` / `RequestedSize` / 外観）と `RenderScaling`
-- 十字線・市松模様・外枠の外観変更（`Options.Appearance`）
+- `Options`（`ZoomLevel` / `RequestedSize` / `Metrics`）と `Paint`（色）・`RenderScaling`
+- 十字線・市松模様・外枠の色変更（`Paint`）
 - `IsVisible`、`Clear()`、`RequestRender()`
 - `Log`（描画エラーの通知先 ILogger 設定例）

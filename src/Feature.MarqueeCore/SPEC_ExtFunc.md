@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 選択操作の状態機械 | `Marquee` | 押下・移動・解放・キー入力を通知すると、状態遷移の判断（nudge の開始/終了・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセル・エコー移動の抑制）を行い、効果と通知を返す |
 | 描画内容の解決 | `Marquee.ResolveContent` | 描画領域のサイズを渡すと、1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・サイズラベル・カーソル座標ラベルと描画順）を返す。「描くかどうか」の判断はすべてコアが下す |
-| 描画の実行（差し替え可能） | `IMarqueeRenderer` / `Marquee.Renderer` | 描画内容を描画面へ写す実装を注入する（既定実装は描画層 `MarqueeControl.UIBase` の `MarqueeRenderer.Default`）。実装を差し替えれば描画手順を、描画ポート（`IEsCanvas`）の実装を差し替えれば描画先を変えられる |
+| 描画の実行（差し替え可能） | `IMarqueeRenderer` / `Marquee.Renderer` | 描画内容を描画面へ写す実装を注入する（既定実装は描画層 `MarqueeControl.UIBase` の `new MarqueeRenderer(MarqueePaint.Default)`。描画手順は `MarqueeRendererBase` が、色は `MarqueePaint` が単一所有する）。実装を差し替えれば描画手順を、描画ポート（`IEsCanvas`）の実装を差し替えれば描画先を変えられる |
 | 効果の適用 | `IMarqueeEffects` | フォーカス・再描画・カーソル操作・カーソル形状・ポインターキャプチャ・画面座標変換の要求を UI 実装が受ける（不要なメンバーの空実装は `MarqueeEffectsBase` を継承すれば省略できる） |
 | 通知 | `Marquee.Notified` | 選択の開始/変更/確定/キャンセル・追従位置の移動・確定/キャンセル要求を `MarqueeNotice` で通知する |
 | 外部からの状態操作 | `Marquee` | 選択の復元・対話状態の初期化・確定/キャンセルの要求を API から実行できる |
@@ -22,7 +22,7 @@
 - 本コアは UI フレームワークに依存しません。UI 固有の型は利用者（UI 実装）が境界で変換します。
 - 座標は `EsPoint` / `EsRect` / `EsSize` / `EsKey`（`EsUtil.Platform.Core`）で扱います。
 - カーソル操作は `ICursorService` 抽象にのみ依存します（`null` の場合は何もしません）。
-- ラベルの**文言・外観・配置の計算**はコアが単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。
+- ラベルの**文言・フォントサイズ・配置の計算**はコアが単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。色は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有します。
 
 ## 2. 公開 API 一覧
 
@@ -36,7 +36,7 @@
 | `IMarqueeRenderer` | interface | 描画内容を描画面へ写す実装の契約（**描画の差し替え点**。既定実装は描画層の `MarqueeRenderer`） |
 | `IMarqueeEffects` | interface | コアが要求する効果の適用先（UI 実装が実装する） |
 | `MarqueeEffectsBase` | abstract class | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス（必要な効果だけ override する） |
-| `MarqueeOptions` | record | 設定（外観・対話パラメータ）と既定値・補正 |
+| `MarqueeOptions` | record | 設定（寸法・表示可否・対話パラメータ）と既定値・補正。**色は持たない**（色は描画層の `MarqueePaint` が単一所有する） |
 | `MarqueeSnapshot` | readonly record struct | 通知時点の状態（状態・選択矩形・アクティブハンドル・マウス位置・操作フラグ）。値型のため通知のたびにヒープを確保しない |
 | `MarqueeNotice` / `MarqueeNoticeKind` | record / enum | 通知（種別・通知座標・スナップショット） |
 | `MarqueeDrawContent` | record struct | 1 フレーム分の描画内容（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・層の順序） |
@@ -57,9 +57,24 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `MarqueeDecoOptions` | record | 装飾の設定（外観・全面暗転・ハイライト・内側の塗り） |
-| `OuterDecoAppearance` / `InnerDecoAppearance` | record | 外側/内側の装飾の外観と「描くかどうか」の判定（`Has*`） |
-| `OuterDecoFrame` / `InnerDecoFrame` | record struct | 外側/内側の装飾の描画内容（暗転領域・枠線・塗り） |
+| `MarqueeDecoOptions` | record | 装飾の設定（寸法・描画可否フラグ・全面暗転・ハイライト・内側の寸法） |
+| `OuterDecoAppearance` / `InnerDecoAppearance` | record | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |
+| `OuterDecoFrame` / `InnerDecoFrame` | record struct | 外側/内側の装飾の描画内容（暗転領域・枠線・塗り。**色は持たない**） |
+
+装飾の色（暗転・穴あけ枠・内側の塗りと枠線）は本コアに含みません（描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します）。描くかどうかも色のアルファ（透明度）ではなく、本コアの明示フラグが決めます。
+
+### `MarqueeDecoOptions` のメンバー
+
+| 分類 | メンバー | 既定値 |
+| --- | --- | --- |
+| 寸法 | `OuterAppearance.BorderThickness`（`OuterDecoAppearance`） | 2.0（穴あけ枠の太さ） |
+| 描画可否 | `ShowOverlay` | `true`（暗転マスクを描く。**アルファ 0 を「描かない」の代用にしない**） |
+| 描画可否 | `ShowOuterBorder` | `true`（穴あけ枠を描く） |
+| 表示ポリシー | `OuterShowFullOverlay` | `false`（穴あけ矩形が無いときは暗転しない。true で全面を暗転する） |
+| ハイライト | `OuterHighlightRect` | null（null が「ハイライトしない」。有効フラグは持たない） |
+| 寸法 | `InnerAppearance.BorderThickness`（`InnerDecoAppearance`） | 2.0（内側の枠線の太さ） |
+| 描画可否 | `ShowInnerFill` | `false`（穴あけ矩形の内側を塗らない） |
+| 描画可否 | `ShowInnerBorder` | `false`（穴あけ矩形の内側の枠線を描かない） |
 
 ### `Marquee`（ファサード）のメンバー
 
@@ -91,18 +106,13 @@
 
 | 分類 | メンバー | 既定値 |
 | --- | --- | --- |
-| 外観 | `ShowHandles` | `true` |
-| 外観 | `HandleColor` | 白（全成分 0 を指定した場合は生成時に白へ解決） |
-| 外観 | `HandleBorderColor` | `#FFA9A9A9`（装飾の枠線 `OuterDecoAppearance.BorderColor` と共通の既定値） |
-| 外観 | `HandleSize` | 10.0 |
-| 外観 | `MarkerColor` | 白 |
-| 外観 | `MarkerLength` | 16.0（描画時の半幅は 1/2） |
-| 外観 | `ShowCoordLabel` | `false` |
-| 外観 | `CoordLabelColor` / `CoordLabelBackgroundColor` | 白 / `#99000000` |
-| 外観 | `CoordLabelFontSize` | 12.0（6〜48 へ補正。非数は既定値） |
-| 外観 | `ShowSizeLabel` | `true` |
-| 外観 | `SizeLabelColor` / `SizeLabelBackgroundColor` | 白 / `#99000000` |
-| 外観 | `SizeLabelFontSize` | 14.0（6〜48 へ補正。非数は既定値） |
+| 表示可否 | `ShowHandles` | `true` |
+| 寸法 | `HandleSize` | 10.0 |
+| 寸法 | `MarkerLength` | 16.0（描画時の半幅は 1/2） |
+| 表示可否 | `ShowCoordLabel` | `false` |
+| 寸法 | `CoordLabelFontSize` | 12.0（6〜48 へ補正。非数は既定値） |
+| 表示可否 | `ShowSizeLabel` | `true` |
+| 寸法 | `SizeLabelFontSize` | 14.0（6〜48 へ補正。非数は既定値） |
 | 対話 | `HandleHitRadius` | 12.0（DIP） |
 | 対話 | `MinSelectionSize` | 6.0（ドメイン座標。これ未満はキャンセル扱い） |
 | 対話 | `ClampToDomainBounds` | `true` |
@@ -111,7 +121,7 @@
 | 体裁 | `CoordLabelOffset` | 8.0 |
 | 体裁 | `CoordLabelFontSizeDefault` / `SizeLabelFontSizeDefault` | 12.0 / 14.0 |
 
-ラベルの文字色・背景色・フォントサイズの既定値（白 / 黒 60% / 12.0）は `EsLabelDefaults`（`EsUtil.Platform.Core.Imaging`）が単一所有します（サイズラベル・中心座標ラベル・ルーペが同じ見た目になるよう、各設定型は本値を参照する）。コード上の色リテラルは持ちません。
+`MarqueeOptions` は**色を持ちません**。ハンドル・始点マーカー・ラベル・装飾の色は描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`）。ラベルの文字色・背景色の既定値（白 / 黒 60%）は `EsLabelDefaults`（`EsUtil.Platform.Core.Imaging`）が単一所有し、`MarqueePaint` が参照するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。コード上の色リテラルは持ちません。
 
 ### `IMarqueeEffects` のメンバー
 
@@ -132,7 +142,7 @@
 | `DrawShapes(IEsCanvas, in MarqueeDrawContent)` | 図形の層（装飾・ハンドル・始点マーカー）を描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く） |
 | `ResolveLabels(in MarqueeDrawContent, Func<string,double,EsSize>)` | ラベル要素の配置指示（`EsLabelElement`）を描画順に解決する（UI 要素として配置する UI 用） |
 
-描画順はコアが単一所有し（`MarqueeDrawContent.Layers`）、実装は順序を判断しません。本コアは描画層（`MarqueeControl.UIBase`）を参照できないため、既定実装（`MarqueeRenderer.Default`）は利用者が渡します。
+描画順はコアが単一所有し（`MarqueeDrawContent.Layers`）、実装は順序を判断しません。本コアは描画層（`MarqueeControl.UIBase`）を参照できないため、既定実装（`new MarqueeRenderer(MarqueePaint.Default)`。描画手順は `MarqueeRendererBase` が、色は `MarqueePaint` が単一所有する）は利用者が渡します。
 
 ### `MarqueeNoticeKind` の値
 
@@ -165,7 +175,7 @@
 - 文字の原点は**背景の左上 + 内側余白**です。
 - サイズラベルは基準点（穴あけ矩形の左上）を背景の左上に置きます。行送り（`EsLabelLayout.NextTop`）で次の行の上端を求めるため、**背景の下端と次の行の上端が一致します**。
 - カーソル座標ラベルはカーソルの右下へ `CoordLabelOffset` だけ離し、描画領域の右端・下端をはみ出す場合は領域内へクランプします（描画領域の軸が 0 以下の場合はクランプしません）。
-- `IEsLabel.ToElement`（`Platform.Core` の拡張メソッド）は配置と外観を `EsLabelElement`（UI 要素の配置指示）へ写します。UI 層はこれをテキスト要素へ写すだけで見た目がコアの計算と一致します。
+- `IEsLabel.ToElement`（`Platform.Core` の拡張メソッド）は配置と `EsLabelElement`（UI 要素の配置指示）を組み立てます（文字色・背景色は引数で受け取り、角丸はラベルの指定に従う）。色は描画層の `MarqueePaint`（`MarqueeLabelPlan` が渡す）が単一所有するため、UI 層はこれをテキスト要素へ写すだけで見た目が設定と一致します。
 
 ### 操作の受理条件
 
@@ -192,6 +202,7 @@
 - ホイール操作（Ctrl+ズーム / スクロール）は本コアに含みません（`MarqueeControl.UIBase` が単一所有します）。
 - ビューポートの変化の通知は本コアに含みません（`MarqueeControl.UIBase` が単一所有します）。
 - 描画 API は提供しません（描画の手順は UI 非依存の描画層 `MarqueeControl.UIBase` が単一所有し、描画先は `Platform.Core` の `IEsCanvas` です。描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`SelectionGeometry`）を参照します）。
+- 色（ハンドル・始点マーカー・ラベル・装飾）は本コアに含みません（描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します）。
 - 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。ホストが文言の生成と描画を行います（体裁の計算は `EsLabelLayout` を共用できます）。
 
 ## 6. ライセンス

@@ -76,21 +76,16 @@ public class MarqueeControlTests
         var options = control.Options;
 
         // ハンドルの枠線の既定は装飾の枠線と同じ DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）
-        Assert.Equal(DrawingColor.FromArgb(255, 169, 169, 169), options.HandleBorderColor);
         // 装飾の既定は枠線と暗転を描く
         Assert.Equal(2.0, control.DecoOptions.OuterAppearance.BorderThickness);
         Assert.True(options.ShowHandles);
-        Assert.Equal(DrawingColor.White, options.HandleColor);
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(10.0, options.MinSelectionSize); // CreateControl で設定
         Assert.True(options.ClampToDomainBounds);
-        Assert.Equal(DrawingColor.White, options.MarkerColor);
         Assert.Equal(16.0, options.MarkerLength);
         Assert.False(options.ShowCoordLabel);
-        Assert.Equal(DrawingColor.White, options.CoordLabelColor);
         // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), options.CoordLabelBackgroundColor);
         Assert.Equal(12.0, options.CoordLabelFontSize);
         Assert.Equal(1.0, control.RenderScaling);
 
@@ -106,35 +101,24 @@ public class MarqueeControlTests
         control.Options = MarqueeOptions.Default with
         {
             ShowHandles = false,
-            HandleColor = DrawingColor.Blue,
-            HandleBorderColor = DrawingColor.Red,
             HandleSize = 14.0,
-            MarkerColor = DrawingColor.Yellow,
             MarkerLength = 24.0,
             ShowCoordLabel = true,
-            CoordLabelColor = DrawingColor.Cyan,
-            CoordLabelBackgroundColor = DrawingColor.FromArgb(128, 0, 100, 0),
         };
         control.DecoOptions = MarqueeDecoOptions.Default with
         {
             OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
             {
-                BorderColor = DrawingColor.Red,
                 BorderThickness = 3.0,
             },
         };
 
         var options = control.Options;
-        Assert.Equal(DrawingColor.Red, options.HandleBorderColor);
         Assert.Equal(3.0, control.DecoOptions.OuterAppearance.BorderThickness);
         Assert.False(options.ShowHandles);
-        Assert.Equal(DrawingColor.Blue, options.HandleColor);
         Assert.Equal(14.0, options.HandleSize);
-        Assert.Equal(DrawingColor.Yellow, options.MarkerColor);
         Assert.Equal(24.0, options.MarkerLength);
         Assert.True(options.ShowCoordLabel);
-        Assert.Equal(DrawingColor.Cyan, options.CoordLabelColor);
-        Assert.Equal(DrawingColor.FromArgb(128, 0, 100, 0), options.CoordLabelBackgroundColor);
     }
 
     [Fact]
@@ -415,7 +399,7 @@ public class MarqueeControlTests
         control.Log = logger;
 
         // 外観（色・サイズ）の変更は対話パラメータを変えないため、設定変更ログは流れない
-        control.Options = control.Options with { HandleBorderColor = DrawingColor.Red };
+        control.Paint = control.Paint with { HandleBorderColor = DrawingColor.Red };
 
         Assert.Empty(logger.Messages);
     }

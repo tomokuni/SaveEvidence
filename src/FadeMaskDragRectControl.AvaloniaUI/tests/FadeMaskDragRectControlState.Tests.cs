@@ -112,19 +112,17 @@ public class FadeMaskDragRectControlStateTests
         var control = new FadeMaskDragRectControl();
         var overlay = FadeMaskDragRectOptions.Default.Deco.OuterAppearance with
         {
-            BorderColor = System.Drawing.Color.Red,
             BorderThickness = 1.0,
         };
 
         control.Options = FadeMaskDragRectOptions.Default with
         {
-            Marquee = MarqueeOptions.Default with { HandleBorderColor = overlay.BorderColor },
-            Deco = MarqueeDecoOptions.Default with { OuterAppearance = overlay },
+            Deco = MarqueeDecoOptions.Default with { ShowOuterBorder = true, OuterAppearance = overlay },
         };
+        // 選択枠線（装飾の穴あけ枠）とハンドルの枠線は同じ矩形に重なるため、ホストが同じ色を与える
+        control.MarqueePaint = control.MarqueePaint with { OuterBorderColor = System.Drawing.Color.Red };
 
-        // 選択枠線（装飾の穴あけ枠）とハンドルの枠線は同じ矩形に重なるため、同じ色・太さになる
-        Assert.Equal(System.Drawing.Color.Red, control.Marquee.DecoOptions.OuterAppearance.BorderColor);
+        Assert.Equal(System.Drawing.Color.Red, control.MarqueePaint.OuterBorderColor);
         Assert.Equal(1.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
-        Assert.Equal(System.Drawing.Color.Red, control.Marquee.Options.HandleBorderColor);
     }
 }

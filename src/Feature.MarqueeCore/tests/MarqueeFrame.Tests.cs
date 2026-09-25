@@ -77,8 +77,6 @@ public class MarqueeFrameTests
         var session = CreateSession(
             MarqueeOptions.Default with
             {
-                HandleColor = DrawingColor.Red,
-                HandleBorderColor = DrawingColor.Blue,
                 HandleSize = 12,
             },
             s_selection);
@@ -90,31 +88,18 @@ public class MarqueeFrameTests
         Assert.Equal(new EsRect(50, 50, 101, 81), handles.Rect);
         Assert.Equal(12, handles.HandleSize);
         Assert.Equal(MarqueeOptions.HandleBorderThickness, handles.BorderThickness);
-        Assert.Equal(DrawingColor.Red, handles.FillColor);
-        Assert.Equal(DrawingColor.Blue, handles.BorderColor);
     }
 
-    /// <summary>ハンドルの塗り色が未指定（全成分 0）の場合は白へ解決されることを検証する。</summary>
+    /// <summary>ハンドルの枠線色は描画の設定が単一所有する（描画内容には含まれない）ことを検証する。</summary>
     [Fact]
-    public void ResolveContent_ハンドルの塗り色が未指定なら白へ解決する()
-    {
-        var session = CreateSession(MarqueeOptions.Default with { HandleColor = DrawingColor.Empty }, s_selection);
-
-        var content = ResolveContent(session);
-
-        Assert.True(content.Handles is not null);
-        Assert.Equal(DrawingColor.White, content.Handles.Value.FillColor);
-    }
-
-    /// <summary>ハンドルの枠線色の既定がダークグレーであることを検証する。</summary>
-    [Fact]
-    public void ResolveContent_ハンドルの枠線色の既定はダークグレー()
+    public void ResolveContent_ハンドルに色を含めない()
     {
         var session = CreateSession(selection: s_selection);
 
         var content = ResolveContent(session);
 
-        Assert.Equal(DrawingColor.FromArgb(255, 169, 169, 169), content.Handles!.Value.BorderColor);
+        Assert.True(content.Handles is not null);
+        Assert.Equal(new EsRect(50, 50, 101, 81), content.Handles.Value.Rect);
     }
 
     /// <summary>ハンドルを非表示にした設定ではハンドルを持たないことを検証する。</summary>
@@ -153,14 +138,13 @@ public class MarqueeFrameTests
     [Fact]
     public void ResolveContent_nudge中は始点マーカーを解決する()
     {
-        var session = CreateSession(MarqueeOptions.Default with { MarkerColor = DrawingColor.Yellow, MarkerLength = 20 });
+        var session = CreateSession(MarqueeOptions.Default with { MarkerLength = 20 });
         session.NudgeByKey(EsKey.Right, new EsPoint(10, 20));
 
         var content = ResolveContent(session);
 
         Assert.True(content.Marker is not null);
         var marker = content.Marker.Value;
-        Assert.Equal(DrawingColor.Yellow, marker.Color);
         Assert.Equal(2.0, marker.Thickness);
         // 設定は全長のため、描画内容は半幅（全長 / 2）になる
         Assert.Equal(10, marker.Size);
@@ -214,7 +198,7 @@ public class MarqueeFrameTests
     public void ResolveContent_サイズラベルの基準点は穴あけ矩形の左上になる()
     {
         var session = CreateSession(
-            MarqueeOptions.Default with { ShowSizeLabel = true, SizeLabelFontSize = 18, SizeLabelColor = DrawingColor.Yellow },
+            MarqueeOptions.Default with { ShowSizeLabel = true, SizeLabelFontSize = 18 },
             s_selection);
 
         var content = ResolveContent(session);
@@ -224,7 +208,6 @@ public class MarqueeFrameTests
         // 閉区間 +1 の DIP 矩形 (50, 50, 101, 81) の左上が基準点になる
         Assert.Equal(new EsPoint(50, 50), label.Anchor);
         Assert.Equal(18, label.FontSize);
-        Assert.Equal(DrawingColor.Yellow, label.TextColor);
         // 文言は矩形から自動生成される
         Assert.Contains("DisplayScale: (100%)", label.Text, StringComparison.Ordinal);
     }
@@ -384,13 +367,13 @@ public class MarqueeFrameTests
         var session = CreateSession(selection: s_selection);
         var deco = MarqueeDecoOptions.Default with
         {
-            OuterAppearance = new OuterDecoAppearance { OverlayColor = DrawingColor.FromArgb(100, 0, 0, 0) },
+            OuterAppearance = new OuterDecoAppearance { BorderThickness = 2.0 },
+            ShowOverlay = true,
         };
 
         var content = ResolveContent(session, deco);
 
         Assert.Equal(4, content.Decoration.OverlayRegions.Count);
-        Assert.Equal(DrawingColor.FromArgb(100, 0, 0, 0), content.Decoration.OverlayColor);
     }
 
     /// <summary>全面暗転の設定が描画内容へ反映されることを検証する。</summary>
@@ -412,13 +395,13 @@ public class MarqueeFrameTests
         var session = CreateSession(selection: s_selection);
         var deco = MarqueeDecoOptions.Default with
         {
-            InnerAppearance = new InnerDecoAppearance { FillColor = DrawingColor.FromArgb(40, 255, 0, 0) },
+            InnerAppearance = new InnerDecoAppearance { BorderThickness = 2.0 },
+            ShowInnerFill = true,
         };
 
         var content = ResolveContent(session, deco);
 
         Assert.NotNull(content.InnerDecoration.FillRect);
-        Assert.Equal(DrawingColor.FromArgb(40, 255, 0, 0), content.InnerDecoration.FillColor);
     }
 
     // ====================================================================
@@ -475,14 +458,11 @@ public class MarqueeFrameTests
         Assert.Empty(content.Decoration.BorderRects);
     }
 
-    /// <summary>暗転色が透明なら暗転領域を生成しないことを検証する。</summary>
+    /// <summary>暗転を描かない設定なら暗転領域を生成しないことを検証する。</summary>
     [Fact]
-    public void ResolveContent_暗転色が透明なら暗転領域を生成しない()
+    public void ResolveContent_暗転を描かない設定なら暗転領域を生成しない()
     {
-        var deco = MarqueeDecoOptions.Default with
-        {
-            OuterAppearance = new OuterDecoAppearance { OverlayColor = DrawingColor.Transparent },
-        };
+        var deco = MarqueeDecoOptions.Default with { ShowOverlay = false };
 
         var content = ResolveContent(CreateSession(selection: s_selection), deco);
 
@@ -491,14 +471,11 @@ public class MarqueeFrameTests
         Assert.NotEmpty(content.Decoration.BorderRects);
     }
 
-    /// <summary>枠線色が透明なら枠線矩形を生成しないことを検証する。</summary>
+    /// <summary>枠線を描かない設定なら枠線矩形を生成しないことを検証する。</summary>
     [Fact]
-    public void ResolveContent_枠線色が透明なら枠線矩形を生成しない()
+    public void ResolveContent_枠線を描かない設定なら枠線矩形を生成しない()
     {
-        var deco = MarqueeDecoOptions.Default with
-        {
-            OuterAppearance = new OuterDecoAppearance { BorderColor = DrawingColor.Transparent },
-        };
+        var deco = MarqueeDecoOptions.Default with { ShowOuterBorder = false };
 
         var content = ResolveContent(CreateSession(selection: s_selection), deco);
 
@@ -611,14 +588,11 @@ public class MarqueeFrameTests
         Assert.Equal(highlight, content.InnerDecoration.FillRect);
     }
 
-    /// <summary>塗り色が透明なら塗らず、枠線だけを生成することを検証する。</summary>
+    /// <summary>塗りを描かない設定なら塗らず、枠線だけを生成することを検証する。</summary>
     [Fact]
-    public void ResolveContent_塗り色が透明なら塗らない()
+    public void ResolveContent_塗りを描かない設定なら塗らない()
     {
-        var deco = MarqueeDecoOptions.Default with
-        {
-            InnerAppearance = new InnerDecoAppearance { FillColor = DrawingColor.Transparent, BorderColor = DrawingColor.White },
-        };
+        var deco = MarqueeDecoOptions.Default with { ShowInnerBorder = true };
 
         var content = ResolveContent(CreateSession(selection: s_selection), deco);
 
@@ -644,35 +618,7 @@ public class MarqueeFrameTests
     /// <summary>内側の塗り・枠線を描く設定を生成する（ハイライト矩形なし）。</summary>
     /// <returns>塗りと内枠を描く設定。</returns>
     private static MarqueeDecoOptions VisibleInnerDecoration()
-        => MarqueeDecoOptions.Default with
-        {
-            InnerAppearance = new InnerDecoAppearance
-            {
-                FillColor = DrawingColor.FromArgb(40, 255, 59, 48),
-                BorderColor = DrawingColor.FromArgb(255, 255, 59, 48),
-            },
-        };
-
-    // ====================================================================
-    // 内側の装飾の色の引き継ぎ
-    // ====================================================================
-
-    /// <summary>内側の塗り色・枠線色が外観のとおり引き継がれることを検証する。</summary>
-    [Fact]
-    public void ResolveContent_内側の色は外観を引き継ぐ()
-    {
-        var fill = DrawingColor.FromArgb(40, 1, 2, 3);
-        var border = DrawingColor.FromArgb(255, 4, 5, 6);
-        var deco = MarqueeDecoOptions.Default with
-        {
-            InnerAppearance = new InnerDecoAppearance { FillColor = fill, BorderColor = border },
-        };
-
-        var content = ResolveContent(CreateSession(selection: s_selection), deco);
-
-        Assert.Equal(fill, content.InnerDecoration.FillColor);
-        Assert.Equal(border, content.InnerDecoration.BorderColor);
-    }
+        => MarqueeDecoOptions.Default with { ShowInnerFill = true, ShowInnerBorder = true };
 
     // ====================================================================
     // 文字の有無の通知

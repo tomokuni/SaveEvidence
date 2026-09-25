@@ -14,7 +14,8 @@ public static class MarqueeOuterRenderer
 {
     /// <summary>暗転マスク・枠線を描く。</summary>
     /// <param name="canvas">描画先の描画ポート。null 不可。</param>
-    /// <param name="frame">描画内容（コアが決定した値）。</param>
+    /// <param name="frame">描画内容（コアが決定した値）。</param>
+    /// <param name="paint">描画に使う色（描画にだけ必要な設定。本層が単一所有する）。null 不可。</param>
     /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
     /// <remarks>
     /// 1. 暗転領域（<see cref="OuterDecoFrame.OverlayRegions"/>）を暗転色で塗る（空なら何もしない）。<br/>
@@ -22,14 +23,15 @@ public static class MarqueeOuterRenderer
     /// <br/>
     /// 描画の要否はフレームが持つため、本メソッドに分岐はない（空のコレクションは単に何もしない）。
     /// </remarks>
-    public static void Draw(IEsCanvas canvas, in OuterDecoFrame frame)
+    public static void Draw(IEsCanvas canvas, in OuterDecoFrame frame, MarqueePaint paint)
     {
         ArgumentNullException.ThrowIfNull(canvas);
+        ArgumentNullException.ThrowIfNull(paint);
 
         // ---- 暗転マスク（描画領域から穴あけ矩形を除いた帯。矩形の計算はコアの純粋関数が単一所有する） ----
-        canvas.FillRects(frame.OverlayRegions, frame.OverlayColor);
+        canvas.FillRects(frame.OverlayRegions, paint.OverlayColor);
 
         // ---- 装飾の枠線（穴あけ矩形の内側 4 辺） ----
-        canvas.FillRects(frame.BorderRects, frame.BorderColor);
+        canvas.FillRects(frame.BorderRects, paint.OuterBorderColor);
     }
 }

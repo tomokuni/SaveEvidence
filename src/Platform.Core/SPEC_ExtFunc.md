@@ -157,7 +157,7 @@ Skia の矩形塗り（単色）を単一所有するヘルパーです。
 | `RoundRect` | `static void RoundRect(SKCanvas canvas, EsRect rect, double cornerRadius, DrawingColor color)` | 角丸矩形を塗る（半径 0 以下は四角形） |
 
 ```csharp
-SkiaFill.Rects(canvas, frame.BorderRects, frame.BorderColor);   // 4 辺を同じ色で塗る
+SkiaFill.Rects(canvas, frame.BorderRects, borderColor);   // 4 辺を同じ色で塗る（色は描画の設定が与える）
 SkiaFill.Rects(canvas, tiles, color);                           // 市松模様のタイル（列挙子。リスト確保なし）
 ```
 
@@ -221,14 +221,13 @@ SkiaFill.Rects(canvas, tiles, color);                           // 市松模様�
 ### `Imaging.IEsLabel`（interface）
 
 ラベル 1 件の描画契約です（「背景付きの 1 行テキスト」という共通の形）。
-文言と外観はコアが単一所有し、配置はテキストの実寸に依存するため実寸測定（描画 API 依存）は UI 層が行います。
+文言はコアが単一所有し、配置はテキストの実寸に依存するため実寸測定（描画 API 依存）は UI 層が行います。
+**色は描画にだけ必要な設定**のため本契約は持たず、要素への写像（`EsLabelExtensions.ToElement`）が描画の設定（`MarqueePaint` / `LoupePaint`）の色を引数で受け取ります。
 
 | メンバー | 説明 |
 | --- | --- |
 | `string Text { get; }` | 表示する文言 |
 | `double FontSize { get; }` | フォントサイズ（DIP。補正済み） |
-| `DrawingColor TextColor { get; }` | 文字色 |
-| `DrawingColor BackgroundColor { get; }` | 背景色（アルファ 0 は透明） |
 | `double CornerRadius { get; }` | 背景の角丸半径（DIP）。既定は 0（四角形）で、角丸を持つラベルだけ実装する |
 | `EsLabelFrame ComputeFrame(EsSize textSize)` | テキストの実寸から配置（背景矩形・文字の原点）を求める |
 
@@ -240,13 +239,14 @@ SkiaFill.Rects(canvas, tiles, color);                           // 市松模様�
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 拡張メソッド | `ToElement` | `static EsLabelElement ToElement(this IEsLabel label, EsSize textSize)` | 配置（`ComputeFrame`）と外観の写像（`EsLabelElement.Create`）を合成する |
+| 拡張メソッド | `ToElement` | `static EsLabelElement ToElement(this IEsLabel label, EsSize textSize, DrawingColor textColor, DrawingColor backgroundColor)` | 配置（`ComputeFrame`）と外観の写像（`EsLabelElement.Create`）を合成する。**文字色と背景色は引数で受け取る**（色は描画にだけ必要な設定であり、描画層（UIBase）の `MarqueePaint` / `LoupePaint` が単一所有する） |
 
 ```csharp
-var element = label.ToElement(measureText(label.Text, label.FontSize));   // UI は要素を置くだけ
+// UI は要素を置くだけ（色は描画の設定から与える）
+var element = label.ToElement(measureText(label.Text, label.FontSize), paint.SizeLabelColor, paint.SizeLabelBackgroundColor);
 ```
 
-各ラベル型が同じ組み立てを書くと写し漏れ（色・角丸・フォントサイズ）で見た目がずれるため、写像を 1 箇所に集約します（拡張メソッドなので呼び出し側は `label.ToElement(...)` のままで使えます）。
+各ラベル型が同じ組み立てを書くと写し漏れ（角丸・フォントサイズ）で見た目がずれるため、写像を 1 箇所に集約します（拡張メソッドなので呼び出し側は `label.ToElement(...)` のままで使えます）。
 
 ### `Imaging.DrawingColorExtensions`（static class）
 
@@ -257,10 +257,10 @@ var element = label.ToElement(measureText(label.Text, label.FontSize));   // UI 
 | 拡張メソッド | `IsVisible` | `static bool IsVisible(this DrawingColor color)` | アルファが 0 より大きい場合に true（**アルファ 0 は「描かない」**を意味する） |
 
 ```csharp
-public bool HasOverlay => OverlayColor.IsVisible();   // 透明なら描かない
+public bool HasFrame => FrameColor.IsVisible();   // 透明なら描かない
 ```
 
-各外観型（暗転・枠線・塗り・十字線・市松模様）が `color.A > 0` を書くと、同じ意味の判定が散らばり、片方だけが不可視の描画要求を UI へ届けます。
+描画の設定（ルーペの `LoupePaint`。下地・市松模様・外枠・十字線）が `color.A > 0` を書くと、同じ意味の判定が散らばり、片方だけが不可視の描画要求を UI へ届けます。マーキーの装飾（暗転マスク・穴あけ枠・内側の塗りと枠線）の描画可否は、色のアルファではなくコア（`MarqueeDecoOptions`）の明示フラグが単一所有します。
 
 ### `Imaging.EsLabelLayout`（static class）
 
@@ -294,7 +294,7 @@ public bool HasOverlay => OverlayColor.IsVisible();   // 透明なら描かな�
 
 ### `Imaging.EsLabelDefaults`（static class）
 
-ラベル（サイズ・中心座標）の**既定の見た目**を単一所有する定数クラスです。同じ画面に並ぶラベルの色と大きさをコントロール間で揃えるため、各コントロールの設定型（`MarqueeOptions` / `LoupeMetrics`）は本値を参照します（同じ色のリテラルを各設定型へ書かない）。
+ラベル（サイズ・中心座標）の**既定の見た目**を単一所有する定数クラスです。同じ画面に並ぶラベルの色と大きさをコントロール間で揃えるため、**色**は描画の設定（`MarqueePaint` / `LoupePaint`）が、**フォントサイズ**はコアの設定型（`MarqueeOptions` / `LoupeMetrics`）が本値を参照します（同じ色のリテラルを各設定型へ書かない）。
 
 | メンバー | 型 / 値 | 説明 |
 | --- | --- | --- |

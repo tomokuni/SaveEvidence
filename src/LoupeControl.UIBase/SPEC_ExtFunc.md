@@ -15,8 +15,9 @@
 
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
-| ルーペの描画（図形） | `ILoupeRenderer.DrawShapes`（既定実装 `LoupeRenderer.Default`） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く） |
+| ルーペの描画（図形） | `ILoupeRenderer.DrawShapes`（既定実装は描画層の `LoupeRenderer`） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く） |
 | ラベル要素の配置 | `ILoupeRenderer.ResolveLabels`（既定実装は `LoupeLabelPlan.Resolve` へ委譲） | 実寸（描画 API の測定値）からラベル要素の配置指示（`EsLabelElement`）を解決する |
+| 描画に使う色 | `LoupePaint` | 下地・市松模様・外枠・十字線・中心座標ラベルの色と「描くかどうか」の述語（`Has*`）を単一所有する |
 
 #### 前提条件
 
@@ -24,6 +25,7 @@
 - 描画の単位は**物理ピクセル**です（`LoupeRenderRequest.PixelSize` が作る正方形が描画面）。DIP → 物理ピクセルの換算はコアが済ませています。
 - 描画面の消去は下地の層（`LoupeDrawLayer.Background`）が行います（前フレームの残像を残しません）。
 - 拡大元画像は UI ごとに型が異なるため引数で渡します（本層は `EsBitmap` のみを受け取ります）。
+- 描画の色は `LoupePaint` として描画実装が保持します（コアの契約（`LoupeRenderRequest`）には含めません）。
 
 ### 1.2 組み込み規則
 
@@ -45,22 +47,32 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeRenderer` | sealed class | 描画手順の単一所有者（`ILoupeRenderer`（`EsUtil.Feature.LoupeCore`）の**既定実装**）。`Default` で唯一のインスタンスを共有する |
-| `LoupeLabelPlan` | static class | ラベル要素の配置指示の解決 |
+| `LoupeRendererBase` | abstract class | 描画手順（層の順序に従って描画ポートを呼ぶ手順）の単一所有者。色は派生クラスが `Paint` で与える（適用パターン: Template Method） |
+| `LoupeRenderer` | sealed class | 既定の描画実装（`ILoupeRenderer`（`EsUtil.Feature.LoupeCore`））。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する |
+| `LoupePaint` | sealed record | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）と描画可否の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
+| `LoupeLabelPlan` | static class | ラベル要素の配置指示の解決（色は `LoupePaint` から受け取る） |
 
 ### `LoupeRenderer` のメンバー（`ILoupeRenderer` の実装）
 
 | メンバー | 説明 |
 | --- | --- |
-| `Default` | 既定の描画実装（唯一のインスタンス。状態を持たないためファサード間で共有できる）。生成は非公開（`new` できない） |
+| `LoupeRenderer(LoupePaint paint)` | 描画に使う色を指定して生成する（`LoupePaint.Default` を基点に組み立てる）。`paint` が null なら `ArgumentNullException` |
 | `DrawShapes(IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeRenderNotification notification)` | 層の順に図形を描く（層の順序は通知から読む。**ラベルの層は描かない**）。`source` が null または拡大中心が未設定の場合は拡大画像を描かない。`canvas` または通知の層が null なら `ArgumentNullException` |
 | `ResolveLabels(LoupeCoordLabel? coordLabel, Func<string, double, EsSize> measureText)` | 配置するラベル要素を 1 件返す（`LoupeLabelPlan.Resolve` へ委譲する）。`measureText` が null なら `ArgumentNullException` |
+
+### `LoupePaint` のメンバー（`EsUtil.SaveEvidence.Loupe.UIBase`・`public sealed record`）
+
+| メンバー | 説明 |
+| --- | --- |
+| `Default` | すべての色を既定値にした値（部分変更の基点: `LoupePaint.Default with { ... }`） |
+| `BackgroundColor` / `CheckerColorA` / `CheckerColorB` / `FrameColor` / `CrossColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` | 描画に使う 7 色（UI 非依存の `System.Drawing.Color`） |
+| `HasBackground` / `HasCheckerColorA` / `HasCheckerColorB` / `HasFrame` / `HasCrosshair` | アルファが 0 でない（= 描画する）かを返す。「透明は描画しない」の判断を本型が単一所有する |
 
 ### `LoupeLabelPlan` のメンバー
 
 | メンバー | 説明 |
 | --- | --- |
-| `Resolve(LoupeCoordLabel? coordLabel, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`EsLabelElement`）を 1 件返す（ラベルが無い場合は空）。`measureText` が null なら `ArgumentNullException` |
+| `Resolve(LoupeCoordLabel? coordLabel, LoupePaint paint, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`EsLabelElement`）を 1 件返す（ラベルが無い場合は空）。`paint` または `measureText` が null なら `ArgumentNullException` |
 
 ### `LoupeRenderCoordinator`（`EsUtil.SaveEvidence.Loupe.UIBase`・`public sealed class`）
 
@@ -105,8 +117,8 @@ if (coordinator.ShouldApply(generation)) { ApplyBitmap(bitmap); }
 | `PixelSize` | 一辺の物理ピクセル。描画面は左上原点の `PixelSize` 正方形 |
 | `SurfaceBounds` | その正方形の矩形（下地・市松模様が塗る範囲） |
 | `ZoomLevel` | 拡大率（十字線の交点と切り出し領域に使う） |
-| `Appearance` | 外観（描画可否は `Has*` が判定済み） |
-| `Scaling` | 外観の DIP 値 → 物理ピクセルの換算係数（換算はコアが済ませている） |
+| `Metrics` | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ）。色は `LoupePaint` が単一所有する |
+| `Scaling` | 寸法の DIP 値 → 物理ピクセルの換算係数（換算はコアが済ませている） |
 
 ### 層（`LoupeDrawLayer`）
 

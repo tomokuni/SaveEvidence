@@ -9,13 +9,13 @@
 | 目的 | 「どう描くか（描画 API の呼び出し手順）」と「他のコントロールへ組み込むときにだけ必要な規則（再描画のスケジューリング）」を 1 箇所へ集約し、UI の追加・描画方式の変更を描画ポートの実装だけで済ませる |
 | 提供形態 | クラスライブラリ（`LoupeControl.UIBase.dll`） |
 | 想定利用者 | UI 実装（`LoupeControl.AvaloniaUI` / `LoupeControl.MewUI`）・独自コントロールの実装者 |
-| 汎用性 | 特定のアプリ・UI に依存しない。色・寸法を持たない（コアの契約が単一所有する） |
+| 汎用性 | 特定のアプリ・UI に依存しない。寸法はコア（`LoupeMetrics`）が、色は本層（`LoupePaint`）が単一所有する |
 
 本層は 2 つの関心事を持ちます。どちらも「単体で使う `Loupe` だけでは決まらない」ため、コア（`Feature.LoupeCore`）には置きません。
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順と、実寸 → ラベル要素の写像 | `LoupeRenderer` / `LoupeLabelPlan` |
+| **描画手順** | 層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順と色（`LoupePaint`）、実寸 → ラベル要素の写像 | `LoupeRendererBase` / `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan` |
 | **組み込み規則** | 再描画要求のバッチ化（1 フレーム 1 回）と世代番号管理 | `LoupeRenderCoordinator` |
 
 ## 2. 技術スタック
@@ -59,7 +59,7 @@ sequenceDiagram
     participant H as ホスト
 
     UI->>L: CreateRequest(表示サイズ, 描画先のサイズ)
-    L-->>UI: LoupeRenderRequest（物理ピクセル・拡大率・外観）
+    L-->>UI: LoupeRenderRequest（物理ピクセル・拡大率・寸法）
     UI->>L: ResolveNotification(request)
     L-->>UI: LoupeRenderNotification（切り出し領域・スケール・層の順序・ラベル）
     UI->>R: DrawShapes(canvas, source, request, notification)
@@ -115,12 +115,15 @@ sequenceDiagram
 ```text
 src/LoupeControl.UIBase/
 ├── src/
-│   ├── LoupeRenderer.cs              描画入力と層の順序（通知）を描画ポートへ写す（ILoupeRenderer の既定実装）
+│   ├── LoupeRendererBase.cs          描画手順（層の順序に従って描画ポートを呼ぶ手順）の単一所有（Template Method）
+│   ├── LoupeRenderer.cs              既定の描画実装（色を保持し、手順は基底が所有する）
+│   ├── LoupePaint.cs                 描画に使う色と「描くかどうか」の述語の単一所有
 │   ├── LoupeLabelPlan.cs             実寸 → ラベル要素の配置指示の写像
 │   └── LoupeRenderCoordinator.cs     再描画のスケジューリング（バッチ化・世代番号）
 └── tests/
     ├── TestHelper.cs                 テスト用の描画先（Skia）
     ├── LoupeRenderer.Tests.cs        層ごとの描画の検証
+    ├── LoupePaint.Tests.cs           色の既定値・部分変更・描画可否の述語の検証
     ├── LoupeLabelPlan.Tests.cs       実寸 → ラベル要素の写像の検証
     └── LoupeRenderCoordinator.Tests.cs バッチ化・世代番号・適用判定・破棄と解放の検証
 ```
@@ -129,8 +132,10 @@ src/LoupeControl.UIBase/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `LoupeRenderer` | 描画入力と層の順序（通知）を描画ポートへ写す（`Default` で共有する）。図形の層とラベルの層を分けて提供する |
-| `LoupeLabelPlan` | 通知と実寸からラベル要素の配置指示を解決する |
+| `LoupeRendererBase` | 描画入力と層の順序（通知）を描画ポートへ写す手順を単一所有する。色は派生が `Paint` で与える |
+| `LoupeRenderer` | 既定の描画実装（`sealed`。色（`LoupePaint`）を保持し、手順は基底が所有する）。図形の層とラベルの層を分けて提供する |
+| `LoupePaint` | 描画に使う 7 色と描画可否の述語（`Has*`）を単一所有する。`Default` を基点に部分変更する |
+| `LoupeLabelPlan` | 通知・色・実寸からラベル要素の配置指示を解決する |
 
 ### 組み込み規則
 
@@ -142,14 +147,14 @@ src/LoupeControl.UIBase/
 
 | 層 | 責務 |
 | --- | --- |
-| `Feature.LoupeCore` | 表示レイアウト・描画入力・通知内容の解決・ログ定義 |
-| **本プロジェクト** | **描画 API の呼び出し手順**・実寸 → ラベル要素の写像・**再描画要求のバッチ化（1 フレーム 1 回）・世代番号管理・古い結果の破棄判定** |
+| `Feature.LoupeCore` | 表示レイアウト・描画入力・通知内容の解決・寸法（`LoupeMetrics`）・ログ定義 |
+| **本プロジェクト** | **描画 API の呼び出し手順と色（`LoupePaint`）**・実寸 → ラベル要素の写像・**再描画要求のバッチ化（1 フレーム 1 回）・世代番号管理・古い結果の破棄判定** |
 | `LoupeControl.*UI` | フレームワークの入力・描画・実行キュー（`post`）の提供、ビットマップの生成と解放、ラベル要素の配置 |
 | ホスト | 表示開始・拡大元画像の供給（中心座標ラベルはコントロールがテキスト要素として表示する） |
 
 | 判断 | 理由 |
 | --- | --- |
-| 描画手順を本層に置く（コアに置かない） | コアは「何を描くか（判断・データ）」だけを決める。描画 API の呼び出しは UI フレームワーク差を `IEsCanvas` へ閉じ込めた本層の責務である |
+| 描画手順を本層に置く（コアに置かない） | コアは「何を描くか（判断・データ）」だけを決める。描画 API の呼び出しは UI フレームワーク差を `IEsCanvas` へ閉じ込めた本層の責務である。色も同じ理由で本層（`LoupePaint`）が単一所有する（色はコアの計算・判定に入らない） |
 | スケジューリングを Core ではなく本層に置く | 「いつ何回再描画するか」は UI へ組み込んで初めて問題になる。単体のルーペには再描画のスケジューリングという概念が無く、コアをそのまま独立できるよう本層へ分離する |
 | `post` を必須引数にする | 実行キューと優先度（`DispatcherPriority.Render` 等）はフレームワーク固有である。既定値（Avalonia の Dispatcher）を持つと本層が UI へ依存してしまう |
 | 表示状態・解放・描画開始をコールバックにする | コントロールの状態とリソースを本層が保持すると、UI コントロールに依存してしまう（テストも不可能になる） |
@@ -160,13 +165,15 @@ src/LoupeControl.UIBase/
 | 対象 | 所有者 |
 | --- | --- |
 | 描画する層とその順序 | `Loupe.ResolveLayers`（コア。本層は順に写すだけ） |
-| 描画可否（透明色は描かない・ソース未解決なら描かない） | コア（`LoupeMetrics.Has*`。判定は `DrawingColorExtensions.IsVisible` が単一所有する / `LoupeImageExtractor.TryExtractRegionAt`） |
+| 描画の色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）とその既定値 | 本層（`LoupePaint`） |
+| 描画可否（透明色は描かない・ソース未解決なら描かない） | 本層（`LoupePaint.Has*`。判定の規則は `DrawingColorExtensions.IsVisible` が単一所有する） / コア（`LoupeImageExtractor.TryExtractRegionAt`） |
 | 切り出し領域と拡大の矩形 | コア（`LoupeImageExtractor`） |
 | 市松模様のタイル位置とタイル数 | コア（`LoupeCheckerboard`。リストを確保しない列挙子で渡す） |
 | 十字線・外枠の矩形 | コア（`LoupeDecorationGeometry`） |
-| 外観の DIP → 物理ピクセル換算 | コア（`LoupeMetricsScaler`） |
+| 寸法の DIP → 物理ピクセル換算 | コア（`LoupeMetricsScaler`） |
 | 描画先のサイズ決定（クランプ） | コア（`LoupePositionCalculator.ResolvePixelSize`） |
-| ラベルの文言・色・フォントサイズ | コア（`LoupeCoordLabel` / `LoupeMetrics`） |
+| ラベルの文言・フォントサイズ・角丸 | コア（`LoupeCoordLabel` / `LoupeMetrics`） |
+| ラベルの色 | 本層（`LoupePaint.CoordLabelColor` / `CoordLabelBackgroundColor`） |
 | ラベルの体裁（背景・文字原点） | `Platform.Core`（`EsLabelLayout`） |
 | 描画 API の呼び出し（背景 → 文字の順序） | `Platform.Core`（`SkiaLabel` / `IEsCanvas.DrawLabel`） |
 | 再描画要求の結合（1 フレームに 1 回） | `LoupeRenderCoordinator.RequestRender` |
@@ -183,6 +190,7 @@ src/LoupeControl.UIBase/
 | `source` が null / 中心未設定 | 拡大画像を描かない（例外ではない。市松模様のみになる） |
 | `source` が破棄済み | コア（`LoupeImageExtractor`）が `ObjectDisposedException` を吸収して null を返す（例外を描画層へ伝播させない） |
 | `measureText` が null | `ArgumentNullException` |
+| `paint`（`LoupePaint`）が null | `ArgumentNullException`（`LoupeRenderer` の生成時・`LoupeLabelPlan.Resolve` の呼び出し時） |
 | 背景色が透明 | 描画面を透明で置き換える（前フレームの残像を残さない） |
 | `LoupeRenderCoordinator` のいずれかのコールバックが null | `ArgumentNullException` を送出する（配線の誤りを早期に検出する） |
 | 要求が取り消された後に `RenderCore` が呼ばれる | 何もしない（防御分岐） |
@@ -199,7 +207,7 @@ src/LoupeControl.UIBase/
 | --- | --- |
 | UI 初期化不要 | 描画は `SkiaEsCanvas`（UI 非依存）で行い、ビットマップの画素を検証する。再描画のスケジューリングは UI 型を持たないため `[Fact]` で検証する |
 | 検証点 | 描画手順の唯一の検証点である（UI 側はアダプタのみを持つため、UI ごとの描画テストは不要） |
-| 合計 | 32 件（描画 20 / 組み込み規則 12） |
+| 合計 | 43 件（描画 17 / 色 8 / ラベル 6 / 組み込み規則 12） |
 
 ```powershell
 dotnet test src/LoupeControl.UIBase/tests/LoupeControl.UIBase.Tests.csproj

@@ -37,7 +37,7 @@ UIBase は `Platform.Core` も参照します（描画ポート・実寸測定�
 | 層 | 置くもの | 置かないもの | 依存先 | Marquee の例 |
 | --- | --- | --- | --- | --- |
 | **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・コア⇔UI の契約・ログ定義 | 描画 API の呼び出し・UI フレームワークの型・組み込み先の概念 | `Platform.Core` | `Marquee`（ファサード）/ `MarqueeSession` / `MarqueeFrame` / `MarqueeOptions` / `IMarqueeRenderer`（契約） |
-| **UIBase** | コントロール化に必要な処理（組み込み規則）と描画手順（層の順序に従った描画 API の呼び出し） | コア単体でも成立する判断（選択・表示レイアウト）・UI フレームワークの型 | `Core` / `Platform.Core` | `MarqueeRenderer`（`Default`）/ `MarqueeLabelPlan` / `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` |
+| **UIBase** | コントロール化に必要な処理（組み込み規則）と描画手順（層の順序に従った描画 API の呼び出し）・描画にだけ必要な色（`MarqueePaint` / `LoupePaint`） | コア単体でも成立する判断（選択・表示レイアウト）・UI フレームワークの型 | `Core` / `Platform.Core` | `MarqueeRenderer` / `MarqueePaint` / `MarqueeLabelPlan` / `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` |
 | **UI** | 入力イベントの受付とコア型への変換・効果の適用・通知の公開イベントへの転送・描画先の用意・ラベル要素の配置 | 判断・計算・既定値（コアが単一所有する）・複数 UI で共有できる手順 | `Core` / `UIBase` / `Platform.*` | `MarqueeControl` / `Effects` / `AvaloniaCanvas` の適合 |
 
 **UIBase の中の 2 つの関心事**: 実装上は同じアセンブリに置きますが、帰属の基準は別です。
@@ -66,8 +66,11 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 | 何 | どこ | 理由 |
 | --- | --- | --- |
 | 描画の契約（`IMarqueeRenderer` / `ILoupeRenderer`） | **Core** | コアが「何を描くか（渡す値）」を決めるため。UI 層が描画を差し替える入口もここにある |
-| 既定実装（`MarqueeRenderer.Default` / `LoupeRenderer.Default`） | **UIBase** | 描画 API の呼び出し手順は UI 非依存だが、コアの一部ではない（コアは UIBase を参照できない） |
-| 注入 | **UI** | `new Marquee(MarqueeRenderer.Default, effects, cursor, options)`。差し替える場合は `Renderer` プロパティへ別実装を設定する |
+| 描画にだけ必要な色（`MarqueePaint` / `LoupePaint`） | **UIBase** | 色はコアの計算・判断に入らない（描画の可否は寸法・表示可否としてコアの明示フラグが持つ）ため、描画手順と同じ層が単一所有する |
+| 既定実装（`MarqueeRenderer` / `LoupeRenderer`） | **UIBase** | 描画 API の呼び出し手順は UI 非依存だが、コアの一部ではない（コアは UIBase を参照できない）。色はインスタンスの状態として受け取る |
+| 注入 | **UI** | `new MarqueeRenderer(paint)` を 1 回生成して注入し、コントロールの `Paint` プロパティ（`MarqueePaint` / `LoupePaint`）と併せて設定する。差し替える場合は `Renderer` プロパティへ別実装を設定する |
+
+**帰属の規則**: **寸法・表示可否・判断は Core、色と描画手順は UIBase、配線は UI** です。色をコアの設定値へ入れないのは、色が「何を描くか」の判断に使われないためです（描画の可否は色のアルファではなくコアの明示フラグが決めます）。
 
 アセンブリ参照の向きは `UI → UIBase → Core` です（`UIBase` は Core の契約を実装するので Core を参照する）。**逆向きの参照はありません**。
 

@@ -418,8 +418,8 @@ public class MarqueeControlTests
         var control = CreateControl();
         var window = Show(control);
 
-        // HandleColor = default（透明）→ DrawHandles は白にフォールバックして描画
-        control.Options = control.Options with { HandleColor = default };
+        // HandleColor = default（透明）→ DrawHandles は白にフォールバックする
+        control.Paint = control.Paint with { HandleColor = default };
         control.SetSelection(new Rect(20, 20, 60, 60));
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
@@ -1411,8 +1411,6 @@ public class MarqueeControlTests
         control.Options = control.Options with
         {
             ShowCoordLabel = true,
-            CoordLabelColor = Colors.White.ToDrawingColor(),
-            CoordLabelBackgroundColor = Color.FromAColor(128, Colors.Black).ToDrawingColor(),
             CoordLabelFontSize = 12.0,
         };
 
@@ -1496,25 +1494,18 @@ public class MarqueeControlTests
         {
             // ハンドルの塗り（ブラシ）とハンドル枠（ペン）の両方のキャッシュ容量を超えさせる
             var color = Color.FromRgb((byte)(i % 256), (byte)((i / 256) % 256), 0).ToDrawingColor();
-            control.Options = control.Options with { HandleColor = color, HandleBorderColor = color };
-            control.DecoOptions = control.DecoOptions with
+            control.Paint = control.Paint with
             {
-                OuterAppearance = control.DecoOptions.OuterAppearance with { BorderColor = color },
+                HandleColor = color,
+                HandleBorderColor = color,
+                OuterBorderColor = color,
             };
             control.InvalidateVisual();
             window.CaptureRenderedFrame();
         }
 
         // クリア後に再描画しても例外なく正しく描画される（キャッシュが再構築される）
-        control.Options = control.Options with
-        {
-            HandleColor = Colors.Red.ToDrawingColor(),
-            HandleBorderColor = Colors.Red.ToDrawingColor(),
-        };
-        control.DecoOptions = control.DecoOptions with
-        {
-            OuterAppearance = control.DecoOptions.OuterAppearance with { BorderColor = Colors.Red.ToDrawingColor() },
-        };
+        control.Paint = control.Paint with { OuterBorderColor = Colors.Red.ToDrawingColor() };
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
 

@@ -128,7 +128,7 @@ public sealed partial class MarqueeControl : Panel
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
         _effects = new Effects(this);
-        _marquee = new MarqueeFacade(MarqueeRenderer.Default, _effects, _cursor, Options);
+        _marquee = new MarqueeFacade(new MarqueeRenderer(MarqueePaint.Default), _effects, _cursor, Options);
         // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
         _marquee.Scaling = GetValue(ScalingProperty);
         _marquee.Notified += OnNotified;
@@ -185,6 +185,10 @@ public sealed partial class MarqueeControl : Panel
         // 設定（外観・装飾を含む）の変更は再描画を要求する
         AffectsRender<MarqueeControl>(OptionsProperty, DecoOptionsProperty, ScalingProperty);
 
+        // 色（描画にだけ必要な設定）の変更は描画実装を差し替える（色は描画実装が単一所有する）
+        PaintProperty.Changed.AddClassHandler<MarqueeControl>(
+            static (o, e) => o._marquee.Renderer = new MarqueeRenderer(e.GetNewValue<MarqueePaint>()));
+
         // 対話パラメータをファサードへ伝搬する（変更の影響判断・ログはコアが単一所有する）
         OptionsProperty.Changed.AddClassHandler<MarqueeControl>(
             static (c, e) => c._marquee.Options = e.GetNewValue<MarqueeOptions>());
@@ -205,7 +209,7 @@ public sealed partial class MarqueeControl : Panel
     // ====================================================================
 
     /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="MarqueeRenderer.Default"/>。</value>
+    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="MarqueeRenderer"/>。</value>
     /// <remarks>
     /// 保持と再描画の要求はコアのファサード（<see cref="MarqueeFacade.Renderer"/>）が単一所有する（本層は委譲するだけ）。<br/>
     /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
@@ -362,6 +366,14 @@ public sealed partial class MarqueeControl : Panel
     public static readonly StyledProperty<MarqueeOptions> OptionsProperty =
         AvaloniaProperty.Register<MarqueeControl, MarqueeOptions>(nameof(Options), defaultValue: MarqueeOptions.Default);
 
+    /// <summary><see cref="Paint"/> 依存関係プロパティ（色。描画にだけ必要な設定）。</summary>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/> / <see cref="DecoOptions"/>）には含めず、<br/>
+    /// 描画の設定（<see cref="MarqueePaint"/>）として本コントロールが公開する（描画実装が単一所有する）。
+    /// </remarks>
+    public static readonly StyledProperty<MarqueePaint> PaintProperty =
+        AvaloniaProperty.Register<MarqueeControl, MarqueePaint>(nameof(Paint), defaultValue: MarqueePaint.Default);
+
     /// <summary>外観・対話パラメータをまとめた設定を取得または設定する。</summary>
     /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
@@ -373,6 +385,18 @@ public sealed partial class MarqueeControl : Panel
     {
         get => GetValue(OptionsProperty);
         set => SetValue(OptionsProperty, value);
+    }
+
+    /// <summary>描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
+    /// <value>色の単一値。既定は <see cref="MarqueePaint.Default"/>。</value>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/> / <see cref="DecoOptions"/>）ではなく本プロパティが単一所有する。<br/>
+    /// 変更すると描画実装（<see cref="Renderer"/>）が新しい色で差し替えられる。
+    /// </remarks>
+    public MarqueePaint Paint
+    {
+        get => GetValue(PaintProperty);
+        set => SetValue(PaintProperty, value);
     }
 
     // ====================================================================

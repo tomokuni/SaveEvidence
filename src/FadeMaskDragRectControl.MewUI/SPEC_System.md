@@ -48,9 +48,9 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 | 層 | 責務 |
 | --- | --- |
 | `FadeMaskDragRectControl.Core` | 動作モードの定義、モード → 子コントロールの有効・無効の写像、ルーペ画像への破線オーバーレイ描画 |
-| 各コントロールの `*.Core` | 選択矩形の状態機械、選択矩形の外側の装飾（暗転マスク・穴あけ枠）の外観・幾何、ルーペの表示位置計算 |
-| `FadeMaskDragRectControl.MewUI` | 内包コントロールの生成・重ね合わせ・イベント配線・状態同期・配置（レイアウト）・ラベル設定の委譲・付加情報（操作・情報ラベル）の描画 |
-| ホスト | モードの指定、座標変換ポートの設定、ルーペ画像の供給、ラベル文言の供給、破線色の供給、ログの注入、確定・キャンセル後の後始末 |
+| 各コントロールの `*.Core` | 選択矩形の状態機械、選択矩形の外側の装飾（暗転マスク・穴あけ枠）の寸法と表示可否、ルーペの表示位置計算（色は描画にだけ必要な設定のため各コントロールの `*.UIBase` が単一所有する） |
+| `FadeMaskDragRectControl.MewUI` | 内包コントロールの生成・重ね合わせ・イベント配線・状態同期・配置（レイアウト）・ラベル設定の委譲・付加情報（操作・情報ラベル）の描画・描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）の委譲 |
+| ホスト | モードの指定、座標変換ポートの設定、ルーペ画像の供給、ラベル文言の供給、破線色・描画色（`MarqueePaint` / `LoupePaint`）の供給、ログの注入、確定・キャンセル後の後始末 |
 
 ### 設計判断
 
@@ -59,7 +59,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 | 基底を `Panel` にして `ArrangeContent` を自前実装した | 暗転マスクと選択矩形は全面、ルーペは「中心 + オフセット」の絶対配置という異なる配置規則が必要（`Grid` のセル配置では表現できない） |
 | モードの解釈をコア（`FadeMaskDragRectModes`）へ置いた | モードと可視性・ルーペの表示可否・全面暗転の対応が UI 間でずれるのを防ぐ（enum の重複定義も解消） |
 | ルーペの位置決めを本クラスで行う | MewUI のルーペは位置を持たない（描画のみ）ため、親領域サイズ・中心・オフセットから配置する必要がある。計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有し、本クラスは結果を Arrange へ渡すだけにする |
-| 設定をコアの単一値（`FadeMaskDragRectOptions`）として公開した | 既定値・項目の対応・子コントロールへの分配規則を UI に持たせない（Avalonia 版と同一の設定値を使うため、見た目も一致する） |
+| 設定をコアの単一値（`FadeMaskDragRectOptions`）として公開した | 既定値・項目の対応・子コントロールへの分配規則を UI に持たせない（Avalonia 版と同一の設定値を使うため、見た目も一致する）。色はコアの計算に入らない（描画にだけ必要）ためコアの設定値に含めず、UIBase の `MarqueePaint` / `LoupePaint` を別プロパティで与える |
 | イベント引数をコア型で公開した | 内包コントロールのイベント引数と同一の型になり境界変換が不要になる |
 | 選択矩形コントロールへ座標変換ポートを渡すようにした | ズームビューのレターボックス等オフセット付きの変換でも、外側の装飾の穴あけと選択矩形が一致する（等倍スケールのみでは位置がずれる） |
 | 付加情報（操作・情報ラベル）は本クラス（ホスト）が描く | サイズ・カーソル座標ラベルは選択矩形コントロールがテキスト要素として表示する（実寸から配置矩形を求める写像は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan.Resolve` が単一所有する）。操作・情報ラベルは選択コントロールの概念ではないため、本クラスが `FadeMaskDragRectOptions.Labels` の外観に従って描く |
@@ -102,6 +102,8 @@ classDiagram
     class FadeMaskDragRectControl {
         +FadeMaskDragRectMode Mode
         +FadeMaskDragRectOptions Options
+        +MarqueePaint MarqueePaint
+        +LoupePaint LoupePaint
         +bool HasSelection
         +EsRect SelectionRect
         +EsRect? LogicalHighlightRect
@@ -266,5 +268,5 @@ ArrangeContent(bounds)                     … bounds はウィンドウ絶対�
 
 | 項目 | 状況 |
 | --- | --- |
-| ハイライトのウィンドウタイトル | ホストが `InfoTextProvider` で与える（表示可否は装飾層の `ホストの表示可否` が判定する） |
+| ハイライトのウィンドウタイトル | ホストが `InfoTextProvider` で与える（表示可否はホストが判定する） |
 | 実ウィンドウへの組み込み | `app.MewUI` のキャプチャフローで配線済み（撮影・切り出しの両方） |

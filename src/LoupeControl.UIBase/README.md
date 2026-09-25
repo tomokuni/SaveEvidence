@@ -6,12 +6,12 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方） | `LoupeRenderer` / `LoupeLabelPlan` |
+| **描画手順** | 「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方）と色（`LoupePaint`） | `LoupeRendererBase` / `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan` |
 | **組み込み規則** | 「他のコントロールへ組み込むときにだけ必要な規則」（再描画要求のバッチ化と世代番号管理） | `LoupeRenderCoordinator` |
 
 ## 目的
 
-- **「どう描くか」を 1 箇所に集約する**。コア（`Feature.LoupeCore`）は「何を描くか（判断とデータ）」だけを決め、描画 API の呼び出し手順は本層が単一所有する。
+- **「どう描くか」を 1 箇所に集約する**。コア（`Feature.LoupeCore`）は「何を描くか（判断とデータ）」だけを決め、描画 API の呼び出し手順と色（`LoupePaint`）は本層が単一所有する。
 - **描画を差し替えられる**。描画先は `IEsCanvas`（`Platform.Core`、UI 非依存の描画ポート）であり、描画手順は `ILoupeRenderer`（`Feature.LoupeCore` の契約）を実装した型で置き換えられる（ファサードの `Loupe.Renderer` へ設定する）。UI の追加・描画方式の変更はポートまたは実装の差し替えだけで済む。
 - **非同期の再描画を 1 フレーム 1 回へ結合する**。中間ビットマップを持つ UI（Avalonia 版）は「要求 → 実行キュー → 非同期生成 → 表示反映」の順に動くため、要求の合流と古い結果の破棄が必要になる。この手順を UI ごとに書かせない。
 - **UI 実装を薄くする**。UI 層は描画内容の解決・描画先（描画ポート）の用意・実行キューの提供だけを行い、描画 API の呼び出し手順と再描画のスケジューリングは本層が持つ。
@@ -25,7 +25,7 @@
 ```text
 UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> LoupeControl.UIBase ← 本プロジェクト   どう描くか（描画手順）＋ 組み込み先があるときだけ必要な規則
+    ├──> LoupeControl.UIBase ← 本プロジェクト   どう描くか（描画手順と色）＋ 組み込み先があるときだけ必要な規則
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
 ※ コアは本層を参照しない（本層の描画実装はコアの契約 ILoupeRenderer を実装する）。
@@ -40,8 +40,10 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 | 型 | 責務 |
 | --- | --- |
-| `LoupeRenderer` | 描画入力（`LoupeRenderRequest`）を描画ポートへ写す（**描画手順の単一所有者**。`ILoupeRenderer` の既定実装で、`Default` のインスタンスを共有する）。`DrawShapes`（下地・市松・拡大画像・十字線・外枠。**ラベルの層は描かない**）/ `ResolveLabels`（要素の配置指示） |
-| `LoupeLabelPlan` | コアの通知（`LoupeRenderNotification`）からラベル要素（`EsLabelElement`）の配置指示を解決する |
+| `LoupeRendererBase` | 描画手順（層の順序に従って描画ポートを呼ぶ手順）を単一所有する抽象基底（**適用パターン**: Template Method。色は派生クラスが `protected abstract LoupePaint Paint` で与える） |
+| `LoupeRenderer` | 既定の描画実装（`sealed`。`ILoupeRenderer` を実装）。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する。`DrawShapes`（下地・市松・拡大画像・十字線・外枠。**ラベルの層は描かない**）/ `ResolveLabels`（要素の配置指示） |
+| `LoupePaint` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）と「描くかどうか」の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
+| `LoupeLabelPlan` | コアの通知（`LoupeRenderNotification`）からラベル要素（`EsLabelElement`）の配置指示を解決する（色は `LoupePaint` から受け取る） |
 
 ### 組み込み規則
 
@@ -68,7 +70,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | --- | --- |
 | **描画先（UI フレームワーク）** | `IEsCanvas` を実装する（例: `SkiaEsCanvas`（Skia）/ `AvaloniaCanvas`（Avalonia の `DrawingContext`））。**描画手順はそのまま使える** |
 | **描画手順そのもの** | `ILoupeRenderer`（`Feature.LoupeCore`）を実装した型を作り、ファサードの `Loupe.Renderer` へ設定する（本層の `LoupeRenderer` を使わなくてもよい） |
-| **色・寸法・拡大率** | `LoupeOptions`（設定）と `LoupeMetrics`（外観）を変える（描画層は値を保持しない） |
+| **色** | `LoupePaint` を変える（`new LoupeRenderer(paint)` をファサードの `Loupe.Renderer` へ設定し直す。UI の `Paint` プロパティが本処理を行う） |
+| **寸法・拡大率・表示サイズ** | `LoupeOptions`（`Metrics` が寸法。`CheckerSize` / `FrameWidth` / ラベルの寸法）を変える（コアが単一所有する） |
 
 ## Core との境界（なぜスケジューリングを Core に置かないか）
 
@@ -83,7 +86,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 | 型 | AvaloniaUI | MewUI | 補足 |
 | --- | --- | --- | --- |
-| `LoupeRenderer` / `LoupeLabelPlan` | 使う | 使う | 描画手順は両 UI で共通 |
+| `LoupeRendererBase` / `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan` | 使う | 使う | 描画手順と色は両 UI で共通 |
 | `LoupeRenderCoordinator` | 使う（中間ビットマップを非同期生成し `Image.Source` へ反映） | **使わない** | MewUI は `OnPaintSurface` の中で同期描画するため、要求の合流と世代番号管理が不要 |
 
 **UI フレームワークによって未使用になる型が存在します**（`LoupeRenderCoordinator` は中間ビットマップを持つ UI だけが使う）。これは「抽象として複数の UI で共用できる処理を本層へ置き、必要とする UI だけが実装・利用する」設計の帰結であり、コア（`Feature.LoupeCore`）の公開面には影響しません。同じ必要が生じた時点で MewUI にも注入できます。
@@ -93,8 +96,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 ルーペ（拡大鏡）を独自コントロールとして実装する場合、**状態の更新**と**描画**から作れます。
 
 ```csharp
-// 1. 生成（設定は 1 値。表示サイズ・拡大率・外観をここへまとめる。第 1 引数は描画の実装）
-private readonly Loupe _loupe = new(LoupeRenderer.Default);
+// 1. 生成（色は LoupePaint（デフォルトは LoupePaint.Default）、設定は LoupeOptions。第 1 引数は描画の実装）
+private readonly Loupe _loupe = new(new LoupeRenderer(LoupePaint.Default));
 private EsBitmap? _source;   // 拡大元の画像（本 UI が解決して渡す）
 
 // 2. 状態の更新（マウス移動などで拡大中心を設定する）
@@ -137,7 +140,7 @@ _coordinator.CancelAndRelease();   // 非表示遷移・明示クリア（要求
 
 ```text
 LoupeControl.UIBase
-    ├── Feature.LoupeCore（描画入力・通知・外観・切り出しの計算）
+    ├── Feature.LoupeCore（描画入力・通知・寸法・切り出しの計算）
     └── Platform.Core（IEsCanvas・Es* 値型・SkiaEsCanvas・EsLabelLayout）
 ```
 
@@ -147,12 +150,13 @@ LoupeControl.UIBase
 
 ## テスト
 
-`tests/` が本プロジェクトのテストを持ちます。描画は UI 非依存の描画ポート（Skia）で行い、再描画のスケジューリングは UI 型を持たないため、**UI 初期化なしで検証**できます（合計 32 件）。
+`tests/` が本プロジェクトのテストを持ちます。描画は UI 非依存の描画ポート（Skia）で行い、再描画のスケジューリングは UI 型を持たないため、**UI 初期化なしで検証**できます（合計 43 件）。
 
 ```text
 tests/
-├── LoupeRenderer.Tests.cs             # 層ごとの描画（下地・市松・拡大画像・十字線・外枠・層の選択・引数の検証）（15 件）
-├── LoupeLabelPlan.Tests.cs            # 実寸 → ラベル要素の写像（5 件）
+├── LoupeRenderer.Tests.cs             # 層ごとの描画（下地・市松・拡大画像・十字線・外枠・層の選択・引数の検証・色の注入）（17 件）
+├── LoupePaint.Tests.cs                # 色の既定値・部分変更・描画可否の述語・値等価（8 件）
+├── LoupeLabelPlan.Tests.cs            # 実寸 → ラベル要素の写像（6 件）
 ├── LoupeRenderCoordinator.Tests.cs    # バッチ化・世代番号・適用判定・破棄と解放・防御分岐（12 件）
 └── TestHelper.cs                      # テスト用の描画先（Skia）
 ```

@@ -158,6 +158,7 @@ CaptureSessionControl.AvaloniaUI/
 ├── src/
 │   ├── CaptureSessionControl.AvaloniaUI.csproj      # ライブラリプロジェクト（Avalonia.Desktop / Logging.Abstractions）
 │   ├── CaptureSessionControl.cs            # 公開 Facade（統括者。組み立て・配線・ライフサイクル）
+│   ├── CapturePaintMapper.cs               # 設定から描画にだけ必要な色（MarqueePaint / LoupePaint）を組み立てる
 │   └── Sessions/                 # 内部実装（SelectionCaptureSession / CropSession / OverlayWindow）
 ├── sample/                       # サンプルアプリ（sample/README.md 参照）
 └── tests/                        # 単体テスト

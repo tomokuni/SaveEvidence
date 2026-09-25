@@ -19,14 +19,16 @@ namespace EsUtil.SaveEvidence.Marquee.UIBase;
 public static class MarqueeLabelPlan
 {
     /// <summary>ラベル要素の配置指示を解決する（描画順に並ぶ）。</summary>
-    /// <param name="content">コアが解決した描画内容（文言・外観・層の順序を持つ）。</param>
+    /// <param name="content">コアが解決した描画内容（文言・寸法・層の順序を持つ）。</param>
+    /// <param name="paint">描画に使う色（描画にだけ必要な設定。本層が単一所有する）。null 不可。</param>
     /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
     /// <returns>配置するラベル要素の一覧（サイズラベル → カーソル座標ラベルの順）。どちらも無い場合は空。</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
-    /// <remarks>外観（色・フォントサイズ・余白）と文言はコアが単一所有する（本クラスは実寸の反映のみ）。</remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="paint"/> または <paramref name="measureText"/> が null の場合。</exception>
+    /// <remarks>寸法（フォントサイズ・余白）と文言はコアが、色は描画の設定が単一所有する（本クラスは実寸の反映のみ）。</remarks>
     public static IReadOnlyList<EsLabelElement> Resolve(
-        in MarqueeDrawContent content, Func<string, double, EsSize> measureText)
+        in MarqueeDrawContent content, MarqueePaint paint, Func<string, double, EsSize> measureText)
     {
+        ArgumentNullException.ThrowIfNull(paint);
         ArgumentNullException.ThrowIfNull(measureText);
 
         if (content.SizeLabel is null && content.CoordLabel is null)
@@ -40,13 +42,15 @@ public static class MarqueeLabelPlan
         if (content.SizeLabel is { } sizeLabel)
         {
             elements.Add(sizeLabel.ToElement(
-                measureText(sizeLabel.Text, sizeLabel.FontSize), sizeLabel.TextColor, sizeLabel.BackgroundColor));
+                measureText(sizeLabel.Text, sizeLabel.FontSize),
+                paint.SizeLabelColor, paint.SizeLabelBackgroundColor));
         }
 
         if (content.CoordLabel is { } coordLabel)
         {
             elements.Add(coordLabel.ToElement(
-                measureText(coordLabel.Text, coordLabel.FontSize), coordLabel.TextColor, coordLabel.BackgroundColor));
+                measureText(coordLabel.Text, coordLabel.FontSize),
+                paint.CoordLabelColor, paint.CoordLabelBackgroundColor));
         }
 
         return elements;

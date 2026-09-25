@@ -23,8 +23,6 @@ public class OuterDecoAppearanceTests
     {
         var appearance = new OuterDecoAppearance();
 
-        Assert.Equal(DrawingColor.FromArgb(128, 0, 0, 0), appearance.OverlayColor);
-        Assert.Equal(DrawingColor.FromArgb(255, 169, 169, 169), appearance.BorderColor);
         Assert.Equal(2.0, appearance.BorderThickness);
     }
 
@@ -34,10 +32,8 @@ public class OuterDecoAppearanceTests
     {
         var baseline = new OuterDecoAppearance();
 
-        var changed = baseline with { BorderThickness = 3.0, BorderColor = DrawingColor.Red };
+        var changed = baseline with { BorderThickness = 3.0 };
 
         Assert.Equal(3.0, changed.BorderThickness);
-        Assert.Equal(DrawingColor.Red, changed.BorderColor);
-        Assert.Equal(baseline.OverlayColor, changed.OverlayColor);
     }
 }

@@ -702,7 +702,6 @@ public class MarqueeSessionTests
         // 外観（色・サイズ）はセッションが関与しないため、変更しても設定変更ログは流れない
         session.ApplyOptions(session.Options with
         {
-            HandleBorderColor = System.Drawing.Color.Red,
             HandleSize = 20.0,
             MarkerLength = 40.0,
             CoordLabelFontSize = 24.0,

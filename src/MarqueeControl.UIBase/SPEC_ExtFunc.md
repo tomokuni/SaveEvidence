@@ -15,8 +15,8 @@
 
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
-| 描画内容の描画（図形） | `IMarqueeRenderer.DrawShapes`（既定実装 `MarqueeRenderer.Default`） | 装飾・ハンドル・始点マーカーを描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く） |
-| ラベル要素の配置 | `IMarqueeRenderer.ResolveLabels`（既定実装は `MarqueeLabelPlan.Resolve` へ委譲） | 実寸（描画 API の測定値）からラベル要素の配置指示（`EsLabelElement`）を解決する |
+| 描画内容の描画（図形） | `IMarqueeRenderer.DrawShapes`（既定実装 `MarqueeRenderer`） | 装飾・ハンドル・始点マーカーを描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く。色は `MarqueePaint` から引く） |
+| ラベル要素の配置 | `IMarqueeRenderer.ResolveLabels`（既定実装は `MarqueeLabelPlan.Resolve` へ委譲） | 実寸（描画 API の測定値）からラベル要素の配置指示（`EsLabelElement`）を解決する（色は `MarqueePaint` から写す） |
 | ホスト付加情報ラベルの描画 | `MarqueeHostLabelRenderer.Draw` | ホストが与えた文言を、サイズラベルと同じ体裁（内側余白・背景 → 文字の順序）で描く |
 
 #### 前提条件
@@ -24,7 +24,7 @@
 - 描画先は `IEsCanvas`（`EsUtil.Platform.Core.Imaging`）です。Skia のキャンバスを使う場合は `SkiaEsCanvas`、Avalonia の `DrawingContext` を使う場合は `AvaloniaCanvas`（`Platform.AvaloniaUI`）を使います。
 - 描画の単位は**アダプタの座標系**に従います（マーキーは DIP、ルーペは物理ピクセル）。単位の換算（DPI スケーリング）はアダプタの利用側が行います。
 - 描画面の消去は呼び出し側の責務です（フレームワークが消去する UI では不要）。
-- 本層は色・寸法・文言を保持しません（すべてコアの契約が単一所有します）。
+- 本層は色（`MarqueePaint`）を単一所有します（描画にだけ必要な設定のため）。寸法・表示可否・文言はコアの契約が単一所有します。
 
 ### 1.2 組み込み規則
 
@@ -46,32 +46,52 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `MarqueeRenderer` | sealed class | 描画手順の単一所有者（`IMarqueeRenderer`（`EsUtil.Feature.MarqueeCore`）の**既定実装**）。`Default` で唯一のインスタンスを共有する |
-| `MarqueeOuterRenderer` | static class | 選択矩形の外側の装飾の描画 |
-| `MarqueeInnerRenderer` | static class | 穴あけ矩形の内側の装飾の描画 |
-| `MarqueeLabelPlan` | static class | ラベル要素の配置指示の解決 |
+| `MarqueePaint` | sealed record | **色の単一所有者**（ハンドル・十字マーカー・ラベル・装飾）。`Default` を基点に `with` 式で部分変更する |
+| `MarqueeRendererBase` | abstract class | **描画手順の単一所有者**（層の順序に従って描画ポートを呼ぶ。色は派生クラスが `Paint` で与える） |
+| `MarqueeRenderer` | sealed class | `MarqueeRendererBase` の既定実装（`IMarqueeRenderer`（`EsUtil.Feature.MarqueeCore`）を実装する）。色を必須引数で受け取る（`Default` のような共有インスタンスは持たない） |
+| `MarqueeOuterRenderer` | static class | 選択矩形の外側の装飾の描画（色は引数の `MarqueePaint` から引く） |
+| `MarqueeInnerRenderer` | static class | 穴あけ矩形の内側の装飾の描画（色は引数の `MarqueePaint` から引く） |
+| `MarqueeLabelPlan` | static class | ラベル要素の配置指示の解決（色は引数の `MarqueePaint` から写す） |
 | `MarqueeHostLabelRenderer` | static class | ホスト付加情報ラベルの描画 |
 
 ### `MarqueeRenderer` のメンバー（`IMarqueeRenderer` の実装）
 
 | メンバー | 説明 |
 | --- | --- |
-| `Default` | 既定の描画実装（唯一のインスタンス。状態を持たないためファサード間で共有できる）。生成は非公開（`new` できない） |
+| `MarqueeRenderer(MarqueePaint paint)` | 描画に使う色を指定して生成する（`MarqueePaint.Default` を基点に組み立てた値を渡す）。`paint` が null なら `ArgumentNullException`。色はインスタンスごとに異なるため、共有インスタンスを書き換えず差し替える |
 | `DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content)` | 図形の層（装飾・ハンドル・始点マーカー）を描画順に描く（**ラベルの層は描かない**）。`canvas` が null なら `ArgumentNullException` |
-| `ResolveLabels(in MarqueeDrawContent content, Func<string, double, EsSize> measureText)` | 配置するラベル要素を順序どおりに返す（`MarqueeLabelPlan.Resolve` へ委譲する）。`measureText` が null なら `ArgumentNullException` |
+| `ResolveLabels(in MarqueeDrawContent content, Func<string, double, EsSize> measureText)` | 配置するラベル要素を順序どおりに返す（`MarqueeLabelPlan.Resolve` へ委譲し、生成時に渡された色を写す）。`measureText` が null なら `ArgumentNullException` |
+
+### `MarqueePaint` のメンバー（色の単一値）
+
+| メンバー | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `Default` | `MarqueePaint` | - | すべての色を既定値にした値（部分変更の基点） |
+| `DefaultHandleBorderColor` | `DrawingColor`（static readonly） | `#FFA9A9A9` | ハンドル枠の既定色（穴あけ枠と共有） |
+| `HandleColor` | `DrawingColor` | 白 | ハンドルの塗り色（全成分 0 を指定した場合は白へ解決される） |
+| `HandleBorderColor` | `DrawingColor` | `#FFA9A9A9` | ハンドルの枠線色 |
+| `MarkerColor` | `DrawingColor` | 白 | 十字マーカー（始点マーカー）の色 |
+| `SizeLabelColor` / `SizeLabelBackgroundColor` | `DrawingColor` | 白 / 黒 60% | サイズラベルの文字色と背景色 |
+| `CoordLabelColor` / `CoordLabelBackgroundColor` | `DrawingColor` | 白 / 黒 60% | カーソル座標ラベルの文字色と背景色 |
+| `OverlayColor` | `DrawingColor` | 黒 50%（`#80000000`） | 暗転マスクの色 |
+| `OuterBorderColor` | `DrawingColor` | `#FFA9A9A9` | 穴あけ枠の色 |
+| `InnerFillColor` / `InnerBorderColor` | `DrawingColor` | 透明 / 透明 | 穴あけ矩形の内側の塗り色と枠線色 |
+
+色は UI 非依存の `System.Drawing.Color` です（各 UI の色型への変換は描画ポートのアダプタが行う）。
+**描画の可否は色のアルファでは決まりません**（`MarqueeDecoOptions` の明示フラグが単一所有します）。
 
 ### `MarqueeOuterRenderer` / `MarqueeInnerRenderer` のメンバー
 
 | メンバー | 説明 |
 | --- | --- |
-| `MarqueeOuterRenderer.Draw(IEsCanvas canvas, in OuterDecoFrame frame)` | 暗転領域（`OverlayRegions`）を暗転色で塗り、枠線（`BorderRects`）を描く（空のコレクションは何もしない） |
-| `MarqueeInnerRenderer.Draw(IEsCanvas canvas, in InnerDecoFrame frame)` | 塗り矩形（`FillRect`。null なら何もしない）を塗り、枠線（`BorderRects`）を描く |
+| `MarqueeOuterRenderer.Draw(IEsCanvas canvas, in OuterDecoFrame frame, MarqueePaint paint)` | 暗転領域（`OverlayRegions`）を `paint.OverlayColor` で塗り、枠線（`BorderRects`）を `paint.OuterBorderColor` で描く（空のコレクションは何もしない） |
+| `MarqueeInnerRenderer.Draw(IEsCanvas canvas, in InnerDecoFrame frame, MarqueePaint paint)` | 塗り矩形（`FillRect`。null なら何もしない）を `paint.InnerFillColor` で塗り、枠線（`BorderRects`）を `paint.InnerBorderColor` で描く |
 
 ### `MarqueeLabelPlan` のメンバー
 
 | メンバー | 説明 |
 | --- | --- |
-| `Resolve(in MarqueeDrawContent content, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`EsLabelElement`）の一覧を**順序どおり**（サイズラベル → カーソル座標ラベル）で返す。どちらも無い場合は空（一覧を生成しない）。`measureText` が null なら `ArgumentNullException` |
+| `Resolve(in MarqueeDrawContent content, MarqueePaint paint, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`EsLabelElement`）の一覧を**順序どおり**（サイズラベル → カーソル座標ラベル）で返す。どちらも無い場合は空（一覧を生成しない）。色は `paint`（描画の設定）から写す。`paint` または `measureText` が null なら `ArgumentNullException` |
 
 ### `MarqueeHostLabelRenderer` のメンバー
 
@@ -196,7 +216,7 @@ viewport.Notify();   // 変化を検知したら呼ぶ
 | `Bounds` | 要素を置く矩形（背景の大きさ = 文字の実寸 + 内側余白 × 2） |
 | `TextOrigin` | 文字の描画原点（背景の内側余白の分だけ内側） |
 | `PaddingX` / `PaddingY` | 要素の内側余白（`TextOrigin` - `Bounds`。要素の `Padding` に写す） |
-| `Text` / `FontSize` / `TextColor` / `BackgroundColor` / `CornerRadius` | 文言・フォントサイズ・色・角丸（コアが解決済み。UI は判断しない） |
+| `Text` / `FontSize` / `TextColor` / `BackgroundColor` / `CornerRadius` | 文言・フォントサイズ・角丸はコアが、色は描画の設定（`MarqueePaint`）が与える（UI は判断しない） |
 
 ### 付加情報ラベルの体裁
 

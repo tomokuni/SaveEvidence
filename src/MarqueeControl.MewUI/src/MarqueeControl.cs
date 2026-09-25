@@ -14,7 +14,6 @@ using EsUtil.Platform.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
-using DrawingColor = System.Drawing.Color;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 
 namespace EsUtil.SaveEvidence.Marquee.MewUI;
@@ -63,6 +62,17 @@ public sealed class MarqueeControl : Panel
         MewProperty<MarqueeDecoOptions>.Register<MarqueeControl>(
             nameof(DecoOptions), MarqueeDecoOptions.Default, MewPropertyOptions.AffectsRender,
             changed: static (owner, _, newValue) => owner._marquee.DecoOptions = newValue);
+
+    /// <summary><see cref="Paint"/> プロパティ（色。描画にだけ必要な設定）。</summary>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/> / <see cref="DecoOptions"/>）には含めず、<br/>
+    /// 描画の設定（<see cref="MarqueePaint"/>）として本コントロールが公開する（描画実装が単一所有する）。
+    /// </remarks>
+    public static readonly MewProperty<MarqueePaint> PaintProperty =
+        MewProperty<MarqueePaint>.Register<MarqueeControl>(
+            nameof(Paint), MarqueePaint.Default, MewPropertyOptions.AffectsRender,
+            changed: static (owner, _, newValue) =>
+                owner._marquee.Renderer = new MarqueeRenderer(newValue));
 
     /// <summary><see cref="RenderScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
     public static readonly MewProperty<double> RenderScalingProperty =
@@ -130,7 +140,7 @@ public sealed class MarqueeControl : Panel
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
         _effects = new Effects(this);
-        _marquee = new MarqueeFacade(MarqueeRenderer.Default, _effects, _cursor, Options);
+        _marquee = new MarqueeFacade(new MarqueeRenderer(MarqueePaint.Default), _effects, _cursor, Options);
         // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
         _marquee.Scaling = GetValue(ScalingProperty);
         _marquee.Notified += OnNotified;
@@ -234,7 +244,7 @@ public sealed class MarqueeControl : Panel
     /// <remarks>
     /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はファサードへ伝搬する。<br/>
     /// 一部の項目だけを変える場合は <c>MarqueeOptions.Default with { ShowHandles = false }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
-    /// 色は UI 非依存の <see cref="DrawingColor"/> で受け取り、描画（Skia）への変換は描画層が行う。
+    /// 色はコアの設定に含めない（描画にだけ必要な設定のため <see cref="Paint"/> が単一所有する）。
     /// </remarks>
     public MarqueeOptions Options
     {
@@ -242,11 +252,23 @@ public sealed class MarqueeControl : Panel
         set => SetValue(OptionsProperty, value);
     }
 
+    /// <summary>描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
+    /// <value>色の単一値。既定は <see cref="MarqueePaint.Default"/>。</value>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/> / <see cref="DecoOptions"/>）ではなく本プロパティが単一所有する。<br/>
+    /// 変更すると描画実装（<see cref="Renderer"/>）が新しい色で差し替えられる。
+    /// </remarks>
+    public MarqueePaint Paint
+    {
+        get => GetValue(PaintProperty);
+        set => SetValue(PaintProperty, value);
+    }
+
     /// <summary>装飾（暗転マスク・穴あけ枠・ラベル）の設定を取得または設定する。</summary>
     /// <value>装飾の設定（暗転色・枠線・ラベル・ハイライト・内側の塗り）。既定は <see cref="MarqueeDecoOptions.Default"/>。</value>
     /// <remarks>
     /// 一部の項目だけを変える場合は <c>MarqueeDecoOptions.Default with { ... }</c> の形式で指定する（指定しない項目は既定値を保つ）。<br/>
-    /// 色は UI 非依存の <see cref="DrawingColor"/> で受け取り、描画（Skia）への変換は描画層が行う。
+    /// 色はコアの設定に含めない（描画にだけ必要な設定のため <see cref="Paint"/> が単一所有する）。
     /// </remarks>
     public MarqueeDecoOptions DecoOptions
     {
@@ -321,7 +343,7 @@ public sealed class MarqueeControl : Panel
     public EsRect SelectionRect => _marquee.SelectionRect;
 
     /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="MarqueeRenderer.Default"/>。</value>
+    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="MarqueeRenderer"/>。</value>
     /// <remarks>
     /// 保持と再描画の要求はコアのファサード（<see cref="MarqueeFacade.Renderer"/>）が単一所有する（本層は委譲するだけ）。<br/>
     /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。

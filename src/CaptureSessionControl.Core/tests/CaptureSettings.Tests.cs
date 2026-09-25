@@ -90,12 +90,9 @@ public class CaptureSettingsTests
 
         Assert.Equal(Color.FromArgb(0xFF, 169, 169, 169), s.BorderColor);
         Assert.Equal(2.0, s.BorderThickness);
-        Assert.Equal(Color.FromArgb(128, 0, 0, 0), s.OverlayColor);
-        Assert.Equal(Color.White, s.HandleColor);
         Assert.Equal(10.0, s.HandleSize);
         Assert.Equal(12.0, s.HandleHitRadius);
         Assert.True(s.ClampToDomainBounds);
-        Assert.Equal(Color.White, s.MarkerColor);
         Assert.Equal(16.0, s.MarkerLength);
         Assert.Equal(1.0, s.LoupeRenderScaling);
         Assert.Equal(Color.FromArgb(0x4C, 128, 128, 128), s.LoupeCheckerColorA);
@@ -119,7 +116,6 @@ public class CaptureSettingsTests
         Assert.Equal(25, s.MinSelectionSize);
         Assert.Equal(200, s.LoupeSize);
         Assert.Equal(Color.Red, s.BorderColor);
-        Assert.Equal(Color.Blue, s.HandleColor);
         Assert.Equal(14.0, s.HandleSize);
         Assert.True(s.ClampToDomainBounds);
         Assert.Equal(2.0, s.LoupeRenderScaling);

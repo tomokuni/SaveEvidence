@@ -45,7 +45,7 @@ Avalonia 版と MewUI 版の間に依存はありません（互いを参照し�
 
 | 層 | 責務 |
 | --- | --- |
-| `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・外枠の矩形計算、市松模様の明暗判定、外観（下地含む）と描画入力（`LoupeRenderRequest`）の単一所有 |
+| `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・外枠の矩形計算、市松模様の明暗判定、寸法・表示可否（`LoupeMetrics`）と描画入力（`LoupeRenderRequest`）の単一所有 |
 | `LoupeControl.UIBase` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
 | `LoupeControl.MewUI` | コアの描画入力を描画層（`LoupeRenderer`）へ渡し、描画ポート `SkiaEsCanvas` を適合させる。`MewProperty` による入力の受付。DPI の自動追従 |
 | ホスト（`app.MewUI` 等） | `Source` / `CenterPoint` の設定、表示位置の決定（コアのファサード `ResolveLayout` を利用） |
@@ -67,7 +67,7 @@ src/LoupeControl.MewUI/
 | コンポーネント | 責務 |
 | --- | --- |
 | `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。描画は描画層（`LoupeRenderer`）を `SkiaEsCanvas` 経由で呼ぶ（描画の順序と内容は描画層が単一所有し、コアは描く層とその順序を指示する） |
-| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画ポートへ写す（コアの描画契約 `LoupeRenderRequest` と、矩形計算・外観の物理ピクセル換算 `LoupeMetricsScaler` をそのまま使用）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
+| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画ポートへ写す（コアの描画契約 `LoupeRenderRequest` と、矩形計算・寸法の物理ピクセル換算 `LoupeMetricsScaler` をそのまま使用）。**色は `LoupePaint` が単一所有する**（コントロールの `Paint` プロパティの値を受け取る）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
 | `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -84,6 +84,7 @@ classDiagram
         +EsBitmap? Source
         +EsPoint? CenterPoint
         +LoupeOptions Options
+        +LoupePaint Paint
         +double RenderScaling
         +LoupeLayout ResolveLayout(parentSize)
         +SetCoordinateTransform(port) void
@@ -101,23 +102,31 @@ classDiagram
         <<Feature.LoupeCore>>
         +int RequestedSize
         +int ZoomLevel
-        +LoupeMetrics Appearance
+        +LoupeMetrics Metrics
     }
     class LoupeMetrics {
         <<Feature.LoupeCore>>
+        +int CheckerSize
+        +int FrameWidth
+        +double CoordLabelFontSize
+        +int CoordLabelCornerRadius
+        +bool ShowCoordLabel
+        +ShouldShowCoordLabel(hasCenter) bool
+    }
+    class LoupePaint {
+        <<LoupeControl.UIBase>>
         +Color BackgroundColor
         +Color CrossColor
         +Color CheckerColorA
         +Color CheckerColorB
         +Color FrameColor
-        +bool ShowCoordLabel
         +Color CoordLabelColor
         +Color CoordLabelBackgroundColor
-        +ShouldShowCoordLabel(hasCenter) bool
+        +Default LoupePaint$
     }
     class LoupeRenderer {
         <<LoupeControl.UIBase / 描画層（ILoupeRenderer の既定実装）>>
-        +Default LoupeRenderer$
+        +LoupeRenderer(paint)
         +DrawShapes(canvas, source, request, notification)$ void
         +ResolveLabels(coordLabel, measureText) EsLabelElement[]$
     }
@@ -143,8 +152,8 @@ classDiagram
     }
     class LoupeMetricsScaler {
         <<Feature.LoupeCore>>
-        +ScaleCheckerSize(appearance, scaling) int$
-        +ScaleFrameWidth(appearance, scaling) int$
+        +ScaleCheckerSize(metrics, scaling) int$
+        +ScaleFrameWidth(metrics, scaling) int$
     }
     class EsLabelLayout {
         <<Platform.Core>>
@@ -175,11 +184,13 @@ classDiagram
     LoupeControl *-- ShapeCanvas : 子（図形の描画）
     LoupeControl *-- Loupe : 操作の唯一の窓口（公開ファサード）
     LoupeControl ..> LoupeRenderer : 描画を委譲（SkiaEsCanvas 経由）
+    LoupeControl ..> LoupePaint : 色（Paint プロパティ）
+    LoupeRenderer ..> LoupePaint : 色
     Loupe ..> LoupeOptions : 設定の単一値
     LoupeRenderer ..> LoupeCheckerboard : 明暗判定
     LoupeRenderer ..> LoupeDecorationGeometry : 矩形
     LoupeRenderer ..> LoupeImageExtractor : 切り出し・拡大矩形
-    LoupeRenderer ..> LoupeMetricsScaler : 外観の物理ピクセル換算
+    LoupeRenderer ..> LoupeMetricsScaler : 寸法の物理ピクセル換算
     LoupeControl ..> LoupeValueCoercer : 値の補正（プロパティ登録の coerce）
     Loupe ..> LoupePositionCalculator : 表示レイアウト・描画サイズ・描画入力の解決
     Loupe ..> CoordinateFormatter : ラベル文字列
@@ -198,7 +209,7 @@ sequenceDiagram
     MW->>LC: PaintSurface(canvas, info)
     LC->>LC: Loupe.CreateRequest（コアのファサードが描画契約を組み立てる。表示サイズは描画先の表面から DpiScaler.ToDip で導出し、物理ピクセルサイズはそれを描画先へクランプして解決する）
     LC->>R: DrawShapes(SkiaEsCanvas, Source, request, layers)（描画層が層の順に描く）
-    R->>SK: 下地（Options.Appearance.BackgroundColor）を表面全体へ塗る
+    R->>SK: 下地（Paint.BackgroundColor）を表面全体へ塗る
     R->>C: ComputeDarkTiles(pixelSize, tileSize)
     R->>SK: 暗色タイルを描画（SkiaFill.Rects・リスト確保なし）
     alt Source と CenterPoint が設定済み
@@ -226,8 +237,8 @@ sequenceDiagram
 2. **拡大は最近傍で行う**。ルーペは画素をそのまま拡大する用途であり、補間すると画素が判別できなくなる。
 3. **装飾矩形と市松模様の明暗判定はコアが単一所有する**。両 UI で同じ見た目を保証するため、
    Avalonia 版と MewUI 版は同じコアの計算を使う（描画の手順そのものも UI 非依存の描画層 `LoupeControl.UIBase` が共有する）。
-4. **設定（表示サイズ・拡大率・外観）はコアの `LoupeOptions` が単一所有する**。UI 層は `Options` を 1 つ公開して描画時に読むだけであり、既定値・数値項目の補正もコアが持つ。
-   描画の可否（アルファ 0）とラベルの余白もコアが判断・所有するため、両 UI の見た目が一致する
+4. **設定（表示サイズ・拡大率・寸法）はコアの `LoupeOptions` が単一所有し、色は描画層の `LoupePaint` が単一所有する**。UI 層は `Options` と `Paint` を公開して描画時に読むだけであり、既定値・数値項目の補正もコアが持つ。
+   描画の可否（アルファ 0）は `LoupePaint.Has*` が、ラベルの余白（寸法）はコアが判断・所有するため、両 UI の見た目が一致する
    （従来は Avalonia が既定で十字線を描き MewUI は描かないという既定値のドリフトがあった）。
 5. **位置を持たない**。表示位置は「親領域サイズ」「中心座標」「オフセット」に依存するホスト側の関心事であり、
    計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有する。コントロールは入力と描画のみを担う。
@@ -241,7 +252,7 @@ sequenceDiagram
 10. **値の補正と変更ログはプロパティの登録が所有する**。`MewProperty.Register` の `coerce` / `changed` へ渡すため、
    setter を経由しない設定（バインディング等）でも安全域が保たれ、変更が記録される
    （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。規則と書式はコアが単一所有する）。
-設定（`Options`）と外観（`Options.Appearance`）の数値項目はコアの型が生成時に補正するため、コントロールは `coerce` を登録しない（環境値の `RenderScaling` のみ登録する）。
+設定（`Options`）と寸法（`Options.Metrics`）の数値項目はコアの型が生成時に補正するため、コントロールは `coerce` を登録しない（環境値の `RenderScaling` のみ登録する）。
 
 ## テスト方針
 

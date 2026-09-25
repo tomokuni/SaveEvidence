@@ -147,6 +147,15 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.LoupeRenderScaling = value;
     }
 
+    /// <summary>領域選択オーバーレイの選択矩形コントロールが使う色。<see cref="FadeMaskDragRectControl.MarqueePaint"/> へ委譲する。</summary>
+    /// <value>色の単一値。既定は <see cref="MarqueePaint.Default"/>。</value>
+    /// <remarks>色は描画にだけ必要な設定のため、コアの設定ではない（セッションが設定する）。</remarks>
+    public MarqueePaint SelectionOverlayMarqueePaint
+    {
+        get => _selectionOverlay.MarqueePaint;
+        set => _selectionOverlay.MarqueePaint = value;
+    }
+
     /// <summary>領域選択オーバーレイのルーペが使う色。<see cref="FadeMaskDragRectControl.LoupePaint"/> へ委譲する。</summary>
     /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
     /// <remarks>色は描画にだけ必要な設定のため、コアの設定ではない（セッションが設定する）。</remarks>

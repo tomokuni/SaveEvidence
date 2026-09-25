@@ -40,10 +40,11 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 - 現在対応する画像実装は `Bitmap` / `EsBitmapAvaloniaImage`（`EsBitmap` を内包する `IImage` アダプタ）
 - 1〜64倍の拡大表示
 - 画像範囲外の透明パディング
-- 市松模様の色・タイルサイズ設定
+- 市松模様の色（`Paint`）・タイルサイズ（`Options.Metrics`）設定
 - 十字線の色設定（不透明度は色のアルファに統合）
 - 中心座標ラベル表示（`(x, y)` 形式・表示/色/背景/フォントサイズ/角丸設定可能）
-- 外枠の色・太さ設定
+- 外枠の色（`Paint`）・太さ（`Options.Metrics`）設定
+- **色は `Paint` プロパティ（`LoupePaint`）、寸法（タイルサイズ・外枠の太さ・ラベルのフォントサイズと角丸半径）は `Options.Metrics`（`LoupeMetrics`）で設定**（コアは寸法・表示可否だけを持ち、色は描画層（`LoupeControl.UIBase`）が単一所有する）
 - DIP と物理ピクセルの分離（`RenderScaling`）
 - 非同期のルーペ画像生成（切り出し・合成は UI スレッドで実行）
 - 古い描画結果の自動破棄
@@ -114,7 +115,7 @@ public sealed class MainViewModel
 
     public bool IsLoupeVisible { get; set; } = true;
 
-    // 設定（表示サイズ・拡大率・外観）はコアの値 1 つで公開する
+    // 設定（表示サイズ・拡大率・寸法）はコアの値 1 つで公開する（色は Paint プロパティ）
     public LoupeOptions Options { get; set; } =
         LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 };
 
@@ -211,7 +212,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 
 ## 12. プロジェクト構成
 
-本コントロールは、UI フレームワーク非依存のロジックを `Feature.LoupeCore` へ、描画の手順を `LoupeControl.UIBase` へ分離しています（マルチ UI 対応）。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
+本コントロールは、UI フレームワーク非依存のロジックと寸法を `Feature.LoupeCore` へ、描画の手順と色を `LoupeControl.UIBase` へ分離しています（マルチ UI 対応）。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 LoupeControl.AvaloniaUI/
@@ -227,8 +228,8 @@ LoupeControl.AvaloniaUI/
 ├── SPEC_ExtFunc.md         # 外部機能仕様書
 └── SPEC_System.md          # システム仕様書
 
-../Feature.LoupeCore/       # UI フレームワーク非依存の設定・計算・外観・判断・ログ定義（設定の単一値 / 外観 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 市松模様のタイル / 描画完了時の表示情報）
-../LoupeControl.UIBase/     # 描画入力 → 描画面の写像（LoupeRenderer / LoupeLabelPlan）と再描画のスケジューリング（LoupeRenderCoordinator）
+../Feature.LoupeCore/       # UI フレームワーク非依存の設定・計算・寸法・判断・ログ定義（設定の単一値 / 寸法 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 市松模様のタイル / 描画完了時の表示情報）
+../LoupeControl.UIBase/     # 描画入力 → 描画面の写像（LoupeRenderer / LoupePaint（色）/ LoupeLabelPlan）と再描画のスケジューリング（LoupeRenderCoordinator）
 ```
 
 ## 13. ライセンス

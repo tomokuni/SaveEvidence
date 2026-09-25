@@ -15,7 +15,7 @@ Avalonia 版と同一の挙動になります。
 | 参照 | 用途 |
 | --- | --- |
 | `Feature.MarqueeCore` | 選択幾何（`SelectionGeometry`）・状態機械（`MarqueeState`）・**公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`）。状態管理クラス（`MarqueeSession`）とフレーム解決（`MarqueeFrame`）は internal（ファサードの内部実装） |
-| `MarqueeControl.UIBase` | 描画の手順（`MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）とラベル計画（`MarqueeLabelPlan`）。描画先は描画ポート（`IEsCanvas`）であり、本 UI は `SkiaEsCanvas`（Platform.Core）を適合させる |
+| `MarqueeControl.UIBase` | 描画の手順（`MarqueeRendererBase` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）と色（`MarqueePaint`）とラベル計画（`MarqueeLabelPlan`）。描画先は描画ポート（`IEsCanvas`）であり、本 UI は `SkiaEsCanvas`（Platform.Core）を適合させる |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Native` | カーソルサービスの既定実装（Win32 / NoOp） |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `SkiaCanvasView`・`MewProperty`・SkiaSharp 描画 |
@@ -34,33 +34,41 @@ Avalonia 版と同一の挙動になります。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた不変の設定値（コアの `EsUtil.Feature.MarqueeCore.MarqueeOptions`） |
-| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定**（装飾層の `EsUtil.Feature.MarqueeCore.Decoration.MarqueeDecoOptions`） |
+| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた不変の設定値（コアの `EsUtil.Feature.MarqueeCore.MarqueeOptions`。**色は含まない**） |
+| `Paint` | `MarqueePaint` | `MarqueePaint.Default` | **色（ハンドル・十字マーカー・ラベル・装飾）の設定**（描画層の `EsUtil.SaveEvidence.Marquee.UIBase.MarqueePaint`）。設定すると描画実装（`Renderer`）が新しい色で差し替わり、再描画を要求する |
+| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ハイライト）の表示可否と寸法の設定**（装飾層の `EsUtil.Feature.MarqueeCore.Decoration.MarqueeDecoOptions`。**色は含まない**） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。操作・情報ラベルの文言も同様にホストが与える |
 | `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
-| `Renderer` | `IMarqueeRenderer` | `MarqueeRenderer.Default` | 描画の実装（**描画の差し替え**。null 不可）。設定すると再描画とラベル要素の再配置を要求する（描画先は `SkiaEsCanvas` が担う） |
+| `Renderer` | `IMarqueeRenderer` | `Paint` の色を保持する描画層の `MarqueeRenderer` | 描画の実装（**描画の差し替え**。null 不可）。設定すると再描画とラベル要素の再配置を要求する（描画先は `SkiaEsCanvas` が担う） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と一致）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `ShowHandles` | `bool` | `true` | ドラッグハンドルを表示するかどうか |
-| `HandleColor` | `System.Drawing.Color` | 白 | ドラッグハンドルの塗り色 |
 | `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP） |
 | `HandleHitRadius` | `double` | `12.0` | ドラッグハンドルのヒットテスト半径（DIP。ドメインへ変換して判定する） |
 | `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標。これ未満のドラッグはキャンセル扱い） |
 | `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する。ON へ切り替えた瞬間に既存の選択矩形をクリップする |
-| `MarkerColor` | `System.Drawing.Color` | 白 | nudge 中に表示する十字マーカーの色 |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP。中心から両端までの半幅は 1/2） |
 | `ShowCoordLabel` | `bool` | `false` | カーソル座標ラベル（`(x, y)`）の表示 |
-| `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
-| `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正。非数は 12 へ補正） |
 
-設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
+設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueePaint.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
 同値の設定を再適用しても再描画・ログは発生しません。
-外観（色・サイズ）と対話パラメータ（`HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）は同じ設定値に含まれますが、
-後者だけがファサードへ伝搬します（判断と変更ログはコアが単一所有する）。
+寸法・表示可否と対話パラメータ（`HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）は同じ設定値に含まれますが、
+後者だけがファサードへ伝搬します（判断と変更ログはコアが単一所有する）。**色はコアの設定に含めません**（描画にだけ必要な設定のため `Paint` が単一所有します）。
+
+`MarqueePaint` の項目（色。既定値は本型が単一所有する）:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `HandleColor` / `HandleBorderColor` | `System.Drawing.Color` | 白 / `#FFA9A9A9` | ハンドルの塗り色と枠線色（全成分 0 の塗り色は白へ解決される） |
+| `MarkerColor` | `System.Drawing.Color` | 白 | 十字マーカーの色 |
+| `SizeLabelColor` / `SizeLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | サイズラベルの文字色と背景色 |
+| `CoordLabelColor` / `CoordLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | 座標ラベルの文字色と背景色 |
+| `OverlayColor` / `OuterBorderColor` | `System.Drawing.Color` | 黒 50% / `#FFA9A9A9` | 暗転マスクと穴あけ枠の色 |
+| `InnerFillColor` / `InnerBorderColor` | `System.Drawing.Color` | 透明 / 透明 | 穴あけ矩形の内側の塗り色と枠線色 |
 
 ## 5. メソッド
 
@@ -100,7 +108,7 @@ Avalonia 版と同一の挙動になります。
 
 ### 7.1 ラベル（文字）の表示
 
-サイズラベルとカーソル座標ラベルの**文言・外観はコアが単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有します。コントロールは `Border` + `TextBlock` を子要素として置き（`SkiaText.Measure` で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Rendered` のハンドラで `Options.Labels` の外観に従って描きます。
+サイズラベルとカーソル座標ラベルの**文言・寸法はコアが、色は描画層の `MarqueePaint` が単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有します。コントロールは `Border` + `TextBlock` を子要素として置き（`SkiaText.Measure` で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Rendered` のハンドラで `Options.Labels` の外観に従って描きます。
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます。
 
 ```csharp
@@ -151,7 +159,7 @@ marquee.Rendered += (_, e) =>
 | ビューポート変化 | ホストが `NotifyViewportChanged()` を呼ぶ（Avalonia 版は `AttachScrollViewer` で `ScrollViewer` を購読） |
 | nudge のキー入力 | フォーカス依存（Avalonia 版は `TopLevel` を購読してフォーカス非依存） |
 | ログ | `Log` プロパティで `ILogger` を注入して出力する（書式・レベルは Avalonia 版と同一） |
-| 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言・外観はコア、実寸測定は `SkiaText.Measure`、配置は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan`） |
+| 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言・寸法はコア、色は `MarqueePaint`、実寸測定は `SkiaText.Measure`、配置は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan`） |
 
 ## 9.5 ログ
 
@@ -169,15 +177,25 @@ marquee.Rendered += (_, e) =>
 ```csharp
 var marquee = new MarqueeControl
 {
+    // 寸法・表示可否・対話パラメータ
     Options = MarqueeOptions.Default with
     {
-        // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描く
-        OuterAppearance = MarqueeOptions.Default.OuterAppearance with
-        {
-            BorderColor = System.Drawing.Color.FromArgb(255, 0, 120, 215),
-        },
         HandleHitRadius = 12.0,
         ShowCoordLabel = true,
+    },
+
+    // 色（描画にだけ必要な設定）
+    Paint = MarqueePaint.Default with
+    {
+        // 選択枠線は外側の装飾（暗転マスクの穴あけ枠）が描く
+        OuterBorderColor = System.Drawing.Color.FromArgb(255, 0, 120, 215),
+    },
+
+    // 装飾の表示可否と寸法
+    DecoOptions = MarqueeDecoOptions.Default with
+    {
+        ShowOverlay = true,
+        ShowOuterBorder = true,
     },
 };
 

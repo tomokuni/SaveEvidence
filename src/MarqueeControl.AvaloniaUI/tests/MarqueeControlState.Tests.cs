@@ -39,21 +39,16 @@ public class MarqueeControlStateTests
         var options = control.Options;
 
         // ハンドルの枠線の既定は装飾の枠線と同じ DarkGray（設定画面の選択枠の色と一致）
-        Assert.Equal(Color.FromAColor(0xFF, Colors.DarkGray), options.HandleBorderColor.ToAvaloniaColor());
         // 装飾の既定は暗転する（単体の選択矩形コントロールとして暗転マスクを描く）
         Assert.Equal(2.0, control.DecoOptions.OuterAppearance.BorderThickness);
         Assert.True(options.ShowHandles);
-        Assert.Equal(Colors.White, options.HandleColor.ToAvaloniaColor());
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(10.0, options.MinSelectionSize); // CreateControl で設定
         Assert.True(options.ClampToDomainBounds);
-        Assert.Equal(Colors.White, options.MarkerColor.ToAvaloniaColor());
         Assert.Equal(16.0, options.MarkerLength);
         Assert.False(options.ShowCoordLabel);
-        Assert.Equal(Colors.White, options.CoordLabelColor.ToAvaloniaColor());
         // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(Color.FromAColor(153, Colors.Black), options.CoordLabelBackgroundColor.ToAvaloniaColor());
         Assert.Equal(12.0, options.CoordLabelFontSize);
         Assert.NotNull(control.Log);
 
@@ -69,43 +64,32 @@ public class MarqueeControlStateTests
         control.Options = MarqueeOptions.Default with
         {
             ShowHandles = false,
-            HandleColor = Colors.Blue.ToDrawingColor(),
-            HandleBorderColor = Colors.Red.ToDrawingColor(),
             HandleSize = 14.0,
             HandleHitRadius = 20.0,
             MinSelectionSize = 5.0,
             ClampToDomainBounds = true,
-            MarkerColor = Colors.Yellow.ToDrawingColor(),
             MarkerLength = 24.0,
             // カーソル座標ラベル
             ShowCoordLabel = true,
-            CoordLabelColor = Colors.Cyan.ToDrawingColor(),
-            CoordLabelBackgroundColor = Color.FromAColor(128, Colors.DarkGreen).ToDrawingColor(),
             CoordLabelFontSize = 14.0,
         };
         control.DecoOptions = MarqueeDecoOptions.Default with
         {
             OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
             {
-                BorderColor = Colors.Red.ToDrawingColor(),
                 BorderThickness = 3.0,
             },
         };
 
         var options = control.Options;
-        Assert.Equal(Colors.Red, options.HandleBorderColor.ToAvaloniaColor());
         Assert.Equal(3.0, control.DecoOptions.OuterAppearance.BorderThickness);
         Assert.False(options.ShowHandles);
-        Assert.Equal(Colors.Blue, options.HandleColor.ToAvaloniaColor());
         Assert.Equal(14.0, options.HandleSize);
         Assert.Equal(20.0, options.HandleHitRadius);
         Assert.Equal(5.0, options.MinSelectionSize);
         Assert.True(options.ClampToDomainBounds);
-        Assert.Equal(Colors.Yellow, options.MarkerColor.ToAvaloniaColor());
         Assert.Equal(24.0, options.MarkerLength);
         Assert.True(options.ShowCoordLabel);
-        Assert.Equal(Colors.Cyan, options.CoordLabelColor.ToAvaloniaColor());
-        Assert.Equal(Color.FromAColor(128, Colors.DarkGreen), options.CoordLabelBackgroundColor.ToAvaloniaColor());
         Assert.Equal(14.0, options.CoordLabelFontSize);
     }
 

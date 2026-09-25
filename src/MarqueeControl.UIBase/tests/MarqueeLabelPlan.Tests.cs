@@ -27,13 +27,13 @@ public class MarqueeLabelPlanTests
     /// <param name="text">文言。</param>
     /// <returns>サイズラベル。</returns>
     private static MarqueeSizeLabel CreateSizeLabel(string text = "(10, 20) - (30, 40),  (20×20)")
-        => new(text, new EsPoint(10, 20), 14.0, DrawingColor.White, DrawingColor.FromArgb(153, 0, 0, 0));
+        => new(text, new EsPoint(10, 20), 14.0);
 
     /// <summary>テスト用のカーソル座標ラベルを生成する。</summary>
     /// <param name="text">文言。</param>
     /// <returns>カーソル座標ラベル。</returns>
     private static MarqueeCoordLabel CreateCoordLabel(string text = "(50, 60)")
-        => new(text, new EsPoint(50, 60), new EsSize(200, 200), 12.0, DrawingColor.Yellow, DrawingColor.FromArgb(153, 0, 0, 0));
+        => new(text, new EsPoint(50, 60), new EsSize(200, 200), 12.0);
 
     /// <summary>実寸を固定で返す測定関数。</summary>
     /// <param name="text">測定する文言。</param>
@@ -41,10 +41,21 @@ public class MarqueeLabelPlanTests
     /// <returns>固定の実寸。</returns>
     private static EsSize Measure(string text, double fontSize) => MeasuredSize;
 
+    /// <summary>テスト用の描画に使う色を生成する（本テストは色の写像を検証する）。</summary>
+    /// <returns>描画に使う色。</returns>
+    private static MarqueePaint CreatePaint()
+        => new()
+        {
+            SizeLabelColor = DrawingColor.White,
+            SizeLabelBackgroundColor = DrawingColor.FromArgb(153, 0, 0, 0),
+            CoordLabelColor = DrawingColor.Yellow,
+            CoordLabelBackgroundColor = DrawingColor.FromArgb(153, 0, 0, 0),
+        };
+
     [Fact]
     public void Resolve_ラベルが無ければ空を返す()
     {
-        var elements = MarqueeLabelPlan.Resolve(CreateContent(), Measure);
+        var elements = MarqueeLabelPlan.Resolve(CreateContent(), CreatePaint(), Measure);
 
         Assert.Empty(elements);
     }
@@ -52,7 +63,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_サイズラベルのみなら1件を返す()
     {
-        var elements = MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel("サイズ")), Measure);
+        var elements = MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel("サイズ")), CreatePaint(), Measure);
 
         var element = Assert.Single(elements);
         Assert.Equal("サイズ", element.Text);
@@ -62,7 +73,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_カーソル座標ラベルのみなら1件を返す()
     {
-        var elements = MarqueeLabelPlan.Resolve(CreateContent(coordLabel: CreateCoordLabel("(1, 2)")), Measure);
+        var elements = MarqueeLabelPlan.Resolve(CreateContent(coordLabel: CreateCoordLabel("(1, 2)")), CreatePaint(), Measure);
 
         var element = Assert.Single(elements);
         Assert.Equal("(1, 2)", element.Text);
@@ -74,7 +85,7 @@ public class MarqueeLabelPlanTests
     {
         // 順序はコアが単一所有する（座標ラベルが手前 = 最後）
         var elements = MarqueeLabelPlan.Resolve(
-            CreateContent(sizeLabel: CreateSizeLabel("サイズ"), coordLabel: CreateCoordLabel()), Measure);
+            CreateContent(sizeLabel: CreateSizeLabel("サイズ"), coordLabel: CreateCoordLabel()), CreatePaint(), Measure);
 
         Assert.Equal(2, elements.Count);
         Assert.Equal("サイズ", elements[0].Text);
@@ -86,7 +97,7 @@ public class MarqueeLabelPlanTests
     {
         var sizeLabel = CreateSizeLabel();
 
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: sizeLabel), Measure));
+        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: sizeLabel), CreatePaint(), Measure));
         var frame = sizeLabel.ComputeFrame(MeasuredSize);
 
         // 背景矩形・文字の描画原点はコアの ComputeFrame が単一所有する（本クラスは写すだけ）
@@ -97,7 +108,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_内側余白は背景矩形と文字原点の差になる()
     {
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), Measure));
+        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), CreatePaint(), Measure));
 
         Assert.Equal(element.TextOrigin.X - element.Bounds.X, element.PaddingX);
         Assert.Equal(element.TextOrigin.Y - element.Bounds.Y, element.PaddingY);
@@ -110,6 +121,7 @@ public class MarqueeLabelPlanTests
 
         MarqueeLabelPlan.Resolve(
             CreateContent(sizeLabel: CreateSizeLabel("サイズ"), coordLabel: CreateCoordLabel("(7, 8)")),
+            CreatePaint(),
             (text, fontSize) =>
             {
                 calls.Add((text, fontSize));
@@ -122,8 +134,9 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_色と角丸を要素へ写す()
     {
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(coordLabel: CreateCoordLabel()), Measure));
+        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(coordLabel: CreateCoordLabel()), CreatePaint(), Measure));
 
+        // 色は描画の設定（本層が単一所有する）から写す
         Assert.Equal(DrawingColor.Yellow, element.TextColor);
         Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), element.BackgroundColor);
         // サイズラベル・カーソル座標ラベルはいずれも角丸なしの矩形である
@@ -134,6 +147,13 @@ public class MarqueeLabelPlanTests
     public void Resolve_測定関数がnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(
-            () => MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), null!));
+            () => MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), CreatePaint(), null!));
+    }
+
+    [Fact]
+    public void Resolve_色がnullなら例外()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), null!, Measure));
     }
 }

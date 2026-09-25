@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Feature.MarqueeCore;
 
@@ -9,11 +8,10 @@ namespace EsUtil.Feature.MarqueeCore;
 /// <param name="Text">表示する文言（<see cref="Format"/> が生成する。ホストが上書きした場合はその文字列）。</param>
 /// <param name="Anchor">ラベルを積む基準点（穴あけ矩形の左上・DIP）。</param>
 /// <param name="FontSize">フォントサイズ（DIP）。</param>
-/// <param name="TextColor">文字色。</param>
-/// <param name="BackgroundColor">背景色（不透明度は色のアルファに統合）。</param>
 /// <remarks>
 /// <b>文言はコアが単一所有する</b>: 既定は <see cref="Format"/> の書式（<c>(L, T) - (R, B),  (W×H), DisplayScale: (P%)</c>）。<br/>
 /// ホスト固有の文言（元画像座標等）が必要な場合は <see cref="Marquee.SizeLabelOverrideProvider"/> で与える。<br/>
+/// <b>色は含まない</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c>）が単一所有する。<br/>
 /// <br/>
 /// <b>文字の描画は UI 層が担う</b>: テキストの実寸は描画 API でしか測れないため、<br/>
 /// UI 層が実寸を <see cref="ComputeFrame"/> へ渡し、返された配置へテキスト要素を置く<br/>
@@ -23,9 +21,7 @@ namespace EsUtil.Feature.MarqueeCore;
 public readonly record struct MarqueeSizeLabel(
     string Text,
     EsPoint Anchor,
-    double FontSize,
-    DrawingColor TextColor,
-    DrawingColor BackgroundColor) : IEsLabel
+    double FontSize) : IEsLabel
 {
     /// <summary>テキストの実寸からラベルの配置（背景矩形・文字の描画原点）を求める。</summary>
     /// <param name="textSize">テキストの実寸（描画 API で測定した値・DIP）。</param>

@@ -6,6 +6,7 @@ using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.SaveEvidence.CaptureSession.MewUI;
 using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.SaveEvidence.Marquee.MewUI;
+using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.SaveEvidence.ZoomView.MewUI;
 using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core;
@@ -90,19 +91,17 @@ internal static class CapturePage
     /// <summary>自動切り出しの検出矩形の塗り色（ホバー中・赤 16%。Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropHoverFill = System.Drawing.Color.FromArgb(40, 255, 59, 48);
 
-    /// <summary>自動切り出しで外側の装飾を使わない外観（ハイライトの枠線は内側の装飾が単一所有する）。</summary>
-    private static readonly OuterDecoAppearance s_hiddenOuterDecoAppearance = new()
+    /// <summary>自動切り出しのホバー強調に使う色（内側の塗りと枠線）。</summary>
+    /// <remarks>色は描画にだけ必要な設定であるため、描画の設定（<see cref="MarqueePaint"/>）が単一所有する。</remarks>
+    private static readonly MarqueePaint s_autoCropHighlightPaint = new()
     {
-        OverlayColor = System.Drawing.Color.Transparent,
-        BorderColor = System.Drawing.Color.Transparent,
-        BorderThickness = AutoCropBorderThickness,
+        InnerFillColor = s_autoCropHoverFill,
+        InnerBorderColor = s_autoCropHoverBorder,
     };
 
-    /// <summary>自動切り出しのホバー強調（赤色の枠線 + 半透明の塗り）の外観。</summary>
+    /// <summary>自動切り出しの内側の装飾（ホバー強調の枠線）の寸法。</summary>
     private static readonly InnerDecoAppearance s_autoCropHighlightAppearance = new()
     {
-        FillColor = s_autoCropHoverFill,
-        BorderColor = s_autoCropHoverBorder,
         BorderThickness = AutoCropBorderThickness,
     };
 
@@ -636,9 +635,9 @@ internal static class CapturePage
             var hovered = viewModel.IsAutoCropActive ? viewModel.HoveredRect : null;
             if (hovered is not { } target)
             {
-                // ハイライトなし（外側の装飾も描かない。サイズラベルも表示しない）
+                // ハイライトなし（外側・内側とも描かない。サイズラベルも表示しない）
                 autoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
-                autoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with { OuterAppearance = s_hiddenOuterDecoAppearance };
+                autoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with { ShowOverlay = false, ShowOuterBorder = false };
                 return;
             }
 
@@ -646,9 +645,13 @@ internal static class CapturePage
             var bottomRight = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.Right, target.Bottom));
 
             autoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
+            autoCropHighlight.Paint = s_autoCropHighlightPaint;
             autoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with
             {
-                OuterAppearance = s_hiddenOuterDecoAppearance,
+                ShowOverlay = false,
+                ShowOuterBorder = false,
+                ShowInnerFill = true,
+                ShowInnerBorder = true,
                 OuterHighlightRect = new EsRect(
                     topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y),
                 InnerAppearance = s_autoCropHighlightAppearance,

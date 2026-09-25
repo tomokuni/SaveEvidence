@@ -95,12 +95,9 @@ public class FadeMaskDragRectControlTests
             Marquee = MarqueeOptions.Default with
             {
                 MinSelectionSize = 5,
-                HandleBorderColor = System.Drawing.Color.Red,
-                HandleColor = Color.FromAColor(102, Colors.Red).ToDrawingColor(),
                 HandleSize = 12.0,
                 HandleHitRadius = 15.0,
                 ClampToDomainBounds = true,
-                MarkerColor = Colors.Green.ToDrawingColor(),
                 MarkerLength = 20.0,
             },
             Deco = MarqueeDecoOptions.Default with
@@ -113,13 +110,10 @@ public class FadeMaskDragRectControlTests
 
         var applied = control.Marquee.Options;
         Assert.Equal(5, applied.MinSelectionSize);
-        Assert.Equal(System.Drawing.Color.Red, applied.HandleBorderColor);
         Assert.Equal(3.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
-        Assert.Equal(Color.FromAColor(102, Colors.Red), applied.HandleColor.ToAvaloniaColor());
         Assert.Equal(12.0, applied.HandleSize);
         Assert.Equal(15.0, applied.HandleHitRadius);
         Assert.True(applied.ClampToDomainBounds);
-        Assert.Equal(Colors.Green, applied.MarkerColor.ToAvaloniaColor());
         Assert.Equal(20.0, applied.MarkerLength);
     }
 
@@ -133,16 +127,13 @@ public class FadeMaskDragRectControlTests
             Marquee = MarqueeOptions.Default with
             {
                 ShowSizeLabel = false,
-                SizeLabelColor = Colors.Yellow.ToDrawingColor(),
-                SizeLabelBackgroundColor = Color.FromAColor(179, Colors.DarkBlue).ToDrawingColor(), // 暗青 70%
                 SizeLabelFontSize = 18.0,
             },
             Deco = MarqueeDecoOptions.Default with
             {
+                ShowOuterBorder = true,
                 OuterAppearance = new OuterDecoAppearance
                 {
-                    OverlayColor = Color.FromAColor(128, Colors.DarkBlue).ToDrawingColor(), // 暗青 50%
-                    BorderColor = Colors.Red.ToDrawingColor(),
                     BorderThickness = 3.0,
                 },
             },
@@ -160,14 +151,11 @@ public class FadeMaskDragRectControlTests
         // 選択の設定（サイズラベル）はコアの MarqueeOptions へ反映される
         var marquee = control.Marquee.Options;
         Assert.False(marquee.ShowSizeLabel);
-        Assert.Equal(Colors.Yellow.ToDrawingColor(), marquee.SizeLabelColor);
-        Assert.Equal(Color.FromAColor(179, Colors.DarkBlue).ToDrawingColor(), marquee.SizeLabelBackgroundColor);
         Assert.Equal(18.0, marquee.SizeLabelFontSize);
 
-        // 装飾の外観（暗転と枠線）は OuterDecoAppearance へ 1 つにまとめて反映される（色は UI 非依存の色型）
+        // 装飾の寸法と表示可否は装飾の設定へ、色は描画の設定へ 1 つにまとめて反映される
         var appearance = control.Marquee.DecoOptions.OuterAppearance;
-        Assert.Equal(Color.FromAColor(128, Colors.DarkBlue).ToDrawingColor(), appearance.OverlayColor);
-        Assert.Equal(Colors.Red.ToDrawingColor(), appearance.BorderColor);
+        Assert.True(control.Marquee.DecoOptions.ShowOuterBorder);
         Assert.Equal(3.0, appearance.BorderThickness);
     }
 
@@ -180,8 +168,6 @@ public class FadeMaskDragRectControlTests
             Marquee = MarqueeOptions.Default with
             {
                 ShowCoordLabel = true,
-                CoordLabelColor = Colors.Yellow.ToDrawingColor(),
-                CoordLabelBackgroundColor = Color.FromAColor(179, Colors.DarkGreen).ToDrawingColor(), // 暗緑 70%
                 CoordLabelFontSize = 14.0,
             },
             Loupe = new LoupeOptions
@@ -207,8 +193,6 @@ public class FadeMaskDragRectControlTests
             CheckerColorA = Colors.Black.ToDrawingColor(),
             CheckerColorB = Colors.White.ToDrawingColor(),
             FrameColor = Colors.Gray.ToDrawingColor(),
-            CoordLabelColor = Colors.Cyan.ToDrawingColor(),
-            CoordLabelBackgroundColor = Color.FromAColor(153, Colors.DarkRed).ToDrawingColor(), // 暗赤 60%
         };
 
         // ルーペ描画スケールは設定（Options）の対象外（環境値。個別プロパティで設定）
@@ -220,14 +204,11 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(10, control.Loupe.Options.Metrics.CheckerSize);
         Assert.Equal(4, control.Loupe.Options.Metrics.FrameWidth);
         Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Paint.CrossColor.ToAvaloniaColor());
-        Assert.Equal(Color.FromAColor(153, Colors.DarkRed), control.Loupe.Paint.CoordLabelBackgroundColor.ToAvaloniaColor());
         // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため、ルーペのプロパティへ渡される
         Assert.Equal(30.0, control.Loupe.PositionOffset);
         // 座標ラベル（Marquee / Loupe）
         var applied = control.Marquee.Options;
         Assert.True(applied.ShowCoordLabel);
-        Assert.Equal(Colors.Yellow, applied.CoordLabelColor.ToAvaloniaColor());
-        Assert.Equal(Color.FromAColor(179, Colors.DarkGreen), applied.CoordLabelBackgroundColor.ToAvaloniaColor());
         Assert.Equal(14.0, applied.CoordLabelFontSize);
         Assert.True(control.Loupe.Options.Metrics.ShowCoordLabel);
         Assert.Equal(13.0, control.Loupe.Options.Metrics.CoordLabelFontSize);

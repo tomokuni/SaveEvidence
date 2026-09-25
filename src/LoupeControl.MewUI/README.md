@@ -4,7 +4,7 @@
 
 ## 目的
 
-ルーペのロジック（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は `Feature.LoupeCore` が単一所有し、描画の手順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有します。
+ルーペのロジック（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は `Feature.LoupeCore` が単一所有し、描画の手順と色は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer` / `LoupePaint`）が単一所有します。
 本プロジェクトはその計算結果を描画ポート `SkiaEsCanvas`（Platform.Core）経由で **Skia のキャンバスへ描画させるだけ** の層です。
 そのため Avalonia 版と**同じ設定・同じ見た目**になり、設定ファイル（`%LOCALAPPDATA%\SaveEvidence\settings.json`）も両 UI で共用できます。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
@@ -40,19 +40,23 @@ var loupe = new LoupeControl
 {
     Source = esBitmap,                       // 拡大元の 100% 画像（コアの EsBitmap）
     CenterPoint = new EsPoint(320, 240),     // 拡大中心（元画像ピクセル座標）
-    // 設定（表示サイズ・拡大率・外観）はコアの値を 1 つ設定する（with 式で部分変更する）
+    // 寸法はコアの Options.Metrics（with 式で部分変更する）
     Options = LoupeOptions.Default with
     {
         RequestedSize = 160,                 // 一辺のサイズ（DIP）
         ZoomLevel = 4,                       // 拡大率
-        Appearance = new LoupeMetrics
+        Metrics = new LoupeMetrics
         {
-            CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
-            CheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255),
-            CheckerColorB = DrawingColor.FromArgb(255, 192, 192, 192),
-            FrameColor = DrawingColor.FromArgb(255, 0, 0, 0),
             FrameWidth = 2,
         },
+    },
+    // 色は描画の設定（LoupePaint）で指定する
+    Paint = LoupePaint.Default with
+    {
+        CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
+        CheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255),
+        CheckerColorB = DrawingColor.FromArgb(255, 192, 192, 192),
+        FrameColor = DrawingColor.FromArgb(255, 0, 0, 0),
     },
 };
 ```
@@ -76,7 +80,8 @@ if (layout.Position is { } position)
 | --- | --- | --- | --- |
 | `Source` | `EsBitmap?` | `null` | 拡大元の 100% 画像。null の場合は市松模様のみ |
 | `CenterPoint` | `EsPoint?` | `null` | 拡大中心（元画像ピクセル座標）。null の場合は市松模様のみ |
-| `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（表示サイズ・拡大率・外観）。`with` 式で部分変更する。数値項目はコアの型が生成時に安全域へ補正する |
+| `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する。数値項目はコアの型が生成時に安全域へ補正する |
+| `Paint` | `LoupePaint` | `LoupePaint.Default` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）。`with` 式で部分変更する。色はコアの計算に入らない |
 | `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。0.1〜8.0 に補正（非有限は既定値）。DPI 変更で自動更新 |
 | `Log` | `ILogger` | `NullLogger` | 設定変更ログと描画例外の出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
 
@@ -86,27 +91,32 @@ if (layout.Position is { } position)
 | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。1〜4096 に補正 |
 | `ZoomLevel` | `int` | 4 | 拡大率。1〜64 に補正 |
-| `Appearance` | `LoupeMetrics` | コアの既定値 | 外観（下地・市松模様・外枠・十字線・中心座標ラベル） |
+| `Metrics` | `LoupeMetrics` | コアの既定値 | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否。色は含まない |
 
-`Options.Appearance`（コアの `LoupeMetrics`）の項目:
+`Options.Metrics`（コアの `LoupeMetrics`）の項目:
+
+| 項目 | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `CheckerSize` | `int` | 6 | 市松模様の 1 タイルサイズ（DIP）。1〜128 に補正 |
+| `FrameWidth` | `int` | 2 | 外枠の太さ（DIP）。1〜64 に補正 |
+| `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
+| `CoordLabelFontSize` | `double` | 12.0 | 座標ラベルのフォントサイズ（DIP）。6〜48 に補正 |
+| `CoordLabelCornerRadius` | `int` | 2 | 座標ラベルの背景の角丸半径（DIP）。0〜64 に補正（0 は角丸なし） |
+
+`Paint`（`LoupePaint`。`EsUtil.SaveEvidence.Loupe.UIBase`）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `BackgroundColor` | `System.Drawing.Color` | 透明 | 下地（ベース）色。市松模様・拡大画像より先に表面全体へ塗る。背後の要素を透かさない場合は不透明色を指定する |
 | `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色。アルファ 0 は描画しない |
-| `CheckerSize` | `int` | 6 | 市松模様の 1 タイルサイズ（DIP）。1〜128 に補正 |
 | `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色。アルファ 0 は描画しない |
 | `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色。アルファ 0 は描画しない |
-| `FrameWidth` | `int` | 2 | 外枠の太さ（DIP）。1〜64 に補正 |
-| `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
-| `CoordLabelFontSize` | `double` | 12.0 | 座標ラベルのフォントサイズ（DIP）。6〜48 に補正 |
-| `CoordLabelCornerRadius` | `int` | 2 | 座標ラベルの背景の角丸半径（DIP）。0〜64 に補正（0 は角丸なし） |
 
 `Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
 
-数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `LoupeValueCoercer`、ログの書式と変化判定はコアの `LoupeLogMessage` が単一所有します）。設定（`Options`）と外観（`Options.Appearance`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `RenderScaling` のみ `coerce` を登録します）。
+数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `LoupeValueCoercer`、ログの書式と変化判定はコアの `LoupeLogMessage` が単一所有します）。設定（`Options`）と寸法（`Options.Metrics`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `RenderScaling` のみ `coerce` を登録します）。
 
 ## イベント
 

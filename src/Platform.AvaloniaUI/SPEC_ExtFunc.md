@@ -206,7 +206,7 @@ var brush = s_cache.GetOrCreate(color);
 
 ```csharp
 using var ctx = renderTargetBitmap.CreateDrawingContext();
-MarqueeRenderer.Default.DrawShapes(new AvaloniaCanvas(ctx), content);
+new MarqueeRenderer(MarqueePaint.Default).DrawShapes(new AvaloniaCanvas(ctx), content);
 ```
 
 ### 5.6 型一覧

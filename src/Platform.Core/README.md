@@ -48,9 +48,9 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `Imaging.EsLabelFrame` / `EsLabelElement` | ラベル 1 件の配置（背景矩形・文字原点）と、UI 要素として配置するための指示（配置矩形・文字原点・文言・寸法・色・角丸）。**コアの配置を UI 要素へ写す写像を単一所有する** |
 | `Imaging.EsLabelLayout` | ラベルの体裁（背景 = 文字の実寸 + 内側余白 × 2、文字原点、カーソル基準の配置と領域内へのクランプ、上端中央の配置、行送り）の単一所有（純粋関数）。**全ラベル共通の内側余白は `Padding` 定数**として公開し、コントロールとホストが同じ値を使う |
 | `Imaging.EsLabelMetrics` | ラベルのフォントサイズの安全域（6〜48）と「非数は既定値」の補正の単一所有（純粋関数） |
-| `Imaging.EsLabelDefaults` | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0）の単一所有。マーキー・ルーペの設定型が本値を参照する（同じ色のリテラルを各設定型へ書かない） |
-| `Imaging.IEsLabel` | ラベル 1 件の描画契約（文言・フォントサイズ・色・角丸と、実寸から配置を求める `ComputeFrame`）。寸法表示・座標表示・付加情報ラベルが同じ形を共有する |
-| `Imaging.EsLabelExtensions` | ラベル契約から UI 要素の配置指示を求める拡張メソッド（`IEsLabel.ToElement`）。配置と外観の写像を単一所有し、各ラベル型の写し漏れを防ぐ |
+| `Imaging.EsLabelDefaults` | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0）の単一所有。**色**は描画の設定（`MarqueePaint` / `LoupePaint`）が、**フォントサイズ**はマーキー・ルーペの設定型が本値を参照する（同じ色のリテラルを各設定型へ書かない） |
+| `Imaging.IEsLabel` | ラベル 1 件の描画契約（文言・フォントサイズ・角丸と、実寸から配置を求める `ComputeFrame`。**色は持たない**）。寸法表示・座標表示・付加情報ラベルが同じ形を共有する |
+| `Imaging.EsLabelExtensions` | ラベル契約から UI 要素の配置指示を求める拡張メソッド（`IEsLabel.ToElement`。**文字色と背景色は引数で受ける**）。配置と外観の写像を単一所有し、各ラベル型の写し漏れを防ぐ |
 | `Imaging.DrawingColorExtensions` | 描画色の判定（`IsVisible`＝アルファが 0 より大きいか）。「アルファ 0 は描かない」の判定を単一所有する |
 | `CoordMath`（internal） | 画像レイアウト計算の一元化（`CalculateUniformLayout` / `ComputeImageRenderInfo`）。`CoordTransform` から利用する |
 | `LoggerFallback` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（`logger.OrNullLogger()`）。「ロガー未設定（null）は出力なし」の規則を単一所有し、各コントロール・サービスの `?? NullLogger.Instance` を排除する |

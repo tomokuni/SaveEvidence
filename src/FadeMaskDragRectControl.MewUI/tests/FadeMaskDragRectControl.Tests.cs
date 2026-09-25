@@ -177,37 +177,29 @@ public class FadeMaskDragRectControlTests
         {
             Deco = MarqueeDecoOptions.Default with
             {
+                ShowOuterBorder = true,
                 OuterAppearance = new OuterDecoAppearance
                 {
-                    BorderColor = DrawingColor.Red,
                     BorderThickness = 3.0,
-                    OverlayColor = DrawingColor.FromArgb(128, 255, 0, 0),
                 },
             },
             // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する
             Marquee = MarqueeOptions.Default with
             {
-                HandleBorderColor = DrawingColor.Red,
                 ShowSizeLabel = false,
                 SizeLabelFontSize = 18.0,
-                SizeLabelColor = DrawingColor.Yellow,
-                SizeLabelBackgroundColor = DrawingColor.FromArgb(200, 0, 0, 255),
             },
         };
 
         var appearance = control.Options.Deco.OuterAppearance;
-        Assert.Equal(DrawingColor.Red, appearance.BorderColor);
+        Assert.True(control.Options.Deco.ShowOuterBorder);
         Assert.Equal(3.0, appearance.BorderThickness);
-        Assert.Equal(DrawingColor.FromArgb(128, 255, 0, 0), appearance.OverlayColor);
 
-        // 設定は子コントロールへ分配される（装飾の枠線は装飾の設定、ハンドルの枠線とサイズラベルは選択の設定が持つ）
-        Assert.Equal(DrawingColor.Red, control.Marquee.DecoOptions.OuterAppearance.BorderColor);
+        // 設定は子コントロールへ分配される（装飾の寸法は装飾の設定、サイズラベルは選択の設定が持つ）
+        Assert.True(control.Marquee.DecoOptions.ShowOuterBorder);
         Assert.Equal(3.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
-        Assert.Equal(DrawingColor.Red, control.Marquee.Options.HandleBorderColor);
         Assert.False(control.Marquee.Options.ShowSizeLabel);
         Assert.Equal(18.0, control.Marquee.Options.SizeLabelFontSize);
-        Assert.Equal(DrawingColor.Yellow, control.Marquee.Options.SizeLabelColor);
-        Assert.Equal(DrawingColor.FromArgb(200, 0, 0, 255), control.Marquee.Options.SizeLabelBackgroundColor);
     }
 
     [Fact]

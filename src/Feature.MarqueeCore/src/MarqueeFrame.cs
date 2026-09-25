@@ -154,32 +154,32 @@ internal static class MarqueeFrame
     /// </remarks>
     private static OuterDecoFrame ResolveOuterDecoration(in MarqueeFrameRequest request, EsRect? hole)
     {
-        var appearance = request.DecoOptions.OuterAppearance;
+        var deco = request.DecoOptions;
 
-        if (!DecoGeometry.ShouldDrawOverlay(hole, request.DecoOptions.OuterShowFullOverlay))
+        if (!DecoGeometry.ShouldDrawOverlay(hole, deco.OuterShowFullOverlay))
         {
-            return new OuterDecoFrame([], appearance.OverlayColor, [], appearance.BorderColor);
+            return new OuterDecoFrame([], []);
         }
 
-        var overlayRegions = appearance.HasOverlay
+        var overlayRegions = deco.ShowOverlay
             ? DecoGeometry.ComputeOverlayRegions(request.ClientSize, hole)
             : [];
 
-        var borderRects = hole is { } holeRect && appearance.HasBorder
-            ? DecoGeometry.GetBorderRects(holeRect, appearance.BorderThickness)
+        var borderRects = hole is { } holeRect && deco.ShowOuterBorder
+            ? DecoGeometry.GetBorderRects(holeRect, deco.OuterAppearance.BorderThickness)
             : [];
 
-        return new OuterDecoFrame(overlayRegions, appearance.OverlayColor, borderRects, appearance.BorderColor);
+        return new OuterDecoFrame(overlayRegions, borderRects);
     }
 
     /// <summary>内側の装飾（穴あけ矩形の塗り・内枠）の描画内容を解決する。</summary>
-    /// <param name="request">描画入力（外観）。</param>
+    /// <param name="request">描画入力（装飾の設定）。</param>
     /// <param name="hole">穴あけ矩形（DIP）。選択もハイライトも無い場合は null。</param>
     /// <returns>内側の装飾の描画内容。描くものが無い場合は各項目が空。</returns>
     /// <remarks>
     /// 1. 穴あけ矩形が無い場合は空のフレームを返す。<br/>
-    /// 2. 塗り色が透明なら塗り矩形を生成しない。<br/>
-    /// 3. 枠線色が透明なら枠線矩形（内側 4 辺）を生成しない。<br/>
+    /// 2. 塗りを描かない設定なら塗り矩形を生成しない。<br/>
+    /// 3. 枠線を描かない設定なら枠線矩形（内側 4 辺）を生成しない。<br/>
     /// <br/>
     /// 枠線矩形の計算は外側の装飾と共通（<see cref="DecoGeometry.GetBorderRects"/>）のため、<br/>
     /// 外側の枠線と内側の枠線が同じ矩形へ重なる。<br/>
@@ -187,26 +187,26 @@ internal static class MarqueeFrame
     /// </remarks>
     private static InnerDecoFrame ResolveInnerDecoration(in MarqueeFrameRequest request, EsRect? hole)
     {
-        var appearance = request.DecoOptions.InnerAppearance;
+        var deco = request.DecoOptions;
 
         if (hole is not { } holeRect)
         {
-            return new InnerDecoFrame(null, appearance.FillColor, [], appearance.BorderColor);
+            return new InnerDecoFrame(null, []);
         }
 
-        var fillRect = appearance.HasFill ? holeRect : (EsRect?)null;
-        var borderRects = appearance.HasBorder
-            ? DecoGeometry.GetBorderRects(holeRect, appearance.BorderThickness)
+        var fillRect = deco.ShowInnerFill ? holeRect : (EsRect?)null;
+        var borderRects = deco.ShowInnerBorder
+            ? DecoGeometry.GetBorderRects(holeRect, deco.InnerAppearance.BorderThickness)
             : [];
 
-        return new InnerDecoFrame(fillRect, appearance.FillColor, borderRects, appearance.BorderColor);
+        return new InnerDecoFrame(fillRect, borderRects);
     }
 
     /// <summary>ドラッグハンドルの描画内容を解決する。</summary>
     /// <param name="request">描画入力。</param>
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
     /// <returns>ハンドルの描画内容。非表示の設定または選択なしの場合は null。</returns>
-    /// <remarks>ハンドル枠の色は独立した設定値である（装飾の枠線色とは別の値であり、ホストが同じ色を割り当てる）。</remarks>
+    /// <remarks>ハンドル枠の太さはコアが、色は描画の設定（<c>MarqueePaint</c>）が単一所有する。</remarks>
     private static MarqueeHandles? ResolveHandles(in MarqueeFrameRequest request, ICoordTransform port)
     {
         var options = request.Options;
@@ -218,15 +218,14 @@ internal static class MarqueeFrame
         return new MarqueeHandles(
             DecoGeometry.ToDipRect(rect, port),
             options.HandleSize,
-            MarqueeOptions.HandleBorderThickness,
-            options.HandleColor,
-            options.HandleBorderColor);
+            MarqueeOptions.HandleBorderThickness);
     }
 
     /// <summary>始点マーカー（十字線）の描画内容を解決する。</summary>
     /// <param name="request">描画入力。</param>
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
     /// <returns>マーカーの描画内容。nudge 中でない（または十字線が可視でない）場合は null。</returns>
+    /// <remarks>十字線の色は描画の設定（<c>MarqueePaint</c>）が単一所有する。</remarks>
     private static MarqueeMarker? ResolveMarker(in MarqueeFrameRequest request, ICoordTransform port)
     {
         if (!request.MarkerActive)
@@ -234,12 +233,10 @@ internal static class MarqueeFrame
             return null;
         }
 
-        var options = request.Options;
         return new MarqueeMarker(
             port.Inverse(request.MarkerPosition),
-            options.MarkerColor,
             MarkerThickness,
-            options.MarkerLength / 2);
+            request.Options.MarkerLength / 2);
     }
 
     /// <summary>サイズラベルの描画内容を解決する。</summary>
@@ -250,7 +247,8 @@ internal static class MarqueeFrame
     /// 基準点は穴あけ矩形の左上である（装飾と同じ規則で決まる）。<br/>
     /// 文言はプロバイダ優先であり、未指定・空文字の場合はコアが矩形から自動生成する。<br/>
     /// 自動生成の 2 つの係数は、どちらも本コントロールがホストから受け取った表示スケーリングを使う<br/>
-    /// （ホストが文言プロバイダを与える場合は <see cref="MarqueeSizeLabel.Format"/> を自前で呼び分けられる）。
+    /// （ホストが文言プロバイダを与える場合は <see cref="MarqueeSizeLabel.Format"/> を自前で呼び分けられる）。<br/>
+    /// 色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
     private static MarqueeSizeLabel? ResolveSizeLabel(in MarqueeFrameRequest request, EsRect? hole)
     {
@@ -259,25 +257,25 @@ internal static class MarqueeFrame
             return null;
         }
 
-        var options = request.Options;
         var overrideText = request.SizeLabelOverrideProvider?.Invoke();
         var text = string.IsNullOrEmpty(overrideText)
             ? MarqueeSizeLabel.Format(holeRect, request.DisplayScaleScaling, request.DisplayScaleScaling)
             : overrideText;
 
-        return new MarqueeSizeLabel(
-            text, holeRect.TopLeft, options.SizeLabelFontSize, options.SizeLabelColor, options.SizeLabelBackgroundColor);
+        return new MarqueeSizeLabel(text, holeRect.TopLeft, request.Options.SizeLabelFontSize);
     }
 
     /// <summary>カーソル座標ラベルの描画内容を解決する。</summary>
     /// <param name="request">描画入力。</param>
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
     /// <returns>座標ラベルの描画内容。非表示の設定の場合は null。</returns>
-    /// <remarks>文言はコア（<see cref="CoordinateFormatter"/>）が文字列化し、配置は描画時に実寸から決まる。</remarks>
+    /// <remarks>
+    /// 文言はコア（<see cref="CoordinateFormatter"/>）が文字列化し、配置は描画時に実寸から決まる。<br/>
+    /// 色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
+    /// </remarks>
     private static MarqueeCoordLabel? ResolveCoordLabel(in MarqueeFrameRequest request, ICoordTransform port)
     {
-        var options = request.Options;
-        if (!options.ShowCoordLabel)
+        if (!request.Options.ShowCoordLabel)
         {
             return null;
         }
@@ -286,8 +284,6 @@ internal static class MarqueeFrame
             CoordinateFormatter.Format(request.MousePosition),
             port.Inverse(request.MousePosition),
             request.ClientSize,
-            options.CoordLabelFontSize,
-            options.CoordLabelColor,
-            options.CoordLabelBackgroundColor);
+            request.Options.CoordLabelFontSize);
     }
 }

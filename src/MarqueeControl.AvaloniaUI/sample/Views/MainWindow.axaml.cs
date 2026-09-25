@@ -169,14 +169,20 @@ public partial class MainWindow : Window
     /// <summary>ViewModel の設定プロパティを MarqueeControl へ反映する。</summary>
     private void ApplyControlSettings()
     {
-        // 選択枠線は装飾（暗転マスクの穴あけ枠）が描くため、枠線の色・太さは装飾の外観へ与える
+        // 選択枠線は装飾（暗転マスクの穴あけ枠）が描くため、枠線の色は描画の設定へ、太さは装飾の外観へ与える
         // （ハンドルの枠線も同じ色に揃える。両者は同じ矩形に重なる）
         var borderColor = _vm.BorderColorOption.Color.ToDrawingColor();
+        Marquee.Paint = Marquee.Paint with
+        {
+            OuterBorderColor = borderColor,
+            HandleColor = _vm.HandleColorOption.Color.ToDrawingColor(),
+            HandleBorderColor = borderColor,
+            MarkerColor = _vm.MarkerColorOption.Color.ToDrawingColor(),
+        };
         Marquee.DecoOptions = MarqueeDecoOptions.Default with
         {
             OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
             {
-                BorderColor = borderColor,
                 BorderThickness = _vm.BorderThickness,
             },
         };
@@ -185,9 +191,6 @@ public partial class MainWindow : Window
             HandleSize = _vm.HandleSize,
             HandleHitRadius = _vm.HandleHitRadius,
             MinSelectionSize = _vm.MinSelectionSize,
-            HandleColor = _vm.HandleColorOption.Color.ToDrawingColor(),
-            HandleBorderColor = borderColor,
-            MarkerColor = _vm.MarkerColorOption.Color.ToDrawingColor(),
             MarkerLength = _vm.MarkerLength,
             ClampToDomainBounds = _vm.ClampToDomainBounds,
         };
