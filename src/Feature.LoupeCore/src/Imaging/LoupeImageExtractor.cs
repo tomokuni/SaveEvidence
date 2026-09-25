@@ -20,11 +20,11 @@ public static class LoupeImageExtractor
     /// 切り出し・十字線位置・選択矩形変換の各所で共用する（単一所有）。<br/>
     /// <b>切り上げ</b>るのは、拡大で埋めきれない余り（最大 <c>zoomLevel - 1</c> ピクセル）を<br/>
     /// 透明パディングで補うためである（切り捨てるとルーペの右端・下端が埋まらない）。<br/>
-    /// 切り上げの計算は <see cref="IntMath.CeilDiv"/> が単一所有し、<br/>
+    /// 切り上げの計算は <see cref="LoupeDivMath.CeilDiv"/> が単一所有し、<br/>
     /// 切り上げの規則は <see cref="ComputeMagnifiedRects"/> と対で意味を持つ（描画先は切り上げた領域の倍率）。
     /// </remarks>
     internal static int ComputeCaptureSize(int pixelSize, int zoomLevel)
-        => IntMath.CeilDiv(pixelSize, zoomLevel);
+        => LoupeDivMath.CeilDiv(pixelSize, zoomLevel);
 
     /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）を計算する。</summary>
     /// <param name="centerX">拡大中心のX座標（元画像ピクセル）。</param>

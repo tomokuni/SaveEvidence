@@ -17,6 +17,7 @@
 | 型 | 内容 |
 | --- | --- |
 | `Imaging.IEsCanvas` | 描画内容を描画面へ写す**即時描画ポート**（UI 非依存）。コア側の描画層は本ポートだけを呼び、各 UI が自 UI の描画 API を適合させる（Avalonia は `AvaloniaCanvas`、Skia は `Platform.Skia` の `SkiaEsCanvas`） |
+| `Imaging.IEsRectWalker<TSelf>` | 矩形の列を確保なしで走査する列挙子（構造体）が実装する契約。`IEsCanvas.FillRects` が受け取る列挙子の型であり、ボックス化もリスト確保もせずにタイル列を渡すために使う |
 | `Imaging.IEsLabel` | ラベル 1 件の描画契約（文言・フォントサイズ・角丸と、実寸から配置を求める `ComputeFrame`）。**色は持たない**（色は描画にだけ必要な設定のため、呼び出し側が与える） |
 | `Imaging.EsLabelFrame` | ラベル配置の値（背景矩形と文字の描画原点）。算出は `EsLabelLayout` が単一所有する |
 | `Imaging.EsLabelLayout` | ラベルの体裁（背景 = 文字の実寸 + 内側余白×2・文字の原点・行送り・配置規則）の**単一所有** |

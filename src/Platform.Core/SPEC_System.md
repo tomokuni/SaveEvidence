@@ -57,8 +57,6 @@ graph LR
 | `Imaging/EsBitmap.cs` | 自前のピクセルバッファを所有するピクセルコンテナ（BGRA8888・Premul。外部パッケージに依存しない） |
 | `Imaging/ImageDrawMode.cs` | 画像を描画先の領域へ配置する方法（`Uniform` / `Fill`） |
 | `Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（純粋関数。Skia の `SKRect` を返す） |
-| `Geometry/IEsRectWalker.cs` | 矩形の列を確保なしで走査する列挙子（構造体）の契約 |
-| `Geometry/IntMath.cs` | 整数の切り上げ除算の単一所有 |
 | `Imaging/DrawingColorExtensions.cs` | 描画色の可視判定（アルファが 0 より大きいか）の単一所有 |
 
 ### ラベル体裁を本プロジェクトが所有する理由
@@ -89,8 +87,7 @@ graph LR
 ### コア型の命名
 
 コア型には **`Es`（`EsUtil` の略）接頭辞**を付けます（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` /
-`EsPointInt` / `EsSizeInt` / `EsRectInt` / `EsAxis` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap` / `IEsRectWalker` /
-`IntMath`）。
+`EsPointInt` / `EsSizeInt` / `EsRectInt` / `EsAxis` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap`）。
 
 **整数版の型は `Es` + 型名 + `Int`** とします（`EsPoint` / `EsSize` / `EsRect` の整数版が `EsPointInt` / `EsSizeInt` /
 `EsRectInt`）。整数であることは「画面物理ピクセル」を意味しない（画像ピクセルも整数である）ため、単位が読む側に

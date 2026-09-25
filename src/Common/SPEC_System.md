@@ -47,6 +47,7 @@ graph LR
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
 | `Imaging/IEsCanvas.cs` | `public interface` | 即時描画ポート（10 メンバー） |
+| `Imaging/IEsRectWalker.cs` | `public interface` | 矩形の列を確保なしで走査する列挙子（構造体）の契約（`IEsCanvas.FillRects` の引数） |
 | `Imaging/IEsLabel.cs` | `public interface` | ラベル 1 件の描画契約（文言・フォントサイズ・角丸・配置の算出。色は持たない） |
 | `Imaging/EsLabelFrame.cs` | `public readonly record struct` | 配置の値（背景矩形・文字の原点） |
 | `Imaging/EsLabelElement.cs` | `public readonly record struct` | UI 要素の配置指示（`Create` が写像を単一所有する） |
@@ -70,6 +71,11 @@ classDiagram
     +DrawLabel(bounds, textOrigin, text, fontSize, textColor, backgroundColor, cornerRadius)
     +DrawImage(image, source, destination)
     +MeasureText(text, fontSize) EsSize
+  }
+  class IEsRectWalker {
+    <<interface>>
+    +MoveNext() bool
+    +EsRect Current
   }
   class IEsLabel {
     <<interface>>
@@ -123,6 +129,7 @@ classDiagram
     +double FontSize
   }
 
+  IEsCanvas ..> IEsRectWalker : FillRects の引数として受ける
   IEsLabel ..> EsLabelFrame : 返す
   EsLabelExtensions ..> IEsLabel : 写像する
   EsLabelExtensions ..> EsLabelElement : 生成

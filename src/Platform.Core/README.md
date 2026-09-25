@@ -31,11 +31,9 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `Geometry.EsPointInt` / `EsSizeInt` / `EsRectInt` | UI フレームワーク非依存の**整数版**の幾何値型（`EsPoint` / `EsSize` / `EsRect` の整数版。画面物理ピクセル座標・画像ピクセル座標・矩形に使う） |
 | `Geometry.EsAxis` | レイアウト計算で扱う軸（`X` / `Y`）。軸を `bool` で指定しないための列挙型 |
 | `EsPlatformHandle` | UI フレームワーク非依存のネイティブウィンドウ識別子（座標・寸法ではないため `Geometry` ではなくルート直下） |
-| `Geometry.IntMath` | 整数の丸め計算（切り上げ除算 `CeilDiv`。余りを 1 区画として数える規則の単一所有） |
 | `Imaging.EsBitmap` | 複数のビットマップ種別を横断する軽量なユニバーサルビットマップラッパー（BGRA8888・Premul）。**自前のピクセルバッファ（`NativeMemory.AlignedAlloc` の 64 バイト整列）を所有**し、外部パッケージに依存しない（Skia との相互変換は [`Platform.Skia`](../Platform.Skia/README.md) が担う） |
 | `Imaging.ImageDrawMode` | 画像を描画先の領域へ配置する方法（縦横比を保つ `Uniform` / 領域全体へ引き伸ばす `Fill`） |
 | `Imaging.ImageDrawMath` | 画像を描画先の領域へ配置する矩形の計算（純粋関数）。UI ごとに異なる描画側は本クラスの結果を使う |
-| `Geometry.IEsRectWalker<TSelf>` | 矩形の列を確保なしで走査する列挙子（構造体）が実装する契約。ボックス化もリスト確保もせずに描画へ渡すために使う |
 | `Imaging.DrawingColorExtensions` | 描画色の判定（`IsVisible`＝アルファが 0 より大きいか）。「アルファ 0 は描かない」の判定を単一所有する |
 | `CoordMath`（internal） | 画像レイアウト計算の一元化（`CalculateUniformLayout` / `ComputeImageRenderInfo`）。`CoordTransform` から利用する |
 | `LoggerFallback` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（`logger.OrNullLogger()`）。「ロガー未設定（null）は出力なし」の規則を単一所有し、各コントロール・サービスの `?? NullLogger.Instance` を排除する |

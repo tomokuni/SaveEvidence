@@ -66,8 +66,8 @@ public static class LoupeCheckerboard
         internal DarkTiles(int pixelSize, int tileSize)
         {
             _tileSize = tileSize;
-            // 一辺のタイル数は切り上げ（余りを 1 タイルとして数える。計算は IntMath が単一所有する）
-            _tiles = IntMath.CeilDiv(pixelSize, tileSize);
+            // 一辺のタイル数は切り上げ（余りを 1 タイルとして数える。計算は LoupeDivMath が単一所有する）
+            _tiles = LoupeDivMath.CeilDiv(pixelSize, tileSize);
             _col = 0;
             _row = 0;
             _current = default;

@@ -51,6 +51,7 @@ graph LR
 | `LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化 |
 | `LoupeLogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有 |
 | `Imaging/LoupeImageExtractor.cs` | 切り出し領域の一辺・左上（ドメイン座標）の計算、`EsBitmap` からの領域切り出し、拡大描画の矩形（`ComputeMagnifiedRects`。引数はビットマップの実寸） |
+| `LoupeDivMath.cs`（**internal**） | 区画数の切り上げ除算（`CeilDiv`。「余りを 1 区画として数える」規則の単一所有。タイル数と切り出し領域の一辺が共用する） |
 
 ## データフロー
 
@@ -96,7 +97,7 @@ sequenceDiagram
 | 寸法の数値項目の安全域への補正（生成時） | `LoupeMetrics`（`init` アクセサ。規則は `LoupeValueCoercer` が単一所有する） |
 | 描画の可否（アルファ 0 は描画しない） | `LoupePaint.Has*`（`LoupeControl.UIBase`。判定の規則は `DrawingColorExtensions.IsVisible`） |
 | ラベル表示の可否（設定と中心の有無） | `LoupeMetrics.ShouldShowCoordLabel` |
-| 切り出し領域の一辺（ドメインピクセル） | `Imaging.LoupeImageExtractor.ComputeCaptureSize`（internal。切り上げは `Platform.Core` の `IntMath.CeilDiv`） |
+| 切り出し領域の一辺（ドメインピクセル） | `Imaging.LoupeImageExtractor.ComputeCaptureSize`（internal。切り上げは `LoupeDivMath.CeilDiv`） |
 | 切り出し領域の左上（中心 → 左上の変換） | `Imaging.LoupeImageExtractor.ComputeCaptureTopLeft`（internal） |
 | 拡大描画の矩形（切り出し元・描画先） | `Imaging.LoupeImageExtractor.ComputeMagnifiedRects`（ビットマップの実寸を受け取る） |
 | 表示サイズの親領域へのクランプと表示サイズの決定 | `Loupe.ResolveLayout`（規則は `Platform.Core` の `EsSize.ClampToArea`。状態を保持しないため、親領域のサイズを引数で受ける） |

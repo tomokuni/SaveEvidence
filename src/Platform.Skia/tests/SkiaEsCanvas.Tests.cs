@@ -3,6 +3,7 @@ using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Common.Imaging;
 
 namespace EsUtil.Platform.Skia.Tests;
 

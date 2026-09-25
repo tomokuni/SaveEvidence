@@ -70,17 +70,6 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 
 レイアウト計算で扱う軸（`X` = 幅 / `Y` = 高さ）です。軸を `bool` で渡すと `true` が横か縦か読めなくなるため、列挙型で指定します。
 
-### `Geometry.IntMath`（static class）
-
-整数の丸め計算を単一所有する純粋関数です。
-
-| メンバー | シグネチャ | 説明 |
-| --- | --- | --- |
-| `CeilDiv` | `static int CeilDiv(int value, int divisor)` | 切り上げ除算（余りを 1 区画として数える）。除数は 1 以上を前提とする |
-
-```csharp
-var tileCount = IntMath.CeilDiv(pixelSize, tileSize);   // 余りを 1 タイルとして数える
-```
 
 ### `LoggerFallback`（static class）
 
@@ -96,17 +85,6 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 
 「ロガー未設定（null）は出力なしとして扱う」規則を単一所有します。各コントロール・サービスは `logger ?? NullLogger.Instance` を自前で書かず本メソッドへ委譲してください。
 
-### `Imaging.IEsRectWalker<TSelf>`（interface）
-
-矩形の列を確保なしで走査する列挙子（構造体）が実装する契約です。
-
-| メンバー | 説明 |
-| --- | --- |
-| `bool MoveNext()` | 次の矩形へ進む |
-| `EsRect Current { get; }` | 現在の矩形 |
-
-- 実装者は `GetEnumerator() => this` を公開します（`foreach` が構造体の列挙子をボックス化せずに使えるようにするため）。
-- **列挙は 1 回だけ**が契約です（実装が内部に走査位置を持つため）。
 
 ### `Imaging.DrawingColorExtensions`（static class）
 
