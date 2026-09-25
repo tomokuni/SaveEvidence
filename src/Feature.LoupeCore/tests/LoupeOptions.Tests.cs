@@ -14,8 +14,8 @@ public class LoupeOptionsTests
     {
         var options = new LoupeOptions();
 
-        Assert.Equal(LoupeValueCoercer.RequestedSizeDefault, options.RequestedSize);
-        Assert.Equal(LoupeValueCoercer.ZoomLevelDefault, options.ZoomLevel);
+        Assert.Equal(Loupe.Limits.RequestedSizeDefault, options.RequestedSize);
+        Assert.Equal(Loupe.Limits.ZoomLevelDefault, options.ZoomLevel);
         Assert.Equal(new LoupeMetrics(), options.Metrics);
     }
 
@@ -48,8 +48,8 @@ public class LoupeOptionsTests
     {
         var options = new LoupeOptions { RequestedSize = 100000, ZoomLevel = 0 };
 
-        Assert.Equal(LoupeValueCoercer.RequestedSizeMax, options.RequestedSize);
-        Assert.Equal(LoupeValueCoercer.ZoomLevelMin, options.ZoomLevel);
+        Assert.Equal(Loupe.Limits.RequestedSizeMax, options.RequestedSize);
+        Assert.Equal(Loupe.Limits.ZoomLevelMin, options.ZoomLevel);
     }
 
     /// <summary><c>with</c> 式による変更も生成時と同じ補正を受けることを検証する。</summary>
@@ -58,8 +58,8 @@ public class LoupeOptionsTests
     {
         var changed = LoupeOptions.Default with { RequestedSize = 0, ZoomLevel = 1000 };
 
-        Assert.Equal(LoupeValueCoercer.RequestedSizeMin, changed.RequestedSize);
-        Assert.Equal(LoupeValueCoercer.ZoomLevelMax, changed.ZoomLevel);
+        Assert.Equal(Loupe.Limits.RequestedSizeMin, changed.RequestedSize);
+        Assert.Equal(Loupe.Limits.ZoomLevelMax, changed.ZoomLevel);
     }
 
     /// <summary>外観の変更が値の等価性に反映されることを検証する。</summary>

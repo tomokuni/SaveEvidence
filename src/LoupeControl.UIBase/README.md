@@ -43,7 +43,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | `LoupeRendererBase` | 描画手順（層の順序に従って描画ポートを呼ぶ手順）を単一所有する抽象基底（**適用パターン**: Template Method。色は派生クラスが `protected abstract LoupePaint Paint` で与える） |
 | `LoupeRenderer` | 既定の描画実装（`sealed`。`ILoupeRenderer` を実装）。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する。`DrawShapes`（下地・市松・拡大画像・十字線・外枠。**ラベルの層は描かない**）/ `ResolveLabels`（要素の配置指示） |
 | `LoupePaint` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）と「描くかどうか」の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
-| `LoupeLabelPlan` | コアの通知（`LoupeRenderNotification`）からラベル要素（`EsLabelElement`）の配置指示を解決する（色は `LoupePaint` から受け取る） |
+| `LoupeLabelPlan` | コアのラベル契約（`LoupeCoordLabel`）からラベル要素（`EsLabelElement`）の配置指示を解決する（色は `LoupePaint` から受け取る） |
 
 ### 組み込み規則
 
@@ -53,7 +53,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 ## 描画の単位
 
-**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（`LoupeMetricsScaler` / `LoupeRenderRequest.ResolvePixelSize`）はコアが済ませているため、本層は換算しません。中心座標ラベルだけは DIP で配 置します（コアが `EsLabelLayout` で配置を決める）。
+**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `LoupeRenderRequest.ResolvePixelSize`、寸法は `CheckerSizePixels` / `FrameWidthPixels`）は**コアが済ませている**ため、本層は換算しません。中心座標ラベルだけは DIP で配置します（コアが `EsLabelLayout` で配置を決める）。
 
 ## ラベルは UI の要素が描く
 

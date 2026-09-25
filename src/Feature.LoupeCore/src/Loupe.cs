@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.LoupeCore.Imaging;
-using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
+using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using EsUtil.SaveEvidence.Common.Imaging;
 
 
@@ -23,17 +23,11 @@ public readonly record struct LoupeLayout(double DisplaySize, EsPoint? Position)
 /// <summary>ルーペの描画完了時に通知する表示情報（UI 層が描画に必要とする値）。</summary>
 /// <param name="CaptureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null。</param>
 /// <param name="Scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値）。</param>
-/// <param name="Layers">描く層とその順序（<b>描画順はコアが単一所有する</b>）。先頭から順に処理する。</param>
 /// <remarks>
-/// UI 層は <see cref="Layers"/> の順に各層を処理し、図形は自 UI の描画 API へ写す。<br/>
-/// 中心座標ラベルは <see cref="Layers"/> の最後の層であり、UI のテキスト要素が描く（描画実装は当該の層を描かない。<br/>
-/// ラベル要素は親より後に描かれるため常に最上位になる）。<br/>
-/// 切り出し領域・スケールは <see cref="Loupe.ResolveNotification"/> が解決し、層の順序はコアが単一所有する。
+/// UI 層は本値をホストの通知へ写す（描く層とその順序は描画内容（<see cref="LoupeDrawContent"/>）が持つ）。<br/>
+/// 切り出し領域・スケールは <see cref="Loupe.ResolveNotification"/> が単一所有する。
 /// </remarks>
-public readonly record struct LoupeRenderNotification(
-    EsPoint? CaptureTopLeft,
-    double Scale,
-    IReadOnlyList<LoupeDrawLayer> Layers);
+public readonly record struct LoupeRenderNotification(EsPoint? CaptureTopLeft, double Scale);
 
 /// <summary>Loupe（拡大鏡）の操作を UI 層・ホストへ提供するファサード。</summary>
 /// <remarks>
@@ -109,7 +103,7 @@ public sealed partial class Loupe
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数。</summary>
     /// <value>スケーリング係数（0.1〜8.0）。範囲外・非有限は補正済みの値を設定する。既定は 1.0。</value>
     /// <remarks>
-    /// 環境値（DPI）のため <see cref="Options"/> には含めない。補正の規則は <see cref="LoupeValueCoercer"/> が単一所有し、<br/>
+    /// 環境値（DPI）のため <see cref="Options"/> には含めない。補正の規則は <see cref="Loupe.Limits"/> が単一所有し、<br/>
     /// どの設定経路（初期化・UI の依存関係プロパティ・直接代入）でも範囲内の値だけが保持される。
     /// </remarks>
     public double RenderScaling
@@ -174,14 +168,14 @@ public sealed partial class Loupe
 
     /// <summary>実際に描画した入力から描画完了通知の内容を解決する。</summary>
     /// <param name="request">実際に描画した描画入力（<see cref="CreateRequest"/> の結果）。</param>
-    /// <returns>切り出し領域の左上・スケール・描画層の順序。</returns>
+    /// <returns>切り出し領域の左上とスケール。</returns>
     /// <remarks>
     /// 1. 切り出し領域の一辺を拡大率で切り上げて求める（切り上げは <see cref="LoupeImageExtractor.ComputeCaptureSize"/>）。<br/>
     /// 2. 拡大中心が未設定の場合は切り出し領域を null とする（描画しないため）。<br/>
     /// 3. 切り出し領域の左上を中心から導出する（<see cref="LoupeImageExtractor.ComputeCaptureTopLeft"/>）。<br/>
     /// <br/>
     /// 描画に使った値を受け取る（本メソッドが DIP から再換算すると、描画先の領域によるクランプで実際の描画と値が食い違うため）。<br/>
-    /// <b>描画順もコアが単一所有する</b>: 層の一覧は固定であり（<see cref="s_layers"/>）、中心座標ラベルは常に最後（最上位）である。
+    /// スケールは拡大率と同値である（描画は切り出し領域を拡大率倍で描く）。
     /// </remarks>
     public LoupeRenderNotification ResolveNotification(in LoupeRenderRequest request)
     {
@@ -190,14 +184,14 @@ public sealed partial class Loupe
             ? LoupeImageExtractor.ComputeCaptureTopLeft((int)center.X, (int)center.Y, captureSize)
             : null;
 
-        return new LoupeRenderNotification(captureTopLeft, request.ZoomLevel, s_layers);
+        return new LoupeRenderNotification(captureTopLeft, request.ZoomLevel);
     }
 
     /// <summary>描画内容を描画面へ描く（描画起動の唯一の入口）。</summary>
     /// <param name="canvas">描画先の描画ポート（UI 層が自 UI の描画面を適合させて渡す）。null 不可。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は市松模様のみを描く。</param>
     /// <param name="request">描画入力（コアと UI の契約）。</param>
-    /// <param name="notification">コアが解決した通知（層の順序を持つ）。</param>
+    /// <param name="content">コアが解決した描画内容（層の順序と矩形を持つ）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
     /// <remarks>
     /// <b>描画は本メソッドを通してのみ起動する</b>: UI 層が <see cref="Renderer"/> を直接呼ぶと、<br/>
@@ -206,12 +200,11 @@ public sealed partial class Loupe
     /// 差し替えのすべてがコアの単一所有になる。<br/>
     /// 描画面の確保（フレームワーク固有の機構）は UI 層が所有する。
     /// </remarks>
-    public void Draw(
-        IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeRenderNotification notification)
+    public void Draw(IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)
     {
         ArgumentNullException.ThrowIfNull(canvas);
 
-        _renderer.DrawShapes(canvas, source, in request, in notification);
+        _renderer.DrawShapes(canvas, source, in request, in content);
     }
 
     /// <summary>中心座標ラベルの配置指示を解決する（UI 要素として配置する UI 用）。</summary>
@@ -227,20 +220,4 @@ public sealed partial class Loupe
     /// </remarks>
     public IReadOnlyList<EsLabelElement> ResolveLabels(double displaySize, Func<string, double, EsSize> measureText)
         => _renderer.ResolveLabels(LoupeCoordLabel.Resolve(displaySize, CenterPoint, Options.Metrics), measureText);
-
-    /// <summary>描く層とその順序（中心座標ラベルは必ず最後 = 常に最上位）。</summary>
-    /// <remarks>
-    /// 図形の層の順序は固定であり、層の有無で変わらないため 1 つの一覧を共有する（描画のたびの確保を避ける）。<br/>
-    /// 中心座標ラベルは UI のテキスト要素が描くため、描画実装は当該の層を描かない<br/>
-    /// （一覧に含めるのは「ラベルが最上位である」という契約の表現である）。
-    /// </remarks>
-    private static readonly IReadOnlyList<LoupeDrawLayer> s_layers =
-    [
-        LoupeDrawLayer.Background,
-        LoupeDrawLayer.Checkerboard,
-        LoupeDrawLayer.Image,
-        LoupeDrawLayer.Crosshair,
-        LoupeDrawLayer.Frame,
-        LoupeDrawLayer.CoordLabel,
-    ];
 }

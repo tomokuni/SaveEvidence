@@ -33,7 +33,7 @@ public class LoupeTests
         var loupe = new Loupe(s_renderer);
 
         Assert.Same(LoupeOptions.Default, loupe.Options);
-        Assert.Equal(LoupeValueCoercer.RenderScalingDefault, loupe.RenderScaling);
+        Assert.Equal(Loupe.Limits.RenderScalingDefault, loupe.RenderScaling);
         Assert.Null(loupe.CenterPoint);
         Assert.Equal(0.0, loupe.PositionOffset);
     }
@@ -98,7 +98,7 @@ public class LoupeTests
     [InlineData(double.PositiveInfinity, 1.0)]
     public void RenderScaling_安全域外の指定は補正して保持する(double input, double expected)
     {
-        // 補正の規則は LoupeValueCoercer が単一所有する（UI の依存関係プロパティを経由しない代入でも範囲内になる）
+        // 補正の規則は Loupe.Limits が単一所有する（UI の依存関係プロパティを経由しない代入でも範囲内になる）
         var loupe = new Loupe(s_renderer) { RenderScaling = input };
 
         Assert.Equal(expected, loupe.RenderScaling);
@@ -296,12 +296,10 @@ public class LoupeTests
     }
 
     [Fact]
-    public void ResolveNotification_描く層は下地から中心座標ラベルの順で返す()
+    public void ResolveContent_描く層は下地から中心座標ラベルの順で返す()
     {
         var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(50, 60) };
-        var request = loupe.CreateRequest(160);
-
-        var notification = loupe.ResolveNotification(request);
+        var content = loupe.ResolveContent(loupe.CreateRequest(160));
 
         // 描画順はコアが単一所有する（UI 層は先頭から順に処理するだけ）
         Assert.Equal(
@@ -313,18 +311,18 @@ public class LoupeTests
                 LoupeDrawLayer.Frame,
                 LoupeDrawLayer.CoordLabel,
             ],
-            notification.Layers);
+            content.Layers);
     }
 
     [Fact]
-    public void ResolveNotification_層の一覧を共有する()
+    public void ResolveContent_層の一覧を共有する()
     {
         var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(50, 60) };
 
-        var first = loupe.ResolveNotification(loupe.CreateRequest(160));
-        var second = loupe.ResolveNotification(loupe.CreateRequest(160));
+        var first = loupe.ResolveContent(loupe.CreateRequest(160));
+        var second = loupe.ResolveContent(loupe.CreateRequest(160));
 
-        // 層の順序は固定であり、通知のたびに一覧を組み立てない
+        // 層の順序は固定であり、描画のたびに一覧を組み立てない
         Assert.Same(first.Layers, second.Layers);
     }
 

@@ -1,3 +1,4 @@
+using EsUtil.Feature.LoupeCore.Checkerboard;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 
@@ -8,9 +9,11 @@ namespace EsUtil.Feature.LoupeCore.Imaging;
 /// <remarks>
 /// ピクセルデータの抽出・切り出しは <see cref="EsBitmap"/> が担い、本クラスはルーペ固有の領域計算<br/>
 /// （<see cref="ComputeCaptureSize"/> / <see cref="ComputeCaptureTopLeft"/>）と切り出しの委譲を提供する。<br/>
+/// 切り出し元・描画先の矩形は描画の実行時にソースの実寸から決まるため、描画内容（<see cref="LoupeDrawContent"/>）には含めず<br/>
+/// コアの描画手順（<c>LoupeRendererBase</c>）が本クラスへ委譲する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-public static class LoupeImageExtractor
+internal static class LoupeImageExtractor
 {
     /// <summary>ルーペの一辺（ピクセル）から切り出し領域の一辺（ドメインピクセル）を計算する。</summary>
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>

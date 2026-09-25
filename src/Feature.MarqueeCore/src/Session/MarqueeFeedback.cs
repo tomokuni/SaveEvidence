@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.MarqueeCore;
+namespace EsUtil.Feature.MarqueeCore.Session;
 
 /// <summary>コア（状態層）が UI 層へ要求するカーソル操作（フラグの組み合わせ）。</summary>
 /// <remarks>

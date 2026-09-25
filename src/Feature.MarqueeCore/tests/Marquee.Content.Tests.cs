@@ -1,6 +1,8 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.MarqueeCore.Content;
+using EsUtil.Feature.MarqueeCore.Session;
 using Xunit;
 
 using EsUtil.Feature.MarqueeCore.Decoration;
@@ -84,8 +86,8 @@ public class MarqueeContentTests
 
         Assert.True(content.Handles is not null);
         var handles = content.Handles.Value;
-        Assert.Equal(new EsRect(50, 50, 101, 81), handles.Rect);
-        Assert.Equal(12, handles.HandleSize);
+        Assert.Equal(8, handles.Rects.Count);
+        Assert.Equal(new EsRect(44, 44, 12, 12), handles.Rects[0]);   // 左上（中心 50, 50）
         Assert.Equal(MarqueeOptions.HandleBorderThickness, handles.BorderThickness);
     }
 
@@ -98,7 +100,7 @@ public class MarqueeContentTests
         var content = ResolveContent(session);
 
         Assert.True(content.Handles is not null);
-        Assert.Equal(new EsRect(50, 50, 101, 81), content.Handles.Value.Rect);
+        Assert.Equal(8, content.Handles.Value.Rects.Count);
     }
 
     /// <summary>ハンドルを非表示にした設定ではハンドルを持たないことを検証する。</summary>
@@ -126,7 +128,8 @@ public class MarqueeContentTests
         var content = ResolveContent(session, port: CoordTransform.Scale(2.0));
 
         // 選択矩形は閉区間（終点 +1）で DIP 変換される（両 UI で同一の規則）
-        Assert.Equal(new EsRect(100, 100, 202, 162), content.Handles!.Value.Rect);
+        // 左上ハンドルの中心は変換後の左上（100, 100）であり、一辺 10 の中 心合わせで (95, 95) から始まる
+        Assert.Equal(new EsRect(95, 95, 10, 10), content.Handles!.Value.Rects[0]);
     }
 
     // ====================================================================

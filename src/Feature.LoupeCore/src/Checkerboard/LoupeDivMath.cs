@@ -1,4 +1,4 @@
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Checkerboard;
 
 /// <summary>ルーペの区画数の計算ロジック（純粋関数）。</summary>
 /// <remarks>
@@ -6,6 +6,7 @@ namespace EsUtil.Feature.LoupeCore;
 /// ルーペの寸法から個数・寸法を導く規則を単一所有する。<br/>
 /// タイル数（市松模様）と切り出し領域の一辺（拡大）が同じ規則を使うため、<br/>
 /// 各クラスが <c>(int)Math.Ceiling((double)a / b)</c> を書くと余り 1 単位の扱いが散る。<br/>
+/// <b>可視性</b>: 利用者は本アセンブリの内部計算だけであるため internal とする。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 internal static class LoupeDivMath

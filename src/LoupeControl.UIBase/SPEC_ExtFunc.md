@@ -57,7 +57,7 @@
 | メンバー | 説明 |
 | --- | --- |
 | `LoupeRenderer(LoupePaint paint)` | 描画に使う色を指定して生成する（`LoupePaint.Default` を基点に組み立てる）。`paint` が null なら `ArgumentNullException` |
-| `DrawShapes(IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeRenderNotification notification)` | 層の順に図形を描く（層の順序は通知から読む。**ラベルの層は描かない**）。`source` が null または拡大中心が未設定の場合は拡大画像を描かない。`canvas` または通知の層が null なら `ArgumentNullException` |
+| `DrawShapes(IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)` | 層の順に図形を描く（層の順序と矩形はコアが解決済み。本層は写すだけ）。`source` が null または拡大中心が未設定の場合は拡大画像を描かない。`canvas` または内容の層が null なら `ArgumentNullException` |
 | `ResolveLabels(LoupeCoordLabel? coordLabel, Func<string, double, EsSize> measureText)` | 配置するラベル要素を 1 件返す（`LoupeLabelPlan.Resolve` へ委譲する）。`measureText` が null なら `ArgumentNullException` |
 
 ### `LoupePaint` のメンバー（`EsUtil.SaveEvidence.Loupe.UIBase`・`public sealed record`）

@@ -12,7 +12,7 @@ using EsUtil.Platform.MewUI.Labels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
-using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
+using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.Skia;
 
@@ -31,7 +31,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// <b>描画</b>: 中間ビットマップを生成せず、子の図形キャンバス（<see cref="ShapeCanvas"/>）が画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
 /// 数値の安全域への補正は <see cref="LoupeOptions"/> / <see cref="LoupeMetrics"/>（コア）が、描画サイズの決定は<br/>
 /// <see cref="LoupeFacade.CreateRequest"/>（コア）が、外観の寸法値（タイルサイズ・外枠の太さ）と<br/>
-/// 下地の描画可否は <see cref="LoupeMetricsScaler"/> / <see cref="LoupeMetrics"/>（コア）が単一所有する。<br/>
+/// 下地の描画可否は <see cref="LoupeMetrics"/>（コア）が単一所有する。<br/>
 /// <br/>
 /// <b>基底クラス</b>: 図形キャンバスとラベル要素を子として重ねるため <see cref="Panel"/> を採用する。<br/>
 /// 図形キャンバスを先に、ラベル要素を後に子へ加えるため、<b>ラベルは常に最上位</b>の契約が構造で成立する。<br/>
@@ -356,7 +356,7 @@ public sealed class LoupeControl : Panel
     /// <remarks>
     /// 描画入力（コア⇔UI の契約。<see cref="LoupeRenderRequest"/>）を自 UI の公開プロパティから組み立てて描画層へ渡す<br/>
     /// （DIP → 物理ピクセルの換算と描画先へのクランプはコアが単一所有する）。<br/>
-    /// <b>描く層とその順序はコアが単一所有する</b>（<see cref="LoupeRenderNotification.Layers"/> の順に処理する）。<br/>
+    /// <b>描く層とその順序はコアが単一所有する</b>（<see cref="LoupeDrawContent.Layers"/> の順に処理する）。<br/>
     /// 中心座標ラベルはテキストの実寸測定が必要なため本キャンバスでは描かず、<br/>
     /// 親パネルのラベル要素（<c>Border</c> + <c>TextBlock</c>）が表示する。
     /// </remarks>
@@ -368,20 +368,21 @@ public sealed class LoupeControl : Panel
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         var surfaceSize = info.Size.ToEsSize();
         var request = _loupe.CreateRequest(DpiScaler.ToDip(surfaceSize, scaling).Width, surfaceSize);
+        var content = _loupe.ResolveContent(request);
         var notification = _loupe.ResolveNotification(request);
 
         try
         {
             // 描画の手順（層の順序と描画 API への写し）はファサードが保持するレンダラ（LoupeControl.UIBase）が単一所有する
-            // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序と起動はコアが単一所有する）
+            // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序と起 動はコアが単一所有する）
             if (_loupe.Renderer is LoupeRendererMewUI uiRenderer)
             {
-                uiRenderer.Draw(canvas, Source, in request, in notification);
+                uiRenderer.Draw(canvas, Source, in request, in content);
             }
             else
             {
                 // 描画実装が差し替えられている場合はコアの入口から描く
-                _loupe.Draw(new SkiaEsCanvas(canvas), Source, in request, in notification);
+                _loupe.Draw(new SkiaEsCanvas(canvas), Source, in request, in content);
             }
         }
         catch (Exception ex)

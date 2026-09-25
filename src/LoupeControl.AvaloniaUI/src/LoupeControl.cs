@@ -16,7 +16,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Globalization;
-using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
+using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 
 
@@ -65,7 +65,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 public sealed class LoupeControl : Panel
 {
     // ====================================================================
-    // 数値プロパティの安全域・既定値（LoupeValueCoercer から委譲）
+    // 数値プロパティの安全域・既定値（Loupe.Limits から委譲）
     // ====================================================================
 
     /// <summary><see cref="LoupeControl"/> クラスの新しいインスタンスを初期化する。</summary>
@@ -312,7 +312,7 @@ public sealed class LoupeControl : Panel
 
     /// <summary>表示DIPを物理ピクセルへ変換するスケーリング係数。</summary>
     /// <remarks>
-    /// 環境値（DPI）のため設定（<see cref="LoupeOptions"/>）には含めず、補正の規則はコアの <see cref="LoupeValueCoercer"/> が単一所有する。
+    /// 環境値（DPI）のため設定（<see cref="LoupeOptions"/>）には含めず、補正の規則はコアの <see cref="EsUtil.Feature.LoupeCore.Loupe.Limits"/> が単一所有する。
     /// </remarks>
     public static readonly StyledProperty<double> RenderScalingProperty =
         AvaloniaProperty.Register<LoupeControl, double>(
@@ -576,9 +576,10 @@ public sealed class LoupeControl : Panel
             // 描画入力（コア⇔UI の契約）は現在のレイアウト（親領域でのクランプ結果）から組み立てる
             // （描画入力の値・単位・換算はコアが単一所有する。開始時に固定しない）
             var request = _loupe.CreateRequest(_loupe.ResolveLayout(ParentAreaSize).DisplaySize);
+            var content = _loupe.ResolveContent(request);
             var notification = _loupe.ResolveNotification(request);
 
-            var bitmap = await LoupeRenderPipeline.RenderAsync(_loupe, Source, request, notification);
+            var bitmap = await LoupeRenderPipeline.RenderAsync(_loupe, Source, request, content);
 
             // 描画反映（SetLoupeBitmap）は描画フェーズ（Render 優先度）で実行する。
             // マウス移動中の連続再描画では、既定の Normal 優先度の継続が入力イベント（Input 優先度）に

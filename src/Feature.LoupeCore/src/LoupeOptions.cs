@@ -20,7 +20,7 @@ namespace EsUtil.Feature.LoupeCore;
 /// <br/>
 /// <b>安全域への補正</b>: 数値項目の補正は本型の生成時に適用する（<c>init</c> アクセサ）。<br/>
 /// 値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず、範囲は<br/>
-/// <see cref="LoupeValueCoercer"/> が単一所有する安全域内の値だけが保持される<br/>
+/// <see cref="Loupe.Limits"/> が単一所有する安全域内の値だけが保持される<br/>
 /// （UI 側に補正の登録を要求すると、登録を忘れた UI だけ安全域外の値を保持する）。
 /// </remarks>
 public sealed record LoupeOptions
@@ -39,16 +39,16 @@ public sealed record LoupeOptions
     public int RequestedSize
     {
         get => field;
-        init => field = LoupeValueCoercer.CoerceRequestedSize(value);
-    } = LoupeValueCoercer.RequestedSizeDefault;
+        init => field = Loupe.Limits.CoerceRequestedSize(value);
+    } = Loupe.Limits.RequestedSizeDefault;
 
     /// <summary>拡大率を取得する。</summary>
     /// <value>拡大率（偶数推奨）。既定は 4。設定時は 1〜64 へ補正される。</value>
     public int ZoomLevel
     {
         get => field;
-        init => field = LoupeValueCoercer.CoerceZoomLevel(value);
-    } = LoupeValueCoercer.ZoomLevelDefault;
+        init => field = Loupe.Limits.CoerceZoomLevel(value);
+    } = Loupe.Limits.ZoomLevelDefault;
 
     /// <summary>ルーペの寸法（市松模様のタイル・外枠の太さ・中心座標ラベルの寸法）を取得する。</summary>
     /// <value>寸法の単一値。既定は <see cref="LoupeMetrics"/> の既定値。</value>

@@ -1,15 +1,16 @@
 using EsUtil.Feature.LoupeCore.Imaging;
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Decoration;
 
 /// <summary>ルーペの装飾（十字線・外枠）の矩形計算ロジック（純粋関数）。</summary>
 /// <remarks>
-/// 装飾矩形の計算を UI 非依存の純粋関数として単一所有し、各 UI 実装は<br/>
-/// 返された <see cref="EsRect"/> を自身の描画 API へ渡すだけにする（二重所有を防ぐ）。<br/>
-/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
+/// 装飾矩形の計算を UI 非依存の純粋関数として単一所有する。<br/>
+/// 矩形は描画内容（<see cref="Loupe.ResolveContent"/> の結果）へ解決済みの値として含まれるため、<br/>
+/// 描画実装は返された <see cref="EsRect"/> を自身の描画 API へ渡すだけにする（二重所有を 防ぐ）。<br/>
+/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証 できる。
 /// </remarks>
-public static class LoupeDecorationGeometry
+internal static class LoupeDecorationGeometry
 {
     /// <summary>十字線の 2 本の矩形を計算する。</summary>
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>

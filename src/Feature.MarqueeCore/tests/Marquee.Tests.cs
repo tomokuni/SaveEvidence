@@ -402,9 +402,10 @@ public class MarqueeTests
 
         var content = marquee.ResolveContent(new EsSize(200, 100));
 
-        // ハンドル矩形は選択領域の閉区間（終点 +1）で求める（描画層は結果を使うだけ）
+        // ハンドル矩形は選択領域の閉区間（終点 +1）の左上を中心に置く（描画層は結果を使うだけ）
         Assert.NotNull(content.Handles);
-        Assert.Equal(new EsRect(10, 20, 101, 51), content.Handles!.Value.Rect);
+        Assert.Equal(8, content.Handles!.Value.Rects.Count);
+        Assert.Equal(new EsRect(5, 15, 10, 10), content.Handles!.Value.Rects[0]);
     }
 
     [Fact]
@@ -442,8 +443,8 @@ public class MarqueeTests
 
         var content = marquee.ResolveContent(default);
 
-        // 選択領域は閉区間（終点 +1）で変換されるため、幅・高さは 2 倍 + 2 になる
-        Assert.Equal(new EsRect(20, 40, 202, 102), content.Handles!.Value.Rect);
+        // 選択領域は閉区間（終点 +1）で変換されるため、左上ハンドルは (15, 35) から始まる
+        Assert.Equal(new EsRect(15, 35, 10, 10), content.Handles!.Value.Rects[0]);
     }
 
     [Fact]

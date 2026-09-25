@@ -6,6 +6,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using EsUtil.Feature.LoupeCore;
+using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
@@ -412,11 +413,11 @@ public class LoupeControlTests
         control.SetValue(LoupeControl.RenderScalingProperty, 100.0);
 
         // 環境値（DPI）の補正はプロパティのメタデータ（coerce）へ登録する
-        Assert.Equal(LoupeValueCoercer.RequestedSizeMax, control.Options.RequestedSize);
-        Assert.Equal(LoupeValueCoercer.ZoomLevelMax, control.Options.ZoomLevel);
-        Assert.Equal(LoupeValueCoercer.RenderScalingMax, control.RenderScaling);
-        Assert.Equal(LoupeValueCoercer.CheckerSizeMax, control.Options.Metrics.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthMax, control.Options.Metrics.FrameWidth);
+        Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
+        Assert.Equal(ZoomLevelMax, control.Options.ZoomLevel);
+        Assert.Equal(RenderScalingMax, control.RenderScaling);
+        Assert.Equal(CheckerSizeMax, control.Options.Metrics.CheckerSize);
+        Assert.Equal(FrameWidthMax, control.Options.Metrics.FrameWidth);
     }
 
     /// <summary>寸法の設定値が保持されることを検証する（色は描画の設定が単一所有する）。</summary>
@@ -520,7 +521,7 @@ public class LoupeControlTests
         // 背景の大きさはコアが「実測幅 + 内側余白」で決める（本コントロールは自 UI の API で実測して渡す）
         var text = new FormattedText(
             "(12, 34)", CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-            Typeface.Default, LoupeValueCoercer.CoordLabelFontSizeDefault, Brushes.White);
+            Typeface.Default, CoordLabelFontSizeDefault, Brushes.White);
         Assert.True(label.Width > text.Width);
 
         // 上端中央（左右の余白が等しい）: コアの中央寄せ規則が要素へ反映される

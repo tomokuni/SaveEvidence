@@ -24,16 +24,16 @@ public sealed class LoupeRendererAvaloniaUI(LoupePaint paint) : LoupeRenderer(pa
 {
     /// <summary>Avalonia の描画コンテキストから図形の層を描く。</summary>
     /// <param name="context">描画コンテキスト。null 不可。</param>
-    /// <param name="source">拡大元の 100% 画像。null の場合は市松模様のみを描く。</param>
-    /// <param name="request">描画入力（コアと UI の契約）。</param>
-    /// <param name="notification">コアが解決した通知（層の順序を持つ）。</param>
+    /// <param name="source">拡大元の 100% 画像。null の場合は市松模様のみ を描く。</param>
+    /// <param name="request">描画入力（拡大画像の切り出しに使う値）。</param>
+    /// <param name="content">コアが解決した描画内容（層の順序・矩形を持つ）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="context"/> が null の場合。</exception>
-    /// <remarks>描画面の確保（<c>DrawingContext</c> → <c>IEsCanvas</c> の適合）が本 UI 固有の処理である。</remarks>
+    /// <remarks>描画面の確保（<c>DrawingContext</c> → <c>IEsCanvas</c> の適 合）が本 UI 固有の処理である。</remarks>
     public void Draw(
-        DrawingContext context, EsBitmap? source, in LoupeRenderRequest request, in LoupeRenderNotification notification)
+        DrawingContext context, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        DrawShapes(new AvaloniaCanvas(context), source, in request, in notification);
+        DrawShapes(new AvaloniaCanvas(context), source, in request, in content);
     }
 }

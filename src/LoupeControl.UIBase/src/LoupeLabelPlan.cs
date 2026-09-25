@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// 実寸測定（描画 API 依存）を UI から受け取って要素の矩形へ変換する。<br/>
 /// 体裁は <see cref="EsLabelLayout"/> と <see cref="EsLabelElement"/> が、配置の計算はコアの <c>LoupeCoordLabel.ComputeFrame</c> が単一所有する。<br/>
 /// <br/>
-/// <b>順序はコアが所有する</b>: ラベルは <see cref="LoupeRenderNotification.Layers"/> の最後の層であり、常に最上位に置かれる<br/>
+/// <b>順序はコアが所有する</b>: ラベルは <see cref="LoupeDrawContent.Layers"/> の最後の層であり、常に最上位に置かれる<br/>
 /// （UI の要素は親より後に描かれるため、構造で成立する）。<br/>
 /// UI フレームワークに依存しない（測定関数をデリゲートで受け取る）ため、UI 初期化なしの <c>[Fact]</c> で検証できる。
 /// </remarks>

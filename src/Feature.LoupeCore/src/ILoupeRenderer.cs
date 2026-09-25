@@ -31,14 +31,15 @@ public interface ILoupeRenderer
     /// <summary>図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。null 不可。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（市松模様のみ）。</param>
-    /// <param name="request">描画入力（コアと UI の契約）。</param>
-    /// <param name="notification">コアが解決した通知（層の順序を持つ）。</param>
+    /// <param name="request">描画入力（拡大画像の切り出しに使う物理ピクセルサイズ・拡大率・拡大中心）。</param>
+    /// <param name="content">コアが解決した描画内容（層の順序・描画面・矩形を持つ）。</param>
     /// <remarks>
+    /// 描く値はすべて <paramref name="content"/> に解決済みであり、実装は計算を持たない。<br/>
     /// 中心座標ラベルの層は描かない（UI が要素として配置するため）。<br/>
     /// 描画面の消去は下地の層（<c>LoupeDrawLayer.Background</c>）が行う（前フレームの残像を残さない）。
     /// </remarks>
     void DrawShapes(
-        IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeRenderNotification notification);
+        IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content);
 
     /// <summary>中心座標ラベルの配置指示を解決する（UI 要素として配置する UI 用）。</summary>
     /// <param name="coordLabel">コアが解決したラベル契約。描かない場合は null。</param>

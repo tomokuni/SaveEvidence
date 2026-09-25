@@ -205,7 +205,7 @@ src/MarqueeControl.UIBase/
 | --- | --- |
 | 描画する層とその順序 | `Marquee.ResolveLayers`（コア。本層は順に写すだけ） |
 | 描くかどうかの判断（非表示・選択なし・nudge・表示可否フラグ・穴あけ矩形な し） | コア（`Marquee.ResolveFrame`。本層は判断を持たない） |
-| ハンドルの位置（8 方向）と一覧 | コア（`SelectionGeometry`） |
+| ハンドルの矩形（8 方向の位置と大きさ） | コア（`Marquee.ResolveFrame` が解決済み。本層は矩形を渡すだけ） |
 | ラベルの文言・フォントサイズ | コア（`MarqueeOptions` / `MarqueeSizeLabel` / `MarqueeCoordLabel`） |
 | 描画に使う色（ハンドル・十字マーカー・ラベル・装飾） | 本層（`MarqueePaint`） |
 | ラベルの体裁（背景・文字原点・行送り） | `Platform.Core`（`EsLabelLayout`） |

@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.MarqueeCore;
+namespace EsUtil.Feature.MarqueeCore.Content;
 
 /// <summary>1 フレーム分の描画内容を解決するための入力（設定・状態と、描画時に決まる値を 1 つにまとめた値）。</summary>
 /// <param name="Options">選択矩形の設定（ハンドル・十字マーカー・カーソル座標ラベルの外観）。</param>

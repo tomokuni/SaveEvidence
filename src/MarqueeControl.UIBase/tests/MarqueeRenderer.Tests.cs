@@ -209,11 +209,34 @@ public class MarqueeRendererTests
     // ヘルパー
     // ====================================================================
 
-    /// <summary>テスト用のハンドル描画内容を生成する。</summary>
+    /// <summary>テスト用のハンドル描画内容を生成する（大きさ 10・枠線の太さ 1.5 の 8 方向）。</summary>
     /// <param name="rect">選択矩形（DIP）。</param>
-    /// <returns>大きさ 10・枠線の太さ 1.5 のハンドル。</returns>
+    /// <returns>8 方向のハンドル矩形。</returns>
+    /// <remarks>
+    /// ハンドルの位置はコアが解決するため、本テストは期待値を独立に組み立てる（実装と同じ式を使わない）。
+    /// </remarks>
     private static MarqueeHandles CreateHandles(EsRect rect)
-        => new(rect, HandleSize: 10, BorderThickness: 1.5);
+    {
+        const double size = 10.0;
+        var half = size / 2;
+        var midX = rect.X + rect.Width / 2;
+        var midY = rect.Y + rect.Height / 2;
+
+        EsRect At(double x, double y) => new(x - half, y - half, size, size);
+
+        return new MarqueeHandles(
+            [
+                At(rect.X, rect.Y),           // 左上
+                At(midX, rect.Y),             // 上中央
+                At(rect.Right, rect.Y),       // 右上
+                At(rect.X, midY),             // 左中央
+                At(rect.Right, midY),         // 右中央
+                At(rect.X, rect.Bottom),      // 左下
+                At(midX, rect.Bottom),        // 下中央
+                At(rect.Right, rect.Bottom),  // 右下
+            ],
+            BorderThickness: 1.5);
+    }
 
     /// <summary>描画に使う色を生成する（本テストは色ごとの画素を検証する）。</summary>
     /// <returns>ハンドル白／枠線赤・マーカー白・暗転赤・穴あけ枠青・内側の塗り緑の色。</returns>

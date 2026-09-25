@@ -13,19 +13,17 @@
 | `Loupe` | `public` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決、描画入力の生成、通知内容の解決、描画実装の保持 |
 | `ILoupeRenderer` | `public` | 描画内容を描画面へ写す実装の契約（**描画の差し替え点**。既定実装は描画層の `LoupeRenderer`） |
 | `LoupeLayout` | `public` | 表示レイアウトの値（表示サイズ（DIP）と表示位置。配置しない場合は位置が null） |
-| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール・中心座標ラベルの契約。`Layers` は描く層とその順序を持ち、**描画順はコアが単一所有する**（ラベルは必ず末尾 = 常に最上位））。描画の実行は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が担う |
+| `LoupeDrawContent` | `public` | 1 フレーム分の描画内容（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・**層の順序**）。描画層は本値を写すだけ |
+| `LoupeCheckerTiles` | `public` | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部） |
+| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール）。描く層の順序は描画内容（`LoupeDrawContent`）が持ち、**描画順はコアが単一所有する**（ラベルは必ず末尾 = 常に最上位） |
 | `LoupeOptions` | `public` | 設定の単一値（ホストが設定する） |
 | `LoupeMetrics` | `public` | 寸法の単一値（`LoupeOptions.Metrics` として、また単体でも寸法を指定する。**色は持たない**） |
-| `LoupeValueCoercer` | `public` | 数値パラメータの既定値・安全域とクランプ |
-| `LoupeMetricsScaler` | `public` | 寸法値の物理ピクセル換算 |
+| `Loupe.Limits`（`Loupe` の入れ子） | `public` | 数値パラメータの既定値・安全域とクランプ（UI がプロパティ登録に使う） |
 | `LoupeRenderRequest` | `public` | 1 フレーム分の描画入力（コア⇔UI の契約） |
 | `LoupeCoordLabel` | `public` | 中心座標ラベルの描画契約（文言・DIP の寸法・配置の計算。**色は持たない**）。表示はコントロールがテキスト要素として行う（色は描画層の `LoupePaint` が与える） |
-| `LoupeCheckerboard` | `public` | 市松模様の明暗判定とタイル矩形の**列挙子**（`ComputeDarkTiles`。リストを確保しない） |
-| `LoupeDecorationGeometry` | `public` | 十字線・外枠の描画矩形 |
-| `LoupeLogFormat` / `LoupeLogMessage` | `public` | ログの書式と定義（UI 非依存の分） |
-| `Imaging.LoupeImageExtractor` | `public` | 切り出し領域の計算と `EsBitmap` からの切り出し |
+| `LoupeLogFormat` / `LoupeLogMessage` | `public` | ログの書式と定義（両 UI が同じレベル・書式で出力するための契約。UI のコードが拡張メソッドを呼ぶ） |
 
-**internal（本アセンブリと単体テストのみ）**: `Loupe.ComputePosition`（表示位置の計算。`Loupe.Position.cs`）/ `LoupeRenderRequest.ResolvePixelSize`（描画に使う物理ピクセルサイズの解決）/ `LoupeDivMath.CeilDiv`（区画数の切り上げ）。いずれもファサード（`Loupe.ResolveLayout` / `Loupe.CreateRequest`）とその内部計算が吸収して提供します。
+**internal（本アセンブリと単体テストのみ）**: 描画の計算・換算・列挙（`Checkerboard.LoupeCheckerboard`（明暗の判定）/ `Checkerboard.LoupeDivMath`（区画数の切り上げ）/ `Decoration.LoupeDecorationGeometry`（矩形）/ `Decoration.LoupeMetricsScaler`（寸法の換算）/ `Imaging.LoupeImageExtractor`（切り出し）/ `Loupe.ComputePosition` / `LoupeRenderRequest.ResolvePixelSize`）と、描画内容の解決の内部手順。いずれもファサード（`Loupe.ResolveLayout` / `Loupe.CreateRequest` / `Loupe.ResolveContent` / `Loupe.ResolveNotification`）とその内部計算が吸収して提供します。
 
 **UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
 
@@ -37,12 +35,13 @@
 | --- | --- |
 | `Loupe(ILoupeRenderer renderer, LoupeOptions? options = null)` | 生成（設定を省略した場合は `LoupeOptions.Default`）。`renderer` は null 不可（本コアは描画層を参照できないため、描画実装は必須引数で注入する） |
 | `Options` | 設定（表示サイズ・拡大率・寸法）の読み書き |
-| `RenderScaling` | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。補正は `LoupeValueCoercer` が単一所有する） |
+| `RenderScaling` | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。補正は `Loupe.Limits` が単一所有する） |
 | `CenterPoint` | 拡大中心（ドメイン座標）。未設定（null）は市松模様のみを描画し、配置も行わない |
 | `PositionOffset` | 拡大中心からの右下オフセット（DIP） |
 | `SetCoordinateTransform(port)` | ドメイン ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換） |
 | `ResolveLayout(parentSize)` | 親領域サイズから表示レイアウト（`LoupeLayout` = 表示サイズ + 位置）を解決する（拡大中心未設定時は位置が null）。**状態を変更しない**（親領域のサイズを保持しないため、値をいつ解決したかに依存しない） |
 | `CreateRequest(displaySize, availableSize = null)` | 描画 1 フレーム分の入力（`LoupeRenderRequest`）の生成（DIP → 物理ピクセルの換算と描画先へのクランプを含む）。表示サイズは呼び出し側が渡す（`ResolveLayout` の結果、または描画先の表面から導出した DIP） |
+| `ResolveContent(request)` | 描画 1 フレーム分の**描画内容**（`LoupeDrawContent` = 描画面・タイル・矩形・層の順序）を解決する（描画層は計算を持たない） |
 | `ResolveNotification(request)` | 実際に描画した入力から描画完了通知の内容（`LoupeRenderNotification`）を解決する |
 | `Renderer` | 描画の実装（`ILoupeRenderer`）の取得・設定（**描画の差し替え**。null 不可。設定後の再描画は UI 層が要求する） |
 | `ResolveLabels(displaySize, measureText)` | 中心座標ラベルの配置指示（`EsLabelElement`）の解決（UI 要素として配置する UI 用）。表示サイズは要素の大きさ（`ResolveLayout` の結果）を渡す（描画の物理ピクセルから逆算しない） |
@@ -53,10 +52,10 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `DrawShapes(canvas, source, in request, in notification)` | 図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く（**中心座標ラベルの層は描かない**。ラベルは UI の要素が描く） |
+| `DrawShapes(canvas, source, in request, in content)` | 図形の層（下地 ・市松模様・拡大画像・十字線・円枠）を描画順に描く（**中心座標ラベルの層は描かない**。ラベルは UI の要素が描く） |
 | `ResolveLabels(coordLabel, measureText)` | 中心座標ラベルの配置指示（`EsLabelElement`）を解決する（UI 要素として配置する UI 用） |
 
-描く層とその順序はコアが単一所有し（`LoupeRenderNotification.Layers`）、実装は順序を判断しません。拡大元画像は UI ごとに型が異なるため引数で受け取ります（描画の契約には含めません）。本コアは描画層（`LoupeControl.UIBase`）を参照できないため、既定実装（描画層の `LoupeRenderer`。色をコンストラクタで受け取る）は利用者が渡します。
+描く層とその順序はコアが単一所有し（`Loupe.ResolveContent` が返す `LoupeDrawContent.Layers`）、実装 は順序を判断しません。拡大元画像は UI ごとに型が異なるため引数で受け取ります（描画の契約には含めません）。本コアは描画層（`LoupeControl.UIBase`）を参照できない ため、既定実装（描画層の `LoupeRenderer`。色をコンストラクタで受け取る）は利用者が渡します。
 
 ```csharp
 var loupe = new Loupe(new LoupeRenderer(LoupePaint.Default), options) { CenterPoint = cursorDomain, RenderScaling = 1.25 };
@@ -84,7 +83,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 | --- | --- |
 | `Default` | すべての項目を既定値にした設定（部分変更の基点: `LoupeOptions.Default with { ZoomLevel = 8 }`） |
 
-数値項目（`RequestedSize` / `ZoomLevel`）は **`init` アクセサで補正**します（規則は `LoupeValueCoercer` が単一所有する）。したがってオブジェクト初期化子・`with` 式・逆シリアル化などの **どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録（Avalonia の `coerce` / MewUI の `coerce`）を要求しません。
+数値項目（`RequestedSize` / `ZoomLevel`）は **`init` アクセサで補正**します（規則は `Loupe.Limits` が単一所有する）。したがってオブジェクト初期化子・`with` 式・逆シリアル化などの **どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録（Avalonia の `coerce` / MewUI の `coerce`）を要求しません。
 
 **含めない値**: 拡大元画像・拡大中心（マウス移動ごとに変わるデータ）、DPI スケーリング係数（環境値）、表示位置のオフセット（UI 固有のホスト結線）。これらは UI の個別プロパティとして公開します（1 つの値へまとめると、中心の更新のたびに寸法を含む値全体を組み立て直すことになります）。
 
@@ -110,11 +109,11 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 
 「透明は描画しない」の判断（`HasBackground` / `HasCheckerColorA` / `HasCheckerColorB` / `HasFrame` / `HasCrosshair`）は、色を持つ描画層の `LoupePaint` が単一所有します。
 
-数値項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は **`init` アクセサで補正**します。したがってオブジェクト初期化子・`with` 式・逆シリアル化などの**どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録（Avalonia の `coerce` / MewUI の `coerce`）を要求しません（規則は `LoupeValueCoercer` が単一所有する）。
+数値項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は **`init` アクセサで補正**します。したがってオブジェクト初期化子・`with` 式・逆シリアル化などの**どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録（Avalonia の `coerce` / MewUI の `coerce`）を要求しません（規則は `Loupe.Limits` が単一所有する）。
 
 状態（拡大元画像・拡大中心・拡大率・基本サイズ・スケーリング係数・表示オフセット）は本型に含めません。
 
-## `LoupeValueCoercer`（`EsUtil.Feature.LoupeCore`）
+## `Loupe.Limits`（`EsUtil.Feature.LoupeCore`）
 
 ルーペの数値パラメータの既定値と安全域を単一所有し、範囲外の値をクランプします。
 
@@ -142,9 +141,22 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 | `CoerceCoordLabelFontSize(double)` | ラベル文字サイズを 6〜48 へクランプ。非有限値は既定値（安全域と規則は `EsLabelMetrics`（`Platform.Core`）が単一所有し、本メソッドは既定値を添えて委譲する） |
 | `CoerceCoordLabelCornerRadius(int)` | ラベルの角丸半径を 0〜64 へクランプ（0 は角丸なし） |
 
-## `LoupeMetricsScaler`（`EsUtil.Feature.LoupeCore`）
+## `LoupeDrawContent` / `LoupeCheckerTiles`（`EsUtil.Feature.LoupeCore`・`public`）
 
-寸法値（DIP）を描画に使う物理ピクセルへ換算する規則を単一所有します。安全域への補正は `LoupeMetrics`（生成時）が済ませているため再補正はせず、描画層は返された値だけを使います。
+`Loupe.ResolveContent` が返す**1 フレーム分の描画内容**です。描画層は本値を写すだけで、幾何計算（タイルの位置・矩形の導出・寸法の換算）を持ちません。
+
+| メンバー | 説明 |
+| --- | --- |
+| `SurfaceBounds` | 描画面の全体（幅・高さが物理ピクセルサイズの正方形） |
+| `CheckerTiles` | 市松模様の暗色タイルの矩形を列挙する構造体（`LoupeCheckerTiles`。リストを確保しない） |
+| `CrosshairRects` / `FrameRects` | 十字線（縦横 2 本）/ 円枠（4 辺）の矩形 |
+| `Layers` | 描く層とその順序（中心座標ラベルは必ず最後）。**描画順はコアが単一所有する** |
+
+`LoupeCheckerTiles` は `foreach` でもボックス化せず、`IEsCanvas.FillRects` へ制約付きジェネリックとして渡せます（列挙は 1 回だけ）。
+
+## `Decoration.LoupeMetricsScaler`（`EsUtil.Feature.LoupeCore.Decoration`・**internal**）
+
+寸法値（DIP）を描画に使う物理ピクセルへ換算する規則を単一所有します。安全域 への補正は `LoupeMetrics`（生成時）が済ませているため再補正はしません。**換算結果は `LoupeRenderRequest.Create` が描画入力（`CheckerSizePixels` / `FrameWidthPixels`）へ解決済みとして含めるため、描画層は本型を呼びません。**
 
 | メソッド | 説明 |
 | --- | --- |

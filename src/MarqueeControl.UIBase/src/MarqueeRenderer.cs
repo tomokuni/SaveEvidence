@@ -54,13 +54,8 @@ public class MarqueeRenderer : MarqueeRendererBase
     /// <inheritdoc/>
     protected override void DrawHandles(IEsCanvas canvas, in MarqueeHandles handles)
     {
-        var half = handles.HandleSize / 2;
-
-        foreach (var handle in SelectionGeometry.DirectionalHandles)
+        foreach (var bounds in handles.Rects)
         {
-            var center = SelectionGeometry.GetHandlePosition(handles.Rect, handle);
-            var bounds = new EsRect(center.X - half, center.Y - half, handles.HandleSize, handles.HandleSize);
-
             canvas.FillRect(bounds, _paint.HandleColor);
             canvas.StrokeRect(bounds, _paint.HandleBorderColor, handles.BorderThickness);
         }

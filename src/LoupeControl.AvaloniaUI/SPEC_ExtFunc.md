@@ -240,7 +240,7 @@ Bitmapの一辺は概ね次の式で決定されます。
 BitmapSize = ceil(表示サイズ × RenderScaling)
 ```
 
-環境値（DPI）のためコアの `LoupeOptions` には含めず、補正（`coerce`）はプロパティが担います（安全域の定義はコアの `LoupeValueCoercer` が単一所有します）。
+環境値（DPI）のためコアの `LoupeOptions` には含めず、補正（`coerce`）はプロパティが担います（安全域の定義はコアの `Loupe.Limits` が単一所有します）。
 
 #### 5.1.5 Metrics（寸法）と Paint（色）
 
@@ -274,7 +274,7 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 
 座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeMetrics` が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。**ラベルの色は `Paint`（`CoordLabelColor` / `CoordLabelBackgroundColor`）が単一所有します**。
 
-寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時にコアの `LoupeMetricsScaler` が物理ピクセルへ換算します（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
+寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.CheckerSizePixels` / `FrameWidthPixels`）（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 

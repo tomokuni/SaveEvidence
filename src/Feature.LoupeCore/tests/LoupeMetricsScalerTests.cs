@@ -1,3 +1,4 @@
+using EsUtil.Feature.LoupeCore.Decoration;
 using Xunit;
 
 namespace EsUtil.Feature.LoupeCore.Tests;

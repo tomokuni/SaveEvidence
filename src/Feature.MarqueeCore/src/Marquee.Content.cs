@@ -1,6 +1,8 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.MarqueeCore.Selection;
 
 namespace EsUtil.Feature.MarqueeCore;
 
@@ -206,7 +208,11 @@ public sealed partial class Marquee
     /// <param name="request">描画入力。</param>
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
     /// <returns>ハンドルの描画内容。非表示の設定または選択なしの場合は null。</returns>
-    /// <remarks>ハンドル枠の太さはコアが、色は描画の設定（<c>MarqueePaint</c>）が単一所有する。</remarks>
+    /// <remarks>
+    /// 中心位置（8 方向）と一辺サイズの適用を本メソッドが解決し、描画側へは矩形の一覧として渡す<br/>
+    /// （位置の式を描画層が持つと、ハンドルのヒットテストと同じ規則が 2 箇所になる）。<br/>
+    /// ハンドル枠の太さはコアが、色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
+    /// </remarks>
     private static MarqueeHandles? ResolveHandles(in MarqueeFrameRequest request, ICoordTransform port)
     {
         var options = request.Options;
@@ -215,10 +221,16 @@ public sealed partial class Marquee
             return null;
         }
 
-        return new MarqueeHandles(
-            DecoGeometry.ToDipRect(rect, port),
-            options.HandleSize,
-            MarqueeOptions.HandleBorderThickness);
+        var dip = DecoGeometry.ToDipRect(rect, port);
+        var half = options.HandleSize / 2;
+        var rects = new List<EsRect>(SelectionGeometry.DirectionalHandles.Count);
+        foreach (var handle in SelectionGeometry.DirectionalHandles)
+        {
+            var center = SelectionGeometry.GetHandlePosition(dip, handle);
+            rects.Add(new EsRect(center.X - half, center.Y - half, options.HandleSize, options.HandleSize));
+        }
+
+        return new MarqueeHandles(rects, MarqueeOptions.HandleBorderThickness);
     }
 
     /// <summary>始点マーカー（十字線）の描画内容を解決する。</summary>

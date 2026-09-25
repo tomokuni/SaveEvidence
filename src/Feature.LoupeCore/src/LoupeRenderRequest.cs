@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Feature.LoupeCore.Decoration;
 
 namespace EsUtil.Feature.LoupeCore;
 
@@ -23,12 +24,20 @@ namespace EsUtil.Feature.LoupeCore;
 /// <param name="ZoomLevel">拡大率（1〜64。1 未満は不可）。</param>
 /// <param name="Metrics">ルーペの寸法（市松模様のタイル・外枠の太さ。色は描画の設定が単一所有する）。</param>
 /// <param name="Scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
+/// <param name="CheckerSizePixels">市松模様の 1 タイルの一辺（物理ピクセル。換算済み。0 は市松模様を描かない）。</param>
+/// <param name="FrameWidthPixels">外枠の太さ（物理ピクセル。換算済み。0 は外枠を描かない）。</param>
+/// <remarks>
+/// <b>寸法は換算済みの値を保持する</b>: DIP の寸法（<paramref name="Metrics"/>）を描画に使う物理ピクセルへ換算する手順は<br/>
+/// コアが単一所有する（描画実装が換算を持たないため、描画側には物理ピクセルの値だけが渡る）。
+/// </remarks>
 public readonly record struct LoupeRenderRequest(
     EsPoint? Center,
     int PixelSize,
     int ZoomLevel,
     LoupeMetrics Metrics,
-    double Scaling)
+    double Scaling,
+    int CheckerSizePixels,
+    int FrameWidthPixels)
 {
     /// <summary>描画先の全領域（ルーペの一辺が作る正方形）を取得する。</summary>
     /// <value>左上を原点（0, 0）とし、幅・高さが <see cref="PixelSize"/> の矩形（物理ピクセル）。</value>
@@ -48,6 +57,7 @@ public readonly record struct LoupeRenderRequest(
     /// <remarks>
     /// 表示サイズ（DIP）を物理ピクセルへ換算し、描画先の領域が指定された場合はそれへクランプする。<br/>
     /// 換算とクランプの規則は <see cref="ResolvePixelSize"/> が単一所有する（描画と通知で同じ値を使う）。<br/>
+    /// 寸法（市松タイル・外枠の太さ）も併せて物理ピクセルへ換算する（換算の規則は <see cref="LoupeMetricsScaler"/> が単一所有する）。<br/>
     /// 表示サイズは設定（<see cref="LoupeOptions.RequestedSize"/>）ではなく、親領域でクランプした後の値を渡す<br/>
     /// （クランプの基準が親パネルか描画先の表面かで異なるため、値の決定は呼び出し側が担う）。
     /// </remarks>
@@ -61,7 +71,9 @@ public readonly record struct LoupeRenderRequest(
                ResolvePixelSize(displaySize, renderScaling, availableSize),
                options.ZoomLevel,
                options.Metrics,
-               renderScaling);
+               renderScaling,
+               LoupeMetricsScaler.ScaleCheckerSize(options.Metrics, renderScaling),
+               LoupeMetricsScaler.ScaleFrameWidth(options.Metrics, renderScaling));
 
     /// <summary>表示サイズ（DIP）から描画に使う物理ピクセルサイズを求める。</summary>
     /// <param name="size">表示サイズ（DIP・一辺）。</param>

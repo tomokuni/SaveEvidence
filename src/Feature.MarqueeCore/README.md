@@ -45,7 +45,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `MarqueeFeedback` / `MarqueeCursorAction` | internal | コアから UI 層への効果（再描画・フォーカス・マウスキャプチャ・カーソル操作・カーソル形状）。適用順は `Marquee` が単一所有し、UI 層は値を受け取らない（ファサードへ入力を通知するだけ） |
 | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持と更新ロジック（純粋計算の適用）。可変プロパティを多数持つため、外部には公開しない |
 | `MarqueeCursorKind` | public | 操作位置に対応するカーソル形状の種別（UI は自 UI のカーソル型へ写像するだけ） |
-| `SelectionGeometry` | public | 純粋な幾何計算（正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形）・描画対象ハンドル一覧・カーソル種別変換 |
+| `SelectionGeometry`（`Selection/`） | internal | 純粋な幾何計算（正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形）・描画対象ハンドル一覧・カーソル種別変換。利用者はコアの内部（描画内容の解決・状態機械）だけであり、UI 層へは解決済みの矩形が渡る |
 | `MarqueeLogMessage` | internal | ログの LoggerMessage 定義（入力の判断・設定変更）。呼ぶのは状態機械だけであり、UI 層はロガー（`Marquee.Log`）を渡すだけである（自 UI 固有の操作ログは UI 層が持つ。ズーム要求のログは `MarqueeControl.UIBase` が単一所有する） |
 
 ## 公開面の階層
@@ -223,6 +223,7 @@ UI 層が使う共有値・計算:
 | メンバー | 用途 |
 | --- | --- |
 | `MarqueeOptions.HandleBorderThickness` | ハンドル枠の線の太さ（DIP）。`MarqueeHandles.BorderThickness` として描画層へ渡るため、描画層は定数を持たない |
+| `MarqueeHandles`（`Rects`） | 8 方向のハンドル矩形（`Marquee.ResolveFrame` が `SelectionGeometry` の位置と `MarqueeOptions.HandleSize` から解決済み） |
 | `MarqueeOptions.CoordLabelOffset` | カーソルからラベルを離すオフセット（DIP。本コントロール固有の値） |
 | `EsLabelLayout.Padding`（`EsUtil.Platform.Core.Imaging`） | ラベルの内側余白の既定値（全ラベル共通）。ホストが描く付加情報ラベルも同じ値を使う |
 | `EsLabelLayout`（同） | ラベルの体裁（内側余白・行送り・配置基準）の単一所有者。`ComputeBox` / `ComputeBoxAtAnchor` / `ComputeOffsetTextOrigin` / `ComputeCursorLabelBox` / `ComputeTopCenterBox` / `NextTop` |
@@ -230,7 +231,7 @@ UI 層が使う共有値・計算:
 | `EsLabelElement`（同） | UI 要素として配置するための指示（配置矩形・文字原点・文言・フォント・色・角丸）。UI 層はこれを置くだけでよい |
 | `MarqueePaint.Default`（描画層 `MarqueeControl.UIBase`） | 色の既定値（部分変更の基点。`MarqueePaint.Default with { ... }`。コアの設定は色を持たない） |
 | `MarqueePaint.HandleColor`（同） | ハンドルの塗り色（未指定（全成分 0）は生成時に白へ解決。両 UI が同じ見た目になる） |
-| `SelectionGeometry.DirectionalHandles` | 描画対象の 8 方向ハンドル（読み取り専用の一覧。列挙順は `HitTarget` の宣言順） |
+| `SelectionGeometry.DirectionalHandles` | 描画対象の 8 方向ハンドル（読み取り専用の一覧。列挙順は `HitTarget` の宣言順。**描画層へは解決済みの矩形が渡る**） |
 | `SelectionGeometry.ToCursorKind` | ハンドル → `MarqueeCursorKind`（どのハンドルが同じカーソルになるか） |
 
 ## 設計上の約束

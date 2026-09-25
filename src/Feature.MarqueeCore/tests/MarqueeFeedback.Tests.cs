@@ -1,3 +1,4 @@
+using EsUtil.Feature.MarqueeCore.Session;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 

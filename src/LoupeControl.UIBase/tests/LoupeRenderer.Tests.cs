@@ -1,4 +1,5 @@
 using EsUtil.Feature.LoupeCore;
+using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
@@ -160,7 +161,7 @@ public class LoupeRendererTests
             target.Canvas,
             source,
             request,
-            new LoupeRenderNotification(null, 4, [LoupeDrawLayer.Background, LoupeDrawLayer.Image]));
+            CreateContent([LoupeDrawLayer.Background, LoupeDrawLayer.Image]));
 
         Assert.Equal(s_backgroundPixel, target.GetPixel(16, 16));
     }
@@ -259,7 +260,7 @@ public class LoupeRendererTests
         var request = CreateRequest();
 
         Assert.Throws<ArgumentNullException>(
-            () => renderer.DrawShapes(null!, null, request, CreateNotification([])));
+            () => renderer.DrawShapes(null!, null, request, CreateContent([])));
     }
 
     [Fact]
@@ -270,7 +271,7 @@ public class LoupeRendererTests
 
         Assert.Throws<ArgumentNullException>(
             () => renderer.DrawShapes(
-                target.Canvas, null, CreateRequest(), new LoupeRenderNotification(null, 4, null!)));
+                target.Canvas, null, CreateRequest(), CreateContent(null!)));
     }
 
     [Fact]
@@ -302,13 +303,13 @@ public class LoupeRendererTests
     private static void DrawShapes(
         RenderTarget target, LoupePaint paint, IReadOnlyList<LoupeDrawLayer> layers, EsBitmap? source = null)
         => new LoupeRenderer(paint).DrawShapes(
-            target.Canvas, source, CreateRequest(), CreateNotification(layers));
+            target.Canvas, source, CreateRequest(), CreateContent(layers));
 
-    /// <summary>テスト用の描画完了通知を生成する。</summary>
+    /// <summary>テスト用の描画内容を生成する（層だけを差し替える）。</summary>
     /// <param name="layers">描く層。</param>
-    /// <returns>描画完了通知。</returns>
-    private static LoupeRenderNotification CreateNotification(IReadOnlyList<LoupeDrawLayer> layers)
-        => new(s_center, 4, layers);
+    /// <returns>描画内容。</returns>
+    private static LoupeDrawContent CreateContent(IReadOnlyList<LoupeDrawLayer> layers)
+        => new LoupeFacade(new LoupeRenderer(CreatePaint())).ResolveContent(CreateRequest()) with { Layers = layers };
 
     /// <summary>テスト用の描画入力（一辺 32 DIP・スケーリング 1.0・拡大中心は描画先の中央）を生成する。</summary>
     /// <returns>描画入力。</returns>

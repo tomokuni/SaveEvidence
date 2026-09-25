@@ -67,7 +67,7 @@ src/LoupeControl.MewUI/
 | コンポーネント | 責務 |
 | --- | --- |
 | `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。描画は描画層（`LoupeRenderer`）を `SkiaEsCanvas` 経由で呼ぶ（描画の順序と内容は描画層が単一所有し、コアは描く層とその順序を指示する） |
-| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画ポートへ写す（コアの描画契約 `LoupeRenderRequest` と、矩形計算・寸法の物理ピクセル換算 `LoupeMetricsScaler` をそのまま使用）。**色は `LoupePaint` が単一所有する**（コントロールの `Paint` プロパティの値を受け取る）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
+| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画ポートへ写す（コアの描画内容 `LoupeDrawContent`（層の順序・矩形・タイル）と、拡大画像の切り出しに使う `LoupeRenderRequest` をそのまま使用）。**色は `LoupePaint` が単一所有する**（コントロールの `Paint` プロパティの値を受け取る）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
 | `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -127,33 +127,26 @@ classDiagram
     class LoupeRenderer {
         <<LoupeControl.UIBase / 描画層（ILoupeRenderer の既定実装）>>
         +LoupeRenderer(paint)
-        +DrawShapes(canvas, source, request, notification)$ void
+        +DrawShapes(canvas, source, request, content)$ void
         +ResolveLabels(coordLabel, measureText) EsLabelElement[]$
     }
-    class LoupeValueCoercer {
+    class Loupe.Limits {
         <<Feature.LoupeCore>>
         +CoerceRequestedSize(v) int$
         +CoerceZoomLevel(v) int$
         +CoerceRenderScaling(v) double$
     }
-    class LoupeDecorationGeometry {
+    class LoupeDrawContent {
         <<Feature.LoupeCore>>
-        +ComputeCrosshairRects(pixelSize, zoomLevel)$ IReadOnlyList~EsRect~
-        +ComputeFrameRects(pixelSize, width)$ IReadOnlyList~EsRect~
-    }
-    class LoupeCheckerboard {
-        <<Feature.LoupeCore>>
-        +ComputeDarkTiles(pixelSize, tileSize)$ DarkTiles（構造体の列挙子）
+        +EsRect SurfaceBounds
+        +LoupeCheckerTiles CheckerTiles
+        +CrosshairRects / FrameRects
+        +Layers
     }
     class LoupeImageExtractor {
-        <<Feature.LoupeCore>>
+        <<Feature.LoupeCore / internal>>
         +ComputeMagnifiedRects(captureSize, zoomLevel) (EsRect, EsRect)$
         +TryExtractRegionAt(source, request) EsBitmap?
-    }
-    class LoupeMetricsScaler {
-        <<Feature.LoupeCore>>
-        +ScaleCheckerSize(metrics, scaling) int$
-        +ScaleFrameWidth(metrics, scaling) int$
     }
     class EsLabelLayout {
         <<Platform.Core>>
@@ -186,11 +179,8 @@ classDiagram
     LoupeControl ..> LoupePaint : 色（Paint プロパティ）
     LoupeRenderer ..> LoupePaint : 色
     Loupe ..> LoupeOptions : 設定の単一値
-    LoupeRenderer ..> LoupeCheckerboard : 明暗判定
-    LoupeRenderer ..> LoupeDecorationGeometry : 矩形
-    LoupeRenderer ..> LoupeImageExtractor : 切り出し・拡大矩形
-    LoupeRenderer ..> LoupeMetricsScaler : 寸法の物理ピクセル換算
-    LoupeControl ..> LoupeValueCoercer : 値の補正（プロパティ登録の coerce）
+    LoupeRenderer ..> LoupeDrawContent : 層の順序・矩形・タイル（コアが解決済み）
+    LoupeControl ..> Loupe.Limits : 値の補正（プロパティ登録の coerce）
     Loupe ..> LoupeRenderRequest : 表示レイアウト・描画サイズ・描画入力の解決（ComputePosition / ResolvePixelSize）
     Loupe ..> EsPoint : ラベル文字列（Format）
 ```
@@ -209,7 +199,7 @@ sequenceDiagram
     LC->>LC: Loupe.CreateRequest（コアのファサードが描画契約を組み立てる。表示サイズは描画先の表面から DpiScaler.ToDip で導出し、物理ピクセルサイズはそれを描画先へクランプして解決する）
     LC->>R: DrawShapes(SkiaEsCanvas, Source, request, layers)（描画層が層の順に描く）
     R->>SK: 下地（Paint.BackgroundColor）を表面全体へ塗る
-    R->>C: ComputeDarkTiles(pixelSize, tileSize)
+    R->>C: FillRects(タイル列挙子, 色B)
     R->>SK: 暗色タイルを描画（SkiaFill.Rects・リスト確保なし）
     alt Source と CenterPoint が設定済み
         R->>C: TryExtractRegionAt(source, request)

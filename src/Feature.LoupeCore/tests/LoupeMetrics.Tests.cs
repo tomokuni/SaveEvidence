@@ -16,9 +16,9 @@ public class LoupeMetricsTests
     {
         var metrics = new LoupeMetrics();
 
-        Assert.Equal(LoupeValueCoercer.CheckerSizeDefault, metrics.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthDefault, metrics.FrameWidth);
-        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeDefault, metrics.CoordLabelFontSize);
+        Assert.Equal(Loupe.Limits.CheckerSizeDefault, metrics.CheckerSize);
+        Assert.Equal(Loupe.Limits.FrameWidthDefault, metrics.FrameWidth);
+        Assert.Equal(Loupe.Limits.CoordLabelFontSizeDefault, metrics.CoordLabelFontSize);
         Assert.True(metrics.ShowCoordLabel);
     }
 
@@ -51,10 +51,10 @@ public class LoupeMetricsTests
             CoordLabelCornerRadius = 1000,
         };
 
-        Assert.Equal(LoupeValueCoercer.CheckerSizeMax, metrics.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthMin, metrics.FrameWidth);
-        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeMax, metrics.CoordLabelFontSize);
-        Assert.Equal(LoupeValueCoercer.CoordLabelCornerRadiusMax, metrics.CoordLabelCornerRadius);
+        Assert.Equal(Loupe.Limits.CheckerSizeMax, metrics.CheckerSize);
+        Assert.Equal(Loupe.Limits.FrameWidthMin, metrics.FrameWidth);
+        Assert.Equal(Loupe.Limits.CoordLabelFontSizeMax, metrics.CoordLabelFontSize);
+        Assert.Equal(Loupe.Limits.CoordLabelCornerRadiusMax, metrics.CoordLabelCornerRadius);
     }
 
     /// <summary><c>with</c> 式による変更も生成時と同じ補正を受けることを検証する。</summary>
@@ -63,7 +63,7 @@ public class LoupeMetricsTests
     {
         var changed = new LoupeMetrics() with { CheckerSize = 1000 };
 
-        Assert.Equal(LoupeValueCoercer.CheckerSizeMax, changed.CheckerSize);
+        Assert.Equal(Loupe.Limits.CheckerSizeMax, changed.CheckerSize);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class LoupeMetricsTests
     {
         var metrics = new LoupeMetrics { CoordLabelFontSize = double.NaN };
 
-        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeDefault, metrics.CoordLabelFontSize);
+        Assert.Equal(Loupe.Limits.CoordLabelFontSizeDefault, metrics.CoordLabelFontSize);
     }
 
     [Fact]

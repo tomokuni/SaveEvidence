@@ -60,9 +60,9 @@ sequenceDiagram
 
     UI->>L: CreateRequest(表示サイズ, 描画先のサイズ)
     L-->>UI: LoupeRenderRequest（物理ピクセル・拡大率・寸法）
-    UI->>L: ResolveNotification(request)
-    L-->>UI: LoupeRenderNotification（切り出し領域・スケール・層の順序・ラベル）
-    UI->>R: DrawShapes(canvas, source, request, notification)
+    UI->>L: ResolveContent(request) / ResolveNotification(request)
+    L-->>UI: LoupeDrawContent（層の順序・矩形）/ LoupeRenderNotification（切り出し領域・スケール）
+    UI->>R: DrawShapes(canvas, source, request, content)
     R->>R: Layers の順に下地・市松・拡大画像・十字線・外枠を選択
     R->>C: Clear / FillRect / FillRects / DrawImage
     UI->>UI: LoupeLabelPlan.Resolve → ラベル要素を配置
@@ -73,7 +73,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A[LoupeRenderNotification.Layers] --> B{層}
+    A[LoupeDrawContent.Layers] --> B{層}
     B -->|Background| C[Clear<br/>描画面全体を置換]
     B -->|Checkerboard| D[明色を全面へ + 暗色タイルを列挙]
     B -->|Image| E[切り出し → 拡大描画]
@@ -168,9 +168,9 @@ src/LoupeControl.UIBase/
 | 描画の色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）とその既定値 | 本層（`LoupePaint`） |
 | 描画可否（透明色は描かない・ソース未解決なら描かない） | 本層（`LoupePaint.Has*`。判定の規則は `DrawingColorExtensions.IsVisible` が単一所有する） / コア（`LoupeImageExtractor.TryExtractRegionAt`） |
 | 切り出し領域と拡大の矩形 | コア（`LoupeImageExtractor`） |
-| 市松模様のタイル位置とタイル数 | コア（`LoupeCheckerboard`。リストを確保しない列挙子で渡す） |
-| 十字線・外枠の矩形 | コア（`LoupeDecorationGeometry`） |
-| 寸法の DIP → 物理ピクセル換算 | コア（`LoupeMetricsScaler`） |
+| 市松模様のタイル位置とタイル数 | コア（描画内容 `LoupeDrawContent.CheckerTiles`。リストを確保しない列挙子で渡す） |
+| 十字線・円枠の矩形 | コア（描画内容 `LoupeDrawContent`） |
+| 寸法の DIP → 物理ピクセル換算 | コア（描画入力 `LoupeRenderRequest` の換算済み寸法） |
 | 描画先のサイズ決定（クランプ） | コア（`LoupeRenderRequest.ResolvePixelSize`） |
 | ラベルの文言・フォントサイズ・角丸 | コア（`LoupeCoordLabel` / `LoupeMetrics`） |
 | ラベルの色 | 本層（`LoupePaint.CoordLabelColor` / `CoordLabelBackgroundColor`） |

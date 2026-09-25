@@ -4,15 +4,16 @@ namespace EsUtil.Feature.MarqueeCore.Selection;
 
 /// <summary>選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算・ドラッグ変形・境界クリップ）を提供する静的クラス。</summary>
 /// <remarks>
-/// 状態を持たない純粋関数のみを提供し、状態管理（<see cref="MarqueeState"/>）と描画層（UI 実装側）から共通利用する（DRY 原則・疎結合）。<br/>
+/// 状態を持たない純粋関数のみを提供し、状態機械（<see cref="Session.MarqueeState"/>）と描画内容の解決から共通利用する（DRY 原則・疎結合）。<br/>
 /// コア型（<see cref="EsRect"/> / <see cref="EsPoint"/> / <see cref="EsSize"/>）のみに依存し、UI フレームワークへ依存しない<br/>
 /// （移植性・テスト容易性。UI 型との相互変換は各 UI 実装の Interop 層が担う）。<br/>
 /// <br/>
-/// <b>可視性</b>: 描画層が使うのはハンドル一覧（<see cref="DirectionalHandles"/>）とハンドル位置（<see cref="GetHandlePosition"/>）だけであり、<br/>
+/// <b>可視性</b>: ハンドル一覧（<see cref="DirectionalHandles"/>）とハンドル位置（<see cref="GetHandlePosition"/>）を使うのは<br/>
+/// コアの描画内容の解決（<see cref="Marquee.ResolveFrame"/>）だけであり、描画層は解決済みの矩形を受け取る。<br/>
 /// それ以外（ドラッグ変形・境界クランプ・ヒットテスト）は状態機械の内部手順であるため internal とする<br/>
 /// （利用側はファサード <see cref="Marquee"/> を通す。使わないメンバーを公開しない）。
 /// </remarks>
-public static class SelectionGeometry
+internal static class SelectionGeometry
 {
     /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>
     private const double MinSelectionSizeLowerBound = 1.0;

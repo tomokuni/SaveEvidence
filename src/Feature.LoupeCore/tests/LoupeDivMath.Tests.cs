@@ -1,3 +1,4 @@
+using EsUtil.Feature.LoupeCore.Checkerboard;
 using Xunit;
 
 namespace EsUtil.Feature.LoupeCore.Tests;

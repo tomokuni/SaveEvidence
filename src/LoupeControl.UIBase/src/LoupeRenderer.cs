@@ -44,15 +44,15 @@ public class LoupeRenderer : LoupeRendererBase
         => LoupeLabelPlan.Resolve(coordLabel, _paint, measureText);
 
     /// <inheritdoc/>
-    protected override void DrawBackground(IEsCanvas canvas, in LoupeRenderRequest request)
-        => canvas.Clear(request.SurfaceBounds, _paint.BackgroundColor);
+    protected override void DrawBackground(IEsCanvas canvas, in LoupeDrawContent content)
+        => canvas.Clear(content.SurfaceBounds, _paint.BackgroundColor);
 
     /// <inheritdoc/>
-    protected override void DrawCheckerboard(IEsCanvas canvas, in LoupeRenderRequest request)
+    protected override void DrawCheckerboard(IEsCanvas canvas, in LoupeDrawContent content)
     {
         if (_paint.HasCheckerColorA)
         {
-            canvas.FillRect(request.SurfaceBounds, _paint.CheckerColorA);
+            canvas.FillRect(content.SurfaceBounds, _paint.CheckerColorA);
         }
 
         if (!_paint.HasCheckerColorB)
@@ -61,36 +61,28 @@ public class LoupeRenderer : LoupeRendererBase
         }
 
         // タイル数は描画先の大きさに比例して増えるため、リストを確保しない列挙子をそのまま渡す
-        canvas.FillRects(
-            LoupeCheckerboard.ComputeDarkTiles(
-                request.PixelSize, LoupeMetricsScaler.ScaleCheckerSize(request.Metrics, request.Scaling)),
-            _paint.CheckerColorB);
+        canvas.FillRects(content.CheckerTiles, _paint.CheckerColorB);
     }
 
     /// <inheritdoc/>
-    protected override void DrawCrosshair(IEsCanvas canvas, in LoupeRenderRequest request)
+    protected override void DrawCrosshair(IEsCanvas canvas, in LoupeDrawContent content)
     {
         if (!_paint.HasCrosshair)
         {
             return;
         }
 
-        canvas.FillRects(
-            LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel),
-            _paint.CrossColor);
+        canvas.FillRects(content.CrosshairRects, _paint.CrossColor);
     }
 
     /// <inheritdoc/>
-    protected override void DrawFrame(IEsCanvas canvas, in LoupeRenderRequest request)
+    protected override void DrawFrame(IEsCanvas canvas, in LoupeDrawContent content)
     {
         if (!_paint.HasFrame)
         {
             return;
         }
 
-        canvas.FillRects(
-            LoupeDecorationGeometry.ComputeFrameRects(
-                request.PixelSize, LoupeMetricsScaler.ScaleFrameWidth(request.Metrics, request.Scaling)),
-            _paint.FrameColor);
+        canvas.FillRects(content.FrameRects, _paint.FrameColor);
     }
 }

@@ -21,7 +21,7 @@ internal sealed class StubLoupeRenderer : ILoupeRenderer
 
     /// <inheritdoc/>
     public void DrawShapes(
-        IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeRenderNotification notification)
+        IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)
     {
     }
 

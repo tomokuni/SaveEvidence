@@ -111,12 +111,11 @@ flowchart TB
         Opt["LoupeOptions<br/>public sealed record<br/>（表示サイズ・拡大率・寸法）"]
         Req["LoupeRenderRequest<br/>public readonly record struct<br/>（1 フレーム分の描画入力）"]
         App["LoupeMetrics<br/>public sealed record<br/>（寸法）"]
-        Ext["LoupeImageExtractor<br/>public static class<br/>Imaging/LoupeImageExtractor.cs"]
-        Coerce["LoupeValueCoercer<br/>public static class"]
-        Scale["LoupeMetricsScaler<br/>public static class"]
-        Geo["LoupeDecorationGeometry / LoupeCheckerboard<br/>public static class"]
+        Ext["LoupeImageExtractor<br/>internal static class<br/>Imaging/LoupeImageExtractor.cs（コア内部）"]
+        Coerce["Loupe.Limits<br/>ファサードの入れ子（数値スキーマ）"]
+        Content["LoupeDrawContent<br/>public readonly record struct<br/>（1 フレーム分の描画内容：矩形・タイル・層）"]
         Lay["EsLabelLayout<br/>Platform.Core.Imaging"]
-        Pos["Loupe（公開ファサード）<br/>public sealed class<br/>Loupe.cs / LoupeLayout / LoupeRenderNotification"]
+        Pos["Loupe（公開ファサード）<br/>public sealed class<br/>Loupe.cs / LoupeLayout / LoupeRenderNotification / LoupeDrawContent"]
         Args["Loupe / LoupeRenderRequest<br/>公開ファサード + 描画入力<br/>（内部の配置・サイズ計算はファサードが持つ）"]
         Log["LoupeLogMessage<br/>public static partial class"]
     end
@@ -171,9 +170,9 @@ flowchart TB
 
 - **分類**: 公開クラス（`public sealed class LoupeRenderer : LoupeRendererBase`。所属は UI 非依存の描画層 `LoupeControl.UIBase`。色は生成時に受け取る）
 - **責務**: ルーペ Bitmap の合成描画（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠）を描画ポート `IEsCanvas` へ写す（**描画手順の単一所有者は基底の `LoupeRendererBase`**）
-- **公開API**: `DrawShapes(canvas, source, request, notification)`（図形の層のみ。**ラベルの層は描かない**）/ `ResolveLabels(coordLabel, measureText)`（要素の配置指示）。引数はコアの描画契約 `LoupeRenderRequest` と `LoupeRenderNotification`（層の順序）、および解決済みのソース。色は `LoupePaint` として保持する（幾何・値の単位・切り出しの可否はコアが単一所有する）
-- **特徴**: 描画の可否（アルファ 0）は `LoupePaint` の述語が判定する。市松タイル・外枠の太さはコアの `LoupeMetricsScaler` が物理ピクセルへ換算する（DIP の見た目を DPI に依存させない）。描画層へは契約（`LoupeRenderRequest`）を渡し、各層がコアへ問い合わせる（呼び出し側で可否を判定して null を渡す形にはしない）
-- **依存**: Platform.Core（`IEsCanvas` / `DrawingColorExtensions`）/ Feature.LoupeCore（`LoupeRenderRequest` / `LoupeMetrics` / `LoupeMetricsScaler` / `LoupeImageExtractor`）
+- **公開API**: `DrawShapes(canvas, source, request, content)`（図形の層のみ。**ラベルの層は描かない**）/ `ResolveLabels(coordLabel, measureText)`（要素の配置指示）。引数はコアの描画入力 `LoupeRenderRequest` と描画内容 `LoupeDrawContent`（層の順序・矩形・タイル）、および解決済みのソース。色は `LoupePaint` として保持する（幾何・値の単位・切り出しの可否はコアが単一所有する）
+- **特徴**: 描画の可否（アルファ 0）は `LoupePaint` の述語が判定する。タイルの位置・矩形・寸法の物理ピクセルへの換算は**コアが解決済み**であり、描画層は計算を持たない（描画内容を写すだけ）
+- **依存**: Platform.Core（`IEsCanvas` / `DrawingColorExtensions`）/ Feature.LoupeCore（`LoupeRenderRequest` / `LoupeDrawContent` / `LoupeMetrics`）
 
 ### 6.3 描画責務分割
 
@@ -270,6 +269,6 @@ sequenceDiagram
 | RenderScaling | 0.1〜8.0（非有限値は 1.0） | `coerce` コールバック（プロパティのメタデータ） |
 | Options.Metrics（CheckerSize / FrameWidth / CoordLabelFontSize / CoordLabelCornerRadius） | 1〜128 / 1〜64 / 6〜48 / 0〜64 | **コアの `LoupeMetrics`（`init` アクセサ）** |
 
-環境値の `RenderScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `LoupeValueCoercer` が単一所有し、UI は登録するだけです）。MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
+環境値の `RenderScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `Loupe.Limits` が単一所有し、UI は登録するだけです）。MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
 
 設定（`Options`）と寸法（`Options.Metrics`）の数値項目は**コアの型が生成時に補正**するため、UI 側に補正の登録を置きません（値の設定経路（オブジェクト初期化子・`with` 式・逆シリアル化・バインディング）によらず範囲内の値だけが保持されます）。

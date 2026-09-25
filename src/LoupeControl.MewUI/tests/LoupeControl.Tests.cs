@@ -1,6 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.LoupeCore;
+using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
@@ -26,15 +27,15 @@ public class LoupeControlTests
 
         Assert.Null(control.Source);
         Assert.Null(control.CenterPoint);
-        Assert.Equal(LoupeValueCoercer.RequestedSizeDefault, control.Options.RequestedSize);
-        Assert.Equal(LoupeValueCoercer.ZoomLevelDefault, control.Options.ZoomLevel);
-        Assert.Equal(LoupeValueCoercer.RenderScalingDefault, control.RenderScaling);
+        Assert.Equal(RequestedSizeDefault, control.Options.RequestedSize);
+        Assert.Equal(ZoomLevelDefault, control.Options.ZoomLevel);
+        Assert.Equal(RenderScalingDefault, control.RenderScaling);
 
         // 外観の既定値はコア（LoupeMetrics）が単一所有する（両 UI で同一）
         Assert.Equal(new LoupeMetrics(), control.Options.Metrics);
-        Assert.Equal(LoupeValueCoercer.CheckerSizeDefault, control.Options.Metrics.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthDefault, control.Options.Metrics.FrameWidth);
-        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeDefault, control.Options.Metrics.CoordLabelFontSize);
+        Assert.Equal(CheckerSizeDefault, control.Options.Metrics.CheckerSize);
+        Assert.Equal(FrameWidthDefault, control.Options.Metrics.FrameWidth);
+        Assert.Equal(CoordLabelFontSizeDefault, control.Options.Metrics.CoordLabelFontSize);
         Assert.True(control.Options.Metrics.ShowCoordLabel);
         // 色の既定値は描画の設定が単一所有する
         Assert.Equal(LoupePaint.Default, control.Paint);
@@ -49,10 +50,10 @@ public class LoupeControlTests
     public void 表示サイズが安全域へ補正される(int min, int max)
     {
         var control = new LoupeControl { Options = LoupeOptions.Default with { RequestedSize = min } };
-        Assert.Equal(LoupeValueCoercer.RequestedSizeMin, control.Options.RequestedSize);
+        Assert.Equal(RequestedSizeMin, control.Options.RequestedSize);
 
         control.Options = control.Options with { RequestedSize = max };
-        Assert.Equal(LoupeValueCoercer.RequestedSizeMax, control.Options.RequestedSize);
+        Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
     }
 
     /// <summary>拡大率が安全域へ補正されることを検証する。</summary>
@@ -60,20 +61,20 @@ public class LoupeControlTests
     public void 拡大率が安全域へ補正される()
     {
         var control = new LoupeControl { Options = LoupeOptions.Default with { ZoomLevel = 0 } };
-        Assert.Equal(LoupeValueCoercer.ZoomLevelMin, control.Options.ZoomLevel);
+        Assert.Equal(ZoomLevelMin, control.Options.ZoomLevel);
 
         control.Options = control.Options with { ZoomLevel = 1000 };
-        Assert.Equal(LoupeValueCoercer.ZoomLevelMax, control.Options.ZoomLevel);
+        Assert.Equal(ZoomLevelMax, control.Options.ZoomLevel);
     }
 
     /// <summary>スケーリング係数が非有限値のとき既定値へ補正されることを検証する。</summary>
     /// <param name="value">設定する値。</param>
     /// <param name="expected">期待する補正結果。</param>
     [Theory]
-    [InlineData(double.NaN, LoupeValueCoercer.RenderScalingDefault)]
-    [InlineData(double.PositiveInfinity, LoupeValueCoercer.RenderScalingDefault)]
-    [InlineData(0.0, LoupeValueCoercer.RenderScalingMin)]
-    [InlineData(100.0, LoupeValueCoercer.RenderScalingMax)]
+    [InlineData(double.NaN, RenderScalingDefault)]
+    [InlineData(double.PositiveInfinity, RenderScalingDefault)]
+    [InlineData(0.0, RenderScalingMin)]
+    [InlineData(100.0, RenderScalingMax)]
     public void スケーリング係数が安全域へ補正される(double value, double expected)
     {
         var control = new LoupeControl { RenderScaling = value };
@@ -86,10 +87,10 @@ public class LoupeControlTests
     public void 座標ラベルのフォントサイズが安全域へ補正される()
     {
         var control = new LoupeControl { Options = LoupeOptions.Default with { Metrics = new LoupeMetrics { CoordLabelFontSize = 0 } } };
-        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeMin, control.Options.Metrics.CoordLabelFontSize);
+        Assert.Equal(CoordLabelFontSizeMin, control.Options.Metrics.CoordLabelFontSize);
 
         control.Options = control.Options with { Metrics = control.Options.Metrics with { CoordLabelFontSize = double.NaN } };
-        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeDefault, control.Options.Metrics.CoordLabelFontSize);
+        Assert.Equal(CoordLabelFontSizeDefault, control.Options.Metrics.CoordLabelFontSize);
     }
 
     /// <summary>市松模様と外枠のサイズが安全域へ補正されることを検証する。</summary>
@@ -101,13 +102,13 @@ public class LoupeControlTests
             Options = LoupeOptions.Default with { Metrics = new LoupeMetrics { CheckerSize = 0, FrameWidth = 0 } },
         };
 
-        Assert.Equal(LoupeValueCoercer.CheckerSizeMin, control.Options.Metrics.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthMin, control.Options.Metrics.FrameWidth);
+        Assert.Equal(CheckerSizeMin, control.Options.Metrics.CheckerSize);
+        Assert.Equal(FrameWidthMin, control.Options.Metrics.FrameWidth);
 
         control.Options = control.Options with { Metrics = control.Options.Metrics with { CheckerSize = 1000, FrameWidth = 1000 } };
 
-        Assert.Equal(LoupeValueCoercer.CheckerSizeMax, control.Options.Metrics.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthMax, control.Options.Metrics.FrameWidth);
+        Assert.Equal(CheckerSizeMax, control.Options.Metrics.CheckerSize);
+        Assert.Equal(FrameWidthMax, control.Options.Metrics.FrameWidth);
     }
 
     /// <summary>要求サイズが <see cref="LoupeOptions.RequestedSize"/> の正方形になることを検証する。</summary>
@@ -178,7 +179,7 @@ public class LoupeControlTests
         Assert.Equal("(12, 34)", LabelText(control));
 
         // 幅は実測値（本コントロールが Skia で測ってコアへ渡す）と内側余白から決まる
-        var measured = SkiaText.Measure("(12, 34)", LoupeValueCoercer.CoordLabelFontSizeDefault);
+        var measured = SkiaText.Measure("(12, 34)", CoordLabelFontSizeDefault);
         Assert.True(LabelElement(control).Bounds.Width > measured.Width);
     }
 
@@ -279,9 +280,9 @@ public class LoupeControlTests
         });
         TestHelper.SetValueWithoutSetter(control, LoupeControl.RenderScalingProperty, 100.0);
 
-        Assert.Equal(LoupeValueCoercer.RequestedSizeMax, control.Options.RequestedSize);
-        Assert.Equal(LoupeValueCoercer.ZoomLevelMax, control.Options.ZoomLevel);
-        Assert.Equal(LoupeValueCoercer.RenderScalingMax, control.RenderScaling);
+        Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
+        Assert.Equal(ZoomLevelMax, control.Options.ZoomLevel);
+        Assert.Equal(RenderScalingMax, control.RenderScaling);
     }
 
     /// <summary>プロパティ変更がコアのログ定義で記録されることを検証する。</summary>
@@ -334,9 +335,9 @@ public class LoupeControlTests
 
         control.Options = control.Options with { RequestedSize = 100_000 };
 
-        Assert.Equal(LoupeValueCoercer.RequestedSizeMax, control.Options.RequestedSize);
+        Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
         Assert.Contains(
             logger.Messages,
-            message => message.Contains(LoupeValueCoercer.RequestedSizeMax.ToString(), StringComparison.Ordinal));
+            message => message.Contains(RequestedSizeMax.ToString(), StringComparison.Ordinal));
     }
 }

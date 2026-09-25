@@ -6,10 +6,9 @@ namespace EsUtil.Feature.LoupeCore;
 /// <summary>ルーペのログへ出力する値の文字列化（純粋関数）。</summary>
 /// <remarks>
 /// 設定値の変更ログが出力する値の書式を単一所有する。<br/>
-/// UI 実装が自前で整形すると同じ設定でも書式がずれ（片方だけ修正される）、ログの比較ができなくなる。<br/>
-/// <b>可視性</b>: UI が使うのは未設定の表現（<see cref="Null"/>）と画像の寸法（<see cref="DescribeImage"/>）だけであり、<br/>
-/// 座標・数値の整形はログ定義（<see cref="LoupeLogMessage"/>）の内部手順であるため internal とする。<br/>
-/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
+/// UI 実装が自前で整形すると同じ設定でも書式がずれ（片方だけ修正される）、ログ の比較ができなくなる。<br/>
+/// <b>公開である理由</b>: UI がソース画像の寸法をログへ出すのに本クラスを使う（ログの書式は両 UI で共有する契約）。<br/>
+/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証 できる。
 /// </remarks>
 public static class LoupeLogFormat
 {
@@ -41,8 +40,7 @@ public static class LoupeLogFormat
     /// <param name="height">画像の高さ（ピクセル）。未設定は null。</param>
     /// <returns><c>WidthxHeight</c> 形式の文字列。未設定は <c>null</c>。</returns>
     /// <remarks>
-    /// 画像の型は UI ごとに異なるため、<br/>
-    /// 各 UI が寸法を取り出して本メソッドへ渡す（書式は本メソッドが単一所有する）。
+    /// 画像の型は UI ごとに異なるため、各 UI が寸法を取り出して本メソッドへ渡す（書式は本メソッドが単一所有する）。
     /// </remarks>
     public static string DescribeImage(int? width, int? height)
         => width is { } w && height is { } h ? $"{w}x{h}" : Null;
