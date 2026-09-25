@@ -171,7 +171,7 @@ src/LoupeControl.UIBase/
 | 市松模様のタイル位置とタイル数 | コア（`LoupeCheckerboard`。リストを確保しない列挙子で渡す） |
 | 十字線・外枠の矩形 | コア（`LoupeDecorationGeometry`） |
 | 寸法の DIP → 物理ピクセル換算 | コア（`LoupeMetricsScaler`） |
-| 描画先のサイズ決定（クランプ） | コア（`LoupePositionCalculator.ResolvePixelSize`） |
+| 描画先のサイズ決定（クランプ） | コア（`LoupeRenderRequest.ResolvePixelSize`） |
 | ラベルの文言・フォントサイズ・角丸 | コア（`LoupeCoordLabel` / `LoupeMetrics`） |
 | ラベルの色 | 本層（`LoupePaint.CoordLabelColor` / `CoordLabelBackgroundColor`） |
 | ラベルの体裁（背景・文字原点） | `Platform.Core`（`EsLabelLayout`） |

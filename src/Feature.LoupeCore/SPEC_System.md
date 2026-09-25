@@ -44,10 +44,9 @@ graph LR
 | `LoupeMetricsScaler.cs` | 寸法値（タイルサイズ・外枠の太さ）の物理ピクセル換算（補正は `LoupeMetrics` の生成時に済んでいるため再補正しない）。**中心座標ラベルは対象外**（DIP で配置するため） |
 | `LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）と、UI の DIP 値からの組み立て（`Create`） |
 | `LoupeCoordLabel.cs` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`。体裁は `EsLabelLayout`（Platform.Core）が単一所有する）。表示はコントロールがテキスト要素として行う |
-| `LoupePositionCalculator.cs`（**internal**） | 表示位置（中心 + オフセット）の計算と親領域内へのクランプ、親サイズ未確定の判定。利用者はファサードの `ResolveLayout` を使う |
+| `Loupe.Position.cs`（`Loupe` の **partial**・**internal**） | 表示位置（中心 + オフセット）の計算と親領域内へのクランプ、親サイズ未確定の判定。利用者はファサードの `ResolveLayout` を使う |
 | `LoupeDecorationGeometry.cs` | 十字線（縦横 2 本）と外枠（4 辺）の描画矩形の計算 |
 | `LoupeCheckerboard.cs` | 市松模様のタイルの明暗判定と、暗色タイルの**列挙子**（`ComputeDarkTiles`。リストを確保しない） |
-| `LoupeRenderArgsCalculator.cs`（**internal**） | 描画完了イベント引数用の表示情報（切り出し左上・スケール）の計算と `RenderArgs` 値型。利用者はファサードの `ResolveNotification` を使う |
 | `LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化 |
 | `LoupeLogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有 |
 | `Imaging/LoupeImageExtractor.cs` | 切り出し領域の一辺・左上（ドメイン座標）の計算、`EsBitmap` からの領域切り出し、拡大描画の矩形（`ComputeMagnifiedRects`。引数はビットマップの実寸） |
@@ -66,7 +65,7 @@ sequenceDiagram
   Fac->>Core: parentSize.ClampToArea(requestedSize)
   Core-->>Fac: 表示サイズ（DIP。要素サイズ・描画サイズ・位置クランプで同じ値を使う）
   Fac->>PC: ICoordTransform.Inverse(center) → EsPoint（親領域 DIP）
-  Fac->>Core: LoupePositionCalculator.ComputePosition(表示サイズ, parentSize, centerDip, offset)
+  Fac->>Core: Loupe.ComputePosition(表示サイズ, parentSize, centerDip, offset)
   Core-->>Fac: EsPoint（表示位置）
   Fac-->>UI: LoupeLayout（表示サイズ + 表示位置）
   UI->>UI: 要素サイズ（Width / Height）と RenderTransform / Arrange へ反映する
@@ -77,9 +76,9 @@ sequenceDiagram
   Fac-->>UI: LoupeRenderRequest（描画と通知の両方で使用）
 
   UI->>Fac: ResolveNotification(request)
-  Fac->>Core: LoupeRenderArgsCalculator.Compute(request)
+  Fac->>Core: Loupe.ResolveNotification(request)
   Core->>PC: LoupeImageExtractor.ComputeCaptureSize
-  Core-->>Fac: RenderArgs（CaptureTopLeft / Scale）
+  Core-->>Fac: 切り出し左上 / スケール
   Fac-->>UI: LoupeRenderNotification（切り出し左上 / スケール / 層の順序）
 ```
 
@@ -101,9 +100,9 @@ sequenceDiagram
 | 切り出し領域の左上（中心 → 左上の変換） | `Imaging.LoupeImageExtractor.ComputeCaptureTopLeft`（internal） |
 | 拡大描画の矩形（切り出し元・描画先） | `Imaging.LoupeImageExtractor.ComputeMagnifiedRects`（ビットマップの実寸を受け取る） |
 | 表示サイズの親領域へのクランプと表示サイズの決定 | `Loupe.ResolveLayout`（規則は `Platform.Core` の `EsSize.ClampToArea`。状態を保持しないため、親領域のサイズを引数で受ける） |
-| 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（規則は internal の `LoupePositionCalculator.ComputePosition`。親サイズ未確 定の判定は `EsSize.HasArea`） |
-| 描画入力（物理ピクセルサイズ）の組み立てと描画先へのクランプ | `Loupe.CreateRequest`（規則は internal の `LoupePositionCalculator.ResolvePixelSize`） |
-| 描画完了通知の内容（切り出し左上・スケール・層の順序） | `Loupe.ResolveNotification`（規則は internal の `LoupeRenderArgsCalculator`。層の一覧は `Loupe` が静的共有する） |
+| 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（規則は internal の `Loupe.ComputePosition`。親サイズ未確 定の判定は `EsSize.HasArea`） |
+| 描画入力（物理ピクセルサイズ）の組み立てと描画先へのクランプ | `Loupe.CreateRequest`（規則は internal の `LoupeRenderRequest.ResolvePixelSize`） |
+| 描画完了通知の内容（切り出し左上・スケール・層の順序） | `Loupe.ResolveNotification`（切り出し領域の計算は `Imaging.LoupeImageExtractor` へ委譲し、層の一覧は `Loupe` が静的共有する） |
 | 中心座標ラベルの契約（文言・寸法）と表示可否 | `LoupeCoordLabel.Resolve`（文言は `EsPoint.Format`、表示可否は `LoupeMetrics.ShouldShowCoordLabel`） |
 | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0） | `EsLabelDefaults`（`Platform.Core`。マーキーと共有） |
 | 十字線・外枠の矩形 | `LoupeDecorationGeometry` |
@@ -112,7 +111,7 @@ sequenceDiagram
 | 寸法値の物理ピクセル換算（市松タイル・外枠の太さ） | `LoupeMetricsScaler` |
 | ログの書式とレベル、変化判定（同値・同一インスタンスなら出力しない） | `LoupeLogMessage` / `LoupeLogFormat` |
 
-`LoupeRenderArgsCalculator` / `LoupeImageExtractor.ExtractRegionAt`（internal）/ 描画層（`LoupeControl.UIBase`）の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
+`LoupeImageExtractor.ExtractRegionAt`（internal）/ 描画層（`LoupeControl.UIBase`）の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
 
 ## 例外処理ポリシー
 

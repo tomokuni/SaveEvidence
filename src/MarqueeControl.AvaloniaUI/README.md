@@ -196,7 +196,7 @@ Feature.MarqueeCore/
 │   ├── MarqueeOptions.cs            # 公開型（寸法・表示可否・対話パラメータの設定値 record）
 │   ├── Marquee.cs                   # 公開ファサード（操作の唯一の窓口。設定・効果の適用・描画内容の解決）
 │   ├── IMarqueeEffects.cs           # コアが要求する効果の適用先（UI 層が実装する）
-│   ├── MarqueeFrame.cs              # 内部型（選択矩形の描画内容のフレーム解決。ファサードからのみ使う）
+│   ├── Marquee.Content.cs           # `Marquee` の partial（選択矩形の描画内容のフレーム 解決。ファサードからのみ使う）
 │   ├── MarqueeSession.cs            # 内部型（状態管理クラス。入力の解釈・通知・効果。ファサードからのみ使う）
 │   ├── MarqueeNotice.cs             # 内部型（コア → UI の通知の種別と値）
 │   ├── MarqueeFeedback.cs           # 内部型（コア → UI の効果。カーソル操作を含む）

@@ -7,7 +7,7 @@ namespace EsUtil.Feature.LoupeCore.Tests;
 /// <summary><see cref="Loupe"/>（公開ファサード）の単体テスト（表示レイアウト・描画入力・通知内容・設定）。</summary>
 /// <remarks>
 /// UI 層とホストが使う唯一の窓口であるファサードの振る舞いを、UI フレームワークなしで検証する。<br/>
-/// クランプ・位置計算そのもの（純粋計算）は <see cref="LoupePositionCalculator"/> のテストが検証するため、<br/>
+/// 位置計算そのもの（純粋計算）は <see cref="LoupePositionTests"/> のテストが検証するため、<br/>
 /// 本テストは「設定からの解決」「ポートとオフセットの適用」「描画入力・通知内容の組み立て」に焦点を当てる。
 /// </remarks>
 public class LoupeTests
@@ -326,6 +326,45 @@ public class LoupeTests
 
         // 層の順序は固定であり、通知のたびに一覧を組み立てない
         Assert.Same(first.Layers, second.Layers);
+    }
+
+    /// <summary>スケールが切り出しサイズの切り上げ（描画先によるクランプを含む）に影響されないことを検証する。</summary>
+    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <remarks>
+    /// 実描画は切り出し領域（切り出しサイズのドメインピクセル）を <c>zoomLevel</c> 倍で描くため、<br/>
+    /// 変換係数は切り出しサイズで割った値（<c>物理ピクセル / 切り出しサイズ</c>）ではなく <c>zoomLevel</c> になる。
+    /// </remarks>
+    [Theory]
+    [InlineData(160)]
+    [InlineData(150)]
+    [InlineData(200)]
+    public void ResolveNotification_スケールは切り出しサイズの切り上げに影響されない(int pixelSize)
+    {
+        var loupe = new Loupe(s_renderer, new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
+
+        var notification = loupe.ResolveNotification(loupe.CreateRequest(pixelSize));
+
+        Assert.Equal(4.0, notification.Scale, 6);
+    }
+
+    /// <summary>スケールが DPI スケーリング係数に依存しないことを検証する。</summary>
+    /// <param name="renderScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
+    /// <remarks>
+    /// 物理ピクセル数は DIP とスケーリングに依存するが、描画の倍率（ドメイン → 描画ピクセル）は変わらない。<br/>
+    /// 破線オーバーレイの位置が DPI でずれないことを保証する。
+    /// </remarks>
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.25)]
+    [InlineData(2.0)]
+    public void ResolveNotification_スケールはDPIスケーリングに依存しない(double renderScaling)
+    {
+        var loupe = new Loupe(s_renderer, new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
+        var pixelSize = DpiScaler.ScaleToPixel(160, renderScaling);
+
+        var notification = loupe.ResolveNotification(loupe.CreateRequest(pixelSize));
+
+        Assert.Equal(4.0, notification.Scale, 6);
     }
 
     /// <summary>表示レイアウト・描画入力・通知の解決がヒープを確保しないことを検証する。</summary>

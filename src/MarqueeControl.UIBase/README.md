@@ -33,7 +33,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 ※ コアは本層を参照しない（本層の描画実装はコアの契約 IMarqueeRenderer を実装する）。
 ```
 
-**帰属の判定**: 「何を描くか（判断・データ・寸法・表示可否）」はコア、「どう描くか（色・API 呼び出し）」は本層。`MarqueeFrame`（描くかどうかの判断）はコアに残る。
+**帰属の判定**: 「何を描くか（判断・データ・寸法・表示可否）」はコア、「どう 描くか（色・API 呼び出し）」は本層。`Marquee.ResolveFrame`（描くかどうかの判断）はコアに残る。
 
 ## 収録する型
 

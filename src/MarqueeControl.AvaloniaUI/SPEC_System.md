@@ -22,7 +22,7 @@
     - [6.6 MarqueeOuterRenderer（MarqueeControl.UIBase）](#66-marqueeouterrenderermarqueecontroluibase)
     - [6.6.1 ラベルの要素配置（文字の表示）](#661-ラベルの要素配置文字の表示)
     - [6.7 MarqueeInnerRenderer（MarqueeControl.UIBase）](#67-marqueeinnerrenderermarqueecontroluibase)
-    - [6.8 MarqueeFrame（コア）](#68-marqueeframeコア)
+    - [6.8 Marquee（コアのフレーム解決）](#68-marqueeコアのフレーム解決)
     - [6.9 HitTarget](#69-hittarget)
     - [6.10 公開イベント引数](#610-公開イベント引数)
   - [7. 依存ルール](#7-依存ルール)
@@ -64,7 +64,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
   → 状態管理クラス（MarqueeSession）… 入力の解釈と状態遷移の判断
     → 状態（MarqueeState）… 状態保持と更新ロジック
       → 共有型（SelectionGeometry）+ Platform.AvaloniaUI
-  → 描画内容の解決（MarqueeFrame）… 選択の状態 + 設定 → 描画内容 1 値（MarqueeDrawContent）
+  → 描画内容の解決（Marquee.Content.cs の ResolveFrame）… 選択の状態 + 設定 → 描画内容 1 値（MarqueeDrawContent）
   → 装飾の解決（Core 内の `Decoration` 名前空間）… 暗転・穴あけ枠・ハイライトの判断
   → 描画の手順（MarqueeControl.UIBase）… `MarqueeRenderer` が色（`MarqueePaint`）を使い、描画ポート `IEsCanvas` へ層の順に写す
   → ラベルの配置（UI 層）… `MarqueeLabelPlan`（描画層）が返す配置矩形へ `Border` + `TextBlock` を置く（ラベルは常に最上位）
@@ -113,7 +113,7 @@ flowchart TB
         Hdl["HitTarget<br/>public enum"]
         Hdl2["MarqueeInteractionState<br/>public enum"]
         Hdl3["MarqueeSnapshot<br/>public record<br/>（EsRect / EsPoint）"]
-        Frm["MarqueeFrame<br/>internal static<br/>MarqueeFrame.cs<br/>（1 フレーム分の描画内容の解決）"]
+        Frm["Marquee（partial）<br/>internal の ResolveFrame<br/>Marquee.Content.cs<br/>（1 フレーム分の描画内容の解決）"]
     end
     subgraph DRC2["MarqueeControl プロジェクト (MarqueeControl)"]
         direction TB
@@ -185,7 +185,7 @@ flowchart TB
   - 効果の適用: `IMarqueeEffects`（UI が実装）へフォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換を要求する（適用順の単一所有）
   - ホイールの解釈（`MarqueeWheelInterpreter.Handle`）: Ctrl = ズーム要求 / それ以外 = スクロール（連携先があれば適用、無ければ `ScrollRequested`）とログを組み込みの層へ委ね、要求を公開イベントへ転送する
   - 通知: `Notified`（状態機械の通知をそのまま転送する）
-- **内部実装**: 状態機械 `MarqueeSession`（`internal`）とフレーム解決 `MarqueeFrame`（`internal`）を保持・利用する
+- **内部実装**: 状態機械 `MarqueeSession`（`internal`）を保持・利用する（フレーム解決は同じ型の `Marquee.Content.cs`（partial）にあり、`internal` の `ResolveFrame` として実装する）
 - **可視性**: public（ファサードのみ。内部の状態機械とフレーム解決は `internal` で隠す）
 - **備考**: 設定・効果の適用・通知の転送・描画内容の解決を 1 型に集約したため、UI 層は自 UI の公開プロパティ・公開イベント・描画 API へつなぐだけになる（ホイールの解釈は組み込みの層（`MarqueeControl.UIBase`）が単一所有する）
 
@@ -198,7 +198,7 @@ flowchart TB
   - クリップ（`MarqueeOptions.ClampToDomainBounds` + `Port.Bounds` による境界内制限。境界 Rect 生成は `GetBoundsRect` に一元化）
   - カーソル操作（`ICursorService`）
   - nudge 終了の共通化（`EndNudge`。`Reset` / `SetSelection` / `MarqueeSession` から共用し、カーソル再表示を委譲）
-- **可視性**: internal（本コントロールはコアの公開ファサード（`Marquee`）と公開型（`MarqueeSnapshot`）のみを使う。`MarqueeState` / `MarqueeSession` / `MarqueeFrame` はコアの内部実装であり参照しない）
+- **可視性**: internal（本コントロールはコアの公開ファサード（`Marquee`）と公開型（`MarqueeSnapshot`）のみを使う。`MarqueeState` / `MarqueeSession` はコアの内部実装であり参照しない）
 - **依存**: SelectionGeometry / HitTarget / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）
 
 ### 6.4 SelectionGeometry
@@ -240,12 +240,12 @@ flowchart TB
 - **特徴**: 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `InnerDecoFrame` の各項目を描画ポート `IEsCanvas` へ写すだけで、判断を持たない（塗るか・枠線を描くかは装飾層が単一所有する）。色は引数の `MarqueePaint`（`InnerFillColor` / `InnerBorderColor`）から引く
 - **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`EsUtil.Feature.MarqueeCore.Decoration` の `InnerDecoFrame`）/ `MarqueePaint`（同層）
 
-### 6.8 MarqueeFrame（コア）
+### 6.8 Marquee（コアのフレーム解決）
 
-- **分類**: 静的クラス（`internal static class`・コア提供）
+- **分類**: 公開ファサード（`public sealed partial class`）の**描画内容解決の部分**（`Marquee.Content.cs`。コア提供）
 - **責務**: 1 フレーム分の描画内容（外側の装飾・内側の装飾・穴あけ矩形・ハンドル・始点マーカー・サイズラベル・カーソル座標ラベル・層の順序）を解決する（セッションの状態 + 設定 + 文言プロバイダ → `MarqueeDrawContent`）
-- **可視性**: internal（ファサード `Marquee.ResolveContent` からのみ使う。外部には公開しない）
-- **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。描くかどうかの判断（非表示の設定・選択なし・nudge 中・表示可否フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）・穴あけ矩形なし）はすべて本型が持つ
+- **可視性**: internal（`ResolveFrame` はファサード `Marquee.ResolveContent` からのみ使う。外部には公開しない）
+- **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。描くかどうかの判断（非表示の設定・選択なし・nudge 中・表示可否フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）・穴あけ矩形なし）はすべて本部分が持つ
 
 ### 6.9 HitTarget
 

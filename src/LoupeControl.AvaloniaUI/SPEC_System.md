@@ -117,7 +117,7 @@ flowchart TB
         Geo["LoupeDecorationGeometry / LoupeCheckerboard<br/>public static class"]
         Lay["EsLabelLayout<br/>Platform.Core.Imaging"]
         Pos["Loupe（公開ファサード）<br/>public sealed class<br/>Loupe.cs / LoupeLayout / LoupeRenderNotification"]
-        Args["LoupePositionCalculator / LoupeRenderArgsCalculator<br/>internal static class<br/>（ファサードが内部で使う）"]
+        Args["Loupe / LoupeRenderRequest<br/>公開ファサード + 描画入力<br/>（内部の配置・サイズ計算はファサードが持つ）"]
         Log["LoupeLogMessage<br/>public static partial class"]
     end
 

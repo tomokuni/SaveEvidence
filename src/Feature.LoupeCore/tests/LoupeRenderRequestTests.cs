@@ -84,4 +84,40 @@ public class LoupeRenderRequestTests
 
         Assert.Null(request.Center);
     }
+
+    /// <summary>表示サイズとスケーリングから物理ピクセルを求めることを検証する。</summary>
+    /// <param name="size">表示サイズ（DIP）。</param>
+    /// <param name="scaling">スケーリング係数。</param>
+    /// <param name="expected">期待する物理ピクセルサイズ。</param>
+    [Theory]
+    [InlineData(100, 1.0, 100)]
+    [InlineData(100, 1.5, 150)]
+    [InlineData(33, 1.1, 37)]
+    [InlineData(160.4, 1.0, 161)]
+    public void ResolvePixelSize_表示サイズとスケーリングから物理ピクセルを求める(double size, double scaling, int expected)
+        => Assert.Equal(expected, LoupeRenderRequest.ResolvePixelSize(size, scaling));
+
+    /// <summary>換算結果の下限が 1 になることを検証する。</summary>
+    /// <param name="size">表示サイズ（DIP）。</param>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-10)]
+    public void ResolvePixelSize_最低1になる(double size)
+        => Assert.Equal(1, LoupeRenderRequest.ResolvePixelSize(size, 1.0));
+
+    /// <summary>描画先の領域を指定すると最小辺へクランプされることを検証する。</summary>
+    [Fact]
+    public void ResolvePixelSize_描画先の領域を指定するとクランプされる()
+    {
+        // 160 DIP × 2.0 = 320 ピクセル → 描画先 200×200 に合わせて 200
+        Assert.Equal(200, LoupeRenderRequest.ResolvePixelSize(160, 2.0, new EsSize(200, 200)));
+    }
+
+    /// <summary>描画先の領域が未確定ならクランプしないことを検証する。</summary>
+    [Fact]
+    public void ResolvePixelSize_領域が未確定ならクランプしない()
+    {
+        Assert.Equal(320, LoupeRenderRequest.ResolvePixelSize(160, 2.0, new EsSize(0, 0)));
+        Assert.Equal(320, LoupeRenderRequest.ResolvePixelSize(160, 2.0));
+    }
 }

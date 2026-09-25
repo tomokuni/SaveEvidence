@@ -4,12 +4,12 @@ using EsUtil.Feature.MarqueeCore.Decoration;
 
 namespace EsUtil.Feature.MarqueeCore;
 
-/// <summary>選択矩形コントロールの 1 フレーム分の描画内容（選択矩形・装飾・ラベル）を解決する静的クラス。</summary>
+/// <summary>選択矩形コントロールの 1 フレーム分の描画内容（選択矩形・装飾・ラベル）の解決を担う部分。</summary>
 /// <remarks>
-/// <b>描画順はコアが単一所有する</b>: 本クラスが <see cref="MarqueeDrawContent.Layers"/> を組み立てるため、<br/>
+/// <b>描画順はコアが単一所有する</b>: 本部分が <see cref="MarqueeDrawContent.Layers"/> を組み立てるため、<br/>
 /// UI 層は層の順序・有無を判断しない（ラベルは必ず最後 = 常に最上位）。<br/>
 /// <br/>
-/// <b>描くかどうかの判断はすべて本クラスが持つ</b>: 設定（非表示）・選択なし・nudge 中・透明色・穴あけ矩形なしなどを解決し、<br/>
+/// <b>描くかどうかの判断はすべて本部分が持つ</b>: 設定（非表示）・選択なし・nudge 中・透明色・穴あけ矩形なしなどを解決し、<br/>
 /// UI 層は値を持つ項目を反映するだけでよい（<see cref="MarqueeDrawContent"/> とその要素型は描画に必要な値のみを持つ純粋データである）。<br/>
 /// <br/>
 /// <b>穴あけ矩形と座標変換ポートは 1 回だけ解決する</b>: 外側の装飾・内側の装飾・サイズラベルが同じ穴あけ矩形を使い、<br/>
@@ -17,10 +17,10 @@ namespace EsUtil.Feature.MarqueeCore;
 /// <br/>
 /// <b>テキストの実寸は描画 API 依存</b>: コアは「どこへ何を描くか」だけを返し、実測と要素の配置は UI 層が行う。<br/>
 /// <br/>
-/// <b>可視性</b>: 本クラスは公開ファサード <see cref="Marquee"/> の内部実装であるため internal とする<br/>
+/// <b>可視性</b>: 本部分は公開ファサード <see cref="Marquee"/> の内部実装であるため internal とする<br/>
 /// （UI 層・ホストは <see cref="Marquee.ResolveContent"/> を通して描画内容を得る）。
 /// </remarks>
-internal static class MarqueeFrame
+public sealed partial class Marquee
 {
     /// <summary>始点マーカー（十字線）の線の太さ（DIP）。</summary>
     /// <remarks>塗りの中に隠れない細さでありながら、拡大表示でも線が判別できる太さである。</remarks>
@@ -45,7 +45,7 @@ internal static class MarqueeFrame
     /// </remarks>
     private static readonly IReadOnlyList<MarqueeDrawLayer>[] s_layers = CreateLayers();
 
-    /// <summary>1 フレーム分の描画内容を解決する。</summary>
+    /// <summary>1 フレーム分の描画内容を解決する（ファサードの描画入力から）。</summary>
     /// <param name="request">描画入力（設定・状態と描画時に決まる値）。</param>
     /// <returns>描画内容（描くものが無い項目は空・null）。</returns>
     /// <remarks>
@@ -58,7 +58,7 @@ internal static class MarqueeFrame
     /// 描画順は <see cref="MarqueeDrawLayer"/> の宣言順ではなく<b>本メソッドの意図</b>で決める<br/>
     /// （列挙に層を追加しても描画順が勝手に変わらないようにするため、明示的に組み立てる）。
     /// </remarks>
-    public static MarqueeDrawContent ResolveContent(in MarqueeFrameRequest request)
+    internal static MarqueeDrawContent ResolveFrame(in MarqueeFrameRequest request)
     {
         // 座標変換ポートは 1 フレームで 1 回だけ解決する（未指定時は倍率から等倍スケールを生成するため、各項目で解決すると生成と評価が重複する）
         var port = DecoGeometry.ResolvePort(request.Port, request.Scaling);
@@ -270,7 +270,7 @@ internal static class MarqueeFrame
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
     /// <returns>座標ラベルの描画内容。非表示の設定の場合は null。</returns>
     /// <remarks>
-    /// 文言はコア（<see cref="EsPoint.Format(int)"/>）が文字列化し、配置は描画 時に実寸から決まる。<br/>
+    /// 文言はコア（<see cref="EsPoint.Format(int)"/>）が文字列化し、配置は描画時に実寸から決まる。<br/>
     /// 色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
     private static MarqueeCoordLabel? ResolveCoordLabel(in MarqueeFrameRequest request, ICoordTransform port)

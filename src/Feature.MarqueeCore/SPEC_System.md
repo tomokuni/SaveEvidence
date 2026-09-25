@@ -94,7 +94,7 @@ stateDiagram-v2
 | `src/Marquee.cs` | `Marquee` | public | ファサード。設定・環境値の保持、入力の通知、外部操作、描画内容の解決、描画実装の保持、効果の適用 |
 | `src/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態遷移の判断。通知と効果を返す |
 | `src/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。**状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
-| `src/MarqueeFrame.cs` | `MarqueeFrame` | internal | 1 フレーム分の描画内容の解決（装飾・穴あけ矩形・ハンドル・ラベル。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する） |
+| `src/Marquee.Content.cs` | `Marquee`（**partial**） | internal | 1 フレーム分の描画内容 の解決（装飾・穴あけ矩形・ハンドル・ラベル。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する） |
 | `src/MarqueeFrameRequest.cs` | `MarqueeFrameRequest` | internal | フレーム解決の入力（設定・状態・描画時に決まる値） |
 | `src/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は `EsLabelLayout` が単一所有する） |
 | `src/MarqueeDrawContent.cs` | `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` | public | 描画契約 |
@@ -113,7 +113,7 @@ stateDiagram-v2
 | `src/Selection/SelectionGeometry.cs` | `SelectionGeometry` | public | 純粋幾何計算（**描画層が使う `DirectionalHandles`（読み取り専用の一覧）/ `GetHandlePosition` のみ public**。ヒットテスト・ドラッグ変形・境界クランプは状態機械の内部手順のため internal） |
 | `src/Decoration/MarqueeDecoOptions.cs` | `MarqueeDecoOptions` | public | 装飾の設定（寸法・描画可否フラグ・ハイライト・内側） |
 | `src/Decoration/OuterDecoAppearance.cs` / `InnerDecoAppearance.cs` | `OuterDecoAppearance` / `InnerDecoAppearance` | public | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |
-| `src/Decoration/OuterDecoFrame.cs` / `InnerDecoFrame.cs` | `OuterDecoFrame` / `InnerDecoFrame` | public | 装飾の描画内容（**純粋データ**。暗転領域・枠線・塗りを保持し、描くかどうかは `MarqueeFrame` が判断する） |
+| `src/Decoration/OuterDecoFrame.cs` / `InnerDecoFrame.cs` | `OuterDecoFrame` / `InnerDecoFrame` | public | 装飾の描画内容（**純粋データ**。暗転領域・枠線・塗りを保持し、描くかどうかは `Marquee.ResolveFrame` が判断する） |
 | `src/Decoration/DecoGeometry.cs` | `DecoGeometry` | internal | 装飾の幾何計算（穴あけ矩形・暗転領域・枠線矩形・DIP 変換） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
@@ -123,8 +123,8 @@ stateDiagram-v2
 | 選択の状態遷移の判断 | `MarqueeSession` |
 | 選択矩形・ドラッグ・nudge の状態（遷移は操作メソッドでのみ変更できる） | `MarqueeState` |
 | 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `SelectionGeometry` |
-| 描画する層とその順序 | `MarqueeFrame.ResolveLayers`（`MarqueeDrawContent.Layers`） |
-| 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ矩形なし） | `MarqueeFrame` |
+| 描画する層とその順序 | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
+| 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveFrame` |
 | 設定の既定値・範囲補正・体裁定数 | `MarqueeOptions`（補正は生成時の `init` アクセサ） |
 | ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（12.0） | `EsLabelDefaults`（`Platform.Core`。`MarqueePaint` と `MarqueeOptions` が参照する） |
 | フォントサイズの安全域（6〜48。他コントロールと共通） | `EsLabelMetrics`（`Platform.Core`） |
@@ -132,7 +132,7 @@ stateDiagram-v2
 | 装飾の DIP 変換と穴あけ矩形の決定 | `DecoGeometry` |
 | 装飾の描画可否（明示フラグ。透明色を代用にしない） | `MarqueeDecoOptions.ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint`（本コアは色を持つ型を公開しない） |
-| サイズラベルの文言（`Format`）と自動生成 | `MarqueeSizeLabel` / `MarqueeFrame.ResolveSizeLabel` |
+| サイズラベルの文言（`Format`）と自動生成 | `MarqueeSizeLabel` / `Marquee.ResolveSizeLabel` |
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。デリゲートを生成しない） |
 | 描画 API の呼び出し（層の順序と写し方、色の参照） | 描画層 `MarqueeControl.UIBase`（`MarqueeRenderer` / `MarqueeRendererBase` 等）。本コアは `IMarqueeRenderer` 経由で委譲する（実装は注入。本コアは描画層を参照しない） |
 | 描画実装の保持と差し替え | `Marquee.Renderer`（同値の再設定では再描画しない規則も本クラスが単一所有する） |

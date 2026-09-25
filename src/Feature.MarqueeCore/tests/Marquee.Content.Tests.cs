@@ -7,14 +7,14 @@ using EsUtil.Feature.MarqueeCore.Decoration;
 
 namespace EsUtil.Feature.MarqueeCore.Tests;
 
-/// <summary><see cref="MarqueeFrame"/> のテスト（UI 非依存・並列実行）。</summary>
+/// <summary><see cref="Marquee.ResolveFrame"/>（1 フレーム分の描画内容の解決）のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・ラベル・層の順序）の解決を検証する。<br/>
 /// UI 実装は <see cref="MarqueeDrawContent.Layers"/> の順に各層を反映するだけであり、<br/>
 /// 「描くかどうか」「どの順に描くか」の判断がコアにあることを本テストが担保する。<br/>
 /// 装飾の判断（穴あけ矩形・暗転領域・枠線）もフレームの一部であるため本テストが検証する。
 /// </remarks>
-public class MarqueeFrameTests
+public class MarqueeContentTests
 {
     /// <summary>検証に使う描画領域のサイズ（DIP）。</summary>
     private static readonly EsSize s_clientSize = new(300, 300);
@@ -52,7 +52,7 @@ public class MarqueeFrameTests
         double scaling = 1.0,
         Func<string?>? sizeLabelProvider = null,
         double displayScale = 1.0)
-        => MarqueeFrame.ResolveContent(new MarqueeFrameRequest(
+        => Marquee.ResolveFrame(new MarqueeFrameRequest(
             session.Options,
             decoOptions ?? MarqueeDecoOptions.Default,
             s_clientSize,

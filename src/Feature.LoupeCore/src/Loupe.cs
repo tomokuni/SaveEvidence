@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Feature.LoupeCore.Imaging;
 using static EsUtil.Feature.LoupeCore.LoupeValueCoercer;
 using EsUtil.SaveEvidence.Common.Imaging;
 
@@ -27,7 +28,7 @@ public readonly record struct LoupeLayout(double DisplaySize, EsPoint? Position)
 /// UI 層は <see cref="Layers"/> の順に各層を処理し、図形は自 UI の描画 API へ写す。<br/>
 /// 中心座標ラベルは <see cref="Layers"/> の最後の層であり、UI のテキスト要素が描く（描画実装は当該の層を描かない。<br/>
 /// ラベル要素は親より後に描かれるため常に最上位になる）。<br/>
-/// 切り出し領域・スケールは <see cref="LoupeRenderArgsCalculator"/> が、層の順序はコアが単一所有する。
+/// 切り出し領域・スケールは <see cref="Loupe.ResolveNotification"/> が解決し、層の順序はコアが単一所有する。
 /// </remarks>
 public readonly record struct LoupeRenderNotification(
     EsPoint? CaptureTopLeft,
@@ -59,7 +60,7 @@ public readonly record struct LoupeRenderNotification(
 /// 座標変換ポート（<see cref="ICoordTransform"/>）にのみ依存する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で検証できる。
 /// </remarks>
-public sealed class Loupe
+public sealed partial class Loupe
 {
     /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は等価変換として扱う）。</summary>
     private ICoordTransform? _coordinatePort;
@@ -154,9 +155,7 @@ public sealed class Loupe
         }
 
         var centerDip = _coordinatePort.OrIdentity().Inverse(center);
-        return new LoupeLayout(
-            size,
-            LoupePositionCalculator.ComputePosition(size, parentSize, centerDip, PositionOffset));
+        return new LoupeLayout(size, ComputePosition(size, parentSize, centerDip, PositionOffset));
     }
 
     /// <summary>現在の状態から描画 1 フレーム分の入力を生成する。</summary>
@@ -177,14 +176,21 @@ public sealed class Loupe
     /// <param name="request">実際に描画した描画入力（<see cref="CreateRequest"/> の結果）。</param>
     /// <returns>切り出し領域の左上・スケール・描画層の順序。</returns>
     /// <remarks>
+    /// 1. 切り出し領域の一辺を拡大率で切り上げて求める（切り上げは <see cref="LoupeImageExtractor.ComputeCaptureSize"/>）。<br/>
+    /// 2. 拡大中心が未設定の場合は切り出し領域を null とする（描画しないため）。<br/>
+    /// 3. 切り出し領域の左上を中心から導出する（<see cref="LoupeImageExtractor.ComputeCaptureTopLeft"/>）。<br/>
+    /// <br/>
     /// 描画に使った値を受け取る（本メソッドが DIP から再換算すると、描画先の領域によるクランプで実際の描画と値が食い違うため）。<br/>
     /// <b>描画順もコアが単一所有する</b>: 層の一覧は固定であり（<see cref="s_layers"/>）、中心座標ラベルは常に最後（最上位）である。
     /// </remarks>
     public LoupeRenderNotification ResolveNotification(in LoupeRenderRequest request)
     {
-        var args = LoupeRenderArgsCalculator.Compute(request);
+        var captureSize = LoupeImageExtractor.ComputeCaptureSize(request.PixelSize, request.ZoomLevel);
+        EsPoint? captureTopLeft = request.Center is { } center
+            ? LoupeImageExtractor.ComputeCaptureTopLeft((int)center.X, (int)center.Y, captureSize)
+            : null;
 
-        return new LoupeRenderNotification(args.CaptureTopLeft, args.Scale, s_layers);
+        return new LoupeRenderNotification(captureTopLeft, request.ZoomLevel, s_layers);
     }
 
     /// <summary>描画内容を描画面へ描く（描画起動の唯一の入口）。</summary>

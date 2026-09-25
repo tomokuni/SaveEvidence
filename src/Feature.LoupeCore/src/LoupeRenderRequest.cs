@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 
@@ -46,7 +47,7 @@ public readonly record struct LoupeRenderRequest(
     /// <returns>描画入力（物理ピクセルサイズを解決済み）。</returns>
     /// <remarks>
     /// 表示サイズ（DIP）を物理ピクセルへ換算し、描画先の領域が指定された場合はそれへクランプする。<br/>
-    /// 換算とクランプの規則は <see cref="LoupePositionCalculator.ResolvePixelSize"/> が単一所有する（描画と通知で同じ値を使う）。<br/>
+    /// 換算とクランプの規則は <see cref="ResolvePixelSize"/> が単一所有する（描画と通知で同じ値を使う）。<br/>
     /// 表示サイズは設定（<see cref="LoupeOptions.RequestedSize"/>）ではなく、親領域でクランプした後の値を渡す<br/>
     /// （クランプの基準が親パネルか描画先の表面かで異なるため、値の決定は呼び出し側が担う）。
     /// </remarks>
@@ -57,8 +58,22 @@ public readonly record struct LoupeRenderRequest(
         LoupeOptions options,
         EsSize? availableSize = null)
         => new(center,
-               LoupePositionCalculator.ResolvePixelSize(displaySize, renderScaling, availableSize),
+               ResolvePixelSize(displaySize, renderScaling, availableSize),
                options.ZoomLevel,
                options.Metrics,
                renderScaling);
+
+    /// <summary>表示サイズ（DIP）から描画に使う物理ピクセルサイズを求める。</summary>
+    /// <param name="size">表示サイズ（DIP・一辺）。</param>
+    /// <param name="renderScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
+    /// <param name="availableSize">描画先の領域サイズ。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
+    /// <returns>描画に使う一辺の物理ピクセルサイズ（切り上げ・最低 1、領域指定時はクランプ済み）。</returns>
+    /// <remarks>
+    /// 「表示サイズを物理ピクセルへ換算し、描画先より大きい場合は描画先に合わせる」手順を単一所有する。<br/>
+    /// 換算は <see cref="DpiScaler.ScaleToPixel(double, double)"/>、クランプは <see cref="EsSize.ClampToArea(double)"/> へ委譲する。<br/>
+    /// 描画と描画引数（イベント通知）が同じ値を使うため、UI 層は本値（<see cref="PixelSize"/>）を両方へ渡す<br/>
+    /// （それぞれの計算で値がずれると、ホストへ通知する切り出し領域と実際の描画が食い違う）。
+    /// </remarks>
+    internal static int ResolvePixelSize(double size, double renderScaling, EsSize? availableSize = null)
+        => (int)availableSize.GetValueOrDefault().ClampToArea(DpiScaler.ScaleToPixel(size, renderScaling));
 }

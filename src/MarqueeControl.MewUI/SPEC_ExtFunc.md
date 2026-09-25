@@ -14,7 +14,7 @@ Avalonia 版と同一の挙動になります。
 
 | 参照 | 用途 |
 | --- | --- |
-| `Feature.MarqueeCore` | 選択幾何（`SelectionGeometry`）・状態機械（`MarqueeState`）・**公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`）。状態管理クラス（`MarqueeSession`）とフレーム解決（`MarqueeFrame`）は internal（ファサードの内部実装） |
+| `Feature.MarqueeCore` | 選択幾何（`SelectionGeometry`）・状態機械（`MarqueeState`）・**公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`）。状態管理ク ラス（`MarqueeSession`）とフレーム解決（`Marquee.Content.cs` の `ResolveFrame`）は internal（ファサード の内部実装） |
 | `MarqueeControl.UIBase` | 描画の手順（`MarqueeRendererBase` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）と色（`MarqueePaint`）とラベル計画（`MarqueeLabelPlan`）。描画先は描画ポート（`IEsCanvas`）であり、本 UI は `SkiaEsCanvas`（Platform.Core）を適合させる |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Native` | カーソルサービスの既定実装（Win32 / NoOp） |

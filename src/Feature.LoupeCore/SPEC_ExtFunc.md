@@ -25,7 +25,7 @@
 | `LoupeLogFormat` / `LoupeLogMessage` | `public` | ログの書式と定義（UI 非依存の分） |
 | `Imaging.LoupeImageExtractor` | `public` | 切り出し領域の計算と `EsBitmap` からの切り出し |
 
-**internal（本アセンブリと単体テストのみ）**: `LoupePositionCalculator`（表示サイズ・位置の計算）/ `LoupeRenderArgsCalculator`（描画完了通知用の表示情報の計算と `RenderArgs`）。いずれもファサード（`Loupe.ResolveLayout` / `Loupe.ResolveNotification`）が吸収して提供します。
+**internal（本アセンブリと単体テストのみ）**: `Loupe.ComputePosition`（表示位置の計算。`Loupe.Position.cs`）/ `LoupeRenderRequest.ResolvePixelSize`（描画に使う物理ピクセルサイズの解決）/ `LoupeDivMath.CeilDiv`（区画数の切り上げ）。いずれもファサード（`Loupe.ResolveLayout` / `Loupe.CreateRequest`）とその内部計算が吸収して提供します。
 
 **UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
 

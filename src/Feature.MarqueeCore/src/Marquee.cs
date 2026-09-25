@@ -13,8 +13,7 @@ namespace EsUtil.Feature.MarqueeCore;
 /// <b>適用パターン</b>: Facade（コアの状態機械・描画内容の解決・設定を 1 つの窓口へ集約する）。<br/>
 /// <br/>
 /// <b>責務</b>: Marquee の「操作（入力の通知・外部からの状態操作・描画内容の解決・設定）」を単一の窓口で提供し、<br/>
-/// UI 層とホストは本クラスだけを参照する（コアの内部契約である状態機械 <see cref="MarqueeSession"/> と<br/>
-/// フレーム解決 <see cref="MarqueeFrame"/> へ直接触れない）。<br/>
+/// UI 層とホストは本クラスだけを参照する（コアの内部契約である状態機械 <see cref="MarqueeSession"/> へ直接触れない）。<br/>
 /// <br/>
 /// <b>本クラスが単一所有するもの</b>:<br/>
 /// - セッション（入力の解釈と状態遷移の判断）の生成と保持<br/>
@@ -36,7 +35,7 @@ namespace EsUtil.Feature.MarqueeCore;
 /// 抽象（<see cref="ICursorService"/> / <see cref="ICoordTransform"/> / <see cref="IMarqueeEffects"/>）にのみ依存する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で検証できる。
 /// </remarks>
-public sealed class Marquee
+public sealed partial class Marquee
 {
     /// <summary>入力の解釈と状態遷移の判断を担うセッション（コア内部の状態機械）。</summary>
     private readonly MarqueeSession _session;
@@ -314,7 +313,7 @@ public sealed class Marquee
     /// テキストの実寸は描画 API 依存のため、コアは「どこへ何を描くか」だけを返し、実測と要素の配置は UI 層が行う。
     /// </remarks>
     public MarqueeDrawContent ResolveContent(EsSize clientSize)
-        => MarqueeFrame.ResolveContent(new MarqueeFrameRequest(
+        => ResolveFrame(new MarqueeFrameRequest(
             _session.Options,
             _decoOptions,
             clientSize,

@@ -169,9 +169,8 @@ classDiagram
         +ResolveNotification(request) LoupeRenderNotification
         +ResolveLabels(displaySize, measureText) EsLabelElement[]
     }
-    class LoupePositionCalculator {
-        <<Feature.LoupeCore / internal>>
-        +ComputePosition(displaySize, parentSize, centerDip, offset)$ EsPoint
+    class LoupeRenderRequest {
+        <<Feature.LoupeCore>>
         +ResolvePixelSize(size, renderScaling, availableSize) int$
     }
     class EsPoint {
@@ -192,7 +191,7 @@ classDiagram
     LoupeRenderer ..> LoupeImageExtractor : 切り出し・拡大矩形
     LoupeRenderer ..> LoupeMetricsScaler : 寸法の物理ピクセル換算
     LoupeControl ..> LoupeValueCoercer : 値の補正（プロパティ登録の coerce）
-    Loupe ..> LoupePositionCalculator : 表示レイアウト・描画サイズ・描画入力の解決
+    Loupe ..> LoupeRenderRequest : 表示レイアウト・描画サイズ・描画入力の解決（ComputePosition / ResolvePixelSize）
     Loupe ..> EsPoint : ラベル文字列（Format）
 ```
 

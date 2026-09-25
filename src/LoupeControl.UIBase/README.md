@@ -53,7 +53,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 ## 描画の単位
 
-**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（`LoupeMetricsScaler` / `LoupePositionCalculator`）はコアが済ませているため、本層は換算しません。中心座標ラベルだけは DIP で配置します（コアが `EsLabelLayout` で配置を決める）。
+**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（`LoupeMetricsScaler` / `LoupeRenderRequest.ResolvePixelSize`）はコアが済ませているため、本層は換算しません。中心座標ラベルだけは DIP で配 置します（コアが `EsLabelLayout` で配置を決める）。
 
 ## ラベルは UI の要素が描く
 
