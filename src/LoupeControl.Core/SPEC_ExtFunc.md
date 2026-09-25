@@ -12,13 +12,13 @@
 | --- | --- | --- |
 | `Loupe` | `public` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決、描画入力の生成、通知内容の解決 |
 | `LoupeLayout` | `public` | 表示レイアウトの値（表示サイズ（DIP）と表示位置。配置しない場合は位置が null） |
-| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール・座標ラベルの契約） |
+| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール・中心座標ラベルの契約。`Layers` は描く層とその順序を持ち、**描画順はコアが単一所有する**（ラベルは必ず末尾 = 常に最上位）） |
 | `LoupeOptions` | `public` | 設定の単一値（ホストが設定する） |
 | `LoupeAppearance` | `public` | 外観の単一値（設定の一部として、また単体でも外観を指定する） |
 | `LoupeValueCoercer` | `public` | 数値パラメータの既定値・安全域とクランプ |
 | `LoupeAppearanceScaler` | `public` | 外観の寸法値の物理ピクセル換算 |
 | `LoupeRenderRequest` | `public` | 1 フレーム分の描画入力（コア⇔UI の契約） |
-| `LoupeCoordLabel` | `public` | 中心座標ラベルの描画契約（文言・寸法・色・配置の計算）。文字はホストが描く |
+| `LoupeCoordLabel` | `public` | 中心座標ラベルの描画契約（文言・DIP の寸法・色・配置の計算）。表示はコントロールがテキスト要素として行う |
 | `LoupeCheckerboard` | `public` | 市松模様の明暗判定とタイル矩形 |
 | `LoupeDecorationGeometry` | `public` | 十字線・外枠の描画矩形 |
 | `LoupeLogFormat` / `LoupeLogMessage` | `public` | ログの書式と定義（UI 非依存の分） |

@@ -94,8 +94,8 @@ public sealed class FadeMaskDragRectControl : Panel
         _marquee.CancelRequested += (_, _) => RaiseCancelRequested();
         _marquee.ZoomRequested += (_, request) => RaiseZoomRequested(request);
         _marquee.ScrollRequested += (_, request) => RaiseScrollRequested(request);
-        // 文字（サイズラベル・操作ラベル・情報ラベル・座標ラベル）はテキストの実寸測定が必要なため、
-        // 選択矩形コントロールは描かずに描画完了を通知する。ホスト（本クラス）が文字を描く。
+        // サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。
+        // 操作ラベル・情報ラベルはアプリ固有の付加情報のため、本クラス（ホスト）が描画完了時に描く。
         _marquee.Rendered += OnMarqueeRendered;
         // ルーペ画像上の選択矩形破線は、ルーペの描画完了直後に同一のキャンバスへ描く
         _loupe.Rendered += OnLoupeRendered;
@@ -226,11 +226,12 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>情報ラベル（ウィンドウタイトル）の文字色。</summary>
     private static readonly DrawingColor s_infoColor = DrawingColor.White;
 
+
     /// <summary>サイズラベルの文言を描画時に評価するデリゲートを取得または設定する。</summary>
     /// <value>描画時に呼び出される関数。null または空文字を返す場合はサイズラベルを描画しない。</value>
     /// <remarks>
     /// ホストは最新の選択状態から文言を生成するクロージャを設定する（例: コアの
-    /// <c>OuterDecoLabels.FormatSizeLabel</c> で選択矩形を整形する）。
+    /// <c>MarqueeSizeLabel.Format</c> で選択矩形を整形する）。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
     {
@@ -496,6 +497,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。<br/>
     /// <b>操作ラベル・情報ラベルは選択コントロールの概念ではない</b>（アプリ固有の付加情報）ため、<br/>
     /// 本クラス（ホスト）が文言の生成と描画を行い、コアは関知しない。<br/>
+    /// 外観（表示可否・寸法・色）は設定（<see cref="FadeMaskDragRectOptions.Labels"/>）が単一所有する。<br/>
     /// 本ハンドラはコントロールの子要素（ラベル）より後に呼ばれるため、付加情報はラベルより前面に置かれる。
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
@@ -506,23 +508,29 @@ public sealed class FadeMaskDragRectControl : Panel
             return;
         }
 
+        var labels = _options.Labels;
         var y = hole.Y;
 
-        // サイズラベルが描かれている場合はその下へ積む（重なりを避ける）
+        // サイズラベルが描かれている場合はその下へ積む（重なりを避ける。行送りはコアが単一所有する）
         if (e.Content.SizeLabel is { } sizeLabel)
         {
-            y += MarqueeAppearance.SizeLabelPadding * 2 + sizeLabel.FontSize;
+            y = MarqueeAppearance.NextLabelTop(y, sizeLabel.FontSize);
         }
 
-        if (OperationTextProvider?.Invoke() is { Length: > 0 } operation)
+        // 表示可否はホストが判定する（設定スイッチと文言の有無の両方が成立したときだけ描く）
+        if (labels.ShowOperationLabel && OperationTextProvider?.Invoke() is { Length: > 0 } operation)
         {
-            DrawHostLabel(e.Canvas, hole.X, y, operation, s_subLineColor);
-            y += MarqueeOptions.SizeLabelFontSizeDefault + MarqueeAppearance.SizeLabelPadding * 2;
+            DrawHostLabel(
+                e.Canvas, hole.X, y, operation,
+                labels.OperationFontSize, labels.OperationColor, labels.OperationBackgroundColor);
+            y = MarqueeAppearance.NextLabelTop(y, labels.OperationFontSize);
         }
 
-        if (InfoTextProvider?.Invoke() is { Length: > 0 } info)
+        if (labels.ShowInfoLabel && InfoTextProvider?.Invoke() is { Length: > 0 } info)
         {
-            DrawHostLabel(e.Canvas, hole.X, y, info, s_infoColor);
+            DrawHostLabel(
+                e.Canvas, hole.X, y, info,
+                labels.InfoFontSize, labels.InfoColor, labels.InfoBackgroundColor);
         }
     }
 
@@ -531,18 +539,28 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="x">ラベルの左端（DIP）。</param>
     /// <param name="y">ラベルの上端（DIP）。</param>
     /// <param name="text">文言。</param>
+    /// <param name="fontSize">フォントサイズ（DIP）。</param>
     /// <param name="color">文字色。</param>
+    /// <param name="background">背景色。</param>
     /// <remarks>
-    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（両者の見た目を揃える）。<br/>
+    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（体裁はコアが単一所有する）。<br/>
     /// テキストの実寸測定と描画は本クラス（ホスト）が行う（コアは文字を描かない）。
     /// </remarks>
-    private static void DrawHostLabel(SKCanvas canvas, double x, double y, string text, DrawingColor color)
+    private static void DrawHostLabel(
+        SKCanvas canvas, double x, double y, string text, double fontSize, DrawingColor color, DrawingColor background)
     {
-        var padding = MarqueeAppearance.SizeLabelPadding;
-        var size = SkiaText.Measure(text, MarqueeOptions.SizeLabelFontSizeDefault);
+        var size = SkiaText.Measure(text, fontSize);
+        var textOrigin = new EsPoint(x, y + MarqueeAppearance.SizeLabelPadding);
 
-        SkiaFill.Rect(canvas, new EsRect(x - padding, y, size.Width + padding * 2, size.Height + padding * 2), s_labelBackground);
-        SkiaText.Draw(canvas, text, x, y + padding, MarqueeOptions.SizeLabelFontSizeDefault, color);
+        // 体裁（内側余白）はコアが単一所有し、「背景を塗ってから文字を描く」順序は SkiaLabel（Platform.Core）が単一所有する
+        SkiaLabel.Draw(
+            canvas,
+            MarqueeAppearance.ComputeHostLabelBackground(textOrigin, size),
+            background,
+            text,
+            textOrigin,
+            fontSize,
+            color);
     }
 
     /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを同一のキャンバスへ描画する。</summary>
@@ -552,7 +570,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 選択矩形の破線はルーペ内部では描画せず、本クラス（ホスト側）が描画完了直後にキャンバスへ追加描画する<br/>
     /// （破線の幾何はコアの <c>FadeMaskDragRectOverlay</c> が単一所有し、Avalonia 版と同じ見た目になる）。<br/>
     /// 切り出し領域の左上が未設定（中心未設定）の場合は破線を描画しない。<br/>
-    /// <b>中心座標ラベルはルーペコントロールが描く</b>（ホストもラベル要素を配置する側になったため、破線だけを描く）。
+    /// <b>中心座標ラベルはルーペコントロールがテキスト要素として表示する</b>（本クラスは破線だけを描く）。
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {

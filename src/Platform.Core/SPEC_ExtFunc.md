@@ -126,7 +126,7 @@ SkiaFill.Rects(canvas, frame.BorderRects, frame.BorderColor);   // 4 辺を同�
 ### `Imaging.SkiaLabel`（static class）
 
 Skia のラベル 1 件（背景 + 文字）の描画順を単一所有するヘルパーです。
-「背景を塗ってから文字を描く」順序は <code>SkiaFill</code> と <code>SkiaText</code> の呼び出し順そのものであり、各 UI・各ホストが書くと重なりがずれうるため本クラスへ集約します。
+「背景を塗ってから文字を描く」順序は `SkiaFill` と `SkiaText` の呼び出し順そのものであり、各 UI・各ホストが書くと重なりがずれうるため本クラスへ集約します。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |

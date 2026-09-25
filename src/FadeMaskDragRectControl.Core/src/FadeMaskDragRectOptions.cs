@@ -36,6 +36,14 @@ public sealed record FadeMaskDragRectOptions
     /// <remarks>選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なって描画されるため、枠線の色・太さは本値（外側の装飾の外観）が単一所有する。</remarks>
     public MarqueeDecoOptions Deco { get; init; } = MarqueeDecoOptions.Default;
 
+    /// <summary>ホスト固有の付加情報（操作ラベル・情報ラベル）の外観を取得する。</summary>
+    /// <value>操作・情報ラベルの表示可否・寸法・色。既定は <see cref="FadeMaskDragRectLabelOptions.Default"/>。</value>
+    /// <remarks>
+    /// 操作ラベル・情報ラベルは選択矩形コントロールの概念ではない（ホストが必要とする付加情報）ため、<br/>
+    /// 文言の生成と描画はホストが行う。本値はその描画に使う外観のみを保持する。
+    /// </remarks>
+    public FadeMaskDragRectLabelOptions Labels { get; init; } = FadeMaskDragRectLabelOptions.Default;
+
     /// <summary>ルーペの設定を取得する（拡大率・表示サイズ・外観）。</summary>
     /// <value>ルーペの設定。既定は <see cref="LoupeOptions.Default"/>。</value>
     /// <remarks>市松模様の下地色（<see cref="LoupeAppearance.BackgroundColor"/>）も本値で与える（ホストが背後の要素を透かすかどうかを決める）。</remarks>

@@ -19,9 +19,27 @@ public class FadeMaskDragRectOptionsTests
         // 外側の装飾の外観も選択矩形の設定が単一所有する
         Assert.Equal(MarqueeOptions.Default, options.Marquee);
         Assert.Equal(LoupeOptions.Default, options.Loupe);
+        // ホスト固有の付加情報（操作・情報ラベル）の外観は専用の値が単一所有する
+        Assert.Equal(FadeMaskDragRectLabelOptions.Default, options.Labels);
         Assert.Equal(DrawingColor.White, options.SelectionRectColorA);
         Assert.Equal(DrawingColor.Black, options.SelectionRectColorB);
         Assert.Equal(20.0, options.LoupeOffset);
+    }
+
+    /// <summary>付加情報ラベルの既定値が要件（表示し、ホストの配色を使う）を満たすことを検証する。</summary>
+    [Fact]
+    public void 既定値_付加情報ラベルは表示して配色と寸法を持つ()
+    {
+        var labels = FadeMaskDragRectLabelOptions.Default;
+
+        Assert.True(labels.ShowOperationLabel);
+        Assert.Equal(12.0, labels.OperationFontSize);
+        Assert.Equal(DrawingColor.FromArgb(255, 220, 220, 220), labels.OperationColor);
+        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), labels.OperationBackgroundColor);
+        Assert.True(labels.ShowInfoLabel);
+        Assert.Equal(14.0, labels.InfoFontSize);
+        Assert.Equal(DrawingColor.White, labels.InfoColor);
+        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), labels.InfoBackgroundColor);
     }
 
     /// <summary>新しいインスタンスも既定値に一致することを検証する。</summary>

@@ -13,6 +13,7 @@
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `LoupeRenderCoordinator` | public | 再描画要求のバッチ化（1 フレームに 1 回）と世代番号管理。表示状態・ビットマップ解放・描画開始・実行キューへのポストをコールバックで受け取る |
+| `LoupeLabelLayoutPlan` / `LoupeLabelElement` | public | 中心座標ラベルの配置指示（配置矩形・文字原点・文言・寸法・色・角丸）を実寸から解決する。**文字は描かず、UI 要素として置くための指示を返す**（実寸測定だけを UI 層が行う） |
 
 ## 依存方向
 
@@ -52,7 +53,8 @@ _coordinator.CancelAndRelease();   // 非表示遷移・明示クリア（要求
 
 ```text
 tests/
-└── LoupeRenderCoordinator.Tests.cs   # バッチ化・世代番号・適用判定・破棄と解放・防御分岐（12 件）
+├── LoupeRenderCoordinator.Tests.cs # バッチ化・世代番号・適用判定・破棄と解放・防御分岐（12 件）
+└── LoupeLabelLayoutPlan.Tests.cs   # ラベル要素の配置指示の解決（ラベルなし・ラベル 1 件・配置・測定の呼ばれ方・引数の検証）（5 件）
 ```
 
 ```powershell

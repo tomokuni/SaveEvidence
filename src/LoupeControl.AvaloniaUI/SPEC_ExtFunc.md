@@ -54,8 +54,8 @@
 | 名前空間 | `Estable.AvaloniaUI.Loupe` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
-| 主要基底クラス | `Avalonia.Controls.UserControl` |
-| 表示方式 | 内部 `Image` 要素へのBitmap設定 |
+| 主要基底クラス | `Avalonia.Controls.Panel`（コードのみ。AXAML を持たない） |
+| 表示方式 | 子の `Image` 要素へのBitmap設定と、中心座標ラベルのテキスト要素（`Border` + `TextBlock`） |
 | 主な用途 | 画像中心周辺の拡大表示、画像端の透明領域の市松模様表示 |
 
 ## 2. 目的
@@ -98,7 +98,7 @@ using Estable.AvaloniaUI.Loupe;
 
 ### 3.3 Visual Treeへの配置
 
-`LoupeControl` は `UserControl` であるため、表示するには親Visualの子要素として配置します。
+`LoupeControl` は `Panel` であるため、表示するには親Visualの子要素として配置します。
 
 ```csharp
 var loupe = new LoupeControl
@@ -260,7 +260,7 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正） |
 | `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeAppearance` が単一所有します。**文字の描画はコントロールではなくホストが行います**（描画完了イベント `Rendered` の `CoordLabel` をルーペ画像（`EsBitmap`）へ描く。配置はコアの `LoupeCoordLabel.ComputeFrame`、実寸測定は `Platform.Core` の `SkiaText.Measure`、描画順は `SkiaLabel.Draw` が単一所有する）。
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeAppearance` が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
 寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時にコアの `LoupeAppearanceScaler` が物理ピクセルへ換算します（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 

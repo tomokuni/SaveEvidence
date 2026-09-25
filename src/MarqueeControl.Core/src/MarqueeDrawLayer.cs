@@ -1,6 +1,6 @@
 namespace Estable.Marquee;
 
-/// <summary>選択矩形コントロールが描く層（描画順の契約）。</summary>
+/// <summary>選択矩形の UI 層が処理する層（描画順の契約）。</summary>
 /// <remarks>
 /// <b>描画順はコアが単一所有する</b>: UI 層は <c>Marquee.ResolveContent</c> が返す
 /// <see cref="MarqueeDrawContent.Layers"/> を先頭から順に処理するだけで、順序を判断しない。<br/>

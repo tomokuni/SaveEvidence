@@ -368,13 +368,26 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 1. `%LOCALAPPDATA%\SaveEvidence\settings.json` を退避する
 2. アプリを起動して `MainWindowHandle` を取得する
 3. `PrintWindow`（`PW_RENDERFULLCONTENT`）で撮影し、`mewui-initial.png` に保存する
-4. 画素を実測し、プレビューの充填・ステータスバーの表示・ルーペ（設定の枠色の画素数と座標ラベルの白）を判定する
+4. 画素を実測し、ステータスバーの表示とルーペの非表示（カーソルをウィンドウ外へ退避した状態）を判定する
 5. ウィンドウを縮めて撮影し（`mewui-resized.png`）、追従を確認する
 6. プロセスを終了し、退避した設定を復元する
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File src/app.MewUI/verify-ui.ps1
 ```
+
+**切り出し中のルーペ（中心座標ラベル）まで検証する場合**: `-VerifyLoupe` を付けます。
+通常画面（`CapturePage`）はルーペを使わない（ルーペは切り出しと領域選択のオーバーレイが使う）ため、
+切り出しを `Ctrl+R` で開始し、カーソルをプレビュー上へ移動してルーペを表示させます。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File src/app.MewUI/verify-ui.ps1 -VerifyLoupe
+```
+
+- 判定項目: `loupeShown_loupeVisible`（設定の枠色の画素数）と `loupeShown_labelVisible`
+  （ルーペ上端中央帯の文字色と暗色背景の画素数。文字色は実設定の `LoupeCoordLabelColor` から解決する）。
+- 実測例: 一辺 160 DIP のルーペで枠 1264 px・ラベル文字 127 px・背景 815 px。
+- 終了時は `Esc` で切り出しをキャンセルしてからプロセスを終了します。
 
 > **重要（実測の落とし穴）**: 検証スクリプト側のプロセスを **Per-Monitor V2（`SetProcessDpiAwarenessContext(-4)`）**
 > にしてください。未対応だと座標と撮影が `96/dpi` に仮想化され、ウィンドウの下端・右端が切れた画像になるため、

@@ -3,7 +3,6 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Estable.FadeMaskDragRect;
 using Estable.Marquee;
-using Estable.Marquee.Decoration;
 
 namespace Estable.CaptureSession;
 
@@ -42,7 +41,7 @@ public static class CaptureLabelTexts
     /// <remarks>
     /// 確定操作の文言は 2 系統（Enter 系 / ダブルクリック系）に集約する。<br/>
     /// スクリーン選択・ウィンドウ選択は Enter 系、範囲選択・切出しはダブルクリック系とする。<br/>
-    /// 表示の可否（<c>OuterDecoAppearance.ShowSubLines</c>）は描画側が判断する。
+    /// 表示の可否（<see cref="FadeMaskDragRectLabelOptions.ShowOperationLabel"/>）は描画側（ホスト）が判断する。
     /// </remarks>
     public static string GetOperationText(FadeMaskDragRectMode mode)
         => mode is FadeMaskDragRectMode.ScreenSelect or FadeMaskDragRectMode.WindowSelect
@@ -55,7 +54,7 @@ public static class CaptureLabelTexts
     /// <returns>ウィンドウ選択の場合はウィンドウタイトル、それ以外は null（情報ラベルを描かない）。</returns>
     /// <remarks>
     /// 情報ラベルはウィンドウ選択でのみ意味を持つため、他モードでは null を返して描画させない。<br/>
-    /// 表示の可否（<c>OuterDecoAppearance.InfoLabelVisible</c>）と空文字の扱いは描画側が判断する。
+    /// 表示の可否（<see cref="FadeMaskDragRectLabelOptions.ShowInfoLabel"/>）と空文字の扱いは描画側（ホスト）が判断する。
     /// </remarks>
     public static string? GetInfoText(FadeMaskDragRectMode mode, string? windowTitle)
         => mode == FadeMaskDragRectMode.WindowSelect ? windowTitle : null;

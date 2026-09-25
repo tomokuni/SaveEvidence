@@ -11,7 +11,7 @@ namespace Estable.Loupe;
 /// <remarks>
 /// <see cref="Position"/> が null になるのは、拡大中心が未設定の場合である<br/>
 /// （「配置しない」の判断をコアが単一所有し、UI 層はセルフサイズの反映だけを行う）。<br/>
-/// MewUI 版のように配置をホストが行う UI では <see cref="Position"/> をそのまま配置に使う。
+/// 配置をホストが行う UI では <see cref="Position"/> をそのまま配置に使う。
 /// </remarks>
 public readonly record struct LoupeLayout(int DisplaySize, EsPoint? Position);
 
@@ -61,7 +61,7 @@ public sealed class Loupe
     /// <summary>UI 層が通知した親領域サイズ（null = 未通知。未通知の場合はクランプしない）。</summary>
     /// <remarks>
     /// 「親領域が未確定ならクランプしない」の判断は <see cref="LoupePositionCalculator.ClampSizeToArea"/> が単一所有する。<br/>
-    /// 配置を行わない UI（MewUI 版はホストが配置する）は親領域を通知せず、要求サイズをそのまま表示サイズとして使う。
+    /// 配置を行わない UI（ホストが配置する）は親領域を通知せず、要求サイズをそのまま表示サイズとして使う。
     /// </remarks>
     private EsSize? _parentSize;
 

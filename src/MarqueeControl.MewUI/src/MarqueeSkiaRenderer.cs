@@ -13,8 +13,8 @@ namespace Estable.MewUI.Marquee;
 /// Avalonia 版のドロワー（<c>MarqueeDrawer</c>）と等価な見た目を、中間ビットマップなしの直接描画で実現する。<br/>
 /// ハンドル位置は <see cref="SelectionGeometry.GetHandlePosition"/> から取得する（コアが単一所有）。<br/>
 /// 選択矩形の外側に描く装飾（暗転マスク・穴あけ枠）は <see cref="MarqueeOuterSkiaRenderer"/> が担う。<br/>
-/// <b>文字（ラベル・座標ラベル）は本クラスが描かない</b>: テキストの実寸測定が必要なため、描画完了時にホストへ通知し<br/>
-/// <see cref="MarqueeLabelRenderer"/> が描く（文字の描画をホストの責務とする）。<br/>
+/// <b>文字（サイズラベル・座標ラベル）は本クラスが描かない</b>: 実寸測定が必要なため、コントロールが<br/>
+/// テキスト要素（<c>Border</c> + <c>TextBlock</c>）として配置する（ラベルは常に最上位）。<br/>
 /// 座標はすべて DIP で扱い、呼び出し側が DPI スケーリングを適用済みであることを前提とする。
 /// </remarks>
 internal static class MarqueeSkiaRenderer

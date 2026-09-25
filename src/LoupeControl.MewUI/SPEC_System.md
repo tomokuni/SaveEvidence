@@ -19,7 +19,7 @@
 | 言語 | C# 14 |
 | UI フレームワーク | MewUI（`Aprillz.MewUI.Skia` **0.21.1 固定**） |
 | 描画 | SkiaSharp（`SKCanvas` へ直接描画する） |
-| 基底コントロール | `Aprillz.MewUI.Skia.Controls.SkiaCanvasView` |
+| 基底コントロール | `Aprillz.MewUI.Controls.Panel`（図形は子の `SkiaCanvasView` が描画する） |
 | プロパティシステム | `MewProperty<T>`（`MewPropertyOptions.AffectsRender` / `AffectsLayout`） |
 
 ## アーキテクチャ
@@ -61,7 +61,7 @@ src/LoupeControl.MewUI/
 ├── src/
 │   ├── LoupeControl.cs          MewProperty の定義・DPI 追従・描画の起点
 │   ├── LoupeSkiaRenderer.cs     コアの計算結果を SKCanvas へ描画する（市松・画像・十字線・外枠）
-│   └── LoupeRenderedEventArgs.cs  描画完了の通知引数（文字はホストが描く）
+│   └── LoupeRenderedEventArgs.cs  描画完了の通知引数（中心座標ラベルはコントロールが表示する）
 └── tests/
     ├── TestHelper.cs                テスト用の描画先（SKBitmap + SKCanvas）・画像生成・setter を経由しない設定
     ├── RecordingLogger.cs           ログ収集
@@ -72,8 +72,8 @@ src/LoupeControl.MewUI/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、`PaintSurface` から描画を開始（描画の順序と内容は描画層が所有）。文字は描かず、`Rendered` でホストへ委ねる（`LoupeCoordLabel.Resolve` の結果を渡す） |
-| `LoupeSkiaRenderer` | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画する（コアの描画契約 `LoupeRenderRequest` と、矩形計算・外観の物理ピクセル換算 `LoupeAppearanceScaler` をそのまま使用）。描画の順序は描画層が単一所有し、コントロールは `Render` を呼ぶだけ。**中心座標ラベルの文字は描かない**（ホストが描く） |
+| `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。描画は子の `SkiaCanvasView` が行う（描画の順序と内容は描画層が所有） |
+| `LoupeSkiaRenderer` | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画する（コアの描画契約 `LoupeRenderRequest` と、矩形計算・外観の物理ピクセル換算 `LoupeAppearanceScaler` をそのまま使用）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
 | `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -91,9 +91,17 @@ classDiagram
         +EsPoint? CenterPoint
         +LoupeOptions Options
         +double RenderScaling
-        -OnPaintSurface(canvas, info) void
+        +LoupeLayout ResolveLayout(parentSize)
+        +SetCoordinateTransform(port) void
         +OnDpiChanged(oldDpi, newDpi) void
         +MeasureContent(size) Size
+        +ArrangeContent(bounds) void
+        -SyncLabelElements(count) void
+        -OnPaintSurface(canvas, info) void
+    }
+    class ShapeCanvas {
+        <<子の図形キャンバス>>
+        +PaintSurface
     }
     class LoupeOptions {
         <<LoupeControl.Core>>
@@ -114,9 +122,8 @@ classDiagram
         +ShouldShowCoordLabel(hasCenter) bool
     }
     class LoupeSkiaRenderer {
-        +Render(canvas, source, request)$ void
+        +Render(canvas, source, request, layers)$ void
         -DrawBackground(canvas, request) void
-        -DrawCoordLabel(canvas, request) void
     }
     class LoupeValueCoercer {
         <<LoupeControl.Core>>
@@ -167,9 +174,11 @@ classDiagram
         +Format(point) string$
     }
 
-    SkiaCanvasView <|-- LoupeControl
+    SkiaCanvasView <|-- ShapeCanvas
+    Panel <|-- LoupeControl
+    LoupeControl *-- ShapeCanvas : 子（図形の描画）
     LoupeControl *-- Loupe : 操作の唯一の窓口（公開ファサード）
-    LoupeControl ..> LoupeSkiaRenderer : 描画を委譲
+    LoupeControl ..> LoupeSkiaRenderer : 描画を委譲（子の OnPaintSurface から）
     Loupe ..> LoupeOptions : 設定の単一値
     LoupeSkiaRenderer ..> LoupeCheckerboard : 明暗判定
     LoupeSkiaRenderer ..> LoupeDecorationGeometry : 矩形
@@ -209,10 +218,9 @@ sequenceDiagram
     R->>C: ComputeFrameRects(pixelSize, frameWidth)
     R->>SK: 外枠を描画
     alt ShowCoordLabel かつ CenterPoint が設定済み
-        R->>C: ComputeBackground / ComputeTextOrigin（ラベルの余白と位置）
-        R->>SK: 座標ラベル（背景 + 文字）を描画
+        R-->>R: 座標ラベル層は描画しない（コントロールがテキスト要素として表示する）
     else 未設定
-        R-->>R: 座標ラベルを描かない
+        R-->>R: 座標ラベルを表示しない
     end
 ```
 
@@ -234,7 +242,7 @@ sequenceDiagram
 描画サイズは `Options.RequestedSize` × `RenderScaling` を物理ピクセルへ換算し、キャンバスより大きい場合はキャンバスに合わせる
    （「領域へクランプする」規則と DIP → 物理ピクセルの換算はコアのファサード（`Loupe.ResolveLayout` / `Loupe.CreateRequest`）が単一所有し、Avalonia 版の親パネルへのクランプと同じ規則を使う）。
 8. **静的画像では連続再描画を無効化する**。`ContinuousAnimation` を `false` にし、プロパティ変更時のみ再描画する。
-9. **座標ラベルの文字はホストが描く**（両 UI 共通）。文言・表示可否・寸法換算・配置はコア（`LoupeCoordLabel` / `LoupeAppearanceScaler`。配置の内部手順は internal の `LoupeLabelLayout`）が単一所有し、コントロールは描画完了時に `Rendered` の `CoordLabel` で渡す。ホストは `SkiaText.Measure` と `SkiaLabel.Draw`（`Platform.Core`）で描く（テキストの実寸測定は描画 API 依存のため、コントロールの描画サイクルに閉じ込めない）。Avalonia 版も同じ契約を使い、描画先が `EsBitmap`（Skia）である点だけが異なる。
+9. **座標ラベルはコントロールがテキスト要素として表示する**（両 UI 共通）。文言・表示可否・配置はコア（`LoupeCoordLabel` / `LoupeAppearanceScaler`。配置の内部手順は internal の `LoupeLabelLayout`）が単一所有し、コントロールは `LoupeLabelLayoutPlan`（`LoupeControl.CoreForControl`）へ自 UI の実寸（`SkiaText.Measure`）を渡して要素を配置する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）。Avalonia 版も同じ契約を使い、測定 API（`FormattedText`）だけが異なる。
 10. **値の補正と変更ログはプロパティの登録が所有する**。`MewProperty.Register` の `coerce` / `changed` へ渡すため、
    setter を経由しない設定（バインディング等）でも安全域が保たれ、変更が記録される
    （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。規則と書式はコアが単一所有する）。

@@ -37,7 +37,7 @@ graph LR
 | `LoupeValueCoercer.cs` | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ |
 | `LoupeAppearanceScaler.cs` | 外観の寸法値（タイルサイズ・外枠の太さ・ラベル文字サイズ・角丸半径）の物理ピクセル換算（補正は外観の生成時に済んでいるため再補正しない） |
 | `LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）と、UI の DIP 値からの組み立て（`Create`） |
-| `LoupeCoordLabel.cs` | 中心座標ラベルの描画契約（文言・物理ピクセルの寸法・色）と配置の計算（`ComputeFrame`。背景矩形・文字原点は `LoupeLabelLayout`（internal）が単一所有する）。文字はホストが描く |
+| `LoupeCoordLabel.cs` | 中心座標ラベルの描画契約（文言・**DIP** の寸法・色）と配置の計算（`ComputeFrame`。背景矩形・文字原点は `LoupeLabelLayout`（internal）が単一所有する）。表示はコントロールがテキスト要素として行う |
 | `LoupePositionCalculator.cs`（**internal**） | 表示サイズの親領域へのクランプ、表示位置（中心 + オフセット）の計算と親領域内へのクランプ、親サイズ未確定の判断。利用者はファサードの `ResolveLayout` を使う |
 | `LoupeDecorationGeometry.cs` | 十字線（縦横 2 本）と外枠（4 辺）の描画矩形の計算 |
 | `LoupeLabelLayout.cs`（**internal**） | 中心座標ラベルの余白と、背景矩形・文字原点の計算。利用者は `LoupeCoordLabel.ComputeFrame` を使う |
@@ -98,7 +98,7 @@ sequenceDiagram
 | 表示サイズの親領域へのクランプと表示サイズの決定（唯一の書き込み元） | `Loupe.DisplaySize` / `Loupe.ResolveLayout`（規則は internal の `LoupePositionCalculator.ClampSizeToArea`） |
 | 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（規則は internal の `LoupePositionCalculator.ComputePosition`） |
 | 描画入力（物理ピクセルサイズ）の組み立てと描画先へのクランプ | `Loupe.CreateRequest`（規則は internal の `LoupePositionCalculator.ResolvePixelSize`） |
-| 描画完了通知の内容（切り出し左上・スケール・座標ラベル） | `Loupe.ResolveNotification`（規則は internal の `LoupeRenderArgsCalculator` / `LoupeCoordLabel.Resolve`） |
+| 描画完了通知の内容（切り出し左上・スケール・中心座標ラベル・層の順序） | `Loupe.ResolveNotification`（規則は internal の `LoupeRenderArgsCalculator` / `LoupeCoordLabel.Resolve` / `Loupe.ResolveLayers`） |
 | 十字線・外枠の矩形 | `LoupeDecorationGeometry` |
 | ラベルの余白・背景矩形・文字原点 | internal の `LoupeLabelLayout`（利用者は `LoupeCoordLabel.ComputeFrame`） |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |

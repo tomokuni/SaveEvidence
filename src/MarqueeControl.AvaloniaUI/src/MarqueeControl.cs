@@ -29,7 +29,7 @@ namespace Estable.AvaloniaUI.Marquee;
 /// 4. コアが解決した描画内容を描画する（枠線・ハンドル・十字マーカー。計算は描画層へ委譲）。<br/>
 /// <br/>
 /// <b>文字は描かない</b>: ラベル（サイズラベル・操作ラベル・情報ラベル）と座標ラベルは、テキストの実寸測定が必要なため<br/>
-/// <see cref="Rendered"/> で通知し、ホストが描く（<see cref="MarqueeLabelRenderer"/> が共通実装を提供する）。<br/>
+/// <see cref="Rendered"/> で通知し、ホストが描く（サイズラベル・座標ラベルはテキスト要素として配置する）。<br/>
 /// <br/>
 /// <b>自己完結</b>: 矢印キーの検出・nudge 後の再描画・カーソル表示/非表示・ダブルクリックの確定/キャンセル判定を
 /// コアが担うため、ホスト依存のない動作になっている。ホストは <see cref="SelectionStarted"/>（始点決定）/
@@ -108,7 +108,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary><see cref="MarqueeControl"/> の新しいインスタンスを初期化します（AXAML および既定構成向け）。</summary>
     /// <remarks>
     /// カーソル操作はデフォルトの Win32 実装（<c>WinCursorService</c>。生成は <see cref="PlatformFactory.CreateCursorService"/>）で動作する。<br/>
-    /// nudge 後の再描画要求は本コントロール自身の <see cref="Control.InvalidateVisual"/> に配線し、<br/>
+    /// nudge 後の再描画要求は本コントロール自身の <see cref="Avalonia.Visual.InvalidateVisual"/> に配線し、<br/>
     /// 矢印キーを受け取れるようフォーカス可能にする（自己完結・ホスト依存なし）。<br/>
     /// </remarks>
     public MarqueeControl()
@@ -281,7 +281,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント。</summary>
     /// <remarks>
     /// 本コントロールは文字（ラベル・座標ラベル）を描かない。テキストの実寸測定は描画 API に依存するため、<br/>
-    /// 「どの文言をどこへ描くか」はコアが決め、実際の描画はホストが本イベントで行う（<see cref="MarqueeLabelRenderer"/> を使うとよい）。<br/>
+    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<see cref="MarqueeLabelLayoutPlan"/>）。<br/>
     /// 契約は文字に限定せず**描画内容全体**（<see cref="MarqueeRenderedEventArgs.Content"/>）を渡すため、ホストは文字以外の上書きもできる。<br/>
     /// <b>描画中に発火する</b>ため、ハンドラ内で描画を完了させること（コンテキストを保持しない）。<br/>
     /// 描画のたびに発火する（文字の有無は <c>Content.HasText</c> で判定できる）。
@@ -417,7 +417,7 @@ public sealed partial class MarqueeControl : Panel
     /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は等価変換。</param>
     /// <remarks>
     /// ホスト（上位 AP）がモードに応じた変換ポートを設定する（AreaSelect: 仮想スクリーンピクセル / Crop: 元画像ピクセル）。<br/>
-    /// ポートの生成は PlatformFactory の <see cref="EsUtil.Platform.AvaloniaUI.CoordTransform"/> のファクトリ（<c>Compose</c> / <c>ScrollOffset</c> / <c>DomainScale</c> / <c>ImageLayout</c> 等）で行う。<br/>
+    /// ポートの生成はコアの <see cref="EsUtil.Platform.Core.Coordinate.CoordTransform"/> のファクトリ（<c>Compose</c> / <c>ScrollOffset</c> / <c>DomainScale</c> / <c>ImageLayout</c> 等）で行う。<br/>
     /// 未設定時は等価変換（1 ドメインピクセル = 1 DIP・無制限）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
     /// 座標変換の変更は描画（選択矩形・ハンドル・十字線）へ即時反映されるため、再描画を要求する。
@@ -427,7 +427,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <remarks>
-    /// 状態の更新と通知はコア（ファサード）が担う（<see cref="ClampToDomainBounds"/> が有効な場合は境界内へクリップしてから設定する）。<br/>
+    /// 状態の更新と通知はコア（ファサード）が担う（<see cref="MarqueeOptions.ClampToDomainBounds"/> が有効な場合は境界内へクリップしてから設定する）。<br/>
     /// 設定後は <see cref="SelectionChanged"/> が発火し、再描画される。
     /// </remarks>
     public void SetSelection(Rect rect) => _marquee.SetSelection(rect.ToEsRect());
@@ -467,7 +467,12 @@ public sealed partial class MarqueeControl : Panel
         public void RequestFocus() => owner.Focus();
 
         /// <summary>再描画を要求する。</summary>
-        public void RequestRedraw() => owner.InvalidateVisual();
+        /// <remarks>ラベル（サイズ・カーソル座標）はテキスト要素であり、配置は配置フェーズで書き換えるため、再描画と併せて配置も無効化する。</remarks>
+        public void RequestRedraw()
+        {
+            owner.InvalidateVisual();
+            owner.InvalidateArrange();
+        }
 
         /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
         /// <param name="kind">カーソル形状の種別（コア提供）。</param>

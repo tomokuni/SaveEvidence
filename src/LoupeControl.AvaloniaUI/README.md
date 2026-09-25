@@ -49,8 +49,8 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 - 古い描画結果の自動破棄
 - 非表示時の生成Bitmap解放
 - `ILogger` によるエラー通知
-- 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケール・中心座標ラベルの契約を通知。ホスト側のオーバーレイ描画用。線分・選択矩形等の破線とラベルの文字はホストが描画済み Bitmap へ直接描く）
-- 文字（中心座標ラベル）の描画はホストの責務です。描画完了イベントの `CoordLabel`（文言・寸法・配置の計算元を含む契約）をルーペ画像（`EsBitmap`）へ描きます（配置はコアの `LoupeCoordLabel.ComputeFrame`、実寸測定は `Platform.Core` の `SkiaText.Measure`、描画順は `SkiaLabel.Draw` が単一所有）
+- 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホスト側のオーバーレイ描画用。線分・選択矩形等の破線はホストが描画済み Bitmap へ直接描く）
+- 中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（文言・表示可否・配置はコア、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有）
 - **座標変換ポート（`SetCoordinateTransform(ICoordTransform?)` + `PositionOffset`）**: MarqueeControl と同方式。表示位置（`RenderTransform`）と表示サイズ（親パネルでクランプ）をレイアウト時に自己計算（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **`RefreshPosition()`**: パン・ズーム等のレイアウト非変更なビューポート変化時に、表示位置・サイズを再計算（座標変換ポートは呼び出し毎に最新の表示状態を評価）
 
@@ -126,7 +126,7 @@ public sealed class MainViewModel
 }
 ```
 
-`LoupeControl` は `UserControl` なので、親の `Panel` や `Canvas` のVisual Treeへ配置してください。表示位置・表示サイズは座標変換ポート方式（`SetCoordinateTransform` + `PositionOffset`）で自己計算します。
+`LoupeControl` は `Panel` なので、親の `Panel` や `Canvas` のVisual Treeへ配置してください。表示位置・表示サイズは座標変換ポート方式（`SetCoordinateTransform` + `PositionOffset`）で自己計算します。
 
 ### Code-behind
 
@@ -217,11 +217,11 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 LoupeControl.AvaloniaUI/
 ├── src/
 │   ├── LoupeControl.AvaloniaUI.csproj
-│   ├── LoupeControl.axaml(.cs) # 公開 UserControl（コードビハインド: 公開API一覧・StyledProperty・公開プロパティ・公開メソッド・非公開実装）
+│   ├── LoupeControl.cs         # 公開 Panel（コードのみ。AXAML を持たない。公開API一覧・StyledProperty・公開プロパティ・公開メソッド・ラベル要素の配置・非公開実装）
 │   ├── [CoreForControl] LoupeRenderCoordinator.cs   # 再描画のバッチ化（LoupeControl.CoreForControl が単所有。実行キューは UI が注入する）
 │   ├── LoupeRenderPipeline.cs      # ソース解決と抽出・描画合成（IImage 型判定と Bitmap の複製は UI 固有）
 │   ├── LoupeSourceResolver.cs      # IImage の対応型判定・破棄済み検出
-│   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知引数（UI 固有。文字はホストが描く）
+│   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知引数（UI 固有。中心座標ラベルはコントロールが表示する）
 │   └── Rendering/          # 内部描画層（LoupeRenderer / LoupeBackgroundRenderer / LoupeDecorationRenderer / LoupeImageRenderer / LoupeBrushes）
 ├── sample/                 # 独立サンプルアプリ（sample/README.md 参照）
 ├── tests/                  # UI 依存の単体テスト（Avalonia ヘッドレス・直列）

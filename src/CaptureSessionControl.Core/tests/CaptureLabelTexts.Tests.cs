@@ -91,7 +91,7 @@ public class CaptureLabelTextsTests
         var label = CaptureLabelTexts.ResolveSizeLabel(
             new EsRect(0, 0, 100, 50), overrideText: "指定文言", displayScaling: _ => 1.0);
 
-        // 既定の書式（OuterDecoLabels.FormatSizeLabel）で生成される（明示指定は使わない）
+        // 既定の書式（MarqueeSizeLabel.Format）で生成される（明示指定は使わない）
         Assert.NotNull(label);
         Assert.NotEqual("指定文言", label);
     }

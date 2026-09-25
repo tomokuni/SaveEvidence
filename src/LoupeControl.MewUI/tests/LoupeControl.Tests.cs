@@ -1,6 +1,8 @@
 using Aprillz.MewUI;
+using Aprillz.MewUI.Controls;
 using Estable.Loupe;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
@@ -129,6 +131,87 @@ public class LoupeControlTests
 
         Assert.Equal(200, control.DesiredSize.Width);
         Assert.Equal(200, control.DesiredSize.Height);
+    }
+
+    // ====================================================================
+    // 中心座標ラベル（文言・配置はコアが決め、本コントロールがテキスト要素として表示する）
+    // ====================================================================
+
+    /// <summary>コントロールを配置する（ラベル要素は配置フェーズで更新される）。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <param name="size">配置する一辺のサイズ（DIP）。</param>
+    /// <remarks>
+    /// MewUI のテキスト要素の測定はグラフィックス バックエンドを必要とするため、本テストは配置のみを実行する<br/>
+    /// （ラベル要素の大きさは配置矩形で決まり、測定はプラットフォーム ホストを起動するアプリが行う）。
+    /// </remarks>
+    private static void Layout(LoupeControl control, double size = 100)
+        => control.Arrange(new Rect(0, 0, size, size));
+
+    /// <summary>中心座標ラベルの要素（子のうち <see cref="Border"/>）を取得する。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <returns>ラベルの背景要素。</returns>
+    private static Border LabelElement(LoupeControl control) => control.Children.OfType<Border>().Single();
+
+    /// <summary>中心座標ラベルの文言を取得する。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <returns>表示されている文言。</returns>
+    private static string LabelText(LoupeControl control) => ((TextBlock)LabelElement(control).Child!).Text!;
+
+    /// <summary>中心座標を設定するとラベル要素が表示されることを検証する（中心未設定では表示しない）。</summary>
+    [Fact]
+    public void 中心座標を設定するとラベル要素が表示される()
+    {
+        var control = new LoupeControl { Options = LoupeOptions.Default with { RequestedSize = 100 } };
+        Layout(control);
+
+        // 中心未設定 → ラベルは表示しない
+        Assert.Empty(control.Children.OfType<Border>());
+
+        control.CenterPoint = new EsPoint(12, 34);
+        Layout(control);
+
+        // 文言はコアの CoordinateFormatter が単一所有する（本コントロールは要素へ写すだけ）
+        Assert.Equal("(12, 34)", LabelText(control));
+
+        // 幅は実測値（本コントロールが Skia で測ってコアへ渡す）と内側余白から決まる
+        var measured = SkiaText.Measure("(12, 34)", LoupeValueCoercer.CoordLabelFontSizeDefault);
+        Assert.True(LabelElement(control).Bounds.Width > measured.Width);
+    }
+
+    /// <summary>ラベル非表示の設定では要素を追加しないことを検証する。</summary>
+    [Fact]
+    public void ラベル非表示の設定では要素を表示しない()
+    {
+        var control = new LoupeControl
+        {
+            Options = LoupeOptions.Default with
+            {
+                Appearance = LoupeOptions.Default.Appearance with { ShowCoordLabel = false },
+            },
+            CenterPoint = new EsPoint(12, 34),
+        };
+
+        Layout(control);
+
+        Assert.Empty(control.Children.OfType<Border>());
+    }
+
+    /// <summary>中心座標を変更するとラベル要素の文言が追従することを検証する。</summary>
+    [Fact]
+    public void 中心座標を変更するとラベル要素の文言が追従する()
+    {
+        var control = new LoupeControl
+        {
+            Options = LoupeOptions.Default with { RequestedSize = 100 },
+            CenterPoint = new EsPoint(1, 2),
+        };
+        Layout(control);
+        Assert.Equal("(1, 2)", LabelText(control));
+
+        control.CenterPoint = new EsPoint(3, 4);
+        Layout(control);
+
+        Assert.Equal("(3, 4)", LabelText(control));
     }
 
     /// <summary>外観を設定できることを検証する（描画は <see cref="LoupeSkiaRendererTests"/> が検証する）。</summary>

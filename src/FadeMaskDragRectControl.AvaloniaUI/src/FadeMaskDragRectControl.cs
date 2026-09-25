@@ -4,18 +4,15 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Estable.AvaloniaUI.Marquee;
 using Estable.AvaloniaUI.Loupe;
-using Estable.Loupe;
 using Estable.Marquee;
-using Estable.Marquee.Decoration;
 using Estable.Marquee.CoreForControl;
 using Estable.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
-using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
-using SkiaSharp;
 using System.Globalization;
 using DrawingColor = System.Drawing.Color;
 
@@ -78,15 +75,6 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>動作モード（C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義）。</summary>
     private FadeMaskDragRectMode _mode = FadeMaskDragRectMode.AreaSelect;
 
-    /// <summary>付加情報ラベルの背景色（黒 60%）。</summary>
-    private static readonly DrawingColor s_labelBackground = DrawingColor.FromArgb(153, 0, 0, 0);
-
-    /// <summary>操作ラベル（確定・キャンセル方法）の文字色。</summary>
-    private static readonly DrawingColor s_subLineColor = DrawingColor.FromArgb(255, 220, 220, 220);
-
-    /// <summary>情報ラベル（ウィンドウタイトル）の文字色。</summary>
-    private static readonly DrawingColor s_infoColor = DrawingColor.White;
-
     /// <summary>操作ラベル（アプリ固有の付加情報）の文言を描画時に生成するデリゲート。</summary>
     /// <value>描画のたびに評価される関数。null または空文字を返す場合は描かない。</value>
     /// <remarks>
@@ -124,8 +112,8 @@ public sealed class FadeMaskDragRectControl : Panel
         _marquee.ZoomRequested += (_, request) => RaiseZoomRequested(request);
         _marquee.ScrollRequested += (_, request) => RaiseScrollRequested(request);
 
-        // 文字（サイズラベル・操作ラベル・情報ラベル・座標ラベル）はテキストの実寸測定が必要なため、
-        // 選択矩形コントロールは描かずに描画完了を通知する。ホスト（本クラス）が文字を描く。
+        // サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。
+        // 操作ラベル・情報ラベルはアプリ固有の付加情報のため、本クラス（ホスト）が描画完了時に描く。
         _marquee.Rendered += OnMarqueeRendered;
 
         // ルーペ描画完了時に選択矩形の破線オーバーレイを描画する（LoupeControl の選択矩形 API は削除済み）
@@ -529,6 +517,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。<br/>
     /// <b>操作ラベル・情報ラベルは選択コントロールの概念ではない</b>（アプリ固有の付加情報）ため、<br/>
     /// 本クラス（ホスト）が文言の生成と描画を行い、コアは関知しない。<br/>
+    /// 外観（表示可否・寸法・色）は設定（<see cref="FadeMaskDragRectOptions.Labels"/>）が単一所有する。<br/>
     /// 本ハンドラはコントロールの子要素（ラベル）より後に呼ばれるため、付加情報はラベルより前面に置かれる。
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
@@ -539,29 +528,29 @@ public sealed class FadeMaskDragRectControl : Panel
             return;
         }
 
+        var labels = _options.Labels;
         var y = hole.Y;
 
-        // サイズラベルが描かれている場合はその下へ積む（重なりを避ける）
+        // サイズラベルが描かれている場合はその下へ積む（重なりを避ける。行送りはコアが単一所有する）
         if (e.Content.SizeLabel is { } sizeLabel)
         {
-            y += MarqueeAppearance.SizeLabelPadding * 2 + sizeLabel.FontSize;
+            y = MarqueeAppearance.NextLabelTop(y, sizeLabel.FontSize);
         }
 
-        var lines = new List<(string Text, double FontSize, DrawingColor Color, DrawingColor Background)>();
-        if (OperationTextProvider?.Invoke() is { Length: > 0 } operation)
+        // 表示可否はホストが判定する（設定スイッチと文言の有無の両方が成立したときだけ描く）
+        if (labels.ShowOperationLabel && OperationTextProvider?.Invoke() is { Length: > 0 } operation)
         {
-            lines.Add((operation, MarqueeOptions.SizeLabelFontSizeDefault, s_subLineColor, s_labelBackground));
+            DrawHostLabel(
+                e.Context, hole.X, y, operation,
+                labels.OperationFontSize, labels.OperationColor, labels.OperationBackgroundColor);
+            y = MarqueeAppearance.NextLabelTop(y, labels.OperationFontSize);
         }
 
-        if (InfoTextProvider?.Invoke() is { Length: > 0 } info)
+        if (labels.ShowInfoLabel && InfoTextProvider?.Invoke() is { Length: > 0 } info)
         {
-            lines.Add((info, MarqueeOptions.SizeLabelFontSizeDefault, s_infoColor, s_labelBackground));
-        }
-
-        foreach (var line in lines)
-        {
-            DrawHostLabel(e.Context, hole.X, y, line.Text, line.FontSize, line.Color, line.Background);
-            y += line.FontSize + MarqueeAppearance.SizeLabelPadding * 2;
+            DrawHostLabel(
+                e.Context, hole.X, y, info,
+                labels.InfoFontSize, labels.InfoColor, labels.InfoBackgroundColor);
         }
     }
 
@@ -574,7 +563,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="color">文字色。</param>
     /// <param name="background">背景色。</param>
     /// <remarks>
-    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（両者の見た目を揃える）。<br/>
+    /// サイズラベルと同じ体裁（背景 + 文字の縦積み）で描く（体裁はコアが単一所有する）。<br/>
     /// テキストの実寸測定と描画は本クラス（ホスト）が行う（コアは文字を描かない）。
     /// </remarks>
     private static void DrawHostLabel(
@@ -584,11 +573,13 @@ public sealed class FadeMaskDragRectControl : Panel
             text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, fontSize,
             s_hostLabelBrushes.GetOrCreate(color.ToAvaloniaColor()));
 
-        var padding = MarqueeAppearance.SizeLabelPadding;
+        // 体裁（内側余白）はコアが単一所有する（MewUI ホストと同じ組み立てに揃える）
+        var textOrigin = new EsPoint(x, y + MarqueeAppearance.SizeLabelPadding);
         context.FillRectangle(
             s_hostLabelBrushes.GetOrCreate(background.ToAvaloniaColor()),
-            new Rect(x - padding, y, formatted.Width + padding * 2, formatted.Height + padding * 2));
-        context.DrawText(formatted, new Point(x, y + padding));
+            MarqueeAppearance.ComputeHostLabelBackground(
+                textOrigin, new EsSize(formatted.Width, formatted.Height)).ToAvaloniaRect());
+        context.DrawText(formatted, textOrigin.ToAvaloniaPoint());
     }
 
     /// <summary>ホスト固有ラベルのブラシを共有する容量制限付きキャッシュ。</summary>
@@ -607,7 +598,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <see cref="LoupeControl.Rendered"/> イベントで通知された <see cref="LoupeRenderedEventArgs.Bitmap"/> へ直接描画する。<br/>
     /// 選択矩形（<see cref="SelectionRect"/> = ドメイン座標）は <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で<br/>
     /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
-    /// <b>中心座標ラベルはルーペコントロールが描く</b>（ホストもラベル要素を配置する側になったため、破線だけを描く）。<br/>
+    /// <b>中心座標ラベルはルーペコントロールがテキスト要素として表示する</b>（本クラスは破線だけを描く）。<br/>
     /// 描画しない場合（選択矩形を使わないモード・選択なし・切り出し領域の左上が未設定）でも、<br/>
     /// ホストへルーペ描画完了を中継する（外部提供矩形の描画用）。
     /// </remarks>

@@ -17,8 +17,8 @@ namespace Estable.AvaloniaUI.Marquee.Tests;
 /// 対象: <c>MarqueeOuterDrawer.cs</c>（フレームの非文字の描画のみ）。<br/>
 /// 「どの矩形を暗転するか」「枠線を描くか」の判断はコアの <c>OuterDecoFrame</c> が単一所有するため、<br/>
 /// 本テストは「与えられたフレームを描く」こと（例外なし・ブラシキャッシュの容量管理）のみを検証する。<br/>
-/// フレームの解決（判断）はコアの <c>OuterDecoFrameTests</c> が、文字の描画は<br/>
-/// <see cref="MarqueeLabelRendererTests"/> が検証する。
+/// フレームの解決（判断）はコアの <c>OuterDecoFrameTests</c> が、文字（サイズ・座標ラベル）は<br/>
+/// コントロールのテキスト要素配置（<c>MarqueeControlTests</c>）が検証する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class MarqueeOuterDrawerTests

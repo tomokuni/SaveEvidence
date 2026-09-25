@@ -1,5 +1,6 @@
 using Estable.Loupe;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
@@ -50,6 +51,69 @@ public class LoupeSkiaRendererTests
         EsPoint? center, int pixelSize, int zoomLevel, LoupeAppearance appearance, double scaling = 1.0)
         => new(center, pixelSize, zoomLevel, appearance, scaling);
 
+    /// <summary>コアが解決する描画層の順序（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠）。</summary>
+    /// <remarks>
+    /// 描画順はコアが単一所有するため、本テストはコアが返す順序と同じ並びを渡して描画層を検証する<br/>
+    /// （順序そのものの検証はコアのテストが担う。中心座標ラベルはテキスト要素が表示するため含めない）。
+    /// </remarks>
+    private static readonly IReadOnlyList<LoupeDrawLayer> s_layers =
+    [
+        LoupeDrawLayer.Background,
+        LoupeDrawLayer.Checkerboard,
+        LoupeDrawLayer.Image,
+        LoupeDrawLayer.Crosshair,
+        LoupeDrawLayer.Frame,
+    ];
+
+    /// <summary>ルーペを描画する（コアの描画層の順序を渡す）。</summary>
+    /// <param name="canvas">描画先のキャンバス。</param>
+    /// <param name="source">拡大元の画像。</param>
+    /// <param name="request">描画入力。</param>
+    private static void Render(SKCanvas canvas, EsBitmap? source, in LoupeRenderRequest request)
+        => LoupeSkiaRenderer.Render(canvas, source, request, s_layers);
+
+    /// <summary>描く層の一覧が null の場合は例外になることを検証する。</summary>
+    [Fact]
+    public void Render_層の一覧がnullなら例外()
+    {
+        using var target = TestHelper.CreateTarget(16);
+
+        Assert.Throws<ArgumentNullException>(
+            () => LoupeSkiaRenderer.Render(target.Canvas, null, Request(null, 16, 4, new LoupeAppearance()), null!));
+    }
+
+    /// <summary>渡された層だけを描画することを検証する（層の順序と有無はコアが決める）。</summary>
+    /// <remarks>下地のみを渡した場合は市松模様・十字線・外枠を描かない（全面が下地色になる）。</remarks>
+    [Fact]
+    public void Render_渡された層だけを描画する()
+    {
+        const int size = 16;
+        using var target = TestHelper.CreateTarget(size);
+        var appearance = CreateAppearance(
+                ToColor(SKColors.White), 8, ToColor(SKColors.White), ToColor(SKColors.Black), ToColor(SKColors.Red), 2)
+            with { BackgroundColor = ToColor(SKColors.Blue) };
+
+        LoupeSkiaRenderer.Render(
+            target.Canvas, null, Request(null, size, 4, appearance), [LoupeDrawLayer.Background]);
+
+        Assert.Equal(SKColors.Blue, target.GetPixel(0, 0));
+        Assert.Equal(SKColors.Blue, target.GetPixel(size - 1, size - 1));
+    }
+
+    /// <summary>中心座標ラベルの層は描画しないことを検証する（テキスト要素が表示する）。</summary>
+    [Fact]
+    public void Render_中心座標ラベルの層は描画しない()
+    {
+        const int size = 16;
+        using var target = TestHelper.CreateTarget(size);
+
+        LoupeSkiaRenderer.Render(
+            target.Canvas, null, Request(null, size, 4, new LoupeAppearance()), [LoupeDrawLayer.CoordLabel]);
+
+        // 何も描画しない（初期状態の透明のまま）
+        Assert.Equal(0, target.GetPixel(size / 2, size / 2).Alpha);
+    }
+
     /// <summary>下地（ベース色）が最初に全面へ塗られることを検証する。</summary>
     /// <remarks>
     /// 市松模様の色は半透明のため、背後の要素を透かしたくない場合はホストが不透明色を指定する。<br/>
@@ -65,7 +129,7 @@ public class LoupeSkiaRendererTests
         var appearance = CreateAppearance(Transparent, 8, Transparent, Transparent, Transparent, 1)
             with { BackgroundColor = ToColor(SKColors.Red) };
 
-        LoupeSkiaRenderer.Render(target.Canvas, null, Request(null, size, 4, appearance));
+        Render(target.Canvas, null, Request(null, size, 4, appearance));
 
         // 全体が下地色になる
         Assert.Equal(SKColors.Red, target.GetPixel(1, 1));
@@ -83,7 +147,7 @@ public class LoupeSkiaRendererTests
         var appearance = CreateAppearance(Transparent, 8, ToColor(SKColors.White), ToColor(SKColors.Black), Transparent, 1)
             with { BackgroundColor = ToColor(SKColors.Red) };
 
-        LoupeSkiaRenderer.Render(target.Canvas, null, Request(null, size, 4, appearance));
+        Render(target.Canvas, null, Request(null, size, 4, appearance));
 
         // 市松模様が下地を覆う（下地は見えない）
         Assert.Equal(SKColors.White, target.GetPixel(4, 4));
@@ -97,7 +161,7 @@ public class LoupeSkiaRendererTests
         const int size = 64;
         using var target = TestHelper.CreateTarget(size);
 
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, null,
             Request(null, size, 4, CreateAppearance(Transparent, 8, ToColor(SKColors.White), ToColor(SKColors.Black), Transparent, 1)));
 
@@ -116,7 +180,7 @@ public class LoupeSkiaRendererTests
         const int size = 8;
         using var target = TestHelper.CreateTarget(size);
 
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, null,
             Request(null, size, 4, CreateAppearance(Transparent, 0, ToColor(SKColors.White), ToColor(SKColors.Black), Transparent, 1)));
 
@@ -136,7 +200,7 @@ public class LoupeSkiaRendererTests
         using var target = TestHelper.CreateTarget(size);
 
         // pixelSize=64, zoom=4 → captureSize=16, topLeft=(50-8, 50-8)=(42,42)
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, source,
             Request(new EsPoint(50, 50), size, 4, CreateAppearance(Transparent, 8, Transparent, Transparent, Transparent, 1)));
 
@@ -157,7 +221,7 @@ public class LoupeSkiaRendererTests
         using var source = TestHelper.CreateBitmap(64, SKColors.Red);
         using var target = TestHelper.CreateTarget(size);
 
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, withSource ? source : null,
             Request(withSource ? null : new EsPoint(10, 10), size, 4,
                 CreateAppearance(Transparent, 8, ToColor(SKColors.White), ToColor(SKColors.Black), Transparent, 1)));
@@ -175,7 +239,7 @@ public class LoupeSkiaRendererTests
         using var target = TestHelper.CreateTarget(size);
 
         // pixelSize=64, zoom=4 → blocks=16, start=32（十字線は 4 ピクセル幅）
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, null,
             Request(null, size, 4, CreateAppearance(ToColor(SKColors.Yellow), 8, Transparent, Transparent, Transparent, 1)));
 
@@ -190,7 +254,7 @@ public class LoupeSkiaRendererTests
         const int size = 64;
         using var target = TestHelper.CreateTarget(size);
 
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, null,
             Request(null, size, 4, CreateAppearance(Transparent, 8, Transparent, Transparent, ToColor(SKColors.Lime), 4)));
 
@@ -214,7 +278,7 @@ public class LoupeSkiaRendererTests
         using var target = TestHelper.CreateTarget(size);
 
         // 市松模様は不透明の白（全面が白）・十字線と外枠は透明
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, null,
             Request(null, size, 4, CreateAppearance(Transparent, 8, ToColor(SKColors.White), ToColor(SKColors.White), Transparent, 4)));
 
@@ -232,7 +296,7 @@ public class LoupeSkiaRendererTests
         const int size = 16;
         using var target = TestHelper.CreateTarget(size);
 
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, null,
             Request(null, size, 4, CreateAppearance(Transparent, 8, Transparent, Transparent, Transparent, 2)));
 
@@ -255,7 +319,7 @@ public class LoupeSkiaRendererTests
         using var target = TestHelper.CreateTarget(size);
 
         // pixelSize=32, zoom=1 → captureSize=32、topLeft=(-16,-16)。ソース (0,0) は画像 (16,16) へ写る
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, source,
             Request(new EsPoint(0, 0), size, 1,
                 CreateAppearance(Transparent, 8, ToColor(SKColors.White), ToColor(SKColors.Black), Transparent, 1)));
@@ -277,7 +341,7 @@ public class LoupeSkiaRendererTests
         const int size = 32;
         using var target = TestHelper.CreateTarget(size);
 
-        LoupeSkiaRenderer.Render(
+        Render(
             target.Canvas, source,
             Request(new EsPoint(16, 16), size, 4,
                 CreateAppearance(Transparent, 8, ToColor(SKColors.White), ToColor(SKColors.Black), Transparent, 1)));
@@ -291,7 +355,7 @@ public class LoupeSkiaRendererTests
     public void Render_キャンバスがnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(
-            () => LoupeSkiaRenderer.Render(null!, null, Request(null, 16, 4, new LoupeAppearance())));
+            () => Render(null!, null, Request(null, 16, 4, new LoupeAppearance())));
     }
 
     /// <summary>外観が null の場合は例外になることを検証する。</summary>
@@ -302,7 +366,7 @@ public class LoupeSkiaRendererTests
         using var target = TestHelper.CreateTarget(size);
 
         Assert.Throws<ArgumentNullException>(
-            () => LoupeSkiaRenderer.Render(target.Canvas, null, Request(null, size, 4, null!)));
+            () => Render(target.Canvas, null, Request(null, size, 4, null!)));
     }
 
     /// <summary>Skia の色をコアの色へ変換する（不透明度はアルファに統合）。</summary>

@@ -15,6 +15,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Globalization;
 using static Estable.Loupe.LoupeValueCoercer;
 using LoupeFacade = Estable.Loupe.Loupe;
 
@@ -39,8 +40,11 @@ namespace Estable.AvaloniaUI.Loupe;
 /// 表示時（true）は最新の画像を非同期生成し、非表示時（false）はビットマップを解放する。<br/>
 /// 非表示中のプロパティ変更では画像を生成しない。<br/>
 /// <br/>
-/// <b>基底クラス</b>: 外観が生成ビットマップのみで構成される単一用途のコントロールであるため、<br/>
-/// <see cref="UserControl"/> を採用する（テンプレート差し替え余地を提供する <c>TemplatedControl</c> は不要であり、KISS に従う）。<br/>
+/// <b>基底クラス</b>: ルーペ画像とラベル要素を子として重ねるため <see cref="Panel"/> を採用する。<br/>
+/// 子は親より後に描かれるため、後から子へ加えるラベル要素が常に最上位になる（<b>ラベルは常に最上位</b>の契約が構造で成立する）。<br/>
+/// <br/>
+/// <b>要素の描画順</b>: 図形（下地・市松模様・拡大画像・十字線・外枠）は生成ビットマップへ焼き、<br/>
+/// ラベル（中心座標）だけをテキスト要素として子へ置く（描画順はコアの <see cref="LoupeDrawLayer"/> が単一所有する）。<br/>
 /// <br/>
 /// <b>色指定</b>: 外観の色は UI 非依存の <see cref="System.Drawing.Color"/> として <see cref="Options"/> で受け取り、<br/>
 /// 描画時にブラシへ変換する（色の文字列解析は行わない）。<br/>
@@ -57,22 +61,27 @@ namespace Estable.AvaloniaUI.Loupe;
 /// - イベント: <see cref="Rendered"/>（描画完了時に描画済み Bitmap と表示情報を通知。ホストが Bitmap に直接オーバーレイを描画できる）<br/>
 /// - 操作: <see cref="Clear()"/>（非表示にしてビットマップを解放） / <see cref="RequestRender()"/>（プロパティ変更を伴わない再生成要求）<br/>
 /// </remarks>
-public sealed partial class LoupeControl : UserControl
+public sealed class LoupeControl : Panel
 {
     // ====================================================================
     // 数値プロパティの安全域・既定値（LoupeValueCoercer から委譲）
     // ====================================================================
 
-    /// <summary><see cref="LoupeControl"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <summary><see cref="LoupeControl"/> クラスの新しいインスタンスを初期化する。</summary>
     /// <remarks>
-    /// <c>InitializeComponent()</c>（AXAML の生成コード）を呼び出して子要素を生成します。<br/>
+    /// 子要素（ルーペ画像を表示する <see cref="Image"/>）を生成し、初期状態を非表示にする。<br/>
+    /// ラベル要素は配置フェーズ（<see cref="ArrangeOverride"/>）でラベルの有無に追従して追加・削除する。
     /// </remarks>
     public LoupeControl()
     {
-        // InitializeComponent() は IsVisible 変更イベントを発火するため、コーディネーターを先に初期化する
+        // コーディネーターを先に初期化する（以降のプロパティ設定で参照されるため）
         _renderCoordinator = CreateRenderCoordinator();
-        InitializeComponent();
-        // 初期状態は非表示（表示指示は IsVisible=true で行う。XAML 属性ではなくコンストラクタで設定する）
+
+        // ルーペ画像を表示する子要素を最初に加える（子は親より後に描かれるため、ラベル要素より下になる）
+        _image = new Image { Stretch = Stretch.Fill, IsHitTestVisible = false };
+        Children.Add(_image);
+
+        // 初期状態は非表示（表示指示は IsVisible=true で行う）
         IsVisible = false;
     }
 
@@ -107,6 +116,15 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary>表示位置（RenderTransform）のインスタンス（座標更新時は値を書き換えて再利用する）。</summary>
     private readonly TranslateTransform _positionTransform = new();
+
+    /// <summary>ルーペ画像を表示する子要素（生成ビットマップを <see cref="Image.Source"/> へ設定する）。</summary>
+    private readonly Image _image;
+
+    /// <summary>ラベル要素（背景 + テキスト）を保持する。要素数はラベルの有無に追従する。</summary>
+    private readonly List<Border> _labelElements = [];
+
+    /// <summary>テキストの実寸測定に使うブラシ（測定には色が影響しないため固定で共有する。外観値ではない）。</summary>
+    private static readonly SolidColorBrush s_measureBrush = new(Colors.White);
 
     /// <summary>再描画のバッチ化コーディネーター（Dispatcher へのポストで 1 フレームに 1 回に結合）。</summary>
     private LoupeRenderCoordinator _renderCoordinator;
@@ -189,6 +207,91 @@ public sealed partial class LoupeControl : UserControl
         UpdatePosition();
     }
 
+    // ====================================================================
+    // ラベル（テキスト要素として配置する）
+    // ====================================================================
+
+    /// <summary>子要素（画像・ラベル）の配置を確定する。</summary>
+    /// <param name="finalSize">本コントロールへ割り当てられたサイズ（DIP）。</param>
+    /// <returns>割り当てサイズ。</returns>
+    /// <remarks>
+    /// <b>位置はコアが決める</b>: コアの描画内容から得た配置（<see cref="LoupeLabelLayoutPlan"/>）に従って<br/>
+    /// ラベル要素を配置するだけであり、本クラスは位置の計算を持たない。<br/>
+    /// ラベル要素は <see cref="Panel.Children"/> の末尾へ置く（子は親より後に描かれるため、ラベルは常に最上位になる）。
+    /// </remarks>
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        // 配置の基準は実際に描画する領域（親から割り当てられたサイズ）である（コアは実寸から配置を求める）
+        UpdateLabelElements(_loupe.CreateRequest(finalSize.ToEsSize()));
+
+        return base.ArrangeOverride(finalSize);
+    }
+
+    /// <summary>コアの描画内容に合わせてラベル要素を追加・更新する。</summary>
+    /// <param name="request">コアが解決した描画入力（レイアウトの基準になる）。</param>
+    /// <remarks>
+    /// 実寸は自 UI の描画 API（<see cref="FormattedText"/>）で測ってコアへ渡す<br/>
+    /// （コアは実寸から背景の大きさ・中央寄せの位置を計算する）。
+    /// </remarks>
+    private void UpdateLabelElements(in LoupeRenderRequest request)
+    {
+        var notification = _loupe.ResolveNotification(request);
+        var elements = LoupeLabelLayoutPlan.Resolve(notification, MeasureText);
+
+        while (_labelElements.Count > elements.Count)
+        {
+            var last = _labelElements[^1];
+            _labelElements.RemoveAt(_labelElements.Count - 1);
+            Children.Remove(last);
+        }
+
+        while (_labelElements.Count < elements.Count)
+        {
+            var border = new Border { Child = new TextBlock { TextWrapping = TextWrapping.NoWrap } };
+            _labelElements.Add(border);
+            Children.Add(border);
+        }
+
+        for (var i = 0; i < elements.Count; i++)
+        {
+            ApplyLabelElement(_labelElements[i], elements[i]);
+        }
+    }
+
+    /// <summary>ラベル要素の内容と配置をコアの指示に合わせる。</summary>
+    /// <param name="border">更新する要素（背景）。</param>
+    /// <param name="element">コア（CoreForControl）が解決した配置指示。</param>
+    private static void ApplyLabelElement(Border border, in LoupeLabelElement element)
+    {
+        border.Background = LoupeBrushes.Get(element.BackgroundColor);
+        border.CornerRadius = new CornerRadius(element.CornerRadius);
+        border.Padding = new Thickness(element.PaddingX, element.PaddingY);
+        border.Width = element.Bounds.Width;
+        border.Height = element.Bounds.Height;
+        border.Margin = new Thickness(element.Bounds.X, element.Bounds.Y, 0, 0);
+        border.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        border.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
+
+        if (border.Child is TextBlock text)
+        {
+            text.Text = element.Text;
+            text.FontSize = element.FontSize;
+            text.Foreground = LoupeBrushes.Get(element.TextColor);
+        }
+    }
+
+    /// <summary>テキストの実寸を測定する（描画 API でしか測れない値）。</summary>
+    /// <param name="text">測定するテキスト。</param>
+    /// <param name="fontSize">フォントサイズ（DIP）。</param>
+    /// <returns>テキストの実寸（DIP）。</returns>
+    /// <remarks><see cref="FormattedText"/> は実寸を 2 つの double でしか公開しないため、コアのサイズ型へは本境界で組み立てる。</remarks>
+    private static EsSize MeasureText(string text, double fontSize)
+    {
+        var formatted = new FormattedText(
+            text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, fontSize, s_measureBrush);
+        return new EsSize(formatted.Width, formatted.Height);
+    }
+
     /// <summary>入力（Source / CenterPoint / 設定）の変更で再描画を要求する。</summary>
     /// <remarks>
     /// 各プロパティの変更は <see cref="RequestRender"/> を呼び出し、<br/>
@@ -210,6 +313,8 @@ public sealed partial class LoupeControl : UserControl
             o._loupe.CenterPoint = ToEsPoint(e.NewValue as Point?);
             o.RequestRender();
             o.UpdatePosition();
+            // 中心座標ラベルの文言は中心に依存するため、ラベル要素を配置し直す
+            o.InvalidateArrange();
         });
         // 設定（LoupeOptions）は表示サイズ・拡大率・外観をまとめて持つため、要素サイズと描画へ波及する
         OptionsProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
@@ -218,6 +323,8 @@ public sealed partial class LoupeControl : UserControl
             o._loupe.Options = e.GetNewValue<LoupeOptions>();
             o.RequestRender();
             o.UpdatePosition();
+            // 表示サイズとラベルの外観が変わるため、ラベル要素を配置し直す（サイズが同じでも必要）
+            o.InvalidateArrange();
         });
         RenderScalingProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
@@ -225,6 +332,8 @@ public sealed partial class LoupeControl : UserControl
             o.Log.LogRenderScalingChanged(e.GetOldValue<double>(), e.GetNewValue<double>());
             o._loupe.RenderScaling = e.GetNewValue<double>();
             o.RequestRender();
+            // ラベルの配置の基準（表示サイズ）が物理ピクセル換算で変わるため、配置し直す
+            o.InvalidateArrange();
         });
 
         IsVisibleProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) => o.OnIsVisibleChanged(e));
@@ -353,7 +462,7 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary>表示用の画像アダプタ（EsBitmapAvaloniaImage）。所有権は本コントロールが保持し、外部へ公開しない。</summary>
     /// <remarks>
-    /// <see cref="PART_Image"/> の Source へ設定する <see cref="EsBitmapAvaloniaImage"/> を保持する。<br/>
+    /// <see cref="Image.Source"/> へ設定する <see cref="EsBitmapAvaloniaImage"/> を保持する。<br/>
     /// <c>WriteableBitmap</c> を生成せず Skia 直描画するため、破棄は <see cref="ReleaseBitmap"/> で行う。
     /// </remarks>
     private EsBitmapAvaloniaImage? _loupeImage;
@@ -383,31 +492,28 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary>ルーペの描画完了を通知するイベント（描画済み Bitmap と切り出し領域を渡す）。</summary>
     /// <remarks>
-    /// 拡大画像の描画結果（<see cref="LoupeRenderedEventArgs.Bitmap"/>）と、描画に必要な値（切り出し領域・スケール・<br/>
-    /// 中心座標ラベルの描画契約）を通知する。<br/>
+    /// 拡大画像の描画結果（<see cref="LoupeRenderedEventArgs.Bitmap"/>）と、描画に必要な値（切り出し領域・スケール）を通知する。<br/>
     /// イベントは表示へ反映する前に同期的に発火するため、ホスト側はイベントハンドラ内で<br/>
-    /// Bitmap を <c>Lock</c> してオーバーレイ（線分の破線等）やラベルの文字を直接描画できる（描画後は表示へ反映される）。<br/>
-    /// <b>座標ラベルの文字はホストが描く</b>（テキストの実寸測定は描画 API 依存のため）。<br/>
+    /// Bitmap を <c>Lock</c> してオーバーレイ（線分の破線等）を直接描画できる（描画後は表示へ反映される）。<br/>
+    /// <b>中心座標ラベルは本コントロールがテキスト要素として表示する</b>ため、通知に含めない。<br/>
     /// 描画は非同期・バッチ化されるため、プロパティ変更より 1 フレーム遅れて発火する。
     /// </remarks>
     public event EventHandler<LoupeRenderedEventArgs>? Rendered;
 
     /// <summary><see cref="Rendered"/> イベントを発火する（描画済み EsBitmap と表示情報を構築して通知）。</summary>
     /// <param name="bitmap">描画済みのルーペ画像（EsBitmap）。ホストがピクセルにオーバーレイを描画できる。</param>
-    /// <param name="request">実際に描画した描画入力（通知する切り出し領域・スケール・ラベルの算出元）。</param>
+    /// <param name="notification">コアが解決した通知内容（切り出し領域・スケール）。</param>
     /// <remarks>
-    /// 切り出し領域の左上・スケール・座標ラベルの契約はコア（<see cref="LoupeFacade.ResolveNotification"/>）が単一所有する。<br/>
-    /// 中心未設定時は <see cref="LoupeRenderedEventArgs.CaptureTopLeft"/> が null になる（オーバーレイ描画不可）。
+    /// 切り出し領域の左上・スケールはコア（<see cref="LoupeFacade.ResolveNotification"/>）が単一所有する。<br/>
+    /// 中心未設定時は <see cref="LoupeRenderedEventArgs.CaptureTopLeft"/> が null になる（オーバーレイ描画不可）。<br/>
+    /// <b>中心座標ラベルは本コントロールがテキスト要素として表示する</b>ため、通知に含めない。
     /// </remarks>
-    private void RaiseRendered(EsBitmap bitmap, LoupeRenderRequest request)
+    private void RaiseRendered(EsBitmap bitmap, in LoupeRenderNotification notification)
     {
-        var notification = _loupe.ResolveNotification(request);
-
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
             bitmap,
             notification.CaptureTopLeft?.ToAvaloniaPoint(),
-            notification.Scale,
-            notification.CoordLabel));
+            notification.Scale));
     }
 
     // ====================================================================
@@ -440,7 +546,7 @@ public sealed partial class LoupeControl : UserControl
     private void ReleaseBitmap()
     {
         // 破棄済み EsBitmap を Image.Source が参照し続けないよう、先に Source を解除してから解放する。
-        PART_Image?.Source = null;
+        _image.Source = null;
         _loupeImage?.Dispose();
         _loupeImage = null;
     }
@@ -473,8 +579,9 @@ public sealed partial class LoupeControl : UserControl
             // 描画入力（コア⇔UI の契約）はコアのファサードが自 UI の公開プロパティの写しから組み立てる
             // （DIP 換算・クランプはコアが単一所有する）
             var request = _loupe.CreateRequest();
+            var notification = _loupe.ResolveNotification(request);
 
-            var bitmap = await LoupeRenderPipeline.RenderAsync(Source, request);
+            var bitmap = await LoupeRenderPipeline.RenderAsync(Source, request, notification.Layers);
 
             // 描画反映（SetLoupeBitmap）は描画フェーズ（Render 優先度）で実行する。
             // マウス移動中の連続再描画では、既定の Normal 優先度の継続が入力イベント（Input 優先度）に
@@ -491,7 +598,7 @@ public sealed partial class LoupeControl : UserControl
                     return;
                 }
 
-                SetLoupeBitmap(bitmap, request);
+                SetLoupeBitmap(bitmap, notification);
                 Log.LogGenerateAsyncDone(true, false, visible, generation, current);
             }, DispatcherPriority.Render);
         }
@@ -504,32 +611,29 @@ public sealed partial class LoupeControl : UserControl
 
     /// <summary>生成したルーペビットマップをコントロールへ反映する。</summary>
     /// <param name="bmp">生成したルーペビットマップ（EsBitmap）。</param>
-    /// <param name="request">実際に描画した描画入力（表示サイズ（DIP）と通知値を含む）。</param>
+    /// <param name="notification">コアが解決した通知内容（切り出し領域・スケール）。</param>
     /// <remarks>
     /// 前回のビットマップを破棄し、<see cref="LoupeBitmap"/> と表示内容（画像）を更新する。<br/>
     /// 表示状態（IsVisible）と要素サイズ（Width / Height）は変更しない（サイズは <see cref="UpdatePosition"/> が単一所有する）。<br/>
     /// 表示への反映前に <see cref="Rendered"/> イベントを発火し、ホスト側が EsBitmap のピクセルに<br/>
     /// オーバーレイ（線分の破線等）を描画できるようにする（イベント後に表示へ反映）。<br/>
-    /// <b>チラつき防止</b>: <c>PART_Image.Source</c> が前回のアダプタを参照し続ける間に、<br/>
+    /// <b>チラつき防止</b>: <c>Image.Source</c> が前回のアダプタを参照し続ける間に、<br/>
     /// その内包 <see cref="EsBitmap"/> を破棄すると、描画時に破棄済みピクセルへアクセスして例外・チラつきが生じる。<br/>
-    /// そのため、新しいアダプタを先に <c>PART_Image.Source</c> へ設定し、旧アダプタは後から破棄する<br/>
+    /// そのため、新しいアダプタを先に <c>Image.Source</c> へ設定し、旧アダプタは後から破棄する<br/>
     /// （描画が参照するアダプタを連続的に保ち、破棄済み Bitmap の参照を防ぐ）。
     /// </remarks>
-    private void SetLoupeBitmap(EsBitmap bmp, LoupeRenderRequest request)
+    private void SetLoupeBitmap(EsBitmap bmp, in LoupeRenderNotification notification)
     {
         // ホストが EsBitmap のピクセルへオーバーレイ（破線等）を描画するフック。イベント内でピクセルが更新される
-        RaiseRendered(bmp, request);
+        RaiseRendered(bmp, notification);
 
         // イベント後の EsBitmap（ホストのオーバーレイ描画を含む）を表示境界で Avalonia 画像として反映する。
         // EsBitmapAvaloniaImage（Skia 直描画・ゼロコピー）を Source に設定する。
         // 旧アダプタを破棄する前に、新しいアダプタを先に Source へ設定する（破棄済み Bitmap の参照防止・チラつき防止）。
         var previousImage = _loupeImage;
         _loupeImage = new EsBitmapAvaloniaImage(bmp);
-        PART_Image?.Source = _loupeImage;
-        // Source 差し替えに加えて明示的に再描画を要求する（マウス移動中の連続描画で Image の再描画が
-        // 抑制される場合があるため、確実に再描画してポインタ移動に追従させる）。
-        PART_Image?.InvalidateVisual();
-        // 旧アダプタは新しい Source 設定後に破棄する（PART_Image.Source が旧アダプタを参照しなくなった後）。
+        _image.Source = _loupeImage;
+        // 旧アダプタは新しい Source 設定後に破棄する（Image.Source が旧アダプタを参照しなくなった後）。
         previousImage?.Dispose();
     }
 }

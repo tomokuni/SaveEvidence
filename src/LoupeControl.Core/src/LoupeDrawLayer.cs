@@ -1,6 +1,6 @@
 namespace Estable.Loupe;
 
-/// <summary>ルーペコントロールが描く層（描画順の契約）。</summary>
+/// <summary>ルーペの UI 層が処理する層（描画順の契約）。</summary>
 /// <remarks>
 /// <b>描画順はコアが単一所有する</b>: UI 層は <c>Loupe.ResolveNotification</c> が返す
 /// <see cref="LoupeRenderNotification.Layers"/> を先頭から順に処理するだけで、順序を判断しない。<br/>

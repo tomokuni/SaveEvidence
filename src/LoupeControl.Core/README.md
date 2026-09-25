@@ -14,16 +14,17 @@
 | --- | --- |
 | `Loupe` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、描画完了通知の内容解決（`ResolveNotification`）、座標変換ポートの設定（`SetCoordinateTransform`） |
 | `LoupeLayout` | 表示レイアウトの値（表示サイズ（DIP）と表示位置（親領域 DIP）。配置しない場合は位置が null）。ファサードの結果として UI・ホストへ渡す |
-| `LoupeRenderNotification` | 描画完了通知の値（切り出し左上・スケール・座標ラベルの契約）。切り出し領域とスケールは `LoupeRenderArgsCalculator`（内部）、ラベルは `LoupeCoordLabel.Resolve` の結果をまとめたもの |
+| `LoupeRenderNotification` | 描画完了通知の値（切り出し左上・スケール・中心座標ラベルの契約・**描く層の順序**）。切り出し領域とスケールは `LoupeRenderArgsCalculator`（内部）、ラベルは `LoupeCoordLabel.Resolve`、層は `Loupe.ResolveNotification` が単一所有する |
 | `LoupeOptions` | ルーペの設定（表示サイズ・拡大率・外観）を 1 つの値として所有（**public**）。既定値・数値項目の安全域への補正（生成時。値の設定経路によらず範囲内の値だけが保持される）を持つ。UI 層は本型を 1 プロパティとして公開するだけ |
 | `LoupeAppearance` | ルーペの外観（下地・市松模様・外枠・十字線・中心座標ラベル）12 項目の単一所有（**public**）。既定値・数値項目の安全域への補正（生成時）・描画可否の判定（アルファ 0 は描画しない）・ラベル表示の判定（`ShouldShowCoordLabel`）を持つ |
 | `LoupeValueCoercer` | ルーペの数値パラメータ（表示サイズ / 拡大率 / スケーリング / 市松模様 / 外枠 / ラベル文字サイズ / ラベルの角丸）の既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ |
 | `LoupeAppearanceScaler` | 外観の寸法値（市松模様のタイルサイズ・外枠の太さ・座標ラベルのフォントサイズ・角丸半径）を描画に使う物理ピクセルへ換算（安全域への補正は外観の生成時に済んでいるため再補正しない）。描画層は換算結果を使うだけ |
 | `LoupeRenderRequest` | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層は自 UI の公開プロパティから本値を組み立てて描画層・コアの計算へ渡すだけで、描画に必要な値の単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を持たない |
-| `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・物理ピクセルの寸法・色）と配置の計算（`ComputeFrame`）。**文字の描画はホストが行う**（実寸測定は描画 API 依存のため）ため、コントロールは本値を描画完了イベントで渡し、ホストが背景と文字を描く |
+| `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法・色）と配置の計算（`ComputeFrame`）。**表示はコントロールが行う**（`Border` + `TextBlock` の要素として配置する）ため、実寸測定だけを UI が行い本値へ渡す（測定は描画 API 依存） |
 | `LoupePositionCalculator`（**internal**） | 表示サイズの親領域へのクランプ（`ClampSizeToArea`）・表示位置（中心 + オフセット）の計算と親領域内へのクランプ（`ComputePosition`。親サイズが未確定の場合の判断も含む）・両者を合成した計算（`Compute`）・描画に使う物理ピクセルサイズの解決（`ResolvePixelSize`）。表示サイズを要素へ先に反映する UI はファサードの `ResolveLayout` を使う（内部手順はファサードの実装詳細のため外部に公開しない） |
 | `LoupeDecorationGeometry` | 十字線（縦横 2 本）と外枠（4 辺）の描画矩形の計算（各 UI は返された `EsRect` を自身の描画 API へ渡すだけ） |
-| `LoupeLabelLayout`（**internal**） | 中心座標ラベルの余白（上端からの距離・内側余白）と、背景矩形・文字原点の計算（両 UI で同じ位置に描画する）。利用者は `LoupeCoordLabel.ComputeFrame` だけを使う |
+| `LoupeLabelLayout`（**internal**） | 中心座標ラベルの余白（上端からの距離・内側余白）と、背景矩形・文字原点の計算（両 UI で同じ位置にラベル要素を置く）。利用者は `LoupeCoordLabel.ComputeFrame` だけを使う |
+| `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位）。UI 層は `LoupeRenderNotification.Layers` を先頭から処理するだけで、順序を判断しない |
 | `LoupeCheckerboard` | 市松模様のタイルの明暗判定と、暗色タイルの矩形列挙（`ComputeDarkTileRects`。各 UI が同一のパターンを描画できるようにする） |
 | `LoupeRenderArgsCalculator`（**internal**） | 描画完了イベント引数用の表示情報（切り出し左上 / スケール）の計算。物理ピクセルサイズは実際に描画した値を受け取る。利用者はファサードの `ResolveNotification` だけを使う |
 | `LoupeLogFormat` | 設定値の変更ログが出力する値の文字列化（`(X, Y)` / `Width×Height` / `null`） |

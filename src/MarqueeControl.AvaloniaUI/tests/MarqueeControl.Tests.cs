@@ -13,6 +13,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Xunit;
@@ -1522,6 +1523,60 @@ public class MarqueeControlTests
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
 
+        window.Close();
+    }
+
+    // ====================================================================
+    // ラベル要素（文言・配置はコアが決め、本コントロールがテキスト要素として表示する）
+    // ====================================================================
+
+    /// <summary>ラベル要素の文言（サイズラベル・カーソル座標ラベル）を列挙する。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <returns>表示されている文言の一覧。</returns>
+    private static List<string> LabelTexts(MarqueeControl control)
+        => [.. control.Children.OfType<Border>().Select(border => ((TextBlock)border.Child!).Text!)];
+
+    /// <summary>レイアウト パスを進める（ラベル要素は配置フェーズで更新される）。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    private static async Task PumpLayoutAsync(MarqueeControl control)
+    {
+        for (var i = 0; i < 8; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Yield();
+        }
+    }
+
+    /// <summary>カーソル座標ラベルの要素が選択操作に追従することを検証する。</summary>
+    /// <remarks>
+    /// 文言・配置はコアが決め、本コントロールは要素を置くだけである（実寸は自 UI で測ってコアへ渡す）。<br/>
+    /// 配置は配置フェーズで書き換えるため、再描画要求と併せて配置も無効化される（要素が追従する）。
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task 座標ラベル要素は選択操作に追従する()
+    {
+        var control = new MarqueeControl
+        {
+            Width = 200,
+            Height = 200,
+            Options = TestOptions with { ShowCoordLabel = true },
+        };
+        var window = Show(control);
+        var pointer = CreatePointer();
+
+        // ドラッグして選択を作る（カーソル位置が座標ラベルの基準になる）
+        control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(20, 20)), 0UL, LeftPressed(), KeyModifiers.None, 1));
+        control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 40)), 0UL, LeftPressed(), KeyModifiers.None));
+        await PumpLayoutAsync(control);
+
+        // 文言はコアの CoordinateFormatter が単一所有する
+        Assert.Contains("(50, 40)", LabelTexts(control));
+
+        // 続けて移動すると要素の文言が追従する（配置の無効化が効いている）
+        control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(80, 70)), 0UL, LeftPressed(), KeyModifiers.None));
+        await PumpLayoutAsync(control);
+
+        Assert.Contains("(80, 70)", LabelTexts(control));
         window.Close();
     }
 }

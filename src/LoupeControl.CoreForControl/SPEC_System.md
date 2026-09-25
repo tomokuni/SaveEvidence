@@ -39,7 +39,7 @@ MewUI 版は現状コーディネーターを使いません（中間ビット�
 | `LoupeControl.Core` | 表示レイアウト・描画入力・通知内容の解決・ログ定義 |
 | **本プロジェクト** | **再描画要求のバッチ化（1 フレーム 1 回）・世代番号管理・古い結果の破棄判定** |
 | `LoupeControl.*UI` | フレームワークの入力・描画・実行キュー（`post`）の提供、ビットマップの生成と解放 |
-| ホスト | 表示開始・拡大元画像の供給・ラベル（文字）の描画 |
+| ホスト | 表示開始・拡大元画像の供給（中心座標ラベルはコントロールがテキスト要素として表示する） |
 
 ### 設計判断
 
@@ -55,9 +55,11 @@ MewUI 版は現状コーディネーターを使いません（中間ビット�
 ```text
 src/LoupeControl.CoreForControl/
 ├── src/
-│   └── LoupeRenderCoordinator.cs        再描画のスケジューリング（唯一のロジック）
+│   ├── LoupeRenderCoordinator.cs        再描画のスケジューリング（ファサード層）
+│   └── LoupeLabelLayoutPlan.cs          中心座標ラベルの配置指示（実寸 → 要素の配置矩形）
 └── tests/
-    └── LoupeRenderCoordinator.Tests.cs  バッチ化・世代番号・適用判定・破棄と解放の検証
+    ├── LoupeRenderCoordinator.Tests.cs  バッチ化・世代番号・適用判定・破棄と解放の検証
+    └── LoupeLabelLayoutPlan.Tests.cs    配置指示の解決の検証
 ```
 
 | コンポーネント | 責務 |

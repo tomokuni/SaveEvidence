@@ -20,7 +20,7 @@
 | `WheelScrollRequest` | public | 通常ホイールによるスクロール要求（`DeltaX` / `DeltaY` / `Shift` / `Position`）。回転量をベクターで受け取る API へ渡す `Delta`（`EsVector`）を提供する |
 | `MarqueeWheelLogMessage` | internal | ズーム要求のログ定義（`ILogger` 拡張。書式 `[Marquee] ZoomRequested: zoomIn={ZoomIn}`）。ホストはロガーをファサードへ渡すだけで、定義名を参照しない |
 | `MarqueeViewportNotifier` | public | ビューポートの変化の再通知（現在の状態スナップショット）と再描画の要求。選択の状態は変更しない |
-| `MarqueeLabelLayoutPlan` / `MarqueeLabelElement` | public | 描画するラベル（装飾のラベルとカーソル座標ラベル）を 1 つの一覧へまとめる（描画順の単一所有）。実寸測定と描画 API の呼び出しは UI 層が担う |
+| `MarqueeLabelLayoutPlan` / `MarqueeLabelElement` | public | 描画するラベル（サイズラベルとカーソル座標ラベル）を 1 つの一覧へまとめる（順序の単一所有）。 **文字は描かず、UI 要素（`Border` + `TextBlock`）として置くための配置指示を返す**（実寸測定だけを UI 層が行う） |
 
 ## 依存方向
 
@@ -41,7 +41,7 @@ MarqueeControl.AvaloniaUI / MarqueeControl.MewUI（UI 層）
 | `MarqueeWheelInterpreter` / `WheelZoomRequest` / `WheelScrollRequest` | 使う | 使う | ホイールの解釈は両 UI で共通 |
 | `IWheelScrollTarget` / `AttachScrollTarget` | 使う（`ScrollViewer` を適合） | **使わない** | MewUI のホストはビューポート変化を `NotifyViewportChanged` で通知し、スクロールの適用先を持たない（適用先がある UI だけがこの抽象を実装する） |
 | `MarqueeViewportNotifier` | 使う（`ScrollChanged` を購読） | 使う（ホストが `NotifyViewportChanged` を呼ぶ） | 契機は UI ごとに異なるが、規則は共通 |
-| `MarqueeLabelLayoutPlan` | 使う | 使う | ラベルの描画項目の一覧と描画順を共通化する |
+| `MarqueeLabelLayoutPlan` | 使う | 使う | ラベル要素の配置指示の一覧と順序を共通化する |
 | `WheelScrollDelta` / `MarqueeWheelLogMessage`（internal） | 参照しない | 参照しない | 本層の内部手順（適用先は換算済みの移動量を受け取る） |
 
 **UI フレームワークによって未使用になる型が存在します**（`IWheelScrollTarget` は適用先を持つ UI だけが使う）。これは「抽象として複数の UI で共用できる処理を本層へ置き、必要とする UI だけが実装・利用する」設計の帰結であり、コア（`MarqueeControl.Core`）の公開面には影響しません。
@@ -56,7 +56,7 @@ MarqueeControl.AvaloniaUI / MarqueeControl.MewUI（UI 層）
 | ホイール要求（Ctrl = ズーム / それ以外 = スクロール）とそのログ | 本プロジェクト | 組み込み先（ビューポート）が存在して初めて意味を持つ |
 | 連携先へのスクロール適用（回転量 → 移動量の換算と適用先への加算） | 本プロジェクト | 「1 ノッチ = 48 DIP」「Shift で横」は UI をまたいで同じ規則である |
 | ビューポート変化の再通知（現在の状態スナップショット + 再描画） | 本プロジェクト | ビューポートが存在して初めて意味を持つ（単体の Marquee にはビューポートもズームも無い） |
-| 描画するラベルの一覧と描画順（装飾のラベル → 座標ラベル） | 本プロジェクト | 文字の描画をホストへ委ねるコントロールでだけ必要な手順（単体の Marquee には重ね順の概念が無い）。実寸測定は描画 API 依存のため UI 層が与える |
+| 描画するラベルの一覧と順序（サイズラベル → カーソル座標ラベル） | 本プロジェクト | 文字を UI 要素として置くコントロールでだけ必要な手順（単体の Marquee には要素という概念が無い）。実寸測定は描画 API 依存のため UI 層が与える（ラベルは常に最上位） |
 | 要求の実処理（ズーム率の決定・表示の適用・スクロール先の決定） | ホスト（ズームビューポート等） | ビューの状態を持つのはビューポートだけ |
 | スクロール適用先の適合（UI 固有の型 → `IWheelScrollTarget`） | UI 層 | フレームワーク固有の型（Avalonia の `ScrollViewer` 等）を使う |
 
@@ -88,11 +88,11 @@ _viewport.Notify();   // 状態スナップショットの通知 + 再描画（�
 ```
 
 ```csharp
-// UI 層（コントロール）: ラベルの描画項目を 1 回の走査で描く
+// UI 層（コントロール）: ラベル要素の配置指示を 1 回の走査で得る
 // （実寸測定は描画 API 依存のため、UI 層が測定関数を渡す）
-foreach (var item in MarqueeLabelLayoutPlan.Resolve(deco, coordLabel, MeasureText))
+foreach (var item in MarqueeLabelLayoutPlan.Resolve(content, MeasureText))
 {
-    DrawLabel(item);   // 背景を塗ってから文字を描く（自 UI の描画 API へ写すだけ）
+    PlaceLabelElement(item);   // 自 UI の要素（Border + TextBlock）へ写すだけ
 }
 ```
 
@@ -103,7 +103,7 @@ tests/
 ├── MarqueeWheelInterpreter.Tests.cs # 解釈・通知・連携先への適用・ログ（Ctrl の判定・方向・位置・Shift の横変換・連続通知・読者なし）（15 件）
 ├── WheelRequest.Tests.cs            # 要求の値（回転量ベクター・方向と位置）（3 件）
 ├── MarqueeViewportNotifier.Tests.cs # ビューポート変化の通知（スナップショット・再描画・状態不変・読者なし・引数の検証）（5 件）
-└── MarqueeLabelLayoutPlan.Tests.cs    # ラベル描画項目の解決（空・ラベルのみ・座標ラベルのみ・並び順・配置・測定の呼ばれ方・引数の検証）（8 件）
+└── MarqueeLabelLayoutPlan.Tests.cs  # ラベル要素の配置指示の解決（空・サイズのみ・座標のみ・順序・配置・内側余白・測定の呼ばれ方・色と角丸・引数の検証）（9 件）
 ```
 
 ```powershell

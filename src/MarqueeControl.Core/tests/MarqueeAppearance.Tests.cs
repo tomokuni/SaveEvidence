@@ -158,4 +158,63 @@ public class MarqueeAppearanceTests
             Assert.NotEqual(MarqueeCursorKind.Default, Selection.SelectionGeometry.ToCursorKind(handle));
         }
     }
+
+    // ====================================================================
+    // ComputeHostLabelBackground（ホストが描く付加情報ラベルの体裁）
+    // ====================================================================
+
+    [Fact]
+    public void 背景_ホスト付加情報ラベルは文字の周囲へ内側余白を取る()
+    {
+        // 操作・情報ラベルは選択コントロールの概念ではないが、体裁（内側余白）はコアが単一所有する
+        var rect = MarqueeAppearance.ComputeHostLabelBackground(new EsPoint(100, 50), new EsSize(40, 12));
+
+        Assert.Equal(100 - MarqueeAppearance.SizeLabelPadding, rect.X);
+        Assert.Equal(50 - MarqueeAppearance.SizeLabelPadding, rect.Y);
+        Assert.Equal(40 + MarqueeAppearance.SizeLabelPadding * 2, rect.Width);
+        Assert.Equal(12 + MarqueeAppearance.SizeLabelPadding * 2, rect.Height);
+    }
+
+    [Fact]
+    public void 背景_サイズラベルと同じ内側余白を使う()
+    {
+        // 縦積みの間隔を揃えるため、付加情報ラベルはサイズラベルと同じ余白値を共有する
+        var textSize = new EsSize(30, 10);
+        var host = MarqueeAppearance.ComputeHostLabelBackground(new EsPoint(0, 0), textSize);
+        var size = MarqueeAppearance.ComputeSizeLabelBackground(new EsPoint(0, 0), textSize);
+
+        Assert.Equal(size.Width, host.Width);
+        Assert.Equal(size.Height, host.Height);
+    }
+
+    // ====================================================================
+    // NextLabelTop（縦積みしたラベルの行送り）
+    // ====================================================================
+
+    [Fact]
+    public void 行送り_フォントサイズと内側余白の分だけ下へ進む()
+    {
+        // サイズラベル（上端 20・フォント 14）の下へ付加情報ラベルを積む例
+        var next = MarqueeAppearance.NextLabelTop(20.0, 14.0);
+
+        Assert.Equal(20.0 + 14.0 + MarqueeAppearance.SizeLabelPadding * 2, next);
+        Assert.True(next > 20.0);
+    }
+
+    [Fact]
+    public void 行送り_サイズラベルの背景の下端から内側余白を戻した位置になる()
+    {
+        // 実利用の経路（サイズラベルの ComputeFrame）と関係を固定する。
+        // サイズラベルの背景は基準点に内側余白を加えた位置から始まり、次の行はその下端から内側余白を戻した位置になる。
+        var anchor = new EsPoint(0, 30);
+        var fontSize = 14.0;
+        var sizeLabel = new MarqueeSizeLabel(
+            "(0, 0) - (50, 14),  (50×14)", anchor, fontSize,
+            System.Drawing.Color.White, System.Drawing.Color.Black);
+        var frame = sizeLabel.ComputeFrame(new EsSize(50, fontSize));
+
+        Assert.Equal(
+            frame.Background.Bottom - MarqueeAppearance.SizeLabelPadding,
+            MarqueeAppearance.NextLabelTop(anchor.Y, fontSize));
+    }
 }

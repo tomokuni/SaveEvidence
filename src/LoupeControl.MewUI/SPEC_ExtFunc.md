@@ -6,13 +6,13 @@
 ## 概要
 
 ルーペ（拡大鏡）は、**拡大元の 100% 画像**と**拡大中心（元画像ピクセル座標）**を受け取り、
-市松模様の背景・拡大画像・十字線・外枠を描画するコントロールです（中心座標ラベルは文字の描画をホストが担います）。
+市松模様の背景・拡大画像・十字線・外枠を描画するコントロールです（中心座標ラベルはテキスト要素として表示します）。
 
 **Avalonia 版 `LoupeControl` と同じ UI 非依存コア（`LoupeControl.Core`）を使うため、設定値と見た目は両 UI で一致します。**
 
 ## 公開 API
 
-名前空間 `Estable.MewUI.Loupe` / クラス `LoupeControl`（`public sealed`、`SkiaCanvasView` 派生）。
+名前空間 `Estable.MewUI.Loupe` / クラス `LoupeControl`（`public sealed`、`Panel` 派生。図形は子の `SkiaCanvasView` が描画する）。
 
 ### プロパティ
 
@@ -52,7 +52,7 @@
 
 ## 描画仕様
 
-描画の順序は次のとおりです（後から描いたものが上に重なります）。
+**描く層とその順序はコアが単一所有します**（`LoupeDrawLayer`）。コアが返す層の順序は次のとおりです（後から描いたものが上に重なります）。
 
 | 順序 | 要素 | 備考 |
 | --- | --- | --- |
@@ -62,7 +62,7 @@
 | 4 | 十字線 | 中央の縦横 2 本（幅は拡大率と同じ物理ピクセル） |
 | 5 | 外枠 | 四辺（`Options.Appearance.FrameWidth` の太さ） |
 
-中心座標ラベルの文字はコントロールが描かず、描画完了イベント（`Rendered`）の `CoordLabel` をホストがキャンバスへ描きます（上記の後ろに重なります。配置はコアの `LoupeCoordLabel.ComputeFrame`、実寸測定は `Platform.Core` の `SkiaText.Measure`、描画順は `SkiaLabel.Draw` が単一所有します）。
+中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（上記の後ろに重なります。文言・表示可否・配置はコア、実寸測定は `SkiaText.Measure`、描画順はコアの `LoupeDrawLayer` が単一所有します）。子要素は親より後に描かれるため、ラベルは常に最上位になります。
 
 ### サイズの決定
 
@@ -103,7 +103,7 @@
 
 `Rendered` イベントは、ルーペを描画した直後（同一フレーム内）に引数 `LoupeRenderedEventArgs` で通知します。ホストはハンドラ内で描画先キャンバスへ追加描画（選択矩形の破線等のオーバーレイ）を行えます。
 
-中心座標ラベルの**文字はコントロールが描きません**。`LoupeRenderedEventArgs.CoordLabel`（文言・寸法・配置の計算元を含む契約）を渡すので、ホストがキャンバスへ描きます（配置はコアの `LoupeCoordLabel.ComputeFrame`、実寸測定は `Platform.Core` の `SkiaText.Measure`、描画順は `SkiaLabel.Draw` が単一所有するため、ホストは実測と描画の呼び出しだけを行います）。
+中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言・寸法・表示可否はコア（`LoupeCoordLabel`）が、実寸からの配置は `LoupeLabelLayoutPlan`（`LoupeControl.CoreForControl`）が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |

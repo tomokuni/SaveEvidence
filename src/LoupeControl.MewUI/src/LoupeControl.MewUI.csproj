@@ -23,9 +23,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- UI 非依存の純粋ロジック（Core）とコア幾何型を参照する -->
+    <!-- UI 非依存の純粋ロジック（Core）と、コントロール化のためのラベル配置計画（CoreForControl） -->
     <ProjectReference Include="..\..\LoupeControl.Core\src\LoupeControl.Core.csproj" />
+    <ProjectReference Include="..\..\LoupeControl.CoreForControl\src\LoupeControl.CoreForControl.csproj" />
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
+    <!-- コアの色型 → MewUI の色型へ変換する Interop（色変換の単一所有者） -->
+    <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -97,7 +97,7 @@ flowchart TB
     end
     subgraph Dep["内包コントロール（外部プロジェクト）"]
         direction TB
-        DR["MarqueeControl<br/>Estable.AvaloniaUI.Marquee<br/>（選択矩形の外側の装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）も描画）"]
+        DR["MarqueeControl<br/>Estable.AvaloniaUI.Marquee<br/>（選択矩形の外側の装飾（暗転マスク・穴あけ枠・ハイライト）も描画）"]
 
         LC["LoupeControl<br/>Estable.AvaloniaUI.Loupe"]
     end
@@ -148,8 +148,8 @@ flowchart TB
 
 | コンポーネント | プロジェクト | 責務 |
 | --- | --- | --- |
-| `MarqueeControl` | MarqueeControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート）と、選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の描画。**文字（ラベル・座標ラベル）は描かず** `Rendered` で本クラスへ委ねる |
-| `LoupeControl` | LoupeControl | 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算）。**文字（中心座標ラベル）は描かず** `Rendered` で本クラスへ委ねる |
+| `MarqueeControl` | MarqueeControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート）と、選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の描画。**サイズラベルとカーソル座標ラベルはテキスト要素として配置し**、操作・情報ラベルは本クラス（ホスト）が `Options.Labels` に従って描く |
+| `LoupeControl` | LoupeControl | 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算）。**中心座標ラベルはテキスト要素として配置する** |
 
 ### 6.5 公開イベント引数
 
@@ -187,8 +187,8 @@ sequenceDiagram
     C-->>LC: RequestRender（破線の色・表示可否は Loupe のプロパティに現れないため再生成を要求）
     DR-->>C: SelectionChanged（選択矩形）
     C-->>FM: LogicalSelectionRect / HasSelection 同期 + 再描画
-    C-->>LC: Rendered イベントで選択矩形破線と中心座標ラベルの文字を描画
-    DR-->>C: Rendered イベントでラベル（サイズ・操作・情報）・座標ラベルの文字を描画
+    C-->>LC: Rendered イベントで選択矩形破線を描画（中心座標ラベルはコントロールが表示済み）
+    DR-->>C: Rendered イベントで付加情報（操作・情報ラベル）を描画（サイズ・座標ラベルはコントロールが表示済み）
     DR-->>C: LoupePositionMoved（中心）
     C-->>LC: CenterPoint 更新 + 表示開始
     DR-->>C: ConfirmRequested
@@ -201,8 +201,8 @@ sequenceDiagram
 | 内包イベント | 複合コントロールの処理 | 同期先 |
 | --- | --- | --- |
 | `SelectionChanged` | ルーペの再描画を要求（`RequestRender`） | 選択矩形と外側の装飾は `MarqueeControl` がセッションから直接読んで描画する（本クラスは同期しない）。ルーペの選択矩形破線は Rendered イベント経由で描画し、描画の可否はコアの `ShowSelectionOverlay` が単一所有する（UI は派生値を保持しない） |
-| `Rendered`（選択矩形コントロール） | UI 層が配置したラベル要素 | 描画内容全体（`Content`）を受け取り、そのうち文字（ラベル・座標ラベル）を描く。文言・行・配置はコアが単一所有し、コントロールは文字を描かない（実寸測定は描画 API 依存のため） |
-| `Rendered`（ルーペ） | 破線の描画後に中心座標ラベルを描く（`SkiaText.Measure` + `SkiaLabel.Draw`） | 中心座標ラベルの文字（破線より上に重ねる）。寸法・配置はコアが単一所有する |
+| `Rendered`（選択矩形コントロール） | 付加情報（操作・情報ラベル）を描く | 描画内容全体（`Content`）を受け取り、付加情報を描く。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**（文言・順序はコアが、配置矩形は `MarqueeLabelLayoutPlan` が単一所有する） |
+| `Rendered`（ルーペ） | 破線を描く（中心座標ラベルはコントロールが表示する） | 選択矩形の破線。ラベルの寸法・配置はコアが単一所有する |
 | `ViewportChanged` / ホスト通知（`NotifyViewportChanged`） | `NotifyViewportChanged()`（再描画 + ルーペ位置再計算） | Marquee 再描画 + Loupe（RefreshPosition）。選択矩形はビューポート変化で不変のため再同期しない |
 | `SelectionStarted` | （購読しない） | セッションが自身の選択を初期化するため同期不要（外側の装飾はセッションの状態をそのまま読む） |
 | `SelectionCancelled` | （購読しない） | 同上 |

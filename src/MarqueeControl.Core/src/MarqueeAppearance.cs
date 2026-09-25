@@ -118,4 +118,31 @@ public static class MarqueeAppearance
     /// </remarks>
     public static EsPoint ComputeSizeLabelTextOrigin(EsPoint origin)
         => new(origin.X + SizeLabelPadding * 2, origin.Y + SizeLabelPadding);
+
+    /// <summary>ホストが描く付加情報ラベルの背景矩形を求める（テキストの実寸 + 内側余白 × 2）。</summary>
+    /// <param name="textOrigin">文字の左上原点（DIP）。</param>
+    /// <param name="textSize">テキストの実寸（描画 API で測定した値・DIP）。</param>
+    /// <returns>背景矩形（DIP。文字の左上原点から内側余白の分だけ広げた矩形）。</returns>
+    /// <remarks>
+    /// 付加情報ラベル（操作・情報）は選択矩形コントロールの概念ではないため文言はホストが与えるが、<br/>
+    /// <b>体裁はサイズラベルと同じ内側余白を使う</b>（穴あけ矩形の左上へ同じ間隔で縦に積む）。<br/>
+    /// 余白の適用を UI へ書かせないため、背景矩形の組み立ては本メソッドが単一所有する。
+    /// </remarks>
+    public static EsRect ComputeHostLabelBackground(EsPoint textOrigin, EsSize textSize)
+        => new(
+            textOrigin.X - SizeLabelPadding,
+            textOrigin.Y - SizeLabelPadding,
+            textSize.Width + SizeLabelPadding * 2,
+            textSize.Height + SizeLabelPadding * 2);
+
+    /// <summary>縦積みしたラベルの次の行の上端を求める。</summary>
+    /// <param name="top">現在の行の上端（DIP）。</param>
+    /// <param name="fontSize">現在の行のフォントサイズ（DIP）。</param>
+    /// <returns>次の行の上端（DIP。現在の行の高さ + 内側余白 × 2 だけ下）。</returns>
+    /// <remarks>
+    /// サイズラベルと付加情報ラベル（操作・情報）を同じ間隔で縦に積む規則を本メソッドが単一所有する。<br/>
+    /// 行送りを UI へ書かせない（両 UI で間隔がずれる余地をなくす）。
+    /// </remarks>
+    public static double NextLabelTop(double top, double fontSize)
+        => top + fontSize + SizeLabelPadding * 2;
 }

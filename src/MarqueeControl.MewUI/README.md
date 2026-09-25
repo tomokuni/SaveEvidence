@@ -8,7 +8,7 @@
 - **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `MarqueeControl.Core` が単一所有します（UI 層は公開ファサード `Marquee` だけを参照し、内部の状態機械・フレーム解決には触れません）。
   Avalonia 版と MewUI 版の挙動は同じ計算に基づきます。
 - **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへハンドル・十字マーカー（選択矩形）と、選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・枠線）を描画します。
-- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベルの**文言・外観・配置の計算は Core が単一所有**し、実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。操作・情報ラベルはアプリ固有の付加情報のためホストが自前で描く。
+- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベル（`MarqueeCoordLabel`）の**文言・外観・順序は Core が単一所有**し、実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`SkiaText.Measure`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - **DPI 追従**: `OnDpiChanged` でスケーリング係数を更新し、DIP 座標で描画します（枠線・ハンドルの画面上の大きさを保ちます）。
 - **コア型のイベント引数**: イベントの座標は UI 非依存のコア型（`EsPoint` / `EsRect`）で公開します（境界変換が不要）。
 
@@ -44,7 +44,8 @@ marquee.SelectionChanged += (_, e) => Console.WriteLine($"選択: {e.Rect}");
 marquee.LoupePositionMoved += (_, e) => UpdateLoupe(e.Point);
 marquee.SelectionCompleted += (_, e) => Capture(e.Rect);
 
-// 3.5 文字（ラベル・座標ラベル）を描く（テキストの実寸測定が必要なためホストが描く）
+// 3.5 ラベル（サイズ・カーソル座標）はコントロールがテキスト要素として配置する。
+// ホストは描画完了イベントで付加情報（操作・情報ラベル）を描ける（図形はコントロールが描き終えている）。
 marquee.Rendered += (_, e) =>
 {
     // 図形（装飾・ハンドル・マーカー）はコントロールが描く。
@@ -96,7 +97,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた設定（コアの `Estable.Marquee.MarqueeOptions`） |
-| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | 装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定（装飾層の `Estable.Marquee.Decoration.MarqueeDecoOptions`） |
+| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | 装飾（暗転マスク・穴あけ枠・ハイライト）の設定（`Estable.Marquee.Decoration.MarqueeDecoOptions`） |
 | `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と同一）:
@@ -146,7 +147,7 @@ dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 - `MarqueeSkiaRenderer.Tests.cs`: ハンドル・十字マーカーの画素検証。
 - `MarqueeOuterSkiaRenderer.Tests.cs`: 外側の装飾（暗転・枠線）の画素検証（文字は描かないことの検証を含む）。
 - `MarqueeInnerSkiaRenderer.Tests.cs`: 内側の装飾（塗り・内枠）の画素検証。
-  - `MarqueeSizeLabel.Tests.cs` / `MarqueeCoordLabel.Tests.cs` / `MarqueeLabelLayoutPlan.Tests.cs`: ラベルの文言・外観・配置矩形の検証。
+  - `MarqueeLabelLayoutPlan.Tests.cs`（`MarqueeControl.CoreForControl`）: ラベル要素の配置指示の検証（実寸の反映・順序・引数）。UI 層の要素配置は `MarqueeControl.Tests.cs` が検証する。
 - `MarqueeControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、ビューポート通知、`Log` のフォールバックと設定変更ログ。
 - ログの定義（操作ログ・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います（ズーム要求のログは組み込みの層の `MarqueeWheelLogMessage` が所有し、`MarqueeControl.CoreForControl.Tests` が検証します）。
 

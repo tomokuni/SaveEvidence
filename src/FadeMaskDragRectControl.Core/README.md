@@ -16,7 +16,8 @@
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `FadeMaskDragRectMode` | public | 動作モード（Crop / AreaSelect / ScreenSelect / WindowSelect） |
-| `FadeMaskDragRectOptions` | public | 設定の単一値（`Marquee` / `Loupe` / 選択矩形破線の色 / ルーペオフセット）。**外側の装飾の外観も `Marquee.OuterAppearance` が単一所有する**（枠線を 2 箇所に持たない） |
+| `FadeMaskDragRectOptions` | public | 設定の単一値（`Marquee` / `Deco`（装飾） / `Loupe` / `Labels`（操作・情報ラベルの外観） / 選択矩形破線の色 / ルーペオフセット）。**外側の装飾の外観は `Deco.OuterAppearance` が単一所有する**（枠線を 2 箇所に持たない） |
+| `FadeMaskDragRectLabelOptions` | public | ホスト固有の付加情報（操作ラベル・情報ラベル）の外観（表示可否・寸法・色）。文言の生成と描画はホストが行う |
 | `FadeMaskDragRectState` | internal | モードから導出する状態（選択矩形・破線・全面暗転の可否とルーペの表示可否） |
 | `FadeMaskDragRectModes` | internal | モード → 状態の解決（`Resolve`） |
 | `FadeMaskDragRectSelection` | internal | 選択矩形の可否判定（幅・高さが正か） |

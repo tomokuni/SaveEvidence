@@ -295,4 +295,38 @@ public class LoupeTests
         // 配置の基準は物理ピクセルを DIP へ換算した表示サイズ（160 DIP の要求が 2 倍の物理ピクセルになり、DIP へ戻る）
         Assert.Equal(160.0, notification.CoordLabel.Value.DisplaySize);
     }
+
+    [Fact]
+    public void ResolveNotification_描く層は下地から中心座標ラベルの順で返す()
+    {
+        var loupe = new Loupe { CenterPoint = new EsPoint(50, 60) };
+        var request = loupe.CreateRequest();
+
+        var notification = loupe.ResolveNotification(request);
+
+        // 描画順はコアが単一所有する（UI 層は先頭から順に処理するだけ）
+        Assert.Equal(
+            [
+                LoupeDrawLayer.Background,
+                LoupeDrawLayer.Checkerboard,
+                LoupeDrawLayer.Image,
+                LoupeDrawLayer.Crosshair,
+                LoupeDrawLayer.Frame,
+                LoupeDrawLayer.CoordLabel,
+            ],
+            notification.Layers);
+    }
+
+    [Fact]
+    public void ResolveNotification_ラベルを描かない場合はラベルの層を含めない()
+    {
+        var options = new LoupeOptions { Appearance = new LoupeAppearance { ShowCoordLabel = false } };
+        var loupe = new Loupe(options) { CenterPoint = new EsPoint(50, 60) };
+        var request = loupe.CreateRequest();
+
+        var notification = loupe.ResolveNotification(request);
+
+        Assert.Equal(5, notification.Layers.Count);
+        Assert.DoesNotContain(LoupeDrawLayer.CoordLabel, notification.Layers);
+    }
 }

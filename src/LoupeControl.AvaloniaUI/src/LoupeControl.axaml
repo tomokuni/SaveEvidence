@@ -1,8 +1,0 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Estable.AvaloniaUI.Loupe.LoupeControl">
-    <!-- ルーペ画像表示領域（外枠・市松模様・十字線はビットマップ自体に描画済み） -->
-    <!-- 中心座標ラベルの文字は本コントロールが描かない。描画完了イベント（Rendered）でホストが描く -->
-    <Image x:Name="PART_Image"
-           Stretch="Fill"/>
-</UserControl>

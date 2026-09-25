@@ -222,8 +222,8 @@ public sealed partial class MarqueeControl
     /// <returns>割り当てサイズ。</returns>
     /// <remarks>
     /// <b>描画順はコアが単一所有する</b>: コアの描画内容から得た配置（<see cref="MarqueeLabelLayoutPlan"/>）に従って<br/>
-    /// ラベル要素を <see cref="Bounds"/> へ配置するだけであり、位置の計算を持たない。<br/>
-    /// 要素は <see cref="Children"/> の末尾へ置く（子は親より後に描かれるため、ラベルは常に最上位になる）。
+    /// ラベル要素を <see cref="Avalonia.Visual.Bounds"/> へ配置するだけであり、位置の計算を持たない。<br/>
+    /// 要素は <see cref="Avalonia.Controls.Panel.Children"/> の末尾へ置く（子は親より後に描かれるため、ラベルは常に最上位になる）。
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {

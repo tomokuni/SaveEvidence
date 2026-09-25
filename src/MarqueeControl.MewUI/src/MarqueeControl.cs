@@ -220,7 +220,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント。</summary>
     /// <remarks>
     /// 本コントロールは文字（ラベル・座標ラベル）を描かない。テキストの実寸測定は描画 API に依存するため、<br/>
-    /// 「どの文言をどこへ描くか」はコアが決め、実際の描画はホストが本イベントで行う（<see cref="MarqueeLabelRenderer"/> を使うとよい）。<br/>
+    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<see cref="MarqueeLabelLayoutPlan"/>）。<br/>
     /// 契約は文字に限定せず**描画内容全体**（<see cref="MarqueeRenderedEventArgs.Content"/>）を渡すため、ホストは文字以外の上書きもできる。<br/>
     /// <b>描画中に発火する</b>ため、ハンドラ内で描画を完了させること（キャンバスを保持しない）。<br/>
     /// 描画のたびに発火する（文字の有無は <c>Content.HasText</c> で判定できる）。
@@ -342,7 +342,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <remarks>
-    /// 状態の更新と通知はコア（ファサード）が担う（<see cref="ClampToDomainBounds"/> が有効な場合は境界内へクリップしてから設定する）。<br/>
+    /// 状態の更新と通知はコア（ファサード）が担う（<see cref="MarqueeOptions.ClampToDomainBounds"/> が有効な場合は境界内へクリップしてから設定する）。<br/>
     /// 設定後は <see cref="SelectionChanged"/> が発火し、再描画される。
     /// </remarks>
     public void SetSelection(EsRect rect) => _marquee.SetSelection(rect);
@@ -393,7 +393,7 @@ public sealed class MarqueeControl : Panel
     /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
     /// <remarks>
     /// <b>位置はコアが決める</b>: ラベルの配置は <see cref="MarqueeLabelLayoutPlan"/>（コントロール化の層）が<br/>
-    /// 実寸から求めた矩形をそのまま使い、本クラスは要素を <see cref="Arrange"/> するだけである。<br/>
+    /// 実寸から求めた矩形をそのまま使い、本クラスは要素を <c>Arrange</c> するだけである。<br/>
     /// MewUI は <c>Margin</c> による絶対配置が反映されないため、配置フェーズで明示的に位置を確定させる。<br/>
     /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。
     /// </remarks>
@@ -515,7 +515,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>ホイールでズーム要求・スクロール要求を行う。</summary>
     /// <param name="e">ホイールの情報。</param>
     /// <remarks>
-    /// Ctrl+ホイールは <see cref="ZoomRequested"/>（ズームの実処理は上位 AP）、それ以外は <see cref="ScrollRequested"><br/>
+    /// Ctrl+ホイールは <see cref="ZoomRequested"/>（ズームの実処理は上位 AP）、それ以外は <see cref="ScrollRequested"/><br/>
     /// （スクロールの実処理は上位 AP）を発火する。回転量はそのまま通知し、解釈（Ctrl の判定・連携先への適用・ログ）は<br/>
     /// コントロール化の層（<c>MarqueeControl.CoreForControl</c> の <see cref="MarqueeWheelInterpreter"/>）が単一所有する。<br/>
     /// ホイールはビューの操作であり選択矩形の状態を変えない。
@@ -582,7 +582,12 @@ public sealed class MarqueeControl : Panel
         public void RequestFocus() => owner.Focus();
 
         /// <summary>再描画を要求する。</summary>
-        public void RequestRedraw() => owner.InvalidateVisual();
+        /// <remarks>ラベル（サイズ・カーソル座標）はテキスト要素であり、配置は配置フェーズで書き換えるため、再描画と併せて配置も無効化する。</remarks>
+        public void RequestRedraw()
+        {
+            owner.InvalidateVisual();
+            owner.InvalidateArrange();
+        }
 
         /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
         /// <param name="kind">カーソル形状の種別（コア提供）。</param>
@@ -693,7 +698,7 @@ public sealed class MarqueeControl : Panel
         };
     }
 
-    /// <summary>選択矩形の外側に描く装飾・ハンドル・十字マーカーを描画し、文字はホストへ委ねる。</summary>
+    /// <summary>選択矩形の外側に描く装飾・ハンドル・十字マーカーを描画し、付加情報の描画機会をホストへ通知する。</summary>
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>

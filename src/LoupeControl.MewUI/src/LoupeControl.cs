@@ -1,10 +1,13 @@
 using Aprillz.MewUI;
+using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
 using Estable.Loupe;
+using Estable.Loupe.CoreForControl;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
@@ -21,17 +24,21 @@ namespace Estable.MewUI.Loupe;
 /// <b>入力</b>: <see cref="Source"/>（拡大元の 100% 画像）と <see cref="CenterPoint"/>（元画像ピクセル座標）。<br/>
 /// <b>設定</b>: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有する表示サイズ・拡大率・外観）。<br/>
 /// <b>環境</b>: <see cref="RenderScaling"/>（DPI 追従）。<br/>
-/// <b>描画</b>: 中間ビットマップを生成せず、画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
+/// <b>描画</b>: 中間ビットマップを生成せず、子の図形キャンバス（<see cref="ShapeCanvas"/>）が画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
 /// 数値の安全域への補正は <see cref="LoupeOptions"/> / <see cref="LoupeAppearance"/>（コア）が、描画サイズの決定は<br/>
-/// <see cref="LoupeFacade.CreateRequest"/>（コア）が、外観の寸法値（タイルサイズ・外枠の太さ・ラベル文字サイズ）と<br/>
+/// <see cref="LoupeFacade.CreateRequest"/>（コア）が、外観の寸法値（タイルサイズ・外枠の太さ）と<br/>
 /// 下地の描画可否は <see cref="LoupeAppearanceScaler"/> / <see cref="LoupeAppearance"/>（コア）が単一所有する。<br/>
+/// <br/>
+/// <b>基底クラス</b>: 図形キャンバスとラベル要素を子として重ねるため <see cref="Panel"/> を採用する。<br/>
+/// 図形キャンバスを先に、ラベル要素を後に子へ加えるため、<b>ラベルは常に最上位</b>の契約が構造で成立する。<br/>
 /// <br/>
 /// <b>ホスト側の操作</b>: <see cref="Source"/> を設定して <see cref="CenterPoint"/> を現在位置へ更新すると、<br/>
 /// ルーペがその位置を拡大表示する（描画はプロパティ変更で自動的に無効化される）。<br/>
 /// <b>座標ラベル</b>: 表示可否は <see cref="LoupeAppearance.ShouldShowCoordLabel"/>（コア）が判断し、<br/>
-/// 余白と位置はコアの <c>LoupeLabelLayout</c>（コア内部）が単一所有する。
+/// 文言・寸法は <see cref="LoupeCoordLabel"/>（コア）が、配置は <see cref="LoupeLabelLayoutPlan"/>（コントロール化の層）が<br/>
+/// 実寸（<see cref="SkiaText.Measure"/>）から単一所有する（本コントロールは要素を置くだけである）。
 /// </remarks>
-public sealed class LoupeControl : SkiaCanvasView
+public sealed class LoupeControl : Panel
 {
     /// <summary><see cref="Source"/> プロパティ（拡大元の 100% 画像）。</summary>
     /// <remarks>変更ログはコアのログ定義が単一所有する（本コントロールは変更通知で呼ぶだけ）。</remarks>
@@ -50,6 +57,8 @@ public sealed class LoupeControl : SkiaCanvasView
                 o.Log.LogCenterPointChanged(oldValue, newValue);
                 // 拡大中心はコア（ファサード）が単一所有する（表示位置・描画入力の計算元）
                 o._loupe.CenterPoint = newValue;
+                // 中心座標ラベルの文言は中心に依存するため、ラベル要素を配置し直す
+                o.InvalidateArrange();
             });
 
     /// <summary><see cref="Options"/> プロパティ（表示サイズ・拡大率・外観。コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
@@ -69,6 +78,8 @@ public sealed class LoupeControl : SkiaCanvasView
                 o.Log.LogOptionsChanged(oldValue, newValue);
                 // 表示サイズ（要求サイズ）と拡大率・外観はコア（ファサード）が単一所有する（表示レイアウトと描画入力の計算元）
                 o._loupe.Options = newValue;
+                // ラベルの大きさ・外観・表示可否が変わるため、ラベル要素を配置し直す（表示サイズが同じでも必要）
+                o.InvalidateArrange();
             });
 
     /// <summary><see cref="RenderScaling"/> プロパティ（表示 DIP → 物理ピクセルのスケーリング係数）。</summary>
@@ -84,6 +95,8 @@ public sealed class LoupeControl : SkiaCanvasView
                 o.Log.LogRenderScalingChanged(oldValue, newValue);
                 // 描画入力（物理ピクセル）の計算元はコア（ファサード）が単一所有する
                 o._loupe.RenderScaling = newValue;
+                // ラベルの配置の基準（表示サイズ）が物理ピクセル換算で変わるため、配置し直す
+                o.InvalidateArrange();
             },
             coerce: static (_, value) => CoerceRenderScaling(value));
 
@@ -94,6 +107,17 @@ public sealed class LoupeControl : SkiaCanvasView
     /// フィールド初期化子で生成する（プロパティ変更のコールバックから参照できるようにするため）。
     /// </remarks>
     private readonly LoupeFacade _loupe = new();
+
+    /// <summary>図形（背景・市松模様・拡大画像・十字線・外枠）を描画する内部キャンバス。</summary>
+    /// <remarks>
+    /// <b>描画順を構造で保証する</b>: 本パネルが図形のキャンバスを先に、ラベル要素を後に子として持つため、<br/>
+    /// ラベルは常に図形より後に描かれる（コアの「ラベルは最上位」契約が構造で成立する）。<br/>
+    /// 入力は本パネルが受ける（本キャンバスはヒットテスト対象外）。
+    /// </remarks>
+    private readonly ShapeCanvas _shapes;
+
+    /// <summary>ラベル要素（背景 + テキスト）を保持する。要素数はラベルの有無に追従する。</summary>
+    private readonly List<Border> _labelElements = [];
 
     /// <summary>拡大元の 100% 画像を取得または設定する。</summary>
     /// <value>拡大元の画像。null の場合は市松模様のみを表示する。</value>
@@ -171,12 +195,35 @@ public sealed class LoupeControl : SkiaCanvasView
 
     /// <summary>ルーペコントロールを初期化する。</summary>
     /// <remarks>
-    /// 静的画像を描画するため連続再描画を無効化し、キャンバスの描画イベントを購読する。
+    /// 図形キャンバス（<see cref="ShapeCanvas"/>）を子として加える（ラベル要素より先に加えるため常に最下になる）。<br/>
+    /// キャンバスは連続再描画を無効化し、親からの要求（入力・設定の変更）があるときだけ描き直す。
     /// </remarks>
     public LoupeControl()
     {
-        ContinuousAnimation = false;
-        PaintSurface += OnPaintSurface;
+        // 図形は専用の子キャンバスが描く（ラベル要素より先に子として加えるため、常にラベルの下になる）
+        _shapes = new ShapeCanvas(this) { IsHitTestVisible = false };
+        Add(_shapes);
+    }
+
+    /// <summary>図形（背景・市松模様・拡大画像・十字線・外枠）だけを描画する内部 Skia キャンバス。</summary>
+    /// <remarks>
+    /// 親（<see cref="LoupeControl"/>）の描画入力を組み立てて描画層へ渡すだけであり、判断を持たない。<br/>
+    /// 中心座標ラベルの文字は本キャンバスが描かない（親パネルのラベル要素が描く）。
+    /// </remarks>
+    private sealed class ShapeCanvas : SkiaCanvasView
+    {
+        /// <summary>描画入力の取得元（親コントロール）。</summary>
+        private readonly LoupeControl _owner;
+
+        /// <summary>描画先の親を指定して初期化する。</summary>
+        /// <param name="owner">描画入力の取得元（親コントロール）。</param>
+        public ShapeCanvas(LoupeControl owner)
+        {
+            _owner = owner;
+            // 静止画として扱う（入力・設定の変更時のみ再描画する）
+            ContinuousAnimation = false;
+            PaintSurface += _owner.OnPaintSurface;
+        }
     }
 
     /// <summary>ルーペの描画完了を通知するイベント（描画先キャンバスと表示情報を渡す）。</summary>
@@ -200,15 +247,90 @@ public sealed class LoupeControl : SkiaCanvasView
         set => field = value.OrNullLogger();
     }
 
-    /// <summary>ルーペの要求サイズ（DIP）を返す。</summary>
-    /// <param name="availableSize">親から提示された利用可能サイズ（使用しない）。</param>
-    /// <returns>常に <see cref="LoupeOptions.RequestedSize"/> の正方形。</returns>
+    /// <summary>ルーペの要求サイズ（DIP）と子要素の計測を行う。</summary>
+    /// <param name="availableSize">親から提示された利用可能サイズ。</param>
+    /// <returns>一辺が <see cref="LoupeOptions.RequestedSize"/> の正方形。</returns>
     /// <remarks>
-    /// <see cref="SkiaCanvasView"/> は既定で <c>Size.Empty</c>（親の残余を埋める）を返すが、<br/>
     /// ルーペは一辺が <see cref="LoupeOptions.RequestedSize"/> の正方形であるため、自身の要求サイズを返す。<br/>
-    /// 表示位置はホストが <see cref="ResolveLayout"/>（コアの計算）の結果で配置する（本コントロールは位置を持たない）。
+    /// 表示位置はホストが <see cref="ResolveLayout"/>（コアの計算）の結果で配置する（本コントロールは位置を持たない）。<br/>
+    /// 子（図形キャンバス・ラベル要素）へは利用可能サイズを伝搬する。
     /// </remarks>
-    protected override Size MeasureContent(Size availableSize) => new(Options.RequestedSize, Options.RequestedSize);
+    protected override Size MeasureContent(Size availableSize)
+    {
+        var size = new Size(Options.RequestedSize, Options.RequestedSize);
+
+        _shapes.Measure(size);
+        foreach (var element in _labelElements)
+        {
+            element.Measure(size);
+        }
+
+        return size;
+    }
+
+    /// <summary>子（図形キャンバス・ラベル要素）を配置する。</summary>
+    /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
+    /// <remarks>
+    /// <b>位置はコアが決める</b>: ラベルの配置は <see cref="LoupeLabelLayoutPlan"/>（コントロール化の層）が<br/>
+    /// 実寸から求めた矩形をそのまま使い、本クラスは要素を <c>Arrange</c> するだけである。<br/>
+    /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。
+    /// </remarks>
+    protected override void ArrangeContent(Rect bounds)
+    {
+        // 図形のキャンバスは親領域全体を埋める
+        _shapes.Arrange(bounds);
+
+        var notification = _loupe.ResolveNotification(_loupe.CreateRequest(bounds.Size.ToEsSize()));
+        var elements = LoupeLabelLayoutPlan.Resolve(notification, SkiaText.Measure);
+
+        SyncLabelElements(elements.Count);
+        for (var i = 0; i < elements.Count; i++)
+        {
+            var element = elements[i];
+            ApplyLabelElement(_labelElements[i], element);
+            _labelElements[i].Arrange(new Rect(
+                bounds.X + element.Bounds.X, bounds.Y + element.Bounds.Y, element.Bounds.Width, element.Bounds.Height));
+        }
+    }
+
+    /// <summary>ラベル要素の数を描くラベルの数に合わせる。</summary>
+    /// <param name="count">必要な要素数。</param>
+    /// <remarks>余分な要素は子から外し、不足分は生成して子へ追加する（配置のたびに呼ばれる）。</remarks>
+    private void SyncLabelElements(int count)
+    {
+        while (_labelElements.Count > count)
+        {
+            var last = _labelElements[^1];
+            _labelElements.RemoveAt(_labelElements.Count - 1);
+            Remove(last);
+        }
+
+        while (_labelElements.Count < count)
+        {
+            var border = new Border().Child(new TextBlock());
+            _labelElements.Add(border);
+            Add(border);
+        }
+    }
+
+    /// <summary>ラベル要素の内容と体裁をコアの指示に合わせる。</summary>
+    /// <param name="border">更新する要素（背景）。</param>
+    /// <param name="element">コア（CoreForControl）が解決した配置指示。</param>
+    /// <remarks>背景色はコアが実効色で渡す（アルファ 0 は透明）。文字が無い場合はコアが要素自体を返さない。</remarks>
+    private static void ApplyLabelElement(Border border, in LoupeLabelElement element)
+    {
+        // 本体は配置でサイズを確定するため、要素には内側余白と角丸だけを与える
+        border.Padding(element.PaddingX, element.PaddingY);
+        border.CornerRadius(element.CornerRadius);
+        border.Background = element.BackgroundColor.ToMewUIColor();
+
+        if (border.Child is TextBlock text)
+        {
+            text.Text = element.Text;
+            text.FontSize = element.FontSize;
+            text.Foreground = element.TextColor.ToMewUIColor();
+        }
+    }
 
     /// <summary>DPI の変更時に表示スケーリング係数を追従させる。</summary>
     /// <param name="oldDpi">変更前の DPI。</param>
@@ -231,19 +353,20 @@ public sealed class LoupeControl : SkiaCanvasView
     /// <remarks>
     /// 描画入力（コア⇔UI の契約。<see cref="LoupeRenderRequest"/>）を自 UI の公開プロパティから組み立てて描画層へ渡す<br/>
     /// （DIP → 物理ピクセルの換算と描画先へのクランプはコアが単一所有する）。<br/>
-    /// 描画の順序と内容（下地・市松模様・拡大画像・十字線・外枠）は <see cref="LoupeSkiaRenderer"/> が所有する。<br/>
-    /// 中心座標ラベルの文字はテキストの実寸測定が必要なため描画せず、描画完了イベント（<see cref="Rendered"/>）でホストへ委ねる。
+    /// <b>描く層とその順序はコアが単一所有する</b>（<see cref="LoupeRenderNotification.Layers"/> の順に処理する）。<br/>
+    /// 中心座標ラベルはテキストの実寸測定が必要なため本キャンバスでは描かず、<br/>
+    /// 親パネルのラベル要素（<c>Border</c> + <c>TextBlock</c>）が表示する。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
         // 描画先の表面サイズを渡し、下地の塗りとクランプをコアの契約で解決する。
-        // 表示サイズは本コントロールが自己配置しない（ホストが配置する）ため、要求サイズ（未配置時はコアがクランプしない）を使う。
         var canvasSize = info.Size.ToEsSize();
         var request = _loupe.CreateRequest(canvasSize);
+        var notification = _loupe.ResolveNotification(request);
 
         try
         {
-            LoupeSkiaRenderer.Render(canvas, Source, request);
+            LoupeSkiaRenderer.Render(canvas, Source, request, notification.Layers);
         }
         catch (Exception ex)
         {
@@ -252,21 +375,7 @@ public sealed class LoupeControl : SkiaCanvasView
             return;
         }
 
-        RaiseRendered(canvas, request);
-    }
-
-    /// <summary><see cref="Rendered"/> イベントを発火する（描画完了と表示情報を通知する）。</summary>
-    /// <param name="canvas">ルーペを描画したキャンバス。</param>
-    /// <param name="request">実際に描画した描画入力（通知する切り出し領域・スケール・ラベルの算出元）。</param>
-    /// <remarks>
-    /// 切り出し領域の左上・スケール・座標ラベルの契約はコア（<see cref="LoupeFacade.ResolveNotification"/>）が単一所有する。<br/>
-    /// 中心が未設定の場合は <see cref="LoupeRenderedEventArgs.CaptureTopLeft"/> が null になり、ホストはオーバーレイを描画できない。
-    /// </remarks>
-    private void RaiseRendered(SKCanvas canvas, LoupeRenderRequest request)
-    {
-        var notification = _loupe.ResolveNotification(request);
-
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
-            canvas, request.PixelSize, notification.CaptureTopLeft, notification.Scale, notification.CoordLabel));
+            canvas, request.PixelSize, notification.CaptureTopLeft, notification.Scale));
     }
 }

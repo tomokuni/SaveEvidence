@@ -8,12 +8,12 @@ namespace Estable.CaptureSession;
 /// <param name="BorderColor">選択枠線の色（不透明度は色のアルファに統合）。</param>
 /// <param name="BorderThickness">選択枠線の太さ（DIP）。</param>
 /// <param name="OverlayColor">暗転オーバーレイの色（不透明度は色のアルファに統合）。</param>
-/// <param name="HandleColor">ドラッグハンドルの色（MarqueeControl.HandleColor）。</param>
-/// <param name="HandleSize">ドラッグハンドルの一辺サイズ（DIP・MarqueeControl.HandleSize）。</param>
-/// <param name="HandleHitRadius">ハンドルヒットテスト半径（DIP・MarqueeControl.HandleHitRadius）。</param>
-/// <param name="ClampToDomainBounds">画像外の選択を禁止するか（MarqueeControl.ClampToDomainBounds）。</param>
-/// <param name="MarkerColor">nudge 中の十字マーカーの色（MarqueeControl.MarkerColor）。</param>
-/// <param name="MarkerLength">nudge 中の十字マーカーの長さ（全長・DIP・MarqueeControl.MarkerLength）。</param>
+/// <param name="HandleColor">ドラッグハンドルの色（MarqueeOptions.HandleColor）。</param>
+/// <param name="HandleSize">ドラッグハンドルの一辺サイズ（DIP・MarqueeOptions.HandleSize）。</param>
+/// <param name="HandleHitRadius">ハンドルヒットテスト半径（DIP・MarqueeOptions.HandleHitRadius）。</param>
+/// <param name="ClampToDomainBounds">画像外の選択を禁止するか（MarqueeOptions.ClampToDomainBounds）。</param>
+/// <param name="MarkerColor">nudge 中の十字マーカーの色（MarqueeOptions.MarkerColor）。</param>
+/// <param name="MarkerLength">nudge 中の十字マーカーの長さ（全長・DIP・MarqueeOptions.MarkerLength）。</param>
 /// <param name="LoupeSize">ルーペの一辺のサイズ（DIP）。</param>
 /// <param name="LoupeZoomLevel">ルーペ拡大倍率。</param>
 /// <param name="LoupeOffset">ルーペのカーソルからのオフセット（DIP）。</param>
@@ -37,7 +37,7 @@ namespace Estable.CaptureSession;
 /// <param name="SizeLabelVisible">サイズラベルの表示状態。</param>
 /// <param name="SizeLabelColor">サイズラベルの文字色。</param>
 /// <param name="SizeLabelFontSize">サイズラベルのフォントサイズ。</param>
-/// <param name="SizeLabelOverride">サイズラベルのテキスト明示指定（MarqueeControl.SizeLabelOverrideProvider。null = 自動生成）。</param>
+/// <param name="SizeLabelOverride">サイズラベルのテキスト明示指定（FadeMaskDragRectControl.SizeLabelOverrideProvider。null = 自動生成）。</param>
 /// <param name="TextBackgroundColor">サイズラベル（1 行目）の背景色（不透明度は色のアルファに統合）。</param>
 /// <param name="InfoLabelVisible">情報ラベルの表示状態。</param>
 /// <param name="InfoLabelColor">情報ラベルの文字色。</param>
@@ -47,7 +47,7 @@ namespace Estable.CaptureSession;
 /// <param name="SubLineFontSize">サブラインのフォントサイズ。</param>
 /// <param name="SubLineColor">サブラインの文字色。</param>
 /// <param name="SubLineBackgroundColor">サブライン（2 行目）の背景色（不透明度は色のアルファに統合）。</param>
-/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（MarqueeControl.DisplayScaleScaling・0 以下は Scaling と同値）。</param>
+/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskDragRectControl.DisplayScaleScaling・0 以下は Scaling と同値）。</param>
 /// <remarks>
 /// 全メンバーは nullable とする。<br/>
     /// - 初期設定として使用する場合: null は本クラスの既定値（<see cref="ToNonNull"/> が埋める値）として扱う。<br/>

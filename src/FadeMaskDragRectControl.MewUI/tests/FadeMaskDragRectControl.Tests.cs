@@ -5,6 +5,7 @@ using Estable.MewUI.Marquee;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Aprillz.MewUI;
+using Aprillz.MewUI.Controls;
 using SkiaSharp;
 using System.Reflection;
 using Xunit;
@@ -526,6 +527,37 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(80, control.Loupe.Bounds.Y);
         Assert.Equal(100, control.Loupe.Bounds.Width);
         Assert.Equal(100, control.Loupe.Bounds.Height);
+    }
+
+    /// <summary>複合コントロール経由でもルーペの中心座標ラベルがテキスト要素として配置されることを検証する。</summary>
+    /// <remarks>文言・表示可否・配置はコアが単一所有し、ルーペコントロールが要素を置く（統合経路の検証）。</remarks>
+    [Fact]
+    public void ルーペ_中心座標ラベルの要素を配置する()
+    {
+        var control = new FadeMaskDragRectControl();
+        control.SetCoordinateTransform(CreatePort());
+        control.Options = control.Options with { Loupe = control.Options.Loupe with { RequestedSize = 100 } };
+
+        using var source = CreateSource();
+        control.SetLoupeSource(source);
+        control.SetLoupePosition(new EsPoint(50, 60));
+
+        control.Measure(new Size(400, 400));
+        control.Arrange(new Rect(0, 0, 400, 400));
+
+        // ルーペの子は図形キャンバス + 中心座標ラベル（Border + TextBlock）の 2 つ
+        var label = Assert.Single(control.Loupe.Children.OfType<Border>());
+        var text = Assert.IsType<TextBlock>(label.Child);
+
+        // 文言はコアの CoordinateFormatter が単一所有する
+        Assert.Equal("(50, 60)", text.Text);
+        // ルーペの内側（上端中央）へ配置され、大きさを持つ（子の座標は絶対座標のため相対へ戻して判定する）
+        Assert.True(label.Bounds.Width > 0);
+        Assert.True(label.Bounds.Height > 0);
+        var relativeX = label.Bounds.X - control.Loupe.Bounds.X;
+        var relativeY = label.Bounds.Y - control.Loupe.Bounds.Y;
+        Assert.InRange(relativeX, 0, control.Loupe.Bounds.Width - label.Bounds.Width);
+        Assert.InRange(relativeY, 0, control.Loupe.Bounds.Height - label.Bounds.Height);
     }
 
     [Fact]

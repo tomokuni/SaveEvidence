@@ -96,7 +96,7 @@ flowchart TB
     end
     subgraph LC["LoupeControl.AvaloniaUI プロジェクト (LoupeControl.AvaloniaUI)"]
         direction TB
-        Ctl["LoupeControl<br/>public sealed partial<br/>: UserControl<br/>LoupeControl.axaml / LoupeControl.axaml.cs"]
+        Ctl["LoupeControl<br/>public sealed<br/>: Panel<br/>LoupeControl.cs（コードのみ）"]
         Coh["LoupeRenderCoordinator<br/>public sealed class<br/>（再描画のバッチ化。定義は LoupeControl.CoreForControl）"]
         Pip["LoupeRenderPipeline<br/>internal static class<br/>（ソース解決と描画合成）"]
         Src["LoupeSourceResolver<br/>internal static class<br/>（IImage の型判定・破棄済み検出）"]
@@ -159,11 +159,11 @@ flowchart TB
 
 ### 6.1 LoupeControl
 
-- **分類**: 公開コントロール（`public sealed partial class LoupeControl : UserControl`）
+- **分類**: 公開コントロール（`public sealed class LoupeControl : Panel`。AXAML を持たずコードのみで子要素を構成する）
 - **責務**:
   - 状態管理: 4 個の StyledProperty（`Source: IImage?` / `CenterPoint` / 設定 `Options` / 環境値 `RenderScaling`）
-- 座標ラベル: **コントロールは描かない**。文言・寸法・配置の計算元はコア （`LoupeCoordLabel` / `LoupeAppearanceScaler`。配置の内部手順は internal の `LoupeLabelLayout`）が単一所有し、描画完了イベント（`Rendered`）の `CoordLabel` でホストへ渡す（ホストがルーペ画像へ描く。実寸測定は `Platform.Core` の `SkiaText`、描画順は `SkiaLabel` が単一所有する）
-    - **ホストが描く理由**: テキストの実寸測定は描画 API 依存であり、コントロールの描画サイクル外（ホストの任意のタイミング）で描けるようにするため
+  - 座標ラベル: **コントロールがテキスト要素（`Border` + `TextBlock`）として表示する**。文言・表示可否・寸法・配置はコア（`LoupeCoordLabel` / `LoupeAppearanceScaler`。配置の内部手順は internal の `LoupeLabelLayout`）が単一所有し、コントロールは配置フェーズ（`ArrangeOverride`）で要素を追加・更新する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
+    - **実寸測定は UI が行う理由**: テキストの実寸は描画 API（`FormattedText`）でしか測れないため、UI が測って `LoupeLabelLayoutPlan`（コントロール化の層）へ渡し、返された配置を要素へ反映する
     - ライフサイクル: 世代管理付き非同期ビットマップ生成と解放（`ReleaseBitmap`）
   - 表示制御: 標準プロパティ `IsVisible` で表示・非表示を指示（表示時=再生成要求（非同期・1 フレームに 1 回の生成へ結合）、非表示時=未実行要求の破棄と解放）
     - 再描画のバッチ化: `Dispatcher.UIThread.Post` で複数プロパティ変更を1フレーム1回の再描画に結合
@@ -189,13 +189,13 @@ flowchart TB
 - `LoupeDecorationRenderer`: 十字線と外枠の描画。描画の可否は `LoupeAppearance.HasCrosshair` / `HasFrame`、矩形の計算はコアの `LoupeDecorationGeometry`、太さの換算は `LoupeAppearanceScaler` へ委譲する。
 - `LoupeBrushes`: コアの色型 → 共有ブラシの変換と容量制限付きキャッシュの単一所有（描画層が共用する）。
 - 描画層は**描画入力（`LoupeRenderRequest`）を受け取り、描画の可否・値の単位・幾何をコアへ問い合わせて描くだけ**にする（MewUI 版の描画層と同じ形。外観値は保持しない）。
-- 描画する層の集合と順序（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠）は `LoupeRenderer` が単一所有する。
+- **描く層とその順序はコアが単一所有する**（`LoupeDrawLayer`）。`LoupeRenderer` は渡された層の順に処理するだけで、順序を判断しない（中心座標ラベルは処理しない）。
 - `LoupeRenderer`: 上記3層を合成し、生成したBitmapを返すオーケストレーター。
 
 > 十字線・外枠の矩形計算、市松模様の明暗判定とタイルサイズの換算、拡大描画の矩形計算は `LoupeControl.Core` が単一所有します（MewUI 版と共用）。
 > 本プロジェクトは返された `EsRect` を Avalonia の矩形へ変換して描画するだけです。
 
-> **通知契約**: `LoupeRenderedEventArgs` はホストがオーバーレイ・文字を描くのに必要な値（描画済み Bitmap・切り出し左上・スケール・中心座標ラベルの契約 `CoordLabel`）を通知します。表示位置・表示サイズ・拡大率・拡大中心は、消費側が存在しないため削除しました（必要になればコントロールの公開プロパティから取得できます）。
+> **通知契約**: `LoupeRenderedEventArgs` はホストがオーバーレイを描くのに必要な値（描画済み Bitmap・切り出し左上・スケール）を通知します。中心座標ラベルはコントロールがテキスト要素として表示するため含みません。表示位置・表示サイズ・拡大率・拡大中心は、消費側が存在しないため削除しました（必要になればコントロールの公開プロパティから取得できます）。
 
 ### 6.4 画像入力とピクセル抽出
 
@@ -266,10 +266,10 @@ sequenceDiagram
     Ext-->>Rdr: 切り出し画像 / null（切り出せない = 市松模様のみ）
     Rdr-->>Pl: 合成 Bitmap
     Pl-->>Ctl: 生成 Bitmap
-    Ctl->>Ctl: SetLoupeBitmap（PART_Image.Source / LoupeBitmap・Rendered 通知）
+    Ctl->>Ctl: SetLoupeBitmap（子の Image.Source / LoupeBitmap・Rendered 通知）
 
     AP->>Ctl: IsVisible = false（または Clear）
-    Ctl->>Ctl: ReleaseBitmap（Dispose / null / PART_Image.Source=null）
+    Ctl->>Ctl: ReleaseBitmap（Dispose / null / 子の Image.Source=null）
 ```
 
 ## 9. 補正（coerce）一覧

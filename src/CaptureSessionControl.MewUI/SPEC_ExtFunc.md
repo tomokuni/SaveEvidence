@@ -26,7 +26,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 ### 2.0 排他の規則
 
-撮影（<see cref="Capture" />）と切り出し（<see cref="ToggleCrop" />）は**同時に 1 つだけ**実行できます。  
+撮影（`Capture`）と切り出し（`ToggleCrop`）は**同時に 1 つだけ**実行できます。  
 この規則は `CaptureSessionControl.Core` の `CaptureSessionSlot` が単一所有し、本 Facade がその唯一の適用者です。  
 実行中の要求は無視し、**実行中のセッションを中断しません**（撮影中に切り出しを開始できない・切り出し中に撮影を開始できない）。
 

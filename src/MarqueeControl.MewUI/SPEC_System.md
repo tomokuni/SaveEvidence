@@ -74,12 +74,12 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 ```text
 src/MarqueeControl.MewUI/
 ├── src/
-│   ├── MarqueeControl.cs                 公開 API・入力の受付と効果の適用・カーソル制御・描画の起点（文字はホストへ委ねる）
+│   ├── MarqueeControl.cs                 公開 API・入力の受付と効果の適用・カーソル制御・描画の起点（ラベル要素の配置も含む）
 │   ├── MarqueeSkiaRenderer.cs            ハンドル・十字マーカーの描画
 │   ├── MarqueeOuterSkiaRenderer.cs       外側の装飾（暗転マスク・穴あけ枠）の描画
 │   ├── MarqueeInnerSkiaRenderer.cs       内側の装飾（穴あけ矩形の塗り・内枠）の描画
-│   ├── ラベルの要素配置（ArrangeOverride）           公開（ホスト向け）: ラベル・座標ラベルの文字描画の共通実装
-│   ├── MarqueeRenderedEventArgs.cs        描画完了通知のイベント引数（文字はホストが描く）
+│   ├── ラベルの要素配置（ArrangeContent）        内部: ラベル要素（Border + TextBlock）の追加・更新と配置
+│   ├── MarqueeRenderedEventArgs.cs        描画完了通知のイベント引数（サイズ・座標ラベルはコントロールが表示する）
 │   ├── MarqueePointEventArgs.cs          座標通知のイベント引数
 │   └── SelectionRectEventArgs.cs          選択矩形通知のイベント引数
 └── tests/
@@ -88,17 +88,17 @@ src/MarqueeControl.MewUI/
     ├── MarqueeSkiaRenderer.Tests.cs     描画の検証
     ├── MarqueeOuterSkiaRenderer.Tests.cs 外側の装飾の描画の検証（画素を実測する）
     ├── MarqueeInnerSkiaRenderer.Tests.cs 内側の装飾の描画の検証（画素を実測する）
-    ├── ラベル要素配置のテスト     ラベル・座標ラベルの文字描画の検証（画素を実測する）
+    ├── ラベル要素配置のテスト     ラベル要素の追加・更新と配置の検証
     └── MarqueeControl.Tests.cs          公開 API・プロパティ・イベントの検証
 ```
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `MarqueeControl` | `MewProperty` の定義、入力のドメイン変換とファサードへの通知、`IMarqueeEffects` の実装（効果の適用）、マウスキャプチャの取得/解放、DPI 変更の追従、描画内容の写像と文字の委譲（`Rendered`） |
-| `MarqueeSkiaRenderer` | 8 方向ハンドル・十字マーカーの描画。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため）。**座標ラベルも描かない**（ホストが描く） |
-| `MarqueeOuterSkiaRenderer` | 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）の `OuterDecoFrame` を Skia の描画 API へ写す（暗転マスク・枠線。判断を持たない）。**ラベル（文字）は描かない**（ホストが描く） |
+| `MarqueeControl` | `MewProperty` の定義、入力のドメイン変換とファサードへの通知、`IMarqueeEffects` の実装（効果の適用）、マウスキャプチャの取得/解放、DPI 変更の追従、描画内容の写像、子要素（図形キャンバス・ラベル要素）の計測と配置、付加情報の描画機会の通知（`Rendered`） |
+| `MarqueeSkiaRenderer` | 8 方向ハンドル・十字マーカーの描画。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため）。**サイズ・座標ラベルも描かない**（コントロールがテキスト要素として表示する） |
+| `MarqueeOuterSkiaRenderer` | 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）の `OuterDecoFrame` を Skia の描画 API へ写す（暗転マスク・枠線。判断を持たない）。**ラベル（サイズ・座標）は描かない**（コントロールがテキスト要素として表示する） |
 | `MarqueeInnerSkiaRenderer` | 装飾（`MarqueeControl.Core` の `Decoration` 名前空間）の `InnerDecoFrame` を Skia の描画 API へ写す（穴あけ矩形の塗り・内枠。判断を持たない） |
-| UI 層のラベル要素 | 描画内容のうち文字（ラベル・座標ラベル）を Skia で描く（ホスト向けの共通実装）。文言・外観と描画順（`MarqueeDrawContent.Layers`）は Core が単一所有し、実寸から配置矩形を求める写像は `MarqueeLabelLayoutPlan` が単一所有する |
+| UI 層のラベル要素 | 親パネルの子要素（`Border` + `TextBlock`）として中心座標・サイズラベルを配置する。文言・外観と順序（`MarqueeDrawContent.Layers`）は Core が単一所有し、実寸から配置矩形を求める写像は `MarqueeLabelLayoutPlan` が単一所有する |
 | `MarqueePointEventArgs` / `SelectionRectEventArgs` / `MarqueeRenderedEventArgs` | 通知時点の座標（矩形）とスナップショットの組・描画完了（描画先と描画内容の契約） |
 | `RenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
@@ -186,8 +186,9 @@ classDiagram
         +Draw(canvas, frame)$ void
       }
       class ラベル要素の配置 {
-        <<public（ホスト向け）>>
-        +Draw(canvas, content)$ void
+        <<内部（親パネルの子要素）>>
+        +SyncLabelElements(count) void
+        +ApplyLabelElement(border, element)$ void
       }
       class MarqueeInnerSkiaRenderer {
         +Draw(canvas, frame)$ void
@@ -233,6 +234,7 @@ classDiagram
 
     SkiaCanvasView <|-- MarqueeControl
     MarqueeControl *-- Marquee : 操作の唯一の窓口（公開ファサード）
+    MarqueeControl *-- ラベル要素の配置 : 子要素として配置（テキスト要素。常に最上位）
     MarqueeControl ..> IMarqueeEffects : 実装（effects の適用先）
     Marquee *-- MarqueeSession : 状態管理（入力の解釈）
     Marquee ..> MarqueeNotice : 通知を UI へ転送（UI は公開イベントへ）
@@ -360,7 +362,7 @@ OnPaintSurface(canvas, info)
        └─ Rendered（ホスト）                         … UI 層が配置したテキスト要素がラベルを表示する
 ```
 
-背景は塗りません（透明のままにして下の画像を透かします）。**選択枠線は外側の装飾の穴あけ枠が描きます**（別々に描くと線幅が二重になるため）。**文字（ラベル・座標ラベル）はホストが描きます**（テキストの実寸測定は描画 API 依存のため。コントロールは描画完了を `Rendered` で通知するだけ。契約は描画内容全体であるため、ホストは文字以外の上書きもできます）。
+背景は塗りません（透明のままにして下の画像を透かします）。**選択枠線は外側の装飾の穴あけ枠が描きます**（別々に描くと線幅が二重になるため）。**サイズ・座標ラベルはコントロールがテキスト要素として表示します**（実寸測定は描画 API 依存のためコントロールが行い、配置矩形は `MarqueeLabelLayoutPlan` が単一所有する。コントロールは描画完了を `Rendered` で通知するだけ。契約は描画内容全体であるため、ホストは付加情報以外の上書きもできます）。
 
 ## エラー処理ポリシー
 

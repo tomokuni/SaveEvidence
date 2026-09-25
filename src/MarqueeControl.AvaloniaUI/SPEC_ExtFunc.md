@@ -6,7 +6,7 @@
 - [2. 目的](#2-目的)
 - [3. 外部利用条件](#3-外部利用条件)
 - [4. 基本的な使用方法](#4-基本的な使用方法)
-  - [4.2.1 文字（ラベル・座標ラベル）の描画](#421-文字ラベル座標ラベルの描画)
+  - [4.2.1 ラベル（文字）の表示](#421-ラベル文字の表示)
 - [5. 公開API](#5-公開api)
   - [5.1 プロパティ](#51-プロパティ)
   - [5.2 メソッド](#52-メソッド)
@@ -128,10 +128,10 @@ marquee.CancelRequested += (_, _) => CancelSelection();
 
 `Escape` / `Enter` キーはコントロールが自己処理し、それぞれ `CancelRequested` / `ConfirmRequested` を発火します。上位はこのイベントを購読して後始末（確定・キャンセル後の処理）を行います。
 
-#### 4.2.1 文字（ラベル・座標ラベル）の描画
+#### 4.2.1 ラベル（文字）の表示
 
-サイズラベルとカーソル座標ラベルの**文言・外観・配置の計算は Core が単一所有**し、`MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が実寸から配置矩形を求める写像を単一所有します。UI 層は `Border` + `TextBlock` を子要素として置くため、**コントロール自身は文字を描きません**。操作・情報ラベルはアプリ固有の付加情報のためホストが自前で描きます。
-描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます（引数の `Content` に装飾・ハンドル・マーカー・ラベル・層の順序が含まれます）。
+サイズラベルとカーソル座標ラベルの**文言・外観・順序は Core が単一所有**し、`MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が実寸から配置矩形を求める写像を単一所有します。コントロールは `Border` + `TextBlock` を子要素として置き（自 UI の API で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のためホストが `Rendered` のハンドラで自前で描きます。
+描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます（引数の `Content` に装飾・穴あけ矩形・ハンドル・マーカー・サイズラベル・座標ラベル・層の順序が含まれます）。
 
 ```csharp
 using Estable.AvaloniaUI.Marquee;
@@ -188,7 +188,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた設定。変更すると再描画され、対話パラメータはコア（ファサード）へ伝搬する |
 | `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定**。装飾（`MarqueeControl.Core` の `Decoration` 名前空間）へ反映する |
-| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）・操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。保持と評価は装飾層が行う）。null または空文字を返す行は描かない |
+| `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。null または空文字を返す場合は自動生成の文言を使う |
 
 `MarqueeOptions` の項目（既定値は本型が単一所有する。すべて `init` のみで不変）:
 
@@ -253,7 +253,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 | `ScrollRequested` | `EventHandler<WheelScrollRequest>` | 通常ホイールによるスクロール要求（生の回転量・Shift・発生位置。連携 ScrollViewer がある場合は発火せず本コントロールがスクロールする） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | Enter キーによる確定要求 |
 | `CancelRequested` | `EventArgs` | Escape キーによるキャンセル要求 |
-| `Rendered` | `MarqueeRenderedEventArgs` | 描画完了の通知（描画のたびに発火）。`Context`（`DrawingContext`）と描画内容（`Content` = `MarqueeDrawContent`（選択矩形の図形・文字）/ `Deco` = `MarqueeDrawContent`（装飾））を渡し、ホストが文字を描く |
+| `Rendered` | `MarqueeRenderedEventArgs` | 描画完了の通知（描画のたびに発火）。`Context`（`DrawingContext`）と描画内容（`Content` = `MarqueeDrawContent`）を渡す。**サイズ・カーソル座標ラベルは本コントロールがテキスト要素として表示する**ため、ホストは付加情報（操作・情報ラベル）の描画に使う |
 
 すべての座標イベントはドメイン座標で通知されます。
 
@@ -286,7 +286,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 | `MarqueeSnapshot` record | 状態 Snapshot（State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / IsDragging / NudgeActive。`HasSelection` は導出プロパティ）。値セマンティクスで比較可能。**`SelectionRect` は `EsRect`、`MousePosition` は `EsPoint`**（UI 非依存） |
 | `SelectionRectEventArgs` | 選択矩形通知（`Rect` は Avalonia 型・ドメイン座標系。`Snapshot` を同梱） |
 | `MarqueePointEventArgs` | 座標通知（`Point` は Avalonia 型・ドメイン座標系。`Snapshot` を同梱） |
-| `MarqueeRenderedEventArgs` | 描画完了通知（`Context` = `DrawingContext`（描画中のみ有効）/ `Content` = `MarqueeDrawContent`（選択矩形の図形・文字の契約）/ `Deco` = `MarqueeDrawContent`（装飾の描画内容）） |
+| `MarqueeRenderedEventArgs` | 描画完了通知（`Context` = `DrawingContext`（描画中のみ有効）/ `Content` = `MarqueeDrawContent`（装飾・穴あけ矩形・ハンドル・マーカー・サイズラベル・座標ラベル・層の順序）） |
 | `HitTarget` enum | ドラッグハンドル種別（カーソル形状マッピング用）。コアが所有 |
 
 ## 6. 座標系

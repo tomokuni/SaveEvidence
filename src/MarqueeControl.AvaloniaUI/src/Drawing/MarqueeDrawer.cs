@@ -10,11 +10,11 @@ namespace Estable.AvaloniaUI.Marquee.Drawing;
 /// <summary>リサイズ可能なドラッグ矩形の描画（選択枠線・ドラッグハンドル・始点マーカー）を提供する静的クラス。</summary>
 /// <remarks>
 /// 矩形ドメイン（Marquee）の視覚表現を担当する。<br/>
-/// ハンドル位置は <see cref="Selection.SelectionGeometry.GetHandlePosition"/>（DRY）から取得し、中心に描画する。<br/>
+/// ハンドル位置は <see cref="SelectionGeometry.GetHandlePosition"/>（DRY）から取得し、中心に描画する。<br/>
 /// <br/>
 /// 選択矩形の外側に描く装飾（暗転マスク・枠線）の描画は <see cref="MarqueeOuterDrawer"/> が担う。<br/>
-/// <b>文字（座標ラベル）は本クラスが描かない</b>: テキストの実寸測定が必要なため、描画完了時にホストへ通知し<br/>
-/// <see cref="MarqueeLabelRenderer"/> が描く（文字の描画をホストの責務とする）。<br/>
+/// <b>文字（サイズラベル・座標ラベル）は本クラスが描かない</b>: 実寸測定が必要なため、コントロールが<br/>
+/// テキスト要素（<see cref="Avalonia.Controls.Border"/> + <see cref="Avalonia.Controls.TextBlock"/>）として配置する（ラベルは常に最上位）。<br/>
 /// <br/>
 /// **適用パターン**: Flyweight（色・太さで決まるブラシ / ペンをキャッシュして再利用）。
 /// </remarks>
@@ -49,7 +49,7 @@ internal static class MarqueeDrawer
     /// <param name="handleColor">ハンドルの塗り色（未指定は白へ解決済み。コアの <c>MarqueeAppearance.ResolveHandleColor</c> が単一所有する）。</param>
     /// <param name="borderColor">ハンドル枠の色（外側の装飾の枠線色を使う）。</param>
     /// <remarks>
-    /// 8方向のハンドル（None / Move を除く）を列挙し、<see cref="Selection.SelectionGeometry.GetHandlePosition"/> から<br/>
+    /// 8方向のハンドル（None / Move を除く）を列挙し、<see cref="SelectionGeometry.GetHandlePosition"/> から<br/>
     /// 中心位置を取得して描画する。新ハンドル追加時は HitTarget の追加のみで描画が追従する（OCP）。
     /// </remarks>
     public static void DrawHandles(DrawingContext context, Rect rect, double handleSize, Color handleColor, Color borderColor)

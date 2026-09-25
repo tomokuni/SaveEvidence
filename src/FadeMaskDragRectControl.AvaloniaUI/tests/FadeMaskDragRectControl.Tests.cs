@@ -499,6 +499,33 @@ public class FadeMaskDragRectControlTests
         window.Close();
     }
 
+    /// <summary>複合コントロール経由でもルーペの中心座標ラベルがテキスト要素として配置されることを検証する。</summary>
+    /// <remarks>文言・表示可否・配置はコアが単一所有し、ルーペコントロールが要素を置く（統合経路の検証）。</remarks>
+    [AvaloniaFact]
+    public void ルーペ_中心座標ラベルの要素を配置する()
+    {
+        var control = new FadeMaskDragRectControl();
+        var window = new Window { Content = new Panel { Children = { control } } };
+        window.Show();
+
+        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.SetLoupePosition(new Point(50, 60));
+
+        // 配置フェーズ（ArrangeOverride）でラベル要素が更新される
+        Dispatcher.UIThread.RunJobs();
+
+        // ルーペの子は画像 + 中心座標ラベル（Border + TextBlock）の 2 つ
+        var label = Assert.Single(control.Loupe.Children.OfType<Border>());
+        var text = Assert.IsType<TextBlock>(label.Child);
+
+        // 文言はコアの CoordinateFormatter が単一所有する
+        Assert.Equal("(50, 60)", text.Text);
+        Assert.True(label.Width > 0);
+        Assert.True(label.Height > 0);
+
+        window.Close();
+    }
+
     // ====================================================================
     // ルーペ Bitmap の再生成要求（ホスト側オーバーレイの鮮度）
     // ====================================================================

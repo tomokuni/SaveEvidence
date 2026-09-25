@@ -60,12 +60,75 @@ public class LoupeRendererTests
         return bitmap;
     }
 
+    /// <summary>コアが解決する描画層の順序（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠）。</summary>
+    /// <remarks>
+    /// 描画順はコアが単一所有するため、本テストはコアが返す順序と同じ並びを渡して描画層を検証する<br/>
+    /// （順序そのものの検証はコアのテストが担う。中心座標ラベルはテキスト要素が表示するため含めない）。
+    /// </remarks>
+    private static readonly IReadOnlyList<LoupeDrawLayer> s_layers =
+    [
+        LoupeDrawLayer.Background,
+        LoupeDrawLayer.Checkerboard,
+        LoupeDrawLayer.Image,
+        LoupeDrawLayer.Crosshair,
+        LoupeDrawLayer.Frame,
+    ];
+
+    /// <summary>ルーペを描画する（コアの描画層の順序を渡す）。</summary>
+    /// <param name="source">拡大元の画像。</param>
+    /// <param name="request">描画入力。</param>
+    /// <returns>描画結果の EsBitmap。破棄は呼び出し側。</returns>
+    private static EsBitmap DrawLoupe(EsBitmap? source, in LoupeRenderRequest request)
+        => LoupeRenderer.DrawLoupe(source, request, s_layers);
+
+    [AvaloniaFact]
+    public void DrawLoupe_描く層の一覧がnullなら例外()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => LoupeRenderer.DrawLoupe(
+                null,
+                CreateRequest(50, 4, CreateAppearance(DrawingColor.Red, 6, DrawingColor.White, DrawingColor.LightGray, DrawingColor.Black, 2)),
+                null!));
+    }
+
+    [AvaloniaFact]
+    public void DrawLoupe_渡された層をその順に描画する()
+    {
+        // 順序を逆にしても例外なく完了する（描画順は渡された層の順に従う）
+        using var src = CreateBitmap(10);
+        var request = CreateRequest(
+            64, 4, CreateAppearance(DrawingColor.Red, 6, DrawingColor.White, DrawingColor.LightGray, DrawingColor.Black, 2),
+            new EsPoint(5, 5));
+
+        var result = LoupeRenderer.DrawLoupe(
+            src, request,
+            [LoupeDrawLayer.Frame, LoupeDrawLayer.Image, LoupeDrawLayer.Checkerboard, LoupeDrawLayer.Background]);
+
+        Assert.NotNull(result);
+        Assert.Equal(64, result.Size.Width);
+    }
+
+    [AvaloniaFact]
+    public void DrawLoupe_層が空なら何も描画しない()
+    {
+        // 描く層が無い場合は描画 API を呼ばない（中心座標ラベルの要素だけを表示する状態）
+        using var src = CreateBitmap(10);
+
+        var result = LoupeRenderer.DrawLoupe(
+            src,
+            CreateRequest(32, 4, CreateAppearance(DrawingColor.Red, 6, Transparent, Transparent, DrawingColor.Black, 2), new EsPoint(5, 5)),
+            []);
+
+        Assert.NotNull(result);
+        Assert.Equal(32, result.Size.Width);
+    }
+
     [AvaloniaFact]
     public void DrawLoupe_指定サイズのBitmapを生成する()
     {
         using var src = CreateBitmap(10);
 
-        var result = LoupeRenderer.DrawLoupe(
+        var result = DrawLoupe(
             src, CreateRequest(160, 4,
                 CreateAppearance(DrawingColor.Red, 6, DrawingColor.White, DrawingColor.LightGray, DrawingColor.Black, 2),
                 new EsPoint(5, 5)));
@@ -79,7 +142,7 @@ public class LoupeRendererTests
     public void DrawLoupe_切り出せない場合は市松模様のみを生成する()
     {
         // 中心未設定 → 切り出せない（市松模様と外枠のみを描画する）
-        var result = LoupeRenderer.DrawLoupe(
+        var result = DrawLoupe(
             null, CreateRequest(100, 4,
                 CreateAppearance(DrawingColor.Red, 6, DrawingColor.White, DrawingColor.LightGray, DrawingColor.Black, 2)));
 
@@ -91,7 +154,7 @@ public class LoupeRendererTests
     [AvaloniaFact]
     public void DrawLoupe_チェッカーサイズ1未満でも動作する()
     {
-        var result = LoupeRenderer.DrawLoupe(
+        var result = DrawLoupe(
             null, CreateRequest(50, 4, CreateAppearance(DrawingColor.Red, 0, Transparent, Transparent, DrawingColor.Black, 1)));
 
         Assert.NotNull(result);
@@ -103,7 +166,7 @@ public class LoupeRendererTests
     {
         using var src = CreateBitmap(4);
 
-        var result = LoupeRenderer.DrawLoupe(
+        var result = DrawLoupe(
             src, CreateRequest(8, 2,
                 CreateAppearance(DrawingColor.Red, 2, DrawingColor.White, DrawingColor.LightGray, DrawingColor.Black, 1),
                 new EsPoint(2, 2)));
@@ -119,7 +182,7 @@ public class LoupeRendererTests
         using var src = CreateBitmap(10);
 
         // すべての色が透明（アルファ 0）でも例外なく描画する（十字線・市松・外枠をスキップ）
-        var result = LoupeRenderer.DrawLoupe(
+        var result = DrawLoupe(
             src, CreateRequest(64, 4, CreateAppearance(Transparent, 6, Transparent, Transparent, Transparent, 2), new EsPoint(5, 5)));
 
         Assert.NotNull(result);
@@ -129,7 +192,7 @@ public class LoupeRendererTests
     [AvaloniaFact]
     public void DrawLoupe_色が透明で切り出しもできない場合でも動作する()
     {
-        var result = LoupeRenderer.DrawLoupe(
+        var result = DrawLoupe(
             null, CreateRequest(50, 4, CreateAppearance(Transparent, 6, Transparent, Transparent, Transparent, 2)));
 
         Assert.NotNull(result);

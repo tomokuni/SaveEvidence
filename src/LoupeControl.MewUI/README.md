@@ -12,7 +12,7 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| 基底クラス | `Aprillz.MewUI.Skia.Controls.SkiaCanvasView`（SkiaSharp で直接描画する） |
+| 基底クラス | `Aprillz.MewUI.Controls.Panel`（子の `SkiaCanvasView` が Skia で直接描画する） |
 | 中間バッファ | **生成しない**。画面のキャンバスへ直接描画する（Avalonia 版は `RenderTargetBitmap` を経由する） |
 | 描画サイズ | `Options.RequestedSize` × `RenderScaling`（物理ピクセル）。キャンバスより大きい場合はキャンバスに合わせる（クランプ規則はコアが単一所有） |
 | 拡大方式 | 最近傍（画素をそのまま拡大表示する） |
@@ -112,7 +112,7 @@ if (layout.Position is { } position)
 
 | イベント | 引数 | 説明 |
 | --- | --- | --- |
-| `Rendered` | `LoupeRenderedEventArgs` | 描画完了の通知（描画先キャンバス・一辺の物理ピクセル・切り出し領域の左上・スケール・中心座標ラベルの契約）。ホストはハンドラ内でキャンバスへオーバーレイやラベルの文字を追加描画できる |
+| `Rendered` | `LoupeRenderedEventArgs` | 描画完了の通知（描画先キャンバス・一辺の物理ピクセル・切り出し領域の左上・スケール）。ホストはハンドラ内でキャンバスへオーバーレイを追加描画できる |
 
 オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求めます（破線の例は `FadeMaskDragRectControl.MewUI`）。
 
@@ -136,10 +136,9 @@ src/LoupeControl.MewUI/
 ├── SPEC_System.md           # システム仕様書
 ├── src/
 │   ├── LoupeControl.MewUI.csproj   # net10.0 / MewUI 0.21.1 固定
-│   ├── LoupeControl.cs             # SkiaCanvasView 派生のコントロール
-│   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知（キャンバスと表示情報・文字の契約）
+│   ├── LoupeControl.cs             # Panel 派生のコントロール（子の図形キャンバスとラベル要素を配置する）
+│   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知（キャンバスと表示情報）
 │   ├── LoupeSkiaRenderer.cs        # コアの計算結果を SKCanvas へ描画する層（市松・画像・十字線・外枠）
-│   └── LoupeRenderedEventArgs.cs   # 描画完了の通知（キャンバスと表示情報・文字の契約）
 └── tests/
     ├── LoupeControl.MewUI.Tests.csproj
     ├── TestHelper.cs                   # テスト共通（描画先・画像生成）

@@ -448,7 +448,7 @@ internal sealed class CaptureOverlay
     ///    <c>CaptureLabelTexts</c> が単一所有する。表示名はコアの <see cref="CaptureHighlightSession"/> を参照する）。
     /// 5. 表示する矩形の選択（ハイライト型 / ドラッグ型）はコア（<see cref="CaptureTypeTraits.ResolveRect"/>）が単一所有し、
     ///    未選択時は設定 <see cref="CaptureSettings.SizeLabelOverride"/> に委ねる（Avalonia 版と同じ規則）。
-    /// 6. サイズラベルの表示可否は外観（<c>OuterDecoAppearance.ShowSizeLabel</c>）が単一所有するため本メソッドでは判定しない。
+    /// 6. サイズラベルの表示可否はコア（<c>MarqueeOptions.ShowSizeLabel</c>）が単一所有するため本メソッドでは判定しない。
     /// </remarks>
     private void ApplyLabels(CaptureSettings settings)
     {

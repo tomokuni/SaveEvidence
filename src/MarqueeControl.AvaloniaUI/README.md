@@ -33,10 +33,10 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - 矢印キーによる1Pixel単位のキーボード微調整（nudge）
 - ドメイン座標系で正確な nudge（矢印キー1回 = ドメイン1Pixel）
 - ドラッグハンドル・始点マーカーの自己描画
-- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・サイズ/操作/情報ラベル・ハイライト（外観と表示ポリシーは `DecoOptions`（装飾層 `MarqueeControl.Core` の `Decoration` 名前空間の `MarqueeDecoOptions`）が単一所有し、描画内容の判断は Core（`Decoration`）が持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
+- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト（外観と表示ポリシーは `DecoOptions`（`MarqueeControl.Core` の `Decoration` 名前空間の `MarqueeDecoOptions`）が単一所有し、描画内容の判断は Core（`Decoration`）が持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
 - **ハンドル表示の切替**: `Options.ShowHandles = false` でハンドルを描かず枠線と外側の装飾だけを表示する
 - カーソル座標ラベルの表示（任意設定・`(x, y)` 形式）
-- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベルの**文言・外観・配置の計算は Core が単一所有**し、実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。操作・情報ラベルはアプリ固有の付加情報のためホストが自前で描画完了イベント（`Rendered`）で行います（ホスト向けの共通実装として UI 層のラベル要素 を提供）。`Rendered` は選択矩形の描画内容（`Content`）と装飾の描画内容（`Deco`）を渡します（座標ラベルと装飾ラベルをまとめて描ける）
+- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベル（`MarqueeCoordLabel`）の**文言・外観・順序は Core が単一所有**し、実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`FormattedText`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - Avalonia Binding 対応の StyledProperty
 - ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
@@ -109,11 +109,12 @@ marquee.SelectionCancelled += (_, _) => CancelSelection();
 marquee.ConfirmRequested += (_, e) => ConfirmSelection(e.Rect);
 marquee.CancelRequested += (_, _) => CancelSelection();
 
-// 文字（ラベル・座標ラベル）はコントロールが描かないため、描画完了イベントで描く
+// ラベル（サイズ・カーソル座標）はコントロールがテキスト要素として配置する。
+// ホストは描画完了イベントで付加情報（操作・情報ラベル）を描ける（図形はコントロールが描き終えている）。
 marquee.Rendered += (_, e) =>
 {
-    // 図形（装飾・ハンドル・マーカー）はコントロールが描く。
-    // 文字は Content.Layers の順に従い、UI 層が配置したテキスト要素が表示する。
+    // e.Content: 穴あけ矩形（付加情報の基準）・サイズラベル・座標ラベル・層の順序
+    // e.Context: ホスト固有の付加情報を描くための描画コンテキスト
 };
 
 // 座標ポートを設定（ドメイン = 画像ピクセル等）。ポート生成は Platform.AvaloniaUI の CoordTransform ファクトリを使用する。
@@ -161,8 +162,7 @@ MarqueeControl/
 │   └── MarqueeControl.Visual.cs     内部: `Content.Layers` の順に図形を描き、ラベル要素を配置する
 │   ├── SelectionRectEventArgs.cs  # 公開イベント引数（選択矩形通知）
 │   ├── MarqueePointEventArgs.cs  # 公開イベント引数（座標通知）
-│   ├── MarqueeRenderedEventArgs.cs  # 公開イベント引数（描画完了。選択矩形の描画内容と装飾の描画内容を通知する）
-│   ├── ラベルの要素配置（ArrangeOverride）    # 公開（ホスト向け）: ラベル・座標ラベルの文字描画の共通実装
+│   ├── MarqueeRenderedEventArgs.cs  # 公開イベント引数（描画完了。描画コンテキストと描画内容を通知する）
 │   └── Drawing/                   # 内部型（MarqueeDrawer / MarqueeOuterDrawer / MarqueeInnerDrawer / MarqueeBrushCache）
 ├── sample/                        # サンプルアプリ（sample/README.md 参照）
 └── tests/                         # 単体テスト（公開 API 経由）

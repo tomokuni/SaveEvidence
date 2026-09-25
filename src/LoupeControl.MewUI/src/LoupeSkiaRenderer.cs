@@ -8,12 +8,13 @@ namespace Estable.MewUI.Loupe;
 
 /// <summary>ルーペの描画（市松模様背景 + 拡大画像 + 十字線 + 外枠）を Skia で行うレンダラー。</summary>
 /// <remarks>
-/// 描画の順序と、描画に必要な値の単位はコアの契約（<see cref="LoupeRenderRequest"/>）が単一所有する。<br/>
+/// <b>描く層とその順序はコアが単一所有する</b>（<see cref="LoupeDrawLayer"/> の順に処理する）。<br/>
+/// 描画に必要な値の単位はコアの契約（<see cref="LoupeRenderRequest"/>）が単一所有する。<br/>
 /// UI 非依存コア（<see cref="LoupeAppearance"/> / <see cref="LoupeImageExtractor"/> / <see cref="LoupeDecorationGeometry"/> /<br/>
 /// <see cref="LoupeCheckerboard"/>）の値と計算結果を <see cref="SKCanvas"/> へ描画するだけの層。<br/>
 /// 外観値（色・太さ・タイルサイズ）は <see cref="LoupeAppearance"/> が単一所有し、本クラスは保持しない。<br/>
-/// <b>文字（中心座標ラベル）は本クラスが描かない</b>: テキストの実寸測定が必要なため、描画完了時にホストへ通知する<br/>
-/// （ホストが <c>SkiaText.Measure</c> と <c>SkiaLabel.Draw</c> で描く。文字の描画をホストの責務とする）。<br/>
+/// <b>文字（中心座標ラベル）は本クラスが描かない</b>: テキストの実寸測定が必要なため、<br/>
+/// 親パネルのラベル要素（<c>Border</c> + <c>TextBlock</c>）が表示する（<see cref="LoupeDrawLayer.CoordLabel"/> は処理しない）。<br/>
 /// Avalonia 版は中間ビットマップ（<c>RenderTargetBitmap</c>）を経由するが、MewUI 版は画面のキャンバスへ<br/>
 /// 直接描画できるため、中間バッファの生成とコピーを行わない。<br/>
 /// 矩形計算はコアが単一所有するため、両 UI の見た目は一致する（Avalonia 版のレンダラーと等価）。
@@ -24,26 +25,48 @@ internal static class LoupeSkiaRenderer
     /// <param name="canvas">描画先のキャンバス（左上を原点とする）。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は市松模様のみ。</param>
     /// <param name="request">描画入力（コア⇔UI の契約。UI が公開プロパティから組み立てる）。</param>
+    /// <param name="layers">描く層とその順序（コアが単一所有する）。null 不可。</param>
     /// <remarks>
-    /// 0. 下地（ベース色。透明なら描かない）を描画する。<br/>
-    /// 1. 市松模様の背景を描画する。<br/>
-    /// 2. ソース画像があれば切り出して拡大描画する（切り出しはコアへ委譲。範囲外は透明パディング）。<br/>
-    /// 3. 十字線を描画する。<br/>
-    /// 4. 外枠を描画する。<br/>
+    /// <paramref name="layers"/> の順に層を処理する（描画順の判断を持たない）。<br/>
     /// 外観の DIP 値は描画時に物理ピクセルへ換算する（DPI 差で見た目を変えない）。<br/>
-    /// 中心座標ラベル（<see cref="LoupeCoordLabel"/>）は文字の描画をホストが担うため、本メソッドは描かない。
+    /// 中心座標ラベル（<see cref="LoupeDrawLayer.CoordLabel"/>）はテキスト要素が描くため、本メソッドは描かない。
     /// </remarks>
-    public static void Render(SKCanvas canvas, EsBitmap? source, LoupeRenderRequest request)
+    public static void Render(
+        SKCanvas canvas, EsBitmap? source, LoupeRenderRequest request, IReadOnlyList<LoupeDrawLayer> layers)
     {
         ArgumentNullException.ThrowIfNull(canvas);
         ArgumentNullException.ThrowIfNull(request.Appearance);
+        ArgumentNullException.ThrowIfNull(layers);
 
-        // 下地（ベース色）→ 市松模様の背景（タイルサイズの補正・DIP → 物理ピクセルの換算はコアが行う）
-        DrawBackground(canvas, request);
-        DrawCheckerboard(canvas, request);
-        DrawMagnified(canvas, source, request);
-        DrawCrosshair(canvas, request);
-        DrawFrame(canvas, request);
+        foreach (var layer in layers)
+        {
+            switch (layer)
+            {
+                case LoupeDrawLayer.Background:
+                    DrawBackground(canvas, request);
+                    break;
+
+                case LoupeDrawLayer.Checkerboard:
+                    DrawCheckerboard(canvas, request);
+                    break;
+
+                case LoupeDrawLayer.Image:
+                    DrawMagnified(canvas, source, request);
+                    break;
+
+                case LoupeDrawLayer.Crosshair:
+                    DrawCrosshair(canvas, request);
+                    break;
+
+                case LoupeDrawLayer.Frame:
+                    DrawFrame(canvas, request);
+                    break;
+
+                // 中心座標ラベルはテキスト要素（Border + TextBlock）が描く（親より後に描かれるため常に最上位になる）
+                case LoupeDrawLayer.CoordLabel:
+                    break;
+            }
+        }
     }
 
     /// <summary>下地（ベース色）を表面全体へ描画する。</summary>

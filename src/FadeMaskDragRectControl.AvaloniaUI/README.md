@@ -89,7 +89,7 @@ SelectionOverlay.Options = captureSettings.ToFadeMaskDragRectOptions();
 // 一部の項目だけを変える場合はコアの既定値から with 式で組み立てる
 SelectionOverlay.Options = FadeMaskDragRectOptions.Default with
 {
-    // 装飾（暗転マスク・穴あけ枠・ラベル）は別の値が単一所有する
+    // 装飾（暗転マスク・穴あけ枠）は別の値が単一所有する
     Deco = MarqueeDecoOptions.Default with
     {
         OuterAppearance = new OuterDecoAppearance { OverlayColor = System.Drawing.Color.FromArgb(77, 0, 0, 0) }, // 黒 30%

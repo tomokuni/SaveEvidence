@@ -35,7 +35,7 @@ Avalonia 版と同一の挙動になります。
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の外観・対話パラメータをまとめた不変の設定値（コアの `Estable.Marquee.MarqueeOptions`） |
 | `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ラベル・ハイライト）の設定**（装飾層の `Estable.Marquee.Decoration.MarqueeDecoOptions`） |
-| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）・操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。保持と評価は装飾層が行う）。null または空文字を返す行は描かない |
+| `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。操作・情報ラベルの文言も同様にホストが与える |
 | `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と一致）:
@@ -92,23 +92,23 @@ Avalonia 版と同一の挙動になります。
 | `ScrollRequested` | `WheelScrollRequest` | 通常ホイール（回転量・Shift・発生位置。解釈は組み込みの層が単一所有する） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | 矩形内ダブルクリック・Enter |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel()` |
-| `Rendered` | `MarqueeRenderedEventArgs` | 描画完了の通知（描画のたびに発火）。`Canvas`（DPI スケーリング済み・描画中のみ有効）と描画内容（`Content` = `MarqueeDrawContent`。図形と文字の契約）を渡す |
+| `Rendered` | `MarqueeRenderedEventArgs` | 描画完了の通知（描画のたびに発火）。`Canvas`（DPI スケーリング済み・描画中のみ有効）と描画内容（`Content` = `MarqueeDrawContent`）を渡す。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**ため、ホストは付加情報（操作・情報ラベル）の描画に使う |
 
 座標系はすべてドメイン座標です。
 
-### 7.1 文字（ラベル・座標ラベル）の描画
+### 7.1 ラベル（文字）の表示
 
-ラベル（サイズ・操作・情報）とカーソル座標ラベルの**文言・行の選定・配置はコアが単一所有**しますが、**実寸測定が必要な文字の描画はホストが担います**（コントロール自身は文字を描きません）。
-描画完了時に `Rendered` が発火するため、ホストはそのハンドラで描きます。
+サイズラベルとカーソル座標ラベルの**文言・外観・順序はコアが単一所有**し、実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有します。コントロールは `Border` + `TextBlock` を子要素として置き（`SkiaText.Measure` で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Rendered` のハンドラで `Options.Labels` の外観に従って描きます。
+描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます。
 
 ```csharp
 using Estable.MewUI.Marquee;
 
-// ラベル・座標ラベルの文字を描く（コアの契約に従って背景と文字を描く共通実装）
+// 付加情報（操作・情報ラベル）を自前で描く。
+// サイズ・座標ラベルはコントロールがテキスト要素として表示する（図形もコントロールが描く）。
 marquee.Rendered += (_, e) =>
 {
-    // 図形（装飾・ハンドル・マーカー）はコントロールが描く。
-    // 文字は Content.Layers の順に従い、UI 層が配置したテキスト要素が表示する。
+    // e.Content.HoleRect（基準）と Options.Labels（外観）を使って描く。
 };
 ```
 
@@ -149,7 +149,7 @@ marquee.Rendered += (_, e) =>
 | ビューポート変化 | ホストが `NotifyViewportChanged()` を呼ぶ（Avalonia 版は `AttachScrollViewer` で `ScrollViewer` を購読） |
 | nudge のキー入力 | フォーカス依存（Avalonia 版は `TopLevel` を購読してフォーカス非依存） |
 | ログ | `Log` プロパティで `ILogger` を注入して出力する（書式・レベルは Avalonia 版と同一） |
-| 文字（ラベル・座標ラベル）の描画 | ホストが `Rendered` の `SKCanvas` へ描く（UI 層のラベル要素 を提供） |
+| 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言・外観・順序はコア、実寸測定は `SkiaText.Measure`、配置は `MarqueeLabelLayoutPlan`） |
 
 ## 9.5 ログ
 

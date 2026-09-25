@@ -20,6 +20,7 @@ internal static class LoupeRenderPipeline
     /// <summary>画像抽出を非同期に実行し、Avaloniaの描画オブジェクトをUIスレッドで合成する。</summary>
     /// <param name="source">ルーペのソース画像。</param>
     /// <param name="request">描画入力（コア⇔UI の契約。UI が公開プロパティから組み立てる）。</param>
+    /// <param name="layers">描く層とその順序（コアの <see cref="LoupeRenderNotification.Layers"/>）。null 不可。</param>
     /// <returns>生成したルーペ画像（<see cref="EsBitmap"/>）。</returns>
     /// <exception cref="NotSupportedException">
     /// <paramref name="source"/> が <see cref="Bitmap"/> / <see cref="EsBitmapAvaloniaImage"/> 以外の場合。
@@ -30,7 +31,8 @@ internal static class LoupeRenderPipeline
     /// 3. 描画（切り出し・拡大・十字線・市松・外枠）は <see cref="LoupeRenderer"/> へ委譲し、UI スレッドで行う<br/>
     /// （切り出しの可否と破棄済みソースの扱いはコアが単一所有する）。
     /// </remarks>
-    public static async Task<EsBitmap> RenderAsync(IImage? source, LoupeRenderRequest request)
+    public static async Task<EsBitmap> RenderAsync(
+        IImage? source, LoupeRenderRequest request, IReadOnlyList<LoupeDrawLayer> layers)
     {
         // 未対応型の判定は LoupeSourceResolver（単一所有）へ委譲する。
         if (!LoupeSourceResolver.IsSourceSupported(source))
@@ -48,7 +50,7 @@ internal static class LoupeRenderPipeline
             // Task.Run によるバックグラウンド抽出は、マウス移動中の連続再描画でスレッドプールが競合し、
             // 抽出結果が UI スレッドへ戻る前に次の再描画が要求されてルーペ画像が移動停止まで更新されない問題を生む。
             return await Dispatcher.UIThread.InvokeAsync(
-                () => LoupeRenderer.DrawLoupe(sourceBitmap, request),
+                () => LoupeRenderer.DrawLoupe(sourceBitmap, request, layers),
                 DispatcherPriority.Render);
         }
         finally

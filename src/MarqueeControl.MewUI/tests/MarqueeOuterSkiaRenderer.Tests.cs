@@ -12,7 +12,8 @@ namespace Estable.MewUI.Marquee.Tests;
 /// Skia のビットマップはウィンドウを必要としないため、UI 初期化なしで並列実行できる。<br/>
 /// 「どの矩形を暗転するか」「枠線を描くか」の判断はコアの <c>OuterDecoFrame</c> が単一所有するため、<br/>
 /// 本テストは「与えられたフレームを描く」ことのみを検証する。<br/>
-/// 文字の描画は <c>MarqueeLabelRendererTests</c>、フォント解決は Platform.Core の <c>SkiaText</c> のテストが検証する。
+/// 文字（サイズ・座標ラベル）はコントロールのテキスト要素配置（<c>MarqueeControlTests</c>）、<br/>
+/// フォント解決は Platform.Core の <c>SkiaText</c> のテストが検証する。
 /// </remarks>
 public class MarqueeOuterSkiaRendererTests
 {

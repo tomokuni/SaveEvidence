@@ -99,6 +99,34 @@ public class FadeMaskDragRectOptionsMapperTests
     }
 
     [Fact]
+    public void 変換_操作ラベルと情報ラベルの外観がホストの描画設定へ反映される()
+    {
+        var settings = CreateSettings() with
+        {
+            ShowSubLines = false,
+            SubLineFontSize = 13.0,
+            SubLineColor = DrawingColor.Yellow,
+            SubLineBackgroundColor = DrawingColor.FromArgb(179, 1, 2, 3),
+            InfoLabelVisible = false,
+            InfoLabelFontSize = 15.0,
+            InfoLabelColor = DrawingColor.Cyan,
+            InfoLabelBackgroundColor = DrawingColor.FromArgb(179, 4, 5, 6),
+        };
+
+        var labels = settings.ToFadeMaskDragRectOptions().Labels;
+
+        // 操作（サブライン）・情報ラベルはホストが描くため、表示可否と外観を写像する（文言は写像しない）
+        Assert.False(labels.ShowOperationLabel);
+        Assert.Equal(13.0, labels.OperationFontSize);
+        Assert.Equal(DrawingColor.Yellow, labels.OperationColor);
+        Assert.Equal(DrawingColor.FromArgb(179, 1, 2, 3), labels.OperationBackgroundColor);
+        Assert.False(labels.ShowInfoLabel);
+        Assert.Equal(15.0, labels.InfoFontSize);
+        Assert.Equal(DrawingColor.Cyan, labels.InfoColor);
+        Assert.Equal(DrawingColor.FromArgb(179, 4, 5, 6), labels.InfoBackgroundColor);
+    }
+
+    [Fact]
     public void 変換_ルーペの設定が反映される()
     {
         var settings = CreateSettings() with

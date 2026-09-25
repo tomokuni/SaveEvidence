@@ -1,4 +1,3 @@
-using BindingFlags = System.Reflection.BindingFlags;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -7,10 +6,12 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Estable.Loupe;
+using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using System.Globalization;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
@@ -29,6 +30,35 @@ public class LoupeControlTests
     /// <summary>テスト用の LoupeControl を生成する（ヘッドレスで初期化）。</summary>
     private static LoupeControl CreateControl()
         => new() { Options = LoupeOptions.Default with { RequestedSize = 100, ZoomLevel = 2 }, IsVisible = true };
+
+    /// <summary>コントロールを親パネルへ載せてレイアウトを確定する。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <param name="size">親パネルの一辺のサイズ（DIP）。</param>
+    /// <returns>配置に使った親パネル。</returns>
+    /// <remarks>ラベル要素（子要素）は配置フェーズ（<c>ArrangeOverride</c>）で更新されるため、テストは配置を明示的に実行する。</remarks>
+    private static Panel Layout(LoupeControl control, double size = 300)
+    {
+        var panel = new Panel { Width = size, Height = size };
+        panel.Children.Add(control);
+        panel.Measure(new Size(size, size));
+        panel.Arrange(new Rect(0, 0, size, size));
+        return panel;
+    }
+
+    /// <summary>表示用の画像要素（子要素のうち <see cref="Image"/>）を取得する。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <returns>表示用の画像要素。</returns>
+    private static Image ImageElement(LoupeControl control) => control.Children.OfType<Image>().Single();
+
+    /// <summary>中心座標ラベルの要素（子要素のうち <see cref="Border"/>）を取得する。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <returns>ラベルの背景要素。</returns>
+    private static Border LabelElement(LoupeControl control) => control.Children.OfType<Border>().Single();
+
+    /// <summary>中心座標ラベルの文言を取得する。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <returns>表示されている文言。</returns>
+    private static string LabelText(LoupeControl control) => ((TextBlock)LabelElement(control).Child!).Text!;
 
     // ====================================================================
     // 更新経路（バッチ化）
@@ -101,40 +131,6 @@ public class LoupeControlTests
         Assert.NotNull(control.LoupeBitmap);
         Assert.Equal(100, control.LoupeBitmap!.Size.Width);
         Assert.Equal(100, control.LoupeBitmap.Size.Height);
-    }
-
-    [AvaloniaFact]
-    public void InitializeComponentを再実行しても再ロードされない()
-    {
-        var control = new LoupeControl();
-
-        // 2 回目の呼び出しは _contentLoaded が true のため再ロードされない（冪等）
-        control.InitializeComponent();
-
-        Assert.NotNull(control.PART_Image);
-    }
-
-    [AvaloniaFact]
-    public async Task PART_Image未初期化でもビットマップ生成と描画が動作する()
-    {
-        // PART_Image フィールドを null に設定して SetLoupeBitmap の null 分岐をカバーする。
-        // 実際には InitializeComponent が必ず呼ばれるため到達しない防御的分岐だが、
-        // ブランチカバレッジ 100% のためにテストで直接検証する。
-        var control = CreateControl();
-        var field = typeof(LoupeControl).GetField(
-            "PART_Image", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        Assert.NotNull(field);
-        field!.SetValue(control, null);
-
-        await control.WaitForRenderedAsync();
-
-        // 描画は内部 Image 要素（PART_Image）が null でも完了する（LoupeBitmap は生成される）
-        Assert.NotNull(control.LoupeBitmap);
-        Assert.Null(control.PART_Image);
-
-        // PART_Image が null の状態で解放する（ReleaseBitmap の null 分岐をカバー）
-        control.Clear();
-        Assert.Null(control.LoupeBitmap);
     }
 
     [AvaloniaFact]
@@ -468,7 +464,7 @@ public class LoupeControlTests
     }
 
     // ====================================================================
-    // 座標ラベルの契約（文字はホストが描くため、コントロールは契約を通知する）
+    // 中心座標ラベル（文言・配置はコアが決め、本コントロールがテキスト要素として表示する）
     // ====================================================================
 
     [AvaloniaFact]
@@ -484,42 +480,57 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
-    public async Task 座標ラベルを有効化してCenterPointを設定すると契約が通知される()
+    public void 座標ラベルを有効化してCenterPointを設定するとラベル要素が表示される()
     {
         var control = CreateControl();
-        LoupeRenderedEventArgs? args = null;
-        control.Rendered += (_, e) => args = e;
-
         control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = true } };
         control.CenterPoint = new Point(123, 456);
-        await control.WaitForRenderedAsync();
 
-        // 文言はコアの CoordinateFormatter が単一所有する（コントロールは表示しない）
-        Assert.NotNull(args?.CoordLabel);
-        Assert.Equal("(123, 456)", args!.CoordLabel!.Value.Text);
+        Layout(control);
+
+        // 文言はコアの CoordinateFormatter が単一所有する（本コントロールは要素へ写すだけ）
+        Assert.Equal("(123, 456)", LabelText(control));
     }
 
     [AvaloniaFact]
-    public async Task 座標ラベル無効時はCenterPointがあっても契約がnullになる()
+    public void 座標ラベル無効時はCenterPointがあっても要素を表示しない()
     {
         var control = CreateControl();
-        LoupeRenderedEventArgs? args = null;
-        control.Rendered += (_, e) => args = e;
-
         control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = false } };
         control.CenterPoint = new Point(123, 456);
-        await control.WaitForRenderedAsync();
 
-        Assert.Null(args!.CoordLabel);
+        Layout(control);
+
+        Assert.Empty(control.Children.OfType<Border>());
     }
 
     [AvaloniaFact]
-    public async Task 座標ラベルの色とフォントサイズが契約へ反映される()
+    public void 座標ラベルはルーペ上端の中央に実測幅で配置される()
     {
         var control = CreateControl();
-        LoupeRenderedEventArgs? args = null;
-        control.Rendered += (_, e) => args = e;
+        control.CenterPoint = new Point(12, 34);
 
+        Layout(control);
+
+        var label = LabelElement(control);
+
+        // 背景の大きさはコアが「実測幅 + 内側余白」で決める（本コントロールは自 UI の API で実測して渡す）
+        var text = new FormattedText(
+            "(12, 34)", CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+            Typeface.Default, LoupeValueCoercer.CoordLabelFontSizeDefault, Brushes.White);
+        Assert.True(label.Width > text.Width);
+
+        // 上端中央（左右の余白が等しい）: コアの中央寄せ規則が要素へ反映される
+        Assert.Equal(control.Bounds.Width / 2, label.Margin.Left + label.Width / 2, 1);
+
+        // 上端（ルーペの表示領域の内側）
+        Assert.True(label.Margin.Top >= 0);
+    }
+
+    [AvaloniaFact]
+    public void 座標ラベルの外観が要素へ反映される()
+    {
+        var control = CreateControl();
         var background = DrawingColor.FromArgb(179, 0, 0, 139); // 暗青 70%
         control.Options = control.Options with
         {
@@ -529,44 +540,44 @@ public class LoupeControlTests
                 CoordLabelColor = DrawingColor.Yellow,
                 CoordLabelBackgroundColor = background,
                 CoordLabelFontSize = 16,
+                CoordLabelCornerRadius = 8,
             },
         };
         control.CenterPoint = new Point(10, 20);
-        await control.WaitForRenderedAsync();
 
-        // フォントサイズはコアが物理ピクセルへ換算する（RenderScaling = 1 のため DIP と同値）
-        Assert.NotNull(args?.CoordLabel);
-        var label = args!.CoordLabel!.Value;
-        Assert.Equal(16.0, label.FontSize);
-        Assert.Equal(DrawingColor.Yellow, label.TextColor);
-        Assert.Equal(background, label.BackgroundColor);
+        Layout(control);
+
+        var border = LabelElement(control);
+        var text = (TextBlock)border.Child!;
+
+        Assert.Equal(16.0, text.FontSize);
+        Assert.Equal(8, border.CornerRadius.TopLeft);
+
+        // 色は UI のブラシへ変換して反映する
+        Assert.Equal(DrawingColor.Yellow.ToAvaloniaColor(), ((SolidColorBrush)text.Foreground!).Color);
+        Assert.Equal(background.ToAvaloniaColor(), ((SolidColorBrush)border.Background!).Color);
     }
 
-    /// <summary>座標ラベルの角丸がコアの外観値から契約へ反映されることを検証する。</summary>
-    /// <remarks>角丸の物理ピクセル換算（0 は四角形のまま保持する）はコアの <c>LoupeAppearanceScaler</c> が単一所有する。</remarks>
     [AvaloniaFact]
-    public async Task 座標ラベルの角丸がコアの外観値から契約へ反映される()
+    public async Task CenterPointを変更するとラベル要素の文言が追従する()
     {
+        // 配置の無効化（InvalidateArrange）が実際のレイアウト パスで反映されることを検証する
+        // （コントロールを載せた状態でレイアウト パスを走らせる）。
         var control = CreateControl();
-        LoupeRenderedEventArgs? args = null;
-        control.Rendered += (_, e) => args = e;
+        var panel = new Panel { Width = 300, Height = 300 };
+        panel.Children.Add(control);
+        var window = new Window { Content = panel };
+        window.Show();
 
-        // 既定はコアの既定値
-        control.CenterPoint = new Point(10, 20);
-        await control.WaitForRenderedAsync();
-        Assert.Equal(LoupeValueCoercer.CoordLabelCornerRadiusDefault, args!.CoordLabel!.Value.CornerRadius);
+        control.CenterPoint = new Point(1, 2);
+        await control.PumpAsync();
+        Assert.Equal("(1, 2)", LabelText(control));
 
-        // 外観を変えると契約も追従する
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { CoordLabelCornerRadius = 8 } };
-        control.CenterPoint = new Point(11, 20);
-        await control.WaitForRenderedAsync();
-        Assert.Equal(8, args!.CoordLabel!.Value.CornerRadius);
+        control.CenterPoint = new Point(3, 4);
+        await control.PumpAsync();
 
-        // 0 は角丸なし（四角形）として保持される（最低 1 へ切り上げない）
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { CoordLabelCornerRadius = 0 } };
-        control.CenterPoint = new Point(12, 20);
-        await control.WaitForRenderedAsync();
-        Assert.Equal(0, args!.CoordLabel!.Value.CornerRadius);
+        Assert.Equal("(3, 4)", LabelText(control));
+        window.Close();
     }
 
     // ====================================================================
@@ -755,9 +766,9 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
-    public async Task 生成後にPART_Imageのソースが破棄されず有効に保持される()
+    public async Task 生成後に表示用画像のソースが破棄されず有効に保持される()
     {
-        // 回帰テスト: SetLoupeBitmap が using で即座に破棄した WriteableBitmap を PART_Image.Source に
+        // 回帰テスト: SetLoupeBitmap が using で即座に破棄した WriteableBitmap を Image.Source に
         // 設定すると、レイアウトパス（Image.MeasureOverride → Bitmap.get_Size）で ObjectDisposedException が
         // 発生し、領域選択開始時にアプリがハングする。表示用画像（EsBitmapAvaloniaImage）はコントロールが所有し、
         // 内包する EsBitmap が有効なまま保持されることを検証する。
@@ -767,26 +778,25 @@ public class LoupeControlTests
         await control.WaitForRenderedAsync();
 
         // Source が破棄済みでないこと（Size 参照で ObjectDisposedException が発生しない）
-        Assert.NotNull(control.PART_Image);
-        Assert.NotNull(control.PART_Image!.Source);
-        Assert.True(control.PART_Image.Source is EsBitmapAvaloniaImage img
+        var image = ImageElement(control);
+        Assert.NotNull(image.Source);
+        Assert.True(image.Source is EsBitmapAvaloniaImage img
             && img.Bitmap is { } bmp && bmp.Size.Width > 0);
     }
 
     [AvaloniaFact]
-    public async Task Clear後にPART_Imageのソースが解放される()
+    public async Task Clear後に表示用画像のソースが解放される()
     {
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(100, 100);
         await control.WaitForRenderedAsync();
 
-        // Clear で表示用 Bitmap と PART_Image.Source の両方が解放される（破棄済み Bitmap の残留防止）
+        // Clear で表示用 Bitmap と Image.Source の両方が解放される（破棄済み Bitmap の残留防止）
         control.Clear();
 
         Assert.Null(control.LoupeBitmap);
-        Assert.NotNull(control.PART_Image);
-        Assert.Null(control.PART_Image!.Source);
+        Assert.Null(ImageElement(control).Source);
     }
 
     [AvaloniaFact]

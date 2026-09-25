@@ -25,7 +25,7 @@ UI 層（MarqueeControl.AvaloniaUI / .MewUI）
                    ハンドルのスナップ・クリック検出・最小サイズによるキャンセル・エコー移動の抑制）
         │ MarqueeNotice（通知: 種別・通知座標・スナップショット）
         ▼
-UI 層（通知を公開イベントへ転送。文字はホストが描くため Rendered で描画内容を渡す）
+UI 層（通知を公開イベントへ転送。図形を描き、文字はテキスト要素として配置する。`Rendered` で描画内容をホストへ渡す）
 ```
 
 ## 構成
@@ -57,7 +57,7 @@ UI 層（通知を公開イベントへ転送。文字はホストが描くた�
 | 層 | 利用者 | 型 |
 | --- | --- | --- |
 | **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` |
-| **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層・描画層）とホスト（文字の描画） | `Marquee`（操作の唯一の窓口。既定値は `DefaultScaling`）/ `IMarqueeEffects` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` / `MarqueeAppearance` / `SelectionGeometry` |
+| **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層・描画層） | `Marquee`（操作の唯一の窓口。既定値は `DefaultScaling`）/ `IMarqueeEffects` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` / `MarqueeAppearance` / `SelectionGeometry` |
 | **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeLogMessage`（適用とログ出力はファサード・状態機械が行う）/ `MarqueeSession` / `MarqueeFrame`（「1 フレーム分の描画内容の解決」は `Marquee.ResolveContent` が提供する）/ `MarqueeState` |
 
 - **操作はファサード経由に一本化**しています（状態機械とフレーム解決は `internal` のため、UI 層はファサード以外の入口を持ちません）。
@@ -150,11 +150,8 @@ UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せ�
 3. **フレームワーク固有の値の解決**（DPI の 0 以下フォールバック・色型変換）
 4. **描画方式の差**（直接描画 / 中間バッファ・ブラシキャッシュ）
 
-**文字（座標ラベル）はコントロールが描かず、ホストが描きます**（テキストの実寸測定は描画 API 依存のため）。<br/>
-配置（背景矩形・文字原点）の計算は本コアが単一所有し、コントロールは描画完了時（`Rendered`）に契約を渡します。
-
-ハンドル・始点マーカーの描画は各 UI の描画層（`MarqueeControl.AvaloniaUI` の `MarqueeDrawer` / `MarqueeControl.MewUI` の `MarqueeSkiaRenderer`）が行います（本コアは描画 API を持たない）。<br/>
-文字（サイズラベル・カーソル座標ラベル）は **UI 層がテキスト要素を配置**します（`Border` + `TextBlock`）。実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有します。
+ハンドル・始点マーカーの描画は各 UI の描画層（`MarqueeControl.AvaloniaUI` の `MarqueeDrawer` / `MarqueeControl.MewUI` の `MarqueeSkiaRenderer`）が行います（本コアは描画 API を持たない）。
+**文字（サイズラベル・カーソル座標ラベル）は UI 層がテキスト要素を配置**します（`Border` + `TextBlock`。ラベルは常に最上位）。文言・外観・順序は本コアが単一所有し、実寸から配置矩形を求める写像は `MarqueeControl.CoreForControl` の `MarqueeLabelLayoutPlan` が単一所有します。
 
 ## 依存関係
 
@@ -221,6 +218,8 @@ UI 層が使う共有値・計算（`MarqueeAppearance`）:
 | `MarkerThickness` / `HandlePenThickness` / `LabelOffset` / `LabelPadding` | 両 UI で共有する描画の外観値（片方だけ変えると見た目がずれるため単一所有） |
 | `CoerceCoordLabelFontSize` | 座標ラベルのフォントサイズを安全域（6〜48）へ補正（非数は既定値） |
 | `ComputeCoordLabelPosition` / `ComputeCoordLabelBackground` | 座標ラベルの左上位置（カーソル右側 + 描画領域内へのクランプ）と背景の大きさ |
+| `ComputeHostLabelBackground` | ホストが描く付加情報ラベル（操作・情報）の背景矩形（サイズラベルと同じ内側余白を適用。文言はホストが与える） |
+| `NextLabelTop` | 縦積みしたラベルの次の行の上端（行送り = 現在の行のフォントサイズ + 内側余白 × 2）。サイズラベルと付加情報ラベルを同じ間隔で積む規則を単一所有する |
 | `ResolveHandleColor` | ハンドルの塗り色（未指定（全成分 0）は白へ解決。両 UI が同じ見た目になる） |
 | `SelectionGeometry.DirectionalHandles` | 描画対象の 8 方向ハンドル（列挙順は `HitTarget` の宣言順） |
 | `SelectionGeometry.ToCursorKind` | ハンドル → `MarqueeCursorKind`（どのハンドルが同じカーソルになるか） |
@@ -258,7 +257,7 @@ tests/
 ├── MarqueeState.Tests.cs            # 状態遷移・ヒットテスト・ドラッグ・nudge・境界クリップ（32 件）
 ├── MarqueeFeedback.Tests.cs         # 効果の適用（カーソル操作・表示上の効果の順序）（6 件）
 ├── MarqueeSession.Tests.cs          # 入力の解釈・通知・効果・設定の反映・カーソル再表示の要求（50 件）
-├── MarqueeAppearance.Tests.cs       # ラベル配置・値補正・ハンドル一覧・カーソル種別（19 件）
+├── MarqueeAppearance.Tests.cs       # ラベル配置・付加情報ラベルの体裁・行送り・値補正・ハンドル一覧・カーソル種別（23 件）
 ├── MarqueeOptions.Tests.cs          # 既定値・部分変更・値補正・等価性（14 件）
 ├── MarqueeFrame.Tests.cs            # 描画内容の解決（ハンドル・マーカー・座標ラベル・描画可否）（13 件）
 └── MarqueeLogMessage.Tests.cs       # ログ定義の生成コード（IsEnabled 両パス・書式）（3 件）

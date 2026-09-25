@@ -78,6 +78,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ LoupeC
 - [ ] `SelectionRectColorA` / `SelectionRectColorB`（「なし」で非表示・不透明度は色のアルファ）が破線に反映される
 - [ ] チェック OFF / `Clear()` で Bitmap が解放され、チェック ON で再表示される
 - [ ] `RequestRender()` で再生成が要求され、`Rendered` が発火する
+- [ ] ルーペ上端の中央に中心座標ラベル（`(x, y)`）が表示され、マウス移動で文言が追従する（コントロールがテキスト要素として表示する）
 - [ ] 画像の外では、距離に応じて市松模様が部分的に表示される（全面市松になるのは視野全体が外に出た時のみ）
 
 ## 5. 構成

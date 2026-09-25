@@ -1,6 +1,9 @@
 param(
     [int]$ResizeWidth = 1000,
-    [int]$ResizeHeight = 700
+    [int]$ResizeHeight = 700,
+    # 切り出しを開始してルーペ（と中心座標ラベル）まで検証する。
+    # 既定は off（通常画面の検証だけを行い、アプリの状態を切り出しモードへ変えない）。
+    [switch]$VerifyLoupe
 )
 
 $ErrorActionPreference = 'Stop'
@@ -14,6 +17,9 @@ public static class W {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
     [DllImport("user32.dll", SetLastError = true)] public static extern bool SetProcessDpiAwarenessContext(IntPtr value);
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
 }
@@ -37,14 +43,22 @@ $settingsBackup = $null
 if (Test-Path $settingsPath) { $settingsBackup = Get-Content -LiteralPath $settingsPath -Raw }
 
 # ルーペの枠色は設定（LoupeFrameColor）に依存する（既定 #FFD3D3D3）。
+# 中心座標ラベルの文字色も同様（LoupeCoordLabelColor。既定は白）。
 # 実設定から解決して判定に使う（色を決め打ちすると設定変更で誤判定する）。
 $loupeFrameColor = [System.Drawing.Color]::FromArgb(255, 211, 211, 211)
+$loupeTextColor = [System.Drawing.Color]::White
 if ($null -ne $settingsBackup) {
     try {
-        $loupeFrameRaw = ($settingsBackup | ConvertFrom-Json).LoupeFrameColor
-        if ($loupeFrameRaw -match '^#([0-9A-Fa-f]{8})$') {
+        $settingsJson = $settingsBackup | ConvertFrom-Json
+        if ($settingsJson.LoupeFrameColor -match '^#([0-9A-Fa-f]{8})$') {
             $argb = [Convert]::ToUInt32($Matches[1], 16)
             $loupeFrameColor = [System.Drawing.Color]::FromArgb(
+                [int](($argb -shr 24) -band 0xFF), [int](($argb -shr 16) -band 0xFF),
+                [int](($argb -shr 8) -band 0xFF), [int]($argb -band 0xFF))
+        }
+        if ($settingsJson.LoupeCoordLabelColor -match '^#([0-9A-Fa-f]{8})$') {
+            $argb = [Convert]::ToUInt32($Matches[1], 16)
+            $loupeTextColor = [System.Drawing.Color]::FromArgb(
                 [int](($argb -shr 24) -band 0xFF), [int](($argb -shr 16) -band 0xFF),
                 [int](($argb -shr 8) -band 0xFF), [int]($argb -band 0xFF))
         }
@@ -94,21 +108,59 @@ function Get-StatusBarPixelCount([System.Drawing.Bitmap]$bitmap) {
     return ($counts.Values | Measure-Object -Maximum).Maximum
 }
 
-# ルーペ領域の枠（設定の枠色）と白（座標ラベル文字）の画素数を数える。
+# ルーペ領域の枠（設定の枠色）と白（座標ラベル文字）の画素数を数え、枠の外接矩形を返す。
 # ルーペはカーソル追従のため位置が固定でない（カーソルがプレビュー外なら画像中央を右下へ表示する）。
-# そのためキャンバス全域を走査し、枠色の画素数で存在を判定する。
+# そのためキャンバス全域を走査し、枠色の画素数で存在を、外接矩形で中心座標ラベルの位置を判定する。
 # 枠色は設定（LoupeFrameColor）に依存するため、呼び出し側が実設定から解決した色を渡す。
 function Get-LoupeStats([System.Drawing.Bitmap]$bitmap, [System.Drawing.Color]$frameColor) {
     $w = $bitmap.Width; $h = $bitmap.Height
     $frame = 0; $white = 0
+    $left = [int]::MaxValue; $top = [int]::MaxValue; $right = -1; $bottom = -1
     for ($y = [int]($h * 0.06); $y -lt [int]($h * 0.93); $y++) {
         for ($x = [int]($w * 0.20); $x -lt [int]($w * 0.99); $x++) {
             $c = $bitmap.GetPixel($x, $y)
-            if ($c.R -eq $frameColor.R -and $c.G -eq $frameColor.G -and $c.B -eq $frameColor.B) { $frame++ }
+            if ($c.R -eq $frameColor.R -and $c.G -eq $frameColor.G -and $c.B -eq $frameColor.B) {
+                $frame++
+                if ($x -lt $left) { $left = $x }
+                if ($x -gt $right) { $right = $x }
+                if ($y -lt $top) { $top = $y }
+                if ($y -gt $bottom) { $bottom = $y }
+            }
             elseif ($c.R -eq 255 -and $c.G -eq 255 -and $c.B -eq 255) { $white++ }
         }
     }
-    return [ordered]@{ frame = $frame; white = $white }
+    return [ordered]@{ frame = $frame; white = $white; left = $left; top = $top; right = $right; bottom = $bottom }
+}
+
+# ルーペの上端中央帯で中心座標ラベルの画素を数える（背景の暗色 + 文字色）。
+# ラベルはルーペ上端から 2 DIP の位置に中央寄せで置かれる（コアが配置を単一所有する）ため、
+# 枠の外接矩形から上端 25%・左右中央 80% の帯を走査する。
+# 文字色（既定は白）と背景色（既定は黒 60%。市松模様の上に重なるため純黒にはならない）は
+# 設定に依存するため、文字色は呼び出し側が実設定から解決して渡す。
+function Get-LoupeLabelStats([System.Drawing.Bitmap]$bitmap, $loupe, [System.Drawing.Color]$textColor) {
+    $width = $loupe.right - $loupe.left
+    $height = $loupe.bottom - $loupe.top
+    if ($width -le 0 -or $height -le 0) { return [ordered]@{ text = 0; dark = 0 } }
+
+    $x0 = [int]($loupe.left + $width * 0.10)
+    $x1 = [int]($loupe.left + $width * 0.90)
+    $y0 = $loupe.top
+    $y1 = [int]($loupe.top + $height * 0.25)
+    $text = 0; $dark = 0
+    for ($y = $y0; $y -lt $y1; $y++) {
+        for ($x = $x0; $x -lt $x1; $x++) {
+            $c = $bitmap.GetPixel($x, $y)
+            $max = [Math]::Max($c.R, [Math]::Max($c.G, $c.B))
+            $min = [Math]::Min($c.R, [Math]::Min($c.G, $c.B))
+            # 文字（アンチエイリアスで中間色になるため、文字色より 40 低い値までを文字とみなす）
+            if ($c.R -ge [Math]::Max(120, $textColor.R - 40) -and
+                $c.G -ge [Math]::Max(120, $textColor.G - 40) -and
+                $c.B -ge [Math]::Max(120, $textColor.B - 40)) { $text++ }
+            # 背景（暗色かつ無彩色。市松模様の濃色と区別する）
+            elseif ($max -le 120 -and ($max - $min) -le 24) { $dark++ }
+        }
+    }
+    return [ordered]@{ text = $text; dark = $dark }
 }
 
 # プレビュー領域（ルーペを除く中央）の平均色を求める（ズーム・パンの変化を検出する）
@@ -165,8 +217,7 @@ $out['hwnd'] = $hwnd.ToInt64()
 if ($hwnd -ne [IntPtr]::Zero) {
     Start-Sleep -Milliseconds 2000
 
-    # ルーペはカーソルがプレビュー上にある間のみ表示するため、カーソルをウィンドウ外へ退避する
-    # （位置が不定だと判定が撮影時のカーソル位置に左右される）
+    # カーソルをウィンドウ外へ退避する（ルーペはカーソルがプレビュー上にある間のみ表示する）
     [void][W]::SetCursorPos(2, 2)
     Start-Sleep -Milliseconds 500
     $out['initial'] = Capture-Window $hwnd 'initial'
@@ -178,6 +229,38 @@ if ($hwnd -ne [IntPtr]::Zero) {
     [void][W]::SetCursorPos(2, 2)
     Start-Sleep -Milliseconds 500
     $out['resized'] = Capture-Window $hwnd 'resized'
+
+    # 切り出しを開始してルーペを表示させ、中心座標ラベルの画素を検証する（任意）。
+    # 通常画面（CapturePage）はルーペを使わないため、ルーペを見るには切り出し（Ctrl+R）が必要。
+    if ($VerifyLoupe) {
+        [void][W]::SetForegroundWindow($hwnd)
+        Start-Sleep -Milliseconds 300
+        $out['foregroundSet'] = ([W]::GetForegroundWindow() -eq $hwnd)
+
+        # Ctrl+R で切り出しを開始する（キーはフォアグラウンドウィンドウへ届く）
+        [W]::keybd_event(0x11, 0, 0, [UIntPtr]::Zero)
+        [W]::keybd_event(0x52, 0, 0, [UIntPtr]::Zero)
+        [W]::keybd_event(0x52, 0, 2, [UIntPtr]::Zero)
+        [W]::keybd_event(0x11, 0, 2, [UIntPtr]::Zero)
+        Start-Sleep -Milliseconds 1500
+
+        # カーソルをプレビュー上へ移動する（切り出し中は移動でルーペ中心が更新され、ルーペが表示される）
+        $win = New-Object W+RECT
+        [void][W]::GetWindowRect($hwnd, [ref]$win)
+        for ($i = 1; $i -le 4; $i++) {
+            [void][W]::SetCursorPos(
+                [int]($win.Left + ($win.Right - $win.Left) * 0.55) + $i,
+                [int]($win.Top + ($win.Bottom - $win.Top) * 0.50) + $i)
+            Start-Sleep -Milliseconds 150
+        }
+        Start-Sleep -Milliseconds 800
+        $out['loupeShown'] = Capture-Window $hwnd 'loupeShown'
+
+        # 切り出しをキャンセルして元の状態へ戻す（後続の判定に影響させない）
+        [W]::keybd_event(0x1B, 0, 0, [UIntPtr]::Zero)
+        [W]::keybd_event(0x1B, 0, 2, [UIntPtr]::Zero)
+        Start-Sleep -Milliseconds 500
+    }
 
     # 判定: ステータスバーが画面内に表示されていること
     $checks = [ordered]@{}
@@ -192,6 +275,24 @@ if ($hwnd -ne [IntPtr]::Zero) {
         $checks["${label}_loupeFramePixels"] = $loupe.frame
         $checks["${label}_loupeWhitePixels"] = $loupe.white
         $checks["${label}_loupeHidden"] = ($loupe.frame -lt 200)
+    }
+
+    # ルーペ表示時の判定: ルーペが現れ、その上端中央に中心座標ラベル（暗色背景 + 文字色）が現れること。
+    # 通常画面（CapturePage）はルーペを使わないため、本判定は -VerifyLoupe 指定時のみ実行される。
+    if ($VerifyLoupe) {
+        $loupeShown = Get-LoupeStats $script:images['loupeShown'] $loupeFrameColor
+        $checks['loupeShown_loupeFramePixels'] = $loupeShown.frame
+        $checks['loupeShown_loupeVisible'] = ($loupeShown.frame -ge 200)
+        $checks['loupeShown_labelTextPixels'] = 0
+        $checks['loupeShown_labelDarkPixels'] = 0
+        $checks['loupeShown_labelVisible'] = $false
+        if ($loupeShown.frame -ge 200) {
+            $label = Get-LoupeLabelStats $script:images['loupeShown'] $loupeShown $loupeTextColor
+            $checks['loupeShown_labelTextPixels'] = $label.text
+            $checks['loupeShown_labelDarkPixels'] = $label.dark
+            $checks['loupeShown_labelVisible'] = ($label.text -gt 0 -and $label.dark -gt 0)
+            $checks['loupeShown_loupeRect'] = "$($loupeShown.left),$($loupeShown.top) - $($loupeShown.right),$($loupeShown.bottom)"
+        }
     }
     $out['checks'] = $checks
 

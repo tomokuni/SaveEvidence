@@ -29,7 +29,9 @@ public static class FadeMaskDragRectOptionsMapper
     /// 3. サイズラベルの背景色は <see cref="CaptureSettings.TextBackgroundColor"/> を対応させる。<br/>
     /// 4. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる。市松模様の下地色は<b>ホストが決めた色</b>を使う<br/>
     ///    （引数 <paramref name="loupeBackground"/>。撮影オーバーレイは白、プレビューの切り出しはテーマ背景色）。<br/>
-    /// 5. 選択矩形破線の色とルーペのオフセットを設定する（オフセットは <see cref="CaptureSettings.LoupeOffset"/> を使う）。
+    /// 5. 選択矩形破線の色とルーペのオフセットを設定する（オフセットは <see cref="CaptureSettings.LoupeOffset"/> を使う）。<br/>
+    /// 6. ホスト固有の付加情報（操作・情報ラベル）の外観（<see cref="FadeMaskDragRectLabelOptions"/>）を組み立てる。<br/>
+    ///    文言の生成と描画はホストが行い、本変換は外観のみを写像する（表示可否はホストが判定する）。
     /// </remarks>
     public static FadeMaskDragRectOptions ToFadeMaskDragRectOptions(
         this CaptureSettings settings, DrawingColor? loupeBackground = null)
@@ -92,6 +94,18 @@ public static class FadeMaskDragRectOptionsMapper
             SelectionRectColorA = settings.LoupeSelectionRectColorA!.Value,
             SelectionRectColorB = settings.LoupeSelectionRectColorB!.Value,
             LoupeOffset = settings.LoupeOffset!.Value,
+            // 操作・情報ラベルはホストが自前で描くため、外観（表示可否・寸法・色）だけを写像する
+            Labels = new FadeMaskDragRectLabelOptions
+            {
+                ShowOperationLabel = settings.ShowSubLines!.Value,
+                OperationFontSize = settings.SubLineFontSize!.Value,
+                OperationColor = settings.SubLineColor!.Value,
+                OperationBackgroundColor = settings.SubLineBackgroundColor!.Value,
+                ShowInfoLabel = settings.InfoLabelVisible!.Value,
+                InfoFontSize = settings.InfoLabelFontSize!.Value,
+                InfoColor = settings.InfoLabelColor!.Value,
+                InfoBackgroundColor = settings.InfoLabelBackgroundColor!.Value,
+            },
         };
     }
 }
