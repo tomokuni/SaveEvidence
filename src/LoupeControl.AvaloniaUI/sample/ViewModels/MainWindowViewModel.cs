@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.SaveEvidence.Loupe.Sample.Imaging;
 using DrawingColor = System.Drawing.Color;
 
@@ -78,6 +79,8 @@ public sealed class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(ZoomText));
                 OnPropertyChanged(nameof(CoordinateText));
                 OnPropertyChanged(nameof(Options));
+                OnPropertyChanged(nameof(Metrics));
+                OnPropertyChanged(nameof(Paint));
             }
         }
     }
@@ -95,6 +98,8 @@ public sealed class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(RequestedSizeText));
                 OnPropertyChanged(nameof(CoordinateText));
                 OnPropertyChanged(nameof(Options));
+                OnPropertyChanged(nameof(Metrics));
+                OnPropertyChanged(nameof(Paint));
             }
         }
     }
@@ -198,6 +203,8 @@ public sealed class MainWindowViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(CheckerSizeText));
                 OnPropertyChanged(nameof(Options));
+                OnPropertyChanged(nameof(Metrics));
+                OnPropertyChanged(nameof(Paint));
             }
         }
     }
@@ -214,6 +221,8 @@ public sealed class MainWindowViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(FrameWidthText));
                 OnPropertyChanged(nameof(Options));
+                OnPropertyChanged(nameof(Metrics));
+                OnPropertyChanged(nameof(Paint));
             }
         }
     }
@@ -248,6 +257,8 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _crossColorOption, value))
             {
                 OnPropertyChanged(nameof(Options));
+                OnPropertyChanged(nameof(Metrics));
+                OnPropertyChanged(nameof(Paint));
             }
         }
     }
@@ -263,6 +274,8 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _checkerColorAOption, value))
             {
                 OnPropertyChanged(nameof(Options));
+                OnPropertyChanged(nameof(Metrics));
+                OnPropertyChanged(nameof(Paint));
             }
         }
     }
@@ -278,6 +291,8 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _checkerColorBOption, value))
             {
                 OnPropertyChanged(nameof(Options));
+                OnPropertyChanged(nameof(Metrics));
+                OnPropertyChanged(nameof(Paint));
             }
         }
     }
@@ -293,34 +308,44 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _frameColorOption, value))
             {
                 OnPropertyChanged(nameof(Options));
+                OnPropertyChanged(nameof(Metrics));
+                OnPropertyChanged(nameof(Paint));
             }
         }
     }
 
-    /// <summary>ルーペの外観（コアの値。色は UI 非依存の色型で保持する）。</summary>
-    /// <value>選択中の色とサイズから組み立てた外観。依存する選択肢・サイズの変更で再評価される。</value>
-    /// <remarks>外観の既定値・型はコントロール（コアの <see cref="LoupeAppearance"/>）が単一所有する。</remarks>
-    public LoupeAppearance Appearance => new()
+    /// <summary>ルーペの寸法（コアの値）。</summary>
+    /// <value>選択中のサイズから組み立てた寸法。依存するサイズの変更で再評価される。</value>
+    /// <remarks>寸法の既定値・型はコントロール（コアの <see cref="LoupeMetrics"/>）が単一所有する。</remarks>
+    public LoupeMetrics Metrics => new()
     {
-        CrossColor = ToDrawingColor(CrossColorOption),
         CheckerSize = CheckerSize,
-        CheckerColorA = ToDrawingColor(CheckerColorAOption),
-        CheckerColorB = ToDrawingColor(CheckerColorBOption),
-        FrameColor = ToDrawingColor(FrameColorOption),
         FrameWidth = FrameWidth,
     };
 
-    /// <summary>ルーペの設定（表示サイズ・拡大率・外観。コアの <see cref="LoupeOptions"/> が単一所有する）。</summary>
+    /// <summary>ルーペの色（描画にだけ必要な設定）。</summary>
+    /// <value>選択中の色から組み立てた色。依存する選択肢の変更で再評価される。</value>
+    /// <remarks>色の既定値・型は描画の設定（<c>LoupePaint</c>）が単一所有する（コアは色を持たない）。</remarks>
+    public LoupePaint Paint => new()
+    {
+        CrossColor = ToDrawingColor(CrossColorOption),
+        CheckerColorA = ToDrawingColor(CheckerColorAOption),
+        CheckerColorB = ToDrawingColor(CheckerColorBOption),
+        FrameColor = ToDrawingColor(FrameColorOption),
+    };
+
+    /// <summary>ルーペの設定（表示サイズ・拡大率・寸法。コアの <see cref="LoupeOptions"/> が単一所有する）。</summary>
     /// <value>現在の設定（コントロールの <c>Options</c> へ一括でバインドする）。</value>
     /// <remarks>
     /// 設定を 1 つの値にまとめて公開する（コントロール側の公開プロパティも 1 つである）。<br/>
-    /// 依存する値（拡大率・サイズ・外観の項目）の変更は各 setter が <c>Options</c> の変更を通知する。
+    /// 依存する値（拡大率・サイズ・外観の項目）の変更は各 setter が <c>Options</c> の変更を通知する。<br/>
+    /// 色はコアの設定に含めない（描画にだけ必要な設定のため、コントロールの <c>Paint</c> へ与える）。
     /// </remarks>
     public LoupeOptions Options => new()
     {
         RequestedSize = RequestedSize,
         ZoomLevel = ZoomLevel,
-        Appearance = Appearance,
+        Metrics = Metrics,
     };
 
     /// <summary>色選択肢をコアの色型へ変換する（「なし」はアルファ 0 = 描画しない）。</summary>

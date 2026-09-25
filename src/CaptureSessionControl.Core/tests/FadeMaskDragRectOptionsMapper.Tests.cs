@@ -149,27 +149,11 @@ public class FadeMaskDragRectOptionsMapperTests
 
         Assert.Equal(150, loupe.RequestedSize);
         Assert.Equal(3, loupe.ZoomLevel);
-        Assert.Equal(DrawingColor.Red, loupe.Appearance.CrossColor);
-        Assert.Equal(10, loupe.Appearance.CheckerSize);
-        Assert.Equal(DrawingColor.Black, loupe.Appearance.CheckerColorA);
-        Assert.Equal(DrawingColor.White, loupe.Appearance.CheckerColorB);
-        Assert.Equal(DrawingColor.Gray, loupe.Appearance.FrameColor);
-        Assert.Equal(4, loupe.Appearance.FrameWidth);
-        Assert.False(loupe.Appearance.ShowCoordLabel);
-        Assert.Equal(DrawingColor.Cyan, loupe.Appearance.CoordLabelColor);
-        Assert.Equal(DrawingColor.FromArgb(153, 100, 0, 0), loupe.Appearance.CoordLabelBackgroundColor);
-        Assert.Equal(13.0, loupe.Appearance.CoordLabelFontSize);
-    }
-
-    [Fact]
-    public void 変換_市松模様の下地色は引数で与える()
-    {
-        var settings = CreateSettings();
-
-        // 既定（null）は透明のまま（背後の要素を透かす）
-        Assert.Equal(DrawingColor.Transparent, settings.ToFadeMaskDragRectOptions().Loupe.Appearance.BackgroundColor);
-        // ホストが決めた色（撮影オーバーレイは白・プレビューの切り出しはテーマ背景色）を使う
-        Assert.Equal(DrawingColor.White, settings.ToFadeMaskDragRectOptions(DrawingColor.White).Loupe.Appearance.BackgroundColor);
+        // 寸法のみを写像する（色は描画にだけ必要な設定のため、描画側（UI 層のホスト）が設定する）
+        Assert.Equal(10, loupe.Metrics.CheckerSize);
+        Assert.Equal(4, loupe.Metrics.FrameWidth);
+        Assert.False(loupe.Metrics.ShowCoordLabel);
+        Assert.Equal(13.0, loupe.Metrics.CoordLabelFontSize);
     }
 
     [Fact]

@@ -20,17 +20,20 @@ public static class LoupeLabelPlan
 {
     /// <summary>中心座標ラベルの配置指示を解決する。</summary>
     /// <param name="coordLabel">コアが解決したラベル契約。描かない場合は null。</param>
+    /// <param name="paint">描画に使う色（描画にだけ必要な設定。本層が単一所有する）。null 不可。</param>
     /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
     /// <returns>配置するラベル要素（1 要素）。描かない場合は空。</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
-    /// <remarks>外観（色・フォントサイズ・角丸・余白）と文言はコアが単一所有する（本クラスは実寸の反映のみ）。</remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="paint"/> または <paramref name="measureText"/> が null の場合。</exception>
+    /// <remarks>寸法（フォントサイズ・角丸・余白）と文言はコアが、色は描画の設定が単一所有する（本クラスは実寸の反映のみ）。</remarks>
     public static IReadOnlyList<EsLabelElement> Resolve(
-        LoupeCoordLabel? coordLabel, Func<string, double, EsSize> measureText)
+        LoupeCoordLabel? coordLabel, LoupePaint paint, Func<string, double, EsSize> measureText)
     {
+        ArgumentNullException.ThrowIfNull(paint);
         ArgumentNullException.ThrowIfNull(measureText);
 
         return coordLabel is { } label
-            ? [label.ToElement(measureText(label.Text, label.FontSize))]
+            ? [label.ToElement(
+                measureText(label.Text, label.FontSize), paint.CoordLabelColor, paint.CoordLabelBackgroundColor)]
             : [];
     }
 }

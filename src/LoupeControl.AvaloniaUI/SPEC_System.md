@@ -109,10 +109,10 @@ flowchart TB
         direction TB
         Opt["LoupeOptions<br/>public sealed record<br/>（表示サイズ・拡大率・外観）"]
         Req["LoupeRenderRequest<br/>public readonly record struct<br/>（1 フレーム分の描画入力）"]
-        App["LoupeAppearance<br/>public sealed record"]
+        App["LoupeMetrics<br/>public sealed record"]
         Ext["LoupeImageExtractor<br/>public static class<br/>Imaging/LoupeImageExtractor.cs"]
         Coerce["LoupeValueCoercer<br/>public static class"]
-        Scale["LoupeAppearanceScaler<br/>public static class"]
+        Scale["LoupeMetricsScaler<br/>public static class"]
         Geo["LoupeDecorationGeometry / LoupeCheckerboard<br/>public static class"]
         Lay["EsLabelLayout<br/>Platform.Core.Imaging"]
         Pos["Loupe（公開ファサード）<br/>public sealed class<br/>Loupe.cs / LoupeLayout / LoupeRenderNotification"]
@@ -160,21 +160,21 @@ flowchart TB
     - 非同期生成: 切り出しと合成（`RenderTargetBitmap` / `DrawingContext`）は UI スレッドで行い（バックグラウンド抽出（`Task.Run`）は使わない。連続再描画時にスレッドプールが競合し、移動中の追従が止まるため）、古い世代の結果は採用せず破棄する
     - 表示サイズ・位置: `UpdatePosition` がコアのファサード `Loupe.ResolveLayout` を呼び、返された `LoupeLayout`（表示サイズと表示位置）を要素（`Width` / `Height`）と `RenderTransform` へ写すだけである（クランプ・オフセット・親領域へのクランプはコアが単一所有し、`UpdatePosition` は表示サイズの唯一の反映元になる）
     - 座標単位: `Options.RequestedSize` は DIP、レンダラーへ渡すサイズと装飾幅は `RenderScaling` で物理ピクセルへ変換
-  - 値の補正: コアの設定値（`LoupeOptions` / `LoupeAppearance`）は型の生成時に補正される（UI は関与しない）。環境値の `RenderScaling` のみ `coerce` コールバックで矯正する
+  - 値の補正: コアの設定値（`LoupeOptions` / `LoupeMetrics`）は型の生成時に補正される（UI は関与しない）。環境値の `RenderScaling` のみ `coerce` コールバックで矯正する
 - **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する表示サイズ・拡大率・外観。UI は設定値を保持しない。色は `System.Drawing.Color` で受け取り描画時にブラシへ変換する））/ 環境（`RenderScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
-- **依存**: LoupeRenderer / LoupeLabelPlan（LoupeControl.UIBase） / LoupeLogMessage（コア） / LoupeOptions（コア） / LoupeAppearance（コア） / AvaloniaCanvas（Platform.AvaloniaUI） / Avalonia / ILogger
+- **依存**: LoupeRenderer / LoupeLabelPlan（LoupeControl.UIBase） / LoupeLogMessage（コア） / LoupeOptions（コア） / LoupeMetrics（コア） / AvaloniaCanvas（Platform.AvaloniaUI） / Avalonia / ILogger
 
 ### 6.2 LoupeRenderer（LoupeControl.UIBase）
 
 - **分類**: 公開静的クラス（`public static class`。所属は UI 非依存の描画層 `LoupeControl.UIBase`）
 - **責務**: ルーペ Bitmap の合成描画（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠）を描画ポート `IEsCanvas` へ写す（**描画手順の単一所有者**）
 - **公開API**: `DrawShapes(canvas, source, request, notification)`（図形の層のみ。**ラベルの層は描かない**）/ `ResolveLabels(coordLabel, measureText)`（要素の配置指示）。引数はコアの描画契約 `LoupeRenderRequest` と `LoupeRenderNotification`（層の順序）、および解決済みのソース。外観値・換算値を保持しない（切り出せない場合は市松模様のみを描画する）
-- **特徴**: 描画の可否（アルファ 0）はコアが判定する。市松タイル・外枠の太さはコアの `LoupeAppearanceScaler` が物理ピクセルへ換算する（DIP の見た目を DPI に依存させない）。描画層へは契約（`LoupeRenderRequest`）を渡し、各層がコアへ問い合わせる（呼び出し側で可否を判定して null を渡す形にはしない）
-- **依存**: Platform.Core（`IEsCanvas`）/ Feature.LoupeCore（`LoupeRenderRequest` / `LoupeAppearance` / `LoupeAppearanceScaler` / `LoupeImageExtractor`）
+- **特徴**: 描画の可否（アルファ 0）はコアが判定する。市松タイル・外枠の太さはコアの `LoupeMetricsScaler` が物理ピクセルへ換算する（DIP の見た目を DPI に依存させない）。描画層へは契約（`LoupeRenderRequest`）を渡し、各層がコアへ問い合わせる（呼び出し側で可否を判定して null を渡す形にはしない）
+- **依存**: Platform.Core（`IEsCanvas`）/ Feature.LoupeCore（`LoupeRenderRequest` / `LoupeMetrics` / `LoupeMetricsScaler` / `LoupeImageExtractor`）
 
 ### 6.3 描画責務分割
 
-- 描画の手順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有し、Avalonia 版と MewUI 版が同じ手順を共有する（層の順序と描く可否はコアの `LoupeDrawLayer` / `LoupeAppearance.Has*` が単一所有する）。
+- 描画の手順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有し、Avalonia 版と MewUI 版が同じ手順を共有する（層の順序と描く可否はコアの `LoupeDrawLayer` / `LoupeMetrics.Has*` が単一所有する）。
 - `LoupeRenderer` は**描画入力（`LoupeRenderRequest`）と層の順序を受け取り、描画の可否・値の単位・幾何をコアへ問い合わせて描くだけ**である（外観値・判断を保持しない）。
 - 描画先は UI 非依存の描画ポート `IEsCanvas` であり、本プロジェクトでは `AvaloniaCanvas`（`Platform.AvaloniaUI`）が `DrawingContext` を適合させる。
 - `EsLabelElementHost`（`Platform.AvaloniaUI.Labels`）: コアの配置指示（`EsLabelElement`）をラベル要素（`Border` + `TextBlock`）へ写すホスト。色 → 共有ブラシの変換と容量制限付きキャッシュも本型が単一所有する（本コントロールとマーキーが共用する）。
@@ -265,7 +265,7 @@ sequenceDiagram
 | --- | --- | --- |
 | Options（RequestedSize / ZoomLevel） | 1〜4096 / 1〜64 | **コアの `LoupeOptions`（`init` アクセサ）** |
 | RenderScaling | 0.1〜8.0（非有限値は 1.0） | `coerce` コールバック（プロパティのメタデータ） |
-| Options.Appearance（CheckerSize / FrameWidth / CoordLabelFontSize / CoordLabelCornerRadius） | 1〜128 / 1〜64 / 6〜48 / 0〜64 | **コアの `LoupeAppearance`（`init` アクセサ）** |
+| Options.Appearance（CheckerSize / FrameWidth / CoordLabelFontSize / CoordLabelCornerRadius） | 1〜128 / 1〜64 / 6〜48 / 0〜64 | **コアの `LoupeMetrics`（`init` アクセサ）** |
 
 環境値の `RenderScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `LoupeValueCoercer` が単一所有し、UI は登録するだけです）。MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
 

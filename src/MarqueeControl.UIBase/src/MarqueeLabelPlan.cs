@@ -39,12 +39,14 @@ public static class MarqueeLabelPlan
 
         if (content.SizeLabel is { } sizeLabel)
         {
-            elements.Add(sizeLabel.ToElement(measureText(sizeLabel.Text, sizeLabel.FontSize)));
+            elements.Add(sizeLabel.ToElement(
+                measureText(sizeLabel.Text, sizeLabel.FontSize), sizeLabel.TextColor, sizeLabel.BackgroundColor));
         }
 
         if (content.CoordLabel is { } coordLabel)
         {
-            elements.Add(coordLabel.ToElement(measureText(coordLabel.Text, coordLabel.FontSize)));
+            elements.Add(coordLabel.ToElement(
+                measureText(coordLabel.Text, coordLabel.FontSize), coordLabel.TextColor, coordLabel.BackgroundColor));
         }
 
         return elements;

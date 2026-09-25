@@ -26,14 +26,6 @@ public interface IEsLabel
     /// <value>安全域へ補正済みのフォントサイズ。</value>
     double FontSize { get; }
 
-    /// <summary>文字色を取得する。</summary>
-    /// <value>文字の色（不透明度は色のアルファに統合）。</value>
-    DrawingColor TextColor { get; }
-
-    /// <summary>背景色を取得する。</summary>
-    /// <value>背景の色（アルファ 0 は透明）。</value>
-    DrawingColor BackgroundColor { get; }
-
     /// <summary>背景の角丸半径（DIP）を取得する。</summary>
     /// <value>角丸半径。0（既定）は四角形。</value>
     /// <remarks>角丸を持たないラベルは既定値（0）をそのまま使う（本メンバーを実装しない）。</remarks>

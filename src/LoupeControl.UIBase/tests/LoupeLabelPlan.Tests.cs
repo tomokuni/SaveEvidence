@@ -20,7 +20,16 @@ public class LoupeLabelPlanTests
     /// <param name="text">文言。</param>
     /// <returns>中心座標ラベル。</returns>
     private static LoupeCoordLabel CreateCoordLabel(string text = "(50, 60)")
-        => new(text, 160.0, 12.0, 2.0, DrawingColor.White, DrawingColor.FromArgb(153, 0, 0, 0));
+        => new(text, 160.0, 12.0, 2.0);
+
+    /// <summary>テスト用の色を生成する。</summary>
+    /// <returns>描画に使う色。</returns>
+    private static LoupePaint CreatePaint()
+        => new()
+        {
+            CoordLabelColor = DrawingColor.White,
+            CoordLabelBackgroundColor = DrawingColor.FromArgb(153, 0, 0, 0),
+        };
 
     /// <summary>実寸を固定で返す測定関数。</summary>
     /// <param name="text">測定する文言。</param>
@@ -31,7 +40,7 @@ public class LoupeLabelPlanTests
     [Fact]
     public void Resolve_ラベルが無ければ空を返す()
     {
-        var elements = LoupeLabelPlan.Resolve(null, Measure);
+        var elements = LoupeLabelPlan.Resolve(null, CreatePaint(), Measure);
 
         Assert.Empty(elements);
     }
@@ -39,7 +48,7 @@ public class LoupeLabelPlanTests
     [Fact]
     public void Resolve_ラベルがあれば1件を返す()
     {
-        var element = Assert.Single(LoupeLabelPlan.Resolve(CreateCoordLabel(), Measure));
+        var element = Assert.Single(LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), Measure));
 
         Assert.Equal("(50, 60)", element.Text);
         Assert.Equal(12.0, element.FontSize);
@@ -52,7 +61,7 @@ public class LoupeLabelPlanTests
     {
         var coordLabel = CreateCoordLabel();
 
-        var element = Assert.Single(LoupeLabelPlan.Resolve(coordLabel, Measure));
+        var element = Assert.Single(LoupeLabelPlan.Resolve(coordLabel, CreatePaint(), Measure));
         var frame = coordLabel.ComputeFrame(MeasuredSize);
 
         // 背景矩形・文字の描画原点はコアの ComputeFrame が単一所有する（本クラスは写すだけ）
@@ -67,6 +76,7 @@ public class LoupeLabelPlanTests
 
         LoupeLabelPlan.Resolve(
             CreateCoordLabel("(7, 8)"),
+            CreatePaint(),
             (text, fontSize) =>
             {
                 calls.Add((text, fontSize));
@@ -79,6 +89,12 @@ public class LoupeLabelPlanTests
     [Fact]
     public void Resolve_測定関数がnullなら例外()
     {
-        Assert.Throws<ArgumentNullException>(() => LoupeLabelPlan.Resolve(CreateCoordLabel(), null!));
+        Assert.Throws<ArgumentNullException>(() => LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), null!));
+    }
+
+    [Fact]
+    public void Resolve_色がnullなら例外()
+    {
+        Assert.Throws<ArgumentNullException>(() => LoupeLabelPlan.Resolve(CreateCoordLabel(), null!, Measure));
     }
 }

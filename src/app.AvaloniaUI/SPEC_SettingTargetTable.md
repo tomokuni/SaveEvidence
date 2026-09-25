@@ -126,7 +126,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 ### 3.3 LoupeControl の公開外観と FadeMaskDragRectControl での公開有無
 
-ルーペの装飾の外観はコアの `LoupeAppearance` が単一所有し、`LoupeControl` は `Appearance` プロパティへ 1 つの値として公開します（個別プロパティは持ちません）。
+ルーペの装飾の外観はコアの `LoupeMetrics` が単一所有し、`LoupeControl` は `Appearance` プロパティへ 1 つの値として公開します（個別プロパティは持ちません）。
 
 | LoupeControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
@@ -148,7 +148,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `Appearance.CoordLabelCornerRadius` | —（公開しない） | —（設定なし） | ラベル背景の角丸半径（コアの既定値 2 を使用） |
 | —（破線色） | ✅ `Options.SelectionRectColorA / B` | ✅ | LoupeControl のプロパティではなく、ルーペ描画時（`LoupeRendered`）に破線オーバーレイを描くための色 |
 
-- ルーペの設定も `FadeMaskDragRectControl.Options`（`FadeMaskDragRectOptions`）経由で公開され、コアの `LoupeOptions` / `LoupeAppearance` へ組み立てて一括設定される。
+- ルーペの設定も `FadeMaskDragRectControl.Options`（`FadeMaskDragRectOptions`）経由で公開され、コアの `LoupeOptions` / `LoupeMetrics` へ組み立てて一括設定される。
 - `SelectionRectColorA / B` は `LoupeControl` には公開されず、`FadeMaskDragRectControl` がルーペ描画完了時に破線オーバーレイを描画する際に用いる（`Options` から参照）。
 - **例外**: `RenderScaling` は設定（`Options`）の**対象外**の環境値で、`FadeMaskDragRectControl.LoupeRenderScaling`（個別プロパティ）として公開される。DPI スケーリング（`MainWindow.DesktopScaling`）から自動取得するため設定画面では設定不可。
 

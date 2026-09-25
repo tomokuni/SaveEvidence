@@ -65,15 +65,15 @@ public class LoupeRenderRequestTests
     [Fact]
     public void Create_入力値をそのまま保持する()
     {
-        var appearance = new LoupeAppearance { CheckerSize = 8 };
-        var options = new LoupeOptions { ZoomLevel = 8, Appearance = appearance };
+        var appearance = new LoupeMetrics { CheckerSize = 8 };
+        var options = new LoupeOptions { ZoomLevel = 8, Metrics = appearance };
 
         var request = LoupeRenderRequest.Create(new EsPoint(3, 4), 100, 1.5, options);
 
         Assert.Equal(new EsPoint(3, 4), request.Center);
         Assert.Equal(8, request.ZoomLevel);
         Assert.Equal(1.5, request.Scaling);
-        Assert.Same(appearance, request.Appearance);
+        Assert.Same(appearance, request.Metrics);
     }
 
     /// <summary>中心が未設定（null）でも組み立てられることを検証する。</summary>

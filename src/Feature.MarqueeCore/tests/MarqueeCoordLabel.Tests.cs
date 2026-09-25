@@ -70,7 +70,7 @@ public class MarqueeCoordLabelTests
         var label = new MarqueeCoordLabel(
             "(100, 50)", new EsPoint(100, 50), new EsSize(800, 600), 12.0, DrawingColor.White, DrawingColor.Black);
 
-        var element = label.ToElement(new EsSize(120, 24));
+        var element = label.ToElement(new EsSize(120, 24), label.TextColor, label.BackgroundColor);
 
         Assert.Equal(new EsRect(108, 58, 128, 32), element.Bounds);
         Assert.Equal(new EsPoint(112, 62), element.TextOrigin);

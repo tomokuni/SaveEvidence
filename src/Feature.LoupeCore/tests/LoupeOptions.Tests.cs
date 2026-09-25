@@ -16,7 +16,7 @@ public class LoupeOptionsTests
 
         Assert.Equal(LoupeValueCoercer.RequestedSizeDefault, options.RequestedSize);
         Assert.Equal(LoupeValueCoercer.ZoomLevelDefault, options.ZoomLevel);
-        Assert.Equal(new LoupeAppearance(), options.Appearance);
+        Assert.Equal(new LoupeMetrics(), options.Metrics);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class LoupeOptionsTests
         Assert.Equal(8, changed.ZoomLevel);
         // 他の項目は維持される（部分指定でもゼロ値にならない）
         Assert.Equal(options.RequestedSize, changed.RequestedSize);
-        Assert.Equal(options.Appearance, changed.Appearance);
+        Assert.Equal(options.Metrics, changed.Metrics);
     }
 
     /// <summary>数値項目が生成時に安全域へ補正されることを検証する。</summary>
@@ -74,7 +74,7 @@ public class LoupeOptionsTests
         var options = new LoupeOptions();
         var other = same
             ? options
-            : options with { Appearance = options.Appearance with { FrameWidth = 8 } };
+            : options with { Metrics = options.Metrics with { FrameWidth = 8 } };
 
         Assert.Equal(same, options == other);
         Assert.Equal(!same, options != other);

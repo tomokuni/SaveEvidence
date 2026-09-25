@@ -305,7 +305,10 @@ internal sealed class CropSession
         var s = _settings;
 
         // 設定を 1 値に変換して一括適用する（ラベル文言は描画時に評価するため別途設定する）
-        _selector.Options = s.ToFadeMaskDragRectOptions(_themeBackground);
+        _selector.Options = s.ToFadeMaskDragRectOptions();
+        // 色は描画にだけ必要な設定のため、コアの設定ではなく描画の設定として与える
+        // （テーマ背景色でルーペの下地を塗り、背後のプレビューを透かさない）
+        _selector.LoupePaint = CapturePaintMapper.ToLoupePaint(s, _themeBackground);
 
         // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）。
         // 書式と「未選択なら描かない」規則はコアが単一所有する

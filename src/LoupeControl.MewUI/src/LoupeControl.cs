@@ -26,16 +26,16 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// <b>設定</b>: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有する表示サイズ・拡大率・外観）。<br/>
 /// <b>環境</b>: <see cref="RenderScaling"/>（DPI 追従）。<br/>
 /// <b>描画</b>: 中間ビットマップを生成せず、子の図形キャンバス（<see cref="ShapeCanvas"/>）が画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
-/// 数値の安全域への補正は <see cref="LoupeOptions"/> / <see cref="LoupeAppearance"/>（コア）が、描画サイズの決定は<br/>
+/// 数値の安全域への補正は <see cref="LoupeOptions"/> / <see cref="LoupeMetrics"/>（コア）が、描画サイズの決定は<br/>
 /// <see cref="LoupeFacade.CreateRequest"/>（コア）が、外観の寸法値（タイルサイズ・外枠の太さ）と<br/>
-/// 下地の描画可否は <see cref="LoupeAppearanceScaler"/> / <see cref="LoupeAppearance"/>（コア）が単一所有する。<br/>
+/// 下地の描画可否は <see cref="LoupeMetricsScaler"/> / <see cref="LoupeMetrics"/>（コア）が単一所有する。<br/>
 /// <br/>
 /// <b>基底クラス</b>: 図形キャンバスとラベル要素を子として重ねるため <see cref="Panel"/> を採用する。<br/>
 /// 図形キャンバスを先に、ラベル要素を後に子へ加えるため、<b>ラベルは常に最上位</b>の契約が構造で成立する。<br/>
 /// <br/>
 /// <b>ホスト側の操作</b>: <see cref="Source"/> を設定して <see cref="CenterPoint"/> を現在位置へ更新すると、<br/>
 /// ルーペがその位置を拡大表示する（描画はプロパティ変更で自動的に無効化される）。<br/>
-/// <b>座標ラベル</b>: 表示可否は <see cref="LoupeAppearance.ShouldShowCoordLabel"/>（コア）が判断し、<br/>
+/// <b>座標ラベル</b>: 表示可否は <see cref="LoupeMetrics.ShouldShowCoordLabel"/>（コア）が判断し、<br/>
 /// 文言・寸法は <see cref="LoupeCoordLabel"/>（コア）が、配置は <see cref="LoupeLabelPlan"/>（描画層）が<br/>
 /// 実寸（<see cref="SkiaText.Measure"/>）から単一所有する（本コントロールは要素を置くだけである）。
 /// </remarks>
@@ -101,13 +101,30 @@ public sealed class LoupeControl : Panel
             },
             coerce: static (_, value) => CoerceRenderScaling(value));
 
+    /// <summary><see cref="Paint"/> プロパティ（色。描画にだけ必要な設定）。</summary>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）には含めず、<br/>
+    /// 描画の設定（<see cref="LoupePaint"/>）として本コントロールが公開する（描画実装が単一所有する）。
+    /// </remarks>
+    public static readonly MewProperty<LoupePaint> PaintProperty =
+        MewProperty<LoupePaint>.Register<LoupeControl>(
+            nameof(Paint), LoupePaint.Default,
+            MewPropertyOptions.AffectsRender | MewPropertyOptions.AffectsLayout,
+            changed: static (o, oldValue, newValue) =>
+            {
+                // 色は描画実装が単一所有するため、新しい色の描画実装へ差し替える
+                o._loupe.Renderer = new LoupeRenderer(newValue);
+                // 中心座標ラベルの色も描画実装が与えるため、ラベル要素を配置し直す
+                o.InvalidateArrange();
+            });
+
     /// <summary>コアのファサード（表示レイアウト・描画入力・通知内容の解決と設定の窓口）。</summary>
     /// <remarks>
     /// 表示サイズ・描画入力・座標ラベル・表示位置の計算はすべてファサードが単一所有する<br/>
     /// （本コントロールは公開プロパティで受け取った値を転送し、返された値を描画・配置へ使うだけ）。<br/>
     /// フィールド初期化子で生成する（プロパティ変更のコールバックから参照できるようにするため）。
     /// </remarks>
-    private readonly LoupeFacade _loupe = new(LoupeRenderer.Default);
+    private readonly LoupeFacade _loupe = new(new LoupeRenderer(LoupePaint.Default));
 
     /// <summary>図形（背景・市松模様・拡大画像・十字線・外枠）を描画する内部キャンバス。</summary>
     /// <remarks>
@@ -149,6 +166,18 @@ public sealed class LoupeControl : Panel
         set => SetValue(OptionsProperty, value);
     }
 
+    /// <summary>描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
+    /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）ではなく本プロパティが単一所有する。<br/>
+    /// 変更すると描画実装（<see cref="Renderer"/>）が新しい色で差し替えられ、ラベル要素の再配置が行われる。
+    /// </remarks>
+    public LoupePaint Paint
+    {
+        get => GetValue(PaintProperty);
+        set => SetValue(PaintProperty, value);
+    }
+
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
     /// <value>スケーリング係数。範囲外・非有限は 0.1〜8.0 または既定値へ補正される。</value>
     public double RenderScaling
@@ -158,7 +187,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="LoupeRenderer.Default"/>。</value>
+    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="LoupeRenderer"/>。</value>
     /// <remarks>
     /// 保持はコアのファサード（<see cref="LoupeFacade.Renderer"/>）が単一所有する。<br/>
     /// 変更すると再描画とラベル要素の再配置を要求する（ラベルの文言・寸法は描画実装が解決するため）。<br/>

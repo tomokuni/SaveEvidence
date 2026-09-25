@@ -137,7 +137,7 @@ public static partial class LoupeLogMessage
     /// LogLevel: Debug（項目ごとの書式は個別の変更ログと同一）<br/>
     /// 設定を 1 つの値へ統合したため、変更された項目の判定（差分検出）を本メソッドが単一所有する<br/>
     /// （UI 層は変更前後の値を渡すだけで、どの項目が変わったかを判断しない）。<br/>
-    /// <see cref="LoupeAppearance"/> の各項目は変更ログの対象外とする（外観の再適用で設定数ぶんのログが溢れるため）。
+    /// <see cref="LoupeMetrics"/> の各項目は変更ログの対象外とする（外観の再適用で設定数ぶんのログが溢れるため）。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の設定。</param>

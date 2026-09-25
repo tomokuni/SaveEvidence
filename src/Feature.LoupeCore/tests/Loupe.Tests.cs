@@ -215,8 +215,8 @@ public class LoupeTests
     [Fact]
     public void CreateRequest_表示サイズと設定から描画入力を組み立てる()
     {
-        var appearance = new LoupeAppearance { CheckerSize = 8 };
-        var loupe = new Loupe(s_renderer, new LoupeOptions { RequestedSize = 160, ZoomLevel = 4, Appearance = appearance })
+        var appearance = new LoupeMetrics { CheckerSize = 8 };
+        var loupe = new Loupe(s_renderer, new LoupeOptions { RequestedSize = 160, ZoomLevel = 4, Metrics = appearance })
         {
             CenterPoint = new EsPoint(10, 20),
             RenderScaling = 1.5,
@@ -228,7 +228,7 @@ public class LoupeTests
         Assert.Equal(240, request.PixelSize);
         Assert.Equal(4, request.ZoomLevel);
         Assert.Equal(1.5, request.Scaling);
-        Assert.Same(appearance, request.Appearance);
+        Assert.Same(appearance, request.Metrics);
     }
 
     [Fact]

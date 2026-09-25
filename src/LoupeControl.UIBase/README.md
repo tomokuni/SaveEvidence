@@ -51,7 +51,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 ## 描画の単位
 
-**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（`LoupeAppearanceScaler` / `LoupePositionCalculator`）はコアが済ませているため、本層は換算しません。中心座標ラベルだけは DIP で配置します（コアが `EsLabelLayout` で配置を決める）。
+**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（`LoupeMetricsScaler` / `LoupePositionCalculator`）はコアが済ませているため、本層は換算しません。中心座標ラベルだけは DIP で配置します（コアが `EsLabelLayout` で配置を決める）。
 
 ## ラベルは UI の要素が描く
 
@@ -68,7 +68,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | --- | --- |
 | **描画先（UI フレームワーク）** | `IEsCanvas` を実装する（例: `SkiaEsCanvas`（Skia）/ `AvaloniaCanvas`（Avalonia の `DrawingContext`））。**描画手順はそのまま使える** |
 | **描画手順そのもの** | `ILoupeRenderer`（`Feature.LoupeCore`）を実装した型を作り、ファサードの `Loupe.Renderer` へ設定する（本層の `LoupeRenderer` を使わなくてもよい） |
-| **色・寸法・拡大率** | `LoupeOptions`（設定）と `LoupeAppearance`（外観）を変える（描画層は値を保持しない） |
+| **色・寸法・拡大率** | `LoupeOptions`（設定）と `LoupeMetrics`（外観）を変える（描画層は値を保持しない） |
 
 ## Core との境界（なぜスケジューリングを Core に置かないか）
 

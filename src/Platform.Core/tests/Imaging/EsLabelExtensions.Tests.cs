@@ -16,9 +16,7 @@ public class EsLabelExtensionsTests
     private readonly record struct PlainLabel(
         string Text,
         EsPoint Anchor,
-        double FontSize,
-        DrawingColor TextColor,
-        DrawingColor BackgroundColor) : IEsLabel
+        double FontSize) : IEsLabel
     {
         public EsLabelFrame ComputeFrame(EsSize textSize)
         {
@@ -32,16 +30,13 @@ public class EsLabelExtensionsTests
     private readonly record struct RoundedLabel(
         string Text,
         double FontSize,
-        double CornerRadius,
-        DrawingColor TextColor,
-        DrawingColor BackgroundColor) : IEsLabel
+        double CornerRadius) : IEsLabel
     {
         public EsLabelFrame ComputeFrame(EsSize textSize)
             => new(new EsRect(0, 0, textSize.Width, textSize.Height), new EsPoint(0, 0));
     }
 
-    private static PlainLabel CreatePlain() => new(
-        "(1, 2)", new EsPoint(10, 20), 12.0, DrawingColor.White, DrawingColor.FromArgb(153, 0, 0, 0));
+    private static PlainLabel CreatePlain() => new("(1, 2)", new EsPoint(10, 20), 12.0);
 
     [Fact]
     public void CornerRadius_実装しない型は0になる()
@@ -50,7 +45,7 @@ public class EsLabelExtensionsTests
     [Fact]
     public void ToElement_実装しない型は角丸0で四角形になる()
     {
-        var element = CreatePlain().ToElement(new EsSize(30, 8));
+        var element = CreatePlain().ToElement(new EsSize(30, 8), DrawingColor.White, DrawingColor.Black);
 
         Assert.Equal(0, element.CornerRadius);
     }
@@ -59,13 +54,15 @@ public class EsLabelExtensionsTests
     public void ToElement_配置と外観を要素の指示へ写す()
     {
         var label = CreatePlain();
+        var textColor = DrawingColor.White;
+        var backgroundColor = DrawingColor.FromArgb(153, 0, 0, 0);
 
-        var element = label.ToElement(new EsSize(30, 8));
+        var element = label.ToElement(new EsSize(30, 8), textColor, backgroundColor);
 
         Assert.Equal("(1, 2)", element.Text);
         Assert.Equal(12.0, element.FontSize);
-        Assert.Equal(DrawingColor.White, element.TextColor);
-        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), element.BackgroundColor);
+        Assert.Equal(textColor, element.TextColor);
+        Assert.Equal(backgroundColor, element.BackgroundColor);
         Assert.Equal(label.ComputeFrame(new EsSize(30, 8)).Background, element.Bounds);
         Assert.Equal(label.ComputeFrame(new EsSize(30, 8)).TextOrigin, element.TextOrigin);
     }
@@ -73,8 +70,8 @@ public class EsLabelExtensionsTests
     [Fact]
     public void ToElement_角丸を指定した型は指定値を使う()
     {
-        var element = new RoundedLabel("(1, 2)", 12.0, 2.0, DrawingColor.White, DrawingColor.Transparent)
-            .ToElement(new EsSize(30, 8));
+        var element = new RoundedLabel("(1, 2)", 12.0, 2.0)
+            .ToElement(new EsSize(30, 8), DrawingColor.White, DrawingColor.Transparent);
 
         Assert.Equal(2.0, element.CornerRadius);
     }
@@ -82,7 +79,7 @@ public class EsLabelExtensionsTests
     [Fact]
     public void ToElement_内側余白が背景と文字で一致する()
     {
-        var element = CreatePlain().ToElement(new EsSize(30, 8));
+        var element = CreatePlain().ToElement(new EsSize(30, 8), DrawingColor.White, DrawingColor.Black);
 
         Assert.Equal(EsLabelLayout.Padding, element.PaddingX, precision: 9);
         Assert.Equal(EsLabelLayout.Padding, element.PaddingY, precision: 9);
@@ -90,5 +87,5 @@ public class EsLabelExtensionsTests
 
     [Fact]
     public void ToElement_nullのラベルは例外になる()
-        => Assert.Throws<ArgumentNullException>(() => EsLabelExtensions.ToElement(null!, new EsSize(30, 8)));
+        => Assert.Throws<ArgumentNullException>(() => EsLabelExtensions.ToElement(null!, new EsSize(30, 8), DrawingColor.White, DrawingColor.Black));
 }

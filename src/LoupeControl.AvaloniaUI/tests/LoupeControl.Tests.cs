@@ -6,6 +6,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
@@ -284,9 +285,9 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { FrameWidth = 0 } };
+        control.Options = control.Options with { Metrics = control.Options.Metrics with { FrameWidth = 0 } };
 
-        Assert.Equal(1, control.Options.Appearance.FrameWidth);
+        Assert.Equal(1, control.Options.Metrics.FrameWidth);
     }
 
     // ====================================================================
@@ -387,11 +388,11 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { CheckerSize = 0 } };
-        Assert.Equal(1, control.Options.Appearance.CheckerSize);
+        control.Options = control.Options with { Metrics = control.Options.Metrics with { CheckerSize = 0 } };
+        Assert.Equal(1, control.Options.Metrics.CheckerSize);
 
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { CheckerSize = 200 } };
-        Assert.Equal(128, control.Options.Appearance.CheckerSize);
+        control.Options = control.Options with { Metrics = control.Options.Metrics with { CheckerSize = 200 } };
+        Assert.Equal(128, control.Options.Metrics.CheckerSize);
     }
 
     [AvaloniaFact]
@@ -400,13 +401,13 @@ public class LoupeControlTests
         var control = CreateControl();
 
         // プロパティのスタイル値を直接設定する（バインディングと同じ経路。CLR プロパティの setter を通らない）
-        // 数値項目の補正は値の型（LoupeOptions / LoupeAppearance）が生成時に適用するため、
+        // 数値項目の補正は値の型（LoupeOptions / LoupeMetrics）が生成時に適用するため、
         // どの設定経路でも範囲内の値だけがコントロールへ渡る（UI 側に補正の登録を要求しない）。
         control.SetValue(LoupeControl.OptionsProperty, LoupeOptions.Default with
         {
             RequestedSize = 100_000,
             ZoomLevel = 1000,
-            Appearance = new LoupeAppearance { CheckerSize = 1000, FrameWidth = 1000 },
+            Metrics = new LoupeMetrics { CheckerSize = 1000, FrameWidth = 1000 },
         });
         control.SetValue(LoupeControl.RenderScalingProperty, 100.0);
 
@@ -414,10 +415,11 @@ public class LoupeControlTests
         Assert.Equal(LoupeValueCoercer.RequestedSizeMax, control.Options.RequestedSize);
         Assert.Equal(LoupeValueCoercer.ZoomLevelMax, control.Options.ZoomLevel);
         Assert.Equal(LoupeValueCoercer.RenderScalingMax, control.RenderScaling);
-        Assert.Equal(LoupeValueCoercer.CheckerSizeMax, control.Options.Appearance.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthMax, control.Options.Appearance.FrameWidth);
+        Assert.Equal(LoupeValueCoercer.CheckerSizeMax, control.Options.Metrics.CheckerSize);
+        Assert.Equal(LoupeValueCoercer.FrameWidthMax, control.Options.Metrics.FrameWidth);
     }
 
+    /// <summary>寸法の設定値が保持されることを検証する（色は描画の設定が単一所有する）。</summary>
     [AvaloniaFact]
     public void 外観の設定値が保持される()
     {
@@ -425,23 +427,22 @@ public class LoupeControlTests
 
         control.Options = control.Options with
         {
-            Appearance = new LoupeAppearance
-            {
-                CrossColor = DrawingColor.Green,
-                CheckerColorA = DrawingColor.Green,
-                CheckerColorB = DrawingColor.Green,
-                FrameColor = DrawingColor.Green,
-                FrameWidth = 3,
-                CheckerSize = 5,
-            },
+            Metrics = new LoupeMetrics { FrameWidth = 3, CheckerSize = 5 },
+        };
+        control.Paint = new LoupePaint
+        {
+            CrossColor = DrawingColor.Green,
+            CheckerColorA = DrawingColor.Green,
+            CheckerColorB = DrawingColor.Green,
+            FrameColor = DrawingColor.Green,
         };
 
-        Assert.Equal(DrawingColor.Green, control.Options.Appearance.CrossColor);
-        Assert.Equal(DrawingColor.Green, control.Options.Appearance.CheckerColorA);
-        Assert.Equal(DrawingColor.Green, control.Options.Appearance.CheckerColorB);
-        Assert.Equal(DrawingColor.Green, control.Options.Appearance.FrameColor);
-        Assert.Equal(3, control.Options.Appearance.FrameWidth);
-        Assert.Equal(5, control.Options.Appearance.CheckerSize);
+        Assert.Equal(3, control.Options.Metrics.FrameWidth);
+        Assert.Equal(5, control.Options.Metrics.CheckerSize);
+        Assert.Equal(DrawingColor.Green, control.Paint.CrossColor);
+        Assert.Equal(DrawingColor.Green, control.Paint.CheckerColorA);
+        Assert.Equal(DrawingColor.Green, control.Paint.CheckerColorB);
+        Assert.Equal(DrawingColor.Green, control.Paint.FrameColor);
     }
 
     [AvaloniaFact]
@@ -453,14 +454,16 @@ public class LoupeControlTests
         Assert.Equal(4, control.Options.ZoomLevel);
         Assert.Equal(1.0, control.RenderScaling);
 
-        // 外観の既定値はコア（LoupeAppearance）が単一所有する（両 UI で同一）
-        Assert.Equal(new LoupeAppearance(), control.Options.Appearance);
-        Assert.Equal(6, control.Options.Appearance.CheckerSize);
-        Assert.Equal(2, control.Options.Appearance.FrameWidth);
-        Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), control.Options.Appearance.CrossColor);
-        Assert.Equal(DrawingColor.FromArgb(0x4C, 0x80, 0x80, 0x80), control.Options.Appearance.CheckerColorA);
-        Assert.Equal(DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), control.Options.Appearance.CheckerColorB);
-        Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), control.Options.Appearance.FrameColor);
+        // 外観の既定値はコア（LoupeMetrics）が単一所有する（両 UI で同一）
+        Assert.Equal(new LoupeMetrics(), control.Options.Metrics);
+        Assert.Equal(6, control.Options.Metrics.CheckerSize);
+        Assert.Equal(2, control.Options.Metrics.FrameWidth);
+        // 色の既定値は描画の設定が単一所有する
+        Assert.Equal(LoupePaint.Default, control.Paint);
+        Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), control.Paint.CrossColor);
+        Assert.Equal(DrawingColor.FromArgb(0x4C, 0x80, 0x80, 0x80), control.Paint.CheckerColorA);
+        Assert.Equal(DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), control.Paint.CheckerColorB);
+        Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), control.Paint.FrameColor);
     }
 
     // ====================================================================
@@ -472,18 +475,18 @@ public class LoupeControlTests
     {
         var control = new LoupeControl();
 
-        // ルーペ座標ラベルは既定で表示（設定画面の現在値）。色はコアの既定値（白 / 黒 60% = #99000000）
-        Assert.True(control.Options.Appearance.ShowCoordLabel);
-        Assert.Equal(DrawingColor.White, control.Options.Appearance.CoordLabelColor);
-        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), control.Options.Appearance.CoordLabelBackgroundColor);
-        Assert.Equal(12.0, control.Options.Appearance.CoordLabelFontSize);
+        // ルーペ座標ラベルは既定で表示（設定画面の現在値）。色は描画の設定（白 / 黒 60% = #99000000）
+        Assert.True(control.Options.Metrics.ShowCoordLabel);
+        Assert.Equal(DrawingColor.White, control.Paint.CoordLabelColor);
+        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), control.Paint.CoordLabelBackgroundColor);
+        Assert.Equal(12.0, control.Options.Metrics.CoordLabelFontSize);
     }
 
     [AvaloniaFact]
     public void 座標ラベルを有効化してCenterPointを設定するとラベル要素が表示される()
     {
         var control = CreateControl();
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = true } };
+        control.Options = control.Options with { Metrics = control.Options.Metrics with { ShowCoordLabel = true } };
         control.CenterPoint = new Point(123, 456);
 
         Layout(control);
@@ -496,7 +499,7 @@ public class LoupeControlTests
     public void 座標ラベル無効時はCenterPointがあっても要素を表示しない()
     {
         var control = CreateControl();
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { ShowCoordLabel = false } };
+        control.Options = control.Options with { Metrics = control.Options.Metrics with { ShowCoordLabel = false } };
         control.CenterPoint = new Point(123, 456);
 
         Layout(control);
@@ -534,14 +537,17 @@ public class LoupeControlTests
         var background = DrawingColor.FromArgb(179, 0, 0, 139); // 暗青 70%
         control.Options = control.Options with
         {
-            Appearance = control.Options.Appearance with
+            Metrics = control.Options.Metrics with
             {
                 ShowCoordLabel = true,
-                CoordLabelColor = DrawingColor.Yellow,
-                CoordLabelBackgroundColor = background,
                 CoordLabelFontSize = 16,
                 CoordLabelCornerRadius = 8,
             },
+        };
+        control.Paint = control.Paint with
+        {
+            CoordLabelColor = DrawingColor.Yellow,
+            CoordLabelBackgroundColor = background,
         };
         control.CenterPoint = new Point(10, 20);
 
@@ -841,9 +847,9 @@ public class LoupeControlTests
     {
         var control = new LoupeControl();
 
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { CoordLabelFontSize = double.NaN } };
+        control.Options = control.Options with { Metrics = control.Options.Metrics with { CoordLabelFontSize = double.NaN } };
 
-        Assert.Equal(12.0, control.Options.Appearance.CoordLabelFontSize);
+        Assert.Equal(12.0, control.Options.Metrics.CoordLabelFontSize);
     }
 
     [AvaloniaFact]

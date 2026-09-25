@@ -150,5 +150,5 @@ public class LoupeImageExtractorTests
     /// <param name="zoomLevel">拡大率。</param>
     /// <returns>描画入力。</returns>
     private static LoupeRenderRequest Request(EsPoint? center, int pixelSize, int zoomLevel)
-        => new(center, pixelSize, zoomLevel, new LoupeAppearance(), 1.0);
+        => new(center, pixelSize, zoomLevel, new LoupeMetrics(), 1.0);
 }

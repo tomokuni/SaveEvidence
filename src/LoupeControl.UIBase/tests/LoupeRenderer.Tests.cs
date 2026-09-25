@@ -1,6 +1,6 @@
+using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Feature.LoupeCore;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
@@ -10,7 +10,8 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
 /// <summary><see cref="LoupeRenderer"/> の描画テスト（描画ポートの画素を検証する）。</summary>
 /// <remarks>
 /// 描画の実行は UI 非依存の描画ポート（Skia）で行うため、UI 初期化とウィンドウなしで検証できる。<br/>
-/// 本テストが「描画の手順」の唯一の検証点である（各 UI はアダプタのみを持つため、UI ごとの描画テストは不要）。
+/// 本テストが「描画の手順」の唯一の検証点である（各 UI はアダプタのみを持つため、UI ごとの描画テストは不要）。<br/>
+/// 色は描画の設定（<see cref="LoupePaint"/>）が単一所有するため、各テストが色を与えて描画実装を生成する。
 /// </remarks>
 public class LoupeRendererTests
 {
@@ -41,9 +42,6 @@ public class LoupeRendererTests
     /// <summary>拡大中心（描画先の中央）。</summary>
     private static readonly EsPoint s_center = new(16, 16);
 
-    /// <summary>検証対象（既定の描画実装）。</summary>
-    private static readonly LoupeRenderer s_renderer = LoupeRenderer.Default;
-
     // ====================================================================
     // 下地
     // ====================================================================
@@ -55,7 +53,7 @@ public class LoupeRendererTests
         // 前フレームの残像を模して別の色で塗っておく
         target.Canvas.FillRect(new EsRect(0, 0, LoupeSize, LoupeSize), s_checkerB);
 
-        DrawShapes(target, CreateAppearance(background: s_background), [LoupeDrawLayer.Background]);
+        DrawShapes(target, CreatePaint(background: s_background), [LoupeDrawLayer.Background]);
 
         Assert.Equal(s_backgroundPixel, target.GetPixel(0, 0));
         Assert.Equal(s_backgroundPixel, target.GetPixel(LoupeSize - 1, LoupeSize - 1));
@@ -66,7 +64,7 @@ public class LoupeRendererTests
     {
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
 
-        DrawShapes(target, CreateAppearance(crosshair: s_cross), [LoupeDrawLayer.Crosshair]);
+        DrawShapes(target, CreatePaint(crosshair: s_cross), [LoupeDrawLayer.Crosshair]);
 
         // 十字線だけが描かれ、下地は塗られない
         Assert.Equal(s_transparent, target.GetPixel(1, 1));
@@ -81,7 +79,7 @@ public class LoupeRendererTests
     {
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
 
-        DrawShapes(target, CreateAppearance(checkerA: s_checkerA, checkerB: s_checkerB), [LoupeDrawLayer.Checkerboard]);
+        DrawShapes(target, CreatePaint(checkerA: s_checkerA, checkerB: s_checkerB), [LoupeDrawLayer.Checkerboard]);
 
         // タイルサイズ 6（既定）× スケーリング 1.0。明暗は (col + row) の偶奇で決まる
         Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(0, 0));   // (0,0) 明色
@@ -97,7 +95,7 @@ public class LoupeRendererTests
 
         DrawShapes(
             target,
-            CreateAppearance(checkerA: s_checkerA, checkerB: DrawingColor.Transparent),
+            CreatePaint(checkerA: s_checkerA, checkerB: DrawingColor.Transparent),
             [LoupeDrawLayer.Checkerboard]);
 
         Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(0, 0));
@@ -111,7 +109,7 @@ public class LoupeRendererTests
 
         DrawShapes(
             target,
-            CreateAppearance(checkerA: DrawingColor.Transparent, checkerB: DrawingColor.Transparent),
+            CreatePaint(checkerA: DrawingColor.Transparent, checkerB: DrawingColor.Transparent),
             [LoupeDrawLayer.Checkerboard]);
 
         Assert.Equal(s_transparent, target.GetPixel(0, 0));
@@ -127,7 +125,7 @@ public class LoupeRendererTests
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
         using var source = EsBitmap.Create(LoupeSize, LoupeSize, s_checkerA);
 
-        DrawShapes(target, CreateAppearance(background: s_background), [LoupeDrawLayer.Image], source);
+        DrawShapes(target, CreatePaint(background: s_background), [LoupeDrawLayer.Image], source);
 
         // 切り出した領域（一様な色）がルーペ全体へ拡大される
         Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(0, 0));
@@ -142,7 +140,7 @@ public class LoupeRendererTests
 
         DrawShapes(
             target,
-            CreateAppearance(background: s_background),
+            CreatePaint(background: s_background),
             [LoupeDrawLayer.Background, LoupeDrawLayer.Image]);
 
         // 下地のみ（拡大画像は描かれない）
@@ -156,10 +154,9 @@ public class LoupeRendererTests
         using var source = EsBitmap.Create(LoupeSize, LoupeSize, s_checkerA);
 
         // 中心を指定しない描画入力を組み立てる（コアは中心が無ければ切り出さない）
-        var request = LoupeRenderRequest.Create(
-            center: null, LoupeSize, 1.0, LoupeOptions.Default with { Appearance = CreateAppearance(background: s_background) });
+        var request = LoupeRenderRequest.Create(center: null, LoupeSize, 1.0, LoupeOptions.Default);
 
-        s_renderer.DrawShapes(
+        new LoupeRenderer(CreatePaint(background: s_background)).DrawShapes(
             target.Canvas,
             source,
             request,
@@ -179,7 +176,7 @@ public class LoupeRendererTests
 
         DrawShapes(
             target,
-            CreateAppearance(background: s_background, crosshair: s_cross),
+            CreatePaint(background: s_background, crosshair: s_cross),
             [LoupeDrawLayer.Background, LoupeDrawLayer.Crosshair]);
 
         // 拡大率 4・一辺 32 → ブロック数 8、交点は 8 / 2 × 4 = 16
@@ -196,7 +193,7 @@ public class LoupeRendererTests
 
         DrawShapes(
             target,
-            CreateAppearance(background: s_background, crosshair: DrawingColor.Transparent),
+            CreatePaint(background: s_background, crosshair: DrawingColor.Transparent),
             [LoupeDrawLayer.Background, LoupeDrawLayer.Crosshair]);
 
         Assert.Equal(s_backgroundPixel, target.GetPixel(17, 1));
@@ -209,7 +206,7 @@ public class LoupeRendererTests
 
         DrawShapes(
             target,
-            CreateAppearance(background: s_background, frame: s_frame, frameWidth: 2),
+            CreatePaint(background: s_background, frame: s_frame),
             [LoupeDrawLayer.Background, LoupeDrawLayer.Frame]);
 
         // 上辺（太さ 2）
@@ -218,6 +215,19 @@ public class LoupeRendererTests
         Assert.Equal(new SKColor(255, 255, 0), target.GetPixel(1, 16));
         // 内側は下地のまま
         Assert.Equal(s_backgroundPixel, target.GetPixel(16, 16));
+    }
+
+    [Fact]
+    public void DrawShapes_外枠が透明なら描かない()
+    {
+        using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
+
+        DrawShapes(
+            target,
+            CreatePaint(background: s_background, frame: DrawingColor.Transparent),
+            [LoupeDrawLayer.Background, LoupeDrawLayer.Frame]);
+
+        Assert.Equal(s_backgroundPixel, target.GetPixel(16, 1));
     }
 
     // ====================================================================
@@ -231,7 +241,7 @@ public class LoupeRendererTests
 
         DrawShapes(
             target,
-            CreateAppearance(background: s_background, coordLabel: s_frame),
+            CreatePaint(background: s_background, coordLabel: s_frame),
             [LoupeDrawLayer.Background, LoupeDrawLayer.CoordLabel]);
 
         // ラベルは UI 要素が配置するため、描画ポートには何も現れない（下地のみ）
@@ -245,30 +255,37 @@ public class LoupeRendererTests
     [Fact]
     public void DrawShapes_描画ポートがnullなら例外()
     {
-        var request = CreateRequest(CreateAppearance());
+        var renderer = new LoupeRenderer(CreatePaint());
+        var request = CreateRequest();
 
         Assert.Throws<ArgumentNullException>(
-            () => s_renderer.DrawShapes(null!, null, request, CreateNotification([])));
+            () => renderer.DrawShapes(null!, null, request, CreateNotification([])));
     }
 
     [Fact]
     public void DrawShapes_層の一覧がnullなら例外()
     {
         using var target = TestHelper.CreateTarget(4, 4);
+        var renderer = new LoupeRenderer(CreatePaint());
 
         Assert.Throws<ArgumentNullException>(
-            () => s_renderer.DrawShapes(
-                target.Canvas, null, CreateRequest(CreateAppearance()), new LoupeRenderNotification(null, 4, null!)));
+            () => renderer.DrawShapes(
+                target.Canvas, null, CreateRequest(), new LoupeRenderNotification(null, 4, null!)));
     }
+
+    [Fact]
+    public void 生成_色がnullなら例外()
+        => Assert.Throws<ArgumentNullException>(() => new LoupeRenderer(null!));
 
     [Fact]
     public void ResolveLabels_はLoupeLabelPlanへ委譲する()
     {
         var coordLabel = CreateCoordLabel();
+        var paint = CreatePaint(coordLabel: s_frame);
         static EsSize Measure(string text, double fontSize) => new(text.Length * 6 + fontSize, 16);
 
-        var viaRenderer = s_renderer.ResolveLabels(coordLabel, Measure);
-        var viaPlan = LoupeLabelPlan.Resolve(coordLabel, Measure);
+        var viaRenderer = new LoupeRenderer(paint).ResolveLabels(coordLabel, Measure);
+        var viaPlan = LoupeLabelPlan.Resolve(coordLabel, paint, Measure);
 
         Assert.Equal(viaPlan, viaRenderer);
     }
@@ -279,13 +296,13 @@ public class LoupeRendererTests
 
     /// <summary>図形の層を描く（テストの可読性のための短い呼び出し）。</summary>
     /// <param name="target">描画先。</param>
-    /// <param name="appearance">外観。</param>
+    /// <param name="paint">描画に使う色。</param>
     /// <param name="layers">描く層。</param>
     /// <param name="source">拡大元の画像。</param>
     private static void DrawShapes(
-        RenderTarget target, LoupeAppearance appearance, IReadOnlyList<LoupeDrawLayer> layers, EsBitmap? source = null)
-        => s_renderer.DrawShapes(
-            target.Canvas, source, CreateRequest(appearance), CreateNotification(layers));
+        RenderTarget target, LoupePaint paint, IReadOnlyList<LoupeDrawLayer> layers, EsBitmap? source = null)
+        => new LoupeRenderer(paint).DrawShapes(
+            target.Canvas, source, CreateRequest(), CreateNotification(layers));
 
     /// <summary>テスト用の描画完了通知を生成する。</summary>
     /// <param name="layers">描く層。</param>
@@ -293,27 +310,25 @@ public class LoupeRendererTests
     private static LoupeRenderNotification CreateNotification(IReadOnlyList<LoupeDrawLayer> layers)
         => new(s_center, 4, layers);
 
-    /// <summary>テスト用の描画入力（表示サイズ 32 DIP・スケーリング 1.0・拡大中心は描画先の中央）を生成する。</summary>
-    /// <param name="appearance">外観。</param>
+    /// <summary>テスト用の描画入力（一辺 32 DIP・スケーリング 1.0・拡大中心は描画先の中央）を生成する。</summary>
     /// <returns>描画入力。</returns>
-    private static LoupeRenderRequest CreateRequest(LoupeAppearance appearance)
-        => LoupeRenderRequest.Create(s_center, LoupeSize, 1.0, LoupeOptions.Default with { Appearance = appearance });
+    private static LoupeRenderRequest CreateRequest()
+        => LoupeRenderRequest.Create(s_center, LoupeSize, 1.0, LoupeOptions.Default);
 
-    /// <summary>テスト用の外観を生成する（指定しない項目は透明＝描かない）。</summary>
+    /// <summary>テスト用の色を生成する（指定しない色は透明＝描かない）。</summary>
     /// <param name="background">下地の色。</param>
     /// <param name="checkerA">市松模様の明色。</param>
     /// <param name="checkerB">市松模様の暗色。</param>
     /// <param name="frame">外枠の色。</param>
-    /// <param name="frameWidth">外枠の太さ（DIP）。</param>
     /// <param name="crosshair">十字線の色。</param>
     /// <param name="coordLabel">中心座標ラベルの背景色。</param>
-    /// <returns>外観。</returns>
-    private static LoupeAppearance CreateAppearance(
+    /// <returns>描画に使う色。</returns>
+    /// <remarks>外枠の太さは寸法（コアの <see cref="LoupeMetrics.FrameWidth"/>）が単一所有するため、ここでは与えない。</remarks>
+    private static LoupePaint CreatePaint(
         DrawingColor? background = null,
         DrawingColor? checkerA = null,
         DrawingColor? checkerB = null,
         DrawingColor? frame = null,
-        int frameWidth = 2,
         DrawingColor? crosshair = null,
         DrawingColor? coordLabel = null)
         => new()
@@ -322,7 +337,6 @@ public class LoupeRendererTests
             CheckerColorA = checkerA ?? DrawingColor.Transparent,
             CheckerColorB = checkerB ?? DrawingColor.Transparent,
             FrameColor = frame ?? DrawingColor.Transparent,
-            FrameWidth = frameWidth,
             CrossColor = crosshair ?? DrawingColor.Transparent,
             CoordLabelBackgroundColor = coordLabel ?? DrawingColor.Transparent,
         };
@@ -330,5 +344,5 @@ public class LoupeRendererTests
     /// <summary>テスト用の中心座標ラベルを生成する。</summary>
     /// <returns>中心座標ラベル。</returns>
     private static LoupeCoordLabel CreateCoordLabel()
-        => new("(50, 60)", LoupeSize, 12.0, 0.0, DrawingColor.White, DrawingColor.FromArgb(255, 0, 0, 0));
+        => new("(50, 60)", LoupeSize, 12.0, 0.0);
 }

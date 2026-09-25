@@ -45,7 +45,7 @@ var loupe = new LoupeControl
     {
         RequestedSize = 160,                 // 一辺のサイズ（DIP）
         ZoomLevel = 4,                       // 拡大率
-        Appearance = new LoupeAppearance
+        Appearance = new LoupeMetrics
         {
             CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
             CheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255),
@@ -86,9 +86,9 @@ if (layout.Position is { } position)
 | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。1〜4096 に補正 |
 | `ZoomLevel` | `int` | 4 | 拡大率。1〜64 に補正 |
-| `Appearance` | `LoupeAppearance` | コアの既定値 | 外観（下地・市松模様・外枠・十字線・中心座標ラベル） |
+| `Appearance` | `LoupeMetrics` | コアの既定値 | 外観（下地・市松模様・外枠・十字線・中心座標ラベル） |
 
-`Options.Appearance`（コアの `LoupeAppearance`）の項目:
+`Options.Appearance`（コアの `LoupeMetrics`）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |

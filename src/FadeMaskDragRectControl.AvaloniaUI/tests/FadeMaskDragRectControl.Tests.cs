@@ -15,6 +15,7 @@ using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
@@ -187,17 +188,11 @@ public class FadeMaskDragRectControlTests
             {
                 RequestedSize = 150,
                 ZoomLevel = 3,
-                Appearance = new LoupeAppearance
+                Metrics = new LoupeMetrics
                 {
-                    CrossColor = Color.FromAColor(204, Colors.Red).ToDrawingColor(), // 赤 80%
                     CheckerSize = 10,
-                    CheckerColorA = Colors.Black.ToDrawingColor(),
-                    CheckerColorB = Colors.White.ToDrawingColor(),
-                    FrameColor = Colors.Gray.ToDrawingColor(),
                     FrameWidth = 4,
                     ShowCoordLabel = true,
-                    CoordLabelColor = Colors.Cyan.ToDrawingColor(),
-                    CoordLabelBackgroundColor = Color.FromAColor(153, Colors.DarkRed).ToDrawingColor(), // 暗赤 60%
                     CoordLabelFontSize = 13.0,
                 },
             },
@@ -205,6 +200,16 @@ public class FadeMaskDragRectControlTests
         };
 
         control.Options = options;
+        // 色は描画にだけ必要な設定のため、描画の設定として与える
+        control.LoupePaint = new LoupePaint
+        {
+            CrossColor = Color.FromAColor(204, Colors.Red).ToDrawingColor(), // 赤 80%
+            CheckerColorA = Colors.Black.ToDrawingColor(),
+            CheckerColorB = Colors.White.ToDrawingColor(),
+            FrameColor = Colors.Gray.ToDrawingColor(),
+            CoordLabelColor = Colors.Cyan.ToDrawingColor(),
+            CoordLabelBackgroundColor = Color.FromAColor(153, Colors.DarkRed).ToDrawingColor(), // 暗赤 60%
+        };
 
         // ルーペ描画スケールは設定（Options）の対象外（環境値。個別プロパティで設定）
         control.LoupeRenderScaling = 2.0;
@@ -212,9 +217,10 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(150, control.Loupe.Options.RequestedSize);
         Assert.Equal(3, control.Loupe.Options.ZoomLevel);
         Assert.Equal(2.0, control.Loupe.RenderScaling);
-        Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Options.Appearance.CrossColor.ToAvaloniaColor());
-        Assert.Equal(10, control.Loupe.Options.Appearance.CheckerSize);
-        Assert.Equal(4, control.Loupe.Options.Appearance.FrameWidth);
+        Assert.Equal(10, control.Loupe.Options.Metrics.CheckerSize);
+        Assert.Equal(4, control.Loupe.Options.Metrics.FrameWidth);
+        Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Paint.CrossColor.ToAvaloniaColor());
+        Assert.Equal(Color.FromAColor(153, Colors.DarkRed), control.Loupe.Paint.CoordLabelBackgroundColor.ToAvaloniaColor());
         // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため、ルーペのプロパティへ渡される
         Assert.Equal(30.0, control.Loupe.PositionOffset);
         // 座標ラベル（Marquee / Loupe）
@@ -223,9 +229,8 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(Colors.Yellow, applied.CoordLabelColor.ToAvaloniaColor());
         Assert.Equal(Color.FromAColor(179, Colors.DarkGreen), applied.CoordLabelBackgroundColor.ToAvaloniaColor());
         Assert.Equal(14.0, applied.CoordLabelFontSize);
-        Assert.True(control.Loupe.Options.Appearance.ShowCoordLabel);
-        Assert.Equal(13.0, control.Loupe.Options.Appearance.CoordLabelFontSize);
-        Assert.Equal(Color.FromAColor(153, Colors.DarkRed), control.Loupe.Options.Appearance.CoordLabelBackgroundColor.ToAvaloniaColor());
+        Assert.True(control.Loupe.Options.Metrics.ShowCoordLabel);
+        Assert.Equal(13.0, control.Loupe.Options.Metrics.CoordLabelFontSize);
     }
 
     [AvaloniaFact]
@@ -532,7 +537,7 @@ public class FadeMaskDragRectControlTests
 
     /// <summary>破線色のみを変更した場合でもルーペ Bitmap が再生成される（ホスト側オーバーレイはルーペのプロパティではない）。</summary>
     /// <remarks>
-    /// 破線色（<c>SelectionRectColorA / B</c>）はルーペの外観（<c>LoupeAppearance</c>）に含まれず、<br/>
+    /// 破線色（<c>SelectionRectColorA / B</c>）はルーペの外観（<c>LoupeMetrics</c>）に含まれず、<br/>
     /// ルーペ Bitmap へホストが描画するオーバーレイの色である。したがって破線色のみの変更では<br/>
     /// ルーペのプロパティ通知が発生せず、明示的な再生成要求が無いと Bitmap が古い色のまま残る。
     /// </remarks>
@@ -562,9 +567,9 @@ public class FadeMaskDragRectControlTests
             rendered = 0;
 
             // 破線色のみの変更（ルーペ自身の外観・サイズ・ズームは不変 → ルーペのプロパティ通知は発生しない）
-            var appearance = control.Loupe.Options.Appearance;
+            var appearance = control.Loupe.Options.Metrics;
             control.Options = control.Options with { SelectionRectColorA = Colors.Lime.ToDrawingColor() };
-            Assert.Equal(appearance, control.Loupe.Options.Appearance);
+            Assert.Equal(appearance, control.Loupe.Options.Metrics);
             Assert.Equal(200, control.Loupe.Options.RequestedSize);
 
             await PumpUntilAsync(() => rendered > 0);

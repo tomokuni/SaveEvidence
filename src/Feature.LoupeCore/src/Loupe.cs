@@ -190,14 +190,14 @@ public sealed class Loupe
     /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
     /// <returns>配置するラベル要素（1 要素）。中心未設定または非表示の設定の場合は空。</returns>
     /// <remarks>
-    /// 文言（<see cref="CoordinateFormatter"/>）・表示可否（<see cref="LoupeAppearance.ShouldShowCoordLabel"/>）・<br/>
+    /// 文言（<see cref="CoordinateFormatter"/>）・表示可否（<see cref="LoupeMetrics.ShouldShowCoordLabel"/>）・<br/>
     /// 配置（<see cref="EsLabelLayout"/>）はコアが単一所有し、通知から要素への写像（実寸の反映）は<br/>
     /// <see cref="Renderer"/>（描画実装）へ委譲する。<br/>
     /// 表示サイズは要素の大きさ（＝ <see cref="ResolveLayout"/> の結果）を渡す<br/>
     /// （描画の物理ピクセルから逆算すると、丸めにより要素と背景が 1 DIP ずれうる）。
     /// </remarks>
     public IReadOnlyList<EsLabelElement> ResolveLabels(double displaySize, Func<string, double, EsSize> measureText)
-        => _renderer.ResolveLabels(LoupeCoordLabel.Resolve(displaySize, CenterPoint, Options.Appearance), measureText);
+        => _renderer.ResolveLabels(LoupeCoordLabel.Resolve(displaySize, CenterPoint, Options.Metrics), measureText);
 
     /// <summary>描く層とその順序（中心座標ラベルは必ず最後 = 常に最上位）。</summary>
     /// <remarks>

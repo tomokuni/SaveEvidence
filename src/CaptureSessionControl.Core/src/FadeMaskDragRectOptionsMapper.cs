@@ -19,7 +19,6 @@ public static class FadeMaskDragRectOptionsMapper
 {
     /// <summary>キャプチャ設定を複合コントロールの設定へ変換する。</summary>
     /// <param name="settings">キャプチャ設定（全メンバー non-null。<c>ToNonNull</c> 済みを渡す）。</param>
-    /// <param name="loupeBackground">ルーペの市松模様の下地色。null の場合は透明（背後の要素を透かす）。</param>
     /// <returns>複合コントロールへ一括設定できる設定値。</returns>
     /// <remarks>
     /// 1. 選択矩形の設定（<see cref="MarqueeOptions"/>）を組み立てる（選択の判断に必要な項目のみ。装飾は含まない）。<br/>
@@ -27,14 +26,13 @@ public static class FadeMaskDragRectOptionsMapper
     ///    <see cref="CaptureSettings.BorderThickness"/>）は装飾の外枠（暗転マスクの穴あけ枠）とハンドルの枠線の<br/>
     ///    両方へ同じ値を割り当てる（同じ矩形に重なるため、見た目を揃える）。<br/>
     /// 3. サイズラベルの背景色は <see cref="CaptureSettings.TextBackgroundColor"/> を対応させる。<br/>
-    /// 4. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる。市松模様の下地色は<b>ホストが決めた色</b>を使う<br/>
-    ///    （引数 <paramref name="loupeBackground"/>。撮影オーバーレイは白、プレビューの切り出しはテーマ背景色）。<br/>
+    /// 4. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる（寸法のみ。色は描画にだけ必要な設定であり、<br/>
+    ///    描画側（UI 層のホスト）が描画の設定として設定する）。<br/>
     /// 5. 選択矩形破線の色とルーペのオフセットを設定する（オフセットは <see cref="CaptureSettings.LoupeOffset"/> を使う）。<br/>
     /// 6. ホスト固有の付加情報（操作・情報ラベル）の外観（<see cref="FadeMaskDragRectLabelOptions"/>）を組み立てる。<br/>
     ///    文言の生成と描画はホストが行い、本変換は外観のみを写像する（表示可否はホストが判定する）。
     /// </remarks>
-    public static FadeMaskDragRectOptions ToFadeMaskDragRectOptions(
-        this CaptureSettings settings, DrawingColor? loupeBackground = null)
+    public static FadeMaskDragRectOptions ToFadeMaskDragRectOptions(this CaptureSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
 
@@ -75,19 +73,12 @@ public static class FadeMaskDragRectOptionsMapper
             {
                 RequestedSize = settings.LoupeSize!.Value,
                 ZoomLevel = settings.LoupeZoomLevel!.Value,
-                Appearance = new LoupeAppearance
+                Metrics = new LoupeMetrics
                 {
-                    // 市松模様の色は半透明のため、下地を塗らないと背後の要素（撮影画像・画面・プレビュー）が透ける
-                    BackgroundColor = loupeBackground ?? DrawingColor.Transparent,
-                    CrossColor = settings.LoupeCrossColor!.Value,
+                    // 寸法のみを写像する（色は描画にだけ必要な設定のため、描画側（UI 層のホスト）が設定する）
                     CheckerSize = settings.LoupeCheckerSize!.Value,
-                    CheckerColorA = settings.LoupeCheckerColorA!.Value,
-                    CheckerColorB = settings.LoupeCheckerColorB!.Value,
-                    FrameColor = settings.LoupeFrameColor!.Value,
                     FrameWidth = settings.LoupeFrameThickness!.Value,
                     ShowCoordLabel = settings.LoupeShowCoordLabel!.Value,
-                    CoordLabelColor = settings.LoupeCoordLabelColor!.Value,
-                    CoordLabelBackgroundColor = settings.LoupeCoordLabelBackgroundColor!.Value,
                     CoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value,
                 },
             },

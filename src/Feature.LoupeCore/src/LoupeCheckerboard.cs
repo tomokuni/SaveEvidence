@@ -31,7 +31,7 @@ public static class LoupeCheckerboard
     /// タイル数の算出（切り上げ）と走査順を単一所有し、各 UI は返された矩形を塗るだけにする<br/>
     /// （十字線・外枠の <see cref="LoupeDecorationGeometry"/> と同じ形にする）。<br/>
     /// タイル座標で走査するため除算（<c>x / tileSize</c>）は発生しない。<br/>
-    /// タイルサイズの安全域への補正は <see cref="LoupeAppearance"/>（生成時）が単一所有する。
+    /// タイルサイズの安全域への補正は <see cref="LoupeMetrics"/>（生成時）が単一所有する。
     /// </remarks>
     public static DarkTiles ComputeDarkTiles(int pixelSize, int tileSize) => new(pixelSize, tileSize);
 

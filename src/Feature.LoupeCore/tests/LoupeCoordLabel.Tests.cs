@@ -2,7 +2,6 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-
 namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary><see cref="LoupeCoordLabel"/> のテスト（UI 非依存・並列実行）。</summary>
@@ -20,45 +19,38 @@ public class LoupeCoordLabelTests
     /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP）。</param>
     /// <param name="appearance">外観。null の場合は既定。</param>
     /// <returns>解決したラベル（描かない場合は null）。</returns>
-    private static LoupeCoordLabel? Resolve(double displaySize = 100, LoupeAppearance? appearance = null)
-        => LoupeCoordLabel.Resolve(displaySize, s_center, appearance ?? new LoupeAppearance());
+    private static LoupeCoordLabel? Resolve(double displaySize = 100, LoupeMetrics? appearance = null)
+        => LoupeCoordLabel.Resolve(displaySize, s_center, appearance ?? new LoupeMetrics());
 
     // ====================================================================
     // Resolve（表示可否・文言・寸法）
     // ====================================================================
 
-    /// <summary>中心と表示可否が揃う場合に文言と色が解決されることを検証する。</summary>
+    /// <summary>中心と表示可否が揃う場合に文言が解決されることを検証する。</summary>
     [Fact]
-    public void Resolve_文言と色を解決する()
+    public void Resolve_文言を解決する()
     {
-        var appearance = new LoupeAppearance
-        {
-            ShowCoordLabel = true,
-            CoordLabelColor = DrawingColor.Yellow,
-            CoordLabelBackgroundColor = DrawingColor.FromArgb(200, 1, 2, 3),
-        };
+        var metrics = new LoupeMetrics { ShowCoordLabel = true };
 
-        var label = LoupeCoordLabel.Resolve(100, new EsPoint(123, 456), appearance);
+        var label = LoupeCoordLabel.Resolve(100, new EsPoint(123, 456), metrics);
 
         // 文言の書式はコアの CoordinateFormatter が単一所有する
         Assert.NotNull(label);
         Assert.Equal("(123, 456)", label.Value.Text);
-        Assert.Equal(DrawingColor.Yellow, label.Value.TextColor);
-        Assert.Equal(DrawingColor.FromArgb(200, 1, 2, 3), label.Value.BackgroundColor);
     }
 
     /// <summary>中心が未設定の場合は null になることを検証する。</summary>
     [Fact]
     public void Resolve_中心未設定ならnull()
     {
-        Assert.Null(LoupeCoordLabel.Resolve(100, null, new LoupeAppearance()));
+        Assert.Null(LoupeCoordLabel.Resolve(100, null, new LoupeMetrics()));
     }
 
     /// <summary>表示しない設定の場合は中心があっても null になることを検証する。</summary>
     [Fact]
     public void Resolve_非表示の設定ならnull()
     {
-        var appearance = new LoupeAppearance { ShowCoordLabel = false };
+        var appearance = new LoupeMetrics { ShowCoordLabel = false };
 
         Assert.Null(Resolve(appearance: appearance));
     }
@@ -67,7 +59,7 @@ public class LoupeCoordLabelTests
     [Fact]
     public void Resolve_寸法はDIPのまま引き継ぐ()
     {
-        var appearance = new LoupeAppearance { CoordLabelFontSize = 14, CoordLabelCornerRadius = 3 };
+        var appearance = new LoupeMetrics { CoordLabelFontSize = 14, CoordLabelCornerRadius = 3 };
 
         var label = Resolve(appearance: appearance);
 
@@ -93,7 +85,7 @@ public class LoupeCoordLabelTests
     [Fact]
     public void Resolve_角丸0はそのまま保持する()
     {
-        var appearance = new LoupeAppearance { CoordLabelCornerRadius = 0 };
+        var appearance = new LoupeMetrics { CoordLabelCornerRadius = 0 };
 
         var label = Resolve(appearance: appearance);
 
@@ -109,7 +101,7 @@ public class LoupeCoordLabelTests
     [Fact]
     public void ComputeFrame_背景と文字の原点を返す()
     {
-        var label = new LoupeCoordLabel("(8, 8)", 100, 12, 0, DrawingColor.White, DrawingColor.White);
+        var label = new LoupeCoordLabel("(8, 8)", 100, 12, 0);
         var textSize = new EsSize(40, 14);
 
         var frame = label.ComputeFrame(textSize);
@@ -126,8 +118,8 @@ public class LoupeCoordLabelTests
     [Fact]
     public void ComputeFrame_表示サイズを基準に配置する()
     {
-        var wide = new LoupeCoordLabel("(8, 8)", 200, 12, 0, DrawingColor.White, DrawingColor.White);
-        var narrow = new LoupeCoordLabel("(8, 8)", 100, 12, 0, DrawingColor.White, DrawingColor.White);
+        var wide = new LoupeCoordLabel("(8, 8)", 200, 12, 0);
+        var narrow = new LoupeCoordLabel("(8, 8)", 100, 12, 0);
 
         var wideFrame = wide.ComputeFrame(new EsSize(40, 14));
         var narrowFrame = narrow.ComputeFrame(new EsSize(40, 14));
@@ -139,13 +131,13 @@ public class LoupeCoordLabelTests
         Assert.Equal(wideFrame.TextOrigin.Y, narrowFrame.TextOrigin.Y);
     }
 
-    /// <summary>UI 要素へ写す際に、コアの配置と外観がそのまま伝わることを検証する。</summary>
+    /// <summary>UI 要素へ写す際に、コアの配置と与えられた色がそのまま伝わることを検証する。</summary>
     [Fact]
     public void ToElement_配置と外観を要素の指示へ写す()
     {
-        var label = new LoupeCoordLabel("(8, 8)", 100, 12, 2, DrawingColor.White, DrawingColor.Black);
+        var label = new LoupeCoordLabel("(8, 8)", 100, 12, 2);
 
-        var element = label.ToElement(new EsSize(40, 14));
+        var element = label.ToElement(new EsSize(40, 14), DrawingColor.White, DrawingColor.Black);
 
         Assert.Equal(new EsRect(26, 2, 48, 16), element.Bounds);
         Assert.Equal(new EsPoint(30, 3), element.TextOrigin);

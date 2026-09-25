@@ -200,7 +200,7 @@ public bool IsLoupeVisible { get; set; } = true;
 | 項目 | 内容 |
 | --- | --- |
 | 型 | `LoupeOptions`（コアの `EsUtil.Feature.LoupeCore`） |
-| 既定値 | `LoupeOptions.Default`（表示サイズ 160 / 拡大率 4 / 外観は `LoupeAppearance` の既定値） |
+| 既定値 | `LoupeOptions.Default`（表示サイズ 160 / 拡大率 4 / 外観は `LoupeMetrics` の既定値） |
 | 用途 | ルーペの設定（表示サイズ・拡大率・外観）を 1 つの値で指定する |
 
 ```csharp
@@ -213,7 +213,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | `160` | `1`〜`4096` | ルーペの基本サイズ（DIP・一辺） |
 | `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
-| `Appearance` | `LoupeAppearance` | コアの既定値 | | 装飾（市松模様・外枠・十字線・中心座標ラベル）の外観 |
+| `Appearance` | `LoupeMetrics` | コアの既定値 | | 装飾（市松模様・外枠・十字線・中心座標ラベル）の外観 |
 
 **表示サイズ（`RequestedSize`）のクランプはコア（ファサード）が内包**します: 表示サイズはコアが本値（基本サイズ）を親領域サイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
@@ -244,13 +244,13 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 
 #### 5.1.5 Appearance（設定の一部）
 
-装飾（市松模様・外枠・十字線・中心座標ラベル）の外観は **コアの `LoupeAppearance`（`EsUtil.Feature.LoupeCore`）が単一所有**し、`Options` の一部（`Options.Appearance`）として指定します（UI 側に外観の個別プロパティはありません。両 UI で既定値・意味が一致します）。
+装飾（市松模様・外枠・十字線・中心座標ラベル）の外観は **コアの `LoupeMetrics`（`EsUtil.Feature.LoupeCore`）が単一所有**し、`Options` の一部（`Options.Appearance`）として指定します（UI 側に外観の個別プロパティはありません。両 UI で既定値・意味が一致します）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options.Appearance` | `LoupeAppearance` | コアの既定値 | 装飾の外観。`with` 式で部分変更する。数値項目はコアの `LoupeAppearance` が生成時に安全域へ補正する |
+| `Options.Appearance` | `LoupeMetrics` | コアの既定値 | 装飾の外観。`with` 式で部分変更する。数値項目はコアの `LoupeMetrics` が生成時に安全域へ補正する |
 
-`LoupeAppearance` の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
+`LoupeMetrics` の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -266,9 +266,9 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正） |
 | `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeAppearance` が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `LoupeCoordLabel.ComputeFrame`）が、角丸（`CoordLabelCornerRadius`）は `LoupeMetrics` が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
-寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時にコアの `LoupeAppearanceScaler` が物理ピクセルへ換算します（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
+寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時にコアの `LoupeMetricsScaler` が物理ピクセルへ換算します（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 
@@ -468,7 +468,7 @@ private readonly LoupeControl _loupe = new()
     {
         RequestedSize = 240,
         ZoomLevel = 4,
-        Appearance = new LoupeAppearance
+        Appearance = new LoupeMetrics
         {
             CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
             CheckerSize = 8,

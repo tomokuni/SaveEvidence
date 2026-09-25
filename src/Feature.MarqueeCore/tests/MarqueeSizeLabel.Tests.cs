@@ -68,7 +68,8 @@ public class MarqueeSizeLabelTests
     [Fact]
     public void ToElement_配置と外観を要素の指示へ写す()
     {
-        var element = CreateLabel(anchor: new EsPoint(10, 30)).ToElement(new EsSize(50, 14));
+        var element = CreateLabel(anchor: new EsPoint(10, 30)).ToElement(
+            new EsSize(50, 14), s_text, s_background);
 
         Assert.Equal(new EsRect(10, 30, 58, 22), element.Bounds);
         Assert.Equal(new EsPoint(14, 34), element.TextOrigin);

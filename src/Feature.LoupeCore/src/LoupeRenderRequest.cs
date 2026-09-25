@@ -12,7 +12,7 @@ namespace EsUtil.Feature.LoupeCore;
 /// 描画 1 フレーム分に必要な形へ<b>解決したスナップショット</b>である（描画層は公開プロパティを読まない）。<br/>
 /// - 表示サイズ（親領域のクランプ結果。<see cref="Loupe.ResolveLayout"/> の DIP）+ `RenderScaling`（環境）→ <see cref="PixelSize"/><br/>
 /// - <see cref="LoupeOptions.ZoomLevel"/>（設定）→ <see cref="ZoomLevel"/>（そのまま）<br/>
-/// - <see cref="LoupeOptions.Appearance"/>（設定）→ <see cref="Appearance"/>（そのまま）<br/>
+/// - <see cref="LoupeOptions.Metrics"/>（設定）→ <see cref="Metrics"/>（そのまま）<br/>
 /// 拡大元画像は UI ごとに型が異なるため本値に含めず、<br/>
 /// 描画層が解決した <see cref="EsBitmap"/> を別引数として受け取る（両 UI が同じ手順で本値を組み立てられる）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
@@ -20,13 +20,13 @@ namespace EsUtil.Feature.LoupeCore;
 /// <param name="Center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定は null（市松模様のみを描画する）。</param>
 /// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。切り上げ・最低 1）。</param>
 /// <param name="ZoomLevel">拡大率（1〜64。1 未満は不可）。</param>
-/// <param name="Appearance">外観（下地・色・寸法・描画可否を単一所有する）。</param>
+/// <param name="Metrics">ルーペの寸法（市松模様のタイル・外枠の太さ。色は描画の設定が単一所有する）。</param>
 /// <param name="Scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
 public readonly record struct LoupeRenderRequest(
     EsPoint? Center,
     int PixelSize,
     int ZoomLevel,
-    LoupeAppearance Appearance,
+    LoupeMetrics Metrics,
     double Scaling)
 {
     /// <summary>描画先の全領域（ルーペの一辺が作る正方形）を取得する。</summary>
@@ -59,6 +59,6 @@ public readonly record struct LoupeRenderRequest(
         => new(center,
                LoupePositionCalculator.ResolvePixelSize(displaySize, renderScaling, availableSize),
                options.ZoomLevel,
-               options.Appearance,
+               options.Metrics,
                renderScaling);
 }

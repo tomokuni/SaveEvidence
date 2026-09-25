@@ -50,11 +50,11 @@ public sealed record LoupeOptions
         init => field = LoupeValueCoercer.CoerceZoomLevel(value);
     } = LoupeValueCoercer.ZoomLevelDefault;
 
-    /// <summary>装飾の外観（下地・市松模様・外枠・十字線・中心座標ラベル）を取得する。</summary>
-    /// <value>外観の単一値。既定は <see cref="LoupeAppearance"/> の既定値。</value>
+    /// <summary>ルーペの寸法（市松模様のタイル・外枠の太さ・中心座標ラベルの寸法）を取得する。</summary>
+    /// <value>寸法の単一値。既定は <see cref="LoupeMetrics"/> の既定値。</value>
     /// <remarks>
-    /// 外観の値・既定値・数値項目の安全域への補正は <see cref="LoupeAppearance"/> が単一所有する<br/>
-    /// （本型は外観をそのまま保持する）。
+    /// 寸法の値・既定値・数値項目の安全域への補正は <see cref="LoupeMetrics"/> が単一所有する<br/>
+    /// （本型は寸法をそのまま保持する）。色は描画にだけ必要な設定のため本型に含めない（描画の設定が単一所有する）。
     /// </remarks>
-    public LoupeAppearance Appearance { get; init; } = new();
+    public LoupeMetrics Metrics { get; init; } = new();
 }

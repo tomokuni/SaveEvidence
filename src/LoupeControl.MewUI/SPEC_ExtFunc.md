@@ -30,9 +30,9 @@
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 1〜4096 | 一辺のサイズ（DIP） |
 | `ZoomLevel` | `int` | 4 | 1〜64 | 拡大率（偶数推奨） |
-| `Appearance` | `LoupeAppearance` | コアの既定値 | 下表のとおり | 外観（下地・市松模様・外枠・十字線・中心座標ラベル）。数値項目を安全域へ補正する |
+| `Appearance` | `LoupeMetrics` | コアの既定値 | 下表のとおり | 外観（下地・市松模様・外枠・十字線・中心座標ラベル）。数値項目を安全域へ補正する |
 
-`Options.Appearance`（コアの `LoupeAppearance`。色は UI 非依存の `System.Drawing.Color`）の項目:
+`Options.Appearance`（コアの `LoupeMetrics`。色は UI 非依存の `System.Drawing.Color`）の項目:
 
 | 項目 | 型 | 既定値 | 安全域（範囲外は自動補正） | 説明 |
 | --- | --- | --- | --- | --- |
@@ -76,7 +76,7 @@
 
 ### 座標ラベルの表示条件
 
-`ShowCoordLabel` が `true` かつ `CenterPoint` が設定済みの場合のみ表示します（判断はコアの `LoupeAppearance.ShouldShowCoordLabel` が単一所有する）。
+`ShowCoordLabel` が `true` かつ `CenterPoint` が設定済みの場合のみ表示します（判断はコアの `LoupeMetrics.ShouldShowCoordLabel` が単一所有する）。
 
 ## レイアウト
 
@@ -97,7 +97,7 @@
 | `Source` が `null` | 市松模様のみを描画する（例外にしない） |
 | `CenterPoint` が `null` | 市松模様のみを描画する（例外にしない） |
 | `Source` が破棄済み | 市松模様のみを描画する（例外にしない） |
-| 色のアルファが 0 | その層を描画しない（例外にしない。判定はコアの `LoupeAppearance.Has*` が単一所有する） |
+| 色のアルファが 0 | その層を描画しない（例外にしない。判定はコアの `LoupeMetrics.Has*` が単一所有する） |
 | 安全域外の数値 | 安全域へ補正する（例外にしない） |
 
 ## 描画完了イベント

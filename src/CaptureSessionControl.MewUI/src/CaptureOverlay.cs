@@ -10,6 +10,8 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 
+using DrawingColor = System.Drawing.Color;
+
 namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 
 /// <summary>画面全体を覆うキャプチャ選択オーバーレイ（MewUI 版）。</summary>
@@ -117,8 +119,10 @@ internal sealed class CaptureOverlay
 
         _selector = new FadeMaskDragRectControl { Mode = CaptureLabelTexts.ToSelectionMode(type), Log = _log };
         // 設定はコアのマッパーで 1 値に変換して一括適用する（変換はコアが単一所有する）。
-        // ルーペの市松模様の下地色は指定しない（背後の撮影画像を透かす。Avalonia 版と同じ扱いにする）
+        // 色は描画にだけ必要な設定のため、描画の設定として与える
+        // （ルーペの市松模様の下地色は透明にし、背後の撮影画像を透かす。Avalonia 版と同じ扱いにする）
         _selector.Options = settings.ToFadeMaskDragRectOptions();
+        _selector.LoupePaint = CapturePaintMapper.ToLoupePaint(settings, DrawingColor.Transparent);
         _highlight = new CaptureHighlightSession(_log);
         // 検出サービスはハイライト型のみ使う（それ以外はドラッグで選択矩形を作るため検出が不要）。
         // 「どちらの種別か」の判定は利用時にコア（CaptureTypeTraits）へ問い合わせる（導出値を null 性で保持しない）

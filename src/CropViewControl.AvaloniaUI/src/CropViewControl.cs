@@ -4,6 +4,8 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Layout;
 using Avalonia.Media;
+using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI;
@@ -143,6 +145,15 @@ public sealed partial class CropViewControl : Panel
     {
         get => _selectionOverlay.LoupeRenderScaling;
         set => _selectionOverlay.LoupeRenderScaling = value;
+    }
+
+    /// <summary>領域選択オーバーレイのルーペが使う色。<see cref="FadeMaskDragRectControl.LoupePaint"/> へ委譲する。</summary>
+    /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
+    /// <remarks>色は描画にだけ必要な設定のため、コアの設定ではない（セッションが設定する）。</remarks>
+    public LoupePaint SelectionOverlayLoupePaint
+    {
+        get => _selectionOverlay.LoupePaint;
+        set => _selectionOverlay.LoupePaint = value;
     }
 
     /// <summary>表示する画像を設定する（ZoomViewControl とルーペへ伝搬する）。</summary>

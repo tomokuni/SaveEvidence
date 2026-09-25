@@ -210,7 +210,7 @@ public class LoupeLogMessageTests
     {
         var logger = new RecordingLogger();
         var oldValue = new LoupeOptions();
-        var newValue = oldValue with { Appearance = oldValue.Appearance with { FrameWidth = 8 } };
+        var newValue = oldValue with { Metrics = oldValue.Metrics with { FrameWidth = 8 } };
 
         logger.LogOptionsChanged(oldValue, newValue);
 

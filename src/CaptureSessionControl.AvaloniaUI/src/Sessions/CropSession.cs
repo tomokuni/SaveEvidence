@@ -12,6 +12,8 @@ using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using Microsoft.Extensions.Logging;
 
+using DrawingColor = System.Drawing.Color;
+
 namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 
 /// <summary>切出し（Crop）セッション（CropViewControl のライフサイクル管理と確定・キャンセル処理）。</summary>
@@ -194,6 +196,9 @@ internal sealed class CropSession(
         var s = _settings;
         // 設定を複合コントロールの設定値（1 値）へ変換して一括適用する（変換はコアのマッパーが単一所有する）
         cropView.SelectionOverlayOptions = s.ToFadeMaskDragRectOptions();
+        // 色は描画にだけ必要な設定のため、コアの設定ではなく描画の設定として与える
+        // （プレビューの切り出しは背後の要素を透かすため、ルーペの下地は透明にする）
+        cropView.SelectionOverlayLoupePaint = CapturePaintMapper.ToLoupePaint(s, DrawingColor.Transparent);
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
         // プレビュー内 Crop はドメイン = 論理座標（元画像ピクセル）のため DIP と 1:1（基準値）にする。
         cropView.Scaling = DpiScaler.StandardScaling;

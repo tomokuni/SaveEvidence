@@ -1,6 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
@@ -28,12 +29,14 @@ public class LoupeControlTests
         Assert.Equal(LoupeValueCoercer.ZoomLevelDefault, control.Options.ZoomLevel);
         Assert.Equal(LoupeValueCoercer.RenderScalingDefault, control.RenderScaling);
 
-        // 外観の既定値はコア（LoupeAppearance）が単一所有する（両 UI で同一）
-        Assert.Equal(new LoupeAppearance(), control.Options.Appearance);
-        Assert.Equal(LoupeValueCoercer.CheckerSizeDefault, control.Options.Appearance.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthDefault, control.Options.Appearance.FrameWidth);
-        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeDefault, control.Options.Appearance.CoordLabelFontSize);
-        Assert.True(control.Options.Appearance.ShowCoordLabel);
+        // 外観の既定値はコア（LoupeMetrics）が単一所有する（両 UI で同一）
+        Assert.Equal(new LoupeMetrics(), control.Options.Metrics);
+        Assert.Equal(LoupeValueCoercer.CheckerSizeDefault, control.Options.Metrics.CheckerSize);
+        Assert.Equal(LoupeValueCoercer.FrameWidthDefault, control.Options.Metrics.FrameWidth);
+        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeDefault, control.Options.Metrics.CoordLabelFontSize);
+        Assert.True(control.Options.Metrics.ShowCoordLabel);
+        // 色の既定値は描画の設定が単一所有する
+        Assert.Equal(LoupePaint.Default, control.Paint);
     }
 
     /// <summary>数値プロパティがコアの安全域へ補正されることを検証する。</summary>
@@ -81,11 +84,11 @@ public class LoupeControlTests
     [Fact]
     public void 座標ラベルのフォントサイズが安全域へ補正される()
     {
-        var control = new LoupeControl { Options = LoupeOptions.Default with { Appearance = new LoupeAppearance { CoordLabelFontSize = 0 } } };
-        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeMin, control.Options.Appearance.CoordLabelFontSize);
+        var control = new LoupeControl { Options = LoupeOptions.Default with { Metrics = new LoupeMetrics { CoordLabelFontSize = 0 } } };
+        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeMin, control.Options.Metrics.CoordLabelFontSize);
 
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { CoordLabelFontSize = double.NaN } };
-        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeDefault, control.Options.Appearance.CoordLabelFontSize);
+        control.Options = control.Options with { Metrics = control.Options.Metrics with { CoordLabelFontSize = double.NaN } };
+        Assert.Equal(LoupeValueCoercer.CoordLabelFontSizeDefault, control.Options.Metrics.CoordLabelFontSize);
     }
 
     /// <summary>市松模様と外枠のサイズが安全域へ補正されることを検証する。</summary>
@@ -94,16 +97,16 @@ public class LoupeControlTests
     {
         var control = new LoupeControl
         {
-            Options = LoupeOptions.Default with { Appearance = new LoupeAppearance { CheckerSize = 0, FrameWidth = 0 } },
+            Options = LoupeOptions.Default with { Metrics = new LoupeMetrics { CheckerSize = 0, FrameWidth = 0 } },
         };
 
-        Assert.Equal(LoupeValueCoercer.CheckerSizeMin, control.Options.Appearance.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthMin, control.Options.Appearance.FrameWidth);
+        Assert.Equal(LoupeValueCoercer.CheckerSizeMin, control.Options.Metrics.CheckerSize);
+        Assert.Equal(LoupeValueCoercer.FrameWidthMin, control.Options.Metrics.FrameWidth);
 
-        control.Options = control.Options with { Appearance = control.Options.Appearance with { CheckerSize = 1000, FrameWidth = 1000 } };
+        control.Options = control.Options with { Metrics = control.Options.Metrics with { CheckerSize = 1000, FrameWidth = 1000 } };
 
-        Assert.Equal(LoupeValueCoercer.CheckerSizeMax, control.Options.Appearance.CheckerSize);
-        Assert.Equal(LoupeValueCoercer.FrameWidthMax, control.Options.Appearance.FrameWidth);
+        Assert.Equal(LoupeValueCoercer.CheckerSizeMax, control.Options.Metrics.CheckerSize);
+        Assert.Equal(LoupeValueCoercer.FrameWidthMax, control.Options.Metrics.FrameWidth);
     }
 
     /// <summary>要求サイズが <see cref="LoupeOptions.RequestedSize"/> の正方形になることを検証する。</summary>
@@ -186,7 +189,7 @@ public class LoupeControlTests
         {
             Options = LoupeOptions.Default with
             {
-                Appearance = LoupeOptions.Default.Appearance with { ShowCoordLabel = false },
+                Metrics = LoupeOptions.Default.Metrics with { ShowCoordLabel = false },
             },
             CenterPoint = new EsPoint(12, 34),
         };
@@ -214,7 +217,7 @@ public class LoupeControlTests
         Assert.Equal("(3, 4)", LabelText(control));
     }
 
-    /// <summary>外観を設定できることを検証する（描画は <c>LoupeControl.UIBase</c> のテストが検証する）。</summary>
+    /// <summary>寸法と色を設定できることを検証する（描画は <c>LoupeControl.UIBase</c> のテストが検証する）。</summary>
     [Fact]
     public void 外観を設定できる()
     {
@@ -223,23 +226,26 @@ public class LoupeControlTests
             CenterPoint = new EsPoint(10, 20),
             Options = LoupeOptions.Default with
             {
-                Appearance = new LoupeAppearance
-                {
-                    CrossColor = DrawingColor.FromArgb(255, 255, 0, 0),
-                    CheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255),
-                    CheckerColorB = DrawingColor.FromArgb(255, 0, 0, 0),
-                    FrameColor = DrawingColor.FromArgb(255, 0, 0, 255),
-                    CoordLabelColor = DrawingColor.FromArgb(255, 255, 255, 0),
-                    CoordLabelBackgroundColor = DrawingColor.FromArgb(128, 0, 0, 0),
-                    ShowCoordLabel = false,
-                },
+                Metrics = new LoupeMetrics { ShowCoordLabel = false, CheckerSize = 4 },
+            },
+            Paint = new LoupePaint
+            {
+                CrossColor = DrawingColor.FromArgb(255, 255, 0, 0),
+                CheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255),
+                CheckerColorB = DrawingColor.FromArgb(255, 0, 0, 0),
+                FrameColor = DrawingColor.FromArgb(255, 0, 0, 255),
+                CoordLabelColor = DrawingColor.FromArgb(255, 255, 255, 0),
+                CoordLabelBackgroundColor = DrawingColor.FromArgb(128, 0, 0, 0),
             },
         };
 
         Assert.Equal(new EsPoint(10, 20), control.CenterPoint);
-        Assert.Equal(DrawingColor.FromArgb(255, 255, 0, 0), control.Options.Appearance.CrossColor);
-        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), control.Options.Appearance.CheckerColorB);
-        Assert.False(control.Options.Appearance.ShowCoordLabel);
+        Assert.Equal(DrawingColor.FromArgb(255, 255, 0, 0), control.Paint.CrossColor);
+        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), control.Paint.CheckerColorB);
+        Assert.False(control.Options.Metrics.ShowCoordLabel);
+        Assert.Equal(4, control.Options.Metrics.CheckerSize);
+        // 色は描画実装へ反映される（描画実装が単一所有する）
+        Assert.NotNull(control.Renderer);
     }
 
     /// <summary>ソース画像を設定できることを検証する。</summary>

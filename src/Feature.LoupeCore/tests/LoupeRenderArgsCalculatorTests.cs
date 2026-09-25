@@ -78,5 +78,5 @@ public class LoupeRenderArgsCalculatorTests
     /// <param name="center">拡大中心（ドメイン座標）。</param>
     /// <returns>描画入力。</returns>
     private static LoupeRenderRequest Request(int pixelSize, int zoomLevel, EsPoint? center)
-        => new(center, pixelSize, zoomLevel, new LoupeAppearance(), 1.0);
+        => new(center, pixelSize, zoomLevel, new LoupeMetrics(), 1.0);
 }

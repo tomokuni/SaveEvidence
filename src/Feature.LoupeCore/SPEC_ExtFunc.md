@@ -15,9 +15,9 @@
 | `LoupeLayout` | `public` | 表示レイアウトの値（表示サイズ（DIP）と表示位置。配置しない場合は位置が null） |
 | `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール・中心座標ラベルの契約。`Layers` は描く層とその順序を持ち、**描画順はコアが単一所有する**（ラベルは必ず末尾 = 常に最上位））。描画の実行は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が担う |
 | `LoupeOptions` | `public` | 設定の単一値（ホストが設定する） |
-| `LoupeAppearance` | `public` | 外観の単一値（設定の一部として、また単体でも外観を指定する） |
+| `LoupeMetrics` | `public` | 外観の単一値（設定の一部として、また単体でも外観を指定する） |
 | `LoupeValueCoercer` | `public` | 数値パラメータの既定値・安全域とクランプ |
-| `LoupeAppearanceScaler` | `public` | 外観の寸法値の物理ピクセル換算 |
+| `LoupeMetricsScaler` | `public` | 外観の寸法値の物理ピクセル換算 |
 | `LoupeRenderRequest` | `public` | 1 フレーム分の描画入力（コア⇔UI の契約） |
 | `LoupeCoordLabel` | `public` | 中心座標ラベルの描画契約（文言・DIP の寸法・色・配置の計算）。表示はコントロールがテキスト要素として行う |
 | `LoupeCheckerboard` | `public` | 市松模様の明暗判定とタイル矩形の**列挙子**（`ComputeDarkTiles`。リストを確保しない） |
@@ -76,7 +76,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 | --- | --- | --- | --- |
 | `RequestedSize` | `int` | `160` | ルーペの基本サイズ（DIP・一辺）。安全域 1〜4096。表示サイズは UI 層が親領域・描画先へクランプして導出する |
 | `ZoomLevel` | `int` | `4` | 拡大率（偶数推奨）。安全域 1〜64 |
-| `Appearance` | `LoupeAppearance` | `new LoupeAppearance()` | 装飾の外観（下地・市松模様・外枠・十字線・中心座標ラベル） |
+| `Appearance` | `LoupeMetrics` | `new LoupeMetrics()` | 装飾の外観（下地・市松模様・外枠・十字線・中心座標ラベル） |
 
 `record` のため `with` 式による部分変更と値の等価比較ができます。等価比較は UI のプロパティシステムと併せて「同値の再設定では再描画しない」動作を保証します。
 
@@ -88,7 +88,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 
 **含めない値**: 拡大元画像・拡大中心（マウス移動ごとに変わるデータ）、DPI スケーリング係数（環境値）、表示位置のオフセット（UI 固有のホスト結線）。これらは UI の個別プロパティとして公開します（1 つの値へまとめると、中心の更新のたびに外観を含む値全体を組み立て直すことになります）。
 
-## `LoupeAppearance`（`EsUtil.Feature.LoupeCore`・`public sealed record`）
+## `LoupeMetrics`（`EsUtil.Feature.LoupeCore`・`public sealed record`）
 
 ルーペの外観 12 項目を 1 つの値として所有します。両 UI は本型を 1 つ公開するだけで外観を設定でき、UI ごとに既定値がずれません。色は UI 非依存の `System.Drawing.Color` です。
 
@@ -146,14 +146,14 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 | `CoerceCoordLabelFontSize(double)` | ラベル文字サイズを 6〜48 へクランプ。非有限値は既定値（安全域と規則は `EsLabelMetrics`（`Platform.Core`）が単一所有し、本メソッドは既定値を添えて委譲する） |
 | `CoerceCoordLabelCornerRadius(int)` | ラベルの角丸半径を 0〜64 へクランプ（0 は角丸なし） |
 
-## `LoupeAppearanceScaler`（`EsUtil.Feature.LoupeCore`）
+## `LoupeMetricsScaler`（`EsUtil.Feature.LoupeCore`）
 
-外観の寸法値（DIP）を描画に使う物理ピクセルへ換算する規則を単一所有します。安全域への補正は `LoupeAppearance`（生成時）が済ませているため再補正はせず、描画層は返された値だけを使います。
+外観の寸法値（DIP）を描画に使う物理ピクセルへ換算する規則を単一所有します。安全域への補正は `LoupeMetrics`（生成時）が済ませているため再補正はせず、描画層は返された値だけを使います。
 
 | メソッド | 説明 |
 | --- | --- |
-| `ScaleCheckerSize(LoupeAppearance, double scaling)` | 市松模様の 1 タイルサイズを物理ピクセルへ換算（切り上げ・最低 1）。`CheckerSize` は 1〜128 へ補正してから換算 |
-| `ScaleFrameWidth(LoupeAppearance, double scaling)` | 外枠の太さを物理ピクセルへ換算（切り上げ・最低 1）。`FrameWidth` は 1〜64 へ補正してから換算 |
+| `ScaleCheckerSize(LoupeMetrics, double scaling)` | 市松模様の 1 タイルサイズを物理ピクセルへ換算（切り上げ・最低 1）。`CheckerSize` は 1〜128 へ補正してから換算 |
+| `ScaleFrameWidth(LoupeMetrics, double scaling)` | 外枠の太さを物理ピクセルへ換算（切り上げ・最低 1）。`FrameWidth` は 1〜64 へ補正してから換算 |
 
 **中心座標ラベルは本型の対象外です**（「ラベル文字サイズ・角丸半径を換算する」という記述は過去のもので、実装は持ちません）。ラベルは DIP で配置するため、物理ピクセルへの換算を必要としません（テキスト要素として配置され、描画 API 側がスケーリングを扱います）。
 
@@ -170,7 +170,7 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 | `Center` | `EsPoint?` | 拡大中心（ドメイン座標 = 元画像ピクセル座標）。null の場合は市松模様のみを描画する |
 | `PixelSize` | `int` | ルーペの一辺のサイズ（物理ピクセル。表示サイズ × `RenderScaling` を描画先でクランプ済み） |
 | `ZoomLevel` | `int` | 拡大率（1〜64。`LoupeOptions.ZoomLevel` の補正済みの値） |
-| `Appearance` | `LoupeAppearance` | 外観（下地・色・寸法・描画可否。`LoupeOptions.Appearance` の値） |
+| `Appearance` | `LoupeMetrics` | 外観（下地・色・寸法・描画可否。`LoupeOptions.Appearance` の値） |
 | `Scaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数 |
 | `SurfaceBounds` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。下地・市松模様を全面へ描くために契約が単一所有する（UI 層は矩形を組み立てない） |
 

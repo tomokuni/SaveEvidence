@@ -160,13 +160,13 @@ src/LoupeControl.UIBase/
 | 対象 | 所有者 |
 | --- | --- |
 | 描画する層とその順序 | `Loupe.ResolveLayers`（コア。本層は順に写すだけ） |
-| 描画可否（透明色は描かない・ソース未解決なら描かない） | コア（`LoupeAppearance.Has*`。判定は `DrawingColorExtensions.IsVisible` が単一所有する / `LoupeImageExtractor.TryExtractRegionAt`） |
+| 描画可否（透明色は描かない・ソース未解決なら描かない） | コア（`LoupeMetrics.Has*`。判定は `DrawingColorExtensions.IsVisible` が単一所有する / `LoupeImageExtractor.TryExtractRegionAt`） |
 | 切り出し領域と拡大の矩形 | コア（`LoupeImageExtractor`） |
 | 市松模様のタイル位置とタイル数 | コア（`LoupeCheckerboard`。リストを確保しない列挙子で渡す） |
 | 十字線・外枠の矩形 | コア（`LoupeDecorationGeometry`） |
-| 外観の DIP → 物理ピクセル換算 | コア（`LoupeAppearanceScaler`） |
+| 外観の DIP → 物理ピクセル換算 | コア（`LoupeMetricsScaler`） |
 | 描画先のサイズ決定（クランプ） | コア（`LoupePositionCalculator.ResolvePixelSize`） |
-| ラベルの文言・色・フォントサイズ | コア（`LoupeCoordLabel` / `LoupeAppearance`） |
+| ラベルの文言・色・フォントサイズ | コア（`LoupeCoordLabel` / `LoupeMetrics`） |
 | ラベルの体裁（背景・文字原点） | `Platform.Core`（`EsLabelLayout`） |
 | 描画 API の呼び出し（背景 → 文字の順序） | `Platform.Core`（`SkiaLabel` / `IEsCanvas.DrawLabel`） |
 | 再描画要求の結合（1 フレームに 1 回） | `LoupeRenderCoordinator.RequestRender` |

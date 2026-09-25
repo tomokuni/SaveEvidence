@@ -67,7 +67,7 @@ src/LoupeControl.MewUI/
 | コンポーネント | 責務 |
 | --- | --- |
 | `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。描画は描画層（`LoupeRenderer`）を `SkiaEsCanvas` 経由で呼ぶ（描画の順序と内容は描画層が単一所有し、コアは描く層とその順序を指示する） |
-| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画ポートへ写す（コアの描画契約 `LoupeRenderRequest` と、矩形計算・外観の物理ピクセル換算 `LoupeAppearanceScaler` をそのまま使用）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
+| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画ポートへ写す（コアの描画契約 `LoupeRenderRequest` と、矩形計算・外観の物理ピクセル換算 `LoupeMetricsScaler` をそのまま使用）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
 | `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -101,9 +101,9 @@ classDiagram
         <<Feature.LoupeCore>>
         +int RequestedSize
         +int ZoomLevel
-        +LoupeAppearance Appearance
+        +LoupeMetrics Appearance
     }
-    class LoupeAppearance {
+    class LoupeMetrics {
         <<Feature.LoupeCore>>
         +Color BackgroundColor
         +Color CrossColor
@@ -141,7 +141,7 @@ classDiagram
         +ComputeMagnifiedRects(captureSize, zoomLevel) (EsRect, EsRect)$
         +TryExtractRegionAt(source, request) EsBitmap?
     }
-    class LoupeAppearanceScaler {
+    class LoupeMetricsScaler {
         <<Feature.LoupeCore>>
         +ScaleCheckerSize(appearance, scaling) int$
         +ScaleFrameWidth(appearance, scaling) int$
@@ -179,7 +179,7 @@ classDiagram
     LoupeRenderer ..> LoupeCheckerboard : 明暗判定
     LoupeRenderer ..> LoupeDecorationGeometry : 矩形
     LoupeRenderer ..> LoupeImageExtractor : 切り出し・拡大矩形
-    LoupeRenderer ..> LoupeAppearanceScaler : 外観の物理ピクセル換算
+    LoupeRenderer ..> LoupeMetricsScaler : 外観の物理ピクセル換算
     LoupeControl ..> LoupeValueCoercer : 値の補正（プロパティ登録の coerce）
     Loupe ..> LoupePositionCalculator : 表示レイアウト・描画サイズ・描画入力の解決
     Loupe ..> CoordinateFormatter : ラベル文字列

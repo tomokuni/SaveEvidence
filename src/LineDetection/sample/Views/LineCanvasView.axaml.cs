@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
@@ -58,18 +59,22 @@ public partial class LineCanvasView : UserControl
         Loupe.SetCoordinateTransform(CoordTransform.Scale(ImageDisplayScale));
         Loupe.PositionOffset = LoupePositionOffset;
 
-        // 設定はコアの単一値（Options）で指定する（サイズ・拡大率・外観。外観は十字線を 20% の赤、外枠をライトグレー、座標ラベルなしに設定する）
+        // 設定はコアの単一値（Options）で指定する（サイズ・拡大率・寸法）
         Loupe.Options = Loupe.Options with
         {
             RequestedSize = 220,
             ZoomLevel = 4,
-            Appearance = new LoupeAppearance
+            Metrics = new LoupeMetrics
             {
-                CrossColor = DrawingColor.FromArgb(0x33, 0xFF, 0x00, 0x00),
-                FrameColor = DrawingColor.FromArgb(0xFF, 0xCC, 0xCC, 0xCC),
                 FrameWidth = 1,
                 ShowCoordLabel = false,
             },
+        };
+        // 色は描画にだけ必要な設定のため、描画の設定（Paint）で指定する（十字線を 20% の赤、外枠をライトグレーにする）
+        Loupe.Paint = new LoupePaint
+        {
+            CrossColor = DrawingColor.FromArgb(0x33, 0xFF, 0x00, 0x00),
+            FrameColor = DrawingColor.FromArgb(0xFF, 0xCC, 0xCC, 0xCC),
         };
 
         // 描画完了イベントでルーペの Bitmap に線分オーバーレイ（破線）を描画する

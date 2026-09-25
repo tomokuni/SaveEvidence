@@ -6,6 +6,7 @@ using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
@@ -431,6 +432,22 @@ public sealed class FadeMaskDragRectControl : Panel
     public bool ShowFullOverlay => _marquee.DecoOptions.OuterShowFullOverlay;
 
     // ====================================================================
+    // 公開 API: 描画に使う色
+    // ====================================================================
+
+    /// <summary>ルーペの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
+    /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
+    /// 内包するルーペコントロールへそのまま転送する（下地色もここで与える。ホストが背後の要素を透かすかを決める）。
+    /// </remarks>
+    public LoupePaint LoupePaint
+    {
+        get => _loupeControl.Paint;
+        set => _loupeControl.Paint = value;
+    }
+
+    // ====================================================================
     // 内部実装（設定の分配・モードの適用・配線）
     // ====================================================================
 
@@ -439,7 +456,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 選択矩形コントロールの設定は 1 回の代入で分配する（外側の装飾の外観も同じ値が持つ）。<br/>
     /// ハイライト（ホストが与える実行時状態）は設定値に含まれないため、設定の差し替えで失わないように引き継ぐ。<br/>
     /// 適用後は選択矩形の再描画、ルーペの再配置・再生成を要求する（選択状態・ルーペ中心は維持される）。<br/>
-    /// ルーペの再生成は、選択矩形破線の色がルーペの外観（<c>LoupeAppearance</c>）に含まれず、<br/>
+    /// ルーペの再生成は、選択矩形破線の色がルーペの外観（<c>LoupeMetrics</c>）に含まれず、<br/>
     /// プロパティ通知では再生成されないため。
     /// </remarks>
     private void ApplyOptions()

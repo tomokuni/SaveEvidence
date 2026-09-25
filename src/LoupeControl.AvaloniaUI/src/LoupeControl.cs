@@ -49,7 +49,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// <b>色指定</b>: 外観の色は UI 非依存の <see cref="System.Drawing.Color"/> として <see cref="Options"/> で受け取り、<br/>
 /// 描画時にブラシへ変換する（色の文字列解析は行わない）。<br/>
 /// 不透明度は色のアルファに統合する（例: 十字線の赤 40% = <c>#66FF0000</c>）。<br/>
-/// 設定（<see cref="Options"/>）と外観（<see cref="LoupeAppearance"/>）の数値項目はコアの型が生成時に安全域へ補正する<br/>
+/// 設定（<see cref="Options"/>）と外観（<see cref="LoupeMetrics"/>）の数値項目はコアの型が生成時に安全域へ補正する<br/>
 /// （UI 側に補正の登録を置かない）。環境値の <see cref="RenderScaling"/> のみ本コントロールが補正（coerce）する。<br/>
 /// <br/>
 /// **公開 API 一覧**:<br/>
@@ -113,7 +113,7 @@ public sealed class LoupeControl : Panel
     /// （本コントロールは自 UI の公開プロパティで受け取った値を転送し、返された値を反映するだけ）。<br/>
     /// フィールド初期化子で生成する（AXAML の初期化でプロパティ変更が発火しても参照できるようにするため）。
     /// </remarks>
-    private readonly LoupeFacade _loupe = new(LoupeRenderer.Default);
+    private readonly LoupeFacade _loupe = new(new LoupeRenderer(LoupePaint.Default));
 
     /// <summary>表示位置（RenderTransform）のインスタンス（座標更新時は値を書き換えて再利用する）。</summary>
     private readonly TranslateTransform _positionTransform = new();
@@ -287,6 +287,14 @@ public sealed class LoupeControl : Panel
         });
 
         IsVisibleProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) => o.OnIsVisibleChanged(e));
+        // 色（描画にだけ必要な設定）の変更は描画実装を差し替える（色は描画実装が単一所有する）
+        PaintProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
+        {
+            o._loupe.Renderer = new LoupeRenderer(e.GetNewValue<LoupePaint>());
+            o.RequestRender();
+            // 中心座標ラベルの色も描画実装が与えるため、ラベル要素を配置し直す
+            o.InvalidateArrange();
+        });
     }
 
     // ====================================================================
@@ -317,6 +325,14 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     public static readonly StyledProperty<LoupeOptions> OptionsProperty =
         AvaloniaProperty.Register<LoupeControl, LoupeOptions>(nameof(Options), defaultValue: LoupeOptions.Default);
+
+    /// <summary><see cref="Paint"/> 依存関係プロパティ（色。描画にだけ必要な設定）。</summary>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）には含めず、<br/>
+    /// 描画の設定（<see cref="LoupePaint"/>）として本コントロールが公開する（描画実装が単一所有する）。
+    /// </remarks>
+    public static readonly StyledProperty<LoupePaint> PaintProperty =
+        AvaloniaProperty.Register<LoupeControl, LoupePaint>(nameof(Paint), defaultValue: LoupePaint.Default);
 
     // ====================================================================
     // 公開プロパティ（入力）
@@ -360,6 +376,18 @@ public sealed class LoupeControl : Panel
         set => SetValue(OptionsProperty, value);
     }
 
+    /// <summary>描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
+    /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）ではなく本プロパティが単一所有する。<br/>
+    /// 変更すると描画実装（<see cref="Renderer"/>）が新しい色で差し替えられ、再生成とラベル要素の再配置が行われる。
+    /// </remarks>
+    public LoupePaint Paint
+    {
+        get => GetValue(PaintProperty);
+        set => SetValue(PaintProperty, value);
+    }
+
     /// <summary>表示DIPを物理ピクセルへ変換するスケーリング係数を取得または設定します。</summary>
     public double RenderScaling
     {
@@ -368,7 +396,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="LoupeRenderer.Default"/>。</value>
+    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="LoupeRenderer"/>。</value>
     /// <remarks>
     /// 保持はコアのファサード（<see cref="LoupeFacade.Renderer"/>）が単一所有する。<br/>
     /// 変更すると再生成（<see cref="RequestRender"/>）とラベル要素の再配置を要求する<br/>

@@ -3,6 +3,7 @@ using Aprillz.MewUI.Controls;
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Feature.LoupeCore;
 using EsUtil.SaveEvidence.Marquee.MewUI;
@@ -189,6 +190,18 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <value>ルーペ中心。未設定時は null。</value>
     /// <remarks>中心の真のソースはルーペコントロールへ集約し、本プロパティはその参照のみを返す。</remarks>
     public EsPoint? LoupeCenterPoint => _loupe.CenterPoint;
+
+    /// <summary>ルーペの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
+    /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
+    /// <remarks>
+    /// 色はコアの計算に入らない（描画にだけ必要）ため、設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
+    /// 内包するルーペコントロールへそのまま転送する（下地色もここで与える。ホストが背後の要素を透かすかを決める）。
+    /// </remarks>
+    public LoupePaint LoupePaint
+    {
+        get => _loupe.Paint;
+        set => _loupe.Paint = value;
+    }
 
     /// <summary>ドラッグ選択コントロール（テスト用アクセサ。設定は <see cref="Options"/> 経由で設定する）。</summary>
     internal MarqueeControl Marquee => _marquee;

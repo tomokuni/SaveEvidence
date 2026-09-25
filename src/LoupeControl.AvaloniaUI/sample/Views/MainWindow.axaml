@@ -160,6 +160,7 @@
                                     Source="{Binding SourceImage}"
                                     CenterPoint="{Binding CenterPoint}"
                                     Options="{Binding Options}"
+                                    Paint="{Binding Paint}"
                                     RenderScaling="{Binding RenderScaling}"/>
 
             </Canvas>
