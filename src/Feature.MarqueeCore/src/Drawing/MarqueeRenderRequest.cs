@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Setting;
 
-namespace EsUtil.Feature.MarqueeCore.Content;
+namespace EsUtil.Feature.MarqueeCore.Drawing;
 
 /// <summary>1 フレーム分の描画内容を解決するための入力（設定・状態と、描画時に決まる値を 1 つにまとめた値）。</summary>
 /// <param name="Options">選択矩形の設定（ハンドル・十字マーカー・カーソル座標ラベルの外観）。</param>
@@ -22,7 +22,7 @@ namespace EsUtil.Feature.MarqueeCore.Content;
 /// （描画領域のサイズ・座標変換ポート・倍率・文言プロバイダ）を加えたものである。<br/>
 /// <b>可視性</b>: UI 実装は <see cref="Marquee.ResolveContent"/> を呼ぶため、本値は内部契約とする。
 /// </remarks>
-internal readonly record struct MarqueeFrameRequest(
+internal readonly record struct MarqueeRenderRequest(
     MarqueeOptions Options,
     Decoration.MarqueeDecoOptions DecoOptions,
     EsSize ClientSize,

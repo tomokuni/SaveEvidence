@@ -1,6 +1,5 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Selection;
 using EsUtil.Feature.MarqueeCore.Drawing;
@@ -59,7 +58,7 @@ public sealed partial class Marquee
     /// 描画順は <see cref="MarqueeDrawLayer"/> の宣言順ではなく<b>本メソッドの意図</b>で決める<br/>
     /// （列挙に層を追加しても描画順が勝手に変わらないようにするため、明示的に組み立てる）。
     /// </remarks>
-    internal static MarqueeDrawContent ResolveFrame(in MarqueeFrameRequest request)
+    internal static MarqueeDrawContent ResolveFrame(in MarqueeRenderRequest request)
     {
         // 座標変換ポートは 1 フレームで 1 回だけ解決する（未指定時は倍率から等倍スケールを生成するため、各項目で解決すると生成と評価が重複する）
         var port = DecoGeometry.ResolvePort(request.Port, request.Scaling);
@@ -148,7 +147,7 @@ public sealed partial class Marquee
     /// <br/>
     /// 「描くかどうか」の解決は本メソッドが単一所有する（UI 層は値を持つ項目を反映するだけ）。
     /// </remarks>
-    private static OuterDecoFrame ResolveOuterDecoration(in MarqueeFrameRequest request, EsRect? hole)
+    private static OuterDecoFrame ResolveOuterDecoration(in MarqueeRenderRequest request, EsRect? hole)
     {
         var deco = request.DecoOptions;
 
@@ -181,7 +180,7 @@ public sealed partial class Marquee
     /// 外側の枠線と内側の枠線が同じ矩形へ重なる。<br/>
     /// 「描くかどうか」の解決は本メソッドが単一所有する（UI 層は値を持つ項目を反映するだけ）。
     /// </remarks>
-    private static InnerDecoFrame ResolveInnerDecoration(in MarqueeFrameRequest request, EsRect? hole)
+    private static InnerDecoFrame ResolveInnerDecoration(in MarqueeRenderRequest request, EsRect? hole)
     {
         var deco = request.DecoOptions;
 
@@ -207,7 +206,7 @@ public sealed partial class Marquee
     /// （位置の式を描画層が持つと、ハンドルのヒットテストと同じ規則が 2 箇所になる）。<br/>
     /// ハンドル枠の太さはコアが、色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
-    private static MarqueeHandles? ResolveHandles(in MarqueeFrameRequest request, ICoordTransform port)
+    private static MarqueeHandles? ResolveHandles(in MarqueeRenderRequest request, ICoordTransform port)
     {
         var options = request.Options;
         if (!options.ShowHandles || request.SelectionRect is not { } rect)
@@ -232,7 +231,7 @@ public sealed partial class Marquee
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
     /// <returns>マーカーの描画内容。nudge 中でない（または十字線が可視でない）場合は null。</returns>
     /// <remarks>十字線の色は描画の設定（<c>MarqueePaint</c>）が単一所有する。</remarks>
-    private static MarqueeMarker? ResolveMarker(in MarqueeFrameRequest request, ICoordTransform port)
+    private static MarqueeMarker? ResolveMarker(in MarqueeRenderRequest request, ICoordTransform port)
     {
         if (!request.MarkerActive)
         {
@@ -254,13 +253,13 @@ public sealed partial class Marquee
     /// 基準点は穴あけ矩形の左上であり、アラインは左端・上端である（装飾と同じ規則で決まる）。<br/>
     /// 文言はプロバイダ優先であり、未指定・空文字の場合はコアが矩形から自動生成する<br/>
     /// （書式はコアが単一所有し、描画層・ホストは文言を作らない）。<br/>
-    /// 座標の換算は <see cref="MarqueeFrameRequest.DisplayScaleScaling"/> を使い、<br/>
-    /// DisplayScale の百分率だけを <see cref="MarqueeFrameRequest.SizeLabelDisplayScalingProvider"/> で矩形ごとに差し替えられる<br/>
+    /// 座標の換算は <see cref="MarqueeRenderRequest.DisplayScaleScaling"/> を使い、<br/>
+    /// DisplayScale の百分率だけを <see cref="MarqueeRenderRequest.SizeLabelDisplayScalingProvider"/> で矩形ごとに差し替えられる<br/>
     /// （マルチモニタで表示スケールが矩形の位置によって異なる場合、ホストが矩形からモニタのスケールを解決する）。<br/>
     /// フォントサイズ・色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
     private static MarqueeTextPlacement? ResolveSizeLabelText(
-        in MarqueeFrameRequest request, EsRect? hole, ICoordTransform port)
+        in MarqueeRenderRequest request, EsRect? hole, ICoordTransform port)
     {
         if (!request.Options.ShowSizeLabel || hole is not { } holeRect)
         {
@@ -336,7 +335,7 @@ public sealed partial class Marquee
     /// （ラベルがカーソルに重ならず、描画領域をはみ出す場合は領域内へクランプされる）。<br/>
     /// フォントサイズ・色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
-    private static MarqueeTextPlacement? ResolveCoordLabelText(in MarqueeFrameRequest request, ICoordTransform port)
+    private static MarqueeTextPlacement? ResolveCoordLabelText(in MarqueeRenderRequest request, ICoordTransform port)
     {
         if (!request.Options.ShowCoordLabel)
         {

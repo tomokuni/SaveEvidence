@@ -1,14 +1,17 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Placement;
 
-/// <summary>ルーペの表示レイアウトの解決（表示位置の計算）を担う部分。</summary>
+/// <summary>ルーペの配置の幾何計算（表示位置の決定）を単一所有する。</summary>
 /// <remarks>
-/// 配置の計算は公開ファサード <see cref="Loupe"/> の実装詳細であるため、本ファイルは本体と同じ型（partial）に属し、<br/>
-/// 利用者（UI 実装・ホスト）が直接呼ぶ入口は <see cref="Loupe.ResolveLayout"/> だけとする。<br/>
+/// <b>本クラスが持つもの</b>: 拡大中心と表示位置のオフセットからルーペの左上座標を求め、<br/>
+/// 親領域の内側へクランプする規則である（表示サイズは呼び出し側がクランプ済みの値を渡す）。<br/>
+/// <br/>
+/// <b>利用者</b>: 公開ファサード <c>Loupe.ResolveLayout</c> だけである（本クラスは内部手順であり、<br/>
+/// 利用者（UI 実装・ホスト）が直接呼ぶ入口にはしない）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-public sealed partial class Loupe
+internal static class LoupePlacementGeometry
 {
     /// <summary>ルーペの表示位置（左上）を計算する（オフセット加算・親領域内へのクランプ）。</summary>
     /// <param name="displaySize">ルーペの表示サイズ（DIP・一辺。クランプ済みの値を渡す）。</param>

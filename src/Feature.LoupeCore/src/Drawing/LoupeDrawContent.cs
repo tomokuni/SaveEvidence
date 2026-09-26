@@ -26,4 +26,9 @@ public readonly record struct LoupeDrawContent(
     IReadOnlyList<EsRect> FrameRects,
     LoupeMagnifiedImage? MagnifiedImage,
     LoupeTextPlacement? CoordLabelText,
-    IReadOnlyList<LoupeDrawLayer> Layers);
+    IReadOnlyList<LoupeDrawLayer> Layers)
+{
+    /// <summary>テキスト（中心座標ラベル）を描く必要があるかどうかを取得する。</summary>
+    /// <value>中心座標ラベルを持つ場合は true。</value>
+    public bool HasText => CoordLabelText is not null;
+}

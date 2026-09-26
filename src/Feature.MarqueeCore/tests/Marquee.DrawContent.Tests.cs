@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Session;
 using Xunit;
 
@@ -18,7 +17,7 @@ namespace EsUtil.Feature.MarqueeCore.Tests;
 /// 「描くかどうか」「どの順に描くか」の判断がコアにあることを本テストが担保する。<br/>
 /// 装飾の判断（穴あけ矩形・暗転領域・枠線）もフレームの一部であるため本テストが検証する。
 /// </remarks>
-public class MarqueeContentTests
+public class MarqueeDrawContentTests
 {
     /// <summary>検証に使う描画領域のサイズ（DIP）。</summary>
     private static readonly EsSize s_clientSize = new(300, 300);
@@ -56,7 +55,7 @@ public class MarqueeContentTests
         double scaling = 1.0,
         Func<string?>? sizeLabelProvider = null,
         double displayScale = 1.0)
-        => Marquee.ResolveFrame(new MarqueeFrameRequest(
+        => Marquee.ResolveFrame(new MarqueeRenderRequest(
             session.Options,
             decoOptions ?? MarqueeDecoOptions.Default,
             s_clientSize,

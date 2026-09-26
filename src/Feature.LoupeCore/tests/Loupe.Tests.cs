@@ -270,6 +270,9 @@ public class LoupeTests
                 LoupeDrawLayer.Label,
             ],
             content.Layers);
+
+        // テキストの有無は HasText で判定できる（描く必要があるかどうかの判断はコアが持つ）
+        Assert.True(content.HasText);
     }
 
     [Fact]
@@ -280,6 +283,7 @@ public class LoupeTests
         var content = loupe.ResolveContent(loupe.CreateRequest(160));
 
         Assert.Null(content.CoordLabelText);
+        Assert.False(content.HasText);
         Assert.DoesNotContain(LoupeDrawLayer.Label, content.Layers);
     }
 

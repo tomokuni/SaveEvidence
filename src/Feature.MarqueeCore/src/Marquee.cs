@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Session;
 using Microsoft.Extensions.Logging;
@@ -311,7 +310,7 @@ public sealed partial class Marquee
     /// テキストの実寸は描画 API 依存のため、コアは「どこへ何を描くか」だけを返し、実測と要素の配置は UI 層が行う。
     /// </remarks>
     public MarqueeDrawContent ResolveContent(EsSize clientSize)
-        => ResolveFrame(new MarqueeFrameRequest(
+        => ResolveFrame(new MarqueeRenderRequest(
             _session.Options,
             _decoOptions,
             clientSize,

@@ -3,7 +3,7 @@ using Xunit;
 using EsUtil.Feature.LoupeCore.Drawing;
 using EsUtil.Feature.LoupeCore.Setting;
 
-namespace EsUtil.Feature.LoupeCore.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests.Checkerboard;
 
 /// <summary><see cref="LoupeCheckerTiles"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

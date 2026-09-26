@@ -1,7 +1,7 @@
 using EsUtil.Feature.LoupeCore.Checkerboard;
 using Xunit;
 
-namespace EsUtil.Feature.LoupeCore.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests.Checkerboard;
 
 /// <summary><see cref="LoupeDivMath"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>切り上げ除算は「余りを 1 区画として数える」規則であり、境界（0・割り切れる値・余りあり）を固定する。</remarks>
