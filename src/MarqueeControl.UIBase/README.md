@@ -34,7 +34,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 ※ コアは本層を参照しない（本層がコアの描画内容（`MarqueeDrawContent`）を使う向きだけ）。
 ```
 
-**帰属の判定**: 「何を描くか（判断・データ・寸法・表示可否）」はコア、「どう 描くか（色・API 呼び出し）」は本層。`Marquee.ResolveFrame`（描くかどうかの判断）はコアに残る。
+**帰属の判定**: 「何を描くか（判断・データ・寸法・表示可否）」はコア、「どう 描くか（色・API 呼び出し）」は本層。`Marquee.ResolveContent`（描くかどうかの判断）はコアに残る。
 
 ## 収録する型
 
@@ -130,7 +130,7 @@ protected override void OnPointerPressed(PointerPressedEventArgs e)
 protected override void Render(DrawingContext context)
 {
     var size = Bounds.Size.ToEsSize();
-    var content = _marquee.ResolveContent(size);
+    var content = _marquee.ResolveContent(_marquee.CreateRequest(size));
     new MarqueeRendererAvaloniaUI(paint).Draw(context, in content);   // 自 UI の描画面を適合させて描く
 }
 ```

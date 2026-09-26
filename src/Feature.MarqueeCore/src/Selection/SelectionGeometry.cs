@@ -10,7 +10,7 @@ namespace EsUtil.Feature.MarqueeCore.Selection;
 /// （移植性・テスト容易性。UI 型との相互変換は各 UI 実装の Interop 層が担う）。<br/>
 /// <br/>
 /// <b>可視性</b>: ハンドル一覧（<see cref="DirectionalHandles"/>）とハンドル位置（<see cref="GetHandlePosition"/>）を使うのは<br/>
-/// コアの描画内容の解決（<see cref="Marquee.ResolveFrame"/>）だけであり、描画層は解決済みの矩形を受け取る。<br/>
+/// コアの描画内容の解決（<see cref="Marquee.ResolveContent"/>）だけであり、描画層は解決済みの矩形を受け取る。<br/>
 /// それ以外（ドラッグ変形・境界クランプ・ヒットテスト）は状態機械の内部手順であるため internal とする<br/>
 /// （利用側はファサード <see cref="Marquee"/> を通す。使わないメンバーを公開しない）。
 /// </remarks>

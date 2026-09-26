@@ -59,7 +59,7 @@ sequenceDiagram
     participant C as IEsCanvas（描画ポート）
     participant H as ホスト
 
-    UI->>M: ResolveContent(描画領域のサイズ)
+    UI->>M: CreateRequest(描画領域のサイズ) / ResolveContent(request)
     M-->>UI: MarqueeDrawContent（データ＋層の順序）
     UI->>R: DrawShapes(canvas, content)
     R->>R: Layers の順に装飾・ハンドル・マーカーを選択
@@ -203,8 +203,8 @@ src/MarqueeControl.UIBase/
 | 対象 | 所有者 |
 | --- | --- |
 | 描画する層とその順序 | `Marquee.ResolveLayers`（コア。本層は順に写すだけ） |
-| 描くかどうかの判断（非表示・選択なし・nudge・表示可否フラグ・穴あけ矩形な し） | コア（`Marquee.ResolveFrame`。本層は判断を持たない） |
-| ハンドルの矩形（8 方向の位置と大きさ） | コア（`Marquee.ResolveFrame` が解決済み。本層は矩形を渡すだけ） |
+| 描くかどうかの判断（非表示・選択なし・nudge・表示可否フラグ・穴あけ矩形な し） | コア（`Marquee.ResolveContent`。本層は判断を持たない） |
+| ハンドルの矩形（8 方向の位置と大きさ） | コア（`Marquee.ResolveContent` が解決済み。本層は矩形を渡すだけ） |
 | ラベルの文言と基準点 | コア（`MarqueeTextPlacement`） |
 | ラベルの体裁（フォントサイズ・内側余白・色） | 本層（`MarqueePaint`） |
 | 描画に使う色（ハンドル・十字マーカー・ラベル・装飾） | 本層（`MarqueePaint`） |

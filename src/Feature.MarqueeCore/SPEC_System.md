@@ -60,8 +60,10 @@ sequenceDiagram
     M->>E: 効果の適用（カーソル → フォーカス → カーソル形状 → 再描画、キャプチャ）
     M-->>UI: 通知を転送
     UI->>H: 公開イベント
-    UI->>M: ResolveContent(描画領域のサイズ)
+    UI->>M: CreateRequest(描画領域のサイズ)
     M->>S: 状態と設定の読み取り
+    M-->>UI: MarqueeRenderRequest（設定・状態・描画時の値）
+    UI->>M: ResolveContent(request)
     M-->>UI: MarqueeDrawContent（層の順序つき）
     UI->>UI: Layers の順に図形を描き、ラベルは要素として配置
     UI->>H: Rendered（描画内容を渡す）
@@ -95,7 +97,7 @@ stateDiagram-v2
 | `src/Session/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態 遷移の判断。通知と効果を返す |
 | `src/Session/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。**状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
 | `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 1 フレーム分の描画内容 の解決（装飾・穴あけ矩形・ハンドル・テキストの配置。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する） |
-| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | internal | フレーム解決の入力（設定・状態・描画時に決まる値） |
+| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | フレーム解決の入力（設定・状態・描画時に決まる値）。`Marquee.CreateRequest` が生成する |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は描画層の `MarqueePaint` が単一所有する） |
 | `src/Drawing/MarqueeDrawContent.cs` | `MarqueeDrawContent` | public | 描画契約（装飾・穴あけ矩形・ハンドル・マーカー・テキストの配置・層の順序） |
 | `src/Drawing/MarqueeHandles.cs` | `MarqueeHandles` | public | ドラッグハンドルの描画契約（8 方向の矩形・枠線の太さ） |
@@ -117,7 +119,7 @@ stateDiagram-v2
 | `src/Selection/SelectionGeometry.cs` | `SelectionGeometry` | internal | 純粋幾何計算（ハンドル一覧とハンドル位置を描画内容の解決が使い、ヒットテスト・ドラッグ変形・境界クランプは状態機械の内部手順であるため internal） |
 | `src/Decoration/MarqueeDecoOptions.cs` | `MarqueeDecoOptions` | public | 装飾の設定（寸法・描画可否フラグ・ハイライト・内側） |
 | `src/Decoration/OuterDecoAppearance.cs` / `InnerDecoAppearance.cs` | `OuterDecoAppearance` / `InnerDecoAppearance` | public | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |
-| `src/Decoration/OuterDecoFrame.cs` / `InnerDecoFrame.cs` | `OuterDecoFrame` / `InnerDecoFrame` | public | 装飾の描画内容（**純粋データ**。暗転領域・枠線・塗りを保持し、描くかどうかは `Marquee.ResolveFrame` が判断する） |
+| `src/Decoration/OuterDecoFrame.cs` / `InnerDecoFrame.cs` | `OuterDecoFrame` / `InnerDecoFrame` | public | 装飾の描画内容（**純粋データ**。暗転領域・枠線・塗りを保持し、描くかどうかは `Marquee.ResolveContent` が判断する） |
 | `src/Decoration/DecoGeometry.cs` | `DecoGeometry` | internal | 装飾の幾何計算（穴あけ矩形・暗転領域・枠線矩形・DIP 変換） |
 | `src/Decoration/HoleRect.cs` | `HoleRect` | internal | 穴あけ矩形と閉区間の指定（どちらの矩形を優先するかと +1 の判断を 1 値で持つ） |
 
@@ -129,7 +131,7 @@ stateDiagram-v2
 | 選択矩形・ドラッグ・nudge の状態（遷移は操作メソッドでのみ変更できる） | `MarqueeState` |
 | 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `SelectionGeometry` |
 | 描画する層とその順序 | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
-| 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveFrame` |
+| 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveContent` |
 | 設定の既定値・範囲補正・体裁定数 | `MarqueeOptions`（補正は生成時の `init` アクセサ） |
 | ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（14.0 / 12.0） | 描画層の `MarqueePaint` |
 | フォントサイズの安全域（6〜48） | 描画層の `MarqueePaint` |
@@ -137,7 +139,7 @@ stateDiagram-v2
 | 装飾の DIP 変換と穴あけ矩形の決定 | `DecoGeometry` |
 | 装飾の描画可否（明示フラグ。透明色を代用にしない） | `MarqueeDecoOptions.ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint`（本コアは色を持つ型を公開しない） |
-| サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveFrame` の `ResolveSizeLabel`（書式は private の `FormatSizeLabel`） |
+| サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveContent` の `ResolveSizeLabel`（書式は private の `FormatSizeLabel`） |
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。デリゲートを生成しない） |
 | 描画 API の呼び出し（層の順序と写し方、色の参照） | 描画層 `MarqueeControl.UIBase`（`IMarqueeRenderer` / `MarqueeRendererBase` / `MarqueeRenderer` 等）。本コアは描画内容と層の順序（`MarqueeDrawContent.Layers`）をデータとして渡すだけである |
 | 入力の判断に伴うログ | `MarqueeLogMessage` |

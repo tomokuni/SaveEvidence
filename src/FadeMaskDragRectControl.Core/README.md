@@ -30,7 +30,7 @@
 ```text
 FadeMaskDragRectControl.Core
     ├── Platform.Core（Es* 幾何型 / EsBitmap）
-    ├── Feature.MarqueeCore（MarqueeOptions / Marquee.ResolveFrame / 選択矩形の描画内容）
+    ├── Feature.MarqueeCore（MarqueeOptions / Marquee.ResolveContent / 選択矩形の描画内容）
     └── Feature.LoupeCore（LoupeOptions）
 ```
 

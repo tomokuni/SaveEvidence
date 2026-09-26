@@ -315,7 +315,7 @@ public class MarqueeTests
     {
         var marquee = CreateMarquee(null, out _);
 
-        var content = marquee.ResolveContent(new EsSize(200, 100));
+        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
 
         Assert.Null(content.Handles);
         Assert.Null(content.Marker);
@@ -329,7 +329,7 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out _);
         marquee.SetSelection(new EsRect(10, 20, 100, 50));
 
-        var content = marquee.ResolveContent(new EsSize(200, 100));
+        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
 
         // ハンドル矩形は選択領域の閉区間（終点 +1）の左上を中心に置く（描画層は結果を使うだけ）
         Assert.NotNull(content.Handles);
@@ -343,7 +343,7 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ShowHandles = false });
         marquee.SetSelection(new EsRect(10, 20, 100, 50));
 
-        var content = marquee.ResolveContent(new EsSize(200, 100));
+        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
 
         Assert.Null(content.Handles);
     }
@@ -354,7 +354,7 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ShowCoordLabel = true });
         marquee.Move(new EsPoint(30, 40));
 
-        var content = marquee.ResolveContent(new EsSize(200, 100));
+        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
 
         Assert.NotNull(content.CoordLabelText);
         Assert.Equal("(30, 40)", content.CoordLabelText!.Value.Text);
@@ -370,7 +370,8 @@ public class MarqueeTests
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
         marquee.SetSelection(new EsRect(10, 20, 100, 50));
 
-        var content = marquee.ResolveContent(default);
+        // 描画領域のサイズは使わない（座標変換ポートだけが結果に影響する）ため既定値で解決する
+        var content = marquee.ResolveContent(marquee.CreateRequest(default));
 
         // 選択領域は閉区間（終点 +1）で変換されるため、左上ハンドルは (15, 35) から始まる
         Assert.Equal(new EsRect(15, 35, 10, 10), content.Handles!.Value.Rects[0]);
@@ -382,7 +383,7 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ShowCoordLabel = true });
         marquee.Move(new EsPoint(30, 40));
 
-        var content = marquee.ResolveContent(new EsSize(200, 100));
+        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
 
         // 描画領域のサイズは座標ラベルの位置クランプに使う（領域外へ出さない）
         Assert.Equal(new EsSize(200, 100), content.CoordLabelText!.Value.ClampArea);

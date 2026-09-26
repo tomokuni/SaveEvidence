@@ -20,8 +20,8 @@ namespace EsUtil.Feature.MarqueeCore;
 /// <br/>
 /// <b>テキストの実寸は描画 API 依存</b>: コアは「どこへ何を描くか」だけを返し、実測と要素の配置は UI 層が行う。<br/>
 /// <br/>
-/// <b>可視性</b>: 本部分は公開ファサード <see cref="Marquee"/> の内部実装であるため internal とする<br/>
-/// （UI 層・ホストは <see cref="Marquee.ResolveContent"/> を通して描画内容を得る）。
+/// <b>可視性</b>: 描画内容の解決は公開ファサードの窓口（<see cref="ResolveContent"/>）だけであり、<br/>
+/// 本部分の内部手順（ハンドル・マーカー・ラベルの解決）は本アセンブリに限定する。
 /// </remarks>
 public sealed partial class Marquee
 {
@@ -45,10 +45,15 @@ public sealed partial class Marquee
     /// </remarks>
     private static readonly IReadOnlyList<MarqueeDrawLayer>[] s_layers = CreateLayers();
 
-    /// <summary>1 フレーム分の描画内容を解決する（ファサードの描画入力から）。</summary>
-    /// <param name="request">描画入力（設定・状態と描画時に決まる値）。</param>
-    /// <returns>描画内容（描くものが無い項目は空・null）。</returns>
+    /// <summary>描画入力から 1 フレーム分の描画内容（選択矩形・装飾・ラベルと描画順）を解決する。</summary>
+    /// <param name="request">描画入力（設定・状態と描画時に決まる値。<see cref="CreateRequest"/> の結果を渡す）。</param>
+    /// <returns>描画内容（描くものが無い項目は空・null。層の順序は <see cref="MarqueeDrawContent.Layers"/> が持つ）。</returns>
     /// <remarks>
+    /// 判断（描くかどうか・位置・寸法・文言）はすべて本メソッドが単一所有するため、<br/>
+    /// UI 層は <see cref="MarqueeDrawContent.Layers"/> の順に各層を反映するだけでよい。<br/>
+    /// ラベル（サイズ・カーソル座標）は必ず最後の層であり、常に最上位に表示される。<br/>
+    /// テキストの実寸は描画 API 依存のため、コアは「どこへ何を描くか」だけを返し、実測と要素の配置は UI 層が行う。<br/>
+    /// <br/>
     /// 処理フロー:<br/>
     /// 1. 装飾（暗転マスク・穴あけ枠・内側の塗り）を解決する。<br/>
     /// 2. 選択矩形そのもの（ハンドル・始点マーカー）を解決する。<br/>
@@ -58,7 +63,7 @@ public sealed partial class Marquee
     /// 描画順は <see cref="MarqueeDrawLayer"/> の宣言順ではなく<b>本メソッドの意図</b>で決める<br/>
     /// （列挙に層を追加しても描画順が勝手に変わらないようにするため、明示的に組み立てる）。
     /// </remarks>
-    internal static MarqueeDrawContent ResolveFrame(in MarqueeRenderRequest request)
+    public MarqueeDrawContent ResolveContent(in MarqueeRenderRequest request)
     {
         // 座標変換ポートは 1 フレームで 1 回だけ解決する（未指定時は倍率から等倍スケールを生成するため、各項目で解決すると生成と評価が重複する）
         var port = MarqueeFrameGeometry.ResolvePort(request.Port, request.Scaling);

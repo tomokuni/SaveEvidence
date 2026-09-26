@@ -295,17 +295,16 @@ public sealed partial class Marquee
     // 描画内容（1 フレーム分）
     // ====================================================================
 
-    /// <summary>選択矩形コントロールの 1 フレーム分の描画内容（選択矩形・装飾・ラベルと描画順）を解決する。</summary>
+    /// <summary>現在の状態から描画 1 フレーム分の入力を生成する。</summary>
     /// <param name="clientSize">描画領域のサイズ（DIP。UI 実装の描画先のサイズ）。</param>
-    /// <returns>描画内容（描くものが無い項目は空・null。層の順序は <see cref="MarqueeDrawContent.Layers"/> が持つ）。</returns>
+    /// <returns>描画入力（設定・状態と、描画時に決まる値を解決済み）。</returns>
     /// <remarks>
-    /// 判断（描くかどうか・位置・寸法・文言）はすべてコアが単一所有するため、<br/>
-    /// UI 層は <see cref="MarqueeDrawContent.Layers"/> の順に各層を反映するだけでよい。<br/>
-    /// ラベル（サイズ・カーソル座標）は必ず最後の層であり、常に最上位に表示される。<br/>
-    /// テキストの実寸は描画 API 依存のため、コアは「どこへ何を描くか」だけを返し、実測と要素の配置は UI 層が行う。
+    /// 設定・状態の読み出し（選択矩形・マーカー位置・マウス位置・文言プロバイダ）は本メソッドが単一所有するため、<br/>
+    /// UI 層は描画領域のサイズを渡すだけでよい（内部状態の組み立て順を持たない）。<br/>
+    /// 図形の描画とテキストの配置が同じ入力を使うため、UI 層は本メソッドの結果を <see cref="ResolveContent"/> へ渡す。
     /// </remarks>
-    public MarqueeDrawContent ResolveContent(EsSize clientSize)
-        => ResolveFrame(new MarqueeRenderRequest(
+    public MarqueeRenderRequest CreateRequest(EsSize clientSize)
+        => new(
             _session.Options,
             _decoOptions,
             clientSize,
@@ -317,7 +316,7 @@ public sealed partial class Marquee
             _scaling,
             SizeLabelOverrideProvider,
             DisplayScaleScaling,
-            SizeLabelDisplayScalingProvider));
+            SizeLabelDisplayScalingProvider);
 
     // ====================================================================
     // 内部ヘルパー

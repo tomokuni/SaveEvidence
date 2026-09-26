@@ -357,7 +357,7 @@ stateDiagram-v2
 OnPaintSurface(canvas, info)
   ├─ canvas.Scale(RenderScaling)                     … DPI の適用（境界 1 箇所）
   ├─ canvas.Clear(透明)                              … 前フレームの描画を残さない
-  ├─ Marquee.ResolveContent(clientSize)              … 描画内容 1 値（判断はコア。内部で Marquee.ResolveFrame が解決。サイズのみを渡し原点は常に 0）
+  ├─ Marquee.CreateRequest(clientSize) / Marquee.ResolveContent(request)  … 描画内容 1 値（判断はコア。サイズのみを渡し原点は常に 0）
   └─ 自 UI の描画実装（MarqueeRendererMewUI）があれば Draw(canvas, content)、なければ描画ポート経由の DrawShapes(new SkiaEsCanvas(canvas), content)
        （層の順序はコアの MarqueeRendererBase が、色は UIBase の MarqueeRenderer が単一所有する）
        ├─ MarqueeOuterRenderer.Draw                 … 外側の装飾（暗転マスク・枠線）

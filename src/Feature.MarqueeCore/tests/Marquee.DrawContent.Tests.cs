@@ -10,7 +10,7 @@ using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.Feature.MarqueeCore.Tests;
 
-/// <summary><see cref="Marquee.ResolveFrame"/>（1 フレーム分の描画内容の解決）のテスト（UI 非依存・並列実行）。</summary>
+/// <summary><see cref="Marquee.ResolveContent"/>（1 フレーム分の描画内容の解決）のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・ラベル・層の順序）の解決を検証する。<br/>
 /// UI 実装は <see cref="MarqueeDrawContent.Layers"/> の順に各層を反映するだけであり、<br/>
@@ -24,6 +24,9 @@ public class MarqueeDrawContentTests
 
     /// <summary>検証に使う選択矩形（ドメイン座標）。</summary>
     private static readonly EsRect s_selection = new(50, 50, 100, 80);
+
+    /// <summary>描画内容の解決に使うファサード（解決は描画入力だけで決まり、ファサードの状態に依存しない）。</summary>
+    private static readonly Marquee s_marquee = new(new EffectsSpy());
 
     /// <summary>テスト用のセッションを生成する。</summary>
     /// <param name="options">設定。null の場合は既定。</param>
@@ -55,7 +58,7 @@ public class MarqueeDrawContentTests
         double scaling = 1.0,
         Func<string?>? sizeLabelProvider = null,
         double displayScale = 1.0)
-        => Marquee.ResolveFrame(new MarqueeRenderRequest(
+        => s_marquee.ResolveContent(new MarqueeRenderRequest(
             session.Options,
             decoOptions ?? MarqueeDecoOptions.Default,
             s_clientSize,

@@ -46,6 +46,7 @@
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `MarqueeDrawContent` | record struct | 1 フレーム分の描画内容（装飾・穴あけ矩形・ハンドル・マーカー・テキストの配置・層の順序） |
+| `MarqueeRenderRequest` | record struct | 1 フレーム分の描画入力（設定・状態と、描画時に決まる値）。`Marquee.CreateRequest` が生成し、`Marquee.ResolveContent` へ渡す |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの描画契約 |
 | `MarqueeTextPlacement` | record struct | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（フォントサイズ・色は描画層の `MarqueePaint` が持つ） |
 | `MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。**`Label` はテキストがある場合だけ末尾に置く**（UI 要素として置く UI は無視してよい） |
@@ -103,7 +104,7 @@
 | `Notified` | event | 通知（`MarqueeNotice`） |
 | `Log` | property | ロガー。null は `NullLogger` へ吸収される |
 | `Options` | property | 設定。設定すると対話パラメータを反映し、境界外選択の禁止の変化時のみログと即時クリップを行う |
-| `Scaling` | property | 座標変換ポート未指定時に適用する倍率。既定は `DefaultScaling`（1.0） |
+| `Scaling` | property | 座標変換ポート未指定時に適用する倍率。既定は `Limits.ScalingDefault`（1.0） |
 | `DecoOptions` | property | 装飾の設定 |
 | `SizeLabelOverrideProvider` | property | サイズラベルの文言プロバイダ（null または空文字はコアが自動生成） |
 | `DisplayScaleScaling` | property | サイズラベルの DisplayScale 表示に使う係数（0 以下は `Scaling` と同値） |
@@ -116,8 +117,9 @@
 | `EndNudge()` | method | nudge の終了（フォーカス喪失で使用） |
 | `SetSelection(EsRect)` / `ResetSelection()` | method | 選択の復元・対話状態の初期化 |
 | `RequestConfirm()` / `RequestCancel()` | method | 確定/キャンセルの要求（キー・ダブルクリックと同一経路） |
-| `ResolveContent(EsSize)` | method | 1 フレーム分の描画内容の解決 |
-| `DefaultScaling` | const | 倍率の既定値（1.0） |
+| `CreateRequest(EsSize)` | method | 描画 1 フレーム分の入力（`MarqueeRenderRequest`）の生成（設定・状態と、描画時に決まる値） |
+| `ResolveContent(MarqueeRenderRequest)` | method | 1 フレーム分の描画内容（`MarqueeDrawContent`）の解決 |
+| `Limits.ScalingDefault` | const | 倍率の既定値（1.0。`Marquee.Limits` の入れ子） |
 
 ### `MarqueeOptions` のメンバー
 

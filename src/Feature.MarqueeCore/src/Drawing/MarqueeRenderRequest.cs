@@ -18,11 +18,12 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 /// <param name="DisplayScaleScaling">サイズラベルの自動生成に使う表示スケーリング（0 以下は等倍）。</param>
 /// <param name="SizeLabelDisplayScalingProvider">サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ（引数はドメイン座標の矩形）。null 可（その場合は <paramref name="DisplayScaleScaling"/> を使う）。</param>
 /// <remarks>
-/// 設定と状態の単一値（<see cref="Options"/> / <see cref="DecoOptions"/>）に、 描画時にしか決まらない値<br/>
+/// 設定と状態の単一値（<see cref="Options"/> / <see cref="DecoOptions"/>）に、描画時にしか決まらない値<br/>
 /// （描画領域のサイズ・座標変換ポート・倍率・文言プロバイダ）を加えたものである。<br/>
-/// <b>可視性</b>: UI 実装は <see cref="Marquee.ResolveContent"/> を呼ぶため、本値は内部契約とする。
+/// <b>UI 層は本値を自分で組み立てない</b>: セッションの状態を写す組み立て順は <see cref="Marquee.CreateRequest"/> が単一所有する。<br/>
+/// UI 層は本値を <see cref="Marquee.ResolveContent"/> へ渡すだけで、描画に必要な値の意味・単位を持たない。
 /// </remarks>
-internal readonly record struct MarqueeRenderRequest(
+public readonly record struct MarqueeRenderRequest(
     MarqueeOptions Options,
     Decoration.MarqueeDecoOptions DecoOptions,
     EsSize ClientSize,

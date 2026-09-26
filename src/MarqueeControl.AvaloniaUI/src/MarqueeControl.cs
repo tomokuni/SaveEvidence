@@ -269,7 +269,7 @@ public sealed partial class MarqueeControl : Panel
     {
         if (_frame is not { } cached || _frameSize != clientSize)
         {
-            cached = _marquee.ResolveContent(clientSize);
+            cached = _marquee.ResolveContent(_marquee.CreateRequest(clientSize));
             _frame = cached;
             _frameSize = clientSize;
         }
