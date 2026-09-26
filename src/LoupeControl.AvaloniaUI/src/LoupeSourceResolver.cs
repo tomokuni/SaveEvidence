@@ -4,6 +4,7 @@ using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Native.Imaging;
+using EsUtil.Feature.LoupeCore.Logging;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 

@@ -6,7 +6,7 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方）と色（`LoupePaint`） | `LoupeRendererBase` / `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan` |
+| **描画手順** | 「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方）と色（`LoupePaint`） | `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`（写し方の基底はコアの `LoupeRendererBase`） |
 | **組み込み規則** | 「他のコントロールへ組み込むときにだけ必要な規則」（再描画要求のバッチ化と世代番号管理） | `LoupeRenderCoordinator` |
 
 ## 目的
@@ -40,7 +40,6 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 | 型 | 責務 |
 | --- | --- |
-| `LoupeRendererBase` | 描画手順（層の順序に従って描画ポートを呼ぶ手順）を単一所有する抽象基底（**適用パターン**: Template Method。色は派生クラスが `protected abstract LoupePaint Paint` で与える） |
 | `LoupeRenderer` | 既定の描画実装（`sealed`。`ILoupeRenderer` を実装）。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する。`DrawShapes`（下地・市松・拡大画像・十字線・外枠。**ラベルの層は描かない**）/ `ResolveLabels`（要素の配置指示） |
 | `LoupePaint` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）と「描くかどうか」の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
 | `LoupeLabelPlan` | コアのラベル契約（`LoupeCoordLabel`）からラベル要素（`EsLabelElement`）の配置指示を解決する（色は `LoupePaint` から受け取る） |
@@ -86,7 +85,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 | 型 | AvaloniaUI | MewUI | 補足 |
 | --- | --- | --- | --- |
-| `LoupeRendererBase` / `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan` | 使う | 使う | 描画手順と色は両 UI で共通 |
+| `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`（写し方の基底はコアの `LoupeRendererBase`） | 使う | 使う | 描画手順と色は両 UI で共通 |
 | `LoupeRenderCoordinator` | 使う（中間ビットマップを非同期生成し `Image.Source` へ反映） | **使わない** | MewUI は `OnPaintSurface` の中で同期描画するため、要求の合流と世代番号管理が不要 |
 
 **UI フレームワークによって未使用になる型が存在します**（`LoupeRenderCoordinator` は中間ビットマップを持つ UI だけが使う）。これは「抽象として複数の UI で共用できる処理を本層へ置き、必要とする UI だけが実装・利用する」設計の帰結であり、コア（`Feature.LoupeCore`）の公開面には影響しません。同じ必要が生じた時点で MewUI にも注入できます。

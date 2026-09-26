@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.SaveEvidence.Common.Imaging;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 
 namespace EsUtil.Feature.MarqueeCore.Drawing;

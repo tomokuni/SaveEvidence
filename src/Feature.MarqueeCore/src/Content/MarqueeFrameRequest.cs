@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.Feature.MarqueeCore.Content;
 

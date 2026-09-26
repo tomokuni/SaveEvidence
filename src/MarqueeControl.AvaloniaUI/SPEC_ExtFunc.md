@@ -59,7 +59,7 @@
 ```csharp
 using Avalonia;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
-using EsUtil.Feature.MarqueeCore;            // MarqueeOptions
+using EsUtil.Feature.MarqueeCore.Setting; // MarqueeOptions
 using EsUtil.Feature.MarqueeCore.Decoration; // MarqueeDecoOptions
 using EsUtil.SaveEvidence.Marquee.UIBase;    // MarqueePaint
 ```
@@ -194,7 +194,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 #### 5.1.1 設定（`Options`）
 
-寸法・表示可否・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `EsUtil.Feature.MarqueeCore.MarqueeOptions`）に、色は不変の設定値 `MarqueePaint`（描画層の `EsUtil.SaveEvidence.Marquee.UIBase.MarqueePaint`）にまとめて公開し、`Options` / `Paint` プロパティで設定します。
+寸法・表示可否・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `EsUtil.Feature.MarqueeCore.Setting.MarqueeOptions`）に、色は不変の設定値 `MarqueePaint`（描画層の `EsUtil.SaveEvidence.Marquee.UIBase.MarqueePaint`）にまとめて公開し、`Options` / `Paint` プロパティで設定します。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -292,7 +292,7 @@ marquee.Renderer = MyMarqueeRenderer.Instance;   // 描画手順の差し替え
 ### 5.4 型
 
 公開型は `MarqueeControl` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` とイベント引数（`SelectionRectEventArgs` / `MarqueePointEventArgs`）です。
-`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.MarqueeCore`、名前空間 `EsUtil.Feature.MarqueeCore`）が単一所有し、各 UI 実装で共有します。
+`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.MarqueeCore`、名前空間 `EsUtil.Feature.MarqueeCore.Interaction`）が単一所有し、各 UI 実装で共有します。
 コア（`Feature.MarqueeCore`）の公開型は 2 層です（内部契約（状態機械・描画入力の組み立て・幾何）は internal）。
 
 - **ホスト設定**: `MarqueeOptions` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest`
@@ -303,7 +303,7 @@ marquee.Renderer = MyMarqueeRenderer.Instance;   // 描画手順の差し替え
 
 効果（`MarqueeFeedback` / `MarqueeCursorAction`）とログ定義（`MarqueeLogMessage`）はコアの内部契約（internal）であり、本プロジェクトは参照しません（適用はファサード、記録は状態機械が行います）。
 
-描画の手順（層の順序と描画ポートへの写し方）と色（`MarqueePaint`）は UI 非依存の描画層（`MarqueeControl.UIBase` の `MarqueeRendererBase` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan`）が単一所有し、本コントロールは描画ポートのアダプタ（`AvaloniaCanvas`）とラベル要素の配置を担います。本プロジェクトの内部実装も internal です。
+描画の手順（層の順序と描画ポートへの写し方）はコアの `MarqueeRendererBase`（`EsUtil.Feature.MarqueeCore.Contract`）が、その UI 実装と色（`MarqueePaint`）は UI 非依存の描画層（`MarqueeControl.UIBase` の `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan`）が単一所有し、本コントロールは描画ポートのアダプタ（`AvaloniaCanvas`）とラベル要素の配置を担います。本プロジェクトの内部実装も internal です。
 
 #### 5.4.1 MarqueeControl（`MarqueeControl.cs`）
 

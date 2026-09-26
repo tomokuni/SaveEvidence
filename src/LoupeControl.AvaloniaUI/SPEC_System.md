@@ -164,7 +164,7 @@ flowchart TB
     - 座標単位: `Options.RequestedSize` は DIP、レンダラーへ渡すサイズと装飾幅は `RenderScaling` で物理ピクセルへ変換
   - 値の補正: コアの設定値（`LoupeOptions` / `LoupeMetrics`）は型の生成時に補正される（UI は関与しない）。環境値の `RenderScaling` のみ `coerce` コールバックで矯正する
 - **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する表示サイズ・拡大率・寸法。UI は設定値を保持しない）/ 色（`Paint`（`LoupePaint`。`System.Drawing.Color` で受け取り描画時にブラシへ変換する）））/ 環境（`RenderScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
-- **依存**: LoupeRendererBase / LoupeRenderer / LoupePaint / LoupeLabelPlan（LoupeControl.UIBase） / LoupeLogMessage（コア） / LoupeOptions（コア） / LoupeMetrics（コア） / AvaloniaCanvas（Platform.AvaloniaUI） / Avalonia / ILogger
+- **依存**: LoupeRenderer / LoupePaint / LoupeLabelPlan（`LoupeControl.UIBase`） / LoupeRendererBase（コアの `EsUtil.Feature.LoupeCore.Contract`） / LoupeLogMessage（コアの `EsUtil.Feature.LoupeCore.Logging`） / LoupeOptions / LoupeMetrics（コアの `EsUtil.Feature.LoupeCore.Setting`） / AvaloniaCanvas（Platform.AvaloniaUI） / Avalonia / ILogger
 
 ### 6.2 LoupeRenderer（LoupeControl.UIBase）
 
@@ -176,7 +176,7 @@ flowchart TB
 
 ### 6.3 描画責務分割
 
-- 描画の手順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRendererBase` / `LoupeRenderer`）が単一所有し、Avalonia 版と MewUI 版が同じ手順を共有する（層の順序はコアの `LoupeDrawLayer` が、色と描く可否（`Has*`）は本層の `LoupePaint` が単一所有する）。
+- 描画の手順は層の順序に従う写し方の基底（コアの `EsUtil.Feature.LoupeCore.Contract` の `LoupeRendererBase`）とその UI 実装（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有し、Avalonia 版と MewUI 版が同じ手順を共有する（層の順序はコアの `LoupeDrawLayer` が、色と描く可否（`Has*`）は本層の `LoupePaint` が単一所有する）。
 - `LoupeRenderer` は**描画入力（`LoupeRenderRequest`）と層の順序を受け取り、幾何・値の単位をコアへ問い合わせて描くだけ**である（色は `LoupePaint` として保持し、描画可否は色の述語が判定する）。
 - 描画先は UI 非依存の描画ポート `IEsCanvas` であり、本プロジェクトでは `AvaloniaCanvas`（`Platform.AvaloniaUI`）が `DrawingContext` を適合させる。
 - `EsLabelElementHost`（`Platform.AvaloniaUI.Labels`）: コアの配置指示（`EsLabelElement`）をラベル要素（`Border` + `TextBlock`）へ写すホスト。色 → 共有ブラシの変換と容量制限付きキャッシュも本型が単一所有する（本コントロールとマーキーが共用する）。
@@ -205,7 +205,7 @@ flowchart TB
 
 ### 6.6 LoupeLogMessage / LoupeRenderLog
 
-- **分類**: 公開静的クラス（`public static partial class`。所属は `Feature.LoupeCore` の `EsUtil.Feature.LoupeCore`）
+- **分類**: 公開静的クラス（`public static partial class`。所属は `Feature.LoupeCore` の `EsUtil.Feature.LoupeCore.Logging`）
 - **責務**: LoggerMessage source generator によるログ定義。**書式・レベルを UI 間で揃えるためコアが単一所有する**
 - **公開API**: `LogUpdateError`（Error）/ `LogSettingChanged`（Debug。汎用）/ 設定項目ごとの名前付きメソッド（`LogSourceChanged` / `LogCenterPointChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`。**設定名はコアが付与**し、UI 層は値だけを渡す）/ `LogOptionsChanged`（設定 `LoupeOptions` の**変化した項目だけ**を出力）
 - **本 UI 固有のログ**: 中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は **本プロジェクトの `LoupeRenderLog`**（`Logging/LoupeRenderLog.cs`・`internal static partial class`）が所有する（コアに UI 固有のログを持たせない）

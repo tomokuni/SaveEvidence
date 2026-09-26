@@ -17,7 +17,7 @@
 | --- | --- |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `EsUtil.Feature.MarqueeCore`（幾何は `EsUtil.Feature.MarqueeCore.Selection`、装飾は `EsUtil.Feature.MarqueeCore.Decoration`） |
+| ルート名前空間 | `EsUtil.Feature.MarqueeCore`。フォルダへ追従し、`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Content` / `.Session` / `.Selection` / `.Decoration` を持ちます |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
 | テスト | xUnit v3（UI 初期化不要。`InternalsVisibleTo` で `internal` を検証する） |
 
@@ -96,20 +96,20 @@ stateDiagram-v2
 | `src/Session/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。**状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
 | `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 1 フレーム分の描画内容 の解決（装飾・穴あけ矩形・ハンドル・ラベル。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する） |
 | `src/Content/MarqueeFrameRequest.cs` | `MarqueeFrameRequest` | internal | フレー ム解決の入力（設定・状態・描画時に決まる値） |
-| `src/Settings/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は `EsLabelLayout` が単一所有する） |
+| `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は `EsLabelLayout` が単一所有する） |
 | `src/Drawing/MarqueeDrawContent.cs` | `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` | public | 描画契約 |
 | `src/Drawing/MarqueeSizeLabel.cs` | `MarqueeSizeLabel` | public | サイズラベルの描画契約（文言・基準点・フォントサイズと配置の計算。書式はコアの内部） |
 | `src/Interaction/MarqueeSnapshot.cs` | `MarqueeSnapshot` | public | 状態のスナップショット（`readonly record struct`。値型のため通知でヒープを確保しない） |
 | `src/Interaction/MarqueeNotice.cs` | `MarqueeNotice` / `MarqueeNoticeKind` | public | 通知（`MarqueeNotice` は値型） |
 | `src/Session/MarqueeFeedback.cs` | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeCaptureAction` | internal | 効果（適用順を単一所有。適用先は `IMarqueeEffects`） |
-| `src/Contracts/IMarqueeEffects.cs` | `IMarqueeEffects` | public | 効果の適用先 |
-| `src/Contracts/IMarqueeRenderer.cs` | `IMarqueeRenderer` | public | 描画の契約（描画内容 → 描画面の写像。**描画の差し替え点**。実装は描画層が提供する） |
-| `src/Contracts/MarqueeEffectsBase.cs` | `MarqueeEffectsBase` | public abstract | 効果の既定実装（全メンバーが virtual の空実装） |
+| `src/Contract/IMarqueeEffects.cs` | `IMarqueeEffects` | public | 効果の適用先 |
+| `src/Contract/IMarqueeRenderer.cs` | `IMarqueeRenderer` | public | 描画の契約（描画内容 → 描画面の写像。**描画の差し替え点**。実装は描画層が提供する） |
+| `src/Contract/MarqueeEffectsBase.cs` | `MarqueeEffectsBase` | public abstract | 効果の既定実装（全メンバーが virtual の空実装） |
 | `src/Drawing/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public | 描画層の順序 |
 | `src/Interaction/HitTarget.cs` | `HitTarget` | public | ヒット対象 |
 | `src/Interaction/MarqueeCursorKind.cs` | `MarqueeCursorKind` | public | カーソル形状の種別 |
 | `src/Interaction/MarqueeInteractionState.cs` | `MarqueeInteractionState` | public | 対話状態 |
-| `src/MarqueeLogMessage.cs` | `MarqueeLogMessage` | internal | LoggerMessage 定義（入力の判断・設定変更） |
+| `src/Logging/MarqueeLogMessage.cs` | `MarqueeLogMessage` | internal | LoggerMessage 定義（入力の判断・設定変更） |
 | `src/Selection/SelectionGeometry.cs` | `SelectionGeometry` | internal | 純粋幾何計算（ハンドル一覧とハンドル位置を描画内容の解決が使い、ヒットテスト・ドラッグ変形・境界クランプは状態機械の内部手順であるため internal） |
 | `src/Decoration/MarqueeDecoOptions.cs` | `MarqueeDecoOptions` | public | 装飾の設定（寸法・描画可否フラグ・ハイライト・内側） |
 | `src/Decoration/OuterDecoAppearance.cs` / `InnerDecoAppearance.cs` | `OuterDecoAppearance` / `InnerDecoAppearance` | public | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |

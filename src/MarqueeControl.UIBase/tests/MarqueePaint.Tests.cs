@@ -1,7 +1,7 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Common.Imaging;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;

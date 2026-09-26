@@ -17,6 +17,7 @@ using System.Globalization;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI.Tests;
 

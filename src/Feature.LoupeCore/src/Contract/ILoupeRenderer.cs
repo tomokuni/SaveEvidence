@@ -1,9 +1,10 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.LoupeCore.Drawing;
 
 
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Contract;
 
 /// <summary>Loupe の描画内容（何を描くか）を描画面（どう描くか）へ写す実装の契約。</summary>
 /// <remarks>

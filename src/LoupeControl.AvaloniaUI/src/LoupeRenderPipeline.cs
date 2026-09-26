@@ -7,6 +7,7 @@ using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Imaging;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
+using EsUtil.Feature.LoupeCore.Drawing;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 

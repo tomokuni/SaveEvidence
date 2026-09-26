@@ -125,7 +125,7 @@ FadeMaskDragRectOptions options = FadeMaskDragRectOptions.Default with
 | 依存 | 用途 |
 | --- | --- |
 | `Platform.Core`（`EsUtil.Platform.Core.*`） | コア幾何型（`EsRect` / `EsPoint`）・`EsBitmap`（描画先） |
-| `Feature.MarqueeCore`（`EsUtil.Feature.MarqueeCore` / `.Decoration`） | `MarqueeOptions` / `MarqueeDecoOptions`（設定の構成要素） |
-| `Feature.LoupeCore`（`EsUtil.Feature.LoupeCore`） | `LoupeOptions`（設定の構成要素） |
+| `Feature.MarqueeCore`（`EsUtil.Feature.MarqueeCore.Setting` / `.Decoration`） | `MarqueeOptions` / `MarqueeDecoOptions`（設定の構成要素） |
+| `Feature.LoupeCore`（`EsUtil.Feature.LoupeCore.Setting`） | `LoupeOptions`（設定の構成要素） |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。外部パッケージへの直接依存もありません。

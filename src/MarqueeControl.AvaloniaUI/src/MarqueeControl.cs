@@ -14,10 +14,10 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
-using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
 using EsUtil.Feature.MarqueeCore.Interaction;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Platform.AvaloniaUI.Coordinate;
 

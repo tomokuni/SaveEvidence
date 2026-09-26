@@ -12,6 +12,7 @@ using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 using System.ComponentModel;
 using System.Reactive.Linq;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 

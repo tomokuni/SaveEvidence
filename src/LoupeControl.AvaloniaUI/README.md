@@ -106,6 +106,7 @@ using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using EsUtil.Feature.LoupeCore;
+using EsUtil.Feature.LoupeCore.Setting;
 
 public sealed class MainViewModel
 {

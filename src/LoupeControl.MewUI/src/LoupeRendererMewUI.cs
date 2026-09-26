@@ -3,6 +3,7 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Loupe.UIBase;
 using SkiaSharp;
 using EsUtil.Platform.Skia;
+using EsUtil.Feature.LoupeCore.Drawing;
 
 
 

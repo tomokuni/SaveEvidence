@@ -3,7 +3,7 @@ using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Drawing;
 
 
-namespace EsUtil.Feature.MarqueeCore.Contracts;
+namespace EsUtil.Feature.MarqueeCore.Contract;
 
 /// <summary>Marquee の描画内容（何を描くか）を描画面（どう描くか）へ写す実装の契約。</summary>
 /// <remarks>

@@ -15,7 +15,7 @@ Avalonia 版と同一の挙動になります。
 | 参照 | 用途 |
 | --- | --- |
 | `Feature.MarqueeCore` | 選択幾何（`SelectionGeometry`）・状態機械（`MarqueeState`）・**公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`）。状態管理ク ラス（`MarqueeSession`）とフレーム解決（`Marquee.Content.cs` の `ResolveFrame`）は internal（ファサード の内部実装） |
-| `MarqueeControl.UIBase` | 描画の手順（`MarqueeRendererBase` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）と色（`MarqueePaint`）とラベル計画（`MarqueeLabelPlan`）。描画先は描画ポート（`IEsCanvas`）であり、本 UI は `SkiaEsCanvas`（Platform.Core）を適合させる |
+| `MarqueeControl.UIBase` | 描画の手順の実装（コアの `MarqueeRendererBase`（`EsUtil.Feature.MarqueeCore.Contract`）の派生である `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）と色（`MarqueePaint`）とラベル計画（`MarqueeLabelPlan`）。描画先は描画ポート（`IEsCanvas`）であり、本 UI は `SkiaEsCanvas`（Platform.Core）を適合させる |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Native` | カーソルサービスの既定実装（Win32 / NoOp） |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `SkiaCanvasView`・`MewProperty`・SkiaSharp 描画 |
@@ -34,7 +34,7 @@ Avalonia 版と同一の挙動になります。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた不変の設定値（コアの `EsUtil.Feature.MarqueeCore.MarqueeOptions`。**色は含まない**） |
+| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた不変の設定値（コアの `EsUtil.Feature.MarqueeCore.Setting.MarqueeOptions`。**色は含まない**） |
 | `Paint` | `MarqueePaint` | `MarqueePaint.Default` | **色（ハンドル・十字マーカー・ラベル・装飾）の設定**（描画層の `EsUtil.SaveEvidence.Marquee.UIBase.MarqueePaint`）。設定すると描画実装（`Renderer`）が新しい色で差し替わり、再描画を要求する |
 | `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ハイライト）の表示可否と寸法の設定**（装飾層の `EsUtil.Feature.MarqueeCore.Decoration.MarqueeDecoOptions`。**色は含まない**） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。操作・情報ラベルの文言も同様にホストが与える |

@@ -1,6 +1,7 @@
 using EsUtil.Feature.LoupeCore.Checkerboard;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Feature.LoupeCore.Drawing;
 
 
 namespace EsUtil.Feature.LoupeCore.Imaging;

@@ -65,7 +65,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 using Avalonia;
 using Avalonia.Media;                        // Colors
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
-using EsUtil.Feature.MarqueeCore;            // MarqueeOptions
+using EsUtil.Feature.MarqueeCore.Setting; // MarqueeOptions
 using EsUtil.Feature.MarqueeCore.Decoration; // MarqueeDecoOptions
 using EsUtil.SaveEvidence.Marquee.UIBase;    // MarqueePaint
 using EsUtil.Platform.Core.Coordinate;       // ICoordTransform / CoordTransform（コア提供）
@@ -190,21 +190,16 @@ UI 非依存の幾何計算・状態機械・入力の解釈は `src/Feature.Mar
 ```text
 Feature.MarqueeCore/
 ├── src/
-│   ├── HitTarget.cs                 # 公開型（ドラッグハンドル種別 enum）
-│   ├── MarqueeInteractionState.cs   # 公開型（対話状態 enum）
-│   ├── MarqueeSnapshot.cs           # 公開型（状態 Snapshot record。座標は EsRect / EsPoint）
-│   ├── MarqueeOptions.cs            # 公開型（寸法・表示可否・対話パラメータの設定値 record）
-│   ├── Marquee.cs                   # 公開ファサード（操作の唯一の窓口。設定・効果の適用・描画内容の解決）
-│   ├── IMarqueeEffects.cs           # コアが要求する効果の適用先（UI 層が実装する）
-│   ├── Marquee.Content.cs           # `Marquee` の partial（選択矩形の描画内容のフレーム 解決。ファサードからのみ使う）
-│   ├── MarqueeSession.cs            # 内部型（状態管理クラス。入力の解釈・通知・効果。ファサードからのみ使う）
-│   ├── MarqueeNotice.cs             # 内部型（コア → UI の通知の種別と値）
-│   ├── MarqueeFeedback.cs           # 内部型（コア → UI の効果。カーソル操作を含む）
-│   ├── MarqueeLogMessage.cs                 # 内部型（入力の判断・設定変更の LoggerMessage 定義）
-│   ├── MarqueeState.cs              # 内部型（状態保持 + 更新ロジック）
-│   └── Selection/                    # 内部型（SelectionGeometry）
-└── tests/                            # 単体テスト（UI 非依存・並列実行）
-```
+│   ├── Marquee.cs / Marquee.DrawContent.cs  # 公開ファサードとその partial（描画内容の解決）
+│   ├── Contract/                            # 描画と効果の契約（IMarqueeRenderer / IMarqueeEffects / MarqueeRendererBase / MarqueeEffectsBase）
+│   ├── Drawing/                             # 描画内容の契約（MarqueeDrawContent / MarqueeDrawLayer / MarqueeSizeLabel / MarqueeCoordLabel 等）
+│   ├── Interaction/                         # 入力と通知（HitTarget / MarqueeInteractionState / MarqueeSnapshot / MarqueeNotice / MarqueeCursorKind）
+│   ├── Setting/                             # 設定の値（MarqueeOptions）
+│   ├── Logging/                             # ログ定義（MarqueeLogMessage。内部）
+│   ├── Content/ / Session/                  # 内部（フレーム解決の入力・状態機械）
+│   ├── Selection/                           # 内部（純粋な幾何計算）
+│   └── Decoration/                          # 装飾（設定・外観・幾何・描画内容）
+└── tests/                                   # 単体テスト（UI 非依存・並列実行）```
 
 ### 9.2 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）
 

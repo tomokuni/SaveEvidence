@@ -17,7 +17,7 @@ using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Xunit;
 using EsUtil.Feature.MarqueeCore.Interaction;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Platform.AvaloniaUI.Coordinate;
 

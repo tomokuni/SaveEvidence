@@ -2,6 +2,8 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.LoupeCore.Drawing;
+using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.Feature.LoupeCore.Tests;
 

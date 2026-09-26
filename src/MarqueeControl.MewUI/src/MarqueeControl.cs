@@ -15,10 +15,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 using EsUtil.Platform.Skia;
-using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
 using EsUtil.Feature.MarqueeCore.Interaction;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 
 

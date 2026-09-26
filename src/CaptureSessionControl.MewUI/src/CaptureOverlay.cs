@@ -11,7 +11,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 

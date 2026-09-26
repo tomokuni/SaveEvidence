@@ -3,7 +3,7 @@ using EsUtil.Feature.MarqueeCore.Session;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Interaction;
 
-namespace EsUtil.Feature.MarqueeCore.Contracts;
+namespace EsUtil.Feature.MarqueeCore.Contract;
 
 /// <summary>Marquee が要求する効果の既定実装（すべて何もしない）。</summary>
 /// <remarks>

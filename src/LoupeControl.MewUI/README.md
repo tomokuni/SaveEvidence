@@ -32,6 +32,7 @@
 
 ```csharp
 using EsUtil.Feature.LoupeCore;
+using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.SaveEvidence.Loupe.MewUI;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;

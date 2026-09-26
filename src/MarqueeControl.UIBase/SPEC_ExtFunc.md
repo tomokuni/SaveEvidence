@@ -47,8 +47,7 @@
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `MarqueePaint` | sealed record | **色の単一所有者**（ハンドル・十字マーカー・ラベル・装飾）。`Default` を基点に `with` 式で部分変更する |
-| `MarqueeRendererBase` | abstract class | **描画手順の単一所有者**（層の順序に従って描画ポートを呼ぶ。色は派生クラスが `Paint` で与える） |
-| `MarqueeRenderer` | sealed class | `MarqueeRendererBase` の既定実装（`IMarqueeRenderer`（`EsUtil.Feature.MarqueeCore`）を実装する）。色を必須引数で受け取る（`Default` のような共有インスタンスは持たない） |
+| `MarqueeRenderer` | sealed class | コアの `MarqueeRendererBase` の既定実装（`IMarqueeRenderer`（`EsUtil.Feature.MarqueeCore.Contract`）を実装する）。色を必須引数で受け取る（`Default` のような共有インスタンスは持たない） |
 | `MarqueeOuterRenderer` | static class | 選択矩形の外側の装飾の描画（色は引数の `MarqueePaint` から引く） |
 | `MarqueeInnerRenderer` | static class | 穴あけ矩形の内側の装飾の描画（色は引数の `MarqueePaint` から引く） |
 | `MarqueeLabelPlan` | static class | ラベル要素の配置指示の解決（色は引数の `MarqueePaint` から写す） |

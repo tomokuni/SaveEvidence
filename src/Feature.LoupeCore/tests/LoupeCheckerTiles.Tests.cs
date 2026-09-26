@@ -1,5 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
+using EsUtil.Feature.LoupeCore.Drawing;
+using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.Feature.LoupeCore.Tests;
 

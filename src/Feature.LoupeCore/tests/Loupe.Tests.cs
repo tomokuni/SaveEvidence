@@ -1,6 +1,8 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
+using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.LoupeCore.Drawing;
 
 namespace EsUtil.Feature.LoupeCore.Tests;
 

@@ -15,6 +15,9 @@ using SkiaSharp;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.Skia;
+using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.LoupeCore.Contract;
+using EsUtil.Feature.LoupeCore.Logging;
 
 
 

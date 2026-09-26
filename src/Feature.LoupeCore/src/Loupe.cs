@@ -4,6 +4,9 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.LoupeCore.Imaging;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.LoupeCore.Contract;
+using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.LoupeCore.Drawing;
 
 
 namespace EsUtil.Feature.LoupeCore;

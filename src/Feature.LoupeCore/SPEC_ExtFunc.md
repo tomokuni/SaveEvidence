@@ -48,7 +48,7 @@
 
 **本型が単一所有するもの**: 表示レイアウトの解決（表示サイズのクランプと表示位置の決定）・描画入力の組み立て・通知内容の解決・描画実装の保持。
 
-### `ILoupeRenderer` のメンバー（`EsUtil.Feature.LoupeCore`・`public interface`）
+### `ILoupeRenderer` のメンバー（`EsUtil.Feature.LoupeCore.Contract`・`public interface`）
 
 | メンバー | 説明 |
 | --- | --- |
@@ -67,7 +67,7 @@ var notification = loupe.ResolveNotification(request); // 切り出し左上・�
 var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベルを UI 要素として配置する場合
 ```
 
-## `LoupeOptions`（`EsUtil.Feature.LoupeCore`・`public sealed record`）
+## `LoupeOptions`（`EsUtil.Feature.LoupeCore.Setting`・`public sealed record`）
 
 ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値として所有します。両 UI は本型を 1 プロパティとして公開するだけであり、UI ごとに既定値がずれたり設定プロパティが増えたりしません。
 
@@ -87,7 +87,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 
 **含めない値**: 拡大元画像・拡大中心（マウス移動ごとに変わるデータ）、DPI スケーリング係数（環境値）、表示位置のオフセット（UI 固有のホスト結線）。これらは UI の個別プロパティとして公開します（1 つの値へまとめると、中心の更新のたびに寸法を含む値全体を組み立て直すことになります）。
 
-## `LoupeMetrics`（`EsUtil.Feature.LoupeCore`・`public sealed record`）
+## `LoupeMetrics`（`EsUtil.Feature.LoupeCore.Setting`・`public sealed record`）
 
 ルーペの寸法 5 項目（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否を 1 つの値として所有します。**色は持たず**、色は描画にだけ必要な設定として描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有します（コアは色の値を決定せず、描画可否の判定にも使いません）。両 UI は本型を 1 つ公開するだけで寸法を設定でき、UI ごとに既定値がずれません。
 
@@ -141,7 +141,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 | `CoerceCoordLabelFontSize(double)` | ラベル文字サイズを 6〜48 へクランプ。非有限値は既定値（安全域と規則は `EsLabelMetrics`（`Platform.Core`）が単一所有し、本メソッドは既定値を添えて委譲する） |
 | `CoerceCoordLabelCornerRadius(int)` | ラベルの角丸半径を 0〜64 へクランプ（0 は角丸なし） |
 
-## `LoupeDrawContent` / `LoupeCheckerTiles`（`EsUtil.Feature.LoupeCore`・`public`）
+## `LoupeDrawContent` / `LoupeCheckerTiles`（`EsUtil.Feature.LoupeCore.Drawing`・`public`）
 
 `Loupe.ResolveContent` が返す**1 フレーム分の描画内容**です。描画層は本値を写すだけで、幾何計算（タイルの位置・矩形の導出・寸法の換算）を持ちません。
 
@@ -167,7 +167,7 @@ var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベ�
 
 UI 層が `CheckerSize * scaling` のような式を自前で書かないための型です（片方の UI だけ換算が抜けると、DPI ≠ 100% で両 UI の見た目がずれます）。
 
-## `LoupeRenderRequest`（`EsUtil.Feature.LoupeCore`）
+## `LoupeRenderRequest`（`EsUtil.Feature.LoupeCore.Drawing`）
 
 1 フレーム分の描画入力（**コア⇔UI の契約**）です。UI 層は自 UI の公開プロパティから本値を組み立てて描画層・コアの計算へ渡すだけで、描画に必要な値の単位と組み立て順を持ちません。
 
@@ -190,7 +190,7 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 
 拡大元画像は UI ごとに型が異なる（Avalonia は `IImage`、MewUI は `EsBitmap`）ため本値に含めず、描画層が解決した `EsBitmap` を別引数として渡します（両 UI が同じ手順で本値を組み立てられます）。
 
-## `LoupeLogFormat`（`EsUtil.Feature.LoupeCore`）
+## `LoupeLogFormat`（`EsUtil.Feature.LoupeCore.Logging`）
 
 | メンバー | 説明 |
 | --- | --- |
@@ -199,7 +199,7 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 
 `FormatNumber` / `FormatPoint` はログ定義（`LoupeLogMessage`）の内部手順のため **internal** です（UI は数値をそのまま渡せる `LogSettingChanged` 系を使います）。
 
-## `LoupeLogMessage`（`EsUtil.Feature.LoupeCore`）
+## `LoupeLogMessage`（`EsUtil.Feature.LoupeCore.Logging`）
 
 ルーペのログ定義（`LoggerMessage` ソース生成）を単一所有します。`[LoupeCtrl]` の接頭辞とレベル・書式は両 UI で共通です。
 

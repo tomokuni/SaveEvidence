@@ -199,7 +199,7 @@ public bool IsLoupeVisible { get; set; } = true;
 
 | 項目 | 内容 |
 | --- | --- |
-| 型 | `LoupeOptions`（コアの `EsUtil.Feature.LoupeCore`） |
+| 型 | `LoupeOptions`（コアの `EsUtil.Feature.LoupeCore.Setting`） |
 | 既定値 | `LoupeOptions.Default`（表示サイズ 160 / 拡大率 4 / 寸法は `LoupeMetrics` の既定値） |
 | 用途 | ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値で指定する |
 
@@ -244,7 +244,7 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 
 #### 5.1.5 Metrics（寸法）と Paint（色）
 
-ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否は **コアの `LoupeMetrics`（`EsUtil.Feature.LoupeCore`）が単一所有**し、`Options` の一部（`Options.Metrics`）として指定します（両 UI で既定値・意味が一致します）。**色は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアは色の値を決定せず、描画可否の判定にも使いません）。
+ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否は **コアの `LoupeMetrics`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options.Metrics`）として指定します（両 UI で既定値・意味が一致します）。**色は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアは色の値を決定せず、描画可否の判定にも使いません）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |

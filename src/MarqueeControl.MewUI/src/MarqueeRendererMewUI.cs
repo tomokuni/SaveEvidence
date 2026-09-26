@@ -2,7 +2,7 @@ using EsUtil.Feature.MarqueeCore;
 using EsUtil.SaveEvidence.Marquee.UIBase;
 using SkiaSharp;
 using EsUtil.Platform.Skia;
-using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
 
 

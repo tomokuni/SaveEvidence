@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Interaction;
 
 namespace EsUtil.Feature.MarqueeCore.Session;

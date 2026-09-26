@@ -2,8 +2,9 @@ using System.Globalization;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
+using EsUtil.Feature.LoupeCore.Setting;
 
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Logging;
 
 /// <summary>ルーペのログ定義（ソース生成ログ・拡張メソッド）。</summary>
 /// <remarks>

@@ -1,7 +1,7 @@
 using Xunit;
 
 using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.Feature.MarqueeCore.Tests.Decoration;
 

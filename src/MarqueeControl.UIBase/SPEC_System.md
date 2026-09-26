@@ -15,7 +15,7 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 色（描画にだけ必要な設定）と、層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順、実寸 → ラベル要素の写像 | `MarqueePaint` / `MarqueeRendererBase` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan` / `MarqueeHostLabelRenderer` |
+| **描画手順** | 色（描画にだけ必要な設定）と、層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順、実寸 → ラベル要素の写像 | `MarqueePaint` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan` / `MarqueeHostLabelRenderer`（写し方の基底はコアの `MarqueeRendererBase`） |
 | **組み込み規則** | ホイール入力の解釈・連携先へのスクロール適用・ビューポート変化の再通知 | `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` / `WheelZoomRequest` / `WheelScrollRequest` / `IWheelScrollTarget` |
 
 ## 2. 技術スタック
@@ -74,8 +74,8 @@ sequenceDiagram
 flowchart LR
     A[MarqueeDrawContent.Layers] --> B{層}
     B -->|Decoration| C[MarqueeOuterRenderer + MarqueeInnerRenderer]
-    B -->|Handles| D[MarqueeRendererBase.DrawHandles<br/>8 方向を列挙]
-    B -->|Marker| E[MarqueeRendererBase.DrawStartMarker<br/>十字線 2 本]
+    B -->|Handles| D[コアの MarqueeRendererBase.DrawHandles<br/>8 方向を列挙]
+    B -->|Marker| E[コアの MarqueeRendererBase.DrawStartMarker<br/>十字線 2 本]
     B -->|SizeLabel / CoordLabel| F[スキップ<br/>UI の要素が描く]
 ```
 
@@ -131,7 +131,6 @@ sequenceDiagram
 src/MarqueeControl.UIBase/
 ├── src/
 │   ├── MarqueePaint.cs              色の単一所有（ハンドル・十字マーカー・ラベル・装飾）
-│   ├── MarqueeRendererBase.cs       描画手順の単一所有（層の順序。色は派生クラスが Paint で与える）
 │   ├── MarqueeRenderer.cs           描画内容を層の順に写す（IMarqueeRenderer の既定実装。色を保持）
 │   ├── MarqueeOuterRenderer.cs      外側の装飾（暗転マスク・穴あけ枠）の描画
 │   ├── MarqueeInnerRenderer.cs      内側の装飾（塗り・内枠）の描画
@@ -160,8 +159,7 @@ src/MarqueeControl.UIBase/
 | コンポーネント | 責務 |
 | --- | --- |
 | `MarqueePaint` | 色の単一所有者（ハンドル・十字マーカー・ラベル・装飾） |
-| `MarqueeRendererBase` | 描画手順の単一所有者（層の順序に従って描画ポートを呼ぶ。色は派生クラスの `Paint` から引く） |
-| `MarqueeRenderer` | `MarqueeRendererBase` の既定実装（sealed）。色を必須引数で受け取り、描画内容の解決結果を層の順に描画ポートへ写す。図形の層（装飾・ハンドル・マーカー）とラベルの層（描かない）を分けて提供する |
+| `MarqueeRenderer` | コアの `MarqueeRendererBase` の既定実装（sealed）。色を必須引数で受け取り、描画内容の解決結果を層の順に描画ポートへ写す。図形の層（装飾・ハンドル・マーカー）とラベルの層（描かない）を分けて提供する |
 | `MarqueeOuterRenderer` | `OuterDecoFrame`（暗転領域・枠線）を `paint.OverlayColor` / `paint.OuterBorderColor` で描く |
 | `MarqueeInnerRenderer` | `InnerDecoFrame`（塗り・内枠）を `paint.InnerFillColor` / `paint.InnerBorderColor` で描く |
 | `MarqueeLabelPlan` | 描画内容と実寸からラベル要素の配置指示を解決する |

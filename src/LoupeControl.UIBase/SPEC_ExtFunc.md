@@ -47,8 +47,7 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeRendererBase` | abstract class | 描画手順（層の順序に従って描画ポートを呼ぶ手順）の単一所有者。色は派生クラスが `Paint` で与える（適用パターン: Template Method） |
-| `LoupeRenderer` | sealed class | 既定の描画実装（`ILoupeRenderer`（`EsUtil.Feature.LoupeCore`））。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する |
+| `LoupeRenderer` | sealed class | 既定の描画実装（`ILoupeRenderer`（`EsUtil.Feature.LoupeCore.Contract`））。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する |
 | `LoupePaint` | sealed record | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）と描画可否の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
 | `LoupeLabelPlan` | static class | ラベル要素の配置指示の解決（色は `LoupePaint` から受け取る） |
 

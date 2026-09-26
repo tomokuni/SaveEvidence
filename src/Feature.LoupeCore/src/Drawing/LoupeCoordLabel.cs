@@ -1,8 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.LoupeCore.Setting;
 
 
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Drawing;
 
 /// <summary>ルーペの中心座標ラベル（表示する文言と配置に必要な値）を表す描画契約。</summary>
 /// <param name="Text">表示する文言（<c>(x, y)</c> 形式。コアが文字列化する）。</param>

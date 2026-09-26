@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 
 using EsUtil.Feature.LoupeCore.Decoration;
+using EsUtil.Feature.LoupeCore.Drawing;
 
 namespace EsUtil.Feature.LoupeCore;
 

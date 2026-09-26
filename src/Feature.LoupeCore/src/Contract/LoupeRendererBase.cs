@@ -2,9 +2,10 @@ using EsUtil.Feature.LoupeCore.Imaging;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.LoupeCore.Drawing;
 
 
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Contract;
 
 /// <summary>ルーペの描画手順（層の順序に従った描画ポートの呼び出し）を単一所有する基底クラス。</summary>
 /// <remarks>

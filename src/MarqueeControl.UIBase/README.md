@@ -6,7 +6,7 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 色（描画にだけ必要な設定）と「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方） | `MarqueePaint` / `MarqueeRendererBase` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan` / `MarqueeHostLabelRenderer` |
+| **描画手順** | 色（描画にだけ必要な設定）と「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方） | `MarqueePaint` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan` / `MarqueeHostLabelRenderer`（写し方の基底はコアの `MarqueeRendererBase`） |
 | **組み込み規則** | 「他のコントロールへ組み込むときにだけ必要な規則」（ホイールの解釈・ビューポート変化の再通知） | `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` / `WheelZoomRequest` / `WheelScrollRequest` / `IWheelScrollTarget` |
 
 ## 目的
@@ -42,7 +42,6 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 型 | 責務 |
 | --- | --- |
 | `MarqueePaint` | **色の単一所有者**（ハンドル・十字マーカー・ラベル・装飾）。`Default` を基点に `with` 式で部分変更する |
-| `MarqueeRendererBase` | **描画手順の単一所有者**（abstract。層の順序に従って描画ポートを呼ぶ。色は派生クラスが `Paint` で与える） |
 | `MarqueeRenderer` | `MarqueeRendererBase` の既定実装（sealed）。色（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形の層のみ。ラベルの層は描かない）/ `ResolveLabels`（要素の配置指示）を提供する |
 | `MarqueeOuterRenderer` | 選択矩形の外側の装飾（暗転マスク・穴あけ枠）を描く（色は引数の `MarqueePaint` から引く） |
 | `MarqueeInnerRenderer` | 穴あけ矩形の内側の装飾（塗り・内枠）を描く（色は引数の `MarqueePaint` から引く） |

@@ -18,7 +18,7 @@
 ```text
 UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> MarqueeControl.UIBase   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
+    ├──> MarqueeControl.UIBase   どう描くか（コアの IMarqueeRenderer を実装する描画実装）
     ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
@@ -27,19 +27,19 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 ## 構成
 
-ルート（`src/`）に置くのは**ファサード本体とその partial**（`Marquee.cs` / `Marquee.DrawContent.cs`）と内部ログ定義だけです。それ以外は用途別のフォルダへまとめます。
-**公開型は名前空間をルート（`EsUtil.Feature.MarqueeCore`）のまま**にしてフォルダへ置くため（`Platform.AvaloniaUI` の `Platform/Interop/` と同じ方式）、利用者の `using` は増えません。内部型は用途別の名前空間（`Session` / `Content` / `Selection` / `Decoration`）に分けます。
+ルート（`src/`）に置くのは**ファサード本体とその partial**（`Marquee.cs` / `Marquee.DrawContent.cs`）だけです。それ以外は用途別のフォルダへまとめます。
+**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.MarqueeCore`。`Contract` / `Drawing` / `Interaction` / `Setting` / `Logging` / `Content` / `Session` / `Selection` / `Decoration` は `EsUtil.Feature.MarqueeCore.<フォルダ名>`）。公開面も複数のフォルダに分かれるため、利用者は用途に応じて `using` を追加します。
 
 | フォルダ | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
 | `Interaction/` | `HitTarget` | public | ヒット対象の種別（8 方向のハンドル + `Move`。`None` は対象なし） |
 | `Interaction/` | `MarqueeInteractionState` | public | 対話状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging） |
 | `Interaction/` | `MarqueeSnapshot` | public | 通知時点の状態の値型（`readonly record struct`。`selectionRect` は `EsRect`、`mousePosition` は `EsPoint`。操作中の通知のたびにヒープを確保しない） |
-| `Settings/` | `MarqueeOptions` | public | 設定の値オブジェクト（寸法・表示可否・対話パラメータ）。既定値とフォントサイズの補正を単一所有する（**色は持たない**。色は描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有する）。ラベルの体裁（内側余白）は `EsLabelLayout`（Platform.Core）が単一所有し、本型はコントロール固有の値（`CoordLabelOffset` / `HandleBorderThickness` / フォントの既定値）を public const として公開する |
+| `Setting/` | `MarqueeOptions` | public | 設定の値オブジェクト（寸法・表示可否・対話パラメータ）。既定値とフォントサイズの補正を単一所有する（**色は持たない**。色は描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有する）。ラベルの体裁（内側余白）は `EsLabelLayout`（Platform.Core）が単一所有し、本型はコントロール固有の値（`CoordLabelOffset` / `HandleBorderThickness` / フォントの既定値）を public const として公開する |
 | ルート | `Marquee` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値の保持、入力の通知、外部からの操作、描画内容の解決、描画実装の保持、効果の適用を行う |
-| `Contracts/` | `IMarqueeRenderer` | public | 描画内容（何を描くか）を描画面（どう描くか）へ写す実装の契約（**描画の差し替え点**）。既定実装は描画層の `MarqueeRenderer`（`new MarqueeRenderer(MarqueePaint.Default)`。描画手順は `MarqueeRendererBase` が、色は `MarqueePaint` が単一所有する）。本コアは描画 API を持たず、実装を注入で受ける |
-| `Contracts/` | `IMarqueeEffects` | public | コアが要求する効果（フォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換）の適用先。UI 層が自 UI の操作へ接続する唯一の境界 |
-| `Contracts/` | `MarqueeEffectsBase` | public abstract | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス。独自コントロールは必要な効果だけ override する（不要なメンバーの空実装を書かずに済む） |
+| `Contract/` | `IMarqueeRenderer` | public | 描画内容（何を描くか）を描画面（どう描くか）へ写す実装の契約（**描画の差し替え点**）。既定実装は描画層の `MarqueeRenderer`（`new MarqueeRenderer(MarqueePaint.Default)`。描画手順は `MarqueeRendererBase` が、色は `MarqueePaint` が単一所有する）。本コアは描画 API を持たず、実装を注入で受ける |
+| `Contract/` | `IMarqueeEffects` | public | コアが要求する効果（フォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換）の適用先。UI 層が自 UI の操作へ接続する唯一の境界 |
+| `Contract/` | `MarqueeEffectsBase` | public abstract | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス。独自コントロールは必要な効果だけ override する（不要なメンバーの空実装を書かずに済む） |
 | ルート | `Marquee.DrawContent.cs`（`Marquee` の **partial**） | internal | 1 フレーム分の**描画内容**（装飾・穴あけ矩形・ハンドル・始点マーカー・ラベル）を解決する（セッションの状態 + 設定 → `MarqueeDrawContent`）。描くかどうかの判断（ハンドル非表示・選択なし・nudge 中・装飾の描画可否フラグ・穴あけ矩形なし）はすべて `ResolveFrame` が持つ。穴あけ矩形と座標変換ポートは 1  フレームに 1 回だけ解決する。外部は `Marquee.ResolveContent` を使う |
 | `Drawing/` | `MarqueeDrawContent` | public | 1 フレーム分の描画契約（`Decoration` / `InnerDecoration` / `HoleRect` / `Handles` / `Marker` / `SizeLabel` / `CoordLabel` / `Layers`）。UI は `Layers` の順に処理するだけ |
 | `Drawing/` | `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` | public | ハンドル・始点マーカー・カーソル座標ラベルの描画契約（描画に必要な値のみ。ハンドルは枠線の太さも含む。座標ラベルは `ComputeFrame` で配置を求め、要素への写像は `IEsLabel.ToElement`（Platform.Core の拡張メソッド）が単一所有する） |
@@ -49,7 +49,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `Session/` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持と更新ロジック（純粋計算の適用）。可変プロパティを多数持つため、外部には公開しない |
 | `Interaction/` | `MarqueeCursorKind` | public | 操作位置に対応するカーソル形状の種別（UI は自 UI のカーソル型へ写像するだけ） |
 | `Selection/` | `SelectionGeometry` | internal | 純粋な幾何計算（正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形）・描画対象ハンドル一覧・カーソル種別変換。利用者はコアの内部（描画内容の解決・状態機械）だけであり、UI 層へは解決済みの矩形が渡る |
-| ルート | `MarqueeLogMessage` | internal | ログの LoggerMessage 定義（入力の判断・設定変更）。呼ぶのは状態機械だけであり、UI 層はロガー（`Marquee.Log`）を渡すだけである（自 UI 固有の操作ログは UI 層が持つ。ズーム要求のログは `MarqueeControl.UIBase` が単一所有する） |
+| `Logging/` | `MarqueeLogMessage` | internal | ログの LoggerMessage 定義（入力の判断・設定変更）。呼ぶのは状態機械だけであり、UI 層はロガー（`Marquee.Log`）を渡すだけである（自 UI 固有の操作ログは UI 層が持つ。ズーム要求のログは `MarqueeControl.UIBase` が単一所有する） |
 
 ## 公開面の階層
 
@@ -70,7 +70,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 **UI 非依存の汎用ライブラリ**として、特定のアプリ・UI 実装に依存しません（文言・モード等のアプリ固有情報を持ちません）。
 
-名前空間は `EsUtil.Feature.MarqueeCore`（幾何は `EsUtil.Feature.MarqueeCore.Selection`、装飾は `EsUtil.Feature.MarqueeCore.Decoration`）。アセンブリ名は `Feature.MarqueeCore`。
+名前空間はフォルダに追従します（ルート直下は `EsUtil.Feature.MarqueeCore`。`Contract` / `Drawing` / `Interaction` / `Setting` / `Logging` / `Content` / `Session` / `Selection` / `Decoration` は `EsUtil.Feature.MarqueeCore.<フォルダ名>`）。アセンブリ名は `Feature.MarqueeCore`。
 
 ## 名前の由来と一般的な呼称
 

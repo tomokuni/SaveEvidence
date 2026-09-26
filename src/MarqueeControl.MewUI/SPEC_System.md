@@ -163,7 +163,7 @@ classDiagram
         +MarqueeCaptureAction Capture
     }
     class MarqueeRenderer {
-        <<MarqueeControl.UIBase / 描画層（MarqueeRendererBase の派生）>>
+        <<MarqueeControl.UIBase / 描画層（MarqueeRenderer がコアの MarqueeRendererBase を継承）>>
         +MarqueeRenderer(paint) void
         +DrawShapes(canvas, content)$ void
         +ResolveLabels(content, measureText) EsLabelElement[]$
@@ -398,5 +398,5 @@ OnPaintSurface(canvas, info)
 | --- | --- |
 | `ScrollViewer` の自動連携 | ホストが `NotifyViewportChanged()` を呼ぶ方式で代替 |
 | フォーカス非依存の矢印キー nudge | フォーカス依存で実装（`TopLevel` のキー購読は行わない） |
-| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`EsUtil.Feature.MarqueeCore.MarqueeLogMessage`）が所有し、ズーム要求のログは組み込みの層（`EsUtil.SaveEvidence.Marquee.UIBase.MarqueeWheelLogMessage`）が所有する。書式・レベルとも Avalonia 版と同一） |
+| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`EsUtil.Feature.MarqueeCore.Logging.MarqueeLogMessage`）が所有し、ズーム要求のログは組み込みの層（`EsUtil.SaveEvidence.Marquee.UIBase.MarqueeWheelLogMessage`）が所有する。書式・レベルとも Avalonia 版と同一） |
 | 実ウィンドウへの組み込み | `FadeMaskDragRectControl.MewUI` を経由して配線済み（撮影・切り出しの両方） |

@@ -15,7 +15,7 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順と色（`LoupePaint`）、実寸 → ラベル要素の写像 | `LoupeRendererBase` / `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan` |
+| **描画手順** | 層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順と色（`LoupePaint`）、実寸 → ラベル要素の写像 | `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`（写し方の基底はコアの `LoupeRendererBase`） |
 | **組み込み規則** | 再描画要求のバッチ化（1 フレーム 1 回）と世代番号管理 | `LoupeRenderCoordinator` |
 
 ## 2. 技術スタック
@@ -115,7 +115,6 @@ sequenceDiagram
 ```text
 src/LoupeControl.UIBase/
 ├── src/
-│   ├── LoupeRendererBase.cs          描画手順（層の順序に従って描画ポートを呼ぶ手順）の単一所有（Template Method）
 │   ├── LoupeRenderer.cs              既定の描画実装（色を保持し、手順は基底が所有する）
 │   ├── LoupePaint.cs                 描画に使う色と「描くかどうか」の述語の単一所有
 │   ├── LoupeLabelPlan.cs             実寸 → ラベル要素の配置指示の写像
@@ -132,7 +131,6 @@ src/LoupeControl.UIBase/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `LoupeRendererBase` | 描画入力と層の順序（通知）を描画ポートへ写す手順を単一所有する。色は派生が `Paint` で与える |
 | `LoupeRenderer` | 既定の描画実装（`sealed`。色（`LoupePaint`）を保持し、手順は基底が所有する）。図形の層とラベルの層を分けて提供する |
 | `LoupePaint` | 描画に使う 7 色と描画可否の述語（`Has*`）を単一所有する。`Default` を基点に部分変更する |
 | `LoupeLabelPlan` | 通知・色・実寸からラベル要素の配置指示を解決する |

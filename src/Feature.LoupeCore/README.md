@@ -15,22 +15,22 @@
 ## 収録する型
 
 ルート（`src/`）に置くのは**ファサード本体とその partial**（`Loupe.cs` / `Loupe.Position.cs` / `Loupe.DrawContent.cs` / `Loupe.Limits.cs`）です。それ以外は用途別のフォルダへまとめます。
-**公開型は名前空間をルート（`EsUtil.Feature.LoupeCore`）のまま**にしてフォルダへ置くため（`Platform.AvaloniaUI` の `Platform/Interop/` と同じ方式）、利用者の `using` は増えません。内部型は用途別の名前空間（`Checkerboard` / `Decoration` / `Imaging`）に分けます。
+**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.LoupeCore`。`Contract` / `Drawing` / `Setting` / `Logging` / `Checkerboard` / `Decoration` / `Imaging` は `EsUtil.Feature.LoupeCore.<フォルダ名>`）。公開面も複数のフォルダに分かれるため、利用者は用途に応じて `using` を追加します。
 
 | フォルダ | 型 | 責務 |
 | --- | --- | --- |
 | ルート | `Loupe` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、描画完了通知の内容解決（`ResolveNotification`）、座標変換ポートの設定（`SetCoordinateTransform`）、描画実装の保持（`Renderer`。差し替え可能） |
 | ルート | `Loupe.Limits`（`Loupe` の入れ子） | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ。**UI がプロパティの既定値と coerce を登録するときに参照する**ためファサードの入れ子として公開する |
-| `Contracts/` | `ILoupeRenderer` | 描画内容を描画面へ写す実装の契約（**描画の差し替え点**）。既定型は描画層の `LoupeRenderer`（色は `LoupePaint` をコンストラクタで受け取る） |
-| `Contracts/` | `LoupeRendererBase` | 描画手順（層の順序に従った描画ポートの呼び出し）を単一所有する基底（Template Method） |
-| `Contracts/` | `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位） |
+| `Contract/` | `ILoupeRenderer` | 描画内容を描画面へ写す実装の契約（**描画の差し替え点**）。既定型は描画層の `LoupeRenderer`（色は `LoupePaint` をコンストラクタで受け取る） |
+| `Contract/` | `LoupeRendererBase` | 描画手順（層の順序に従った描画ポートの呼び出し）を単一所有する基底（Template Method） |
+| `Contract/` | `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位） |
 | `Drawing/` | `LoupeRenderRequest` | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層は自 UI の公開プロパティから組み立てるだけで、単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を持たない。**換算済みの寸法**（`CheckerSizePixels` / `FrameWidthPixels`）も含む |
 | `Drawing/` | `LoupeDrawContent` | **1 フレーム分の描画内容**（描画面の矩形・市松模様のタイル列挙子・十字線の矩形・円枠の矩形・**層の順序**）。描画層は本値を写すだけで計算を持たない |
 | `Drawing/` | `LoupeCheckerTiles` | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部）。列挙子で渡し、描画のたびのヒープ確保をゼロにする |
-| `Settings/` | `LoupeOptions` | ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値として所有。既定値・生成時の補正を持つ（設定経路によらず範囲内の値だけが保持される） |
-| `Settings/` | `LoupeMetrics` | ルーペの**寸法**（市松タイル・円枠の太さ・中心座標ラベルのフォントサイズと角丸半径）の単一所有。ラベル表示の判定（`ShouldShowCoordLabel`）を持つ。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
-| `Labels/` | `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`）。体裁は `EsLabelLayout`（Platform.Core）が単一所有する |
-| `Log/` | `LoupeLogFormat` / `LoupeLogMessage` | ログの書式（`(X, Y)` / `Width×Height` / `null`）とログ定義・変化判定。**UI のコードが拡張メソッドと書式を直接呼ぶ契約**であるため public |
+| `Setting/` | `LoupeOptions` | ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値として所有。既定値・生成時の補正を持つ（設定経路によらず範囲内の値だけが保持される） |
+| `Setting/` | `LoupeMetrics` | ルーペの**寸法**（市松タイル・円枠の太さ・中心座標ラベルのフォントサイズと角丸半径）の単一所有。ラベル表示の判定（`ShouldShowCoordLabel`）を持つ。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
+| `Drawing/` | `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`）。体裁は `EsLabelLayout`（Platform.Core）が単一所有する |
+| `Logging/` | `LoupeLogFormat` / `LoupeLogMessage` | ログの書式（`(X, Y)` / `Width×Height` / `null`）とログ定義・変化判定。**UI のコードが拡張メソッドと書式を直接呼ぶ契約**であるため public |
 
 ### 内部（`internal`）
 
@@ -49,7 +49,7 @@
 ```text
 UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> LoupeControl.UIBase   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
+    ├──> LoupeControl.UIBase   どう描くか（コアの ILoupeRenderer を実装する描画実装）
     ├──> LoupeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.LoupeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
@@ -58,14 +58,14 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 本プロジェクトが UI フレームワークへ依存することはありません。外部パッケージへの直接依存もありません（`Platform.Core` 経由で SkiaSharp を参照します）。
 
-**コントロール化にだけ必要な処理は `LoupeControl.UIBase` が所有します**（再描画要求のバッチ化・世代番号管理）。**描画の手順と色は `LoupeControl.UIBase` が所有します**（手順は下地 → 市松模様 → 拡大画像 → 十字線 → 外枠を層の順に描く。色は `LoupePaint`。描画先は `IEsCanvas`）。本プロジェクトはルーペの計算と寸法（どのアセンブリでも同じ結果になる部分）に限定し、描画 API も色も持ちません。
+**コントロール化にだけ必要な処理は `LoupeControl.UIBase` が所有します**（再描画要求のバッチ化・世代番号管理）。**描画の手順（層の順序に従う写し方）は本コアの `LoupeRendererBase`（`Contract/`）が、その UI 実装と色は `LoupeControl.UIBase` が所有します**（手順は下地 → 市松模様 → 拡大画像 → 十字線 → 外枠を層の順に描く。色は `LoupePaint`。描画先は `IEsCanvas`）。本プロジェクトはルーペの計算と寸法（どのアセンブリでも同じ結果になる部分）に限定し、描画 API も色も持ちません。
 
 ## 層の責務の境界
 
 | 層 | 責務 |
 | --- | --- |
 | Core（本プロジェクト） | 設定・寸法の値とその既定値・補正、状態の判断、両 UI 共通の計算、コア⇔UI の契約（描画入力・描画完了通知）、公開ファサード（`Loupe` = 操作の唯一の窓口）、ログ定義 |
-| UIBase（`LoupeControl.UIBase`） | 描画の手順（`LoupeRendererBase` が単一所有）と色（`LoupePaint`）、実寸 → ラベル要素の写像（`LoupeLabelPlan`）、組み込み先がある場合にだけ必要な規則（`LoupeRenderCoordinator`） |
+| UIBase（`LoupeControl.UIBase`） | 描画の手順の UI 実装（コアの `LoupeRendererBase`（`Contract/`）の派生である `LoupeRenderer`）と色（`LoupePaint`）、実寸 → ラベル要素の写像（`LoupeLabelPlan`）、組み込み先がある場合にだけ必要な規則（`LoupeRenderCoordinator`） |
 | UI 層（`LoupeControl.*`） | 状態（拡大元画像・拡大中心）の保持と設定（`Options`・`Paint`）の保持、**ファサードへの委譲**（表示レイアウト・描画入力・通知内容の解決）、描画層（`LoupeRenderer`）への描画の委譲、描画ポートの適合（`AvaloniaCanvas` / `SkiaEsCanvas`）とラベル要素の配置、ホスト結線 |
 
 UI 層に残してよい分岐は 4 種のみです（それ以外の判断はコアへ移します）。

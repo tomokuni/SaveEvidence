@@ -33,19 +33,39 @@
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `Marquee` | class | 操作の唯一の窓口となるファサード |
+
+### `EsUtil.Feature.MarqueeCore.Contract`
+
+| 型 | 種別 | 説明 |
+| --- | --- | --- |
 | `IMarqueeRenderer` | interface | 描画内容を描画面へ写す実装の契約（**描画の差し替え点**。既定実装は描画層の `MarqueeRenderer`） |
 | `IMarqueeEffects` | interface | コアが要求する効果の適用先（UI 実装が実装する） |
 | `MarqueeEffectsBase` | abstract class | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス（必要な効果だけ override する） |
-| `MarqueeOptions` | record | 設定（寸法・表示可否・対話パラメータ）と既定値・補正。**色は持たない**（色は描画層の `MarqueePaint` が単一所有する） |
-| `MarqueeSnapshot` | readonly record struct | 通知時点の状態（状態・選択矩形・アクティブハンドル・マウス位置・操作フラグ）。値型のため通知のたびにヒープを確保しない |
-| `MarqueeNotice` / `MarqueeNoticeKind` | record / enum | 通知（種別・通知座標・スナップショット） |
+
+### `EsUtil.Feature.MarqueeCore.Drawing`
+
+| 型 | 種別 | 説明 |
+| --- | --- | --- |
 | `MarqueeDrawContent` | record struct | 1 フレーム分の描画内容（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・層の順序） |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの描画契約 |
 | `MarqueeSizeLabel` / `MarqueeCoordLabel` | record struct | ラベルの描画契約と配置（`ComputeFrame`）。要素への写像は `IEsLabel.ToElement`（`Platform.Core` の拡張メソッド）が単一所有する |
 | `MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `SizeLabel` / `CoordLabel`） |
+
+### `EsUtil.Feature.MarqueeCore.Interaction`
+
+| 型 | 種別 | 説明 |
+| --- | --- | --- |
+| `MarqueeSnapshot` | readonly record struct | 通知時点の状態（状態・選択矩形・アクティブハンドル・マウス位置・操作フラグ）。値型のため通知のたびにヒープを確保しない |
+| `MarqueeNotice` / `MarqueeNoticeKind` | record / enum | 通知（種別・通知座標・スナップショット） |
 | `HitTarget` | enum | ヒット対象（8 方向のハンドル + `Move` + `None`） |
 | `MarqueeCursorKind` | enum | カーソル形状の種別（`Default` / `DiagonalNWSE` / `DiagonalNESW` / `Vertical` / `Horizontal` / `Move`） |
 | `MarqueeInteractionState` | enum | 対話状態（`NoSelection` / `StartPointNudging` / `Dragging` / `DraggingNudging` / `Selected` / `SelectedNudging`） |
+
+### `EsUtil.Feature.MarqueeCore.Setting`
+
+| 型 | 種別 | 説明 |
+| --- | --- | --- |
+| `MarqueeOptions` | record | 設定（寸法・表示可否・対話パラメータ）と既定値・補正。**色は持たない**（色は描画層の `MarqueePaint` が単一所有する） |
 
 ### `EsUtil.Feature.MarqueeCore.Selection`
 

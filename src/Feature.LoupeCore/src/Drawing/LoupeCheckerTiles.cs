@@ -3,7 +3,7 @@ using EsUtil.SaveEvidence.Common.Imaging;
 
 using EsUtil.Feature.LoupeCore.Checkerboard;
 
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Drawing;
 
 /// <summary>ルーペの市松模様の暗色タイルの矩形を、リストを確保せずに列挙する構造体。</summary>
 /// <remarks>

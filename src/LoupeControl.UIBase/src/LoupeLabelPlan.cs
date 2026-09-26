@@ -2,6 +2,7 @@ using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.Core.Geometry;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.LoupeCore.Drawing;
 
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase;

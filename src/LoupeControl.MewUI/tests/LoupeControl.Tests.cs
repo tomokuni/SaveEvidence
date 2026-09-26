@@ -8,6 +8,7 @@ using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.Skia;
+using EsUtil.Feature.LoupeCore.Setting;
 
 
 namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;

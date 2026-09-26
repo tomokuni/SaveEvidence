@@ -5,6 +5,8 @@ using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.LoupeCore.Drawing;
+using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
 

@@ -1,7 +1,7 @@
 using EsUtil.Feature.MarqueeCore.Session;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
-using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Interaction;
 
 namespace EsUtil.Feature.MarqueeCore.Tests;

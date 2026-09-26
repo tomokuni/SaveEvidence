@@ -5,7 +5,8 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using EsUtil.Feature.MarqueeCore.Interaction;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
+using EsUtil.Feature.MarqueeCore.Logging;
 
 namespace EsUtil.Feature.MarqueeCore.Session;
 

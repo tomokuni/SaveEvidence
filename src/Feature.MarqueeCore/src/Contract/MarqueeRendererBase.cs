@@ -3,7 +3,7 @@ using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Drawing;
 
 
-namespace EsUtil.Feature.MarqueeCore.Contracts;
+namespace EsUtil.Feature.MarqueeCore.Contract;
 
 /// <summary>選択矩形コントロールの描画手順（層の順序に従った描画ポートの呼び出し）を単一所有する基底クラス。</summary>
 /// <remarks>

@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Drawing;
 
 /// <summary>ルーペの 1 フレーム分の描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
 /// <param name="SurfaceBounds">描画面の全体（左上を原点とし、幅・高さが物理ピクセルサイズの正方形）。</param>

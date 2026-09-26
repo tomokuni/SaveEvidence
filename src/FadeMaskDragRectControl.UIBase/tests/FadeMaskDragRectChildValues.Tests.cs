@@ -2,7 +2,8 @@ using EsUtil.Feature.LoupeCore;
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
-using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Feature.MarqueeCore.Setting;
+using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
 

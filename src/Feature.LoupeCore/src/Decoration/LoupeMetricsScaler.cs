@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.Feature.LoupeCore.Decoration;
 
