@@ -15,9 +15,9 @@ namespace EsUtil.SaveEvidence.Marquee.UIBase;
 internal static partial class MarqueeWheelLogMessage
 {
     /// <summary>Ctrl+ホイールによるズーム要求のログ。</summary>
-    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Marquee] ZoomRequested: zoomIn={ZoomIn}</c></remarks>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.MarqueeCore] ZoomRequested: zoomIn={ZoomIn}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
-    [LoggerMessage(LogLevel.Debug, "[Marquee] ZoomRequested: zoomIn={ZoomIn}")]
+    [LoggerMessage(LogLevel.Debug, "[Feature.MarqueeCore] ZoomRequested: zoomIn={ZoomIn}")]
     public static partial void LogZoomRequested(this ILogger logger, bool zoomIn);
 }

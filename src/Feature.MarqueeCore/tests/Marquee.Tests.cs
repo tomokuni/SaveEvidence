@@ -539,8 +539,8 @@ public class MarqueeTests
 
         Assert.Equal(
             [
-                "[Marquee] Setting: DomainToDipScaling 1 → 1.25",
-                "[Marquee] Setting: DomainToDipScaling 1.25 → 2",
+                "[Feature.MarqueeCore] Setting: DomainToDipScaling 1 → 1.25",
+                "[Feature.MarqueeCore] Setting: DomainToDipScaling 1.25 → 2",
             ],
             logger.Messages);
     }
@@ -556,7 +556,7 @@ public class MarqueeTests
         marquee.DisplayScaleScaling = 1.5;
         marquee.DisplayScaleScaling = 1.5;   // 同値
 
-        Assert.Equal("[Marquee] Setting: DisplayScaleScaling 0 → 1.5", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.MarqueeCore] Setting: DisplayScaleScaling 0 → 1.5", Assert.Single(logger.Messages));
     }
 
     /// <summary>装飾の設定の変更が変化した項目だけ記録されることを検証する。</summary>
@@ -572,8 +572,8 @@ public class MarqueeTests
 
         Assert.Equal(
             [
-                "[Marquee] Setting: ShowOverlay True → False",
-                "[Marquee] Setting: ShowInnerFill False → True",
+                "[Feature.MarqueeCore] Setting: ShowOverlay True → False",
+                "[Feature.MarqueeCore] Setting: ShowInnerFill False → True",
             ],
             logger.Messages);
     }
@@ -593,8 +593,8 @@ public class MarqueeTests
 
         Assert.Equal(
             [
-                "[Marquee] Setting: SizeLabelOverrideProvider False → True",
-                "[Marquee] Setting: SizeLabelOverrideProvider True → False",
+                "[Feature.MarqueeCore] Setting: SizeLabelOverrideProvider False → True",
+                "[Feature.MarqueeCore] Setting: SizeLabelOverrideProvider True → False",
             ],
             logger.Messages);
     }

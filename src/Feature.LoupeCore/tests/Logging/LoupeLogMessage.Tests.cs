@@ -42,11 +42,11 @@ public class LoupeLogMessageTests
         var logger = new RecordingLogger();
         InvokeAll(logger);
 
-        Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
-        Assert.Equal("[LoupeCtrl] Setting: RequestedSize 160 → 240", logger.Messages[1]);
-        Assert.Equal("[LoupeCtrl] Setting: FrameWidth 2 → 8", logger.Messages[2]);
-        Assert.Equal("[LoupeCtrl] Setting: ShowFrame True → False", logger.Messages[3]);
-        Assert.Equal("[LoupeCtrl] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[4]);
+        Assert.Equal("[Feature.LoupeCore] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
+        Assert.Equal("[Feature.LoupeCore] Setting: RequestedSize 160 → 240", logger.Messages[1]);
+        Assert.Equal("[Feature.LoupeCore] Setting: FrameWidth 2 → 8", logger.Messages[2]);
+        Assert.Equal("[Feature.LoupeCore] Setting: ShowFrame True → False", logger.Messages[3]);
+        Assert.Equal("[Feature.LoupeCore] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[4]);
     }
 
     /// <summary>拡大中心のログが両 UI 共通の書式（括弧付き座標）で出力されることを検証する。</summary>
@@ -58,8 +58,8 @@ public class LoupeLogMessageTests
         logger.LogCenterPointChanged(new EsPoint(10, 20), null);
         logger.LogCenterPointChanged(null, new EsPoint(30, 40));
 
-        Assert.Equal("[LoupeCtrl] Setting: CenterPoint (10, 20) → null", logger.Messages[0]);
-        Assert.Equal("[LoupeCtrl] Setting: CenterPoint null → (30, 40)", logger.Messages[1]);
+        Assert.Equal("[Feature.LoupeCore] Setting: CenterPoint (10, 20) → null", logger.Messages[0]);
+        Assert.Equal("[Feature.LoupeCore] Setting: CenterPoint null → (30, 40)", logger.Messages[1]);
     }
 
     /// <summary>真偽設定値のログが変化したときだけ出力されることを検証する。</summary>
@@ -75,7 +75,7 @@ public class LoupeLogMessageTests
         logger.LogSettingChanged("ShowFrame", true, false);   // 変化 → 出力
         logger.LogSettingChanged("ShowFrame", false, false);  // 同値 → 出力しない
 
-        Assert.Equal("[LoupeCtrl] Setting: ShowFrame True → False", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.LoupeCore] Setting: ShowFrame True → False", Assert.Single(logger.Messages));
     }
 
     /// <summary>数値設定値のログが変化したときだけ出力されることを検証する。</summary>
@@ -90,8 +90,8 @@ public class LoupeLogMessageTests
         logger.LogSettingChanged("DipToDeviceScaling", 1.5, 1.5);  // 同値 → 出力しない
 
         Assert.Equal(2, logger.Messages.Count);
-        Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
-        Assert.Equal("[LoupeCtrl] Setting: DipToDeviceScaling 1 → 1.5", logger.Messages[1]);
+        Assert.Equal("[Feature.LoupeCore] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
+        Assert.Equal("[Feature.LoupeCore] Setting: DipToDeviceScaling 1 → 1.5", logger.Messages[1]);
     }
 
     /// <summary>数値のログがカルチャに依存しないことを検証する。</summary>
@@ -107,7 +107,7 @@ public class LoupeLogMessageTests
 
             logger.LogSettingChanged((string)"DipToDeviceScaling", 1.0, 2.5);
 
-            Assert.Equal("[LoupeCtrl] Setting: DipToDeviceScaling 1 → 2.5", logger.Messages[0]);
+            Assert.Equal("[Feature.LoupeCore] Setting: DipToDeviceScaling 1 → 2.5", logger.Messages[0]);
         }
         finally
         {
@@ -140,8 +140,8 @@ public class LoupeLogMessageTests
 
         Assert.Equal(
             [
-                "[LoupeCtrl] Setting: RequestedSize 160 → 240",
-                "[LoupeCtrl] Setting: ShowCrosshair True → False",
+                "[Feature.LoupeCore] Setting: RequestedSize 160 → 240",
+                "[Feature.LoupeCore] Setting: ShowCrosshair True → False",
             ],
             logger.Messages);
     }
@@ -172,14 +172,14 @@ public class LoupeLogMessageTests
 
         Assert.Equal(
             [
-                "[LoupeCtrl] Setting: RequestedSize 160 → 240",
-                "[LoupeCtrl] Setting: ZoomLevel 4 → 8",
-                "[LoupeCtrl] Setting: CheckerSize 6 → 12",
-                "[LoupeCtrl] Setting: FrameWidth 2 → 8",
-                "[LoupeCtrl] Setting: ShowCoordLabel True → False",
-                "[LoupeCtrl] Setting: ShowCheckerboard True → False",
-                "[LoupeCtrl] Setting: ShowCrosshair True → False",
-                "[LoupeCtrl] Setting: ShowFrame True → False",
+                "[Feature.LoupeCore] Setting: RequestedSize 160 → 240",
+                "[Feature.LoupeCore] Setting: ZoomLevel 4 → 8",
+                "[Feature.LoupeCore] Setting: CheckerSize 6 → 12",
+                "[Feature.LoupeCore] Setting: FrameWidth 2 → 8",
+                "[Feature.LoupeCore] Setting: ShowCoordLabel True → False",
+                "[Feature.LoupeCore] Setting: ShowCheckerboard True → False",
+                "[Feature.LoupeCore] Setting: ShowCrosshair True → False",
+                "[Feature.LoupeCore] Setting: ShowFrame True → False",
             ],
             logger.Messages);
     }

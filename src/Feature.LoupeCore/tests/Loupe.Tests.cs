@@ -346,8 +346,8 @@ public class LoupeTests
 
         Assert.Equal(
             [
-                "[LoupeCtrl] Setting: PositionOffset 0 → 20",
-                "[LoupeCtrl] Setting: PositionOffset 20 → 8",
+                "[Feature.LoupeCore] Setting: PositionOffset 0 → 20",
+                "[Feature.LoupeCore] Setting: PositionOffset 20 → 8",
             ],
             logger.Messages);
     }

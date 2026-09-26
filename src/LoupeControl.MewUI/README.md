@@ -127,8 +127,8 @@ if (layout.Position is { } position)
 
 | レベル | 出力例 |
 | --- | --- |
-| Debug | `[LoupeCtrl] Setting: ZoomLevel 4 → 8`（Source / CenterPoint / RequestedSize / DipToDeviceScaling / ZoomLevel。変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は `LoupeControl.UIBase` の `LoupeUiLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は同値判定を持たない。設定の変更は変化した項目だけを出力する） |
-| Error | `[LoupeCtrl] Update exception`（描画の例外。アプリは継続する） |
+| Debug | `[Feature.LoupeCore] Setting: ZoomLevel 4 → 8`（Source / CenterPoint / RequestedSize / DipToDeviceScaling / ZoomLevel。変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は `LoupeControl.UIBase` の `LoupeUiLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は同値判定を持たない。設定の変更は変化した項目だけを出力する） |
+| Error | `[Feature.LoupeCore] Update exception`（描画の例外。アプリは継続する） |
 
 Avalonia 版の Trace ログ（再描画パイプライン）は持ちません（MewUI 版は中間ビットマップを作らず同期描画するため）。
 

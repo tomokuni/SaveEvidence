@@ -23,12 +23,12 @@ internal static partial class LoupeLogMessage
     private const string Null = "null";
 
     /// <summary>設定値変更のログ（変更前後）。</summary>
-    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.LoupeCore] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値（整形済み）。</param>
     /// <param name="newValue">変更後の値（整形済み）。</param>
-    [LoggerMessage(LogLevel.Debug, "[LoupeCtrl] Setting: {Name} {OldValue} → {NewValue}")]
+    [LoggerMessage(LogLevel.Debug, "[Feature.LoupeCore] Setting: {Name} {OldValue} → {NewValue}")]
     internal static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
 
     /// <summary>整数設定値の変更ログ（同値の再設定では出力しない）。</summary>
@@ -98,7 +98,7 @@ internal static partial class LoupeLogMessage
 
     /// <summary>拡大中心（ドメイン座標）の変更ログ（同値の再設定では出力しない）。</summary>
     /// <remarks>
-    /// LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: CenterPoint {OldValue} → {NewValue}</c><br/>
+    /// LogLevel: Debug<br/>出力書式: <c>[Feature.LoupeCore] Setting: CenterPoint {OldValue} → {NewValue}</c><br/>
     /// 中心はマウス移動のたびに設定されるため、「変化したときだけ出力する」判断を本メソッドが単一所有する<br/>
     /// （出力をコアが行うため、UI 層は同値判定を持たない）。
     /// </remarks>

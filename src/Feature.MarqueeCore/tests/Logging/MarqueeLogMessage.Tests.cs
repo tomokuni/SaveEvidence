@@ -43,16 +43,16 @@ public class MarqueeLogMessageTests
         var logger = new RecordingLogger();
         InvokeAll(logger);
 
-        Assert.Equal("[Marquee] MouseDown: pos=(10, 20) clickCount=1 hasSelection=False", logger.Messages[0]);
-        Assert.Equal("[Marquee] MouseUp: pos=(10, 20) wasDragging=True hasSelection=True", logger.Messages[1]);
-        Assert.Equal("[Marquee] DoubleClick: pos=(10, 20) inside=True", logger.Messages[2]);
-        Assert.Equal("[Marquee] MouseDown 直前の位置: pos=(10, 20)", logger.Messages[3]);
-        Assert.Equal("[Marquee] MouseUp 直後の位置: pos=(10, 20)", logger.Messages[4]);
-        Assert.Equal("[Marquee] DragStart: handle=Move pos=(10, 20)", logger.Messages[5]);
-        Assert.Equal("[Marquee] KeyDown: key=Left handled=True", logger.Messages[6]);
-        Assert.Equal("[Marquee] ConfirmRequested: rect=(10, 20, 30, 40)", logger.Messages[7]);
-        Assert.Equal("[Marquee] CancelRequested", logger.Messages[8]);
-        Assert.Equal("[Marquee] Setting: MinSelectionSize 3 → 5", logger.Messages[9]);
+        Assert.Equal("[Feature.MarqueeCore] MouseDown: pos=(10, 20) clickCount=1 hasSelection=False", logger.Messages[0]);
+        Assert.Equal("[Feature.MarqueeCore] MouseUp: pos=(10, 20) wasDragging=True hasSelection=True", logger.Messages[1]);
+        Assert.Equal("[Feature.MarqueeCore] DoubleClick: pos=(10, 20) inside=True", logger.Messages[2]);
+        Assert.Equal("[Feature.MarqueeCore] MouseDown 直前の位置: pos=(10, 20)", logger.Messages[3]);
+        Assert.Equal("[Feature.MarqueeCore] MouseUp 直後の位置: pos=(10, 20)", logger.Messages[4]);
+        Assert.Equal("[Feature.MarqueeCore] DragStart: handle=Move pos=(10, 20)", logger.Messages[5]);
+        Assert.Equal("[Feature.MarqueeCore] KeyDown: key=Left handled=True", logger.Messages[6]);
+        Assert.Equal("[Feature.MarqueeCore] ConfirmRequested: rect=(10, 20, 30, 40)", logger.Messages[7]);
+        Assert.Equal("[Feature.MarqueeCore] CancelRequested", logger.Messages[8]);
+        Assert.Equal("[Feature.MarqueeCore] Setting: MinSelectionSize 3 → 5", logger.Messages[9]);
     }
 
     /// <summary>設定（MarqueeOptions）の変更ログが変化した項目だけを出力することを検証する。</summary>
@@ -70,8 +70,8 @@ public class MarqueeLogMessageTests
 
         Assert.Equal(
             [
-                "[Marquee] Setting: ShowHandles True → False",
-                "[Marquee] Setting: HandleSize 10 → 20",
+                "[Feature.MarqueeCore] Setting: ShowHandles True → False",
+                "[Feature.MarqueeCore] Setting: HandleSize 10 → 20",
             ],
             logger.Messages);
     }
@@ -94,9 +94,9 @@ public class MarqueeLogMessageTests
 
         Assert.Equal(
             [
-                "[Marquee] Setting: ShowOverlay True → False",
-                "[Marquee] Setting: OuterAppearance.BorderThickness 2 → 3",
-                "[Marquee] Setting: OuterHighlightRect False → True",
+                "[Feature.MarqueeCore] Setting: ShowOverlay True → False",
+                "[Feature.MarqueeCore] Setting: OuterAppearance.BorderThickness 2 → 3",
+                "[Feature.MarqueeCore] Setting: OuterHighlightRect False → True",
             ],
             logger.Messages);
     }
@@ -119,8 +119,8 @@ public class MarqueeLogMessageTests
 
             Assert.Equal(
                 [
-                    "[Marquee] Setting: HandleSize 10 → 20",
-                    "[Marquee] Setting: MinSelectionSize 6 → 7",
+                    "[Feature.MarqueeCore] Setting: HandleSize 10 → 20",
+                    "[Feature.MarqueeCore] Setting: MinSelectionSize 6 → 7",
                 ],
                 logger.Messages);
         }

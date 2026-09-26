@@ -77,7 +77,7 @@ public sealed partial class Loupe
         /// <param name="value">補正する値。</param>
         /// <returns>安全域へ補正した値。非有限値の場合は既定値。</returns>
         public static double CoerceDipToDeviceScaling(double value)
-            => double.IsFinite(value) ? Math.Clamp(value, DipToDeviceScalingMin, DipToDeviceScalingMax) : DipToDeviceScalingDefault;
+            => CoerceFinite(value, DipToDeviceScalingMin, DipToDeviceScalingMax, DipToDeviceScalingDefault);
 
         /// <summary>市松模様の 1 タイルサイズを安全域へ補正する（1〜128）。</summary>
         /// <param name="value">補正する値（ピクセル）。</param>
@@ -88,5 +88,18 @@ public sealed partial class Loupe
         /// <param name="value">補正する値（ピクセル）。</param>
         /// <returns>安全域へ補正した値。</returns>
         public static int CoerceFrameWidth(int value) => Math.Clamp(value, FrameWidthMin, FrameWidthMax);
+
+        /// <summary>実数を安全域へ補正する（非有限値は既定値）。</summary>
+        /// <param name="value">補正する値。</param>
+        /// <param name="min">安全域の最小値。</param>
+        /// <param name="max">安全域の最大値。</param>
+        /// <param name="fallback">非有限値のときに返す既定値。</param>
+        /// <returns>安全域に補正した値。</returns>
+        /// <remarks>
+        /// 「非有限は素通ししない」規則を単一所有する（<c>Math.Clamp</c> は NaN を素通しするため、<br/>
+        /// 表示サイズの換算へ NaN が入ると切り出し領域が全て NaN になり描画が消える）。
+        /// </remarks>
+        private static double CoerceFinite(double value, double min, double max, double fallback)
+            => double.IsFinite(value) ? Math.Clamp(value, min, max) : fallback;
     }
 }

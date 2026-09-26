@@ -374,7 +374,7 @@ public class MarqueeControlTests
 
         control.Options = control.Options with { ClampToDomainBounds = false };
 
-        Assert.Equal("[Marquee] Setting: ClampToDomainBounds True → False", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.MarqueeCore] Setting: ClampToDomainBounds True → False", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -413,7 +413,7 @@ public class MarqueeControlTests
 
         control.RequestConfirm();
 
-        Assert.Contains("[Marquee] ConfirmRequested: rect=(10, 10, 50, 40)", logger.Messages);
+        Assert.Contains("[Feature.MarqueeCore] ConfirmRequested: rect=(10, 10, 50, 40)", logger.Messages);
     }
 
     // ====================================================================

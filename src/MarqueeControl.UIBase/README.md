@@ -59,7 +59,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `WheelScrollDelta` | internal | 回転量 → 移動量（DIP）の換算（1 ノッチ = `ScrollMath.WheelScrollUnit`・Shift で横）。適用先は換算済みの移動量を受け取るため、本層の内部手順に限定する |
 | `WheelZoomRequest` | public | Ctrl+ホイールによるズーム要求（方向 `ZoomIn` と発生位置 `Position`） |
 | `WheelScrollRequest` | public | 通常ホイールによるスクロール要求（`DeltaX` / `DeltaY` / `Shift` / `Position`）。回転量をベクターで受け取る API へ渡す `Delta`（`EsVector`）を提供する |
-| `MarqueeWheelLogMessage` | internal | ズーム要求のログ定義（`ILogger` 拡張。書式 `[Marquee] ZoomRequested: zoomIn={ZoomIn}`）。ホストはロガーをファサードへ渡すだけで、定義名を参照しない |
+| `MarqueeWheelLogMessage` | internal | ズーム要求のログ定義（`ILogger` 拡張。書式 `[Feature.MarqueeCore] ZoomRequested: zoomIn={ZoomIn}`）。ホストはロガーをファサードへ渡すだけで、定義名を参照しない |
 | `MarqueeViewportNotifier` | public | ビューポートの変化の再通知（現在の状態スナップショット）と再描画の要求。選択の状態は変更しない |
 
 ## テキストの扱いは UI 層が決める

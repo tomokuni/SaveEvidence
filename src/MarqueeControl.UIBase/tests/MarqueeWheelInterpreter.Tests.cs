@@ -195,7 +195,7 @@ public class MarqueeWheelInterpreterTests
 
         wheel.Handle(controlKey: true, shiftKey: false, deltaX: 0, deltaY: 1, default);
 
-        Assert.Equal("[Marquee] ZoomRequested: zoomIn=True", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.MarqueeCore] ZoomRequested: zoomIn=True", Assert.Single(logger.Messages));
     }
 
     [Fact]

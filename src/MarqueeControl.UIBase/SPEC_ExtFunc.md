@@ -196,7 +196,7 @@ viewport.Notify();   // 変化を検知したら呼ぶ
 
 | メンバー | 説明 |
 | --- | --- |
-| `LogZoomRequested(this ILogger, bool zoomIn)` | Ctrl+ホイールによるズーム要求のログ。LogLevel: Debug、書式 `[Marquee] ZoomRequested: zoomIn={ZoomIn}` |
+| `LogZoomRequested(this ILogger, bool zoomIn)` | Ctrl+ホイールによるズーム要求のログ。LogLevel: Debug、書式 `[Feature.MarqueeCore] ZoomRequested: zoomIn={ZoomIn}` |
 
 書式とレベルは両 UI で共通です（UI 実装ごとに持つと書式がずれ、片方だけ修正されます）。
 

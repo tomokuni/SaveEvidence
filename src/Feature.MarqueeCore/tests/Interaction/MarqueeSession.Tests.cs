@@ -710,8 +710,8 @@ public class MarqueeSessionTests
 
         Assert.Equal(
             [
-                "[Marquee] Setting: HandleSize 10 → 20",
-                "[Marquee] Setting: MarkerLength 16 → 40",
+                "[Feature.MarqueeCore] Setting: HandleSize 10 → 20",
+                "[Feature.MarqueeCore] Setting: MarkerLength 16 → 40",
             ],
             logger.Messages);
     }
@@ -732,7 +732,7 @@ public class MarqueeSessionTests
         // 1 項目だけ変えるとその項目だけが出力される
         session.ApplyOptions(session.Options with { HandleHitRadius = 30.0 });
 
-        Assert.Equal("[Marquee] Setting: HandleHitRadius 12 → 30", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.MarqueeCore] Setting: HandleHitRadius 12 → 30", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -752,7 +752,7 @@ public class MarqueeSessionTests
         Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionRect);
         Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
-        Assert.Equal("[Marquee] Setting: ClampToDomainBounds False → True", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.MarqueeCore] Setting: ClampToDomainBounds False → True", Assert.Single(logger.Messages));
     }
 
     [Fact]

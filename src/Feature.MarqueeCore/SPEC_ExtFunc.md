@@ -238,7 +238,7 @@
 
 ## 6. ログ
 
-ロガーは `Marquee.Log` で受け取り、**入力の判断**（`[Marquee] MouseDown` / `MouseUp` / `DoubleClick` / `DragStart` / `KeyDown` / `ConfirmRequested` / `CancelRequested` 等。Debug。位置の記録は Trace）と**設定の変更**（`[Marquee] Setting: {名前} {前} → {後}`。Debug）を出力します。ロガー未設定（null）は出力なしです。
+ロガーは `Marquee.Log` で受け取り、**入力の判断**（`[Feature.MarqueeCore] MouseDown` / `MouseUp` / `DoubleClick` / `DragStart` / `KeyDown` / `ConfirmRequested` / `CancelRequested` 等。Debug。位置の記録は Trace）と**設定の変更**（`[Feature.MarqueeCore] Setting: {名前} {前} → {後}`。Debug）を出力します。ロガー未設定（null）は出力なしです。
 
 | 契機 | 出力 |
 | --- | --- |
@@ -248,6 +248,8 @@
 | 文言プロバイダ 2 種の set | 設定の有無が変化したときだけ（デリゲートは値の比較ができないため） |
 
 **差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。**UI 固有のログは各 UI プロジェクトが所有します**（ズーム要求のログは `MarqueeControl.UIBase` の `MarqueeWheelLogMessage`）。
+
+**メッセージの接頭辞はコアの名前空間名（`[Feature.MarqueeCore]`）とします**（同じ系統のログ（コア・UIBase・各 UI）は同じ接頭辞で揃え、出力元の層を接頭辞で読み分けません。層ごとに接頭辞を変えると、同じ設定変更のログが層によって別の接頭辞になり、出力を絞り込む側が層を知っていなければならなくなります）。
 
 ## 7. ライセンス
 
