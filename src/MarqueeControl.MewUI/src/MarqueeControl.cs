@@ -56,7 +56,11 @@ public sealed class MarqueeControl : Panel
     public static readonly MewProperty<MarqueeOptions> OptionsProperty =
         MewProperty<MarqueeOptions>.Register<MarqueeControl>(
             nameof(Options), MarqueeOptions.Default, MewPropertyOptions.AffectsRender,
-            changed: static (owner, _, newValue) => owner._marquee.Options = newValue);
+            changed: static (owner, _, newValue) =>
+            {
+                owner._marquee.Options = newValue;
+                owner.InvalidateFrame();
+            });
 
     /// <summary><see cref="DecoOptions"/> プロパティ（装飾の設定）。</summary>
     /// <remarks>
@@ -66,7 +70,11 @@ public sealed class MarqueeControl : Panel
     public static readonly MewProperty<MarqueeDecoOptions> DecoOptionsProperty =
         MewProperty<MarqueeDecoOptions>.Register<MarqueeControl>(
             nameof(DecoOptions), MarqueeDecoOptions.Default, MewPropertyOptions.AffectsRender,
-            changed: static (owner, _, newValue) => owner._marquee.DecoOptions = newValue);
+            changed: static (owner, _, newValue) =>
+            {
+                owner._marquee.DecoOptions = newValue;
+                owner.InvalidateFrame();
+            });
 
     /// <summary><see cref="Paint"/> プロパティ（色。描画にだけ必要な設定）。</summary>
     /// <remarks>
@@ -91,7 +99,11 @@ public sealed class MarqueeControl : Panel
     public static readonly MewProperty<double> DomainToDipScalingProperty =
         MewProperty<double>.Register<MarqueeControl>(
             nameof(DomainToDipScaling), DomainToDipScalingDefault, MewPropertyOptions.AffectsRender,
-            changed: static (owner, _, newValue) => owner._marquee.DomainToDipScaling = newValue);
+            changed: static (owner, _, newValue) =>
+            {
+                owner._marquee.DomainToDipScaling = newValue;
+                owner.InvalidateFrame();
+            });
 
     /// <summary>コアのファサード（入力の解釈・状態遷移の判断・描画内容の解決・設定の窓口）。</summary>
     private readonly MarqueeFacade _marquee;
@@ -314,6 +326,7 @@ public sealed class MarqueeControl : Panel
         set
         {
             _marquee.DisplayScaleScaling = value;
+            InvalidateFrame();
             InvalidateVisual();
         }
     }
@@ -322,7 +335,7 @@ public sealed class MarqueeControl : Panel
     /// <value>サイズラベルのテキストを返す関数。null または空文字の場合は自動生成する。</value>
     /// <remarks>
     /// デリゲート（ホスト結線）のため <see cref="DecoOptions"/> には含めない（値の等価比較の対象外にするため）。<br/>
-    /// 保持と再描画の要求はコア（<see cref="MarqueeFacade.SizeLabelOverrideProvider"/>）が単一所有する。<br/>
+    /// 保持はコア（<see cref="MarqueeFacade.SizeLabelOverrideProvider"/>）が単一所有し、本 setter が再描画を要求する。<br/>
     /// <b>操作ラベル・情報ラベルは本コントロールの概念ではない</b>（アプリ固有の付加情報）ため、ホストが自前で描く。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
@@ -331,6 +344,7 @@ public sealed class MarqueeControl : Panel
         set
         {
             _marquee.SizeLabelOverrideProvider = value;
+            InvalidateFrame();
             InvalidateVisual();
         }
     }
@@ -340,7 +354,7 @@ public sealed class MarqueeControl : Panel
     /// <remarks>
     /// マルチモニタでモニタごとに表示スケールが異なる場合、ホストは矩形からモニタを判定してそのスケールを返す。<br/>
     /// 文言（書式）はコアが単一所有するため、ホストは数値だけを与える。<br/>
-    /// 保持と再描画の要求はコア（<see cref="MarqueeFacade.SizeLabelDisplayScalingProvider"/>）が単一所有する。
+    /// 保持はコア（<see cref="MarqueeFacade.SizeLabelDisplayScalingProvider"/>）が単一所有し、本 setter が再描画を要求する。
     /// </remarks>
     public Func<EsRect, double>? SizeLabelDisplayScalingProvider
     {
@@ -348,6 +362,7 @@ public sealed class MarqueeControl : Panel
         set
         {
             _marquee.SizeLabelDisplayScalingProvider = value;
+            InvalidateFrame();
             InvalidateVisual();
         }
     }

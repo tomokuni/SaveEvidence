@@ -200,8 +200,8 @@ control.ResetSelection();           // 状態と nudge の初期化
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた設定。変更すると再描画され、対話パラメータはコア（ファサード）へ伝搬する（**色は含まない**） |
 | `Paint` | `MarqueePaint` | `MarqueePaint.Default` | **色（ハンドル・十字マーカー・ラベル・装飾）とラベルのフォントサイズの設定**。変更すると描画実装（`Renderer`）が新しい色で差し替わり、即時反映される |
-| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ハイライト）の表示可否と寸法の設定**（色は含まない）。装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）へ反映する |
-| `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。null または空文字を返す場合は自動生成の文言を使う |
+| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ハイライト）の表示可否と寸法の設定**（色は含まない）。装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）へ反映し、保持している描画内容を破棄して再描画を要求する |
+| `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。null または空文字を返す場合は自動生成の文言を使う。変更すると保持している描画内容を破棄して再描画を要求する |
 
 `MarqueeOptions` の項目（既定値は本型が単一所有する。すべて `init` のみで不変）:
 

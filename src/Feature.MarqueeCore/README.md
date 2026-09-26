@@ -145,7 +145,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 | 責務 | 所有者 | 内容 |
 | --- | --- | --- |
-| 設定と状態 | 本コア（値） / UI（保持） | 選択の設定は `MarqueeOptions`、装飾の設定は `MarqueeDecoOptions`（いずれも公開値）、選択矩形はセッションが持つ。UI はフレームワークのプロパティ機構で保持し、ファサードへ伝搬するだけ |
+| 設定と状態 | 本コア（値） / UI（保持） | 選択の設定は `MarqueeOptions`、装飾の設定は `MarqueeDecoOptions`（いずれも公開値）、選択矩形はセッションが持つ。UI はフレームワークのプロパティ機構で保持し、ファサードへ伝搬するだけ。**設定の変更に伴う再描画は UI が要求する**（本コアは設定の保持だけを行い、再描画は入力に伴う場合にだけ効果として要求する） |
 | 判断・計算 | 本コア | 選択の状態遷移・スナップ・最小サイズ・論理矩形 → DIP 変換（選択は閉区間 +1）・ハンドル/マーカー/ラベルの可否と値・描画順 |
 | 契約 | 本コア | `MarqueeDrawContent`（装飾・ハンドル・始点マーカー・サイズラベル・座標ラベル・層の順序）・`Marquee.CreateRequest` / `Marquee.ResolveContent`（公開のエンドポイント。`MarqueeSession` は内部契約） |
 | 描画（図形） | 描画層（`MarqueeControl.UIBase` の `MarqueeRendererBase` / `MarqueeRenderer`） | 描画内容の各項目を描画ポート（`IEsCanvas`）へ写す（色は描画の設定 `MarqueePaint` から引く）。本コアは描画 API を持たず、**描画内容と層の順序（`MarqueeDrawContent.Layers`）をデータとして渡すだけ**である |

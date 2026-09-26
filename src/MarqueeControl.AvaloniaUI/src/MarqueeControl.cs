@@ -193,26 +193,42 @@ public sealed partial class MarqueeControl : Panel
     /// </remarks>
     static MarqueeControl()
     {
-        // 設定（外観・装飾を含む）の変更は再描画を要求する
-        AffectsRender<MarqueeControl>(OptionsProperty, DecoOptionsProperty, DomainToDipScalingProperty);
+        // 設定（外観・装飾・環境値）の変更は再描画を要求する
+        AffectsRender<MarqueeControl>(OptionsProperty, DecoOptionsProperty, DomainToDipScalingProperty, DisplayScaleScalingProperty);
 
         // 色（描画にだけ必要な設定）の変更は本 UI の描画実装を差し替える（色は描画実装が単一所有する）
         PaintProperty.Changed.AddClassHandler<MarqueeControl>(
             static (o, e) => o.Renderer = new MarqueeRendererAvaloniaUI(e.GetNewValue<MarqueePaint>()));
 
-        // 対話パラメータをファサードへ伝搬する（変更の影響判断・ログはコアが単一所有する）
+        // 対話パラメータをファサードへ伝搬し、保持している描画内容を破棄する（設定の変更を次の解決へ反映する）
         OptionsProperty.Changed.AddClassHandler<MarqueeControl>(
-            static (c, e) => c._marquee.Options = e.GetNewValue<MarqueeOptions>());
+            static (c, e) =>
+            {
+                c._marquee.Options = e.GetNewValue<MarqueeOptions>();
+                c.InvalidateFrame();
+            });
 
         // 装飾の設定をコアへ伝搬する（描画可否の判断はコアが単一所有する）
         DecoOptionsProperty.Changed.AddClassHandler<MarqueeControl>(
-            static (c, e) => c._marquee.DecoOptions = e.GetNewValue<MarqueeDecoOptions>());
+            static (c, e) =>
+            {
+                c._marquee.DecoOptions = e.GetNewValue<MarqueeDecoOptions>();
+                c.InvalidateFrame();
+            });
 
         // 環境値（倍率）をファサードへ伝搬する（ポート未指定時の倍率の使い方・表示倍率の解決はコアが単一所有する）
         DomainToDipScalingProperty.Changed.AddClassHandler<MarqueeControl>(
-            static (c, e) => c._marquee.DomainToDipScaling = e.GetNewValue<double>());
+            static (c, e) =>
+            {
+                c._marquee.DomainToDipScaling = e.GetNewValue<double>();
+                c.InvalidateFrame();
+            });
         DisplayScaleScalingProperty.Changed.AddClassHandler<MarqueeControl>(
-            static (c, e) => c._marquee.DisplayScaleScaling = e.GetNewValue<double>());
+            static (c, e) =>
+            {
+                c._marquee.DisplayScaleScaling = e.GetNewValue<double>();
+                c.InvalidateFrame();
+            });
     }
 
     // ====================================================================
@@ -473,7 +489,10 @@ public sealed partial class MarqueeControl : Panel
     }
 
     /// <summary><see cref="DisplayScaleScaling"/> 依存関係プロパティ。</summary>
-    /// <remarks>環境値（DPI・マルチスクリーン）だが、ホストのバインディングで設定できるよう依存関係プロパティとして公開する。</remarks>
+    /// <remarks>
+    /// 環境値（DPI・マルチスクリーン）だが、ホストのバインディングで設定できるよう依存関係プロパティとして公開する。<br/>
+    /// 変更は再描画を要求する（ラベルの百分率が変わる）。
+    /// </remarks>
     public static readonly StyledProperty<double> DisplayScaleScalingProperty =
         AvaloniaProperty.Register<MarqueeControl, double>(nameof(DisplayScaleScaling));
 
@@ -493,13 +512,18 @@ public sealed partial class MarqueeControl : Panel
     /// <value>描画のたびに呼び出される関数。null または空文字の場合は穴あけ矩形から自動生成する。</value>
     /// <remarks>
     /// デリゲート（ホスト結線）のため <see cref="DecoOptions"/> には含めない（値の等価比較の対象外にするため）。<br/>
-    /// 保持と再描画の要求はコア（<see cref="MarqueeFacade.SizeLabelOverrideProvider"/>）が単一所有する。<br/>
+    /// 保持はコア（<see cref="MarqueeFacade.SizeLabelOverrideProvider"/>）が単一所有し、本 setter が再描画を要求する。<br/>
     /// <b>操作ラベル・情報ラベルは本コントロールの概念ではない</b>（アプリ固有の付加情報）ため、ホストが自前で描く。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
     {
         get => _marquee.SizeLabelOverrideProvider;
-        set => _marquee.SizeLabelOverrideProvider = value;
+        set
+        {
+            _marquee.SizeLabelOverrideProvider = value;
+            InvalidateFrame();
+            InvalidateVisual();
+        }
     }
 
     /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
@@ -507,12 +531,17 @@ public sealed partial class MarqueeControl : Panel
     /// <remarks>
     /// マルチモニタでモニタごとに表示スケールが異なる場合、ホストは矩形からモニタを判定してそのスケールを返す。<br/>
     /// 文言（書式）はコアが単一所有するため、ホストは数値だけを与える。<br/>
-    /// 保持と再描画の要求はコア（<see cref="MarqueeFacade.SizeLabelDisplayScalingProvider"/>）が単一所有する。
+    /// 保持はコア（<see cref="MarqueeFacade.SizeLabelDisplayScalingProvider"/>）が単一所有し、本 setter が再描画を要求する。
     /// </remarks>
     public Func<EsRect, double>? SizeLabelDisplayScalingProvider
     {
         get => _marquee.SizeLabelDisplayScalingProvider;
-        set => _marquee.SizeLabelDisplayScalingProvider = value;
+        set
+        {
+            _marquee.SizeLabelDisplayScalingProvider = value;
+            InvalidateFrame();
+            InvalidateVisual();
+        }
     }
 
     // ====================================================================

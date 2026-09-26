@@ -126,19 +126,19 @@ public sealed partial class Marquee
     public double DomainToDipScaling
     {
         get => _scaling;
-        set => SetAndRedraw(ref _scaling, value);
+        set => SetIfChanged(ref _scaling, value);
     }
 
     /// <summary>装飾（暗転マスク・穴あけ枠・枠線・内側の塗り）の設定。</summary>
     /// <value>装飾の設定。既定は <see cref="MarqueeDecoOptions.Default"/>。</value>
     /// <remarks>
     /// 装飾は選択矩形コントロール単体の概念ではない（組み込み先の表示）ため、選択の設定（<see cref="Options"/>）とは分けている。<br/>
-    /// 設定すると再描画を要求する。
+    /// 描画の更新は UI が観測して行う（本コアは再描画を要求しない）。
     /// </remarks>
     public MarqueeDecoOptions DecoOptions
     {
         get => _decoOptions;
-        set => SetAndRedraw(ref _decoOptions, value);
+        set => SetIfChanged(ref _decoOptions, value);
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するプロバイダ。</summary>
@@ -150,7 +150,7 @@ public sealed partial class Marquee
     public Func<string?>? SizeLabelOverrideProvider
     {
         get => _sizeLabelOverrideProvider;
-        set => SetAndRedraw(ref _sizeLabelOverrideProvider, value);
+        set => SetIfChanged(ref _sizeLabelOverrideProvider, value);
     }
 
     /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ。</summary>
@@ -164,7 +164,7 @@ public sealed partial class Marquee
     public Func<EsRect, double>? SizeLabelDisplayScalingProvider
     {
         get => _sizeLabelDisplayScalingProvider;
-        set => SetAndRedraw(ref _sizeLabelDisplayScalingProvider, value);
+        set => SetIfChanged(ref _sizeLabelDisplayScalingProvider, value);
     }
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
@@ -173,7 +173,7 @@ public sealed partial class Marquee
     public double DisplayScaleScaling
     {
         get => Limits.ResolveDisplayScale(_displayScaleScaling, _scaling);
-        set => SetAndRedraw(ref _displayScaleScaling, value);
+        set => SetIfChanged(ref _displayScaleScaling, value);
     }
 
     /// <summary>選択矩形があるかどうか。</summary>
@@ -391,15 +391,17 @@ public sealed partial class Marquee
     /// <param name="notice">通知（種別・座標・スナップショット）。</param>
     private void OnSessionNotified(object? sender, MarqueeNotice notice) => Notified?.Invoke(this, notice);
 
-    /// <summary>新しい値を保持し、変化があれば再描画を要求する。</summary>
+    /// <summary>新しい値を保持する（同値なら何もしない）。</summary>
     /// <typeparam name="T">値の型。</typeparam>
     /// <param name="field">保持先のフィールド。</param>
     /// <param name="value">設定する値。</param>
     /// <remarks>
-    /// 「同値なら何もしない（再描画も要求しない）」という規則を単一所有する<br/>
-    /// （各プロパティが同じ数行を書くと、片方だけ同値判定が抜けて再描画が溢れる）。
+    /// 「同値なら何もしない」という規則を単一所有する<br/>
+    /// （各プロパティが同じ数行を書くと、片方だけ同値判定が抜けて無駄な再評価が溢れる）。<br/>
+    /// <b>再描画は要求しない</b>: 設定は UI の公開プロパティ（変更通知を持つ）から渡されるため、<br/>
+    /// 描画の更新は UI が観測して行う（コアは入力に伴う再描画だけを効果として要求する）。
     /// </remarks>
-    private void SetAndRedraw<T>(ref T field, T value)
+    private void SetIfChanged<T>(ref T field, T value)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
         {
@@ -407,6 +409,5 @@ public sealed partial class Marquee
         }
 
         field = value;
-        _effects.RequestRedraw();
     }
 }

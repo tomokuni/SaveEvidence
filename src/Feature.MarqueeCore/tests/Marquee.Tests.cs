@@ -239,7 +239,7 @@ public class MarqueeTests
     }
 
     [Fact]
-    public void Scaling_変更を保持し変更時のみ再描画する()
+    public void Scaling_変更を保持し再描画は要求しない()
     {
         var marquee = CreateMarquee(null, out var effects);
 
@@ -247,7 +247,9 @@ public class MarqueeTests
         marquee.DomainToDipScaling = 2.0;
 
         Assert.Equal(2.0, marquee.DomainToDipScaling);
-        Assert.Equal(1, effects.RedrawCount);
+        // 設定の変更は UI の公開プロパティから渡されるため、描画の更新は UI が観測して行う
+        // （コアが効果として再描画を要求するのは入力に伴う場合だけである）
+        Assert.Equal(0, effects.RedrawCount);
     }
 
     /// <summary>表示スケーリングが 0 以下の場合は倍率と同値になることを検証する。</summary>
