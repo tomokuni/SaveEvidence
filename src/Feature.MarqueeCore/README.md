@@ -24,7 +24,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 ※ Core は UIBase を参照しない（UIBase がコアの描画内容を使う向きだけ）。Core は Common も参照しない。
 ```
 
-## 構成
+## 収録する型
 
 ルート（`src/`）に置くのは**ファサード本体とその partial**（`Marquee.cs` / `Marquee.DrawContent.cs` / `Marquee.Limits.cs`）だけです。それ以外は用途別のフォルダへまとめます。
 **1 ファイル 1 型**とします（複数の型を 1 ファイルへ含めない。`partial` による分割は可）。
@@ -276,7 +276,7 @@ tests/
 ├── Marquee.DrawContent.Tests.cs     # 描画内容の解決（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・描画可否・層の順序）（50 件）
 ├── Marquee.Limits.Tests.cs          # 数値パラメータの既定値・安全域と補正・未設定時の解決規則（46 件）
 ├── Contract/                        # 効果の基底クラス（全メンバーが空実装であること・派生で必要なものだけを override できること）（3 件）
-├── Decoration/                      # 装飾（暗転マスク・枠線・内側の塗り・外観の安全域への補正）（24 件）
+├── Decoration/                      # 装飾（暗転マスク・枠線・内側の塗り・外観の安全域への補正）（27 件）
 ├── Drawing/                         # フレーム全体の幾何（描画入力の組み立て・座標変換ポート・DIP 変換・穴あけ矩形）（20 件）
 ├── Interaction/                     # 状態遷移・ヒットテスト・ドラッグ・nudge・入力の解釈・効果の適用・設定の差分検出（88 件）
 ├── Logging/                         # ログ定義の生成コード（IsEnabled 両パス・書式・差分検出）（6 件）

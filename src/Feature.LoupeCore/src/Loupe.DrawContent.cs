@@ -20,6 +20,10 @@ namespace EsUtil.Feature.LoupeCore;
 /// </remarks>
 public sealed partial class Loupe
 {
+    /// <summary>ルーペ上端から中心座標ラベルの基準点までの距離（DIP）。</summary>
+    /// <remarks>ラベルを上端の帯へ収めるための距離である（ラベルの体裁（余白・角丸）は描画の設定が単一所有する）。</remarks>
+    private const double CoordLabelTopMargin = 2.0;
+
     /// <summary>層の組合せのうち、市松模様の有無を表すビット。</summary>
     private const int CheckerboardBit = 1;
 
@@ -110,10 +114,6 @@ public sealed partial class Loupe
 
         return table;
     }
-
-    /// <summary>ルーペ上端から中心座標ラベルの基準点までの距離（DIP）。</summary>
-    /// <remarks>ラベルを上端の帯へ収めるための距離である（ラベルの体裁（余白・角丸）は描画の設定が単一所有する）。</remarks>
-    private const double CoordLabelTopMargin = 2.0;
 
     /// <summary>市松模様のタイル列挙子を解決する。</summary>
     /// <param name="request">描画入力（物理ピクセルサイズと換算済みのタイルサイズを含む）。</param>

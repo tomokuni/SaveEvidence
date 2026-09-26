@@ -41,8 +41,8 @@ public class LoupeUiLogMessageTests
         var logger = new RecordingLogger();
         InvokeAll(logger);
 
-        Assert.Equal("[Feature.LoupeCore] Setting: Source 8x6 → null", logger.Messages[0]);
-        Assert.Equal("[Feature.LoupeCore] Update exception", logger.Messages[1]);
+        Assert.Equal("[LoupeControl.UIBase] Setting: Source 8x6 → null", logger.Messages[0]);
+        Assert.Equal("[LoupeControl.UIBase] Update exception", logger.Messages[1]);
     }
 
     /// <summary>拡大元画像のログが同一インスタンスの再設定では出力されないことを検証する。</summary>
@@ -70,8 +70,8 @@ public class LoupeUiLogMessageTests
         logger.LogSourceChanged(oldBitmap, null);
 
         Assert.Equal(2, logger.Messages.Count);
-        Assert.Equal("[Feature.LoupeCore] Setting: Source 8x6 → 8x6", logger.Messages[0]);
-        Assert.Equal("[Feature.LoupeCore] Setting: Source 8x6 → null", logger.Messages[1]);
+        Assert.Equal("[LoupeControl.UIBase] Setting: Source 8x6 → 8x6", logger.Messages[0]);
+        Assert.Equal("[LoupeControl.UIBase] Setting: Source 8x6 → null", logger.Messages[1]);
     }
 
     /// <summary>画像の寸法を各 UI が整形して渡す経路のログが出力されることを検証する。</summary>
@@ -83,7 +83,7 @@ public class LoupeUiLogMessageTests
         logger.LogSourceChanged(LoupeLogFormat.DescribeImage(1920, 1080), LoupeLogFormat.Null);
 
         Assert.Single(logger.Messages);
-        Assert.Equal("[Feature.LoupeCore] Setting: Source 1920x1080 → null", logger.Messages[0]);
+        Assert.Equal("[LoupeControl.UIBase] Setting: Source 1920x1080 → null", logger.Messages[0]);
     }
 
     /// <summary>例外ログに例外が渡されることを検証する。</summary>
@@ -97,7 +97,7 @@ public class LoupeUiLogMessageTests
 
         Assert.Single(logger.Messages);
         // メッセージ本体は例外本文を含まない（例外は構造化ログのフィールドとして渡す）
-        Assert.Equal("[Feature.LoupeCore] Update exception", logger.Messages[0]);
+        Assert.Equal("[LoupeControl.UIBase] Update exception", logger.Messages[0]);
     }
 
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>

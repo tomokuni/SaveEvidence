@@ -1,4 +1,5 @@
 using System.Globalization;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Setting;
@@ -81,9 +82,20 @@ internal static partial class MarqueeLogMessage
     /// <summary>確定要求（Enter・ダブルクリック・API 呼び出し）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.MarqueeCore] ConfirmRequested: rect={Rect}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    /// <param name="rect">確定する選択矩形。</param>
+    /// <param name="rect">確定する選択矩形（整形済み）。</param>
     [LoggerMessage(LogLevel.Debug, "[Feature.MarqueeCore] ConfirmRequested: rect={Rect}")]
     internal static partial void LogConfirmRequested(this ILogger logger, string rect);
+
+    /// <summary>確定要求のログ（矩形の整形を含む）。</summary>
+    /// <remarks>
+    /// <see cref="LogConfirmRequested(ILogger, string)"/> と同じ書式で出力する。<br/>
+    /// 矩形の整形（<c>(X, Y, W, H)</c>）は <see cref="FormatRect"/> が単一所有する
+    /// （整形を呼び出し側へ置くと、同じ矩形が経路によって別の書式で出力される）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="rect">確定する選択矩形。</param>
+    internal static void LogConfirmRequested(this ILogger logger, EsRect rect)
+        => logger.LogConfirmRequested(FormatRect(rect));
 
     /// <summary>キャンセル要求（Escape・枠外ダブルクリック・API 呼び出し）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.MarqueeCore] CancelRequested</c></remarks>
@@ -216,4 +228,11 @@ internal static partial class MarqueeLogMessage
             oldValue.OuterHighlightRect is not null,
             newValue.OuterHighlightRect is not null);
     }
+
+    /// <summary>矩形を <c>(X, Y, W, H)</c> 形式の文字列へ整形する。</summary>
+    /// <param name="rect">整形する矩形。</param>
+    /// <returns><c>(X, Y, W, H)</c> 形式の文字列。</returns>
+    /// <remarks>数値の書式は現在のカルチャに依存しない（ログを環境非依存にする）。</remarks>
+    private static string FormatRect(EsRect rect)
+        => $"({rect.X.ToString(CultureInfo.InvariantCulture)}, {rect.Y.ToString(CultureInfo.InvariantCulture)}, {rect.Width.ToString(CultureInfo.InvariantCulture)}, {rect.Height.ToString(CultureInfo.InvariantCulture)})";
 }

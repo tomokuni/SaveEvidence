@@ -449,7 +449,7 @@ internal sealed class MarqueeSession
             return default;
         }
 
-        Log.LogConfirmRequested(FormatRect(_state.SelectionRect));
+        Log.LogConfirmRequested(_state.SelectionRect);
         NotifyState(MarqueeNoticeKind.ConfirmRequested);
         var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
         _state.Reset();
@@ -546,7 +546,7 @@ internal sealed class MarqueeSession
 
         if (inside)
         {
-            Log.LogConfirmRequested(FormatRect(_state.SelectionRect));
+            Log.LogConfirmRequested(_state.SelectionRect);
             NotifyAt(MarqueeNoticeKind.ConfirmRequested, position);
             _state.Reset();
             return new MarqueeFeedback { Redraw = true, Cursor = cursor };
@@ -571,11 +571,6 @@ internal sealed class MarqueeSession
         var radius = Math.Abs(offset.X - origin.X);
         return radius < 0.001 ? Options.HandleHitRadius : radius;
     }
-
-    /// <summary>ログ用に選択矩形を整形する。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。</param>
-    /// <returns><c>(X, Y, Width, Height)</c> 形式の文字列。</returns>
-    private static string FormatRect(EsRect rect) => $"({rect.X}, {rect.Y}, {rect.Width}, {rect.Height})";
 
     /// <summary>点座標付きの通知を発火する（スナップショットのマウス位置も指定座標とする）。</summary>
     /// <param name="kind">通知の種別。</param>

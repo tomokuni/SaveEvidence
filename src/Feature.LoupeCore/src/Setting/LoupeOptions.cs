@@ -30,6 +30,10 @@ public sealed record LoupeOptions
     /// <remarks>部分変更の基点として使用する（<c>Default with { ... }</c>）。</remarks>
     public static LoupeOptions Default { get; } = new();
 
+    // ----------------------------------------------------------------
+    // 寸法（表示レイアウトと描画の両方に使用する）
+    // ----------------------------------------------------------------
+
     /// <summary>ルーペの基本サイズ（DIP。一辺）を取得する。</summary>
     /// <value>表示サイズ（DIP）。既定は 160。設定時は 1〜4096 へ補正される。</value>
     /// <remarks>
@@ -44,6 +48,10 @@ public sealed record LoupeOptions
 
     /// <summary>拡大率を取得する。</summary>
     /// <value>拡大率（偶数推奨）。既定は 4。設定時は 1〜64 へ補正される。</value>
+    /// <remarks>
+    /// 拡大率は切り出し領域の一辺（物理ピクセルサイズ ÷ 本値の切り上げ）と、拡大画像の描画先の大きさに使う<br/>
+    /// （切り上げの規則は <c>LoupeDivMath.CeilDiv</c>、矩形の導出は <c>Decoration.LoupeDecorationGeometry</c> が単一所有する）。
+    /// </remarks>
     public int ZoomLevel
     {
         get => field;
@@ -67,6 +75,10 @@ public sealed record LoupeOptions
         get => field;
         init => field = CoerceFrameWidth(value);
     } = FrameWidthDefault;
+
+    // ----------------------------------------------------------------
+    // 表示可否（描画するかどうか）
+    // ----------------------------------------------------------------
 
     /// <summary>中心座標ラベルを表示するかどうかを取得する。</summary>
     /// <value>true の場合はルーペ上端中央へ中心座標を表示する。既定は true。</value>

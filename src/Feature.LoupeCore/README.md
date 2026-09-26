@@ -107,7 +107,24 @@ dotnet build src/Feature.LoupeCore/src/Feature.LoupeCore.csproj
 
 ## テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます（**合計 150 件**。`[Theory]` は展開後のケース数）。
+`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます。
+
+```text
+tests/
+├── Loupe.Tests.cs                   # 公開ファサード（表示レイアウトの解決・描画入力の生成・設定変更ログ・確保量の固定）（31 件）
+├── Loupe.DrawContent.Tests.cs       # 描画内容の解決（層の順序・描画可否・層の一覧の共有）（12 件）
+├── Loupe.Limits.Tests.cs            # 数値パラメータの既定値・安全域と補正（13 件）
+├── Checkerboard/                    # 区画数の切り上げ除算（8 件）
+├── Decoration/                      # 十字線と円枠の矩形・寸法の物理ピクセル換算（14 件）
+├── Drawing/                         # 描画入力の組み立て・切り出し領域の導出・市松模様のタイル列挙（43 件）
+├── Logging/                         # ログ定義の生成コード（IsEnabled 両パス・書式・差分検出）（10 件）
+├── Placement/                       # 表示位置の計算（5 件）
+└── Setting/                         # 設定の既定値・部分変更・安全域への補正・表示可否・等価性（14 件）
+```
+
+**テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Loupe.cs` / `Loupe.DrawContent.cs` / `Loupe.Limits.cs`）のテストはルートに置きます。
+
+件数は `[Theory]` を展開したケース数（合計 150 件）です。
 
 ```powershell
 dotnet test src/Feature.LoupeCore/tests/Feature.LoupeCore.Tests.csproj

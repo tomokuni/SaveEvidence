@@ -18,7 +18,7 @@ public static partial class LoupeUiLogMessage
     /// <param name="oldValue">変更前の拡大元画像（未設定は null）。</param>
     /// <param name="newValue">変更後の拡大元画像（未設定は null）。</param>
     /// <remarks>
-    /// LogLevel: Debug<br/>出力書式: <c>[Feature.LoupeCore] Setting: Source {OldValue} → {NewValue}</c><br/>
+    /// LogLevel: Debug<br/>出力書式: <c>[LoupeControl.UIBase] Setting: Source {OldValue} → {NewValue}</c><br/>
     /// 「別のインスタンスに差し替わったか」の判断（参照の同一性）を本メソッドが単一所有し、<br/>
     /// UI 層は設定の前後を渡すだけでよい（寸法が同じ別画像への差し替えは変更として記録する）。
     /// </remarks>
@@ -39,27 +39,28 @@ public static partial class LoupeUiLogMessage
     /// <param name="oldValue">変更前の画像の寸法（未設定は null）。</param>
     /// <param name="newValue">変更後の画像の寸法（未設定は null）。</param>
     /// <remarks>
-    /// LogLevel: Debug<br/>出力書式: <c>[Feature.LoupeCore] Setting: Source {OldValue} → {NewValue}</c><br/>
+    /// LogLevel: Debug<br/>出力書式: <c>[LoupeControl.UIBase] Setting: Source {OldValue} → {NewValue}</c><br/>
     /// 画像の型は UI ごとに異なるため、寸法の取り出しは各 UI が担う（書式は <see cref="LoupeLogFormat.DescribeImage"/> が単一所有する）。
     /// </remarks>
     public static void LogSourceChanged(this ILogger logger, string oldValue, string newValue)
         => logger.LogSettingChanged("Source", oldValue, newValue);
 
-    /// <summary>設定変更のログ（書式はコアの設定変更ログと同一に保つ）。</summary>
+    /// <summary>設定変更のログ（本文の書式はコアの設定変更ログと同一）。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値（整形済み）。</param>
     /// <param name="newValue">変更後の値（整形済み）。</param>
-    [LoggerMessage(LogLevel.Debug, "[Feature.LoupeCore] Setting: {Name} {OldValue} → {NewValue}")]
+    /// <remarks>接頭辞は定義している本層のプロジェクト名（<c>[LoupeControl.UIBase]</c>）とする（本文の書式はコアと揃える）。</remarks>
+    [LoggerMessage(LogLevel.Debug, "[LoupeControl.UIBase] Setting: {Name} {OldValue} → {NewValue}")]
     private static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
 
     /// <summary>ルーペ描画の例外エラーログ。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="exception">発生した例外。</param>
     /// <remarks>
-    /// LogLevel: Error<br/>出力書式: <c>[Feature.LoupeCore] Update exception</c>（例外スタックトレース付き）<br/>
+    /// LogLevel: Error<br/>出力書式: <c>[LoupeControl.UIBase] Update exception</c>（例外スタックトレース付き）<br/>
     /// 例外の記録は UI の描画パイプラインが行う（コアは描画 API を持たず例外を検知しない）。
     /// </remarks>
-    [LoggerMessage(LogLevel.Error, "[Feature.LoupeCore] Update exception")]
+    [LoggerMessage(LogLevel.Error, "[LoupeControl.UIBase] Update exception")]
     public static partial void LogUpdateError(this ILogger logger, Exception exception);
 }

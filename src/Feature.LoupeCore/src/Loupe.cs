@@ -73,6 +73,10 @@ public sealed partial class Loupe
         set => field = value.OrNullLogger();
     }
 
+    // ====================================================================
+    // 設定・環境値
+    // ====================================================================
+
     /// <summary>ルーペの設定（表示サイズ・拡大率・外観）。</summary>
     /// <value>設定の単一値。既定は <see cref="LoupeOptions.Default"/>。</value>
     /// <remarks>
@@ -152,6 +156,10 @@ public sealed partial class Loupe
     /// </remarks>
     public void SetCoordinateTransform(ICoordTransform? port) => _coordinatePort = port;
 
+    // ====================================================================
+    // 表示レイアウト
+    // ====================================================================
+
     /// <summary>親領域のサイズを通知して表示レイアウト（表示サイズ・表示位置）を解決する。</summary>
     /// <param name="parentSize">親領域のサイズ（DIP）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
     /// <returns>表示レイアウト（表示サイズと表示位置。拡大中心が未設定の場合は位置が null）。</returns>
@@ -174,6 +182,10 @@ public sealed partial class Loupe
         var centerDip = _coordinatePort.OrIdentity().Inverse(center);
         return new LoupeLayout(size, LoupePlacementGeometry.ComputePosition(size, parentSize, centerDip, PositionOffset));
     }
+
+    // ====================================================================
+    // 描画内容（1 フレーム分）
+    // ====================================================================
 
     /// <summary>現在の状態から描画 1 フレーム分の入力を生成する。</summary>
     /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP。通常は <see cref="ResolveLayout"/> の結果）。</param>
@@ -224,6 +236,10 @@ public sealed partial class Loupe
             coordLabelText,
             ResolveLayers(checkerTiles, magnifiedImage, crosshairRects, frameRects, coordLabelText));
     }
+
+    // ====================================================================
+    // 内部ヘルパー
+    // ====================================================================
 
     /// <summary>新しい値を保持する（同値なら何もしない）。</summary>
     /// <typeparam name="T">値の型。</typeparam>

@@ -122,9 +122,9 @@ if (coordinator.ShouldApply(generation)) { ApplyBitmap(bitmap); }
 
 | メンバー | 説明 |
 | --- | --- |
-| `LogSourceChanged(ILogger, EsBitmap? oldValue, EsBitmap? newValue)` | 拡大元画像の変更（Debug。`[Feature.LoupeCore] Setting: Source {OldValue} → {NewValue}`）。**同一インスタンスなら出力しない** |
+| `LogSourceChanged(ILogger, EsBitmap? oldValue, EsBitmap? newValue)` | 拡大元画像の変更（Debug。`[LoupeControl.UIBase] Setting: Source {OldValue} → {NewValue}`）。**同一インスタンスなら出力しない** |
 | `LogSourceChanged(ILogger, string oldValue, string newValue)` | 寸法を UI が整形して渡す経路（上記と同じ書式。書式は `LoupeLogFormat.DescribeImage` を使う） |
-| `LogUpdateError(ILogger, Exception)` | 描画の例外（Error。`[Feature.LoupeCore] Update exception`） |
+| `LogUpdateError(ILogger, Exception)` | 描画の例外（Error。`[LoupeControl.UIBase] Update exception`） |
 
 ```csharp
 logger.LogSourceChanged(oldBitmap, newBitmap);   // 別インスタンスなら出力する

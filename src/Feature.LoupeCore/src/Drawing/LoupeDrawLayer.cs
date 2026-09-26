@@ -13,19 +13,19 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// </remarks>
 public enum LoupeDrawLayer
 {
-    /// <summary>下地（ベース色）。透明の場合は描かない。</summary>
+    /// <summary>下地（ベース色）。常に含む（描画面を置き換えて前フレームの残像を残さない）。</summary>
     Background,
 
-    /// <summary>市松模様（透明色は描かない）。</summary>
+    /// <summary>市松模様（表示の設定が有効な場合のみ）。</summary>
     Checkerboard,
 
-    /// <summary>拡大画像（切り出せない場合は描かない）。</summary>
+    /// <summary>拡大画像（切り出し領域を解決できた場合のみ。拡大中心未設定の場合は含まない）。</summary>
     Image,
 
-    /// <summary>十字線（透明色は描かない）。</summary>
+    /// <summary>十字線（表示の設定が有効な場合のみ）。</summary>
     Crosshair,
 
-    /// <summary>外枠（透明色は描かない）。</summary>
+    /// <summary>外枠（表示の設定が有効な場合のみ）。</summary>
     Frame,
 
     /// <summary>テキスト（中心座標ラベル。テキストがある場合のみ。常に最上位）。</summary>

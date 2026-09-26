@@ -141,7 +141,7 @@ public class MarqueeLogMessageTests
         MarqueeLogMessage.LogPositionAfterUp(logger, 10, 20);
         MarqueeLogMessage.LogDragStart(logger, "Move", 10, 20);
         MarqueeLogMessage.LogKeyDown(logger, "Left", true);
-        MarqueeLogMessage.LogConfirmRequested(logger, "(10, 20, 30, 40)");
+        MarqueeLogMessage.LogConfirmRequested(logger, new EsRect(10, 20, 30, 40));
         MarqueeLogMessage.LogCancelRequested(logger);
         MarqueeLogMessage.LogSettingChanged(logger, "MinSelectionSize", "3", "5");
     }
