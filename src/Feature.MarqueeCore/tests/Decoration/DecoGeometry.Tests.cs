@@ -15,11 +15,11 @@ public class DecoGeometryTests
 {
     /// <summary>枠線が四辺（上下左右）の矩形で返ることを検証する。</summary>
     [Fact]
-    public void GetBorderRects_四辺の矩形を返す()
+    public void ComputeBorderRects_四辺の矩形を返す()
     {
         var rect = new EsRect(10, 20, 100, 50);
 
-        var result = DecoGeometry.GetBorderRects(rect, 2.0);
+        var result = DecoGeometry.ComputeBorderRects(rect, 2.0);
 
         Assert.Equal(4, result.Count);
         Assert.Equal(new EsRect(10, 20, 100, 2), result[0]);     // 上
@@ -30,22 +30,22 @@ public class DecoGeometryTests
 
     /// <summary>枠線の太さが 0.5 未満なら 0.5 に正規化されることを検証する。</summary>
     [Fact]
-    public void GetBorderRects_太さ05未満は05に正規化される()
+    public void ComputeBorderRects_太さ05未満は05に正規化される()
     {
         var rect = new EsRect(0, 0, 100, 50);
 
-        var result = DecoGeometry.GetBorderRects(rect, 0.1);
+        var result = DecoGeometry.ComputeBorderRects(rect, 0.1);
 
         Assert.Equal(0.5, result[0].Height);
     }
 
     /// <summary>高さより太い枠線でも負のサイズにならないことを検証する。</summary>
     [Fact]
-    public void GetBorderRects_高さより太い枠線でも負にならない()
+    public void ComputeBorderRects_高さより太い枠線でも負にならない()
     {
         var rect = new EsRect(0, 0, 10, 2);
 
-        var result = DecoGeometry.GetBorderRects(rect, 2.0);
+        var result = DecoGeometry.ComputeBorderRects(rect, 2.0);
 
         Assert.Equal(0, result[2].Height);
         Assert.Equal(0, result[3].Height);

@@ -390,7 +390,7 @@ OnPaintSurface(canvas, info)
    カーソル移動（nudge）の座標変換はこの非対称性を踏まえて実装する。
 4. **スナップショットはドラッグ状態の解除前に生成する**。`EndDrag` の後ではマーカー位置が固定コーナーを返すため、
    nudge 位置は解放処理の冒頭で計算する。
-5. **枠線は 4 辺の塗り（FILL）で描かれる**。コアの `DecoGeometry.GetBorderRects`（辺の計算は `EsRect.ComputeInnerEdges` が単一所有）が穴あけ矩形の内側に太 さ分の帯を 4 本返し、それを塗る（ストロークではないため、太さが半分外側へはみ出 さない）。
+5. **枠線は 4 辺の塗り（FILL）で描かれる**。コアの `DecoGeometry.ComputeBorderRects`（辺の計算は `EsRect.ComputeInnerEdges` が単一所有）が穴あけ矩形の内側に太 さ分の帯を 4 本返し、それを塗る（ストロークではないため、太さが半分外側へはみ出 さない）。
    描画テストの期待値はこの前提で書く。
 
 ## 未実装（今後の判断）

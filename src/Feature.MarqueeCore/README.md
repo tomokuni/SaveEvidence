@@ -39,7 +39,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | ルート | `Marquee` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値の保持、入力の通知、外部からの操作、描画内容の解決、効果の適用を行う |
 | `Contract/` | `IMarqueeEffects` | public | コアが要求する効果（フォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換）の適用先。UI 層が自 UI の操作へ接続する唯一の境界 |
 | `Contract/` | `MarqueeEffectsBase` | public abstract | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス。独自コントロールは必要な効果だけ override する（不要なメンバーの空実装を書かずに済む） |
-| ルート | `Marquee.DrawContent.cs`（`Marquee` の **partial**） | public | 1 フレーム分の**描画内容**（装飾・穴あけ矩形・ハンドル・始点マーカー・テキストの配置）を解決する（`MarqueeRenderRequest` → `MarqueeDrawContent`）。描くかどうかの判断（ハンドル非表示・選択なし・nudge 中・装飾の描画可否フラグ・穴あけ矩形なし）はすべて公開メソッド `ResolveContent` が持つ。穴あけ矩形と座標変換ポートは 1 フレームに 1 回だけ解決する |
+| ルート | `Marquee.DrawContent.cs`（`Marquee` の **partial**） | internal | 描画内容の**内部手順**（装飾・穴あけ矩形・ハンドル・始点マーカー・テキストの配置の解決）を持つ。公開の入口（`ResolveContent`）はファサード本体（`Marquee.cs`）が持つ。穴あけ矩形と座標変換ポートは 1 フレームに 1 回だけ解決する |
 | `Drawing/` | `MarqueeDrawContent` | public | 1 フレーム分の描画契約（`Decoration` / `InnerDecoration` / `HoleRect` / `Handles` / `Marker` / `SizeLabelText` / `CoordLabelText` / `Layers`）。UI は `Layers` の順に処理するだけ |
 | `Drawing/` | `MarqueeHandles` | public | ドラッグハンドルの描画契約（8 方向の矩形と枠線の太さ。位置はコアが解決済み） |
 | `Drawing/` | `MarqueeMarker` | public | 始点マーカー（十字線）の描画契約（中心・太さ・半幅） |
@@ -273,6 +273,7 @@ UI 層が使う共有値・計算:
 tests/
 ├── Marquee.Tests.cs                 # 公開ファサード（操作・効果の適用・設定の伝搬・描画内容の解決・通知の転送・確保量の固定）（36 件）
 ├── Marquee.DrawContent.Tests.cs     # 描画内容の解決（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・描画可否・層の順序）（50 件）
+├── Marquee.Limits.Tests.cs          # 数値パラメータの既定値と未設定時の解決規則（10 件）
 ├── Contract/                        # 効果の基底クラス（全メンバーが空実装であること・派生で必要なものだけを override できること）（3 件）
 ├── Decoration/                      # 装飾（暗転マスク・枠線・内側の塗り）（27 件）
 ├── Drawing/                         # フレーム全体の幾何（座標変換ポート・DIP 変換・穴あけ矩形）（13 件）
@@ -284,7 +285,7 @@ tests/
 
 **テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Marquee.cs` / `Marquee.DrawContent.cs`）のテストはルートに置きます。
 
-件数は `[Theory]` を展開したケース数（合計 235 件）です。
+件数は `[Theory]` を展開したケース数（合計 245 件）です。
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj

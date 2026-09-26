@@ -45,49 +45,6 @@ public sealed partial class Marquee
     /// </remarks>
     private static readonly IReadOnlyList<MarqueeDrawLayer>[] s_layers = CreateLayers();
 
-    /// <summary>描画入力から 1 フレーム分の描画内容（選択矩形・装飾・ラベルと描画順）を解決する。</summary>
-    /// <param name="request">描画入力（設定・状態と描画時に決まる値。<see cref="CreateRequest"/> の結果を渡す）。</param>
-    /// <returns>描画内容（描くものが無い項目は空・null。層の順序は <see cref="MarqueeDrawContent.Layers"/> が持つ）。</returns>
-    /// <remarks>
-    /// 判断（描くかどうか・位置・寸法・文言）はすべて本メソッドが単一所有するため、<br/>
-    /// UI 層は <see cref="MarqueeDrawContent.Layers"/> の順に各層を反映するだけでよい。<br/>
-    /// ラベル（サイズ・カーソル座標）は必ず最後の層であり、常に最上位に表示される。<br/>
-    /// テキストの実寸は描画 API 依存のため、コアは「どこへ何を描くか」だけを返し、実測と要素の配置は UI 層が行う。<br/>
-    /// <br/>
-    /// 処理フロー:<br/>
-    /// 1. 装飾（暗転マスク・穴あけ枠・内側の塗り）を解決する。<br/>
-    /// 2. 選択矩形そのもの（ハンドル・始点マーカー）を解決する。<br/>
-    /// 3. テキスト（サイズ・カーソル座標の文言と基準点）を解決する。<br/>
-    /// 4. 描く層だけを順序どおりに並べる（テキストは最後 = 最上位）。<br/>
-    /// <br/>
-    /// 描画順は <see cref="MarqueeDrawLayer"/> の宣言順ではなく<b>本メソッドの意図</b>で決める<br/>
-    /// （列挙に層を追加しても描画順が勝手に変わらないようにするため、明示的に組み立てる）。
-    /// </remarks>
-    public MarqueeDrawContent ResolveContent(in MarqueeRenderRequest request)
-    {
-        // 座標変換ポートは 1 フレームで 1 回だけ解決する（未指定時は倍率から等倍スケールを生成するため、各項目で解決すると生成と評価が重複する）
-        var port = MarqueeFrameGeometry.ResolvePort(request.Port, request.DomainToDipScaling);
-
-        // 穴あけ矩形も 1 回だけ解決する（外側の装飾・内側の装飾・サイズラベルが同じ矩形を使う）
-        var hole = MarqueeFrameGeometry.ResolveHoleRectDip(
-            request.DecoOptions.OuterHighlightRect, request.SelectionRect, port);
-
-        var handles = ResolveHandles(request, port);
-        var marker = ResolveMarker(request, port);
-        var sizeLabel = ResolveSizeLabelText(request, hole, port);
-        var coordLabel = ResolveCoordLabelText(request, port);
-
-        return new MarqueeDrawContent(
-            ResolveOuterDecoration(request, hole),
-            ResolveInnerDecoration(request, hole),
-            hole,
-            handles,
-            marker,
-            sizeLabel,
-            coordLabel,
-            ResolveLayers(handles, marker, sizeLabel, coordLabel));
-    }
-
     /// <summary>描く層だけを描画順に並べる。</summary>
     /// <param name="handles">ドラッグハンドル。null の場合は層を含めない。</param>
     /// <param name="marker">始点マーカー。null の場合は層を含めない。</param>
@@ -166,7 +123,7 @@ public sealed partial class Marquee
             : [];
 
         var borderRects = hole is { } holeRect && deco.ShowOuterBorder
-            ? DecoGeometry.GetBorderRects(holeRect, deco.OuterAppearance.BorderThickness)
+            ? DecoGeometry.ComputeBorderRects(holeRect, deco.OuterAppearance.BorderThickness)
             : [];
 
         return new OuterDecoFrame(overlayRegions, borderRects);
@@ -181,7 +138,7 @@ public sealed partial class Marquee
     /// 2. 塗りを描かない設定なら塗り矩形を生成しない。<br/>
     /// 3. 枠線を描かない設定なら枠線矩形（内側 4 辺）を生成しない。<br/>
     /// <br/>
-    /// 枠線矩形の計算は外側の装飾と共通（<see cref="DecoGeometry.GetBorderRects"/>）のため、<br/>
+    /// 枠線矩形の計算は外側の装飾と共通（<see cref="DecoGeometry.ComputeBorderRects"/>）のため、<br/>
     /// 外側の枠線と内側の枠線が同じ矩形へ重なる。<br/>
     /// 「描くかどうか」の解決は本メソッドが単一所有する（UI 層は値を持つ項目を反映するだけ）。
     /// </remarks>
@@ -196,7 +153,7 @@ public sealed partial class Marquee
 
         var fillRect = deco.ShowInnerFill ? holeRect : (EsRect?)null;
         var borderRects = deco.ShowInnerBorder
-            ? DecoGeometry.GetBorderRects(holeRect, deco.InnerAppearance.BorderThickness)
+            ? DecoGeometry.ComputeBorderRects(holeRect, deco.InnerAppearance.BorderThickness)
             : [];
 
         return new InnerDecoFrame(fillRect, borderRects);

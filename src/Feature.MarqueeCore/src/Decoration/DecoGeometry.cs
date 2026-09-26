@@ -26,7 +26,7 @@ internal static class DecoGeometry
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの外枠と同じ式）。<br/>
     /// 太さの下限のみ本メソッドが決める（選択枠は細い線でも視認できる必要がある）。
     /// </remarks>
-    public static IReadOnlyList<EsRect> GetBorderRects(EsRect rect, double thickness)
+    public static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)
         => rect.ComputeInnerEdges(Math.Max(BorderThicknessLowerBound, thickness));
 
     /// <summary>暗転オーバーレイを描画するかどうかを判定する。</summary>

@@ -96,7 +96,7 @@ stateDiagram-v2
 | `src/Marquee.cs`（ルート） | `Marquee` | public | ファサード。設定・環境値の保持、入力の通知、外部操作、描画内容の解決、描画実装の保持、効果の適用 |
 | `src/Interaction/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態 遷移の判断。通知と効果を返す |
 | `src/Interaction/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。**状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
-| `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 1 フレーム分の描画内容 の解決（装飾・穴あけ矩形・ハンドル・テキストの配置。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する） |
+| `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 描画内容の**内部手順**（装飾・穴あけ矩形・ハンドル・テキストの配置。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する）。公開の入口 `ResolveContent` は `Marquee.cs` が持つ |
 | `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | フレーム解決の入力（設定・状態・描画時に決まる値）。`Marquee.CreateRequest` が生成する |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は描画層の `MarqueePaint` が単一所有する） |
 | `src/Drawing/MarqueeDrawContent.cs` | `MarqueeDrawContent` | public | 描画契約（装飾・穴あけ矩形・ハンドル・マーカー・テキストの配置・層の順序） |

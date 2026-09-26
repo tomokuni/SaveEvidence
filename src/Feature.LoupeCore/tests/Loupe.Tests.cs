@@ -6,11 +6,12 @@ using EsUtil.Feature.LoupeCore.Drawing;
 
 namespace EsUtil.Feature.LoupeCore.Tests;
 
-/// <summary><see cref="Loupe"/>（公開ファサード）の単体テスト（表示レイアウト・描画入力・通知内容・設定）。</summary>
+/// <summary><see cref="Loupe"/>（公開ファサード）の単体テスト（表示レイアウト・描画入力・設定）。</summary>
 /// <remarks>
 /// UI 層とホストが使う唯一の窓口であるファサードの振る舞いを、UI フレームワークなしで検証する。<br/>
-/// 位置計算そのもの（純粋計算）は <see cref="LoupePositionTests"/> のテストが検証するため、<br/>
-/// 本テストは「設定からの解決」「ポートとオフセットの適用」「描画入力・通知内容の組み立て」に焦点を当てる。
+/// 位置計算そのもの（純粋計算）は <see cref="Placement.LoupePlacementGeometryTests"/> のテストが検証するため、<br/>
+/// 本テストは「設定からの解決」「ポートとオフセットの適用」「描画入力の組み立て」に焦点を当てる。<br/>
+/// 描画内容（層の一覧と順序・テキストの有無）は <see cref="Drawing.LoupeDrawContentTests"/> のテストが検証する。
 /// </remarks>
 public class LoupeTests
 {
@@ -247,52 +248,6 @@ public class LoupeTests
 
         Assert.Null(request.CaptureTopLeft);
         Assert.Equal(4, request.ZoomLevel);
-    }
-
-    [Fact]
-    public void ResolveContent_描く層は下地からテキストの順で返す()
-    {
-        var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
-        var content = loupe.ResolveContent(loupe.CreateRequest(160));
-
-        // 描画順はコアが単一所有する（UI 層は先頭から順に処理するだけ）
-        Assert.Equal(
-            [
-                LoupeDrawLayer.Background,
-                LoupeDrawLayer.Checkerboard,
-                LoupeDrawLayer.Image,
-                LoupeDrawLayer.Crosshair,
-                LoupeDrawLayer.Frame,
-                LoupeDrawLayer.Label,
-            ],
-            content.Layers);
-
-        // テキストの有無は HasText で判定できる（描く必要があるかどうかの判断はコアが持つ）
-        Assert.True(content.HasText);
-    }
-
-    [Fact]
-    public void ResolveContent_テキストが無ければ層に含まれない()
-    {
-        // 拡大中心が無ければ中心座標ラベルは表示されない
-        var loupe = new Loupe();
-        var content = loupe.ResolveContent(loupe.CreateRequest(160));
-
-        Assert.Null(content.CoordLabelText);
-        Assert.False(content.HasText);
-        Assert.DoesNotContain(LoupeDrawLayer.Label, content.Layers);
-    }
-
-    [Fact]
-    public void ResolveContent_層の一覧を共有する()
-    {
-        var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
-
-        var first = loupe.ResolveContent(loupe.CreateRequest(160));
-        var second = loupe.ResolveContent(loupe.CreateRequest(160));
-
-        // 層の順序は固定であり、描画のたびに一覧を組み立てない
-        Assert.Same(first.Layers, second.Layers);
     }
 
     /// <summary>拡大率が切り出しサイズの切り上げ（描画先によるクランプを含む）に影響されないことを検証する。</summary>
