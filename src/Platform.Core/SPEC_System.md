@@ -53,6 +53,7 @@ graph LR
 | `Geometry/EsSizeInt.cs` | UI フレームワーク非依存の整数サイズ（`EsSize` の整数版。`IsEmpty`） |
 | `Geometry/EsRectInt.cs` | UI フレームワーク非依存の整数矩形（`EsRect` の整数版。`Contains` / `Union` / `Center`） |
 | `Geometry/EsAxis.cs` | レイアウト計算で扱う軸（`X` / `Y`）。軸を `bool` で指定しないための列挙型 |
+| `Geometry/EsHorizontalAlign.cs` / `EsVerticalAlign.cs` | 対象を基準点の水平/垂直方向のどこへ合わせるか（左端 / 中央 / 右端、上端 / 中央 / 下端）。実寸を知らずに基準点の意味を指定するための列挙型 |
 | `EsPlatformHandle.cs` | UI フレームワーク非依存のネイティブウィンドウ識別子（座標・寸法ではないため `Geometry` に置かない） |
 | `Imaging/EsBitmap.cs` | 自前のピクセルバッファを所有するピクセルコンテナ（BGRA8888・Premul。外部パッケージに依存しない） |
 | `Imaging/ImageDrawMode.cs` | 画像を描画先の領域へ配置する方法（`Uniform` / `Fill`） |

@@ -44,8 +44,8 @@ public static class EsLabelLayout
         EsPoint point,
         EsSize areaSize,
         EsSize textSize,
-        EsLabelAlignX horizontal,
-        EsLabelAlignY vertical,
+        EsHorizontalAlign horizontal,
+        EsVerticalAlign vertical,
         double paddingX,
         double paddingY)
     {
@@ -54,15 +54,15 @@ public static class EsLabelLayout
 
         var x = horizontal switch
         {
-            EsLabelAlignX.Center => point.X - width / 2,
-            EsLabelAlignX.Right => point.X - width,
+            EsHorizontalAlign.Center => point.X - width / 2,
+            EsHorizontalAlign.Right => point.X - width,
             _ => point.X,
         };
 
         var y = vertical switch
         {
-            EsLabelAlignY.Middle => point.Y - height / 2,
-            EsLabelAlignY.Bottom => point.Y - height,
+            EsVerticalAlign.Middle => point.Y - height / 2,
+            EsVerticalAlign.Bottom => point.Y - height,
             _ => point.Y,
         };
 

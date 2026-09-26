@@ -85,8 +85,8 @@ public sealed partial class Loupe
         return new LoupeTextPlacement(
             center.Format(),
             new EsPoint(request.DisplaySize / 2, CoordLabelTopMargin),
-            EsLabelAlignX.Center,
-            EsLabelAlignY.Top,
+            EsHorizontalAlign.Center,
+            EsVerticalAlign.Top,
             default);
     }
 }

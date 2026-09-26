@@ -24,6 +24,6 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 public readonly record struct MarqueeTextPlacement(
     string Text,
     EsPoint Point,
-    EsLabelAlignX Horizontal,
-    EsLabelAlignY Vertical,
+    EsHorizontalAlign Horizontal,
+    EsVerticalAlign Vertical,
     EsSize ClampArea);

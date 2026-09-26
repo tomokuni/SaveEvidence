@@ -97,7 +97,7 @@ public class FadeMaskHostLabelRendererTests
     {
         using var target = TestHelper.CreateTarget(200, 160);
         var sizeLabel = new MarqueeTextPlacement(
-            "(10, 20), (20×20)", HoleTopLeft, EsLabelAlignX.Left, EsLabelAlignY.Top, default);
+            "(10, 20), (20×20)", HoleTopLeft, EsHorizontalAlign.Left, EsVerticalAlign.Top, default);
         var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80), sizeLabel);
 
         FadeMaskHostLabelRenderer.Draw(

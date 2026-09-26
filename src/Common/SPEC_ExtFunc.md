@@ -9,7 +9,7 @@
 | `IEsCanvas` | `public` | 任意（各 UI が自 UI の描画 API を適合させる契約） |
 | `IEsRectWalker<TSelf>` | `public` | 任意（`IEsCanvas.FillRects` へタイル列を渡す列挙子が実装する） |
 | `EsLabelFrame` / `EsLabelElement` | `public` | 任意（配置と要素の配置指示の値型） |
-| `EsLabelLayout` / `EsLabelAlignX` / `EsLabelAlignY` / `EsLabelMetrics` / `EsLabelDefaults` | `public` | 任意（体裁・アライン・既定値の単一所有） |
+| `EsLabelLayout` / `EsLabelMetrics` / `EsLabelDefaults` | `public` | 任意（体裁・既定値の単一所有） |
 
 本プロジェクトは UI フレームワークにも外部パッケージにも依存しないため、全型が `public` として公開されます。
 
@@ -73,15 +73,6 @@
 | `ComputeAlignedBox(point, areaSize, textSize, horizontal, vertical, paddingX, paddingY)` | 基準点がラベルのどこを指すか（アライン）を指定して背景矩形を求める。領域が確定している軸（0 超）は領域内へクランプする |
 | `ComputeOffsetTextOrigin(boxTopLeft, paddingX, paddingY)` | 背景の左上から文字の描画原点を求める |
 | `NextTop(top, lineHeight, paddingY)` | 縦積みの次の行の上端（背景の下端と次の行の上端が一致する） |
-
-## `EsLabelAlignX` / `EsLabelAlignY`（基準点のアライン）
-
-| 型 | 値 |
-| --- | --- |
-| `EsLabelAlignX` | `Left` / `Center` / `Right` |
-| `EsLabelAlignY` | `Top` / `Middle` / `Bottom` |
-
-**コアは幅・高さを知らずに位置を指定できます**（ラベルの大きさは実寸に依存するため）。文字を要素として置くか画像として描くかは UI 層の判断であり、本 enum はそのどちらでも共通の指定です。
 
 ## `EsLabelMetrics`（フォントサイズの安全域）
 

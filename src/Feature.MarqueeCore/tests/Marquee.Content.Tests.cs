@@ -181,8 +181,8 @@ public class MarqueeContentTests
         Assert.Equal("(40, 60)", label.Text);
         // 基準点はカーソル + オフセットであり、左端・上端に合わせる
         Assert.Equal(new EsPoint(48, 68), label.Point);
-        Assert.Equal(EsLabelAlignX.Left, label.Horizontal);
-        Assert.Equal(EsLabelAlignY.Top, label.Vertical);
+        Assert.Equal(EsHorizontalAlign.Left, label.Horizontal);
+        Assert.Equal(EsVerticalAlign.Top, label.Vertical);
         // クランプ領域は描画領域（はみ出しを領域内へ戻す）
         Assert.Equal(new EsSize(300, 300), label.ClampArea);
     }
@@ -212,8 +212,8 @@ public class MarqueeContentTests
         var label = content.SizeLabelText.Value;
         // 閉区間 +1 の DIP 矩形 (50, 50, 101, 81) の左上が基準点になる
         Assert.Equal(new EsPoint(50, 50), label.Point);
-        Assert.Equal(EsLabelAlignX.Left, label.Horizontal);
-        Assert.Equal(EsLabelAlignY.Top, label.Vertical);
+        Assert.Equal(EsHorizontalAlign.Left, label.Horizontal);
+        Assert.Equal(EsVerticalAlign.Top, label.Vertical);
         // クランプ領域は指定しない（描画領域へはみ出しても位置を動かさない）
         Assert.Equal(default, label.ClampArea);
         // 文言は矩形から自動生成される（書式はコアの内部に閉じる）

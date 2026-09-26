@@ -263,7 +263,7 @@ public sealed partial class Marquee
             : overrideText;
 
         return new MarqueeTextPlacement(
-            text, holeRect.TopLeft, EsLabelAlignX.Left, EsLabelAlignY.Top, default);
+            text, holeRect.TopLeft, EsHorizontalAlign.Left, EsVerticalAlign.Top, default);
     }
 
     /// <summary>サイズラベルの書式（文言）を生成する。</summary>
@@ -335,8 +335,8 @@ public sealed partial class Marquee
         return new MarqueeTextPlacement(
             request.MousePosition.Format(),
             new EsPoint(cursor.X + offset, cursor.Y + offset),
-            EsLabelAlignX.Left,
-            EsLabelAlignY.Top,
+            EsHorizontalAlign.Left,
+            EsVerticalAlign.Top,
             request.ClientSize);
     }
 }

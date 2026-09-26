@@ -53,7 +53,6 @@ graph LR
 | `Imaging/EsLabelFrame.cs` | `public readonly record struct` | 配置の値（背景矩形・文字の原点） |
 | `Imaging/EsLabelElement.cs` | `public readonly record struct` | UI 要素の配置指示（`Create` が写像を単一所有する） |
 | `Imaging/EsLabelLayout.cs` | `public static class` | 体裁（背景・文字の原点・アライン・行送り）の単一所有 |
-| `Imaging/EsLabelAlignX.cs` / `EsLabelAlignY.cs` | `public enum` | 基準点がラベルのどこを指すかの指定（水平: 左端/中央/右端、垂直: 上端/中央/下端） |
 | `Imaging/EsLabelMetrics.cs` | `public static class` | フォントサイズの安全域と補正 |
 | `Imaging/EsLabelDefaults.cs` | `public static class` | 既定の色とフォントサイズ |
 
@@ -103,18 +102,6 @@ classDiagram
     +ComputeOffsetTextOrigin(...)$ EsPoint
     +NextTop(...)$ double
   }
-  class EsLabelAlignX {
-    <<enum>>
-    Left
-    Center
-    Right
-  }
-  class EsLabelAlignY {
-    <<enum>>
-    Top
-    Middle
-    Bottom
-  }
   class EsLabelMetrics {
     <<static>>
     +double FontSizeMin
@@ -130,8 +117,6 @@ classDiagram
 
   IEsCanvas ..> IEsRectWalker : FillRects の引数として受ける
   EsLabelLayout ..> EsLabelFrame : 生成
-  EsLabelLayout ..> EsLabelAlignX : 使う
-  EsLabelLayout ..> EsLabelAlignY : 使う
   EsLabelElement ..> EsLabelFrame : 取り込む
 ```
 
@@ -163,7 +148,7 @@ sequenceDiagram
 | --- | --- |
 | 描画 API の抽象（描画の可変性） | `IEsCanvas`（本プロジェクト） |
 | ラベルの体裁（背景 = 実寸 + 内側余白×2・文字の原点・アライン・行送り） | `EsLabelLayout` |
-| ラベルの基準点がどこを指すかの指定 | `EsLabelAlignX` / `EsLabelAlignY` |
+| ラベルの基準点がどこを指すかの指定 | `EsHorizontalAlign` / `EsVerticalAlign`（`Platform.Core.Geometry`。ラベルに限らない汎用値） |
 | 配置と外観から要素の配置指示を組み立てる手順 | `EsLabelElement.Create` |
 | フォントサイズの安全域（6〜48）と補正 | `EsLabelMetrics` |
 | ラベルの既定の色・フォントサイズ | `EsLabelDefaults` |

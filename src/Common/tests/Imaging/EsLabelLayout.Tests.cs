@@ -16,14 +16,14 @@ public class EsLabelLayoutTests
         => Assert.Equal(4.0, EsLabelLayout.Padding);
 
     [Theory]
-    [InlineData(EsLabelAlignX.Left, 10)]
-    [InlineData(EsLabelAlignX.Center, -9)]
-    [InlineData(EsLabelAlignX.Right, -28)]
-    public void ComputeAlignedBox_水平の基準位置を合わせる(EsLabelAlignX horizontal, double expectedX)
+    [InlineData(EsHorizontalAlign.Left, 10)]
+    [InlineData(EsHorizontalAlign.Center, -9)]
+    [InlineData(EsHorizontalAlign.Right, -28)]
+    public void ComputeAlignedBox_水平の基準位置を合わせる(EsHorizontalAlign horizontal, double expectedX)
     {
         var box = EsLabelLayout.ComputeAlignedBox(
             new EsPoint(10, 20), new EsSize(0, 0), new EsSize(30, 8),
-            horizontal, EsLabelAlignY.Top, paddingX: 4, paddingY: 4);
+            horizontal, EsVerticalAlign.Top, paddingX: 4, paddingY: 4);
 
         Assert.Equal(expectedX, box.X);
         Assert.Equal(20, box.Y);
@@ -32,14 +32,14 @@ public class EsLabelLayoutTests
     }
 
     [Theory]
-    [InlineData(EsLabelAlignY.Top, 20)]
-    [InlineData(EsLabelAlignY.Middle, 12)]
-    [InlineData(EsLabelAlignY.Bottom, 4)]
-    public void ComputeAlignedBox_垂直の基準位置を合わせる(EsLabelAlignY vertical, double expectedY)
+    [InlineData(EsVerticalAlign.Top, 20)]
+    [InlineData(EsVerticalAlign.Middle, 12)]
+    [InlineData(EsVerticalAlign.Bottom, 4)]
+    public void ComputeAlignedBox_垂直の基準位置を合わせる(EsVerticalAlign vertical, double expectedY)
     {
         var box = EsLabelLayout.ComputeAlignedBox(
             new EsPoint(10, 20), new EsSize(0, 0), new EsSize(30, 8),
-            EsLabelAlignX.Left, vertical, paddingX: 4, paddingY: 4);
+            EsHorizontalAlign.Left, vertical, paddingX: 4, paddingY: 4);
 
         Assert.Equal(10, box.X);
         Assert.Equal(expectedY, box.Y);
@@ -51,7 +51,7 @@ public class EsLabelLayoutTests
         // ルーペの中心座標ラベル（領域の上端中央）の指定
         var box = EsLabelLayout.ComputeAlignedBox(
             new EsPoint(80, 2), new EsSize(0, 0), new EsSize(40, 14),
-            EsLabelAlignX.Center, EsLabelAlignY.Top, paddingX: 4, paddingY: 1);
+            EsHorizontalAlign.Center, EsVerticalAlign.Top, paddingX: 4, paddingY: 1);
 
         Assert.Equal(56, box.X);
         Assert.Equal(2, box.Y);
@@ -64,7 +64,7 @@ public class EsLabelLayoutTests
     {
         var box = EsLabelLayout.ComputeAlignedBox(
             new EsPoint(490, 495), new EsSize(500, 500), new EsSize(32, 14),
-            EsLabelAlignX.Left, EsLabelAlignY.Top, paddingX: 4, paddingY: 1);
+            EsHorizontalAlign.Left, EsVerticalAlign.Top, paddingX: 4, paddingY: 1);
 
         Assert.Equal(460, box.X);
         Assert.Equal(484, box.Y);
@@ -75,7 +75,7 @@ public class EsLabelLayoutTests
     {
         var box = EsLabelLayout.ComputeAlignedBox(
             new EsPoint(10, 20), new EsSize(30, 12), new EsSize(32, 14),
-            EsLabelAlignX.Left, EsLabelAlignY.Top, paddingX: 4, paddingY: 1);
+            EsHorizontalAlign.Left, EsVerticalAlign.Top, paddingX: 4, paddingY: 1);
 
         Assert.Equal(0, box.X);
         Assert.Equal(0, box.Y);
@@ -89,7 +89,7 @@ public class EsLabelLayoutTests
     {
         var box = EsLabelLayout.ComputeAlignedBox(
             new EsPoint(10, 20), new EsSize(areaWidth, areaHeight), new EsSize(32, 14),
-            EsLabelAlignX.Left, EsLabelAlignY.Top, paddingX: 4, paddingY: 1);
+            EsHorizontalAlign.Left, EsVerticalAlign.Top, paddingX: 4, paddingY: 1);
 
         Assert.Equal(10, box.X);
         Assert.Equal(20, box.Y);
@@ -111,7 +111,7 @@ public class EsLabelLayoutTests
         var textSize = new EsSize(30, 8);
 
         var box = EsLabelLayout.ComputeAlignedBox(
-            anchor, new EsSize(0, 0), textSize, EsLabelAlignX.Left, EsLabelAlignY.Top, paddingX: 4, paddingY: 2);
+            anchor, new EsSize(0, 0), textSize, EsHorizontalAlign.Left, EsVerticalAlign.Top, paddingX: 4, paddingY: 2);
         var origin = EsLabelLayout.ComputeOffsetTextOrigin(box.TopLeft, paddingX: 4, paddingY: 2);
 
         // 背景の四方の余白が等しく、文字が背景の右端・下端へ接しない

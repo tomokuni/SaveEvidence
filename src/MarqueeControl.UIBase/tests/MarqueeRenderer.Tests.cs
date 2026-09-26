@@ -172,7 +172,7 @@ public class MarqueeRendererTests
     {
         using var target = TestHelper.CreateTarget(120, 60);
         var content = CreateContent(
-            sizeLabel: new MarqueeTextPlacement("W", new EsPoint(10, 10), EsLabelAlignX.Left, EsLabelAlignY.Top, default));
+            sizeLabel: new MarqueeTextPlacement("W", new EsPoint(10, 10), EsHorizontalAlign.Left, EsVerticalAlign.Top, default));
 
         s_renderer.DrawShapes(target.Canvas, content);
 

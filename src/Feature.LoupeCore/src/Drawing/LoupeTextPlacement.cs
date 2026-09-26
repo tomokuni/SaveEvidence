@@ -22,6 +22,6 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 public readonly record struct LoupeTextPlacement(
     string Text,
     EsPoint Point,
-    EsLabelAlignX Horizontal,
-    EsLabelAlignY Vertical,
+    EsHorizontalAlign Horizontal,
+    EsVerticalAlign Vertical,
     EsSize ClampArea);

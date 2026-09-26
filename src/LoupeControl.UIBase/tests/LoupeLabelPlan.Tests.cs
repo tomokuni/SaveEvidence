@@ -21,7 +21,7 @@ public class LoupeLabelPlanTests
     /// <param name="text">文言。</param>
     /// <returns>テキスト配置。</returns>
     private static LoupeTextPlacement CreateCoordLabel(string text = "(50, 60)")
-        => new(text, new EsPoint(80, 2), EsLabelAlignX.Center, EsLabelAlignY.Top, default);
+        => new(text, new EsPoint(80, 2), EsHorizontalAlign.Center, EsVerticalAlign.Top, default);
 
     /// <summary>テスト用の描画に使う設定を生成する。</summary>
     /// <returns>描画に使う設定。</returns>

@@ -44,7 +44,7 @@ public static class MarqueeHostLabelRenderer
         var textSize = canvas.MeasureText(text, fontSize);
         var textOrigin = EsLabelLayout.ComputeOffsetTextOrigin(anchor, padding, padding);
         var background = EsLabelLayout.ComputeAlignedBox(
-            anchor, default, textSize, EsLabelAlignX.Left, EsLabelAlignY.Top, padding, padding);
+            anchor, default, textSize, EsHorizontalAlign.Left, EsVerticalAlign.Top, padding, padding);
 
         canvas.DrawLabel(background, backgroundColor, text, textOrigin, fontSize, textColor, cornerRadius: 0);
     }

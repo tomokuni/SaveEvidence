@@ -19,8 +19,7 @@
 | `Imaging.IEsCanvas` | 描画内容を描画面へ写す**即時描画ポート**（UI 非依存）。コア側の描画層は本ポートだけを呼び、各 UI が自 UI の描画 API を適合させる（Avalonia は `AvaloniaCanvas`、Skia は `Platform.Skia` の `SkiaEsCanvas`） |
 | `Imaging.IEsRectWalker<TSelf>` | 矩形の列を確保なしで走査する列挙子（構造体）が実装する契約。`IEsCanvas.FillRects` が受け取る列挙子の型であり、ボックス化もリスト確保もせずにタイル列を渡すために使う |
 | `Imaging.EsLabelFrame` | ラベル配置の値（背景矩形と文字の描画原点）。算出は `EsLabelLayout` が単一所有する |
-| `Imaging.EsLabelLayout` | ラベルの体裁（背景 = 文字の実寸 + 内側余白×2・文字の原点・**基準点のアライン**・行送り）の**単一所有** |
-| `Imaging.EsLabelAlignX` / `EsLabelAlignY` | 基準点がラベルのどこを指すかの指定（水平: 左端 / 中央 / 右端、垂直: 上端 / 中央 / 下端）。コアは幅・高さを知らずに配置位置を指定できる |
+| `Imaging.EsLabelLayout` | ラベルの体裁（背景 = 文字の実寸 + 内側余白×2・文字の原点・**基準点のアライン**・行送り）の**単一所有**（アラインの指定は `Platform.Core.Geometry` の `EsHorizontalAlign` / `EsVerticalAlign`） |
 | `Imaging.EsLabelElement` | UI がテキスト要素を配置するための写像結果（背景矩形・文字原点・文言・フォントサイズ・色・角丸） |
 | `Imaging.EsLabelMetrics` | ラベルのフォントサイズの安全域（6〜48）と補正 |
 | `Imaging.EsLabelDefaults` | ラベルの既定の色（白 / 黒 60%）とフォントサイズ |
@@ -52,7 +51,7 @@ var size = canvas.MeasureText("Hello", 12.0);     // 実寸は描画 API でし�
 // ラベルの体裁（コアは位置だけを決め、実寸の反映は UI 層が行う）
 var textSize = canvas.MeasureText("Hello", 12.0);
 var box = EsLabelLayout.ComputeAlignedBox(
-    anchor, areaSize, textSize, EsLabelAlignX.Left, EsLabelAlignY.Top, EsLabelLayout.Padding, EsLabelLayout.Padding);
+    anchor, areaSize, textSize, EsHorizontalAlign.Left, EsVerticalAlign.Top, EsLabelLayout.Padding, EsLabelLayout.Padding);
 var origin = EsLabelLayout.ComputeOffsetTextOrigin(box.TopLeft, EsLabelLayout.Padding, EsLabelLayout.Padding);
 
 // 要素の配置指示（UI は要素を置くか画像として描くかを選ぶ）
