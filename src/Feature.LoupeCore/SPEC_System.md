@@ -36,10 +36,13 @@ graph LR
 
 | ファイル | 内容 |
 | --- | --- |
-| `Loupe.cs`（ルート） | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、通知内容の解決（`ResolveNotification`）。`LoupeLayout` / `LoupeRenderNotification` の値型も本ファイルが所有する |
-| `Drawing/LoupeDrawContent.cs` | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・拡大画像の切り出しと描画の矩形（`LoupeMagnifiedImage`）・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
+| `Loupe.cs`（ルート） | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、通知内容の解決（`ResolveNotification`） |
+| `LoupeLayout.cs`（ルート） | 表示レイアウトの値（表示サイズ + 表示位置。配置しない場合は位置が null） |
+| `LoupeRenderNotification.cs`（ルート） | 描画完了通知の値（切り出し左上・スケール） |
+| `Drawing/LoupeDrawContent.cs` | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・拡大画像の幾何・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
+| `Drawing/LoupeMagnifiedImage.cs` | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。描画内容の一部 |
 | `Drawing/LoupeCheckerTiles.cs` | 市松模様の暗色タイルの矩形を**リストを確保せずに列挙する構造体**（描画内容の一部。`foreach` で列挙でき、描画ポートの列挙子への適合は描画層が行う） |
-| `Contract/` | 描画の契約（`ILoupeRenderer`）は **UI 側の共有層（`LoupeControl.UIBase`）が所有します**（本プロジェクトの `Contract/` フォルダは削除しました） |
+| （本プロジェクトには置かない） | 描画の契約（`ILoupeRenderer`）と描画手順の基底は **UI 側の共有層（`LoupeControl.UIBase`）が所有します**（本コアは描画 API も描画ポートも持たない） |
 | `Setting/LoupeOptions.cs` | ルーペの設定（表示サイズ・拡大率・寸法）の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`Default` |
 | `Setting/LoupeMetrics.cs` | ルーペの寸法 2 項目（市松模様のタイルサイズ・外枠の太さ）と中心座標ラベルの表示可否の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`ShouldShowCoordLabel`。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
 | `Loupe.Limits.cs`（ルート） | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ（`Loupe` の**入れ子**。UI がプロパティ登録に使う） |

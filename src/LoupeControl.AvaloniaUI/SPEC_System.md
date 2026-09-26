@@ -115,7 +115,7 @@ flowchart TB
         Coerce["Loupe.Limits<br/>ファサードの入れ子（数値スキーマ）"]
         Content["LoupeDrawContent<br/>public readonly record struct<br/>（1 フレーム分の描画内容：矩形・タイル・層）"]
         Lay["LoupeLabelPlan<br/>LoupeControl.UIBase<br/>（実寸 → ラベル配置の写像）"]
-        Pos["Loupe（公開ファサード）<br/>public sealed class<br/>Loupe.cs / LoupeLayout / LoupeRenderNotification / LoupeDrawContent"]
+        Pos["Loupe（公開ファサード）<br/>public sealed class（Loupe.cs）<br/>値型 LoupeLayout / LoupeRenderNotification と<br/>描画内容 LoupeDrawContent を解決する"]
         Args["Loupe / LoupeRenderRequest<br/>公開ファサード + 描画入力<br/>（内部の配置・サイズ計算はファサードが持つ）"]
         Log["LoupeLogMessage<br/>public static partial class"]
     end

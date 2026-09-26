@@ -8,27 +8,6 @@ using EsUtil.Feature.LoupeCore.Drawing;
 
 namespace EsUtil.Feature.LoupeCore;
 
-/// <summary>ルーペの表示レイアウト（DIP。表示サイズと表示位置）。</summary>
-/// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。親領域の最小辺へクランプ済み）。</param>
-/// <param name="Position">ルーペの表示位置（左上・親領域の DIP 座標）。配置できない場合は null。</param>
-/// <remarks>
-/// <see cref="Position"/> が null になるのは、拡大中心が未設定の場合である<br/>
-/// （「配置しない」の判断をコアが単一所有し、UI 層はセルフサイズの反映だけを行う）。<br/>
-/// 配置をホストが行う UI では <see cref="Position"/> をそのまま配置に使う。<br/>
-/// <b><see cref="DisplaySize"/> は整数化しない</b>: 要素のサイズ（幅・高さ）と描画入力は同じ値でなければならず、<br/>
-/// 途中で切り捨てると同じ表示サイズを求める 2 経路が最大 1 DIP ずれる（描画ビットマップと要素の大きさが食い違う）。
-/// </remarks>
-public readonly record struct LoupeLayout(double DisplaySize, EsPoint? Position);
-
-/// <summary>ルーペの描画完了時に通知する表示情報（UI 層が描画に必要とする値）。</summary>
-/// <param name="CaptureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null。</param>
-/// <param name="Scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値）。</param>
-/// <remarks>
-/// UI 層は本値をホストの通知へ写す（描く層とその順序は描画内容（<see cref="LoupeDrawContent"/>）が持つ）。<br/>
-/// 切り出し領域・スケールは <see cref="Loupe.ResolveNotification"/> が単一所有する。
-/// </remarks>
-public readonly record struct LoupeRenderNotification(EsPoint? CaptureTopLeft, double Scale);
-
 /// <summary>Loupe（拡大鏡）の操作を UI 層・ホストへ提供するファサード。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: Facade（表示レイアウトの解決・描画入力の生成・通知内容の解決・設定を 1 つの窓口へ集約する）。<br/>

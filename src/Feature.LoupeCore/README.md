@@ -14,17 +14,21 @@
 
 ## 収録する型
 
-ルート（`src/`）に置くのは**ファサード本体とその partial**（`Loupe.cs` / `Loupe.Position.cs` / `Loupe.DrawContent.cs` / `Loupe.Limits.cs`）です。それ以外は用途別のフォルダへまとめます。
-**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.LoupeCore`。`Contract` / `Drawing` / `Setting` / `Logging` / `Checkerboard` / `Decoration` / `Imaging` は `EsUtil.Feature.LoupeCore.<フォルダ名>`）。公開面も複数のフォルダに分かれるため、利用者は用途に応じて `using` を追加します。
+ルート（`src/`）に置くのは**ファサード本体とその partial**（`Loupe.cs` / `Loupe.Position.cs` / `Loupe.DrawContent.cs` / `Loupe.Limits.cs`）と、**公開値型**（`LoupeLayout` / `LoupeRenderNotification`）です。それ以外は用途別のフォルダへまとめます。
+**1 ファイル 1 型**とします（複数の型を 1 ファイルへ含めない。`partial` による分割は可）。
+**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.LoupeCore`。`Drawing` / `Setting` / `Logging` / `Checkerboard` / `Decoration` は `EsUtil.Feature.LoupeCore.<フォルダ名>`）。公開面も複数のフォルダに分かれるため、利用者は用途に応じて `using` を追加します。
 
 | フォルダ | 型 | 責務 |
 | --- | --- | --- |
 | ルート | `Loupe` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、描画完了通知の内容解決（`ResolveNotification`）、座標変換ポートの設定（`SetCoordinateTransform`） |
+| ルート | `LoupeLayout` | 表示レイアウトの値（表示サイズと表示位置。配置しない場合は位置が null） |
+| ルート | `LoupeRenderNotification` | 描画完了通知の値（切り出し領域の左上とスケール） |
 | ルート | `Loupe.Limits`（`Loupe` の入れ子） | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ。**UI がプロパティの既定値と coerce を登録するときに参照する**ためファサードの入れ子として公開する |
-| `Contract/` | `ILoupeRenderer` / `LoupeRendererBase` | 描画の契約と描画手順の基底は **UI 側の共有層（`LoupeControl.UIBase`）が所有します**（本コアは描画 API も描画ポートも持たない） |
+| （本コアには置かない） | `ILoupeRenderer` / `LoupeRendererBase` | 描画の契約と描画手順の基底は **UI 側の共有層（`LoupeControl.UIBase`）が所有します**（本コアは描画 API も描画ポートも持たない） |
 | `Contract/` | `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルはテキストがある場合のみ末尾 = 常に最上位） |
 | `Drawing/` | `LoupeRenderRequest` | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層は自 UI の公開プロパティから組み立てるだけで、単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を持たない。**換算済みの寸法**（`CheckerSizePixels` / `FrameWidthPixels`）も含む |
-| `Drawing/` | `LoupeDrawContent` | **1 フレーム分の描画内容**（描画面の矩形・市松模様のタイル列挙子・十字線の矩形・円枠の矩形・**層の順序**）。描画層は本値を写すだけで計算を持たない |
+| `Drawing/` | `LoupeDrawContent` | **1 フレーム分の描画内容**（描画面の矩形・市松模様のタイル列挙子・十字線の矩形・円枠の矩形・拡大画像の幾何・**層の順序**）。描画層は本値を写すだけで計算を持たない |
+| `Drawing/` | `LoupeMagnifiedImage` | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。描画内容の一部 |
 | `Drawing/` | `LoupeCheckerTiles` | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部）。列挙子で渡し、描画のたびのヒープ確保をゼロにする |
 | `Setting/` | `LoupeOptions` | ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値として所有。既定値・生成時の補正を持つ（設定経路によらず範囲内の値だけが保持される） |
 | `Setting/` | `LoupeMetrics` | ルーペの**寸法**（市松タイル・円枠の太さ）と中心座標ラベルの表示可否の単一所有。ラベル表示の判定（`ShouldShowCoordLabel`）を持つ。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
@@ -108,7 +112,7 @@ dotnet build src/Feature.LoupeCore/src/Feature.LoupeCore.csproj
 
 ## テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます（**合計 170 件**。`[Theory]` は展開後のケース数）。
+`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます（**合計 157 件**。`[Theory]` は展開後のケース数）。
 
 ```powershell
 dotnet test src/Feature.LoupeCore/tests/Feature.LoupeCore.Tests.csproj

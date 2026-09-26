@@ -4,28 +4,6 @@ using EsUtil.Feature.MarqueeCore.Decoration;
 
 namespace EsUtil.Feature.MarqueeCore.Drawing;
 
-/// <summary>ドラッグハンドルの描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
-/// <param name="Rects">ハンドルの矩形（DIP。ハンドル 8 方向の位置と大きさをコアが解決済み）。</param>
-/// <param name="BorderThickness">ハンドル枠の線の太さ（DIP）。</param>
-/// <remarks>
-/// ハンドルの中心位置（8 方向）と一辺サイズの適用は <see cref="Marquee.ResolveFrame"/> が単一所有するため、<br/>
-/// 描画側は本値を渡して描くだけとする（位置を描画層が計算すると、ハンドルのヒットテストと同じ式が 2 箇所になる）。<br/>
-/// <b>色は含まない</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c>）が単一所有する。
-/// </remarks>
-public readonly record struct MarqueeHandles(
-    IReadOnlyList<EsRect> Rects,
-    double BorderThickness);
-
-/// <summary>始点マーカー（十字線）の描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
-/// <param name="Center">十字線の中心（DIP）。</param>
-/// <param name="Thickness">十字線の太さ（DIP）。</param>
-/// <param name="Size">十字線の半幅（DIP）。</param>
-/// <remarks><b>色は含まない</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c>）が単一所有する。</remarks>
-public readonly record struct MarqueeMarker(
-    EsPoint Center,
-    double Thickness,
-    double Size);
-
 /// <summary>選択矩形コントロールの 1 フレーム分の描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
 /// <param name="Decoration">選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・枠線）。描くものが無い場合は各項目が空。</param>
 /// <param name="InnerDecoration">穴あけ矩形の内側に描く装飾（塗り・内枠）。描くものが無い場合は各項目が空。</param>
