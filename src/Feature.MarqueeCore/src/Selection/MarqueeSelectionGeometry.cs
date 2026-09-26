@@ -24,7 +24,7 @@ internal static class MarqueeSelectionGeometry
     /// 列挙順は <see cref="HitTarget"/> の宣言順。描画層は本一覧を走査してハンドルを描く（ハンドル一覧の単一所有）。<br/>
     /// 読み取り専用の一覧として公開する（共有の一覧を呼び出し側が書き換えない）。
     /// </remarks>
-    public static IReadOnlyList<HitTarget> DirectionalHandles { get; } =
+    internal static IReadOnlyList<HitTarget> DirectionalHandles { get; } =
         [.. Enum.GetValues<HitTarget>().Where(static h => h is not (HitTarget.None or HitTarget.Move))];
 
     /// <summary>ハンドル種別をカーソル形状の種別へ変換する。</summary>
@@ -63,7 +63,7 @@ internal static class MarqueeSelectionGeometry
     /// ハンドル位置はヒットテスト・nudge のカーソル追従先・描画（ハンドル矩形の中心）で共通利用する（DRY 原則）。<br/>
     /// 描画側は本メソッドからハンドル中心位置を取得し、ハンドルサイズ分を展開して描画する。<br/>
     /// </remarks>
-    public static EsPoint GetHandlePosition(EsRect rect, HitTarget handle) => handle switch
+    internal static EsPoint GetHandlePosition(EsRect rect, HitTarget handle) => handle switch
     {
         HitTarget.TopLeft => rect.TopLeft,
         HitTarget.TopCenter => new EsPoint(rect.Center.X, rect.Y),

@@ -20,5 +20,5 @@ internal static class LoupeCheckerboard
     /// 交互パターン（<c>(col + row)</c> が奇数なら暗色）を判定する。<br/>
     /// 明色で全面を塗った後に暗色のタイルのみを描くことで、描画回数を半減できる。
     /// </remarks>
-    public static bool IsDarkTile(int col, int row) => (col + row) % 2 == 1;
+    internal static bool IsDarkTile(int col, int row) => (col + row) % 2 == 1;
 }

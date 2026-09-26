@@ -145,10 +145,13 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 | メンバー | 型 / 値 | 説明 |
 | --- | --- | --- |
 | `Center` | `EsPoint?` | 拡大中心（ドメイン座標 = 元画像ピクセル座標）。null の場合は市松模様のみを描画する |
+| `DisplaySize` | `double` | ルーペの一辺の表示サイズ（DIP。ラベルの位置の基準であり、物理ピクセルサイズの換算元） |
 | `PixelSize` | `int` | ルーペの一辺のサイズ（物理ピクセル。表示サイズ × `DipToDeviceScaling` を描画先でクランプ済み） |
 | `ZoomLevel` | `int` | 拡大率（1〜64。設定 `Options.ZoomLevel` の値。描画完了通知のスケールにも使う） |
 | `Options` | `LoupeOptions` | ルーペの設定（拡大率・寸法）。**色は `LoupePaint`（描画層）が単一所有する** |
-| `DomainToDipScaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数 |
+| `DipToDeviceScaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数 |
+| `CheckerSizePixels` | `int` | 市松模様の 1 タイルの一辺（物理ピクセル。換算済み。0 は市松模様を描かない） |
+| `FrameWidthPixels` | `int` | 外枠の太さ（物理ピクセル。換算済み。0 は外枠を描かない） |
 | `SurfaceBounds` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。下地・市松模様を全面へ描くために契約が単一所有する（UI 層は矩形を組み立てない） |
 
 | メソッド | 説明 |

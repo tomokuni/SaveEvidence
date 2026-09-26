@@ -17,32 +17,32 @@ namespace EsUtil.Feature.MarqueeCore.Interaction;
 internal readonly record struct MarqueeFeedback
 {
     /// <summary>入力が処理されたかどうか（UI 層は自 UI の「処理済み」フラグへ設定する）。</summary>
-    public bool Handled { get; init; }
+    internal bool Handled { get; init; }
 
     /// <summary>再描画が必要かどうか。</summary>
-    public bool Redraw { get; init; }
+    internal bool Redraw { get; init; }
 
     /// <summary>フォーカスを取得するかどうか。</summary>
-    public bool RequestFocus { get; init; }
+    internal bool RequestFocus { get; init; }
 
     /// <summary>ポインターキャプチャの操作（なし・取得・解放）。</summary>
     /// <remarks>
     /// キャプチャを明示的に行う必要がある UI（ポインターがコントロール外へ出てもドラッグを継続したい実装）が使用する。<br/>
     /// ポインターを暗黙にキャプチャする UI では無視してよい（使用しない場合は常に <see cref="MarqueeCaptureAction.None"/> として扱える）。
     /// </remarks>
-    public MarqueeCaptureAction Capture { get; init; }
+    internal MarqueeCaptureAction Capture { get; init; }
 
     /// <summary>カーソル形状を更新するかどうか。</summary>
-    public bool UpdateCursorShape { get; init; }
+    internal bool UpdateCursorShape { get; init; }
 
     /// <summary><see cref="UpdateCursorShape"/> が true のときのカーソル形状の種別（UI 層が自 UI のカーソル型へ写像する）。</summary>
-    public MarqueeCursorKind CursorKind { get; init; }
+    internal MarqueeCursorKind CursorKind { get; init; }
 
     /// <summary>要求するカーソル操作。</summary>
-    public MarqueeCursorAction Cursor { get; init; }
+    internal MarqueeCursorAction Cursor { get; init; }
 
     /// <summary><see cref="MarqueeCursorAction.MoveTo"/> の移動先（ドメイン座標）。</summary>
-    public EsPoint CursorDomainPosition { get; init; }
+    internal EsPoint CursorDomainPosition { get; init; }
 
     /// <summary>要求されたカーソル操作を適用する。</summary>
     /// <param name="cursor">カーソルサービス。</param>
@@ -51,7 +51,7 @@ internal readonly record struct MarqueeFeedback
     /// 適用順は「移動 → 非表示 → 再表示」に固定する（nudge の終了では移動してから再表示する必要がある）。<br/>
     /// 画面座標の変換のみ UI 層に委ね、それ以外（どの操作をどの順で行うか）はコアが単一所有する。
     /// </remarks>
-    public void ApplyCursor(ICursorService cursor, IMarqueeEffects effects)
+    internal void ApplyCursor(ICursorService cursor, IMarqueeEffects effects)
     {
         if (Cursor.HasFlag(MarqueeCursorAction.MoveTo))
         {
@@ -76,7 +76,7 @@ internal readonly record struct MarqueeFeedback
     /// どの効果をどの順で適用するかはコアが単一所有し、UI 層は自 UI の操作へ接続するだけにする。<br/>
     /// 効果の適用先をデリゲートで受け取らない（入力イベントのたびにデリゲートを生成しない）。
     /// </remarks>
-    public void ApplyVisual(IMarqueeEffects effects)
+    internal void ApplyVisual(IMarqueeEffects effects)
     {
         if (RequestFocus)
         {

@@ -22,7 +22,7 @@ internal static class LoupeMetricsScaler
     /// <param name="scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
     /// <returns>タイルサイズ（物理ピクセル。切り上げ・最低 1）。</returns>
     /// <remarks>タイルサイズの安全域への補正は <see cref="LoupeOptions"/>（生成時）が単一所有する。</remarks>
-    public static int ScaleCheckerSize(int checkerSize, double scaling)
+    internal static int ScaleCheckerSize(int checkerSize, double scaling)
         => DpiScaler.ScaleToPixel(checkerSize, scaling);
 
     /// <summary>外枠の太さを物理ピクセルへ換算する。</summary>
@@ -30,6 +30,6 @@ internal static class LoupeMetricsScaler
     /// <param name="scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
     /// <returns>外枠の太さ（物理ピクセル。切り上げ・最低 1）。</returns>
     /// <remarks>外枠の太さの安全域への補正は <see cref="LoupeOptions"/>（生成時）が単一所有する。</remarks>
-    public static int ScaleFrameWidth(int frameWidth, double scaling)
+    internal static int ScaleFrameWidth(int frameWidth, double scaling)
         => DpiScaler.ScaleToPixel(frameWidth, scaling);
 }

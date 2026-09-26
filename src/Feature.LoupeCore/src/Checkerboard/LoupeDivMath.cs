@@ -19,5 +19,5 @@ internal static class LoupeDivMath
     /// 切り捨てると端の区画が失われ、市松模様のタイルや切り出し領域の右端・下端が埋まらない。<br/>
     /// 除数は 1 以上を前提とする（0 を渡すと <see cref="double"/> の除算が無限大になる）。
     /// </remarks>
-    public static int CeilDiv(int value, int divisor) => (int)Math.Ceiling((double)value / divisor);
+    internal static int CeilDiv(int value, int divisor) => (int)Math.Ceiling((double)value / divisor);
 }

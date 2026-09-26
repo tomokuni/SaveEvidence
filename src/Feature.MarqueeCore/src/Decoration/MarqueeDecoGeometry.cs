@@ -23,7 +23,7 @@ internal static class MarqueeDecoGeometry
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの外枠と同じ式）。<br/>
     /// 太さの補正は装飾の外観（<c>OuterDecoAppearance</c> / <c>InnerDecoAppearance</c>）の生成時に適用される。
     /// </remarks>
-    public static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)
+    internal static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)
         => rect.ComputeInnerEdges(thickness);
 
     /// <summary>暗転オーバーレイを描画するかどうかを判定する。</summary>
@@ -34,7 +34,7 @@ internal static class MarqueeDecoGeometry
     /// 穴あけ矩形がある場合、または全面暗転表示が有効な場合は描画する。<br/>
     /// 穴あけ矩形がある場合の暗転は「クライアント矩形 − 穴あけ矩形」の 4 領域で表現する（穴あけ矩形を除いた帯状の矩形）。
     /// </remarks>
-    public static bool ShouldDrawOverlay(EsRect? holeRect, bool showFullOverlay)
+    internal static bool ShouldDrawOverlay(EsRect? holeRect, bool showFullOverlay)
         => holeRect.HasValue || showFullOverlay;
 
     /// <summary>描画領域から穴あけ矩形を除いた暗転領域（4 帯）を計算する。</summary>
@@ -46,7 +46,7 @@ internal static class MarqueeDecoGeometry
     /// 親座標を混ぜるとマスクが原点分ずれる。原点を持たない型で受けることで取り違えを防ぐ）。<br/>
     /// 穴あけ矩形が完全に描画領域の外の場合は全面を返す（描画漏れを防ぐ）。
     /// </remarks>
-    public static IReadOnlyList<EsRect> ComputeOverlayRegions(EsSize clientSize, EsRect? hole)
+    internal static IReadOnlyList<EsRect> ComputeOverlayRegions(EsSize clientSize, EsRect? hole)
     {
         var full = new EsRect(0, 0, clientSize.Width, clientSize.Height);
 

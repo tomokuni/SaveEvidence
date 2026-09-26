@@ -17,7 +17,7 @@
 | --- | --- |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `EsUtil.Feature.MarqueeCore`。フォルダへ追従し、`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Content` / `.Session` / `.Selection` / `.Decoration` を持ちます |
+| ルート名前空間 | `EsUtil.Feature.MarqueeCore`。フォルダへ追従し、`.Contract` / `.Decoration` / `.Drawing` / `.Interaction` / `.Logging` / `.Selection` / `.Setting` を持ちます |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
 | テスト | xUnit v3（UI 初期化不要。`InternalsVisibleTo` で `internal` を検証する） |
 
@@ -140,7 +140,7 @@ stateDiagram-v2
 | 装飾の DIP 変換と穴あけ矩形の決定 | `MarqueeRenderRequest`（描画入力から導出する値は入力型が単一所有する） |
 | 装飾の描画可否（明示フラグ。透明色を代用にしない） | `MarqueeDecoOptions.ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint`（本コアは色を持つ型を公開しない） |
-| サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveContent` の `ResolveSizeLabel`（書式は private の `FormatSizeLabel`） |
+| サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveContent` の `ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。デリゲートを生成しない） |
 | 描画 API の呼び出し（層の順序と写し方、色の参照） | 描画層 `MarqueeControl.UIBase`（`IMarqueeRenderer` / `MarqueeRendererBase` / `MarqueeRenderer` 等）。本コアは描画内容と層の順序（`MarqueeDrawContent.Layers`）をデータとして渡すだけである |
 | 入力の判断に伴うログ | `MarqueeLogMessage` |
@@ -161,7 +161,7 @@ stateDiagram-v2
 - 外部が使わない型・メンバーは `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.MarqueeCore.Tests`）で公開します。
 - **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
 - `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。
-- **層 3（内部ヘルパー）は外部参照 0 件を実測して絞り込んだ結果**です。UI 実装が参照するのは `Marquee`・描画契約・列挙型・`MarqueeSelectionGeometry`・`MarqueeOptions`・`MarqueeDecoOptions` のみです。
+- **層 3（内部ヘルパー）は外部参照 0 件を実測して絞り込んだ結果**です。UI 実装が参照するのは `Marquee`・描画契約・列挙型・`MarqueeOptions`・`MarqueeDecoOptions` のみです（幾何計算は `internal` であり UI 実装からは参照できません）。
 
 ## 8. テスト方針
 

@@ -23,32 +23,32 @@ namespace EsUtil.Feature.MarqueeCore.Interaction;
 internal sealed class MarqueeState
 {
     /// <summary>選択矩形（ドメイン座標）。未選択時は 0x0。</summary>
-    public EsRect SelectionRect { get; private set; }
+    internal EsRect SelectionRect { get; private set; }
 
     /// <summary>選択矩形が有効かどうか（幅・高さが 0 より大きい）。</summary>
-    public bool HasSelection => SelectionRect.Width > 0 && SelectionRect.Height > 0;
+    internal bool HasSelection => SelectionRect.Width > 0 && SelectionRect.Height > 0;
 
     /// <summary>ドラッグの始点（ドメイン座標）。未選択時の nudge の基点にもなる。</summary>
-    public EsPoint StartPoint { get; private set; }
+    internal EsPoint StartPoint { get; private set; }
 
     /// <summary>直近のマウス位置（ドメイン座標）。</summary>
-    public EsPoint LastMousePosition { get; private set; }
+    internal EsPoint LastMousePosition { get; private set; }
 
     /// <summary>ドラッグ中かどうか（新規選択・移動・リサイズ）。</summary>
-    public bool IsDragging { get; private set; }
+    internal bool IsDragging { get; private set; }
 
     /// <summary>マウスボタン（左）が押下中かどうか。</summary>
-    public bool IsMouseDown { get; private set; }
+    internal bool IsMouseDown { get; private set; }
 
     /// <summary>アクティブなドラッグハンドル（リサイズ・移動）。<see cref="HitTarget.None"/> は新規選択。</summary>
-    public HitTarget ActiveTarget { get; private set; }
+    internal HitTarget ActiveTarget { get; private set; }
 
     /// <summary>nudge（矢印キー微調整）中かどうか。</summary>
-    public bool NudgeActive { get; private set; }
+    internal bool NudgeActive { get; private set; }
 
     /// <summary>座標変換ポート（Forward = UI 論理座標→ドメイン / Inverse = ドメイン→UI 論理座標 / Bounds = ドメイン境界）。</summary>
     /// <remarks>環境値（注入された依存）であるため、設定は <see cref="SetPort"/> で行う。</remarks>
-    public ICoordTransform Port { get; private set; } = CoordTransform.Identity;
+    internal ICoordTransform Port { get; private set; } = CoordTransform.Identity;
 
     /// <summary>ドラッグ開始時の矩形（移動・リサイズの基準）。</summary>
     private EsRect _dragStartRect;
@@ -61,22 +61,22 @@ internal sealed class MarqueeState
 
     /// <summary>座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート。null 不可（null を等価変換へ置換する規則は呼び出し側が単一所有する）。</param>
-    public void SetPort(ICoordTransform port) => Port = port;
+    internal void SetPort(ICoordTransform port) => Port = port;
 
     /// <summary>ポインター押下を記録する。</summary>
-    public void BeginPress() => IsMouseDown = true;
+    internal void BeginPress() => IsMouseDown = true;
 
     /// <summary>ポインター解放を記録する。</summary>
-    public void EndPress() => IsMouseDown = false;
+    internal void EndPress() => IsMouseDown = false;
 
     /// <summary>マウス位置を記録する。</summary>
     /// <param name="position">マウス位置（ドメイン座標）。</param>
-    public void SetMousePosition(EsPoint position) => LastMousePosition = position;
+    internal void SetMousePosition(EsPoint position) => LastMousePosition = position;
 
     /// <summary>現在の対話状態（公開イベントの Snapshot 用）を算出する。</summary>
     /// <returns>対話状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging）。</returns>
     /// <remarks>上位の描画モード判定用に、nudge・ドラッグ・選択の各状態を合成した状態を返す。</remarks>
-    public MarqueeInteractionState GetInteractionState()
+    internal MarqueeInteractionState GetInteractionState()
     {
         // 優先順位: nudge 状態を最優先で合成し、次にドラッグ/選択状態を判定する
         if (NudgeActive)
@@ -94,7 +94,7 @@ internal sealed class MarqueeState
     /// <summary>公開イベント用のスナップショットを生成する。</summary>
     /// <param name="mousePosition">通知時点のマウス位置（ドメイン座標）。省略時は最終位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・ボタン状態・ドラッグ状態・nudge 状態を含むスナップショット。</returns>
-    public MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null)
+    internal MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null)
         => new(
             GetInteractionState(),
             SelectionRect,
@@ -105,7 +105,7 @@ internal sealed class MarqueeState
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
     /// <remarks>nudge 中だった場合は nudge 状態を終了する（カーソルの再表示はセッションが効果として要求する）。</remarks>
-    public void Reset()
+    internal void Reset()
     {
         EndNudge();
         SelectionRect = default;
@@ -122,7 +122,7 @@ internal sealed class MarqueeState
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
     /// <remarks>nudge 中だった場合は nudge 状態を終了する（カーソルの再表示はセッションが効果として要求する）。</remarks>
-    public void SetSelection(EsRect rect)
+    internal void SetSelection(EsRect rect)
     {
         EndNudge();
         SelectionRect = rect;
@@ -137,7 +137,7 @@ internal sealed class MarqueeState
     /// （カーソル位置が未取得のまま nudge すると基点が原点になり矩形が飛ぶため）。<br/>
     /// nudge 中（2 回目以降）は基点を再同期しない（座標変換の丸め誤差・スクロール追従で移動が相殺されるのを防ぐ）。
     /// </remarks>
-    public bool BeginNudge()
+    internal bool BeginNudge()
     {
         if (NudgeActive)
         {
@@ -156,7 +156,7 @@ internal sealed class MarqueeState
     /// <summary>nudge 状態を終了する。</summary>
     /// <returns>nudge 中だった場合は true（カーソルの再表示が必要かどうかの判定材料）。</returns>
     /// <remarks>本メソッドは状態のみを更新する（カーソルの再表示は効果としてセッションが UI 層へ要求する）。</remarks>
-    public bool EndNudge()
+    internal bool EndNudge()
     {
         if (!NudgeActive)
         {
@@ -170,14 +170,14 @@ internal sealed class MarqueeState
     /// <summary>nudge 終了直後のエコー移動を抑制する位置を記録する。</summary>
     /// <param name="position">抑制する位置（ドメイン座標）。</param>
     /// <remarks>カーソルを nudge 位置へ戻した直後に届く、実マウス位置への移動イベントを無視するために使う。</remarks>
-    public void SuppressEcho(EsPoint position) => _suppressEchoAt = position;
+    internal void SuppressEcho(EsPoint position) => _suppressEchoAt = position;
 
     /// <summary>指定位置が抑制位置の近傍なら抑制を解除する。</summary>
     /// <param name="position">比較する位置（ドメイン座標）。</param>
     /// <param name="hitRadius">近傍とみなす半径（ドメイン座標）。</param>
     /// <returns>抑制を解除した場合は true（呼び出し側は移動を適用しない）。</returns>
     /// <remarks>抑制は 1 回で解除する（以降の移動イベントは通常どおり適用する）。</remarks>
-    public bool ConsumeSuppressedEcho(EsPoint position, double hitRadius)
+    internal bool ConsumeSuppressedEcho(EsPoint position, double hitRadius)
     {
         if (_suppressEchoAt is not { } echoPosition || !MarqueeSelectionGeometry.IsNear(position, echoPosition, hitRadius))
         {
@@ -196,7 +196,7 @@ internal sealed class MarqueeState
     /// ハンドル位置は <see cref="MarqueeSelectionGeometry.GetHandlePosition"/> から取得し、各ハンドルへの距離判定でヒットを確定する（ハンドル位置計算の DRY）。<br/>
     /// 判定順は「角（4 方向）→ 辺（4 方向）→ 矩形内（Move）」で、角が辺より優先される。
     /// </remarks>
-    public HitTarget HitTest(EsPoint pos, double hitRadius)
+    internal HitTarget HitTest(EsPoint pos, double hitRadius)
     {
         var r = SelectionRect;
         if (!HasSelection) return HitTarget.None;
@@ -216,7 +216,7 @@ internal sealed class MarqueeState
 
     /// <summary>新規選択のドラッグを開始する。</summary>
     /// <param name="startPos">始点座標（ドメイン座標）。</param>
-    public void StartNewSelection(EsPoint startPos)
+    internal void StartNewSelection(EsPoint startPos)
     {
         StartPoint = startPos;
         SelectionRect = new EsRect(startPos.X, startPos.Y, 0, 0);
@@ -230,7 +230,7 @@ internal sealed class MarqueeState
     /// <summary>既存ハンドルによるリサイズ/移動のドラッグを開始する。</summary>
     /// <param name="handle">アクティブにするハンドル。</param>
     /// <param name="position">現在のマウス位置（ドメイン座標）。</param>
-    public void StartDrag(HitTarget handle, EsPoint position)
+    internal void StartDrag(HitTarget handle, EsPoint position)
     {
         ActiveTarget = handle;
         IsDragging = true;
@@ -246,7 +246,7 @@ internal sealed class MarqueeState
     /// 基準点をハンドル点へ揃えることで、スナップ後の最初の移動がハンドル点からの差分として正しく矩形へ反映される。<br/>
     /// 移動（<see cref="HitTarget.Move"/>）は掴んだ位置を維持するのが自然なためスナップしない。
     /// </remarks>
-    public void SnapToHandle(EsPoint position)
+    internal void SnapToHandle(EsPoint position)
     {
         _dragStartPoint = position;
         LastMousePosition = position;
@@ -262,7 +262,7 @@ internal sealed class MarqueeState
     /// 2. 移動（Move）: 矩形全体が境界内に収まるようにシフトする。<br/>
     /// 3. 新規選択: 始点・終点の両方を境界内にクリップしてから矩形を作成する（始点が画像外の場合にはみ出さない）。<br/>
     /// </remarks>
-    public void UpdateDrag(EsPoint currentPos, double minSize, bool clampToBounds)
+    internal void UpdateDrag(EsPoint currentPos, double minSize, bool clampToBounds)
     {
         var bounds = GetBoundsRect(clampToBounds);
 
@@ -293,7 +293,7 @@ internal sealed class MarqueeState
         => clampToBounds && Port.Bounds is { } size ? new EsRect(0, 0, size.Width, size.Height) : null;
 
     /// <summary>ドラッグを終了する。</summary>
-    public void EndDrag()
+    internal void EndDrag()
     {
         IsDragging = false;
         ActiveTarget = HitTarget.None;
@@ -311,7 +311,7 @@ internal sealed class MarqueeState
     /// 3. 選択確定後（<see cref="HasSelection"/>）: 終点（StartPoint でない方の隅）を移動する。<br/>
     /// 4. 未選択: 始点を移動する（次回クリック時の始点となる）。
     /// </remarks>
-    public void Nudge(double dx, double dy, double minSize, bool clampToBounds)
+    internal void Nudge(double dx, double dy, double minSize, bool clampToBounds)
     {
         var bounds = GetBoundsRect(clampToBounds);
 
@@ -352,7 +352,7 @@ internal sealed class MarqueeState
     /// 3. 新規選択ドラッグ中・nudge: 終点（クリップ・最小サイズ保証後の矩形の角）。<br/>
     /// 4. 未選択（始点決め nudge）: 始点。
     /// </remarks>
-    public EsPoint GetMarkerPosition()
+    internal EsPoint GetMarkerPosition()
     {
         // ハンドル操作中:
         // - リサイズ（8 方向）: ドラッグ中のハンドル位置（ポインタ・矩形の角・追従位置を一体にする）
@@ -380,7 +380,7 @@ internal sealed class MarqueeState
     /// 「画像外の選択を禁止」が ON に切り替わった瞬間や、外部から復元した矩形が画像外にはみ出している場合に適用する。<br/>
     /// 純粋計算の <see cref="ClipRectToBounds"/> に委譲し、変更があった場合のみ状態へ適用する（純粋計算と状態適用の分離）。
     /// </remarks>
-    public bool ClampSelectionToBounds()
+    internal bool ClampSelectionToBounds()
     {
         if (!HasSelection) return false;
         var clipped = ClipRectToBounds(SelectionRect);
@@ -397,7 +397,7 @@ internal sealed class MarqueeState
     /// 矩形全体を境界内に収める（<see cref="SetSelection"/> 等の外部復元・設定変更時の即時適用用）。<br/>
     /// クリップ計算は <see cref="MarqueeSelectionGeometry.ClampRectToDomainBounds"/> へ委譲する（単一所有・DRY）。
     /// </remarks>
-    public EsRect ClipRectToBounds(EsRect rect)
+    internal EsRect ClipRectToBounds(EsRect rect)
         => Port.Bounds is { } size
             ? MarqueeSelectionGeometry.ClampRectToDomainBounds(rect, size)
             : rect;
