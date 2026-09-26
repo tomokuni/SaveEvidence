@@ -493,27 +493,25 @@ internal sealed class MarqueeSession
     /// <returns>UI 層が適用する効果（境界外選択の禁止が変化した場合のみ再描画）。</returns>
     /// <remarks>
     /// 1. 設定を取り込み、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）を更新する。<br/>
-    /// 2. 境界外選択の禁止が変化した場合は変更前後をログ出力し、既存の選択矩形へ即時適用する。<br/>
-    /// 3. 外観（色・サイズ）はセッションが関与しない（UI 層が描画時に読む）。<br/>
+    /// 2. 変化した項目をログ出力する（差分検出はログ定義が単一所有する）。<br/>
+    /// 3. 境界外選択の禁止が変化した場合は既存の選択矩形へ即時適用する。<br/>
     /// <br/>
     /// 同値の設定を再適用しても効果・ログを発生させない（UI 層は変更内容を確認せず委譲できる）。
     /// </remarks>
     internal MarqueeFeedback ApplyOptions(MarqueeOptions options)
     {
-        // ログと即時クリップは「境界外選択の禁止」が実際に変化した場合のみ行う
-        bool clampChanged = Options.ClampToDomainBounds != options.ClampToDomainBounds;
+        var previous = Options;
         Options = options;
 
-        if (!clampChanged)
+        if (previous == options)
         {
             return default;
         }
 
-        Log.LogSettingChanged(
-            nameof(MarqueeOptions.ClampToDomainBounds),
-            (!options.ClampToDomainBounds).ToString(),
-            options.ClampToDomainBounds.ToString());
-        return ApplyClampToBounds();
+        Log.LogOptionsChanged(previous, options);
+
+        // 即時クリップは「境界外選択の禁止」が実際に変化した場合のみ行う
+        return previous.ClampToDomainBounds != options.ClampToDomainBounds ? ApplyClampToBounds() : default;
     }
 
     // ====================================================================

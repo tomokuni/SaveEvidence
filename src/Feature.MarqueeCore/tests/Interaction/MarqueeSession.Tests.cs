@@ -695,20 +695,44 @@ public class MarqueeSessionTests
     }
 
     [Fact]
-    public void ApplyOptions_外観のみの変更では設定変更ログを出力しない()
+    public void ApplyOptions_外観のみの変更でも変更した項目を記録する()
     {
         var session = CreateSession(out _);
         var logger = new RecordingLogger();
         session.Log = logger;
 
-        // 外観（色・サイズ）はセッションが関与しないため、変更しても設定変更ログは流れない
+        // 設定は 1 つの値であるため、外観だけの変更も変化した項目として記録する
         session.ApplyOptions(session.Options with
         {
             HandleSize = 20.0,
             MarkerLength = 40.0,
         });
 
+        Assert.Equal(
+            [
+                "[Marquee] Setting: HandleSize 10 → 20",
+                "[Marquee] Setting: MarkerLength 16 → 40",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>設定の変更ログが変化した項目だけを出力することを検証する。</summary>
+    [Fact]
+    public void ApplyOptions_設定の変更ログは変化した項目だけを出力する()
+    {
+        var session = CreateSession(out _);
+        var logger = new RecordingLogger();
+        session.Log = logger;
+
+        // 同値の再適用では何も出力しない
+        session.ApplyOptions(session.Options);
+
         Assert.Empty(logger.Messages);
+
+        // 1 項目だけ変えるとその項目だけが出力される
+        session.ApplyOptions(session.Options with { HandleHitRadius = 30.0 });
+
+        Assert.Equal("[Marquee] Setting: HandleHitRadius 12 → 30", Assert.Single(logger.Messages));
     }
 
     [Fact]

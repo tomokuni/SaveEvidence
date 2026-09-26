@@ -1,7 +1,11 @@
+using System.Globalization;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Logging;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.Feature.MarqueeCore.Tests.Logging;
 
@@ -49,6 +53,81 @@ public class MarqueeLogMessageTests
         Assert.Equal("[Marquee] ConfirmRequested: rect=(10, 20, 30, 40)", logger.Messages[7]);
         Assert.Equal("[Marquee] CancelRequested", logger.Messages[8]);
         Assert.Equal("[Marquee] Setting: MinSelectionSize 3 → 5", logger.Messages[9]);
+    }
+
+    /// <summary>設定（MarqueeOptions）の変更ログが変化した項目だけを出力することを検証する。</summary>
+    /// <remarks>設定を 1 つの値へ統合したため、変更された項目の判定（差分検出）はログ定義が単一所有する。</remarks>
+    [Fact]
+    public void 設定の変更ログは変化した項目だけを出力する()
+    {
+        var logger = new RecordingLogger();
+
+        MarqueeLogMessage.LogOptionsChanged(
+            logger,
+            MarqueeOptions.Default,
+            MarqueeOptions.Default with { HandleSize = 20.0, ShowHandles = false });
+        MarqueeLogMessage.LogOptionsChanged(logger, MarqueeOptions.Default, MarqueeOptions.Default);
+
+        Assert.Equal(
+            [
+                "[Marquee] Setting: ShowHandles True → False",
+                "[Marquee] Setting: HandleSize 10 → 20",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>装飾の設定の変更ログが変化した項目だけを出力することを検証する。</summary>
+    [Fact]
+    public void 装飾の設定の変更ログは変化した項目だけを出力する()
+    {
+        var logger = new RecordingLogger();
+
+        MarqueeLogMessage.LogDecoOptionsChanged(
+            logger,
+            MarqueeDecoOptions.Default,
+            MarqueeDecoOptions.Default with
+            {
+                ShowOverlay = false,
+                OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
+                OuterHighlightRect = new EsRect(1, 2, 3, 4),
+            });
+
+        Assert.Equal(
+            [
+                "[Marquee] Setting: ShowOverlay True → False",
+                "[Marquee] Setting: OuterAppearance.BorderThickness 2 → 3",
+                "[Marquee] Setting: OuterHighlightRect False → True",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>数値の変更ログが同値なら出力せず、カルチャに依存しないことを検証する。</summary>
+    [Fact]
+    public void 数値の変更ログは同値なら出力せずカルチャに依存しない()
+    {
+        var original = CultureInfo.CurrentCulture;
+        try
+        {
+            // 小数の区切りがコンマのカルチャでも不変の表記（ピリオド）で出力する
+            CultureInfo.CurrentCulture = new CultureInfo("de-DE");
+            var logger = new RecordingLogger();
+
+            MarqueeLogMessage.LogSettingChanged(logger, "HandleSize", 10.0, 20.0);
+            MarqueeLogMessage.LogSettingChanged(logger, "HandleSize", 20.0, 20.0);
+            MarqueeLogMessage.LogSettingChanged(logger, "MinSelectionSize", 6, 7);
+            MarqueeLogMessage.LogSettingChanged(logger, "ShowHandles", true, true);
+
+            Assert.Equal(
+                [
+                    "[Marquee] Setting: HandleSize 10 → 20",
+                    "[Marquee] Setting: MinSelectionSize 6 → 7",
+                ],
+                logger.Messages);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
     }
 
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>

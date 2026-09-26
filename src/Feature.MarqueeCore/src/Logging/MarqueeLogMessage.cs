@@ -1,4 +1,7 @@
+using System.Globalization;
 using Microsoft.Extensions.Logging;
+using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.Feature.MarqueeCore.Logging;
 
@@ -96,4 +99,121 @@ internal static partial class MarqueeLogMessage
     /// <param name="newValue">変更後の値。</param>
     [LoggerMessage(LogLevel.Debug, "[Marquee] Setting: {Name} {OldValue} → {NewValue}")]
     internal static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
+
+    /// <summary>整数設定値の変更ログ（同値の再設定では出力しない）。</summary>
+    /// <remarks>
+    /// <see cref="LogSettingChanged(ILogger, string, string, string)"/> と同じ書式で出力する。<br/>
+    /// 「変化したときだけ出力する」判断と数値の文字列化は <see cref="LogSettingChangedIfChanged"/> が単一所有する。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値。</param>
+    /// <param name="newValue">変更後の値。</param>
+    internal static void LogSettingChanged(this ILogger logger, string name, int oldValue, int newValue)
+        => logger.LogSettingChangedIfChanged(name, oldValue, newValue);
+
+    /// <summary>実数設定値の変更ログ（同値の再設定では出力しない）。</summary>
+    /// <remarks><see cref="LogSettingChanged(ILogger, string, int, int)"/> の実数版（書式・規則とも同一）。</remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値。</param>
+    /// <param name="newValue">変更後の値。</param>
+    internal static void LogSettingChanged(this ILogger logger, string name, double oldValue, double newValue)
+        => logger.LogSettingChangedIfChanged(name, oldValue, newValue);
+
+    /// <summary>真偽設定値の変更ログ（同値の再設定では出力しない）。</summary>
+    /// <remarks>
+    /// <see cref="LogSettingChanged(ILogger, string, int, int)"/> の真偽版。<br/>
+    /// <c>bool</c> は <see cref="IFormattable"/> を実装しないため本体の汎用版へは委譲できない（書式は型の標準表記）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値。</param>
+    /// <param name="newValue">変更後の値。</param>
+    internal static void LogSettingChanged(this ILogger logger, string name, bool oldValue, bool newValue)
+    {
+        if (oldValue == newValue)
+        {
+            return;
+        }
+
+        logger.LogSettingChanged(name, oldValue.ToString(), newValue.ToString());
+    }
+
+    /// <summary>数値設定値の変更ログ（同値の再設定では出力しない）の本体。</summary>
+    /// <typeparam name="T">数値の型（整数・実数）。</typeparam>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値。</param>
+    /// <param name="newValue">変更後の値。</param>
+    /// <remarks>
+    /// 「同値なら出力しない」判定と、カルチャに依存しない数値の文字列化を単一所有する<br/>
+    /// （整数版・実数版が同じ規則を別々に持つと、片方だけ非カルチャ非依存のまま残る）。
+    /// </remarks>
+    private static void LogSettingChangedIfChanged<T>(this ILogger logger, string name, T oldValue, T newValue)
+        where T : struct, IEquatable<T>, IFormattable
+    {
+        if (oldValue.Equals(newValue))
+        {
+            return;
+        }
+
+        logger.LogSettingChanged(
+            name,
+            oldValue.ToString(format: null, CultureInfo.InvariantCulture),
+            newValue.ToString(format: null, CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>設定（<see cref="MarqueeOptions"/>）の変更ログ（変化した項目だけを出力する）。</summary>
+    /// <remarks>
+    /// LogLevel: Debug（項目ごとの書式は個別の変更ログと同一）<br/>
+    /// 設定を 1 つの値へ統合したため、変更された項目の判定（差分検出）を本メソッドが単一所有する<br/>
+    /// （UI 層は前後の値を渡さず、コアが保持する値の変化を知るだけでよい）。<br/>
+    /// 外観の再適用で設定数ぶんのログが溢れないよう、各項目のログが同値判定を行う（変化した項目だけが出力される）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前の設定。</param>
+    /// <param name="newValue">変更後の設定。</param>
+    internal static void LogOptionsChanged(this ILogger logger, MarqueeOptions oldValue, MarqueeOptions newValue)
+    {
+        logger.LogSettingChanged(nameof(MarqueeOptions.ShowHandles), oldValue.ShowHandles, newValue.ShowHandles);
+        logger.LogSettingChanged(nameof(MarqueeOptions.HandleSize), oldValue.HandleSize, newValue.HandleSize);
+        logger.LogSettingChanged(nameof(MarqueeOptions.MarkerLength), oldValue.MarkerLength, newValue.MarkerLength);
+        logger.LogSettingChanged(nameof(MarqueeOptions.ShowCoordLabel), oldValue.ShowCoordLabel, newValue.ShowCoordLabel);
+        logger.LogSettingChanged(nameof(MarqueeOptions.ShowSizeLabel), oldValue.ShowSizeLabel, newValue.ShowSizeLabel);
+        logger.LogSettingChanged(nameof(MarqueeOptions.HandleHitRadius), oldValue.HandleHitRadius, newValue.HandleHitRadius);
+        logger.LogSettingChanged(nameof(MarqueeOptions.MinSelectionSize), oldValue.MinSelectionSize, newValue.MinSelectionSize);
+        logger.LogSettingChanged(nameof(MarqueeOptions.ClampToDomainBounds), oldValue.ClampToDomainBounds, newValue.ClampToDomainBounds);
+    }
+
+    /// <summary>装飾の設定（<see cref="MarqueeDecoOptions"/>）の変更ログ（変化した項目だけを出力する）。</summary>
+    /// <remarks>
+    /// LogLevel: Debug（書式は設定の変更ログと同一）<br/>
+    /// 装飾も 1 つの値へ統合したため、変更された項目の判定（差分検出）を本メソッドが単一所有する。<br/>
+    /// ハイライト矩形は値の同一性（設定の有無）だけを記録する（座標の変更は操作中に高頻度で起こりうるため）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前の装飾の設定。</param>
+    /// <param name="newValue">変更後の装飾の設定。</param>
+    internal static void LogDecoOptionsChanged(
+        this ILogger logger, MarqueeDecoOptions oldValue, MarqueeDecoOptions newValue)
+    {
+        logger.LogSettingChanged(nameof(MarqueeDecoOptions.ShowOverlay), oldValue.ShowOverlay, newValue.ShowOverlay);
+        logger.LogSettingChanged(nameof(MarqueeDecoOptions.ShowOuterBorder), oldValue.ShowOuterBorder, newValue.ShowOuterBorder);
+        logger.LogSettingChanged(nameof(MarqueeDecoOptions.OuterShowFullOverlay), oldValue.OuterShowFullOverlay, newValue.OuterShowFullOverlay);
+        logger.LogSettingChanged(nameof(MarqueeDecoOptions.ShowInnerFill), oldValue.ShowInnerFill, newValue.ShowInnerFill);
+        logger.LogSettingChanged(nameof(MarqueeDecoOptions.ShowInnerBorder), oldValue.ShowInnerBorder, newValue.ShowInnerBorder);
+        logger.LogSettingChanged(
+            $"{nameof(MarqueeDecoOptions.OuterAppearance)}.{nameof(MarqueeOuterDecoAppearance.BorderThickness)}",
+            oldValue.OuterAppearance.BorderThickness,
+            newValue.OuterAppearance.BorderThickness);
+        logger.LogSettingChanged(
+            $"{nameof(MarqueeDecoOptions.InnerAppearance)}.{nameof(MarqueeInnerDecoAppearance.BorderThickness)}",
+            oldValue.InnerAppearance.BorderThickness,
+            newValue.InnerAppearance.BorderThickness);
+        logger.LogSettingChanged(
+            nameof(MarqueeDecoOptions.OuterHighlightRect),
+            oldValue.OuterHighlightRect is not null,
+            newValue.OuterHighlightRect is not null);
+    }
 }

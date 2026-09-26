@@ -103,7 +103,7 @@
 | `Marquee(IMarqueeEffects, ICursorService?, MarqueeOptions?)` | ctor | `effects` は null 不可。`cursor` は null 可（カーソル操作を行わない）。描画実装は受け取らない（描画は UI の関心事であり、本コアは描画 API を持たない） |
 | `Notified` | event | 通知（`MarqueeNotice`） |
 | `Log` | property | ロガー。null は `NullLogger` へ吸収される |
-| `Options` | property | 設定。設定すると対話パラメータを反映し、境界外選択の禁止の変化時のみログと即時クリップを行う |
+| `Options` | property | 設定。設定すると対話パラメータを反映し、**変化した項目をログ出力**し、境界外選択の禁止の変化時のみ即時クリップを行う |
 | `DomainToDipScaling` | property | 座標変換ポート未指定時に適用する倍率。既定は `Limits.DomainToDipScalingDefault`（1.0）。設定時は 0.1〜8.0 へ補正される |
 | `DecoOptions` | property | 装飾の設定 |
 | `SizeLabelOverrideProvider` | property | サイズラベルの文言プロバイダ（null または空文字はコアが自動生成） |
@@ -230,6 +230,19 @@
 - 色（ハンドル・始点マーカー・ラベル・装飾）は本コアに含みません（描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します）。
 - 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。ホストが文言の生成と描画を行います（体裁の適用は `MarqueeControl.UIBase` の `MarqueeHostLabelRenderer` / `FadeMaskHostLabelRenderer` を共用できます）。
 
-## 6. ライセンス
+## 6. ログ
+
+ロガーは `Marquee.Log` で受け取り、**入力の判断**（`[Marquee] MouseDown` / `MouseUp` / `DoubleClick` / `DragStart` / `KeyDown` / `ConfirmRequested` / `CancelRequested` 等。Debug。位置の記録は Trace）と**設定の変更**（`[Marquee] Setting: {名前} {前} → {後}`。Debug）を出力します。ロガー未設定（null）は出力なしです。
+
+| 契機 | 出力 |
+| --- | --- |
+| `Options` の change | 変化した項目だけ（`ShowHandles` / `HandleSize` / `MarkerLength` / `ShowCoordLabel` / `ShowSizeLabel` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`） |
+| `DecoOptions` の change | 変化した項目だけ（`ShowOverlay` / `ShowOuterBorder` / `ShowOuterFullOverlay` / `ShowInnerFill` / `ShowInnerBorder` / `OuterAppearance.BorderThickness` / `InnerAppearance.BorderThickness` / `OuterHighlightRect`（有無）） |
+| `DomainToDipScaling` / `DisplayScaleScaling` の set | 変化したときだけ |
+| 文言プロバイダ 2 種の set | 設定の有無が変化したときだけ（デリゲートは値の比較ができないため） |
+
+**差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。**UI 固有のログは各 UI プロジェクトが所有します**（ズーム要求のログは `MarqueeControl.UIBase` の `MarqueeWheelLogMessage`）。
+
+## 7. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

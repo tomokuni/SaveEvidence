@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
 using EsUtil.Feature.MarqueeCore.Interaction;
+using EsUtil.Feature.MarqueeCore.Logging;
 using EsUtil.Feature.MarqueeCore.Setting;
 using static EsUtil.Feature.MarqueeCore.Marquee.Limits;
 
@@ -127,7 +128,13 @@ public sealed partial class Marquee
     public double DomainToDipScaling
     {
         get => _scaling;
-        set => SetIfChanged(ref _scaling, CoerceDomainToDipScaling(value), out _);
+        set
+        {
+            if (SetIfChanged(ref _scaling, CoerceDomainToDipScaling(value), out var previous))
+            {
+                Log.LogSettingChanged(nameof(DomainToDipScaling), previous, _scaling);
+            }
+        }
     }
 
     /// <summary>装飾（暗転マスク・穴あけ枠・枠線・内側の塗り）の設定。</summary>
@@ -139,7 +146,13 @@ public sealed partial class Marquee
     public MarqueeDecoOptions DecoOptions
     {
         get => _decoOptions;
-        set => SetIfChanged(ref _decoOptions, value, out _);
+        set
+        {
+            if (SetIfChanged(ref _decoOptions, value, out var previous))
+            {
+                Log.LogDecoOptionsChanged(previous, value);
+            }
+        }
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するプロバイダ。</summary>
@@ -151,7 +164,14 @@ public sealed partial class Marquee
     public Func<string?>? SizeLabelOverrideProvider
     {
         get => _sizeLabelOverrideProvider;
-        set => SetIfChanged(ref _sizeLabelOverrideProvider, value, out _);
+        set
+        {
+            if (SetIfChanged(ref _sizeLabelOverrideProvider, value, out var previous))
+            {
+                // デリゲートは値の比較ができないため、設定の有無の変化だけを記録する
+                Log.LogSettingChanged(nameof(SizeLabelOverrideProvider), previous is not null, value is not null);
+            }
+        }
     }
 
     /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ。</summary>
@@ -165,7 +185,14 @@ public sealed partial class Marquee
     public Func<EsRect, double>? SizeLabelDisplayScalingProvider
     {
         get => _sizeLabelDisplayScalingProvider;
-        set => SetIfChanged(ref _sizeLabelDisplayScalingProvider, value, out _);
+        set
+        {
+            if (SetIfChanged(ref _sizeLabelDisplayScalingProvider, value, out var previous))
+            {
+                // デリゲートは値の比較ができないため、設定の有無の変化だけを記録する
+                Log.LogSettingChanged(nameof(SizeLabelDisplayScalingProvider), previous is not null, value is not null);
+            }
+        }
     }
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
@@ -174,7 +201,13 @@ public sealed partial class Marquee
     public double DisplayScaleScaling
     {
         get => ResolveDisplayScale(_displayScaleScaling, _scaling);
-        set => SetIfChanged(ref _displayScaleScaling, value, out _);
+        set
+        {
+            if (SetIfChanged(ref _displayScaleScaling, value, out var previous))
+            {
+                Log.LogSettingChanged(nameof(DisplayScaleScaling), previous, value);
+            }
+        }
     }
 
     /// <summary>選択矩形があるかどうか。</summary>

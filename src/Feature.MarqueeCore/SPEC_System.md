@@ -145,7 +145,8 @@ stateDiagram-v2
 | サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveContent` の `ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。デリゲートを生成しない） |
 | 描画 API の呼び出し（層の順序と写し方、色の参照） | 描画層 `MarqueeControl.UIBase`（`IMarqueeRenderer` / `MarqueeRendererBase` / `MarqueeRenderer` 等）。本コアは描画内容と層の順序（`MarqueeDrawContent.Layers`）をデータとして渡すだけである |
-| 入力の判断に伴うログ | `MarqueeLogMessage` |
+| 入力の判断に伴うログと設定変更のログ | `MarqueeLogMessage` |
+| 設定変更の差分検出（変化した項目だけを出力） | `MarqueeLogMessage.LogOptionsChanged` / `LogDecoOptionsChanged`（出力の契機は `Marquee.Options` / `DecoOptions` / 環境値の setter） |
 
 ## 6. 例外処理ポリシー
 
@@ -172,7 +173,7 @@ stateDiagram-v2
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
 | 単位 | 純粋計算（`MarqueeSelectionGeometry` / `MarqueeDecoGeometry` / `MarqueeRenderRequest`）・状態機械・ファサード・描画内容の解決 |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Contract` / `tests/Decoration` / `tests/Drawing` / `tests/Interaction` / `tests/Logging` / `tests/Selection` / `tests/Setting`。ファサードの partial のテストはルート） |
-| 合計 | 314 件（`[Theory]` は展開後のケース数） |
+| 合計 | 322 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj

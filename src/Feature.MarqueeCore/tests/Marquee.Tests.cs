@@ -524,4 +524,78 @@ public class MarqueeTests
 
         Assert.Same(NullLogger.Instance, marquee.Log);
     }
+
+    /// <summary>環境値（倍率）の変更が変化したときだけ記録されることを検証する。</summary>
+    [Fact]
+    public void DomainToDipScaling_変更したときだけ記録する()
+    {
+        var marquee = CreateMarquee(null, out _);
+        var logger = new RecordingLogger();
+        marquee.Log = logger;
+
+        marquee.DomainToDipScaling = 1.25;
+        marquee.DomainToDipScaling = 1.25;   // 同値
+        marquee.DomainToDipScaling = 2.0;
+
+        Assert.Equal(
+            [
+                "[Marquee] Setting: DomainToDipScaling 1 → 1.25",
+                "[Marquee] Setting: DomainToDipScaling 1.25 → 2",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>環境値（表示スケーリング）の変更が変化したときだけ記録されることを検証する。</summary>
+    [Fact]
+    public void DisplayScaleScaling_変更したときだけ記録する()
+    {
+        var marquee = CreateMarquee(null, out _);
+        var logger = new RecordingLogger();
+        marquee.Log = logger;
+
+        marquee.DisplayScaleScaling = 1.5;
+        marquee.DisplayScaleScaling = 1.5;   // 同値
+
+        Assert.Equal("[Marquee] Setting: DisplayScaleScaling 0 → 1.5", Assert.Single(logger.Messages));
+    }
+
+    /// <summary>装飾の設定の変更が変化した項目だけ記録されることを検証する。</summary>
+    [Fact]
+    public void DecoOptions_変更した項目だけ記録する()
+    {
+        var marquee = CreateMarquee(null, out _);
+        var logger = new RecordingLogger();
+        marquee.Log = logger;
+
+        marquee.DecoOptions = marquee.DecoOptions with { ShowInnerFill = true, ShowOverlay = false };
+        marquee.DecoOptions = marquee.DecoOptions;   // 同値
+
+        Assert.Equal(
+            [
+                "[Marquee] Setting: ShowOverlay True → False",
+                "[Marquee] Setting: ShowInnerFill False → True",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>デリゲートの設定が有無の変化だけ記録されることを検証する。</summary>
+    /// <remarks>デリゲートは値の比較ができないため、差し替えの有無だけを記録する。</remarks>
+    [Fact]
+    public void SizeLabelOverrideProvider_有無の変化だけ記録する()
+    {
+        var marquee = CreateMarquee(null, out _);
+        var logger = new RecordingLogger();
+        marquee.Log = logger;
+
+        marquee.SizeLabelOverrideProvider = () => "S";
+        marquee.SizeLabelOverrideProvider = () => "S2";   // 差し替え（有無は変わらない）
+        marquee.SizeLabelOverrideProvider = null;
+
+        Assert.Equal(
+            [
+                "[Marquee] Setting: SizeLabelOverrideProvider False → True",
+                "[Marquee] Setting: SizeLabelOverrideProvider True → False",
+            ],
+            logger.Messages);
+    }
 }
