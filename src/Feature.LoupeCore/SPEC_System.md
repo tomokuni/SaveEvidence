@@ -47,8 +47,7 @@ graph LR
 | `Drawing/LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む）、切り出し領域の幾何の導出（`CaptureSize` / `MagnifiedImage` は internal、`CaptureTopLeft` は描画完了通知のために public） |
 | `Drawing/LoupeTextPlacement.cs` | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（体裁・フォントサイズ・角丸・色は描画層 `LoupeControl.UIBase` の `LoupePaint` / `LoupeLabelPlan` が単一所有する） |
 | `Loupe.DrawContent.cs`（`Loupe` の **partial**・**internal**） | 1 フレーム分の描画内容の解決（描く層の一覧の組み立てと中心座標ラベルのテキスト配置）。利用者はファサード（`Loupe.ResolveContent`）を使う |
-| `Logging/LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化（**UI も寸法の書式を使うため public**） |
-| `Logging/LoupeLogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有（**クラスは public。UI が呼ぶ定義（`LogSourceChanged` / `LogUpdateError`）だけ public とし、コアが出力する定義は internal**） |
+| `Logging/LoupeLogMessage.cs` | コアが出力するログ定義（`LoggerMessage` ソース生成）の単一所有（**internal。UI が出力する定義と書式は `LoupeControl.UIBase` が単一所有する**） |
 
 ### 内部（`internal`。用途別フォルダ）
 
@@ -118,7 +117,7 @@ sequenceDiagram
 | 寸法値の物理ピクセル換算（市松タイル・円枠の太さ） | `LoupeRenderRequest.Create`（規則は internal の `Decoration.LoupeMetricsScaler`。結果は描画入力に含まれる） |
 | 市松模様のタイル矩形の列挙 | `Loupe.ResolveContent`（`LoupeCheckerTiles`。リストを確保しない） |
 | 設定・環境値・拡大中心の変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `DipToDeviceScaling` / `CenterPoint` の setter） |
-| ログの書式とレベル、変化判定（同値・同一インスタンスなら出力しない） | `LoupeLogMessage` / `LoupeLogFormat` |
+| ログの書式とレベル、変化判定（同値なら出力しない） | `LoupeLogMessage`（コアが出力する定義。UI が出力する定義と書式は `LoupeControl.UIBase` が単一所有する） |
 
 `LoupeRenderRequest.MagnifiedImage`（internal）/ 描画層（`LoupeControl.UIBase`）の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
 

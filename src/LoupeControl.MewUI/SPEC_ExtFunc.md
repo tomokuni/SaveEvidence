@@ -123,7 +123,7 @@
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | `[LoupeCtrl] Setting: {名前} {前} → {後}`（Source / CenterPoint / RequestedSize / DipToDeviceScaling / ZoomLevel。補正後の値を渡し、変化判定（同一値・同一インスタンスなら出力しない）はコアのログ定義が単一所有する。設定の変更は変化した項目だけを出力する） |
+| Debug | `[LoupeCtrl] Setting: {名前} {前} → {後}`（Source / CenterPoint / RequestedSize / DipToDeviceScaling / ZoomLevel。補正後の値を渡し、変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は `LoupeControl.UIBase`、他はコア）が単一所有する。設定の変更は変化した項目だけを出力する） |
 | Error | `[LoupeCtrl] Update exception`（描画の例外。スタックトレース付き。アプリは継続する） |
 
 数値の補正（`coerce`）と変更ログ（`changed`）は**プロパティの登録（`MewProperty.Register`）**へ渡します。したがって setter を経由しない設定（バインディング・`MewObject.SetValue` 相当）でも安全域が保たれ、変更が記録されます（Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約）。

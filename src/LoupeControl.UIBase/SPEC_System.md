@@ -119,13 +119,18 @@ src/LoupeControl.UIBase/
 │   ├── LoupeRenderer.cs              既定の描画実装（色を保持し、手順は基底が所有する）
 │   ├── LoupePaint.cs                 描画に使う色と「描くかどうか」の述語の単一所有
 │   ├── LoupeLabelPlan.cs             実寸 → ラベル要素の配置指示の写像
-│   └── LoupeRenderCoordinator.cs     再描画のスケジューリング（バッチ化・世代番号）
+│   ├── LoupeRenderCoordinator.cs     再描画のスケジューリング（バッチ化・世代番号）
+│   ├── LoupeUiLogMessage.cs          UI が出力するログ定義（拡大元画像の変更・描画の例外）
+│   └── LoupeLogFormat.cs             UI がログへ出す値の書式（未設定の表記・画像の寸法）
 └── tests/
     ├── TestHelper.cs                 テスト用の描画先（Skia）
+    ├── RecordingLogger.cs            テスト用のロガー（ログ出力を収集する）
     ├── LoupeRenderer.Tests.cs        層ごとの描画の検証
     ├── LoupePaint.Tests.cs           色の既定値・部分変更・描画可否の述語の検証
     ├── LoupeLabelPlan.Tests.cs       実寸 → ラベル要素の写像の検証
-    └── LoupeRenderCoordinator.Tests.cs バッチ化・世代番号・適用判定・破棄と解放の検証
+    ├── LoupeRenderCoordinator.Tests.cs バッチ化・世代番号・適用判定・破棄と解放の検証
+    ├── LoupeUiLogMessage.Tests.cs    ログ定義の書式・変化判定の検証
+    └── LoupeLogFormat.Tests.cs       ログの値の書式の検証
 ```
 
 ### 描画手順
@@ -141,6 +146,13 @@ src/LoupeControl.UIBase/
 | コンポーネント | 責務 |
 | --- | --- |
 | `LoupeRenderCoordinator` | 要求のバッチ化、世代番号の採番、古い結果の破棄判定、要求の破棄と解放。ビットマップと表示状態は保持しない |
+
+### UI が出力するログ
+
+| コンポーネント | 責務 |
+| --- | --- |
+| `LoupeUiLogMessage` | UI が出力するログ定義（`LoggerMessage` ソース生成。拡大元画像の変更・描画の例外）。書式・レベルを UI 間で揃えるため本層が単一所有する |
+| `LoupeLogFormat` | UI がログへ出す値の書式（未設定の表記・画像の寸法）。画像の型は UI ごとに異なるため、寸法の取り出しは各 UI が担う |
 
 ## 5. 責務の分担と設計判断
 
@@ -205,7 +217,7 @@ src/LoupeControl.UIBase/
 | --- | --- |
 | UI 初期化不要 | 描画は `SkiaEsCanvas`（UI 非依存）で行い、ビットマップの画素を検証する。再描画のスケジューリングは UI 型を持たないため `[Fact]` で検証する |
 | 検証点 | 描画手順の唯一の検証点である（UI 側はアダプタのみを持つため、UI ごとの描画テストは不要） |
-| 合計 | 44 件（描画 17 / 色 8 / ラベル 7 / 組み込み規則 12） |
+| 合計 | 56 件（描画 17 / 色 8 / ラベル 7 / 組み込み規則 12 / ログ 12） |
 
 ```powershell
 dotnet test src/LoupeControl.UIBase/tests/LoupeControl.UIBase.Tests.csproj

@@ -2,12 +2,13 @@
 
 `LoupeControl.UIBase`（`LoupeControl` をコントロールとして成り立たせる UI 非依存層）が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト・独自コントロールの作者）から見える情報のみを記載し、内部実装の詳細は記載しません。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
 
-本層の機能は 2 つに分かれます。
+本層の機能は 3 つに分かれます。
 
 | 区分 | 機能 |
 | --- | --- |
 | **描画手順** | ルーペの図形の描画・ラベル要素の配置指示 |
 | **組み込み規則** | 再描画要求のバッチ化と世代番号管理 |
+| **UI が出力するログ** | 拡大元画像の変更・描画の例外のログ定義と、ログへ出す値の書式 |
 
 ## 1. 提供機能
 
@@ -42,6 +43,20 @@
 - 表示状態・ビットマップの解放・描画の開始もコールバックで受け取ります（本層はコントロールの状態とリソースを保持しません）。
 - 中間ビットマップを持たず同期描画する UI（MewUI 版）は本機能を使いません。
 
+### 1.3 UI が出力するログ
+
+| 機能 | 提供元 | 説明 |
+| --- | --- | --- |
+| 拡大元画像の変更のログ | `LoupeUiLogMessage.LogSourceChanged` | 設定値の変更ログと同じ書式・レベル（Debug）で出力する。**同一インスタンスの再設定では出力しない**（参照の同一性の判定を本層が単一所有する）。画像の型は UI ごとに異なるため、寸法の取り出しは各 UI が担う（書式は `LoupeLogFormat.DescribeImage` が単一所有する） |
+| 描画の例外のログ | `LoupeUiLogMessage.LogUpdateError` | Error レベルで出力する（例外スタックトレース付き）。描画の例外を検知するのは UI の描画パイプラインであるため、本層が定義を所有する |
+| ログへ出す値の書式 | `LoupeLogFormat` | 未設定の表記（`Null`）と画像の寸法（`DescribeImage`）。**書式を UI 間で揃える**（UI 実装が自前で整形すると同じ値でも書式がずれる） |
+
+#### 1.3.1 前提条件
+
+- ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有します（本層は定義のみ）。
+- コアが出力する定義（設定値・拡大中心の変更）は `Feature.LoupeCore` の `LoupeLogMessage`（internal）が単一所有します。UI は本層の定義だけを呼びます。
+- UI 固有の描画方式に対応するログ（中間ビットマップを生成するパイプライン固有のもの等）は各 UI プロジェクトが所有します（本層へは置きません）。
+
 ## 2. 公開 API 一覧
 
 ### `EsUtil.SaveEvidence.Loupe.UIBase`（描画手順）
@@ -51,6 +66,8 @@
 | `LoupeRenderer` | sealed class | 既定の描画実装（`ILoupeRenderer`（本層の契約））。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する |
 | `LoupePaint` | sealed record | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）と描画可否の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
 | `LoupeLabelPlan` | static class | ラベル要素の配置指示の解決（色は `LoupePaint` から受け取る） |
+| `LoupeUiLogMessage` | static partial class | UI が出力するログ定義（拡大元画像の変更・描画の例外） |
+| `LoupeLogFormat` | static class | UI がログへ出す値の書式（未設定の表記・画像の寸法） |
 
 ### `LoupeRenderer` のメンバー（`ILoupeRenderer` の実装）
 
@@ -101,6 +118,27 @@ coordinator.CancelAndRelease();   // 非表示遷移・明示クリア
 // 非同期の描画結果を反映する側で世代を照合する
 if (coordinator.ShouldApply(generation)) { ApplyBitmap(bitmap); }
 ```
+
+### `LoupeUiLogMessage`（`EsUtil.SaveEvidence.Loupe.UIBase`・`public static partial class`）
+
+| メンバー | 説明 |
+| --- | --- |
+| `LogSourceChanged(ILogger, EsBitmap? oldValue, EsBitmap? newValue)` | 拡大元画像の変更（Debug。`[LoupeCtrl] Setting: Source {OldValue} → {NewValue}`）。**同一インスタンスなら出力しない** |
+| `LogSourceChanged(ILogger, string oldValue, string newValue)` | 寸法を UI が整形して渡す経路（上記と同じ書式。書式は `LoupeLogFormat.DescribeImage` を使う） |
+| `LogUpdateError(ILogger, Exception)` | 描画の例外（Error。`[LoupeCtrl] Update exception`） |
+
+```csharp
+logger.LogSourceChanged(oldBitmap, newBitmap);   // 別インスタンスなら出力する
+logger.LogSourceChanged(LoupeLogFormat.DescribeImage(width, height), LoupeLogFormat.Null);
+logger.LogUpdateError(exception);
+```
+
+### `LoupeLogFormat`（`EsUtil.SaveEvidence.Loupe.UIBase`・`public static class`）
+
+| メンバー | 説明 |
+| --- | --- |
+| `Null` | `"null"`（未設定の表記） |
+| `DescribeImage(int? width, int? height)` | `Width×Height` 形式。片方でも未設定なら `null` |
 
 ## 3. 契約（利用者が守る・受け取る値）
 

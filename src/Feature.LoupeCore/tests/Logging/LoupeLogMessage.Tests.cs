@@ -1,6 +1,5 @@
 using System.Globalization;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -11,9 +10,9 @@ namespace EsUtil.Feature.LoupeCore.Tests.Logging;
 
 /// <summary><see cref="LoupeLogMessage"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>
-/// ログ定義は internal のため、<see cref="RecordingLogger"/>（IsEnabled=true）と<br/>
-/// <see cref="NullLogger"/>（IsEnabled=false）の両方で全メソッドを直接呼び、<br/>
-/// LoggerMessage 生成コードの state 走査と IsEnabled 分岐の両パスを網羅する。
+/// ログ定義はコアが出力するものだけを本コアが持つ（UI が出力する定義はコントロール化の層が持つ）。<br/>
+/// <see cref="RecordingLogger"/>（IsEnabled=true）と <see cref="NullLogger"/>（IsEnabled=false）の両方で<br/>
+/// 全メソッドを直接呼び、LoggerMessage 生成コードの state 走査と IsEnabled 分岐の両パスを網羅する。
 /// </remarks>
 public class LoupeLogMessageTests
 {
@@ -25,7 +24,7 @@ public class LoupeLogMessageTests
         InvokeAll(logger);
 
         Assert.True(logger.IsEnabled(LogLevel.Trace));
-        Assert.Equal(3, logger.Messages.Count);
+        Assert.Equal(2, logger.Messages.Count);
     }
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
@@ -45,7 +44,6 @@ public class LoupeLogMessageTests
 
         Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
         Assert.Equal("[LoupeCtrl] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[1]);
-        Assert.Equal("[LoupeCtrl] Update exception", logger.Messages[2]);
     }
 
     /// <summary>拡大中心のログが両 UI 共通の書式（括弧付き座標）で出力されることを検証する。</summary>
@@ -68,16 +66,14 @@ public class LoupeLogMessageTests
     {
         var logger = new RecordingLogger();
 
-        logger.LogSourceChanged("1920x1080", "null");
         logger.LogRequestedSizeChanged(160, 240);
         logger.LogDipToDeviceScalingChanged(1.0, 2.0);
         logger.LogZoomLevelChanged(4, 8);
 
-        Assert.Equal(4, logger.Messages.Count);
-        Assert.Equal("[LoupeCtrl] Setting: Source 1920x1080 → null", logger.Messages[0]);
-        Assert.Equal("[LoupeCtrl] Setting: RequestedSize 160 → 240", logger.Messages[1]);
-        Assert.Equal("[LoupeCtrl] Setting: DipToDeviceScaling 1 → 2", logger.Messages[2]);
-        Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[3]);
+        Assert.Equal(3, logger.Messages.Count);
+        Assert.Equal("[LoupeCtrl] Setting: RequestedSize 160 → 240", logger.Messages[0]);
+        Assert.Equal("[LoupeCtrl] Setting: DipToDeviceScaling 1 → 2", logger.Messages[1]);
+        Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[2]);
     }
 
     /// <summary>名前付きログも同値の再設定では出力しないことを検証する。</summary>
@@ -130,20 +126,6 @@ public class LoupeLogMessageTests
         }
     }
 
-    /// <summary>例外ログに例外が渡されることを検証する。</summary>
-    [Fact]
-    public void 例外ログは例外を受け取る()
-    {
-        var logger = new RecordingLogger();
-        var exception = new InvalidOperationException("失敗");
-
-        logger.LogUpdateError(exception);
-
-        Assert.Single(logger.Messages);
-        // メッセージ本体は例外本文を含まない（例外は構造化ログのフィールドとして渡す）
-        Assert.Equal("[LoupeCtrl] Update exception", logger.Messages[0]);
-    }
-
     /// <summary>拡大中心のログが同値の再設定では出力されないことを検証する。</summary>
     /// <remarks>中心はマウス移動のたびに設定されるため、同値判定はコアが単一所有する。</remarks>
     [Fact]
@@ -155,35 +137,6 @@ public class LoupeLogMessageTests
         logger.LogCenterPointChanged(null, null);
 
         Assert.Empty(logger.Messages);
-    }
-
-    /// <summary>拡大元画像のログが同一インスタンスの再設定では出力されないことを検証する。</summary>
-    [Fact]
-    public void 拡大元画像のログは同一インスタンスなら出力しない()
-    {
-        using var bitmap = EsBitmap.Create(4, 4);
-        var logger = new RecordingLogger();
-
-        logger.LogSourceChanged(bitmap, bitmap);
-        logger.LogSourceChanged((EsBitmap?)null, null);
-
-        Assert.Empty(logger.Messages);
-    }
-
-    /// <summary>拡大元画像のログが寸法の等しい別インスタンスへの差し替えを出力することを検証する。</summary>
-    [Fact]
-    public void 拡大元画像のログは別インスタンスなら出力する()
-    {
-        using var oldBitmap = EsBitmap.Create(8, 6);
-        using var newBitmap = EsBitmap.Create(8, 6);
-        var logger = new RecordingLogger();
-
-        logger.LogSourceChanged(oldBitmap, newBitmap);
-        logger.LogSourceChanged(oldBitmap, null);
-
-        Assert.Equal(2, logger.Messages.Count);
-        Assert.Equal("[LoupeCtrl] Setting: Source 8x6 → 8x6", logger.Messages[0]);
-        Assert.Equal("[LoupeCtrl] Setting: Source 8x6 → null", logger.Messages[1]);
     }
 
     /// <summary>設定（LoupeOptions）の変更ログが変化した項目だけを出力することを検証する。</summary>
@@ -225,6 +178,5 @@ public class LoupeLogMessageTests
     {
         logger.LogSettingChanged("ZoomLevel", "4", "8");
         logger.LogCenterPointChanged(new EsPoint(1.5, 2.5), null);
-        logger.LogUpdateError(new InvalidOperationException("test"));
     }
 }

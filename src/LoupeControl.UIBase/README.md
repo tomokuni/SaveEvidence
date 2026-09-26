@@ -52,6 +52,15 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | --- | --- | --- |
 | `LoupeRenderCoordinator` | public | 再描画要求のバッチ化（1 フレームに 1 回）と世代番号管理。表示状態・ビットマップ解放・描画開始・実行キューへのポストをコールバックで受け取る |
 
+### UI が出力するログ
+
+| 型 | 責務 |
+| --- | --- |
+| `LoupeUiLogMessage` | UI が出力するログ定義（`LoggerMessage` ソース生成。拡大元画像の変更 `LogSourceChanged` / 描画の例外 `LogUpdateError`）。**書式・レベルを UI 間で揃えるため本層が単一所有する** |
+| `LoupeLogFormat` | UI がログへ出す値の書式（未設定の表記 `Null` / 画像の寸法 `DescribeImage`） |
+
+コアが出力する定義（設定値・拡大中心の変更）は `Feature.LoupeCore` の `LoupeLogMessage`（internal）が単一所有します。**UI 固有の処理に対応するログ**（中間ビットマップを生成する描画パイプライン固有のログ等）は各 UI プロジェクトが所有します。
+
 ## 描画の単位
 
 **物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `LoupeRenderRequest.ResolvePixelSize`、寸法は `CheckerSizePixels` / `FrameWidthPixels`）は**コアが済ませている**ため、本層は換算しません。中心座標ラベルだけは DIP で配置します（コアが基準点を、本層が `LoupeLabelPlan` で配置矩形を決める）。
@@ -160,7 +169,7 @@ LoupeControl.UIBase
 
 ## テスト
 
-`tests/` が本プロジェクトのテストを持ちます。描画は UI 非依存の描画ポート（Skia）で行い、再描画のスケジューリングは UI 型を持たないため、**UI 初期化なしで検証**できます（合計 43 件）。
+`tests/` が本プロジェクトのテストを持ちます。描画は UI 非依存の描画ポート（Skia）で行い、再描画のスケジューリングは UI 型を持たないため、**UI 初期化なしで検証**できます（合計 56 件）。
 
 ```text
 tests/

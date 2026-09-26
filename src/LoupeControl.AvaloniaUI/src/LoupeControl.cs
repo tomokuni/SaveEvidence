@@ -17,7 +17,6 @@ using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Drawing;
-using EsUtil.Feature.LoupeCore.Logging;
 
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
@@ -634,7 +633,7 @@ public sealed class LoupeControl : Panel
     /// 生成は <see cref="LoupeRenderPipeline.RenderAsync"/> に一元化する（ソース解決・抽出・描画合成）。<br/>
     /// <see cref="Source"/> / <see cref="CenterPoint"/> のいずれかが未設定、または切り出せない場合は市松模様のみを表示する<br/>
     /// （判定は描画層が単一所有する）。<br/>
-    /// 例外は <see cref="LoupeLogMessage.LogUpdateError"/> で記録し、前回のビットマップを維持する。<br/>
+    /// 例外は <see cref="LoupeUiLogMessage.LogUpdateError"/> で記録し、前回のビットマップを維持する。<br/>
     /// </remarks>
     private async Task GenerateAsync(long generation)
     {

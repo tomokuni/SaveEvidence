@@ -30,12 +30,12 @@
 | `Drawing/` | `LoupeCheckerTiles` | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部）。列挙子で渡し、描画のたびのヒープ確保をゼロにする |
 | `Setting/` | `LoupeOptions` | ルーペの設定（表示サイズ・拡大率・寸法（市松タイル・円枠の太さ）と中心座標ラベルの表示可否）を 1 つの値として所有。既定値・生成時の補正・ラベル表示の判定（`ShouldShowCoordLabel`）を持つ（設定経路によらず範囲内の値だけが保持される）。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
 | `Drawing/` | `LoupeTextPlacement` | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（フォントサイズ・角丸・色は描画層 `LoupeControl.UIBase` の `LoupePaint` が持つ） |
-| `Logging/` | `LoupeLogFormat` / `LoupeLogMessage` | ログの書式（`(X, Y)` / `Width×Height` / `null`）とログ定義・変化判定。**UI のコードが拡張メソッドと書式を直接呼ぶ契約**であるため public |
 
 ### 内部（`internal`）
 
 | フォルダ | 型 | 責務 |
 | --- | --- | --- |
+| `Logging/` | `LoupeLogMessage` | コアが出力するログ定義・変化判定（設定値・拡大中心の変更）。**UI が出力する定義（拡大元画像の変更・描画の例外）と書式は `LoupeControl.UIBase` が単一所有する** |
 | `Checkerboard/` | `LoupeCheckerboard` | 市松模様の明暗の判定規則（タイル矩形の列挙は `LoupeCheckerTiles`） |
 | `Checkerboard/` | `LoupeDivMath` | 区画数の切り上げ除算（タイル数と切り出し領域の一辺が共用する規則） |
 | `Decoration/` | `LoupeDecorationGeometry` | 十字線（縦横 2 本）と円枠（4 辺）の矩形の計算（結果は描画内容に含まれる） |
@@ -111,7 +111,7 @@ dotnet build src/Feature.LoupeCore/src/Feature.LoupeCore.csproj
 
 ## テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます（**合計 153 件**。`[Theory]` は展開後のケース数）。
+`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます（**合計 140 件**。`[Theory]` は展開後のケース数）。
 
 ```powershell
 dotnet test src/Feature.LoupeCore/tests/Feature.LoupeCore.Tests.csproj

@@ -16,7 +16,6 @@ using EsUtil.Platform.Skia;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Placement;
 using EsUtil.Feature.LoupeCore.Drawing;
-using EsUtil.Feature.LoupeCore.Logging;
 
 
 
