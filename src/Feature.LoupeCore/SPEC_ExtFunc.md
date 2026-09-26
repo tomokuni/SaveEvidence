@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | `Loupe` | `public` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決、描画入力の生成、通知内容の解決 |
 | `ILoupeRenderer` | `public` | 描画の契約と描画手順の基底は **UI 側の共有層（`LoupeControl.UIBase`）が所有します**（本コアは描画 API も描画ポートも持たない） |
-| `LoupeLayout` | `public` | 表示レイアウトの値（表示サイズ（DIP）と表示位置。配置しない場合は位置が null） |
+| `LoupeLayout` | `public` | 表示レイアウトの値（表示サイズ（DIP）と表示位置。配置しない場合は位置が null）。名前空間は `EsUtil.Feature.LoupeCore.Placement` |
 | `LoupeDrawContent` | `public` | 1 フレーム分の描画内容（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・**拡大画像の切り出しと描画の矩形**・**層の順序**）。描画層は本値を写すだけ |
 | `LoupeCheckerTiles` | `public` | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部。`foreach` で列挙でき、描画ポートの列挙子への適合は描画側が行う） |
 | `LoupeMagnifiedImage` | `public` | 拡大画像の切り出しと描画の矩形（`Crop`＝元画像から切り出す領域・`Source`＝切り出した画像内の描画元・`Destination`＝描画面への描画先）。中心未設定の場合は描画内容が null になる |

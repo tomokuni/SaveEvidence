@@ -37,7 +37,7 @@ graph LR
 | ファイル | 内容 |
 | --- | --- |
 | `Loupe.cs`（ルート） | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、設定変更の検出とログ出力（`Log`） |
-| `LoupeLayout.cs`（ルート） | 表示レイアウトの値（表示サイズ + 表示位置。配置しない場合は位置が null） |
+| `Placement/LoupeLayout.cs` | 表示レイアウトの値（表示サイズ + 表示位置。配置しない場合は位置が null。**public**） |
 | `Drawing/LoupeDrawContent.cs` | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・拡大画像の幾何・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
 | `Drawing/LoupeMagnifiedImage.cs` | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。描画内容の一部 |
 | `Drawing/LoupeCheckerTiles.cs` | 市松模様の暗色タイルの矩形を**リストを確保せずに列挙する構造体**（描画内容の一部。`foreach` で列挙でき、描画ポートの列挙子への適合は描画層が行う） |

@@ -1,10 +1,9 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore.Session;
 using Xunit;
 using EsUtil.Feature.MarqueeCore.Interaction;
 
-namespace EsUtil.Feature.MarqueeCore.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests.Interaction;
 
 /// <summary><see cref="MarqueeState"/> の単体テスト（状態遷移・ヒットテスト・ドラッグ・nudge・境界クリップ）。</summary>
 /// <remarks>

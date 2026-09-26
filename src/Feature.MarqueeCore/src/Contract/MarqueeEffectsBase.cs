@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core;
-using EsUtil.Feature.MarqueeCore.Session;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Interaction;
 

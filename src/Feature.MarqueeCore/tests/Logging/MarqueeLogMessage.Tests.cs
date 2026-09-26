@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.MarqueeCore.Logging;
 
-namespace EsUtil.Feature.MarqueeCore.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests.Logging;
 
 /// <summary><see cref="MarqueeLogMessage"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>

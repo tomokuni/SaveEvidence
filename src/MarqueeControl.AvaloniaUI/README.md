@@ -193,10 +193,9 @@ Feature.MarqueeCore/
 │   ├── Marquee.cs / Marquee.DrawContent.cs  # 公開ファサードとその partial（描画内容の解決）
 │   ├── Contract/                            # 効果の契約（IMarqueeEffects / MarqueeEffectsBase。描画の契約は MarqueeControl.UIBase が所有する）
 │   ├── Drawing/                             # 描画内容の契約（MarqueeDrawContent / MarqueeDrawLayer / MarqueeTextPlacement 等）
-│   ├── Interaction/                         # 入力と通知（HitTarget / MarqueeInteractionState / MarqueeSnapshot / MarqueeNotice / MarqueeCursorKind）
+│   ├── Interaction/                         # 入力と通知・状態機械（HitTarget / MarqueeInteractionState / MarqueeSnapshot / MarqueeNotice / MarqueeCursorKind / MarqueeSession / MarqueeState）
 │   ├── Setting/                             # 設定の値（MarqueeOptions）
 │   ├── Logging/                             # ログ定義（MarqueeLogMessage。内部）
-│   ├── Content/ / Session/                  # 内部（フレーム解決の入力・状態機械）
 │   ├── Selection/                           # 内部（純粋な幾何計算）
 │   └── Decoration/                          # 装飾（設定・外観・幾何・描画内容）
 └── tests/                                   # 単体テスト（UI 非依存・並列実行）```

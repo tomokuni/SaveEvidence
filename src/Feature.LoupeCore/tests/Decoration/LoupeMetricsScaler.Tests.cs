@@ -1,7 +1,7 @@
 using EsUtil.Feature.LoupeCore.Decoration;
 using Xunit;
 
-namespace EsUtil.Feature.LoupeCore.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests.Decoration;
 
 /// <summary><see cref="LoupeMetricsScaler"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

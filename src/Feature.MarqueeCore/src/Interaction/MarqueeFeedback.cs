@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Interaction;
 
-namespace EsUtil.Feature.MarqueeCore.Session;
+namespace EsUtil.Feature.MarqueeCore.Interaction;
 
 /// <summary>1 回の入力通知に対して UI 層が適用する表示上の効果（状態を持たない指示）。</summary>
 /// <remarks>

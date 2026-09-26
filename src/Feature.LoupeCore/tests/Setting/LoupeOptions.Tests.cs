@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using EsUtil.Feature.LoupeCore.Setting;
 
-namespace EsUtil.Feature.LoupeCore.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests.Setting;
 
 /// <summary><see cref="LoupeOptions"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

@@ -4,7 +4,7 @@ using Xunit;
 using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Interaction;
 
-namespace EsUtil.Feature.MarqueeCore.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests.Contract;
 
 /// <summary><see cref="MarqueeEffectsBase"/> の単体テスト（効果の既定実装）。</summary>
 /// <remarks>

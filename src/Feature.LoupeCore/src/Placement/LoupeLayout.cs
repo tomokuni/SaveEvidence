@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.LoupeCore;
+namespace EsUtil.Feature.LoupeCore.Placement;
 
 /// <summary>ルーペの表示レイアウト（DIP。表示サイズと表示位置）。</summary>
 /// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。親領域の最小辺へクランプ済み）。</param>

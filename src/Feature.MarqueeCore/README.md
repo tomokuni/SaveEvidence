@@ -28,7 +28,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 ルート（`src/`）に置くのは**ファサード本体とその partial**（`Marquee.cs` / `Marquee.DrawContent.cs`）だけです。それ以外は用途別のフォルダへまとめます。
 **1 ファイル 1 型**とします（複数の型を 1 ファイルへ含めない。`partial` による分割は可）。
-**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.MarqueeCore`。`Contract` / `Drawing` / `Interaction` / `Setting` / `Logging` / `Session` / `Selection` / `Decoration` は `EsUtil.Feature.MarqueeCore.<フォルダ名>`）。公開面も複数のフォルダに分かれるため、利用者は用途に応じて `using` を追加します。
+**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.MarqueeCore`。`Contract` / `Drawing` / `Interaction` / `Setting` / `Logging` / `Selection` / `Decoration` は `EsUtil.Feature.MarqueeCore.<フォルダ名>`）。公開面も複数のフォルダに分かれるため、利用者は用途に応じて `using` を追加します。
 
 | フォルダ | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
@@ -45,13 +45,13 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `Drawing/` | `MarqueeMarker` | public | 始点マーカー（十字線）の描画契約（中心・太さ・半幅） |
 | `Drawing/` | `MarqueeTextPlacement` | public | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。要素への写像は描画層の `MarqueeLabelPlan` が単一所有する |
 | `Drawing/` | `MarqueeRenderRequest` | public | 1 フレーム分の描画内容を解決する入力（設定・状態と、描画時に決まる値）。UI 層は自分で組み立てず、コアの `Marquee.CreateRequest` が返した値を受け取る（内部状態の組み立て順を UI が持たない） |
-| `Session/` | `MarqueeSession` | internal | **状態管理クラス**。入力の通知を受けて状態を更新し、効果（`MarqueeFeedback`）と通知（`MarqueeNotice`）を返す。公開ファサード `Marquee` の内部実装 |
+| `Interaction/` | `MarqueeSession` | internal | **状態管理クラス**。入力の通知を受けて状態を更新し、効果（`MarqueeFeedback`）と通知（`MarqueeNotice`）を返す。公開ファサード `Marquee` の内部実装 |
 | `Interaction/` | `MarqueeNotice` | public | コアから UI 層への通知（種別・通知座標・スナップショット。値型）。**生のポインター入力（押下・解放・クリック・移動）は通知しない**（入力は UI が受け取りホストも自 UI で観測できるため、通知すると往復になる。押下状態は `MarqueeSnapshot.IsMouseDown` で取得できる） |
 | `Interaction/` | `MarqueeNoticeKind` | public | 通知の種別（選択の開始・変更・確定・キャンセル・追従位置・確定/キャンセル要求） |
-| `Session/` | `MarqueeFeedback` | internal | コアから UI 層への効果（再描画・フォーカス・マウスキャプチャ・カーソル操作・カーソル形状）。適用順は `Marquee` が単一所有し、UI 層は値を受け取らない（ファサードへ入力を通知するだけ） |
-| `Session/` | `MarqueeCursorAction` | internal | 要求するカーソル操作のフラグ（移動・非表示・再表示） |
-| `Session/` | `MarqueeCaptureAction` | internal | 要求するポインターキャプチャの操作（取得・解放） |
-| `Session/` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持と更新ロジック（純粋計算の適用）。可変プロパティを多数持つため、外部には公開しない |
+| `Interaction/` | `MarqueeFeedback` | internal | コアから UI 層への効果（再描画・フォーカス・マウスキャプチャ・カーソル操作・カーソル形状）。適用順は `Marquee` が単一所有し、UI 層は値を受け取らない（ファサードへ入力を通知するだけ） |
+| `Interaction/` | `MarqueeCursorAction` | internal | 要求するカーソル操作のフラグ（移動・非表示・再表示） |
+| `Interaction/` | `MarqueeCaptureAction` | internal | 要求するポインターキャプチャの操作（取得・解放） |
+| `Interaction/` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持と更新ロジック（純粋計算の適用）。可変プロパティを多数持つため、外部には公開しない |
 | `Interaction/` | `MarqueeCursorKind` | public | 操作位置に対応するカーソル形状の種別（UI は自 UI のカーソル型へ写像するだけ） |
 | `Selection/` | `SelectionGeometry` | internal | 純粋な幾何計算（正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形）・描画対象ハンドル一覧・カーソル種別変換。利用者はコアの内部（描画内容の解決・状態機械）だけであり、UI 層へは解決済みの矩形が渡る |
 | `Logging/` | `MarqueeLogMessage` | internal | ログの LoggerMessage 定義（入力の判断・設定変更）。呼ぶのは状態機械だけであり、UI 層はロガー（`Marquee.Log`）を渡すだけである（自 UI 固有の操作ログは UI 層が持つ。ズーム要求のログは `MarqueeControl.UIBase` が単一所有する） |
@@ -75,7 +75,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 **UI 非依存の汎用ライブラリ**として、特定のアプリ・UI 実装に依存しません（文言・モード等のアプリ固有情報を持ちません）。
 
-名前空間はフォルダに追従します（ルート直下は `EsUtil.Feature.MarqueeCore`。`Contract` / `Drawing` / `Interaction` / `Setting` / `Logging` / `Content` / `Session` / `Selection` / `Decoration` は `EsUtil.Feature.MarqueeCore.<フォルダ名>`）。アセンブリ名は `Feature.MarqueeCore`。
+名前空間はフォルダに追従します（ルート直下は `EsUtil.Feature.MarqueeCore`。`Contract` / `Drawing` / `Interaction` / `Setting` / `Logging` / `Selection` / `Decoration` は `EsUtil.Feature.MarqueeCore.<フォルダ名>`）。アセンブリ名は `Feature.MarqueeCore`。
 
 ## 名前の由来と一般的な呼称
 
@@ -133,7 +133,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | カーソル座標ラベル | `MarqueeTextPlacement`（本コア） | 文言（`EsPoint.Format`）・基準点（カーソル + `MarqueeOptions.CoordLabelOffset`）・アライン。要素への写像は描画層の `MarqueeLabelPlan`、フォントサイズと色は `MarqueePaint`（描画層）が単一所有する |
 | 装飾・ハンドル・マーカー・ラベルの色 | `MarqueePaint`（描画層 `MarqueeControl.UIBase`） | `OverlayColor` / `OuterBorderColor` / `InnerFillColor` / `InnerBorderColor` / `HandleColor` / `HandleBorderColor` / `MarkerColor` / `SizeLabelColor` / `SizeLabelBackgroundColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` |
 | 操作ラベル・情報ラベル | **ホスト**（アプリ固有の付加情報） | 文言の生成と描画。コアは表示可否も含めて関知しない |
-| 選択矩形・選択の有無のソース | 本コア（`Marquee.Session` 経由） | 装飾は参照のみ（複製しない） |
+| 選択矩形・選択の有無のソース | 本コア（`Marquee` のセッション経由） | 装飾は参照のみ（複製しない） |
 | 選択枠線（ハンドル）の枠線色 | `MarqueePaint.HandleBorderColor`（描画層） | 既定は穴あけ枠（`OuterBorderColor`）と共通の `MarqueePaint.DefaultHandleBorderColor`（`#FFA9A9A9`）。別の色にする場合は `MarqueePaint` の各値を指定する |
 
 - 本コアは装飾の設定（`Marquee.DecoOptions`）と描画内容（`MarqueeDrawContent.Decoration` / `InnerDecoration`）を解決します。
@@ -271,17 +271,18 @@ UI 層が使う共有値・計算:
 
 ```text
 tests/
-├── SelectionGeometry.Tests.cs        # 純粋幾何（正規化・ハンドル位置・近傍判定・境界クリップ・ハンドル一覧・カーソル種別）（21 件）
 ├── Marquee.Tests.cs                 # 公開ファサード（操作・効果の適用・設定の伝搬・描画内容の解決・通知の転送・確保量の固定）（36 件）
-├── MarqueeState.Tests.cs            # 状態遷移・ヒットテスト・ドラッグ・nudge・境界クリップ（31 件）
-├── MarqueeFeedback.Tests.cs         # 効果の適用（カーソル操作・表示上の効果の順序）（6 件）
-├── MarqueeSession.Tests.cs          # 入力の解釈・通知・効果・設定の反映・カーソル再表示の要求（50 件）
-├── MarqueeOptions.Tests.cs          # 既定値・部分変更・値補正・等価性（8 件）
 ├── Marquee.DrawContent.Tests.cs     # 描画内容の解決（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・描画可否・層の順序）（50 件）
-├── MarqueeLogMessage.Tests.cs       # ログ定義の生成コード（IsEnabled 両パス・書式）（3 件）
-├── MarqueeEffectsBase.Tests.cs      # 効果の基底クラス（全メンバーが空実装であること・派生で必要なものだけを override できること）（3 件）
-└── Decoration/                      # 装飾（暗転マスク・枠線・内側の塗り）（27 件）
+├── Contract/                        # 効果の基底クラス（全メンバーが空実装であること・派生で必要なものだけを override できること）（3 件）
+├── Decoration/                      # 装飾（暗転マスク・枠線・内側の塗り）（27 件）
+├── Drawing/                         # フレーム全体の幾何（座標変換ポート・DIP 変換・穴あけ矩形）（13 件）
+├── Interaction/                     # 状態遷移・ヒットテスト・ドラッグ・nudge・入力の解釈・効果の適用（87 件）
+├── Logging/                         # ログ定義の生成コード（IsEnabled 両パス・書式）（3 件）
+├── Selection/                       # 純粋幾何（正規化・ハンドル位置・近傍判定・境界クリップ・カーソル種別）（21 件）
+└── Setting/                         # 既定値・部分変更・値補正・等価性（8 件）
 ```
+
+**テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Marquee.cs` / `Marquee.DrawContent.cs`）のテストはルートに置きます。
 
 件数は `[Theory]` を展開したケース数（合計 235 件）です。
 

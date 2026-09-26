@@ -3,7 +3,7 @@ using Xunit;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Drawing;
 
-namespace EsUtil.Feature.LoupeCore.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests.Drawing;
 
 /// <summary><see cref="LoupeRenderRequest"/> の組み立て（UI 非依存・並列実行）のテスト。</summary>
 /// <remarks>

@@ -8,7 +8,7 @@ using EsUtil.Feature.MarqueeCore.Interaction;
 using EsUtil.Feature.MarqueeCore.Setting;
 using EsUtil.Feature.MarqueeCore.Logging;
 
-namespace EsUtil.Feature.MarqueeCore.Session;
+namespace EsUtil.Feature.MarqueeCore.Interaction;
 
 /// <summary>Marquee の対話（選択・ドラッグ・nudge）の状態を管理し、入力を通知されて状態を更新する状態管理クラス（Mediator パターン: 入力と状態の仲介）。</summary>
 /// <remarks>

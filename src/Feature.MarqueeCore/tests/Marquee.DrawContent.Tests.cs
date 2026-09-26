@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore.Session;
+using EsUtil.Feature.MarqueeCore.Interaction;
 using Xunit;
 
 using EsUtil.Feature.MarqueeCore.Decoration;

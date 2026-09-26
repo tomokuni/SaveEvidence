@@ -7,7 +7,7 @@ using Xunit;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Logging;
 
-namespace EsUtil.Feature.LoupeCore.Tests;
+namespace EsUtil.Feature.LoupeCore.Tests.Logging;
 
 /// <summary><see cref="LoupeLogMessage"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>

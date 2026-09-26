@@ -1,13 +1,12 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore.Session;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.MarqueeCore.Interaction;
 using EsUtil.Feature.MarqueeCore.Setting;
 
-namespace EsUtil.Feature.MarqueeCore.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests.Interaction;
 
 /// <summary><see cref="MarqueeSession"/> の単体テスト（入力の解釈・状態遷移の判断・通知・効果）。</summary>
 /// <remarks>

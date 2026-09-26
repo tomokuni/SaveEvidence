@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Interaction;
 
-namespace EsUtil.Feature.MarqueeCore.Session;
+namespace EsUtil.Feature.MarqueeCore.Interaction;
 
 /// <summary>選択・ドラッグ・nudge の状態を保持し、状態遷移の操作と読み取りを提供する内部クラス。</summary>
 /// <remarks>

@@ -2,7 +2,7 @@ using Xunit;
 using EsUtil.Feature.MarqueeCore.Setting;
 
 
-namespace EsUtil.Feature.MarqueeCore.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests.Setting;
 
 /// <summary><see cref="MarqueeOptions"/> の単体テスト（既定値・部分変更・値補正・等価性）。</summary>
 /// <remarks>

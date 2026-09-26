@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using EsUtil.Feature.MarqueeCore.Interaction;
 
-namespace EsUtil.Feature.MarqueeCore.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests.Selection;
 
 /// <summary><see cref="SelectionGeometry"/> の単体テスト（純粋な幾何計算）。</summary>
 /// <remarks>
