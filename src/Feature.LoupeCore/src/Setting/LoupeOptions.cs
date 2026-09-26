@@ -72,6 +72,21 @@ public sealed record LoupeOptions
     /// <value>true の場合はルーペ上端中央へ中心座標を表示する。既定は true。</value>
     public bool ShowCoordLabel { get; init; } = true;
 
+    /// <summary>市松模様を表示するかどうかを取得する。</summary>
+    /// <value>true（既定）の場合は画像の外側（透明領域）へ市松模様を描く。false の場合は描かない。</value>
+    /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
+    public bool ShowCheckerboard { get; init; } = true;
+
+    /// <summary>十字線を表示するかどうかを取得する。</summary>
+    /// <value>true（既定）の場合は切り出し領域の中央へ十字線を描く。false の場合は描かない。</value>
+    /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
+    public bool ShowCrosshair { get; init; } = true;
+
+    /// <summary>外枠を表示するかどうかを取得する。</summary>
+    /// <value>true（既定）の場合はルーペの四辺へ外枠を描く。false の場合は描かない。</value>
+    /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
+    public bool ShowFrame { get; init; } = true;
+
     /// <summary>中心座標ラベルを描画するかどうかを判定する。</summary>
     /// <param name="hasCenterPoint">拡大中心が設定されているかどうか。</param>
     /// <returns>描画する場合は true。</returns>

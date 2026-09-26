@@ -23,6 +23,9 @@ public class LoupeOptionsTests
         Assert.Equal(Loupe.Limits.CheckerSizeDefault, options.CheckerSize);
         Assert.Equal(Loupe.Limits.FrameWidthDefault, options.FrameWidth);
         Assert.True(options.ShowCoordLabel);
+        Assert.True(options.ShowCheckerboard);
+        Assert.True(options.ShowCrosshair);
+        Assert.True(options.ShowFrame);
     }
 
     [Fact]

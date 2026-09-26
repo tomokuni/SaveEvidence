@@ -216,6 +216,9 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | `CheckerSize` | `int` | `6` | `1`〜`128` | 市松模様の 1 タイルサイズ（DIP） |
 | `FrameWidth` | `int` | `2` | `1`〜`64` | 外枠の太さ（DIP） |
 | `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
+| `ShowCheckerboard` | `bool` | `true` | — | 市松模様の表示可否 |
+| `ShowCrosshair` | `bool` | `true` | — | 十字線の表示可否 |
+| `ShowFrame` | `bool` | `true` | — | 外枠の表示可否 |
 
 **表示サイズ（`RequestedSize`）のクランプはコア（ファサード）が内包**します: 表示サイズはコアが本値（基本サイズ）を親領域サイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
@@ -260,15 +263,16 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 | `CheckerSize` | `int` | `6` | 市松模様の 1 タイルサイズ（DIP。1〜128 に補正） |
 | `FrameWidth` | `int` | `2` | 外枠の太さ（DIP。1〜64 に補正） |
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
+| `ShowCheckerboard` / `ShowCrosshair` / `ShowFrame` | `bool` | `true` | 市松模様・十字線・外枠の表示有無（透明色を「描かない」の代用にしない） |
 
 `Paint`（`LoupePaint`。詳細は `LoupeControl.UIBase` の `SPEC_ExtFunc.md` を参照）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `BackgroundColor` | `System.Drawing.Color` | 透明 | 下地（ベース）色。市松模様・拡大画像より先に全面へ塗る。背後の要素を透かさない場合は不透明色を指定する（既定は透明 = 背後の要素を透かす） |
-| `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色。アルファ 0 の場合は描画しない |
-| `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色。アルファ 0 の場合は描画しない |
-| `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色。アルファ 0 の場合は描画しない |
+| `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色 |
+| `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色 |
+| `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色 |
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（DIP。6〜48 に補正。非数は既定値へ補正） |

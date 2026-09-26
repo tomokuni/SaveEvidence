@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
 
@@ -12,8 +11,8 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// <b>ラベルのフォントサイズ・角丸も同じ理由で本型が持つ</b>: ラベルをどの体裁（文字要素 / 画像）で描くかは UI 層の判断であり、<br/>
 /// コアは文言と位置だけを渡す（<c>LoupeTextPlacement</c>）。<br/>
 /// <br/>
-/// <b>描画の可否</b>: 「アルファ 0 の色は描かない」の判定は <see cref="HasBackground"/> 等の述語が単一所有する<br/>
-/// （判定の規則自体は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する）。<br/>
+/// <b>描画の可否</b>: 描くかどうかはコアの設定（<c>LoupeOptions</c> の <c>ShowCheckerboard</c> / <c>ShowCrosshair</c> / <c>ShowFrame</c>）が単一所有する<br/>
+/// （コアが非表示の項目を空の描画内容として返すため、描画実装は分岐を持たない）。<br/>
 /// <br/>
 /// <b>下地</b>: 市松模様の色は半透明であり、背後の要素を透かしたくない場合はホストが不透明色を指定する。<br/>
 /// <br/>
@@ -107,32 +106,7 @@ public sealed record LoupePaint
     /// <summary>中心座標ラベルの角丸半径の既定値（DIP）。</summary>
     public const int CoordLabelCornerRadiusDefault = 2;
 
-    /// <summary>下地を塗るかどうかを取得する。</summary>
-    /// <value>下地のアルファが 0 でない場合は true。</value>
-    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
-    public bool HasBackground => BackgroundColor.IsVisible();
-
-    /// <summary>市松模様の明色で下地を塗るかどうかを取得する。</summary>
-    /// <value>色Aのアルファが 0 でない場合は true。</value>
-    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
-    public bool HasCheckerColorA => CheckerColorA.IsVisible();
-
-    /// <summary>市松模様の暗色タイルを描画するかどうかを取得する。</summary>
-    /// <value>色Bのアルファが 0 でない場合は true。</value>
-    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
-    public bool HasCheckerColorB => CheckerColorB.IsVisible();
-
-    /// <summary>外枠を描画するかどうかを取得する。</summary>
-    /// <value>外枠の色のアルファが 0 でない場合は true。</value>
-    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
-    public bool HasFrame => FrameColor.IsVisible();
-
-    /// <summary>十字線を描画するかどうかを取得する。</summary>
-    /// <value>十字線の色のアルファが 0 でない場合は true。</value>
-    /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
-    public bool HasCrosshair => CrossColor.IsVisible();
-
-    /// <summary>ラベルのフォントサイズを安全域（6〜48）へ補正する。</summary>
+    /// <summary>中心座標ラベルのフォントサイズを安全域（6〜48）へ補正する。</summary>
     /// <param name="value">補正する値（DIP）。</param>
     /// <param name="defaultValue">非数（NaN / ∞）の場合に使う既定値（DIP）。</param>
     /// <returns>6〜48 に補正した値。非数の場合は <paramref name="defaultValue"/>。</returns>

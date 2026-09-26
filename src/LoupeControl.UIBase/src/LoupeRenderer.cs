@@ -59,15 +59,7 @@ public class LoupeRenderer : LoupeRendererBase
     /// <inheritdoc/>
     protected override void DrawCheckerboard(IEsCanvas canvas, in LoupeDrawContent content)
     {
-        if (_paint.HasCheckerColorA)
-        {
-            canvas.FillRect(content.SurfaceBounds, _paint.CheckerColorA);
-        }
-
-        if (!_paint.HasCheckerColorB)
-        {
-            return;
-        }
+        canvas.FillRect(content.SurfaceBounds, _paint.CheckerColorA);
 
         // タイル数は描画先の大きさに比例して増えるため、リストを確保しない列挙子をそのまま渡す
         canvas.FillRects(new CheckerTileWalker(content.CheckerTiles), _paint.CheckerColorB);
@@ -75,25 +67,11 @@ public class LoupeRenderer : LoupeRendererBase
 
     /// <inheritdoc/>
     protected override void DrawCrosshair(IEsCanvas canvas, in LoupeDrawContent content)
-    {
-        if (!_paint.HasCrosshair)
-        {
-            return;
-        }
-
-        canvas.FillRects(content.CrosshairRects, _paint.CrossColor);
-    }
+        => canvas.FillRects(content.CrosshairRects, _paint.CrossColor);
 
     /// <inheritdoc/>
     protected override void DrawFrame(IEsCanvas canvas, in LoupeDrawContent content)
-    {
-        if (!_paint.HasFrame)
-        {
-            return;
-        }
-
-        canvas.FillRects(content.FrameRects, _paint.FrameColor);
-    }
+        => canvas.FillRects(content.FrameRects, _paint.FrameColor);
 
     /// <summary>コアが解決した市松模様の暗色タイルを、描画ポートの列挙子の契約へ適合させる構造体。</summary>
     /// <remarks>

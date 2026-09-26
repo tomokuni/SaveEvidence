@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using EsUtil.Feature.LoupeCore.Drawing;
+using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.Feature.LoupeCore.Tests;
 
@@ -59,5 +60,61 @@ public class LoupeDrawContentTests
 
         // 層の順序は固定であり、描画のたびに一覧を組み立てない
         Assert.Same(first.Layers, second.Layers);
+    }
+
+    /// <summary>市松模様の非表示設定で市松模様の描画内容が空になることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_市松模様の非表示設定で描画内容を空にする()
+    {
+        var loupe = new Loupe(LoupeOptions.Default with { ShowCheckerboard = false })
+        {
+            CenterPoint = new EsPoint(50, 60),
+        };
+
+        var content = loupe.ResolveContent(loupe.CreateRequest(160));
+
+        // 描くかどうかは設定の明示フラグが単一所有する（色のアルファを代用にしない）
+        Assert.Equal(0, content.CheckerTiles.Count);
+    }
+
+    /// <summary>十字線の非表示設定で十字線の描画内容が空になることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_十字線の非表示設定で描画内容を空にする()
+    {
+        var loupe = new Loupe(LoupeOptions.Default with { ShowCrosshair = false })
+        {
+            CenterPoint = new EsPoint(50, 60),
+        };
+
+        var content = loupe.ResolveContent(loupe.CreateRequest(160));
+
+        Assert.Empty(content.CrosshairRects);
+    }
+
+    /// <summary>外枠の非表示設定で外枠の描画内容が空になることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_外枠の非表示設定で描画内容を空にする()
+    {
+        var loupe = new Loupe(LoupeOptions.Default with { ShowFrame = false })
+        {
+            CenterPoint = new EsPoint(50, 60),
+        };
+
+        var content = loupe.ResolveContent(loupe.CreateRequest(160));
+
+        Assert.Empty(content.FrameRects);
+    }
+
+    /// <summary>既定では市松模様・十字線・外枠の描画内容が返ることを検証する。</summary>
+    [Fact]
+    public void ResolveContent_既定では3つとも描画内容を返す()
+    {
+        var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
+
+        var content = loupe.ResolveContent(loupe.CreateRequest(160));
+
+        Assert.True(content.CheckerTiles.Count > 0);
+        Assert.NotEmpty(content.CrosshairRects);
+        Assert.NotEmpty(content.FrameRects);
     }
 }

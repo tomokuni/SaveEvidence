@@ -84,7 +84,6 @@
 | --- | --- |
 | `Default` | すべての色を既定値にした値（部分変更の基点: `LoupePaint.Default with { ... }`） |
 | `BackgroundColor` / `CheckerColorA` / `CheckerColorB` / `FrameColor` / `CrossColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` | 描画に使う 7 色（UI 非依存の `System.Drawing.Color`） |
-| `HasBackground` / `HasCheckerColorA` / `HasCheckerColorB` / `HasFrame` / `HasCrosshair` | アルファが 0 でない（= 描画する）かを返す。「透明は描画しない」の判断を本型が単一所有する |
 
 ### `LoupeLabelPlan` のメンバー
 

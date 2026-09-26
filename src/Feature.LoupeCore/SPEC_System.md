@@ -100,7 +100,7 @@ sequenceDiagram
 | 描画の色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）とその既定値、および描画可否の述語 | `LoupePaint`（描画層 `LoupeControl.UIBase`） |
 | 下地（ベース）色とその既定値 | `LoupePaint.BackgroundColor`（描画層 `LoupeControl.UIBase`。最初に塗る） |
 | 数値パラメータ（スカラー）の安全域とクランプ | `Loupe.Limits` |
-| 描画の可否（アルファ 0 は描画しない） | `LoupePaint.Has*`（`LoupeControl.UIBase`。判定の規則は `DrawingColorExtensions.IsVisible`） |
+| 描画の可否（市松模様・十字線・外枠・中心座標ラベルの表示可否） | `LoupeOptions.ShowCheckerboard` / `ShowCrosshair` / `ShowFrame` / `ShowCoordLabel`（明示フラグ。透明色を代用にしない） |
 | ラベル表示の可否（設定と中心の有無） | `LoupeOptions.ShouldShowCoordLabel` |
 | 切り出し領域の一辺（ドメインピクセル） | `LoupeRenderRequest.CaptureSize`（internal。切り上げは `LoupeDivMath.CeilDiv`） |
 | 切り出し領域の左上（中心 → 左上の変換） | `LoupeRenderRequest.CaptureTopLeft`（中心未設定は null。描画完了通知のために public） |

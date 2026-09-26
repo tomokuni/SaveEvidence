@@ -34,16 +34,19 @@
 | `CheckerSize` | `int` | 6 | 1〜128 | 市松模様の 1 タイルサイズ（DIP） |
 | `FrameWidth` | `int` | 2 | 1〜64 | 外枠の太さ（DIP） |
 | `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
+| `ShowCheckerboard` | `bool` | `true` | — | 市松模様の表示可否 |
+| `ShowCrosshair` | `bool` | `true` | — | 十字線の表示可否 |
+| `ShowFrame` | `bool` | `true` | — | 外枠の表示可否 |
 
 `Paint`（`LoupePaint`。色は UI 非依存の `System.Drawing.Color`）の項目:
 
 | 項目 | 型 | 既定値 | 安全域（範囲外は自動補正） | 説明 |
 | --- | --- | --- | --- | --- |
 | `BackgroundColor` | `DrawingColor` | 透明 | — | 下地（ベース）色。市松模様・拡大画像より先に表面全体へ塗る。背後の要素を透かさない場合は不透明色を指定する（既定は透明 = 背後の要素を透かす） |
-| `CrossColor` | `DrawingColor` | 赤 40%（`#66FF0000`） | — | 十字線の色（不透明度はアルファ）。アルファ 0 は描画しない |
-| `CheckerColorA` | `DrawingColor` | Gray 30% | — | 市松模様の明色。アルファ 0 は描画しない |
-| `CheckerColorB` | `DrawingColor` | DarkGray 30% | — | 市松模様の暗色。アルファ 0 は描画しない |
-| `FrameColor` | `DrawingColor` | LightGray | — | 外枠の色。アルファ 0 は描画しない |
+| `CrossColor` | `DrawingColor` | 赤 40%（`#66FF0000`） | — | 十字線の色（不透明度はアルファ） |
+| `CheckerColorA` | `DrawingColor` | Gray 30% | — | 市松模様の明色 |
+| `CheckerColorB` | `DrawingColor` | DarkGray 30% | — | 市松模様の暗色 |
+| `FrameColor` | `DrawingColor` | LightGray | — | 外枠の色 |
 | `CoordLabelColor` | `DrawingColor` | 白 | — | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `DrawingColor` | 黒 60%（`#99000000`） | — | 座標ラベルの背景色 |
 | `CoordLabelFontSize` | `double` | 12.0 | 6〜48（非有限は既定値） | 座標ラベルのフォントサイズ（DIP） |

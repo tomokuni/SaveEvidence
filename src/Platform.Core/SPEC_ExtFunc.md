@@ -104,10 +104,11 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 | 拡張メソッド | `IsVisible` | `static bool IsVisible(this DrawingColor color)` | アルファが 0 より大きい場合に true（**アルファ 0 は「描かない」**を意味する） |
 
 ```csharp
-public bool HasFrame => FrameColor.IsVisible();   // 透明なら描かない
+// ホストの色設定をコアの明示フラグへ写す（色を指定しない = 描かない）
+ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
 ```
 
-描画の設定（ルーペの `LoupePaint`。下地・市松模様・外枠・十字線）が `color.A > 0` を書くと、同じ意味の判定が散らばり、片方だけが不可視の描画要求を UI へ届けます。マーキーの装飾（暗転マスク・穴あけ枠・内側の塗りと枠線）の描画可否は、色のアルファではなくコア（`MarqueeDecoOptions`）の明示フラグが単一所有します。
+描画の可否は**コアの明示フラグ**（マーキーの `MarqueeDecoOptions` / ルーペの `LoupeOptions`）が単一所有します。本メソッドは「ホストの色設定（省略可能な色）をフラグへ写す」場面で使います（`color.A > 0` を各所に書くと、同じ意味の判定が散らばる）。
 
 ### `Imaging.ImageDrawMode`（enum）
 

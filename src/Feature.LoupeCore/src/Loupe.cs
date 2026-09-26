@@ -186,21 +186,22 @@ public sealed partial class Loupe
     /// 5. テキスト（中心座標ラベルの文言と基準点）を解決する。<br/>
     /// 6. 描く層の一覧（テキストの有無で末尾が変わる）を添えて描画内容を返す。<br/>
     /// <br/>
-    /// 色はコアが持たないため本メソッドは扱わない（描画時のアルファ判定は描画実装の責務であり、<br/>
-    /// アルファ 0 の色は描かない）。<br/>
+    /// 色はコアが持たないため本メソッドは扱わない（描くかどうかは設定の明示フラグが決め、<br/>
+    /// 非表示の項目は空の描画内容として返す）。<br/>
     /// 拡大画像は切り出しと描画の矩形（<see cref="LoupeMagnifiedImage"/>）として本値に含める<br/>
     /// （切り出し元の画像そのものは型が UI に依存するため、描画の起動時に引数で受け取る）。
     /// </remarks>
     public LoupeDrawContent ResolveContent(in LoupeRenderRequest request)
     {
         var surface = request.SurfaceBounds;
+        var options = request.Options;
         var coordLabelText = ResolveCoordLabelText(request);
 
         return new LoupeDrawContent(
             surface,
-            new LoupeCheckerTiles(request.PixelSize, request.CheckerSizePixels),
-            LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel),
-            LoupeDecorationGeometry.ComputeFrameRects(surface, request.FrameWidthPixels),
+            options.ShowCheckerboard ? new LoupeCheckerTiles(request.PixelSize, request.CheckerSizePixels) : default,
+            options.ShowCrosshair ? LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel) : [],
+            options.ShowFrame ? LoupeDecorationGeometry.ComputeFrameRects(surface, request.FrameWidthPixels) : [],
             request.MagnifiedImage,
             coordLabelText,
             coordLabelText is null ? s_layersWithoutLabel : s_layersWithLabel);

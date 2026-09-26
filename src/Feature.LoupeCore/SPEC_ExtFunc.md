@@ -72,6 +72,9 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | `CheckerSize` | `int` | `6` | 市松模様の 1 タイルサイズ（DIP）。安全域 1〜128 |
 | `FrameWidth` | `int` | `2` | 外枠の太さ（DIP）。安全域 1〜64 |
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示可否 |
+| `ShowCheckerboard` | `bool` | `true` | 市松模様の表示可否（透明色を「描かない」の代用にしない） |
+| `ShowCrosshair` | `bool` | `true` | 十字線の表示可否 |
+| `ShowFrame` | `bool` | `true` | 外枠の表示可否 |
 
 `record` のため `with` 式による部分変更と値の等価比較ができます。等価比較は UI のプロパティシステムと併せて「同値の再設定では再描画しない」動作を保証します。
 
@@ -80,7 +83,7 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | `Default` | すべての項目を既定値にした設定（部分変更の基点: `LoupeOptions.Default with { ZoomLevel = 8 }`） |
 | `ShouldShowCoordLabel(bool hasCenterPoint)` | 中心座標ラベルを描画するかを判定（`ShowCoordLabel` かつ拡大中心あり） |
 
-**色・フォントサイズ・角丸は本型に含みません**（描画にだけ必要な設定のため、描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有します。コアはこれらの値を決定せず、描画可否の判定にも使いません）。ホストは UI の `Paint` プロパティへ `LoupePaint` を指定します。また「透明は描画しない」の判断（`HasBackground` / `HasCheckerColorA` / `HasCheckerColorB` / `HasFrame` / `HasCrosshair`）も色を持つ描画層の `LoupePaint` が単一所有します。
+**色・フォントサイズ・角丸は本型に含みません**（描画にだけ必要な設定のため、描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有します。コアはこれらの値を決定せず、描画可否の判定にも使いません）。ホストは UI の `Paint` プロパティへ `LoupePaint` を指定します。**描画の可否は本型の明示フラグ（`ShowCheckerboard` / `ShowCrosshair` / `ShowFrame` / `ShowCoordLabel`）が単一所有します**（透明色を「描かない」の代用にしません）。
 
 数値項目（`RequestedSize` / `ZoomLevel` / `CheckerSize` / `FrameWidth`）は **`init` アクセサで補正**します（規則は `Loupe.Limits` が単一所有する）。したがってオブジェクト初期化子・`with` 式・逆シリアル化などの **どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録（Avalonia の `coerce` / MewUI の `coerce`）を要求しません。
 

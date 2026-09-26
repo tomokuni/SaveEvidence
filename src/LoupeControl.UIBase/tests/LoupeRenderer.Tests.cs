@@ -91,30 +91,18 @@ public class LoupeRendererTests
     }
 
     [Fact]
-    public void DrawShapes_市松模様の暗色が透明なら明色のみを塗る()
+    public void DrawShapes_市松模様の層が無ければ市松模様を描かない()
     {
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
 
+        // 層の一覧に市松模様が含まれない場合、描画実装は市松模様を描かない（描くかどうかはコアが決める）
         DrawShapes(
             target,
-            CreatePaint(checkerA: s_checkerA, checkerB: DrawingColor.Transparent),
-            [LoupeDrawLayer.Checkerboard]);
+            CreatePaint(background: s_background, checkerA: s_checkerA, checkerB: s_checkerB),
+            [LoupeDrawLayer.Background]);
 
-        Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(0, 0));
-        Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(6, 0));
-    }
-
-    [Fact]
-    public void DrawShapes_市松模様の明暗とも透明なら何も塗らない()
-    {
-        using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
-
-        DrawShapes(
-            target,
-            CreatePaint(checkerA: DrawingColor.Transparent, checkerB: DrawingColor.Transparent),
-            [LoupeDrawLayer.Checkerboard]);
-
-        Assert.Equal(s_transparent, target.GetPixel(0, 0));
+        Assert.Equal(s_backgroundPixel, target.GetPixel(0, 0));
+        Assert.Equal(s_backgroundPixel, target.GetPixel(6, 0));
     }
 
     // ====================================================================
@@ -187,14 +175,15 @@ public class LoupeRendererTests
     }
 
     [Fact]
-    public void DrawShapes_十字線が透明なら描かない()
+    public void DrawShapes_十字線の層が無ければ十字線を描かない()
     {
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
 
+        // 層の一覧に十字線が含まれない場合、描画実装は十字線を描かない（描くかどうかはコアが決める）
         DrawShapes(
             target,
-            CreatePaint(background: s_background, crosshair: DrawingColor.Transparent),
-            [LoupeDrawLayer.Background, LoupeDrawLayer.Crosshair]);
+            CreatePaint(background: s_background, crosshair: s_cross),
+            [LoupeDrawLayer.Background, LoupeDrawLayer.Frame]);
 
         Assert.Equal(s_backgroundPixel, target.GetPixel(17, 1));
     }
@@ -218,14 +207,15 @@ public class LoupeRendererTests
     }
 
     [Fact]
-    public void DrawShapes_外枠が透明なら描かない()
+    public void DrawShapes_外枠の層が無ければ外枠を描かない()
     {
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
 
+        // 層の一覧に外枠が含まれない場合、描画実装は外枠を描かない（描くかどうかはコアが決める）
         DrawShapes(
             target,
-            CreatePaint(background: s_background, frame: DrawingColor.Transparent),
-            [LoupeDrawLayer.Background, LoupeDrawLayer.Frame]);
+            CreatePaint(background: s_background, frame: s_frame),
+            [LoupeDrawLayer.Background, LoupeDrawLayer.Crosshair]);
 
         Assert.Equal(s_backgroundPixel, target.GetPixel(16, 1));
     }
