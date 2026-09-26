@@ -113,7 +113,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | --- | --- | --- | --- |
 | `ShowHandles` | `bool` | `true` | ドラッグハンドルの表示可否 |
 | `HandleSize` | `double` | `10.0` | ハンドルの一辺サイズ（DIP） |
-| `HandleHitRadius` | `double` | `12.0` | ハンドルのヒットテスト半径（DIP） |
+| `HandleHitRadius` | `double` | `12.0` | ハンドルのヒットテスト半径（DIP。0.0〜256.0 に補正） |
 | `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
 | `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP） |

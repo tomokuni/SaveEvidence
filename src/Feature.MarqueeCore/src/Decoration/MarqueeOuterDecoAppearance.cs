@@ -1,3 +1,5 @@
+using static EsUtil.Feature.MarqueeCore.Marquee.Limits;
+
 namespace EsUtil.Feature.MarqueeCore.Decoration;
 
 /// <summary>暗転マスク（オーバーレイ）の外枠（枠線）の寸法をまとめた不変の設定値。</summary>
@@ -22,6 +24,6 @@ public sealed record MarqueeOuterDecoAppearance
     public double BorderThickness
     {
         get => field;
-        init => field = Marquee.Limits.CoerceBorderThickness(value);
-    } = Marquee.Limits.BorderThicknessDefault;
+        init => field = CoerceBorderThickness(value);
+    } = BorderThicknessDefault;
 }

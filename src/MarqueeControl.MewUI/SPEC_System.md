@@ -192,13 +192,20 @@ classDiagram
       }
       class MarqueeOptions {
           <<Feature.MarqueeCore>>
-          +double HandleSize
+          +double HandleSize / MarkerLength
           +double HandleHitRadius / MinSelectionSize
-          +double HandleHitRadius / MinSelectionSize
+          +bool ShowHandles / ShowCoordLabel / ShowSizeLabel
           +bool ClampToDomainBounds
-          +double HandleBorderThickness$ const
-          +double CoordLabelOffset$ const
-    }
+      }
+      class MarqueeLimits {
+          <<Feature.MarqueeCore / Marquee.Limits>>
+          +CoerceHandleSize(value)$ double
+          +CoerceMarkerLength(value)$ double
+          +CoerceHandleHitRadius(value)$ double
+          +CoerceMinSelectionSize(value)$ double
+          +CoerceDomainToDipScaling(value)$ double
+          +CoerceBorderThickness(value)$ double
+      }
     class MarqueeLabelPlacement {
         <<MarqueeControl.UIBase>>
         +EsRect Bounds

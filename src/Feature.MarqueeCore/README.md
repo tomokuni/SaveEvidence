@@ -35,8 +35,9 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `Interaction/` | `HitTarget` | public | ヒット対象の種別（8 方向のハンドル + `Move`。`None` は対象なし） |
 | `Interaction/` | `MarqueeInteractionState` | public | 対話状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging） |
 | `Interaction/` | `MarqueeSnapshot` | public | 通知時点の状態の値型（`readonly record struct`。`selectionRect` は `EsRect`、`mousePosition` は `EsPoint`。操作中の通知のたびにヒープを確保しない） |
-| `Setting/` | `MarqueeOptions` | public | 設定の値オブジェクト（寸法・表示可否・対話パラメータ）。既定値を単一所有する（**色・フォントサイズは持たない**。これらは描画にだけ必要な設定であり、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有する）。ラベルの体裁（内側余白・行送り）も描画層の `MarqueePaint` が単一所有し、本型はコントロール固有の値（`CoordLabelOffset` / `HandleBorderThickness`）を public const として公開する |
+| `Setting/` | `MarqueeOptions` | public | 設定の値オブジェクト（寸法・表示可否・対話パラメータ）。既定値と安全域への補正を単一所有する（補正の規則は `Marquee.Limits` が持ち、生成時の `init` アクセサが適用する）。**色・フォントサイズは持たない**（これらは描画にだけ必要な設定であり、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有する）。ラベルの体裁（内側余白・行送り）も描画層の `MarqueePaint` が単一所有する |
 | ルート | `Marquee` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値の保持、入力の通知、外部からの操作、描画内容の解決、効果の適用を行う |
+| ルート | `Marquee.Limits.cs`（`Marquee` の **partial**） | public | 数値パラメータの既定値・安全域と範囲外の補正（`Marquee.Limits` の入れ子）。ファサード以外のコア型を直接参照しないためのスキーマの窓口 |
 | `Contract/` | `IMarqueeEffects` | public | コアが要求する効果（フォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換）の適用先。UI 層が自 UI の操作へ接続する唯一の境界 |
 | `Contract/` | `MarqueeEffectsBase` | public abstract | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス。独自コントロールは必要な効果だけ override する（不要なメンバーの空実装を書かずに済む） |
 | ルート | `Marquee.DrawContent.cs`（`Marquee` の **partial**） | internal | 描画内容の**内部手順**（装飾・穴あけ矩形・ハンドル・始点マーカー・テキストの配置の解決）を持つ。公開の入口（`ResolveContent`）はファサード本体（`Marquee.cs`）が持つ。穴あけ矩形と座標変換ポートは 1 フレームに 1 回だけ解決する |
@@ -130,7 +131,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 装飾の設定（寸法・描画可否・ハイライト・内側） | `Decoration` の `MarqueeDecoOptions` | 枠線の太さ（`OuterAppearance` / `InnerAppearance`）・描画可否の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）・ハイライト矩形 |
 | 装飾の描画内容と描画の可否の判断 | `Marquee.ResolveContent`（`ResolveOuterDecoration` / `ResolveInnerDecoration`） | 暗転領域・枠線矩形・塗り矩形（可否は `MarqueeDecoOptions` の明示フラグ。**アルファ 0 を「描かない」の代用にしない**）。**穴あけ矩形は 1 回だけ解決して外側・内側・サイズラベルへ同じ値を渡す** |
 | サイズラベル（穴あけ矩形の位置と寸法） | `MarqueeTextPlacement`（本コア） | 文言（コアが矩形から生成し、書式は内部に閉じる）・基準点（穴あけ矩形の左上・DIP）・アライン。体裁（背景矩形・内側余白・フォントサイズ・色）は描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` が単一所有する |
-| カーソル座標ラベル | `MarqueeTextPlacement`（本コア） | 文言（`EsPoint.Format`）・基準点（カーソル + `MarqueeOptions.CoordLabelOffset`）・アライン。要素への写像は描画層の `MarqueeLabelPlan`、フォントサイズと色は `MarqueePaint`（描画層）が単一所有する |
+| カーソル座標ラベル | `MarqueeTextPlacement`（本コア） | 文言（`EsPoint.Format`）・基準点（カーソル + `Marquee.Limits.CoordLabelOffset`）・アライン。要素への写像は描画層の `MarqueeLabelPlan`、フォントサイズと色は `MarqueePaint`（描画層）が単一所有する |
 | 装飾・ハンドル・マーカー・ラベルの色 | `MarqueePaint`（描画層 `MarqueeControl.UIBase`） | `OverlayColor` / `OuterBorderColor` / `InnerFillColor` / `InnerBorderColor` / `HandleColor` / `HandleBorderColor` / `MarkerColor` / `SizeLabelColor` / `SizeLabelBackgroundColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` |
 | 操作ラベル・情報ラベル | **ホスト**（アプリ固有の付加情報） | 文言の生成と描画。コアは表示可否も含めて関知しない |
 | 選択矩形・選択の有無のソース | 本コア（`Marquee` のセッション経由） | 装飾は参照のみ（複製しない） |
@@ -232,9 +233,9 @@ UI 層が使う共有値・計算:
 
 | メンバー | 用途 |
 | --- | --- |
-| `MarqueeOptions.HandleBorderThickness` | ハンドル枠の線の太さ（DIP）。`MarqueeHandles.BorderThickness` として描画層へ渡るため、描画層は定数を持たない |
+| `Marquee.Limits.HandleBorderThickness` | ハンドル枠の線の太さ（DIP。固定値）。`MarqueeHandles.BorderThickness` として描画層へ渡るため、描画層は定数を持たない |
 | `MarqueeHandles`（`Rects`） | 8 方向のハンドル矩形（`Marquee.ResolveContent` が `MarqueeSelectionGeometry` の位置と `MarqueeOptions.HandleSize` から解決済み） |
-| `MarqueeOptions.CoordLabelOffset` | カーソルからラベルを離すオフセット（DIP。本コントロール固有の値） |
+| `Marquee.Limits.CoordLabelOffset` | カーソルからラベルを離すオフセット（DIP。固定値） |
 | `MarqueePaint.LabelPadding`（描画層 `MarqueeControl.UIBase`） | ラベルの内側余白の既定値（全ラベル共通。既定 4.0 DIP）。ホストが描く付加情報ラベルも同じ値を使う |
 | `MarqueePaint`（同） | ラベルの体裁（フォントサイズ・色・内側余白）の単一所有者。行送りは「行の高さ + 内側余白 × 2」で求める（`FadeMaskHostLabelRenderer` が単一所有する） |
 | `MarqueeLabelPlacement`（同） | UI 要素として配置するための指示（配置矩形・内側余白・文言・フォント・色）。UI 層はこれを置くだけでよい（`MarqueeLabelPlan` が組み立てる） |
@@ -273,19 +274,19 @@ UI 層が使う共有値・計算:
 tests/
 ├── Marquee.Tests.cs                 # 公開ファサード（操作・効果の適用・設定の伝搬・描画内容の解決・通知の転送・確保量の固定）（36 件）
 ├── Marquee.DrawContent.Tests.cs     # 描画内容の解決（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・描画可否・層の順序）（50 件）
-├── Marquee.Limits.Tests.cs          # 数値パラメータの既定値・未設定時の解決規則・安全域への補正（18 件）
+├── Marquee.Limits.Tests.cs          # 数値パラメータの既定値・安全域と補正・未設定時の解決規則（46 件）
 ├── Contract/                        # 効果の基底クラス（全メンバーが空実装であること・派生で必要なものだけを override できること）（3 件）
 ├── Decoration/                      # 装飾（暗転マスク・枠線・内側の塗り・外観の安全域への補正）（24 件）
 ├── Drawing/                         # フレーム全体の幾何（座標変換ポート・DIP 変換・穴あけ矩形）（18 件）
 ├── Interaction/                     # 状態遷移・ヒットテスト・ドラッグ・nudge・入力の解釈・効果の適用（87 件）
 ├── Logging/                         # ログ定義の生成コード（IsEnabled 両パス・書式）（3 件）
 ├── Selection/                       # 純粋幾何（正規化・ハンドル位置・近傍判定・境界クリップ・カーソル種別）（21 件）
-└── Setting/                         # 既定値・部分変更・値補正・等価性（8 件）
+└── Setting/                         # 既定値・部分変更・安全域への補正・等価性（18 件）
 ```
 
 **テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Marquee.cs` / `Marquee.DrawContent.cs`）のテストはルートに置きます。
 
-件数は `[Theory]` を展開したケース数（合計 268 件）です。
+件数は `[Theory]` を展開したケース数（合計 306 件）です。
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj

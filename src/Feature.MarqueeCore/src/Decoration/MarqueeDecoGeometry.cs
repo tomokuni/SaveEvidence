@@ -21,10 +21,11 @@ internal static class MarqueeDecoGeometry
     /// <returns>上・下・左・右の順の枠線矩形（4 個）。</returns>
     /// <remarks>
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの外枠と同じ式）。<br/>
-    /// 太さの補正は装飾の外観（<c>OuterDecoAppearance</c> / <c>InnerDecoAppearance</c>）の生成時に適用される。
+    /// 太さは面の短辺で上限を取る（面より太い枠線は面全体を覆い、矩形が面からはみ出さない）。<br/>
+    /// 太さの補正は装飾の外観（<c>MarqueeOuterDecoAppearance</c> / <c>MarqueeInnerDecoAppearance</c>）の生成時に適用される。
     /// </remarks>
-    internal static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)
-        => rect.ComputeInnerEdges(thickness);
+    public static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)
+        => rect.ComputeInnerEdges(Math.Min(thickness, Math.Min(rect.Width, rect.Height)));
 
     /// <summary>暗転オーバーレイを描画するかどうかを判定する。</summary>
     /// <param name="holeRect">穴あけ矩形（DIP）。null の場合は全面暗転を検討する。</param>

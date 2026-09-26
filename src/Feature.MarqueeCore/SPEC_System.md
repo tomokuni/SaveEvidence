@@ -98,7 +98,7 @@ stateDiagram-v2
 | `src/Interaction/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。**状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
 | `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 描画内容の**内部手順**（装飾・穴あけ矩形・ハンドル・テキストの配置。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する）。公開の入口 `ResolveContent` は `Marquee.cs` が持つ |
 | `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | フレーム解決の入力（設定・状態・描画時に決まる値）。`Marquee.CreateRequest` が生成する。**本値から導出する値（座標変換ポートの決定・論理座標から DIP への変換・穴あけ矩形の決定）は本型が単一所有する**（内部メンバー） |
-| `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は描画層の `MarqueePaint` が単一所有する） |
+| `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値を単一所有し、生成時に安全域（`Marquee.Limits`）へ補正する（体裁は描画層の `MarqueePaint` が単一所有する） |
 | `src/Drawing/MarqueeDrawContent.cs` | `MarqueeDrawContent` | public | 描画契約（装飾・穴あけ矩形・ハンドル・マーカー・テキストの配置・層の順序） |
 | `src/Drawing/MarqueeHandles.cs` | `MarqueeHandles` | public | ドラッグハンドルの描画契約（8 方向の矩形・枠線の太さ） |
 | `src/Drawing/MarqueeMarker.cs` | `MarqueeMarker` | public | 始点マーカー（十字線）の描画契約（中心・太さ・半幅） |
@@ -132,8 +132,9 @@ stateDiagram-v2
 | 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `MarqueeSelectionGeometry` |
 | 描画する層とその順序 | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
 | 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveContent` |
-| 設定の既定値・範囲補正・体裁定数 | `MarqueeOptions`（補正は生成時の `init` アクセサ） |
-| 枠線の太さの安全域（最小 0.5・既定 2.0）とその補正 | `Marquee.Limits`（補正は装飾の外観（`MarqueeOuterDecoAppearance` / `MarqueeInnerDecoAppearance`）の生成時の `init` アクセサが適用する） |
+| 設定の既定値・範囲補正・固定値 | `Marquee.Limits`（`MarqueeOptions` と装飾の外観の生成時の `init` アクセサが参照する） |
+| 装飾の枠線の太さの安全域（0.5〜64.0・既定 2.0） | `Marquee.Limits`（補正は装飾の外観（`MarqueeOuterDecoAppearance` / `MarqueeInnerDecoAppearance`）の生成時の `init` アクセサが適用する） |
+| 枠線の 4 辺の矩形（太さは面の短辺で上限を取る） | `MarqueeDecoGeometry.ComputeBorderRects`（辺の式は `EsRect.ComputeInnerEdges` が単一所有する） |
 | ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（14.0 / 12.0） | 描画層の `MarqueePaint` |
 | フォントサイズの安全域（6〜48） | 描画層の `MarqueePaint` |
 | ラベルの体裁（背景 = 実寸 + 余白×2、アライン、クランプ、行送り） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` |
@@ -154,7 +155,7 @@ stateDiagram-v2
 | ロガー未設定 | `NullLogger` へ吸収する（呼び出し側は null を設定してよい） |
 | 座標変換ポート未設定 | 等価変換（1 ドメインピクセル = 1 DIP・境界なし）として扱う |
 | 未定義の `EsKey` | 何もしない（`default` の効果を返す） |
-| 設定値の範囲外・非数 | 生成時に補正する（例外にしない）。フォントサイズは 6〜48、非数は既定値 |
+| 設定値の範囲外・非数 | 生成時に補正する（例外にしない）。安全域は `Marquee.Limits` が単一所有し、`MarqueeOptions` と装飾の外観が `init` アクセサで適用する。フォントサイズは 6〜48、非数は既定値 |
 
 ## 7. 可視性ポリシー
 
@@ -170,7 +171,7 @@ stateDiagram-v2
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
 | 単位 | 純粋計算（`MarqueeSelectionGeometry` / `MarqueeDecoGeometry` / `MarqueeRenderRequest`）・状態機械・ファサード・描画内容の解決 |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Contract` / `tests/Decoration` / `tests/Drawing` / `tests/Interaction` / `tests/Logging` / `tests/Selection` / `tests/Setting`。ファサードの partial のテストはルート） |
-| 合計 | 268 件（`[Theory]` は展開後のケース数） |
+| 合計 | 306 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj

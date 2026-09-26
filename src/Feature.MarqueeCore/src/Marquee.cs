@@ -7,6 +7,7 @@ using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
 using EsUtil.Feature.MarqueeCore.Interaction;
 using EsUtil.Feature.MarqueeCore.Setting;
+using static EsUtil.Feature.MarqueeCore.Marquee.Limits;
 
 
 namespace EsUtil.Feature.MarqueeCore;
@@ -64,7 +65,7 @@ public sealed partial class Marquee
     private double _displayScaleScaling;
 
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
-    private double _scaling = Limits.DomainToDipScalingDefault;
+    private double _scaling = DomainToDipScalingDefault;
 
     /// <summary>サイズラベルの文言プロバイダ（null = 未指定。未指定時はコアが自動生成する）。</summary>
     private Func<string?>? _sizeLabelOverrideProvider;
@@ -116,7 +117,7 @@ public sealed partial class Marquee
     }
 
     /// <summary>ポート未指定時に適用する倍率。</summary>
-    /// <value>ドメイン → DIP の倍率。既定は 1.0（0 以下・等倍は等価変換として扱う）。</value>
+    /// <value>ドメイン → DIP の倍率。既定は 1.0。設定時は 0.1〜8.0 へ補正される（0 以下・等倍は等価変換として扱う）。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
     /// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が設定されている場合は使われない（ポート優先。規則はコアが単一所有する）。<br/>
@@ -126,7 +127,7 @@ public sealed partial class Marquee
     public double DomainToDipScaling
     {
         get => _scaling;
-        set => SetIfChanged(ref _scaling, value);
+        set => SetIfChanged(ref _scaling, CoerceDomainToDipScaling(value));
     }
 
     /// <summary>装飾（暗転マスク・穴あけ枠・枠線・内側の塗り）の設定。</summary>
@@ -169,10 +170,10 @@ public sealed partial class Marquee
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
     /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
-    /// <remarks>0 以下を倍率と同値として扱う規則は <see cref="Limits.ResolveDisplayScale"/> が単一所有する。</remarks>
+    /// <remarks>0 以下を倍率と同値として扱う規則は <see cref="ResolveDisplayScale"/> が単一所有する。</remarks>
     public double DisplayScaleScaling
     {
-        get => Limits.ResolveDisplayScale(_displayScaleScaling, _scaling);
+        get => ResolveDisplayScale(_displayScaleScaling, _scaling);
         set => SetIfChanged(ref _displayScaleScaling, value);
     }
 

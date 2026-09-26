@@ -205,7 +205,7 @@ sequenceDiagram
     end
     R->>C: ComputeCrosshairRects(pixelSize, zoomLevel)
     R->>SK: 十字線を描画
-    R->>C: ComputeFrameRects(pixelSize, frameWidth)
+    R->>C: ComputeFrameRects(surface, frameWidth)
     R->>SK: 外枠を描画
     alt ShowCoordLabel かつ CenterPoint が設定済み
         R-->>R: 座標ラベル層は描画しない（コントロールがテキスト要素として表示する）

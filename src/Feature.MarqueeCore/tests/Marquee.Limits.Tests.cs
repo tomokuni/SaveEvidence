@@ -38,7 +38,7 @@ public class MarqueeLimitsTests
         Assert.Equal(0.5, Marquee.Limits.BorderThicknessMin);
     }
 
-    /// <summary>枠線の太さが最小値未満なら最小値へ補正されることを検証する。</summary>
+    /// <summary>枠線の太さが安全域へ補正されることを検証する。</summary>
     /// <param name="value">補正する太さ（DIP）。</param>
     /// <param name="expected">補正後の太さ（DIP）。</param>
     [Theory]
@@ -48,9 +48,103 @@ public class MarqueeLimitsTests
     [InlineData(0.5, 0.5)]
     [InlineData(2.0, 2.0)]
     [InlineData(10.0, 10.0)]
-    public void CoerceBorderThickness_最小値未満は最小値へ補正する(double value, double expected)
+    [InlineData(100.0, 64.0)]
+    [InlineData(double.NaN, 2.0)]
+    public void CoerceBorderThickness_安全域へ補正する(double value, double expected)
     {
         Assert.Equal(expected, Marquee.Limits.CoerceBorderThickness(value));
+    }
+
+    // ====================================================================
+    // 固定値（設定では変更しない）
+    // ====================================================================
+
+    /// <summary>ハンドルの枠線の太さが 1.5 であることを検証する。</summary>
+    [Fact]
+    public void HandleBorderThickness_15である()
+    {
+        Assert.Equal(1.5, Marquee.Limits.HandleBorderThickness);
+    }
+
+    /// <summary>カーソル座標ラベルのオフセットが 8.0 であることを検証する。</summary>
+    [Fact]
+    public void CoordLabelOffset_8である()
+    {
+        Assert.Equal(8.0, Marquee.Limits.CoordLabelOffset);
+    }
+
+    // ====================================================================
+    // 各設定値の Coerce（非有限は既定値）
+    // ====================================================================
+
+    /// <summary>ハンドルの一辺サイズが安全域へ補正されることを検証する。</summary>
+    /// <param name="value">補正する値（DIP）。</param>
+    /// <param name="expected">補正後の値（DIP）。</param>
+    [Theory]
+    [InlineData(0.5, 1.0)]
+    [InlineData(10.0, 10.0)]
+    [InlineData(300.0, 256.0)]
+    [InlineData(double.NaN, 10.0)]
+    public void CoerceHandleSize_安全域へ補正する(double value, double expected)
+    {
+        Assert.Equal(expected, Marquee.Limits.CoerceHandleSize(value));
+    }
+
+    /// <summary>十字マーカーの全長が安全域へ補正されることを検証する。</summary>
+    /// <param name="value">補正する値（DIP）。</param>
+    /// <param name="expected">補正後の値（DIP）。</param>
+    [Theory]
+    [InlineData(1.0, 2.0)]
+    [InlineData(16.0, 16.0)]
+    [InlineData(5000.0, 4096.0)]
+    [InlineData(double.PositiveInfinity, 16.0)]
+    public void CoerceMarkerLength_安全域へ補正する(double value, double expected)
+    {
+        Assert.Equal(expected, Marquee.Limits.CoerceMarkerLength(value));
+    }
+
+    /// <summary>ハンドルのヒットテスト半径が安全域へ補正されることを検証する。</summary>
+    /// <param name="value">補正する値（DIP）。</param>
+    /// <param name="expected">補正後の値（DIP）。</param>
+    [Theory]
+    [InlineData(-1.0, 0.0)]
+    [InlineData(0.0, 0.0)]
+    [InlineData(12.0, 12.0)]
+    [InlineData(300.0, 256.0)]
+    [InlineData(double.NaN, 12.0)]
+    public void CoerceHandleHitRadius_安全域へ補正する(double value, double expected)
+    {
+        Assert.Equal(expected, Marquee.Limits.CoerceHandleHitRadius(value));
+    }
+
+    /// <summary>選択矩形の最小サイズが安全域へ補正されることを検証する。</summary>
+    /// <param name="value">補正する値（ドメイン座標）。</param>
+    /// <param name="expected">補正後の値（ドメイン座標）。</param>
+    /// <remarks>0 以下の指定は最小値（1.0）へ補正される（幅・高さが 0 の選択を残さない）。</remarks>
+    [Theory]
+    [InlineData(-1.0, 1.0)]
+    [InlineData(0.0, 1.0)]
+    [InlineData(0.5, 1.0)]
+    [InlineData(6.0, 6.0)]
+    [InlineData(5000.0, 4096.0)]
+    [InlineData(double.NaN, 6.0)]
+    public void CoerceMinSelectionSize_安全域へ補正する(double value, double expected)
+    {
+        Assert.Equal(expected, Marquee.Limits.CoerceMinSelectionSize(value));
+    }
+
+    /// <summary>ポート未指定時の倍率が安全域へ補正されることを検証する。</summary>
+    /// <param name="value">補正する値。</param>
+    /// <param name="expected">補正後の値。</param>
+    [Theory]
+    [InlineData(0.0, 0.1)]
+    [InlineData(1.0, 1.0)]
+    [InlineData(1.25, 1.25)]
+    [InlineData(10.0, 8.0)]
+    [InlineData(double.NaN, 1.0)]
+    public void CoerceDomainToDipScaling_安全域へ補正する(double value, double expected)
+    {
+        Assert.Equal(expected, Marquee.Limits.CoerceDomainToDipScaling(value));
     }
 
     // ====================================================================

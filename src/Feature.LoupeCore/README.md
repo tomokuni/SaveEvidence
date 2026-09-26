@@ -111,7 +111,7 @@ dotnet build src/Feature.LoupeCore/src/Feature.LoupeCore.csproj
 
 ## テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます（**合計 140 件**。`[Theory]` は展開後のケース数）。
+`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、`[Fact]` / `[Theory]` で並列実行されます（**合計 139 件**。`[Theory]` は展開後のケース数）。
 
 ```powershell
 dotnet test src/Feature.LoupeCore/tests/Feature.LoupeCore.Tests.csproj

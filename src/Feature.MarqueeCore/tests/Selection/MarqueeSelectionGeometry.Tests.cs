@@ -187,13 +187,13 @@ public class MarqueeSelectionGeometryTests
     }
 
     [Fact]
-    public void ComputeDragRect_最小サイズの指定が1未満でも1に補正される()
+    public void ComputeDragRect_渡された最小サイズをそのまま使う()
     {
-        // 最小サイズ 0 の指定は下限 1.0 に補正され、幅・高さは 1 未満にならない
-        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 0.2, 0.2), 0, 0, HitTarget.Move, 0);
+        // 最小サイズの補正（下限 1.0）は設定値の生成時に済ませる（規則は Marquee.Limits が単一所有する）
+        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 0.2, 0.2), 0, 0, HitTarget.Move, 10);
 
-        Assert.Equal(1.0, result.Width);
-        Assert.Equal(1.0, result.Height);
+        Assert.Equal(10.0, result.Width);
+        Assert.Equal(10.0, result.Height);
     }
 
     // ====================================================================

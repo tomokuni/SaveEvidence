@@ -39,8 +39,8 @@ public class LoupeDecorationGeometryTests
     [Fact]
     public void ComputeFrameRects_外枠の4辺の矩形を返す()
     {
-        // pixelSize=100, width=2 → frame=2、inner=100-4=96
-        var rects = LoupeDecorationGeometry.ComputeFrameRects(100, 2);
+        // 一辺 100・width=2 → 上 = 100×2、内側 = 100-4 = 96
+        var rects = LoupeDecorationGeometry.ComputeFrameRects(new EsRect(0, 0, 100, 100), 2.0);
 
         Assert.Equal(4, rects.Count);
         Assert.Equal(new EsRect(0, 0, 100, 2), rects[0]);   // 上
@@ -49,25 +49,12 @@ public class LoupeDecorationGeometryTests
         Assert.Equal(new EsRect(98, 2, 2, 96), rects[3]);   // 右
     }
 
-    /// <summary>外枠の太さが 0 以下でも 1 に正規化されることを検証する。</summary>
+    /// <summary>外枠の太さが描画面より大きい場合は面の短辺で上限を取り、内側が 0 になることを検証する。</summary>
+    /// <remarks>太さの安全域への補正は設定（<c>LoupeOptions.FrameWidth</c> の生成時）が担う。</remarks>
     [Fact]
-    public void ComputeFrameRects_幅が0以下なら1に正規化する()
+    public void ComputeFrameRects_幅が描画面を超えるなら内側が0になる()
     {
-        // width=0 → frame = clamp(0,1,100) = 1、inner = 100-2 = 98
-        var rects = LoupeDecorationGeometry.ComputeFrameRects(100, 0);
-
-        Assert.Equal(new EsRect(0, 0, 100, 1), rects[0]);   // 上
-        Assert.Equal(new EsRect(0, 99, 100, 1), rects[1]);  // 下
-        Assert.Equal(new EsRect(0, 1, 1, 98), rects[2]);    // 左
-        Assert.Equal(new EsRect(99, 1, 1, 98), rects[3]);   // 右
-    }
-
-    /// <summary>外枠の太さがルーペサイズを超える場合はルーペサイズに正規化され、内側が 0 になることを検証する。</summary>
-    [Fact]
-    public void ComputeFrameRects_幅がルーペサイズを超えるなら内側が0になる()
-    {
-        // width=200 → frame = clamp(200,1,100) = 100、inner = max(0, 100-200) = 0
-        var rects = LoupeDecorationGeometry.ComputeFrameRects(100, 200);
+        var rects = LoupeDecorationGeometry.ComputeFrameRects(new EsRect(0, 0, 100, 100), 200.0);
 
         Assert.Equal(new EsRect(0, 0, 100, 100), rects[0]);  // 上（全面）
         Assert.Equal(new EsRect(0, 0, 100, 100), rects[1]);  // 下（全面）

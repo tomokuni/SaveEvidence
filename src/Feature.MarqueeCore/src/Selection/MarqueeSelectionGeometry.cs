@@ -16,9 +16,6 @@ namespace EsUtil.Feature.MarqueeCore.Selection;
 /// </remarks>
 internal static class MarqueeSelectionGeometry
 {
-    /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>
-    private const double MinSelectionSizeLowerBound = 1.0;
-
     /// <summary>描画対象の 8 方向ハンドル（<see cref="HitTarget.None"/> / <see cref="HitTarget.Move"/> を除く）。</summary>
     /// <remarks>
     /// 列挙順は <see cref="HitTarget"/> の宣言順。描画層は本一覧を走査してハンドルを描く（ハンドル一覧の単一所有）。<br/>
@@ -157,7 +154,7 @@ internal static class MarqueeSelectionGeometry
     /// <param name="dx">X 方向の移動量。</param>
     /// <param name="dy">Y 方向の移動量。</param>
     /// <param name="handle">アクティブなハンドル。</param>
-    /// <param name="minSize">選択矩形の最小サイズ。</param>
+    /// <param name="minSize">選択矩形の最小サイズ（補正済みの値を渡す。安全域は <c>Marquee.Limits</c> が単一所有する）。</param>
     /// <returns>変形後の矩形（反転を正規化・最小サイズ保証）。</returns>
     /// <remarks>
     /// ハンドルを反対側までドラッグした場合（l&gt;r または t&gt;b）、矩形を反転（正規化）する。<br/>
@@ -188,7 +185,7 @@ internal static class MarqueeSelectionGeometry
         double y1 = Math.Min(t, b);
         double y2 = Math.Max(t, b);
 
-        var m = Math.Max(minSize, MinSelectionSizeLowerBound);
+        var m = minSize;
         if (x2 - x1 < m) x2 = x1 + m;
         if (y2 - y1 < m) y2 = y1 + m;
 

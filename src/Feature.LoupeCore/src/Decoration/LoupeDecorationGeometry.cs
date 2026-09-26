@@ -30,13 +30,14 @@ internal static class LoupeDecorationGeometry
     }
 
     /// <summary>外枠の 4 辺の矩形を計算する。</summary>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="width">外枠の太さ（ピクセル）。1〜ルーペサイズに正規化される。</param>
+    /// <param name="surface">描画面の全体（左上を原点とする正方形）。</param>
+    /// <param name="width">外枠の太さ（物理ピクセル）。補正済みの値を渡す（安全域は <c>Loupe.Limits</c> が単一所有する）。</param>
     /// <returns>外枠の上・下・左・右の 4 つの矩形。</returns>
     /// <remarks>
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（選択矩形の枠線と同じ式）。<br/>
-    /// 太さの下限のみ本メソッドが決める（外枠は 1 ピクセル未満では描けない）。
+    /// 太さは面の短辺で上限を取る（面より太い外枠は面全体を覆い、矩形が面からはみ出さない）。<br/>
+    /// 太さの補正は設定（<c>LoupeOptions.FrameWidth</c> の生成時）に適用される。
     /// </remarks>
-    internal static IReadOnlyList<EsRect> ComputeFrameRects(int pixelSize, int width)
-        => new EsRect(0, 0, pixelSize, pixelSize).ComputeInnerEdges(Math.Clamp(width, 1, pixelSize));
+    internal static IReadOnlyList<EsRect> ComputeFrameRects(EsRect surface, double width)
+        => surface.ComputeInnerEdges(Math.Min(width, Math.Min(surface.Width, surface.Height)));
 }

@@ -92,7 +92,7 @@ public class MarqueeDrawContentTests
         var handles = content.Handles.Value;
         Assert.Equal(8, handles.Rects.Count);
         Assert.Equal(new EsRect(44, 44, 12, 12), handles.Rects[0]);   // 左上（中心 50, 50）
-        Assert.Equal(MarqueeOptions.HandleBorderThickness, handles.BorderThickness);
+        Assert.Equal(Marquee.Limits.HandleBorderThickness, handles.BorderThickness);
     }
 
     /// <summary>ハンドルの枠線色は描画の設定が単一所有する（描画内容には含まれない）ことを検証する。</summary>

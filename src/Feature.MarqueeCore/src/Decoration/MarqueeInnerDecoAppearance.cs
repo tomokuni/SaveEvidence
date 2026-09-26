@@ -1,3 +1,5 @@
+using static EsUtil.Feature.MarqueeCore.Marquee.Limits;
+
 namespace EsUtil.Feature.MarqueeCore.Decoration;
 
 /// <summary>選択矩形（穴あけ矩形）の内側に描く装飾の寸法。</summary>
@@ -23,6 +25,6 @@ public sealed record MarqueeInnerDecoAppearance
     public double BorderThickness
     {
         get => field;
-        init => field = Marquee.Limits.CoerceBorderThickness(value);
-    } = Marquee.Limits.BorderThicknessDefault;
+        init => field = CoerceBorderThickness(value);
+    } = BorderThicknessDefault;
 }

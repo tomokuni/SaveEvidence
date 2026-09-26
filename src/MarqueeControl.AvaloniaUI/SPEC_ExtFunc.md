@@ -208,12 +208,14 @@ control.ResetSelection();           // 状態と nudge の初期化
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `ShowHandles` | `bool` | `true` | ドラッグハンドルを表示するかどうか（false の場合は枠線と外側の装飾のみを描く） |
-| `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP 座標系） |
-| `MarkerLength` | `double` | `16.0` | nudge 中の十字マーカーの長さ（**全長** = 中心から両端までの長さ・DIP 座標系） |
+| `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP 座標系。1.0〜256.0 に補正） |
+| `MarkerLength` | `double` | `16.0` | nudge 中の十字マーカーの長さ（**全長** = 中心から両端までの長さ・DIP 座標系。2.0〜4096.0 に補正） |
 | `ShowCoordLabel` | `bool` | `false` | カーソル座標ラベル（`(x, y)`）をカーソルの右側に表示するかどうか |
-| `HandleHitRadius` | `double` | `12.0` | ハンドルヒットテスト半径（**DIP 座標系**。ズーム・縮小表示でも画面上の大きさが一定） |
-| `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標系） |
+| `HandleHitRadius` | `double` | `12.0` | ハンドルヒットテスト半径（**DIP 座標系**。0.0〜256.0 に補正。ズーム・縮小表示でも画面上の大きさが一定） |
+| `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標系。1.0〜4096.0 に補正） |
 | `ClampToDomainBounds` | `bool` | `true` | 画像外の選択を禁止するかどうか（ON: 領域選択・移動・nudge を画像境界内にクリップ / OFF: 画像外も選択可能） |
+
+安全域への補正は**コアの設定型の生成時**に適用されます（設定の経路によらず範囲内の値だけが保持され、UI 側に補正の登録は不要です）。
 
 `Options` は変更時に即時反映されます（`AffectsRender` による再描画 + コア（ファサード）への伝搬）。
 色は描画の設定（`Paint` の `MarqueePaint`）が単一所有し、UI 非依存の `System.Drawing.Color` で保持します（Avalonia 型からの変換は `EsUtil.Platform.AvaloniaUI` の `ToDrawingColor()`。描画ポートのアダプタが描画時に Avalonia の色型へ変換します）。**描くかどうかは色のアルファではなく `DecoOptions` の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）が決めます**。

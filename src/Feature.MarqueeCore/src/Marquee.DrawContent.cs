@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Selection;
 using EsUtil.Feature.MarqueeCore.Drawing;
-using EsUtil.Feature.MarqueeCore.Setting;
+using static EsUtil.Feature.MarqueeCore.Marquee.Limits;
 
 namespace EsUtil.Feature.MarqueeCore;
 
@@ -185,7 +185,7 @@ public sealed partial class Marquee
             rects.Add(new EsRect(center.X - half, center.Y - half, options.HandleSize, options.HandleSize));
         }
 
-        return new MarqueeHandles(rects, MarqueeOptions.HandleBorderThickness);
+        return new MarqueeHandles(rects, HandleBorderThickness);
     }
 
     /// <summary>始点マーカー（十字線）の描画内容を解決する。</summary>
@@ -254,7 +254,7 @@ public sealed partial class Marquee
     private static string FormatSizeLabel(EsRect dipRect, double scaling, double displayScaling)
     {
         var s = DpiScaler.NormalizeScaling(scaling);
-        var d = Limits.ResolveDisplayScale(displayScaling, s);
+        var d = ResolveDisplayScale(displayScaling, s);
         var left = (int)(dipRect.X * s);
         var top = (int)(dipRect.Y * s);
         var right = (int)(dipRect.Right * s);
@@ -272,7 +272,7 @@ public sealed partial class Marquee
     /// <returns>座標ラベルのテキスト配置。非表示の設定の場合は null。</returns>
     /// <remarks>
     /// 文言はコア（<see cref="EsPoint.Format(int)"/>）が文字列化する。<br/>
-    /// 基準点は「カーソル + <see cref="MarqueeOptions.CoordLabelOffset"/>」であり、アラインは左端・上端である<br/>
+    /// 基準点は「カーソル + <see cref="CoordLabelOffset"/>」であり、アラインは左端・上端である<br/>
     /// （ラベルがカーソルに重ならず、描画領域をはみ出す場合は領域内へクランプされる）。<br/>
     /// フォントサイズ・色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
@@ -284,7 +284,7 @@ public sealed partial class Marquee
         }
 
         var cursor = port.Inverse(request.MousePosition);
-        var offset = MarqueeOptions.CoordLabelOffset;
+        var offset = CoordLabelOffset;
 
         return new MarqueeTextPlacement(
             request.MousePosition.Format(),

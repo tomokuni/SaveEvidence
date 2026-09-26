@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
+using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 
 namespace EsUtil.Feature.LoupeCore.Setting;
 
@@ -18,9 +19,8 @@ namespace EsUtil.Feature.LoupeCore.Setting;
 /// <br/>
 /// <b>等価性</b>: レコードの値等価性により、同値の設定を再代入しても UI 側の変更通知（再描画）は発生しない。<br/>
 /// <br/>
-/// <b>安全域への補正</b>: 数値項目の補正は本型の生成時に適用する（<c>init</c> アクセサ）。<br/>
-/// 値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず、範囲は<br/>
-/// <see cref="Loupe.Limits"/> が単一所有する安全域内の値だけが保持される<br/>
+/// <b>安全域への補正</b>: 数値項目の補正は本型の生成時に適用する（<c>init</c> アクセサ。安全域は <c>Loupe.Limits</c> が単一所有する）。<br/>
+/// 値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず、範囲内の値だけが保持される<br/>
 /// （UI 側に補正の登録を要求すると、登録を忘れた UI だけ安全域外の値を保持する）。
 /// </remarks>
 public sealed record LoupeOptions
@@ -39,16 +39,16 @@ public sealed record LoupeOptions
     public int RequestedSize
     {
         get => field;
-        init => field = Loupe.Limits.CoerceRequestedSize(value);
-    } = Loupe.Limits.RequestedSizeDefault;
+        init => field = CoerceRequestedSize(value);
+    } = RequestedSizeDefault;
 
     /// <summary>拡大率を取得する。</summary>
     /// <value>拡大率（偶数推奨）。既定は 4。設定時は 1〜64 へ補正される。</value>
     public int ZoomLevel
     {
         get => field;
-        init => field = Loupe.Limits.CoerceZoomLevel(value);
-    } = Loupe.Limits.ZoomLevelDefault;
+        init => field = CoerceZoomLevel(value);
+    } = ZoomLevelDefault;
 
     /// <summary>市松模様の 1 タイルサイズ（DIP）を取得する。</summary>
     /// <value>タイルサイズ（DIP）。既定は 6。設定時は 1〜128 へ補正される。</value>
@@ -56,8 +56,8 @@ public sealed record LoupeOptions
     public int CheckerSize
     {
         get => field;
-        init => field = Loupe.Limits.CoerceCheckerSize(value);
-    } = Loupe.Limits.CheckerSizeDefault;
+        init => field = CoerceCheckerSize(value);
+    } = CheckerSizeDefault;
 
     /// <summary>外枠の太さ（DIP）を取得する。</summary>
     /// <value>枠線の太さ（DIP）。既定は 2。設定時は 1〜64 へ補正される。</value>
@@ -65,8 +65,8 @@ public sealed record LoupeOptions
     public int FrameWidth
     {
         get => field;
-        init => field = Loupe.Limits.CoerceFrameWidth(value);
-    } = Loupe.Limits.FrameWidthDefault;
+        init => field = CoerceFrameWidth(value);
+    } = FrameWidthDefault;
 
     /// <summary>中心座標ラベルを表示するかどうかを取得する。</summary>
     /// <value>true の場合はルーペ上端中央へ中心座標を表示する。既定は true。</value>

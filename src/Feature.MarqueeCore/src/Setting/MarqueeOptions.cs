@@ -1,3 +1,5 @@
+using static EsUtil.Feature.MarqueeCore.Marquee.Limits;
+
 namespace EsUtil.Feature.MarqueeCore.Setting;
 
 /// <summary>選択矩形コントロールの設定（表示可否・寸法・対話パラメータ）をまとめた不変の値オブジェクト。</summary>
@@ -23,6 +25,10 @@ namespace EsUtil.Feature.MarqueeCore.Setting;
 /// <br/>
 /// <b>等価性</b>: レコードの値等価性により、同値の設定を再代入しても UI 側の変更通知（再描画）は発生しない。<br/>
 /// <br/>
+/// <b>安全域への補正</b>: 数値項目の補正は本型の生成時に適用する（<c>init</c> アクセサ。安全域は <c>Marquee.Limits</c> が単一所有する）。<br/>
+/// 値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず、範囲内の値だけが保持される<br/>
+/// （UI 側に補正の登録を要求すると、登録を忘れた UI だけ安全域外の値を保持する）。<br/>
+/// <br/>
 /// <b>色は含まない</b>: 色は<b>描画にだけ必要な設定</b>であり、描画の設定（<c>MarqueePaint</c>。UIBase が単一所有する）が持つ。
 /// </remarks>
 public sealed record MarqueeOptions
@@ -41,26 +47,24 @@ public sealed record MarqueeOptions
     public bool ShowHandles { get; init; } = true;
 
     /// <summary>ドラッグハンドルの一辺サイズ。</summary>
-    /// <value>ハンドルの一辺サイズ（DIP）。既定は 10.0。</value>
-    public double HandleSize { get; init; } = 10.0;
-
-    /// <summary>ドラッグハンドルの枠線の太さ（DIP）。</summary>
-    /// <value>枠線の太さ。既定は 1.5。</value>
-    /// <remarks>塗りの中に隠れない細さでありながら、拡大表示でも輪郭が判別できる太さである。</remarks>
-    public const double HandleBorderThickness = 1.5;
+    /// <value>ハンドルの一辺サイズ（DIP）。既定は 10.0。設定時は 1.0〜256.0 へ補正される。</value>
+    public double HandleSize
+    {
+        get => field;
+        init => field = CoerceHandleSize(value);
+    } = HandleSizeDefault;
 
     /// <summary>十字マーカーの全長。</summary>
-    /// <value>十字マーカーの全長（DIP）。中心から両端までの半幅はこの 1/2。既定は 16.0。</value>
-    public double MarkerLength { get; init; } = 16.0;
+    /// <value>十字マーカーの全長（DIP）。中心から両端までの半幅はこの 1/2。既定は 16.0。設定時は 2.0〜4096.0 へ補正される。</value>
+    public double MarkerLength
+    {
+        get => field;
+        init => field = CoerceMarkerLength(value);
+    } = MarkerLengthDefault;
 
     /// <summary>カーソル座標ラベルを表示するかどうか。</summary>
     /// <value>true の場合はマウス位置のドメイン座標をカーソルの右側に表示する。既定は false。</value>
     public bool ShowCoordLabel { get; init; }
-
-    /// <summary>カーソル座標ラベルをカーソルから離すオフセット（DIP）。</summary>
-    /// <value>カーソルの右下へ離す距離。既定は 8.0。</value>
-    /// <remarks>ラベルがカーソルに重ならないための余白である（基準点の算出は本値を使う）。</remarks>
-    public const double CoordLabelOffset = 8.0;
 
     /// <summary>サイズラベルを表示するかどうか。</summary>
     /// <value>true（既定）の場合は穴あけ矩形の左上に位置と寸法を表示する。false の場合は描かない。</value>
@@ -71,17 +75,25 @@ public sealed record MarqueeOptions
     // 対話パラメータ（入力の解釈に使用し、セッションへ伝搬する）
     // ----------------------------------------------------------------
     /// <summary>ドラッグハンドルのヒットテスト半径。</summary>
-    /// <value>ヒットテスト半径（DIP）。既定は 12.0。</value>
+    /// <value>ヒットテスト半径（DIP）。既定は 12.0。設定時は 0.0〜256.0 へ補正される。</value>
     /// <remarks>
     /// DIP 座標での半径であるため、ズーム・縮小表示を変えてもヒットテストの画面上の大きさが一定になる。<br/>
     /// ドメイン座標系への変換はセッションが行う。
     /// </remarks>
-    public double HandleHitRadius { get; init; } = 12.0;
+    public double HandleHitRadius
+    {
+        get => field;
+        init => field = CoerceHandleHitRadius(value);
+    } = HandleHitRadiusDefault;
 
     /// <summary>選択矩形の最小サイズ。</summary>
-    /// <value>最小サイズ（ドメイン座標）。既定は 6.0。</value>
+    /// <value>最小サイズ（ドメイン座標）。既定は 6.0。設定時は 1.0〜4096.0 へ補正される。</value>
     /// <remarks>ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる（判断はセッションが行う）。</remarks>
-    public double MinSelectionSize { get; init; } = 6.0;
+    public double MinSelectionSize
+    {
+        get => field;
+        init => field = CoerceMinSelectionSize(value);
+    } = MinSelectionSizeDefault;
 
     /// <summary>ドメイン境界外の選択を禁止するかどうか。</summary>
     /// <value>true（既定）の場合は選択をドメイン境界内に制限する。false の場合は境界外も選択できる。</value>

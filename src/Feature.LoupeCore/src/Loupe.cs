@@ -204,7 +204,7 @@ public sealed partial class Loupe
             surface,
             new LoupeCheckerTiles(request.PixelSize, request.CheckerSizePixels),
             LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel),
-            LoupeDecorationGeometry.ComputeFrameRects(request.PixelSize, request.FrameWidthPixels),
+            LoupeDecorationGeometry.ComputeFrameRects(surface, request.FrameWidthPixels),
             request.MagnifiedImage,
             coordLabelText,
             coordLabelText is null ? s_layersWithoutLabel : s_layersWithLabel);
