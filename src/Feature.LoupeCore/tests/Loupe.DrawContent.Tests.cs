@@ -117,4 +117,59 @@ public class LoupeDrawContentTests
         Assert.NotEmpty(content.CrosshairRects);
         Assert.NotEmpty(content.FrameRects);
     }
+
+    /// <summary>非表示の項目が層の一覧から外れることを検証する。</summary>
+    /// <param name="checkerboard">市松模様の表示可否。</param>
+    /// <param name="crosshair">十字線の表示可否。</param>
+    /// <param name="frame">外枠の表示可否。</param>
+    [Theory]
+    [InlineData(false, true, true, LoupeDrawLayer.Checkerboard)]
+    [InlineData(true, false, true, LoupeDrawLayer.Crosshair)]
+    [InlineData(true, true, false, LoupeDrawLayer.Frame)]
+    public void ResolveContent_非表示の項目は層に含まれない(
+        bool checkerboard, bool crosshair, bool frame, LoupeDrawLayer hidden)
+    {
+        var options = LoupeOptions.Default with
+        {
+            ShowCheckerboard = checkerboard,
+            ShowCrosshair = crosshair,
+            ShowFrame = frame,
+        };
+        var loupe = new Loupe(options) { CenterPoint = new EsPoint(50, 60) };
+
+        var content = loupe.ResolveContent(loupe.CreateRequest(160));
+
+        Assert.DoesNotContain(hidden, content.Layers);
+    }
+
+    /// <summary>下地は常に層に含まれる（描画面を置き換えて残像を残さない）ことを検証する。</summary>
+    [Fact]
+    public void ResolveContent_下地は常に層に含まれる()
+    {
+        var options = LoupeOptions.Default with
+        {
+            ShowCheckerboard = false,
+            ShowCrosshair = false,
+            ShowFrame = false,
+            ShowCoordLabel = false,
+        };
+        var loupe = new Loupe(options);
+
+        var content = loupe.ResolveContent(loupe.CreateRequest(160));
+
+        // 透明色を指定した場合も描画面の消去が必要であるため、下地は常に含める
+        Assert.Equal([LoupeDrawLayer.Background], content.Layers);
+    }
+
+    /// <summary>拡大画像が解決できない場合は層に含まれないことを検証する。</summary>
+    [Fact]
+    public void ResolveContent_拡大画像が無ければ層に含まれない()
+    {
+        // 拡大中心が未設定の場合は切り出し領域が解決されない
+        var loupe = new Loupe();
+
+        var content = loupe.ResolveContent(loupe.CreateRequest(160));
+
+        Assert.DoesNotContain(LoupeDrawLayer.Image, content.Layers);
+    }
 }

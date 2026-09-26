@@ -11,41 +11,99 @@ namespace EsUtil.Feature.LoupeCore;
 /// <br/>
 /// <b>描画順はコアが単一所有する</b>: 層の一覧を本部分が組み立てるため、UI 層は層の順序・有無を判断しない<br/>
 /// （中心座標ラベルは必ず最後 = 常に最上位。UI の子要素は親の描画より後に描かれる性質とも一致する）。<br/>
+/// 層ごとの有無は描画内容（設定の明示フラグと解決済みの値）から決まり、<br/>
+/// 有無の全組合せは事前生成した表から選ぶ（描画のたびに一覧を組み立てない）。<br/>
 /// <br/>
 /// <b>可視性</b>: <see cref="ResolveContent"/> はファサードの公開メソッドであり、<br/>
 /// 内部の計算（タイルの列挙子・矩形の導出・寸法の換算）は本アセンブリに限定する。
 /// </remarks>
 public sealed partial class Loupe
 {
-    /// <summary>描く層とその順序（テキストなし）。</summary>
-    /// <remarks>
-    /// 図形の層の順序は固定であり、テキストの有無で末尾の層だけが変わる。<br/>
-    /// 描画のたびに一覧を組み立てないよう、2 通りを事前生成して共有する
-    /// （<see cref="LoupeDrawContent.Layers"/> は読取専用の参照として渡す）。
-    /// </remarks>
-    private static readonly IReadOnlyList<LoupeDrawLayer> s_layersWithoutLabel =
-    [
-        LoupeDrawLayer.Background,
-        LoupeDrawLayer.Checkerboard,
-        LoupeDrawLayer.Image,
-        LoupeDrawLayer.Crosshair,
-        LoupeDrawLayer.Frame,
-    ];
+    /// <summary>層の組合せのうち、市松模様の有無を表すビット。</summary>
+    private const int CheckerboardBit = 1;
 
-    /// <summary>描く層とその順序（テキストあり。中心座標ラベルは常に最上位）。</summary>
+    /// <summary>層の組合せのうち、拡大画像の有無を表すビット。</summary>
+    private const int ImageBit = 2;
+
+    /// <summary>層の組合せのうち、十字線の有無を表すビット。</summary>
+    private const int CrosshairBit = 4;
+
+    /// <summary>層の組合せのうち、外枠の有無を表すビット。</summary>
+    private const int FrameBit = 8;
+
+    /// <summary>層の組合せのうち、テキストの有無を表すビット。</summary>
+    private const int TextBit = 16;
+
+    /// <summary>層の並び（下地を除く 5 つの有無 = 32 通り）。</summary>
     /// <remarks>
-    /// テキストは UI 要素としても置ける（要素は親より後に描かれるため常に最上位になる）。<br/>
-    /// その場合、描画実装はテキストの層を無視してよい（基底のフックの既定は何もしない）。
+    /// 描画のたびに一覧を組み立てないよう、全通りを事前生成して共有する<br/>
+    /// （<see cref="LoupeDrawContent.Layers"/> は読取専用の参照として渡す）。層を追加した場合は本表も更新する。
     /// </remarks>
-    private static readonly IReadOnlyList<LoupeDrawLayer> s_layersWithLabel =
-    [
-        LoupeDrawLayer.Background,
-        LoupeDrawLayer.Checkerboard,
-        LoupeDrawLayer.Image,
-        LoupeDrawLayer.Crosshair,
-        LoupeDrawLayer.Frame,
-        LoupeDrawLayer.Label,
-    ];
+    private static readonly IReadOnlyList<LoupeDrawLayer>[] s_layers = CreateLayers();
+
+    /// <summary>描く層だけを描画順に並べる。</summary>
+    /// <param name="hasCheckerboard">市松模様を描くかどうか（設定の明示フラグ）。</param>
+    /// <param name="hasImage">拡大画像を描くかどうか（切り出し領域が解決できたか）。</param>
+    /// <param name="hasCrosshair">十字線を描くかどうか（設定の明示フラグ）。</param>
+    /// <param name="hasFrame">外枠を描くかどうか（設定の明示フラグ）。</param>
+    /// <param name="hasText">テキスト（中心座標ラベル）を描くかどうか。</param>
+    /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
+    /// <remarks>
+    /// 下地は常に含める（描画面を置き換えて前フレームの残像を残さないため。透明色を指定した場合も描画面の消去が必要）。<br/>
+    /// テキストは末尾へ置き、常に最上位にする（UI 要素として置く UI は本層を無視してよい）。<br/>
+    /// 一覧はビットの組合せで事前生成したものを返す（描画のたびの確保を避ける）。
+    /// </remarks>
+    private static IReadOnlyList<LoupeDrawLayer> ResolveLayers(
+        bool hasCheckerboard, bool hasImage, bool hasCrosshair, bool hasFrame, bool hasText)
+        => s_layers[
+            (hasCheckerboard ? CheckerboardBit : 0)
+            | (hasImage ? ImageBit : 0)
+            | (hasCrosshair ? CrosshairBit : 0)
+            | (hasFrame ? FrameBit : 0)
+            | (hasText ? TextBit : 0)];
+
+    /// <summary>層の全 32 通りを生成する。</summary>
+    /// <returns>ビットの組合せを添字とする層の一覧。</returns>
+    /// <remarks>ビットの意味は <see cref="CheckerboardBit"/> / <see cref="ImageBit"/> / <see cref="CrosshairBit"/> / <see cref="FrameBit"/> / <see cref="TextBit"/> が単一所有する。</remarks>
+    private static IReadOnlyList<LoupeDrawLayer>[] CreateLayers()
+    {
+        var table = new IReadOnlyList<LoupeDrawLayer>[1 << 5];
+
+        for (var index = 0; index < table.Length; index++)
+        {
+            var layers = new List<LoupeDrawLayer>(6) { LoupeDrawLayer.Background };
+
+            if ((index & CheckerboardBit) != 0)
+            {
+                layers.Add(LoupeDrawLayer.Checkerboard);
+            }
+
+            if ((index & ImageBit) != 0)
+            {
+                layers.Add(LoupeDrawLayer.Image);
+            }
+
+            if ((index & CrosshairBit) != 0)
+            {
+                layers.Add(LoupeDrawLayer.Crosshair);
+            }
+
+            if ((index & FrameBit) != 0)
+            {
+                layers.Add(LoupeDrawLayer.Frame);
+            }
+
+            // テキストは常に最上位（下地・市松模様・拡大画像・十字線・外枠より後に描く）
+            if ((index & TextBit) != 0)
+            {
+                layers.Add(LoupeDrawLayer.Label);
+            }
+
+            table[index] = layers;
+        }
+
+        return table;
+    }
 
     /// <summary>ルーペ上端から中心座標ラベルの基準点までの距離（DIP）。</summary>
     /// <remarks>ラベルを上端の帯へ収めるための距離である（ラベルの体裁（余白・角丸）は描画の設定が単一所有する）。</remarks>

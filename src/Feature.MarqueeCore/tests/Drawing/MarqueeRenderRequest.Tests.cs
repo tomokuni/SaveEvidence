@@ -2,17 +2,78 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
+using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Drawing;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.Feature.MarqueeCore.Tests.Drawing;
 
 /// <summary><see cref="MarqueeRenderRequest"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
-/// 1 フレーム分の描画内容に共通する幾何計算（座標変換ポートの決定・論理座標から DIP への変換・穴あけ矩形の決定）を検証する。<br/>
+/// 描画入力の組み立てと、描画入力から導出する値（座標変換ポートの決定・論理座標から DIP への変換・穴あけ矩形の決定）を検証する。<br/>
 /// UI 初期化に依存せず <c>[Fact]</c> で並列実行する。
 /// </remarks>
 public class MarqueeRenderRequestTests
 {
+    /// <summary>組み立てがすべての値をそのまま保持することを検証する。</summary>
+    [Fact]
+    public void Create_すべての値をそのまま保持する()
+    {
+        var options = MarqueeOptions.Default with { ShowHandles = false };
+        var deco = MarqueeDecoOptions.Default with { ShowInnerFill = true };
+        var port = CoordTransform.Scale(2.0);
+        Func<string?> sizeLabel = () => "S";
+        Func<EsRect, double> scaling = _ => 1.5;
+
+        var request = MarqueeRenderRequest.Create(
+            options,
+            deco,
+            new EsSize(640, 480),
+            new EsRect(10, 20, 30, 40),
+            markerActive: true,
+            new EsPoint(50, 60),
+            new EsPoint(70, 80),
+            port,
+            domainToDipScaling: 1.25,
+            sizeLabel,
+            displayScaleScaling: 1.5,
+            scaling);
+
+        Assert.Equal(options, request.Options);
+        Assert.Equal(deco, request.DecoOptions);
+        Assert.Equal(new EsSize(640, 480), request.ClientSize);
+        Assert.Equal(new EsRect(10, 20, 30, 40), request.SelectionRect);
+        Assert.True(request.MarkerActive);
+        Assert.Equal(new EsPoint(50, 60), request.MarkerPosition);
+        Assert.Equal(new EsPoint(70, 80), request.MousePosition);
+        Assert.Same(port, request.Port);
+        Assert.Equal(1.25, request.DomainToDipScaling);
+        Assert.Same(sizeLabel, request.SizeLabelOverrideProvider);
+        Assert.Equal(1.5, request.DisplayScaleScaling);
+        Assert.Same(scaling, request.SizeLabelDisplayScalingProvider);
+    }
+
+    /// <summary>省略したプロバイダが null になることを検証する。</summary>
+    [Fact]
+    public void Create_省略したプロバイダはnullになる()
+    {
+        var request = MarqueeRenderRequest.Create(
+            MarqueeOptions.Default,
+            MarqueeDecoOptions.Default,
+            new EsSize(100, 100),
+            selectionRect: null,
+            markerActive: false,
+            new EsPoint(0, 0),
+            new EsPoint(0, 0),
+            port: null,
+            domainToDipScaling: 1.0,
+            sizeLabelOverrideProvider: null,
+            displayScaleScaling: 1.0);
+
+        Assert.Null(request.SizeLabelDisplayScalingProvider);
+        Assert.Null(request.SelectionRect);
+    }
+
     /// <summary>等価変換では終点に +1 した閉区間の矩形になることを検証する。</summary>
     [Fact]
     public void ToDipRect_等価変換で終点に1を加算した閉区間になる()

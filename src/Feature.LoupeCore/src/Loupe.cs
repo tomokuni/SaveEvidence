@@ -195,6 +195,7 @@ public sealed partial class Loupe
     {
         var surface = request.SurfaceBounds;
         var options = request.Options;
+        var magnifiedImage = request.MagnifiedImage;
         var coordLabelText = ResolveCoordLabelText(request);
 
         return new LoupeDrawContent(
@@ -202,9 +203,14 @@ public sealed partial class Loupe
             options.ShowCheckerboard ? new LoupeCheckerTiles(request.PixelSize, request.CheckerSizePixels) : default,
             options.ShowCrosshair ? LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel) : [],
             options.ShowFrame ? LoupeDecorationGeometry.ComputeFrameRects(surface, request.FrameWidthPixels) : [],
-            request.MagnifiedImage,
+            magnifiedImage,
             coordLabelText,
-            coordLabelText is null ? s_layersWithoutLabel : s_layersWithLabel);
+            ResolveLayers(
+                options.ShowCheckerboard,
+                magnifiedImage is not null,
+                options.ShowCrosshair,
+                options.ShowFrame,
+                coordLabelText is not null));
     }
 
     /// <summary>新しい値を保持する（同値なら何もしない）。</summary>

@@ -43,6 +43,51 @@ public readonly record struct MarqueeRenderRequest(
     double DisplayScaleScaling,
     Func<EsRect, double>? SizeLabelDisplayScalingProvider = null)
 {
+    /// <summary>設定・状態と描画時に決まる値から描画入力を組み立てる。</summary>
+    /// <param name="options">選択矩形の設定。</param>
+    /// <param name="decoOptions">装飾の設定。</param>
+    /// <param name="clientSize">描画領域のサイズ（DIP。原点は常に 0）。</param>
+    /// <param name="selectionRect">選択矩形（ドメイン座標）。選択なしの場合は null。</param>
+    /// <param name="markerActive">始点マーカー（十字線）を描くかどうか。</param>
+    /// <param name="markerPosition">始点マーカーの中心（ドメイン座標）。</param>
+    /// <param name="mousePosition">直近のマウス位置（ドメイン座標）。</param>
+    /// <param name="port">論理座標 → DIP の座標変換ポート。null の場合は倍率を使う。</param>
+    /// <param name="domainToDipScaling">ポート未指定の場合に適用する倍率。</param>
+    /// <param name="sizeLabelOverrideProvider">サイズラベルの文言プロバイダ。null 可。</param>
+    /// <param name="displayScaleScaling">サイズラベルの自動生成に使う表示スケーリング。</param>
+    /// <param name="sizeLabelDisplayScalingProvider">表示スケーリングを矩形ごとに解決するプロバイダ。null 可。</param>
+    /// <returns>描画入力。</returns>
+    /// <remarks>
+    /// セッションの状態を写す組み立て順は <see cref="Marquee.CreateRequest"/> が単一所有し、<br/>
+    /// 本メソッドは値の組を 1 箇所に閉じる（UI 層が引数の並び順を知らずに済み、入力型の生成元が入力型にある）。
+    /// </remarks>
+    public static MarqueeRenderRequest Create(
+        MarqueeOptions options,
+        Decoration.MarqueeDecoOptions decoOptions,
+        EsSize clientSize,
+        EsRect? selectionRect,
+        bool markerActive,
+        EsPoint markerPosition,
+        EsPoint mousePosition,
+        ICoordTransform? port,
+        double domainToDipScaling,
+        Func<string?>? sizeLabelOverrideProvider,
+        double displayScaleScaling,
+        Func<EsRect, double>? sizeLabelDisplayScalingProvider = null)
+        => new(
+            options,
+            decoOptions,
+            clientSize,
+            selectionRect,
+            markerActive,
+            markerPosition,
+            mousePosition,
+            port,
+            domainToDipScaling,
+            sizeLabelOverrideProvider,
+            displayScaleScaling,
+            sizeLabelDisplayScalingProvider);
+
     /// <summary>使用する座標変換ポートを取得する（ポート優先・未指定なら倍率による等倍スケール）。</summary>
     /// <value>使用する座標変換ポート。</value>
     /// <remarks>解決の規則は <see cref="ResolvePort"/> が単一所有する。</remarks>

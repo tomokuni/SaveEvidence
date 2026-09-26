@@ -46,7 +46,7 @@ graph LR
 | `Loupe.Limits.cs`（ルート） | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ（`Loupe` の**入れ子**。UI がプロパティ登録に使う） |
 | `Drawing/LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む）、切り出し領域の幾何の導出（`CaptureSize` / `MagnifiedImage` は internal、`CaptureTopLeft` は描画完了通知のために public） |
 | `Drawing/LoupeTextPlacement.cs` | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（体裁・フォントサイズ・角丸・色は描画層 `LoupeControl.UIBase` の `LoupePaint` / `LoupeLabelPlan` が単一所有する） |
-| `Loupe.DrawContent.cs`（`Loupe` の **partial**・**internal**） | 1 フレーム分の描画内容の解決（描く層の一覧の組み立てと中心座標ラベルのテキスト配置）。利用者はファサード（`Loupe.ResolveContent`）を使う |
+| `Loupe.DrawContent.cs`（`Loupe` の **partial**・**internal**） | 1 フレーム分の描画内容の解決（描く層の一覧の組み立てと中心座標ラベルのテキスト配置）。**層の有無の全組合せ（32 通り）を事前生成した表**から選ぶ（描画のたびに一覧を組み立てない）。利用者はファサード（`Loupe.ResolveContent`）を使う |
 | `Logging/LoupeLogMessage.cs` | コアが出力するログ定義（`LoggerMessage` ソース生成）の単一所有（**internal。UI が出力する定義と書式は `LoupeControl.UIBase` が単一所有する**） |
 
 ### 内部（`internal`。用途別フォルダ）

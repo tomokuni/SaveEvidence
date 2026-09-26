@@ -304,7 +304,7 @@ public sealed partial class Marquee
     /// 図形の描画とテキストの配置が同じ入力を使うため、UI 層は本メソッドの結果を <see cref="ResolveContent"/> へ渡す。
     /// </remarks>
     public MarqueeRenderRequest CreateRequest(EsSize clientSize)
-        => new(
+        => MarqueeRenderRequest.Create(
             _session.Options,
             _decoOptions,
             clientSize,

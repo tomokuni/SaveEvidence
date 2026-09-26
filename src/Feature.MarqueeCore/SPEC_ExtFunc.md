@@ -46,7 +46,7 @@
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `MarqueeDrawContent` | record struct | 1 フレーム分の描画内容（装飾・穴あけ矩形・ハンドル・マーカー・テキストの配置・層の順序） |
-| `MarqueeRenderRequest` | record struct | 1 フレーム分の描画入力（設定・状態と、描画時に決まる値）。`Marquee.CreateRequest` が生成し、`Marquee.ResolveContent` へ渡す |
+| `MarqueeRenderRequest` | record struct | 1 フレーム分の描画入力（設定・状態と、描画時に決まる値）。`Marquee.CreateRequest` が生成し、`Marquee.ResolveContent` へ渡す。値の組は `MarqueeRenderRequest.Create` が 1 箇所に閉じる |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの描画契約 |
 | `MarqueeTextPlacement` | record struct | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（フォントサイズ・色は描画層の `MarqueePaint` が持つ） |
 | `MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。**`Label` はテキストがある場合だけ末尾に置く**（UI 要素として置く UI は無視してよい） |
