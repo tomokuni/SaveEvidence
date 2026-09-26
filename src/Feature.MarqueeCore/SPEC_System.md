@@ -173,7 +173,7 @@ stateDiagram-v2
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
 | 単位 | 純粋計算（`MarqueeSelectionGeometry` / `MarqueeDecoGeometry` / `MarqueeRenderRequest`）・状態機械・ファサード・描画内容の解決 |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Contract` / `tests/Decoration` / `tests/Drawing` / `tests/Interaction` / `tests/Logging` / `tests/Selection` / `tests/Setting`。ファサードの partial のテストはルート） |
-| 合計 | 322 件（`[Theory]` は展開後のケース数） |
+| 合計 | 325 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj
@@ -194,6 +194,7 @@ dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画ポートの境界で行う |
 | 選択矩形の閉区間 | 「終点を含む」規則（DIP への変換時の +1）はコア（`MarqueeHoleRect` / `MarqueeSelectionGeometry`）が単一所有する（UI ごとに +1 すると片方だけずれる） |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「アラインの適用」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）が単一所有する（コアは文言・基準点・アライン・クランプ領域だけを渡す） |
+| 設定では変更しない固定値 | **UI 層が参照するものは `Marquee.Limits` の公開定数**（`HandleBorderThickness` / `CoordLabelOffset`。描画層の既定値と配置計算が参照する）、**コア内だけで使うものは描画内容の解決（`Marquee.DrawContent.cs`）の private 定数**（`MarkerThickness`。公開面へ出さない）とする |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は描画層（`MarqueePaint` / `LoupePaint`）が単一所有する |
 | ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.Bounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
 

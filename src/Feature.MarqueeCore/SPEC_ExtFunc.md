@@ -157,7 +157,7 @@
 | `ShouldShowSizeLabel(bool hasHoleRect)` | 表示の設定が有効かつ穴あけ矩形がある（基準点が矩形の左上であり、文言も矩形の寸法から作るため） |
 | `ShouldShowCoordLabel()` | 表示の設定が有効（基準点はカーソル位置であり、位置は描画入力が常に持つ） |
 
-ハンドル枠の太さ（`Marquee.Limits.HandleBorderThickness`）とカーソル座標ラベルのオフセット（`Marquee.Limits.CoordLabelOffset`）は**設定では変更しない固定値**であり、数値スキーマ（`Marquee.Limits`）が単一所有します。
+ハンドル枠の太さ（`Marquee.Limits.HandleBorderThickness`）とカーソル座標ラベルのオフセット（`Marquee.Limits.CoordLabelOffset`）は**設定では変更しない固定値**であり、数値スキーマ（`Marquee.Limits`）が単一所有します（描画層の既定値と配置計算が参照するため公開します）。**コア内だけで使う固定値（始点マーカーの太さ）は描画内容の解決が持ちます**（公開面へ出しません）。
 
 `MarqueeOptions` は**色もラベルのフォントサイズも持ちません**。これらは描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`、フォントサイズは `SizeLabelFontSizeDefault` = 14.0 / `CoordLabelFontSizeDefault` = 12.0、内側余白は `LabelPadding`（既定 4.0））。ラベルの文字色・背景色の既定値（白 / 黒 60%）も `MarqueePaint` が単一所有するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
 

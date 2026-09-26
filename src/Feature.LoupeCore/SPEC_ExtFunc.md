@@ -169,7 +169,7 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | `CrosshairRects` / `FrameRects` | 十字線（縦横 2 本）/ 円枠（4 辺）の矩形 |
 | `MagnifiedImage` | 拡大画像の切り出しと描画の矩形（`LoupeMagnifiedImage`。中心未設定の場合は null） |
 | `CoordLabelText` | テキスト（`LoupeTextPlacement`。null は表示しない）。文言・基準点・アライン・描画領域を持つ |
-| `Layers` | 描く層とその順序。先頭から順に処理する。テキストの層（`Label`）はテキストがある場合のみ末尾（常に最上位）。**UI 要素として置く UI は本層を無視してよい** |
+| `Layers` | 描く層とその順序。先頭から順に処理する。**層の有無は描く値の有無から決まる**（層にある ⇔ 描く値がある。下地は常に含む）。テキストの層（`Label`）はテキストがある場合のみ末尾（常に最上位）。**UI 要素として置く UI は本層を無視してよい** |
 
 `LoupeCheckerTiles` は `foreach` でもボックス化せず、`IEsCanvas.FillRects` へ制約付きジェネリックとして渡せます（列挙は 1 回だけ）。
 
@@ -194,8 +194,8 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | `ZoomLevel` | `int` | 拡大率（1〜64。設定 `Options.ZoomLevel` の値。描画完了通知のスケールにも使う） |
 | `Options` | `LoupeOptions` | ルーペの設定（拡大率・寸法。**色は `LoupePaint`（描画層）が単一所有する**） |
 | `DipToDeviceScaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数 |
-| `CheckerSizePixels` | `int` | 市松模様の 1 タイルの一辺（物理ピクセル。換算済み。0 は市松模様を描かない） |
-| `FrameWidthPixels` | `int` | 外枠の太さ（物理ピクセル。換算済み。0 は外枠を描かない） |
+| `CheckerSizePixels` | `int` | 市松模様の 1 タイルの一辺（物理ピクセル。換算済みで最低 1。**値 0 を「描かない」の代用にしない**） |
+| `FrameWidthPixels` | `int` | 外枠の太さ（物理ピクセル。換算済みで最低 1。**値 0 を「描かない」の代用にしない**） |
 | `SurfaceBounds` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。下地・市松模様を全面へ描くために契約が単一所有する（UI 層は矩形を組み立てない） |
 
 | メソッド | 説明 |
@@ -256,6 +256,8 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の set | 変化したときだけ |
 
 **差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。
+
+設定値の変更は `LogSettingChanged(名前, 前, 後)`（整数 / 実数 / 真偽）で出力し、**設定名は `nameof` をコアが付与します**（UI 層に設定名の文字列を持たせません）。拡大中心は座標の整形（`(X, Y)`）を伴うため専用の定義（`LogCenterPointChanged`）を持ちます。
 
 **UI が出力するログ（拡大元画像の変更・描画の例外）とその書式は `LoupeControl.UIBase` が単一所有します**（コアは UI が呼ぶ定義を持ちません）。**UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
 
