@@ -120,7 +120,7 @@ stateDiagram-v2
 | `src/Decoration/MarqueeDecoOptions.cs` | `MarqueeDecoOptions` | public | 装飾の設定（寸法・描画可否フラグ・ハイライト・内側） |
 | `src/Decoration/OuterDecoAppearance.cs` / `InnerDecoAppearance.cs` | `OuterDecoAppearance` / `InnerDecoAppearance` | public | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |
 | `src/Decoration/OuterDecoFrame.cs` / `InnerDecoFrame.cs` | `OuterDecoFrame` / `InnerDecoFrame` | public | 装飾の描画内容（**純粋データ**。暗転領域・枠線・塗りを保持し、描くかどうかは `Marquee.ResolveContent` が判断する） |
-| `src/Decoration/DecoGeometry.cs` | `DecoGeometry` | internal | 装飾の幾何計算（穴あけ矩形・暗転領域・枠線矩形・DIP 変換） |
+| `src/Decoration/DecoGeometry.cs` | `DecoGeometry` | internal | 装飾の幾何計算（穴あけ矩形・暗転領域・枠線矩形）。**枠線の太さの補正は持たない**（装飾の外観の生成時に <c>Marquee.Limits</c> の安全域へ補正される） |
 | `src/Decoration/HoleRect.cs` | `HoleRect` | internal | 穴あけ矩形と閉区間の指定（どちらの矩形を優先するかと +1 の判断を 1 値で持つ） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
@@ -133,10 +133,11 @@ stateDiagram-v2
 | 描画する層とその順序 | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
 | 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveContent` |
 | 設定の既定値・範囲補正・体裁定数 | `MarqueeOptions`（補正は生成時の `init` アクセサ） |
+| 枠線の太さの安全域（最小 0.5・既定 2.0）とその補正 | `Marquee.Limits`（補正は装飾の外観（`OuterDecoAppearance` / `InnerDecoAppearance`）の生成時の `init` アクセサが適用する） |
 | ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（14.0 / 12.0） | 描画層の `MarqueePaint` |
 | フォントサイズの安全域（6〜48） | 描画層の `MarqueePaint` |
 | ラベルの体裁（背景 = 実寸 + 余白×2、アライン、クランプ、行送り） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` |
-| 装飾の DIP 変換と穴あけ矩形の決定 | `DecoGeometry` |
+| 装飾の DIP 変換と穴あけ矩形の決定 | `MarqueeRenderRequest`（描画入力から導出する値は入力型が単一所有する） |
 | 装飾の描画可否（明示フラグ。透明色を代用にしない） | `MarqueeDecoOptions.ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint`（本コアは色を持つ型を公開しない） |
 | サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveContent` の `ResolveSizeLabel`（書式は private の `FormatSizeLabel`） |
@@ -169,7 +170,7 @@ stateDiagram-v2
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
 | 単位 | 純粋計算（`SelectionGeometry` / `DecoGeometry` / `MarqueeRenderRequest`）・状態機械・ファサード・描画内容の解決 |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Contract` / `tests/Decoration` / `tests/Drawing` / `tests/Interaction` / `tests/Logging` / `tests/Selection` / `tests/Setting`。ファサードの partial のテストはルート） |
-| 合計 | 250 件（`[Theory]` は展開後のケース数） |
+| 合計 | 268 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj

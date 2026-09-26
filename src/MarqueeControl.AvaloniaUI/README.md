@@ -41,7 +41,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - Avalonia Binding 対応の StyledProperty
 - ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
-- **閉区間描画（始点・終点を含む）**: ハンドルと外側の装飾（穴あけ枠）は終点（Right/Bottom）に +1 して DIP 変換（キャプチャの閉区間 +1 と一致。規則は装飾層の `DecoGeometry` が単一所有）
+- **閉区間描画（始点・終点を含む）**: ハンドルと外側の装飾（穴あけ枠）は終点（Right/Bottom）に +1 して DIP 変換（キャプチャの閉区間 +1 と一致。規則はコアの描画入力（`MarqueeRenderRequest.ToDipRect`）が単一所有）
 - **ホイール操作**: Ctrl+ホイールで `ZoomRequested`（方向と発生位置） / 通常ホイールで `ScrollRequested`（生の回転量）を発火します。解釈（Ctrl の判定・Shift の横変換・連携先への適用）とログは組み込みの層（`MarqueeControl.UIBase` の `MarqueeWheelInterpreter`）が単一所有します。連携 ScrollViewer（`AttachScrollViewer`）を設定した場合は適用先として登録され、本コントロールがスクロールします場合は上位 AP がスクロール先を決める
 - **薄い UI 層**: 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの公開ファサード（`Marquee`）が担います。本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行います
 

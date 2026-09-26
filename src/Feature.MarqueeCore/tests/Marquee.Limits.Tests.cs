@@ -21,6 +21,39 @@ public class MarqueeLimitsTests
     }
 
     // ====================================================================
+    // BorderThickness（既定 2.0・最小 0.5）
+    // ====================================================================
+
+    /// <summary>枠線の太さの既定値が 2.0 であることを検証する。</summary>
+    [Fact]
+    public void BorderThicknessDefault_2である()
+    {
+        Assert.Equal(2.0, Marquee.Limits.BorderThicknessDefault);
+    }
+
+    /// <summary>枠線の太さの最小値が 0.5 であることを検証する。</summary>
+    [Fact]
+    public void BorderThicknessMin_05である()
+    {
+        Assert.Equal(0.5, Marquee.Limits.BorderThicknessMin);
+    }
+
+    /// <summary>枠線の太さが最小値未満なら最小値へ補正されることを検証する。</summary>
+    /// <param name="value">補正する太さ（DIP）。</param>
+    /// <param name="expected">補正後の太さ（DIP）。</param>
+    [Theory]
+    [InlineData(0.1, 0.5)]
+    [InlineData(0.0, 0.5)]
+    [InlineData(-1.0, 0.5)]
+    [InlineData(0.5, 0.5)]
+    [InlineData(2.0, 2.0)]
+    [InlineData(10.0, 10.0)]
+    public void CoerceBorderThickness_最小値未満は最小値へ補正する(double value, double expected)
+    {
+        Assert.Equal(expected, Marquee.Limits.CoerceBorderThickness(value));
+    }
+
+    // ====================================================================
     // ResolveDisplayScale（0 以下は倍率を使う）
     // ====================================================================
 

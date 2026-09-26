@@ -15,19 +15,16 @@ namespace EsUtil.Feature.MarqueeCore.Decoration;
 /// </remarks>
 internal static class DecoGeometry
 {
-    /// <summary>枠線の太さの下限（DIP。0 以下の指定を無効化する）。</summary>
-    private const double BorderThicknessLowerBound = 0.5;
-
     /// <summary>選択矩形の四辺に描く枠線の矩形を計算する。</summary>
     /// <param name="rect">選択矩形（DIP 座標）。</param>
-    /// <param name="thickness">枠線の太さ（DIP）。0.5 未満は 0.5 に正規化される。</param>
+    /// <param name="thickness">枠線の太さ（DIP）。補正済みの値を渡す（安全域は <see cref="Marquee.Limits"/> が単一所有する）。</param>
     /// <returns>上・下・左・右の順の枠線矩形（4 個）。</returns>
     /// <remarks>
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの外枠と同じ式）。<br/>
-    /// 太さの下限のみ本メソッドが決める（選択枠は細い線でも視認できる必要がある）。
+    /// 太さの補正は装飾の外観（<c>OuterDecoAppearance</c> / <c>InnerDecoAppearance</c>）の生成時に適用される。
     /// </remarks>
     public static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)
-        => rect.ComputeInnerEdges(Math.Max(BorderThicknessLowerBound, thickness));
+        => rect.ComputeInnerEdges(thickness);
 
     /// <summary>暗転オーバーレイを描画するかどうかを判定する。</summary>
     /// <param name="holeRect">穴あけ矩形（DIP）。null の場合は全面暗転を検討する。</param>

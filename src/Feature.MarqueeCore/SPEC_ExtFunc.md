@@ -87,12 +87,12 @@
 
 | 分類 | メンバー | 既定値 |
 | --- | --- | --- |
-| 寸法 | `OuterAppearance.BorderThickness`（`OuterDecoAppearance`） | 2.0（穴あけ枠の太さ） |
+| 寸法 | `OuterAppearance.BorderThickness`（`OuterDecoAppearance`） | 2.0（穴あけ枠の太さ。0.5 未満は 0.5 へ補正される） |
 | 描画可否 | `ShowOverlay` | `true`（暗転マスクを描く。**アルファ 0 を「描かない」の代用にしない**） |
 | 描画可否 | `ShowOuterBorder` | `true`（穴あけ枠を描く） |
 | 表示ポリシー | `OuterShowFullOverlay` | `false`（穴あけ矩形が無いときは暗転しない。true で全面を暗転する） |
 | ハイライト | `OuterHighlightRect` | null（null が「ハイライトしない」。有効フラグは持たない） |
-| 寸法 | `InnerAppearance.BorderThickness`（`InnerDecoAppearance`） | 2.0（内側の枠線の太さ） |
+| 寸法 | `InnerAppearance.BorderThickness`（`InnerDecoAppearance`） | 2.0（内側の枠線の太さ。0.5 未満は 0.5 へ補正される） |
 | 描画可否 | `ShowInnerFill` | `false`（穴あけ矩形の内側を塗らない） |
 | 描画可否 | `ShowInnerBorder` | `false`（穴あけ矩形の内側の枠線を描かない） |
 
@@ -120,6 +120,8 @@
 | `CreateRequest(EsSize)` | method | 描画 1 フレーム分の入力（`MarqueeRenderRequest`）の生成（設定・状態と、描画時に決まる値） |
 | `ResolveContent(MarqueeRenderRequest)` | method | 1 フレーム分の描画内容（`MarqueeDrawContent`）の解決 |
 | `Limits.DomainToDipScalingDefault` | const | 倍率の既定値（1.0。`Marquee.Limits` の入れ子） |
+| `Limits.BorderThicknessMin` / `BorderThicknessDefault` | const | 枠線の太さの最小値（0.5）と既定値（2.0。装飾の外観の既定値も本値を参照する） |
+| `Limits.CoerceBorderThickness(double)` | method | 枠線の太さを安全域へ補正する（0.5 未満は 0.5。装飾の外観の生成時に適用される） |
 
 ### `MarqueeOptions` のメンバー
 

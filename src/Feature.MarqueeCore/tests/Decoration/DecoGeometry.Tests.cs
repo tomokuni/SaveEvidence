@@ -28,13 +28,14 @@ public class DecoGeometryTests
         Assert.Equal(new EsRect(108, 22, 2, 46), result[3]);     // 右
     }
 
-    /// <summary>枠線の太さが 0.5 未満なら 0.5 に正規化されることを検証する。</summary>
+    /// <summary>渡された太さがそのまま枠線の厚みになることを検証する。</summary>
+    /// <remarks>太さの補正は装飾の外観の生成時に行われるため、本計算は補正を持たない。</remarks>
     [Fact]
-    public void ComputeBorderRects_太さ05未満は05に正規化される()
+    public void ComputeBorderRects_渡された太さをそのまま使う()
     {
         var rect = new EsRect(0, 0, 100, 50);
 
-        var result = DecoGeometry.ComputeBorderRects(rect, 0.1);
+        var result = DecoGeometry.ComputeBorderRects(rect, 0.5);
 
         Assert.Equal(0.5, result[0].Height);
     }

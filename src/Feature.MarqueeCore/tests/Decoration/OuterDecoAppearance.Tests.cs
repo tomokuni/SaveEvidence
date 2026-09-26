@@ -36,4 +36,20 @@ public class OuterDecoAppearanceTests
 
         Assert.Equal(3.0, changed.BorderThickness);
     }
+
+    /// <summary>枠線の太さが安全域へ補正されることを検証する。</summary>
+    /// <param name="value">設定する太さ（DIP）。</param>
+    /// <param name="expected">補正後の太さ（DIP）。</param>
+    /// <remarks>補正は生成時に行われるため、保持している値が常に安全域内になる。</remarks>
+    [Theory]
+    [InlineData(0.1, 0.5)]
+    [InlineData(0.0, 0.5)]
+    [InlineData(-1.0, 0.5)]
+    [InlineData(2.5, 2.5)]
+    public void 枠線の太さは安全域へ補正される(double value, double expected)
+    {
+        var appearance = new OuterDecoAppearance { BorderThickness = value };
+
+        Assert.Equal(expected, appearance.BorderThickness);
+    }
 }

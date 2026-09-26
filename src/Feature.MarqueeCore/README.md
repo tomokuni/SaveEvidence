@@ -273,10 +273,10 @@ UI 層が使う共有値・計算:
 tests/
 ├── Marquee.Tests.cs                 # 公開ファサード（操作・効果の適用・設定の伝搬・描画内容の解決・通知の転送・確保量の固定）（36 件）
 ├── Marquee.DrawContent.Tests.cs     # 描画内容の解決（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・描画可否・層の順序）（50 件）
-├── Marquee.Limits.Tests.cs          # 数値パラメータの既定値と未設定時の解決規則（10 件）
+├── Marquee.Limits.Tests.cs          # 数値パラメータの既定値・未設定時の解決規則・安全域への補正（18 件）
 ├── Contract/                        # 効果の基底クラス（全メンバーが空実装であること・派生で必要なものだけを override できること）（3 件）
-├── Decoration/                      # 装飾（暗転マスク・枠線・内側の塗り）（27 件）
-├── Drawing/                         # フレーム全体の幾何（座標変換ポート・DIP 変換・穴あけ矩形）（13 件）
+├── Decoration/                      # 装飾（暗転マスク・枠線・内側の塗り・外観の安全域への補正）（24 件）
+├── Drawing/                         # フレーム全体の幾何（座標変換ポート・DIP 変換・穴あけ矩形）（18 件）
 ├── Interaction/                     # 状態遷移・ヒットテスト・ドラッグ・nudge・入力の解釈・効果の適用（87 件）
 ├── Logging/                         # ログ定義の生成コード（IsEnabled 両パス・書式）（3 件）
 ├── Selection/                       # 純粋幾何（正規化・ハンドル位置・近傍判定・境界クリップ・カーソル種別）（21 件）
@@ -285,7 +285,7 @@ tests/
 
 **テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Marquee.cs` / `Marquee.DrawContent.cs`）のテストはルートに置きます。
 
-件数は `[Theory]` を展開したケース数（合計 245 件）です。
+件数は `[Theory]` を展開したケース数（合計 268 件）です。
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj

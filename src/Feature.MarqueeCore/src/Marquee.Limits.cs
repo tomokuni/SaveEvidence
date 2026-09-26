@@ -21,6 +21,24 @@ public sealed partial class Marquee
         /// <remarks>各 UI の依存関係プロパティ（<c>Scaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
         public const double DomainToDipScalingDefault = 1.0;
 
+        /// <summary>枠線の太さの最小値（DIP。0 以下の指定を無効化する）。</summary>
+        /// <value>0.5（選択枠は細い線でも視認できる必要がある）。</value>
+        public const double BorderThicknessMin = 0.5;
+
+        /// <summary>枠線の太さの既定値（DIP）。</summary>
+        /// <value>2.0。</value>
+        /// <remarks>装飾の外観（<c>OuterDecoAppearance</c> / <c>InnerDecoAppearance</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
+        public const double BorderThicknessDefault = 2.0;
+
+        /// <summary>枠線の太さを安全域へ補正する（最小値未満は最小値）。</summary>
+        /// <param name="value">補正する値（DIP）。</param>
+        /// <returns>安全域に補正した値。</returns>
+        /// <remarks>
+        /// 補正は装飾の外観（<c>OuterDecoAppearance</c> / <c>InnerDecoAppearance</c>）の生成時に適用する<br/>
+        /// （設定の経路によらず、範囲内の値だけが保持される）。
+        /// </remarks>
+        public static double CoerceBorderThickness(double value) => Math.Max(BorderThicknessMin, value);
+
         /// <summary>表示スケールの係数を解決する（0 以下の場合は座標換算の係数を使う）。</summary>
         /// <param name="displayScaling">指定された表示スケール。0 以下は未指定として扱う。</param>
         /// <param name="scaling">座標換算の係数（1.0 未満は 1.0 として扱う）。</param>
