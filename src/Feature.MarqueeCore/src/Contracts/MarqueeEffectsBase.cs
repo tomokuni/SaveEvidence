@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core;
+using EsUtil.Feature.MarqueeCore.Session;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Feature.MarqueeCore;

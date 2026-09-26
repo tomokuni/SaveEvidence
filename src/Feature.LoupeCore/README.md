@@ -14,41 +14,33 @@
 
 ## 収録する型
 
-ルートに置くのは**ファサードと、ファサードから推移的に公開が必要な型**（契約・設定・描画内容の値型）です。それ以外は **internal** にして用途別のフォルダ（`Checkerboard/` / `Decoration/` / `Imaging/`）へまとめます。
+ルート（`src/`）に置くのは**ファサード本体とその partial**（`Loupe.cs` / `Loupe.Position.cs` / `Loupe.DrawContent.cs` / `Loupe.Limits.cs`）です。それ以外は用途別のフォルダへまとめます。
+**公開型は名前空間をルート（`EsUtil.Feature.LoupeCore`）のまま**にしてフォルダへ置くため（`Platform.AvaloniaUI` の `Platform/Interop/` と同じ方式）、利用者の `using` は増えません。内部型は用途別の名前空間（`Checkerboard` / `Decoration` / `Imaging`）に分けます。
 
-| 型 | 責務 |
-| --- | --- |
-| `Loupe` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、描画完了通知の内容解決（`ResolveNotification`）、座標変換ポートの設定（`SetCoordinateTransform`）、描画実装の保持（`Renderer`。差し替え可能） |
-| `ILoupeRenderer` | 描画内容（何を描くか）を描画面（どう描くか）へ写す実装の契約（**描画の差し替え点**）。既定実装は描画層の `LoupeRenderer`（色は `LoupePaint` をコンストラクタで受け取る）。本コアは描画 API を持たず、実装を注入で受ける |
-| `LoupeLayout` | 表示レイアウトの値（表示サイズ（DIP）と表示位置（親領域 DIP）。配置しない場合は位置が null）。ファサードの結果として UI・ホストへ渡す |
-| `LoupeRenderNotification` | 描画完了通知の値（切り出し左上・スケール）。切り出し領域とスケールは `Loupe.ResolveNotification` が単一所有する（**描く層の順序は描画内容 `LoupeDrawContent` が持つ**） |
-| `LoupeDrawContent` | **1 フレーム分の描画内容**（描画面の矩形・市松模様のタイル列挙子・十字線の矩形・円枠の矩形・**層の順序**）。描画層は本値を写すだけで計算を持たない |
-| `LoupeCheckerTiles` | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部）。タイル数は描画先の大きさに比例して増えるため、列挙子で渡してヒープ確保をゼロにする |
-| `LoupeOptions` | ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値として所有（**public**）。既定値・数値項目の安全域への補正（生成時。値の設定経路によらず範囲内の値だけが保持される）を持つ。UI 層は本型を 1 プロパティとして公開するだけ |
-| `LoupeMetrics` | ルーペの**寸法**（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）5 項目の単一所有（**public**）。既定値・数値項目の安全域への補正（生成時）・ラベル表示の判定（`ShouldShowCoordLabel`）を持つ。**色は持たない**（色は描画にだけ必要な設定であり、描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
-| `Loupe.Limits`（`Loupe` の入れ子） | ルーペの数値パラメータ（表示サイズ / 拡大率 / スケーリング / 市松模様 / 円枠 / ラベル文字サイズ / ラベルの角丸）の既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ。**UI がプロパティの既定値と coerce を登録するときに参照する**ためファサードの入れ子として公開する（UI は本値のために他のコア型を参照しない） |
-| `LoupeRenderRequest` | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層 は自 UI の公開プロパティから本値を組み立てて描画層・コアの計算へ渡すだけで、描画に必要な値の単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を持たない。**換算済みの寸法**（`CheckerSizePixels` / `FrameWidthPixels`）も含む |
-| `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`）。**表示はコントロールが行う**（`Border` + `TextBlock` の要素として配置する）ため、実寸測定だけを UI が行い本値へ渡す（測定は描画 API 依存）。体裁（背景・文字原点）は `EsLabelLayout`（Platform.Core）が単一所有し、要素への写像は `EsLabelExtensions.ToElement`（拡張メソッド。色は引数で受け取る）が単一所有する |
-| `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位）。描画の実行は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が担い、`LoupeDrawContent.Layers` を先頭から処理するだけである（順序を判断しない） |
-| `LoupeLogFormat` / `LoupeLogMessage` | ログの書式（`(X, Y)` / `Width×Height` / `null`）とログ定義（設定変更・拡大中心の変更・描画例外・再描画の進行）・変化判定（同値の再設定では出力しない）。**UI のコードが拡張メソッドと書式を直接呼ぶ契約**であるため public（両 UI で同じレベル・書式にする） |
+| フォルダ | 型 | 責務 |
+| --- | --- | --- |
+| ルート | `Loupe` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、描画完了通知の内容解決（`ResolveNotification`）、座標変換ポートの設定（`SetCoordinateTransform`）、描画実装の保持（`Renderer`。差し替え可能） |
+| ルート | `Loupe.Limits`（`Loupe` の入れ子） | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ。**UI がプロパティの既定値と coerce を登録するときに参照する**ためファサードの入れ子として公開する |
+| `Contracts/` | `ILoupeRenderer` | 描画内容を描画面へ写す実装の契約（**描画の差し替え点**）。既定型は描画層の `LoupeRenderer`（色は `LoupePaint` をコンストラクタで受け取る） |
+| `Contracts/` | `LoupeRendererBase` | 描画手順（層の順序に従った描画ポートの呼び出し）を単一所有する基底（Template Method） |
+| `Contracts/` | `LoupeDrawLayer` | 描く層とその順序（**描画順はコアが単一所有する**。中心座標ラベルは必ず最後 = 常に最上位） |
+| `Drawing/` | `LoupeRenderRequest` | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層は自 UI の公開プロパティから組み立てるだけで、単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を持たない。**換算済みの寸法**（`CheckerSizePixels` / `FrameWidthPixels`）も含む |
+| `Drawing/` | `LoupeDrawContent` | **1 フレーム分の描画内容**（描画面の矩形・市松模様のタイル列挙子・十字線の矩形・円枠の矩形・**層の順序**）。描画層は本値を写すだけで計算を持たない |
+| `Drawing/` | `LoupeCheckerTiles` | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部）。列挙子で渡し、描画のたびのヒープ確保をゼロにする |
+| `Settings/` | `LoupeOptions` | ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値として所有。既定値・生成時の補正を持つ（設定経路によらず範囲内の値だけが保持される） |
+| `Settings/` | `LoupeMetrics` | ルーペの**寸法**（市松タイル・円枠の太さ・中心座標ラベルのフォントサイズと角丸半径）の単一所有。ラベル表示の判定（`ShouldShowCoordLabel`）を持つ。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
+| `Labels/` | `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`）。体裁は `EsLabelLayout`（Platform.Core）が単一所有する |
+| `Log/` | `LoupeLogFormat` / `LoupeLogMessage` | ログの書式（`(X, Y)` / `Width×Height` / `null`）とログ定義・変化判定。**UI のコードが拡張メソッドと書式を直接呼ぶ契約**であるため public |
 
-### 内部（`internal`。用途別フォルダ）
+### 内部（`internal`）
 
-| 型 | 責務 |
-| --- | --- |
-| `Checkerboard.LoupeCheckerboard` | 市松模様の明暗の判定規則（タイル矩形の列挙は `LoupeCheckerTiles`） |
-| `Checkerboard.LoupeDivMath` | 区画数の切り上げ除算（タイル数と切り出し領域の一辺が共用する規則） |
-| `Decoration.LoupeDecorationGeometry` | 十字線（縦横 2 本）と円枠（4 辺）の矩形の計算（結果は描画内容に含まれる） |
-| `Decoration.LoupeMetricsScaler` | 寸法値（市松タイル・円枠の太さ）の物理ピクセル換算（結果は描画入力に含まれる） |
-| `Imaging.LoupeImageExtractor` | 切り出し領域の一辺・左上（ドメイン座標）の計算と `EsBitmap` からの領域切り出し、拡大描画の矩形（`ComputeMagnifiedRects`。引数はビットマップの実寸） |
-| `Loupe.Position` / `Loupe.Content` | ファサードの部分実装（表示位置の計算・描画内容の解決。`Loupe` の partial であり同じ型） |
-
-
-**公開面の性格**: 本プロジェクトの公開型は「ファサード + UI アダプタ契約（描画契約・設定・描画内容の値型・ログ契約）」に限定されます。操作の入口はファサード（`Loupe`） に一本化し、表示サイズの決定（唯一の書き込み元を持つ規則）・表示位置・描画入力・**描画内容**・通知内容の解決は本型が単一所有します。
-
-**public の判断は「ファサードから推移的に到達できるか」** です。到達できない型（描画の計算・換算・タイル列挙・ログの値整形）は internal とし、単体テストにのみ `InternalsVisibleTo`（`Feature.LoupeCore.Tests`）で公開します。例外はロ グの契約（`LoupeLogMessage` / `LoupeLogFormat`。両 UI が同じレベル・書式で 出力するために共有する契約であり、UI のコードが拡張メソッドを直接呼ぶ）。
-
-**UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログは `LoupeControl.AvaloniaUI` にあります）。
+| フォルダ | 型 | 責務 |
+| --- | --- | --- |
+| `Checkerboard/` | `LoupeCheckerboard` | 市松模様の明暗の判定規則（タイル矩形の列挙は `LoupeCheckerTiles`） |
+| `Checkerboard/` | `LoupeDivMath` | 区画数の切り上げ除算（タイル数と切り出し領域の一辺が共用する規則） |
+| `Decoration/` | `LoupeDecorationGeometry` | 十字線（縦横 2 本）と円枠（4 辺）の矩形の計算（結果は描画内容に含まれる） |
+| `Decoration/` | `LoupeMetricsScaler` | 寸法値（市松タイル・円枠の太さ）の物理ピクセル換算（結果は描画入力に含まれる） |
+| `Imaging/` | `LoupeImageExtractor` | 切り出し領域の一辺・左上（ドメイン座標）の計算と `EsBitmap` からの領域切り出し、拡大描画の矩形 |
 
 ## 依存方向
 

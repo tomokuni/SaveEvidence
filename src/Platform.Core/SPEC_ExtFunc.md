@@ -70,7 +70,6 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 
 レイアウト計算で扱う軸（`X` = 幅 / `Y` = 高さ）です。軸を `bool` で渡すと `true` が横か縦か読めなくなるため、列挙型で指定します。
 
-
 ### `LoggerFallback`（static class）
 
 ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー。拡張メソッドとして提供します。
@@ -84,7 +83,6 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 ```
 
 「ロガー未設定（null）は出力なしとして扱う」規則を単一所有します。各コントロール・サービスは `logger ?? NullLogger.Instance` を自前で書かず本メソッドへ委譲してください。
-
 
 ### `Imaging.DrawingColorExtensions`（static class）
 

@@ -72,8 +72,10 @@ public readonly record struct MarqueeSizeLabel(
     /// <param name="scaling">座標換算の係数（1.0 未満は 1.0 として扱う）。</param>
     /// <returns>解決した表示スケール。</returns>
     /// <remarks>
-    /// 「0 以下は未指定」という規則を単一所有する（UI 層が同じ三項演算を書くと、同じ設定で表示が食い違う）。
+    /// 「0 以下は未指定」という規則を単一所有する（UI 層が同じ三項演算を書くと、同じ設定で表示が食い違う）。<br/>
+    /// <b>可視性</b>: 利用者はコアの描画内容の解決（<see cref="Marquee.ResolveFrame"/>）とファサードの
+    /// <see cref="Marquee.DisplayScaleScaling"/> だけであり、描画層は解決済みの文言を受け取るため internal とする。
     /// </remarks>
-    public static double ResolveDisplayScaling(double displayScaling, double scaling)
+    internal static double ResolveDisplayScaling(double displayScaling, double scaling)
         => displayScaling > 0 ? displayScaling : DpiScaler.NormalizeScaling(scaling);
 }

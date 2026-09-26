@@ -36,18 +36,18 @@ graph LR
 
 | ファイル | 内容 |
 | --- | --- |
-| `Loupe.cs` | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、通知内容の解決（`ResolveNotification`）、描画実装の保持（`Renderer`。`ILoupeRenderer` 経由で委譲する）。`LoupeLayout` / `LoupeRenderNotification` の値型も本ファイルが所有する |
-| `LoupeDrawContent.cs` | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
-| `LoupeCheckerTiles.cs` | 市松模様の暗色タイルの矩形を**リストを確保せずに列挙する構造体**（描画内容の一部） |
-| `ILoupeRenderer.cs` | 描画の契約（描画内容 → 描画面の写像。**描画の差し替え点**。実装は描画層が提供する） |
-| `LoupeOptions.cs` | ルーペの設定（表示サイズ・拡大率・寸法）の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`Default` |
-| `LoupeMetrics.cs` | ルーペの寸法 5 項目（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`ShouldShowCoordLabel`。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
-| `Loupe.Limits.cs` | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ（`Loupe` の**入れ子**。UI がプロパティ登録に使う） |
-| `LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）と、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む） |
-| `LoupeCoordLabel.cs` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`。体裁は `EsLabelLayout`（Platform.Core）が単一所有する）。表示はコントロールがテキスト要素として行う |
-| `Loupe.Position.cs` / `Loupe.Content.cs`（`Loupe` の **partial**・**internal**） | 表示位置の計算・親サイズ未確定の判定、描画内容の解決。利用者はファサード（`ResolveLayout` / `ResolveContent`）を使う |
-| `LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化（**UI がログへ出すため public**） |
-| `LoupeLogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有（**UI が拡張メソッドを呼ぶため public**） |
+| `Loupe.cs`（ルート） | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、通知内容の解決（`ResolveNotification`）、描画実装の保持（`Renderer`。`ILoupeRenderer` 経由で委譲する）。`LoupeLayout` / `LoupeRenderNotification` の値型も本ファイルが所有する |
+| `Drawing/LoupeDrawContent.cs` | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
+| `Drawing/LoupeCheckerTiles.cs` | 市松模様の暗色タイルの矩形を**リストを確保せずに列挙する構造体**（描画内容の一部） |
+| `Contracts/ILoupeRenderer.cs` | 描画の契約（描画内容 → 描画面の写像。**描画の差し替え点**。実装は描画層が提供する） |
+| `Settings/LoupeOptions.cs` | ルーペの設定（表示サイズ・拡大率・寸法）の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`Default` |
+| `Settings/LoupeMetrics.cs` | ルーペの寸法 5 項目（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`ShouldShowCoordLabel`。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
+| `Loupe.Limits.cs`（ルート） | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ（`Loupe` の**入れ子**。UI がプロパティ登録に使う） |
+| `Drawing/LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）と、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む） |
+| `Labels/LoupeCoordLabel.cs` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`。体裁は `EsLabelLayout`（Platform.Core）が単一所有する）。表示はコントロールがテキスト要素として行う |
+| `Loupe.Position.cs` / `Loupe.DrawContent.cs`（`Loupe` の **partial**・**internal**） | 表示位置の計算・親サイズ未確定の判定、描画内容の解決。利用者はファサード（`ResolveLayout` / `ResolveContent`）を使う |
+| `Log/LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化（**UI がログへ出すため public**） |
+| `Log/LoupeLogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有（**UI が拡張メソッドを呼ぶため public**） |
 
 ### 内部（`internal`。用途別フォルダ）
 
