@@ -48,13 +48,13 @@ public readonly record struct MarqueeRenderRequest(
     /// <remarks>解決の規則は <see cref="ResolvePort"/> が単一所有する。</remarks>
     internal ICoordTransform ResolvedPort => ResolvePort(Port, DomainToDipScaling);
 
-    /// <summary>描画領域の全体を取得する（左上を原点（0, 0）とする矩形）。</summary>
+    /// <summary>描画面の全体を取得する（左上を原点（0, 0）とする矩形）。</summary>
     /// <value>幅・高さが <see cref="ClientSize"/> の矩形（DIP）。</value>
     /// <remarks>
-    /// 暗転領域の計算は描画領域を基準にする（描画 API のコンテキスト原点は常にコントロールの左上であるため、<br/>
+    /// 暗転領域の計算は描画面を基準にする（描画 API のコンテキスト原点は常にコントロールの左上であるため、<br/>
     /// 原点を持たない型で受けることで取り違えを防ぐ）。
     /// </remarks>
-    internal EsRect ClientArea => new(0, 0, ClientSize.Width, ClientSize.Height);
+    internal EsRect SurfaceBounds => new(0, 0, ClientSize.Width, ClientSize.Height);
 
     /// <summary>設定・状態と描画時に決まる値から描画入力を組み立てる。</summary>
     /// <param name="options">選択矩形の設定。</param>

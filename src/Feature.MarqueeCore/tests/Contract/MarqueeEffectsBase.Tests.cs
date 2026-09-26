@@ -62,26 +62,4 @@ public class MarqueeEffectsBaseTests
         /// <summary>再描画を要求する。</summary>
         public override void RequestRedraw() => requestRedraw();
     }
-
-    /// <summary>呼び出しを記録するカーソルサービス（nudge のカーソル操作を検証する）。</summary>
-    private sealed class CursorServiceSpy : EsUtil.Platform.Core.ICursorService
-    {
-        /// <summary>表示状態の変更履歴。</summary>
-        public List<bool> Visibility { get; } = [];
-
-        /// <summary>現在のカーソル位置（画面物理座標）。</summary>
-        public EsPointInt Current { get; private set; }
-
-        /// <summary>カーソル位置を取得する。</summary>
-        /// <returns>現在のカーソル位置。</returns>
-        public EsPointInt GetCursorScreenPoint() => Current;
-
-        /// <summary>カーソル位置を設定する。</summary>
-        /// <param name="screenPoint">設定する位置（画面物理座標）。</param>
-        public void SetCursorScreenPoint(EsPointInt screenPoint) => Current = screenPoint;
-
-        /// <summary>カーソルの表示を切り替える。</summary>
-        /// <param name="visible">表示する場合は true。</param>
-        public void ShowCursor(bool visible) => Visibility.Add(visible);
-    }
 }

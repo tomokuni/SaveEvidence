@@ -106,7 +106,7 @@ public sealed partial class Loupe
         {
             if (SetIfChanged(ref _dipToDeviceScaling, CoerceDipToDeviceScaling(value), out var previous))
             {
-                Log.LogDipToDeviceScalingChanged(previous, _dipToDeviceScaling);
+                Log.LogSettingChanged(nameof(DipToDeviceScaling), previous, _dipToDeviceScaling);
             }
         }
     }
@@ -209,7 +209,6 @@ public sealed partial class Loupe
     public LoupeDrawContent ResolveContent(in LoupeRenderRequest request)
     {
         var surface = request.SurfaceBounds;
-        var options = request.Options;
         var magnifiedImage = request.MagnifiedImage;
         var checkerTiles = ResolveCheckerboard(request);
         var crosshairRects = ResolveCrosshairRects(request);
@@ -218,17 +217,12 @@ public sealed partial class Loupe
 
         return new LoupeDrawContent(
             surface,
-            checkerTiles,
+            checkerTiles ?? default,
             crosshairRects,
             frameRects,
             magnifiedImage,
             coordLabelText,
-            ResolveLayers(
-                options.ShowCheckerboard,
-                magnifiedImage is not null,
-                options.ShowCrosshair,
-                options.ShowFrame,
-                coordLabelText is not null));
+            ResolveLayers(checkerTiles, magnifiedImage, crosshairRects, frameRects, coordLabelText));
     }
 
     /// <summary>新しい値を保持する（同値なら何もしない）。</summary>

@@ -53,6 +53,25 @@ internal static partial class LoupeLogMessage
     internal static void LogSettingChanged(this ILogger logger, string name, double oldValue, double newValue)
         => logger.LogSettingChangedIfChanged(name, oldValue, newValue);
 
+    /// <summary>真偽設定値の変更ログ（同値の再設定では出力しない）。</summary>
+    /// <remarks>
+    /// <see cref="LogSettingChanged(ILogger, string, int, int)"/> の真偽版。<br/>
+    /// <c>bool</c> は <see cref="IFormattable"/> を実装しないため本体の汎用版へは委譲できない（書式は型の標準表記）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値。</param>
+    /// <param name="newValue">変更後の値。</param>
+    internal static void LogSettingChanged(this ILogger logger, string name, bool oldValue, bool newValue)
+    {
+        if (oldValue == newValue)
+        {
+            return;
+        }
+
+        logger.LogSettingChanged(name, oldValue.ToString(), newValue.ToString());
+    }
+
     /// <summary>数値設定値の変更ログ（同値の再設定では出力しない）の本体。</summary>
     /// <typeparam name="T">数値の型（整数・実数）。</typeparam>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
@@ -96,46 +115,27 @@ internal static partial class LoupeLogMessage
         LogSettingChanged(logger, "CenterPoint", FormatPoint(oldValue), FormatPoint(newValue));
     }
 
-    /// <summary>ルーペの基本サイズ（DIP）の変更ログ。</summary>
-    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: RequestedSize {OldValue} → {NewValue}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    /// <param name="oldValue">変更前の基本サイズ。</param>
-    /// <param name="newValue">変更後の基本サイズ。</param>
-    internal static void LogRequestedSizeChanged(this ILogger logger, int oldValue, int newValue)
-        => LogSettingChanged(logger, "RequestedSize", oldValue, newValue);
-
     /// <summary>設定（<see cref="LoupeOptions"/>）の変更ログ（変化した項目だけを出力する）。</summary>
     /// <remarks>
-    /// LogLevel: Debug（項目ごとの書式は個別の変更ログと同一）<br/>
+    /// LogLevel: Debug（書式は個別の変更ログと同一）<br/>
     /// 設定を 1 つの値へ統合したため、変更された項目の判定（差分検出）を本メソッドが単一所有する<br/>
     /// （UI 層は前後の値を渡さず、コアが保持する値の変化を知るだけでよい）。<br/>
-    /// 寸法（<see cref="LoupeOptions.CheckerSize"/> / <see cref="LoupeOptions.FrameWidth"/>）とラベル表示の可否は変更ログの対象外とする（外観の再適用で設定数ぶんのログが溢れるため）。
+    /// 外観の再適用で設定数ぶんのログが溢れないよう、各項目のログが同値判定を行う（変化した項目だけが出力される）。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の設定。</param>
     /// <param name="newValue">変更後の設定。</param>
     internal static void LogOptionsChanged(this ILogger logger, LoupeOptions oldValue, LoupeOptions newValue)
     {
-        // 各項目のログが同値判定を行うため、変化していない項目は出力されない
-        logger.LogRequestedSizeChanged(oldValue.RequestedSize, newValue.RequestedSize);
-        logger.LogZoomLevelChanged(oldValue.ZoomLevel, newValue.ZoomLevel);
+        logger.LogSettingChanged(nameof(LoupeOptions.RequestedSize), oldValue.RequestedSize, newValue.RequestedSize);
+        logger.LogSettingChanged(nameof(LoupeOptions.ZoomLevel), oldValue.ZoomLevel, newValue.ZoomLevel);
+        logger.LogSettingChanged(nameof(LoupeOptions.CheckerSize), oldValue.CheckerSize, newValue.CheckerSize);
+        logger.LogSettingChanged(nameof(LoupeOptions.FrameWidth), oldValue.FrameWidth, newValue.FrameWidth);
+        logger.LogSettingChanged(nameof(LoupeOptions.ShowCoordLabel), oldValue.ShowCoordLabel, newValue.ShowCoordLabel);
+        logger.LogSettingChanged(nameof(LoupeOptions.ShowCheckerboard), oldValue.ShowCheckerboard, newValue.ShowCheckerboard);
+        logger.LogSettingChanged(nameof(LoupeOptions.ShowCrosshair), oldValue.ShowCrosshair, newValue.ShowCrosshair);
+        logger.LogSettingChanged(nameof(LoupeOptions.ShowFrame), oldValue.ShowFrame, newValue.ShowFrame);
     }
-
-    /// <summary>表示スケーリング係数の変更ログ。</summary>
-    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: DipToDeviceScaling {OldValue} → {NewValue}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    /// <param name="oldValue">変更前のスケーリング係数。</param>
-    /// <param name="newValue">変更後のスケーリング係数。</param>
-    internal static void LogDipToDeviceScalingChanged(this ILogger logger, double oldValue, double newValue)
-        => LogSettingChanged(logger, "DipToDeviceScaling", oldValue, newValue);
-
-    /// <summary>拡大率の変更ログ。</summary>
-    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: ZoomLevel {OldValue} → {NewValue}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    /// <param name="oldValue">変更前の拡大率。</param>
-    /// <param name="newValue">変更後の拡大率。</param>
-    internal static void LogZoomLevelChanged(this ILogger logger, int oldValue, int newValue)
-        => LogSettingChanged(logger, "ZoomLevel", oldValue, newValue);
 
     /// <summary>拡大中心（ドメイン座標）を文字列化する。</summary>
     /// <param name="point">拡大中心。未設定は null。</param>

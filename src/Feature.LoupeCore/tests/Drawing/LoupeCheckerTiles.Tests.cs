@@ -3,7 +3,7 @@ using Xunit;
 using EsUtil.Feature.LoupeCore.Drawing;
 using EsUtil.Feature.LoupeCore.Setting;
 
-namespace EsUtil.Feature.LoupeCore.Tests.Checkerboard;
+namespace EsUtil.Feature.LoupeCore.Tests.Drawing;
 
 /// <summary><see cref="LoupeCheckerTiles"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
@@ -65,7 +65,7 @@ public class LoupeCheckerTilesTests
     [Fact]
     public void タイルサイズが0なら列挙する矩形がない()
     {
-        // 0 は市松模様を描かない指定（0 除算を避けて空になる）
+        // 0 除算を避けて空になる（換算は最低 1 のため通常の経路では 0 にならない）
         var tiles = Content(pixelSize: 64, tileSize: 0).CheckerTiles;
 
         Assert.Equal(0, tiles.Count);

@@ -56,16 +56,16 @@ public sealed partial class Marquee
         /// <summary>選択矩形の最小サイズの既定値（ドメイン座標）。</summary>
         public const double MinSelectionSizeDefault = 6.0;
 
-        /// <summary>ポート未指定時に適用する倍率の既定値（ドメイン座標と DIP が 1:1）。</summary>
-        /// <value>1.0（等倍）。</value>
-        /// <remarks>各 UI の依存関係プロパティ（<c>DomainToDipScaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
-        public const double DomainToDipScalingDefault = 1.0;
-
         /// <summary>ポート未指定時に適用する倍率の最小値。</summary>
         public const double DomainToDipScalingMin = 0.1;
 
         /// <summary>ポート未指定時に適用する倍率の最大値。</summary>
         public const double DomainToDipScalingMax = 8.0;
+
+        /// <summary>ポート未指定時に適用する倍率の既定値（ドメイン座標と DIP が 1:1）。</summary>
+        /// <value>1.0（等倍）。</value>
+        /// <remarks>各 UI の依存関係プロパティ（<c>DomainToDipScaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
+        public const double DomainToDipScalingDefault = 1.0;
 
         /// <summary>枠線の太さの最小値（DIP。0 以下の指定を無効化する）。</summary>
         /// <value>0.5（選択枠は細い線でも視認できる必要がある）。</value>

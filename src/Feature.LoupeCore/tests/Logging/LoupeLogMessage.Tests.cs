@@ -24,7 +24,7 @@ public class LoupeLogMessageTests
         InvokeAll(logger);
 
         Assert.True(logger.IsEnabled(LogLevel.Trace));
-        Assert.Equal(2, logger.Messages.Count);
+        Assert.Equal(6, logger.Messages.Count);
     }
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
@@ -43,7 +43,10 @@ public class LoupeLogMessageTests
         InvokeAll(logger);
 
         Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
-        Assert.Equal("[LoupeCtrl] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[1]);
+        Assert.Equal("[LoupeCtrl] Setting: RequestedSize 160 → 240", logger.Messages[1]);
+        Assert.Equal("[LoupeCtrl] Setting: FrameWidth 2 → 8", logger.Messages[2]);
+        Assert.Equal("[LoupeCtrl] Setting: ShowFrame True → False", logger.Messages[3]);
+        Assert.Equal("[LoupeCtrl] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[4]);
     }
 
     /// <summary>拡大中心のログが両 UI 共通の書式（括弧付き座標）で出力されることを検証する。</summary>
@@ -59,34 +62,20 @@ public class LoupeLogMessageTests
         Assert.Equal("[LoupeCtrl] Setting: CenterPoint null → (30, 40)", logger.Messages[1]);
     }
 
-    /// <summary>設定項目ごとの名前付きログが同じ書式で出力されることを検証する。</summary>
-    /// <remarks>設定名はコアが単一所有するため、UI 層に文字列リテラル（nameof）を置かない。</remarks>
+    /// <summary>真偽設定値のログが変化したときだけ出力されることを検証する。</summary>
+    /// <remarks>
+    /// 表示可否（<c>Show*</c>）は真偽値のため、数値と同じ書式（<c>True</c> / <c>False</c>）で出力する<br/>
+    /// （<c>bool</c> は <see cref="IFormattable"/> を実装しないため本体の汎用版とは別の経路になる）。
+    /// </remarks>
     [Fact]
-    public void 名前付きログは設定名をコアで付与する()
+    public void 真偽設定値のログは変化したときだけ出力する()
     {
         var logger = new RecordingLogger();
 
-        logger.LogRequestedSizeChanged(160, 240);
-        logger.LogDipToDeviceScalingChanged(1.0, 2.0);
-        logger.LogZoomLevelChanged(4, 8);
+        logger.LogSettingChanged("ShowFrame", true, false);   // 変化 → 出力
+        logger.LogSettingChanged("ShowFrame", false, false);  // 同値 → 出力しない
 
-        Assert.Equal(3, logger.Messages.Count);
-        Assert.Equal("[LoupeCtrl] Setting: RequestedSize 160 → 240", logger.Messages[0]);
-        Assert.Equal("[LoupeCtrl] Setting: DipToDeviceScaling 1 → 2", logger.Messages[1]);
-        Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[2]);
-    }
-
-    /// <summary>名前付きログも同値の再設定では出力しないことを検証する。</summary>
-    [Fact]
-    public void 名前付きログも同値なら出力しない()
-    {
-        var logger = new RecordingLogger();
-
-        logger.LogRequestedSizeChanged(160, 160);
-        logger.LogDipToDeviceScalingChanged(1.0, 1.0);
-        logger.LogZoomLevelChanged(4, 4);
-
-        Assert.Empty(logger.Messages);
+        Assert.Equal("[LoupeCtrl] Setting: ShowFrame True → False", Assert.Single(logger.Messages));
     }
 
     /// <summary>数値設定値のログが変化したときだけ出力されることを検証する。</summary>
@@ -145,38 +134,66 @@ public class LoupeLogMessageTests
     public void 設定の変更ログは変化した項目だけを出力する()
     {
         var logger = new RecordingLogger();
+        var oldValue = new LoupeOptions();
 
-        logger.LogOptionsChanged(
-            new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 },
-            new LoupeOptions { RequestedSize = 240, ZoomLevel = 4 });
-        logger.LogOptionsChanged(
-            new LoupeOptions { RequestedSize = 240, ZoomLevel = 4 },
-            new LoupeOptions { RequestedSize = 240, ZoomLevel = 8 });
+        logger.LogOptionsChanged(oldValue, oldValue with { RequestedSize = 240, ShowCrosshair = false });
 
-        Assert.Equal(2, logger.Messages.Count);
-        Assert.Equal("[LoupeCtrl] Setting: RequestedSize 160 → 240", logger.Messages[0]);
-        Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[1]);
+        Assert.Equal(
+            [
+                "[LoupeCtrl] Setting: RequestedSize 160 → 240",
+                "[LoupeCtrl] Setting: ShowCrosshair True → False",
+            ],
+            logger.Messages);
     }
 
-    /// <summary>設定（LoupeOptions）の外観だけの変更ではログを出力しないことを検証する。</summary>
-    /// <remarks>外観は再適用のたびに設定されるため、項目ごとのログは出力しない（設定の変更ログは 2 項目のみ）。</remarks>
+    /// <summary>設定の変更ログが寸法・表示可否を含む全項目を対象にすることを検証する。</summary>
+    /// <remarks>
+    /// 各項目のログが同値判定を行うため、全項目を対象にしても変化した項目しか出力されない<br/>
+    /// （対象外の項目を設けると、その項目の変更だけがログから漏れる）。
+    /// </remarks>
     [Fact]
-    public void 設定の変更ログは外観だけの変更では出力しない()
+    public void 設定の変更ログは全項目を対象にする()
     {
         var logger = new RecordingLogger();
         var oldValue = new LoupeOptions();
-        var newValue = oldValue with { FrameWidth = 8 };
+        var newValue = oldValue with
+        {
+            RequestedSize = 240,
+            ZoomLevel = 8,
+            CheckerSize = 12,
+            FrameWidth = 8,
+            ShowCoordLabel = false,
+            ShowCheckerboard = false,
+            ShowCrosshair = false,
+            ShowFrame = false,
+        };
 
         logger.LogOptionsChanged(oldValue, newValue);
 
-        Assert.Empty(logger.Messages);
+        Assert.Equal(
+            [
+                "[LoupeCtrl] Setting: RequestedSize 160 → 240",
+                "[LoupeCtrl] Setting: ZoomLevel 4 → 8",
+                "[LoupeCtrl] Setting: CheckerSize 6 → 12",
+                "[LoupeCtrl] Setting: FrameWidth 2 → 8",
+                "[LoupeCtrl] Setting: ShowCoordLabel True → False",
+                "[LoupeCtrl] Setting: ShowCheckerboard True → False",
+                "[LoupeCtrl] Setting: ShowCrosshair True → False",
+                "[LoupeCtrl] Setting: ShowFrame True → False",
+            ],
+            logger.Messages);
     }
 
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>
     /// <param name="logger">ロガー。</param>
+    /// <remarks>出力書式の検証がメッセージの並びに依存するため、呼び出す順序を固定する。</remarks>
     private static void InvokeAll(ILogger logger)
     {
-        logger.LogSettingChanged("ZoomLevel", "4", "8");
-        logger.LogCenterPointChanged(new EsPoint(1.5, 2.5), null);
+        logger.LogSettingChanged("ZoomLevel", "4", "8");                             // 1
+        logger.LogSettingChanged("RequestedSize", 160, 240);                          // 2
+        logger.LogSettingChanged("FrameWidth", 2.0, 8.0);                             // 3
+        logger.LogSettingChanged("ShowFrame", true, false);                           // 4
+        logger.LogCenterPointChanged(new EsPoint(1.5, 2.5), null);                    // 5
+        logger.LogOptionsChanged(new LoupeOptions(), new LoupeOptions { ZoomLevel = 8 });  // 6
     }
 }

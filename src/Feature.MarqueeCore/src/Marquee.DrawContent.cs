@@ -119,7 +119,7 @@ public sealed partial class Marquee
         }
 
         var overlayRegions = deco.ShowOverlay
-            ? MarqueeDecoGeometry.ComputeOverlayRegions(request.ClientArea, hole)
+            ? MarqueeDecoGeometry.ComputeOverlayRegions(request.SurfaceBounds, hole)
             : [];
 
         var borderRects = hole is { } holeRect && deco.ShowOuterBorder

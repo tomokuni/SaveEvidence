@@ -25,11 +25,12 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。切り上げ・最低 1）。</param>
 /// <param name="Options">ルーペの設定（拡大率・寸法。色は描画の設定が単一所有する）。</param>
 /// <param name="DipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
-/// <param name="CheckerSizePixels">市松模様の 1 タイルの一辺（物理ピクセル。換算済み。0 は市松模様を描かない）。</param>
-/// <param name="FrameWidthPixels">外枠の太さ（物理ピクセル。換算済み。0 は外枠を描かない）。</param>
+/// <param name="CheckerSizePixels">市松模様の 1 タイルの一辺（物理ピクセル。換算済みで最低 1。描くかどうかは <see cref="LoupeOptions.ShowCheckerboard"/> が単一所有する）。</param>
+/// <param name="FrameWidthPixels">外枠の太さ（物理ピクセル。換算済みで最低 1。描くかどうかは <see cref="LoupeOptions.ShowFrame"/> が単一所有する）。</param>
 /// <remarks>
 /// <b>寸法は換算済みの値を保持する</b>: DIP の寸法（<see cref="LoupeOptions.CheckerSize"/> / <see cref="LoupeOptions.FrameWidth"/>）を描画に使う物理ピクセルへ換算する手順は<br/>
 /// コアが単一所有する（描画実装が換算を持たないため、描画側には物理ピクセルの値だけが渡る）。<br/>
+/// <b>値 0 を「描かない」の代用にしない</b>: 描画の可否は設定の明示フラグが単一所有し、非表示の項目は描画内容として空が渡る。<br/>
 /// <b>表示サイズ（DIP）も保持する</b>: ラベルの位置は DIP で決まるため、描画内容の解決が本値だけで完結する。
 /// </remarks>
 public readonly record struct LoupeRenderRequest(

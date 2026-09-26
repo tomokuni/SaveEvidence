@@ -43,25 +43,30 @@ public sealed partial class Loupe
     private static readonly IReadOnlyList<LoupeDrawLayer>[] s_layers = CreateLayers();
 
     /// <summary>描く層だけを描画順に並べる。</summary>
-    /// <param name="hasCheckerboard">市松模様を描くかどうか（設定の明示フラグ）。</param>
-    /// <param name="hasImage">拡大画像を描くかどうか（切り出し領域が解決できたか）。</param>
-    /// <param name="hasCrosshair">十字線を描くかどうか（設定の明示フラグ）。</param>
-    /// <param name="hasFrame">外枠を描くかどうか（設定の明示フラグ）。</param>
-    /// <param name="hasText">テキスト（中心座標ラベル）を描くかどうか。</param>
+    /// <param name="checkerTiles">市松模様のタイル列挙子。null の場合は層を含めない。</param>
+    /// <param name="magnifiedImage">拡大画像の切り出しと描画の矩形。null の場合は層を含めない。</param>
+    /// <param name="crosshairRects">十字線の矩形。空の場合は層を含めない。</param>
+    /// <param name="frameRects">外枠の矩形。空の場合は層を含めない。</param>
+    /// <param name="coordLabelText">中心座標ラベルのテキスト配置。null の場合は層を含めない。</param>
     /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
     /// <remarks>
     /// 下地は常に含める（描画面を置き換えて前フレームの残像を残さないため。透明色を指定した場合も描画面の消去が必要）。<br/>
     /// テキストは末尾へ置き、常に最上位にする（UI 要素として置く UI は本層を無視してよい）。<br/>
+    /// 層の有無は<b>描く値の有無</b>から決まる（層にある ⇔ 描く値がある。設定の明示フラグは値の解決時に適用済み）。<br/>
     /// 一覧はビットの組合せで事前生成したものを返す（描画のたびの確保を避ける）。
     /// </remarks>
     private static IReadOnlyList<LoupeDrawLayer> ResolveLayers(
-        bool hasCheckerboard, bool hasImage, bool hasCrosshair, bool hasFrame, bool hasText)
+        LoupeCheckerTiles? checkerTiles,
+        LoupeMagnifiedImage? magnifiedImage,
+        IReadOnlyList<EsRect> crosshairRects,
+        IReadOnlyList<EsRect> frameRects,
+        LoupeTextPlacement? coordLabelText)
         => s_layers[
-            (hasCheckerboard ? CheckerboardBit : 0)
-            | (hasImage ? ImageBit : 0)
-            | (hasCrosshair ? CrosshairBit : 0)
-            | (hasFrame ? FrameBit : 0)
-            | (hasText ? TextBit : 0)];
+            (checkerTiles is not null ? CheckerboardBit : 0)
+            | (magnifiedImage is not null ? ImageBit : 0)
+            | (crosshairRects.Count > 0 ? CrosshairBit : 0)
+            | (frameRects.Count > 0 ? FrameBit : 0)
+            | (coordLabelText is not null ? TextBit : 0)];
 
     /// <summary>層の全 32 通りを生成する。</summary>
     /// <returns>ビットの組合せを添字とする層の一覧。</returns>
@@ -112,12 +117,12 @@ public sealed partial class Loupe
 
     /// <summary>市松模様のタイル列挙子を解決する。</summary>
     /// <param name="request">描画入力（物理ピクセルサイズと換算済みのタイルサイズを含む）。</param>
-    /// <returns>暗色タイルの列挙子。非表示の設定の場合は空（列挙する矩形がない）。</returns>
+    /// <returns>暗色タイルの列挙子。非表示の設定の場合は null（描く値がない）。</returns>
     /// <remarks>描画の可否は設定の明示フラグが単一所有する（色のアルファを「描かない」の代用にしない）。</remarks>
-    private static LoupeCheckerTiles ResolveCheckerboard(in LoupeRenderRequest request)
+    private static LoupeCheckerTiles? ResolveCheckerboard(in LoupeRenderRequest request)
         => request.Options.ShowCheckerboard
             ? new LoupeCheckerTiles(request.PixelSize, request.CheckerSizePixels)
-            : default;
+            : null;
 
     /// <summary>十字線の矩形を解決する。</summary>
     /// <param name="request">描画入力（物理ピクセルサイズ・拡大率・設定を含む）。</param>
