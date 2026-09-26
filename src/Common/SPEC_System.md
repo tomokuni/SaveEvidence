@@ -5,8 +5,10 @@
 `Common` は、SaveEvidence のソリューション内で共有する**UI 非依存の契約**を提供します。
 
 1. **描画ポート**（`IEsCanvas`）— コア側の描画手順が唯一呼ぶ即時描画ポート
-2. **ラベル契約**（`IEsLabel` / `EsLabelFrame` / `EsLabelElement`）— コアが文言と配置を決め、UI が要素として置くための契約
-3. **ラベルの体裁**（`EsLabelLayout` / `EsLabelMetrics` / `EsLabelDefaults` / `EsLabelExtensions`）— 背景と文字の組み立ての単一所有
+2. **ラベルの値**（`EsLabelFrame` / `EsLabelElement`）— 配置の値と、UI が要素として置くための配置指示
+
+**ラベル契約（`IEsLabel`）と要素への写像（`EsLabelExtensions`）は置きません**（テキストを要素として置くか画像として描くかは UI 層の判断であり、コアは文言・基準点・アライン・領域だけを渡す）。
+3. **ラベルの体裁**（`EsLabelLayout` / `EsLabelMetrics` / `EsLabelDefaults` / `EsLabelElement.Create`）— 背景と文字の組み立ての単一所有
 
 外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
 
@@ -48,11 +50,10 @@ graph LR
 | --- | --- | --- |
 | `Imaging/IEsCanvas.cs` | `public interface` | 即時描画ポート（10 メンバー） |
 | `Imaging/IEsRectWalker.cs` | `public interface` | 矩形の列を確保なしで走査する列挙子（構造体）の契約（`IEsCanvas.FillRects` の引数） |
-| `Imaging/IEsLabel.cs` | `public interface` | ラベル 1 件の描画契約（文言・フォントサイズ・角丸・配置の算出。色は持たない） |
 | `Imaging/EsLabelFrame.cs` | `public readonly record struct` | 配置の値（背景矩形・文字の原点） |
 | `Imaging/EsLabelElement.cs` | `public readonly record struct` | UI 要素の配置指示（`Create` が写像を単一所有する） |
-| `Imaging/EsLabelLayout.cs` | `public static class` | 体裁（背景・文字の原点・行送り・配置規則）の単一所有 |
-| `Imaging/EsLabelExtensions.cs` | `public static class` | ラベル契約 → 要素の配置指示の写像（`ToElement`） |
+| `Imaging/EsLabelLayout.cs` | `public static class` | 体裁（背景・文字の原点・アライン・行送り）の単一所有 |
+| `Imaging/EsLabelAlignX.cs` / `EsLabelAlignY.cs` | `public enum` | 基準点がラベルのどこを指すかの指定（水平: 左端/中央/右端、垂直: 上端/中央/下端） |
 | `Imaging/EsLabelMetrics.cs` | `public static class` | フォントサイズの安全域と補正 |
 | `Imaging/EsLabelDefaults.cs` | `public static class` | 既定の色とフォントサイズ |
 
@@ -77,13 +78,6 @@ classDiagram
     +MoveNext() bool
     +EsRect Current
   }
-  class IEsLabel {
-    <<interface>>
-    +string Text
-    +double FontSize
-    +double CornerRadius
-    +ComputeFrame(textSize) EsLabelFrame
-  }
   class EsLabelFrame {
     <<readonly record struct>>
     +EsRect Background
@@ -105,16 +99,21 @@ classDiagram
   class EsLabelLayout {
     <<static>>
     +double Padding
-    +ComputeBox(...)$ EsRect
-    +ComputeBoxAtAnchor(...)$ EsRect
+    +ComputeAlignedBox(...)$ EsRect
     +ComputeOffsetTextOrigin(...)$ EsPoint
-    +ComputeCursorLabelBox(...)$ EsRect
-    +ComputeTopCenterBox(...)$ EsRect
     +NextTop(...)$ double
   }
-  class EsLabelExtensions {
-    <<static>>
-    +ToElement(label, textSize, textColor, backgroundColor)$ EsLabelElement
+  class EsLabelAlignX {
+    <<enum>>
+    Left
+    Center
+    Right
+  }
+  class EsLabelAlignY {
+    <<enum>>
+    Top
+    Middle
+    Bottom
   }
   class EsLabelMetrics {
     <<static>>
@@ -130,10 +129,9 @@ classDiagram
   }
 
   IEsCanvas ..> IEsRectWalker : FillRects の引数として受ける
-  IEsLabel ..> EsLabelFrame : 返す
-  EsLabelExtensions ..> IEsLabel : 写像する
-  EsLabelExtensions ..> EsLabelElement : 生成
   EsLabelLayout ..> EsLabelFrame : 生成
+  EsLabelLayout ..> EsLabelAlignX : 使う
+  EsLabelLayout ..> EsLabelAlignY : 使う
   EsLabelElement ..> EsLabelFrame : 取り込む
 ```
 
@@ -142,28 +140,31 @@ classDiagram
 ```mermaid
 sequenceDiagram
   participant UI as UI 層（コントロール）
+  participant Plan as UIBase の XxxLabelPlan
   participant Core as コントロールのコア
   participant C as Common
   participant Port as IEsCanvas 実装
 
-  Core->>C: ラベル契約（IEsLabel）を用意する（文言・フォントサイズ）
-  UI->>Port: MeasureText(text, fontSize)
-  Port-->>UI: 実寸（EsSize）
-  UI->>C: EsLabelExtensions.ToElement(label, 実寸, textColor, backgroundColor)
-  C->>C: ComputeFrame（体裁の適用）→ EsLabelElement.Create（写像）
-  C-->>UI: EsLabelElement（背景矩形・文字原点・外観）
-  UI->>UI: 自 UI の要素（Border + TextBlock 等）を配置する
+  Core->>C: テキスト配置（文言・基準点・アライン・領域）を用意する
+  UI->>Plan: Resolve(配置, 描画の設定, measureText)
+  Plan->>Port: MeasureText(text, fontSize)
+  Port-->>Plan: 実寸（EsSize）
+  Plan->>C: EsLabelLayout.ComputeAlignedBox(point, areaSize, 実寸, アライン, 余白)
+  C-->>Plan: 背景矩形（EsRect）
+  Plan-->>UI: EsLabelElement（背景矩形・文字原点・外観）
+  UI->>UI: 自 UI の要素（Border + TextBlock 等）を置くか、画像として描く
 ```
 
-**実寸は描画 API でしか測れない**ため、測定は UI 層が行い、体裁の適用と写像は本プロジェクトが単一所有します。
+**実寸は描画 API でしか測れない**ため、測定は UI 層が行い、体裁の適用は本プロジェクトが単一所有します。**テキストをどう描くか（要素 / 画像）は UI 層が決めます**。
 
 ## 単一所有（Single Source of Truth）
 
 | 内容 | 所有者 |
 | --- | --- |
 | 描画 API の抽象（描画の可変性） | `IEsCanvas`（本プロジェクト） |
-| ラベルの体裁（背景 = 実寸 + 内側余白×2・文字の原点・行送り） | `EsLabelLayout` |
-| ラベル契約 → UI 要素の配置指示の写像 | `EsLabelExtensions.ToElement` / `EsLabelElement.Create` |
+| ラベルの体裁（背景 = 実寸 + 内側余白×2・文字の原点・アライン・行送り） | `EsLabelLayout` |
+| ラベルの基準点がどこを指すかの指定 | `EsLabelAlignX` / `EsLabelAlignY` |
+| 配置と外観から要素の配置指示を組み立てる手順 | `EsLabelElement.Create` |
 | フォントサイズの安全域（6〜48）と補正 | `EsLabelMetrics` |
 | ラベルの既定の色・フォントサイズ | `EsLabelDefaults` |
 | ラベルの**色**の実体 | 呼び出し側（描画にだけ必要な設定。コントロールの UIBase が所有する） |
@@ -193,8 +194,7 @@ tests/
 ├── Common.Tests.csproj
 └── Imaging/
     ├── EsLabelElement.Tests.cs      # 写像結果の値・内側余白の導出
-    ├── EsLabelExtensions.Tests.cs   # ラベル契約 → 要素（色は引数で与える）
-    ├── EsLabelLayout.Tests.cs       # 体裁・行送り・配置（境界とクランプ）
+        ├── EsLabelLayout.Tests.cs       # 体裁・行送り・配置（境界とクランプ）
     └── EsLabelMetrics.Tests.cs      # フォントサイズの安全域（非有限値を含む）
 ```
 

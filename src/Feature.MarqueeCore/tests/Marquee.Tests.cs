@@ -135,17 +135,16 @@ public class MarqueeTests
     }
 
     [Fact]
-    public void ResolveLabels_は設定された描画実装へ委譲する()
+    public void Draw_は設定された描画実装へ委譲する()
     {
         var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
-        var replacement = new StubMarqueeRenderer { Elements = [] };
+        var replacement = new StubMarqueeRenderer();
         marquee.Renderer = replacement;
         var content = marquee.ResolveContent(new EsSize(120, 80));
 
-        var elements = marquee.ResolveLabels(content, static (_, _) => new EsSize(10, 10));
+        marquee.Draw(StubCanvas.Instance, content);
 
-        Assert.Empty(elements);
-        Assert.Equal(1, replacement.ResolveLabelsCalls);
+        Assert.Equal(1, replacement.DrawShapesCalls);
     }
 
     /// <summary>効果を何もしない実装（確保量の計測に使う）。</summary>
@@ -419,7 +418,7 @@ public class MarqueeTests
 
         Assert.Null(content.Handles);
         Assert.Null(content.Marker);
-        Assert.Null(content.CoordLabel);
+        Assert.Null(content.CoordLabelText);
         Assert.False(content.HasText);
     }
 
@@ -456,8 +455,8 @@ public class MarqueeTests
 
         var content = marquee.ResolveContent(new EsSize(200, 100));
 
-        Assert.NotNull(content.CoordLabel);
-        Assert.Equal("(30, 40)", content.CoordLabel!.Value.Text);
+        Assert.NotNull(content.CoordLabelText);
+        Assert.Equal("(30, 40)", content.CoordLabelText!.Value.Text);
         Assert.True(content.HasText);
     }
 
@@ -485,7 +484,7 @@ public class MarqueeTests
         var content = marquee.ResolveContent(new EsSize(200, 100));
 
         // 描画領域のサイズは座標ラベルの位置クランプに使う（領域外へ出さない）
-        Assert.Equal(new EsSize(200, 100), content.CoordLabel!.Value.ClientSize);
+        Assert.Equal(new EsSize(200, 100), content.CoordLabelText!.Value.ClampArea);
     }
 
     // ====================================================================

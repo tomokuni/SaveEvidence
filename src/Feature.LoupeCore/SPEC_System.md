@@ -114,7 +114,7 @@ sequenceDiagram
 | 中心座標ラベルの契約（文言・寸法）と表示可否 | `LoupeCoordLabel.Resolve`（文言は `EsPoint.Format`、表示可否は `LoupeMetrics.ShouldShowCoordLabel`） |
 | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0） | `EsLabelDefaults`（`Platform.Core`。マーキーと共有） |
 | 十字線・円枠の矩形 | `Loupe.ResolveContent`（規則は internal の `Decoration.LoupeDecorationGeometry`） |
-| ラベルの余白・背景矩形・文字原点 | `EsLabelLayout`（`Platform.Core`。内側余白の既定値は `EsLabelLayout.Padding`）。コアは使用する余白・オフセットだけを指定し、利用者は `LoupeCoordLabel.ComputeFrame` を使う |
+| ラベルの余白・背景矩形・文字原点 | `EsLabelLayout`（`Platform.Core`。内側余白の既定値は `EsLabelLayout.Padding`）。コアは使用する余白・オフセットだけを指定し、利用者は `EsLabelLayout.ComputeAlignedBox` を使う |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
 | 寸法値の物理ピクセル換算（市松タイル・円枠の太さ） | `LoupeRenderRequest.Create`（規則は internal の `Decoration.LoupeMetricsScaler`。結果は描画入力に含まれる） |
 | 市松模様のタイル矩形の列挙 | `Loupe.ResolveContent`（`LoupeCheckerTiles`。リストを確保しない） |
@@ -150,7 +150,7 @@ sequenceDiagram
 | 再描画のバッチ化 | UI のディスパッチャーに依存するため `LoupeControl.UIBase` が単一所有する（コアは同期計算のみ） |
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画ポートの境界で行う |
 | 切り出し領域の左上 | `ExtractRegionAt` と描画完了通知の 2 経路で重複する計算を `LoupeImageExtractor.ComputeCaptureTopLeft`（internal）が単一所有する（切り出しと通知が同じ規則を使う） |
-| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「文字原点 = 背景の左上 + 内側余白」「行送り」は特定のコントロールに依存しない規則のため、`Platform.Core` の `EsLabelLayout` が単一所有する（マーキーとルーペが同じ規則を共用する） |
+| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「文字原点 = 背景の左上 + 内側余白」「行送り」は特定のコントロールに依存しない規則のため、`Common` の `EsLabelLayout` が単一所有する（マーキーとルーペが同じ規則を共用する） |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は両コントロールで共通のため `EsLabelMetrics`（`Platform.Core`）が単一所有する |
 
 ## ライセンス

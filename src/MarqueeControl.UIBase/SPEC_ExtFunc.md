@@ -16,12 +16,12 @@
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
 | 描画内容の描画（図形） | `Marquee.Draw`（コアの入口）/ `IMarqueeRenderer.DrawShapes`（契約） | 装飾・ハンドル・始点マーカーを描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く。色は `MarqueePaint` から引く）。層の順序はコアの `MarqueeRendererBase` が単一所有し、起動は `Marquee.Draw` に一本化する |
-| ラベル要素の配置 | `IMarqueeRenderer.ResolveLabels`（既定実装は `MarqueeLabelPlan.Resolve` へ委譲） | 実寸（描画 API の測定値）からラベル要素の配置指示（`EsLabelElement`）を解決する（色は `MarqueePaint` から写す） |
+| テキスト要素の配置 | `MarqueeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素（`EsLabelElement`）の配置指示を解決する。**要素として置くか画像として描くかは UI 層が決める** |
 | ホスト付加情報ラベルの描画 | `MarqueeHostLabelRenderer.Draw` | ホストが与えた文言を、サイズラベルと同じ体裁（内側余白・背景 → 文字の順序）で描く |
 
 #### 1.1.1 前提条件
 
-- 描画先は `IEsCanvas`（`EsUtil.Platform.Core.Imaging`）です。Skia のキャンバスを使う場合は `SkiaEsCanvas`、Avalonia の `DrawingContext` を使う場合は `AvaloniaCanvas`（`Platform.AvaloniaUI`）を使います。
+- 描画先は `IEsCanvas`（`EsUtil.SaveEvidence.Common.Imaging`）です。Skia のキャンバスを使う場合は `SkiaEsCanvas`、Avalonia の `DrawingContext` を使う場合は `AvaloniaCanvas`（`Platform.AvaloniaUI`）を使います。
 - 描画の単位は**アダプタの座標系**に従います（マーキーは DIP、ルーペは物理ピクセル）。単位の換算（DPI スケーリング）はアダプタの利用側が行います。
 - 描画面の消去は呼び出し側の責務です（フレームワークが消去する UI では不要）。
 - 本層は色（`MarqueePaint`）を単一所有します（描画にだけ必要な設定のため）。寸法・表示可否・文言はコアの契約が単一所有します。
@@ -59,7 +59,7 @@
 | --- | --- |
 | `MarqueeRenderer(MarqueePaint paint)` | 描画に使う色を指定して生成する（`MarqueePaint.Default` を基点に組み立てた値を渡す）。`paint` が null なら `ArgumentNullException`。色はインスタンスごとに異なるため、共有インスタンスを書き換えず差し替える |
 | `DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content)` | 図形の層（装飾・ハンドル・始点マーカー）を描画順に描く（**ラベルの層は描かない**）。`canvas` が null なら `ArgumentNullException` |
-| `ResolveLabels(in MarqueeDrawContent content, Func<string, double, EsSize> measureText)` | 配置するラベル要素を順序どおりに返す（`MarqueeLabelPlan.Resolve` へ委譲し、生成時に渡された色を写す）。`measureText` が null なら `ArgumentNullException` |
+| `SizeLabelFontSize` / `CoordLabelFontSize`（描画実装のプロパティ） | ラベルのフォントサイズ（描画の設定 `MarqueePaint` の値への入口） |
 
 ### `MarqueePaint` のメンバー（色の単一値）
 

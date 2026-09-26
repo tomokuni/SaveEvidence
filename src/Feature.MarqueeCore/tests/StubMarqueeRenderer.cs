@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
@@ -14,22 +13,15 @@ namespace EsUtil.Feature.MarqueeCore.Tests;
 /// </remarks>
 internal sealed class StubMarqueeRenderer : IMarqueeRenderer
 {
-    /// <summary>ラベル要素の解決を要求された回数。</summary>
-    public int ResolveLabelsCalls { get; private set; }
+    /// <summary>図形の描画を要求された回数。</summary>
+    public int DrawShapesCalls { get; private set; }
 
-    /// <summary><see cref="ResolveLabels"/> が返す要素（ファサードの戻り値の検証に使う）。</summary>
-    public IReadOnlyList<EsLabelElement> Elements { get; set; } = [];
+    /// <summary><see cref="SizeLabelFontSize"/> が返す値（既定は 14.0）。</summary>
+    public double SizeLabelFontSize { get; set; } = 14.0;
 
-    /// <inheritdoc/>
-    public void DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content)
-    {
-    }
+    /// <summary><see cref="CoordLabelFontSize"/> が返す値（既定は 12.0）。</summary>
+    public double CoordLabelFontSize { get; set; } = 12.0;
 
     /// <inheritdoc/>
-    public IReadOnlyList<EsLabelElement> ResolveLabels(
-        in MarqueeDrawContent content, Func<string, double, EsSize> measureText)
-    {
-        ResolveLabelsCalls++;
-        return Elements;
-    }
+    public void DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content) => DrawShapesCalls++;
 }

@@ -1,6 +1,7 @@
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.SaveEvidence.Common.Imaging;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
@@ -163,21 +164,28 @@ public class MarqueeRendererTests
     }
 
     // ====================================================================
-    // ラベル（描画実装は描かない）
+    // テキスト（描画実装は描かない）
     // ====================================================================
 
     [Fact]
-    public void DrawShapes_はラベル層を描かない()
+    public void DrawShapes_はテキストを描かない()
     {
         using var target = TestHelper.CreateTarget(120, 60);
         var content = CreateContent(
-            sizeLabel: new MarqueeSizeLabel("W", new EsPoint(10, 10), 14.0),
-            layer: MarqueeDrawLayer.SizeLabel);
+            sizeLabel: new MarqueeTextPlacement("W", new EsPoint(10, 10), EsLabelAlignX.Left, EsLabelAlignY.Top, default));
 
         s_renderer.DrawShapes(target.Canvas, content);
 
-        // ラベルは UI 要素が配置するため、描画ポートには何も現れない
+        // テキストは UI 層が要素として置くか画像として描くかを決めるため、描画ポートには何も現れない
         Assert.Equal(s_transparent, target.GetPixel(11, 11));
+    }
+
+    [Fact]
+    public void フォントサイズは描画の設定から公開する()
+    {
+        // コアは値を持たず、描画の契約を通して UI 層へ公開する
+        Assert.Equal(CreatePaint().SizeLabelFontSize, s_renderer.SizeLabelFontSize);
+        Assert.Equal(CreatePaint().CoordLabelFontSize, s_renderer.CoordLabelFontSize);
     }
 
     // ====================================================================
@@ -190,20 +198,6 @@ public class MarqueeRendererTests
         var content = CreateContent(handles: null, layer: MarqueeDrawLayer.Handles);
 
         Assert.Throws<ArgumentNullException>(() => s_renderer.DrawShapes(null!, content));
-    }
-
-    [Fact]
-    public void ResolveLabels_はMarqueeLabelPlanへ委譲する()
-    {
-        var content = CreateContent(
-            sizeLabel: new MarqueeSizeLabel("W", new EsPoint(10, 10), 14.0),
-            layer: MarqueeDrawLayer.SizeLabel);
-        static EsSize Measure(string text, double fontSize) => new(text.Length * 6 + fontSize, 16);
-
-        var viaRenderer = s_renderer.ResolveLabels(content, Measure);
-        var viaPlan = MarqueeLabelPlan.Resolve(content, CreatePaint(), Measure);
-
-        Assert.Equal(viaPlan, viaRenderer);
     }
 
     // ====================================================================
@@ -259,7 +253,7 @@ public class MarqueeRendererTests
     /// <param name="marker">始点マーカー。</param>
     /// <param name="decoration">外側の装飾。</param>
     /// <param name="inner">内側の装飾。</param>
-    /// <param name="sizeLabel">サイズラベル。</param>
+    /// <param name="sizeLabel">サイズラベルのテキスト配置。</param>
     /// <returns>描画内容。</returns>
     private static MarqueeDrawContent CreateContent(
         MarqueeHandles? handles = null,
@@ -267,7 +261,7 @@ public class MarqueeRendererTests
         MarqueeMarker? marker = null,
         OuterDecoFrame? decoration = null,
         InnerDecoFrame? inner = null,
-        MarqueeSizeLabel? sizeLabel = null)
+        MarqueeTextPlacement? sizeLabel = null)
         => new(
             decoration ?? EmptyOuter,
             inner ?? EmptyInner,

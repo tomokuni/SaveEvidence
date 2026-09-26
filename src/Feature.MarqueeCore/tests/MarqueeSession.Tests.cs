@@ -708,7 +708,6 @@ public class MarqueeSessionTests
         {
             HandleSize = 20.0,
             MarkerLength = 40.0,
-            CoordLabelFontSize = 24.0,
         });
 
         Assert.Empty(logger.Messages);

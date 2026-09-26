@@ -31,21 +31,22 @@ flowchart TB
     UI["UI 層<br/>XxxControl.AvaloniaUI / .MewUI<br/>入力の受付・効果の適用・描画面の確保・ラベル要素の配置"]
     UIR["UI 層の描画実装<br/>XxxRenderer~UI（XxxRendererBase を継承）<br/>自 UI の描画面を IEsCanvas へ適合させる"]
     UB["UIBase<br/>コントロール化に必要な処理（組み込み規則）<br/>＋ 色（XxxPaint）と既定の描画実装（XxxRenderer）"]
-    CORE["Core<br/>何を描くか + 判断 + 描画の起動・順序<br/>（状態・値・純粋計算・コア⇔UI の契約・XxxRendererBase）"]
+    CORE["Core<br/>何を描くか + 判断 + 描画の起動・順序<br/>（状態・値・純粋計算・コア⇔UI の契約・XxxRendererBase）<br/>テキストは文言と位置だけを渡す"]
     UI --> UIR
     UI --> UB
     UI --> CORE
     UIR --> UB
     UB -->|XxxRendererBase を継承し IMarqueeRenderer / ILoupeRenderer を実装| CORE
-    CORE --> PC["Platform.Core<br/>Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout"]
+    CORE --> CM["Common<br/>IEsCanvas（描画ポート）・IEsRectWalker・EsLabelLayout（ラベルの体裁）"]
+    CM --> PC["Platform.Core<br/>Es* 値型・ICoordTransform・ICursorService"]
 ```
 
-UIBase は `Platform.Core` も参照します（描画ポート・実寸測定）。Core は UIBase を参照しません。
+UIBase は `Platform.Core` も参照します（描画ポートの適合と実寸測定）。Core は UIBase を参照しません。
 
 | 層 | 置くもの | 置かないもの | 依存先 | Marquee の例 |
 | --- | --- | --- | --- | --- |
-| **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・コア⇔UI の契約・**描画内容の解決（層の順序・矩形）と描画の起動**・ログ定義 | 色・UI フレームワークの型・組み込み先の概念 | `Platform.Core` | `Marquee`（ファサード + `Marquee.Content.cs` の `ResolveFrame`）/ `MarqueeDrawContent` / `MarqueeOptions` / `IMarqueeRenderer`（契約）/ `MarqueeRendererBase` |
-| **UIBase** | コントロール化に必要な処理（組み込み規則）・**色（`MarqueePaint` / `LoupePaint`）と色を持つ既定の描画実装**（層の順序は Core の基底が所有するため順序を判断しない）・層をまたぐ設定の写像（設定 → 子の値、設定 → 色。両 UI で共有する） | コア単体でも成立する判断（選択・表示レイアウト）・UI フレームワークの型 | `Core` / `Platform.Core` | `MarqueeRenderer` / `MarqueePaint` / `MarqueeLabelPlan` / `MarqueeWheelInterpreter` / `CapturePaintMapper` / `FadeMaskHostLabelRenderer` |
+| **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・コア⇔UI の契約・**描画内容の解決（層の順序・矩形）と描画の起動**・**テキストの文言と位置（Text と基準点）**・ログ定義 | 色・フォントサイズ・UI フレームワークの型・組み込み先の概念 | `Common` / `Platform.Core` | `Marquee`（ファサード + `Marquee.Content.cs` の `ResolveFrame`）/ `MarqueeDrawContent` / `MarqueeTextPlacement` / `MarqueeOptions` / `IMarqueeRenderer`（契約）/ `MarqueeRendererBase` |
+| **UIBase** | コントロール化に必要な処理（組み込み規則）・**色（`MarqueePaint` / `LoupePaint`）と色を持つ既定の描画実装**（層の順序は Core の基底が所有するため順序を判断しない）・**テキストを要素に写す配置計算（`MarqueeLabelPlan` / `LoupeLabelPlan`）**・層をまたぐ設定の写像（設定 → 子の値、設定 → 色。両 UI で共有する） | コア単体でも成立する判断（選択・表示レイアウト）・UI フレームワークの型 | `Core` / `Common` / `Platform.Core` | `MarqueeRenderer` / `MarqueePaint` / `MarqueeLabelPlan` / `MarqueeWheelInterpreter` / `CapturePaintMapper` / `FadeMaskHostLabelRenderer` |
 | **UI** | 入力イベントの受付とコア型への変換・効果の適用・通知の公開イベントへの転送・**描画面の確保（`XxxRenderer~UI`）**・ラベル要素の配置 | 判断・計算・既定値（コアが単一所有する）・層の順序（コアが単一所有する）・複数 UI で共有できる手順 | `Core` / `UIBase` / `Platform.*` | `MarqueeControl` / `MarqueeRendererAvaloniaUI` / `Effects` |
 
 **UIBase の中の 2 つの関心事**: 実装上は同じアセンブリに置きますが、帰属の基準は別です。
@@ -57,8 +58,8 @@ UIBase は `Platform.Core` も参照します（描画ポート・実寸測定�
 
 ## 3. どこに置くかを決める 3 つの問い
 
-1. **単体でそのコントロールを使っても存在する概念か** — する なら **Core**。例: 選択の判断・表示レイアウト・**層の順序に従った描画手順（`XxxRendererBase`）**・実寸からラベル要素への写像。
-2. **描画 API の呼び出しに色が要るか** — 要る なら **UIBase**（色と、その色を使う既定の描画実装）。
+1. **単体でそのコントロールを使っても存在する概念か** — する なら **Core**。例: 選択の判断・表示レイアウト・**テキストの文言と位置**・**層の順序に従った描画手順（`XxxRendererBase`）**。
+2. **描画 API の呼び出しに色やテキストの体裁（フォントサイズ）が要るか** — 要る なら **UIBase**（色・フォントサイズと、それを使う既定の描画実装・配置計算）。
 3. **フレームワーク固有の機構か** — そうなら **UI**（入力の受付・描画面の確保・要素の配置・UI 型への写像）。
    例: `DrawingContext` / `SKCanvas` の確保、`Border` + `TextBlock` の配置、カーソル型の写像。
 
@@ -68,20 +69,23 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 
 UI 層に残すのは「フレームワーク固有の型を使うもの」だけです（入力の受付・効果の適用・通知の転送・描画面の確保・要素の配置・境界の 1 行変換）。
 
-## 4. 「描画の起動と順序は Core・色は UIBase・描画面は ~UI」
+## 4. 「描画の起動と順序は Core・色とテキストの体裁は UIBase・描画面は ~UI」
 
-もっとも紛らわしい点です。**Core は色を持ちません**（色は UI 非依存の型だが、Core の計算・判断に入らないため）が、**描画手順（層の順序と起動）は Core が持ちます**。この 2 つは「色をレンダラのインスタンス状態にする」ことで両立します。
+もっとも紛らわしい点です。**Core は色もフォントサイズも持ちません**（描画にだけ必要な設定であり、Core の計算・判断に入らないため）が、**描画手順（層の順序と起動）は Core が持ちます**。この 2 つは「描画にだけ必要な設定をレンダラのインスタンス状態にする」ことで両立します。
+
+**テキスト（ラベル）は Core が値を渡し、UI 層が扱いを決めます**。Core が決めるのは「文言・基準点・アライン・領域」までであり、**テキスト要素（`TextBlock` 等）として置くか画像として描くかは UI 層の判断**です。そのためコアの描画内容は文字を層に含めず、値（`MarqueeTextPlacement` / `LoupeTextPlacement`）として渡します。
 
 | 何 | どこ | 理由 |
 | --- | --- | --- |
 | 描画の契約（`IMarqueeRenderer` / `ILoupeRenderer`） | **Core** | コアが「何を描くか（渡す値）」を決めるため。UI 層が描画を差し替える入口もここにある |
 | 描画手順の基底（`MarqueeRendererBase` / `LoupeRendererBase`） | **Core** | 「どの層をどの順に描くか」は**単体のコントロールにも存在する概念**であり UI フレームワーク非依存（描画 API は `IEsCanvas` が抽象化済み）。Core が持つことで**描画の起動と順序が Core の単一所有**になる |
 | 描画の起動（`Marquee.Draw` / `Loupe.Draw`） | **Core** | 起動の入口を Core に一本化する（UI が `Renderer.DrawShapes` を直接呼ぶと、実装の差し替えと順序の単一所有が二重経路になる） |
-| 描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）と既定実装 | **UIBase** | 色はコアの計算・判断に入らないためコアの型面に現れない（**色を使う層の描画は抽象メソッドとして派生へ委ねる**）。その派生（`MarqueeRenderer` / `LoupeRenderer`）が色をインスタンス状態として保持する |
+| 描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）と、テキストの体裁（フォントサイズ・角丸）と既定実装 | **UIBase** | これらはコアの計算・判断に入らないためコアの型面に現れない（**体裁を使う層の描画は抽象メソッドとして派生へ委ねる**）。その派生（`MarqueeRenderer` / `LoupeRenderer`）が描画の設定をインスタンス状態として保持し、描画の契約（`IMarqueeRenderer` / `ILoupeRenderer`）のプロパティとして UI 層へ公開する |
+| テキストを要素に写す配置計算（`MarqueeLabelPlan` / `LoupeLabelPlan`） | **UIBase** | 実寸（描画 API 依存）から配置矩形を求め、要素の配置指示（`EsLabelElement`）へ写す。**UI 層が要素として置くか画像として描くかの選択は各 UI に残る** |
 | 描画面の確保（`DrawingContext` / `SKCanvas` → `IEsCanvas` の適合）と UI 固有の描画 | **~UI** | `IEsCanvas` では吸収できないフレームワーク固有の機構（中間ビットマップ・描画コールバック・要素ベースの描画）を担う。`XxxRenderer~UI` が継承の拡張点になる |
 | 注入 | **UI** | `new MarqueeRendererAvaloniaUI(paint)` を 1 回生成して注入し、コントロールの `Paint` プロパティ（`MarqueePaint` / `LoupePaint`）と併せて設定する。差し替える場合は `Renderer` プロパティへ別実装を設定する（その場合はコアの `Draw` 入口を通る） |
 
-**帰属の規則**: **判断・寸法・表示可否・描画の起動と順序は Core、色は UIBase、描画面とフレームワーク固有の描画は ~UI、配線は UI** です。色をコアの設定値へ入れないのは、色が「何を描くか」の判断に使われないためです（描画の可否は色のアルファではなくコアの明示フラグが決めます）。
+**帰属の規則**: **判断・寸法・表示可否・描画の起動と順序・テキストの文言と位置は Core、色とテキストの体裁は UIBase、描画面とフレームワーク固有の描画（要素として置くか画像として描くかの選択）は ~UI、配線は UI** です。色とフォントサイズをコアの設定値へ入れないのは、「何を描くか」の判断に使われないためです（描画の可否は色のアルファではなくコアの明示フラグが決めます）。
 
 アセンブリ参照の向きは `UI → UIBase → Core` です（`UIBase` は Core の契約を実装するので Core を参照する）。**逆向きの参照はありません**。
 

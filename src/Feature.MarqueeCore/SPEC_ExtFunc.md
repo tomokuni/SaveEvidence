@@ -13,7 +13,7 @@
 | 通知 | `Marquee.Notified` | 選択の開始/変更/確定/キャンセル・追従位置の移動・確定/キャンセル要求を `MarqueeNotice` で通知する |
 | 外部からの状態操作 | `Marquee` | 選択の復元・対話状態の初期化・確定/キャンセルの要求を API から実行できる |
 | 座標変換 | `Marquee` / `ICoordTransform` | ドメイン座標（利用者が定める座標系）とローカル DIP の相互変換と、ドメイン境界の指定 |
-| ラベルの体裁計算 | `EsLabelLayout`（`EsUtil.Platform.Core.Imaging`） | 内側余白の適用・文字原点・カーソル基準の配置と領域内へのクランプ・上端中央の配置・行送り |
+| ラベルの体裁計算 | `EsLabelLayout`（`EsUtil.SaveEvidence.Common.Imaging`） | 内側余白の適用・文字原点・カーソル基準の配置と領域内へのクランプ・上端中央の配置・行送り |
 | 装飾（暗転マスク等） | `MarqueeDecoOptions` / `OuterDecoFrame` / `InnerDecoFrame` | 選択矩形の外側/内側へ描く装飾の設定と描画内容 |
 | 幾何計算 | `SelectionGeometry` | 正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形・描画対象ハンドル一覧・カーソル種別 |
 
@@ -48,7 +48,7 @@
 | --- | --- | --- |
 | `MarqueeDrawContent` | record struct | 1 フレーム分の描画内容（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・層の順序） |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの描画契約 |
-| `MarqueeSizeLabel` / `MarqueeCoordLabel` | record struct | ラベルの描画契約と配置（`ComputeFrame`）。要素への写像は `IEsLabel.ToElement`（`Platform.Core` の拡張メソッド）が単一所有する |
+| `MarqueeTextPlacement` | record struct | ラベルの描画契約と配置（`ComputeFrame`）。要素への写像は `EsLabelElement.Create`（`Platform.Core` の拡張メソッド）が単一所有する |
 | `MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `SizeLabel` / `CoordLabel`） |
 
 ### `EsUtil.Feature.MarqueeCore.Interaction`
@@ -137,11 +137,11 @@
 | 対話 | `MinSelectionSize` | 6.0（ドメイン座標。これ未満はキャンセル扱い） |
 | 対話 | `ClampToDomainBounds` | `true` |
 | 体裁 | `HandleBorderThickness` | 1.5（`MarqueeHandles.BorderThickness` として描画層へ渡る） |
-| 体裁 | `EsLabelLayout.Padding`（`Platform.Core`） | 4.0（全ラベル共通の内側余白） |
+| 体裁 | `EsLabelLayout.Padding`（`Common`） | 4.0（全ラベル共通の内側余白） |
 | 体裁 | `CoordLabelOffset` | 8.0 |
 | 体裁 | `CoordLabelFontSizeDefault` / `SizeLabelFontSizeDefault` | 12.0 / 14.0 |
 
-`MarqueeOptions` は**色を持ちません**。ハンドル・始点マーカー・ラベル・装飾の色は描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`）。ラベルの文字色・背景色の既定値（白 / 黒 60%）は `EsLabelDefaults`（`EsUtil.Platform.Core.Imaging`）が単一所有し、`MarqueePaint` が参照するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。コード上の色リテラルは持ちません。
+`MarqueeOptions` は**色を持ちません**。ハンドル・始点マーカー・ラベル・装飾の色は描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`）。ラベルの文字色・背景色の既定値（白 / 黒 60%）は `EsLabelDefaults`（`EsUtil.SaveEvidence.Common.Imaging`）が単一所有し、`MarqueePaint` が参照するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。コード上の色リテラルは持ちません。
 
 ### `IMarqueeEffects` のメンバー
 
@@ -195,7 +195,7 @@
 - 文字の原点は**背景の左上 + 内側余白**です。
 - サイズラベルは基準点（穴あけ矩形の左上）を背景の左上に置きます。行送り（`EsLabelLayout.NextTop`）で次の行の上端を求めるため、**背景の下端と次の行の上端が一致します**。
 - カーソル座標ラベルはカーソルの右下へ `CoordLabelOffset` だけ離し、描画領域の右端・下端をはみ出す場合は領域内へクランプします（描画領域の軸が 0 以下の場合はクランプしません）。
-- `IEsLabel.ToElement`（`Platform.Core` の拡張メソッド）は配置と `EsLabelElement`（UI 要素の配置指示）を組み立てます（文字色・背景色は引数で受け取り、角丸はラベルの指定に従う）。色は描画層の `MarqueePaint`（`MarqueeLabelPlan` が渡す）が単一所有するため、UI 層はこれをテキスト要素へ写すだけで見た目が設定と一致します。
+- `EsLabelElement.Create`（`Platform.Core` の拡張メソッド）は配置と `EsLabelElement`（UI 要素の配置指示）を組み立てます（文字色・背景色は引数で受け取り、角丸はラベルの指定に従う）。色は描画層の `MarqueePaint`（`MarqueeLabelPlan` が渡す）が単一所有するため、UI 層はこれをテキスト要素へ写すだけで見た目が設定と一致します。
 
 ### 操作の受理条件
 

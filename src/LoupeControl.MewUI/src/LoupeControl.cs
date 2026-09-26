@@ -333,8 +333,10 @@ public sealed class LoupeControl : Panel
         // 図形のキャンバスは親領域全体を埋める
         _shapes.Arrange(bounds);
 
-        // 表示サイズは要素の大きさ（ホストがコアのレイアウト結果で配置したサイズ）である
-        var elements = _loupe.ResolveLabels(bounds.Size.Width, SkiaText.Measure);
+        // テキストはコアが文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
+        // （表示サイズは要素の大きさ（ホストがコアのレイアウト結果で配置したサイズ）である）
+        var content = _loupe.ResolveContent(_loupe.CreateRequest(bounds.Size.Width));
+        var elements = LoupeLabelPlan.Resolve(content.CoordLabelText, Paint, SkiaText.Measure);
         _labelHost.Sync(elements, bounds);
     }
 

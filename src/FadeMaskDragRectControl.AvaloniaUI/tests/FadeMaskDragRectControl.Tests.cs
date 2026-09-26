@@ -129,7 +129,6 @@ public class FadeMaskDragRectControlTests
             Marquee = MarqueeOptions.Default with
             {
                 ShowSizeLabel = false,
-                SizeLabelFontSize = 18.0,
             },
             Deco = MarqueeDecoOptions.Default with
             {
@@ -153,7 +152,6 @@ public class FadeMaskDragRectControlTests
         // 選択の設定（サイズラベル）はコアの MarqueeOptions へ反映される
         var marquee = control.Marquee.Options;
         Assert.False(marquee.ShowSizeLabel);
-        Assert.Equal(18.0, marquee.SizeLabelFontSize);
 
         // 装飾の寸法と表示可否は装飾の設定へ、色は描画の設定へ 1 つにまとめて反映される
         var appearance = control.Marquee.DecoOptions.OuterAppearance;
@@ -170,7 +168,6 @@ public class FadeMaskDragRectControlTests
             Marquee = MarqueeOptions.Default with
             {
                 ShowCoordLabel = true,
-                CoordLabelFontSize = 14.0,
             },
             Loupe = new LoupeOptions
             {
@@ -181,7 +178,6 @@ public class FadeMaskDragRectControlTests
                     CheckerSize = 10,
                     FrameWidth = 4,
                     ShowCoordLabel = true,
-                    CoordLabelFontSize = 13.0,
                 },
             },
             LoupeOffset = 30.0,
@@ -197,6 +193,10 @@ public class FadeMaskDragRectControlTests
             FrameColor = Colors.Gray.ToDrawingColor(),
         };
 
+        // ラベルの体裁（フォントサイズ）も描画の設定であり、コアの設定には含まない
+        control.MarqueePaint = MarqueePaint.Default with { CoordLabelFontSize = 14.0 };
+        control.LoupePaint = control.LoupePaint with { CoordLabelFontSize = 13.0 };
+
         // ルーペ描画スケールは設定（Options）の対象外（環境値。個別プロパティで設定）
         control.LoupeRenderScaling = 2.0;
 
@@ -211,9 +211,10 @@ public class FadeMaskDragRectControlTests
         // 座標ラベル（Marquee / Loupe）
         var applied = control.Marquee.Options;
         Assert.True(applied.ShowCoordLabel);
-        Assert.Equal(14.0, applied.CoordLabelFontSize);
         Assert.True(control.Loupe.Options.Metrics.ShowCoordLabel);
-        Assert.Equal(13.0, control.Loupe.Options.Metrics.CoordLabelFontSize);
+        // フォントサイズは描画の設定（描画の契約が公開する）
+        Assert.Equal(14.0, control.MarqueePaint.CoordLabelFontSize);
+        Assert.Equal(13.0, control.LoupePaint.CoordLabelFontSize);
     }
 
     [AvaloniaFact]

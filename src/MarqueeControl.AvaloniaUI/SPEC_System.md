@@ -213,7 +213,7 @@ flowchart TB
 - **分類**: 公開 sealed クラス（`public sealed class`。`MarqueeRendererBase`（abstract）を継承する。所属は UI 非依存の描画層 `MarqueeControl.UIBase`）
 - **責務**: 描画内容（`MarqueeDrawContent`）を描画ポート `IEsCanvas` へ写す（**描画手順は基底の `MarqueeRendererBase` が単一所有**し、本クラスは色を与える）
 - **可視性**: public（UI 実装・独自コントロールの作者が参照する）
-- **特徴**: 色（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形の層のみ。**ラベルの層は描かない**（UI の要素が描く））/ `ResolveLabels`（要素の配置指示）を提供する。外観値（ハンドル枠の太さは描画契約の `MarqueeHandles.BorderThickness`）と描画対象のハンドル一覧はコア（`SelectionGeometry.DirectionalHandles`。読み取り専用の一覧）を参照する。**色は `MarqueePaint` から引く**（未指定（全成分 0）のハンドル塗り色は `MarqueePaint` が白へ解決する。色はコントロールごとに異なるため `Default` のような共有インスタンスは持たない）。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため。2 本目を描くと線幅が二重になる）
+- **特徴**: 描画の設定（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形のみ。**テキストは描かない**）/ フォントサイズ（`SizeLabelFontSize` / `CoordLabelFontSize`）を提供する
 - **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`MarqueeDrawContent` / `SelectionGeometry`）/ `MarqueePaint`（同層）
 
 ### 6.6 MarqueeOuterRenderer（MarqueeControl.UIBase）

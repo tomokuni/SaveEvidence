@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore;
+using EsUtil.SaveEvidence.Common.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.MarqueeCore.Drawing;
@@ -8,8 +8,8 @@ namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;
 
 /// <summary><see cref="MarqueeLabelPlan"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
 /// <remarks>
-/// 文言・外観・順序はコアが単一所有するため、本テストは「実寸の反映」と「要素への写像」だけを検証する<br/>
-/// （配置の計算そのものはコアの <c>MarqueeSizeLabel.ComputeFrame</c> / <c>MarqueeCoordLabel.ComputeFrame</c> のテストが担う）。<br/>
+/// 文言・位置はコアが、色・フォントサイズは描画の設定が単一所有するため、本テストは「実寸の反映」と「要素への写像」だけを検証する<br/>
+/// （配置の計算そのものは <c>EsLabelLayout.ComputeAlignedBox</c> のテストが担う）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public class MarqueeLabelPlanTests
@@ -18,23 +18,24 @@ public class MarqueeLabelPlanTests
     private static readonly EsSize MeasuredSize = new(42.0, 14.0);
 
     /// <summary>テスト用の描画内容を生成する（装飾・ハンドル・マーカーは本テストの対象外のため既定値）。</summary>
-    /// <param name="sizeLabel">サイズラベル。無い場合は null。</param>
-    /// <param name="coordLabel">カーソル座標ラベル。無い場合は null。</param>
+    /// <param name="sizeLabel">サイズラベルのテキスト配置。無い場合は null。</param>
+    /// <param name="coordLabel">カーソル座標ラベルのテキスト配置。無い場合は null。</param>
     /// <returns>描画内容。</returns>
-    private static MarqueeDrawContent CreateContent(MarqueeSizeLabel? sizeLabel = null, MarqueeCoordLabel? coordLabel = null)
+    private static MarqueeDrawContent CreateContent(
+        MarqueeTextPlacement? sizeLabel = null, MarqueeTextPlacement? coordLabel = null)
         => new(default, default, null, null, null, sizeLabel, coordLabel, []);
 
-    /// <summary>テスト用のサイズラベルを生成する。</summary>
+    /// <summary>テスト用のサイズラベルのテキスト配置を生成する（穴あけ矩形の左上へ置く）。</summary>
     /// <param name="text">文言。</param>
-    /// <returns>サイズラベル。</returns>
-    private static MarqueeSizeLabel CreateSizeLabel(string text = "(10, 20) - (30, 40),  (20×20)")
-        => new(text, new EsPoint(10, 20), 14.0);
+    /// <returns>テキスト配置。</returns>
+    private static MarqueeTextPlacement CreateSizeLabel(string text = "(10, 20) - (30, 40),  (20×20)")
+        => new(text, new EsPoint(10, 20), EsLabelAlignX.Left, EsLabelAlignY.Top, default);
 
-    /// <summary>テスト用のカーソル座標ラベルを生成する。</summary>
+    /// <summary>テスト用のカーソル座標ラベルのテキスト配置を生成する（カーソル + オフセットへ置き、領域内へクランプする）。</summary>
     /// <param name="text">文言。</param>
-    /// <returns>カーソル座標ラベル。</returns>
-    private static MarqueeCoordLabel CreateCoordLabel(string text = "(50, 60)")
-        => new(text, new EsPoint(50, 60), new EsSize(200, 200), 12.0);
+    /// <returns>テキスト配置。</returns>
+    private static MarqueeTextPlacement CreateCoordLabel(string text = "(50, 60)")
+        => new(text, new EsPoint(58, 68), EsLabelAlignX.Left, EsLabelAlignY.Top, new EsSize(200, 200));
 
     /// <summary>実寸を固定で返す測定関数。</summary>
     /// <param name="text">測定する文言。</param>
@@ -42,15 +43,17 @@ public class MarqueeLabelPlanTests
     /// <returns>固定の実寸。</returns>
     private static EsSize Measure(string text, double fontSize) => MeasuredSize;
 
-    /// <summary>テスト用の描画に使う色を生成する（本テストは色の写像を検証する）。</summary>
-    /// <returns>描画に使う色。</returns>
+    /// <summary>テスト用の描画に使う設定を生成する（本テストは色とフォントサイズの写像を検証する）。</summary>
+    /// <returns>描画に使う設定。</returns>
     private static MarqueePaint CreatePaint()
         => new()
         {
             SizeLabelColor = DrawingColor.White,
             SizeLabelBackgroundColor = DrawingColor.FromArgb(153, 0, 0, 0),
+            SizeLabelFontSize = 14.0,
             CoordLabelColor = DrawingColor.Yellow,
             CoordLabelBackgroundColor = DrawingColor.FromArgb(153, 0, 0, 0),
+            CoordLabelFontSize = 12.0,
         };
 
     [Fact]
@@ -84,7 +87,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_両方ある場合はサイズラベルが先で座標ラベルが後になる()
     {
-        // 順序はコアが単一所有する（座標ラベルが手前 = 最後）
+        // 順序は本クラスが単一所有する（座標ラベルが手前 = 最後）
         var elements = MarqueeLabelPlan.Resolve(
             CreateContent(sizeLabel: CreateSizeLabel("サイズ"), coordLabel: CreateCoordLabel()), CreatePaint(), Measure);
 
@@ -94,16 +97,27 @@ public class MarqueeLabelPlanTests
     }
 
     [Fact]
-    public void Resolve_配置はコアの計算結果をそのまま使う()
+    public void Resolve_基準点を背景の左上に置く()
     {
-        var sizeLabel = CreateSizeLabel();
+        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), CreatePaint(), Measure));
 
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: sizeLabel), CreatePaint(), Measure));
-        var frame = sizeLabel.ComputeFrame(MeasuredSize);
+        // 基準点 (10, 20) がアライン（左端・上端）どおり背景の左上になる
+        Assert.Equal(new EsPoint(10, 20), element.Bounds.TopLeft);
+        Assert.Equal(MeasuredSize.Width + EsLabelLayout.Padding * 2, element.Bounds.Width);
+        Assert.Equal(MeasuredSize.Height + EsLabelLayout.Padding * 2, element.Bounds.Height);
+    }
 
-        // 背景矩形・文字の描画原点はコアの ComputeFrame が単一所有する（本クラスは写すだけ）
-        Assert.Equal(frame.Background, element.Bounds);
-        Assert.Equal(frame.TextOrigin, element.TextOrigin);
+    [Fact]
+    public void Resolve_領域をはみ出す場合はクランプする()
+    {
+        // クランプ領域 (200, 200) へ収まらない位置を指定する
+        var label = new MarqueeTextPlacement(
+            "(50, 60)", new EsPoint(190, 195), EsLabelAlignX.Left, EsLabelAlignY.Top, new EsSize(200, 200));
+
+        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(coordLabel: label), CreatePaint(), Measure));
+
+        Assert.Equal(200 - (MeasuredSize.Width + EsLabelLayout.Padding * 2), element.Bounds.X);
+        Assert.Equal(200 - (MeasuredSize.Height + EsLabelLayout.Padding * 2), element.Bounds.Y);
     }
 
     [Fact]

@@ -1,6 +1,6 @@
 # Common 外部機能仕様書
 
-`Common` は、SaveEvidence のソリューション内で共有する **UI 非依存の契約**（描画ポート・ラベル契約・ラベルの体裁）を提供します。名前空間は `EsUtil.SaveEvidence.Common.Imaging`、アセンブリ名は `Common` です。
+`Common` は、SaveEvidence のソリューション内で共有する **UI 非依存の契約**（描画ポート・ラベルの体裁）を提供します。名前空間は `EsUtil.SaveEvidence.Common.Imaging`、アセンブリ名は `Common` です。
 
 ## 公開 API の可視性
 
@@ -8,9 +8,8 @@
 | --- | --- | --- |
 | `IEsCanvas` | `public` | 任意（各 UI が自 UI の描画 API を適合させる契約） |
 | `IEsRectWalker<TSelf>` | `public` | 任意（`IEsCanvas.FillRects` へタイル列を渡す列挙子が実装する） |
-| `IEsLabel` | `public` | 任意（各コントロールのコアがラベル契約として実装する） |
-| `EsLabelFrame` / `EsLabelElement` | `public` | 任意（配置と写像結果の値型） |
-| `EsLabelLayout` / `EsLabelExtensions` / `EsLabelMetrics` / `EsLabelDefaults` | `public` | 任意（体裁・写像・既定値の単一所有） |
+| `EsLabelFrame` / `EsLabelElement` | `public` | 任意（配置と要素の配置指示の値型） |
+| `EsLabelLayout` / `EsLabelAlignX` / `EsLabelAlignY` / `EsLabelMetrics` / `EsLabelDefaults` | `public` | 任意（体裁・アライン・既定値の単一所有） |
 
 本プロジェクトは UI フレームワークにも外部パッケージにも依存しないため、全型が `public` として公開されます。
 
@@ -46,17 +45,6 @@
 - **列挙は 1 回だけ**が契約です（実装が内部に走査位置を持つため）。
 - 名前が `Rect` を指すのは、列挙する要素が `EsRect` に固定されているためです（塗りの入力が矩形であるため）。
 
-## `IEsLabel`（ラベル契約）
-
-| メンバー | 型 | 内容 |
-| --- | --- | --- |
-| `Text` | `string` | 表示する文言 |
-| `FontSize` | `double` | フォントサイズ（DIP） |
-| `CornerRadius` | `double` | 背景の角丸半径（既定は 0 = 角丸なし。実装が上書きできる） |
-| `ComputeFrame(EsSize textSize)` | `EsLabelFrame` | テキストの実寸から配置（背景矩形・文字の原点）を求める |
-
-**本契約は色を持ちません**。色は描画にだけ必要な設定であるため、`EsLabelExtensions.ToElement` の引数として呼び出し側が与えます。
-
 ## `EsLabelFrame`（配置の値）
 
 | メンバー | 型 | 内容 |
@@ -82,12 +70,18 @@
 | メンバー | 内容 |
 | --- | --- |
 | `Padding`（const） | 既定の内側余白（4.0 DIP） |
-| `ComputeBox(textOrigin, textSize, paddingX, paddingY)` | 文字の原点と実寸から背景矩形を求める |
-| `ComputeBoxAtAnchor(anchor, textSize, paddingX, paddingY)` | 左上の基準点から背景矩形を求める（`anchor` が背景の左上になる） |
-| `ComputeOffsetTextOrigin(anchor, paddingX, paddingY)` | 基準点から文字の描画原点を求める |
-| `ComputeCursorLabelBox(...)` | カーソルに追従するラベルの背景矩形を求める |
-| `ComputeTopCenterBox(...)` | 上端中央へ置くラベルの背景矩形を求める |
+| `ComputeAlignedBox(point, areaSize, textSize, horizontal, vertical, paddingX, paddingY)` | 基準点がラベルのどこを指すか（アライン）を指定して背景矩形を求める。領域が確定している軸（0 超）は領域内へクランプする |
+| `ComputeOffsetTextOrigin(boxTopLeft, paddingX, paddingY)` | 背景の左上から文字の描画原点を求める |
 | `NextTop(top, lineHeight, paddingY)` | 縦積みの次の行の上端（背景の下端と次の行の上端が一致する） |
+
+## `EsLabelAlignX` / `EsLabelAlignY`（基準点のアライン）
+
+| 型 | 値 |
+| --- | --- |
+| `EsLabelAlignX` | `Left` / `Center` / `Right` |
+| `EsLabelAlignY` | `Top` / `Middle` / `Bottom` |
+
+**コアは幅・高さを知らずに位置を指定できます**（ラベルの大きさは実寸に依存するため）。文字を要素として置くか画像として描くかは UI 層の判断であり、本 enum はそのどちらでも共通の指定です。
 
 ## `EsLabelMetrics`（フォントサイズの安全域）
 
@@ -104,12 +98,6 @@
 | `BackgroundColor` | 黒 60%（`#99000000`） |
 | `FontSize`（const） | 12.0 |
 
-## `EsLabelExtensions`（写像）
-
-| メソッド | 内容 |
-| --- | --- |
-| `ToElement(this IEsLabel label, EsSize textSize, DrawingColor textColor, DrawingColor backgroundColor)` | ラベル契約の `ComputeFrame` と外観を `EsLabelElement` へ写す |
-
 ## 依存
 
 | 依存 | 用途 |
@@ -122,6 +110,6 @@ UI フレームワーク（Avalonia / MewUI / Skia）への依存はありませ
 
 | 置き場所の候補 | 可否 | 理由 |
 | --- | --- | --- |
-| `Platform.Core` | 不可 | 判定基準が「**このソリューション以外でもそのまま使える型**」であり、描画ポートとラベル契約はソリューション固有の共有契約である |
+| `Platform.Core` | 不可 | 判定基準が「**このソリューション以外でもそのまま使える型**」であり、描画ポートとラベルの体裁はソリューション固有の共有契約である |
 | 各コントロールのコア | 不可 | Marquee と Loupe の両方が同じ契約を使うため、どちらか一方に置くと他方が依存する |
 | `Common`（本プロジェクト） | 採用 | ソリューション固有の共有契約だけを置く層として、`Platform.Core` と各層の間に位置する |

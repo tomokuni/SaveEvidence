@@ -36,7 +36,6 @@ public class LoupeControlTests
         Assert.Equal(new LoupeMetrics(), control.Options.Metrics);
         Assert.Equal(CheckerSizeDefault, control.Options.Metrics.CheckerSize);
         Assert.Equal(FrameWidthDefault, control.Options.Metrics.FrameWidth);
-        Assert.Equal(CoordLabelFontSizeDefault, control.Options.Metrics.CoordLabelFontSize);
         Assert.True(control.Options.Metrics.ShowCoordLabel);
         // 色の既定値は描画の設定が単一所有する
         Assert.Equal(LoupePaint.Default, control.Paint);
@@ -87,11 +86,11 @@ public class LoupeControlTests
     [Fact]
     public void 座標ラベルのフォントサイズが安全域へ補正される()
     {
-        var control = new LoupeControl { Options = LoupeOptions.Default with { Metrics = new LoupeMetrics { CoordLabelFontSize = 0 } } };
-        Assert.Equal(CoordLabelFontSizeMin, control.Options.Metrics.CoordLabelFontSize);
+        var control = new LoupeControl { Paint = LoupePaint.Default with { CoordLabelFontSize = 0 } };
+        Assert.Equal(6.0, control.Paint.CoordLabelFontSize);
 
-        control.Options = control.Options with { Metrics = control.Options.Metrics with { CoordLabelFontSize = double.NaN } };
-        Assert.Equal(CoordLabelFontSizeDefault, control.Options.Metrics.CoordLabelFontSize);
+        control.Paint = control.Paint with { CoordLabelFontSize = double.NaN };
+        Assert.Equal(LoupePaint.CoordLabelFontSizeDefault, control.Paint.CoordLabelFontSize);
     }
 
     /// <summary>市松模様と外枠のサイズが安全域へ補正されることを検証する。</summary>
@@ -180,7 +179,7 @@ public class LoupeControlTests
         Assert.Equal("(12, 34)", LabelText(control));
 
         // 幅は実測値（本コントロールが Skia で測ってコアへ渡す）と内側余白から決まる
-        var measured = SkiaText.Measure("(12, 34)", CoordLabelFontSizeDefault);
+        var measured = SkiaText.Measure("(12, 34)", control.Paint.CoordLabelFontSize);
         Assert.True(LabelElement(control).Bounds.Width > measured.Width);
     }
 

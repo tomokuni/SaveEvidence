@@ -502,7 +502,7 @@ public sealed class MarqueeControl : Panel
         _shapes.Arrange(bounds);
 
         // 描画内容は本フェーズで 1 回だけ解決し、図形の描画（OnPaintSurface）と共有する
-        var elements = _marquee.ResolveLabels(ResolveFrame(bounds.Size.ToEsSize()), SkiaText.Measure);
+        var elements = MarqueeLabelPlan.Resolve(ResolveFrame(bounds.Size.ToEsSize()), Paint, SkiaText.Measure);
         _labelHost.Sync(elements, bounds);
     }
 

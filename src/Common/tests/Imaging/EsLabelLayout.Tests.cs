@@ -15,85 +15,67 @@ public class EsLabelLayoutTests
     public void Padding_ラベルの内側余白の既定値は4である()
         => Assert.Equal(4.0, EsLabelLayout.Padding);
 
-    [Fact]
-    public void ComputeBox_文字の実寸へ内側余白を四方へ加える()
+    [Theory]
+    [InlineData(EsLabelAlignX.Left, 10)]
+    [InlineData(EsLabelAlignX.Center, -9)]
+    [InlineData(EsLabelAlignX.Right, -28)]
+    public void ComputeAlignedBox_水平の基準位置を合わせる(EsLabelAlignX horizontal, double expectedX)
     {
-        var box = EsLabelLayout.ComputeBox(new EsPoint(10, 20), new EsSize(30, 8), paddingX: 4, paddingY: 1);
+        var box = EsLabelLayout.ComputeAlignedBox(
+            new EsPoint(10, 20), new EsSize(0, 0), new EsSize(30, 8),
+            horizontal, EsLabelAlignY.Top, paddingX: 4, paddingY: 4);
 
-        Assert.Equal(6, box.X);
-        Assert.Equal(19, box.Y);
-        Assert.Equal(38, box.Width);
-        Assert.Equal(10, box.Height);
-    }
-
-    [Fact]
-    public void ComputeBoxAtAnchor_基準点を背景の左上に置く()
-    {
-        var box = EsLabelLayout.ComputeBoxAtAnchor(new EsPoint(10, 20), new EsSize(30, 8), paddingX: 4, paddingY: 4);
-
-        Assert.Equal(10, box.X);
+        Assert.Equal(expectedX, box.X);
         Assert.Equal(20, box.Y);
         Assert.Equal(38, box.Width);
         Assert.Equal(16, box.Height);
     }
 
-    [Fact]
-    public void ComputeOffsetTextOrigin_基準点から内側余白だけ空ける()
+    [Theory]
+    [InlineData(EsLabelAlignY.Top, 20)]
+    [InlineData(EsLabelAlignY.Middle, 12)]
+    [InlineData(EsLabelAlignY.Bottom, 4)]
+    public void ComputeAlignedBox_垂直の基準位置を合わせる(EsLabelAlignY vertical, double expectedY)
     {
-        var origin = EsLabelLayout.ComputeOffsetTextOrigin(new EsPoint(10, 20), paddingX: 4, paddingY: 4);
+        var box = EsLabelLayout.ComputeAlignedBox(
+            new EsPoint(10, 20), new EsSize(0, 0), new EsSize(30, 8),
+            EsLabelAlignX.Left, vertical, paddingX: 4, paddingY: 4);
 
-        Assert.Equal(14, origin.X);
-        Assert.Equal(24, origin.Y);
+        Assert.Equal(10, box.X);
+        Assert.Equal(expectedY, box.Y);
     }
 
     [Fact]
-    public void ComputeBoxAtAnchorとComputeOffsetTextOriginの余白は一致する()
+    public void ComputeAlignedBox_上端中央を基準にできる()
     {
-        var anchor = new EsPoint(10, 20);
-        var textSize = new EsSize(30, 8);
+        // ルーペの中心座標ラベル（領域の上端中央）の指定
+        var box = EsLabelLayout.ComputeAlignedBox(
+            new EsPoint(80, 2), new EsSize(0, 0), new EsSize(40, 14),
+            EsLabelAlignX.Center, EsLabelAlignY.Top, paddingX: 4, paddingY: 1);
 
-        var box = EsLabelLayout.ComputeBoxAtAnchor(anchor, textSize, paddingX: 4, paddingY: 2);
-        var origin = EsLabelLayout.ComputeOffsetTextOrigin(anchor, paddingX: 4, paddingY: 2);
-
-        // 背景の四方の余白が等しく、文字が背景の右端・下端へ接しない
-        Assert.Equal(origin.X - box.X, box.Right - (origin.X + textSize.Width));
-        Assert.Equal(origin.Y - box.Y, box.Bottom - (origin.Y + textSize.Height));
+        Assert.Equal(56, box.X);
+        Assert.Equal(2, box.Y);
+        Assert.Equal(48, box.Width);
+        Assert.Equal(16, box.Height);
     }
 
     [Fact]
-    public void ComputeCursorLabelBox_カーソルの右下へオフセットして背景を求める()
+    public void ComputeAlignedBox_領域の右端と下端をはみ出す場合はクランプする()
     {
-        var box = EsLabelLayout.ComputeCursorLabelBox(
-            new EsPoint(10, 20), new EsSize(500, 500), new EsSize(32, 14), paddingX: 4, paddingY: 1, offset: 8);
-
-        Assert.Equal(new EsRect(18, 28, 40, 16), box);
-    }
-
-    [Fact]
-    public void ComputeCursorLabelBox_右端をはみ出す場合は領域内へクランプする()
-    {
-        var box = EsLabelLayout.ComputeCursorLabelBox(
-            new EsPoint(490, 20), new EsSize(500, 500), new EsSize(32, 14), paddingX: 4, paddingY: 1, offset: 8);
+        var box = EsLabelLayout.ComputeAlignedBox(
+            new EsPoint(490, 495), new EsSize(500, 500), new EsSize(32, 14),
+            EsLabelAlignX.Left, EsLabelAlignY.Top, paddingX: 4, paddingY: 1);
 
         Assert.Equal(460, box.X);
-        Assert.Equal(28, box.Y);
-    }
-
-    [Fact]
-    public void ComputeCursorLabelBox_下端をはみ出す場合は領域内へクランプする()
-    {
-        var box = EsLabelLayout.ComputeCursorLabelBox(
-            new EsPoint(10, 495), new EsSize(500, 500), new EsSize(32, 14), paddingX: 4, paddingY: 1, offset: 8);
-
-        Assert.Equal(18, box.X);
         Assert.Equal(484, box.Y);
     }
 
     [Fact]
-    public void ComputeCursorLabelBox_ラベルが領域より大きい場合は0へクランプする()
+    public void ComputeAlignedBox_ラベルが領域より大きい場合は0へクランプする()
     {
-        var box = EsLabelLayout.ComputeCursorLabelBox(
-            new EsPoint(10, 20), new EsSize(30, 12), new EsSize(32, 14), paddingX: 4, paddingY: 1, offset: 8);
+        var box = EsLabelLayout.ComputeAlignedBox(
+            new EsPoint(10, 20), new EsSize(30, 12), new EsSize(32, 14),
+            EsLabelAlignX.Left, EsLabelAlignY.Top, paddingX: 4, paddingY: 1);
 
         Assert.Equal(0, box.X);
         Assert.Equal(0, box.Y);
@@ -103,47 +85,38 @@ public class EsLabelLayoutTests
     [InlineData(0, 500)]
     [InlineData(500, 0)]
     [InlineData(-1, -1)]
-    public void ComputeCursorLabelBox_領域サイズが0以下なら軸ごとにクランプしない(double areaWidth, double areaHeight)
+    public void ComputeAlignedBox_領域サイズが0以下なら軸ごとにクランプしない(double areaWidth, double areaHeight)
     {
-        var box = EsLabelLayout.ComputeCursorLabelBox(
+        var box = EsLabelLayout.ComputeAlignedBox(
             new EsPoint(10, 20), new EsSize(areaWidth, areaHeight), new EsSize(32, 14),
-            paddingX: 4, paddingY: 1, offset: 8);
+            EsLabelAlignX.Left, EsLabelAlignY.Top, paddingX: 4, paddingY: 1);
 
-        Assert.Equal(18, box.X);
-        Assert.Equal(28, box.Y);
+        Assert.Equal(10, box.X);
+        Assert.Equal(20, box.Y);
     }
 
     [Fact]
-    public void ComputeTopCenterBox_領域の中央へ背景をセンタリングする()
+    public void ComputeOffsetTextOrigin_背景の左上から内側余白だけ空ける()
     {
-        var box = EsLabelLayout.ComputeTopCenterBox(
-            areaWidth: 160, new EsSize(40, 14), paddingX: 4, paddingY: 1, topMargin: 2);
+        var origin = EsLabelLayout.ComputeOffsetTextOrigin(new EsPoint(10, 20), paddingX: 4, paddingY: 4);
 
-        // 背景の幅は 40 + 4*2 = 48。中央寄せなので X = (160 - 48) / 2 = 56
-        Assert.Equal(56, box.X);
-        Assert.Equal(2, box.Y);
-        Assert.Equal(48, box.Width);
-        Assert.Equal(16, box.Height);
+        Assert.Equal(14, origin.X);
+        Assert.Equal(24, origin.Y);
     }
 
     [Fact]
-    public void ComputeTopCenterBox_背景が領域より広い場合は負のXになる()
+    public void ComputeAlignedBoxとComputeOffsetTextOriginの余白は一致する()
     {
-        var box = EsLabelLayout.ComputeTopCenterBox(
-            areaWidth: 30, new EsSize(40, 14), paddingX: 4, paddingY: 1, topMargin: 0);
+        var anchor = new EsPoint(10, 20);
+        var textSize = new EsSize(30, 8);
 
-        Assert.Equal(-9, box.X);
-    }
+        var box = EsLabelLayout.ComputeAlignedBox(
+            anchor, new EsSize(0, 0), textSize, EsLabelAlignX.Left, EsLabelAlignY.Top, paddingX: 4, paddingY: 2);
+        var origin = EsLabelLayout.ComputeOffsetTextOrigin(box.TopLeft, paddingX: 4, paddingY: 2);
 
-    [Fact]
-    public void ComputeTopCenterBoxの文字原点も背景の中央に揃う()
-    {
-        var box = EsLabelLayout.ComputeTopCenterBox(
-            areaWidth: 160, new EsSize(40, 14), paddingX: 4, paddingY: 1, topMargin: 2);
-        var origin = EsLabelLayout.ComputeOffsetTextOrigin(box.TopLeft, paddingX: 4, paddingY: 1);
-
-        // 背景の中心と文字の中心が一致する
-        Assert.Equal(box.Center.X, origin.X + 40 / 2);
+        // 背景の四方の余白が等しく、文字が背景の右端・下端へ接しない
+        Assert.Equal(origin.X - box.X, box.Right - (origin.X + textSize.Width));
+        Assert.Equal(origin.Y - box.Y, box.Bottom - (origin.Y + textSize.Height));
     }
 
     [Fact]

@@ -41,9 +41,10 @@ public class MarqueeRenderer : MarqueeRendererBase
     protected MarqueePaint Paint => _paint;
 
     /// <inheritdoc/>
-    public override IReadOnlyList<EsLabelElement> ResolveLabels(
-        in MarqueeDrawContent content, Func<string, double, EsSize> measureText)
-        => MarqueeLabelPlan.Resolve(content, _paint, measureText);
+    public override double SizeLabelFontSize => _paint.SizeLabelFontSize;
+
+    /// <inheritdoc/>
+    public override double CoordLabelFontSize => _paint.CoordLabelFontSize;
 
     /// <inheritdoc/>
     /// <remarks>外側（暗転マスク・穴あけ枠）と内側（塗り・枠線）の描画は、それぞれの描画内容へ委譲する。</remarks>

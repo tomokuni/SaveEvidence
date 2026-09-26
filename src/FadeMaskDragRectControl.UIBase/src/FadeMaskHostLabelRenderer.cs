@@ -25,13 +25,14 @@ public static class FadeMaskHostLabelRenderer
     /// <param name="canvas">描画先の描画ポート。null 不可。</param>
     /// <param name="content">選択矩形コントロールが解決した描画内容（穴あけ矩形とサイズラベルの有無を参照する）。</param>
     /// <param name="labels">付加情報ラベルの外観（表示可否・寸法・色）。</param>
+    /// <param name="paint">選択矩形コントロールの描画の設定（サイズラベルのフォントサイズを行送りに使う）。null 不可。</param>
     /// <param name="operationText">操作ラベルの文言（ホストが生成する。null または空文字の場合は描かない）。</param>
     /// <param name="infoText">情報ラベルの文言（ホストが生成する。null または空文字の場合は描かない）。</param>
-    /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="canvas"/> または <paramref name="paint"/> が null の場合。</exception>
     /// <remarks>
     /// 1. 穴あけ矩形（選択またはハイライトの領域）が無い場合は何も描かない（積み上げる基準が無い）。<br/>
     /// 2. 積み上げの開始位置は穴あけ矩形の左上であり、サイズラベルが描かれている場合はその下から始める<br/>
-    ///    （重なりを避ける。行送りはコアが単一所有する）。<br/>
+    ///    （重なりを避ける。行送りの行の高さは描画の設定のフォントサイズを使う）。<br/>
     /// 3. 操作ラベル → 情報ラベルの順に、表示可否を満たす行だけを描く（左端は穴あけ矩形の左端に揃える）。<br/>
     /// 4. 描画のたびに評価される（ホストの文言プロバイダは最新の状態から文言を生成できる）。
     /// </remarks>
@@ -39,10 +40,12 @@ public static class FadeMaskHostLabelRenderer
         IEsCanvas canvas,
         in MarqueeDrawContent content,
         FadeMaskDragRectLabelOptions labels,
+        MarqueePaint paint,
         string? operationText,
         string? infoText)
     {
         ArgumentNullException.ThrowIfNull(canvas);
+        ArgumentNullException.ThrowIfNull(paint);
 
         // 付加情報を重ねる基準は穴あけ矩形（選択またはハイライトの領域）の左上である
         if (content.HoleRect is not { } hole)
@@ -53,9 +56,9 @@ public static class FadeMaskHostLabelRenderer
         var y = hole.Y;
 
         // サイズラベルが描かれている場合はその下へ積む（重なりを避ける）
-        if (content.SizeLabel is { } sizeLabel)
+        if (content.SizeLabelText is not null)
         {
-            y = EsLabelLayout.NextTop(y, sizeLabel.FontSize, EsLabelLayout.Padding);
+            y = EsLabelLayout.NextTop(y, paint.SizeLabelFontSize, EsLabelLayout.Padding);
         }
 
         // 表示可否はホストが判定する（設定スイッチと文言の有無の両方が成立したときだけ描く）

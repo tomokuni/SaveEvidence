@@ -16,12 +16,12 @@
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
 | ルーペの描画（図形） | `Loupe.Draw`（コアの入口）/ `ILoupeRenderer.DrawShapes`（契約） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く）。層の順序はコアの `LoupeRendererBase` が単一所有し、起動は `Loupe.Draw` に一本化する |
-| ラベル要素の配置 | `ILoupeRenderer.ResolveLabels`（既定実装は `LoupeLabelPlan.Resolve` へ委譲） | 実寸（描画 API の測定値）からラベル要素の配置指示（`EsLabelElement`）を解決する |
+| テキスト要素の配置 | `LoupeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素（`EsLabelElement`）の配置指示を解決する。**要素として置くか画像として描くかは UI 層が決める** |
 | 描画に使う色 | `LoupePaint` | 下地・市松模様・外枠・十字線・中心座標ラベルの色と「描くかどうか」の述語（`Has*`）を単一所有する |
 
 #### 1.1.1 前提条件
 
-- 描画先は `IEsCanvas`（`EsUtil.Platform.Core.Imaging`）です。Skia は `SkiaEsCanvas`、Avalonia の `DrawingContext` は `AvaloniaCanvas`（`Platform.AvaloniaUI`）を使います。
+- 描画先は `IEsCanvas`（`EsUtil.SaveEvidence.Common.Imaging`）です。Skia は `SkiaEsCanvas`、Avalonia の `DrawingContext` は `AvaloniaCanvas`（`Platform.AvaloniaUI`）を使います。
 - 描画の単位は**物理ピクセル**です（`LoupeRenderRequest.PixelSize` が作る正方形が描画面）。DIP → 物理ピクセルの換算はコアが済ませています。
 - 描画面の消去は下地の層（`LoupeDrawLayer.Background`）が行います（前フレームの残像を残しません）。
 - 拡大元画像は UI ごとに型が異なるため引数で渡します（本層は `EsBitmap` のみを受け取ります）。
@@ -57,7 +57,7 @@
 | --- | --- |
 | `LoupeRenderer(LoupePaint paint)` | 描画に使う色を指定して生成する（`LoupePaint.Default` を基点に組み立てる）。`paint` が null なら `ArgumentNullException` |
 | `DrawShapes(IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)` | 層の順に図形を描く（層の順序と矩形はコアが解決済み。本層は写すだけ）。`source` が null または拡大中心が未設定の場合は拡大画像を描かない。`canvas` または内容の層が null なら `ArgumentNullException` |
-| `ResolveLabels(LoupeCoordLabel? coordLabel, Func<string, double, EsSize> measureText)` | 配置するラベル要素を 1 件返す（`LoupeLabelPlan.Resolve` へ委譲する）。`measureText` が null なら `ArgumentNullException` |
+| `CoordLabelFontSize` / `CoordLabelCornerRadius`（描画実装のプロパティ） | ラベルのフォントサイズと角丸（描画の設定 `LoupePaint` の値への入口） |
 
 ### `LoupePaint` のメンバー（`EsUtil.SaveEvidence.Loupe.UIBase`・`public sealed record`）
 

@@ -187,7 +187,6 @@ public class FadeMaskDragRectControlTests
             Marquee = MarqueeOptions.Default with
             {
                 ShowSizeLabel = false,
-                SizeLabelFontSize = 18.0,
             },
         };
 
@@ -199,7 +198,6 @@ public class FadeMaskDragRectControlTests
         Assert.True(control.Marquee.DecoOptions.ShowOuterBorder);
         Assert.Equal(3.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
         Assert.False(control.Marquee.Options.ShowSizeLabel);
-        Assert.Equal(18.0, control.Marquee.Options.SizeLabelFontSize);
     }
 
     [Fact]

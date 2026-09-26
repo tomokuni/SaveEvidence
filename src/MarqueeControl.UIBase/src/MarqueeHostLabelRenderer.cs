@@ -26,7 +26,7 @@ public static class MarqueeHostLabelRenderer
     /// <exception cref="ArgumentNullException"><paramref name="canvas"/> または <paramref name="text"/> が null の場合。</exception>
     /// <remarks>
     /// 背景は文字の実寸へ内側余白を四方へ加えた大きさになり、文字は同じ余白だけ内側へ入る<br/>
-    /// （<see cref="EsLabelLayout.ComputeBoxAtAnchor"/> と <see cref="EsLabelLayout.ComputeOffsetTextOrigin"/> が対で決める）。<br/>
+    /// （<see cref="EsLabelLayout.ComputeAlignedBox"/> と <see cref="EsLabelLayout.ComputeOffsetTextOrigin"/> が対で決める）。<br/>
     /// 縦積みの行送りは <see cref="EsLabelLayout.NextTop"/> を使う（背景の下端と次の行の上端が一致する）。
     /// </remarks>
     public static void Draw(
@@ -43,7 +43,8 @@ public static class MarqueeHostLabelRenderer
 
         var textSize = canvas.MeasureText(text, fontSize);
         var textOrigin = EsLabelLayout.ComputeOffsetTextOrigin(anchor, padding, padding);
-        var background = EsLabelLayout.ComputeBoxAtAnchor(anchor, textSize, padding, padding);
+        var background = EsLabelLayout.ComputeAlignedBox(
+            anchor, default, textSize, EsLabelAlignX.Left, EsLabelAlignY.Top, padding, padding);
 
         canvas.DrawLabel(background, backgroundColor, text, textOrigin, fontSize, textColor, cornerRadius: 0);
     }

@@ -1,12 +1,13 @@
 namespace EsUtil.Feature.LoupeCore.Setting;
 
-/// <summary>ルーペの寸法（市松模様のタイル・外枠の太さ・中心座標ラベルの寸法）をまとめた不変の設定値。</summary>
+/// <summary>ルーペの寸法（市松模様のタイル・外枠の太さ）とラベルの表示可否をまとめた不変の設定値。</summary>
 /// <remarks>
 /// <b>本型が持つもの</b>: 計算に必要な寸法と、中心座標ラベルの表示可否である
 /// （市松模様のタイルサイズと外枠の太さは描画の矩形計算に入るため、コアが単一所有する）。<br/>
 /// <br/>
-/// <b>本型が持たないもの（色）</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>LoupePaint</c>）が単一所有する。<br/>
-/// コアは色の値を決めず、描画の可否の判定にも使わない（描画の可否は描画側がアルファから判定する）。<br/>
+/// <b>本型が持たないもの（描画にだけ必要な設定）</b>: 色・フォントサイズ・角丸・余白は、<br/>
+/// ラベルをどの体裁で描くかという描画の設定であり、描画の設定（<c>LoupePaint</c>）が単一所有する。<br/>
+/// コアは描画の体裁を決めず、描画の可否の判定にも使わない。<br/>
 /// <br/>
 /// <b>状態は含めない</b>: 拡大元画像・拡大中心・拡大率・基本サイズ・スケーリング係数・表示オフセットは本型に含めない。<br/>
 /// 中心座標ラベルの表示可否（設定値と中心の有無の組合せ）は <see cref="ShouldShowCoordLabel"/> が単一所有する。<br/>
@@ -36,24 +37,6 @@ public sealed record LoupeMetrics
     /// <summary>中心座標ラベルを表示するかどうかを取得する。</summary>
     /// <value>true の場合はルーペ上端中央へ中心座標を表示する。既定は true。</value>
     public bool ShowCoordLabel { get; init; } = true;
-
-    /// <summary>中心座標ラベルのフォントサイズ（DIP）を取得する。</summary>
-    /// <value>フォントサイズ（DIP）。既定は 12.0。設定時は 6〜48 へ補正される（非有限値は既定値）。</value>
-    /// <remarks>安全域への補正（非有限値を含む）は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。</remarks>
-    public double CoordLabelFontSize
-    {
-        get => field;
-        init => field = Loupe.Limits.CoerceCoordLabelFontSize(value);
-    } = Loupe.Limits.CoordLabelFontSizeDefault;
-
-    /// <summary>中心座標ラベルの背景の角丸半径（DIP）を取得する。</summary>
-    /// <value>角丸半径（DIP）。既定は 2。設定時は 0〜64 へ補正される（0 は角丸なし）。</value>
-    /// <remarks>安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。</remarks>
-    public int CoordLabelCornerRadius
-    {
-        get => field;
-        init => field = Loupe.Limits.CoerceCoordLabelCornerRadius(value);
-    } = Loupe.Limits.CoordLabelCornerRadiusDefault;
 
     /// <summary>中心座標ラベルを描画するかどうかを判定する。</summary>
     /// <param name="hasCenterPoint">拡大中心が設定されているかどうか。</param>

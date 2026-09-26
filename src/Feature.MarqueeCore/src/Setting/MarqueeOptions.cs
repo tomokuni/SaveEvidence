@@ -3,16 +3,17 @@ using EsUtil.SaveEvidence.Common.Imaging;
 
 namespace EsUtil.Feature.MarqueeCore.Setting;
 
-/// <summary>選択矩形コントロールの設定（外観・対話パラメータ）をまとめた不変の値オブジェクト。</summary>
+/// <summary>選択矩形コントロールの設定（表示可否・寸法・対話パラメータ）をまとめた不変の値オブジェクト。</summary>
 /// <remarks>
 /// 個別の依存関係プロパティとして公開していた設定を 1 つの値にまとめ、UI 層の公開 API を 1 プロパティへ縮小する。<br/>
 /// 設定の既定値も本型が単一所有する（各 UI 実装は既定値を持たず、本型を UI の色型・プロパティ型へ橋渡しするだけ）。<br/>
-/// <b>ラベルの体裁</b>（内側余白・背景・行送り・配置）は <see cref="EsLabelLayout"/> が単一所有する<br/>
+/// <b>ラベルの体裁</b>（内側余白・背景・行送り・配置）は <see cref="EsLabelLayout"/>（<c>Common</c>）が単一所有する<br/>
 /// （ホストが描く付加情報ラベルと同じ体裁を使うため、余白の値は本型ではなく同クラスを参照する）。<br/>
-/// 本型が公開するのはコントロール固有の値（カーソルとラベルの距離等）のみである。<br/>
+/// <b>フォントサイズは本型に含まない</b>: ラベルをどの体裁で描くかは描画にだけ必要な設定であり、<br/>
+/// 描画の設定（<c>MarqueePaint</c>。UIBase が単一所有する）が持つ。<br/>
 /// <br/>
 /// 設定は 2 つの性格に分かれる:<br/>
-/// - <b>外観</b>: ハンドル・十字マーカー・座標ラベルの色とサイズ（描画のみに使用する）。<br/>
+/// - <b>表示可否・寸法・位置</b>: ラベルの表示可否と、基準点を決めるための寸法（描画と配置に使用する）。<br/>
 /// - <b>対話パラメータ</b>: 最小選択サイズ・ハンドルのヒットテスト半径・境界外選択の禁止（入力の解釈に使用し、セッションへ伝搬する）。<br/>
 /// <br/>
 /// <b>装飾（暗転マスク・穴あけ枠）は本値に含まない</b>: 装飾は選択矩形コントロール単体の概念ではなく、<br/>
@@ -25,8 +26,7 @@ namespace EsUtil.Feature.MarqueeCore.Setting;
 /// <br/>
 /// <b>等価性</b>: レコードの値等価性により、同値の設定を再代入しても UI 側の変更通知（再描画）は発生しない。<br/>
 /// <br/>
-/// <b>色は含まない</b>: 色は<b>描画にだけ必要な設定</b>であり、描画の設定（<c>MarqueePaint</c>。UIBase が単一所有する）が持つ。<br/>
-/// 本型は寸法・表示可否・対話パラメータ（計算に必要な値）だけを持つ。
+/// <b>色は含まない</b>: 色は<b>描画にだけ必要な設定</b>であり、描画の設定（<c>MarqueePaint</c>。UIBase が単一所有する）が持つ。
 /// </remarks>
 public sealed record MarqueeOptions
 {
@@ -60,22 +60,9 @@ public sealed record MarqueeOptions
     /// <value>true の場合はマウス位置のドメイン座標をカーソルの右側に表示する。既定は false。</value>
     public bool ShowCoordLabel { get; init; }
 
-    /// <summary>カーソル座標ラベルのフォントサイズ。</summary>
-    /// <value>フォントサイズ（DIP）。6〜48 の範囲へ補正される。既定は 12.0。</value>
-    /// <remarks>非数（NaN / ∞）を指定した場合は既定値へ補正する（補正は本型が単一所有する）。</remarks>
-    public double CoordLabelFontSize
-    {
-        get => field;
-        init => field = EsLabelMetrics.CoerceFontSize(value, CoordLabelFontSizeDefault);
-    } = CoordLabelFontSizeDefault;
-
-    /// <summary>カーソル座標ラベルのフォントサイズの既定値。</summary>
-    /// <value>既定のフォントサイズ（DIP）。</value>
-    public const double CoordLabelFontSizeDefault = EsLabelDefaults.FontSize;
-
     /// <summary>カーソル座標ラベルをカーソルから離すオフセット（DIP）。</summary>
     /// <value>カーソルの右下へ離す距離。既定は 8.0。</value>
-    /// <remarks>ラベルがカーソルに重ならないための余白である（配置の計算は <see cref="EsLabelLayout"/> が単一所有する）。</remarks>
+    /// <remarks>ラベルがカーソルに重ならないための余白である（基準点の算出は本値を使う）。</remarks>
     public const double CoordLabelOffset = 8.0;
 
     /// <summary>サイズラベルを表示するかどうか。</summary>
@@ -83,23 +70,9 @@ public sealed record MarqueeOptions
     /// <remarks>他のラベル（操作・情報）はホストが自前で描くため、本設定には含まれない。</remarks>
     public bool ShowSizeLabel { get; init; } = true;
 
-    /// <summary>サイズラベルのフォントサイズ。</summary>
-    /// <value>フォントサイズ（DIP）。6〜48 の範囲へ補正される。既定は 14.0。</value>
-    /// <remarks>非数（NaN / ∞）を指定した場合は既定値へ補正する（補正は本型が単一所有する）。</remarks>
-    public double SizeLabelFontSize
-    {
-        get => field;
-        init => field = EsLabelMetrics.CoerceFontSize(value, SizeLabelFontSizeDefault);
-    } = SizeLabelFontSizeDefault;
-
-    /// <summary>サイズラベルのフォントサイズの既定値。</summary>
-    /// <value>既定のフォントサイズ（DIP）。</value>
-    public const double SizeLabelFontSizeDefault = 14.0;
-
     // ----------------------------------------------------------------
     // 対話パラメータ（入力の解釈に使用し、セッションへ伝搬する）
     // ----------------------------------------------------------------
-
     /// <summary>ドラッグハンドルのヒットテスト半径。</summary>
     /// <value>ヒットテスト半径（DIP）。既定は 12.0。</value>
     /// <remarks>

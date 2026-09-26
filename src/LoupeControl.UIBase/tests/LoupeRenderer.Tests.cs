@@ -234,20 +234,20 @@ public class LoupeRendererTests
     }
 
     // ====================================================================
-    // ラベル（描画実装は描かない）
+    // テキスト（描画実装は描かない）
     // ====================================================================
 
     [Fact]
-    public void DrawShapes_はラベル層を描かない()
+    public void DrawShapes_はテキストを描かない()
     {
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
 
         DrawShapes(
             target,
             CreatePaint(background: s_background, coordLabel: s_frame),
-            [LoupeDrawLayer.Background, LoupeDrawLayer.CoordLabel]);
+            [LoupeDrawLayer.Background]);
 
-        // ラベルは UI 要素が配置するため、描画ポートには何も現れない（下地のみ）
+        // テキストは UI 層が要素として置くか画像として描くかを決めるため、描画ポートには何も現れない（下地のみ）
         Assert.Equal(s_backgroundPixel, target.GetPixel(16, 2));
     }
 
@@ -281,16 +281,14 @@ public class LoupeRendererTests
         => Assert.Throws<ArgumentNullException>(() => new LoupeRenderer(null!));
 
     [Fact]
-    public void ResolveLabels_はLoupeLabelPlanへ委譲する()
+    public void フォントサイズと角丸は描画の設定から公開する()
     {
-        var coordLabel = CreateCoordLabel();
-        var paint = CreatePaint(coordLabel: s_frame);
-        static EsSize Measure(string text, double fontSize) => new(text.Length * 6 + fontSize, 16);
+        var paint = new LoupePaint { CoordLabelFontSize = 20.0, CoordLabelCornerRadius = 4 };
+        var renderer = new LoupeRenderer(paint);
 
-        var viaRenderer = new LoupeRenderer(paint).ResolveLabels(coordLabel, Measure);
-        var viaPlan = LoupeLabelPlan.Resolve(coordLabel, paint, Measure);
-
-        Assert.Equal(viaPlan, viaRenderer);
+        // コアは値を持たず、描画の契約を通して UI 層へ公開する
+        Assert.Equal(20.0, renderer.CoordLabelFontSize);
+        Assert.Equal(4.0, renderer.CoordLabelCornerRadius);
     }
 
     // ====================================================================
@@ -343,9 +341,4 @@ public class LoupeRendererTests
             CrossColor = crosshair ?? DrawingColor.Transparent,
             CoordLabelBackgroundColor = coordLabel ?? DrawingColor.Transparent,
         };
-
-    /// <summary>テスト用の中心座標ラベルを生成する。</summary>
-    /// <returns>中心座標ラベル。</returns>
-    private static LoupeCoordLabel CreateCoordLabel()
-        => new("(50, 60)", LoupeSize, 12.0, 0.0);
 }

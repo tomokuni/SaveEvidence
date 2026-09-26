@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Session;
 using Xunit;
@@ -165,23 +166,25 @@ public class MarqueeContentTests
     // カーソル座標ラベル
     // ====================================================================
 
-    /// <summary>座標ラベルを表示する設定では文言と配置の基準が得られることを検証する。</summary>
+    /// <summary>座標ラベルを表示する設定では文言と基準点が得られることを検証する。</summary>
     [Fact]
     public void ResolveContent_座標ラベルを解決する()
     {
-        var session = CreateSession(
-            MarqueeOptions.Default with { ShowCoordLabel = true, CoordLabelFontSize = 16 },
-            s_selection);
+        var session = CreateSession(MarqueeOptions.Default with { ShowCoordLabel = true }, s_selection);
         session.Move(new EsPoint(40, 60));
 
         var content = ResolveContent(session);
 
-        Assert.True(content.CoordLabel is not null);
-        var label = content.CoordLabel.Value;
+        Assert.True(content.CoordLabelText is not null);
+        var label = content.CoordLabelText.Value;
         // 文言の書式はコアの EsPoint.Format が単一所有する
         Assert.Equal("(40, 60)", label.Text);
-        Assert.Equal(16, label.FontSize);
-        Assert.Equal(new EsSize(300, 300), label.ClientSize);
+        // 基準点はカーソル + オフセットであり、左端・上端に合わせる
+        Assert.Equal(new EsPoint(48, 68), label.Point);
+        Assert.Equal(EsLabelAlignX.Left, label.Horizontal);
+        Assert.Equal(EsLabelAlignY.Top, label.Vertical);
+        // クランプ領域は描画領域（はみ出しを領域内へ戻す）
+        Assert.Equal(new EsSize(300, 300), label.ClampArea);
     }
 
     /// <summary>座標ラベルを表示しない設定では持たないことを検証する。</summary>
@@ -190,7 +193,7 @@ public class MarqueeContentTests
     {
         var session = CreateSession(MarqueeOptions.Default with { ShowCoordLabel = false }, s_selection);
 
-        Assert.Null(ResolveContent(session).CoordLabel);
+        Assert.Null(ResolveContent(session).CoordLabelText);
     }
 
     // ====================================================================
@@ -201,17 +204,18 @@ public class MarqueeContentTests
     [Fact]
     public void ResolveContent_サイズラベルの基準点は穴あけ矩形の左上になる()
     {
-        var session = CreateSession(
-            MarqueeOptions.Default with { ShowSizeLabel = true, SizeLabelFontSize = 18 },
-            s_selection);
+        var session = CreateSession(MarqueeOptions.Default with { ShowSizeLabel = true }, s_selection);
 
         var content = ResolveContent(session);
 
-        Assert.True(content.SizeLabel is not null);
-        var label = content.SizeLabel.Value;
+        Assert.True(content.SizeLabelText is not null);
+        var label = content.SizeLabelText.Value;
         // 閉区間 +1 の DIP 矩形 (50, 50, 101, 81) の左上が基準点になる
-        Assert.Equal(new EsPoint(50, 50), label.Anchor);
-        Assert.Equal(18, label.FontSize);
+        Assert.Equal(new EsPoint(50, 50), label.Point);
+        Assert.Equal(EsLabelAlignX.Left, label.Horizontal);
+        Assert.Equal(EsLabelAlignY.Top, label.Vertical);
+        // クランプ領域は指定しない（描画領域へはみ出しても位置を動かさない）
+        Assert.Equal(default, label.ClampArea);
         // 文言は矩形から自動生成される（書式はコアの内部に閉じる）
         Assert.Equal("(50, 50) - (151, 131),  (101×81), DisplayScale: (100%)", label.Text);
     }
@@ -229,7 +233,7 @@ public class MarqueeContentTests
         var content = ResolveContent(session, displayScale: 1.25);
 
         // 閉区間 +1 の DIP 矩形 (50, 50, 101, 81) を 1.25 倍して整数へ切り捨てる
-        Assert.Equal("(62, 62) - (188, 163),  (126×101), DisplayScale: (125%)", content.SizeLabel!.Value.Text);
+        Assert.Equal("(62, 62) - (188, 163),  (126×101), DisplayScale: (125%)", content.SizeLabelText!.Value.Text);
     }
 
     /// <summary>表示スケーリングが 0 以下の場合は等倍（100%）として扱うことを検証する。</summary>
@@ -243,7 +247,7 @@ public class MarqueeContentTests
 
         var content = ResolveContent(session, displayScale: displayScale);
 
-        Assert.Contains("DisplayScale: (100%)", content.SizeLabel!.Value.Text, StringComparison.Ordinal);
+        Assert.Contains("DisplayScale: (100%)", content.SizeLabelText!.Value.Text, StringComparison.Ordinal);
     }
 
     /// <summary>サイズラベルを表示しない設定では持たないことを検証する。</summary>
@@ -252,7 +256,7 @@ public class MarqueeContentTests
     {
         var session = CreateSession(MarqueeOptions.Default with { ShowSizeLabel = false }, s_selection);
 
-        Assert.Null(ResolveContent(session).SizeLabel);
+        Assert.Null(ResolveContent(session).SizeLabelText);
     }
 
     /// <summary>穴あけ矩形が無い場合はサイズラベルを持たないことを検証する（全面暗転時も含む）。</summary>
@@ -262,7 +266,7 @@ public class MarqueeContentTests
         // 全面暗転のみ（選択・ハイライトなし）
         var session = CreateSession();
 
-        Assert.Null(ResolveContent(session).SizeLabel);
+        Assert.Null(ResolveContent(session).SizeLabelText);
     }
 
     /// <summary>サイズラベルの文言プロバイダが優先されることを検証する。</summary>
@@ -273,7 +277,7 @@ public class MarqueeContentTests
 
         var content = ResolveContent(session, sizeLabelProvider: () => "Custom");
 
-        Assert.Equal("Custom", content.SizeLabel!.Value.Text);
+        Assert.Equal("Custom", content.SizeLabelText!.Value.Text);
     }
 
     /// <summary>プロバイダが空文字を返した場合は自動生成されることを検証する。</summary>
@@ -284,8 +288,8 @@ public class MarqueeContentTests
 
         var content = ResolveContent(session, sizeLabelProvider: () => "");
 
-        Assert.NotEqual("", content.SizeLabel!.Value.Text);
-        Assert.Contains("DisplayScale:", content.SizeLabel.Value.Text, StringComparison.Ordinal);
+        Assert.NotEqual("", content.SizeLabelText!.Value.Text);
+        Assert.Contains("DisplayScale:", content.SizeLabelText.Value.Text, StringComparison.Ordinal);
     }
 
     /// <summary>表示スケーリングがサイズラベルの文言へ反映されることを検証する。</summary>
@@ -296,7 +300,7 @@ public class MarqueeContentTests
 
         var content = ResolveContent(session, displayScale: 1.25);
 
-        Assert.Contains("DisplayScale: (125%)", content.SizeLabel!.Value.Text, StringComparison.Ordinal);
+        Assert.Contains("DisplayScale: (125%)", content.SizeLabelText!.Value.Text, StringComparison.Ordinal);
     }
 
     /// <summary>ハイライトが有効な場合はハイライト矩形がサイズラベルの基準点になることを検証する。</summary>
@@ -309,7 +313,7 @@ public class MarqueeContentTests
         var content = ResolveContent(session, deco);
 
         // ハイライト矩形は終点 +0 のため (10, 20, 30, 40) が基準になる
-        Assert.Equal(new EsPoint(10, 20), content.SizeLabel!.Value.Anchor);
+        Assert.Equal(new EsPoint(10, 20), content.SizeLabelText!.Value.Point);
     }
 
     // ====================================================================
@@ -336,21 +340,23 @@ public class MarqueeContentTests
         Assert.Equal([MarqueeDrawLayer.Decoration, MarqueeDrawLayer.Handles], content.Layers);
     }
 
-    /// <summary>ラベルは必ず最後の層になることを検証する（常に最上位に表示する）。</summary>
+    /// <summary>2 つのテキスト（サイズ・カーソル座標）は同じ型で別々の位置を持つことを検証する。</summary>
     [Fact]
-    public void ResolveContent_ラベルは最後の層になる()
+    public void ResolveContent_2つのテキストは別々の基準点を持つ()
     {
         var session = CreateSession(
             MarqueeOptions.Default with { ShowSizeLabel = true, ShowCoordLabel = true, ShowHandles = true },
             s_selection);
+        session.Move(new EsPoint(40, 60));
 
         var content = ResolveContent(session);
 
+        // 文字はコアの層には含まれない（UI 層が要素として置くか画像として描くかを決める）
         Assert.Equal(
-            [MarqueeDrawLayer.Decoration, MarqueeDrawLayer.Handles, MarqueeDrawLayer.SizeLabel, MarqueeDrawLayer.CoordLabel],
+            [MarqueeDrawLayer.Decoration, MarqueeDrawLayer.Handles],
             content.Layers);
-        // ラベルは末尾で連続する（間に図形の層が入らない）
-        Assert.Equal(MarqueeDrawLayer.CoordLabel, content.Layers[^1]);
+        Assert.True(content.HasText);
+        Assert.NotEqual(content.SizeLabelText!.Value.Point, content.CoordLabelText!.Value.Point);
     }
 
     /// <summary>nudge 中はマーカーが描く層に含まれることを検証する。</summary>

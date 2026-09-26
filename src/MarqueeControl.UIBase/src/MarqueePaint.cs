@@ -5,11 +5,13 @@ using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase;
 
-/// <summary>選択矩形コントロールの色（ハンドル・始点マーカー・ラベル・装飾）をまとめた不変の設定値。</summary>
+/// <summary>選択矩形コントロールの色（ハンドル・始点マーカー・ラベル・装飾）とラベルの体裁をまとめた不変の設定値。</summary>
 /// <remarks>
 /// <b>なぜ本層（UIBase）が持つか</b>: 色は<b>描画にだけ必要な設定</b>であり、コアの計算には入らない。したがって<br/>
 /// コア（<c>Feature.MarqueeCore</c>）には置かず、描画の設定として本層が単一所有する<br/>
-/// （コアは寸法・表示可否・対話パラメータを持つ <c>MarqueeOptions</c> と <c>MarqueeDecoOptions</c> を持つ）。<br/>
+/// （コアは表示可否・寸法・対話パラメータを持つ <c>MarqueeOptions</c> と <c>MarqueeDecoOptions</c> を持つ）。<br/>
+/// <b>ラベルのフォントサイズも同じ理由で本型が持つ</b>: ラベルをどの体裁（文字要素 / 画像）で描くかは UI 層の判断であり、<br/>
+/// コアは文言と位置だけを渡す（<c>MarqueeTextPlacement</c>）。<br/>
 /// <br/>
 /// <b>描画の可否</b>: 「描くかどうか」は本型ではなく <c>MarqueeDecoOptions</c> の明示フラグが単一所有する<br/>
 /// （色のアルファを「描かない」の代用にしない）。<br/>
@@ -63,6 +65,40 @@ public sealed record MarqueePaint
     /// <summary>カーソル座標ラベルの背景色を取得する。</summary>
     /// <value>ラベルの背景色。既定は黒 60%（<c>#99000000</c>）。</value>
     public DrawingColor CoordLabelBackgroundColor { get; init; } = EsLabelDefaults.BackgroundColor;
+
+    /// <summary>サイズラベルのフォントサイズ（DIP）を取得する。</summary>
+    /// <value>フォントサイズ（DIP）。6〜48 へ補正済み。既定は 14.0。</value>
+    /// <remarks>
+    /// ラベルをどの体裁で描くかは<b>描画にだけ必要な設定</b>であり、描画の設定である本型が単一所有する。<br/>
+    /// コアは値を持たず、描画の契約（<c>IMarqueeRenderer</c>）を通して UI 層へ公開する。<br/>
+    /// 安全域への補正（非有限値は既定値）は <see cref="EsLabelMetrics"/> が単一所有する。
+    /// </remarks>
+    public double SizeLabelFontSize
+    {
+        get => field;
+        init => field = EsLabelMetrics.CoerceFontSize(value, SizeLabelFontSizeDefault);
+    } = SizeLabelFontSizeDefault;
+
+    /// <summary>サイズラベルのフォントサイズの既定値（DIP）。</summary>
+    /// <value>既定のフォントサイズ（DIP）。</value>
+    public const double SizeLabelFontSizeDefault = 14.0;
+
+    /// <summary>カーソル座標ラベルのフォントサイズ（DIP）を取得する。</summary>
+    /// <value>フォントサイズ（DIP）。6〜48 へ補正済み。既定は 12.0。</value>
+    /// <remarks>
+    /// ラベルをどの体裁で描くかは<b>描画にだけ必要な設定</b>であり、描画の設定である本型が単一所有する。<br/>
+    /// コアは値を持たず、描画の契約（<c>IMarqueeRenderer</c>）を通して UI 層へ公開する。<br/>
+    /// 安全域への補正（非有限値は既定値）は <see cref="EsLabelMetrics"/> が単一所有する。
+    /// </remarks>
+    public double CoordLabelFontSize
+    {
+        get => field;
+        init => field = EsLabelMetrics.CoerceFontSize(value, CoordLabelFontSizeDefault);
+    } = CoordLabelFontSizeDefault;
+
+    /// <summary>カーソル座標ラベルのフォントサイズの既定値（DIP）。</summary>
+    /// <value>既定のフォントサイズ（DIP）。</value>
+    public const double CoordLabelFontSizeDefault = EsLabelDefaults.FontSize;
 
     /// <summary>暗転マスク（オーバーレイ）の色を取得する。</summary>
     /// <value>アルファを含む色。既定は黒 50%（<c>#80000000</c>）。</value>

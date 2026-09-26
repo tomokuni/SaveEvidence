@@ -209,7 +209,7 @@ public sealed partial class MarqueeControl
         // 描画内容は本フェーズで 1 回だけ解決し、図形の描画（RenderShapes）と共有する。
         // 配置指示（実寸 → 配置矩形の写像）は描画実装（Marquee.Renderer）が単一所有し、
         // 要素への写像は UI 共通のホストが単一所有する（本層は測定関数を与えるだけである）。
-        _labelHost.Sync(_marquee.ResolveLabels(ResolveFrame(finalSize.ToEsSize()), MeasureText));
+        _labelHost.Sync(MarqueeLabelPlan.Resolve(ResolveFrame(finalSize.ToEsSize()), Paint, MeasureText));
 
         return base.ArrangeOverride(finalSize);
     }

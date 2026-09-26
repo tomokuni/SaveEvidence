@@ -24,11 +24,22 @@ namespace EsUtil.Feature.LoupeCore.Contract;
 /// <br/>
 /// <b>拡大元画像は引数で受ける</b>: 拡大元の型は UI に依存する（UI が解決する）ため、描画の契約に含めない。<br/>
 /// <br/>
-/// <b>ラベルは UI 要素が描く</b>: 中心座標ラベルは <see cref="ResolveLabels"/> で配置指示を返し、UI の要素機構が描く。<br/>
-/// 描画実装はラベルの層（<see cref="LoupeDrawLayer.CoordLabel"/>）を描かない。
+/// <b>テキストは値として渡す</b>: 文言と基準点は <see cref="LoupeDrawContent.CoordLabelText"/> が持ち、<br/>
+/// <b>要素として置くか画像として描くかは UI 層が決める</b>。<br/>
+/// フォントサイズと角丸は <see cref="CoordLabelFontSize"/> / <see cref="CoordLabelCornerRadius"/> が公開する。<br/>
+/// 描画実装はテキストを描かない（描く場合も体裁は本契約の値を参照する）。
 /// </remarks>
 public interface ILoupeRenderer
 {
+    /// <summary>中心座標ラベルのフォントサイズ（DIP）を取得する。</summary>
+    /// <value>安全域（6〜48）へ補正済みのフォントサイズ。既定は 12.0。</value>
+    /// <remarks>値の所有者は描画の設定（<c>LoupePaint</c>）であり、本契約は UI 層への入口である。</remarks>
+    double CoordLabelFontSize { get; }
+
+    /// <summary>中心座標ラベルの背景の角丸半径（DIP）を取得する。</summary>
+    /// <value>角丸半径（DIP）。0〜64 へ補正済み（0 は四角形）。既定は 2。</value>
+    /// <remarks>値の所有者は描画の設定（<c>LoupePaint</c>）であり、本契約は UI 層への入口である。</remarks>
+    double CoordLabelCornerRadius { get; }
     /// <summary>図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。null 不可。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（市松模様のみ）。</param>
@@ -41,15 +52,4 @@ public interface ILoupeRenderer
     /// </remarks>
     void DrawShapes(
         IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content);
-
-    /// <summary>中心座標ラベルの配置指示を解決する（UI 要素として配置する UI 用）。</summary>
-    /// <param name="coordLabel">コアが解決したラベル契約。描かない場合は null。</param>
-    /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
-    /// <returns>配置するラベル要素（1 要素）。描かない場合は空。</returns>
-    /// <remarks>
-    /// 外観（色・フォントサイズ・角丸・余白）と文言はコアが単一所有する（実装は実寸の反映のみを行う）。<br/>
-    /// UI は要素へ値を写すだけで、配置の計算を持たない。
-    /// </remarks>
-    IReadOnlyList<EsLabelElement> ResolveLabels(
-        LoupeCoordLabel? coordLabel, Func<string, double, EsSize> measureText);
 }

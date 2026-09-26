@@ -1,5 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
@@ -15,11 +13,13 @@ namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;
 internal sealed class StubMarqueeRenderer : IMarqueeRenderer
 {
     /// <inheritdoc/>
+    public double SizeLabelFontSize => 14.0;
+
+    /// <inheritdoc/>
+    public double CoordLabelFontSize => 12.0;
+
+    /// <inheritdoc/>
     public void DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content)
     {
     }
-
-    /// <inheritdoc/>
-    public IReadOnlyList<EsLabelElement> ResolveLabels(
-        in MarqueeDrawContent content, Func<string, double, EsSize> measureText) => [];
 }

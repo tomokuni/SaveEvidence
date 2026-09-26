@@ -48,8 +48,6 @@ public class MarqueeControlStateTests
         Assert.True(options.ClampToDomainBounds);
         Assert.Equal(16.0, options.MarkerLength);
         Assert.False(options.ShowCoordLabel);
-        // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(12.0, options.CoordLabelFontSize);
         Assert.NotNull(control.Log);
 
         // 設定を指定しない場合の既定値はコアの MarqueeOptions.Default と一致する
@@ -71,8 +69,8 @@ public class MarqueeControlStateTests
             MarkerLength = 24.0,
             // カーソル座標ラベル
             ShowCoordLabel = true,
-            CoordLabelFontSize = 14.0,
         };
+        control.Paint = control.Paint with { CoordLabelFontSize = 14.0 };
         control.DecoOptions = MarqueeDecoOptions.Default with
         {
             OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
@@ -90,7 +88,7 @@ public class MarqueeControlStateTests
         Assert.True(options.ClampToDomainBounds);
         Assert.Equal(24.0, options.MarkerLength);
         Assert.True(options.ShowCoordLabel);
-        Assert.Equal(14.0, options.CoordLabelFontSize);
+        Assert.Equal(14.0, control.Paint.CoordLabelFontSize);
     }
 
     // ====================================================================
@@ -175,17 +173,17 @@ public class MarqueeControlStateTests
     {
         var control = CreateControl();
 
-        // NaN → 既定値 12
-        control.Options = control.Options with { CoordLabelFontSize = double.NaN };
-        Assert.Equal(12.0, control.Options.CoordLabelFontSize);
+        // NaN → 既定値 12（描画の設定が補正を単一所有する）
+        control.Paint = control.Paint with { CoordLabelFontSize = double.NaN };
+        Assert.Equal(12.0, control.Paint.CoordLabelFontSize);
 
         // 上限 48 にクランプ
-        control.Options = control.Options with { CoordLabelFontSize = 100.0 };
-        Assert.Equal(48.0, control.Options.CoordLabelFontSize);
+        control.Paint = control.Paint with { CoordLabelFontSize = 100.0 };
+        Assert.Equal(48.0, control.Paint.CoordLabelFontSize);
 
         // 下限 6 にクランプ
-        control.Options = control.Options with { CoordLabelFontSize = 1.0 };
-        Assert.Equal(6.0, control.Options.CoordLabelFontSize);
+        control.Paint = control.Paint with { CoordLabelFontSize = 1.0 };
+        Assert.Equal(6.0, control.Paint.CoordLabelFontSize);
     }
 
     // ====================================================================

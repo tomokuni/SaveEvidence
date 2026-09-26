@@ -501,6 +501,7 @@ public sealed class FadeMaskDragRectControl : Panel
             new SkiaEsCanvas(e.Canvas),
             e.Content,
             _options.Labels,
+            MarqueePaint,
             OperationTextProvider?.Invoke(),
             InfoTextProvider?.Invoke());
 

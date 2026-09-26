@@ -111,27 +111,4 @@ public class LoupeLimitsTests
         Assert.Equal(1, Loupe.Limits.CoerceFrameWidth(0));
         Assert.Equal(64, Loupe.Limits.CoerceFrameWidth(100));
     }
-
-    // ====================================================================
-    // CoordLabelFontSize（6〜48、既定 12.0）
-    // ====================================================================
-
-    [Fact]
-    public void CoerceCoordLabelFontSize_範囲内はそのまま返す()
-    {
-        Assert.Equal(12.0, Loupe.Limits.CoerceCoordLabelFontSize(12.0));
-    }
-
-    [Fact]
-    public void CoerceCoordLabelFontSize_範囲外は最小値と最大値に補正する()
-    {
-        Assert.Equal(6.0, Loupe.Limits.CoerceCoordLabelFontSize(1.0));
-        Assert.Equal(48.0, Loupe.Limits.CoerceCoordLabelFontSize(100.0));
-    }
-
-    [Fact]
-    public void CoerceCoordLabelFontSize_非有限値は既定値に補正する()
-    {
-        Assert.Equal(12.0, Loupe.Limits.CoerceCoordLabelFontSize(double.NaN));
-    }
 }

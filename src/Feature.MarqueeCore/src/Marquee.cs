@@ -369,20 +369,6 @@ public sealed partial class Marquee
         _renderer.DrawShapes(canvas, content);
     }
 
-    /// <summary>ラベル要素の配置指示を描画順に解決する（UI 要素として配置する UI 用）。</summary>
-    /// <param name="content">配置の基準にする描画内容（同じフレームの <see cref="ResolveContent"/> の結果）。</param>
-    /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
-    /// <returns>配置するラベル要素の一覧（サイズラベル → カーソル座標ラベルの順）。どちらも無い場合は空。</returns>
-    /// <remarks>
-    /// 描画内容を引数で受け取る（本メソッドが <see cref="ResolveContent"/> を呼び直すと、1 フレームで同じ解決が 2 回走る）。<br/>
-    /// UI 層は 1 フレーム分の描画内容を保持し、図形の描画と本メソッドの両方へ同じ値を渡す。<br/>
-    /// 要素への写像は <see cref="Renderer"/>（描画実装）へ委譲する<br/>
-    /// （どのラベルを・どの順に・どの体裁で描くかはコアが単一所有し、実寸の反映だけが描画実装の責務である）。
-    /// </remarks>
-    public IReadOnlyList<EsLabelElement> ResolveLabels(
-        in MarqueeDrawContent content, Func<string, double, EsSize> measureText)
-        => _renderer.ResolveLabels(content, measureText);
-
     // ====================================================================
     // 内部ヘルパー
     // ====================================================================

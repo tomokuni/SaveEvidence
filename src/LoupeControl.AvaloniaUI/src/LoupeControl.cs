@@ -229,8 +229,10 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
-        // 表示サイズは要素の大きさ（親から割り当てられたサイズ）である（ラベルの水平位置の基準になる）
-        _labelHost.Sync(_loupe.ResolveLabels(finalSize.Width, MeasureText));
+        // テキストはコアが文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
+        // （実寸は要素の大きさ（親から割り当てられたサイズ）を基準に測る）
+        var content = _loupe.ResolveContent(_loupe.CreateRequest(finalSize.Width));
+        _labelHost.Sync(LoupeLabelPlan.Resolve(content.CoordLabelText, Paint, MeasureText));
 
         return base.ArrangeOverride(finalSize);
     }

@@ -35,7 +35,8 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     ├──> MarqueeControl.UIBase   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
     ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
+           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ※ 本コントロール（UI 層）は Platform.Native（Win32 実装）と Platform.MewUI も参照する。
 ```
@@ -166,7 +167,7 @@ classDiagram
         <<MarqueeControl.UIBase / 描画層（MarqueeRenderer がコアの MarqueeRendererBase を継承）>>
         +MarqueeRenderer(paint) void
         +DrawShapes(canvas, content)$ void
-        +ResolveLabels(content, measureText) EsLabelElement[]$
+        +SizeLabelFontSize / CoordLabelFontSize$ double
     }
     class MarqueePaint {
         <<MarqueeControl.UIBase / 描画層>>
@@ -192,7 +193,7 @@ classDiagram
       class MarqueeOptions {
           <<Feature.MarqueeCore>>
           +double HandleSize
-          +double CoordLabelFontSize / SizeLabelFontSize
+          +double HandleHitRadius / MinSelectionSize
           +double HandleHitRadius / MinSelectionSize
           +bool ClampToDomainBounds
           +double HandleBorderThickness$ const
@@ -200,9 +201,9 @@ classDiagram
     }
     class EsLabelLayout {
         <<Platform.Core>>
-        +ComputeBoxAtAnchor(anchor, textSize, paddingX, paddingY)$ EsRect
+        <<Common>>
         +ComputeOffsetTextOrigin(anchor, paddingX, paddingY)$ EsPoint
-        +ComputeCursorLabelBox(cursor, areaSize, textSize, paddingX, paddingY, offset)$ EsRect
+        +ComputeAlignedBox(point, areaSize, textSize, horizontal, vertical, paddingX, paddingY)$ EsRect
         +NextTop(top, lineHeight, paddingY)$ double
     }
     class MarqueeState {

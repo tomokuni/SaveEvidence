@@ -19,7 +19,6 @@ public class LoupeMetricsTests
 
         Assert.Equal(Loupe.Limits.CheckerSizeDefault, metrics.CheckerSize);
         Assert.Equal(Loupe.Limits.FrameWidthDefault, metrics.FrameWidth);
-        Assert.Equal(Loupe.Limits.CoordLabelFontSizeDefault, metrics.CoordLabelFontSize);
         Assert.True(metrics.ShowCoordLabel);
     }
 
@@ -33,7 +32,7 @@ public class LoupeMetricsTests
         Assert.Equal(5, changed.FrameWidth);
         // 他の項目は維持される
         Assert.Equal(metrics.CheckerSize, changed.CheckerSize);
-        Assert.Equal(metrics.CoordLabelCornerRadius, changed.CoordLabelCornerRadius);
+        Assert.Equal(metrics.ShowCoordLabel, changed.ShowCoordLabel);
     }
 
     /// <summary>数値項目が生成時に安全域へ補正されることを検証する。</summary>
@@ -48,14 +47,10 @@ public class LoupeMetricsTests
         {
             CheckerSize = 1000,
             FrameWidth = 0,
-            CoordLabelFontSize = 100,
-            CoordLabelCornerRadius = 1000,
         };
 
         Assert.Equal(Loupe.Limits.CheckerSizeMax, metrics.CheckerSize);
         Assert.Equal(Loupe.Limits.FrameWidthMin, metrics.FrameWidth);
-        Assert.Equal(Loupe.Limits.CoordLabelFontSizeMax, metrics.CoordLabelFontSize);
-        Assert.Equal(Loupe.Limits.CoordLabelCornerRadiusMax, metrics.CoordLabelCornerRadius);
     }
 
     /// <summary><c>with</c> 式による変更も生成時と同じ補正を受けることを検証する。</summary>
@@ -68,26 +63,16 @@ public class LoupeMetricsTests
     }
 
     [Fact]
-    public void 非有限のフォントサイズは既定値へ補正される()
-    {
-        var metrics = new LoupeMetrics { CoordLabelFontSize = double.NaN };
-
-        Assert.Equal(Loupe.Limits.CoordLabelFontSizeDefault, metrics.CoordLabelFontSize);
-    }
-
-    [Fact]
     public void 安全域内の値は変更されない()
     {
         var metrics = new LoupeMetrics
         {
             CheckerSize = 8,
             FrameWidth = 3,
-            CoordLabelFontSize = 16,
         };
 
         Assert.Equal(8, metrics.CheckerSize);
         Assert.Equal(3, metrics.FrameWidth);
-        Assert.Equal(16, metrics.CoordLabelFontSize);
     }
 
     [Theory]

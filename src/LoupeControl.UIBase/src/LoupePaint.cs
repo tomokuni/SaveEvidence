@@ -5,11 +5,13 @@ using EsUtil.SaveEvidence.Common.Imaging;
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase;
 
-/// <summary>ルーペの色（下地・市松模様・外枠・十字線・中心座標ラベル）をまとめた不変の設定値。</summary>
+/// <summary>ルーペの色（下地・市松模様・外枠・十字線・中心座標ラベル）とラベルの体裁をまとめた不変の設定値。</summary>
 /// <remarks>
 /// <b>なぜ本層（UIBase）が持つか</b>: 色は<b>描画にだけ必要な設定</b>である（コアの計算には一切入らず、<br/>
 /// 「描くかどうか」の判定に使うのはアルファだけ）ため、コア（<c>Feature.LoupeCore</c>）には置かない。<br/>
-/// コアは寸法（<c>LoupeMetrics</c>）を持ち、色は本型が単一所有する。<br/>
+/// コアは表示可否と寸法（<c>LoupeMetrics</c>）を持ち、色と描画の体裁は本型が単一所有する。<br/>
+/// <b>ラベルのフォントサイズ・角丸も同じ理由で本型が持つ</b>: ラベルをどの体裁（文字要素 / 画像）で描くかは UI 層の判断であり、<br/>
+/// コアは文言と位置だけを渡す（<c>LoupeTextPlacement</c>）。<br/>
 /// <br/>
 /// <b>描画の可否</b>: 「アルファ 0 の色は描かない」の判定は <see cref="HasBackground"/> 等の述語が単一所有する<br/>
 /// （判定の規則自体は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する）。<br/>
@@ -53,6 +55,41 @@ public sealed record LoupePaint
     /// <summary>中心座標ラベルの背景色を取得する。</summary>
     /// <value>アルファを含む色。既定は黒 60%（#99000000）。</value>
     public DrawingColor CoordLabelBackgroundColor { get; init; } = EsLabelDefaults.BackgroundColor;
+
+    /// <summary>中心座標ラベルのフォントサイズ（DIP）を取得する。</summary>
+    /// <value>フォントサイズ（DIP）。6〜48 へ補正済み。既定は 12.0。</value>
+    /// <remarks>
+    /// ラベルをどの体裁で描くかは<b>描画にだけ必要な設定</b>であり、描画の設定である本型が単一所有する。<br/>
+    /// コアは値を持たず、描画の契約（<c>ILoupeRenderer</c>）を通して UI 層へ公開する。<br/>
+    /// 安全域への補正（非有限値は既定値）は <see cref="EsLabelMetrics"/> が単一所有する。
+    /// </remarks>
+    public double CoordLabelFontSize
+    {
+        get => field;
+        init => field = EsLabelMetrics.CoerceFontSize(value, CoordLabelFontSizeDefault);
+    } = CoordLabelFontSizeDefault;
+
+    /// <summary>中心座標ラベルのフォントサイズの既定値（DIP）。</summary>
+    /// <value>既定のフォントサイズ（DIP）。</value>
+    public const double CoordLabelFontSizeDefault = EsLabelDefaults.FontSize;
+
+    /// <summary>中心座標ラベルの背景の角丸半径（DIP）を取得する。</summary>
+    /// <value>角丸半径（DIP）。0〜64 へ補正済み（0 は四角形）。既定は 2。</value>
+    /// <remarks>ラベルの体裁（描画にだけ必要な設定）であるため、描画の設定である本型が単一所有する。</remarks>
+    public int CoordLabelCornerRadius
+    {
+        get => field;
+        init => field = Math.Clamp(value, CoordLabelCornerRadiusMin, CoordLabelCornerRadiusMax);
+    } = CoordLabelCornerRadiusDefault;
+
+    /// <summary>中心座標ラベルの角丸半径の最小値（DIP。0 は四角形）。</summary>
+    public const int CoordLabelCornerRadiusMin = 0;
+
+    /// <summary>中心座標ラベルの角丸半径の最大値（DIP）。</summary>
+    public const int CoordLabelCornerRadiusMax = 64;
+
+    /// <summary>中心座標ラベルの角丸半径の既定値（DIP）。</summary>
+    public const int CoordLabelCornerRadiusDefault = 2;
 
     /// <summary>下地を塗るかどうかを取得する。</summary>
     /// <value>下地のアルファが 0 でない場合は true。</value>

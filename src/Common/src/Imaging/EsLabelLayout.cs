@@ -23,61 +23,48 @@ public static class EsLabelLayout
     /// </remarks>
     public const double Padding = 4.0;
 
-    /// <summary>文字の左上原点を基準に、背景矩形を求める（文字の実寸へ内側余白を四方へ加える）。</summary>
-    /// <param name="textOrigin">文字の左上原点（DIP）。</param>
-    /// <param name="textSize">テキストの実寸（描画 API で測定した値・DIP）。</param>
-    /// <param name="paddingX">左右の内側余白（DIP）。0 以上。</param>
-    /// <param name="paddingY">上下の内側余白（DIP）。0 以上。</param>
-    /// <returns>背景矩形（文字の左上原点から内側余白の分だけ四方へ広げた矩形）。</returns>
-    public static EsRect ComputeBox(EsPoint textOrigin, EsSize textSize, double paddingX, double paddingY)
-        => new(
-            textOrigin.X - paddingX,
-            textOrigin.Y - paddingY,
-            textSize.Width + paddingX * 2,
-            textSize.Height + paddingY * 2);
-
-    /// <summary>基準点を背景の左上に置き、背景矩形を求める（文字の実寸へ内側余白を四方へ加える）。</summary>
-    /// <param name="anchor">背景の左上に置く基準点（DIP）。</param>
-    /// <param name="textSize">テキストの実寸（描画 API で測定した値・DIP）。</param>
-    /// <param name="paddingX">左右の内側余白（DIP）。0 以上。</param>
-    /// <param name="paddingY">上下の内側余白（DIP）。0 以上。</param>
-    /// <returns>背景矩形（基準点を左上とする）。</returns>
-    /// <remarks>
-    /// 穴あけ矩形の左上へラベルを積む場合に使う（基準点が背景の位置そのものになる）。<br/>
-    /// 文字の原点は <see cref="ComputeOffsetTextOrigin"/> が同じ余白から求める（背景と文字の余白が一致する）。
-    /// </remarks>
-    public static EsRect ComputeBoxAtAnchor(EsPoint anchor, EsSize textSize, double paddingX, double paddingY)
-        => new(anchor.X, anchor.Y, textSize.Width + paddingX * 2, textSize.Height + paddingY * 2);
-
-    /// <summary>基準点から、文字の左上原点を求める（背景の内側余白だけ空ける）。</summary>
-    /// <param name="anchor">背景の左上に置いた基準点（DIP）。</param>
-    /// <param name="paddingX">左右の内側余白（DIP）。0 以上。</param>
-    /// <param name="paddingY">上下の内側余白（DIP）。0 以上。</param>
-    /// <returns>文字の左上原点（DIP）。</returns>
-    public static EsPoint ComputeOffsetTextOrigin(EsPoint anchor, double paddingX, double paddingY)
-        => new(anchor.X + paddingX, anchor.Y + paddingY);
-
-    /// <summary>カーソル位置を基準に、ラベルの背景矩形を求める（右下へオフセットし、描画領域内へクランプする）。</summary>
-    /// <param name="cursor">カーソルの座標（DIP。描画領域と同じ座標系）。</param>
+    /// <summary>基準点がラベルのどこを指すかを指定して、背景矩形を求める。</summary>
+    /// <param name="point">基準点（DIP。コアが決める位置。<paramref name="horizontal"/> / <paramref name="vertical"/> に従って解釈する）。</param>
     /// <param name="areaSize">描画領域のサイズ（DIP）。0 以下の軸はクランプしない。</param>
     /// <param name="textSize">テキストの実寸（描画 API で測定した値・DIP）。</param>
+    /// <param name="horizontal">基準点を合わせる水平位置（左端 / 中央 / 右端）。</param>
+    /// <param name="vertical">基準点を合わせる垂直位置（上端 / 中央 / 下端）。</param>
     /// <param name="paddingX">左右の内側余白（DIP）。0 以上。</param>
     /// <param name="paddingY">上下の内側余白（DIP）。0 以上。</param>
-    /// <param name="offset">カーソルからラベルを離すオフセット（DIP）。0 以上。</param>
-    /// <returns>背景矩形（DIP）。</returns>
+    /// <returns>背景矩形（DIP。領域が確定している軸だけ領域内へクランプ済み）。</returns>
     /// <remarks>
-    /// カーソルの右下へ <paramref name="offset"/> だけ離して配置し、描画領域の右端・下端をはみ出す場合は<br/>
-    /// 領域内へクランプする（ラベル全体が見えるよう左寄せ・上寄せ）。<br/>
-    /// 領域サイズが 0 以下（未確定）の軸はクランプしない（レイアウト前の配置を勝手に動かさない）。<br/>
-    /// 文字の原点は <see cref="ComputeOffsetTextOrigin"/> が同じ余白から求める。
+    /// 背景は「文字の実寸 + 内側余白 × 2」であり、基準点を <paramref name="horizontal"/> / <paramref name="vertical"/> の位置へ合わせる。<br/>
+    /// 描画領域の右端・下端をはみ出す場合は領域内へクランプする（ラベル全体が見えるよう左寄せ・上寄せ）。<br/>
+    /// 領域サイズが 0 以下の軸はクランプしない（レイアウト前の配置を勝手に動かさない）。<br/>
+    /// 文字の原点は <see cref="ComputeOffsetTextOrigin"/> が同じ余白から求める。<br/>
+    /// <b>位置の指定はコア、実寸の反映は UI 層</b>: コアは「テキスト・基準点・アライン・領域」を渡し、<br/>
+    /// UI 層が本メソッドへ実寸を渡す（ラベルを要素として置くか画像として描くかは UI 層が決める）。
     /// </remarks>
-    public static EsRect ComputeCursorLabelBox(
-        EsPoint cursor, EsSize areaSize, EsSize textSize, double paddingX, double paddingY, double offset)
+    public static EsRect ComputeAlignedBox(
+        EsPoint point,
+        EsSize areaSize,
+        EsSize textSize,
+        EsLabelAlignX horizontal,
+        EsLabelAlignY vertical,
+        double paddingX,
+        double paddingY)
     {
         var width = textSize.Width + paddingX * 2;
         var height = textSize.Height + paddingY * 2;
-        var x = cursor.X + offset;
-        var y = cursor.Y + offset;
+
+        var x = horizontal switch
+        {
+            EsLabelAlignX.Center => point.X - width / 2,
+            EsLabelAlignX.Right => point.X - width,
+            _ => point.X,
+        };
+
+        var y = vertical switch
+        {
+            EsLabelAlignY.Middle => point.Y - height / 2,
+            EsLabelAlignY.Bottom => point.Y - height,
+            _ => point.Y,
+        };
 
         if (areaSize.Width > 0)
         {
@@ -92,24 +79,14 @@ public static class EsLabelLayout
         return new EsRect(x, y, width, height);
     }
 
-    /// <summary>領域の上端中央に置くラベルの、背景矩形を求める。</summary>
-    /// <param name="areaWidth">領域の幅（DIP）。</param>
-    /// <param name="textSize">テキストの実寸（描画 API で測定した値・DIP）。</param>
+    /// <summary>背景の左上から、文字の左上原点を求める（背景の内側余白だけ空ける）。</summary>
+    /// <param name="boxTopLeft">背景の左上（DIP）。</param>
     /// <param name="paddingX">左右の内側余白（DIP）。0 以上。</param>
     /// <param name="paddingY">上下の内側余白（DIP）。0 以上。</param>
-    /// <param name="topMargin">領域の上端から背景までの距離（DIP）。0 以上。</param>
-    /// <returns>背景矩形（水平位置は領域の中央、垂直位置は上端から <paramref name="topMargin"/>）。</returns>
-    /// <remarks>
-    /// 水平位置は背景の幅（文字の実寸 + 左右の余白）でセンタリングする<br/>
-    /// （文字幅でセンタリングすると余白の分だけ左右へずれる）。<br/>
-    /// 文字の原点は <see cref="ComputeOffsetTextOrigin"/> が同じ余白から求める。
-    /// </remarks>
-    public static EsRect ComputeTopCenterBox(
-        double areaWidth, EsSize textSize, double paddingX, double paddingY, double topMargin)
-    {
-        var width = textSize.Width + paddingX * 2;
-        return new EsRect((areaWidth - width) / 2, topMargin, width, textSize.Height + paddingY * 2);
-    }
+    /// <returns>文字の左上原点（DIP）。</returns>
+    /// <remarks>背景と文字の余白が一致する（<see cref="ComputeAlignedBox"/> が同じ余白で背景を求める）。</remarks>
+    public static EsPoint ComputeOffsetTextOrigin(EsPoint boxTopLeft, double paddingX, double paddingY)
+        => new(boxTopLeft.X + paddingX, boxTopLeft.Y + paddingY);
 
     /// <summary>縦積みしたラベルの次の行の上端を求める。</summary>
     /// <param name="top">現在の行の上端（DIP）。</param>

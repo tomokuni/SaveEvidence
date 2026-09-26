@@ -64,26 +64,6 @@ public sealed partial class Loupe
         /// <summary>外枠の太さの既定値（ピクセル）。</summary>
         public const int FrameWidthDefault = 2;
 
-        /// <summary>座標ラベルのフォントサイズの最小値（DIP）。</summary>
-        /// <remarks>ラベルのフォントサイズの安全域は両コントロールで共通のため、値は <see cref="EsLabelMetrics"/> が単一所有する。</remarks>
-        public const double CoordLabelFontSizeMin = EsLabelMetrics.FontSizeMin;
-
-        /// <summary>座標ラベルのフォントサイズの最大値（DIP）。</summary>
-        /// <remarks>ラベルのフォントサイズの安全域は両コントロールで共通のため、値は <see cref="EsLabelMetrics"/> が単一所有する。</remarks>
-        public const double CoordLabelFontSizeMax = EsLabelMetrics.FontSizeMax;
-
-        /// <summary>座標ラベルのフォントサイズの既定値（DIP）。</summary>
-        public const double CoordLabelFontSizeDefault = EsLabelDefaults.FontSize;
-
-        /// <summary>座標ラベルの背景の角丸半径の最小値（ピクセル。0 は角丸なし）。</summary>
-        public const int CoordLabelCornerRadiusMin = 0;
-
-        /// <summary>座標ラベルの背景の角丸半径の最大値（ピクセル）。</summary>
-        public const int CoordLabelCornerRadiusMax = 64;
-
-        /// <summary>座標ラベルの背景の角丸半径の既定値（ピクセル）。</summary>
-        public const int CoordLabelCornerRadiusDefault = 2;
-
         /// <summary>表示サイズ要求値を安全域へ補正する（1〜4096）。</summary>
         /// <param name="value">補正する値（DIP）。</param>
         /// <returns>安全域にクランプした値。</returns>
@@ -109,18 +89,5 @@ public sealed partial class Loupe
         /// <param name="value">補正する値（ピクセル）。</param>
         /// <returns>安全域にクランプした値。</returns>
         public static int CoerceFrameWidth(int value) => Math.Clamp(value, FrameWidthMin, FrameWidthMax);
-
-        /// <summary>座標ラベルのフォントサイズを安全域へ補正する（6〜48。非有限は既定値）。</summary>
-        /// <param name="value">補正する値（DIP）。</param>
-        /// <returns>安全域にクランプした値。非有限の場合は既定値。</returns>
-        /// <remarks>安全域と「非数は既定値」の規則は <see cref="EsLabelMetrics"/> が単一所有する（他のラベルと同じ規則）。</remarks>
-        public static double CoerceCoordLabelFontSize(double value)
-        => EsLabelMetrics.CoerceFontSize(value, CoordLabelFontSizeDefault);
-
-        /// <summary>座標ラベルの背景の角丸半径を安全域へ補正する（0〜64）。</summary>
-        /// <param name="value">補正する値（ピクセル。0 は角丸なし）。</param>
-        /// <returns>安全域にクランプした値。</returns>
-        public static int CoerceCoordLabelCornerRadius(int value)
-        => Math.Clamp(value, CoordLabelCornerRadiusMin, CoordLabelCornerRadiusMax);
-}
+    }
 }

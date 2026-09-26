@@ -33,7 +33,9 @@ public static class FadeMaskDragRectOptionsMapper
     ///    文言の生成と描画はホストが行い、本変換は外観のみを写像する（表示可否はホストが判定する）。<br/>
     /// <br/>
     /// <b>色は写像しない</b>: 色は描画にだけ必要な設定であり、描画の設定（UI 層のホストが組み立てる色の値）が単一所有する。<br/>
-    /// 本変換はコアの設定（寸法・表示可否）だけを組み立てる（Core → UIBase の逆流を作らないため）。
+    /// 本変換はコアの設定（表示可否・寸法）だけを組み立てる（Core → UIBase の逆流を作らないため）。<br/>
+    /// <b>ラベルのフォントサイズも写像しない</b>: ラベルをどの体裁で描くかは描画の設定であり、<br/>
+    /// 描画の設定（<c>MarqueePaint</c> / <c>LoupePaint</c>）が単一所有する。
     /// </remarks>
     public static FadeMaskDragRectOptions ToFadeMaskDragRectOptions(this CaptureSettings settings)
     {
@@ -49,10 +51,8 @@ public static class FadeMaskDragRectOptionsMapper
                 ClampToDomainBounds = settings.ClampToDomainBounds!.Value,
                 MarkerLength = settings.MarkerLength!.Value,
                 ShowCoordLabel = settings.ShowCoordLabel!.Value,
-                CoordLabelFontSize = settings.CoordLabelFontSize!.Value,
                 // サイズラベルは選択コアが単一所有する（穴あけ矩形の左上に表示する位置と寸法のラベル）
                 ShowSizeLabel = settings.SizeLabelVisible!.Value,
-                SizeLabelFontSize = settings.SizeLabelFontSize!.Value,
             },
             Deco = new MarqueeDecoOptions
             {
@@ -73,11 +73,10 @@ public static class FadeMaskDragRectOptionsMapper
                 ZoomLevel = settings.LoupeZoomLevel!.Value,
                 Metrics = new LoupeMetrics
                 {
-                    // 寸法のみを写像する（色は描画にだけ必要な設定のため、描画側（UI 層のホスト）が設定する）
+                    // 尺寸のみを写像する（色・フォントサイズ・角丸は描画にだけ必要な設定のため、描画側（UI 層のホスト）が設定する）
                     CheckerSize = settings.LoupeCheckerSize!.Value,
                     FrameWidth = settings.LoupeFrameThickness!.Value,
                     ShowCoordLabel = settings.LoupeShowCoordLabel!.Value,
-                    CoordLabelFontSize = settings.LoupeCoordLabelFontSize!.Value,
                 },
             },
             SelectionRectColorA = settings.LoupeSelectionRectColorA!.Value,

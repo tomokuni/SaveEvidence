@@ -297,9 +297,9 @@ marquee.Renderer = MyMarqueeRenderer.Instance;   // 描画手順の差し替え
 
 - **ホスト設定**: `MarqueeOptions` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest`
 - **公開ファサード（操作の唯一の窓口）**: `Marquee`（操作・設定・効果の適用・描画内容の解決）/ `IMarqueeEffects`（効果の適用先）/ `MarqueeEffectsBase`（効果の既定実装。必要な効果だけを override できる）
-- **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` / `MarqueeSizeLabel` / `SelectionGeometry`
+- **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` / `MarqueeTextPlacement` / `SelectionGeometry`
 
-**装飾（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は Core 内のサブ概念**（`src/Decoration/`・名前空間 `EsUtil.Feature.MarqueeCore.Decoration`）が単一所有します（/ `MarqueeDecoOptions` / `MarqueeDrawContent` / `OuterDecoFrame` / `InnerDecoFrame` / `MarqueeSizeLabel` / `MarqueeCoordLabel`）。本コントロールは `DecoOptions` で設定し、`Rendered` で装飾の描画内容を渡します。**色は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有し**、本コントロールは `Paint` で設定します。**描画するラベルの一覧と描画順はコア（`MarqueeDrawLayer`）が、実寸 → 配置矩形の写像は描画層**（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有し、実寸測定だけを UI 層が与えます。
+**装飾（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は Core 内のサブ概念**（`src/Decoration/`・名前空間 `EsUtil.Feature.MarqueeCore.Decoration`）が単一所有します（/ `MarqueeDecoOptions` / `MarqueeDrawContent` / `OuterDecoFrame` / `InnerDecoFrame` / `MarqueeTextPlacement`）。本コントロールは `DecoOptions` で設定し、`Rendered` で装飾の描画内容を渡します。**色は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有し**、本コントロールは `Paint` で設定します。**描画するラベルの一覧と描画順はコア（`MarqueeDrawLayer`）が、実寸 → 配置矩形の写像は描画層**（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有し、実寸測定だけを UI 層が与えます。
 
 効果（`MarqueeFeedback` / `MarqueeCursorAction`）とログ定義（`MarqueeLogMessage`）はコアの内部契約（internal）であり、本プロジェクトは参照しません（適用はファサード、記録は状態機械が行います）。
 

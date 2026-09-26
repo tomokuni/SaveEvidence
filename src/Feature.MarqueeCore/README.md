@@ -21,7 +21,8 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     ├──> MarqueeControl.UIBase   どう描くか（コアの IMarqueeRenderer を実装する描画実装）
     ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout）
+           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```
 
@@ -42,7 +43,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `Contract/` | `MarqueeEffectsBase` | public abstract | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス。独自コントロールは必要な効果だけ override する（不要なメンバーの空実装を書かずに済む） |
 | ルート | `Marquee.DrawContent.cs`（`Marquee` の **partial**） | internal | 1 フレーム分の**描画内容**（装飾・穴あけ矩形・ハンドル・始点マーカー・ラベル）を解決する（セッションの状態 + 設定 → `MarqueeDrawContent`）。描くかどうかの判断（ハンドル非表示・選択なし・nudge 中・装飾の描画可否フラグ・穴あけ矩形なし）はすべて `ResolveFrame` が持つ。穴あけ矩形と座標変換ポートは 1  フレームに 1 回だけ解決する。外部は `Marquee.ResolveContent` を使う |
 | `Drawing/` | `MarqueeDrawContent` | public | 1 フレーム分の描画契約（`Decoration` / `InnerDecoration` / `HoleRect` / `Handles` / `Marker` / `SizeLabel` / `CoordLabel` / `Layers`）。UI は `Layers` の順に処理するだけ |
-| `Drawing/` | `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` | public | ハンドル・始点マーカー・カーソル座標ラベルの描画契約（描画に必要な値のみ。ハンドルは枠線の太さも含む。座標ラベルは `ComputeFrame` で配置を求め、要素への写像は `IEsLabel.ToElement`（Platform.Core の拡張メソッド）が単一所有する） |
+| `Drawing/` | `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` | public | ハンドル・始点マーカー・カーソル座標ラベルの描画契約（描画に必要な値のみ。ハンドルは枠線の太さも含む。座標ラベルは `ComputeFrame` で配置を求め、要素への写像は `EsLabelElement.Create`（Platform.Core の拡張メソッド）が単一所有する） |
 | `Session/` | `MarqueeSession` | internal | **状態管理クラス**。入力の通知を受けて状態を更新し、効果（`MarqueeFeedback`）と通知（`MarqueeNotice`）を返す。公開ファサード `Marquee` の内部実装 |
 | `Interaction/` | `MarqueeNotice` / `MarqueeNoticeKind` | public | コアから UI 層への通知（種別・通知座標・スナップショット。`MarqueeNotice` は値型）。**生のポインター入力（押下・解放・クリック・移動）は通知しない**（入力は UI が受け取りホストも自 UI で観測できるため、通知すると往復になる。押下状態は `MarqueeSnapshot.IsMouseDown` で取得できる） |
 | `Session/` | `MarqueeFeedback` / `MarqueeCursorAction` | internal | コアから UI 層への効果（再描画・フォーカス・マウスキャプチャ・カーソル操作・カーソル形状）。適用順は `Marquee` が単一所有し、UI 層は値を受け取らない（ファサードへ入力を通知するだけ） |
@@ -58,7 +59,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 層 | 利用者 | 型 |
 | --- | --- | --- |
 | **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` |
-| **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層・描画層） | `Marquee`（操作の唯一の窓口。既定値は `DefaultScaling`。`Renderer` で描画実装を差し替える）/ `IMarqueeRenderer`（描画の契約） / `IMarqueeEffects` / `MarqueeEffectsBase` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` / `MarqueeSizeLabel` / `SelectionGeometry` |
+| **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層・描画層） | `Marquee`（操作の唯一の窓口。既定値は `DefaultScaling`。`Renderer` で描画実装を差し替える）/ `IMarqueeRenderer`（描画の契約） / `IMarqueeEffects` / `MarqueeEffectsBase` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` / `MarqueeTextPlacement` / `SelectionGeometry` |
 | **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeLogMessage`（適用とログ出力はファサード・状態機械 が行う）/ `MarqueeSession` / `Marquee.DrawContent.cs`（「1 フレーム分の描画内容の解決」は `Marquee.ResolveContent` が提供する）/ `MarqueeState` |
 
 - **操作はファサード経由に一本化**しています（状態機械とフレーム解決は `internal` のため、UI 層はファサード以外の入口を持ちません）。
@@ -124,8 +125,8 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | --- | --- | --- |
 | 装飾の設定（寸法・描画可否・ハイライト・内側） | `Decoration` の `MarqueeDecoOptions` | 枠線の太さ（`OuterAppearance` / `InnerAppearance`）・描画可否の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）・ハイライト矩形 |
 | 装飾の描画内容と描画の可否の判断 | `Marquee.ResolveFrame`（`ResolveOuterDecoration` / `ResolveInnerDecoration`） | 暗転領域・枠線矩形・塗り矩形（可否は `MarqueeDecoOptions` の明示フラグ。**アルファ 0 を「描かない」の代用にしない**）。**穴あけ矩形は 1 回だけ解決して外側・内側・サイズラベルへ同じ値を渡す** |
-| サイズラベル（穴あけ矩形の位置と寸法） | `MarqueeSizeLabel` / `MarqueeOptions`（本コア） | 文言（コアが矩形から生成し、書式は内部に閉じる）・フォントサイズ・基準点（穴あけ矩形の左上・DIP）。体裁は `EsLabelLayout`、色は `MarqueePaint`（描画層）が単一所有する |
-| カーソル座標ラベル | `MarqueeCoordLabel` / `MarqueeOptions`（本コア） | 文言 （`EsPoint.Format`）・配置（`ComputeFrame`）。要素への写像は `IEsLabel.ToElement`（Platform.Core）、色は `MarqueePaint`（描画層）が単一所有する |
+| サイズラベル（穴あけ矩形の位置と寸法） | `MarqueeTextPlacement` / `MarqueeOptions`（本コア） | 文言（コアが矩形から生成し、書式は内部に閉じる）・フォントサイズ・基準点（穴あけ矩形の左上・DIP）。体裁は `EsLabelLayout`、色は `MarqueePaint`（描画層）が単一所有する |
+| カーソル座標ラベル | `MarqueeTextPlacement` / `MarqueeOptions`（本コア） | 文言 （`EsPoint.Format`）・配置（`ComputeFrame`）。要素への写像は `EsLabelElement.Create`（Platform.Core）、色は `MarqueePaint`（描画層）が単一所有する |
 | 装飾・ハンドル・マーカー・ラベルの色 | `MarqueePaint`（描画層 `MarqueeControl.UIBase`） | `OverlayColor` / `OuterBorderColor` / `InnerFillColor` / `InnerBorderColor` / `HandleColor` / `HandleBorderColor` / `MarkerColor` / `SizeLabelColor` / `SizeLabelBackgroundColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` |
 | 操作ラベル・情報ラベル | **ホスト**（アプリ固有の付加情報） | 文言の生成と描画。コアは表示可否も含めて関知しない |
 | 選択矩形・選択の有無のソース | 本コア（`Marquee.Session` 経由） | 装飾は参照のみ（複製しない） |
@@ -228,9 +229,8 @@ UI 層が使う共有値・計算:
 | `MarqueeOptions.HandleBorderThickness` | ハンドル枠の線の太さ（DIP）。`MarqueeHandles.BorderThickness` として描画層へ渡るため、描画層は定数を持たない |
 | `MarqueeHandles`（`Rects`） | 8 方向のハンドル矩形（`Marquee.ResolveFrame` が `SelectionGeometry` の位置と `MarqueeOptions.HandleSize` から解決済み） |
 | `MarqueeOptions.CoordLabelOffset` | カーソルからラベルを離すオフセット（DIP。本コントロール固有の値） |
-| `EsLabelLayout.Padding`（`EsUtil.Platform.Core.Imaging`） | ラベルの内側余白の既定値（全ラベル共通）。ホストが描く付加情報ラベルも同じ値を使う |
-| `EsLabelLayout`（同） | ラベルの体裁（内側余白・行送り・配置基準）の単一所有者。`ComputeBox` / `ComputeBoxAtAnchor` / `ComputeOffsetTextOrigin` / `ComputeCursorLabelBox` / `ComputeTopCenterBox` / `NextTop` |
-| `EsLabelMetrics.CoerceFontSize`（同） | ラベルのフォントサイズを安全域（6〜48）へ補正（非数は既定値） |
+| `EsLabelLayout.Padding`（`EsUtil.SaveEvidence.Common.Imaging`） | ラベルの内側余白の既定値（全ラベル共通）。ホストが描く付加情報ラベルも同じ値を使う |
+| `EsLabelLayout`（`Common`） | ラベルの体裁（内側余白・行送り・基準点のアライン）の単一所有者。`ComputeAlignedBox` / `ComputeOffsetTextOrigin` / `NextTop` |
 | `EsLabelElement`（同） | UI 要素として配置するための指示（配置矩形・文字原点・文言・フォント・色・角丸）。UI 層はこれを置くだけでよい |
 | `MarqueePaint.Default`（描画層 `MarqueeControl.UIBase`） | 色の既定値（部分変更の基点。`MarqueePaint.Default with { ... }`。コアの設定は色を持たない） |
 | `MarqueePaint.HandleColor`（同） | ハンドルの塗り色（未指定（全成分 0）は生成時に白へ解決。両 UI が同じ見た目になる） |
@@ -251,8 +251,8 @@ UI 層が使う共有値・計算:
 10. **持続資源の保持もコア**: ロガーは `Marquee.Log` が保持し、null を `NullLogger` へ吸収する（UI は get/set を委譲するだけ）。入力の判断のログも同じロガーで出力する。
 11. **描画順は本コアが単一所有する**: `MarqueeDrawLayer`（`Decoration` → `Handles` → `Marker` → `SizeLabel` → `CoordLabel`）で層と順序を指示し、UI 層はその順に処理するだけにする。**ラベル層を必ず最後に置く**ため、ラベルは常に最上位に表示される（UI の子要素は親の描画より後に描かれる性質とも一致する）。
 12. **選択の状態はセッションが単一のソース**: 選択矩形と選択の有無は設定値ではなくセッションの状態から `Marquee.ResolveContent` が導出し、装飾層も同じ値を参照する（同じデータを 2 箇所に持たない）。
-13. **描画内容の契約は本コアが単一所有する**: `Marquee.ResolveContent` が「装飾（`OuterDecoFrame` / `InnerDecoFrame`）・穴あけ矩形・ハンドル（`MarqueeHandles`）・始点マーカー（`MarqueeMarker`）・サイズラベル（`MarqueeSizeLabel`）・カーソル座標ラベル（`MarqueeCoordLabel`）・層の順序」を 1 つの `MarqueeDrawContent` にまとめて返し、**描くかどうかの判断（非表示の設定・選択なし・nudge 中・装飾の描画可否フラグ・穴あけ矩形なし）をすべてコアが下す**（公開は描画内容の型と `Marquee.ResolveContent`。組み立てに使う `MarqueeSession` / `Marquee.ResolveFrame` / `MarqueeFrameRequest` は internal。契約型は描画に必要な値だけを持つ純粋データであり、判断を持たない）。**穴あけ矩形と座標変換ポートは 1 フレームに 1 回だけ解決する**（同じ矩形を各所が個別に変換するとずれるため）。
-14. **文字は Core が文言と配置を決め、UI 層が要素を配置する**: サイズラベル（`MarqueeSizeLabel`）とカーソル座標ラベル（`MarqueeCoordLabel`）の**文言・フォントサイズ・配置の計算は本コアが単一所有**し、**実寸測定と要素への反映は UI 層**が担う（実寸は描画 API でしか測れないため）。体裁（背景 = 実寸 + 余白×2、文字原点、行送り）は `EsLabelLayout`（Platform.Core）、色は `MarqueePaint`（描画層）、実寸から要素の矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有し、UI 層は `Border` + `TextBlock` を子として置く。**操作・情報ラベルはアプリ固有の付加情報**であるため、本コアは関知せずホストが自前で描く。
+13. **描画内容の契約は本コアが単一所有する**: `Marquee.ResolveContent` が「装飾（`OuterDecoFrame` / `InnerDecoFrame`）・穴あけ矩形・ハンドル（`MarqueeHandles`）・始点マーカー（`MarqueeMarker`）・サイズラベル（`MarqueeTextPlacement`）・カーソル座標ラベル（`MarqueeTextPlacement`）・層の順序」を 1 つの `MarqueeDrawContent` にまとめて返し、**描くかどうかの判断（非表示の設定・選択なし・nudge 中・装飾の描画可否フラグ・穴あけ矩形なし）をすべてコアが下す**（公開は描画内容の型と `Marquee.ResolveContent`。組み立てに使う `MarqueeSession` / `Marquee.ResolveFrame` / `MarqueeFrameRequest` は internal。契約型は描画に必要な値だけを持つ純粋データであり、判断を持たない）。**穴あけ矩形と座標変換ポートは 1 フレームに 1 回だけ解決する**（同じ矩形を各所が個別に変換するとずれるため）。
+14. **文字は Core が文言と配置を決め、UI 層が要素を配置する**: サイズラベル（`MarqueeTextPlacement`）とカーソル座標ラベル（`MarqueeTextPlacement`）の**文言・フォントサイズ・配置の計算は本コアが単一所有**し、**実寸測定と要素への反映は UI 層**が担う（実寸は描画 API でしか測れないため）。体裁（背景 = 実寸 + 余白×2、文字原点、行送り）は `EsLabelLayout`（Platform.Core）、色は `MarqueePaint`（描画層）、実寸から要素の矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有し、UI 層は `Border` + `TextBlock` を子として置く。**操作・情報ラベルはアプリ固有の付加情報**であるため、本コアは関知せずホストが自前で描く。
 15. **色は本コアが持たない**: ハンドル・始点マーカー・ラベル・装飾の色は**描画にだけ必要な設定**であるため、描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有する（本コアの設定と描画内容（`MarqueeDrawContent`）には色を含めない）。両 UI が同じ見た目になるよう、既定値は `MarqueePaint.Default` が単一所有し、ハンドル枠と穴あけ枠は同じ既定値（`MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`）を共有する。
 16. **ハンドル・マーカー・座標ラベルの可否もコアが決める**: 「ハンドルを描くか（`ShowHandles` と選択の有無）」「マーカーを描くか（nudge 中で十字線が可視か）」「座標ラベルを描くか（`ShowCoordLabel`）」の判断は `Marquee.ResolveContent` が行う。UI 層は値を持つ項目を描くだけでよい（判断の分散を防ぐ）。
 17. **操作の入口はファサードのみ**: UI 層とホストは `Marquee` だけを参照し、状態機械（`MarqueeSession`）とフレーム解決（`Marquee.DrawContent.cs` の `ResolveFrame`）には触れない（`internal` で強制する）。設定の伝搬・効果の適用・通知の転送・描画内容の解決も本型が単 一所有し、UI 層は自 UI の公開プロパティ・公開イベント・描画 API へつなぐだけになる。
@@ -270,8 +270,8 @@ tests/
 ├── MarqueeState.Tests.cs            # 状態遷移・ヒットテスト・ドラッグ・nudge・境界クリップ（31 件）
 ├── MarqueeFeedback.Tests.cs         # 効果の適用（カーソル操作・表示上の効果の順序）（6 件）
 ├── MarqueeSession.Tests.cs          # 入力の解釈・通知・効果・設定の反映・カーソル再表示の要求（50 件）
-├── MarqueeSizeLabel.Tests.cs        # サイズラベルの配置・要素への写像・行送り（6 件）
-├── MarqueeCoordLabel.Tests.cs       # カーソル座標ラベルの配置（オフセット・クランプ・余白）（6 件）
+├── MarqueeContent用テスト        # サイズラベルの配置・要素への写像・行送り（6 件）
+├── MarqueeContent用テスト       # カーソル座標ラベルの配置（オフセット・クランプ・余白）（6 件）
 ├── MarqueeOptions.Tests.cs          # 既定値・部分変更・値補正・等価性（22 件）
 ├── Marquee.Content.Tests.cs         # 描画内容の解決（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・描画可否・層の順序）（46 件）
 ├── MarqueeLogMessage.Tests.cs       # ログ定義の生成コード（IsEnabled 両パス・書式）（3 件）

@@ -29,7 +29,7 @@
 | `Drawing/` | `LoupeCheckerTiles` | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部）。列挙子で渡し、描画のたびのヒープ確保をゼロにする |
 | `Setting/` | `LoupeOptions` | ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値として所有。既定値・生成時の補正を持つ（設定経路によらず範囲内の値だけが保持される） |
 | `Setting/` | `LoupeMetrics` | ルーペの**寸法**（市松タイル・円枠の太さ・中心座標ラベルのフォントサイズと角丸半径）の単一所有。ラベル表示の判定（`ShouldShowCoordLabel`）を持つ。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
-| `Drawing/` | `LoupeCoordLabel` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`）。体裁は `EsLabelLayout`（Platform.Core）が単一所有する |
+| `Drawing/` | `LoupeTextPlacement` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`）。体裁は `EsLabelLayout`（Platform.Core）が単一所有する |
 | `Logging/` | `LoupeLogFormat` / `LoupeLogMessage` | ログの書式（`(X, Y)` / `Width×Height` / `null`）とログ定義・変化判定。**UI のコードが拡張メソッドと書式を直接呼ぶ契約**であるため public |
 
 ### 内部（`internal`）
@@ -52,7 +52,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
     ├──> LoupeControl.UIBase   どう描くか（コアの ILoupeRenderer を実装する描画実装）
     ├──> LoupeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.LoupeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
+           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           └──> Platform.Core（Es* 値型・ICoordTransform）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```
 

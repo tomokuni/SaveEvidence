@@ -41,9 +41,10 @@ public class LoupeRenderer : LoupeRendererBase
     protected LoupePaint Paint => _paint;
 
     /// <inheritdoc/>
-    public override IReadOnlyList<EsLabelElement> ResolveLabels(
-        LoupeCoordLabel? coordLabel, Func<string, double, EsSize> measureText)
-        => LoupeLabelPlan.Resolve(coordLabel, _paint, measureText);
+    public override double CoordLabelFontSize => _paint.CoordLabelFontSize;
+
+    /// <inheritdoc/>
+    public override double CoordLabelCornerRadius => _paint.CoordLabelCornerRadius;
 
     /// <inheritdoc/>
     protected override void DrawBackground(IEsCanvas canvas, in LoupeDrawContent content)

@@ -27,7 +27,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> LoupeControl.UIBase ← 本プロジェクト   どう描くか（描画手順と色）＋ 組み込み先があるときだけ必要な規則
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           └──> Platform.Core（Es* 値型・ICoordTransform・IEsCanvas・EsLabelLayout）
+           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           └──> Platform.Core（Es* 値型・ICoordTransform）
 ※ コアは本層を参照しない（本層の描画実装はコアの契約 ILoupeRenderer を実装する）。
 ※ 本層を使うのは LoupeControl.AvaloniaUI のみ（MewUI は中間ビットマップを持たず同期描画するため再描画のスケジューリングが不要）。
 ```
@@ -40,9 +41,9 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 | 型 | 責務 |
 | --- | --- |
-| `LoupeRenderer` | 既定の描画実装（`sealed`。`ILoupeRenderer` を実装）。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する。`DrawShapes`（下地・市松・拡大画像・十字線・外枠。**ラベルの層は描かない**）/ `ResolveLabels`（要素の配置指示） |
-| `LoupePaint` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）と「描くかどうか」の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
-| `LoupeLabelPlan` | コアのラベル契約（`LoupeCoordLabel`）からラベル要素（`EsLabelElement`）の配置指示を解決する（色は `LoupePaint` から受け取る） |
+| `LoupeRenderer` | 既定の描画実装（`sealed`。`ILoupeRenderer` を実装）。描画の設定（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する。`DrawShapes`（下地・市松・拡大画像・十字線・外枠。**テキストは描かない**）とフォントサイズ・角丸（`CoordLabelFontSize` / `CoordLabelCornerRadius`）を提供する |
+| `LoupePaint` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）・ラベルのフォントサイズと角丸・「描くかどうか」の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
+| `LoupeLabelPlan` | コアのラベル契約（`LoupeTextPlacement`）からラベル要素（`EsLabelElement`）の配置指示を解決する（色は `LoupePaint` から受け取る） |
 
 ### 組み込み規則
 
@@ -58,10 +59,10 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 | 対象 | 誰が描くか | 呼ぶ API |
 | --- | --- | --- |
-| 図形（下地・市松模様・拡大画像・十字線・外枠） | 本層 | `DrawShapes`（**ラベルの層は描かない**） |
-| ラベル（中心座標） | UI の要素（`Border` + `TextBlock` 等） | `ResolveLabels`（`Loupe.ResolveLabels` が解決したラベル契約を渡す。既定実装は `LoupeLabelPlan.Resolve` へ委譲）の結果を要素へ写す（子要素は親より後に描かれるため**ラベルは常に最上位**） |
+| 図形（下地・市松模様・拡大画像・十字線・外枠） | 本層 | `DrawShapes`（**テキストは描かない**） |
+| テキスト（中心座標） | UI 層（要素として置くか画像として描くか） | 要素として置く場合は `LoupeLabelPlan.Resolve`（配置指示）の結果を要素へ写す（子要素は親より後に描かれるため**常に最上位**） |
 
-本層はラベルをキャンバスへ描く経路を持ちません（`Draw` / `DrawLabels` はありません）。
+本層はテキストをキャンバスへ描く経路を持ちません（`Draw` / `DrawLabels` はありません）。
 
 ## 描画の差し替え
 
@@ -124,7 +125,7 @@ protected override void Render(DrawingContext context)
 }
 ```
 
-- ラベルを要素として配置する UI は 3 の描画後、`ResolveLabels`（既定実装は `LoupeLabelPlan.Resolve`）の結果を要素へ写す。
+- テキストを要素として置く UI は 3 の描画後、`LoupeLabelPlan.Resolve` の結果を要素へ写す（`Loupe.ResolveContent` が返す `CoordLabelText` を渡す）。
 - 表示位置（左上）が必要なら `Loupe.ResolveLayout(parentSize)` を使う（親領域へ収めるクランプはコアが単一所有する）。
 - 拡大元画像は UI ごとに型が異なるため契約（`LoupeRenderRequest`）に含めませ ん。UI が `EsBitmap` を解決して描画へ渡します。
 
@@ -148,7 +149,8 @@ _coordinator.CancelAndRelease();   // 非表示遷移・明示クリア（要求
 ```text
 LoupeControl.UIBase
     ├── Feature.LoupeCore（描画入力・通知・寸法・切り出しの計算）
-    └── Platform.Core（IEsCanvas・Es* 値型・SkiaEsCanvas・EsLabelLayout）
+    ├── Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+└── Platform.Core（Es* 値型・SkiaEsCanvas）
 ```
 
 **UI フレームワークへ依存しません**。UI 固有の描画 API は `IEsCanvas` の実装が担い、実行キューは `post` コールバックとして UI が注入します。

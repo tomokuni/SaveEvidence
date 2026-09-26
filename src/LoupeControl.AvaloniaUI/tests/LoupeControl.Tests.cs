@@ -482,7 +482,7 @@ public class LoupeControlTests
         Assert.True(control.Options.Metrics.ShowCoordLabel);
         Assert.Equal(DrawingColor.White, control.Paint.CoordLabelColor);
         Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), control.Paint.CoordLabelBackgroundColor);
-        Assert.Equal(12.0, control.Options.Metrics.CoordLabelFontSize);
+        Assert.Equal(12.0, control.Paint.CoordLabelFontSize);
     }
 
     [AvaloniaFact]
@@ -523,7 +523,7 @@ public class LoupeControlTests
         // 背景の大きさはコアが「実測幅 + 内側余白」で決める（本コントロールは自 UI の API で実測して渡す）
         var text = new FormattedText(
             "(12, 34)", CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-            Typeface.Default, CoordLabelFontSizeDefault, Brushes.White);
+            Typeface.Default, control.Paint.CoordLabelFontSize, Brushes.White);
         Assert.True(label.Width > text.Width);
 
         // 上端中央（左右の余白が等しい）: コアの中央寄せ規則が要素へ反映される
@@ -540,17 +540,14 @@ public class LoupeControlTests
         var background = DrawingColor.FromArgb(179, 0, 0, 139); // 暗青 70%
         control.Options = control.Options with
         {
-            Metrics = control.Options.Metrics with
-            {
-                ShowCoordLabel = true,
-                CoordLabelFontSize = 16,
-                CoordLabelCornerRadius = 8,
-            },
+            Metrics = control.Options.Metrics with { ShowCoordLabel = true },
         };
         control.Paint = control.Paint with
         {
             CoordLabelColor = DrawingColor.Yellow,
             CoordLabelBackgroundColor = background,
+            CoordLabelFontSize = 16,
+            CoordLabelCornerRadius = 8,
         };
         control.CenterPoint = new Point(10, 20);
 
@@ -850,9 +847,9 @@ public class LoupeControlTests
     {
         var control = new LoupeControl();
 
-        control.Options = control.Options with { Metrics = control.Options.Metrics with { CoordLabelFontSize = double.NaN } };
+        control.Paint = control.Paint with { CoordLabelFontSize = double.NaN };
 
-        Assert.Equal(12.0, control.Options.Metrics.CoordLabelFontSize);
+        Assert.Equal(12.0, control.Paint.CoordLabelFontSize);
     }
 
     [AvaloniaFact]

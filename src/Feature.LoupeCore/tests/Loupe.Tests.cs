@@ -80,16 +80,17 @@ public class LoupeTests
     }
 
     [Fact]
-    public void ResolveLabels_は設定された描画実装へ委譲する()
+    public void Draw_は設定された描画実装へ委譲する()
     {
         var loupe = new Loupe(new StubLoupeRenderer());
-        var replacement = new StubLoupeRenderer { Elements = [] };
+        var replacement = new StubLoupeRenderer();
         loupe.Renderer = replacement;
+        var request = loupe.CreateRequest(160);
+        var content = loupe.ResolveContent(request);
 
-        var elements = loupe.ResolveLabels(160, static (_, _) => new EsSize(10, 10));
+        loupe.Draw(StubCanvas.Instance, source: null, request, content);
 
-        Assert.Empty(elements);
-        Assert.Equal(1, replacement.ResolveLabelsCalls);
+        Assert.Equal(1, replacement.DrawShapesCalls);
     }
 
     [Theory]
@@ -298,7 +299,7 @@ public class LoupeTests
     }
 
     [Fact]
-    public void ResolveContent_描く層は下地から中心座標ラベルの順で返す()
+    public void ResolveContent_描く層は下地から外枠の順で返す()
     {
         var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(50, 60) };
         var content = loupe.ResolveContent(loupe.CreateRequest(160));
@@ -311,7 +312,6 @@ public class LoupeTests
                 LoupeDrawLayer.Image,
                 LoupeDrawLayer.Crosshair,
                 LoupeDrawLayer.Frame,
-                LoupeDrawLayer.CoordLabel,
             ],
             content.Layers);
     }

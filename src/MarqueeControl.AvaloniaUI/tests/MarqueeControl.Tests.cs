@@ -1414,8 +1414,8 @@ public class MarqueeControlTests
         control.Options = control.Options with
         {
             ShowCoordLabel = true,
-            CoordLabelFontSize = 12.0,
         };
+        control.Paint = control.Paint with { CoordLabelFontSize = 12.0 };
 
         // マウス移動 → Render で座標ラベルが描画される（例外なし）
         control.RaiseEvent(new PointerEventArgs(

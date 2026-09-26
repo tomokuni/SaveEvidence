@@ -20,7 +20,7 @@
 | `LoupeMetrics` | `public` | 寸法の単一値（`LoupeOptions.Metrics` として、また単体でも寸法を指定する。**色は持たない**） |
 | `Loupe.Limits`（`Loupe` の入れ子） | `public` | 数値パラメータの既定値・安全域とクランプ（UI がプロパティ登録に使う） |
 | `LoupeRenderRequest` | `public` | 1 フレーム分の描画入力（コア⇔UI の契約） |
-| `LoupeCoordLabel` | `public` | 中心座標ラベルの描画契約（文言・DIP の寸法・配置の計算。**色は持たない**）。表示はコントロールがテキスト要素として行う（色は描画層の `LoupePaint` が与える） |
+| `LoupeTextPlacement` | `public` | 中心座標ラベルの描画契約（文言・DIP の寸法・配置の計算。**色は持たない**）。表示はコントロールがテキスト要素として行う（色は描画層の `LoupePaint` が与える） |
 | `LoupeLogFormat` / `LoupeLogMessage` | `public` | ログの書式と定義（両 UI が同じレベル・書式で出力するための契約。UI のコードが拡張メソッドを呼ぶ） |
 
 **internal（本アセンブリと単体テストのみ）**: 描画の計算・換算・列挙（`Checkerboard.LoupeCheckerboard`（明暗の判定）/ `Checkerboard.LoupeDivMath`（区画数の切り上げ）/ `Decoration.LoupeDecorationGeometry`（矩形）/ `Decoration.LoupeMetricsScaler`（寸法の換算）/ `Imaging.LoupeImageExtractor`（切り出し）/ `Loupe.ComputePosition` / `LoupeRenderRequest.ResolvePixelSize`）と、描画内容の解決の内部手順。いずれもファサード（`Loupe.ResolveLayout` / `Loupe.CreateRequest` / `Loupe.ResolveContent` / `Loupe.ResolveNotification`）とその内部計算が吸収して提供します。
@@ -44,7 +44,7 @@
 | `ResolveContent(request)` | 描画 1 フレーム分の**描画内容**（`LoupeDrawContent` = 描画面・タイル・矩形・層の順序）を解決する（描画層は計算を持たない） |
 | `ResolveNotification(request)` | 実際に描画した入力から描画完了通知の内容（`LoupeRenderNotification`）を解決する |
 | `Renderer` | 描画の実装（`ILoupeRenderer`）の取得・設定（**描画の差し替え**。null 不可。設定後の再描画は UI 層が要求する） |
-| `ResolveLabels(displaySize, measureText)` | 中心座標ラベルの配置指示（`EsLabelElement`）の解決（UI 要素として配置する UI 用）。表示サイズは要素の大きさ（`ResolveLayout` の結果）を渡す（描画の物理ピクセルから逆算しない） |
+| `CoordLabelFontSize` / `CoordLabelCornerRadius`（描画実装のプロパティ） | 中心座標ラベルのフォントサイズと角丸（描画の設定 `LoupePaint` の値への入口） |
 
 **本型が単一所有するもの**: 表示レイアウトの解決（表示サイズのクランプと表示位置の決定）・描画入力の組み立て・通知内容の解決・描画実装の保持。
 
@@ -53,7 +53,7 @@
 | メンバー | 説明 |
 | --- | --- |
 | `DrawShapes(canvas, source, in request, in content)` | 図形の層（下地 ・市松模様・拡大画像・十字線・円枠）を描画順に描く（**中心座標ラベルの層は描かない**。ラベルは UI の要素が描く） |
-| `ResolveLabels(coordLabel, measureText)` | 中心座標ラベルの配置指示（`EsLabelElement`）を解決する（UI 要素として配置する UI 用） |
+
 
 描く層とその順序はコアが単一所有し（`Loupe.ResolveContent` が返す `LoupeDrawContent.Layers`）、実装 は順序を判断しません。拡大元画像は UI ごとに型が異なるため引数で受け取ります（描画の契約には含めません）。本コアは描画層（`LoupeControl.UIBase`）を参照できない ため、既定実装（描画層の `LoupeRenderer`。色をコンストラクタで受け取る）は利用者が渡します。
 
@@ -64,7 +64,7 @@ loupe.SetCoordinateTransform(port);
 var layout = loupe.ResolveLayout(parentSize);          // 表示サイズ + 表示位置（配置はしない場合は Position が null）
 var request = loupe.CreateRequest(layout.DisplaySize, canvasSize); // 描画入力（物理ピクセルを解決済み）
 var notification = loupe.ResolveNotification(request); // 切り出し左上・スケール・層の順序
-var elements = loupe.ResolveLabels(layout.DisplaySize, measureText); // ラベルを UI 要素として配置する場合
+var content = loupe.ResolveContent(request);    // テキストは CoordLabelText として受け取る（UI 層が扱いを決める）
 ```
 
 ## `LoupeOptions`（`EsUtil.Feature.LoupeCore.Setting`・`public sealed record`）

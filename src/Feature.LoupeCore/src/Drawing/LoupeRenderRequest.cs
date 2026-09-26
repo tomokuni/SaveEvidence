@@ -21,6 +21,7 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 /// <param name="Center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定は null（市松模様のみを描画する）。</param>
+/// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
 /// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。切り上げ・最低 1）。</param>
 /// <param name="ZoomLevel">拡大率（1〜64。1 未満は不可）。</param>
 /// <param name="Metrics">ルーペの寸法（市松模様のタイル・外枠の太さ。色は描画の設定が単一所有する）。</param>
@@ -29,10 +30,12 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// <param name="FrameWidthPixels">外枠の太さ（物理ピクセル。換算済み。0 は外枠を描かない）。</param>
 /// <remarks>
 /// <b>寸法は換算済みの値を保持する</b>: DIP の寸法（<paramref name="Metrics"/>）を描画に使う物理ピクセルへ換算する手順は<br/>
-/// コアが単一所有する（描画実装が換算を持たないため、描画側には物理ピクセルの値だけが渡る）。
+/// コアが単一所有する（描画実装が換算を持たないため、描画側には物理ピクセルの値だけが渡る）。<br/>
+/// <b>表示サイズ（DIP）も保持する</b>: ラベルの位置は DIP で決まるため、描画内容の解決が本値だけで完結する。
 /// </remarks>
 public readonly record struct LoupeRenderRequest(
     EsPoint? Center,
+    double DisplaySize,
     int PixelSize,
     int ZoomLevel,
     LoupeMetrics Metrics,
@@ -69,6 +72,7 @@ public readonly record struct LoupeRenderRequest(
         LoupeOptions options,
         EsSize? availableSize = null)
         => new(center,
+               displaySize,
                ResolvePixelSize(displaySize, renderScaling, availableSize),
                options.ZoomLevel,
                options.Metrics,

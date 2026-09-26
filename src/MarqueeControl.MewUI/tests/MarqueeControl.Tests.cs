@@ -87,8 +87,6 @@ public class MarqueeControlTests
         Assert.True(options.ClampToDomainBounds);
         Assert.Equal(16.0, options.MarkerLength);
         Assert.False(options.ShowCoordLabel);
-        // 背景色は不透明度をアルファに統合（黒 60% = #99000000）
-        Assert.Equal(12.0, options.CoordLabelFontSize);
         Assert.Equal(1.0, control.RenderScaling);
 
         // 設定を指定しない場合の既定値はコアの MarqueeOptions.Default と一致する
@@ -128,17 +126,17 @@ public class MarqueeControlTests
     {
         var control = CreateControl(new CursorServiceSpy());
 
-        // NaN → 既定値 12
-        control.Options = control.Options with { CoordLabelFontSize = double.NaN };
-        Assert.Equal(12.0, control.Options.CoordLabelFontSize);
+        // NaN → 既定値 12（描画の設定が補正を単一所有する）
+        control.Paint = control.Paint with { CoordLabelFontSize = double.NaN };
+        Assert.Equal(12.0, control.Paint.CoordLabelFontSize);
 
         // 上限 48 にクランプ
-        control.Options = control.Options with { CoordLabelFontSize = 100.0 };
-        Assert.Equal(48.0, control.Options.CoordLabelFontSize);
+        control.Paint = control.Paint with { CoordLabelFontSize = 100.0 };
+        Assert.Equal(48.0, control.Paint.CoordLabelFontSize);
 
         // 下限 6 にクランプ
-        control.Options = control.Options with { CoordLabelFontSize = 1.0 };
-        Assert.Equal(6.0, control.Options.CoordLabelFontSize);
+        control.Paint = control.Paint with { CoordLabelFontSize = 1.0 };
+        Assert.Equal(6.0, control.Paint.CoordLabelFontSize);
     }
 
     // ====================================================================

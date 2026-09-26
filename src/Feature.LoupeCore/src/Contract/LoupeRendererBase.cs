@@ -16,9 +16,11 @@ namespace EsUtil.Feature.LoupeCore.Contract;
 /// コアが本クラスを所有することで、<b>描画の起動と順序がコアの単一所有</b>になり、<br/>
 /// UI 層は描画面（<see cref="IEsCanvas"/>）を用意するだけでよくなる。<br/>
 /// <br/>
-/// <b>色はコアが持たない</b>: 色は<b>描画にだけ必要な設定</b>であり、コアの計算・判定に入らない。<br/>
+/// <b>描画にだけ必要な設定はコアが持たない</b>: 色は<b>描画にだけ必要な設定</b>であり、コアの計算・判定に入らない。<br/>
 /// したがって本クラスは色の値も型も持たず、色を使う層の描画を抽象メソッドとして派生クラスへ委ねる<br/>
 /// （色の実体は UIBase の <c>LoupePaint</c> が単一所有し、その保持者である <c>LoupeRenderer</c> が実装する）。<br/>
+/// フォントサイズと角丸も同じ扱いであり、値は描画の設定が所有し、本クラスは <see cref="ILoupeRenderer"/> の<br/>
+/// プロパティとして UI 層へ公開する（UI 層はテキストを要素として置くか画像として描くかを決める）。<br/>
 /// <br/>
 /// <b>色を使わない層はコアが描く</b>: 拡大画像の層は色を必要としない（切り出しと描画先の計算はコアが単一所有する）<br/>
 /// ため、本クラスが実装する。<br/>
@@ -28,6 +30,12 @@ namespace EsUtil.Feature.LoupeCore.Contract;
 /// </remarks>
 public abstract class LoupeRendererBase : ILoupeRenderer
 {
+    /// <inheritdoc/>
+    public abstract double CoordLabelFontSize { get; }
+
+    /// <inheritdoc/>
+    public abstract double CoordLabelCornerRadius { get; }
+
     /// <summary>ルーペの図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。null 不可。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（市松模様のみ）。</param>
@@ -37,7 +45,7 @@ public abstract class LoupeRendererBase : ILoupeRenderer
     /// <remarks>
     /// 本メソッドが<b>描画起動の唯一の入口</b>である（コアが描画内容を解決し、本メソッドを通して描く）。<br/>
     /// 描く値はすべて <paramref name="content"/> に解決済みであり、本クラスは計算を持たない（順に写すだけ）。<br/>
-    /// 中心座標ラベルの層（<see cref="LoupeDrawLayer.CoordLabel"/>）は描かない（UI が要素として配置する）。<br/>
+    /// テキスト（<see cref="LoupeDrawContent.CoordLabelText"/>）は描かない（UI 層が要素として置くか画像として描くかを決める）。<br/>
     /// 描画面の消去は下地の層（<see cref="LoupeDrawLayer.Background"/>）が行う（前フレームの残像を残さない）。
     /// </remarks>
     public void DrawShapes(
@@ -70,21 +78,9 @@ public abstract class LoupeRendererBase : ILoupeRenderer
                 case LoupeDrawLayer.Frame:
                     DrawFrame(canvas, in content);
                     break;
-
-                // 中心座標ラベルは UI が要素として配置する（本メソッドは描かない）
-                case LoupeDrawLayer.CoordLabel:
-                    break;
             }
         }
     }
-
-    /// <summary>中心座標ラベルの配置指示を解決する（UI 要素として配置する UI 用）。</summary>
-    /// <param name="coordLabel">コアが解決したラベル契約。描かない場合は null。</param>
-    /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
-    /// <returns>配置するラベル要素（1 要素）。描かない場合は空。</returns>
-    /// <remarks>ラベルの色は色を持つ派生クラス（UIBase の既定実装）が与える。</remarks>
-    public abstract IReadOnlyList<EsLabelElement> ResolveLabels(
-        LoupeCoordLabel? coordLabel, Func<string, double, EsSize> measureText);
 
     /// <summary>下地（ベース色）で描画面の全体を置き換える。</summary>
     /// <param name="canvas">描画先の描画ポート。</param>

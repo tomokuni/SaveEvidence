@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.LoupeCore.Drawing;
@@ -15,23 +14,17 @@ namespace EsUtil.Feature.LoupeCore.Tests;
 /// </remarks>
 internal sealed class StubLoupeRenderer : ILoupeRenderer
 {
-    /// <summary>ラベル要素の解決を要求された回数。</summary>
-    public int ResolveLabelsCalls { get; private set; }
+    /// <summary>図形の描画を要求された回数。</summary>
+    public int DrawShapesCalls { get; private set; }
 
-    /// <summary><see cref="ResolveLabels"/> が返す要素（ファサードの戻り値の検証に使う）。</summary>
-    public IReadOnlyList<EsLabelElement> Elements { get; set; } = [];
+    /// <summary><see cref="CoordLabelFontSize"/> が返す値（既定は 12.0）。</summary>
+    public double CoordLabelFontSize { get; set; } = 12.0;
+
+    /// <summary><see cref="CoordLabelCornerRadius"/> が返す値（既定は 2.0）。</summary>
+    public double CoordLabelCornerRadius { get; set; } = 2.0;
 
     /// <inheritdoc/>
     public void DrawShapes(
         IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)
-    {
-    }
-
-    /// <inheritdoc/>
-    public IReadOnlyList<EsLabelElement> ResolveLabels(
-        LoupeCoordLabel? coordLabel, Func<string, double, EsSize> measureText)
-    {
-        ResolveLabelsCalls++;
-        return Elements;
-    }
+        => DrawShapesCalls++;
 }

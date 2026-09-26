@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Selection;
@@ -36,15 +37,9 @@ public sealed partial class Marquee
     /// <summary>層の組合せのうち、始点マーカーの有無を表すビット。</summary>
     private const int MarkerBit = 2;
 
-    /// <summary>層の組合せのうち、サイズラベルの有無を表すビット。</summary>
-    private const int SizeLabelBit = 4;
-
-    /// <summary>層の組合せのうち、カーソル座標ラベルの有無を表すビット。</summary>
-    private const int CoordLabelBit = 8;
-
-    /// <summary>層の並び（4 つの有無 = 16 通り）。</summary>
+    /// <summary>層の並び（2 つの有無 = 4 通り）。</summary>
     /// <remarks>
-    /// 描画と要素配置のたびに一覧を組み立てないよう、全通りを事前生成して共有する<br/>
+    /// 描画のたびに一覧を組み立てないよう、全通りを事前生成して共有する<br/>
     /// （<see cref="MarqueeDrawContent.Layers"/> は読取専用の参照として渡す）。層を追加した場合は本表も更新する。
     /// </remarks>
     private static readonly IReadOnlyList<MarqueeDrawLayer>[] s_layers = CreateLayers();
@@ -56,8 +51,8 @@ public sealed partial class Marquee
     /// 処理フロー:<br/>
     /// 1. 装飾（暗転マスク・穴あけ枠・内側の塗り）を解決する。<br/>
     /// 2. 選択矩形そのもの（ハンドル・始点マーカー）を解決する。<br/>
-    /// 3. ラベル（サイズ・カーソル座標）を解決する。<br/>
-    /// 4. 描く層だけを順序どおりに並べる（ラベルは最後 = 常に最上位）。<br/>
+    /// 3. テキスト（サイズ・カーソル座標の文言と基準点）を解決する。<br/>
+    /// 4. 描く図形の層だけを順序どおりに並べる。<br/>
     /// <br/>
     /// 描画順は <see cref="MarqueeDrawLayer"/> の宣言順ではなく<b>本メソッドの意図</b>で決める<br/>
     /// （列挙に層を追加しても描画順が勝手に変わらないようにするため、明示的に組み立てる）。
@@ -73,8 +68,8 @@ public sealed partial class Marquee
 
         var handles = ResolveHandles(request, port);
         var marker = ResolveMarker(request, port);
-        var sizeLabel = ResolveSizeLabel(request, hole, port);
-        var coordLabel = ResolveCoordLabel(request, port);
+        var sizeLabel = ResolveSizeLabelText(request, hole, port);
+        var coordLabel = ResolveCoordLabelText(request, port);
 
         return new MarqueeDrawContent(
             ResolveOuterDecoration(request, hole),
@@ -84,38 +79,32 @@ public sealed partial class Marquee
             marker,
             sizeLabel,
             coordLabel,
-            ResolveLayers(handles, marker, sizeLabel, coordLabel));
+            ResolveLayers(handles, marker));
     }
 
-    /// <summary>描く層だけを描画順に並べる。</summary>
+    /// <summary>描く図形の層だけを描画順に並べる。</summary>
     /// <param name="handles">ドラッグハンドル。null の場合は層を含めない。</param>
     /// <param name="marker">始点マーカー。null の場合は層を含めない。</param>
-    /// <param name="sizeLabel">サイズラベル。null の場合は層を含めない。</param>
-    /// <param name="coordLabel">カーソル座標ラベル。null の場合は層を含めない。</param>
     /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
     /// <remarks>
     /// 装飾は常に含める（描くものが無い場合は各項目が空であり、UI 層の分岐を増やさない）。<br/>
-    /// ラベルは必ず末尾へ置き、常に最上位に表示する。<br/>
     /// 一覧はビットの組合せで事前生成したものを返す（描画のたびの確保を避ける）。
     /// </remarks>
-    private static IReadOnlyList<MarqueeDrawLayer> ResolveLayers(
-        MarqueeHandles? handles, MarqueeMarker? marker, MarqueeSizeLabel? sizeLabel, MarqueeCoordLabel? coordLabel)
+    private static IReadOnlyList<MarqueeDrawLayer> ResolveLayers(MarqueeHandles? handles, MarqueeMarker? marker)
         => s_layers[
             (handles is not null ? SelectionBit : 0)
-            | (marker is not null ? MarkerBit : 0)
-            | (sizeLabel is not null ? SizeLabelBit : 0)
-            | (coordLabel is not null ? CoordLabelBit : 0)];
+            | (marker is not null ? MarkerBit : 0)];
 
-    /// <summary>層の全 16 通りを生成する。</summary>
+    /// <summary>層の全 4 通りを生成する。</summary>
     /// <returns>ビットの組合せを添字とする層の一覧。</returns>
-    /// <remarks>ビットの意味は <see cref="SelectionBit"/> / <see cref="MarkerBit"/> / <see cref="SizeLabelBit"/> / <see cref="CoordLabelBit"/> が単一所有する。</remarks>
+    /// <remarks>ビットの意味は <see cref="SelectionBit"/> / <see cref="MarkerBit"/> が単一所有する。</remarks>
     private static IReadOnlyList<MarqueeDrawLayer>[] CreateLayers()
     {
-        var table = new IReadOnlyList<MarqueeDrawLayer>[16];
+        var table = new IReadOnlyList<MarqueeDrawLayer>[4];
 
         for (var index = 0; index < table.Length; index++)
         {
-            var layers = new List<MarqueeDrawLayer>(5) { MarqueeDrawLayer.Decoration };
+            var layers = new List<MarqueeDrawLayer>(3) { MarqueeDrawLayer.Decoration };
 
             if ((index & SelectionBit) != 0)
             {
@@ -125,17 +114,6 @@ public sealed partial class Marquee
             if ((index & MarkerBit) != 0)
             {
                 layers.Add(MarqueeDrawLayer.Marker);
-            }
-
-            // ラベルは常に最上位（選択矩形・マーカーより後に描く）
-            if ((index & SizeLabelBit) != 0)
-            {
-                layers.Add(MarqueeDrawLayer.SizeLabel);
-            }
-
-            if ((index & CoordLabelBit) != 0)
-            {
-                layers.Add(MarqueeDrawLayer.CoordLabel);
             }
 
             table[index] = layers;
@@ -253,21 +231,21 @@ public sealed partial class Marquee
             request.Options.MarkerLength / 2);
     }
 
-    /// <summary>サイズラベルの描画内容を解決する。</summary>
+    /// <summary>サイズラベルの文言と基準点を解決する。</summary>
     /// <param name="request">描画入力。</param>
     /// <param name="hole">穴あけ矩形（DIP）。選択もハイライトも無い場合は null。</param>
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
-    /// <returns>サイズラベルの描画内容。非表示の設定または穴あけ矩形なしの場合は null。</returns>
+    /// <returns>サイズラベルのテキスト配置。非表示の設定または穴あけ矩形なしの場合は null。</returns>
     /// <remarks>
-    /// 基準点は穴あけ矩形の左上である（装飾と同じ規則で決まる）。<br/>
+    /// 基準点は穴あけ矩形の左上であり、アラインは左端・上端である（装飾と同じ規則で決まる）。<br/>
     /// 文言はプロバイダ優先であり、未指定・空文字の場合はコアが矩形から自動生成する<br/>
     /// （書式はコアが単一所有し、描画層・ホストは文言を作らない）。<br/>
     /// 座標の換算は <see cref="MarqueeFrameRequest.DisplayScaleScaling"/> を使い、<br/>
     /// DisplayScale の百分率だけを <see cref="MarqueeFrameRequest.SizeLabelDisplayScalingProvider"/> で矩形ごとに差し替えられる<br/>
     /// （マルチモニタで表示スケールが矩形の位置によって異なる場合、ホストが矩形からモニタのスケールを解決する）。<br/>
-    /// 色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
+    /// フォントサイズ・色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
-    private static MarqueeSizeLabel? ResolveSizeLabel(
+    private static MarqueeTextPlacement? ResolveSizeLabelText(
         in MarqueeFrameRequest request, EsRect? hole, ICoordTransform port)
     {
         if (!request.Options.ShowSizeLabel || hole is not { } holeRect)
@@ -284,7 +262,8 @@ public sealed partial class Marquee
             ? FormatSizeLabel(holeRect, request.DisplayScaleScaling, displayScaling)
             : overrideText;
 
-        return new MarqueeSizeLabel(text, holeRect.TopLeft, request.Options.SizeLabelFontSize);
+        return new MarqueeTextPlacement(
+            text, holeRect.TopLeft, EsLabelAlignX.Left, EsLabelAlignY.Top, default);
     }
 
     /// <summary>サイズラベルの書式（文言）を生成する。</summary>
@@ -333,25 +312,31 @@ public sealed partial class Marquee
         return new EsRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 
-    /// <summary>カーソル座標ラベルの描画内容を解決する。</summary>
+    /// <summary>カーソル座標ラベルの文言と基準点を解決する。</summary>
     /// <param name="request">描画入力。</param>
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
-    /// <returns>座標ラベルの描画内容。非表示の設定の場合は null。</returns>
+    /// <returns>座標ラベルのテキスト配置。非表示の設定の場合は null。</returns>
     /// <remarks>
-    /// 文言はコア（<see cref="EsPoint.Format(int)"/>）が文字列化し、配置は描画時に実寸から決まる。<br/>
-    /// 色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
+    /// 文言はコア（<see cref="EsPoint.Format(int)"/>）が文字列化する。<br/>
+    /// 基準点は「カーソル + <see cref="MarqueeOptions.CoordLabelOffset"/>」であり、アラインは左端・上端である<br/>
+    /// （ラベルがカーソルに重ならず、描画領域をはみ出す場合は領域内へクランプされる）。<br/>
+    /// フォントサイズ・色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
-    private static MarqueeCoordLabel? ResolveCoordLabel(in MarqueeFrameRequest request, ICoordTransform port)
+    private static MarqueeTextPlacement? ResolveCoordLabelText(in MarqueeFrameRequest request, ICoordTransform port)
     {
         if (!request.Options.ShowCoordLabel)
         {
             return null;
         }
 
-        return new MarqueeCoordLabel(
+        var cursor = port.Inverse(request.MousePosition);
+        var offset = MarqueeOptions.CoordLabelOffset;
+
+        return new MarqueeTextPlacement(
             request.MousePosition.Format(),
-            port.Inverse(request.MousePosition),
-            request.ClientSize,
-            request.Options.CoordLabelFontSize);
+            new EsPoint(cursor.X + offset, cursor.Y + offset),
+            EsLabelAlignX.Left,
+            EsLabelAlignY.Top,
+            request.ClientSize);
     }
 }

@@ -40,7 +40,8 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> MarqueeControl.UIBase ← 本プロジェクト   どう描くか（色・描画手順）＋ 組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・IEsCanvas・EsLabelLayout・ScrollMath）
+           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・ScrollMath）
 ※ コアは本層を参照しない（本層の描画実装はコアの契約 IMarqueeRenderer を実装する）。
 ```
 
@@ -204,9 +205,9 @@ src/MarqueeControl.UIBase/
 | 描画する層とその順序 | `Marquee.ResolveLayers`（コア。本層は順に写すだけ） |
 | 描くかどうかの判断（非表示・選択なし・nudge・表示可否フラグ・穴あけ矩形な し） | コア（`Marquee.ResolveFrame`。本層は判断を持たない） |
 | ハンドルの矩形（8 方向の位置と大きさ） | コア（`Marquee.ResolveFrame` が解決済み。本層は矩形を渡すだけ） |
-| ラベルの文言・フォントサイズ | コア（`MarqueeOptions` / `MarqueeSizeLabel` / `MarqueeCoordLabel`） |
+| ラベルの文言・フォントサイズ | コア（`MarqueeOptions` / `MarqueeTextPlacement`） |
 | 描画に使う色（ハンドル・十字マーカー・ラベル・装飾） | 本層（`MarqueePaint`） |
-| ラベルの体裁（背景・文字原点・行送り） | `Platform.Core`（`EsLabelLayout`） |
+| ラベルの体裁（背景・文字原点・行送り） | `Common`（`EsLabelLayout`） |
 | ラベル要素の写像（順序・実寸の反映） | 本層（`MarqueeLabelPlan`） |
 | 描画 API の呼び出し（背景 → 文字の順序） | `Platform.Core`（`SkiaLabel` / `IEsCanvas.DrawLabel`） |
 | ブラシ・ペンの共有 | 描画ポートの実装（`AvaloniaCanvas` / `SkiaEsCanvas`） |

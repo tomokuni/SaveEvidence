@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.LoupeCore;
+using EsUtil.SaveEvidence.Common.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.LoupeCore.Drawing;
@@ -8,8 +8,8 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
 
 /// <summary><see cref="LoupeLabelPlan"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
 /// <remarks>
-/// 文言・外観・順序はコアが単一所有するため、本テストは「実寸の反映」と「要素への写像」だけを検証する<br/>
-/// （配置の計算そのものはコアの <c>LoupeCoordLabel.ComputeFrame</c> のテストが担う）。<br/>
+/// 文言・位置はコアが、色・フォントサイズ・角丸は描画の設定が単一所有するため、本テストは「実寸の反映」と「要素への写像」だけを検証する<br/>
+/// （配置の計算そのものは <c>EsLabelLayout.ComputeAlignedBox</c> のテストが担う）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public class LoupeLabelPlanTests
@@ -17,19 +17,21 @@ public class LoupeLabelPlanTests
     /// <summary>測定に使う固定の実寸（テキストの実測値を模した値）。</summary>
     private static readonly EsSize MeasuredSize = new(36.0, 14.0);
 
-    /// <summary>テスト用の中心座標ラベルを生成する。</summary>
+    /// <summary>テスト用の中心座標ラベルのテキスト配置を生成する（ルーペ上端の中央）。</summary>
     /// <param name="text">文言。</param>
-    /// <returns>中心座標ラベル。</returns>
-    private static LoupeCoordLabel CreateCoordLabel(string text = "(50, 60)")
-        => new(text, 160.0, 12.0, 2.0);
+    /// <returns>テキスト配置。</returns>
+    private static LoupeTextPlacement CreateCoordLabel(string text = "(50, 60)")
+        => new(text, new EsPoint(80, 2), EsLabelAlignX.Center, EsLabelAlignY.Top, default);
 
-    /// <summary>テスト用の色を生成する。</summary>
-    /// <returns>描画に使う色。</returns>
+    /// <summary>テスト用の描画に使う設定を生成する。</summary>
+    /// <returns>描画に使う設定。</returns>
     private static LoupePaint CreatePaint()
         => new()
         {
             CoordLabelColor = DrawingColor.White,
             CoordLabelBackgroundColor = DrawingColor.FromArgb(153, 0, 0, 0),
+            CoordLabelFontSize = 12.0,
+            CoordLabelCornerRadius = 2,
         };
 
     /// <summary>実寸を固定で返す測定関数。</summary>
@@ -58,16 +60,14 @@ public class LoupeLabelPlanTests
     }
 
     [Fact]
-    public void Resolve_配置はコアの計算結果をそのまま使う()
+    public void Resolve_基準点を水平中央へ合わせる()
     {
-        var coordLabel = CreateCoordLabel();
+        var element = Assert.Single(LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), Measure));
 
-        var element = Assert.Single(LoupeLabelPlan.Resolve(coordLabel, CreatePaint(), Measure));
-        var frame = coordLabel.ComputeFrame(MeasuredSize);
-
-        // 背景矩形・文字の描画原点はコアの ComputeFrame が単一所有する（本クラスは写すだけ）
-        Assert.Equal(frame.Background, element.Bounds);
-        Assert.Equal(frame.TextOrigin, element.TextOrigin);
+        // 基準点 (80, 2) がアライン（水平中央・上端）どおり背景の位置になる
+        var width = MeasuredSize.Width + EsLabelLayout.Padding * 2;
+        Assert.Equal(80 - width / 2, element.Bounds.X);
+        Assert.Equal(2, element.Bounds.Y);
     }
 
     [Fact]

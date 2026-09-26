@@ -34,7 +34,6 @@ public class FadeMaskDragRectOptionsMapperTests
         Assert.False(marquee.ClampToDomainBounds);
         Assert.Equal(20.0, marquee.MarkerLength);
         Assert.True(marquee.ShowCoordLabel);
-        Assert.Equal(14.0, marquee.CoordLabelFontSize);
     }
 
     [Fact]
@@ -81,7 +80,6 @@ public class FadeMaskDragRectOptionsMapperTests
 
         // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する
         Assert.False(marquee.ShowSizeLabel);
-        Assert.Equal(18.0, marquee.SizeLabelFontSize);
     }
 
     [Fact]
@@ -139,7 +137,6 @@ public class FadeMaskDragRectOptionsMapperTests
         Assert.Equal(10, loupe.Metrics.CheckerSize);
         Assert.Equal(4, loupe.Metrics.FrameWidth);
         Assert.False(loupe.Metrics.ShowCoordLabel);
-        Assert.Equal(13.0, loupe.Metrics.CoordLabelFontSize);
     }
 
     [Fact]

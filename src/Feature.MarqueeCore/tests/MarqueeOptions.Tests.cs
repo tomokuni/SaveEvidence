@@ -22,7 +22,6 @@ public class MarqueeOptionsTests
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(16.0, options.MarkerLength);
         Assert.False(options.ShowCoordLabel);
-        Assert.Equal(12.0, options.CoordLabelFontSize);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(6.0, options.MinSelectionSize);
         Assert.True(options.ClampToDomainBounds);
@@ -43,7 +42,6 @@ public class MarqueeOptionsTests
 
         Assert.False(options.ShowHandles);
         Assert.Equal(MarqueeOptions.Default.HandleSize, options.HandleSize);
-        Assert.Equal(MarqueeOptions.Default.CoordLabelFontSize, options.CoordLabelFontSize);
         Assert.Equal(MarqueeOptions.Default.MinSelectionSize, options.MinSelectionSize);
         Assert.True(options.ClampToDomainBounds);
     }
@@ -67,22 +65,6 @@ public class MarqueeOptionsTests
         Assert.NotEqual(a, a with { ShowCoordLabel = false });
     }
 
-    [Theory]
-    [InlineData(double.NaN, 12.0)]
-    [InlineData(double.PositiveInfinity, 12.0)]
-    [InlineData(double.NegativeInfinity, 12.0)]
-    [InlineData(1.0, 6.0)]
-    [InlineData(100.0, 48.0)]
-    [InlineData(6.0, 6.0)]
-    [InlineData(48.0, 48.0)]
-    [InlineData(12.0, 12.0)]
-    public void CoordLabelFontSizeは安全域へ補正される(double value, double expected)
-    {
-        var options = MarqueeOptions.Default with { CoordLabelFontSize = value };
-
-        Assert.Equal(expected, options.CoordLabelFontSize);
-    }
-
     [Fact]
     public void 設定は不変である()
     {
@@ -93,23 +75,6 @@ public class MarqueeOptionsTests
         Assert.Equal(6.0, options.MinSelectionSize);
         Assert.Equal(20.0, changed.MinSelectionSize);
         Assert.NotEqual(options, changed);
-    }
-
-    // ====================================================================
-    // 寸法値の補正（生成時に適用する）
-    // ====================================================================
-
-    [Theory]
-    [InlineData(double.NaN, 14.0)]
-    [InlineData(double.PositiveInfinity, 14.0)]
-    [InlineData(1.0, 6.0)]
-    [InlineData(100.0, 48.0)]
-    [InlineData(14.0, 14.0)]
-    public void SizeLabelFontSizeは安全域へ補正される(double value, double expected)
-    {
-        var options = MarqueeOptions.Default with { SizeLabelFontSize = value };
-
-        Assert.Equal(expected, options.SizeLabelFontSize);
     }
 
     [Fact]
