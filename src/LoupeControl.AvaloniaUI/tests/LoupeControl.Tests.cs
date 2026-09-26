@@ -286,9 +286,9 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.Options = control.Options with { Metrics = control.Options.Metrics with { FrameWidth = 0 } };
+        control.Options = control.Options with { FrameWidth = 0 };
 
-        Assert.Equal(1, control.Options.Metrics.FrameWidth);
+        Assert.Equal(1, control.Options.FrameWidth);
     }
 
     // ====================================================================
@@ -389,11 +389,11 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.Options = control.Options with { Metrics = control.Options.Metrics with { CheckerSize = 0 } };
-        Assert.Equal(1, control.Options.Metrics.CheckerSize);
+        control.Options = control.Options with { CheckerSize = 0 };
+        Assert.Equal(1, control.Options.CheckerSize);
 
-        control.Options = control.Options with { Metrics = control.Options.Metrics with { CheckerSize = 200 } };
-        Assert.Equal(128, control.Options.Metrics.CheckerSize);
+        control.Options = control.Options with { CheckerSize = 200 };
+        Assert.Equal(128, control.Options.CheckerSize);
     }
 
     [AvaloniaFact]
@@ -402,13 +402,14 @@ public class LoupeControlTests
         var control = CreateControl();
 
         // プロパティのスタイル値を直接設定する（バインディングと同じ経路。CLR プロパティの setter を通らない）
-        // 数値項目の補正は値の型（LoupeOptions / LoupeMetrics）が生成時に適用するため、
+        // 数値項目の補正は値の型（LoupeOptions）が生成時に適用するため、
         // どの設定経路でも範囲内の値だけがコントロールへ渡る（UI 側に補正の登録を要求しない）。
         control.SetValue(LoupeControl.OptionsProperty, LoupeOptions.Default with
         {
             RequestedSize = 100_000,
             ZoomLevel = 1000,
-            Metrics = new LoupeMetrics { CheckerSize = 1000, FrameWidth = 1000 },
+            CheckerSize = 1000,
+            FrameWidth = 1000,
         });
         control.SetValue(LoupeControl.RenderScalingProperty, 100.0);
 
@@ -416,8 +417,8 @@ public class LoupeControlTests
         Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
         Assert.Equal(ZoomLevelMax, control.Options.ZoomLevel);
         Assert.Equal(RenderScalingMax, control.RenderScaling);
-        Assert.Equal(CheckerSizeMax, control.Options.Metrics.CheckerSize);
-        Assert.Equal(FrameWidthMax, control.Options.Metrics.FrameWidth);
+        Assert.Equal(CheckerSizeMax, control.Options.CheckerSize);
+        Assert.Equal(FrameWidthMax, control.Options.FrameWidth);
     }
 
     /// <summary>寸法の設定値が保持されることを検証する（色は描画の設定が単一所有する）。</summary>
@@ -428,7 +429,8 @@ public class LoupeControlTests
 
         control.Options = control.Options with
         {
-            Metrics = new LoupeMetrics { FrameWidth = 3, CheckerSize = 5 },
+            FrameWidth = 3,
+            CheckerSize = 5,
         };
         control.Paint = new LoupePaint
         {
@@ -438,8 +440,8 @@ public class LoupeControlTests
             FrameColor = DrawingColor.Green,
         };
 
-        Assert.Equal(3, control.Options.Metrics.FrameWidth);
-        Assert.Equal(5, control.Options.Metrics.CheckerSize);
+        Assert.Equal(3, control.Options.FrameWidth);
+        Assert.Equal(5, control.Options.CheckerSize);
         Assert.Equal(DrawingColor.Green, control.Paint.CrossColor);
         Assert.Equal(DrawingColor.Green, control.Paint.CheckerColorA);
         Assert.Equal(DrawingColor.Green, control.Paint.CheckerColorB);
@@ -455,10 +457,9 @@ public class LoupeControlTests
         Assert.Equal(4, control.Options.ZoomLevel);
         Assert.Equal(1.0, control.RenderScaling);
 
-        // 外観の既定値はコア（LoupeMetrics）が単一所有する（両 UI で同一）
-        Assert.Equal(new LoupeMetrics(), control.Options.Metrics);
-        Assert.Equal(6, control.Options.Metrics.CheckerSize);
-        Assert.Equal(2, control.Options.Metrics.FrameWidth);
+        // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
+        Assert.Equal(6, control.Options.CheckerSize);
+        Assert.Equal(2, control.Options.FrameWidth);
         // 色の既定値は描画の設定が単一所有する
         Assert.Equal(LoupePaint.Default, control.Paint);
         Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), control.Paint.CrossColor);
@@ -477,7 +478,7 @@ public class LoupeControlTests
         var control = new LoupeControl();
 
         // ルーペ座標ラベルは既定で表示（設定画面の現在値）。色は描画の設定（白 / 黒 60% = #99000000）
-        Assert.True(control.Options.Metrics.ShowCoordLabel);
+        Assert.True(control.Options.ShowCoordLabel);
         Assert.Equal(DrawingColor.White, control.Paint.CoordLabelColor);
         Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), control.Paint.CoordLabelBackgroundColor);
         Assert.Equal(12.0, control.Paint.CoordLabelFontSize);
@@ -487,7 +488,7 @@ public class LoupeControlTests
     public void 座標ラベルを有効化してCenterPointを設定するとラベル要素が表示される()
     {
         var control = CreateControl();
-        control.Options = control.Options with { Metrics = control.Options.Metrics with { ShowCoordLabel = true } };
+        control.Options = control.Options with { ShowCoordLabel = true };
         control.CenterPoint = new Point(123, 456);
 
         Layout(control);
@@ -500,7 +501,7 @@ public class LoupeControlTests
     public void 座標ラベル無効時はCenterPointがあっても要素を表示しない()
     {
         var control = CreateControl();
-        control.Options = control.Options with { Metrics = control.Options.Metrics with { ShowCoordLabel = false } };
+        control.Options = control.Options with { ShowCoordLabel = false };
         control.CenterPoint = new Point(123, 456);
 
         Layout(control);
@@ -538,7 +539,7 @@ public class LoupeControlTests
         var background = DrawingColor.FromArgb(179, 0, 0, 139); // 暗青 70%
         control.Options = control.Options with
         {
-            Metrics = control.Options.Metrics with { ShowCoordLabel = true },
+            ShowCoordLabel = true,
         };
         control.Paint = control.Paint with
         {

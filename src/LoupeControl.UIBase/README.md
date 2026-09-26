@@ -72,7 +72,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | **描画先（UI フレームワーク）** | `IEsCanvas` を実装する（例: `SkiaEsCanvas`（Skia）/ `AvaloniaCanvas`（Avalonia の `DrawingContext`））。**描画手順はそのまま使える** |
 | **描画手順そのもの** | `ILoupeRenderer`（本層の契約）を実装した型を作り、UI が保持する `Renderer` へ設定する（本層の `LoupeRenderer` を使わなくてもよい） |
 | **色** | `LoupePaint` を変える（`new LoupeRendererMewUI(paint)` / `new LoupeRendererAvaloniaUI(paint)` を UI が保持する `Renderer` へ設定し直す。UI の `Paint` プロパティが本処理を行う） |
-| **寸法・拡大率・表示サイズ** | `LoupeOptions`（`Metrics` が寸法。`CheckerSize` / `FrameWidth` / ラベルの寸法）を変える（コアが単一所有する） |
+| **寸法・拡大率・表示サイズ** | `LoupeOptions`（`CheckerSize` / `FrameWidth` / `RequestedSize` / `ZoomLevel`）を変える（コアが単一所有する） |
 
 ## Core との境界（なぜスケジューリングを Core に置かないか）
 
@@ -113,11 +113,11 @@ protected override void Render(DrawingContext context)
 {
     var canvas = new AvaloniaCanvas(context);
     var request = _loupe.CreateRequest(layout.DisplaySize);  // DIP → 物理 px と描画先のクランプ
-    var notification = _loupe.ResolveNotification(request); // 切り出し領域・スケール・層の順序
+    var content = _loupe.ResolveContent(request);   // 描画内容（層の順序・矩形。コアが計算済み）
     // 自 UI の描画実装（LoupeRenderer~UI）があればそれを使い、差し替えられていればコアの入口を使う
     if (_loupe.Renderer is LoupeRendererAvaloniaUI uiRenderer)
     {
-        uiRenderer.Draw(context, _source, in request, in notification);
+        uiRenderer.Draw(context, _source, in content);
     }
     else
     {

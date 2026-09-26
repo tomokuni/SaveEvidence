@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// <remarks>
 /// <b>なぜ本層（UIBase）が持つか</b>: 色は<b>描画にだけ必要な設定</b>である（コアの計算には一切入らず、<br/>
 /// 「描くかどうか」の判定に使うのはアルファだけ）ため、コア（<c>Feature.LoupeCore</c>）には置かない。<br/>
-/// コアは表示可否と寸法（<c>LoupeMetrics</c>）を持ち、色と描画の体裁は本型が単一所有する。<br/>
+/// コアは表示可否と寸法（<c>LoupeOptions</c>）を持ち、色と描画の体裁は本型が単一所有する。<br/>
 /// <b>ラベルのフォントサイズ・角丸も同じ理由で本型が持つ</b>: ラベルをどの体裁（文字要素 / 画像）で描くかは UI 層の判断であり、<br/>
 /// コアは文言と位置だけを渡す（<c>LoupeTextPlacement</c>）。<br/>
 /// <br/>

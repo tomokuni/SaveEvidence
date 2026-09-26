@@ -116,7 +116,7 @@ public sealed partial class Loupe
     /// 実際の描画面からの導出は描画先を知る UI 層が担う）。本クラスは親領域のサイズを保持しない<br/>
     /// （保持すると「クランプの基準」が暗黙の状態になり、値をいつ解決したかに依存する）。<br/>
     /// DIP → 物理ピクセルの換算と描画先の領域へのクランプは <see cref="LoupeRenderRequest.Create"/> が単一所有する。<br/>
-    /// 描画と通知（<see cref="ResolveNotification"/>）が同じ値を使うため、UI 層は本メソッドの結果を両方へ渡す。
+    /// 描画と描画完了通知が同じ値を使うため、UI 層は本メソッドの結果を両方へ渡す。
     /// </remarks>
     public LoupeRenderRequest CreateRequest(double displaySize, EsSize? availableSize = null)
         => LoupeRenderRequest.Create(CenterPoint, displaySize, RenderScaling, Options, availableSize);
@@ -152,15 +152,4 @@ public sealed partial class Loupe
             coordLabelText,
             coordLabelText is null ? s_layersWithoutLabel : s_layersWithLabel);
     }
-
-    /// <summary>実際に描画した入力から描画完了通知の内容を解決する。</summary>
-    /// <param name="request">実際に描画した描画入力（<see cref="CreateRequest"/> の結果）。</param>
-    /// <returns>切り出し領域の左上とスケール。</returns>
-    /// <remarks>
-    /// 切り出し領域の一辺と左上は <see cref="LoupeRenderRequest"/> が単一所有する（拡大中心が未設定の場合は左上が null）。<br/>
-    /// 描画に使った値を受け取る（本メソッドが DIP から再換算すると、描画先の領域によるクランプで実際の描画と値が食い違うため）。<br/>
-    /// スケールは拡大率と同値である（描画は切り出し領域を拡大率倍で描く）。
-    /// </remarks>
-    public LoupeRenderNotification ResolveNotification(in LoupeRenderRequest request)
-        => new(request.CaptureTopLeft, request.ZoomLevel);
 }

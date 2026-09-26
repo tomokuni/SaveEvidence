@@ -243,7 +243,7 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 - 初期設定（コンストラクタ）: null = CaptureSessionControl.AvaloniaUI のデフォルト値として扱う。
 - 設定適用（Settings の setter）: null = 現在の設定値を維持する（部分更新）。
 
-**反映先**: **寸法・表示可否・対話パラメータ**はコアの設定型（`MarqueeOptions` / `MarqueeDecoOptions` / `LoupeOptions.Metrics`。`FadeMaskDragRectOptionsMapper` が写像）へ、**描画にだけ必要な色**は両 UI が共有する `CaptureSessionControl.UIBase` の設定型（`MarqueePaint` / `LoupePaint`。`CapturePaintMapper` が本設定から組み立てる）へ反映します。
+**反映先**: **寸法・表示可否・対話パラメータ**はコアの設定型（`MarqueeOptions` / `MarqueeDecoOptions` / `LoupeOptions`。`FadeMaskDragRectOptionsMapper` が写像）へ、**描画にだけ必要な色**は両 UI が共有する `CaptureSessionControl.UIBase` の設定型（`MarqueePaint` / `LoupePaint`。`CapturePaintMapper` が本設定から組み立てる）へ反映します。
 
 **キャプチャ動作（3 項目）**:
 

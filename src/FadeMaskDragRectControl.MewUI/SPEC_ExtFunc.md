@@ -65,7 +65,7 @@ Avalonia 版と同一の解釈になります。
 | 項目 | 型 | 説明 |
 | --- | --- | --- |
 | `Marquee` | `MarqueeOptions`（コア） | 選択矩形の設定（寸法・表示可否・対話パラメータ。**色は含まない**） |
-| `Loupe` | `LoupeOptions`（コア） | ルーペの設定（拡大率・表示サイズ・寸法（`LoupeMetrics`）。**色は含まない**） |
+| `Loupe` | `LoupeOptions`（コア） | ルーペの設定（拡大率・表示サイズ・寸法・ラベル表示の可否。**色は含まない**） |
 | `SelectionRectColorA` / `SelectionRectColorB` | `System.Drawing.Color` | ルーペ画像上の選択矩形破線の色（2 色交互。既定は白 / 黒） |
 | `LoupeOffset` | `double` | ルーペの中心からの右下オフセット（DIP。既定は 20） |
 

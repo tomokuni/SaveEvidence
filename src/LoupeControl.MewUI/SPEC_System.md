@@ -46,7 +46,7 @@ Avalonia 版と MewUI 版の間に依存はありません（互いを参照し�
 
 | 層 | 責務 |
 | --- | --- |
-| `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・外枠の矩形計算、市松模様の明暗判定、寸法・表示可否（`LoupeMetrics`）と描画入力（`LoupeRenderRequest`）の単一所有 |
+| `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・外枠の矩形計算、市松模様の明暗判定、寸法・表示可否（`LoupeOptions`）と描画入力（`LoupeRenderRequest`）の単一所有 |
 | `LoupeControl.UIBase` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
 | `LoupeControl.MewUI` | コアの描画入力を描画層（`LoupeRenderer`）へ渡し、描画ポート `SkiaEsCanvas` を適合させる。`MewProperty` による入力の受付。DPI の自動追従 |
 | ホスト（`app.MewUI` 等） | `Source` / `CenterPoint` の設定、表示位置の決定（コアのファサード `ResolveLayout` を利用） |
@@ -103,10 +103,6 @@ classDiagram
         <<Feature.LoupeCore>>
         +int RequestedSize
         +int ZoomLevel
-        +LoupeMetrics Metrics
-    }
-    class LoupeMetrics {
-        <<Feature.LoupeCore>>
         +int CheckerSize
         +int FrameWidth
         +bool ShowCoordLabel
@@ -164,7 +160,6 @@ classDiagram
         +SetCoordinateTransform(port) void
         +ResolveLayout(parentSize) LoupeLayout
         +CreateRequest(displaySize, availableSize) LoupeRenderRequest
-        +ResolveNotification(request) LoupeRenderNotification
         +ResolveContent(request) LoupeDrawContent
     }
     class EsPoint {
@@ -241,7 +236,7 @@ sequenceDiagram
 10. **値の補正と変更ログはプロパティの登録が所有する**。`MewProperty.Register` の `coerce` / `changed` へ渡すため、
    setter を経由しない設定（バインディング等）でも安全域が保たれ、変更が記録される
    （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。規則と書式はコアが単一所有する）。
-設定（`Options`・`Options.Metrics`）の数値項目はコアの型が、描画の設定（`Paint`）の数値項目は描画層の型が生成時に補正するため、コントロールは `coerce` を登録しない（環境値の `RenderScaling` のみ登録する）。
+設定（`Options`・`Options`）の数値項目はコアの型が、描画の設定（`Paint`）の数値項目は描画層の型が生成時に補正するため、コントロールは `coerce` を登録しない（環境値の `RenderScaling` のみ登録する）。
 
 ## テスト方針
 

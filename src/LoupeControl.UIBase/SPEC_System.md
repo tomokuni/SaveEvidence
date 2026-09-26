@@ -9,7 +9,7 @@
 | 目的 | 「どう描くか（描画 API の呼び出し手順）」と「他のコントロールへ組み込むときにだけ必要な規則（再描画のスケジューリング）」を 1 箇所へ集約し、UI の追加・描画方式の変更を描画ポートの実装だけで済ませる |
 | 提供形態 | クラスライブラリ（`LoupeControl.UIBase.dll`） |
 | 想定利用者 | UI 実装（`LoupeControl.AvaloniaUI` / `LoupeControl.MewUI`）・独自コントロールの実装者 |
-| 汎用性 | 特定のアプリ・UI に依存しない。寸法はコア（`LoupeMetrics`）が、色は本層（`LoupePaint`）が単一所有する |
+| 汎用性 | 特定のアプリ・UI に依存しない。設定（寸法・表示可否）はコア（`LoupeOptions`）が、色は本層（`LoupePaint`）が単一所有する |
 
 本層は 2 つの関心事を持ちます。どちらも「単体で使う `Loupe` だけでは決まらない」ため、コア（`Feature.LoupeCore`）には置きません。
 
@@ -61,8 +61,8 @@ sequenceDiagram
 
     UI->>L: CreateRequest(表示サイズ, 描画先のサイズ)
     L-->>UI: LoupeRenderRequest（物理ピクセル・拡大率・寸法）
-    UI->>L: ResolveContent(request) / ResolveNotification(request)
-    L-->>UI: LoupeDrawContent（層の順序・矩形）/ LoupeRenderNotification（切り出し領域・スケール）
+    UI->>L: ResolveContent(request)
+    L-->>UI: LoupeDrawContent（層の順序・矩形）
     UI->>R: DrawShapes(canvas, source, request, content)
     R->>R: Layers の順に下地・市松・拡大画像・十字線・外枠を選択
     R->>C: Clear / FillRect / FillRects / DrawImage
@@ -146,7 +146,7 @@ src/LoupeControl.UIBase/
 
 | 層 | 責務 |
 | --- | --- |
-| `Feature.LoupeCore` | 表示レイアウト・描画入力・通知内容の解決・寸法（`LoupeMetrics`）・ログ定義 |
+| `Feature.LoupeCore` | 表示レイアウト・描画入力・描画内容の解決・設定（`LoupeOptions`）・ログ定義 |
 | **本プロジェクト** | **描画 API の呼び出し手順と色（`LoupePaint`）**・実寸 → ラベル要素の写像・**再描画要求のバッチ化（1 フレーム 1 回）・世代番号管理・古い結果の破棄判定** |
 | `LoupeControl.*UI` | フレームワークの入力・描画・実行キュー（`post`）の提供、ビットマップの生成と解放、ラベル要素の配置 |
 | ホスト | 表示開始・拡大元画像の供給（中心座標ラベルはコントロールがテキスト要素として表示する） |

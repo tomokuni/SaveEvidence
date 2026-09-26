@@ -50,11 +50,34 @@ public sealed record LoupeOptions
         init => field = Loupe.Limits.CoerceZoomLevel(value);
     } = Loupe.Limits.ZoomLevelDefault;
 
-    /// <summary>ルーペの寸法（市松模様のタイル・外枠の太さ・中心座標ラベルの寸法）を取得する。</summary>
-    /// <value>寸法の単一値。既定は <see cref="LoupeMetrics"/> の既定値。</value>
+    /// <summary>市松模様の 1 タイルサイズ（DIP）を取得する。</summary>
+    /// <value>タイルサイズ（DIP）。既定は 6。設定時は 1〜128 へ補正される。</value>
+    /// <remarks>安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。</remarks>
+    public int CheckerSize
+    {
+        get => field;
+        init => field = Loupe.Limits.CoerceCheckerSize(value);
+    } = Loupe.Limits.CheckerSizeDefault;
+
+    /// <summary>外枠の太さ（DIP）を取得する。</summary>
+    /// <value>枠線の太さ（DIP）。既定は 2。設定時は 1〜64 へ補正される。</value>
+    /// <remarks>安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。</remarks>
+    public int FrameWidth
+    {
+        get => field;
+        init => field = Loupe.Limits.CoerceFrameWidth(value);
+    } = Loupe.Limits.FrameWidthDefault;
+
+    /// <summary>中心座標ラベルを表示するかどうかを取得する。</summary>
+    /// <value>true の場合はルーペ上端中央へ中心座標を表示する。既定は true。</value>
+    public bool ShowCoordLabel { get; init; } = true;
+
+    /// <summary>中心座標ラベルを描画するかどうかを判定する。</summary>
+    /// <param name="hasCenterPoint">拡大中心が設定されているかどうか。</param>
+    /// <returns>描画する場合は true。</returns>
     /// <remarks>
-    /// 寸法の値・既定値・数値項目の安全域への補正は <see cref="LoupeMetrics"/> が単一所有する<br/>
-    /// （本型は寸法をそのまま保持する）。色は描画にだけ必要な設定のため本型に含めない（描画の設定が単一所有する）。
+    /// ラベルの文言は中心座標から決まるため、中心が未設定のときは描画しない。<br/>
+    /// 表示可否の判断（設定値と中心の有無の組合せ）を本メソッドが単一所有し、UI 層は判定結果で描画するだけにする。
     /// </remarks>
-    public LoupeMetrics Metrics { get; init; } = new();
+    public bool ShouldShowCoordLabel(bool hasCenterPoint) => ShowCoordLabel && hasCenterPoint;
 }

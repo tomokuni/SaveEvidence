@@ -31,16 +31,16 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// <b>設定</b>: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有する表示サイズ・拡大率・外観）。<br/>
 /// <b>環境</b>: <see cref="RenderScaling"/>（DPI 追従）。<br/>
 /// <b>描画</b>: 中間ビットマップを生成せず、子の図形キャンバス（<see cref="ShapeCanvas"/>）が画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
-/// 数値の安全域への補正は <see cref="LoupeOptions"/> / <see cref="LoupeMetrics"/>（コア）が、描画サイズの決定は<br/>
-/// <see cref="LoupeFacade.CreateRequest"/>（コア）が、外観の寸法値（タイルサイズ・外枠の太さ）と<br/>
-/// 下地の描画可否は <see cref="LoupeMetrics"/>（コア）が単一所有する。<br/>
+/// 数値の安全域への補正は <see cref="LoupeOptions"/>（コア）が、描画サイズの決定は<br/>
+/// <see cref="LoupeFacade.CreateRequest"/>（コア）が、寸法値（タイルサイズ・外枠の太さ）と<br/>
+/// ラベル表示の可否は <see cref="LoupeOptions"/>（コア）が単一所有する。<br/>
 /// <br/>
 /// <b>基底クラス</b>: 図形キャンバスとラベル要素を子として重ねるため <see cref="Panel"/> を採用する。<br/>
 /// 図形キャンバスを先に、ラベル要素を後に子へ加えるため、<b>ラベルは常に最上位</b>の契約が構造で成立する。<br/>
 /// <br/>
 /// <b>ホスト側の操作</b>: <see cref="Source"/> を設定して <see cref="CenterPoint"/> を現在位置へ更新すると、<br/>
 /// ルーペがその位置を拡大表示する（描画はプロパティ変更で自動的に無効化される）。<br/>
-/// <b>座標ラベル</b>: 表示可否は <see cref="LoupeMetrics.ShouldShowCoordLabel"/>（コア）が判断し、<br/>
+/// <b>座標ラベル</b>: 表示可否は <see cref="LoupeOptions.ShouldShowCoordLabel"/>（コア）が判断し、<br/>
 /// 文言・基準点は <see cref="LoupeTextPlacement"/>（コア）が、配置は <see cref="LoupeLabelPlan"/>（描画層）が<br/>
 /// 実寸（<see cref="SkiaText.Measure"/>）から単一所有する（本コントロールは要素を置くだけである）。
 /// </remarks>
@@ -444,7 +444,6 @@ public sealed class LoupeControl : Panel
         var surfaceSize = info.Size.ToEsSize();
         var request = _loupe.CreateRequest(DpiScaler.ToDip(surfaceSize, scaling).Width, surfaceSize);
         var content = _loupe.ResolveContent(request);
-        var notification = _loupe.ResolveNotification(request);
 
         try
         {
@@ -468,6 +467,6 @@ public sealed class LoupeControl : Panel
         }
 
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
-            canvas, request.PixelSize, notification.CaptureTopLeft, notification.Scale));
+            canvas, request.PixelSize, request.CaptureTopLeft, request.ZoomLevel));
     }
 }

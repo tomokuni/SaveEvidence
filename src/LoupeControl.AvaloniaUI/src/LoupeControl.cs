@@ -51,7 +51,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// <b>色指定</b>: 外観の色は UI 非依存の <see cref="System.Drawing.Color"/> として <see cref="Options"/> で受け取り、<br/>
 /// 描画時にブラシへ変換する（色の文字列解析は行わない）。<br/>
 /// 不透明度は色のアルファに統合する（例: 十字線の赤 40% = <c>#66FF0000</c>）。<br/>
-/// 設定（<see cref="Options"/>）と外観（<see cref="LoupeMetrics"/>）の数値項目はコアの型が生成時に安全域へ補正する<br/>
+/// 設定（<see cref="Options"/>）の数値項目はコアの型が生成時に安全域へ補正する<br/>
 /// （UI 側に補正の登録を置かない）。環境値の <see cref="RenderScaling"/> のみ本コントロールが補正（coerce）する。<br/>
 /// <br/>
 /// **公開 API 一覧**:<br/>
@@ -565,18 +565,18 @@ public sealed class LoupeControl : Panel
 
     /// <summary><see cref="Rendered"/> イベントを発火する（描画済み EsBitmap と表示情報を構築して通知）。</summary>
     /// <param name="bitmap">描画済みのルーペ画像（EsBitmap）。ホストがピクセルにオーバーレイを描画できる。</param>
-    /// <param name="notification">コアが解決した通知内容（切り出し領域・スケール）。</param>
+    /// <param name="request">実際に描画した描画入力（切り出し領域の左上と拡大率を持つ）。</param>
     /// <remarks>
-    /// 切り出し領域の左上・スケールはコア（<see cref="LoupeFacade.ResolveNotification"/>）が単一所有する。<br/>
+    /// 切り出し領域の左上・拡大率は描画入力（<see cref="LoupeRenderRequest.CaptureTopLeft"/> / <see cref="LoupeRenderRequest.ZoomLevel"/>）が単一所有する。<br/>
     /// 中心未設定時は <see cref="LoupeRenderedEventArgs.CaptureTopLeft"/> が null になる（オーバーレイ描画不可）。<br/>
     /// <b>中心座標ラベルは本コントロールがテキスト要素として表示する</b>ため、通知に含めない。
     /// </remarks>
-    private void RaiseRendered(EsBitmap bitmap, in LoupeRenderNotification notification)
+    private void RaiseRendered(EsBitmap bitmap, in LoupeRenderRequest request)
     {
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
             bitmap,
-            notification.CaptureTopLeft?.ToAvaloniaPoint(),
-            notification.Scale));
+            request.CaptureTopLeft?.ToAvaloniaPoint(),
+            request.ZoomLevel));
     }
 
     // ====================================================================
@@ -643,7 +643,6 @@ public sealed class LoupeControl : Panel
             // （描画入力の値・単位・換算はコアが単一所有する。開始時に固定しない）
             var request = _loupe.CreateRequest(_loupe.ResolveLayout(ParentAreaSize).DisplaySize);
             var content = _loupe.ResolveContent(request);
-            var notification = _loupe.ResolveNotification(request);
 
             var bitmap = await LoupeRenderPipeline.RenderAsync(_renderer, Source, request, content);
 
@@ -662,7 +661,7 @@ public sealed class LoupeControl : Panel
                     return;
                 }
 
-                SetLoupeBitmap(bitmap, notification);
+                SetLoupeBitmap(bitmap, request);
                 Log.LogGenerateAsyncDone(true, false, visible, generation, current);
             }, DispatcherPriority.Render);
         }
@@ -675,7 +674,7 @@ public sealed class LoupeControl : Panel
 
     /// <summary>生成したルーペビットマップをコントロールへ反映する。</summary>
     /// <param name="bmp">生成したルーペビットマップ（EsBitmap）。</param>
-    /// <param name="notification">コアが解決した通知内容（切り出し領域・スケール）。</param>
+    /// <param name="request">実際に描画した描画入力（切り出し領域の左上と拡大率を持つ）。</param>
     /// <remarks>
     /// 前回のビットマップを破棄し、<see cref="LoupeBitmap"/> と表示内容（画像）を更新する。<br/>
     /// 表示状態（IsVisible）と要素サイズ（Width / Height）は変更しない（サイズは <see cref="UpdatePosition"/> が単一所有する）。<br/>
@@ -686,10 +685,10 @@ public sealed class LoupeControl : Panel
     /// そのため、新しいアダプタを先に <c>Image.Source</c> へ設定し、旧アダプタは後から破棄する<br/>
     /// （描画が参照するアダプタを連続的に保ち、破棄済み Bitmap の参照を防ぐ）。
     /// </remarks>
-    private void SetLoupeBitmap(EsBitmap bmp, in LoupeRenderNotification notification)
+    private void SetLoupeBitmap(EsBitmap bmp, in LoupeRenderRequest request)
     {
         // ホストが EsBitmap のピクセルへオーバーレイ（破線等）を描画するフック。イベント内でピクセルが更新される
-        RaiseRendered(bmp, notification);
+        RaiseRendered(bmp, request);
 
         // イベント後の EsBitmap（ホストのオーバーレイ描画を含む）を表示境界で Avalonia 画像として反映する。
         // EsBitmapAvaloniaImage（Skia 直描画・ゼロコピー）を Source に設定する。

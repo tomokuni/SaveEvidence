@@ -57,7 +57,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ LoupeC
 | 拡大率 / ルーペサイズのスライダー | `Options.ZoomLevel` / `LoupeSize` の変更 |
 | 基本サイズのスライダー | `Options.RequestedSize`（クランプ前の基本サイズ。設定時に `LoupeSize` へ反映） |
 | 色コンボボックス | `Paint`（`CrossColor` / `CheckerColorA/B` / `FrameColor`。「なし」 で描画なし） |
-| タイルサイズ・枠の太さ | `Options.Metrics`（`CheckerSize` / `FrameWidth`） |
+| タイルサイズ・枠の太さ | `Options`（`CheckerSize` / `FrameWidth`） |
 | 描画スケール | `RenderScaling`（DIP→物理ピクセル変換の確認） |
 | 選択矩形オーバーレイ | `SelectionRectVisible` チェック・`SelectionRect`（X / Y / W / H）の編集（ドメイン座標 = 元画像ピクセル）。テスト画像上に破線の枠＋座標ラベルが表示され、ルーペ内にも破線が描画される |
 | Clear() ボタン | `Clear()` を呼び出し、非表示＋Bitmap 解放 |

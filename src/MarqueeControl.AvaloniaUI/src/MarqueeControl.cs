@@ -11,6 +11,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
+using static EsUtil.Feature.MarqueeCore.Marquee.Limits;
 using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
 using EsUtil.Feature.MarqueeCore.Interaction;
@@ -453,9 +454,9 @@ public sealed partial class MarqueeControl : Panel
     // ====================================================================
 
     /// <summary><see cref="Scaling"/> 依存関係プロパティ。</summary>
-    /// <remarks>既定値はコアの <see cref="MarqueeFacade.DefaultScaling"/> を参照する（既定値の二重所有を防ぐ）。</remarks>
+    /// <remarks>既定値はコアの <see cref="ScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。</remarks>
     public static readonly StyledProperty<double> ScalingProperty =
-        AvaloniaProperty.Register<MarqueeControl, double>(nameof(Scaling), MarqueeFacade.DefaultScaling);
+        AvaloniaProperty.Register<MarqueeControl, double>(nameof(Scaling), ScalingDefault);
 
     /// <summary>ドメイン → DIP 変換の基準倍率を取得または設定する。</summary>
     /// <value>ドメイン → DIP 変換の基準倍率。既定は 1.0。</value>

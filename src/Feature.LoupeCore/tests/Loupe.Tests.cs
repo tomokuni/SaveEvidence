@@ -173,8 +173,8 @@ public class LoupeTests
     [Fact]
     public void CreateRequest_表示サイズと設定から描画入力を組み立てる()
     {
-        var appearance = new LoupeMetrics { CheckerSize = 8 };
-        var loupe = new Loupe(new LoupeOptions { RequestedSize = 160, ZoomLevel = 4, Metrics = appearance })
+        var options = LoupeOptions.Default with { RequestedSize = 160, ZoomLevel = 4, CheckerSize = 8 };
+        var loupe = new Loupe(options)
         {
             CenterPoint = new EsPoint(10, 20),
             RenderScaling = 1.5,
@@ -186,7 +186,7 @@ public class LoupeTests
         Assert.Equal(240, request.PixelSize);
         Assert.Equal(4, request.ZoomLevel);
         Assert.Equal(1.5, request.Scaling);
-        Assert.Same(appearance, request.Metrics);
+        Assert.Equal(options, request.Options);
     }
 
     [Fact]
@@ -222,11 +222,11 @@ public class LoupeTests
     }
 
     // ====================================================================
-    // 描画完了通知の内容
+    // 描画入力（切り出し領域・拡大率）
     // ====================================================================
 
     [Fact]
-    public void ResolveNotification_切り出し領域とスケールを返す()
+    public void CreateRequest_切り出しの左上と拡大率を解決する()
     {
         var loupe = new Loupe(new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 })
         {
@@ -234,23 +234,19 @@ public class LoupeTests
         };
         var request = loupe.CreateRequest(160);
 
-        var notification = loupe.ResolveNotification(request);
-
         // 切り出し一辺 = 160 / 4 = 40 のため、左上は中心から 20 引いた位置になる
-        Assert.Equal(new EsPoint(30, 40), notification.CaptureTopLeft);
-        Assert.Equal(4, notification.Scale);
+        Assert.Equal(new EsPoint(30, 40), request.CaptureTopLeft);
+        Assert.Equal(4, request.ZoomLevel);
     }
 
     [Fact]
-    public void ResolveNotification_中心未設定なら切り出し領域を返さない()
+    public void CreateRequest_中心未設定なら切り出し領域を返さない()
     {
         var loupe = new Loupe();
         var request = loupe.CreateRequest(160);
 
-        var notification = loupe.ResolveNotification(request);
-
-        Assert.Null(notification.CaptureTopLeft);
-        Assert.Equal(4, notification.Scale);
+        Assert.Null(request.CaptureTopLeft);
+        Assert.Equal(4, request.ZoomLevel);
     }
 
     [Fact]
@@ -299,26 +295,24 @@ public class LoupeTests
         Assert.Same(first.Layers, second.Layers);
     }
 
-    /// <summary>スケールが切り出しサイズの切り上げ（描画先によるクランプを含む）に影響されないことを検証する。</summary>
+    /// <summary>拡大率が切り出しサイズの切り上げ（描画先によるクランプを含む）に影響されないことを検証する。</summary>
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <remarks>
-    /// 実描画は切り出し領域（切り出しサイズのドメインピクセル）を <c>zoomLevel</c> 倍で描くため、<br/>
-    /// 変換係数は切り出しサイズで割った値（<c>物理ピクセル / 切り出しサイズ</c>）ではなく <c>zoomLevel</c> になる。
+    /// 実描画は切り出し領域（切り出しサイズのドメインピクセル）を <c>ZoomLevel</c> 倍で描くため、<br/>
+    /// 変換係数は切り出しサイズで割った値（<c>物理ピクセル / 切り出しサイズ</c>）ではなく <c>ZoomLevel</c> になる。
     /// </remarks>
     [Theory]
     [InlineData(160)]
     [InlineData(150)]
     [InlineData(200)]
-    public void ResolveNotification_スケールは切り出しサイズの切り上げに影響されない(int pixelSize)
+    public void CreateRequest_拡大率は切り出しサイズの切り上げに影響されない(int pixelSize)
     {
         var loupe = new Loupe(new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
 
-        var notification = loupe.ResolveNotification(loupe.CreateRequest(pixelSize));
-
-        Assert.Equal(4.0, notification.Scale, 6);
+        Assert.Equal(4, loupe.CreateRequest(pixelSize).ZoomLevel);
     }
 
-    /// <summary>スケールが DPI スケーリング係数に依存しないことを検証する。</summary>
+    /// <summary>拡大率が DPI スケーリング係数に依存しないことを検証する。</summary>
     /// <param name="renderScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
     /// <remarks>
     /// 物理ピクセル数は DIP とスケーリングに依存するが、描画の倍率（ドメイン → 描画ピクセル）は変わらない。<br/>
@@ -328,14 +322,12 @@ public class LoupeTests
     [InlineData(1.0)]
     [InlineData(1.25)]
     [InlineData(2.0)]
-    public void ResolveNotification_スケールはDPIスケーリングに依存しない(double renderScaling)
+    public void CreateRequest_拡大率はDPIスケーリングに依存しない(double renderScaling)
     {
         var loupe = new Loupe(new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
         var pixelSize = DpiScaler.ScaleToPixel(160, renderScaling);
 
-        var notification = loupe.ResolveNotification(loupe.CreateRequest(pixelSize));
-
-        Assert.Equal(4.0, notification.Scale, 6);
+        Assert.Equal(4, loupe.CreateRequest(pixelSize).ZoomLevel);
     }
 
     /// <summary>表示レイアウト・描画入力・通知の解決がヒープを確保しないことを検証する。</summary>
@@ -352,7 +344,7 @@ public class LoupeTests
         for (var i = 0; i < 100; i++)
         {
             loupe.ResolveLayout(ParentSize);
-            loupe.ResolveNotification(loupe.CreateRequest(160));
+            loupe.CreateRequest(160);
         }
 
         GC.Collect();
@@ -360,7 +352,7 @@ public class LoupeTests
         for (var i = 0; i < 1000; i++)
         {
             loupe.ResolveLayout(ParentSize);
-            loupe.ResolveNotification(loupe.CreateRequest(160));
+            loupe.CreateRequest(160);
         }
 
         var perCall = (GC.GetAllocatedBytesForCurrentThread() - before) / 1000.0;

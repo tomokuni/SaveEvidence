@@ -64,11 +64,8 @@ public partial class LineCanvasView : UserControl
         {
             RequestedSize = 220,
             ZoomLevel = 4,
-            Metrics = new LoupeMetrics
-            {
-                FrameWidth = 1,
-                ShowCoordLabel = false,
-            },
+            FrameWidth = 1,
+            ShowCoordLabel = false,
         };
         // 色は描画にだけ必要な設定のため、描画の設定（Paint）で指定する（十字線を 20% の赤、外枠をライトグレーにする）
         Loupe.Paint = new LoupePaint

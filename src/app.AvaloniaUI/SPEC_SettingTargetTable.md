@@ -56,7 +56,7 @@ FadeMaskDragRectControl（_selectionOverlay）
 | `ZoomViewControl` | `Background` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観 |
 | `FadeMaskDragRectControl` | `Options`（`FadeMaskDragRectOptions`）/ `MarqueePaint`（`MarqueePaint`）/ `LoupePaint`（`LoupePaint`）/ `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` / `Mode` / `ShowFullOverlay` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | 下位（Marquee（選択の設定） / 装飾（`Deco`） / Loupe）の設定を一括公開（コアの設定値 1 つ）+ 描画にだけ必要な色（描画層の単一値 2 つ）+ DPI スケーリングとラベル文言プロバイダを個別公開 |
 | `MarqueeControl` | `Options`（`MarqueeOptions`。ハンドル寸法・マーカー寸法・サイズラベル・座標ラベルの表示可否・対話パラメータ）/ `DecoOptions`（`MarqueeDecoOptions`。暗転マスク・穴あけ枠の寸法と表示可否）/ `Paint`（`MarqueePaint`。描画にだけ必要な色）/ `Scaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` | `FadeMaskDragRectOptions.Marquee`（選択の設定）と `.Deco`（装飾の寸法・表示可否）からそれぞれ設定（枠線の太さは `Deco.OuterAppearance`、色は `Paint` が単一所有する）。**操作・情報ラベルは本コントロールの概念ではない**ため、ホスト（`FadeMaskDragRectControl`）が `Options.Labels` で描く |
-| `LoupeControl` | `Options`（`LoupeOptions`。表示サイズ・拡大率・寸法（`LoupeMetrics`））/ `Paint`（`LoupePaint`。描画にだけ必要な色）/ `RenderScaling`（DPI 自動取得）/ `PositionOffset` | `FadeMaskDragRectOptions.Loupe` から設定（`RenderScaling` と色を除く） |
+| `LoupeControl` | `Options`（`LoupeOptions`。表示サイズ・拡大率・寸法・中心座標ラベルの表示可否）/ `Paint`（`LoupePaint`。描画にだけ必要な色）/ `RenderScaling`（DPI 自動取得）/ `PositionOffset` | `FadeMaskDragRectOptions.Loupe` から設定（`RenderScaling` と色を除く） |
 | `Platform.AvaloniaUI` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。`Platform.Core` 提供）を提供 |
 
 ### 2.3 反映経路
@@ -129,7 +129,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 ### 3.3 LoupeControl の公開外観と FadeMaskDragRectControl での公開有無
 
-ルーペの**寸法**はコアの `LoupeMetrics` が単一所有し、`LoupeControl` は `Options.Metrics`（`LoupeOptions.Metrics`）として公開します。**色と、ラベルのフォントサイズ・角丸**は描画層の `LoupePaint` が単一所有し、`LoupeControl.Paint` として公開します。
+ルーペの**設定（表示サイズ・拡大率・寸法・中心座標ラベルの表示可否）**はコアの `LoupeOptions` が単一所有し、`LoupeControl` は `Options`（`LoupeOptions`）として公開します。**色と、ラベルのフォントサイズ・角丸**は描画層の `LoupePaint` が単一所有し、`LoupeControl.Paint` として公開します。
 
 | LoupeControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
@@ -138,20 +138,20 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `RenderScaling` | ✅ `LoupeRenderScaling`（個別プロパティ） | —（DPI から自動取得） | DIP → 物理ピクセル倍率 |
 | `Paint.CrossColor` | ✅ `LoupePaint.CrossColor` | ✅ | 十字線色 |
 | `Paint.BackgroundColor` | —（設定なし） | — | 下地（ベース）色。ホスト（`CaptureSessionControl.UIBase` の `CapturePaintMapper`）が透明またはテーマ背景色を設定し、設定画面では設定しない |
-| `Options.Metrics.CheckerSize` | ✅ `Options.Loupe.Metrics.CheckerSize` | ✅ | 市松模様タイルサイズ |
+| `Options.CheckerSize` | ✅ `Options.Loupe.CheckerSize` | ✅ | 市松模様タイルサイズ |
 | `Paint.CheckerColorA` | ✅ `LoupePaint.CheckerColorA` | ✅ | |
 | `Paint.CheckerColorB` | ✅ `LoupePaint.CheckerColorB` | ✅ | |
 | `Paint.FrameColor` | ✅ `LoupePaint.FrameColor` | ✅ | 枠色 |
-| `Options.Metrics.FrameWidth` | ✅ `Options.Loupe.Metrics.FrameWidth` | ✅ | 枠の太さ |
+| `Options.FrameWidth` | ✅ `Options.Loupe.FrameWidth` | ✅ | 枠の太さ |
 | `PositionOffset` | ✅ `Options.LoupeOffset` | ✅ | カーソルからのオフセット（複合コントロール固有の設定） |
-| `Options.Metrics.ShowCoordLabel` | ✅ `Options.Loupe.Metrics.ShowCoordLabel` | ✅ | 座標ラベル表示 |
+| `Options.ShowCoordLabel` | ✅ `Options.Loupe.ShowCoordLabel` | ✅ | 座標ラベル表示 |
 | `Paint.CoordLabelColor` | ✅ `LoupePaint.CoordLabelColor` | ✅ | |
 | `Paint.CoordLabelBackgroundColor` | ✅ `LoupePaint.CoordLabelBackgroundColor` | ✅ | |
 | `Paint.CoordLabelFontSize` | ✅ `LoupePaint.CoordLabelFontSize` | ✅ | |
 | `Paint.CoordLabelCornerRadius` | —（公開しない） | —（設定なし） | ラベル背景の角丸半径（描画層の既定値 2 を使用） |
 | —（破線色） | ✅ `Options.SelectionRectColorA / B` | ✅ | LoupeControl のプロパティではなく、ルーペ描画時（`LoupeRendered`）に破線オーバーレイを描くための色 |
 
-- ルーペの設定も `FadeMaskDragRectControl.Options`（`FadeMaskDragRectOptions`）と `LoupePaint` 経由で公開され、コアの `LoupeOptions` / `LoupeMetrics` と描画層の `LoupePaint` へ組み立てて一括設定される。
+- ルーペの設定も `FadeMaskDragRectControl.Options`（`FadeMaskDragRectOptions`）と `LoupePaint` 経由で公開され、コアの `LoupeOptions` と描画層の `LoupePaint` へ組み立てて一括設定される。
 - `SelectionRectColorA / B` は `LoupeControl` には公開されず、`FadeMaskDragRectControl` がルーペ描画完了時に破線オーバーレイを描画する際に用いる（`Options` から参照）。
 - **例外**: `RenderScaling` は設定（`Options`）の**対象外**の環境値で、`FadeMaskDragRectControl.LoupeRenderScaling`（個別プロパティ）として公開される。DPI スケーリング（`MainWindow.DesktopScaling`）から自動取得するため設定画面では設定不可。
 
@@ -232,7 +232,7 @@ DPI スケーリング（`Scaling` / `LoupeRenderScaling`）は `CaptureSettings
 | スクロール不要時は中央に配置 | `CenterAlign` | `CropView.CenterAlign`（画像配置） |
 | 市松模様 A（色） | `PreviewCheckerColorA` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.Paint.CheckerColorA`（ルーペ） |
 | 市松模様 B（色） | `PreviewCheckerColorB` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.Paint.CheckerColorB`（ルーペ） |
-| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.Options.Metrics.CheckerSize`（ルーペ）。実効値は `ZoomViewAppearance.ResolveCheckerTileSize` が決める（0 以下 = 描かない / 1 は下限 2 へ切り上げ） |
+| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.Options.CheckerSize`（ルーペ）。実効値は `ZoomViewAppearance.ResolveCheckerTileSize` が決める（0 以下 = 描かない / 1 は下限 2 へ切り上げ） |
 
 - 市松模様は「画像設定」の詳細設定で管理し、**プレビュー背景とルーペ背景で同じ設定を共有**する。
 
@@ -272,9 +272,9 @@ DPI スケーリング（`Scaling` / `LoupeRenderScaling`）は `CaptureSettings
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| ルーペの中心座標を表示 | `LoupeShowCoordLabel` | `LoupeControl.Options.Metrics.ShowCoordLabel`（外観設定のラベル設定カテゴリに配置） |
+| ルーペの中心座標を表示 | `LoupeShowCoordLabel` | `LoupeControl.Options.ShowCoordLabel`（外観設定のラベル設定カテゴリに配置） |
 | 枠色 | `LoupeFrameColor` | `LoupeControl.Paint.FrameColor` |
-| 枠の太さ | `LoupeFrameWidth` | `LoupeControl.Options.Metrics.FrameWidth` |
+| 枠の太さ | `LoupeFrameWidth` | `LoupeControl.Options.FrameWidth` |
 | 十字線色（不透明度含む） | `LoupeCrossColor` | `LoupeControl.Paint.CrossColor`（アルファ込みの色） |
 | 選択矩形破線の色A（不透明度含む） | `LoupeSelectionRectColorA` | `FadeMaskDragRectOptions.SelectionRectColorA`（アルファ込み。ルーペの Bitmap へ破線を描く `FadeMaskDragRectControl` が使用） |
 | 選択矩形破線の色B（不透明度含む） | `LoupeSelectionRectColorB` | `FadeMaskDragRectOptions.SelectionRectColorB`（アルファ込み。同上） |

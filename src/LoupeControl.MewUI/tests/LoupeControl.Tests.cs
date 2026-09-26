@@ -31,11 +31,10 @@ public class LoupeControlTests
         Assert.Equal(ZoomLevelDefault, control.Options.ZoomLevel);
         Assert.Equal(RenderScalingDefault, control.RenderScaling);
 
-        // 外観の既定値はコア（LoupeMetrics）が単一所有する（両 UI で同一）
-        Assert.Equal(new LoupeMetrics(), control.Options.Metrics);
-        Assert.Equal(CheckerSizeDefault, control.Options.Metrics.CheckerSize);
-        Assert.Equal(FrameWidthDefault, control.Options.Metrics.FrameWidth);
-        Assert.True(control.Options.Metrics.ShowCoordLabel);
+        // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
+        Assert.Equal(CheckerSizeDefault, control.Options.CheckerSize);
+        Assert.Equal(FrameWidthDefault, control.Options.FrameWidth);
+        Assert.True(control.Options.ShowCoordLabel);
         // 色の既定値は描画の設定が単一所有する
         Assert.Equal(LoupePaint.Default, control.Paint);
     }
@@ -98,16 +97,16 @@ public class LoupeControlTests
     {
         var control = new LoupeControl
         {
-            Options = LoupeOptions.Default with { Metrics = new LoupeMetrics { CheckerSize = 0, FrameWidth = 0 } },
+            Options = LoupeOptions.Default with { CheckerSize = 0, FrameWidth = 0 },
         };
 
-        Assert.Equal(CheckerSizeMin, control.Options.Metrics.CheckerSize);
-        Assert.Equal(FrameWidthMin, control.Options.Metrics.FrameWidth);
+        Assert.Equal(CheckerSizeMin, control.Options.CheckerSize);
+        Assert.Equal(FrameWidthMin, control.Options.FrameWidth);
 
-        control.Options = control.Options with { Metrics = control.Options.Metrics with { CheckerSize = 1000, FrameWidth = 1000 } };
+        control.Options = control.Options with { CheckerSize = 1000, FrameWidth = 1000 };
 
-        Assert.Equal(CheckerSizeMax, control.Options.Metrics.CheckerSize);
-        Assert.Equal(FrameWidthMax, control.Options.Metrics.FrameWidth);
+        Assert.Equal(CheckerSizeMax, control.Options.CheckerSize);
+        Assert.Equal(FrameWidthMax, control.Options.FrameWidth);
     }
 
     /// <summary>要求サイズが <see cref="LoupeOptions.RequestedSize"/> の正方形になることを検証する。</summary>
@@ -190,7 +189,7 @@ public class LoupeControlTests
         {
             Options = LoupeOptions.Default with
             {
-                Metrics = LoupeOptions.Default.Metrics with { ShowCoordLabel = false },
+                ShowCoordLabel = false,
             },
             CenterPoint = new EsPoint(12, 34),
         };
@@ -227,7 +226,8 @@ public class LoupeControlTests
             CenterPoint = new EsPoint(10, 20),
             Options = LoupeOptions.Default with
             {
-                Metrics = new LoupeMetrics { ShowCoordLabel = false, CheckerSize = 4 },
+                ShowCoordLabel = false,
+                CheckerSize = 4,
             },
             Paint = new LoupePaint
             {
@@ -243,8 +243,8 @@ public class LoupeControlTests
         Assert.Equal(new EsPoint(10, 20), control.CenterPoint);
         Assert.Equal(DrawingColor.FromArgb(255, 255, 0, 0), control.Paint.CrossColor);
         Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), control.Paint.CheckerColorB);
-        Assert.False(control.Options.Metrics.ShowCoordLabel);
-        Assert.Equal(4, control.Options.Metrics.CheckerSize);
+        Assert.False(control.Options.ShowCoordLabel);
+        Assert.Equal(4, control.Options.CheckerSize);
         // 色は描画実装へ反映される（描画実装が単一所有する）
         Assert.NotNull(control.Renderer);
     }

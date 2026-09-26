@@ -62,7 +62,7 @@ public sealed partial class Loupe
     /// </remarks>
     private static LoupeTextPlacement? ResolveCoordLabelText(in LoupeRenderRequest request)
     {
-        if (!request.Metrics.ShouldShowCoordLabel(request.Center is not null) || request.Center is not { } center)
+        if (!request.Options.ShouldShowCoordLabel(request.Center is not null) || request.Center is not { } center)
         {
             return null;
         }

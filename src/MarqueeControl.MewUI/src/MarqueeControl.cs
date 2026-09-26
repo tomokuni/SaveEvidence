@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
+using static EsUtil.Feature.MarqueeCore.Marquee.Limits;
 using EsUtil.Platform.Skia;
 using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
@@ -83,10 +84,13 @@ public sealed class MarqueeControl : Panel
         MewProperty<double>.Register<MarqueeControl>(nameof(RenderScaling), DpiScaler.StandardScaling, MewPropertyOptions.AffectsRender);
 
     /// <summary><see cref="Scaling"/> プロパティ（座標変換ポートへ適用する倍率）。</summary>
-    /// <remarks><see cref="SetCoordinateTransform"/> でポートを設定した場合は使用しない（等倍スケール専用の簡易指定）。</remarks>
+    /// <remarks>
+    /// <see cref="SetCoordinateTransform"/> でポートを設定した場合は使用しない（等倍スケール専用の簡易指定）。<br/>
+    /// 既定値はコアの <see cref="ScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。
+    /// </remarks>
     public static readonly MewProperty<double> ScalingProperty =
         MewProperty<double>.Register<MarqueeControl>(
-            nameof(Scaling), MarqueeFacade.DefaultScaling, MewPropertyOptions.AffectsRender,
+            nameof(Scaling), ScalingDefault, MewPropertyOptions.AffectsRender,
             changed: static (owner, _, newValue) => owner._marquee.Scaling = newValue);
 
     /// <summary>コアのファサード（入力の解釈・状態遷移の判断・描画内容の解決・設定の窓口）。</summary>

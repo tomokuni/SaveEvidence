@@ -41,15 +41,12 @@ var loupe = new LoupeControl
 {
     Source = esBitmap,                       // 拡大元の 100% 画像（コアの EsBitmap）
     CenterPoint = new EsPoint(320, 240),     // 拡大中心（元画像ピクセル座標）
-    // 寸法はコアの Options.Metrics（with 式で部分変更する）
+    // 寸法はコアの Options（with 式で部分変更する）
     Options = LoupeOptions.Default with
     {
         RequestedSize = 160,                 // 一辺のサイズ（DIP）
         ZoomLevel = 4,                       // 拡大率
-        Metrics = new LoupeMetrics
-        {
-            FrameWidth = 2,
-        },
+        FrameWidth = 2,                      // 外枠の太さ（DIP）
     },
     // 色は描画の設定（LoupePaint）で指定する
     Paint = LoupePaint.Default with
@@ -92,13 +89,9 @@ if (layout.Position is { } position)
 | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。1〜4096 に補正 |
 | `ZoomLevel` | `int` | 4 | 拡大率。1〜64 に補正 |
-| `Metrics` | `LoupeMetrics` | コアの既定値 | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ）と中心座標ラベルの表示可否。色・フォントサイズ・角丸は含まない（描画層の `LoupePaint` が持つ） |
-
-`Options.Metrics`（コアの `LoupeMetrics`）の項目:
-
-| 項目 | 型 | 既定値 | 説明 |
-| --- | --- | --- | --- |
 | `CheckerSize` | `int` | 6 | 市松模様の 1 タイルサイズ（DIP）。1〜128 に補正 |
+| `FrameWidth` | `int` | 2 | 外枠の太さ（DIP）。1〜64 に補正 |
+| `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
 | `FrameWidth` | `int` | 2 | 外枠の太さ（DIP）。1〜64 に補正 |
 | `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
 
@@ -117,7 +110,7 @@ if (layout.Position is { } position)
 
 `Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
 
-数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、ログの書式と変化判定はコアの `LoupeLogMessage` が単一所有します）。設定（`Options`）と寸法（`Options.Metrics`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `RenderScaling` のみ `coerce` を登録します）。
+数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、ログの書式と変化判定はコアの `LoupeLogMessage` が単一所有します）。設定（`Options`）と寸法（`Options`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `RenderScaling` のみ `coerce` を登録します）。
 
 ## イベント
 

@@ -188,7 +188,7 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `EsUtil.SaveE
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Loupe` | `LoupeOptions`（コア） | ルーペの設定（拡大率・表示サイズ・寸法（`LoupeMetrics`）。**色は含まない**。色は描画層の `LoupePaint` が単一所有する） |
+| `Loupe` | `LoupeOptions`（コア） | ルーペの設定（拡大率・表示サイズ・寸法・ラベル表示の可否。**色は含まない**。色は描画層の `LoupePaint` が単一所有する） |
 | `SelectionRectColorA` | `System.Drawing.Color` | ルーペ画像上の選択矩形破線の色 A（描画開始色） |
 | `SelectionRectColorB` | `System.Drawing.Color` | 選択矩形破線の色 B（色 A と交互に使用） |
 | `LoupeOffset` | `double` | ルーペのカーソル中心からの右下オフセット（DIP） |
@@ -218,7 +218,7 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `EsUtil.SaveE
 - **モードが決めるのは子コントロールの有効・無効と全面暗転のみ**です（暗転マスクの描画内容は外観が決め、文言はホストがプロバイダで与えます）。判断はコアの `FadeMaskDragRectModes.Resolve` が単一所有します。
 
 - ルーペの選択矩形破線はモードに応じて有効になる（`Crop` / `AreaSelect` で有効）。描画の可否はコアの `FadeMaskDragRectState.ShowSelectionOverlay` が単一所有し、描画時に問い合わせる（UI は派生値を保持しない）。描画は `LoupeControl.Rendered` イベントを受けた本コントロール（ホスト側）が行う。
-- 破線の色（`Options.SelectionRectColorA` / `SelectionRectColorB`）と破線の表示可否は、ルーペのプロパティ（`LoupeMetrics` 等）には現れません。したがってこれらが変わった場合（設定の適用・モード変更）は `LoupeControl.RequestRender()` でルーペ Bitmap の再生成を要求します（プロパティ通知では再生成されないため）。選択矩形の変更も破線の内容が変わるため同様に要求します。既存 Bitmap を破線だけ書き換える API は提供しません（再生成して `Rendered` で描き直す方式に統一）。
+- 破線の色（`Options.SelectionRectColorA` / `SelectionRectColorB`）と破線の表示可否は、ルーペの設定（`LoupeOptions`）には現れません。したがってこれらが変わった場合（設定の適用・モード変更）は `LoupeControl.RequestRender()` でルーペ Bitmap の再生成を要求します（プロパティ通知では再生成されないため）。選択矩形の変更も破線の内容が変わるため同様に要求します。既存 Bitmap を破線だけ書き換える API は提供しません（再生成して `Rendered` で描き直す方式に統一）。
 
 ## 8. 配線（内部で完結する状態同期）
 

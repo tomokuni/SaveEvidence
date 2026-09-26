@@ -103,10 +103,10 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `SizeLabelVisible` / `SizeLabelColor` / `TextBackgroundColor` / `SizeLabelFontSize` | サイズラベル（表示可否は選択矩形の設定、フォントサイズと色は描画層の `MarqueePaint` へ反映。**文言はホストが単一所有する**） |
 | `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル。`FadeMaskDragRectLabelOptions`（ホストが描く付加情報ラベルの外観）へ反映） |
 | `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | 操作ラベル（サブライン。`FadeMaskDragRectLabelOptions` へ反映） |
-| `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` / `LoupeCrossColor` / `LoupeFrameColor` / `LoupeFrameThickness` | ルーペ（サイズ・倍率・オフセットは `LoupeOptions`、外枠の太さは `LoupeOptions.Metrics.FrameWidth`、色は描画層の `LoupePaint` へ反映） |
-| `LoupeCheckerSize` / `LoupeCheckerColorA` / `LoupeCheckerColorB` | ルーペの市松模様（タイルサイズは `LoupeOptions.Metrics.CheckerSize`、色は描画層の `LoupePaint` へ反映。下地色はホストが与える） |
+| `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` / `LoupeCrossColor` / `LoupeFrameColor` / `LoupeFrameThickness` | ルーペ（サイズ・倍率・オフセットは `LoupeOptions`、外枠の太さは `LoupeOptions.FrameWidth`、色は描画層の `LoupePaint` へ反映） |
+| `LoupeCheckerSize` / `LoupeCheckerColorA` / `LoupeCheckerColorB` | ルーペの市松模様（タイルサイズは `LoupeOptions.CheckerSize`、色は描画層の `LoupePaint` へ反映。下地色はホストが与える） |
 | `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | ルーペ画像上の選択矩形破線（選択矩形破線の色（`FadeMaskDragRectOptions`）へ反映） |
-| `LoupeShowCoordLabel` / `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | ルーペの中心座標ラベル（表示可否は `LoupeOptions.Metrics`、フォントサイズと色は描画層の `LoupePaint` へ反映） |
+| `LoupeShowCoordLabel` / `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | ルーペの中心座標ラベル（表示可否は `LoupeOptions`、フォントサイズと色は描画層の `LoupePaint` へ反映） |
 
 ### 4.1 適用先
 

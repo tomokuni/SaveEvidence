@@ -320,7 +320,7 @@ public class LoupeRendererTests
     /// <param name="crosshair">十字線の色。</param>
     /// <param name="coordLabel">中心座標ラベルの背景色。</param>
     /// <returns>描画に使う色。</returns>
-    /// <remarks>外枠の太さは寸法（コアの <see cref="LoupeMetrics.FrameWidth"/>）が単一所有するため、ここでは与えない。</remarks>
+    /// <remarks>外枠の太さは寸法（コアの <see cref="LoupeOptions.FrameWidth"/>）が単一所有するため、ここでは与えない。</remarks>
     private static LoupePaint CreatePaint(
         DrawingColor? background = null,
         DrawingColor? checkerA = null,

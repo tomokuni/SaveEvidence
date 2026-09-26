@@ -79,7 +79,6 @@ public sealed class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(ZoomText));
                 OnPropertyChanged(nameof(CoordinateText));
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Metrics));
                 OnPropertyChanged(nameof(Paint));
             }
         }
@@ -98,7 +97,6 @@ public sealed class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(RequestedSizeText));
                 OnPropertyChanged(nameof(CoordinateText));
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Metrics));
                 OnPropertyChanged(nameof(Paint));
             }
         }
@@ -203,7 +201,6 @@ public sealed class MainWindowViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(CheckerSizeText));
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Metrics));
                 OnPropertyChanged(nameof(Paint));
             }
         }
@@ -221,7 +218,6 @@ public sealed class MainWindowViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(FrameWidthText));
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Metrics));
                 OnPropertyChanged(nameof(Paint));
             }
         }
@@ -257,7 +253,6 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _crossColorOption, value))
             {
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Metrics));
                 OnPropertyChanged(nameof(Paint));
             }
         }
@@ -274,7 +269,6 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _checkerColorAOption, value))
             {
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Metrics));
                 OnPropertyChanged(nameof(Paint));
             }
         }
@@ -291,7 +285,6 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _checkerColorBOption, value))
             {
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Metrics));
                 OnPropertyChanged(nameof(Paint));
             }
         }
@@ -308,20 +301,10 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _frameColorOption, value))
             {
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Metrics));
                 OnPropertyChanged(nameof(Paint));
             }
         }
     }
-
-    /// <summary>ルーペの寸法（コアの値）。</summary>
-    /// <value>選択中のサイズから組み立てた寸法。依存するサイズの変更で再評価される。</value>
-    /// <remarks>寸法の既定値・型はコントロール（コアの <see cref="LoupeMetrics"/>）が単一所有する。</remarks>
-    public LoupeMetrics Metrics => new()
-    {
-        CheckerSize = CheckerSize,
-        FrameWidth = FrameWidth,
-    };
 
     /// <summary>ルーペの色（描画にだけ必要な設定）。</summary>
     /// <value>選択中の色から組み立てた色。依存する選択肢の変更で再評価される。</value>
@@ -345,7 +328,8 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         RequestedSize = RequestedSize,
         ZoomLevel = ZoomLevel,
-        Metrics = Metrics,
+        CheckerSize = CheckerSize,
+        FrameWidth = FrameWidth,
     };
 
     /// <summary>色選択肢をコアの色型へ変換する（「なし」はアルファ 0 = 描画しない）。</summary>

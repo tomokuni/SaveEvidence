@@ -11,7 +11,7 @@ public sealed partial class Loupe
         /// <b>ファサードの入れ子である理由</b>: 利用者（UI 実装）はプロパティの既定値と補正を登録するため本値を参照する。<br/>
         /// ファサード（<see cref="Loupe"/>）の入れ子とすることで、UI がファサード以外のコア型を直接呼ぶ経路を作らない<br/>
         /// （利用者はルーペの数値を得るのに <c>Loupe</c> だけを参照すればよい）。<br/>
-        /// <b>規則の所在</b>: 設定値の補正は設定型（<see cref="LoupeOptions"/> / <see cref="LoupeMetrics"/> の生成時の <c>init</c> アクセサ）と<br/>
+        /// <b>規則の所在</b>: 設定値の補正は設定型（<see cref="LoupeOptions"/> の生成時の <c>init</c> アクセサ）と<br/>
         /// ファサードの環境値（<see cref="Loupe.RenderScaling"/> の setter）も本値へ委譲する（補正の規則を二重に持たない）。<br/>
         /// ラベルのフォントサイズの安全域は、他のコントロールと共通の規則のため描画層（<c>LoupeControl.UIBase</c> の <c>LoupePaint</c>）が単一所有する<br/>
         /// （本クラスは既定値を添えて委譲するだけ）。<br/>

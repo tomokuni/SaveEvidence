@@ -143,7 +143,7 @@ tests/
 | `ImageDrawMath`（`Platform.Core`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。`Settings` を参照する側に置く） |
-| `LoupeMetrics` | 設定のルーペ項目をルーペコントロールへ反映（プレビュー / 撮影 / 切り出しで共用） |
+| `LoupeOptions` | 設定のルーペ項目をルーペコントロールへ反映（プレビュー / 撮影 / 切り出しで共用） |
 | `CropBoundsMath`（`CaptureSessionControl.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。Avalonia 版と共用する（`CropSession` が使用） |
 | `CaptureFlow` | キャプチャの開始（ホットキーの連打の防止）と結果の反映（Undo 退避 → プレビュー設定）。排他は Facade（`CaptureSessionControl`）が担う |
 | `EditHistory` | 編集履歴の移動（履歴からの画像の取り出しとプレビューへの差し替え） |
@@ -192,8 +192,8 @@ classDiagram
         +Undo(services)$ void
         +Redo(services)$ void
     }
-    class LoupeMetrics {
-        +Apply(loupe, settings)$ void
+    class LoupeOptions {
+        <<コアの設定値>>
     }
     class SettingsJsonContext {
         <<JsonSerializerContext>>
@@ -297,7 +297,7 @@ classDiagram
     MainViewModelCaptureTarget ..> MainViewModel : CropPreviewCommand
     MainViewModelCaptureTarget ..> ICaptureTarget : 実装
     CropSession ..> FadeMaskDragRectControl : 設定の変換（コアの FadeMaskDragRectOptionsMapper）
-    CapturePage ..> LoupeMetrics : ルーペの外観（プレビューの常時表示）
+    CapturePage ..> LoupeOptions : ルーペの設定（プレビューの常時表示）
     Program ..> SettingsJsonContext : 設定のソース生成
     SettingsService ..> SettingsJsonContext : 型情報の取得
     CaptureFlow ..> CaptureSessionControl : 撮影の実行
@@ -633,7 +633,7 @@ sequenceDiagram
    `Canvas` の絶対配置は反映されない（実測）。また `ActualWidth` / `ActualHeight` は測定結果（残余を埋める
    要素では 0）であり実サイズは配置引数からしか得られないため、位置の決定は配置フェーズで行う（`OverlayHost`）。
 18. **ルーペの外観の反映を 1 箇所に集約する**。ルーペはプレビュー・撮影・切り出しの 3 箇所に登場し、
-   同じ設定を同じ対応で反映する必要がある（`LoupeMetrics`）。
+   同じ設定を同じ対応で反映する必要がある（`LoupeOptions`）。
 19. **履歴の移動を専用クラスへ分離する**。`EditHistory` が「履歴から取り出してプレビューへ差し替える」
    操作を単一所有し、ツールバーのボタンはこれを呼ぶだけにする。
 20. **設定の変更は Facade へ集約する**。設定（切り出しの外観・最小サイズ等）は `CaptureSessionControl.AppearanceSettings`

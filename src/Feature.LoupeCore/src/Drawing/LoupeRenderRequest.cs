@@ -15,8 +15,7 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// <b>役割の分担</b>: ホストが設定する入力（設定値・環境値）は UI の公開プロパティが持ち、本値はそれらから<br/>
 /// 描画 1 フレーム分に必要な形へ<b>解決したスナップショット</b>である（描画層は公開プロパティを読まない）。<br/>
 /// - 表示サイズ（親領域のクランプ結果。<see cref="Loupe.ResolveLayout"/> の DIP）+ `RenderScaling`（環境）→ <see cref="PixelSize"/><br/>
-/// - <see cref="LoupeOptions.ZoomLevel"/>（設定）→ <see cref="ZoomLevel"/>（そのまま）<br/>
-/// - <see cref="LoupeOptions.Metrics"/>（設定）→ <see cref="Metrics"/>（そのまま）<br/>
+/// - <see cref="LoupeOptions"/>（設定）→ <see cref="Options"/>（そのまま。拡大率は <see cref="ZoomLevel"/> として読める）<br/>
 /// 拡大元画像は UI ごとに型が異なるため本値に含めず、<br/>
 /// 描画層が解決した <see cref="EsBitmap"/> を別引数として受け取る（両 UI が同じ手順で本値を組み立てられる）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
@@ -24,13 +23,12 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// <param name="Center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定は null（市松模様のみを描画する）。</param>
 /// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
 /// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。切り上げ・最低 1）。</param>
-/// <param name="ZoomLevel">拡大率（1〜64。1 未満は不可）。</param>
-/// <param name="Metrics">ルーペの寸法（市松模様のタイル・外枠の太さ。色は描画の設定が単一所有する）。</param>
+/// <param name="Options">ルーペの設定（拡大率・寸法。色は描画の設定が単一所有する）。</param>
 /// <param name="Scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
 /// <param name="CheckerSizePixels">市松模様の 1 タイルの一辺（物理ピクセル。換算済み。0 は市松模様を描かない）。</param>
 /// <param name="FrameWidthPixels">外枠の太さ（物理ピクセル。換算済み。0 は外枠を描かない）。</param>
 /// <remarks>
-/// <b>寸法は換算済みの値を保持する</b>: DIP の寸法（<paramref name="Metrics"/>）を描画に使う物理ピクセルへ換算する手順は<br/>
+/// <b>寸法は換算済みの値を保持する</b>: DIP の寸法（<see cref="LoupeOptions.CheckerSize"/> / <see cref="LoupeOptions.FrameWidth"/>）を描画に使う物理ピクセルへ換算する手順は<br/>
 /// コアが単一所有する（描画実装が換算を持たないため、描画側には物理ピクセルの値だけが渡る）。<br/>
 /// <b>表示サイズ（DIP）も保持する</b>: ラベルの位置は DIP で決まるため、描画内容の解決が本値だけで完結する。
 /// </remarks>
@@ -38,12 +36,16 @@ public readonly record struct LoupeRenderRequest(
     EsPoint? Center,
     double DisplaySize,
     int PixelSize,
-    int ZoomLevel,
-    LoupeMetrics Metrics,
+    LoupeOptions Options,
     double Scaling,
     int CheckerSizePixels,
     int FrameWidthPixels)
 {
+    /// <summary>拡大率を取得する。</summary>
+    /// <value>拡大率（1〜64。設定の補正済みの値）。</value>
+    /// <remarks>設定（<see cref="Options"/>）から導出する（同じ真実を 2 つ持たない）。</remarks>
+    public int ZoomLevel => Options.ZoomLevel;
+
     /// <summary>描画先の全領域（ルーペの一辺が作る正方形）を取得する。</summary>
     /// <value>左上を原点（0, 0）とし、幅・高さが <see cref="PixelSize"/> の矩形（物理ピクセル）。</value>
     /// <remarks>
@@ -65,9 +67,10 @@ public readonly record struct LoupeRenderRequest(
     /// <value>切り出し領域の左上（ドメイン座標）。<see cref="Center"/> が未設定の場合は null（描画しない）。</value>
     /// <remarks>
     /// 中心の整数化（<c>(int)</c>）は切り出し（<c>EsBitmap.Crop</c>）と同じ丸めにする<br/>
-    /// （切り出しの実行は描画層が、切り出し領域の通知は本値が行い、同じ矩形を指す必要があるため）。
+    /// （切り出しの実行は描画層が、切り出し領域の通知は本値が行い、同じ矩形を指す必要があるため）。<br/>
+    /// 公開である理由: UI 層が描画完了通知（ホストが描画済み画像へオーバーレイを描くための情報）を組み立てるのに使う。
     /// </remarks>
-    internal EsPoint? CaptureTopLeft => Center is { } center
+    public EsPoint? CaptureTopLeft => Center is { } center
         ? new EsPoint((int)center.X - CaptureSize / 2, (int)center.Y - CaptureSize / 2)
         : null;
 
@@ -109,11 +112,10 @@ public readonly record struct LoupeRenderRequest(
         => new(center,
                displaySize,
                ResolvePixelSize(displaySize, renderScaling, availableSize),
-               options.ZoomLevel,
-               options.Metrics,
+               options,
                renderScaling,
-               LoupeMetricsScaler.ScaleCheckerSize(options.Metrics, renderScaling),
-               LoupeMetricsScaler.ScaleFrameWidth(options.Metrics, renderScaling));
+               LoupeMetricsScaler.ScaleCheckerSize(options.CheckerSize, renderScaling),
+               LoupeMetricsScaler.ScaleFrameWidth(options.FrameWidth, renderScaling));
 
     /// <summary>表示サイズ（DIP）から描画に使う物理ピクセルサイズを求める。</summary>
     /// <param name="size">表示サイズ（DIP・一辺）。</param>

@@ -61,10 +61,10 @@ public sealed partial class Marquee
     internal static MarqueeDrawContent ResolveFrame(in MarqueeRenderRequest request)
     {
         // 座標変換ポートは 1 フレームで 1 回だけ解決する（未指定時は倍率から等倍スケールを生成するため、各項目で解決すると生成と評価が重複する）
-        var port = DecoGeometry.ResolvePort(request.Port, request.Scaling);
+        var port = MarqueeFrameGeometry.ResolvePort(request.Port, request.Scaling);
 
         // 穴あけ矩形も 1 回だけ解決する（外側の装飾・内側の装飾・サイズラベルが同じ矩形を使う）
-        var hole = DecoGeometry.ResolveHoleRectDip(
+        var hole = MarqueeFrameGeometry.ResolveHoleRectDip(
             request.DecoOptions.OuterHighlightRect, request.SelectionRect, port);
 
         var handles = ResolveHandles(request, port);
@@ -214,7 +214,7 @@ public sealed partial class Marquee
             return null;
         }
 
-        var dip = DecoGeometry.ToDipRect(rect, port);
+        var dip = MarqueeFrameGeometry.ToDipRect(rect, port);
         var half = options.HandleSize / 2;
         var rects = new List<EsRect>(SelectionGeometry.DirectionalHandles.Count);
         foreach (var handle in SelectionGeometry.DirectionalHandles)
@@ -292,7 +292,7 @@ public sealed partial class Marquee
     private static string FormatSizeLabel(EsRect dipRect, double scaling, double displayScaling)
     {
         var s = DpiScaler.NormalizeScaling(scaling);
-        var d = ResolveDisplayScale(displayScaling, s);
+        var d = Limits.ResolveDisplayScale(displayScaling, s);
         var left = (int)(dipRect.X * s);
         var top = (int)(dipRect.Y * s);
         var right = (int)(dipRect.Right * s);
@@ -303,14 +303,6 @@ public sealed partial class Marquee
 
         return $"({left}, {top}) - ({right}, {bottom}),  ({width}×{height}), DisplayScale: ({percent}%)";
     }
-
-    /// <summary>表示スケールの係数を解決する（0 以下の場合は座標換算の係数を使う）。</summary>
-    /// <param name="displayScaling">指定された表示スケール。0 以下は未指定として扱う。</param>
-    /// <param name="scaling">座標換算の係数（1.0 未満は 1.0 として扱う）。</param>
-    /// <returns>解決した表示スケール。</returns>
-    /// <remarks>「0 以下は未指定」という規則を単一所有する（UI 層に同じ三項演算を書かせない）。</remarks>
-    private static double ResolveDisplayScale(double displayScaling, double scaling)
-        => displayScaling > 0 ? displayScaling : DpiScaler.NormalizeScaling(scaling);
 
     /// <summary>DIP 矩形をドメイン座標の矩形へ逆換算する（左上と右下の順変換から組む）。</summary>
     /// <param name="dipRect">DIP 座標の矩形。</param>

@@ -31,12 +31,6 @@
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 1〜4096 | 一辺のサイズ（DIP） |
 | `ZoomLevel` | `int` | 4 | 1〜64 | 拡大率（偶数推奨） |
-| `Metrics` | `LoupeMetrics` | コアの既定値 | 下表のとおり | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ）とラベル表示の可否。数値項目を安全域へ補正する。色・フォントサイズ・角丸は含まない（描画層の `LoupePaint` が持つ） |
-
-`Options.Metrics`（コアの `LoupeMetrics`）の項目:
-
-| 項目 | 型 | 既定値 | 安全域（範囲外は自動補正） | 説明 |
-| --- | --- | --- | --- | --- |
 | `CheckerSize` | `int` | 6 | 1〜128 | 市松模様の 1 タイルサイズ（DIP） |
 | `FrameWidth` | `int` | 2 | 1〜64 | 外枠の太さ（DIP） |
 | `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
@@ -67,7 +61,7 @@
 | 2 | 市松模様 | 明色で全面を塗った後、暗色タイルを市松位置へ描画する |
 | 3 | 拡大画像 | `Source` と `CenterPoint` がある場合のみ。切り出し領域の外は透明（下地の市松模様が見える） |
 | 4 | 十字線 | 中央の縦横 2 本（幅は拡大率と同じ物理ピクセル） |
-| 5 | 外枠 | 四辺（`Options.Metrics.FrameWidth` の太さ） |
+| 5 | 外枠 | 四辺（`Options.FrameWidth` の太さ） |
 
 中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（上記の後ろに重なります。文言・表示可否・配置はコア、実寸測定は `SkiaText.Measure`、描画順はコアの `LoupeDrawLayer` が単一所有します）。子要素は親より後に描かれるため、ラベルは常に最上位になります。
 
@@ -82,7 +76,7 @@
 
 ### 座標ラベルの表示条件
 
-`ShowCoordLabel` が `true` かつ `CenterPoint` が設定済みの場合のみ表示します（判断はコアの `LoupeMetrics.ShouldShowCoordLabel` が単一所有する）。ラベルの色は `Paint`（`CoordLabelColor` / `CoordLabelBackgroundColor`）が単一所有します。
+`ShowCoordLabel` が `true` かつ `CenterPoint` が設定済みの場合のみ表示します（判断はコアの `LoupeOptions.ShouldShowCoordLabel` が単一所有する）。ラベルの色は `Paint`（`CoordLabelColor` / `CoordLabelBackgroundColor`）が単一所有します。
 
 ## レイアウト
 
@@ -134,7 +128,7 @@
 
 数値の補正（`coerce`）と変更ログ（`changed`）は**プロパティの登録（`MewProperty.Register`）**へ渡します。したがって setter を経由しない設定（バインディング・`MewObject.SetValue` 相当）でも安全域が保たれ、変更が記録されます（Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約）。
 
-設定（`Options`）と寸法（`Options.Metrics`）の数値項目は**コアの型が生成時に補正**するため、本コントロールは補正を登録しません（値の設定経路（オブジェクト初期化子・`with` 式・逆シリアル化・バインディング）によらず範囲内の値だけが保持されます）。
+設定（`Options`）と寸法（`Options`）の数値項目は**コアの型が生成時に補正**するため、本コントロールは補正を登録しません（値の設定経路（オブジェクト初期化子・`with` 式・逆シリアル化・バインディング）によらず範囲内の値だけが保持されます）。
 
 Avalonia 版の再描画パイプライン（RequestRender / RenderCore / GenerateAsyncDone）に相当する Trace ログは持ちません（MewUI 版は同期描画のため）。
 

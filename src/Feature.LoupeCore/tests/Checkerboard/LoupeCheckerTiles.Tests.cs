@@ -19,7 +19,7 @@ public class LoupeCheckerTilesTests
     /// <returns>解決した描画内容。</returns>
     private static LoupeDrawContent Content(int pixelSize, int tileSize)
         => new Loupe().ResolveContent(
-            new LoupeRenderRequest(null, pixelSize, pixelSize, ZoomLevel: 4, new LoupeMetrics(), 1.0, tileSize, 1));
+            new LoupeRenderRequest(null, pixelSize, pixelSize, LoupeOptions.Default with { ZoomLevel = 4 }, 1.0, tileSize, 1));
 
     /// <summary>列挙子を検証用の一覧へ展開する。</summary>
     /// <param name="tiles">列挙するタイル。</param>

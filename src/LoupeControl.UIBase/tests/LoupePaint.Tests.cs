@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
 
 /// <summary><see cref="LoupePaint"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
-/// 色は描画にだけ必要な設定であり、本層が単一所有する（コアの寸法は <c>LoupeMetrics</c> が持つ）。<br/>
+/// 色は描画にだけ必要な設定であり、本層が単一所有する（コアの寸法は <c>LoupeOptions</c> が持つ）。<br/>
 /// 既定値・描画可否の判定（アルファ 0 は描かない）を検証する。<br/>
 /// 実際の描画結果は <see cref="LoupeRenderer"/> のテストが画素で検証する。
 /// </remarks>

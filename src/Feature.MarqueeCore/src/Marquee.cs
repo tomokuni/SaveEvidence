@@ -64,13 +64,8 @@ public sealed partial class Marquee
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（0 以下は <see cref="Scaling"/> と同値）。</summary>
     private double _displayScaleScaling;
 
-    /// <summary>ポート未指定時に適用する倍率の既定値（ドメイン座標と DIP が 1:1）。</summary>
-    /// <value>1.0（等倍）。</value>
-    /// <remarks>各 UI の依存関係プロパティ（<c>Scaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
-    public const double DefaultScaling = 1.0;
-
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
-    private double _scaling = DefaultScaling;
+    private double _scaling = Limits.ScalingDefault;
 
     /// <summary>サイズラベルの文言プロバイダ（null = 未指定。未指定時はコアが自動生成する）。</summary>
     private Func<string?>? _sizeLabelOverrideProvider;
@@ -175,10 +170,10 @@ public sealed partial class Marquee
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
     /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値。</value>
-    /// <remarks>0 以下を倍率と同値として扱う規則は <see cref="ResolveDisplayScale"/> が単一所有する。</remarks>
+    /// <remarks>0 以下を倍率と同値として扱う規則は <see cref="Limits.ResolveDisplayScale"/> が単一所有する。</remarks>
     public double DisplayScaleScaling
     {
-        get => ResolveDisplayScale(_displayScaleScaling, _scaling);
+        get => Limits.ResolveDisplayScale(_displayScaleScaling, _scaling);
         set => SetAndRedraw(ref _displayScaleScaling, value);
     }
 
