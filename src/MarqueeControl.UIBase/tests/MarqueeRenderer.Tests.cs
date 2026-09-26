@@ -4,6 +4,7 @@ using EsUtil.Feature.MarqueeCore.Decoration;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.MarqueeCore.Drawing;
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;
 

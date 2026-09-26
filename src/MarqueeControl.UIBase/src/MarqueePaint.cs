@@ -1,5 +1,6 @@
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase;

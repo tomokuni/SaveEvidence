@@ -9,6 +9,7 @@ using EsUtil.SaveEvidence.LineDetection.Sample.Models;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using EsUtil.SaveEvidence.CaptureSession;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 

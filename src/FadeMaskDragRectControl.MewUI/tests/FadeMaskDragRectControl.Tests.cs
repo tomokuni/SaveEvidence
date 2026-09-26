@@ -9,6 +9,7 @@ using SkiaSharp;
 using System.Reflection;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI.Tests;
 

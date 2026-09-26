@@ -11,6 +11,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 
@@ -452,17 +453,13 @@ internal sealed class CaptureOverlay
     /// 4. 操作ラベル・情報ラベルの文言をホスト（キャプチャ文脈）がプロバイダで与える（モード別の文言と情報ラベルの表示可否は
     ///    <c>CaptureLabelTexts</c> が単一所有する。表示名はコアの <see cref="CaptureHighlightSession"/> を参照する）。
     /// 5. 表示する矩形の選択（ハイライト型 / ドラッグ型）はコア（<see cref="CaptureTypeTraits.ResolveRect"/>）が単一所有し、
-    ///    未選択時は設定 <see cref="CaptureSettings.SizeLabelOverride"/> に委ねる（Avalonia 版と同じ規則）。
+    ///    サイズラベ ルの文言（書式）もコアが単一所有する（本ホストは表示スケールだけを与える）。
     /// 6. サイズラベルの表示可否はコア（<c>MarqueeOptions.ShowSizeLabel</c>）が単一所有するため本メソッドでは判定しない。
     /// </remarks>
     private void ApplyLabels(CaptureSettings settings)
     {
-        // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）。
-        // DisplayScale は選択位置のモニターの実表示スケールを表示する。
-        // 「確定対象が無ければ設定の明示指定を使う」規則と書式はコアが単一所有する
-        // （矩形は既に画像ピクセルのため、表示倍率は基準値（DIP と 1:1）で渡す）。
-        _selector.SizeLabelOverrideProvider = () => CaptureLabelTexts.ResolveSizeLabel(
-            ResolveSelection(), settings.SizeLabelOverride, DisplayScalingAt);
+        // サイズラベルの文言（書式）はコアが単一所有し、本ホストは矩形を含むモニタの実表示スケール（マルチモニタ補正）だけを提供する。
+        _selector.SizeLabelDisplayScalingProvider = DisplayScalingAt;
 
         // 操作ラベル・情報ラベルの文言はキャプチャコア（CaptureLabelTexts）が単一所有する
         _selector.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(_selector.Mode);

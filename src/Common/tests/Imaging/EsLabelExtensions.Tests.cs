@@ -3,7 +3,7 @@ using EsUtil.SaveEvidence.Common.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.SaveEvidence.Common.Tests;
+namespace EsUtil.SaveEvidence.Common.Tests.Imaging;
 
 /// <summary><see cref="IEsLabel"/> と <see cref="EsLabelExtensions.ToElement"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

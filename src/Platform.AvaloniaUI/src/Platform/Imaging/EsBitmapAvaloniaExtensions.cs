@@ -8,6 +8,7 @@ using EsUtil.Platform.Native.Imaging;
 using SkiaSharp;
 using Color = System.Drawing.Color;
 using AvaloniaColor = Avalonia.Media.Color;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.Platform.AvaloniaUI.Imaging;
 

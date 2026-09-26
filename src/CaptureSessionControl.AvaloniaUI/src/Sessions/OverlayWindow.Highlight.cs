@@ -2,8 +2,10 @@ using Avalonia.Input;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.Platform.AvaloniaUI.Coordinate;
 
-namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
 
 /// <summary>
 /// OverlayWindow のクリック確定フローとハイライト更新（partial 分割）。

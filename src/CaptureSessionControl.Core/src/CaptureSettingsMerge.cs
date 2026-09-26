@@ -65,7 +65,6 @@ public static class CaptureSettingsMerge
             SizeLabelVisible = input.SizeLabelVisible ?? baseline.SizeLabelVisible,
             SizeLabelColor = input.SizeLabelColor ?? baseline.SizeLabelColor,
             SizeLabelFontSize = input.SizeLabelFontSize ?? baseline.SizeLabelFontSize,
-            SizeLabelOverride = input.SizeLabelOverride ?? baseline.SizeLabelOverride,
             TextBackgroundColor = input.TextBackgroundColor ?? baseline.TextBackgroundColor,
             InfoLabelVisible = input.InfoLabelVisible ?? baseline.InfoLabelVisible,
             InfoLabelColor = input.InfoLabelColor ?? baseline.InfoLabelColor,

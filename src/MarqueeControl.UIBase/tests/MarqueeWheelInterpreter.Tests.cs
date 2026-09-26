@@ -3,6 +3,8 @@ using EsUtil.Feature.MarqueeCore;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
+using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Interaction;
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;
 

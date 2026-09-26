@@ -98,7 +98,7 @@ stateDiagram-v2
 | `src/Content/MarqueeFrameRequest.cs` | `MarqueeFrameRequest` | internal | フレー ム解決の入力（設定・状態・描画時に決まる値） |
 | `src/Settings/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は `EsLabelLayout` が単一所有する） |
 | `src/Drawing/MarqueeDrawContent.cs` | `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeCoordLabel` | public | 描画契約 |
-| `src/Drawing/MarqueeSizeLabel.cs` | `MarqueeSizeLabel` | public | サイズラベルの文言（`Format`）と配置 |
+| `src/Drawing/MarqueeSizeLabel.cs` | `MarqueeSizeLabel` | public | サイズラベルの描画契約（文言・基準点・フォントサイズと配置の計算。書式はコアの内部） |
 | `src/Interaction/MarqueeSnapshot.cs` | `MarqueeSnapshot` | public | 状態のスナップショット（`readonly record struct`。値型のため通知でヒープを確保しない） |
 | `src/Interaction/MarqueeNotice.cs` | `MarqueeNotice` / `MarqueeNoticeKind` | public | 通知（`MarqueeNotice` は値型） |
 | `src/Session/MarqueeFeedback.cs` | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeCaptureAction` | internal | 効果（適用順を単一所有。適用先は `IMarqueeEffects`） |
@@ -132,7 +132,7 @@ stateDiagram-v2
 | 装飾の DIP 変換と穴あけ矩形の決定 | `DecoGeometry` |
 | 装飾の描画可否（明示フラグ。透明色を代用にしない） | `MarqueeDecoOptions.ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint`（本コアは色を持つ型を公開しない） |
-| サイズラベルの文言（`Format`）と自動生成 | `MarqueeSizeLabel` / `Marquee.ResolveSizeLabel` |
+| サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveFrame` の `ResolveSizeLabel`（書式は private の `FormatSizeLabel`） |
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。デリゲートを生成しない） |
 | 描画 API の呼び出し（層の順序と写し方、色の参照） | 描画層 `MarqueeControl.UIBase`（`MarqueeRenderer` / `MarqueeRendererBase` 等）。本コアは `IMarqueeRenderer` 経由で委譲する（実装は注入。本コアは描画層を参照しない） |
 | 描画実装の保持と差し替え | `Marquee.Renderer`（同値の再設定では再描画しない規則も本クラスが単一所有する） |

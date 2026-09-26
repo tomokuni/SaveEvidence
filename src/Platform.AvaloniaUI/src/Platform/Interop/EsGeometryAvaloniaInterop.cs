@@ -1,7 +1,7 @@
 using Avalonia;
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Platform.AvaloniaUI;
+namespace EsUtil.Platform.AvaloniaUI.Interop;
 
 /// <summary>コア幾何型と Avalonia の座標型を相互変換する。</summary>
 /// <remarks>

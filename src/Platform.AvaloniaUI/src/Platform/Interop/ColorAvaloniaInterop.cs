@@ -1,7 +1,7 @@
 using Avalonia.Media;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Platform.AvaloniaUI;
+namespace EsUtil.Platform.AvaloniaUI.Interop;
 
 /// <summary>Avalonia の色型とコア色型（<see cref="DrawingColor"/>）を相互変換する。</summary>
 /// <remarks>

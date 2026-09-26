@@ -4,6 +4,7 @@ using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
 

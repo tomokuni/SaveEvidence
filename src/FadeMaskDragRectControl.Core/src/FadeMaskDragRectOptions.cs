@@ -2,6 +2,7 @@ using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.LoupeCore;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 

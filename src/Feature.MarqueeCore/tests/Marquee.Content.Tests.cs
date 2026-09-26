@@ -6,6 +6,8 @@ using EsUtil.Feature.MarqueeCore.Session;
 using Xunit;
 
 using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.MarqueeCore.Drawing;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.Feature.MarqueeCore.Tests;
 
@@ -210,8 +212,38 @@ public class MarqueeContentTests
         // 閉区間 +1 の DIP 矩形 (50, 50, 101, 81) の左上が基準点になる
         Assert.Equal(new EsPoint(50, 50), label.Anchor);
         Assert.Equal(18, label.FontSize);
-        // 文言は矩形から自動生成される
-        Assert.Contains("DisplayScale: (100%)", label.Text, StringComparison.Ordinal);
+        // 文言は矩形から自動生成される（書式はコアの内部に閉じる）
+        Assert.Equal("(50, 50) - (151, 131),  (101×81), DisplayScale: (100%)", label.Text);
+    }
+
+    /// <summary>サイズラベルの書式（座標・寸法と表示倍率）を検証する。</summary>
+    /// <remarks>
+    /// 書式はコアの内部手順であるため、公開契約（描画内容）を通して固定する。<br/>
+    /// 表示スケーリングは座標・寸法の換算にも使う（DIP × スケーリングを整数切り捨てで表示する）。
+    /// </remarks>
+    [Fact]
+    public void ResolveContent_サイズラベルの文言は座標と寸法と表示倍率を並べる()
+    {
+        var session = CreateSession(selection: s_selection);
+
+        var content = ResolveContent(session, displayScale: 1.25);
+
+        // 閉区間 +1 の DIP 矩形 (50, 50, 101, 81) を 1.25 倍して整数へ切り捨てる
+        Assert.Equal("(62, 62) - (188, 163),  (126×101), DisplayScale: (125%)", content.SizeLabel!.Value.Text);
+    }
+
+    /// <summary>表示スケーリングが 0 以下の場合は等倍（100%）として扱うことを検証する。</summary>
+    /// <param name="displayScale">指定する表示スケーリング。</param>
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(-1.0)]
+    public void ResolveContent_サイズラベルの表示スケーリングが0以下なら等倍になる(double displayScale)
+    {
+        var session = CreateSession(selection: s_selection);
+
+        var content = ResolveContent(session, displayScale: displayScale);
+
+        Assert.Contains("DisplayScale: (100%)", content.SizeLabel!.Value.Text, StringComparison.Ordinal);
     }
 
     /// <summary>サイズラベルを表示しない設定では持たないことを検証する。</summary>

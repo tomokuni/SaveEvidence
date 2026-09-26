@@ -20,6 +20,7 @@ using Avalonia.Media.Imaging;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using EsUtil.SaveEvidence.CaptureSession;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Views;
 

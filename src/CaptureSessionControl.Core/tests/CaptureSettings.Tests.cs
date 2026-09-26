@@ -102,7 +102,6 @@ public class CaptureSettingsTests
         Assert.True(s.SizeLabelVisible);
         Assert.True(s.InfoLabelVisible);
         Assert.True(s.ShowSubLines);
-        Assert.Null(s.SizeLabelOverride);
     }
 
     [Fact]

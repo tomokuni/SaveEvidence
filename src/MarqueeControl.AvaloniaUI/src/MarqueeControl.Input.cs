@@ -4,6 +4,8 @@ using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
+using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.Platform.AvaloniaUI.Coordinate;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 

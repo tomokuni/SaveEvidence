@@ -3,6 +3,7 @@ using Avalonia.Platform;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.Platform.AvaloniaUI.Tests;
 

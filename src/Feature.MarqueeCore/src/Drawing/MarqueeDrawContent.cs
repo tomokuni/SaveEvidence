@@ -1,9 +1,10 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 
-namespace EsUtil.Feature.MarqueeCore;
+namespace EsUtil.Feature.MarqueeCore.Drawing;
 
 /// <summary>ドラッグハンドルの描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
 /// <param name="Rects">ハンドルの矩形（DIP。ハンドル 8 方向の位置と大きさをコアが解決済み）。</param>

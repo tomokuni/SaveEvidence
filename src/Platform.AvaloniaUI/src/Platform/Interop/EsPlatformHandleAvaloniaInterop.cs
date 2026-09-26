@@ -1,7 +1,7 @@
 using Avalonia.Platform;
 using EsUtil.Platform.Core;
 
-namespace EsUtil.Platform.AvaloniaUI;
+namespace EsUtil.Platform.AvaloniaUI.Interop;
 
 /// <summary>Avalonia のネイティブハンドルをコアの <see cref="EsPlatformHandle"/> へ変換する。</summary>
 /// <remarks>

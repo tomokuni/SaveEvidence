@@ -1,4 +1,4 @@
-namespace EsUtil.Feature.MarqueeCore;
+namespace EsUtil.Feature.MarqueeCore.Interaction;
 
 /// <summary>操作位置に対応するカーソル形状の種別（UI 非依存）。</summary>
 /// <remarks>

@@ -3,6 +3,7 @@ using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.SaveEvidence.CaptureSession;
 

@@ -31,7 +31,7 @@
 | --- | --- |
 | 対象 | `Platform.AvaloniaUI` |
 | プロジェクト | `Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj` |
-| 名前空間 | `EsUtil.Platform.AvaloniaUI`（画像アダプタは `EsUtil.Platform.AvaloniaUI.Imaging`） |
+| 名前空間 | `EsUtil.Platform.AvaloniaUI`（画像アダプタは `.Imaging`、相互変換は `.Interop`、ラベル要素は `.Labels`、座標変換は `.Coordinate`） |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要設計パターン | Adapter（コア型 ⇔ Avalonia 型の適合）/ 拡張メソッドによる Interop |

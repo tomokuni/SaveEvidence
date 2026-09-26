@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.Platform.Core.Tests.Geometry;
 
 /// <summary><see cref="EsSizeInt"/> の単体テスト（整数のサイズと空の判定・DIP サイズへの変換）。</summary>
 /// <remarks>UI 初期化が不要な純粋な値型のため、<c>[Fact]</c> で並列実行される。</remarks>

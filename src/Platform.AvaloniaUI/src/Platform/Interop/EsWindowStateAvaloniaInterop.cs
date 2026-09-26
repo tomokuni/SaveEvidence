@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
 using AvaloniaWindowState = Avalonia.Controls.WindowState;
 
-namespace EsUtil.Platform.AvaloniaUI;
+namespace EsUtil.Platform.AvaloniaUI.Interop;
 
 /// <summary>UI フレームワーク非依存の <see cref="EsWindowState"/> と Avalonia の <see cref="AvaloniaWindowState"/> を相互変換する。</summary>
 /// <remarks>

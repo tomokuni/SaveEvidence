@@ -1,4 +1,4 @@
-namespace EsUtil.Feature.MarqueeCore;
+namespace EsUtil.Feature.MarqueeCore.Interaction;
 
 /// <summary>ドラッグハンドルの種別。</summary>
 /// <remarks>

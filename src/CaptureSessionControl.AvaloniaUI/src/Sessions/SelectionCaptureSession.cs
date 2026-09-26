@@ -6,8 +6,9 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
-namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
 
 /// <summary>選択キャプチャセッション（背景キャプチャ → オーバーレイ表示 → 結果取得）を管理する。</summary>
 /// <remarks>

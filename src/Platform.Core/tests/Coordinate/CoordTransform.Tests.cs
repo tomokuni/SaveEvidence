@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.Platform.Core.Tests.Coordinate;
 
 /// <summary><see cref="CoordTransform"/> の合成・スクロール・ファクトリの単体テスト。</summary>
 /// <remarks>

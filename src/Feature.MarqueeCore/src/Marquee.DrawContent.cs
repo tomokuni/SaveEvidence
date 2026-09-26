@@ -3,6 +3,8 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Selection;
+using EsUtil.Feature.MarqueeCore.Drawing;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.Feature.MarqueeCore;
 
@@ -71,7 +73,7 @@ public sealed partial class Marquee
 
         var handles = ResolveHandles(request, port);
         var marker = ResolveMarker(request, port);
-        var sizeLabel = ResolveSizeLabel(request, hole);
+        var sizeLabel = ResolveSizeLabel(request, hole, port);
         var coordLabel = ResolveCoordLabel(request, port);
 
         return new MarqueeDrawContent(
@@ -254,27 +256,81 @@ public sealed partial class Marquee
     /// <summary>サイズラベルの描画内容を解決する。</summary>
     /// <param name="request">描画入力。</param>
     /// <param name="hole">穴あけ矩形（DIP）。選択もハイライトも無い場合は null。</param>
+    /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
     /// <returns>サイズラベルの描画内容。非表示の設定または穴あけ矩形なしの場合は null。</returns>
     /// <remarks>
     /// 基準点は穴あけ矩形の左上である（装飾と同じ規則で決まる）。<br/>
-    /// 文言はプロバイダ優先であり、未指定・空文字の場合はコアが矩形から自動生成する。<br/>
-    /// 自動生成の 2 つの係数は、どちらも本コントロールがホストから受け取った表示スケーリングを使う<br/>
-    /// （ホストが文言プロバイダを与える場合は <see cref="MarqueeSizeLabel.Format"/> を自前で呼び分けられる）。<br/>
+    /// 文言はプロバイダ優先であり、未指定・空文字の場合はコアが矩形から自動生成する<br/>
+    /// （書式はコアが単一所有し、描画層・ホストは文言を作らない）。<br/>
+    /// 座標の換算は <see cref="MarqueeFrameRequest.DisplayScaleScaling"/> を使い、<br/>
+    /// DisplayScale の百分率だけを <see cref="MarqueeFrameRequest.SizeLabelDisplayScalingProvider"/> で矩形ごとに差し替えられる<br/>
+    /// （マルチモニタで表示スケールが矩形の位置によって異なる場合、ホストが矩形からモニタのスケールを解決する）。<br/>
     /// 色は描画の設定（<c>MarqueePaint</c>）が単一所有する。
     /// </remarks>
-    private static MarqueeSizeLabel? ResolveSizeLabel(in MarqueeFrameRequest request, EsRect? hole)
+    private static MarqueeSizeLabel? ResolveSizeLabel(
+        in MarqueeFrameRequest request, EsRect? hole, ICoordTransform port)
     {
         if (!request.Options.ShowSizeLabel || hole is not { } holeRect)
         {
             return null;
         }
 
+        var displayScaling = request.SizeLabelDisplayScalingProvider is { } scalingProvider
+            ? scalingProvider(ToDomainRect(holeRect, port))
+            : request.DisplayScaleScaling;
+
         var overrideText = request.SizeLabelOverrideProvider?.Invoke();
         var text = string.IsNullOrEmpty(overrideText)
-            ? MarqueeSizeLabel.Format(holeRect, request.DisplayScaleScaling, request.DisplayScaleScaling)
+            ? FormatSizeLabel(holeRect, request.DisplayScaleScaling, displayScaling)
             : overrideText;
 
         return new MarqueeSizeLabel(text, holeRect.TopLeft, request.Options.SizeLabelFontSize);
+    }
+
+    /// <summary>サイズラベルの書式（文言）を生成する。</summary>
+    /// <param name="dipRect">対象の矩形（DIP）。</param>
+    /// <param name="scaling">座標・サイズを物理ピクセルへ換算する係数（0 以下は 100% として扱う）。</param>
+    /// <param name="displayScaling">DisplayScale の百分率に使う係数（0 以下は <paramref name="scaling"/> を使う）。</param>
+    /// <returns><c>"(L, T) - (R, B),  (W×H), DisplayScale: (P%)"</c> 形式の文言。</returns>
+    /// <remarks>
+    /// 書式はコアの内部に閉じる（ホスト・描画層は文言を作らない）。<br/>
+    /// 座標・サイズは物理ピクセル（<c>DIP × scaling</c> の整数切り捨て）で表示する。<br/>
+    /// 値がドメイン座標（画像ピクセル）の場合は <paramref name="scaling"/> に等倍を渡す（百分率だけを実表示スケールで表示する）。
+    /// </remarks>
+    private static string FormatSizeLabel(EsRect dipRect, double scaling, double displayScaling)
+    {
+        var s = DpiScaler.NormalizeScaling(scaling);
+        var d = ResolveDisplayScale(displayScaling, s);
+        var left = (int)(dipRect.X * s);
+        var top = (int)(dipRect.Y * s);
+        var right = (int)(dipRect.Right * s);
+        var bottom = (int)(dipRect.Bottom * s);
+        var width = (int)(dipRect.Width * s);
+        var height = (int)(dipRect.Height * s);
+        var percent = (int)(d * 100);
+
+        return $"({left}, {top}) - ({right}, {bottom}),  ({width}×{height}), DisplayScale: ({percent}%)";
+    }
+
+    /// <summary>表示スケールの係数を解決する（0 以下の場合は座標換算の係数を使う）。</summary>
+    /// <param name="displayScaling">指定された表示スケール。0 以下は未指定として扱う。</param>
+    /// <param name="scaling">座標換算の係数（1.0 未満は 1.0 として扱う）。</param>
+    /// <returns>解決した表示スケール。</returns>
+    /// <remarks>「0 以下は未指定」という規則を単一所有する（UI 層に同じ三項演算を書かせない）。</remarks>
+    private static double ResolveDisplayScale(double displayScaling, double scaling)
+        => displayScaling > 0 ? displayScaling : DpiScaler.NormalizeScaling(scaling);
+
+    /// <summary>DIP 矩形をドメイン座標の矩形へ逆換算する（左上と右下の順変換から組む）。</summary>
+    /// <param name="dipRect">DIP 座標の矩形。</param>
+    /// <param name="port">座標変換ポート（順変換 = DIP → ドメイン）。</param>
+    /// <returns>ドメイン座標の矩形。</returns>
+    /// <remarks>ホストが「矩形から表示スケールを解決する」ために使う（コアはモニタを知らない）。</remarks>
+    private static EsRect ToDomainRect(EsRect dipRect, ICoordTransform port)
+    {
+        var topLeft = port.Forward(dipRect.TopLeft);
+        var bottomRight = port.Forward(dipRect.BottomRight);
+
+        return new EsRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 
     /// <summary>カーソル座標ラベルの描画内容を解決する。</summary>

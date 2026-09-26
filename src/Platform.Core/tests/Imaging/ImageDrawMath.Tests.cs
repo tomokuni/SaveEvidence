@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.Platform.Core.Tests.Imaging;
 
 /// <summary><see cref="ImageDrawMath"/> の単体テスト（Uniform 収め・Fill・空の扱い）。</summary>
 /// <remarks>

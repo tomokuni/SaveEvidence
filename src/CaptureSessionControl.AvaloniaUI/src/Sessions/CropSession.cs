@@ -13,8 +13,9 @@ using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using Microsoft.Extensions.Logging;
 
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
-namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
 
 /// <summary>切出し（Crop）セッション（CropViewControl のライフサイクル管理と確定・キャンセル処理）。</summary>
 /// <remarks>

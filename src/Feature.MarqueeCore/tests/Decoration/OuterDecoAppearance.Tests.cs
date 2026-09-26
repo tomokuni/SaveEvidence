@@ -1,8 +1,9 @@
 using Xunit;
 
 using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.MarqueeCore.Settings;
 
-namespace EsUtil.Feature.MarqueeCore.Tests;
+namespace EsUtil.Feature.MarqueeCore.Tests.Decoration;
 
 /// <summary><see cref="OuterDecoAppearance"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

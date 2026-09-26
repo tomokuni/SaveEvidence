@@ -13,6 +13,7 @@ using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using EsUtil.Platform.Skia;
+using EsUtil.Feature.MarqueeCore.Drawing;
 
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
@@ -235,13 +236,24 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>サイズラベルの文言を描画時に評価するデリゲートを取得または設定する。</summary>
     /// <value>描画時に呼び出される関数。null または空文字を返す場合はサイズラベルを描画しない。</value>
     /// <remarks>
-    /// ホストは最新の選択状態から文言を生成するクロージャを設定する（例: コアの
-    /// <c>MarqueeSizeLabel.Format</c> で選択矩形を整形する）。
+    /// ホストは最新の選択状態から文言を生成するクロージャを設定する（設定しない場合はコアが矩形から自動生成する）。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
     {
         get => _marquee.SizeLabelOverrideProvider;
         set => _marquee.SizeLabelOverrideProvider = value;
+    }
+
+    /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
+    /// <value>描画時に呼び出される関数（引数はドメイン座標の矩形）。null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
+    /// <remarks>
+    /// ホストは最新の選択状態からモニタの実表示スケールを解決するクロージャを設定する（例: 矩形を含むモニタのスケール）。<br/>
+    /// 文言（書式）はコアが単一所有するため、ホストは数値だけを与える。設定時は選択矩形コントロールへ伝搬し、再描画を要求する。
+    /// </remarks>
+    public Func<EsRect, double>? SizeLabelDisplayScalingProvider
+    {
+        get => _marquee.SizeLabelDisplayScalingProvider;
+        set => _marquee.SizeLabelDisplayScalingProvider = value;
     }
 
     /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）を取得または設定する。</summary>

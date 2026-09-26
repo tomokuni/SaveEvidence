@@ -35,7 +35,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 | 項目 | 内容 |
 | --- | --- |
 | **プロジェクト** | `Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj` |
-| **ルート名前空間** | `EsUtil.Platform.AvaloniaUI`（画像アダプタは `EsUtil.Platform.AvaloniaUI.Imaging`） |
+| **ルート名前空間** | `EsUtil.Platform.AvaloniaUI`（画像アダプタは `.Imaging`、相互変換は `.Interop`、ラベル要素は `.Labels`、座標変換は `.Coordinate`） |
 | **言語** | C# 14（.NET 10.0） |
 | **UI フレームワーク** | Avalonia UI 12.1（Bitmap / PixelPoint / PixelRect / TopLevel 等の標準型） |
 | **ターゲットフレームワーク** | net10.0 |

@@ -10,7 +10,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
+namespace EsUtil.SaveEvidence.CaptureSession.MewUI.Sessions;
 
 /// <summary>プレビュー画像の切り出し（Crop）セッション（MewUI 版）。</summary>
 /// <remarks>

@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.Platform.Core.Tests.Coordinate;
 
 /// <summary>
 /// <see cref="ScrollMath"/>（スクロールバーの幾何計算・純粋関数）の回帰テスト。

@@ -3,7 +3,7 @@ using EsUtil.SaveEvidence.Common.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.SaveEvidence.Common.Tests;
+namespace EsUtil.SaveEvidence.Common.Tests.Imaging;
 
 /// <summary><see cref="EsLabelElement"/> のテスト（コアの配置から UI 要素の配置指示への写像）。</summary>
 /// <remarks>

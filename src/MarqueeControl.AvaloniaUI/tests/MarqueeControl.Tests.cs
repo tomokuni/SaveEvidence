@@ -16,6 +16,10 @@ using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Xunit;
+using EsUtil.Feature.MarqueeCore.Interaction;
+using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.Platform.AvaloniaUI.Coordinate;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI.Tests;
 

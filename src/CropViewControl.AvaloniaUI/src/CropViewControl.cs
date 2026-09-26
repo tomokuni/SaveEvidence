@@ -14,6 +14,7 @@ using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.CropView.AvaloniaUI;
 

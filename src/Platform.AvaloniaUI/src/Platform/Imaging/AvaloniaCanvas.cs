@@ -5,6 +5,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 
 namespace EsUtil.Platform.AvaloniaUI.Imaging;

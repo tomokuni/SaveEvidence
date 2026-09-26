@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.AvaloniaUI.Interop;
 using Xunit;
 
 namespace EsUtil.Platform.AvaloniaUI.Tests;

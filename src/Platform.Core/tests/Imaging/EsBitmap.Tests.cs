@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.Platform.Core.Tests.Imaging;
 
 /// <summary>
 /// <see cref="EsBitmap"/> の単体テスト。

@@ -1,6 +1,7 @@
 using EsUtil.Feature.MarqueeCore.Selection;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
+using EsUtil.Feature.MarqueeCore.Interaction;
 
 namespace EsUtil.Feature.MarqueeCore.Tests;
 

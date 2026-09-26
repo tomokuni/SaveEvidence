@@ -4,8 +4,9 @@ using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
-namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
 
 /// <summary>
 /// OverlayWindow の確定・切り出し・キャンセル・ライフサイクル処理（partial 分割）。

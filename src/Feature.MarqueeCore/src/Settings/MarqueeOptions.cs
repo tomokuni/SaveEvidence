@@ -1,7 +1,7 @@
 using EsUtil.SaveEvidence.Common.Imaging;
 
 
-namespace EsUtil.Feature.MarqueeCore;
+namespace EsUtil.Feature.MarqueeCore.Settings;
 
 /// <summary>選択矩形コントロールの設定（外観・対話パラメータ）をまとめた不変の値オブジェクト。</summary>
 /// <remarks>

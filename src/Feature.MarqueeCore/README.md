@@ -124,7 +124,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | --- | --- | --- |
 | 装飾の設定（寸法・描画可否・ハイライト・内側） | `Decoration` の `MarqueeDecoOptions` | 枠線の太さ（`OuterAppearance` / `InnerAppearance`）・描画可否の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）・ハイライト矩形 |
 | 装飾の描画内容と描画の可否の判断 | `Marquee.ResolveFrame`（`ResolveOuterDecoration` / `ResolveInnerDecoration`） | 暗転領域・枠線矩形・塗り矩形（可否は `MarqueeDecoOptions` の明示フラグ。**アルファ 0 を「描かない」の代用にしない**）。**穴あけ矩形は 1 回だけ解決して外側・内側・サイズラベルへ同じ値を渡す** |
-| サイズラベル（穴あけ矩形の位置と寸法） | `MarqueeSizeLabel` / `MarqueeOptions`（本コア） | 文言（`Format`）・フォントサイズ・基準点（穴あけ矩形の左上・DIP）。体裁は `EsLabelLayout`、色は `MarqueePaint`（描画層）が単一所有する |
+| サイズラベル（穴あけ矩形の位置と寸法） | `MarqueeSizeLabel` / `MarqueeOptions`（本コア） | 文言（コアが矩形から生成し、書式は内部に閉じる）・フォントサイズ・基準点（穴あけ矩形の左上・DIP）。体裁は `EsLabelLayout`、色は `MarqueePaint`（描画層）が単一所有する |
 | カーソル座標ラベル | `MarqueeCoordLabel` / `MarqueeOptions`（本コア） | 文言 （`EsPoint.Format`）・配置（`ComputeFrame`）。要素への写像は `IEsLabel.ToElement`（Platform.Core）、色は `MarqueePaint`（描画層）が単一所有する |
 | 装飾・ハンドル・マーカー・ラベルの色 | `MarqueePaint`（描画層 `MarqueeControl.UIBase`） | `OverlayColor` / `OuterBorderColor` / `InnerFillColor` / `InnerBorderColor` / `HandleColor` / `HandleBorderColor` / `MarkerColor` / `SizeLabelColor` / `SizeLabelBackgroundColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` |
 | 操作ラベル・情報ラベル | **ホスト**（アプリ固有の付加情報） | 文言の生成と描画。コアは表示可否も含めて関知しない |
@@ -270,7 +270,7 @@ tests/
 ├── MarqueeState.Tests.cs            # 状態遷移・ヒットテスト・ドラッグ・nudge・境界クリップ（31 件）
 ├── MarqueeFeedback.Tests.cs         # 効果の適用（カーソル操作・表示上の効果の順序）（6 件）
 ├── MarqueeSession.Tests.cs          # 入力の解釈・通知・効果・設定の反映・カーソル再表示の要求（50 件）
-├── MarqueeSizeLabel.Tests.cs        # サイズラベルの文言（Format）・配置・要素への写像・行送り（11 件）
+├── MarqueeSizeLabel.Tests.cs        # サイズラベルの配置・要素への写像・行送り（6 件）
 ├── MarqueeCoordLabel.Tests.cs       # カーソル座標ラベルの配置（オフセット・クランプ・余白）（6 件）
 ├── MarqueeOptions.Tests.cs          # 既定値・部分変更・値補正・等価性（22 件）
 ├── Marquee.Content.Tests.cs         # 描画内容の解決（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・描画可否・層の順序）（46 件）

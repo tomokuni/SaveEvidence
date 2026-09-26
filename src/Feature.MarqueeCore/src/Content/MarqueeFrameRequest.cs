@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.Feature.MarqueeCore.Content;
 
@@ -15,8 +16,9 @@ namespace EsUtil.Feature.MarqueeCore.Content;
 /// <param name="Scaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
 /// <param name="SizeLabelOverrideProvider">サイズラベルの文言プロバイダ。null 可（未指定・空文字の場合は自動生成する）。</param>
 /// <param name="DisplayScaleScaling">サイズラベルの自動生成に使う表示スケーリング（0 以下は等倍）。</param>
+/// <param name="SizeLabelDisplayScalingProvider">サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ（引数はドメイン座標の矩形）。null 可（その場合は <paramref name="DisplayScaleScaling"/> を使う）。</param>
 /// <remarks>
-/// 設定と状態の単一値（<see cref="Options"/> / <see cref="DecoOptions"/>）に、描画時にしか決まらない値<br/>
+/// 設定と状態の単一値（<see cref="Options"/> / <see cref="DecoOptions"/>）に、 描画時にしか決まらない値<br/>
 /// （描画領域のサイズ・座標変換ポート・倍率・文言プロバイダ）を加えたものである。<br/>
 /// <b>可視性</b>: UI 実装は <see cref="Marquee.ResolveContent"/> を呼ぶため、本値は内部契約とする。
 /// </remarks>
@@ -31,4 +33,5 @@ internal readonly record struct MarqueeFrameRequest(
     ICoordTransform? Port,
     double Scaling,
     Func<string?>? SizeLabelOverrideProvider,
-    double DisplayScaleScaling);
+    double DisplayScaleScaling,
+    Func<EsRect, double>? SizeLabelDisplayScalingProvider = null);

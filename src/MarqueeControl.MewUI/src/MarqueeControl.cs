@@ -15,6 +15,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 using EsUtil.Platform.Skia;
+using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Drawing;
+using EsUtil.Feature.MarqueeCore.Interaction;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 
 
@@ -318,6 +322,23 @@ public sealed class MarqueeControl : Panel
         set
         {
             _marquee.SizeLabelOverrideProvider = value;
+            InvalidateVisual();
+        }
+    }
+
+    /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
+    /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
+    /// <remarks>
+    /// マルチモニタでモニタごとに表示スケールが異なる場合、ホストは矩形からモニタを判定してそのスケールを返す。<br/>
+    /// 文言（書式）はコアが単一所有するため、ホストは数値だけを与える。<br/>
+    /// 保持と再描画の要求はコア（<see cref="MarqueeFacade.SizeLabelDisplayScalingProvider"/>）が単一所有する。
+    /// </remarks>
+    public Func<EsRect, double>? SizeLabelDisplayScalingProvider
+    {
+        get => _marquee.SizeLabelDisplayScalingProvider;
+        set
+        {
+            _marquee.SizeLabelDisplayScalingProvider = value;
             InvalidateVisual();
         }
     }

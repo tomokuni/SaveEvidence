@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.MarqueeCore.Drawing;
 
 
 namespace EsUtil.Feature.MarqueeCore.Tests;
@@ -80,60 +81,4 @@ public class MarqueeSizeLabelTests
         // サイズラベルの背景は四角形である（角丸なし）
         Assert.Equal(0, element.CornerRadius);
     }
-
-    // ====================================================================
-    // Format（文言の書式）
-    // ====================================================================
-
-    [Fact]
-    public void Format_座標と寸法と表示倍率を並べる()
-    {
-        var text = MarqueeSizeLabel.Format(new EsRect(10, 20, 30, 40), scaling: 1.0, displayScaling: 1.0);
-
-        Assert.Equal("(10, 20) - (40, 60),  (30×40), DisplayScale: (100%)", text);
-    }
-
-    [Fact]
-    public void Format_座標と寸法は換算係数を掛けた整数になる()
-    {
-        // 125% 表示: (10, 20) - (40, 60) / 30x40 → 12, 25, 50, 75 / 37, 50
-        var text = MarqueeSizeLabel.Format(new EsRect(10, 20, 30, 40), scaling: 1.25, displayScaling: 1.25);
-
-        Assert.Equal("(12, 25) - (50, 75),  (37×50), DisplayScale: (125%)", text);
-    }
-
-    [Fact]
-    public void Format_表示倍率だけを別の係数にできる()
-    {
-        // 座標は画像ピクセルのまま（1.0）、表示倍率だけ 150% を示す
-        var text = MarqueeSizeLabel.Format(new EsRect(10, 20, 30, 40), scaling: 1.0, displayScaling: 1.5);
-
-        Assert.Equal("(10, 20) - (40, 60),  (30×40), DisplayScale: (150%)", text);
-    }
-
-    [Theory]
-    [InlineData(0.0)]
-    [InlineData(-1.0)]
-    public void Format_換算係数が0以下なら等倍として扱う(double scaling)
-    {
-        var text = MarqueeSizeLabel.Format(new EsRect(10, 20, 30, 40), scaling, displayScaling: 0.0);
-
-        Assert.Equal("(10, 20) - (40, 60),  (30×40), DisplayScale: (100%)", text);
-    }
-
-    // ====================================================================
-    // ResolveDisplayScaling（0 以下は未指定）
-    // ====================================================================
-
-    [Fact]
-    public void ResolveDisplayScaling_0以下は座標換算の係数を使う()
-    {
-        Assert.Equal(1.25, MarqueeSizeLabel.ResolveDisplayScaling(0, 1.25));
-        Assert.Equal(1.25, MarqueeSizeLabel.ResolveDisplayScaling(-1, 1.25));
-        Assert.Equal(2.0, MarqueeSizeLabel.ResolveDisplayScaling(2.0, 1.25));
-    }
-
-    [Fact]
-    public void ResolveDisplayScaling_両方0以下なら等倍になる()
-        => Assert.Equal(1.0, MarqueeSizeLabel.ResolveDisplayScaling(0, 0));
 }

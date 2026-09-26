@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.MarqueeCore;
+namespace EsUtil.Feature.MarqueeCore.Interaction;
 
 /// <summary>コア（状態層）から UI 層へ伝える通知の種別。</summary>
 /// <remarks>

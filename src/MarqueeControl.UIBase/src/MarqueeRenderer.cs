@@ -2,6 +2,8 @@ using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Selection;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Drawing;
 
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase;

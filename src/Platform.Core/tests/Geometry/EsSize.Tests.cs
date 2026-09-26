@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.Platform.Core.Tests.Geometry;
 
 /// <summary><see cref="EsSize"/> の領域判定とクランプのテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

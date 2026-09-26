@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 
 namespace EsUtil.Platform.AvaloniaUI.Labels;

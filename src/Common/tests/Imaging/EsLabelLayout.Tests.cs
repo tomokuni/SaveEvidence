@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Common.Imaging;
 using Xunit;
 
-namespace EsUtil.SaveEvidence.Common.Tests;
+namespace EsUtil.SaveEvidence.Common.Tests.Imaging;
 
 /// <summary><see cref="EsLabelLayout"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
 using AvaloniaKey = Avalonia.Input.Key;
 
-namespace EsUtil.Platform.AvaloniaUI;
+namespace EsUtil.Platform.AvaloniaUI.Interop;
 
 /// <summary>UI フレームワーク非依存の <see cref="EsKey"/> と Avalonia の <see cref="AvaloniaKey"/> を相互変換する。</summary>
 /// <remarks>

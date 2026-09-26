@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.Platform.Core.Tests.Imaging;
 
 /// <summary><see cref="DrawingColorExtensions"/> の純粋計算テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>「アルファ 0 は描かない」の判定を固定する（RGB は判定に使わない）。</remarks>

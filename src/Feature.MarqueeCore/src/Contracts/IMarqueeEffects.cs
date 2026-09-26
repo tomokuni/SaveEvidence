@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.MarqueeCore.Interaction;
 
-namespace EsUtil.Feature.MarqueeCore;
+namespace EsUtil.Feature.MarqueeCore.Contracts;
 
 /// <summary>Marquee が UI 層へ要求する効果（フォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換）を適用する窓口。</summary>
 /// <remarks>

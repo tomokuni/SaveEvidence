@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.MarqueeCore.Drawing;
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;
 

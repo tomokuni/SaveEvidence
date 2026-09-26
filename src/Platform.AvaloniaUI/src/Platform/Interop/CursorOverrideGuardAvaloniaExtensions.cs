@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using EsUtil.Platform.Core;
 
-namespace EsUtil.Platform.AvaloniaUI;
+namespace EsUtil.Platform.AvaloniaUI.Interop;
 
 /// <summary><see cref="ICursorOverrideGuard"/> の Avalonia 向け拡張。</summary>
 /// <remarks>

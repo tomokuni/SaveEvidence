@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests;
+namespace EsUtil.Platform.Core.Tests.Coordinate;
 
 /// <summary><see cref="CoordMath"/> の単体テスト（座標変換の純粋計算）。</summary>
 public class CoordinateMathTests

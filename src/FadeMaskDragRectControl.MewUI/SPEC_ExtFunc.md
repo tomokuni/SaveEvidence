@@ -124,7 +124,7 @@ Avalonia 版と同一の解釈になります。
 - ルーペは拡大元画像（`SetLoupeSource`）と中心（`SetLoupePosition`）の両方が設定された場合のみ表示します。
   親領域の外へはみ出す場合は内側へクランプします。
 - ルーペ画像上の選択矩形破線は、選択矩形を使うモード（`Crop` / `AreaSelect`）でのみ描画します（破線の幾何はコアの `FadeMaskDragRectOverlay` が、描画の可否はコアの `FadeMaskDragRectState.ShowSelectionOverlay` が単一所有する）。選択矩形を変更した場合はルーペの再描画を要求します（破線はルーペのプロパティに現れないため）。
-- サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（指定しない場合の既定の文言はコアの `MarqueeSizeLabel.Format` が単一所有する）。
+- サイズラベルの文言は本コントロールが自動生成しません。ホストが `SizeLabelOverrideProvider` で与えます（指定しない場合の既定の文言はコアが矩形から生成し、書式はコアの内部に閉じる）。
 - サイズラベルとカーソル座標ラベルは選択矩形コントロールが**テキスト要素（`Border` + `TextBlock`）として配置**します（実寸から配置矩形を求める写像は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan.Resolve` が単一所有する）。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Options.Labels` の外観に従って文言を生成し、描画は UIBase の `FadeMaskHostLabelRenderer` が行います（積み上げの位置と表示可否も同層が単一所有する）。
 
 ## 9. Avalonia 版との違い

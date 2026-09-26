@@ -1,4 +1,4 @@
-namespace EsUtil.Feature.MarqueeCore;
+namespace EsUtil.Feature.MarqueeCore.Drawing;
 
 /// <summary>選択矩形の UI 層が処理する層（描画順の契約）。</summary>
 /// <remarks>

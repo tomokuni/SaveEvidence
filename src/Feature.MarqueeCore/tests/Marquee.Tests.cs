@@ -3,6 +3,9 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Interaction;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.Feature.MarqueeCore.Tests;
 
@@ -345,6 +348,32 @@ public class MarqueeTests
 
         Assert.Equal(2.0, marquee.Scaling);
         Assert.Equal(1, effects.RedrawCount);
+    }
+
+    /// <summary>表示スケーリングが 0 以下の場合は倍率と同値になることを検証する。</summary>
+    /// <param name="displayScale">指定する表示スケーリング。</param>
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(-1.0)]
+    public void DisplayScaleScaling_0以下は倍率と同値になる(double displayScale)
+    {
+        var marquee = CreateMarquee(null, out _);
+        marquee.Scaling = 1.25;
+
+        marquee.DisplayScaleScaling = displayScale;
+
+        Assert.Equal(1.25, marquee.DisplayScaleScaling);
+    }
+
+    [Fact]
+    public void DisplayScaleScaling_正の値はそのまま保持する()
+    {
+        var marquee = CreateMarquee(null, out _);
+        marquee.Scaling = 1.25;
+
+        marquee.DisplayScaleScaling = 2.0;
+
+        Assert.Equal(2.0, marquee.DisplayScaleScaling);
     }
 
     // ====================================================================

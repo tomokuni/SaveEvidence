@@ -5,6 +5,8 @@ using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Session;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using EsUtil.Feature.MarqueeCore.Interaction;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.Feature.MarqueeCore.Tests;
 

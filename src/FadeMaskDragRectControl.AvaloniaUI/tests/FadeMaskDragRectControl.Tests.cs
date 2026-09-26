@@ -18,6 +18,8 @@ using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
+using EsUtil.Feature.MarqueeCore.Settings;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 

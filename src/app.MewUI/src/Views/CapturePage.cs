@@ -19,6 +19,7 @@ using EsUtil.SaveEvidence.MewUI.Icons;
 using EsUtil.SaveEvidence.MewUI.Logging;
 using EsUtil.SaveEvidence.MewUI.Services;
 using MewUIColor = Aprillz.MewUI.Color;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.SaveEvidence.MewUI.Views;
 

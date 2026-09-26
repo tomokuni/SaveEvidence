@@ -8,8 +8,9 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using Microsoft.Extensions.Logging;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
-namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
+namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
 
 /// <summary>画面キャプチャ用の切り取りオーバーレイウィンドウ（UI 部品）。</summary>
 /// <remarks>
@@ -179,11 +180,9 @@ internal sealed partial class OverlayWindow : Window
         SelectionOverlay.Scaling = _scaling;
         SelectionOverlay.DisplayScaleScaling = _scaling;
         SelectionOverlay.LoupeRenderScaling = s.LoupeRenderScaling!.Value;
-        // サイズラベル: 選択中の矩形（ドメイン = 画面物理 − Position）と、そのモニタの実スケーリングから
-        // 描画時に直接生成する（物理ピクセルはスケーリングに依存しない。DIP 換算の往復誤差を排除）。
-        // 書式と「確定対象が無ければホスト指定の文言を使う」規則はコアが単一所有する。
-        SelectionOverlay.SizeLabelOverrideProvider = () => CaptureLabelTexts.ResolveSizeLabel(
-            ResolveTargetRect(), s.SizeLabelOverride, GetMonitorScalingForRect);
+        // サイズラベル: 文言（書式）はコアが単一所有し、本ホストは矩形を含むモニタの実スケール（マルチモニタ補正）だけを提供する。
+        // ドメインはウィンドウローカル物理ピクセルのため、コアは DIP × スケーリングで物理ピクセルへ換算する（DIP 換算の往復誤差を排除）。
+        SelectionOverlay.SizeLabelDisplayScalingProvider = GetMonitorScalingForRect;
         // 操作ラベル・情報ラベルの文言はホスト（キャプチャ文脈）が与える（汎用コアは文言を持たない）。
         // モード別の文言と情報ラベルの表示可否は CaptureLabelTexts が単一所有し、
         // 情報ラベルに出すウィンドウタイトルはハイライト状態（コアが単一所有する）を参照する。

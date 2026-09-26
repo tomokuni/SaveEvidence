@@ -6,6 +6,10 @@ using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Session;
 using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.MarqueeCore.Contracts;
+using EsUtil.Feature.MarqueeCore.Drawing;
+using EsUtil.Feature.MarqueeCore.Interaction;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 
 namespace EsUtil.Feature.MarqueeCore;
@@ -74,6 +78,9 @@ public sealed partial class Marquee
 
     /// <summary>サイズラベルの文言プロバイダ（null = 未指定。未指定時はコアが自動生成する）。</summary>
     private Func<string?>? _sizeLabelOverrideProvider;
+
+    /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ（null = 未指定。未指定時は表示スケーリングを使う）。</summary>
+    private Func<EsRect, double>? _sizeLabelDisplayScalingProvider;
 
     /// <summary>ファサードを初期化する。</summary>
     /// <param name="renderer">描画の実装（既定実装は描画層の <c>MarqueeRenderer</c>。色はインスタンス状態として渡す）。null 不可。</param>
@@ -178,12 +185,26 @@ public sealed partial class Marquee
         set => SetAndRedraw(ref _sizeLabelOverrideProvider, value);
     }
 
+    /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ。</summary>
+    /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
+    /// <remarks>
+    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
+    /// マルチモニタでモニタごとに表示スケールが異なる場合、ホストは矩形からモニタを判定してそのスケールを返す<br/>
+    /// （コアはモニタを知らないため、この判定はホストが担う）。<br/>
+    /// <b>文言はコアが作る</b>: ホストは数値（スケール）だけを与え、書式はコアが単一所有する。
+    /// </remarks>
+    public Func<EsRect, double>? SizeLabelDisplayScalingProvider
+    {
+        get => _sizeLabelDisplayScalingProvider;
+        set => SetAndRedraw(ref _sizeLabelDisplayScalingProvider, value);
+    }
+
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
     /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値。</value>
-    /// <remarks>0 以下を倍率と同値として扱う規則は <see cref="MarqueeSizeLabel.ResolveDisplayScaling"/> が単一所有する。</remarks>
+    /// <remarks>0 以下を倍率と同値として扱う規則は <see cref="ResolveDisplayScale"/> が単一所有する。</remarks>
     public double DisplayScaleScaling
     {
-        get => MarqueeSizeLabel.ResolveDisplayScaling(_displayScaleScaling, _scaling);
+        get => ResolveDisplayScale(_displayScaleScaling, _scaling);
         set => SetAndRedraw(ref _displayScaleScaling, value);
     }
 
@@ -326,7 +347,8 @@ public sealed partial class Marquee
             _coordinatePort,
             _scaling,
             SizeLabelOverrideProvider,
-            DisplayScaleScaling));
+            DisplayScaleScaling,
+            SizeLabelDisplayScalingProvider));
 
     /// <summary>解決済みの描画内容を描画面へ描く（描画起動の唯一の入口）。</summary>
     /// <param name="canvas">描画先の描画ポート（UI 層が自 UI の描画面を適合させて渡す）。null 不可。</param>

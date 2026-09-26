@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using EsUtil.Platform.Core;
 using Xunit;
 using Avalonia.Headless.XUnit;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.Platform.AvaloniaUI.Tests;
 

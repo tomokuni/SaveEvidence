@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using System.Globalization;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;

@@ -2,8 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.AvaloniaUI.Interop;
 
-namespace EsUtil.Platform.AvaloniaUI;
+namespace EsUtil.Platform.AvaloniaUI.Coordinate;
 
 /// <summary>コントロールローカル DIP と画面物理座標の変換を提供するヘルパー。</summary>
 /// <remarks>

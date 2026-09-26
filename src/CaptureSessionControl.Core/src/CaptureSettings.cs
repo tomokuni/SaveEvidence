@@ -1,4 +1,5 @@
 using System.Drawing;
+using EsUtil.Feature.MarqueeCore.Settings;
 
 namespace EsUtil.SaveEvidence.CaptureSession;
 
@@ -37,7 +38,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <param name="SizeLabelVisible">サイズラベルの表示状態。</param>
 /// <param name="SizeLabelColor">サイズラベルの文字色。</param>
 /// <param name="SizeLabelFontSize">サイズラベルのフォントサイズ。</param>
-/// <param name="SizeLabelOverride">サイズラベルのテキスト明示指定（FadeMaskDragRectControl.SizeLabelOverrideProvider。null = 自動生成）。</param>
+
 /// <param name="TextBackgroundColor">サイズラベル（1 行目）の背景色（不透明度は色のアルファに統合）。</param>
 /// <param name="InfoLabelVisible">情報ラベルの表示状態。</param>
 /// <param name="InfoLabelColor">情報ラベルの文字色。</param>
@@ -90,7 +91,6 @@ public sealed record CaptureSettings(
     bool? SizeLabelVisible = null,
     Color? SizeLabelColor = null,
     double? SizeLabelFontSize = null,
-    string? SizeLabelOverride = null,
     Color? TextBackgroundColor = null,
     bool? InfoLabelVisible = null,
     Color? InfoLabelColor = null,
@@ -159,7 +159,6 @@ public sealed record CaptureSettings(
             SizeLabelVisible: SizeLabelVisible ?? true,
             SizeLabelColor: SizeLabelColor ?? Color.White,
             SizeLabelFontSize: SizeLabelFontSize ?? 14.0,
-            SizeLabelOverride: SizeLabelOverride,
             TextBackgroundColor: TextBackgroundColor ?? Color.FromArgb(153, 0, 0, 0),
             InfoLabelVisible: InfoLabelVisible ?? true,
             InfoLabelColor: InfoLabelColor ?? Color.White,

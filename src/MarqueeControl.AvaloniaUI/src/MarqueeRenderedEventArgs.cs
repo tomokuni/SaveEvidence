@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using EsUtil.Feature.MarqueeCore;
+using EsUtil.Feature.MarqueeCore.Drawing;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
