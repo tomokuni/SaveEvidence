@@ -5,7 +5,6 @@ using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Session;
 using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
 using EsUtil.Feature.MarqueeCore.Interaction;
@@ -25,17 +24,18 @@ namespace EsUtil.Feature.MarqueeCore;
 /// - セッション（入力の解釈と状態遷移の判断）の生成と保持<br/>
 /// - 環境値の保持（座標変換ポート・倍率）と、ポート未指定時に倍率を使う規則の適用<br/>
 /// - 効果（フォーカス・カーソル操作・カーソル形状・ポインターキャプチャ・再描画）の適用<br/>
-/// - 1 フレーム分の描画内容の解決（描くかどうかの判断）と、描画実装（<see cref="IMarqueeRenderer"/>）の保持<br/>
+/// - 1 フレーム分の描画内容の解決（描くかどうかの判断）<br/>
 /// <br/>
-/// <b>本クラスが持つもの</b>: 選択の判断・状態・描画内容（選択矩形・装飾・ラベル）と描画順の契約、<br/>
+/// <b>本クラスが持つもの</b>: 選択の判断・状態・描画内容（選択矩形・装飾・ラベル）と描画順のデータ、<br/>
 /// 装飾の設定の保持、ラベルの文言プロバイダの保持。<br/>
+/// <br/>
+/// <b>描画は本コアの関心事ではない</b>: 本コアは描画 API も描画面も知らない（<see cref="MarqueeDrawContent"/> と<br/>
+/// その <see cref="MarqueeDrawContent.Layers"/> というデータを返すだけである）。描画は UI 層が行い、<br/>
+/// 層の順序に従った描画手順は UI 側の共有層（<c>MarqueeControl.UIBase</c> の <c>MarqueeRendererBase</c>）が単一所有する。<br/>
 /// <br/>
 /// <b>UI 層の責務</b>: 入力イベントの受付と座標変換（<see cref="ToDomain"/> / <see cref="ToDip"/>）、<br/>
 /// <see cref="IMarqueeEffects"/> の実装、通知（<see cref="Notified"/>）の公開イベントへの転送、<br/>
-/// 返された描画内容の反映（図形は <see cref="Renderer"/> へ委譲、文字はテキスト要素の配置）。<b>描画順はコアの指示に従う</b>。<br/>
-/// <br/>
-/// <b>描画の差し替え</b>: 描画は <see cref="IMarqueeRenderer"/> の実装へ委譲する（<see cref="Renderer"/> で差し替え可能）。<br/>
-/// コアは描画層を参照しないため、実装は注入で受け取る（コンストラクタで必須）。<br/>
+/// 返された描画内容の反映（図形は描画実装へ委譲、文字はテキスト要素の配置）。<b>描画順はコアの指示に従う</b>。<br/>
 /// <br/>
 /// <b>依存分離</b>: UI 非依存のコア型（<see cref="EsPoint"/> / <see cref="EsRect"/> / <see cref="EsKey"/>）と<br/>
 /// 抽象（<see cref="ICursorService"/> / <see cref="ICoordTransform"/> / <see cref="IMarqueeEffects"/>）にのみ依存する。<br/>
@@ -45,9 +45,6 @@ public sealed partial class Marquee
 {
     /// <summary>入力の解釈と状態遷移の判断を担うセッション（コア内部の状態機械）。</summary>
     private readonly MarqueeSession _session;
-
-    /// <summary>描画内容を描画面へ写す描画実装（既定は描画層の <c>MarqueeRenderer</c>。色はインスタンス状態として渡す）。</summary>
-    private IMarqueeRenderer _renderer;
 
     /// <summary>効果（フォーカス・再描画・カーソル操作）の適用先（UI 層が実装する）。</summary>
     private readonly IMarqueeEffects _effects;
@@ -83,21 +80,17 @@ public sealed partial class Marquee
     private Func<EsRect, double>? _sizeLabelDisplayScalingProvider;
 
     /// <summary>ファサードを初期化する。</summary>
-    /// <param name="renderer">描画の実装（既定実装は描画層の <c>MarqueeRenderer</c>。色はインスタンス状態として渡す）。null 不可。</param>
     /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。null 不可。</param>
     /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
-    /// <exception cref="ArgumentNullException"><paramref name="renderer"/> または <paramref name="effects"/> が null の場合。</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="effects"/> が null の場合。</exception>
     public Marquee(
-        IMarqueeRenderer renderer,
         IMarqueeEffects effects,
         ICursorService? cursor = null,
         MarqueeOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(renderer);
         ArgumentNullException.ThrowIfNull(effects);
 
-        _renderer = renderer;
         _effects = effects;
         _cursor = cursor;
         _session = new MarqueeSession(options ?? MarqueeOptions.Default);
@@ -107,24 +100,6 @@ public sealed partial class Marquee
     /// <summary>上位（UI 層）へ伝える通知。UI 層は自 UI の公開イベントへ転送する。</summary>
     /// <remarks>通知の種別と公開イベントの対応は UI 層が持ち、判断（確定・キャンセル等）は本クラスが済ませている。</remarks>
     public event EventHandler<MarqueeNotice>? Notified;
-
-    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。</summary>
-    /// <value>現在の描画実装。既定は <see cref="IMarqueeRenderer"/> の既定実装。</value>
-    /// <remarks>
-    /// 設定すると再描画を要求する（同値の再設定では何も起こらない）。<br/>
-    /// 描画先（<see cref="IEsCanvas"/> の実装）と描画手順（本プロパティ）の両方を差し替えできる。<br/>
-    /// null は受け付けない（設定の有無で描画可否が変わると、UI の描画経路に分岐が生まれるため）。
-    /// </remarks>
-    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
-    public IMarqueeRenderer Renderer
-    {
-        get => _renderer;
-        set
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            SetAndRedraw(ref _renderer, value);
-        }
-    }
 
     /// <summary>ロガー。null を設定した場合は出力なし。</summary>
     /// <value>注入されたロガー。null 可（null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> へフォールバックする）。</value>
@@ -349,25 +324,6 @@ public sealed partial class Marquee
             SizeLabelOverrideProvider,
             DisplayScaleScaling,
             SizeLabelDisplayScalingProvider));
-
-    /// <summary>解決済みの描画内容を描画面へ描く（描画起動の唯一の入口）。</summary>
-    /// <param name="canvas">描画先の描画ポート（UI 層が自 UI の描画面を適合させて渡す）。null 不可。</param>
-    /// <param name="content">描く内容（同じフレームの <see cref="ResolveContent"/> の結果）。</param>
-    /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
-    /// <remarks>
-    /// <b>描画は本メソッドを通してのみ起動する</b>: UI 層が <see cref="Renderer"/> を直接呼ぶと、<br/>
-    /// 描画実装の差し替え（<see cref="Renderer"/> の設定）と描画内容の単一所有が二重経路になる。<br/>
-    /// 本メソッドを経由させることで、描画の起動・順序（<see cref="MarqueeRendererBase.DrawShapes"/>）・<br/>
-    /// 差し替えのすべてがコアの単一所有になる。<br/>
-    /// <b>描画面の寿命と消去は UI 層が所有する</b>（前フレームの残像の除去は本メソッドでは行わない）。<br/>
-    /// 描画内容を引数で受け取る（本メソッドが <see cref="ResolveContent"/> を呼び直すと 1 フレームで解決が 2 回走る）。
-    /// </remarks>
-    public void Draw(IEsCanvas canvas, in MarqueeDrawContent content)
-    {
-        ArgumentNullException.ThrowIfNull(canvas);
-
-        _renderer.DrawShapes(canvas, content);
-    }
 
     // ====================================================================
     // 内部ヘルパー

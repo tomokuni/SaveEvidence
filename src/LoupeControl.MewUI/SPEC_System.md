@@ -31,7 +31,7 @@
 ```text
 UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> LoupeControl.UIBase   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
+    ├──> LoupeControl.UIBase   どう描くか（UIBase の ILoupeRenderer を実装する）
     ├──> LoupeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            ├──> Common（IEsCanvas・IEsRectWalker）
@@ -68,7 +68,7 @@ src/LoupeControl.MewUI/
 | コンポーネント | 責務 |
 | --- | --- |
 | `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。描画は描画層（`LoupeRenderer`）を `SkiaEsCanvas` 経由で呼ぶ（描画の順序と内容は描画層が単一所有し、コアは描く層とその順序を指示する） |
-| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画ポートへ写す（コアの描画内容 `LoupeDrawContent`（層の順序・矩形・タイル）と、拡大画像の切り出しに使う `LoupeRenderRequest` をそのまま使用）。**色は `LoupePaint` が単一所有する**（コントロールの `Paint` プロパティの値を受け取る）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
+| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画ポートへ写す（コアの描画内容 `LoupeDrawContent`（層の順序・矩形・タイル・拡大画像の切り出しと描画の矩形）をそのまま使用）。**色は `LoupePaint` が単一所有する**（コントロールの `Paint` プロパティの値を受け取る）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
 | `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -142,10 +142,13 @@ classDiagram
         +CrosshairRects / FrameRects
         +Layers
     }
-    class LoupeImageExtractor {
-        <<Feature.LoupeCore / internal>>
-        +ComputeMagnifiedRects(captureSize, zoomLevel) (EsRect, EsRect)$
-        +TryExtractRegionAt(source, request) EsBitmap?
+    class LoupeRenderRequest {
+        <<Feature.LoupeCore>>
+        +EsRect SurfaceBounds
+        +int CaptureSize（internal）
+        +EsPoint? CaptureTopLeft（internal）
+        +LoupeMagnifiedImage? MagnifiedImage（internal）
+        +ResolvePixelSize(size, renderScaling, availableSize) int$
     }
     class LoupeLabelPlacement {
         <<LoupeControl.UIBase>>
@@ -163,10 +166,6 @@ classDiagram
         +CreateRequest(displaySize, availableSize) LoupeRenderRequest
         +ResolveNotification(request) LoupeRenderNotification
         +ResolveContent(request) LoupeDrawContent
-    }
-    class LoupeRenderRequest {
-        <<Feature.LoupeCore>>
-        +ResolvePixelSize(size, renderScaling, availableSize) int$
     }
     class EsPoint {
         <<Platform.Core>>
@@ -199,14 +198,13 @@ sequenceDiagram
 
     MW->>LC: PaintSurface(canvas, info)
     LC->>LC: Loupe.CreateRequest（コアのファサードが描画契約を組み立てる。表示サイズは描画先の表面から DpiScaler.ToDip で導出し、物理ピクセルサイズはそれを描画先へクランプして解決する）
-    LC->>R: DrawShapes(SkiaEsCanvas, Source, request, layers)（描画層が層の順に描く）
+    LC->>R: DrawShapes(SkiaEsCanvas, Source, content)（描画層が層の順に描く）
     R->>SK: 下地（Paint.BackgroundColor）を表面全体へ塗る
     R->>C: FillRects(タイル列挙子, 色B)
     R->>SK: 暗色タイルを描画（SkiaFill.Rects・リスト確保なし）
-    alt Source と CenterPoint が設定済み
-        R->>C: TryExtractRegionAt(source, request)
-        C-->>R: 切り出し画像 / null（切り出せない）
-        R->>SK: DrawBitmap(srcRect, dstRect)（最近傍で拡大）
+    alt Source と切り出し領域が揃っている
+        R->>R: EsBitmap.Crop(content.MagnifiedImage.Crop)（描画層が実行する）
+        R->>SK: DrawImage(cropped, Source, Destination)（最近傍で拡大）
     else 未設定または破棄済み
         R-->>R: 市松模様のみを残す
     end

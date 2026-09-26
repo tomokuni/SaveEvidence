@@ -17,9 +17,6 @@ public class LoupeTests
     /// <summary>親領域のサイズ（表示サイズのクランプ基準）。</summary>
     private static readonly EsSize ParentSize = new(400, 300);
 
-    /// <summary>テストで使用する描画実装のスタブ（コアは描画層を参照しないため注入する）。</summary>
-    private static readonly StubLoupeRenderer s_renderer = new();
-
     /// <summary>ドメイン → 親領域 DIP を 2 倍で返す座標変換ポートを生成する。</summary>
     /// <returns>Inverse が 2 倍の座標変換ポート。</returns>
     private static ICoordTransform CreateDoublingPort()
@@ -32,7 +29,7 @@ public class LoupeTests
     [Fact]
     public void 生成_既定の設定を保持する()
     {
-        var loupe = new Loupe(s_renderer);
+        var loupe = new Loupe();
 
         Assert.Same(LoupeOptions.Default, loupe.Options);
         Assert.Equal(Loupe.Limits.RenderScalingDefault, loupe.RenderScaling);
@@ -45,52 +42,10 @@ public class LoupeTests
     {
         var options = new LoupeOptions { RequestedSize = 200, ZoomLevel = 8 };
 
-        var loupe = new Loupe(s_renderer, options);
+        var loupe = new Loupe(options);
 
         Assert.Equal(200, loupe.Options.RequestedSize);
         Assert.Equal(8, loupe.Options.ZoomLevel);
-    }
-
-    // ====================================================================
-    // 描画の差し替え（Strategy）
-    // ====================================================================
-
-    [Fact]
-    public void 生成_描画実装がnullなら例外を投げる()
-    {
-        Assert.Throws<ArgumentNullException>(() => new Loupe(null!));
-    }
-
-    [Fact]
-    public void 生成_注入した描画実装を保持する()
-    {
-        var renderer = new StubLoupeRenderer();
-
-        var loupe = new Loupe(renderer);
-
-        Assert.Same(renderer, loupe.Renderer);
-    }
-
-    [Fact]
-    public void 描画実装にnullは設定できない()
-    {
-        var loupe = new Loupe(new StubLoupeRenderer());
-
-        Assert.Throws<ArgumentNullException>(() => loupe.Renderer = null!);
-    }
-
-    [Fact]
-    public void Draw_は設定された描画実装へ委譲する()
-    {
-        var loupe = new Loupe(new StubLoupeRenderer());
-        var replacement = new StubLoupeRenderer();
-        loupe.Renderer = replacement;
-        var request = loupe.CreateRequest(160);
-        var content = loupe.ResolveContent(request);
-
-        loupe.Draw(StubCanvas.Instance, source: null, request, content);
-
-        Assert.Equal(1, replacement.DrawShapesCalls);
     }
 
     [Theory]
@@ -102,7 +57,7 @@ public class LoupeTests
     public void RenderScaling_安全域外の指定は補正して保持する(double input, double expected)
     {
         // 補正の規則は Loupe.Limits が単一所有する（UI の依存関係プロパティを経由しない代入でも範囲内になる）
-        var loupe = new Loupe(s_renderer) { RenderScaling = input };
+        var loupe = new Loupe() { RenderScaling = input };
 
         Assert.Equal(expected, loupe.RenderScaling);
     }
@@ -114,7 +69,7 @@ public class LoupeTests
     [Fact]
     public void ResolveLayout_要求サイズを親領域の最小辺へクランプする()
     {
-        var loupe = new Loupe(s_renderer, new LoupeOptions { RequestedSize = 200 });
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 200 });
 
         var layout = loupe.ResolveLayout(new EsSize(120, 300));
 
@@ -124,7 +79,7 @@ public class LoupeTests
     [Fact]
     public void ResolveLayout_親領域が未確定なら要求サイズを表示サイズにする()
     {
-        var loupe = new Loupe(s_renderer, new LoupeOptions { RequestedSize = 200 });
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 200 });
 
         var layout = loupe.ResolveLayout(default);
 
@@ -134,7 +89,7 @@ public class LoupeTests
     [Fact]
     public void ResolveLayout_設定変更で表示サイズを再導出する()
     {
-        var loupe = new Loupe(s_renderer, new LoupeOptions { RequestedSize = 200 });
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 200 });
 
         // 要求サイズと親領域の小さい方（親領域 400x300 なので要求サイズ 400 がクランプされる）
         loupe.Options = loupe.Options with { RequestedSize = 400 };
@@ -149,7 +104,7 @@ public class LoupeTests
     [Fact]
     public void ResolveLayout_中心未設定なら配置しない()
     {
-        var loupe = new Loupe(s_renderer);
+        var loupe = new Loupe();
 
         var layout = loupe.ResolveLayout(ParentSize);
 
@@ -160,7 +115,7 @@ public class LoupeTests
     [Fact]
     public void ResolveLayout_中心とオフセットから位置を求める()
     {
-        var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(50, 60), PositionOffset = 20 };
+        var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60), PositionOffset = 20 };
 
         var layout = loupe.ResolveLayout(ParentSize);
 
@@ -170,7 +125,7 @@ public class LoupeTests
     [Fact]
     public void ResolveLayout_親領域の外へは配置しない()
     {
-        var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(390, 290) };
+        var loupe = new Loupe() { CenterPoint = new EsPoint(390, 290) };
 
         var layout = loupe.ResolveLayout(ParentSize);
 
@@ -181,7 +136,7 @@ public class LoupeTests
     [Fact]
     public void ResolveLayout_親領域が未確定ならクランプしない()
     {
-        var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(500, 600) };
+        var loupe = new Loupe() { CenterPoint = new EsPoint(500, 600) };
 
         var layout = loupe.ResolveLayout(default);
 
@@ -191,7 +146,7 @@ public class LoupeTests
     [Fact]
     public void ResolveLayout_座標変換ポートを適用する()
     {
-        var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(10, 20) };
+        var loupe = new Loupe() { CenterPoint = new EsPoint(10, 20) };
         loupe.SetCoordinateTransform(CreateDoublingPort());
 
         var layout = loupe.ResolveLayout(ParentSize);
@@ -202,7 +157,7 @@ public class LoupeTests
     [Fact]
     public void ResolveLayout_ポート未設定は等価変換になる()
     {
-        var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(10, 20) };
+        var loupe = new Loupe() { CenterPoint = new EsPoint(10, 20) };
 
         loupe.SetCoordinateTransform(null);
 
@@ -219,7 +174,7 @@ public class LoupeTests
     public void CreateRequest_表示サイズと設定から描画入力を組み立てる()
     {
         var appearance = new LoupeMetrics { CheckerSize = 8 };
-        var loupe = new Loupe(s_renderer, new LoupeOptions { RequestedSize = 160, ZoomLevel = 4, Metrics = appearance })
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 160, ZoomLevel = 4, Metrics = appearance })
         {
             CenterPoint = new EsPoint(10, 20),
             RenderScaling = 1.5,
@@ -237,7 +192,7 @@ public class LoupeTests
     [Fact]
     public void CreateRequest_描画先の領域へクランプする()
     {
-        var loupe = new Loupe(s_renderer, new LoupeOptions { RequestedSize = 300 });
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 300 });
 
         var request = loupe.CreateRequest(300, new EsSize(200, 150));
 
@@ -247,7 +202,7 @@ public class LoupeTests
     [Fact]
     public void CreateRequest_レイアウトのクランプ結果を物理ピクセルへ換算する()
     {
-        var loupe = new Loupe(s_renderer, new LoupeOptions { RequestedSize = 300 });
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 300 });
 
         var layout = loupe.ResolveLayout(new EsSize(120, 400));
         var request = loupe.CreateRequest(layout.DisplaySize);
@@ -259,7 +214,7 @@ public class LoupeTests
     [Fact]
     public void CreateRequest_中心未設定でも組み立てられる()
     {
-        var loupe = new Loupe(s_renderer);
+        var loupe = new Loupe();
 
         var request = loupe.CreateRequest(160);
 
@@ -273,7 +228,7 @@ public class LoupeTests
     [Fact]
     public void ResolveNotification_切り出し領域とスケールを返す()
     {
-        var loupe = new Loupe(s_renderer, new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 })
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 })
         {
             CenterPoint = new EsPoint(50, 60),
         };
@@ -289,7 +244,7 @@ public class LoupeTests
     [Fact]
     public void ResolveNotification_中心未設定なら切り出し領域を返さない()
     {
-        var loupe = new Loupe(s_renderer);
+        var loupe = new Loupe();
         var request = loupe.CreateRequest(160);
 
         var notification = loupe.ResolveNotification(request);
@@ -301,7 +256,7 @@ public class LoupeTests
     [Fact]
     public void ResolveContent_描く層は下地からテキストの順で返す()
     {
-        var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(50, 60) };
+        var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
         var content = loupe.ResolveContent(loupe.CreateRequest(160));
 
         // 描画順はコアが単一所有する（UI 層は先頭から順に処理するだけ）
@@ -321,7 +276,7 @@ public class LoupeTests
     public void ResolveContent_テキストが無ければ層に含まれない()
     {
         // 拡大中心が無ければ中心座標ラベルは表示されない
-        var loupe = new Loupe(s_renderer);
+        var loupe = new Loupe();
         var content = loupe.ResolveContent(loupe.CreateRequest(160));
 
         Assert.Null(content.CoordLabelText);
@@ -331,7 +286,7 @@ public class LoupeTests
     [Fact]
     public void ResolveContent_層の一覧を共有する()
     {
-        var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(50, 60) };
+        var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
 
         var first = loupe.ResolveContent(loupe.CreateRequest(160));
         var second = loupe.ResolveContent(loupe.CreateRequest(160));
@@ -352,7 +307,7 @@ public class LoupeTests
     [InlineData(200)]
     public void ResolveNotification_スケールは切り出しサイズの切り上げに影響されない(int pixelSize)
     {
-        var loupe = new Loupe(s_renderer, new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
+        var loupe = new Loupe(new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
 
         var notification = loupe.ResolveNotification(loupe.CreateRequest(pixelSize));
 
@@ -371,7 +326,7 @@ public class LoupeTests
     [InlineData(2.0)]
     public void ResolveNotification_スケールはDPIスケーリングに依存しない(double renderScaling)
     {
-        var loupe = new Loupe(s_renderer, new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
+        var loupe = new Loupe(new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
         var pixelSize = DpiScaler.ScaleToPixel(160, renderScaling);
 
         var notification = loupe.ResolveNotification(loupe.CreateRequest(pixelSize));
@@ -387,7 +342,7 @@ public class LoupeTests
     [Fact]
     public void レイアウトと描画入力の解決はヒープを確保しない()
     {
-        var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(50, 60) };
+        var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
         loupe.SetCoordinateTransform(CreateDoublingPort());
 
         for (var i = 0; i < 100; i++)

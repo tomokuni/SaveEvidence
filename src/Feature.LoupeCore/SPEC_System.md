@@ -25,7 +25,7 @@ graph LR
 層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 
 - `Feature.LoupeCore` は UI フレームワークへ依存しません。依存は `Platform.Core` のみです。
-- **描画の手順と色は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer` / `LoupePaint`）が単一所有します**（描画先は `Platform.Core` の `IEsCanvas`。本プロジェクトは描画 API も色も持ちません）。
+- **描画の手順と色は UI 側の共有層（`LoupeControl.UIBase` の `ILoupeRenderer` / `LoupeRendererBase` / `LoupeRenderer` / `LoupePaint`）が単一所有します**（描画先は `Common` の `IEsCanvas`。本プロジェクトは描画 API も色も持ちません）。
 - **コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.UIBase` が所有します**（同層も UI フレームワークに依存せず、実行キューは UI がコールバックで注入します）。
 - UI 実装は、コア型と自身の型（`Avalonia.Point` / `Size` / `IBrush`、`SKColor`）を相互変換します。変換は境界（サービス呼び出し・イベント引数の生成・描画）の 1 行に限定し、UI 側の状態・描画は UI の型のまま維持します。
 - 設定（表示サイズ・拡大率・寸法）は `LoupeOptions` が単一所有し、UI 層は本型を 1 プロパティとして公開するだけです（設定の既定値・補正も本型が持つ）。寸法（装飾の寸法値と表示可否）は `LoupeMetrics` が単一所有し、UI 層は寸法値を保持しません（描画時に読むだけ）。**色はコアの型に含めず、描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有します**（コアは色の値を決めず、描画可否の判定にも使いません）。
@@ -36,14 +36,14 @@ graph LR
 
 | ファイル | 内容 |
 | --- | --- |
-| `Loupe.cs`（ルート） | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、通知内容の解決（`ResolveNotification`）、描画実装の保持（`Renderer`。`ILoupeRenderer` 経由で委譲する）。`LoupeLayout` / `LoupeRenderNotification` の値型も本ファイルが所有する |
-| `Drawing/LoupeDrawContent.cs` | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
-| `Drawing/LoupeCheckerTiles.cs` | 市松模様の暗色タイルの矩形を**リストを確保せずに列挙する構造体**（描画内容の一部） |
-| `Contract/ILoupeRenderer.cs` | 描画の契約（描画内容 → 描画面の写像。**描画の差し替え点**。実装は描画層が提供する） |
+| `Loupe.cs`（ルート） | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、通知内容の解決（`ResolveNotification`）。`LoupeLayout` / `LoupeRenderNotification` の値型も本ファイルが所有する |
+| `Drawing/LoupeDrawContent.cs` | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・拡大画像の切り出しと描画の矩形（`LoupeMagnifiedImage`）・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
+| `Drawing/LoupeCheckerTiles.cs` | 市松模様の暗色タイルの矩形を**リストを確保せずに列挙する構造体**（描画内容の一部。`foreach` で列挙でき、描画ポートの列挙子への適合は描画層が行う） |
+| `Contract/` | 描画の契約（`ILoupeRenderer`）は **UI 側の共有層（`LoupeControl.UIBase`）が所有します**（本プロジェクトの `Contract/` フォルダは削除しました） |
 | `Setting/LoupeOptions.cs` | ルーペの設定（表示サイズ・拡大率・寸法）の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`Default` |
 | `Setting/LoupeMetrics.cs` | ルーペの寸法 2 項目（市松模様のタイルサイズ・外枠の太さ）と中心座標ラベルの表示可否の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`ShouldShowCoordLabel`。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
 | `Loupe.Limits.cs`（ルート） | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ（`Loupe` の**入れ子**。UI がプロパティ登録に使う） |
-| `Drawing/LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）と、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む） |
+| `Drawing/LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む）、切り出し領域の幾何の導出（`CaptureSize` / `CaptureTopLeft` / `MagnifiedImage`。internal） |
 | `Drawing/LoupeTextPlacement.cs` | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（体裁・フォントサイズ・角丸・色は描画層 `LoupeControl.UIBase` の `LoupePaint` / `LoupeLabelPlan` が単一所有する） |
 | `Loupe.Position.cs` / `Loupe.DrawContent.cs`（`Loupe` の **partial**・**internal**） | 表示位置の計算・親サイズ未確定の判定、描画内容の解決。利用者はファサード（`ResolveLayout` / `ResolveContent`）を使う |
 | `Logging/LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化（**UI がログへ出すため public**） |
@@ -57,7 +57,6 @@ graph LR
 | `Checkerboard/LoupeDivMath.cs` | 区画数の切り上げ除算（`CeilDiv`。「余りを 1 区画として数える」規則の単一所有。タイル数と切り出し領域の一辺が共用する） |
 | `Decoration/LoupeDecorationGeometry.cs` | 十字線（縦横 2 本）と円枠（4 辺）の描画矩形の計算 |
 | `Decoration/LoupeMetricsScaler.cs` | 寸法値（タイルサイズ・円枠の太さ）の物理ピクセル換算（結果は描画入力へ解決済み） |
-| `Imaging/LoupeImageExtractor.cs` | 切り出し領域の一辺・左上（ドメイン座標）の計算、`EsBitmap` からの領域切り出し、拡大描画の矩形（`ComputeMagnifiedRects`。引数はビットマップの実寸） |
 
 ## データフロー
 
@@ -84,7 +83,7 @@ sequenceDiagram
 
   UI->>Fac: ResolveNotification(request)
   Fac->>Core: Loupe.ResolveNotification(request)
-  Core->>PC: LoupeImageExtractor.ComputeCaptureSize
+  Core->>Core: LoupeRenderRequest.CaptureTopLeft（描画入力から導出する）
   Core-->>Fac: 切り出し左上 / スケール
   UI->>Fac: ResolveContent(request) / ResolveNotification(request)
   Fac-->>UI: LoupeDrawContent（描画面・タイル・矩形・層の順序）/ LoupeRenderNotification（切り出し左上 / スケール）
@@ -104,13 +103,13 @@ sequenceDiagram
 | 寸法の数値項目の安全域への補正（生成時） | `LoupeMetrics`（`init` アクセサ。規則は `Loupe.Limits` が単一所有する） |
 | 描画の可否（アルファ 0 は描画しない） | `LoupePaint.Has*`（`LoupeControl.UIBase`。判定の規則は `DrawingColorExtensions.IsVisible`） |
 | ラベル表示の可否（設定と中心の有無） | `LoupeMetrics.ShouldShowCoordLabel` |
-| 切り出し領域の一辺（ドメインピクセル） | `Imaging.LoupeImageExtractor.ComputeCaptureSize`（internal。切り上げは `LoupeDivMath.CeilDiv`） |
-| 切り出し領域の左上（中心 → 左上の変換） | `Imaging.LoupeImageExtractor.ComputeCaptureTopLeft`（internal） |
-| 拡大描画の矩形（切り出し元・描画先） | `Imaging.LoupeImageExtractor.ComputeMagnifiedRects`（ビットマップの実寸を受け取る） |
+| 切り出し領域の一辺（ドメインピクセル） | `LoupeRenderRequest.CaptureSize`（internal。切り上げは `LoupeDivMath.CeilDiv`） |
+| 切り出し領域の左上（中心 → 左上の変換） | `LoupeRenderRequest.CaptureTopLeft`（internal。中心未設定は null） |
+| 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） | `LoupeRenderRequest.MagnifiedImage`（internal）。`Loupe.ResolveContent` が `LoupeDrawContent.MagnifiedImage` として描画層へ渡す（切り出しの実行は描画層） |
 | 表示サイズの親領域へのクランプと表示サイズの決定 | `Loupe.ResolveLayout`（規則は `Platform.Core` の `EsSize.ClampToArea`。状態を保持しないため、親領域のサイズを引数で受ける） |
 | 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（規則は internal の `Loupe.ComputePosition`。親サイズ未確 定の判定は `EsSize.HasArea`） |
 | 描画入力（物理ピクセルサイズ）の組み立てと描画先へのクランプ | `Loupe.CreateRequest`（規則は internal の `LoupeRenderRequest.ResolvePixelSize`） |
-| 描画完了通知の内容（切り出し左上・スケール） | `Loupe.ResolveNotification`（切り出し領域の計算は `Imaging.LoupeImageExtractor` へ委譲する） |
+| 描画完了通知の内容（切り出し左上・スケール） | `Loupe.ResolveNotification`（切り出し左上は `LoupeRenderRequest.CaptureTopLeft`） |
 | 中心座標ラベルの文言・基準点と表示可否 | `Loupe.ResolveContent`（文言は `EsPoint.Format`、表示可否は `LoupeMetrics.ShouldShowCoordLabel`） |
 | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0） | 描画層 `LoupeControl.UIBase` の `LoupePaint` |
 | 十字線・円枠の矩形 | `Loupe.ResolveContent`（規則は internal の `Decoration.LoupeDecorationGeometry`） |
@@ -120,11 +119,11 @@ sequenceDiagram
 | 市松模様のタイル矩形の列挙 | `Loupe.ResolveContent`（`LoupeCheckerTiles`。リストを確保しない） |
 | ログの書式とレベル、変化判定（同値・同一インスタンスなら出力しない） | `LoupeLogMessage` / `LoupeLogFormat` |
 
-`LoupeImageExtractor.ExtractRegionAt`（internal）/ 描画層（`LoupeControl.UIBase`）の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
+`LoupeRenderRequest.MagnifiedImage`（internal）/ 描画層（`LoupeControl.UIBase`）の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。
 
 ## 例外処理ポリシー
 
-本プロジェクトは純粋計算と `EsBitmap` の操作で構成されます。例外を送出するのは `EsBitmap` の引数検証（`ArgumentOutOfRangeException`）と破棄後アクセス（`ObjectDisposedException`）のみです。`LoupeImageExtractor.ExtractRegionAt` は破棄済みソースに備え、例外の捕捉は呼び出し側（UI 実装）の責務とします。
+本プロジェクトは純粋計算で構成されます。例外を送出するのは `EsBitmap` の引数検証（`ArgumentOutOfRangeException`）と破棄後アクセス（`ObjectDisposedException`）のみです。破棄済みソースの例外の捕捉は描画層（`LoupeRendererBase`）の责務とします。
 
 ## 可視性ポリシー
 
@@ -149,7 +148,7 @@ sequenceDiagram
 | 文字の描画 | コアは文言・寸法・配置の基準だけを持ち、実寸 → 配置矩形の写像は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため）。色は描画層の `LoupePaint` が与える |
 | 再描画のバッチ化 | UI のディスパッチャーに依存するため `LoupeControl.UIBase` が単一所有する（コアは同期計算のみ） |
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画ポートの境界で行う |
-| 切り出し領域の左上 | `ExtractRegionAt` と描画完了通知の 2 経路で重複する計算を `LoupeImageExtractor.ComputeCaptureTopLeft`（internal）が単一所有する（切り出しと通知が同じ規則を使う） |
+| 切り出し領域の左上 | 切り出し（描画層）と描画完了通知の 2 経路で重複する計算を `LoupeRenderRequest.CaptureTopLeft`（internal）が単一所有する（切り出しと通知が同じ値を使う） |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「アラインの適用」「行送り」は描画にだけ必要な規則のため、描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）が単一所有する（コアは文言・基準点・アライン・クランプ領域だけを渡す） |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は描画層（`LoupePaint` / `MarqueePaint`）が単一所有する |
 

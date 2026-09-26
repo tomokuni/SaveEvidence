@@ -251,7 +251,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Renderer` | `IMarqueeRenderer` | 描画の実装（**描画の差し替え**。既定は `Paint` の色を保持する描画層の `MarqueeRenderer`。null 不可）。設定するとコア（ファサード）へ伝搬し、再描画とラベル要素の再配置を要求する（描画先は `AvaloniaCanvas` が担うため、描画手順だけを交換できる） |
+| `Renderer` | `IMarqueeRenderer` | 描画の実装（**描画の差し替え**。既定は `Paint` の色を保持する `MarqueeRendererAvaloniaUI`。null 不可）。設定すると再描画とラベル要素の再配置を要求する（描画先は `AvaloniaCanvas` が担うため、描画手順だけを交換できる） |
 
 ```csharp
 marquee.Renderer = MyMarqueeRenderer.Instance;   // 描画手順の差し替え
@@ -303,7 +303,7 @@ marquee.Renderer = MyMarqueeRenderer.Instance;   // 描画手順の差し替え
 
 効果（`MarqueeFeedback` / `MarqueeCursorAction`）とログ定義（`MarqueeLogMessage`）はコアの内部契約（internal）であり、本プロジェクトは参照しません（適用はファサード、記録は状態機械が行います）。
 
-描画の手順（層の順序と描画ポートへの写し方）はコアの `MarqueeRendererBase`（`EsUtil.Feature.MarqueeCore.Contract`）が、その UI 実装と色（`MarqueePaint`）は UI 非依存の描画層（`MarqueeControl.UIBase` の `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan`）が単一所有し、本コントロールは描画ポートのアダプタ（`AvaloniaCanvas`）とラベル要素の配置を担います。本プロジェクトの内部実装も internal です。
+描画の手順（層の順序と描画ポートへの写し方）は UIBase の `MarqueeRendererBase` が、その UI 実装と色（`MarqueePaint`）は UI 非依存の描画層（`MarqueeControl.UIBase` の `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan`）が単一所有し、本コントロールは描画ポートのアダプタ（`AvaloniaCanvas`）とラベル要素の配置を担います。本プロジェクトの内部実装も internal です。
 
 #### 5.4.1 MarqueeControl（`MarqueeControl.cs`）
 

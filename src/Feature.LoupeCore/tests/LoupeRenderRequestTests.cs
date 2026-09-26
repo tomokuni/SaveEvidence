@@ -122,4 +122,105 @@ public class LoupeRenderRequestTests
         Assert.Equal(320, LoupeRenderRequest.ResolvePixelSize(160, 2.0, new EsSize(0, 0)));
         Assert.Equal(320, LoupeRenderRequest.ResolvePixelSize(160, 2.0));
     }
+
+    // ====================================================================
+    // 切り出し領域の導出（CaptureSize / CaptureTopLeft / MagnifiedImage）
+    // ====================================================================
+
+    /// <summary>切り出し領域の一辺がドメインピクセルの切り上げで求まることを検証する。</summary>
+    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="zoomLevel">拡大率。</param>
+    /// <param name="expected">期待する切り出し領域の一辺（ドメインピクセル）。</param>
+    [Theory]
+    [InlineData(100, 4, 25)]
+    [InlineData(100, 3, 34)]
+    [InlineData(64, 4, 16)]
+    [InlineData(10, 64, 1)]
+    [InlineData(16, 4, 4)]
+    [InlineData(25, 4, 7)]
+    [InlineData(1, 1, 1)]
+    public void CaptureSize_切り上げてドメインピクセルを返す(int pixelSize, int zoomLevel, int expected)
+        => Assert.Equal(expected, Request(pixelSize, zoomLevel).CaptureSize);
+
+    /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）が求まることを検証する。</summary>
+    /// <param name="centerX">拡大中心のX座標。</param>
+    /// <param name="centerY">拡大中心のY座標。</param>
+    /// <param name="size">切り出し領域の一辺（ドメインピクセル）。物理ピクセルサイズは <c>size × zoomLevel</c> で与える。</param>
+    /// <param name="zoomLevel">拡大率。</param>
+    /// <param name="expectedLeft">期待する左上のX座標。</param>
+    /// <param name="expectedTop">期待する左上のY座標。</param>
+    [Theory]
+    [InlineData(50, 50, 4, 4, 48, 48)]
+    [InlineData(0, 0, 4, 4, -2, -2)]
+    [InlineData(101, 99, 25, 25, 89, 87)]
+    public void CaptureTopLeft_中心を左上として指定サイズ領域を計算する(
+        int centerX, int centerY, int size, int zoomLevel, int expectedLeft, int expectedTop)
+    {
+        // 切り出し領域の一辺が size になるよう、物理ピクセルサイズを size × 拡大率で与える
+        var topLeft = Request(new EsPoint(centerX, centerY), size * zoomLevel, zoomLevel).CaptureTopLeft;
+
+        Assert.NotNull(topLeft);
+        Assert.Equal(expectedLeft, (int)topLeft.Value.X);
+        Assert.Equal(expectedTop, (int)topLeft.Value.Y);
+    }
+
+    /// <summary>拡大中心が未設定の場合は切り出し領域の左上が null（描画しない）になることを検証する。</summary>
+    [Fact]
+    public void CaptureTopLeft_中心未設定ならnullになる()
+    {
+        Assert.Null(Request(center: null, 32, 4).CaptureTopLeft);
+        Assert.Null(Request(center: null, 32, 4).MagnifiedImage);
+    }
+
+    /// <summary>拡大画像の切り出し・描画元・描画先の矩形が求まることを検証する。</summary>
+    /// <remarks>中心 (10, 10)・pixelSize=16・zoom=4 → 切り出し 4 px、左上 (8, 8)、描画元 4 px、描画先 16 px。</remarks>
+    [Fact]
+    public void MagnifiedImage_切り出し領域と描画元と描画先を解決する()
+    {
+        var image = Assert.NotNull(Request(new EsPoint(10, 10), 16, 4).MagnifiedImage);
+
+        Assert.Equal(new EsRectInt(8, 8, 4, 4), image.Crop);
+        Assert.Equal(new EsRect(0, 0, 4, 4), image.Source);
+        Assert.Equal(new EsRect(0, 0, 16, 16), image.Destination);
+    }
+
+    /// <summary>画像端では切り出し領域が負の左上になることを検証する（透明パディングは切り出し側が担う）。</summary>
+    [Fact]
+    public void MagnifiedImage_画像端では切り出し左上が負になる()
+    {
+        var image = Assert.NotNull(Request(new EsPoint(0, 0), 16, 4).MagnifiedImage);
+
+        Assert.Equal(new EsRectInt(-2, -2, 4, 4), image.Crop);
+    }
+
+    /// <summary>描画先が切り出しサイズ × 拡大率になることを検証する（切り上げ分だけ表面より大きくなりうる）。</summary>
+    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="zoomLevel">拡大率。</param>
+    /// <param name="expectedDestination">期待する描画先の一辺。</param>
+    [Theory]
+    [InlineData(16, 4, 16)]
+    [InlineData(25, 4, 28)]
+    [InlineData(1, 1, 1)]
+    public void MagnifiedImage_描画先は切り出しサイズの拡大率倍になる(
+        int pixelSize, int zoomLevel, int expectedDestination)
+    {
+        var image = Assert.NotNull(Request(new EsPoint(100, 100), pixelSize, zoomLevel).MagnifiedImage);
+
+        Assert.Equal(new EsRect(0, 0, expectedDestination, expectedDestination), image.Destination);
+    }
+
+    /// <summary>テスト用の描画入力を生成する（表示サイズ＝物理ピクセル・スケーリング 1.0・外観は既定）。</summary>
+    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="zoomLevel">拡大率。</param>
+    /// <returns>描画入力。</returns>
+    private static LoupeRenderRequest Request(int pixelSize, int zoomLevel)
+        => Request(new EsPoint(50, 50), pixelSize, zoomLevel);
+
+    /// <summary>テスト用の描画入力を生成する（表示サイズ＝物理ピクセル・スケーリング 1.0・外観は既定）。</summary>
+    /// <param name="center">拡大中心（ドメイン座標）。未設定は null。</param>
+    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="zoomLevel">拡大率。</param>
+    /// <returns>描画入力。</returns>
+    private static LoupeRenderRequest Request(EsPoint? center, int pixelSize, int zoomLevel)
+        => new(center, pixelSize, pixelSize, zoomLevel, new LoupeMetrics(), 1.0, CheckerSizePixels: 6, FrameWidthPixels: 2);
 }

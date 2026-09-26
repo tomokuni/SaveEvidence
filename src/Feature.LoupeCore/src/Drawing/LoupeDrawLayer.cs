@@ -3,7 +3,7 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// <summary>ルーペの UI 層が描く層（描画順の契約）。</summary>
 /// <remarks>
 /// <b>描画順はコアが単一所有する</b>: UI 層は <see cref="LoupeDrawContent.Layers"/> を先頭から順に処理するだけで、<br/>
-/// 順序を判断しない（描画の起動は <see cref="Loupe.Draw"/>、描画内容の解決は <see cref="Loupe.ResolveContent"/>）。<br/>
+/// 順序を判断しない（描画内容の解決は <see cref="Loupe.ResolveContent"/>。描画は UI 層が行う）。<br/>
 /// <b>テキスト（<see cref="Label"/>）は UI 要素でも描ける</b>: 要素（<c>TextBlock</c> 等）として置く UI は<br/>
 /// 要素を子として置く（親より後に描かれるため常に最上位になる）。
 /// その場合、描画実装は本層を無視してよい（基底のフックの既定は何もしない）。<br/>

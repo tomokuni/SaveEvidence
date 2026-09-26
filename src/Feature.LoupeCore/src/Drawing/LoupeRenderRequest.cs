@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Feature.LoupeCore.Checkerboard;
 using EsUtil.Feature.LoupeCore.Decoration;
 using EsUtil.Feature.LoupeCore.Setting;
 
@@ -50,6 +51,40 @@ public readonly record struct LoupeRenderRequest(
     /// （描画先の原点は常に 0 であり、UI 側で組み立てると原点の取り違えが生じる）。
     /// </remarks>
     public EsRect SurfaceBounds => new(0, 0, PixelSize, PixelSize);
+
+    /// <summary>切り出し領域の一辺（ドメインピクセル）を取得する。</summary>
+    /// <value>切り出し領域の一辺。<see cref="PixelSize"/> を <see cref="ZoomLevel"/> で割った切り上げ。</value>
+    /// <remarks>
+    /// <b>切り上げる理由</b>: 拡大で埋めきれない余り（最大 <c>ZoomLevel - 1</c> ピクセル）を透明パディングで補うためである<br/>
+    /// （切り捨てるとルーペの右端・下端が埋まらない）。切り上げの規則は <see cref="LoupeDivMath.CeilDiv"/> が単一所有する。<br/>
+    /// 十字線の交点（<c>CaptureSize / 2</c>）も本値を使う。
+    /// </remarks>
+    internal int CaptureSize => LoupeDivMath.CeilDiv(PixelSize, ZoomLevel);
+
+    /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）を取得する。</summary>
+    /// <value>切り出し領域の左上（ドメイン座標）。<see cref="Center"/> が未設定の場合は null（描画しない）。</value>
+    /// <remarks>
+    /// 中心の整数化（<c>(int)</c>）は切り出し（<c>EsBitmap.Crop</c>）と同じ丸めにする<br/>
+    /// （切り出しの実行は描画層が、切り出し領域の通知は本値が行い、同じ矩形を指す必要があるため）。
+    /// </remarks>
+    internal EsPoint? CaptureTopLeft => Center is { } center
+        ? new EsPoint((int)center.X - CaptureSize / 2, (int)center.Y - CaptureSize / 2)
+        : null;
+
+    /// <summary>拡大画像の切り出しと描画の矩形を取得する。</summary>
+    /// <value>切り出しと描画の矩形。<see cref="Center"/> が未設定の場合は null（描画しない）。</value>
+    /// <remarks>
+    /// 「切り出した領域を左上原点から <see cref="ZoomLevel"/> 倍の大きさで描く」規則を単一所有する。<br/>
+    /// 切り出し元の画像（<c>EsBitmap</c>）は含めない（切り出しの実行は描画層が <c>EsBitmap.Crop</c> で行う）。<br/>
+    /// <b>描画先は切り上げ分だけ表面より大きくなりうる</b>（最大 <c>ZoomLevel - 1</c> 物理ピクセル）。<br/>
+    /// はみ出した部分は描画先のクリップに任せる（切り捨てると拡大の倍率が整数でなくなり画素がぼやける）。
+    /// </remarks>
+    internal LoupeMagnifiedImage? MagnifiedImage => CaptureTopLeft is not { } topLeft
+        ? null
+        : new LoupeMagnifiedImage(
+            new EsRectInt((int)topLeft.X, (int)topLeft.Y, CaptureSize, CaptureSize),
+            new EsRect(0, 0, CaptureSize, CaptureSize),
+            new EsRect(0, 0, CaptureSize * ZoomLevel, CaptureSize * ZoomLevel));
 
     /// <summary>UI 層が保持する DIP 値から描画入力を組み立てる。</summary>
     /// <param name="center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定は null。</param>

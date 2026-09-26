@@ -15,7 +15,7 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 色（描画にだけ必要な設定）と、層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順、実寸 → ラベル要素の写像 | `MarqueePaint` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan` / `MarqueeHostLabelRenderer`（写し方の基底はコアの `MarqueeRendererBase`） |
+| **描画手順** | 色（描画にだけ必要な設定）と、層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順、実寸 → ラベル要素の写像 | `MarqueePaint` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan` / `MarqueeHostLabelRenderer`（写し方の基底は本層の `MarqueeRendererBase`） |
 | **組み込み規則** | ホイール入力の解釈・連携先へのスクロール適用・ビューポート変化の再通知 | `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` / `WheelZoomRequest` / `WheelScrollRequest` / `IWheelScrollTarget` |
 
 ## 2. 技術スタック
@@ -42,7 +42,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・ScrollMath）
-※ コアは本層を参照しない（本層の描画実装はコアの契約 IMarqueeRenderer を実装する）。
+※ コアは本層を参照しない（本層がコアの描画内容（`MarqueeDrawContent`）を使う向きだけ）。
 ```
 
 - 上位層は下位層のみを参照します（逆参照なし）。
@@ -75,8 +75,8 @@ sequenceDiagram
 flowchart LR
     A[MarqueeDrawContent.Layers] --> B{層}
     B -->|Decoration| C[MarqueeOuterRenderer + MarqueeInnerRenderer]
-    B -->|Handles| D[コアの MarqueeRendererBase.DrawHandles<br/>8 方向を列挙]
-    B -->|Marker| E[コアの MarqueeRendererBase.DrawStartMarker<br/>十字線 2 本]
+    B -->|Handles| D[本層の MarqueeRendererBase.DrawHandles<br/>8 方向を列挙]
+    B -->|Marker| E[本層の MarqueeRendererBase.DrawStartMarker<br/>十字線 2 本]
     B -->|SizeLabel / CoordLabel| F[スキップ<br/>UI の要素が描く]
 ```
 
@@ -160,7 +160,7 @@ src/MarqueeControl.UIBase/
 | コンポーネント | 責務 |
 | --- | --- |
 | `MarqueePaint` | 色の単一所有者（ハンドル・十字マーカー・ラベル・装飾） |
-| `MarqueeRenderer` | コアの `MarqueeRendererBase` の既定実装（sealed）。色を必須引数で受け取り、描画内容の解決結果を層の順に描画ポートへ写す。図形の層を描き、テキストのフック（`DrawLabel`）は基底の既定（何もしない）を引き継ぐ |
+| `MarqueeRenderer` | 本層の `MarqueeRendererBase` の既定実装（sealed）。色を必須引数で受け取り、描画内容の解決結果を層の順に描画ポートへ写す。図形の層を描き、テキストのフック（`DrawLabel`）は基底の既定（何もしない）を引き継ぐ |
 | `MarqueeOuterRenderer` | `OuterDecoFrame`（暗転領域・枠線）を `paint.OverlayColor` / `paint.OuterBorderColor` で描く |
 | `MarqueeInnerRenderer` | `InnerDecoFrame`（塗り・内枠）を `paint.InnerFillColor` / `paint.InnerBorderColor` で描く |
 | `MarqueeLabelPlan` | 描画内容と実寸からラベル要素の配置指示を解決する |
@@ -249,7 +249,7 @@ src/MarqueeControl.UIBase/
 | --- | --- |
 | UI 初期化不要 | 描画は `SkiaEsCanvas`（UI 非依存）で行い、ビットマップの画素を検証する。ホイールの解釈は UI 型を持たないため `[Fact]` で検証する |
 | 検証点 | 描画手順の唯一の検証点である（UI 側はアダプタのみを持つため、UI ごとの描画テストは不要） |
-| 合計 | 57 件（描画 34 / 組み込み規則 23） |
+| 合計 | 59 件（描画 36 / 組み込み規則 23） |
 
 ```powershell
 dotnet test src/MarqueeControl.UIBase/tests/MarqueeControl.UIBase.Tests.csproj

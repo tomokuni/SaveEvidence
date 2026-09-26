@@ -23,8 +23,5 @@
   </ItemGroup>
 
   <!-- 状態機械は持たない（公開面はファサードとその契約）。他アセンブリへの InternalsVisibleTo はテストのみ。 -->
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\src\Common.csproj" />
-  </ItemGroup>
 
 </Project>

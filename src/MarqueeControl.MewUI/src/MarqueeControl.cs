@@ -76,7 +76,7 @@ public sealed class MarqueeControl : Panel
         MewProperty<MarqueePaint>.Register<MarqueeControl>(
             nameof(Paint), MarqueePaint.Default, MewPropertyOptions.AffectsRender,
             changed: static (owner, _, newValue) =>
-                owner._marquee.Renderer = new MarqueeRendererMewUI(newValue));
+                owner.Renderer = new MarqueeRendererMewUI(newValue));
 
     /// <summary><see cref="RenderScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
     public static readonly MewProperty<double> RenderScalingProperty =
@@ -91,6 +91,14 @@ public sealed class MarqueeControl : Panel
 
     /// <summary>コアのファサード（入力の解釈・状態遷移の判断・描画内容の解決・設定の窓口）。</summary>
     private readonly MarqueeFacade _marquee;
+
+    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。既定は自 UI の描画実装（色を保持する）。</summary>
+    /// <remarks>
+    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
+    /// 層の順序に従った描画手順は UIBase の基底（<c>MarqueeRendererBase</c>）が単一所有する。<br/>
+    /// 既定値は <see cref="Paint"/> の既定値（<see cref="MarqueePaint.Default"/>）と同じ色で組み立てる。
+    /// </remarks>
+    private IMarqueeRenderer _renderer = new MarqueeRendererMewUI(MarqueePaint.Default);
 
     /// <summary>図形（装飾・ハンドル・始点マーカー）を描画する内部キャンバス。</summary>
     /// <remarks>
@@ -144,7 +152,7 @@ public sealed class MarqueeControl : Panel
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
         _effects = new Effects(this);
-        _marquee = new MarqueeFacade(new MarqueeRendererMewUI(MarqueePaint.Default), _effects, _cursor, Options);
+        _marquee = new MarqueeFacade(_effects, _cursor, Options);
         // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
         _marquee.Scaling = GetValue(ScalingProperty);
         _marquee.Notified += OnNotified;
@@ -363,16 +371,31 @@ public sealed class MarqueeControl : Panel
     public EsRect SelectionRect => _marquee.SelectionRect;
 
     /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="MarqueeRenderer"/>。</value>
+    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="MarqueeRendererMewUI"/>。</value>
     /// <remarks>
-    /// 保持と再描画の要求はコアのファサード（<see cref="MarqueeFacade.Renderer"/>）が単一所有する（本層は委譲するだけ）。<br/>
-    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
+    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
+    /// 層の順序に従った描画手順は UIBase の基底（<c>MarqueeRendererBase</c>）が単一所有する。<br/>
+    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。<br/>
+    /// 設定すると再描画を要求する（同値の再設定では何も起こらない）。
     /// </remarks>
     /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
     public IMarqueeRenderer Renderer
     {
-        get => _marquee.Renderer;
-        set => _marquee.Renderer = value;
+        get => _renderer;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (ReferenceEquals(_renderer, value))
+            {
+                return;
+            }
+
+            _renderer = value;
+            InvalidateFrame();
+            InvalidateVisual();
+            InvalidateArrange();
+        }
     }
 
     /// <summary>操作ログの出力先を取得または設定する。</summary>
@@ -830,15 +853,15 @@ public sealed class MarqueeControl : Panel
             // 描画内容は配置フェーズ（ArrangeContent）が解決した値を共有する（未解決の場合のみ本メソッドが解決する）
             var content = CurrentFrame(DpiScaler.ToDip(info.Size.ToEsSize(), scaling));
 
-            // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序と起動はコアが単一所有する）
-            if (_marquee.Renderer is MarqueeRendererMewUI uiRenderer)
+            // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序は UIBase の基底が単一所有する）
+            if (_renderer is MarqueeRendererMewUI uiRenderer)
             {
                 uiRenderer.Draw(canvas, in content);
             }
             else
             {
-                // 描画実装が差し替えられている場合はコアの入口から描く
-                _marquee.Draw(new SkiaEsCanvas(canvas), in content);
+                // 差し替えられた描画実装は描画ポート（自 UI の描画面を適合させたもの）経由で描く
+                _renderer.DrawShapes(new SkiaEsCanvas(canvas), in content);
             }
 
             // 描画完了をホストへ通知する（操作・情報ラベルなどホスト固有の付加情報を描くための入口）。

@@ -4,7 +4,7 @@
 
 `Common` は、SaveEvidence のソリューション内で共有する**UI 非依存の描画ポート**を提供します。
 
-1. **描画ポート**（`IEsCanvas`）— コア側の描画手順が唯一呼ぶ即時描画ポート
+1. **描画ポート**（`IEsCanvas`）— UI 側の共有層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）の描画手順が唯一呼ぶ即時描画ポート
 2. **矩形列挙子の契約**（`IEsRectWalker<TSelf>`）— `IEsCanvas.FillRects` が受け取る列挙子の型
 
 **ラベル専用の型は置きません**（配置の値・体裁・要素への写像）。ラベルの体裁（内側余白・フォントサイズ・色・角丸）と実寸 → 配置矩形の写像は描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase` の `MarqueePaint` / `LoupePaint` と `MarqueeLabelPlan` / `LoupeLabelPlan`）が単一所有し、テキストを要素として置くか画像として描くかは UI 層の判断です。コアは文言・基準点・アライン・領域だけを渡します。
@@ -101,7 +101,7 @@ sequenceDiagram
 | 描画 API の抽象（描画の可変性） | `IEsCanvas`（本プロジェクト） |
 | ビットマップ（`EsBitmap`）とピクセル操作 | `Platform.Core`（汎用のため本プロジェクトへは移さない） |
 | Skia との相互変換 | `Platform.Skia` |
-| 描画の層の順序と描画手順 | コアの契約（`IMarqueeRenderer` / `ILoupeRenderer`）と描画層の実装 |
+| 描画の層の順序（データ） | コア（`MarqueeDrawLayer` / `LoupeDrawLayer` と `XxxDrawContent.Layers`） |
 | ラベルの体裁（内側余白・フォントサイズ・色・角丸） | 描画層の設定（`MarqueePaint` / `LoupePaint`） |
 | 実寸 → ラベル配置矩形の写像 | 描画層（`MarqueeLabelPlan` / `LoupeLabelPlan`） |
 | ラベルの文言・基準点・アライン・クランプ領域 | コア（`MarqueeTextPlacement` / `LoupeTextPlacement`） |

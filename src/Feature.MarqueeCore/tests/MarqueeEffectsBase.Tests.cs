@@ -33,7 +33,7 @@ public class MarqueeEffectsBaseTests
     {
         // 独自コントロールの最小構成（再描画だけを実装し、他の効果は基底の既定実装を使う）
         var redraws = 0;
-        var marquee = new Marquee(new StubMarqueeRenderer(), new RedrawOnly(() => redraws++));
+        var marquee = new Marquee(new RedrawOnly(() => redraws++));
 
         marquee.Press(new EsPoint(10, 10), clickCount: 1);
         marquee.Move(new EsPoint(60, 40));
@@ -48,7 +48,7 @@ public class MarqueeEffectsBaseTests
     public void 効果を実装しない場合はカーソル操作も例外にならない()
     {
         // カーソルサービスを渡した場合でも、画面座標の変換は基底の既定値で完結する（例外を投げない）
-        var marquee = new Marquee(new StubMarqueeRenderer(), new RedrawOnly(() => { }), new CursorServiceSpy());
+        var marquee = new Marquee(new RedrawOnly(() => { }), new CursorServiceSpy());
 
         marquee.KeyDown(EsKey.Right, new EsPoint(10, 10));
 

@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 選択操作の状態機械 | `Marquee` | 押下・移動・解放・キー入力を通知すると、状態遷移の判断（nudge の開始/終了・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセル・エコー移動の抑制）を行い、効果と通知を返す |
 | 描画内容の解決 | `Marquee.ResolveContent` | 描画領域のサイズを渡すと、1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・サイズラベル・カーソル座標ラベルと描画順）を返す。「描くかどうか」の判断はすべてコアが下す |
-| 描画の実行（差し替え可能） | `IMarqueeRenderer` / `Marquee.Renderer` | 描画内容を描画面へ写す実装を注入する（既定実装は描画層 `MarqueeControl.UIBase` の `new MarqueeRenderer(MarqueePaint.Default)`。描画手順は `MarqueeRendererBase` が、色は `MarqueePaint` が単一所有する）。実装を差し替えれば描画手順を、描画ポート（`IEsCanvas`）の実装を差し替えれば描画先を変えられる |
+| 描画（本コアの対象外） | 描画層 `MarqueeControl.UIBase` の `IMarqueeRenderer` / `MarqueeRendererBase` | 描画内容を描画面へ写す手順は UI 側の共有層が単一所有する（本コアは描画 API も描画ポートも持たない）。色は `MarqueePaint`、描画先は `IEsCanvas` が担う |
 | 効果の適用 | `IMarqueeEffects` | フォーカス・再描画・カーソル操作・カーソル形状・ポインターキャプチャ・画面座標変換の要求を UI 実装が受ける（不要なメンバーの空実装は `MarqueeEffectsBase` を継承すれば省略できる） |
 | 通知 | `Marquee.Notified` | 選択の開始/変更/確定/キャンセル・追従位置の移動・確定/キャンセル要求を `MarqueeNotice` で通知する |
 | 外部からの状態操作 | `Marquee` | 選択の復元・対話状態の初期化・確定/キャンセルの要求を API から実行できる |
@@ -38,7 +38,6 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `IMarqueeRenderer` | interface | 描画内容を描画面へ写す実装の契約（**描画の差し替え点**。既定実装は描画層の `MarqueeRenderer`） |
 | `IMarqueeEffects` | interface | コアが要求する効果の適用先（UI 実装が実装する） |
 | `MarqueeEffectsBase` | abstract class | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス（必要な効果だけ override する） |
 
@@ -100,7 +99,7 @@
 
 | メンバー | 種別 | 説明 |
 | --- | --- | --- |
-| `Marquee(IMarqueeRenderer, IMarqueeEffects, ICursorService?, MarqueeOptions?)` | ctor | `renderer` と `effects` は null 不可。`cursor` は null 可（カーソル操作を行わない）。描画実装は必須（本コアは描画層を参照できないため、コンストラクタで注入する） |
+| `Marquee(IMarqueeEffects, ICursorService?, MarqueeOptions?)` | ctor | `effects` は null 不可。`cursor` は null 可（カーソル操作を行わない）。描画実装は受け取らない（描画は UI の関心事であり、本コアは描画 API を持たない） |
 | `Notified` | event | 通知（`MarqueeNotice`） |
 | `Log` | property | ロガー。null は `NullLogger` へ吸収される |
 | `Options` | property | 設定。設定すると対話パラメータを反映し、境界外選択の禁止の変化時のみログと即時クリップを行う |
@@ -118,8 +117,6 @@
 | `SetSelection(EsRect)` / `ResetSelection()` | method | 選択の復元・対話状態の初期化 |
 | `RequestConfirm()` / `RequestCancel()` | method | 確定/キャンセルの要求（キー・ダブルクリックと同一経路） |
 | `ResolveContent(EsSize)` | method | 1 フレーム分の描画内容の解決 |
-| `Renderer` | property | 描画の実装（`IMarqueeRenderer`）の取得・設定（**描画の差し替え**。null 不可。設定すると再描画を要求する） |
-| `SizeLabelFontSize` / `CoordLabelFontSize`（描画実装＝`MarqueeRenderer` のプロパティ） | property | テキストのフォントサイズ（描画の設定 `MarqueePaint` の値への入口）。**描画の契約と本コアの設定には含めない** |
 | `DefaultScaling` | const | 倍率の既定値（1.0） |
 
 ### `MarqueeOptions` のメンバー
@@ -151,13 +148,9 @@
 
 `MarqueeEffectsBase` はこれらの全メンバーを virtual の空実装として提供する `abstract class` です。独自の UI アダプタは本クラスを継承し、必要な効果（例: `RequestRedraw`）だけを override します（不要なメンバーの空実装を書かなくて済む）。
 
-### `IMarqueeRenderer` のメンバー
+### 描画の契約（`IMarqueeRenderer` / `MarqueeRendererBase`）
 
-| メンバー | 説明 |
-| --- | --- |
-| `DrawShapes(IEsCanvas, in MarqueeDrawContent)` | 図形の層（装飾・ハンドル・始点マーカー）を描画順に描く（**テキストは描かない**）。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする |
-
-描画順はコアが単一所有し（`MarqueeDrawContent.Layers`）、実装は順序を判断しません。テキストを描く層（`MarqueeDrawLayer.Label`）は基底がフックとして用意し、**既定は何もしません**（UI 要素として置く UI は上書きしません）。本コアは描画層（`MarqueeControl.UIBase`）を参照できないため、既定実装（`new MarqueeRenderer(MarqueePaint.Default)`。描画手順は `MarqueeRendererBase` が、色は `MarqueePaint` が単一所有する）は利用者が渡します。
+描画の契約は `MarqueeControl.UIBase`（UI 側の共有層）が所有します（本コアは描画 API も描画ポートも持ちません）。引数は描画ポート（`IEsCanvas`）と描画内容（`MarqueeDrawContent`）であり、描く値はすべて描画内容に解決済みです。層の順序はコアが `MarqueeDrawContent.Layers` として単一所有し、実装はその順に写すだけです。
 
 ### `MarqueeNoticeKind` の値
 

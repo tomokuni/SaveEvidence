@@ -176,15 +176,15 @@ public sealed partial class MarqueeControl
         // 描画内容は配置フェーズが解決した値を共有する（未解決の場合のみ本メソッドが解決する）。
         var content = CurrentFrame(Bounds.Size.ToEsSize());
 
-        // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序と起動はコアが単一所有する）
-        if (_marquee.Renderer is MarqueeRendererAvaloniaUI uiRenderer)
+        // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序は UIBase の基底が単一所有する）
+        if (_renderer is MarqueeRendererAvaloniaUI uiRenderer)
         {
             uiRenderer.Draw(context, in content);
         }
         else
         {
-            // 描画実装が差し替えられている場合はコアの入口から描く
-            _marquee.Draw(new AvaloniaCanvas(context), in content);
+            // 差し替えられた描画実装は描画ポート（自 UI の描画面を適合させたもの）経由で描く
+            _renderer.DrawShapes(new AvaloniaCanvas(context), in content);
         }
 
         // 描画完了をホストへ通知する（操作・情報ラベルなどホスト固有の付加情報を描くための入口）。

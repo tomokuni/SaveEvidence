@@ -5,7 +5,6 @@ using Avalonia.Threading;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI.Logging;
 using EsUtil.Feature.LoupeCore;
 using EsUtil.SaveEvidence.Loupe.UIBase;
-using EsUtil.Feature.LoupeCore.Imaging;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
@@ -19,7 +18,6 @@ using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Drawing;
-using EsUtil.Feature.LoupeCore.Contract;
 using EsUtil.Feature.LoupeCore.Logging;
 
 
@@ -116,7 +114,15 @@ public sealed class LoupeControl : Panel
     /// （本コントロールは自 UI の公開プロパティで受け取った値を転送し、返された値を反映するだけ）。<br/>
     /// フィールド初期化子で生成する（AXAML の初期化でプロパティ変更が発火しても参照できるようにするため）。
     /// </remarks>
-    private readonly LoupeFacade _loupe = new(new LoupeRendererAvaloniaUI(LoupePaint.Default));
+    private readonly LoupeFacade _loupe = new();
+
+    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。既定は自 UI の描画実装（色を保持する）。</summary>
+    /// <remarks>
+    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
+    /// 層の順序に従った描画手順は UIBase の基底（<c>LoupeRendererBase</c>）が単一所有する。<br/>
+    /// 既定値は <see cref="Paint"/> の既定値（<see cref="LoupePaint.Default"/>）と同じ色で組み立てる。
+    /// </remarks>
+    private ILoupeRenderer _renderer = new LoupeRendererAvaloniaUI(LoupePaint.Default);
 
     /// <summary>表示位置（RenderTransform）のインスタンス（座標更新時は値を書き換えて再利用する）。</summary>
     private readonly TranslateTransform _positionTransform = new();
@@ -343,7 +349,7 @@ public sealed class LoupeControl : Panel
         // 色（描画にだけ必要な設定）の変更は描画実装を差し替える（色は描画実装が単一所有する）
         PaintProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            o._loupe.Renderer = new LoupeRendererAvaloniaUI(e.GetNewValue<LoupePaint>());
+            o.Renderer = new LoupeRendererAvaloniaUI(e.GetNewValue<LoupePaint>());
             o.RequestRender();
             // 中心座標ラベルの色も描画実装が与えるため、ラベル要素を配置し直す
             o.InvalidateArrange();
@@ -449,9 +455,10 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="LoupeRenderer"/>。</value>
+    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="LoupeRendererAvaloniaUI"/>。</value>
     /// <remarks>
-    /// 保持はコアのファサード（<see cref="LoupeFacade.Renderer"/>）が単一所有する。<br/>
+    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
+    /// 層の順序に従った描画手順は UIBase の基底（<c>LoupeRendererBase</c>）が単一所有する。<br/>
     /// 変更すると再生成（<see cref="RequestRender"/>）とラベル要素の再配置を要求する<br/>
     /// （ラベルの文言・寸法は描画実装が解決するため）。<br/>
     /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
@@ -459,10 +466,17 @@ public sealed class LoupeControl : Panel
     /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
     public ILoupeRenderer Renderer
     {
-        get => _loupe.Renderer;
+        get => _renderer;
         set
         {
-            _loupe.Renderer = value;
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (ReferenceEquals(_renderer, value))
+            {
+                return;
+            }
+
+            _renderer = value;
             RequestRender();
             InvalidateArrange();
         }
@@ -618,7 +632,7 @@ public sealed class LoupeControl : Panel
     /// <remarks>
     /// 生成は <see cref="LoupeRenderPipeline.RenderAsync"/> に一元化する（ソース解決・抽出・描画合成）。<br/>
     /// <see cref="Source"/> / <see cref="CenterPoint"/> のいずれかが未設定、または切り出せない場合は市松模様のみを表示する<br/>
-    /// （判定はコアの <see cref="LoupeImageExtractor.TryExtractRegionAt"/> が単一所有する）。<br/>
+    /// （判定は描画層が単一所有する）。<br/>
     /// 例外は <see cref="LoupeLogMessage.LogUpdateError"/> で記録し、前回のビットマップを維持する。<br/>
     /// </remarks>
     private async Task GenerateAsync(long generation)
@@ -631,7 +645,7 @@ public sealed class LoupeControl : Panel
             var content = _loupe.ResolveContent(request);
             var notification = _loupe.ResolveNotification(request);
 
-            var bitmap = await LoupeRenderPipeline.RenderAsync(_loupe, Source, request, content);
+            var bitmap = await LoupeRenderPipeline.RenderAsync(_renderer, Source, request, content);
 
             // 描画反映（SetLoupeBitmap）は描画フェーズ（Render 優先度）で実行する。
             // マウス移動中の連続再描画では、既定の Normal 優先度の継続が入力イベント（Input 優先度）に

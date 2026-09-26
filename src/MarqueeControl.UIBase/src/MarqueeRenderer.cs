@@ -1,14 +1,13 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Common.Imaging;
-using EsUtil.Feature.MarqueeCore.Contract;
 using EsUtil.Feature.MarqueeCore.Drawing;
 
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase;
 
-/// <summary>選択矩形コントロールの描画の既定実装（色を 1 値で保持し、層の順序はコアが単一所有する）。</summary>
+/// <summary>選択矩形コントロールの描画の既定実装（色を 1 値で保持し、層の順序は本層の基底が単一所有する）。</summary>
 /// <remarks>
-/// <b>適用パターン</b>: Template Method（層の順序はコアの <see cref="MarqueeRendererBase"/> が所有し、<br/>
+/// <b>適用パターン</b>: Template Method（層の順序は <see cref="MarqueeRendererBase"/> が所有し、<br/>
 /// 本クラスが層ごとの描き方と色を与える）と Strategy（<see cref="IMarqueeRenderer"/> として差し替えられる）。<br/>
 /// <br/>
 /// <b>色の所有者</b>: 色とフォントサイズは<b>描画にだけ必要な設定</b>であり、コアの計算・判定には入らない。したがって<br/>

@@ -15,7 +15,8 @@
 
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
-| ルーペの描画（図形） | `Loupe.Draw`（コアの入口）/ `ILoupeRenderer.DrawShapes`（契約） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする）。層の順序はコアの `LoupeRendererBase` が単一所有し、起動は `Loupe.Draw` に一本化する |
+| ルーペの描画（図形） | `ILoupeRenderer.DrawShapes`（本層の契約） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする）。層の順序はコア（`LoupeDrawContent.Layers`）がデータとして単一所有し、本層の `LoupeRendererBase` がその順に写す |
+| 拡大画像の切り出しと描画（色を使わない層） | `LoupeRendererBase`（本層の基底が実装する） | コアが解決した切り出し領域（`LoupeDrawContent.MagnifiedImage`）で `EsBitmap.Crop` を呼び、描画先へ `DrawImage` する。破棄済みソースの `ObjectDisposedException` は本層で吸収する（市松模様のみが残る） |
 | テキスト要素の配置 | `LoupeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素の配置指示（`LoupeLabelPlacement`）を解決する。**要素として置くか画像として描くかは UI 層が決める** |
 | 描画に使う色 | `LoupePaint` | 下地・市松模様・外枠・十字線・中心座標ラベルの色と「描くかどうか」の述語（`Has*`）を単一所有する |
 
@@ -47,7 +48,7 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeRenderer` | sealed class | 既定の描画実装（`ILoupeRenderer`（`EsUtil.Feature.LoupeCore.Contract`））。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する |
+| `LoupeRenderer` | sealed class | 既定の描画実装（`ILoupeRenderer`（本層の契約））。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する |
 | `LoupePaint` | sealed record | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）と描画可否の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
 | `LoupeLabelPlan` | static class | ラベル要素の配置指示の解決（色は `LoupePaint` から受け取る） |
 
@@ -56,7 +57,7 @@
 | メンバー | 説明 |
 | --- | --- |
 | `LoupeRenderer(LoupePaint paint)` | 描画に使う色を指定して生成する（`LoupePaint.Default` を基点に組み立てる）。`paint` が null なら `ArgumentNullException` |
-| `DrawShapes(IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)` | 層の順に図形を描く（層の順序と矩形はコアが解決済み。本層は写すだけ）。`source` が null または拡大中心が未設定の場合は拡大画像を描かない。`canvas` または内容の層が null なら `ArgumentNullException` |
+| `DrawShapes(IEsCanvas canvas, EsBitmap? source, in LoupeDrawContent content)` | 層の順に図形を描く（層の順序・矩形・拡大画像の幾何はコアが解決済み。本層は写すだけ）。`source` が null または切り出し領域が無い場合は拡大画像を描かない。`canvas` または内容の層が null なら `ArgumentNullException` |
 | `CoordLabelFontSize` / `CoordLabelCornerRadius`（描画実装＝`LoupeRenderer` のプロパティ） | ラベルのフォントサイズと角丸（描画の設定 `LoupePaint` の値への入口）。**描画の契約（`ILoupeRenderer`）には含めない** |
 | `DrawLabel(IEsCanvas canvas, in LoupeDrawContent content)`（`protected virtual`） | テキストを描画ポートへ描くフック。**既定は何もしない**（UI 要素として置く UI は上書きしない） |
 

@@ -155,14 +155,12 @@ public class LoupeRendererTests
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
         using var source = EsBitmap.Create(LoupeSize, LoupeSize, s_checkerA);
 
-        // 中心を指定しない描画入力を組み立てる（コアは中心が無ければ切り出さない）
-        var request = LoupeRenderRequest.Create(center: null, LoupeSize, 1.0, LoupeOptions.Default);
+        // 中心を指定しない描画内容（コアは中心が無ければ切り出し領域を解決しない）
+        var content = new LoupeFacade().ResolveContent(
+            LoupeRenderRequest.Create(center: null, LoupeSize, 1.0, LoupeOptions.Default))
+            with { Layers = [LoupeDrawLayer.Background, LoupeDrawLayer.Image] };
 
-        new LoupeRenderer(CreatePaint(background: s_background)).DrawShapes(
-            target.Canvas,
-            source,
-            request,
-            CreateContent([LoupeDrawLayer.Background, LoupeDrawLayer.Image]));
+        new LoupeRenderer(CreatePaint(background: s_background)).DrawShapes(target.Canvas, source, content);
 
         Assert.Equal(s_backgroundPixel, target.GetPixel(16, 16));
     }
@@ -258,10 +256,9 @@ public class LoupeRendererTests
     public void DrawShapes_描画ポートがnullなら例外()
     {
         var renderer = new LoupeRenderer(CreatePaint());
-        var request = CreateRequest();
 
         Assert.Throws<ArgumentNullException>(
-            () => renderer.DrawShapes(null!, null, request, CreateContent([])));
+            () => renderer.DrawShapes(null!, null, CreateContent([])));
     }
 
     [Fact]
@@ -272,7 +269,7 @@ public class LoupeRendererTests
 
         Assert.Throws<ArgumentNullException>(
             () => renderer.DrawShapes(
-                target.Canvas, null, CreateRequest(), CreateContent(null!)));
+                target.Canvas, null, CreateContent(null!)));
     }
 
     [Fact]
@@ -302,13 +299,13 @@ public class LoupeRendererTests
     private static void DrawShapes(
         RenderTarget target, LoupePaint paint, IReadOnlyList<LoupeDrawLayer> layers, EsBitmap? source = null)
         => new LoupeRenderer(paint).DrawShapes(
-            target.Canvas, source, CreateRequest(), CreateContent(layers));
+            target.Canvas, source, CreateContent(layers));
 
     /// <summary>テスト用の描画内容を生成する（層だけを差し替える）。</summary>
     /// <param name="layers">描く層。</param>
     /// <returns>描画内容。</returns>
     private static LoupeDrawContent CreateContent(IReadOnlyList<LoupeDrawLayer> layers)
-        => new LoupeFacade(new LoupeRenderer(CreatePaint())).ResolveContent(CreateRequest()) with { Layers = layers };
+        => new LoupeFacade().ResolveContent(CreateRequest()) with { Layers = layers };
 
     /// <summary>テスト用の描画入力（一辺 32 DIP・スケーリング 1.0・拡大中心は描画先の中央）を生成する。</summary>
     /// <returns>描画入力。</returns>

@@ -191,7 +191,7 @@ UI 非依存の幾何計算・状態機械・入力の解釈は `src/Feature.Mar
 Feature.MarqueeCore/
 ├── src/
 │   ├── Marquee.cs / Marquee.DrawContent.cs  # 公開ファサードとその partial（描画内容の解決）
-│   ├── Contract/                            # 描画と効果の契約（IMarqueeRenderer / IMarqueeEffects / MarqueeRendererBase / MarqueeEffectsBase）
+│   ├── Contract/                            # 効果の契約（IMarqueeEffects / MarqueeEffectsBase。描画の契約は MarqueeControl.UIBase が所有する）
 │   ├── Drawing/                             # 描画内容の契約（MarqueeDrawContent / MarqueeDrawLayer / MarqueeTextPlacement 等）
 │   ├── Interaction/                         # 入力と通知（HitTarget / MarqueeInteractionState / MarqueeSnapshot / MarqueeNotice / MarqueeCursorKind）
 │   ├── Setting/                             # 設定の値（MarqueeOptions）

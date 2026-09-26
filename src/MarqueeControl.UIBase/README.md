@@ -6,14 +6,14 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 色（描画にだけ必要な設定）と「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方） | `MarqueePaint` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan` / `MarqueeHostLabelRenderer`（写し方の基底はコアの `MarqueeRendererBase`） |
+| **描画手順** | 色（描画にだけ必要な設定）と「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方） | `MarqueePaint` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan` / `MarqueeHostLabelRenderer`（写し方の基底は本層の `MarqueeRendererBase`） |
 | **組み込み規則** | 「他のコントロールへ組み込むときにだけ必要な規則」（ホイールの解釈・ビューポート変化の再通知） | `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` / `WheelZoomRequest` / `WheelScrollRequest` / `IWheelScrollTarget` |
 
 ## 目的
 
 - **「どう描くか」を 1 箇所に集約する**。コア（`Feature.MarqueeCore`）は「何を描くか（判断とデータ）」だけを決め、描画 API の呼び出し手順は本層が単一所有する。
 - **色を 1 箇所に集約する**。ハンドル・十字マーカー・ラベル・装飾の色は**描画にだけ必要な設定**であり、コアの計算・判断には入らない。したがってコアには置かず、本層の `MarqueePaint` が単一所有する（コアは寸法・表示可否・対話パラメータを持つ）。
-- **描画を差し替えられる**。描画先は `IEsCanvas`（`Platform.Core`、UI 非依存の描画ポート）であり、描画手順は `IMarqueeRenderer`（`Feature.MarqueeCore` の契約）を実装した型で置き換えられる（ファサードの `Marquee.Renderer` へ設定する）。UI の追加・描画方式の変更はポートまたは実装の差し替えだけで済む。
+- **描画を差し替えられる**。描画先は `IEsCanvas`（`Platform.Core`、UI 非依存の描画ポート）であり、描画手順は `IMarqueeRenderer`（本層の契約）を実装した型で置き換えられる（UI が保持する `Renderer` へ設定する）。UI の追加・描画方式の変更はポートまたは実装の差し替えだけで済む。
 - **組み込み規則を UI をまたいで 1 箇所に集約する**。ホイールの解釈（Ctrl = ズーム / 通常 = スクロール）とビューポート変化の再通知は、UI ごとに書くと片方だけ変わる。
 - **UI 実装を薄くする**。UI 層は入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置だけを行い、判断と手順は本層とコアが持つ。
 - **UI 初期化なしで検証できる**。描画の実行は Skia（`SkiaEsCanvas`）で行うため、ウィンドウなしの画素テストが書ける（`tests/`）。ホイールの解釈も UI 型を持たないため `[Fact]` で検証できる。
@@ -31,7 +31,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
-※ コアは本層を参照しない（本層の描画実装はコアの契約 IMarqueeRenderer を実装する）。
+※ コアは本層を参照しない（本層がコアの描画内容（`MarqueeDrawContent`）を使う向きだけ）。
 ```
 
 **帰属の判定**: 「何を描くか（判断・データ・寸法・表示可否）」はコア、「どう 描くか（色・API 呼び出し）」は本層。`Marquee.ResolveFrame`（描くかどうかの判断）はコアに残る。
@@ -76,7 +76,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 差し替えたいもの | 方法 |
 | --- | --- |
 | **描画先（UI フレームワーク）** | `IEsCanvas` を実装する（例: `SkiaEsCanvas`（Skia）/ `AvaloniaCanvas`（Avalonia の `DrawingContext`））。**描画手順はそのまま使える** |
-| **描画手順そのもの** | `IMarqueeRenderer`（`Feature.MarqueeCore`）を実装した型を作り、ファサードの `Marquee.Renderer` へ設定する（本層の `MarqueeRenderer` を使わなくてもよい） |
+| **描画手順そのもの** | `IMarqueeRenderer`（本層の契約）を実装した型を作り、UI が保持する `Renderer` へ設定する（本層の `MarqueeRenderer` を使わなくてもよい） |
 | **色** | `MarqueePaint` を組み立てて渡す（`MarqueeRenderer` の生成時に渡すか、UI の `Paint` プロパティで差し替える）。色はコントロールごとに異なるため、共有インスタンスを書き換えずインスタンスを差し替える |
 | **寸法・表示可否** | `MarqueeOptions`（選択の設定）と `MarqueeDecoOptions`（装飾）を変える（色は含まない） |
 
@@ -131,11 +131,11 @@ protected override void Render(DrawingContext context)
 {
     var size = Bounds.Size.ToEsSize();
     var content = _marquee.ResolveContent(size);
-    _marquee.Draw(new AvaloniaCanvas(context), in content);
+    new MarqueeRendererAvaloniaUI(paint).Draw(context, in content);   // 自 UI の描画面を適合させて描く
 }
 ```
 
-- 自 UI の描画実装（`MarqueeRenderer~UI`）を使う場合も、起動はコアの `Marquee.Draw` に一本化する（本 UI の型なら `Draw(context, in content)` へ委譲する）。
+- 自 UI の描画実装（`MarqueeRenderer~UI`）は自 UI の描画面を渡す `Draw` を持ち、起動は UI が行う（描画の入口をコアに置かない）。差し替えられた実装は描画ポート経由の `DrawShapes` で描く。
 - ラベルを要素として配置する UI は 4 の後、`MarqueeLabelPlan.Resolve`（色は `Paint` の `MarqueePaint` から引かれる）の結果を要素へ写す。
 - ホスト固有の付加情報ラベルは `MarqueeHostLabelRenderer.Draw` で体裁を揃えて描く。
 - 座標変換（ドメイン ⇔ DIP）は `Marquee.SetCoordinateTransform` へ注入する（未指定は等倍）。

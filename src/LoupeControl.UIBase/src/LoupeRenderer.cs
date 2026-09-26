@@ -1,13 +1,13 @@
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.LoupeCore.Drawing;
-using EsUtil.Feature.LoupeCore.Contract;
 
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase;
 
-/// <summary>ルーペの描画の既定実装（色を 1 値で保持し、層の順序はコアが単一所有する）。</summary>
+/// <summary>ルーペの描画の既定実装（色を 1 値で保持し、層の順序は本層の基底が単一所有する）。</summary>
 /// <remarks>
-/// <b>適用パターン</b>: Template Method（層の順序はコアの <see cref="LoupeRendererBase"/> が所有し、<br/>
+/// <b>適用パターン</b>: Template Method（層の順序は <see cref="LoupeRendererBase"/> が所有し、<br/>
 /// 本クラスが層ごとの描き方と色を与える）と Strategy（<see cref="ILoupeRenderer"/> として差し替えられる）。<br/>
 /// <br/>
 /// <b>色の所有者</b>: 色・フォントサイズ・角丸は<b>描画にだけ必要な設定</b>であり、コアの計算・判定には入らない。<br/>
@@ -70,7 +70,7 @@ public class LoupeRenderer : LoupeRendererBase
         }
 
         // タイル数は描画先の大きさに比例して増えるため、リストを確保しない列挙子をそのまま渡す
-        canvas.FillRects(content.CheckerTiles, _paint.CheckerColorB);
+        canvas.FillRects(new CheckerTileWalker(content.CheckerTiles), _paint.CheckerColorB);
     }
 
     /// <inheritdoc/>
@@ -93,5 +93,26 @@ public class LoupeRenderer : LoupeRendererBase
         }
 
         canvas.FillRects(content.FrameRects, _paint.FrameColor);
+    }
+
+    /// <summary>コアが解決した市松模様の暗色タイルを、描画ポートの列挙子の契約へ適合させる構造体。</summary>
+    /// <remarks>
+    /// タイルの位置と個数の計算はコア（<see cref="LoupeCheckerTiles"/>）が単一所有する（描画側で計算しない）。<br/>
+    /// 本構造体はコアの列挙子（コアは描画 API を知らない）を描画ポートの契約へ写すだけであり、<br/>
+    /// リストを確保しないためタイル数が多くてもヒープ確保は発生しない。
+    /// </remarks>
+    /// <param name="tiles">コアが解決した暗色タイルの列挙子。</param>
+    private struct CheckerTileWalker(LoupeCheckerTiles tiles) : IEsRectWalker<CheckerTileWalker>
+    {
+        /// <summary>コアの列挙子（走査位置を持つため値で保持する）。</summary>
+        private LoupeCheckerTiles _tiles = tiles;
+
+        /// <summary>次の暗色タイルへ進む。</summary>
+        /// <returns>次のタイルがある場合は true。列の末尾を超えた場合は false。</returns>
+        public bool MoveNext() => _tiles.MoveNext();
+
+        /// <summary>現在の暗色タイルの矩形を取得する。</summary>
+        /// <value>直近の <see cref="MoveNext"/> が true を返したときの矩形。</value>
+        public readonly EsRect Current => _tiles.Current;
     }
 }

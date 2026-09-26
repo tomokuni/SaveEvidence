@@ -15,7 +15,7 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順と色（`LoupePaint`）、実寸 → ラベル要素の写像 | `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`（写し方の基底はコアの `LoupeRendererBase`） |
+| **描画手順** | 層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順と色（`LoupePaint`）、実寸 → ラベル要素の写像 | `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`（写し方の基底は本層の `LoupeRendererBase`） |
 | **組み込み規則** | 再描画要求のバッチ化（1 フレーム 1 回）と世代番号管理 | `LoupeRenderCoordinator` |
 
 ## 2. 技術スタック
@@ -41,7 +41,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform）
-※ コアは本層を参照しない（本層の描画実装はコアの契約 ILoupeRenderer を実装する）。
+※ コアは本層を参照しない（本層がコアの描画内容（`LoupeDrawContent`）を使う向きだけ）。
 ※ 本層を使うのは LoupeControl.AvaloniaUI のみ（MewUI は中間ビットマップを持たず同期描画するため不要）。
 ```
 
@@ -165,8 +165,8 @@ src/LoupeControl.UIBase/
 | --- | --- |
 | 描画する層とその順序 | `Loupe.ResolveLayers`（コア。本層は順に写すだけ） |
 | 描画の色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）とその既定値 | 本層（`LoupePaint`） |
-| 描画可否（透明色は描かない・ソース未解決なら描かない） | 本層（`LoupePaint.Has*`。判定の規則は `DrawingColorExtensions.IsVisible` が単一所有する） / コア（`LoupeImageExtractor.TryExtractRegionAt`） |
-| 切り出し領域と拡大の矩形 | コア（`LoupeImageExtractor`） |
+| 描画可否（透明色は描かない・切り出し領域が無い場合は描かない） | 本層（`LoupePaint.Has*` / `LoupeRendererBase.DrawMagnifiedImage`。判定の規則は `DrawingColorExtensions.IsVisible` が単一所有する） |
+| 切り出し領域と拡大の矩形 | コア（`LoupeRenderRequest` の internal メンバーが算出し、描画内容 `LoupeDrawContent.MagnifiedImage` が持つ） |
 | 市松模様のタイル位置とタイル数 | コア（描画内容 `LoupeDrawContent.CheckerTiles`。リストを確保しない列挙子で渡す） |
 | 十字線・円枠の矩形 | コア（描画内容 `LoupeDrawContent`） |
 | 寸法の DIP → 物理ピクセル換算 | コア（描画入力 `LoupeRenderRequest` の換算済み寸法） |
@@ -185,8 +185,8 @@ src/LoupeControl.UIBase/
 | --- | --- |
 | `canvas` が null | `ArgumentNullException`（呼び出し側の実装誤り） |
 | `layers` が null | `ArgumentNullException` |
-| `source` が null / 中心未設定 | 拡大画像を描かない（例外ではない。市松模様のみになる） |
-| `source` が破棄済み | コア（`LoupeImageExtractor`）が `ObjectDisposedException` を吸収して null を返す（例外を描画層へ伝播させない） |
+| `source` が null / 切り出し領域が無い | 拡大画像を描かない（例外ではない。市松模様のみになる） |
+| `source` が破棄済み | 本層（`LoupeRendererBase.DrawMagnifiedImage`）が `ObjectDisposedException` を吸収して何も描かない（市松模様のみが残る） |
 | `measureText` が null | `ArgumentNullException` |
 | `paint`（`LoupePaint`）が null | `ArgumentNullException`（`LoupeRenderer` の生成時・`LoupeLabelPlan.Resolve` の呼び出し時） |
 | 背景色が透明 | 描画面を透明で置き換える（前フレームの残像を残さない） |
@@ -205,7 +205,7 @@ src/LoupeControl.UIBase/
 | --- | --- |
 | UI 初期化不要 | 描画は `SkiaEsCanvas`（UI 非依存）で行い、ビットマップの画素を検証する。再描画のスケジューリングは UI 型を持たないため `[Fact]` で検証する |
 | 検証点 | 描画手順の唯一の検証点である（UI 側はアダプタのみを持つため、UI ごとの描画テストは不要） |
-| 合計 | 43 件（描画 17 / 色 8 / ラベル 6 / 組み込み規則 12） |
+| 合計 | 44 件（描画 17 / 色 8 / ラベル 7 / 組み込み規則 12） |
 
 ```powershell
 dotnet test src/LoupeControl.UIBase/tests/LoupeControl.UIBase.Tests.csproj

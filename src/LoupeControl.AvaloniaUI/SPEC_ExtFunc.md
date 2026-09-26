@@ -219,7 +219,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 
 **設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。DPI スケーリング係数（`RenderScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
 
-**描画の差し替え**: `Renderer`（`ILoupeRenderer`。既定は描画層の `LoupeRenderer`（色は `Paint` の値で生成）。null 不可）で描画の実装を差し替えられます（描画先は `AvaloniaCanvas` が担うため、描画手順だけを交換できます）。設定すると再生成とラベル要素の再配置を要求します。
+**描画の差し替え**: `Renderer`（`ILoupeRenderer`。既定は自 UI の `LoupeRendererAvaloniaUI`（色は `Paint` の値で生成）。null 不可）で描画の実装を差し替えられます（描画先は `AvaloniaCanvas` が担うため、描画手順だけを交換できます）。設定すると再生成とラベル要素の再配置を要求します。
 
 ```csharp
 loupe.Renderer = MyLoupeRenderer.Instance;   // 描画手順の差し替え

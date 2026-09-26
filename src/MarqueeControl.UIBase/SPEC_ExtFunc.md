@@ -15,7 +15,7 @@
 
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
-| 描画内容の描画（図形） | `Marquee.Draw`（コアの入口）/ `IMarqueeRenderer.DrawShapes`（契約） | 装飾・ハンドル・始点マーカーを描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする。色は `MarqueePaint` から引く）。層の順序はコアの `MarqueeRendererBase` が単一所有し、起動は `Marquee.Draw` に一本化する |
+| 描画内容の描画（図形） | `IMarqueeRenderer.DrawShapes`（本層の契約） | 装飾・ハンドル・始点マーカーを描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする。色は `MarqueePaint` から引く）。層の順序はコア（`MarqueeDrawContent.Layers`）がデータとして単一所有し、本層の `MarqueeRendererBase` がその順に写す |
 | テキスト要素の配置 | `MarqueeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素の配置指示（`MarqueeLabelPlacement`）を解決する。**要素として置くか画像として描くかは UI 層が決める** |
 | ホスト付加情報ラベルの描画 | `MarqueeHostLabelRenderer.Draw` | ホストが与えた文言を、サイズラベルと同じ体裁（内側余白・背景 → 文字の順序）で描く |
 
@@ -47,7 +47,7 @@
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `MarqueePaint` | sealed record | **色の単一所有者**（ハンドル・十字マーカー・ラベル・装飾）。`Default` を基点に `with` 式で部分変更する |
-| `MarqueeRenderer` | sealed class | コアの `MarqueeRendererBase` の既定実装（`IMarqueeRenderer`（`EsUtil.Feature.MarqueeCore.Contract`）を実装する）。色を必須引数で受け取る（`Default` のような共有インスタンスは持たない） |
+| `MarqueeRenderer` | sealed class | 本層の `MarqueeRendererBase` の既定実装（`IMarqueeRenderer`（本層の契約）を実装する）。色を必須引数で受け取る（`Default` のような共有インスタンスは持たない） |
 | `MarqueeOuterRenderer` | static class | 選択矩形の外側の装飾の描画（色は引数の `MarqueePaint` から引く） |
 | `MarqueeInnerRenderer` | static class | 穴あけ矩形の内側の装飾の描画（色は引数の `MarqueePaint` から引く） |
 | `MarqueeLabelPlan` | static class | ラベル要素の配置指示の解決（色は引数の `MarqueePaint` から写す） |

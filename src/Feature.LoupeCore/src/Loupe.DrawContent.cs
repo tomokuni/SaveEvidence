@@ -54,18 +54,20 @@ public sealed partial class Loupe
 
     /// <summary>描画入力から 1 フレーム分の描画内容を解決する。</summary>
     /// <param name="request">描画入力（描画のたびに決まる値。物理ピクセルサイズ・寸法の換算結果を含む）。</param>
-    /// <returns>描画内容（描画面・タイル列挙子・矩形・テキスト配置・層の順序）。</returns>
+    /// <returns>描画内容（描画面・タイル列挙子・矩形・拡大画像の幾何・テキスト配置・層の順序）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
     /// 1. 描画面の全体を物理ピクセルサイズから決める。<br/>
     /// 2. 市松模様の暗色タイルを列挙する構造体を換算済みのタイルサイズから作る。<br/>
     /// 3. 十字線と外枠の矩形を、物理ピクセルサイズと換算済みの太さから導出する。<br/>
-    /// 4. テキスト（中心座標ラベルの文言と基準点）を解決する。<br/>
-    /// 5. 描く層の一覧（テキストの有無で末尾が変わる）を添えて描画内容を返す。<br/>
+    /// 4. 拡大画像の切り出しと描画の矩形を解決する（`LoupeRenderRequest` の `MagnifiedImage`）。<br/>
+    /// 5. テキスト（中心座標ラベルの文言と基準点）を解決する。<br/>
+    /// 6. 描く層の一覧（テキストの有無で末尾が変わる）を添えて描画内容を返す。<br/>
     /// <br/>
     /// 色はコアが持たないため本メソッドは扱わない（描画時のアルファ判定は描画実装の責務であり、<br/>
     /// アルファ 0 の色は描かない）。<br/>
-    /// 拡大画像の層は本値に含めない（切り出し元の型が UI に依存するため、描画の起動時に引数で受け取る）。
+    /// 拡大画像は切り出しと描画の矩形（<see cref="LoupeMagnifiedImage"/>）として本値に含める<br/>
+    /// （切り出し元の画像そのものは型が UI に依存するため、描画の起動時に引数で受け取る）。
     /// </remarks>
     public LoupeDrawContent ResolveContent(in LoupeRenderRequest request)
     {
@@ -77,6 +79,7 @@ public sealed partial class Loupe
             new LoupeCheckerTiles(request.PixelSize, request.CheckerSizePixels),
             LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel),
             LoupeDecorationGeometry.ComputeFrameRects(request.PixelSize, request.FrameWidthPixels),
+            request.MagnifiedImage,
             coordLabelText,
             coordLabelText is null ? s_layersWithoutLabel : s_layersWithLabel);
     }

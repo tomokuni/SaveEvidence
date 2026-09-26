@@ -23,7 +23,7 @@
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 下表のとおり | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する |
 | `Paint` | `LoupePaint` | `LoupePaint.Default` | — | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）。`with` 式で部分変更する。色はコアの計算に入らない |
 | `RenderScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。設定には含めない） |
-| `Renderer` | `ILoupeRenderer` | `Paint` の色を保持する `LoupeRenderer` | — | 描画の実装（**描画の差し替え**。null 不可）。設定すると再生成とラベル要素の再配置を要求する |
+| `Renderer` | `ILoupeRenderer` | `Paint` の色を保持する `LoupeRendererMewUI` | — | 描画の実装（**描画の差し替え**。null 不可）。設定すると再生成とラベル要素の再配置を要求する |
 
 `Options`（コアの `LoupeOptions`。UI 非依存の値）の項目:
 

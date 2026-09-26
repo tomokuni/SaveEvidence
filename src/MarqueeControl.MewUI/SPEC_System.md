@@ -32,7 +32,7 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 ```text
 UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> MarqueeControl.UIBase   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
+    ├──> MarqueeControl.UIBase   どう描くか（UIBase の IMarqueeRenderer を実装する）
     ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            ├──> Common（IEsCanvas・IEsRectWalker）
@@ -164,7 +164,7 @@ classDiagram
         +MarqueeCaptureAction Capture
     }
     class MarqueeRenderer {
-        <<MarqueeControl.UIBase / 描画層（MarqueeRenderer がコアの MarqueeRendererBase を継承）>>
+        <<MarqueeControl.UIBase / 描画層（MarqueeRenderer が UIBase の MarqueeRendererBase を継承）>>
         +MarqueeRenderer(paint) void
         +DrawShapes(canvas, content)$ void
     }
@@ -358,7 +358,7 @@ OnPaintSurface(canvas, info)
   ├─ canvas.Scale(RenderScaling)                     … DPI の適用（境界 1 箇所）
   ├─ canvas.Clear(透明)                              … 前フレームの描画を残さない
   ├─ Marquee.ResolveContent(clientSize)              … 描画内容 1 値（判断はコア。内部で Marquee.ResolveFrame が解決。サイズのみを渡し原点は常に 0）
-  └─ 自 UI の描画実装（MarqueeRendererMewUI）があれば Draw(canvas, content)、なければ Marquee.Draw(new SkiaEsCanvas(canvas), content)
+  └─ 自 UI の描画実装（MarqueeRendererMewUI）があれば Draw(canvas, content)、なければ描画ポート経由の DrawShapes(new SkiaEsCanvas(canvas), content)
        （層の順序はコアの MarqueeRendererBase が、色は UIBase の MarqueeRenderer が単一所有する）
        ├─ MarqueeOuterRenderer.Draw                 … 外側の装飾（暗転マスク・枠線）
        ├─ MarqueeInnerRenderer.Draw                 … 穴あけ矩形の塗り・内枠

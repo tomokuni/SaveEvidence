@@ -58,7 +58,7 @@ public class MarqueeTests
     private static Marquee CreateMarquee(ICursorService? cursor, out EffectsSpy effects, MarqueeOptions? options = null)
     {
         effects = new EffectsSpy();
-        return new Marquee(new StubMarqueeRenderer(), effects, cursor, options) { Log = NullLogger.Instance };
+        return new Marquee(effects, cursor, options) { Log = NullLogger.Instance };
     }
 
     // ====================================================================
@@ -66,15 +66,9 @@ public class MarqueeTests
     // ====================================================================
 
     [Fact]
-    public void 生成_描画実装がnullなら例外を投げる()
-    {
-        Assert.Throws<ArgumentNullException>(() => new Marquee(null!, new EffectsSpy()));
-    }
-
-    [Fact]
     public void 生成_効果がnullなら例外を投げる()
     {
-        Assert.Throws<ArgumentNullException>(() => new Marquee(new StubMarqueeRenderer(), null!));
+        Assert.Throws<ArgumentNullException>(() => new Marquee(null!));
     }
 
     [Fact]
@@ -85,66 +79,6 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out _, options);
 
         Assert.Same(options, marquee.Options);
-    }
-
-    // ====================================================================
-    // 描画の差し替え（Strategy）
-    // ====================================================================
-
-    [Fact]
-    public void 生成_注入した描画実装を保持する()
-    {
-        var renderer = new StubMarqueeRenderer();
-
-        var marquee = new Marquee(renderer, new EffectsSpy());
-
-        Assert.Same(renderer, marquee.Renderer);
-    }
-
-    [Fact]
-    public void 描画実装を差し替えると再描画する()
-    {
-        var effects = new EffectsSpy();
-        var marquee = new Marquee(new StubMarqueeRenderer(), effects);
-        var before = effects.RedrawCount;
-
-        marquee.Renderer = new StubMarqueeRenderer();
-
-        Assert.True(effects.RedrawCount > before, "描画実装の差し替えで再描画が要求されていない");
-    }
-
-    [Fact]
-    public void 描画実装が同じなら再描画しない()
-    {
-        var effects = new EffectsSpy();
-        var renderer = new StubMarqueeRenderer();
-        var marquee = new Marquee(renderer, effects);
-        var before = effects.RedrawCount;
-
-        marquee.Renderer = renderer;
-
-        Assert.Equal(before, effects.RedrawCount);
-    }
-
-    [Fact]
-    public void 描画実装にnullは設定できない()
-    {
-        var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
-
-        Assert.Throws<ArgumentNullException>(() => marquee.Renderer = null!);
-    }
-
-    [Fact]
-    public void Draw_は設定された描画実装へ委譲する()
-    {
-        var marquee = new Marquee(new StubMarqueeRenderer(), new EffectsSpy());
-        var replacement = new StubMarqueeRenderer();
-        marquee.Renderer = replacement;
-        var content = marquee.ResolveContent(new EsSize(120, 80));
-
-        marquee.Draw(StubCanvas.Instance, content);
-
-        Assert.Equal(1, replacement.DrawShapesCalls);
     }
 
     /// <summary>効果を何もしない実装（確保量の計測に使う）。</summary>
@@ -160,7 +94,7 @@ public class MarqueeTests
     [Fact]
     public void Move_ポインター移動はヒープを確保しない()
     {
-        var marquee = new Marquee(new StubMarqueeRenderer(), new NoOpEffects());
+        var marquee = new Marquee(new NoOpEffects());
         marquee.SetSelection(new EsRect(10, 10, 100, 80));
         marquee.Press(new EsPoint(50, 50), 1);
         marquee.Move(new EsPoint(51, 51));

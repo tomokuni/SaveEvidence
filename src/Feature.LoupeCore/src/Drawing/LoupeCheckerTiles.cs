@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Common.Imaging;
 
 using EsUtil.Feature.LoupeCore.Checkerboard;
 
@@ -11,12 +10,12 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// 描画実装は返された矩形を順に塗るだけである（タイルの位置と個数の計算を描画側に持たせない）。<br/>
 /// <b>なぜ列挙子か</b>: タイル数は描画先の大きさに比例して増えるため（既定でも数百、タイルサイズを小さくすると数万）、<br/>
 /// 描画のたびにリストを確保するとヒープ確保がフレームごとに積み上がる。<br/>
-/// 構造体のため <c>foreach</c> でもボックス化せず、<see cref="IEsCanvas.FillRects{TWalker}"/> へは<br/>
-/// 制約付きジェネリックとして渡せる（リスト確保もボックス化も発生しない）。<br/>
+/// 構造体のため <c>foreach</c> でもボックス化せず、リスト確保も発生しない（<see cref="GetEnumerator"/> が自身を返す）。<br/>
 /// <b>列挙は 1 回だけ</b>（内部に走査位置を持つため、同じ値で 2 回列挙すると 2 回目は空になる）。<br/>
-/// <b>既定値は空</b>（タイルなし = 描かない）であり、作成はコア（<see cref="Loupe.ResolveContent"/>）だけが行う。
+/// <b>既定値は空</b>（タイルなし = 描かない）であり、作成はコア（<see cref="Loupe.ResolveContent"/>）だけが行う。<br/>
+/// <b>描画ポートの列挙子契約には適合させない</b>（コアは描画 API を知らない。適合は描画側が行う）。
 /// </remarks>
-public struct LoupeCheckerTiles : IEsRectWalker<LoupeCheckerTiles>
+public struct LoupeCheckerTiles
 {
     /// <summary>一辺のタイル数（切り上げ。0 の場合は列挙する矩形がない）。</summary>
     private readonly int _tiles;

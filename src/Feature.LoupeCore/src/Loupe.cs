@@ -1,10 +1,7 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Feature.LoupeCore.Imaging;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
-using EsUtil.SaveEvidence.Common.Imaging;
-using EsUtil.Feature.LoupeCore.Contract;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Drawing;
 
@@ -44,11 +41,11 @@ public readonly record struct LoupeRenderNotification(EsPoint? CaptureTopLeft, d
 /// - 表示サイズの決定（要求サイズを親領域の最小辺へクランプする規則と、その唯一の書き込み元）<br/>
 /// - 表示位置の決定（拡大中心 ＋ オフセット ＋ 親領域内へのクランプ）<br/>
 /// - 描画入力（<see cref="LoupeRenderRequest"/>）の組み立て（DIP → 物理ピクセルの換算と描画先へのクランプ）<br/>
-/// - 描画完了通知の内容（切り出し領域・スケール・座標ラベル）の解決<br/>
-/// - 描画実装（<see cref="ILoupeRenderer"/>）の保持<br/>
+/// - 描画完了通知の内容（切り出し領域・スケール）の解決<br/>
 /// <br/>
-/// <b>描画の差し替え</b>: 描画は <see cref="ILoupeRenderer"/> の実装へ委譲する（<see cref="Renderer"/> で差し替え可能）。<br/>
-/// コアは描画層を参照しないため、実装は注入で受け取る（コンストラクタで必須）。<br/>
+/// <b>描画は本コアの関心事ではない</b>: 本コアは描画 API も描画面も知らない<br/>
+/// （<see cref="LoupeDrawContent"/> とその <see cref="LoupeDrawContent.Layers"/> というデータを返すだけである）。<br/>
+/// 描画は UI 層が行い、層の順序に従った描画手順は UI 側の共有層（<c>LoupeControl.UIBase</c> の <c>LoupeRendererBase</c>）が単一所有する。<br/>
 /// <br/>
 /// <b>UI 層の責務</b>: 拡大元画像の解決（UI ごとに型が異なる）、描画の実行（ビットマップ合成・キャンバス描画）、<br/>
 /// 再描画のバッチ化（UI のディスパッチャー）、公開プロパティ・公開イベントへの写像。<br/>
@@ -62,37 +59,11 @@ public sealed partial class Loupe
     /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は等価変換として扱う）。</summary>
     private ICoordTransform? _coordinatePort;
 
-    /// <summary>描画内容を描画面へ写す描画実装（既定は描画層の <c>LoupeRenderer</c>。色はインスタンス状態として渡す）。</summary>
-    private ILoupeRenderer _renderer;
-
     /// <summary>ファサードを初期化する。</summary>
-    /// <param name="renderer">描画の実装（既定実装は描画層の <c>LoupeRenderer</c>。色はインスタンス状態として渡す）。null 不可。</param>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="LoupeOptions.Default"/>）。</param>
-    /// <exception cref="ArgumentNullException"><paramref name="renderer"/> が null の場合。</exception>
-    public Loupe(ILoupeRenderer renderer, LoupeOptions? options = null)
+    public Loupe(LoupeOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(renderer);
-
-        _renderer = renderer;
         Options = options ?? LoupeOptions.Default;
-    }
-
-    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。</summary>
-    /// <value>現在の描画実装。既定は <see cref="ILoupeRenderer"/> の既定実装。</value>
-    /// <remarks>
-    /// 描画先（<see cref="IEsCanvas"/> の実装）と描画手順（本プロパティ）の両方を差し替えできる。<br/>
-    /// 設定後の再描画は UI 層が要求する（本クラスは再描画のトリガーを持たない）。<br/>
-    /// null は受け付けない（設定の有無で描画可否が変わると、UI の描画経路に分岐が生まれるため）。
-    /// </remarks>
-    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
-    public ILoupeRenderer Renderer
-    {
-        get => _renderer;
-        set
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            _renderer = value;
-        }
     }
 
     /// <summary>ルーペの設定（表示サイズ・拡大率・外観）。</summary>
@@ -173,40 +144,10 @@ public sealed partial class Loupe
     /// <param name="request">実際に描画した描画入力（<see cref="CreateRequest"/> の結果）。</param>
     /// <returns>切り出し領域の左上とスケール。</returns>
     /// <remarks>
-    /// 1. 切り出し領域の一辺を拡大率で切り上げて求める（切り上げは <see cref="LoupeImageExtractor.ComputeCaptureSize"/>）。<br/>
-    /// 2. 拡大中心が未設定の場合は切り出し領域を null とする（描画しないため）。<br/>
-    /// 3. 切り出し領域の左上を中心から導出する（<see cref="LoupeImageExtractor.ComputeCaptureTopLeft"/>）。<br/>
-    /// <br/>
+    /// 切り出し領域の一辺と左上は <see cref="LoupeRenderRequest"/> が単一所有する（拡大中心が未設定の場合は左上が null）。<br/>
     /// 描画に使った値を受け取る（本メソッドが DIP から再換算すると、描画先の領域によるクランプで実際の描画と値が食い違うため）。<br/>
     /// スケールは拡大率と同値である（描画は切り出し領域を拡大率倍で描く）。
     /// </remarks>
     public LoupeRenderNotification ResolveNotification(in LoupeRenderRequest request)
-    {
-        var captureSize = LoupeImageExtractor.ComputeCaptureSize(request.PixelSize, request.ZoomLevel);
-        EsPoint? captureTopLeft = request.Center is { } center
-            ? LoupeImageExtractor.ComputeCaptureTopLeft((int)center.X, (int)center.Y, captureSize)
-            : null;
-
-        return new LoupeRenderNotification(captureTopLeft, request.ZoomLevel);
-    }
-
-    /// <summary>描画内容を描画面へ描く（描画起動の唯一の入口）。</summary>
-    /// <param name="canvas">描画先の描画ポート（UI 層が自 UI の描画面を適合させて渡す）。null 不可。</param>
-    /// <param name="source">拡大元の 100% 画像。null の場合は市松模様のみを描く。</param>
-    /// <param name="request">描画入力（コアと UI の契約）。</param>
-    /// <param name="content">コアが解決した描画内容（層の順序と矩形を持つ）。</param>
-    /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
-    /// <remarks>
-    /// <b>描画は本メソッドを通してのみ起動する</b>: UI 層が <see cref="Renderer"/> を直接呼ぶと、<br/>
-    /// 描画実装の差し替え（<see cref="Renderer"/> の設定）と層の順序の単一所有が二重経路になる。<br/>
-    /// 本メソッドを経由させることで、描画の起動・順序（<c>LoupeRendererBase.DrawShapes</c>）・<br/>
-    /// 差し替えのすべてがコアの単一所有になる。<br/>
-    /// 描画面の確保（フレームワーク固有の機構）は UI 層が所有する。
-    /// </remarks>
-    public void Draw(IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)
-    {
-        ArgumentNullException.ThrowIfNull(canvas);
-
-        _renderer.DrawShapes(canvas, source, in request, in content);
-    }
+        => new(request.CaptureTopLeft, request.ZoomLevel);
 }

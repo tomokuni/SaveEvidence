@@ -2,20 +2,20 @@ using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Drawing;
 
 
-namespace EsUtil.Feature.MarqueeCore.Contract;
+namespace EsUtil.SaveEvidence.Marquee.UIBase;
 
 /// <summary>選択矩形コントロールの描画手順（層の順序に従った描画ポートの呼び出し）を単一所有する基底クラス。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: Template Method（層の順序を本クラスが所有し、層ごとの描き方を派生クラスが与える）。<br/>
 /// <br/>
-/// <b>なぜコアに置くか</b>: 「どの層をどの順に描くか」は<b>単体の選択矩形コントロールにも存在する概念</b>であり、<br/>
-/// UI フレームワークに依存しない（描画 API は <see cref="IEsCanvas"/> が抽象化している）。<br/>
-/// コアが本クラスを所有することで、<b>描画の起動と順序がコアの単一所有</b>になり、<br/>
-/// UI 層は描画面（<see cref="IEsCanvas"/>）を用意するだけでよくなる。<br/>
+/// <b>なぜ UIBase に置くか</b>: 「どの層をどの順に描くか」の<b>順序はコアがデータとして単一所有する</b>が、<br/>
+/// そのデータをたどって描画 API を呼ぶのは描画の都合（UI 側の関心事）である。<br/>
+/// 各 UI が同じ手順を書くと片方だけずれるため、UI フレームワーク非依存の本層が手順を単一所有する<br/>
+/// （描画 API は <see cref="IEsCanvas"/> が抽象化しているため、本層はフレームワークを知らない）。<br/>
 /// <br/>
-/// <b>描画にだけ必要な設定はコアが持たない</b>: 色とフォントサイズは<b>描画にだけ必要な設定</b>であり、コアの計算・判定に入らない。<br/>
+/// <b>描画にだけ必要な設定は本層の型が持つ</b>: 色とフォントサイズは<b>描画にだけ必要な設定</b>であり、コアの計算・判定に入らない。<br/>
 /// したがって本クラスはこれらの値も型も持たず、それを使う層の描画を抽象メソッドまたはフックとして派生クラスへ委ねる<br/>
-/// （実体は UIBase の <c>MarqueePaint</c> が単一所有し、その保持者である <c>MarqueeRenderer</c> が実装する）。<br/>
+/// （実体は <c>MarqueePaint</c> が単一所有し、その保持者である <see cref="MarqueeRenderer"/> が実装する）。<br/>
 /// <br/>
 /// <b>層の順序はコアが単一所有する</b>: <see cref="MarqueeDrawContent.Layers"/> の順に層を処理する。<br/>
 /// <b>テキストを描く層はフックで受ける</b>: 文言と基準点は <see cref="MarqueeDrawContent.SizeLabelText"/> /<br/>
@@ -33,7 +33,7 @@ public abstract class MarqueeRendererBase : IMarqueeRenderer
     /// <param name="content">コアが解決した描画内容（層の順序を持つ）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
     /// <remarks>
-    /// 本メソッドが<b>描画起動の唯一の入口</b>である（コアが描画内容を解決し、本メソッドを通して描く）。<br/>
+    /// 本メソッドが<b>描画起動の唯一の入口</b>である（UI 層が描画内容を解決し、本メソッドを通して描く）。<br/>
     /// テキストは <see cref="DrawLabel"/>（既定は何もしない）へ委ねる（UI 層が要素として置くか画像として描くかを決める）。<br/>
     /// 描くものが無い層は値が null のため何もしない。<br/>
     /// 描画面の消去（前フレームの残像の除去）は呼び出し側が行う（描画面の寿命は UI が所有するため）。
@@ -73,8 +73,8 @@ public abstract class MarqueeRendererBase : IMarqueeRenderer
     /// <b>既定は何もしない</b>: テキストを UI の要素（<c>TextBlock</c> 等）として置く UI は、本フックを上書きしない<br/>
     /// （要素は親より後に描かれるため常に最上位になる。両方を描くと二重に表示される）。<br/>
     /// canvas へ直接描く実装だけが上書きし、<see cref="IEsCanvas.DrawLabel"/> と <see cref="IEsCanvas.MeasureText"/> を使って描く<br/>
-    /// （配置は描画層（<c>MarqueeControl.UIBase</c> の <c>MarqueeLabelPlan</c>）が単一所有するため、実装は実寸の反映と描画 API の呼び出しだけを担う）。<br/>
-    /// フォントサイズ・色は描画層の設定（<c>MarqueePaint</c>）を参照する。
+    /// （配置は <see cref="MarqueeLabelPlan"/> が単一所有するため、実装は実寸の反映と描画 API の呼び出しだけを担う）。<br/>
+    /// フォントサイズ・色は描画の設定（<see cref="MarqueePaint"/>）を参照する。
     /// </remarks>
     protected virtual void DrawLabel(IEsCanvas canvas, in MarqueeDrawContent content)
     {

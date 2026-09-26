@@ -30,10 +30,9 @@
 ```text
 UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> MarqueeControl.UIBase   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
+    ├──> MarqueeControl.UIBase   どう描くか（UIBase が所有する描画手順）
     ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```
@@ -41,7 +40,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 - 上位層は下位層のみを参照します（逆参照なし）。
 - 本コアは UI フレームワークを参照しません。装飾（暗転マスク等）は**本コア内のサブ概念**として同居します（別プロジェクトに分けません）。
 - 本コアは描画 API を持ちません。描画の手順は UI 非依存の描画層（`MarqueeControl.UIBase`）が単一所有し、描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`SelectionGeometry.DirectionalHandles`（読み取り専用の一覧）等）を参照します。
-- **本コアは描画層を参照しません**（依存の向きは `Core` → `Rendering` の一方向）。描画の実行は契約（`IMarqueeRenderer`）経由で受け取り、既定実装（`new MarqueeRenderer(MarqueePaint.Default)`。描画手順は `MarqueeRendererBase` が、色は `MarqueePaint` が単一所有する）は利用者がコンストラクタで注入します。
+- **本コアは描画層を参照しません**（依存の向きは `UI 層 → MarqueeControl.UIBase → Feature.MarqueeCore` の一方向。本コアは `Common` も `Platform.*` の UI アダプタも参照しません）。**描画は本コアの関心事ではない**ため、本コアは描画内容（`MarqueeDrawContent` と `Layers`）をデータとして返すだけであり、層の順序に従う描画手順は UI 側の共有層（`MarqueeControl.UIBase` の `MarqueeRendererBase`）が単一所有します。
 
 ### 3.2 データフロー（入力 → 描画）
 
@@ -103,8 +102,7 @@ stateDiagram-v2
 | `src/Interaction/MarqueeSnapshot.cs` | `MarqueeSnapshot` | public | 状態のスナップショット（`readonly record struct`。値型のため通知でヒープを確保しない） |
 | `src/Interaction/MarqueeNotice.cs` | `MarqueeNotice` / `MarqueeNoticeKind` | public | 通知（`MarqueeNotice` は値型） |
 | `src/Session/MarqueeFeedback.cs` | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeCaptureAction` | internal | 効果（適用順を単一所有。適用先は `IMarqueeEffects`） |
-| `src/Contract/IMarqueeEffects.cs` | `IMarqueeEffects` | public | 効果の適用先 |
-| `src/Contract/IMarqueeRenderer.cs` | `IMarqueeRenderer` | public | 描画の契約（描画内容 → 描画面の写像。**描画の差し替え点**。実装は描画層が提供する） |
+| `src/Contract/IMarqueeEffects.cs` | `IMarqueeEffects` | public | 効果の適用先（フォーカス・再描画・カーソル操作・カーソル形状・ポインターキャプチャ・座標変換） |
 | `src/Contract/MarqueeEffectsBase.cs` | `MarqueeEffectsBase` | public abstract | 効果の既定実装（全メンバーが virtual の空実装） |
 | `src/Drawing/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public | 描画層の順序（`Decoration` / `Handles` / `Marker` / `Label`。`Label` はテキストがある場合のみ） |
 | `src/Interaction/HitTarget.cs` | `HitTarget` | public | ヒット対象 |
@@ -135,8 +133,7 @@ stateDiagram-v2
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint`（本コアは色を持つ型を公開しない） |
 | サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveFrame` の `ResolveSizeLabel`（書式は private の `FormatSizeLabel`） |
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。デリゲートを生成しない） |
-| 描画 API の呼び出し（層の順序と写し方、色の参照） | 描画層 `MarqueeControl.UIBase`（`MarqueeRenderer` / `MarqueeRendererBase` 等）。本コアは `IMarqueeRenderer` 経由で委譲する（実装は注入。本コアは描画層を参照しない） |
-| 描画実装の保持と差し替え | `Marquee.Renderer`（同値の再設定では再描画しない規則も本クラスが単一所有する） |
+| 描画 API の呼び出し（層の順序と写し方、色の参照） | 描画層 `MarqueeControl.UIBase`（`IMarqueeRenderer` / `MarqueeRendererBase` / `MarqueeRenderer` 等）。本コアは描画内容と層の順序（`MarqueeDrawContent.Layers`）をデータとして渡すだけである |
 | 入力の判断に伴うログ | `MarqueeLogMessage` |
 
 ## 6. 例外処理ポリシー
@@ -144,7 +141,6 @@ stateDiagram-v2
 | 状況 | 扱い |
 | --- | --- |
 | `Marquee` の `effects` が null | `ArgumentNullException`（呼び出し側の実装誤り） |
-| `Marquee` の `renderer` が null | `ArgumentNullException`（描画実装は必須。`Renderer` プロパティへの null 代入も同様） |
 | カーソルサービス未指定 | 例外にせず、カーソル操作を効果へ載せない（UI 初期化なしの検証を可能にする） |
 | ロガー未設定 | `NullLogger` へ吸収する（呼び出し側は null を設定してよい） |
 | 座標変換ポート未設定 | 等価変換（1 ドメインピクセル = 1 DIP・境界なし）として扱う |

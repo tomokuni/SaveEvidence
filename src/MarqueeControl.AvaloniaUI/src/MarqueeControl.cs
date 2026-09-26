@@ -57,6 +57,14 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>コアのファサード（入力の解釈・状態遷移の判断・描画内容の解決・設定の窓口）。</summary>
     private readonly MarqueeFacade _marquee;
 
+    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。既定は自 UI の描画実装（色を保持する）。</summary>
+    /// <remarks>
+    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
+    /// 層の順序に従った描画手順は UIBase の基底（<c>MarqueeRendererBase</c>）が単一所有する。<br/>
+    /// 既定値は <see cref="Paint"/> の既定値（<see cref="MarqueePaint.Default"/>）と同じ色で組み立てる。
+    /// </remarks>
+    private IMarqueeRenderer _renderer = new MarqueeRendererAvaloniaUI(MarqueePaint.Default);
+
     /// <summary>コアが要求する効果（フォーカス・再描画・カーソル形状・座標変換）の適用先。</summary>
     private readonly IMarqueeEffects _effects;
 
@@ -132,7 +140,7 @@ public sealed partial class MarqueeControl : Panel
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
         _effects = new Effects(this);
-        _marquee = new MarqueeFacade(new MarqueeRendererAvaloniaUI(MarqueePaint.Default), _effects, _cursor, Options);
+        _marquee = new MarqueeFacade(_effects, _cursor, Options);
         // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
         _marquee.Scaling = GetValue(ScalingProperty);
         _marquee.Notified += OnNotified;
@@ -189,7 +197,7 @@ public sealed partial class MarqueeControl : Panel
 
         // 色（描画にだけ必要な設定）の変更は本 UI の描画実装を差し替える（色は描画実装が単一所有する）
         PaintProperty.Changed.AddClassHandler<MarqueeControl>(
-            static (o, e) => o._marquee.Renderer = new MarqueeRendererAvaloniaUI(e.GetNewValue<MarqueePaint>()));
+            static (o, e) => o.Renderer = new MarqueeRendererAvaloniaUI(e.GetNewValue<MarqueePaint>()));
 
         // 対話パラメータをファサードへ伝搬する（変更の影響判断・ログはコアが単一所有する）
         OptionsProperty.Changed.AddClassHandler<MarqueeControl>(
@@ -211,16 +219,31 @@ public sealed partial class MarqueeControl : Panel
     // ====================================================================
 
     /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="MarqueeRenderer"/>。</value>
+    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="MarqueeRendererAvaloniaUI"/>。</value>
     /// <remarks>
-    /// 保持と再描画の要求はコアのファサード（<see cref="MarqueeFacade.Renderer"/>）が単一所有する（本層は委譲するだけ）。<br/>
-    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
+    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
+    /// 層の順序に従った描画手順は UIBase の基底（<c>MarqueeRendererBase</c>）が単一所有する。<br/>
+    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。<br/>
+    /// 設定すると再描画を要求する（同値の再設定では何も起こらない）。
     /// </remarks>
     /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
     public IMarqueeRenderer Renderer
     {
-        get => _marquee.Renderer;
-        set => _marquee.Renderer = value;
+        get => _renderer;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (ReferenceEquals(_renderer, value))
+            {
+                return;
+            }
+
+            _renderer = value;
+            InvalidateFrame();
+            InvalidateVisual();
+            InvalidateArrange();
+        }
     }
 
     // ====================================================================

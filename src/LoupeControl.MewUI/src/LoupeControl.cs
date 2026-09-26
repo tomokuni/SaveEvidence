@@ -16,7 +16,6 @@ using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.Skia;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Drawing;
-using EsUtil.Feature.LoupeCore.Contract;
 using EsUtil.Feature.LoupeCore.Logging;
 
 
@@ -119,7 +118,7 @@ public sealed class LoupeControl : Panel
             changed: static (o, oldValue, newValue) =>
             {
                 // 色は描画実装が単一所有するため、新しい色の描画実装へ差し替える
-                o._loupe.Renderer = new LoupeRendererMewUI(newValue);
+                o.Renderer = new LoupeRendererMewUI(newValue);
                 // 中心座標ラベルの色も描画実装が与えるため、ラベル要素を配置し直す
                 o.InvalidateArrange();
             });
@@ -130,7 +129,15 @@ public sealed class LoupeControl : Panel
     /// （本コントロールは公開プロパティで受け取った値を転送し、返された値を描画・配置へ使うだけ）。<br/>
     /// フィールド初期化子で生成する（プロパティ変更のコールバックから参照できるようにするため）。
     /// </remarks>
-    private readonly LoupeFacade _loupe = new(new LoupeRendererMewUI(LoupePaint.Default));
+    private readonly LoupeFacade _loupe = new();
+
+    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。既定は自 UI の描画実装（色を保持する）。</summary>
+    /// <remarks>
+    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
+    /// 層の順序に従った描画手順は UIBase の基底（<c>LoupeRendererBase</c>）が単一所有する。<br/>
+    /// 既定値は <see cref="Paint"/> の既定値（<see cref="LoupePaint.Default"/>）と同じ色で組み立てる。
+    /// </remarks>
+    private ILoupeRenderer _renderer = new LoupeRendererMewUI(LoupePaint.Default);
 
     /// <summary>図形（背景・市松模様・拡大画像・十字線・外枠）を描画する内部キャンバス。</summary>
     /// <remarks>
@@ -193,19 +200,27 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="LoupeRenderer"/>。</value>
+    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="LoupeRendererMewUI"/>。</value>
     /// <remarks>
-    /// 保持はコアのファサード（<see cref="LoupeFacade.Renderer"/>）が単一所有する。<br/>
+    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
+    /// 層の順序に従った描画手順は UIBase の基底（<c>LoupeRendererBase</c>）が単一所有する。<br/>
     /// 変更すると再描画とラベル要素の再配置を要求する（ラベルの文言・寸法は描画実装が解決するため）。<br/>
     /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
     /// </remarks>
     /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
     public ILoupeRenderer Renderer
     {
-        get => _loupe.Renderer;
+        get => _renderer;
         set
         {
-            _loupe.Renderer = value;
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (ReferenceEquals(_renderer, value))
+            {
+                return;
+            }
+
+            _renderer = value;
             InvalidateVisual();
             InvalidateArrange();
         }
@@ -435,14 +450,14 @@ public sealed class LoupeControl : Panel
         {
             // 描画の手順（層の順序と描画 API への写し）はファサードが保持するレンダラ（LoupeControl.UIBase）が単一所有する
             // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序と起 動はコアが単一所有する）
-            if (_loupe.Renderer is LoupeRendererMewUI uiRenderer)
+            if (_renderer is LoupeRendererMewUI uiRenderer)
             {
-                uiRenderer.Draw(canvas, Source, in request, in content);
+                uiRenderer.Draw(canvas, Source, in content);
             }
             else
             {
-                // 描画実装が差し替えられている場合はコアの入口から描く
-                _loupe.Draw(new SkiaEsCanvas(canvas), Source, in request, in content);
+                // 差し替えられた描画実装は描画ポート（自 UI の描画面を適合させたもの）経由で描く
+                _renderer.DrawShapes(new SkiaEsCanvas(canvas), Source, in content);
             }
         }
         catch (Exception ex)

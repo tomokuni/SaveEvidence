@@ -6,13 +6,13 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **描画手順** | 「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方）と色（`LoupePaint`） | `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`（写し方の基底はコアの `LoupeRendererBase`） |
+| **描画手順** | 「どう描くか」（描画 API の呼び出し手順＝層の順序と写し方）と色（`LoupePaint`） | `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`（写し方の基底は本層の `LoupeRendererBase`） |
 | **組み込み規則** | 「他のコントロールへ組み込むときにだけ必要な規則」（再描画要求のバッチ化と世代番号管理） | `LoupeRenderCoordinator` |
 
 ## 目的
 
 - **「どう描くか」を 1 箇所に集約する**。コア（`Feature.LoupeCore`）は「何を描くか（判断とデータ）」だけを決め、描画 API の呼び出し手順と色（`LoupePaint`）は本層が単一所有する。
-- **描画を差し替えられる**。描画先は `IEsCanvas`（`Platform.Core`、UI 非依存の描画ポート）であり、描画手順は `ILoupeRenderer`（`Feature.LoupeCore` の契約）を実装した型で置き換えられる（ファサードの `Loupe.Renderer` へ設定する）。UI の追加・描画方式の変更はポートまたは実装の差し替えだけで済む。
+- **描画を差し替えられる**。描画先は `IEsCanvas`（`Platform.Core`、UI 非依存の描画ポート）であり、描画手順は `ILoupeRenderer`（本層の契約）を実装した型で置き換えられる（UI が保持する `Renderer` へ設定する）。UI の追加・描画方式の変更はポートまたは実装の差し替えだけで済む。
 - **非同期の再描画を 1 フレーム 1 回へ結合する**。中間ビットマップを持つ UI（Avalonia 版）は「要求 → 実行キュー → 非同期生成 → 表示反映」の順に動くため、要求の合流と古い結果の破棄が必要になる。この手順を UI ごとに書かせない。
 - **UI 実装を薄くする**。UI 層は描画内容の解決・描画先（描画ポート）の用意・実行キューの提供だけを行い、描画 API の呼び出し手順と再描画のスケジューリングは本層が持つ。
 - **UI 初期化なしで検証できる**。描画の実行は Skia（`SkiaEsCanvas`）で行うため、ウィンドウなしの画素テストが書ける（`tests/`）。再描画のスケジューリングも UI 型を持たないため `[Fact]` で検証できる。
@@ -29,7 +29,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform）
-※ コアは本層を参照しない（本層の描画実装はコアの契約 ILoupeRenderer を実装する）。
+※ コアは本層を参照しない（本層がコアの描画内容（`LoupeDrawContent`）を使う向きだけ）。
 ※ 本層を使うのは LoupeControl.AvaloniaUI のみ（MewUI は中間ビットマップを持たず同期描画するため再描画のスケジューリングが不要）。
 ```
 
@@ -70,8 +70,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | 差し替えたいもの | 方法 |
 | --- | --- |
 | **描画先（UI フレームワーク）** | `IEsCanvas` を実装する（例: `SkiaEsCanvas`（Skia）/ `AvaloniaCanvas`（Avalonia の `DrawingContext`））。**描画手順はそのまま使える** |
-| **描画手順そのもの** | `ILoupeRenderer`（`Feature.LoupeCore`）を実装した型を作り、ファサードの `Loupe.Renderer` へ設定する（本層の `LoupeRenderer` を使わなくてもよい） |
-| **色** | `LoupePaint` を変える（`new LoupeRenderer(paint)` をファサードの `Loupe.Renderer` へ設定し直す。UI の `Paint` プロパティが本処理を行う） |
+| **描画手順そのもの** | `ILoupeRenderer`（本層の契約）を実装した型を作り、UI が保持する `Renderer` へ設定する（本層の `LoupeRenderer` を使わなくてもよい） |
+| **色** | `LoupePaint` を変える（`new LoupeRendererMewUI(paint)` / `new LoupeRendererAvaloniaUI(paint)` を UI が保持する `Renderer` へ設定し直す。UI の `Paint` プロパティが本処理を行う） |
 | **寸法・拡大率・表示サイズ** | `LoupeOptions`（`Metrics` が寸法。`CheckerSize` / `FrameWidth` / ラベルの寸法）を変える（コアが単一所有する） |
 
 ## Core との境界（なぜスケジューリングを Core に置かないか）
@@ -87,7 +87,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 | 型 | AvaloniaUI | MewUI | 補足 |
 | --- | --- | --- | --- |
-| `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`（写し方の基底はコアの `LoupeRendererBase`） | 使う | 使う | 描画手順と色は両 UI で共通 |
+| `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`（写し方の基底は本層の `LoupeRendererBase`） | 使う | 使う | 描画手順と色は両 UI で共通 |
 | `LoupeRenderCoordinator` | 使う（中間ビットマップを非同期生成し `Image.Source` へ反映） | **使わない** | MewUI は `OnPaintSurface` の中で同期描画するため、要求の合流と世代番号管理が不要 |
 
 **UI フレームワークによって未使用になる型が存在します**（`LoupeRenderCoordinator` は中間ビットマップを持つ UI だけが使う）。これは「抽象として複数の UI で共用できる処理を本層へ置き、必要とする UI だけが実装・利用する」設計の帰結であり、コア（`Feature.LoupeCore`）の公開面には影響しません。同じ必要が生じた時点で MewUI にも注入できます。
@@ -121,7 +121,7 @@ protected override void Render(DrawingContext context)
     }
     else
     {
-        _loupe.Draw(canvas, _source, in request, in notification);
+        _loupe.ResolveContent(request);
     }
 }
 ```

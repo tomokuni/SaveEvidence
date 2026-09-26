@@ -13,15 +13,12 @@ namespace EsUtil.Feature.LoupeCore.Tests;
 /// </remarks>
 public class LoupeCheckerTilesTests
 {
-    /// <summary>テストで使用する描画実装のスタブ（ファサードの生成に必要）。</summary>
-    private static readonly StubLoupeRenderer s_renderer = new();
-
     /// <summary>描画内容を解決する（タイルサイズは物理ピクセルで指定する）。</summary>
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="tileSize">1 タイルの一辺（物理ピクセル）。</param>
     /// <returns>解決した描画内容。</returns>
     private static LoupeDrawContent Content(int pixelSize, int tileSize)
-        => new Loupe(s_renderer).ResolveContent(
+        => new Loupe().ResolveContent(
             new LoupeRenderRequest(null, pixelSize, pixelSize, ZoomLevel: 4, new LoupeMetrics(), 1.0, tileSize, 1));
 
     /// <summary>列挙子を検証用の一覧へ展開する。</summary>

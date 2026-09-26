@@ -9,8 +9,8 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 
 /// <summary>Avalonia 版の描画の既定実装（自 UI の描画面を描画ポートへ適合させる）。</summary>
 /// <remarks>
-/// <b>位置付け</b>: 描画の手順（層の順序）はコアの <c>LoupeRendererBase</c> が、色は <see cref="LoupePaint"/> を<br/>
-/// 保持する <see cref="LoupeRenderer"/>（UIBase）が単一所有する。本クラスは<b>UI フレームワーク固有の描画</b>だけを<br/>
+/// <b>位置付け</b>: 描画の手順（層の順序）は UIBase の <c>LoupeRendererBase</c> が、色は <see cref="LoupePaint"/> を<br/>
+/// 保持する <see cref="LoupeRenderer"/> が単一所有する。本クラスは<b>UI フレームワーク固有の描画</b>だけを<br/>
 /// 担う層であり、現在は「自 UI の描画面（<see cref="DrawingContext"/>）を描画ポート（<c>AvaloniaCanvas</c>）へ<br/>
 /// 適合させる」ことがその中身である。<br/>
 /// <br/>
@@ -18,22 +18,20 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// （<c>LoupeRenderPipeline</c> が生成する）。<br/>
 /// <br/>
 /// <b>拡張の場所</b>: <c>IEsCanvas</c> では扱えない UI 固有の描画が必要になった場合は本クラスへ追加する<br/>
-/// （コアへ UI 型を持ち込まないため）。
+/// （UIBase へ UI 型を持ち込まないため）。
 /// </remarks>
 public sealed class LoupeRendererAvaloniaUI(LoupePaint paint) : LoupeRenderer(paint)
 {
     /// <summary>Avalonia の描画コンテキストから図形の層を描く。</summary>
     /// <param name="context">描画コンテキスト。null 不可。</param>
-    /// <param name="source">拡大元の 100% 画像。null の場合は市松模様のみ を描く。</param>
-    /// <param name="request">描画入力（拡大画像の切り出しに使う値）。</param>
-    /// <param name="content">コアが解決した描画内容（層の順序・矩形を持つ）。</param>
+    /// <param name="source">拡大元の 100% 画像。null の場合は市松模様のみを描く。</param>
+    /// <param name="content">コアが解決した描画内容（層の順序・矩形・拡大画像の幾何を持つ）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="context"/> が null の場合。</exception>
-    /// <remarks>描画面の確保（<c>DrawingContext</c> → <c>IEsCanvas</c> の適 合）が本 UI 固有の処理である。</remarks>
-    public void Draw(
-        DrawingContext context, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)
+    /// <remarks>描画面の確保（<c>DrawingContext</c> → <c>IEsCanvas</c> の適合）が本 UI 固有の処理である。</remarks>
+    public void Draw(DrawingContext context, EsBitmap? source, in LoupeDrawContent content)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        DrawShapes(new AvaloniaCanvas(context), source, in request, in content);
+        DrawShapes(new AvaloniaCanvas(context), source, in content);
     }
 }
