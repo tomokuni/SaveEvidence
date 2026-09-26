@@ -144,7 +144,7 @@ classDiagram
         +int CaptureSize（internal）
         +EsPoint? CaptureTopLeft（internal）
         +LoupeMagnifiedImage? MagnifiedImage（internal）
-        +ResolvePixelSize(size, renderScaling, availableSize) int$
+        +ResolvePixelSize(size, dipToDeviceScaling, availableSize) int$
     }
     class LoupeLabelPlacement {
         <<LoupeControl.UIBase>>

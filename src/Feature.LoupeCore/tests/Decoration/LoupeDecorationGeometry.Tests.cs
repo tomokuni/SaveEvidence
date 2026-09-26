@@ -16,8 +16,8 @@ public class LoupeDecorationGeometryTests
     [Fact]
     public void ComputeCrosshairRects_十字線の縦横2本の矩形を返す()
     {
-        // pixelSize=100, zoomLevel=4 → blocks = ceil(100/4) = 25、start = 25/2*4 = 48
-        var rects = LoupeDecorationGeometry.ComputeCrosshairRects(100, 4);
+        // 一辺 100, zoomLevel=4 → blocks = ceil(100/4) = 25、start = 25/2*4 = 48
+        var rects = LoupeDecorationGeometry.ComputeCrosshairRects(new EsRect(0, 0, 100, 100), 4);
 
         Assert.Equal(2, rects.Count);
         Assert.Equal(new EsRect(48, 0, 4, 100), rects[0]); // 縦
@@ -28,11 +28,21 @@ public class LoupeDecorationGeometryTests
     [Fact]
     public void ComputeCrosshairRects_zoomLevel1では中央を1ピクセルで描画する()
     {
-        // pixelSize=100, zoomLevel=1 → blocks = 100、start = 100/2*1 = 50
-        var rects = LoupeDecorationGeometry.ComputeCrosshairRects(100, 1);
+        // 一辺 100, zoomLevel=1 → blocks = 100、start = 100/2*1 = 50
+        var rects = LoupeDecorationGeometry.ComputeCrosshairRects(new EsRect(0, 0, 100, 100), 1);
 
         Assert.Equal(new EsRect(50, 0, 1, 100), rects[0]);
         Assert.Equal(new EsRect(0, 50, 100, 1), rects[1]);
+    }
+
+    /// <summary>描画面の原点が 0 でない場合もその座標系で矩形が返ることを検証する。</summary>
+    [Fact]
+    public void ComputeCrosshairRects_描画面の原点を基準に計算する()
+    {
+        var rects = LoupeDecorationGeometry.ComputeCrosshairRects(new EsRect(10, 20, 100, 100), 1);
+
+        Assert.Equal(new EsRect(60, 20, 1, 100), rects[0]);
+        Assert.Equal(new EsRect(10, 70, 100, 1), rects[1]);
     }
 
     /// <summary>外枠が 4 辺（上下左右）の矩形で返ることを検証する。</summary>

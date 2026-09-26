@@ -14,7 +14,7 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// <br/>
 /// <b>役割の分担</b>: ホストが設定する入力（設定値・環境値）は UI の公開プロパティが持ち、本値はそれらから<br/>
 /// 描画 1 フレーム分に必要な形へ<b>解決したスナップショット</b>である（描画層は公開プロパティを読まない）。<br/>
-/// - 表示サイズ（親領域のクランプ結果。<see cref="Loupe.ResolveLayout"/> の DIP）+ `RenderScaling`（環境）→ <see cref="PixelSize"/><br/>
+/// - 表示サイズ（親領域のクランプ結果。<see cref="Loupe.ResolveLayout"/> の DIP）+ <see cref="Loupe.DipToDeviceScaling"/>（環境値）→ <see cref="PixelSize"/><br/>
 /// - <see cref="LoupeOptions"/>（設定）→ <see cref="Options"/>（そのまま。拡大率は <see cref="ZoomLevel"/> として読める）<br/>
 /// 拡大元画像は UI ごとに型が異なるため本値に含めず、<br/>
 /// 描画層が解決した <see cref="EsBitmap"/> を別引数として受け取る（両 UI が同じ手順で本値を組み立てられる）。<br/>
@@ -92,7 +92,7 @@ public readonly record struct LoupeRenderRequest(
     /// <summary>UI 層が保持する DIP 値から描画入力を組み立てる。</summary>
     /// <param name="center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定は null。</param>
     /// <param name="displaySize">ルーペの表示サイズ（DIP。一辺）。</param>
-    /// <param name="renderScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
+    /// <param name="dipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
     /// <param name="options">ルーペの設定（拡大率・外観。補正済みの値を渡す）。</param>
     /// <param name="availableSize">描画先の領域サイズ（物理ピクセル）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
     /// <returns>描画入力（物理ピクセルサイズを解決済み）。</returns>
@@ -106,20 +106,20 @@ public readonly record struct LoupeRenderRequest(
     public static LoupeRenderRequest Create(
         EsPoint? center,
         double displaySize,
-        double renderScaling,
+        double dipToDeviceScaling,
         LoupeOptions options,
         EsSize? availableSize = null)
         => new(center,
                displaySize,
-               ResolvePixelSize(displaySize, renderScaling, availableSize),
+               ResolvePixelSize(displaySize, dipToDeviceScaling, availableSize),
                options,
-               renderScaling,
-               LoupeMetricsScaler.ScaleCheckerSize(options.CheckerSize, renderScaling),
-               LoupeMetricsScaler.ScaleFrameWidth(options.FrameWidth, renderScaling));
+               dipToDeviceScaling,
+               LoupeMetricsScaler.ScaleCheckerSize(options.CheckerSize, dipToDeviceScaling),
+               LoupeMetricsScaler.ScaleFrameWidth(options.FrameWidth, dipToDeviceScaling));
 
     /// <summary>表示サイズ（DIP）から描画に使う物理ピクセルサイズを求める。</summary>
     /// <param name="size">表示サイズ（DIP・一辺）。</param>
-    /// <param name="renderScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
+    /// <param name="dipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
     /// <param name="availableSize">描画先の領域サイズ。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
     /// <returns>描画に使う一辺の物理ピクセルサイズ（切り上げ・最低 1、領域指定時はクランプ済み）。</returns>
     /// <remarks>
@@ -128,6 +128,6 @@ public readonly record struct LoupeRenderRequest(
     /// 描画と描画引数（イベント通知）が同じ値を使うため、UI 層は本値（<see cref="PixelSize"/>）を両方へ渡す<br/>
     /// （それぞれの計算で値がずれると、ホストへ通知する切り出し領域と実際の描画が食い違う）。
     /// </remarks>
-    internal static int ResolvePixelSize(double size, double renderScaling, EsSize? availableSize = null)
-        => (int)availableSize.GetValueOrDefault().ClampToArea(DpiScaler.ScaleToPixel(size, renderScaling));
+    internal static int ResolvePixelSize(double size, double dipToDeviceScaling, EsSize? availableSize = null)
+        => (int)availableSize.GetValueOrDefault().ClampToArea(DpiScaler.ScaleToPixel(size, dipToDeviceScaling));
 }

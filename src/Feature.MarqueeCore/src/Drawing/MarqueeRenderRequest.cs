@@ -43,6 +43,19 @@ public readonly record struct MarqueeRenderRequest(
     double DisplayScaleScaling,
     Func<EsRect, double>? SizeLabelDisplayScalingProvider = null)
 {
+    /// <summary>使用する座標変換ポートを取得する（ポート優先・未指定なら倍率による等倍スケール）。</summary>
+    /// <value>使用する座標変換ポート。</value>
+    /// <remarks>解決の規則は <see cref="ResolvePort"/> が単一所有する。</remarks>
+    internal ICoordTransform ResolvedPort => ResolvePort(Port, DomainToDipScaling);
+
+    /// <summary>描画領域の全体を取得する（左上を原点（0, 0）とする矩形）。</summary>
+    /// <value>幅・高さが <see cref="ClientSize"/> の矩形（DIP）。</value>
+    /// <remarks>
+    /// 暗転領域の計算は描画領域を基準にする（描画 API のコンテキスト原点は常にコントロールの左上であるため、<br/>
+    /// 原点を持たない型で受けることで取り違えを防ぐ）。
+    /// </remarks>
+    internal EsRect ClientArea => new(0, 0, ClientSize.Width, ClientSize.Height);
+
     /// <summary>設定・状態と描画時に決まる値から描画入力を組み立てる。</summary>
     /// <param name="options">選択矩形の設定。</param>
     /// <param name="decoOptions">装飾の設定。</param>
@@ -87,11 +100,6 @@ public readonly record struct MarqueeRenderRequest(
             sizeLabelOverrideProvider,
             displayScaleScaling,
             sizeLabelDisplayScalingProvider);
-
-    /// <summary>使用する座標変換ポートを取得する（ポート優先・未指定なら倍率による等倍スケール）。</summary>
-    /// <value>使用する座標変換ポート。</value>
-    /// <remarks>解決の規則は <see cref="ResolvePort"/> が単一所有する。</remarks>
-    internal ICoordTransform ResolvedPort => ResolvePort(Port, DomainToDipScaling);
 
     /// <summary>座標変換ポートを決定する（ポート優先・未指定なら倍率による等倍スケール）。</summary>
     /// <param name="port">座標変換ポート。指定されている場合はそれをそのまま使う。</param>

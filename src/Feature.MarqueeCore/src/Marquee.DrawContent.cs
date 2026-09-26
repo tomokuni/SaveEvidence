@@ -69,7 +69,7 @@ public sealed partial class Marquee
     /// <remarks>ビットの意味は <see cref="SelectionBit"/> / <see cref="MarkerBit"/> / <see cref="TextBit"/> が単一所有する。</remarks>
     private static IReadOnlyList<MarqueeDrawLayer>[] CreateLayers()
     {
-        var table = new IReadOnlyList<MarqueeDrawLayer>[8];
+        var table = new IReadOnlyList<MarqueeDrawLayer>[1 << 3];
 
         for (var index = 0; index < table.Length; index++)
         {
@@ -113,13 +113,13 @@ public sealed partial class Marquee
     {
         var deco = request.DecoOptions;
 
-        if (!MarqueeDecoGeometry.ShouldDrawOverlay(hole, deco.OuterShowFullOverlay))
+        if (!deco.ShouldDrawOverlay(hole is not null))
         {
             return new MarqueeOuterDecoFrame([], []);
         }
 
         var overlayRegions = deco.ShowOverlay
-            ? MarqueeDecoGeometry.ComputeOverlayRegions(request.ClientSize, hole)
+            ? MarqueeDecoGeometry.ComputeOverlayRegions(request.ClientArea, hole)
             : [];
 
         var borderRects = hole is { } holeRect && deco.ShowOuterBorder

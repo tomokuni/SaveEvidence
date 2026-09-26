@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Drawing;
@@ -55,7 +56,7 @@ public class LoupeTests
     [InlineData(100.0, 8.0)]
     [InlineData(double.NaN, 1.0)]
     [InlineData(double.PositiveInfinity, 1.0)]
-    public void RenderScaling_安全域外の指定は補正して保持する(double input, double expected)
+    public void DipToDeviceScaling_安全域外の指定は補正して保持する(double input, double expected)
     {
         // 補正の規則は Loupe.Limits が単一所有する（UI の依存関係プロパティを経由しない代入でも範囲内になる）
         var loupe = new Loupe() { DipToDeviceScaling = input };
@@ -268,7 +269,7 @@ public class LoupeTests
     }
 
     /// <summary>拡大率が DPI スケーリング係数に依存しないことを検証する。</summary>
-    /// <param name="renderScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
+    /// <param name="dipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
     /// <remarks>
     /// 物理ピクセル数は DIP とスケーリングに依存するが、描画の倍率（ドメイン → 描画ピクセル）は変わらない。<br/>
     /// 破線オーバーレイの位置が DPI でずれないことを保証する。
@@ -277,10 +278,10 @@ public class LoupeTests
     [InlineData(1.0)]
     [InlineData(1.25)]
     [InlineData(2.0)]
-    public void CreateRequest_拡大率はDPIスケーリングに依存しない(double renderScaling)
+    public void CreateRequest_拡大率はDPIスケーリングに依存しない(double dipToDeviceScaling)
     {
         var loupe = new Loupe(new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
-        var pixelSize = DpiScaler.ScaleToPixel(160, renderScaling);
+        var pixelSize = DpiScaler.ScaleToPixel(160, dipToDeviceScaling);
 
         Assert.Equal(4, loupe.CreateRequest(pixelSize).ZoomLevel);
     }
@@ -312,5 +313,42 @@ public class LoupeTests
 
         var perCall = (GC.GetAllocatedBytesForCurrentThread() - before) / 1000.0;
         Assert.True(perCall <= 16, $"レイアウトと描画入力 1 回の確保が {perCall} バイト（16 バイト以下を期待）");
+    }
+
+    // ====================================================================
+    // 設定変更の記録
+    // ====================================================================
+
+    /// <summary>ロガーの設定が保持され、null は出力なしへ吸収されることを検証する。</summary>
+    [Fact]
+    public void Log_設定したロガーを保持しnullは出力なしへ吸収する()
+    {
+        var loupe = new Loupe();
+        var logger = new RecordingLogger();
+
+        loupe.Log = logger;
+        Assert.Same(logger, loupe.Log);
+
+        loupe.Log = null!;
+        Assert.Same(NullLogger.Instance, loupe.Log);
+    }
+
+    /// <summary>表示位置オフセットの変更が変化したときだけ記録されることを検証する。</summary>
+    [Fact]
+    public void PositionOffset_変更したときだけ記録する()
+    {
+        var loupe = new Loupe { Log = new RecordingLogger() };
+        var logger = (RecordingLogger)loupe.Log;
+
+        loupe.PositionOffset = 20;
+        loupe.PositionOffset = 20;   // 同値
+        loupe.PositionOffset = 8;
+
+        Assert.Equal(
+            [
+                "[LoupeCtrl] Setting: PositionOffset 0 → 20",
+                "[LoupeCtrl] Setting: PositionOffset 20 → 8",
+            ],
+            logger.Messages);
     }
 }

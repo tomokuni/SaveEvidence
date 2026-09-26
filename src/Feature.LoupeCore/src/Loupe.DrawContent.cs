@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
+using EsUtil.Feature.LoupeCore.Decoration;
 using EsUtil.Feature.LoupeCore.Drawing;
 
 namespace EsUtil.Feature.LoupeCore;
@@ -108,6 +109,33 @@ public sealed partial class Loupe
     /// <summary>ルーペ上端から中心座標ラベルの基準点までの距離（DIP）。</summary>
     /// <remarks>ラベルを上端の帯へ収めるための距離である（ラベルの体裁（余白・角丸）は描画の設定が単一所有する）。</remarks>
     private const double CoordLabelTopMargin = 2.0;
+
+    /// <summary>市松模様のタイル列挙子を解決する。</summary>
+    /// <param name="request">描画入力（物理ピクセルサイズと換算済みのタイルサイズを含む）。</param>
+    /// <returns>暗色タイルの列挙子。非表示の設定の場合は空（列挙する矩形がない）。</returns>
+    /// <remarks>描画の可否は設定の明示フラグが単一所有する（色のアルファを「描かない」の代用にしない）。</remarks>
+    private static LoupeCheckerTiles ResolveCheckerboard(in LoupeRenderRequest request)
+        => request.Options.ShowCheckerboard
+            ? new LoupeCheckerTiles(request.PixelSize, request.CheckerSizePixels)
+            : default;
+
+    /// <summary>十字線の矩形を解決する。</summary>
+    /// <param name="request">描画入力（物理ピクセルサイズ・拡大率・設定を含む）。</param>
+    /// <returns>縦横 2 本の矩形。非表示の設定の場合は空。</returns>
+    /// <remarks>矩形の計算（中央のブロックへの合わせ方）は <see cref="LoupeDecorationGeometry"/> が単一所有する。</remarks>
+    private static IReadOnlyList<EsRect> ResolveCrosshairRects(in LoupeRenderRequest request)
+        => request.Options.ShowCrosshair
+            ? LoupeDecorationGeometry.ComputeCrosshairRects(request.SurfaceBounds, request.ZoomLevel)
+            : [];
+
+    /// <summary>外枠の矩形を解決する。</summary>
+    /// <param name="request">描画入力（描画面の全体と換算済みの太さを含む）。</param>
+    /// <returns>上・下・左・右の 4 辺の矩形。非表示の設定の場合は空。</returns>
+    /// <remarks>矩形の計算（内側 4 辺の取り方）は <see cref="LoupeDecorationGeometry"/> が単一所有する。</remarks>
+    private static IReadOnlyList<EsRect> ResolveFrameRects(in LoupeRenderRequest request)
+        => request.Options.ShowFrame
+            ? LoupeDecorationGeometry.ComputeFrameRects(request.SurfaceBounds, request.FrameWidthPixels)
+            : [];
 
     /// <summary>中心座標ラベルの文言と基準点を解決する。</summary>
     /// <param name="request">描画入力（拡大中心・表示サイズと設定を含む）。</param>

@@ -73,4 +73,14 @@ public sealed record MarqueeDecoOptions
     /// <value>true の場合は描く。既定は false（描かない）。</value>
     /// <remarks>描画の可否を明示フラグで持つ（色のアルファを「描くかどうか」の代用にしない）。</remarks>
     public bool ShowInnerBorder { get; init; }
+
+    /// <summary>暗転オーバーレイを描画するかどうかを判定する。</summary>
+    /// <param name="hasHoleRect">穴あけ矩形（選択またはハイライトの領域）があるかどうか。</param>
+    /// <returns>描画する場合は true。</returns>
+    /// <remarks>
+    /// 穴あけ矩形がある場合、または全面暗転表示が有効な場合に描画する。<br/>
+    /// 穴あけ矩形がある場合の暗転は「描画領域 − 穴あけ矩形」の 4 領域で表現する（穴あけ矩形を除いた帯状の矩形）。<br/>
+    /// 表示可否の判断（設定値と矩形の有無の組合せ）を本メソッドが単一所有し、コアのフレーム解決は判定結果だけを使う。
+    /// </remarks>
+    public bool ShouldDrawOverlay(bool hasHoleRect) => hasHoleRect || OuterShowFullOverlay;
 }

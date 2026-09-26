@@ -24,55 +24,42 @@ internal static class MarqueeDecoGeometry
     /// 太さは面の短辺で上限を取る（面より太い枠線は面全体を覆い、矩形が面からはみ出さない）。<br/>
     /// 太さの補正は装飾の外観（<c>MarqueeOuterDecoAppearance</c> / <c>MarqueeInnerDecoAppearance</c>）の生成時に適用される。
     /// </remarks>
-    public static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)
+    internal static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)
         => rect.ComputeInnerEdges(Math.Min(thickness, Math.Min(rect.Width, rect.Height)));
 
-    /// <summary>暗転オーバーレイを描画するかどうかを判定する。</summary>
-    /// <param name="holeRect">穴あけ矩形（DIP）。null の場合は全面暗転を検討する。</param>
-    /// <param name="showFullOverlay">選択なしでも全面暗転を表示するか。</param>
-    /// <returns>暗転オーバーレイを描画する場合は true。</returns>
-    /// <remarks>
-    /// 穴あけ矩形がある場合、または全面暗転表示が有効な場合は描画する。<br/>
-    /// 穴あけ矩形がある場合の暗転は「クライアント矩形 − 穴あけ矩形」の 4 領域で表現する（穴あけ矩形を除いた帯状の矩形）。
-    /// </remarks>
-    internal static bool ShouldDrawOverlay(EsRect? holeRect, bool showFullOverlay)
-        => holeRect.HasValue || showFullOverlay;
-
     /// <summary>描画領域から穴あけ矩形を除いた暗転領域（4 帯）を計算する。</summary>
-    /// <param name="clientSize">描画領域のサイズ（DIP）。</param>
+    /// <param name="clientArea">描画領域の全体（DIP。左上を原点とする矩形）。</param>
     /// <param name="hole">穴あけ矩形（DIP）。null の場合は全面（1 領域）。</param>
     /// <returns>暗転して塗る矩形の一覧（上・下・左・右の順）。幅・高さが 0 以下の領域は含めない。</returns>
     /// <remarks>
-    /// 暗転領域は描画先の原点（0, 0）を基準に計算する（描画 API のコンテキスト原点は常にコントロールの左上であるため、<br/>
-    /// 親座標を混ぜるとマスクが原点分ずれる。原点を持たない型で受けることで取り違えを防ぐ）。<br/>
+    /// 暗転領域は描画領域（<paramref name="clientArea"/>）を基準に計算する（描画 API のコンテキスト原点は常にコントロールの左上であるため、<br/>
+    /// 親座標を混ぜるとマスクが原点分ずれる）。<br/>
     /// 穴あけ矩形が完全に描画領域の外の場合は全面を返す（描画漏れを防ぐ）。
     /// </remarks>
-    internal static IReadOnlyList<EsRect> ComputeOverlayRegions(EsSize clientSize, EsRect? hole)
+    internal static IReadOnlyList<EsRect> ComputeOverlayRegions(EsRect clientArea, EsRect? hole)
     {
-        var full = new EsRect(0, 0, clientSize.Width, clientSize.Height);
-
         if (hole is not { } h)
         {
-            return [full];
+            return [clientArea];
         }
 
         // 穴あけ矩形を描画領域内へクランプする（領域外の部分は暗転しない）
-        var left = Math.Clamp(h.X, 0, clientSize.Width);
-        var top = Math.Clamp(h.Y, 0, clientSize.Height);
-        var right = Math.Clamp(h.Right, 0, clientSize.Width);
-        var bottom = Math.Clamp(h.Bottom, 0, clientSize.Height);
+        var left = Math.Clamp(h.X, clientArea.X, clientArea.Right);
+        var top = Math.Clamp(h.Y, clientArea.Y, clientArea.Bottom);
+        var right = Math.Clamp(h.Right, clientArea.X, clientArea.Right);
+        var bottom = Math.Clamp(h.Bottom, clientArea.Y, clientArea.Bottom);
 
         if (right <= left || bottom <= top)
         {
             // 穴あけ矩形が描画領域と交差しない: 全面を暗転する
-            return [full];
+            return [clientArea];
         }
 
         var regions = new List<EsRect>(4);
-        AddRegion(regions, new EsRect(0, 0, clientSize.Width, top));                                                 // 上
-        AddRegion(regions, new EsRect(0, bottom, clientSize.Width, clientSize.Height - bottom));                      // 下
-        AddRegion(regions, new EsRect(0, top, left, bottom - top));                                                   // 左
-        AddRegion(regions, new EsRect(right, top, clientSize.Width - right, bottom - top));                           // 右
+        AddRegion(regions, new EsRect(clientArea.X, clientArea.Y, clientArea.Width, top - clientArea.Y));                       // 上
+        AddRegion(regions, new EsRect(clientArea.X, bottom, clientArea.Width, clientArea.Bottom - bottom));                     // 下
+        AddRegion(regions, new EsRect(clientArea.X, top, left - clientArea.X, bottom - top));                                   // 左
+        AddRegion(regions, new EsRect(right, top, clientArea.Right - right, bottom - top));                                     // 右
         return regions;
     }
 

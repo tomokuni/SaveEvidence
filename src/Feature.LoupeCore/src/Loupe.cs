@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Drawing;
-using EsUtil.Feature.LoupeCore.Decoration;
 using EsUtil.Feature.LoupeCore.Logging;
 using EsUtil.Feature.LoupeCore.Placement;
 
@@ -51,6 +50,9 @@ public sealed partial class Loupe
 
     /// <summary>拡大表示する中心座標（ドメイン座標。未設定は null）。</summary>
     private EsPoint? _centerPoint;
+
+    /// <summary>拡大中心からの右下オフセット（DIP。既定は 0）。</summary>
+    private double _positionOffset;
 
     /// <summary>ファサードを初期化する。</summary>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="LoupeOptions.Default"/>）。</param>
@@ -126,8 +128,21 @@ public sealed partial class Loupe
 
     /// <summary>拡大中心からの右下オフセット（DIP）。</summary>
     /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。既定は 0。</value>
-    /// <remarks>表示位置をカーソルから離して配置するためのホスト指定値である（位置のクランプはコアが行う）。</remarks>
-    public double PositionOffset { get; set; }
+    /// <remarks>
+    /// 表示位置をカーソルから離して配置するためのホスト指定値である（位置のクランプはコアが行う）。<br/>
+    /// 変更は本コアが検出して出力する（UI 層に同値判定を置かない）。
+    /// </remarks>
+    public double PositionOffset
+    {
+        get => _positionOffset;
+        set
+        {
+            if (SetIfChanged(ref _positionOffset, value, out var previous))
+            {
+                Log.LogSettingChanged(nameof(PositionOffset), previous, _positionOffset);
+            }
+        }
+    }
 
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。null の場合は等価変換。</param>
@@ -196,13 +211,16 @@ public sealed partial class Loupe
         var surface = request.SurfaceBounds;
         var options = request.Options;
         var magnifiedImage = request.MagnifiedImage;
+        var checkerTiles = ResolveCheckerboard(request);
+        var crosshairRects = ResolveCrosshairRects(request);
+        var frameRects = ResolveFrameRects(request);
         var coordLabelText = ResolveCoordLabelText(request);
 
         return new LoupeDrawContent(
             surface,
-            options.ShowCheckerboard ? new LoupeCheckerTiles(request.PixelSize, request.CheckerSizePixels) : default,
-            options.ShowCrosshair ? LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel) : [],
-            options.ShowFrame ? LoupeDecorationGeometry.ComputeFrameRects(surface, request.FrameWidthPixels) : [],
+            checkerTiles,
+            crosshairRects,
+            frameRects,
             magnifiedImage,
             coordLabelText,
             ResolveLayers(

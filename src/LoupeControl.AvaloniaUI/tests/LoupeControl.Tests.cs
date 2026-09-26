@@ -367,7 +367,7 @@ public class LoupeControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void RenderScaling_範囲外は補正される()
+    public void DipToDeviceScaling_範囲外は補正される()
     {
         var control = CreateControl();
 
@@ -862,7 +862,7 @@ public class LoupeControlTests
         control.CenterPoint = new Point(100, 100);
         await control.WaitForRenderedAsync();
 
-        // RequestedSize=100 / ZoomLevel=2 / RenderScaling=1.0 の場合:
+        // RequestedSize=100 / ZoomLevel=2 / DipToDeviceScaling=1.0 の場合:
         // pixelSize = ceil(100×1.0) = 100, captureSize = ceil(100/2) = 50
         // CaptureTopLeft = (100−25, 100−25) = (75, 75), Scale = ZoomLevel = 2.0
         Assert.NotNull(args);
@@ -889,7 +889,7 @@ public class LoupeControlTests
         await control.WaitForRenderedAsync();
 
         Assert.NotNull(args);
-        // RequestedSize=100 / ZoomLevel=2 / RenderScaling=1.5 → pixelSize=150, captureSize=75
+        // RequestedSize=100 / ZoomLevel=2 / DipToDeviceScaling=1.5 → pixelSize=150, captureSize=75
         Assert.Equal(150, args!.Bitmap!.Size.Width);
         Assert.Equal(2.0, args.Scale);
     }

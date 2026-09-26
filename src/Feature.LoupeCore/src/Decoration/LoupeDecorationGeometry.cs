@@ -13,7 +13,7 @@ namespace EsUtil.Feature.LoupeCore.Decoration;
 internal static class LoupeDecorationGeometry
 {
     /// <summary>十字線の 2 本の矩形を計算する。</summary>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="surface">描画面の全体（左上を原点とする正方形）。</param>
     /// <param name="zoomLevel">拡大率（1〜64）。</param>
     /// <returns>十字線の縦・横 2 本の矩形。</returns>
     /// <remarks>
@@ -22,11 +22,12 @@ internal static class LoupeDecorationGeometry
     /// 切り出し領域の一辺は切り上げのため、<b>拡大率が偶数でない場合は交点が表面の中央から最大 1 ブロックずれる</b><br/>
     /// （切り捨てをやめると、奇数倍率で交点が画素境界から外れて十字線がぼやける）。
     /// </remarks>
-    internal static IReadOnlyList<EsRect> ComputeCrosshairRects(int pixelSize, int zoomLevel)
+    internal static IReadOnlyList<EsRect> ComputeCrosshairRects(EsRect surface, int zoomLevel)
     {
+        var pixelSize = (int)surface.Width;
         var blocks = LoupeDivMath.CeilDiv(pixelSize, zoomLevel);
         var start = blocks / 2 * zoomLevel;
-        return [new EsRect(start, 0, zoomLevel, pixelSize), new EsRect(0, start, pixelSize, zoomLevel)];
+        return [new EsRect(surface.X + start, surface.Y, zoomLevel, pixelSize), new EsRect(surface.X, surface.Y + start, pixelSize, zoomLevel)];
     }
 
     /// <summary>外枠の 4 辺の矩形を計算する。</summary>

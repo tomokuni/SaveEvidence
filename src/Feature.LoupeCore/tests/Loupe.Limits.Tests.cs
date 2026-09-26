@@ -55,24 +55,24 @@ public class LoupeLimitsTests
     }
 
     // ====================================================================
-    // RenderScaling（0.1〜8.0、既定 1.0）
+    // DipToDeviceScaling（0.1〜8.0、既定 1.0）
     // ====================================================================
 
     [Fact]
-    public void CoerceRenderScaling_範囲内はそのまま返す()
+    public void CoerceDipToDeviceScaling_範囲内はそのまま返す()
     {
         Assert.Equal(2.0, Loupe.Limits.CoerceDipToDeviceScaling(2.0));
     }
 
     [Fact]
-    public void CoerceRenderScaling_範囲外は最小値と最大値に補正する()
+    public void CoerceDipToDeviceScaling_範囲外は最小値と最大値に補正する()
     {
         Assert.Equal(0.1, Loupe.Limits.CoerceDipToDeviceScaling(0.0));
         Assert.Equal(8.0, Loupe.Limits.CoerceDipToDeviceScaling(10.0));
     }
 
     [Fact]
-    public void CoerceRenderScaling_非有限値は既定値に補正する()
+    public void CoerceDipToDeviceScaling_非有限値は既定値に補正する()
     {
         Assert.Equal(1.0, Loupe.Limits.CoerceDipToDeviceScaling(double.NaN));
         Assert.Equal(1.0, Loupe.Limits.CoerceDipToDeviceScaling(double.PositiveInfinity));
