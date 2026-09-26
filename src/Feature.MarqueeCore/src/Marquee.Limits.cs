@@ -10,7 +10,7 @@ public sealed partial class Marquee
     /// <b>ファサードの入れ子である理由</b>: 利用者（UI 実装）はプロパティの既定値を登録するため本値を参照する。<br/>
     /// ファサード（<see cref="Marquee"/>）の入れ子とすることで、UI がファサード以外のコア型を直接呼ぶ経路を作らない<br/>
     /// （利用者は選択矩形の数値を得るのに <c>Marquee</c> だけを参照すればよい）。<br/>
-    /// <b>規則の所在</b>: 倍率が未設定（0 以下・等倍）の場合に等価変換とする規則は <c>Drawing.MarqueeFrameGeometry.ResolvePort</c> が、<br/>
+    /// <b>規則の所在</b>: 倍率が未設定（0 以下・等倍）の場合に等価変換とする規則は <c>Drawing.MarqueeRenderRequest.ResolvePort</c> が、<br/>
     /// 表示スケールが未設定（0 以下）の場合に倍率を使う規則は <see cref="ResolveDisplayScale"/> が単一所有する。<br/>
     /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
     /// </remarks>

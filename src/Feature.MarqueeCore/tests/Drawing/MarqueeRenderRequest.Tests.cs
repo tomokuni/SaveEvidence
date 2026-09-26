@@ -6,12 +6,12 @@ using EsUtil.Feature.MarqueeCore.Drawing;
 
 namespace EsUtil.Feature.MarqueeCore.Tests.Drawing;
 
-/// <summary><see cref="MarqueeFrameGeometry"/> のテスト（UI 非依存・並列実行）。</summary>
+/// <summary><see cref="MarqueeRenderRequest"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 1 フレーム分の描画内容に共通する幾何計算（座標変換ポートの決定・論理座標から DIP への変換・穴あけ矩形の決定）を検証する。<br/>
 /// UI 初期化に依存せず <c>[Fact]</c> で並列実行する。
 /// </remarks>
-public class MarqueeFrameGeometryTests
+public class MarqueeRenderRequestTests
 {
     /// <summary>等価変換では終点に +1 した閉区間の矩形になることを検証する。</summary>
     [Fact]
@@ -19,7 +19,7 @@ public class MarqueeFrameGeometryTests
     {
         var logical = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeFrameGeometry.ToDipRect(logical, CoordTransform.Identity);
+        var result = MarqueeRenderRequest.ToDipRect(logical, CoordTransform.Identity);
 
         Assert.Equal(new EsRect(10, 20, 31, 41), result);
     }
@@ -30,7 +30,7 @@ public class MarqueeFrameGeometryTests
     {
         var logical = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeFrameGeometry.ToDipRect(logical, CoordTransform.Scale(2.0));
+        var result = MarqueeRenderRequest.ToDipRect(logical, CoordTransform.Scale(2.0));
 
         // 左上 (10,20) → (20,40)、右下 (41,61) → (82,122)
         Assert.Equal(20, result.X);
@@ -45,7 +45,7 @@ public class MarqueeFrameGeometryTests
     {
         var logical = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeFrameGeometry.ToDipRect(logical, CoordTransform.Identity, closedInterval: false);
+        var result = MarqueeRenderRequest.ToDipRect(logical, CoordTransform.Identity, closedInterval: false);
 
         Assert.Equal(new EsRect(10, 20, 30, 40), result);
     }
@@ -56,9 +56,34 @@ public class MarqueeFrameGeometryTests
     {
         var logical = new EsRect(5, 6, 7, 8);
 
-        var result = MarqueeFrameGeometry.ToDipRect(logical);
+        var result = MarqueeRenderRequest.ToDipRect(logical);
 
         Assert.Equal(new EsRect(5, 6, 8, 9), result);
+    }
+
+    /// <summary>DIP 矩形がドメイン座標の矩形へ逆換算されることを検証する。</summary>
+    [Fact]
+    public void ToDomainRect_等価変換では同じ矩形になる()
+    {
+        var dip = new EsRect(10, 20, 30, 40);
+
+        var result = MarqueeRenderRequest.ToDomainRect(dip, CoordTransform.Identity);
+
+        Assert.Equal(dip, result);
+    }
+
+    /// <summary>スケール 2 倍のポートで座標が縮小されることを検証する。</summary>
+    [Fact]
+    public void ToDomainRect_スケール2倍のポートで座標が縮小される()
+    {
+        var dip = new EsRect(20, 40, 60, 80);
+
+        var result = MarqueeRenderRequest.ToDomainRect(dip, CoordTransform.Scale(2.0));
+
+        Assert.Equal(10, result.X);
+        Assert.Equal(20, result.Y);
+        Assert.Equal(30, result.Width);
+        Assert.Equal(40, result.Height);
     }
 
     /// <summary>ハイライト矩形があればハイライト矩形を優先することを検証する。</summary>
@@ -68,7 +93,7 @@ public class MarqueeFrameGeometryTests
         var highlight = new EsRect(1, 2, 3, 4);
         var selection = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeFrameGeometry.ResolveHoleRect(highlight, selection);
+        var result = MarqueeRenderRequest.ResolveHoleRect(highlight, selection);
 
         Assert.NotNull(result);
         Assert.Equal(highlight, result.Value.Rect);
@@ -82,7 +107,7 @@ public class MarqueeFrameGeometryTests
     {
         var selection = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeFrameGeometry.ResolveHoleRect(null, selection);
+        var result = MarqueeRenderRequest.ResolveHoleRect(null, selection);
 
         Assert.NotNull(result);
         Assert.Equal(selection, result.Value.Rect);
@@ -94,7 +119,39 @@ public class MarqueeFrameGeometryTests
     [Fact]
     public void ResolveHoleRect_両方nullならnullを返す()
     {
-        var result = MarqueeFrameGeometry.ResolveHoleRect(null, null);
+        var result = MarqueeRenderRequest.ResolveHoleRect(null, null);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>ハイライト矩形が選ばれた場合は終点を加算せずに DIP 変換されることを検証する。</summary>
+    [Fact]
+    public void ResolveHoleRectDip_ハイライト矩形は終点を加算せずDIP変換する()
+    {
+        var highlight = new EsRect(1, 2, 3, 4);
+        var selection = new EsRect(10, 20, 30, 40);
+
+        var result = MarqueeRenderRequest.ResolveHoleRectDip(highlight, selection, CoordTransform.Identity);
+
+        Assert.Equal(new EsRect(1, 2, 3, 4), result);
+    }
+
+    /// <summary>選択矩形が選ばれた場合は終点を加算して DIP 変換されることを検証する。</summary>
+    [Fact]
+    public void ResolveHoleRectDip_選択矩形は終点を加算してDIP変換する()
+    {
+        var selection = new EsRect(10, 20, 30, 40);
+
+        var result = MarqueeRenderRequest.ResolveHoleRectDip(null, selection, CoordTransform.Identity);
+
+        Assert.Equal(new EsRect(10, 20, 31, 41), result);
+    }
+
+    /// <summary>どちらも null なら null を返すことを検証する。</summary>
+    [Fact]
+    public void ResolveHoleRectDip_両方nullならnullを返す()
+    {
+        var result = MarqueeRenderRequest.ResolveHoleRectDip(null, null, CoordTransform.Identity);
 
         Assert.Null(result);
     }
@@ -105,7 +162,7 @@ public class MarqueeFrameGeometryTests
     {
         var port = CoordTransform.Scale(2.0);
 
-        var result = MarqueeFrameGeometry.ResolvePort(port, scaling: 3.0);
+        var result = MarqueeRenderRequest.ResolvePort(port, scaling: 3.0);
 
         Assert.Same(port, result);
     }
@@ -114,7 +171,7 @@ public class MarqueeFrameGeometryTests
     [Fact]
     public void ResolvePort_ポート未指定なら倍率を適用する()
     {
-        var result = MarqueeFrameGeometry.ResolvePort(null, scaling: 2.0);
+        var result = MarqueeRenderRequest.ResolvePort(null, scaling: 2.0);
 
         Assert.Equal(new EsPoint(20, 40), result.Inverse(new EsPoint(10, 20)));
     }
@@ -128,7 +185,7 @@ public class MarqueeFrameGeometryTests
     [InlineData(double.NaN)]
     public void ResolvePort_倍率が無効なら等価変換になる(double scaling)
     {
-        var result = MarqueeFrameGeometry.ResolvePort(null, scaling);
+        var result = MarqueeRenderRequest.ResolvePort(null, scaling);
 
         Assert.Same(CoordTransform.Identity, result);
     }

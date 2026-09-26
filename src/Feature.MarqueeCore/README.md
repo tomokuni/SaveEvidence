@@ -44,7 +44,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `Drawing/` | `MarqueeHandles` | public | ドラッグハンドルの描画契約（8 方向の矩形と枠線の太さ。位置はコアが解決済み） |
 | `Drawing/` | `MarqueeMarker` | public | 始点マーカー（十字線）の描画契約（中心・太さ・半幅） |
 | `Drawing/` | `MarqueeTextPlacement` | public | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。要素への写像は描画層の `MarqueeLabelPlan` が単一所有する |
-| `Drawing/` | `MarqueeRenderRequest` | public | 1 フレーム分の描画内容を解決する入力（設定・状態と、描画時に決まる値）。UI 層は自分で組み立てず、コアの `Marquee.CreateRequest` が返した値を受け取る（内部状態の組み立て順を UI が持たない） |
+| `Drawing/` | `MarqueeRenderRequest` | public | 1 フレーム分の描画内容を解決する入力（設定・状態と、描画時に決まる値）。UI 層は自分で組み立てず、コアの `Marquee.CreateRequest` が返した値を受け取る（内部状態の組み立て順を UI が持たない）。**本値から導出する値（座標変換ポートの決定・論理座標から DIP への変換・穴あけ矩形の決定）は本値が単一所有する** |
 | `Interaction/` | `MarqueeSession` | internal | **状態管理クラス**。入力の通知を受けて状態を更新し、効果（`MarqueeFeedback`）と通知（`MarqueeNotice`）を返す。公開ファサード `Marquee` の内部実装 |
 | `Interaction/` | `MarqueeNotice` | public | コアから UI 層への通知（種別・通知座標・スナップショット。値型）。**生のポインター入力（押下・解放・クリック・移動）は通知しない**（入力は UI が受け取りホストも自 UI で観測できるため、通知すると往復になる。押下状態は `MarqueeSnapshot.IsMouseDown` で取得できる） |
 | `Interaction/` | `MarqueeNoticeKind` | public | 通知の種別（選択の開始・変更・確定・キャンセル・追従位置・確定/キャンセル要求） |

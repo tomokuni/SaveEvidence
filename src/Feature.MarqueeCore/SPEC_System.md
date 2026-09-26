@@ -97,7 +97,7 @@ stateDiagram-v2
 | `src/Interaction/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態 遷移の判断。通知と効果を返す |
 | `src/Interaction/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。**状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
 | `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 描画内容の**内部手順**（装飾・穴あけ矩形・ハンドル・テキストの配置。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する）。公開の入口 `ResolveContent` は `Marquee.cs` が持つ |
-| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | フレーム解決の入力（設定・状態・描画時に決まる値）。`Marquee.CreateRequest` が生成する |
+| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | フレーム解決の入力（設定・状態・描画時に決まる値）。`Marquee.CreateRequest` が生成する。**本値から導出する値（座標変換ポートの決定・論理座標から DIP への変換・穴あけ矩形の決定）は本型が単一所有する**（内部メンバー） |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は描画層の `MarqueePaint` が単一所有する） |
 | `src/Drawing/MarqueeDrawContent.cs` | `MarqueeDrawContent` | public | 描画契約（装飾・穴あけ矩形・ハンドル・マーカー・テキストの配置・層の順序） |
 | `src/Drawing/MarqueeHandles.cs` | `MarqueeHandles` | public | ドラッグハンドルの描画契約（8 方向の矩形・枠線の太さ） |
@@ -167,9 +167,9 @@ stateDiagram-v2
 | 方針 | 内容 |
 | --- | --- |
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
-| 単位 | 純粋計算（`SelectionGeometry` / `DecoGeometry` / `MarqueeFrameGeometry`）・状態機械・ファサード・描画内容の解決 |
+| 単位 | 純粋計算（`SelectionGeometry` / `DecoGeometry` / `MarqueeRenderRequest`）・状態機械・ファサード・描画内容の解決 |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Contract` / `tests/Decoration` / `tests/Drawing` / `tests/Interaction` / `tests/Logging` / `tests/Selection` / `tests/Setting`。ファサードの partial のテストはルート） |
-| 合計 | 235 件（`[Theory]` は展開後のケース数） |
+| 合計 | 250 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj

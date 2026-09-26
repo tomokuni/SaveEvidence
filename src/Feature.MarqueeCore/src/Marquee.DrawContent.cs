@@ -176,7 +176,7 @@ public sealed partial class Marquee
             return null;
         }
 
-        var dip = MarqueeFrameGeometry.ToDipRect(rect, port);
+        var dip = MarqueeRenderRequest.ToDipRect(rect, port);
         var half = options.HandleSize / 2;
         var rects = new List<EsRect>(SelectionGeometry.DirectionalHandles.Count);
         foreach (var handle in SelectionGeometry.DirectionalHandles)
@@ -229,7 +229,7 @@ public sealed partial class Marquee
         }
 
         var displayScaling = request.SizeLabelDisplayScalingProvider is { } scalingProvider
-            ? scalingProvider(ToDomainRect(holeRect, port))
+            ? scalingProvider(MarqueeRenderRequest.ToDomainRect(holeRect, port))
             : request.DisplayScaleScaling;
 
         var overrideText = request.SizeLabelOverrideProvider?.Invoke();
@@ -264,19 +264,6 @@ public sealed partial class Marquee
         var percent = (int)(d * 100);
 
         return $"({left}, {top}) - ({right}, {bottom}),  ({width}×{height}), DisplayScale: ({percent}%)";
-    }
-
-    /// <summary>DIP 矩形をドメイン座標の矩形へ逆換算する（左上と右下の順変換から組む）。</summary>
-    /// <param name="dipRect">DIP 座標の矩形。</param>
-    /// <param name="port">座標変換ポート（順変換 = DIP → ドメイン）。</param>
-    /// <returns>ドメイン座標の矩形。</returns>
-    /// <remarks>ホストが「矩形から表示スケールを解決する」ために使う（コアはモニタを知らない）。</remarks>
-    private static EsRect ToDomainRect(EsRect dipRect, ICoordTransform port)
-    {
-        var topLeft = port.Forward(dipRect.TopLeft);
-        var bottomRight = port.Forward(dipRect.BottomRight);
-
-        return new EsRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 
     /// <summary>カーソル座標ラベルの文言と基準点を解決する。</summary>
