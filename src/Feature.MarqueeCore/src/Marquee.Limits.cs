@@ -63,29 +63,19 @@ public sealed partial class Marquee
         public const double DomainToDipScalingMax = 8.0;
 
         /// <summary>ポート未指定時に適用する倍率の既定値（ドメイン座標と DIP が 1:1）。</summary>
-        /// <value>1.0（等倍）。</value>
         /// <remarks>各 UI の依存関係プロパティ（<c>DomainToDipScaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
         public const double DomainToDipScalingDefault = 1.0;
 
-        /// <summary>枠線の太さの最小値（DIP。0 以下の指定を無効化する）。</summary>
-        /// <value>0.5（選択枠は細い線でも視認できる必要がある）。</value>
+        /// <summary>枠線の太さの最小値（DIP）。</summary>
+        /// <remarks>0 以下の指定を無効化する（選択枠は細い線でも視認できる必要がある）。</remarks>
         public const double BorderThicknessMin = 0.5;
 
         /// <summary>枠線の太さの最大値（DIP）。</summary>
         public const double BorderThicknessMax = 64.0;
 
         /// <summary>枠線の太さの既定値（DIP）。</summary>
-        /// <value>2.0。</value>
         /// <remarks>装飾の外観（<c>MarqueeOuterDecoAppearance</c> / <c>MarqueeInnerDecoAppearance</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
         public const double BorderThicknessDefault = 2.0;
-
-        /// <summary>ドラッグハンドルの枠線の太さ（DIP。設定では変更しない固定値）。</summary>
-        /// <value>1.5（塗りの中に隠れない細さでありながら、拡大表示でも輪郭が判別できる太さ）。</value>
-        public const double HandleBorderThickness = 1.5;
-
-        /// <summary>カーソル座標ラベルをカーソルから離すオフセット（DIP。設定では変更しない固定値）。</summary>
-        /// <value>8.0（ラベルがカーソルに重ならないための余白）。</value>
-        public const double CoordLabelOffset = 8.0;
 
         /// <summary>ドラッグハンドルの一辺サイズを安全域へ補正する。</summary>
         /// <param name="value">補正する値（DIP）。</param>

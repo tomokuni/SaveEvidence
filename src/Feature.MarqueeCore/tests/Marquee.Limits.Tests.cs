@@ -56,24 +56,6 @@ public class MarqueeLimitsTests
     }
 
     // ====================================================================
-    // 固定値（設定では変更しない）
-    // ====================================================================
-
-    /// <summary>ハンドルの枠線の太さが 1.5 であることを検証する。</summary>
-    [Fact]
-    public void HandleBorderThickness_15である()
-    {
-        Assert.Equal(1.5, Marquee.Limits.HandleBorderThickness);
-    }
-
-    /// <summary>カーソル座標ラベルのオフセットが 8.0 であることを検証する。</summary>
-    [Fact]
-    public void CoordLabelOffset_8である()
-    {
-        Assert.Equal(8.0, Marquee.Limits.CoordLabelOffset);
-    }
-
-    // ====================================================================
     // 各設定値の Coerce（非有限は既定値）
     // ====================================================================
 

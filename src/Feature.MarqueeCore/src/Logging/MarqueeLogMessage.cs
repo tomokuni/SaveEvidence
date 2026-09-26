@@ -86,17 +86,6 @@ internal static partial class MarqueeLogMessage
     [LoggerMessage(LogLevel.Debug, "[Feature.MarqueeCore] ConfirmRequested: rect={Rect}")]
     internal static partial void LogConfirmRequested(this ILogger logger, string rect);
 
-    /// <summary>確定要求のログ（矩形の整形を含む）。</summary>
-    /// <remarks>
-    /// <see cref="LogConfirmRequested(ILogger, string)"/> と同じ書式で出力する。<br/>
-    /// 矩形の整形（<c>(X, Y, W, H)</c>）は <see cref="FormatRect"/> が単一所有する
-    /// （整形を呼び出し側へ置くと、同じ矩形が経路によって別の書式で出力される）。
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
-    /// <param name="rect">確定する選択矩形。</param>
-    internal static void LogConfirmRequested(this ILogger logger, EsRect rect)
-        => logger.LogConfirmRequested(FormatRect(rect));
-
     /// <summary>キャンセル要求（Escape・枠外ダブルクリック・API 呼び出し）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.MarqueeCore] CancelRequested</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
@@ -175,6 +164,17 @@ internal static partial class MarqueeLogMessage
             oldValue.ToString(format: null, CultureInfo.InvariantCulture),
             newValue.ToString(format: null, CultureInfo.InvariantCulture));
     }
+
+    /// <summary>確定要求（Enter・ダブルクリック・API 呼び出し）のログ（矩形の整形を含む）。</summary>
+    /// <remarks>
+    /// <see cref="LogConfirmRequested(ILogger, string)"/> と同じ書式で出力する。<br/>
+    /// 矩形の整形（<c>(X, Y, W, H)</c>）は <see cref="FormatRect"/> が単一所有する
+    /// （整形を呼び出し側へ置くと、同じ矩形が経路によって別の書式で出力される）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="rect">確定する選択矩形。</param>
+    internal static void LogConfirmRequested(this ILogger logger, EsRect rect)
+        => logger.LogConfirmRequested(FormatRect(rect));
 
     /// <summary>設定（<see cref="MarqueeOptions"/>）の変更ログ（変化した項目だけを出力する）。</summary>
     /// <remarks>

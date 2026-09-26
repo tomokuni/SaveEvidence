@@ -29,6 +29,14 @@ public sealed partial class Marquee
     /// <remarks>塗りの中に隠れない細さでありながら、拡大表示でも線が判別できる太さである。</remarks>
     private const double MarkerThickness = 2.0;
 
+    /// <summary>ドラッグハンドルの枠線の太さ（DIP）。</summary>
+    /// <remarks>塗りの中に隠れない細さでありながら、拡大表示でも輪郭が判別できる太さである。</remarks>
+    private const double HandleBorderThickness = 1.5;
+
+    /// <summary>カーソル座標ラベルをカーソルから離すオフセット（DIP）。</summary>
+    /// <remarks>ラベルがカーソルに重ならないための余白である。</remarks>
+    private const double CoordLabelOffset = 8.0;
+
     /// <summary>層の組合せのうち、選択の有無を表すビット。</summary>
     private const int SelectionBit = 1;
 

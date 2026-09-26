@@ -162,7 +162,7 @@ sequenceDiagram
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画ポートの境界で行う |
 | 切り出し領域の左上 | 切り出し（描画層）と描画完了通知の 2 経路で重複する計算を `LoupeRenderRequest.CaptureTopLeft`（internal）が単一所有する（切り出しと通知が同じ値を使う） |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「アラインの適用」「行送り」は描画にだけ必要な規則のため、描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）が単一所有する（コアは文言・基準点・アライン・クランプ領域だけを渡す） |
-| 設定では変更しない固定値 | **UI 層が参照するものは `Loupe.Limits` の公開定数**、**コア内だけで使うものは描画内容の解決（`Loupe.DrawContent.cs`）の private 定数**（中心座標ラベルの上端余白 `CoordLabelTopMargin`。公開面へ出さない）とする |
+| 設定では変更しない固定値 | **公開しません**。コア内だけで使う値（中心座標ラベルの上端余白）は描画内容の解決（`Loupe.DrawContent.cs`）の private 定数とし、UI 層は解決済みの値（`LoupeTextPlacement.Point`）を受け取る |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は描画層（`LoupePaint` / `MarqueePaint`）が単一所有する |
 
 ## 11. ライセンス

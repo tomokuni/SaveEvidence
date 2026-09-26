@@ -131,7 +131,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 装飾の設定（寸法・描画可否・ハイライト・内側） | `Decoration` の `MarqueeDecoOptions` | 枠線の太さ（`OuterAppearance` / `InnerAppearance`）・描画可否の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）と暗転の述語（`ShouldDrawOverlay(hasHoleRect)`）・ハイライト矩形 |
 | 装飾の描画内容と描画の可否の判断 | `Marquee.ResolveContent`（`ResolveOuterDecoration` / `ResolveInnerDecoration`） | 暗転領域・枠線矩形・塗り矩形（可否は `MarqueeDecoOptions` の明示フラグと述語。**アルファ 0 を「描かない」の代用にしない**）。**穴あけ矩形は 1 回だけ解決して外側・内側・サイズラベルへ同じ値を渡す** |
 | サイズラベル（穴あけ矩形の位置と寸法） | `MarqueeTextPlacement`（本コア） | 文言（コアが矩形から生成し、書式は内部に閉じる）・基準点（穴あけ矩形の左上・DIP）・アライン。体裁（背景矩形・内側余白・フォントサイズ・色）は描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` が単一所有する |
-| カーソル座標ラベル | `MarqueeTextPlacement`（本コア） | 文言（`EsPoint.Format`）・基準点（カーソル + `Marquee.Limits.CoordLabelOffset`）・アライン。要素への写像は描画層の `MarqueeLabelPlan`、フォントサイズと色は `MarqueePaint`（描画層）が単一所有する |
+| カーソル座標ラベル | `MarqueeTextPlacement`（本コア） | 文言（`EsPoint.Format`）・基準点（カーソル + 固定オフセット（8.0 DIP）。コアが解決済み）・アライン。要素への写像は描画層の `MarqueeLabelPlan`、フォントサイズと色は `MarqueePaint`（描画層）が単一所有する |
 | 装飾・ハンドル・マーカー・ラベルの色 | `MarqueePaint`（描画層 `MarqueeControl.UIBase`） | `OverlayColor` / `OuterBorderColor` / `InnerFillColor` / `InnerBorderColor` / `HandleColor` / `HandleBorderColor` / `MarkerColor` / `SizeLabelColor` / `SizeLabelBackgroundColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` |
 | 操作ラベル・情報ラベル | **ホスト**（アプリ固有の付加情報） | 文言の生成と描画。コアは表示可否も含めて関知しない |
 | 選択矩形・選択の有無のソース | 本コア（`Marquee` のセッション経由） | 装飾は参照のみ（複製しない） |
@@ -233,9 +233,9 @@ UI 層が使う共有値・計算:
 
 | メンバー | 用途 |
 | --- | --- |
-| `Marquee.Limits.HandleBorderThickness` | ハンドル枠の線の太さ（DIP。固定値）。`MarqueeHandles.BorderThickness` として描画層へ渡るため、描画層は定数を持たない |
+| `MarqueeHandles.BorderThickness` | ハンドル枠の線の太さ（DIP。固定値。コアが `Marquee.ResolveContent` で解決済みとして渡すため、描画層は定数を持たない） |
 | `MarqueeHandles`（`Rects`） | 8 方向のハンドル矩形（`Marquee.ResolveContent` が `MarqueeSelectionGeometry` の位置と `MarqueeOptions.HandleSize` から解決済み） |
-| `Marquee.Limits.CoordLabelOffset` | カーソルからラベルを離すオフセット（DIP。固定値） |
+| `MarqueeTextPlacement.Point`（カーソル座標ラベル） | カーソルから固定オフセット（DIP）だけ離した基準点（コアが解決済みとして渡す） |
 | `MarqueePaint.LabelPadding`（描画層 `MarqueeControl.UIBase`） | ラベルの内側余白の既定値（全ラベル共通。既定 4.0 DIP）。ホストが描く付加情報ラベルも同じ値を使う |
 | `MarqueePaint`（同） | ラベルの体裁（フォントサイズ・色・内側余白）の単一所有者。行送りは「行の高さ + 内側余白 × 2」で求める（`FadeMaskHostLabelRenderer` が単一所有する） |
 | `MarqueeLabelPlacement`（同） | UI 要素として配置するための指示（配置矩形・内側余白・文言・フォント・色）。UI 層はこれを置くだけでよい（`MarqueeLabelPlan` が組み立てる） |
@@ -274,7 +274,7 @@ UI 層が使う共有値・計算:
 tests/
 ├── Marquee.Tests.cs                 # 公開ファサード（操作・効果の適用・設定の伝搬・描画内容の解決・通知の転送・設定変更ログ・確保量の固定）（40 件）
 ├── Marquee.DrawContent.Tests.cs     # 描画内容の解決（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・描画可否・層の順序）（50 件）
-├── Marquee.Limits.Tests.cs          # 数値パラメータの既定値・安全域と補正・未設定時の解決規則（46 件）
+├── Marquee.Limits.Tests.cs          # 数値パラメータの既定値・安全域と補正・未設定時の解決規則（44 件）
 ├── Contract/                        # 効果の基底クラス（全メンバーが空実装であること・派生で必要なものだけを override できること）（3 件）
 ├── Decoration/                      # 装飾（暗転マスク・枠線・内側の塗り・外観の安全域への補正）（27 件）
 ├── Drawing/                         # フレーム全体の幾何（描画入力の組み立て・座標変換ポート・DIP 変換・穴あけ矩形）（20 件）
@@ -286,7 +286,7 @@ tests/
 
 **テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Marquee.cs` / `Marquee.DrawContent.cs`）のテストはルートに置きます。
 
-件数は `[Theory]` を展開したケース数（合計 325 件）です。
+件数は `[Theory]` を展開したケース数（合計 323 件）です。
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj

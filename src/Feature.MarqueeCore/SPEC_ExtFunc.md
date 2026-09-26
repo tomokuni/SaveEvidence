@@ -131,9 +131,10 @@
 | `Limits.HandleHitRadiusMin` / `HandleHitRadiusMax` / `HandleHitRadiusDefault` | const | ヒットテスト半径の安全域（0.0〜256.0）と既定値（12.0） |
 | `Limits.MinSelectionSizeMin` / `MinSelectionSizeMax` / `MinSelectionSizeDefault` | const | 選択矩形の最小サイズの安全域（1.0〜4096.0）と既定値（6.0） |
 | `Limits.BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | const | 枠線の太さの安全域（0.5〜64.0）と既定値（2.0。装飾の外観の既定値も本値を参照する） |
-| `Limits.HandleBorderThickness` / `Limits.CoordLabelOffset` | const | 設定では変更しない固定値（ハンドル枠の太さ 1.5 / カーソル座標ラベルのオフセット 8.0） |
 | `Limits.CoerceHandleSize(double)` 等の 6 つの `Coerce*` | method | 各設定値を安全域へ補正する（非有限は既定値。設定型・装飾の外観の生成時に適用される） |
 | `Limits.ResolveDisplayScale(double, double)` | method | 表示スケールの解決（internal。0 以下は倍率を使う） |
+
+**設定では変更しない固定値（ハンドル枠の太さ 1.5・カーソル座標ラベルのオフセット 8.0・始点マーカーの太さ 2.0）は公開しません**。参照するのはコアの描画内容の解決だけであり、UI 層は解決済みの値（`MarqueeHandles.BorderThickness`・`MarqueeTextPlacement.Point`）を受け取って使うためです（公開面へ出す必然性がない）。
 
 ### `MarqueeOptions` のメンバー
 
@@ -157,7 +158,7 @@
 | `ShouldShowSizeLabel(bool hasHoleRect)` | 表示の設定が有効かつ穴あけ矩形がある（基準点が矩形の左上であり、文言も矩形の寸法から作るため） |
 | `ShouldShowCoordLabel()` | 表示の設定が有効（基準点はカーソル位置であり、位置は描画入力が常に持つ） |
 
-ハンドル枠の太さ（`Marquee.Limits.HandleBorderThickness`）とカーソル座標ラベルのオフセット（`Marquee.Limits.CoordLabelOffset`）は**設定では変更しない固定値**であり、数値スキーマ（`Marquee.Limits`）が単一所有します（描画層の既定値と配置計算が参照するため公開します）。**コア内だけで使う固定値（始点マーカーの太さ）は描画内容の解決が持ちます**（公開面へ出しません）。
+ハンドル枠の太さ（1.5）・カーソル座標ラベルのオフセット（8.0）・始点マーカーの太さ（2.0）は**設定では変更しない固定値**であり、**描画内容の解決（`Marquee.DrawContent.cs`）の private 定数**が単一所有します（いずれもコア内だけで使う値であり、UI 層は解決済みの値を受け取るため公開しません）。
 
 `MarqueeOptions` は**色もラベルのフォントサイズも持ちません**。これらは描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`、フォントサイズは `SizeLabelFontSizeDefault` = 14.0 / `CoordLabelFontSizeDefault` = 12.0、内側余白は `LabelPadding`（既定 4.0））。ラベルの文字色・背景色の既定値（白 / 黒 60%）も `MarqueePaint` が単一所有するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
 
@@ -205,7 +206,7 @@
 
 - コアが決めるのは**文言・基準点・アライン（水平/垂直）・描画領域**です（`EsHorizontalAlign` / `EsVerticalAlign` で基準点がテキストのどこを指すかを指定するため、コアは幅・高さを知りません）。
 - サイズラベルは基準点を穴あけ矩形の左上にし、アラインは左端・上端です。行送り（行の高さ + 内側余白 × 2）で次の行の上端を求めるため、**背景の下端と次の行の上端が一致します**。
-- カーソル座標ラベルは基準点を「カーソル + `Marquee.Limits.CoordLabelOffset`」にし、描画領域を渡します（描画領域の右端・下端をはみ出す場合は領域内へクランプされ、軸が 0 以下の場合はクランプされません）。
+- カーソル座標ラベルは基準点を「カーソル + 固定オフセット（8.0 DIP）」にし、描画領域を渡します（描画領域の右端・下端をはみ出す場合は領域内へクランプされ、軸が 0 以下の場合はクランプされません）。
 - **フォントサイズ・色・内側余白は描画の設定（`MarqueePaint`）**、実寸から背景矩形を求める計算とアラインの適用は描画層の `MarqueeLabelPlan` が単一所有します。**要素として置くか canvas へ描くかは UI 層が決めます**。
 
 ### 操作の受理条件
