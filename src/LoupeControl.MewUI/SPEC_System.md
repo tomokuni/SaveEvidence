@@ -109,8 +109,6 @@ classDiagram
         <<Feature.LoupeCore>>
         +int CheckerSize
         +int FrameWidth
-        +double CoordLabelFontSize
-        +int CoordLabelCornerRadius
         +bool ShowCoordLabel
         +ShouldShowCoordLabel(hasCenter) bool
     }
@@ -123,13 +121,13 @@ classDiagram
         +Color FrameColor
         +Color CoordLabelColor
         +Color CoordLabelBackgroundColor
+        +double CoordLabelFontSize / int CoordLabelCornerRadius
         +Default LoupePaint$
     }
     class LoupeRenderer {
         <<LoupeControl.UIBase / 描画層（ILoupeRenderer の既定実装）>>
         +LoupeRenderer(paint)
         +DrawShapes(canvas, source, request, content)$ void
-        +CoordLabelFontSize / CoordLabelCornerRadius$ double
     }
     class Loupe.Limits {
         <<Feature.LoupeCore>>
@@ -242,7 +240,7 @@ sequenceDiagram
 10. **値の補正と変更ログはプロパティの登録が所有する**。`MewProperty.Register` の `coerce` / `changed` へ渡すため、
    setter を経由しない設定（バインディング等）でも安全域が保たれ、変更が記録される
    （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。規則と書式はコアが単一所有する）。
-設定（`Options`）と寸法（`Options.Metrics`）の数値項目はコアの型が生成時に補正するため、コントロールは `coerce` を登録しない（環境値の `RenderScaling` のみ登録する）。
+設定（`Options`・`Options.Metrics`）の数値項目はコアの型が、描画の設定（`Paint`）の数値項目は描画層の型が生成時に補正するため、コントロールは `coerce` を登録しない（環境値の `RenderScaling` のみ登録する）。
 
 ## テスト方針
 

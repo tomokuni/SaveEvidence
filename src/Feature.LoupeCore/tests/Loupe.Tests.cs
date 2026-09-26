@@ -299,7 +299,7 @@ public class LoupeTests
     }
 
     [Fact]
-    public void ResolveContent_描く層は下地から外枠の順で返す()
+    public void ResolveContent_描く層は下地からテキストの順で返す()
     {
         var loupe = new Loupe(s_renderer) { CenterPoint = new EsPoint(50, 60) };
         var content = loupe.ResolveContent(loupe.CreateRequest(160));
@@ -312,8 +312,20 @@ public class LoupeTests
                 LoupeDrawLayer.Image,
                 LoupeDrawLayer.Crosshair,
                 LoupeDrawLayer.Frame,
+                LoupeDrawLayer.Label,
             ],
             content.Layers);
+    }
+
+    [Fact]
+    public void ResolveContent_テキストが無ければ層に含まれない()
+    {
+        // 拡大中心が無ければ中心座標ラベルは表示されない
+        var loupe = new Loupe(s_renderer);
+        var content = loupe.ResolveContent(loupe.CreateRequest(160));
+
+        Assert.Null(content.CoordLabelText);
+        Assert.DoesNotContain(LoupeDrawLayer.Label, content.Layers);
     }
 
     [Fact]

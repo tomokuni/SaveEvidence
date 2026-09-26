@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Feature.LoupeCore.Drawing;
 using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.Feature.LoupeCore.Decoration;
@@ -10,7 +11,7 @@ namespace EsUtil.Feature.LoupeCore.Decoration;
 /// 解決済みの値として含まれるため、描画実装は換算を持たない。<br/>
 /// 安全域への補正は <see cref="LoupeMetrics"/> が生成時に適用済みであり、本クラスは換算だけを行う<br/>
 /// （整った値が来ることを型が保証するため、ここで再補正はしない）。<br/>
-/// <b>中心座標ラベルは本クラスの対象外</b>: ラベルは DIP で配置する（<see cref="LoupeCoordLabel"/> が DIP の値を保持し、
+/// <b>中心座標ラベルは本クラスの対象外</b>: ラベルは DIP で配置する（<see cref="LoupeTextPlacement"/> が文言と基準点を DIP で保持し、
 /// テキスト要素として配置される）ため、物理ピクセルへの換算を必要としない。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証 できる。
 /// </remarks>

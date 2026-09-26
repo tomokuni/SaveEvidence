@@ -1,5 +1,4 @@
 using EsUtil.Feature.LoupeCore.Imaging;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.LoupeCore.Drawing;
@@ -16,26 +15,22 @@ namespace EsUtil.Feature.LoupeCore.Contract;
 /// コアが本クラスを所有することで、<b>描画の起動と順序がコアの単一所有</b>になり、<br/>
 /// UI 層は描画面（<see cref="IEsCanvas"/>）を用意するだけでよくなる。<br/>
 /// <br/>
-/// <b>描画にだけ必要な設定はコアが持たない</b>: 色は<b>描画にだけ必要な設定</b>であり、コアの計算・判定に入らない。<br/>
-/// したがって本クラスは色の値も型も持たず、色を使う層の描画を抽象メソッドとして派生クラスへ委ねる<br/>
-/// （色の実体は UIBase の <c>LoupePaint</c> が単一所有し、その保持者である <c>LoupeRenderer</c> が実装する）。<br/>
-/// フォントサイズと角丸も同じ扱いであり、値は描画の設定が所有し、本クラスは <see cref="ILoupeRenderer"/> の<br/>
-/// プロパティとして UI 層へ公開する（UI 層はテキストを要素として置くか画像として描くかを決める）。<br/>
+/// <b>描画にだけ必要な設定はコアが持たない</b>: 色・フォントサイズ・角丸は<b>描画にだけ必要な設定</b>であり、コアの計算・判定に入らない。<br/>
+/// したがって本クラスはこれらの値も型も持たず、それを使う層の描画を抽象メソッドまたはフックとして派生クラスへ委ねる<br/>
+/// （実体は UIBase の <c>LoupePaint</c> が単一所有し、その保持者である <c>LoupeRenderer</c> が実装する）。<br/>
 /// <br/>
 /// <b>色を使わない層はコアが描く</b>: 拡大画像の層は色を必要としない（切り出しと描画先の計算はコアが単一所有する）<br/>
 /// ため、本クラスが実装する。<br/>
+/// <br/>
+/// <b>テキストを描く層はフックで受ける</b>: 文言と基準点は <see cref="LoupeDrawContent.CoordLabelText"/> が持ち、UI 層が扱いを決める。<br/>
+/// <b>要素（<c>TextBlock</c> 等）として置く UI は <see cref="DrawLabel"/> を上書きしない</b>（既定は何もしない）。<br/>
+/// canvas へ描く実装だけが本フックを上書きする（既定の実装を置くと、要素と canvas の二重描画になるため）。<br/>
 /// <br/>
 /// <b>UI 非依存</b>: 描画 API は <see cref="IEsCanvas"/> の実装が担うため、UI フレームワークとウィンドウを必要としない<br/>
 /// （UI 初期化なしの <c>[Fact]</c> でピクセル検証できる）。
 /// </remarks>
 public abstract class LoupeRendererBase : ILoupeRenderer
 {
-    /// <inheritdoc/>
-    public abstract double CoordLabelFontSize { get; }
-
-    /// <inheritdoc/>
-    public abstract double CoordLabelCornerRadius { get; }
-
     /// <summary>ルーペの図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。null 不可。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（市松模様のみ）。</param>
@@ -45,7 +40,7 @@ public abstract class LoupeRendererBase : ILoupeRenderer
     /// <remarks>
     /// 本メソッドが<b>描画起動の唯一の入口</b>である（コアが描画内容を解決し、本メソッドを通して描く）。<br/>
     /// 描く値はすべて <paramref name="content"/> に解決済みであり、本クラスは計算を持たない（順に写すだけ）。<br/>
-    /// テキスト（<see cref="LoupeDrawContent.CoordLabelText"/>）は描かない（UI 層が要素として置くか画像として描くかを決める）。<br/>
+    /// テキストは <see cref="DrawLabel"/>（既定は何もしない）へ委ねる（UI 層が要素として置くか画像として描くかを決める）。<br/>
     /// 描画面の消去は下地の層（<see cref="LoupeDrawLayer.Background"/>）が行う（前フレームの残像を残さない）。
     /// </remarks>
     public void DrawShapes(
@@ -78,8 +73,26 @@ public abstract class LoupeRendererBase : ILoupeRenderer
                 case LoupeDrawLayer.Frame:
                     DrawFrame(canvas, in content);
                     break;
+
+                case LoupeDrawLayer.Label:
+                    DrawLabel(canvas, in content);
+                    break;
             }
         }
+    }
+
+    /// <summary>テキスト（中心座標ラベル）を描画ポートへ描く。</summary>
+    /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。</param>
+    /// <param name="content">コアが解決した描画内容（テキストの文言と基準点を持つ）。</param>
+    /// <remarks>
+    /// <b>既定は何もしない</b>: テキストを UI の要素（<c>TextBlock</c> 等）として置く UI は、本フックを上書きしない<br/>
+    /// （要素は親より後に描かれるため常に最上位になる。両方を描くと二重に表示される）。<br/>
+    /// canvas へ直接描く実装だけが上書きし、<see cref="IEsCanvas.DrawLabel"/> と <see cref="IEsCanvas.MeasureText"/> を使って描く。<br/>
+    /// <b>座標系の換算は実装が担う</b>（本ポートは物理ピクセル単位であり、テキストの基点は DIP である）。<br/>
+    /// フォントサイズ・角丸・色は描画層の設定（<c>LoupePaint</c>）を参照する。
+    /// </remarks>
+    protected virtual void DrawLabel(IEsCanvas canvas, in LoupeDrawContent content)
+    {
     }
 
     /// <summary>下地（ベース色）で描画面の全体を置き換える。</summary>

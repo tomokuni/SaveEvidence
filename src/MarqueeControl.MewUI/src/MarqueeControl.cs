@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.Platform.Core;

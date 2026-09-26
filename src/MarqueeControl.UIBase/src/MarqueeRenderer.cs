@@ -1,5 +1,3 @@
-using EsUtil.Feature.MarqueeCore;
-using EsUtil.Feature.MarqueeCore.Selection;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Contract;
@@ -13,8 +11,8 @@ namespace EsUtil.SaveEvidence.Marquee.UIBase;
 /// <b>適用パターン</b>: Template Method（層の順序はコアの <see cref="MarqueeRendererBase"/> が所有し、<br/>
 /// 本クラスが層ごとの描き方と色を与える）と Strategy（<see cref="IMarqueeRenderer"/> として差し替えられる）。<br/>
 /// <br/>
-/// <b>色の所有者</b>: 色は<b>描画にだけ必要な設定</b>であり、コアの計算・判定には入らない。したがって色は<br/>
-/// <see cref="MarqueePaint"/> が単一所有し、本クラスが保持する（コアの型面に色は現れない）。<br/>
+/// <b>色の所有者</b>: 色とフォントサイズは<b>描画にだけ必要な設定</b>であり、コアの計算・判定には入らない。したがって<br/>
+/// <see cref="MarqueePaint"/> が単一所有し、本クラスが保持する（コアの型面にも描画の契約にも現れない）。<br/>
 /// <b>共有しない理由</b>: 色はコントロールごとに異なる（各自の設定色で描く）。色を変更する場合はインスタンスを<br/>
 /// 差し替える（同じ実装を共有したまま書き換えると、他のコントロールの見た目まで変わる）。<br/>
 /// <br/>
@@ -40,11 +38,19 @@ public class MarqueeRenderer : MarqueeRendererBase
     /// <value>本クラスが保持する色（描画にだけ必要な設定の単一値）。派生クラスも同じ値を参照する。</value>
     protected MarqueePaint Paint => _paint;
 
-    /// <inheritdoc/>
-    public override double SizeLabelFontSize => _paint.SizeLabelFontSize;
+    /// <summary>サイズラベルのフォントサイズ（DIP）を取得する。</summary>
+    /// <value>安全域（6〜48）へ補正済みのフォントサイズ。既定は 14.0。</value>
+    /// <remarks>
+    /// 値の所有者は描画の設定（<see cref="MarqueePaint"/>）である（本プロパティは同じ値への参照）。<br/>
+    /// テキストを canvas へ直接描く実装（<see cref="MarqueeRendererBase.DrawLabel"/> を上書きする派生）が参照する。<br/>
+    /// <b>描画の契約（<c>IMarqueeRenderer</c>）には含めない</b>（コアは値を必要とせず、UI 要素として置く UI も参照しない）。
+    /// </remarks>
+    public double SizeLabelFontSize => _paint.SizeLabelFontSize;
 
-    /// <inheritdoc/>
-    public override double CoordLabelFontSize => _paint.CoordLabelFontSize;
+    /// <summary>カーソル座標ラベルのフォントサイズ（DIP）を取得する。</summary>
+    /// <value>安全域（6〜48）へ補正済みのフォントサイズ。既定は 12.0。</value>
+    /// <remarks>値の所有者は描画の設定（<see cref="MarqueePaint"/>）である（本プロパティは同じ値への参照）。</remarks>
+    public double CoordLabelFontSize => _paint.CoordLabelFontSize;
 
     /// <inheritdoc/>
     /// <remarks>外側（暗転マスク・穴あけ枠）と内側（塗り・枠線）の描画は、それぞれの描画内容へ委譲する。</remarks>

@@ -1,5 +1,3 @@
-using EsUtil.Feature.LoupeCore;
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Setting;

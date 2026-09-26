@@ -1,6 +1,5 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Selection;
@@ -37,7 +36,10 @@ public sealed partial class Marquee
     /// <summary>層の組合せのうち、始点マーカーの有無を表すビット。</summary>
     private const int MarkerBit = 2;
 
-    /// <summary>層の並び（2 つの有無 = 4 通り）。</summary>
+    /// <summary>層の組合せのうち、テキストの有無を表すビット。</summary>
+    private const int TextBit = 4;
+
+    /// <summary>層の並び（3 つの有無 = 8 通り）。</summary>
     /// <remarks>
     /// 描画のたびに一覧を組み立てないよう、全通りを事前生成して共有する<br/>
     /// （<see cref="MarqueeDrawContent.Layers"/> は読取専用の参照として渡す）。層を追加した場合は本表も更新する。
@@ -52,7 +54,7 @@ public sealed partial class Marquee
     /// 1. 装飾（暗転マスク・穴あけ枠・内側の塗り）を解決する。<br/>
     /// 2. 選択矩形そのもの（ハンドル・始点マーカー）を解決する。<br/>
     /// 3. テキスト（サイズ・カーソル座標の文言と基準点）を解決する。<br/>
-    /// 4. 描く図形の層だけを順序どおりに並べる。<br/>
+    /// 4. 描く層だけを順序どおりに並べる（テキストは最後 = 最上位）。<br/>
     /// <br/>
     /// 描画順は <see cref="MarqueeDrawLayer"/> の宣言順ではなく<b>本メソッドの意図</b>で決める<br/>
     /// （列挙に層を追加しても描画順が勝手に変わらないようにするため、明示的に組み立てる）。
@@ -79,32 +81,38 @@ public sealed partial class Marquee
             marker,
             sizeLabel,
             coordLabel,
-            ResolveLayers(handles, marker));
+            ResolveLayers(handles, marker, sizeLabel, coordLabel));
     }
 
-    /// <summary>描く図形の層だけを描画順に並べる。</summary>
+    /// <summary>描く層だけを描画順に並べる。</summary>
     /// <param name="handles">ドラッグハンドル。null の場合は層を含めない。</param>
     /// <param name="marker">始点マーカー。null の場合は層を含めない。</param>
+    /// <param name="sizeLabel">サイズラベルのテキスト配置。null の場合は数えない。</param>
+    /// <param name="coordLabel">カーソル座標ラベルのテキスト配置。null の場合は数えない。</param>
     /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
     /// <remarks>
     /// 装飾は常に含める（描くものが無い場合は各項目が空であり、UI 層の分岐を増やさない）。<br/>
+    /// テキストは**どちらかの文言がある場合**だけ末尾へ置き、常に最上位にする<br/>
+    /// （UI 要素として置く UI は本層を無視してよい。基底のフックの既定は何もしない）。<br/>
     /// 一覧はビットの組合せで事前生成したものを返す（描画のたびの確保を避ける）。
     /// </remarks>
-    private static IReadOnlyList<MarqueeDrawLayer> ResolveLayers(MarqueeHandles? handles, MarqueeMarker? marker)
+    private static IReadOnlyList<MarqueeDrawLayer> ResolveLayers(
+        MarqueeHandles? handles, MarqueeMarker? marker, MarqueeTextPlacement? sizeLabel, MarqueeTextPlacement? coordLabel)
         => s_layers[
             (handles is not null ? SelectionBit : 0)
-            | (marker is not null ? MarkerBit : 0)];
+            | (marker is not null ? MarkerBit : 0)
+            | (sizeLabel is not null || coordLabel is not null ? TextBit : 0)];
 
-    /// <summary>層の全 4 通りを生成する。</summary>
+    /// <summary>層の全 8 通りを生成する。</summary>
     /// <returns>ビットの組合せを添字とする層の一覧。</returns>
-    /// <remarks>ビットの意味は <see cref="SelectionBit"/> / <see cref="MarkerBit"/> が単一所有する。</remarks>
+    /// <remarks>ビットの意味は <see cref="SelectionBit"/> / <see cref="MarkerBit"/> / <see cref="TextBit"/> が単一所有する。</remarks>
     private static IReadOnlyList<MarqueeDrawLayer>[] CreateLayers()
     {
-        var table = new IReadOnlyList<MarqueeDrawLayer>[4];
+        var table = new IReadOnlyList<MarqueeDrawLayer>[8];
 
         for (var index = 0; index < table.Length; index++)
         {
-            var layers = new List<MarqueeDrawLayer>(3) { MarqueeDrawLayer.Decoration };
+            var layers = new List<MarqueeDrawLayer>(4) { MarqueeDrawLayer.Decoration };
 
             if ((index & SelectionBit) != 0)
             {
@@ -114,6 +122,12 @@ public sealed partial class Marquee
             if ((index & MarkerBit) != 0)
             {
                 layers.Add(MarqueeDrawLayer.Marker);
+            }
+
+            // テキストは常に最上位（装飾・ハンドル・マーカーより後に描く）
+            if ((index & TextBit) != 0)
+            {
+                layers.Add(MarqueeDrawLayer.Label);
             }
 
             table[index] = layers;

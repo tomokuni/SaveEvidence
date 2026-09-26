@@ -13,12 +13,6 @@ namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;
 internal sealed class StubMarqueeRenderer : IMarqueeRenderer
 {
     /// <inheritdoc/>
-    public double SizeLabelFontSize => 14.0;
-
-    /// <inheritdoc/>
-    public double CoordLabelFontSize => 12.0;
-
-    /// <inheritdoc/>
     public void DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content)
     {
     }

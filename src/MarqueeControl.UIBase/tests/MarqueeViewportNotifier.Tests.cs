@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore;
 using Xunit;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;
 using EsUtil.Feature.MarqueeCore.Interaction;

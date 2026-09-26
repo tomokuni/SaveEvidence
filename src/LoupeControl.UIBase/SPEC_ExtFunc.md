@@ -15,7 +15,7 @@
 
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
-| ルーペの描画（図形） | `Loupe.Draw`（コアの入口）/ `ILoupeRenderer.DrawShapes`（契約） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く）。層の順序はコアの `LoupeRendererBase` が単一所有し、起動は `Loupe.Draw` に一本化する |
+| ルーペの描画（図形） | `Loupe.Draw`（コアの入口）/ `ILoupeRenderer.DrawShapes`（契約） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする）。層の順序はコアの `LoupeRendererBase` が単一所有し、起動は `Loupe.Draw` に一本化する |
 | テキスト要素の配置 | `LoupeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素（`EsLabelElement`）の配置指示を解決する。**要素として置くか画像として描くかは UI 層が決める** |
 | 描画に使う色 | `LoupePaint` | 下地・市松模様・外枠・十字線・中心座標ラベルの色と「描くかどうか」の述語（`Has*`）を単一所有する |
 
@@ -57,7 +57,8 @@
 | --- | --- |
 | `LoupeRenderer(LoupePaint paint)` | 描画に使う色を指定して生成する（`LoupePaint.Default` を基点に組み立てる）。`paint` が null なら `ArgumentNullException` |
 | `DrawShapes(IEsCanvas canvas, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)` | 層の順に図形を描く（層の順序と矩形はコアが解決済み。本層は写すだけ）。`source` が null または拡大中心が未設定の場合は拡大画像を描かない。`canvas` または内容の層が null なら `ArgumentNullException` |
-| `CoordLabelFontSize` / `CoordLabelCornerRadius`（描画実装のプロパティ） | ラベルのフォントサイズと角丸（描画の設定 `LoupePaint` の値への入口） |
+| `CoordLabelFontSize` / `CoordLabelCornerRadius`（描画実装＝`LoupeRenderer` のプロパティ） | ラベルのフォントサイズと角丸（描画の設定 `LoupePaint` の値への入口）。**描画の契約（`ILoupeRenderer`）には含めない** |
+| `DrawLabel(IEsCanvas canvas, in LoupeDrawContent content)`（`protected virtual`） | テキストを描画ポートへ描くフック。**既定は何もしない**（UI 要素として置く UI は上書きしない） |
 
 ### `LoupePaint` のメンバー（`EsUtil.SaveEvidence.Loupe.UIBase`・`public sealed record`）
 
@@ -71,7 +72,7 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `Resolve(LoupeCoordLabel? coordLabel, LoupePaint paint, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`EsLabelElement`）を 1 件返す（ラベルが無い場合は空）。`paint` または `measureText` が null なら `ArgumentNullException` |
+| `Resolve(LoupeTextPlacement? coordLabel, LoupePaint paint, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`EsLabelElement`）を 1 件返す（テキストが無い場合は空）。`paint` または `measureText` が null なら `ArgumentNullException` |
 
 ### `LoupeRenderCoordinator`（`EsUtil.SaveEvidence.Loupe.UIBase`・`public sealed class`）
 
@@ -106,8 +107,8 @@ if (coordinator.ShouldApply(generation)) { ApplyBitmap(bitmap); }
 
 | 描く対象 | 呼ぶ API |
 | --- | --- |
-| 図形（下地・市松模様・拡大画像・十字線・外枠） | `DrawShapes`（**ラベルの層は描かない**） |
-| ラベル（中心座標） | `DrawShapes` ＋ `ResolveLabels`（ファサードの `Loupe.ResolveLabels` がラベル契約まで解決する。UI の要素が描く） |
+| 図形（下地・市松模様・拡大画像・十字線・外枠） | `DrawShapes`（**テキストは描かない**） |
+| テキスト（中心座標） | `LoupeLabelPlan.Resolve`（コアの `LoupeDrawContent.CoordLabelText` を渡す。UI が要素として置くか canvas へ描くかを決める） |
 
 ### 描画面（`LoupeRenderRequest`）
 

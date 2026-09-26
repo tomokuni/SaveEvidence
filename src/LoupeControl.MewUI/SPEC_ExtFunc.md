@@ -31,7 +31,7 @@
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 1〜4096 | 一辺のサイズ（DIP） |
 | `ZoomLevel` | `int` | 4 | 1〜64 | 拡大率（偶数推奨） |
-| `Metrics` | `LoupeMetrics` | コアの既定値 | 下表のとおり | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベル）とラベル表示の可否。数値項目を安全域へ補正する。色は含まない |
+| `Metrics` | `LoupeMetrics` | コアの既定値 | 下表のとおり | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ）とラベル表示の可否。数値項目を安全域へ補正する。色・フォントサイズ・角丸は含まない（描画層の `LoupePaint` が持つ） |
 
 `Options.Metrics`（コアの `LoupeMetrics`）の項目:
 
@@ -40,8 +40,6 @@
 | `CheckerSize` | `int` | 6 | 1〜128 | 市松模様の 1 タイルサイズ（DIP） |
 | `FrameWidth` | `int` | 2 | 1〜64 | 外枠の太さ（DIP） |
 | `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
-| `CoordLabelFontSize` | `double` | 12.0 | 6〜48（非有限は既定値） | 座標ラベルのフォントサイズ（DIP） |
-| `CoordLabelCornerRadius` | `int` | 2 | 0〜64 | 座標ラベルの背景の角丸半径（DIP。0 は角丸なし） |
 
 `Paint`（`LoupePaint`。色は UI 非依存の `System.Drawing.Color`）の項目:
 
@@ -54,6 +52,8 @@
 | `FrameColor` | `DrawingColor` | LightGray | — | 外枠の色。アルファ 0 は描画しない |
 | `CoordLabelColor` | `DrawingColor` | 白 | — | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `DrawingColor` | 黒 60%（`#99000000`） | — | 座標ラベルの背景色 |
+| `CoordLabelFontSize` | `double` | 12.0 | 6〜48（非有限は既定値） | 座標ラベルのフォントサイズ（DIP） |
+| `CoordLabelCornerRadius` | `int` | 2 | 0〜64 | 座標ラベルの背景の角丸半径（DIP。0 は角丸なし） |
 
 `Color` は `Aprillz.MewUI.Color`、`DrawingColor` は `System.Drawing.Color`（`Paint` の色）です。
 

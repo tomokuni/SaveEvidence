@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Input;
-using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;

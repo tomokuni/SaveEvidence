@@ -1,6 +1,5 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;

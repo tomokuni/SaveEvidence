@@ -132,7 +132,7 @@ src/LoupeControl.UIBase/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `LoupeRenderer` | 既定の描画実装（`sealed`。色（`LoupePaint`）を保持し、手順は基底が所有する）。図形の層とラベルの層を分けて提供する |
+| `LoupeRenderer` | 既定の描画実装（`sealed`。色（`LoupePaint`）を保持し、手順は基底が所有する）。図形の層を描き、テキストのフック（`DrawLabel`）は引き継ぐ（既定は何もしない） |
 | `LoupePaint` | 描画に使う 7 色と描画可否の述語（`Has*`）を単一所有する。`Default` を基点に部分変更する |
 | `LoupeLabelPlan` | 通知・色・実寸からラベル要素の配置指示を解決する |
 
@@ -171,7 +171,8 @@ src/LoupeControl.UIBase/
 | 十字線・円枠の矩形 | コア（描画内容 `LoupeDrawContent`） |
 | 寸法の DIP → 物理ピクセル換算 | コア（描画入力 `LoupeRenderRequest` の換算済み寸法） |
 | 描画先のサイズ決定（クランプ） | コア（`LoupeRenderRequest.ResolvePixelSize`） |
-| ラベルの文言・フォントサイズ・角丸 | コア（`LoupeTextPlacement` / `LoupeMetrics`） |
+| ラベルの文言と基準点 | コア（`LoupeTextPlacement`） |
+| ラベルのフォントサイズと角丸 | 本層（`LoupePaint`） |
 | ラベルの色 | 本層（`LoupePaint.CoordLabelColor` / `CoordLabelBackgroundColor`） |
 | ラベルの体裁（背景・文字原点） | `Common`（`EsLabelLayout`） |
 | 描画 API の呼び出し（背景 → 文字の順序） | `Platform.Core`（`SkiaLabel` / `IEsCanvas.DrawLabel`） |

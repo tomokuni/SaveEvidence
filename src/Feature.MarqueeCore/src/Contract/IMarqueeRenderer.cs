@@ -17,32 +17,21 @@ namespace EsUtil.Feature.MarqueeCore.Contract;
 /// <br/>
 /// <b>実装の提供元</b>: 既定実装は描画層（<c>MarqueeControl.UIBase</c> の <c>MarqueeRenderer</c>）にある。<br/>
 /// 色とフォントサイズ（描画にだけ必要な設定）はその実装のインスタンス状態として渡すため、<br/>
-/// 本契約にも本コアにも色の型は現れない（フォントサイズは数値として本契約が公開する）。<br/>
+/// 本契約にも本コアにも現れない（描画層が保持する）。<br/>
 /// コアは描画層を参照できないため、本契約だけを定義して実装を注入で受ける（依存の向きは一方向に保たれる）。<br/>
 /// <br/>
 /// <b>テキストは値として渡す</b>: 文言と基準点は <see cref="MarqueeDrawContent.SizeLabelText"/> /<br/>
 /// <see cref="MarqueeDrawContent.CoordLabelText"/> が持ち、<b>要素として置くか画像として描くかは UI 層が決める</b>。<br/>
-/// フォントサイズは <see cref="SizeLabelFontSize"/> / <see cref="CoordLabelFontSize"/> が公開する。<br/>
-/// 描画実装はテキストを描かない（描く場合も体裁は本契約の値を参照する）。
+/// テキストを描く層のフックは基底（<c>MarqueeRendererBase</c>）が用意する（既定は何もしない）。<br/>
+/// 要素として置く UI の実装は当該フックを上書きしない（フォントサイズ・色は描画層の設定を参照する）。
 /// </remarks>
 public interface IMarqueeRenderer
 {
-    /// <summary>サイズラベルのフォントサイズ（DIP）を取得する。</summary>
-    /// <value>安全域（6〜48）へ補正済みのフォントサイズ。既定は 14.0。</value>
-    /// <remarks>値の所有者は描画の設定（<c>MarqueePaint</c>）であり、本契約は UI 層への入口である。</remarks>
-    double SizeLabelFontSize { get; }
-
-    /// <summary>カーソル座標ラベルのフォントサイズ（DIP）を取得する。</summary>
-    /// <value>安全域（6〜48）へ補正済みのフォントサイズ。既定は 12.0。</value>
-    /// <remarks>値の所有者は描画の設定（<c>MarqueePaint</c>）であり、本契約は UI 層への入口である。</remarks>
-    double CoordLabelFontSize { get; }
-
     /// <summary>図形の層（装飾・ハンドル・始点マーカー）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート。null 不可。</param>
-    /// <param name="content">コアが解決した描画内容（図形の層の順序を持つ）。</param>
+    /// <param name="content">コアが解決した描画内容（層の順序を持つ）。</param>
     /// <remarks>
-    /// テキスト（<see cref="MarqueeDrawContent.SizeLabelText"/> / <see cref="MarqueeDrawContent.CoordLabelText"/>）は描かない<br/>
-    /// （UI 層が要素として置くか画像として描くかを決める）。<br/>
+    /// テキストは描かない（UI 層が要素として置くか画像として描くかを決める）。<br/>
     /// 描画面の消去（前フレームの残像の除去）は呼び出し側が行う（描画面の寿命は UI が所有するため）。
     /// </remarks>
     void DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content);

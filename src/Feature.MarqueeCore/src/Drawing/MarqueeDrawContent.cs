@@ -1,6 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.Feature.MarqueeCore.Setting;
 
 
 namespace EsUtil.Feature.MarqueeCore.Drawing;

@@ -1,4 +1,3 @@
-using EsUtil.Feature.LoupeCore;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;

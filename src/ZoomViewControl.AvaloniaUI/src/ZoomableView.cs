@@ -5,7 +5,6 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.AvaloniaUI.Interop;
 

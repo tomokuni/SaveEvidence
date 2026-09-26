@@ -16,6 +16,7 @@ using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.Skia;
 using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.LoupeCore.Drawing;
 using EsUtil.Feature.LoupeCore.Contract;
 using EsUtil.Feature.LoupeCore.Logging;
 
@@ -42,7 +43,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// <b>ホスト側の操作</b>: <see cref="Source"/> を設定して <see cref="CenterPoint"/> を現在位置へ更新すると、<br/>
 /// ルーペがその位置を拡大表示する（描画はプロパティ変更で自動的に無効化される）。<br/>
 /// <b>座標ラベル</b>: 表示可否は <see cref="LoupeMetrics.ShouldShowCoordLabel"/>（コア）が判断し、<br/>
-/// 文言・寸法は <see cref="LoupeCoordLabel"/>（コア）が、配置は <see cref="LoupeLabelPlan"/>（描画層）が<br/>
+/// 文言・基準点は <see cref="LoupeTextPlacement"/>（コア）が、配置は <see cref="LoupeLabelPlan"/>（描画層）が<br/>
 /// 実寸（<see cref="SkiaText.Measure"/>）から単一所有する（本コントロールは要素を置くだけである）。
 /// </remarks>
 public sealed class LoupeControl : Panel

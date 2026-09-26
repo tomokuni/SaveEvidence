@@ -1,4 +1,3 @@
-using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.LoupeCore.Drawing;
@@ -8,7 +7,7 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 
 /// <summary>ルーペの中心座標ラベルの配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>
-/// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。コア（<see cref="Loupe.ResolveContent"/>）は<br/>
+/// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。コア（<see cref="EsUtil.Feature.LoupeCore.Loupe.ResolveContent"/>）は<br/>
 /// 文言・基準点・アラインを決めるが、実際の配置矩形はテキストの実寸に依存するため、<br/>
 /// 実寸測定（描画 API 依存）を UI 層から受け取って要素の矩形へ変換する。<br/>
 /// 体裁（内側余白）は <see cref="EsLabelLayout"/> が、要素の配置指示は <see cref="EsLabelElement"/> が単一所有する。<br/>

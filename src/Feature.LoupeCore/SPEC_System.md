@@ -41,10 +41,10 @@ graph LR
 | `Drawing/LoupeCheckerTiles.cs` | 市松模様の暗色タイルの矩形を**リストを確保せずに列挙する構造体**（描画内容の一部） |
 | `Contract/ILoupeRenderer.cs` | 描画の契約（描画内容 → 描画面の写像。**描画の差し替え点**。実装は描画層が提供する） |
 | `Setting/LoupeOptions.cs` | ルーペの設定（表示サイズ・拡大率・寸法）の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`Default` |
-| `Setting/LoupeMetrics.cs` | ルーペの寸法 5 項目（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`ShouldShowCoordLabel`。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
+| `Setting/LoupeMetrics.cs` | ルーペの寸法 2 項目（市松模様のタイルサイズ・外枠の太さ）と中心座標ラベルの表示可否の単一所有（**public**）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`ShouldShowCoordLabel`。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
 | `Loupe.Limits.cs`（ルート） | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値のクランプ（`Loupe` の**入れ子**。UI がプロパティ登録に使う） |
 | `Drawing/LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）と、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む） |
-| `Drawing/LoupeCoordLabel.cs` | 中心座標ラベルの描画契約（文言・**DIP** の寸法。**色は持たない**）と配置の計算（`ComputeFrame`。体裁は `EsLabelLayout`（Platform.Core）が単一所有する）。表示はコントロールがテキスト要素として行う |
+| `Drawing/LoupeTextPlacement.cs` | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（体裁は `EsLabelLayout`（`Platform.Core`）が、フォントサイズ・角丸・色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
 | `Loupe.Position.cs` / `Loupe.DrawContent.cs`（`Loupe` の **partial**・**internal**） | 表示位置の計算・親サイズ未確定の判定、描画内容の解決。利用者はファサード（`ResolveLayout` / `ResolveContent`）を使う |
 | `Logging/LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化（**UI がログへ出すため public**） |
 | `Logging/LoupeLogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有（**UI が拡張メソッドを呼ぶため public**） |
@@ -111,7 +111,7 @@ sequenceDiagram
 | 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（規則は internal の `Loupe.ComputePosition`。親サイズ未確 定の判定は `EsSize.HasArea`） |
 | 描画入力（物理ピクセルサイズ）の組み立てと描画先へのクランプ | `Loupe.CreateRequest`（規則は internal の `LoupeRenderRequest.ResolvePixelSize`） |
 | 描画完了通知の内容（切り出し左上・スケール） | `Loupe.ResolveNotification`（切り出し領域の計算は `Imaging.LoupeImageExtractor` へ委譲する） |
-| 中心座標ラベルの契約（文言・寸法）と表示可否 | `LoupeCoordLabel.Resolve`（文言は `EsPoint.Format`、表示可否は `LoupeMetrics.ShouldShowCoordLabel`） |
+| 中心座標ラベルの文言・基準点と表示可否 | `Loupe.ResolveContent`（文言は `EsPoint.Format`、表示可否は `LoupeMetrics.ShouldShowCoordLabel`） |
 | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0） | `EsLabelDefaults`（`Platform.Core`。マーキーと共有） |
 | 十字線・円枠の矩形 | `Loupe.ResolveContent`（規則は internal の `Decoration.LoupeDecorationGeometry`） |
 | ラベルの余白・背景矩形・文字原点 | `EsLabelLayout`（`Platform.Core`。内側余白の既定値は `EsLabelLayout.Padding`）。コアは使用する余白・オフセットだけを指定し、利用者は `EsLabelLayout.ComputeAlignedBox` を使う |

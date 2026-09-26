@@ -7,7 +7,6 @@ using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.SaveEvidence.Marquee.UIBase;
 using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
-using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;

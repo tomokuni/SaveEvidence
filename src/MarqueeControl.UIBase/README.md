@@ -43,7 +43,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 型 | 責務 |
 | --- | --- |
 | `MarqueePaint` | **色とラベルのフォントサイズの単一所有者**（ハンドル・十字マーカー・ラベル・装飾）。`Default` を基点に `with` 式で部分変更する |
-| `MarqueeRenderer` | `MarqueeRendererBase` の既定実装（sealed）。描画の設定（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形のみ。**テキストは描かない**）とフォントサイズ（`SizeLabelFontSize` / `CoordLabelFontSize`）を提供する |
+| `MarqueeRenderer` | `MarqueeRendererBase` の既定実装（sealed）。描画の設定（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形のみ。**テキストは描かない**）とフォントサイズ（`SizeLabelFontSize` / `CoordLabelFontSize`）を提供する（描画の契約には含めない） |
 | `MarqueeOuterRenderer` | 選択矩形の外側の装飾（暗転マスク・穴あけ枠）を描く（色は引数の `MarqueePaint` から引く） |
 | `MarqueeInnerRenderer` | 穴あけ矩形の内側の装飾（塗り・内枠）を描く（色は引数の `MarqueePaint` から引く） |
 | `MarqueeLabelPlan` | コアのテキスト配置（`MarqueeTextPlacement`）からラベル要素（`EsLabelElement`）の配置指示を解決する（実寸 → 配置の写像。フォントサイズと色は引数の `MarqueePaint` から写す） |

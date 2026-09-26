@@ -160,7 +160,7 @@ src/MarqueeControl.UIBase/
 | コンポーネント | 責務 |
 | --- | --- |
 | `MarqueePaint` | 色の単一所有者（ハンドル・十字マーカー・ラベル・装飾） |
-| `MarqueeRenderer` | コアの `MarqueeRendererBase` の既定実装（sealed）。色を必須引数で受け取り、描画内容の解決結果を層の順に描画ポートへ写す。図形の層（装飾・ハンドル・マーカー）とラベルの層（描かない）を分けて提供する |
+| `MarqueeRenderer` | コアの `MarqueeRendererBase` の既定実装（sealed）。色を必須引数で受け取り、描画内容の解決結果を層の順に描画ポートへ写す。図形の層を描き、テキストのフック（`DrawLabel`）は基底の既定（何もしない）を引き継ぐ |
 | `MarqueeOuterRenderer` | `OuterDecoFrame`（暗転領域・枠線）を `paint.OverlayColor` / `paint.OuterBorderColor` で描く |
 | `MarqueeInnerRenderer` | `InnerDecoFrame`（塗り・内枠）を `paint.InnerFillColor` / `paint.InnerBorderColor` で描く |
 | `MarqueeLabelPlan` | 描画内容と実寸からラベル要素の配置指示を解決する |
@@ -205,7 +205,8 @@ src/MarqueeControl.UIBase/
 | 描画する層とその順序 | `Marquee.ResolveLayers`（コア。本層は順に写すだけ） |
 | 描くかどうかの判断（非表示・選択なし・nudge・表示可否フラグ・穴あけ矩形な し） | コア（`Marquee.ResolveFrame`。本層は判断を持たない） |
 | ハンドルの矩形（8 方向の位置と大きさ） | コア（`Marquee.ResolveFrame` が解決済み。本層は矩形を渡すだけ） |
-| ラベルの文言・フォントサイズ | コア（`MarqueeOptions` / `MarqueeTextPlacement`） |
+| ラベルの文言と基準点 | コア（`MarqueeTextPlacement`） |
+| ラベルのフォントサイズ | 本層（`MarqueePaint`） |
 | 描画に使う色（ハンドル・十字マーカー・ラベル・装飾） | 本層（`MarqueePaint`） |
 | ラベルの体裁（背景・文字原点・行送り） | `Common`（`EsLabelLayout`） |
 | ラベル要素の写像（順序・実寸の反映） | 本層（`MarqueeLabelPlan`） |

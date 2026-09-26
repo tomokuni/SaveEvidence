@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.SaveEvidence.CropView;
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.SaveEvidence.CaptureSession.MewUI;
 using EsUtil.SaveEvidence.CropView.MewUI;

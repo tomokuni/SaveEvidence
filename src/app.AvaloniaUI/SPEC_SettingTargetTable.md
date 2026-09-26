@@ -100,7 +100,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `ShowCoordLabel` | ✅ `Options.Marquee.ShowCoordLabel` | ✅ | カーソル座標ラベルの表示有無 |
 | `Paint.CoordLabelColor` | ✅ `MarqueePaint.CoordLabelColor` | ✅ | |
 | `Paint.CoordLabelBackgroundColor` | ✅ `MarqueePaint.CoordLabelBackgroundColor` | ✅ | |
-| `CoordLabelFontSize` | ✅ `Options.Marquee.CoordLabelFontSize` | ✅ | |
+| `CoordLabelFontSize` | ✅ `Paint.CoordLabelFontSize`（`MarqueePaint`） | ✅ | |
 
 - `FadeMaskDragRectControl` は MarqueeControl の公開設定を**全て** `Options.Marquee` / `Options.Deco`（寸法・表示可否）と `MarqueePaint`（色）で公開する（枠線の太さは `Options.Deco.OuterAppearance`、色は `MarqueePaint` が単一所有する）。
 - MarqueeControl の外観プロパティは**全て**設定画面（`SettingsPage.axaml` の外観設定）で設定可能（✅）。
@@ -114,7 +114,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `OverlayColor`（`MarqueePaint`） | ✅ `MarqueePaint.OverlayColor` | ✅ | 暗転オーバーレイの色。描画の可否は `Options.Deco.ShowOverlay` |
 | `SizeLabelColor`（`MarqueePaint`） | ✅ `MarqueePaint.SizeLabelColor` | ✅ | サイズラベル（1 行目）の文字色 |
 | `SizeLabelBackgroundColor`（`MarqueePaint`） | ✅ `MarqueePaint.SizeLabelBackgroundColor` | ✅ | サイズラベル（1 行目）の背景色 |
-| `SizeLabelFontSize`（`MarqueeOptions`） | ✅ `Options.Marquee.SizeLabelFontSize` | ✅ | サイズラベルのフォントサイズ |
+| `SizeLabelFontSize`（`MarqueePaint`） | ✅ `MarqueePaint.SizeLabelFontSize` | ✅ | サイズラベルのフォントサイズ |
 | `ShowSizeLabel`（`MarqueeOptions`） | ✅ `Options.Marquee.ShowSizeLabel` | ✅ | サイズラベル表示 |
 | `OuterBorderColor`（`MarqueePaint`） | ✅ `MarqueePaint.OuterBorderColor` | ✅ | `MarqueePaint.HandleBorderColor` と共通適用（同じ矩形に重なるため）。描画の可否は `Options.Deco.ShowOuterBorder` |
 | `InnerFillColor` / `InnerBorderColor`（`MarqueePaint`） | ✅ `MarqueePaint.InnerFillColor` / `.InnerBorderColor` | —（設定なし） | 穴あけ矩形の内側。既定は透明で、描画の可否は `Options.Deco.ShowInnerFill` / `ShowInnerBorder`（既定 false） |
@@ -123,13 +123,13 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `OperationColor` / `OperationFontSize` / `OperationBackgroundColor` / `ShowOperationLabel`（`FadeMaskDragRectLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 操作ラベル（2 行目）。**文言の生成と描画はホスト**が行う |
 | `Mode` | —（`Mode` で公開） | —（セッションで決定） | 子コントロールの有効・無効と全面暗転（`FadeMaskDragRectMode`） |
 
-- サイズラベルの表示可否・フォントサイズは選択矩形コア（`MarqueeOptions`）が、装飾の寸法と描画可否は `Options.Deco`（`MarqueeDecoOptions`）が、操作・情報ラベルは `Options.Labels`（`FadeMaskDragRectLabelOptions`）が単一所有する。**色は描画層の `MarqueePaint`（`FadeMaskDragRectControl.MarqueePaint`）が単一所有する**。
+- サイズラベルの表示可否は選択矩形コア（`MarqueeOptions`）が、装飾の寸法と描画可否は `Options.Deco`（`MarqueeDecoOptions`）が、操作・情報ラベルは `Options.Labels`（`FadeMaskDragRectLabelOptions`）が単一所有する。**描画にだけ必要な設定（色と、ラベルのフォントサイズ・角丸）は描画層の `MarqueePaint` / `LoupePaint`（`FadeMaskDragRectControl.MarqueePaint` / `.LoupePaint`）が単一所有する**。
 - `Mode` は `FadeMaskDragRectControl.Mode`（`FadeMaskDragRectMode`）として公開される（モードが決めるのは子コントロールの有効・無効と全面暗転のみ。文言はホストがプロバイダで与える）。
 - **例外**: `Scaling` / `DisplayScaleScaling` は設定（`Options`）の**対象外**の環境値で、`FadeMaskDragRectControl.Scaling` / `.DisplayScaleScaling`（個別プロパティ）として公開される。DPI スケーリング・マルチスクリーン補正のため設定画面では設定不可（セッションがコードから動的設定）。
 
 ### 3.3 LoupeControl の公開外観と FadeMaskDragRectControl での公開有無
 
-ルーペの**寸法**はコアの `LoupeMetrics` が単一所有し、`LoupeControl` は `Options.Metrics`（`LoupeOptions.Metrics`）として公開します。**色**は描画層の `LoupePaint` が単一所有し、`LoupeControl.Paint` として公開します。
+ルーペの**寸法**はコアの `LoupeMetrics` が単一所有し、`LoupeControl` は `Options.Metrics`（`LoupeOptions.Metrics`）として公開します。**色と、ラベルのフォントサイズ・角丸**は描画層の `LoupePaint` が単一所有し、`LoupeControl.Paint` として公開します。
 
 | LoupeControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
@@ -147,8 +147,8 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `Options.Metrics.ShowCoordLabel` | ✅ `Options.Loupe.Metrics.ShowCoordLabel` | ✅ | 座標ラベル表示 |
 | `Paint.CoordLabelColor` | ✅ `LoupePaint.CoordLabelColor` | ✅ | |
 | `Paint.CoordLabelBackgroundColor` | ✅ `LoupePaint.CoordLabelBackgroundColor` | ✅ | |
-| `Options.Metrics.CoordLabelFontSize` | ✅ `Options.Loupe.Metrics.CoordLabelFontSize` | ✅ | |
-| `Options.Metrics.CoordLabelCornerRadius` | —（公開しない） | —（設定なし） | ラベル背景の角丸半径（コアの既定値 2 を使用） |
+| `Paint.CoordLabelFontSize` | ✅ `LoupePaint.CoordLabelFontSize` | ✅ | |
+| `Paint.CoordLabelCornerRadius` | —（公開しない） | —（設定なし） | ラベル背景の角丸半径（描画層の既定値 2 を使用） |
 | —（破線色） | ✅ `Options.SelectionRectColorA / B` | ✅ | LoupeControl のプロパティではなく、ルーペ描画時（`LoupeRendered`）に破線オーバーレイを描くための色 |
 
 - ルーペの設定も `FadeMaskDragRectControl.Options`（`FadeMaskDragRectOptions`）と `LoupePaint` 経由で公開され、コアの `LoupeOptions` / `LoupeMetrics` と描画層の `LoupePaint` へ組み立てて一括設定される。
@@ -262,7 +262,7 @@ DPI スケーリング（`Scaling` / `LoupeRenderScaling`）は `CaptureSettings
 | マーカーの長さ | `MarkerLength` | `Options.Marquee.MarkerLength` |
 | 座標ラベルのテキスト色 | `CoordLabelColor` | `MarqueeControl.Paint.CoordLabelColor` |
 | 座標ラベルの背景色（不透明度含む） | `CoordLabelBackgroundColor` | `MarqueeControl.Paint.CoordLabelBackgroundColor`（アルファ込み） |
-| 座標ラベルのフォントサイズ | `CoordLabelFontSize` | `Options.Marquee.CoordLabelFontSize` |
+| 座標ラベルのフォントサイズ | `CoordLabelFontSize` | `Paint.CoordLabelFontSize`（描画層の `MarqueePaint`） |
 
 - 設定は複合コントロールの設定値（`FadeMaskDragRectOptions.Marquee`。寸法・表示可否）と描画層の色（`MarqueePaint`）経由で子コントロールへ分配される（選択矩形コントロールは同じ項目の個別プロパティを公開しない）。
 
@@ -280,7 +280,7 @@ DPI スケーリング（`Scaling` / `LoupeRenderScaling`）は `CaptureSettings
 | 選択矩形破線の色B（不透明度含む） | `LoupeSelectionRectColorB` | `FadeMaskDragRectOptions.SelectionRectColorB`（アルファ込み。同上） |
 | 座標ラベルのテキスト色 | `LoupeCoordLabelColor` | `LoupeControl.Paint.CoordLabelColor` |
 | 座標ラベルの背景色（不透明度含む） | `LoupeCoordLabelBackgroundColor` | `LoupeControl.Paint.CoordLabelBackgroundColor`（アルファ込みの色） |
-| 座標ラベルのフォントサイズ | `LoupeCoordLabelFontSize` | `LoupeControl.Options.Metrics.CoordLabelFontSize` |
+| 座標ラベルのフォントサイズ | `LoupeCoordLabelFontSize` | `LoupeControl.Paint.CoordLabelFontSize` |
 
 - 拡大率（`LoupeZoomLevel`）・サイズ（`LoupeSize`）・カーソルからのオフセット（`LoupeOffset`）は「外観設定」（§4）に配置。
 - 市松模様は「画像設定」（§6）で管理するため、ルーペ設定には含めない。
@@ -306,7 +306,7 @@ DPI スケーリング（`Scaling` / `LoupeRenderScaling`）は `CaptureSettings
 | 選択矩形のサイズを表示 | `SizeLabelVisible` | `Options.Marquee.ShowSizeLabel`（選択矩形コアが単一所有する） |
 | テキスト色 | `CaptureTextColor` | `MarqueeControl.Paint.SizeLabelColor`（キャプチャのテキスト色と共用） |
 | 背景色（不透明度含む） | `SizeLabelBackgroundColor` | `MarqueeControl.Paint.SizeLabelBackgroundColor`（アルファ込み） |
-| フォントサイズ | `SizeLabelFontSize` | `Options.Marquee.SizeLabelFontSize` |
+| フォントサイズ | `SizeLabelFontSize` | `MarqueePaint.SizeLabelFontSize` |
 
 ### 10.2 2 行目: 操作ラベル
 

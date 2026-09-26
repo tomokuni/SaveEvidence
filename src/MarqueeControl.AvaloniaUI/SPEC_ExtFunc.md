@@ -199,7 +199,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた設定。変更すると再描画され、対話パラメータはコア（ファサード）へ伝搬する（**色は含まない**） |
-| `Paint` | `MarqueePaint` | `MarqueePaint.Default` | **色（ハンドル・十字マーカー・ラベル・装飾）の設定**。変更すると描画実装（`Renderer`）が新しい色で差し替わり、即時反映される |
+| `Paint` | `MarqueePaint` | `MarqueePaint.Default` | **色（ハンドル・十字マーカー・ラベル・装飾）とラベルのフォントサイズの設定**。変更すると描画実装（`Renderer`）が新しい色で差し替わり、即時反映される |
 | `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ハイライト）の表示可否と寸法の設定**（色は含まない）。装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）へ反映する |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。null または空文字を返す場合は自動生成の文言を使う |
 
@@ -211,14 +211,13 @@ control.ResetSelection();           // 状態と nudge の初期化
 | `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP 座標系） |
 | `MarkerLength` | `double` | `16.0` | nudge 中の十字マーカーの長さ（**全長** = 中心から両端までの長さ・DIP 座標系） |
 | `ShowCoordLabel` | `bool` | `false` | カーソル座標ラベル（`(x, y)`）をカーソルの右側に表示するかどうか |
-| `CoordLabelFontSize` | `double` | `12.0` | カーソル座標ラベルのフォントサイズ（6〜48 に補正） |
 | `HandleHitRadius` | `double` | `12.0` | ハンドルヒットテスト半径（**DIP 座標系**。ズーム・縮小表示でも画面上の大きさが一定） |
 | `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標系） |
 | `ClampToDomainBounds` | `bool` | `true` | 画像外の選択を禁止するかどうか（ON: 領域選択・移動・nudge を画像境界内にクリップ / OFF: 画像外も選択可能） |
 
 `Options` は変更時に即時反映されます（`AffectsRender` による再描画 + コア（ファサード）への伝搬）。
 色は描画の設定（`Paint` の `MarqueePaint`）が単一所有し、UI 非依存の `System.Drawing.Color` で保持します（Avalonia 型からの変換は `EsUtil.Platform.AvaloniaUI` の `ToDrawingColor()`。描画ポートのアダプタが描画時に Avalonia の色型へ変換します）。**描くかどうかは色のアルファではなく `DecoOptions` の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）が決めます**。
-一部の項目だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueePaint.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。`CoordLabelFontSize` は設定値の生成時に 6〜48 へ補正されます。
+一部の項目だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueePaint.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。フォントサイズは設定値の生成時に 6〜48 へ補正されます。
 
 `MarqueePaint` の項目（既定値は本型が単一所有する。すべて `init` のみで不変）:
 
@@ -228,6 +227,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 | `HandleBorderColor` | `Color` | `#FFA9A9A9` | ドラッグハンドルの枠線色（穴あけ枠と共通の既定値） |
 | `MarkerColor` | `Color` | `White` | nudge 中の十字マーカーの色 |
 | `SizeLabelColor` / `SizeLabelBackgroundColor` | `Color` | `White` / `#99000000`（黒 60%） | サイズラベルの文字色と背景色 |
+| `SizeLabelFontSize` / `CoordLabelFontSize` | `double` | `14.0` / `12.0` | サイズラベル（1 行目）とカーソル座標ラベルのフォントサイズ（DIP。6〜48 に補正。非数は既定値へ補正） |
 | `CoordLabelColor` / `CoordLabelBackgroundColor` | `Color` | `White` / `#99000000`（黒 60%） | カーソル座標ラベルの文字色と背景色 |
 | `OverlayColor` | `Color` | `#80000000`（黒 50%） | 暗転マスクの色 |
 | `OuterBorderColor` | `Color` | `#FFA9A9A9` | 穴あけ枠（選択枠線）の色 |

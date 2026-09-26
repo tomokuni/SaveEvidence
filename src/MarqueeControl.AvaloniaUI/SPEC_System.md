@@ -213,7 +213,7 @@ flowchart TB
 - **分類**: 公開 sealed クラス（`public sealed class`。`MarqueeRendererBase`（abstract）を継承する。所属は UI 非依存の描画層 `MarqueeControl.UIBase`）
 - **責務**: 描画内容（`MarqueeDrawContent`）を描画ポート `IEsCanvas` へ写す（**描画手順は基底の `MarqueeRendererBase` が単一所有**し、本クラスは色を与える）
 - **可視性**: public（UI 実装・独自コントロールの作者が参照する）
-- **特徴**: 描画の設定（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形のみ。**テキストは描かない**）/ フォントサイズ（`SizeLabelFontSize` / `CoordLabelFontSize`）を提供する
+- **特徴**: 描画の設定（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形のみ。**テキストは描かない**）を実装する。フォントサイズ（`SizeLabelFontSize` / `CoordLabelFontSize`）は描画の設定の値への入口として公開する（**描画の契約には含めない**）
 - **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`MarqueeDrawContent` / `SelectionGeometry`）/ `MarqueePaint`（同層）
 
 ### 6.6 MarqueeOuterRenderer（MarqueeControl.UIBase）
@@ -230,7 +230,7 @@ flowchart TB
 - **責務**: コアの描画内容のうち**ラベル**（サイズ・カーソル座標）をテキスト要素（`Border` + `TextBlock`）として配置する
 - **可視性**: 非公開（ホストは `Rendered` の `Content` を参照できる）
 - **特徴**: 文言・寸法・表示可否はコアが、色は描画層の `MarqueePaint` が単一所有し、実寸からの配置矩形（一覧と順序）は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有する。本実装は実寸測定（`FormattedText`）と要素への反映のみを持つ。要素の適用（色・余白・配置）とブラシの容量制限付きキャッシュは `EsLabelElementHost`（`Platform.AvaloniaUI.Labels`）が単一所有する
-- **依存**: Avalonia（`FormattedText` / テキスト要素）/ MarqueeControl.UIBase（`MarqueeLabelPlan` / `MarqueePaint`）/ Feature.MarqueeCore（装飾と座標ラベルの描画契約）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
+- **依存**: Avalonia（`FormattedText` / テキスト要素）/ MarqueeControl.UIBase（`MarqueeLabelPlan` / `MarqueePaint`）/ Feature.MarqueeCore（装飾の描画契約と、テキストの文言・基準点）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
 
 ### 6.7 MarqueeInnerRenderer（MarqueeControl.UIBase）
 

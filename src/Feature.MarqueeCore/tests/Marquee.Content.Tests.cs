@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Session;
 using Xunit;
@@ -329,9 +328,9 @@ public class MarqueeContentTests
         Assert.Equal([MarqueeDrawLayer.Decoration], content.Layers);
     }
 
-    /// <summary>選択がある場合は装飾の後にハンドルが描かれることを検証する。</summary>
+    /// <summary>選択ありでテキストなしならハンドルが最後の層になることを検証する。</summary>
     [Fact]
-    public void ResolveContent_選択ありならハンドルが装飾の後に来る()
+    public void ResolveContent_テキストなしならハンドルが最後の層になる()
     {
         var session = CreateSession(MarqueeOptions.Default with { ShowSizeLabel = false }, s_selection);
 
@@ -340,9 +339,9 @@ public class MarqueeContentTests
         Assert.Equal([MarqueeDrawLayer.Decoration, MarqueeDrawLayer.Handles], content.Layers);
     }
 
-    /// <summary>2 つのテキスト（サイズ・カーソル座標）は同じ型で別々の位置を持つことを検証する。</summary>
+    /// <summary>2 つのテキスト（サイズ・カーソル座標）は同じ型で別々の位置を持ち、テキストの層を 1 つだけ末尾に置くことを検証する。</summary>
     [Fact]
-    public void ResolveContent_2つのテキストは別々の基準点を持つ()
+    public void ResolveContent_2つのテキストは別々の基準点を持ち末尾の層にまとまる()
     {
         var session = CreateSession(
             MarqueeOptions.Default with { ShowSizeLabel = true, ShowCoordLabel = true, ShowHandles = true },
@@ -351,12 +350,23 @@ public class MarqueeContentTests
 
         var content = ResolveContent(session);
 
-        // 文字はコアの層には含まれない（UI 層が要素として置くか画像として描くかを決める）
+        // テキストはまとめて 1 つの層になり、常に最上位（UI 要素として置く UI は本層を無視してよい）
         Assert.Equal(
-            [MarqueeDrawLayer.Decoration, MarqueeDrawLayer.Handles],
+            [MarqueeDrawLayer.Decoration, MarqueeDrawLayer.Handles, MarqueeDrawLayer.Label],
             content.Layers);
         Assert.True(content.HasText);
         Assert.NotEqual(content.SizeLabelText!.Value.Point, content.CoordLabelText!.Value.Point);
+    }
+
+    /// <summary>テキストが無ければ層に含まれないことを検証する。</summary>
+    [Fact]
+    public void ResolveContent_テキストが無ければ層に含まれない()
+    {
+        var session = CreateSession(
+            MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false },
+            s_selection);
+
+        Assert.DoesNotContain(MarqueeDrawLayer.Label, ResolveContent(session).Layers);
     }
 
     /// <summary>nudge 中はマーカーが描く層に含まれることを検証する。</summary>

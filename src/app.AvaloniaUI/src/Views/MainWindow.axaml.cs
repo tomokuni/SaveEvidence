@@ -1,4 +1,3 @@
-using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 using EsUtil.Platform.Core;

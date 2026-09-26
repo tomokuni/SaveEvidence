@@ -118,9 +118,8 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP） |
 | `ShowCoordLabel` | `bool` | `false` | カーソル座標ラベルの表示 |
-| `CoordLabelFontSize` | `double` | `12.0` | ラベルのフォントサイズ（6〜48 に補正） |
 
-色は描画の設定値 `MarqueePaint`（描画層）が単一所有します。
+色とラベルのフォントサイズは描画の設定値 `MarqueePaint`（描画層）が単一所有します。
 
 `MarqueePaint` の項目（既定値は本型が単一所有する）:
 

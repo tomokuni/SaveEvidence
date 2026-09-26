@@ -15,7 +15,7 @@
 
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
-| 描画内容の描画（図形） | `Marquee.Draw`（コアの入口）/ `IMarqueeRenderer.DrawShapes`（契約） | 装飾・ハンドル・始点マーカーを描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く。色は `MarqueePaint` から引く）。層の順序はコアの `MarqueeRendererBase` が単一所有し、起動は `Marquee.Draw` に一本化する |
+| 描画内容の描画（図形） | `Marquee.Draw`（コアの入口）/ `IMarqueeRenderer.DrawShapes`（契約） | 装飾・ハンドル・始点マーカーを描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする。色は `MarqueePaint` から引く）。層の順序はコアの `MarqueeRendererBase` が単一所有し、起動は `Marquee.Draw` に一本化する |
 | テキスト要素の配置 | `MarqueeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素（`EsLabelElement`）の配置指示を解決する。**要素として置くか画像として描くかは UI 層が決める** |
 | ホスト付加情報ラベルの描画 | `MarqueeHostLabelRenderer.Draw` | ホストが与えた文言を、サイズラベルと同じ体裁（内側余白・背景 → 文字の順序）で描く |
 
@@ -58,8 +58,9 @@
 | メンバー | 説明 |
 | --- | --- |
 | `MarqueeRenderer(MarqueePaint paint)` | 描画に使う色を指定して生成する（`MarqueePaint.Default` を基点に組み立てた値を渡す）。`paint` が null なら `ArgumentNullException`。色はインスタンスごとに異なるため、共有インスタンスを書き換えず差し替える |
-| `DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content)` | 図形の層（装飾・ハンドル・始点マーカー）を描画順に描く（**ラベルの層は描かない**）。`canvas` が null なら `ArgumentNullException` |
-| `SizeLabelFontSize` / `CoordLabelFontSize`（描画実装のプロパティ） | ラベルのフォントサイズ（描画の設定 `MarqueePaint` の値への入口） |
+| `DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content)` | 図形の層（装飾・ハンドル・始点マーカー）を描画順に描く（**テキストは描かない**）。`canvas` が null なら `ArgumentNullException` |
+| `SizeLabelFontSize` / `CoordLabelFontSize`（描画実装＝`MarqueeRenderer` のプロパティ） | ラベルのフォントサイズ（描画の設定 `MarqueePaint` の値への入口）。**描画の契約（`IMarqueeRenderer`）には含めない** |
+| `DrawLabel(IEsCanvas canvas, in MarqueeDrawContent content)`（`protected virtual`） | テキストを描画ポートへ描くフック。**既定は何もしない**（UI 要素として置く UI は上書きしない） |
 
 ### `MarqueePaint` のメンバー（色の単一値）
 
@@ -205,8 +206,8 @@ viewport.Notify();   // 変化を検知したら呼ぶ
 
 | 描く対象 | 呼ぶ API |
 | --- | --- |
-| 図形（装飾・ハンドル・始点マーカー） | `DrawShapes`（**ラベルの層は描かない**） |
-| ラベル（サイズ・カーソル座標） | `DrawShapes` ＋ `ResolveLabels`（`Marquee.ResolveLabels` へ同じフレームの描画内容を渡す。UI の要素が描く） |
+| 図形（装飾・ハンドル・始点マーカー） | `DrawShapes`（**テキストは描かない**） |
+| テキスト（サイズ・カーソル座標） | `MarqueeLabelPlan.Resolve`（コアの `MarqueeDrawContent` のテキスト配置を渡す。UI が要素として置くか canvas へ描くかを決める） |
 
 ### ラベル要素（`EsLabelElement`）
 

@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.MarqueeCore.Content;
 using EsUtil.Feature.MarqueeCore.Session;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

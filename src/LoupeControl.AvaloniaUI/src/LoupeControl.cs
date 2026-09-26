@@ -6,7 +6,6 @@ using EsUtil.SaveEvidence.Loupe.AvaloniaUI.Logging;
 using EsUtil.Feature.LoupeCore;
 using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Feature.LoupeCore.Imaging;
-using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Labels;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
@@ -20,6 +19,7 @@ using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.LoupeCore.Drawing;
 using EsUtil.Feature.LoupeCore.Contract;
 using EsUtil.Feature.LoupeCore.Logging;
 

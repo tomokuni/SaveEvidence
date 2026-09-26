@@ -1,4 +1,5 @@
 using EsUtil.SaveEvidence.Common.Imaging;
+using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.Feature.LoupeCore;
 

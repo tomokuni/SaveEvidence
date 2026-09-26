@@ -1,6 +1,5 @@
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using EsUtil.Feature.LoupeCore;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Native.Imaging;

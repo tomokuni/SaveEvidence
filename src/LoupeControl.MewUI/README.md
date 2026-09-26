@@ -92,7 +92,7 @@ if (layout.Position is { } position)
 | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。1〜4096 に補正 |
 | `ZoomLevel` | `int` | 4 | 拡大率。1〜64 に補正 |
-| `Metrics` | `LoupeMetrics` | コアの既定値 | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否。色は含まない |
+| `Metrics` | `LoupeMetrics` | コアの既定値 | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ）と中心座標ラベルの表示可否。色・フォントサイズ・角丸は含まない（描画層の `LoupePaint` が持つ） |
 
 `Options.Metrics`（コアの `LoupeMetrics`）の項目:
 
@@ -101,8 +101,6 @@ if (layout.Position is { } position)
 | `CheckerSize` | `int` | 6 | 市松模様の 1 タイルサイズ（DIP）。1〜128 に補正 |
 | `FrameWidth` | `int` | 2 | 外枠の太さ（DIP）。1〜64 に補正 |
 | `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
-| `CoordLabelFontSize` | `double` | 12.0 | 座標ラベルのフォントサイズ（DIP）。6〜48 に補正 |
-| `CoordLabelCornerRadius` | `int` | 2 | 座標ラベルの背景の角丸半径（DIP）。0〜64 に補正（0 は角丸なし） |
 
 `Paint`（`LoupePaint`。`EsUtil.SaveEvidence.Loupe.UIBase`）の項目:
 
@@ -114,6 +112,8 @@ if (layout.Position is { } position)
 | `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色。アルファ 0 は描画しない |
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
+| `CoordLabelFontSize` | `double` | 12.0 | 座標ラベルのフォントサイズ（DIP）。6〜48 に補正 |
+| `CoordLabelCornerRadius` | `int` | 2 | 座標ラベルの背景の角丸半径（DIP）。0〜64 に補正（0 は角丸なし） |
 
 `Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
 

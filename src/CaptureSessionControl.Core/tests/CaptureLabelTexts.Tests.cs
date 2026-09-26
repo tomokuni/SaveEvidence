@@ -1,8 +1,6 @@
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using Xunit;
-using EsUtil.Feature.MarqueeCore.Drawing;
 
 namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 

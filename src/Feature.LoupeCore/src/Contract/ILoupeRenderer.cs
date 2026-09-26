@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.LoupeCore.Drawing;
@@ -26,20 +25,11 @@ namespace EsUtil.Feature.LoupeCore.Contract;
 /// <br/>
 /// <b>テキストは値として渡す</b>: 文言と基準点は <see cref="LoupeDrawContent.CoordLabelText"/> が持ち、<br/>
 /// <b>要素として置くか画像として描くかは UI 層が決める</b>。<br/>
-/// フォントサイズと角丸は <see cref="CoordLabelFontSize"/> / <see cref="CoordLabelCornerRadius"/> が公開する。<br/>
-/// 描画実装はテキストを描かない（描く場合も体裁は本契約の値を参照する）。
+/// <b>フォントサイズと角丸は本契約に含めない</b>: 描画にだけ必要な設定であるため、描画実装が描画の設定（<c>LoupePaint</c>）の値として公開する。<br/>
+/// 本契約を実装する描画実装はテキストを描かない（canvas へ描く場合は基底のフックを上書きし、描画の設定の値を使う）。
 /// </remarks>
 public interface ILoupeRenderer
 {
-    /// <summary>中心座標ラベルのフォントサイズ（DIP）を取得する。</summary>
-    /// <value>安全域（6〜48）へ補正済みのフォントサイズ。既定は 12.0。</value>
-    /// <remarks>値の所有者は描画の設定（<c>LoupePaint</c>）であり、本契約は UI 層への入口である。</remarks>
-    double CoordLabelFontSize { get; }
-
-    /// <summary>中心座標ラベルの背景の角丸半径（DIP）を取得する。</summary>
-    /// <value>角丸半径（DIP）。0〜64 へ補正済み（0 は四角形）。既定は 2。</value>
-    /// <remarks>値の所有者は描画の設定（<c>LoupePaint</c>）であり、本契約は UI 層への入口である。</remarks>
-    double CoordLabelCornerRadius { get; }
     /// <summary>図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。null 不可。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（市松模様のみ）。</param>
@@ -47,7 +37,7 @@ public interface ILoupeRenderer
     /// <param name="content">コアが解決した描画内容（層の順序・描画面・矩形を持つ）。</param>
     /// <remarks>
     /// 描く値はすべて <paramref name="content"/> に解決済みであり、実装は計算を持たない。<br/>
-    /// 中心座標ラベルの層は描かない（UI が要素として配置するため）。<br/>
+    /// テキストは描かない（UI 層が要素として置くか画像として描くかを決める）。<br/>
     /// 描画面の消去は下地の層（<c>LoupeDrawLayer.Background</c>）が行う（前フレームの残像を残さない）。
     /// </remarks>
     void DrawShapes(

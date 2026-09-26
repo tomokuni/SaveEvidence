@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.Native;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.LineDetection.Sample.Models;

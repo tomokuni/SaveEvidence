@@ -15,12 +15,12 @@
 | `LoupeLayout` | `public` | 表示レイアウトの値（表示サイズ（DIP）と表示位置。配置しない場合は位置が null） |
 | `LoupeDrawContent` | `public` | 1 フレーム分の描画内容（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・**層の順序**）。描画層は本値を写すだけ |
 | `LoupeCheckerTiles` | `public` | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部） |
-| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール）。描く層の順序は描画内容（`LoupeDrawContent`）が持ち、**描画順はコアが単一所有する**（ラベルは必ず末尾 = 常に最上位） |
+| `LoupeRenderNotification` | `public` | 描画完了通知の値（切り出し左上・スケール）。描く層の順序は描画内容（`LoupeDrawContent`）が持ち、**描画順はコアが単一所有する**（テキストの層は末尾 = 常に最上位であり、テキストがある場合のみ含める） |
 | `LoupeOptions` | `public` | 設定の単一値（ホストが設定する） |
-| `LoupeMetrics` | `public` | 寸法の単一値（`LoupeOptions.Metrics` として、また単体でも寸法を指定する。**色は持たない**） |
+| `LoupeMetrics` | `public` | 寸法の単一値（`LoupeOptions.Metrics` として、また単体でも寸法を指定する。**色・フォントサイズ・角丸は持たない**） |
 | `Loupe.Limits`（`Loupe` の入れ子） | `public` | 数値パラメータの既定値・安全域とクランプ（UI がプロパティ登録に使う） |
 | `LoupeRenderRequest` | `public` | 1 フレーム分の描画入力（コア⇔UI の契約） |
-| `LoupeTextPlacement` | `public` | 中心座標ラベルの描画契約（文言・DIP の寸法・配置の計算。**色は持たない**）。表示はコントロールがテキスト要素として行う（色は描画層の `LoupePaint` が与える） |
+| `LoupeTextPlacement` | `public` | コアが UI 層へ渡すテキスト（**文言・基準点・アライン・描画領域**）。**要素として置くか canvas へ描くかは UI 層が決める**（フォントサイズ・角丸・色は描画層の `LoupePaint` が持つ） |
 | `LoupeLogFormat` / `LoupeLogMessage` | `public` | ログの書式と定義（両 UI が同じレベル・書式で出力するための契約。UI のコードが拡張メソッドを呼ぶ） |
 
 **internal（本アセンブリと単体テストのみ）**: 描画の計算・換算・列挙（`Checkerboard.LoupeCheckerboard`（明暗の判定）/ `Checkerboard.LoupeDivMath`（区画数の切り上げ）/ `Decoration.LoupeDecorationGeometry`（矩形）/ `Decoration.LoupeMetricsScaler`（寸法の換算）/ `Imaging.LoupeImageExtractor`（切り出し）/ `Loupe.ComputePosition` / `LoupeRenderRequest.ResolvePixelSize`）と、描画内容の解決の内部手順。いずれもファサード（`Loupe.ResolveLayout` / `Loupe.CreateRequest` / `Loupe.ResolveContent` / `Loupe.ResolveNotification`）とその内部計算が吸収して提供します。
@@ -44,7 +44,7 @@
 | `ResolveContent(request)` | 描画 1 フレーム分の**描画内容**（`LoupeDrawContent` = 描画面・タイル・矩形・層の順序）を解決する（描画層は計算を持たない） |
 | `ResolveNotification(request)` | 実際に描画した入力から描画完了通知の内容（`LoupeRenderNotification`）を解決する |
 | `Renderer` | 描画の実装（`ILoupeRenderer`）の取得・設定（**描画の差し替え**。null 不可。設定後の再描画は UI 層が要求する） |
-| `CoordLabelFontSize` / `CoordLabelCornerRadius`（描画実装のプロパティ） | 中心座標ラベルのフォントサイズと角丸（描画の設定 `LoupePaint` の値への入口） |
+| `CoordLabelFontSize` / `CoordLabelCornerRadius`（描画実装＝UIBase の `LoupeRenderer` のプロパティ） | 中心座標ラベルのフォントサイズと角丸（描画の設定 `LoupePaint` の値への入口）。**描画の契約（`ILoupeRenderer`）には含めない** |
 
 **本型が単一所有するもの**: 表示レイアウトの解決（表示サイズのクランプと表示位置の決定）・描画入力の組み立て・通知内容の解決・描画実装の保持。
 
@@ -52,8 +52,7 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `DrawShapes(canvas, source, in request, in content)` | 図形の層（下地 ・市松模様・拡大画像・十字線・円枠）を描画順に描く（**中心座標ラベルの層は描かない**。ラベルは UI の要素が描く） |
-
+| `DrawShapes(canvas, source, in request, in content)` | 図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く（**テキストは描かない**）。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする |
 
 描く層とその順序はコアが単一所有し（`Loupe.ResolveContent` が返す `LoupeDrawContent.Layers`）、実装 は順序を判断しません。拡大元画像は UI ごとに型が異なるため引数で受け取ります（描画の契約には含めません）。本コアは描画層（`LoupeControl.UIBase`）を参照できない ため、既定実装（描画層の `LoupeRenderer`。色をコンストラクタで受け取る）は利用者が渡します。
 
@@ -75,7 +74,7 @@ var content = loupe.ResolveContent(request);    // テキストは CoordLabelTex
 | --- | --- | --- | --- |
 | `RequestedSize` | `int` | `160` | ルーペの基本サイズ（DIP・一辺）。安全域 1〜4096。表示サイズは UI 層が親領域・描画先へクランプして導出する |
 | `ZoomLevel` | `int` | `4` | 拡大率（偶数推奨）。安全域 1〜64 |
-| `Metrics` | `LoupeMetrics` | `new LoupeMetrics()` | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否。**色は含まない**（色は描画層の `LoupePaint` が単一所有する） |
+| `Metrics` | `LoupeMetrics` | `new LoupeMetrics()` | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ）と中心座標ラベルの表示可否。**色・フォントサイズ・角丸は含まない**（描画層の `LoupePaint` が単一所有する） |
 
 `record` のため `with` 式による部分変更と値の等価比較ができます。等価比較は UI のプロパティシステムと併せて「同値の再設定では再描画しない」動作を保証します。
 
@@ -89,17 +88,15 @@ var content = loupe.ResolveContent(request);    // テキストは CoordLabelTex
 
 ## `LoupeMetrics`（`EsUtil.Feature.LoupeCore.Setting`・`public sealed record`）
 
-ルーペの寸法 5 項目（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否を 1 つの値として所有します。**色は持たず**、色は描画にだけ必要な設定として描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有します（コアは色の値を決定せず、描画可否の判定にも使いません）。両 UI は本型を 1 つ公開するだけで寸法を設定でき、UI ごとに既定値がずれません。
+ルーペの寸法 2 項目（市松模様のタイルサイズ・外枠の太さ）とラベル表示の可否を 1 つの値として所有します。**色・フォントサイズ・角丸は持たず**、これらは描画にだけ必要な設定として描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。両 UI は本型を 1 つ公開するだけで寸法を設定でき、UI ごとに既定値がずれません。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `CheckerSize` | `int` | `6` | 市松模様の 1 タイルサイズ（DIP）。安全域 1〜128 |
 | `FrameWidth` | `int` | `2` | 外枠の太さ（DIP）。安全域 1〜64 |
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示可否 |
-| `CoordLabelFontSize` | `double` | `12.0` | ラベルのフォントサイズ（DIP）。安全域 6〜48。既定値は `EsLabelDefaults.FontSize`（`Platform.Core`） |
-| `CoordLabelCornerRadius` | `int` | `2` | ラベルの背景の角丸半径（DIP）。安全域 0〜64（0 は角丸なし） |
 
-色（下地・市松模様・外枠・十字線・中心座標ラベル）は本型に含まず、描画にだけ必要な設定として描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有します（既定は `LoupePaint.Default`。詳細は同プロジェクトの仕様書を参照）。ホストは UI の `Paint` プロパティへ `LoupePaint` を指定します。
+色（下地・市松模様・外枠・十字線・中心座標ラベル）と中心座標ラベルのフォントサイズ・角丸は本型に含まず、描画にだけ必要な設定として描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有します（既定は `LoupePaint.Default`。詳細は同プロジェクトの仕様書を参照）。ホストは UI の `Paint` プロパティへ `LoupePaint` を指定します。
 
 `record` のため `with` 式による部分変更と値の等価比較ができます。
 
@@ -109,7 +106,7 @@ var content = loupe.ResolveContent(request);    // テキストは CoordLabelTex
 
 「透明は描画しない」の判断（`HasBackground` / `HasCheckerColorA` / `HasCheckerColorB` / `HasFrame` / `HasCrosshair`）は、色を持つ描画層の `LoupePaint` が単一所有します。
 
-数値項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は **`init` アクセサで補正**します。したがってオブジェクト初期化子・`with` 式・逆シリアル化などの**どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録（Avalonia の `coerce` / MewUI の `coerce`）を要求しません（規則は `Loupe.Limits` が単一所有する）。
+数値項目（`CheckerSize` / `FrameWidth`）は **`init` アクセサで補正**します。したがってオブジェクト初期化子・`with` 式・逆シリアル化などの**どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録（Avalonia の `coerce` / MewUI の `coerce`）を要求しません（規則は `Loupe.Limits` が単一所有する）。
 
 状態（拡大元画像・拡大中心・拡大率・基本サイズ・スケーリング係数・表示オフセット）は本型に含めません。
 
@@ -126,8 +123,6 @@ var content = loupe.ResolveContent(request);    // テキストは CoordLabelTex
 | `RenderScalingMin` / `RenderScalingMax` / `RenderScalingDefault` | `0.1` / `8.0` / `1.0` | スケーリング係数 |
 | `CheckerSizeMin` / `CheckerSizeMax` / `CheckerSizeDefault` | `1` / `128` / `6` | 市松模様の 1 タイルサイズ（ピクセル） |
 | `FrameWidthMin` / `FrameWidthMax` / `FrameWidthDefault` | `1` / `64` / `2` | 外枠の太さ（ピクセル） |
-| `CoordLabelFontSizeMin` / `CoordLabelFontSizeMax` / `CoordLabelFontSizeDefault` | `6` / `48` / `12.0` | 座標ラベルのフォントサイズ（DIP） |
-| `CoordLabelCornerRadiusMin` / `CoordLabelCornerRadiusMax` / `CoordLabelCornerRadiusDefault` | `0` / `64` / `2` | 座標ラベルの背景の角丸半径（ピクセル。0 は角丸なし） |
 
 ### メソッド
 
@@ -138,8 +133,6 @@ var content = loupe.ResolveContent(request);    // テキストは CoordLabelTex
 | `CoerceRenderScaling(double)` | スケーリング係数を 0.1〜8.0 へクランプ。非有限値は `RenderScalingDefault` |
 | `CoerceCheckerSize(int)` | 市松模様の 1 タイルサイズを 1〜128 へクランプ |
 | `CoerceFrameWidth(int)` | 外枠の太さを 1〜64 へクランプ |
-| `CoerceCoordLabelFontSize(double)` | ラベル文字サイズを 6〜48 へクランプ。非有限値は既定値（安全域と規則は `EsLabelMetrics`（`Platform.Core`）が単一所有し、本メソッドは既定値を添えて委譲する） |
-| `CoerceCoordLabelCornerRadius(int)` | ラベルの角丸半径を 0〜64 へクランプ（0 は角丸なし） |
 
 ## `LoupeDrawContent` / `LoupeCheckerTiles`（`EsUtil.Feature.LoupeCore.Drawing`・`public`）
 
@@ -150,7 +143,7 @@ var content = loupe.ResolveContent(request);    // テキストは CoordLabelTex
 | `SurfaceBounds` | 描画面の全体（幅・高さが物理ピクセルサイズの正方形） |
 | `CheckerTiles` | 市松模様の暗色タイルの矩形を列挙する構造体（`LoupeCheckerTiles`。リストを確保しない） |
 | `CrosshairRects` / `FrameRects` | 十字線（縦横 2 本）/ 円枠（4 辺）の矩形 |
-| `Layers` | 描く層とその順序（中心座標ラベルは必ず最後）。**描画順はコアが単一所有する** |
+| `Layers` | 描く層とその順序。**描画順はコアが単一所有する**（テキストの層 `Label` はテキストがある場合のみ末尾 = 常に最上位。**UI 要素として置く UI は本層を無視してよい**） |
 
 `LoupeCheckerTiles` は `foreach` でもボックス化せず、`IEsCanvas.FillRects` へ制約付きジェネリックとして渡せます（列挙は 1 回だけ）。
 
@@ -163,7 +156,7 @@ var content = loupe.ResolveContent(request);    // テキストは CoordLabelTex
 | `ScaleCheckerSize(LoupeMetrics, double scaling)` | 市松模様の 1 タイルサイズを物理ピクセルへ換算（切り上げ・最低 1）。`CheckerSize` は 1〜128 へ補正してから換算 |
 | `ScaleFrameWidth(LoupeMetrics, double scaling)` | 外枠の太さを物理ピクセルへ換算（切り上げ・最低 1）。`FrameWidth` は 1〜64 へ補正してから換算 |
 
-**中心座標ラベルは本型の対象外です**（「ラベル文字サイズ・角丸半径を換算する」という記述は過去のもので、実装は持ちません）。ラベルは DIP で配置するため、物理ピクセルへの換算を必要としません（テキスト要素として配置され、描画 API 側がスケーリングを扱います）。
+**中心座標ラベルは本型の対象外です**（ラベルは canvas へ描く場合も DIP で配置するため、換算を必要としません）。ラベルは DIP で配置するため、物理ピクセルへの換算を必要としません（テキスト要素として配置され、描画 API 側がスケーリングを扱います）。
 
 UI 層が `CheckerSize * scaling` のような式を自前で書かないための型です（片方の UI だけ換算が抜けると、DPI ≠ 100% で両 UI の見た目がずれます）。
 

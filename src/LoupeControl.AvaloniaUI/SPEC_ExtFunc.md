@@ -213,7 +213,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | `160` | `1`〜`4096` | ルーペの基本サイズ（DIP・一辺） |
 | `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
-| `Metrics` | `LoupeMetrics` | コアの既定値 | | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否。**色は含まない**（色は `Paint` プロパティが単一所有する） |
+| `Metrics` | `LoupeMetrics` | コアの既定値 | | ルーペの寸法（市松模様のタイルサイズ・外枠の太さ）とラベル表示の可否。**色・フォントサイズ・角丸は含まない**（`Paint` プロパティが単一所有する） |
 
 **表示サイズ（`RequestedSize`）のクランプはコア（ファサード）が内包**します: 表示サイズはコアが本値（基本サイズ）を親領域サイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
@@ -244,12 +244,12 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 
 #### 5.1.5 Metrics（寸法）と Paint（色）
 
-ルーペの寸法（市松模様のタイルサイズ・外枠の太さ・中心座標ラベルのフォントサイズと角丸半径）とラベル表示の可否は **コアの `LoupeMetrics`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options.Metrics`）として指定します（両 UI で既定値・意味が一致します）。**色は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアは色の値を決定せず、描画可否の判定にも使いません）。
+ルーペの寸法（市松模様のタイルサイズ・外枠の太さ）とラベル表示の可否は **コアの `LoupeMetrics`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options.Metrics`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options.Metrics` | `LoupeMetrics` | コアの既定値 | ルーペの寸法とラベル表示の可否。`with` 式で部分変更する。数値項目はコアの `LoupeMetrics` が生成時に安全域へ補正する |
-| `Paint` | `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupePaint.Default` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）。`LoupePaint.Default with { ... }` で部分変更する |
+| `Paint` | `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupePaint.Default` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）とラベルのフォントサイズ・角丸。`LoupePaint.Default with { ... }` で部分変更する |
 
 `Options.Metrics`（コアの `LoupeMetrics`）の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
 
@@ -258,8 +258,6 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 | `CheckerSize` | `int` | `6` | 市松模様の 1 タイルサイズ（DIP。1〜128 に補正） |
 | `FrameWidth` | `int` | `2` | 外枠の太さ（DIP。1〜64 に補正） |
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
-| `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正） |
-| `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
 `Paint`（`LoupePaint`。詳細は `LoupeControl.UIBase` の `SPEC_ExtFunc.md` を参照）の項目:
 
@@ -271,10 +269,12 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 | `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色。アルファ 0 の場合は描画しない |
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
+| `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（DIP。6〜48 に補正。非数は既定値へ補正） |
+| `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）はコア（ファサードの `EsLabelLayout.ComputeAlignedBox`）が、角丸（`CoordLabelCornerRadius`）は `LoupeMetrics` が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。**ラベルの色は `Paint`（`CoordLabelColor` / `CoordLabelBackgroundColor`）が単一所有します**。
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）と実寸 → 配置矩形の写像は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`。体裁は `Common` の `EsLabelLayout`）が、角丸（`CoordLabelCornerRadius`）は描画の設定（`Paint`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。**ラベルの色は `Paint`（`CoordLabelColor` / `CoordLabelBackgroundColor`）が単一所有します**。
 
-寸法項目（`CheckerSize` / `FrameWidth` / `CoordLabelFontSize` / `CoordLabelCornerRadius`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.CheckerSizePixels` / `FrameWidthPixels`）（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
+寸法項目（`CheckerSize` / `FrameWidth`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.CheckerSizePixels` / `FrameWidthPixels`）（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 

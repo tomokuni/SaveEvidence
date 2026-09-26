@@ -167,13 +167,13 @@ classDiagram
         <<MarqueeControl.UIBase / 描画層（MarqueeRenderer がコアの MarqueeRendererBase を継承）>>
         +MarqueeRenderer(paint) void
         +DrawShapes(canvas, content)$ void
-        +SizeLabelFontSize / CoordLabelFontSize$ double
     }
     class MarqueePaint {
         <<MarqueeControl.UIBase / 描画層>>
         +DrawingColor HandleColor / HandleBorderColor / MarkerColor
         +DrawingColor SizeLabelColor / SizeLabelBackgroundColor
         +DrawingColor CoordLabelColor / CoordLabelBackgroundColor
+        +double SizeLabelFontSize / CoordLabelFontSize
         +DrawingColor OverlayColor / OuterBorderColor
         +DrawingColor InnerFillColor / InnerBorderColor
     }
@@ -376,7 +376,7 @@ OnPaintSurface(canvas, info)
 | --- | --- |
 | カーソルサービスが null | `PlatformFactory.CreateCursorService()` の既定実装を使用する |
 | ウィンドウを特定できない（未レイアウト・未表示） | マウスキャプチャとカーソル移動を行わない（例外にしない） |
-| `Options.CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する |
+| `Paint.CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する |
 | 破棄済みの画像を描画しようとした | 本コントロールは画像を扱わない（対象外） |
 
 ## 実装上の注意（実測・設計から得た知見）

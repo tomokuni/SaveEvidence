@@ -95,18 +95,18 @@ stateDiagram-v2
 | `src/Marquee.cs`（ルート） | `Marquee` | public | ファサード。設定・環境値の保持、入力の通知、外部操作、描画内容の解決、描画実装の保持、効果の適用 |
 | `src/Session/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態 遷移の判断。通知と効果を返す |
 | `src/Session/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。**状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
-| `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 1 フレーム分の描画内容 の解決（装飾・穴あけ矩形・ハンドル・ラベル。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する） |
+| `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 1 フレーム分の描画内容 の解決（装飾・穴あけ矩形・ハンドル・テキストの配置。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する） |
 | `src/Content/MarqueeFrameRequest.cs` | `MarqueeFrameRequest` | internal | フレー ム解決の入力（設定・状態・描画時に決まる値） |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は `EsLabelLayout` が単一所有する） |
 | `src/Drawing/MarqueeDrawContent.cs` | `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` | public | 描画契約 |
-| `src/Drawing/MarqueeSizeLabel.cs` | `MarqueeTextPlacement` | public | サイズラベルの描画契約（文言・基準点・フォントサイズと配置の計算。書式はコアの内部） |
+| `src/Drawing/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（フォントサイズ・色は描画層の `MarqueePaint` が持つ） |
 | `src/Interaction/MarqueeSnapshot.cs` | `MarqueeSnapshot` | public | 状態のスナップショット（`readonly record struct`。値型のため通知でヒープを確保しない） |
 | `src/Interaction/MarqueeNotice.cs` | `MarqueeNotice` / `MarqueeNoticeKind` | public | 通知（`MarqueeNotice` は値型） |
 | `src/Session/MarqueeFeedback.cs` | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeCaptureAction` | internal | 効果（適用順を単一所有。適用先は `IMarqueeEffects`） |
 | `src/Contract/IMarqueeEffects.cs` | `IMarqueeEffects` | public | 効果の適用先 |
 | `src/Contract/IMarqueeRenderer.cs` | `IMarqueeRenderer` | public | 描画の契約（描画内容 → 描画面の写像。**描画の差し替え点**。実装は描画層が提供する） |
 | `src/Contract/MarqueeEffectsBase.cs` | `MarqueeEffectsBase` | public abstract | 効果の既定実装（全メンバーが virtual の空実装） |
-| `src/Drawing/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public | 描画層の順序 |
+| `src/Drawing/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public | 描画層の順序（`Decoration` / `Handles` / `Marker` / `Label`。`Label` はテキストがある場合のみ） |
 | `src/Interaction/HitTarget.cs` | `HitTarget` | public | ヒット対象 |
 | `src/Interaction/MarqueeCursorKind.cs` | `MarqueeCursorKind` | public | カーソル形状の種別 |
 | `src/Interaction/MarqueeInteractionState.cs` | `MarqueeInteractionState` | public | 対話状態 |
@@ -127,7 +127,7 @@ stateDiagram-v2
 | 描画する層とその順序 | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
 | 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveFrame` |
 | 設定の既定値・範囲補正・体裁定数 | `MarqueeOptions`（補正は生成時の `init` アクセサ） |
-| ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（12.0） | `EsLabelDefaults`（`Platform.Core`。`MarqueePaint` と `MarqueeOptions` が参照する） |
+| ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（12.0） | `EsLabelDefaults`（`Platform.Core`。描画層の `MarqueePaint` が参照する） |
 | フォントサイズの安全域（6〜48。他コントロールと共通） | `EsLabelMetrics`（`Platform.Core`） |
 | ラベルの体裁（背景 = 実寸 + 余白×2、文字原点、行送り、クランプ） | `EsLabelLayout`（`Common`） |
 | 装飾の DIP 変換と穴あけ矩形の決定 | `DecoGeometry` |

@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Common.Imaging;
 
 using EsUtil.Feature.LoupeCore.Decoration;
 using EsUtil.Feature.LoupeCore.Drawing;
@@ -19,19 +18,34 @@ namespace EsUtil.Feature.LoupeCore;
 /// </remarks>
 public sealed partial class Loupe
 {
-    /// <summary>描く図形の層とその順序（文字の層は含まない）。</summary>
+    /// <summary>描く層とその順序（テキストなし）。</summary>
     /// <remarks>
-    /// 図形の層の順序は固定であり、層の有無で変わらないため 1 つの一覧を共有する（描画のたびの確保を避ける）。<br/>
-    /// 中心座標ラベルは値（<see cref="LoupeDrawContent.CoordLabelText"/>）として渡し、UI 層が要素として置くか画像として描くかを決める。<br/>
-    /// <b>中心座標ラベルは常に最上位</b>である（UI の要素は親の描画より後に描かれる）。
+    /// 図形の層の順序は固定であり、テキストの有無で末尾の層だけが変わる。<br/>
+    /// 描画のたびに一覧を組み立てないよう、2 通りを事前生成して共有する
+    /// （<see cref="LoupeDrawContent.Layers"/> は読取専用の参照として渡す）。
     /// </remarks>
-    private static readonly IReadOnlyList<LoupeDrawLayer> s_layers =
+    private static readonly IReadOnlyList<LoupeDrawLayer> s_layersWithoutLabel =
     [
         LoupeDrawLayer.Background,
         LoupeDrawLayer.Checkerboard,
         LoupeDrawLayer.Image,
         LoupeDrawLayer.Crosshair,
         LoupeDrawLayer.Frame,
+    ];
+
+    /// <summary>描く層とその順序（テキストあり。中心座標ラベルは常に最上位）。</summary>
+    /// <remarks>
+    /// テキストは UI 要素としても置ける（要素は親より後に描かれるため常に最上位になる）。<br/>
+    /// その場合、描画実装はテキストの層を無視してよい（基底のフックの既定は何もしない）。
+    /// </remarks>
+    private static readonly IReadOnlyList<LoupeDrawLayer> s_layersWithLabel =
+    [
+        LoupeDrawLayer.Background,
+        LoupeDrawLayer.Checkerboard,
+        LoupeDrawLayer.Image,
+        LoupeDrawLayer.Crosshair,
+        LoupeDrawLayer.Frame,
+        LoupeDrawLayer.Label,
     ];
 
     /// <summary>ルーペ上端から中心座標ラベルの基準点までの距離（DIP）。</summary>
@@ -47,7 +61,7 @@ public sealed partial class Loupe
     /// 2. 市松模様の暗色タイルを列挙する構造体を換算済みのタイルサイズから作る。<br/>
     /// 3. 十字線と外枠の矩形を、物理ピクセルサイズと換算済みの太さから導出する。<br/>
     /// 4. テキスト（中心座標ラベルの文言と基準点）を解決する。<br/>
-    /// 5. 図形の層の一覧（固定順）を添えて描画内容を返す。<br/>
+    /// 5. 描く層の一覧（テキストの有無で末尾が変わる）を添えて描画内容を返す。<br/>
     /// <br/>
     /// 色はコアが持たないため本メソッドは扱わない（描画時のアルファ判定は描画実装の責務であり、<br/>
     /// アルファ 0 の色は描かない）。<br/>
@@ -56,14 +70,15 @@ public sealed partial class Loupe
     public LoupeDrawContent ResolveContent(in LoupeRenderRequest request)
     {
         var surface = request.SurfaceBounds;
+        var coordLabelText = ResolveCoordLabelText(request);
 
         return new LoupeDrawContent(
             surface,
             new LoupeCheckerTiles(request.PixelSize, request.CheckerSizePixels),
             LoupeDecorationGeometry.ComputeCrosshairRects(request.PixelSize, request.ZoomLevel),
             LoupeDecorationGeometry.ComputeFrameRects(request.PixelSize, request.FrameWidthPixels),
-            ResolveCoordLabelText(request),
-            s_layers);
+            coordLabelText,
+            coordLabelText is null ? s_layersWithoutLabel : s_layersWithLabel);
     }
 
     /// <summary>中心座標ラベルの文言と基準点を解決する。</summary>

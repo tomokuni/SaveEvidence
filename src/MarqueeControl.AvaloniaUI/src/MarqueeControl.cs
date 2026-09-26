@@ -1,11 +1,9 @@
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.SaveEvidence.Marquee.UIBase;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Labels;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Native;

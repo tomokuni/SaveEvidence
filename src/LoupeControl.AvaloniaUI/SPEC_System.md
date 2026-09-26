@@ -170,7 +170,7 @@ flowchart TB
 
 - **分類**: 公開クラス（`public sealed class LoupeRenderer : LoupeRendererBase`。所属は UI 非依存の描画層 `LoupeControl.UIBase`。色は生成時に受け取る）
 - **責務**: ルーペ Bitmap の合成描画（下地 → 市松模様 → 拡大画像 → 十字線 → 外枠）を描画ポート `IEsCanvas` へ写す（**描画手順の単一所有者は基底の `LoupeRendererBase`**）
-  **公開API**: `DrawShapes(canvas, source, request, content)`（図形のみ。**テキストは描かない**）/ `CoordLabelFontSize` / `CoordLabelCornerRadius`（ラベルの体裁）。引数はコアの描画入力 `LoupeRenderRequest` と描画内容 `LoupeDrawContent`（層の順序・矩形・タイル）、および解決済みのソース。描画の設定は `LoupePaint` として保持する（幾何・値の単位・切り出しの可否はコアが単一所有する）
+  **公開API**: `DrawShapes(canvas, source, request, content)`（図形のみ。**テキストは描かない**）を実装する。`CoordLabelFontSize` / `CoordLabelCornerRadius`（ラベルの体裁）は描画の設定の値への入口として公開する（**描画の契約には含めない**）。引数はコアの描画入力 `LoupeRenderRequest` と描画内容 `LoupeDrawContent`（層の順序・矩形・タイル）、および解決済みのソース。描画の設定は `LoupePaint` として保持する（幾何・値の単位・切り出しの可否はコアが単一所有する）
 - **特徴**: 描画の可否（アルファ 0）は `LoupePaint` の述語が判定する。タイルの位置・矩形・寸法の物理ピクセルへの換算は**コアが解決済み**であり、描画層は計算を持たない（描画内容を写すだけ）
 - **依存**: Platform.Core（`IEsCanvas` / `DrawingColorExtensions`）/ Feature.LoupeCore（`LoupeRenderRequest` / `LoupeDrawContent` / `LoupeMetrics`）
 
@@ -267,8 +267,9 @@ sequenceDiagram
 | --- | --- | --- |
 | Options（RequestedSize / ZoomLevel） | 1〜4096 / 1〜64 | **コアの `LoupeOptions`（`init` アクセサ）** |
 | RenderScaling | 0.1〜8.0（非有限値は 1.0） | `coerce` コールバック（プロパティのメタデータ） |
-| Options.Metrics（CheckerSize / FrameWidth / CoordLabelFontSize / CoordLabelCornerRadius） | 1〜128 / 1〜64 / 6〜48 / 0〜64 | **コアの `LoupeMetrics`（`init` アクセサ）** |
+| `Options.Metrics`（`CheckerSize` / `FrameWidth`） | 1〜128 / 1〜64 | **コアの `LoupeMetrics`（`init` アクセサ）** |
+| `Paint`（`CoordLabelFontSize` / `CoordLabelCornerRadius`） | 6〜48 / 0〜64 | **描画層の `LoupePaint`（`init` アクセサ）** |
 
 環境値の `RenderScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `Loupe.Limits` が単一所有し、UI は登録するだけです）。MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
 
-設定（`Options`）と寸法（`Options.Metrics`）の数値項目は**コアの型が生成時に補正**するため、UI 側に補正の登録を置きません（値の設定経路（オブジェクト初期化子・`with` 式・逆シリアル化・バインディング）によらず範囲内の値だけが保持されます）。
+設定（`Options`・`Options.Metrics`）の数値項目は**コアの型が生成時に補正**し、描画の設定（`Paint`）の数値項目は**描画層の型が生成時に補正**するため、UI 側に補正の登録を置きません（値の設定経路（オブジェクト初期化子・`with` 式・逆シリアル化・バインディング）によらず範囲内の値だけが保持されます）。

@@ -73,14 +73,15 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 
 もっとも紛らわしい点です。**Core は色もフォントサイズも持ちません**（描画にだけ必要な設定であり、Core の計算・判断に入らないため）が、**描画手順（層の順序と起動）は Core が持ちます**。この 2 つは「描画にだけ必要な設定をレンダラのインスタンス状態にする」ことで両立します。
 
-**テキスト（ラベル）は Core が値を渡し、UI 層が扱いを決めます**。Core が決めるのは「文言・基準点・アライン・領域」までであり、**テキスト要素（`TextBlock` 等）として置くか画像として描くかは UI 層の判断**です。そのためコアの描画内容は文字を層に含めず、値（`MarqueeTextPlacement` / `LoupeTextPlacement`）として渡します。
+**テキスト（ラベル）は Core が値を渡し、UI 層が扱いを決めます**。Core が決めるのは「文言・基準点・アライン・領域」までであり、**テキスト要素（`TextBlock` 等）として置くか canvas へ描くかは UI 層の判断**です。  
+Core は値（`MarqueeTextPlacement` / `LoupeTextPlacement`）と層（`MarqueeDrawLayer.Label` / `LoupeDrawLayer.Label`）の両方を渡します。層は canvas へ描く実装のためのものであり、**要素として置く UI は無視してよい**（要素は親の描画より後に描かれるため常に最上位になる）。そのためのフック（`XxxRendererBase.DrawLabel`）の**既定は何もしない**ため、要素で描く UI はコードを書かなくて済みます。
 
 | 何 | どこ | 理由 |
 | --- | --- | --- |
-| 描画の契約（`IMarqueeRenderer` / `ILoupeRenderer`） | **Core** | コアが「何を描くか（渡す値）」を決めるため。UI 層が描画を差し替える入口もここにある |
+| 描画の契約（`IMarqueeRenderer` / `ILoupeRenderer`） | **Core** | コアが「何を描くか（渡す値）」を決めるため。UI 層が描画を差し替える入口もここにある（色とフォントサイズは描画にだけ必要な設定であり、契約には含めない） |
 | 描画手順の基底（`MarqueeRendererBase` / `LoupeRendererBase`） | **Core** | 「どの層をどの順に描くか」は**単体のコントロールにも存在する概念**であり UI フレームワーク非依存（描画 API は `IEsCanvas` が抽象化済み）。Core が持つことで**描画の起動と順序が Core の単一所有**になる |
 | 描画の起動（`Marquee.Draw` / `Loupe.Draw`） | **Core** | 起動の入口を Core に一本化する（UI が `Renderer.DrawShapes` を直接呼ぶと、実装の差し替えと順序の単一所有が二重経路になる） |
-| 描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）と、テキストの体裁（フォントサイズ・角丸）と既定実装 | **UIBase** | これらはコアの計算・判断に入らないためコアの型面に現れない（**体裁を使う層の描画は抽象メソッドとして派生へ委ねる**）。その派生（`MarqueeRenderer` / `LoupeRenderer`）が描画の設定をインスタンス状態として保持し、描画の契約（`IMarqueeRenderer` / `ILoupeRenderer`）のプロパティとして UI 層へ公開する |
+| 描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）と、テキストの体裁（フォントサイズ・角丸）と既定実装 | **UIBase** | これらはコアの計算・判断に入らないため、コアの型面にも**描画の契約にも現れない**（**体裁を使う層の描画は派生へ委ねる**）。その派生（`MarqueeRenderer` / `LoupeRenderer`）が描画の設定をインスタンス状態として保持し、自クラスの公開プロパティとして提供する（テキストを canvas へ描く派生が参照する） |
 | テキストを要素に写す配置計算（`MarqueeLabelPlan` / `LoupeLabelPlan`） | **UIBase** | 実寸（描画 API 依存）から配置矩形を求め、要素の配置指示（`EsLabelElement`）へ写す。**UI 層が要素として置くか画像として描くかの選択は各 UI に残る** |
 | 描画面の確保（`DrawingContext` / `SKCanvas` → `IEsCanvas` の適合）と UI 固有の描画 | **~UI** | `IEsCanvas` では吸収できないフレームワーク固有の機構（中間ビットマップ・描画コールバック・要素ベースの描画）を担う。`XxxRenderer~UI` が継承の拡張点になる |
 | 注入 | **UI** | `new MarqueeRendererAvaloniaUI(paint)` を 1 回生成して注入し、コントロールの `Paint` プロパティ（`MarqueePaint` / `LoupePaint`）と併せて設定する。差し替える場合は `Renderer` プロパティへ別実装を設定する（その場合はコアの `Draw` 入口を通る） |

@@ -22,7 +22,7 @@
 - 本コアは UI フレームワークに依存しません。UI 固有の型は利用者（UI 実装）が境界で変換します。
 - 座標は `EsPoint` / `EsRect` / `EsSize` / `EsKey`（`EsUtil.Platform.Core`）で扱います。
 - カーソル操作は `ICursorService` 抽象にのみ依存します（`null` の場合は何もしません）。
-- ラベルの**文言・フォントサイズ・配置の計算**はコアが単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。色は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有します。
+- ラベルの**文言・基準点（アラインを含む）**はコアが単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。体裁（背景矩形と文字原点）は `EsLabelLayout`（`Common`）、**フォントサイズと色**は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有します。
 
 ## 2. 公開 API 一覧
 
@@ -46,10 +46,10 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `MarqueeDrawContent` | record struct | 1 フレーム分の描画内容（装飾・穴あけ矩形・ハンドル・マーカー・ラベル・層の順序） |
+| `MarqueeDrawContent` | record struct | 1 フレーム分の描画内容（装飾・穴あけ矩形・ハンドル・マーカー・テキストの配置・層の順序） |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの描画契約 |
-| `MarqueeTextPlacement` | record struct | ラベルの描画契約と配置（`ComputeFrame`）。要素への写像は `EsLabelElement.Create`（`Platform.Core` の拡張メソッド）が単一所有する |
-| `MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `SizeLabel` / `CoordLabel`） |
+| `MarqueeTextPlacement` | record struct | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（フォントサイズ・色は描画層の `MarqueePaint` が持つ） |
+| `MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。**`Label` はテキストがある場合だけ末尾に置く**（UI 要素として置く UI は無視してよい） |
 
 ### `EsUtil.Feature.MarqueeCore.Interaction`
 
@@ -119,7 +119,7 @@
 | `RequestConfirm()` / `RequestCancel()` | method | 確定/キャンセルの要求（キー・ダブルクリックと同一経路） |
 | `ResolveContent(EsSize)` | method | 1 フレーム分の描画内容の解決 |
 | `Renderer` | property | 描画の実装（`IMarqueeRenderer`）の取得・設定（**描画の差し替え**。null 不可。設定すると再描画を要求する） |
-| `ResolveLabels(in MarqueeDrawContent, Func<string,double,EsSize>)` | method | ラベル要素（`EsLabelElement`）の配置指示の解決（UI 要素として配置する UI 用）。描画実装へ委譲する。**同じフレームの `ResolveContent` の結果を渡す**（本メソッドが再解決すると 1 フレームで 2 回解決される） |
+| `SizeLabelFontSize` / `CoordLabelFontSize`（描画実装＝`MarqueeRenderer` のプロパティ） | property | テキストのフォントサイズ（描画の設定 `MarqueePaint` の値への入口）。**描画の契約と本コアの設定には含めない** |
 | `DefaultScaling` | const | 倍率の既定値（1.0） |
 
 ### `MarqueeOptions` のメンバー
@@ -130,18 +130,14 @@
 | 寸法 | `HandleSize` | 10.0 |
 | 寸法 | `MarkerLength` | 16.0（描画時の半幅は 1/2） |
 | 表示可否 | `ShowCoordLabel` | `false` |
-| 寸法 | `CoordLabelFontSize` | 12.0（6〜48 へ補正。非数は既定値） |
 | 表示可否 | `ShowSizeLabel` | `true` |
-| 寸法 | `SizeLabelFontSize` | 14.0（6〜48 へ補正。非数は既定値） |
 | 対話 | `HandleHitRadius` | 12.0（DIP） |
 | 対話 | `MinSelectionSize` | 6.0（ドメイン座標。これ未満はキャンセル扱い） |
 | 対話 | `ClampToDomainBounds` | `true` |
 | 体裁 | `HandleBorderThickness` | 1.5（`MarqueeHandles.BorderThickness` として描画層へ渡る） |
-| 体裁 | `EsLabelLayout.Padding`（`Common`） | 4.0（全ラベル共通の内側余白） |
-| 体裁 | `CoordLabelOffset` | 8.0 |
-| 体裁 | `CoordLabelFontSizeDefault` / `SizeLabelFontSizeDefault` | 12.0 / 14.0 |
+| 体裁 | `CoordLabelOffset` | 8.0（カーソルからラベルを離す距離） |
 
-`MarqueeOptions` は**色を持ちません**。ハンドル・始点マーカー・ラベル・装飾の色は描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`）。ラベルの文字色・背景色の既定値（白 / 黒 60%）は `EsLabelDefaults`（`EsUtil.SaveEvidence.Common.Imaging`）が単一所有し、`MarqueePaint` が参照するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。コード上の色リテラルは持ちません。
+`MarqueeOptions` は**色もラベルのフォントサイズも持ちません**。これらは描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`、フォントサイズは `SizeLabelFontSizeDefault` = 14.0 / `CoordLabelFontSizeDefault` = 12.0）。ラベルの文字色・背景色の既定値（白 / 黒 60%）は `EsLabelDefaults`（`EsUtil.SaveEvidence.Common.Imaging`）が単一所有し、`MarqueePaint` が参照するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
 
 ### `IMarqueeEffects` のメンバー
 
@@ -159,10 +155,9 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `DrawShapes(IEsCanvas, in MarqueeDrawContent)` | 図形の層（装飾・ハンドル・始点マーカー）を描画順に描く（**ラベルの層は描かない**。ラベルは UI の要素が描く） |
-| `ResolveLabels(in MarqueeDrawContent, Func<string,double,EsSize>)` | ラベル要素の配置指示（`EsLabelElement`）を描画順に解決する（UI 要素として配置する UI 用） |
+| `DrawShapes(IEsCanvas, in MarqueeDrawContent)` | 図形の層（装飾・ハンドル・始点マーカー）を描画順に描く（**テキストは描かない**）。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする |
 
-描画順はコアが単一所有し（`MarqueeDrawContent.Layers`）、実装は順序を判断しません。本コアは描画層（`MarqueeControl.UIBase`）を参照できないため、既定実装（`new MarqueeRenderer(MarqueePaint.Default)`。描画手順は `MarqueeRendererBase` が、色は `MarqueePaint` が単一所有する）は利用者が渡します。
+描画順はコアが単一所有し（`MarqueeDrawContent.Layers`）、実装は順序を判断しません。テキストを描く層（`MarqueeDrawLayer.Label`）は基底がフックとして用意し、**既定は何もしません**（UI 要素として置く UI は上書きしません）。本コアは描画層（`MarqueeControl.UIBase`）を参照できないため、既定実装（`new MarqueeRenderer(MarqueePaint.Default)`。描画手順は `MarqueeRendererBase` が、色は `MarqueePaint` が単一所有する）は利用者が渡します。
 
 ### `MarqueeNoticeKind` の値
 
@@ -185,17 +180,15 @@
 | `Decoration` / `InnerDecoration` | 外側/内側の装飾の描画内容（描くものが無い場合は各項目が空） |
 | `HoleRect` | 穴あけ矩形（DIP。選択もハイライトも無い場合は null） |
 | `Handles` / `Marker` | ハンドル・始点マーカー（null は描かない） |
-| `SizeLabel` / `CoordLabel` | ラベル（null は描かない） |
-| `Layers` | 描く層とその順序。先頭から順に処理する。ラベルは必ず末尾（常に最上位） |
+| `SizeLabelText` / `CoordLabelText` | テキスト（`MarqueeTextPlacement`。null は表示しない）。文言・基準点・アライン・描画領域を持つ |
+| `Layers` | 描く層とその順序。先頭から順に処理する。テキストの層（`Label`）はテキストがある場合のみ末尾（常に最上位）。**UI 要素として置く UI は本層を無視してよい**（基底のフックの既定は何もしない） |
 
-### ラベルの配置（`ComputeFrame`）
+### テキストの位置（`MarqueeTextPlacement`）
 
-- 配置は**文字の実寸**（描画 API で測定した幅・高さ）を受け取って返します。
-- 背景は**文字の実寸 + 内側余白 × 2**（四方とも同じ余白）です。
-- 文字の原点は**背景の左上 + 内側余白**です。
-- サイズラベルは基準点（穴あけ矩形の左上）を背景の左上に置きます。行送り（`EsLabelLayout.NextTop`）で次の行の上端を求めるため、**背景の下端と次の行の上端が一致します**。
-- カーソル座標ラベルはカーソルの右下へ `CoordLabelOffset` だけ離し、描画領域の右端・下端をはみ出す場合は領域内へクランプします（描画領域の軸が 0 以下の場合はクランプしません）。
-- `EsLabelElement.Create`（`Platform.Core` の拡張メソッド）は配置と `EsLabelElement`（UI 要素の配置指示）を組み立てます（文字色・背景色は引数で受け取り、角丸はラベルの指定に従う）。色は描画層の `MarqueePaint`（`MarqueeLabelPlan` が渡す）が単一所有するため、UI 層はこれをテキスト要素へ写すだけで見た目が設定と一致します。
+- コアが決めるのは**文言・基準点・アライン（水平/垂直）・描画領域**です（`EsHorizontalAlign` / `EsVerticalAlign` で基準点がテキストのどこを指すかを指定するため、コアは幅・高さを知りません）。
+- サイズラベルは基準点を穴あけ矩形の左上にし、アラインは左端・上端です。行送り（`EsLabelLayout.NextTop`）で次の行の上端を求めるため、**背景の下端と次の行の上端が一致します**。
+- カーソル座標ラベルは基準点を「カーソル + `CoordLabelOffset`」にし、描画領域を渡します（描画領域の右端・下端をはみ出す場合は領域内へクランプされ、軸が 0 以下の場合はクランプされません）。
+- **フォントサイズ・色は描画の設定（`MarqueePaint`）**、実寸から背景矩形を求める計算は `EsLabelLayout.ComputeAlignedBox`（`Common`）、要素の配置指示への写像は描画層の `MarqueeLabelPlan` が単一所有します。**Elements として置くか canvas へ描くかは UI 層が決めます**。
 
 ### 操作の受理条件
 

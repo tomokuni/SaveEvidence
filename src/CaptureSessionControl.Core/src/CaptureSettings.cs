@@ -1,5 +1,4 @@
 using System.Drawing;
-using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.SaveEvidence.CaptureSession;
 

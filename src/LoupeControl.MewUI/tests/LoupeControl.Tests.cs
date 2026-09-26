@@ -1,6 +1,5 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Feature.LoupeCore;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Platform.Core.Geometry;

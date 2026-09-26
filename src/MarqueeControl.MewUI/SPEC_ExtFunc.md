@@ -52,12 +52,11 @@ Avalonia 版と同一の挙動になります。
 | `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する。ON へ切り替えた瞬間に既存の選択矩形をクリップする |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP。中心から両端までの半幅は 1/2） |
 | `ShowCoordLabel` | `bool` | `false` | カーソル座標ラベル（`(x, y)`）の表示 |
-| `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（6〜48 に補正。非数は 12 へ補正） |
 
 設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueePaint.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
 同値の設定を再適用しても再描画・ログは発生しません。
 寸法・表示可否と対話パラメータ（`HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）は同じ設定値に含まれますが、
-後者だけがファサードへ伝搬します（判断と変更ログはコアが単一所有する）。**色はコアの設定に含めません**（描画にだけ必要な設定のため `Paint` が単一所有します）。
+後者だけがファサードへ伝搬します（判断と変更ログはコアが単一所有する）。**色とフォントサイズはコアの設定に含めません**（描画にだけ必要な設定のため `Paint` が単一所有します）。
 
 `MarqueePaint` の項目（色。既定値は本型が単一所有する）:
 
@@ -67,6 +66,7 @@ Avalonia 版と同一の挙動になります。
 | `MarkerColor` | `System.Drawing.Color` | 白 | 十字マーカーの色 |
 | `SizeLabelColor` / `SizeLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | サイズラベルの文字色と背景色 |
 | `CoordLabelColor` / `CoordLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | 座標ラベルの文字色と背景色 |
+| `SizeLabelFontSize` / `CoordLabelFontSize` | `double` | 14.0 / 12.0 | サイズラベル（1 行目）と座標ラベルのフォントサイズ（DIP。6〜48 に補正。非数は既定値へ補正） |
 | `OverlayColor` / `OuterBorderColor` | `System.Drawing.Color` | 黒 50% / `#FFA9A9A9` | 暗転マスクと穴あけ枠の色 |
 | `InnerFillColor` / `InnerBorderColor` | `System.Drawing.Color` | 透明 / 透明 | 穴あけ矩形の内側の塗り色と枠線色 |
 
@@ -212,5 +212,5 @@ marquee.SelectionCompleted += (_, e) => OnCaptured(e.Rect);
 | --- | --- |
 | カーソルサービスが null | Windows 既定実装（Win32）を使用する |
 | `SetCoordinateTransform(null)` | 等価変換（境界なし）を適用する |
-| `Options.CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する（例外は発生しない） |
+| `Paint.CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する（例外は発生しない） |
 | `SetSelection` に境界外の矩形 | `Options.ClampToDomainBounds` が有効なら境界内へクリップする（例外は発生しない） |

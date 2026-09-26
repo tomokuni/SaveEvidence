@@ -1,6 +1,4 @@
-using EsUtil.Feature.MarqueeCore;
 using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.Feature.LoupeCore;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.MarqueeCore.Setting;
