@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using EsUtil.Feature.LoupeCore.Drawing;
 
-namespace EsUtil.Feature.LoupeCore.Tests.Drawing;
+namespace EsUtil.Feature.LoupeCore.Tests;
 
 /// <summary><see cref="Loupe.ResolveContent"/>（1 フレーム分の描画内容の解決）のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>

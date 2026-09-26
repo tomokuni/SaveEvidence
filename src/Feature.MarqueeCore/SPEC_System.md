@@ -132,6 +132,7 @@ stateDiagram-v2
 | 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `MarqueeSelectionGeometry` |
 | 描画する層とその順序 | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
 | 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveContent` |
+| ラベルの表示可否（設定値と穴あけ矩形の有無） | `MarqueeOptions.ShouldShowSizeLabel` / `ShouldShowCoordLabel` |
 | 設定の既定値・範囲補正・固定値 | `Marquee.Limits`（`MarqueeOptions` と装飾の外観の生成時の `init` アクセサが参照する） |
 | 装飾の枠線の太さの安全域（0.5〜64.0・既定 2.0） | `Marquee.Limits`（補正は装飾の外観（`MarqueeOuterDecoAppearance` / `MarqueeInnerDecoAppearance`）の生成時の `init` アクセサが適用する） |
 | 枠線の 4 辺の矩形（太さは面の短辺で上限を取る） | `MarqueeDecoGeometry.ComputeBorderRects`（辺の式は `EsRect.ComputeInnerEdges` が単一所有する） |
@@ -171,7 +172,7 @@ stateDiagram-v2
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
 | 単位 | 純粋計算（`MarqueeSelectionGeometry` / `MarqueeDecoGeometry` / `MarqueeRenderRequest`）・状態機械・ファサード・描画内容の解決 |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Contract` / `tests/Decoration` / `tests/Drawing` / `tests/Interaction` / `tests/Logging` / `tests/Selection` / `tests/Setting`。ファサードの partial のテストはルート） |
-| 合計 | 306 件（`[Theory]` は展開後のケース数） |
+| 合計 | 312 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj

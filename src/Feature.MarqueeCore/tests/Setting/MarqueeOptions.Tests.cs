@@ -124,4 +124,34 @@ public class MarqueeOptionsTests
 
         Assert.Equal(expected, actual);
     }
+
+    /// <summary>サイズラベルの表示可否が設定値と穴あけ矩形の有無の両方で決まることを検証する。</summary>
+    /// <param name="showSizeLabel">表示の設定値。</param>
+    /// <param name="hasHoleRect">穴あけ矩形があるかどうか。</param>
+    /// <param name="expected">描画するかどうか。</param>
+    /// <remarks>ラベルの基準点は穴あけ矩形の左上であり、文言も矩形の寸法から作るため、矩形が無いときは描画しない。</remarks>
+    [Theory]
+    [InlineData(true, true, true)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, false)]
+    public void ShouldShowSizeLabel_設定値と矩形の有無で決まる(bool showSizeLabel, bool hasHoleRect, bool expected)
+    {
+        var options = MarqueeOptions.Default with { ShowSizeLabel = showSizeLabel };
+
+        Assert.Equal(expected, options.ShouldShowSizeLabel(hasHoleRect));
+    }
+
+    /// <summary>カーソル座標ラベルの表示可否が設定値で決まることを検証する。</summary>
+    /// <param name="showCoordLabel">表示の設定値。</param>
+    /// <remarks>基準点はカーソル位置であり、位置は描画入力が常に持つため矩形の有無のような条件は無い。</remarks>
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public void ShouldShowCoordLabel_設定値で決まる(bool showCoordLabel, bool expected)
+    {
+        var options = MarqueeOptions.Default with { ShowCoordLabel = showCoordLabel };
+
+        Assert.Equal(expected, options.ShouldShowCoordLabel());
+    }
 }

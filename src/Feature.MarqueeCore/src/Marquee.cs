@@ -127,7 +127,7 @@ public sealed partial class Marquee
     public double DomainToDipScaling
     {
         get => _scaling;
-        set => SetIfChanged(ref _scaling, CoerceDomainToDipScaling(value));
+        set => SetIfChanged(ref _scaling, CoerceDomainToDipScaling(value), out _);
     }
 
     /// <summary>装飾（暗転マスク・穴あけ枠・枠線・内側の塗り）の設定。</summary>
@@ -139,7 +139,7 @@ public sealed partial class Marquee
     public MarqueeDecoOptions DecoOptions
     {
         get => _decoOptions;
-        set => SetIfChanged(ref _decoOptions, value);
+        set => SetIfChanged(ref _decoOptions, value, out _);
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するプロバイダ。</summary>
@@ -151,7 +151,7 @@ public sealed partial class Marquee
     public Func<string?>? SizeLabelOverrideProvider
     {
         get => _sizeLabelOverrideProvider;
-        set => SetIfChanged(ref _sizeLabelOverrideProvider, value);
+        set => SetIfChanged(ref _sizeLabelOverrideProvider, value, out _);
     }
 
     /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ。</summary>
@@ -165,7 +165,7 @@ public sealed partial class Marquee
     public Func<EsRect, double>? SizeLabelDisplayScalingProvider
     {
         get => _sizeLabelDisplayScalingProvider;
-        set => SetIfChanged(ref _sizeLabelDisplayScalingProvider, value);
+        set => SetIfChanged(ref _sizeLabelDisplayScalingProvider, value, out _);
     }
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
@@ -174,7 +174,7 @@ public sealed partial class Marquee
     public double DisplayScaleScaling
     {
         get => ResolveDisplayScale(_displayScaleScaling, _scaling);
-        set => SetIfChanged(ref _displayScaleScaling, value);
+        set => SetIfChanged(ref _displayScaleScaling, value, out _);
     }
 
     /// <summary>選択矩形があるかどうか。</summary>
@@ -396,19 +396,24 @@ public sealed partial class Marquee
     /// <typeparam name="T">値の型。</typeparam>
     /// <param name="field">保持先のフィールド。</param>
     /// <param name="value">設定する値。</param>
+    /// <param name="previous">変更前の値（同値の場合は現在値）。</param>
+    /// <returns>値を変更した場合は true（同値だった場合は false）。</returns>
     /// <remarks>
     /// 「同値なら何もしない」という規則を単一所有する<br/>
     /// （各プロパティが同じ数行を書くと、片方だけ同値判定が抜けて無駄な再評価が溢れる）。<br/>
+    /// 変更前の値も返すため、変更を検出した側（設定の変更ログ）が前後を比較できる。<br/>
     /// <b>再描画は要求しない</b>: 設定は UI の公開プロパティ（変更通知を持つ）から渡されるため、<br/>
     /// 描画の更新は UI が観測して行う（コアは入力に伴う再描画だけを効果として要求する）。
     /// </remarks>
-    private void SetIfChanged<T>(ref T field, T value)
+    private bool SetIfChanged<T>(ref T field, T value, out T previous)
     {
-        if (EqualityComparer<T>.Default.Equals(field, value))
+        previous = field;
+        if (EqualityComparer<T>.Default.Equals(previous, value))
         {
-            return;
+            return false;
         }
 
         field = value;
+        return true;
     }
 }

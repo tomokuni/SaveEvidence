@@ -43,6 +43,15 @@ public sealed partial class Loupe
     /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は等価変換として扱う）。</summary>
     private ICoordTransform? _coordinatePort;
 
+    /// <summary>ルーペの設定（既定は <see cref="LoupeOptions.Default"/>）。</summary>
+    private LoupeOptions _options = LoupeOptions.Default;
+
+    /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数（既定は 1.0）。</summary>
+    private double _dipToDeviceScaling = DipToDeviceScalingDefault;
+
+    /// <summary>拡大表示する中心座標（ドメイン座標。未設定は null）。</summary>
+    private EsPoint? _centerPoint;
+
     /// <summary>ファサードを初期化する。</summary>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="LoupeOptions.Default"/>）。</param>
     public Loupe(LoupeOptions? options = null)
@@ -71,19 +80,15 @@ public sealed partial class Loupe
     /// </remarks>
     public LoupeOptions Options
     {
-        get => field;
+        get => _options;
         set
         {
-            if (field == value)
+            if (SetIfChanged(ref _options, value, out var previous))
             {
-                return;
+                Log.LogOptionsChanged(previous, value);
             }
-
-            var previous = field;
-            field = value;
-            Log.LogOptionsChanged(previous, value);
         }
-    } = LoupeOptions.Default;
+    }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数。</summary>
     /// <value>スケーリング係数（0.1〜8.0）。範囲外・非有限は補正済みの値を設定する。既定は 1.0。</value>
@@ -94,37 +99,28 @@ public sealed partial class Loupe
     /// </remarks>
     public double DipToDeviceScaling
     {
-        get => field;
+        get => _dipToDeviceScaling;
         set
         {
-            var coerced = CoerceDipToDeviceScaling(value);
-            if (field == coerced)
+            if (SetIfChanged(ref _dipToDeviceScaling, CoerceDipToDeviceScaling(value), out var previous))
             {
-                return;
+                Log.LogDipToDeviceScalingChanged(previous, _dipToDeviceScaling);
             }
-
-            var previous = field;
-            field = coerced;
-            Log.LogDipToDeviceScalingChanged(previous, coerced);
         }
-    } = DipToDeviceScalingDefault;
+    }
 
     /// <summary>拡大表示する中心座標（ドメイン座標）。</summary>
     /// <value>拡大中心（元画像ピクセル座標）。未設定は null（市松模様のみを描画し、配置も行わない）。</value>
     /// <remarks>変更は本コアが検出して出力する（マウス移動ごとに UI が設定しても、変化したときだけ記録される）。</remarks>
     public EsPoint? CenterPoint
     {
-        get => field;
+        get => _centerPoint;
         set
         {
-            if (field == value)
+            if (SetIfChanged(ref _centerPoint, value, out var previous))
             {
-                return;
+                Log.LogCenterPointChanged(previous, value);
             }
-
-            var previous = field;
-            field = value;
-            Log.LogCenterPointChanged(previous, value);
         }
     }
 
@@ -208,5 +204,29 @@ public sealed partial class Loupe
             request.MagnifiedImage,
             coordLabelText,
             coordLabelText is null ? s_layersWithoutLabel : s_layersWithLabel);
+    }
+
+    /// <summary>新しい値を保持する（同値なら何もしない）。</summary>
+    /// <typeparam name="T">値の型。</typeparam>
+    /// <param name="field">保持先のフィールド。</param>
+    /// <param name="value">設定する値。</param>
+    /// <param name="previous">変更前の値（同値の場合は現在値）。</param>
+    /// <returns>値を変更した場合は true（同値だった場合は false）。</returns>
+    /// <remarks>
+    /// 「同値なら何もしない」という規則を単一所有する<br/>
+    /// （各プロパティが同じ数行を書くと、片方だけ同値判定が抜けて無駄なログ・再評価が溢れる）。<br/>
+    /// 変更前の値も返すため、変更を検出した側（設定の変更ログ）が前後を比較できる。<br/>
+    /// 本クラスは <c>field</c> キーワードを使わず明示的なフィールドを持つ（<c>field</c> は <c>ref</c> 引数へ渡せないため）。
+    /// </remarks>
+    private bool SetIfChanged<T>(ref T field, T value, out T previous)
+    {
+        previous = field;
+        if (EqualityComparer<T>.Default.Equals(previous, value))
+        {
+            return false;
+        }
+
+        field = value;
+        return true;
     }
 }

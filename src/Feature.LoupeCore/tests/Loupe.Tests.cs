@@ -11,7 +11,7 @@ namespace EsUtil.Feature.LoupeCore.Tests;
 /// UI 層とホストが使う唯一の窓口であるファサードの振る舞いを、UI フレームワークなしで検証する。<br/>
 /// 位置計算そのもの（純粋計算）は <see cref="Placement.LoupePlacementGeometryTests"/> のテストが検証するため、<br/>
 /// 本テストは「設定からの解決」「ポートとオフセットの適用」「描画入力の組み立て」に焦点を当てる。<br/>
-/// 描画内容（層の一覧と順序・テキストの有無）は <see cref="Drawing.LoupeDrawContentTests"/> のテストが検証する。
+/// 描画内容（層の一覧と順序・テキストの有無）は <see cref="LoupeDrawContentTests"/> のテストが検証する。
 /// </remarks>
 public class LoupeTests
 {

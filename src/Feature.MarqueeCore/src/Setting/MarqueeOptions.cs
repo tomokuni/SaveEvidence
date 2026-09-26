@@ -102,4 +102,21 @@ public sealed record MarqueeOptions
     /// true へ切り替えた場合は既存の選択矩形を即時に境界内へクリップする（セッションが判断する）。
     /// </remarks>
     public bool ClampToDomainBounds { get; init; } = true;
+
+    /// <summary>サイズラベルを描画するかどうかを判定する。</summary>
+    /// <param name="hasHoleRect">穴あけ矩形（選択またはハイライトの領域）があるかどうか。</param>
+    /// <returns>描画する場合は true。</returns>
+    /// <remarks>
+    /// ラベルの基準点は穴あけ矩形の左上であり、文言も矩形の寸法から作るため、矩形が無いときは描画しない。<br/>
+    /// 表示可否の判断（設定値と矩形の有無の組合せ）を本メソッドが単一所有し、コアのフレーム解決は判定結果だけを使う。
+    /// </remarks>
+    public bool ShouldShowSizeLabel(bool hasHoleRect) => ShowSizeLabel && hasHoleRect;
+
+    /// <summary>カーソル座標ラベルを描画するかどうかを判定する。</summary>
+    /// <returns>描画する場合は true。</returns>
+    /// <remarks>
+    /// ラベルの基準点はカーソル位置であり、位置は入力（描画入力）が常に持つため、矩形の有無のような条件は無い<br/>
+    /// （ルーペの座標ラベルは拡大中心が未設定になりうるため、中心の有無を条件に取る）。
+    /// </remarks>
+    public bool ShouldShowCoordLabel() => ShowCoordLabel;
 }

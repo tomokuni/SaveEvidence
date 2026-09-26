@@ -136,6 +136,7 @@ sequenceDiagram
 
 - `src/Feature.LoupeCore/tests`（`Feature.LoupeCore.Tests`）が本プロジェクトのテストを持ちます。
 - UI 初期化が不要なため、`[Fact]` / `[Theory]`（`AvaloniaFact` ではない）で並列実行されます。
+- **テストはソースのフォルダを鏡映**します（`src/Drawing/` の型は `tests/Drawing/` で検証する）。**ファサードの partial（`Loupe.cs` / `Loupe.DrawContent.cs`）のテストはルート**に置きます。
 - UI 依存の検証（コントロール生成・描画・`StyledProperty` の coerce 経由の反映・イベント発火）は `LoupeControl.AvaloniaUI.Tests`（Avalonia ヘッドレス・直列）が担います。
 
 ## 設計判断（UI 非依存の境界）

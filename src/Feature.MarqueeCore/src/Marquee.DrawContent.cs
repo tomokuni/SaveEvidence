@@ -223,7 +223,7 @@ public sealed partial class Marquee
     private static MarqueeTextPlacement? ResolveSizeLabelText(
         in MarqueeRenderRequest request, EsRect? hole, ICoordTransform port)
     {
-        if (!request.Options.ShowSizeLabel || hole is not { } holeRect)
+        if (!request.Options.ShouldShowSizeLabel(hole is not null) || hole is not { } holeRect)
         {
             return null;
         }
@@ -278,7 +278,7 @@ public sealed partial class Marquee
     /// </remarks>
     private static MarqueeTextPlacement? ResolveCoordLabelText(in MarqueeRenderRequest request, ICoordTransform port)
     {
-        if (!request.Options.ShowCoordLabel)
+        if (!request.Options.ShouldShowCoordLabel())
         {
             return null;
         }
