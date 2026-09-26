@@ -13,8 +13,8 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 /// （設定スイッチと文言の有無の両方が成立したときだけ描く）は両 UI で同じ</b>であるため、本クラスが単一所有する<br/>
 /// （片方の UI だけ積み方が変わる余地をなくす）。<br/>
 /// <br/>
-/// 体裁（背景 = 文字の実寸 + 内側余白）は <see cref="MarqueeHostLabelRenderer"/> が、行送りは<br/>
-/// <see cref="EsLabelLayout"/> が単一所有する。本クラスは「どの文言をどの位置へ積むか」だけを決める。<br/>
+/// 体裁（背景 = 文字の実寸 + 内側余白）は <see cref="MarqueeHostLabelRenderer"/> が、体裁の値（内側余白）は<br/>
+/// <see cref="MarqueePaint"/> が単一所有する。本クラスは「どの文言をどの位置へ積むか」だけを決める。<br/>
 /// <br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> でピクセル検証できる。
 /// </remarks>
@@ -53,11 +53,12 @@ public static class FadeMaskHostLabelRenderer
         }
 
         var y = hole.Y;
+        var padding = paint.LabelPadding;
 
         // サイズラベルが描かれている場合はその下へ積む（重なりを避ける）
         if (content.SizeLabelText is not null)
         {
-            y = EsLabelLayout.NextTop(y, paint.SizeLabelFontSize, EsLabelLayout.Padding);
+            y = NextTop(y, paint.SizeLabelFontSize, padding);
         }
 
         // 表示可否はホストが判定する（設定スイッチと文言の有無の両方が成立したときだけ描く）
@@ -70,8 +71,8 @@ public static class FadeMaskHostLabelRenderer
                 labels.OperationFontSize,
                 labels.OperationColor,
                 labels.OperationBackgroundColor,
-                EsLabelLayout.Padding);
-            y = EsLabelLayout.NextTop(y, labels.OperationFontSize, EsLabelLayout.Padding);
+                padding);
+            y = NextTop(y, labels.OperationFontSize, padding);
         }
 
         if (labels.ShowInfoLabel && infoText is { Length: > 0 })
@@ -83,7 +84,19 @@ public static class FadeMaskHostLabelRenderer
                 labels.InfoFontSize,
                 labels.InfoColor,
                 labels.InfoBackgroundColor,
-                EsLabelLayout.Padding);
+                padding);
         }
     }
+
+    /// <summary>縦積みしたラベルの次の行の上端を求める。</summary>
+    /// <param name="top">現在の行の上端（DIP）。</param>
+    /// <param name="lineHeight">現在の行の高さ（DIP。フォントサイズ等）。</param>
+    /// <param name="padding">上下の内側余白（DIP）。0 以上。</param>
+    /// <returns>次の行の上端（DIP。現在の行の高さ + 内側余白 × 2 だけ下）。</returns>
+    /// <remarks>
+    /// ラベルを同じ間隔で縦に積む規則を本クラスが単一所有する（行送りを各 UI へ書かせない）。<br/>
+    /// <b>行送り ≠ 背景の下端</b>: 背景は基準点（アンカー）から求め、行送りは基準点の間隔である。
+    /// </remarks>
+    private static double NextTop(double top, double lineHeight, double padding)
+        => top + lineHeight + padding * 2;
 }

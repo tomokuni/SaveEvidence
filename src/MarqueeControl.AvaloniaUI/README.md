@@ -176,7 +176,7 @@ MarqueeControl/
 │   ├── SelectionRectEventArgs.cs  # 公開イベント引数（選択矩形通知）
 │   ├── MarqueePointEventArgs.cs  # 公開イベント引数（座標通知）
 │   ├── MarqueeRenderedEventArgs.cs  # 公開イベント引数（描画完了。描画コンテキストと描画内容を通知する）
-│   └── （ラベル要素の適用は Platform.AvaloniaUI の EsLabelElementHost へ委譲する）
+│   └── （ラベル要素（`Border` + `TextBlock`）の配置は本コントロールが行う）
 ├── sample/                        # サンプルアプリ（sample/README.md 参照）
 └── tests/                         # 単体テスト（公開 API 経由）
 ```

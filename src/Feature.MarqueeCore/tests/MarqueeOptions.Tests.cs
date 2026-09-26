@@ -1,5 +1,4 @@
 using Xunit;
-using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Setting;
 
 
@@ -88,9 +87,8 @@ public class MarqueeOptionsTests
     [Fact]
     public void ラベルの体裁定数はコアが単一所有する()
     {
-        // 内側余白は全ラベル共通の規則（Platform.Core の EsLabelLayout）が単一所有する。
+        // 内側余白は全ラベル共通の規則（描画層の MarqueePaint）が単一所有する。
         // 本型はコントロール固有の値（カーソルとラベルの距離）だけを公開する。
-        Assert.Equal(4.0, EsLabelLayout.Padding);
         Assert.Equal(8.0, MarqueeOptions.CoordLabelOffset);
         Assert.Equal(1.5, MarqueeOptions.HandleBorderThickness);
     }

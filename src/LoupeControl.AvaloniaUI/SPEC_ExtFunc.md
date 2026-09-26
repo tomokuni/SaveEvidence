@@ -272,7 +272,7 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（DIP。6〜48 に補正。非数は既定値へ補正） |
 | `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。余白（上端から 2 DIP・内側余白 4 / 1 DIP）と実寸 → 配置矩形の写像は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`。体裁は `Common` の `EsLabelLayout`）が、角丸（`CoordLabelCornerRadius`）は描画の設定（`Paint`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸 → 配置矩形の写像は描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。**ラベルの色は `Paint`（`CoordLabelColor` / `CoordLabelBackgroundColor`）が単一所有します**。
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Paint`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
 寸法項目（`CheckerSize` / `FrameWidth`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.CheckerSizePixels` / `FrameWidthPixels`）（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 

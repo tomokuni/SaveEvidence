@@ -103,7 +103,7 @@ flowchart TB
         Rdr["LoupeRenderer<br/>public sealed class<br/>描画層 LoupeControl.UIBase<br/>（ILoupeRenderer の既定実装。色は Paint を保持する）"]
         Pnt["LoupePaint<br/>public sealed record<br/>描画層 LoupeControl.UIBase<br/>（色と描画可否の述語）"]
         Cvs["AvaloniaCanvas<br/>public sealed class<br/>Platform.AvaloniaUI<br/>（DrawingContext の IEsCanvas アダプタ）"]
-        Brs["EsLabelElementHost<br/>public sealed class<br/>Platform.AvaloniaUI.Labels<br/>（コアの指示をラベル要素へ写す）"]
+        Brs["SolidColorBrushCache<br/>public static class<br/>Platform.AvaloniaUI.Imaging<br/>（色 → ブラシの共有キャッシュ）"]
         Evt["LoupeRenderedEventArgs<br/>public sealed class<br/>LoupeRenderedEventArgs.cs"]
     end
     subgraph Core["Feature.LoupeCore プロジェクト (UI 非依存)"]
@@ -114,7 +114,7 @@ flowchart TB
         Ext["LoupeImageExtractor<br/>internal static class<br/>Imaging/LoupeImageExtractor.cs（コア内部）"]
         Coerce["Loupe.Limits<br/>ファサードの入れ子（数値スキーマ）"]
         Content["LoupeDrawContent<br/>public readonly record struct<br/>（1 フレーム分の描画内容：矩形・タイル・層）"]
-        Lay["EsLabelLayout<br/>Platform.Core.Imaging"]
+        Lay["LoupeLabelPlan<br/>LoupeControl.UIBase<br/>（実寸 → ラベル配置の写像）"]
         Pos["Loupe（公開ファサード）<br/>public sealed class<br/>Loupe.cs / LoupeLayout / LoupeRenderNotification / LoupeDrawContent"]
         Args["Loupe / LoupeRenderRequest<br/>公開ファサード + 描画入力<br/>（内部の配置・サイズ計算はファサードが持つ）"]
         Log["LoupeLogMessage<br/>public static partial class"]
@@ -154,7 +154,7 @@ flowchart TB
 - **分類**: 公開コントロール（`public sealed class LoupeControl : Panel`。AXAML を持たずコードのみで子要素を構成する）
 - **責務**:
   - 状態管理: 5 個の StyledProperty（`Source: IImage?` / `CenterPoint` / 設定 `Options` / 色 `Paint` / 環境値 `RenderScaling`）
-  - 座標ラベル: **コントロールがテキスト要素（`Border` + `TextBlock`）として表示する**。文言・表示可否・寸法はコア（`LoupeTextPlacement`。体裁は Platform.Core の `EsLabelLayout`）が単一所有し、実寸 → 配置矩形の写像は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有する。コントロールは配置フェーズ（`ArrangeOverride`）で要素を追加・更新する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
+  - 座標ラベル: **コントロールがテキスト要素（`Border` + `TextBlock`）として表示する**。文言・表示可否・基準点はコア（`LoupeTextPlacement`）が、体裁（フォントサイズ・色・角丸）は描画の設定（`Paint`）が、実寸 → 配置矩形の写像は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有する。コントロールは配置フェーズ（`ArrangeOverride`）で要素を追加・更新する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
     - **実寸測定は UI が行う理由**: テキストの実寸は描画 API（`FormattedText`）でしか測れないため、UI が測って `LoupeLabelPlan`（描画層 `LoupeControl.UIBase`）へ渡し、返された配置を要素へ反映する
     - ライフサイクル: 世代管理付き非同期ビットマップ生成と解放（`ReleaseBitmap`）
   - 表示制御: 標準プロパティ `IsVisible` で表示・非表示を指示（表示時=再生成要求（非同期・1 フレームに 1 回の生成へ結合）、非表示時=未実行要求の破棄と解放）
@@ -179,7 +179,7 @@ flowchart TB
 - 描画の手順は層の順序に従う写し方の基底（コアの `EsUtil.Feature.LoupeCore.Contract` の `LoupeRendererBase`）とその UI 実装（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有し、Avalonia 版と MewUI 版が同じ手順を共有する（層の順序はコアの `LoupeDrawLayer` が、色と描く可否（`Has*`）は本層の `LoupePaint` が単一所有する）。
 - `LoupeRenderer` は**描画入力（`LoupeRenderRequest`）と層の順序を受け取り、幾何・値の単位をコアへ問い合わせて描くだけ**である（色は `LoupePaint` として保持し、描画可否は色の述語が判定する）。
 - 描画先は UI 非依存の描画ポート `IEsCanvas` であり、本プロジェクトでは `AvaloniaCanvas`（`Platform.AvaloniaUI`）が `DrawingContext` を適合させる。
-- `EsLabelElementHost`（`Platform.AvaloniaUI.Labels`）: コアの配置指示（`EsLabelElement`）をラベル要素（`Border` + `TextBlock`）へ写すホスト。色 → 共有ブラシの変換と容量制限付きキャッシュも本型が単一所有する（本コントロールとマーキーが共用する）。
+- `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）: コアの色型（`System.Drawing.Color`）→ `SolidColorBrush` の変換と容量制限付きキャッシュを単一所有する。描画アダプタ（`AvaloniaCanvas`）とラベル要素の配置（本コントロールとマーキー）が共用する。
 
 > 十字線・外枠の矩形計算、市松模様の明暗判定とタイルサイズの換算、拡大描画の矩形計算は `Feature.LoupeCore` が単一所有します（MewUI 版と共用）。
 > 本プロジェクトは `AvaloniaCanvas` の適合と要素の配置を担います。

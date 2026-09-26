@@ -1,6 +1,5 @@
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Common.Imaging;
 
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase;
@@ -23,6 +22,15 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// </remarks>
 public sealed record LoupePaint
 {
+    /// <summary>中心座標ラベルの文字色の既定値（白）。</summary>
+    /// <value>アルファを含む色。既定は白（不透明）。</value>
+    private static readonly DrawingColor LabelTextColorDefault = DrawingColor.White;
+
+    /// <summary>中心座標ラベルの背景色の既定値（黒 60%）。</summary>
+    /// <value>アルファを含む色。既定は黒 60%（<c>#99000000</c>）。</value>
+    /// <remarks>背景はチップとして文字を読ませるための帯であり、下の画像を完全には隠さない濃度にする。</remarks>
+    private static readonly DrawingColor LabelBackgroundColorDefault = DrawingColor.FromArgb(153, 0, 0, 0);
+
     /// <summary>すべての色を既定値にした設定。</summary>
     /// <value>既定の色（部分変更の基点として使用する）。</value>
     public static LoupePaint Default { get; } = new();
@@ -50,28 +58,36 @@ public sealed record LoupePaint
 
     /// <summary>中心座標ラベルの文字色を取得する。</summary>
     /// <value>アルファを含む色。既定は白。</value>
-    public DrawingColor CoordLabelColor { get; init; } = EsLabelDefaults.TextColor;
+    public DrawingColor CoordLabelColor { get; init; } = LabelTextColorDefault;
 
     /// <summary>中心座標ラベルの背景色を取得する。</summary>
     /// <value>アルファを含む色。既定は黒 60%（#99000000）。</value>
-    public DrawingColor CoordLabelBackgroundColor { get; init; } = EsLabelDefaults.BackgroundColor;
+    public DrawingColor CoordLabelBackgroundColor { get; init; } = LabelBackgroundColorDefault;
 
     /// <summary>中心座標ラベルのフォントサイズ（DIP）を取得する。</summary>
     /// <value>フォントサイズ（DIP）。6〜48 へ補正済み。既定は 12.0。</value>
     /// <remarks>
     /// ラベルをどの体裁で描くかは<b>描画にだけ必要な設定</b>であり、描画の設定である本型が単一所有する。<br/>
     /// コアは値を持たず、描画の契約（<c>ILoupeRenderer</c>）を通して UI 層へ公開する。<br/>
-    /// 安全域への補正（非有限値は既定値）は <see cref="EsLabelMetrics"/> が単一所有する。
+    /// 安全域への補正（非有限値は既定値）は <see cref="CoerceLabelFontSize"/> が単一所有する。
     /// </remarks>
     public double CoordLabelFontSize
     {
         get => field;
-        init => field = EsLabelMetrics.CoerceFontSize(value, CoordLabelFontSizeDefault);
+        init => field = CoerceLabelFontSize(value, CoordLabelFontSizeDefault);
     } = CoordLabelFontSizeDefault;
 
     /// <summary>中心座標ラベルのフォントサイズの既定値（DIP）。</summary>
     /// <value>既定のフォントサイズ（DIP）。</value>
-    public const double CoordLabelFontSizeDefault = EsLabelDefaults.FontSize;
+    public const double CoordLabelFontSizeDefault = 12.0;
+
+    /// <summary>中心座標ラベルのフォントサイズの最小値（DIP）。</summary>
+    /// <value>ラベルのフォントサイズとして受け付ける下限。</value>
+    public const double LabelFontSizeMin = 6.0;
+
+    /// <summary>中心座標ラベルのフォントサイズの最大値（DIP）。</summary>
+    /// <value>ラベルのフォントサイズとして受け付ける上限。</value>
+    public const double LabelFontSizeMax = 48.0;
 
     /// <summary>中心座標ラベルの背景の角丸半径（DIP）を取得する。</summary>
     /// <value>角丸半径（DIP）。0〜64 へ補正済み（0 は四角形）。既定は 2。</value>
@@ -115,4 +131,12 @@ public sealed record LoupePaint
     /// <value>十字線の色のアルファが 0 でない場合は true。</value>
     /// <remarks>アルファ 0 を描画しない扱いにする判定は <see cref="DrawingColorExtensions.IsVisible"/> が単一所有する（UI 層に持たせない）。</remarks>
     public bool HasCrosshair => CrossColor.IsVisible();
+
+    /// <summary>ラベルのフォントサイズを安全域（6〜48）へ補正する。</summary>
+    /// <param name="value">補正する値（DIP）。</param>
+    /// <param name="defaultValue">非数（NaN / ∞）の場合に使う既定値（DIP）。</param>
+    /// <returns>6〜48 に補正した値。非数の場合は <paramref name="defaultValue"/>。</returns>
+    /// <remarks>非数を素通しするとフォントが描画されなくなるため、本型が単一所有する。</remarks>
+    private static double CoerceLabelFontSize(double value, double defaultValue)
+        => double.IsFinite(value) ? Math.Clamp(value, LabelFontSizeMin, LabelFontSizeMax) : defaultValue;
 }

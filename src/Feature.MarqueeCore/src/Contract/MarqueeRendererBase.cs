@@ -73,7 +73,7 @@ public abstract class MarqueeRendererBase : IMarqueeRenderer
     /// <b>既定は何もしない</b>: テキストを UI の要素（<c>TextBlock</c> 等）として置く UI は、本フックを上書きしない<br/>
     /// （要素は親より後に描かれるため常に最上位になる。両方を描くと二重に表示される）。<br/>
     /// canvas へ直接描く実装だけが上書きし、<see cref="IEsCanvas.DrawLabel"/> と <see cref="IEsCanvas.MeasureText"/> を使って描く<br/>
-    /// （配置は <see cref="EsLabelLayout.ComputeAlignedBox"/> が単一所有するため、実装は実寸の反映と描画 API の呼び出しだけを担う）。<br/>
+    /// （配置は描画層（<c>MarqueeControl.UIBase</c> の <c>MarqueeLabelPlan</c>）が単一所有するため、実装は実寸の反映と描画 API の呼び出しだけを担う）。<br/>
     /// フォントサイズ・色は描画層の設定（<c>MarqueePaint</c>）を参照する。
     /// </remarks>
     protected virtual void DrawLabel(IEsCanvas canvas, in MarqueeDrawContent content)

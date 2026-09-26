@@ -33,7 +33,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     ├──> MarqueeControl.UIBase   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
     ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```
@@ -97,7 +97,7 @@ stateDiagram-v2
 | `src/Session/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。**状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
 | `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 1 フレーム分の描画内容 の解決（装飾・穴あけ矩形・ハンドル・テキストの配置。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する） |
 | `src/Content/MarqueeFrameRequest.cs` | `MarqueeFrameRequest` | internal | フレー ム解決の入力（設定・状態・描画時に決まる値） |
-| `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は `EsLabelLayout` が単一所有する） |
+| `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値・補正・コントロール固有の定数（体裁は描画層の `MarqueePaint` が単一所有する） |
 | `src/Drawing/MarqueeDrawContent.cs` | `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` | public | 描画契約 |
 | `src/Drawing/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（フォントサイズ・色は描画層の `MarqueePaint` が持つ） |
 | `src/Interaction/MarqueeSnapshot.cs` | `MarqueeSnapshot` | public | 状態のスナップショット（`readonly record struct`。値型のため通知でヒープを確保しない） |
@@ -127,9 +127,9 @@ stateDiagram-v2
 | 描画する層とその順序 | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
 | 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveFrame` |
 | 設定の既定値・範囲補正・体裁定数 | `MarqueeOptions`（補正は生成時の `init` アクセサ） |
-| ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（12.0） | `EsLabelDefaults`（`Platform.Core`。描画層の `MarqueePaint` が参照する） |
-| フォントサイズの安全域（6〜48。他コントロールと共通） | `EsLabelMetrics`（`Platform.Core`） |
-| ラベルの体裁（背景 = 実寸 + 余白×2、文字原点、行送り、クランプ） | `EsLabelLayout`（`Common`） |
+| ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（14.0 / 12.0） | 描画層の `MarqueePaint` |
+| フォントサイズの安全域（6〜48） | 描画層の `MarqueePaint` |
+| ラベルの体裁（背景 = 実寸 + 余白×2、アライン、クランプ、行送り） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` |
 | 装飾の DIP 変換と穴あけ矩形の決定 | `DecoGeometry` |
 | 装飾の描画可否（明示フラグ。透明色を代用にしない） | `MarqueeDecoOptions.ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint`（本コアは色を持つ型を公開しない） |
@@ -162,7 +162,7 @@ stateDiagram-v2
 | 方針 | 内容 |
 | --- | --- |
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
-| 単位 | 純粋計算（`SelectionGeometry` / `DecoGeometry` / `EsLabelLayout`）・状態機械・ファサード・描画内容の解決 |
+| 単位 | 純粋計算（`SelectionGeometry` / `DecoGeometry`）・状態機械・ファサード・描画内容の解決 |
 | 合計 | 264 件（`[Theory]` は展開後のケース数） |
 
 ```powershell

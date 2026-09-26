@@ -39,7 +39,6 @@ graph LR
 | `EsPlatformHandleMewUIInterop.cs` | `Aprillz.MewUI.Window` → `EsPlatformHandle` |
 | `Imaging/SkiaImageView.cs` | `EsBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生） |
 | `Imaging/SkiaImageRenderer.cs`（internal） | `EsBitmap` を Skia キャンバスへ敷く描画層（画素で検証できる） |
-| `Labels/EsLabelElementHost.cs` | コアが解決したラベル要素（`EsLabelElement`）を親パネルの子要素として同期し、親の絶対座標を基準に配置するホスト（寸法・位置・色はコアの指示を使う） |
 
 ## 単一所有（Single Source of Truth）
 

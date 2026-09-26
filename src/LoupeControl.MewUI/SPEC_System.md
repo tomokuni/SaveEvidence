@@ -34,7 +34,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
     ├──> LoupeControl.UIBase   どう描くか（描画 API の呼び出し手順。ILoupeRenderer を実装する）
     ├──> LoupeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```
@@ -147,10 +147,13 @@ classDiagram
         +ComputeMagnifiedRects(captureSize, zoomLevel) (EsRect, EsRect)$
         +TryExtractRegionAt(source, request) EsBitmap?
     }
-    class EsLabelLayout {
-        <<Platform.Core>>
-        +ComputeAlignedBox(point, areaSize, textSize, horizontal, vertical, paddingX, paddingY)$ EsRect
-        +ComputeOffsetTextOrigin(anchor, paddingX, paddingY)$ EsPoint
+    class LoupeLabelPlacement {
+        <<LoupeControl.UIBase>>
+        +EsRect Bounds
+        +double PaddingX / PaddingY
+        +string Text
+        +double FontSize
+        +double CornerRadius
     }
     class Loupe {
         <<Feature.LoupeCore / 公開ファサード>>
@@ -236,7 +239,7 @@ sequenceDiagram
 描画サイズは `Options.RequestedSize` × `RenderScaling` を物理ピクセルへ換算し、キャンバスより大きい場合はキャンバスに合わせる
    （「領域へクランプする」規則と DIP → 物理ピクセルの換算はコアのファサード（`Loupe.ResolveLayout` / `Loupe.CreateRequest`）が単一所有し、Avalonia 版の親パネルへのクランプと同じ規則を使う）。
 8. **静的画像では連続再描画を無効化する**。`ContinuousAnimation` を `false` にし、プロパティ変更時のみ再描画する。
-9. **座標ラベルはコントロールがテキスト要素として表示する**（両 UI 共通）。文言・表示可否はコア（`LoupeTextPlacement`。体裁は Platform.Core の `EsLabelLayout`）が単一所有し、コントロールは `LoupeLabelPlan`（描画層 `LoupeControl.UIBase`）へ自 UI の実寸（`SkiaText.Measure`）を渡して要素を配置する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）。Avalonia 版も同じ契約を使い、測定 API（`FormattedText`）だけが異なる。
+9. **座標ラベルはコントロールがテキスト要素として表示する**（両 UI 共通）。文言・表示可否・基準点はコア（`LoupeTextPlacement`）が、体裁（フォントサイズ・色・角丸）は描画の設定（`Paint`）が単一所有し、コントロールは `LoupeLabelPlan`（描画層 `LoupeControl.UIBase`）へ自 UI の実寸（`SkiaText.Measure`）を渡して要素を配置する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）。Avalonia 版も同じ契約を使い、測定 API（`FormattedText`）だけが異なる。
 10. **値の補正と変更ログはプロパティの登録が所有する**。`MewProperty.Register` の `coerce` / `changed` へ渡すため、
    setter を経由しない設定（バインディング等）でも安全域が保たれ、変更が記録される
    （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。規則と書式はコアが単一所有する）。

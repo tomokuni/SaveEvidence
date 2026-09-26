@@ -18,7 +18,6 @@ Avalonia 版の `Platform.AvaloniaUI` と同じ役割を MewUI 向けに提供�
 | `WindowPlacementMath` | ウィンドウ配置の DIP ⇔ 画面物理ピクセルの変換、スケールの正規化、復元可否の判定（純粋関数。`WindowStartupLocation` / `WindowSize` へ DIP を渡すために使う）。**換算と正規化は `Platform.Core` の `DpiScaler`（両 UI 共通の単一所有者）へ委譲する** |
 | `Imaging.SkiaImageView` | `EsBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生。`Source` を設定するだけで描く） |
 | `Imaging.SkiaImageRenderer`（internal） | `EsBitmap` を Skia キャンバスへ敷く描画層（`SkiaImageView` とその派生が共用。画素で検証できる） |
-| `Labels.EsLabelElementHost` | コアが解決したラベル要素（`EsLabelElement`）を親パネルの子要素（`Border` + `TextBlock`）として同期し、親の総対座標を基準に配置するホスト。寸法・位置・色はコアの指示を使う |
 
 依存方向:
 

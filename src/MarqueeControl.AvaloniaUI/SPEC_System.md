@@ -226,11 +226,11 @@ flowchart TB
 
 ### 6.6.1 ラベルの要素配置（文字の表示）
 
-- **分類**: `MarqueeControl` の内部実装（`ArrangeOverride` と `ApplyLabelElement` / `MeasureText`。独立した型ではない）
+- **分類**: `MarqueeControl` の内部実装（`ArrangeOverride` と `SyncLabels` / `Apply` / `MeasureText`。独立した型ではない）
 - **責務**: コアの描画内容のうち**ラベル**（サイズ・カーソル座標）をテキスト要素（`Border` + `TextBlock`）として配置する
 - **可視性**: 非公開（ホストは `Rendered` の `Content` を参照できる）
-- **特徴**: 文言・寸法・表示可否はコアが、色は描画層の `MarqueePaint` が単一所有し、実寸からの配置矩形（一覧と順序）は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有する。本実装は実寸測定（`FormattedText`）と要素への反映のみを持つ。要素の適用（色・余白・配置）とブラシの容量制限付きキャッシュは `EsLabelElementHost`（`Platform.AvaloniaUI.Labels`）が単一所有する
-- **依存**: Avalonia（`FormattedText` / テキスト要素）/ MarqueeControl.UIBase（`MarqueeLabelPlan` / `MarqueePaint`）/ Feature.MarqueeCore（装飾の描画契約と、テキストの文言・基準点）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
+- **特徴**: 文言・位置はコアが、体裁（フォントサイズ・色・内側余白）は描画層の `MarqueePaint` が単一所有し、実寸からの配置矩形（一覧と順序）は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有する。本実装は実寸測定（`FormattedText`）と要素への反映（`Border` の余白・大きさ・位置、`TextBlock` の文言・文字サイズ・色）を持つ。色 → ブラシは `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）が単一所有する
+- **依存**: Avalonia（`FormattedText` / テキスト要素）/ MarqueeControl.UIBase（`MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueePaint`）/ Feature.MarqueeCore（装飾の描画契約と、テキストの文言・基準点）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
 
 ### 6.7 MarqueeInnerRenderer（MarqueeControl.UIBase）
 

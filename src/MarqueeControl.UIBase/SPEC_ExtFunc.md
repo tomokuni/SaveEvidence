@@ -16,7 +16,7 @@
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
 | 描画内容の描画（図形） | `Marquee.Draw`（コアの入口）/ `IMarqueeRenderer.DrawShapes`（契約） | 装飾・ハンドル・始点マーカーを描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする。色は `MarqueePaint` から引く）。層の順序はコアの `MarqueeRendererBase` が単一所有し、起動は `Marquee.Draw` に一本化する |
-| テキスト要素の配置 | `MarqueeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素（`EsLabelElement`）の配置指示を解決する。**要素として置くか画像として描くかは UI 層が決める** |
+| テキスト要素の配置 | `MarqueeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素の配置指示（`MarqueeLabelPlacement`）を解決する。**要素として置くか画像として描くかは UI 層が決める** |
 | ホスト付加情報ラベルの描画 | `MarqueeHostLabelRenderer.Draw` | ホストが与えた文言を、サイズラベルと同じ体裁（内側余白・背景 → 文字の順序）で描く |
 
 #### 1.1.1 前提条件
@@ -91,7 +91,7 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `Resolve(in MarqueeDrawContent content, MarqueePaint paint, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`EsLabelElement`）の一覧を**順序どおり**（サイズラベル → カーソル座標ラベル）で返す。どちらも無い場合は空（一覧を生成しない）。色は `paint`（描画の設定）から写す。`paint` または `measureText` が null なら `ArgumentNullException` |
+| `Resolve(in MarqueeDrawContent content, MarqueePaint paint, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`MarqueeLabelPlacement`）の一覧を**順序どおり**（サイズラベル → カーソル座標ラベル）で返す。どちらも無い場合は空（一覧を生成しない）。体裁（フォントサイズ・色・内側余白）は `paint`（描画の設定）から写す。`paint` または `measureText` が null なら `ArgumentNullException` |
 
 ### `MarqueeHostLabelRenderer` のメンバー
 
@@ -209,20 +209,20 @@ viewport.Notify();   // 変化を検知したら呼ぶ
 | 図形（装飾・ハンドル・始点マーカー） | `DrawShapes`（**テキストは描かない**） |
 | テキスト（サイズ・カーソル座標） | `MarqueeLabelPlan.Resolve`（コアの `MarqueeDrawContent` のテキスト配置を渡す。UI が要素として置くか canvas へ描くかを決める） |
 
-### ラベル要素（`EsLabelElement`）
+### ラベル要素（`MarqueeLabelPlacement`）
 
 | 項目 | 内容 |
 | --- | --- |
-| `Bounds` | 要素を置く矩形（背景の大きさ = 文字の実寸 + 内側余白 × 2） |
-| `TextOrigin` | 文字の描画原点（背景の内側余白の分だけ内側） |
-| `PaddingX` / `PaddingY` | 要素の内側余白（`TextOrigin` - `Bounds`。要素の `Padding` に写す） |
-| `Text` / `FontSize` / `TextColor` / `BackgroundColor` / `CornerRadius` | 文言・フォントサイズ・角丸はコアが、色は描画の設定（`MarqueePaint`）が与える（UI は判断しない） |
+| `Bounds` | 要素を置く矩形（背景の大きさ = 文字の実寸 + 内側余白 × 2。アラインと領域クランプ適用済み） |
+| `PaddingX` / `PaddingY` | 要素の内側余白（体裁の値。要素の `Padding` にそのまま写す） |
+| `Text` / `FontSize` / `TextColor` / `BackgroundColor` | 文言・フォントサイズ・色は描画の設定（`MarqueePaint`）が与える（UI は判断しない） |
+| 角丸 | 持たない（選択矩形のラベルは矩形である） |
 
 ### 付加情報ラベルの体裁
 
 - 背景は基準点（`anchor`）を左上とし、文字の実寸へ内側余白（`padding`）を四方へ加えた大きさになります。
 - 文字は同じ余白だけ内側へ入ります（**背景の四方の余白が等しい**）。
-- 縦積みの行送りは `EsLabelLayout.NextTop` を使います（背景の下端と次の行の上端が一致します）。
+- 縦積みの行送りは「行の高さ + 内側余白 × 2」です（背景の下端と次の行の上端が一致します）。
 - 文言・表示可否はホストが判断します（本層は文言を生成しません）。
 
 ### ホイール要求の受け取り

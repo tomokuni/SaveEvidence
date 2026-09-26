@@ -8,7 +8,6 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
-using EsUtil.Platform.MewUI.Labels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
@@ -141,8 +140,8 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     private readonly ShapeCanvas _shapes;
 
-    /// <summary>ラベル要素（背景 + テキスト）を子として同期するホスト（コアの配置指示を写す）。</summary>
-    private readonly EsLabelElementHost _labelHost;
+    /// <summary>配置中のラベル要素（背景 + テキスト）。子の末尾側へ置くため常に最上位になる。</summary>
+    private readonly List<Border> _labels = [];
 
     /// <summary>拡大元の 100% 画像を取得または設定する。</summary>
     /// <value>拡大元の画像。null の場合は市松模様のみを表示する。</value>
@@ -259,7 +258,6 @@ public sealed class LoupeControl : Panel
         // 図形は専用の子キャンバスが描く（ラベル要素より先に子として加えるため、常にラベルの下になる）
         _shapes = new ShapeCanvas(this) { IsHitTestVisible = false };
         Add(_shapes);
-        _labelHost = new EsLabelElementHost(this);
     }
 
     /// <summary>図形（背景・市松模様・拡大画像・十字線・外枠）だけを描画する内部 Skia キャンバス。</summary>
@@ -317,7 +315,11 @@ public sealed class LoupeControl : Panel
         var size = new Size(Options.RequestedSize, Options.RequestedSize);
 
         _shapes.Measure(size);
-        _labelHost.Measure(size);
+
+        foreach (var label in _labels)
+        {
+            label.Measure(size);
+        }
 
         return size;
     }
@@ -337,8 +339,60 @@ public sealed class LoupeControl : Panel
         // テキストはコアが文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
         // （表示サイズは要素の大きさ（ホストがコアのレイアウト結果で配置したサイズ）である）
         var content = _loupe.ResolveContent(_loupe.CreateRequest(bounds.Size.Width));
-        var elements = LoupeLabelPlan.Resolve(content.CoordLabelText, Paint, SkiaText.Measure);
-        _labelHost.Sync(elements, bounds);
+        SyncLabels(LoupeLabelPlan.Resolve(content.CoordLabelText, Paint, SkiaText.Measure), bounds);
+    }
+
+    /// <summary>ラベル要素（背景 + テキスト）を配置指示へ同期し、親の絶対座標を基準に配置する。</summary>
+    /// <param name="placements">配置するラベル（描画順に並ぶ）。</param>
+    /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
+    /// <remarks>
+    /// 余分な要素は親から外し、不足分は生成して子の末尾へ追加する（配置のたびに呼ばれる）。<br/>
+    /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。
+    /// </remarks>
+    private void SyncLabels(IReadOnlyList<LoupeLabelPlacement> placements, Rect bounds)
+    {
+        while (_labels.Count > placements.Count)
+        {
+            var last = _labels[^1];
+            _labels.RemoveAt(_labels.Count - 1);
+            Remove(last);
+        }
+
+        while (_labels.Count < placements.Count)
+        {
+            var border = new Border().Child(new TextBlock());
+            _labels.Add(border);
+            Add(border);
+        }
+
+        for (var i = 0; i < placements.Count; i++)
+        {
+            var placement = placements[i];
+            var border = _labels[i];
+
+            Apply(border, placement);
+            border.Arrange(new Rect(
+                bounds.X + placement.Bounds.X, bounds.Y + placement.Bounds.Y,
+                placement.Bounds.Width, placement.Bounds.Height));
+        }
+    }
+
+    /// <summary>1 つのラベル要素の内容と体裁を配置指示に合わせる。</summary>
+    /// <param name="border">更新する要素（背景）。</param>
+    /// <param name="placement">配置指示（寸法は実寸を反映済み）。</param>
+    /// <remarks>本体は配置でサイズを確定するため、要素には内側余白と角丸だけを与える。</remarks>
+    private static void Apply(Border border, in LoupeLabelPlacement placement)
+    {
+        border.Padding(placement.PaddingX, placement.PaddingY);
+        border.CornerRadius(placement.CornerRadius);
+        border.Background = placement.BackgroundColor.ToMewUIColor();
+
+        if (border.Child is TextBlock text)
+        {
+            text.Text = placement.Text;
+            text.FontSize = placement.FontSize;
+            text.Foreground = placement.TextColor.ToMewUIColor();
+        }
     }
 
     /// <summary>DPI の変更時に表示スケーリング係数を追従させる。</summary>

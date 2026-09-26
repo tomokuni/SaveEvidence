@@ -36,8 +36,8 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 - **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPointInt`・`EsRectInt`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
 - **カーソル抑止の仲介**: `CursorOverrideGuardAvaloniaExtensions.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲）
 - **画像ユーティリティ**: `EsBitmap`（`Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
-- **描画アダプタ**: `AvaloniaCanvas`（`Platform.Core` の描画ポート `IEsCanvas` を `DrawingContext` へ適合させる。塗り・枠線・ラベル・画像の描画を写す） アダプタ（`EsBitmapAvaloniaImage`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
-- **ラベル要素ホスト**: `EsLabelElementHost`（コアが解決したラベル要素（背景 + テキスト）を親パネルの子要素として同期する。寸法・位置・色はコアが単一所有し、色 → ブラシの容量制限付きキャッシュも本型が単一所有する）
+- **描画アダプタ**: `AvaloniaCanvas`（`Common` の描画ポート `IEsCanvas` を `DrawingContext` へ適合させる。塗り・枠線・ラベル・画像の描画を写す） アダプタ（`EsBitmapAvaloniaImage`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
+- **ブラシキャッシュ**: `SolidColorBrushCache`（`System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有する。描画アダプタとラベル要素の配置が共用する）
 - **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
 
 ## 3. システム要件

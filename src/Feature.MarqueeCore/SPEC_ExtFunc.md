@@ -13,7 +13,7 @@
 | 通知 | `Marquee.Notified` | 選択の開始/変更/確定/キャンセル・追従位置の移動・確定/キャンセル要求を `MarqueeNotice` で通知する |
 | 外部からの状態操作 | `Marquee` | 選択の復元・対話状態の初期化・確定/キャンセルの要求を API から実行できる |
 | 座標変換 | `Marquee` / `ICoordTransform` | ドメイン座標（利用者が定める座標系）とローカル DIP の相互変換と、ドメイン境界の指定 |
-| ラベルの体裁計算 | `EsLabelLayout`（`EsUtil.SaveEvidence.Common.Imaging`） | 内側余白の適用・文字原点・カーソル基準の配置と領域内へのクランプ・上端中央の配置・行送り |
+| ラベルの体裁計算 | 描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` | 内側余白の適用・アラインの適用・カーソル基準の配置と領域内へのクランプ・行送り（描画にだけ必要な規則のためコアは持たない） |
 | 装飾（暗転マスク等） | `MarqueeDecoOptions` / `OuterDecoFrame` / `InnerDecoFrame` | 選択矩形の外側/内側へ描く装飾の設定と描画内容 |
 | 幾何計算 | `SelectionGeometry` | 正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形・描画対象ハンドル一覧・カーソル種別 |
 
@@ -22,7 +22,7 @@
 - 本コアは UI フレームワークに依存しません。UI 固有の型は利用者（UI 実装）が境界で変換します。
 - 座標は `EsPoint` / `EsRect` / `EsSize` / `EsKey`（`EsUtil.Platform.Core`）で扱います。
 - カーソル操作は `ICursorService` 抽象にのみ依存します（`null` の場合は何もしません）。
-- ラベルの**文言・基準点（アラインを含む）**はコアが単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。体裁（背景矩形と文字原点）は `EsLabelLayout`（`Common`）、**フォントサイズと色**は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有します。
+- ラベルの**文言・基準点（アラインを含む）**はコアが単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。体裁（背景矩形・内側余白・フォントサイズ・色）は描画層（`MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan`）が単一所有します。
 
 ## 2. 公開 API 一覧
 
@@ -137,7 +137,7 @@
 | 体裁 | `HandleBorderThickness` | 1.5（`MarqueeHandles.BorderThickness` として描画層へ渡る） |
 | 体裁 | `CoordLabelOffset` | 8.0（カーソルからラベルを離す距離） |
 
-`MarqueeOptions` は**色もラベルのフォントサイズも持ちません**。これらは描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`、フォントサイズは `SizeLabelFontSizeDefault` = 14.0 / `CoordLabelFontSizeDefault` = 12.0）。ラベルの文字色・背景色の既定値（白 / 黒 60%）は `EsLabelDefaults`（`EsUtil.SaveEvidence.Common.Imaging`）が単一所有し、`MarqueePaint` が参照するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
+`MarqueeOptions` は**色もラベルのフォントサイズも持ちません**。これらは描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`、フォントサイズは `SizeLabelFontSizeDefault` = 14.0 / `CoordLabelFontSizeDefault` = 12.0、内側余白は `LabelPadding`（既定 4.0））。ラベルの文字色・背景色の既定値（白 / 黒 60%）も `MarqueePaint` が単一所有するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
 
 ### `IMarqueeEffects` のメンバー
 
@@ -186,9 +186,9 @@
 ### テキストの位置（`MarqueeTextPlacement`）
 
 - コアが決めるのは**文言・基準点・アライン（水平/垂直）・描画領域**です（`EsHorizontalAlign` / `EsVerticalAlign` で基準点がテキストのどこを指すかを指定するため、コアは幅・高さを知りません）。
-- サイズラベルは基準点を穴あけ矩形の左上にし、アラインは左端・上端です。行送り（`EsLabelLayout.NextTop`）で次の行の上端を求めるため、**背景の下端と次の行の上端が一致します**。
+- サイズラベルは基準点を穴あけ矩形の左上にし、アラインは左端・上端です。行送り（行の高さ + 内側余白 × 2）で次の行の上端を求めるため、**背景の下端と次の行の上端が一致します**。
 - カーソル座標ラベルは基準点を「カーソル + `CoordLabelOffset`」にし、描画領域を渡します（描画領域の右端・下端をはみ出す場合は領域内へクランプされ、軸が 0 以下の場合はクランプされません）。
-- **フォントサイズ・色は描画の設定（`MarqueePaint`）**、実寸から背景矩形を求める計算は `EsLabelLayout.ComputeAlignedBox`（`Common`）、要素の配置指示への写像は描画層の `MarqueeLabelPlan` が単一所有します。**Elements として置くか canvas へ描くかは UI 層が決めます**。
+- **フォントサイズ・色・内側余白は描画の設定（`MarqueePaint`）**、実寸から背景矩形を求める計算とアラインの適用は描画層の `MarqueeLabelPlan` が単一所有します。**要素として置くか canvas へ描くかは UI 層が決めます**。
 
 ### 操作の受理条件
 
@@ -216,7 +216,7 @@
 - ビューポートの変化の通知は本コアに含みません（`MarqueeControl.UIBase` が単一所有します）。
 - 描画 API は提供しません（描画の手順は UI 非依存の描画層 `MarqueeControl.UIBase` が単一所有し、描画先は `Platform.Core` の `IEsCanvas` です。描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`SelectionGeometry`）を参照します）。
 - 色（ハンドル・始点マーカー・ラベル・装飾）は本コアに含みません（描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します）。
-- 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。ホストが文言の生成と描画を行います（体裁の計算は `EsLabelLayout` を共用できます）。
+- 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。ホストが文言の生成と描画を行います（体裁の適用は `MarqueeControl.UIBase` の `MarqueeHostLabelRenderer` / `FadeMaskHostLabelRenderer` を共用できます）。
 
 ## 6. ライセンス
 

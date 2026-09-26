@@ -1,13 +1,10 @@
-using EsUtil.SaveEvidence.Common.Imaging;
-
-
 namespace EsUtil.Feature.MarqueeCore.Setting;
 
 /// <summary>選択矩形コントロールの設定（表示可否・寸法・対話パラメータ）をまとめた不変の値オブジェクト。</summary>
 /// <remarks>
 /// 個別の依存関係プロパティとして公開していた設定を 1 つの値にまとめ、UI 層の公開 API を 1 プロパティへ縮小する。<br/>
 /// 設定の既定値も本型が単一所有する（各 UI 実装は既定値を持たず、本型を UI の色型・プロパティ型へ橋渡しするだけ）。<br/>
-/// <b>ラベルの体裁</b>（内側余白・背景・行送り・配置）は <see cref="EsLabelLayout"/>（<c>Common</c>）が単一所有する<br/>
+/// <b>ラベルの体裁</b>（内側余白・背景・行送り・配置）は描画層（<c>MarqueeControl.UIBase</c> の <c>MarqueePaint</c>）が単一所有する<br/>
 /// （ホストが描く付加情報ラベルと同じ体裁を使うため、余白の値は本型ではなく同クラスを参照する）。<br/>
 /// <b>フォントサイズは本型に含まない</b>: ラベルをどの体裁で描くかは描画にだけ必要な設定であり、<br/>
 /// 描画の設定（<c>MarqueePaint</c>。UIBase が単一所有する）が持つ。<br/>

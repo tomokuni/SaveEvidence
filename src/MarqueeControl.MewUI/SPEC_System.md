@@ -35,7 +35,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     ├──> MarqueeControl.UIBase   どう描くか（描画 API の呼び出し手順。IMarqueeRenderer を実装する）
     ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ※ 本コントロール（UI 層）は Platform.Native（Win32 実装）と Platform.MewUI も参照する。
@@ -199,12 +199,12 @@ classDiagram
           +double HandleBorderThickness$ const
           +double CoordLabelOffset$ const
     }
-    class EsLabelLayout {
-        <<Platform.Core>>
-        <<Common>>
-        +ComputeOffsetTextOrigin(anchor, paddingX, paddingY)$ EsPoint
-        +ComputeAlignedBox(point, areaSize, textSize, horizontal, vertical, paddingX, paddingY)$ EsRect
-        +NextTop(top, lineHeight, paddingY)$ double
+    class MarqueeLabelPlacement {
+        <<MarqueeControl.UIBase>>
+        +EsRect Bounds
+        +double PaddingX / PaddingY
+        +string Text
+        +double FontSize
     }
     class MarqueeState {
         <<Feature.MarqueeCore>>

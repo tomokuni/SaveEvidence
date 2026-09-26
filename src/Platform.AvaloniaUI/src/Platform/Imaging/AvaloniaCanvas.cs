@@ -16,19 +16,16 @@ namespace EsUtil.Platform.AvaloniaUI.Imaging;
 /// <c>LoupeControl.UIBase</c>）が単一所有する。本クラスはその手順を Avalonia の描画 API へ写すだけである。<br/>
 /// <br/>
 /// <b>座標系</b>: 呼び出し側が定める単位をそのまま使う（<see cref="DrawingContext"/> の単位と同じ）。<br/>
-/// 高速化のためブラシとペンを容量制限付きで共有する（<see cref="CapacityLimitedCache{TKey, TValue}"/> が容量管理を単一所有する）。<br/>
+/// 高速化のためブラシとペンを容量制限付きで共有する（ブラシは <see cref="SolidColorBrushCache"/>、<br/>
+/// ペンは本クラスが容量管理を単一所有する）。<br/>
 /// <b>描画面の消去</b>: <see cref="DrawingContext"/> には全面消去の API が無いため、<see cref="Clear"/> は渡された矩形を塗って代用する<br/>
 /// （フレームワークが描画面を消去する UI では <see cref="Clear"/> を呼ぶ必要はない）。
 /// </remarks>
 public sealed class AvaloniaCanvas : IEsCanvas
 {
-    /// <summary>ブラシのキャッシュ（Avalonia の色 → ブラシ。容量制限付き）。</summary>
-    private static readonly CapacityLimitedCache<Color, SolidColorBrush> s_brushes =
-        new(static color => new SolidColorBrush(color));
-
     /// <summary>ペンのキャッシュ（色と太さ → ペン。容量制限付き）。</summary>
     private static readonly CapacityLimitedCache<(Color Color, double Thickness), Pen> s_pens =
-        new(static key => new Pen(s_brushes.GetOrCreate(key.Color), key.Thickness));
+        new(static key => new Pen(SolidColorBrushCache.GetOrCreate(key.Color.ToDrawingColor()), key.Thickness));
 
     /// <summary>テキストの実寸測定に使うブラシ（<see cref="FormattedText"/> の生成に必要。実寸は色に依存しない）。</summary>
     private static readonly SolidColorBrush s_measureBrush = new(Colors.Transparent);
@@ -55,7 +52,7 @@ public sealed class AvaloniaCanvas : IEsCanvas
     /// <param name="rect">塗る矩形。</param>
     /// <param name="color">塗り色（不透明度はアルファ）。</param>
     public void FillRect(EsRect rect, DrawingColor color)
-        => _context.DrawRectangle(s_brushes.GetOrCreate(color.ToAvaloniaColor()), null, rect.ToAvaloniaRect());
+        => _context.DrawRectangle(SolidColorBrushCache.GetOrCreate(color), null, rect.ToAvaloniaRect());
 
     /// <summary>複数の矩形を同じ色で塗る。</summary>
     /// <param name="rects">塗る矩形の一覧。空の場合は何もしない。</param>
@@ -69,7 +66,7 @@ public sealed class AvaloniaCanvas : IEsCanvas
             return;
         }
 
-        var brush = s_brushes.GetOrCreate(color.ToAvaloniaColor());
+        var brush = SolidColorBrushCache.GetOrCreate(color);
         foreach (var rect in rects)
         {
             _context.DrawRectangle(brush, null, rect.ToAvaloniaRect());
@@ -83,7 +80,7 @@ public sealed class AvaloniaCanvas : IEsCanvas
     public void FillRects<TWalker>(TWalker rects, DrawingColor color)
         where TWalker : struct, IEsRectWalker<TWalker>
     {
-        var brush = s_brushes.GetOrCreate(color.ToAvaloniaColor());
+        var brush = SolidColorBrushCache.GetOrCreate(color);
 
         while (rects.MoveNext())
         {
@@ -98,7 +95,7 @@ public sealed class AvaloniaCanvas : IEsCanvas
     /// <remarks>角丸 0 は <see cref="RoundedRect"/> の半径 0 として四角形になる（呼び出し側の分岐を不要にする）。</remarks>
     public void FillRoundRect(EsRect rect, double cornerRadius, DrawingColor color)
         => _context.DrawRectangle(
-            s_brushes.GetOrCreate(color.ToAvaloniaColor()), null, new RoundedRect(rect.ToAvaloniaRect(), cornerRadius));
+            SolidColorBrushCache.GetOrCreate(color), null, new RoundedRect(rect.ToAvaloniaRect(), cornerRadius));
 
     /// <summary>矩形の枠線を描く（線は矩形の辺の上に中心を置く）。</summary>
     /// <param name="rect">枠の矩形。</param>
@@ -174,7 +171,7 @@ public sealed class AvaloniaCanvas : IEsCanvas
     private static FormattedText CreateFormattedText(string text, double fontSize, DrawingColor color)
         => new(
             text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, fontSize,
-            s_brushes.GetOrCreate(color.ToAvaloniaColor()));
+            SolidColorBrushCache.GetOrCreate(color));
 
     /// <summary>色と太さに対応するペンを取得する（キャッシュ優先）。</summary>
     /// <param name="color">線の色。</param>

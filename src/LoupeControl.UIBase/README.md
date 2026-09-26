@@ -27,7 +27,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> LoupeControl.UIBase ← 本プロジェクト   どう描くか（描画手順と色）＋ 組み込み先があるときだけ必要な規則
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform）
 ※ コアは本層を参照しない（本層の描画実装はコアの契約 ILoupeRenderer を実装する）。
 ※ 本層を使うのは LoupeControl.AvaloniaUI のみ（MewUI は中間ビットマップを持たず同期描画するため再描画のスケジューリングが不要）。
@@ -43,7 +43,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | --- | --- |
 | `LoupeRenderer` | 既定の描画実装（`sealed`。`ILoupeRenderer` を実装）。描画の設定（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する。`DrawShapes`（下地・市松・拡大画像・十字線・外枠。**テキストは描かない**）とフォントサイズ・角丸（`CoordLabelFontSize` / `CoordLabelCornerRadius`。**描画の契約には含めない**）を提供する。テキストのフック（`DrawLabel`）は基底の既定（何もしない）を引き継ぐ |
 | `LoupePaint` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）・ラベルのフォントサイズと角丸・「描くかどうか」の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
-| `LoupeLabelPlan` | コアのラベル契約（`LoupeTextPlacement`）からラベル要素（`EsLabelElement`）の配置指示を解決する（色は `LoupePaint` から受け取る） |
+| `LoupeLabelPlacement` | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
+| `LoupeLabelPlan` | コアのラベル契約（`LoupeTextPlacement`）からラベル要素の配置指示（`LoupeLabelPlacement`）を解決する（体裁は `LoupePaint` から受け取る） |
 
 ### 組み込み規則
 
@@ -53,7 +54,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 ## 描画の単位
 
-**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `LoupeRenderRequest.ResolvePixelSize`、寸法は `CheckerSizePixels` / `FrameWidthPixels`）は**コアが済ませている**ため、本層は換算しません。中心座標ラベルだけは DIP で配置します（コアが `EsLabelLayout` で配置を決める）。
+**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `LoupeRenderRequest.ResolvePixelSize`、寸法は `CheckerSizePixels` / `FrameWidthPixels`）は**コアが済ませている**ため、本層は換算しません。中心座標ラベルだけは DIP で配置します（コアが基準点を、本層が `LoupeLabelPlan` で配置矩形を決める）。
 
 ## ラベルは UI の要素が描く
 
@@ -149,7 +150,7 @@ _coordinator.CancelAndRelease();   // 非表示遷移・明示クリア（要求
 ```text
 LoupeControl.UIBase
     ├── Feature.LoupeCore（描画入力・通知・寸法・切り出しの計算）
-    ├── Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+    ├── Common（IEsCanvas・IEsRectWalker）
 └── Platform.Core（Es* 値型・SkiaEsCanvas）
 ```
 

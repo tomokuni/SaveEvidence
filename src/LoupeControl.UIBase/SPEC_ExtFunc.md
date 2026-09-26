@@ -16,7 +16,7 @@
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
 | ルーペの描画（図形） | `Loupe.Draw`（コアの入口）/ `ILoupeRenderer.DrawShapes`（契約） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする）。層の順序はコアの `LoupeRendererBase` が単一所有し、起動は `Loupe.Draw` に一本化する |
-| テキスト要素の配置 | `LoupeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素（`EsLabelElement`）の配置指示を解決する。**要素として置くか画像として描くかは UI 層が決める** |
+| テキスト要素の配置 | `LoupeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素の配置指示（`LoupeLabelPlacement`）を解決する。**要素として置くか画像として描くかは UI 層が決める** |
 | 描画に使う色 | `LoupePaint` | 下地・市松模様・外枠・十字線・中心座標ラベルの色と「描くかどうか」の述語（`Has*`）を単一所有する |
 
 #### 1.1.1 前提条件
@@ -72,7 +72,7 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `Resolve(LoupeTextPlacement? coordLabel, LoupePaint paint, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`EsLabelElement`）を 1 件返す（テキストが無い場合は空）。`paint` または `measureText` が null なら `ArgumentNullException` |
+| `Resolve(LoupeTextPlacement? coordLabel, LoupePaint paint, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`LoupeLabelPlacement`）を 1 件返す（テキストが無い場合は空）。`paint` または `measureText` が null なら `ArgumentNullException` |
 
 ### `LoupeRenderCoordinator`（`EsUtil.SaveEvidence.Loupe.UIBase`・`public sealed class`）
 

@@ -99,19 +99,6 @@ internal sealed class ThumbnailView : SkiaImageView
 `SkiaImageRenderer`（internal）が単一所有し、配置の矩形は `Platform.Core` の `ImageDrawMath` が単一所有します。  
 静止画のため連続再描画は無効化し、`Source` の変更時のみ描画します。
 
-### `Labels.EsLabelElementHost`（class）
-
-コア（描画実装）が解決したラベル要素（`EsLabelElement`）を、親パネルの子要素（`Border` + `TextBlock`）として同期するホスト。
-ラベルを「テキスト要素として配置する」コントロール（マーキー選択・ルーペ）が共通で必要とする処理（要素の追加・再利用・削除、内側余白・角丸・色・配置矩形の写像）を単一所有します。
-
-| 種別 | メンバー | シグネチャ | 説明 |
-| --- | --- | --- | --- |
-| ctor | `EsLabelElementHost` | `EsLabelElementHost(Panel owner)` | 要素を子として持つ親パネルを指定する（`owner` が null なら `ArgumentNullException`） |
-| メソッド | `Measure` | `void Measure(Size availableSize)` | 子要素へ利用可能サイズを伝搬して測定する（本 UI は子を自動で測定しないため、コントロールの測定フェーズから呼ぶ） |
-| メソッド | `Sync` | `void Sync(IReadOnlyList<EsLabelElement> elements, Rect bounds)` | 配置指示へ子要素を同期し、親の絶対座標（`bounds` の左上）を基準に配置する（`elements` が null なら `ArgumentNullException`） |
-
-寸法・位置・文言・色はコアが単一所有するため、本型は位置の計算を持ちません（要素は子の末尾へ置かれ、**常に最上位**になります）。実寸測定は呼び出し側が行います（測定 API と実寸の使い方はコントロールごとに異なるため）。
-
 ## 依存
 
 | 依存 | 用途 |

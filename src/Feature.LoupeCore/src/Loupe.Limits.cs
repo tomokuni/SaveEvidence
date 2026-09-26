@@ -1,4 +1,3 @@
-using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.Feature.LoupeCore;
@@ -14,7 +13,7 @@ public sealed partial class Loupe
         /// （利用者はルーペの数値を得るのに <c>Loupe</c> だけを参照すればよい）。<br/>
         /// <b>規則の所在</b>: 設定値の補正は設定型（<see cref="LoupeOptions"/> / <see cref="LoupeMetrics"/> の生成時の <c>init</c> アクセサ）と<br/>
         /// ファサードの環境値（<see cref="Loupe.RenderScaling"/> の setter）も本値へ委譲する（補正の規則を二重に持たない）。<br/>
-        /// ラベルのフォントサイズの安全域は、他のコントロールと共通の規則のため <see cref="EsLabelMetrics"/> が単一所有する<br/>
+        /// ラベルのフォントサイズの安全域は、他のコントロールと共通の規則のため描画層（<c>LoupeControl.UIBase</c> の <c>LoupePaint</c>）が単一所有する<br/>
         /// （本クラスは既定値を添えて委譲するだけ）。<br/>
         /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
         /// </remarks>

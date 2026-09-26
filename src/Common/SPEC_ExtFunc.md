@@ -1,6 +1,6 @@
 # Common 外部機能仕様書
 
-`Common` は、SaveEvidence のソリューション内で共有する **UI 非依存の契約**（描画ポート・ラベルの体裁）を提供します。名前空間は `EsUtil.SaveEvidence.Common.Imaging`、アセンブリ名は `Common` です。
+`Common` は、SaveEvidence のソリューション内で共有する **UI 非依存の描画ポート**（描画内容を描画面へ写す契約）を提供します。名前空間は `EsUtil.SaveEvidence.Common.Imaging`、アセンブリ名は `Common` です。
 
 ## 公開 API の可視性
 
@@ -8,8 +8,6 @@
 | --- | --- | --- |
 | `IEsCanvas` | `public` | 任意（各 UI が自 UI の描画 API を適合させる契約） |
 | `IEsRectWalker<TSelf>` | `public` | 任意（`IEsCanvas.FillRects` へタイル列を渡す列挙子が実装する） |
-| `EsLabelFrame` / `EsLabelElement` | `public` | 任意（配置と要素の配置指示の値型） |
-| `EsLabelLayout` / `EsLabelMetrics` / `EsLabelDefaults` | `public` | 任意（体裁・既定値の単一所有） |
 
 本プロジェクトは UI フレームワークにも外部パッケージにも依存しないため、全型が `public` として公開されます。
 
@@ -45,50 +43,6 @@
 - **列挙は 1 回だけ**が契約です（実装が内部に走査位置を持つため）。
 - 名前が `Rect` を指すのは、列挙する要素が `EsRect` に固定されているためです（塗りの入力が矩形であるため）。
 
-## `EsLabelFrame`（配置の値）
-
-| メンバー | 型 | 内容 |
-| --- | --- | --- |
-| `Background` | `EsRect` | 背景矩形 |
-| `TextOrigin` | `EsPoint` | 文字の描画原点 |
-
-## `EsLabelElement`（UI 要素の配置指示）
-
-| メンバー | 型 | 内容 |
-| --- | --- | --- |
-| `Bounds` | `EsRect` | 背景矩形 |
-| `TextOrigin` | `EsPoint` | 文字の描画原点 |
-| `Text` | `string` | 文言 |
-| `FontSize` | `double` | フォントサイズ |
-| `TextColor` / `BackgroundColor` | `System.Drawing.Color` | 文字色と背景色 |
-| `CornerRadius` | `double` | 背景の角丸半径 |
-| `PaddingX` / `PaddingY` | `double` | 左・上の内側余白（背景矩形と文字原点の差。派生値） |
-| `Create(frame, text, fontSize, textColor, backgroundColor, cornerRadius)` | `EsLabelElement` | 配置と外観から要素の配置指示を組み立てる（写像の単一所有） |
-
-## `EsLabelLayout`（体裁の単一所有）
-
-| メンバー | 内容 |
-| --- | --- |
-| `Padding`（const） | 既定の内側余白（4.0 DIP） |
-| `ComputeAlignedBox(point, areaSize, textSize, horizontal, vertical, paddingX, paddingY)` | 基準点がラベルのどこを指すか（アライン）を指定して背景矩形を求める。領域が確定している軸（0 超）は領域内へクランプする |
-| `ComputeOffsetTextOrigin(boxTopLeft, paddingX, paddingY)` | 背景の左上から文字の描画原点を求める |
-| `NextTop(top, lineHeight, paddingY)` | 縦積みの次の行の上端（背景の下端と次の行の上端が一致する） |
-
-## `EsLabelMetrics`（フォントサイズの安全域）
-
-| メンバー | 内容 |
-| --- | --- |
-| `FontSizeMin` / `FontSizeMax`（const） | 6.0 / 48.0 |
-| `CoerceFontSize(value, defaultValue)` | 安全域へ補正する（非有限値は既定値） |
-
-## `EsLabelDefaults`（既定の外観）
-
-| メンバー | 内容 |
-| --- | --- |
-| `TextColor` | 白 |
-| `BackgroundColor` | 黒 60%（`#99000000`） |
-| `FontSize`（const） | 12.0 |
-
 ## 依存
 
 | 依存 | 用途 |
@@ -101,6 +55,8 @@ UI フレームワーク（Avalonia / MewUI / Skia）への依存はありませ
 
 | 置き場所の候補 | 可否 | 理由 |
 | --- | --- | --- |
-| `Platform.Core` | 不可 | 判定基準が「**このソリューション以外でもそのまま使える型**」であり、描画ポートとラベルの体裁はソリューション固有の共有契約である |
+| `Platform.Core` | 不可 | 判定基準が「**このソリューション以外でもそのまま使える型**」であり、描画ポートはソリューション固有の共有契約である |
 | 各コントロールのコア | 不可 | Marquee と Loupe の両方が同じ契約を使うため、どちらか一方に置くと他方が依存する |
 | `Common`（本プロジェクト） | 採用 | ソリューション固有の共有契約だけを置く層として、`Platform.Core` と各層の間に位置する |
+
+**ラベル専用の型（配置の値・体裁・要素への写像）は置きません**。ラベルの体裁と実寸 → 配置矩形の写像は UI 層の中で閉じるため、描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）が単一所有します。コアは文言・基準点・アライン・領域だけを渡します。

@@ -52,7 +52,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
     ├──> LoupeControl.UIBase   どう描くか（コアの ILoupeRenderer を実装する描画実装）
     ├──> LoupeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.LoupeCore ← 本プロジェクト   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```

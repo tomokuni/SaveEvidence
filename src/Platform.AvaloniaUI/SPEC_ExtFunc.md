@@ -213,7 +213,7 @@ new MarqueeRenderer(MarqueePaint.Default).DrawShapes(new AvaloniaCanvas(ctx), co
 公開型は `ScreenConverter` / `EsKeyAvaloniaInterop` / `EsWindowStateAvaloniaInterop` /
 `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop` / `ColorAvaloniaInterop` / `CursorOverrideGuardAvaloniaExtensions` /
 `ColorExtensions` / `EsBitmapAvaloniaImage` / `EsBitmapAvaloniaExtensions` / `AvaloniaCanvas` /
-`CapacityLimitedCache<TKey, TValue>` / `EsLabelElementHost` です。
+`CapacityLimitedCache<TKey, TValue>` / `SolidColorBrushCache` です。
 
 インターフェース・コア値型・`CoordTransform`・`EsBitmap` は `Platform.Core`、
 `PlatformFactory.CreateXxx()` と Win32 / NoOp 実装・`EsBitmapDrawingExtensions` は `Platform.Native` が提供します。

@@ -195,22 +195,72 @@ public sealed partial class MarqueeControl
     // ラベル（テキスト要素として配置する）
     // ====================================================================
 
+    /// <summary>配置中のラベル要素（背景 + テキスト）。子の末尾側へ置くため常に最上位になる。</summary>
+    private readonly List<Border> _labels = [];
+
     /// <summary>子要素の配置を確定し、ラベル要素を追加・更新する。</summary>
     /// <param name="finalSize">本コントロールへ割り当てられたサイズ（DIP）。</param>
     /// <returns>割り当てサイズ。</returns>
     /// <remarks>
-    /// <b>描画順はコアが単一所有する</b>: コアの描画内容から得た配置（<see cref="MarqueeLabelPlan"/>）に従って<br/>
-    /// ラベル要素を <see cref="Avalonia.Visual.Bounds"/> へ配置するだけであり、位置の計算を持たない。<br/>
-    /// 要素は <see cref="Avalonia.Controls.Panel.Children"/> の末尾へ置く（子は親より後に描かれるため、ラベルは常に最上位になる）。
+    /// <b>位置はコアと描画層が決める</b>: コアのテキスト配置から <see cref="MarqueeLabelPlan"/> が求めた配置指示に従って<br/>
+    /// ラベル要素を配置するだけであり、本クラスは位置の計算を持たない。<br/>
+    /// 要素は <see cref="Panel.Children"/> の末尾へ置く（子は親より後に描かれるため、ラベルは常に最上位になる）。
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
         // 描画内容は本フェーズで 1 回だけ解決し、図形の描画（RenderShapes）と共有する。
-        // 配置指示（実寸 → 配置矩形の写像）は描画実装（Marquee.Renderer）が単一所有し、
-        // 要素への写像は UI 共通のホストが単一所有する（本層は測定関数を与えるだけである）。
-        _labelHost.Sync(MarqueeLabelPlan.Resolve(ResolveFrame(finalSize.ToEsSize()), Paint, MeasureText));
+        SyncLabels(MarqueeLabelPlan.Resolve(ResolveFrame(finalSize.ToEsSize()), Paint, MeasureText));
 
         return base.ArrangeOverride(finalSize);
+    }
+
+    /// <summary>ラベル要素（背景 + テキスト）を配置指示へ同期する。</summary>
+    /// <param name="placements">配置するラベル（描画順に並ぶ）。</param>
+    /// <remarks>
+    /// 余分な要素は親から外し、不足分は生成して子の末尾へ追加する（配置のたびに呼ばれる）。<br/>
+    /// 各要素は左上寄せと <c>Margin</c> で絶対配置する（配置矩形はコアと描画層が単一所有する）。
+    /// </remarks>
+    private void SyncLabels(IReadOnlyList<MarqueeLabelPlacement> placements)
+    {
+        while (_labels.Count > placements.Count)
+        {
+            var last = _labels[^1];
+            _labels.RemoveAt(_labels.Count - 1);
+            Children.Remove(last);
+        }
+
+        while (_labels.Count < placements.Count)
+        {
+            var border = new Border { Child = new TextBlock { TextWrapping = TextWrapping.NoWrap } };
+            _labels.Add(border);
+            Children.Add(border);
+        }
+
+        for (var i = 0; i < placements.Count; i++)
+        {
+            Apply(_labels[i], placements[i]);
+        }
+    }
+
+    /// <summary>1 つのラベル要素の内容と配置を配置指示に合わせる。</summary>
+    /// <param name="border">更新する要素（背景）。</param>
+    /// <param name="placement">配置指示（寸法は実寸を反映済み）。</param>
+    private static void Apply(Border border, in MarqueeLabelPlacement placement)
+    {
+        border.Background = SolidColorBrushCache.GetOrCreate(placement.BackgroundColor);
+        border.Padding = new Thickness(placement.PaddingX, placement.PaddingY);
+        border.Width = placement.Bounds.Width;
+        border.Height = placement.Bounds.Height;
+        border.Margin = new Thickness(placement.Bounds.X, placement.Bounds.Y, 0, 0);
+        border.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        border.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
+
+        if (border.Child is TextBlock text)
+        {
+            text.Text = placement.Text;
+            text.FontSize = placement.FontSize;
+            text.Foreground = SolidColorBrushCache.GetOrCreate(placement.TextColor);
+        }
     }
 
     /// <summary>テキストの実寸を測定する（<see cref="TextBlock"/> 自身に測らせるため 0 を返す）。</summary>

@@ -1,5 +1,4 @@
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Common.Imaging;
 
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase;
@@ -28,6 +27,19 @@ public sealed record MarqueePaint
     /// <remarks>穴あけ枠と同じ矩形に重なるため、既定値を共有する（同じ色を 2 箇所へ書かない）。</remarks>
     public static readonly DrawingColor DefaultHandleBorderColor = DrawingColor.FromArgb(255, 169, 169, 169);
 
+    /// <summary>ラベルの文字色の既定値（白）。</summary>
+    /// <value>アルファを含む色。既定は白（不透明）。</value>
+    /// <remarks>
+    /// ラベルは文字 + 背景の小さなチップであり、その見た目はラベルの種類を跨いで共通である<br/>
+    /// （サイズ・カーソル座標・ホストの付加情報が同じ画面に並ぶため、片方だけ色が違うと体裁が崩れる）。
+    /// </remarks>
+    private static readonly DrawingColor LabelTextColorDefault = DrawingColor.White;
+
+    /// <summary>ラベルの背景色の既定値（黒 60%）。</summary>
+    /// <value>アルファを含む色。既定は黒 60%（<c>#99000000</c>）。</value>
+    /// <remarks>背景はチップとして文字を読ませるための帯であり、下の画像を完全には隠さない濃度にする。</remarks>
+    private static readonly DrawingColor LabelBackgroundColorDefault = DrawingColor.FromArgb(153, 0, 0, 0);
+
     /// <summary>すべての色を既定値にした設定。</summary>
     /// <value>既定の色（部分変更の基点として使用する）。</value>
     public static MarqueePaint Default { get; } = new();
@@ -51,31 +63,31 @@ public sealed record MarqueePaint
 
     /// <summary>サイズラベルの文字色を取得する。</summary>
     /// <value>ラベルの文字色。既定は白。</value>
-    public DrawingColor SizeLabelColor { get; init; } = EsLabelDefaults.TextColor;
+    public DrawingColor SizeLabelColor { get; init; } = LabelTextColorDefault;
 
     /// <summary>サイズラベルの背景色を取得する。</summary>
     /// <value>ラベルの背景色。既定は黒 60%（<c>#99000000</c>）。</value>
-    public DrawingColor SizeLabelBackgroundColor { get; init; } = EsLabelDefaults.BackgroundColor;
+    public DrawingColor SizeLabelBackgroundColor { get; init; } = LabelBackgroundColorDefault;
 
     /// <summary>カーソル座標ラベルの文字色を取得する。</summary>
     /// <value>ラベルの文字色。既定は白。</value>
-    public DrawingColor CoordLabelColor { get; init; } = EsLabelDefaults.TextColor;
+    public DrawingColor CoordLabelColor { get; init; } = LabelTextColorDefault;
 
     /// <summary>カーソル座標ラベルの背景色を取得する。</summary>
     /// <value>ラベルの背景色。既定は黒 60%（<c>#99000000</c>）。</value>
-    public DrawingColor CoordLabelBackgroundColor { get; init; } = EsLabelDefaults.BackgroundColor;
+    public DrawingColor CoordLabelBackgroundColor { get; init; } = LabelBackgroundColorDefault;
 
     /// <summary>サイズラベルのフォントサイズ（DIP）を取得する。</summary>
     /// <value>フォントサイズ（DIP）。6〜48 へ補正済み。既定は 14.0。</value>
     /// <remarks>
     /// ラベルをどの体裁で描くかは<b>描画にだけ必要な設定</b>であり、描画の設定である本型が単一所有する。<br/>
     /// コアは値を持たず、描画の契約（<c>IMarqueeRenderer</c>）を通して UI 層へ公開する。<br/>
-    /// 安全域への補正（非有限値は既定値）は <see cref="EsLabelMetrics"/> が単一所有する。
+    /// 安全域への補正（非有限値は既定値）は <see cref="CoerceLabelFontSize"/> が単一所有する。
     /// </remarks>
     public double SizeLabelFontSize
     {
         get => field;
-        init => field = EsLabelMetrics.CoerceFontSize(value, SizeLabelFontSizeDefault);
+        init => field = CoerceLabelFontSize(value, SizeLabelFontSizeDefault);
     } = SizeLabelFontSizeDefault;
 
     /// <summary>サイズラベルのフォントサイズの既定値（DIP）。</summary>
@@ -87,17 +99,37 @@ public sealed record MarqueePaint
     /// <remarks>
     /// ラベルをどの体裁で描くかは<b>描画にだけ必要な設定</b>であり、描画の設定である本型が単一所有する。<br/>
     /// コアは値を持たず、描画の契約（<c>IMarqueeRenderer</c>）を通して UI 層へ公開する。<br/>
-    /// 安全域への補正（非有限値は既定値）は <see cref="EsLabelMetrics"/> が単一所有する。
+    /// 安全域への補正（非有限値は既定値）は <see cref="CoerceLabelFontSize"/> が単一所有する。
     /// </remarks>
     public double CoordLabelFontSize
     {
         get => field;
-        init => field = EsLabelMetrics.CoerceFontSize(value, CoordLabelFontSizeDefault);
+        init => field = CoerceLabelFontSize(value, CoordLabelFontSizeDefault);
     } = CoordLabelFontSizeDefault;
 
     /// <summary>カーソル座標ラベルのフォントサイズの既定値（DIP）。</summary>
     /// <value>既定のフォントサイズ（DIP）。</value>
-    public const double CoordLabelFontSizeDefault = EsLabelDefaults.FontSize;
+    public const double CoordLabelFontSizeDefault = 12.0;
+
+    /// <summary>ラベルのフォントサイズの最小値（DIP）。</summary>
+    /// <value>ラベルのフォントサイズとして受け付ける下限。</value>
+    public const double LabelFontSizeMin = 6.0;
+
+    /// <summary>ラベルのフォントサイズの最大値（DIP）。</summary>
+    /// <value>ラベルのフォントサイズとして受け付ける上限。</value>
+    public const double LabelFontSizeMax = 48.0;
+
+    /// <summary>ラベルの内側余白（DIP）を取得する。</summary>
+    /// <value>背景を文字の実寸より四方へ広げる量。既定は 4.0。</value>
+    /// <remarks>
+    /// サイズラベルとホストの付加情報ラベルは同じ体裁で縦に積まれるため、余白を共有する<br/>
+    /// （片方だけ余白が違うと積み上げの間隔が崩れる）。行送り（前の行の高さ + 内側余白 × 2）も本値から導く。
+    /// </remarks>
+    public double LabelPadding { get; init; } = LabelPaddingDefault;
+
+    /// <summary>ラベルの内側余白の既定値（DIP）。</summary>
+    /// <value>既定の内側余白（DIP）。</value>
+    public const double LabelPaddingDefault = 4.0;
 
     /// <summary>暗転マスク（オーバーレイ）の色を取得する。</summary>
     /// <value>アルファを含む色。既定は黒 50%（<c>#80000000</c>）。</value>
@@ -120,4 +152,15 @@ public sealed record MarqueePaint
     /// <returns>描画に使う塗り色。未指定（全成分 0）の場合は白。</returns>
     private static DrawingColor ResolveHandleColor(DrawingColor color)
         => color.ToArgb() == 0 ? DrawingColor.White : color;
+
+    /// <summary>ラベルのフォントサイズを安全域（6〜48）へ補正する。</summary>
+    /// <param name="value">補正する値（DIP）。</param>
+    /// <param name="defaultValue">非数（NaN / ∞）の場合に使う既定値（DIP）。</param>
+    /// <returns>6〜48 に補正した値。非数の場合は <paramref name="defaultValue"/>。</returns>
+    /// <remarks>
+    /// 非数を素通しするとフォントが描画されなくなるため、本型が単一所有する<br/>
+    /// （ラベルごとに既定値だけが異なるため、既定値は引数で受ける）。
+    /// </remarks>
+    private static double CoerceLabelFontSize(double value, double defaultValue)
+        => double.IsFinite(value) ? Math.Clamp(value, LabelFontSizeMin, LabelFontSizeMax) : defaultValue;
 }

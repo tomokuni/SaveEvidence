@@ -4,7 +4,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using EsUtil.Platform.AvaloniaUI.Labels;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Coordinate;
@@ -152,10 +151,8 @@ public sealed partial class MarqueeControl : Panel
         // Panel は Render をシールするため自前で描けず、また子として持つことでラベル要素（後から追加する子）が
         // 必ず図形より後に描かれ「ラベルは常に最上位」というコアの描画順契約が構造で保証される。
         Children.Add(new ShapeLayer(this));
-        _labelHost = new EsLabelElementHost(this);
     }
-    /// <summary>ラベル要素（背景 + テキスト）を子として同期するホスト（コアの配置指示を写す）。</summary>
-    private readonly EsLabelElementHost _labelHost;
+
     /// <summary>図形（装飾・ハンドル・始点マーカー）だけを描画する子コントロール。</summary>
     /// <remarks>
     /// 親（<see cref="MarqueeControl"/>）の描画内容を読んで描くだけであり、判断を持たない。<br/>

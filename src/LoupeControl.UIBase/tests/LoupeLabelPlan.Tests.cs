@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Common.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.LoupeCore.Drawing;
@@ -8,8 +7,9 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
 
 /// <summary><see cref="LoupeLabelPlan"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
 /// <remarks>
-/// 文言・位置はコアが、色・フォントサイズ・角丸は描画の設定が単一所有するため、本テストは「実寸の反映」と「要素への写像」だけを検証する<br/>
-/// （配置の計算そのものは <c>EsLabelLayout.ComputeAlignedBox</c> のテストが担う）。<br/>
+/// 文言・位置はコアが、色・フォントサイズ・角丸・内側余白は描画の設定が単一所有するため、<br/>
+/// 本テストは「実寸の反映」と「配置指示への写像」だけを検証する。
+/// <br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public class LoupeLabelPlanTests
@@ -65,9 +65,19 @@ public class LoupeLabelPlanTests
         var element = Assert.Single(LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), Measure));
 
         // 基準点 (80, 2) がアライン（水平中央・上端）どおり背景の位置になる
-        var width = MeasuredSize.Width + EsLabelLayout.Padding * 2;
+        var width = MeasuredSize.Width + element.PaddingX * 2;
         Assert.Equal(80 - width / 2, element.Bounds.X);
         Assert.Equal(2, element.Bounds.Y);
+    }
+
+    [Fact]
+    public void Resolve_上下の内側余白は左右より狭い()
+    {
+        var element = Assert.Single(LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), Measure));
+
+        // ルーペ上端の帯へ収めるため、上下の余白は左右（共通の体裁値）より狭い
+        Assert.True(element.PaddingY < element.PaddingX);
+        Assert.Equal(MeasuredSize.Height + element.PaddingY * 2, element.Bounds.Height);
     }
 
     [Fact]

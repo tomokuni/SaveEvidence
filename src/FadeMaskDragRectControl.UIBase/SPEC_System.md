@@ -145,7 +145,7 @@ flowchart TD
 | ハイライト矩形（実行時状態） | ホスト（本層は引数で受けるだけ） |
 | 付加情報ラベルの積み上げ位置と表示可否 | `FadeMaskHostLabelRenderer`（本層） |
 | ラベルの体裁（背景 = 実寸 + 内側余白） | `MarqueeHostLabelRenderer`（MarqueeControl.UIBase） |
-| 行送り（背景の下端と次の行の上端を一致させる） | `EsLabelLayout`（Platform.Core） |
+| 内側余白（体裁の値）と行送り | `MarqueePaint`（MarqueeControl.UIBase） |
 | 付加情報ラベルの文言 | ホスト |
 | 選択矩形の破線の幾何 | `FadeMaskDragRectOverlay`（コア） |
 

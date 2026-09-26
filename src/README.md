@@ -37,7 +37,7 @@ flowchart TB
     UI --> CORE
     UIR --> UB
     UB -->|XxxRendererBase を継承し IMarqueeRenderer / ILoupeRenderer を実装| CORE
-    CORE --> CM["Common<br/>IEsCanvas（描画ポート）・IEsRectWalker・EsLabelLayout（ラベルの体裁）"]
+    CORE --> CM["Common<br/>IEsCanvas（描画ポート）・IEsRectWalker"]
     CM --> PC["Platform.Core<br/>Es* 値型・ICoordTransform・ICursorService"]
 ```
 
@@ -82,7 +82,7 @@ Core は値（`MarqueeTextPlacement` / `LoupeTextPlacement`）と層（`MarqueeD
 | 描画手順の基底（`MarqueeRendererBase` / `LoupeRendererBase`） | **Core** | 「どの層をどの順に描くか」は**単体のコントロールにも存在する概念**であり UI フレームワーク非依存（描画 API は `IEsCanvas` が抽象化済み）。Core が持つことで**描画の起動と順序が Core の単一所有**になる |
 | 描画の起動（`Marquee.Draw` / `Loupe.Draw`） | **Core** | 起動の入口を Core に一本化する（UI が `Renderer.DrawShapes` を直接呼ぶと、実装の差し替えと順序の単一所有が二重経路になる） |
 | 描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）と、テキストの体裁（フォントサイズ・角丸）と既定実装 | **UIBase** | これらはコアの計算・判断に入らないため、コアの型面にも**描画の契約にも現れない**（**体裁を使う層の描画は派生へ委ねる**）。その派生（`MarqueeRenderer` / `LoupeRenderer`）が描画の設定をインスタンス状態として保持し、自クラスの公開プロパティとして提供する（テキストを canvas へ描く派生が参照する） |
-| テキストを要素に写す配置計算（`MarqueeLabelPlan` / `LoupeLabelPlan`） | **UIBase** | 実寸（描画 API 依存）から配置矩形を求め、要素の配置指示（`EsLabelElement`）へ写す。**UI 層が要素として置くか画像として描くかの選択は各 UI に残る** |
+| テキストを要素に写す配置計算（`MarqueeLabelPlan` / `LoupeLabelPlan`） | **UIBase** | 実寸（描画 API 依存）から配置矩形を求め、要素の配置指示（`MarqueeLabelPlacement` / `LoupeLabelPlacement`）へ写す。**体裁値（内側余白・フォントサイズ・色・角丸）の所有も UIBase（`MarqueePaint` / `LoupePaint`）**である。**UI 層が要素として置くか画像として描くかの選択は各 UI に残る** |
 | 描画面の確保（`DrawingContext` / `SKCanvas` → `IEsCanvas` の適合）と UI 固有の描画 | **~UI** | `IEsCanvas` では吸収できないフレームワーク固有の機構（中間ビットマップ・描画コールバック・要素ベースの描画）を担う。`XxxRenderer~UI` が継承の拡張点になる |
 | 注入 | **UI** | `new MarqueeRendererAvaloniaUI(paint)` を 1 回生成して注入し、コントロールの `Paint` プロパティ（`MarqueePaint` / `LoupePaint`）と併せて設定する。差し替える場合は `Renderer` プロパティへ別実装を設定する（その場合はコアの `Draw` 入口を通る） |
 

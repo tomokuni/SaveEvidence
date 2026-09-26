@@ -7,7 +7,6 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.MewUI;
-using EsUtil.Platform.MewUI.Labels;
 using EsUtil.Platform.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -101,8 +100,8 @@ public sealed class MarqueeControl : Panel
     /// </remarks>
     private readonly ShapeCanvas _shapes;
 
-    /// <summary>ラベル要素（背景 + テキスト）を子として同期するホスト（コアの配置指示を写す）。</summary>
-    private readonly EsLabelElementHost _labelHost;
+    /// <summary>配置中のラベル要素（背景 + テキスト）。子の末尾側へ置くため常に最上位になる。</summary>
+    private readonly List<Border> _labels = [];
 
     /// <summary>コアが要求する効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。</summary>
     private readonly IMarqueeEffects _effects;
@@ -162,7 +161,6 @@ public sealed class MarqueeControl : Panel
         // 図形は専用の子キャンバスが描く（ラベル要素より先に子として加えるため、常にラベルの下になる）
         _shapes = new ShapeCanvas(this) { IsHitTestVisible = false };
         Add(_shapes);
-        _labelHost = new EsLabelElementHost(this);
 
         // フォーカスを失ったら nudge を終了する（カーソル非表示の残留防止）
         this.OnLostFocus(EndNudge);
@@ -440,7 +438,11 @@ public sealed class MarqueeControl : Panel
     {
         // 子（図形のキャンバスとラベル要素）へ利用可能サイズを伝搬する
         _shapes.Measure(availableSize);
-        _labelHost.Measure(availableSize);
+
+        foreach (var label in _labels)
+        {
+            label.Measure(availableSize);
+        }
 
         return Size.Empty;
     }
@@ -501,8 +503,59 @@ public sealed class MarqueeControl : Panel
         _shapes.Arrange(bounds);
 
         // 描画内容は本フェーズで 1 回だけ解決し、図形の描画（OnPaintSurface）と共有する
-        var elements = MarqueeLabelPlan.Resolve(ResolveFrame(bounds.Size.ToEsSize()), Paint, SkiaText.Measure);
-        _labelHost.Sync(elements, bounds);
+        SyncLabels(MarqueeLabelPlan.Resolve(ResolveFrame(bounds.Size.ToEsSize()), Paint, SkiaText.Measure), bounds);
+    }
+
+    /// <summary>ラベル要素（背景 + テキスト）を配置指示へ同期し、親の絶対座標を基準に配置する。</summary>
+    /// <param name="placements">配置するラベル（描画順に並ぶ）。</param>
+    /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
+    /// <remarks>
+    /// 余分な要素は親から外し、不足分は生成して子の末尾へ追加する（配置のたびに呼ばれる）。<br/>
+    /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。
+    /// </remarks>
+    private void SyncLabels(IReadOnlyList<MarqueeLabelPlacement> placements, Rect bounds)
+    {
+        while (_labels.Count > placements.Count)
+        {
+            var last = _labels[^1];
+            _labels.RemoveAt(_labels.Count - 1);
+            Remove(last);
+        }
+
+        while (_labels.Count < placements.Count)
+        {
+            var border = new Border().Child(new TextBlock());
+            _labels.Add(border);
+            Add(border);
+        }
+
+        for (var i = 0; i < placements.Count; i++)
+        {
+            var placement = placements[i];
+            var border = _labels[i];
+
+            Apply(border, placement);
+            border.Arrange(new Rect(
+                bounds.X + placement.Bounds.X, bounds.Y + placement.Bounds.Y,
+                placement.Bounds.Width, placement.Bounds.Height));
+        }
+    }
+
+    /// <summary>1 つのラベル要素の内容と体裁を配置指示に合わせる。</summary>
+    /// <param name="border">更新する要素（背景）。</param>
+    /// <param name="placement">配置指示（寸法は実寸を反映済み）。</param>
+    /// <remarks>本体は配置でサイズを確定するため、要素には内側余白だけを与える。</remarks>
+    private static void Apply(Border border, in MarqueeLabelPlacement placement)
+    {
+        border.Padding(placement.PaddingX, placement.PaddingY);
+        border.Background = placement.BackgroundColor.ToMewUIColor();
+
+        if (border.Child is TextBlock text)
+        {
+            text.Text = placement.Text;
+            text.FontSize = placement.FontSize;
+            text.Foreground = placement.TextColor.ToMewUIColor();
+        }
     }
 
     /// <summary>DPI の変更時に表示スケーリング係数を追従させる。</summary>

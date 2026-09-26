@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Common.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.MarqueeCore.Drawing;
@@ -8,8 +7,9 @@ namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;
 
 /// <summary><see cref="MarqueeLabelPlan"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
 /// <remarks>
-/// 文言・位置はコアが、色・フォントサイズは描画の設定が単一所有するため、本テストは「実寸の反映」と「要素への写像」だけを検証する<br/>
-/// （配置の計算そのものは <c>EsLabelLayout.ComputeAlignedBox</c> のテストが担う）。<br/>
+/// 文言・位置はコアが、色・フォントサイズ・内側余白は描画の設定が単一所有するため、<br/>
+/// 本テストは「実寸の反映」と「配置指示への写像」だけを検証する。
+/// <br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public class MarqueeLabelPlanTests
@@ -103,8 +103,8 @@ public class MarqueeLabelPlanTests
 
         // 基準点 (10, 20) がアライン（左端・上端）どおり背景の左上になる
         Assert.Equal(new EsPoint(10, 20), element.Bounds.TopLeft);
-        Assert.Equal(MeasuredSize.Width + EsLabelLayout.Padding * 2, element.Bounds.Width);
-        Assert.Equal(MeasuredSize.Height + EsLabelLayout.Padding * 2, element.Bounds.Height);
+        Assert.Equal(MeasuredSize.Width + MarqueePaint.LabelPaddingDefault * 2, element.Bounds.Width);
+        Assert.Equal(MeasuredSize.Height + MarqueePaint.LabelPaddingDefault * 2, element.Bounds.Height);
     }
 
     [Fact]
@@ -116,17 +116,28 @@ public class MarqueeLabelPlanTests
 
         var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(coordLabel: label), CreatePaint(), Measure));
 
-        Assert.Equal(200 - (MeasuredSize.Width + EsLabelLayout.Padding * 2), element.Bounds.X);
-        Assert.Equal(200 - (MeasuredSize.Height + EsLabelLayout.Padding * 2), element.Bounds.Y);
+        Assert.Equal(200 - (MeasuredSize.Width + MarqueePaint.LabelPaddingDefault * 2), element.Bounds.X);
+        Assert.Equal(200 - (MeasuredSize.Height + MarqueePaint.LabelPaddingDefault * 2), element.Bounds.Y);
     }
 
     [Fact]
-    public void Resolve_内側余白は背景矩形と文字原点の差になる()
+    public void Resolve_内側余白は体裁の値になる()
     {
         var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), CreatePaint(), Measure));
 
-        Assert.Equal(element.TextOrigin.X - element.Bounds.X, element.PaddingX);
-        Assert.Equal(element.TextOrigin.Y - element.Bounds.Y, element.PaddingY);
+        Assert.Equal(MarqueePaint.LabelPaddingDefault, element.PaddingX);
+        Assert.Equal(MarqueePaint.LabelPaddingDefault, element.PaddingY);
+    }
+
+    [Fact]
+    public void Resolve_内側余白の設定を配置へ反映する()
+    {
+        var paint = CreatePaint() with { LabelPadding = 7.0 };
+
+        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), paint, Measure));
+
+        Assert.Equal(7.0, element.PaddingX);
+        Assert.Equal(MeasuredSize.Width + 14.0, element.Bounds.Width);
     }
 
     [Fact]
@@ -147,15 +158,13 @@ public class MarqueeLabelPlanTests
     }
 
     [Fact]
-    public void Resolve_色と角丸を要素へ写す()
+    public void Resolve_色を要素へ写す()
     {
         var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(coordLabel: CreateCoordLabel()), CreatePaint(), Measure));
 
         // 色は描画の設定（本層が単一所有する）から写す
         Assert.Equal(DrawingColor.Yellow, element.TextColor);
         Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), element.BackgroundColor);
-        // サイズラベル・カーソル座標ラベルはいずれも角丸なしの矩形である
-        Assert.Equal(0, element.CornerRadius);
     }
 
     [Fact]

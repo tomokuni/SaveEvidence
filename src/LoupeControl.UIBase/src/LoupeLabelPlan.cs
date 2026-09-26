@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.LoupeCore.Drawing;
 
 
@@ -10,16 +9,19 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。コア（<see cref="EsUtil.Feature.LoupeCore.Loupe.ResolveContent"/>）は<br/>
 /// 文言・基準点・アラインを決めるが、実際の配置矩形はテキストの実寸に依存するため、<br/>
 /// 実寸測定（描画 API 依存）を UI 層から受け取って要素の矩形へ変換する。<br/>
-/// 体裁（内側余白）は <see cref="EsLabelLayout"/> が、要素の配置指示は <see cref="EsLabelElement"/> が単一所有する。<br/>
-/// フォントサイズと角丸は描画の設定（<see cref="LoupePaint"/>）が単一所有する（コアは値を持たない）。<br/>
+/// 体裁（内側余白・フォントサイズ・色・角丸）は描画の設定（<see cref="LoupePaint"/>）が単一所有する（コアは値を持たない）。<br/>
 /// <br/>
 /// <b>中心座標ラベルは常に最上位</b>である（UI の要素は親より後に描かれるため構造で成立する）。<br/>
 /// UI フレームワークに依存しない（測定関数をデリゲートで受け取る）ため、UI 初期化なしの <c>[Fact]</c> で検証できる。
 /// </remarks>
 public static class LoupeLabelPlan
 {
+    /// <summary>中心座標ラベル背景の左右の内側余白（DIP）。</summary>
+    /// <remarks>上下（<see cref="PaddingY"/>）より広くする（文字の左右に余白を確保するため）。</remarks>
+    private const double PaddingX = 4.0;
+
     /// <summary>中心座標ラベル背景の上下の内側余白（DIP）。</summary>
-    /// <remarks>左右（<see cref="EsLabelLayout.Padding"/>）より狭くする（ルーペ上端の帯へ収めるため）。</remarks>
+    /// <remarks>左右（<see cref="PaddingX"/>）より狭くする（ルーペ上端の帯へ収めるため）。</remarks>
     private const double PaddingY = 1.0;
 
     /// <summary>中心座標ラベルの配置指示を解決する。</summary>
@@ -29,7 +31,7 @@ public static class LoupeLabelPlan
     /// <returns>配置するラベル要素（1 要素）。表示しない場合は空。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="paint"/> または <paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>文言・位置はコアが、色・フォントサイズ・角丸は描画の設定が単一所有する（本クラスは実寸の反映のみ）。</remarks>
-    public static IReadOnlyList<EsLabelElement> Resolve(
+    public static IReadOnlyList<LoupeLabelPlacement> Resolve(
         LoupeTextPlacement? coordLabel, LoupePaint paint, Func<string, double, EsSize> measureText)
     {
         ArgumentNullException.ThrowIfNull(paint);
@@ -44,23 +46,41 @@ public static class LoupeLabelPlan
     /// <param name="measureText">テキストの実寸を測る関数。</param>
     /// <returns>要素の配置指示。</returns>
     /// <remarks>
-    /// 背景矩形の算出は <see cref="EsLabelLayout.ComputeAlignedBox"/> が単一所有する<br/>
-    /// （基準点がラベルのどこを指すかをアラインで受け取り、領域が確定している軸だけクランプする）。<br/>
-    /// 上下の余白はルーペ固有の値であり本クラスが単一所有する（左右は共通の <see cref="EsLabelLayout.Padding"/>）。
+    /// 背景矩形は「文字の実寸 + 内側余白 × 2」であり、基準点をアライン（<see cref="EsHorizontalAlign"/> /<br/>
+    /// <see cref="EsVerticalAlign"/>）の位置へ合わせる。描画領域をはみ出す場合は領域内へクランプする<br/>
+    /// （クランプは <see cref="EsSize.ClampOffset"/> が単一所有する。領域が未確定の軸はクランプしない）。<br/>
+    /// 上下の余白はルーペ固有の値であり本クラスが単一所有する。
     /// </remarks>
-    private static EsLabelElement ResolveElement(
+    private static LoupeLabelPlacement ResolveElement(
         in LoupeTextPlacement placement, LoupePaint paint, Func<string, double, EsSize> measureText)
     {
         var fontSize = paint.CoordLabelFontSize;
         var textSize = measureText(placement.Text, fontSize);
-        var box = EsLabelLayout.ComputeAlignedBox(
-            placement.Point, placement.ClampArea, textSize,
-            placement.Horizontal, placement.Vertical, EsLabelLayout.Padding, PaddingY);
-        var frame = new EsLabelFrame(
-            box, EsLabelLayout.ComputeOffsetTextOrigin(box.TopLeft, EsLabelLayout.Padding, PaddingY));
+        var width = textSize.Width + PaddingX * 2;
+        var height = textSize.Height + PaddingY * 2;
 
-        return EsLabelElement.Create(
-            frame, placement.Text, fontSize,
+        var x = placement.Horizontal switch
+        {
+            EsHorizontalAlign.Center => placement.Point.X - width / 2,
+            EsHorizontalAlign.Right => placement.Point.X - width,
+            _ => placement.Point.X,
+        };
+
+        var y = placement.Vertical switch
+        {
+            EsVerticalAlign.Middle => placement.Point.Y - height / 2,
+            EsVerticalAlign.Bottom => placement.Point.Y - height,
+            _ => placement.Point.Y,
+        };
+
+        var bounds = new EsRect(
+            placement.ClampArea.ClampOffset(x, width, EsAxis.X),
+            placement.ClampArea.ClampOffset(y, height, EsAxis.Y),
+            width,
+            height);
+
+        return new LoupeLabelPlacement(
+            bounds, PaddingX, PaddingY, placement.Text, fontSize,
             paint.CoordLabelColor, paint.CoordLabelBackgroundColor, paint.CoordLabelCornerRadius);
     }
 }

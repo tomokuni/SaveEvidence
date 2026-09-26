@@ -223,7 +223,7 @@ LoupeControl.AvaloniaUI/
 │   ├── LoupeRenderPipeline.cs      # ソース解決と描画の起動（IImage 型判定と Bitmap の複製は UI 固有。描画先は AvaloniaCanvas）
 │   ├── LoupeSourceResolver.cs      # IImage の対応型判定・破棄済み検出
 │   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知引数（UI 固有。中心座標ラベルはコントロールが表示する）
-│   └── （ラベル要素の適用は Platform.AvaloniaUI の EsLabelElementHost へ委譲する）
+│   └── （ラベル要素（`Border` + `TextBlock`）の配置は本コントロールが行う）
 ├── sample/                 # 独立サンプルアプリ（sample/README.md 参照）
 ├── tests/                  # UI 依存の単体テスト（Avalonia ヘッドレス・直列）
 ├── SPEC_ExtFunc.md         # 外部機能仕様書

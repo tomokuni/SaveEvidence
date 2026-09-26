@@ -2,7 +2,6 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.MarqueeCore.Drawing;
 using EsUtil.SaveEvidence.Marquee.UIBase;
 
@@ -55,15 +54,16 @@ public class FadeMaskHostLabelRendererTests
     private static MarqueeDrawContent CreateContent(EsRect? holeRect, MarqueeTextPlacement? sizeLabel = null)
         => new(default, default, holeRect, null, null, sizeLabel, null, []);
 
-    /// <summary>穴あけ矩形の左上から次の行の上端を求める（行送りはコアが単一所有する）。</summary>
-    /// <param name="top">現在の上端。</param>
-    /// <param name="fontSize">フォントサイズ。</param>
-    /// <returns>次の行の上端。</returns>
-    private static double NextTop(double top, double fontSize) => EsLabelLayout.NextTop(top, fontSize, EsLabelLayout.Padding);
-
     /// <summary>テスト用の選択矩形コントロールの描画設定を生成する（ラベルの行送りにフォントサイズを使う）。</summary>
     /// <returns>描画の設定。</returns>
     private static MarqueePaint CreatePaint() => new();
+
+    /// <summary>穴あけ矩形の左上から次の行の上端を求める（行送り = 行の高さ + 内側余白 × 2）。</summary>
+    /// <param name="top">現在の上端。</param>
+    /// <param name="fontSize">フォントサイズ。</param>
+    /// <returns>次の行の上端。</returns>
+    private static double NextTop(double top, double fontSize)
+        => top + fontSize + CreatePaint().LabelPadding * 2;
 
     [Fact]
     public void 描画_穴あけ矩形が無ければ何も描かない()

@@ -2,13 +2,12 @@
 
 ## 概要
 
-`Common` は、SaveEvidence のソリューション内で共有する**UI 非依存の契約**を提供します。
+`Common` は、SaveEvidence のソリューション内で共有する**UI 非依存の描画ポート**を提供します。
 
 1. **描画ポート**（`IEsCanvas`）— コア側の描画手順が唯一呼ぶ即時描画ポート
-2. **ラベルの値**（`EsLabelFrame` / `EsLabelElement`）— 配置の値と、UI が要素として置くための配置指示
+2. **矩形列挙子の契約**（`IEsRectWalker<TSelf>`）— `IEsCanvas.FillRects` が受け取る列挙子の型
 
-**ラベル契約（`IEsLabel`）と要素への写像（`EsLabelExtensions`）は置きません**（テキストを要素として置くか画像として描くかは UI 層の判断であり、コアは文言・基準点・アライン・領域だけを渡す）。
-3. **ラベルの体裁**（`EsLabelLayout` / `EsLabelMetrics` / `EsLabelDefaults` / `EsLabelElement.Create`）— 背景と文字の組み立ての単一所有
+**ラベル専用の型は置きません**（配置の値・体裁・要素への写像）。ラベルの体裁（内側余白・フォントサイズ・色・角丸）と実寸 → 配置矩形の写像は描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase` の `MarqueePaint` / `LoupePaint` と `MarqueeLabelPlan` / `LoupeLabelPlan`）が単一所有し、テキストを要素として置くか画像として描くかは UI 層の判断です。コアは文言・基準点・アライン・領域だけを渡します。
 
 外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
 
@@ -41,7 +40,7 @@ graph LR
 ```
 
 - 依存の向きは **各層 → Common → Platform.Core** の一方向です。
-- **`Platform.Core` は Common を参照しません**（Common が `Platform.Core` の幾何値型だけを使うため）。
+- **`Platform.Core` は Common を参照しません**（Common が `Platform.Core` の幾何値型とビットマップだけを使うため）。
 - UI フレームワークと外部パッケージへの依存はありません。
 
 ## コンポーネント構成
@@ -50,11 +49,6 @@ graph LR
 | --- | --- | --- |
 | `Imaging/IEsCanvas.cs` | `public interface` | 即時描画ポート（10 メンバー） |
 | `Imaging/IEsRectWalker.cs` | `public interface` | 矩形の列を確保なしで走査する列挙子（構造体）の契約（`IEsCanvas.FillRects` の引数） |
-| `Imaging/EsLabelFrame.cs` | `public readonly record struct` | 配置の値（背景矩形・文字の原点） |
-| `Imaging/EsLabelElement.cs` | `public readonly record struct` | UI 要素の配置指示（`Create` が写像を単一所有する） |
-| `Imaging/EsLabelLayout.cs` | `public static class` | 体裁（背景・文字の原点・アライン・行送り）の単一所有 |
-| `Imaging/EsLabelMetrics.cs` | `public static class` | フォントサイズの安全域と補正 |
-| `Imaging/EsLabelDefaults.cs` | `public static class` | 既定の色とフォントサイズ |
 
 ## クラス図
 
@@ -77,114 +71,62 @@ classDiagram
     +MoveNext() bool
     +EsRect Current
   }
-  class EsLabelFrame {
-    <<readonly record struct>>
-    +EsRect Background
-    +EsPoint TextOrigin
-  }
-  class EsLabelElement {
-    <<readonly record struct>>
-    +EsRect Bounds
-    +EsPoint TextOrigin
-    +string Text
-    +double FontSize
-    +Color TextColor
-    +Color BackgroundColor
-    +double CornerRadius
-    +double PaddingX
-    +double PaddingY
-    +Create(...)$ EsLabelElement
-  }
-  class EsLabelLayout {
-    <<static>>
-    +double Padding
-    +ComputeAlignedBox(...)$ EsRect
-    +ComputeOffsetTextOrigin(...)$ EsPoint
-    +NextTop(...)$ double
-  }
-  class EsLabelMetrics {
-    <<static>>
-    +double FontSizeMin
-    +double FontSizeMax
-    +CoerceFontSize(value, defaultValue)$ double
-  }
-  class EsLabelDefaults {
-    <<static>>
-    +Color TextColor
-    +Color BackgroundColor
-    +double FontSize
-  }
 
   IEsCanvas ..> IEsRectWalker : FillRects の引数として受ける
-  EsLabelLayout ..> EsLabelFrame : 生成
-  EsLabelElement ..> EsLabelFrame : 取り込む
 ```
 
-## データフロー（ラベルの配置）
+## データフロー（描画と実寸測定）
 
 ```mermaid
 sequenceDiagram
   participant UI as UI 層（コントロール）
-  participant Plan as UIBase の XxxLabelPlan
+  participant R as 描画層（XxxRenderer）
   participant Core as コントロールのコア
-  participant C as Common
   participant Port as IEsCanvas 実装
 
-  Core->>C: テキスト配置（文言・基準点・アライン・領域）を用意する
-  UI->>Plan: Resolve(配置, 描画の設定, measureText)
-  Plan->>Port: MeasureText(text, fontSize)
-  Port-->>Plan: 実寸（EsSize）
-  Plan->>C: EsLabelLayout.ComputeAlignedBox(point, areaSize, 実寸, アライン, 余白)
-  C-->>Plan: 背景矩形（EsRect）
-  Plan-->>UI: EsLabelElement（背景矩形・文字原点・外観）
+  Core->>Core: 1 フレーム分の描画内容（層の順序・矩形・文言と基準点）を解決する
+  Core->>R: Draw(canvas, content)
+  R->>Port: 層の順序どおりに描く（FillRect / DrawLine / DrawImage 等）
+  UI->>Port: MeasureText(text, fontSize)
+  Port-->>UI: 実寸（EsSize。実寸は描画 API でしか測れない）
   UI->>UI: 自 UI の要素（Border + TextBlock 等）を置くか、画像として描く
 ```
 
-**実寸は描画 API でしか測れない**ため、測定は UI 層が行い、体裁の適用は本プロジェクトが単一所有します。**テキストをどう描くか（要素 / 画像）は UI 層が決めます**。
+**実寸は描画 API でしか測れない**ため、測定と配置の反映は UI 層が行います。**テキストをどう描くか（要素 / 画像）も UI 層が決めます**。
 
 ## 単一所有（Single Source of Truth）
 
 | 内容 | 所有者 |
 | --- | --- |
 | 描画 API の抽象（描画の可変性） | `IEsCanvas`（本プロジェクト） |
-| ラベルの体裁（背景 = 実寸 + 内側余白×2・文字の原点・アライン・行送り） | `EsLabelLayout` |
-| ラベルの基準点がどこを指すかの指定 | `EsHorizontalAlign` / `EsVerticalAlign`（`Platform.Core.Geometry`。ラベルに限らない汎用値） |
-| 配置と外観から要素の配置指示を組み立てる手順 | `EsLabelElement.Create` |
-| フォントサイズの安全域（6〜48）と補正 | `EsLabelMetrics` |
-| ラベルの既定の色・フォントサイズ | `EsLabelDefaults` |
-| ラベルの**色**の実体 | 呼び出し側（描画にだけ必要な設定。コントロールの UIBase が所有する） |
 | ビットマップ（`EsBitmap`）とピクセル操作 | `Platform.Core`（汎用のため本プロジェクトへは移さない） |
 | Skia との相互変換 | `Platform.Skia` |
+| 描画の層の順序と描画手順 | コアの契約（`IMarqueeRenderer` / `ILoupeRenderer`）と描画層の実装 |
+| ラベルの体裁（内側余白・フォントサイズ・色・角丸） | 描画層の設定（`MarqueePaint` / `LoupePaint`） |
+| 実寸 → ラベル配置矩形の写像 | 描画層（`MarqueeLabelPlan` / `LoupeLabelPlan`） |
+| ラベルの文言・基準点・アライン・クランプ領域 | コア（`MarqueeTextPlacement` / `LoupeTextPlacement`） |
 
 ## 例外処理ポリシー
 
 | 状況 | 挙動 |
 | --- | --- |
 | 引数の null | 各実装が `ArgumentNullException`（呼び出し側の実装誤りであり回復して続行すべき状況ではない） |
-| 実寸が 0（未測定） | 例外にせず、体裁の計算がそのまま成立する（背景は内側余白だけで決まる） |
-| フォントサイズが範囲外・非有限 | `EsLabelMetrics.CoerceFontSize` が安全域または既定値へ補正する（例外にしない） |
+| 空の矩形列 | `FillRects` は何もせずに戻る（描画のたびに呼ばれるため例外にしない） |
+| 色のアルファ 0 | 描画 API にそのまま渡す（「描くかどうか」の判定は描画内容の解決が単一所有する） |
 
-本プロジェクトは外部 I/O・非同期処理・リソース解放を持ちません（値と純粋計算のみ）。
+本プロジェクトは外部 I/O・非同期処理・リソース解放を持ちません（契約のみ）。
 
 ## 可視性ポリシー
 
 - 全型が `public` です。各コントロールのコア（別プロジェクト）と各 UI が同じ契約を使うためです。
-- `Common.Tests` からのみ `internal` 型へアクセスできます（現在 `internal` 型はありません）。
+- `internal` 型はありません。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。
 
 ## テスト
 
-```text
-tests/
-├── Common.Tests.csproj
-└── Imaging/
-    ├── EsLabelElement.Tests.cs      # 写像結果の値・内側余白の導出
-        ├── EsLabelLayout.Tests.cs       # 体裁・行送り・配置（境界とクランプ）
-    └── EsLabelMetrics.Tests.cs      # フォントサイズの安全域（非有限値を含む）
-```
-
-UI 初期化が不要なため、すべて `[Fact]` / `[Theory]` で並列実行されます。
+本プロジェクトは契約のみを持ち、テストプロジェクトを持ちません（実装が無いため検証対象がありません）。実装は各 UI のアダプタであり、それぞれの利用側のテストが検証します。
 
 ```powershell
-dotnet test src/Common/tests/Common.Tests.csproj
+dotnet test src/Platform.AvaloniaUI/tests/Platform.AvaloniaUI.Tests.csproj
+dotnet test src/Platform.Skia/tests/Platform.Skia.Tests.csproj
 ```

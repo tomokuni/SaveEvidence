@@ -1,6 +1,5 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Common.Imaging;
 
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
@@ -24,8 +23,8 @@ public class LoupePaintTests
         Assert.Equal(DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), paint.CheckerColorB);
         Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), paint.FrameColor);
         // 座標ラベルは白文字・黒 60% 背景
-        Assert.Equal(EsLabelDefaults.TextColor, paint.CoordLabelColor);
-        Assert.Equal(EsLabelDefaults.BackgroundColor, paint.CoordLabelBackgroundColor);
+        Assert.Equal(DrawingColor.White, paint.CoordLabelColor);
+        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), paint.CoordLabelBackgroundColor);
     }
 
     [Fact]

@@ -44,13 +44,10 @@
     <Project Path="src/CropViewControl.MewUI/src/CropViewControl.MewUI.csproj" />
     <Project Path="src/CropViewControl.MewUI/tests/CropViewControl.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Common/" />
-  <Folder Name="/src/Common/src/">
+  <Folder Name="/src/Common/">
     <Project Path="src/Common/src/Common.csproj" />
   </Folder>
-  <Folder Name="/src/Common/tests/">
-    <Project Path="src/Common/tests/Common.Tests.csproj" />
-  </Folder>
+  <Folder Name="/src/Common/src/" />
   <Folder Name="/src/CropViewControl.AvaloniaUI/">
     <Project Path="src/CropViewControl.AvaloniaUI/src/CropViewControl.AvaloniaUI.csproj" />
     <Project Path="src/CropViewControl.AvaloniaUI/tests/CropViewControl.AvaloniaUI.Tests.csproj" />

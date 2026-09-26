@@ -1,6 +1,5 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Common.Imaging;
 
 
 namespace EsUtil.SaveEvidence.Marquee.UIBase.Tests;
@@ -23,10 +22,10 @@ public class MarqueePaintTests
         Assert.Equal(DrawingColor.FromArgb(255, 169, 169, 169), paint.HandleBorderColor);
         Assert.Equal(DrawingColor.White, paint.MarkerColor);
         // ラベルは白文字・黒 60% 背景
-        Assert.Equal(EsLabelDefaults.TextColor, paint.SizeLabelColor);
-        Assert.Equal(EsLabelDefaults.BackgroundColor, paint.SizeLabelBackgroundColor);
-        Assert.Equal(EsLabelDefaults.TextColor, paint.CoordLabelColor);
-        Assert.Equal(EsLabelDefaults.BackgroundColor, paint.CoordLabelBackgroundColor);
+        Assert.Equal(DrawingColor.White, paint.SizeLabelColor);
+        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), paint.SizeLabelBackgroundColor);
+        Assert.Equal(DrawingColor.White, paint.CoordLabelColor);
+        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), paint.CoordLabelBackgroundColor);
     }
 
     [Fact]

@@ -39,7 +39,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> LoupeControl.UIBase ← 本プロジェクト   どう描くか（描画手順）＋ 組み込み先があるときだけ必要な規則
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform）
 ※ コアは本層を参照しない（本層の描画実装はコアの契約 ILoupeRenderer を実装する）。
 ※ 本層を使うのは LoupeControl.AvaloniaUI のみ（MewUI は中間ビットマップを持たず同期描画するため不要）。
@@ -172,9 +172,7 @@ src/LoupeControl.UIBase/
 | 寸法の DIP → 物理ピクセル換算 | コア（描画入力 `LoupeRenderRequest` の換算済み寸法） |
 | 描画先のサイズ決定（クランプ） | コア（`LoupeRenderRequest.ResolvePixelSize`） |
 | ラベルの文言と基準点 | コア（`LoupeTextPlacement`） |
-| ラベルのフォントサイズと角丸 | 本層（`LoupePaint`） |
-| ラベルの色 | 本層（`LoupePaint.CoordLabelColor` / `CoordLabelBackgroundColor`） |
-| ラベルの体裁（背景・文字原点） | `Common`（`EsLabelLayout`） |
+| ラベルのフォントサイズ・角丸・色・内側余白 | 本層（`LoupePaint` / `LoupeLabelPlan`） |
 | 描画 API の呼び出し（背景 → 文字の順序） | `Platform.Core`（`SkiaLabel` / `IEsCanvas.DrawLabel`） |
 | 再描画要求の結合（1 フレームに 1 回） | `LoupeRenderCoordinator.RequestRender` |
 | 再描画の世代番号と、古い結果を破棄する判断 | `LoupeRenderCoordinator.RenderCore` / `ShouldApply` |

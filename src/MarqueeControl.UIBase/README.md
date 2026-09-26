@@ -29,7 +29,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> MarqueeControl.UIBase ← 本プロジェクト   どう描くか（色・描画手順）＋ 組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+           ├──> Common（IEsCanvas・IEsRectWalker）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ コアは本層を参照しない（本層の描画実装はコアの契約 IMarqueeRenderer を実装する）。
 ```
@@ -42,11 +42,12 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 | 型 | 責務 |
 | --- | --- |
-| `MarqueePaint` | **色とラベルのフォントサイズの単一所有者**（ハンドル・十字マーカー・ラベル・装飾）。`Default` を基点に `with` 式で部分変更する |
+| `MarqueePaint` | **色とラベルの体裁（フォントサイズ・内側余白）の単一所有者**（ハンドル・十字マーカー・ラベル・装飾）。`Default` を基点に `with` 式で部分変更する |
 | `MarqueeRenderer` | `MarqueeRendererBase` の既定実装（sealed）。描画の設定（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形のみ。**テキストは描かない**）とフォントサイズ（`SizeLabelFontSize` / `CoordLabelFontSize`）を提供する（描画の契約には含めない） |
 | `MarqueeOuterRenderer` | 選択矩形の外側の装飾（暗転マスク・穴あけ枠）を描く（色は引数の `MarqueePaint` から引く） |
 | `MarqueeInnerRenderer` | 穴あけ矩形の内側の装飾（塗り・内枠）を描く（色は引数の `MarqueePaint` から引く） |
-| `MarqueeLabelPlan` | コアのテキスト配置（`MarqueeTextPlacement`）からラベル要素（`EsLabelElement`）の配置指示を解決する（実寸 → 配置の写像。フォントサイズと色は引数の `MarqueePaint` から写す） |
+| `MarqueeLabelPlacement` | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
+| `MarqueeLabelPlan` | コアのテキスト配置（`MarqueeTextPlacement`）からラベル要素の配置指示（`MarqueeLabelPlacement`）を解決する（実寸 → 配置の写像。体裁は引数の `MarqueePaint` から写す） |
 | `MarqueeHostLabelRenderer` | ホストが描く付加情報ラベル（操作・情報）の体裁を適用して描く（文言はホストが与える） |
 
 ### 組み込み規則
@@ -68,7 +69,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 図形（装飾・ハンドル・始点マーカー） | 本層 | `DrawShapes`（**テキストは描かない**） |
 | テキスト（サイズ・カーソル座標） | UI 層（要素として置くか画像として描くか） | 要素として置く場合は `MarqueeLabelPlan.Resolve`（配置指示）の結果を要素へ写す（子要素は親より後に描かれるため**常に最上位**） |
 
-**コアはテキストを値（`MarqueeTextPlacement`）として渡します**（文言・基準点・アライン・描画領域）。**フォントサイズ・色は描画の設定（`MarqueePaint`）**、体裁（背景 = 文字の実寸 + 内側余白 × 2、文字原点、アライン、行送り）は `EsLabelLayout`（`Common`）、実寸から要素の矩形を求める写像は `MarqueeLabelPlan` が単一所有します。
+**コアはテキストを値（`MarqueeTextPlacement`）として渡します**（文言・基準点・アライン・描画領域）。**体裁（フォントサイズ・色・内側余白）と実寸 → 配置矩形の写像は本層（`MarqueePaint` / `MarqueeLabelPlan`）が単一所有**します。
 
 ## 描画の差し替え
 
@@ -171,7 +172,7 @@ _viewport.Notify();   // 状態スナップショットの通知 + 再描画（�
 ```text
 MarqueeControl.UIBase
     ├── Feature.MarqueeCore（描画内容の契約・選択の判断・公開ファサード Marquee）
-    ├── Common（IEsCanvas・EsLabelLayout（ラベルの体裁））
+    ├── Common（IEsCanvas・IEsRectWalker）
 ├── Platform.Core（Es* 値型・SkiaEsCanvas・ScrollMath）
     └── Microsoft.Extensions.Logging.Abstractions（ズーム要求の LoggerMessage 定義）
 ```

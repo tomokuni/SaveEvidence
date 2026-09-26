@@ -6,7 +6,6 @@ using EsUtil.SaveEvidence.Loupe.AvaloniaUI.Logging;
 using EsUtil.Feature.LoupeCore;
 using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Feature.LoupeCore.Imaging;
-using EsUtil.Platform.AvaloniaUI.Labels;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
@@ -85,7 +84,6 @@ public sealed class LoupeControl : Panel
         // ルーペ画像を表示する子要素を最初に加える（子は親より後に描かれるため、ラベル要素より下になる）
         _image = new Image { Stretch = Stretch.Fill, IsHitTestVisible = false };
         Children.Add(_image);
-        _labelHost = new EsLabelElementHost(this);
 
         // 初期状態は非表示（表示指示は IsVisible=true で行う）
         IsVisible = false;
@@ -126,8 +124,8 @@ public sealed class LoupeControl : Panel
     /// <summary>ルーペ画像を表示する子要素（生成ビットマップを <see cref="Image.Source"/> へ設定する）。</summary>
     private readonly Image _image;
 
-    /// <summary>ラベル要素（背景 + テキスト）を子として同期するホスト（コアの配置指示を写す）。</summary>
-    private readonly EsLabelElementHost _labelHost;
+    /// <summary>配置中のラベル要素（背景 + テキスト）。子の末尾側へ置くため常に最上位になる。</summary>
+    private readonly List<Border> _labels = [];
 
     /// <summary>テキストの実寸測定に使うブラシ（測定には色が影響しないため固定で共有する。外観値ではない）。</summary>
     private static readonly SolidColorBrush s_measureBrush = new(Colors.White);
@@ -221,20 +219,68 @@ public sealed class LoupeControl : Panel
     /// <param name="finalSize">本コントロールへ割り当てられたサイズ（DIP）。</param>
     /// <returns>割り当てサイズ。</returns>
     /// <remarks>
-    /// <b>位置はコアが決める</b>: コアの配置指示（<see cref="LoupeLabelPlan"/>）に従ってラベル要素を配置するだけであり、<br/>
-    /// 本クラスは位置の計算を持たない。要素は <see cref="Panel.Children"/> の末尾へ置かれるため常に最上位になる。<br/>
-    /// 配置指示（実寸 → 配置矩形の写像）は描画実装（<see cref="LoupeFacade.Renderer"/>。既定実装は
-    /// <see cref="LoupeLabelPlan"/> へ委譲）が単一所有し、要素への写像は UI 共通のホストが単一所有する。<br/>
-    /// 実寸は自 UI の描画 API（<see cref="FormattedText"/>）で測って渡す（コアは実寸から背景の大きさ・中央寄せの位置を計算する）。
+    /// <b>位置はコアと描画層が決める</b>: コアのテキスト配置から <see cref="LoupeLabelPlan"/> が求めた配置指示に従って<br/>
+    /// ラベル要素を配置するだけであり、本クラスは位置の計算を持たない。要素は <see cref="Panel.Children"/> の末尾へ<br/>
+    /// 置かれるため常に最上位になる。実寸は自 UI の描画 API（<see cref="FormattedText"/>）で測って渡す。
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
         // テキストはコアが文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
         // （実寸は要素の大きさ（親から割り当てられたサイズ）を基準に測る）
         var content = _loupe.ResolveContent(_loupe.CreateRequest(finalSize.Width));
-        _labelHost.Sync(LoupeLabelPlan.Resolve(content.CoordLabelText, Paint, MeasureText));
+        SyncLabels(LoupeLabelPlan.Resolve(content.CoordLabelText, Paint, MeasureText));
 
         return base.ArrangeOverride(finalSize);
+    }
+
+    /// <summary>ラベル要素（背景 + テキスト）を配置指示へ同期する。</summary>
+    /// <param name="placements">配置するラベル（描画順に並ぶ）。</param>
+    /// <remarks>
+    /// 余分な要素は親から外し、不足分は生成して子の末尾へ追加する（配置のたびに呼ばれる）。<br/>
+    /// 各要素は左上寄せと <c>Margin</c> で絶対配置する（配置矩形はコアと描画層が単一所有する）。
+    /// </remarks>
+    private void SyncLabels(IReadOnlyList<LoupeLabelPlacement> placements)
+    {
+        while (_labels.Count > placements.Count)
+        {
+            var last = _labels[^1];
+            _labels.RemoveAt(_labels.Count - 1);
+            Children.Remove(last);
+        }
+
+        while (_labels.Count < placements.Count)
+        {
+            var border = new Border { Child = new TextBlock { TextWrapping = TextWrapping.NoWrap } };
+            _labels.Add(border);
+            Children.Add(border);
+        }
+
+        for (var i = 0; i < placements.Count; i++)
+        {
+            Apply(_labels[i], placements[i]);
+        }
+    }
+
+    /// <summary>1 つのラベル要素の内容と配置を配置指示に合わせる。</summary>
+    /// <param name="border">更新する要素（背景）。</param>
+    /// <param name="placement">配置指示（寸法は実寸を反映済み）。</param>
+    private static void Apply(Border border, in LoupeLabelPlacement placement)
+    {
+        border.Background = SolidColorBrushCache.GetOrCreate(placement.BackgroundColor);
+        border.CornerRadius = new CornerRadius(placement.CornerRadius);
+        border.Padding = new Thickness(placement.PaddingX, placement.PaddingY);
+        border.Width = placement.Bounds.Width;
+        border.Height = placement.Bounds.Height;
+        border.Margin = new Thickness(placement.Bounds.X, placement.Bounds.Y, 0, 0);
+        border.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        border.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
+
+        if (border.Child is TextBlock text)
+        {
+            text.Text = placement.Text;
+            text.FontSize = placement.FontSize;
+            text.Foreground = SolidColorBrushCache.GetOrCreate(placement.TextColor);
+        }
     }
 
     /// <summary>テキストの実寸を測定する（描画 API でしか測れない値）。</summary>

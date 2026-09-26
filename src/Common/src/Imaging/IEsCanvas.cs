@@ -111,7 +111,8 @@ public interface IEsCanvas
     /// <param name="fontSize">フォントサイズ（描画単位）。</param>
     /// <returns>テキストの実寸（描画単位）。</returns>
     /// <remarks>
-    /// 実寸は描画 API でしか測れないため、コア側の配置計算（<see cref="EsLabelLayout"/>）へ実寸を渡す入口となる。
+    /// 実寸は描画 API でしか測れないため、配置の計算（文字の実寸から背景の大きさと位置を求める処理）へ<br/>
+    /// 実寸を渡す入口となる。
     /// </remarks>
     EsSize MeasureText(string text, double fontSize);
 }
