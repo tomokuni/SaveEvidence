@@ -22,7 +22,7 @@
 | `CenterPoint` | `EsPoint?` | `null` | — | 拡大中心（元画像ピクセル座標）。null の場合は市松模様のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 下表のとおり | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する |
 | `Paint` | `LoupePaint` | `LoupePaint.Default` | — | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）。`with` 式で部分変更する。色はコアの計算に入らない |
-| `RenderScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。設定には含めない） |
+| `DipToDeviceScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。設定には含めない） |
 | `Renderer` | `ILoupeRenderer` | `Paint` の色を保持する `LoupeRendererMewUI` | — | 描画の実装（**描画の差し替え**。null 不可）。設定すると再生成とラベル要素の再配置を要求する |
 
 `Options`（コアの `LoupeOptions`。UI 非依存の値）の項目:
@@ -69,7 +69,7 @@
 
 | 項目 | 決定方法 |
 | --- | --- |
-| 表示サイズ（物理ピクセル） | `Options.RequestedSize`（DIP） × `RenderScaling`。キャンバスより大きい場合はキャンバスに合わせる |
+| 表示サイズ（物理ピクセル） | `Options.RequestedSize`（DIP） × `DipToDeviceScaling`。キャンバスより大きい場合はキャンバスに合わせる |
 | 拡大率 | `Options.ZoomLevel` 倍（最近傍で拡大する） |
 | 切り出し領域の一辺 | `ceil(表示サイズ / Options.ZoomLevel)` ドメインピクセル |
 | 切り出し領域の左上 | 拡大中心 − 切り出し一辺 / 2（整数化）。画像の外へはみ出した部分（左・上・右・下）は透明パディングとなる |
@@ -87,7 +87,7 @@
 
 ## DPI
 
-モニター間の移動で DPI が変わると、`RenderScaling` は DPI から換算した値（DIP 基準 96 DPI ≠ 1.0）へ自動更新されます（換算規則は `DpiScaler.ToScaling` が単一所有します）。
+モニター間の移動で DPI が変わると、`DipToDeviceScaling` は DPI から換算した値（DIP 基準 96 DPI ≠ 1.0）へ自動更新されます（換算規則は `DpiScaler.ToScaling` が単一所有します）。
 ホストがスケーリング係数を設定する必要はありません（明示設定した値も DPI 変更時は上書きされます）。
 
 ## エラー時の挙動
@@ -109,7 +109,7 @@
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `Canvas` | `SKCanvas` | ルーペを描画したキャンバス（座標系はルーペ画像のピクセル） |
-| `PixelSize` | `int` | 実際に描画したルーペの一辺のサイズ（物理ピクセル。`Options.RequestedSize` × `RenderScaling` をキャンバスでクランプした値） |
+| `PixelSize` | `int` | 実際に描画したルーペの一辺のサイズ（物理ピクセル。`Options.RequestedSize` × `DipToDeviceScaling` をキャンバスでクランプした値） |
 | `CaptureTopLeft` | `EsPoint?` | 切り出し領域の左上（ドメイン座標）。中心未設定時は null（オーバーレイを描画できない） |
 | `Scale` | `double` | ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。DPI スケーリングの影響を受けない） |
 
@@ -119,11 +119,11 @@
 
 ## ログ
 
-`Log` プロパティへ `ILogger` を設定すると、描画の例外と `Source` の変更を出力します（未設定・null の場合は `NullLogger` になり出力しません）。設定（`Options`）・環境値（`RenderScaling`）・拡大中心（`CenterPoint`）の変更ログはコアが出力するため、本コントロールは同じロガーをコアへも渡します。
+`Log` プロパティへ `ILogger` を設定すると、描画の例外と `Source` の変更を出力します（未設定・null の場合は `NullLogger` になり出力しません）。設定（`Options`）・環境値（`DipToDeviceScaling`）・拡大中心（`CenterPoint`）の変更ログはコアが出力するため、本コントロールは同じロガーをコアへも渡します。
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | `[LoupeCtrl] Setting: {名前} {前} → {後}`（Source / CenterPoint / RequestedSize / RenderScaling / ZoomLevel。補正後の値を渡し、変化判定（同一値・同一インスタンスなら出力しない）はコアのログ定義が単一所有する。設定の変更は変化した項目だけを出力する） |
+| Debug | `[LoupeCtrl] Setting: {名前} {前} → {後}`（Source / CenterPoint / RequestedSize / DipToDeviceScaling / ZoomLevel。補正後の値を渡し、変化判定（同一値・同一インスタンスなら出力しない）はコアのログ定義が単一所有する。設定の変更は変化した項目だけを出力する） |
 | Error | `[LoupeCtrl] Update exception`（描画の例外。スタックトレース付き。アプリは継続する） |
 
 数値の補正（`coerce`）と変更ログ（`changed`）は**プロパティの登録（`MewProperty.Register`）**へ渡します。したがって setter を経由しない設定（バインディング・`MewObject.SetValue` 相当）でも安全域が保たれ、変更が記録されます（Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約）。

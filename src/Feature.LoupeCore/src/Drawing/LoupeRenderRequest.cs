@@ -24,7 +24,7 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
 /// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。切り上げ・最低 1）。</param>
 /// <param name="Options">ルーペの設定（拡大率・寸法。色は描画の設定が単一所有する）。</param>
-/// <param name="Scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
+/// <param name="DipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
 /// <param name="CheckerSizePixels">市松模様の 1 タイルの一辺（物理ピクセル。換算済み。0 は市松模様を描かない）。</param>
 /// <param name="FrameWidthPixels">外枠の太さ（物理ピクセル。換算済み。0 は外枠を描かない）。</param>
 /// <remarks>
@@ -37,7 +37,7 @@ public readonly record struct LoupeRenderRequest(
     double DisplaySize,
     int PixelSize,
     LoupeOptions Options,
-    double Scaling,
+    double DipToDeviceScaling,
     int CheckerSizePixels,
     int FrameWidthPixels)
 {

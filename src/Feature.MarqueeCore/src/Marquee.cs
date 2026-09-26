@@ -50,21 +50,21 @@ public sealed partial class Marquee
     /// <summary>カーソルサービス（nudge のカーソル移動・表示切替）。null の場合はカーソル操作を行わない。</summary>
     private readonly ICursorService? _cursor;
 
-    /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は <see cref="Scaling"/> を倍率として使う）。</summary>
+    /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は <see cref="DomainToDipScaling"/> を倍率として使う）。</summary>
     /// <remarks>
     /// セッションは null を等価変換に置換して保持するため、<b>指定の有無（null かどうか）は本フィールドだけが保持する</b>。<br/>
-    /// この区別が必要なのは、ポート未指定時に倍率（<see cref="Scaling"/>）を使う規則をコアが単一所有するためである。
+    /// この区別が必要なのは、ポート未指定時に倍率（<see cref="DomainToDipScaling"/>）を使う規則をコアが単一所有するためである。
     /// </remarks>
     private ICoordTransform? _coordinatePort;
 
     /// <summary>現在の装飾の設定（暗転マスク・穴あけ枠・枠線・内側の塗り）。</summary>
     private MarqueeDecoOptions _decoOptions = MarqueeDecoOptions.Default;
 
-    /// <summary>サイズラベルの自動生成に使うスケーリング係数（0 以下は <see cref="Scaling"/> と同値）。</summary>
+    /// <summary>サイズラベルの自動生成に使うスケーリング係数（0 以下は <see cref="DomainToDipScaling"/> と同値）。</summary>
     private double _displayScaleScaling;
 
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
-    private double _scaling = Limits.ScalingDefault;
+    private double _scaling = Limits.DomainToDipScalingDefault;
 
     /// <summary>サイズラベルの文言プロバイダ（null = 未指定。未指定時はコアが自動生成する）。</summary>
     private Func<string?>? _sizeLabelOverrideProvider;
@@ -123,7 +123,7 @@ public sealed partial class Marquee
     /// 選択矩形と十字マーカーの描画はセッションのポートのみを使うため本値の影響を受けない<br/>
     /// （本値が影響するのはサイズラベル・座標ラベルの位置と寸法）。
     /// </remarks>
-    public double Scaling
+    public double DomainToDipScaling
     {
         get => _scaling;
         set => SetAndRedraw(ref _scaling, value);
@@ -168,7 +168,7 @@ public sealed partial class Marquee
     }
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
-    /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値。</value>
+    /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
     /// <remarks>0 以下を倍率と同値として扱う規則は <see cref="Limits.ResolveDisplayScale"/> が単一所有する。</remarks>
     public double DisplayScaleScaling
     {

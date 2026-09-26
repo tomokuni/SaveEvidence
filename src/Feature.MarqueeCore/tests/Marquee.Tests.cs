@@ -243,10 +243,10 @@ public class MarqueeTests
     {
         var marquee = CreateMarquee(null, out var effects);
 
-        marquee.Scaling = 2.0;
-        marquee.Scaling = 2.0;
+        marquee.DomainToDipScaling = 2.0;
+        marquee.DomainToDipScaling = 2.0;
 
-        Assert.Equal(2.0, marquee.Scaling);
+        Assert.Equal(2.0, marquee.DomainToDipScaling);
         Assert.Equal(1, effects.RedrawCount);
     }
 
@@ -258,7 +258,7 @@ public class MarqueeTests
     public void DisplayScaleScaling_0以下は倍率と同値になる(double displayScale)
     {
         var marquee = CreateMarquee(null, out _);
-        marquee.Scaling = 1.25;
+        marquee.DomainToDipScaling = 1.25;
 
         marquee.DisplayScaleScaling = displayScale;
 
@@ -269,7 +269,7 @@ public class MarqueeTests
     public void DisplayScaleScaling_正の値はそのまま保持する()
     {
         var marquee = CreateMarquee(null, out _);
-        marquee.Scaling = 1.25;
+        marquee.DomainToDipScaling = 1.25;
 
         marquee.DisplayScaleScaling = 2.0;
 

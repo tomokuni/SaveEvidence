@@ -49,7 +49,7 @@ public static class CaptureSettingsMerge
             LoupeSize = input.LoupeSize ?? baseline.LoupeSize,
             LoupeZoomLevel = input.LoupeZoomLevel ?? baseline.LoupeZoomLevel,
             LoupeOffset = input.LoupeOffset ?? baseline.LoupeOffset,
-            LoupeRenderScaling = input.LoupeRenderScaling ?? baseline.LoupeRenderScaling,
+            LoupeDipToDeviceScaling = input.LoupeDipToDeviceScaling ?? baseline.LoupeDipToDeviceScaling,
             LoupeCrossColor = input.LoupeCrossColor ?? baseline.LoupeCrossColor,
             LoupeFrameColor = input.LoupeFrameColor ?? baseline.LoupeFrameColor,
             LoupeFrameThickness = input.LoupeFrameThickness ?? baseline.LoupeFrameThickness,

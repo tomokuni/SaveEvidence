@@ -38,7 +38,7 @@ Avalonia 版と同一の挙動になります。
 | `Paint` | `MarqueePaint` | `MarqueePaint.Default` | **色（ハンドル・十字マーカー・ラベル・装飾）の設定**（描画層の `EsUtil.SaveEvidence.Marquee.UIBase.MarqueePaint`）。設定すると描画実装（`Renderer`）が新しい色で差し替わり、再描画を要求する |
 | `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | **装飾（暗転マスク・穴あけ枠・ハイライト）の表示可否と寸法の設定**（装飾層の `EsUtil.Feature.MarqueeCore.Decoration.MarqueeDecoOptions`。**色は含まない**） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。操作・情報ラベルの文言も同様にホストが与える |
-| `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
+| `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
 | `Renderer` | `IMarqueeRenderer` | `Paint` の色を保持する描画層の `MarqueeRenderer` | 描画の実装（**描画の差し替え**。null 不可）。設定すると再描画とラベル要素の再配置を要求する（描画先は `SkiaEsCanvas` が担う） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と一致）:

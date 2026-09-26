@@ -120,11 +120,11 @@ flowchart TB
         Log["LoupeLogMessage<br/>public static partial class"]
     end
 
-    AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>Options / RenderScaling / RequestRender / Clear"| Ctl
+    AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>Options / DipToDeviceScaling / RequestRender / Clear"| Ctl
     Ctl -->|"RequestRender / CancelAndRelease / ShouldApply"| Coh
     Ctl -->|"RenderAsync（描画入力）"| Pip
     Pip --> Src
-    Ctl -->|"Coerce（RenderScaling）"| Coerce
+    Ctl -->|"Coerce（DipToDeviceScaling）"| Coerce
     Ctl -->|"EsSize.ClampToArea / ComputePosition"| Pos
     Ctl -->|"Create（描画入力の組み立て。設定を渡す）"| Req
     Ctl -->|"Compute(表示情報)"| Args
@@ -154,7 +154,7 @@ flowchart TB
 
 - **分類**: 公開コントロール（`public sealed class LoupeControl : Panel`。AXAML を持たずコードのみで子要素を構成する）
 - **責務**:
-  - 状態管理: 5 個の StyledProperty（`Source: IImage?` / `CenterPoint` / 設定 `Options` / 色 `Paint` / 環境値 `RenderScaling`）
+  - 状態管理: 5 個の StyledProperty（`Source: IImage?` / `CenterPoint` / 設定 `Options` / 色 `Paint` / 環境値 `DipToDeviceScaling`）
   - 座標ラベル: **コントロールがテキスト要素（`Border` + `TextBlock`）として表示する**。文言・表示可否・基準点はコア（`LoupeTextPlacement`）が、体裁（フォントサイズ・色・角丸）は描画の設定（`Paint`）が、実寸 → 配置矩形の写像は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有する。コントロールは配置フェーズ（`ArrangeOverride`）で要素を追加・更新する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
     - **実寸測定は UI が行う理由**: テキストの実寸は描画 API（`FormattedText`）でしか測れないため、UI が測って `LoupeLabelPlan`（描画層 `LoupeControl.UIBase`）へ渡し、返された配置を要素へ反映する
     - ライフサイクル: 世代管理付き非同期ビットマップ生成と解放（`ReleaseBitmap`）
@@ -162,9 +162,9 @@ flowchart TB
     - 再描画のバッチ化: `Dispatcher.UIThread.Post` で複数プロパティ変更を1フレーム1回の再描画に結合
     - 非同期生成: 切り出しと合成（`RenderTargetBitmap` / `DrawingContext`）は UI スレッドで行い（バックグラウンド抽出（`Task.Run`）は使わない。連続再描画時にスレッドプールが競合し、移動中の追従が止まるため）、古い世代の結果は採用せず破棄する
     - 表示サイズ・位置: `UpdatePosition` がコアのファサード `Loupe.ResolveLayout` を呼び、返された `LoupeLayout`（表示サイズと表示位置）を要素（`Width` / `Height`）と `RenderTransform` へ写すだけである（クランプ・オフセット・親領域へのクランプはコアが単一所有し、`UpdatePosition` は表示サイズの唯一の反映元になる）
-    - 座標単位: `Options.RequestedSize` は DIP、レンダラーへ渡すサイズと装飾幅は `RenderScaling` で物理ピクセルへ変換
-  - 値の補正: コアの設定値（`LoupeOptions`）は型の生成時に補正される（UI は関与しない）。環境値の `RenderScaling` のみ `coerce` コールバックで矯正する
-- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する表示サイズ・拡大率・寸法。UI は設定値を保持しない）/ 色（`Paint`（`LoupePaint`。`System.Drawing.Color` で受け取り描画時にブラシへ変換する）））/ 環境（`RenderScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
+    - 座標単位: `Options.RequestedSize` は DIP、レンダラーへ渡すサイズと装飾幅は `DipToDeviceScaling` で物理ピクセルへ変換
+  - 値の補正: コアの設定値（`LoupeOptions`）は型の生成時に補正される（UI は関与しない）。環境値の `DipToDeviceScaling` のみ `coerce` コールバックで矯正する
+- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する表示サイズ・拡大率・寸法。UI は設定値を保持しない）/ 色（`Paint`（`LoupePaint`。`System.Drawing.Color` で受け取り描画時にブラシへ変換する）））/ 環境（`DipToDeviceScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
 - **依存**: LoupeRenderer / LoupePaint / LoupeLabelPlan（`LoupeControl.UIBase`） / LoupeRendererBase（`LoupeControl.UIBase`） / LoupeLogMessage（コアの `EsUtil.Feature.LoupeCore.Logging`） / LoupeOptions（コアの `EsUtil.Feature.LoupeCore.Setting`） / AvaloniaCanvas（Platform.AvaloniaUI） / Avalonia / ILogger
 
 ### 6.2 LoupeRenderer（LoupeControl.UIBase）
@@ -209,7 +209,7 @@ flowchart TB
 
 - **分類**: 公開静的クラス（`public static partial class`。所属は `Feature.LoupeCore` の `EsUtil.Feature.LoupeCore.Logging`）
 - **責務**: LoggerMessage source generator によるログ定義。**書式・レベルを UI 間で揃えるためコアが単一所有する**
-- **公開API**: `LogUpdateError`（Error）/ `LogSettingChanged`（Debug。汎用）/ 設定項目ごとの名前付きメソッド（`LogSourceChanged` / `LogCenterPointChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`。**設定名はコアが付与**し、UI 層は値だけを渡す）/ `LogOptionsChanged`（設定 `LoupeOptions` の**変化した項目だけ**を出力）
+- **公開API**: `LogUpdateError`（Error）/ `LogSettingChanged`（Debug。汎用）/ 設定項目ごとの名前付きメソッド（`LogSourceChanged` / `LogCenterPointChanged` / `LogRequestedSizeChanged` / `LogDipToDeviceScalingChanged` / `LogZoomLevelChanged`。**設定名はコアが付与**し、UI 層は値だけを渡す）/ `LogOptionsChanged`（設定 `LoupeOptions` の**変化した項目だけ**を出力）
 - **本 UI 固有のログ**: 中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は **本プロジェクトの `LoupeRenderLog`**（`Logging/LoupeRenderLog.cs`・`internal static partial class`）が所有する（コアに UI 固有のログを持たせない）
 - **依存**: Microsoft.Extensions.Logging。値の文字列化はコアの `LoupeLogFormat` が行う
 
@@ -269,10 +269,10 @@ sequenceDiagram
 | プロパティ | 範囲 | 補正の場所 |
 | --- | --- | --- |
 | Options（RequestedSize / ZoomLevel） | 1〜4096 / 1〜64 | **コアの `LoupeOptions`（`init` アクセサ）** |
-| RenderScaling | 0.1〜8.0（非有限値は 1.0） | `coerce` コールバック（プロパティのメタデータ） |
+| DipToDeviceScaling | 0.1〜8.0（非有限値は 1.0） | `coerce` コールバック（プロパティのメタデータ） |
 | `Options`（`CheckerSize` / `FrameWidth`） | 1〜128 / 1〜64 | **コアの `LoupeOptions`（`init` アクセサ）** |
 | `Paint`（`CoordLabelFontSize` / `CoordLabelCornerRadius`） | 6〜48 / 0〜64 | **描画層の `LoupePaint`（`init` アクセサ）** |
 
-環境値の `RenderScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `Loupe.Limits` が単一所有し、UI は登録するだけです）。MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
+環境値の `DipToDeviceScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `Loupe.Limits` が単一所有し、UI は登録するだけです）。MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
 
 設定（`Options`・`Options`）の数値項目は**コアの型が生成時に補正**し、描画の設定（`Paint`）の数値項目は**描画層の型が生成時に補正**するため、UI 側に補正の登録を置きません（値の設定経路（オブジェクト初期化子・`with` 式・逆シリアル化・バインディング）によらず範囲内の値だけが保持されます）。

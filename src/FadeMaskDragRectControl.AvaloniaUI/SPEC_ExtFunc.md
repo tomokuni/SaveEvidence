@@ -99,7 +99,7 @@ overlay.Options = captureSettings.ToFadeMaskDragRectOptions();
 overlay.MarqueePaint = MarqueePaint.Default with { OverlayColor = System.Drawing.Color.FromArgb(128, 0, 0, 0) };
 overlay.LoupePaint = LoupePaint.Default with { BackgroundColor = System.Drawing.Color.White };
 // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
-overlay.Scaling = 1.0;
+overlay.DomainToDipScaling = 1.0;
 overlay.SetCoordinateTransform(CoordTransform.Compose(
     CoordTransform.ImageLayout(() => preview.Bounds.Size.ToEsSize(), imageSize.ToEsSize(), () => true),
     CoordTransform.ScrollOffset(() => new EsVector(origin.X, origin.Y))));
@@ -119,9 +119,9 @@ parentPanel.Children.Add(overlay);
 | `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標。未選択時は 0x0 の空矩形） |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | サイズラベルを描画時に評価するプロバイダ（`MarqueeControl` へ委譲） |
 | `LogicalHighlightRect` | `Rect?` | ハイライト矩形（ドメイン座標。未検出時は null。**null が「ハイライトなし」を意味する**。ScreenSelect / WindowSelect 用） |
-| `Scaling` | `double` | DPI スケーリング係数（設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
+| `DomainToDipScaling` | `double` | DPI スケーリング係数（設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
 | `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
-| `LoupeRenderScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（設定（`Options`）の対象外・DPI から自動取得。`LoupeControl.RenderScaling` へ委譲） |
+| `LoupeDipToDeviceScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（設定（`Options`）の対象外・DPI から自動取得。`LoupeControl.DipToDeviceScaling` へ委譲） |
 | `MarqueePaint` | `MarqueePaint`（描画層） | 選択矩形コントロールの描画に使う色（描画にだけ必要な設定）の単一値。既定は `MarqueePaint.Default`。内包する選択矩形コントロールへ委譲する |
 | `LoupePaint` | `LoupePaint`（描画層） | ルーペの描画に使う色（描画にだけ必要な設定）の単一値。既定は `LoupePaint.Default`。内包するルーペコントロールへ委譲する（市松模様の下地色もここで与える） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言を描画時に評価するプロバイダ（文言はホストが与える。`WindowTitle` は廃止し `InfoTextProvider` へ統合） |

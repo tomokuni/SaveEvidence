@@ -115,7 +115,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 | 項目 | 理由 |
 | --- | --- |
-| `LoupeRenderScaling` / `DisplayScaleScaling` | 切り出しのルーペ・ラベルはプレビューの表示倍率（`CropViewControl` が所有）に従うため、設定値を与えない |
+| `LoupeDipToDeviceScaling` / `DisplayScaleScaling` | 切り出しのルーペ・ラベルはプレビューの表示倍率（`CropViewControl` が所有）に従うため、設定値を与えない |
 
 情報ラベルはキャプチャコアの `CaptureLabelTexts.GetInfoText` がウィンドウ選択に限定するため、切り出しでは表示されません。
 

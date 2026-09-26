@@ -141,10 +141,10 @@ public class FadeMaskDragRectControlTests
         control.Options = options;
 
         // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
-        control.Scaling = 2.0;
+        control.DomainToDipScaling = 2.0;
         control.DisplayScaleScaling = 1.5;
 
-        Assert.Equal(2.0, control.Scaling);
+        Assert.Equal(2.0, control.DomainToDipScaling);
         Assert.Equal(1.5, control.DisplayScaleScaling);
 
         // 選択の設定（サイズラベル）はコアの MarqueeOptions へ反映される
@@ -193,11 +193,11 @@ public class FadeMaskDragRectControlTests
         control.LoupePaint = control.LoupePaint with { CoordLabelFontSize = 13.0 };
 
         // ルーペ描画スケールは設定（Options）の対象外（環境値。個別プロパティで設定）
-        control.LoupeRenderScaling = 2.0;
+        control.LoupeDipToDeviceScaling = 2.0;
 
         Assert.Equal(150, control.Loupe.Options.RequestedSize);
         Assert.Equal(3, control.Loupe.Options.ZoomLevel);
-        Assert.Equal(2.0, control.Loupe.RenderScaling);
+        Assert.Equal(2.0, control.Loupe.DipToDeviceScaling);
         Assert.Equal(10, control.Loupe.Options.CheckerSize);
         Assert.Equal(4, control.Loupe.Options.FrameWidth);
         Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Paint.CrossColor.ToAvaloniaColor());

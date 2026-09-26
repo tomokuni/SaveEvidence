@@ -102,7 +102,7 @@ sequenceDiagram
 UI 層に残る分岐（コアへ移せない例外）は次の 4 種のみです。
 
 1. 描画先の構築と描画（Avalonia = 子 `Image` + `RenderTransform` + 標準 `ScrollBar` / MewUI = `SKCanvas`）
-2. DPI の取得と `RenderScaling`、ポインタキャプチャ API の呼び出し
+2. DPI の取得と `DipToDeviceScaling`、ポインタキャプチャ API の呼び出し
 3. レイアウト（`Bounds` の確定とビューポートのセッションへの通知）
 4. 見た目の差（スクロールバーの太さ・余白。Avalonia は標準部品を使うためコアの値を参照しない）
 

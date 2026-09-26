@@ -72,7 +72,7 @@ src/ZoomViewControl.MewUI/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `ZoomViewControl` | `MewProperty`（`Source` / `CenterAlign` / `RenderScaling`）の定義、`Appearance` の窓口、入力の変換と効果の適用、通知の転送、描画順の所有、DPI 追従 |
+| `ZoomViewControl` | `MewProperty`（`Source` / `CenterAlign` / `DipToDeviceScaling`）の定義、`Appearance` の窓口、入力の変換と効果の適用、通知の転送、描画順の所有、DPI 追従 |
 | `ZoomSkiaRenderer` | コアが確定した表示矩形へ `DrawBitmap` で描画するだけ（判断・計算を持たない） |
 | `RenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
@@ -89,7 +89,7 @@ classDiagram
     class ZoomViewControl {
         +EsBitmap? Source
         +bool CenterAlign
-        +double RenderScaling
+        +double DipToDeviceScaling
         +ZoomViewAppearance Appearance
         +double ZoomPercent
         +bool IsFit

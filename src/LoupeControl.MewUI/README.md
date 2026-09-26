@@ -14,7 +14,7 @@
 | --- | --- |
 | 基底クラス | `Aprillz.MewUI.Controls.Panel`（子の `SkiaCanvasView` が Skia で直接描画する） |
 | 中間バッファ | **生成しない**。画面のキャンバスへ直接描画する（Avalonia 版は `RenderTargetBitmap` を経由する） |
-| 描画サイズ | `Options.RequestedSize` × `RenderScaling`（物理ピクセル）。キャンバスより大きい場合はキャンバスに合わせる（クランプ規則はコアが単一所有） |
+| 描画サイズ | `Options.RequestedSize` × `DipToDeviceScaling`（物理ピクセル）。キャンバスより大きい場合はキャンバスに合わせる（クランプ規則はコアが単一所有） |
 | 拡大方式 | 最近傍（画素をそのまま拡大表示する） |
 | DPI 追従 | `OnDpiChanged` で表示スケーリング係数を DPI から換算した値へ自動更新する（換算規則は `DpiScaler.ToScaling` が単一所有。ホストの設定は不要） |
 | 連続再描画 | **無効**。プロパティ変更時にのみ再描画する（静止画のため） |
@@ -80,7 +80,7 @@ if (layout.Position is { } position)
 | `CenterPoint` | `EsPoint?` | `null` | 拡大中心（元画像ピクセル座標）。null の場合は市松模様のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する。数値項目はコアの型が生成時に安全域へ補正する |
 | `Paint` | `LoupePaint` | `LoupePaint.Default` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）。`with` 式で部分変更する。色はコアの計算に入らない |
-| `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。0.1〜8.0 に補正（非有限は既定値）。DPI 変更で自動更新 |
+| `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。0.1〜8.0 に補正（非有限は既定値）。DPI 変更で自動更新 |
 | `Log` | `ILogger` | `NullLogger` | 設定変更ログと描画例外の出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
 
 `Options`（コアの `LoupeOptions`）の項目:
@@ -110,7 +110,7 @@ if (layout.Position is { } position)
 
 `Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
 
-数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、ログの書式と変化判定はコアの `LoupeLogMessage` が単一所有します）。設定（`Options`）と寸法（`Options`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `RenderScaling` のみ `coerce` を登録します）。
+数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、ログの書式と変化判定はコアの `LoupeLogMessage` が単一所有します）。設定（`Options`）と寸法（`Options`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `DipToDeviceScaling` のみ `coerce` を登録します）。
 
 ## イベント
 
@@ -126,7 +126,7 @@ if (layout.Position is { } position)
 
 | レベル | 出力例 |
 | --- | --- |
-| Debug | `[LoupeCtrl] Setting: ZoomLevel 4 → 8`（Source / CenterPoint / RequestedSize / RenderScaling / ZoomLevel。変化判定（同一値・同一インスタンスなら出力しない）はコアのログ定義が単一所有し、UI 層は同値判定を持たない。設定の変更は変化した項目だけを出力する） |
+| Debug | `[LoupeCtrl] Setting: ZoomLevel 4 → 8`（Source / CenterPoint / RequestedSize / DipToDeviceScaling / ZoomLevel。変化判定（同一値・同一インスタンスなら出力しない）はコアのログ定義が単一所有し、UI 層は同値判定を持たない。設定の変更は変化した項目だけを出力する） |
 | Error | `[LoupeCtrl] Update exception`（描画の例外。アプリは継続する） |
 
 Avalonia 版の Trace ログ（再描画パイプライン）は持ちません（MewUI 版は中間ビットマップを作らず同期描画するため）。

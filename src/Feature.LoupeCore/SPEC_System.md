@@ -117,7 +117,7 @@ sequenceDiagram
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
 | 寸法値の物理ピクセル換算（市松タイル・円枠の太さ） | `LoupeRenderRequest.Create`（規則は internal の `Decoration.LoupeMetricsScaler`。結果は描画入力に含まれる） |
 | 市松模様のタイル矩形の列挙 | `Loupe.ResolveContent`（`LoupeCheckerTiles`。リストを確保しない） |
-| 設定・環境値・拡大中心の変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `RenderScaling` / `CenterPoint` の setter） |
+| 設定・環境値・拡大中心の変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `DipToDeviceScaling` / `CenterPoint` の setter） |
 | ログの書式とレベル、変化判定（同値・同一インスタンスなら出力しない） | `LoupeLogMessage` / `LoupeLogFormat` |
 
 `LoupeRenderRequest.MagnifiedImage`（internal）/ 描画層（`LoupeControl.UIBase`）の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。

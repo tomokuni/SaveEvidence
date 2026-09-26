@@ -284,7 +284,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` | `int?` / `int?` / `double?` | ルーペのサイズ（DIP 座標系）・倍率・カーソルからのオフセット（DIP 座標系） |
-| `LoupeRenderScaling` | `double?` | DIP → 物理ピクセル変換 |
+| `LoupeDipToDeviceScaling` | `double?` | DIP → 物理ピクセル変換 |
 | `LoupeCrossColor` | `Color?` | ルーペの十字線（不透明度は色のアルファに統合） |
 | `LoupeFrameColor` / `LoupeFrameThickness` | `Color?` / `int?` | ルーペの枠 |
 | `LoupeCheckerSize` / `LoupeCheckerColorA` / `LoupeCheckerColorB` | `int?` / `Color?` / `Color?` | ルーペの市松模様 |

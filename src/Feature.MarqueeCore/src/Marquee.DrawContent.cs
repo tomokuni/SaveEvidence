@@ -66,7 +66,7 @@ public sealed partial class Marquee
     public MarqueeDrawContent ResolveContent(in MarqueeRenderRequest request)
     {
         // 座標変換ポートは 1 フレームで 1 回だけ解決する（未指定時は倍率から等倍スケールを生成するため、各項目で解決すると生成と評価が重複する）
-        var port = MarqueeFrameGeometry.ResolvePort(request.Port, request.Scaling);
+        var port = MarqueeFrameGeometry.ResolvePort(request.Port, request.DomainToDipScaling);
 
         // 穴あけ矩形も 1 回だけ解決する（外側の装飾・内側の装飾・サイズラベルが同じ矩形を使う）
         var hole = MarqueeFrameGeometry.ResolveHoleRectDip(

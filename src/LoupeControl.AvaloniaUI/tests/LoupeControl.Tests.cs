@@ -371,17 +371,17 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.RenderScaling = 0.0;
-        Assert.Equal(0.1, control.RenderScaling);
+        control.DipToDeviceScaling = 0.0;
+        Assert.Equal(0.1, control.DipToDeviceScaling);
 
-        control.RenderScaling = 10.0;
-        Assert.Equal(8.0, control.RenderScaling);
+        control.DipToDeviceScaling = 10.0;
+        Assert.Equal(8.0, control.DipToDeviceScaling);
 
-        control.RenderScaling = double.NaN;
-        Assert.Equal(1.0, control.RenderScaling);
+        control.DipToDeviceScaling = double.NaN;
+        Assert.Equal(1.0, control.DipToDeviceScaling);
 
-        control.RenderScaling = double.PositiveInfinity;
-        Assert.Equal(1.0, control.RenderScaling);
+        control.DipToDeviceScaling = double.PositiveInfinity;
+        Assert.Equal(1.0, control.DipToDeviceScaling);
     }
 
     [AvaloniaFact]
@@ -411,12 +411,12 @@ public class LoupeControlTests
             CheckerSize = 1000,
             FrameWidth = 1000,
         });
-        control.SetValue(LoupeControl.RenderScalingProperty, 100.0);
+        control.SetValue(LoupeControl.DipToDeviceScalingProperty, 100.0);
 
         // 環境値（DPI）の補正はプロパティのメタデータ（coerce）へ登録する
         Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
         Assert.Equal(ZoomLevelMax, control.Options.ZoomLevel);
-        Assert.Equal(RenderScalingMax, control.RenderScaling);
+        Assert.Equal(DipToDeviceScalingMax, control.DipToDeviceScaling);
         Assert.Equal(CheckerSizeMax, control.Options.CheckerSize);
         Assert.Equal(FrameWidthMax, control.Options.FrameWidth);
     }
@@ -455,7 +455,7 @@ public class LoupeControlTests
 
         Assert.Equal(160, control.Options.RequestedSize);
         Assert.Equal(4, control.Options.ZoomLevel);
-        Assert.Equal(1.0, control.RenderScaling);
+        Assert.Equal(1.0, control.DipToDeviceScaling);
 
         // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
         Assert.Equal(6, control.Options.CheckerSize);
@@ -814,7 +814,7 @@ public class LoupeControlTests
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(50, 50);
         control.Options = control.Options with { RequestedSize = 120 };
-        control.RenderScaling = 1.5;
+        control.DipToDeviceScaling = 1.5;
         control.Options = control.Options with { ZoomLevel = 8 };
 
         Assert.NotNull(control.Source);
@@ -880,7 +880,7 @@ public class LoupeControlTests
         // 描画は切り出し領域を ZoomLevel 倍で描くため、Scale は常に ZoomLevel と同値になる
         // （DIP 表示サイズを物理ピクセルで割った値ではない）。
         var control = CreateControl();
-        control.RenderScaling = 1.5;
+        control.DipToDeviceScaling = 1.5;
         LoupeRenderedEventArgs? args = null;
         control.Rendered += (_, e) => args = e;
 

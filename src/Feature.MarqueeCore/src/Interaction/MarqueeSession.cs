@@ -4,7 +4,6 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using EsUtil.Feature.MarqueeCore.Interaction;
 using EsUtil.Feature.MarqueeCore.Setting;
 using EsUtil.Feature.MarqueeCore.Logging;
 

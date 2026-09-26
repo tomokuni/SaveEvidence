@@ -12,8 +12,8 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 /// <param name="MarkerActive">始点マーカー（十字線）を描くかどうか（nudge 中かつ十字線が可視の場合に true）。</param>
 /// <param name="MarkerPosition">始点マーカーの中心（ドメイン座標）。</param>
 /// <param name="MousePosition">直近のマウス位置（ドメイン座標。カーソル座標ラベルの基準）。</param>
-/// <param name="Port">論理座標 → DIP の座標変換ポート。null の場合は <paramref name="Scaling"/> を等倍スケールとして適用する。</param>
-/// <param name="Scaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
+/// <param name="Port">論理座標 → DIP の座標変換ポート。null の場合は <paramref name="DomainToDipScaling"/> を等倍スケールとして適用する。</param>
+/// <param name="DomainToDipScaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
 /// <param name="SizeLabelOverrideProvider">サイズラベルの文言プロバイダ。null 可（未指定・空文字の場合は自動生成する）。</param>
 /// <param name="DisplayScaleScaling">サイズラベルの自動生成に使う表示スケーリング（0 以下は等倍）。</param>
 /// <param name="SizeLabelDisplayScalingProvider">サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ（引数はドメイン座標の矩形）。null 可（その場合は <paramref name="DisplayScaleScaling"/> を使う）。</param>
@@ -32,7 +32,7 @@ public readonly record struct MarqueeRenderRequest(
     EsPoint MarkerPosition,
     EsPoint MousePosition,
     ICoordTransform? Port,
-    double Scaling,
+    double DomainToDipScaling,
     Func<string?>? SizeLabelOverrideProvider,
     double DisplayScaleScaling,
     Func<EsRect, double>? SizeLabelDisplayScalingProvider = null);

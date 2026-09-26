@@ -21,7 +21,7 @@
 | --- | --- | --- | --- |
 | `Source` | `EsBitmap?` | `null` | ズーム対象の画像。設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
-| `RenderScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数（DPI 変更で自動更新される環境値） |
+| `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数（DPI 変更で自動更新される環境値） |
 | `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし・スクロールバー表示 | 外観の単一値（コアが単一所有する）。下地色・市松模様（サイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を含む |
 | `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。**0 より大きい値のみ設定可能**（0 以下は無視。Fit へは `ZoomFit()`）。設定値は `ZoomConfig` の範囲へクランプされる |
 | `IsFit` | `bool` | `true` | Fit 表示中かどうか |
@@ -111,7 +111,7 @@
 
 ## DPI
 
-モニター間の移動で DPI が変わると、`RenderScaling` は DPI から換算した値（DIP 基準 96 DPI。規則は `DpiScaler.ToScaling` が単一所有します）へ自動更新されます。
+モニター間の移動で DPI が変わると、`DipToDeviceScaling` は DPI から換算した値（DIP 基準 96 DPI。規則は `DpiScaler.ToScaling` が単一所有します）へ自動更新されます。
 キャンバスは DIP 座標で描画されるため、DPI に関わらず同じ見た目になります。
 
 ## エラー時の挙動

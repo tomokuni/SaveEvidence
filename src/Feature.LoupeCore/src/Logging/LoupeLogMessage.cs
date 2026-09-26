@@ -153,12 +153,12 @@ public static partial class LoupeLogMessage
     }
 
     /// <summary>表示スケーリング係数の変更ログ。</summary>
-    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: RenderScaling {OldValue} → {NewValue}</c></remarks>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: DipToDeviceScaling {OldValue} → {NewValue}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前のスケーリング係数。</param>
     /// <param name="newValue">変更後のスケーリング係数。</param>
-    internal static void LogRenderScalingChanged(this ILogger logger, double oldValue, double newValue)
-        => LogSettingChanged(logger, "RenderScaling", oldValue, newValue);
+    internal static void LogDipToDeviceScalingChanged(this ILogger logger, double oldValue, double newValue)
+        => LogSettingChanged(logger, "DipToDeviceScaling", oldValue, newValue);
 
     /// <summary>拡大率の変更ログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: ZoomLevel {OldValue} → {NewValue}</c></remarks>

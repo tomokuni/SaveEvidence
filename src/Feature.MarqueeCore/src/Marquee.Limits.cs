@@ -19,7 +19,7 @@ public sealed partial class Marquee
         /// <summary>ポート未指定時に適用する倍率の既定値（ドメイン座標と DIP が 1:1）。</summary>
         /// <value>1.0（等倍）。</value>
         /// <remarks>各 UI の依存関係プロパティ（<c>Scaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
-        public const double ScalingDefault = 1.0;
+        public const double DomainToDipScalingDefault = 1.0;
 
         /// <summary>表示スケールの係数を解決する（0 以下の場合は座標換算の係数を使う）。</summary>
         /// <param name="displayScaling">指定された表示スケール。0 以下は未指定として扱う。</param>

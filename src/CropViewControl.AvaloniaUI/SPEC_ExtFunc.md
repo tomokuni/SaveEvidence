@@ -49,8 +49,8 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `SelectionOverlayOptions` | `FadeMaskDragRectOptions`（コア） | 領域選択オーバーレイの設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線の寸法・表示可否）。FadeMaskDragRectControl へ委譲。 |
 | `SelectionOverlayMarqueePaint` / `SelectionOverlayLoupePaint` | `MarqueePaint` / `LoupePaint`（描画層） | 領域選択オーバーレイの選択矩形・ルーペが使う色（描画にだけ必要な設定。コアの設定には含まれない）。FadeMaskDragRectControl へ委譲。 |
 | `Log` | `ILogger` | 内部ロガー（ズームビューポートへ伝搬）。null の場合の吸収はコアが単一所有する（出力なし）。 |
-| `Scaling` | `double` | DPI スケーリング係数（`FadeMaskDragRectControl.Scaling` へ委譲。コードから動的設定） |
-| `LoupeRenderScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（`FadeMaskDragRectControl.LoupeRenderScaling` へ委譲。DPI から自動取得） |
+| `DomainToDipScaling` | `double` | DPI スケーリング係数（`FadeMaskDragRectControl.DomainToDipScaling` へ委譲。コードから動的設定） |
+| `LoupeDipToDeviceScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（`FadeMaskDragRectControl.LoupeDipToDeviceScaling` へ委譲。DPI から自動取得） |
 | `ZoomPercent` | `double` | 現在のズーム率（%）。0 = Fit（自動）。スライダ等の連続値も設定できる。 |
 | `CanZoomIn` | `bool` | 現在のズーム状態でズームインが可能か。 |
 | `CanZoomOut` | `bool` | 現在のズーム状態でズームアウトが可能か。 |

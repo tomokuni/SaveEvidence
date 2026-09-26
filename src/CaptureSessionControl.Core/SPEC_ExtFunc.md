@@ -122,18 +122,18 @@
 | `BorderColor` / `BorderThickness` | `System.Drawing.Color?` / `double?` | 選択枠の色・太さ（DIP） |
 | `OverlayColor` | `System.Drawing.Color?` | 暗転オーバーレイの色（不透明度はアルファに統合） |
 | `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` | `int?` / `int?` / `double?` | ルーペのサイズ・倍率・オフセット |
-| `LoupeRenderScaling` | `double?` | ルーペの描画倍率（0.1〜8.0） |
+| `LoupeDipToDeviceScaling` | `double?` | ルーペの描画倍率（0.1〜8.0） |
 | `SizeLabelVisible` / `SizeLabelColor` / `SizeLabelFontSize` | `bool?` / `System.Drawing.Color?` / `double?` | サイズラベルの表示・色・サイズ |
 | `InfoLabelVisible` / `ShowSubLines` / `SubLineFontSize` | `bool?` / `bool?` / `double?` | 情報ラベル・サブライン |
 | `SizeLabelOverride` | `string?` | サイズラベルの文言明示指定（null = 自動生成） |
-| `DisplayScaleScaling` | `double?` | サイズラベル表示用のスケーリング（0 以下は `Scaling` と同値） |
+| `DisplayScaleScaling` | `double?` | サイズラベル表示用のスケーリング（0 以下は `DomainToDipScaling` と同値） |
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
 | `Validate` | `void Validate()` | 設定値を検証する。範囲外の場合は `ArgumentOutOfRangeException`（null は検証対象外） |
 | `ToNonNull` | `CaptureSettings ToNonNull()` | null をデフォルト値で埋めた non-null 版を返す |
 
-**色は `System.Drawing.Color`** です（UI 非依存のため）。`Validate` が検証する範囲は `MinSelectionSize` / `HandleSize` / `HandleHitRadius` / `MarkerLength` / `LoupeSize` / `LoupeZoomLevel` / `LoupeFrameThickness` / `LoupeCheckerSize`（1 以上）、`BorderThickness` / `LoupeOffset`（0 以上）、`LoupeRenderScaling`（0.1〜8.0）です。
+**色は `System.Drawing.Color`** です（UI 非依存のため）。`Validate` が検証する範囲は `MinSelectionSize` / `HandleSize` / `HandleHitRadius` / `MarkerLength` / `LoupeSize` / `LoupeZoomLevel` / `LoupeFrameThickness` / `LoupeCheckerSize`（1 以上）、`BorderThickness` / `LoupeOffset`（0 以上）、`LoupeDipToDeviceScaling`（0.1〜8.0）です。
 
 ## 6. CaptureResult
 

@@ -58,7 +58,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ LoupeC
 | 基本サイズのスライダー | `Options.RequestedSize`（クランプ前の基本サイズ。設定時に `LoupeSize` へ反映） |
 | 色コンボボックス | `Paint`（`CrossColor` / `CheckerColorA/B` / `FrameColor`。「なし」 で描画なし） |
 | タイルサイズ・枠の太さ | `Options`（`CheckerSize` / `FrameWidth`） |
-| 描画スケール | `RenderScaling`（DIP→物理ピクセル変換の確認） |
+| 描画スケール | `DipToDeviceScaling`（DIP→物理ピクセル変換の確認） |
 | 選択矩形オーバーレイ | `SelectionRectVisible` チェック・`SelectionRect`（X / Y / W / H）の編集（ドメイン座標 = 元画像ピクセル）。テスト画像上に破線の枠＋座標ラベルが表示され、ルーペ内にも破線が描画される |
 | Clear() ボタン | `Clear()` を呼び出し、非表示＋Bitmap 解放 |
 | RequestRender() ボタン | `RequestRender()` を呼び出し、プロパティ変更を伴わない再生成を要求 |
@@ -70,7 +70,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ LoupeC
 - [ ] ズーム・サイズ変更が即時反映される
 - [ ] 十字線・市松模様・外枠の色が反映される（不透明度は色のアルファに統合）
 - [ ] 「なし」を選ぶと該当要素が描画されなくなる
-- [ ] `RenderScaling` を 0.5〜2.0 に変更すると Bitmap の物理ピクセルサイズが変化する
+- [ ] `DipToDeviceScaling` を 0.5〜2.0 に変更すると Bitmap の物理ピクセルサイズが変化する
 - [ ] `Options.RequestedSize` を変更すると `LoupeSize` にも反映される（基本サイズ → 表示サイズ）
 - [ ] `SelectionRectVisible` を ON にすると、テスト画像上に選択矩形の破線枠＋座標ラベルが表示され、場所が一目でわかる
 - [ ] `SelectionRectVisible` を ON にすると、`SelectionRect`（ドメイン座標）の枠線がルーペ画像上にも破線で描画される（ズーム 2 倍以上）

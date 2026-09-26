@@ -106,8 +106,8 @@ SelectionOverlay.MarqueePaint = MarqueePaint.Default with
 SelectionOverlay.LoupePaint = LoupePaint.Default with { FrameColor = System.Drawing.Color.Red };
 
 // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
-SelectionOverlay.Scaling = 1.0;
-SelectionOverlay.LoupeRenderScaling = 1.0;
+SelectionOverlay.DomainToDipScaling = 1.0;
+SelectionOverlay.LoupeDipToDeviceScaling = 1.0;
 
 // 座標変換ポート（ドメイン = 仮想スクリーンピクセル。Marquee / Loupe へ一括分配）
 SelectionOverlay.SetCoordinateTransform(CoordTransform.DomainScale(() => scaling));

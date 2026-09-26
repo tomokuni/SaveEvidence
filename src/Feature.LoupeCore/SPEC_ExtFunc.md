@@ -35,7 +35,7 @@
 | `Loupe(LoupeOptions? options = null)` | 生成（設定を省略した場合は `LoupeOptions.Default`）。描画実装は受け取らない（描画は UI の関心事であり、本コアは描画 API を持たない） |
 | `Log` | 設定変更ログの出力先（null は出力なしへ吸収される）。設定・環境値・拡大中心の変更は本コアが検出して出力する |
 | `Options` | 設定（表示サイズ・拡大率・寸法・ラベル表示の可否）の読み書き。**変化したときだけ**変更ログを出力する |
-| `RenderScaling` | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。補正は `Loupe.Limits` が単一所有する）。**変化したときだけ**変更ログを出力する |
+| `DipToDeviceScaling` | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。補正は `Loupe.Limits` が単一所有する）。**変化したときだけ**変更ログを出力する |
 | `CenterPoint` | 拡大中心（ドメイン座標）。未設定（null）は市松模様のみを描画し、配置も行わない。**変化したときだけ**変更ログを出力する |
 | `PositionOffset` | 拡大中心からの右下オフセット（DIP） |
 | `SetCoordinateTransform(port)` | ドメイン ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換） |
@@ -50,7 +50,7 @@
 描画の契約は `LoupeControl.UIBase`（UI 側の共有層）が所有します（本コアは描画 API も描画ポートも持ちません）。引数は描画ポート（`IEsCanvas`）・拡大元画像・描画内容（`LoupeDrawContent`）であり、描く値はすべて描画内容に解決済みです。層の順序はコアが `LoupeDrawContent.Layers` として単一所有し、実装はその順に写すだけです。
 
 ```csharp
-var loupe = new Loupe(options) { CenterPoint = cursorDomain, RenderScaling = 1.25 };
+var loupe = new Loupe(options) { CenterPoint = cursorDomain, DipToDeviceScaling = 1.25 };
 loupe.SetCoordinateTransform(port);
 
 var layout = loupe.ResolveLayout(parentSize);          // 表示サイズ + 表示位置（配置はしない場合は Position が null）
@@ -97,7 +97,7 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | --- | --- | --- |
 | `RequestedSizeMin` / `RequestedSizeMax` / `RequestedSizeDefault` | `1` / `4096` / `160` | 表示サイズ要求値（DIP） |
 | `ZoomLevelMin` / `ZoomLevelMax` / `ZoomLevelDefault` | `1` / `64` / `4` | 拡大率 |
-| `RenderScalingMin` / `RenderScalingMax` / `RenderScalingDefault` | `0.1` / `8.0` / `1.0` | スケーリング係数 |
+| `DipToDeviceScalingMin` / `DipToDeviceScalingMax` / `DipToDeviceScalingDefault` | `0.1` / `8.0` / `1.0` | スケーリング係数 |
 | `CheckerSizeMin` / `CheckerSizeMax` / `CheckerSizeDefault` | `1` / `128` / `6` | 市松模様の 1 タイルサイズ（ピクセル） |
 | `FrameWidthMin` / `FrameWidthMax` / `FrameWidthDefault` | `1` / `64` / `2` | 外枠の太さ（ピクセル） |
 
@@ -107,7 +107,7 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | --- | --- |
 | `CoerceRequestedSize(int)` | 表示サイズ要求値を 1〜4096 へクランプ |
 | `CoerceZoomLevel(int)` | 拡大率を 1〜64 へクランプ |
-| `CoerceRenderScaling(double)` | スケーリング係数を 0.1〜8.0 へクランプ。非有限値は `RenderScalingDefault` |
+| `CoerceDipToDeviceScaling(double)` | スケーリング係数を 0.1〜8.0 へクランプ。非有限値は `DipToDeviceScalingDefault` |
 | `CoerceCheckerSize(int)` | 市松模様の 1 タイルサイズを 1〜128 へクランプ |
 | `CoerceFrameWidth(int)` | 外枠の太さを 1〜64 へクランプ |
 
@@ -141,15 +141,15 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 
 1 フレーム分の描画入力（**コア⇔UI の契約**）です。UI 層は自 UI の公開プロパティから本値を組み立てて描画層・コアの計算へ渡すだけで、描画に必要な値の単位と組み立て順を持ちません。
 
-**役割の分担**: ホストが設定する入力（設定値・環境値）は UI の公開プロパティ（`Options` / `RenderScaling`）が持ち、本値はそれらから**描画 1 フレーム分に必要な形へ解決したスナップショット**です（描画層は公開プロパティを読まない）。
+**役割の分担**: ホストが設定する入力（設定値・環境値）は UI の公開プロパティ（`Options` / `DipToDeviceScaling`）が持ち、本値はそれらから**描画 1 フレーム分に必要な形へ解決したスナップショット**です（描画層は公開プロパティを読まない）。
 
 | メンバー | 型 / 値 | 説明 |
 | --- | --- | --- |
 | `Center` | `EsPoint?` | 拡大中心（ドメイン座標 = 元画像ピクセル座標）。null の場合は市松模様のみを描画する |
-| `PixelSize` | `int` | ルーペの一辺のサイズ（物理ピクセル。表示サイズ × `RenderScaling` を描画先でクランプ済み） |
+| `PixelSize` | `int` | ルーペの一辺のサイズ（物理ピクセル。表示サイズ × `DipToDeviceScaling` を描画先でクランプ済み） |
 | `ZoomLevel` | `int` | 拡大率（1〜64。設定 `Options.ZoomLevel` の値。描画完了通知のスケールにも使う） |
 | `Options` | `LoupeOptions` | ルーペの設定（拡大率・寸法）。**色は `LoupePaint`（描画層）が単一所有する** |
-| `Scaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数 |
+| `DomainToDipScaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数 |
 | `SurfaceBounds` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。下地・市松模様を全面へ描くために契約が単一所有する（UI 層は矩形を組み立てない） |
 
 | メソッド | 説明 |
@@ -184,16 +184,16 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 | `LogSettingChanged(name, oldValue, newValue)`（`int` / `double`） | internal | Debug | 数値をそのまま渡せ、**同値の再設定では出力しない**（変化判定と数値の文字列化を本メソッドが単一所有） |
 | `LogCenterPointChanged(EsPoint?, EsPoint?)` | internal | Debug | `LogSettingChanged` の `CenterPoint` 版（値は `LoupeLogFormat.FormatPoint` で整形。**同値の再設定では出力しない**） |
 | `LogRequestedSizeChanged(int, int)` | internal | Debug | `RequestedSize` 版（同値なら出力しない） |
-| `LogRenderScalingChanged(double, double)` | internal | Debug | `RenderScaling` 版（同値なら出力しない） |
+| `LogDipToDeviceScalingChanged(double, double)` | internal | Debug | `DipToDeviceScaling` 版（同値なら出力しない） |
 | `LogZoomLevelChanged(int, int)` | internal | Debug | `ZoomLevel` 版（同値なら出力しない） |
 
 `LogSettingChanged(name, oldValue, newValue)`（文字列）はソース生成の本体であり、本アセンブリ内に限定します。
 
 **UI 固有のログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は `LoupeControl.AvaloniaUI` の `LoupeRenderLog` にあります）。
 
-設定項目ごとの名前付きメソッド（`LogCenterPointChanged` / `LogSourceChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`）は、**設定名・書式・変化判定をコアが単一所有**するために提供します。UI 層は値（と Source の寸法）を渡すだけで、設定名の文字列を持ちません。
+設定項目ごとの名前付きメソッド（`LogCenterPointChanged` / `LogSourceChanged` / `LogRequestedSizeChanged` / `LogDipToDeviceScalingChanged` / `LogZoomLevelChanged`）は、**設定名・書式・変化判定をコアが単一所有**するために提供します。UI 層は値（と Source の寸法）を渡すだけで、設定名の文字列を持ちません。
 
-**変更の検出は本コアが行います**: `Loupe.Options` / `Loupe.RenderScaling` / `Loupe.CenterPoint` の setter が変化を判定して出力するため、UI 層は変更通知で値を転送するだけです（`LogSourceChanged` と `LogUpdateError` は画像型・描画パイプラインを知る UI 側が出力します）。
+**変更の検出は本コアが行います**: `Loupe.Options` / `Loupe.DipToDeviceScaling` / `Loupe.CenterPoint` の setter が変化を判定して出力するため、UI 層は変更通知で値を転送するだけです（`LogSourceChanged` と `LogUpdateError` は画像型・描画パイプラインを知る UI 側が出力します）。
 
 ## `LoupeRenderRequest` の切り出し領域の導出（internal メンバー）
 

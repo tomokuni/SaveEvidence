@@ -261,14 +261,14 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 環境値（ユーザー設定ではない）のため設定（<see cref="Options"/>）には含めず、ホストが与える。<br/>
     /// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が設定されている場合はそちらが優先される。
     /// </remarks>
-    public double Scaling
+    public double DomainToDipScaling
     {
-        get => _marquee.Scaling;
-        set => _marquee.Scaling = value;
+        get => _marquee.DomainToDipScaling;
+        set => _marquee.DomainToDipScaling = value;
     }
 
-    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="Scaling"/> と同値）を取得または設定する。</summary>
-    /// <value>サイズラベルの DisplayScale に使う倍率。0 以下は <see cref="Scaling"/> から解決される。</value>
+    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="DomainToDipScaling"/> と同値）を取得または設定する。</summary>
+    /// <value>サイズラベルの DisplayScale に使う倍率。0 以下は <see cref="DomainToDipScaling"/> から解決される。</value>
     /// <remarks>環境値のため設定（<see cref="Options"/>）には含めず、ホストが与える。</remarks>
     public double DisplayScaleScaling
     {
@@ -279,14 +279,14 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ルーペの DIP → 物理ピクセル倍率を取得または設定する。</summary>
     /// <value>スケーリング係数（0.1〜8.0）。既定は 1.0。</value>
     /// <remarks>環境値（DPI）のため設定（<see cref="Options"/>）には含めず、ホストが与える。</remarks>
-    public double LoupeRenderScaling
+    public double LoupeDipToDeviceScaling
     {
-        get => _loupe.RenderScaling;
-        set => _loupe.RenderScaling = value;
+        get => _loupe.DipToDeviceScaling;
+        set => _loupe.DipToDeviceScaling = value;
     }
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
-    /// <param name="port">座標変換ポート。null の場合は <see cref="Scaling"/> 相当の等倍スケール（コアが解決）を使う。</param>
+    /// <param name="port">座標変換ポート。null の場合は <see cref="DomainToDipScaling"/> 相当の等倍スケール（コアが解決）を使う。</param>
     /// <remarks>
     /// ドラッグ選択とルーペへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。<br/>

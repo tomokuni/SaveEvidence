@@ -130,20 +130,20 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.Options = value;
     }
 
-    /// <summary>DPI スケーリング係数（<see cref="FadeMaskDragRectControl.Scaling"/> へ委譲）。</summary>
+    /// <summary>DPI スケーリング係数（<see cref="FadeMaskDragRectControl.DomainToDipScaling"/> へ委譲）。</summary>
     /// <remarks>ユーザー設定ではなく、セッション（Crop は 1.0）がコードから動的設定する。</remarks>
-    public double Scaling
+    public double DomainToDipScaling
     {
-        get => _selectionOverlay.Scaling;
-        set => _selectionOverlay.Scaling = value;
+        get => _selectionOverlay.DomainToDipScaling;
+        set => _selectionOverlay.DomainToDipScaling = value;
     }
 
-    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="FadeMaskDragRectControl.LoupeRenderScaling"/> へ委譲する。</summary>
+    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="FadeMaskDragRectControl.LoupeDipToDeviceScaling"/> へ委譲する。</summary>
     /// <remarks>ユーザー設定ではなく、ウィンドウの DPI スケーリングから自動取得する。</remarks>
-    public double LoupeRenderScaling
+    public double LoupeDipToDeviceScaling
     {
-        get => _selectionOverlay.LoupeRenderScaling;
-        set => _selectionOverlay.LoupeRenderScaling = value;
+        get => _selectionOverlay.LoupeDipToDeviceScaling;
+        set => _selectionOverlay.LoupeDipToDeviceScaling = value;
     }
 
     /// <summary>領域選択オーバーレイの選択矩形コントロールが使う色。<see cref="FadeMaskDragRectControl.MarqueePaint"/> へ委譲する。</summary>

@@ -77,11 +77,11 @@
                     <Separator/>
 
                     <!-- 描画スケール -->
-                    <TextBlock Text="描画スケール（RenderScaling・DIP→ピクセル）"/>
+                    <TextBlock Text="描画スケール（DipToDeviceScaling・DIP→ピクセル）"/>
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding RenderScalingText}" VerticalAlignment="Center"/>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding DipToDeviceScalingText}" VerticalAlignment="Center"/>
                         <Slider Minimum="0.5" Maximum="2" TickFrequency="0.25" IsSnapToTickEnabled="True"
-                                Value="{Binding RenderScaling, Mode=TwoWay}"/>
+                                Value="{Binding DipToDeviceScaling, Mode=TwoWay}"/>
                     </DockPanel>
 
                     <Separator/>
@@ -161,7 +161,7 @@
                                     CenterPoint="{Binding CenterPoint}"
                                     Options="{Binding Options}"
                                     Paint="{Binding Paint}"
-                                    RenderScaling="{Binding RenderScaling}"/>
+                                    DipToDeviceScaling="{Binding DipToDeviceScaling}"/>
 
             </Canvas>
 

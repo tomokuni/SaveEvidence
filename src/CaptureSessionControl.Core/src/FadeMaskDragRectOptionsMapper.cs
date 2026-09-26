@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// 両 UI のホスト（セッション）が本変換を使うため、UI ごとに見た目がずれる余地がない（UI 非依存の型のみで完結する）。<br/>
 /// <br/>
 /// <b>本変換の対象外</b>（ホストが個別に設定する）:<br/>
-/// - DPI スケーリング（<c>Scaling</c> / <c>DisplayScaleScaling</c>）とルーペの描画スケール（<c>LoupeRenderScaling</c>）: 環境値のため。<br/>
+/// - DPI スケーリング（<c>DomainToDipScaling</c> / <c>DisplayScaleScaling</c>）とルーペの描画スケール（<c>LoupeDipToDeviceScaling</c>）: 環境値のため。<br/>
 /// - 実行時状態（選択矩形・ハイライト矩形・ルーペ中心・拡大元画像）と座標変換ポート: セッションが管理する。
 /// </remarks>
 public static class FadeMaskDragRectOptionsMapper

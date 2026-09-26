@@ -12,7 +12,7 @@ public sealed partial class Loupe
         /// ファサード（<see cref="Loupe"/>）の入れ子とすることで、UI がファサード以外のコア型を直接呼ぶ経路を作らない<br/>
         /// （利用者はルーペの数値を得るのに <c>Loupe</c> だけを参照すればよい）。<br/>
         /// <b>規則の所在</b>: 設定値の補正は設定型（<see cref="LoupeOptions"/> の生成時の <c>init</c> アクセサ）と<br/>
-        /// ファサードの環境値（<see cref="Loupe.RenderScaling"/> の setter）も本値へ委譲する（補正の規則を二重に持たない）。<br/>
+        /// ファサードの環境値（<see cref="Loupe.DipToDeviceScaling"/> の setter）も本値へ委譲する（補正の規則を二重に持たない）。<br/>
         /// ラベルのフォントサイズの安全域は、他のコントロールと共通の規則のため描画層（<c>LoupeControl.UIBase</c> の <c>LoupePaint</c>）が単一所有する<br/>
         /// （本クラスは既定値を添えて委譲するだけ）。<br/>
         /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
@@ -38,13 +38,13 @@ public sealed partial class Loupe
         public const int ZoomLevelDefault = 4;
 
         /// <summary>スケーリング係数の最小値。</summary>
-        public const double RenderScalingMin = 0.1;
+        public const double DipToDeviceScalingMin = 0.1;
 
         /// <summary>スケーリング係数の最大値。</summary>
-        public const double RenderScalingMax = 8.0;
+        public const double DipToDeviceScalingMax = 8.0;
 
         /// <summary>スケーリング係数の既定値（補正不能時のフォールバックも兼ねる）。</summary>
-        public const double RenderScalingDefault = 1.0;
+        public const double DipToDeviceScalingDefault = 1.0;
 
         /// <summary>市松模様の 1 タイルサイズの最小値（ピクセル）。</summary>
         public const int CheckerSizeMin = 1;
@@ -77,8 +77,8 @@ public sealed partial class Loupe
         /// <summary>スケーリング係数を安全域へ補正する（0.1〜8.0。非有限は既定値）。</summary>
         /// <param name="value">補正する値。</param>
         /// <returns>安全域にクランプした値。非有限の場合は既定値。</returns>
-        public static double CoerceRenderScaling(double value)
-        => double.IsFinite(value) ? Math.Clamp(value, RenderScalingMin, RenderScalingMax) : RenderScalingDefault;
+        public static double CoerceDipToDeviceScaling(double value)
+        => double.IsFinite(value) ? Math.Clamp(value, DipToDeviceScalingMin, DipToDeviceScalingMax) : DipToDeviceScalingDefault;
 
         /// <summary>市松模様の 1 タイルサイズを安全域へ補正する（1〜128）。</summary>
         /// <param name="value">補正する値（ピクセル）。</param>

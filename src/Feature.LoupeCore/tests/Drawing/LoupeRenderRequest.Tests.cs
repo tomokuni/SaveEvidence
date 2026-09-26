@@ -73,7 +73,7 @@ public class LoupeRenderRequestTests
 
         Assert.Equal(new EsPoint(3, 4), request.Center);
         Assert.Equal(8, request.ZoomLevel);
-        Assert.Equal(1.5, request.Scaling);
+        Assert.Equal(1.5, request.DipToDeviceScaling);
         Assert.Equal(options, request.Options);
     }
 

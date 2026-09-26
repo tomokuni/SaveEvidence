@@ -176,9 +176,9 @@ internal sealed partial class OverlayWindow : Window
         SelectionOverlay.Options = s.ToFadeMaskDragRectOptions();
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
         // ドメインはウィンドウローカル物理ピクセル（= ローカル DIP × スケーリング）のため、ウィンドウのスケーリング（_scaling）を設定する。
-        SelectionOverlay.Scaling = _scaling;
+        SelectionOverlay.DomainToDipScaling = _scaling;
         SelectionOverlay.DisplayScaleScaling = _scaling;
-        SelectionOverlay.LoupeRenderScaling = s.LoupeRenderScaling!.Value;
+        SelectionOverlay.LoupeDipToDeviceScaling = s.LoupeDipToDeviceScaling!.Value;
         // サイズラベル: 文言（書式）はコアが単一所有し、本ホストは矩形を含むモニタの実スケール（マルチモニタ補正）だけを提供する。
         // ドメインはウィンドウローカル物理ピクセルのため、コアは DIP × スケーリングで物理ピクセルへ換算する（DIP 換算の往復誤差を排除）。
         SelectionOverlay.SizeLabelDisplayScalingProvider = GetMonitorScalingForRect;

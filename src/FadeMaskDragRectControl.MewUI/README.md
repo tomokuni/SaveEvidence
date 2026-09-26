@@ -79,7 +79,7 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | `LoupeCenterPoint` | ルーペ中心（ドメイン座標） |
 | `OperationTextProvider` / `InfoTextProvider` | 操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に生成するデリゲート（文言はホストが与える） |
 | `SizeLabelOverrideProvider` | サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
-| `Scaling` / `DisplayScaleScaling` / `LoupeRenderScaling` | DPI スケーリング（設定には含めない環境値。コードから動的設定） |
+| `DomainToDipScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` | DPI スケーリング（設定には含めない環境値。コードから動的設定） |
 | `Log` | 操作ログの出力先（null は `NullLogger`。内包するドラッグ選択コントロールとルーペへ伝搬する） |
 | `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定（ドラッグ選択・暗転マスクへ分配。null の場合は倍率からコアが解決する） |
 | `SetSelection` / `ClearSelection` | 選択状態の外部設定・クリア |

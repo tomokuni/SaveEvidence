@@ -46,7 +46,7 @@ public class CaptureSettingsTests
     [InlineData(0.05)]
     [InlineData(9.0)]
     public void Validate_ルーペの描画倍率が許容範囲外で例外を投げる(double value)
-        => Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeRenderScaling: value).Validate());
+        => Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeDipToDeviceScaling: value).Validate());
 
     [Fact]
     public void Validate_枠線の太さが負で例外を投げる()
@@ -66,7 +66,7 @@ public class CaptureSettingsTests
         new CaptureSettings(
             MinSelectionSize: 1, LoupeSize: 1, LoupeZoomLevel: 1, LoupeFrameThickness: 1, LoupeCheckerSize: 1,
             HandleSize: 1, HandleHitRadius: 1, MarkerLength: 1, BorderThickness: 0, LoupeOffset: 0,
-            LoupeRenderScaling: 0.1).Validate();
+            LoupeDipToDeviceScaling: 0.1).Validate();
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class CaptureSettingsTests
         Assert.Equal(12.0, s.HandleHitRadius);
         Assert.True(s.ClampToDomainBounds);
         Assert.Equal(16.0, s.MarkerLength);
-        Assert.Equal(1.0, s.LoupeRenderScaling);
+        Assert.Equal(1.0, s.LoupeDipToDeviceScaling);
         Assert.Equal(Color.FromArgb(0x4C, 128, 128, 128), s.LoupeCheckerColorA);
         Assert.Equal(Color.FromArgb(0x4C, 169, 169, 169), s.LoupeCheckerColorB);
         Assert.Equal(Color.White, s.LoupeSelectionRectColorA);
@@ -110,14 +110,14 @@ public class CaptureSettingsTests
         var s = new CaptureSettings(
             MinSelectionSize: 25, LoupeSize: 200, BorderColor: Color.Red,
             HandleColor: Color.Blue, HandleSize: 14.0, ClampToDomainBounds: true,
-            LoupeRenderScaling: 2.0, SizeLabelVisible: false, InfoLabelVisible: false).ToNonNull();
+            LoupeDipToDeviceScaling: 2.0, SizeLabelVisible: false, InfoLabelVisible: false).ToNonNull();
 
         Assert.Equal(25, s.MinSelectionSize);
         Assert.Equal(200, s.LoupeSize);
         Assert.Equal(Color.Red, s.BorderColor);
         Assert.Equal(14.0, s.HandleSize);
         Assert.True(s.ClampToDomainBounds);
-        Assert.Equal(2.0, s.LoupeRenderScaling);
+        Assert.Equal(2.0, s.LoupeDipToDeviceScaling);
         Assert.False(s.SizeLabelVisible);
         Assert.False(s.InfoLabelVisible);
         // 指定していない項目は既定値のまま

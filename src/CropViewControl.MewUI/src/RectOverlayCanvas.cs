@@ -80,7 +80,7 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
         }
 
         // スケーリング係数の正規化（0 以下は基準値）は DpiScaler が単一所有する
-        var scaling = DpiScaler.NormalizeScaling(_zoomView.RenderScaling);
+        var scaling = DpiScaler.NormalizeScaling(_zoomView.DipToDeviceScaling);
 
         canvas.Save();
         canvas.Scale((float)scaling);

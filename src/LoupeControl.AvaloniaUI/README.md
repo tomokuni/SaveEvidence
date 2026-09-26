@@ -45,7 +45,7 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 - 中心座標ラベル表示（`(x, y)` 形式・表示/色/背景/フォントサイズ/角丸設定可能）
 - 外枠の色（`Paint`）・太さ（`Options`）設定
 - **色と、ラベルのフォントサイズ・角丸は `Paint` プロパティ（`LoupePaint`）、寸法（タイルサイズ・外枠の太さ）は `Options`（`LoupeOptions`）で設定**（コアは寸法・表示可否だけを持ち、描画にだけ必要な設定は描画層（`LoupeControl.UIBase`）が単一所有する）
-- DIP と物理ピクセルの分離（`RenderScaling`）
+- DIP と物理ピクセルの分離（`DipToDeviceScaling`）
 - 非同期のルーペ画像生成（切り出し・合成は UI スレッドで実行）
 - 古い描画結果の自動破棄
 - 非表示時の生成Bitmap解放
@@ -95,7 +95,7 @@ using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
             Source="{Binding SourceImage}"
             CenterPoint="{Binding CenterPoint}"
             Options="{Binding Options}"
-            RenderScaling="1.0" />
+            DipToDeviceScaling="1.0" />
     </Canvas>
 </Window>
 ```
@@ -184,7 +184,7 @@ loupe.Log = logger;
 ## 9. パフォーマンス
 
 - `Source` や `CenterPoint` の高頻度更新は、利用側で更新間隔を制限することを推奨します。
-- 大きな `Options.RequestedSize` や高い `RenderScaling` は生成Bitmapのサイズと処理負荷を増加させます。
+- 大きな `Options.RequestedSize` や高い `DipToDeviceScaling` は生成Bitmapのサイズと処理負荷を増加させます。
 
 ## 10. サンプルアプリケーション
 

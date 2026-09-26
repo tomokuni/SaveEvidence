@@ -119,7 +119,7 @@ if (coordinator.ShouldApply(generation)) { ApplyBitmap(bitmap); }
 | `SurfaceBounds` | その正方形の矩形（下地・市松模様が塗る範囲） |
 | `ZoomLevel` | 拡大率（十字線の交点と切り出し領域に使う） |
 | `Options` | ルーペの設定（拡大率・寸法・ラベル表示の可否）。色は `LoupePaint` が単一所有する |
-| `Scaling` | 寸法の DIP 値 → 物理ピクセルの換算係数（換算はコアが済ませている） |
+| `DipToDeviceScaling` | 寸法の DIP 値 → 物理ピクセルの換算係数（換算はコアが済ませている） |
 
 ### 層（`LoupeDrawLayer`）
 

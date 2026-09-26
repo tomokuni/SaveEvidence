@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
-using EsUtil.Feature.LoupeCore;
 using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
@@ -30,7 +29,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// <br/>
 /// <b>入力</b>: <see cref="Source"/>（拡大元の 100% 画像）と <see cref="CenterPoint"/>（元画像ピクセル座標）。<br/>
 /// <b>設定</b>: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有する表示サイズ・拡大率・外観）。<br/>
-/// <b>環境</b>: <see cref="RenderScaling"/>（DPI 追従）。<br/>
+/// <b>環境</b>: <see cref="DipToDeviceScaling"/>（DPI 追従）。<br/>
 /// <b>描画</b>: 中間ビットマップを生成せず、子の図形キャンバス（<see cref="ShapeCanvas"/>）が画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
 /// 数値の安全域への補正は <see cref="LoupeOptions"/>（コア）が、描画サイズの決定は<br/>
 /// <see cref="LoupeFacade.CreateRequest"/>（コア）が、寸法値（タイルサイズ・外枠の太さ）と<br/>
@@ -87,22 +86,22 @@ public sealed class LoupeControl : Panel
                 o.InvalidateArrange();
             });
 
-    /// <summary><see cref="RenderScaling"/> プロパティ（表示 DIP → 物理ピクセルのスケーリング係数）。</summary>
+    /// <summary><see cref="DipToDeviceScaling"/> プロパティ（表示 DIP → 物理ピクセルのスケーリング係数）。</summary>
     /// <remarks>
     /// 環境値（DPI）のため設定（<see cref="LoupeOptions"/>）には含めず、補正と変更ログは本プロパティへ登録する<br/>
     /// （setter を経由しない設定でも安全域が保たれ、変更が記録される）。
     /// </remarks>
-    public static readonly MewProperty<double> RenderScalingProperty =
+    public static readonly MewProperty<double> DipToDeviceScalingProperty =
         MewProperty<double>.Register<LoupeControl>(
-            nameof(RenderScaling), RenderScalingDefault, MewPropertyOptions.AffectsRender,
+            nameof(DipToDeviceScaling), DipToDeviceScalingDefault, MewPropertyOptions.AffectsRender,
             changed: static (o, oldValue, newValue) =>
             {
                 // 描画入力（物理ピクセル）の計算元はコア（ファサード）が単一所有する
-                o._loupe.RenderScaling = newValue;
+                o._loupe.DipToDeviceScaling = newValue;
                 // ラベルの配置の基準（表示サイズ）が物理ピクセル換算で変わるため、配置し直す
                 o.InvalidateArrange();
             },
-            coerce: static (_, value) => CoerceRenderScaling(value));
+            coerce: static (_, value) => CoerceDipToDeviceScaling(value));
 
     /// <summary><see cref="Paint"/> プロパティ（色。描画にだけ必要な設定）。</summary>
     /// <remarks>
@@ -191,10 +190,10 @@ public sealed class LoupeControl : Panel
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
     /// <value>スケーリング係数。範囲外・非有限は 0.1〜8.0 または既定値へ補正される。</value>
-    public double RenderScaling
+    public double DipToDeviceScaling
     {
-        get => GetValue(RenderScalingProperty);
-        set => SetValue(RenderScalingProperty, value);
+        get => GetValue(DipToDeviceScalingProperty);
+        set => SetValue(DipToDeviceScalingProperty, value);
     }
 
     /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
@@ -417,7 +416,7 @@ public sealed class LoupeControl : Panel
     /// <param name="oldDpi">変更前の DPI。</param>
     /// <param name="newDpi">変更後の DPI。</param>
     /// <remarks>
-    /// モニター間の移動で DPI が変わっても物理ピクセル基準の見た目を保つため、<see cref="RenderScaling"/> を<br/>
+    /// モニター間の移動で DPI が変わっても物理ピクセル基準の見た目を保つため、<see cref="DipToDeviceScaling"/> を<br/>
     /// DPI から換算した値へ更新する（ホストが明示設定した値も DPI 変更時は上書きされる）。<br/>
     /// 換算規則は <see cref="DpiScaler.ToScaling"/>（コア）が単一所有する。<br/>
     /// ホストがスケーリングを明示する必要はない（DPI はコントロールが自動取得する）。
@@ -425,7 +424,7 @@ public sealed class LoupeControl : Panel
     protected override void OnDpiChanged(uint oldDpi, uint newDpi)
     {
         base.OnDpiChanged(oldDpi, newDpi);
-        RenderScaling = DpiScaler.ToScaling(newDpi);
+        DipToDeviceScaling = DpiScaler.ToScaling(newDpi);
     }
 
     /// <summary>ルーペを描画する。</summary>
@@ -443,7 +442,7 @@ public sealed class LoupeControl : Panel
         // 描画先の表面サイズ（物理ピクセル）から表示サイズ（DIP）を導いて描画入力を組み立てる
         // （表面は要素の大きさそのものであるため、要素の大きさと描画サイズが一致する）。
         // 導出は DpiScaler が単一所有する（丸め規則を両 UI で揃える）。
-        var scaling = DpiScaler.NormalizeScaling(RenderScaling);
+        var scaling = DpiScaler.NormalizeScaling(DipToDeviceScaling);
         var surfaceSize = info.Size.ToEsSize();
         var request = _loupe.CreateRequest(DpiScaler.ToDip(surfaceSize, scaling).Width, surfaceSize);
         var content = _loupe.ResolveContent(request);

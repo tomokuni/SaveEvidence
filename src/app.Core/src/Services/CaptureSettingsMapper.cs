@@ -40,7 +40,7 @@ internal static class CaptureSettingsMapper
             LoupeSize: settings.LoupeSize,
             LoupeZoomLevel: settings.LoupeZoomLevel,
             LoupeOffset: settings.LoupeOffset,
-            LoupeRenderScaling: renderScaling,
+            LoupeDipToDeviceScaling: renderScaling,
             LoupeCrossColor: ParseColor(settings.LoupeCrossColor),
             LoupeFrameColor: ParseColor(settings.LoupeFrameColor),
             LoupeFrameThickness: settings.LoupeFrameWidth,

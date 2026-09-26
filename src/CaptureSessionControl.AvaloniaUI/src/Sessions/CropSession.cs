@@ -202,8 +202,8 @@ internal sealed class CropSession(
         cropView.SelectionOverlayLoupePaint = CapturePaintMapper.ToLoupePaint(s, DrawingColor.Transparent);
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
         // プレビュー内 Crop はドメイン = 論理座標（元画像ピクセル）のため DIP と 1:1（基準値）にする。
-        cropView.Scaling = DpiScaler.StandardScaling;
-        cropView.LoupeRenderScaling = s.LoupeRenderScaling!.Value;
+        cropView.DomainToDipScaling = DpiScaler.StandardScaling;
+        cropView.LoupeDipToDeviceScaling = s.LoupeDipToDeviceScaling!.Value;
         // サイズラベルも描画時に最新のズーム率から生成する（ズーム率表示の追従）。
         // 書式と「未選択なら描かない」規則はコアが単一所有する。
         cropView.SizeLabelOverrideProvider = () => CropLabelTexts.ResolveSizeLabel(

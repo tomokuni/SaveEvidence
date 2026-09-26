@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <param name="LoupeSize">ルーペの一辺のサイズ（DIP）。</param>
 /// <param name="LoupeZoomLevel">ルーペ拡大倍率。</param>
 /// <param name="LoupeOffset">ルーペのカーソルからのオフセット（DIP）。</param>
-/// <param name="LoupeRenderScaling">ルーペの DIP→物理ピクセル倍率（LoupeControl.RenderScaling・0.1〜8.0）。</param>
+/// <param name="LoupeDipToDeviceScaling">ルーペの DIP→物理ピクセル倍率（LoupeControl.DipToDeviceScaling・0.1〜8.0）。</param>
 /// <param name="LoupeCrossColor">ルーペの十字線の色（不透明度は色のアルファに統合）。</param>
 /// <param name="LoupeFrameColor">ルーペの枠の色。</param>
 /// <param name="LoupeFrameThickness">ルーペの枠の太さ（ピクセル）。</param>
@@ -47,7 +47,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <param name="SubLineFontSize">サブラインのフォントサイズ。</param>
 /// <param name="SubLineColor">サブラインの文字色。</param>
 /// <param name="SubLineBackgroundColor">サブライン（2 行目）の背景色（不透明度は色のアルファに統合）。</param>
-/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskDragRectControl.DisplayScaleScaling・0 以下は Scaling と同値）。</param>
+/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskDragRectControl.DisplayScaleScaling・0 以下は DomainToDipScaling と同値）。</param>
 /// <remarks>
 /// 全メンバーは nullable とする。<br/>
     /// - 初期設定として使用する場合: null は本クラスの既定値（<see cref="ToNonNull"/> が埋める値）として扱う。<br/>
@@ -74,7 +74,7 @@ public sealed record CaptureSettings(
     int? LoupeSize = null,
     int? LoupeZoomLevel = null,
     double? LoupeOffset = null,
-    double? LoupeRenderScaling = null,
+    double? LoupeDipToDeviceScaling = null,
     Color? LoupeCrossColor = null,
     Color? LoupeFrameColor = null,
     int? LoupeFrameThickness = null,
@@ -116,7 +116,7 @@ public sealed record CaptureSettings(
         if (LoupeCheckerSize is < 1) throw new ArgumentOutOfRangeException(nameof(LoupeCheckerSize), "LoupeCheckerSize は 1 以上でなければなりません。");
         if (BorderThickness is < 0) throw new ArgumentOutOfRangeException(nameof(BorderThickness), "BorderThickness は 0 以上でなければなりません。");
         if (LoupeOffset is < 0) throw new ArgumentOutOfRangeException(nameof(LoupeOffset), "LoupeOffset は 0 以上でなければなりません。");
-        if (LoupeRenderScaling is < 0.1 or > 8.0) throw new ArgumentOutOfRangeException(nameof(LoupeRenderScaling), "LoupeRenderScaling は 0.1〜8.0 でなければなりません。");
+        if (LoupeDipToDeviceScaling is < 0.1 or > 8.0) throw new ArgumentOutOfRangeException(nameof(LoupeDipToDeviceScaling), "LoupeDipToDeviceScaling は 0.1〜8.0 でなければなりません。");
     }
 
     /// <summary>null のメンバーを本クラスの既定値で埋めた non-null 版の設定を生成する。</summary>
@@ -142,7 +142,7 @@ public sealed record CaptureSettings(
             LoupeSize: LoupeSize ?? 160,
             LoupeZoomLevel: LoupeZoomLevel ?? 4,
             LoupeOffset: LoupeOffset ?? 20.0,
-            LoupeRenderScaling: LoupeRenderScaling ?? 1.0,
+            LoupeDipToDeviceScaling: LoupeDipToDeviceScaling ?? 1.0,
             LoupeCrossColor: LoupeCrossColor ?? Color.FromArgb(102, 255, 0, 0),
             LoupeFrameColor: LoupeFrameColor ?? Color.LightGray,
             LoupeFrameThickness: LoupeFrameThickness ?? 2,

@@ -92,12 +92,12 @@ public sealed partial class Loupe
     /// どの設定経路（初期化・UI の依存関係プロパティ・直接代入）でも範囲内の値だけが保持される。<br/>
     /// 変更は本コアが検出して出力する（UI 層に同値判定を置かない）。
     /// </remarks>
-    public double RenderScaling
+    public double DipToDeviceScaling
     {
         get => field;
         set
         {
-            var coerced = CoerceRenderScaling(value);
+            var coerced = CoerceDipToDeviceScaling(value);
             if (field == coerced)
             {
                 return;
@@ -105,9 +105,9 @@ public sealed partial class Loupe
 
             var previous = field;
             field = coerced;
-            Log.LogRenderScalingChanged(previous, coerced);
+            Log.LogDipToDeviceScalingChanged(previous, coerced);
         }
-    } = RenderScalingDefault;
+    } = DipToDeviceScalingDefault;
 
     /// <summary>拡大表示する中心座標（ドメイン座標）。</summary>
     /// <value>拡大中心（元画像ピクセル座標）。未設定は null（市松模様のみを描画し、配置も行わない）。</value>
@@ -176,7 +176,7 @@ public sealed partial class Loupe
     /// 描画と描画完了通知が同じ値を使うため、UI 層は本メソッドの結果を両方へ渡す。
     /// </remarks>
     public LoupeRenderRequest CreateRequest(double displaySize, EsSize? availableSize = null)
-        => LoupeRenderRequest.Create(CenterPoint, displaySize, RenderScaling, Options, availableSize);
+        => LoupeRenderRequest.Create(CenterPoint, displaySize, DipToDeviceScaling, Options, availableSize);
 
     /// <summary>描画入力から 1 フレーム分の描画内容を解決する。</summary>
     /// <param name="request">描画入力（描画のたびに決まる値。物理ピクセルサイズ・寸法の換算結果を含む）。</param>

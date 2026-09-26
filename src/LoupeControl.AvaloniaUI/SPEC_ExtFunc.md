@@ -19,7 +19,7 @@
       - [5.1.1 Source](#511-source)
       - [5.1.2 CenterPoint](#512-centerpoint)
       - [5.1.3 Options（設定の単一値）](#513-options設定の単一値)
-      - [5.1.4 RenderScaling](#514-renderscaling)
+      - [5.1.4 DipToDeviceScaling](#514-renderscaling)
       - [5.1.5 寸法と Paint（色）](#515-寸法と-paint色)
       - [5.1.6 IsVisible](#516-isvisible)
       - [5.1.7 Log](#517-log)
@@ -126,7 +126,7 @@ panel.Children.Add(loupe);
             Source="{Binding SourceImage}"
             CenterPoint="{Binding CenterPoint}"
             Options="{Binding Options}"
-            RenderScaling="1.0" />
+            DipToDeviceScaling="1.0" />
     </Canvas>
 </Window>
 ```
@@ -139,7 +139,7 @@ var loupe = new LoupeControl
     Source = sourceBitmap,
     CenterPoint = new Point(400, 300),
     Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 },
-    RenderScaling = 1.0,
+    DipToDeviceScaling = 1.0,
     IsHitTestVisible = false,
     IsVisible = true
 };
@@ -219,7 +219,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 
 **表示サイズ（`RequestedSize`）のクランプはコア（ファサード）が内包**します: 表示サイズはコアが本値（基本サイズ）を親領域サイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
-**設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。DPI スケーリング係数（`RenderScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
+**設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。DPI スケーリング係数（`DipToDeviceScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
 
 **描画の差し替え**: `Renderer`（`ILoupeRenderer`。既定は自 UI の `LoupeRendererAvaloniaUI`（色は `Paint` の値で生成）。null 不可）で描画の実装を差し替えられます（描画先は `AvaloniaCanvas` が担うため、描画手順だけを交換できます）。設定すると再生成とラベル要素の再配置を要求します。
 
@@ -227,7 +227,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 loupe.Renderer = MyLoupeRenderer.Instance;   // 描画手順の差し替え
 ```
 
-#### 5.1.4 RenderScaling
+#### 5.1.4 DipToDeviceScaling
 
 | 項目 | 内容 |
 | --- | --- |
@@ -239,7 +239,7 @@ loupe.Renderer = MyLoupeRenderer.Instance;   // 描画手順の差し替え
 Bitmapの一辺は概ね次の式で決定されます。
 
 ```text
-BitmapSize = ceil(表示サイズ × RenderScaling)
+BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 ```
 
 環境値（DPI）のためコアの `LoupeOptions` には含めず、補正（`coerce`）はプロパティが担います（安全域の定義はコアの `Loupe.Limits` が単一所有します）。
@@ -276,7 +276,7 @@ BitmapSize = ceil(表示サイズ × RenderScaling)
 
 座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Paint`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
-寸法項目（`CheckerSize` / `FrameWidth`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.CheckerSizePixels` / `FrameWidthPixels`）（`RenderScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
+寸法項目（`CheckerSize` / `FrameWidth`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.CheckerSizePixels` / `FrameWidthPixels`）（`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 
@@ -432,7 +432,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 描画エラー（`Source` が未対応の `IImage` 等）は `Log` へ記録され、アプリは落ちません（例外は開始側が観測し、呼び出し元へは伝播しません）。
 
-`Log` へ設定したロガーは**コアへも伝搬**します。設定（`Options`）・環境値（`RenderScaling`）・拡大中心（`CenterPoint`）の変更ログはコアが出力し、本コントロールは `Source` の変更と描画の例外だけを出力します。
+`Log` へ設定したロガーは**コアへも伝搬**します。設定（`Options`）・環境値（`DipToDeviceScaling`）・拡大中心（`CenterPoint`）の変更ログはコアが出力し、本コントロールは `Source` の変更と描画の例外だけを出力します。
 
 ## 7. ライフサイクルと所有権
 
@@ -535,7 +535,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 - `Source` のBinding
 - `CenterPoint` のマウス追従
 - 画像端から外れた部分の部分的な市松模様
-- `Options`（`ZoomLevel` / `RequestedSize` / `CheckerSize` / `FrameWidth`）と `Paint`（色）・`RenderScaling`
+- `Options`（`ZoomLevel` / `RequestedSize` / `CheckerSize` / `FrameWidth`）と `Paint`（色）・`DipToDeviceScaling`
 - 十字線・市松模様・外枠の色変更（`Paint`）
 - `IsVisible`、`Clear()`、`RequestRender()`
 - `Log`（描画エラーの通知先 ILogger 設定例）

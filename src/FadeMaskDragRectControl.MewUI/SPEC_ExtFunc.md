@@ -56,9 +56,9 @@ Avalonia 版と同一の解釈になります。
 | `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（ドメイン座標） |
 | `Options` | `FadeMaskDragRectOptions`（コア） | `FadeMaskDragRectOptions.Default` | 設定の単一値（下記）。同じ値の再設定はスキップされる |
 | `MarqueePaint` / `LoupePaint` | `MarqueePaint` / `LoupePaint`（描画層） | 各 `Default` | 描画にだけ必要な色の単一値（コアの設定値には含まれない） |
-| `Scaling` | `double` | `1.0` | ドメイン → DIP 変換の基準倍率（設定には含めない環境値） |
-| `DisplayScaleScaling` | `double` | `0`（`Scaling` と同値） | サイズラベルの DisplayScale 補正（環境値） |
-| `LoupeRenderScaling` | `double` | `1.0` | ルーペの DIP → 物理ピクセル倍率（環境値） |
+| `DomainToDipScaling` | `double` | `1.0` | ドメイン → DIP 変換の基準倍率（設定には含めない環境値） |
+| `DisplayScaleScaling` | `double` | `0`（`DomainToDipScaling` と同値） | サイズラベルの DisplayScale 補正（環境値） |
+| `LoupeDipToDeviceScaling` | `double` | `1.0` | ルーペの DIP → 物理ピクセル倍率（環境値） |
 
 `Options`（コアの `FadeMaskDragRectOptions`）の項目:
 
@@ -134,7 +134,7 @@ Avalonia 版と同一の解釈になります。
 | イベント引数の座標 | コア型（`EsPoint` / `EsRect`）で公開する |
 | 外観設定 | コアの `FadeMaskDragRectOptions` を 1 プロパティ（`Options`）として公開する（Avalonia 版と同じ設定値を使う）。色は `MarqueePaint` / `LoupePaint` プロパティで与える |
 | ルーペの位置決め | 本コントロールがコアの計算で配置する（Avalonia 版はルーペ自身が算出する） |
-| ルーペの描画スケール | 自動追従（Avalonia 版は `LoupeRenderScaling` の手動設定が必要） |
+| ルーペの描画スケール | 自動追従（Avalonia 版は `LoupeDipToDeviceScaling` の手動設定が必要） |
 | サイズラベル・操作ラベル・情報ラベル | サイズラベルはコントロールが表示し、操作・情報ラベルはホストが `Options.Labels` の外観で描く |
 | ルーペ画像上の選択矩形破線 | 描画する（同じコアの破線幾何を使う。描画先はキャンバスと `EsBitmap` の違い） |
 | ルーペ描画完了の通知 | 本コントロールが内部で受けて破線を描くため、ホストへは中継しない（Avalonia 版は `LoupeRendered` で中継し、ホストがルーペ画像へ直接描く） |

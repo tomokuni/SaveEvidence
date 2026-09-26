@@ -32,7 +32,7 @@ public class LoupeTests
         var loupe = new Loupe();
 
         Assert.Same(LoupeOptions.Default, loupe.Options);
-        Assert.Equal(Loupe.Limits.RenderScalingDefault, loupe.RenderScaling);
+        Assert.Equal(Loupe.Limits.DipToDeviceScalingDefault, loupe.DipToDeviceScaling);
         Assert.Null(loupe.CenterPoint);
         Assert.Equal(0.0, loupe.PositionOffset);
     }
@@ -57,9 +57,9 @@ public class LoupeTests
     public void RenderScaling_安全域外の指定は補正して保持する(double input, double expected)
     {
         // 補正の規則は Loupe.Limits が単一所有する（UI の依存関係プロパティを経由しない代入でも範囲内になる）
-        var loupe = new Loupe() { RenderScaling = input };
+        var loupe = new Loupe() { DipToDeviceScaling = input };
 
-        Assert.Equal(expected, loupe.RenderScaling);
+        Assert.Equal(expected, loupe.DipToDeviceScaling);
     }
 
     // ====================================================================
@@ -177,7 +177,7 @@ public class LoupeTests
         var loupe = new Loupe(options)
         {
             CenterPoint = new EsPoint(10, 20),
-            RenderScaling = 1.5,
+            DipToDeviceScaling = 1.5,
         };
 
         var request = loupe.CreateRequest(160);
@@ -185,7 +185,7 @@ public class LoupeTests
         Assert.Equal(new EsPoint(10, 20), request.Center);
         Assert.Equal(240, request.PixelSize);
         Assert.Equal(4, request.ZoomLevel);
-        Assert.Equal(1.5, request.Scaling);
+        Assert.Equal(1.5, request.DipToDeviceScaling);
         Assert.Equal(options, request.Options);
     }
 

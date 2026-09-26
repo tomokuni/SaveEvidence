@@ -40,9 +40,9 @@ public sealed class ZoomViewControl : SkiaCanvasView
             nameof(CenterAlign), true, MewPropertyOptions.AffectsRender,
             changed: static (owner, _, _) => owner.OnCenterAlignChanged());
 
-    /// <summary><see cref="RenderScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
-    public static readonly MewProperty<double> RenderScalingProperty =
-        MewProperty<double>.Register<ZoomViewControl>(nameof(RenderScaling), 1.0, MewPropertyOptions.AffectsRender);
+    /// <summary><see cref="DipToDeviceScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
+    public static readonly MewProperty<double> DipToDeviceScalingProperty =
+        MewProperty<double>.Register<ZoomViewControl>(nameof(DipToDeviceScaling), 1.0, MewPropertyOptions.AffectsRender);
 
     /// <summary>ズームの状態・判断・計算を単一所有するセッション。</summary>
     private readonly ZoomViewSession _session;
@@ -106,10 +106,10 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
     /// <value>スケーリング係数。DPI 変更時に自動更新される。</value>
-    public double RenderScaling
+    public double DipToDeviceScaling
     {
-        get => GetValue(RenderScalingProperty);
-        set => SetValue(RenderScalingProperty, value);
+        get => GetValue(DipToDeviceScalingProperty);
+        set => SetValue(DipToDeviceScalingProperty, value);
     }
 
     /// <summary>ズームビューの外観（下地・市松模様・スクロールバー）を取得または設定する。</summary>
@@ -207,7 +207,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     protected override void OnDpiChanged(uint oldDpi, uint newDpi)
     {
         base.OnDpiChanged(oldDpi, newDpi);
-        RenderScaling = DpiScaler.ToScaling(newDpi);
+        DipToDeviceScaling = DpiScaler.ToScaling(newDpi);
     }
 
     /// <summary>ビューポートのサイズ変更をセッションへ通知する。</summary>
@@ -388,7 +388,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
         canvas.Clear(appearance.BackgroundColor.ToSKColor());
 
         // スケーリング係数の正規化（0 以下は基準値）は DpiScaler が単一所有する
-        var scaling = DpiScaler.NormalizeScaling(RenderScaling);
+        var scaling = DpiScaler.NormalizeScaling(DipToDeviceScaling);
 
         // レイアウト前は Bounds が 0 のため、キャンバスサイズからビューポートを求める
         var viewport = CurrentViewport();

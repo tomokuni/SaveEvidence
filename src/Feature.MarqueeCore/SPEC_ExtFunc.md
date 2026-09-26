@@ -104,10 +104,10 @@
 | `Notified` | event | 通知（`MarqueeNotice`） |
 | `Log` | property | ロガー。null は `NullLogger` へ吸収される |
 | `Options` | property | 設定。設定すると対話パラメータを反映し、境界外選択の禁止の変化時のみログと即時クリップを行う |
-| `Scaling` | property | 座標変換ポート未指定時に適用する倍率。既定は `Limits.ScalingDefault`（1.0） |
+| `DomainToDipScaling` | property | 座標変換ポート未指定時に適用する倍率。既定は `Limits.DomainToDipScalingDefault`（1.0） |
 | `DecoOptions` | property | 装飾の設定 |
 | `SizeLabelOverrideProvider` | property | サイズラベルの文言プロバイダ（null または空文字はコアが自動生成） |
-| `DisplayScaleScaling` | property | サイズラベルの DisplayScale 表示に使う係数（0 以下は `Scaling` と同値） |
+| `DisplayScaleScaling` | property | サイズラベルの DisplayScale 表示に使う係数（0 以下は `DomainToDipScaling` と同値） |
 | `HasSelection` / `SelectionRect` | property | 選択の有無と選択矩形（ドメイン座標） |
 | `CreateSnapshot(EsPoint?)` | method | 状態スナップショットの生成 |
 | `SetCoordinateTransform(ICoordTransform?)` | method | 座標変換ポートの設定（null は等価変換） |
@@ -119,7 +119,7 @@
 | `RequestConfirm()` / `RequestCancel()` | method | 確定/キャンセルの要求（キー・ダブルクリックと同一経路） |
 | `CreateRequest(EsSize)` | method | 描画 1 フレーム分の入力（`MarqueeRenderRequest`）の生成（設定・状態と、描画時に決まる値） |
 | `ResolveContent(MarqueeRenderRequest)` | method | 1 フレーム分の描画内容（`MarqueeDrawContent`）の解決 |
-| `Limits.ScalingDefault` | const | 倍率の既定値（1.0。`Marquee.Limits` の入れ子） |
+| `Limits.DomainToDipScalingDefault` | const | 倍率の既定値（1.0。`Marquee.Limits` の入れ子） |
 
 ### `MarqueeOptions` のメンバー
 

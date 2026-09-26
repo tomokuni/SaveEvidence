@@ -143,7 +143,7 @@ public sealed partial class MarqueeControl : Panel
         _effects = new Effects(this);
         _marquee = new MarqueeFacade(_effects, _cursor, Options);
         // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
-        _marquee.Scaling = GetValue(ScalingProperty);
+        _marquee.DomainToDipScaling = GetValue(DomainToDipScalingProperty);
         _marquee.Notified += OnNotified;
         // 装飾の設定と環境値はコアが単一所有する（本層は公開プロパティをコアへ委譲するだけ）
         _marquee.DecoOptions = GetValue(DecoOptionsProperty);
@@ -194,7 +194,7 @@ public sealed partial class MarqueeControl : Panel
     static MarqueeControl()
     {
         // 設定（外観・装飾を含む）の変更は再描画を要求する
-        AffectsRender<MarqueeControl>(OptionsProperty, DecoOptionsProperty, ScalingProperty);
+        AffectsRender<MarqueeControl>(OptionsProperty, DecoOptionsProperty, DomainToDipScalingProperty);
 
         // 色（描画にだけ必要な設定）の変更は本 UI の描画実装を差し替える（色は描画実装が単一所有する）
         PaintProperty.Changed.AddClassHandler<MarqueeControl>(
@@ -209,8 +209,8 @@ public sealed partial class MarqueeControl : Panel
             static (c, e) => c._marquee.DecoOptions = e.GetNewValue<MarqueeDecoOptions>());
 
         // 環境値（倍率）をファサードへ伝搬する（ポート未指定時の倍率の使い方・表示倍率の解決はコアが単一所有する）
-        ScalingProperty.Changed.AddClassHandler<MarqueeControl>(
-            static (c, e) => c._marquee.Scaling = e.GetNewValue<double>());
+        DomainToDipScalingProperty.Changed.AddClassHandler<MarqueeControl>(
+            static (c, e) => c._marquee.DomainToDipScaling = e.GetNewValue<double>());
         DisplayScaleScalingProperty.Changed.AddClassHandler<MarqueeControl>(
             static (c, e) => c._marquee.DisplayScaleScaling = e.GetNewValue<double>());
     }
@@ -453,10 +453,10 @@ public sealed partial class MarqueeControl : Panel
     // 描画入力（環境値・ホスト結線・座標変換ポート）
     // ====================================================================
 
-    /// <summary><see cref="Scaling"/> 依存関係プロパティ。</summary>
-    /// <remarks>既定値はコアの <see cref="ScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。</remarks>
-    public static readonly StyledProperty<double> ScalingProperty =
-        AvaloniaProperty.Register<MarqueeControl, double>(nameof(Scaling), ScalingDefault);
+    /// <summary><see cref="DomainToDipScaling"/> 依存関係プロパティ。</summary>
+    /// <remarks>既定値はコアの <see cref="DomainToDipScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。</remarks>
+    public static readonly StyledProperty<double> DomainToDipScalingProperty =
+        AvaloniaProperty.Register<MarqueeControl, double>(nameof(DomainToDipScaling), DomainToDipScalingDefault);
 
     /// <summary>ドメイン → DIP 変換の基準倍率を取得または設定する。</summary>
     /// <value>ドメイン → DIP 変換の基準倍率。既定は 1.0。</value>
@@ -466,10 +466,10 @@ public sealed partial class MarqueeControl : Panel
     /// 選択矩形と十字マーカーの描画はファサードの座標変換ポートのみを使うため本値の影響を受けない
     /// （本値が影響するのは装飾のサイズラベル・ラベル位置）。
     /// </remarks>
-    public double Scaling
+    public double DomainToDipScaling
     {
-        get => GetValue(ScalingProperty);
-        set => SetValue(ScalingProperty, value);
+        get => GetValue(DomainToDipScalingProperty);
+        set => SetValue(DomainToDipScalingProperty, value);
     }
 
     /// <summary><see cref="DisplayScaleScaling"/> 依存関係プロパティ。</summary>
@@ -478,10 +478,10 @@ public sealed partial class MarqueeControl : Panel
         AvaloniaProperty.Register<MarqueeControl, double>(nameof(DisplayScaleScaling));
 
     /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
-    /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="Scaling"/> と同じ値が使用される。</value>
+    /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値が使用される。</value>
     /// <remarks>
     /// マルチスクリーン環境では、選択矩形が存在するスクリーンのスケーリング係数を設定する。<br/>
-    /// 0 以下を <see cref="Scaling"/> と同値として扱う規則はコア（<see cref="MarqueeFacade.DisplayScaleScaling"/>）が単一所有する。
+    /// 0 以下を <see cref="DomainToDipScaling"/> と同値として扱う規則はコア（<see cref="MarqueeFacade.DisplayScaleScaling"/>）が単一所有する。
     /// </remarks>
     public double DisplayScaleScaling
     {

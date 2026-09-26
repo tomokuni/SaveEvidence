@@ -39,7 +39,7 @@
 UI 層に残してよいもの（コアへ移せない例外）:
 
 1. 描画先（Avalonia = 子 `Image` + `RenderTransform` + 標準 `ScrollBar` / MewUI = `SKCanvas`）
-2. DPI の取得と `RenderScaling`、ポインタキャプチャ API
+2. DPI の取得と `DipToDeviceScaling`、ポインタキャプチャ API
 3. レイアウト（`Bounds` の確定）
 4. 見た目の差（スクロールバーの太さ・余白。Avalonia は標準部品を使うため廃止し、MewUI は外観値を使う）
 

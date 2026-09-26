@@ -256,7 +256,7 @@ public sealed class FadeMaskDragRectControl : Panel
     // ====================================================================
 
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
-    /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は倍率（<see cref="Scaling"/>）からコアが解決する。</param>
+    /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。null の場合は倍率（<see cref="DomainToDipScaling"/>）からコアが解決する。</param>
     /// <remarks>
     /// Marquee / Loupe の 2 コントロールへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。
@@ -299,14 +299,14 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 環境値（ユーザー設定ではない）のため設定（<see cref="Options"/>）には含めず、ホスト（セッション）が与える。<br/>
     /// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が設定されている場合はそちらが優先される。
     /// </remarks>
-    public double Scaling
+    public double DomainToDipScaling
     {
-        get => _marquee.Scaling;
-        set => _marquee.Scaling = value;
+        get => _marquee.DomainToDipScaling;
+        set => _marquee.DomainToDipScaling = value;
     }
 
-    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="Scaling"/> と同値）を取得または設定する。</summary>
-    /// <value>サイズラベルの DisplayScale に使う倍率。0 以下は <see cref="Scaling"/> から解決される。</value>
+    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="DomainToDipScaling"/> と同値）を取得または設定する。</summary>
+    /// <value>サイズラベルの DisplayScale に使う倍率。0 以下は <see cref="DomainToDipScaling"/> から解決される。</value>
     /// <remarks>環境値のため設定（<see cref="Options"/>）には含めず、ホスト（セッション）が与える。</remarks>
     public double DisplayScaleScaling
     {
@@ -319,10 +319,10 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// 環境値（DPI）のため設定（<see cref="Options"/>）には含めず、ホスト（<c>MainWindow.DesktopScaling</c> 等）が与える。
     /// </remarks>
-    public double LoupeRenderScaling
+    public double LoupeDipToDeviceScaling
     {
-        get => _loupeControl.RenderScaling;
-        set => _loupeControl.RenderScaling = value;
+        get => _loupeControl.DipToDeviceScaling;
+        set => _loupeControl.DipToDeviceScaling = value;
     }
 
     /// <summary>内部ロガー（内包コントロール（Marquee / Loupe）へ伝搬）。null の場合は出力なし。</summary>

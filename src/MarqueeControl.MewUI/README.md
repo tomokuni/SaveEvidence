@@ -105,7 +105,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた設定（コアの `EsUtil.Feature.MarqueeCore.Setting.MarqueeOptions`。**色は含まない**） |
 | `Paint` | `MarqueePaint` | `MarqueePaint.Default` | **色（ハンドル・十字マーカー・ラベル・装飾）の設定**（描画層の `EsUtil.SaveEvidence.Marquee.UIBase.MarqueePaint`）。変更すると描画実装が新しい色で差し替わる |
 | `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | 装飾（暗転マスク・穴あけ枠・ハイライト）の表示可否と寸法の設定（`EsUtil.Feature.MarqueeCore.Decoration.MarqueeDecoOptions`。**色は含まない**） |
-| `RenderScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新） |
+| `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と同一）:
 

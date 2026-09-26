@@ -106,7 +106,7 @@ classDiagram
     class MarqueeControl {
         +MarqueeOptions Options
         +MarqueePaint Paint
-        +double RenderScaling
+        +double DipToDeviceScaling
         +MarqueeSnapshot CurrentSnapshot
         +SetCoordinateTransform(port) void
         +SetSelection(rect) void
@@ -355,7 +355,7 @@ stateDiagram-v2
 
 ```text
 OnPaintSurface(canvas, info)
-  ├─ canvas.Scale(RenderScaling)                     … DPI の適用（境界 1 箇所）
+  ├─ canvas.Scale(DipToDeviceScaling)                     … DPI の適用（境界 1 箇所）
   ├─ canvas.Clear(透明)                              … 前フレームの描画を残さない
   ├─ Marquee.CreateRequest(clientSize) / Marquee.ResolveContent(request)  … 描画内容 1 値（判断はコア。サイズのみを渡し原点は常に 0）
   └─ 自 UI の描画実装（MarqueeRendererMewUI）があれば Draw(canvas, content)、なければ描画ポート経由の DrawShapes(new SkiaEsCanvas(canvas), content)

@@ -29,7 +29,7 @@ public class LoupeControlTests
         Assert.Null(control.CenterPoint);
         Assert.Equal(RequestedSizeDefault, control.Options.RequestedSize);
         Assert.Equal(ZoomLevelDefault, control.Options.ZoomLevel);
-        Assert.Equal(RenderScalingDefault, control.RenderScaling);
+        Assert.Equal(DipToDeviceScalingDefault, control.DipToDeviceScaling);
 
         // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
         Assert.Equal(CheckerSizeDefault, control.Options.CheckerSize);
@@ -69,15 +69,15 @@ public class LoupeControlTests
     /// <param name="value">設定する値。</param>
     /// <param name="expected">期待する補正結果。</param>
     [Theory]
-    [InlineData(double.NaN, RenderScalingDefault)]
-    [InlineData(double.PositiveInfinity, RenderScalingDefault)]
-    [InlineData(0.0, RenderScalingMin)]
-    [InlineData(100.0, RenderScalingMax)]
+    [InlineData(double.NaN, DipToDeviceScalingDefault)]
+    [InlineData(double.PositiveInfinity, DipToDeviceScalingDefault)]
+    [InlineData(0.0, DipToDeviceScalingMin)]
+    [InlineData(100.0, DipToDeviceScalingMax)]
     public void スケーリング係数が安全域へ補正される(double value, double expected)
     {
-        var control = new LoupeControl { RenderScaling = value };
+        var control = new LoupeControl { DipToDeviceScaling = value };
 
-        Assert.Equal(expected, control.RenderScaling);
+        Assert.Equal(expected, control.DipToDeviceScaling);
     }
 
     /// <summary>座標ラベルのフォントサイズが安全域へ補正されることを検証する。</summary>
@@ -264,7 +264,7 @@ public class LoupeControlTests
     /// MewUI のバインディングはプロパティの setter を通さずに値を書き込む。<br/>
     /// 設定（<see cref="LoupeOptions"/>）の数値項目は<b>値の型の生成時</b>に補正されるため、
     /// 設定経路（オブジェクト初期化子・<c>with</c> 式・バインディング）によらず範囲内の値だけが保持される。<br/>
-    /// 環境値の <see cref="LoupeControl.RenderScaling"/> はプロパティの補正コールバック（<c>coerce</c>）で補正する。<br/>
+    /// 環境値の <see cref="LoupeControl.DipToDeviceScaling"/> はプロパティの補正コールバック（<c>coerce</c>）で補正する。<br/>
     /// setter を経由しない設定は <c>MewObject.SetValue</c>（protected）しかないため、リフレクションで呼ぶ。
     /// </remarks>
     [Fact]
@@ -277,11 +277,11 @@ public class LoupeControlTests
             RequestedSize = 100_000,
             ZoomLevel = 1000,
         });
-        TestHelper.SetValueWithoutSetter(control, LoupeControl.RenderScalingProperty, 100.0);
+        TestHelper.SetValueWithoutSetter(control, LoupeControl.DipToDeviceScalingProperty, 100.0);
 
         Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
         Assert.Equal(ZoomLevelMax, control.Options.ZoomLevel);
-        Assert.Equal(RenderScalingMax, control.RenderScaling);
+        Assert.Equal(DipToDeviceScalingMax, control.DipToDeviceScaling);
     }
 
     /// <summary>プロパティ変更がコアのログ定義で記録されることを検証する。</summary>
@@ -295,7 +295,7 @@ public class LoupeControlTests
     [InlineData(nameof(LoupeControl.Source))]
     [InlineData(nameof(LoupeControl.CenterPoint))]
     [InlineData(nameof(LoupeOptions.RequestedSize))]
-    [InlineData(nameof(LoupeControl.RenderScaling))]
+    [InlineData(nameof(LoupeControl.DipToDeviceScaling))]
     [InlineData(nameof(LoupeOptions.ZoomLevel))]
     public void プロパティ変更がログへ記録される(string propertyName)
     {
@@ -314,8 +314,8 @@ public class LoupeControlTests
             case nameof(LoupeOptions.RequestedSize):
                 control.Options = control.Options with { RequestedSize = 200 };
                 break;
-            case nameof(LoupeControl.RenderScaling):
-                control.RenderScaling = 2.0;
+            case nameof(LoupeControl.DipToDeviceScaling):
+                control.DipToDeviceScaling = 2.0;
                 break;
             default:
                 control.Options = control.Options with { ZoomLevel = 8 };

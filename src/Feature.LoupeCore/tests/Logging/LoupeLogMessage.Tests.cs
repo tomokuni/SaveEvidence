@@ -70,13 +70,13 @@ public class LoupeLogMessageTests
 
         logger.LogSourceChanged("1920x1080", "null");
         logger.LogRequestedSizeChanged(160, 240);
-        logger.LogRenderScalingChanged(1.0, 2.0);
+        logger.LogDipToDeviceScalingChanged(1.0, 2.0);
         logger.LogZoomLevelChanged(4, 8);
 
         Assert.Equal(4, logger.Messages.Count);
         Assert.Equal("[LoupeCtrl] Setting: Source 1920x1080 → null", logger.Messages[0]);
         Assert.Equal("[LoupeCtrl] Setting: RequestedSize 160 → 240", logger.Messages[1]);
-        Assert.Equal("[LoupeCtrl] Setting: RenderScaling 1 → 2", logger.Messages[2]);
+        Assert.Equal("[LoupeCtrl] Setting: DipToDeviceScaling 1 → 2", logger.Messages[2]);
         Assert.Equal("[LoupeCtrl] Setting: ZoomLevel 4 → 8", logger.Messages[3]);
     }
 
@@ -87,7 +87,7 @@ public class LoupeLogMessageTests
         var logger = new RecordingLogger();
 
         logger.LogRequestedSizeChanged(160, 160);
-        logger.LogRenderScalingChanged(1.0, 1.0);
+        logger.LogDipToDeviceScalingChanged(1.0, 1.0);
         logger.LogZoomLevelChanged(4, 4);
 
         Assert.Empty(logger.Messages);
