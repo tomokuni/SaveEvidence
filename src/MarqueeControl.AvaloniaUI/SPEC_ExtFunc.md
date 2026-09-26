@@ -249,6 +249,8 @@ control.ResetSelection();           // 状態と nudge の初期化
 | --- | --- | --- |
 | `Log` | `ILogger` | 操作ログ用ロガー（既定は `NullLogger`。出力先・レベル制御はホストアプリケーションが所有） |
 
+操作ログの書式・レベルは MewUI 版と同一です。ログはコア（`EsUtil.Feature.MarqueeCore.Logging.MarqueeLogMessage`）と組み込みの層（`EsUtil.SaveEvidence.Marquee.UIBase.MarqueeWheelLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。Debug で操作（MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / ZoomRequested）と**設定の変更**（`[Marquee] Setting: {名前} {前} → {後}`。変化した項目だけ）を、Trace で位置の記録を出力します。
+
 #### 5.1.4 描画
 
 | プロパティ | 型 | 説明 |

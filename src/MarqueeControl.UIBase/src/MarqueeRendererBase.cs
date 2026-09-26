@@ -89,7 +89,7 @@ public abstract class MarqueeRendererBase : IMarqueeRenderer
     /// <summary>ドラッグハンドル（塗り矩形 + 枠線）を描く。</summary>
     /// <param name="canvas">描画先の描画ポート。</param>
     /// <param name="handles">コアが解決したハンドルの描画内容（矩形・大きさ・枠線の太さを持つ）。</param>
-    /// <remarks>ハンドル位置の計算はコア（<c>SelectionGeometry</c>）が単一所有する。色は色の保持者が与える。</remarks>
+    /// <remarks>ハンドル位置の計算はコア（<c>MarqueeSelectionGeometry</c>）が単一所有する。色は色の保持者が与える。</remarks>
     protected abstract void DrawHandles(IEsCanvas canvas, in MarqueeHandles handles);
 
     /// <summary>始点マーカー（十字線）を描く。</summary>

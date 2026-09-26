@@ -268,7 +268,7 @@ internal sealed class MarqueeState
 
         if (ActiveTarget != HitTarget.None)
         {
-            // ハンドルによるリサイズ/移動（変形・クリップは SelectionGeometry へ委譲・単一所有）
+            // ハンドルによるリサイズ/移動（変形・クリップは MarqueeSelectionGeometry へ委譲・単一所有）
             double dx = currentPos.X - _dragStartPoint.X;
             double dy = currentPos.Y - _dragStartPoint.Y;
             var rect = MarqueeSelectionGeometry.ComputeDragRect(_dragStartRect, dx, dy, ActiveTarget, minSize);
@@ -317,7 +317,7 @@ internal sealed class MarqueeState
 
         if (ActiveTarget != HitTarget.None)
         {
-            // ハンドルドラッグ中 → ハンドル方向にリサイズ（変形・クリップは SelectionGeometry へ委譲・単一所有）
+            // ハンドルドラッグ中 → ハンドル方向にリサイズ（変形・クリップは MarqueeSelectionGeometry へ委譲・単一所有）
             var rect = MarqueeSelectionGeometry.ComputeDragRect(SelectionRect, dx, dy, ActiveTarget, minSize);
             SelectionRect = bounds is { } b ? MarqueeSelectionGeometry.ClampRectToBounds(rect, b, ActiveTarget) : rect;
             // ドラッグ基準を nudge 後の状態に合わせる（次の UpdateDrag で nudge が失われるのを防ぐ）
