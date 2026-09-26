@@ -83,7 +83,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 
 **寸法値の物理ピクセル換算はコアが描画入力（`LoupeRenderRequest.CheckerSizePixels` / `FrameWidthPixels`）へ済ませます**。UI 層が `CheckerSize * scaling` のような式を自前で書くと、片方の UI だけ換算が抜けて DPI ≠ 100% で見た目がずれます（実例あり）。
 
-**「変化したときだけログ出力する」判定はコアのログ定義が単一所有します**（`LogCenterPointChanged` / `LogSourceChanged(EsBitmap?, EsBitmap?)` など）。UI 層は設定の前後を渡すだけで、同値判定を持ちません。設定（`LoupeOptions`）の変更は `LogOptionsChanged` が**変化した項目だけ**を出力します（差分検出を UI 層に置くと、設定を 1 つの値にまとめた意味が失われます）。
+**「変化したときだけログ出力する」判定はコアが単一所有します**（`Options` / `RenderScaling` / `CenterPoint` の setter が変化を検出し、`LogOptionsChanged` などの定義で出力します）。UI 層は変更通知で値を転送するだけで、同値判定も前後の値の保持も持ちません（設定（`LoupeOptions`）の変更は `LogOptionsChanged` が**変化した項目だけ**を出力します）。ログの出力先は `Log` プロパティで受け取ります（UI の `Log` 設定がコアへ伝搬します）。
 
 **設定（表示サイズ・拡大率・寸法）は 1 つの値（`LoupeOptions`）にまとめます**。UI 層の公開プロパティを設定の数だけ増やすと、UI ごとに宣言・アクセサ・補正の登録・変更ハンドラが並び、同じ設定を複数回に分けて代入する呼び出し（設定の適用箇所）が生まれます。1 つの値にすれば UI は `Options` 1 プロパティを公開するだけで済み、**既定値と補正はコアの 1 箇所**が所有します（参照実装は `MarqueeControl` の `MarqueeOptions`）。
 

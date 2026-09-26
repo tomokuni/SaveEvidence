@@ -36,7 +36,7 @@ graph LR
 
 | ファイル | 内容 |
 | --- | --- |
-| `Loupe.cs`（ルート） | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）** |
+| `Loupe.cs`（ルート） | **公開ファサード（操作の唯一の窓口）**。設定・環境値・中心・オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、設定変更の検出とログ出力（`Log`） |
 | `LoupeLayout.cs`（ルート） | 表示レイアウトの値（表示サイズ + 表示位置。配置しない場合は位置が null） |
 | `Drawing/LoupeDrawContent.cs` | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・拡大画像の幾何・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
 | `Drawing/LoupeMagnifiedImage.cs` | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。描画内容の一部 |
@@ -47,8 +47,8 @@ graph LR
 | `Drawing/LoupeRenderRequest.cs` | 1 フレーム分の描画入力（コア⇔UI の契約）、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む）、切り出し領域の幾何の導出（`CaptureSize` / `MagnifiedImage` は internal、`CaptureTopLeft` は描画完了通知のために public） |
 | `Drawing/LoupeTextPlacement.cs` | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（体裁・フォントサイズ・角丸・色は描画層 `LoupeControl.UIBase` の `LoupePaint` / `LoupeLabelPlan` が単一所有する） |
 | `Loupe.DrawContent.cs`（`Loupe` の **partial**・**internal**） | 1 フレーム分の描画内容の解決（描く層の一覧の組み立てと中心座標ラベルのテキスト配置）。利用者はファサード（`Loupe.ResolveContent`）を使う |
-| `Logging/LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化（**UI がログへ出すため public**） |
-| `Logging/LoupeLogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有（**UI が拡張メソッドを呼ぶため public**） |
+| `Logging/LoupeLogFormat.cs` | 設定値の変更ログが出力する値の文字列化（**UI も寸法の書式を使うため public**） |
+| `Logging/LoupeLogMessage.cs` | ログ定義（`LoggerMessage` ソース生成）の単一所有（**クラスは public。UI が呼ぶ定義（`LogSourceChanged` / `LogUpdateError`）だけ public とし、コアが出力する定義は internal**） |
 
 ### 内部（`internal`。用途別フォルダ）
 
@@ -96,7 +96,7 @@ sequenceDiagram
 | --- | --- |
 | ルーペの設定（表示サイズ・拡大率・寸法）とその既定値 | `LoupeOptions` |
 | 設定の数値項目の安全域への補正（生成時） | `LoupeOptions`（`init` アクセサ。規則は `Loupe.Limits` が単一所有する） |
-| 設定の変更ログの差分検出（変化した項目だけを出力） | `LoupeLogMessage.LogOptionsChanged` |
+| 設定の変更ログの差分検出（変化した項目だけを出力） | `LoupeLogMessage.LogOptionsChanged`（出力の契機は `Loupe.Options` の setter） |
 | ルーペの寸法（タイルサイズ・外枠の太さ）とラベル表示の可否 | `LoupeOptions` |
 | 描画の色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）とその既定値、および描画可否の述語 | `LoupePaint`（描画層 `LoupeControl.UIBase`） |
 | 下地（ベース）色とその既定値 | `LoupePaint.BackgroundColor`（描画層 `LoupeControl.UIBase`。最初に塗る） |
@@ -117,6 +117,7 @@ sequenceDiagram
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
 | 寸法値の物理ピクセル換算（市松タイル・円枠の太さ） | `LoupeRenderRequest.Create`（規則は internal の `Decoration.LoupeMetricsScaler`。結果は描画入力に含まれる） |
 | 市松模様のタイル矩形の列挙 | `Loupe.ResolveContent`（`LoupeCheckerTiles`。リストを確保しない） |
+| 設定・環境値・拡大中心の変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `RenderScaling` / `CenterPoint` の setter） |
 | ログの書式とレベル、変化判定（同値・同一インスタンスなら出力しない） | `LoupeLogMessage` / `LoupeLogFormat` |
 
 `LoupeRenderRequest.MagnifiedImage`（internal）/ 描画層（`LoupeControl.UIBase`）の十字線・外枠描画はいずれも上記へ委譲し、同じ計算を二重に所有しません。

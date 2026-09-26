@@ -1,10 +1,13 @@
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using Microsoft.Extensions.Logging;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Drawing;
 using EsUtil.Feature.LoupeCore.Decoration;
+using EsUtil.Feature.LoupeCore.Logging;
 using EsUtil.Feature.LoupeCore.Placement;
 
 
@@ -47,29 +50,83 @@ public sealed partial class Loupe
         Options = options ?? LoupeOptions.Default;
     }
 
+    /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
+    /// <value>ロガー。null を設定した場合は出力なし（<see cref="LoggerFallback"/> が吸収する）。</value>
+    /// <remarks>
+    /// ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義（<see cref="LoupeLogMessage"/>）だけを持つ。<br/>
+    /// 設定・環境値・拡大中心の変更は本コアが検出して出力する（UI 層に同値判定・差分検出・変換を持たせない）。
+    /// </remarks>
+    public ILogger Log
+    {
+        get => field.OrNullLogger();
+        set => field = value.OrNullLogger();
+    }
+
     /// <summary>ルーペの設定（表示サイズ・拡大率・外観）。</summary>
     /// <value>設定の単一値。既定は <see cref="LoupeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定の値・既定値・数値項目の安全域への補正は <see cref="LoupeOptions"/> が単一所有する。<br/>
-    /// 変更すると表示サイズ（要求サイズのクランプ結果）も変わるため、UI 層は <see cref="ResolveLayout"/> を呼び直す。
+    /// 変更すると表示サイズ（要求サイズのクランプ結果）も変わるため、UI 層は <see cref="ResolveLayout"/> を呼び直す。<br/>
+    /// 変更の検出（変化した項目だけの出力）は <see cref="LoupeLogMessage.LogOptionsChanged"/> が単一所有し、UI 層は前後の値を渡さない。
     /// </remarks>
-    public LoupeOptions Options { get; set; }
+    public LoupeOptions Options
+    {
+        get => field;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            var previous = field;
+            field = value;
+            Log.LogOptionsChanged(previous, value);
+        }
+    } = LoupeOptions.Default;
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数。</summary>
     /// <value>スケーリング係数（0.1〜8.0）。範囲外・非有限は補正済みの値を設定する。既定は 1.0。</value>
     /// <remarks>
     /// 環境値（DPI）のため <see cref="Options"/> には含めない。補正の規則は <see cref="Loupe.Limits"/> が単一所有し、<br/>
-    /// どの設定経路（初期化・UI の依存関係プロパティ・直接代入）でも範囲内の値だけが保持される。
+    /// どの設定経路（初期化・UI の依存関係プロパティ・直接代入）でも範囲内の値だけが保持される。<br/>
+    /// 変更は本コアが検出して出力する（UI 層に同値判定を置かない）。
     /// </remarks>
     public double RenderScaling
     {
         get => field;
-        set => field = CoerceRenderScaling(value);
+        set
+        {
+            var coerced = CoerceRenderScaling(value);
+            if (field == coerced)
+            {
+                return;
+            }
+
+            var previous = field;
+            field = coerced;
+            Log.LogRenderScalingChanged(previous, coerced);
+        }
     } = RenderScalingDefault;
 
     /// <summary>拡大表示する中心座標（ドメイン座標）。</summary>
     /// <value>拡大中心（元画像ピクセル座標）。未設定は null（市松模様のみを描画し、配置も行わない）。</value>
-    public EsPoint? CenterPoint { get; set; }
+    /// <remarks>変更は本コアが検出して出力する（マウス移動ごとに UI が設定しても、変化したときだけ記録される）。</remarks>
+    public EsPoint? CenterPoint
+    {
+        get => field;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            var previous = field;
+            field = value;
+            Log.LogCenterPointChanged(previous, value);
+        }
+    }
 
     /// <summary>拡大中心からの右下オフセット（DIP）。</summary>
     /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。既定は 0。</value>

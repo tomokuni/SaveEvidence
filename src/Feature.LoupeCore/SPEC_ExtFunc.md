@@ -33,16 +33,17 @@
 | メンバー | 説明 |
 | --- | --- |
 | `Loupe(LoupeOptions? options = null)` | 生成（設定を省略した場合は `LoupeOptions.Default`）。描画実装は受け取らない（描画は UI の関心事であり、本コアは描画 API を持たない） |
-| `Options` | 設定（表示サイズ・拡大率・寸法）の読み書き |
-| `RenderScaling` | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。補正は `Loupe.Limits` が単一所有する） |
-| `CenterPoint` | 拡大中心（ドメイン座標）。未設定（null）は市松模様のみを描画し、配置も行わない |
+| `Log` | 設定変更ログの出力先（null は出力なしへ吸収される）。設定・環境値・拡大中心の変更は本コアが検出して出力する |
+| `Options` | 設定（表示サイズ・拡大率・寸法・ラベル表示の可否）の読み書き。**変化したときだけ**変更ログを出力する |
+| `RenderScaling` | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。補正は `Loupe.Limits` が単一所有する）。**変化したときだけ**変更ログを出力する |
+| `CenterPoint` | 拡大中心（ドメイン座標）。未設定（null）は市松模様のみを描画し、配置も行わない。**変化したときだけ**変更ログを出力する |
 | `PositionOffset` | 拡大中心からの右下オフセット（DIP） |
 | `SetCoordinateTransform(port)` | ドメイン ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換） |
 | `ResolveLayout(parentSize)` | 親領域サイズから表示レイアウト（`LoupeLayout` = 表示サイズ + 位置）を解決する（拡大中心未設定時は位置が null）。**状態を変更しない**（親領域のサイズを保持しないため、値をいつ解決したかに依存しない） |
 | `CreateRequest(displaySize, availableSize = null)` | 描画 1 フレーム分の入力（`LoupeRenderRequest`）の生成（DIP → 物理ピクセルの換算と描画先へのクランプを含む）。表示サイズは呼び出し側が渡す（`ResolveLayout` の結果、または描画先の表面から導出した DIP） |
 | `ResolveContent(request)` | 描画 1 フレーム分の**描画内容**（`LoupeDrawContent` = 描画面・タイル・矩形・層の順序）を解決する（描画層は計算を持たない） |
 
-**本型が単一所有するもの**: 表示レイアウトの解決（表示サイズのクランプと表示位置の決定）・描画入力の組み立て。
+**本型が単一所有するもの**: 表示レイアウトの解決（表示サイズのクランプと表示位置の決定）・描画入力の組み立て・**設定変更の検出とログ出力**。
 
 ### 描画の契約（`ILoupeRenderer` / `LoupeRendererBase`）
 
@@ -166,28 +167,33 @@ UI 層が `CheckerSize * scaling` のような式を自前で書かないため�
 | `Null` | `"null"`（未設定の表記。UI も使う） |
 | `DescribeImage(int? width, int? height)` | `Width×Height` 形式。片方でも未設定なら `null`（UI も使う） |
 
-`FormatNumber` / `FormatPoint` はログ定義（`LoupeLogMessage`）の内部手順のため **internal** です（UI は数値をそのまま渡せる `LogSettingChanged` 系を使います）。
+`FormatNumber` / `FormatPoint` はログ定義（`LoupeLogMessage`）の内部手順のため **internal** です（本コアのログ出力が使います）。
 
 ## `LoupeLogMessage`（`EsUtil.Feature.LoupeCore.Logging`）
 
 ルーペのログ定義（`LoggerMessage` ソース生成）を単一所有します。`[LoupeCtrl]` の接頭辞とレベル・書式は両 UI で共通です。
 
-| メソッド | レベル | 出力書式 |
-| --- | --- | --- |
-| `LogSettingChanged(name, oldValue, newValue)`（文字列） | Debug | `[LoupeCtrl] Setting: {Name} {OldValue} → {NewValue}`（整形済みの値と設定名を受け取る） |
-| `LogSettingChanged(name, oldValue, newValue)`（`int` / `double`） | Debug | 上記と同じ書式。数値をそのまま渡せ、**同値の再設定では出力しない**（変化判定と数値の文字列化を本メソッドが単一所有） |
-| `LogCenterPointChanged(EsPoint?, EsPoint?)` | Debug | `LogSettingChanged` の `CenterPoint` 版（値は `LoupeLogFormat.FormatPoint` で整形。**同値の再設定では出力しない**） |
-| `LogSourceChanged(EsBitmap? oldValue, EsBitmap? newValue)` | Debug | `Source` 版。**同一インスタンスの再設定では出力しない**（参照の同一性の判定をコアが単一所有） |
-| `LogSourceChanged(string oldValue, string newValue)` | Debug | 上記と同じ書式。**設定名はコアが付与**し、寸法の文字列化は `LoupeLogFormat.DescribeImage` を使う（画像型が UI ごとに異なるため、寸法の取り出しだけ各 UI が担う） |
-| `LogRequestedSizeChanged(int, int)` | Debug | `RequestedSize` 版（同値なら出力しない） |
-| `LogOptionsChanged(LoupeOptions, LoupeOptions)` | Debug | 設定（`LoupeOptions`）の変更版。**変化した項目だけ**を上記の書式で出力する（差分検出を本メソッドが単一所有し、UI 層は変更前後の値を渡すだけ。色は `LoupeOptions` に含めないため対象外） |
-| `LogRenderScalingChanged(double, double)` | Debug | `RenderScaling` 版（同値なら出力しない） |
-| `LogZoomLevelChanged(int, int)` | Debug | `ZoomLevel` 版（同値なら出力しない） |
-| `LogUpdateError(Exception)` | Error | `[LoupeCtrl] Update exception` |
+**可視性の規則**: **UI が呼ぶ定義だけを public** とし、**コアが出力する定義は internal** です（設定・環境値・拡大中心の変更はコアが検出して出力するため、UI から呼ぶ必要がありません）。
+
+| メソッド | 可視性 | レベル | 出力書式 |
+| --- | --- | --- | --- |
+| `LogSourceChanged(EsBitmap? oldValue, EsBitmap? newValue)` | public | Debug | `Source` 版。**同一インスタンスの再設定では出力しない**（参照の同一性の判定をコアが単一所有） |
+| `LogSourceChanged(string oldValue, string newValue)` | public | Debug | 上記と同じ書式。**設定名はコアが付与**し、寸法の文字列化は `LoupeLogFormat.DescribeImage` を使う（画像型が UI ごとに異なるため、寸法の取り出しだけ各 UI が担う） |
+| `LogUpdateError(Exception)` | public | Error | `[LoupeCtrl] Update exception` |
+| `LogOptionsChanged(LoupeOptions, LoupeOptions)` | internal | Debug | 設定（`LoupeOptions`）の変更版。**変化した項目だけ**を上記の書式で出力する（差分検出を本メソッドが単一所有する） |
+| `LogSettingChanged(name, oldValue, newValue)`（`int` / `double`） | internal | Debug | 数値をそのまま渡せ、**同値の再設定では出力しない**（変化判定と数値の文字列化を本メソッドが単一所有） |
+| `LogCenterPointChanged(EsPoint?, EsPoint?)` | internal | Debug | `LogSettingChanged` の `CenterPoint` 版（値は `LoupeLogFormat.FormatPoint` で整形。**同値の再設定では出力しない**） |
+| `LogRequestedSizeChanged(int, int)` | internal | Debug | `RequestedSize` 版（同値なら出力しない） |
+| `LogRenderScalingChanged(double, double)` | internal | Debug | `RenderScaling` 版（同値なら出力しない） |
+| `LogZoomLevelChanged(int, int)` | internal | Debug | `ZoomLevel` 版（同値なら出力しない） |
+
+`LogSettingChanged(name, oldValue, newValue)`（文字列）はソース生成の本体であり、本アセンブリ内に限定します。
 
 **UI 固有のログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は `LoupeControl.AvaloniaUI` の `LoupeRenderLog` にあります）。
 
 設定項目ごとの名前付きメソッド（`LogCenterPointChanged` / `LogSourceChanged` / `LogRequestedSizeChanged` / `LogRenderScalingChanged` / `LogZoomLevelChanged`）は、**設定名・書式・変化判定をコアが単一所有**するために提供します。UI 層は値（と Source の寸法）を渡すだけで、設定名の文字列を持ちません。
+
+**変更の検出は本コアが行います**: `Loupe.Options` / `Loupe.RenderScaling` / `Loupe.CenterPoint` の setter が変化を判定して出力するため、UI 層は変更通知で値を転送するだけです（`LogSourceChanged` と `LogUpdateError` は画像型・描画パイプラインを知る UI 側が出力します）。
 
 ## `LoupeRenderRequest` の切り出し領域の導出（internal メンバー）
 

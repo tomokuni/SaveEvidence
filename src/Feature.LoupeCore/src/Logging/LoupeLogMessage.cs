@@ -14,7 +14,8 @@ namespace EsUtil.Feature.LoupeCore.Logging;
 /// 「変化したときだけ出力する」判断（同値の再設定・同一画像の再設定）も本クラスが単一所有する（UI 層に同値判定を置かない）。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一 引数）として定義し、呼び出し側では logger 引数を省略する。<br/>
-/// <b>公開である理由</b>: ログの定義（レベル・書式・変化判定）は両 UI が呼ぶ契約であり、UI は本型の拡張メソッドを呼ぶ。<br/>
+/// <b>可視性</b>: <b>UI が呼ぶ定義だけを public</b> とし、<b>コアが出力する定義は internal</b> とする<br/>
+/// （設定・環境値・拡大中心の変更はコアが検出して出力するため、UI から呼ぶ必要がない）。<br/>
 /// <b>UI 固有のログは各 UI プロジェクトが所有する</b>（中間ビットマップを生成する描画パイプライン固有のログ等）。
 /// </remarks>
 public static partial class LoupeLogMessage
@@ -38,7 +39,7 @@ public static partial class LoupeLogMessage
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
-    public static void LogSettingChanged(this ILogger logger, string name, int oldValue, int newValue)
+    internal static void LogSettingChanged(this ILogger logger, string name, int oldValue, int newValue)
         => logger.LogSettingChangedIfChanged(name, oldValue, newValue);
 
     /// <summary>実数設定値の変更ログ（同値の再設定では出力しない）。</summary>
@@ -47,7 +48,7 @@ public static partial class LoupeLogMessage
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
-    public static void LogSettingChanged(this ILogger logger, string name, double oldValue, double newValue)
+    internal static void LogSettingChanged(this ILogger logger, string name, double oldValue, double newValue)
         => logger.LogSettingChangedIfChanged(name, oldValue, newValue);
 
     /// <summary>数値設定値の変更ログ（同値の再設定では出力しない）の本体。</summary>
@@ -78,12 +79,12 @@ public static partial class LoupeLogMessage
     /// <remarks>
     /// LogLevel: Debug<br/>出力書式: <c>[LoupeCtrl] Setting: CenterPoint {OldValue} → {NewValue}</c><br/>
     /// 中心はマウス移動のたびに設定されるため、「変化したときだけ出力する」判断を本メソッドが単一所有する<br/>
-    /// （UI 層に同値判定を持たせると、片方の UI だけログが溢れる）。
+    /// （出力をコアが行うため、UI 層は同値判定を持たない）。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の拡大中心（未設定は null）。</param>
     /// <param name="newValue">変更後の拡大中心（未設定は null）。</param>
-    public static void LogCenterPointChanged(this ILogger logger, EsPoint? oldValue, EsPoint? newValue)
+    internal static void LogCenterPointChanged(this ILogger logger, EsPoint? oldValue, EsPoint? newValue)
     {
         if (oldValue == newValue)
         {
@@ -131,20 +132,20 @@ public static partial class LoupeLogMessage
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の基本サイズ。</param>
     /// <param name="newValue">変更後の基本サイズ。</param>
-    public static void LogRequestedSizeChanged(this ILogger logger, int oldValue, int newValue)
+    internal static void LogRequestedSizeChanged(this ILogger logger, int oldValue, int newValue)
         => LogSettingChanged(logger, "RequestedSize", oldValue, newValue);
 
     /// <summary>設定（<see cref="LoupeOptions"/>）の変更ログ（変化した項目だけを出力する）。</summary>
     /// <remarks>
     /// LogLevel: Debug（項目ごとの書式は個別の変更ログと同一）<br/>
     /// 設定を 1 つの値へ統合したため、変更された項目の判定（差分検出）を本メソッドが単一所有する<br/>
-    /// （UI 層は変更前後の値を渡すだけで、どの項目が変わったかを判断しない）。<br/>
+    /// （UI 層は前後の値を渡さず、コアが保持する値の変化を知るだけでよい）。<br/>
     /// 寸法（<see cref="LoupeOptions.CheckerSize"/> / <see cref="LoupeOptions.FrameWidth"/>）とラベル表示の可否は変更ログの対象外とする（外観の再適用で設定数ぶんのログが溢れるため）。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の設定。</param>
     /// <param name="newValue">変更後の設定。</param>
-    public static void LogOptionsChanged(this ILogger logger, LoupeOptions oldValue, LoupeOptions newValue)
+    internal static void LogOptionsChanged(this ILogger logger, LoupeOptions oldValue, LoupeOptions newValue)
     {
         // 各項目のログが同値判定を行うため、変化していない項目は出力されない
         logger.LogRequestedSizeChanged(oldValue.RequestedSize, newValue.RequestedSize);
@@ -156,7 +157,7 @@ public static partial class LoupeLogMessage
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前のスケーリング係数。</param>
     /// <param name="newValue">変更後のスケーリング係数。</param>
-    public static void LogRenderScalingChanged(this ILogger logger, double oldValue, double newValue)
+    internal static void LogRenderScalingChanged(this ILogger logger, double oldValue, double newValue)
         => LogSettingChanged(logger, "RenderScaling", oldValue, newValue);
 
     /// <summary>拡大率の変更ログ。</summary>
@@ -164,7 +165,7 @@ public static partial class LoupeLogMessage
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の拡大率。</param>
     /// <param name="newValue">変更後の拡大率。</param>
-    public static void LogZoomLevelChanged(this ILogger logger, int oldValue, int newValue)
+    internal static void LogZoomLevelChanged(this ILogger logger, int oldValue, int newValue)
         => LogSettingChanged(logger, "ZoomLevel", oldValue, newValue);
 
     /// <summary>ルーペ描画の例外エラーログ。</summary>

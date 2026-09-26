@@ -132,7 +132,8 @@ flowchart TB
     Ctl -->|"寸法・ラベル余白"| App
     Ctl -->|"Paint（色）"| Pnt
     Ctl -->|"ラベル余白"| Lay
-    Ctl -->|"LogUpdateError / LogOptionsChanged"| Log
+    Ctl -->|"LogUpdateError（描画の例外）"| Log
+    Ctl -->|"Log（選択設定時にコアへ伝搬）"| Fac
     Pip -->|"DrawShapes（AvaloniaCanvas 経由）"| Rdr
     Rdr -->|"描画ポート"| Cvs
     Rdr --> Brs

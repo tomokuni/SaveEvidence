@@ -317,7 +317,6 @@ public sealed class LoupeControl : Panel
         // CenterPoint 変更時は再描画に加えて表示位置（RenderTransform）も更新する（コアが座標変換ポートと親パネルサイズから算出する）
         CenterPointProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            o.Log.LogCenterPointChanged(ToEsPoint(e.OldValue as Point?), ToEsPoint(e.NewValue as Point?));
             o._loupe.CenterPoint = ToEsPoint(e.NewValue as Point?);
             o.RequestRender();
             o.UpdatePosition();
@@ -327,7 +326,6 @@ public sealed class LoupeControl : Panel
         // 設定（LoupeOptions）は表示サイズ・拡大率・外観をまとめて持つため、要素サイズと描画へ波及する
         OptionsProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            o.Log.LogOptionsChanged(e.GetOldValue<LoupeOptions>(), e.GetNewValue<LoupeOptions>());
             o._loupe.Options = e.GetNewValue<LoupeOptions>();
             o.RequestRender();
             o.UpdatePosition();
@@ -337,7 +335,6 @@ public sealed class LoupeControl : Panel
         RenderScalingProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
             // OldValue / NewValue は StyledProperty&lt;double&gt; により常に非 null（boxed double）
-            o.Log.LogRenderScalingChanged(e.GetOldValue<double>(), e.GetNewValue<double>());
             o._loupe.RenderScaling = e.GetNewValue<double>();
             o.RequestRender();
             // ラベルの配置の基準（表示サイズ）が物理ピクセル換算で変わるため、配置し直す
@@ -537,12 +534,17 @@ public sealed class LoupeControl : Panel
     // ログ
     // ====================================================================
 
-    /// <summary>内部ロガー（描画エラーの記録用）。</summary>
+    /// <summary>内部ロガー（描画エラーの記録と UI 固有のログに使う）。</summary>
     /// <value>注入されたロガー。null 可（null の場合は <see cref="NullLogger"/> へフォールバックする）。</value>
+    /// <remarks>設定・環境値・拡大中心の変更ログはコアが出力するため、同じロガーをコアへも渡す。</remarks>
     public ILogger Log
     {
         get => _log.OrNullLogger();
-        set => _log = value;
+        set
+        {
+            _log = value;
+            _loupe.Log = value;
+        }
     }
 
     /// <summary>内部ロガー（未設定は null。読み取り時に <see cref="LoggerFallback"/> が吸収する）。</summary>

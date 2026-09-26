@@ -60,7 +60,6 @@ public sealed class LoupeControl : Panel
             nameof(CenterPoint), null, MewPropertyOptions.AffectsRender,
             changed: static (o, oldValue, newValue) =>
             {
-                o.Log.LogCenterPointChanged(oldValue, newValue);
                 // 拡大中心はコア（ファサード）が単一所有する（表示位置・描画入力の計算元）
                 o._loupe.CenterPoint = newValue;
                 // 中心座標ラベルの文言は中心に依存するため、ラベル要素を配置し直す
@@ -81,7 +80,6 @@ public sealed class LoupeControl : Panel
             MewPropertyOptions.AffectsRender | MewPropertyOptions.AffectsLayout,
             changed: static (o, oldValue, newValue) =>
             {
-                o.Log.LogOptionsChanged(oldValue, newValue);
                 // 表示サイズ（要求サイズ）と拡大率・外観はコア（ファサード）が単一所有する（表示レイアウトと描画入力の計算元）
                 o._loupe.Options = newValue;
                 // ラベルの大きさ・外観・表示可否が変わるため、ラベル要素を配置し直す（表示サイズが同じでも必要）
@@ -98,7 +96,6 @@ public sealed class LoupeControl : Panel
             nameof(RenderScaling), RenderScalingDefault, MewPropertyOptions.AffectsRender,
             changed: static (o, oldValue, newValue) =>
             {
-                o.Log.LogRenderScalingChanged(oldValue, newValue);
                 // 描画入力（物理ピクセル）の計算元はコア（ファサード）が単一所有する
                 o._loupe.RenderScaling = newValue;
                 // ラベルの配置の基準（表示サイズ）が物理ピクセル換算で変わるため、配置し直す
@@ -309,12 +306,17 @@ public sealed class LoupeControl : Panel
     /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>
     /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
-    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。
+    /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。<br/>
+    /// 設定・環境値・拡大中心の変更ログはコアが出力するため、同じロガーをコアへも渡す。
     /// </remarks>
     public ILogger Log
     {
         get => field.OrNullLogger();
-        set => field = value.OrNullLogger();
+        set
+        {
+            field = value.OrNullLogger();
+            _loupe.Log = value;
+        }
     }
 
     /// <summary>ルーペの要求サイズ（DIP）と子要素の計測を行う。</summary>
