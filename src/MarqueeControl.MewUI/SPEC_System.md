@@ -82,8 +82,8 @@ src/MarqueeControl.MewUI/
 | --- | --- |
 | `MarqueeControl` | `MewProperty` の定義、入力のドメイン変換とファサードへの通知、`IMarqueeEffects` の実装（効果の適用）、マウスキャプチャの取得/解放、DPI 変更の追従、描画内容の描画層（`MarqueeRenderer`）への委譲、子要素（図形キャンバス・ラベル要素）の計測と配置、付加情報の描画機会の通知（`Rendered`） |
 | `MarqueeRenderer`（描画層） | 描画内容を層の順に描画ポートへ写す。色は `MarqueePaint`（生成時に注入）から引く。`DrawShapes`（図形）は本コントロールが呼ぶ。**選択枠線は描かない**（外側の装飾の穴あけ枠が同じ矩形を描くため）。**サイズ・座標ラベルも描かない**（コントロールがテキスト要素として表示する） |
-| `MarqueeOuterRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `OuterDecoFrame` を描画ポートへ写す（暗転マスク・枠線。色は引数の `MarqueePaint` から引く）。**ラベル（サイズ・座標）は描かない**（コントロールがテキスト要素として表示する） |
-| `MarqueeInnerRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `InnerDecoFrame` を描画ポートへ写す（穴あけ矩形の塗り・内枠。色は引数の `MarqueePaint` から引く） |
+| `MarqueeOuterRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `MarqueeOuterDecoFrame` を描画ポートへ写す（暗転マスク・枠線。色は引数の `MarqueePaint` から引く）。**ラベル（サイズ・座標）は描かない**（コントロールがテキスト要素として表示する） |
+| `MarqueeInnerRenderer`（描画層） | 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）の `MarqueeInnerDecoFrame` を描画ポートへ写す（穴あけ矩形の塗り・内枠。色は引数の `MarqueePaint` から引く） |
 | UI 層のラベル要素 | 親パネルの子要素（`Border` + `TextBlock`）として中心座標・サイズラベルを配置する。文言・寸法と順序（`MarqueeDrawContent.Layers`）は Core が、色は `MarqueePaint`（描画層）が単一所有し、実寸から配置矩形を求める写像は `MarqueeLabelPlan`（描画層）が単一所有する |
 | `MarqueePointEventArgs` / `SelectionRectEventArgs` / `MarqueeRenderedEventArgs` | 通知時点の座標（矩形）とスナップショットの組・描画完了（描画先と描画内容の契約） |
 
@@ -221,7 +221,7 @@ classDiagram
         +GetMarkerPosition() EsPoint
         +ClampSelectionToBounds() bool
     }
-    class SelectionGeometry {
+    class MarqueeSelectionGeometry {
         <<Feature.MarqueeCore>>
         +GetHandlePosition(rect, handle)$ EsPoint
         +IsNear(p1, p2, radius)$ bool
@@ -250,8 +250,8 @@ classDiagram
     MarqueeRenderer ..> MarqueePaint : 色を保持
     MarqueeSession *-- MarqueeState : 状態機械
     MarqueeSession ..> ICursorService : カーソル操作
-    MarqueeState ..> SelectionGeometry : 幾何計算
-    MarqueeRenderer ..> SelectionGeometry : ハンドル位置
+    MarqueeState ..> MarqueeSelectionGeometry : 幾何計算
+    MarqueeRenderer ..> MarqueeSelectionGeometry : ハンドル位置
 ```
 
 ## シーケンス図（新規選択のドラッグ）
@@ -362,7 +362,7 @@ OnPaintSurface(canvas, info)
        （層の順序はコアの MarqueeRendererBase が、色は UIBase の MarqueeRenderer が単一所有する）
        ├─ MarqueeOuterRenderer.Draw                 … 外側の装飾（暗転マスク・枠線）
        ├─ MarqueeInnerRenderer.Draw                 … 穴あけ矩形の塗り・内枠
-       ├─ content.Handles があれば                  … 8 方向の中心は SelectionGeometry（コア）が単一所有
+       ├─ content.Handles があれば                  … 8 方向の中心は MarqueeSelectionGeometry（コア）が単一所有
        └─ content.Marker があれば                   … nudge 中の十字マーカー
   └─ content.HasText なら
        └─ Rendered（ホスト）                         … UI 層が配置したテキスト要素がラベルを表示する
@@ -390,8 +390,8 @@ OnPaintSurface(canvas, info)
    カーソル移動（nudge）の座標変換はこの非対称性を踏まえて実装する。
 4. **スナップショットはドラッグ状態の解除前に生成する**。`EndDrag` の後ではマーカー位置が固定コーナーを返すため、
    nudge 位置は解放処理の冒頭で計算する。
-5. **枠線は 4 辺の塗り（FILL）で描かれる**。コアの `DecoGeometry.ComputeBorderRects`（辺の計算は `EsRect.ComputeInnerEdges` が単一所有）が穴あけ矩形の内側に太さ分の帯を 4 本返し、それを塗る（ストロークではないため、太さが半分外側へはみ出さない）。
-   太さの安全域への補正は装飾の外観（`OuterDecoAppearance` / `InnerDecoAppearance`）の生成時に適用される（本計算は補正を持たない）。
+5. **枠線は 4 辺の塗り（FILL）で描かれる**。コアの `MarqueeDecoGeometry.ComputeBorderRects`（辺の計算は `EsRect.ComputeInnerEdges` が単一所有）が穴あけ矩形の内側に太さ分の帯を 4 本返し、それを塗る（ストロークではないため、太さが半分外側へはみ出さない）。
+   太さの安全域への補正は装飾の外観（`MarqueeOuterDecoAppearance` / `MarqueeInnerDecoAppearance`）の生成時に適用される（本計算は補正を持たない）。
    描画テストの期待値はこの前提で書く。
 
 ## 未実装（今後の判断）

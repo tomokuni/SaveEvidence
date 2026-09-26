@@ -118,7 +118,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `ShowSizeLabel`（`MarqueeOptions`） | ✅ `Options.Marquee.ShowSizeLabel` | ✅ | サイズラベル表示 |
 | `OuterBorderColor`（`MarqueePaint`） | ✅ `MarqueePaint.OuterBorderColor` | ✅ | `MarqueePaint.HandleBorderColor` と共通適用（同じ矩形に重なるため）。描画の可否は `Options.Deco.ShowOuterBorder` |
 | `InnerFillColor` / `InnerBorderColor`（`MarqueePaint`） | ✅ `MarqueePaint.InnerFillColor` / `.InnerBorderColor` | —（設定なし） | 穴あけ矩形の内側。既定は透明で、描画の可否は `Options.Deco.ShowInnerFill` / `ShowInnerBorder`（既定 false） |
-| `BorderThickness`（`OuterDecoAppearance`） | ✅ `Options.Deco.OuterAppearance.BorderThickness` | ✅ | 枠線の太さ（寸法はコアが単一所有する） |
+| `BorderThickness`（`MarqueeOuterDecoAppearance`） | ✅ `Options.Deco.OuterAppearance.BorderThickness` | ✅ | 枠線の太さ（寸法はコアが単一所有する） |
 | `InfoColor` / `InfoBackgroundColor` / `InfoFontSize` / `ShowInfoLabel`（`FadeMaskDragRectLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 情報ラベル（3 行目）。**文言の生成と描画はホスト**が行う |
 | `OperationColor` / `OperationFontSize` / `OperationBackgroundColor` / `ShowOperationLabel`（`FadeMaskDragRectLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 操作ラベル（2 行目）。**文言の生成と描画はホスト**が行う |
 | `Mode` | —（`Mode` で公開） | —（セッションで決定） | 子コントロールの有効・無効と全面暗転（`FadeMaskDragRectMode`） |
@@ -354,6 +354,6 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 設定画面「外観設定」の右上にある **「デフォルト値に戻す」** ボタンで、外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・市松模様・選択矩形内ラベル・座標ラベル）をデフォルト値へ一括復元する。
 
 - 実装: `Settings.ResetAppearanceToDefaults()`（新規インスタンスのフィールド初期化子 = デフォルト値をコピー）
-- デフォルト値は各コントロール（`MarqueeControl` / `LoupeControl` の `Options` と `Paint` / 装飾の `OuterDecoAppearance`）の既定値と一致させる
+- デフォルト値は各コントロール（`MarqueeControl` / `LoupeControl` の `Options` と `Paint` / 装飾の `MarqueeOuterDecoAppearance`）の既定値と一致させる
 - 変更は `PropertyChanged` 購読により自動保存される
 - 外観設定以外（テーマ・保存設定・ホットキー等）は変更されない

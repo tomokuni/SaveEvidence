@@ -161,8 +161,8 @@ src/MarqueeControl.UIBase/
 | --- | --- |
 | `MarqueePaint` | 色の単一所有者（ハンドル・十字マーカー・ラベル・装飾） |
 | `MarqueeRenderer` | 本層の `MarqueeRendererBase` の既定実装（sealed）。色を必須引数で受け取り、描画内容の解決結果を層の順に描画ポートへ写す。図形の層を描き、テキストのフック（`DrawLabel`）は基底の既定（何もしない）を引き継ぐ |
-| `MarqueeOuterRenderer` | `OuterDecoFrame`（暗転領域・枠線）を `paint.OverlayColor` / `paint.OuterBorderColor` で描く |
-| `MarqueeInnerRenderer` | `InnerDecoFrame`（塗り・内枠）を `paint.InnerFillColor` / `paint.InnerBorderColor` で描く |
+| `MarqueeOuterRenderer` | `MarqueeOuterDecoFrame`（暗転領域・枠線）を `paint.OverlayColor` / `paint.OuterBorderColor` で描く |
+| `MarqueeInnerRenderer` | `MarqueeInnerDecoFrame`（塗り・内枠）を `paint.InnerFillColor` / `paint.InnerBorderColor` で描く |
 | `MarqueeLabelPlan` | 描画内容と実寸からラベル要素の配置指示を解決する |
 | `MarqueeHostLabelRenderer` | ホスト付加情報ラベルへコアの体裁を適用して描く |
 

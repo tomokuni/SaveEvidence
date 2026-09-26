@@ -9,4 +9,4 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 /// 「どちらの矩形を穴として優先するか」と「その矩形の終点を +1 するか」は同じ判断であるため 1 つの値として返す<br/>
 /// （呼び出し側が優先順位を再判定すると、規則が 2 箇所へ分かれる）。
 /// </remarks>
-internal readonly record struct HoleRect(EsRect Rect, bool ClosedInterval);
+internal readonly record struct MarqueeHoleRect(EsRect Rect, bool ClosedInterval);

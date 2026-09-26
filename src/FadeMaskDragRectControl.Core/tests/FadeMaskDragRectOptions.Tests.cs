@@ -68,7 +68,7 @@ public class FadeMaskDragRectOptionsTests
     [Fact]
     public void 装飾_選択矩形の設定とは別の値が単一所有する()
     {
-        var appearance = new OuterDecoAppearance { BorderThickness = 3.0 };
+        var appearance = new MarqueeOuterDecoAppearance { BorderThickness = 3.0 };
 
         var options = FadeMaskDragRectOptions.Default with
         {

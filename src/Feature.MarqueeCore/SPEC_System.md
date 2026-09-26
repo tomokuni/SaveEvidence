@@ -39,7 +39,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 - 上位層は下位層のみを参照します（逆参照なし）。
 - 本コアは UI フレームワークを参照しません。装飾（暗転マスク等）は**本コア内のサブ概念**として同居します（別プロジェクトに分けません）。
-- 本コアは描画 API を持ちません。描画の手順は UI 非依存の描画層（`MarqueeControl.UIBase`）が単一所有し、描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`SelectionGeometry.DirectionalHandles`（読み取り専用の一覧）等）を参照します。
+- 本コアは描画 API を持ちません。描画の手順は UI 非依存の描画層（`MarqueeControl.UIBase`）が単一所有し、描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`MarqueeSelectionGeometry.DirectionalHandles`（読み取り専用の一覧）等）を参照します。
 - **本コアは描画層を参照しません**（依存の向きは `UI 層 → MarqueeControl.UIBase → Feature.MarqueeCore` の一方向。本コアは `Common` も `Platform.*` の UI アダプタも参照しません）。**描画は本コアの関心事ではない**ため、本コアは描画内容（`MarqueeDrawContent` と `Layers`）をデータとして返すだけであり、層の順序に従う描画手順は UI 側の共有層（`MarqueeControl.UIBase` の `MarqueeRendererBase`）が単一所有します。
 
 ### 3.2 データフロー（入力 → 描画）
@@ -116,12 +116,12 @@ stateDiagram-v2
 | `src/Interaction/MarqueeCursorKind.cs` | `MarqueeCursorKind` | public | カーソル形状の種別 |
 | `src/Interaction/MarqueeInteractionState.cs` | `MarqueeInteractionState` | public | 対話状態 |
 | `src/Logging/MarqueeLogMessage.cs` | `MarqueeLogMessage` | internal | LoggerMessage 定義（入力の判断・設定変更） |
-| `src/Selection/SelectionGeometry.cs` | `SelectionGeometry` | internal | 純粋幾何計算（ハンドル一覧とハンドル位置を描画内容の解決が使い、ヒットテスト・ドラッグ変形・境界クランプは状態機械の内部手順であるため internal） |
+| `src/Selection/MarqueeSelectionGeometry.cs` | `MarqueeSelectionGeometry` | internal | 純粋幾何計算（ハンドル一覧とハンドル位置を描画内容の解決が使い、ヒットテスト・ドラッグ変形・境界クランプは状態機械の内部手順であるため internal） |
 | `src/Decoration/MarqueeDecoOptions.cs` | `MarqueeDecoOptions` | public | 装飾の設定（寸法・描画可否フラグ・ハイライト・内側） |
-| `src/Decoration/OuterDecoAppearance.cs` / `InnerDecoAppearance.cs` | `OuterDecoAppearance` / `InnerDecoAppearance` | public | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |
-| `src/Decoration/OuterDecoFrame.cs` / `InnerDecoFrame.cs` | `OuterDecoFrame` / `InnerDecoFrame` | public | 装飾の描画内容（**純粋データ**。暗転領域・枠線・塗りを保持し、描くかどうかは `Marquee.ResolveContent` が判断する） |
-| `src/Decoration/DecoGeometry.cs` | `DecoGeometry` | internal | 装飾の幾何計算（穴あけ矩形・暗転領域・枠線矩形）。**枠線の太さの補正は持たない**（装飾の外観の生成時に <c>Marquee.Limits</c> の安全域へ補正される） |
-| `src/Decoration/HoleRect.cs` | `HoleRect` | internal | 穴あけ矩形と閉区間の指定（どちらの矩形を優先するかと +1 の判断を 1 値で持つ） |
+| `src/Decoration/MarqueeOuterDecoAppearance.cs` / `MarqueeInnerDecoAppearance.cs` | `MarqueeOuterDecoAppearance` / `MarqueeInnerDecoAppearance` | public | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |
+| `src/Decoration/MarqueeOuterDecoFrame.cs` / `MarqueeInnerDecoFrame.cs` | `MarqueeOuterDecoFrame` / `MarqueeInnerDecoFrame` | public | 装飾の描画内容（**純粋データ**。暗転領域・枠線・塗りを保持し、描くかどうかは `Marquee.ResolveContent` が判断する） |
+| `src/Decoration/MarqueeDecoGeometry.cs` | `MarqueeDecoGeometry` | internal | 装飾の幾何計算（穴あけ矩形・暗転領域・枠線矩形）。**枠線の太さの補正は持たない**（装飾の外観の生成時に Marquee.Limits の安全域へ補正される） |
+| `src/Decoration/MarqueeHoleRect.cs` | `MarqueeHoleRect` | internal | 穴あけ矩形と閉区間の指定（どちらの矩形を優先するかと +1 の判断を 1 値で持つ） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
 
@@ -129,11 +129,11 @@ stateDiagram-v2
 | --- | --- |
 | 選択の状態遷移の判断 | `MarqueeSession` |
 | 選択矩形・ドラッグ・nudge の状態（遷移は操作メソッドでのみ変更できる） | `MarqueeState` |
-| 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `SelectionGeometry` |
+| 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `MarqueeSelectionGeometry` |
 | 描画する層とその順序 | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
 | 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveContent` |
 | 設定の既定値・範囲補正・体裁定数 | `MarqueeOptions`（補正は生成時の `init` アクセサ） |
-| 枠線の太さの安全域（最小 0.5・既定 2.0）とその補正 | `Marquee.Limits`（補正は装飾の外観（`OuterDecoAppearance` / `InnerDecoAppearance`）の生成時の `init` アクセサが適用する） |
+| 枠線の太さの安全域（最小 0.5・既定 2.0）とその補正 | `Marquee.Limits`（補正は装飾の外観（`MarqueeOuterDecoAppearance` / `MarqueeInnerDecoAppearance`）の生成時の `init` アクセサが適用する） |
 | ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（14.0 / 12.0） | 描画層の `MarqueePaint` |
 | フォントサイズの安全域（6〜48） | 描画層の `MarqueePaint` |
 | ラベルの体裁（背景 = 実寸 + 余白×2、アライン、クランプ、行送り） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` |
@@ -161,14 +161,14 @@ stateDiagram-v2
 - 外部が使わない型・メンバーは `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.MarqueeCore.Tests`）で公開します。
 - **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
 - `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。
-- **層 3（内部ヘルパー）は外部参照 0 件を実測して絞り込んだ結果**です。UI 実装が参照するのは `Marquee`・描画契約・列挙型・`SelectionGeometry`・`MarqueeOptions`・`MarqueeDecoOptions` のみです。
+- **層 3（内部ヘルパー）は外部参照 0 件を実測して絞り込んだ結果**です。UI 実装が参照するのは `Marquee`・描画契約・列挙型・`MarqueeSelectionGeometry`・`MarqueeOptions`・`MarqueeDecoOptions` のみです。
 
 ## 8. テスト方針
 
 | 方針 | 内容 |
 | --- | --- |
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
-| 単位 | 純粋計算（`SelectionGeometry` / `DecoGeometry` / `MarqueeRenderRequest`）・状態機械・ファサード・描画内容の解決 |
+| 単位 | 純粋計算（`MarqueeSelectionGeometry` / `MarqueeDecoGeometry` / `MarqueeRenderRequest`）・状態機械・ファサード・描画内容の解決 |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Contract` / `tests/Decoration` / `tests/Drawing` / `tests/Interaction` / `tests/Logging` / `tests/Selection` / `tests/Setting`。ファサードの partial のテストはルート） |
 | 合計 | 268 件（`[Theory]` は展開後のケース数） |
 

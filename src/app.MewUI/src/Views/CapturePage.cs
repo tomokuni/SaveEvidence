@@ -100,7 +100,7 @@ internal static class CapturePage
     };
 
     /// <summary>自動切り出しの内側の装飾（ホバー強調の枠線）の寸法。</summary>
-    private static readonly InnerDecoAppearance s_autoCropHighlightAppearance = new()
+    private static readonly MarqueeInnerDecoAppearance s_autoCropHighlightAppearance = new()
     {
         BorderThickness = AutoCropBorderThickness,
     };

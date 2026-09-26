@@ -14,8 +14,8 @@
 | 外部からの状態操作 | `Marquee` | 選択の復元・対話状態の初期化・確定/キャンセルの要求を API から実行できる |
 | 座標変換 | `Marquee` / `ICoordTransform` | ドメイン座標（利用者が定める座標系）とローカル DIP の相互変換と、ドメイン境界の指定 |
 | ラベルの体裁計算 | 描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` | 内側余白の適用・アラインの適用・カーソル基準の配置と領域内へのクランプ・行送り（描画にだけ必要な規則のためコアは持たない） |
-| 装飾（暗転マスク等） | `MarqueeDecoOptions` / `OuterDecoFrame` / `InnerDecoFrame` | 選択矩形の外側/内側へ描く装飾の設定と描画内容 |
-| 幾何計算 | `SelectionGeometry` | 正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形・描画対象ハンドル一覧・カーソル種別 |
+| 装飾（暗転マスク等） | `MarqueeDecoOptions` / `MarqueeOuterDecoFrame` / `MarqueeInnerDecoFrame` | 選択矩形の外側/内側へ描く装飾の設定と描画内容 |
+| 幾何計算 | `MarqueeSelectionGeometry` | 正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形・描画対象ハンドル一覧・カーソル種別 |
 
 ### 前提条件
 
@@ -71,15 +71,15 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `SelectionGeometry` | static class | 純粋な幾何計算とハンドル関連の変換 |
+| `MarqueeSelectionGeometry` | static class | 純粋な幾何計算とハンドル関連の変換 |
 
 ### `EsUtil.Feature.MarqueeCore.Decoration`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `MarqueeDecoOptions` | record | 装飾の設定（寸法・描画可否フラグ・全面暗転・ハイライト・内側の寸法） |
-| `OuterDecoAppearance` / `InnerDecoAppearance` | record | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |
-| `OuterDecoFrame` / `InnerDecoFrame` | record struct | 外側/内側の装飾の描画内容（暗転領域・枠線・塗り。**色は持たない**） |
+| `MarqueeOuterDecoAppearance` / `MarqueeInnerDecoAppearance` | record | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |
+| `MarqueeOuterDecoFrame` / `MarqueeInnerDecoFrame` | record struct | 外側/内側の装飾の描画内容（暗転領域・枠線・塗り。**色は持たない**） |
 
 装飾の色（暗転・穴あけ枠・内側の塗りと枠線）は本コアに含みません（描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します）。描くかどうかも色のアルファ（透明度）ではなく、本コアの明示フラグが決めます。
 
@@ -87,12 +87,12 @@
 
 | 分類 | メンバー | 既定値 |
 | --- | --- | --- |
-| 寸法 | `OuterAppearance.BorderThickness`（`OuterDecoAppearance`） | 2.0（穴あけ枠の太さ。0.5 未満は 0.5 へ補正される） |
+| 寸法 | `OuterAppearance.BorderThickness`（`MarqueeOuterDecoAppearance`） | 2.0（穴あけ枠の太さ。0.5 未満は 0.5 へ補正される） |
 | 描画可否 | `ShowOverlay` | `true`（暗転マスクを描く。**アルファ 0 を「描かない」の代用にしない**） |
 | 描画可否 | `ShowOuterBorder` | `true`（穴あけ枠を描く） |
 | 表示ポリシー | `OuterShowFullOverlay` | `false`（穴あけ矩形が無いときは暗転しない。true で全面を暗転する） |
 | ハイライト | `OuterHighlightRect` | null（null が「ハイライトしない」。有効フラグは持たない） |
-| 寸法 | `InnerAppearance.BorderThickness`（`InnerDecoAppearance`） | 2.0（内側の枠線の太さ。0.5 未満は 0.5 へ補正される） |
+| 寸法 | `InnerAppearance.BorderThickness`（`MarqueeInnerDecoAppearance`） | 2.0（内側の枠線の太さ。0.5 未満は 0.5 へ補正される） |
 | 描画可否 | `ShowInnerFill` | `false`（穴あけ矩形の内側を塗らない） |
 | 描画可否 | `ShowInnerBorder` | `false`（穴あけ矩形の内側の枠線を描かない） |
 
@@ -211,7 +211,7 @@
 
 - ホイール操作（Ctrl+ズーム / スクロール）は本コアに含みません（`MarqueeControl.UIBase` が単一所有します）。
 - ビューポートの変化の通知は本コアに含みません（`MarqueeControl.UIBase` が単一所有します）。
-- 描画 API は提供しません（描画の手順は UI 非依存の描画層 `MarqueeControl.UIBase` が単一所有し、描画先は `Platform.Core` の `IEsCanvas` です。描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`SelectionGeometry`）を参照します）。
+- 描画 API は提供しません（描画の手順は UI 非依存の描画層 `MarqueeControl.UIBase` が単一所有し、描画先は `Platform.Core` の `IEsCanvas` です。描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`MarqueeSelectionGeometry`）を参照します）。
 - 色（ハンドル・始点マーカー・ラベル・装飾）は本コアに含みません（描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します）。
 - 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。ホストが文言の生成と描画を行います（体裁の適用は `MarqueeControl.UIBase` の `MarqueeHostLabelRenderer` / `FadeMaskHostLabelRenderer` を共用できます）。
 

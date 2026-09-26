@@ -19,7 +19,7 @@
       - [5.1.1 Source](#511-source)
       - [5.1.2 CenterPoint](#512-centerpoint)
       - [5.1.3 Options（設定の単一値）](#513-options設定の単一値)
-      - [5.1.4 DipToDeviceScaling](#514-renderscaling)
+      - [5.1.4 DipToDeviceScaling](#514-diptodevicescaling)
       - [5.1.5 寸法と Paint（色）](#515-寸法と-paint色)
       - [5.1.6 IsVisible](#516-isvisible)
       - [5.1.7 Log](#517-log)

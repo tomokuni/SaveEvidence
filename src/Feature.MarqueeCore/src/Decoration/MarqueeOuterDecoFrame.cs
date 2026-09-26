@@ -11,7 +11,7 @@ namespace EsUtil.Feature.MarqueeCore.Decoration;
 /// </remarks>
 /// <param name="OverlayRegions">暗転して塗る領域（DIP）。空の場合は塗らない。</param>
 /// <param name="BorderRects">枠線を描く矩形（DIP）。空の場合は描かない。</param>
-public readonly record struct OuterDecoFrame(
+public readonly record struct MarqueeOuterDecoFrame(
     IReadOnlyList<EsRect> OverlayRegions,
     IReadOnlyList<EsRect> BorderRects)
 {

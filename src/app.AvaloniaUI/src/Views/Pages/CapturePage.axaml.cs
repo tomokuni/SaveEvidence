@@ -1012,7 +1012,7 @@ public sealed partial class CapturePage : UserControl
     };
 
     /// <summary>自動切り出しの内側の装飾（ホバー強調の枠線）の寸法。</summary>
-    private static readonly InnerDecoAppearance s_autoCropHighlightAppearance = new()
+    private static readonly MarqueeInnerDecoAppearance s_autoCropHighlightAppearance = new()
     {
         BorderThickness = AutoCropStrokeThickness,
     };
@@ -1021,7 +1021,7 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>
     /// 1. 検出矩形の枠線は <see cref="CropViewControl.Rects"/> へ<b>ドメイン座標</b>で渡す（座標変換は CropView が単一所有する）。<br/>
     /// 2. ホバー中の 1 件は <see cref="CropViewControl.Rects"/> から外し、<see cref="AutoCropHighlight"/>（Marquee）の<br/>
-    ///    ハイライト矩形 + 内側の装飾（<see cref="InnerDecoAppearance"/>）で「枠線 + 半透明の塗り」として強調する<br/>
+    ///    ハイライト矩形 + 内側の装飾（<see cref="MarqueeInnerDecoAppearance"/>）で「枠線 + 半透明の塗り」として強調する<br/>
     ///    （ハイライト矩形は DIP 座標で渡す。Marquee の座標変換ポートは未指定・倍率 1 のため等価変換になる）。<br/>
     /// 3. 自動切り出しが無効な場合はハイライトを消し、矩形の一覧も空にする。
     /// </remarks>

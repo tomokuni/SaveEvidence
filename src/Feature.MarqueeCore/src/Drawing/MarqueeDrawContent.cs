@@ -22,8 +22,8 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 /// テキストの配置は実寸に依存するため、基準点は各テキストの <c>Point</c> が持つ（実寸の反映は UI 層が行う）。
 /// </remarks>
 public readonly record struct MarqueeDrawContent(
-    OuterDecoFrame Decoration,
-    InnerDecoFrame InnerDecoration,
+    MarqueeOuterDecoFrame Decoration,
+    MarqueeInnerDecoFrame InnerDecoration,
     EsRect? HoleRect,
     MarqueeHandles? Handles,
     MarqueeMarker? Marker,

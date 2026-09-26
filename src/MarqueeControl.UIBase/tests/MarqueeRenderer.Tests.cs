@@ -33,10 +33,10 @@ public class MarqueeRendererTests
     private static readonly MarqueeRenderer s_renderer = new(CreatePaint());
 
     /// <summary>空の装飾フレーム（描くものが無い）。</summary>
-    private static OuterDecoFrame EmptyOuter => new([], []);
+    private static MarqueeOuterDecoFrame EmptyOuter => new([], []);
 
     /// <summary>空の内側装飾フレーム（描くものが無い）。</summary>
-    private static InnerDecoFrame EmptyInner => new(null, []);
+    private static MarqueeInnerDecoFrame EmptyInner => new(null, []);
 
     // ====================================================================
     // ハンドル
@@ -118,7 +118,7 @@ public class MarqueeRendererTests
     public void DrawShapes_外側装飾の暗転領域と枠線を描く()
     {
         using var target = TestHelper.CreateTarget(100, 60);
-        var decoration = new OuterDecoFrame(
+        var decoration = new MarqueeOuterDecoFrame(
             [new EsRect(0, 0, 100, 10)],
             [new EsRect(10, 10, 80, 4)]);
         var content = CreateContent(decoration: decoration, layer: MarqueeDrawLayer.Decoration);
@@ -137,7 +137,7 @@ public class MarqueeRendererTests
     public void DrawShapes_内側装飾の塗りと枠線を描く()
     {
         using var target = TestHelper.CreateTarget(100, 60);
-        var inner = new InnerDecoFrame(
+        var inner = new MarqueeInnerDecoFrame(
             new EsRect(20, 20, 20, 20),
             [new EsRect(20, 20, 20, 2)]);
         var content = CreateContent(inner: inner, layer: MarqueeDrawLayer.Decoration);
@@ -257,8 +257,8 @@ public class MarqueeRendererTests
         MarqueeHandles? handles = null,
         MarqueeDrawLayer layer = MarqueeDrawLayer.Decoration,
         MarqueeMarker? marker = null,
-        OuterDecoFrame? decoration = null,
-        InnerDecoFrame? inner = null,
+        MarqueeOuterDecoFrame? decoration = null,
+        MarqueeInnerDecoFrame? inner = null,
         MarqueeTextPlacement? sizeLabel = null)
         => new(
             decoration ?? EmptyOuter,

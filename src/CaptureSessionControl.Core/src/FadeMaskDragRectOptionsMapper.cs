@@ -57,7 +57,7 @@ public static class FadeMaskDragRectOptionsMapper
                 // 暗転と枠線は暗転マスクの穴あけ枠と選択枠線が同じ矩形に重なるため、寸法を装飾が単一所有する
                 // （色は描画にだけ必要な設定のため、描画側（UI 層のホスト）が設定する）
                 // （サイズ・操作・情報ラベルは装飾の概念ではない。操作・情報ラベルはホストが自前で描く）
-                OuterAppearance = new OuterDecoAppearance
+                OuterAppearance = new MarqueeOuterDecoAppearance
                 {
                     BorderThickness = settings.BorderThickness!.Value,
                 },

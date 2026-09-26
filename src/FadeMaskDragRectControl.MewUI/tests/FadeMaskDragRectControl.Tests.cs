@@ -177,7 +177,7 @@ public class FadeMaskDragRectControlTests
             Deco = MarqueeDecoOptions.Default with
             {
                 ShowOuterBorder = true,
-                OuterAppearance = new OuterDecoAppearance
+                OuterAppearance = new MarqueeOuterDecoAppearance
                 {
                     BorderThickness = 3.0,
                 },

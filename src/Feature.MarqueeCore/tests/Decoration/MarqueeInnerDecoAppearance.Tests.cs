@@ -1,27 +1,21 @@
 using Xunit;
 
 using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.Feature.MarqueeCore.Tests.Decoration;
 
-/// <summary><see cref="OuterDecoAppearance"/> のテスト（UI 非依存・並列実行）。</summary>
+/// <summary><see cref="MarqueeInnerDecoAppearance"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
-/// 既定値と部分変更を検証する。<br/>
-/// 本型は暗転と枠線の外観のみを所有する（サイズラベルはコアの <see cref="MarqueeOptions"/>、<br/>
-/// 操作・情報ラベルはホストが自前で描くため、装飾は画面の暗転と枠線以外の外観を持たない）。
+/// 既定値・部分変更・安全域への補正を検証する。<br/>
+/// 本型は穴あけ矩形の内側の枠線の寸法のみを所有する（色は描画の設定が、描画の可否は <c>MarqueeDecoOptions</c> が単一所有する）。
 /// </remarks>
-public class OuterDecoAppearanceTests
+public class MarqueeInnerDecoAppearanceTests
 {
-    // ====================================================================
-    // 既定値
-    // ====================================================================
-
-    /// <summary>既定値が黒 50% の暗転とダークグレーの枠線であることを検証する。</summary>
+    /// <summary>既定値が想定どおりであることを検証する。</summary>
     [Fact]
     public void 既定値が想定どおりである()
     {
-        var appearance = new OuterDecoAppearance();
+        var appearance = new MarqueeInnerDecoAppearance();
 
         Assert.Equal(2.0, appearance.BorderThickness);
     }
@@ -30,7 +24,7 @@ public class OuterDecoAppearanceTests
     [Fact]
     public void 部分変更では他の値が維持される()
     {
-        var baseline = new OuterDecoAppearance();
+        var baseline = new MarqueeInnerDecoAppearance();
 
         var changed = baseline with { BorderThickness = 3.0 };
 
@@ -48,7 +42,7 @@ public class OuterDecoAppearanceTests
     [InlineData(2.5, 2.5)]
     public void 枠線の太さは安全域へ補正される(double value, double expected)
     {
-        var appearance = new OuterDecoAppearance { BorderThickness = value };
+        var appearance = new MarqueeInnerDecoAppearance { BorderThickness = value };
 
         Assert.Equal(expected, appearance.BorderThickness);
     }

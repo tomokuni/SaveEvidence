@@ -93,7 +93,7 @@ SelectionOverlay.Options = FadeMaskDragRectOptions.Default with
     // 装飾（暗転マスク・穴あけ枠）は寸法と表示可否だけを持ち、色は描画層（UIBase）が単一所有する
     Deco = MarqueeDecoOptions.Default with
     {
-        OuterAppearance = new OuterDecoAppearance { BorderThickness = 3.0 },
+        OuterAppearance = new MarqueeOuterDecoAppearance { BorderThickness = 3.0 },
     },
     Loupe = LoupeOptions.Default with { RequestedSize = 200, ZoomLevel = 2 },
 };

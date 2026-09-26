@@ -109,24 +109,24 @@ public sealed partial class Marquee
     /// <br/>
     /// 「描くかどうか」の解決は本メソッドが単一所有する（UI 層は値を持つ項目を反映するだけ）。
     /// </remarks>
-    private static OuterDecoFrame ResolveOuterDecoration(in MarqueeRenderRequest request, EsRect? hole)
+    private static MarqueeOuterDecoFrame ResolveOuterDecoration(in MarqueeRenderRequest request, EsRect? hole)
     {
         var deco = request.DecoOptions;
 
-        if (!DecoGeometry.ShouldDrawOverlay(hole, deco.OuterShowFullOverlay))
+        if (!MarqueeDecoGeometry.ShouldDrawOverlay(hole, deco.OuterShowFullOverlay))
         {
-            return new OuterDecoFrame([], []);
+            return new MarqueeOuterDecoFrame([], []);
         }
 
         var overlayRegions = deco.ShowOverlay
-            ? DecoGeometry.ComputeOverlayRegions(request.ClientSize, hole)
+            ? MarqueeDecoGeometry.ComputeOverlayRegions(request.ClientSize, hole)
             : [];
 
         var borderRects = hole is { } holeRect && deco.ShowOuterBorder
-            ? DecoGeometry.ComputeBorderRects(holeRect, deco.OuterAppearance.BorderThickness)
+            ? MarqueeDecoGeometry.ComputeBorderRects(holeRect, deco.OuterAppearance.BorderThickness)
             : [];
 
-        return new OuterDecoFrame(overlayRegions, borderRects);
+        return new MarqueeOuterDecoFrame(overlayRegions, borderRects);
     }
 
     /// <summary>内側の装飾（穴あけ矩形の塗り・内枠）の描画内容を解決する。</summary>
@@ -138,25 +138,25 @@ public sealed partial class Marquee
     /// 2. 塗りを描かない設定なら塗り矩形を生成しない。<br/>
     /// 3. 枠線を描かない設定なら枠線矩形（内側 4 辺）を生成しない。<br/>
     /// <br/>
-    /// 枠線矩形の計算は外側の装飾と共通（<see cref="DecoGeometry.ComputeBorderRects"/>）のため、<br/>
+    /// 枠線矩形の計算は外側の装飾と共通（<see cref="MarqueeDecoGeometry.ComputeBorderRects"/>）のため、<br/>
     /// 外側の枠線と内側の枠線が同じ矩形へ重なる。<br/>
     /// 「描くかどうか」の解決は本メソッドが単一所有する（UI 層は値を持つ項目を反映するだけ）。
     /// </remarks>
-    private static InnerDecoFrame ResolveInnerDecoration(in MarqueeRenderRequest request, EsRect? hole)
+    private static MarqueeInnerDecoFrame ResolveInnerDecoration(in MarqueeRenderRequest request, EsRect? hole)
     {
         var deco = request.DecoOptions;
 
         if (hole is not { } holeRect)
         {
-            return new InnerDecoFrame(null, []);
+            return new MarqueeInnerDecoFrame(null, []);
         }
 
         var fillRect = deco.ShowInnerFill ? holeRect : (EsRect?)null;
         var borderRects = deco.ShowInnerBorder
-            ? DecoGeometry.ComputeBorderRects(holeRect, deco.InnerAppearance.BorderThickness)
+            ? MarqueeDecoGeometry.ComputeBorderRects(holeRect, deco.InnerAppearance.BorderThickness)
             : [];
 
-        return new InnerDecoFrame(fillRect, borderRects);
+        return new MarqueeInnerDecoFrame(fillRect, borderRects);
     }
 
     /// <summary>ドラッグハンドルの描画内容を解決する。</summary>
@@ -178,10 +178,10 @@ public sealed partial class Marquee
 
         var dip = MarqueeRenderRequest.ToDipRect(rect, port);
         var half = options.HandleSize / 2;
-        var rects = new List<EsRect>(SelectionGeometry.DirectionalHandles.Count);
-        foreach (var handle in SelectionGeometry.DirectionalHandles)
+        var rects = new List<EsRect>(MarqueeSelectionGeometry.DirectionalHandles.Count);
+        foreach (var handle in MarqueeSelectionGeometry.DirectionalHandles)
         {
-            var center = SelectionGeometry.GetHandlePosition(dip, handle);
+            var center = MarqueeSelectionGeometry.GetHandlePosition(dip, handle);
             rects.Add(new EsRect(center.X - half, center.Y - half, options.HandleSize, options.HandleSize));
         }
 

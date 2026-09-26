@@ -5,13 +5,13 @@ using EsUtil.Feature.MarqueeCore.Decoration;
 
 namespace EsUtil.Feature.MarqueeCore.Tests.Decoration;
 
-/// <summary><see cref="DecoGeometry"/> のテスト（UI 非依存・並列実行）。</summary>
+/// <summary><see cref="MarqueeDecoGeometry"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 装飾（暗転領域・枠線矩形）の幾何計算のみを検証するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
 /// 各 UI（Avalonia / MewUI）の描画は <see cref="EsRect"/> を自身の描画 API へ渡すだけであり、<br/>
 /// 本テストが両 UI の見た目を保証する（幾何計算の単一所有）。
 /// </remarks>
-public class DecoGeometryTests
+public class MarqueeDecoGeometryTests
 {
     /// <summary>枠線が四辺（上下左右）の矩形で返ることを検証する。</summary>
     [Fact]
@@ -19,7 +19,7 @@ public class DecoGeometryTests
     {
         var rect = new EsRect(10, 20, 100, 50);
 
-        var result = DecoGeometry.ComputeBorderRects(rect, 2.0);
+        var result = MarqueeDecoGeometry.ComputeBorderRects(rect, 2.0);
 
         Assert.Equal(4, result.Count);
         Assert.Equal(new EsRect(10, 20, 100, 2), result[0]);     // 上
@@ -35,7 +35,7 @@ public class DecoGeometryTests
     {
         var rect = new EsRect(0, 0, 100, 50);
 
-        var result = DecoGeometry.ComputeBorderRects(rect, 0.5);
+        var result = MarqueeDecoGeometry.ComputeBorderRects(rect, 0.5);
 
         Assert.Equal(0.5, result[0].Height);
     }
@@ -46,7 +46,7 @@ public class DecoGeometryTests
     {
         var rect = new EsRect(0, 0, 10, 2);
 
-        var result = DecoGeometry.ComputeBorderRects(rect, 2.0);
+        var result = MarqueeDecoGeometry.ComputeBorderRects(rect, 2.0);
 
         Assert.Equal(0, result[2].Height);
         Assert.Equal(0, result[3].Height);
@@ -56,28 +56,28 @@ public class DecoGeometryTests
     [Fact]
     public void ShouldDrawOverlay_穴あけ矩形があればtrueを返す()
     {
-        Assert.True(DecoGeometry.ShouldDrawOverlay(new EsRect(10, 20, 50, 40), showFullOverlay: false));
+        Assert.True(MarqueeDecoGeometry.ShouldDrawOverlay(new EsRect(10, 20, 50, 40), showFullOverlay: false));
     }
 
     /// <summary>穴あけ矩形が無く全面暗転なら描画すると判定することを検証する。</summary>
     [Fact]
     public void ShouldDrawOverlay_穴あけ矩形がなく全面暗転ならtrueを返す()
     {
-        Assert.True(DecoGeometry.ShouldDrawOverlay(null, showFullOverlay: true));
+        Assert.True(MarqueeDecoGeometry.ShouldDrawOverlay(null, showFullOverlay: true));
     }
 
     /// <summary>穴あけ矩形も全面暗転も無効なら描画しないと判定することを検証する。</summary>
     [Fact]
     public void ShouldDrawOverlay_両方無効ならfalseを返す()
     {
-        Assert.False(DecoGeometry.ShouldDrawOverlay(null, showFullOverlay: false));
+        Assert.False(MarqueeDecoGeometry.ShouldDrawOverlay(null, showFullOverlay: false));
     }
 
     /// <summary>穴あけ矩形がない場合は全面が暗転領域になることを検証する。</summary>
     [Fact]
     public void ComputeOverlayRegions_穴あけ矩形がなければ全面を返す()
     {
-        var result = DecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), null);
+        var result = MarqueeDecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), null);
 
         Assert.Single(result);
         Assert.Equal(new EsRect(0, 0, 100, 100), result[0]);
@@ -89,7 +89,7 @@ public class DecoGeometryTests
     {
         var hole = new EsRect(20, 30, 40, 50);
 
-        var result = DecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), hole);
+        var result = MarqueeDecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), hole);
 
         // 上（全幅・高さ 30）/ 下（全幅・高さ 20）/ 左（高さ 50・幅 20）/ 右（高さ 50・幅 40）
         Assert.Equal(4, result.Count);
@@ -105,7 +105,7 @@ public class DecoGeometryTests
     {
         var hole = new EsRect(200, 200, 50, 50);
 
-        var result = DecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), hole);
+        var result = MarqueeDecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), hole);
 
         Assert.Single(result);
         Assert.Equal(new EsRect(0, 0, 100, 100), result[0]);
@@ -115,7 +115,7 @@ public class DecoGeometryTests
     [Fact]
     public void ComputeOverlayRegions_穴あけ矩形が全面なら暗転なしになる()
     {
-        var result = DecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), new EsRect(0, 0, 100, 100));
+        var result = MarqueeDecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), new EsRect(0, 0, 100, 100));
 
         Assert.Empty(result);
     }
@@ -126,7 +126,7 @@ public class DecoGeometryTests
     {
         var hole = new EsRect(0, 0, 40, 40);
 
-        var result = DecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), hole);
+        var result = MarqueeDecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), hole);
 
         // 上（Top == 0）と左（Left == 0）は幅・高さが 0 のため生成されない
         Assert.Equal(2, result.Count);
@@ -140,7 +140,7 @@ public class DecoGeometryTests
     {
         var hole = new EsRect(50, 50, 0, 0);
 
-        var result = DecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), hole);
+        var result = MarqueeDecoGeometry.ComputeOverlayRegions(new EsSize(100, 100), hole);
 
         // 穴あけ矩形が交差しない（幅・高さ 0）ため、暗転の抜けが生じないよう全面を返す
         Assert.Single(result);

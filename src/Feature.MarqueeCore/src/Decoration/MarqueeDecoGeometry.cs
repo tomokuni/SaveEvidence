@@ -5,7 +5,7 @@ namespace EsUtil.Feature.MarqueeCore.Decoration;
 /// <summary>装飾（選択矩形の外側・内側）の幾何計算（純粋関数）。</summary>
 /// <remarks>
 /// 暗転領域（穴あけ矩形を除いた 4 帯）と枠線の 4 矩形の計算を単一所有する。<br/>
-/// 選択矩形の外側を描く <see cref="OuterDecoFrame"/> と内側を描く <see cref="InnerDecoFrame"/> が共用するため、<br/>
+/// 選択矩形の外側を描く <see cref="MarqueeOuterDecoFrame"/> と内側を描く <see cref="MarqueeInnerDecoFrame"/> が共用するため、<br/>
 /// 「枠線はどの 4 矩形か」「どの太さを下限とするか」の規則が 2 箇所へ分かれない。<br/>
 /// 穴あけ矩形の決定と論理座標から DIP への変換はフレーム全体の関心事のため <c>Drawing.MarqueeRenderRequest</c> が持つ。<br/>
 /// 各 UI 実装は返された <see cref="EsRect"/> を自身の描画 API へ渡すだけにする。<br/>
@@ -13,7 +13,7 @@ namespace EsUtil.Feature.MarqueeCore.Decoration;
 /// <b>可視性</b>: 描画内容の判断は各フレームの解決が担うため、本クラスは内部実装とする
 /// （UI 実装は返されたフレームを描くだけで、幾何計算を直接呼ばない）。
 /// </remarks>
-internal static class DecoGeometry
+internal static class MarqueeDecoGeometry
 {
     /// <summary>選択矩形の四辺に描く枠線の矩形を計算する。</summary>
     /// <param name="rect">選択矩形（DIP 座標）。</param>

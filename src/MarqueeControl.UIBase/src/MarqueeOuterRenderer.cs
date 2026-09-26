@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.Marquee.UIBase;
 /// <summary>選択矩形の外側に描く装飾（暗転マスク・穴あけ枠）を描画ポートへ写すレンダラ。</summary>
 /// <remarks>
 /// <b>位置付け</b>: 「どう描くか」だけを持つ層である。「どの矩形を暗転するか」「枠線を描くか」の判断は<br/>
-/// 装飾コア（<see cref="OuterDecoFrame"/>）が持つため、本クラスはフレームの各項目を描画ポートへ写すだけとする<br/>
+/// 装飾コア（<see cref="MarqueeOuterDecoFrame"/>）が持つため、本クラスはフレームの各項目を描画ポートへ写すだけとする<br/>
 /// （外観値・判断を持たない）。<br/>
 /// 選択矩形そのもの（ハンドル・始点マーカー）は <see cref="MarqueeRenderer"/> が担う。
 /// </remarks>
@@ -20,12 +20,12 @@ public static class MarqueeOuterRenderer
     /// <param name="paint">描画に使う色（描画にだけ必要な設定。本層が単一所有する）。null 不可。</param>
     /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
     /// <remarks>
-    /// 1. 暗転領域（<see cref="OuterDecoFrame.OverlayRegions"/>）を暗転色で塗る（空なら何もしない）。<br/>
-    /// 2. 枠線（<see cref="OuterDecoFrame.BorderRects"/>）を描く（空なら何もしない）。<br/>
+    /// 1. 暗転領域（<see cref="MarqueeOuterDecoFrame.OverlayRegions"/>）を暗転色で塗る（空なら何もしない）。<br/>
+    /// 2. 枠線（<see cref="MarqueeOuterDecoFrame.BorderRects"/>）を描く（空なら何もしない）。<br/>
     /// <br/>
     /// 描画の要否はフレームが持つため、本メソッドに分岐はない（空のコレクションは単に何もしない）。
     /// </remarks>
-    public static void Draw(IEsCanvas canvas, in OuterDecoFrame frame, MarqueePaint paint)
+    public static void Draw(IEsCanvas canvas, in MarqueeOuterDecoFrame frame, MarqueePaint paint)
     {
         ArgumentNullException.ThrowIfNull(canvas);
         ArgumentNullException.ThrowIfNull(paint);

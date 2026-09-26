@@ -14,7 +14,7 @@ namespace EsUtil.Feature.MarqueeCore.Selection;
 /// それ以外（ドラッグ変形・境界クランプ・ヒットテスト）は状態機械の内部手順であるため internal とする<br/>
 /// （利用側はファサード <see cref="Marquee"/> を通す。使わないメンバーを公開しない）。
 /// </remarks>
-internal static class SelectionGeometry
+internal static class MarqueeSelectionGeometry
 {
     /// <summary>選択矩形の最小サイズの下限（ドメイン座標。0 以下の指定を無効化）。</summary>
     private const double MinSelectionSizeLowerBound = 1.0;

@@ -11,7 +11,7 @@ namespace EsUtil.Feature.MarqueeCore.Decoration;
 /// </remarks>
 /// <param name="FillRect">塗る矩形（DIP。穴あけ矩形そのもの）。null の場合は塗らない。</param>
 /// <param name="BorderRects">枠線を描く矩形（DIP。穴あけ矩形の内側 4 辺）。空の場合は描かない。</param>
-public readonly record struct InnerDecoFrame(
+public readonly record struct MarqueeInnerDecoFrame(
     EsRect? FillRect,
     IReadOnlyList<EsRect> BorderRects)
 {

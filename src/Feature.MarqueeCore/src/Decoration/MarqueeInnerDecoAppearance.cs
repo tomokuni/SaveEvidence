@@ -16,7 +16,7 @@ namespace EsUtil.Feature.MarqueeCore.Decoration;
 /// <see cref="Marquee.Limits"/> が単一所有する安全域内の値だけが保持される<br/>
 /// （UI 側に補正の登録を要求すると、登録を忘れた UI だけ安全域外の値を保持する）。
 /// </remarks>
-public sealed record InnerDecoAppearance
+public sealed record MarqueeInnerDecoAppearance
 {
     /// <summary>穴あけ矩形の内側に描く枠線の太さを取得する。</summary>
     /// <value>枠線の太さ（DIP）。既定は 2.0。設定時は 0.5 未満なら 0.5 へ補正される。</value>

@@ -84,8 +84,8 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `MarqueeOuterRenderer.Draw(IEsCanvas canvas, in OuterDecoFrame frame, MarqueePaint paint)` | 暗転領域（`OverlayRegions`）を `paint.OverlayColor` で塗り、枠線（`BorderRects`）を `paint.OuterBorderColor` で描く（空のコレクションは何もしない） |
-| `MarqueeInnerRenderer.Draw(IEsCanvas canvas, in InnerDecoFrame frame, MarqueePaint paint)` | 塗り矩形（`FillRect`。null なら何もしない）を `paint.InnerFillColor` で塗り、枠線（`BorderRects`）を `paint.InnerBorderColor` で描く |
+| `MarqueeOuterRenderer.Draw(IEsCanvas canvas, in MarqueeOuterDecoFrame frame, MarqueePaint paint)` | 暗転領域（`OverlayRegions`）を `paint.OverlayColor` で塗り、枠線（`BorderRects`）を `paint.OuterBorderColor` で描く（空のコレクションは何もしない） |
+| `MarqueeInnerRenderer.Draw(IEsCanvas canvas, in MarqueeInnerDecoFrame frame, MarqueePaint paint)` | 塗り矩形（`FillRect`。null なら何もしない）を `paint.InnerFillColor` で塗り、枠線（`BorderRects`）を `paint.InnerBorderColor` で描く |
 
 ### `MarqueeLabelPlan` のメンバー
 

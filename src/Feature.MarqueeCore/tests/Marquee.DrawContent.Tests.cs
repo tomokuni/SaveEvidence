@@ -419,7 +419,7 @@ public class MarqueeDrawContentTests
         var session = CreateSession(selection: s_selection);
         var deco = MarqueeDecoOptions.Default with
         {
-            OuterAppearance = new OuterDecoAppearance { BorderThickness = 2.0 },
+            OuterAppearance = new MarqueeOuterDecoAppearance { BorderThickness = 2.0 },
             ShowOverlay = true,
         };
 
@@ -447,7 +447,7 @@ public class MarqueeDrawContentTests
         var session = CreateSession(selection: s_selection);
         var deco = MarqueeDecoOptions.Default with
         {
-            InnerAppearance = new InnerDecoAppearance { BorderThickness = 2.0 },
+            InnerAppearance = new MarqueeInnerDecoAppearance { BorderThickness = 2.0 },
             ShowInnerFill = true,
         };
 
@@ -541,7 +541,7 @@ public class MarqueeDrawContentTests
     {
         var deco = MarqueeDecoOptions.Default with
         {
-            OuterAppearance = new OuterDecoAppearance { BorderThickness = 4.0 },
+            OuterAppearance = new MarqueeOuterDecoAppearance { BorderThickness = 4.0 },
         };
 
         var content = ResolveContent(CreateSession(selection: s_selection), deco);
@@ -560,7 +560,7 @@ public class MarqueeDrawContentTests
     {
         var deco = MarqueeDecoOptions.Default with
         {
-            OuterAppearance = new OuterDecoAppearance { BorderThickness = 0 },
+            OuterAppearance = new MarqueeOuterDecoAppearance { BorderThickness = 0 },
         };
 
         var content = ResolveContent(CreateSession(selection: s_selection), deco);
@@ -658,7 +658,7 @@ public class MarqueeDrawContentTests
     {
         var deco = VisibleInnerDecoration() with
         {
-            OuterAppearance = new OuterDecoAppearance { BorderThickness = 2.0 },
+            OuterAppearance = new MarqueeOuterDecoAppearance { BorderThickness = 2.0 },
         };
 
         var content = ResolveContent(CreateSession(selection: s_selection), deco);

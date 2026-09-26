@@ -172,7 +172,7 @@ internal sealed class MarqueeSession
             // 移動（Move）は掴んだ位置を維持するのが自然なためスナップしない。
             if (handle != HitTarget.Move)
             {
-                var handlePosition = SelectionGeometry.GetHandlePosition(_state.SelectionRect, handle);
+                var handlePosition = MarqueeSelectionGeometry.GetHandlePosition(_state.SelectionRect, handle);
                 _state.SnapToHandle(handlePosition);
                 feedback = feedback with
                 {
@@ -212,14 +212,14 @@ internal sealed class MarqueeSession
             return new MarqueeFeedback
             {
                 UpdateCursorShape = true,
-                CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
+                CursorKind = MarqueeSelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
             };
         }
 
         var cursor = new MarqueeFeedback
         {
             UpdateCursorShape = true,
-            CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
+            CursorKind = MarqueeSelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
         };
 
         // nudge 中はエコー移動で選択矩形・マウス位置を上書きしない（解放時の追従位置が実マウス位置へ飛ぶのを防ぐ）
@@ -299,7 +299,7 @@ internal sealed class MarqueeSession
                 Cursor = feedback.Cursor | MarqueeCursorAction.MoveTo,
                 CursorDomainPosition = nudgePosition,
                 UpdateCursorShape = true,
-                CursorKind = SelectionGeometry.ToCursorKind(_state.HitTest(nudgePosition, ToDomainRadius())),
+                CursorKind = MarqueeSelectionGeometry.ToCursorKind(_state.HitTest(nudgePosition, ToDomainRadius())),
             };
         }
 

@@ -113,9 +113,9 @@ public readonly record struct MarqueeRenderRequest(
     /// <b>終点の扱いは矩形の種類で決まる</b>: 選択矩形は閉区間（終点のピクセルも含む）、<br/>
     /// ハイライト矩形はホストが既に全ピクセルを含む閉区間として与えるため +1 しない。
     /// </remarks>
-    internal static HoleRect? ResolveHoleRect(EsRect? highlightRect, EsRect? selectionRect)
-        => highlightRect is { } highlight ? new HoleRect(highlight, ClosedInterval: false)
-            : selectionRect is { } selection ? new HoleRect(selection, ClosedInterval: true)
+    internal static MarqueeHoleRect? ResolveHoleRect(EsRect? highlightRect, EsRect? selectionRect)
+        => highlightRect is { } highlight ? new MarqueeHoleRect(highlight, ClosedInterval: false)
+            : selectionRect is { } selection ? new MarqueeHoleRect(selection, ClosedInterval: true)
             : null;
 
     /// <summary>論理座標の矩形から穴あけ矩形（DIP）を決定する。</summary>
