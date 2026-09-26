@@ -138,7 +138,7 @@ src/LoupeControl.UIBase/
 | コンポーネント | 責務 |
 | --- | --- |
 | `LoupeRenderer` | 既定の描画実装（`sealed`。色（`LoupePaint`）を保持し、手順は基底が所有する）。図形の層を描き、テキストのフック（`DrawLabel`）は引き継ぐ（既定は何もしない） |
-| `LoupePaint` | 描画に使う 7 色と描画可否の述語（`Has*`）を単一所有する。`Default` を基点に部分変更する |
+| `LoupePaint` | 描画に使う 7 色を単一所有する（**描画可否の述語は持たない**。可否はコアの明示フラグが単一所有する）。`Default` を基点に部分変更する |
 | `LoupeLabelPlan` | 通知・色・実寸からラベル要素の配置指示を解決する |
 
 ### 組み込み規則
@@ -177,7 +177,7 @@ src/LoupeControl.UIBase/
 | --- | --- |
 | 描画する層とその順序 | `Loupe.ResolveLayers`（コア。本層は順に写すだけ） |
 | 描画の色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）とその既定値 | 本層（`LoupePaint`） |
-| 描画可否（透明色は描かない・切り出し領域が無い場合は描かない） | 本層（`LoupePaint.Has*` / `LoupeRendererBase.DrawMagnifiedImage`。判定の規則は `DrawingColorExtensions.IsVisible` が単一所有する） |
+| 描画可否（非表示の項目はコアが空の描画内容として返す・切り出し領域が無い場合は描かない） | コア（明示フラグ `LoupeOptions.ShowCheckerboard` / `ShowCrosshair` / `ShowFrame` / `ShowCoordLabel` と、切り出し不可時の `LoupeRendererBase.DrawMagnifiedImage`） |
 | 切り出し領域と拡大の矩形 | コア（`LoupeRenderRequest` の internal メンバーが算出し、描画内容 `LoupeDrawContent.MagnifiedImage` が持つ） |
 | 市松模様のタイル位置とタイル数 | コア（描画内容 `LoupeDrawContent.CheckerTiles`。リストを確保しない列挙子で渡す） |
 | 十字線・円枠の矩形 | コア（描画内容 `LoupeDrawContent`） |

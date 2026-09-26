@@ -45,11 +45,11 @@ flowchart TB
 
 UIBase は `Platform.Core` も参照します（描画ポートの適合と実寸測定）。**Core は `Common` も UIBase も参照しません**（描画 API も描画ポートも知らない）。
 
-| 層 | 置くもの | 置かないもの | 依存先 | Marquee の例 |
-| --- | --- | --- | --- | --- |
-| **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・コア⇔UI の契約・**描画内容の解決（層の順序・矩形）**・**テキストの文言と位置（Text と基準点）**・**コアが出力するログ定義** | 色・フォントサイズ・UI フレームワークの型・組み込み先の概念・**描画 API と描画ポート**・UI が出力するログ定義 | `Platform.Core` | `Marquee`（ファサード + `Marquee.DrawContent.cs` の `CreateRequest` / `ResolveContent`）/ `MarqueeDrawContent` / `MarqueeDrawLayer` / `MarqueeTextPlacement` / `MarqueeOptions` |
-| **UIBase** | コントロール化に必要な処理（組み込み規則）・**描画手順（層の順序に従う写し方＝`XxxRendererBase` とその契約）**・**色（`MarqueePaint` / `LoupePaint`）と既定の描画実装**・**テキストを要素に写す配置計算（`MarqueeLabelPlan` / `LoupeLabelPlan`）**・層をまたぐ設定の写像（設定 → 子の値、設定 → 色。両 UI で共有する）・**UI が出力するログ定義とログの値の書式** | コア単体でも成立する判断（選択・表示レイアウト）・UI フレームワークの型 | `Core` / `Common` / `Platform.Core` | `MarqueeRendererBase` / `IMarqueeRenderer` / `MarqueeRenderer` / `MarqueePaint` / `MarqueeLabelPlan` / `MarqueeWheelInterpreter` / `FadeMaskHostLabelRenderer` |
-| **UI** | 入力イベントの受付とコア型への変換・効果の適用・通知の公開イベントへの転送・**描画面の確保（`XxxRenderer~UI`）**・ラベル要素の配置 | 判断・計算・既定値（コアが単一所有する）・層の順序（コアがデータとして単一所有する）・複数 UI で共有できる手順 | `Core` / `UIBase` / `Platform.*` | `MarqueeControl` / `MarqueeRendererAvaloniaUI` / `Effects` |
+| 層 | 置くもの | 置かないもの | 依存先 | Marquee の例 | Loupe の例 |
+| --- | --- | --- | --- | --- | --- |
+| **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・コア⇔UI の契約・**描画内容の解決（層の順序・矩形）**・**テキストの文言と位置（Text と基準点）**・**コアが出力するログ定義** | 色・フォントサイズ・UI フレームワークの型・組み込み先の概念・**描画 API と描画ポート**・UI が出力するログ定義 | `Platform.Core` | `Marquee`（ファサード + `Marquee.DrawContent.cs` の `CreateRequest` / `ResolveContent`）/ `MarqueeDrawContent` / `MarqueeDrawLayer` / `MarqueeTextPlacement` / `MarqueeOptions` | `Loupe`（ファサード + `Loupe.DrawContent.cs` の `CreateRequest` / `ResolveContent`）/ `LoupeDrawContent` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeOptions` |
+| **UIBase** | コントロール化に必要な処理（組み込み規則）・**描画手順（層の順序に従う写し方＝`XxxRendererBase` とその契約）**・**色（`MarqueePaint` / `LoupePaint`）と既定の描画実装**・**テキストを要素に写す配置計算（`MarqueeLabelPlan` / `LoupeLabelPlan`）**・層をまたぐ設定の写像（設定 → 子の値、設定 → 色。両 UI で共有する）・**UI が出力するログ定義とログの値の書式** | コア単体でも成立する判断（選択・表示レイアウト）・UI フレームワークの型 | `Core` / `Common` / `Platform.Core` | `MarqueeRendererBase` / `IMarqueeRenderer` / `MarqueeRenderer` / `MarqueePaint` / `MarqueeLabelPlan` / `MarqueeWheelInterpreter` / `FadeMaskHostLabelRenderer` | `LoupeRendererBase` / `ILoupeRenderer` / `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan` |
+| **UI** | 入力イベントの受付とコア型への変換・効果の適用・通知の公開イベントへの転送・**描画面の確保（`XxxRenderer~UI`）**・ラベル要素の配置 | 判断・計算・既定値（コアが単一所有する）・層の順序（コアがデータとして単一所有する）・複数 UI で共有できる手順 | `Core` / `UIBase` / `Platform.*` | `MarqueeControl` / `MarqueeRendererAvaloniaUI` / `Effects` | `LoupeControl` / `LoupeRendererAvaloniaUI` |
 
 **UIBase の中の 2 つの関心事**: 実装上は同じアセンブリに置きますが、帰属の基準は別です。
 

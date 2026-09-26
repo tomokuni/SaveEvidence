@@ -140,7 +140,7 @@ stateDiagram-v2
 | フォントサイズの安全域（6〜48） | 描画層の `MarqueePaint` |
 | ラベルの体裁（背景 = 実寸 + 余白×2、アライン、クランプ、行送り） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` |
 | 装飾の DIP 変換と穴あけ矩形の決定 | `MarqueeRenderRequest`（描画入力から導出する値は入力型が単一所有する） |
-| 装飾の描画可否（明示フラグ。透明色を代用にしない） | `MarqueeDecoOptions.ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` |
+| 装飾の描画可否（明示フラグ。透明色を代用にしない） | `MarqueeDecoOptions`（暗転の可否は述語 `ShouldDrawOverlay(hasHoleRect)`、それ以外は明示フラグ `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`） |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint`（本コアは色を持つ型を公開しない） |
 | サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveContent` の `ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。デリゲートを生成しない） |
@@ -179,6 +179,24 @@ stateDiagram-v2
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj
 ```
 
-## 9. ライセンス
+## 9. 設計判断（UI 非依存の境界）
+
+本プロジェクトの型は、UI フレームワークの型をシグネチャに持たないことを境界の条件としています。
+
+| 判断 | 内容 |
+| --- | --- |
+| 座標・寸法の型 | コア（`EsUtil.Platform.Core.Geometry`）の `EsPoint` / `EsRect` / `EsSize` を使い、UI 型は境界で 1 行変換する |
+| キー入力の型 | コアの `EsKey` を使い、UI のキー型は境界で変換する |
+| カーソル操作 | `ICursorService` 抽象にのみ依存する（未指定はカーソル操作を行わない）。UI のカーソル型への写像は効果（`IMarqueeEffects.SetCursorShape`）を受けた UI が行う |
+| 効果の適用 | UI 固有の操作（フォーカス・再描画・ポインターキャプチャ・画面座標変換）は `IMarqueeEffects` を唯一の境界とし、コアは UI 型を知らない（不要なメンバーの空実装は `MarqueeEffectsBase` で省略できる） |
+| 文字の描画 | コアは文言・基準点・アラインだけを持ち、実寸 → 配置矩形の写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため）。色は描画層の `MarqueePaint` が与える |
+| 再描画のバッチ化 | UI のディスパッチャーに依存するため `MarqueeControl.UIBase` が単一所有する（コアは同期計算のみ） |
+| 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画ポートの境界で行う |
+| 選択矩形の閉区間 | 「終点を含む」規則（DIP への変換時の +1）はコア（`MarqueeHoleRect` / `MarqueeSelectionGeometry`）が単一所有する（UI ごとに +1 すると片方だけずれる） |
+| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「アラインの適用」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）が単一所有する（コアは文言・基準点・アライン・クランプ領域だけを渡す） |
+| フォントサイズの安全域 | 6〜48 と「非数は既定値」は描画層（`MarqueePaint` / `LoupePaint`）が単一所有する |
+| ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.Bounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
+
+## 10. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

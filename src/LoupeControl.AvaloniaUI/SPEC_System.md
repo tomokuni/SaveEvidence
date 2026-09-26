@@ -177,8 +177,8 @@ flowchart TB
 
 ### 6.3 描画責務分割
 
-- 描画の手順は層の順序に従う写し方の基底（UIBase の `LoupeRendererBase`）とその UI 実装（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有し、Avalonia 版と MewUI 版が同じ手順を共有する（層の順序はコアの `LoupeDrawLayer` が、色と描く可否（`Has*`）は本層の `LoupePaint` が単一所有する）。
-- `LoupeRenderer` は**描画内容（`LoupeDrawContent`。層の順序・矩形・拡大画像の幾何）と層の順序を受け取り、描画ポートへ写すだけ**である（色は `LoupePaint` として保持し、描画可否は色の述語が判定する）。
+- 描画の手順は層の順序に従う写し方の基底（UIBase の `LoupeRendererBase`）とその UI 実装（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有し、Avalonia 版と MewUI 版が同じ手順を共有する（層の順序はコアの `LoupeDrawLayer` が、色は UIBase の `LoupePaint` が単一所有する。描画の可否はコアの明示フラグ（`LoupeOptions.Show*`）が単一所有し、非表示の項目は空の描画内容として渡る）。
+- `LoupeRenderer` は**描画内容（`LoupeDrawContent`。層の順序・矩形・拡大画像の幾何）と層の順序を受け取り、描画ポートへ写すだけ**である（色は `LoupePaint` として保持するが、描画可否の判定は持たない）。
 - 描画先は UI 非依存の描画ポート `IEsCanvas` であり、本プロジェクトでは `AvaloniaCanvas`（`Platform.AvaloniaUI`）が `DrawingContext` を適合させる。
 - `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）: コアの色型（`System.Drawing.Color`）→ `SolidColorBrush` の変換と容量制限付きキャッシュを単一所有する。描画アダプタ（`AvaloniaCanvas`）とラベル要素の配置（本コントロールとマーキー）が共用する。
 

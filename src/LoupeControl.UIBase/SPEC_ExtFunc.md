@@ -19,7 +19,7 @@
 | ルーペの描画（図形） | `ILoupeRenderer.DrawShapes`（本層の契約） | 下地・市松模様・拡大画像・十字線・外枠を描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする）。層の順序はコア（`LoupeDrawContent.Layers`）がデータとして単一所有し、本層の `LoupeRendererBase` がその順に写す |
 | 拡大画像の切り出しと描画（色を使わない層） | `LoupeRendererBase`（本層の基底が実装する） | コアが解決した切り出し領域（`LoupeDrawContent.MagnifiedImage`）で `EsBitmap.Crop` を呼び、描画先へ `DrawImage` する。破棄済みソースの `ObjectDisposedException` は本層で吸収する（市松模様のみが残る） |
 | テキスト要素の配置 | `LoupeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素の配置指示（`LoupeLabelPlacement`）を解決する。**要素として置くか画像として描くかは UI 層が決める** |
-| 描画に使う色 | `LoupePaint` | 下地・市松模様・外枠・十字線・中心座標ラベルの色と「描くかどうか」の述語（`Has*`）を単一所有する |
+| 描画に使う色 | `LoupePaint` | 下地・市松模様・外枠・十字線・中心座標ラベルの色を単一所有する（**描画の可否は持たない**） |
 
 #### 1.1.1 前提条件
 
@@ -64,7 +64,7 @@
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeRenderer` | sealed class | 既定の描画実装（`ILoupeRenderer`（本層の契約））。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する |
-| `LoupePaint` | sealed record | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）と描画可否の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
+| `LoupePaint` | sealed record | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）の単一所有者（**描画可否の述語は持たない**。可否はコアの明示フラグが単一所有し、非表示の項目は空の描画内容として渡る）。`Default` を基点に `with` 式で部分変更する |
 | `LoupeLabelPlan` | static class | ラベル要素の配置指示の解決（色は `LoupePaint` から受け取る） |
 | `LoupeUiLogMessage` | static partial class | UI が出力するログ定義（拡大元画像の変更・描画の例外） |
 | `LoupeLogFormat` | static class | UI がログへ出す値の書式（未設定の表記・画像の寸法） |

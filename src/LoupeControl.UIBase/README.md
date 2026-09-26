@@ -42,7 +42,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | 型 | 責務 |
 | --- | --- |
 | `LoupeRenderer` | 既定の描画実装（`sealed`。`ILoupeRenderer` を実装）。描画の設定（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する。`DrawShapes`（下地・市松・拡大画像・十字線・外枠。**テキストは描かない**）とフォントサイズ・角丸（`CoordLabelFontSize` / `CoordLabelCornerRadius`。**描画の契約には含めない**）を提供する。テキストのフック（`DrawLabel`）は基底の既定（何もしない）を引き継ぐ |
-| `LoupePaint` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）・ラベルのフォントサイズと角丸・「描くかどうか」の述語（`Has*`）の単一所有者。`Default` を基点に `with` 式で部分変更する |
+| `LoupePaint` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）・ラベルのフォントサイズと角丸の単一所有者（**描画の可否は持たない**。可否はコアの明示フラグが単一所有し、非表示の項目は空の描画内容として渡る）。`Default` を基点に `with` 式で部分変更する |
 | `LoupeLabelPlacement` | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
 | `LoupeLabelPlan` | コアのラベル契約（`LoupeTextPlacement`）からラベル要素の配置指示（`LoupeLabelPlacement`）を解決する（体裁は `LoupePaint` から受け取る） |
 
