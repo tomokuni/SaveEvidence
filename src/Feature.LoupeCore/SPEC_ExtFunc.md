@@ -8,13 +8,13 @@
 | --- | --- | --- |
 | 表示レイアウトの解決 | `Loupe.ResolveLayout` | 親領域のサイズを渡すと、表示サイズ（要求サイズを親領域の最小辺へクランプ）と表示位置（拡大中心 ＋ オフセットの親領域内へのクランプ）を返す（拡大中心が未設定の場合は位置が null）。**状態を変更しない** |
 | 描画入力の生成 | `Loupe.CreateRequest` | 描画 1 フレーム分の入力（`LoupeRenderRequest`）を生成する。DIP → 物理ピクセルの換算と描画先へのクランプはコアが行う |
-| 描画内容の解決 | `Loupe.ResolveContent` | 描画入力を渡すと、1 フレーム分の描画内容（描画面・市松模様のタイル・十字線 / 円枠の矩形・拡大画像の幾何・層の順序）を返す。「描くかどうか」の判断と文言はすべてコアが下す |
+| 描画内容の解決 | `Loupe.ResolveContent` | 描画入力を渡すと、1 フレーム分の描画内容（描画面・市松模様のタイル・十字線 / 外枠の矩形・拡大画像の幾何・層の順序）を返す。「描くかどうか」の判断と文言はすべてコアが下す |
 | 描画（本コアの対象外） | 描画層 `LoupeControl.UIBase` の `ILoupeRenderer` / `LoupeRendererBase` | 描画内容を描画面へ写す手順は UI 側の共有層が単一所有する（本コアは描画 API も描画ポートも持たない）。色は `LoupePaint`、描画先は `IEsCanvas` が担う |
 | 拡大中心の管理 | `Loupe` | 拡大中心（ドメイン座標）と表示位置のオフセットを保持する（マウス移動ごとの更新は UI 層が通知する） |
 | 設定 | `LoupeOptions` / `Loupe.Limits` | 設定の単一値（寸法・表示可否）と、既定値・安全域への補正 |
 | ログ | `Loupe.Log` | 設定・環境値・拡大中心・位置オフセットの変更を検出して出力する（変化したときだけ） |
 | 寸法の換算 | `LoupeMetricsScaler` | 寸法値（DIP）の物理ピクセル換算（internal。描画入力の生成が吸収する） |
-| 幾何計算 | `LoupeDecorationGeometry` / `LoupePlacementGeometry` / `LoupeDivMath` / `LoupeCheckerboard` | 十字線・円枠の矩形、表示位置、区画数の切り上げ、市松模様の明暗（internal。ファサードが吸収する） |
+| 幾何計算 | `LoupeDecorationGeometry` / `LoupePlacementGeometry` / `LoupeDivMath` / `LoupeCheckerboard` | 十字線・外枠の矩形、表示位置、区画数の切り上げ、市松模様の明暗（internal。ファサードが吸収する） |
 
 ### 前提条件
 
@@ -40,7 +40,7 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeDrawContent` | record struct | 1 フレーム分の描画内容（描画面・タイル列挙子・十字線 / 円枠の矩形・拡大画像の幾何・層の順序） |
+| `LoupeDrawContent` | record struct | 1 フレーム分の描画内容（描画面・タイル列挙子・十字線 / 外枠の矩形・拡大画像の幾何・層の順序） |
 | `LoupeRenderRequest` | record struct | 1 フレーム分の描画入力（コア⇔UI の契約）。値の組は `LoupeRenderRequest.Create` が 1 箇所に閉じる |
 | `LoupeMagnifiedImage` | record struct | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） |
 | `LoupeCheckerTiles` | struct | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部） |
@@ -167,7 +167,7 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | `SurfaceBounds` | 描画面の全体（幅・高さが物理ピクセルサイズの正方形） |
 | `CheckerTiles` | 市松模様の暗色タイルの矩形を列挙する構造体（`LoupeCheckerTiles`。リストを確保しない） |
 | `MagnifiedImage` | 拡大画像の切り出しと描画の矩形（`LoupeMagnifiedImage`。中心未設定の場合は null） |
-| `CrosshairRects` / `FrameRects` | 十字線（縦横 2 本）/ 円枠（4 辺）の矩形 |
+| `CrosshairRects` / `FrameRects` | 十字線（縦横 2 本）/ 外枠（4 辺）の矩形 |
 | `CoordLabelText` | テキスト（`LoupeTextPlacement`。null は表示しない）。文言・基準点・アライン・描画領域を持つ |
 | `Layers` | 描く層とその順序。先頭から順に処理する。**層の有無は描く値の有無から決まる**（層にある ⇔ 描く値がある。下地は常に含む）。テキストの層（`Label`）はテキストがある場合のみ末尾（常に最上位）。**UI 要素として置く UI は本層を無視してよい** |
 

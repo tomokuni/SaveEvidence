@@ -121,7 +121,7 @@ stateDiagram-v2
 | `src/Decoration/MarqueeOuterDecoAppearance.cs` / `MarqueeInnerDecoAppearance.cs` | `MarqueeOuterDecoAppearance` / `MarqueeInnerDecoAppearance` | public | 外側/内側の装飾の寸法（枠線の太さのみ。**色は持たない**） |
 | `src/Decoration/MarqueeOuterDecoFrame.cs` / `MarqueeInnerDecoFrame.cs` | `MarqueeOuterDecoFrame` / `MarqueeInnerDecoFrame` | public | 装飾の描画内容（**純粋データ**。暗転領域・枠線・塗りを保持し、描くかどうかは `Marquee.ResolveContent` が判断する） |
 | `src/Decoration/MarqueeDecoGeometry.cs` | `MarqueeDecoGeometry` | internal | 装飾の幾何計算（穴あけ矩形・暗転領域・枠線矩形）。**枠線の太さの補正は持たない**（装飾の外観の生成時に Marquee.Limits の安全域へ補正される） |
-| `src/Decoration/MarqueeHoleRect.cs` | `MarqueeHoleRect` | internal | 穴あけ矩形と閉区間の指定（どちらの矩形を優先するかと +1 の判断を 1 値で持つ） |
+| `src/Drawing/MarqueeHoleRect.cs` | `MarqueeHoleRect` | internal | 穴あけ矩形と閉区間の指定（どちらの矩形を優先するかと +1 の判断を 1 値で持つ） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
 
