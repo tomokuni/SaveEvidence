@@ -17,8 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 配置・描画引数の内部手順（LoupePositionCalculator / LoupeRenderArgsCalculator）は、
-         ファサード（Loupe）の実装詳細であり、単体テストにのみ公開する（UI 実装・ホストは参照しない）。 -->
+    <!-- 内部手順（配置の幾何・描画入力の導出）はファサード（Loupe）の実装詳細であり、
+         単体テストにのみ公開する（UI 実装・ホストは参照しない）。 -->
     <InternalsVisibleTo Include="Feature.LoupeCore.Tests" />
   </ItemGroup>
 
