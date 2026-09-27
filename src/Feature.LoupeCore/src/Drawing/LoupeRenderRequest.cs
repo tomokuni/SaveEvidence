@@ -50,10 +50,12 @@ public readonly record struct LoupeRenderRequest(
     /// <summary>描画先の全領域（ルーペの一辺が作る正方形）を取得する。</summary>
     /// <value>左上を原点（0, 0）とし、幅・高さが <see cref="PixelSize"/> の矩形（物理ピクセル）。</value>
     /// <remarks>
-    /// 下地・市松模様は描画先の全面へ描くため、各 UI の描画層が矩形を組み立てないよう契約が単一所有する<br/>
-    /// （描画先の原点は常に 0 であり、UI 側で組み立てると原点の取り違えが生じる）。
+    /// 下地・市松模様は描画先の全面へ描くため、各 UI の描画層が矩形を組み立てないよう本値が導出する<br/>
+    /// （描画先の原点は常に 0 であり、UI 側で組み立てると原点の取り違えが生じる）。<br/>
+    /// 描画層へは描画内容（<see cref="LoupeDrawContent.SurfaceBounds"/>）として渡るため本値は公開しない
+    /// （外部参照は無く、追加描画のための座標変換は公開している <see cref="CaptureTopLeft"/> と <see cref="ZoomLevel"/> で足りる）。
     /// </remarks>
-    public EsRect SurfaceBounds => new(0, 0, PixelSize, PixelSize);
+    internal EsRect SurfaceBounds => new(0, 0, PixelSize, PixelSize);
 
     /// <summary>切り出し領域の一辺（ドメインピクセル）を取得する。</summary>
     /// <value>切り出し領域の一辺。<see cref="PixelSize"/> を <see cref="ZoomLevel"/> で割った切り上げ。</value>

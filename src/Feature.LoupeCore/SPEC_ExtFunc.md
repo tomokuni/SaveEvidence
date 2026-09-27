@@ -166,8 +166,8 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | --- | --- |
 | `SurfaceBounds` | 描画面の全体（幅・高さが物理ピクセルサイズの正方形） |
 | `CheckerTiles` | 市松模様の暗色タイルの矩形を列挙する構造体（`LoupeCheckerTiles`。リストを確保しない） |
-| `CrosshairRects` / `FrameRects` | 十字線（縦横 2 本）/ 円枠（4 辺）の矩形 |
 | `MagnifiedImage` | 拡大画像の切り出しと描画の矩形（`LoupeMagnifiedImage`。中心未設定の場合は null） |
+| `CrosshairRects` / `FrameRects` | 十字線（縦横 2 本）/ 円枠（4 辺）の矩形 |
 | `CoordLabelText` | テキスト（`LoupeTextPlacement`。null は表示しない）。文言・基準点・アライン・描画領域を持つ |
 | `Layers` | 描く層とその順序。先頭から順に処理する。**層の有無は描く値の有無から決まる**（層にある ⇔ 描く値がある。下地は常に含む）。テキストの層（`Label`）はテキストがある場合のみ末尾（常に最上位）。**UI 要素として置く UI は本層を無視してよい** |
 
@@ -196,7 +196,7 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 | `DipToDeviceScaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数 |
 | `CheckerSizePixels` | `int` | 市松模様の 1 タイルの一辺（物理ピクセル。換算済みで最低 1。**値 0 を「描かない」の代用にしない**） |
 | `FrameWidthPixels` | `int` | 外枠の太さ（物理ピクセル。換算済みで最低 1。**値 0 を「描かない」の代用にしない**） |
-| `SurfaceBounds` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。下地・市松模様を全面へ描くために契約が単一所有する（UI 層は矩形を組み立てない） |
+| `SurfaceBounds` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。下地・市松模様を全面へ描くために本値が導出する（UI 層は矩形を組み立てない）。**描画層へは描画内容として渡るため本値は internal** |
 
 | メソッド | 説明 |
 | --- | --- |

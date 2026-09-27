@@ -140,9 +140,9 @@
 
 | 分類 | メンバー | 既定値 | 安全域（生成時に補正） |
 | --- | --- | --- | --- |
-| 表示可否 | `ShowHandles` | `true` | — |
 | 寸法 | `HandleSize` | 10.0 | 1.0〜256.0 |
 | 寸法 | `MarkerLength` | 16.0（描画時の半幅は 1/2） | 2.0〜4096.0 |
+| 表示可否 | `ShowHandles` | `true` | — |
 | 表示可否 | `ShowCoordLabel` | `false` | — |
 | 表示可否 | `ShowSizeLabel` | `true` | — |
 | 対話 | `HandleHitRadius` | 12.0（DIP） | 0.0〜256.0 |

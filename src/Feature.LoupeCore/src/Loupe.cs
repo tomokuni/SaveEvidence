@@ -56,9 +56,10 @@ public sealed partial class Loupe
 
     /// <summary>ファサードを初期化する。</summary>
     /// <param name="options">初期設定。null 可（null の場合は <see cref="LoupeOptions.Default"/>）。</param>
+    /// <remarks>初期値は本フィールドへ直接保持する（変更ログの経路を通さない。構築時点では出力先が未設定である）。</remarks>
     public Loupe(LoupeOptions? options = null)
     {
-        Options = options ?? LoupeOptions.Default;
+        _options = options ?? LoupeOptions.Default;
     }
 
     /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
@@ -230,9 +231,9 @@ public sealed partial class Loupe
         return new LoupeDrawContent(
             surface,
             checkerTiles ?? default,
+            magnifiedImage,
             crosshairRects,
             frameRects,
-            magnifiedImage,
             coordLabelText,
             ResolveLayers(checkerTiles, magnifiedImage, crosshairRects, frameRects, coordLabelText));
     }

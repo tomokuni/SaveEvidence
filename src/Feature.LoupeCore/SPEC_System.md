@@ -54,7 +54,7 @@ graph LR
 | `src/Loupe.DrawContent.cs`（ルート） | `Loupe`（**partial**） | internal | 描画内容の**内部手順**（市松模様のタイル・十字線 / 円枠の矩形・中心座標ラベルのテキスト配置）と描く層の一覧の組み立て。描くかどうかの判断を単一所有し、**層の有無の全組合せ（32 通り）を事前生成した表**から選ぶ（描画のたびに一覧を組み立てない）。公開の入口 `ResolveContent` は `Loupe.cs` が持つ |
 | `src/Loupe.Limits.cs`（ルート） | `Loupe.Limits`（`Loupe` の入れ子） | public | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値の補正。**UI がプロパティ登録に使う** |
 | `src/Setting/LoupeOptions.cs` | `LoupeOptions` | public | 設定の値オブジェクト（表示サイズ・拡大率・寸法・表示可否）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`Default`・`ShouldShowCoordLabel`。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
-| `src/Drawing/LoupeRenderRequest.cs` | `LoupeRenderRequest` | public | 1 フレーム分の描画入力（コア⇔UI の契約）、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む）、切り出し領域の幾何の導出（`CaptureSize` / `MagnifiedImage` は internal、`CaptureTopLeft` は描画完了通知のために public） |
+| `src/Drawing/LoupeRenderRequest.cs` | `LoupeRenderRequest` | public | 1 フレーム分の描画入力（コア⇔UI の契約）、UI の DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `FrameWidthPixels` を含む）、切り出し領域の幾何の導出（`CaptureSize` / `MagnifiedImage` / `SurfaceBounds` は internal、`CaptureTopLeft` / `ZoomLevel` は描画完了通知のために public） |
 | `src/Drawing/LoupeDrawContent.cs` | `LoupeDrawContent` | public | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 円枠の矩形・拡大画像の幾何・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
 | `src/Drawing/LoupeMagnifiedImage.cs` | `LoupeMagnifiedImage` | public | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） |
 | `src/Drawing/LoupeCheckerTiles.cs` | `LoupeCheckerTiles` | public | 市松模様の暗色タイルの矩形を**リストを確保せずに列挙する構造体**（`foreach` で列挙でき、描画ポートの列挙子への適合は描画層が行う） |
