@@ -17,6 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 設定変更のログ定義（LoggerMessage ソース生成）をコアが所有する。
+         Platform.Core 経由の推移参照でも解決できるが、本コアが直接使う依存のため明示する
+         （Platform.Core が参照を外すと本コアが壊れるため）。 -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- 内部手順（配置の幾何・描画入力の導出）はファサード（Loupe）の実装詳細であり、
          単体テストにのみ公開する（UI 実装・ホストは参照しない）。 -->
     <InternalsVisibleTo Include="Feature.LoupeCore.Tests" />

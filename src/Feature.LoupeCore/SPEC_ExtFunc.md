@@ -13,12 +13,12 @@
 | 拡大中心の管理 | `Loupe` | 拡大中心（ドメイン座標）と表示位置のオフセットを保持する（マウス移動ごとの更新は UI 層が通知する） |
 | 設定 | `LoupeOptions` / `Loupe.Limits` | 設定の単一値（寸法・表示可否）と、既定値・安全域への補正 |
 | ログ | `Loupe.Log` | 設定・環境値・拡大中心・位置オフセットの変更を検出して出力する（変化したときだけ） |
-| 寸法の換算 | `LoupeMetricsScaler` | 寸法値（DIP）の物理ピクセル換算（internal。描画入力の生成が吸収する） |
+| 寸法の換算 | `LoupeMetricsScaler`（`Drawing/`） | 寸法値（DIP）の物理ピクセル換算（internal。描画入力の生成が吸収する） |
 | 幾何計算 | `LoupeDecoGeometry` / `LoupePlacementGeometry` / `LoupeDivMath` / `LoupeCheckerboard` | 十字線・枠線の矩形、表示位置、区画数の切り上げ、市松模様の明暗（internal。ファサードが吸収する） |
 
 ### 前提条件
 
-- 本コアは UI フレームワークに依存しません（依存は `Platform.Core` のみで、外部パッケージへの直接依存もありません）。UI 固有の型は利用者（UI 実装）が境界で変換します。
+- 本コアは UI フレームワークに依存しません（依存は `Platform.Core` と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成）のみ）。UI 固有の型は利用者（UI 実装）が境界で変換します。
 - 座標は `EsPoint` / `EsSize` / `EsRect`（`EsUtil.Platform.Core`）、拡大元画像は `EsBitmap` で扱います。
 - 描画の可否は**コアの明示フラグ**（`LoupeOptions.ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`）が単一所有し、非表示の項目はコアが空の描画内容として返します（描画層は層ごとの可否を判定しません）。
 - 描画の順序（下地 → 市松模様 → 拡大画像 → 十字線 → 枠線）と色（`LoupePaint`）は描画層 `LoupeControl.UIBase` が単一所有します。
@@ -216,9 +216,9 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 
 **切り出しの実行はありません**: 切り出しは描画層（UIBase の `LoupeRendererBase`）が `EsBitmap.Crop` を呼んで行います。本メンバーは「どこを切り出すか」を解決する値だけを持ちます。
 
-### 寸法の換算（`Decoration.LoupeMetricsScaler`・internal）
+### 寸法の換算（`Drawing.LoupeMetricsScaler`・internal）
 
-寸法値（DIP）を描画に使う物理ピクセルへ換算する規則を単一所有します。安全域への補正は `LoupeOptions`（生成時）が済ませているため再補正はしません。**換算結果は `LoupeRenderRequest.Create` が描画入力（`CheckerSizePixels` / `BorderThicknessPixels`）へ解決済みとして含めるため、描画層は本型を呼びません。**
+寸法値（DIP）を描画に使う物理ピクセルへ換算する規則を単一所有します。**適用先が描画入力であるため `Drawing/` に置きます**（`Decoration/` は十字線・枠線の矩形（装飾）だけです）。安全域への補正は `LoupeOptions`（生成時）が済ませているため再補正はしません。**換算結果は `LoupeRenderRequest.Create` が描画入力（`CheckerSizePixels` / `BorderThicknessPixels`）へ解決済みとして含めるため、描画層は本型を呼びません。**
 
 | メソッド | 説明 |
 | --- | --- |

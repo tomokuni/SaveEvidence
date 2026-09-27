@@ -7,7 +7,7 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 /// <summary>選択矩形コントロールの 1 フレーム分の描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
 /// <param name="Decoration">選択矩形の外側に描く装飾（暗転マスク・穴あけ枠・枠線）。描くものが無い場合は各項目が空。</param>
 /// <param name="InnerDecoration">穴あけ矩形の内側に描く装飾（塗り・内枠）。描くものが無い場合は各項目が空。</param>
-/// <param name="HoleRect">穴あけ矩形（選択またはハイライトの領域・DIP）。選択もハイライトも無い場合は null。</param>
+/// /// <param name="HoleRect">穴あけ矩形（選択またはハイライトの領域・DIP）。選択もハイライトも無い場合は null。</param>
 /// <param name="Handles">ドラッグハンドル。null の場合は描かない（非表示の設定または選択なし）。</param>
 /// <param name="Marker">始点マーカー（十字線）。null の場合は描かない（nudge 中のみ表示する）。</param>
 /// <param name="SizeLabelText">サイズラベルの文言と基準点。null の場合は表示しない（非表示の設定または穴あけ矩形なし）。</param>

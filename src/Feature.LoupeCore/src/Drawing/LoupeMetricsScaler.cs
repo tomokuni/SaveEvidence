@@ -1,19 +1,19 @@
 using EsUtil.Platform.Core.Coordinate;
-using EsUtil.Feature.LoupeCore.Drawing;
 using EsUtil.Feature.LoupeCore.Setting;
 
-namespace EsUtil.Feature.LoupeCore.Decoration;
+namespace EsUtil.Feature.LoupeCore.Drawing;
 
 /// <summary>ルーペの寸法（DIP）を描画に使う物理ピクセルへ換算する計算ロジック（純粋関数）。</summary>
 /// <remarks>
-/// 寸法値（市松模様のタイルサイズ・枠線の太さ）を、表示 DIP → 物理ピクセルのス ケーリング係数で換算する規則を単一所有する。<br/>
+/// 寸法値（市松模様のタイルサイズ・枠線の太さ）を、表示 DIP → 物理ピクセルのスケーリング係数で換算する規則を単一所有する。<br/>
+/// <b>寸法ではなく描画の一部として `Drawing/` に置く</b>（適用先は描画入力であり、描画の色・矩形の導出と同居させる）。<br/>
 /// 換算結果は描画入力（<see cref="LoupeRenderRequest.CheckerSizePixels"/> / <see cref="LoupeRenderRequest.BorderThicknessPixels"/>）へ<br/>
 /// 解決済みの値として含まれるため、描画実装は換算を持たない。<br/>
 /// 安全域への補正は <see cref="LoupeOptions"/> が生成時に適用済みであり、本クラスは換算だけを行う<br/>
 /// （整った値が来ることを型が保証するため、ここで再補正はしない）。<br/>
 /// <b>中心座標ラベルは本クラスの対象外</b>: ラベルは DIP で配置する（<see cref="LoupeTextPlacement"/> が文言と基準点を DIP で保持し、
 /// テキスト要素として配置される）ため、物理ピクセルへの換算を必要としない。<br/>
-/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証 できる。
+/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 internal static class LoupeMetricsScaler
 {

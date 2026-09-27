@@ -36,7 +36,7 @@
 | `Checkerboard/` | `LoupeCheckerboard` | internal | 市松模様の明暗の判定規則（タイル矩形の列挙は `LoupeCheckerTiles`） |
 | `Checkerboard/` | `LoupeDivMath` | internal | 区画数の切り上げ除算（タイル数と切り出し領域の一辺が共用する規則） |
 | `Decoration/` | `LoupeDecoGeometry` | internal | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算（結果は描画内容に含まれる） |
-| `Decoration/` | `LoupeMetricsScaler` | internal | 寸法値（市松タイル・枠線の太さ）の物理ピクセル換算（結果は描画入力に含まれる） |
+| `Drawing/` | `LoupeMetricsScaler` | internal | 寸法値（市松タイル・枠線の太さ）の物理ピクセル換算（結果は描画入力に含まれる）。**適用先が描画入力であるため装飾ではなく描画に属する** |
 | `Placement/` | `LoupePlacementGeometry` | internal | 表示位置（左上）の計算（中心 + オフセットと親領域内へのクランプ）。親サイズ未確定の判定も本クラスが扱う |
 
 切り出し領域の幾何（一辺・左上・拡大画像の矩形）は `LoupeRenderRequest` の**メンバー**（`CaptureSize` / `MagnifiedImage` / `SurfaceBounds` は internal、`CaptureTopLeft` は描画完了通知のために public）が単一所有します（描画入力の値から導出するため、独立したクラスを持ちません）。
@@ -49,8 +49,9 @@
 | --- | --- | --- |
 | **1. ホスト設定** | アプリ・ホスト | `LoupeOptions` / `LoupeLayout` |
 | **2. 公開ファサードと UI アダプタ契約** | UI 実装（描画層） | `Loupe`（操作の唯一の窓口。既定値は `Limits.*Default`） / `LoupeRenderRequest` / `LoupeDrawContent` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeMagnifiedImage` / `LoupeCheckerTiles` |
-| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `LoupeDecoGeometry` / `LoupeMetricsScaler` / `LoupePlacementGeometry` / `LoupeCheckerboard` / `LoupeDivMath` / `LoupeLogMessage` / `Loupe.DrawContent.cs`（「1 フレーム分の描画内容の解決」の公開の入口は `Loupe.ResolveContent`） |
+| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `LoupeMetricsScaler`（`Drawing/`） / `LoupeDecoGeometry`（`Decoration/`） / `LoupePlacementGeometry` / `LoupeCheckerboard` / `LoupeDivMath` / `LoupeLogMessage` / `Loupe.DrawContent.cs`（「1 フレーム分の描画内容の解決」の公開の入口は `Loupe.ResolveContent`） |
 
+- `LoupeMetricsScaler` は `Drawing/` に置きます（結果の適用先が描画入力であり、`Decoration/` は十字線・枠線の矩形（装飾）だけにします）。
 - **操作はファサード経由に一本化**しています（計算クラスと内部手順は `internal` のため、UI 層はファサード以外の入口を持ちません）。
 - **層 3 は外部参照 0 件**を実測して絞り込んだ結果です。「描画内容の解決（`Loupe.ResolveContent`）と描画に必要な値」だけが公開面です。
 - **層 2 は UI アダプタを自作する場合の契約**です（独自 UI を追加するには、この面だけで完結します）。
@@ -72,7 +73,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 ※ Core は UIBase を参照しない（UIBase がコアの描画内容を使う向きだけ）。Core は Common も参照しない。
 ```
 
-本プロジェクトが UI フレームワークへ依存することはありません。外部パッケージへの直接依存もありません（`Platform.Core` 経由で SkiaSharp を参照します）。
+本プロジェクトが UI フレームワークへ依存することはありません。**直接参照する外部パッケージは `Microsoft.Extensions.Logging.Abstractions`（`LoggerMessage` ソース生成）だけ**です（SkiaSharp は `Platform.Core` 経由で参照します）。
 
 **コントロール化にだけ必要な処理は `LoupeControl.UIBase` が所有します**（再描画要求のバッチ化・世代番号管理）。**描画の手順（層の順序に従う写し方）と色も `LoupeControl.UIBase` が所有します**（手順は下地 → 市松模様 → 拡大画像 → 十字線 → 枠線を層の順に描く。色は `LoupePaint`。描画先は `IEsCanvas`）。本プロジェクトはルーペの計算と寸法（どのアセンブリでも同じ結果になる部分）に限定し、描画 API も色も持ちません。
 

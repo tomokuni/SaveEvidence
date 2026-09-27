@@ -20,7 +20,7 @@
 | ルート名前空間 | `EsUtil.Feature.LoupeCore`。フォルダへ追従し、`.Checkerboard` / `.Decoration` / `.Drawing` / `.Logging` / `.Placement` / `.Setting` を持ちます |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
 | テスト | xUnit v3（UI 初期化不要。`InternalsVisibleTo` で `internal` を検証する） |
-| 依存 | UI フレームワークを一切参照しない。外部パッケージへの直接依存なし（`Platform.Core` 経由で SkiaSharp を参照） |
+| 依存 | UI フレームワークを一切参照しない。直接依存は `Platform.Core` と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成。SkiaSharp は `Platform.Core` 経由） |
 
 ## 3. アーキテクチャ
 
@@ -96,7 +96,7 @@ sequenceDiagram
 | `src/Checkerboard/LoupeCheckerboard.cs` | `LoupeCheckerboard` | internal | 市松模様の明暗の判定規則（タイル矩形の列挙は `LoupeCheckerTiles`） |
 | `src/Checkerboard/LoupeDivMath.cs` | `LoupeDivMath` | internal | 区画数の切り上げ除算（`CeilDiv`。「余りを 1 区画として数える」規則の単一所有。タイル数と切り出し領域の一辺が共用する） |
 | `src/Decoration/LoupeDecoGeometry.cs` | `LoupeDecoGeometry` | internal | 十字線（縦横 2 本）と枠線（4 辺）の描画矩形の計算 |
-| `src/Decoration/LoupeMetricsScaler.cs` | `LoupeMetricsScaler` | internal | 寸法値（タイルサイズ・枠線の太さ）の物理ピクセル換算（結果は描画入力へ解決済み） |
+| `src/Drawing/LoupeMetricsScaler.cs` | `LoupeMetricsScaler` | internal | 寸法値（タイルサイズ・枠線の太さ）の物理ピクセル換算（結果は描画入力へ解決済み。適用先が描画入力のため `Drawing/`） |
 | `src/Placement/LoupePlacementGeometry.cs` | `LoupePlacementGeometry` | internal | 表示位置（左上）の計算（中心 + オフセットと親領域内へのクランプ。親サイズ未確定の判定も本クラスが扱う） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
@@ -124,7 +124,7 @@ sequenceDiagram
 | 十字線・枠線の矩形 | `Loupe.ResolveContent`（規則は internal の `Decoration.LoupeDecoGeometry`） |
 | ラベルの余白・背景矩形・文字原点 | 描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`（左右の余白は `LoupeLabelPlan` が、上下はルーペ固有の値を単一所有する） |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
-| 寸法値の物理ピクセル換算（市松タイル・枠線の太さ） | `LoupeRenderRequest.Create`（規則は internal の `Decoration.LoupeMetricsScaler`。結果は描画入力に含まれる） |
+| 寸法値の物理ピクセル換算（市松タイル・枠線の太さ） | `LoupeRenderRequest.Create`（規則は internal の `Drawing.LoupeMetricsScaler`。結果は描画入力に含まれる） |
 | 市松模様のタイル矩形の列挙 | `Loupe.ResolveContent`（`LoupeCheckerTiles`。リストを確保しない） |
 | 設定・環境値・拡大中心・位置オフセットの変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter） |
 | ログの書式とレベル、変化判定（同値なら出力しない） | `LoupeLogMessage`（コアが出力する定義。UI が出力する定義と書式は `LoupeControl.UIBase` が単一所有する） |
