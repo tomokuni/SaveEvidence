@@ -91,9 +91,9 @@ public class LoupeControlTests
         Assert.Equal(LoupePaint.CoordLabelFontSizeDefault, control.Paint.CoordLabelFontSize);
     }
 
-    /// <summary>市松模様と外枠のサイズが安全域へ補正されることを検証する。</summary>
+    /// <summary>市松模様と枠線のサイズが安全域へ補正されることを検証する。</summary>
     [Fact]
-    public void 市松模様と外枠のサイズが安全域へ補正される()
+    public void 市松模様と枠線のサイズが安全域へ補正される()
     {
         var control = new LoupeControl
         {

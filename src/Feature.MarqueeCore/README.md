@@ -189,6 +189,10 @@ UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せ�
 | 表示可否の述語の引数 | `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` | `ShouldShowCoordLabel(bool)` | ルーペの座標ラベルは拡大中心が未設定になりうる（本コアの座標ラベルは入力に常にある） |
 | `Limits` の追加役割 | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`） | 安全域と補正のみ | ラベルの表示スケールは本コア固有の概念 |
 | ログ定義の構成 | `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキーを使う） | `LogOptionsChanged` のみ | 設定型の数の違いに由来する |
+| 市松模様・区画数の計算 | 持たない | `Checkerboard/`（`LoupeCheckerboard` / `LoupeDivMath`）+ `LoupeCheckerTiles` | ルーペは透明領域を市松模様で示す（区画数の切り上げは切り出し領域とも共用する） |
+| 選択の幾何 | `Selection/`（`MarqueeSelectionGeometry`）を持つ | 持たない | ルーペは選択操作を持たない（幾何は自身の矩形だけ） |
+| 座標変換の設定の副作用 | 再描画を要求する（`RequestRedraw`） | 要求しない（表示位置の再計算は UI が行う） | 本コアは選択矩形と装飾が座標変換に直接左右され、再計算の契機を UI が観測できない |
+| 座標ラベルの既定表示 | `ShowCoordLabel` の既定は false | 既定は true | ルーペの中心座標は常に有用であり、本コアのカーソル座標は必要なときだけ表示する |
 
 ## 主な API
 

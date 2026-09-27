@@ -3,7 +3,7 @@ using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase;
 
-/// <summary>ルーペの色（下地・市松模様・外枠・十字線・中心座標ラベル）とラベルの体裁をまとめた不変の設定値。</summary>
+/// <summary>ルーペの色（下地・市松模様・枠線・十字線・中心座標ラベル）とラベルの体裁をまとめた不変の設定値。</summary>
 /// <remarks>
 /// <b>なぜ本層（UIBase）が持つか</b>: 色は<b>描画にだけ必要な設定</b>であり、コアの計算・判定には一切入らないため、<br/>
 /// コア（<c>Feature.LoupeCore</c>）には置かない。<br/>
@@ -47,7 +47,7 @@ public sealed record LoupePaint
     /// <value>アルファを含む色。既定は DarkGray 30%（#4CA9A9A9）。</value>
     public DrawingColor CheckerColorB { get; init; } = DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9);
 
-    /// <summary>外枠の色を取得する。</summary>
+    /// <summary>枠線の色を取得する。</summary>
     /// <value>アルファを含む色。既定は LightGray（#FFD3D3D3）。</value>
     public DrawingColor BorderColor { get; init; } = DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3);
 

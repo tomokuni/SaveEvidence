@@ -27,7 +27,7 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// </remarks>
 public abstract class LoupeRendererBase : ILoupeRenderer
 {
-    /// <summary>ルーペの図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く。</summary>
+    /// <summary>ルーペの図形の層（下地・市松模様・拡大画像・十字線・枠線）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。null 不可。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（市松模様のみ）。</param>
     /// <param name="content">コアが解決した描画内容。<see cref="LoupeDrawContent.Layers"/> は null 不可。</param>
@@ -115,9 +115,9 @@ public abstract class LoupeRendererBase : ILoupeRenderer
     /// <remarks>矩形はコアが解決して本値に含まれる（本メソッドは計算しない）。色は色の保持者が与える。</remarks>
     protected abstract void DrawCrosshair(IEsCanvas canvas, in LoupeDrawContent content);
 
-    /// <summary>外枠を描く。</summary>
+    /// <summary>枠線を描く。</summary>
     /// <param name="canvas">描画先の描画ポート。</param>
-    /// <param name="content">コアが解決した描画内容（外枠の矩形を持つ）。</param>
+    /// <param name="content">コアが解決した描画内容（枠線の矩形を持つ）。</param>
     /// <remarks>太さの換算と矩形の導出はコアが済ませて本値に含まれる（本メソッドは計算しない）。色は色の保持者が与える。</remarks>
     protected abstract void DrawBorder(IEsCanvas canvas, in LoupeDrawContent content);
 

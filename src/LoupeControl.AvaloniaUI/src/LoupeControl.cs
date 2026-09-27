@@ -31,7 +31,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// 中心周辺領域を切り出して拡大描画する（Binding 方式）。<br/>
 /// 表示は内部の <see cref="Image"/> 要素へ生成Bitmapを設定する方式に統一する。<br/>
 /// <br/>
-/// <b>描画の委譲</b>: 描画（抽出→拡大→十字線→市松→外枠）の手順は UI 非依存の描画層（<c>LoupeControl.UIBase</c>）が<br/>
+/// <b>描画の委譲</b>: 描画（抽出→拡大→十字線→市松→枠線）の手順は UI 非依存の描画層（<c>LoupeControl.UIBase</c>）が<br/>
 /// 本コントロールは状態（DP）とライフサイクル（ビットマップ生成/解放）に専念する。<br/>
 /// <br/>
 /// <b>再描画のバッチ化</b>: 複数プロパティの連続変更は <see cref="Dispatcher"/> へのポストにより<br/>
@@ -43,7 +43,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// <b>基底クラス</b>: ルーペ画像とラベル要素を子として重ねるため <see cref="Panel"/> を採用する。<br/>
 /// 子は親より後に描かれるため、後から子へ加えるラベル要素が常に最上位になる（<b>ラベルは常に最上位</b>の契約が構造で成立する）。<br/>
 /// <br/>
-/// <b>要素の描画順</b>: 図形（下地・市松模様・拡大画像・十字線・外枠）は生成ビットマップへ焼き、<br/>
+/// <b>要素の描画順</b>: 図形（下地・市松模様・拡大画像・十字線・枠線）は生成ビットマップへ焼き、<br/>
 /// ラベル（中心座標）だけをテキスト要素として子へ置く（描画順はコアの <see cref="LoupeDrawLayer"/> が単一所有する）。<br/>
 /// <br/>
 /// <b>色指定</b>: 外観の色は UI 非依存の <see cref="System.Drawing.Color"/> として <see cref="Options"/> で受け取り、<br/>

@@ -2,7 +2,7 @@ using static EsUtil.Feature.MarqueeCore.Marquee.Limits;
 
 namespace EsUtil.Feature.MarqueeCore.Decoration;
 
-/// <summary>暗転マスク（オーバーレイ）の外枠（枠線）の寸法をまとめた不変の設定値。</summary>
+/// <summary>暗転マスク（オーバーレイ）の枠線の寸法をまとめた不変の設定値。</summary>
 /// <remarks>
 /// 枠線の太さを単一所有する（各 UI 実装は本型を 1 つ公開するだけでよく、UI ごとに既定値がずれない）。<br/>
 /// <br/>

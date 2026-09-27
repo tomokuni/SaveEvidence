@@ -79,7 +79,7 @@ flowchart LR
     B -->|Checkerboard| D[明色を全面へ + 暗色タイルを列挙]
     B -->|Image| E[切り出し → 拡大描画]
     B -->|Crosshair| F[十字線 2 本]
-    B -->|Frame| G[枠線 4 辺]
+    B -->|Border| G[枠線 4 辺]
     B -->|CoordLabel| H[スキップ<br/>UI の要素が描く]
 ```
 

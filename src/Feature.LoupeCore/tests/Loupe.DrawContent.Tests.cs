@@ -91,9 +91,9 @@ public class LoupeDrawContentTests
         Assert.Empty(content.CrosshairRects);
     }
 
-    /// <summary>外枠の非表示設定で外枠の描画内容が空になることを検証する。</summary>
+    /// <summary>枠線の非表示設定で枠線の描画内容が空になることを検証する。</summary>
     [Fact]
-    public void ResolveContent_外枠の非表示設定で描画内容を空にする()
+    public void ResolveContent_枠線の非表示設定で描画内容を空にする()
     {
         var loupe = new Loupe(LoupeOptions.Default with { ShowBorder = false })
         {
@@ -105,7 +105,7 @@ public class LoupeDrawContentTests
         Assert.Empty(content.BorderRects);
     }
 
-    /// <summary>既定では市松模様・十字線・外枠の描画内容が返ることを検証する。</summary>
+    /// <summary>既定では市松模様・十字線・枠線の描画内容が返ることを検証する。</summary>
     [Fact]
     public void ResolveContent_既定では3つとも描画内容を返す()
     {
@@ -121,19 +121,19 @@ public class LoupeDrawContentTests
     /// <summary>非表示の項目が層の一覧から外れることを検証する。</summary>
     /// <param name="checkerboard">市松模様の表示可否。</param>
     /// <param name="crosshair">十字線の表示可否。</param>
-    /// <param name="frame">外枠の表示可否。</param>
+    /// <param name="border">枠線の表示可否。</param>
     [Theory]
     [InlineData(false, true, true, LoupeDrawLayer.Checkerboard)]
     [InlineData(true, false, true, LoupeDrawLayer.Crosshair)]
     [InlineData(true, true, false, LoupeDrawLayer.Border)]
     public void ResolveContent_非表示の項目は層に含まれない(
-        bool checkerboard, bool crosshair, bool frame, LoupeDrawLayer hidden)
+        bool checkerboard, bool crosshair, bool border, LoupeDrawLayer hidden)
     {
         var options = LoupeOptions.Default with
         {
             ShowCheckerboard = checkerboard,
             ShowCrosshair = crosshair,
-            ShowBorder = frame,
+            ShowBorder = border,
         };
         var loupe = new Loupe(options) { CenterPoint = new EsPoint(50, 60) };
 

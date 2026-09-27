@@ -31,7 +31,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// <b>環境</b>: <see cref="DipToDeviceScaling"/>（DPI 追従）。<br/>
 /// <b>描画</b>: 中間ビットマップを生成せず、子の図形キャンバス（<see cref="ShapeCanvas"/>）が画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
 /// 数値の安全域への補正は <see cref="LoupeOptions"/>（コア）が、描画サイズの決定は<br/>
-/// <see cref="LoupeFacade.CreateRequest"/>（コア）が、寸法値（タイルサイズ・外枠の太さ）と<br/>
+/// <see cref="LoupeFacade.CreateRequest"/>（コア）が、寸法値（タイルサイズ・枠線の太さ）と<br/>
 /// ラベル表示の可否は <see cref="LoupeOptions"/>（コア）が単一所有する。<br/>
 /// <br/>
 /// <b>基底クラス</b>: 図形キャンバスとラベル要素を子として重ねるため <see cref="Panel"/> を採用する。<br/>
@@ -135,7 +135,7 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     private ILoupeRenderer _renderer = new LoupeRendererMewUI(LoupePaint.Default);
 
-    /// <summary>図形（背景・市松模様・拡大画像・十字線・外枠）を描画する内部キャンバス。</summary>
+    /// <summary>図形（背景・市松模様・拡大画像・十字線・枠線）を描画する内部キャンバス。</summary>
     /// <remarks>
     /// <b>描画順を構造で保証する</b>: 本パネルが図形のキャンバスを先に、ラベル要素を後に子として持つため、<br/>
     /// ラベルは常に図形より後に描かれる（コアの「ラベルは最上位」契約が構造で成立する）。<br/>
@@ -271,7 +271,7 @@ public sealed class LoupeControl : Panel
         Add(_shapes);
     }
 
-    /// <summary>図形（背景・市松模様・拡大画像・十字線・外枠）だけを描画する内部 Skia キャンバス。</summary>
+    /// <summary>図形（背景・市松模様・拡大画像・十字線・枠線）だけを描画する内部 Skia キャンバス。</summary>
     /// <remarks>
     /// 親（<see cref="LoupeControl"/>）の描画入力を組み立てて描画層へ渡すだけであり、判断を持たない。<br/>
     /// 中心座標ラベルの文字は本キャンバスが描かない（親パネルのラベル要素が描く）。

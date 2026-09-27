@@ -34,7 +34,7 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// </remarks>
 public interface ILoupeRenderer
 {
-    /// <summary>図形の層（下地・市松模様・拡大画像・十字線・外枠）を描画順に描く。</summary>
+    /// <summary>図形の層（下地・市松模様・拡大画像・十字線・枠線）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。null 不可。</param>
     /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（市松模様のみ）。</param>
     /// <param name="content">コアが解決した描画内容（層の順序・描画面・矩形・拡大画像の幾何を持つ）。</param>

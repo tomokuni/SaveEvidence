@@ -20,7 +20,7 @@ internal static class MarqueeDecoGeometry
     /// <param name="thickness">枠線の太さ（DIP）。補正済みの値を渡す（安全域は <see cref="Marquee.Limits"/> が単一所有する）。</param>
     /// <returns>上・下・左・右の順の枠線矩形（4 個）。</returns>
     /// <remarks>
-    /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの外枠と同じ式）。<br/>
+    /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの枠線と同じ式）。<br/>
     /// 太さは面の短辺で上限を取る（面より太い枠線は面全体を覆い、矩形が面からはみ出さない）。<br/>
     /// 太さの補正は装飾の外観（<c>MarqueeOuterDecoAppearance</c> / <c>MarqueeInnerDecoAppearance</c>）の生成時に適用される。
     /// </remarks>

@@ -26,8 +26,8 @@ public class LoupeRendererTests
     /// <summary>市松模様の暗色（緑・不透明）。</summary>
     private static readonly DrawingColor s_checkerB = DrawingColor.FromArgb(255, 0, 128, 0);
 
-    /// <summary>外枠の色（黄・不透明）。</summary>
-    private static readonly DrawingColor s_frame = DrawingColor.FromArgb(255, 255, 255, 0);
+    /// <summary>枠線の色（黄・不透明）。</summary>
+    private static readonly DrawingColor s_border = DrawingColor.FromArgb(255, 255, 255, 0);
 
     /// <summary>十字線の色（白・不透明）。</summary>
     private static readonly DrawingColor s_cross = DrawingColor.FromArgb(255, 255, 255, 255);
@@ -154,7 +154,7 @@ public class LoupeRendererTests
     }
 
     // ====================================================================
-    // 十字線・外枠
+    // 十字線・枠線
     // ====================================================================
 
     [Fact]
@@ -189,13 +189,13 @@ public class LoupeRendererTests
     }
 
     [Fact]
-    public void DrawShapes_外枠を四辺へ太さ分だけ描く()
+    public void DrawShapes_枠線を四辺へ太さ分だけ描く()
     {
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
 
         DrawShapes(
             target,
-            CreatePaint(background: s_background, frame: s_frame),
+            CreatePaint(background: s_background, border: s_border),
             [LoupeDrawLayer.Background, LoupeDrawLayer.Border]);
 
         // 上辺（太さ 2）
@@ -207,14 +207,14 @@ public class LoupeRendererTests
     }
 
     [Fact]
-    public void DrawShapes_外枠の層が無ければ外枠を描かない()
+    public void DrawShapes_枠線の層が無ければ枠線を描かない()
     {
         using var target = TestHelper.CreateTarget(LoupeSize, LoupeSize);
 
-        // 層の一覧に外枠が含まれない場合、描画実装は外枠を描かない（描くかどうかはコアが決める）
+        // 層の一覧に枠線が含まれない場合、描画実装は枠線を描かない（描くかどうかはコアが決める）
         DrawShapes(
             target,
-            CreatePaint(background: s_background, frame: s_frame),
+            CreatePaint(background: s_background, border: s_border),
             [LoupeDrawLayer.Background, LoupeDrawLayer.Crosshair]);
 
         Assert.Equal(s_backgroundPixel, target.GetPixel(16, 1));
@@ -231,7 +231,7 @@ public class LoupeRendererTests
 
         DrawShapes(
             target,
-            CreatePaint(background: s_background, coordLabel: s_frame),
+            CreatePaint(background: s_background, coordLabel: s_border),
             [LoupeDrawLayer.Background]);
 
         // テキストは UI 層が要素として置くか画像として描くかを決めるため、描画ポートには何も現れない（下地のみ）
@@ -306,16 +306,16 @@ public class LoupeRendererTests
     /// <param name="background">下地の色。</param>
     /// <param name="checkerA">市松模様の明色。</param>
     /// <param name="checkerB">市松模様の暗色。</param>
-    /// <param name="frame">外枠の色。</param>
+    /// <param name="border">枠線の色。</param>
     /// <param name="crosshair">十字線の色。</param>
     /// <param name="coordLabel">中心座標ラベルの背景色。</param>
     /// <returns>描画に使う色。</returns>
-    /// <remarks>外枠の太さは寸法（コアの <see cref="LoupeOptions.BorderThickness"/>）が単一所有するため、ここでは与えない。</remarks>
+    /// <remarks>枠線の太さは寸法（コアの <see cref="LoupeOptions.BorderThickness"/>）が単一所有するため、ここでは与えない。</remarks>
     private static LoupePaint CreatePaint(
         DrawingColor? background = null,
         DrawingColor? checkerA = null,
         DrawingColor? checkerB = null,
-        DrawingColor? frame = null,
+        DrawingColor? border = null,
         DrawingColor? crosshair = null,
         DrawingColor? coordLabel = null)
         => new()
@@ -323,7 +323,7 @@ public class LoupeRendererTests
             BackgroundColor = background ?? DrawingColor.Transparent,
             CheckerColorA = checkerA ?? DrawingColor.Transparent,
             CheckerColorB = checkerB ?? DrawingColor.Transparent,
-            BorderColor = frame ?? DrawingColor.Transparent,
+            BorderColor = border ?? DrawingColor.Transparent,
             CrossColor = crosshair ?? DrawingColor.Transparent,
             CoordLabelBackgroundColor = coordLabel ?? DrawingColor.Transparent,
         };

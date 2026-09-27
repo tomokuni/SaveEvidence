@@ -16,7 +16,7 @@ public class LoupePaintTests
     {
         var paint = new LoupePaint();
 
-        // 十字線は赤 40%、市松模様は Gray / DarkGray 30%、外枠は LightGray
+        // 十字線は赤 40%、市松模様は Gray / DarkGray 30%、枠線は LightGray
         Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), paint.CrossColor);
         Assert.Equal(DrawingColor.FromArgb(0x4C, 0x80, 0x80, 0x80), paint.CheckerColorA);
         Assert.Equal(DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), paint.CheckerColorB);

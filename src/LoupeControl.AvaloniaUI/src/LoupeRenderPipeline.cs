@@ -35,7 +35,7 @@ internal static class LoupeRenderPipeline
     /// <remarks>
     /// 1. 未対応型の判定（<see cref="LoupeSourceResolver.IsSourceSupported"/>）を行い、未対応型は例外にする。<br/>
     /// 2. 切り出し元の <see cref="EsBitmap"/> を解決する（<see cref="Bitmap"/> は複製、<see cref="EsBitmapAvaloniaImage"/> は共有参照）。<br/>
-    /// 3. 描画（切り出し・拡大・十字線・市松・外枠）は UI 非依存のレンダラへ委譲し、UI スレッドで行う<br/>
+    /// 3. 描画（切り出し・拡大・十字線・市松・枠線）は UI 非依存のレンダラへ委譲し、UI スレッドで行う<br/>
     /// （切り出しの可否と破棄済みソースの扱いは描画層が単一所有する）。
     /// </remarks>
     public static async Task<EsBitmap> RenderAsync(

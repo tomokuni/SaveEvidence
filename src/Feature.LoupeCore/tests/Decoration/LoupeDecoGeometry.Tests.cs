@@ -6,7 +6,7 @@ namespace EsUtil.Feature.LoupeCore.Tests.Decoration;
 
 /// <summary><see cref="LoupeDecoGeometry"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
-/// 十字線・外枠の描画矩形の計算のみを検証するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
+/// 十字線・枠線の描画矩形の計算のみを検証するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
 /// 各 UI（Avalonia / MewUI）の描画は <see cref="EsRect"/> を自身の描画 API へ渡すだけであり、<br/>
 /// 本テストが両 UI の見た目を保証する（矩形計算の単一所有）。
 /// </remarks>
