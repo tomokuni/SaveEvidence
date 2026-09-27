@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.SaveEvidence.Marquee.UIBase;
-using EsUtil.SaveEvidence.Loupe.UIBase;
+using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.SaveEvidence.Loupe.MewUI;

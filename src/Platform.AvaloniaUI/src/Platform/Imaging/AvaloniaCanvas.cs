@@ -12,8 +12,8 @@ namespace EsUtil.Platform.AvaloniaUI.Imaging;
 
 /// <summary>Avalonia のベクター描画（<see cref="DrawingContext"/>）を <see cref="IEsCanvas"/> へ適合させるアダプタ。</summary>
 /// <remarks>
-/// <b>位置付け</b>: 描画の手順（「何をどの順で描くか」）は UI 非依存のレンダラ（<c>MarqueeControl.UIBase</c> /<br/>
-/// <c>LoupeControl.UIBase</c>）が単一所有する。本クラスはその手順を Avalonia の描画 API へ写すだけである。<br/>
+/// <b>位置付け</b>: 描画の手順（「何をどの順で描くか」）は UI 非依存のレンダラ（<c>Feature.Marquee.Presenter</c> /<br/>
+/// <c>Feature.Loupe.Presenter</c>）が単一所有する。本クラスはその手順を Avalonia の描画 API へ写すだけである。<br/>
 /// <br/>
 /// <b>座標系</b>: 呼び出し側が定める単位をそのまま使う（<see cref="DrawingContext"/> の単位と同じ）。<br/>
 /// 高速化のためブラシとペンを容量制限付きで共有する（ブラシは <see cref="SolidColorBrushCache"/>、<br/>

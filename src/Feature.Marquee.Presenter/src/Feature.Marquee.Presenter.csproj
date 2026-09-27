@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EsUtil.Feature.Marquee.Presenter</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。
+         XML は配布物（bin / publish）へ出さない（検証だけに使う）。 -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 本層は「コアをコントロールへ組み込むときにだけ必要な処理」と「描画手順」を単一所有する。
+         描画手順はコアの契約（IMarqueeRenderer）の既定実装として本層に置く。
+         UI フレームワークは参照しない（UI はアダプタとして本層を参照する）。 -->
+    <ProjectReference Include="..\..\Feature.Marquee.Core\src\Feature.Marquee.Core.csproj" />
+    <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ホイール要求のログ定義（LoggerMessage ソース生成）を本層が所有する -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 内部型（ホイールの回転量換算・ズーム要求のログ定義）は本層の内部手順であり、
+         単体テストにのみ公開する（UI 実装・ホストは参照しない）。 -->
+    <InternalsVisibleTo Include="Feature.Marquee.Presenter.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\src\Common.csproj" />
+  </ItemGroup>
+
+</Project>

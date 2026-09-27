@@ -73,9 +73,9 @@ updates:
       - "/src/ZoomViewControl.MewUI/tests"
       # ── コントロールのコア（UI 非依存。パッケージはテストのみが参照する）───
       - "/src/CropViewControl.Core/tests"
-      - "/src/Feature.MarqueeCore/tests"
+      - "/src/Feature.Marquee.Core/tests"
       - "/src/FadeMaskDragRectControl.Core/tests"
-      - "/src/Feature.LoupeCore/tests"
+      - "/src/Feature.Loupe.Core/tests"
       - "/src/ZoomViewControl.Core/tests"
       # ── プラットフォーム基盤 ──
       - "/src/Platform.AvaloniaUI/src"

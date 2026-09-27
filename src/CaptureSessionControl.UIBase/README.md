@@ -15,7 +15,7 @@
 
 ```text
 CaptureSessionControl.Core ─────────────┐（設定型・寸法・表示可否）
-MarqueeControl.UIBase / LoupeControl.UIBase ─┐（描画の設定＝色）
+Feature.Marquee.Presenter / Feature.Loupe.Presenter ─┐（描画の設定＝色）
                                              ↓
                               CaptureSessionControl.UIBase（色の写像）
                                              ↓
@@ -39,8 +39,8 @@ MarqueeControl.UIBase / LoupeControl.UIBase ─┐（描画の設定＝色）
 ```text
 CaptureSessionControl.UIBase
     ├── CaptureSessionControl.Core（CaptureSettings）
-    ├── MarqueeControl.UIBase（MarqueePaint）
-    └── LoupeControl.UIBase（LoupeAppearance）
+    ├── Feature.Marquee.Presenter（MarqueePaint）
+    └── Feature.Loupe.Presenter（LoupeAppearance）
 ```
 
 UI フレームワークへ依存しません。外部パッケージへの直接依存もありません。

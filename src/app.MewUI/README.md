@@ -79,7 +79,7 @@ app.MewUI ──> app.Core ──> Platform.Core / LineDetection
     │                              │
     ├──> Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
     ├──> Platform.Native（キャプチャ等。UI 非依存）
-    ├──> LoupeControl.MewUI ──> Feature.LoupeCore（UI 非依存のルーペロジック）
+    ├──> LoupeControl.MewUI ──> Feature.Loupe.Core（UI 非依存のルーペロジック）
     └──> CropViewControl.MewUI ──> ZoomViewControl.MewUI / CropViewControl.Core（画像表示と矩形オーバーレイ）
 ```
 
@@ -304,7 +304,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 - 出力先: `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持。Serilog）
 - 内容: アプリ起動 / 終了、撮影・切り出しの開始と確定・キャンセル、選択操作（MouseDown / MouseUp / DragStart / KeyDown 等）、ズーム操作（前後のズーム率）、ルーペの状態変更（表示中の選択オーバーレイ）、未処理の例外
 - 未処理の例外は、アプリ全体（`AppDomain`）/ UI スレッド（`Application.DispatcherUnhandledException`）/ 待機されなかったタスク（`TaskScheduler`）の 3 経路を記録します。UI スレッドの例外は記録後に処理済みとして扱い、ウィンドウの表示を維持します（Avalonia 版と同じ）。
-- カテゴリはクラス名（`Program` / `CaptureSessionControl` / `CapturePage` 等）です。メッセージの接頭辞（`[Feature.MarqueeCore]` / `[Feature.LoupeCore]` / `[MarqueeControl.UIBase]` / `[LoupeControl.UIBase]` / `[ZoomIn]`）は、そのログを定義しているプロジェクトを表します。
+- カテゴリはクラス名（`Program` / `CaptureSessionControl` / `CapturePage` 等）です。メッセージの接頭辞（`[Feature.Marquee.Core]` / `[Feature.Loupe.Core]` / `[Feature.Marquee.Presenter]` / `[Feature.Loupe.Presenter]` / `[ZoomIn]`）は、そのログを定義しているプロジェクトを表します。
 
 ## 履歴（戻す / やり直し）
 

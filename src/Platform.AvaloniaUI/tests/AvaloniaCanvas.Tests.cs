@@ -14,7 +14,7 @@ namespace EsUtil.Platform.AvaloniaUI.Tests;
 /// <summary><see cref="AvaloniaCanvas"/> のテスト（Avalonia の描画 API へ写すことの検証）。</summary>
 /// <remarks>
 /// 描画の手順（何をどの順で描くか）は UI 非依存のレンダラが単一所有し、その画素検証は UI 非依存のテスト<br/>
-/// （<c>MarqueeControl.UIBase.Tests</c> / <c>LoupeControl.UIBase.Tests</c>）が担う。<br/>
+/// （<c>Feature.Marquee.Presenter.Tests</c> / <c>Feature.Loupe.Presenter.Tests</c>）が担う。<br/>
 /// 本テストは「アダプタが例外なく描画 API を呼ぶこと」と「描画面の消去・ブラシ共有の契約」を検証する<br/>
 /// （Avalonia ヘッドレスでは <see cref="RenderTargetBitmap"/> 経由の画素を読めないため、画素の検証は行わない）。<br/>
 /// Avalonia のヘッドレス初期化が必要なため <see cref="AvaloniaHeadlessCollection"/> 内で直列実行する。

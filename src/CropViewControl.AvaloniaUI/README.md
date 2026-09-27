@@ -67,8 +67,8 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;   // FadeMaskDragRectMode
 using EsUtil.SaveEvidence.CropView;                      // OverlayRect / OverlayLineStyle
-using EsUtil.SaveEvidence.Marquee.UIBase;                // MarqueePaint（描画にだけ必要な色）
-using EsUtil.SaveEvidence.Loupe.UIBase;                  // LoupeAppearance（描画にだけ必要な色）
+using EsUtil.Feature.Marquee.Presenter;                // MarqueePaint（描画にだけ必要な色）
+using EsUtil.Feature.Loupe.Presenter;                  // LoupeAppearance（描画にだけ必要な色）
 using EsUtil.Platform.Core.Geometry;         // EsRect
 using Avalonia;                              // Point / Rect
 using DrawingColor = System.Drawing.Color;   // コアの色型（Avalonia.Media.Color と衝突するため別名）

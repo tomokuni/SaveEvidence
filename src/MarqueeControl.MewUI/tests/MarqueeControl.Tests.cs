@@ -1,13 +1,13 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.MarqueeCore.Interaction;
-using EsUtil.Feature.MarqueeCore.Setting;
+using EsUtil.Feature.Marquee.Core.Interaction;
+using EsUtil.Feature.Marquee.Core.Setting;
 
 namespace EsUtil.SaveEvidence.Marquee.MewUI.Tests;
 
@@ -374,7 +374,7 @@ public class MarqueeControlTests
 
         control.Options = control.Options with { ClampToDomainBounds = false };
 
-        Assert.Equal("[Feature.MarqueeCore] Setting: ClampToDomainBounds True → False", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.Marquee.Core] Setting: ClampToDomainBounds True → False", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -413,7 +413,7 @@ public class MarqueeControlTests
 
         control.RequestConfirm();
 
-        Assert.Contains("[Feature.MarqueeCore] ConfirmRequested: rect=(10, 10, 50, 40)", logger.Messages);
+        Assert.Contains("[Feature.Marquee.Core] ConfirmRequested: rect=(10, 10, 50, 40)", logger.Messages);
     }
 
     // ====================================================================

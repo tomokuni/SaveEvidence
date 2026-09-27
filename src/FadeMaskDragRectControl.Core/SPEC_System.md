@@ -32,8 +32,8 @@ graph LR
   B[FadeMaskDragRectControl.MewUI] --> C
   S[CaptureSessionControl.Core] --> C
   C --> P[Platform.Core]
-  C --> M[Feature.MarqueeCore]
-  C --> L[Feature.LoupeCore]
+  C --> M[Feature.Marquee.Core]
+  C --> L[Feature.Loupe.Core]
 ```
 
 - 本プロジェクトは UI フレームワークへ依存しません。

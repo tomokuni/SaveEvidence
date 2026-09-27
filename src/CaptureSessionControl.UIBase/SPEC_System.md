@@ -29,8 +29,8 @@ graph LR
   A[CaptureSessionControl.AvaloniaUI] --> U[CaptureSessionControl.UIBase]
   B[CaptureSessionControl.MewUI] --> U
   U --> C[CaptureSessionControl.Core]
-  U --> M[MarqueeControl.UIBase]
-  U --> L[LoupeControl.UIBase]
+  U --> M[Feature.Marquee.Presenter]
+  U --> L[Feature.Loupe.Presenter]
 ```
 
 依存の向きは **UI → UIBase → Core / 各描画の設定**の一方向です。逆向きの参照はありません。
@@ -62,10 +62,10 @@ classDiagram
     <<record / CaptureSessionControl.Core>>
   }
   class MarqueePaint {
-    <<record / MarqueeControl.UIBase>>
+    <<record / Feature.Marquee.Presenter>>
   }
   class LoupeAppearance {
-    <<record / LoupeControl.UIBase>>
+    <<record / Feature.Loupe.Presenter>>
   }
 
   CapturePaintMapper ..> CaptureSettings : 読み取る

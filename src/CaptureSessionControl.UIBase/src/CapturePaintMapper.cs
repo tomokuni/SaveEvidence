@@ -1,5 +1,5 @@
-using EsUtil.SaveEvidence.Loupe.UIBase;
-using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.Feature.Loupe.Presenter;
+using EsUtil.Feature.Marquee.Presenter;
 
 namespace EsUtil.SaveEvidence.CaptureSession.UIBase;
 

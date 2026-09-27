@@ -3,7 +3,7 @@ using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Loupe.UIBase;
+using EsUtil.Feature.Loupe.Presenter;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;

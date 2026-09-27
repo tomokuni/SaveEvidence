@@ -1,13 +1,13 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using static EsUtil.Feature.LoupeCore.Loupe.Limits;
-using EsUtil.SaveEvidence.Loupe.UIBase;
+using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
+using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.Skia;
-using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
 
 
 namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
 /// <summary><see cref="LoupeControl"/> のプロパティとレイアウトのテスト。</summary>
 /// <remarks>
 /// MewUI の要素生成はプラットフォームホストの登録を必要としないため、UI を表示せずに検証できる。<br/>
-/// 描画結果の検証は <c>LoupeControl.UIBase</c> のテストが担う。
+/// 描画結果の検証は <c>Feature.Loupe.Presenter</c> のテストが担う。
 /// </remarks>
 public class LoupeControlTests
 {
@@ -214,7 +214,7 @@ public class LoupeControlTests
         Assert.Equal("(3, 4)", LabelText(control));
     }
 
-    /// <summary>寸法と色を設定できることを検証する（描画は <c>LoupeControl.UIBase</c> のテストが検証する）。</summary>
+    /// <summary>寸法と色を設定できることを検証する（描画は <c>Feature.Loupe.Presenter</c> のテストが検証する）。</summary>
     [Fact]
     public void 外観を設定できる()
     {

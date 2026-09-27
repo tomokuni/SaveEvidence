@@ -8,7 +8,7 @@
 ルーペ（拡大鏡）は、**拡大元の 100% 画像**と**拡大中心（元画像ピクセル座標）**を受け取り、
 画像外の色（無地）・拡大画像・十字線・枠線を描画するコントロールです（中心座標ラベルはテキスト要素として表示します）。
 
-**Avalonia 版 `LoupeControl` と同じ UI 非依存コア（`Feature.LoupeCore`）を使うため、設定値と見た目は両 UI で一致します。**
+**Avalonia 版 `LoupeControl` と同じ UI 非依存コア（`Feature.Loupe.Core`）を使うため、設定値と見た目は両 UI で一致します。**
 
 ## 公開 API
 
@@ -101,7 +101,7 @@
 
 `Rendered` イベントは、ルーペを描画した直後（同一フレーム内）に引数 `LoupeRenderedEventArgs` で通知します。ホストはハンドラ内で描画先キャンバスへ追加描画（選択矩形の破線等のオーバーレイ）を行えます。
 
-中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言・寸法・表示可否はコア（`LoupeTextPlacement`）が、実寸からの配置は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
+中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言・寸法・表示可否はコア（`LoupeTextPlacement`）が、実寸からの配置は描画層（`Feature.Loupe.Presenter` の `LoupeLabelPlan`）が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
@@ -120,8 +120,8 @@
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | `[Feature.LoupeCore] Setting: {名前} {前} → {後}`（コアの設定）/ `[LoupeControl.UIBase] Setting: Source {前} → {後}`。補正後の値を渡し、変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は `LoupeControl.UIBase`、他はコア）が単一所有する。設定の変更は変化した項目だけを出力する） |
-| Error | `[LoupeControl.UIBase] Update exception`（描画の例外。スタックトレース付き。アプリは継続する） |
+| Debug | `[Feature.Loupe.Core] Setting: {名前} {前} → {後}`（コアの設定）/ `[Feature.Loupe.Presenter] Setting: Source {前} → {後}`。補正後の値を渡し、変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は `Feature.Loupe.Presenter`、他はコア）が単一所有する。設定の変更は変化した項目だけを出力する） |
+| Error | `[Feature.Loupe.Presenter] Update exception`（描画の例外。スタックトレース付き。アプリは継続する） |
 
 数値の補正（`coerce`）と変更ログ（`changed`）は**プロパティの登録（`MewProperty.Register`）**へ渡します。したがって setter を経由しない設定（バインディング・`MewObject.SetValue` 相当）でも安全域が保たれ、変更が記録されます（Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約）。
 

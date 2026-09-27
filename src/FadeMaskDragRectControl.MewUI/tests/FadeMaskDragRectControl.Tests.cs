@@ -1,4 +1,4 @@
-using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -8,7 +8,7 @@ using SkiaSharp;
 using System.Reflection;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.MarqueeCore.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI.Tests;
 

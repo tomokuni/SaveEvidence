@@ -45,7 +45,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
 | **依存プロジェクト** | MarqueeControl / LoupeControl / Platform.AvaloniaUI |
 
-色（描画にだけ必要な設定）の型は内包コントロールの UIBase 層（`MarqueeControl.UIBase` の `MarqueePaint` / `LoupeControl.UIBase` の `LoupeAppearance`）が単一所有します。
+色（描画にだけ必要な設定）の型は内包コントロールの UIBase 層（`Feature.Marquee.Presenter` の `MarqueePaint` / `Feature.Loupe.Presenter` の `LoupeAppearance`）が単一所有します。
 
 ## 3. アーキテクチャ
 
@@ -162,7 +162,7 @@ flowchart TB
 | `FadeMaskDragRectPointEventArgs` | 本プロジェクト | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
 | `FadeMaskDragRectMode` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 動作モード（描画モード・可視性・全面暗転の切替） |
 | `FadeMaskDragRectOptions` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。**色は含まない**） |
-| `MarqueePaint` / `LoupeAppearance` | EsUtil.SaveEvidence.Marquee.UIBase / EsUtil.SaveEvidence.Loupe.UIBase（描画層） | 描画にだけ必要な色の単一値（内包コントロールへ委譲する） |
+| `MarqueePaint` / `LoupeAppearance` | EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter（描画層） | 描画にだけ必要な色の単一値（内包コントロールへ委譲する） |
 | `FadeMaskDragRectChildValues` / `FadeMaskHostLabelRenderer` | EsUtil.SaveEvidence.FadeMaskDragRect.UIBase（UI 間の共有層） | 設定とモードから子コントロールへ適用する値の解決と、付加情報ラベルの描画 |
 | `ICoordTransform` / `CoordTransform` | Platform.Core | ドメイン ↔ DIP の座標変換ポート |
 
@@ -207,7 +207,7 @@ sequenceDiagram
 | 内包イベント | 複合コントロールの処理 | 同期先 |
 | --- | --- | --- |
 | `SelectionChanged` | ルーペの再描画を要求（`RequestRender`） | 選択矩形と外側の装飾は `MarqueeControl` がセッションから直接読んで描画する（本クラスは同期しない）。ルーペの選択矩形破線は Rendered イベント経由で描画し、描画の可否はコアの `ShowSelectionOverlay` が単一所有する（UI は派生値を保持しない） |
-| `Rendered`（選択矩形コントロール） | 付加情報（操作・情報ラベル）を描く | 描画内容全体（`Content`）を受け取り、付加情報を描く。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**（文言はコアが、配置矩形は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan` が単一所有する）。付加情報の積み上げ（位置・表示可否）は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは描画ポートを用意して文言を渡すだけである |
+| `Rendered`（選択矩形コントロール） | 付加情報（操作・情報ラベル）を描く | 描画内容全体（`Content`）を受け取り、付加情報を描く。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**（文言はコアが、配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueeLabelPlan` が単一所有する）。付加情報の積み上げ（位置・表示可否）は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは描画ポートを用意して文言を渡すだけである |
 | `Rendered`（ルーペ） | 破線を描く（中心座標ラベルはコントロールが表示する） | 選択矩形の破線。ラベルの寸法・配置はコアが単一所有する |
 | `ViewportChanged` / ホスト通知（`NotifyViewportChanged`） | `NotifyViewportChanged()`（再描画 + ルーペ位置再計算） | Marquee 再描画 + Loupe（RefreshPosition）。選択矩形はビューポート変化で不変のため再同期しない |
 | `SelectionStarted` | （購読しない） | セッションが自身の選択を初期化するため同期不要（外側の装飾はセッションの状態をそのまま読む） |

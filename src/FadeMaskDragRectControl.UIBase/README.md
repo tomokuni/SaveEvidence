@@ -9,7 +9,7 @@
   「設定の写し → モードから導出する項目の上書き」という 2 段の分配をそれぞれ持っており、片方だけ規則が
   変わる余地があった。
 - **付加情報ラベル（操作・情報）の積み上げを 1 箇所へ集約**する。体裁は既に
-  `MarqueeHostLabelRenderer` と `MarqueePaint`（`MarqueeControl.UIBase`）が単一所有しているが、
+  `MarqueeHostLabelRenderer` と `MarqueePaint`（`Feature.Marquee.Presenter`）が単一所有しているが、
   「どの文言をどの位置へ積むか」は両 UI が別々に書いていた。
 
 ## 層の位置付け
@@ -38,8 +38,8 @@ FadeMaskDragRectControl.AvaloniaUI / .MewUI（子コントロールへの代入�
 ```text
 FadeMaskDragRectControl.UIBase
     ├── FadeMaskDragRectControl.Core（設定・モード・状態の解決）
-    ├── Feature.MarqueeCore / Feature.LoupeCore（内包コントロールの設定型）
-    ├── MarqueeControl.UIBase（付加情報ラベルの体裁）
+    ├── Feature.Marquee.Core / Feature.Loupe.Core（内包コントロールの設定型）
+    ├── Feature.Marquee.Presenter（付加情報ラベルの体裁）
     └── Platform.Core（コア幾何型・描画ポート・ラベル配置）
 ```
 

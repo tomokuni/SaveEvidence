@@ -4,9 +4,9 @@
 
 `Common` は、SaveEvidence のソリューション内で共有する**UI 非依存の描画ポート**を提供します。
 
-1. **描画ポート**（`IEsCanvas`）— UI 側の共有層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）の描画手順が唯一呼ぶ即時描画ポート
+1. **描画ポート**（`IEsCanvas`）— UI 側の共有層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter`）の描画手順が唯一呼ぶ即時描画ポート
 
-**ラベル専用の型は置きません**（配置の値・体裁・要素への写像）。ラベルの体裁（内側余白・フォントサイズ・色・角丸）と実寸 → 配置矩形の写像は描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase` の `MarqueePaint` / `LoupePaint` と `MarqueeLabelPlan` / `LoupeLabelPlan`）が単一所有し、テキストを要素として置くか画像として描くかは UI 層の判断です。コアは文言・基準点・アライン・領域だけを渡します。
+**ラベル専用の型は置きません**（配置の値・体裁・要素への写像）。ラベルの体裁（内側余白・フォントサイズ・色・角丸）と実寸 → 配置矩形の写像は描画層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` の `MarqueePaint` / `LoupePaint` と `MarqueeLabelPlan` / `LoupeLabelPlan`）が単一所有し、テキストを要素として置くか画像として描くかは UI 層の判断です。コアは文言・基準点・アライン・領域だけを渡します。
 
 外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
 

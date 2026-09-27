@@ -5,8 +5,8 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
-using static EsUtil.Feature.LoupeCore.Loupe.Limits;
-using EsUtil.SaveEvidence.Loupe.UIBase;
+using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
+using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -15,7 +15,7 @@ using System.Globalization;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.AvaloniaUI.Interop;
-using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI.Tests;
 

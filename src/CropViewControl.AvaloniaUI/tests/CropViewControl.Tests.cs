@@ -9,7 +9,7 @@ using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
-using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;

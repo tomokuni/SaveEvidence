@@ -66,14 +66,14 @@
 | 依存 | 用途 |
 | --- | --- |
 | `CaptureSessionControl.Core`（`EsUtil.SaveEvidence.CaptureSession`） | 写像元の設定型（`CaptureSettings`） |
-| `MarqueeControl.UIBase`（`EsUtil.SaveEvidence.Marquee.UIBase`） | 写像先の描画の設定（`MarqueePaint`） |
-| `LoupeControl.UIBase`（`EsUtil.SaveEvidence.Loupe.UIBase`） | 写像先の描画の設定（`LoupeAppearance`） |
+| `Feature.Marquee.Presenter`（`EsUtil.Feature.Marquee.Presenter`） | 写像先の描画の設定（`MarqueePaint`） |
+| `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Presenter`） | 写像先の描画の設定（`LoupeAppearance`） |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。外部パッケージへの直接依存もありません。
 
 ## 本層を置く理由（設計上の位置付け）
 
 写像元がセッションの設定型（`CaptureSettings`）であるため、再利用ライブラリ（`FadeMaskDragRectControl.UIBase`）
-に置くと後者が製品の設定型へ依存します。また写像先が描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）の
+に置くと後者が製品の設定型へ依存します。また写像先が描画層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter`）の
 型であるため、`CaptureSessionControl.Core` にも置けません（Core → UIBase の逆流になる）。両 UI のホストが
 参照できる中間の層として本層を置きます。

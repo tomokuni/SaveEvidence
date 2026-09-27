@@ -12,7 +12,7 @@
 
 ## `IEsCanvas`（描画ポート）
 
-描画内容を描画面へ写す**即時描画ポート**です。UI 側の共有層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）の描画手順は本ポートだけを呼び、UI フレームワーク固有の API は各 UI のアダプタが適合させます。
+描画内容を描画面へ写す**即時描画ポート**です。UI 側の共有層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter`）の描画手順は本ポートだけを呼び、UI フレームワーク固有の API は各 UI のアダプタが適合させます。
 
 | メンバー | 内容 |
 | --- | --- |
@@ -44,4 +44,4 @@ UI フレームワーク（Avalonia / MewUI / Skia）への依存はありませ
 | 各コントロールのコア | 不可 | Marquee と Loupe の両方が同じ契約を使うため、どちらか一方に置くと他方が依存する |
 | `Common`（本プロジェクト） | 採用 | ソリューション固有の共有契約だけを置く層として、`Platform.Core` と各層の間に位置する |
 
-**ラベル専用の型（配置の値・体裁・要素への写像）は置きません**。ラベルの体裁と実寸 → 配置矩形の写像は UI 層の中で閉じるため、描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）が単一所有します。コアは文言・基準点・アライン・領域だけを渡します。
+**ラベル専用の型（配置の値・体裁・要素への写像）は置きません**。ラベルの体裁と実寸 → 配置矩形の写像は UI 層の中で閉じるため、描画層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter`）が単一所有します。コアは文言・基準点・アライン・領域だけを渡します。

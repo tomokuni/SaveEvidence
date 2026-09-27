@@ -10,15 +10,15 @@ using Rect = Avalonia.Rect;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.SaveEvidence.Marquee.UIBase;
-using EsUtil.SaveEvidence.Loupe.UIBase;
+using EsUtil.Feature.Marquee.Core.Decoration;
+using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
-using EsUtil.Feature.MarqueeCore.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Platform.AvaloniaUI.Interop;
-using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 

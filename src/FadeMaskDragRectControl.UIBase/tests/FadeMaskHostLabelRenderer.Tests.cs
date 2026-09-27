@@ -2,8 +2,8 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.MarqueeCore.Drawing;
-using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.Feature.Marquee.Core.Drawing;
+using EsUtil.Feature.Marquee.Presenter;
 
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;

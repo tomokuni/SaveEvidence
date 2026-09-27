@@ -3,7 +3,7 @@ using Avalonia.Media.Imaging;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Native.Imaging;
-using EsUtil.SaveEvidence.Loupe.UIBase;
+using EsUtil.Feature.Loupe.Presenter;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 

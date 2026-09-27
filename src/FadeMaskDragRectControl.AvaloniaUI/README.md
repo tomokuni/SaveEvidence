@@ -189,7 +189,7 @@ FadeMaskDragRectControl.UIBase/
 ```
 
 本コントロールは、解決された値を子コントロールへ代入し、描画ポートを用意して文言を渡すだけです
-（ラベルの体裁と行送りは `MarqueeControl.UIBase` の `MarqueeHostLabelRenderer` / `MarqueePaint` が
+（ラベルの体裁と行送りは `Feature.Marquee.Presenter` の `MarqueeHostLabelRenderer` / `MarqueePaint` が
 単一所有します）。
 
 ## 10. ライセンス

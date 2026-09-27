@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Skia;
-using EsUtil.SaveEvidence.Loupe.UIBase;
+using EsUtil.Feature.Loupe.Presenter;
 using SkiaSharp;
 
 namespace EsUtil.SaveEvidence.Loupe.MewUI;

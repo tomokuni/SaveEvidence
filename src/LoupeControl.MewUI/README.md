@@ -1,10 +1,10 @@
 # LoupeControl.MewUI
 
-`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase`）** を使い、描画（`SKCanvas`）と入力の受付のみを **MewUI** で実装したルーペ（拡大鏡）コントロールです。
+`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`Feature.Loupe.Core`）と描画層（`Feature.Loupe.Presenter`）** を使い、描画（`SKCanvas`）と入力の受付のみを **MewUI** で実装したルーペ（拡大鏡）コントロールです。
 
 ## 目的
 
-ルーペのロジック（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は `Feature.LoupeCore` が単一所有し、描画の手順と色は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupePresenter` / `LoupeAppearance`）が単一所有します。
+ルーペのロジック（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は `Feature.Loupe.Core` が単一所有し、描画の手順と色は UI 非依存の描画層（`Feature.Loupe.Presenter` の `LoupePresenter` / `LoupeAppearance`）が単一所有します。
 本プロジェクトはその計算結果を`SKCanvas`（Platform.Core）経由で **Skia のキャンバスへ描画させるだけ** の層です。
 そのため Avalonia 版と**同じ設定・同じ見た目**になり、設定ファイル（`%LOCALAPPDATA%\SaveEvidence\settings.json`）も両 UI で共用できます。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
@@ -31,8 +31,8 @@
 ## 使い方
 
 ```csharp
-using EsUtil.Feature.LoupeCore;
-using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.Loupe.Core;
+using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.SaveEvidence.Loupe.MewUI;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
@@ -69,7 +69,7 @@ if (layout.Position is { } position)
 }
 ```
 
-> **注意**: `ResolveLayout` はコアのファサード（`Feature.LoupeCore` の `Loupe`、`public` 型）の API です（汎用コアとして公開されており、`InternalsVisibleTo` は不要です）。
+> **注意**: `ResolveLayout` はコアのファサード（`Feature.Loupe.Core` の `Loupe`、`public` 型）の API です（汎用コアとして公開されており、`InternalsVisibleTo` は不要です）。
 
 ## プロパティ
 
@@ -93,7 +93,7 @@ if (layout.Position is { } position)
 | `ShowCrosshair` | `bool` | `true` | 十字線の表示可否 |
 | `ShowBorder` | `bool` | `true` | 枠線の表示可否 |
 
-`Appearance`（`LoupeAppearance`。`EsUtil.SaveEvidence.Loupe.UIBase`）の項目:
+`Appearance`（`LoupeAppearance`。`EsUtil.Feature.Loupe.Presenter`）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -106,7 +106,7 @@ if (layout.Position is { } position)
 
 `Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
 
-数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、設定値の変更ログはコアの `LoupeLogMessage` が単一所有し、拡大元画像の変更と描画の例外のログは `LoupeControl.UIBase` の `LoupeUiLogMessage` が単一所有します）。設定（`Options`）と寸法（`Options`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `DipToDeviceScaling` のみ `coerce` を登録します）。
+数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、設定値の変更ログはコアの `LoupeLogMessage` が単一所有し、拡大元画像の変更と描画の例外のログは `Feature.Loupe.Presenter` の `LoupeUiLogMessage` が単一所有します）。設定（`Options`）と寸法（`Options`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `DipToDeviceScaling` のみ `coerce` を登録します）。
 
 ## イベント
 
@@ -122,8 +122,8 @@ if (layout.Position is { } position)
 
 | レベル | 出力例 |
 | --- | --- |
-| Debug | `[Feature.LoupeCore] Setting: ZoomLevel 4 → 8`（コアの設定。Source は `[LoupeControl.UIBase] Setting: Source ...`）/ `CenterPoint` / `RequestedSize` / `DipToDeviceScaling` / `ZoomLevel`。変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は `LoupeControl.UIBase` の `LoupeUiLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は同値判定を持たない。設定の変更は変化した項目だけを出力する） |
-| Error | `[LoupeControl.UIBase] Update exception`（描画の例外。アプリは継続する） |
+| Debug | `[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8`（コアの設定。Source は `[Feature.Loupe.Presenter] Setting: Source ...`）/ `CenterPoint` / `RequestedSize` / `DipToDeviceScaling` / `ZoomLevel`。変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は `Feature.Loupe.Presenter` の `LoupeUiLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は同値判定を持たない。設定の変更は変化した項目だけを出力する） |
+| Error | `[Feature.Loupe.Presenter] Update exception`（描画の例外。アプリは継続する） |
 
 Avalonia 版の Trace ログ（再描画パイプライン）は持ちません（MewUI 版は中間ビットマップを作らず同期描画するため）。
 
@@ -157,7 +157,7 @@ dotnet test src/LoupeControl.MewUI/tests/LoupeControl.MewUI.Tests.csproj
 
 ## 関連ドキュメント
 
-- `../Feature.LoupeCore/README.md` — 共有する UI 非依存ロジック
-- `../LoupeControl.UIBase/README.md` — 共有する UI 非依存の描画層
+- `../Feature.Loupe.Core/README.md` — 共有する UI 非依存ロジック
+- `../Feature.Loupe.Presenter/README.md` — 共有する UI 非依存の描画層
 - `../LoupeControl.AvaloniaUI/README.md` — Avalonia 版ルーペ
 - `../app.MewUI/README.md` — 組み込み先のアプリ

@@ -1,15 +1,15 @@
 # MarqueeControl.MewUI
 
-`MarqueeControl`（リサイズ可能なドラッグ矩形）の **MewUI 版**です。Avalonia 版と同一の UI 非依存コア（`Feature.MarqueeCore`）と描画層（`MarqueeControl.UIBase`）を使い、
+`MarqueeControl`（リサイズ可能なドラッグ矩形）の **MewUI 版**です。Avalonia 版と同一の UI 非依存コア（`Feature.Marquee.Core`）と描画層（`Feature.Marquee.Presenter`）を使い、
 入力の受付と効果の適用・カーソル制御・描画ポートの適合のみを MewUI で実装しています。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ## 特徴
 
-- **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `Feature.MarqueeCore` が単一所有します（UI 層は公開ファサード `Marquee` だけを参照し、内部の状態機械・フレーム解決には触れません）。
+- **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `Feature.Marquee.Core` が単一所有します（UI 層は公開ファサード `Marquee` だけを参照し、内部の状態機械・フレーム解決には触れません）。
   Avalonia 版と MewUI 版の挙動は同じ計算に基づきます。
-- **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへ直接描画します。ハンドル・十字マーカー・外側/内側の装飾（暗転マスク・穴あけ枠・塗り・内枠）の描画手順は UI 非依存の描画層（`MarqueeControl.UIBase`）が単一所有し、キャンバスの適合は `SkiaEsCanvas`（Platform.Core）が担います。
-- **色の設定（`Paint`）**: ハンドル・十字マーカー・ラベル・装飾の色は**描画にだけ必要な設定**のためコアには含めず、描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有します。`Paint` プロパティで指定し（既定は `MarqueePaint.Default`）、部分変更は `MarqueePaint.Default with { ... }` で行います。**描くかどうかは色のアルファではなく `DecoOptions` の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）が決めます**。
-- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeTextPlacement`）とカーソル座標ラベル（`MarqueeTextPlacement`）の**文言・寸法は Core が、色は描画層の `MarqueePaint` が単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`SkiaText.Measure`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
+- **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへ直接描画します。ハンドル・十字マーカー・外側/内側の装飾（暗転マスク・穴あけ枠・塗り・内枠）の描画手順は UI 非依存の描画層（`Feature.Marquee.Presenter`）が単一所有し、キャンバスの適合は `SkiaEsCanvas`（Platform.Core）が担います。
+- **色の設定（`Paint`）**: ハンドル・十字マーカー・ラベル・装飾の色は**描画にだけ必要な設定**のためコアには含めず、描画層（`Feature.Marquee.Presenter` の `MarqueePaint`）が単一所有します。`Paint` プロパティで指定し（既定は `MarqueePaint.Default`）、部分変更は `MarqueePaint.Default with { ... }` で行います。**描くかどうかは色のアルファではなく `DecoOptions` の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）が決めます**。
+- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeTextPlacement`）とカーソル座標ラベル（`MarqueeTextPlacement`）の**文言・寸法は Core が、色は描画層の `MarqueePaint` が単一所有**し、実寸から配置矩形を求める写像は描画層（`Feature.Marquee.Presenter` の `MarqueeLabelPlan`）が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`SkiaText.Measure`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - **DPI 追従**: `OnDpiChanged` でスケーリング係数を更新し、DIP 座標で描画します（枠線・ハンドルの画面上の大きさを保ちます）。
 - **コア型のイベント引数**: イベントの座標は UI 非依存のコア型（`EsPoint` / `EsRect`）で公開します（境界変換が不要）。
 
@@ -25,10 +25,10 @@ MewUI は API が安定化中（0.x）のため、パッケージのバージョ
 ## 使い方
 
 ```csharp
-using EsUtil.Feature.MarqueeCore.Setting;
-using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.SaveEvidence.Marquee.MewUI;
-using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 
@@ -81,7 +81,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | 矢印キー | nudge（1 ドメインピクセル単位の微調整。カーソルを非表示にして十字マーカーを表示） |
 | Enter | 確定要求（`ConfirmRequested`） |
 | Escape | キャンセル要求（`CancelRequested`） |
-| Ctrl + ホイール | ズーム要求（`ZoomRequested`。方向と発生位置）。解釈は組み込みの層（`MarqueeControl.UIBase`）が単一所有する |
+| Ctrl + ホイール | ズーム要求（`ZoomRequested`。方向と発生位置）。解釈は組み込みの層（`Feature.Marquee.Presenter`）が単一所有する |
 | ホイール（Ctrl なし） | スクロール要求（`ScrollRequested`。回転量・Shift・発生位置。スクロール先はホストが決める） |
 
 矢印キーの nudge は本コントロールにフォーカスがある場合のみ動作します（マウス押下時に自動でフォーカスを取得します）。
@@ -102,9 +102,9 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた設定（コアの `EsUtil.Feature.MarqueeCore.Setting.MarqueeOptions`。**色は含まない**） |
-| `Paint` | `MarqueePaint` | `MarqueePaint.Default` | **色（ハンドル・十字マーカー・ラベル・装飾）の設定**（描画層の `EsUtil.SaveEvidence.Marquee.UIBase.MarqueePaint`）。変更すると描画実装が新しい色で差し替わる |
-| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | 装飾（暗転マスク・穴あけ枠・ハイライト）の表示可否と寸法の設定（`EsUtil.Feature.MarqueeCore.Decoration.MarqueeDecoOptions`。**色は含まない**） |
+| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた設定（コアの `EsUtil.Feature.Marquee.Core.Setting.MarqueeOptions`。**色は含まない**） |
+| `Paint` | `MarqueePaint` | `MarqueePaint.Default` | **色（ハンドル・十字マーカー・ラベル・装飾）の設定**（描画層の `EsUtil.Feature.Marquee.Presenter.MarqueePaint`）。変更すると描画実装が新しい色で差し替わる |
+| `DecoOptions` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | 装飾（暗転マスク・穴あけ枠・ハイライト）の表示可否と寸法の設定（`EsUtil.Feature.Marquee.Core.Decoration.MarqueeDecoOptions`。**色は含まない**） |
 | `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新） |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と同一）:
@@ -161,30 +161,30 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 ```
 
-- 描画（ハンドル・十字マーカー・外側/内側の装飾）の画素検証は UI 非依存の描画層（`MarqueeControl.UIBase`）のテストが担うため、本プロジェクトは描画のテストを持たない。
+- 描画（ハンドル・十字マーカー・外側/内側の装飾）の画素検証は UI 非依存の描画層（`Feature.Marquee.Presenter`）のテストが担うため、本プロジェクトは描画のテストを持たない。
 - ラベル要素の配置（実寸 → 配置矩形）の検証は描画層の `MarqueeLabelPlan.Tests.cs` が担う。UI 層の要素配置は `MarqueeControl.Tests.cs` が検証する。
 - `MarqueeControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、ビューポート通知、`Log` のフォールバックと設定変更ログ。
-- ログの定義（操作ログ・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います（ズーム要求のログは組み込みの層の `MarqueeWheelLogMessage` が所有し、`MarqueeControl.UIBase.Tests` が検証します）。
+- ログの定義（操作ログ・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います（ズーム要求のログは組み込みの層の `MarqueeWheelLogMessage` が所有し、`Feature.Marquee.Presenter.Tests` が検証します）。
 
-入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアが担うため、その検証は `Feature.MarqueeCore.Tests` が行います。
+入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアが担うため、その検証は `Feature.Marquee.Core.Tests` が行います。
 
 ## 操作ログ
 
 `Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。  
-ログはコア（`EsUtil.Feature.MarqueeCore.Logging.MarqueeLogMessage`）と組み込みの層（`EsUtil.SaveEvidence.Marquee.UIBase.MarqueeWheelLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。本プロジェクトはログ定義を持ちません。
+ログはコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と組み込みの層（`EsUtil.Feature.Marquee.Presenter.MarqueeWheelLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。本プロジェクトはログ定義を持ちません。
 
 | レベル | 出力内容 |
 | --- | --- |
 | Debug | MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / ZoomRequested / 設定変更 |
 | Trace | MouseDown 直前の位置 / MouseUp 直後の位置 |
 
-定義はコア（`EsUtil.Feature.MarqueeCore.Logging.MarqueeLogMessage`）と組み込みの層（`EsUtil.SaveEvidence.Marquee.UIBase.MarqueeWheelLogMessage`）が持ち、本プロジェクトは定義を持ちません。
+定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と組み込みの層（`EsUtil.Feature.Marquee.Presenter.MarqueeWheelLogMessage`）が持ち、本プロジェクトは定義を持ちません。
 
 ## 未対応
 
 - `ScrollViewer` の自動連携（ホストが `NotifyViewportChanged()` を呼ぶ）。
 - フォーカス非依存の矢印キー nudge。
-  - 文字（ラベル・座標ラベル）の要素配置（UI 層の責務。配置矩形は描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan` が求める）。
+  - 文字（ラベル・座標ラベル）の要素配置（UI 層の責務。配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueeLabelPlan` が求める）。
 
 ## ライセンス
 

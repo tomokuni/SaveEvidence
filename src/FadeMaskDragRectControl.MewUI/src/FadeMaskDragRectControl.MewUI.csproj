@@ -22,11 +22,11 @@
     <ProjectReference Include="..\..\MarqueeControl.MewUI\src\MarqueeControl.MewUI.csproj" />
     <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
     <!-- ホイール要求（ズーム / スクロール）の中継で型を直接参照する -->
-    <ProjectReference Include="..\..\MarqueeControl.UIBase\src\MarqueeControl.UIBase.csproj" />
+    <ProjectReference Include="..\..\Feature.Marquee.Presenter\src\Feature.Marquee.Presenter.csproj" />
     <!-- 設定の分配（子コントロールの値の決定）と付加情報ラベルの描画を共有する -->
     <ProjectReference Include="..\..\FadeMaskDragRectControl.UIBase\src\FadeMaskDragRectControl.UIBase.csproj" />
     <!-- 表示位置の計算（LoupePositionCalculator）と表示情報の契約（LoupeLayout） -->
-    <ProjectReference Include="..\..\Feature.LoupeCore\src\Feature.LoupeCore.csproj" />
+    <ProjectReference Include="..\..\Feature.Loupe.Core\src\Feature.Loupe.Core.csproj" />
     <!-- UI 非依存の動作モード・選択矩形オーバーレイ描画 -->
     <ProjectReference Include="..\..\FadeMaskDragRectControl.Core\src\FadeMaskDragRectControl.Core.csproj" />
     <!-- コア幾何型・座標変換ポート -->

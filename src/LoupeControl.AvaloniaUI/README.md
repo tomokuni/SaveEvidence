@@ -1,6 +1,6 @@
 # LoupeControl
 
-> プロジェクト名: `LoupeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `Feature.LoupeCore`、MewUI 版は `LoupeControl.MewUI` にあります。
+> プロジェクト名: `LoupeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `Feature.Loupe.Core`、MewUI 版は `LoupeControl.MewUI` にあります。
 
 ## 目次
 
@@ -44,14 +44,14 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 - 十字線の色設定（不透明度は色のアルファに統合）
 - 中心座標ラベル表示（`(x, y)` 形式・表示/色/背景/フォントサイズ/角丸設定可能）
 - 枠線の色（`Appearance`）・太さ（`Options`）設定
-- **色と、ラベルのフォントサイズ・角丸は `Appearance` プロパティ（`LoupeAppearance`）、寸法（タイルサイズ・枠線の太さ）は `Options`（`LoupeOptions`）で設定**（コアは寸法・表示可否だけを持ち、描画にだけ必要な設定は描画層（`LoupeControl.UIBase`）が単一所有する）
+- **色と、ラベルのフォントサイズ・角丸は `Appearance` プロパティ（`LoupeAppearance`）、寸法（タイルサイズ・枠線の太さ）は `Options`（`LoupeOptions`）で設定**（コアは寸法・表示可否だけを持ち、描画にだけ必要な設定は描画層（`Feature.Loupe.Presenter`）が単一所有する）
 - DIP と物理ピクセルの分離（`DipToDeviceScaling`）
 - 非同期のルーペ画像生成（切り出し・合成は UI スレッドで実行）
 - 古い描画結果の自動破棄
 - 非表示時の生成Bitmap解放
 - `ILogger` によるエラー通知
 - 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホスト側のオーバーレイ描画用。線分・選択矩形等の破線はホストが描画済み Bitmap へ直接描く）
-- 中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（文言・表示可否はコア、実寸 → 配置矩形の写像は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有）
+- 中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（文言・表示可否はコア、実寸 → 配置矩形の写像は描画層（`Feature.Loupe.Presenter` の `LoupeLabelPlan`）、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有）
 - **座標変換ポート（`SetCoordinateTransform(ICoordTransform?)` + `PositionOffset`）**: MarqueeControl と同方式。表示位置（`RenderTransform`）と表示サイズ（親パネルでクランプ）をレイアウト時に自己計算（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **`RefreshPosition()`**: パン・ズーム等のレイアウト非変更なビューポート変化時に、表示位置・サイズを再計算（座標変換ポートは呼び出し毎に最新の表示状態を評価）
 
@@ -105,8 +105,8 @@ using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 ```csharp
 using Avalonia;
 using Avalonia.Media.Imaging;
-using EsUtil.Feature.LoupeCore;
-using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.Loupe.Core;
+using EsUtil.Feature.Loupe.Core.Setting;
 
 public sealed class MainViewModel
 {
@@ -213,7 +213,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 
 ## 12. プロジェクト構成
 
-本コントロールは、UI フレームワーク非依存のロジックと寸法を `Feature.LoupeCore` へ、描画の手順と色を `LoupeControl.UIBase` へ分離しています（マルチ UI 対応）。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
+本コントロールは、UI フレームワーク非依存のロジックと寸法を `Feature.Loupe.Core` へ、描画の手順と色を `Feature.Loupe.Presenter` へ分離しています（マルチ UI 対応）。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 LoupeControl.AvaloniaUI/
@@ -229,8 +229,8 @@ LoupeControl.AvaloniaUI/
 ├── SPEC_ExtFunc.md         # 外部機能仕様書
 └── SPEC_System.md          # システム仕様書
 
-../Feature.LoupeCore/       # UI フレームワーク非依存の設定・計算・寸法・判断・ログ定義（設定の単一値 / 寸法 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 区画数の切り上げ / 描画完了時の表示情報）
-../LoupeControl.UIBase/     # 描画入力 → 描画面の写像（LoupePresenter / LoupeAppearance（色）/ LoupeLabelPlan）と再描画のスケジューリング（LoupeRenderCoordinator）
+../Feature.Loupe.Core/       # UI フレームワーク非依存の設定・計算・寸法・判断・ログ定義（設定の単一値 / 寸法 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 区画数の切り上げ / 描画完了時の表示情報）
+../Feature.Loupe.Presenter/     # 描画入力 → 描画面の写像（LoupePresenter / LoupeAppearance（色）/ LoupeLabelPlan）と再描画のスケジューリング（LoupeRenderCoordinator）
 ```
 
 ## 13. ライセンス

@@ -21,14 +21,14 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.SaveEvidence.CropView;
-using EsUtil.Feature.MarqueeCore.Decoration;
-using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.Feature.Marquee.Core.Decoration;
+using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.MarqueeCore.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Views.Pages;

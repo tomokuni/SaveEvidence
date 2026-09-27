@@ -81,7 +81,7 @@
 
 ### 3.1 プロジェクト参照
 
-利用側プロジェクトから `LoupeControl.AvaloniaUI.csproj` を参照します（`Feature.LoupeCore` は本プロジェクトが参照するため、追加の参照は不要です）。
+利用側プロジェクトから `LoupeControl.AvaloniaUI.csproj` を参照します（`Feature.Loupe.Core` は本プロジェクトが参照するため、追加の参照は不要です）。
 
 ```xml
 <ProjectReference Include="..\LoupeControl.AvaloniaUI\src\LoupeControl.AvaloniaUI.csproj" />
@@ -199,7 +199,7 @@ public bool IsLoupeVisible { get; set; } = true;
 
 | 項目 | 内容 |
 | --- | --- |
-| 型 | `LoupeOptions`（コアの `EsUtil.Feature.LoupeCore.Setting`） |
+| 型 | `LoupeOptions`（コアの `EsUtil.Feature.Loupe.Core.Setting`） |
 | 既定値 | `LoupeOptions.Default`（表示サイズ 160 / 拡大率 4 / 寸法は `LoupeOptions` の既定値） |
 | 用途 | ルーペの設定（表示サイズ・拡大率・寸法）を 1 つの値で指定する |
 
@@ -247,14 +247,14 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 #### 5.1.5 寸法と Paint（色）
 
-ルーペの寸法（枠線の太さ）とラベル表示の可否は **コアの `LoupeOptions`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupeAppearance`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Appearance` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
+ルーペの寸法（枠線の太さ）とラベル表示の可否は **コアの `LoupeOptions`（`EsUtil.Feature.Loupe.Core.Setting`）が単一所有**し、`Options` の一部（`Options`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `Feature.Loupe.Presenter` の `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter`）が単一所有し、本コントロールの `Appearance` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `LoupeOptions` | コアの既定値 | ルーペの寸法とラベル表示の可否。`with` 式で部分変更する。数値項目はコアの `LoupeOptions` が生成時に安全域へ補正する |
-| `Paint` | `LoupeAppearance`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupeAppearance.Default` | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）とラベルのフォントサイズ・角丸。`LoupeAppearance.Default with { ... }` で部分変更する |
+| `Paint` | `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter`） | `LoupeAppearance.Default` | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）とラベルのフォントサイズ・角丸。`LoupeAppearance.Default with { ... }` で部分変更する |
 
-`Options`（コアの `LoupeOptions`）の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
+`Options`（コアの `LoupeOptions`）の項目（詳細は `Feature.Loupe.Core` の `SPEC_ExtFunc.md` を参照）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -262,7 +262,7 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
 | `ShowCrosshair` / `ShowBorder` | `bool` | `true` | 十字線・枠線の表示有無（透明色を「描かない」の代用にしない） |
 
-`Appearance`（`LoupeAppearance`。詳細は `LoupeControl.UIBase` の `SPEC_ExtFunc.md` を参照）の項目:
+`Appearance`（`LoupeAppearance`。詳細は `Feature.Loupe.Presenter` の `SPEC_ExtFunc.md` を参照）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -274,7 +274,7 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（DIP。6〜48 に補正。非数は既定値へ補正） |
 | `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Appearance`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`Feature.Loupe.Presenter` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Appearance`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
 寸法項目（`BorderThickness`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeGeometry.BorderThicknessPixels`）（`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
@@ -410,7 +410,7 @@ loupe.Rendered += (_, e) =>
 ### 5.5 型
 
 公開型は `LoupeControl` と `LoupeRenderedEventArgs` です。
-描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase` の `LoupePresenter` / `LoupeAppearance` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順と色は描画層が単一所有し、本プロジェクトは描画（`DrawingContext`）とラベル要素の配置を担います。
+描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`Feature.Loupe.Core`）と描画層（`Feature.Loupe.Presenter` の `LoupePresenter` / `LoupeAppearance` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順と色は描画層が単一所有し、本プロジェクトは描画（`DrawingContext`）とラベル要素の配置を担います。
 UI 固有のログ（`LoupeRenderLog`）は本プロジェクトの internal です。
 
 #### 5.5.1 LoupeControl

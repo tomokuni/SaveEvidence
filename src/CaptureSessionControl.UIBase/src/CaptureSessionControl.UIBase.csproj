@@ -18,8 +18,8 @@
     <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
     <!-- 写像先の色（MarqueePaint / LoupePaint）。描画の設定は UI 非依存の型のため本層で共有できる
          （コアから描画の設定を参照すると Core → UIBase の逆流になる）。 -->
-    <ProjectReference Include="..\..\MarqueeControl.UIBase\src\MarqueeControl.UIBase.csproj" />
-    <ProjectReference Include="..\..\LoupeControl.UIBase\src\LoupeControl.UIBase.csproj" />
+    <ProjectReference Include="..\..\Feature.Marquee.Presenter\src\Feature.Marquee.Presenter.csproj" />
+    <ProjectReference Include="..\..\Feature.Loupe.Presenter\src\Feature.Loupe.Presenter.csproj" />
   </ItemGroup>
 
   <ItemGroup>

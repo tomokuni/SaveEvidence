@@ -22,8 +22,8 @@ using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Marquee.UIBase; // MarqueePaint（描画にだけ必要な色）
-using EsUtil.SaveEvidence.Loupe.UIBase;   // LoupeAppearance（描画にだけ必要な色）
+using EsUtil.Feature.Marquee.Presenter; // MarqueePaint（描画にだけ必要な色）
+using EsUtil.Feature.Loupe.Presenter;   // LoupeAppearance（描画にだけ必要な色）
 
 var selection = new FadeMaskDragRectControl
 {

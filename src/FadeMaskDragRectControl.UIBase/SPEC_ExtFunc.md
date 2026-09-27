@@ -67,7 +67,7 @@
 3. **操作ラベル → 情報ラベルの順**に、表示可否を満たす行だけを描きます（左端は穴あけ矩形の左端に揃う）。
 4. **表示可否は設定スイッチと文言の有無の両方**が成立したときだけ真です（対象外のモードでは文言が空になるため、
    スイッチだけでは判定できません）。
-5. 体裁（背景 = 文字の実寸 + 内側余白）は `MarqueeHostLabelRenderer` が、体裁の値（内側余白）と行送りは `MarqueePaint`（`MarqueeControl.UIBase`）が単一所有します。
+5. 体裁（背景 = 文字の実寸 + 内側余白）は `MarqueeHostLabelRenderer` が、体裁の値（内側余白）と行送りは `MarqueePaint`（`Feature.Marquee.Presenter`）が単一所有します。
 
 操作ラベル・情報ラベルは選択矩形コントロールの概念ではない（撮影オーバーレイ等へ組み込むホストが必要とする付加情報）
 ため、**文言の生成はホストが担います**。本層が単一所有するのは「どの位置へどの順に積むか」と「描くかどうか」です。
@@ -77,8 +77,8 @@
 | 依存 | 用途 |
 | --- | --- |
 | `FadeMaskDragRectControl.Core`（`EsUtil.SaveEvidence.FadeMaskDragRect`） | 設定・動作モード・モードから導出する状態の解決 |
-| `Feature.MarqueeCore` / `Feature.LoupeCore` | 内包コントロールの設定型（`MarqueeOptions` / `MarqueeDecoOptions` / `LoupeOptions` / `MarqueeDrawContent`） |
-| `MarqueeControl.UIBase` | 付加情報ラベルの体裁（`MarqueeHostLabelRenderer`） |
+| `Feature.Marquee.Core` / `Feature.Loupe.Core` | 内包コントロールの設定型（`MarqueeOptions` / `MarqueeDecoOptions` / `LoupeOptions` / `MarqueeDrawContent`） |
+| `Feature.Marquee.Presenter` | 付加情報ラベルの体裁（`MarqueeHostLabelRenderer`） |
 | Common | 描画ポート（IEsCanvas） |
 | Platform.Core | コア幾何型・値型 |
 

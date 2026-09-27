@@ -28,13 +28,13 @@ graph LR
   A[FadeMaskDragRectControl.AvaloniaUI] --> U[FadeMaskDragRectControl.UIBase]
   B[FadeMaskDragRectControl.MewUI] --> U
   U --> C[FadeMaskDragRectControl.Core]
-  U --> M[Feature.MarqueeCore]
-  U --> L[Feature.LoupeCore]
-  U --> H[MarqueeControl.UIBase]
+  U --> M[Feature.Marquee.Core]
+  U --> L[Feature.Loupe.Core]
+  U --> H[Feature.Marquee.Presenter]
   U --> P[Platform.Core]
 ```
 
-依存の向きは **UI → UIBase → Core / 各コア**の一方向です。`MarqueeControl.UIBase` は UI フレームワークを参照しない
+依存の向きは **UI → UIBase → Core / 各コア**の一方向です。`Feature.Marquee.Presenter` は UI フレームワークを参照しない
 （描画ポート `IEsCanvas` 経由で描く）ため、本層から参照しても UI 非依存性は損なわれません。
 
 ## コンポーネント構成
@@ -69,7 +69,7 @@ classDiagram
     +Resolve(mode)$ FadeMaskDragRectState
   }
   class MarqueeHostLabelRenderer {
-    <<static / MarqueeControl.UIBase>>
+    <<static / Feature.Marquee.Presenter>>
     +Draw(canvas, anchor, text, fontSize, textColor, backgroundColor, padding)$
   }
 
@@ -144,8 +144,8 @@ flowchart TD
 | 設定とモードから子の値への解決 | `FadeMaskDragRectChildValues`（本層） |
 | ハイライト矩形（実行時状態） | ホスト（本層は引数で受けるだけ） |
 | 付加情報ラベルの積み上げ位置と表示可否 | `FadeMaskHostLabelRenderer`（本層） |
-| ラベルの体裁（背景 = 実寸 + 内側余白） | `MarqueeHostLabelRenderer`（MarqueeControl.UIBase） |
-| 内側余白（体裁の値）と行送り | `MarqueePaint`（MarqueeControl.UIBase） |
+| ラベルの体裁（背景 = 実寸 + 内側余白） | `MarqueeHostLabelRenderer`（Feature.Marquee.Presenter） |
+| 内側余白（体裁の値）と行送り | `MarqueePaint`（Feature.Marquee.Presenter） |
 | 付加情報ラベルの文言 | ホスト |
 | 選択矩形の破線の幾何 | `FadeMaskDragRectOverlay`（コア） |
 

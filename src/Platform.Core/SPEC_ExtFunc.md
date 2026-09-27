@@ -79,7 +79,7 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 | `EsHorizontalAlign` | `Left` / `Center` / `Right` |
 | `EsVerticalAlign` | `Top` / `Middle` / `Bottom` |
 
-**本型は配置の規則を持ちません**（基準点と実寸から位置を求める手順は利用側が単一所有します。「背景 = 実寸 + 内側余白 × 2」の体裁とアラインの適用は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan` / `LoupeControl.UIBase` の `LoupeLabelPlan`）が担います）。
+**本型は配置の規則を持ちません**（基準点と実寸から位置を求める手順は利用側が単一所有します。「背景 = 実寸 + 内側余白 × 2」の体裁とアラインの適用は描画層（`Feature.Marquee.Presenter` の `MarqueeLabelPlan` / `Feature.Loupe.Presenter` の `LoupeLabelPlan`）が担います）。
 
 ### `LoggerFallback`（static class）
 

@@ -107,12 +107,12 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 
 | コントロール | Core | UIBase |
 | --- | --- | --- |
-| Marquee | [`Feature.MarqueeCore`](Feature.MarqueeCore/README.md) | [`MarqueeControl.UIBase`](MarqueeControl.UIBase/README.md) |
-| Loupe | [`Feature.LoupeCore`](Feature.LoupeCore/README.md) | [`LoupeControl.UIBase`](LoupeControl.UIBase/README.md) |
+| Marquee | [`Feature.Marquee.Core`](Feature.Marquee.Core/README.md) | [`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) |
+| Loupe | [`Feature.Loupe.Core`](Feature.Loupe.Core/README.md) | [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md) |
 | CaptureSession | [`CaptureSessionControl.Core`](CaptureSessionControl.Core/README.md) | [`CaptureSessionControl.UIBase`](CaptureSessionControl.UIBase/README.md) |
 | FadeMaskDragRect | [`FadeMaskDragRectControl.Core`](FadeMaskDragRectControl.Core/README.md) | [`FadeMaskDragRectControl.UIBase`](FadeMaskDragRectControl.UIBase/README.md) |
 
-FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`MarqueeControl.UIBase`](MarqueeControl.UIBase/README.md) / [`LoupeControl.UIBase`](LoupeControl.UIBase/README.md)）。
+FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) / [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md)）。
 
 UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [`MarqueeControl.MewUI`](MarqueeControl.MewUI/README.md) / [`LoupeControl.AvaloniaUI`](LoupeControl.AvaloniaUI/README.md) / [`LoupeControl.MewUI`](LoupeControl.MewUI/README.md)、
 プラットフォーム層は [`Platform.Core`](Platform.Core/README.md) / [`Platform.Skia`](Platform.Skia/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) / [`Platform.Native`](Platform.Native/README.md) を参照してください。
@@ -122,12 +122,12 @@ UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [
 | 種別 | フォルダ | 名前空間 |
 | --- | --- | --- |
 | プラットフォーム層 | `Platform.Core` / `.Native` / `.Skia` / `.AvaloniaUI` / `.MewUI` | `EsUtil.Platform.Core` / `.Native` / `.Skia` / `.AvaloniaUI` / `.MewUI` |
-| 可搬コア（機能単位） | `Feature.MarqueeCore` / `Feature.LoupeCore` | `EsUtil.Feature.MarqueeCore`（`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Session` / `.Selection` / `.Decoration`） / `EsUtil.Feature.LoupeCore`（`.Drawing` / `.Setting` / `.Logging` / `.Placement`） |
-| 製品側のコントロール | `MarqueeControl.UIBase` 等 | `EsUtil.SaveEvidence.Marquee.UIBase` 等 |
+| 可搬コア（機能単位） | `Feature.Marquee.Core` / `Feature.Loupe.Core` | `EsUtil.Feature.Marquee.Core`（`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Session` / `.Selection` / `.Decoration`） / `EsUtil.Feature.Loupe.Core`（`.Drawing` / `.Setting` / `.Logging` / `.Placement`） |
+| 製品側のコントロール | `Feature.Marquee.Presenter` 等 | `EsUtil.Feature.Marquee.Presenter` 等 |
 | アプリ | `app.Core` / `app.AvaloniaUI` / `app.MewUI` | `EsUtil.SaveEvidence`（Core と AvaloniaUI が共有） / `EsUtil.SaveEvidence.MewUI` |
 
 **コントロール系の名前空間は、フォルダ名から `Control` を除いた短縮名を使います**（例: `MarqueeControl.AvaloniaUI` → `EsUtil.SaveEvidence.Marquee.AvaloniaUI`）。これは好みではなく制約です。
 
 - 名前空間のセグメントと型名が一致すると **CS0118**（名前空間を種類として使用）になります。C# の名前解決は「外側の名前空間のメンバー（名前空間を含む）」を、`namespace` 宣言より前に書いた `using` より優先するためです。実測では `MarqueeControl` / `LoupeControl` / `ZoomViewControl` / `CropViewControl` / `ColorPickerControl` / `FadeMaskDragRectControl` / `CaptureSessionControl` の 7 型が該当します（フォルダ名をそのまま使うと、他の名前空間からこれらの型を単純名で参照できません）。
-- 短縮名にしても `Marquee` / `Loupe`（コアのファサード型）だけはセグメントと一致するため、UI 側は**別名 `using`**（`using MarqueeFacade = EsUtil.Feature.MarqueeCore.Marquee;` / `LoupeFacade` も同様）で参照します。
+- 短縮名にしても `Marquee` / `Loupe`（コアのファサード型）だけはセグメントと一致するため、UI 側は**別名 `using`**（`using MarqueeFacade = EsUtil.Feature.Marquee.Core.Marquee;` / `LoupeFacade` も同様）で参照します。
 - コアの名前空間は可搬性の単位（`EsUtil.Feature.*`）、製品側は `EsUtil.SaveEvidence.*` に置きます。`EsUtil.Platform.*` は外部パッケージに依存しない値型・抽象です。

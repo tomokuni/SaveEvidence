@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI.Logging;
-using EsUtil.SaveEvidence.Loupe.UIBase;
+using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
@@ -12,9 +12,9 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Globalization;
-using static EsUtil.Feature.LoupeCore.Loupe.Limits;
+using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
 using EsUtil.Platform.AvaloniaUI.Interop;
-using EsUtil.Feature.LoupeCore.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
 
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
@@ -29,7 +29,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// 中心周辺領域を切り出して拡大描画する（Binding 方式）。<br/>
 /// 表示は内部の <see cref="Image"/> 要素へ生成Bitmapを設定する方式に統一する。<br/>
 /// <br/>
-/// <b>描画の委譲</b>: 描画（抽出→拡大→十字線→市松→枠線）の手順は UI 非依存の描画層（<c>LoupeControl.UIBase</c>）が<br/>
+/// <b>描画の委譲</b>: 描画（抽出→拡大→十字線→市松→枠線）の手順は UI 非依存の描画層（<c>Feature.Loupe.Presenter</c>）が<br/>
 /// 本コントロールは状態（DP）とライフサイクル（ビットマップ生成/解放）に専念する。<br/>
 /// <br/>
 /// <b>再描画のバッチ化</b>: 複数プロパティの連続変更は <see cref="Dispatcher"/> へのポストにより<br/>
@@ -355,7 +355,7 @@ public sealed class LoupeControl : Panel
 
     /// <summary>表示DIPを物理ピクセルへ変換するスケーリング係数。</summary>
     /// <remarks>
-    /// 環境値（DPI）のため設定（<see cref="LoupeOptions"/>）には含めず、補正の規則はコアの <see cref="EsUtil.Feature.LoupeCore.Loupe.Limits"/> が単一所有する。
+    /// 環境値（DPI）のため設定（<see cref="LoupeOptions"/>）には含めず、補正の規則はコアの <see cref="EsUtil.Feature.Loupe.Core.Loupe.Limits"/> が単一所有する。
     /// </remarks>
     public static readonly StyledProperty<double> DipToDeviceScalingProperty =
         AvaloniaProperty.Register<LoupeControl, double>(

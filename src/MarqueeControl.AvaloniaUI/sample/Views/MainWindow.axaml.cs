@@ -9,14 +9,14 @@ using Rect = Avalonia.Rect;
 using EsUtil.SaveEvidence.Marquee.Sample.Logging;
 using EsUtil.SaveEvidence.Marquee.Sample.ViewModels;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
-using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using System.Collections.Specialized;
-using EsUtil.Feature.MarqueeCore.Drawing;
-using EsUtil.Feature.MarqueeCore.Setting;
+using EsUtil.Feature.Marquee.Core.Drawing;
+using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Marquee.Sample.Views;

@@ -1,6 +1,6 @@
 # MarqueeControl
 
-> プロジェクト名: `MarqueeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `Feature.MarqueeCore`、MewUI 版は `MarqueeControl.MewUI` にあります。
+> プロジェクト名: `MarqueeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `Feature.Marquee.Core`、MewUI 版は `MarqueeControl.MewUI` にあります。
 
 ## 目次
 
@@ -33,16 +33,16 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - 矢印キーによる1Pixel単位のキーボード微調整（nudge）
 - ドメイン座標系で正確な nudge（矢印キー1回 = ドメイン1Pixel）
 - ドラッグハンドル・始点マーカーの自己描画
-- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト（**表示ポリシーと寸法**は `DecoOptions`（`Feature.MarqueeCore` の `Decoration` 名前空間の `MarqueeDecoOptions`）が、**色**は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有し、描画内容の判断は Core（`Decoration`）が持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
+- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト（**表示ポリシーと寸法**は `DecoOptions`（`Feature.Marquee.Core` の `Decoration` 名前空間の `MarqueeDecoOptions`）が、**色**は描画層（`Feature.Marquee.Presenter` の `MarqueePaint`）が単一所有し、描画内容の判断は Core（`Decoration`）が持つ）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
 - **ハンドル表示の切替**: `Options.ShowHandles = false` でハンドルを描かず枠線と外側の装飾だけを表示する
-- **色の設定（`Paint`）**: ハンドル・十字マーカー・ラベル・装飾の色は**描画にだけ必要な設定**のためコアには含めず、描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有する。`Paint` プロパティで指定し（既定は `MarqueePaint.Default`）、部分変更は `Paint = MarqueePaint.Default with { ... }` で行う（指定しない色は既定値を保つ）。**描くかどうかは色のアルファではなく `DecoOptions` の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）が決める**
+- **色の設定（`Paint`）**: ハンドル・十字マーカー・ラベル・装飾の色は**描画にだけ必要な設定**のためコアには含めず、描画層（`Feature.Marquee.Presenter` の `MarqueePaint`）が単一所有する。`Paint` プロパティで指定し（既定は `MarqueePaint.Default`）、部分変更は `Paint = MarqueePaint.Default with { ... }` で行う（指定しない色は既定値を保つ）。**描くかどうかは色のアルファではなく `DecoOptions` の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）が決める**
 - カーソル座標ラベルの表示（任意設定・`(x, y)` 形式）
-- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeTextPlacement`）とカーソル座標ラベル（`MarqueeTextPlacement`）の**文言・寸法は Core が、色は描画層の `MarqueePaint` が単一所有**し、実寸から配置矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`FormattedText`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
+- **文字は UI 層が要素として配置する**: サイズラベル（`MarqueeTextPlacement`）とカーソル座標ラベル（`MarqueeTextPlacement`）の**文言・寸法は Core が、色は描画層の `MarqueePaint` が単一所有**し、実寸から配置矩形を求める写像は描画層（`Feature.Marquee.Presenter` の `MarqueeLabelPlan`）が単一所有し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。実寸測定は自 UI の API（`FormattedText`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - Avalonia Binding 対応の StyledProperty
 - ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
 - **閉区間描画（始点・終点を含む）**: ハンドルと外側の装飾（穴あけ枠）は終点（Right/Bottom）に +1 して DIP 変換（キャプチャの閉区間 +1 と一致。規則はコアの描画入力（`MarqueeRenderRequest.ToDipRect`）が単一所有）
-- **ホイール操作**: Ctrl+ホイールで `ZoomRequested`（方向と発生位置） / 通常ホイールで `ScrollRequested`（生の回転量）を発火します。解釈（Ctrl の判定・Shift の横変換・連携先への適用）とログは組み込みの層（`MarqueeControl.UIBase` の `MarqueeWheelInterpreter`）が単一所有します。連携 ScrollViewer（`AttachScrollViewer`）を設定した場合は適用先として登録され、本コントロールがスクロールします場合は上位 AP がスクロール先を決める
+- **ホイール操作**: Ctrl+ホイールで `ZoomRequested`（方向と発生位置） / 通常ホイールで `ScrollRequested`（生の回転量）を発火します。解釈（Ctrl の判定・Shift の横変換・連携先への適用）とログは組み込みの層（`Feature.Marquee.Presenter` の `MarqueeWheelInterpreter`）が単一所有します。連携 ScrollViewer（`AttachScrollViewer`）を設定した場合は適用先として登録され、本コントロールがスクロールします場合は上位 AP がスクロール先を決める
 - **薄い UI 層**: 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの公開ファサード（`Marquee`）が担います。本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行います
 
 ## 3. システム要件
@@ -65,9 +65,9 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 using Avalonia;
 using Avalonia.Media;                        // Colors
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
-using EsUtil.Feature.MarqueeCore.Setting; // MarqueeOptions
-using EsUtil.Feature.MarqueeCore.Decoration; // MarqueeDecoOptions
-using EsUtil.SaveEvidence.Marquee.UIBase;    // MarqueePaint
+using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions
+using EsUtil.Feature.Marquee.Core.Decoration; // MarqueeDecoOptions
+using EsUtil.Feature.Marquee.Presenter;    // MarqueePaint
 using EsUtil.Platform.Core.Coordinate;       // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;         // EsPoint / EsSize（コア提供）
 ```
@@ -169,7 +169,7 @@ dotnet run --project sample/MarqueeControl.AvaloniaUI.Sample.csproj
 ```text
 MarqueeControl/
 ├── src/
-│   ├── MarqueeControl.csproj     # 独立プロジェクト（Feature.MarqueeCore + MarqueeControl.UIBase + Platform.AvaloniaUI を参照）
+│   ├── MarqueeControl.csproj     # 独立プロジェクト（Feature.Marquee.Core + Feature.Marquee.Presenter + Platform.AvaloniaUI を参照）
 │   ├── MarqueeControl.cs         # 公開 API + 効果の適用 + 通知の転送 + ポインター入力 + 描画の起動
 │   ├── MarqueeControl.Input.cs   # キーボード入力（フォーカス非依存。コア型 EsKey への変換と通知）
 │   └── MarqueeControl.Visual.cs     内部: `Content.Layers` の順に図形を描くよう描画層（MarqueeRenderer）へ渡し、ラベル要素を配置する
@@ -181,17 +181,17 @@ MarqueeControl/
 └── tests/                         # 単体テスト（公開 API 経由）
 ```
 
-### 9.1 共有コア（`Feature.MarqueeCore`）と描画層（`MarqueeControl.UIBase`）
+### 9.1 共有コア（`Feature.Marquee.Core`）と描画層（`Feature.Marquee.Presenter`）
 
-UI 非依存の幾何計算・状態機械・入力の解釈は `src/Feature.MarqueeCore` が単一所有し、描画の手順（層の順序と描画ポートへの写し方）と色（`MarqueePaint`）は `src/MarqueeControl.UIBase` が単一所有します（Avalonia / MewUI で共有）。UI 層はアダプタ（`AvaloniaCanvas` など）とラベル要素の配置を担います。
+UI 非依存の幾何計算・状態機械・入力の解釈は `src/Feature.Marquee.Core` が単一所有し、描画の手順（層の順序と描画ポートへの写し方）と色（`MarqueePaint`）は `src/Feature.Marquee.Presenter` が単一所有します（Avalonia / MewUI で共有）。UI 層はアダプタ（`AvaloniaCanvas` など）とラベル要素の配置を担います。
 
 本コントロールの層構成（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
-Feature.MarqueeCore/
+Feature.Marquee.Core/
 ├── src/
 │   ├── Marquee.cs / Marquee.DrawContent.cs  # 公開ファサードとその partial（描画内容の解決）
-│   ├── Contract/                            # 効果の契約（IMarqueeEffects / MarqueeEffectsBase。描画の契約は MarqueeControl.UIBase が所有する）
+│   ├── Contract/                            # 効果の契約（IMarqueeEffects / MarqueeEffectsBase。描画の契約は Feature.Marquee.Presenter が所有する）
 │   ├── Drawing/                             # 描画内容の契約（MarqueeDrawContent / MarqueeDrawLayer / MarqueeTextPlacement 等）
 │   ├── Interaction/                         # 入力と通知・状態機械（MarqueeHitTarget / MarqueeInteractionState / MarqueeSnapshot / MarqueeNotice / MarqueeCursorKind / MarqueeSession / MarqueeState）
 │   ├── Setting/                             # 設定の値（MarqueeOptions）
@@ -200,9 +200,9 @@ Feature.MarqueeCore/
 │   └── Decoration/                          # 装飾（設定・外観・幾何・描画内容）
 └── tests/                                   # 単体テスト（UI 非依存・並列実行）```
 
-### 9.2 装飾（`Feature.MarqueeCore` の `Decoration` 名前空間）
+### 9.2 装飾（`Feature.Marquee.Core` の `Decoration` 名前空間）
 
-選択矩形の**外側・内側に描く装飾**（暗転マスク・穴あけ枠・ラベル・ハイライト・塗り）は、選択矩形コントロール単体の概念ではないため Core 内のサブ概念として同居します（`MarqueeDecoOptions`（設定）/ `MarqueeDrawContent`（描画内容）。詳細は同プロジェクトの `README.md`）。**色は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有します**（装飾の設定は表示可否と寸法だけを持ちます）。
+選択矩形の**外側・内側に描く装飾**（暗転マスク・穴あけ枠・ラベル・ハイライト・塗り）は、選択矩形コントロール単体の概念ではないため Core 内のサブ概念として同居します（`MarqueeDecoOptions`（設定）/ `MarqueeDrawContent`（描画内容）。詳細は同プロジェクトの `README.md`）。**色は描画層（`Feature.Marquee.Presenter` の `MarqueePaint`）が単一所有します**（装飾の設定は表示可否と寸法だけを持ちます）。
 
 ## 10. ライセンス
 

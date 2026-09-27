@@ -1,11 +1,11 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.SaveEvidence.CropView;
-using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.SaveEvidence.CaptureSession.MewUI;
 using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.SaveEvidence.Marquee.MewUI;
-using EsUtil.SaveEvidence.Marquee.UIBase;
+using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.SaveEvidence.ZoomView.MewUI;
 using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core;
@@ -18,7 +18,7 @@ using EsUtil.SaveEvidence.MewUI.Icons;
 using EsUtil.SaveEvidence.MewUI.Logging;
 using EsUtil.SaveEvidence.MewUI.Services;
 using MewUIColor = Aprillz.MewUI.Color;
-using EsUtil.Feature.MarqueeCore.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
 
 namespace EsUtil.SaveEvidence.MewUI.Views;
 

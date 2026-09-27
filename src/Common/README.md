@@ -4,13 +4,13 @@
 
 ## 目的
 
-`Platform.Core` は「**このソリューション以外でもそのまま使える型**」だけを置く層です（判定基準は後述）。描画ポートは UI 側の共有層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）の描画手順（層の順序に従う写し方）と各 UI の描画 API をつなぐ**ソリューション固有の共有契約**であるため、本プロジェクトが持ちます。
+`Platform.Core` は「**このソリューション以外でもそのまま使える型**」だけを置く層です（判定基準は後述）。描画ポートは UI 側の共有層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter`）の描画手順（層の順序に従う写し方）と各 UI の描画 API をつなぐ**ソリューション固有の共有契約**であるため、本プロジェクトが持ちます。
 
 - 描画ポート（`IEsCanvas`）を**単一所有**する。
 - **外部パッケージへ依存しない**（UI フレームワーク・Skia のいずれにも依存しない）。
 - 各コントロールのコア・UIBase・UI、および各プラットフォーム層が**同じ契約**を使うことを保証する。
 
-**ラベル専用の型は置きません**。ラベルは「文字 + 背景」の体裁（内側余白・フォントサイズ・色・角丸）と「実寸 → 配置矩形」の写像を持つため、これらは描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase` の `MarqueePaint` / `LoupePaint` と `MarqueeLabelPlan` / `LoupeLabelPlan`）が単一所有します。コアが渡すのは文言・基準点・アライン・領域（`MarqueeTextPlacement` / `LoupeTextPlacement`）だけであり、テキスト要素として置くか画像として描くかは UI 層が決めます。
+**ラベル専用の型は置きません**。ラベルは「文字 + 背景」の体裁（内側余白・フォントサイズ・色・角丸）と「実寸 → 配置矩形」の写像を持つため、これらは描画層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` の `MarqueePaint` / `LoupePaint` と `MarqueeLabelPlan` / `LoupeLabelPlan`）が単一所有します。コアが渡すのは文言・基準点・アライン・領域（`MarqueeTextPlacement` / `LoupeTextPlacement`）だけであり、テキスト要素として置くか画像として描くかは UI 層が決めます。
 
 ## 収録する型
 

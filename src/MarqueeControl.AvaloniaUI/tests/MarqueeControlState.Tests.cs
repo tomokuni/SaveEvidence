@@ -1,11 +1,11 @@
-using EsUtil.Feature.MarqueeCore.Decoration;
+using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Rect = Avalonia.Rect;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using EsUtil.Feature.MarqueeCore.Interaction;
-using EsUtil.Feature.MarqueeCore.Setting;
+using EsUtil.Feature.Marquee.Core.Interaction;
+using EsUtil.Feature.Marquee.Core.Setting;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI.Tests;
 
