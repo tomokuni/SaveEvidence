@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 /// <remarks>
 /// ビジュアルツリー接続時に TopLevel のキーイベントを購読し、切断時に解除する。<br/>
 /// 連携 ScrollViewer（スクロール・ズーム検知）は明示注入のみで設定する（暗黙の祖先探索は行わない）。<br/>
-/// 描画は UI 非依存のレンダラ（<see cref="MarqueeRenderer"/>）に委譲し、座標変換（ドメイン → DIP）はファサードの座標変換ポートに問い合わせる
+/// 描画は提示層が解決した描画計画（<see cref="MarqueeDrawPlan"/>）を自 UI の描画面へ写し、座標変換（ドメイン → DIP）はファサードの座標変換ポートに問い合わせる
 /// （描画はコアが解決した描画内容と <see cref="Options"/> を読むだけで、判断を持たない）。
 /// </remarks>
 public sealed partial class MarqueeControl
@@ -164,8 +164,8 @@ public sealed partial class MarqueeControl
     /// <summary>図形（装飾・ハンドル・始点マーカー）を描画する。</summary>
     /// <param name="context">描画コンテキスト。</param>
     /// <remarks>
-    /// <b>描画の手順は UI 非依存のレンダラが単一所有する</b>: 層の順序と描画 API への写し方は<br/>
-    /// <see cref="MarqueeRenderer"/>（<c>Feature.Marquee.Presenter</c>）が担う。本メソッドは自 UI の描画面を渡すだけである。<br/>
+    /// <b>描画の手順は提示層が単一所有する</b>: 層の順序と描画 API への写し方は描画計画（<see cref="MarqueeDrawPlan"/>）が持ち、<br/>
+    /// 本メソッドは自 UI の描画面へ写すだけである（<see cref="MarqueeContextPainter.Paint"/>）。<br/>
     /// <b>ラベルは <see cref="Border"/> + <see cref="TextBlock"/> の子要素として配置する</b>ため図形の層だけを描く<br/>
     /// （子は親より後に描かれるため常に最上位になる）。<br/>
     /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なるため描画しない（別々に描くと線幅が二重になる）。
@@ -173,22 +173,13 @@ public sealed partial class MarqueeControl
     internal void RenderShapes(DrawingContext context)
     {
         // 描画コンテキストの原点は常に自コントロールの左上（0, 0）であるため、親座標（Bounds.X/Y）は渡さない。
-        // 描画内容は配置フェーズが解決した値を共有する（未解決の場合のみ本メソッドが解決する）。
-        var content = CurrentFrame(Bounds.Size.ToEsSize());
+        // 描画計画は配置フェーズが解決した値を共有する（未解決の場合のみ本メソッドが解決する）。
+        var plan = CurrentFrame(Bounds.Size.ToEsSize());
 
-        // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序は UIBase の基底が単一所有する）
-        if (_renderer is MarqueeRendererAvaloniaUI uiRenderer)
-        {
-            uiRenderer.Draw(context, in content);
-        }
-        else
-        {
-            // 差し替えられた描画実装は描画ポート（自 UI の描画面を適合させたもの）経由で描く
-            _renderer.DrawShapes(new AvaloniaCanvas(context), in content);
-        }
+        MarqueeContextPainter.Paint(context, in plan);
 
         // 描画完了をホストへ通知する（操作・情報ラベルなどホスト固有の付加情報を描くための入口）。
-        Rendered?.Invoke(this, new MarqueeRenderedEventArgs(context, content));
+        Rendered?.Invoke(this, new MarqueeRenderedEventArgs(context, plan));
     }
 
     // ====================================================================
@@ -208,8 +199,9 @@ public sealed partial class MarqueeControl
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
-        // 描画内容は本フェーズで 1 回だけ解決し、図形の描画（RenderShapes）と共有する。
-        SyncLabels(MarqueeLabelPlan.Resolve(ResolveFrame(finalSize.ToEsSize()), Paint, MeasureText));
+        // 描画計画は本フェーズで 1 回だけ解決し、図形の描画（RenderShapes）と共有する。
+        // ラベルは描画計画が持つ配置指示（実寸を反映済み）をそのまま反映する。
+        SyncLabels(ResolveFrame(finalSize.ToEsSize()).Labels);
 
         return base.ArrangeOverride(finalSize);
     }

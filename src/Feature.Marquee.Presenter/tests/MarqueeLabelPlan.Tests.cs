@@ -7,8 +7,8 @@ namespace EsUtil.Feature.Marquee.Presenter.Tests;
 
 /// <summary><see cref="MarqueeLabelPlan"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
 /// <remarks>
-/// 文言・位置はコアが、色・フォントサイズ・内側余白は描画の設定が単一所有するため、<br/>
-/// 本テストは「実寸の反映」と「配置指示への写像」だけを検証する。
+/// 文言・位置は提示層（<see cref="MarqueePresenter"/>）が、色・フォントサイズ・内側余白は外観（<see cref="MarqueeAppearance"/>）が<br/>
+/// 単一所有するため、本テストは「実寸の反映」と「配置指示への写像」だけを検証する。<br/>
 /// <br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
@@ -16,14 +16,6 @@ public class MarqueeLabelPlanTests
 {
     /// <summary>測定に使う固定の実寸（テキストの実測値を模した値）。</summary>
     private static readonly EsSize MeasuredSize = new(42.0, 14.0);
-
-    /// <summary>テスト用の描画内容を生成する（装飾・ハンドル・マーカーは本テストの対象外のため既定値）。</summary>
-    /// <param name="sizeLabel">サイズラベルのテキスト配置。無い場合は null。</param>
-    /// <param name="coordLabel">カーソル座標ラベルのテキスト配置。無い場合は null。</param>
-    /// <returns>描画内容。</returns>
-    private static MarqueeDrawContent CreateContent(
-        MarqueeTextPlacement? sizeLabel = null, MarqueeTextPlacement? coordLabel = null)
-        => new(default, default, null, null, null, sizeLabel, coordLabel, []);
 
     /// <summary>テスト用のサイズラベルのテキスト配置を生成する（穴あけ矩形の左上へ置く）。</summary>
     /// <param name="text">文言。</param>
@@ -43,9 +35,9 @@ public class MarqueeLabelPlanTests
     /// <returns>固定の実寸。</returns>
     private static EsSize Measure(string text, double fontSize) => MeasuredSize;
 
-    /// <summary>テスト用の描画に使う設定を生成する（本テストは色とフォントサイズの写像を検証する）。</summary>
-    /// <returns>描画に使う設定。</returns>
-    private static MarqueePaint CreatePaint()
+    /// <summary>テスト用の外観を生成する（本テストは色・フォントサイズ・内側余白の写像を検証する）。</summary>
+    /// <returns>外観。</returns>
+    private static MarqueeAppearance CreateAppearance()
         => new()
         {
             SizeLabelColor = DrawingColor.White,
@@ -59,7 +51,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_ラベルが無ければ空を返す()
     {
-        var elements = MarqueeLabelPlan.Resolve(CreateContent(), CreatePaint(), Measure);
+        var elements = MarqueeLabelPlan.Resolve(null, null, CreateAppearance(), Measure);
 
         Assert.Empty(elements);
     }
@@ -67,7 +59,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_サイズラベルのみなら1件を返す()
     {
-        var elements = MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel("サイズ")), CreatePaint(), Measure);
+        var elements = MarqueeLabelPlan.Resolve(CreateSizeLabel("サイズ"), null, CreateAppearance(), Measure);
 
         var element = Assert.Single(elements);
         Assert.Equal("サイズ", element.Text);
@@ -77,7 +69,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_カーソル座標ラベルのみなら1件を返す()
     {
-        var elements = MarqueeLabelPlan.Resolve(CreateContent(coordLabel: CreateCoordLabel("(1, 2)")), CreatePaint(), Measure);
+        var elements = MarqueeLabelPlan.Resolve(null, CreateCoordLabel("(1, 2)"), CreateAppearance(), Measure);
 
         var element = Assert.Single(elements);
         Assert.Equal("(1, 2)", element.Text);
@@ -89,7 +81,7 @@ public class MarqueeLabelPlanTests
     {
         // 順序は本クラスが単一所有する（座標ラベルが手前 = 最後）
         var elements = MarqueeLabelPlan.Resolve(
-            CreateContent(sizeLabel: CreateSizeLabel("サイズ"), coordLabel: CreateCoordLabel()), CreatePaint(), Measure);
+            CreateSizeLabel("サイズ"), CreateCoordLabel(), CreateAppearance(), Measure);
 
         Assert.Equal(2, elements.Count);
         Assert.Equal("サイズ", elements[0].Text);
@@ -99,12 +91,13 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_基準点を背景の左上に置く()
     {
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), CreatePaint(), Measure));
+        var element = Assert.Single(
+            MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, CreateAppearance(), Measure));
 
         // 基準点 (10, 20) がアライン（左端・上端）どおり背景の左上になる
         Assert.Equal(new EsPoint(10, 20), element.Bounds.TopLeft);
-        Assert.Equal(MeasuredSize.Width + MarqueePaint.LabelPaddingDefault * 2, element.Bounds.Width);
-        Assert.Equal(MeasuredSize.Height + MarqueePaint.LabelPaddingDefault * 2, element.Bounds.Height);
+        Assert.Equal(MeasuredSize.Width + MarqueeAppearance.LabelPaddingDefault * 2, element.Bounds.Width);
+        Assert.Equal(MeasuredSize.Height + MarqueeAppearance.LabelPaddingDefault * 2, element.Bounds.Height);
     }
 
     [Fact]
@@ -114,27 +107,28 @@ public class MarqueeLabelPlanTests
         var label = new MarqueeTextPlacement(
             "(50, 60)", new EsPoint(190, 195), EsHorizontalAlign.Left, EsVerticalAlign.Top, new EsSize(200, 200));
 
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(coordLabel: label), CreatePaint(), Measure));
+        var element = Assert.Single(MarqueeLabelPlan.Resolve(null, label, CreateAppearance(), Measure));
 
-        Assert.Equal(200 - (MeasuredSize.Width + MarqueePaint.LabelPaddingDefault * 2), element.Bounds.X);
-        Assert.Equal(200 - (MeasuredSize.Height + MarqueePaint.LabelPaddingDefault * 2), element.Bounds.Y);
+        Assert.Equal(200 - (MeasuredSize.Width + MarqueeAppearance.LabelPaddingDefault * 2), element.Bounds.X);
+        Assert.Equal(200 - (MeasuredSize.Height + MarqueeAppearance.LabelPaddingDefault * 2), element.Bounds.Y);
     }
 
     [Fact]
     public void Resolve_内側余白は体裁の値になる()
     {
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), CreatePaint(), Measure));
+        var element = Assert.Single(
+            MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, CreateAppearance(), Measure));
 
-        Assert.Equal(MarqueePaint.LabelPaddingDefault, element.PaddingX);
-        Assert.Equal(MarqueePaint.LabelPaddingDefault, element.PaddingY);
+        Assert.Equal(MarqueeAppearance.LabelPaddingDefault, element.PaddingX);
+        Assert.Equal(MarqueeAppearance.LabelPaddingDefault, element.PaddingY);
     }
 
     [Fact]
     public void Resolve_内側余白の設定を配置へ反映する()
     {
-        var paint = CreatePaint() with { LabelPadding = 7.0 };
+        var appearance = CreateAppearance() with { LabelPadding = 7.0 };
 
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), paint, Measure));
+        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, appearance, Measure));
 
         Assert.Equal(7.0, element.PaddingX);
         Assert.Equal(MeasuredSize.Width + 14.0, element.Bounds.Width);
@@ -146,8 +140,9 @@ public class MarqueeLabelPlanTests
         var calls = new List<(string Text, double FontSize)>();
 
         MarqueeLabelPlan.Resolve(
-            CreateContent(sizeLabel: CreateSizeLabel("サイズ"), coordLabel: CreateCoordLabel("(7, 8)")),
-            CreatePaint(),
+            CreateSizeLabel("サイズ"),
+            CreateCoordLabel("(7, 8)"),
+            CreateAppearance(),
             (text, fontSize) =>
             {
                 calls.Add((text, fontSize));
@@ -160,9 +155,10 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_色を要素へ写す()
     {
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(coordLabel: CreateCoordLabel()), CreatePaint(), Measure));
+        var element = Assert.Single(
+            MarqueeLabelPlan.Resolve(null, CreateCoordLabel(), CreateAppearance(), Measure));
 
-        // 色は描画の設定（本層が単一所有する）から写す
+        // 色は外観（本層が単一所有する）から写す
         Assert.Equal(DrawingColor.Yellow, element.TextColor);
         Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), element.BackgroundColor);
     }
@@ -171,13 +167,13 @@ public class MarqueeLabelPlanTests
     public void Resolve_測定関数がnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(
-            () => MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), CreatePaint(), null!));
+            () => MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, CreateAppearance(), null!));
     }
 
     [Fact]
-    public void Resolve_色がnullなら例外()
+    public void Resolve_外観がnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(
-            () => MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), null!, Measure));
+            () => MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, null!, Measure));
     }
 }

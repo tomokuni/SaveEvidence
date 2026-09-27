@@ -1,5 +1,4 @@
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Loupe.Core.Setting;
 
@@ -11,18 +10,13 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 /// 複合コントロール固有の設定（選択矩形破線の色・ルーペのオフセット）をまとめて所有する。<br/>
 /// UI 層は本値を 1 プロパティとして公開するだけであり、既定値・項目の対応・子コントロールへの分配規則を持たない<br/>
 /// （値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず同じ結果になる）。<br/>
-/// <br/>
-/// <b>装飾は別の値が単一所有する</b>: 暗転マスク・穴あけ枠・ラベル（サイズ・操作・情報）の外観は<br/>
-/// <see cref="Deco"/>（<see cref="MarqueeDecoOptions"/>）が持ち、選択の設定（<see cref="Marquee"/>）とは分けている<br/>
-/// （装飾は選択コントロール単体の概念ではなく、コントロールを撮影オーバーレイ等へ組み込むときの表示のため）。<br/>
-/// <br/>
 /// <b>実行時状態</b>（選択矩形・ハイライト矩形・ルーペ中心・拡大元画像）と<b>環境値</b>（DPI スケーリング）は<br/>
 /// 本値に含めない（モード・ホストの結線・DPI から決まる値のため）。
 /// </remarks>
 public sealed record FadeMaskDragRectOptions
 {
     /// <summary>既定の設定を取得する。</summary>
-    /// <value>各内包コントロールの既定値（<see cref="MarqueeOptions.Default"/> / <see cref="MarqueeDecoOptions.Default"/> / <see cref="LoupeOptions.Default"/>）と複合コントロール固有の既定値。</value>
+    /// <value>各内包コントロールの既定値（<see cref="MarqueeOptions.Default"/> / <see cref="LoupeOptions.Default"/>）と複合コントロール固有の既定値。</value>
     /// <remarks>既定値は各コア層の型が単一所有する（UI 層・ホストに既定値の写しを置かない）。</remarks>
     public static FadeMaskDragRectOptions Default { get; } = new();
 
@@ -30,11 +24,6 @@ public sealed record FadeMaskDragRectOptions
     /// <value>選択矩形の外観・対話パラメータ。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>設定は 1 回の代入で子コントロールへ分配される（項目ごとの写し替えを行わない）。</remarks>
     public MarqueeOptions Marquee { get; init; } = MarqueeOptions.Default;
-
-    /// <summary>装飾（暗転マスク・穴あけ枠・ラベル）の設定を取得する。</summary>
-    /// <value>装飾の外観・表示ポリシー・ハイライト。既定は <see cref="MarqueeDecoOptions.Default"/>。</value>
-    /// <remarks>選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なって描画されるため、枠線の色・太さは本値（外側の装飾の外観）が単一所有する。</remarks>
-    public MarqueeDecoOptions Deco { get; init; } = MarqueeDecoOptions.Default;
 
     /// <summary>ホスト固有の付加情報（操作ラベル・情報ラベル）の外観を取得する。</summary>
     /// <value>操作・情報ラベルの表示可否・寸法・色。既定は <see cref="FadeMaskDragRectLabelOptions.Default"/>。</value>

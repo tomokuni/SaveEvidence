@@ -427,33 +427,34 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>ハイライト矩形（ドメイン座標）。未検出時は null。</summary>
     /// <remarks>
-    /// 選択矩形コントロールの装飾の設定へ委譲する（変更は自動で再描画される）。<br/>
+    /// 選択矩形コントロールのハイライト矩形（実行時状態）へ委譲する（変更は自動で再描画される）。<br/>
     /// <b>null が「ハイライトしない」を意味する</b>（有効フラグは持たない。ハイライトをやめる場合は null にする）。
     /// </remarks>
     public Rect? LogicalHighlightRect
     {
-        get => _marquee.DecoOptions.OuterHighlightRect?.ToAvaloniaRect();
-        set => _marquee.DecoOptions = _marquee.DecoOptions with { OuterHighlightRect = value?.ToEsRect() };
+        get => _marquee.HighlightRect?.ToAvaloniaRect();
+        set => _marquee.HighlightRect = value?.ToEsRect();
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
-    /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ。</remarks>
-    public bool ShowFullOverlay => _marquee.DecoOptions.OuterShowFullOverlay;
+    /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ（外観の表示可否を参照する）。</remarks>
+    public bool ShowFullOverlay => _marquee.Appearance.ShowFullOverlay;
 
     // ====================================================================
     // 公開 API: 描画に使う色
     // ====================================================================
 
-    /// <summary>選択矩形コントロールの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
-    /// <value>色の単一値。既定は <see cref="MarqueePaint.Default"/>。</value>
+    /// <summary>選択矩形コントロールの外観（描画にだけ必要な設定）を取得または設定する。</summary>
+    /// <value>外観の単一値。既定は <see cref="MarqueeAppearance.Default"/>。</value>
     /// <remarks>
-    /// 色はコアの計算に入らない（描画にだけ必要）ため、設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
+    /// 色・ラベル体裁・表示可否・枠線の太さはコアの計算に入らない（描画にだけ必要）ため、<br/>
+    /// 設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
     /// 内包する選択矩形コントロールへそのまま転送する。
     /// </remarks>
-    public MarqueePaint MarqueePaint
+    public MarqueeAppearance MarqueeAppearance
     {
-        get => _marquee.Paint;
-        set => _marquee.Paint = value;
+        get => _marquee.Appearance;
+        set => _marquee.Appearance = value;
     }
 
     /// <summary>ルーペの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
@@ -483,11 +484,11 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void ApplyOptions()
     {
-        // ハイライト矩形は実行時状態のため、現在値を渡して引き継ぐ（設定の差し替えで失わない）
-        var values = FadeMaskDragRectChildValues.Resolve(_options, _mode, _marquee.DecoOptions.OuterHighlightRect);
+        // ハイライト矩形は実行時状態のため子コントロールが保持する（設定の差し替えで失わない）
+        var values = FadeMaskDragRectChildValues.Resolve(_options, _mode, _marquee.Appearance);
 
         _marquee.Options = values.Marquee;
-        _marquee.DecoOptions = values.Deco;
+        _marquee.Appearance = values.MarqueeAppearance;
         _loupeControl.Options = values.Loupe;
         // 表示位置のオフセットはフレームワーク差（Avalonia 版のルーペは自己配置する）のため、
         // 設定に含まれる値からルーペのプロパティへ個別に渡す
@@ -538,7 +539,7 @@ public sealed class FadeMaskDragRectControl : Panel
             new AvaloniaCanvas(e.Context),
             e.Content,
             _options.Labels,
-            MarqueePaint,
+            MarqueeAppearance,
             OperationTextProvider?.Invoke(),
             InfoTextProvider?.Invoke());
 

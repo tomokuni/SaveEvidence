@@ -9,7 +9,6 @@ using Rect = Avalonia.Rect;
 using EsUtil.SaveEvidence.Marquee.Sample.Logging;
 using EsUtil.SaveEvidence.Marquee.Sample.ViewModels;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -170,22 +169,16 @@ public partial class MainWindow : Window
     /// <summary>ViewModel の設定プロパティを MarqueeControl へ反映する。</summary>
     private void ApplyControlSettings()
     {
-        // 選択枠線は装飾（暗転マスクの穴あけ枠）が描くため、枠線の色は描画の設定へ、太さは装飾の外観へ与える
+        // 選択枠線は装飾（暗転マスクの穴あけ枠）が描くため、色は外観へ、太さも外観（枠線の太さ）へ与える
         // （ハンドルの枠線も同じ色に揃える。両者は同じ矩形に重なる）
         var borderColor = _vm.BorderColorOption.Color.ToDrawingColor();
-        Marquee.Paint = Marquee.Paint with
+        Marquee.Appearance = Marquee.Appearance with
         {
             OuterBorderColor = borderColor,
+            OuterBorderThickness = _vm.BorderThickness,
             HandleColor = _vm.HandleColorOption.Color.ToDrawingColor(),
             HandleBorderColor = borderColor,
             MarkerColor = _vm.MarkerColorOption.Color.ToDrawingColor(),
-        };
-        Marquee.DecoOptions = MarqueeDecoOptions.Default with
-        {
-            OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
-            {
-                BorderThickness = _vm.BorderThickness,
-            },
         };
         Marquee.Options = new MarqueeOptions
         {
@@ -295,7 +288,7 @@ public partial class MainWindow : Window
     /// <remarks>
     /// サイズラベルとカーソル座標ラベルはコントロールがテキスト要素として配置するため、本ハンドラは何もしない。<br/>
     /// ホスト固有の付加情報（操作ラベル等）を描く場合は本ハンドラで <see cref="MarqueeRenderedEventArgs.Content"/> の<br/>
-    /// <see cref="MarqueeDrawContent.HoleRect"/> を基準に描く。
+    /// <see cref="MarqueeDrawPlan.HoleRect"/> を基準に描く。
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
     {

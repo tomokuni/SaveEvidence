@@ -252,32 +252,6 @@ public class MarqueeTests
         Assert.Equal(0, effects.RedrawCount);
     }
 
-    /// <summary>表示スケーリングが 0 以下の場合は倍率と同値になることを検証する。</summary>
-    /// <param name="displayScale">指定する表示スケーリング。</param>
-    [Theory]
-    [InlineData(0.0)]
-    [InlineData(-1.0)]
-    public void DisplayScaleScaling_0以下は倍率と同値になる(double displayScale)
-    {
-        var marquee = CreateMarquee(null, out _);
-        marquee.DomainToDipScaling = 1.25;
-
-        marquee.DisplayScaleScaling = displayScale;
-
-        Assert.Equal(1.25, marquee.DisplayScaleScaling);
-    }
-
-    [Fact]
-    public void DisplayScaleScaling_正の値はそのまま保持する()
-    {
-        var marquee = CreateMarquee(null, out _);
-        marquee.DomainToDipScaling = 1.25;
-
-        marquee.DisplayScaleScaling = 2.0;
-
-        Assert.Equal(2.0, marquee.DisplayScaleScaling);
-    }
-
     // ====================================================================
     // 環境値（座標変換ポート）
     // ====================================================================
@@ -306,90 +280,6 @@ public class MarqueeTests
         Assert.Equal(new EsPoint(5, 10), marquee.ToDomain(new EsPoint(10, 20)));
         Assert.Equal(new EsPoint(20, 40), marquee.ToDip(new EsPoint(10, 20)));
         Assert.Contains("redraw", effects.Calls);
-    }
-
-    // ====================================================================
-    // 描画内容（1 フレーム分）
-    // ====================================================================
-
-    [Fact]
-    public void ResolveContent_選択なしではハンドルとラベルを返さない()
-    {
-        // 座標ラベルは既定で表示されるため、ここでは明示的に無効化して「選択なしの結果」を見る
-        var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ShowCoordLabel = false });
-
-        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
-
-        Assert.Null(content.Handles);
-        Assert.Null(content.Marker);
-        Assert.Null(content.CoordLabelText);
-        Assert.False(content.HasText);
-    }
-
-    [Fact]
-    public void ResolveContent_選択ありではハンドルを返す()
-    {
-        var marquee = CreateMarquee(null, out _);
-        marquee.SetSelection(new EsRect(10, 20, 100, 50));
-
-        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
-
-        // ハンドル矩形は選択領域の閉区間（終点 +1）の左上を中心に置く（描画層は結果を使うだけ）
-        Assert.NotNull(content.Handles);
-        Assert.Equal(8, content.Handles!.Value.Rects.Count);
-        Assert.Equal(new EsRect(5, 15, 10, 10), content.Handles!.Value.Rects[0]);
-    }
-
-    [Fact]
-    public void ResolveContent_設定でハンドルを隠すとnullになる()
-    {
-        var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ShowHandles = false });
-        marquee.SetSelection(new EsRect(10, 20, 100, 50));
-
-        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
-
-        Assert.Null(content.Handles);
-    }
-
-    [Fact]
-    public void ResolveContent_座標ラベルは設定とマウス位置から解決する()
-    {
-        var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ShowCoordLabel = true });
-        marquee.Move(new EsPoint(30, 40));
-
-        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
-
-        Assert.NotNull(content.CoordLabelText);
-        Assert.Equal("(30, 40)", content.CoordLabelText!.Value.Text);
-        Assert.True(content.HasText);
-    }
-
-    [Fact]
-    public void ResolveContent_座標変換ポートを描画内容へ適用する()
-    {
-        var marquee = CreateMarquee(null, out _);
-        // Inverse（ドメイン → DIP）は 2 倍
-        marquee.SetCoordinateTransform(new CoordTransform(
-            p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
-        marquee.SetSelection(new EsRect(10, 20, 100, 50));
-
-        // 描画領域のサイズは使わない（座標変換ポートだけが結果に影響する）ため既定値で解決する
-        var content = marquee.ResolveContent(marquee.CreateRequest(default));
-
-        // 選択領域は閉区間（終点 +1）で変換されるため、左上ハンドルは (15, 35) から始まる
-        Assert.Equal(new EsRect(15, 35, 10, 10), content.Handles!.Value.Rects[0]);
-    }
-
-    [Fact]
-    public void ResolveContent_選択矩形の大きさを座標ラベルのクランプへ渡す()
-    {
-        var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ShowCoordLabel = true });
-        marquee.Move(new EsPoint(30, 40));
-
-        var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
-
-        // 描画領域のサイズは座標ラベルの位置クランプに使う（領域外へ出さない）
-        Assert.Equal(new EsSize(200, 100), content.CoordLabelText!.Value.ClampArea);
     }
 
     // ====================================================================
@@ -546,57 +436,23 @@ public class MarqueeTests
             logger.Messages);
     }
 
-    /// <summary>環境値（表示スケーリング）の変更が変化したときだけ記録されることを検証する。</summary>
+    /// <summary>ハイライト矩形の変更が有無の変化だけ記録されることを検証する。</summary>
+    /// <remarks>矩形は操作中に高頻度で変化しうるため、記録するのは有無の変化だけである（座標の値自体は記録しない）。</remarks>
     [Fact]
-    public void DisplayScaleScaling_変更したときだけ記録する()
+    public void HighlightRect_有無の変化だけ記録する()
     {
         var marquee = CreateMarquee(null, out _);
         var logger = new RecordingLogger();
         marquee.Log = logger;
 
-        marquee.DisplayScaleScaling = 1.5;
-        marquee.DisplayScaleScaling = 1.5;   // 同値
-
-        // 記録するのは実際に使われる値（未設定（0）は倍率（1.0）へ解決された後の値）
-        Assert.Equal("[Feature.Marquee.Core] Setting: DisplayScaleScaling 1 → 1.5", Assert.Single(logger.Messages));
-    }
-
-    /// <summary>装飾の設定の変更が変化した項目だけ記録されることを検証する。</summary>
-    [Fact]
-    public void DecoOptions_変更した項目だけ記録する()
-    {
-        var marquee = CreateMarquee(null, out _);
-        var logger = new RecordingLogger();
-        marquee.Log = logger;
-
-        marquee.DecoOptions = marquee.DecoOptions with { ShowInnerFill = true, ShowOverlay = false };
-        marquee.DecoOptions = marquee.DecoOptions;   // 同値
+        marquee.HighlightRect = new EsRect(1, 2, 3, 4);
+        marquee.HighlightRect = new EsRect(5, 6, 7, 8);   // どちらも非 null（有無は変わらない）
+        marquee.HighlightRect = null;
 
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: ShowOverlay True → False",
-                "[Feature.Marquee.Core] Setting: ShowInnerFill False → True",
-            ],
-            logger.Messages);
-    }
-
-    /// <summary>デリゲートの設定が有無の変化だけ記録されることを検証する。</summary>
-    /// <remarks>デリゲートは値の比較ができないため、差し替えの有無だけを記録する。</remarks>
-    [Fact]
-    public void SizeLabelOverrideProvider_有無の変化だけ記録する()
-    {
-        var marquee = CreateMarquee(null, out _);
-        var logger = new RecordingLogger();
-        marquee.Log = logger;
-
-        marquee.SizeLabelOverrideProvider = () => "S";
-        marquee.SizeLabelOverrideProvider = () => "S2";   // 差し替え（有無は変わらない）
-        marquee.SizeLabelOverrideProvider = null;
-
-        Assert.Equal(
-            [
-                "[Feature.Marquee.Core] Setting: SizeLabelOverrideProvider False → True",
-                "[Feature.Marquee.Core] Setting: SizeLabelOverrideProvider True → False",
+                "[Feature.Marquee.Core] Setting: HighlightRect False → True",
+                "[Feature.Marquee.Core] Setting: HighlightRect True → False",
             ],
             logger.Messages);
     }

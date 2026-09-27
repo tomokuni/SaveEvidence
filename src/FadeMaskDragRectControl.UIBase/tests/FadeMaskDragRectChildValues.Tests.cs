@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Loupe.Core.Setting;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
@@ -13,15 +14,19 @@ public class FadeMaskDragRectChildValuesTests
     /// <returns>既定の設定。</returns>
     private static FadeMaskDragRectOptions CreateOptions() => FadeMaskDragRectOptions.Default;
 
+    /// <summary>検証用の外観を生成する（ホストが与えた現在値の想定）。</summary>
+    /// <returns>既定の外観。</returns>
+    private static MarqueeAppearance CreateAppearance() => MarqueeAppearance.Default;
+
     [Theory]
     [InlineData(FadeMaskDragRectMode.Crop)]
     [InlineData(FadeMaskDragRectMode.AreaSelect)]
     public void 解決_選択矩形を使うモードでは全面暗転とハンドルと入力を有効にする(FadeMaskDragRectMode mode)
     {
-        var values = FadeMaskDragRectChildValues.Resolve(CreateOptions(), mode, null);
+        var values = FadeMaskDragRectChildValues.Resolve(CreateOptions(), mode, CreateAppearance());
 
-        Assert.True(values.Deco.OuterShowFullOverlay);
-        Assert.True(values.Marquee.ShowHandles);
+        Assert.True(values.MarqueeAppearance.ShowFullOverlay);
+        Assert.True(values.MarqueeAppearance.ShowHandles);
         Assert.True(values.IsHitTestVisible);
     }
 
@@ -30,11 +35,11 @@ public class FadeMaskDragRectChildValuesTests
     [InlineData(FadeMaskDragRectMode.WindowSelect)]
     public void 解決_選択矩形を使わないモードではハンドルと入力を無効にする(FadeMaskDragRectMode mode)
     {
-        var values = FadeMaskDragRectChildValues.Resolve(CreateOptions(), mode, null);
+        var values = FadeMaskDragRectChildValues.Resolve(CreateOptions(), mode, CreateAppearance());
 
         // ハイライトのみのモードでも暗転マスクは描画する（全面暗転は行わない）
-        Assert.False(values.Deco.OuterShowFullOverlay);
-        Assert.False(values.Marquee.ShowHandles);
+        Assert.False(values.MarqueeAppearance.ShowFullOverlay);
+        Assert.False(values.MarqueeAppearance.ShowHandles);
         Assert.False(values.IsHitTestVisible);
     }
 
@@ -43,23 +48,33 @@ public class FadeMaskDragRectChildValuesTests
     [Fact]
     public void 解決_未定義のモードは選択矩形を使わない扱いになる()
     {
-        var values = FadeMaskDragRectChildValues.Resolve(CreateOptions(), (FadeMaskDragRectMode)999, null);
+        var values = FadeMaskDragRectChildValues.Resolve(CreateOptions(), (FadeMaskDragRectMode)999, CreateAppearance());
 
-        Assert.False(values.Marquee.ShowHandles);
+        Assert.False(values.MarqueeAppearance.ShowHandles);
         Assert.False(values.IsHitTestVisible);
     }
 
+    /// <summary>ホストが与えた外観を保ち、モードから導出する項目だけを上書きすることを検証する。</summary>
+    /// <remarks>ハイライト矩形は実行時状態のため本値に含めない（子コントロールが現在値を持ち続ける）。</remarks>
     [Fact]
-    public void 解決_ハイライト矩形は引数の値が反映される()
+    public void 解決_外観は指定した値を保つ()
     {
-        var highlight = new EsRect(10, 20, 30, 40);
+        var appearance = MarqueeAppearance.Default with { OverlayColor = System.Drawing.Color.Red, ShowSizeLabel = false };
 
-        Assert.Equal(highlight, FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.Crop, highlight).Deco.OuterHighlightRect);
-        Assert.Null(FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.Crop, null).Deco.OuterHighlightRect);
+        var values = FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.Crop, appearance);
+
+        Assert.Equal(System.Drawing.Color.Red, values.MarqueeAppearance.OverlayColor);
+        Assert.False(values.MarqueeAppearance.ShowSizeLabel);
     }
 
+    /// <summary>外観が null の場合は例外になることを検証する。</summary>
+    [Fact]
+    public void 解決_外観がnullなら例外()
+        => Assert.Throws<ArgumentNullException>(
+            () => FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.Crop, null!));
+
     /// <summary>設定の値がそのまま写されることを検証する。</summary>
-    /// <remarks>設定の差し替えで実行時状態（ハイライト矩形）以外は失われないことを確認する。</remarks>
+    /// <remarks>設定の差し替えで実行時状態（外観・ハイライト矩形）を失わないことを確認する。</remarks>
     [Fact]
     public void 解決_設定の値はそのまま写される()
     {
@@ -70,7 +85,7 @@ public class FadeMaskDragRectChildValuesTests
             LoupeOffset = 32.0,
         };
 
-        var values = FadeMaskDragRectChildValues.Resolve(options, FadeMaskDragRectMode.Crop, null);
+        var values = FadeMaskDragRectChildValues.Resolve(options, FadeMaskDragRectMode.Crop, CreateAppearance());
 
         // 寸法は設定の値を保ち、モードから導出する項目（ハンドルの表示可否）だけが上書きされる
         Assert.Equal(14.0, values.Marquee.HandleSize);
@@ -82,10 +97,10 @@ public class FadeMaskDragRectChildValuesTests
     [Fact]
     public void 等価性は値で判定される()
     {
-        var a = FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.Crop, null);
-        var b = FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.Crop, null);
+        var a = FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.Crop, CreateAppearance());
+        var b = FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.Crop, CreateAppearance());
 
         Assert.Equal(a, b);
-        Assert.NotEqual(a, FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.WindowSelect, null));
+        Assert.NotEqual(a, FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.WindowSelect, CreateAppearance()));
     }
 }

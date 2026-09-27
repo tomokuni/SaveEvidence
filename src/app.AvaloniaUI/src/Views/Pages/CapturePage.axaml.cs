@@ -21,7 +21,6 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.SaveEvidence.CropView;
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Geometry;
@@ -1003,25 +1002,35 @@ public sealed partial class CapturePage : UserControl
     /// <summary>自動切り出しの矩形枠線の太さ（DIP）。</summary>
     private const double AutoCropStrokeThickness = 2.0;
 
-    /// <summary>自動切り出しのホバー強調に使う色（内側の塗りと枠線）。</summary>
-    /// <remarks>色は描画にだけ必要な設定であるため、描画の設定（<see cref="MarqueePaint"/>）が単一所有する。</remarks>
-    private static readonly MarqueePaint s_autoCropHighlightPaint = new()
+    /// <summary>自動切り出しのホバー強調に使う外観（内側の塗りと枠線）。</summary>
+    /// <remarks>色・枠線の太さ・表示可否は描画にだけ必要な設定であるため、外観（<see cref="MarqueeAppearance"/>）が単一所有する。</remarks>
+    private static readonly MarqueeAppearance s_autoCropHighlightAppearance = MarqueeAppearance.Default with
     {
+        ShowSizeLabel = false,
+        ShowCoordLabel = false,
+        ShowOverlay = false,
+        ShowOuterBorder = false,
+        ShowInnerFill = true,
+        ShowInnerBorder = true,
         InnerFillColor = s_autoCropHoverFillColor,
         InnerBorderColor = s_autoCropHoverBorderColor,
+        InnerBorderThickness = AutoCropStrokeThickness,
     };
 
-    /// <summary>自動切り出しの内側の装飾（ホバー強調の枠線）の寸法。</summary>
-    private static readonly MarqueeInnerDecoAppearance s_autoCropHighlightAppearance = new()
+    /// <summary>自動切り出しで強調しないときの外観（枠線も内側の塗りもラベルも描かない）。</summary>
+    private static readonly MarqueeAppearance s_autoCropIdleAppearance = MarqueeAppearance.Default with
     {
-        BorderThickness = AutoCropStrokeThickness,
+        ShowSizeLabel = false,
+        ShowCoordLabel = false,
+        ShowOverlay = false,
+        ShowOuterBorder = false,
     };
 
     /// <summary>自動切り出しの矩形オーバーレイ（枠線とホバー強調）を現在のビューポート状態に合わせて更新する。</summary>
     /// <remarks>
     /// 1. 検出矩形の枠線は <see cref="CropViewControl.Rects"/> へ<b>ドメイン座標</b>で渡す（座標変換は CropView が単一所有する）。<br/>
     /// 2. ホバー中の 1 件は <see cref="CropViewControl.Rects"/> から外し、<see cref="AutoCropHighlight"/>（Marquee）の<br/>
-    ///    ハイライト矩形 + 内側の装飾（<see cref="MarqueeInnerDecoAppearance"/>）で「枠線 + 半透明の塗り」として強調する<br/>
+    ///    ハイライト矩形 + 内側の外観（<see cref="MarqueeAppearance"/>）で「枠線 + 半透明の塗り」として強調する<br/>
     ///    （ハイライト矩形は DIP 座標で渡す。Marquee の座標変換ポートは未指定・倍率 1 のため等価変換になる）。<br/>
     /// 3. 自動切り出しが無効な場合はハイライトを消し、矩形の一覧も空にする。
     /// </remarks>
@@ -1040,9 +1049,9 @@ public sealed partial class CapturePage : UserControl
 
         if (hovered is not { } target)
         {
-            // ハイライトなし（外側・内側とも描かない。サイズラベルも表示しない）
-            AutoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
-            AutoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with { ShowOverlay = false, ShowOuterBorder = false };
+            // ハイライトなし（外側・内側とも描かない。サイズ・座標ラベルも表示しない）
+            AutoCropHighlight.Appearance = s_autoCropIdleAppearance;
+            AutoCropHighlight.HighlightRect = null;
             return;
         }
 
@@ -1050,18 +1059,9 @@ public sealed partial class CapturePage : UserControl
         var topLeft = ContentToViewportDomain(new Point(target.X, target.Y));
         var bottomRight = ContentToViewportDomain(new Point(target.Right, target.Bottom));
 
-        AutoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
-        AutoCropHighlight.Paint = s_autoCropHighlightPaint;
-        AutoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with
-        {
-            ShowOverlay = false,
-            ShowOuterBorder = false,
-            ShowInnerFill = true,
-            ShowInnerBorder = true,
-            OuterHighlightRect = new EsRect(
-                topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y),
-            InnerAppearance = s_autoCropHighlightAppearance,
-        };
+        AutoCropHighlight.Appearance = s_autoCropHighlightAppearance;
+        AutoCropHighlight.HighlightRect = new EsRect(
+            topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 
     /// <summary>自動切り出し中に、ポインタ位置（ドメイン座標）の検出矩形をホバーとして設定する。</summary>

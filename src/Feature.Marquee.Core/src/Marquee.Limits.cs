@@ -125,8 +125,11 @@ public sealed partial class Marquee
         /// <param name="displayScaling">指定された表示スケール。0 以下は未指定として扱う。</param>
         /// <param name="domainToDipScaling">座標換算の係数（1.0 未満は 1.0 として扱う）。</param>
         /// <returns>解決した表示スケール。</returns>
-        /// <remarks>「0 以下は未指定」という規則を単一所有する（UI 層に同じ三項演算を書かせない）。</remarks>
-        internal static double ResolveDisplayScale(double displayScaling, double domainToDipScaling)
+        /// <remarks>
+        /// 「0 以下は未指定」という規則を単一所有する（UI 層に同じ三項演算を書かせない）。<br/>
+        /// サイズラベルの文言（描画層が生成する）も本規則を使うため public とする。
+        /// </remarks>
+        public static double ResolveDisplayScale(double displayScaling, double domainToDipScaling)
             => displayScaling > 0 ? displayScaling : DpiScaler.NormalizeScaling(domainToDipScaling);
 
         /// <summary>実数を安全域へ補正する（非有限は既定値へ戻す）。</summary>

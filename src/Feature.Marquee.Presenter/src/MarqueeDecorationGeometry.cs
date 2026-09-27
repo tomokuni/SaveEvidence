@@ -1,29 +1,24 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Core.Drawing;
 
-namespace EsUtil.Feature.Marquee.Core.Decoration;
+namespace EsUtil.Feature.Marquee.Presenter;
 
-/// <summary>装飾（選択矩形の外側・内側）の幾何計算（純粋関数）。</summary>
+/// <summary>選択矩形の外側・内側に描く装飾（暗転マスク・枠線・内側の塗り）の矩形計算ロジック（純粋関数）。</summary>
 /// <remarks>
 /// 暗転領域（穴あけ矩形を除いた 4 帯）と枠線の 4 矩形の計算を単一所有する。<br/>
-/// 選択矩形の外側を描く <see cref="MarqueeOuterDecoFrame"/> と内側を描く <see cref="MarqueeInnerDecoFrame"/> が共用するため、<br/>
+/// 穴あけ矩形（DIP・閉区間解決済み）はコアが単一所有するため、本クラスは「与えられた矩形から何を描くか」だけを計算する。<br/>
 /// 「枠線はどの 4 矩形か」「どの太さを下限とするか」の規則が 2 箇所へ分かれない。<br/>
-/// 穴あけ矩形の決定と論理座標から DIP への変換はフレーム全体の関心事のため <see cref="MarqueeRenderRequest"/> が持つ。<br/>
-/// 各 UI 実装は返された <see cref="EsRect"/> を自身の描画 API へ渡すだけにする。<br/>
-/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
-/// <b>可視性</b>: 描画内容の判断は各フレームの解決が担うため、本クラスは内部実装とする
-/// （UI 実装は返されたフレームを描くだけで、幾何計算を直接呼ばない）。
+/// 太さの補正は外観（<c>MarqueeAppearance</c>）の生成時に適用される。<br/>
+/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class MarqueeDecoGeometry
+internal static class MarqueeDecorationGeometry
 {
-    /// <summary>選択矩形の四辺に描く枠線の矩形を計算する。</summary>
-    /// <param name="rect">選択矩形（DIP 座標）。</param>
-    /// <param name="thickness">枠線の太さ（DIP）。補正済みの値を渡す（安全域は <see cref="Marquee.Limits"/> が単一所有する）。</param>
+    /// <summary>矩形の四辺に描く枠線の矩形を計算する。</summary>
+    /// <param name="rect">対象の矩形（DIP 座標）。</param>
+    /// <param name="thickness">枠線の太さ（DIP）。補正済みの値を渡す（安全域は <c>Marquee.Limits</c> が単一所有する）。</param>
     /// <returns>上・下・左・右の順の枠線矩形（4 個）。</returns>
     /// <remarks>
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの枠線と同じ式）。<br/>
-    /// 太さは矩形の短辺で上限を取る（短辺より太い枠線は矩形全体を覆い、矩形からはみ出さない）。<br/>
-    /// 太さの補正は装飾の外観（<c>MarqueeOuterDecoAppearance</c> / <c>MarqueeInnerDecoAppearance</c>）の生成時に適用される。
+    /// 太さは矩形の短辺で上限を取る（短辺より太い枠線は矩形全体を覆い、矩形からはみ出さない）。
     /// </remarks>
     internal static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)
         => rect.ComputeInnerEdges(Math.Min(thickness, Math.Min(rect.Width, rect.Height)));

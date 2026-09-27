@@ -1,6 +1,5 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
@@ -8,6 +7,7 @@ using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter;
 
 namespace EsUtil.SaveEvidence.Marquee.MewUI.Tests;
 
@@ -77,15 +77,15 @@ public class MarqueeControlTests
         var options = control.Options;
 
         // ハンドルの枠線の既定は装飾の枠線と同じ DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）
-        // 装飾の既定は枠線と暗転を描く
-        Assert.Equal(2.0, control.DecoOptions.OuterAppearance.BorderThickness);
-        Assert.True(options.ShowHandles);
+        // 外観の既定は枠線と暗転を描く
+        Assert.Equal(2.0, control.Appearance.OuterBorderThickness);
+        Assert.True(control.Appearance.ShowHandles);
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(10.0, options.MinSelectionSize); // CreateControl で設定
         Assert.True(options.ClampToDomainBounds);
         Assert.Equal(16.0, options.MarkerLength);
-        Assert.True(options.ShowCoordLabel);
+        Assert.True(control.Appearance.ShowCoordLabel);
         Assert.Equal(1.0, control.DipToDeviceScaling);
 
         // 設定を指定しない場合の既定値はコアの MarqueeOptions.Default と一致する
@@ -99,25 +99,24 @@ public class MarqueeControlTests
 
         control.Options = MarqueeOptions.Default with
         {
-            ShowHandles = false,
             HandleSize = 14.0,
             MarkerLength = 24.0,
-            ShowCoordLabel = true,
         };
-        control.DecoOptions = MarqueeDecoOptions.Default with
+        control.Appearance = MarqueeAppearance.Default with
         {
-            OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
-            {
-                BorderThickness = 3.0,
-            },
+            ShowHandles = false,
+            ShowCoordLabel = false,
+            OuterBorderThickness = 3.0,
         };
+        control.HighlightRect = new EsRect(1, 2, 3, 4);
 
         var options = control.Options;
-        Assert.Equal(3.0, control.DecoOptions.OuterAppearance.BorderThickness);
-        Assert.False(options.ShowHandles);
+        Assert.Equal(3.0, control.Appearance.OuterBorderThickness);
+        Assert.False(control.Appearance.ShowHandles);
         Assert.Equal(14.0, options.HandleSize);
         Assert.Equal(24.0, options.MarkerLength);
-        Assert.True(options.ShowCoordLabel);
+        Assert.False(control.Appearance.ShowCoordLabel);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightRect);
     }
 
     [Fact]
@@ -125,17 +124,17 @@ public class MarqueeControlTests
     {
         var control = CreateControl(new CursorServiceSpy());
 
-        // NaN → 既定値 12（描画の設定が補正を単一所有する）
-        control.Paint = control.Paint with { CoordLabelFontSize = double.NaN };
-        Assert.Equal(12.0, control.Paint.CoordLabelFontSize);
+        // NaN → 既定値 12（外観が補正を単一所有する）
+        control.Appearance = control.Appearance with { CoordLabelFontSize = double.NaN };
+        Assert.Equal(12.0, control.Appearance.CoordLabelFontSize);
 
         // 上限 48 にクランプ
-        control.Paint = control.Paint with { CoordLabelFontSize = 100.0 };
-        Assert.Equal(48.0, control.Paint.CoordLabelFontSize);
+        control.Appearance = control.Appearance with { CoordLabelFontSize = 100.0 };
+        Assert.Equal(48.0, control.Appearance.CoordLabelFontSize);
 
         // 下限 6 にクランプ
-        control.Paint = control.Paint with { CoordLabelFontSize = 1.0 };
-        Assert.Equal(6.0, control.Paint.CoordLabelFontSize);
+        control.Appearance = control.Appearance with { CoordLabelFontSize = 1.0 };
+        Assert.Equal(6.0, control.Appearance.CoordLabelFontSize);
     }
 
     // ====================================================================
@@ -398,7 +397,7 @@ public class MarqueeControlTests
         control.Log = logger;
 
         // 外観（色・サイズ）の変更は対話パラメータを変えないため、設定変更ログは流れない
-        control.Paint = control.Paint with { HandleBorderColor = DrawingColor.Red };
+        control.Appearance = control.Appearance with { HandleBorderColor = DrawingColor.Red };
 
         Assert.Empty(logger.Messages);
     }
@@ -483,7 +482,7 @@ public class MarqueeControlTests
     /// <summary>1 フレーム分の描画内容は 1 回だけ解決されることを検証する。</summary>
     /// <remarks>
     /// 配置と描画で同じ描画内容を共有しないと、選択矩形・装飾・ラベル文言の解決と確保が 1 フレームで 2 回走る。<br/>
-    /// サイズラベルの文言プロバイダは <see cref="MarqueeFacade.ResolveContent"/> が 1 回だけ評価するため、<br/>
+    /// サイズラベルの文言プロバイダは <see cref="MarqueePresenter.ResolveContent"/> が 1 回だけ評価するため、<br/>
     /// その呼び出し回数が 1 フレームの解決回数になる（選択がありサイズラベルを表示する場合のみ評価される）。<br/>
     /// 同じ基準サイズで配置を繰り返しても再解決しない（状態が変わった場合だけ再解決する）。
     /// </remarks>

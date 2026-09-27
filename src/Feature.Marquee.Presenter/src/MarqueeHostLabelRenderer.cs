@@ -9,7 +9,7 @@ namespace EsUtil.Feature.Marquee.Presenter;
 /// <remarks>
 /// <b>位置付け</b>: 付加情報ラベルは選択矩形コントロールの概念ではない（アプリ固有の付加情報）ため、<br/>
 /// 文言の生成と表示可否の判断はホストが担う。ただし<b>体裁（背景 = 文字の実寸 + 内側余白 × 2）は<br/>
-/// サイズラベルと同じ規則</b>であり、体裁の値は描画の設定（<see cref="MarqueePaint"/>）が単一所有する。<br/>
+/// サイズラベルと同じ規則</b>であり、体裁の値は描画の設定（<see cref="MarqueeAppearance"/>）が単一所有する。<br/>
 /// 両 UI のホストが同じ組み立てを書かないよう、本クラスが体裁の適用を単一所有する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> でピクセル検証できる。
 /// </remarks>
@@ -22,7 +22,7 @@ public static class MarqueeHostLabelRenderer
     /// <param name="fontSize">フォントサイズ（描画単位）。</param>
     /// <param name="textColor">文字色。</param>
     /// <param name="backgroundColor">背景色（不透明度はアルファ）。</param>
-    /// <param name="padding">内側余白（描画単位）。サイズラベルと同じ値（<see cref="MarqueePaint.LabelPadding"/>）を渡す。</param>
+    /// <param name="padding">内側余白（描画単位）。サイズラベルと同じ値（<see cref="MarqueeAppearance.LabelPadding"/>）を渡す。</param>
     /// <exception cref="ArgumentNullException"><paramref name="canvas"/> または <paramref name="text"/> が null の場合。</exception>
     /// <remarks>
     /// 基準点が背景の左上であり、背景は文字の実寸へ内側余白を四方へ加えた大きさになり、<br/>

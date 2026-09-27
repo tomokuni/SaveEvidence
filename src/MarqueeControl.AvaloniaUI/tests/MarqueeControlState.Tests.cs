@@ -1,4 +1,3 @@
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Rect = Avalonia.Rect;
@@ -6,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI.Tests;
 
@@ -38,15 +38,15 @@ public class MarqueeControlStateTests
         var options = control.Options;
 
         // ハンドルの枠線の既定は装飾の枠線と同じ DarkGray（設定画面の選択枠の色と一致）
-        // 装飾の既定は暗転する（単体の選択矩形コントロールとして暗転マスクを描く）
-        Assert.Equal(2.0, control.DecoOptions.OuterAppearance.BorderThickness);
-        Assert.True(options.ShowHandles);
+        // 外観の既定は暗転する（単体の選択矩形コントロールとして暗転マスクを描く）
+        Assert.Equal(2.0, control.Appearance.OuterBorderThickness);
+        Assert.True(control.Appearance.ShowHandles);
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(10.0, options.MinSelectionSize); // CreateControl で設定
         Assert.True(options.ClampToDomainBounds);
         Assert.Equal(16.0, options.MarkerLength);
-        Assert.True(options.ShowCoordLabel);
+        Assert.True(control.Appearance.ShowCoordLabel);
         Assert.NotNull(control.Log);
 
         // 設定を指定しない場合の既定値はコアの MarqueeOptions.Default と一致する
@@ -60,34 +60,32 @@ public class MarqueeControlStateTests
 
         control.Options = MarqueeOptions.Default with
         {
-            ShowHandles = false,
             HandleSize = 14.0,
             HandleHitRadius = 20.0,
             MinSelectionSize = 5.0,
             ClampToDomainBounds = true,
             MarkerLength = 24.0,
-            // カーソル座標ラベル
-            ShowCoordLabel = true,
         };
-        control.Paint = control.Paint with { CoordLabelFontSize = 14.0 };
-        control.DecoOptions = MarqueeDecoOptions.Default with
+        control.Appearance = control.Appearance with
         {
-            OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with
-            {
-                BorderThickness = 3.0,
-            },
+            CoordLabelFontSize = 14.0,
+            ShowHandles = false,
+            ShowCoordLabel = false,
+            OuterBorderThickness = 3.0,
         };
+        control.HighlightRect = new EsRect(1, 2, 3, 4);
 
         var options = control.Options;
-        Assert.Equal(3.0, control.DecoOptions.OuterAppearance.BorderThickness);
-        Assert.False(options.ShowHandles);
+        Assert.Equal(3.0, control.Appearance.OuterBorderThickness);
+        Assert.False(control.Appearance.ShowHandles);
         Assert.Equal(14.0, options.HandleSize);
         Assert.Equal(20.0, options.HandleHitRadius);
         Assert.Equal(5.0, options.MinSelectionSize);
         Assert.True(options.ClampToDomainBounds);
         Assert.Equal(24.0, options.MarkerLength);
-        Assert.True(options.ShowCoordLabel);
-        Assert.Equal(14.0, control.Paint.CoordLabelFontSize);
+        Assert.False(control.Appearance.ShowCoordLabel);
+        Assert.Equal(14.0, control.Appearance.CoordLabelFontSize);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightRect);
     }
 
     // ====================================================================
@@ -172,17 +170,17 @@ public class MarqueeControlStateTests
     {
         var control = CreateControl();
 
-        // NaN → 既定値 12（描画の設定が補正を単一所有する）
-        control.Paint = control.Paint with { CoordLabelFontSize = double.NaN };
-        Assert.Equal(12.0, control.Paint.CoordLabelFontSize);
+        // NaN → 既定値 12（外観が補正を単一所有する）
+        control.Appearance = control.Appearance with { CoordLabelFontSize = double.NaN };
+        Assert.Equal(12.0, control.Appearance.CoordLabelFontSize);
 
         // 上限 48 にクランプ
-        control.Paint = control.Paint with { CoordLabelFontSize = 100.0 };
-        Assert.Equal(48.0, control.Paint.CoordLabelFontSize);
+        control.Appearance = control.Appearance with { CoordLabelFontSize = 100.0 };
+        Assert.Equal(48.0, control.Appearance.CoordLabelFontSize);
 
         // 下限 6 にクランプ
-        control.Paint = control.Paint with { CoordLabelFontSize = 1.0 };
-        Assert.Equal(6.0, control.Paint.CoordLabelFontSize);
+        control.Appearance = control.Appearance with { CoordLabelFontSize = 1.0 };
+        Assert.Equal(6.0, control.Appearance.CoordLabelFontSize);
     }
 
     // ====================================================================

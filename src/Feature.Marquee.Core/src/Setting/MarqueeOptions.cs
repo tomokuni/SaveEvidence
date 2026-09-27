@@ -2,23 +2,20 @@ using static EsUtil.Feature.Marquee.Core.Marquee.Limits;
 
 namespace EsUtil.Feature.Marquee.Core.Setting;
 
-/// <summary>選択矩形コントロールの設定（表示可否・寸法・対話パラメータ）をまとめた不変の値オブジェクト。</summary>
+/// <summary>選択矩形コントロールの設定（計算に必要な値。寸法・対話パラメータ）をまとめた不変の値オブジェクト。</summary>
 /// <remarks>
 /// 個別の依存関係プロパティとして公開していた設定を 1 つの値にまとめ、UI 層の公開 API を 1 プロパティへ縮小する。<br/>
-/// 設定の既定値も本型が単一所有する（各 UI 実装は既定値を持たず、本型を UI の色型・プロパティ型へ橋渡しするだけ）。<br/>
-/// <b>ラベルの体裁</b>（内側余白・背景・行送り・配置）は描画層（<c>Feature.Marquee.Presenter</c> の <c>MarqueePaint</c>）が単一所有する<br/>
-/// （ホストが描く付加情報ラベルと同じ体裁を使うため、余白の値は本型ではなく同クラスを参照する）。<br/>
-/// <b>フォントサイズは本型に含まない</b>: ラベルをどの体裁で描くかは描画にだけ必要な設定であり、<br/>
-/// 描画の設定（<c>MarqueePaint</c>。UIBase が単一所有する）が持つ。<br/>
+/// 設定の既定値も本型が単一所有する（各 UI 実装は既定値を持たず、本型を UI のプロパティ型へ橋渡しするだけ）。<br/>
+/// <b>体裁・フォントサイズは本型に含まない</b>: ラベルをどの体裁で描くかは描画にだけ必要な設定であり、<br/>
+/// 描画層（<c>Feature.Marquee.Presenter</c> の <c>MarqueeAppearance</c>）が単一所有する。<br/>
 /// <br/>
-/// 設定は 3 つの性格に分かれる:<br/>
+/// 設定は 2 つの性格に分かれる:<br/>
 /// - <b>寸法</b>: 基準点と表示を決めるための長さ（描画と配置に使用する）。<br/>
-/// - <b>表示可否</b>: ハンドルとラベルを描くかどうか（描画にだけ使用する）。<br/>
 /// - <b>対話パラメータ</b>: 最小選択サイズ・ハンドルのヒットテスト半径・境界外選択の禁止（入力の解釈に使用し、セッションへ伝搬する）。<br/>
 /// <br/>
-/// <b>装飾（暗転マスク・穴あけ枠）は本値に含まない</b>: 装飾は選択矩形コントロール単体の概念ではなく、<br/>
-/// コントロールを撮影オーバーレイ等へ組み込むときにだけ必要になる表示のため、<br/>
-/// 同じアセンブリの別フォルダ（<c>Decoration</c> の <c>MarqueeDecoOptions</c>）が単一所有する。<br/>
+/// <b>装飾（暗転マスク・穴あけ枠・内側の塗り）も本値に含まない</b>: 装飾の外観と表示ポリシーは<br/>
+/// 選択矩形コントロール単体の概念ではなく、コントロールを撮影オーバーレイ等へ組み込むときにだけ必要になる表示のため、<br/>
+/// 描画層（<c>Feature.Marquee.Presenter</c> の <c>MarqueeAppearance</c>）が単一所有する。<br/>
 /// <br/>
 /// <b>既定値</b>: 既定値を持つのは <see cref="Default"/> と <see cref="MarqueeOptions()"/> のみである。<br/>
 /// <see cref="Default"/> を基点に部分変更する（<c>MarqueeOptions.Default with { HandleSize = ... }</c>）と、<br/>
@@ -30,12 +27,12 @@ namespace EsUtil.Feature.Marquee.Core.Setting;
 /// 値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず、範囲内の値だけが保持される<br/>
 /// （UI 側に補正の登録を要求すると、登録を忘れた UI だけ安全域外の値を保持する）。<br/>
 /// <br/>
-/// <b>色は含まない</b>: 色は<b>描画にだけ必要な設定</b>であり、描画の設定（<c>MarqueePaint</c>。UIBase が単一所有する）が持つ。
+/// <b>色と表示可否は含まない</b>: 色と「描くかどうか」は<b>描画にだけ必要な設定</b>であり、描画層（Feature.Marquee.Presenter の MarqueeAppearance）が単一所有する。
 /// </remarks>
 public sealed record MarqueeOptions
 {
     /// <summary>すべての項目を既定値にした設定。</summary>
-    /// <value>既定の寸法・表示可否・対話パラメータ（各 UI のプロパティの初期値）。</value>
+    /// <value>既定の寸法・対話パラメータ（各 UI のプロパティの初期値）。</value>
     /// <remarks>部分変更の基点として使用する（<c>Default with { ... }</c>）。</remarks>
     public static MarqueeOptions Default { get; } = new();
 
@@ -58,23 +55,6 @@ public sealed record MarqueeOptions
         get => field;
         init => field = CoerceMarkerLength(value);
     } = MarkerLengthDefault;
-
-    // ----------------------------------------------------------------
-    // 表示可否（描画するかどうか）
-    // ----------------------------------------------------------------
-
-    /// <summary>ドラッグハンドルを表示するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合は選択中にハンドルを描く。false の場合は枠線と十字マーカーのみを描く。</value>
-    public bool ShowHandles { get; init; } = true;
-
-    /// <summary>カーソル座標ラベルを表示するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合はマウス位置のドメイン座標をカーソルの右側に表示する。false の場合は表示しない。</value>
-    public bool ShowCoordLabel { get; init; } = true;
-
-    /// <summary>サイズラベルを表示するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合は穴あけ矩形の左上に位置と寸法を表示する。false の場合は描かない。</value>
-    /// <remarks>他のラベル（操作・情報）はホストが自前で描くため、本設定には含まれない。</remarks>
-    public bool ShowSizeLabel { get; init; } = true;
 
     // ----------------------------------------------------------------
     // 対話パラメータ（入力の解釈に使用し、セッションへ伝搬する）
@@ -108,21 +88,4 @@ public sealed record MarqueeOptions
     /// true へ切り替えた場合は既存の選択矩形を即時に境界内へクリップする（セッションが判断する）。
     /// </remarks>
     public bool ClampToDomainBounds { get; init; } = true;
-
-    /// <summary>サイズラベルを描画するかどうかを判定する。</summary>
-    /// <param name="hasHoleRect">穴あけ矩形（選択またはハイライトの領域）があるかどうか。</param>
-    /// <returns>描画する場合は true。</returns>
-    /// <remarks>
-    /// ラベルの基準点は穴あけ矩形の左上であり、文言も矩形の寸法から作るため、矩形が無いときは描画しない。<br/>
-    /// 表示可否の判断（設定値と矩形の有無の組合せ）を本メソッドが単一所有し、コアのフレーム解決は判定結果だけを使う。
-    /// </remarks>
-    public bool ShouldShowSizeLabel(bool hasHoleRect) => ShowSizeLabel && hasHoleRect;
-
-    /// <summary>カーソル座標ラベルを描画するかどうかを判定する。</summary>
-    /// <returns>描画する場合は true。</returns>
-    /// <remarks>
-    /// ラベルの基準点はカーソル位置であり、位置は入力（描画入力）が常に持つため、矩形の有無のような条件は無い<br/>
-    /// （ルーペの座標ラベルは拡大中心が未設定になりうるため、中心の有無を条件に取る）。
-    /// </remarks>
-    public bool ShouldShowCoordLabel() => ShowCoordLabel;
 }

@@ -1,9 +1,9 @@
-namespace EsUtil.Feature.Marquee.Core.Drawing;
+namespace EsUtil.Feature.Marquee.Presenter;
 
 /// <summary>選択矩形の UI 層が描く層（描画順の契約）。</summary>
 /// <remarks>
-/// <b>描画順はコアが単一所有する</b>: UI 層は <c>Marquee.ResolveContent</c> が返す
-/// <see cref="MarqueeDrawContent.Layers"/> を先頭から順に処理するだけで、順序を判断しない。<br/>
+/// <b>描画順は描画層が単一所有する</b>: UI 層は <c>MarqueePresenter.ResolveDrawPlan</c> が返す
+/// <see cref="MarqueeDrawPlan.Layers"/> を先頭から順に処理するだけで、順序を判断しない。<br/>
 /// <b>テキスト（<see cref="Label"/>）は UI 要素でも描ける</b>: 要素（<c>TextBlock</c> 等）として置く UI は
 /// <c>TextBlock</c> の描画を本層に頼らず、要素を子として置く（親より後に描かれるため常に最上位になる）。<br/>
 /// その場合、描画実装は本層を無視してよい（基底のフックの既定は何もしない）。<br/>

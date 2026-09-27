@@ -420,7 +420,7 @@ public class MarqueeControlTests
         var window = Show(control);
 
         // HandleColor = default（透明）→ DrawHandles は白にフォールバックする
-        control.Paint = control.Paint with { HandleColor = default };
+        control.Appearance = control.Appearance with { HandleColor = default };
         control.SetSelection(new Rect(20, 20, 60, 60));
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
@@ -1409,11 +1409,11 @@ public class MarqueeControlTests
         var window = Show(control);
         var pointer = CreatePointer();
 
-        control.Options = control.Options with
+        control.Appearance = control.Appearance with
         {
             ShowCoordLabel = true,
+            CoordLabelFontSize = 12.0,
         };
-        control.Paint = control.Paint with { CoordLabelFontSize = 12.0 };
 
         // マウス移動 → Render で座標ラベルが描画される（例外なし）
         control.RaiseEvent(new PointerEventArgs(
@@ -1433,7 +1433,7 @@ public class MarqueeControlTests
         var window = Show(control);
 
         // 座標ラベルを無効化した状態で描画（座標ラベルは描画されない）
-        control.Options = control.Options with { ShowCoordLabel = false };
+        control.Appearance = control.Appearance with { ShowCoordLabel = false };
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
         window.Close();
@@ -1474,7 +1474,12 @@ public class MarqueeControlTests
     public void サイズ0のコントロールでも座標ラベル描画が実行される()
     {
         // クライアントサイズ 0 の描画（DrawCoordLabel のクランプ分岐: サイズ 0 はクランプしない）
-        var control = new MarqueeControl { Width = 0, Height = 0, Options = MarqueeOptions.Default with { ShowCoordLabel = true } };
+        var control = new MarqueeControl
+        {
+            Width = 0,
+            Height = 0,
+            Appearance = MarqueeAppearance.Default with { ShowCoordLabel = true },
+        };
         var window = Show(control);
 
         control.InvalidateVisual();
@@ -1496,7 +1501,7 @@ public class MarqueeControlTests
         {
             // ハンドルの塗り（ブラシ）とハンドル枠（ペン）の両方のキャッシュ容量を超えさせる
             var color = Color.FromRgb((byte)(i % 256), (byte)((i / 256) % 256), 0).ToDrawingColor();
-            control.Paint = control.Paint with
+            control.Appearance = control.Appearance with
             {
                 HandleColor = color,
                 HandleBorderColor = color,
@@ -1507,7 +1512,7 @@ public class MarqueeControlTests
         }
 
         // クリア後に再描画しても例外なく正しく描画される（キャッシュが再構築される）
-        control.Paint = control.Paint with { OuterBorderColor = Colors.Red.ToDrawingColor() };
+        control.Appearance = control.Appearance with { OuterBorderColor = Colors.Red.ToDrawingColor() };
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
 
@@ -1551,7 +1556,7 @@ public class MarqueeControlTests
         {
             Width = 200,
             Height = 200,
-            Options = TestOptions with { ShowCoordLabel = true },
+            Appearance = MarqueeAppearance.Default with { ShowCoordLabel = true },
         };
         var window = Show(control);
         var pointer = CreatePointer();

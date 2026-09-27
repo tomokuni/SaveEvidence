@@ -122,7 +122,7 @@ internal sealed class CaptureOverlay
         // 色は描画にだけ必要な設定のため、描画の設定として与える
         // （ルーペの市松模様の下地色は透明にし、背後の撮影画像を透かす。Avalonia 版と同じ扱いにする）
         _selector.Options = settings.ToFadeMaskDragRectOptions();
-        _selector.MarqueePaint = CapturePaintMapper.ToMarqueePaint(settings);
+        _selector.MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(settings);
         _selector.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(settings);
         _highlight = new CaptureHighlightSession(_log);
         // 検出サービスはハイライト型のみ使う（それ以外はドラッグで選択矩形を作るため検出が不要）。
