@@ -1432,7 +1432,8 @@ public class MarqueeControlTests
         var control = CreateControl();
         var window = Show(control);
 
-        // ShowCoordLabel = false（デフォルト）の状態で描画（座標ラベルは描画されない）
+        // 座標ラベルを無効化した状態で描画（座標ラベルは描画されない）
+        control.Options = control.Options with { ShowCoordLabel = false };
         control.InvalidateVisual();
         window.CaptureRenderedFrame();
         window.Close();
