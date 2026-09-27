@@ -32,7 +32,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
-本プロジェクト（LoupeControl.AvaloniaUI）は、このシステムのうち**ルーペ（拡大鏡）表示**を担う再利用可能なコントロールです。元画像の指定座標を拡大表示し、市松模様・十字線・枠線を合成描画します。上位 AP（`CaptureSessionControl` / `FadeMaskDragRectControl`）のルーペ表示に使用されます。
+本プロジェクト（LoupeControl.AvaloniaUI）は、このシステムのうち**ルーペ（拡大鏡）表示**を担う再利用可能なコントロールです。元画像の指定座標を拡大表示し、十字線・枠線を合成描画します（画像外は無地）。上位 AP（`CaptureSessionControl` / `FadeMaskDragRectControl`）のルーペ表示に使用されます。
 
 ## 2. 技術スタック
 
@@ -56,7 +56,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 公開コントロール（LoupeControl）
   → 描画オーケストレーション（LoupeRenderPipeline / LoupeSourceResolver）※ UI 固有の機構
   → レンダリング（描画層 LoupeControl.UIBase の LoupeRenderer。描画先は AvaloniaCanvas が適合させる）
-  → Core（Feature.LoupeCore: 寸法 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル計画 / 市松模様 / 描画完了時の表示情報 / ログ定義）
+  → Core（Feature.LoupeCore: 寸法 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル計画 / 区画数の切り上げ / 描画完了時の表示情報 / ログ定義）
 ```
 
 ### 3.2 依存方向
@@ -65,7 +65,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 - LoupeControl は上位 AP に依存しない（再利用可能）。
 - 色の境界変換（設定文字列 → コアの色型）は上位AP 側で行い、LoupeControl 内に文字列解析を持ち込まない（色は `Paint`（コアの `LoupePaint`）として `System.Drawing.Color` で受け取る）。
 - 描画の手順は描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が、色は `LoupePaint` が単一所有し、本コントロールは描画ポート（`AvaloniaCanvas`）とラベル要素の配置、状態（DP）とライフサイクル（Bitmap 生成 / 解放）を担う。
-- 描画の可否（市松模様・十字線・枠線）・切り出しの可否・タイルサイズの補正はコアが判定・所有し（設定の明示フラグ）、本プロジェクトはその結果で描画する。
+- 描画の可否（十字線・枠線）・切り出しの可否・枠線の太さの補正はコアが判定・所有し（設定の明示フラグ）、本プロジェクトはその結果で描画する。
 - `LoupeSourceResolver`（`IImage` の型判定）と中間ビットマップを生成するパイプラインは **Avalonia 固有の機構** であり、コアへ移さない（MewUI 版は同期描画のため不要）。
 - 再描画のバッチ化（`LoupeRenderCoordinator`）は UI フレームワークに依存しないため **`LoupeControl.UIBase`（組み込みの層）** が所有する（実行キューと優先度は UI が `post` コールバックで注入する）。
 - 描画可否の判断（非表示なら描画しない・解放する、古い世代は反映しない）と、未実行要求の破棄と解放の手順は **`LoupeRenderCoordinator` が単一所有** する（コントロールは `RequestRender` / `CancelAndRelease` / `ShouldApply` を呼ぶだけ）。
@@ -170,9 +170,9 @@ flowchart TB
 ### 6.2 LoupeRenderer（LoupeControl.UIBase）
 
 - **分類**: 公開クラス（`public sealed class LoupeRenderer : LoupeRendererBase`。所属は UI 非依存の描画層 `LoupeControl.UIBase`。色は生成時に受け取る）
-- **責務**: ルーペ Bitmap の合成描画（下地 → 市松模様 → 拡大画像 → 十字線 → 枠線）を描画ポート `IEsCanvas` へ写す（**描画手順の単一所有者は基底の `LoupeRendererBase`**）
+- **責務**: ルーペ Bitmap の合成描画（ペーストボード（画像外の色） → 拡大画像 → 十字線 → 枠線）を描画ポート `IEsCanvas` へ写す（**描画手順の単一所有者は基底の `LoupeRendererBase`**）
   **公開API**: `DrawShapes(canvas, source, request, content)`（図形のみ。**テキストは描かない**）を実装する。`CoordLabelFontSize` / `CoordLabelCornerRadius`（ラベルの体裁）は描画の設定の値への入口として公開する（**描画の契約には含めない**）。引数はコアの描画入力 `LoupeRenderRequest` と描画内容 `LoupeDrawContent`（層の順序・矩形・タイル）、および解決済みのソース。描画の設定は `LoupePaint` として保持する（幾何・値の単位・切り出しの可否はコアが単一所有する）
-- **特徴**: 描画の可否（市松模様・十字線・枠線）はコアの設定フラグが判定する（非表示の項目は空の描画内容として渡るため、描画層は分岐を持たない）。タイルの位置・矩形・寸法の物理ピクセルへの換算は**コアが解決済み**であり、描画層は計算を持たない（描画内容を写すだけ）
+- **特徴**: 描画の可否（十字線・枠線）はコアの設定フラグが判定する（非表示の項目は空の描画内容として渡るため、描画層は分岐を持たない）。矩形と枠線の太さの物理ピクセルへの換算は**コアが解決済み**であり、描画層は計算を持たない（描画内容を写すだけ）
 - **依存**: Platform.Core（`IEsCanvas` / `DrawingColorExtensions`）/ Feature.LoupeCore（`LoupeRenderRequest` / `LoupeDrawContent` / `LoupeOptions`）
 
 ### 6.3 描画責務分割
@@ -182,7 +182,7 @@ flowchart TB
 - 描画先は UI 非依存の描画ポート `IEsCanvas` であり、本プロジェクトでは `AvaloniaCanvas`（`Platform.AvaloniaUI`）が `DrawingContext` を適合させる。
 - `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）: コアの色型（`System.Drawing.Color`）→ `SolidColorBrush` の変換と容量制限付きキャッシュを単一所有する。描画アダプタ（`AvaloniaCanvas`）とラベル要素の配置（本コントロールとマーキー）が共用する。
 
-> 十字線・枠線の矩形計算、市松模様の明暗判定とタイルサイズの換算、拡大描画の矩形計算は `Feature.LoupeCore` が単一所有します（MewUI 版と共用）。
+> 十字線・枠線の矩形計算、枠線の太さの換算、拡大描画の矩形計算は `Feature.LoupeCore` が単一所有します（MewUI 版と共用）。
 > 本プロジェクトは `AvaloniaCanvas` の適合と要素の配置を担います。
 
 > **通知契約**: `LoupeRenderedEventArgs` はホストがオーバーレイを描くのに必要な値（描画済み Bitmap・切り出し左上・スケール）を通知します。中心座標ラベルはコントロールがテキスト要素として表示するため含みません。表示位置・表示サイズ・拡大率・拡大中心は、消費側が存在しないため削除しました（必要になればコントロールの公開プロパティから取得できます）。
@@ -271,7 +271,7 @@ sequenceDiagram
 | --- | --- | --- |
 | Options（RequestedSize / ZoomLevel） | 1〜4096 / 1〜64 | **コアの `LoupeOptions`（`init` アクセサ）** |
 | DipToDeviceScaling | 0.1〜8.0（非有限値は 1.0） | `coerce` コールバック（プロパティのメタデータ） |
-| `Options`（`CheckerSize` / `BorderThickness`） | 1〜128 / 1〜64 | **コアの `LoupeOptions`（`init` アクセサ）** |
+| `Options`（`BorderThickness`） | 1〜64 | **コアの `LoupeOptions`（`init` アクセサ）** |
 | `Paint`（`CoordLabelFontSize` / `CoordLabelCornerRadius`） | 6〜48 / 0〜64 | **描画層の `LoupePaint`（`init` アクセサ）** |
 
 環境値の `DipToDeviceScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `Loupe.Limits` が単一所有し、UI は登録するだけです）。MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。

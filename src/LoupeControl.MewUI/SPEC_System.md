@@ -46,7 +46,7 @@ Avalonia 版と MewUI 版の間に依存はありません（互いを参照し�
 
 | 層 | 責務 |
 | --- | --- |
-| `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・枠線の矩形計算、市松模様の明暗判定、寸法・表示可否（`LoupeOptions`）と描画入力（`LoupeRenderRequest`）の単一所有 |
+| `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・枠線の矩形計算、寸法・表示可否（`LoupeOptions`）と描画入力（`LoupeRenderRequest`）の単一所有 |
 | `LoupeControl.UIBase` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
 | `LoupeControl.MewUI` | コアの描画入力を描画層（`LoupeRenderer`）へ渡し、描画ポート `SkiaEsCanvas` を適合させる。`MewProperty` による入力の受付。DPI の自動追従 |
 | ホスト（`app.MewUI` 等） | `Source` / `CenterPoint` の設定、表示位置の決定（コアのファサード `ResolveLayout` を利用） |
@@ -68,7 +68,7 @@ src/LoupeControl.MewUI/
 | コンポーネント | 責務 |
 | --- | --- |
 | `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。描画は描画層（`LoupeRenderer`）を `SkiaEsCanvas` 経由で呼ぶ（描画の順序と内容は描画層が単一所有し、コアは描く層とその順序を指示する） |
-| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 枠線の順に描画ポートへ写す（コアの描画内容 `LoupeDrawContent`（層の順序・矩形・タイル・拡大画像の切り出しと描画の矩形）をそのまま使用）。**色は `LoupePaint` が単一所有する**（コントロールの `Paint` プロパティの値を受け取る）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
+| `LoupeRenderer`（描画層） | ペーストボード（画像外の色） → 拡大画像 → 十字線 → 枠線の順に描画ポートへ写す（コアの描画内容 `LoupeDrawContent`（層の順序・矩形・拡大画像の切り出しと描画の矩形）をそのまま使用）。**色は `LoupePaint` が単一所有する**（コントロールの `Paint` プロパティの値を受け取る）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
 | `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -103,18 +103,15 @@ classDiagram
         <<Feature.LoupeCore>>
         +int RequestedSize
         +int ZoomLevel
-        +int CheckerSize
-        +int BorderThickness
+                +int BorderThickness
         +bool ShowCoordLabel
         +ShouldShowCoordLabel(hasCenter) bool
     }
     class LoupePaint {
         <<LoupeControl.UIBase>>
-        +Color BackgroundColor
+        +Color PasteboardColor
         +Color CrossColor
-        +Color CheckerColorA
-        +Color CheckerColorB
-        +Color BorderColor
+                        +Color BorderColor
         +Color CoordLabelColor
         +Color CoordLabelBackgroundColor
         +double CoordLabelFontSize / int CoordLabelCornerRadius
@@ -134,8 +131,7 @@ classDiagram
     class LoupeDrawContent {
         <<Feature.LoupeCore>>
         +EsRect SurfaceBounds
-        +LoupeCheckerTiles CheckerTiles
-        +CrosshairRects / BorderRects
+                +CrosshairRects / BorderRects
         +Layers
     }
     class LoupeRenderRequest {
@@ -194,14 +190,14 @@ sequenceDiagram
     MW->>LC: PaintSurface(canvas, info)
     LC->>LC: Loupe.CreateRequest（コアのファサードが描画契約を組み立てる。表示サイズは描画先の表面から DpiScaler.ToDip で導出し、物理ピクセルサイズはそれを描画先へクランプして解決する）
     LC->>R: DrawShapes(SkiaEsCanvas, Source, content)（描画層が層の順に描く）
-    R->>SK: 下地（Paint.BackgroundColor）を表面全体へ塗る
+    R->>SK: 画像外の色（Paint.PasteboardColor）を表面全体へ塗る
     R->>C: FillRects(タイル列挙子, 色B)
     R->>SK: 暗色タイルを描画（SkiaFill.Rects・リスト確保なし）
     alt Source と切り出し領域が揃っている
         R->>R: EsBitmap.Crop(content.MagnifiedImage.Crop)（描画層が実行する）
         R->>SK: DrawImage(cropped, Source, Destination)（最近傍で拡大）
     else 未設定または破棄済み
-        R-->>R: 市松模様のみを残す
+        R-->>R: 画像外の色のみを残す
     end
     R->>C: ComputeCrosshairRects(pixelSize, zoomLevel)
     R->>SK: 十字線を描画
@@ -219,10 +215,10 @@ sequenceDiagram
 1. **中間ビットマップを持たない**。Avalonia 版は `RenderTargetBitmap` に描いて `EsBitmap` へコピーするが、
    MewUI 版は `SkiaCanvasView` のキャンバスへ直接描画する（コピーとメモリ確保を排除）。
 2. **拡大は最近傍で行う**。ルーペは画素をそのまま拡大する用途であり、補間すると画素が判別できなくなる。
-3. **装飾矩形と市松模様の明暗判定はコアが単一所有する**。両 UI で同じ見た目を保証するため、
+3. **装飾矩形と区画数の切り上げはコアが単一所有する**。両 UI で同じ見た目を保証するため、
    Avalonia 版と MewUI 版は同じコアの計算を使う（描画の手順そのものも UI 非依存の描画層 `LoupeControl.UIBase` が共有する）。
 4. **設定（表示サイズ・拡大率・寸法）はコアの `LoupeOptions` が単一所有し、色は描画層の `LoupePaint` が単一所有する**。UI 層は `Options` と `Paint` を公開して描画時に読むだけであり、既定値・数値項目の補正もコアが持つ。
-   描画の可否（市松模様・十字線・枠線）はコアの設定フラグ（`LoupeOptions.Show*`）が、ラベルの余白（寸法）はコアが判断・所有するため、両 UI の見た目が一致する
+   描画の可否（十字線・枠線）はコアの設定フラグ（`LoupeOptions.Show*`）が、ラベルの余白（寸法）はコアが判断・所有するため、両 UI の見た目が一致する
    （従来は Avalonia が既定で十字線を描き MewUI は描かないという既定値のドリフトがあった）。
 5. **位置を持たない**。表示位置は「親領域サイズ」「中心座標」「オフセット」に依存するホスト側の関心事であり、
    計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有する。コントロールは入力と描画のみを担う。

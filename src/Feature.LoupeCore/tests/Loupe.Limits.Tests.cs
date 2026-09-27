@@ -79,23 +79,6 @@ public class LoupeLimitsTests
     }
 
     // ====================================================================
-    // CheckerSize（1〜128、既定 6）
-    // ====================================================================
-
-    [Fact]
-    public void CoerceCheckerSize_範囲内はそのまま返す()
-    {
-        Assert.Equal(6, Loupe.Limits.CoerceCheckerSize(6));
-    }
-
-    [Fact]
-    public void CoerceCheckerSize_範囲外は最小値と最大値に補正する()
-    {
-        Assert.Equal(1, Loupe.Limits.CoerceCheckerSize(0));
-        Assert.Equal(128, Loupe.Limits.CoerceCheckerSize(200));
-    }
-
-    // ====================================================================
     // BorderThickness（1〜64、既定 2）
     // ====================================================================
 

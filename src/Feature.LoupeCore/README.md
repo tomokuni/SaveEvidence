@@ -16,27 +16,25 @@
 
 ルート（`src/`）に置くのは**ファサード本体とその partial**（`Loupe.cs` / `Loupe.DrawContent.cs` / `Loupe.Limits.cs`）だけです。それ以外は用途別のフォルダへまとめます。
 **1 ファイル 1 型**とします（複数の型を 1 ファイルへ含めない。`partial` による分割は可）。
-**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.LoupeCore`。`Drawing` / `Setting` / `Logging` / `Checkerboard` / `Decoration` / `Placement` は `EsUtil.Feature.LoupeCore.<フォルダ名>`）。公開面も複数のフォルダに分かれるため、利用者は用途に応じて `using` を追加します。
+**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.LoupeCore`。`Drawing` / `Setting` / `Logging` / `Decoration` / `Placement` は `EsUtil.Feature.LoupeCore.<フォルダ名>`）。公開面も複数のフォルダに分かれるため、利用者は用途に応じて `using` を追加します。
 
 | フォルダ | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
 | ルート | `Loupe` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、座標変換ポートの設定（`SetCoordinateTransform`） |
 | ルート | `Loupe.Limits`（`Loupe` の入れ子） | public | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値の補正。**UI がプロパティの既定値と coerce を登録するときに参照する**ためファサードの入れ子として公開する |
-| ルート | `Loupe.DrawContent.cs`（`Loupe` の **partial**） | internal | 描画内容の**内部手順**（市松模様のタイル数・十字線 / 枠線の矩形・中心座標ラベルの文言の解決）を持つ。公開の入口（`ResolveContent`）はファサード本体（`Loupe.cs`）が持つ |
+| ルート | `Loupe.DrawContent.cs`（`Loupe` の **partial**） | internal | 描画内容の**内部手順**（十字線 / 枠線の矩形・中心座標ラベルの文言の解決）を持つ。公開の入口（`ResolveContent`）はファサード本体（`Loupe.cs`）が持つ |
 | （本コアには置かない） | `ILoupeRenderer` / `LoupeRendererBase` | — | 描画の契約と描画手順の基底は **UI 側の共有層（`LoupeControl.UIBase`）が所有します**（本コアは描画 API も描画ポートも持たない） |
-| `Drawing/` | `LoupeDrawLayer` | public | 描く層とその順序（**描画順はコアが単一所有する**。層の有無は**解決済みの値**から決まり（層にある ⇔ 描く値がある）、下地は常に含む。中心座標ラベルはテキストがある場合のみ末尾 = 常に最上位） |
-| `Drawing/` | `LoupeRenderRequest` | public | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層は自分で組み立てず、ファサードの `Loupe.CreateRequest` が返した値を受け取る（単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を UI 層が持たない）。**換算済みの寸法**（`CheckerSizePixels` / `BorderThicknessPixels`）も含む |
-| `Drawing/` | `LoupeDrawContent` | public | **1 フレーム分の描画内容**（描画面の矩形・市松模様のタイル列挙子・十字線の矩形・枠線の矩形・拡大画像の幾何・**層の順序**）。描画層は本値を写すだけで計算を持たない |
+| `Drawing/` | `LoupeDrawLayer` | public | 描く層とその順序（**描画順はコアが単一所有する**。層の有無は**解決済みの値**から決まり（層にある ⇔ 描く値がある）、ペーストボード（画像外の色）は常に含む。中心座標ラベルはテキストがある場合のみ末尾 = 常に最上位） |
+| `Drawing/` | `LoupeRenderRequest` | public | 1 フレーム分の描画入力（**コア⇔UI の契約**）。UI 層は自分で組み立てず、ファサードの `Loupe.CreateRequest` が返した値を受け取る（単位と組み立て順（DIP → 物理ピクセルの換算とクランプ）を UI 層が持たない）。**換算済みの寸法**（`BorderThicknessPixels`）も含む |
+| `Drawing/` | `LoupeDrawContent` | public | **1 フレーム分の描画内容**（描画面の矩形・十字線の矩形・枠線の矩形・拡大画像の幾何・**層の順序**）。描画層は本値を写すだけで計算を持たない |
 | `Drawing/` | `LoupeMagnifiedImage` | public | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。描画内容の一部 |
-| `Drawing/` | `LoupeCheckerTiles` | public | 市松模様の暗色タイルの矩形を、**リストを確保せずに列挙する構造体**（描画内容の一部）。列挙子で渡し、描画のたびのヒープ確保をゼロにする |
-| `Setting/` | `LoupeOptions` | public | ルーペの設定（表示サイズ・拡大率・寸法（市松タイル・枠線の太さ）と表示可否（中心座標ラベル・市松模様・十字線・枠線））を 1 つの値として所有。既定値・生成時の補正・ラベル表示の判定（`ShouldShowCoordLabel`）を持つ（設定経路によらず範囲内の値だけが保持される）。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
+| `Setting/` | `LoupeOptions` | public | ルーペの設定（表示サイズ・拡大率・寸法（枠線の太さ）と表示可否（中心座標ラベル・十字線・枠線））を 1 つの値として所有。既定値・生成時の補正・ラベル表示の判定（`ShouldShowCoordLabel`）を持つ（設定経路によらず範囲内の値だけが保持される）。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
 | `Drawing/` | `LoupeTextPlacement` | public | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（フォントサイズ・角丸・色は描画層 `LoupeControl.UIBase` の `LoupePaint` が持つ） |
 | `Placement/` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズと表示位置。配置しない場合は位置が null）。描画入力の生成と UI 層の要素配置の両方へ渡す |
 | `Logging/` | `LoupeLogMessage` | internal | コアが出力するログ定義・変化判定（設定値・拡大中心の変更）。**UI が出力する定義（拡大元画像の変更・描画の例外）と書式は `LoupeControl.UIBase` が単一所有する** |
-| `Checkerboard/` | `LoupeCheckerboard` | internal | 市松模様の明暗の判定規則（タイル矩形の列挙は `LoupeCheckerTiles`） |
-| `Checkerboard/` | `LoupeDivMath` | internal | 区画数の切り上げ除算（タイル数と切り出し領域の一辺が共用する規則） |
+| `Drawing/` | `LoupeDivMath` | internal | 区画数の切り上げ除算（切り出し領域の一辺と十字線の交点が共用する規則） |
 | `Decoration/` | `LoupeDecoGeometry` | internal | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算（結果は描画内容に含まれる） |
-| `Drawing/` | `LoupeMetricsScaler` | internal | 寸法値（市松タイル・枠線の太さ）の物理ピクセル換算（結果は描画入力に含まれる）。**適用先が描画入力であるため装飾ではなく描画に属する** |
+| `Drawing/` | `LoupeMetricsScaler` | internal | 寸法値（枠線の太さ）の物理ピクセル換算（結果は描画入力に含まれる）。**適用先が描画入力であるため装飾ではなく描画に属する** |
 | `Placement/` | `LoupePlacementGeometry` | internal | 表示位置（左上）の計算（中心 + オフセットと親領域内へのクランプ）。親サイズ未確定の判定も本クラスが扱う |
 
 切り出し領域の幾何（一辺・左上・拡大画像の矩形）は `LoupeRenderRequest` の**メンバー**（`CaptureSize` / `MagnifiedImage` / `SurfaceBounds` は internal、`CaptureTopLeft` は描画完了通知のために public）が単一所有します（描画入力の値から導出するため、独立したクラスを持ちません）。
@@ -48,8 +46,8 @@
 | 層 | 利用者 | 型 |
 | --- | --- | --- |
 | **1. ホスト設定** | アプリ・ホスト | `LoupeOptions` / `LoupeLayout` |
-| **2. 公開ファサードと UI アダプタ契約** | UI 実装（描画層） | `Loupe`（操作の唯一の窓口。既定値は `Limits.*Default`） / `LoupeRenderRequest` / `LoupeDrawContent` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeMagnifiedImage` / `LoupeCheckerTiles` |
-| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `LoupeMetricsScaler`（`Drawing/`） / `LoupeDecoGeometry`（`Decoration/`） / `LoupePlacementGeometry` / `LoupeCheckerboard` / `LoupeDivMath` / `LoupeLogMessage` / `Loupe.DrawContent.cs`（「1 フレーム分の描画内容の解決」の公開の入口は `Loupe.ResolveContent`） |
+| **2. 公開ファサードと UI アダプタ契約** | UI 実装（描画層） | `Loupe`（操作の唯一の窓口。既定値は `Limits.*Default`） / `LoupeRenderRequest` / `LoupeDrawContent` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeMagnifiedImage` |
+| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `LoupeMetricsScaler`（`Drawing/`） / `LoupeDivMath`（`Drawing/`） / `LoupeDecoGeometry`（`Decoration/`） / `LoupePlacementGeometry` / `LoupeLogMessage` / `Loupe.DrawContent.cs`（「1 フレーム分の描画内容の解決」の公開の入口は `Loupe.ResolveContent`） |
 
 - `LoupeMetricsScaler` は `Drawing/` に置きます（結果の適用先が描画入力であり、`Decoration/` は十字線・枠線の矩形（装飾）だけにします）。
 - **操作はファサード経由に一本化**しています（計算クラスと内部手順は `internal` のため、UI 層はファサード以外の入口を持ちません）。
@@ -75,7 +73,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 本プロジェクトが UI フレームワークへ依存することはありません。**直接参照する外部パッケージは `Microsoft.Extensions.Logging.Abstractions`（`LoggerMessage` ソース生成）だけ**です（SkiaSharp は `Platform.Core` 経由で参照します）。
 
-**コントロール化にだけ必要な処理は `LoupeControl.UIBase` が所有します**（再描画要求のバッチ化・世代番号管理）。**描画の手順（層の順序に従う写し方）と色も `LoupeControl.UIBase` が所有します**（手順は下地 → 市松模様 → 拡大画像 → 十字線 → 枠線を層の順に描く。色は `LoupePaint`。描画先は `IEsCanvas`）。本プロジェクトはルーペの計算と寸法（どのアセンブリでも同じ結果になる部分）に限定し、描画 API も色も持ちません。
+**コントロール化にだけ必要な処理は `LoupeControl.UIBase` が所有します**（再描画要求のバッチ化・世代番号管理）。**描画の手順（層の順序に従う写し方）と色も `LoupeControl.UIBase` が所有します**（手順はペーストボード → 拡大画像 → 十字線 → 枠線を層の順に描く。色は `LoupePaint`。描画先は `IEsCanvas`）。本プロジェクトはルーペの計算と寸法（どのアセンブリでも同じ結果になる部分）に限定し、描画 API も色も持ちません。
 
 ## 層の責務の境界
 
@@ -94,9 +92,9 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 
 **数値の安全域への補正は値の型（`LoupeOptions`）が生成時に適用します**（`init` アクセサ）。UI 側のプロパティへ補正の登録を要求すると、登録を忘れた UI だけバインディング経由の値が安全域外になります（実例あり: 両 UI で 1 回ずつ発生）。型の生成時に補正すれば、値の設定経路（オブジェクト初期化子・`with` 式・逆シリアル化）によらず範囲内の値だけが保持され、UI 側に補正の判断が残りません。
 
-**描画の可否はコアの明示フラグが単一所有します**（`LoupeOptions.ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`）。非表示の項目はコアが**空の描画内容**として返し、描画層は層ごとの描画可否を判定しません（判定を持つと両 UI でずれ、片方だけ修正されます）。`LoupePaint` は色とラベルの体裁のみを持ちます（`Platform.Core` の `DrawingColorExtensions.IsVisible` は、ホストの省略可能な色設定をコアのフラグへ写す場面で使います）。
+**描画の可否はコアの明示フラグが単一所有します**（`LoupeOptions.ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`）。非表示の項目はコアが**空の描画内容**として返し、描画層は層ごとの描画可否を判定しません（判定を持つと両 UI でずれ、片方だけ修正されます）。`LoupePaint` は色とラベルの体裁のみを持ちます（`Platform.Core` の `DrawingColorExtensions.IsVisible` は、ホストの省略可能な色設定をコアのフラグへ写す場面で使います）。
 
-**寸法値の物理ピクセル換算はコアが描画入力（`LoupeRenderRequest.CheckerSizePixels` / `BorderThicknessPixels`）へ済ませます**。UI 層が `CheckerSize * scaling` のような式を自前で書くと、片方の UI だけ換算が抜けて DPI ≠ 100% で見た目がずれます（実例あり）。
+**寸法値の物理ピクセル換算はコアが描画入力（`LoupeRenderRequest.BorderThicknessPixels`）へ済ませます**。UI 層が `BorderThickness * scaling` のような式を自前で書くと、片方の UI だけ換算が抜けて DPI ≠ 100% で見た目がずれます（実例あり）。
 
 **「変化したときだけログ出力する」判定はコアが単一所有します**（`Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter が変化を検出し、`LogOptionsChanged` などの定義で出力します）。UI 層は変更通知で値を転送するだけで、同値判定も前後の値の保持も持ちません（設定（`LoupeOptions`）の変更は `LogOptionsChanged` が**変化した項目だけ**を出力します）。ログの出力先は `Log` プロパティで受け取ります（UI の `Log` 設定がコアへ伝搬します）。
 
@@ -108,7 +106,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 
 **操作の入口は公開ファサード（`Loupe`）に一本化します**。UI 層とホストは本型だけを参照し、表示レイアウトの解決（`ResolveLayout`）・描画入力の生成（`CreateRequest`）を本型へ委ねます（MewUI 版のホストも位置計算のために計算クラスを直接呼ばず、コントロールの `ResolveLayout` を経由します）。
 
-**下地色（`LoupePaint.BackgroundColor`）は描画層（`LoupeControl.UIBase`）が単一所有します**。市松模様の色は半透明のため、背後の要素を透かしたくない場合はホストが不透明色を指定します（既定は透明 = 透かす）。**キャンバスへ直接描画する UI（MewUI）とウィンドウの上へ重ねる UI（Avalonia）のどちらも同じ色の値で指定でき、UI 層に固有の下地プロパティを持ちません**。塗る処理と描画順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有します。
+**画像外の色（`LoupePaint.PasteboardColor`）は描画層（`LoupeControl.UIBase`）が単一所有します**。描画層は本色で描画面全体を塗ってから拡大画像を重ねるため、画像の範囲外（画像端の透明パディングと切り上げの余りを含む）が本色の無地になります（既定は不透明の中性グレー。透明を指定すると背後の要素がそのまま見えます）。**キャンバスへ直接描画する UI（MewUI）とウィンドウの上へ重ねる UI（Avalonia）のどちらも同じ色の値で指定でき、UI 層に固有の画像外プロパティを持ちません**。塗る処理と描画順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有します。
 
 ## 機能差に由来する非対称（もう一方のコアとの違い）
 
@@ -123,12 +121,11 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 | 設定型の数とログ定義 | 1 型（`LoupeOptions`）。ログは `LogOptionsChanged` のみ | 2 型（`MarqueeOptions` + `MarqueeDecoOptions`）。ログは `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキー） | Marquee の装飾は撮影オーバーレイ等へ組み込むときだけ必要なサブ概念 |
 | 描画データの粒度 | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker` / `MarqueeOuterDecoFrame`） | 描画プリミティブが違う（塗る矩形の列 / 線の座標） |
 | 描画入力の座標変換ポート | 入力に持たない（ポートは `ResolveLayout` の表示位置解決だけに使う） | 入力が保持する（`Port` ＋ 未指定時の `DomainToDipScaling`。`ResolvedPort` / `ToDipRect` が自分で解決する） | 本コアは自身の物理ピクセル面で描画が完結する（Marquee は選択矩形をドメイン → DIP へ変換して描き、その DIP はホストの座標系で決まる） |
-| 確保の戦略 | 高カウントのタイルだけ構造体列挙子（`LoupeCheckerTiles`）で確保 0（数百〜数千） | 固定個の矩形は `List` を毎フレーム確保（ハンドル 8 / 暗転 4 / 枠線 4） | 要素数の桁が違う（描画面に比例するタイルと、固定個の矩形） |
-| 下地の層 | `LoupeDrawLayer.Background` で自前の描画面を消す | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | ルーペは描画先のビットマップを自分で置き換える（Marquee は自身の表面へ直接描き、消去はフレームワークが行う） |
+| 下地の層 | `LoupeDrawLayer.Pasteboard`（画像外の色）で描画面全体を塗る | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | ルーペは描画先のビットマップを自分で置き換える（Marquee は自身の表面へ直接描き、消去はフレームワークが行う） |
 | 描画完了の通知の内容 | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | `MarqueeRenderedEventArgs`（`MarqueeDrawContent`: 層・文言の有無） | ホストが重ね描きするために必要な情報が違う（切り出し領域と倍率 / 選択矩形の所在） |
 | 表示可否の述語の引数 | `ShouldShowCoordLabel(bool)` | `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` | ルーペの座標ラベルは拡大中心が未設定になりうる（Marquee の座標ラベルは入力に常にある） |
 | `Limits` の追加役割 | 安全域と補正のみ | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`） | ラベルの表示スケールは Marquee 固有の概念 |
-| 市松模様・区画数の計算 | `Checkerboard/`（`LoupeCheckerboard` / `LoupeDivMath`）+ `LoupeCheckerTiles` | 持たない | ルーペは透明領域を市松模様で示す（区画数の切り上げは切り出し領域とも共用する） |
+| 区画数の計算 | `Drawing/`（`LoupeDivMath`）を持つ | 持たない | 切り出し領域の一辺と十字線の交点が「余りを 1 区画として数える」規則を共用する |
 | 選択の幾何 | 持たない | `Selection/`（`MarqueeSelectionGeometry`）を持つ | ルーペは選択操作を持たない |
 | テスト補助（スパイ） | `RecordingLogger` のみ | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
 | ドキュメントの追加の節 | 追加の節なし | 3 節（README「名前の由来と一般的な呼称」「選択矩形の外側に描く装飾」、SPEC_System「3.3 状態遷移」） | 改名の経緯・装飾・状態遷移はルーペに対応する概念が無い（共通の節は両コアで同一順） |
@@ -137,7 +134,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 
 ```csharp
 // 色は描画層（LoupeControl.UIBase）の LoupePaint が単一所有する（コアの LoupeOptions は色を持たない）
-var paint = LoupePaint.Default with { CheckerColorA = Color.White };  // 色は System.Drawing.Color（UI 非依存）で指定する
+var paint = LoupePaint.Default with { PasteboardColor = Color.White };  // 色は System.Drawing.Color（UI 非依存）で指定する
 // コアは描画実装を持たない（描画は UI 層の都合であり、層の順序に従う手順は UIBase が単一所有する）
 var loupe = new Loupe(options);                                // options は null 可（null は LoupeOptions.Default）
 loupe.Log = logger;                                            // null は NullLogger へ吸収される
@@ -145,7 +142,7 @@ loupe.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => null)); //
 
 // 状態（ホストが更新する。設定はコア、拡大元画像と拡大中心は UI 層が保持する）
 loupe.DipToDeviceScaling = 1.25;                               // 環境値（DPI 追従。範囲外は補正される）
-loupe.CenterPoint = cursorDomain;                              // 拡大中心（元画像ピクセル座標。null は市松模様のみ）
+loupe.CenterPoint = cursorDomain;                              // 拡大中心（元画像ピクセル座標。null は拡大画像なし = 画像外の色のみ）
 loupe.PositionOffset = 16;                                     // カーソルから離して配置するためのホスト指定値
 
 // 描画（1 フレーム分。レイアウト → 描画入力 → 描画内容の順に解決する）
@@ -186,11 +183,11 @@ UI 側（`LoupeControl`）が公開する入口:
 3. **座標系の 3 区分**: ドメイン座標（元画像 px）→ 親領域 DIP（`ICoordTransform`）→ 物理ピクセル（`DipToDeviceScaling`）のうち、① ドメイン → DIP は `Loupe`、② DIP → 物理ピクセルは `LoupeRenderRequest` が担う（描画層は換算しない）。
 4. **設定は 1 値・補正は生成時**: 設定は `LoupeOptions` の 1 値にまとめ、数値項目の安全域への補正は型の生成時（`init` アクセサ）に適用する（UI 側に補正の登録を要求しない）。
 5. **表示サイズの決定はファサードが単一所有**: 要求サイズを親領域の最小辺へクランプする規則は `Loupe.ResolveLayout` の 1 箇所である（親領域のサイズを引数で受けるため、クランプの基準をコアが保持しない）。
-6. **描画順は本コアが単一所有する**: `LoupeDrawLayer`（`Background` → `Checkerboard` → `Image` → `Crosshair` → `Border` → `Label`）で層と順序を指示し、UI 層はその順に処理するだけにする。**層は「描く値がある場合だけ」含める**（層の有無 = 描く値の有無。`LoupeDrawContent.HasText` が層の有無と一致する）。**テキストの層を必ず最後に置く**ため、テキストは常に最上位に表示される。
+6. **描画順は本コアが単一所有する**: `LoupeDrawLayer`（`Pasteboard` → `Image` → `Crosshair` → `Border` → `Label`）で層と順序を指示し、UI 層はその順に処理するだけにする。**層は「描く値がある場合だけ」含める**（層の有無 = 描く値の有無。`LoupeDrawContent.HasText` が層の有無と一致する）。**テキストの層を必ず最後に置く**ため、テキストは常に最上位に表示される。
 7. **描画は本コアの関心事ではない**: 本コアは描画 API も描画ポートも持たず、`LoupeDrawContent`（と `Layers`）というデータを返すだけである。描画の手順（層の順序に従う写し方）は UI 側の共有層（`LoupeControl.UIBase` の `LoupeRendererBase`）が単一所有する。
 8. **文字は Core が文言と基準点を決め、UI 層が要素を配置する**: 中心座標ラベルの文言は `EsPoint.Format`、基準点はルーペ上端の中央（コアが解決済み）であり、実寸の測定と要素への配置は UI 層が担う（実寸は描画 API でしか測れないため）。体裁は描画層（`LoupeControl.UIBase` の `LoupePaint` / `LoupeLabelPlan`）が単一所有する。
-9. **色は本コアが持たない**: 下地・市松模様・枠線・十字線・ラベルの色は描画にだけ必要な設定であるため、描画層（`LoupeControl.UIBase` の `LoupePaint`）が単一所有する。
-10. **描画の可否は明示フラグが単一所有**: 描くかどうかは `LoupeOptions` の `ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` が決める（透明色を「描かない」の代用にしない）。非表示の項目は空の描画内容として返す。
+9. **色は本コアが持たない**: ペーストボード（画像外）・枠線・十字線・ラベルの色は描画にだけ必要な設定であるため、描画層（`LoupeControl.UIBase` の `LoupePaint`）が単一所有する。
+10. **描画の可否は明示フラグが単一所有**: 描くかどうかは `LoupeOptions` の `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` が決める（透明色を「描かない」の代用にしない）。非表示の項目は空の描画内容として返す。
 11. **変化したときだけログ出力する判断もコア**: `Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter が変化を検出し、変化した項目だけを出力する（UI 層は変更通知で値を転送するだけで、同値判定も前後の値の保持も持たない）。
 12. **操作の入口はファサードのみ**: UI 層とホストは `Loupe` だけを参照し、計算クラス（`internal`）には触れない。表示レイアウトの解決・描画入力の生成・描画内容の解決も本型が単一所有する。
 
@@ -217,11 +214,10 @@ dotnet build src/Feature.LoupeCore/src/Feature.LoupeCore.csproj
 ```text
 tests/
 ├── Loupe.Tests.cs                   # 公開ファサード（表示レイアウトの解決・描画入力の生成・設定変更ログ・確保量の固定）（31 件）
-├── Loupe.DrawContent.Tests.cs       # 描画内容の解決（層の順序・描画可否・層の一覧の共有）（12 件）
-├── Loupe.Limits.Tests.cs            # 数値パラメータの既定値・安全域と補正（13 件）
-├── Checkerboard/                    # 区画数の切り上げ除算・市松模様の明暗の判定（17 件）
-├── Decoration/                      # 十字線と枠線の矩形・寸法の物理ピクセル換算（14 件）
-├── Drawing/                         # 描画入力の組み立て・切り出し領域の導出・市松模様のタイル列挙（43 件）
+├── Loupe.DrawContent.Tests.cs       # 描画内容の解決（層の順序・描画可否・層の一覧の共有）（10 件）
+├── Loupe.Limits.Tests.cs            # 数値パラメータの既定値・安全域と補正（11 件）
+├── Decoration/                      # 十字線と枠線の矩形（5 件）
+├── Drawing/                         # 描画入力の組み立て・切り出し領域の導出・区画数の切り上げ・寸法の換算（45 件）
 ├── Logging/                         # ログ定義の生成コード（IsEnabled 両パス・書式・差分検出）（10 件）
 ├── Placement/                       # 表示位置の計算（5 件）
 └── Setting/                         # 設定の既定値・部分変更・安全域への補正・表示可否・等価性（14 件）
@@ -229,7 +225,7 @@ tests/
 
 **テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Loupe.cs` / `Loupe.DrawContent.cs` / `Loupe.Limits.cs`）のテストはルートに置きます。
 
-件数は `[Theory]` を展開したケース数（合計 159 件）です。
+件数は `[Theory]` を展開したケース数（合計 131 件）です。
 
 ```powershell
 dotnet test src/Feature.LoupeCore/tests/Feature.LoupeCore.Tests.csproj

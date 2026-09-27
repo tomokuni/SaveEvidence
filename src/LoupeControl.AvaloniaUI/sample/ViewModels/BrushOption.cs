@@ -55,10 +55,10 @@ public static class BrushOptions
     /// <summary>オレンジ。</summary>
     public static BrushOption Orange { get; } = new("オレンジ", Brushes.Orange);
 
-    /// <summary>市松模様 B の既定色（#CCCCCC）。</summary>
-    public static BrushOption CheckerB { get; } = new("#CCCCCC", new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)));
+    /// <summary>画像外（ペーストボード）の既定色（#CCCCCC。従来の市松模様 B と同じ濃さ）。</summary>
+    public static BrushOption Pasteboard { get; } = new("#CCCCCC", new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)));
 
     /// <summary>全選択肢。</summary>
     public static IReadOnlyList<BrushOption> All { get; } =
-        [None, Red, Green, Blue, Yellow, Cyan, Magenta, White, Black, Gray, LightGray, Orange, CheckerB];
+        [None, Red, Green, Blue, Yellow, Cyan, Magenta, White, Black, Gray, LightGray, Orange, Pasteboard];
 }

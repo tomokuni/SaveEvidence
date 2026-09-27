@@ -72,41 +72,36 @@ public class CapturePaintMapperTests
     {
         var settings = CreateSettings() with
         {
-            LoupeCheckerColorA = DrawingColor.Red,
-            LoupeCheckerColorB = DrawingColor.Green,
+            LoupePasteboardColor = DrawingColor.Red,
             LoupeFrameColor = DrawingColor.Blue,
             LoupeCrossColor = DrawingColor.Yellow,
             LoupeCoordLabelColor = DrawingColor.Cyan,
             LoupeCoordLabelBackgroundColor = DrawingColor.FromArgb(11, 22, 33),
         };
 
-        var paint = CapturePaintMapper.ToLoupePaint(settings, DrawingColor.Transparent);
+        var paint = CapturePaintMapper.ToLoupePaint(settings);
 
-        Assert.Equal(DrawingColor.Red, paint.CheckerColorA);
-        Assert.Equal(DrawingColor.Green, paint.CheckerColorB);
+        Assert.Equal(DrawingColor.Red, paint.PasteboardColor);
         Assert.Equal(DrawingColor.Blue, paint.BorderColor);
         Assert.Equal(DrawingColor.Yellow, paint.CrossColor);
         Assert.Equal(DrawingColor.Cyan, paint.CoordLabelColor);
         Assert.Equal(DrawingColor.FromArgb(11, 22, 33), paint.CoordLabelBackgroundColor);
     }
 
-    /// <summary>市松模様の下地色が引数で与えられることを検証する。</summary>
-    /// <remarks>下地はホストの状況（撮影オーバーレイは透かす / プレビューの切り出しはテーマ背景色）で決まるため、設定からは写像しない。</remarks>
+    /// <summary>画像外（ペーストボード）の色が設定から与えられることを検証する。</summary>
+    /// <remarks>画像外の色は設定（<c>LoupePasteboardColor</c>）が単一所有する（透明を指定すると背後の要素が見える）。</remarks>
     [Fact]
-    public void 変換_ルーペの下地色は引数で与えられる()
+    public void 変換_ルーペの画像外の色は設定から与えられる()
     {
-        var settings = CreateSettings();
-        var background = DrawingColor.FromArgb(255, 12, 34, 56);
+        var settings = CreateSettings() with { LoupePasteboardColor = DrawingColor.FromArgb(255, 12, 34, 56) };
 
-        Assert.Equal(background, CapturePaintMapper.ToLoupePaint(settings, background).BackgroundColor);
-        // 透明を渡すと市松模様の背後が透ける（撮影オーバーレイの既定）
-        Assert.Equal(DrawingColor.Transparent, CapturePaintMapper.ToLoupePaint(settings, DrawingColor.Transparent).BackgroundColor);
+        Assert.Equal(DrawingColor.FromArgb(255, 12, 34, 56), CapturePaintMapper.ToLoupePaint(settings).PasteboardColor);
     }
 
     [Fact]
     public void 変換_設定がnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToMarqueePaint(null!));
-        Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToLoupePaint(null!, DrawingColor.Transparent));
+        Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToLoupePaint(null!));
     }
 }

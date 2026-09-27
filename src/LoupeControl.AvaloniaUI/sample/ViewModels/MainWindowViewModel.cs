@@ -21,11 +21,8 @@ public sealed class MainWindowViewModel : ObservableObject
     /// <summary>十字線の色選択肢。</summary>
     public IReadOnlyList<BrushOption> CrossColorOptions { get; } = BrushOptions.All;
 
-    /// <summary>市松模様 A の色選択肢。</summary>
-    public IReadOnlyList<BrushOption> CheckerColorAOptions { get; } = BrushOptions.All;
-
-    /// <summary>市松模様 B の色選択肢。</summary>
-    public IReadOnlyList<BrushOption> CheckerColorBOptions { get; } = BrushOptions.All;
+    /// <summary>画像外（ペーストボード）の色選択肢。</summary>
+    public IReadOnlyList<BrushOption> PasteboardColorOptions { get; } = BrushOptions.All;
 
     /// <summary>枠線の色選択肢。</summary>
     public IReadOnlyList<BrushOption> BorderColorOptions { get; } = BrushOptions.All;
@@ -189,23 +186,6 @@ public sealed class MainWindowViewModel : ObservableObject
     public string SelectionRectLabel =>
         $"({SelectionRectX:F0}, {SelectionRectY:F0}) {SelectionRectWidth:F0}x{SelectionRectHeight:F0}";
 
-    private int _checkerSize = 8;
-
-    /// <summary>市松模様のタイルサイズ。</summary>
-    public int CheckerSize
-    {
-        get => _checkerSize;
-        set
-        {
-            if (SetProperty(ref _checkerSize, value))
-            {
-                OnPropertyChanged(nameof(CheckerSizeText));
-                OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Paint));
-            }
-        }
-    }
-
     private int _borderThickness = 2;
 
     /// <summary>枠線の太さ（ピクセル）。</summary>
@@ -258,31 +238,15 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
-    private BrushOption _checkerColorAOption = BrushOptions.White;
+    private BrushOption _pasteboardColorOption = BrushOptions.Pasteboard;
 
-    /// <summary>市松模様 A の色選択。</summary>
-    public BrushOption CheckerColorAOption
+    /// <summary>画像外（ペーストボード）の色選択。</summary>
+    public BrushOption PasteboardColorOption
     {
-        get => _checkerColorAOption;
+        get => _pasteboardColorOption;
         set
         {
-            if (SetProperty(ref _checkerColorAOption, value))
-            {
-                OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Paint));
-            }
-        }
-    }
-
-    private BrushOption _checkerColorBOption = BrushOptions.CheckerB;
-
-    /// <summary>市松模様 B の色選択。</summary>
-    public BrushOption CheckerColorBOption
-    {
-        get => _checkerColorBOption;
-        set
-        {
-            if (SetProperty(ref _checkerColorBOption, value))
+            if (SetProperty(ref _pasteboardColorOption, value))
             {
                 OnPropertyChanged(nameof(Options));
                 OnPropertyChanged(nameof(Paint));
@@ -312,8 +276,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public LoupePaint Paint => new()
     {
         CrossColor = ToDrawingColor(CrossColorOption),
-        CheckerColorA = ToDrawingColor(CheckerColorAOption),
-        CheckerColorB = ToDrawingColor(CheckerColorBOption),
+        PasteboardColor = ToDrawingColor(PasteboardColorOption),
         BorderColor = ToDrawingColor(BorderColorOption),
     };
 
@@ -328,7 +291,6 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         RequestedSize = RequestedSize,
         ZoomLevel = ZoomLevel,
-        CheckerSize = CheckerSize,
         BorderThickness = BorderThickness,
     };
 
@@ -348,9 +310,6 @@ public sealed class MainWindowViewModel : ObservableObject
     /// <summary>ルーペサイズの表示文字列。</summary>
     public string RequestedSizeText => $"{RequestedSize} DIP";
 
-    /// <summary>市松模様タイルサイズの表示文字列。</summary>
-    public string CheckerSizeText => $"{CheckerSize} px";
-
     /// <summary>枠線の太さの表示文字列。</summary>
     public string BorderThicknessText => $"{BorderThickness} px";
 
@@ -362,5 +321,5 @@ public sealed class MainWindowViewModel : ObservableObject
     public string CoordinateText => CenterPoint is { } p
         ? $"中心座標: ({p.X:F0}, {p.Y:F0})  拡大率: {ZoomLevel}x  サイズ: {RequestedSize} DIP"
         + (SelectionRectVisible ? $"  選択矩形: ({SelectionRectX:F0}, {SelectionRectY:F0}) {SelectionRectWidth:F0}x{SelectionRectHeight:F0}" : "")
-        : "画像の外です（市松模様のみ表示）";
+        : "画像の外です（画像外の色のみ表示）";
 }

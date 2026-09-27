@@ -137,11 +137,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `Options.ZoomLevel` | ✅ `Options.Loupe.ZoomLevel` | ✅ | 拡大倍率 |
 | `DipToDeviceScaling` | ✅ `LoupeDipToDeviceScaling`（個別プロパティ） | —（DPI から自動取得） | DIP → 物理ピクセル倍率 |
 | `Paint.CrossColor` | ✅ `LoupePaint.CrossColor` | ✅ | 十字線色 |
-| `Paint.BackgroundColor` | —（設定なし） | — | 下地（ベース）色。ホスト（`CaptureSessionControl.UIBase` の `CapturePaintMapper`）が透明またはテーマ背景色を設定し、設定画面では設定しない |
-| `Options.CheckerSize` | ✅ `Options.Loupe.CheckerSize` | ✅ | 市松模様タイルサイズ |
-| `Paint.CheckerColorA` | ✅ `LoupePaint.CheckerColorA` | ✅ | |
-| `Paint.CheckerColorB` | ✅ `LoupePaint.CheckerColorB` | ✅ | |
-| `Paint.BorderColor` | ✅ `LoupePaint.BorderColor` | ✅ | 枠色 |
+| `Paint.PasteboardColor` | ✅ `LoupePaint.PasteboardColor` | ✅ | 画像外（ペーストボード）の色 |
 | `Options.BorderThickness` | ✅ `Options.Loupe.BorderThickness` | ✅ | 枠の太さ |
 | `PositionOffset` | ✅ `Options.LoupeOffset` | ✅ | カーソルからのオフセット（複合コントロール固有の設定） |
 | `Options.ShowCoordLabel` | ✅ `Options.Loupe.ShowCoordLabel` | ✅ | 座標ラベル表示 |
@@ -164,7 +160,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | --- | --- | --- | --- |
 | `Options`（`FadeMaskDragRectOptions`） | ✅ `SelectionOverlayOptions`（そのまま委譲） | ✅ | 下位 2 コントロールの設定（寸法・表示可否）を一括公開（全て設定画面で設定可能） |
 | `MarqueePaint`（`MarqueePaint`） | ✅ `SelectionOverlayMarqueePaint`（そのまま委譲） | ✅ | 描画にだけ必要な色（選択矩形・装飾） |
-| `LoupePaint`（`LoupePaint`） | ✅ `SelectionOverlayLoupePaint`（そのまま委譲） | ✅ | 描画にだけ必要な色（ルーペ・市松模様・中心座標ラベル） |
+| `LoupePaint`（`LoupePaint` ） | ✅ `SelectionOverlayLoupePaint`（そのまま委譲） | ✅ | 描画にだけ必要な色（ルーペの画像外・枠線・十字線・中心座標ラベル） |
 | `DomainToDipScaling` | ✅ `DomainToDipScaling`（個別プロパティ） | —（コードから動的設定） | DPI スケーリング |
 | `DisplayScaleScaling` | —（公開しない） | — | マルチスクリーン補正。Crop では使用しない（Crop のサイズラベルは `DomainToDipScaling` と同値で動作する） |
 | `LoupeDipToDeviceScaling` | ✅ `LoupeDipToDeviceScaling`（個別プロパティ） | —（DPI から自動取得） | ルーペ描画スケール |
@@ -230,11 +226,12 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
 | スクロール不要時は中央に配置 | `CenterAlign` | `CropView.CenterAlign`（画像配置） |
-| 市松模様 A（色） | `PreviewCheckerColorA` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.Paint.CheckerColorA`（ルーペ） |
-| 市松模様 B（色） | `PreviewCheckerColorB` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.Paint.CheckerColorB`（ルーペ） |
-| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.ViewportBackground`（プレビュー）+ `LoupeControl.Options.CheckerSize`（ルーペ）。実効値は `ZoomViewAppearance.ResolveCheckerTileSize` が決める（0 以下 = 描かない / 1 は下限 2 へ切り上げ） |
+| 市松模様 A（色） | `PreviewCheckerColorA` | `CropView.ViewportBackground`（プレビュー） |
+| 市松模様 B（色） | `PreviewCheckerColorB` | `CropView.ViewportBackground`（プレビュー） |
+| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.ViewportBackground`（プレビュー）。実効値は `ZoomViewAppearance.ResolveCheckerTileSize` が決める（0 以下 = 描かない / 1 は下限 2 へ切り上げ） |
+| ルーペの画像外の色 | `LoupePasteboardColor` | `LoupeControl.Paint.PasteboardColor`（ルーペの画像外は無地） |
 
-- 市松模様は「画像設定」の詳細設定で管理し、**プレビュー背景とルーペ背景で同じ設定を共有**する。
+- 市松模様は「画像設定」の詳細設定で管理し、**プレビュー背景（画像の透明部分とレターボックス）に適用**する（ルーペは市松模様を使わず、画像外を無地の色で示す）。
 
 ## 7. キャプチャ設定
 
@@ -283,7 +280,7 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 | 座標ラベルのフォントサイズ | `LoupeCoordLabelFontSize` | `LoupeControl.Paint.CoordLabelFontSize` |
 
 - 拡大率（`LoupeZoomLevel`）・サイズ（`LoupeSize`）・カーソルからのオフセット（`LoupeOffset`）は「外観設定」（§4）に配置。
-- 市松模様は「画像設定」（§6）で管理するため、ルーペ設定には含めない。
+- 市松模様は「画像設定」（§6 ）で管理するため、ルーペ設定には含めない（ルーペは画像外を無地の色で示す）。
 - 座標ラベルの外観は詳細設定（Expander）内に配置。
 
 ### 描画スケール（自動設定・設定項目なし）
@@ -351,7 +348,7 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 
 ## 13. 外観設定のデフォルト値への復元
 
-設定画面「外観設定」の右上にある **「デフォルト値に戻す」** ボタンで、外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・市松模様・選択矩形内ラベル・座標ラベル）をデフォルト値へ一括復元する。
+設定画面「外観設定」の右上にある **「デフォルト値に戻す」** ボタンで、外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・プレビューの市松模様・選択矩形内ラベル・座標ラベル）をデフォルト値へ一括復元する。
 
 - 実装: `Settings.ResetAppearanceToDefaults()`（新規インスタンスのフィールド初期化子 = デフォルト値をコピー）
 - デフォルト値は各コントロール（`MarqueeControl` / `LoupeControl` の `Options` と `Paint` / 装飾の `MarqueeOuterDecoAppearance`）の既定値と一致させる

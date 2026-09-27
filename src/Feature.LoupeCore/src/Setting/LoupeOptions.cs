@@ -59,15 +59,6 @@ public sealed record LoupeOptions
         init => field = CoerceZoomLevel(value);
     } = ZoomLevelDefault;
 
-    /// <summary>市松模様の 1 タイルサイズ（DIP）を取得する。</summary>
-    /// <value>タイルサイズ（DIP）。既定は 6。設定時は 1〜128 へ補正される。</value>
-    /// <remarks>安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。</remarks>
-    public int CheckerSize
-    {
-        get => field;
-        init => field = CoerceCheckerSize(value);
-    } = CheckerSizeDefault;
-
     /// <summary>枠線の太さ（DIP）を取得する。</summary>
     /// <value>枠線の太さ（DIP）。既定は 2。設定時は 1〜64 へ補正される。</value>
     /// <remarks>安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。</remarks>
@@ -84,11 +75,6 @@ public sealed record LoupeOptions
     /// <summary>中心座標ラベルを表示するかどうかを取得する。</summary>
     /// <value>true の場合はルーペ上端中央へ中心座標を表示する。既定は true。</value>
     public bool ShowCoordLabel { get; init; } = true;
-
-    /// <summary>市松模様を表示するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合は画像の外側（透明領域）へ市松模様を描く。false の場合は描かない。</value>
-    /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
-    public bool ShowCheckerboard { get; init; } = true;
 
     /// <summary>十字線を表示するかどうかを取得する。</summary>
     /// <value>true（既定）の場合は切り出し領域の中央へ十字線を描く。false の場合は描かない。</value>

@@ -1,6 +1,5 @@
 using EsUtil.SaveEvidence.Loupe.UIBase;
 using EsUtil.SaveEvidence.Marquee.UIBase;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.CaptureSession.UIBase;
 
@@ -50,19 +49,20 @@ internal static class CapturePaintMapper
 
     /// <summary>キャプチャ設定からルーペの色を組み立てる。</summary>
     /// <param name="settings">キャプチャ設定（全メンバー non-null。<c>ToNonNull</c> 済みを渡す）。</param>
-    /// <param name="background">市松模様の下地色（ホストが決める。撮影オーバーレイは背後の撮影画像を透かすため透明、プレビューの切り出しはテーマ背景色）。</param>
     /// <returns>ルーペの描画に使う色。</returns>
-    /// <remarks>市松模様の色は半透明のため、下地を塗らないと背後の要素（撮影画像・画面・プレビュー）が透ける。</remarks>
+    /// <remarks>
+    /// 画像外（ペーストボード）の色は設定（<see cref="CaptureSettings.LoupePasteboardColor"/>）が単一所有する<br/>
+    /// （描画層は本色で描画面全体を塗ってから拡大画像を重ねるため、画像の無い部分が本色の無地になる）。<br/>
+    /// 透過させたい場合はアルファ付きの色を設定する（既定は不透明の中性グレー）。
+    /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="settings"/> が null の場合。</exception>
-    public static LoupePaint ToLoupePaint(CaptureSettings settings, DrawingColor background)
+    public static LoupePaint ToLoupePaint(CaptureSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
 
         return new LoupePaint
         {
-            BackgroundColor = background,
-            CheckerColorA = settings.LoupeCheckerColorA!.Value,
-            CheckerColorB = settings.LoupeCheckerColorB!.Value,
+            PasteboardColor = settings.LoupePasteboardColor!.Value,
             BorderColor = settings.LoupeFrameColor!.Value,
             CrossColor = settings.LoupeCrossColor!.Value,
             CoordLabelColor = settings.LoupeCoordLabelColor!.Value,

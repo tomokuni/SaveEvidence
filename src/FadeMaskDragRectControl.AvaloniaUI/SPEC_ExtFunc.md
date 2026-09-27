@@ -123,7 +123,7 @@ parentPanel.Children.Add(overlay);
 | `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
 | `LoupeDipToDeviceScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（設定（`Options`）の対象外・DPI から自動取得。`LoupeControl.DipToDeviceScaling` へ委譲） |
 | `MarqueePaint` | `MarqueePaint`（描画層） | 選択矩形コントロールの描画に使う色（描画にだけ必要な設定）の単一値。既定は `MarqueePaint.Default`。内包する選択矩形コントロールへ委譲する |
-| `LoupePaint` | `LoupePaint`（描画層） | ルーペの描画に使う色（描画にだけ必要な設定）の単一値。既定は `LoupePaint.Default`。内包するルーペコントロールへ委譲する（市松模様の下地色もここで与える） |
+| `LoupePaint` | `LoupePaint`（描画層） | ルーペの描画に使う色（描画にだけ必要な設定）の単一値。既定は `LoupePaint.Default`。内包するルーペコントロールへ委譲する |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言を描画時に評価するプロバイダ（文言はホストが与える。`WindowTitle` は廃止し `InfoTextProvider` へ統合） |
 | `ShowFullOverlay` | `bool` | 全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効。読み取り専用） |
 | `LoupeCenterPoint` | `Point?` | ルーペ中心（ドメイン座標。未設定時は null） |

@@ -36,15 +36,6 @@ public sealed partial class Loupe
         /// <summary>拡大率の既定値。</summary>
         public const int ZoomLevelDefault = 4;
 
-        /// <summary>市松模様の 1 タイルサイズの最小値（ピクセル）。</summary>
-        public const int CheckerSizeMin = 1;
-
-        /// <summary>市松模様の 1 タイルサイズの最大値（ピクセル）。</summary>
-        public const int CheckerSizeMax = 128;
-
-        /// <summary>市松模様の 1 タイルサイズの既定値（ピクセル）。</summary>
-        public const int CheckerSizeDefault = 6;
-
         /// <summary>枠線の太さの最小値（ピクセル）。</summary>
         public const int BorderThicknessMin = 1;
 
@@ -72,11 +63,6 @@ public sealed partial class Loupe
         /// <param name="value">補正する値。</param>
         /// <returns>安全域へ補正した値。</returns>
         public static int CoerceZoomLevel(int value) => Math.Clamp(value, ZoomLevelMin, ZoomLevelMax);
-
-        /// <summary>市松模様の 1 タイルサイズを安全域へ補正する（1〜128）。</summary>
-        /// <param name="value">補正する値（ピクセル）。</param>
-        /// <returns>安全域へ補正した値。</returns>
-        public static int CoerceCheckerSize(int value) => Math.Clamp(value, CheckerSizeMin, CheckerSizeMax);
 
         /// <summary>枠線の太さを安全域へ補正する（1〜64）。</summary>
         /// <param name="value">補正する値（ピクセル）。</param>

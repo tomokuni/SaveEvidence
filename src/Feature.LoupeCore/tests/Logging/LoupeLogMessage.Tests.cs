@@ -160,10 +160,8 @@ public class LoupeLogMessageTests
         {
             RequestedSize = 240,
             ZoomLevel = 8,
-            CheckerSize = 12,
             BorderThickness = 8,
             ShowCoordLabel = false,
-            ShowCheckerboard = false,
             ShowCrosshair = false,
             ShowBorder = false,
         };
@@ -174,10 +172,8 @@ public class LoupeLogMessageTests
             [
                 "[Feature.LoupeCore] Setting: RequestedSize 160 → 240",
                 "[Feature.LoupeCore] Setting: ZoomLevel 4 → 8",
-                "[Feature.LoupeCore] Setting: CheckerSize 6 → 12",
                 "[Feature.LoupeCore] Setting: BorderThickness 2 → 8",
                 "[Feature.LoupeCore] Setting: ShowCoordLabel True → False",
-                "[Feature.LoupeCore] Setting: ShowCheckerboard True → False",
                 "[Feature.LoupeCore] Setting: ShowCrosshair True → False",
                 "[Feature.LoupeCore] Setting: ShowBorder True → False",
             ],

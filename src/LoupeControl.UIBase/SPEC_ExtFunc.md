@@ -16,16 +16,16 @@
 
 | 機能 | 提供元 | 説明 |
 | --- | --- | --- |
-| ルーペの描画（図形） | `ILoupeRenderer.DrawShapes`（本層の契約） | 下地・市松模様・拡大画像・十字線・枠線を描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする）。層の順序はコア（`LoupeDrawContent.Layers`）がデータとして単一所有し、本層の `LoupeRendererBase` がその順に写す |
-| 拡大画像の切り出しと描画（色を使わない層） | `LoupeRendererBase`（本層の基底が実装する） | コアが解決した切り出し領域（`LoupeDrawContent.MagnifiedImage`）で `EsBitmap.Crop` を呼び、描画先へ `DrawImage` する。破棄済みソースの `ObjectDisposedException` は本層で吸収する（市松模様のみが残る） |
+| ルーペの描画（図形） | `ILoupeRenderer.DrawShapes`（本層の契約） | ペーストボード（画像外の色）・拡大画像・十字線・枠線を描画順に描く（**テキストは描かない**。テキストを canvas へ描く実装は基底の `DrawLabel`（既定は何もしない）を上書きする）。層の順序はコア（`LoupeDrawContent.Layers`）がデータとして単一所有し、本層の `LoupeRendererBase` がその順に写す |
+| 拡大画像の切り出しと描画（色を使わない層） | `LoupeRendererBase`（本層の基底が実装する） | コアが解決した切り出し領域（`LoupeDrawContent.MagnifiedImage`）で `EsBitmap.Crop` を呼び、描画先へ `DrawImage` する。破棄済みソースの `ObjectDisposedException` は本層で吸収する（画像外の色のみが残る） |
 | テキスト要素の配置 | `LoupeLabelPlan.Resolve`（UI 層が呼ぶ） | 実寸（描画 API の測定値）からラベル要素の配置指示（`LoupeLabelPlacement`）を解決する。**要素として置くか画像として描くかは UI 層が決める** |
-| 描画に使う色 | `LoupePaint` | 下地・市松模様・枠線・十字線・中心座標ラベルの色を単一所有する（**描画の可否は持たない**） |
+| 描画に使う色 | `LoupePaint` | ペーストボード（画像外）・枠線・十字線・中心座標ラベルの色を単一所有する（**描画の可否は持たない**） |
 
 #### 1.1.1 前提条件
 
 - 描画先は `IEsCanvas`（`EsUtil.SaveEvidence.Common.Imaging`）です。Skia は `SkiaEsCanvas`、Avalonia の `DrawingContext` は `AvaloniaCanvas`（`Platform.AvaloniaUI`）を使います。
 - 描画の単位は**物理ピクセル**です（`LoupeRenderRequest.PixelSize` が作る正方形が描画面）。DIP → 物理ピクセルの換算はコアが済ませています。
-- 描画面の消去は下地の層（`LoupeDrawLayer.Background`）が行います（前フレームの残像を残しません）。
+- 描画面の消去はペーストボードの層（`LoupeDrawLayer.Pasteboard`）が行います（前フレームの残像を残しません）。
 - 拡大元画像は UI ごとに型が異なるため引数で渡します（本層は `EsBitmap` のみを受け取ります）。
 - 描画の色は `LoupePaint` として描画実装が保持します（コアの契約（`LoupeRenderRequest`）には含めません）。
 
@@ -64,7 +64,7 @@
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeRenderer` | sealed class | 既定の描画実装（`ILoupeRenderer`（本層の契約））。色（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する |
-| `LoupePaint` | sealed record | 描画に使う色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）の単一所有者（**描画可否の述語は持たない**。可否はコアの明示フラグが単一所有し、非表示の項目は空の描画内容として渡る）。`Default` を基点に `with` 式で部分変更する |
+| `LoupePaint` | sealed record | 描画に使う色（ペーストボード・枠線・十字線・中心座標ラベルの 6 色）の単一所有者（**描画可否の述語は持たない**。可否はコアの明示フラグが単一所有し、非表示の項目は空の描画内容として渡る）。`Default` を基点に `with` 式で部分変更する |
 | `LoupeLabelPlan` | static class | ラベル要素の配置指示の解決（色は `LoupePaint` から受け取る） |
 | `LoupeUiLogMessage` | static partial class | UI が出力するログ定義（拡大元画像の変更・描画の例外） |
 | `LoupeLogFormat` | static class | UI がログへ出す値の書式（未設定の表記・画像の寸法） |
@@ -83,7 +83,7 @@
 | メンバー | 説明 |
 | --- | --- |
 | `Default` | すべての色を既定値にした値（部分変更の基点: `LoupePaint.Default with { ... }`） |
-| `BackgroundColor` / `CheckerColorA` / `CheckerColorB` / `BorderColor` / `CrossColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` | 描画に使う 7 色（UI 非依存の `System.Drawing.Color`） |
+| `PasteboardColor` / `BorderColor` / `CrossColor` / `CoordLabelColor` / `CoordLabelBackgroundColor` | 描画に使う 5 色（UI 非依存の `System.Drawing.Color`） |
 
 ### `LoupeLabelPlan` のメンバー
 
@@ -145,7 +145,7 @@ logger.LogUpdateError(exception);
 
 | 描く対象 | 呼ぶ API |
 | --- | --- |
-| 図形（下地・市松模様・拡大画像・十字線・枠線） | `DrawShapes`（**テキストは描かない**） |
+| 図形（ペーストボード（画像外の色）・拡大画像・十字線・枠線） | `DrawShapes`（**テキストは描かない**） |
 | テキスト（中心座標） | `LoupeLabelPlan.Resolve`（コアの `LoupeDrawContent.CoordLabelText` を渡す。UI が要素として置くか canvas へ描くかを決める） |
 
 ### 描画面（`LoupeRenderRequest`）
@@ -153,7 +153,7 @@ logger.LogUpdateError(exception);
 | 項目 | 内容 |
 | --- | --- |
 | `PixelSize` | 一辺の物理ピクセル。描画面は左上原点の `PixelSize` 正方形 |
-| `SurfaceBounds` | その正方形の矩形（下地・市松模様が塗る範囲） |
+| `SurfaceBounds` | その正方形の矩形（ペーストボード（画像外の色）が塗る範囲） |
 | `ZoomLevel` | 拡大率（十字線の交点と切り出し領域に使う） |
 | `Options` | ルーペの設定（拡大率・寸法・ラベル表示の可否）。色は `LoupePaint` が単一所有する |
 | `DipToDeviceScaling` | 寸法の DIP 値 → 物理ピクセルの換算係数（換算はコアが済ませている） |
@@ -162,8 +162,8 @@ logger.LogUpdateError(exception);
 
 | 層 | 内容 |
 | --- | --- |
-| `Background` | 下地（`Clear` で描画面全体を置き換える） |
-| `Checkerboard` | 市松模様（明色で全面を塗り、暗色タイルを列挙して塗る） |
+| `Pasteboard` | 画像外（ペーストボード）の色（`Clear` で描画面全体を置き換える） |
+| `Pasteboard` | 画像外（ペーストボード）の色（描画面全体を塗って前フレームの残像を残さない） |
 | `Image` | 拡大画像（中心の周囲を切り出して拡大描画） |
 | `Crosshair` | 十字線（切り出し領域の中央） |
 | `Border` | 枠線（4 辺） |

@@ -32,7 +32,6 @@ public class LoupeControlTests
         Assert.Equal(DipToDeviceScalingDefault, control.DipToDeviceScaling);
 
         // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
-        Assert.Equal(CheckerSizeDefault, control.Options.CheckerSize);
         Assert.Equal(BorderThicknessDefault, control.Options.BorderThickness);
         Assert.True(control.Options.ShowCoordLabel);
         // 色の既定値は描画の設定が単一所有する
@@ -91,21 +90,19 @@ public class LoupeControlTests
         Assert.Equal(LoupePaint.CoordLabelFontSizeDefault, control.Paint.CoordLabelFontSize);
     }
 
-    /// <summary>市松模様と枠線のサイズが安全域へ補正されることを検証する。</summary>
+    /// <summary>枠線の太さが安全域へ補正されることを検証する。</summary>
     [Fact]
-    public void 市松模様と枠線のサイズが安全域へ補正される()
+    public void 枠線の太さが安全域へ補正される()
     {
         var control = new LoupeControl
         {
-            Options = LoupeOptions.Default with { CheckerSize = 0, BorderThickness = 0 },
+            Options = LoupeOptions.Default with { BorderThickness = 0 },
         };
 
-        Assert.Equal(CheckerSizeMin, control.Options.CheckerSize);
         Assert.Equal(BorderThicknessMin, control.Options.BorderThickness);
 
-        control.Options = control.Options with { CheckerSize = 1000, BorderThickness = 1000 };
+        control.Options = control.Options with { BorderThickness = 1000 };
 
-        Assert.Equal(CheckerSizeMax, control.Options.CheckerSize);
         Assert.Equal(BorderThicknessMax, control.Options.BorderThickness);
     }
 
@@ -227,13 +224,11 @@ public class LoupeControlTests
             Options = LoupeOptions.Default with
             {
                 ShowCoordLabel = false,
-                CheckerSize = 4,
             },
             Paint = new LoupePaint
             {
                 CrossColor = DrawingColor.FromArgb(255, 255, 0, 0),
-                CheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255),
-                CheckerColorB = DrawingColor.FromArgb(255, 0, 0, 0),
+                PasteboardColor = DrawingColor.FromArgb(255, 0, 0, 0),
                 BorderColor = DrawingColor.FromArgb(255, 0, 0, 255),
                 CoordLabelColor = DrawingColor.FromArgb(255, 255, 255, 0),
                 CoordLabelBackgroundColor = DrawingColor.FromArgb(128, 0, 0, 0),
@@ -242,9 +237,8 @@ public class LoupeControlTests
 
         Assert.Equal(new EsPoint(10, 20), control.CenterPoint);
         Assert.Equal(DrawingColor.FromArgb(255, 255, 0, 0), control.Paint.CrossColor);
-        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), control.Paint.CheckerColorB);
+        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), control.Paint.PasteboardColor);
         Assert.False(control.Options.ShowCoordLabel);
-        Assert.Equal(4, control.Options.CheckerSize);
         // 色は描画実装へ反映される（描画実装が単一所有する）
         Assert.NotNull(control.Renderer);
     }

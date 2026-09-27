@@ -3,7 +3,7 @@ using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase;
 
-/// <summary>ルーペの色（下地・市松模様・枠線・十字線・中心座標ラベル）とラベルの体裁をまとめた不変の設定値。</summary>
+/// <summary>ルーペの色（ペーストボード・枠線・十字線・中心座標ラベル）とラベルの体裁をまとめた不変の設定値。</summary>
 /// <remarks>
 /// <b>なぜ本層（UIBase）が持つか</b>: 色は<b>描画にだけ必要な設定</b>であり、コアの計算・判定には一切入らないため、<br/>
 /// コア（<c>Feature.LoupeCore</c>）には置かない。<br/>
@@ -11,10 +11,12 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// <b>ラベルのフォントサイズ・角丸も同じ理由で本型が持つ</b>: ラベルをどの体裁（文字要素 / 画像）で描くかは UI 層の判断であり、<br/>
 /// コアは文言と位置だけを渡す（<c>LoupeTextPlacement</c>）。<br/>
 /// <br/>
-/// <b>描画の可否</b>: 描くかどうかはコアの設定（<c>LoupeOptions</c> の <c>ShowCheckerboard</c> / <c>ShowCrosshair</c> / <c>ShowBorder</c>）が単一所有する<br/>
+/// <b>描画の可否</b>: 描くかどうかはコアの設定（<c>LoupeOptions</c> の <c>ShowCrosshair</c> / <c>ShowBorder</c>）が単一所有する<br/>
 /// （コアが非表示の項目を空の描画内容として返すため、描画実装は分岐を持たない）。<br/>
 /// <br/>
-/// <b>下地</b>: 市松模様の色は半透明であり、背後の要素を透かしたくない場合はホストが不透明色を指定する。<br/>
+/// <b>ペーストボード（画像外の色）</b>: 拡大画像の範囲外（画像端の透明パディングと切り上げの余りを含む）の見た目を与える。<br/>
+/// 描画層は本色で描画面全体を塗ってから拡大画像を重ねるため、画像の無い部分は本色の無地になる。<br/>
+/// 既定は不透明の中性グレー（画像外を無地として見せる）。<br/>
 /// <br/>
 /// <b>色の型</b>: UI 非依存の <see cref="DrawingColor"/> を使用し、各 UI の色型への変換は境界（描画ポートのアダプタ）で行う。<br/>
 /// 既定値は部分変更の基点（<c>LoupePaint.Default with { ... }</c>）として使う。
@@ -34,18 +36,10 @@ public sealed record LoupePaint
     /// <value>既定の色（部分変更の基点として使用する）。</value>
     public static LoupePaint Default { get; } = new();
 
-    /// <summary>ルーペの下地（ベース）色を取得する。</summary>
-    /// <value>アルファを含む色。既定は透明（背後の要素を透かす）。</value>
-    /// <remarks>市松模様・拡大画像より先に全面へ塗る色。</remarks>
-    public DrawingColor BackgroundColor { get; init; } = DrawingColor.Transparent;
-
-    /// <summary>市松模様の色A（明色）を取得する。</summary>
-    /// <value>アルファを含む色。既定は Gray 30%（#4C808080）。</value>
-    public DrawingColor CheckerColorA { get; init; } = DrawingColor.FromArgb(0x4C, 0x80, 0x80, 0x80);
-
-    /// <summary>市松模様の色B（暗色）を取得する。</summary>
-    /// <value>アルファを含む色。既定は DarkGray 30%（#4CA9A9A9）。</value>
-    public DrawingColor CheckerColorB { get; init; } = DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9);
+    /// <summary>画像外（ペーストボード）の色を取得する。</summary>
+    /// <value>アルファを含む色。既定は不透明の中性グレー（<c>#FF535353</c>）。</value>
+    /// <remarks>描画層は本色で描画面全体を塗ってから拡大画像を重ねる（画像の無い部分が本色の無地になる）。</remarks>
+    public DrawingColor PasteboardColor { get; init; } = DrawingColor.FromArgb(255, 0x53, 0x53, 0x53);
 
     /// <summary>枠線の色を取得する。</summary>
     /// <value>アルファを含む色。既定は LightGray（#FFD3D3D3）。</value>

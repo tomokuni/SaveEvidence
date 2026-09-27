@@ -41,8 +41,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 | 型 | 責務 |
 | --- | --- |
-| `LoupeRenderer` | 既定の描画実装（`sealed`。`ILoupeRenderer` を実装）。描画の設定（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する。`DrawShapes`（下地・市松・拡大画像・十字線・枠線。**テキストは描かない**）とフォントサイズ・角丸（`CoordLabelFontSize` / `CoordLabelCornerRadius`。**描画の契約には含めない**）を提供する。テキストのフック（`DrawLabel`）は基底の既定（何もしない）を引き継ぐ |
-| `LoupePaint` | 描画に使う色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）・ラベルのフォントサイズと角丸の単一所有者（**描画の可否は持たない**。可否はコアの明示フラグが単一所有し、非表示の項目は空の描画内容として渡る）。`Default` を基点に `with` 式で部分変更する |
+| `LoupeRenderer` | 既定の描画実装（`sealed`。`ILoupeRenderer` を実装）。描画の設定（`LoupePaint`）を必須引数で受け取り、インスタンスごとに保持する。`DrawShapes`（ペーストボード（画像外の色）・拡大画像・十字線・枠線。**テキストは描かない**）とフォントサイズ・角丸（`CoordLabelFontSize` / `CoordLabelCornerRadius`。**描画の契約には含めない**）を提供する。テキストのフック（`DrawLabel`）は基底の既定（何もしない）を引き継ぐ |
+| `LoupePaint` | 描画に使う色（ペーストボード・枠線・十字線・中心座標ラベルの 6 色）・ラベルのフォントサイズと角丸の単一所有者（**描画の可否は持たない**。可否はコアの明示フラグが単一所有し、非表示の項目は空の描画内容として渡る）。`Default` を基点に `with` 式で部分変更する |
 | `LoupeLabelPlacement` | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
 | `LoupeLabelPlan` | コアのラベル契約（`LoupeTextPlacement`）からラベル要素の配置指示（`LoupeLabelPlacement`）を解決する（体裁は `LoupePaint` から受け取る） |
 
@@ -63,13 +63,13 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 ## 描画の単位
 
-**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `LoupeRenderRequest.ResolvePixelSize`、寸法は `CheckerSizePixels` / `BorderThicknessPixels`）は**コアが済ませている**ため、本層は換算しません。中心座標ラベルだけは DIP で配置します（コアが基準点を、本層が `LoupeLabelPlan` で配置矩形を決める）。
+**物理ピクセル**です。`LoupeRenderRequest.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `LoupeRenderRequest.ResolvePixelSize`、寸法は `BorderThicknessPixels`）は**コアが済ませている**ため、本層は換算しません。中心座標ラベルだけは DIP で配置します（コアが基準点を、本層が `LoupeLabelPlan` で配置矩形を決める）。
 
 ## ラベルは UI の要素が描く
 
 | 対象 | 誰が描くか | 呼ぶ API |
 | --- | --- | --- |
-| 図形（下地・市松模様・拡大画像・十字線・枠線） | 本層 | `DrawShapes`（**テキストは描かない**） |
+| 図形（ペーストボード（画像外の色）・拡大画像・十字線・枠線） | 本層 | `DrawShapes`（**テキストは描かない**） |
 | テキスト（中心座標） | UI 層（要素として置くか画像として描くか） | 要素として置く場合は `LoupeLabelPlan.Resolve`（配置指示）の結果を要素へ写す（子要素は親より後に描かれるため**常に最上位**） |
 
 本層はテキストをキャンバスへ描く経路を持ちません（`Draw` / `DrawLabels` はありません）。
@@ -81,7 +81,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | **描画先（UI フレームワーク）** | `IEsCanvas` を実装する（例: `SkiaEsCanvas`（Skia）/ `AvaloniaCanvas`（Avalonia の `DrawingContext`））。**描画手順はそのまま使える** |
 | **描画手順そのもの** | `ILoupeRenderer`（本層の契約）を実装した型を作り、UI が保持する `Renderer` へ設定する（本層の `LoupeRenderer` を使わなくてもよい） |
 | **色** | `LoupePaint` を変える（`new LoupeRendererMewUI(paint)` / `new LoupeRendererAvaloniaUI(paint)` を UI が保持する `Renderer` へ設定し直す。UI の `Paint` プロパティが本処理を行う） |
-| **寸法・拡大率・表示サイズ** | `LoupeOptions`（`CheckerSize` / `BorderThickness` / `RequestedSize` / `ZoomLevel`）を変える（コアが単一所有する） |
+| **寸法・拡大率・表示サイズ** | `LoupeOptions`（`BorderThickness` / `RequestedSize` / `ZoomLevel`）を変える（コアが単一所有する） |
 
 ## Core との境界（なぜスケジューリングを Core に置かないか）
 
@@ -169,14 +169,16 @@ LoupeControl.UIBase
 
 ## テスト
 
-`tests/` が本プロジェクトのテストを持ちます。描画は UI 非依存の描画ポート（Skia）で行い、再描画のスケジューリングは UI 型を持たないため、**UI 初期化なしで検証**できます（合計 56 件）。
+`tests/` が本プロジェクトのテストを持ちます。描画は UI 非依存の描画ポート（Skia）で行い、再描画のスケジューリングは UI 型を持たないため、**UI 初期化なしで検証**できます（合計 51 件）。
 
 ```text
 tests/
-├── LoupeRenderer.Tests.cs             # 層ごとの描画（下地・市松・拡大画像・十字線・枠線・層の選択・引数の検証・色の注入）（17 件）
-├── LoupePaint.Tests.cs                # 色の既定値・部分変更・描画可否の述語・値等価（8 件）
-├── LoupeLabelPlan.Tests.cs            # 実寸 → ラベル要素の写像（6 件）
+├── LoupeRenderer.Tests.cs             # 層ごとの描画（ペーストボード（画像外の色・画像外の無地）・拡大画像・十字線・枠線・層の選択・引数の検証・色の注入）（15 件）
+├── LoupePaint.Tests.cs                # 色の既定値・部分変更・描画可否の述語・値等価（5 件）
+├── LoupeLabelPlan.Tests.cs            # 実寸 → ラベル要素の写像（7 件）
 ├── LoupeRenderCoordinator.Tests.cs    # バッチ化・世代番号・適用判定・破棄と解放・防御分岐（12 件）
+├── LoupeLogFormat.Tests.cs            # ログの書式（画像寸法）（5 件）
+├── LoupeUiLogMessage.Tests.cs         # UI が出力するログ定義（7 件）
 └── TestHelper.cs                      # テスト用の描画先（Skia）
 ```
 

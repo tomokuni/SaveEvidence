@@ -18,11 +18,10 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| コンストラクタ | `CaptureSessionControl(CropViewControl cropView, ICaptureTarget cropTarget, Grid cropHost, CaptureSettings? initialSettings = null, DrawingColor themeBackground = default, ILogger? logger = null)` | Facade を生成する。切り出しの対象（`cropView`）とオーバーレイを重ねる領域（`cropHost`）はホストが用意する。`initialSettings` の null メンバーは既定値で埋める |
+| コンストラクタ | `CaptureSessionControl(CropViewControl cropView, ICaptureTarget cropTarget, Grid cropHost, CaptureSettings? initialSettings = null, ILogger? logger = null)` | Facade を生成する。切り出しの対象（`cropView`）とオーバーレイを重ねる領域（`cropHost`）はホストが用意する。`initialSettings` の null メンバーは既定値で埋める |
 | `Capture` | `EsBitmap? Capture(Window owner, CaptureType type, CaptureOverlayServices services)` | オーバーレイを表示し、確定した領域を切り出して返す。キャンセル・取得失敗・退化した選択の場合は null。**実行中のセッションがある場合は何もせず null を返す** |
 | `ToggleCrop` | `void ToggleCrop()` | 切り出しの開始・確定・キャンセルを切り替える。どの操作を行うかの判断はコアの `CropSessionActions.Resolve` が単一所有する（未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）。**撮影中は開始しない** |
 | `AppearanceSettings` | `CaptureSettings` | 現在の設定（getter は全メンバー non-null）。設定時は null メンバーのみ現在値を維持する部分更新。**同一値の再設定はスキップ**。検証・適用ログはコア（`CaptureSettingsMerge.Apply`）が単一所有する。実行中の切り出しセッションへは即時反映する |
-| `UpdateCropThemeColor` | `void UpdateCropThemeColor(DrawingColor themeBackground)` | 切り出しのルーペの市松模様の下地色を更新する（テーマの変更の反映）。実行中のセッションがあれば即時反映し、次に開始するセッションへも引き継ぐ |
 
 ### 2.0 排他の規則
 
@@ -104,7 +103,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル。`FadeMaskDragRectLabelOptions`（ホストが描く付加情報ラベルの外観）へ反映） |
 | `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | 操作ラベル（サブライン。`FadeMaskDragRectLabelOptions` へ反映） |
 | `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` / `LoupeCrossColor` / `LoupeFrameColor` / `LoupeFrameThickness` | ルーペ（サイズ・倍率・オフセットは `LoupeOptions`、枠線の太さは `LoupeOptions.BorderThickness`、色は描画層の `LoupePaint` へ反映） |
-| `LoupeCheckerSize` / `LoupeCheckerColorA` / `LoupeCheckerColorB` | ルーペの市松模様（タイルサイズは `LoupeOptions.CheckerSize`、色は描画層の `LoupePaint` へ反映。下地色はホストが与える） |
+| `LoupePasteboardColor` | ルーペの画像外（ペーストボード）の色（描画層の `LoupePaint.PasteboardColor` へ反映） |
 | `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | ルーペ画像上の選択矩形破線（選択矩形破線の色（`FadeMaskDragRectOptions`）へ反映） |
 | `LoupeShowCoordLabel` / `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | ルーペの中心座標ラベル（表示可否は `LoupeOptions`、フォントサイズと色は描画層の `LoupePaint` へ反映） |
 
@@ -129,6 +128,5 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | 開始 | オーバーレイを表示し、入力を選択コントロールへ移す（画像が未設定の場合は何もしない） |
 | 確定（Enter 相当） | 現在の選択矩形を切り出す（退化した選択はキャンセルとして記録し、画像を差し替えない） |
 | キャンセル（Escape 相当） | 選択を破棄してオーバーレイを取り外す（画像は差し替えない） |
-| テーマ変更 | ルーペの市松模様の下地色を更新する（`UpdateCropThemeColor`） |
 
 切り出しの適用先は `ICaptureTarget`（アプリ側が実装するポート）です。切り出し結果の適用（Undo 退避・画像差し替え）はアプリ側の責務です。

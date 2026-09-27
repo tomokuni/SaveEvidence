@@ -117,7 +117,7 @@ public sealed partial class Loupe
     }
 
     /// <summary>拡大表示する中心座標（ドメイン座標）。</summary>
-    /// <value>拡大中心（元画像ピクセル座標）。未設定は null（市松模様のみを描画し、配置も行わない）。</value>
+    /// <value>拡大中心（元画像ピクセル座標）。未設定は null（拡大画像を描かず、配置も行わない）。</value>
     /// <remarks>変更は本コアが検出して出力する（マウス移動ごとに UI が設定しても、変化したときだけ記録される）。</remarks>
     public EsPoint? CenterPoint
     {
@@ -204,16 +204,17 @@ public sealed partial class Loupe
 
     /// <summary>描画入力から 1 フレーム分の描画内容を解決する。</summary>
     /// <param name="request">描画入力（描画のたびに決まる値。物理ピクセルサイズ・寸法の換算結果を含む）。</param>
-    /// <returns>描画内容（描画面・タイル列挙子・矩形・拡大画像の幾何・テキスト配置・層の順序）。</returns>
+    /// <returns>描画内容（描画面・矩形・拡大画像の幾何・テキスト配置・層の順序）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
     /// 1. 描画面の全体を物理ピクセルサイズから決める。<br/>
-    /// 2. 市松模様の暗色タイルを列挙する構造体を換算済みのタイルサイズから作る。<br/>
-    /// 3. 十字線と枠線の矩形を、物理ピクセルサイズと換算済みの太さから導出する。<br/>
-    /// 4. 拡大画像の切り出しと描画の矩形を解決する（`LoupeRenderRequest` の `MagnifiedImage`）。<br/>
-    /// 5. テキスト（中心座標ラベルの文言と基準点）を解決する。<br/>
-    /// 6. 描く層の一覧（テキストの有無で末尾が変わる）を添えて描画内容を返す。<br/>
+    /// 2. 十字線と枠線の矩形を、物理ピクセルサイズと換算済みの太さから導出する。<br/>
+    /// 3. 拡大画像の切り出しと描画の矩形を解決する（`LoupeRenderRequest` の `MagnifiedImage`）。<br/>
+    /// 4. テキスト（中心座標ラベルの文言と基準点）を解決する。<br/>
+    /// 5. 描く層の一覧（テキストの有無で末尾が変わる）を添えて描画内容を返す。<br/>
     /// <br/>
+    /// <b>画像外は描画層が単一所有する</b>: 画像の範囲外（切り出しの透明パディングを含む）の見た目は、<br/>
+    /// 描画層が描画面全体を塗るペーストボード層（<see cref="LoupeDrawLayer.Pasteboard"/>）が与える（本コアは寸法と矩形だけを返す）。<br/>
     /// 色はコアが持たないため本メソッドは扱わない（描くかどうかは設定の明示フラグが決め、<br/>
     /// 非表示の項目は空の描画内容として返す）。<br/>
     /// 拡大画像は切り出しと描画の矩形（<see cref="LoupeMagnifiedImage"/>）として本値に含める<br/>
@@ -223,19 +224,17 @@ public sealed partial class Loupe
     {
         var surface = request.SurfaceBounds;
         var magnifiedImage = request.MagnifiedImage;
-        var checkerTiles = ResolveCheckerboard(request);
         var crosshairRects = ResolveCrosshairRects(request);
         var borderRects = ResolveBorderRects(request);
         var coordLabelText = ResolveCoordLabelText(request);
 
         return new LoupeDrawContent(
             surface,
-            checkerTiles ?? default,
             magnifiedImage,
             crosshairRects,
             borderRects,
             coordLabelText,
-            ResolveLayers(checkerTiles, magnifiedImage, crosshairRects, borderRects, coordLabelText));
+            ResolveLayers(magnifiedImage, crosshairRects, borderRects, coordLabelText));
     }
 
     // ====================================================================

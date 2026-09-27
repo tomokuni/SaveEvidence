@@ -6,7 +6,7 @@
 ## 概要
 
 ルーペ（拡大鏡）は、**拡大元の 100% 画像**と**拡大中心（元画像ピクセル座標）**を受け取り、
-市松模様の背景・拡大画像・十字線・枠線を描画するコントロールです（中心座標ラベルはテキスト要素として表示します）。
+画像外の色（無地）・拡大画像・十字線・枠線を描画するコントロールです（中心座標ラベルはテキスト要素として表示します）。
 
 **Avalonia 版 `LoupeControl` と同じ UI 非依存コア（`Feature.LoupeCore`）を使うため、設定値と見た目は両 UI で一致します。**
 
@@ -18,10 +18,10 @@
 
 | プロパティ | 型 | 既定値 | 安全域（範囲外は自動補正） | 説明 |
 | --- | --- | --- | --- | --- |
-| `Source` | `EsBitmap?` | `null` | — | 拡大元の 100% 画像。null の場合は市松模様のみ |
-| `CenterPoint` | `EsPoint?` | `null` | — | 拡大中心（元画像ピクセル座標）。null の場合は市松模様のみ |
+| `Source` | `EsBitmap?` | `null` | — | 拡大元の 100% 画像。null の場合は画像外の色のみ |
+| `CenterPoint` | `EsPoint?` | `null` | — | 拡大中心（元画像ピクセル座標）。null の場合は画像外の色のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 下表のとおり | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する |
-| `Paint` | `LoupePaint` | `LoupePaint.Default` | — | 描画に使う色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）。`with` 式で部分変更する。色はコアの計算に入らない |
+| `Paint` | `LoupePaint` | `LoupePaint.Default` | — | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）。`with` 式で部分変更する。色はコアの計算に入らない |
 | `DipToDeviceScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。設定には含めない） |
 | `Renderer` | `ILoupeRenderer` | `Paint` の色を保持する `LoupeRendererMewUI` | — | 描画の実装（**描画の差し替え**。null 不可）。設定すると再生成とラベル要素の再配置を要求する |
 
@@ -31,10 +31,8 @@
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 1〜4096 | 一辺のサイズ（DIP） |
 | `ZoomLevel` | `int` | 4 | 1〜64 | 拡大率（偶数推奨） |
-| `CheckerSize` | `int` | 6 | 1〜128 | 市松模様の 1 タイルサイズ（DIP） |
 | `BorderThickness` | `int` | 2 | 1〜64 | 枠線の太さ（DIP） |
 | `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
-| `ShowCheckerboard` | `bool` | `true` | — | 市松模様の表示可否 |
 | `ShowCrosshair` | `bool` | `true` | — | 十字線の表示可否 |
 | `ShowBorder` | `bool` | `true` | — | 枠線の表示可否 |
 
@@ -42,10 +40,8 @@
 
 | 項目 | 型 | 既定値 | 安全域（範囲外は自動補正） | 説明 |
 | --- | --- | --- | --- | --- |
-| `BackgroundColor` | `DrawingColor` | 透明 | — | 下地（ベース）色。市松模様・拡大画像より先に表面全体へ塗る。背後の要素を透かさない場合は不透明色を指定する（既定は透明 = 背後の要素を透かす） |
+| `PasteboardColor` | `DrawingColor` | 中性グレー（`#FF535353`） | — | 画像外（ペーストボード）の色。拡大画像より先に表面全体へ塗るため、画像の無い部分が本色の無地になる |
 | `CrossColor` | `DrawingColor` | 赤 40%（`#66FF0000`） | — | 十字線の色（不透明度はアルファ） |
-| `CheckerColorA` | `DrawingColor` | Gray 30% | — | 市松模様の明色 |
-| `CheckerColorB` | `DrawingColor` | DarkGray 30% | — | 市松模様の暗色 |
 | `BorderColor` | `DrawingColor` | LightGray | — | 枠線の色 |
 | `CoordLabelColor` | `DrawingColor` | 白 | — | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `DrawingColor` | 黒 60%（`#99000000`） | — | 座標ラベルの背景色 |
@@ -60,9 +56,7 @@
 
 | 順序 | 要素 | 備考 |
 | --- | --- | --- |
-| 1 | 下地 | `Paint.BackgroundColor` で表面全体を塗る（透明の場合は前フレームの画素を残さないためキャンバスをクリアする。市松模様の色は半透明のため、背後の要素を透かさない場合はホストが不透明色を指定する） |
-| 2 | 市松模様 | 明色で全面を塗った後、暗色タイルを市松位置へ描画する |
-| 3 | 拡大画像 | `Source` と `CenterPoint` がある場合のみ。切り出し領域の外は透明（下地の市松模様が見える） |
+| 1 | 拡大画像 | `Source` と `CenterPoint` がある場合のみ。切り出し領域の外は透明（画像外の色が見える） |
 | 4 | 十字線 | 中央の縦横 2 本（幅は拡大率と同じ物理ピクセル） |
 | 5 | 枠線 | 四辺（`Options.BorderThickness` の太さ） |
 
@@ -97,9 +91,9 @@
 
 | 状況 | 挙動 |
 | --- | --- |
-| `Source` が `null` | 市松模様のみを描画する（例外にしない） |
-| `CenterPoint` が `null` | 市松模様のみを描画する（例外にしない） |
-| `Source` が破棄済み | 市松模様のみを描画する（例外にしない） |
+| `Source` が `null` | 画像外の色のみを描画する（例外にしない） |
+| `CenterPoint` が `null` | 画像外の色のみを描画する（例外にしない） |
+| `Source` が破棄済み | 画像外の色のみを描画する（例外にしない） |
 | 色のアルファが 0 | 描画の可否には使わない（描画の可否はコアの明示フラグ（`LoupeOptions.Show*`）が単一所有し、非表示の項目は空の描画内容として渡る）。アルファ 0 の色は描画結果として見えなくなるだけである |
 | 安全域外の数値 | 安全域へ補正する（例外にしない） |
 

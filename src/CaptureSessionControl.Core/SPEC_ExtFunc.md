@@ -133,7 +133,7 @@
 | `Validate` | `void Validate()` | 設定値を検証する。範囲外の場合は `ArgumentOutOfRangeException`（null は検証対象外） |
 | `ToNonNull` | `CaptureSettings ToNonNull()` | null をデフォルト値で埋めた non-null 版を返す |
 
-**色は `System.Drawing.Color`** です（UI 非依存のため）。`Validate` が検証する範囲は `MinSelectionSize` / `HandleSize` / `HandleHitRadius` / `MarkerLength` / `LoupeSize` / `LoupeZoomLevel` / `LoupeFrameThickness` / `LoupeCheckerSize`（1 以上）、`BorderThickness` / `LoupeOffset`（0 以上）、`LoupeDipToDeviceScaling`（0.1〜8.0）です。
+**色は `System.Drawing.Color`** です（UI 非依存のため）。`Validate` が検証する範囲は `MinSelectionSize` / `HandleSize` / `HandleHitRadius` / `MarkerLength` / `LoupeSize` / `LoupeZoomLevel` / `LoupeFrameThickness`（1 以上）、`BorderThickness` / `LoupeOffset`（0 以上）、`LoupeDipToDeviceScaling`（0.1〜8.0）です。
 
 ## 6. CaptureResult
 

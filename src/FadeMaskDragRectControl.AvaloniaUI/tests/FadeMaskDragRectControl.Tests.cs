@@ -171,7 +171,6 @@ public class FadeMaskDragRectControlTests
             {
                 RequestedSize = 150,
                 ZoomLevel = 3,
-                CheckerSize = 10,
                 BorderThickness = 4,
                 ShowCoordLabel = true,
             },
@@ -183,8 +182,7 @@ public class FadeMaskDragRectControlTests
         control.LoupePaint = new LoupePaint
         {
             CrossColor = Color.FromAColor(204, Colors.Red).ToDrawingColor(), // 赤 80%
-            CheckerColorA = Colors.Black.ToDrawingColor(),
-            CheckerColorB = Colors.White.ToDrawingColor(),
+            PasteboardColor = Colors.Black.ToDrawingColor(),
             BorderColor = Colors.Gray.ToDrawingColor(),
         };
 
@@ -198,7 +196,6 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(150, control.Loupe.Options.RequestedSize);
         Assert.Equal(3, control.Loupe.Options.ZoomLevel);
         Assert.Equal(2.0, control.Loupe.DipToDeviceScaling);
-        Assert.Equal(10, control.Loupe.Options.CheckerSize);
         Assert.Equal(4, control.Loupe.Options.BorderThickness);
         Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Paint.CrossColor.ToAvaloniaColor());
         // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため、ルーペのプロパティへ渡される
@@ -546,10 +543,8 @@ public class FadeMaskDragRectControlTests
             rendered = 0;
 
             // 破線色のみの変更（ルーペ自身の外観・サイズ・ズームは不変 → ルーペのプロパティ通知は発生しない）
-            var checkerSize = control.Loupe.Options.CheckerSize;
             var borderThickness = control.Loupe.Options.BorderThickness;
             control.Options = control.Options with { SelectionRectColorA = Colors.Lime.ToDrawingColor() };
-            Assert.Equal(checkerSize, control.Loupe.Options.CheckerSize);
             Assert.Equal(borderThickness, control.Loupe.Options.BorderThickness);
             Assert.Equal(200, control.Loupe.Options.RequestedSize);
 

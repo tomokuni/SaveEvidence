@@ -13,9 +13,9 @@ namespace EsUtil.Feature.LoupeCore.Tests;
 /// </remarks>
 public class LoupeDrawContentTests
 {
-    /// <summary>描く層が下地からテキストの順で返ることを検証する。</summary>
+    /// <summary>描く層がペーストボードからテキストの順で返ることを検証する。</summary>
     [Fact]
-    public void ResolveContent_描く層は下地からテキストの順で返す()
+    public void ResolveContent_描く層はペーストボードからテキストの順で返す()
     {
         var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
         var content = loupe.ResolveContent(loupe.CreateRequest(160));
@@ -23,8 +23,7 @@ public class LoupeDrawContentTests
         // 描画順はコアが単一所有する（UI 層は先頭から順に処理するだけ）
         Assert.Equal(
             [
-                LoupeDrawLayer.Background,
-                LoupeDrawLayer.Checkerboard,
+                LoupeDrawLayer.Pasteboard,
                 LoupeDrawLayer.Image,
                 LoupeDrawLayer.Crosshair,
                 LoupeDrawLayer.Border,
@@ -62,21 +61,6 @@ public class LoupeDrawContentTests
         Assert.Same(first.Layers, second.Layers);
     }
 
-    /// <summary>市松模様の非表示設定で市松模様の描画内容が空になることを検証する。</summary>
-    [Fact]
-    public void ResolveContent_市松模様の非表示設定で描画内容を空にする()
-    {
-        var loupe = new Loupe(LoupeOptions.Default with { ShowCheckerboard = false })
-        {
-            CenterPoint = new EsPoint(50, 60),
-        };
-
-        var content = loupe.ResolveContent(loupe.CreateRequest(160));
-
-        // 描くかどうかは設定の明示フラグが単一所有する（色のアルファを代用にしない）
-        Assert.Equal(0, content.CheckerTiles.Count);
-    }
-
     /// <summary>十字線の非表示設定で十字線の描画内容が空になることを検証する。</summary>
     [Fact]
     public void ResolveContent_十字線の非表示設定で描画内容を空にする()
@@ -105,33 +89,29 @@ public class LoupeDrawContentTests
         Assert.Empty(content.BorderRects);
     }
 
-    /// <summary>既定では市松模様・十字線・枠線の描画内容が返ることを検証する。</summary>
+    /// <summary>既定では十字線・枠線の描画内容が返ることを検証する。</summary>
     [Fact]
-    public void ResolveContent_既定では3つとも描画内容を返す()
+    public void ResolveContent_既定では十字線と枠線の描画内容を返す()
     {
         var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
 
         var content = loupe.ResolveContent(loupe.CreateRequest(160));
 
-        Assert.True(content.CheckerTiles.Count > 0);
         Assert.NotEmpty(content.CrosshairRects);
         Assert.NotEmpty(content.BorderRects);
     }
 
     /// <summary>非表示の項目が層の一覧から外れることを検証する。</summary>
-    /// <param name="checkerboard">市松模様の表示可否。</param>
     /// <param name="crosshair">十字線の表示可否。</param>
     /// <param name="border">枠線の表示可否。</param>
     [Theory]
-    [InlineData(false, true, true, LoupeDrawLayer.Checkerboard)]
-    [InlineData(true, false, true, LoupeDrawLayer.Crosshair)]
-    [InlineData(true, true, false, LoupeDrawLayer.Border)]
+    [InlineData(false, true, LoupeDrawLayer.Crosshair)]
+    [InlineData(true, false, LoupeDrawLayer.Border)]
     public void ResolveContent_非表示の項目は層に含まれない(
-        bool checkerboard, bool crosshair, bool border, LoupeDrawLayer hidden)
+        bool crosshair, bool border, LoupeDrawLayer hidden)
     {
         var options = LoupeOptions.Default with
         {
-            ShowCheckerboard = checkerboard,
             ShowCrosshair = crosshair,
             ShowBorder = border,
         };
@@ -142,13 +122,12 @@ public class LoupeDrawContentTests
         Assert.DoesNotContain(hidden, content.Layers);
     }
 
-    /// <summary>下地は常に層に含まれる（描画面を置き換えて残像を残さない）ことを検証する。</summary>
+    /// <summary>ペーストボードは常に層に含まれる（描画面を置き換えて残像を残さない）ことを検証する。</summary>
     [Fact]
-    public void ResolveContent_下地は常に層に含まれる()
+    public void ResolveContent_ペーストボードは常に層に含まれる()
     {
         var options = LoupeOptions.Default with
         {
-            ShowCheckerboard = false,
             ShowCrosshair = false,
             ShowBorder = false,
             ShowCoordLabel = false,
@@ -157,8 +136,8 @@ public class LoupeDrawContentTests
 
         var content = loupe.ResolveContent(loupe.CreateRequest(160));
 
-        // 透明色を指定した場合も描画面の消去が必要であるため、下地は常に含める
-        Assert.Equal([LoupeDrawLayer.Background], content.Layers);
+        // 透明色を指定した場合も描画面の消去が必要であるため、ペーストボードは常に含める
+        Assert.Equal([LoupeDrawLayer.Pasteboard], content.Layers);
     }
 
     /// <summary>拡大画像が解決できない場合は層に含まれないことを検証する。</summary>

@@ -60,7 +60,6 @@ var session = new CaptureSessionControl(
     captureTarget,             // 切り出しの適用先（Core の ICaptureTarget）
     cropHost,                  // 切り出しのオーバーレイを重ねる Grid
     captureSettings,           // CaptureSessionControl.Core の CaptureSettings
-    themeBackground,           // 切り出しのルーペの市松模様の下地色
     logger);
 
 // 撮影: オーバーレイを表示し、確定した領域を取得する（null はキャンセル。切り出し中は受付しない）

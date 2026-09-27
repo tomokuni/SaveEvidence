@@ -200,7 +200,7 @@ sequenceDiagram
     participant Renderer as FadeMaskDragRectSkiaRenderer
     participant Core as FadeMaskDragRectOverlay（Core）
 
-    Note over Loupe: 描画（市松模様 → 拡大画像 → 十字線 → 外枠）
+    Note over Loupe: 描画（画像外の色 → 拡大画像 → 十字線 → 外枠）
     Loupe->>Facade: Rendered（キャンバス・一辺のpx・拡大率・中心・切り出し左上・スケール）
     Facade->>Facade: 破線を描画するかの判定（コアの ShowSelectionOverlay・選択有無・切り出し左上）
     Facade->>Renderer: DrawSelectionRect(canvas, 選択矩形, 切り出し左上, スケール, 一辺のpx, 色A, 色B)

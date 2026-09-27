@@ -64,7 +64,7 @@ sequenceDiagram
     UI->>L: ResolveContent(request)
     L-->>UI: LoupeDrawContent（層の順序・矩形）
     UI->>R: DrawShapes(canvas, source, request, content)
-    R->>R: Layers の順に下地・市松・拡大画像・十字線・枠線を選択
+    R->>R: Layers の順にペーストボード（画像外の色）・拡大画像・十字線・枠線を選択
     R->>C: Clear / FillRect / FillRects / DrawImage
     UI->>UI: LoupeLabelPlan.Resolve → ラベル要素を配置
     UI->>H: Rendered（描画済みビットマップと表示情報）
@@ -75,8 +75,8 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     A[LoupeDrawContent.Layers] --> B{層}
-    B -->|Background| C[Clear<br/>描画面全体を置換]
-    B -->|Checkerboard| D[明色を全面へ + 暗色タイルを列挙]
+    B -->|Pasteboard| C[Clear<br/>描画面全体を置換]
+    
     B -->|Image| E[切り出し → 拡大描画]
     B -->|Crosshair| F[十字線 2 本]
     B -->|Border| G[枠線 4 辺]
@@ -176,10 +176,10 @@ src/LoupeControl.UIBase/
 | 対象 | 所有者 |
 | --- | --- |
 | 描画する層とその順序 | `Loupe.ResolveLayers`（コア。本層は順に写すだけ） |
-| 描画の色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）とその既定値 | 本層（`LoupePaint`） |
-| 描画可否（非表示の項目はコアが空の描画内容として返す・切り出し領域が無い場合は描かない） | コア（明示フラグ `LoupeOptions.ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` と、切り出し不可時の `LoupeRendererBase.DrawMagnifiedImage`） |
+| 描画の色（ペーストボード・枠線・十字線・中心座標ラベルの 6 色）とその既定値 | 本層（`LoupePaint`） |
+| 描画可否（非表示の項目はコアが空の描画内容として返す・切り出し領域が無い場合は描かない） | コア（明示フラグ `LoupeOptions.ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` と、切り出し不可時の `LoupeRendererBase.DrawMagnifiedImage`） |
 | 切り出し領域と拡大の矩形 | コア（`LoupeRenderRequest` の internal メンバーが算出し、描画内容 `LoupeDrawContent.MagnifiedImage` が持つ） |
-| 市松模様のタイル位置とタイル数 | コア（描画内容 `LoupeDrawContent.CheckerTiles`。リストを確保しない列挙子で渡す） |
+| 区画数の切り上げ（切り出し領域の一辺と十字線の交点） | コア（`Drawing.LoupeDivMath.CeilDiv`） |
 | 十字線・円枠の矩形 | コア（描画内容 `LoupeDrawContent`） |
 | 寸法の DIP → 物理ピクセル換算 | コア（描画入力 `LoupeRenderRequest` の換算済み寸法） |
 | 描画先のサイズ決定（クランプ） | コア（`LoupeRenderRequest.ResolvePixelSize`） |
@@ -197,8 +197,8 @@ src/LoupeControl.UIBase/
 | --- | --- |
 | `canvas` が null | `ArgumentNullException`（呼び出し側の実装誤り） |
 | `layers` が null | `ArgumentNullException` |
-| `source` が null / 切り出し領域が無い | 拡大画像を描かない（例外ではない。市松模様のみになる） |
-| `source` が破棄済み | 本層（`LoupeRendererBase.DrawMagnifiedImage`）が `ObjectDisposedException` を吸収して何も描かない（市松模様のみが残る） |
+| `source` が null / 切り出し領域が無い | 拡大画像を描かない（例外ではない。画像外の色のみになる） |
+| `source` が破棄済み | 本層（`LoupeRendererBase.DrawMagnifiedImage`）が `ObjectDisposedException` を吸収して何も描かない（画像外の色のみが残る） |
 | `measureText` が null | `ArgumentNullException` |
 | `paint`（`LoupePaint`）が null | `ArgumentNullException`（`LoupeRenderer` の生成時・`LoupeLabelPlan.Resolve` の呼び出し時） |
 | 背景色が透明 | 描画面を透明で置き換える（前フレームの残像を残さない） |

@@ -13,11 +13,8 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// </remarks>
 public enum LoupeDrawLayer
 {
-    /// <summary>下地（ベース色）。常に含む（描画面を置き換えて前フレームの残像を残さない）。</summary>
-    Background,
-
-    /// <summary>市松模様（表示の設定が有効な場合のみ）。</summary>
-    Checkerboard,
+    /// <summary>画像外（ペーストボード）の色。常に含む（画像より先に全面へ塗る）。</summary>
+    Pasteboard,
 
     /// <summary>拡大画像（切り出し領域を解決できた場合のみ。拡大中心未設定の場合は含まない）。</summary>
     Image,

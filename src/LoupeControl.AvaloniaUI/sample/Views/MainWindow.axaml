@@ -47,19 +47,9 @@
 
                     <Separator/>
 
-                    <!-- 市松模様 -->
-                    <TextBlock Text="市松模様 A（CheckerColorA）"/>
-                    <ComboBox ItemsSource="{Binding CheckerColorAOptions}" SelectedItem="{Binding CheckerColorAOption}"/>
-
-                    <TextBlock Text="市松模様 B（CheckerColorB）"/>
-                    <ComboBox ItemsSource="{Binding CheckerColorBOptions}" SelectedItem="{Binding CheckerColorBOption}"/>
-
-                    <TextBlock Text="市松模様のタイルサイズ（CheckerSize）"/>
-                    <DockPanel>
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding CheckerSizeText}" VerticalAlignment="Center"/>
-                        <Slider Minimum="2" Maximum="32" TickFrequency="1" IsSnapToTickEnabled="True"
-                                Value="{Binding CheckerSize, Mode=TwoWay}"/>
-                    </DockPanel>
+                    <!-- 画像外（ペーストボード） -->
+                    <TextBlock Text="画像外の色（PasteboardColor）"/>
+                    <ComboBox ItemsSource="{Binding PasteboardColorOptions}" SelectedItem="{Binding PasteboardColorOption}"/>
 
                     <Separator/>
 

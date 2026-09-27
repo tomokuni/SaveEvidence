@@ -12,17 +12,6 @@ namespace EsUtil.Feature.LoupeCore.Tests.Drawing;
 /// </remarks>
 public class LoupeMetricsScalerTests
 {
-    /// <summary>市松模様のタイルサイズがスケーリング係数に追従することを検証する。</summary>
-    /// <param name="scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
-    /// <param name="expected">期待する物理ピクセルサイズ。</param>
-    [Theory]
-    [InlineData(1.0, 8)]
-    [InlineData(1.25, 10)]
-    [InlineData(1.5, 12)]
-    [InlineData(2.0, 16)]
-    public void ScaleCheckerSize_スケーリング係数に追従する(double scaling, int expected)
-        => Assert.Equal(expected, LoupeMetricsScaler.ScaleCheckerSize(8, scaling));
-
     /// <summary>枠線の太さがスケーリング係数に追従する（切り上げ・最低 1）ことを検証する。</summary>
     /// <param name="scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
     /// <param name="expected">期待する物理ピクセルサイズ。</param>
@@ -32,11 +21,6 @@ public class LoupeMetricsScalerTests
     [InlineData(2.0, 4)]
     public void ScaleBorderThickness_スケーリング係数に追従する(double scaling, int expected)
         => Assert.Equal(expected, LoupeMetricsScaler.ScaleBorderThickness(2, scaling));
-
-    /// <summary>タイルサイズ 0 でも最低 1 ピクセルになることを検証する。</summary>
-    [Fact]
-    public void ScaleCheckerSize_0は最低1ピクセルになる()
-        => Assert.Equal(1, LoupeMetricsScaler.ScaleCheckerSize(0, 1.0));
 
     /// <summary>枠線の太さ 0 でも最低 1 ピクセルになることを検証する。</summary>
     [Fact]

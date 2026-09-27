@@ -23,7 +23,6 @@ public class CaptureSettingsTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeSize: value).Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeFrameThickness: value).Validate());
-        Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeCheckerSize: value).Validate());
     }
 
     [Fact]
@@ -64,7 +63,7 @@ public class CaptureSettingsTests
     {
         // 1 は下限ちょうど・0 は下限ちょうど（0 以上が許容される項目）
         new CaptureSettings(
-            MinSelectionSize: 1, LoupeSize: 1, LoupeZoomLevel: 1, LoupeFrameThickness: 1, LoupeCheckerSize: 1,
+            MinSelectionSize: 1, LoupeSize: 1, LoupeZoomLevel: 1, LoupeFrameThickness: 1,
             HandleSize: 1, HandleHitRadius: 1, MarkerLength: 1, BorderThickness: 0, LoupeOffset: 0,
             LoupeDipToDeviceScaling: 0.1).Validate();
     }
@@ -95,8 +94,7 @@ public class CaptureSettingsTests
         Assert.True(s.ClampToDomainBounds);
         Assert.Equal(16.0, s.MarkerLength);
         Assert.Equal(1.0, s.LoupeDipToDeviceScaling);
-        Assert.Equal(Color.FromArgb(0x4C, 128, 128, 128), s.LoupeCheckerColorA);
-        Assert.Equal(Color.FromArgb(0x4C, 169, 169, 169), s.LoupeCheckerColorB);
+        Assert.Equal(Color.FromArgb(0xFF, 0x53, 0x53, 0x53), s.LoupePasteboardColor);
         Assert.Equal(Color.White, s.LoupeSelectionRectColorA);
         Assert.Equal(Color.Black, s.LoupeSelectionRectColorB);
         Assert.True(s.SizeLabelVisible);

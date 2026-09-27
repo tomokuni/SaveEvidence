@@ -20,7 +20,7 @@
 | `Clear(EsRect surface, DrawingColor color)` | 指定矩形を単色で塗る（全面消去の代替。描画面の寿命は UI が所有するため矩形を引数で受ける） |
 | `FillRect(EsRect rect, DrawingColor color)` | 矩形を塗る |
 | `FillRects(IReadOnlyList<EsRect> rects, DrawingColor color)` | 複数矩形を同じ色で塗る |
-| `FillRects<TWalker>(TWalker rects, DrawingColor color)` | 列挙子をそのまま受け取る版（タイル数が多い市松模様でリストを確保しないため） |
+| `FillRects<TWalker>(TWalker rects, DrawingColor color)` | 列挙子をそのまま受け取る版（要素数が描画先に比例する矩形列でリストを確保しないため） |
 | `FillRoundRect(EsRect rect, double cornerRadius, DrawingColor color)` | 角丸矩形を塗る |
 | `StrokeRect(EsRect rect, DrawingColor color, double thickness)` | 矩形の枠線を描く |
 | `DrawLine(EsPoint from, EsPoint to, DrawingColor color, double thickness)` | 線分を描く |
@@ -32,7 +32,7 @@
 
 ## `IEsRectWalker<TSelf>`（矩形列挙子の契約）
 
-矩形の列を確保なしで走査する列挙子（構造体）が実装する契約です。`IEsCanvas.FillRects` が受け取る列挙子の型であり、要素数が描画先の大きさに比例する列（市松模様のタイル等）でリスト確保とボックス化をゼロにします。
+矩形の列を確保なしで走査する列挙子（構造体）が実装する契約です。`IEsCanvas.FillRects` が受け取る列挙子の型であり、要素数が描画先の大きさに比例する列（走査して生成するタイル等）でリスト確保とボックス化をゼロにします。
 
 | メンバー | 説明 |
 | --- | --- |

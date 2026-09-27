@@ -6,7 +6,7 @@ namespace EsUtil.Feature.LoupeCore.Tests.Setting;
 
 /// <summary><see cref="LoupeOptions"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
-/// 設定の既定値・安全域への補正・部分変更・等価性と、寸法（市松模様のタイル・枠線の太さ）の補正・
+/// 設定の既定値・安全域への補正・部分変更・等価性と、寸法（枠線の太さ）の補正・
 /// 中心座標ラベルの表示可否を検証する。<br/>
 /// 色は描画にだけ必要な設定であり本型は持たない（<c>LoupePaint</c> のテストが担う）。<br/>
 /// UI のプロパティ経由（バインディング等）の反映は各 UI のコントロールテストが担う。
@@ -20,10 +20,8 @@ public class LoupeOptionsTests
 
         Assert.Equal(Loupe.Limits.RequestedSizeDefault, options.RequestedSize);
         Assert.Equal(Loupe.Limits.ZoomLevelDefault, options.ZoomLevel);
-        Assert.Equal(Loupe.Limits.CheckerSizeDefault, options.CheckerSize);
         Assert.Equal(Loupe.Limits.BorderThicknessDefault, options.BorderThickness);
         Assert.True(options.ShowCoordLabel);
-        Assert.True(options.ShowCheckerboard);
         Assert.True(options.ShowCrosshair);
         Assert.True(options.ShowBorder);
     }
@@ -44,7 +42,6 @@ public class LoupeOptionsTests
         Assert.Equal(8, changed.ZoomLevel);
         // 他の項目は維持される（部分指定でもゼロ値にならない）
         Assert.Equal(options.RequestedSize, changed.RequestedSize);
-        Assert.Equal(options.CheckerSize, changed.CheckerSize);
         Assert.Equal(options.BorderThickness, changed.BorderThickness);
         Assert.Equal(options.ShowCoordLabel, changed.ShowCoordLabel);
     }
@@ -61,13 +58,11 @@ public class LoupeOptionsTests
         {
             RequestedSize = 100000,
             ZoomLevel = 0,
-            CheckerSize = 1000,
             BorderThickness = 0,
         };
 
         Assert.Equal(Loupe.Limits.RequestedSizeMax, options.RequestedSize);
         Assert.Equal(Loupe.Limits.ZoomLevelMin, options.ZoomLevel);
-        Assert.Equal(Loupe.Limits.CheckerSizeMax, options.CheckerSize);
         Assert.Equal(Loupe.Limits.BorderThicknessMin, options.BorderThickness);
     }
 
@@ -75,19 +70,17 @@ public class LoupeOptionsTests
     [Fact]
     public void with式の変更も安全域へ補正される()
     {
-        var changed = LoupeOptions.Default with { RequestedSize = 0, ZoomLevel = 1000, CheckerSize = 1000 };
+        var changed = LoupeOptions.Default with { RequestedSize = 0, ZoomLevel = 1000 };
 
         Assert.Equal(Loupe.Limits.RequestedSizeMin, changed.RequestedSize);
         Assert.Equal(Loupe.Limits.ZoomLevelMax, changed.ZoomLevel);
-        Assert.Equal(Loupe.Limits.CheckerSizeMax, changed.CheckerSize);
     }
 
     [Fact]
     public void 安全域内の値は変更されない()
     {
-        var options = new LoupeOptions { CheckerSize = 8, BorderThickness = 3 };
+        var options = new LoupeOptions { BorderThickness = 3 };
 
-        Assert.Equal(8, options.CheckerSize);
         Assert.Equal(3, options.BorderThickness);
     }
 
@@ -110,11 +103,11 @@ public class LoupeOptionsTests
     [Fact]
     public void 等価性は値で判定される()
     {
-        var a = LoupeOptions.Default with { CheckerSize = 4 };
-        var b = LoupeOptions.Default with { CheckerSize = 4 };
+        var a = LoupeOptions.Default with { BorderThickness = 4 };
+        var b = LoupeOptions.Default with { BorderThickness = 4 };
 
         Assert.Equal(a, b);
-        Assert.NotEqual(a, a with { CheckerSize = 5 });
+        Assert.NotEqual(a, a with { BorderThickness = 5 });
     }
 
     /// <summary>寸法の変更が値の等価性に反映されることを検証する。</summary>

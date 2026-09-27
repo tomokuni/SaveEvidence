@@ -61,9 +61,6 @@ internal sealed class CropSession
     /// <summary>セッションの状態（切り出し中かどうか・完了は 1 回だけ）。</summary>
     private readonly CaptureSessionState _state = new();
 
-    /// <summary>市松模様の下地色（テーマのページ背景色）。<see cref="UpdateThemeColor"/> で更新する。</summary>
-    private DrawingColor _themeBackground;
-
     /// <summary>長命のオブジェクト（ビュー・適用先）への購読を解除する処理（終了時に 1 回だけ実行する）。</summary>
     /// <remarks>
     /// ビューポートと適用先はアプリと同じ寿命を持つため、終了したセッションのハンドラを残すと<br>
@@ -81,7 +78,6 @@ internal sealed class CropSession
     /// <param name="target">切り出しの適用先（アプリ側の実装）。</param>
     /// <param name="settings">キャプチャ設定（null メンバーは既定値で埋める）。</param>
     /// <param name="host">オーバーレイを重ねる領域（プレビューと同じセル）。</param>
-    /// <param name="themeBackground">市松模様の下地色（テーマのページ背景色）。</param>
     /// <param name="logger">ロガー（null の場合は出力しない）。</param>
     /// <remarks>
     /// 1. 選択オーバーレイを生成してイベントを配線する（確定・キャンセル・ビューポート変化・画像差し替え・ホイール）。<br/>
@@ -89,7 +85,7 @@ internal sealed class CropSession
     /// </remarks>
     internal CropSession(
         CropViewControl view, ICaptureTarget target, CaptureSettings settings, Grid host,
-        DrawingColor themeBackground, ILogger? logger = null)
+        ILogger? logger = null)
     {
         ArgumentNullException.ThrowIfNull(view);
         ArgumentNullException.ThrowIfNull(target);
@@ -99,7 +95,6 @@ internal sealed class CropSession
         _target = target;
         _settings = settings.ToNonNull();
         _host = host;
-        _themeBackground = themeBackground;
         _log = logger.OrNullLogger();
 
         _selector = new FadeMaskDragRectControl
@@ -210,19 +205,6 @@ internal sealed class CropSession
         ApplyAppearance();
     }
 
-    /// <summary>テーマの変更を外観へ反映する（市松模様の下地色）。</summary>
-    /// <param name="themeBackground">テーマのページ背景色。</param>
-    /// <remarks>
-    /// テーマ変更の購読はホストが行う（本クラスはテーマの通知元を知らない）。<br/>
-    /// 呼び出し後は選択コントロールが描き直され、ルーペの市松模様の下地が新しいテーマ色になる。
-    /// </remarks>
-    internal void UpdateThemeColor(DrawingColor themeBackground)
-    {
-        _themeBackground = themeBackground;
-        ApplyAppearance();
-        _selector.InvalidateOverlay();
-    }
-
     /// <summary>切り出しを開始する（オーバーレイを表示し、入力を選択コントロールへ移す）。</summary>
     /// <param name="image">切り出す対象の元画像。</param>
     /// <remarks>
@@ -297,8 +279,7 @@ internal sealed class CropSession
     /// <summary>設定を選択コントロールへ反映する。</summary>
     /// <remarks>
     /// 設定項目と外観の対応はコアのマッパー（<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）が単一所有する<br/>
-    /// （Avalonia 版の <c>CropSession</c> も同じ変換を使うため、UI ごとに見た目がずれない）。<br/>
-    /// ルーペの市松模様の下地にはテーマの背景色を渡す（プレビュー画像を透かして市松色をそのまま重ねない）。
+    /// （Avalonia 版の <c>CropSession</c> も同じ変換を使うため、UI ごとに見た目がずれない）。
     /// </remarks>
     private void ApplyAppearance()
     {
@@ -307,9 +288,8 @@ internal sealed class CropSession
         // 設定を 1 値に変換して一括適用する（ラベル文言は描画時に評価するため別途設定する）
         _selector.Options = s.ToFadeMaskDragRectOptions();
         // 色は描画にだけ必要な設定のため、コアの設定ではなく描画の設定として与える
-        // （テーマ背景色でルーペの下地を塗り、背後のプレビューを透かさない）
         _selector.MarqueePaint = CapturePaintMapper.ToMarqueePaint(s);
-        _selector.LoupePaint = CapturePaintMapper.ToLoupePaint(s, _themeBackground);
+        _selector.LoupePaint = CapturePaintMapper.ToLoupePaint(s);
 
         // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）。
         // 書式と「未選択なら描かない」規則はコアが単一所有する

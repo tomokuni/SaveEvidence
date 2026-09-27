@@ -187,12 +187,12 @@ internal static class SettingsPage
                 () => settings.AreaSelectHotKey, value => settings.AreaSelectHotKey = value),
             Row("", new Label().Text("テキストボックスへフォーカスし、修飾キー付きのキーを押すと設定されます。").FontSize(11)));
 
-    /// <summary>外観（選択枠・暗転・ハンドル・ルーペ・市松模様・ラベル）のセクションを構築する。</summary>
+    /// <summary>外観（選択枠・暗転・ハンドル・ルーペ・プレビューの市松模様・ラベル）のセクションを構築する。</summary>
     /// <param name="settings">設定。</param>
     /// <returns>セクションの要素。</returns>
     /// <remarks>
     /// Avalonia 版と同じカテゴリ構成（ラベル設定 / 選択枠・暗転 / ドラッグハンドル・マーカー / ルーペ /<br/>
-    /// 市松模様 / 選択矩形内のラベル / カーソル位置の座標ラベル / ルーペの中心座標ラベル）で並べる。<br/>
+    /// プレビューの市松模様 / 選択矩形内のラベル / カーソル位置の座標ラベル / ルーペの中心座標ラベル）で並べる。<br/>
     /// 見出し行の右端に「デフォルト値に戻す」ボタンを置き、本体は 3 列（カテゴリ / 項目名 / 設定値）のグリッドにする。
     /// </remarks>
     private static Element BuildAppearanceSection(Settings settings)
@@ -229,13 +229,14 @@ internal static class SettingsPage
                 ("枠色", ColorRow(settings.LoupeFrameColor, value => settings.LoupeFrameColor = value)),
                 ("枠の太さ", NumberRow(settings.LoupeFrameWidth, 1, 10, 1, true, value => settings.LoupeFrameWidth = (int)value)),
                 ("十字線色", ColorRow(settings.LoupeCrossColor, value => settings.LoupeCrossColor = value)),
+                ("画像外の色", ColorRow(settings.LoupePasteboardColor, value => settings.LoupePasteboardColor = value)),
                 ("選択矩形破線の色A", ColorRow(settings.LoupeSelectionRectColorA, value => settings.LoupeSelectionRectColorA = value)),
                 ("選択矩形破線の色B", ColorRow(settings.LoupeSelectionRectColorB, value => settings.LoupeSelectionRectColorB = value)),
                 ("拡大率", NumberRow(settings.LoupeZoomLevel, 4, 32, 2, true, value => settings.LoupeZoomLevel = (int)value)),
                 ("サイズ", NumberRow(settings.LoupeSize, 64, 512, 8, true, value => settings.LoupeSize = (int)value)),
                 ("カーソルからのオフセット", NumberRow(settings.LoupeOffset, 0, 200, 4, false, value => settings.LoupeOffset = value)),
             ]),
-            ("市松模様",
+            ("市松模様（プレビュー）",
             [
                 ("市松模様 A", ColorRow(settings.PreviewCheckerColorA, value => settings.PreviewCheckerColorA = value)),
                 ("市松模様 B", ColorRow(settings.PreviewCheckerColorB, value => settings.PreviewCheckerColorB = value)),

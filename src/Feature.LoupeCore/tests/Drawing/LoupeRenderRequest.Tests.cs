@@ -58,7 +58,7 @@ public class LoupeRenderRequestTests
     {
         var request = LoupeRenderRequest.Create(new EsPoint(3, 4), 100, 1.25, new LoupeOptions());
 
-        // 下地・市松模様は描画先の全面へ描くため、矩形は契約が単一所有する（UI 側で組み立てない）
+        // ペーストボード（画像外の色）は描画先の全面へ描くため、矩形は契約が単一所有する（UI 側で組み立てない）
         Assert.Equal(125, request.PixelSize);
         Assert.Equal(new EsRect(0, 0, 125, 125), request.SurfaceBounds);
     }
@@ -67,7 +67,7 @@ public class LoupeRenderRequestTests
     [Fact]
     public void Create_入力値をそのまま保持する()
     {
-        var options = LoupeOptions.Default with { ZoomLevel = 8, CheckerSize = 8 };
+        var options = LoupeOptions.Default with { ZoomLevel = 8 };
 
         var request = LoupeRenderRequest.Create(new EsPoint(3, 4), 100, 1.5, options);
 
@@ -221,5 +221,5 @@ public class LoupeRenderRequestTests
     /// <param name="zoomLevel">拡大率。</param>
     /// <returns>描画入力。</returns>
     private static LoupeRenderRequest Request(EsPoint? center, int pixelSize, int zoomLevel)
-        => new(center, pixelSize, pixelSize, LoupeOptions.Default with { ZoomLevel = zoomLevel }, 1.0, CheckerSizePixels: 6, BorderThicknessPixels: 2);
+        => new(center, pixelSize, pixelSize, LoupeOptions.Default with { ZoomLevel = zoomLevel }, 1.0, BorderThicknessPixels: 2);
 }

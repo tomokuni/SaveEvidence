@@ -21,9 +21,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <param name="LoupeCrossColor">ルーペの十字線の色（不透明度は色のアルファに統合）。</param>
 /// <param name="LoupeFrameColor">ルーペの枠の色。</param>
 /// <param name="LoupeFrameThickness">ルーペの枠の太さ（ピクセル）。</param>
-/// <param name="LoupeCheckerSize">ルーペの市松模様の一辺のサイズ（ピクセル）。</param>
-/// <param name="LoupeCheckerColorA">ルーペの市松模様の色 A。</param>
-/// <param name="LoupeCheckerColorB">ルーペの市松模様の色 B。</param>
+/// <param name="LoupePasteboardColor">ルーペの画像外（ペーストボード）の色（無地。不透明度は色のアルファに統合）。</param>
 /// <param name="LoupeSelectionRectColorA">ルーペ画像上の選択矩形破線の色 A（FadeMaskDragRectOptions.SelectionRectColorA・不透明度はアルファに統合）。</param>
 /// <param name="LoupeSelectionRectColorB">ルーペ画像上の選択矩形破線の色 B（FadeMaskDragRectOptions.SelectionRectColorB・不透明度はアルファに統合）。</param>
 /// <param name="LoupeShowCoordLabel">ルーペの上側に中心座標ラベル（"xy (x, y)"）を表示するか。</param>
@@ -78,9 +76,7 @@ public sealed record CaptureSettings(
     Color? LoupeCrossColor = null,
     Color? LoupeFrameColor = null,
     int? LoupeFrameThickness = null,
-    int? LoupeCheckerSize = null,
-    Color? LoupeCheckerColorA = null,
-    Color? LoupeCheckerColorB = null,
+    Color? LoupePasteboardColor = null,
     Color? LoupeSelectionRectColorA = null,
     Color? LoupeSelectionRectColorB = null,
     bool? LoupeShowCoordLabel = null,
@@ -113,7 +109,6 @@ public sealed record CaptureSettings(
         if (LoupeSize is < 1) throw new ArgumentOutOfRangeException(nameof(LoupeSize), "LoupeSize は 1 以上でなければなりません。");
         if (LoupeZoomLevel is < 1) throw new ArgumentOutOfRangeException(nameof(LoupeZoomLevel), "LoupeZoomLevel は 1 以上でなければなりません。");
         if (LoupeFrameThickness is < 1) throw new ArgumentOutOfRangeException(nameof(LoupeFrameThickness), "LoupeFrameThickness は 1 以上でなければなりません。");
-        if (LoupeCheckerSize is < 1) throw new ArgumentOutOfRangeException(nameof(LoupeCheckerSize), "LoupeCheckerSize は 1 以上でなければなりません。");
         if (BorderThickness is < 0) throw new ArgumentOutOfRangeException(nameof(BorderThickness), "BorderThickness は 0 以上でなければなりません。");
         if (LoupeOffset is < 0) throw new ArgumentOutOfRangeException(nameof(LoupeOffset), "LoupeOffset は 0 以上でなければなりません。");
         if (LoupeDipToDeviceScaling is < 0.1 or > 8.0) throw new ArgumentOutOfRangeException(nameof(LoupeDipToDeviceScaling), "LoupeDipToDeviceScaling は 0.1〜8.0 でなければなりません。");
@@ -146,9 +141,7 @@ public sealed record CaptureSettings(
             LoupeCrossColor: LoupeCrossColor ?? Color.FromArgb(102, 255, 0, 0),
             LoupeFrameColor: LoupeFrameColor ?? Color.LightGray,
             LoupeFrameThickness: LoupeFrameThickness ?? 2,
-            LoupeCheckerSize: LoupeCheckerSize ?? 6,
-            LoupeCheckerColorA: LoupeCheckerColorA ?? Color.FromArgb(0x4C, 128, 128, 128),
-            LoupeCheckerColorB: LoupeCheckerColorB ?? Color.FromArgb(0x4C, 169, 169, 169),
+            LoupePasteboardColor: LoupePasteboardColor ?? Color.FromArgb(0xFF, 0x53, 0x53, 0x53),
             LoupeSelectionRectColorA: LoupeSelectionRectColorA ?? Color.White,
             LoupeSelectionRectColorB: LoupeSelectionRectColorB ?? Color.Black,
             LoupeShowCoordLabel: LoupeShowCoordLabel ?? true,

@@ -44,9 +44,7 @@ internal static class CaptureSettingsMapper
             LoupeCrossColor: ParseColor(settings.LoupeCrossColor),
             LoupeFrameColor: ParseColor(settings.LoupeFrameColor),
             LoupeFrameThickness: settings.LoupeFrameWidth,
-            LoupeCheckerSize: settings.PreviewCheckerSize,
-            LoupeCheckerColorA: ParseColor(settings.PreviewCheckerColorA),
-            LoupeCheckerColorB: ParseColor(settings.PreviewCheckerColorB),
+            LoupePasteboardColor: ParseColor(settings.LoupePasteboardColor),
             LoupeSelectionRectColorA: ParseColor(settings.LoupeSelectionRectColorA),
             LoupeSelectionRectColorB: ParseColor(settings.LoupeSelectionRectColorB),
             // ルーペ座標ラベル

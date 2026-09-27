@@ -18,6 +18,9 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// したがって本クラスはこれらの値も型も持たず、それを使う層の描画を抽象メソッドまたはフックとして派生クラスへ委ねる<br/>
 /// （実体は <c>LoupePaint</c> が単一所有し、その保持者である <see cref="LoupeRenderer"/> が実装する）。<br/>
 /// <br/>
+/// <b>画像外の見た目はペーストボード層が与える</b>: 画像の範囲外（切り出しの透明パディングを含む）は、<br/>
+/// 描画面全体を塗るペーストボード層（<see cref="LoupeDrawLayer.Pasteboard"/>）の色がそのまま見える。<br/>
+/// <br/>
 /// <b>テキストを描く層はフックで受ける</b>: 文言と基準点は <see cref="LoupeDrawContent.CoordLabelText"/> が持ち、UI 層が扱いを決める。<br/>
 /// <b>要素（<c>TextBlock</c> 等）として置く UI は <see cref="DrawLabel"/> を上書きしない</b>（既定は何もしない）。<br/>
 /// canvas へ描く実装だけが本フックを上書きする（既定の実装を置くと、要素と canvas の二重描画になるため）。<br/>
@@ -27,16 +30,16 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// </remarks>
 public abstract class LoupeRendererBase : ILoupeRenderer
 {
-    /// <summary>ルーペの図形の層（下地・市松模様・拡大画像・十字線・枠線）を描画順に描く。</summary>
+    /// <summary>ルーペの図形の層（ペーストボード・拡大画像・十字線・枠線）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。null 不可。</param>
-    /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（市松模様のみ）。</param>
+    /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（画像外のみ）。</param>
     /// <param name="content">コアが解決した描画内容。<see cref="LoupeDrawContent.Layers"/> は null 不可。</param>
     /// <exception cref="ArgumentNullException"><paramref name="canvas"/> または <paramref name="content"/> の層が null の場合。</exception>
     /// <remarks>
     /// 本メソッドが<b>描画起動の唯一の入口</b>である（UI 層が描画内容を解決し、本メソッドを通して描く）。<br/>
     /// 描く値はすべて <paramref name="content"/> に解決済みであり、本クラスは計算を持たない（順に写すだけ）。<br/>
     /// テキストは <see cref="DrawLabel"/>（既定は何もしない）へ委ねる（UI 層が要素として置くか画像として描くかを決める）。<br/>
-    /// 描画面の消去は下地の層（<see cref="LoupeDrawLayer.Background"/>）が行う（前フレームの残像を残さない）。
+    /// 描画面の消去はペーストボードの層（<see cref="LoupeDrawLayer.Pasteboard"/>）が行う（前フレームの残像を残さない）。
     /// </remarks>
     public void DrawShapes(IEsCanvas canvas, EsBitmap? source, in LoupeDrawContent content)
     {
@@ -48,12 +51,8 @@ public abstract class LoupeRendererBase : ILoupeRenderer
         {
             switch (layer)
             {
-                case LoupeDrawLayer.Background:
-                    DrawBackground(canvas, in content);
-                    break;
-
-                case LoupeDrawLayer.Checkerboard:
-                    DrawCheckerboard(canvas, in content);
+                case LoupeDrawLayer.Pasteboard:
+                    DrawPasteboard(canvas, in content);
                     break;
 
                 case LoupeDrawLayer.Image:
@@ -89,25 +88,15 @@ public abstract class LoupeRendererBase : ILoupeRenderer
     {
     }
 
-    /// <summary>下地（ベース色）で描画面の全体を置き換える。</summary>
+    /// <summary>画像外（ペーストボード）の色で描画面の全体を置き換える。</summary>
     /// <param name="canvas">描画先の描画ポート。</param>
     /// <param name="content">コアが解決した描画内容（描画面の矩形を持つ）。</param>
     /// <remarks>
-    /// 市松模様の色は半透明のため、背後の要素（プレビューの画像・画面の平均色等）を透かしたくない場合は<br/>
-    /// ホストが不透明色を指定する。透明の場合も<b>描画面を置き換える</b>（前フレームの残像を残さない）。<br/>
+    /// 描画面全体を塗ってから拡大画像を重ねるため、画像の範囲外（画像端の透明パディングと切り上げの余りを含む）は本色の無地になる。<br/>
+    /// 透明色を指定した場合も<b>描画面を置き換える</b>（前フレームの残像を残さない）。<br/>
     /// 色は本メソッドを実装する派生クラス（色の保持者）が与える。
     /// </remarks>
-    protected abstract void DrawBackground(IEsCanvas canvas, in LoupeDrawContent content);
-
-    /// <summary>市松模様を描く（明色で全面を塗った後、暗色タイルのみを上書きする）。</summary>
-    /// <param name="canvas">描画先の描画ポート。</param>
-    /// <param name="content">コアが解決した描画内容（描画面の矩形と暗色タイルの列挙子を持つ）。</param>
-    /// <remarks>
-    /// 明色で全面を塗ってから暗色タイルだけを塗ることで描画回数を半減できる。<br/>
-    /// タイルの位置と寸法はコアが換算して本値に解決済みである（本メソッドは計算しない）。<br/>
-    /// 色と「描くかどうか」の判定は色の保持者が与える。
-    /// </remarks>
-    protected abstract void DrawCheckerboard(IEsCanvas canvas, in LoupeDrawContent content);
+    protected abstract void DrawPasteboard(IEsCanvas canvas, in LoupeDrawContent content);
 
     /// <summary>十字線を描く。</summary>
     /// <param name="canvas">描画先の描画ポート。</param>
@@ -130,7 +119,7 @@ public abstract class LoupeRendererBase : ILoupeRenderer
     /// 切り出し領域の算出（切り上げ・中心 → 左上の変換）と描画の矩形はコアが <see cref="LoupeDrawContent.MagnifiedImage"/> へ<br/>
     /// 解決済みである（本メソッドは切り出しの実行と描画 API の呼び出しだけを担う）。<br/>
     /// 描画中にソースが破棄された場合（<see cref="ObjectDisposedException"/>）は何も描かずに戻る<br/>
-    /// （ホストの状態と競合しても描画を継続できる。市松模様のみが残る）。
+    /// （ホストの状態と競合しても描画を継続できる。画像外のみが残る）。
     /// </remarks>
     private static void DrawMagnifiedImage(IEsCanvas canvas, EsBitmap? source, in LoupeDrawContent content)
     {
@@ -146,7 +135,7 @@ public abstract class LoupeRendererBase : ILoupeRenderer
         }
         catch (ObjectDisposedException)
         {
-            // 描画中にソースが破棄された: 市松模様のみを描画する
+            // 描画中にソースが破棄された: 画像の層を描かずに戻る（ペーストボードのみが残る）
         }
     }
 }

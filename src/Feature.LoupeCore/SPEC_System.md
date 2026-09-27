@@ -17,7 +17,7 @@
 | --- | --- |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `EsUtil.Feature.LoupeCore`。フォルダへ追従し、`.Checkerboard` / `.Decoration` / `.Drawing` / `.Logging` / `.Placement` / `.Setting` を持ちます |
+| ルート名前空間 | `EsUtil.Feature.LoupeCore`。フォルダへ追従し、`.Decoration` / `.Drawing` / `.Logging` / `.Placement` / `.Setting` を持ちます |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
 | テスト | xUnit v3（UI 初期化不要。`InternalsVisibleTo` で `internal` を検証する） |
 | 依存 | UI フレームワークを一切参照しない。直接依存は `Platform.Core` と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成。SkiaSharp は `Platform.Core` 経由） |
@@ -81,22 +81,20 @@ sequenceDiagram
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
 | `src/Loupe.cs`（ルート） | `Loupe` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、描画入力の生成（`CreateRequest`）、**描画内容の解決（`ResolveContent`）**、設定変更の検出とログ出力（`Log`） |
-| `src/Loupe.DrawContent.cs`（ルート） | `Loupe`（**partial**） | internal | 描画内容の**内部手順**（市松模様のタイル・十字線 / 枠線の矩形・中心座標ラベルのテキスト配置）と描く層の一覧の組み立て。描くかどうかの判断を単一所有し、**層の有無の全組合せ（32 通り）を事前生成した表**から選ぶ（描画のたびに一覧を組み立てない）。公開の入口 `ResolveContent` は `Loupe.cs` が持つ |
+| `src/Loupe.DrawContent.cs`（ルート） | `Loupe`（**partial**） | internal | 描画内容の**内部手順**（十字線 / 枠線の矩形・中心座標ラベルのテキスト配置）と描く層の一覧の組み立て。描くかどうかの判断を単一所有し、**層の有無の全組合せ（16 通り）を事前生成した表**から選ぶ（描画のたびに一覧を組み立てない）。公開の入口 `ResolveContent` は `Loupe.cs` が持つ |
 | `src/Loupe.Limits.cs`（ルート） | `Loupe.Limits`（`Loupe` の入れ子） | public | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値の補正。**UI がプロパティ登録に使う** |
 | `src/Setting/LoupeOptions.cs` | `LoupeOptions` | public | 設定の値オブジェクト（表示サイズ・拡大率・寸法・表示可否）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`Default`・`ShouldShowCoordLabel`。**色は持たない**（色は描画層 `LoupeControl.UIBase` の `LoupePaint` が単一所有する） |
-| `src/Drawing/LoupeRenderRequest.cs` | `LoupeRenderRequest` | public | 1 フレーム分の描画入力（コア⇔UI の契約）、DIP 値からの組み立て（`Create`。**換算済みの寸法** `CheckerSizePixels` / `BorderThicknessPixels` を含む。UI 層は自分で組み立てず、ファサードの `Loupe.CreateRequest` が返した値を受け取る）、切り出し領域の幾何の導出（`CaptureSize` / `MagnifiedImage` / `SurfaceBounds` は internal、`CaptureTopLeft` / `ZoomLevel` は描画完了通知のために public） |
-| `src/Drawing/LoupeDrawContent.cs` | `LoupeDrawContent` | public | **1 フレーム分の描画内容**（描画面の矩形・タイル列挙子・十字線 / 枠線の矩形・拡大画像の幾何・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
+| `src/Drawing/LoupeRenderRequest.cs` | `LoupeRenderRequest` | public | 1 フレーム分の描画入力（コア⇔UI の契約）、DIP 値からの組み立て（`Create`。**換算済みの寸法** `BorderThicknessPixels` を含む。UI 層は自分で組み立てず、ファサードの `Loupe.CreateRequest` が返した値を受け取る）、切り出し領域の幾何の導出（`CaptureSize` / `MagnifiedImage` / `SurfaceBounds` は internal、`CaptureTopLeft` / `ZoomLevel` は描画完了通知のために public） |
+| `src/Drawing/LoupeDrawContent.cs` | `LoupeDrawContent` | public | **1 フレーム分の描画内容**（描画面の矩形・十字線 / 枠線の矩形・拡大画像の幾何・層の順序）。描画層へ渡す唯一の描画契約であり、幾何計算を含まない |
 | `src/Drawing/LoupeMagnifiedImage.cs` | `LoupeMagnifiedImage` | public | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） |
-| `src/Drawing/LoupeCheckerTiles.cs` | `LoupeCheckerTiles` | public | 市松模様の暗色タイルの矩形を**リストを確保せずに列挙する構造体**（`foreach` で列挙でき、描画ポートの列挙子への適合は描画層が行う） |
 | `src/Drawing/LoupeTextPlacement.cs` | `LoupeTextPlacement` | public | コアが UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める**（体裁・フォントサイズ・角丸・色は描画層 `LoupeControl.UIBase` の `LoupePaint` / `LoupeLabelPlan` が単一所有する） |
-| `src/Drawing/LoupeDrawLayer.cs` | `LoupeDrawLayer` | public | 描画層の順序（`Background` / `Checkerboard` / `Image` / `Crosshair` / `Border` / `Label`。`Label` はテキストがある場合のみ） |
+| `src/Drawing/LoupeDrawLayer.cs` | `LoupeDrawLayer` | public | 描画層の順序（`Pasteboard` / `Image` / `Crosshair` / `Border` / `Label`。`Label` はテキストがある場合のみ） |
 | `src/Placement/LoupeLayout.cs` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズ + 表示位置。配置しない場合は位置が null） |
 | （本プロジェクトには置かない） | `ILoupeRenderer` / `LoupeRendererBase` | — | 描画の契約と描画手順の基底は **UI 側の共有層（`LoupeControl.UIBase`）が所有します**（本コアは描画 API も描画ポートも持たない） |
 | `src/Logging/LoupeLogMessage.cs` | `LoupeLogMessage` | internal | コアが出力するログ定義（`LoggerMessage` ソース生成）の単一所有（**UI が出力する定義と書式は `LoupeControl.UIBase` が単一所有する**） |
-| `src/Checkerboard/LoupeCheckerboard.cs` | `LoupeCheckerboard` | internal | 市松模様の明暗の判定規則（タイル矩形の列挙は `LoupeCheckerTiles`） |
-| `src/Checkerboard/LoupeDivMath.cs` | `LoupeDivMath` | internal | 区画数の切り上げ除算（`CeilDiv`。「余りを 1 区画として数える」規則の単一所有。タイル数と切り出し領域の一辺が共用する） |
+| `src/Drawing/LoupeDivMath.cs` | `LoupeDivMath` | internal | 区画数の切り上げ除算（`CeilDiv`。「余りを 1 区画として数える」規則の単一所有。切り出し領域の一辺と十字線の交点が共用する） |
 | `src/Decoration/LoupeDecoGeometry.cs` | `LoupeDecoGeometry` | internal | 十字線（縦横 2 本）と枠線（4 辺）の描画矩形の計算 |
-| `src/Drawing/LoupeMetricsScaler.cs` | `LoupeMetricsScaler` | internal | 寸法値（タイルサイズ・枠線の太さ）の物理ピクセル換算（結果は描画入力へ解決済み。適用先が描画入力のため `Drawing/`） |
+| `src/Drawing/LoupeMetricsScaler.cs` | `LoupeMetricsScaler` | internal | 寸法値（枠線の太さ）の物理ピクセル換算（結果は描画入力へ解決済み。適用先が描画入力のため `Drawing/`） |
 | `src/Placement/LoupePlacementGeometry.cs` | `LoupePlacementGeometry` | internal | 表示位置（左上）の計算（中心 + オフセットと親領域内へのクランプ。親サイズ未確定の判定も本クラスが扱う） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
@@ -106,11 +104,11 @@ sequenceDiagram
 | ルーペの設定（表示サイズ・拡大率・寸法）とその既定値 | `LoupeOptions` |
 | 設定の数値項目の安全域への補正（生成時） | `LoupeOptions`（`init` アクセサ。規則は `Loupe.Limits` が単一所有する） |
 | 設定の変更ログの差分検出（変化した項目だけを出力） | `LoupeLogMessage.LogOptionsChanged`（出力の契機は `Loupe.Options` の setter） |
-| ルーペの寸法（タイルサイズ・枠線の太さ）とラベル表示の可否 | `LoupeOptions` |
-| 描画の色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）とその既定値 | `LoupePaint`（描画層 `LoupeControl.UIBase`。**描画可否の述語は持たない**） |
-| 下地（ベース）色とその既定値 | `LoupePaint.BackgroundColor`（描画層 `LoupeControl.UIBase`。最初に塗る） |
+| ルーペの寸法（枠線の太さ）とラベル表示の可否 | `LoupeOptions` |
+| 描画の色（ペーストボード・枠線・十字線・中心座標ラベルの 6 色）とその既定値 | `LoupePaint`（描画層 `LoupeControl.UIBase`。**描画可否の述語は持たない**） |
+| 画像外（ペーストボード）の色とその既定値 | `LoupePaint.PasteboardColor`（描画層 `LoupeControl.UIBase`。最初に描画面全体を塗る） |
 | 数値パラメータ（スカラー）の安全域への補正 | `Loupe.Limits` |
-| 描画の可否（市松模様・十字線・枠線・中心座標ラベルの表示可否） | `LoupeOptions.ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`（明示フラグ。透明色を代用にしない） |
+| 描画の可否（十字線・枠線・中心座標ラベルの表示可否） | `LoupeOptions.ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`（明示フラグ。透明色を代用にしない） |
 | ラベル表示の可否（設定と中心の有無） | `LoupeOptions.ShouldShowCoordLabel` |
 | 切り出し領域の一辺（ドメインピクセル） | `LoupeRenderRequest.CaptureSize`（internal。切り上げは `LoupeDivMath.CeilDiv`） |
 | 切り出し領域の左上（中心 → 左上の変換） | `LoupeRenderRequest.CaptureTopLeft`（中心未設定は null。描画完了通知のために public） |
@@ -124,8 +122,8 @@ sequenceDiagram
 | 十字線・枠線の矩形 | `Loupe.ResolveContent`（規則は internal の `Decoration.LoupeDecoGeometry`） |
 | ラベルの余白・背景矩形・文字原点 | 描画層 `LoupeControl.UIBase` の `LoupeLabelPlan`（左右の余白は `LoupeLabelPlan` が、上下はルーペ固有の値を単一所有する） |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
-| 寸法値の物理ピクセル換算（市松タイル・枠線の太さ） | `LoupeRenderRequest.Create`（規則は internal の `Drawing.LoupeMetricsScaler`。結果は描画入力に含まれる） |
-| 市松模様のタイル矩形の列挙 | `Loupe.ResolveContent`（`LoupeCheckerTiles`。リストを確保しない） |
+| 寸法値の物理ピクセル換算（枠線の太さ） | `LoupeRenderRequest.Create`（規則は internal の `Drawing.LoupeMetricsScaler`。結果は描画入力に含まれる） |
+| 区画数の切り上げ（切り出し領域の一辺と十字線の交点） | `Drawing.LoupeDivMath.CeilDiv` |
 | 設定・環境値・拡大中心・位置オフセットの変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter） |
 | ログの書式とレベル、変化判定（同値なら出力しない） | `LoupeLogMessage`（コアが出力する定義。UI が出力する定義と書式は `LoupeControl.UIBase` が単一所有する） |
 
@@ -147,10 +145,10 @@ sequenceDiagram
 | 方針 | 内容 |
 | --- | --- |
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]`（`AvaloniaFact` ではない）で並列実行する |
-| 単位 | 純粋計算（`LoupeCheckerboard` / `LoupeDivMath` / `LoupeDecoGeometry` / `LoupeMetricsScaler` / `LoupePlacementGeometry`）・ファサード・描画内容の解決 |
-| 配置 | **ソースのフォルダを鏡映**する（`tests/Checkerboard` / `tests/Decoration` / `tests/Drawing` / `tests/Logging` / `tests/Placement` / `tests/Setting`。ファサードの partial のテストはルート） |
+| 単位 | 純粋計算（`LoupeDivMath` / `LoupeDecoGeometry` / `LoupeMetricsScaler` / `LoupePlacementGeometry`）・ファサード・描画内容の解決 |
+| 配置 | **ソースのフォルダを鏡映**する（`tests/Decoration` / `tests/Drawing` / `tests/Logging` / `tests/Placement` / `tests/Setting`。ファサードの partial のテストはルート） |
 | UI 依存の検証 | `LoupeControl.AvaloniaUI.Tests`（Avalonia ヘッドレス・直列）が担う（コントロール生成・描画・`StyledProperty` の coerce 経由の反映・イベント発火） |
-| 合計 | 159 件（`[Theory]` は展開後のケース数） |
+| 合計 | 131 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.LoupeCore/tests/Feature.LoupeCore.Tests.csproj

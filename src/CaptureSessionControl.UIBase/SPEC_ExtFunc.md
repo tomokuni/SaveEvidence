@@ -9,7 +9,7 @@
 | 機能 | 提供元 | 内容 |
 | --- | --- | --- |
 | 選択矩形の色の写像 | `CapturePaintMapper.ToMarqueePaint` | `CaptureSettings` から `MarqueePaint`（9 項目）を組み立てる |
-| ルーペの色の写像 | `CapturePaintMapper.ToLoupePaint` | `CaptureSettings` と下地色から `LoupePaint`（7 項目）を組み立てる |
+| ルーペの色の写像 | `CapturePaintMapper.ToLoupePaint` | `CaptureSettings` から `LoupePaint`（5 項目）を組み立てる |
 
 **本層は公開 API を持ちません。** 写像は両 UI のホストが使う内部処理であり、公開面を増やさないため
 `internal` としています。
@@ -42,28 +42,24 @@
 **写像しない項目**: 内側の塗り（`InnerFillColor`）と内側の枠線（`InnerBorderColor`）。描画の可否は
 `MarqueeDecoOptions` の明示フラグが単一所有するため、色は既定の透明を保ちます。
 
-### `ToLoupePaint(CaptureSettings settings, Color background)`
+### `ToLoupePaint(CaptureSettings settings)`
 
 | 写像先（`LoupePaint`） | 写像元 | 内容 |
 | --- | --- | --- |
-| `BackgroundColor` | 引数 `background` | 市松模様の下地色（**ホストが決める**） |
-| `CheckerColorA` | `LoupeCheckerColorA` | 市松模様の色 A |
-| `CheckerColorB` | `LoupeCheckerColorB` | 市松模様の色 B |
+| `PasteboardColor` | `LoupePasteboardColor` | 画像外（ペーストボード）の色 |
 | `BorderColor` | `LoupeFrameColor` | 枠線の色 |
 | `CrossColor` | `LoupeCrossColor` | 十字線の色 |
 | `CoordLabelColor` | `LoupeCoordLabelColor` | 中心座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `LoupeCoordLabelBackgroundColor` | 中心座標ラベルの背景色 |
 
-`background` を引数にするのは、下地が**ホストの状況で決まる**ためです。撮影オーバーレイは背後の撮影画像を
-透かすため透明を、プレビューの切り出しはテーマ背景色を渡します。市松模様の色は半透明のため、下地を塗らないと
-背後の要素が透けます。
+画像外の色を設定にするのは、**描画層が描画面全体を塗ってから拡大画像を重ねる**ためです（画像の無い部分が本色の無地になる）。
+透明を設定すると背後の要素がそのまま見えます（既定は不透明の中性グレー）。
 
 ## 引数と例外
 
 | 引数 | 制約 |
 | --- | --- |
 | `settings` | 全メンバー non-null（`CaptureSettings.ToNonNull` 済みを渡す）。null は `ArgumentNullException` |
-| `background` | 任意の色（アルファを含む） |
 
 ## 依存関係
 

@@ -34,14 +34,14 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// </remarks>
 public interface ILoupeRenderer
 {
-    /// <summary>図形の層（下地・市松模様・拡大画像・十字線・枠線）を描画順に描く。</summary>
+    /// <summary>図形の層（ペーストボード・拡大画像・十字線・枠線）を描画順に描く。</summary>
     /// <param name="canvas">描画先の描画ポート（物理ピクセル単位）。null 不可。</param>
-    /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（市松模様のみ）。</param>
+    /// <param name="source">拡大元の 100% 画像。null の場合は拡大画像を描かない（画像外のみ）。</param>
     /// <param name="content">コアが解決した描画内容（層の順序・描画面・矩形・拡大画像の幾何を持つ）。</param>
     /// <remarks>
     /// 描く値はすべて <paramref name="content"/> に解決済みであり、実装は計算を持たない。<br/>
     /// テキストは描かない（UI 層が要素として置くか画像として描くかを決める）。<br/>
-    /// 描画面の消去は下地の層（<c>LoupeDrawLayer.Background</c>）が行う（前フレームの残像を残さない）。
+    /// 描画面の消去はペーストボードの層（<c>LoupeDrawLayer.Pasteboard</c>）が行う（前フレームの残像を残さない）。
     /// </remarks>
     void DrawShapes(IEsCanvas canvas, EsBitmap? source, in LoupeDrawContent content);
 }

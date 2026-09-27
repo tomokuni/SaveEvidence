@@ -115,12 +115,11 @@ UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せ�
 | 設定型の数とログ定義 | 2 型（`MarqueeOptions` + `MarqueeDecoOptions`）。ログは `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキー） | 1 型（`LoupeOptions`）。ログは `LogOptionsChanged` のみ | 本コアの装飾は撮影オーバーレイ等へ組み込むときだけ必要なサブ概念 |
 | 描画データの粒度 | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker` / `MarqueeOuterDecoFrame`） | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 描画プリミティブが違う（線の座標 / 塗る矩形の列） |
 | 描画入力の座標変換ポート | 入力が保持する（`Port` ＋ 未指定時の `DomainToDipScaling`。`ResolvedPort` / `ToDipRect` が自分で解決する） | 入力に持たない（ポートは `ResolveLayout` の表示位置解決だけに使う） | 本コアは選択矩形をドメイン → DIP へ変換して描き、その DIP はホストの座標系で決まる（ルーペは自身の物理ピクセル面で完結する） |
-| 確保の戦略 | 固定個の矩形は `List` を毎フレーム確保（ハンドル 8 / 暗転 4 / 枠線 4） | 高カウントのタイルだけ構造体列挙子（`LoupeCheckerTiles`）で確保 0（数百〜数千） | 要素数の桁が違う（描画面に比例するタイルと、固定個の矩形） |
-| 下地の層 | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | `LoupeDrawLayer.Background` で自前の描画面を消す | 本コアは自身の表面へ直接描き、消去はフレームワークが行う（ルーペは描画先のビットマップを自分で置き換える） |
+| 下地の層 | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | `LoupeDrawLayer.Pasteboard`（画像外の色）で描画面全体を塗る | 本コアは自身の表面へ直接描き、消去はフレームワークが行う（ルーペは描画先のビットマップを自分で置き換える） |
 | 描画完了の通知の内容 | `MarqueeRenderedEventArgs`（`MarqueeDrawContent`: 層・文言の有無） | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | ホストが重ね描きするために必要な情報が違う（選択矩形の所在 / 切り出し領域と倍率） |
 | 表示可否の述語の引数 | `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` | `ShouldShowCoordLabel(bool)` | ルーペの座標ラベルは拡大中心が未設定になりうる（本コアの座標ラベルは入力に常にある） |
 | `Limits` の追加役割 | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`） | 安全域と補正のみ | ラベルの表示スケールは本コア固有の概念 |
-| 市松模様・区画数の計算 | 持たない | `Checkerboard/`（`LoupeCheckerboard` / `LoupeDivMath`）+ `LoupeCheckerTiles` | ルーペは透明領域を市松模様で示す（区画数の切り上げは切り出し領域とも共用する） |
+| 区画数の計算 | 持たない | `Drawing/`（`LoupeDivMath`）を持つ | 切り出し領域の一辺と十字線の交点が「余りを 1 区画として数える」規則を共用する |
 | 選択の幾何 | `Selection/`（`MarqueeSelectionGeometry`）を持つ | 持たない | ルーペは選択操作を持たない |
 | テスト補助（スパイ） | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | `RecordingLogger` のみ | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
 | ドキュメントの追加の節 | 3 節（README「名前の由来と一般的な呼称」「選択矩形の外側に描く装飾」、SPEC_System「3.3 状態遷移」） | 追加の節なし | 改名の経緯・装飾・状態遷移はルーペに対応する概念が無い（共通の節は両コアで同一順） |

@@ -56,7 +56,7 @@
 | UIフレームワーク | Avalonia 12.1 |
 | 主要基底クラス | `Avalonia.Controls.Panel`（コードのみ。AXAML を持たない） |
 | 表示方式 | 子の `Image` 要素へのBitmap設定と、中心座標ラベルのテキスト要素（`Border` + `TextBlock`） |
-| 主な用途 | 画像中心周辺の拡大表示、画像端の透明領域の市松模様表示 |
+| 主な用途 | 画像中心周辺の拡大表示、画像端の外側（画像外）の無地の表示 |
 
 ## 2. 目的
 
@@ -67,7 +67,7 @@
 - Avalonia Bindingによる画像入力
 - 指定中心座標周辺の画像領域抽出
 - 1〜64倍の拡大表示
-- 画像範囲外の透明領域への市松模様表示
+- 画像範囲外への画像外の色（無地）の表示
 - 十字線の表示
 - 枠線の表示
 - DPIスケーリングに対応したBitmap生成
@@ -178,7 +178,7 @@ public bool IsLoupeVisible { get; set; } = true;
 | Binding | 対応 |
 | 実装上の対応型 | `Bitmap` / `EsBitmapAvaloniaImage` |
 
-`Source` が `null` の場合、画像なしの市松模様を描画します。
+`Source` が `null` の場合、画像なし（画像外の色のみ）を描画します。
 
 `Source` に `Bitmap` 以外の `IImage`（`EsBitmapAvaloniaImage` を除く）を設定した場合、`NotSupportedException` が発生します。例外は `LoupeControl.Log` に記録されます。
 
@@ -191,9 +191,9 @@ public bool IsLoupeVisible { get; set; } = true;
 | 既定値 | `null` |
 | 用途 | 拡大表示の中心座標 |
 
-`CenterPoint` が `null` の場合、画像が設定されていても市松模様のみを描画します。
+`CenterPoint` が `null` の場合、画像が設定されていても拡大画像を描画しません（画像外の色のみ）。
 
-画像範囲外の座標も指定できます。抽出領域と画像の重なり部分は画像として表示され、範囲外部分は透明となって市松模様が表示されます。
+画像範囲外の座標も指定できます。抽出領域と画像の重なり部分は画像として表示され、範囲外部分は画像外の色（無地）になります。
 
 #### 5.1.3 Options（設定の単一値）
 
@@ -213,10 +213,8 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | `160` | `1`〜`4096` | ルーペの基本サイズ（DIP・一辺） |
 | `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
-| `CheckerSize` | `int` | `6` | `1`〜`128` | 市松模様の 1 タイルサイズ（DIP） |
 | `BorderThickness` | `int` | `2` | `1`〜`64` | 枠線の太さ（DIP） |
 | `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
-| `ShowCheckerboard` | `bool` | `true` | — | 市松模様の表示可否 |
 | `ShowCrosshair` | `bool` | `true` | — | 十字線の表示可否 |
 | `ShowBorder` | `bool` | `true` | — | 枠線の表示可否 |
 
@@ -249,28 +247,26 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 #### 5.1.5 寸法と Paint（色）
 
-ルーペの寸法（市松模様のタイルサイズ・枠線の太さ）とラベル表示の可否は **コアの `LoupeOptions`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
+ルーペの寸法（枠線の太さ）とラベル表示の可否は **コアの `LoupeOptions`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `LoupeOptions` | コアの既定値 | ルーペの寸法とラベル表示の可否。`with` 式で部分変更する。数値項目はコアの `LoupeOptions` が生成時に安全域へ補正する |
-| `Paint` | `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupePaint.Default` | 描画に使う色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）とラベルのフォントサイズ・角丸。`LoupePaint.Default with { ... }` で部分変更する |
+| `Paint` | `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupePaint.Default` | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）とラベルのフォントサイズ・角丸。`LoupePaint.Default with { ... }` で部分変更する |
 
 `Options`（コアの `LoupeOptions`）の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `CheckerSize` | `int` | `6` | 市松模様の 1 タイルサイズ（DIP。1〜128 に補正） |
 | `BorderThickness` | `int` | `2` | 枠線の太さ（DIP。1〜64 に補正） |
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
-| `ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` | `bool` | `true` | 市松模様・十字線・枠線の表示有無（透明色を「描かない」の代用にしない） |
+| `ShowCrosshair` / `ShowBorder` | `bool` | `true` | 十字線・枠線の表示有無（透明色を「描かない」の代用にしない） |
 
 `Paint`（`LoupePaint`。詳細は `LoupeControl.UIBase` の `SPEC_ExtFunc.md` を参照）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `BackgroundColor` | `System.Drawing.Color` | 透明 | 下地（ベース）色。市松模様・拡大画像より先に全面へ塗る。背後の要素を透かさない場合は不透明色を指定する（既定は透明 = 背後の要素を透かす） |
-| `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色 |
+| `PasteboardColor` | `System.Drawing.Color` | 中性グレー（`#FF535353`） | 画像外（ペーストボード）の色。拡大画像より先に全面へ塗るため、画像の無い部分が本色の無地になる |
 | `BorderColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 枠線の色 |
 | `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色 |
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
@@ -280,7 +276,7 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Paint`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
-寸法項目（`CheckerSize` / `BorderThickness`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.CheckerSizePixels` / `BorderThicknessPixels`）（`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
+寸法項目（`BorderThickness`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.BorderThicknessPixels`）（`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 
@@ -483,14 +479,13 @@ private readonly LoupeControl _loupe = new()
     {
         RequestedSize = 240,
         ZoomLevel = 4,
-        CheckerSize = 8,
+        BorderThickness = 2,
         BorderThickness = 2,
     },
     Paint = LoupePaint.Default with
     {
         CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
-        CheckerColorA = DrawingColor.White,
-        CheckerColorB = DrawingColor.LightGray,
+        PasteboardColor = DrawingColor.FromArgb(255, 0x53, 0x53, 0x53),
         BorderColor = DrawingColor.LightGray,
     },
 };
@@ -538,8 +533,8 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 
 - `Source` のBinding
 - `CenterPoint` のマウス追従
-- 画像端から外れた部分の部分的な市松模様
-- `Options`（`ZoomLevel` / `RequestedSize` / `CheckerSize` / `BorderThickness`）と `Paint`（色）・`DipToDeviceScaling`
-- 十字線・市松模様・枠線の色変更（`Paint`）
+- 画像端から外れた部分の画像外の色（無地）
+- `Options`（`ZoomLevel` / `RequestedSize` / `BorderThickness`）と `Paint`（色）・`DipToDeviceScaling`
+- 十字線・枠線の色変更（`Paint`）
 - `IsVisible`、`Clear()`、`RequestRender()`
 - `Log`（描画エラーの通知先 ILogger 設定例）

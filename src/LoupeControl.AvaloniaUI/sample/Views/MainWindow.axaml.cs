@@ -46,7 +46,7 @@ public partial class MainWindow : Window
     /// <param name="e">ポインタイベント引数。</param>
     /// <remarks>
     /// 中心座標は画像の外もそのまま許可する。LoupeControl は画像外の領域を透明として切り出し、<br/>
-    /// 市松模様はカーソルと画像端の距離に応じて部分的に表示される（視野全体が画像外になった場合のみ全面市松）。<br/>
+    /// 画像外は無地の色（ペーストボード）で表示される（視野全体が画像外になった場合も全面がその色）。<br/>
     /// Stretch=None のため画像ローカル DIP ≒ 元画像ピクセル。<br/>
     /// ルーペの表示位置は LoupeControl.UpdatePosition（RenderTransform + PositionOffset）が計算するため、
     /// ホスト側では中心座標（CenterPoint）の設定のみを行う。
@@ -55,7 +55,7 @@ public partial class MainWindow : Window
     {
         var pos = e.GetPosition(TestImage);
 
-        // 画像範囲へクランプしない（画像外も中心として許容し、距離に応じた部分市松を表示する）
+        // 画像範囲へクランプしない（画像外も中心として許容し、画像外の色を表示する）
         _vm.CenterPoint = new Point(pos.X, pos.Y);
     }
 

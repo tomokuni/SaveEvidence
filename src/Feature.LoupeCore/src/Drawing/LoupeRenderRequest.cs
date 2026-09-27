@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Feature.LoupeCore.Checkerboard;
 using EsUtil.Feature.LoupeCore.Setting;
 
 namespace EsUtil.Feature.LoupeCore.Drawing;
@@ -21,15 +20,14 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// 描画層が解決した <see cref="EsBitmap"/> を別引数として受け取る（両 UI が同じ手順で本値を組み立てられる）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-/// <param name="Center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定は null（市松模様のみを描画する）。</param>
+/// <param name="Center">拡大中心（ドメイン座標 = 元画像ピクセル座標）。未設定は null（拡大画像を描画しない）。</param>
 /// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
 /// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。切り上げ・最低 1）。</param>
 /// <param name="Options">ルーペの設定（拡大率・寸法。色は描画の設定が単一所有する）。</param>
 /// <param name="DipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
-/// <param name="CheckerSizePixels">市松模様の 1 タイルの一辺（物理ピクセル。換算済みで最低 1。描くかどうかは <see cref="LoupeOptions.ShowCheckerboard"/> が単一所有する）。</param>
 /// <param name="BorderThicknessPixels">枠線の太さ（物理ピクセル。換算済みで最低 1。描くかどうかは <see cref="LoupeOptions.ShowBorder"/> が単一所有する）。</param>
 /// <remarks>
-/// <b>寸法は換算済みの値を保持する</b>: DIP の寸法（<see cref="LoupeOptions.CheckerSize"/> / <see cref="LoupeOptions.BorderThickness"/>）を描画に使う物理ピクセルへ換算する手順は<br/>
+/// <b>寸法は換算済みの値を保持する</b>: DIP の寸法（<see cref="LoupeOptions.BorderThickness"/>）を描画に使う物理ピクセルへ換算する手順は<br/>
 /// コアが単一所有する（描画実装が換算を持たないため、描画側には物理ピクセルの値だけが渡る）。<br/>
 /// <b>値 0 を「描かない」の代用にしない</b>: 描画の可否は設定の明示フラグが単一所有し、非表示の項目は描画内容として空が渡る。<br/>
 /// <b>表示サイズ（DIP）も保持する</b>: ラベルの位置は DIP で決まるため、描画内容の解決が本値だけで完結する。
@@ -40,7 +38,6 @@ public readonly record struct LoupeRenderRequest(
     int PixelSize,
     LoupeOptions Options,
     double DipToDeviceScaling,
-    int CheckerSizePixels,
     int BorderThicknessPixels)
 {
     /// <summary>拡大率を取得する。</summary>
@@ -51,7 +48,7 @@ public readonly record struct LoupeRenderRequest(
     /// <summary>描画先の全領域（ルーペの一辺が作る正方形）を取得する。</summary>
     /// <value>左上を原点（0, 0）とし、幅・高さが <see cref="PixelSize"/> の矩形（物理ピクセル）。</value>
     /// <remarks>
-    /// 下地・市松模様は描画先の全面へ描くため、各 UI の描画層が矩形を組み立てないよう本値が導出する<br/>
+    /// ペーストボード（画像外の色）は描画先の全面へ描くため、各 UI の描画層が矩形を組み立てないよう本値が導出する<br/>
     /// （描画先の原点は常に 0 であり、UI 側で組み立てると原点の取り違えが生じる）。<br/>
     /// 描画層へは描画内容（<see cref="LoupeDrawContent.SurfaceBounds"/>）として渡るため本値は公開しない
     /// （外部参照は無く、追加描画のための座標変換は公開している <see cref="CaptureTopLeft"/> と <see cref="ZoomLevel"/> で足りる）。
@@ -103,7 +100,7 @@ public readonly record struct LoupeRenderRequest(
     /// <remarks>
     /// 表示サイズ（DIP）を物理ピクセルへ換算し、描画先の領域が指定された場合はそれへクランプする。<br/>
     /// 換算とクランプの規則は <see cref="ResolvePixelSize"/> が単一所有する（描画と通知で同じ値を使う）。<br/>
-    /// 寸法（市松タイル・枠線の太さ）も併せて物理ピクセルへ換算する（換算の規則は <see cref="LoupeMetricsScaler"/> が単一所有する）。<br/>
+    /// 寸法（枠線の太さ）も併せて物理ピクセルへ換算する（換算の規則は <see cref="LoupeMetricsScaler"/> が単一所有する）。<br/>
     /// 表示サイズは設定（<see cref="LoupeOptions.RequestedSize"/>）ではなく、親領域でクランプした後の値を渡す<br/>
     /// （クランプの基準が親パネルか描画先の表面かで異なるため、値の決定は呼び出し側が担う）。<br/>
     /// <b>公開である理由</b>: ファサード（<see cref="Loupe.CreateRequest"/>）と独自 UI が描画入力を組み立てる唯一の入口である<br/>
@@ -120,7 +117,6 @@ public readonly record struct LoupeRenderRequest(
                ResolvePixelSize(displaySize, dipToDeviceScaling, availableSize),
                options,
                dipToDeviceScaling,
-               LoupeMetricsScaler.ScaleCheckerSize(options.CheckerSize, dipToDeviceScaling),
                LoupeMetricsScaler.ScaleBorderThickness(options.BorderThickness, dipToDeviceScaling));
 
     /// <summary>表示サイズ（DIP）から描画に使う物理ピクセルサイズを求める。</summary>

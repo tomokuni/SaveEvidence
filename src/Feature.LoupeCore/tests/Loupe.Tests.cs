@@ -175,7 +175,7 @@ public class LoupeTests
     [Fact]
     public void CreateRequest_表示サイズと設定から描画入力を組み立てる()
     {
-        var options = LoupeOptions.Default with { RequestedSize = 160, ZoomLevel = 4, CheckerSize = 8 };
+        var options = LoupeOptions.Default with { RequestedSize = 160, ZoomLevel = 4 };
         var loupe = new Loupe(options)
         {
             CenterPoint = new EsPoint(10, 20),

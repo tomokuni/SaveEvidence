@@ -55,7 +55,7 @@ MarqueePaint marquee = CapturePaintMapper.ToMarqueePaint(settings);           //
 LoupePaint loupe = CapturePaintMapper.ToLoupePaint(settings, background);     // 設定 → ルーペの色（7 項目）
 ```
 
-`background` は市松模様の下地色で、**ホストの状況で決まる**ため引数で与えます（撮影オーバーレイは背後の撮影画像を
+画像外（ペーストボード）の色は**設定（`LoupePasteboardColor`）が単一所有**します（描画層は本色で描画面全体を塗ってから拡大画像を重ねるため、画像の無い部分が本色の無地になります）。
 透かすため透明、プレビューの切り出しはテーマ背景色）。
 
 ## 設計上の約束
@@ -64,14 +64,14 @@ LoupePaint loupe = CapturePaintMapper.ToLoupePaint(settings, background);     //
 2. **枠線の色は 1 つ**: 選択枠線（ハンドルの枠線）と暗転マスクの穴あけ枠は同じ矩形に重なるため、同じ設定値
    （`BorderColor`）を両方へ割り当てる。
 3. **内側の塗り・内側の枠線は写像しない**（描画の可否は `MarqueeDecoOptions` のフラグが単一所有する）。
-4. **下地色は引数**（ホストの状況で決まる）。
+4. **画像外の色は設定**（`LoupePasteboardColor`。ホストは色を引数で渡さない）。
 5. 引数の `settings` は `ToNonNull` 済みを前提とする（null は例外）。
 
 ## テスト
 
 ```text
 tests/
-└── CapturePaintMapper.Tests.cs  # 写像の網羅・枠線の共有・下地の引数・引数の検証（6 件）
+└── CapturePaintMapper.Tests.cs  # 写像の網羅・枠線の共有・画像外の色・引数の検証（6 件）
 ```
 
 ```powershell

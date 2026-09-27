@@ -92,7 +92,7 @@ Core は値（`MarqueeTextPlacement` / `LoupeTextPlacement`）と層（`MarqueeD
 
 **描画内容のまとめ型を作る条件**: 描画内容の項目は、**複数の値を 1 つの概念としてまとめて渡す場合にだけ型を作ります**（`MarqueeOuterDecoFrame`（暗転領域 + 枠線）/ `MarqueeInnerDecoFrame`（塗り + 枠線））。単一のコレクションで足りる項目に型を作りません（`LoupeDrawContent` の十字線と外枠は矩形の一覧のまま渡す）。`MarqueeDrawContent` / `LoupeDrawContent` は層の順序を添えた「フレーム 1 枚分」のまとめ型であり、描画層へ渡す唯一の契約です。
 
-**描画面の矩形の持ち手**: 描画面の全体を使う側（ルーペの下地・市松模様）は `LoupeDrawContent.SurfaceBounds` を持ちます。マーキーは暗転領域（クライアント矩形から穴を除いた帯）を装飾の解決が済ませており、描画層は暗転領域だけを描くため同値の矩形を持ちません（描画入力の `ClientSize` は装飾の解決が使います）。
+**描画面の矩形の持ち手**: 描画面の全体を使う側（ルーペの画像外の色）は `LoupeDrawContent.SurfaceBounds` を持ちます。マーキーは暗転領域（クライアント矩形から穴を除いた帯）を装飾の解決が済ませており、描画層は暗転領域だけを描くため同値の矩形を持ちません（描画入力の `ClientSize` は装飾の解決が使います）。
 
 アセンブリ参照の向きは `UI → UIBase → Core` です（`UIBase` は Core の描画内容（`XxxDrawContent` / `XxxDrawLayer`）を使うので Core を参照する）。**逆向きの参照はありません**（Core は UIBase も `Common` も参照しない）。
 
@@ -137,7 +137,7 @@ UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [
 | --- | --- | --- |
 | プラットフォーム層 | `Platform.Core` / `.Native` / `.Skia` / `.AvaloniaUI` / `.MewUI` | `EsUtil.Platform.Core` / `.Native` / `.Skia` / `.AvaloniaUI` / `.MewUI` |
 | 共有層（ソリューション固有の共有契約） | `Common` | `EsUtil.SaveEvidence.Common`（型は `.Imaging`） |
-| 可搬コア（機能単位） | `Feature.MarqueeCore` / `Feature.LoupeCore` | `EsUtil.Feature.MarqueeCore`（`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Content` / `.Session` / `.Selection` / `.Decoration`） / `EsUtil.Feature.LoupeCore`（`.Contract` / `.Drawing` / `.Setting` / `.Logging` / `.Checkerboard` / `.Decoration` / `.Imaging`） |
+| 可搬コア（機能単位） | `Feature.MarqueeCore` / `Feature.LoupeCore` | `EsUtil.Feature.MarqueeCore`（`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Content` / `.Session` / `.Selection` / `.Decoration`） / `EsUtil.Feature.LoupeCore`（`.Drawing` / `.Setting` / `.Logging` / `.Decoration` / `.Placement`） |
 | 製品側のコントロール | `MarqueeControl.UIBase` 等 | `EsUtil.SaveEvidence.Marquee.UIBase` 等 |
 | アプリ | `app.Core` / `app.AvaloniaUI` / `app.MewUI` | `EsUtil.SaveEvidence`（Core と AvaloniaUI が共有） / `EsUtil.SaveEvidence.MewUI` |
 

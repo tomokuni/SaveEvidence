@@ -287,8 +287,8 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `LoupeDipToDeviceScaling` | `double?` | DIP → 物理ピクセル変換 |
 | `LoupeCrossColor` | `Color?` | ルーペの十字線（不透明度は色のアルファに統合） |
 | `LoupeFrameColor` / `LoupeFrameThickness` | `Color?` / `int?` | ルーペの枠 |
-| `LoupeCheckerSize` / `LoupeCheckerColorA` / `LoupeCheckerColorB` | `int?` / `Color?` / `Color?` | ルーペの市松模様 |
-| `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | `Color?` / `Color?` | 選択矩形破線の色（2 色交互・市松風の視認性） |
+| `LoupePasteboardColor` | `Color?` | ルーペの画像外（ペーストボード）の色 |
+| `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | `Color?` / `Color?` | 選択矩形破線の色（2 色交互の破線） |
 | `LoupeShowCoordLabel` | `bool?` | 中心座標ラベルの表示有無 |
 | `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | `Color?` / `Color?` / `double?` | 中心座標ラベルの外観 |
 
@@ -323,7 +323,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`。オーバーレイの写り込み防止）→ 画面外へ退避（`HideOwnerWindow` が true の場合）
 4. **仮想スクリーン全体をバックグラウンド + 5 秒タイムアウトでキャプチャ（全モード共通。切り出し元）**
 5. `OverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示）
-   - AreaSelect: Marquee ドラッグ選択 + Loupe（仮想スクリーン Bitmap 取得完了後に表示開始。Source 未設定の市松模様を防止）
+   - AreaSelect: Marquee ドラッグ選択 + Loupe（仮想スクリーン Bitmap 取得完了後に表示開始。Source 未設定の「画像外の色のみ」表示を防止）
    - Screen / WindowSelect: Pointer 移動で要素検出 → ハイライト。**クリック（左ボタン押下でハイライト固定 → 解放で確定）/ Enter キーで確定 / Esc キーでキャンセル**
 6. 確定時: 選択矩形を種別に応じて切り出し矩形へ変換（AreaSelect は閉区間化。ScreenSelect / WindowSelect は変換なし）し、**枠選択中に事前切り出し済みのキャッシュを再利用**（不一致時のみ切り出し。枠の変更がない場合は切り出しスキップ）
    - 非アクティブ化 / Close → キャンセル（0x0 空結果）

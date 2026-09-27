@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Common.Imaging;
 using EsUtil.Feature.LoupeCore.Drawing;
 
@@ -54,17 +53,8 @@ public class LoupeRenderer : LoupeRendererBase
     public double CoordLabelCornerRadius => _paint.CoordLabelCornerRadius;
 
     /// <inheritdoc/>
-    protected override void DrawBackground(IEsCanvas canvas, in LoupeDrawContent content)
-        => canvas.Clear(content.SurfaceBounds, _paint.BackgroundColor);
-
-    /// <inheritdoc/>
-    protected override void DrawCheckerboard(IEsCanvas canvas, in LoupeDrawContent content)
-    {
-        canvas.FillRect(content.SurfaceBounds, _paint.CheckerColorA);
-
-        // タイル数は描画先の大きさに比例して増えるため、リストを確保しない列挙子をそのまま渡す
-        canvas.FillRects(new CheckerTileWalker(content.CheckerTiles), _paint.CheckerColorB);
-    }
+    protected override void DrawPasteboard(IEsCanvas canvas, in LoupeDrawContent content)
+        => canvas.Clear(content.SurfaceBounds, _paint.PasteboardColor);
 
     /// <inheritdoc/>
     protected override void DrawCrosshair(IEsCanvas canvas, in LoupeDrawContent content)
@@ -73,25 +63,4 @@ public class LoupeRenderer : LoupeRendererBase
     /// <inheritdoc/>
     protected override void DrawBorder(IEsCanvas canvas, in LoupeDrawContent content)
         => canvas.FillRects(content.BorderRects, _paint.BorderColor);
-
-    /// <summary>コアが解決した市松模様の暗色タイルを、描画ポートの列挙子の契約へ適合させる構造体。</summary>
-    /// <remarks>
-    /// タイルの位置と個数の計算はコア（<see cref="LoupeCheckerTiles"/>）が単一所有する（描画側で計算しない）。<br/>
-    /// 本構造体はコアの列挙子（コアは描画 API を知らない）を描画ポートの契約へ写すだけであり、<br/>
-    /// リストを確保しないためタイル数が多くてもヒープ確保は発生しない。
-    /// </remarks>
-    /// <param name="tiles">コアが解決した暗色タイルの列挙子。</param>
-    private struct CheckerTileWalker(LoupeCheckerTiles tiles) : IEsRectWalker<CheckerTileWalker>
-    {
-        /// <summary>コアの列挙子（走査位置を持つため値で保持する）。</summary>
-        private LoupeCheckerTiles _tiles = tiles;
-
-        /// <summary>次の暗色タイルへ進む。</summary>
-        /// <returns>次のタイルがある場合は true。列の末尾を超えた場合は false。</returns>
-        public bool MoveNext() => _tiles.MoveNext();
-
-        /// <summary>現在の暗色タイルの矩形を取得する。</summary>
-        /// <value>直近の <see cref="MoveNext"/> が true を返したときの矩形。</value>
-        public readonly EsRect Current => _tiles.Current;
-    }
 }

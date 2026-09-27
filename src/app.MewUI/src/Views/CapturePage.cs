@@ -767,18 +767,13 @@ internal static class CapturePage
             new MainViewModelCaptureTarget(viewModel),
             host,
             CaptureSettingsMapper.From(settings, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0),
-            ToDrawingColor(AppStyles.CurrentPageBackground),
             AppLog.CreateLogger(nameof(CaptureSessionControl)));
-
-        // テーマ変更の購読はホストの責務（Facade はテーマの通知元を知らない）
-        // out パラメーターはラムダ内で参照できないため、ローカル変数へコピーして使う
-        var session = captureSession;
-        AppStyles.ThemeChanged += () =>
-            session.UpdateCropThemeColor(ToDrawingColor(AppStyles.CurrentPageBackground));
 
         // 設定変更を Facade へ即時反映する（部分更新・検証・同値スキップ・適用ログはコアが単一所有する）。
         // ページは 1 度だけ生成されるため、購読しないと設定画面での変更が切り出し・撮影へ届かない。
         // 検証（範囲外の値）で例外になっても UI を壊さないよう例外保護付きで行う（Avalonia 版と同じ扱い）。
+        // out パラメーターはラムダ内で参照できないため、ローカル変数へコピーして使う
+        var session = captureSession;
         settings.PropertyChanged += (_, e) =>
         {
             try
@@ -793,13 +788,6 @@ internal static class CapturePage
         };
         return host;
     }
-
-    /// <summary>MewUI の色を System.Drawing の色へ変換する。</summary>
-    /// <param name="color">変換する色。</param>
-    /// <returns>変換した色（A / R / G / B は同一）。</returns>
-    /// <remarks>切り出しセッション（UI 非依存の Core の型を使う）へテーマ色を渡すために使う。</remarks>
-    private static System.Drawing.Color ToDrawingColor(MewUIColor color)
-        => System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
 
     /// <summary>マウスポインタ位置のドメイン座標（画像ピクセル）をステータスバーへ表示する。</summary>
     /// <param name="viewModel">アプリのメイン ViewModel（表示文字列の保持元）。</param>

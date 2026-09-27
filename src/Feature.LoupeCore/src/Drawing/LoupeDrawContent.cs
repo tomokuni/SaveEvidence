@@ -4,7 +4,6 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 
 /// <summary>ルーペの 1 フレーム分の描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
 /// <param name="SurfaceBounds">描画面の全体（左上を原点とし、幅・高さが物理ピクセルサイズの正方形）。</param>
-/// <param name="CheckerTiles">市松模様の暗色タイルの矩形を列挙する構造体（タイルなしの場合は空）。</param>
 /// <param name="MagnifiedImage">拡大画像の切り出しと描画の矩形。null の場合は描かない（拡大中心未設定）。</param>
 /// <param name="CrosshairRects">十字線の矩形（縦 1 本・横 1 本。非表示の設定の場合は空）。</param>
 /// <param name="BorderRects">枠線の矩形（上・下・左・右の 4 辺。非表示の設定の場合は空）。</param>
@@ -22,7 +21,6 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// </remarks>
 public readonly record struct LoupeDrawContent(
     EsRect SurfaceBounds,
-    LoupeCheckerTiles CheckerTiles,
     LoupeMagnifiedImage? MagnifiedImage,
     IReadOnlyList<EsRect> CrosshairRects,
     IReadOnlyList<EsRect> BorderRects,

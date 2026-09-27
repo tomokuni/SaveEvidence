@@ -385,18 +385,6 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
-    public void CheckerSize_範囲外は補正される()
-    {
-        var control = CreateControl();
-
-        control.Options = control.Options with { CheckerSize = 0 };
-        Assert.Equal(1, control.Options.CheckerSize);
-
-        control.Options = control.Options with { CheckerSize = 200 };
-        Assert.Equal(128, control.Options.CheckerSize);
-    }
-
-    [AvaloniaFact]
     public void 設定の補正は値の生成時に適用される()
     {
         var control = CreateControl();
@@ -408,7 +396,6 @@ public class LoupeControlTests
         {
             RequestedSize = 100_000,
             ZoomLevel = 1000,
-            CheckerSize = 1000,
             BorderThickness = 1000,
         });
         control.SetValue(LoupeControl.DipToDeviceScalingProperty, 100.0);
@@ -417,7 +404,6 @@ public class LoupeControlTests
         Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
         Assert.Equal(ZoomLevelMax, control.Options.ZoomLevel);
         Assert.Equal(DipToDeviceScalingMax, control.DipToDeviceScaling);
-        Assert.Equal(CheckerSizeMax, control.Options.CheckerSize);
         Assert.Equal(BorderThicknessMax, control.Options.BorderThickness);
     }
 
@@ -430,21 +416,17 @@ public class LoupeControlTests
         control.Options = control.Options with
         {
             BorderThickness = 3,
-            CheckerSize = 5,
         };
         control.Paint = new LoupePaint
         {
             CrossColor = DrawingColor.Green,
-            CheckerColorA = DrawingColor.Green,
-            CheckerColorB = DrawingColor.Green,
+            PasteboardColor = DrawingColor.Green,
             BorderColor = DrawingColor.Green,
         };
 
         Assert.Equal(3, control.Options.BorderThickness);
-        Assert.Equal(5, control.Options.CheckerSize);
         Assert.Equal(DrawingColor.Green, control.Paint.CrossColor);
-        Assert.Equal(DrawingColor.Green, control.Paint.CheckerColorA);
-        Assert.Equal(DrawingColor.Green, control.Paint.CheckerColorB);
+        Assert.Equal(DrawingColor.Green, control.Paint.PasteboardColor);
         Assert.Equal(DrawingColor.Green, control.Paint.BorderColor);
     }
 
@@ -458,13 +440,11 @@ public class LoupeControlTests
         Assert.Equal(1.0, control.DipToDeviceScaling);
 
         // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
-        Assert.Equal(6, control.Options.CheckerSize);
         Assert.Equal(2, control.Options.BorderThickness);
         // 色の既定値は描画の設定が単一所有する
         Assert.Equal(LoupePaint.Default, control.Paint);
         Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), control.Paint.CrossColor);
-        Assert.Equal(DrawingColor.FromArgb(0x4C, 0x80, 0x80, 0x80), control.Paint.CheckerColorA);
-        Assert.Equal(DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), control.Paint.CheckerColorB);
+        Assert.Equal(DrawingColor.FromArgb(255, 0x53, 0x53, 0x53), control.Paint.PasteboardColor);
         Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), control.Paint.BorderColor);
     }
 

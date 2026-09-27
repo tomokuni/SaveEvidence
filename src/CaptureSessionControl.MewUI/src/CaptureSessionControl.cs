@@ -49,20 +49,16 @@ public sealed class CaptureSessionControl
     /// <summary>設定（全メンバー non-null）。撮影と切り出しが同じ値を使う（本クラスが単一所有する）。</summary>
     private CaptureSettings _settings;
 
-    /// <summary>切り出しのルーペの市松模様の下地色（テーマのページ背景色）。</summary>
-    private DrawingColor _themeBackground;
-
     /// <summary>インスタンスを生成する。</summary>
     /// <param name="cropView">切り出しの対象となるプレビューコントロール。</param>
     /// <param name="cropTarget">切り出しの適用先（アプリ側の実装）。</param>
     /// <param name="cropHost">切り出しのオーバーレイを重ねる領域（プレビューと同じセル）。</param>
     /// <param name="initialSettings">初期設定。null メンバーはデフォルト値が使用される。</param>
-    /// <param name="themeBackground">切り出しのルーペの市松模様の下地色（テーマのページ背景色）。</param>
     /// <param name="logger">内部ログの転送先。null の場合はログを出力しない。</param>
     /// <exception cref="ArgumentNullException"><paramref name="cropView"/> / <paramref name="cropTarget"/> / <paramref name="cropHost"/> が null の場合。</exception>
     public CaptureSessionControl(
         CropViewControl cropView, ICaptureTarget cropTarget, Grid cropHost,
-        CaptureSettings? initialSettings = null, DrawingColor themeBackground = default, ILogger? logger = null)
+        CaptureSettings? initialSettings = null, ILogger? logger = null)
     {
         ArgumentNullException.ThrowIfNull(cropView);
         ArgumentNullException.ThrowIfNull(cropTarget);
@@ -71,7 +67,6 @@ public sealed class CaptureSessionControl
         _cropView = cropView;
         _cropTarget = cropTarget;
         _cropHost = cropHost;
-        _themeBackground = themeBackground;
         // 入力なし（null）は既定値で埋める（規則はコアが単一所有する）
         _settings = CaptureSettingsMerge.Merge(initialSettings);
         _log = logger.OrNullLogger();
@@ -157,18 +152,6 @@ public sealed class CaptureSessionControl
         }
     }
 
-    /// <summary>切り出しのルーペの市松模様の下地色を更新する（テーマの変更の反映）。</summary>
-    /// <param name="themeBackground">テーマのページ背景色。</param>
-    /// <remarks>
-    /// テーマ変更の購読はホストが行う（本クラスはテーマの通知元を知らない）。<br/>
-    /// 次に開始する切り出しセッションへ引き継ぐとともに、実行中のセッションがあれば即時反映する。
-    /// </remarks>
-    public void UpdateCropThemeColor(DrawingColor themeBackground)
-    {
-        _themeBackground = themeBackground;
-        _slot.Crop?.UpdateThemeColor(themeBackground);
-    }
-
     /// <summary>切り出しを開始する（オーバーレイを表示し、入力を選択コントロールへ移す）。</summary>
     /// <remarks>
     /// 1. 画像が無い場合は何もしない（切り出す対象がない）。<br/>
@@ -182,7 +165,7 @@ public sealed class CaptureSessionControl
             return;
         }
 
-        var session = new CropSession(_cropView, _cropTarget, _settings, _cropHost, _themeBackground, _log);
+        var session = new CropSession(_cropView, _cropTarget, _settings, _cropHost, _log);
 
         // 受付は表示より先に行う（表示してから拒否すると、一瞬だけオーバーレイが出る）
         if (!_slot.TryBeginCrop(session))

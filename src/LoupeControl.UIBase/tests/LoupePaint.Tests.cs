@@ -16,24 +16,23 @@ public class LoupePaintTests
     {
         var paint = new LoupePaint();
 
-        // 十字線は赤 40%、市松模様は Gray / DarkGray 30%、枠線は LightGray
+        // ペーストボード（画像外）は不透明の中性グレー、十字線は赤 40%、枠線は LightGray
+        Assert.Equal(DrawingColor.FromArgb(255, 0x53, 0x53, 0x53), paint.PasteboardColor);
         Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), paint.CrossColor);
-        Assert.Equal(DrawingColor.FromArgb(0x4C, 0x80, 0x80, 0x80), paint.CheckerColorA);
-        Assert.Equal(DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), paint.CheckerColorB);
         Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), paint.BorderColor);
         // 座標ラベルは白文字・黒 60% 背景
         Assert.Equal(DrawingColor.White, paint.CoordLabelColor);
         Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), paint.CoordLabelBackgroundColor);
     }
 
-    /// <summary>下地の既定が透明（背後の要素を透かす）であることを検証する。</summary>
-    /// <remarks>下地はホストが指定する（不透明色を指定すると市松模様が背後の要素を透かさない）。</remarks>
+    /// <summary>ペーストボード（画像外）の既定が不透明の中性グレーであることを検証する。</summary>
+    /// <remarks>画像外は無地として見える（透明を指定した場合は背後の要素がそのまま見える）。</remarks>
     [Fact]
-    public void 既定の下地は透明である()
+    public void 既定のペーストボードは不透明の中性グレーである()
     {
         var paint = new LoupePaint();
 
-        Assert.Equal(DrawingColor.Transparent, paint.BackgroundColor);
+        Assert.Equal(DrawingColor.FromArgb(255, 0x53, 0x53, 0x53), paint.PasteboardColor);
     }
 
     [Fact]
@@ -45,17 +44,17 @@ public class LoupePaintTests
 
         Assert.Equal(DrawingColor.Red, changed.BorderColor);
         // 他の項目は維持される
-        Assert.Equal(paint.CheckerColorA, changed.CheckerColorA);
+        Assert.Equal(paint.PasteboardColor, changed.PasteboardColor);
     }
 
     [Fact]
     public void 等価性は値で判定される()
     {
-        var a = new LoupePaint { CrossColor = DrawingColor.Red, CheckerColorA = DrawingColor.Blue };
-        var b = new LoupePaint { CrossColor = DrawingColor.Red, CheckerColorA = DrawingColor.Blue };
+        var a = new LoupePaint { CrossColor = DrawingColor.Red, PasteboardColor = DrawingColor.Blue };
+        var b = new LoupePaint { CrossColor = DrawingColor.Red, PasteboardColor = DrawingColor.Blue };
 
         Assert.Equal(a, b);
-        Assert.NotEqual(a, a with { CheckerColorA = DrawingColor.Green });
+        Assert.NotEqual(a, a with { PasteboardColor = DrawingColor.Green });
     }
 
     [Fact]
