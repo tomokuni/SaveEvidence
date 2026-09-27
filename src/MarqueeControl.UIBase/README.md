@@ -20,7 +20,7 @@
 - UI フレームワークへ依存しない（参照は `Feature.MarqueeCore` と `Platform.Core` のみ）。
 - UI 層が使う面は `public`、本層の内部手順は `internal`（単体テストにのみ `InternalsVisibleTo` で公開する）。
 
-## 層の分担
+## 依存方向
 
 層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 

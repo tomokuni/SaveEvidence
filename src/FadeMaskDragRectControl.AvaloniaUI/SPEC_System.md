@@ -8,7 +8,7 @@
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
     - [3.1 レイヤー構造](#31-レイヤー構造)
-    - [3.2 依存の方向](#32-依存の方向)
+    - [3.2 依存方向](#32-依存方向)
   - [4. 例外処理ポリシー](#4-例外処理ポリシー)
     - [4.1 基本方針](#41-基本方針)
     - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
@@ -56,7 +56,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
   → 内包コントロール（MarqueeControl / LoupeControl）+ Platform.AvaloniaUI
 ```
 
-### 3.2 依存の方向
+### 3.2 依存方向
 
 - 依存は**一方向の階層構造**（FadeMaskDragRectControl → MarqueeControl / LoupeControl / Platform.AvaloniaUI）。逆依存なし。
 - 内包コントロールは上位 AP の設定型（CaptureSettings 等）に依存しない（コアの `FadeMaskDragRectOptions` が変換先の境界）。

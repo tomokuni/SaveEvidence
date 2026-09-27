@@ -8,7 +8,7 @@
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
     - [3.1 レイヤー構造](#31-レイヤー構造)
-    - [3.2 依存の方向](#32-依存の方向)
+    - [3.2 依存方向](#32-依存方向)
   - [4. 例外処理ポリシー](#4-例外処理ポリシー)
     - [4.1 基本方針](#41-基本方針)
     - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
@@ -59,7 +59,7 @@ ZoomViewControl.Core（UI 非依存）
   └── ZoomTransition / ZoomMath / ZoomAvailability / ZoomScrollBarGeometry（純粋関数。internal）
 ```
 
-### 3.2 依存の方向
+### 3.2 依存方向
 
 - **上位 AP → ZoomViewControl → ZoomViewControl.Core → Platform.Core の一方向**。逆方向の依存はない。
 - `ZoomViewControl` が `ZoomableView` を内包し、内部ビューポートのセッションを公開 API の実体として使う（判断はコアが単一所有する）。

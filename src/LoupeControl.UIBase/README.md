@@ -18,7 +18,7 @@
 - **UI 初期化なしで検証できる**。描画の実行は Skia（`SkiaEsCanvas`）で行うため、ウィンドウなしの画素テストが書ける（`tests/`）。再描画のスケジューリングも UI 型を持たないため `[Fact]` で検証できる。
 - UI フレームワークへ依存しない（参照は `Feature.LoupeCore` と `Platform.Core` のみ。実行キューは `post` コールバックとして UI が注入する）。
 
-## 層の分担
+## 依存方向
 
 層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 

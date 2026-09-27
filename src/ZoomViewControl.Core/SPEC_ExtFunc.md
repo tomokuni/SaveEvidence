@@ -139,7 +139,7 @@ internal readonly record struct ZoomAvailability(bool CanZoomIn, bool CanZoomOut
 
 2 つの可否を単一の値として保持し、「片方だけ計算済み」という矛盾状態を構造的に排除します（null = 未計算）。
 
-## 依存
+## 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

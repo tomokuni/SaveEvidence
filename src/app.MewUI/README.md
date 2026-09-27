@@ -72,7 +72,7 @@ src/app.MewUI/
     └── SettingsColorMath.Tests.cs       # 色文字列の解析と整形（22 件）
 ```
 
-## 依存関係（一方向）
+## 依存関係
 
 ```text
 app.MewUI ──> app.Core ──> Platform.Core / LineDetection

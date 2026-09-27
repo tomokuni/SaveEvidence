@@ -11,7 +11,7 @@
 - UI 非依存のためヘッドレス実行が不要で、`[Fact]` で並列実行できる。
 - 座標は `EsPoint` / `EsRect` / `EsSize`（`EsUtil.Platform.Core.Geometry`）で扱う。
 
-## 層の分担
+## 依存方向
 
 層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
 
@@ -142,7 +142,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 - **描画順は本コアが単一所有します**: `MarqueeDrawContent.Layers`（`MarqueeDrawLayer`）が層と順序を指示し、UI 層はそれに従うだけです（テキストの層を必ず最後に置くため、テキストは常に最上位になります）。
 - **テキストは層と値の両方で渡します**: 層（`MarqueeDrawLayer.Label`）は canvas へ描く実装のためのものであり、**UI 要素として置く UI は無視してよい**（要素は親の描画より後に描かれる）。描画実装が上書きするフック（`MarqueeRendererBase.DrawLabel`）の**既定は何もしない**ため、要素で描く UI はコードを書かなくて済みます。
 
-### 層の責務の境界（選択矩形）
+## 層の責務の境界
 
 | 責務 | 所有者 | 内容 |
 | --- | --- | --- |

@@ -15,7 +15,7 @@
     - [画面座標変換](#画面座標変換)
   - [6. 設計方針](#6-設計方針)
     - [公開 API の最小化](#公開-api-の最小化)
-    - [一方向依存](#一方向依存)
+    - [依存方向](#依存方向)
   - [7. サンプル](#7-サンプル)
   - [8. ドキュメント](#8-ドキュメント)
   - [9. プロジェクト構成](#9-プロジェクト構成)
@@ -145,7 +145,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt);
 Win32 / NoOp 実装は `Platform.Native` が唯一の生成経路となるため internal です。
 本プロジェクトの公開 API は Avalonia 固有のアダプタ（`ScreenConverter` / 相互変換 / 画像・幾何アダプタ）のみで構成されます。
 
-### 一方向依存
+### 依存方向
 
 `Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Native` → `Platform.Core` の一方向の階層構造です。上位 AP（MarqueeControl / CaptureSessionControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
 

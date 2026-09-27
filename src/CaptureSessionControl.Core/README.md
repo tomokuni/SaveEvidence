@@ -5,7 +5,7 @@
 - [CaptureSessionControl.Core](#capturesessioncontrolcore)
   - [1. 概要](#1-概要)
   - [2. 機能一覧](#2-機能一覧)
-  - [3. 依存プロジェクト](#3-依存プロジェクト)
+  - [3. 依存関係](#3-依存関係)
   - [4. クイックスタート](#4-クイックスタート)
   - [5. ドキュメント](#5-ドキュメント)
   - [6. プロジェクト構成](#6-プロジェクト構成)
@@ -48,7 +48,7 @@
 - **ログ定義**（`CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`）: 書式・レベル・イベント ID・**完了時の出力の組**（確定は `CaptureCompleted` → `Result` の 2 件、キャンセルは `CaptureCancelled` の 1 件 = `LogCaptureFinished`）を単一所有する（UI 層は呼ぶだけ。未検出・未取得の空文字化・未取得のサイズ 0 化も含む）
 - **UI 非依存**: Avalonia / MewUI のどちらの型も参照しない（色は `System.Drawing.Color`、座標は `Es*` 型）
 
-## 3. 依存プロジェクト
+## 3. 依存関係
 
 ```text
 CaptureSessionControl.Core

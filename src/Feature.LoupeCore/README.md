@@ -91,6 +91,52 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 
 **下地色（`LoupePaint.BackgroundColor`）は描画層（`LoupeControl.UIBase`）が単一所有します**。市松模様の色は半透明のため、背後の要素を透かしたくない場合はホストが不透明色を指定します（既定は透明 = 透かす）。**キャンバスへ直接描画する UI（MewUI）とウィンドウの上へ重ねる UI（Avalonia）のどちらも同じ色の値で指定でき、UI 層に固有の下地プロパティを持ちません**。塗る処理と描画順は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer`）が単一所有します。
 
+## 主な API
+
+```csharp
+// 色は描画層（LoupeControl.UIBase）の LoupePaint が単一所有する（コアの LoupeOptions は色を持たない）
+var paint = LoupePaint.Default with { CheckerColorA = Color.White };  // 色は System.Drawing.Color（UI 非依存）で指定する
+// コアは描画実装を持たない（描画は UI 層の都合であり、層の順序に従う手順は UIBase が単一所有する）
+var loupe = new Loupe(options);                                // options は null 可（null は LoupeOptions.Default）
+loupe.Log = logger;                                            // null は NullLogger へ吸収される
+loupe.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => null)); // ドメイン ⇔ 親領域 DIP
+
+// 状態（ホストが更新する。設定はコア、拡大元画像と拡大中心は UI 層が保持する）
+loupe.DipToDeviceScaling = 1.25;                               // 環境値（DPI 追従。範囲外は補正される）
+loupe.CenterPoint = cursorDomain;                              // 拡大中心（元画像ピクセル座標。null は市松模様のみ）
+loupe.PositionOffset = 16;                                     // カーソルから離して配置するためのホスト指定値
+
+// 描画（1 フレーム分。レイアウト → 描画入力 → 描画内容の順に解決する）
+var layout = loupe.ResolveLayout(parentSize);                  // 表示サイズ（DIP）+ 表示位置（配置しない場合は null）
+var request = loupe.CreateRequest(layout.DisplaySize, canvasSize); // 描画入力（DIP → 物理ピクセルの換算とクランプ済み）
+var content = loupe.ResolveContent(request);                   // 値を持つ項目を自 UI の描画 API へ写すだけ
+// 描画は UI 層が行う（層の順序に従う手順は LoupeControl.UIBase の LoupeRendererBase が単一所有する）
+// テキストを UI 要素として置く場合は content.CoordLabelText を
+// LoupeControl.UIBase の LoupeLabelPlan へ渡して配置を求める
+// 描画完了通知（ホストが描画済み画像へオーバーレイを描くため）は request.CaptureTopLeft / request.ZoomLevel から読む
+```
+
+| メンバー | 用途 |
+| --- | --- |
+| `Loupe(LoupeOptions?)` | 生成（設定を省略した場合は `LoupeOptions.Default`。描画実装は受け取らない） |
+| `ResolveLayout` | 親領域サイズから表示レイアウト（表示サイズ + 表示位置）を解決する。**状態を変更しない**（親領域のサイズを保持しない） |
+| `CreateRequest` | 描画 1 フレーム分の入力（`LoupeRenderRequest`）の生成（DIP → 物理ピクセルの換算と描画先へのクランプを含む） |
+| `ResolveContent` | 1 フレーム分の描画内容（`LoupeDrawContent`）の解決（描くかどうかの判断はコア） |
+| `SetCoordinateTransform` | 座標変換ポートの設定（null は等価変換。変換関数は呼び出し毎に評価されるためレイアウト変化に追従する） |
+| `Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` / `Log` | 設定・環境値・拡大中心・オフセットの読み書き（変更は**変化したときだけ**ログ出力。`Log` は null を `NullLogger` へ吸収する） |
+| `Limits.*` | 数値パラメータの既定値・安全域と補正。UI が依存関係プロパティの既定値と coerce に使う |
+| `LoupeOptions.Default` | 設定の既定値（部分変更の基点。`LoupeOptions.Default with { ZoomLevel = 8 }`） |
+
+UI 側（`LoupeControl`）が公開する入口:
+
+| メンバー | 用途 |
+| --- | --- |
+| `Source` / `CenterPoint` | 拡大元画像と拡大中心（マウス移動ごとに更新する状態。UI 層が保持する） |
+| `Options` / `Paint` | 設定（`LoupeOptions`）と色（`LoupePaint`）。同値の再設定では再描画されない |
+| `DipToDeviceScaling` | 環境値（DPI 追従）。モニター間の移動でも UI が自動更新する |
+| `Rendered` | 描画完了の通知（ホストが描画済み画像へ選択矩形の破線等を追加描画するための入口） |
+| `SetCoordinateTransform` / `RefreshPosition` | 座標変換ポートの設定と、表示位置の再計算要求（パン・ズームなどレイアウト非変更の変化に追従する） |
+
 ## 座標型
 
 UI フレームワークの幾何型（`Avalonia.Point` / `Size` 等）ではなく、`Platform.Core` のコア幾何型 `EsPoint` / `EsSize` を使用します。

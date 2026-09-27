@@ -8,7 +8,7 @@
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
     - [3.1 レイヤー構造](#31-レイヤー構造)
-    - [3.2 依存の方向](#32-依存の方向)
+    - [3.2 依存方向](#32-依存方向)
   - [4. 例外処理ポリシー](#4-例外処理ポリシー)
     - [4.1 基本方針](#41-基本方針)
     - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
@@ -22,7 +22,7 @@
     - [6.6 MarqueeOuterRenderer（MarqueeControl.UIBase）](#66-marqueeouterrenderermarqueecontroluibase)
     - [6.6.1 ラベルの要素配置（文字の表示）](#661-ラベルの要素配置文字の表示)
     - [6.7 MarqueeInnerRenderer（MarqueeControl.UIBase）](#67-marqueeinnerrenderermarqueecontroluibase)
-    - [6.8 Marquee（コアのフレーム解決）](#68-marqueeコアのフレーム解決)
+    - [6.8 Marquee（コアの描画内容解決）](#68-marqueeコアの描画内容解決)
     - [6.9 HitTarget](#69-hittarget)
     - [6.10 公開イベント引数](#610-公開イベント引数)
   - [7. 依存ルール](#7-依存ルール)
@@ -30,8 +30,8 @@
     - [8.1 状態の初期化と破棄（所有権）](#81-状態の初期化と破棄所有権)
   - [9. ログ](#9-ログ)
     - [9.1 ログ定義一覧](#91-ログ定義一覧)
-- [コア（`EsUtil.Feature.MarqueeCore.Logging.MarqueeLogMessage`）](#コアesutilfeaturemarqueecoreloggingmarqueelogmessage)
-- [組み込みの層（`EsUtil.SaveEvidence.Marquee.UIBase.MarqueeWheelLogMessage`）](#組み込みの層esutilsaveevidencemarqueeuibasemarqueewheellogmessage)
+      - [コア（`EsUtil.Feature.MarqueeCore.Logging.MarqueeLogMessage`）](#コアesutilfeaturemarqueecoreloggingmarqueelogmessage)
+      - [組み込みの層（`EsUtil.SaveEvidence.Marquee.UIBase.MarqueeWheelLogMessage`）](#組み込みの層esutilsaveevidencemarqueeuibasemarqueewheellogmessage)
 
 ---
 
@@ -70,7 +70,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
   → ラベルの配置（UI 層）… `MarqueeLabelPlan`（描画層）が返す配置矩形へ `Border` + `TextBlock` を置く（ラベルは常に最上位）
 ```
 
-### 3.2 依存の方向
+### 3.2 依存方向
 
 - 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelectionGeometry / Platform.AvaloniaUI / Platform.Native / Platform.Core。描画は MarqueeControl → MarqueeRenderer（MarqueeControl.UIBase）→ IEsCanvas（Platform.Core））。
 - MarqueeControl は上位 AP に依存しない（再利用可能）。

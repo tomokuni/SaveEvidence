@@ -120,7 +120,7 @@ FadeMaskDragRectOptions options = FadeMaskDragRectOptions.Default with
 
 `Dash`（入れ子の内部型）は 1 ダッシュ分の矩形（`X` / `Y` / `Width` / `Height`）と色の種別（`IsColorA`）を持ちます。水平な辺は高さ 1、垂直な辺は幅 1 になります。画像の外側へはみ出すダッシュは描画側が無視します（例外にしません）。
 
-## 依存
+## 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

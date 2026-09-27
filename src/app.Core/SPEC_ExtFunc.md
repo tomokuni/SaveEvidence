@@ -216,7 +216,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `BeforeEditAction` | `Action?` | null |
 | `StartSelectionMode` | `Action<CaptureType>?` | null |
 
-## 依存
+## 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

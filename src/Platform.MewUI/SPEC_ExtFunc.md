@@ -99,7 +99,7 @@ internal sealed class ThumbnailView : SkiaImageView
 `SkiaImageRenderer`（internal）が単一所有し、配置の矩形は `Platform.Core` の `ImageDrawMath` が単一所有します。  
 静止画のため連続再描画は無効化し、`Source` の変更時のみ描画します。
 
-## 依存
+## 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

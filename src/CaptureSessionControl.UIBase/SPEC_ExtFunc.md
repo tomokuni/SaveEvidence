@@ -65,7 +65,7 @@
 | `settings` | 全メンバー non-null（`CaptureSettings.ToNonNull` 済みを渡す）。null は `ArgumentNullException` |
 | `background` | 任意の色（アルファを含む） |
 
-## 依存
+## 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

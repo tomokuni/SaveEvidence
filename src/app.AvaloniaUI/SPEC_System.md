@@ -8,7 +8,7 @@
   - [2. 技術スタック](#2-技術スタック)
   - [3. アーキテクチャ](#3-アーキテクチャ)
     - [3.1 レイヤー構造](#31-レイヤー構造)
-    - [3.2 依存の方向](#32-依存の方向)
+    - [3.2 依存方向](#32-依存方向)
   - [4. 例外処理ポリシー](#4-例外処理ポリシー)
     - [4.1 基本方針](#41-基本方針)
     - [4.2 本プロジェクト固有の例外処理](#42-本プロジェクト固有の例外処理)
@@ -64,7 +64,7 @@ View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage
       → 外部ライブラリ（CaptureSessionControl.AvaloniaUI / ColorPickerControl / Platform.AvaloniaUI / LineDetection）
 ```
 
-### 3.2 依存の方向
+### 3.2 依存方向
 
 - 依存は**一方向の階層構造**（View → ViewModel → Service / Model → 外部ライブラリ）。
 - ViewModel は View の詳細（コントロール型）に依存せず、公開プロパティ・コールバックで連携する。
