@@ -2,7 +2,6 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Feature.Marquee.Core.Drawing;
 using EsUtil.Feature.Marquee.Core.Setting;
 

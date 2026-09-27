@@ -40,7 +40,7 @@ public class MarqueeAppearanceTests
         var paint = new MarqueeAppearance();
 
         // 穴あけ枠とハンドル枠は同じ矩形に重なるため、既定値を共有する
-        Assert.Equal(MarqueeAppearance.DefaultHandleBorderColor, paint.OuterBorderColor);
+        Assert.Equal(MarqueeAppearance.DefaultBorderColor, paint.OuterBorderColor);
         Assert.Equal(paint.HandleBorderColor, paint.OuterBorderColor);
     }
 

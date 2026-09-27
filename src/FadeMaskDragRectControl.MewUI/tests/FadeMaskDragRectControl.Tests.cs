@@ -1,4 +1,3 @@
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;

@@ -539,7 +539,7 @@ public sealed class FadeMaskDragRectControl : Panel
             new AvaloniaCanvas(e.Context),
             e.Content,
             _options.Labels,
-            MarqueePaint,
+            MarqueeAppearance,
             OperationTextProvider?.Invoke(),
             InfoTextProvider?.Invoke());
 

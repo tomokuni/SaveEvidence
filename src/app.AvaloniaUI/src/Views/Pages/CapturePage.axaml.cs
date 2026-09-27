@@ -21,7 +21,6 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.SaveEvidence.CropView;
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Geometry;
@@ -1051,8 +1050,8 @@ public sealed partial class CapturePage : UserControl
         if (hovered is not { } target)
         {
             // ハイライトなし（外側・内側とも描かない。サイズ・座標ラベルも表示しない）
-            AutoCropHighlight.MarqueeAppearance = s_autoCropIdleAppearance;
-            AutoCropHighlight.LogicalHighlightRect = null;
+            AutoCropHighlight.Appearance = s_autoCropIdleAppearance;
+            AutoCropHighlight.HighlightRect = null;
             return;
         }
 
@@ -1060,8 +1059,8 @@ public sealed partial class CapturePage : UserControl
         var topLeft = ContentToViewportDomain(new Point(target.X, target.Y));
         var bottomRight = ContentToViewportDomain(new Point(target.Right, target.Bottom));
 
-        AutoCropHighlight.MarqueeAppearance = s_autoCropHighlightAppearance;
-        AutoCropHighlight.LogicalHighlightRect = new Rect(
+        AutoCropHighlight.Appearance = s_autoCropHighlightAppearance;
+        AutoCropHighlight.HighlightRect = new EsRect(
             topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 

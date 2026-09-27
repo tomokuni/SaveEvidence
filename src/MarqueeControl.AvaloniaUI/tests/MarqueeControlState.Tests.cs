@@ -1,4 +1,3 @@
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Rect = Avalonia.Rect;

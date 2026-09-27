@@ -645,16 +645,16 @@ internal static class CapturePage
             if (hovered is not { } target)
             {
                 // ハイライトなし（外側・内側とも描かない。サイズ・座標ラベルも表示しない）
-                autoCropHighlight.MarqueeAppearance = s_autoCropIdleAppearance;
-                autoCropHighlight.LogicalHighlightRect = null;
+                autoCropHighlight.Appearance = s_autoCropIdleAppearance;
+                autoCropHighlight.HighlightRect = null;
                 return;
             }
 
             var topLeft = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.X, target.Y));
             var bottomRight = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.Right, target.Bottom));
 
-            autoCropHighlight.MarqueeAppearance = s_autoCropHighlightAppearance;
-            autoCropHighlight.LogicalHighlightRect = new EsRect(
+            autoCropHighlight.Appearance = s_autoCropHighlightAppearance;
+            autoCropHighlight.HighlightRect = new EsRect(
                 topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
         }
 
