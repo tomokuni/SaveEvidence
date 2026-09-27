@@ -1,4 +1,3 @@
-using EsUtil.Feature.Marquee.Core;
 using DrawingColor = System.Drawing.Color;
 using static EsUtil.Feature.Marquee.Core.Marquee.Limits;
 

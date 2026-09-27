@@ -57,7 +57,7 @@ public class CapturePaintMapperTests
     }
 
     /// <summary>写像しない色が既定値を保つことを検証する。</summary>
-    /// <remarks>内側の塗り・内側の枠線の描画可否は <c>MarqueeDecoOptions</c> のフラグが単一所有するため、色は既定の透明のままとする。</remarks>
+    /// <remarks>内側の塗り・内側の枠線の描画可否は <see cref="MarqueeAppearance"/> のフラグが単一所有するため、色は既定の透明のままとする。</remarks>
     [Fact]
     public void 変換_写像しない色は既定値を保つ()
     {
@@ -65,6 +65,48 @@ public class CapturePaintMapperTests
 
         Assert.Equal(MarqueeAppearance.Default.InnerFillColor, paint.InnerFillColor);
         Assert.Equal(MarqueeAppearance.Default.InnerBorderColor, paint.InnerBorderColor);
+    }
+
+    /// <summary>枠線の太さと表示可否が設定から写像されることを検証する。</summary>
+    /// <remarks>
+    /// 枠線の太さと表示可否は描画にだけ必要な設定であり、コアの設定（<c>MarqueeOptions</c>）に含めないため、<br/>
+    /// 本写像が外観（<see cref="MarqueeAppearance"/>）へ写す。
+    /// </remarks>
+    [Fact]
+    public void 変換_枠線の太さと表示可否が設定から写像される()
+    {
+        var settings = CreateSettings() with
+        {
+            BorderThickness = 3.0,
+            SizeLabelVisible = false,
+            ShowCoordLabel = false,
+        };
+
+        var paint = CapturePaintMapper.ToMarqueeAppearance(settings);
+
+        Assert.Equal(3.0, paint.OuterBorderThickness);
+        Assert.False(paint.ShowSizeLabel);
+        Assert.False(paint.ShowCoordLabel);
+        // 色が不透明なら描画する（色のアルファを「描かない」の代用にしない）
+        Assert.True(paint.ShowOverlay);
+        Assert.True(paint.ShowOuterBorder);
+    }
+
+    /// <summary>透明な色は描画しない扱いになることを検証する。</summary>
+    /// <remarks>従来の「アルファ 0 = 描かない」を明示フラグ（表示可否）で表現する。</remarks>
+    [Fact]
+    public void 変換_透明な色は描画しない()
+    {
+        var settings = CreateSettings() with
+        {
+            OverlayColor = DrawingColor.Transparent,
+            BorderColor = DrawingColor.Transparent,
+        };
+
+        var paint = CapturePaintMapper.ToMarqueeAppearance(settings);
+
+        Assert.False(paint.ShowOverlay);
+        Assert.False(paint.ShowOuterBorder);
     }
 
     [Fact]

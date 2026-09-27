@@ -64,38 +64,13 @@ public class MarqueeLogMessageTests
         MarqueeLogMessage.LogOptionsChanged(
             logger,
             MarqueeOptions.Default,
-            MarqueeOptions.Default with { HandleSize = 20.0, ShowHandles = false });
+            MarqueeOptions.Default with { HandleSize = 20.0, MarkerLength = 24.0 });
         MarqueeLogMessage.LogOptionsChanged(logger, MarqueeOptions.Default, MarqueeOptions.Default);
 
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: ShowHandles True → False",
                 "[Feature.Marquee.Core] Setting: HandleSize 10 → 20",
-            ],
-            logger.Messages);
-    }
-
-    /// <summary>装飾の設定の変更ログが変化した項目だけを出力することを検証する。</summary>
-    [Fact]
-    public void 装飾の設定の変更ログは変化した項目だけを出力する()
-    {
-        var logger = new RecordingLogger();
-
-        MarqueeLogMessage.LogDecoOptionsChanged(
-            logger,
-            MarqueeDecoOptions.Default,
-            MarqueeDecoOptions.Default with
-            {
-                ShowOverlay = false,
-                OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
-                OuterHighlightRect = new EsRect(1, 2, 3, 4),
-            });
-
-        Assert.Equal(
-            [
-                "[Feature.Marquee.Core] Setting: ShowOverlay True → False",
-                "[Feature.Marquee.Core] Setting: OuterAppearance.BorderThickness 2 → 3",
-                "[Feature.Marquee.Core] Setting: OuterHighlightRect False → True",
+                "[Feature.Marquee.Core] Setting: MarkerLength 16 → 24",
             ],
             logger.Messages);
     }
@@ -114,7 +89,7 @@ public class MarqueeLogMessageTests
             MarqueeLogMessage.LogSettingChanged(logger, "HandleSize", 10.0, 20.0);
             MarqueeLogMessage.LogSettingChanged(logger, "HandleSize", 20.0, 20.0);
             MarqueeLogMessage.LogSettingChanged(logger, "MinSelectionSize", 6, 7);
-            MarqueeLogMessage.LogSettingChanged(logger, "ShowHandles", true, true);
+            MarqueeLogMessage.LogSettingChanged(logger, "ClampToDomainBounds", true, true);
 
             Assert.Equal(
                 [

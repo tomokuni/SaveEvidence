@@ -13,7 +13,6 @@ using SkiaSharp;
 using static EsUtil.Feature.Marquee.Core.Marquee.Limits;
 using EsUtil.Platform.Skia;
 using EsUtil.Feature.Marquee.Core.Contract;
-using EsUtil.Feature.Marquee.Core.Drawing;
 using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Setting;
 

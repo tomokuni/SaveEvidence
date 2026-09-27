@@ -2,6 +2,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
+using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
 
@@ -94,11 +95,10 @@ public class FadeMaskDragRectControlStateTests
         var control = new FadeMaskDragRectControl();
 
         // 既定の設定（コアの既定値）がそのまま子コントロールへ渡される
-        Assert.Equal(FadeMaskDragRectOptions.Default.Deco.OuterAppearance, control.Marquee.DecoOptions.OuterAppearance);
-        // モードから導出される描画状態（既定は AreaSelect = 全面暗転）だけが設定値と異なる
-        Assert.Equal(
-            FadeMaskDragRectOptions.Default.Deco with { OuterShowFullOverlay = true },
-            control.Marquee.DecoOptions);
+        Assert.Equal(MarqueeAppearance.Default.OuterBorderThickness, control.MarqueeAppearance.OuterBorderThickness);
+        // モードから導出される描画状態（既定は AreaSelect = 全面暗転）だけが外観の既定と異なる
+        Assert.True(control.MarqueeAppearance.ShowFullOverlay);
+        Assert.True(control.MarqueeAppearance.ShowHandles);
         Assert.Equal(FadeMaskDragRectOptions.Default.Loupe, control.Loupe.Options);
         Assert.Equal(FadeMaskDragRectOptions.Default.LoupeOffset, control.Loupe.PositionOffset);
     }
@@ -107,19 +107,18 @@ public class FadeMaskDragRectControlStateTests
     public void 設定_枠線はハンドル枠と暗転マスクで共用される()
     {
         var control = new FadeMaskDragRectControl();
-        var overlay = FadeMaskDragRectOptions.Default.Deco.OuterAppearance with
-        {
-            BorderThickness = 1.0,
-        };
 
-        control.Options = FadeMaskDragRectOptions.Default with
+        control.Options = FadeMaskDragRectOptions.Default;
+        // 選択枠線（装飾の穴あけ枠）とハンドルの枠線は同じ矩形に重なるため、ホストが同じ色・太さを与える
+        control.MarqueeAppearance = control.MarqueeAppearance with
         {
-            Deco = MarqueeDecoOptions.Default with { ShowOuterBorder = true, OuterAppearance = overlay },
+            OuterBorderColor = System.Drawing.Color.Red,
+            HandleBorderColor = System.Drawing.Color.Red,
+            OuterBorderThickness = 1.0,
         };
-        // 選択枠線（装飾の穴あけ枠）とハンドルの枠線は同じ矩形に重なるため、ホストが同じ色を与える
-        control.MarqueeAppearance = control.MarqueeAppearance with { OuterBorderColor = System.Drawing.Color.Red };
 
         Assert.Equal(System.Drawing.Color.Red, control.MarqueeAppearance.OuterBorderColor);
-        Assert.Equal(1.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
+        Assert.Equal(control.MarqueeAppearance.HandleBorderColor, control.MarqueeAppearance.OuterBorderColor);
+        Assert.Equal(1.0, control.MarqueeAppearance.OuterBorderThickness);
     }
 }

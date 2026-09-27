@@ -99,17 +99,15 @@ public class FadeMaskDragRectControlTests
                 ClampToDomainBounds = true,
                 MarkerLength = 20.0,
             },
-            Deco = MarqueeDecoOptions.Default with
-            {
-                OuterAppearance = MarqueeDecoOptions.Default.OuterAppearance with { BorderThickness = 3.0 },
-            },
         };
 
         control.Options = options;
+        // 枠線の太さは描画にだけ必要な設定のため、外観として与える
+        control.MarqueeAppearance = MarqueeAppearance.Default with { OuterBorderThickness = 3.0 };
 
         var applied = control.Marquee.Options;
         Assert.Equal(5, applied.MinSelectionSize);
-        Assert.Equal(3.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
+        Assert.Equal(3.0, control.MarqueeAppearance.OuterBorderThickness);
         Assert.Equal(12.0, applied.HandleSize);
         Assert.Equal(15.0, applied.HandleHitRadius);
         Assert.True(applied.ClampToDomainBounds);
@@ -122,18 +120,9 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var options = FadeMaskDragRectOptions.Default with
         {
-            // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する
             Marquee = MarqueeOptions.Default with
             {
-                ShowSizeLabel = false,
-            },
-            Deco = MarqueeDecoOptions.Default with
-            {
-                ShowOuterBorder = true,
-                OuterAppearance = new MarqueeOuterDecoAppearance
-                {
-                    BorderThickness = 3.0,
-                },
+                MinSelectionSize = 5,
             },
         };
 
@@ -146,14 +135,14 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(2.0, control.DomainToDipScaling);
         Assert.Equal(1.5, control.DisplayScaleScaling);
 
-        // 選択の設定（サイズラベル）はコアの MarqueeOptions へ反映される
+        // 選択の設定（寸法・対話パラメータ）はコアの MarqueeOptions へ反映される
         var marquee = control.Marquee.Options;
-        Assert.False(marquee.ShowSizeLabel);
+        Assert.Equal(5, marquee.MinSelectionSize);
 
-        // 装飾の寸法と表示可否は装飾の設定へ、色は描画の設定へ 1 つにまとめて反映される
-        var appearance = control.Marquee.DecoOptions.OuterAppearance;
-        Assert.True(control.Marquee.DecoOptions.ShowOuterBorder);
-        Assert.Equal(3.0, appearance.BorderThickness);
+        // 外観（枠線の太さ・表示可否）は設定の反映後にモード導出分（ハンドル・全面暗転）を反映して保持される
+        Assert.True(control.MarqueeAppearance.ShowOuterBorder);
+        Assert.Equal(2.0, control.MarqueeAppearance.OuterBorderThickness);
+        Assert.True(control.MarqueeAppearance.ShowHandles);
     }
 
     [AvaloniaFact]
@@ -164,7 +153,7 @@ public class FadeMaskDragRectControlTests
         {
             Marquee = MarqueeOptions.Default with
             {
-                ShowCoordLabel = true,
+                MinSelectionSize = 5,
             },
             Loupe = new LoupeOptions
             {
@@ -185,8 +174,8 @@ public class FadeMaskDragRectControlTests
             ShowCoordLabel = true,
         };
 
-        // ラベルの体裁（フォントサイズ）も描画の設定であり、コアの設定には含まない
-        control.MarqueeAppearance = MarqueeAppearance.Default with { CoordLabelFontSize = 14.0 };
+        // ラベルの体裁（フォントサイズ）も描画にだけ必要な設定であり、コアの設定には含まない
+        control.MarqueeAppearance = MarqueeAppearance.Default with { CoordLabelFontSize = 14.0, ShowCoordLabel = true };
         control.LoupeAppearance = control.LoupeAppearance with { CoordLabelFontSize = 13.0 };
 
         // ルーペ描画スケールは設定（Options）の対象外（環境値。個別プロパティで設定）
@@ -200,8 +189,7 @@ public class FadeMaskDragRectControlTests
         // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため、ルーペのプロパティへ渡される
         Assert.Equal(30.0, control.Loupe.PositionOffset);
         // 座標ラベル（Marquee / Loupe）
-        var applied = control.Marquee.Options;
-        Assert.True(applied.ShowCoordLabel);
+        Assert.True(control.MarqueeAppearance.ShowCoordLabel);
         Assert.True(control.Loupe.Appearance.ShowCoordLabel);
         // フォントサイズは描画の設定（描画の契約が公開する）
         Assert.Equal(14.0, control.MarqueeAppearance.CoordLabelFontSize);
@@ -257,16 +245,14 @@ public class FadeMaskDragRectControlTests
         control.Options = control.Options with
         {
             Marquee = control.Options.Marquee with { MarkerLength = 24.0 },
-            Deco = control.Options.Deco with
-            {
-                OuterAppearance = control.Options.Deco.OuterAppearance with { BorderThickness = 4.0 },
-            },
             Loupe = control.Options.Loupe with { RequestedSize = 200 },
         };
+        // 枠線の太さは描画にだけ必要な設定のため、外観として与える（設定の差し替えで保持される）
+        control.MarqueeAppearance = control.MarqueeAppearance with { OuterBorderThickness = 4.0 };
 
         Assert.Equal(5, control.Marquee.Options.MinSelectionSize);           // 未指定 → 現在値維持
         Assert.Equal(24.0, control.Marquee.Options.MarkerLength);            // 指定 → 反映
-        Assert.Equal(4.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness); // 指定 → 反映
+        Assert.Equal(4.0, control.MarqueeAppearance.OuterBorderThickness);   // 指定 → 反映
         Assert.Equal(200, control.Loupe.Options.RequestedSize);               // 指定 → 反映
         Assert.Equal(30.0, control.Loupe.PositionOffset);                     // 未指定 → 現在値維持
         Assert.Equal(200, control.Options.Loupe.RequestedSize);               // getter は更新後の値を返す
@@ -686,23 +672,19 @@ public class FadeMaskDragRectControlTests
     /// <returns>設定されている座標変換ポート。未設定の場合は null。</returns>
     /// <remarks>
     /// ポートはコアのファサード（<c>Marquee</c> / <c>Loupe</c>）が単一所有し、コントロールはファサードへ委譲するだけである。<br/>
-    /// 検証では選択矩形コントロールが保持するコアのファサード（<c>_marquee</c>）、またはルーペコントロールが保持する<br/>
-    /// 提示層（<c>_presenter</c>）の内部のコアのファサード（<c>_core</c>）の内部フィールドをリフレクションで辿る。
+    /// 選択矩形コントロールもルーペコントロールも提示層（Presenter）を保持し、その内部にコアのファサード（<c>_core</c>）を持つため、<br/>
+    /// 検証では提示層の内部フィールドを経由してコアまで辿る。
     /// </remarks>
     private static ICoordTransform? GetCoordinatePort(Control control)
     {
         var anyInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
         var type = control.GetType();
 
-        // 選択矩形コントロールはコアのファサードを直接保持する
-        if (type.GetField("_marquee", anyInstance)?.GetValue(control) is { } marquee)
-        {
-            return (ICoordTransform?)marquee.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(marquee);
-        }
-
-        // ルーペコントロールは提示層（LoupePresenter）を保持し、その内部にコアのファサード（Loupe）を持つ
-        var presenter = type.GetField("_presenter", anyInstance)!.GetValue(control)!;
+        // 提示層（MarqueePresenter / LoupePresenter）の内部にコアのファサードがある
+        var presenter = type.GetField("_marquee", anyInstance)?.GetValue(control)
+            ?? type.GetField("_presenter", anyInstance)!.GetValue(control)!;
         var core = presenter.GetType().GetField("_core", anyInstance)!.GetValue(presenter)!;
+
         return (ICoordTransform?)core.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(core);
     }
 

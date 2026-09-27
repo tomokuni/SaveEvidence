@@ -47,16 +47,30 @@ public class FadeMaskHostLabelRendererTests
             InfoBackgroundColor = s_infoBackground,
         };
 
-    /// <summary>テスト用の描画内容を生成する。</summary>
+    /// <summary>テスト用の描画計画を生成する。</summary>
     /// <param name="holeRect">穴あけ矩形（null の場合は穴あけなし）。</param>
-    /// <param name="sizeLabel">サイズラベルのテキスト配置（null の場合は描かれていない）。</param>
-    /// <returns>描画内容（装飾・ハンドル・マーカーは本テストの対象外のため既定値）。</returns>
-    private static MarqueeDrawPlan CreateContent(EsRect? holeRect, MarqueeTextPlacement? sizeLabel = null)
-        => new(default, default, holeRect, null, null, sizeLabel, null, []);
+    /// <returns>描画計画（装飾・ハンドル・マーカー・ラベルは本テストの対象外のため空）。</returns>
+    private static MarqueeDrawPlan CreateContent(EsRect? holeRect)
+        => new(
+            MarqueeAppearance.Default,
+            default,
+            holeRect,
+            [],
+            [],
+            null,
+            [],
+            null,
+            null,
+            [],
+            []);
 
-    /// <summary>テスト用の選択矩形コントロールの描画設定を生成する（ラベルの行送りにフォントサイズを使う）。</summary>
-    /// <returns>描画の設定。</returns>
-    private static MarqueeAppearance CreatePaint() => new();
+    /// <summary>テスト用の選択矩形コントロールの外観を生成する（サイズラベルを描かない基準）。</summary>
+    /// <returns>外観。</returns>
+    /// <remarks>
+    /// サイズラベルを描く設定の場合、付加情報はその下へ積まれる（行送りの検証は別のテストが担う）ため、<br/>
+    /// 本ヘルパーは「サイズラベルを描かない」を基準にする。
+    /// </remarks>
+    private static MarqueeAppearance CreatePaint() => MarqueeAppearance.Default with { ShowSizeLabel = false };
 
     /// <summary>穴あけ矩形の左上から次の行の上端を求める（行送り = 行の高さ + 内側余白 × 2）。</summary>
     /// <param name="top">現在の上端。</param>
@@ -95,18 +109,31 @@ public class FadeMaskHostLabelRendererTests
     public void 描画_サイズラベルがある場合はその下へ積む()
     {
         using var target = TestHelper.CreateTarget(200, 160);
-        var sizeLabel = new MarqueeTextPlacement(
-            "(10, 20), (20×20)", HoleTopLeft, EsHorizontalAlign.Left, EsVerticalAlign.Top, default);
-        var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80), sizeLabel);
+        var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80));
+        var appearance = CreatePaint() with { ShowSizeLabel = true };
+
+        FadeMaskHostLabelRenderer.Draw(
+            target.Canvas, content, CreateLabels(showInfo: false), appearance, "確定: Enter", null);
+
+        // サイズラベルを表示する設定では、その行送り分だけ下へずれる（行の高さは外観のフォントサイズを使う）
+        var expectedTop = (int)NextTop(HoleTopLeft.Y, appearance.SizeLabelFontSize);
+        Assert.Equal(new SKColor(10, 20, 30), target.GetPixel((int)HoleTopLeft.X + 1, expectedTop + 1));
+        // サイズラベル自身の位置には付加情報を描かない
+        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel((int)HoleTopLeft.X + 1, (int)HoleTopLeft.Y + 1));
+    }
+
+    /// <summary>サイズラベルを描かない設定では付加情報が先頭へ繰り上がることを検証する。</summary>
+    [Fact]
+    public void 描画_サイズラベルを描かない設定なら先頭へ繰り上がる()
+    {
+        using var target = TestHelper.CreateTarget(200, 160);
+        var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80));
 
         FadeMaskHostLabelRenderer.Draw(
             target.Canvas, content, CreateLabels(showInfo: false), CreatePaint(), "確定: Enter", null);
 
-        // サイズラベルの行送り分だけ下へずれる（行の高さは描画の設定のフォントサイズを使う）
-        var expectedTop = (int)NextTop(HoleTopLeft.Y, CreatePaint().SizeLabelFontSize);
-        Assert.Equal(new SKColor(10, 20, 30), target.GetPixel((int)HoleTopLeft.X + 1, expectedTop + 1));
-        // サイズラベル自身の位置には付加情報を描かない
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel((int)HoleTopLeft.X + 1, (int)HoleTopLeft.Y + 1));
+        // サイズラベルを描かないため、操作ラベルが穴あけ矩形の左上に置かれる
+        Assert.Equal(new SKColor(10, 20, 30), target.GetPixel((int)HoleTopLeft.X + 1, (int)HoleTopLeft.Y + 1));
     }
 
     [Theory]

@@ -28,8 +28,8 @@ namespace EsUtil.Feature.Marquee.Core;
 /// <b>本クラスが持つもの</b>: 選択の判断・状態・描画内容（選択矩形・装飾・ラベル）と描画順のデータ、<br/>
 /// 装飾の設定の保持、ラベルの文言プロバイダの保持。<br/>
 /// <br/>
-/// <b>描画は本コアの関心事ではない</b>: 本コアは描画 API も描画面も知らない（<see cref="MarqueeDrawContent"/> と<br/>
-/// その <see cref="MarqueeDrawContent.Layers"/> というデータを返すだけである）。描画は UI 層が行い、<br/>
+/// <b>描画は本コアの関心事ではない</b>: 本コアは描画 API も描画面も知らない（幾何の値（<c>MarqueeGeometry</c>）と<br/>
+/// その描画順を表す層のデータを返すだけである）。描画は UI 層が行い、<br/>
 /// 層の順序に従った描画手順は UI 側の共有層（<c>Feature.Marquee.Presenter</c> の <c>MarqueeRendererBase</c>）が単一所有する。<br/>
 /// <br/>
 /// <b>UI 層の責務</b>: 入力イベントの受付と座標変換（<see cref="ToDomain"/> / <see cref="ToDip"/>）、<br/>

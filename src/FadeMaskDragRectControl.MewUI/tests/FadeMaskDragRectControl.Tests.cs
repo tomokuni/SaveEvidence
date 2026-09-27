@@ -8,6 +8,7 @@ using System.Reflection;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI.Tests;
 
@@ -167,35 +168,33 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void 外観は選択矩形の設定の外側の装飾へ反映される()
+    public void 外観は選択矩形の外観へ委譲される()
     {
         var control = new FadeMaskDragRectControl();
 
         control.Options = FadeMaskDragRectOptions.Default with
         {
-            Deco = MarqueeDecoOptions.Default with
-            {
-                ShowOuterBorder = true,
-                OuterAppearance = new MarqueeOuterDecoAppearance
-                {
-                    BorderThickness = 3.0,
-                },
-            },
-            // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する
             Marquee = MarqueeOptions.Default with
             {
-                ShowSizeLabel = false,
+                HandleSize = 12.0,
             },
         };
+        // 枠線の太さ・表示可否は描画にだけ必要な設定のため、外観として与える
+        control.MarqueeAppearance = MarqueeAppearance.Default with
+        {
+            ShowOuterBorder = true,
+            OuterBorderThickness = 3.0,
+            ShowSizeLabel = false,
+        };
 
-        var appearance = control.Options.Deco.OuterAppearance;
-        Assert.True(control.Options.Deco.ShowOuterBorder);
-        Assert.Equal(3.0, appearance.BorderThickness);
+        Assert.True(control.MarqueeAppearance.ShowOuterBorder);
+        Assert.Equal(3.0, control.MarqueeAppearance.OuterBorderThickness);
 
-        // 設定は子コントロールへ分配される（装飾の寸法は装飾の設定、サイズラベルは選択の設定が持つ）
-        Assert.True(control.Marquee.DecoOptions.ShowOuterBorder);
-        Assert.Equal(3.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
-        Assert.False(control.Marquee.Options.ShowSizeLabel);
+        // 設定は子コントロールへ分配される（寸法は選択の設定、枠線と表示可否は外観が持つ）
+        Assert.True(control.Marquee.Appearance.ShowOuterBorder);
+        Assert.Equal(3.0, control.Marquee.Appearance.OuterBorderThickness);
+        Assert.False(control.Marquee.Appearance.ShowSizeLabel);
+        Assert.Equal(12.0, control.Marquee.Options.HandleSize);
     }
 
     [Fact]
@@ -234,7 +233,8 @@ public class FadeMaskDragRectControlTests
 
         // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する。<br/>
         // 文言プロバイダ未設定のため穴あけ矩形から自動生成される
-        Assert.True(control.Marquee.Options.ShowSizeLabel);
+        // サイズラベルの表示可否は描画にだけ必要な設定であり、外観が単一所有する
+        Assert.True(control.Marquee.Appearance.ShowSizeLabel);
         Assert.Null(control.SizeLabelOverrideProvider);
     }
 
@@ -417,13 +417,15 @@ public class FadeMaskDragRectControlTests
     /// <returns>保持している座標変換ポート。未設定の場合は null。</returns>
     /// <remarks>
     /// ポートは公開プロパティではなくメソッドで設定し、コアのファサード（<c>Marquee</c>）が内部で保持する（読み取り API を持たない）。<br/>
+    /// 提示層（Presenter）がコアを内包するため、提示層の内部フィールドを経由してコアまで辿る。<br/>
     /// 検証は Avalonia 版の複合コントロールテストと同じくリフレクションで行う。
     /// </remarks>
     private static ICoordTransform? GetCoordinatePort(MarqueeControl control)
     {
         var anyInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-        var facade = typeof(MarqueeControl).GetField("_marquee", anyInstance)!.GetValue(control)!;
-        return (ICoordTransform?)facade.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(facade);
+        var presenter = typeof(MarqueeControl).GetField("_marquee", anyInstance)!.GetValue(control)!;
+        var core = presenter.GetType().GetField("_core", anyInstance)!.GetValue(presenter)!;
+        return (ICoordTransform?)core.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(core);
     }
 
     // ====================================================================

@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 /// <remarks>
 /// ビジュアルツリー接続時に TopLevel のキーイベントを購読し、切断時に解除する。<br/>
 /// 連携 ScrollViewer（スクロール・ズーム検知）は明示注入のみで設定する（暗黙の祖先探索は行わない）。<br/>
-/// 描画は UI 非依存のレンダラ（<see cref="MarqueeRenderer"/>）に委譲し、座標変換（ドメイン → DIP）はファサードの座標変換ポートに問い合わせる
+/// 描画は提示層が解決した描画計画（<see cref="MarqueeDrawPlan"/>）を自 UI の描画面へ写し、座標変換（ドメイン → DIP）はファサードの座標変換ポートに問い合わせる
 /// （描画はコアが解決した描画内容と <see cref="Options"/> を読むだけで、判断を持たない）。
 /// </remarks>
 public sealed partial class MarqueeControl

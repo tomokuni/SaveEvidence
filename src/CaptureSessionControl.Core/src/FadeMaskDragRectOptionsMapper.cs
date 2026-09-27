@@ -1,5 +1,4 @@
 using EsUtil.SaveEvidence.FadeMaskDragRect;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Loupe.Core.Setting;
 

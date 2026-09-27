@@ -1,5 +1,6 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.Marquee.Core.Setting;
 
 namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
@@ -21,8 +22,6 @@ public class FadeMaskDragRectOptionsMapperTests
             HandleHitRadius = 15.0,
             ClampToDomainBounds = false,
             MarkerLength = 20.0,
-            ShowCoordLabel = true,
-            CoordLabelFontSize = 14.0,
         };
 
         var options = settings.ToFadeMaskDragRectOptions();
@@ -33,53 +32,29 @@ public class FadeMaskDragRectOptionsMapperTests
         Assert.Equal(15.0, marquee.HandleHitRadius);
         Assert.False(marquee.ClampToDomainBounds);
         Assert.Equal(20.0, marquee.MarkerLength);
-        Assert.True(marquee.ShowCoordLabel);
     }
 
+    /// <summary>枠線の太さ・表示可否は本変換の対象外であることを検証する。</summary>
+    /// <remarks>
+    /// 描画にだけ必要な設定（色・枠線の太さ・表示可否）は、提示層の <c>MarqueeAppearance</c> が単一所有する<br/>
+    /// （本変換はコアの設定だけを組み立て、Core → UIBase の逆流を作らない）。
+    /// </remarks>
     [Fact]
-    public void 変換_枠線は選択矩形の設定の外側の装飾に入る()
+    public void 変換_枠線と表示可否は本変換の対象外である()
     {
         var settings = CreateSettings() with
         {
             BorderColor = DrawingColor.Red,
             BorderThickness = 1.0,
-        };
-
-        var options = settings.ToFadeMaskDragRectOptions();
-
-        // 枠線の太さは装飾（暗転マスクの穴あけ枠）が単一所有する（色は描画の設定が単一所有するため本変換の対象外）
-        Assert.Equal(1.0, options.Deco.OuterAppearance.BorderThickness);
-        Assert.True(options.Deco.ShowOuterBorder);
-        // ハンドルの枠線は同じ矩形に重なるため、ホストが同じ色を与える（本変換は寸法のみを持つ）
-    }
-
-    [Fact]
-    public void 変換_暗転マスクの設定が反映される()
-    {
-        var settings = CreateSettings() with
-        {
-        };
-
-        var options = settings.ToFadeMaskDragRectOptions();
-
-        // 装飾は暗転と枠線のみを所有する（ラベルはサイズラベルが選択コア、操作・情報ラベルはホストが担う）
-        // 枠線（色・太さ）は「枠線は選択矩形の設定の外側の装飾に入る」のテストが検証する
-    }
-
-    [Fact]
-    public void 変換_サイズラベルの設定が選択コアへ反映される()
-    {
-        var settings = CreateSettings() with
-        {
             SizeLabelVisible = false,
-            TextBackgroundColor = DrawingColor.FromArgb(179, 0, 0, 255),
-            SizeLabelFontSize = 18.0,
+            ShowCoordLabel = false,
         };
 
-        var marquee = settings.ToFadeMaskDragRectOptions().Marquee;
+        var options = settings.ToFadeMaskDragRectOptions();
 
-        // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する
-        Assert.False(marquee.ShowSizeLabel);
+        // 本変換が組み立てるのはコアの設定（選択の判断・ルーペの計算に必要な値）だけである
+        Assert.Equal(MarqueeOptions.Default.HandleSize, options.Marquee.HandleSize);
+        Assert.Equal(20.0, options.LoupeOffset);
     }
 
     [Fact]

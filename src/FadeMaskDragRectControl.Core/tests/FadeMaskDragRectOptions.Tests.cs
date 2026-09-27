@@ -63,15 +63,13 @@ public class FadeMaskDragRectOptionsTests
         Assert.Equal(DrawingColor.Black, changed.SelectionRectColorB);
     }
 
-    /// <summary>装飾の外観が装飾の設定に含まれることを検証する。</summary>
+    /// <summary>装飾の設定である項目が本値に含まれないことを検証する。</summary>
+    /// <remarks>暗転マスク・穴あけ枠の外観と表示可否は、提示層の <c>MarqueeAppearance</c> が単一所有する。</remarks>
     [Fact]
     public void 装飾_選択矩形の設定とは別の値が単一所有する()
     {
-        var appearance = new MarqueeOuterDecoAppearance { BorderThickness = 3.0 };
-
         var options = FadeMaskDragRectOptions.Default with
         {
-            Deco = MarqueeDecoOptions.Default with { OuterAppearance = appearance },
             Marquee = MarqueeOptions.Default with
             {
                 MinSelectionSize = 12.0,
@@ -79,10 +77,10 @@ public class FadeMaskDragRectOptionsTests
             },
         };
 
-        // 枠線の寸法（装飾）は装飾の設定が持ち、選択の設定は選択の判断に必要な項目だけを持つ
-        Assert.Equal(3.0, options.Deco.OuterAppearance.BorderThickness);
+        // 本値が持つのは選択の判断に必要な設定（寸法・対話パラメータ）とルーペ・ラベル・破線の値だけである
         Assert.Equal(12.0, options.Marquee.MinSelectionSize);
         Assert.False(options.Marquee.ClampToDomainBounds);
+        Assert.Equal(MarqueeOptions.Default.HandleSize, options.Marquee.HandleSize);
     }
 
     /// <summary>等価性が値で判定されることを検証する。</summary>

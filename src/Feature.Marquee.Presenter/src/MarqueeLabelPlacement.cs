@@ -14,7 +14,7 @@ namespace EsUtil.Feature.Marquee.Presenter;
 /// <param name="BackgroundColor">背景色（アルファ 0 は透明）。</param>
 /// <remarks>
 /// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための配置指示である。コアが決めた文言・基準点と、<br/>
-/// 描画の設定（<see cref="MarqueePaint"/>）が単一所有する体裁（フォントサイズ・色・内側余白）を、<br/>
+/// 描画の外観（<see cref="MarqueeAppearance"/>）が単一所有する体裁（フォントサイズ・色・内側余白）を、<br/>
 /// UI が「テキスト要素を 1 つ置く」だけで反映できる形へ写した値である。<br/>
 /// <br/>
 /// <b>余白は値として渡す</b>: 背景の大きさは「文字の実寸 + 内側余白 × 2」であり、文字は同じ余白だけ内側へ入る。<br/>

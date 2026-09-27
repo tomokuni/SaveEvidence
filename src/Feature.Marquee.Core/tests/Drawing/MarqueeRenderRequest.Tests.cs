@@ -15,42 +15,39 @@ namespace EsUtil.Feature.Marquee.Core.Tests.Drawing;
 public class MarqueeRenderRequestTests
 {
     /// <summary>検証に使う描画入力を生成する（導出の検証に必要な値だけを指定する）。</summary>
-    /// <param name="deco">装飾の設定。null の場合は既定。</param>
+    /// <param name="highlight">ハイライト矩形（ドメイン座標）。null の場合はハイライトなし。</param>
     /// <param name="selection">選択矩形（ドメイン座標）。null の場合は選択なし。</param>
     /// <param name="port">座標変換ポート。null の場合は未指定（倍率による）。</param>
     /// <param name="scaling">ポート未指定時に適用する倍率。</param>
     /// <returns>生成した描画入力。</returns>
     private static MarqueeRenderRequest CreateRequest(
-        MarqueeDecoOptions? deco = null,
+        EsRect? highlight = null,
         EsRect? selection = null,
         ICoordTransform? port = null,
         double scaling = 1.0)
         => new(
             MarqueeOptions.Default,
-            deco ?? MarqueeDecoOptions.Default,
             new EsSize(300, 300),
             selection,
             MarkerActive: false,
             MarkerPosition: default,
             MousePosition: default,
             port,
-            scaling,
-            SizeLabelOverrideProvider: null,
-            DisplayScaleScaling: 1.0);
+            scaling)
+        {
+            HighlightRect = highlight,
+        };
 
     /// <summary>組み立てがすべての値をそのまま保持することを検証する。</summary>
     [Fact]
     public void Create_すべての値をそのまま保持する()
     {
-        var options = MarqueeOptions.Default with { ShowHandles = false };
-        var deco = MarqueeDecoOptions.Default with { ShowInnerFill = true };
+        var options = MarqueeOptions.Default with { HandleSize = 14.0 };
+        var highlight = new EsRect(1, 2, 3, 4);
         var port = CoordTransform.Scale(2.0);
-        Func<string?> sizeLabel = () => "S";
-        Func<EsRect, double> scaling = _ => 1.5;
 
         var request = MarqueeRenderRequest.Create(
             options,
-            deco,
             new EsSize(640, 480),
             new EsRect(10, 20, 30, 40),
             markerActive: true,
@@ -58,12 +55,9 @@ public class MarqueeRenderRequestTests
             new EsPoint(70, 80),
             port,
             domainToDipScaling: 1.25,
-            sizeLabel,
-            displayScaleScaling: 1.5,
-            scaling);
+            highlightRect: highlight);
 
         Assert.Equal(options, request.Options);
-        Assert.Equal(deco, request.DecoOptions);
         Assert.Equal(new EsSize(640, 480), request.ClientSize);
         Assert.Equal(new EsRect(10, 20, 30, 40), request.SelectionRect);
         Assert.True(request.MarkerActive);
@@ -71,29 +65,24 @@ public class MarqueeRenderRequestTests
         Assert.Equal(new EsPoint(70, 80), request.MousePosition);
         Assert.Same(port, request.Port);
         Assert.Equal(1.25, request.DomainToDipScaling);
-        Assert.Same(sizeLabel, request.SizeLabelOverrideProvider);
-        Assert.Equal(1.5, request.DisplayScaleScaling);
-        Assert.Same(scaling, request.SizeLabelDisplayScalingProvider);
+        Assert.Equal(highlight, request.HighlightRect);
     }
 
-    /// <summary>省略したプロバイダが null になることを検証する。</summary>
+    /// <summary>省略したハイライト矩形が null になることを検証する。</summary>
     [Fact]
-    public void Create_省略したプロバイダはnullになる()
+    public void Create_省略したハイライト矩形はnullになる()
     {
         var request = MarqueeRenderRequest.Create(
             MarqueeOptions.Default,
-            MarqueeDecoOptions.Default,
             new EsSize(100, 100),
             selectionRect: null,
             markerActive: false,
             new EsPoint(0, 0),
             new EsPoint(0, 0),
             port: null,
-            domainToDipScaling: 1.0,
-            sizeLabelOverrideProvider: null,
-            displayScaleScaling: 1.0);
+            domainToDipScaling: 1.0);
 
-        Assert.Null(request.SizeLabelDisplayScalingProvider);
+        Assert.Null(request.HighlightRect);
         Assert.Null(request.SelectionRect);
     }
 
@@ -222,9 +211,7 @@ public class MarqueeRenderRequestTests
     public void ResolveHoleRectDip_ハイライト矩形は終点を加算せずDIP変換する()
     {
         var highlight = new EsRect(1, 2, 3, 4);
-        var request = CreateRequest(
-            deco: MarqueeDecoOptions.Default with { OuterHighlightRect = highlight },
-            selection: new EsRect(10, 20, 30, 40));
+        var request = CreateRequest(highlight: highlight, selection: new EsRect(10, 20, 30, 40));
 
         var result = request.ResolveHoleRectDip(CoordTransform.Identity);
 
@@ -283,5 +270,25 @@ public class MarqueeRenderRequestTests
         var result = MarqueeRenderRequest.ResolvePort(null, domainToDipScaling);
 
         Assert.Same(CoordTransform.Identity, result);
+    }
+
+    /// <summary>解決済みの座標変換ポートがポート優先で公開されることを検証する。</summary>
+    [Fact]
+    public void ResolvedPort_ポート指定時はそのポートを返す()
+    {
+        var port = CoordTransform.Scale(3.0);
+
+        var request = CreateRequest(port: port, scaling: 2.0);
+
+        Assert.Same(port, request.ResolvedPort);
+    }
+
+    /// <summary>ポート未指定の場合は倍率から解決したポートを返すことを検証する。</summary>
+    [Fact]
+    public void ResolvedPort_ポート未指定なら倍率から解決する()
+    {
+        var request = CreateRequest(scaling: 2.0);
+
+        Assert.Equal(new EsPoint(20, 40), request.ResolvedPort.Inverse(new EsPoint(10, 20)));
     }
 }
