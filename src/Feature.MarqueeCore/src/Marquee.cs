@@ -105,6 +105,10 @@ public sealed partial class Marquee
         set => _session.Log = value;
     }
 
+    // ====================================================================
+    // 設定・環境値（設定・倍率・プロバイダ・座標変換）
+    // ====================================================================
+
     /// <summary>現在の設定（外観・対話パラメータ）。</summary>
     /// <value>反映済みの設定。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
@@ -210,6 +214,10 @@ public sealed partial class Marquee
         }
     }
 
+    // ====================================================================
+    // 状態（選択の有無・選択矩形・スナップショット）
+    // ====================================================================
+
     /// <summary>選択矩形があるかどうか。</summary>
     /// <value>選択中の場合は true。</value>
     public bool HasSelection => _session.HasSelection;
@@ -222,10 +230,6 @@ public sealed partial class Marquee
     /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。null の場合は直近の位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・操作フラグを含むスナップショット。</returns>
     public MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null) => _session.CreateSnapshot(mousePosition);
-
-    // ====================================================================
-    // 環境値（座標変換ポート・座標変換）
-    // ====================================================================
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート。null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>

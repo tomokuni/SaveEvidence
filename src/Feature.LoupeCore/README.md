@@ -103,7 +103,7 @@ UI 実装側は、境界（サービス呼び出し・イベント引数の生�
 dotnet build src/Feature.LoupeCore/src/Feature.LoupeCore.csproj
 ```
 
-ループ系の 3 プロジェクト（Core / AvaloniaUI / MewUI）は `GenerateDocumentationFile` を有効にし、**存在しないメンバーへの `<see cref>` をビルド警告（CS1574）で検出**します（メンバー改名・削除でドキュメントが腐るのを防ぐ）。XML は検証にのみ使い、配布物（`bin` / `publish`）へは出しません（`CopyDocumentationFileToOutputDirectory=false`）。公開メンバーの未記載（CS1591）は対象外です。
+ルーペ系の 4 プロジェクト（Core / UIBase / AvaloniaUI / MewUI）は `GenerateDocumentationFile` を有効にし、**存在しないメンバーへの `<see cref>` をビルド警告（CS1574）で検出**します（メンバー改名・削除でドキュメントが腐るのを防ぐ）。XML は検証にのみ使い、配布物（`bin` / `publish`）へは出しません（`CopyDocumentationFileToOutputDirectory=false`）。公開メンバーの未記載（CS1591）は対象外です。
 
 ## テスト
 
@@ -114,7 +114,7 @@ tests/
 ├── Loupe.Tests.cs                   # 公開ファサード（表示レイアウトの解決・描画入力の生成・設定変更ログ・確保量の固定）（31 件）
 ├── Loupe.DrawContent.Tests.cs       # 描画内容の解決（層の順序・描画可否・層の一覧の共有）（12 件）
 ├── Loupe.Limits.Tests.cs            # 数値パラメータの既定値・安全域と補正（13 件）
-├── Checkerboard/                    # 区画数の切り上げ除算（8 件）
+├── Checkerboard/                    # 区画数の切り上げ除算・市松模様の明暗の判定（17 件）
 ├── Decoration/                      # 十字線と外枠の矩形・寸法の物理ピクセル換算（14 件）
 ├── Drawing/                         # 描画入力の組み立て・切り出し領域の導出・市松模様のタイル列挙（43 件）
 ├── Logging/                         # ログ定義の生成コード（IsEnabled 両パス・書式・差分検出）（10 件）
@@ -124,8 +124,12 @@ tests/
 
 **テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Loupe.cs` / `Loupe.DrawContent.cs` / `Loupe.Limits.cs`）のテストはルートに置きます。
 
-件数は `[Theory]` を展開したケース数（合計 150 件）です。
+件数は `[Theory]` を展開したケース数（合計 159 件）です。
 
 ```powershell
 dotnet test src/Feature.LoupeCore/tests/Feature.LoupeCore.Tests.csproj
 ```
+
+## ライセンス
+
+MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

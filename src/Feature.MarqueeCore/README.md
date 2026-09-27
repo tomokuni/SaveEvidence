@@ -268,6 +268,20 @@ UI 層が使う共有値・計算:
 
 > **Note**: 本 README は**利用仕様書**（使い方と設計の意図）です。公開 API の仕様は [SPEC_ExtFunc.md](SPEC_ExtFunc.md)、構造・依存・例外処理・単一所有の一覧は [SPEC_System.md](SPEC_System.md) を参照してください。
 
+## 座標型
+
+UI フレームワークの幾何型（`Avalonia.Point` / `Rect` 等）ではなく、`Platform.Core` のコア幾何型 `EsPoint` / `EsRect` / `EsSize` / `EsKey` を使用します。
+
+UI 実装側は、境界（ポインターイベントの受付・通知の生成・描画）で 1 行の相互変換（`.ToEsPoint()` / `.ToEsRect()` / `.ToAvaloniaRect()`）を行います。UI 内部の状態・描画は UI 側の型のままで構いません。
+
+## ビルド
+
+```powershell
+dotnet build src/Feature.MarqueeCore/src/Feature.MarqueeCore.csproj
+```
+
+選択矩形系の 4 プロジェクト（Core / UIBase / AvaloniaUI / MewUI）は `GenerateDocumentationFile` を有効にし、**存在しないメンバーへの `<see cref>` をビルド警告（CS1574）で検出**します（メンバー改名・削除でドキュメントが腐るのを防ぐ）。XML は検証にのみ使い、配布物（`bin` / `publish`）へは出しません（`CopyDocumentationFileToOutputDirectory=false`）。公開メンバーの未記載（CS1591）は対象外です。
+
 ## テスト
 
 ```text
