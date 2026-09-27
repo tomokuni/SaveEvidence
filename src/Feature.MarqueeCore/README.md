@@ -44,6 +44,27 @@
 | `Selection/` | `MarqueeSelectionGeometry` | internal | 純粋な幾何計算（正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形）・描画対象ハンドル一覧・カーソル種別変換。利用者はコアの内部（描画内容の解決・状態機械）だけであり、UI 層へは解決済みの矩形が渡る |
 | `Logging/` | `MarqueeLogMessage` | internal | ログの LoggerMessage 定義（入力の判断・設定変更）。呼ぶのはコア（状態機械・ファサード）だけであり、UI 層はロガー（`Marquee.Log`）を渡すだけである（自 UI 固有の操作ログは UI 層が持つ。ズーム要求のログは `MarqueeControl.UIBase` が単一所有する） |
 
+## 公開面の階層
+
+公開面は「誰が何のために使うか」で 3 段に分かれます。**外部が使わない内部契約は `internal`** とし、単体テストにのみ `InternalsVisibleTo` で公開します。
+
+| 層 | 利用者 | 型 |
+| --- | --- | --- |
+| **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` |
+| **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層） | `Marquee`（操作の唯一の窓口。既定値は `Limits.DomainToDipScalingDefault`） / `IMarqueeEffects` / `MarqueeEffectsBase` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` / `MarqueeSelectionGeometry` |
+| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeLogMessage`（適用とログ出力はファサード・状態機械 が行う）/ `MarqueeSession` / `Marquee.DrawContent.cs`（「1 フレーム分の描画内容の解決」は `Marquee.ResolveContent` が提供する）/ `MarqueeState` |
+
+- **操作はファサード経由に一本化**しています（状態機械とフレーム解決は `internal` のため、UI 層はファサード以外の入口を持ちません）。
+- **層 3 は外部参照 0 件**を実測して絞り込んだ結果です。「描画内容の解決（`Marquee.ResolveContent`）と描画に必要な値」だけが公開面です。
+- **装飾（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は Core 内のサブ概念です**（`Decoration` 名前空間）。コントロールを撮影オーバーレイ等へ組み込むときにだけ必要になる表示のため `Selection/` と対にして同居させ、描画順は本コアが指示します。
+- **層 2 は UI アダプタを自作する場合の契約**です（独自 UI を追加するには、この面だけで完結します。`IMarqueeEffects` は `MarqueeEffectsBase` を継承すれば必要な効果だけを実装できます）。
+- **層 1 は設定と受け渡しの値**です（ファサードを持たず、設定値と描画契約だけを使う軽い用途でも使えます）。
+- `[EditorBrowsable]` による「見えにくくする」対処はしません。公開面も契約も変わらず（見つけにくくなるだけ）、手段と目的が食い違うためです。**隠すか公開するかの二択**とし、隠す場合は `internal` で除きます。
+
+**UI 非依存の汎用ライブラリ**として、特定のアプリ・UI 実装に依存しません（文言・モード等のアプリ固有情報を持ちません）。
+
+名前空間はフォルダに追従します（ルート直下は `EsUtil.Feature.MarqueeCore`。`Contract` / `Drawing` / `Interaction` / `Setting` / `Logging` / `Selection` / `Decoration` は `EsUtil.Feature.MarqueeCore.<フォルダ名>`）。アセンブリ名は `Feature.MarqueeCore`。
+
 ## 依存方向
 
 層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
@@ -66,27 +87,6 @@ Feature.MarqueeCore
 ```
 
 **UI フレームワークへ依存しません。** カーソル操作は `ICursorService` 抽象にのみ依存し、未指定（`null`）の場合は何もしません。既定実装（Win32）の解決は UI 側の責務です。
-
-## 公開面の階層
-
-公開面は「誰が何のために使うか」で 3 段に分かれます。**外部が使わない内部契約は `internal`** とし、単体テストにのみ `InternalsVisibleTo` で公開します。
-
-| 層 | 利用者 | 型 |
-| --- | --- | --- |
-| **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` |
-| **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層） | `Marquee`（操作の唯一の窓口。既定値は `Limits.DomainToDipScalingDefault`） / `IMarqueeEffects` / `MarqueeEffectsBase` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` / `MarqueeSelectionGeometry` |
-| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeLogMessage`（適用とログ出力はファサード・状態機械 が行う）/ `MarqueeSession` / `Marquee.DrawContent.cs`（「1 フレーム分の描画内容の解決」は `Marquee.ResolveContent` が提供する）/ `MarqueeState` |
-
-- **操作はファサード経由に一本化**しています（状態機械とフレーム解決は `internal` のため、UI 層はファサード以外の入口を持ちません）。
-- **層 3 は外部参照 0 件**を実測して絞り込んだ結果です。「描画内容の解決（`Marquee.ResolveContent`）と描画に必要な値」だけが公開面です。
-- **装飾（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は Core 内のサブ概念です**（`Decoration` 名前空間）。コントロールを撮影オーバーレイ等へ組み込むときにだけ必要になる表示のため `Selection/` と対にして同居させ、描画順は本コアが指示します。
-- **層 2 は UI アダプタを自作する場合の契約**です（独自 UI を追加するには、この面だけで完結します。`IMarqueeEffects` は `MarqueeEffectsBase` を継承すれば必要な効果だけを実装できます）。
-- **層 1 は設定と受け渡しの値**です（ファサードを持たず、設定値と描画契約だけを使う軽い用途でも使えます）。
-- `[EditorBrowsable]` による「見えにくくする」対処はしません。公開面も契約も変わらず（見つけにくくなるだけ）、手段と目的が食い違うためです。**隠すか公開するかの二択**とし、隠す場合は `internal` で除きます。
-
-**UI 非依存の汎用ライブラリ**として、特定のアプリ・UI 実装に依存しません（文言・モード等のアプリ固有情報を持ちません）。
-
-名前空間はフォルダに追従します（ルート直下は `EsUtil.Feature.MarqueeCore`。`Contract` / `Drawing` / `Interaction` / `Setting` / `Logging` / `Selection` / `Decoration` は `EsUtil.Feature.MarqueeCore.<フォルダ名>`）。アセンブリ名は `Feature.MarqueeCore`。
 
 ## 名前の由来と一般的な呼称
 
