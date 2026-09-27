@@ -5,7 +5,7 @@ namespace EsUtil.Feature.MarqueeCore.Interaction;
 /// ヒットテスト・矩形変形・nudge・描画で共通利用する。<br/>
 /// 上位（ホスト）がカーソル形状のマッピングに使用するため public で公開する。
 /// </remarks>
-public enum HitTarget
+public enum MarqueeHitTarget
 {
     /// <summary>なし。</summary>
     None,

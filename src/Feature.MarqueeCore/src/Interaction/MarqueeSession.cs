@@ -162,7 +162,7 @@ internal sealed class MarqueeSession
             Cursor = cursor,
         };
 
-        if (handle != HitTarget.None)
+        if (handle != MarqueeHitTarget.None)
         {
             _state.StartDrag(handle, position);
 
@@ -170,7 +170,7 @@ internal sealed class MarqueeSession
             // （ポインター・矩形の角・追従位置を一体にする）。ドラッグ基準点もハンドル点に揃えることで、
             // スナップ後の最初の移動がハンドル点からの差分として正しく矩形へ反映される。
             // 移動（Move）は掴んだ位置を維持するのが自然なためスナップしない。
-            if (handle != HitTarget.Move)
+            if (handle != MarqueeHitTarget.Move)
             {
                 var handlePosition = MarqueeSelectionGeometry.GetHandlePosition(_state.SelectionRect, handle);
                 _state.SnapToHandle(handlePosition);

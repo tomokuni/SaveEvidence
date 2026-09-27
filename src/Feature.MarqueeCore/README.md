@@ -19,7 +19,7 @@
 
 | フォルダ | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
-| `Interaction/` | `HitTarget` | public | ヒット対象の種別（8 方向のハンドル + `Move`。`None` は対象なし） |
+| `Interaction/` | `MarqueeHitTarget` | public | ヒット対象の種別（8 方向のハンドル + `Move`。`None` は対象なし） |
 | `Interaction/` | `MarqueeInteractionState` | public | 対話状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging） |
 | `Interaction/` | `MarqueeSnapshot` | public | 通知時点の状態の値型（`readonly record struct`。`selectionRect` は `EsRect`、`mousePosition` は `EsPoint`。操作中の通知のたびにヒープを確保しない） |
 | `Setting/` | `MarqueeOptions` | public | 設定の値オブジェクト（寸法・表示可否・対話パラメータ）。既定値と安全域への補正を単一所有する（補正の規則は `Marquee.Limits` が持ち、生成時の `init` アクセサが適用する）。**色・フォントサイズは持たない**（これらは描画にだけ必要な設定であり、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有する）。ラベルの体裁（内側余白・行送り）も描画層の `MarqueePaint` が単一所有する |
@@ -73,7 +73,7 @@ Feature.MarqueeCore
 
 | 層 | 利用者 | 型 |
 | --- | --- | --- |
-| **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` |
+| **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` |
 | **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層） | `Marquee`（操作の唯一の窓口。既定値は `Limits.DomainToDipScalingDefault`） / `IMarqueeEffects` / `MarqueeEffectsBase` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` / `MarqueeSelectionGeometry` |
 | **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeLogMessage`（適用とログ出力はファサード・状態機械 が行う）/ `MarqueeSession` / `Marquee.DrawContent.cs`（「1 フレーム分の描画内容の解決」は `Marquee.ResolveContent` が提供する）/ `MarqueeState` |
 
@@ -126,7 +126,7 @@ Feature.MarqueeCore
 
 | 旧 | 新 | 理由 |
 | --- | --- | --- |
-| `DragHandle`（`None` / `Move` + 8 方向） | `HitTarget` | ハンドル以外（`None` / `Move`）も含むため、ヒット対象を表す名前にする |
+| `DragHandle`（`None` / `Move` + 8 方向） | `HitTarget` → `MarqueeHitTarget` | ハンドル以外（`None` / `Move`）も含むためヒット対象を表す名前にし、公開型の接頭辞（自コア名）を付ける |
 | `MarqueeSnapshot.ActiveHandle` / `MarqueeState.ActiveHandle` | `ActiveTarget` | 同上 |
 | `DragRectZoomRequest` / `DragRectScrollRequest` | `WheelZoomRequest` / `WheelScrollRequest` | コントロール固有の接頭辞を外し、ホイール操作の要求であることを表す |
 
@@ -262,7 +262,7 @@ UI 層が使う共有値・計算:
 | `MarqueeLabelPlacement`（同） | UI 要素として配置するための指示（配置矩形・内側余白・文言・フォント・色）。UI 層はこれを置くだけでよい（`MarqueeLabelPlan` が組み立てる） |
 | `MarqueePaint.Default`（描画層 `MarqueeControl.UIBase`） | 色の既定値（部分変更の基点。`MarqueePaint.Default with { ... }`。コアの設定は色を持たない） |
 | `MarqueePaint.HandleColor`（同） | ハンドルの塗り色（未指定（全成分 0）は生成時に白へ解決。両 UI が同じ見た目になる） |
-| `MarqueeSelectionGeometry.DirectionalHandles` | 描画対象の 8 方向ハンドル（読み取り専用の一覧。列挙順は `HitTarget` の宣言順。**描画層へは解決済みの矩形が渡る**） |
+| `MarqueeSelectionGeometry.DirectionalHandles` | 描画対象の 8 方向ハンドル（読み取り専用の一覧。列挙順は `MarqueeHitTarget` の宣言順。**描画層へは解決済みの矩形が渡る**） |
 | `MarqueeSelectionGeometry.ToCursorKind` | ハンドル → `MarqueeCursorKind`（どのハンドルが同じカーソルになるか） |
 
 ## 設計上の約束
@@ -271,7 +271,7 @@ UI 層が使う共有値・計算:
 2. **単一所有**: 幾何計算は `MarqueeSelectionGeometry` のみ、状態は `MarqueeState` のみ、入力の解釈は `MarqueeSession` のみが持つ。
 3. **座標系**: `EsRect` / `EsPoint` は常にドメイン座標。UI 論理座標（DIP）との変換は `ICoordTransform`（`Port`）が担う。
 4. **境界 1 行変換**: 各 UI のイベント引数は自前の型（例: Avalonia の `Rect`）で公開し、境界で 1 行変換する。キーは `EsKey` を介して通知する。
-5. **カーソル操作の分離**: カーソル操作（非表示・再表示・移動）は**効果**として UI 層へ要求し、公開ファサードだけが `ICursorService` 抽象に依存する（プラットフォーム既定実装を生成しない）。状態機械はカーソル API を知らない。カーソル種別は `HitTarget` として返し、UI が自 UI のカーソル型へ写像する。
+5. **カーソル操作の分離**: カーソル操作（非表示・再表示・移動）は**効果**として UI 層へ要求し、公開ファサードだけが `ICursorService` 抽象に依存する（プラットフォーム既定実装を生成しない）。状態機械はカーソル API を知らない。カーソル種別は `MarqueeHitTarget` として返し、UI が自 UI のカーソル型へ写像する。
 6. **Enter と Return は同一**: Avalonia の `Key` は両者が同値のエイリアスで、名前ベースの相互変換では `Return` が得られるため、双方を確定キーとして扱う。
 7. **両 UI で共通の値はコアが単一所有**: 描画対象ハンドル一覧・カーソル形状の種別・**設定の既定値と範囲補正（`MarqueeOptions`）**は、Avalonia 版と MewUI 版で同じ結果になる必要があるためコアが持つ（片方だけを直すと見た目や既定値がずれる）。**描画にだけ必要な体裁（色・フォントサイズ・内側余白）は描画層（`MarqueePaint`）が単一所有する**。UI 層が持つのは自 UI の描画・カーソル型への写像・座標変換のみ。
 8. **設定の適用はコアが判断する**: 設定（`MarqueeOptions`）の反映は `ApplyOptions` が担い、対話パラメータの更新・変化した項目のログ・境界外選択の禁止の変化の検出・即時クリップを 1 箇所に集約する（UI 層は「変更通知を渡す」だけになる）。

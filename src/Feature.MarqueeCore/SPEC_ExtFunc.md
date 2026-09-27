@@ -57,7 +57,7 @@
 | --- | --- | --- |
 | `MarqueeSnapshot` | readonly record struct | 通知時点の状態（状態・選択矩形・アクティブハンドル・マウス位置・操作フラグ）。値型のため通知のたびにヒープを確保しない |
 | `MarqueeNotice` / `MarqueeNoticeKind` | record / enum | 通知（種別・通知座標・スナップショット） |
-| `HitTarget` | enum | ヒット対象（8 方向のハンドル + `Move` + `None`） |
+| `MarqueeHitTarget` | enum | ヒット対象（8 方向のハンドル + `Move` + `None`） |
 | `MarqueeCursorKind` | enum | カーソル形状の種別（`Default` / `DiagonalNWSE` / `DiagonalNESW` / `Vertical` / `Horizontal` / `Move`） |
 | `MarqueeInteractionState` | enum | 対話状態（`NoSelection` / `StartPointNudging` / `Dragging` / `DraggingNudging` / `Selected` / `SelectedNudging`） |
 

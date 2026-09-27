@@ -16,28 +16,28 @@ namespace EsUtil.Feature.MarqueeCore.Selection;
 /// </remarks>
 internal static class MarqueeSelectionGeometry
 {
-    /// <summary>描画対象の 8 方向ハンドル（<see cref="HitTarget.None"/> / <see cref="HitTarget.Move"/> を除く）。</summary>
+    /// <summary>描画対象の 8 方向ハンドル（<see cref="MarqueeHitTarget.None"/> / <see cref="MarqueeHitTarget.Move"/> を除く）。</summary>
     /// <remarks>
-    /// 列挙順は <see cref="HitTarget"/> の宣言順。描画層は本一覧を走査してハンドルを描く（ハンドル一覧の単一所有）。<br/>
+    /// 列挙順は <see cref="MarqueeHitTarget"/> の宣言順。描画層は本一覧を走査してハンドルを描く（ハンドル一覧の単一所有）。<br/>
     /// 読み取り専用の一覧として公開する（共有の一覧を呼び出し側が書き換えない）。
     /// </remarks>
-    internal static IReadOnlyList<HitTarget> DirectionalHandles { get; } =
-        [.. Enum.GetValues<HitTarget>().Where(static h => h is not (HitTarget.None or HitTarget.Move))];
+    internal static IReadOnlyList<MarqueeHitTarget> DirectionalHandles { get; } =
+        [.. Enum.GetValues<MarqueeHitTarget>().Where(static h => h is not (MarqueeHitTarget.None or MarqueeHitTarget.Move))];
 
     /// <summary>ハンドル種別をカーソル形状の種別へ変換する。</summary>
     /// <param name="handle">ハンドル種別。</param>
-    /// <returns>カーソル形状の種別。ハンドル外（<see cref="HitTarget.None"/>）の場合は <see cref="MarqueeCursorKind.Default"/>。</returns>
+    /// <returns>カーソル形状の種別。ハンドル外（<see cref="MarqueeHitTarget.None"/>）の場合は <see cref="MarqueeCursorKind.Default"/>。</returns>
     /// <remarks>
     /// 「どのハンドルが同じカーソル形状になるか」を単一所有する（各 UI は自 UI のカーソル型へ写像するだけ）。<br/>
     /// 左上と右下、右上と左下は同じ斜めカーソルになる（対角のハンドルは同じ向きの図形で表す）。
     /// </remarks>
-    internal static MarqueeCursorKind ToCursorKind(HitTarget handle) => handle switch
+    internal static MarqueeCursorKind ToCursorKind(MarqueeHitTarget handle) => handle switch
     {
-        HitTarget.TopLeft or HitTarget.BottomRight => MarqueeCursorKind.DiagonalNWSE,
-        HitTarget.TopRight or HitTarget.BottomLeft => MarqueeCursorKind.DiagonalNESW,
-        HitTarget.TopCenter or HitTarget.BottomCenter => MarqueeCursorKind.Vertical,
-        HitTarget.MiddleLeft or HitTarget.MiddleRight => MarqueeCursorKind.Horizontal,
-        HitTarget.Move => MarqueeCursorKind.Move,
+        MarqueeHitTarget.TopLeft or MarqueeHitTarget.BottomRight => MarqueeCursorKind.DiagonalNWSE,
+        MarqueeHitTarget.TopRight or MarqueeHitTarget.BottomLeft => MarqueeCursorKind.DiagonalNESW,
+        MarqueeHitTarget.TopCenter or MarqueeHitTarget.BottomCenter => MarqueeCursorKind.Vertical,
+        MarqueeHitTarget.MiddleLeft or MarqueeHitTarget.MiddleRight => MarqueeCursorKind.Horizontal,
+        MarqueeHitTarget.Move => MarqueeCursorKind.Move,
         _ => MarqueeCursorKind.Default,
     };
 
@@ -60,17 +60,17 @@ internal static class MarqueeSelectionGeometry
     /// ハンドル位置はヒットテスト・nudge のカーソル追従先・描画（ハンドル矩形の中心）で共通利用する（DRY 原則）。<br/>
     /// 描画側は本メソッドからハンドル中心位置を取得し、ハンドルサイズ分を展開して描画する。<br/>
     /// </remarks>
-    internal static EsPoint GetHandlePosition(EsRect rect, HitTarget handle) => handle switch
+    internal static EsPoint GetHandlePosition(EsRect rect, MarqueeHitTarget handle) => handle switch
     {
-        HitTarget.TopLeft => rect.TopLeft,
-        HitTarget.TopCenter => new EsPoint(rect.Center.X, rect.Y),
-        HitTarget.TopRight => rect.TopRight,
-        HitTarget.MiddleLeft => new EsPoint(rect.X, rect.Center.Y),
-        HitTarget.MiddleRight => new EsPoint(rect.Right, rect.Center.Y),
-        HitTarget.BottomLeft => rect.BottomLeft,
-        HitTarget.BottomCenter => new EsPoint(rect.Center.X, rect.Bottom),
-        HitTarget.BottomRight => rect.BottomRight,
-        HitTarget.Move => rect.Center,
+        MarqueeHitTarget.TopLeft => rect.TopLeft,
+        MarqueeHitTarget.TopCenter => new EsPoint(rect.Center.X, rect.Y),
+        MarqueeHitTarget.TopRight => rect.TopRight,
+        MarqueeHitTarget.MiddleLeft => new EsPoint(rect.X, rect.Center.Y),
+        MarqueeHitTarget.MiddleRight => new EsPoint(rect.Right, rect.Center.Y),
+        MarqueeHitTarget.BottomLeft => rect.BottomLeft,
+        MarqueeHitTarget.BottomCenter => new EsPoint(rect.Center.X, rect.Bottom),
+        MarqueeHitTarget.BottomRight => rect.BottomRight,
+        MarqueeHitTarget.Move => rect.Center,
         _ => rect.BottomRight,
     };
 
@@ -111,17 +111,17 @@ internal static class MarqueeSelectionGeometry
     /// <param name="handle">アクティブなハンドル。</param>
     /// <returns>境界内に収めた矩形。</returns>
     /// <remarks>
-    /// <see cref="HitTarget.Move"/> の場合は矩形全体が境界内に収まるようにシフトする（サイズは維持）。<br/>
+    /// <see cref="MarqueeHitTarget.Move"/> の場合は矩形全体が境界内に収まるようにシフトする（サイズは維持）。<br/>
     /// それ以外のハンドル変形は固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限する。
     /// </remarks>
-    internal static EsRect ClampRectToBounds(EsRect rect, EsRect bounds, HitTarget handle)
+    internal static EsRect ClampRectToBounds(EsRect rect, EsRect bounds, MarqueeHitTarget handle)
     {
         double l = rect.X;
         double t = rect.Y;
         double r = rect.Right;
         double b = rect.Bottom;
 
-        if (handle == HitTarget.Move)
+        if (handle == MarqueeHitTarget.Move)
         {
             double shiftX = l < bounds.X ? bounds.X - l : (r > bounds.Right ? bounds.Right - r : 0);
             double shiftY = t < bounds.Y ? bounds.Y - t : (b > bounds.Bottom ? bounds.Bottom - b : 0);
@@ -160,7 +160,7 @@ internal static class MarqueeSelectionGeometry
     /// ハンドルを反対側までドラッグした場合（l&gt;r または t&gt;b）、矩形を反転（正規化）する。<br/>
     /// 最小サイズは幅・高さが <paramref name="minSize"/> 未満にならないよう保証する。
     /// </remarks>
-    internal static EsRect ComputeDragRect(EsRect original, double dx, double dy, HitTarget handle, double minSize)
+    internal static EsRect ComputeDragRect(EsRect original, double dx, double dy, MarqueeHitTarget handle, double minSize)
     {
         double l = original.X;
         double t = original.Y;
@@ -169,15 +169,15 @@ internal static class MarqueeSelectionGeometry
 
         switch (handle)
         {
-            case HitTarget.TopLeft: l += dx; t += dy; break;
-            case HitTarget.TopCenter: t += dy; break;
-            case HitTarget.TopRight: r += dx; t += dy; break;
-            case HitTarget.MiddleLeft: l += dx; break;
-            case HitTarget.MiddleRight: r += dx; break;
-            case HitTarget.BottomLeft: l += dx; b += dy; break;
-            case HitTarget.BottomCenter: b += dy; break;
-            case HitTarget.BottomRight: r += dx; b += dy; break;
-            case HitTarget.Move: l += dx; t += dy; r += dx; b += dy; break;
+            case MarqueeHitTarget.TopLeft: l += dx; t += dy; break;
+            case MarqueeHitTarget.TopCenter: t += dy; break;
+            case MarqueeHitTarget.TopRight: r += dx; t += dy; break;
+            case MarqueeHitTarget.MiddleLeft: l += dx; break;
+            case MarqueeHitTarget.MiddleRight: r += dx; break;
+            case MarqueeHitTarget.BottomLeft: l += dx; b += dy; break;
+            case MarqueeHitTarget.BottomCenter: b += dy; break;
+            case MarqueeHitTarget.BottomRight: r += dx; b += dy; break;
+            case MarqueeHitTarget.Move: l += dx; t += dy; r += dx; b += dy; break;
         }
 
         double x1 = Math.Min(l, r);

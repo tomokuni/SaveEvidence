@@ -89,7 +89,7 @@ public class MarqueeTests
 
         Assert.False(marquee.HasSelection);
         Assert.Equal(default, marquee.SelectionRect);
-        Assert.Equal(HitTarget.None, marquee.CreateSnapshot().ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.None, marquee.CreateSnapshot().ActiveTarget);
     }
 
     // ====================================================================

@@ -134,7 +134,7 @@ public class MarqueeControlTests
         // ドラッグ中の矩形（ドメイン座標）が Snapshot に含まれる
         Assert.Equal(new EsRect(20, 20, 60, 60), duringDrag!.Snapshot.SelectionRect);
         // 新規選択ドラッグ中はハンドルなし（None）
-        Assert.Equal(HitTarget.None, duringDrag.Snapshot.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.None, duringDrag.Snapshot.ActiveTarget);
         // ドラッグ中の状態は Dragging
         Assert.Equal(MarqueeInteractionState.Dragging, duringDrag.Snapshot.State);
         // マウスボタンは押下中
@@ -161,7 +161,7 @@ public class MarqueeControlTests
 
         Assert.NotNull(duringResize);
         // リサイズドラッグ中はアクティブハンドルが TopLeft
-        Assert.Equal(HitTarget.TopLeft, duringResize!.Snapshot.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.TopLeft, duringResize!.Snapshot.ActiveTarget);
         // リサイズ後の矩形（ドメイン座標）が Snapshot に含まれる
         Assert.Equal(new EsRect(30, 30, 120, 100), duringResize.Snapshot.SelectionRect);
         // リサイズドラッグ中の状態は Dragging

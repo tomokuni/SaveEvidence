@@ -112,7 +112,7 @@ stateDiagram-v2
 | `src/Contract/IMarqueeEffects.cs` | `IMarqueeEffects` | public | 効果の適用先（フォーカス・再描画・カーソル操作・カーソル形状・ポインターキャプチャ・座標変換） |
 | `src/Contract/MarqueeEffectsBase.cs` | `MarqueeEffectsBase` | public abstract | 効果の既定実装（全メンバーが virtual の空実装） |
 | `src/Drawing/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public | 描画層の順序（`Decoration` / `Handles` / `Marker` / `Label`。`Label` はテキストがある場合のみ） |
-| `src/Interaction/HitTarget.cs` | `HitTarget` | public | ヒット対象 |
+| `src/Interaction/MarqueeHitTarget.cs` | `MarqueeHitTarget` | public | ヒット対象 |
 | `src/Interaction/MarqueeCursorKind.cs` | `MarqueeCursorKind` | public | カーソル形状の種別 |
 | `src/Interaction/MarqueeInteractionState.cs` | `MarqueeInteractionState` | public | 対話状態 |
 | `src/Logging/MarqueeLogMessage.cs` | `MarqueeLogMessage` | internal | LoggerMessage 定義（入力の判断・設定変更） |

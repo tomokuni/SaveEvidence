@@ -6,7 +6,7 @@ namespace EsUtil.Feature.MarqueeCore.Interaction;
 /// <remarks>
 /// 各イベント引数（選択矩形イベント / 位置イベント）に含まれ、上位は Marquee の状態をポーリングせずイベントだけで状態を把握できる。<br/>
 /// <see cref="SelectionRect"/> は選択矩形（ドメイン座標）。ドラッグ中はドラッグ中の矩形、nudge 中は nudge 適用後の矩形。<br/>
-/// <see cref="ActiveTarget"/> はアクティブなドラッグハンドル。新規選択・移動・未選択時は <see cref="HitTarget.None"/>。<br/>
+/// <see cref="ActiveTarget"/> はアクティブなドラッグハンドル。新規選択・移動・未選択時は <see cref="MarqueeHitTarget.None"/>。<br/>
 /// ドラッグ中かどうかは <see cref="State"/>（<see cref="MarqueeInteractionState.Dragging"/> / <see cref="MarqueeInteractionState.DraggingNudging"/>）で判定できる（同じ真実を 2 つ持たない）。<br/>
 /// <see cref="NudgeActive"/> は nudge（矢印キー微調整）中かどうか。ホストが nudge 中の表示切替等に使用できる。<br/>
 /// コア型（<see cref="EsRect"/> / <see cref="EsPoint"/>）のみに依存し、UI フレームワークへ依存しない（各 UI 実装の境界で変換する）。<br/>
@@ -22,7 +22,7 @@ namespace EsUtil.Feature.MarqueeCore.Interaction;
 public readonly record struct MarqueeSnapshot(
     MarqueeInteractionState State,
     EsRect SelectionRect,
-    HitTarget ActiveTarget,
+    MarqueeHitTarget ActiveTarget,
     EsPoint MousePosition,
     bool IsMouseDown,
     bool NudgeActive)

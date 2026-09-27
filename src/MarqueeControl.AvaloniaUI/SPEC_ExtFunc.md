@@ -295,11 +295,11 @@ marquee.Renderer = MyMarqueeRenderer.Instance;   // 描画手順の差し替え
 
 ### 5.4 型
 
-公開型は `MarqueeControl` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` とイベント引数（`SelectionRectEventArgs` / `MarqueePointEventArgs`）です。
-`HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.MarqueeCore`、名前空間 `EsUtil.Feature.MarqueeCore.Interaction`）が単一所有し、各 UI 実装で共有します。
+公開型は `MarqueeControl` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` とイベント引数（`SelectionRectEventArgs` / `MarqueePointEventArgs`）です。
+`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.MarqueeCore`、名前空間 `EsUtil.Feature.MarqueeCore.Interaction`）が単一所有し、各 UI 実装で共有します。
 コア（`Feature.MarqueeCore`）の公開型は 2 層です（内部契約（状態機械・描画入力の組み立て・幾何）は internal）。
 
-- **ホスト設定**: `MarqueeOptions` / `HitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest`
+- **ホスト設定**: `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest`
 - **公開ファサード（操作の唯一の窓口）**: `Marquee`（操作・設定・効果の適用・描画内容の解決）/ `IMarqueeEffects`（効果の適用先）/ `MarqueeEffectsBase`（効果の既定実装。必要な効果だけを override できる）
 - **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` / `MarqueeTextPlacement` / `MarqueeSelectionGeometry`
 
@@ -323,7 +323,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 | `SelectionRectEventArgs` | 選択矩形通知（`Rect` は Avalonia 型・ドメイン座標系。`Snapshot` を同梱） |
 | `MarqueePointEventArgs` | 座標通知（`Point` は Avalonia 型・ドメイン座標系。`Snapshot` を同梱） |
 | `MarqueeRenderedEventArgs` | 描画完了通知（`Context` = `DrawingContext`（描画中のみ有効）/ `Content` = `MarqueeDrawContent`（装飾・穴あけ矩形・ハンドル・マーカー・サイズラベル・座標ラベル・層の順序）） |
-| `HitTarget` enum | ドラッグハンドル種別（カーソル形状マッピング用）。コアが所有 |
+| `MarqueeHitTarget` enum | ドラッグハンドル種別（カーソル形状マッピング用）。コアが所有 |
 
 ## 6. 座標系
 

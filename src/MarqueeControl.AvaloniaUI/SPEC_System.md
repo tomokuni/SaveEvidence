@@ -23,7 +23,7 @@
     - [6.6.1 ラベルの要素配置（文字の表示）](#661-ラベルの要素配置文字の表示)
     - [6.7 MarqueeInnerRenderer（MarqueeControl.UIBase）](#67-marqueeinnerrenderermarqueecontroluibase)
     - [6.8 Marquee（コアの描画内容解決）](#68-marqueeコアの描画内容解決)
-    - [6.9 HitTarget](#69-hittarget)
+    - [6.9 MarqueeHitTarget](#69-marqueehittarget)
     - [6.10 公開イベント引数](#610-公開イベント引数)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
@@ -110,7 +110,7 @@ flowchart TB
         Fbk["MarqueeFeedback<br/>internal<br/>（コア → UI の効果。適用はファサード）"]
         Stt["MarqueeState<br/>internal sealed<br/>MarqueeState.cs<br/>（状態保持 ＋ 更新ロジック）"]
         Geo["MarqueeSelectionGeometry<br/>public static<br/>Selection/MarqueeSelectionGeometry.cs"]
-        Hdl["HitTarget<br/>public enum"]
+        Hdl["MarqueeHitTarget<br/>public enum"]
         Hdl2["MarqueeInteractionState<br/>public enum"]
         Hdl3["MarqueeSnapshot<br/>public record<br/>（EsRect / EsPoint）"]
         Frm["Marquee（partial）<br/>public の CreateRequest / ResolveContent<br/>Marquee.DrawContent.cs<br/>（1 フレーム分の描画内容の解決）"]
@@ -199,7 +199,7 @@ flowchart TB
   - カーソル操作（`ICursorService`）
   - nudge 終了の共通化（`EndNudge`。`Reset` / `SetSelection` / `MarqueeSession` から共用し、カーソル再表示を委譲）
 - **可視性**: internal（本コントロールはコアの公開ファサード（`Marquee`）と公開型（`MarqueeSnapshot`）のみを使う。`MarqueeState` / `MarqueeSession` はコアの内部実装であり参照しない）
-- **依存**: MarqueeSelectionGeometry / HitTarget / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）
+- **依存**: MarqueeSelectionGeometry / MarqueeHitTarget / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）
 
 ### 6.4 MarqueeSelectionGeometry
 
@@ -247,7 +247,7 @@ flowchart TB
 - **可視性**: `ResolveContent` / `CreateRequest` は public（UI 層・ホストが使う窓口）。内部手順（ハンドル・マーカー・ラベル・層の解決）は private
 - **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。描くかどうかの判断（非表示の設定・選択なし・nudge 中・表示可否フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）・穴あけ矩形なし）はすべて本部分が持つ
 
-### 6.9 HitTarget
+### 6.9 MarqueeHitTarget
 
 - **分類**: 公開 enum
 - **責務**: ドラッグハンドルの種別（ヒットテスト・矩形変形・nudge・描画で共通利用）

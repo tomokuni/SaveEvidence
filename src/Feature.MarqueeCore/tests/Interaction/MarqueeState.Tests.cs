@@ -80,7 +80,7 @@ public class MarqueeStateTests
         var state = new MarqueeState();
         state.StartNewSelection(new EsPoint(10, 10));
         state.UpdateDrag(new EsPoint(60, 50), 10.0, clampToBounds: false);
-        state.StartDrag(HitTarget.TopRight, new EsPoint(60, 10));
+        state.StartDrag(MarqueeHitTarget.TopRight, new EsPoint(60, 10));
         state.SetMousePosition(new EsPoint(7, 8));
         state.BeginPress();
         state.BeginNudge();
@@ -90,7 +90,7 @@ public class MarqueeStateTests
         // nudge 中は選択がドラッグより優先される（GetInteractionState の優先順位）
         Assert.Equal(MarqueeInteractionState.SelectedNudging, snapshot.State);
         Assert.Equal(new EsRect(10, 10, 50, 40), snapshot.SelectionRect);
-        Assert.Equal(HitTarget.TopRight, snapshot.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.TopRight, snapshot.ActiveTarget);
         Assert.Equal(new EsPoint(7, 8), snapshot.MousePosition);
         Assert.True(snapshot.IsMouseDown);
         Assert.True(snapshot.NudgeActive);
@@ -112,9 +112,9 @@ public class MarqueeStateTests
     public void MarqueeSnapshot_HasSelection_幅か高さが0ならfalseを返す()
     {
         // 幅のみ（高さ 0）→ 選択として無効
-        Assert.False(new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 100, 0), HitTarget.None, default, false, false).HasSelection);
+        Assert.False(new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 100, 0), MarqueeHitTarget.None, default, false, false).HasSelection);
         // 高さのみ（幅 0）→ 選択として無効
-        Assert.False(new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 0, 100), HitTarget.None, default, false, false).HasSelection);
+        Assert.False(new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 0, 100), MarqueeHitTarget.None, default, false, false).HasSelection);
     }
 
     // ====================================================================
@@ -126,7 +126,7 @@ public class MarqueeStateTests
     {
         var state = new MarqueeState();
 
-        Assert.Equal(HitTarget.None, state.HitTest(new EsPoint(0, 0), 12.0));
+        Assert.Equal(MarqueeHitTarget.None, state.HitTest(new EsPoint(0, 0), 12.0));
     }
 
     [Fact]
@@ -136,17 +136,17 @@ public class MarqueeStateTests
         state.SetSelection(new EsRect(10, 20, 100, 80));
 
         // 角（左上・右下）
-        Assert.Equal(HitTarget.TopLeft, state.HitTest(new EsPoint(11, 21), 12.0));
-        Assert.Equal(HitTarget.BottomRight, state.HitTest(new EsPoint(109, 99), 12.0));
+        Assert.Equal(MarqueeHitTarget.TopLeft, state.HitTest(new EsPoint(11, 21), 12.0));
+        Assert.Equal(MarqueeHitTarget.BottomRight, state.HitTest(new EsPoint(109, 99), 12.0));
         // 左上の近傍は角が辺（MiddleLeft/TopCenter）より優先される
-        Assert.Equal(HitTarget.TopLeft, state.HitTest(new EsPoint(14, 24), 12.0));
+        Assert.Equal(MarqueeHitTarget.TopLeft, state.HitTest(new EsPoint(14, 24), 12.0));
         // 辺（上中央・中右）
-        Assert.Equal(HitTarget.TopCenter, state.HitTest(new EsPoint(60, 20), 12.0));
-        Assert.Equal(HitTarget.MiddleRight, state.HitTest(new EsPoint(110, 60), 12.0));
+        Assert.Equal(MarqueeHitTarget.TopCenter, state.HitTest(new EsPoint(60, 20), 12.0));
+        Assert.Equal(MarqueeHitTarget.MiddleRight, state.HitTest(new EsPoint(110, 60), 12.0));
         // 矩形内 → Move
-        Assert.Equal(HitTarget.Move, state.HitTest(new EsPoint(60, 60), 12.0));
+        Assert.Equal(MarqueeHitTarget.Move, state.HitTest(new EsPoint(60, 60), 12.0));
         // 矩形外かつハンドル半径外 → None
-        Assert.Equal(HitTarget.None, state.HitTest(new EsPoint(300, 300), 12.0));
+        Assert.Equal(MarqueeHitTarget.None, state.HitTest(new EsPoint(300, 300), 12.0));
     }
 
     // ====================================================================
@@ -161,7 +161,7 @@ public class MarqueeStateTests
         state.StartNewSelection(new EsPoint(10, 20));
 
         Assert.True(state.IsDragging);
-        Assert.Equal(HitTarget.None, state.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.None, state.ActiveTarget);
         Assert.Equal(new EsPoint(10, 20), state.StartPoint);
         Assert.Equal(new EsPoint(10, 20), state.LastMousePosition);
         Assert.Equal(new EsRect(10, 20, 0, 0), state.SelectionRect);
@@ -185,12 +185,12 @@ public class MarqueeStateTests
     {
         var state = new MarqueeState();
         state.SetSelection(new EsRect(10, 20, 100, 80));
-        state.StartDrag(HitTarget.BottomRight, new EsPoint(110, 100));
+        state.StartDrag(MarqueeHitTarget.BottomRight, new EsPoint(110, 100));
 
         state.UpdateDrag(new EsPoint(130, 130), 10.0, clampToBounds: false);
 
         Assert.Equal(new EsRect(10, 20, 120, 110), state.SelectionRect);
-        Assert.Equal(HitTarget.BottomRight, state.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.BottomRight, state.ActiveTarget);
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public class MarqueeStateTests
     public void UpdateDrag_境界内クリップ時はMoveで矩形全体がシフトされる()
     {
         var state = CreateBounded(new EsRect(180, 180, 50, 40));
-        state.StartDrag(HitTarget.Move, new EsPoint(200, 200));
+        state.StartDrag(MarqueeHitTarget.Move, new EsPoint(200, 200));
 
         state.UpdateDrag(new EsPoint(260, 260), 10.0, clampToBounds: true);
 
@@ -222,12 +222,12 @@ public class MarqueeStateTests
     {
         var state = new MarqueeState();
         state.SetSelection(new EsRect(10, 20, 100, 80));
-        state.StartDrag(HitTarget.TopLeft, new EsPoint(10, 20));
+        state.StartDrag(MarqueeHitTarget.TopLeft, new EsPoint(10, 20));
 
         state.EndDrag();
 
         Assert.False(state.IsDragging);
-        Assert.Equal(HitTarget.None, state.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.None, state.ActiveTarget);
         // 矩形は維持される（ドラッグ終了は選択を破棄しない）
         Assert.Equal(new EsRect(10, 20, 100, 80), state.SelectionRect);
     }
@@ -269,7 +269,7 @@ public class MarqueeStateTests
     {
         var state = new MarqueeState();
         state.SetSelection(new EsRect(10, 20, 100, 80));
-        state.StartDrag(HitTarget.BottomRight, new EsPoint(110, 100));
+        state.StartDrag(MarqueeHitTarget.BottomRight, new EsPoint(110, 100));
 
         state.Nudge(4, 6, 10.0, clampToBounds: false);
 
@@ -322,7 +322,7 @@ public class MarqueeStateTests
     {
         var state = new MarqueeState();
         state.SetSelection(new EsRect(10, 20, 100, 80));
-        state.StartDrag(HitTarget.TopRight, new EsPoint(110, 20));
+        state.StartDrag(MarqueeHitTarget.TopRight, new EsPoint(110, 20));
 
         Assert.Equal(new EsPoint(110, 20), state.GetMarkerPosition());
     }
@@ -332,7 +332,7 @@ public class MarqueeStateTests
     {
         var state = new MarqueeState();
         state.SetSelection(new EsRect(10, 20, 100, 80));
-        state.StartDrag(HitTarget.Move, new EsPoint(45, 67));
+        state.StartDrag(MarqueeHitTarget.Move, new EsPoint(45, 67));
 
         Assert.Equal(new EsPoint(45, 67), state.GetMarkerPosition());
     }
@@ -347,13 +347,13 @@ public class MarqueeStateTests
         var state = new MarqueeState();
         state.StartNewSelection(new EsPoint(10, 20));
         state.UpdateDrag(new EsPoint(60, 60), 10.0, clampToBounds: false);
-        state.StartDrag(HitTarget.Move, new EsPoint(5, 6));
+        state.StartDrag(MarqueeHitTarget.Move, new EsPoint(5, 6));
         state.BeginPress();
         state.SuppressEcho(new EsPoint(1, 2));
 
         state.Reset();
 
-        Assert.Equal(HitTarget.None, state.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.None, state.ActiveTarget);
         Assert.False(state.HasSelection);
         Assert.False(state.IsDragging);
         Assert.False(state.IsMouseDown);
@@ -379,13 +379,13 @@ public class MarqueeStateTests
     {
         var state = new MarqueeState();
         state.SetSelection(new EsRect(0, 0, 10, 10));
-        state.StartDrag(HitTarget.TopLeft, new EsPoint(0, 0));
+        state.StartDrag(MarqueeHitTarget.TopLeft, new EsPoint(0, 0));
 
         state.SetSelection(new EsRect(30, 40, 50, 60));
 
         Assert.Equal(new EsRect(30, 40, 50, 60), state.SelectionRect);
         Assert.False(state.IsDragging);
-        Assert.Equal(HitTarget.None, state.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.None, state.ActiveTarget);
     }
 
     [Fact]

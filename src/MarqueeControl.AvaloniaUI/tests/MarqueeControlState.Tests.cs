@@ -103,7 +103,7 @@ public class MarqueeControlStateTests
         var snap0 = control.CurrentSnapshot;
         Assert.Equal(MarqueeInteractionState.NoSelection, snap0.State);
         Assert.Equal(default, snap0.SelectionRect);
-        Assert.Equal(HitTarget.None, snap0.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.None, snap0.ActiveTarget);
         Assert.False(snap0.HasSelection);
         Assert.False(snap0.IsMouseDown);
         Assert.False(snap0.NudgeActive);
@@ -121,18 +121,18 @@ public class MarqueeControlStateTests
     public void MarqueeSnapshot_HasSelection_幅か高さが0ならfalseを返す()
     {
         // Width>0 かつ Height=0（幅のみの矩形は選択として無効）
-        var snap1 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 100, 0), HitTarget.None, default, false, false);
+        var snap1 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 100, 0), MarqueeHitTarget.None, default, false, false);
         Assert.False(snap1.HasSelection);
 
         // Width=0 かつ Height>0（高さのみの矩形は選択として無効）
-        var snap2 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 0, 100), HitTarget.None, default, false, false);
+        var snap2 = new MarqueeSnapshot(MarqueeInteractionState.Selected, new EsRect(0, 0, 0, 100), MarqueeHitTarget.None, default, false, false);
         Assert.False(snap2.HasSelection);
     }
 
     [Fact]
     public void MarqueeSnapshot_MousePositionが取得できる()
     {
-        var snap = new MarqueeSnapshot(MarqueeInteractionState.Selected, default, HitTarget.None, new EsPoint(5, 7), false, false);
+        var snap = new MarqueeSnapshot(MarqueeInteractionState.Selected, default, MarqueeHitTarget.None, new EsPoint(5, 7), false, false);
 
         Assert.Equal(new EsPoint(5, 7), snap.MousePosition);
     }
@@ -270,7 +270,7 @@ public class MarqueeControlStateTests
         // Snapshot はイベント引数の Rect と同一の選択矩形（ドメイン座標）を保持する
         Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Snapshot.SelectionRect);
         // 選択復元後はハンドルなし（新規選択・移動・未選択時は None）
-        Assert.Equal(HitTarget.None, raised.Snapshot.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.None, raised.Snapshot.ActiveTarget);
         // 選択確定後の状態は Selected
         Assert.Equal(MarqueeInteractionState.Selected, raised.Snapshot.State);
         // マウスボタンは押下中ではない

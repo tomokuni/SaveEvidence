@@ -151,7 +151,7 @@ public class MarqueeControlTests
 
         Assert.Equal(MarqueeInteractionState.NoSelection, snapshot.State);
         Assert.Equal(default, snapshot.SelectionRect);
-        Assert.Equal(HitTarget.None, snapshot.ActiveTarget);
+        Assert.Equal(MarqueeHitTarget.None, snapshot.ActiveTarget);
         Assert.False(snapshot.HasSelection);
         Assert.False(snapshot.IsMouseDown);
         Assert.False(snapshot.NudgeActive);

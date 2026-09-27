@@ -219,7 +219,7 @@ classDiagram
         +ICoordTransform Port
         +GetInteractionState() MarqueeInteractionState
         +CreateSnapshot(mousePosition) MarqueeSnapshot
-        +HitTest(pos, radius) HitTarget
+        +HitTest(pos, radius) MarqueeHitTarget
         +StartNewSelection(pos) void
         +StartDrag(handle, pos) void
         +UpdateDrag(pos, minSize, clamp) void

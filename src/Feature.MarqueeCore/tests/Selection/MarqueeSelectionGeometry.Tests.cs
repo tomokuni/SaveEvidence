@@ -38,15 +38,15 @@ public class MarqueeSelectionGeometryTests
     {
         var rect = new EsRect(10, 20, 100, 80); // Right=110 Bottom=100 Center=(60,60)
 
-        Assert.Equal(new EsPoint(10, 20), MarqueeSelectionGeometry.GetHandlePosition(rect, HitTarget.TopLeft));
-        Assert.Equal(new EsPoint(60, 20), MarqueeSelectionGeometry.GetHandlePosition(rect, HitTarget.TopCenter));
-        Assert.Equal(new EsPoint(110, 20), MarqueeSelectionGeometry.GetHandlePosition(rect, HitTarget.TopRight));
-        Assert.Equal(new EsPoint(10, 60), MarqueeSelectionGeometry.GetHandlePosition(rect, HitTarget.MiddleLeft));
-        Assert.Equal(new EsPoint(110, 60), MarqueeSelectionGeometry.GetHandlePosition(rect, HitTarget.MiddleRight));
-        Assert.Equal(new EsPoint(10, 100), MarqueeSelectionGeometry.GetHandlePosition(rect, HitTarget.BottomLeft));
-        Assert.Equal(new EsPoint(60, 100), MarqueeSelectionGeometry.GetHandlePosition(rect, HitTarget.BottomCenter));
-        Assert.Equal(new EsPoint(110, 100), MarqueeSelectionGeometry.GetHandlePosition(rect, HitTarget.BottomRight));
-        Assert.Equal(new EsPoint(60, 60), MarqueeSelectionGeometry.GetHandlePosition(rect, HitTarget.Move));
+        Assert.Equal(new EsPoint(10, 20), MarqueeSelectionGeometry.GetHandlePosition(rect, MarqueeHitTarget.TopLeft));
+        Assert.Equal(new EsPoint(60, 20), MarqueeSelectionGeometry.GetHandlePosition(rect, MarqueeHitTarget.TopCenter));
+        Assert.Equal(new EsPoint(110, 20), MarqueeSelectionGeometry.GetHandlePosition(rect, MarqueeHitTarget.TopRight));
+        Assert.Equal(new EsPoint(10, 60), MarqueeSelectionGeometry.GetHandlePosition(rect, MarqueeHitTarget.MiddleLeft));
+        Assert.Equal(new EsPoint(110, 60), MarqueeSelectionGeometry.GetHandlePosition(rect, MarqueeHitTarget.MiddleRight));
+        Assert.Equal(new EsPoint(10, 100), MarqueeSelectionGeometry.GetHandlePosition(rect, MarqueeHitTarget.BottomLeft));
+        Assert.Equal(new EsPoint(60, 100), MarqueeSelectionGeometry.GetHandlePosition(rect, MarqueeHitTarget.BottomCenter));
+        Assert.Equal(new EsPoint(110, 100), MarqueeSelectionGeometry.GetHandlePosition(rect, MarqueeHitTarget.BottomRight));
+        Assert.Equal(new EsPoint(60, 60), MarqueeSelectionGeometry.GetHandlePosition(rect, MarqueeHitTarget.Move));
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class MarqueeSelectionGeometryTests
     {
         var rect = new EsRect(10, 20, 100, 80);
 
-        Assert.Equal(rect.BottomRight, MarqueeSelectionGeometry.GetHandlePosition(rect, (HitTarget)999));
+        Assert.Equal(rect.BottomRight, MarqueeSelectionGeometry.GetHandlePosition(rect, (MarqueeHitTarget)999));
     }
 
     // ====================================================================
@@ -121,7 +121,7 @@ public class MarqueeSelectionGeometryTests
         // 左下方向へはみ出した矩形（Move 中）→ 境界内へシフト
         var rect = new EsRect(180, 80, 50, 40); // Right=230 Bottom=120
 
-        var result = MarqueeSelectionGeometry.ClampRectToBounds(rect, bounds, HitTarget.Move);
+        var result = MarqueeSelectionGeometry.ClampRectToBounds(rect, bounds, MarqueeHitTarget.Move);
 
         Assert.Equal(new EsRect(150, 60, 50, 40), result); // サイズは維持・シフトのみ
     }
@@ -133,7 +133,7 @@ public class MarqueeSelectionGeometryTests
         // TopLeft ハンドルが左端・上端を超える → 固定角（右下）を維持し、左・上のみクランプ
         var rect = new EsRect(-20, -10, 100, 80); // Right=80 Bottom=70
 
-        var result = MarqueeSelectionGeometry.ClampRectToBounds(rect, bounds, HitTarget.TopLeft);
+        var result = MarqueeSelectionGeometry.ClampRectToBounds(rect, bounds, MarqueeHitTarget.TopLeft);
 
         Assert.Equal(new EsRect(0, 0, 80, 70), result);
     }
@@ -146,7 +146,7 @@ public class MarqueeSelectionGeometryTests
     public void ComputeDragRect_TopLeftハンドルで変形する()
     {
         // 元矩形 (10,20,100,80)、TopLeft を (dx=30, dy=10) 移動 → l=40, t=30, r=110, b=100 → (40,30,70,70)
-        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 30, 10, HitTarget.TopLeft, 10);
+        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 30, 10, MarqueeHitTarget.TopLeft, 10);
         Assert.Equal(new EsRect(40, 30, 70, 70), result);
     }
 
@@ -156,16 +156,16 @@ public class MarqueeSelectionGeometryTests
         var rect = new EsRect(10, 20, 100, 80);
 
         // TopCenter は上辺のみ、MiddleLeft は左辺のみを動かす
-        Assert.Equal(new EsRect(10, 30, 100, 70), MarqueeSelectionGeometry.ComputeDragRect(rect, 0, 10, HitTarget.TopCenter, 10));
-        Assert.Equal(new EsRect(20, 20, 90, 80), MarqueeSelectionGeometry.ComputeDragRect(rect, 10, 0, HitTarget.MiddleLeft, 10));
-        Assert.Equal(new EsRect(10, 20, 110, 80), MarqueeSelectionGeometry.ComputeDragRect(rect, 10, 0, HitTarget.MiddleRight, 10));
-        Assert.Equal(new EsRect(10, 20, 100, 90), MarqueeSelectionGeometry.ComputeDragRect(rect, 0, 10, HitTarget.BottomCenter, 10));
+        Assert.Equal(new EsRect(10, 30, 100, 70), MarqueeSelectionGeometry.ComputeDragRect(rect, 0, 10, MarqueeHitTarget.TopCenter, 10));
+        Assert.Equal(new EsRect(20, 20, 90, 80), MarqueeSelectionGeometry.ComputeDragRect(rect, 10, 0, MarqueeHitTarget.MiddleLeft, 10));
+        Assert.Equal(new EsRect(10, 20, 110, 80), MarqueeSelectionGeometry.ComputeDragRect(rect, 10, 0, MarqueeHitTarget.MiddleRight, 10));
+        Assert.Equal(new EsRect(10, 20, 100, 90), MarqueeSelectionGeometry.ComputeDragRect(rect, 0, 10, MarqueeHitTarget.BottomCenter, 10));
     }
 
     [Fact]
     public void ComputeDragRect_Moveで全体を平行移動する()
     {
-        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 5, -10, HitTarget.Move, 10);
+        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 5, -10, MarqueeHitTarget.Move, 10);
         Assert.Equal(new EsRect(15, 10, 100, 80), result);
     }
 
@@ -173,7 +173,7 @@ public class MarqueeSelectionGeometryTests
     public void ComputeDragRect_反対側までドラッグすると矩形が反転される()
     {
         // TopLeft を右へ移動し l > r になる → 反転（正規化）
-        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 200, 0, HitTarget.TopLeft, 10);
+        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), 200, 0, MarqueeHitTarget.TopLeft, 10);
         // l=210, r=110 → x1=110, x2=210
         Assert.Equal(new EsRect(110, 20, 100, 80), result);
     }
@@ -182,7 +182,7 @@ public class MarqueeSelectionGeometryTests
     public void ComputeDragRect_最小サイズ未満は拡張される()
     {
         // BottomRight を (dx=-95, dy=-95): r=15, b=5, l=10, t=20 → x1=10,x2=15(幅5)→最小10へ、y1=5,y2=20(高さ15)維持
-        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), -95, -95, HitTarget.BottomRight, 10);
+        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 100, 80), -95, -95, MarqueeHitTarget.BottomRight, 10);
         Assert.Equal(new EsRect(10, 5, 10, 15), result);
     }
 
@@ -190,7 +190,7 @@ public class MarqueeSelectionGeometryTests
     public void ComputeDragRect_渡された最小サイズをそのまま使う()
     {
         // 最小サイズの補正（下限 1.0）は設定値の生成時に済ませる（規則は Marquee.Limits が単一所有する）
-        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 0.2, 0.2), 0, 0, HitTarget.Move, 10);
+        var result = MarqueeSelectionGeometry.ComputeDragRect(new EsRect(10, 20, 0.2, 0.2), 0, 0, MarqueeHitTarget.Move, 10);
 
         Assert.Equal(10.0, result.Width);
         Assert.Equal(10.0, result.Height);
@@ -228,9 +228,9 @@ public class MarqueeSelectionGeometryTests
         // None / Move を除く 8 方向
         Assert.Equal(
             [
-                HitTarget.TopLeft, HitTarget.TopCenter, HitTarget.TopRight,
-                HitTarget.MiddleLeft, HitTarget.MiddleRight,
-                HitTarget.BottomLeft, HitTarget.BottomCenter, HitTarget.BottomRight,
+                MarqueeHitTarget.TopLeft, MarqueeHitTarget.TopCenter, MarqueeHitTarget.TopRight,
+                MarqueeHitTarget.MiddleLeft, MarqueeHitTarget.MiddleRight,
+                MarqueeHitTarget.BottomLeft, MarqueeHitTarget.BottomCenter, MarqueeHitTarget.BottomRight,
             ],
             MarqueeSelectionGeometry.DirectionalHandles);
     }
@@ -243,32 +243,32 @@ public class MarqueeSelectionGeometryTests
     public void ToCursorKind_対角と辺のハンドルが同じ種別へ解決する()
     {
         // 対角のハンドルは同じ向きのカーソル（左上 = 右下 / 右上 = 左下）
-        Assert.Equal(MarqueeCursorKind.DiagonalNWSE, MarqueeSelectionGeometry.ToCursorKind(HitTarget.TopLeft));
-        Assert.Equal(MarqueeCursorKind.DiagonalNWSE, MarqueeSelectionGeometry.ToCursorKind(HitTarget.BottomRight));
-        Assert.Equal(MarqueeCursorKind.DiagonalNESW, MarqueeSelectionGeometry.ToCursorKind(HitTarget.TopRight));
-        Assert.Equal(MarqueeCursorKind.DiagonalNESW, MarqueeSelectionGeometry.ToCursorKind(HitTarget.BottomLeft));
+        Assert.Equal(MarqueeCursorKind.DiagonalNWSE, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.TopLeft));
+        Assert.Equal(MarqueeCursorKind.DiagonalNWSE, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.BottomRight));
+        Assert.Equal(MarqueeCursorKind.DiagonalNESW, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.TopRight));
+        Assert.Equal(MarqueeCursorKind.DiagonalNESW, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.BottomLeft));
 
         // 辺のハンドルは向きごとのカーソル
-        Assert.Equal(MarqueeCursorKind.Vertical, MarqueeSelectionGeometry.ToCursorKind(HitTarget.TopCenter));
-        Assert.Equal(MarqueeCursorKind.Vertical, MarqueeSelectionGeometry.ToCursorKind(HitTarget.BottomCenter));
-        Assert.Equal(MarqueeCursorKind.Horizontal, MarqueeSelectionGeometry.ToCursorKind(HitTarget.MiddleLeft));
-        Assert.Equal(MarqueeCursorKind.Horizontal, MarqueeSelectionGeometry.ToCursorKind(HitTarget.MiddleRight));
+        Assert.Equal(MarqueeCursorKind.Vertical, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.TopCenter));
+        Assert.Equal(MarqueeCursorKind.Vertical, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.BottomCenter));
+        Assert.Equal(MarqueeCursorKind.Horizontal, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.MiddleLeft));
+        Assert.Equal(MarqueeCursorKind.Horizontal, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.MiddleRight));
 
         // 矩形内は移動
-        Assert.Equal(MarqueeCursorKind.Move, MarqueeSelectionGeometry.ToCursorKind(HitTarget.Move));
+        Assert.Equal(MarqueeCursorKind.Move, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.Move));
     }
 
     [Fact]
     public void ToCursorKind_ハンドル外は既定の種別を返す()
-        => Assert.Equal(MarqueeCursorKind.Default, MarqueeSelectionGeometry.ToCursorKind(HitTarget.None));
+        => Assert.Equal(MarqueeCursorKind.Default, MarqueeSelectionGeometry.ToCursorKind(MarqueeHitTarget.None));
 
     [Fact]
     public void ToCursorKind_全ハンドルが既定以外の種別へ解決する()
     {
         // None 以外の全ハンドルが Default 以外へ解決する（マッピング漏れの検出）
-        foreach (var handle in Enum.GetValues<HitTarget>())
+        foreach (var handle in Enum.GetValues<MarqueeHitTarget>())
         {
-            if (handle == HitTarget.None)
+            if (handle == MarqueeHitTarget.None)
             {
                 continue;
             }

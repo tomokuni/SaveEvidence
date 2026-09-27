@@ -40,8 +40,8 @@ internal sealed class MarqueeState
     /// <summary>マウスボタン（左）が押下中かどうか。</summary>
     internal bool IsMouseDown { get; private set; }
 
-    /// <summary>アクティブなドラッグハンドル（リサイズ・移動）。<see cref="HitTarget.None"/> は新規選択。</summary>
-    internal HitTarget ActiveTarget { get; private set; }
+    /// <summary>アクティブなドラッグハンドル（リサイズ・移動）。<see cref="MarqueeHitTarget.None"/> は新規選択。</summary>
+    internal MarqueeHitTarget ActiveTarget { get; private set; }
 
     /// <summary>nudge（矢印キー微調整）中かどうか。</summary>
     internal bool NudgeActive { get; private set; }
@@ -113,7 +113,7 @@ internal sealed class MarqueeState
         LastMousePosition = default;
         IsDragging = false;
         IsMouseDown = false;
-        ActiveTarget = HitTarget.None;
+        ActiveTarget = MarqueeHitTarget.None;
         _dragStartRect = default;
         _dragStartPoint = default;
         _suppressEchoAt = null;
@@ -127,7 +127,7 @@ internal sealed class MarqueeState
         EndNudge();
         SelectionRect = rect;
         IsDragging = false;
-        ActiveTarget = HitTarget.None;
+        ActiveTarget = MarqueeHitTarget.None;
     }
 
     /// <summary>nudge 状態を開始する。</summary>
@@ -191,27 +191,27 @@ internal sealed class MarqueeState
     /// <summary>指定座標がどのドラッグハンドルに当たるかを判定する。</summary>
     /// <param name="pos">判定する座標（ドメイン座標）。</param>
     /// <param name="hitRadius">ヒットテスト半径（ドメイン座標）。</param>
-    /// <returns>ヒットしたハンドル種別。選択矩形が空の場合は常に <see cref="HitTarget.None"/>。</returns>
+    /// <returns>ヒットしたハンドル種別。選択矩形が空の場合は常に <see cref="MarqueeHitTarget.None"/>。</returns>
     /// <remarks>
     /// ハンドル位置は <see cref="MarqueeSelectionGeometry.GetHandlePosition"/> から取得し、各ハンドルへの距離判定でヒットを確定する（ハンドル位置計算の DRY）。<br/>
     /// 判定順は「角（4 方向）→ 辺（4 方向）→ 矩形内（Move）」で、角が辺より優先される。
     /// </remarks>
-    internal HitTarget HitTest(EsPoint pos, double hitRadius)
+    internal MarqueeHitTarget HitTest(EsPoint pos, double hitRadius)
     {
         var r = SelectionRect;
-        if (!HasSelection) return HitTarget.None;
+        if (!HasSelection) return MarqueeHitTarget.None;
 
         // 8 方向のハンドル位置を列挙してヒット判定する（角優先 → 辺 → Move の順）
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, HitTarget.TopLeft), hitRadius)) return HitTarget.TopLeft;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, HitTarget.TopRight), hitRadius)) return HitTarget.TopRight;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, HitTarget.BottomLeft), hitRadius)) return HitTarget.BottomLeft;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, HitTarget.BottomRight), hitRadius)) return HitTarget.BottomRight;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, HitTarget.TopCenter), hitRadius)) return HitTarget.TopCenter;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, HitTarget.BottomCenter), hitRadius)) return HitTarget.BottomCenter;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, HitTarget.MiddleLeft), hitRadius)) return HitTarget.MiddleLeft;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, HitTarget.MiddleRight), hitRadius)) return HitTarget.MiddleRight;
-        if (r.Contains(pos)) return HitTarget.Move;
-        return HitTarget.None;
+        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.TopLeft), hitRadius)) return MarqueeHitTarget.TopLeft;
+        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.TopRight), hitRadius)) return MarqueeHitTarget.TopRight;
+        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.BottomLeft), hitRadius)) return MarqueeHitTarget.BottomLeft;
+        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.BottomRight), hitRadius)) return MarqueeHitTarget.BottomRight;
+        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.TopCenter), hitRadius)) return MarqueeHitTarget.TopCenter;
+        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.BottomCenter), hitRadius)) return MarqueeHitTarget.BottomCenter;
+        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.MiddleLeft), hitRadius)) return MarqueeHitTarget.MiddleLeft;
+        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.MiddleRight), hitRadius)) return MarqueeHitTarget.MiddleRight;
+        if (r.Contains(pos)) return MarqueeHitTarget.Move;
+        return MarqueeHitTarget.None;
     }
 
     /// <summary>新規選択のドラッグを開始する。</summary>
@@ -221,7 +221,7 @@ internal sealed class MarqueeState
         StartPoint = startPos;
         SelectionRect = new EsRect(startPos.X, startPos.Y, 0, 0);
         IsDragging = true;
-        ActiveTarget = HitTarget.None;
+        ActiveTarget = MarqueeHitTarget.None;
         _dragStartPoint = startPos;
         _dragStartRect = SelectionRect;
         LastMousePosition = startPos;
@@ -230,7 +230,7 @@ internal sealed class MarqueeState
     /// <summary>既存ハンドルによるリサイズ/移動のドラッグを開始する。</summary>
     /// <param name="handle">アクティブにするハンドル。</param>
     /// <param name="position">現在のマウス位置（ドメイン座標）。</param>
-    internal void StartDrag(HitTarget handle, EsPoint position)
+    internal void StartDrag(MarqueeHitTarget handle, EsPoint position)
     {
         ActiveTarget = handle;
         IsDragging = true;
@@ -244,7 +244,7 @@ internal sealed class MarqueeState
     /// <remarks>
     /// リサイズハンドル（8 方向）の押下時に使う（ポインター・矩形の角・追従位置を一体にする）。<br/>
     /// 基準点をハンドル点へ揃えることで、スナップ後の最初の移動がハンドル点からの差分として正しく矩形へ反映される。<br/>
-    /// 移動（<see cref="HitTarget.Move"/>）は掴んだ位置を維持するのが自然なためスナップしない。
+    /// 移動（<see cref="MarqueeHitTarget.Move"/>）は掴んだ位置を維持するのが自然なためスナップしない。
     /// </remarks>
     internal void SnapToHandle(EsPoint position)
     {
@@ -266,7 +266,7 @@ internal sealed class MarqueeState
     {
         var bounds = GetBoundsRect(clampToBounds);
 
-        if (ActiveTarget != HitTarget.None)
+        if (ActiveTarget != MarqueeHitTarget.None)
         {
             // ハンドルによるリサイズ/移動（変形・クリップは MarqueeSelectionGeometry へ委譲・単一所有）
             double dx = currentPos.X - _dragStartPoint.X;
@@ -296,7 +296,7 @@ internal sealed class MarqueeState
     internal void EndDrag()
     {
         IsDragging = false;
-        ActiveTarget = HitTarget.None;
+        ActiveTarget = MarqueeHitTarget.None;
     }
 
     /// <summary>キーボード微調整（カーソルキー 1 回分）を適用する。</summary>
@@ -315,7 +315,7 @@ internal sealed class MarqueeState
     {
         var bounds = GetBoundsRect(clampToBounds);
 
-        if (ActiveTarget != HitTarget.None)
+        if (ActiveTarget != MarqueeHitTarget.None)
         {
             // ハンドルドラッグ中 → ハンドル方向にリサイズ（変形・クリップは MarqueeSelectionGeometry へ委譲・単一所有）
             var rect = MarqueeSelectionGeometry.ComputeDragRect(SelectionRect, dx, dy, ActiveTarget, minSize);
@@ -357,9 +357,9 @@ internal sealed class MarqueeState
         // ハンドル操作中:
         // - リサイズ（8 方向）: ドラッグ中のハンドル位置（ポインタ・矩形の角・追従位置を一体にする）
         // - 移動（Move）: 掴んだ位置（マウス位置）を追従（追従位置が矩形中心に飛ばず、マウスポインタに追従する）
-        if (ActiveTarget != HitTarget.None)
+        if (ActiveTarget != MarqueeHitTarget.None)
         {
-            return ActiveTarget == HitTarget.Move
+            return ActiveTarget == MarqueeHitTarget.Move
                 ? LastMousePosition
                 : MarqueeSelectionGeometry.GetHandlePosition(SelectionRect, ActiveTarget);
         }
