@@ -1,16 +1,15 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Core.Drawing;
 using DrawingColor = System.Drawing.Color;
 
 
 namespace EsUtil.Feature.Marquee.Presenter;
 
-/// <summary>コアのテキスト配置から、ラベル要素の配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
+/// <summary>描画層のテキスト配置から、ラベル要素の配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>
-/// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。コア（<see cref="EsUtil.Feature.Marquee.Core.Marquee.ResolveContent"/>）は<br/>
+/// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。描画層（<see cref="MarqueePresenter"/>）は<br/>
 /// 文言・基準点・アライン・領域を決めるが、実際の配置矩形はテキストの実寸に依存するため、<br/>
 /// 実寸測定（描画 API 依存）を UI 層から受け取って要素の矩形へ変換する。<br/>
-/// 体裁（内側余白・フォントサイズ・色）は描画の設定（<see cref="MarqueePaint"/>）が単一所有する（コアは値を持たない）。<br/>
+/// 体裁（内側余白・フォントサイズ・色）は外観（<see cref="MarqueeAppearance"/>）が単一所有する。<br/>
 /// <br/>
 /// <b>順序は本クラスが所有する</b>: サイズラベル → カーソル座標ラベルの順に並べる<br/>
 /// （文字を要素として置く場合、要素は親より後に描かれるため常に最上位になる）。<br/>
@@ -19,19 +18,23 @@ namespace EsUtil.Feature.Marquee.Presenter;
 public static class MarqueeLabelPlan
 {
     /// <summary>ラベル要素の配置指示を解決する（描画順に並ぶ）。</summary>
-    /// <param name="content">コアが解決した描画内容（文言・基準点・層の順序を持つ）。</param>
-    /// <param name="paint">描画に使う設定（色・フォントサイズ・内側余白。本層が単一所有する）。null 不可。</param>
+    /// <param name="sizeLabel">サイズラベルのテキスト配置。表示しない場合は null。</param>
+    /// <param name="coordLabel">カーソル座標ラベルのテキスト配置。表示しない場合は null。</param>
+    /// <param name="appearance">外観（色・フォントサイズ・内側余白。本層が単一所有する）。null 不可。</param>
     /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
     /// <returns>配置するラベル要素の一覧（サイズラベル → カーソル座標ラベルの順）。どちらも無い場合は空。</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="paint"/> または <paramref name="measureText"/> が null の場合。</exception>
-    /// <remarks>文言・位置はコアが、色・フォントサイズ・内側余白は描画の設定が単一所有する（本クラスは実寸の反映のみ）。</remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="appearance"/> または <paramref name="measureText"/> が null の場合。</exception>
+    /// <remarks>文言・位置は描画層が、色・フォントサイズ・内側余白は外観が単一所有する（本クラスは実寸の反映のみ）。</remarks>
     public static IReadOnlyList<MarqueeLabelPlacement> Resolve(
-        in MarqueeDrawContent content, MarqueePaint paint, Func<string, double, EsSize> measureText)
+        MarqueeTextPlacement? sizeLabel,
+        MarqueeTextPlacement? coordLabel,
+        MarqueeAppearance appearance,
+        Func<string, double, EsSize> measureText)
     {
-        ArgumentNullException.ThrowIfNull(paint);
+        ArgumentNullException.ThrowIfNull(appearance);
         ArgumentNullException.ThrowIfNull(measureText);
 
-        if (content.SizeLabelText is null && content.CoordLabelText is null)
+        if (sizeLabel is null && coordLabel is null)
         {
             // 描画のたびに呼ばれるため、要素が無い場合は一覧を生成しない
             return [];
@@ -39,27 +42,29 @@ public static class MarqueeLabelPlan
 
         var elements = new List<MarqueeLabelPlacement>(2);
 
-        if (content.SizeLabelText is { } sizeLabel)
+        if (sizeLabel is { } size)
         {
             elements.Add(ResolveElement(
-                sizeLabel, paint.SizeLabelFontSize, paint.SizeLabelColor, paint.SizeLabelBackgroundColor, paint, measureText));
+                size, appearance.SizeLabelFontSize, appearance.SizeLabelColor, appearance.SizeLabelBackgroundColor,
+                appearance, measureText));
         }
 
-        if (content.CoordLabelText is { } coordLabel)
+        if (coordLabel is { } coord)
         {
             elements.Add(ResolveElement(
-                coordLabel, paint.CoordLabelFontSize, paint.CoordLabelColor, paint.CoordLabelBackgroundColor, paint, measureText));
+                coord, appearance.CoordLabelFontSize, appearance.CoordLabelColor, appearance.CoordLabelBackgroundColor,
+                appearance, measureText));
         }
 
         return elements;
     }
 
     /// <summary>テキスト配置と体裁から、要素の配置指示を組み立てる。</summary>
-    /// <param name="placement">コアが決めた文言と基準点（アライン・クランプ領域を含む）。</param>
-    /// <param name="fontSize">フォントサイズ（DIP。描画の設定が所有する）。</param>
-    /// <param name="textColor">文字色（描画の設定が所有する）。</param>
-    /// <param name="backgroundColor">背景色（描画の設定が所有する）。</param>
-    /// <param name="paint">描画に使う設定（内側余白の所有者）。</param>
+    /// <param name="placement">描画層が決めた文言と基準点（アライン・クランプ領域を含む）。</param>
+    /// <param name="fontSize">フォントサイズ（DIP。外観が所有する）。</param>
+    /// <param name="textColor">文字色（外観が所有する）。</param>
+    /// <param name="backgroundColor">背景色（外観が所有する）。</param>
+    /// <param name="appearance">外観（内側余白の所有者）。</param>
     /// <param name="measureText">テキストの実寸を測る関数。</param>
     /// <returns>要素の配置指示。</returns>
     /// <remarks>
@@ -73,10 +78,10 @@ public static class MarqueeLabelPlan
         double fontSize,
         DrawingColor textColor,
         DrawingColor backgroundColor,
-        MarqueePaint paint,
+        MarqueeAppearance appearance,
         Func<string, double, EsSize> measureText)
     {
-        var padding = paint.LabelPadding;
+        var padding = appearance.LabelPadding;
         var textSize = measureText(placement.Text, fontSize);
         var width = textSize.Width + padding * 2;
         var height = textSize.Height + padding * 2;

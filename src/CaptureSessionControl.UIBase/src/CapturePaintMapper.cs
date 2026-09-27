@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Feature.Marquee.Presenter;
 
@@ -26,14 +27,15 @@ internal static class CapturePaintMapper
     /// 2. 枠線（<see cref="CaptureSettings.BorderColor"/>）は、暗転マスクの穴あけ枠（外側の装飾）とハンドルの枠線の両方へ同じ値を割り当てる<br/>
     ///    （両者は同じ矩形に重なるため、別々の値にすると見た目が崩れる）。<br/>
     /// 3. サイズラベルの背景はラベル共通の背景色（<see cref="CaptureSettings.TextBackgroundColor"/>）を使う。<br/>
-    /// 4. 内側の塗り・内側の枠線は写像しない（描画の可否は <c>MarqueeDecoOptions</c> のフラグが単一所有するため、既定の透明を保つ）。
+    /// 4. 内側の塗り・内側の枠線は写像しない（描画の可否は <see cref="MarqueeAppearance"/> のフラグが単一所有するため、既定の透明を保つ）。<br/>
+    /// 5. 枠線の太さと表示可否（暗転・外枠・サイズラベル・座標ラベル）も写像する（描画にだけ必要な設定のため、コアの設定には含めない）。
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="settings"/> が null の場合。</exception>
-    public static MarqueePaint ToMarqueePaint(CaptureSettings settings)
+    public static MarqueeAppearance ToMarqueeAppearance(CaptureSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        return new MarqueePaint
+        return new MarqueeAppearance
         {
             HandleColor = settings.HandleColor!.Value,
             HandleBorderColor = settings.BorderColor!.Value,
@@ -44,6 +46,12 @@ internal static class CapturePaintMapper
             CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor!.Value,
             OverlayColor = settings.OverlayColor!.Value,
             OuterBorderColor = settings.BorderColor!.Value,
+            OuterBorderThickness = settings.BorderThickness!.Value,
+            // 色が透明でも描画の可否は設定のフラグが決める（従来の「アルファ 0 = 描かない」を明示フラグで表現する）
+            ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
+            ShowOuterBorder = settings.BorderColor!.Value.IsVisible(),
+            ShowSizeLabel = settings.SizeLabelVisible!.Value,
+            ShowCoordLabel = settings.ShowCoordLabel!.Value,
         };
     }
 

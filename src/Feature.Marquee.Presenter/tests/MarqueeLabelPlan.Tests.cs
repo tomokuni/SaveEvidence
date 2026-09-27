@@ -21,7 +21,7 @@ public class MarqueeLabelPlanTests
     /// <param name="sizeLabel">サイズラベルのテキスト配置。無い場合は null。</param>
     /// <param name="coordLabel">カーソル座標ラベルのテキスト配置。無い場合は null。</param>
     /// <returns>描画内容。</returns>
-    private static MarqueeDrawContent CreateContent(
+    private static MarqueeDrawPlan CreateContent(
         MarqueeTextPlacement? sizeLabel = null, MarqueeTextPlacement? coordLabel = null)
         => new(default, default, null, null, null, sizeLabel, coordLabel, []);
 
@@ -45,7 +45,7 @@ public class MarqueeLabelPlanTests
 
     /// <summary>テスト用の描画に使う設定を生成する（本テストは色とフォントサイズの写像を検証する）。</summary>
     /// <returns>描画に使う設定。</returns>
-    private static MarqueePaint CreatePaint()
+    private static MarqueeAppearance CreatePaint()
         => new()
         {
             SizeLabelColor = DrawingColor.White,
@@ -103,8 +103,8 @@ public class MarqueeLabelPlanTests
 
         // 基準点 (10, 20) がアライン（左端・上端）どおり背景の左上になる
         Assert.Equal(new EsPoint(10, 20), element.Bounds.TopLeft);
-        Assert.Equal(MeasuredSize.Width + MarqueePaint.LabelPaddingDefault * 2, element.Bounds.Width);
-        Assert.Equal(MeasuredSize.Height + MarqueePaint.LabelPaddingDefault * 2, element.Bounds.Height);
+        Assert.Equal(MeasuredSize.Width + MarqueeAppearance.LabelPaddingDefault * 2, element.Bounds.Width);
+        Assert.Equal(MeasuredSize.Height + MarqueeAppearance.LabelPaddingDefault * 2, element.Bounds.Height);
     }
 
     [Fact]
@@ -116,8 +116,8 @@ public class MarqueeLabelPlanTests
 
         var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(coordLabel: label), CreatePaint(), Measure));
 
-        Assert.Equal(200 - (MeasuredSize.Width + MarqueePaint.LabelPaddingDefault * 2), element.Bounds.X);
-        Assert.Equal(200 - (MeasuredSize.Height + MarqueePaint.LabelPaddingDefault * 2), element.Bounds.Y);
+        Assert.Equal(200 - (MeasuredSize.Width + MarqueeAppearance.LabelPaddingDefault * 2), element.Bounds.X);
+        Assert.Equal(200 - (MeasuredSize.Height + MarqueeAppearance.LabelPaddingDefault * 2), element.Bounds.Y);
     }
 
     [Fact]
@@ -125,8 +125,8 @@ public class MarqueeLabelPlanTests
     {
         var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateContent(sizeLabel: CreateSizeLabel()), CreatePaint(), Measure));
 
-        Assert.Equal(MarqueePaint.LabelPaddingDefault, element.PaddingX);
-        Assert.Equal(MarqueePaint.LabelPaddingDefault, element.PaddingY);
+        Assert.Equal(MarqueeAppearance.LabelPaddingDefault, element.PaddingX);
+        Assert.Equal(MarqueeAppearance.LabelPaddingDefault, element.PaddingY);
     }
 
     [Fact]

@@ -2,7 +2,6 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
 
@@ -118,9 +117,9 @@ public class FadeMaskDragRectControlStateTests
             Deco = MarqueeDecoOptions.Default with { ShowOuterBorder = true, OuterAppearance = overlay },
         };
         // 選択枠線（装飾の穴あけ枠）とハンドルの枠線は同じ矩形に重なるため、ホストが同じ色を与える
-        control.MarqueePaint = control.MarqueePaint with { OuterBorderColor = System.Drawing.Color.Red };
+        control.MarqueeAppearance = control.MarqueeAppearance with { OuterBorderColor = System.Drawing.Color.Red };
 
-        Assert.Equal(System.Drawing.Color.Red, control.MarqueePaint.OuterBorderColor);
+        Assert.Equal(System.Drawing.Color.Red, control.MarqueeAppearance.OuterBorderColor);
         Assert.Equal(1.0, control.Marquee.DecoOptions.OuterAppearance.BorderThickness);
     }
 }

@@ -176,29 +176,30 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <value>ハイライト矩形。未検出時は null（<b>null が「ハイライトしない」を意味する</b>）。選択矩形より優先される。</value>
     public EsRect? LogicalHighlightRect
     {
-        get => _marquee.DecoOptions.OuterHighlightRect;
-        set => _marquee.DecoOptions = _marquee.DecoOptions with { OuterHighlightRect = value };
+        get => _marquee.HighlightRect;
+        set => _marquee.HighlightRect = value;
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうかを取得する。</summary>
-    /// <value>全面暗転する場合は true。モードから導出される読み取り専用の値。</value>
-    public bool ShowFullOverlay => _marquee.DecoOptions.OuterShowFullOverlay;
+    /// <value>全面暗転する場合は true。モードから導出される読み取り専用の値（外観の表示可否を参照する）。</value>
+    public bool ShowFullOverlay => _marquee.Appearance.ShowFullOverlay;
 
     /// <summary>ルーペ中心（ドメイン座標）を取得する。</summary>
     /// <value>ルーペ中心。未設定時は null。</value>
     /// <remarks>中心の真のソースはルーペコントロールへ集約し、本プロパティはその参照のみを返す。</remarks>
     public EsPoint? LoupeCenterPoint => _loupe.CenterPoint;
 
-    /// <summary>選択矩形コントロールの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
-    /// <value>色の単一値。既定は <see cref="MarqueePaint.Default"/>。</value>
+    /// <summary>選択矩形コントロールの外観（描画にだけ必要な設定）を取得または設定する。</summary>
+    /// <value>外観の単一値。既定は <see cref="MarqueeAppearance.Default"/>。</value>
     /// <remarks>
-    /// 色はコアの計算に入らない（描画にだけ必要）ため、設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
+    /// 色・ラベル体裁・表示可否・枠線の太さはコアの計算に入らない（描画にだけ必要）ため、<br/>
+    /// 設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
     /// 内包する選択矩形コントロールへそのまま転送する。
     /// </remarks>
-    public MarqueePaint MarqueePaint
+    public MarqueeAppearance MarqueeAppearance
     {
-        get => _marquee.Paint;
-        set => _marquee.Paint = value;
+        get => _marquee.Appearance;
+        set => _marquee.Appearance = value;
     }
 
     /// <summary>ルーペの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
@@ -456,10 +457,10 @@ public sealed class FadeMaskDragRectControl : Panel
     private void ApplyOptions()
     {
         // ハイライト矩形は実行時状態のため、現在値を渡して引き継ぐ（設定の差し替えで失わない）
-        var values = FadeMaskDragRectChildValues.Resolve(_options, _mode, _marquee.DecoOptions.OuterHighlightRect);
+        var values = FadeMaskDragRectChildValues.Resolve(_options, _mode, _marquee.Appearance);
 
         _marquee.Options = values.Marquee;
-        _marquee.DecoOptions = values.Deco;
+        _marquee.Appearance = values.MarqueeAppearance;
         _loupe.Options = values.Loupe;
         // 表示位置のオフセットは設定に含まれる値からルーペへ渡す（保持と位置の計算はコアが単一所有する）
         _loupe.PositionOffset = values.LoupeOffset;
@@ -500,7 +501,7 @@ public sealed class FadeMaskDragRectControl : Panel
             new SkiaEsCanvas(e.Canvas),
             e.Content,
             _options.Labels,
-            MarqueePaint,
+            MarqueeAppearance,
             OperationTextProvider?.Invoke(),
             InfoTextProvider?.Invoke());
 

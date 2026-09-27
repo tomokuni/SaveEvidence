@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.UIBase.Tests;
 
 /// <summary><see cref="CapturePaintMapper"/> の単体テスト（設定項目と描画の色の対応）。</summary>
 /// <remarks>
-/// 色は描画にだけ必要な設定であり、描画層（UIBase）の <c>MarqueePaint</c> / <c>LoupeAppearance</c> が単一所有する。<br/>
+/// 色は描画にだけ必要な設定であり、描画層（UIBase）の <c>MarqueeAppearance</c> / <c>LoupeAppearance</c> が単一所有する。<br/>
 /// 本テストは「どの設定がどの色になるか」の写像を網羅する（写像漏れはビルドが通り、色が無言で効かなくなるため）。<br/>
 /// UI 初期化が不要なため、<c>[Fact]</c> で並列検証できる。
 /// </remarks>
@@ -31,7 +31,7 @@ public class CapturePaintMapperTests
             OverlayColor = DrawingColor.FromArgb(70, 80, 90),
         };
 
-        var paint = CapturePaintMapper.ToMarqueePaint(settings);
+        var paint = CapturePaintMapper.ToMarqueeAppearance(settings);
 
         Assert.Equal(DrawingColor.Red, paint.HandleColor);
         Assert.Equal(DrawingColor.Green, paint.HandleBorderColor);
@@ -50,7 +50,7 @@ public class CapturePaintMapperTests
     {
         var settings = CreateSettings() with { BorderColor = DrawingColor.Red };
 
-        var paint = CapturePaintMapper.ToMarqueePaint(settings);
+        var paint = CapturePaintMapper.ToMarqueeAppearance(settings);
 
         Assert.Equal(DrawingColor.Red, paint.HandleBorderColor);
         Assert.Equal(paint.HandleBorderColor, paint.OuterBorderColor);
@@ -61,10 +61,10 @@ public class CapturePaintMapperTests
     [Fact]
     public void 変換_写像しない色は既定値を保つ()
     {
-        var paint = CapturePaintMapper.ToMarqueePaint(CreateSettings());
+        var paint = CapturePaintMapper.ToMarqueeAppearance(CreateSettings());
 
-        Assert.Equal(MarqueePaint.Default.InnerFillColor, paint.InnerFillColor);
-        Assert.Equal(MarqueePaint.Default.InnerBorderColor, paint.InnerBorderColor);
+        Assert.Equal(MarqueeAppearance.Default.InnerFillColor, paint.InnerFillColor);
+        Assert.Equal(MarqueeAppearance.Default.InnerBorderColor, paint.InnerBorderColor);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class CapturePaintMapperTests
     [Fact]
     public void 変換_設定がnullなら例外()
     {
-        Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToMarqueePaint(null!));
+        Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToMarqueeAppearance(null!));
         Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToLoupeAppearance(null!));
     }
 }

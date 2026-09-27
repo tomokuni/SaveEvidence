@@ -1,5 +1,5 @@
 using SkiaSharp;
-using EsUtil.Feature.Marquee.Core.Drawing;
+using EsUtil.Feature.Marquee.Presenter;
 
 namespace EsUtil.SaveEvidence.Marquee.MewUI;
 
@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.Marquee.MewUI;
 /// コントロールがテキスト要素として配置するが、操作ラベル・情報ラベルなどアプリ固有の情報は<br/>
 /// 本コントロールの概念ではないため、ホストが本イベントで自前で描く。<br/>
 /// <br/>
-/// <b>描画順はコアが単一所有する</b>: <see cref="MarqueeDrawContent.Layers"/> は図形の順序を持ち、<br/>
+/// <b>描画順はコアが単一所有する</b>: <see cref="MarqueeDrawPlan.Layers"/> は図形の順序を持ち、<br/>
 /// ラベル（テキスト要素）はコントロールの子要素として描かれた後（＝最上位）に本イベントが発火する。<br/>
 /// すなわちホストが描いた内容はラベルより前面に置かれる。<br/>
 /// <br/>
@@ -25,15 +25,15 @@ public sealed class MarqueeRenderedEventArgs : EventArgs
     /// <summary>1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・ラベル・層の順序）。</summary>
     /// <value>コントロールが実際に描画に使った値（描くものが無い項目は空・null）。</value>
     /// <remarks>
-    /// ラベルの契約も含むため、ホストは穴あけ矩形（<see cref="MarqueeDrawContent.HoleRect"/>）を基準に付加情報を配置できる。<br/>
-    /// 文字の有無は <see cref="MarqueeDrawContent.HasText"/> で判定できる。
+    /// ラベルの契約も含むため、ホストは穴あけ矩形（<see cref="MarqueeDrawPlan.HoleRect"/>）を基準に付加情報を配置できる。<br/>
+    /// 文字の有無は <see cref="MarqueeDrawPlan.HasText"/> で判定できる。
     /// </remarks>
-    public MarqueeDrawContent Content { get; }
+    public MarqueeDrawPlan Content { get; }
 
     /// <summary>描画完了イベント引数を初期化する。</summary>
     /// <param name="canvas">描画先のキャンバス（DPI スケーリング適用済み）。</param>
     /// <param name="content">1 フレーム分の描画内容。</param>
-    public MarqueeRenderedEventArgs(SKCanvas canvas, MarqueeDrawContent content)
+    public MarqueeRenderedEventArgs(SKCanvas canvas, MarqueeDrawPlan content)
     {
         Canvas = canvas;
         Content = content;

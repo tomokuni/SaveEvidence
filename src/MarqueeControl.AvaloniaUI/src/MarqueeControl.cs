@@ -1,4 +1,3 @@
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Feature.Marquee.Presenter;
 using Avalonia;
 using Avalonia.Controls;
@@ -10,7 +9,6 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using MarqueeFacade = EsUtil.Feature.Marquee.Core.Marquee;
 using static EsUtil.Feature.Marquee.Core.Marquee.Limits;
 using EsUtil.Feature.Marquee.Core.Contract;
 using EsUtil.Feature.Marquee.Core.Drawing;
@@ -25,7 +23,7 @@ namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 /// <summary>リサイズ可能なドラッグ矩形の UI コントロール（Avalonia 版）。</summary>
 /// <remarks>
 /// <b>層の構成</b>: 選択・ドラッグ・nudge の判断は UI 非依存のコアのファサード（<c>Feature.Marquee.Core</c> の
-/// <see cref="MarqueeFacade"/>）が担い、本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
+/// <see cref="MarqueePresenter"/>）が担い、本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
 /// <br/>
 /// 本クラスの責務:<br/>
 /// 1. ポインター / キー入力をコア型（<see cref="EsPoint"/> / <see cref="EsKey"/>）へ変換してコア（ファサード）へ通知する<br/>
@@ -55,16 +53,12 @@ public sealed partial class MarqueeControl : Panel
     // 内部状態（コンポジション）
     // ====================================================================
 
-    /// <summary>コアのファサード（入力の解釈・状態遷移の判断・描画内容の解決・設定の窓口）。</summary>
-    private readonly MarqueeFacade _marquee;
-
-    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。既定は自 UI の描画実装（色を保持する）。</summary>
+    /// <summary>コントロール化の提示層（設定・入力の解釈・描画計画の窓口）。</summary>
     /// <remarks>
-    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
-    /// 層の順序に従った描画手順は UIBase の基底（<c>MarqueeRendererBase</c>）が単一所有する。<br/>
-    /// 既定値は <see cref="Paint"/> の既定値（<see cref="MarqueePaint.Default"/>）と同じ色で組み立てる。
+    /// 入力の解釈・状態遷移の判断はコア（<c>Feature.Marquee.Core</c>）が、描画計画（幾何 + 外観 + 層の順序 + ラベル配置）は<br/>
+    /// 本層が単一所有する（本コントロールは自 UI の公開プロパティを転送し、返された描画計画を描くだけである）。
     /// </remarks>
-    private IMarqueeRenderer _renderer = new MarqueeRendererAvaloniaUI(MarqueePaint.Default);
+    private readonly MarqueePresenter _marquee;
 
     /// <summary>コアが要求する効果（フォーカス・再描画・カーソル形状・座標変換）の適用先。</summary>
     private readonly IMarqueeEffects _effects;
@@ -141,12 +135,14 @@ public sealed partial class MarqueeControl : Panel
         Focusable = true;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
         _effects = new Effects(this);
-        _marquee = new MarqueeFacade(_effects, _cursor, Options);
-        // 現在の環境値（倍率）をファサードへ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
+        _marquee = new MarqueePresenter(_effects, _cursor, Options);
+        // 現在の環境値（倍率）を提示層へ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
         _marquee.DomainToDipScaling = GetValue(DomainToDipScalingProperty);
         _marquee.Notified += OnNotified;
-        // 装飾の設定と環境値はコアが単一所有する（本層は公開プロパティをコアへ委譲するだけ）
-        _marquee.DecoOptions = GetValue(DecoOptionsProperty);
+        // 外観（色・ラベル体裁・表示可否）とハイライト矩形（ホストが与える実行時状態）は提示層が単一所有する
+        // （本層は公開プロパティを委譲するだけである）
+        _marquee.Appearance = GetValue(AppearanceProperty);
+        _marquee.HighlightRect = GetValue(HighlightRectProperty);
         _marquee.DisplayScaleScaling = GetValue(DisplayScaleScalingProperty);
         // ホイール要求（ズーム / スクロール）の解釈はコントロール化の層が単一所有する（本層は自 UI の公開イベントへ転送するだけ）
         _wheel = new MarqueeWheelInterpreter(_marquee);
@@ -193,26 +189,30 @@ public sealed partial class MarqueeControl : Panel
     /// </remarks>
     static MarqueeControl()
     {
-        // 設定（外観・装飾・環境値）の変更は再描画を要求する
-        AffectsRender<MarqueeControl>(OptionsProperty, DecoOptionsProperty, DomainToDipScalingProperty, DisplayScaleScalingProperty);
+        // 設定（外観・ハイライト・環境値）の変更は再描画を要求する
+        AffectsRender<MarqueeControl>(OptionsProperty, AppearanceProperty, HighlightRectProperty, DomainToDipScalingProperty, DisplayScaleScalingProperty);
 
-        // 色（描画にだけ必要な設定）の変更は本 UI の描画実装を差し替える（色は描画実装が単一所有する）
-        PaintProperty.Changed.AddClassHandler<MarqueeControl>(
-            static (o, e) => o.Renderer = new MarqueeRendererAvaloniaUI(e.GetNewValue<MarqueePaint>()));
+        // 外観（色・ラベル体裁・表示可否）を提示層へ伝搬し、保持している描画計画を破棄する（描画可否の判断は提示層が単一所有する）
+        AppearanceProperty.Changed.AddClassHandler<MarqueeControl>(
+            static (c, e) =>
+            {
+                c._marquee.Appearance = e.GetNewValue<MarqueeAppearance>();
+                c.InvalidateFrame();
+            });
 
-        // 対話パラメータをファサードへ伝搬し、保持している描画内容を破棄する（設定の変更を次の解決へ反映する）
+        // ハイライト矩形（ホストが与える実行時状態）を提示層へ伝搬する（選択矩形より優先される）
+        HighlightRectProperty.Changed.AddClassHandler<MarqueeControl>(
+            static (c, e) =>
+            {
+                c._marquee.HighlightRect = e.GetNewValue<EsRect?>();
+                c.InvalidateFrame();
+            });
+
+        // 対話パラメータを提示層へ伝搬し、保持している描画計画を破棄する（設定の変更を次の解決へ反映する）
         OptionsProperty.Changed.AddClassHandler<MarqueeControl>(
             static (c, e) =>
             {
                 c._marquee.Options = e.GetNewValue<MarqueeOptions>();
-                c.InvalidateFrame();
-            });
-
-        // 装飾の設定をコアへ伝搬する（描画可否の判断はコアが単一所有する）
-        DecoOptionsProperty.Changed.AddClassHandler<MarqueeControl>(
-            static (c, e) =>
-            {
-                c._marquee.DecoOptions = e.GetNewValue<MarqueeDecoOptions>();
                 c.InvalidateFrame();
             });
 
@@ -232,60 +232,30 @@ public sealed partial class MarqueeControl : Panel
     }
 
     // ====================================================================
-    // 描画
+    // 1 フレーム分の描画計画（1 フレーム = 1 回だけ解決する）
     // ====================================================================
 
-    /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="MarqueeRendererAvaloniaUI"/>。</value>
-    /// <remarks>
-    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
-    /// 層の順序に従った描画手順は UIBase の基底（<c>MarqueeRendererBase</c>）が単一所有する。<br/>
-    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。<br/>
-    /// 設定すると再描画を要求する（同値の再設定では何も起こらない）。
-    /// </remarks>
-    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
-    public IMarqueeRenderer Renderer
-    {
-        get => _renderer;
-        set
-        {
-            ArgumentNullException.ThrowIfNull(value);
+    /// <summary>直近に解決した描画計画（null = 未解決）。</summary>
+    private MarqueeDrawPlan? _frame;
 
-            if (ReferenceEquals(_renderer, value))
-            {
-                return;
-            }
-
-            _renderer = value;
-            InvalidateFrame();
-            InvalidateVisual();
-            InvalidateArrange();
-        }
-    }
-
-    // ====================================================================
-    // 1 フレーム分の描画内容（1 フレーム = 1 回だけ解決する）
-    // ====================================================================
-
-    /// <summary>直近に解決した描画内容（null = 未解決）。</summary>
-    private MarqueeDrawContent? _frame;
-
-    /// <summary>直近に解決した描画内容の基準サイズ（DIP）。</summary>
+    /// <summary>直近に解決した描画計画の基準サイズ（DIP）。</summary>
     private EsSize _frameSize;
 
-    /// <summary>1 フレーム分の描画内容を解決して保持する（同じ基準サイズでは再解決しない）。</summary>
+    /// <summary>1 フレーム分の描画計画を解決して保持する（同じ基準サイズでは再解決しない）。</summary>
     /// <param name="clientSize">描画領域のサイズ（DIP。UI 実装の描画先のサイズ）。</param>
-    /// <returns>そのフレームの描画内容。</returns>
+    /// <returns>そのフレームの描画計画。</returns>
     /// <remarks>
-    /// 図形の描画（<c>RenderShapes</c>）とラベルの配置（<c>ArrangeOverride</c>）が同じ描画内容を使う。<br/>
+    /// 図形の描画（<c>RenderShapes</c>）とラベルの配置（<c>ArrangeOverride</c>）が同じ描画計画を使う。<br/>
     /// 解決を 2 回行うと、選択矩形・装飾・ラベル文言の解決と確保が 1 フレームで重複する。<br/>
+    /// 実寸の測定は描画 API に依存するため、本層が <c>MeasureText</c> を渡す<br/>
+    /// （配置の計算（アライン・クランプ）は提示層が単一所有する）。<br/>
     /// 状態が変わると <see cref="InvalidateFrame"/> が破棄し、次の解決で最新の状態を反映する。
     /// </remarks>
-    private MarqueeDrawContent ResolveFrame(EsSize clientSize)
+    private MarqueeDrawPlan ResolveFrame(EsSize clientSize)
     {
         if (_frame is not { } cached || _frameSize != clientSize)
         {
-            cached = _marquee.ResolveContent(_marquee.CreateRequest(clientSize));
+            cached = _marquee.ResolveDrawPlan(clientSize, MeasureText);
             _frame = cached;
             _frameSize = clientSize;
         }
@@ -293,16 +263,16 @@ public sealed partial class MarqueeControl : Panel
         return cached;
     }
 
-    /// <summary>保持している描画内容を取得する（未解決の場合のみ解決する）。</summary>
+    /// <summary>保持している描画計画を取得する（未解決の場合のみ解決する）。</summary>
     /// <param name="clientSize">描画領域のサイズ（DIP。未解決時の解決にだけ使う）。</param>
-    /// <returns>そのフレームの描画内容。</returns>
+    /// <returns>そのフレームの描画計画。</returns>
     /// <remarks>
     /// 描画フェーズ（<c>RenderShapes</c>）は配置フェーズが解決した値をそのまま使う<br/>
     /// （配置と描画で基準サイズが丸めによりわずかに違っても、1 フレームの解決を 2 回にしない）。
     /// </remarks>
-    private MarqueeDrawContent CurrentFrame(EsSize clientSize) => _frame ?? ResolveFrame(clientSize);
+    private MarqueeDrawPlan CurrentFrame(EsSize clientSize) => _frame ?? ResolveFrame(clientSize);
 
-    /// <summary>保持している描画内容を破棄する（次の解決で最新の状態を反映する）。</summary>
+    /// <summary>保持している描画計画を破棄する（次の解決で最新の状態を反映する）。</summary>
     private void InvalidateFrame() => _frame = null;
 
     // ====================================================================
@@ -312,7 +282,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>内部ロガー（null の場合は出力なし）。</summary>
     /// <value>null を設定した場合は <see cref="NullLogger"/> へフォールバックする。</value>
     /// <remarks>
-    /// 保持とフォールバック、ファサードへの伝搬はコア（<see cref="MarqueeFacade.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
+    /// 保持とフォールバック、ファサードへの伝搬はコア（<see cref="MarqueePresenter.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
     /// 入力の判断に伴うログはコアが同じロガーで出力する。
     /// </remarks>
     public ILogger Log
@@ -408,13 +378,13 @@ public sealed partial class MarqueeControl : Panel
     public static readonly StyledProperty<MarqueeOptions> OptionsProperty =
         AvaloniaProperty.Register<MarqueeControl, MarqueeOptions>(nameof(Options), defaultValue: MarqueeOptions.Default);
 
-    /// <summary><see cref="Paint"/> 依存関係プロパティ（色。描画にだけ必要な設定）。</summary>
+    /// <summary><see cref="Appearance"/> 依存関係プロパティ（外観。描画にだけ必要な設定）。</summary>
     /// <remarks>
-    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/> / <see cref="DecoOptions"/>）には含めず、<br/>
-    /// 描画の設定（<see cref="MarqueePaint"/>）として本コントロールが公開する（描画実装が単一所有する）。
+    /// 外観（色・ラベル体裁・表示可否）はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/>）には含めず、<br/>
+    /// 提示層（<c>Feature.Marquee.Presenter</c>）の <see cref="MarqueeAppearance"/> が単一所有する。
     /// </remarks>
-    public static readonly StyledProperty<MarqueePaint> PaintProperty =
-        AvaloniaProperty.Register<MarqueeControl, MarqueePaint>(nameof(Paint), defaultValue: MarqueePaint.Default);
+    public static readonly StyledProperty<MarqueeAppearance> AppearanceProperty =
+        AvaloniaProperty.Register<MarqueeControl, MarqueeAppearance>(nameof(Appearance), defaultValue: MarqueeAppearance.Default);
 
     /// <summary>外観・対話パラメータをまとめた設定を取得または設定する。</summary>
     /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="MarqueeOptions.Default"/>。</value>
@@ -429,40 +399,42 @@ public sealed partial class MarqueeControl : Panel
         set => SetValue(OptionsProperty, value);
     }
 
-    /// <summary>描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
-    /// <value>色の単一値。既定は <see cref="MarqueePaint.Default"/>。</value>
+    /// <summary>描画にだけ必要な外観（色・ラベル体裁・表示可否）を取得または設定する。</summary>
+    /// <value>外観の単一値。既定は <see cref="MarqueeAppearance.Default"/>。</value>
     /// <remarks>
-    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/> / <see cref="DecoOptions"/>）ではなく本プロパティが単一所有する。<br/>
-    /// 変更すると描画実装（<see cref="Renderer"/>）が新しい色で差し替えられる。
+    /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/>）ではなく本プロパティが与える。<br/>
+    /// 変更すると次の描画で提示層が新しい外観で描画計画を解決する。<br/>
+    /// 一部の項目だけを変える場合は <c>MarqueeAppearance.Default with { ... }</c> の形で指定する（指定しない項目は既定値を保つ）。
     /// </remarks>
-    public MarqueePaint Paint
+    public MarqueeAppearance Appearance
     {
-        get => GetValue(PaintProperty);
-        set => SetValue(PaintProperty, value);
+        get => GetValue(AppearanceProperty);
+        set => SetValue(AppearanceProperty, value);
     }
 
     // ====================================================================
-    // 装飾（暗転マスク・穴あけ枠・ラベル）の設定
+    // ハイライト矩形（ホストが与える実行時状態）
     // ====================================================================
 
-    /// <summary><see cref="DecoOptions"/> 依存関係プロパティ（装飾の設定）。</summary>
+    /// <summary><see cref="HighlightRect"/> 依存関係プロパティ（ハイライトする矩形）。</summary>
     /// <remarks>
-    /// 装飾は選択コントロール単体の概念ではなく組み込み先の表示であるため、選択の設定（<see cref="Options"/>）とは別の値にしている。<br/>
-    /// 設定値は不変（<see cref="MarqueeDecoOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。
+    /// <b>選択矩形ではなくホストが与える実行時状態</b>であるため、設定（<see cref="Options"/>）には含めない。<br/>
+    /// <b>null が「ハイライトしない」を意味する</b>（有効フラグは持たない）。設定値は不変（<see cref="EsRect"/> の値）であり、<br/>
+    /// 同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。
     /// </remarks>
-    public static readonly StyledProperty<MarqueeDecoOptions> DecoOptionsProperty =
-        AvaloniaProperty.Register<MarqueeControl, MarqueeDecoOptions>(nameof(DecoOptions), defaultValue: MarqueeDecoOptions.Default);
+    public static readonly StyledProperty<EsRect?> HighlightRectProperty =
+        AvaloniaProperty.Register<MarqueeControl, EsRect?>(nameof(HighlightRect));
 
-    /// <summary>装飾（暗転マスク・穴あけ枠・ラベル）の設定を取得または設定する。</summary>
-    /// <value>装飾の設定（暗転色・枠線・ラベル・ハイライト・内側の塗り）。既定は <see cref="MarqueeDecoOptions.Default"/>。</value>
+    /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
+    /// <value>ハイライト矩形。null（既定）の場合はハイライトしない。</value>
     /// <remarks>
-    /// 一部の項目だけを変える場合は <c>MarqueeDecoOptions.Default with { ... }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
-    /// 色は UI 非依存の <see cref="System.Drawing.Color"/> で受け取り、描画時に Avalonia の色型へ変換する。
+    /// 選択矩形と異なり選択コントロールの操作では変化しない（ホストが与える）。<br/>
+    /// 値がある場合は選択矩形より優先して穴あけ矩形になる（優先順はコアが単一所有する）。
     /// </remarks>
-    public MarqueeDecoOptions DecoOptions
+    public EsRect? HighlightRect
     {
-        get => GetValue(DecoOptionsProperty);
-        set => SetValue(DecoOptionsProperty, value);
+        get => GetValue(HighlightRectProperty);
+        set => SetValue(HighlightRectProperty, value);
     }
 
     // ====================================================================
@@ -500,7 +472,7 @@ public sealed partial class MarqueeControl : Panel
     /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値が使用される。</value>
     /// <remarks>
     /// マルチスクリーン環境では、選択矩形が存在するスクリーンのスケーリング係数を設定する。<br/>
-    /// 0 以下を <see cref="DomainToDipScaling"/> と同値として扱う規則はコア（<see cref="MarqueeFacade.DisplayScaleScaling"/>）が単一所有する。
+    /// 0 以下を <see cref="DomainToDipScaling"/> と同値として扱う規則はコア（<see cref="MarqueePresenter.DisplayScaleScaling"/>）が単一所有する。
     /// </remarks>
     public double DisplayScaleScaling
     {
@@ -511,8 +483,8 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>サイズラベルのテキストを描画時に評価するプロバイダを取得または設定する。</summary>
     /// <value>描画のたびに呼び出される関数。null または空文字の場合は穴あけ矩形から自動生成する。</value>
     /// <remarks>
-    /// デリゲート（ホスト結線）のため <see cref="DecoOptions"/> には含めない（値の等価比較の対象外にするため）。<br/>
-    /// 保持はコア（<see cref="MarqueeFacade.SizeLabelOverrideProvider"/>）が単一所有し、本 setter が再描画を要求する。<br/>
+    /// デリゲート（ホスト結線）のため外観（<see cref="Appearance"/>）には含めない（値の等価比較の対象外にするため）。<br/>
+    /// 保持はコア（<see cref="MarqueePresenter.SizeLabelOverrideProvider"/>）が単一所有し、本 setter が再描画を要求する。<br/>
     /// <b>操作ラベル・情報ラベルは本コントロールの概念ではない</b>（アプリ固有の付加情報）ため、ホストが自前で描く。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
@@ -531,7 +503,7 @@ public sealed partial class MarqueeControl : Panel
     /// <remarks>
     /// マルチモニタでモニタごとに表示スケールが異なる場合、ホストは矩形からモニタを判定してそのスケールを返す。<br/>
     /// 文言（書式）はコアが単一所有するため、ホストは数値だけを与える。<br/>
-    /// 保持はコア（<see cref="MarqueeFacade.SizeLabelDisplayScalingProvider"/>）が単一所有し、本 setter が再描画を要求する。
+    /// 保持はコア（<see cref="MarqueePresenter.SizeLabelDisplayScalingProvider"/>）が単一所有し、本 setter が再描画を要求する。
     /// </remarks>
     public Func<EsRect, double>? SizeLabelDisplayScalingProvider
     {

@@ -9,7 +9,7 @@ namespace EsUtil.Feature.Marquee.Presenter.Tests;
 /// <summary><see cref="MarqueeHostLabelRenderer"/> の描画テスト（体裁は描画層、描画はポート）。</summary>
 /// <remarks>
 /// 付加情報ラベルはアプリ固有の情報だが、体裁（背景 = 文字の実寸 + 内側余白 × 2）はサイズラベルと同じ規則であり、<br/>
-/// 体裁の値（<see cref="MarqueePaint"/>）と組み立て（<see cref="MarqueeHostLabelRenderer"/>）が単一所有する。<br/>
+/// 体裁の値（<see cref="MarqueeAppearance"/>）と組み立て（<see cref="MarqueeHostLabelRenderer"/>）が単一所有する。<br/>
 /// 両 UI のホストが同じ組み立てを書かないことを、画素で固定する。
 /// </remarks>
 public class MarqueeHostLabelRendererTests

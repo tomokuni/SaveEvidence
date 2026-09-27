@@ -10,7 +10,6 @@ using Rect = Avalonia.Rect;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Platform.Core.Coordinate;
@@ -187,7 +186,7 @@ public class FadeMaskDragRectControlTests
         };
 
         // ラベルの体裁（フォントサイズ）も描画の設定であり、コアの設定には含まない
-        control.MarqueePaint = MarqueePaint.Default with { CoordLabelFontSize = 14.0 };
+        control.MarqueeAppearance = MarqueeAppearance.Default with { CoordLabelFontSize = 14.0 };
         control.LoupeAppearance = control.LoupeAppearance with { CoordLabelFontSize = 13.0 };
 
         // ルーペ描画スケールは設定（Options）の対象外（環境値。個別プロパティで設定）
@@ -205,7 +204,7 @@ public class FadeMaskDragRectControlTests
         Assert.True(applied.ShowCoordLabel);
         Assert.True(control.Loupe.Appearance.ShowCoordLabel);
         // フォントサイズは描画の設定（描画の契約が公開する）
-        Assert.Equal(14.0, control.MarqueePaint.CoordLabelFontSize);
+        Assert.Equal(14.0, control.MarqueeAppearance.CoordLabelFontSize);
         Assert.Equal(13.0, control.LoupeAppearance.CoordLabelFontSize);
     }
 

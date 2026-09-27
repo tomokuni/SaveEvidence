@@ -1,6 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
-using MarqueeFacade = EsUtil.Feature.Marquee.Core.Marquee;
 using EsUtil.Feature.Marquee.Core.Interaction;
 
 namespace EsUtil.Feature.Marquee.Presenter.Tests;
@@ -17,10 +16,10 @@ public class MarqueeViewportNotifierTests
     /// <param name="marquee">生成したコアの公開ファサード。</param>
     /// <returns>通知クラスと、通知されたスナップショットの収集先。</returns>
     private static (MarqueeViewportNotifier Notifier, List<MarqueeSnapshot> Snapshots) CreateNotifier(
-        out EffectsSpy effects, out MarqueeFacade marquee)
+        out EffectsSpy effects, out MarqueePresenter marquee)
     {
         effects = new EffectsSpy();
-        marquee = new MarqueeFacade(effects);
+        marquee = new MarqueePresenter(effects);
         var notifier = new MarqueeViewportNotifier(marquee, effects);
         var snapshots = new List<MarqueeSnapshot>();
         notifier.ViewportChanged += (_, snapshot) => snapshots.Add(snapshot);
@@ -81,7 +80,7 @@ public class MarqueeViewportNotifierTests
     [Fact]
     public void 生成_引数がnullなら例外を投げる()
     {
-        var marquee = new MarqueeFacade(new EffectsSpy());
+        var marquee = new MarqueePresenter(new EffectsSpy());
 
         Assert.Throws<ArgumentNullException>(() => new MarqueeViewportNotifier(null!, new EffectsSpy()));
         Assert.Throws<ArgumentNullException>(() => new MarqueeViewportNotifier(marquee, null!));

@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Core.Decoration;
 using Microsoft.Extensions.Logging;
 using EsUtil.Feature.Marquee.Core.Contract;
 using EsUtil.Feature.Marquee.Core.Drawing;
@@ -59,20 +58,8 @@ public sealed partial class Marquee
     /// </remarks>
     private ICoordTransform? _coordinatePort;
 
-    /// <summary>現在の装飾の設定（暗転マスク・穴あけ枠・枠線・内側の塗り）。</summary>
-    private MarqueeDecoOptions _decoOptions = MarqueeDecoOptions.Default;
-
-    /// <summary>サイズラベルの自動生成に使うスケーリング係数（0 以下は <see cref="DomainToDipScaling"/> と同値）。</summary>
-    private double _displayScaleScaling;
-
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
     private double _domainToDipScaling = DomainToDipScalingDefault;
-
-    /// <summary>サイズラベルの文言プロバイダ（null = 未指定。未指定時はコアが自動生成する）。</summary>
-    private Func<string?>? _sizeLabelOverrideProvider;
-
-    /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ（null = 未指定。未指定時は表示スケーリングを使う）。</summary>
-    private Func<EsRect, double>? _sizeLabelDisplayScalingProvider;
 
     /// <summary>ファサードを初期化する。</summary>
     /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。null 不可。</param>
@@ -141,82 +128,22 @@ public sealed partial class Marquee
         }
     }
 
-    /// <summary>装飾（暗転マスク・穴あけ枠・枠線・内側の塗り）の設定を取得または設定する。</summary>
-    /// <value>装飾の設定。既定は <see cref="MarqueeDecoOptions.Default"/>。</value>
+    /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
+    /// <value>ハイライト矩形。null（既定）の場合はハイライトしない。</value>
     /// <remarks>
-    /// 装飾は選択矩形コントロール単体の概念ではない（組み込み先の表示）ため、選択の設定（<see cref="Options"/>）とは分けている。<br/>
-    /// 描画の更新は UI が観測して行う（本コアは再描画を要求しない）。
+    /// ホストが与える実行時状態である（選択矩形と異なり選択コントロールの操作では変化しない）。<br/>
+    /// 穴あけ矩形の優先順（ハイライト → 選択）の規則はコアが単一所有する。<br/>
+    /// 変更は本コアが検出して出力する（同値判定を UI 層に置かない）。
     /// </remarks>
-    public MarqueeDecoOptions DecoOptions
+    public EsRect? HighlightRect
     {
-        get => _decoOptions;
+        get => field;
         set
         {
-            if (SetIfChanged(ref _decoOptions, value, out var previous))
+            if (SetIfChanged(ref field, value, out var previous))
             {
-                Log.LogDecoOptionsChanged(previous, value);
-            }
-        }
-    }
-
-    /// <summary>サイズラベルの文言を描画時に評価するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数。null または空文字を返す場合はコアが自動生成する。</value>
-    /// <remarks>
-    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
-    /// ホスト固有の文言（元画像座標・表示倍率等）を与えるための入口である。
-    /// </remarks>
-    public Func<string?>? SizeLabelOverrideProvider
-    {
-        get => _sizeLabelOverrideProvider;
-        set
-        {
-            if (SetIfChanged(ref _sizeLabelOverrideProvider, value, out var previous))
-            {
-                // デリゲートは値の比較ができないため、設定の有無の変化だけを記録する
-                Log.LogSettingChanged(nameof(SizeLabelOverrideProvider), previous is not null, value is not null);
-            }
-        }
-    }
-
-    /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
-    /// <remarks>
-    /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
-    /// マルチモニタでモニタごとに表示スケールが異なる場合、ホストは矩形からモニタを判定してそのスケールを返す<br/>
-    /// （コアはモニタを知らないため、この判定はホストが担う）。<br/>
-    /// <b>文言はコアが作る</b>: ホストは数値（スケール）だけを与え、書式はコアが単一所有する。
-    /// </remarks>
-    public Func<EsRect, double>? SizeLabelDisplayScalingProvider
-    {
-        get => _sizeLabelDisplayScalingProvider;
-        set
-        {
-            if (SetIfChanged(ref _sizeLabelDisplayScalingProvider, value, out var previous))
-            {
-                // デリゲートは値の比較ができないため、設定の有無の変化だけを記録する
-                Log.LogSettingChanged(nameof(SizeLabelDisplayScalingProvider), previous is not null, value is not null);
-            }
-        }
-    }
-
-    /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
-    /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
-    /// <remarks>
-    /// 0 以下を倍率と同値として扱う規則は <see cref="ResolveDisplayScale"/> が単一所有する。<br/>
-    /// 変更のログは<b>実際に使われる値</b>（0 以下の場合は倍率へ解決した後の値）を記録する<br/>
-    /// （利用者が見るのは解決後の値であり、解決値が同じならログも出力しない）。
-    /// </remarks>
-    public double DisplayScaleScaling
-    {
-        get => ResolveDisplayScale(_displayScaleScaling, _domainToDipScaling);
-        set
-        {
-            if (SetIfChanged(ref _displayScaleScaling, value, out var previous))
-            {
-                Log.LogSettingChanged(
-                    nameof(DisplayScaleScaling),
-                    ResolveDisplayScale(previous, _domainToDipScaling),
-                    ResolveDisplayScale(value, _domainToDipScaling));
+                // 矩形は操作中に高頻度で変化しうるため、設定の有無の変化だけを記録する
+                Log.LogSettingChanged(nameof(HighlightRect), previous is not null, value is not null);
             }
         }
     }
@@ -336,21 +263,20 @@ public sealed partial class Marquee
     public void RequestCancel() => Apply(_session.RequestCancel());
 
     // ====================================================================
-    // 描画内容（1 フレーム分）
+    // 描画の幾何（1 フレーム分）
     // ====================================================================
 
     /// <summary>現在の状態から描画 1 フレーム分の入力を生成する。</summary>
     /// <param name="clientSize">描画領域のサイズ（DIP。UI 実装の描画先のサイズ）。</param>
-    /// <returns>描画入力（設定・状態と、描画時に決まる値を解決済み）。</returns>
+    /// <returns>描画の入力（設定・状態と、描画時に決まる値を解決済み）。</returns>
     /// <remarks>
-    /// 設定・状態の読み出し（選択矩形・マーカー位置・マウス位置・文言プロバイダ）は本メソッドが単一所有するため、<br/>
+    /// 設定・状態の読み出し（選択矩形・マーカー位置・マウス位置・ハイライト矩形）は本メソッドが単一所有するため、<br/>
     /// UI 層は描画領域のサイズを渡すだけでよい（内部状態の組み立て順を持たない）。<br/>
-    /// 図形の描画とテキストの配置が同じ入力を使うため、UI 層は本メソッドの結果を <see cref="ResolveContent"/> へ渡す。
+    /// 描画の幾何の解決と描画計画の解決が同じ入力を使うため、UI 層は本メソッドの結果を <see cref="ResolveGeometry"/> へ渡す。
     /// </remarks>
     public MarqueeRenderRequest CreateRequest(EsSize clientSize)
         => MarqueeRenderRequest.Create(
             _session.Options,
-            _decoOptions,
             clientSize,
             _session.HasSelection ? _session.SelectionRect : null,
             _session.NudgeActive,
@@ -358,53 +284,7 @@ public sealed partial class Marquee
             _session.LastMousePosition,
             _coordinatePort,
             _domainToDipScaling,
-            SizeLabelOverrideProvider,
-            DisplayScaleScaling,
-            SizeLabelDisplayScalingProvider);
-
-    /// <summary>描画入力から 1 フレーム分の描画内容（選択矩形・装飾・ラベルと描画順）を解決する。</summary>
-    /// <param name="request">描画入力（設定・状態と描画時に決まる値。<see cref="CreateRequest"/> の結果を渡す）。</param>
-    /// <returns>描画内容（描くものが無い項目は空・null。層の順序は <see cref="MarqueeDrawContent.Layers"/> が持つ）。</returns>
-    /// <remarks>
-    /// 判断（描くかどうか・位置・寸法・文言）はすべて本メソッドが単一所有するため、<br/>
-    /// UI 層は <see cref="MarqueeDrawContent.Layers"/> の順に各層を反映するだけでよい。<br/>
-    /// ラベル（サイズ・カーソル座標）は必ず最後の層であり、常に最上位に表示される。<br/>
-    /// テキストの実寸は描画 API 依存のため、コアは「どこへ何を描くか」だけを返し、実測と要素の配置は UI 層が行う。<br/>
-    /// <br/>
-    /// 処理フロー:<br/>
-    /// 1. 装飾（暗転マスク・穴あけ枠・内側の塗り）を解決する。<br/>
-    /// 2. 選択矩形そのもの（ハンドル・始点マーカー）を解決する。<br/>
-    /// 3. テキスト（サイズ・カーソル座標の文言と基準点）を解決する。<br/>
-    /// 4. 描く層だけを順序どおりに並べる（テキストは最後 = 最上位）。<br/>
-    /// <br/>
-    /// 描画順は <see cref="MarqueeDrawLayer"/> の宣言順ではなく<b>本メソッドの意図</b>で決める<br/>
-    /// （列挙に層を追加しても描画順が勝手に変わらないようにするため、明示的に組み立てる）。
-    /// </remarks>
-    public MarqueeDrawContent ResolveContent(in MarqueeRenderRequest request)
-    {
-        // 座標変換ポートは 1 フレームで 1 回だけ解決する（未指定時は倍率から等倍スケールを生成するため、各項目で解決すると生成と評価が重複する）
-        var port = request.ResolvedPort;
-
-        // 穴あけ矩形も 1 回だけ解決する（外側の装飾・内側の装飾・サイズラベルが同じ矩形を使う）
-        var hole = request.ResolveHoleRectDip(port);
-
-        var handles = ResolveHandles(request, port);
-        var marker = ResolveMarker(request, port);
-        var sizeLabel = ResolveSizeLabelText(request, hole, port);
-        var coordLabel = ResolveCoordLabelText(request, port);
-        var outer = ResolveOuterDecoration(request, hole);
-        var inner = ResolveInnerDecoration(request, hole);
-
-        return new MarqueeDrawContent(
-            outer,
-            inner,
-            hole,
-            handles,
-            marker,
-            sizeLabel,
-            coordLabel,
-            ResolveLayers(outer, inner, handles, marker, sizeLabel, coordLabel));
-    }
+            HighlightRect);
 
     // ====================================================================
     // 内部ヘルパー

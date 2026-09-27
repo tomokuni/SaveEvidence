@@ -1,4 +1,3 @@
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.Marquee.Core.Setting;
@@ -22,10 +21,7 @@ public static class FadeMaskDragRectOptionsMapper
     /// <returns>複合コントロールへ一括設定できる設定値。</returns>
     /// <remarks>
     /// 1. 選択矩形の設定（<see cref="MarqueeOptions"/>）を組み立てる（選択の判断に必要な項目のみ。色は含まない）。<br/>
-    /// 2. 装飾の設定（<see cref="MarqueeDecoOptions"/>）を組み立てる。枠線の太さ（<see cref="CaptureSettings.BorderThickness"/>）は<br/>
-    ///    装飾の外枠（暗転マスクの穴あけ枠）が単一所有する。描画の可否は明示フラグで与える<br/>
-    ///    （従来の「アルファ 0 = 描かない」をフラグで表す）。<br/>
-    /// 3. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる（計算に必要な値のみ）。<br/>
+    /// 2. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる（計算に必要な値のみ）。<br/>
     /// 4. 選択矩形破線の色とルーペのオフセットを設定する（オフセットは <see cref="CaptureSettings.LoupeOffset"/> を使う）。<br/>
     /// 5. ホスト固有の付加情報（操作・情報ラベル）の外観（<see cref="FadeMaskDragRectLabelOptions"/>）を組み立てる。<br/>
     ///    文言の生成と描画はホストが行い、本変換は外観のみを写像する（表示可否はホストが判定する）。<br/>
@@ -48,22 +44,6 @@ public static class FadeMaskDragRectOptionsMapper
                 HandleHitRadius = settings.HandleHitRadius!.Value,
                 ClampToDomainBounds = settings.ClampToDomainBounds!.Value,
                 MarkerLength = settings.MarkerLength!.Value,
-                ShowCoordLabel = settings.ShowCoordLabel!.Value,
-                // サイズラベルは選択コアが単一所有する（穴あけ矩形の左上に表示する位置と寸法のラベル）
-                ShowSizeLabel = settings.SizeLabelVisible!.Value,
-            },
-            Deco = new MarqueeDecoOptions
-            {
-                // 暗転と枠線は暗転マスクの穴あけ枠と選択枠線が同じ矩形に重なるため、寸法を装飾が単一所有する
-                // （色は描画にだけ必要な設定のため、描画側（UI 層のホスト）が設定する）
-                // （サイズ・操作・情報ラベルは装飾の概念ではない。操作・情報ラベルはホストが自前で描く）
-                OuterAppearance = new MarqueeOuterDecoAppearance
-                {
-                    BorderThickness = settings.BorderThickness!.Value,
-                },
-                // 色が透明でも描画フラグはホストが決める（従来の「アルファ 0 = 描かない」を明示フラグで表現する）
-                ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
-                ShowOuterBorder = settings.BorderColor!.Value.IsVisible(),
             },
             Loupe = new LoupeOptions
             {

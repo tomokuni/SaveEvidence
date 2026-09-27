@@ -51,12 +51,12 @@ public class FadeMaskHostLabelRendererTests
     /// <param name="holeRect">穴あけ矩形（null の場合は穴あけなし）。</param>
     /// <param name="sizeLabel">サイズラベルのテキスト配置（null の場合は描かれていない）。</param>
     /// <returns>描画内容（装飾・ハンドル・マーカーは本テストの対象外のため既定値）。</returns>
-    private static MarqueeDrawContent CreateContent(EsRect? holeRect, MarqueeTextPlacement? sizeLabel = null)
+    private static MarqueeDrawPlan CreateContent(EsRect? holeRect, MarqueeTextPlacement? sizeLabel = null)
         => new(default, default, holeRect, null, null, sizeLabel, null, []);
 
     /// <summary>テスト用の選択矩形コントロールの描画設定を生成する（ラベルの行送りにフォントサイズを使う）。</summary>
     /// <returns>描画の設定。</returns>
-    private static MarqueePaint CreatePaint() => new();
+    private static MarqueeAppearance CreatePaint() => new();
 
     /// <summary>穴あけ矩形の左上から次の行の上端を求める（行送り = 行の高さ + 内側余白 × 2）。</summary>
     /// <param name="top">現在の上端。</param>

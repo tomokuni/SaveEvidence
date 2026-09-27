@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.SaveEvidence.CropView;
-using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.SaveEvidence.CaptureSession.MewUI;
 using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.SaveEvidence.Marquee.MewUI;
@@ -91,18 +90,28 @@ internal static class CapturePage
     /// <summary>自動切り出しの検出矩形の塗り色（ホバー中・赤 16%。Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropHoverFill = System.Drawing.Color.FromArgb(40, 255, 59, 48);
 
-    /// <summary>自動切り出しのホバー強調に使う色（内側の塗りと枠線）。</summary>
-    /// <remarks>色は描画にだけ必要な設定であるため、描画の設定（<see cref="MarqueePaint"/>）が単一所有する。</remarks>
-    private static readonly MarqueePaint s_autoCropHighlightPaint = new()
+    /// <summary>自動切り出しのホバー強調に使う外観（内側の塗りと枠線）。</summary>
+    /// <remarks>色・枠線の太さ・表示可否は描画にだけ必要な設定であるため、外観（<see cref="MarqueeAppearance"/>）が単一所有する。</remarks>
+    private static readonly MarqueeAppearance s_autoCropHighlightAppearance = MarqueeAppearance.Default with
     {
+        ShowSizeLabel = false,
+        ShowCoordLabel = false,
+        ShowOverlay = false,
+        ShowOuterBorder = false,
+        ShowInnerFill = true,
+        ShowInnerBorder = true,
         InnerFillColor = s_autoCropHoverFill,
         InnerBorderColor = s_autoCropHoverBorder,
+        InnerBorderThickness = AutoCropBorderThickness,
     };
 
-    /// <summary>自動切り出しの内側の装飾（ホバー強調の枠線）の寸法。</summary>
-    private static readonly MarqueeInnerDecoAppearance s_autoCropHighlightAppearance = new()
+    /// <summary>自動切り出しで強調しないときの外観（枠線も内側の塗りもラベルも描かない）。</summary>
+    private static readonly MarqueeAppearance s_autoCropIdleAppearance = MarqueeAppearance.Default with
     {
-        BorderThickness = AutoCropBorderThickness,
+        ShowSizeLabel = false,
+        ShowCoordLabel = false,
+        ShowOverlay = false,
+        ShowOuterBorder = false,
     };
 
     /// <summary>ページの内容を生成する。</summary>
@@ -629,33 +638,24 @@ internal static class CapturePage
         var autoCropHighlight = new MarqueeControl { IsHitTestVisible = false };
 
         // ホバー中の検出矩形の強調を更新する（矩形は DIP 座標へ変換して渡す。パン・ズームのたびに位置が変わる）。
-        // 強調の描画は Marquee の内側の装飾（InnerDeco）が単一所有する。
+        // 強調の描画は Marquee の外観（内側の塗り・枠線）とハイライト矩形が単一所有する。
         void UpdateAutoCropHighlight()
         {
             var hovered = viewModel.IsAutoCropActive ? viewModel.HoveredRect : null;
             if (hovered is not { } target)
             {
-                // ハイライトなし（外側・内側とも描かない。サイズラベルも表示しない）
-                autoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
-                autoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with { ShowOverlay = false, ShowOuterBorder = false };
+                // ハイライトなし（外側・内側とも描かない。サイズ・座標ラベルも表示しない）
+                autoCropHighlight.MarqueeAppearance = s_autoCropIdleAppearance;
+                autoCropHighlight.LogicalHighlightRect = null;
                 return;
             }
 
             var topLeft = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.X, target.Y));
             var bottomRight = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.Right, target.Bottom));
 
-            autoCropHighlight.Options = MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false };
-            autoCropHighlight.Paint = s_autoCropHighlightPaint;
-            autoCropHighlight.DecoOptions = MarqueeDecoOptions.Default with
-            {
-                ShowOverlay = false,
-                ShowOuterBorder = false,
-                ShowInnerFill = true,
-                ShowInnerBorder = true,
-                OuterHighlightRect = new EsRect(
-                    topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y),
-                InnerAppearance = s_autoCropHighlightAppearance,
-            };
+            autoCropHighlight.MarqueeAppearance = s_autoCropHighlightAppearance;
+            autoCropHighlight.LogicalHighlightRect = new EsRect(
+                topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
         }
 
         // 自動切り出しの検出矩形をオーバーレイへ変換する（画像座標 → ドメイン座標）。

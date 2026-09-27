@@ -14,7 +14,7 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 /// （片方の UI だけ積み方が変わる余地をなくす）。<br/>
 /// <br/>
 /// 体裁（背景 = 文字の実寸 + 内側余白）は <see cref="MarqueeHostLabelRenderer"/> が、体裁の値（内側余白）は<br/>
-/// <see cref="MarqueePaint"/> が単一所有する。本クラスは「どの文言をどの位置へ積むか」だけを決める。<br/>
+    /// <see cref="MarqueeAppearance"/>（提示層が単一所有する外観）が持つ。本クラスは「どの文言をどの位置へ積むか」だけを決める。<br/>
 /// <br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> でピクセル検証できる。
 /// </remarks>
@@ -22,12 +22,12 @@ public static class FadeMaskHostLabelRenderer
 {
     /// <summary>付加情報ラベル（操作ラベル・情報ラベル）を描画ポートへ描く。</summary>
     /// <param name="canvas">描画先の描画ポート。null 不可。</param>
-    /// <param name="content">選択矩形コントロールが解決した描画内容（穴あけ矩形とサイズラベルの有無を参照する）。</param>
+    /// <param name="plan">選択矩形コントロールが解決した描画計画（穴あけ矩形とサイズラベルの有無を参照する）。</param>
     /// <param name="labels">付加情報ラベルの外観（表示可否・寸法・色）。</param>
-    /// <param name="paint">選択矩形コントロールの描画の設定（サイズラベルのフォントサイズを行送りに使う）。null 不可。</param>
+    /// <param name="appearance">選択矩形コントロールの外観（サイズラベルのフォントサイズを行送りに使う）。null 不可。</param>
     /// <param name="operationText">操作ラベルの文言（ホストが生成する。null または空文字の場合は描かない）。</param>
     /// <param name="infoText">情報ラベルの文言（ホストが生成する。null または空文字の場合は描かない）。</param>
-    /// <exception cref="ArgumentNullException"><paramref name="canvas"/> または <paramref name="paint"/> が null の場合。</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="canvas"/> または <paramref name="appearance"/> が null の場合。</exception>
     /// <remarks>
     /// 1. 穴あけ矩形（選択またはハイライトの領域）が無い場合は何も描かない（積み上げる基準が無い）。<br/>
     /// 2. 積み上げの開始位置は穴あけ矩形の左上であり、サイズラベルが描かれている場合はその下から始める<br/>
@@ -37,28 +37,28 @@ public static class FadeMaskHostLabelRenderer
     /// </remarks>
     public static void Draw(
         IEsCanvas canvas,
-        in MarqueeDrawContent content,
+        in MarqueeDrawPlan plan,
         FadeMaskDragRectLabelOptions labels,
-        MarqueePaint paint,
+        MarqueeAppearance appearance,
         string? operationText,
         string? infoText)
     {
         ArgumentNullException.ThrowIfNull(canvas);
-        ArgumentNullException.ThrowIfNull(paint);
+        ArgumentNullException.ThrowIfNull(appearance);
 
         // 付加情報を重ねる基準は穴あけ矩形（選択またはハイライトの領域）の左上である
-        if (content.HoleRect is not { } hole)
+        if (plan.HoleRect is not { } hole)
         {
             return;
         }
 
         var y = hole.Y;
-        var padding = paint.LabelPadding;
+        var padding = appearance.LabelPadding;
 
         // サイズラベルが描かれている場合はその下へ積む（重なりを避ける）
-        if (content.SizeLabelText is not null)
+        if (appearance.ShouldShowSizeLabel(hasHoleRect: true))
         {
-            y = NextTop(y, paint.SizeLabelFontSize, padding);
+            y = NextTop(y, appearance.SizeLabelFontSize, padding);
         }
 
         // 表示可否はホストが判定する（設定スイッチと文言の有無の両方が成立したときだけ描く）
