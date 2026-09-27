@@ -135,7 +135,7 @@
 | 寸法 | `HandleSize` | 10.0 | 1.0〜256.0 |
 | 寸法 | `MarkerLength` | 16.0（描画時の半幅は 1/2） | 2.0〜4096.0 |
 | 表示可否 | `ShowHandles` | `true` | — |
-| 表示可否 | `ShowCoordLabel` | `false` | — |
+| 表示可否 | `ShowCoordLabel` | `true` | — |
 | 表示可否 | `ShowSizeLabel` | `true` | — |
 | 対話 | `HandleHitRadius` | 12.0（DIP） | 0.0〜256.0 |
 | 対話 | `MinSelectionSize` | 6.0（ドメイン座標。これ未満はキャンセル扱い） | 1.0〜4096.0 |

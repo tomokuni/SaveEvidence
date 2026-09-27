@@ -68,8 +68,8 @@ public sealed record MarqueeOptions
     public bool ShowHandles { get; init; } = true;
 
     /// <summary>カーソル座標ラベルを表示するかどうかを取得する。</summary>
-    /// <value>true の場合はマウス位置のドメイン座標をカーソルの右側に表示する。既定は false。</value>
-    public bool ShowCoordLabel { get; init; }
+    /// <value>true（既定）の場合はマウス位置のドメイン座標をカーソルの右側に表示する。false の場合は表示しない。</value>
+    public bool ShowCoordLabel { get; init; } = true;
 
     /// <summary>サイズラベルを表示するかどうかを取得する。</summary>
     /// <value>true（既定）の場合は穴あけ矩形の左上に位置と寸法を表示する。false の場合は描かない。</value>

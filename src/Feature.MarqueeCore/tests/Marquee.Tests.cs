@@ -315,7 +315,8 @@ public class MarqueeTests
     [Fact]
     public void ResolveContent_選択なしではハンドルとラベルを返さない()
     {
-        var marquee = CreateMarquee(null, out _);
+        // 座標ラベルは既定で表示されるため、ここでは明示的に無効化して「選択なしの結果」を見る
+        var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ShowCoordLabel = false });
 
         var content = marquee.ResolveContent(marquee.CreateRequest(new EsSize(200, 100)));
 

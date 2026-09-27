@@ -325,7 +325,8 @@ public class MarqueeDrawContentTests
     [Fact]
     public void ResolveContent_描く値が無ければ層も無い()
     {
-        var content = ResolveContent(CreateSession());
+        // 座標ラベルは既定で表示されるため、ここでは明示的に無効化して「描く値が無い」状態を作る
+        var content = ResolveContent(CreateSession(MarqueeOptions.Default with { ShowCoordLabel = false }));
 
         Assert.Empty(content.Layers);
         Assert.False(content.HasDecoration);
@@ -335,7 +336,8 @@ public class MarqueeDrawContentTests
     [Fact]
     public void ResolveContent_テキストなしならハンドルが最後の層になる()
     {
-        var session = CreateSession(MarqueeOptions.Default with { ShowSizeLabel = false }, s_selection);
+        var session = CreateSession(
+            MarqueeOptions.Default with { ShowHandles = true, ShowSizeLabel = false, ShowCoordLabel = false }, s_selection);
 
         var content = ResolveContent(session);
 
@@ -377,7 +379,7 @@ public class MarqueeDrawContentTests
     public void ResolveContent_マーカーは描く層に含まれる()
     {
         // nudge は新規選択の微調整であるため、選択がある場合はマーカーを描かない
-        var session = CreateSession(MarqueeOptions.Default with { ShowSizeLabel = false });
+        var session = CreateSession(MarqueeOptions.Default with { ShowSizeLabel = false, ShowCoordLabel = false });
         session.NudgeByKey(EsKey.Right, new EsPoint(10, 20));
 
         var content = ResolveContent(session);
@@ -391,7 +393,9 @@ public class MarqueeDrawContentTests
     public void ResolveContent_装飾は描く値がある場合だけ層に含まれる()
     {
         // 選択なし + 全面暗転 = 暗転領域だけを持つ装飾（穴あけ矩形が無いため枠線は空）
-        var content = ResolveContent(CreateSession(), MarqueeDecoOptions.Default with { OuterShowFullOverlay = true });
+        var content = ResolveContent(
+            CreateSession(MarqueeOptions.Default with { ShowCoordLabel = false }),
+            MarqueeDecoOptions.Default with { OuterShowFullOverlay = true });
 
         Assert.Equal([MarqueeDrawLayer.Decoration], content.Layers);
         Assert.True(content.HasDecoration);

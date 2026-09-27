@@ -46,7 +46,7 @@ public class MarqueeControlStateTests
         Assert.Equal(10.0, options.MinSelectionSize); // CreateControl で設定
         Assert.True(options.ClampToDomainBounds);
         Assert.Equal(16.0, options.MarkerLength);
-        Assert.False(options.ShowCoordLabel);
+        Assert.True(options.ShowCoordLabel);
         Assert.NotNull(control.Log);
 
         // 設定を指定しない場合の既定値はコアの MarqueeOptions.Default と一致する

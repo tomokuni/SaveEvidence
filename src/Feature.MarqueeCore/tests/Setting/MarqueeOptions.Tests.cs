@@ -20,7 +20,7 @@ public class MarqueeOptionsTests
         Assert.True(options.ShowHandles);
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(16.0, options.MarkerLength);
-        Assert.False(options.ShowCoordLabel);
+        Assert.True(options.ShowCoordLabel);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(6.0, options.MinSelectionSize);
         Assert.True(options.ClampToDomainBounds);
