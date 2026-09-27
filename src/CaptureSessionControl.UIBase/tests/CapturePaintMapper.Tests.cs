@@ -84,7 +84,7 @@ public class CapturePaintMapperTests
 
         Assert.Equal(DrawingColor.Red, paint.CheckerColorA);
         Assert.Equal(DrawingColor.Green, paint.CheckerColorB);
-        Assert.Equal(DrawingColor.Blue, paint.FrameColor);
+        Assert.Equal(DrawingColor.Blue, paint.BorderColor);
         Assert.Equal(DrawingColor.Yellow, paint.CrossColor);
         Assert.Equal(DrawingColor.Cyan, paint.CoordLabelColor);
         Assert.Equal(DrawingColor.FromArgb(11, 22, 33), paint.CoordLabelBackgroundColor);

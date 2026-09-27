@@ -209,7 +209,7 @@ public sealed partial class Loupe
     /// 処理フロー:<br/>
     /// 1. 描画面の全体を物理ピクセルサイズから決める。<br/>
     /// 2. 市松模様の暗色タイルを列挙する構造体を換算済みのタイルサイズから作る。<br/>
-    /// 3. 十字線と外枠の矩形を、物理ピクセルサイズと換算済みの太さから導出する。<br/>
+    /// 3. 十字線と枠線の矩形を、物理ピクセルサイズと換算済みの太さから導出する。<br/>
     /// 4. 拡大画像の切り出しと描画の矩形を解決する（`LoupeRenderRequest` の `MagnifiedImage`）。<br/>
     /// 5. テキスト（中心座標ラベルの文言と基準点）を解決する。<br/>
     /// 6. 描く層の一覧（テキストの有無で末尾が変わる）を添えて描画内容を返す。<br/>
@@ -225,7 +225,7 @@ public sealed partial class Loupe
         var magnifiedImage = request.MagnifiedImage;
         var checkerTiles = ResolveCheckerboard(request);
         var crosshairRects = ResolveCrosshairRects(request);
-        var frameRects = ResolveFrameRects(request);
+        var borderRects = ResolveBorderRects(request);
         var coordLabelText = ResolveCoordLabelText(request);
 
         return new LoupeDrawContent(
@@ -233,9 +233,9 @@ public sealed partial class Loupe
             checkerTiles ?? default,
             magnifiedImage,
             crosshairRects,
-            frameRects,
+            borderRects,
             coordLabelText,
-            ResolveLayers(checkerTiles, magnifiedImage, crosshairRects, frameRects, coordLabelText));
+            ResolveLayers(checkerTiles, magnifiedImage, crosshairRects, borderRects, coordLabelText));
     }
 
     // ====================================================================

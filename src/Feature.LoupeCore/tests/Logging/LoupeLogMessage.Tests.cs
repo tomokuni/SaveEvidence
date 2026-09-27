@@ -44,8 +44,8 @@ public class LoupeLogMessageTests
 
         Assert.Equal("[Feature.LoupeCore] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
         Assert.Equal("[Feature.LoupeCore] Setting: RequestedSize 160 → 240", logger.Messages[1]);
-        Assert.Equal("[Feature.LoupeCore] Setting: FrameWidth 2 → 8", logger.Messages[2]);
-        Assert.Equal("[Feature.LoupeCore] Setting: ShowFrame True → False", logger.Messages[3]);
+        Assert.Equal("[Feature.LoupeCore] Setting: BorderThickness 2 → 8", logger.Messages[2]);
+        Assert.Equal("[Feature.LoupeCore] Setting: ShowBorder True → False", logger.Messages[3]);
         Assert.Equal("[Feature.LoupeCore] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[4]);
     }
 
@@ -72,10 +72,10 @@ public class LoupeLogMessageTests
     {
         var logger = new RecordingLogger();
 
-        logger.LogSettingChanged("ShowFrame", true, false);   // 変化 → 出力
-        logger.LogSettingChanged("ShowFrame", false, false);  // 同値 → 出力しない
+        logger.LogSettingChanged("ShowBorder", true, false);   // 変化 → 出力
+        logger.LogSettingChanged("ShowBorder", false, false);  // 同値 → 出力しない
 
-        Assert.Equal("[Feature.LoupeCore] Setting: ShowFrame True → False", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.LoupeCore] Setting: ShowBorder True → False", Assert.Single(logger.Messages));
     }
 
     /// <summary>数値設定値のログが変化したときだけ出力されることを検証する。</summary>
@@ -161,11 +161,11 @@ public class LoupeLogMessageTests
             RequestedSize = 240,
             ZoomLevel = 8,
             CheckerSize = 12,
-            FrameWidth = 8,
+            BorderThickness = 8,
             ShowCoordLabel = false,
             ShowCheckerboard = false,
             ShowCrosshair = false,
-            ShowFrame = false,
+            ShowBorder = false,
         };
 
         logger.LogOptionsChanged(oldValue, newValue);
@@ -175,11 +175,11 @@ public class LoupeLogMessageTests
                 "[Feature.LoupeCore] Setting: RequestedSize 160 → 240",
                 "[Feature.LoupeCore] Setting: ZoomLevel 4 → 8",
                 "[Feature.LoupeCore] Setting: CheckerSize 6 → 12",
-                "[Feature.LoupeCore] Setting: FrameWidth 2 → 8",
+                "[Feature.LoupeCore] Setting: BorderThickness 2 → 8",
                 "[Feature.LoupeCore] Setting: ShowCoordLabel True → False",
                 "[Feature.LoupeCore] Setting: ShowCheckerboard True → False",
                 "[Feature.LoupeCore] Setting: ShowCrosshair True → False",
-                "[Feature.LoupeCore] Setting: ShowFrame True → False",
+                "[Feature.LoupeCore] Setting: ShowBorder True → False",
             ],
             logger.Messages);
     }
@@ -191,8 +191,8 @@ public class LoupeLogMessageTests
     {
         logger.LogSettingChanged("ZoomLevel", "4", "8");                             // 1
         logger.LogSettingChanged("RequestedSize", 160, 240);                          // 2
-        logger.LogSettingChanged("FrameWidth", 2.0, 8.0);                             // 3
-        logger.LogSettingChanged("ShowFrame", true, false);                           // 4
+        logger.LogSettingChanged("BorderThickness", 2.0, 8.0);                       // 3
+        logger.LogSettingChanged("ShowBorder", true, false);                         // 4
         logger.LogCenterPointChanged(new EsPoint(1.5, 2.5), null);                    // 5
         logger.LogOptionsChanged(new LoupeOptions(), new LoupeOptions { ZoomLevel = 8 });  // 6
     }

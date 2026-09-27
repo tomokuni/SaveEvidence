@@ -130,11 +130,11 @@ internal static partial class LoupeLogMessage
         logger.LogSettingChanged(nameof(LoupeOptions.RequestedSize), oldValue.RequestedSize, newValue.RequestedSize);
         logger.LogSettingChanged(nameof(LoupeOptions.ZoomLevel), oldValue.ZoomLevel, newValue.ZoomLevel);
         logger.LogSettingChanged(nameof(LoupeOptions.CheckerSize), oldValue.CheckerSize, newValue.CheckerSize);
-        logger.LogSettingChanged(nameof(LoupeOptions.FrameWidth), oldValue.FrameWidth, newValue.FrameWidth);
+        logger.LogSettingChanged(nameof(LoupeOptions.BorderThickness), oldValue.BorderThickness, newValue.BorderThickness);
         logger.LogSettingChanged(nameof(LoupeOptions.ShowCoordLabel), oldValue.ShowCoordLabel, newValue.ShowCoordLabel);
         logger.LogSettingChanged(nameof(LoupeOptions.ShowCheckerboard), oldValue.ShowCheckerboard, newValue.ShowCheckerboard);
         logger.LogSettingChanged(nameof(LoupeOptions.ShowCrosshair), oldValue.ShowCrosshair, newValue.ShowCrosshair);
-        logger.LogSettingChanged(nameof(LoupeOptions.ShowFrame), oldValue.ShowFrame, newValue.ShowFrame);
+        logger.LogSettingChanged(nameof(LoupeOptions.ShowBorder), oldValue.ShowBorder, newValue.ShowBorder);
     }
 
     /// <summary>拡大中心（ドメイン座標）を文字列化する。</summary>

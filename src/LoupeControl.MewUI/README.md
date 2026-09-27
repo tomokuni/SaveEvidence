@@ -46,7 +46,7 @@ var loupe = new LoupeControl
     {
         RequestedSize = 160,                 // 一辺のサイズ（DIP）
         ZoomLevel = 4,                       // 拡大率
-        FrameWidth = 2,                      // 外枠の太さ（DIP）
+        BorderThickness = 2,                 // 枠線の太さ（DIP）
     },
     // 色は描画の設定（LoupePaint）で指定する
     Paint = LoupePaint.Default with
@@ -54,7 +54,7 @@ var loupe = new LoupeControl
         CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
         CheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255),
         CheckerColorB = DrawingColor.FromArgb(255, 192, 192, 192),
-        FrameColor = DrawingColor.FromArgb(255, 0, 0, 0),
+        BorderColor = DrawingColor.FromArgb(255, 0, 0, 0),
     },
 };
 ```
@@ -79,7 +79,7 @@ if (layout.Position is { } position)
 | `Source` | `EsBitmap?` | `null` | 拡大元の 100% 画像。null の場合は市松模様のみ |
 | `CenterPoint` | `EsPoint?` | `null` | 拡大中心（元画像ピクセル座標）。null の場合は市松模様のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する。数値項目はコアの型が生成時に安全域へ補正する |
-| `Paint` | `LoupePaint` | `LoupePaint.Default` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）。`with` 式で部分変更する。色はコアの計算に入らない |
+| `Paint` | `LoupePaint` | `LoupePaint.Default` | 描画に使う色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）。`with` 式で部分変更する。色はコアの計算に入らない |
 | `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。0.1〜8.0 に補正（非有限は既定値）。DPI 変更で自動更新 |
 | `Log` | `ILogger` | `NullLogger` | 設定変更ログと描画例外の出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
 
@@ -90,11 +90,11 @@ if (layout.Position is { } position)
 | `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。1〜4096 に補正 |
 | `ZoomLevel` | `int` | 4 | 拡大率。1〜64 に補正 |
 | `CheckerSize` | `int` | 6 | 市松模様の 1 タイルサイズ（DIP）。1〜128 に補正 |
-| `FrameWidth` | `int` | 2 | 外枠の太さ（DIP）。1〜64 に補正 |
+| `BorderThickness` | `int` | 2 | 枠線の太さ（DIP）。1〜64 に補正 |
 | `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
 | `ShowCheckerboard` | `bool` | `true` | 市松模様の表示可否 |
 | `ShowCrosshair` | `bool` | `true` | 十字線の表示可否 |
-| `ShowFrame` | `bool` | `true` | 外枠の表示可否 |
+| `ShowBorder` | `bool` | `true` | 枠線の表示可否 |
 
 `Paint`（`LoupePaint`。`EsUtil.SaveEvidence.Loupe.UIBase`）の項目:
 
@@ -103,7 +103,7 @@ if (layout.Position is { } position)
 | `BackgroundColor` | `System.Drawing.Color` | 透明 | 下地（ベース）色。市松模様・拡大画像より先に表面全体へ塗る。背後の要素を透かさない場合は不透明色を指定する |
 | `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色 |
 | `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色 |
-| `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色 |
+| `BorderColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 枠線の色 |
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
 | `CoordLabelFontSize` | `double` | 12.0 | 座標ラベルのフォントサイズ（DIP）。6〜48 に補正 |

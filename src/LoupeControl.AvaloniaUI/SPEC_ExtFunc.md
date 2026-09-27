@@ -69,7 +69,7 @@
 - 1〜64倍の拡大表示
 - 画像範囲外の透明領域への市松模様表示
 - 十字線の表示
-- 外枠の表示
+- 枠線の表示
 - DPIスケーリングに対応したBitmap生成
 - 非同期のルーペ画像生成（切り出し・合成は UI スレッドで実行）
 - 古い非同期描画結果を破棄する世代管理
@@ -214,11 +214,11 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | `RequestedSize` | `int` | `160` | `1`〜`4096` | ルーペの基本サイズ（DIP・一辺） |
 | `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
 | `CheckerSize` | `int` | `6` | `1`〜`128` | 市松模様の 1 タイルサイズ（DIP） |
-| `FrameWidth` | `int` | `2` | `1`〜`64` | 外枠の太さ（DIP） |
+| `BorderThickness` | `int` | `2` | `1`〜`64` | 枠線の太さ（DIP） |
 | `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
 | `ShowCheckerboard` | `bool` | `true` | — | 市松模様の表示可否 |
 | `ShowCrosshair` | `bool` | `true` | — | 十字線の表示可否 |
-| `ShowFrame` | `bool` | `true` | — | 外枠の表示可否 |
+| `ShowBorder` | `bool` | `true` | — | 枠線の表示可否 |
 
 **表示サイズ（`RequestedSize`）のクランプはコア（ファサード）が内包**します: 表示サイズはコアが本値（基本サイズ）を親領域サイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
@@ -249,21 +249,21 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 #### 5.1.5 寸法と Paint（色）
 
-ルーペの寸法（市松模様のタイルサイズ・外枠の太さ）とラベル表示の可否は **コアの `LoupeOptions`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
+ルーペの寸法（市松模様のタイルサイズ・枠線の太さ）とラベル表示の可否は **コアの `LoupeOptions`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `LoupeOptions` | コアの既定値 | ルーペの寸法とラベル表示の可否。`with` 式で部分変更する。数値項目はコアの `LoupeOptions` が生成時に安全域へ補正する |
-| `Paint` | `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupePaint.Default` | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）とラベルのフォントサイズ・角丸。`LoupePaint.Default with { ... }` で部分変更する |
+| `Paint` | `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupePaint.Default` | 描画に使う色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）とラベルのフォントサイズ・角丸。`LoupePaint.Default with { ... }` で部分変更する |
 
 `Options`（コアの `LoupeOptions`）の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `CheckerSize` | `int` | `6` | 市松模様の 1 タイルサイズ（DIP。1〜128 に補正） |
-| `FrameWidth` | `int` | `2` | 外枠の太さ（DIP。1〜64 に補正） |
+| `BorderThickness` | `int` | `2` | 枠線の太さ（DIP。1〜64 に補正） |
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
-| `ShowCheckerboard` / `ShowCrosshair` / `ShowFrame` | `bool` | `true` | 市松模様・十字線・外枠の表示有無（透明色を「描かない」の代用にしない） |
+| `ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` | `bool` | `true` | 市松模様・十字線・枠線の表示有無（透明色を「描かない」の代用にしない） |
 
 `Paint`（`LoupePaint`。詳細は `LoupeControl.UIBase` の `SPEC_ExtFunc.md` を参照）の項目:
 
@@ -271,7 +271,7 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 | --- | --- | --- | --- |
 | `BackgroundColor` | `System.Drawing.Color` | 透明 | 下地（ベース）色。市松模様・拡大画像より先に全面へ塗る。背後の要素を透かさない場合は不透明色を指定する（既定は透明 = 背後の要素を透かす） |
 | `CheckerColorA` / `CheckerColorB` | `System.Drawing.Color` | Gray 30% / DarkGray 30% | 市松模様の明色 / 暗色 |
-| `FrameColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 外枠の色 |
+| `BorderColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 枠線の色 |
 | `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色 |
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `System.Drawing.Color` | 黒 60%（`#99000000`） | 座標ラベルの背景色 |
@@ -280,7 +280,7 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Paint`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
-寸法項目（`CheckerSize` / `FrameWidth`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.CheckerSizePixels` / `FrameWidthPixels`）（`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
+寸法項目（`CheckerSize` / `BorderThickness`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.CheckerSizePixels` / `BorderThicknessPixels`）（`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 
@@ -484,14 +484,14 @@ private readonly LoupeControl _loupe = new()
         RequestedSize = 240,
         ZoomLevel = 4,
         CheckerSize = 8,
-        FrameWidth = 2,
+        BorderThickness = 2,
     },
     Paint = LoupePaint.Default with
     {
         CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
         CheckerColorA = DrawingColor.White,
         CheckerColorB = DrawingColor.LightGray,
-        FrameColor = DrawingColor.LightGray,
+        BorderColor = DrawingColor.LightGray,
     },
 };
 
@@ -539,7 +539,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 - `Source` のBinding
 - `CenterPoint` のマウス追従
 - 画像端から外れた部分の部分的な市松模様
-- `Options`（`ZoomLevel` / `RequestedSize` / `CheckerSize` / `FrameWidth`）と `Paint`（色）・`DipToDeviceScaling`
-- 十字線・市松模様・外枠の色変更（`Paint`）
+- `Options`（`ZoomLevel` / `RequestedSize` / `CheckerSize` / `BorderThickness`）と `Paint`（色）・`DipToDeviceScaling`
+- 十字線・市松模様・枠線の色変更（`Paint`）
 - `IsVisible`、`Clear()`、`RequestRender()`
 - `Log`（描画エラーの通知先 ILogger 設定例）

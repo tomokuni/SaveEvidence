@@ -135,7 +135,7 @@ public class FadeMaskDragRectOptionsMapperTests
         Assert.Equal(3, loupe.ZoomLevel);
         // 寸法のみを写像する（色は描画にだけ必要な設定のため、描画側（UI 層のホスト）が設定する）
         Assert.Equal(10, loupe.CheckerSize);
-        Assert.Equal(4, loupe.FrameWidth);
+        Assert.Equal(4, loupe.BorderThickness);
         Assert.False(loupe.ShowCoordLabel);
     }
 

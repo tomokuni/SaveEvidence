@@ -63,15 +63,15 @@
 
                     <Separator/>
 
-                    <!-- 外枠 -->
-                    <TextBlock Text="外枠の色（FrameColor）"/>
-                    <ComboBox ItemsSource="{Binding FrameColorOptions}" SelectedItem="{Binding FrameColorOption}"/>
+                    <!-- 枠線 -->
+                    <TextBlock Text="枠線の色（BorderColor）"/>
+                    <ComboBox ItemsSource="{Binding BorderColorOptions}" SelectedItem="{Binding BorderColorOption}"/>
 
-                    <TextBlock Text="外枠の太さ（FrameWidth）"/>
+                    <TextBlock Text="枠線の太さ（BorderThickness）"/>
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding FrameWidthText}" VerticalAlignment="Center"/>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding BorderThicknessText}" VerticalAlignment="Center"/>
                         <Slider Minimum="1" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True"
-                                Value="{Binding FrameWidth, Mode=TwoWay}"/>
+                                Value="{Binding BorderThickness, Mode=TwoWay}"/>
                     </DockPanel>
 
                     <Separator/>

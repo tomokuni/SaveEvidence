@@ -46,8 +46,8 @@ public class MarqueeLogMessageTests
         Assert.Equal("[Feature.MarqueeCore] MouseDown: pos=(10, 20) clickCount=1 hasSelection=False", logger.Messages[0]);
         Assert.Equal("[Feature.MarqueeCore] MouseUp: pos=(10, 20) wasDragging=True hasSelection=True", logger.Messages[1]);
         Assert.Equal("[Feature.MarqueeCore] DoubleClick: pos=(10, 20) inside=True", logger.Messages[2]);
-        Assert.Equal("[Feature.MarqueeCore] MouseDown 直前の位置: pos=(10, 20)", logger.Messages[3]);
-        Assert.Equal("[Feature.MarqueeCore] MouseUp 直後の位置: pos=(10, 20)", logger.Messages[4]);
+        Assert.Equal("[Feature.MarqueeCore] Position before MouseDown: pos=(10, 20)", logger.Messages[3]);
+        Assert.Equal("[Feature.MarqueeCore] Position after MouseUp: pos=(10, 20)", logger.Messages[4]);
         Assert.Equal("[Feature.MarqueeCore] DragStart: handle=Move pos=(10, 20)", logger.Messages[5]);
         Assert.Equal("[Feature.MarqueeCore] KeyDown: key=Left handled=True", logger.Messages[6]);
         Assert.Equal("[Feature.MarqueeCore] ConfirmRequested: rect=(10, 20, 30, 40)", logger.Messages[7]);

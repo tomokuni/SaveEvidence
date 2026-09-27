@@ -71,7 +71,7 @@ public static class FadeMaskDragRectOptionsMapper
                 ZoomLevel = settings.LoupeZoomLevel!.Value,
                 // 寸法とラベル表示の可否のみを写像する（色は描画にだけ必要な設定のため、描画側（UI 層のホスト）が設定する）
                 CheckerSize = settings.LoupeCheckerSize!.Value,
-                FrameWidth = settings.LoupeFrameThickness!.Value,
+                BorderThickness = settings.LoupeFrameThickness!.Value,
                 ShowCoordLabel = settings.LoupeShowCoordLabel!.Value,
             },
             SelectionRectColorA = settings.LoupeSelectionRectColorA!.Value,

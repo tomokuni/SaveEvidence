@@ -33,8 +33,8 @@ public sealed partial class Loupe
     /// <summary>層の組合せのうち、十字線の有無を表すビット。</summary>
     private const int CrosshairBit = 4;
 
-    /// <summary>層の組合せのうち、外枠の有無を表すビット。</summary>
-    private const int FrameBit = 8;
+    /// <summary>層の組合せのうち、枠線の有無を表すビット。</summary>
+    private const int BorderBit = 8;
 
     /// <summary>層の組合せのうち、テキストの有無を表すビット。</summary>
     private const int TextBit = 16;
@@ -50,7 +50,7 @@ public sealed partial class Loupe
     /// <param name="checkerTiles">市松模様のタイル列挙子。null の場合は層を含めない。</param>
     /// <param name="magnifiedImage">拡大画像の切り出しと描画の矩形。null の場合は層を含めない。</param>
     /// <param name="crosshairRects">十字線の矩形。空の場合は層を含めない。</param>
-    /// <param name="frameRects">外枠の矩形。空の場合は層を含めない。</param>
+    /// <param name="borderRects">枠線の矩形。空の場合は層を含めない。</param>
     /// <param name="coordLabelText">中心座標ラベルのテキスト配置。null の場合は層を含めない。</param>
     /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
     /// <remarks>
@@ -63,18 +63,18 @@ public sealed partial class Loupe
         LoupeCheckerTiles? checkerTiles,
         LoupeMagnifiedImage? magnifiedImage,
         IReadOnlyList<EsRect> crosshairRects,
-        IReadOnlyList<EsRect> frameRects,
+        IReadOnlyList<EsRect> borderRects,
         LoupeTextPlacement? coordLabelText)
         => s_layers[
             (checkerTiles is not null ? CheckerboardBit : 0)
             | (magnifiedImage is not null ? ImageBit : 0)
             | (crosshairRects.Count > 0 ? CrosshairBit : 0)
-            | (frameRects.Count > 0 ? FrameBit : 0)
+            | (borderRects.Count > 0 ? BorderBit : 0)
             | (coordLabelText is not null ? TextBit : 0)];
 
     /// <summary>層の全 32 通りを生成する。</summary>
     /// <returns>ビットの組合せを添字とする層の一覧。</returns>
-    /// <remarks>ビットの意味は <see cref="CheckerboardBit"/> / <see cref="ImageBit"/> / <see cref="CrosshairBit"/> / <see cref="FrameBit"/> / <see cref="TextBit"/> が単一所有する。</remarks>
+    /// <remarks>ビットの意味は <see cref="CheckerboardBit"/> / <see cref="ImageBit"/> / <see cref="CrosshairBit"/> / <see cref="BorderBit"/> / <see cref="TextBit"/> が単一所有する。</remarks>
     private static IReadOnlyList<LoupeDrawLayer>[] CreateLayers()
     {
         var table = new IReadOnlyList<LoupeDrawLayer>[1 << 5];
@@ -98,12 +98,12 @@ public sealed partial class Loupe
                 layers.Add(LoupeDrawLayer.Crosshair);
             }
 
-            if ((index & FrameBit) != 0)
+            if ((index & BorderBit) != 0)
             {
-                layers.Add(LoupeDrawLayer.Frame);
+                layers.Add(LoupeDrawLayer.Border);
             }
 
-            // テキストは常に最上位（下地・市松模様・拡大画像・十字線・外枠より後に描く）
+            // テキストは常に最上位（下地・市松模様・拡大画像・十字線・枠線より後に描く）
             if ((index & TextBit) != 0)
             {
                 layers.Add(LoupeDrawLayer.Label);
@@ -127,19 +127,19 @@ public sealed partial class Loupe
     /// <summary>十字線の矩形を解決する。</summary>
     /// <param name="request">描画入力（物理ピクセルサイズ・拡大率・設定を含む）。</param>
     /// <returns>縦横 2 本の矩形。非表示の設定の場合は空。</returns>
-    /// <remarks>矩形の計算（中央のブロックへの合わせ方）は <see cref="LoupeDecorationGeometry"/> が単一所有する。</remarks>
+    /// <remarks>矩形の計算（中央のブロックへの合わせ方）は <see cref="LoupeDecoGeometry"/> が単一所有する。</remarks>
     private static IReadOnlyList<EsRect> ResolveCrosshairRects(in LoupeRenderRequest request)
         => request.Options.ShowCrosshair
-            ? LoupeDecorationGeometry.ComputeCrosshairRects(request.SurfaceBounds, request.ZoomLevel)
+            ? LoupeDecoGeometry.ComputeCrosshairRects(request.SurfaceBounds, request.ZoomLevel)
             : [];
 
-    /// <summary>外枠の矩形を解決する。</summary>
+    /// <summary>枠線の矩形を解決する。</summary>
     /// <param name="request">描画入力（描画面の全体と換算済みの太さを含む）。</param>
     /// <returns>上・下・左・右の 4 辺の矩形。非表示の設定の場合は空。</returns>
-    /// <remarks>矩形の計算（内側 4 辺の取り方）は <see cref="LoupeDecorationGeometry"/> が単一所有する。</remarks>
-    private static IReadOnlyList<EsRect> ResolveFrameRects(in LoupeRenderRequest request)
-        => request.Options.ShowFrame
-            ? LoupeDecorationGeometry.ComputeFrameRects(request.SurfaceBounds, request.FrameWidthPixels)
+    /// <remarks>矩形の計算（内側 4 辺の取り方）は <see cref="LoupeDecoGeometry"/> が単一所有する。</remarks>
+    private static IReadOnlyList<EsRect> ResolveBorderRects(in LoupeRenderRequest request)
+        => request.Options.ShowBorder
+            ? LoupeDecoGeometry.ComputeBorderRects(request.SurfaceBounds, request.BorderThicknessPixels)
             : [];
 
     /// <summary>中心座標ラベルの文言と基準点を解決する。</summary>

@@ -33,7 +33,7 @@ public class LoupeControlTests
 
         // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
         Assert.Equal(CheckerSizeDefault, control.Options.CheckerSize);
-        Assert.Equal(FrameWidthDefault, control.Options.FrameWidth);
+        Assert.Equal(BorderThicknessDefault, control.Options.BorderThickness);
         Assert.True(control.Options.ShowCoordLabel);
         // 色の既定値は描画の設定が単一所有する
         Assert.Equal(LoupePaint.Default, control.Paint);
@@ -97,16 +97,16 @@ public class LoupeControlTests
     {
         var control = new LoupeControl
         {
-            Options = LoupeOptions.Default with { CheckerSize = 0, FrameWidth = 0 },
+            Options = LoupeOptions.Default with { CheckerSize = 0, BorderThickness = 0 },
         };
 
         Assert.Equal(CheckerSizeMin, control.Options.CheckerSize);
-        Assert.Equal(FrameWidthMin, control.Options.FrameWidth);
+        Assert.Equal(BorderThicknessMin, control.Options.BorderThickness);
 
-        control.Options = control.Options with { CheckerSize = 1000, FrameWidth = 1000 };
+        control.Options = control.Options with { CheckerSize = 1000, BorderThickness = 1000 };
 
         Assert.Equal(CheckerSizeMax, control.Options.CheckerSize);
-        Assert.Equal(FrameWidthMax, control.Options.FrameWidth);
+        Assert.Equal(BorderThicknessMax, control.Options.BorderThickness);
     }
 
     /// <summary>要求サイズが <see cref="LoupeOptions.RequestedSize"/> の正方形になることを検証する。</summary>
@@ -234,7 +234,7 @@ public class LoupeControlTests
                 CrossColor = DrawingColor.FromArgb(255, 255, 0, 0),
                 CheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255),
                 CheckerColorB = DrawingColor.FromArgb(255, 0, 0, 0),
-                FrameColor = DrawingColor.FromArgb(255, 0, 0, 255),
+                BorderColor = DrawingColor.FromArgb(255, 0, 0, 255),
                 CoordLabelColor = DrawingColor.FromArgb(255, 255, 255, 0),
                 CoordLabelBackgroundColor = DrawingColor.FromArgb(128, 0, 0, 0),
             },

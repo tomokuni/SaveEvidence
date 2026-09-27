@@ -50,7 +50,7 @@ public sealed record LoupeOptions
     /// <value>拡大率（偶数推奨）。既定は 4。設定時は 1〜64 へ補正される。</value>
     /// <remarks>
     /// 拡大率は切り出し領域の一辺（物理ピクセルサイズ ÷ 本値の切り上げ）と、拡大画像の描画先の大きさに使う<br/>
-    /// （切り上げの規則は <c>LoupeDivMath.CeilDiv</c>、矩形の導出は <c>Decoration.LoupeDecorationGeometry</c> が単一所有する）。
+    /// （切り上げの規則は <c>LoupeDivMath.CeilDiv</c>、矩形の導出は <c>Decoration.LoupeDecoGeometry</c> が単一所有する）。
     /// </remarks>
     public int ZoomLevel
     {
@@ -67,14 +67,14 @@ public sealed record LoupeOptions
         init => field = CoerceCheckerSize(value);
     } = CheckerSizeDefault;
 
-    /// <summary>外枠の太さ（DIP）を取得する。</summary>
+    /// <summary>枠線の太さ（DIP）を取得する。</summary>
     /// <value>枠線の太さ（DIP）。既定は 2。設定時は 1〜64 へ補正される。</value>
     /// <remarks>安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。</remarks>
-    public int FrameWidth
+    public int BorderThickness
     {
         get => field;
-        init => field = CoerceFrameWidth(value);
-    } = FrameWidthDefault;
+        init => field = CoerceBorderThickness(value);
+    } = BorderThicknessDefault;
 
     // ----------------------------------------------------------------
     // 表示可否（描画するかどうか）
@@ -94,10 +94,10 @@ public sealed record LoupeOptions
     /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
     public bool ShowCrosshair { get; init; } = true;
 
-    /// <summary>外枠を表示するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合はルーペの四辺へ外枠を描く。false の場合は描かない。</value>
+    /// <summary>枠線を表示するかどうかを取得する。</summary>
+    /// <value>true（既定）の場合はルーペの四辺へ枠線を描く。false の場合は描かない。</value>
     /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
-    public bool ShowFrame { get; init; } = true;
+    public bool ShowBorder { get; init; } = true;
 
     /// <summary>中心座標ラベルを描画するかどうかを判定する。</summary>
     /// <param name="hasCenterPoint">拡大中心が設定されているかどうか。</param>

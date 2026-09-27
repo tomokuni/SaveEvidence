@@ -27,8 +27,8 @@ public sealed class MainWindowViewModel : ObservableObject
     /// <summary>市松模様 B の色選択肢。</summary>
     public IReadOnlyList<BrushOption> CheckerColorBOptions { get; } = BrushOptions.All;
 
-    /// <summary>外枠の色選択肢。</summary>
-    public IReadOnlyList<BrushOption> FrameColorOptions { get; } = BrushOptions.All;
+    /// <summary>枠線の色選択肢。</summary>
+    public IReadOnlyList<BrushOption> BorderColorOptions { get; } = BrushOptions.All;
 
     // ====================================================================
     // 表示制御
@@ -206,17 +206,17 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
-    private int _frameWidth = 2;
+    private int _borderThickness = 2;
 
-    /// <summary>外枠の太さ（ピクセル）。</summary>
-    public int FrameWidth
+    /// <summary>枠線の太さ（ピクセル）。</summary>
+    public int BorderThickness
     {
-        get => _frameWidth;
+        get => _borderThickness;
         set
         {
-            if (SetProperty(ref _frameWidth, value))
+            if (SetProperty(ref _borderThickness, value))
             {
-                OnPropertyChanged(nameof(FrameWidthText));
+                OnPropertyChanged(nameof(BorderThicknessText));
                 OnPropertyChanged(nameof(Options));
                 OnPropertyChanged(nameof(Paint));
             }
@@ -290,15 +290,15 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
-    private BrushOption _frameColorOption = BrushOptions.LightGray;
+    private BrushOption _borderColorOption = BrushOptions.LightGray;
 
-    /// <summary>外枠の色選択。</summary>
-    public BrushOption FrameColorOption
+    /// <summary>枠線の色選択。</summary>
+    public BrushOption BorderColorOption
     {
-        get => _frameColorOption;
+        get => _borderColorOption;
         set
         {
-            if (SetProperty(ref _frameColorOption, value))
+            if (SetProperty(ref _borderColorOption, value))
             {
                 OnPropertyChanged(nameof(Options));
                 OnPropertyChanged(nameof(Paint));
@@ -314,7 +314,7 @@ public sealed class MainWindowViewModel : ObservableObject
         CrossColor = ToDrawingColor(CrossColorOption),
         CheckerColorA = ToDrawingColor(CheckerColorAOption),
         CheckerColorB = ToDrawingColor(CheckerColorBOption),
-        FrameColor = ToDrawingColor(FrameColorOption),
+        BorderColor = ToDrawingColor(BorderColorOption),
     };
 
     /// <summary>ルーペの設定（表示サイズ・拡大率・寸法。コアの <see cref="LoupeOptions"/> が単一所有する）。</summary>
@@ -329,7 +329,7 @@ public sealed class MainWindowViewModel : ObservableObject
         RequestedSize = RequestedSize,
         ZoomLevel = ZoomLevel,
         CheckerSize = CheckerSize,
-        FrameWidth = FrameWidth,
+        BorderThickness = BorderThickness,
     };
 
     /// <summary>色選択肢をコアの色型へ変換する（「なし」はアルファ 0 = 描画しない）。</summary>
@@ -351,8 +351,8 @@ public sealed class MainWindowViewModel : ObservableObject
     /// <summary>市松模様タイルサイズの表示文字列。</summary>
     public string CheckerSizeText => $"{CheckerSize} px";
 
-    /// <summary>外枠太さの表示文字列。</summary>
-    public string FrameWidthText => $"{FrameWidth} px";
+    /// <summary>枠線の太さの表示文字列。</summary>
+    public string BorderThicknessText => $"{BorderThickness} px";
 
     /// <summary>描画スケールの表示文字列。</summary>
     public string DipToDeviceScalingText => $"{DipToDeviceScaling:F2}";

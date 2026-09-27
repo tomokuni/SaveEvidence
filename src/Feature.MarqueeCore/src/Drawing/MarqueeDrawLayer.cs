@@ -13,7 +13,7 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 /// </remarks>
 public enum MarqueeDrawLayer
 {
-    /// <summary>選択矩形の外側・内側に描く装飾（暗転マスク・穴あけ枠・枠線・内側の塗り）。</summary>
+    /// <summary>選択矩形の外側・内側に描く装飾（暗転マスク・穴あけ枠・枠線・内側の塗り。描く値がある場合のみ）。</summary>
     Decoration,
 
     /// <summary>ドラッグハンドル（選択がある場合のみ）。</summary>

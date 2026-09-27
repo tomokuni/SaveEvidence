@@ -63,7 +63,7 @@ internal static class CapturePaintMapper
             BackgroundColor = background,
             CheckerColorA = settings.LoupeCheckerColorA!.Value,
             CheckerColorB = settings.LoupeCheckerColorB!.Value,
-            FrameColor = settings.LoupeFrameColor!.Value,
+            BorderColor = settings.LoupeFrameColor!.Value,
             CrossColor = settings.LoupeCrossColor!.Value,
             CoordLabelColor = settings.LoupeCoordLabelColor!.Value,
             CoordLabelBackgroundColor = settings.LoupeCoordLabelBackgroundColor!.Value,

@@ -27,7 +27,7 @@ public class LoupeDrawContentTests
                 LoupeDrawLayer.Checkerboard,
                 LoupeDrawLayer.Image,
                 LoupeDrawLayer.Crosshair,
-                LoupeDrawLayer.Frame,
+                LoupeDrawLayer.Border,
                 LoupeDrawLayer.Label,
             ],
             content.Layers);
@@ -95,14 +95,14 @@ public class LoupeDrawContentTests
     [Fact]
     public void ResolveContent_外枠の非表示設定で描画内容を空にする()
     {
-        var loupe = new Loupe(LoupeOptions.Default with { ShowFrame = false })
+        var loupe = new Loupe(LoupeOptions.Default with { ShowBorder = false })
         {
             CenterPoint = new EsPoint(50, 60),
         };
 
         var content = loupe.ResolveContent(loupe.CreateRequest(160));
 
-        Assert.Empty(content.FrameRects);
+        Assert.Empty(content.BorderRects);
     }
 
     /// <summary>既定では市松模様・十字線・外枠の描画内容が返ることを検証する。</summary>
@@ -115,7 +115,7 @@ public class LoupeDrawContentTests
 
         Assert.True(content.CheckerTiles.Count > 0);
         Assert.NotEmpty(content.CrosshairRects);
-        Assert.NotEmpty(content.FrameRects);
+        Assert.NotEmpty(content.BorderRects);
     }
 
     /// <summary>非表示の項目が層の一覧から外れることを検証する。</summary>
@@ -125,7 +125,7 @@ public class LoupeDrawContentTests
     [Theory]
     [InlineData(false, true, true, LoupeDrawLayer.Checkerboard)]
     [InlineData(true, false, true, LoupeDrawLayer.Crosshair)]
-    [InlineData(true, true, false, LoupeDrawLayer.Frame)]
+    [InlineData(true, true, false, LoupeDrawLayer.Border)]
     public void ResolveContent_非表示の項目は層に含まれない(
         bool checkerboard, bool crosshair, bool frame, LoupeDrawLayer hidden)
     {
@@ -133,7 +133,7 @@ public class LoupeDrawContentTests
         {
             ShowCheckerboard = checkerboard,
             ShowCrosshair = crosshair,
-            ShowFrame = frame,
+            ShowBorder = frame,
         };
         var loupe = new Loupe(options) { CenterPoint = new EsPoint(50, 60) };
 
@@ -150,7 +150,7 @@ public class LoupeDrawContentTests
         {
             ShowCheckerboard = false,
             ShowCrosshair = false,
-            ShowFrame = false,
+            ShowBorder = false,
             ShowCoordLabel = false,
         };
         var loupe = new Loupe(options);

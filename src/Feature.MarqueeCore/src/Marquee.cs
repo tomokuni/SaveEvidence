@@ -201,7 +201,11 @@ public sealed partial class Marquee
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
     /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
-    /// <remarks>0 以下を倍率と同値として扱う規則は <see cref="ResolveDisplayScale"/> が単一所有する。</remarks>
+    /// <remarks>
+    /// 0 以下を倍率と同値として扱う規則は <see cref="ResolveDisplayScale"/> が単一所有する。<br/>
+    /// 変更のログは<b>実際に使われる値</b>（0 以下の場合は倍率へ解決した後の値）を記録する<br/>
+    /// （利用者が見るのは解決後の値であり、解決値が同じならログも出力しない）。
+    /// </remarks>
     public double DisplayScaleScaling
     {
         get => ResolveDisplayScale(_displayScaleScaling, _scaling);
@@ -209,7 +213,10 @@ public sealed partial class Marquee
         {
             if (SetIfChanged(ref _displayScaleScaling, value, out var previous))
             {
-                Log.LogSettingChanged(nameof(DisplayScaleScaling), previous, value);
+                Log.LogSettingChanged(
+                    nameof(DisplayScaleScaling),
+                    ResolveDisplayScale(previous, _scaling),
+                    ResolveDisplayScale(value, _scaling));
             }
         }
     }
@@ -379,23 +386,24 @@ public sealed partial class Marquee
         var port = request.ResolvedPort;
 
         // 穴あけ矩形も 1 回だけ解決する（外側の装飾・内側の装飾・サイズラベルが同じ矩形を使う）
-        var hole = MarqueeRenderRequest.ResolveHoleRectDip(
-            request.DecoOptions.OuterHighlightRect, request.SelectionRect, port);
+        var hole = request.ResolveHoleRectDip(port);
 
         var handles = ResolveHandles(request, port);
         var marker = ResolveMarker(request, port);
         var sizeLabel = ResolveSizeLabelText(request, hole, port);
         var coordLabel = ResolveCoordLabelText(request, port);
+        var outer = ResolveOuterDecoration(request, hole);
+        var inner = ResolveInnerDecoration(request, hole);
 
         return new MarqueeDrawContent(
-            ResolveOuterDecoration(request, hole),
-            ResolveInnerDecoration(request, hole),
+            outer,
+            inner,
             hole,
             handles,
             marker,
             sizeLabel,
             coordLabel,
-            ResolveLayers(handles, marker, sizeLabel, coordLabel));
+            ResolveLayers(outer, inner, handles, marker, sizeLabel, coordLabel));
     }
 
     // ====================================================================

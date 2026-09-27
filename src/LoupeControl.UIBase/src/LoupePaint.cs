@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// <b>ラベルのフォントサイズ・角丸も同じ理由で本型が持つ</b>: ラベルをどの体裁（文字要素 / 画像）で描くかは UI 層の判断であり、<br/>
 /// コアは文言と位置だけを渡す（<c>LoupeTextPlacement</c>）。<br/>
 /// <br/>
-/// <b>描画の可否</b>: 描くかどうかはコアの設定（<c>LoupeOptions</c> の <c>ShowCheckerboard</c> / <c>ShowCrosshair</c> / <c>ShowFrame</c>）が単一所有する<br/>
+/// <b>描画の可否</b>: 描くかどうかはコアの設定（<c>LoupeOptions</c> の <c>ShowCheckerboard</c> / <c>ShowCrosshair</c> / <c>ShowBorder</c>）が単一所有する<br/>
 /// （コアが非表示の項目を空の描画内容として返すため、描画実装は分岐を持たない）。<br/>
 /// <br/>
 /// <b>下地</b>: 市松模様の色は半透明であり、背後の要素を透かしたくない場合はホストが不透明色を指定する。<br/>
@@ -49,7 +49,7 @@ public sealed record LoupePaint
 
     /// <summary>外枠の色を取得する。</summary>
     /// <value>アルファを含む色。既定は LightGray（#FFD3D3D3）。</value>
-    public DrawingColor FrameColor { get; init; } = DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3);
+    public DrawingColor BorderColor { get; init; } = DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3);
 
     /// <summary>十字線の色を取得する。</summary>
     /// <value>アルファを含む色。既定は赤 40%（#66FF0000）。</value>

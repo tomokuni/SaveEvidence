@@ -183,7 +183,7 @@ public class LoupeRendererTests
         DrawShapes(
             target,
             CreatePaint(background: s_background, crosshair: s_cross),
-            [LoupeDrawLayer.Background, LoupeDrawLayer.Frame]);
+            [LoupeDrawLayer.Background, LoupeDrawLayer.Border]);
 
         Assert.Equal(s_backgroundPixel, target.GetPixel(17, 1));
     }
@@ -196,7 +196,7 @@ public class LoupeRendererTests
         DrawShapes(
             target,
             CreatePaint(background: s_background, frame: s_frame),
-            [LoupeDrawLayer.Background, LoupeDrawLayer.Frame]);
+            [LoupeDrawLayer.Background, LoupeDrawLayer.Border]);
 
         // 上辺（太さ 2）
         Assert.Equal(new SKColor(255, 255, 0), target.GetPixel(16, 1));
@@ -310,7 +310,7 @@ public class LoupeRendererTests
     /// <param name="crosshair">十字線の色。</param>
     /// <param name="coordLabel">中心座標ラベルの背景色。</param>
     /// <returns>描画に使う色。</returns>
-    /// <remarks>外枠の太さは寸法（コアの <see cref="LoupeOptions.FrameWidth"/>）が単一所有するため、ここでは与えない。</remarks>
+    /// <remarks>外枠の太さは寸法（コアの <see cref="LoupeOptions.BorderThickness"/>）が単一所有するため、ここでは与えない。</remarks>
     private static LoupePaint CreatePaint(
         DrawingColor? background = null,
         DrawingColor? checkerA = null,
@@ -323,7 +323,7 @@ public class LoupeRendererTests
             BackgroundColor = background ?? DrawingColor.Transparent,
             CheckerColorA = checkerA ?? DrawingColor.Transparent,
             CheckerColorB = checkerB ?? DrawingColor.Transparent,
-            FrameColor = frame ?? DrawingColor.Transparent,
+            BorderColor = frame ?? DrawingColor.Transparent,
             CrossColor = crosshair ?? DrawingColor.Transparent,
             CoordLabelBackgroundColor = coordLabel ?? DrawingColor.Transparent,
         };

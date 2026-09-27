@@ -103,7 +103,7 @@ SelectionOverlay.MarqueePaint = MarqueePaint.Default with
 {
     OverlayColor = System.Drawing.Color.FromArgb(77, 0, 0, 0), // 黒 30%
 };
-SelectionOverlay.LoupePaint = LoupePaint.Default with { FrameColor = System.Drawing.Color.Red };
+SelectionOverlay.LoupePaint = LoupePaint.Default with { BorderColor = System.Drawing.Color.Red };
 
 // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
 SelectionOverlay.DomainToDipScaling = 1.0;

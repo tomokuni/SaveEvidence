@@ -15,6 +15,7 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 /// <param name="Layers">描く図形の層とその順序（<b>描画順はコアが単一所有する</b>）。先頭から順に処理する。</param>
 /// <remarks>
 /// UI 実装は <see cref="Layers"/> の順に各層を処理するだけにする（描くかどうかの判断・外観値の解決はすべて済んでいる）。<br/>
+/// <b>層にある ⇔ 描く値がある</b>: 描く値の無い層は含めない（<see cref="HasDecoration"/> / <see cref="HasText"/> が層の有無と一致する）。<br/>
 /// <b>文字の層は含まない</b>: テキストは <see cref="SizeLabelText"/> / <see cref="CoordLabelText"/> として値を渡し、<br/>
 /// UI 層が要素として置くか画像として描くかを決める（要素は親より後に描かれるため常に最上位になる）。<br/>
 /// <br/>
@@ -34,4 +35,9 @@ public readonly record struct MarqueeDrawContent(
     /// <summary>テキスト（ラベル）を描く必要があるかどうかを取得する。</summary>
     /// <value>サイズラベルまたはカーソル座標ラベルを持つ場合は true。</value>
     public bool HasText => SizeLabelText is not null || CoordLabelText is not null;
+
+    /// <summary>装飾（外側・内側）を描く必要があるかどうかを取得する。</summary>
+    /// <value>外側または内側の装飾に描く値がある場合は true。</value>
+    /// <remarks>層（<see cref="MarqueeDrawLayer.Decoration"/>）に含めるかどうかを本値が表す（層にある ⇔ 描く値がある）。</remarks>
+    public bool HasDecoration => Decoration.HasContent || InnerDecoration.HasContent;
 }

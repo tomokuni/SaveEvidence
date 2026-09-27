@@ -141,8 +141,8 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `Options.CheckerSize` | ✅ `Options.Loupe.CheckerSize` | ✅ | 市松模様タイルサイズ |
 | `Paint.CheckerColorA` | ✅ `LoupePaint.CheckerColorA` | ✅ | |
 | `Paint.CheckerColorB` | ✅ `LoupePaint.CheckerColorB` | ✅ | |
-| `Paint.FrameColor` | ✅ `LoupePaint.FrameColor` | ✅ | 枠色 |
-| `Options.FrameWidth` | ✅ `Options.Loupe.FrameWidth` | ✅ | 枠の太さ |
+| `Paint.BorderColor` | ✅ `LoupePaint.BorderColor` | ✅ | 枠色 |
+| `Options.BorderThickness` | ✅ `Options.Loupe.BorderThickness` | ✅ | 枠の太さ |
 | `PositionOffset` | ✅ `Options.LoupeOffset` | ✅ | カーソルからのオフセット（複合コントロール固有の設定） |
 | `Options.ShowCoordLabel` | ✅ `Options.Loupe.ShowCoordLabel` | ✅ | 座標ラベル表示 |
 | `Paint.CoordLabelColor` | ✅ `LoupePaint.CoordLabelColor` | ✅ | |
@@ -273,8 +273,8 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
 | ルーペの中心座標を表示 | `LoupeShowCoordLabel` | `LoupeControl.Options.ShowCoordLabel`（外観設定のラベル設定カテゴリに配置） |
-| 枠色 | `LoupeFrameColor` | `LoupeControl.Paint.FrameColor` |
-| 枠の太さ | `LoupeFrameWidth` | `LoupeControl.Options.FrameWidth` |
+| 枠色 | `LoupeFrameColor` | `LoupeControl.Paint.BorderColor` |
+| 枠の太さ | `LoupeFrameWidth` | `LoupeControl.Options.BorderThickness` |
 | 十字線色（不透明度含む） | `LoupeCrossColor` | `LoupeControl.Paint.CrossColor`（アルファ込みの色） |
 | 選択矩形破線の色A（不透明度含む） | `LoupeSelectionRectColorA` | `FadeMaskDragRectOptions.SelectionRectColorA`（アルファ込み。ルーペの Bitmap へ破線を描く `FadeMaskDragRectControl` が使用） |
 | 選択矩形破線の色B（不透明度含む） | `LoupeSelectionRectColorB` | `FadeMaskDragRectOptions.SelectionRectColorB`（アルファ込み。同上） |

@@ -321,13 +321,14 @@ public class MarqueeDrawContentTests
     // 層の順序（描画順はコアが単一所有する）
     // ====================================================================
 
-    /// <summary>選択なしの場合は装飾だけが描く層になることを検証する。</summary>
+    /// <summary>選択もハイライトも無く、描く値も無い場合は層が空になることを検証する。</summary>
     [Fact]
-    public void ResolveContent_選択なしなら装飾だけを描く()
+    public void ResolveContent_描く値が無ければ層も無い()
     {
         var content = ResolveContent(CreateSession());
 
-        Assert.Equal([MarqueeDrawLayer.Decoration], content.Layers);
+        Assert.Empty(content.Layers);
+        Assert.False(content.HasDecoration);
     }
 
     /// <summary>選択ありでテキストなしならハンドルが最後の層になることを検証する。</summary>
@@ -381,18 +382,20 @@ public class MarqueeDrawContentTests
 
         var content = ResolveContent(session);
 
-        Assert.Equal([MarqueeDrawLayer.Decoration, MarqueeDrawLayer.Marker], content.Layers);
+        // 選択もハイライトも無いため装飾は層に含まれない（マーカーだけになる）
+        Assert.Equal([MarqueeDrawLayer.Marker], content.Layers);
     }
 
-    /// <summary>装飾は描くものが無くても常に層に含まれることを検証する（UI の分岐を増やさない）。</summary>
+    /// <summary>装飾は描く値がある場合だけ層に含まれることを検証する（層にある ⇔ 描く値がある）。</summary>
     [Fact]
-    public void ResolveContent_装飾は常に層に含まれる()
+    public void ResolveContent_装飾は描く値がある場合だけ層に含まれる()
     {
-        var content = ResolveContent(CreateSession());
+        // 選択なし + 全面暗転 = 暗転領域だけを持つ装飾（穴あけ矩形が無いため枠線は空）
+        var content = ResolveContent(CreateSession(), MarqueeDecoOptions.Default with { OuterShowFullOverlay = true });
 
-        Assert.Contains(MarqueeDrawLayer.Decoration, content.Layers);
-        // 描くものが無い場合は各項目が空になる
-        Assert.Empty(content.Decoration.OverlayRegions);
+        Assert.Equal([MarqueeDrawLayer.Decoration], content.Layers);
+        Assert.True(content.HasDecoration);
+        Assert.NotEmpty(content.Decoration.OverlayRegions);
         Assert.Empty(content.Decoration.BorderRects);
     }
 

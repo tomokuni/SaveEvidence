@@ -96,19 +96,19 @@ public class LoupeLimitsTests
     }
 
     // ====================================================================
-    // FrameWidth（1〜64、既定 2）
+    // BorderThickness（1〜64、既定 2）
     // ====================================================================
 
     [Fact]
-    public void CoerceFrameWidth_範囲内はそのまま返す()
+    public void CoerceBorderThickness_範囲内はそのまま返す()
     {
-        Assert.Equal(2, Loupe.Limits.CoerceFrameWidth(2));
+        Assert.Equal(2, Loupe.Limits.CoerceBorderThickness(2));
     }
 
     [Fact]
-    public void CoerceFrameWidth_範囲外は最小値と最大値に補正する()
+    public void CoerceBorderThickness_範囲外は最小値と最大値に補正する()
     {
-        Assert.Equal(1, Loupe.Limits.CoerceFrameWidth(0));
-        Assert.Equal(64, Loupe.Limits.CoerceFrameWidth(100));
+        Assert.Equal(1, Loupe.Limits.CoerceBorderThickness(0));
+        Assert.Equal(64, Loupe.Limits.CoerceBorderThickness(100));
     }
 }

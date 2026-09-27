@@ -20,7 +20,7 @@ public class LoupePaintTests
         Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), paint.CrossColor);
         Assert.Equal(DrawingColor.FromArgb(0x4C, 0x80, 0x80, 0x80), paint.CheckerColorA);
         Assert.Equal(DrawingColor.FromArgb(0x4C, 0xA9, 0xA9, 0xA9), paint.CheckerColorB);
-        Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), paint.FrameColor);
+        Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), paint.BorderColor);
         // 座標ラベルは白文字・黒 60% 背景
         Assert.Equal(DrawingColor.White, paint.CoordLabelColor);
         Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), paint.CoordLabelBackgroundColor);
@@ -41,9 +41,9 @@ public class LoupePaintTests
     {
         var paint = new LoupePaint();
 
-        var changed = paint with { FrameColor = DrawingColor.Red };
+        var changed = paint with { BorderColor = DrawingColor.Red };
 
-        Assert.Equal(DrawingColor.Red, changed.FrameColor);
+        Assert.Equal(DrawingColor.Red, changed.BorderColor);
         // 他の項目は維持される
         Assert.Equal(paint.CheckerColorA, changed.CheckerColorA);
     }

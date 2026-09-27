@@ -6,7 +6,7 @@
 ## 概要
 
 ルーペ（拡大鏡）は、**拡大元の 100% 画像**と**拡大中心（元画像ピクセル座標）**を受け取り、
-市松模様の背景・拡大画像・十字線・外枠を描画するコントロールです（中心座標ラベルはテキスト要素として表示します）。
+市松模様の背景・拡大画像・十字線・枠線を描画するコントロールです（中心座標ラベルはテキスト要素として表示します）。
 
 **Avalonia 版 `LoupeControl` と同じ UI 非依存コア（`Feature.LoupeCore`）を使うため、設定値と見た目は両 UI で一致します。**
 
@@ -21,7 +21,7 @@
 | `Source` | `EsBitmap?` | `null` | — | 拡大元の 100% 画像。null の場合は市松模様のみ |
 | `CenterPoint` | `EsPoint?` | `null` | — | 拡大中心（元画像ピクセル座標）。null の場合は市松模様のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 下表のとおり | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する |
-| `Paint` | `LoupePaint` | `LoupePaint.Default` | — | 描画に使う色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）。`with` 式で部分変更する。色はコアの計算に入らない |
+| `Paint` | `LoupePaint` | `LoupePaint.Default` | — | 描画に使う色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）。`with` 式で部分変更する。色はコアの計算に入らない |
 | `DipToDeviceScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。設定には含めない） |
 | `Renderer` | `ILoupeRenderer` | `Paint` の色を保持する `LoupeRendererMewUI` | — | 描画の実装（**描画の差し替え**。null 不可）。設定すると再生成とラベル要素の再配置を要求する |
 
@@ -32,11 +32,11 @@
 | `RequestedSize` | `int` | 160 | 1〜4096 | 一辺のサイズ（DIP） |
 | `ZoomLevel` | `int` | 4 | 1〜64 | 拡大率（偶数推奨） |
 | `CheckerSize` | `int` | 6 | 1〜128 | 市松模様の 1 タイルサイズ（DIP） |
-| `FrameWidth` | `int` | 2 | 1〜64 | 外枠の太さ（DIP） |
+| `BorderThickness` | `int` | 2 | 1〜64 | 枠線の太さ（DIP） |
 | `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
 | `ShowCheckerboard` | `bool` | `true` | — | 市松模様の表示可否 |
 | `ShowCrosshair` | `bool` | `true` | — | 十字線の表示可否 |
-| `ShowFrame` | `bool` | `true` | — | 外枠の表示可否 |
+| `ShowBorder` | `bool` | `true` | — | 枠線の表示可否 |
 
 `Paint`（`LoupePaint`。色は UI 非依存の `System.Drawing.Color`）の項目:
 
@@ -46,7 +46,7 @@
 | `CrossColor` | `DrawingColor` | 赤 40%（`#66FF0000`） | — | 十字線の色（不透明度はアルファ） |
 | `CheckerColorA` | `DrawingColor` | Gray 30% | — | 市松模様の明色 |
 | `CheckerColorB` | `DrawingColor` | DarkGray 30% | — | 市松模様の暗色 |
-| `FrameColor` | `DrawingColor` | LightGray | — | 外枠の色 |
+| `BorderColor` | `DrawingColor` | LightGray | — | 枠線の色 |
 | `CoordLabelColor` | `DrawingColor` | 白 | — | 座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `DrawingColor` | 黒 60%（`#99000000`） | — | 座標ラベルの背景色 |
 | `CoordLabelFontSize` | `double` | 12.0 | 6〜48（非有限は既定値） | 座標ラベルのフォントサイズ（DIP） |
@@ -64,7 +64,7 @@
 | 2 | 市松模様 | 明色で全面を塗った後、暗色タイルを市松位置へ描画する |
 | 3 | 拡大画像 | `Source` と `CenterPoint` がある場合のみ。切り出し領域の外は透明（下地の市松模様が見える） |
 | 4 | 十字線 | 中央の縦横 2 本（幅は拡大率と同じ物理ピクセル） |
-| 5 | 外枠 | 四辺（`Options.FrameWidth` の太さ） |
+| 5 | 枠線 | 四辺（`Options.BorderThickness` の太さ） |
 
 中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（上記の後ろに重なります。文言・表示可否・配置はコア、実寸測定は `SkiaText.Measure`、描画順はコアの `LoupeDrawLayer` が単一所有します）。子要素は親より後に描かれるため、ラベルは常に最上位になります。
 

@@ -23,8 +23,8 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 /// <b>UI 層は本値を自分で組み立てない</b>: セッションの状態を写す組み立て順は <see cref="Marquee.CreateRequest"/> が単一所有する。<br/>
 /// UI 層は本値を <see cref="Marquee.ResolveContent"/> へ渡すだけで、描画に必要な値の意味・単位を持たない。<br/>
 /// <br/>
-/// <b>本値から導出する値は本値が単一所有する</b>: 座標変換ポートの決定と、論理座標の矩形を DIP 矩形へ変換する手順、<br/>
-/// および穴あけ矩形（選択またはハイライトの領域）の決定は、本値のメンバー（<see cref="ResolvedPort"/> と各メソッド）が持つ。<br/>
+/// <b>本値から導出する値は本値が単一所有する</b>: 座標変換ポートの決定（<see cref="ResolvedPort" />）、穴あけ矩形の決定（<see cref="Hole" /> /<br/>
+/// <see cref="ResolveHoleRectDip" />）、論理座標の矩形を DIP 矩形へ変換する手順（<see cref="ToDipRect" /> / <see cref="ToDomainRect" />）は本値のメンバーが持つ。<br/>
 /// 外側の装飾・内側の装飾・ハンドル・サイズラベルが同じ値を使うため、各所が個別に解決すると矩形がずれ、<br/>
 /// 同じ変換の生成と評価が重複する（フレームの解決が 1 回だけ解決して各所へ渡す）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
@@ -55,6 +55,25 @@ public readonly record struct MarqueeRenderRequest(
     /// 原点を持たない型で受けることで取り違えを防ぐ）。
     /// </remarks>
     internal EsRect SurfaceBounds => new(0, 0, ClientSize.Width, ClientSize.Height);
+
+    /// <summary>穴あけ矩形（暗転オーバーレイで穴をあける領域）を取得する。</summary>
+    /// <value>穴あけ矩形。ハイライトも選択も無い場合は null。</value>
+    /// <remarks>
+    /// 優先順（ハイライト → 選択）と終点の扱い（選択は閉区間 +1、ハイライトは +0）の規則は<br/>
+    /// <see cref="ResolveHoleRect" /> が単一所有する（本値は設定と状態を渡すだけである）。
+    /// </remarks>
+    internal MarqueeHoleRect? Hole => ResolveHoleRect(DecoOptions.OuterHighlightRect, SelectionRect);
+
+    /// <summary>穴あけ矩形を DIP 座標で取得する。</summary>
+    /// <param name="port">解決済みの座標変換ポート（1 フレームに 1 回だけ解決した値を渡す）。</param>
+    /// <returns>穴あけ矩形（DIP）。ハイライトも選択も無い場合は null。</returns>
+    /// <remarks>
+    /// 装飾の枠線・内側の塗り・サイズラベルが同じ穴あけ矩形を使うため、<br/>
+    /// 呼び出し側は本メソッドを 1 回だけ呼び、結果を各項目へ渡す（各所が個別に変換すると矩形がずれる）。<br/>
+    /// 選ばれた矩形だけを DIP 変換する（両方を変換して片方を捨てない）。
+    /// </remarks>
+    internal EsRect? ResolveHoleRectDip(ICoordTransform port)
+        => Hole is { } hole ? ToDipRect(hole.Rect, port, hole.ClosedInterval) : null;
 
     /// <summary>設定・状態と描画時に決まる値から描画入力を組み立てる。</summary>
     /// <param name="options">選択矩形の設定。</param>
@@ -123,7 +142,7 @@ public readonly record struct MarqueeRenderRequest(
 
     /// <summary>論理座標の矩形をポート経由で DIP 矩形へ変換する。</summary>
     /// <param name="logical">論理座標（ドメイン）の矩形。</param>
-    /// <param name="port">座標変換ポート。null の場合は等価変換。</param>
+    /// <param name="port">解決済みの座標変換ポート（1 フレームに 1 回だけ解決した値を渡す）。</param>
     /// <param name="closedInterval">閉区間（終点 +1）として扱うか。既定は true。</param>
     /// <returns>DIP 座標の矩形。</returns>
     /// <remarks>
@@ -132,11 +151,10 @@ public readonly record struct MarqueeRenderRequest(
     /// ハイライト矩形（ホストが既に全ピクセルを含む閉区間として与える矩形）は、<br/>
     /// <paramref name="closedInterval"/> を false にして +1 しない（1px 大きく表示されるのを防ぐ）。
     /// </remarks>
-    internal static EsRect ToDipRect(EsRect logical, ICoordTransform? port = null, bool closedInterval = true)
+    internal EsRect ToDipRect(EsRect logical, ICoordTransform port, bool closedInterval = true)
     {
-        var transform = port.OrIdentity();
-        var topLeft = transform.Inverse(new EsPoint(logical.X, logical.Y));
-        var bottomRight = transform.Inverse(closedInterval
+        var topLeft = port.Inverse(new EsPoint(logical.X, logical.Y));
+        var bottomRight = port.Inverse(closedInterval
             ? new EsPoint(logical.Right + 1, logical.Bottom + 1)
             : new EsPoint(logical.Right, logical.Bottom));
 
@@ -145,10 +163,10 @@ public readonly record struct MarqueeRenderRequest(
 
     /// <summary>DIP 矩形をドメイン座標の矩形へ逆換算する（左上と右下の順変換から組む）。</summary>
     /// <param name="dipRect">DIP 座標の矩形。</param>
-    /// <param name="port">座標変換ポート（順変換 = DIP → ドメイン）。</param>
+    /// <param name="port">解決済みの座標変換ポート（順変換 = DIP → ドメイン）。</param>
     /// <returns>ドメイン座標の矩形。</returns>
     /// <remarks>ホストが「矩形から表示スケールを解決する」ために使う（コアはモニタを知らない）。</remarks>
-    internal static EsRect ToDomainRect(EsRect dipRect, ICoordTransform port)
+    internal EsRect ToDomainRect(EsRect dipRect, ICoordTransform port)
     {
         var topLeft = port.Forward(dipRect.TopLeft);
         var bottomRight = port.Forward(dipRect.BottomRight);
@@ -169,23 +187,5 @@ public readonly record struct MarqueeRenderRequest(
     internal static MarqueeHoleRect? ResolveHoleRect(EsRect? highlightRect, EsRect? selectionRect)
         => highlightRect is { } highlight ? new MarqueeHoleRect(highlight, ClosedInterval: false)
             : selectionRect is { } selection ? new MarqueeHoleRect(selection, ClosedInterval: true)
-            : null;
-
-    /// <summary>論理座標の矩形から穴あけ矩形（DIP）を決定する。</summary>
-    /// <param name="logicalHighlightRect">ハイライト矩形（論理座標）。null の場合はハイライトなし。</param>
-    /// <param name="logicalSelectionRect">選択矩形（論理座標）。null の場合は選択なし。</param>
-    /// <param name="port">論理座標 → DIP の座標変換ポート。null の場合は等価変換。</param>
-    /// <returns>穴あけ矩形（DIP）。どちらも null の場合は null。</returns>
-    /// <remarks>
-    /// 優先順（ハイライト → 選択）と終点の扱い（選択は閉区間 +1、ハイライトは +0）は<br/>
-    /// <see cref="ResolveHoleRect"/> が単一所有し、<b>選ばれた矩形だけを DIP 変換する</b>（両方を変換して片方を捨てない）。<br/>
-    /// 装飾の枠線・内側の塗り・サイズラベルが同じ穴あけ矩形を使うため、各所が個別に変換すると矩形がずれる<br/>
-    /// （呼び出し側は本メソッドを 1 回だけ呼び、結果を各項目へ渡す）。<br/>
-    /// ポートの解決（<see cref="ResolvePort"/>）も呼び出し側が 1 回だけ行う（処理の多重実行を避ける）。
-    /// </remarks>
-    internal static EsRect? ResolveHoleRectDip(
-        EsRect? logicalHighlightRect, EsRect? logicalSelectionRect, ICoordTransform? port)
-        => ResolveHoleRect(logicalHighlightRect, logicalSelectionRect) is { } hole
-            ? ToDipRect(hole.Rect, port, hole.ClosedInterval)
             : null;
 }

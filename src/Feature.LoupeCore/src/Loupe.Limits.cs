@@ -54,14 +54,14 @@ public sealed partial class Loupe
         /// <summary>市松模様の 1 タイルサイズの既定値（ピクセル）。</summary>
         public const int CheckerSizeDefault = 6;
 
-        /// <summary>外枠の太さの最小値（ピクセル）。</summary>
-        public const int FrameWidthMin = 1;
+        /// <summary>枠線の太さの最小値（ピクセル）。</summary>
+        public const int BorderThicknessMin = 1;
 
-        /// <summary>外枠の太さの最大値（ピクセル）。</summary>
-        public const int FrameWidthMax = 64;
+        /// <summary>枠線の太さの最大値（ピクセル）。</summary>
+        public const int BorderThicknessMax = 64;
 
-        /// <summary>外枠の太さの既定値（ピクセル）。</summary>
-        public const int FrameWidthDefault = 2;
+        /// <summary>枠線の太さの既定値（ピクセル）。</summary>
+        public const int BorderThicknessDefault = 2;
 
         /// <summary>表示サイズ要求値を安全域へ補正する（1〜4096）。</summary>
         /// <param name="value">補正する値（DIP）。</param>
@@ -84,10 +84,10 @@ public sealed partial class Loupe
         /// <returns>安全域へ補正した値。</returns>
         public static int CoerceCheckerSize(int value) => Math.Clamp(value, CheckerSizeMin, CheckerSizeMax);
 
-        /// <summary>外枠の太さを安全域へ補正する（1〜64）。</summary>
+        /// <summary>枠線の太さを安全域へ補正する（1〜64）。</summary>
         /// <param name="value">補正する値（ピクセル）。</param>
         /// <returns>安全域へ補正した値。</returns>
-        public static int CoerceFrameWidth(int value) => Math.Clamp(value, FrameWidthMin, FrameWidthMax);
+        public static int CoerceBorderThickness(int value) => Math.Clamp(value, BorderThicknessMin, BorderThicknessMax);
 
         /// <summary>実数を安全域へ補正する（非有限値は既定値）。</summary>
         /// <param name="value">補正する値。</param>

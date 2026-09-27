@@ -64,7 +64,7 @@ sequenceDiagram
     UI->>L: ResolveContent(request)
     L-->>UI: LoupeDrawContent（層の順序・矩形）
     UI->>R: DrawShapes(canvas, source, request, content)
-    R->>R: Layers の順に下地・市松・拡大画像・十字線・外枠を選択
+    R->>R: Layers の順に下地・市松・拡大画像・十字線・枠線を選択
     R->>C: Clear / FillRect / FillRects / DrawImage
     UI->>UI: LoupeLabelPlan.Resolve → ラベル要素を配置
     UI->>H: Rendered（描画済みビットマップと表示情報）
@@ -79,7 +79,7 @@ flowchart LR
     B -->|Checkerboard| D[明色を全面へ + 暗色タイルを列挙]
     B -->|Image| E[切り出し → 拡大描画]
     B -->|Crosshair| F[十字線 2 本]
-    B -->|Frame| G[外枠 4 辺]
+    B -->|Frame| G[枠線 4 辺]
     B -->|CoordLabel| H[スキップ<br/>UI の要素が描く]
 ```
 
@@ -176,8 +176,8 @@ src/LoupeControl.UIBase/
 | 対象 | 所有者 |
 | --- | --- |
 | 描画する層とその順序 | `Loupe.ResolveLayers`（コア。本層は順に写すだけ） |
-| 描画の色（下地・市松模様・外枠・十字線・中心座標ラベルの 7 色）とその既定値 | 本層（`LoupePaint`） |
-| 描画可否（非表示の項目はコアが空の描画内容として返す・切り出し領域が無い場合は描かない） | コア（明示フラグ `LoupeOptions.ShowCheckerboard` / `ShowCrosshair` / `ShowFrame` / `ShowCoordLabel` と、切り出し不可時の `LoupeRendererBase.DrawMagnifiedImage`） |
+| 描画の色（下地・市松模様・枠線・十字線・中心座標ラベルの 7 色）とその既定値 | 本層（`LoupePaint`） |
+| 描画可否（非表示の項目はコアが空の描画内容として返す・切り出し領域が無い場合は描かない） | コア（明示フラグ `LoupeOptions.ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` と、切り出し不可時の `LoupeRendererBase.DrawMagnifiedImage`） |
 | 切り出し領域と拡大の矩形 | コア（`LoupeRenderRequest` の internal メンバーが算出し、描画内容 `LoupeDrawContent.MagnifiedImage` が持つ） |
 | 市松模様のタイル位置とタイル数 | コア（描画内容 `LoupeDrawContent.CheckerTiles`。リストを確保しない列挙子で渡す） |
 | 十字線・円枠の矩形 | コア（描画内容 `LoupeDrawContent`） |

@@ -49,7 +49,7 @@
 | `BackgroundColor` | 引数 `background` | 市松模様の下地色（**ホストが決める**） |
 | `CheckerColorA` | `LoupeCheckerColorA` | 市松模様の色 A |
 | `CheckerColorB` | `LoupeCheckerColorB` | 市松模様の色 B |
-| `FrameColor` | `LoupeFrameColor` | 外枠の色 |
+| `BorderColor` | `LoupeFrameColor` | 枠線の色 |
 | `CrossColor` | `LoupeCrossColor` | 十字線の色 |
 | `CoordLabelColor` | `LoupeCoordLabelColor` | 中心座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `LoupeCoordLabelBackgroundColor` | 中心座標ラベルの背景色 |

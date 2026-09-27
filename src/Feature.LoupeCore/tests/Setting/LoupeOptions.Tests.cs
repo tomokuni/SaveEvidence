@@ -21,11 +21,11 @@ public class LoupeOptionsTests
         Assert.Equal(Loupe.Limits.RequestedSizeDefault, options.RequestedSize);
         Assert.Equal(Loupe.Limits.ZoomLevelDefault, options.ZoomLevel);
         Assert.Equal(Loupe.Limits.CheckerSizeDefault, options.CheckerSize);
-        Assert.Equal(Loupe.Limits.FrameWidthDefault, options.FrameWidth);
+        Assert.Equal(Loupe.Limits.BorderThicknessDefault, options.BorderThickness);
         Assert.True(options.ShowCoordLabel);
         Assert.True(options.ShowCheckerboard);
         Assert.True(options.ShowCrosshair);
-        Assert.True(options.ShowFrame);
+        Assert.True(options.ShowBorder);
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class LoupeOptionsTests
         // 他の項目は維持される（部分指定でもゼロ値にならない）
         Assert.Equal(options.RequestedSize, changed.RequestedSize);
         Assert.Equal(options.CheckerSize, changed.CheckerSize);
-        Assert.Equal(options.FrameWidth, changed.FrameWidth);
+        Assert.Equal(options.BorderThickness, changed.BorderThickness);
         Assert.Equal(options.ShowCoordLabel, changed.ShowCoordLabel);
     }
 
@@ -62,13 +62,13 @@ public class LoupeOptionsTests
             RequestedSize = 100000,
             ZoomLevel = 0,
             CheckerSize = 1000,
-            FrameWidth = 0,
+            BorderThickness = 0,
         };
 
         Assert.Equal(Loupe.Limits.RequestedSizeMax, options.RequestedSize);
         Assert.Equal(Loupe.Limits.ZoomLevelMin, options.ZoomLevel);
         Assert.Equal(Loupe.Limits.CheckerSizeMax, options.CheckerSize);
-        Assert.Equal(Loupe.Limits.FrameWidthMin, options.FrameWidth);
+        Assert.Equal(Loupe.Limits.BorderThicknessMin, options.BorderThickness);
     }
 
     /// <summary><c>with</c> 式による変更も生成時と同じ補正を受けることを検証する。</summary>
@@ -85,10 +85,10 @@ public class LoupeOptionsTests
     [Fact]
     public void 安全域内の値は変更されない()
     {
-        var options = new LoupeOptions { CheckerSize = 8, FrameWidth = 3 };
+        var options = new LoupeOptions { CheckerSize = 8, BorderThickness = 3 };
 
         Assert.Equal(8, options.CheckerSize);
-        Assert.Equal(3, options.FrameWidth);
+        Assert.Equal(3, options.BorderThickness);
     }
 
     /// <summary>中心座標ラベルの表示可否が設定と中心の有無で決まることを検証する。</summary>
@@ -126,7 +126,7 @@ public class LoupeOptionsTests
     public void 等価性が寸法の変更を反映する(bool same)
     {
         var options = new LoupeOptions();
-        var other = same ? options : options with { FrameWidth = 8 };
+        var other = same ? options : options with { BorderThickness = 8 };
 
         Assert.Equal(same, options == other);
         Assert.Equal(!same, options != other);

@@ -556,7 +556,8 @@ public class MarqueeTests
         marquee.DisplayScaleScaling = 1.5;
         marquee.DisplayScaleScaling = 1.5;   // 同値
 
-        Assert.Equal("[Feature.MarqueeCore] Setting: DisplayScaleScaling 0 → 1.5", Assert.Single(logger.Messages));
+        // 記録するのは実際に使われる値（未設定（0）は倍率（1.0）へ解決された後の値）
+        Assert.Equal("[Feature.MarqueeCore] Setting: DisplayScaleScaling 1 → 1.5", Assert.Single(logger.Messages));
     }
 
     /// <summary>装飾の設定の変更が変化した項目だけ記録されることを検証する。</summary>

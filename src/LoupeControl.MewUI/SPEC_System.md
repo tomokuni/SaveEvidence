@@ -46,7 +46,7 @@ Avalonia 版と MewUI 版の間に依存はありません（互いを参照し�
 
 | 層 | 責務 |
 | --- | --- |
-| `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・外枠の矩形計算、市松模様の明暗判定、寸法・表示可否（`LoupeOptions`）と描画入力（`LoupeRenderRequest`）の単一所有 |
+| `Feature.LoupeCore` | 数値の安全域補正、切り出し領域の計算、切り出し、十字線・枠線の矩形計算、市松模様の明暗判定、寸法・表示可否（`LoupeOptions`）と描画入力（`LoupeRenderRequest`）の単一所有 |
 | `LoupeControl.UIBase` | 描画の手順（層の順序と描画ポートへの写し方）とラベル計画（実寸 → ラベル要素の配置）。UI 非依存であり、UI フレームワークを参照しない |
 | `LoupeControl.MewUI` | コアの描画入力を描画層（`LoupeRenderer`）へ渡し、描画ポート `SkiaEsCanvas` を適合させる。`MewProperty` による入力の受付。DPI の自動追従 |
 | ホスト（`app.MewUI` 等） | `Source` / `CenterPoint` の設定、表示位置の決定（コアのファサード `ResolveLayout` を利用） |
@@ -68,7 +68,7 @@ src/LoupeControl.MewUI/
 | コンポーネント | 責務 |
 | --- | --- |
 | `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。描画は描画層（`LoupeRenderer`）を `SkiaEsCanvas` 経由で呼ぶ（描画の順序と内容は描画層が単一所有し、コアは描く層とその順序を指示する） |
-| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 外枠の順に描画ポートへ写す（コアの描画内容 `LoupeDrawContent`（層の順序・矩形・タイル・拡大画像の切り出しと描画の矩形）をそのまま使用）。**色は `LoupePaint` が単一所有する**（コントロールの `Paint` プロパティの値を受け取る）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
+| `LoupeRenderer`（描画層） | 下地 → 市松模様 → 拡大画像 → 十字線 → 枠線の順に描画ポートへ写す（コアの描画内容 `LoupeDrawContent`（層の順序・矩形・タイル・拡大画像の切り出しと描画の矩形）をそのまま使用）。**色は `LoupePaint` が単一所有する**（コントロールの `Paint` プロパティの値を受け取る）。**描く層とその順序はコアが単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない） |
 | `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
@@ -104,7 +104,7 @@ classDiagram
         +int RequestedSize
         +int ZoomLevel
         +int CheckerSize
-        +int FrameWidth
+        +int BorderThickness
         +bool ShowCoordLabel
         +ShouldShowCoordLabel(hasCenter) bool
     }
@@ -114,7 +114,7 @@ classDiagram
         +Color CrossColor
         +Color CheckerColorA
         +Color CheckerColorB
-        +Color FrameColor
+        +Color BorderColor
         +Color CoordLabelColor
         +Color CoordLabelBackgroundColor
         +double CoordLabelFontSize / int CoordLabelCornerRadius
@@ -135,7 +135,7 @@ classDiagram
         <<Feature.LoupeCore>>
         +EsRect SurfaceBounds
         +LoupeCheckerTiles CheckerTiles
-        +CrosshairRects / FrameRects
+        +CrosshairRects / BorderRects
         +Layers
     }
     class LoupeRenderRequest {
@@ -205,8 +205,8 @@ sequenceDiagram
     end
     R->>C: ComputeCrosshairRects(pixelSize, zoomLevel)
     R->>SK: 十字線を描画
-    R->>C: ComputeFrameRects(surface, frameWidth)
-    R->>SK: 外枠を描画
+    R->>C: ComputeBorderRects(surface, borderThickness)
+    R->>SK: 枠線を描画
     alt ShowCoordLabel かつ CenterPoint が設定済み
         R-->>R: 座標ラベル層は描画しない（コントロールがテキスト要素として表示する）
     else 未設定
@@ -222,7 +222,7 @@ sequenceDiagram
 3. **装飾矩形と市松模様の明暗判定はコアが単一所有する**。両 UI で同じ見た目を保証するため、
    Avalonia 版と MewUI 版は同じコアの計算を使う（描画の手順そのものも UI 非依存の描画層 `LoupeControl.UIBase` が共有する）。
 4. **設定（表示サイズ・拡大率・寸法）はコアの `LoupeOptions` が単一所有し、色は描画層の `LoupePaint` が単一所有する**。UI 層は `Options` と `Paint` を公開して描画時に読むだけであり、既定値・数値項目の補正もコアが持つ。
-   描画の可否（市松模様・十字線・外枠）はコアの設定フラグ（`LoupeOptions.Show*`）が、ラベルの余白（寸法）はコアが判断・所有するため、両 UI の見た目が一致する
+   描画の可否（市松模様・十字線・枠線）はコアの設定フラグ（`LoupeOptions.Show*`）が、ラベルの余白（寸法）はコアが判断・所有するため、両 UI の見た目が一致する
    （従来は Avalonia が既定で十字線を描き MewUI は描かないという既定値のドリフトがあった）。
 5. **位置を持たない**。表示位置は「親領域サイズ」「中心座標」「オフセット」に依存するホスト側の関心事であり、
    計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有する。コントロールは入力と描画のみを担う。

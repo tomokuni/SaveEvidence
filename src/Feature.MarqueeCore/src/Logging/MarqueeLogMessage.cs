@@ -47,19 +47,19 @@ internal static partial class MarqueeLogMessage
     internal static partial void LogDoubleClick(this ILogger logger, double x, double y, bool inside);
 
     /// <summary>マウス押下直前の位置のログ（移動の高頻度ログは行わない）。</summary>
-    /// <remarks>LogLevel: Trace<br/>出力書式: <c>[Feature.MarqueeCore] MouseDown 直前の位置: pos=({X}, {Y})</c></remarks>
+    /// <remarks>LogLevel: Trace<br/>出力書式: <c>[Feature.MarqueeCore] Position before MouseDown: pos=({X}, {Y})</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="x">ドメイン座標 X。</param>
     /// <param name="y">ドメイン座標 Y。</param>
-    [LoggerMessage(LogLevel.Trace, "[Feature.MarqueeCore] MouseDown 直前の位置: pos=({X}, {Y})")]
+    [LoggerMessage(LogLevel.Trace, "[Feature.MarqueeCore] Position before MouseDown: pos=({X}, {Y})")]
     internal static partial void LogPositionBeforeDown(this ILogger logger, double x, double y);
 
     /// <summary>マウス解放直後の位置のログ（移動の高頻度ログは行わない）。</summary>
-    /// <remarks>LogLevel: Trace<br/>出力書式: <c>[Feature.MarqueeCore] MouseUp 直後の位置: pos=({X}, {Y})</c></remarks>
+    /// <remarks>LogLevel: Trace<br/>出力書式: <c>[Feature.MarqueeCore] Position after MouseUp: pos=({X}, {Y})</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
     /// <param name="x">ドメイン座標 X。</param>
     /// <param name="y">ドメイン座標 Y。</param>
-    [LoggerMessage(LogLevel.Trace, "[Feature.MarqueeCore] MouseUp 直後の位置: pos=({X}, {Y})")]
+    [LoggerMessage(LogLevel.Trace, "[Feature.MarqueeCore] Position after MouseUp: pos=({X}, {Y})")]
     internal static partial void LogPositionAfterUp(this ILogger logger, double x, double y);
 
     /// <summary>マウスドラッグ開始（新規選択・ハンドル操作）のログ。</summary>

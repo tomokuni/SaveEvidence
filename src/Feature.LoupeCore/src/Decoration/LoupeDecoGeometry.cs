@@ -3,14 +3,14 @@ using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Feature.LoupeCore.Decoration;
 
-/// <summary>ルーペの装飾（十字線・外枠）の矩形計算ロジック（純粋関数）。</summary>
+/// <summary>ルーペの装飾（十字線・枠線）の矩形計算ロジック（純粋関数）。</summary>
 /// <remarks>
 /// 装飾矩形の計算を UI 非依存の純粋関数として単一所有する。<br/>
 /// 矩形は描画内容（<see cref="Loupe.ResolveContent"/> の結果）へ解決済みの値として含まれるため、<br/>
 /// 描画実装は返された <see cref="EsRect"/> を自身の描画 API へ渡すだけにする（二重所有を 防ぐ）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証 できる。
 /// </remarks>
-internal static class LoupeDecorationGeometry
+internal static class LoupeDecoGeometry
 {
     /// <summary>十字線の 2 本の矩形を計算する。</summary>
     /// <param name="surface">描画面の全体（左上を原点とする正方形）。</param>
@@ -30,15 +30,15 @@ internal static class LoupeDecorationGeometry
         return [new EsRect(surface.X + start, surface.Y, zoomLevel, pixelSize), new EsRect(surface.X, surface.Y + start, pixelSize, zoomLevel)];
     }
 
-    /// <summary>外枠の 4 辺の矩形を計算する。</summary>
+    /// <summary>枠線の 4 辺の矩形を計算する。</summary>
     /// <param name="surface">描画面の全体（左上を原点とする正方形）。</param>
-    /// <param name="width">外枠の太さ（物理ピクセル）。補正済みの値を渡す（安全域は <c>Loupe.Limits</c> が単一所有する）。</param>
-    /// <returns>外枠の上・下・左・右の 4 つの矩形。</returns>
+    /// <param name="width">枠線の太さ（物理ピクセル）。補正済みの値を渡す（安全域は <c>Loupe.Limits</c> が単一所有する）。</param>
+    /// <returns>枠線の上・下・左・右の 4 つの矩形。</returns>
     /// <remarks>
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（選択矩形の枠線と同じ式）。<br/>
-    /// 太さは面の短辺で上限を取る（面より太い外枠は面全体を覆い、矩形が面からはみ出さない）。<br/>
-    /// 太さの補正は設定（<c>LoupeOptions.FrameWidth</c> の生成時）に適用される。
+    /// 太さは面の短辺で上限を取る（面より太い枠線は面全体を覆い、矩形が面からはみ出さない）。<br/>
+    /// 太さの補正は設定（<c>LoupeOptions.BorderThickness</c> の生成時）に適用される。
     /// </remarks>
-    internal static IReadOnlyList<EsRect> ComputeFrameRects(EsRect surface, double width)
+    internal static IReadOnlyList<EsRect> ComputeBorderRects(EsRect surface, double width)
         => surface.ComputeInnerEdges(Math.Min(width, Math.Min(surface.Width, surface.Height)));
 }

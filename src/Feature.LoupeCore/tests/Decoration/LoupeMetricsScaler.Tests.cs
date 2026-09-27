@@ -23,23 +23,23 @@ public class LoupeMetricsScalerTests
     public void ScaleCheckerSize_スケーリング係数に追従する(double scaling, int expected)
         => Assert.Equal(expected, LoupeMetricsScaler.ScaleCheckerSize(8, scaling));
 
-    /// <summary>外枠の太さがスケーリング係数に追従する（切り上げ・最低 1）ことを検証する。</summary>
+    /// <summary>枠線の太さがスケーリング係数に追従する（切り上げ・最低 1）ことを検証する。</summary>
     /// <param name="scaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
     /// <param name="expected">期待する物理ピクセルサイズ。</param>
     [Theory]
     [InlineData(1.0, 2)]
     [InlineData(1.25, 3)]
     [InlineData(2.0, 4)]
-    public void ScaleFrameWidth_スケーリング係数に追従する(double scaling, int expected)
-        => Assert.Equal(expected, LoupeMetricsScaler.ScaleFrameWidth(2, scaling));
+    public void ScaleBorderThickness_スケーリング係数に追従する(double scaling, int expected)
+        => Assert.Equal(expected, LoupeMetricsScaler.ScaleBorderThickness(2, scaling));
 
     /// <summary>タイルサイズ 0 でも最低 1 ピクセルになることを検証する。</summary>
     [Fact]
     public void ScaleCheckerSize_0は最低1ピクセルになる()
         => Assert.Equal(1, LoupeMetricsScaler.ScaleCheckerSize(0, 1.0));
 
-    /// <summary>外枠の太さ 0 でも最低 1 ピクセルになることを検証する。</summary>
+    /// <summary>枠線の太さ 0 でも最低 1 ピクセルになることを検証する。</summary>
     [Fact]
-    public void ScaleFrameWidth_0は最低1ピクセルになる()
-        => Assert.Equal(1, LoupeMetricsScaler.ScaleFrameWidth(0, 1.0));
+    public void ScaleBorderThickness_0は最低1ピクセルになる()
+        => Assert.Equal(1, LoupeMetricsScaler.ScaleBorderThickness(0, 1.0));
 }

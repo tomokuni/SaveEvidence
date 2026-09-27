@@ -172,7 +172,7 @@ public class FadeMaskDragRectControlTests
                 RequestedSize = 150,
                 ZoomLevel = 3,
                 CheckerSize = 10,
-                FrameWidth = 4,
+                BorderThickness = 4,
                 ShowCoordLabel = true,
             },
             LoupeOffset = 30.0,
@@ -185,7 +185,7 @@ public class FadeMaskDragRectControlTests
             CrossColor = Color.FromAColor(204, Colors.Red).ToDrawingColor(), // 赤 80%
             CheckerColorA = Colors.Black.ToDrawingColor(),
             CheckerColorB = Colors.White.ToDrawingColor(),
-            FrameColor = Colors.Gray.ToDrawingColor(),
+            BorderColor = Colors.Gray.ToDrawingColor(),
         };
 
         // ラベルの体裁（フォントサイズ）も描画の設定であり、コアの設定には含まない
@@ -199,7 +199,7 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(3, control.Loupe.Options.ZoomLevel);
         Assert.Equal(2.0, control.Loupe.DipToDeviceScaling);
         Assert.Equal(10, control.Loupe.Options.CheckerSize);
-        Assert.Equal(4, control.Loupe.Options.FrameWidth);
+        Assert.Equal(4, control.Loupe.Options.BorderThickness);
         Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Paint.CrossColor.ToAvaloniaColor());
         // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため、ルーペのプロパティへ渡される
         Assert.Equal(30.0, control.Loupe.PositionOffset);
@@ -547,10 +547,10 @@ public class FadeMaskDragRectControlTests
 
             // 破線色のみの変更（ルーペ自身の外観・サイズ・ズームは不変 → ルーペのプロパティ通知は発生しない）
             var checkerSize = control.Loupe.Options.CheckerSize;
-            var frameWidth = control.Loupe.Options.FrameWidth;
+            var borderThickness = control.Loupe.Options.BorderThickness;
             control.Options = control.Options with { SelectionRectColorA = Colors.Lime.ToDrawingColor() };
             Assert.Equal(checkerSize, control.Loupe.Options.CheckerSize);
-            Assert.Equal(frameWidth, control.Loupe.Options.FrameWidth);
+            Assert.Equal(borderThickness, control.Loupe.Options.BorderThickness);
             Assert.Equal(200, control.Loupe.Options.RequestedSize);
 
             await PumpUntilAsync(() => rendered > 0);

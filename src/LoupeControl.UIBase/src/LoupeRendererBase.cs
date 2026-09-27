@@ -64,8 +64,8 @@ public abstract class LoupeRendererBase : ILoupeRenderer
                     DrawCrosshair(canvas, in content);
                     break;
 
-                case LoupeDrawLayer.Frame:
-                    DrawFrame(canvas, in content);
+                case LoupeDrawLayer.Border:
+                    DrawBorder(canvas, in content);
                     break;
 
                 case LoupeDrawLayer.Label:
@@ -119,7 +119,7 @@ public abstract class LoupeRendererBase : ILoupeRenderer
     /// <param name="canvas">描画先の描画ポート。</param>
     /// <param name="content">コアが解決した描画内容（外枠の矩形を持つ）。</param>
     /// <remarks>太さの換算と矩形の導出はコアが済ませて本値に含まれる（本メソッドは計算しない）。色は色の保持者が与える。</remarks>
-    protected abstract void DrawFrame(IEsCanvas canvas, in LoupeDrawContent content);
+    protected abstract void DrawBorder(IEsCanvas canvas, in LoupeDrawContent content);
 
     /// <summary>ソース画像を切り出して拡大描画する（ソースまたは切り出し領域が無い場合は何もしない）。</summary>
     /// <param name="canvas">描画先の描画ポート。</param>

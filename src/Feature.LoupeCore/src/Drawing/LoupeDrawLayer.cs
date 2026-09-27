@@ -25,8 +25,8 @@ public enum LoupeDrawLayer
     /// <summary>十字線（表示の設定が有効な場合のみ）。</summary>
     Crosshair,
 
-    /// <summary>外枠（表示の設定が有効な場合のみ）。</summary>
-    Frame,
+    /// <summary>枠線（表示の設定が有効な場合のみ）。</summary>
+    Border,
 
     /// <summary>テキスト（中心座標ラベル。テキストがある場合のみ。常に最上位）。</summary>
     /// <remarks>UI 要素として置く UI は本層を無視してよい（基底のフックの既定は何もしない）。</remarks>

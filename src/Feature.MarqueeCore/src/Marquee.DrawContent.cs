@@ -11,6 +11,7 @@ namespace EsUtil.Feature.MarqueeCore;
 /// <remarks>
 /// <b>描画順はコアが単一所有する</b>: 本部分が <see cref="MarqueeDrawContent.Layers"/> を組み立てるため、<br/>
 /// UI 層は層の順序・有無を判断しない（ラベルは必ず最後 = 常に最上位）。<br/>
+/// <b>層にある ⇔ 描く値がある</b>（描く値の無い層は含めない。層の有無の判断を UI 層へ置かない）。<br/>
 /// <br/>
 /// <b>描くかどうかの判断はすべて本部分が持つ</b>: 設定（非表示・描画可否フラグ）・選択なし・nudge 中・穴あけ矩形なしなどを解決し、<br/>
 /// UI 層は値を持つ項目を反映するだけでよい（<see cref="MarqueeDrawContent"/> とその要素型は描画に必要な値のみを持つ純粋データである）。<br/>
@@ -37,16 +38,19 @@ public sealed partial class Marquee
     /// <remarks>ラベルがカーソルに重ならないための余白である。</remarks>
     private const double CoordLabelOffset = 8.0;
 
-    /// <summary>層の組合せのうち、選択の有無を表すビット。</summary>
-    private const int SelectionBit = 1;
+    /// <summary>層の組合せのうち、装飾の有無を表すビット。</summary>
+    private const int DecorationBit = 1;
+
+    /// <summary>層の組合せのうち、ドラッグハンドルの有無を表すビット。</summary>
+    private const int HandlesBit = 2;
 
     /// <summary>層の組合せのうち、始点マーカーの有無を表すビット。</summary>
-    private const int MarkerBit = 2;
+    private const int MarkerBit = 4;
 
     /// <summary>層の組合せのうち、テキストの有無を表すビット。</summary>
-    private const int TextBit = 4;
+    private const int TextBit = 8;
 
-    /// <summary>層の並び（3 つの有無 = 8 通り）。</summary>
+    /// <summary>層の並び（4 つの有無 = 16 通り）。</summary>
     /// <remarks>
     /// 描画のたびに一覧を組み立てないよう、全通りを事前生成して共有する<br/>
     /// （<see cref="MarqueeDrawContent.Layers"/> は読取専用の参照として渡す）。層を追加した場合は本表も更新する。
@@ -54,36 +58,49 @@ public sealed partial class Marquee
     private static readonly IReadOnlyList<MarqueeDrawLayer>[] s_layers = CreateLayers();
 
     /// <summary>描く層だけを描画順に並べる。</summary>
+    /// <param name="outer">外側の装飾（暗転マスク・穴あけ枠）。描く値が無い場合は層を含めない。</param>
+    /// <param name="inner">内側の装飾（塗り・内枠）。描く値が無い場合は層を含めない。</param>
     /// <param name="handles">ドラッグハンドル。null の場合は層を含めない。</param>
     /// <param name="marker">始点マーカー。null の場合は層を含めない。</param>
     /// <param name="sizeLabel">サイズラベルのテキスト配置。null の場合は数えない。</param>
     /// <param name="coordLabel">カーソル座標ラベルのテキスト配置。null の場合は数えない。</param>
     /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
     /// <remarks>
-    /// 装飾は常に含める（描くものが無い場合は各項目が空であり、UI 層の分岐を増やさない）。<br/>
-    /// テキストは**どちらかの文言がある場合**だけ末尾へ置き、常に最上位にする<br/>
+    /// <b>層にある ⇔ 描く値がある</b>（ルーペの層と同じ規則。描く値の無い層は含めない）。<br/>
+    /// テキストは<b>どちらかの文言がある場合</b>だけ末尾へ置き、常に最上位にする<br/>
     /// （UI 要素として置く UI は本層を無視してよい。基底のフックの既定は何もしない）。<br/>
     /// 一覧はビットの組合せで事前生成したものを返す（描画のたびの確保を避ける）。
     /// </remarks>
     private static IReadOnlyList<MarqueeDrawLayer> ResolveLayers(
-        MarqueeHandles? handles, MarqueeMarker? marker, MarqueeTextPlacement? sizeLabel, MarqueeTextPlacement? coordLabel)
+        MarqueeOuterDecoFrame outer,
+        MarqueeInnerDecoFrame inner,
+        MarqueeHandles? handles,
+        MarqueeMarker? marker,
+        MarqueeTextPlacement? sizeLabel,
+        MarqueeTextPlacement? coordLabel)
         => s_layers[
-            (handles is not null ? SelectionBit : 0)
+            (outer.HasContent || inner.HasContent ? DecorationBit : 0)
+            | (handles is not null ? HandlesBit : 0)
             | (marker is not null ? MarkerBit : 0)
             | (sizeLabel is not null || coordLabel is not null ? TextBit : 0)];
 
-    /// <summary>層の全 8 通りを生成する。</summary>
+    /// <summary>層の全 16 通りを生成する。</summary>
     /// <returns>ビットの組合せを添字とする層の一覧。</returns>
-    /// <remarks>ビットの意味は <see cref="SelectionBit"/> / <see cref="MarkerBit"/> / <see cref="TextBit"/> が単一所有する。</remarks>
+    /// <remarks>ビットの意味は <see cref="DecorationBit"/> / <see cref="HandlesBit"/> / <see cref="MarkerBit"/> / <see cref="TextBit"/> が単一所有する。</remarks>
     private static IReadOnlyList<MarqueeDrawLayer>[] CreateLayers()
     {
-        var table = new IReadOnlyList<MarqueeDrawLayer>[1 << 3];
+        var table = new IReadOnlyList<MarqueeDrawLayer>[1 << 4];
 
         for (var index = 0; index < table.Length; index++)
         {
-            var layers = new List<MarqueeDrawLayer>(4) { MarqueeDrawLayer.Decoration };
+            var layers = new List<MarqueeDrawLayer>(4);
 
-            if ((index & SelectionBit) != 0)
+            if ((index & DecorationBit) != 0)
+            {
+                layers.Add(MarqueeDrawLayer.Decoration);
+            }
+
+            if ((index & HandlesBit) != 0)
             {
                 layers.Add(MarqueeDrawLayer.Handles);
             }
@@ -108,7 +125,7 @@ public sealed partial class Marquee
     /// <summary>外側の装飾（暗転マスク・穴あけ枠）の描画内容を解決する。</summary>
     /// <param name="request">描画入力（外観と表示ポリシー）。</param>
     /// <param name="hole">穴あけ矩形（DIP）。選択もハイライトも無い場合は null。</param>
-    /// <returns>外側の装飾の描画内容。描くものが無い場合は各項目が空。</returns>
+    /// <returns>外側の装飾の描画内容。描くものが無い場合は各項目が空（<see cref="MarqueeOuterDecoFrame.HasContent"/> が false）。</returns>
     /// <remarks>
     /// 1. 穴あけ矩形も全面暗転も無い場合は空のフレームを返す。<br/>
     /// 2. 暗転を描かない設定なら暗転領域を生成しない。<br/>
@@ -140,7 +157,7 @@ public sealed partial class Marquee
     /// <summary>内側の装飾（穴あけ矩形の塗り・内枠）の描画内容を解決する。</summary>
     /// <param name="request">描画入力（装飾の設定）。</param>
     /// <param name="hole">穴あけ矩形（DIP）。選択もハイライトも無い場合は null。</param>
-    /// <returns>内側の装飾の描画内容。描くものが無い場合は各項目が空。</returns>
+    /// <returns>内側の装飾の描画内容。描くものが無い場合は各項目が空（<see cref="MarqueeInnerDecoFrame.HasContent"/> が false）。</returns>
     /// <remarks>
     /// 1. 穴あけ矩形が無い場合は空のフレームを返す。<br/>
     /// 2. 塗りを描かない設定なら塗り矩形を生成しない。<br/>
@@ -184,7 +201,7 @@ public sealed partial class Marquee
             return null;
         }
 
-        var dip = MarqueeRenderRequest.ToDipRect(rect, port);
+        var dip = request.ToDipRect(rect, port);
         var half = options.HandleSize / 2;
         var rects = new List<EsRect>(MarqueeSelectionGeometry.DirectionalHandles.Count);
         foreach (var handle in MarqueeSelectionGeometry.DirectionalHandles)
@@ -237,7 +254,7 @@ public sealed partial class Marquee
         }
 
         var displayScaling = request.SizeLabelDisplayScalingProvider is { } scalingProvider
-            ? scalingProvider(MarqueeRenderRequest.ToDomainRect(holeRect, port))
+            ? scalingProvider(request.ToDomainRect(holeRect, port))
             : request.DisplayScaleScaling;
 
         var overrideText = request.SizeLabelOverrideProvider?.Invoke();

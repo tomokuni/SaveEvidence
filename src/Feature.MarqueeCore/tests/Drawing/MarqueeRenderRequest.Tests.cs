@@ -15,6 +15,30 @@ namespace EsUtil.Feature.MarqueeCore.Tests.Drawing;
 /// </remarks>
 public class MarqueeRenderRequestTests
 {
+    /// <summary>検証に使う描画入力を生成する（導出の検証に必要な値だけを指定する）。</summary>
+    /// <param name="deco">装飾の設定。null の場合は既定。</param>
+    /// <param name="selection">選択矩形（ドメイン座標）。null の場合は選択なし。</param>
+    /// <param name="port">座標変換ポート。null の場合は未指定（倍率による）。</param>
+    /// <param name="scaling">ポート未指定時に適用する倍率。</param>
+    /// <returns>生成した描画入力。</returns>
+    private static MarqueeRenderRequest CreateRequest(
+        MarqueeDecoOptions? deco = null,
+        EsRect? selection = null,
+        ICoordTransform? port = null,
+        double scaling = 1.0)
+        => new(
+            MarqueeOptions.Default,
+            deco ?? MarqueeDecoOptions.Default,
+            new EsSize(300, 300),
+            selection,
+            MarkerActive: false,
+            MarkerPosition: default,
+            MousePosition: default,
+            port,
+            scaling,
+            SizeLabelOverrideProvider: null,
+            DisplayScaleScaling: 1.0);
+
     /// <summary>組み立てがすべての値をそのまま保持することを検証する。</summary>
     [Fact]
     public void Create_すべての値をそのまま保持する()
@@ -80,7 +104,7 @@ public class MarqueeRenderRequestTests
     {
         var logical = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeRenderRequest.ToDipRect(logical, CoordTransform.Identity);
+        var result = CreateRequest().ToDipRect(logical, CoordTransform.Identity);
 
         Assert.Equal(new EsRect(10, 20, 31, 41), result);
     }
@@ -91,7 +115,7 @@ public class MarqueeRenderRequestTests
     {
         var logical = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeRenderRequest.ToDipRect(logical, CoordTransform.Scale(2.0));
+        var result = CreateRequest().ToDipRect(logical, CoordTransform.Scale(2.0));
 
         // 左上 (10,20) → (20,40)、右下 (41,61) → (82,122)
         Assert.Equal(20, result.X);
@@ -106,20 +130,29 @@ public class MarqueeRenderRequestTests
     {
         var logical = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeRenderRequest.ToDipRect(logical, CoordTransform.Identity, closedInterval: false);
+        var result = CreateRequest().ToDipRect(logical, CoordTransform.Identity, closedInterval: false);
 
         Assert.Equal(new EsRect(10, 20, 30, 40), result);
     }
 
-    /// <summary>ポートが null の場合は等価変換として扱うことを検証する。</summary>
+    /// <summary>穴あけ矩形が設定と状態から導出されることを検証する（選択矩形は閉区間）。</summary>
     [Fact]
-    public void ToDipRect_ポートがnullなら等価変換として扱う()
+    public void Hole_選択矩形を閉区間として返す()
     {
-        var logical = new EsRect(5, 6, 7, 8);
+        var selection = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeRenderRequest.ToDipRect(logical);
+        var hole = CreateRequest(selection: selection).Hole;
 
-        Assert.Equal(new EsRect(5, 6, 8, 9), result);
+        Assert.NotNull(hole);
+        Assert.Equal(selection, hole.Value.Rect);
+        Assert.True(hole.Value.ClosedInterval);
+    }
+
+    /// <summary>どちらも無ければ穴あけ矩形が null になることを検証する。</summary>
+    [Fact]
+    public void Hole_選択もハイライトも無ければnullになる()
+    {
+        Assert.Null(CreateRequest().Hole);
     }
 
     /// <summary>DIP 矩形がドメイン座標の矩形へ逆換算されることを検証する。</summary>
@@ -128,7 +161,7 @@ public class MarqueeRenderRequestTests
     {
         var dip = new EsRect(10, 20, 30, 40);
 
-        var result = MarqueeRenderRequest.ToDomainRect(dip, CoordTransform.Identity);
+        var result = CreateRequest().ToDomainRect(dip, CoordTransform.Identity);
 
         Assert.Equal(dip, result);
     }
@@ -139,7 +172,7 @@ public class MarqueeRenderRequestTests
     {
         var dip = new EsRect(20, 40, 60, 80);
 
-        var result = MarqueeRenderRequest.ToDomainRect(dip, CoordTransform.Scale(2.0));
+        var result = CreateRequest().ToDomainRect(dip, CoordTransform.Scale(2.0));
 
         Assert.Equal(10, result.X);
         Assert.Equal(20, result.Y);
@@ -190,9 +223,11 @@ public class MarqueeRenderRequestTests
     public void ResolveHoleRectDip_ハイライト矩形は終点を加算せずDIP変換する()
     {
         var highlight = new EsRect(1, 2, 3, 4);
-        var selection = new EsRect(10, 20, 30, 40);
+        var request = CreateRequest(
+            deco: MarqueeDecoOptions.Default with { OuterHighlightRect = highlight },
+            selection: new EsRect(10, 20, 30, 40));
 
-        var result = MarqueeRenderRequest.ResolveHoleRectDip(highlight, selection, CoordTransform.Identity);
+        var result = request.ResolveHoleRectDip(CoordTransform.Identity);
 
         Assert.Equal(new EsRect(1, 2, 3, 4), result);
     }
@@ -201,9 +236,9 @@ public class MarqueeRenderRequestTests
     [Fact]
     public void ResolveHoleRectDip_選択矩形は終点を加算してDIP変換する()
     {
-        var selection = new EsRect(10, 20, 30, 40);
+        var request = CreateRequest(selection: new EsRect(10, 20, 30, 40));
 
-        var result = MarqueeRenderRequest.ResolveHoleRectDip(null, selection, CoordTransform.Identity);
+        var result = request.ResolveHoleRectDip(CoordTransform.Identity);
 
         Assert.Equal(new EsRect(10, 20, 31, 41), result);
     }
@@ -212,7 +247,7 @@ public class MarqueeRenderRequestTests
     [Fact]
     public void ResolveHoleRectDip_両方nullならnullを返す()
     {
-        var result = MarqueeRenderRequest.ResolveHoleRectDip(null, null, CoordTransform.Identity);
+        var result = CreateRequest().ResolveHoleRectDip(CoordTransform.Identity);
 
         Assert.Null(result);
     }

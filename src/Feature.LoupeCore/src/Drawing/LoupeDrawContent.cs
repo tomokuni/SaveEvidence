@@ -7,7 +7,7 @@ namespace EsUtil.Feature.LoupeCore.Drawing;
 /// <param name="CheckerTiles">市松模様の暗色タイルの矩形を列挙する構造体（タイルなしの場合は空）。</param>
 /// <param name="MagnifiedImage">拡大画像の切り出しと描画の矩形。null の場合は描かない（拡大中心未設定）。</param>
 /// <param name="CrosshairRects">十字線の矩形（縦 1 本・横 1 本。非表示の設定の場合は空）。</param>
-/// <param name="FrameRects">外枠の矩形（上・下・左・右の 4 辺。非表示の設定の場合は空）。</param>
+/// <param name="BorderRects">枠線の矩形（上・下・左・右の 4 辺。非表示の設定の場合は空）。</param>
 /// <param name="CoordLabelText">中心座標ラベルの文言と基準点。null の場合は表示しない（非表示の設定または中心未設定）。</param>
 /// <param name="Layers">描く図形の層とその順序（<b>描画順はコアが単一所有する</b>）。先頭から順に処理する。</param>
 /// <remarks>
@@ -25,7 +25,7 @@ public readonly record struct LoupeDrawContent(
     LoupeCheckerTiles CheckerTiles,
     LoupeMagnifiedImage? MagnifiedImage,
     IReadOnlyList<EsRect> CrosshairRects,
-    IReadOnlyList<EsRect> FrameRects,
+    IReadOnlyList<EsRect> BorderRects,
     LoupeTextPlacement? CoordLabelText,
     IReadOnlyList<LoupeDrawLayer> Layers)
 {

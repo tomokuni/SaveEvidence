@@ -71,8 +71,8 @@ public class LoupeRenderer : LoupeRendererBase
         => canvas.FillRects(content.CrosshairRects, _paint.CrossColor);
 
     /// <inheritdoc/>
-    protected override void DrawFrame(IEsCanvas canvas, in LoupeDrawContent content)
-        => canvas.FillRects(content.FrameRects, _paint.FrameColor);
+    protected override void DrawBorder(IEsCanvas canvas, in LoupeDrawContent content)
+        => canvas.FillRects(content.BorderRects, _paint.BorderColor);
 
     /// <summary>コアが解決した市松模様の暗色タイルを、描画ポートの列挙子の契約へ適合させる構造体。</summary>
     /// <remarks>
