@@ -117,19 +117,16 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 | 非対称 | Loupe | Marquee | 理由 |
 | --- | --- | --- | --- |
 | 描画パイプラインの段数 | 3 段（`ResolveLayout` → `CreateRequest` → `ResolveContent`） | 2 段（`CreateRequest` → `ResolveContent`） | Marquee は親セル全面へ重ねるため配置の余地がない（`LoupeLayout` 相当を持たない） |
-| 入力の通知 | 持たない（状態はホストが設定するだけ） | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）を持つ | ルーペは入力の解釈を持たない |
-| 寸法の型 | `int`（物理ピクセルへ換算して描く） | `double`（DIP のまま描く） | 描く座標系が違う（オフスクリーン画像 / 生きたコンテキスト） |
-| 設定型の数 | 1 型（`LoupeOptions`） | 2 型（`MarqueeOptions` + `MarqueeDecoOptions`） | Marquee の装飾は撮影オーバーレイ等へ組み込むときだけ必要なサブ概念 |
-| 描画データの粒度 | 層ごとに素の矩形（`BorderRects` 等） | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker` / `MarqueeOuterDecoFrame`） | Marquee は生きたコンテキストへ直接描く（幾何を型で渡す） |
-| 下地の層 | `LoupeDrawLayer.Background` を持つ | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | ルーペは描画面（ビットマップ）を消す必要がある（Marquee は UI が毎回消す） |
-| 描画の通知 | `LoupeRenderRequest` の `CaptureTopLeft` / `ZoomLevel` | セッションの通知（`MarqueeNotice`） | 通知の発生源が違う（コアの描画入力 / 状態機械） |
+| 入力の通知と効果ポート | 持たない（状態はホストが設定するだけ。設定は表示のみ。変換の設定は再描画を要求せず、表示位置の再計算は UI が行う。ロガーはファサード自身が保持） | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）／設定に対話パラメータ（`MinSelectionSize` / `HandleHitRadius` / `ClampToDomainBounds`）／ラベル文言プロバイダ（`SizeLabelOverrideProvider` / `SizeLabelDisplayScalingProvider` / `DisplayScaleScaling`）／座標変換の設定で**コアが再描画を要求**（`RequestRedraw`）／ロガーはセッションが保持 | ルーペは入力の解釈も効果ポートも持たない（ホストが状態を設定するだけであり、再描画の要求先が無い） |
+| 寸法の型 | `int`（物理ピクセルへ換算。`FillRects` で塗る） | `double`（DIP のまま。`StrokeRect` / `DrawLine` で線を描く） | 描画プリミティブが違う（塗り / 線） |
+| 設定型の数とログ定義 | 1 型（`LoupeOptions`）。ログは `LogOptionsChanged` のみ | 2 型（`MarqueeOptions` + `MarqueeDecoOptions`）。ログは `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキー） | Marquee の装飾は撮影オーバーレイ等へ組み込むときだけ必要なサブ概念 |
+| 描画データの粒度 | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker` / `MarqueeOuterDecoFrame`） | 描画プリミティブが違う（塗る矩形の列 / 線の座標） |
+| 下地の層 | `LoupeDrawLayer.Background` で自前の描画面を消す | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | ルーペは描画先のビットマップを自分で置き換える（Marquee は自身の表面へ直接描き、消去はフレームワークが行う） |
+| 描画完了の通知の内容 | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | `MarqueeRenderedEventArgs`（`MarqueeDrawContent`: 層・文言の有無） | ホストが重ね描きするために必要な情報が違う（切り出し領域と倍率 / 選択矩形の所在） |
 | 表示可否の述語の引数 | `ShouldShowCoordLabel(bool)` | `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` | ルーペの座標ラベルは拡大中心が未設定になりうる（Marquee の座標ラベルは入力に常にある） |
 | `Limits` の追加役割 | 安全域と補正のみ | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`） | ラベルの表示スケールは Marquee 固有の概念 |
-| ログ定義の構成 | `LogOptionsChanged` のみ | `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキーを使う） | 設定型の数の違いに由来する |
 | 市松模様・区画数の計算 | `Checkerboard/`（`LoupeCheckerboard` / `LoupeDivMath`）+ `LoupeCheckerTiles` | 持たない | ルーペは透明領域を市松模様で示す（区画数の切り上げは切り出し領域とも共用する） |
-| 選択の幾何 | 持たない | `Selection/`（`MarqueeSelectionGeometry`）を持つ | ルーペは選択操作を持たない（幾何は自身の矩形だけ） |
-| 座標変換の設定の副作用 | 要求しない（表示位置の再計算は UI が行う） | 再描画を要求する（`RequestRedraw`） | Marquee は選択矩形と装飾が座標変換に直接左右され、再計算の契機を UI が観測できない |
-| 座標ラベルの既定表示 | 既定は true | `ShowCoordLabel` の既定は false | ルーペの中心座標は常に有用であり、Marquee のカーソル座標は必要なときだけ表示する |
+| 選択の幾何 | 持たない | `Selection/`（`MarqueeSelectionGeometry`）を持つ | ルーペは選択操作を持たない |
 
 ## 主な API
 

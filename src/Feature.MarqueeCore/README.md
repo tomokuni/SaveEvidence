@@ -180,19 +180,16 @@ UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せ�
 | 非対称 | Marquee | Loupe | 理由 |
 | --- | --- | --- | --- |
 | 描画パイプラインの段数 | 2 段（`CreateRequest` → `ResolveContent`） | 3 段（`ResolveLayout` → `CreateRequest` → `ResolveContent`） | 本コアは親セル全面へ重ねるため配置の余地がない（`LoupeLayout` 相当を持たない） |
-| 入力の通知 | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）を持つ | 持たない（状態はホストが設定するだけ） | ルーペは入力の解釈を持たない |
-| 寸法の型 | `double`（DIP のまま描く） | `int`（物理ピクセルへ換算して描く） | 描く座標系が違う（生きたコンテキスト / オフスクリーン画像） |
-| 設定型の数 | 2 型（`MarqueeOptions` + `MarqueeDecoOptions`） | 1 型（`LoupeOptions`） | 本コアの装飾は撮影オーバーレイ等へ組み込むときだけ必要なサブ概念 |
-| 描画データの粒度 | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker` / `MarqueeOuterDecoFrame`） | 層ごとに素の矩形（`BorderRects` 等） | 本コアは生きたコンテキストへ直接描く（幾何を型で渡す） |
-| 下地の層 | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | `LoupeDrawLayer.Background` を持つ | ルーペは描画面（ビットマップ）を消す必要がある（本コアは UI が毎回消す） |
-| 描画の通知 | セッションの通知（`MarqueeNotice`） | `LoupeRenderRequest` の `CaptureTopLeft` / `ZoomLevel` | 通知の発生源が違う（状態機械 / コアの描画入力） |
+| 入力の通知と効果ポート | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）／設定に対話パラメータ（`MinSelectionSize` / `HandleHitRadius` / `ClampToDomainBounds`）／ラベル文言プロバイダ（`SizeLabelOverrideProvider` / `SizeLabelDisplayScalingProvider` / `DisplayScaleScaling`）／座標変換の設定で**コアが再描画を要求**（`RequestRedraw`）／ロガーはセッションが保持 | 持たない（状態はホストが設定するだけ。設定は表示のみ。変換の設定は再描画を要求せず、表示位置の再計算は UI が行う。ロガーはファサード自身が保持） | ルーペは入力の解釈も効果ポートも持たない（ホストが状態を設定するだけであり、再描画の要求先が無い） |
+| 寸法の型 | `double`（DIP のまま。`StrokeRect` / `DrawLine` で線を描く） | `int`（物理ピクセルへ換算。`FillRects` で塗る） | 描画プリミティブが違う（線 / 塗り） |
+| 設定型の数とログ定義 | 2 型（`MarqueeOptions` + `MarqueeDecoOptions`）。ログは `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキー） | 1 型（`LoupeOptions`）。ログは `LogOptionsChanged` のみ | 本コアの装飾は撮影オーバーレイ等へ組み込むときだけ必要なサブ概念 |
+| 描画データの粒度 | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker` / `MarqueeOuterDecoFrame`） | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 描画プリミティブが違う（線の座標 / 塗る矩形の列） |
+| 下地の層 | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | `LoupeDrawLayer.Background` で自前の描画面を消す | 本コアは自身の表面へ直接描き、消去はフレームワークが行う（ルーペは描画先のビットマップを自分で置き換える） |
+| 描画完了の通知の内容 | `MarqueeRenderedEventArgs`（`MarqueeDrawContent`: 層・文言の有無） | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | ホストが重ね描きするために必要な情報が違う（選択矩形の所在 / 切り出し領域と倍率） |
 | 表示可否の述語の引数 | `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` | `ShouldShowCoordLabel(bool)` | ルーペの座標ラベルは拡大中心が未設定になりうる（本コアの座標ラベルは入力に常にある） |
 | `Limits` の追加役割 | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`） | 安全域と補正のみ | ラベルの表示スケールは本コア固有の概念 |
-| ログ定義の構成 | `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキーを使う） | `LogOptionsChanged` のみ | 設定型の数の違いに由来する |
 | 市松模様・区画数の計算 | 持たない | `Checkerboard/`（`LoupeCheckerboard` / `LoupeDivMath`）+ `LoupeCheckerTiles` | ルーペは透明領域を市松模様で示す（区画数の切り上げは切り出し領域とも共用する） |
-| 選択の幾何 | `Selection/`（`MarqueeSelectionGeometry`）を持つ | 持たない | ルーペは選択操作を持たない（幾何は自身の矩形だけ） |
-| 座標変換の設定の副作用 | 再描画を要求する（`RequestRedraw`） | 要求しない（表示位置の再計算は UI が行う） | 本コアは選択矩形と装飾が座標変換に直接左右され、再計算の契機を UI が観測できない |
-| 座標ラベルの既定表示 | `ShowCoordLabel` の既定は false | 既定は true | ルーペの中心座標は常に有用であり、本コアのカーソル座標は必要なときだけ表示する |
+| 選択の幾何 | `Selection/`（`MarqueeSelectionGeometry`）を持つ | 持たない | ルーペは選択操作を持たない |
 
 ## 主な API
 
