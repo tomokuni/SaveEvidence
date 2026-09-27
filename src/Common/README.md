@@ -6,7 +6,7 @@
 
 `Platform.Core` は「**このソリューション以外でもそのまま使える型**」だけを置く層です（判定基準は後述）。描画ポートは UI 側の共有層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）の描画手順（層の順序に従う写し方）と各 UI の描画 API をつなぐ**ソリューション固有の共有契約**であるため、本プロジェクトが持ちます。
 
-- 描画ポート（`IEsCanvas`）と矩形列挙子の契約（`IEsRectWalker<TSelf>`）を**単一所有**する。
+- 描画ポート（`IEsCanvas`）を**単一所有**する。
 - **外部パッケージへ依存しない**（UI フレームワーク・Skia のいずれにも依存しない）。
 - 各コントロールのコア・UIBase・UI、および各プラットフォーム層が**同じ契約**を使うことを保証する。
 
@@ -17,7 +17,6 @@
 | 型 | 内容 |
 | --- | --- |
 | `Imaging.IEsCanvas` | 描画内容を描画面へ写す**即時描画ポート**（UI 非依存）。UI 側の共有層の描画手順（`MarqueeRendererBase` / `LoupeRendererBase`）は本ポートだけを呼び、各 UI が自 UI の描画 API を適合させる（Avalonia は `AvaloniaCanvas`、Skia は `Platform.Skia` の `SkiaEsCanvas`） |
-| `Imaging.IEsRectWalker<TSelf>` | 矩形の列を確保なしで走査する列挙子（構造体）が実装する契約。`IEsCanvas.FillRects` が受け取る列挙子の型であり、ボックス化もリスト確保もせずにタイル列を渡すために使う |
 
 ## 依存関係
 
@@ -45,7 +44,7 @@ var size = canvas.MeasureText("Hello", 12.0);     // 実寸は描画 API でし�
 | メソッド | 用途 |
 | --- | --- |
 | `IEsCanvas.Clear(surface, color)` | 描画面全体を置き換える（前フレームの残像を残さない） |
-| `IEsCanvas.FillRect` / `FillRects` / `FillRoundRect` / `StrokeRect` / `DrawLine` | 図形の描画（`FillRects` はタイル列挙子をそのまま受け取れるオーバーロードを持つ） |
+| `IEsCanvas.FillRect` / `FillRects` / `FillRoundRect` / `StrokeRect` / `DrawLine` | 図形の描画（`FillRects` は同色の矩形の一覧をまとめて塗る） |
 | `IEsCanvas.DrawLabel(...)` | 背景を塗ってから文字を描く（順序を本メソッドが保証する） |
 | `IEsCanvas.DrawImage` | ビットマップを切り出して描く |
 | `IEsCanvas.MeasureText(text, fontSize)` | テキストの実寸（配置計算へ渡す唯一の測定入口） |

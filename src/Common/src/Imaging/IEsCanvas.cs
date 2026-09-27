@@ -40,20 +40,8 @@ public interface IEsCanvas
     /// <summary>複数の矩形を同じ色で塗る。</summary>
     /// <param name="rects">塗る矩形の一覧。空の場合は何もしない。</param>
     /// <param name="color">塗り色（不透明度はアルファ）。</param>
-    /// <remarks>同色の矩形（4 辺の枠線・十字線・市松模様のタイル等）をまとめて塗る。</remarks>
+    /// <remarks>同色の矩形（4 辺の枠線・十字線等）をまとめて塗る（実装はペイントの生成を 1 回に抑える）。</remarks>
     void FillRects(IReadOnlyList<EsRect> rects, DrawingColor color);
-
-    /// <summary>複数の矩形を同じ色で塗る（矩形のリストを確保しない）。</summary>
-    /// <typeparam name="TWalker">実装する列挙子自身の型（構造体）。</typeparam>
-    /// <param name="rects">塗る矩形を列挙する列挙子。</param>
-    /// <param name="color">塗り色（不透明度はアルファ）。</param>
-    /// <remarks>
-    /// 要素数が描画先の大きさに比例して増える列（市松模様のタイル等）で使う<br/>
-    /// （<see cref="FillRects(IReadOnlyList{EsRect}, DrawingColor)"/> は要素数分のリストを要求するため、<br/>
-    /// 列挙子で受けることでヒープ確保をゼロにする。制約付きジェネリックなのでボックス化もしない）。
-    /// </remarks>
-    void FillRects<TWalker>(TWalker rects, DrawingColor color)
-        where TWalker : struct, IEsRectWalker<TWalker>;
 
     /// <summary>角丸矩形を塗る。</summary>
     /// <param name="rect">塗る矩形。</param>

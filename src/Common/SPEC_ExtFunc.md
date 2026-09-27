@@ -7,7 +7,6 @@
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
 | `IEsCanvas` | `public` | 任意（各 UI が自 UI の描画 API を適合させる契約） |
-| `IEsRectWalker<TSelf>` | `public` | 任意（`IEsCanvas.FillRects` へタイル列を渡す列挙子が実装する） |
 
 本プロジェクトは UI フレームワークにも外部パッケージにも依存しないため、全型が `public` として公開されます。
 
@@ -20,7 +19,6 @@
 | `Clear(EsRect surface, DrawingColor color)` | 指定矩形を単色で塗る（全面消去の代替。描画面の寿命は UI が所有するため矩形を引数で受ける） |
 | `FillRect(EsRect rect, DrawingColor color)` | 矩形を塗る |
 | `FillRects(IReadOnlyList<EsRect> rects, DrawingColor color)` | 複数矩形を同じ色で塗る |
-| `FillRects<TWalker>(TWalker rects, DrawingColor color)` | 列挙子をそのまま受け取る版（要素数が描画先に比例する矩形列でリストを確保しないため） |
 | `FillRoundRect(EsRect rect, double cornerRadius, DrawingColor color)` | 角丸矩形を塗る |
 | `StrokeRect(EsRect rect, DrawingColor color, double thickness)` | 矩形の枠線を描く |
 | `DrawLine(EsPoint from, EsPoint to, DrawingColor color, double thickness)` | 線分を描く |
@@ -29,19 +27,6 @@
 | `MeasureText(string text, double fontSize)` | テキストの実寸を測る（実寸は描画 API でしか測れないため、配置計算へ渡す唯一の入口） |
 
 **色の型**は UI 非依存の `System.Drawing.Color`（`System.Drawing.Primitives`）です。
-
-## `IEsRectWalker<TSelf>`（矩形列挙子の契約）
-
-矩形の列を確保なしで走査する列挙子（構造体）が実装する契約です。`IEsCanvas.FillRects` が受け取る列挙子の型であり、要素数が描画先の大きさに比例する列（走査して生成するタイル等）でリスト確保とボックス化をゼロにします。
-
-| メンバー | 説明 |
-| --- | --- |
-| `bool MoveNext()` | 次の矩形へ進む（列の末尾を超えたら false） |
-| `EsRect Current { get; }` | 現在の矩形 |
-
-- 実装者は `GetEnumerator() => this` を公開します（`foreach` が構造体の列挙子をボックス化せずに使えるようにするため）。
-- **列挙は 1 回だけ**が契約です（実装が内部に走査位置を持つため）。
-- 名前が `Rect` を指すのは、列挙する要素が `EsRect` に固定されているためです（塗りの入力が矩形であるため）。
 
 ## 依存関係
 

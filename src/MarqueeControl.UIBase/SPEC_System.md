@@ -40,7 +40,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> MarqueeControl.UIBase ← 本プロジェクト   どう描くか（色・描画手順）＋ 組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・IEsRectWalker）
+           ├──> Common（IEsCanvas）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・ScrollMath）
 ※ コアは本層を参照しない（本層がコアの描画内容（`MarqueeDrawContent`）を使う向きだけ）。
 ```

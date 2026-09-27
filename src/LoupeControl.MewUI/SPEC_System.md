@@ -34,7 +34,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
     ├──> LoupeControl.UIBase   どう描くか（UIBase の ILoupeRenderer を実装する）
     ├──> LoupeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.LoupeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・IEsRectWalker）
+           ├──> Common（IEsCanvas）
            └──> Platform.Core（Es* 値型・ICoordTransform）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```
@@ -191,8 +191,6 @@ sequenceDiagram
     LC->>LC: Loupe.CreateRequest（コアのファサードが描画契約を組み立てる。表示サイズは描画先の表面から DpiScaler.ToDip で導出し、物理ピクセルサイズはそれを描画先へクランプして解決する）
     LC->>R: DrawShapes(SkiaEsCanvas, Source, content)（描画層が層の順に描く）
     R->>SK: 画像外の色（Paint.PasteboardColor）を表面全体へ塗る
-    R->>C: FillRects(タイル列挙子, 色B)
-    R->>SK: 暗色タイルを描画（SkiaFill.Rects・リスト確保なし）
     alt Source と切り出し領域が揃っている
         R->>R: EsBitmap.Crop(content.MagnifiedImage.Crop)（描画層が実行する）
         R->>SK: DrawImage(cropped, Source, Destination)（最近傍で拡大）

@@ -168,7 +168,7 @@ flowchart TB
 
 - **分類**: 公開ページ（`public sealed partial class : UserControl`）
 - **責務**: アプリケーション設定（外観・キャプチャ・ルーペ・保存・表示・ラベル・ホットキー）の編集 UI
-- **外観設定**: テーマ（`ThemeMode`: Light / Dark / System）を ComboBox で選択。System は OS の設定に追従。右下の「デフォルト値に戻す」ボタンで外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・市松模様・ラベル）を `Settings.ResetAppearanceToDefaults()` により一括復元（外観設定以外は変更されない）
+- **外観設定**: テーマ（`ThemeMode`: Light / Dark / System）を ComboBox で選択。System は OS の設定に追従。右下の「デフォルト値に戻す」ボタンで外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・プレビューの市松模様・ラベル）を `Settings.ResetAppearanceToDefaults()` により一括復元（外観設定以外は変更されない）
 - **ラベル設定**: キャプチャ選択画面の左上ラベル（1 行目 = サイズ / 2 行目 = 操作 / 3 行目 = 情報）を行ごとに設定。各行で表示・文字色・背景色・フォントサイズを個別に設定可能（背景色は不透明度を統合した `#AARRGGBB` 形式。カラーピッカーでアルファも設定できる）
 - **設定項目の対応先**: 全設定項目と反映先コントロールの対応は `SPEC_SettingTargetTable.md` を参照
 - **依存**: SettingsService / ColorPickerControl（色選択）

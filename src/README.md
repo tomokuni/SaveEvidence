@@ -9,7 +9,7 @@
 flowchart TB
     APP["アプリ層<br/>app.AvaloniaUI / app.MewUI（+ app.Core の ViewModel・Model）<br/>CaptureSessionControl.*（撮影セッション）"]
     CTRL["コントロール層<br/>XxxControl.Core / .UIBase / .AvaloniaUI / .MewUI<br/>（ZoomView / CropView は Core と UI のみ）"]
-    COMMON["共有層<br/>Common（描画ポート・ラベル契約。ソリューション固有の共有契約）"]
+    COMMON["共有層<br/>Common（描画ポート。ソリューション固有の共有契約）"]
     PLAT["プラットフォーム層<br/>Platform.Core（このソリューション以外でも使える値型・抽象）<br/>Platform.Skia（Skia 依存を閉じ込める）<br/>Platform.AvaloniaUI / Platform.MewUI（UI アダプタ）<br/>Platform.Native（Win32 / NoOp 実装）"]
     APP --> CTRL
     APP --> COMMON
@@ -37,7 +37,7 @@ flowchart TB
     UI --> CORE
     UIR --> UB
     UB -->|描画内容を受け取る| CORE
-    UB --> CM["Common<br/>IEsCanvas（描画ポート）・IEsRectWalker"]
+    UB --> CM["Common<br/>IEsCanvas（描画ポート）"]
     UIR --> CM
     CORE --> PC["Platform.Core<br/>Es* 値型・ICoordTransform・ICursorService"]
     CM --> PC

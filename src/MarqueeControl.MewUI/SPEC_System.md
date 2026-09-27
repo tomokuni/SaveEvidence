@@ -35,7 +35,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     ├──> MarqueeControl.UIBase   どう描くか（UIBase の IMarqueeRenderer を実装する）
     ├──> MarqueeControl.UIBase   組み込み先がある場合にだけ必要な規則
     └──> Feature.MarqueeCore   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas・IEsRectWalker）
+           ├──> Common（IEsCanvas）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ※ 本コントロール（UI 層）は Platform.Native（Win32 実装）と Platform.MewUI も参照する。

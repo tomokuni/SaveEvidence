@@ -17,7 +17,7 @@
 | --- | --- |
 | `SkiaEsCanvas(SKCanvas canvas)` | 描画先のキャンバスを指定して生成する（null 不可） |
 | `Clear(EsRect surface, DrawingColor color)` | 指定矩形を単色で塗る |
-| `FillRect` / `FillRects` / `FillRects<TWalker>` / `FillRoundRect` | 矩形・角丸矩形の塗り（`SkiaFill` へ委譲する） |
+| `FillRect` / `FillRects` / `FillRoundRect` | 矩形・角丸矩形の塗り（`SkiaFill` へ委譲する） |
 | `StrokeRect(EsRect rect, DrawingColor color, double thickness)` | 矩形の枠線（線の中心が矩形の辺の上に来る） |
 | `DrawLine(EsPoint from, EsPoint to, DrawingColor color, double thickness)` | 線分 |
 | `DrawLabel(...)` | 背景を塗ってから文字を描く（順序を保証する） |
@@ -70,7 +70,7 @@
 | 依存 | 用途 |
 | --- | --- |
 | `SkiaSharp`（外部パッケージ） | `SKCanvas` / `SKBitmap` / `SKColor` / `SKRect` / 書体の解決 |
-| `Common`（`EsUtil.SaveEvidence.Common.Imaging`） | 描画ポート（`IEsCanvas`）とラベル契約 |
+| `Common`（`EsUtil.SaveEvidence.Common.Imaging`） | 描画ポート（`IEsCanvas`） |
 | `Platform.Core`（`EsUtil.Platform.Core.*`） | ビットマップ（`EsBitmap`）と幾何値型 |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。

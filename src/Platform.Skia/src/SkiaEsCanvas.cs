@@ -49,14 +49,6 @@ public sealed class SkiaEsCanvas : IEsCanvas
     /// <param name="color">塗り色（不透明度はアルファ）。</param>
     public void FillRects(IReadOnlyList<EsRect> rects, DrawingColor color) => SkiaFill.Rects(_canvas, rects, color);
 
-    /// <summary>複数の矩形を同じ色で塗る（矩形のリストを確保しない）。</summary>
-    /// <typeparam name="TWalker">実装する列挙子自身の型（構造体）。</typeparam>
-    /// <param name="rects">塗る矩形を列挙する列挙子。</param>
-    /// <param name="color">塗り色（不透明度はアルファ）。</param>
-    public void FillRects<TWalker>(TWalker rects, DrawingColor color)
-        where TWalker : struct, IEsRectWalker<TWalker>
-        => SkiaFill.Rects(_canvas, rects, color);
-
     /// <summary>角丸矩形を塗る。</summary>
     /// <param name="rect">塗る矩形。</param>
     /// <param name="cornerRadius">角の半径。0 の場合は四角形として塗る。</param>

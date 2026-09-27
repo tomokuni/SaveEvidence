@@ -79,7 +79,7 @@
 | `FadeMaskDragRectControl.Core`（`EsUtil.SaveEvidence.FadeMaskDragRect`） | 設定・動作モード・モードから導出する状態の解決 |
 | `Feature.MarqueeCore` / `Feature.LoupeCore` | 内包コントロールの設定型（`MarqueeOptions` / `MarqueeDecoOptions` / `LoupeOptions` / `MarqueeDrawContent`） |
 | `MarqueeControl.UIBase` | 付加情報ラベルの体裁（`MarqueeHostLabelRenderer`） |
-| Common | 描画ポート（IEsCanvas・IEsRectWalker） |
+| Common | 描画ポート（IEsCanvas） |
 | Platform.Core | コア幾何型・値型 |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。外部パッケージへの直接依存もありません。

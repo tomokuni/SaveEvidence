@@ -2,7 +2,6 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Common.Imaging;
 
 namespace EsUtil.Platform.Skia;
 
@@ -32,7 +31,7 @@ public static class SkiaFill
     /// <param name="canvas">描画先のキャンバス。</param>
     /// <param name="rects">塗る矩形の一覧（コア座標）。空の場合は何もしない。</param>
     /// <param name="color">塗り色（不透明度はアルファ）。</param>
-    /// <remarks>辺（4 本）や市松模様のタイルのように同色の矩形を列挙する場合にまとめて塗る。</remarks>
+    /// <remarks>辺（4 本）のような同色の矩形を列挙する場合にまとめて塗る（ペイントの生成を 1 回に抑える）。</remarks>
     public static void Rects(SKCanvas canvas, IReadOnlyList<EsRect> rects, DrawingColor color)
     {
         ArgumentNullException.ThrowIfNull(canvas);
@@ -48,29 +47,6 @@ public static class SkiaFill
         foreach (var rect in rects)
         {
             canvas.DrawRect(rect.ToSKRect(), paint);
-        }
-    }
-
-    /// <summary>複数の矩形を同じ色で塗る（列挙子を 1 つだけ生成し、矩形のリストは確保しない）。</summary>
-    /// <typeparam name="TWalker">実装する列挙子自身の型（構造体）。</typeparam>
-    /// <param name="canvas">描画先のキャンバス。</param>
-    /// <param name="rects">塗る矩形を列挙する列挙子（呼び出しごとに先頭から列挙する）。</param>
-    /// <param name="color">塗り色（不透明度はアルファ）。</param>
-    /// <remarks>
-    /// 要素数が描画先の大きさに比例して増える列（市松模様のタイル等）で使う<br/>
-    /// （<see cref="Rects(SKCanvas, IReadOnlyList{EsRect}, DrawingColor)"/> は要素数分のリストを要求するため、<br/>
-    /// 列挙子で受けることでヒープ確保をゼロにする。制約付きジェネリックなのでボックス化もしない）。
-    /// </remarks>
-    public static void Rects<TWalker>(SKCanvas canvas, TWalker rects, DrawingColor color)
-        where TWalker : struct, IEsRectWalker<TWalker>
-    {
-        ArgumentNullException.ThrowIfNull(canvas);
-
-        using var paint = new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill, Color = color.ToSKColor() };
-
-        while (rects.MoveNext())
-        {
-            canvas.DrawRect(rects.Current.ToSKRect(), paint);
         }
     }
 

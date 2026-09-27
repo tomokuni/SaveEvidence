@@ -60,19 +60,6 @@ public class SkiaEsCanvasTests
     }
 
     [Fact]
-    public void FillRects_列挙子でも同じ結果になる()
-    {
-        var (bitmap, canvas) = CreateTarget(20, 20);
-        using var _ = bitmap;
-
-        canvas.FillRects(new TestRects([new EsRect(0, 0, 5, 5), new EsRect(10, 10, 5, 5)]), s_red);
-
-        Assert.Equal(new SKColor(255, 0, 0), bitmap.GetPixel(2, 2));
-        Assert.Equal(new SKColor(255, 0, 0), bitmap.GetPixel(12, 12));
-        Assert.Equal(0, bitmap.GetPixel(8, 8).Alpha);
-    }
-
-    [Fact]
     public void FillRoundRect_角丸0は四角形として塗る()
     {
         var (bitmap, canvas) = CreateTarget(20, 20);
@@ -197,34 +184,4 @@ public class SkiaEsCanvasTests
     [Fact]
     public void コンストラクタ_キャンバスがnullなら例外()
         => Assert.Throws<ArgumentNullException>(() => new SkiaEsCanvas(null!));
-
-    /// <summary>テスト用の矩形列挙子（<see cref="IEsRectWalker{TSelf}"/> の実装検証を兼ねる）。</summary>
-    private struct TestRects : IEsRectWalker<TestRects>
-    {
-        /// <summary>列挙する矩形。</summary>
-        private readonly EsRect[] _rects;
-
-        /// <summary>次に返す位置（-1 は開始前）。</summary>
-        private int _index;
-
-        /// <summary>列挙子を初期化する。</summary>
-        /// <param name="rects">列挙する矩形。</param>
-        public TestRects(EsRect[] rects)
-        {
-            _rects = rects;
-            _index = -1;
-        }
-
-        /// <summary>列挙子自身を返す（<c>foreach</c> をボックス化させない）。</summary>
-        /// <returns>列挙子のコピー。</returns>
-        public readonly TestRects GetEnumerator() => this;
-
-        /// <summary>現在の矩形を取得する。</summary>
-        /// <value>直近の <see cref="MoveNext"/> が true を返したときの矩形。</value>
-        public readonly EsRect Current => _rects[_index];
-
-        /// <summary>次の矩形へ進む。</summary>
-        /// <returns>次の矩形がある場合は true。</returns>
-        public bool MoveNext() => ++_index < _rects.Length;
-    }
 }

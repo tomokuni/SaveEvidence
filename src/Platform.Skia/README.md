@@ -31,7 +31,7 @@ MarqueeControl.MewUI / LoupeControl.MewUI / FadeMaskDragRectControl.MewUI / Zoom
 Platform.MewUI
   └──> Platform.Skia（本プロジェクト）
          ├──> SkiaSharp（外部パッケージ。本層だけが参照する）
-         ├──> Common（IEsCanvas / ラベル契約）
+         ├──> Common（IEsCanvas）
          └──> Platform.Core（EsBitmap / 幾何値型）
 ```
 

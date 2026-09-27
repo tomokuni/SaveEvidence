@@ -5,7 +5,6 @@
 `Common` は、SaveEvidence のソリューション内で共有する**UI 非依存の描画ポート**を提供します。
 
 1. **描画ポート**（`IEsCanvas`）— UI 側の共有層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）の描画手順が唯一呼ぶ即時描画ポート
-2. **矩形列挙子の契約**（`IEsRectWalker<TSelf>`）— `IEsCanvas.FillRects` が受け取る列挙子の型
 
 **ラベル専用の型は置きません**（配置の値・体裁・要素への写像）。ラベルの体裁（内側余白・フォントサイズ・色・角丸）と実寸 → 配置矩形の写像は描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase` の `MarqueePaint` / `LoupePaint` と `MarqueeLabelPlan` / `LoupeLabelPlan`）が単一所有し、テキストを要素として置くか画像として描くかは UI 層の判断です。コアは文言・基準点・アライン・領域だけを渡します。
 
@@ -47,8 +46,7 @@ graph LR
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `Imaging/IEsCanvas.cs` | `public interface` | 即時描画ポート（10 メンバー） |
-| `Imaging/IEsRectWalker.cs` | `public interface` | 矩形の列を確保なしで走査する列挙子（構造体）の契約（`IEsCanvas.FillRects` の引数） |
+| `Imaging/IEsCanvas.cs` | `public interface` | 即時描画ポート（9 メンバー） |
 
 ## クラス図
 
@@ -66,13 +64,6 @@ classDiagram
     +DrawImage(image, source, destination)
     +MeasureText(text, fontSize) EsSize
   }
-  class IEsRectWalker {
-    <<interface>>
-    +MoveNext() bool
-    +EsRect Current
-  }
-
-  IEsCanvas ..> IEsRectWalker : FillRects の引数として受ける
 ```
 
 ## データフロー（描画と実寸測定）

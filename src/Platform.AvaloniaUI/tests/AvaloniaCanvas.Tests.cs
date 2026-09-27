@@ -55,15 +55,6 @@ public class AvaloniaCanvasTests
     }
 
     [AvaloniaFact]
-    public void FillRects_列挙子でも例外なく完了する()
-    {
-        var (bitmap, canvas) = CreateTarget(32);
-        using var _ = bitmap;
-
-        canvas.FillRects(new TestRects([new EsRect(0, 0, 4, 4), new EsRect(8, 8, 4, 4)]), s_red);
-    }
-
-    [AvaloniaFact]
     public void DrawImage_EsBitmapを変換して描画する()
     {
         var (bitmap, canvas) = CreateTarget(32);
@@ -103,34 +94,4 @@ public class AvaloniaCanvasTests
     [AvaloniaFact]
     public void 描画ポートがnullなら例外()
         => Assert.Throws<ArgumentNullException>(() => new AvaloniaCanvas(null!));
-
-    /// <summary>テスト用の矩形列挙子（<see cref="IEsRectWalker{TSelf}"/> の実装検証を兼ねる）。</summary>
-    private struct TestRects : IEsRectWalker<TestRects>
-    {
-        /// <summary>列挙する矩形。</summary>
-        private readonly EsRect[] _rects;
-
-        /// <summary>次に返す位置（-1 は開始前）。</summary>
-        private int _index;
-
-        /// <summary>列挙子を初期化する。</summary>
-        /// <param name="rects">列挙する矩形。</param>
-        public TestRects(EsRect[] rects)
-        {
-            _rects = rects;
-            _index = -1;
-        }
-
-        /// <summary>列挙子自身を返す（<c>foreach</c> をボックス化させない）。</summary>
-        /// <returns>列挙子のコピー。</returns>
-        public readonly TestRects GetEnumerator() => this;
-
-        /// <summary>現在の矩形を取得する。</summary>
-        /// <value>直近の <see cref="MoveNext"/> が true を返したときの矩形。</value>
-        public readonly EsRect Current => _rects[_index];
-
-        /// <summary>次の矩形へ進む。</summary>
-        /// <returns>次の矩形がある場合は true。</returns>
-        public bool MoveNext() => ++_index < _rects.Length;
-    }
 }
