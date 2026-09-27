@@ -63,7 +63,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 公開コントロール（MarqueeControl）… 入力の受付 / 効果の適用 / 通知の転送 / 描画の起動
   → 状態管理クラス（MarqueeSession）… 入力の解釈と状態遷移の判断
     → 状態（MarqueeState）… 状態保持と更新ロジック
-      → 共有型（MarqueeSelectionGeometry）+ Platform.AvaloniaUI
+      → コア内部の純粋幾何（MarqueeSelectionGeometry）+ Platform.AvaloniaUI
   → 描画内容の解決（コアの Marquee.CreateRequest → Marquee.ResolveContent）… 選択の状態 + 設定 → 描画内容 1 値（MarqueeDrawContent）
   → 装飾の解決（Core 内の `Decoration` 名前空間）… 暗転・穴あけ枠・ハイライトの判断
   → 描画の手順（MarqueeControl.UIBase）… `MarqueeRenderer` が色（`MarqueePaint`）を使い、描画ポート `IEsCanvas` へ層の順に写す
@@ -72,7 +72,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ### 3.2 依存方向
 
-- 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelectionGeometry / Platform.AvaloniaUI / Platform.Native / Platform.Core。描画は MarqueeControl → MarqueeRenderer（MarqueeControl.UIBase）→ IEsCanvas（Platform.Core））。
+- 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（これらはコア内部）/ Platform.AvaloniaUI / Platform.Native / Platform.Core。描画は MarqueeControl → MarqueeRenderer（MarqueeControl.UIBase）→ IEsCanvas（Platform.Core））。
 - MarqueeControl は上位 AP に依存しない（再利用可能）。
 - **判断はコア（`Marquee`）・反映は UI**: nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルはコアが決め、コントロールは `IMarqueeEffects` を実装して要求された効果を適用するだけにする。
 - 描画の手順は描画層（`MarqueeControl.UIBase` の `MarqueeRendererBase` と `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）が単一所有する。色（描画にだけ必要な設定）は同層の `MarqueePaint` が単一所有し、本コントロールは `Paint` プロパティで与える。本コントロールは `Marquee.ResolveContent` が返す描画内容を `AvaloniaCanvas`（`IEsCanvas` の Avalonia 実装）経由で渡すだけであり、装飾の**判断**は持たない（状態（選択矩形・nudge）はコア（`MarqueeState`）に集約する）。
@@ -109,7 +109,7 @@ flowchart TB
         Ntc["MarqueeNotice<br/>public<br/>（コア → UI の通知）"]
         Fbk["MarqueeFeedback<br/>internal<br/>（コア → UI の効果。適用はファサード）"]
         Stt["MarqueeState<br/>internal sealed<br/>MarqueeState.cs<br/>（状態保持 ＋ 更新ロジック）"]
-        Geo["MarqueeSelectionGeometry<br/>public static<br/>Selection/MarqueeSelectionGeometry.cs"]
+        Geo["MarqueeSelectionGeometry<br/>internal static<br/>Selection/MarqueeSelectionGeometry.cs"]
         Hdl["MarqueeHitTarget<br/>public enum"]
         Hdl2["MarqueeInteractionState<br/>public enum"]
         Hdl3["MarqueeSnapshot<br/>public record<br/>（EsRect / EsPoint）"]
@@ -203,9 +203,9 @@ flowchart TB
 
 ### 6.4 MarqueeSelectionGeometry
 
-- **分類**: 静的クラス（`public static class`・コア提供）
-- **責務**: 選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算）
-- **可視性**: public（コア提供）
+- **分類**: 静的クラス（`internal static class`・コア内部。本プロジェクトは参照しない）
+- **責務**: 選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算）。ハンドル位置を使うのはコアの状態機械と描画内容の解決であり、**UI 層へは解決済みの矩形が渡る**
+- **可視性**: internal（コア内部。本プロジェクトは参照しない）
 - **依存**: UI 非依存（`Feature.MarqueeCore` の `EsPoint` / `EsRect`）
 
 ### 6.5 MarqueeRenderer（MarqueeControl.UIBase）
@@ -214,7 +214,7 @@ flowchart TB
 - **責務**: 描画内容（`MarqueeDrawContent`）を描画ポート `IEsCanvas` へ写す（**描画手順は基底の `MarqueeRendererBase` が単一所有**し、本クラスは色を与える）
 - **可視性**: public（UI 実装・独自コントロールの作者が参照する）
 - **特徴**: 描画の設定（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形のみ。**テキストは描かない**）を実装する。フォントサイズ（`SizeLabelFontSize` / `CoordLabelFontSize`）は描画の設定の値への入口として公開する（**描画の契約には含めない**）
-- **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`MarqueeDrawContent` / `MarqueeSelectionGeometry`）/ `MarqueePaint`（同層）
+- **依存**: Platform.Core（`IEsCanvas`）/ Feature.MarqueeCore（`MarqueeDrawContent`）/ `MarqueePaint`（同層）
 
 ### 6.6 MarqueeOuterRenderer（MarqueeControl.UIBase）
 
@@ -263,7 +263,7 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。コア内部は MarqueeControl → Marquee（ファサード） → MarqueeSession → MarqueeState → MarqueeSelectionGeometry、描画は MarqueeControl → MarqueeRenderer（MarqueeControl.UIBase）→ IEsCanvas（Platform.Core）、組み込みの規則は MarqueeControl → MarqueeWheelInterpreter / MarqueeViewportNotifier（MarqueeControl.UIBase）。
+- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。コア内部は MarqueeControl → Marquee（ファサード） → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（幾何計算はコア内部に閉じる）、描画は MarqueeControl → MarqueeRenderer（MarqueeControl.UIBase）→ IEsCanvas（Platform.Core）、組み込みの規則は MarqueeControl → MarqueeWheelInterpreter / MarqueeViewportNotifier（MarqueeControl.UIBase）。
 - MarqueeControl は上位 AP に**依存しない**（再利用可能）。
 - 判断（状態遷移・確定/キャンセル・スナップ・クリック検出）はコアの `Marquee`（内部の `MarqueeSession`）に集約し、UI 層は効果（`IMarqueeEffects`）を適用するだけにする。
 - 描画の手順は描画層（`MarqueeControl.UIBase` の `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）が単一所有し、UI はアダプタ（`AvaloniaCanvas`）とラベル要素の配置を担う。状態（選択矩形・nudge）は MarqueeState に集約し、装飾の**判断**は持たない（`Marquee.ResolveContent` が返す描画内容を渡すだけ）。

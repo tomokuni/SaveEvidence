@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-
 using EsUtil.Feature.LoupeCore.Checkerboard;
 
 namespace EsUtil.Feature.LoupeCore.Drawing;

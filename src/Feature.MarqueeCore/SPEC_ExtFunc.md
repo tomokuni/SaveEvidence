@@ -15,7 +15,6 @@
 | 座標変換 | `Marquee` / `ICoordTransform` | ドメイン座標（利用者が定める座標系）とローカル DIP の相互変換と、ドメイン境界の指定 |
 | ラベルの体裁計算 | 描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` | 内側余白の適用・アラインの適用・カーソル基準の配置と領域内へのクランプ・行送り（描画にだけ必要な規則のためコアは持たない） |
 | 装飾（暗転マスク等） | `MarqueeDecoOptions` / `MarqueeOuterDecoFrame` / `MarqueeInnerDecoFrame` | 選択矩形の外側/内側へ描く装飾の設定と描画内容 |
-| 幾何計算 | `MarqueeSelectionGeometry` | 正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形・描画対象ハンドル一覧・カーソル種別 |
 
 ### 前提条件
 
@@ -66,12 +65,6 @@
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `MarqueeOptions` | record | 設定（寸法・表示可否・対話パラメータ）と既定値・補正。**色は持たない**（色は描画層の `MarqueePaint` が単一所有する） |
-
-### `EsUtil.Feature.MarqueeCore.Selection`
-
-| 型 | 種別 | 説明 |
-| --- | --- | --- |
-| `MarqueeSelectionGeometry` | static class | 純粋な幾何計算とハンドル関連の変換 |
 
 ### `EsUtil.Feature.MarqueeCore.Decoration`
 
@@ -160,18 +153,18 @@
 
 | 定数 | 値 | 説明 |
 | --- | --- | --- |
-| `DomainToDipScalingMin` / `DomainToDipScalingMax` / `DomainToDipScalingDefault` | `0.1` / `8.0` / `1.0` | ポート未指定時に適用する倍率 |
 | `HandleSizeMin` / `HandleSizeMax` / `HandleSizeDefault` | `1.0` / `256.0` / `10.0` | ドラッグハンドルの一辺サイズ（DIP） |
 | `MarkerLengthMin` / `MarkerLengthMax` / `MarkerLengthDefault` | `2.0` / `4096.0` / `16.0` | 十字マーカーの全長（DIP） |
 | `HandleHitRadiusMin` / `HandleHitRadiusMax` / `HandleHitRadiusDefault` | `0.0` / `256.0` / `12.0` | ハンドルのヒットテスト半径（DIP） |
 | `MinSelectionSizeMin` / `MinSelectionSizeMax` / `MinSelectionSizeDefault` | `1.0` / `4096.0` / `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
 | `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `0.5` / `64.0` / `2.0` | 枠線の太さ（DIP。装飾の外観の既定値も本値を参照する） |
+| `DomainToDipScalingMin` / `DomainToDipScalingMax` / `DomainToDipScalingDefault` | `0.1` / `8.0` / `1.0` | ポート未指定時に適用する倍率（環境値。他の数値より後に置く） |
 
 | メソッド | 説明 |
 | --- | --- |
-| `CoerceDomainToDipScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
 | `CoerceHandleSize(double)` / `CoerceMarkerLength(double)` / `CoerceHandleHitRadius(double)` / `CoerceMinSelectionSize(double)` | 各寸法を安全域へ補正（非有限は既定値） |
 | `CoerceBorderThickness(double)` | 枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する） |
+| `CoerceDomainToDipScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
 | `ResolveDisplayScale(double, double)` | 表示スケールの解決（internal。未設定（0 以下）は倍率を使う） |
 
 ### `IMarqueeEffects` のメンバー
@@ -256,7 +249,7 @@
 
 - ホイール操作（Ctrl+ズーム / スクロール）は本コアに含みません（`MarqueeControl.UIBase` が単一所有します）。
 - ビューポートの変化の通知は本コアに含みません（`MarqueeControl.UIBase` が単一所有します）。
-- 描画 API は提供しません（描画の手順は UI 非依存の描画層 `MarqueeControl.UIBase` が単一所有し、描画先は `Platform.Core` の `IEsCanvas` です。描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`MarqueeSelectionGeometry`）を参照します）。
+- 描画 API は提供しません（描画の手順は UI 非依存の描画層 `MarqueeControl.UIBase` が単一所有し、描画先は `Platform.Core` の `IEsCanvas` です。描画層は本コアの描画内容（`MarqueeDrawContent`）だけを参照し、層の順序に従って写すだけです）。
 - 色（ハンドル・始点マーカー・ラベル・装飾）は本コアに含みません（描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します）。
 - 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。ホストが文言の生成と描画を行います（体裁の適用は `MarqueeControl.UIBase` の `MarqueeHostLabelRenderer` / `FadeMaskHostLabelRenderer` を共用できます）。
 

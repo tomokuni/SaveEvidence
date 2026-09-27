@@ -58,16 +58,6 @@ public sealed partial class Marquee
         /// <summary>選択矩形の最小サイズの既定値（ドメイン座標）。</summary>
         public const double MinSelectionSizeDefault = 6.0;
 
-        /// <summary>ポート未指定時に適用する倍率の最小値。</summary>
-        public const double DomainToDipScalingMin = 0.1;
-
-        /// <summary>ポート未指定時に適用する倍率の最大値。</summary>
-        public const double DomainToDipScalingMax = 8.0;
-
-        /// <summary>ポート未指定時に適用する倍率の既定値（ドメイン座標と DIP が 1:1）。</summary>
-        /// <remarks>各 UI の依存関係プロパティ（<c>DomainToDipScaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
-        public const double DomainToDipScalingDefault = 1.0;
-
         /// <summary>枠線の太さの最小値（DIP）。</summary>
         /// <remarks>0 以下の指定を無効化する（選択枠は細い線でも視認できる必要がある）。</remarks>
         public const double BorderThicknessMin = 0.5;
@@ -78,6 +68,16 @@ public sealed partial class Marquee
         /// <summary>枠線の太さの既定値（DIP）。</summary>
         /// <remarks>装飾の外観（<c>MarqueeOuterDecoAppearance</c> / <c>MarqueeInnerDecoAppearance</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
         public const double BorderThicknessDefault = 2.0;
+
+        /// <summary>ポート未指定時に適用する倍率の最小値（環境値。他の数値より後に置く）。</summary>
+        public const double DomainToDipScalingMin = 0.1;
+
+        /// <summary>ポート未指定時に適用する倍率の最大値（環境値）。</summary>
+        public const double DomainToDipScalingMax = 8.0;
+
+        /// <summary>ポート未指定時に適用する倍率の既定値（環境値。ドメイン座標と DIP が 1:1）。</summary>
+        /// <remarks>各 UI の依存関係プロパティ（<c>DomainToDipScaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
+        public const double DomainToDipScalingDefault = 1.0;
 
         /// <summary>ドラッグハンドルの一辺サイズを安全域へ補正する。</summary>
         /// <param name="value">補正する値（DIP）。</param>
@@ -104,13 +104,6 @@ public sealed partial class Marquee
         public static double CoerceMinSelectionSize(double value)
             => CoerceFinite(value, MinSelectionSizeMin, MinSelectionSizeMax, MinSelectionSizeDefault);
 
-        /// <summary>ポート未指定時に適用する倍率を安全域へ補正する。</summary>
-        /// <param name="value">補正する値。</param>
-        /// <returns>安全域に補正した値。非有限の場合は既定値。</returns>
-        /// <remarks>倍率は環境値（DPI・マルチスクリーン）として設定され、座標変換ポートが指定されている場合は使われない。</remarks>
-        public static double CoerceDomainToDipScaling(double value)
-            => CoerceFinite(value, DomainToDipScalingMin, DomainToDipScalingMax, DomainToDipScalingDefault);
-
         /// <summary>枠線の太さを安全域へ補正する。</summary>
         /// <param name="value">補正する値（DIP）。</param>
         /// <returns>安全域に補正した値。非有限の場合は既定値。</returns>
@@ -121,13 +114,20 @@ public sealed partial class Marquee
         public static double CoerceBorderThickness(double value)
             => CoerceFinite(value, BorderThicknessMin, BorderThicknessMax, BorderThicknessDefault);
 
+        /// <summary>ポート未指定時に適用する倍率を安全域へ補正する。</summary>
+        /// <param name="value">補正する値。</param>
+        /// <returns>安全域に補正した値。非有限の場合は既定値。</returns>
+        /// <remarks>倍率は環境値（DPI・マルチスクリーン）として設定され、座標変換ポートが指定されている場合は使われない。</remarks>
+        public static double CoerceDomainToDipScaling(double value)
+            => CoerceFinite(value, DomainToDipScalingMin, DomainToDipScalingMax, DomainToDipScalingDefault);
+
         /// <summary>表示スケールの係数を解決する（0 以下の場合は座標換算の係数を使う）。</summary>
         /// <param name="displayScaling">指定された表示スケール。0 以下は未指定として扱う。</param>
-        /// <param name="scaling">座標換算の係数（1.0 未満は 1.0 として扱う）。</param>
+        /// <param name="domainToDipScaling">座標換算の係数（1.0 未満は 1.0 として扱う）。</param>
         /// <returns>解決した表示スケール。</returns>
         /// <remarks>「0 以下は未指定」という規則を単一所有する（UI 層に同じ三項演算を書かせない）。</remarks>
-        internal static double ResolveDisplayScale(double displayScaling, double scaling)
-            => displayScaling > 0 ? displayScaling : DpiScaler.NormalizeScaling(scaling);
+        internal static double ResolveDisplayScale(double displayScaling, double domainToDipScaling)
+            => displayScaling > 0 ? displayScaling : DpiScaler.NormalizeScaling(domainToDipScaling);
 
         /// <summary>実数を安全域へ補正する（非有限は既定値へ戻す）。</summary>
         /// <param name="value">補正する値。</param>

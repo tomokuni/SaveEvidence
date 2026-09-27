@@ -301,7 +301,7 @@ marquee.Renderer = MyMarqueeRenderer.Instance;   // 描画手順の差し替え
 
 - **ホスト設定**: `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest`
 - **公開ファサード（操作の唯一の窓口）**: `Marquee`（操作・設定・効果の適用・描画内容の解決）/ `IMarqueeEffects`（効果の適用先）/ `MarqueeEffectsBase`（効果の既定実装。必要な効果だけを override できる）
-- **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` / `MarqueeTextPlacement` / `MarqueeSelectionGeometry`
+- **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement`
 
 **装飾（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は Core 内のサブ概念**（`src/Decoration/`・名前空間 `EsUtil.Feature.MarqueeCore.Decoration`）が単一所有します（/ `MarqueeDecoOptions` / `MarqueeDrawContent` / `MarqueeOuterDecoFrame` / `MarqueeInnerDecoFrame` / `MarqueeTextPlacement`）。本コントロールは `DecoOptions` で設定し、`Rendered` で装飾の描画内容を渡します。**色は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）が単一所有し**、本コントロールは `Paint` で設定します。**描画するラベルの一覧と描画順はコア（`MarqueeDrawLayer`）が、実寸 → 配置矩形の写像は描画層**（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有し、実寸測定だけを UI 層が与えます。
 
@@ -404,12 +404,12 @@ nudge 中は十字マーカー（色は `Paint.MarkerColor`、全長は `Options
 
 | 状態 | 十字マーカー・ルーペの追従位置 |
 | --- | --- |
-| リサイズ（8 方向ハンドル選択中） | アクティブハンドルの現在位置（`MarqueeSelectionGeometry.GetHandlePosition`） |
+| リサイズ（8 方向ハンドル選択中） | アクティブハンドルの現在位置（コアが通知する追従位置） |
 | 移動（Move ドラッグ中） | **掴んだマウス位置（`LastMousePosition`）**（矩形中心に飛ばず、マウスポインタに追従する） |
 | 新規選択ドラッグ中・nudge | 終点（ドラッグ中の位置） |
 | 未選択（始点決め nudge） | 始点 |
 
-十字マーカーとルーペ中心は、矩形の固定位置（`MarqueeSelectionGeometry.GetOppositeCorner` で得られる左上等の隅）ではなく**ドラッグ中の操作点（ハンドル / 掴んだ位置 / 終点）**を追従します。これにより、マーカーは常にドラッグ中の操作位置に表示されます。
+十字マーカーとルーペ中心は、矩形の固定位置（左上等の隅）ではなく**ドラッグ中の操作点（ハンドル / 掴んだ位置 / 終点）**を追従します。追従位置の算出はコアが単一所有します（本コントロールはコアが通知する位置を写像するだけです）。これにより、マーカーは常にドラッグ中の操作位置に表示されます。
 
 ### 7.5 外側の装飾と選択矩形の一致（閉区間の共有）
 

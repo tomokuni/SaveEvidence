@@ -40,7 +40,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 - 上位層は下位層のみを参照します（逆参照なし）。
 - 本コアは UI フレームワークを参照しません。装飾（暗転マスク等）は**本コア内のサブ概念**として同居します（別プロジェクトに分けません）。
-- 本コアは描画 API を持ちません。描画の手順は UI 非依存の描画層（`MarqueeControl.UIBase`）が単一所有し、描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`MarqueeSelectionGeometry.DirectionalHandles`（読み取り専用の一覧）等）を参照します。
+- 本コアは描画 API を持ちません。描画の手順は UI 非依存の描画層（`MarqueeControl.UIBase`）が単一所有し、描画層は本コアの描画内容（`MarqueeDrawContent`）だけを参照します（層の順序に従って写すだけであり、幾何計算は持ちません。ハンドル位置の計算は本コアの描画内容の解決が済ませています）。
 - **本コアは描画層を参照しません**（依存の向きは `UI 層 → MarqueeControl.UIBase → Feature.MarqueeCore` の一方向。本コアは `Common` も `Platform.*` の UI アダプタも参照しません）。**描画は本コアの関心事ではない**ため、本コアは描画内容（`MarqueeDrawContent` と `Layers`）をデータとして返すだけであり、層の順序に従う描画手順は UI 側の共有層（`MarqueeControl.UIBase` の `MarqueeRendererBase`）が単一所有します。
 
 ### 3.2 データフロー（入力 → 描画）
@@ -194,7 +194,7 @@ dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj
 | 文字の描画 | コアは文言・基準点・アラインだけを持ち、実寸 → 配置矩形の写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため）。色は描画層の `MarqueePaint` が与える |
 | 再描画のバッチ化 | UI のディスパッチャーに依存するため `MarqueeControl.UIBase` が単一所有する（コアは同期計算のみ） |
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画ポートの境界で行う |
-| 選択矩形の閉区間 | 「終点を含む」規則（DIP への変換時の +1）はコア（`MarqueeHoleRect` / `MarqueeSelectionGeometry`）が単一所有する（UI ごとに +1 すると片方だけずれる） |
+| 選択矩形の閉区間 | 「終点を含む」規則（DIP への変換時の +1）はコア（`MarqueeRenderRequest.ToDipRect` の `closedInterval` と、その指定を導出する `MarqueeHoleRect`）が単一所有する（UI ごとに +1 すると片方だけずれる） |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「アラインの適用」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層（`MarqueeControl.UIBase` / `LoupeControl.UIBase`）が単一所有する（コアは文言・基準点・アライン・クランプ領域だけを渡す） |
 | 設定では変更しない固定値 | **公開しません**。コア内だけで使う値（ハンドル枠の太さ・カーソル座標ラベルのオフセット・始点マーカーの太さ）は描画内容の解決（`Marquee.DrawContent.cs`）の private 定数とし、UI 層は解決済みの値（`MarqueeHandles.BorderThickness` 等）を受け取る |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は描画層（`MarqueePaint` / `LoupePaint`）が単一所有する |

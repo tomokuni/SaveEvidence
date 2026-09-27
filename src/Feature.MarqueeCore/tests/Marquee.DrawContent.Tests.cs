@@ -47,7 +47,7 @@ public class MarqueeDrawContentTests
     /// <param name="session">セッション（設定・状態の参照元）。</param>
     /// <param name="decoOptions">装飾の設定。null の場合は既定。</param>
     /// <param name="port">座標変換ポート。null の場合はセッションのポートを使う。</param>
-    /// <param name="scaling">ポート未指定時に適用する倍率。</param>
+    /// <param name="domainToDipScaling">ポート未指定時に適用する倍率。</param>
     /// <param name="sizeLabelProvider">サイズラベルの文言プロバイダ。</param>
     /// <param name="displayScale">サイズラベルの自動生成に使う表示スケーリング。</param>
     /// <returns>解決した描画内容。</returns>
@@ -55,7 +55,7 @@ public class MarqueeDrawContentTests
         MarqueeSession session,
         MarqueeDecoOptions? decoOptions = null,
         ICoordTransform? port = null,
-        double scaling = 1.0,
+        double domainToDipScaling = 1.0,
         Func<string?>? sizeLabelProvider = null,
         double displayScale = 1.0)
         => s_marquee.ResolveContent(new MarqueeRenderRequest(
@@ -67,7 +67,7 @@ public class MarqueeDrawContentTests
             session.MarkerPosition,
             session.LastMousePosition,
             port,
-            scaling,
+            domainToDipScaling,
             sizeLabelProvider,
             displayScale));
 
@@ -592,22 +592,22 @@ public class MarqueeDrawContentTests
     {
         var deco = MarqueeDecoOptions.Default with { OuterHighlightRect = new EsRect(10, 20, 30, 40) };
 
-        var content = ResolveContent(CreateSession(selection: s_selection), deco, scaling: 2.0);
+        var content = ResolveContent(CreateSession(selection: s_selection), deco, domainToDipScaling: 2.0);
 
         Assert.Equal(new EsRect(20, 40, 60, 80), content.HoleRect);
     }
 
     /// <summary>倍率が 0 以下・等倍の場合は等価変換（座標が変わらない）になることを検証する。</summary>
-    /// <param name="scaling">適用する倍率。</param>
+    /// <param name="domainToDipScaling">適用する倍率。</param>
     [Theory]
     [InlineData(0.0)]
     [InlineData(-1.0)]
     [InlineData(1.0)]
-    public void ResolveContent_倍率が無効なら等価変換になる(double scaling)
+    public void ResolveContent_倍率が無効なら等価変換になる(double domainToDipScaling)
     {
         var deco = MarqueeDecoOptions.Default with { OuterHighlightRect = new EsRect(10, 20, 30, 40) };
 
-        var content = ResolveContent(CreateSession(selection: s_selection), deco, scaling: scaling);
+        var content = ResolveContent(CreateSession(selection: s_selection), deco, domainToDipScaling: domainToDipScaling);
 
         Assert.Equal(new EsRect(10, 20, 30, 40), content.HoleRect);
     }

@@ -258,7 +258,7 @@ public class MarqueeRenderRequestTests
     {
         var port = CoordTransform.Scale(2.0);
 
-        var result = MarqueeRenderRequest.ResolvePort(port, scaling: 3.0);
+        var result = MarqueeRenderRequest.ResolvePort(port, domainToDipScaling: 3.0);
 
         Assert.Same(port, result);
     }
@@ -267,21 +267,21 @@ public class MarqueeRenderRequestTests
     [Fact]
     public void ResolvePort_ポート未指定なら倍率を適用する()
     {
-        var result = MarqueeRenderRequest.ResolvePort(null, scaling: 2.0);
+        var result = MarqueeRenderRequest.ResolvePort(null, domainToDipScaling: 2.0);
 
         Assert.Equal(new EsPoint(20, 40), result.Inverse(new EsPoint(10, 20)));
     }
 
     /// <summary>ポート未指定で倍率が 0 以下・等倍の場合は等価変換になることを検証する。</summary>
-    /// <param name="scaling">適用する倍率。</param>
+    /// <param name="domainToDipScaling">適用する倍率。</param>
     [Theory]
     [InlineData(0.0)]
     [InlineData(-1.0)]
     [InlineData(1.0)]
     [InlineData(double.NaN)]
-    public void ResolvePort_倍率が無効なら等価変換になる(double scaling)
+    public void ResolvePort_倍率が無効なら等価変換になる(double domainToDipScaling)
     {
-        var result = MarqueeRenderRequest.ResolvePort(null, scaling);
+        var result = MarqueeRenderRequest.ResolvePort(null, domainToDipScaling);
 
         Assert.Same(CoordTransform.Identity, result);
     }

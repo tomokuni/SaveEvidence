@@ -116,17 +116,17 @@
 | --- | --- | --- |
 | `RequestedSizeMin` / `RequestedSizeMax` / `RequestedSizeDefault` | `1` / `4096` / `160` | 表示サイズ要求値（DIP） |
 | `ZoomLevelMin` / `ZoomLevelMax` / `ZoomLevelDefault` | `1` / `64` / `4` | 拡大率 |
-| `DipToDeviceScalingMin` / `DipToDeviceScalingMax` / `DipToDeviceScalingDefault` | `0.1` / `8.0` / `1.0` | スケーリング係数 |
 | `CheckerSizeMin` / `CheckerSizeMax` / `CheckerSizeDefault` | `1` / `128` / `6` | 市松模様の 1 タイルサイズ（ピクセル） |
 | `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `1` / `64` / `2` | 枠線の太さ（ピクセル） |
+| `DipToDeviceScalingMin` / `DipToDeviceScalingMax` / `DipToDeviceScalingDefault` | `0.1` / `8.0` / `1.0` | スケーリング係数（環境値。他の数値より後に置く） |
 
 | メソッド | 説明 |
 | --- | --- |
 | `CoerceRequestedSize(int)` | 表示サイズ要求値を 1〜4096 へ補正 |
 | `CoerceZoomLevel(int)` | 拡大率を 1〜64 へ補正 |
-| `CoerceDipToDeviceScaling(double)` | スケーリング係数を 0.1〜8.0 へ補正。非有限値は `DipToDeviceScalingDefault` |
 | `CoerceCheckerSize(int)` | 市松模様の 1 タイルサイズを 1〜128 へ補正 |
 | `CoerceBorderThickness(int)` | 枠線の太さを 1〜64 へ補正 |
+| `CoerceDipToDeviceScaling(double)` | スケーリング係数を 0.1〜8.0 へ補正。非有限値は `DipToDeviceScalingDefault` |
 
 ### 描画の契約（`ILoupeRenderer` / `LoupeRendererBase`）
 

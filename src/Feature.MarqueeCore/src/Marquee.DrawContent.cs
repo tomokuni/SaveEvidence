@@ -253,13 +253,13 @@ public sealed partial class Marquee
             return null;
         }
 
-        var displayScaling = request.SizeLabelDisplayScalingProvider is { } scalingProvider
+        var rectDisplayScale = request.SizeLabelDisplayScalingProvider is { } scalingProvider
             ? scalingProvider(request.ToDomainRect(holeRect, port))
             : request.DisplayScaleScaling;
 
         var overrideText = request.SizeLabelOverrideProvider?.Invoke();
         var text = string.IsNullOrEmpty(overrideText)
-            ? FormatSizeLabel(holeRect, request.DisplayScaleScaling, displayScaling)
+            ? FormatSizeLabel(holeRect, request.DisplayScaleScaling, rectDisplayScale)
             : overrideText;
 
         return new MarqueeTextPlacement(
@@ -268,18 +268,18 @@ public sealed partial class Marquee
 
     /// <summary>サイズラベルの書式（文言）を生成する。</summary>
     /// <param name="dipRect">対象の矩形（DIP）。</param>
-    /// <param name="scaling">座標・サイズを物理ピクセルへ換算する係数（0 以下は 100% として扱う）。</param>
-    /// <param name="displayScaling">DisplayScale の百分率に使う係数（0 以下は <paramref name="scaling"/> を使う）。</param>
+    /// <param name="displayScale">座標・サイズを物理ピクセルへ換算する係数（0 以下は 100% として扱う）。</param>
+    /// <param name="rectDisplayScale">DisplayScale の百分率に使う係数（0 以下は <paramref name="displayScale"/> を使う）。</param>
     /// <returns><c>"(L, T) - (R, B),  (W×H), DisplayScale: (P%)"</c> 形式の文言。</returns>
     /// <remarks>
     /// 書式はコアの内部に閉じる（ホスト・描画層は文言を作らない）。<br/>
-    /// 座標・サイズは物理ピクセル（<c>DIP × scaling</c> の整数切り捨て）で表示する。<br/>
-    /// 値がドメイン座標（画像ピクセル）の場合は <paramref name="scaling"/> に等倍を渡す（百分率だけを実表示スケールで表示する）。
+    /// 座標・サイズは物理ピクセル（<c>DIP × displayScale</c> の整数切り捨て）で表示する。<br/>
+    /// 値がドメイン座標（画像ピクセル）の場合は <paramref name="displayScale"/> に等倍を渡す（百分率だけを実表示スケールで表示する）。
     /// </remarks>
-    private static string FormatSizeLabel(EsRect dipRect, double scaling, double displayScaling)
+    private static string FormatSizeLabel(EsRect dipRect, double displayScale, double rectDisplayScale)
     {
-        var s = DpiScaler.NormalizeScaling(scaling);
-        var d = ResolveDisplayScale(displayScaling, s);
+        var s = DpiScaler.NormalizeScaling(displayScale);
+        var d = ResolveDisplayScale(rectDisplayScale, s);
         var left = (int)(dipRect.X * s);
         var top = (int)(dipRect.Y * s);
         var right = (int)(dipRect.Right * s);

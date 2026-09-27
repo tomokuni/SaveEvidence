@@ -66,7 +66,7 @@ public sealed partial class Marquee
     private double _displayScaleScaling;
 
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
-    private double _scaling = DomainToDipScalingDefault;
+    private double _domainToDipScaling = DomainToDipScalingDefault;
 
     /// <summary>サイズラベルの文言プロバイダ（null = 未指定。未指定時はコアが自動生成する）。</summary>
     private Func<string?>? _sizeLabelOverrideProvider;
@@ -131,12 +131,12 @@ public sealed partial class Marquee
     /// </remarks>
     public double DomainToDipScaling
     {
-        get => _scaling;
+        get => _domainToDipScaling;
         set
         {
-            if (SetIfChanged(ref _scaling, CoerceDomainToDipScaling(value), out var previous))
+            if (SetIfChanged(ref _domainToDipScaling, CoerceDomainToDipScaling(value), out var previous))
             {
-                Log.LogSettingChanged(nameof(DomainToDipScaling), previous, _scaling);
+                Log.LogSettingChanged(nameof(DomainToDipScaling), previous, _domainToDipScaling);
             }
         }
     }
@@ -208,15 +208,15 @@ public sealed partial class Marquee
     /// </remarks>
     public double DisplayScaleScaling
     {
-        get => ResolveDisplayScale(_displayScaleScaling, _scaling);
+        get => ResolveDisplayScale(_displayScaleScaling, _domainToDipScaling);
         set
         {
             if (SetIfChanged(ref _displayScaleScaling, value, out var previous))
             {
                 Log.LogSettingChanged(
                     nameof(DisplayScaleScaling),
-                    ResolveDisplayScale(previous, _scaling),
-                    ResolveDisplayScale(value, _scaling));
+                    ResolveDisplayScale(previous, _domainToDipScaling),
+                    ResolveDisplayScale(value, _domainToDipScaling));
             }
         }
     }
@@ -357,7 +357,7 @@ public sealed partial class Marquee
             _session.MarkerPosition,
             _session.LastMousePosition,
             _coordinatePort,
-            _scaling,
+            _domainToDipScaling,
             SizeLabelOverrideProvider,
             DisplayScaleScaling,
             SizeLabelDisplayScalingProvider);

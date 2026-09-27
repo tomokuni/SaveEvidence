@@ -28,6 +28,7 @@
 | `Contract/` | `IMarqueeEffects` | public | コアが要求する効果（フォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換）の適用先。UI 層が自 UI の操作へ接続する唯一の境界 |
 | `Contract/` | `MarqueeEffectsBase` | public abstract | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス。独自コントロールは必要な効果だけ override する（不要なメンバーの空実装を書かずに済む） |
 | ルート | `Marquee.DrawContent.cs`（`Marquee` の **partial**） | internal | 描画内容の**内部手順**（装飾・穴あけ矩形・ハンドル・始点マーカー・テキストの配置の解決）を持つ。公開の入口（`ResolveContent`）はファサード本体（`Marquee.cs`）が持つ。穴あけ矩形と座標変換ポートは 1 フレームに 1 回だけ解決する。**層は描く値がある場合だけ含め、層の有無の全組合せ（16 通り）を事前生成した表から選ぶ** |
+| （本コアには置かない） | `IMarqueeRenderer` / `MarqueeRendererBase` | — | 描画の契約と描画手順の基底は **UI 側の共有層（`MarqueeControl.UIBase`）が所有します**（本コアは描画 API も描画ポートも持たない） |
 | `Drawing/` | `MarqueeDrawContent` | public | 1 フレーム分の描画契約（`Decoration` / `InnerDecoration` / `HoleRect` / `Handles` / `Marker` / `SizeLabelText` / `CoordLabelText` / `Layers`）。UI は `Layers` の順に処理するだけ。**層にある ⇔ 描く値がある**（`HasDecoration` / `HasText` が層の有無と一致する） |
 | `Drawing/` | `MarqueeHandles` | public | ドラッグハンドルの描画契約（8 方向の矩形と枠線の太さ。位置はコアが解決済み） |
 | `Drawing/` | `MarqueeMarker` | public | 始点マーカー（十字線）の描画契約（中心・太さ・半幅） |
@@ -51,8 +52,8 @@
 | 層 | 利用者 | 型 |
 | --- | --- | --- |
 | **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` |
-| **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層） | `Marquee`（操作の唯一の窓口。既定値は `Limits.DomainToDipScalingDefault`） / `IMarqueeEffects` / `MarqueeEffectsBase` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` / `MarqueeSelectionGeometry` |
-| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeLogMessage`（適用とログ出力はファサード・状態機械 が行う）/ `MarqueeSession` / `Marquee.DrawContent.cs`（「1 フレーム分の描画内容の解決」は `Marquee.ResolveContent` が提供する）/ `MarqueeState` |
+| **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層） | `Marquee`（操作の唯一の窓口。既定値は `Limits.DomainToDipScalingDefault`） / `IMarqueeEffects` / `MarqueeEffectsBase` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeDrawContent` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeTextPlacement` |
+| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeCaptureAction` / `MarqueeLogMessage`（適用とログ出力はファサード・状態機械 が行う）/ `MarqueeSession` / `MarqueeSelectionGeometry` / `MarqueeDecoGeometry` / `MarqueeHoleRect` / `Marquee.DrawContent.cs`（「1 フレーム分の描画内容の解決」は `Marquee.ResolveContent` が提供する）/ `MarqueeState` |
 
 - **操作はファサード経由に一本化**しています（状態機械とフレーム解決は `internal` のため、UI 層はファサード以外の入口を持ちません）。
 - **層 3 は外部参照 0 件**を実測して絞り込んだ結果です。「描画内容の解決（`Marquee.ResolveContent`）と描画に必要な値」だけが公開面です。
@@ -78,15 +79,51 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 ※ Core は UIBase を参照しない（UIBase がコアの描画内容を使う向きだけ）。Core は Common も参照しない。
 ```
 
-本プロジェクトが直接参照するもの:
+本プロジェクトが UI フレームワークへ依存することはありません。**直接参照するものは UI 非依存のコア型と抽象（`Platform.Core` の `Es*` 幾何型 / `EsKey` / `ICoordTransform` / `ICursorService`）と、`Microsoft.Extensions.Logging.Abstractions`（`LoggerMessage` ソース生成）だけ**です。**カーソル操作は `ICursorService` 抽象にのみ依存**し、未指定（`null`）の場合は何もしません（既定実装（Win32）の解決は UI 側の責務です）。
 
-```text
-Feature.MarqueeCore
-    ├── Platform.Core（Es* 幾何型 / EsKey / ICoordTransform / ICursorService）
-    └── Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成のみ）
-```
+## 層の責務の境界
 
-**UI フレームワークへ依存しません。** カーソル操作は `ICursorService` 抽象にのみ依存し、未指定（`null`）の場合は何もしません。既定実装（Win32）の解決は UI 側の責務です。
+| 責務 | 所有者 | 内容 |
+| --- | --- | --- |
+| 設定と状態 | 本コア（値） / UI（保持） | 選択の設定は `MarqueeOptions`、装飾の設定は `MarqueeDecoOptions`（いずれも公開値）、選択矩形はセッションが持つ。UI はフレームワークのプロパティ機構で保持し、ファサードへ伝搬するだけ。**設定の変更に伴う再描画は UI が要求する**（本コアは設定の保持だけを行い、再描画は入力に伴う場合にだけ効果として要求する） |
+| 判断・計算 | 本コア | 選択の状態遷移・スナップ・最小サイズ・論理矩形 → DIP 変換（選択は閉区間 +1）・ハンドル/マーカー/ラベルの可否と値・描画順 |
+| 契約 | 本コア | `MarqueeDrawContent`（装飾・ハンドル・始点マーカー・サイズラベル・座標ラベル・層の順序）・`Marquee.CreateRequest` / `Marquee.ResolveContent`（公開のエンドポイント。`MarqueeSession` は内部契約） |
+| 描画（図形） | 描画層（`MarqueeControl.UIBase` の `MarqueeRendererBase` / `MarqueeRenderer`） | 描画内容の各項目を描画ポート（`IEsCanvas`）へ写す（色は描画の設定 `MarqueePaint` から引く）。本コアは描画 API を持たず、**描画内容と層の順序（`MarqueeDrawContent.Layers`）をデータとして渡すだけ**である |
+| 描画（文字） | UI（コントロール・ホスト） | サイズラベル・座標ラベルは **UI 層がテキスト要素を配置**する（描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan` が実寸から配置矩形を求める。色は `MarqueePaint` から渡す）。操作・情報ラベルは**ホストが自前で描く** |
+| ホスト結線 | UI | プロパティ機構・DPI 追従・キャンバスのスケーリング・ブラシキャッシュ・テキストの実寸測定とフォント解決・要素の配置 |
+
+UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せません。
+
+1. **空のコレクションのスキップ**（ブラシ生成を避ける性能ガード）
+2. **描画内容の項目の有無**（値を持つ項目だけを描く＝描画の前提条件）
+3. **フレームワーク固有の値の解決**（DPI の 0 以下フォールバック・色型変換）
+4. **描画方式の差**（直接描画 / 中間バッファ・ブラシキャッシュ）
+
+ハンドル・始点マーカーと装飾の描画は UI 非依存の描画層（`MarqueeControl.UIBase` の `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）が行います（描画先は `Platform.Core` の `IEsCanvas`。本コアは描画 API を持たない）。描画層は本コアの描画内容（`MarqueeDrawContent`）だけを参照します（層の順序に従って写すだけであり、幾何計算は持ちません）。
+**文字（サイズラベル・カーソル座標ラベル）は UI 層がテキスト要素を配置**します（`Border` + `TextBlock`。ラベルは常に最上位）。文言・基準点・並び順は本コアが単一所有し、フォントサイズと色は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）、実寸から配置矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有します。
+
+## 機能差に由来する非対称（もう一方のコアとの違い）
+
+本コアと `Feature.LoupeCore` は同じ規約（`UI → UIBase → Core → Platform.Core` の一方向依存、層の順序をコアが所有、色は描画層が所有）で作られています。揃えない（揃えると書になる）違いは機能差に由来するもので、以下に列挙します。
+
+| 非対称 | Marquee | Loupe | 理由 |
+| --- | --- | --- | --- |
+| 描画パイプラインの段数 | 2 段（`CreateRequest` → `ResolveContent`） | 3 段（`ResolveLayout` → `CreateRequest` → `ResolveContent`） | 本コアは親セル全面へ重ねるため配置の余地がない（`LoupeLayout` 相当を持たない）。配置先はホストの親セル全面であり、位置を決める入力がコアに無い |
+| 描画入力の生成の形 | `CreateRequest(EsSize clientSize)`（描画領域＝座標空間。表示サイズと同じ） | `CreateRequest(double displaySize, EsSize? availableSize = null)`（一辺の表示サイズ＝親パネルのクランプ結果と、描画面＝ビットマップの領域が別） | 本コアは任意矩形の描画領域へ直接描く（正方形の表示サイズと描画面の区別が無い） |
+| 入力の通知と効果ポート | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）／設定に対話パラメータ（`MinSelectionSize` / `HandleHitRadius` / `ClampToDomainBounds`）／ラベル文言プロバイダ（`SizeLabelOverrideProvider` / `SizeLabelDisplayScalingProvider` / `DisplayScaleScaling`）／座標変換の設定で**コアが再描画を要求**（`RequestRedraw`）／ロガーはセッションが保持 | 持たない（状態はホストが設定するだけ。設定は表示のみ。変換の設定は再描画を要求せず、表示位置の再計算は UI が行う。ロガーはファサード自身が保持） | ルーペは入力の解釈も効果ポートも持たない（ホストが状態を設定するだけであり、再描画の要求先が無い） |
+| 寸法の型 | `double`（DIP のまま。`StrokeRect` / `DrawLine` で線を描く） | `int`（物理ピクセルへ換算。`FillRects` で塗る） | 描画プリミティブが違う（線 / 塗り） |
+| 設定型の数とログ定義 | 2 型（`MarqueeOptions` + `MarqueeDecoOptions`）。ログは `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキー） | 1 型（`LoupeOptions`）。ログは `LogOptionsChanged` のみ | 本コアの装飾は撮影オーバーレイ等へ組み込むときだけ必要なサブ概念 |
+| 描画データの粒度 | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker` / `MarqueeOuterDecoFrame`） | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 描画プリミティブが違う（線の座標 / 塗る矩形の列） |
+| 描画入力の座標変換ポート | 入力が保持する（`Port` ＋ 未指定時の `DomainToDipScaling`。`ResolvedPort` / `ToDipRect` が自分で解決する） | 入力に持たない（ポートは `ResolveLayout` の表示位置解決だけに使う） | 本コアは選択矩形をドメイン → DIP へ変換して描き、その DIP はホストの座標系で決まる（ルーペは自身の物理ピクセル面で完結する） |
+| 確保の戦略 | 固定個の矩形は `List` を毎フレーム確保（ハンドル 8 / 暗転 4 / 枠線 4） | 高カウントのタイルだけ構造体列挙子（`LoupeCheckerTiles`）で確保 0（数百〜数千） | 要素数の桁が違う（描画面に比例するタイルと、固定個の矩形） |
+| 下地の層 | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | `LoupeDrawLayer.Background` で自前の描画面を消す | 本コアは自身の表面へ直接描き、消去はフレームワークが行う（ルーペは描画先のビットマップを自分で置き換える） |
+| 描画完了の通知の内容 | `MarqueeRenderedEventArgs`（`MarqueeDrawContent`: 層・文言の有無） | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | ホストが重ね描きするために必要な情報が違う（選択矩形の所在 / 切り出し領域と倍率） |
+| 表示可否の述語の引数 | `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` | `ShouldShowCoordLabel(bool)` | ルーペの座標ラベルは拡大中心が未設定になりうる（本コアの座標ラベルは入力に常にある） |
+| `Limits` の追加役割 | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`） | 安全域と補正のみ | ラベルの表示スケールは本コア固有の概念 |
+| 市松模様・区画数の計算 | 持たない | `Checkerboard/`（`LoupeCheckerboard` / `LoupeDivMath`）+ `LoupeCheckerTiles` | ルーペは透明領域を市松模様で示す（区画数の切り上げは切り出し領域とも共用する） |
+| 選択の幾何 | `Selection/`（`MarqueeSelectionGeometry`）を持つ | 持たない | ルーペは選択操作を持たない |
+| テスト補助（スパイ） | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | `RecordingLogger` のみ | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
+| ドキュメントの追加の節 | 3 節（README「名前の由来と一般的な呼称」「選択矩形の外側に描く装飾」、SPEC_System「3.3 状態遷移」） | 追加の節なし | 改名の経緯・装飾・状態遷移はルーペに対応する概念が無い（共通の節は両コアで同一順） |
 
 ## 名前の由来と一般的な呼称
 
@@ -152,49 +189,6 @@ Feature.MarqueeCore
 - **描画順は本コアが単一所有します**: `MarqueeDrawContent.Layers`（`MarqueeDrawLayer`）が層と順序を指示し、UI 層はそれに従うだけです（テキストの層を必ず最後に置くため、テキストは常に最上位になります）。
 - **テキストは層と値の両方で渡します**: 層（`MarqueeDrawLayer.Label`）は canvas へ描く実装のためのものであり、**UI 要素として置く UI は無視してよい**（要素は親の描画より後に描かれる）。描画実装が上書きするフック（`MarqueeRendererBase.DrawLabel`）の**既定は何もしない**ため、要素で描く UI はコードを書かなくて済みます。
 
-## 層の責務の境界
-
-| 責務 | 所有者 | 内容 |
-| --- | --- | --- |
-| 設定と状態 | 本コア（値） / UI（保持） | 選択の設定は `MarqueeOptions`、装飾の設定は `MarqueeDecoOptions`（いずれも公開値）、選択矩形はセッションが持つ。UI はフレームワークのプロパティ機構で保持し、ファサードへ伝搬するだけ。**設定の変更に伴う再描画は UI が要求する**（本コアは設定の保持だけを行い、再描画は入力に伴う場合にだけ効果として要求する） |
-| 判断・計算 | 本コア | 選択の状態遷移・スナップ・最小サイズ・論理矩形 → DIP 変換（選択は閉区間 +1）・ハンドル/マーカー/ラベルの可否と値・描画順 |
-| 契約 | 本コア | `MarqueeDrawContent`（装飾・ハンドル・始点マーカー・サイズラベル・座標ラベル・層の順序）・`Marquee.CreateRequest` / `Marquee.ResolveContent`（公開のエンドポイント。`MarqueeSession` は内部契約） |
-| 描画（図形） | 描画層（`MarqueeControl.UIBase` の `MarqueeRendererBase` / `MarqueeRenderer`） | 描画内容の各項目を描画ポート（`IEsCanvas`）へ写す（色は描画の設定 `MarqueePaint` から引く）。本コアは描画 API を持たず、**描画内容と層の順序（`MarqueeDrawContent.Layers`）をデータとして渡すだけ**である |
-| 描画（文字） | UI（コントロール・ホスト） | サイズラベル・座標ラベルは **UI 層がテキスト要素を配置**する（描画層 `MarqueeControl.UIBase` の `MarqueeLabelPlan` が実寸から配置矩形を求める。色は `MarqueePaint` から渡す）。操作・情報ラベルは**ホストが自前で描く** |
-| ホスト結線 | UI | プロパティ機構・DPI 追従・キャンバスのスケーリング・ブラシキャッシュ・テキストの実寸測定とフォント解決・要素の配置 |
-
-UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せません。
-
-1. **空のコレクションのスキップ**（ブラシ生成を避ける性能ガード）
-2. **描画内容の項目の有無**（値を持つ項目だけを描く＝描画の前提条件）
-3. **フレームワーク固有の値の解決**（DPI の 0 以下フォールバック・色型変換）
-4. **描画方式の差**（直接描画 / 中間バッファ・ブラシキャッシュ）
-
-ハンドル・始点マーカーと装飾の描画は UI 非依存の描画層（`MarqueeControl.UIBase` の `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）が行います（描画先は `Platform.Core` の `IEsCanvas`。本コアは描画 API を持たない）。描画層は本コアの描画内容（`MarqueeDrawContent`）と幾何（`MarqueeSelectionGeometry.DirectionalHandles` 等）を参照します。
-**文字（サイズラベル・カーソル座標ラベル）は UI 層がテキスト要素を配置**します（`Border` + `TextBlock`。ラベルは常に最上位）。文言・基準点・並び順は本コアが単一所有し、フォントサイズと色は描画層（`MarqueeControl.UIBase` の `MarqueePaint`）、実寸から配置矩形を求める写像は描画層（`MarqueeControl.UIBase` の `MarqueeLabelPlan`）が単一所有します。
-
-## 機能差に由来する非対称（もう一方のコアとの違い）
-
-本コアと `Feature.LoupeCore` は同じ規約（`UI → UIBase → Core → Platform.Core` の一方向依存、層の順序をコアが所有、色は描画層が所有）で作られています。揃えない（揃えると書になる）違いは機能差に由来するもので、以下に列挙します。
-
-| 非対称 | Marquee | Loupe | 理由 |
-| --- | --- | --- | --- |
-| 描画パイプラインの段数 | 2 段（`CreateRequest` → `ResolveContent`） | 3 段（`ResolveLayout` → `CreateRequest` → `ResolveContent`） | 本コアは親セル全面へ重ねるため配置の余地がない（`LoupeLayout` 相当を持たない）。配置先はホストの親セル全面であり、位置を決める入力がコアに無い |
-| 描画入力の生成の形 | `CreateRequest(EsSize clientSize)`（描画領域＝座標空間。表示サイズと同じ） | `CreateRequest(double displaySize, EsSize? availableSize = null)`（一辺の表示サイズ＝親パネルのクランプ結果と、描画面＝ビットマップの領域が別） | 本コアは任意矩形の描画領域へ直接描く（正方形の表示サイズと描画面の区別が無い） |
-| 入力の通知と効果ポート | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）／設定に対話パラメータ（`MinSelectionSize` / `HandleHitRadius` / `ClampToDomainBounds`）／ラベル文言プロバイダ（`SizeLabelOverrideProvider` / `SizeLabelDisplayScalingProvider` / `DisplayScaleScaling`）／座標変換の設定で**コアが再描画を要求**（`RequestRedraw`）／ロガーはセッションが保持 | 持たない（状態はホストが設定するだけ。設定は表示のみ。変換の設定は再描画を要求せず、表示位置の再計算は UI が行う。ロガーはファサード自身が保持） | ルーペは入力の解釈も効果ポートも持たない（ホストが状態を設定するだけであり、再描画の要求先が無い） |
-| 寸法の型 | `double`（DIP のまま。`StrokeRect` / `DrawLine` で線を描く） | `int`（物理ピクセルへ換算。`FillRects` で塗る） | 描画プリミティブが違う（線 / 塗り） |
-| 設定型の数とログ定義 | 2 型（`MarqueeOptions` + `MarqueeDecoOptions`）。ログは `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキー） | 1 型（`LoupeOptions`）。ログは `LogOptionsChanged` のみ | 本コアの装飾は撮影オーバーレイ等へ組み込むときだけ必要なサブ概念 |
-| 描画データの粒度 | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker` / `MarqueeOuterDecoFrame`） | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 描画プリミティブが違う（線の座標 / 塗る矩形の列） |
-| 描画入力の座標変換ポート | 入力が保持する（`Port` ＋ 未指定時の `DomainToDipScaling`。`ResolvedPort` / `ToDipRect` が自分で解決する） | 入力に持たない（ポートは `ResolveLayout` の表示位置解決だけに使う） | 本コアは選択矩形をドメイン → DIP へ変換して描き、その DIP はホストの座標系で決まる（ルーペは自身の物理ピクセル面で完結する） |
-| 確保の戦略 | 固定個の矩形は `List` を毎フレーム確保（ハンドル 8 / 暗転 4 / 枠線 4） | 高カウントのタイルだけ構造体列挙子（`LoupeCheckerTiles`）で確保 0（数百〜数千） | 要素数の桁が違う（描画面に比例するタイルと、固定個の矩形） |
-| 下地の層 | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | `LoupeDrawLayer.Background` で自前の描画面を消す | 本コアは自身の表面へ直接描き、消去はフレームワークが行う（ルーペは描画先のビットマップを自分で置き換える） |
-| 描画完了の通知の内容 | `MarqueeRenderedEventArgs`（`MarqueeDrawContent`: 層・文言の有無） | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | ホストが重ね描きするために必要な情報が違う（選択矩形の所在 / 切り出し領域と倍率） |
-| 表示可否の述語の引数 | `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` | `ShouldShowCoordLabel(bool)` | ルーペの座標ラベルは拡大中心が未設定になりうる（本コアの座標ラベルは入力に常にある） |
-| `Limits` の追加役割 | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`） | 安全域と補正のみ | ラベルの表示スケールは本コア固有の概念 |
-| 市松模様・区画数の計算 | 持たない | `Checkerboard/`（`LoupeCheckerboard` / `LoupeDivMath`）+ `LoupeCheckerTiles` | ルーペは透明領域を市松模様で示す（区画数の切り上げは切り出し領域とも共用する） |
-| 選択の幾何 | `Selection/`（`MarqueeSelectionGeometry`）を持つ | 持たない | ルーペは選択操作を持たない |
-| テスト補助（スパイ） | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | `RecordingLogger` のみ | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
-
 ## 主な API
 
 ```csharp
@@ -256,15 +250,13 @@ UI 層が使う共有値・計算:
 | メンバー | 用途 |
 | --- | --- |
 | `MarqueeHandles.BorderThickness` | ハンドル枠の線の太さ（DIP。固定値。コアが `Marquee.ResolveContent` で解決済みとして渡すため、描画層は定数を持たない） |
-| `MarqueeHandles`（`Rects`） | 8 方向のハンドル矩形（`Marquee.ResolveContent` が `MarqueeSelectionGeometry` の位置と `MarqueeOptions.HandleSize` から解決済み） |
+| `MarqueeHandles`（`Rects`） | 8 方向のハンドル矩形（`Marquee.ResolveContent` がハンドルの位置と `MarqueeOptions.HandleSize` から解決済み） |
 | `MarqueeTextPlacement.Point`（カーソル座標ラベル） | カーソルから固定オフセット（DIP）だけ離した基準点（コアが解決済みとして渡す） |
 | `MarqueePaint.LabelPadding`（描画層 `MarqueeControl.UIBase`） | ラベルの内側余白の既定値（全ラベル共通。既定 4.0 DIP）。ホストが描く付加情報ラベルも同じ値を使う |
 | `MarqueePaint`（同） | ラベルの体裁（フォントサイズ・色・内側余白）の単一所有者。行送りは「行の高さ + 内側余白 × 2」で求める（`FadeMaskHostLabelRenderer` が単一所有する） |
 | `MarqueeLabelPlacement`（同） | UI 要素として配置するための指示（配置矩形・内側余白・文言・フォント・色）。UI 層はこれを置くだけでよい（`MarqueeLabelPlan` が組み立てる） |
 | `MarqueePaint.Default`（描画層 `MarqueeControl.UIBase`） | 色の既定値（部分変更の基点。`MarqueePaint.Default with { ... }`。コアの設定は色を持たない） |
 | `MarqueePaint.HandleColor`（同） | ハンドルの塗り色（未指定（全成分 0）は生成時に白へ解決。両 UI が同じ見た目になる） |
-| `MarqueeSelectionGeometry.DirectionalHandles` | 描画対象の 8 方向ハンドル（読み取り専用の一覧。列挙順は `MarqueeHitTarget` の宣言順。**描画層へは解決済みの矩形が渡る**） |
-| `MarqueeSelectionGeometry.ToCursorKind` | ハンドル → `MarqueeCursorKind`（どのハンドルが同じカーソルになるか） |
 
 ## 設計上の約束
 
@@ -320,7 +312,7 @@ tests/
 └── Setting/                         # 既定値・部分変更・安全域への補正・表示可否・等価性（24 件）
 ```
 
-**テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Marquee.cs` / `Marquee.DrawContent.cs`）のテストはルートに置きます。
+**テストはソースのフォルダを鏡映します**（`src/Drawing/` の型は `tests/Drawing/` で検証する）。同じファサード型の partial（`Marquee.cs` / `Marquee.DrawContent.cs` / `Marquee.Limits.cs`）のテストはルートに置きます。
 
 件数は `[Theory]` を展開したケース数（合計 324 件）です。
 

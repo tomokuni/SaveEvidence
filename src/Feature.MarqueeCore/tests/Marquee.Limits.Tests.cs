@@ -155,14 +155,14 @@ public class MarqueeLimitsTests
     }
 
     /// <summary>0 以下で倍率も無効な場合は基準値（等倍）になることを検証する。</summary>
-    /// <param name="scaling">指定する倍率。</param>
+    /// <param name="domainToDipScaling">指定する倍率。</param>
     [Theory]
     [InlineData(0.0)]
     [InlineData(-1.0)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
-    public void ResolveDisplayScale_倍率も無効なら等倍になる(double scaling)
+    public void ResolveDisplayScale_倍率も無効なら等倍になる(double domainToDipScaling)
     {
-        Assert.Equal(1.0, Marquee.Limits.ResolveDisplayScale(displayScaling: 0.0, scaling));
+        Assert.Equal(1.0, Marquee.Limits.ResolveDisplayScale(displayScaling: 0.0, domainToDipScaling));
     }
 }

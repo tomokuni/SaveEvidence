@@ -22,7 +22,7 @@ internal static class MarqueeDecoGeometry
     /// <returns>上・下・左・右の順の枠線矩形（4 個）。</returns>
     /// <remarks>
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの枠線と同じ式）。<br/>
-    /// 太さは面の短辺で上限を取る（面より太い枠線は面全体を覆い、矩形が面からはみ出さない）。<br/>
+    /// 太さは矩形の短辺で上限を取る（短辺より太い枠線は矩形全体を覆い、矩形からはみ出さない）。<br/>
     /// 太さの補正は装飾の外観（<c>MarqueeOuterDecoAppearance</c> / <c>MarqueeInnerDecoAppearance</c>）の生成時に適用される。
     /// </remarks>
     internal static IReadOnlyList<EsRect> ComputeBorderRects(EsRect rect, double thickness)

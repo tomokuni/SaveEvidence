@@ -3,11 +3,11 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
-using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Drawing;
 using EsUtil.Feature.LoupeCore.Logging;
 using EsUtil.Feature.LoupeCore.Placement;
+using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 
 
 namespace EsUtil.Feature.LoupeCore;

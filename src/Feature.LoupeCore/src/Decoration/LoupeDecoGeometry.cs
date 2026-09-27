@@ -32,13 +32,13 @@ internal static class LoupeDecoGeometry
 
     /// <summary>枠線の 4 辺の矩形を計算する。</summary>
     /// <param name="surface">描画面の全体（左上を原点とする正方形）。</param>
-    /// <param name="width">枠線の太さ（物理ピクセル）。補正済みの値を渡す（安全域は <c>Loupe.Limits</c> が単一所有する）。</param>
+    /// <param name="thickness">枠線の太さ（物理ピクセル）。補正済みの値を渡す（安全域は <c>Loupe.Limits</c> が単一所有する）。</param>
     /// <returns>枠線の上・下・左・右の 4 つの矩形。</returns>
     /// <remarks>
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（選択矩形の枠線と同じ式）。<br/>
     /// 太さは面の短辺で上限を取る（面より太い枠線は面全体を覆い、矩形が面からはみ出さない）。<br/>
     /// 太さの補正は設定（<c>LoupeOptions.BorderThickness</c> の生成時）に適用される。
     /// </remarks>
-    internal static IReadOnlyList<EsRect> ComputeBorderRects(EsRect surface, double width)
-        => surface.ComputeInnerEdges(Math.Min(width, Math.Min(surface.Width, surface.Height)));
+    internal static IReadOnlyList<EsRect> ComputeBorderRects(EsRect surface, double thickness)
+        => surface.ComputeInnerEdges(Math.Min(thickness, Math.Min(surface.Width, surface.Height)));
 }

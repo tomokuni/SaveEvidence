@@ -258,7 +258,6 @@ classDiagram
     MarqueeSession *-- MarqueeState : 状態機械
     MarqueeSession ..> ICursorService : カーソル操作
     MarqueeState ..> MarqueeSelectionGeometry : 幾何計算
-    MarqueeRenderer ..> MarqueeSelectionGeometry : ハンドル位置
 ```
 
 ## シーケンス図（新規選択のドラッグ）
@@ -369,7 +368,7 @@ OnPaintSurface(canvas, info)
        （層の順序はコアの MarqueeRendererBase が、色は UIBase の MarqueeRenderer が単一所有する）
        ├─ MarqueeOuterRenderer.Draw                 … 外側の装飾（暗転マスク・枠線）
        ├─ MarqueeInnerRenderer.Draw                 … 穴あけ矩形の塗り・内枠
-       ├─ content.Handles があれば                  … 8 方向の中心は MarqueeSelectionGeometry（コア）が単一所有
+       ├─ content.Handles があれば                  … 8 方向の中心はコア（Marquee.ResolveContent）が解決済み
        └─ content.Marker があれば                   … nudge 中の十字マーカー
   └─ content.HasText なら
        └─ Rendered（ホスト）                         … UI 層が配置したテキスト要素がラベルを表示する

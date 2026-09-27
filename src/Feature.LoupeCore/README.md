@@ -131,6 +131,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 | 市松模様・区画数の計算 | `Checkerboard/`（`LoupeCheckerboard` / `LoupeDivMath`）+ `LoupeCheckerTiles` | 持たない | ルーペは透明領域を市松模様で示す（区画数の切り上げは切り出し領域とも共用する） |
 | 選択の幾何 | 持たない | `Selection/`（`MarqueeSelectionGeometry`）を持つ | ルーペは選択操作を持たない |
 | テスト補助（スパイ） | `RecordingLogger` のみ | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
+| ドキュメントの追加の節 | 追加の節なし | 3 節（README「名前の由来と一般的な呼称」「選択矩形の外側に描く装飾」、SPEC_System「3.3 状態遷移」） | 改名の経緯・装飾・状態遷移はルーペに対応する概念が無い（共通の節は両コアで同一順） |
 
 ## 主な API
 
@@ -185,13 +186,15 @@ UI 側（`LoupeControl`）が公開する入口:
 3. **座標系の 3 区分**: ドメイン座標（元画像 px）→ 親領域 DIP（`ICoordTransform`）→ 物理ピクセル（`DipToDeviceScaling`）のうち、① ドメイン → DIP は `Loupe`、② DIP → 物理ピクセルは `LoupeRenderRequest` が担う（描画層は換算しない）。
 4. **設定は 1 値・補正は生成時**: 設定は `LoupeOptions` の 1 値にまとめ、数値項目の安全域への補正は型の生成時（`init` アクセサ）に適用する（UI 側に補正の登録を要求しない）。
 5. **表示サイズの決定はファサードが単一所有**: 要求サイズを親領域の最小辺へクランプする規則は `Loupe.ResolveLayout` の 1 箇所である（親領域のサイズを引数で受けるため、クランプの基準をコアが保持しない）。
-6. **描画は本コアの関心事ではない**: 本コアは描画 API も描画ポートも持たず、`LoupeDrawContent`（と `Layers`）というデータを返すだけである。描画の手順（層の順序に従う写し方）は UI 側の共有層（`LoupeControl.UIBase` の `LoupeRendererBase`）が単一所有する。
-7. **描画順は本コアが単一所有する**: `LoupeDrawLayer`（`Background` → `Checkerboard` → `Image` → `Crosshair` → `Border` → `Label`）で層と順序を指示し、UI 層はその順に処理するだけにする。**層は「描く値がある場合だけ」含める**（層の有無 = 描く値の有無。`LoupeDrawContent.HasText` が層の有無と一致する）。**テキストの層を必ず最後に置く**ため、テキストは常に最上位に表示される。
-8. **描画の可否は明示フラグが単一所有**: 描くかどうかは `LoupeOptions` の `ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` が決める（透明色を「描かない」の代用にしない）。非表示の項目は空の描画内容として返す。
-9. **文字は Core が文言と基準点を決め、UI 層が要素を配置する**: 中心座標ラベルの文言は `EsPoint.Format`、基準点はルーペ上端の中央（コアが解決済み）であり、実寸の測定と要素への配置は UI 層が担う（実寸は描画 API でしか測れないため）。体裁は描画層（`LoupeControl.UIBase` の `LoupePaint` / `LoupeLabelPlan`）が単一所有する。
-10. **色は本コアが持たない**: 下地・市松模様・枠線・十字線・ラベルの色は描画にだけ必要な設定であるため、描画層（`LoupeControl.UIBase` の `LoupePaint`）が単一所有する。
+6. **描画順は本コアが単一所有する**: `LoupeDrawLayer`（`Background` → `Checkerboard` → `Image` → `Crosshair` → `Border` → `Label`）で層と順序を指示し、UI 層はその順に処理するだけにする。**層は「描く値がある場合だけ」含める**（層の有無 = 描く値の有無。`LoupeDrawContent.HasText` が層の有無と一致する）。**テキストの層を必ず最後に置く**ため、テキストは常に最上位に表示される。
+7. **描画は本コアの関心事ではない**: 本コアは描画 API も描画ポートも持たず、`LoupeDrawContent`（と `Layers`）というデータを返すだけである。描画の手順（層の順序に従う写し方）は UI 側の共有層（`LoupeControl.UIBase` の `LoupeRendererBase`）が単一所有する。
+8. **文字は Core が文言と基準点を決め、UI 層が要素を配置する**: 中心座標ラベルの文言は `EsPoint.Format`、基準点はルーペ上端の中央（コアが解決済み）であり、実寸の測定と要素への配置は UI 層が担う（実寸は描画 API でしか測れないため）。体裁は描画層（`LoupeControl.UIBase` の `LoupePaint` / `LoupeLabelPlan`）が単一所有する。
+9. **色は本コアが持たない**: 下地・市松模様・枠線・十字線・ラベルの色は描画にだけ必要な設定であるため、描画層（`LoupeControl.UIBase` の `LoupePaint`）が単一所有する。
+10. **描画の可否は明示フラグが単一所有**: 描くかどうかは `LoupeOptions` の `ShowCheckerboard` / `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` が決める（透明色を「描かない」の代用にしない）。非表示の項目は空の描画内容として返す。
 11. **変化したときだけログ出力する判断もコア**: `Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter が変化を検出し、変化した項目だけを出力する（UI 層は変更通知で値を転送するだけで、同値判定も前後の値の保持も持たない）。
 12. **操作の入口はファサードのみ**: UI 層とホストは `Loupe` だけを参照し、計算クラス（`internal`）には触れない。表示レイアウトの解決・描画入力の生成・描画内容の解決も本型が単一所有する。
+
+> **Note**: 本 README は**利用仕様書**（使い方と設計の意図）です。公開 API の仕様は [SPEC_ExtFunc.md](SPEC_ExtFunc.md)、構造・依存・例外処理・単一所有の一覧は [SPEC_System.md](SPEC_System.md) を参照してください。
 
 ## 座標型
 

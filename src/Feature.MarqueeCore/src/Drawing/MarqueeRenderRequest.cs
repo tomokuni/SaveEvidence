@@ -123,21 +123,21 @@ public readonly record struct MarqueeRenderRequest(
 
     /// <summary>座標変換ポートを決定する（ポート優先・未指定なら倍率による等倍スケール）。</summary>
     /// <param name="port">座標変換ポート。指定されている場合はそれをそのまま使う。</param>
-    /// <param name="scaling">倍率。ポート未指定の場合に等倍スケールとして適用する。</param>
+    /// <param name="domainToDipScaling">倍率。ポート未指定の場合に等倍スケールとして適用する。</param>
     /// <returns>使用する座標変換ポート。</returns>
     /// <remarks>
     /// 「ポートがあればそれを使い、無ければ倍率（0 以下・等倍は等価変換）を使う」という規則を単一所有する。<br/>
     /// 各 UI はポートと倍率をそのまま渡すだけで、どちらを使うかを判断しない（両 UI で同じ結果になる）。
     /// </remarks>
-    internal static ICoordTransform ResolvePort(ICoordTransform? port, double scaling)
+    internal static ICoordTransform ResolvePort(ICoordTransform? port, double domainToDipScaling)
     {
         if (port is { } specified)
         {
             return specified;
         }
 
-        return DpiScaler.IsValidScaling(scaling) && scaling != 1.0
-            ? CoordTransform.Scale(scaling)
+        return DpiScaler.IsValidScaling(domainToDipScaling) && domainToDipScaling != 1.0
+            ? CoordTransform.Scale(domainToDipScaling)
             : CoordTransform.Identity;
     }
 
