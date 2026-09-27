@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.LoupeCore.Decoration;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 
 namespace EsUtil.Feature.LoupeCore.Setting;
@@ -50,7 +51,7 @@ public sealed record LoupeOptions
     /// <value>拡大率（偶数推奨）。既定は 4。設定時は 1〜64 へ補正される。</value>
     /// <remarks>
     /// 拡大率は切り出し領域の一辺（物理ピクセルサイズ ÷ 本値の切り上げ）と、拡大画像の描画先の大きさに使う<br/>
-    /// （切り上げの規則は <c>LoupeDivMath.CeilDiv</c>、矩形の導出は <c>Decoration.LoupeDecoGeometry</c> が単一所有する）。
+    /// （切り上げの規則は <c>LoupeDivMath.CeilDiv</c>、矩形の導出は <see cref="LoupeDecoGeometry"/> が単一所有する）。
     /// </remarks>
     public int ZoomLevel
     {

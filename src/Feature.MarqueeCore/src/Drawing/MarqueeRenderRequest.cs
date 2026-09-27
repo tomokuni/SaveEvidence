@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.MarqueeCore.Decoration;
 using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.Feature.MarqueeCore.Drawing;
@@ -31,7 +32,7 @@ namespace EsUtil.Feature.MarqueeCore.Drawing;
 /// </remarks>
 public readonly record struct MarqueeRenderRequest(
     MarqueeOptions Options,
-    Decoration.MarqueeDecoOptions DecoOptions,
+    MarqueeDecoOptions DecoOptions,
     EsSize ClientSize,
     EsRect? SelectionRect,
     bool MarkerActive,
@@ -95,7 +96,7 @@ public readonly record struct MarqueeRenderRequest(
     /// </remarks>
     public static MarqueeRenderRequest Create(
         MarqueeOptions options,
-        Decoration.MarqueeDecoOptions decoOptions,
+        MarqueeDecoOptions decoOptions,
         EsSize clientSize,
         EsRect? selectionRect,
         bool markerActive,

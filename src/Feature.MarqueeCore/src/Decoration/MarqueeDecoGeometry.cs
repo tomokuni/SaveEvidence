@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.MarqueeCore.Drawing;
 
 namespace EsUtil.Feature.MarqueeCore.Decoration;
 
@@ -7,7 +8,7 @@ namespace EsUtil.Feature.MarqueeCore.Decoration;
 /// 暗転領域（穴あけ矩形を除いた 4 帯）と枠線の 4 矩形の計算を単一所有する。<br/>
 /// 選択矩形の外側を描く <see cref="MarqueeOuterDecoFrame"/> と内側を描く <see cref="MarqueeInnerDecoFrame"/> が共用するため、<br/>
 /// 「枠線はどの 4 矩形か」「どの太さを下限とするか」の規則が 2 箇所へ分かれない。<br/>
-/// 穴あけ矩形の決定と論理座標から DIP への変換はフレーム全体の関心事のため <c>Drawing.MarqueeRenderRequest</c> が持つ。<br/>
+/// 穴あけ矩形の決定と論理座標から DIP への変換はフレーム全体の関心事のため <see cref="MarqueeRenderRequest"/> が持つ。<br/>
 /// 各 UI 実装は返された <see cref="EsRect"/> を自身の描画 API へ渡すだけにする。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
 /// <b>可視性</b>: 描画内容の判断は各フレームの解決が担うため、本クラスは内部実装とする

@@ -1,4 +1,6 @@
 using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Feature.MarqueeCore.Drawing;
+using EsUtil.Feature.MarqueeCore.Setting;
 
 namespace EsUtil.Feature.MarqueeCore;
 
@@ -10,10 +12,10 @@ public sealed partial class Marquee
     /// <b>ファサードの入れ子である理由</b>: 利用者（UI 実装）はプロパティの既定値を登録するため本値を参照する。<br/>
     /// ファサード（<see cref="Marquee"/>）の入れ子とすることで、UI がファサード以外のコア型を直接呼ぶ経路を作らない<br/>
     /// （利用者は選択矩形の数値を得るのに <c>Marquee</c> だけを参照すればよい）。<br/>
-    /// <b>補正は値の生成時に行う</b>: 設定型（<see cref="Setting.MarqueeOptions"/>）と装飾の外観の <c>init</c> アクセサが本値を参照するため、<br/>
+    /// <b>補正は値の生成時に行う</b>: 設定型（<see cref="MarqueeOptions"/>）と装飾の外観の <c>init</c> アクセサが本値を参照するため、<br/>
     /// 設定の経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず安全域内の値だけが保持される<br/>
     /// （UI 側に補正の登録を要求すると、登録を忘れた UI だけ安全域外の値を保持する）。<br/>
-    /// <b>規則の所在</b>: 倍率が未設定（0 以下・等倍）の場合に等価変換とする規則は <c>Drawing.MarqueeRenderRequest.ResolvePort</c> が、<br/>
+    /// <b>規則の所在</b>: 倍率が未設定（0 以下・等倍）の場合に等価変換とする規則は <see cref="MarqueeRenderRequest.ResolvePort"/> が、<br/>
     /// 表示スケールが未設定（0 以下）の場合に倍率を使う規則は <see cref="ResolveDisplayScale"/> が単一所有する。<br/>
     /// ラベルのフォントサイズの安全域は、他のコントロールと共通の規則のため描画層（<c>MarqueeControl.UIBase</c> の <c>MarqueePaint</c>）が単一所有する。<br/>
     /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。

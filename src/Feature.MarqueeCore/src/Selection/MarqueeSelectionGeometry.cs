@@ -5,7 +5,7 @@ namespace EsUtil.Feature.MarqueeCore.Selection;
 
 /// <summary>選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算・ドラッグ変形・境界クリップ）を提供する静的クラス。</summary>
 /// <remarks>
-/// 状態を持たない純粋関数のみを提供し、状態機械（<see cref="EsUtil.Feature.MarqueeCore.Interaction.MarqueeState"/>）と描画内容の解決から共通利用する（DRY 原則・疎結合）。<br/>
+/// 状態を持たない純粋関数のみを提供し、状態機械（<see cref="MarqueeState"/>）と描画内容の解決から共通利用する（DRY 原則・疎結合）。<br/>
 /// コア型（<see cref="EsRect"/> / <see cref="EsPoint"/> / <see cref="EsSize"/>）のみに依存し、UI フレームワークへ依存しない<br/>
 /// （移植性・テスト容易性。UI 型との相互変換は各 UI 実装の Interop 層が担う）。<br/>
 /// <br/>
