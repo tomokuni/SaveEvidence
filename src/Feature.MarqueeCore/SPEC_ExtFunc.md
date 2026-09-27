@@ -125,14 +125,6 @@
 | `RequestConfirm()` / `RequestCancel()` | method | 確定/キャンセルの要求（キー・ダブルクリックと同一経路） |
 | `CreateRequest(EsSize)` | method | 描画 1 フレーム分の入力（`MarqueeRenderRequest`）の生成（設定・状態と、描画時に決まる値） |
 | `ResolveContent(MarqueeRenderRequest)` | method | 1 フレーム分の描画内容（`MarqueeDrawContent`）の解決 |
-| `Limits.DomainToDipScalingMin` / `DomainToDipScalingMax` / `DomainToDipScalingDefault` | const | 倍率の安全域（0.1〜8.0）と既定値（1.0。`Marquee.Limits` の入れ子） |
-| `Limits.HandleSizeMin` / `HandleSizeMax` / `HandleSizeDefault` | const | ハンドルの一辺サイズの安全域（1.0〜256.0）と既定値（10.0） |
-| `Limits.MarkerLengthMin` / `MarkerLengthMax` / `MarkerLengthDefault` | const | 十字マーカーの全長の安全域（2.0〜4096.0）と既定値（16.0） |
-| `Limits.HandleHitRadiusMin` / `HandleHitRadiusMax` / `HandleHitRadiusDefault` | const | ヒットテスト半径の安全域（0.0〜256.0）と既定値（12.0） |
-| `Limits.MinSelectionSizeMin` / `MinSelectionSizeMax` / `MinSelectionSizeDefault` | const | 選択矩形の最小サイズの安全域（1.0〜4096.0）と既定値（6.0） |
-| `Limits.BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | const | 枠線の太さの安全域（0.5〜64.0）と既定値（2.0。装飾の外観の既定値も本値を参照する） |
-| `Limits.CoerceHandleSize(double)` 等の 6 つの `Coerce*` | method | 各設定値を安全域へ補正する（非有限は既定値。設定型・装飾の外観の生成時に適用される） |
-| `Limits.ResolveDisplayScale(double, double)` | method | 表示スケールの解決（internal。0 以下は倍率を使う） |
 
 **設定では変更しない固定値（ハンドル枠の太さ 1.5・カーソル座標ラベルのオフセット 8.0・始点マーカーの太さ 2.0）は公開しません**。参照するのはコアの描画内容の解決だけであり、UI 層は解決済みの値（`MarqueeHandles.BorderThickness`・`MarqueeTextPlacement.Point`）を受け取って使うためです（公開面へ出す必然性がない）。
 
@@ -162,6 +154,26 @@
 
 `MarqueeOptions` は**色もラベルのフォントサイズも持ちません**。これらは描画にだけ必要な設定であるため、描画層 `MarqueeControl.UIBase` の `MarqueePaint` が単一所有します（部分変更の基点は `MarqueePaint.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueePaint.DefaultHandleBorderColor` = `#FFA9A9A9`、フォントサイズは `SizeLabelFontSizeDefault` = 14.0 / `CoordLabelFontSizeDefault` = 12.0、内側余白は `LabelPadding`（既定 4.0））。ラベルの文字色・背景色の既定値（白 / 黒 60%）も `MarqueePaint` が単一所有するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
 
+### `Marquee.Limits` のメンバー
+
+選択矩形の数値パラメータの既定値と安全域を単一所有し、範囲外の値を補正します（非有限は既定値）。**数値スキーマに加えて「未設定（0 以下）の解決規則」も持ちます**（`ResolveDisplayScale`）。
+
+| 定数 | 値 | 説明 |
+| --- | --- | --- |
+| `DomainToDipScalingMin` / `DomainToDipScalingMax` / `DomainToDipScalingDefault` | `0.1` / `8.0` / `1.0` | ポート未指定時に適用する倍率 |
+| `HandleSizeMin` / `HandleSizeMax` / `HandleSizeDefault` | `1.0` / `256.0` / `10.0` | ドラッグハンドルの一辺サイズ（DIP） |
+| `MarkerLengthMin` / `MarkerLengthMax` / `MarkerLengthDefault` | `2.0` / `4096.0` / `16.0` | 十字マーカーの全長（DIP） |
+| `HandleHitRadiusMin` / `HandleHitRadiusMax` / `HandleHitRadiusDefault` | `0.0` / `256.0` / `12.0` | ハンドルのヒットテスト半径（DIP） |
+| `MinSelectionSizeMin` / `MinSelectionSizeMax` / `MinSelectionSizeDefault` | `1.0` / `4096.0` / `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
+| `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `0.5` / `64.0` / `2.0` | 枠線の太さ（DIP。装飾の外観の既定値も本値を参照する） |
+
+| メソッド | 説明 |
+| --- | --- |
+| `CoerceDomainToDipScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
+| `CoerceHandleSize(double)` / `CoerceMarkerLength(double)` / `CoerceHandleHitRadius(double)` / `CoerceMinSelectionSize(double)` | 各寸法を安全域へ補正（非有限は既定値） |
+| `CoerceBorderThickness(double)` | 枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する） |
+| `ResolveDisplayScale(double, double)` | 表示スケールの解決（internal。未設定（0 以下）は倍率を使う） |
+
 ### `IMarqueeEffects` のメンバー
 
 | メンバー | 説明 |
@@ -177,6 +189,17 @@
 ### 描画の契約（`IMarqueeRenderer` / `MarqueeRendererBase`）
 
 描画の契約は `MarqueeControl.UIBase`（UI 側の共有層）が所有します（本コアは描画 API も描画ポートも持ちません）。引数は描画ポート（`IEsCanvas`）と描画内容（`MarqueeDrawContent`）であり、描く値はすべて描画内容に解決済みです。層の順序はコアが `MarqueeDrawContent.Layers` として単一所有し、実装はその順に写すだけです。
+
+### `MarqueeDrawLayer` の値
+
+| 値 | 内容 |
+| --- | --- |
+| `Decoration` | 選択矩形の外側・内側に描く装飾（暗転マスク・穴あけ枠・枠線・内側の塗り。描く値がある場合のみ） |
+| `Handles` | ドラッグハンドル（選択がある場合のみ） |
+| `Marker` | 始点マーカー（nudge 中のみ） |
+| `Label` | テキスト（サイズラベル・カーソル座標ラベル。文言がある場合のみ。常に最上位） |
+
+**層にある ⇔ 描く値がある**（層の有無 = 描く値の有無）。描く値の無い層は含めないため、UI 層は層ごとの可否を判定しません。
 
 ### `MarqueeNoticeKind` の値
 
@@ -253,5 +276,7 @@
 **メッセージの接頭辞は、そのログを定義しているプロジェクト名（コアは `[Feature.MarqueeCore]`、UI 側の共有層は `[MarqueeControl.UIBase]`）とします**（接頭辞で出力元の層を読み分けられるようにする。全層が同じ接頭辞だと、ログを見てもどのアセンブリの定義が出力したかを特定できない）。
 
 ## 7. ライセンス
+
+もう一方のコア（`Feature.LoupeCore`）との機能差に由来する非対称は、README の「機能差に由来する非対称（もう一方のコアとの違い）」を参照してください。
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -97,7 +97,7 @@ stateDiagram-v2
 | `src/Interaction/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態 遷移の判断。通知と効果を返す |
 | `src/Interaction/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。**状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
 | `src/Marquee.DrawContent.cs`（ルート） | `Marquee`（**partial**） | internal | 描画内容の**内部手順**（装飾・穴あけ矩形・ハンドル・テキストの配置。描くかどうかの判断を単一所有し、穴あけ矩形とポートは 1 回だけ解決する）。公開の入口 `ResolveContent` は `Marquee.cs` が持つ |
-| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | フレーム解決の入力（設定・状態・描画時に決まる値）。`MarqueeRenderRequest.Create` が値の組を 1 箇所に閉じ、`Marquee.CreateRequest` が状態を写して生成する。**本値から導出する値（座標変換ポートの決定・論理座標から DIP への変換・穴あけ矩形の決定）は本型が単一所有する**（内部メンバー） |
+| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | フレーム解決の入力（設定・状態・描画時に決まる値）。`MarqueeRenderRequest.Create` が値の組を 1 箇所に閉じ、`Marquee.CreateRequest` が状態を写して生成する。**本値から導出する値（座標変換ポートの決定・穴あけ矩形の決定・DIP 変換）は本値のインスタンスメンバーが単一所有する**（`Hole` / `ResolveHoleRectDip` / `ToDipRect` / `ToDomainRect`） |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。既定値を単一所有し、生成時に安全域（`Marquee.Limits`）へ補正する（体裁は描画層の `MarqueePaint` が単一所有する） |
 | `src/Drawing/MarqueeDrawContent.cs` | `MarqueeDrawContent` | public | 描画契約（装飾・穴あけ矩形・ハンドル・マーカー・テキストの配置・層の順序） |
 | `src/Drawing/MarqueeHandles.cs` | `MarqueeHandles` | public | ドラッグハンドルの描画契約（8 方向の矩形・枠線の太さ） |
@@ -130,16 +130,17 @@ stateDiagram-v2
 | 選択の状態遷移の判断 | `MarqueeSession` |
 | 選択矩形・ドラッグ・nudge の状態（遷移は操作メソッドでのみ変更できる） | `MarqueeState` |
 | 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `MarqueeSelectionGeometry` |
-| 描画する層とその順序 | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
+| 描画する層とその順序（層にある ⇔ 描く値がある） | `Marquee.ResolveLayers`（`MarqueeDrawContent.Layers`） |
 | 描くかどうかの判断（非表示・選択なし・nudge・装飾の描画可否フラグ・穴あけ 矩形なし） | `Marquee.ResolveContent` |
 | ラベルの表示可否（設定値と穴あけ矩形の有無） | `MarqueeOptions.ShouldShowSizeLabel` / `ShouldShowCoordLabel` |
 | 設定の既定値・範囲補正・固定値 | `Marquee.Limits`（`MarqueeOptions` と装飾の外観の生成時の `init` アクセサが参照する） |
+| 未設定（0 以下）の解決規則（表示スケールが未指定のときに倍率を使う） | `Marquee.Limits.ResolveDisplayScale`（`Limits` は数値スキーマに加えて本規則を持つ） |
 | 装飾の枠線の太さの安全域（0.5〜64.0・既定 2.0） | `Marquee.Limits`（補正は装飾の外観（`MarqueeOuterDecoAppearance` / `MarqueeInnerDecoAppearance`）の生成時の `init` アクセサが適用する） |
 | 枠線の 4 辺の矩形（太さは面の短辺で上限を取る） | `MarqueeDecoGeometry.ComputeBorderRects`（辺の式は `EsRect.ComputeInnerEdges` が単一所有する） |
 | ラベルの既定色（文字色 = 白、背景色 = 黒 60%）とフォントサイズの既定（14.0 / 12.0） | 描画層の `MarqueePaint` |
 | フォントサイズの安全域（6〜48） | 描画層の `MarqueePaint` |
 | ラベルの体裁（背景 = 実寸 + 余白×2、アライン、クランプ、行送り） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint` / `MarqueeLabelPlan` |
-| 装飾の DIP 変換と穴あけ矩形の決定 | `MarqueeRenderRequest`（描画入力から導出する値は入力型が単一所有する） |
+| 装飾の DIP 変換と穴あけ矩形の決定 | `MarqueeRenderRequest` のインスタンスメンバー（`Hole` / `ResolveHoleRectDip` / `ToDipRect` / `ToDomainRect`。描画入力から導出する値は入力型が単一所有する。解決規則のうちポートの決定と穴あけ矩形の優先順は static メンバー（`ResolvedPort` / `ResolveHoleRect`）が単一所有する） |
 | 装飾の描画可否（明示フラグ。透明色を代用にしない） | `MarqueeDecoOptions`（暗転の可否は述語 `ShouldDrawOverlay(hasHoleRect)`、それ以外は明示フラグ `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`） |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層 `MarqueeControl.UIBase` の `MarqueePaint`（本コアは色を持つ型を公開しない） |
 | サイズラベルの文言と自動生成（書式を含む） | `Marquee.ResolveContent` の `ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
@@ -173,7 +174,7 @@ stateDiagram-v2
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
 | 単位 | 純粋計算（`MarqueeSelectionGeometry` / `MarqueeDecoGeometry` / `MarqueeRenderRequest`）・状態機械・ファサード・描画内容の解決 |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Contract` / `tests/Decoration` / `tests/Drawing` / `tests/Interaction` / `tests/Logging` / `tests/Selection` / `tests/Setting`。ファサードの partial のテストはルート） |
-| 合計 | 323 件（`[Theory]` は展開後のケース数） |
+| 合計 | 324 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj
@@ -199,5 +200,7 @@ dotnet test src/Feature.MarqueeCore/tests/Feature.MarqueeCore.Tests.csproj
 | ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.Bounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
 
 ## 10. ライセンス
+
+もう一方のコア（`Feature.LoupeCore`）との機能差に由来する非対称は、README の「機能差に由来する非対称（もう一方のコアとの違い）」を参照してください。
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

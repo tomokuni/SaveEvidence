@@ -27,27 +27,27 @@ public sealed record MarqueeDecoOptions
     /// <remarks>部分変更の基点として使用する（<c>MarqueeDecoOptions.Default with { ... }</c>）。</remarks>
     public static MarqueeDecoOptions Default { get; } = new();
 
-    /// <summary>外側の装飾の寸法。</summary>
+    /// <summary>外側の装飾の寸法を取得する。</summary>
     /// <value>穴あけ枠の太さ。既定は 2.0。</value>
     /// <remarks>穴あけ枠は選択矩形の内側に同じ矩形で描かれるため、<b>枠線の太さは本値が単一所有する</b>。</remarks>
     public MarqueeOuterDecoAppearance OuterAppearance { get; init; } = new();
 
-    /// <summary>暗転マスクを描くかどうか。</summary>
+    /// <summary>暗転マスクを描くかどうかを取得する。</summary>
     /// <value>true（既定）の場合は暗転する。false の場合は暗転を描かない。</value>
     /// <remarks>描画の可否を明示フラグで持つ（色のアルファを「描くかどうか」の代用にしない）。</remarks>
     public bool ShowOverlay { get; init; } = true;
 
-    /// <summary>穴あけ枠（外側の枠線）を描くかどうか。</summary>
+    /// <summary>穴あけ枠（外側の枠線）を描くかどうかを取得する。</summary>
     /// <value>true（既定）の場合は枠線を描く。false の場合は描かない。</value>
     /// <remarks>描画の可否を明示フラグで持つ（色のアルファを「描くかどうか」の代用にしない）。</remarks>
     public bool ShowOuterBorder { get; init; } = true;
 
-    /// <summary>穴あけ矩形が無くても全面を暗転するかどうか。</summary>
+    /// <summary>穴あけ矩形が無くても全面を暗転するかどうかを取得する。</summary>
     /// <value>true の場合は選択が無くても画面全体を暗転する。既定は false。</value>
     /// <remarks>ハイライトのみを表示するモード（全画面の暗転 + ハイライト矩形）で使用する。</remarks>
     public bool OuterShowFullOverlay { get; init; }
 
-    /// <summary>ハイライトする矩形（ドメイン座標）。</summary>
+    /// <summary>ハイライトする矩形（ドメイン座標）を取得する。</summary>
     /// <value>ハイライト矩形。null（既定）の場合はハイライトしない。</value>
     /// <remarks>
     /// ホストが与える値である（選択矩形と異なり選択コントロールの操作では変化しない）。<br/>
@@ -55,7 +55,7 @@ public sealed record MarqueeDecoOptions
     /// </remarks>
     public EsRect? OuterHighlightRect { get; init; }
 
-    /// <summary>内側の装飾（穴あけ矩形の内側の塗りと枠線）の寸法。</summary>
+    /// <summary>内側の装飾（穴あけ矩形の内側の塗りと枠線）の寸法を取得する。</summary>
     /// <value>枠線の太さ。既定は 2.0。</value>
     /// <remarks>
     /// 対象の穴あけ矩形は外側の装飾と同じ（ハイライト優先 → 選択矩形）である。<br/>
@@ -64,12 +64,12 @@ public sealed record MarqueeDecoOptions
     /// </remarks>
     public MarqueeInnerDecoAppearance InnerAppearance { get; init; } = new();
 
-    /// <summary>穴あけ矩形の内側を塗るかどうか。</summary>
+    /// <summary>穴あけ矩形の内側を塗るかどうかを取得する。</summary>
     /// <value>true の場合は塗る。既定は false（塗らない）。</value>
     /// <remarks>描画の可否を明示フラグで持つ（色のアルファを「描くかどうか」の代用にしない）。</remarks>
     public bool ShowInnerFill { get; init; }
 
-    /// <summary>穴あけ矩形の内側の枠線を描くかどうか。</summary>
+    /// <summary>穴あけ矩形の内側の枠線を描くかどうかを取得する。</summary>
     /// <value>true の場合は描く。既定は false（描かない）。</value>
     /// <remarks>描画の可否を明示フラグで持つ（色のアルファを「描くかどうか」の代用にしない）。</remarks>
     public bool ShowInnerBorder { get; init; }

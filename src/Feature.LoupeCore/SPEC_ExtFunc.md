@@ -265,4 +265,6 @@ var scale = request.ZoomLevel;                 // ドメイン座標 → ルー�
 
 ## 7. ライセンス
 
+もう一方のコア（`Feature.MarqueeCore`）との機能差に由来する非対称は、README の「機能差に由来する非対称（もう一方のコアとの違い）」を参照してください。
+
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

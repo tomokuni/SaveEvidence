@@ -96,7 +96,7 @@ public sealed partial class Marquee
     /// <remarks>通知の種別と公開イベントの対応は UI 層が持ち、判断（確定・キャンセル等）は本クラスが済ませている。</remarks>
     public event EventHandler<MarqueeNotice>? Notified;
 
-    /// <summary>ロガー。null を設定した場合は出力なし。</summary>
+    /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
     /// <value>注入されたロガー。null 可（null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> へフォールバックする）。</value>
     /// <remarks>保持・フォールバック・各判断のログ出力はセッション（コア）が単一所有する（本クラスは委譲するだけ）。</remarks>
     public ILogger Log
@@ -109,7 +109,7 @@ public sealed partial class Marquee
     // 設定・環境値（設定・倍率・プロバイダ・座標変換）
     // ====================================================================
 
-    /// <summary>現在の設定（外観・対話パラメータ）。</summary>
+    /// <summary>現在の設定（外観・対話パラメータ）を取得または設定する。</summary>
     /// <value>反映済みの設定。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定すると対話パラメータをセッションへ伝搬し（境界外選択の禁止の即時クリップを含む）、再描画を要求する。<br/>
@@ -121,7 +121,7 @@ public sealed partial class Marquee
         set => Apply(_session.ApplyOptions(value));
     }
 
-    /// <summary>ポート未指定時に適用する倍率。</summary>
+    /// <summary>ポート未指定時に適用する倍率を取得または設定する。</summary>
     /// <value>ドメイン → DIP の倍率。既定は 1.0。設定時は 0.1〜8.0 へ補正される（0 以下・等倍は等価変換として扱う）。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
@@ -141,7 +141,7 @@ public sealed partial class Marquee
         }
     }
 
-    /// <summary>装飾（暗転マスク・穴あけ枠・枠線・内側の塗り）の設定。</summary>
+    /// <summary>装飾（暗転マスク・穴あけ枠・枠線・内側の塗り）の設定を取得または設定する。</summary>
     /// <value>装飾の設定。既定は <see cref="MarqueeDecoOptions.Default"/>。</value>
     /// <remarks>
     /// 装飾は選択矩形コントロール単体の概念ではない（組み込み先の表示）ため、選択の設定（<see cref="Options"/>）とは分けている。<br/>
@@ -159,7 +159,7 @@ public sealed partial class Marquee
         }
     }
 
-    /// <summary>サイズラベルの文言を描画時に評価するプロバイダ。</summary>
+    /// <summary>サイズラベルの文言を描画時に評価するプロバイダを取得または設定する。</summary>
     /// <value>描画のたびに呼び出される関数。null または空文字を返す場合はコアが自動生成する。</value>
     /// <remarks>
     /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
@@ -178,7 +178,7 @@ public sealed partial class Marquee
         }
     }
 
-    /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダ。</summary>
+    /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
     /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
     /// <remarks>
     /// デリゲート（ホスト結線）のため <see cref="Options"/> には含めない（値の等価比較の対象外にするため）。<br/>
@@ -199,7 +199,7 @@ public sealed partial class Marquee
         }
     }
 
-    /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）。</summary>
+    /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
     /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
     /// <remarks>
     /// 0 以下を倍率と同値として扱う規則は <see cref="ResolveDisplayScale"/> が単一所有する。<br/>
@@ -225,11 +225,11 @@ public sealed partial class Marquee
     // 状態（選択の有無・選択矩形・スナップショット）
     // ====================================================================
 
-    /// <summary>選択矩形があるかどうか。</summary>
+    /// <summary>選択矩形があるかどうかを取得する。</summary>
     /// <value>選択中の場合は true。</value>
     public bool HasSelection => _session.HasSelection;
 
-    /// <summary>現在の選択矩形（ドメイン座標）。</summary>
+    /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形。未選択時は 0x0 の空矩形。</value>
     public EsRect SelectionRect => _session.SelectionRect;
 

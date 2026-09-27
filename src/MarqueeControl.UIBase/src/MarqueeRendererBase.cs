@@ -35,7 +35,7 @@ public abstract class MarqueeRendererBase : IMarqueeRenderer
     /// <remarks>
     /// 本メソッドが<b>描画起動の唯一の入口</b>である（UI 層が描画内容を解決し、本メソッドを通して描く）。<br/>
     /// テキストは <see cref="DrawLabel"/>（既定は何もしない）へ委ねる（UI 層が要素として置くか画像として描くかを決める）。<br/>
-    /// 描くものが無い層は値が null のため何もしない。<br/>
+    /// 描く値の無い層はコアの層の一覧（<see cref="MarqueeDrawContent.Layers"/>）に含まれない（含まれる層でも値が null の項目は何もしない）。<br/>
     /// 描画面の消去（前フレームの残像の除去）は呼び出し側が行う（描画面の寿命は UI が所有するため）。
     /// </remarks>
     public void DrawShapes(IEsCanvas canvas, in MarqueeDrawContent content)

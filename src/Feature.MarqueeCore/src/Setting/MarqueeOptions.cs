@@ -43,7 +43,7 @@ public sealed record MarqueeOptions
     // 寸法（表示レイアウトと描画の両方に使用する）
     // ----------------------------------------------------------------
 
-    /// <summary>ドラッグハンドルの一辺サイズ。</summary>
+    /// <summary>ドラッグハンドルの一辺サイズを取得する。</summary>
     /// <value>ハンドルの一辺サイズ（DIP）。既定は 10.0。設定時は 1.0〜256.0 へ補正される。</value>
     public double HandleSize
     {
@@ -51,7 +51,7 @@ public sealed record MarqueeOptions
         init => field = CoerceHandleSize(value);
     } = HandleSizeDefault;
 
-    /// <summary>十字マーカーの全長。</summary>
+    /// <summary>十字マーカーの全長を取得する。</summary>
     /// <value>十字マーカーの全長（DIP）。中心から両端までの半幅はこの 1/2。既定は 16.0。設定時は 2.0〜4096.0 へ補正される。</value>
     public double MarkerLength
     {
@@ -63,15 +63,15 @@ public sealed record MarqueeOptions
     // 表示可否（描画するかどうか）
     // ----------------------------------------------------------------
 
-    /// <summary>ドラッグハンドルを表示するかどうか。</summary>
+    /// <summary>ドラッグハンドルを表示するかどうかを取得する。</summary>
     /// <value>true（既定）の場合は選択中にハンドルを描く。false の場合は枠線と十字マーカーのみを描く。</value>
     public bool ShowHandles { get; init; } = true;
 
-    /// <summary>カーソル座標ラベルを表示するかどうか。</summary>
+    /// <summary>カーソル座標ラベルを表示するかどうかを取得する。</summary>
     /// <value>true の場合はマウス位置のドメイン座標をカーソルの右側に表示する。既定は false。</value>
     public bool ShowCoordLabel { get; init; }
 
-    /// <summary>サイズラベルを表示するかどうか。</summary>
+    /// <summary>サイズラベルを表示するかどうかを取得する。</summary>
     /// <value>true（既定）の場合は穴あけ矩形の左上に位置と寸法を表示する。false の場合は描かない。</value>
     /// <remarks>他のラベル（操作・情報）はホストが自前で描くため、本設定には含まれない。</remarks>
     public bool ShowSizeLabel { get; init; } = true;
@@ -80,7 +80,7 @@ public sealed record MarqueeOptions
     // 対話パラメータ（入力の解釈に使用し、セッションへ伝搬する）
     // ----------------------------------------------------------------
 
-    /// <summary>ドラッグハンドルのヒットテスト半径。</summary>
+    /// <summary>ドラッグハンドルのヒットテスト半径を取得する。</summary>
     /// <value>ヒットテスト半径（DIP）。既定は 12.0。設定時は 0.0〜256.0 へ補正される。</value>
     /// <remarks>
     /// DIP 座標での半径であるため、ズーム・縮小表示を変えてもヒットテストの画面上の大きさが一定になる。<br/>
@@ -92,7 +92,7 @@ public sealed record MarqueeOptions
         init => field = CoerceHandleHitRadius(value);
     } = HandleHitRadiusDefault;
 
-    /// <summary>選択矩形の最小サイズ。</summary>
+    /// <summary>選択矩形の最小サイズを取得する。</summary>
     /// <value>最小サイズ（ドメイン座標）。既定は 6.0。設定時は 1.0〜4096.0 へ補正される。</value>
     /// <remarks>ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる（判断はセッションが行う）。</remarks>
     public double MinSelectionSize
@@ -101,7 +101,7 @@ public sealed record MarqueeOptions
         init => field = CoerceMinSelectionSize(value);
     } = MinSelectionSizeDefault;
 
-    /// <summary>ドメイン境界外の選択を禁止するかどうか。</summary>
+    /// <summary>ドメイン境界外の選択を禁止するかどうかを取得する。</summary>
     /// <value>true（既定）の場合は選択をドメイン境界内に制限する。false の場合は境界外も選択できる。</value>
     /// <remarks>
     /// クリップ範囲は座標変換ポートの Bounds で指定する。<br/>
