@@ -11,11 +11,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
-using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.Skia;
 using EsUtil.Feature.LoupeCore.Setting;
 using EsUtil.Feature.LoupeCore.Placement;
-using EsUtil.Feature.LoupeCore.Drawing;
 
 
 
@@ -31,16 +29,16 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// <b>環境</b>: <see cref="DipToDeviceScaling"/>（DPI 追従）。<br/>
 /// <b>描画</b>: 中間ビットマップを生成せず、子の図形キャンバス（<see cref="ShapeCanvas"/>）が画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
 /// 数値の安全域への補正は <see cref="LoupeOptions"/>（コア）が、描画サイズの決定は<br/>
-/// <see cref="LoupeFacade.CreateRequest"/>（コア）が、寸法値（タイルサイズ・枠線の太さ）と<br/>
-/// ラベル表示の可否は <see cref="LoupeOptions"/>（コア）が単一所有する。<br/>
+/// <see cref="LoupePresenter.ResolveDrawPlan"/>（描画層）が、寸法値（枠線の太さ）と<br/>
+/// ラベル表示の可否は <see cref="LoupeAppearance"/>（描画層）が単一所有する。<br/>
 /// <br/>
 /// <b>基底クラス</b>: 図形キャンバスとラベル要素を子として重ねるため <see cref="Panel"/> を採用する。<br/>
 /// 図形キャンバスを先に、ラベル要素を後に子へ加えるため、<b>ラベルは常に最上位</b>の契約が構造で成立する。<br/>
 /// <br/>
 /// <b>ホスト側の操作</b>: <see cref="Source"/> を設定して <see cref="CenterPoint"/> を現在位置へ更新すると、<br/>
 /// ルーペがその位置を拡大表示する（描画はプロパティ変更で自動的に無効化される）。<br/>
-/// <b>座標ラベル</b>: 表示可否は <see cref="LoupeOptions.ShouldShowCoordLabel"/>（コア）が判断し、<br/>
-/// 文言・基準点は <see cref="LoupeTextPlacement"/>（コア）が、配置は <see cref="LoupeLabelPlan"/>（描画層）が<br/>
+/// <b>座標ラベル</b>: 表示可否は <see cref="LoupeAppearance.ShouldShowCoordLabel"/>（描画層）が判断し、<br/>
+/// 文言・基準点は <see cref="LoupeTextPlacement"/>（描画層）が、配置は <see cref="LoupeLabelPlan"/>（描画層）が<br/>
 /// 実寸（<see cref="SkiaText.Measure"/>）から単一所有する（本コントロールは要素を置くだけである）。
 /// </remarks>
 public sealed class LoupeControl : Panel
@@ -60,7 +58,7 @@ public sealed class LoupeControl : Panel
             changed: static (o, oldValue, newValue) =>
             {
                 // 拡大中心はコア（ファサード）が単一所有する（表示位置・描画入力の計算元）
-                o._loupe.CenterPoint = newValue;
+                o._presenter.CenterPoint = newValue;
                 // 中心座標ラベルの文言は中心に依存するため、ラベル要素を配置し直す
                 o.InvalidateArrange();
             });
@@ -80,7 +78,7 @@ public sealed class LoupeControl : Panel
             changed: static (o, oldValue, newValue) =>
             {
                 // 表示サイズ（要求サイズ）と拡大率・外観はコア（ファサード）が単一所有する（表示レイアウトと描画入力の計算元）
-                o._loupe.Options = newValue;
+                o._presenter.Options = newValue;
                 // ラベルの大きさ・外観・表示可否が変わるため、ラベル要素を配置し直す（表示サイズが同じでも必要）
                 o.InvalidateArrange();
             });
@@ -96,44 +94,35 @@ public sealed class LoupeControl : Panel
             changed: static (o, oldValue, newValue) =>
             {
                 // 描画入力（物理ピクセル）の計算元はコア（ファサード）が単一所有する
-                o._loupe.DipToDeviceScaling = newValue;
+                o._presenter.DipToDeviceScaling = newValue;
                 // ラベルの配置の基準（表示サイズ）が物理ピクセル換算で変わるため、配置し直す
                 o.InvalidateArrange();
             },
             coerce: static (_, value) => CoerceDipToDeviceScaling(value));
 
-    /// <summary><see cref="Paint"/> プロパティ（色。描画にだけ必要な設定）。</summary>
+    /// <summary><see cref="Appearance"/> プロパティ（外観。描画にだけ必要な設定）。</summary>
     /// <remarks>
-    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）には含めず、<br/>
-    /// 描画の設定（<see cref="LoupePaint"/>）として本コントロールが公開する（描画実装が単一所有する）。
+    /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）には含めず、<br/>
+    /// 描画の設定（<see cref="LoupeAppearance"/>）として本コントロールが公開する（描画層が単一所有する）。
     /// </remarks>
-    public static readonly MewProperty<LoupePaint> PaintProperty =
-        MewProperty<LoupePaint>.Register<LoupeControl>(
-            nameof(Paint), LoupePaint.Default,
+    public static readonly MewProperty<LoupeAppearance> AppearanceProperty =
+        MewProperty<LoupeAppearance>.Register<LoupeControl>(
+            nameof(Appearance), LoupeAppearance.Default,
             MewPropertyOptions.AffectsRender | MewPropertyOptions.AffectsLayout,
             changed: static (o, oldValue, newValue) =>
             {
-                // 色は描画実装が単一所有するため、新しい色の描画実装へ差し替える
-                o.Renderer = new LoupeRendererMewUI(newValue);
-                // 中心座標ラベルの色も描画実装が与えるため、ラベル要素を配置し直す
+                o._presenter.Appearance = newValue;
+                // 中心座標ラベルの色・体裁も外観が与えるため、ラベル要素を配置し直す
                 o.InvalidateArrange();
             });
 
-    /// <summary>コアのファサード（表示レイアウト・描画入力・通知内容の解決と設定の窓口）。</summary>
+    /// <summary>提示層のファサード（設定・表示レイアウト・描画計画の窓口）。</summary>
     /// <remarks>
-    /// 表示サイズ・描画入力・座標ラベル・表示位置の計算はすべてファサードが単一所有する<br/>
-    /// （本コントロールは公開プロパティで受け取った値を転送し、返された値を描画・配置へ使うだけ）。<br/>
+    /// 表示サイズ・伸長入力・座標ラベル・表示位置の計算はすべて <see cref="LoupePresenter"/> が単一所有する<br/>
+    /// （本コントロールは公開プロパティで受け取った値を転送し、返された描画計画を描画・配置へ使うだけ）。<br/>
     /// フィールド初期化子で生成する（プロパティ変更のコールバックから参照できるようにするため）。
     /// </remarks>
-    private readonly LoupeFacade _loupe = new();
-
-    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。既定は自 UI の描画実装（色を保持する）。</summary>
-    /// <remarks>
-    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
-    /// 層の順序に従った描画手順は UIBase の基底（<c>LoupeRendererBase</c>）が単一所有する。<br/>
-    /// 既定値は <see cref="Paint"/> の既定値（<see cref="LoupePaint.Default"/>）と同じ色で組み立てる。
-    /// </remarks>
-    private ILoupeRenderer _renderer = new LoupeRendererMewUI(LoupePaint.Default);
+    private readonly LoupePresenter _presenter = new();
 
     /// <summary>図形（背景・市松模様・拡大画像・十字線・枠線）を描画する内部キャンバス。</summary>
     /// <remarks>
@@ -175,16 +164,16 @@ public sealed class LoupeControl : Panel
         set => SetValue(OptionsProperty, value);
     }
 
-    /// <summary>描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
-    /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
+    /// <summary>外観（色・フォント・角丸・枠線の太さ・表示可否）を取得または設定する。</summary>
+    /// <value>外観の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>
-    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）ではなく本プロパティが単一所有する。<br/>
-    /// 変更すると描画実装（<see cref="Renderer"/>）が新しい色で差し替えられ、ラベル要素の再配置が行われる。
+    /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）ではなく本プロパティが単一所有する。<br/>
+    /// 変更すると再描画され、ラベル要素の再配置が行われる。
     /// </remarks>
-    public LoupePaint Paint
+    public LoupeAppearance Appearance
     {
-        get => GetValue(PaintProperty);
-        set => SetValue(PaintProperty, value);
+        get => GetValue(AppearanceProperty);
+        set => SetValue(AppearanceProperty, value);
     }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
@@ -195,33 +184,6 @@ public sealed class LoupeControl : Panel
         set => SetValue(DipToDeviceScalingProperty, value);
     }
 
-    /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="LoupeRendererMewUI"/>。</value>
-    /// <remarks>
-    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
-    /// 層の順序に従った描画手順は UIBase の基底（<c>LoupeRendererBase</c>）が単一所有する。<br/>
-    /// 変更すると再描画とラベル要素の再配置を要求する（ラベルの文言・寸法は描画実装が解決するため）。<br/>
-    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
-    /// </remarks>
-    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
-    public ILoupeRenderer Renderer
-    {
-        get => _renderer;
-        set
-        {
-            ArgumentNullException.ThrowIfNull(value);
-
-            if (ReferenceEquals(_renderer, value))
-            {
-                return;
-            }
-
-            _renderer = value;
-            InvalidateVisual();
-            InvalidateArrange();
-        }
-    }
-
     /// <summary>ルーペ中心からの右下オフセット（DIP）を取得または設定する。</summary>
     /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。既定は 0。</value>
     /// <remarks>
@@ -230,10 +192,10 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     public double PositionOffset
     {
-        get => _loupe.PositionOffset;
+        get => _presenter.PositionOffset;
         set
         {
-            _loupe.PositionOffset = value;
+            _presenter.PositionOffset = value;
             InvalidateArrange();
         }
     }
@@ -246,7 +208,7 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     public void SetCoordinateTransform(ICoordTransform? port)
     {
-        _loupe.SetCoordinateTransform(port);
+        _presenter.SetCoordinateTransform(port);
         InvalidateArrange();
     }
 
@@ -257,7 +219,7 @@ public sealed class LoupeControl : Panel
     /// 本コントロールは位置を持たないため、ホストが本メソッドの結果で配置する（クランプ・オフセットの規則はコアが単一所有する）。<br/>
     /// 描画サイズも同じ値から決まる（描画ビットマップと配置サイズを一致させる）。
     /// </remarks>
-    public LoupeLayout ResolveLayout(EsSize parentSize) => _loupe.ResolveLayout(parentSize);
+    public LoupeLayout ResolveLayout(EsSize parentSize) => _presenter.ResolveLayout(parentSize);
 
     /// <summary>ルーペコントロールを初期化する。</summary>
     /// <remarks>
@@ -314,7 +276,7 @@ public sealed class LoupeControl : Panel
         set
         {
             field = value.OrNullLogger();
-            _loupe.Log = value;
+            _presenter.Log = value;
         }
     }
 
@@ -352,10 +314,10 @@ public sealed class LoupeControl : Panel
         // 図形のキャンバスは親領域全体を埋める
         _shapes.Arrange(bounds);
 
-        // テキストはコアが文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
-        // （表示サイズは要素の大きさ（ホストがコアのレイアウト結果で配置したサイズ）である）
-        var content = _loupe.ResolveContent(_loupe.CreateRequest(bounds.Size.Width));
-        SyncLabels(LoupeLabelPlan.Resolve(content.CoordLabelText, Paint, SkiaText.Measure), bounds);
+        // テキストは描画層が文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
+        // （表示サイズは要素の大きさ（ホストが描画層のレイアウト結果で配置したサイズ）である）
+        var plan = _presenter.ResolveDrawPlan(bounds.Size.Width, null, SkiaText.Measure);
+        SyncLabels(plan.Labels, bounds);
     }
 
     /// <summary>ラベル要素（背景 + テキスト）を配置指示へ同期し、親の絶対座標を基準に配置する。</summary>
@@ -430,35 +392,25 @@ public sealed class LoupeControl : Panel
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
-    /// 描画入力（コア⇔UI の契約。<see cref="LoupeRenderRequest"/>）を自 UI の公開プロパティから組み立てて描画層へ渡す<br/>
-    /// （DIP → 物理ピクセルの換算と描画先へのクランプはコアが単一所有する）。<br/>
-    /// <b>描く層とその順序はコアが単一所有する</b>（<see cref="LoupeDrawContent.Layers"/> の順に処理する）。<br/>
+    /// 描画計画（描画層が解決した幾何・外観・層の順序）を自 UI の公開プロパティから組み立てて描画層へ渡す<br/>
+    /// （DIP → 物理ピクセルの換算と描画先へのクランプは描画層が単一所有する）。<br/>
+    /// <b>描く層とその順序は描画層が単一所有する</b>（<see cref="LoupeDrawPlan.Layers"/> の順に処理する）。<br/>
     /// 中心座標ラベルはテキストの実寸測定が必要なため本キャンバスでは描かず、<br/>
     /// 親パネルのラベル要素（<c>Border</c> + <c>TextBlock</c>）が表示する。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
-        // 描画先の表面サイズ（物理ピクセル）から表示サイズ（DIP）を導いて描画入力を組み立てる
+        // 描画先の表面サイズ（物理ピクセル）から表示サイズ（DIP）を導いて描画計画を組み立てる
         // （表面は要素の大きさそのものであるため、要素の大きさと描画サイズが一致する）。
         // 導出は DpiScaler が単一所有する（丸め規則を両 UI で揃える）。
         var scaling = DpiScaler.NormalizeScaling(DipToDeviceScaling);
         var surfaceSize = info.Size.ToEsSize();
-        var request = _loupe.CreateRequest(DpiScaler.ToDip(surfaceSize, scaling).Width, surfaceSize);
-        var content = _loupe.ResolveContent(request);
+        var plan = _presenter.ResolveDrawPlan(DpiScaler.ToDip(surfaceSize, scaling).Width, surfaceSize, SkiaText.Measure);
 
         try
         {
-            // 描画の手順（層の順序と描画 API への写し）はファサードが保持するレンダラ（LoupeControl.UIBase）が単一所有する
-            // 図形の層を描く（描画面の確保は本 UI の描画実装、層の順序と起 動はコアが単一所有する）
-            if (_renderer is LoupeRendererMewUI uiRenderer)
-            {
-                uiRenderer.Draw(canvas, Source, in content);
-            }
-            else
-            {
-                // 差し替えられた描画実装は描画ポート（自 UI の描画面を適合させたもの）経由で描く
-                _renderer.DrawShapes(new SkiaEsCanvas(canvas), Source, in content);
-            }
+            // 描画の手順（層の順序と描画 API への写し）は LoupeSkiaPainter が単一所有する
+            LoupeSkiaPainter.Paint(canvas, Source, in plan);
         }
         catch (Exception ex)
         {
@@ -468,6 +420,6 @@ public sealed class LoupeControl : Panel
         }
 
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
-            canvas, request.PixelSize, request.CaptureTopLeft, request.ZoomLevel));
+            canvas, plan.PixelSize, plan.CaptureTopLeft, plan.ZoomLevel));
     }
 }

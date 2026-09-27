@@ -40,11 +40,11 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 - 現在対応する画像実装は `Bitmap` / `EsBitmapAvaloniaImage`（`EsBitmap` を内包する `IImage` アダプタ）
 - 1〜64倍の拡大表示
 - 画像範囲外の透明パディング
-- 画像外（ペーストボード）の色（`Paint`）設定
+- 画像外（ペーストボード）の色（`Appearance`）設定
 - 十字線の色設定（不透明度は色のアルファに統合）
 - 中心座標ラベル表示（`(x, y)` 形式・表示/色/背景/フォントサイズ/角丸設定可能）
-- 枠線の色（`Paint`）・太さ（`Options`）設定
-- **色と、ラベルのフォントサイズ・角丸は `Paint` プロパティ（`LoupePaint`）、寸法（タイルサイズ・枠線の太さ）は `Options`（`LoupeOptions`）で設定**（コアは寸法・表示可否だけを持ち、描画にだけ必要な設定は描画層（`LoupeControl.UIBase`）が単一所有する）
+- 枠線の色（`Appearance`）・太さ（`Options`）設定
+- **色と、ラベルのフォントサイズ・角丸は `Appearance` プロパティ（`LoupeAppearance`）、寸法（タイルサイズ・枠線の太さ）は `Options`（`LoupeOptions`）で設定**（コアは寸法・表示可否だけを持ち、描画にだけ必要な設定は描画層（`LoupeControl.UIBase`）が単一所有する）
 - DIP と物理ピクセルの分離（`DipToDeviceScaling`）
 - 非同期のルーペ画像生成（切り出し・合成は UI スレッドで実行）
 - 古い描画結果の自動破棄
@@ -220,7 +220,7 @@ LoupeControl.AvaloniaUI/
 ├── src/
 │   ├── LoupeControl.AvaloniaUI.csproj
 │   ├── LoupeControl.cs         # 公開 Panel（コードのみ。AXAML を持たない。公開API一覧・StyledProperty・公開プロパティ・公開メソッド・ラベル要素の配置・非公開実装）
-│   ├── LoupeRenderPipeline.cs      # ソース解決と描画の起動（IImage 型判定と Bitmap の複製は UI 固有。描画先は AvaloniaCanvas）
+│   ├── LoupeRenderPipeline.cs      # ソース解決と描画の起動（IImage 型判定と Bitmap の複製は UI 固有。描画先は DrawingContext）
 │   ├── LoupeSourceResolver.cs      # IImage の対応型判定・破棄済み検出
 │   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知引数（UI 固有。中心座標ラベルはコントロールが表示する）
 │   └── （ラベル要素（`Border` + `TextBlock`）の配置は本コントロールが行う）
@@ -230,7 +230,7 @@ LoupeControl.AvaloniaUI/
 └── SPEC_System.md          # システム仕様書
 
 ../Feature.LoupeCore/       # UI フレームワーク非依存の設定・計算・寸法・判断・ログ定義（設定の単一値 / 寸法 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 区画数の切り上げ / 描画完了時の表示情報）
-../LoupeControl.UIBase/     # 描画入力 → 描画面の写像（LoupeRenderer / LoupePaint（色）/ LoupeLabelPlan）と再描画のスケジューリング（LoupeRenderCoordinator）
+../LoupeControl.UIBase/     # 描画入力 → 描画面の写像（LoupePresenter / LoupeAppearance（色）/ LoupeLabelPlan）と再描画のスケジューリング（LoupeRenderCoordinator）
 ```
 
 ## 13. ライセンス

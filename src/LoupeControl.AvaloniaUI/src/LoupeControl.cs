@@ -13,10 +13,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Globalization;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
-using LoupeFacade = EsUtil.Feature.LoupeCore.Loupe;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.LoupeCore.Setting;
-using EsUtil.Feature.LoupeCore.Drawing;
 
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
@@ -106,21 +104,13 @@ public sealed class LoupeControl : Panel
     // コア（ファサード）と表示位置
     // ====================================================================
 
-    /// <summary>コアのファサード（表示レイアウト・描画入力・通知内容の解決と設定の窓口）。</summary>
+    /// <summary>提示層のファサード（設定・表示レイアウト・描画計画の窓口）。</summary>
     /// <remarks>
-    /// 表示サイズ・位置・描画入力・座標ラベルはすべてファサードが単一所有する<br/>
-    /// （本コントロールは自 UI の公開プロパティで受け取った値を転送し、返された値を反映するだけ）。<br/>
+    /// 表示サイズ・位置・幾何・文言・層の順序はすべて <see cref="LoupePresenter"/> が単一所有する<br/>
+    /// （本コントロールは自 UI の公開プロパティで受け取った値を転送し、返された描画計画を反映するだけ）。<br/>
     /// フィールド初期化子で生成する（AXAML の初期化でプロパティ変更が発火しても参照できるようにするため）。
     /// </remarks>
-    private readonly LoupeFacade _loupe = new();
-
-    /// <summary>描画の実装（描画内容を描画面へ写す戦略）。既定は自 UI の描画実装（色を保持する）。</summary>
-    /// <remarks>
-    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
-    /// 層の順序に従った描画手順は UIBase の基底（<c>LoupeRendererBase</c>）が単一所有する。<br/>
-    /// 既定値は <see cref="Paint"/> の既定値（<see cref="LoupePaint.Default"/>）と同じ色で組み立てる。
-    /// </remarks>
-    private ILoupeRenderer _renderer = new LoupeRendererAvaloniaUI(LoupePaint.Default);
+    private readonly LoupePresenter _presenter = new();
 
     /// <summary>表示位置（RenderTransform）のインスタンス（座標更新時は値を書き換えて再利用する）。</summary>
     private readonly TranslateTransform _positionTransform = new();
@@ -149,7 +139,7 @@ public sealed class LoupeControl : Panel
         set
         {
             field = value;
-            _loupe.PositionOffset = value;
+            _presenter.PositionOffset = value;
             UpdatePosition();
         }
     }
@@ -165,7 +155,7 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     public void SetCoordinateTransform(ICoordTransform? port)
     {
-        _loupe.SetCoordinateTransform(port);
+        _presenter.SetCoordinateTransform(port);
         UpdatePosition();
     }
 
@@ -179,7 +169,7 @@ public sealed class LoupeControl : Panel
     /// <summary>表示位置と表示サイズを最新のレイアウトから再計算する。</summary>
     /// <remarks>
     /// 表示サイズ・位置の計算（親領域の最小辺へのクランプ・オフセット・親領域内へのクランプ）は<br/>
-    /// コア（<see cref="LoupeFacade.ResolveLayout"/>）が単一所有する（未確定の扱いもコアが判断する）。<br/>
+    /// コア（<see cref="LoupePresenter.ResolveLayout"/>）が単一所有する（未確定の扱いもコアが判断する）。<br/>
     /// 呼び出しタイミング: <see cref="CenterPoint"/> 変更・ポート設定・<see cref="PositionOffset"/> 変更・<see cref="Options"/> 変更・レイアウト（Arrange）。<br/>
     /// 要素サイズ（Width / Height）も同じ値から設定する（描画ビットマップと必ず一致する）。
     /// </remarks>
@@ -188,7 +178,7 @@ public sealed class LoupeControl : Panel
         var parent = Parent as Panel;
 
         // 親領域未接続（配置前・テスト等）はクランプの基準が無いためクランプされない（規則はコアが単一所有する）
-        var layout = _loupe.ResolveLayout(ParentAreaSize);
+        var layout = _presenter.ResolveLayout(ParentAreaSize);
 
         // 表示サイズは要素サイズ・描画サイズ（物理ピクセルへの換算元）で同じ値を使う
         // （別々にクランプすると丸めの違いで要素が親領域からはみ出しうる）
@@ -229,10 +219,10 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
-        // テキストはコアが文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
+        // テキストは描画層が文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
         // （実寸は要素の大きさ（親から割り当てられたサイズ）を基準に測る）
-        var content = _loupe.ResolveContent(_loupe.CreateRequest(finalSize.Width));
-        SyncLabels(LoupeLabelPlan.Resolve(content.CoordLabelText, Paint, MeasureText));
+        var plan = _presenter.ResolveDrawPlan(finalSize.Width, null, MeasureText);
+        SyncLabels(plan.Labels);
 
         return base.ArrangeOverride(finalSize);
     }
@@ -316,7 +306,7 @@ public sealed class LoupeControl : Panel
         // CenterPoint 変更時は再描画に加えて表示位置（RenderTransform）も更新する（コアが座標変換ポートと親パネルサイズから算出する）
         CenterPointProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            o._loupe.CenterPoint = ToEsPoint(e.NewValue as Point?);
+            o._presenter.CenterPoint = ToEsPoint(e.NewValue as Point?);
             o.RequestRender();
             o.UpdatePosition();
             // 中心座標ラベルの文言は中心に依存するため、ラベル要素を配置し直す
@@ -325,7 +315,7 @@ public sealed class LoupeControl : Panel
         // 設定（LoupeOptions）は表示サイズ・拡大率・外観をまとめて持つため、要素サイズと描画へ波及する
         OptionsProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            o._loupe.Options = e.GetNewValue<LoupeOptions>();
+            o._presenter.Options = e.GetNewValue<LoupeOptions>();
             o.RequestRender();
             o.UpdatePosition();
             // 表示サイズとラベルの外観が変わるため、ラベル要素を配置し直す（サイズが同じでも必要）
@@ -334,19 +324,19 @@ public sealed class LoupeControl : Panel
         DipToDeviceScalingProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
             // OldValue / NewValue は StyledProperty&lt;double&gt; により常に非 null（boxed double）
-            o._loupe.DipToDeviceScaling = e.GetNewValue<double>();
+            o._presenter.DipToDeviceScaling = e.GetNewValue<double>();
             o.RequestRender();
             // ラベルの配置の基準（表示サイズ）が物理ピクセル換算で変わるため、配置し直す
             o.InvalidateArrange();
         });
 
         IsVisibleProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) => o.OnIsVisibleChanged(e));
-        // 色（描画にだけ必要な設定）の変更は描画実装を差し替える（色は描画実装が単一所有する）
-        PaintProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
+        // 外観（色・フォント・角丸・枠線の太さ・表示可否）の変更は描画内容とラベル体裁へ波及する
+        AppearanceProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            o.Renderer = new LoupeRendererAvaloniaUI(e.GetNewValue<LoupePaint>());
+            o._presenter.Appearance = e.GetNewValue<LoupeAppearance>();
             o.RequestRender();
-            // 中心座標ラベルの色も描画実装が与えるため、ラベル要素を配置し直す
+            // 中心座標ラベルの色・体裁も外観が与えるため、ラベル要素を配置し直す
             o.InvalidateArrange();
         });
     }
@@ -380,13 +370,13 @@ public sealed class LoupeControl : Panel
     public static readonly StyledProperty<LoupeOptions> OptionsProperty =
         AvaloniaProperty.Register<LoupeControl, LoupeOptions>(nameof(Options), defaultValue: LoupeOptions.Default);
 
-    /// <summary><see cref="Paint"/> 依存関係プロパティ（色。描画にだけ必要な設定）。</summary>
+    /// <summary><see cref="Appearance"/> 依存関係プロパティ（外観。描画にだけ必要な設定）。</summary>
     /// <remarks>
-    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）には含めず、<br/>
-    /// 描画の設定（<see cref="LoupePaint"/>）として本コントロールが公開する（描画実装が単一所有する）。
+    /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）には含めず、<br/>
+    /// 描画の設定（<see cref="LoupeAppearance"/>）として本コントロールが公開する（描画層が単一所有する）。
     /// </remarks>
-    public static readonly StyledProperty<LoupePaint> PaintProperty =
-        AvaloniaProperty.Register<LoupeControl, LoupePaint>(nameof(Paint), defaultValue: LoupePaint.Default);
+    public static readonly StyledProperty<LoupeAppearance> AppearanceProperty =
+        AvaloniaProperty.Register<LoupeControl, LoupeAppearance>(nameof(Appearance), defaultValue: LoupeAppearance.Default);
 
     // ====================================================================
     // 公開プロパティ（入力）
@@ -412,7 +402,7 @@ public sealed class LoupeControl : Panel
 
     /// <summary>レイアウト（クランプ）の基準になる親パネルのサイズ。</summary>
     /// <value>親パネルのサイズ（DIP）。親が未接続（配置前・テスト等）の場合は 0x0（クランプしない）。</value>
-    /// <remarks>親のサイズが確定しているかの判定とクランプはコア（<see cref="LoupeFacade.ResolveLayout"/>）が単一所有する。</remarks>
+    /// <remarks>親のサイズが確定しているかの判定とクランプはコア（<see cref="LoupePresenter.ResolveLayout"/>）が単一所有する。</remarks>
     private EsSize ParentAreaSize => (Parent as Panel)?.Bounds.Size.ToEsSize() ?? default;
 
     /// <summary>ルーペの設定（表示サイズ・拡大率・外観）を取得または設定する。</summary>
@@ -430,16 +420,16 @@ public sealed class LoupeControl : Panel
         set => SetValue(OptionsProperty, value);
     }
 
-    /// <summary>描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
-    /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
+    /// <summary>外観（色・フォント・角丸・枠線の太さ・表示可否）を取得または設定する。</summary>
+    /// <value>外観の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>
-    /// 色はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）ではなく本プロパティが単一所有する。<br/>
-    /// 変更すると描画実装（<see cref="Renderer"/>）が新しい色で差し替えられ、再生成とラベル要素の再配置が行われる。
+    /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）ではなく本プロパティが単一所有する。<br/>
+    /// 変更すると再生成とラベル要素の再配置が行われる。
     /// </remarks>
-    public LoupePaint Paint
+    public LoupeAppearance Appearance
     {
-        get => GetValue(PaintProperty);
-        set => SetValue(PaintProperty, value);
+        get => GetValue(AppearanceProperty);
+        set => SetValue(AppearanceProperty, value);
     }
 
     /// <summary>表示DIPを物理ピクセルへ変換するスケーリング係数を取得または設定します。</summary>
@@ -447,34 +437,6 @@ public sealed class LoupeControl : Panel
     {
         get => GetValue(DipToDeviceScalingProperty);
         set => SetValue(DipToDeviceScalingProperty, value);
-    }
-
-    /// <summary>描画の実装（描画内容を描画面へ写す戦略）を取得または設定する。</summary>
-    /// <value>現在の描画実装。既定は <see cref="Paint"/> の色を保持する <see cref="LoupeRendererAvaloniaUI"/>。</value>
-    /// <remarks>
-    /// 描画は UI の関心事であるためコアは保持しない（コアは描画内容と層の順序をデータとして返すだけである）。<br/>
-    /// 層の順序に従った描画手順は UIBase の基底（<c>LoupeRendererBase</c>）が単一所有する。<br/>
-    /// 変更すると再生成（<see cref="RequestRender"/>）とラベル要素の再配置を要求する<br/>
-    /// （ラベルの文言・寸法は描画実装が解決するため）。<br/>
-    /// 描画先（<c>IEsCanvas</c> の自 UI アダプタ）と併せて描画方式を差し替えられる。
-    /// </remarks>
-    /// <exception cref="ArgumentNullException">設定値が null の場合。</exception>
-    public ILoupeRenderer Renderer
-    {
-        get => _renderer;
-        set
-        {
-            ArgumentNullException.ThrowIfNull(value);
-
-            if (ReferenceEquals(_renderer, value))
-            {
-                return;
-            }
-
-            _renderer = value;
-            RequestRender();
-            InvalidateArrange();
-        }
     }
 
     /// <summary>ログ用に Avalonia 座標をコア座標へ変換する。</summary>
@@ -542,7 +504,7 @@ public sealed class LoupeControl : Panel
         set
         {
             _log = value;
-            _loupe.Log = value;
+            _presenter.Log = value;
         }
     }
 
@@ -565,18 +527,18 @@ public sealed class LoupeControl : Panel
 
     /// <summary><see cref="Rendered"/> イベントを発火する（描画済み EsBitmap と表示情報を構築して通知）。</summary>
     /// <param name="bitmap">描画済みのルーペ画像（EsBitmap）。ホストがピクセルにオーバーレイを描画できる。</param>
-    /// <param name="request">実際に描画した描画入力（切り出し領域の左上と拡大率を持つ）。</param>
+    /// <param name="plan">実際に描画した描画計画（切り出し領域の左上と拡大率を持つ）。</param>
     /// <remarks>
-    /// 切り出し領域の左上・拡大率は描画入力（<see cref="LoupeRenderRequest.CaptureTopLeft"/> / <see cref="LoupeRenderRequest.ZoomLevel"/>）が単一所有する。<br/>
+    /// 切り出し領域の左上・拡大率は描画計画（<see cref="LoupeDrawPlan.CaptureTopLeft"/> / <see cref="LoupeDrawPlan.ZoomLevel"/>）が単一所有する。<br/>
     /// 中心未設定時は <see cref="LoupeRenderedEventArgs.CaptureTopLeft"/> が null になる（オーバーレイ描画不可）。<br/>
     /// <b>中心座標ラベルは本コントロールがテキスト要素として表示する</b>ため、通知に含めない。
     /// </remarks>
-    private void RaiseRendered(EsBitmap bitmap, in LoupeRenderRequest request)
+    private void RaiseRendered(EsBitmap bitmap, in LoupeDrawPlan plan)
     {
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
             bitmap,
-            request.CaptureTopLeft?.ToAvaloniaPoint(),
-            request.ZoomLevel));
+            plan.CaptureTopLeft?.ToAvaloniaPoint(),
+            plan.ZoomLevel));
     }
 
     // ====================================================================
@@ -639,12 +601,12 @@ public sealed class LoupeControl : Panel
     {
         try
         {
-            // 描画入力（コア⇔UI の契約）は現在のレイアウト（親領域でのクランプ結果）から組み立てる
-            // （描画入力の値・単位・換算はコアが単一所有する。開始時に固定しない）
-            var request = _loupe.CreateRequest(_loupe.ResolveLayout(ParentAreaSize).DisplaySize);
-            var content = _loupe.ResolveContent(request);
+            // 描画計画（描画層が解決した幾何・外観・層の順序）は現在のレイアウト（親領域でのクランプ結果）から組み立てる
+            // （値・単位・換算は描画層が単一所有する。開始時に固定しない）
+            var plan = _presenter.ResolveDrawPlan(
+                _presenter.ResolveLayout(ParentAreaSize).DisplaySize, null, MeasureText);
 
-            var bitmap = await LoupeRenderPipeline.RenderAsync(_renderer, Source, request, content);
+            var bitmap = await LoupeRenderPipeline.RenderAsync(Source, plan);
 
             // 描画反映（SetLoupeBitmap）は描画フェーズ（Render 優先度）で実行する。
             // マウス移動中の連続再描画では、既定の Normal 優先度の継続が入力イベント（Input 優先度）に
@@ -661,7 +623,7 @@ public sealed class LoupeControl : Panel
                     return;
                 }
 
-                SetLoupeBitmap(bitmap, request);
+                SetLoupeBitmap(bitmap, plan);
                 Log.LogGenerateAsyncDone(true, false, visible, generation, current);
             }, DispatcherPriority.Render);
         }
@@ -674,7 +636,7 @@ public sealed class LoupeControl : Panel
 
     /// <summary>生成したルーペビットマップをコントロールへ反映する。</summary>
     /// <param name="bmp">生成したルーペビットマップ（EsBitmap）。</param>
-    /// <param name="request">実際に描画した描画入力（切り出し領域の左上と拡大率を持つ）。</param>
+    /// <param name="plan">実際に描画した描画計画（切り出し領域の左上と拡大率を持つ）。</param>
     /// <remarks>
     /// 前回のビットマップを破棄し、<see cref="LoupeBitmap"/> と表示内容（画像）を更新する。<br/>
     /// 表示状態（IsVisible）と要素サイズ（Width / Height）は変更しない（サイズは <see cref="UpdatePosition"/> が単一所有する）。<br/>
@@ -685,10 +647,10 @@ public sealed class LoupeControl : Panel
     /// そのため、新しいアダプタを先に <c>Image.Source</c> へ設定し、旧アダプタは後から破棄する<br/>
     /// （描画が参照するアダプタを連続的に保ち、破棄済み Bitmap の参照を防ぐ）。
     /// </remarks>
-    private void SetLoupeBitmap(EsBitmap bmp, in LoupeRenderRequest request)
+    private void SetLoupeBitmap(EsBitmap bmp, in LoupeDrawPlan plan)
     {
         // ホストが EsBitmap のピクセルへオーバーレイ（破線等）を描画するフック。イベント内でピクセルが更新される
-        RaiseRendered(bmp, request);
+        RaiseRendered(bmp, plan);
 
         // イベント後の EsBitmap（ホストのオーバーレイ描画を含む）を表示境界で Avalonia 画像として反映する。
         // EsBitmapAvaloniaImage（Skia 直描画・ゼロコピー）を Source に設定する。

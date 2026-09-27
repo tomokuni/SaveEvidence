@@ -289,7 +289,7 @@ internal sealed class CropSession
         _selector.Options = s.ToFadeMaskDragRectOptions();
         // 色は描画にだけ必要な設定のため、コアの設定ではなく描画の設定として与える
         _selector.MarqueePaint = CapturePaintMapper.ToMarqueePaint(s);
-        _selector.LoupePaint = CapturePaintMapper.ToLoupePaint(s);
+        _selector.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
 
         // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）。
         // 書式と「未選択なら描かない」規則はコアが単一所有する

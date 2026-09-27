@@ -59,19 +59,20 @@ public partial class LineCanvasView : UserControl
         Loupe.SetCoordinateTransform(CoordTransform.Scale(ImageDisplayScale));
         Loupe.PositionOffset = LoupePositionOffset;
 
-        // 設定はコアの単一値（Options）で指定する（サイズ・拡大率・寸法）
+        // 設定はコアの単一値（Options）で指定する（計算に必要な値）
         Loupe.Options = Loupe.Options with
         {
             RequestedSize = 220,
             ZoomLevel = 4,
-            BorderThickness = 1,
-            ShowCoordLabel = false,
         };
-        // 色は描画にだけ必要な設定のため、描画の設定（Paint）で指定する（十字線を 20% の赤、外枠をライトグレーにする）
-        Loupe.Paint = new LoupePaint
+        // 色・枠線の太さ・ラベル表示の可否は描画にだけ必要な設定のため、外観（Appearance）で指定する
+        // （十字線を 20% の赤、外枠をライトグレーにする）
+        Loupe.Appearance = new LoupeAppearance
         {
             CrossColor = DrawingColor.FromArgb(0x33, 0xFF, 0x00, 0x00),
             BorderColor = DrawingColor.FromArgb(0xFF, 0xCC, 0xCC, 0xCC),
+            BorderThickness = 1,
+            ShowCoordLabel = false,
         };
 
         // 描画完了イベントでルーペの Bitmap に線分オーバーレイ（破線）を描画する

@@ -286,9 +286,9 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.Options = control.Options with { BorderThickness = 0 };
+        control.Appearance = control.Appearance with { BorderThickness = 0 };
 
-        Assert.Equal(1, control.Options.BorderThickness);
+        Assert.Equal(1, control.Appearance.BorderThickness);
     }
 
     // ====================================================================
@@ -396,15 +396,15 @@ public class LoupeControlTests
         {
             RequestedSize = 100_000,
             ZoomLevel = 1000,
-            BorderThickness = 1000,
         });
+        control.SetValue(LoupeControl.AppearanceProperty, LoupeAppearance.Default with { BorderThickness = 1000 });
         control.SetValue(LoupeControl.DipToDeviceScalingProperty, 100.0);
 
         // 環境値（DPI）の補正はプロパティのメタデータ（coerce）へ登録する
         Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
         Assert.Equal(ZoomLevelMax, control.Options.ZoomLevel);
         Assert.Equal(DipToDeviceScalingMax, control.DipToDeviceScaling);
-        Assert.Equal(BorderThicknessMax, control.Options.BorderThickness);
+        Assert.Equal(BorderThicknessMax, control.Appearance.BorderThickness);
     }
 
     /// <summary>寸法の設定値が保持されることを検証する（色は描画の設定が単一所有する）。</summary>
@@ -413,21 +413,18 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        control.Options = control.Options with
-        {
-            BorderThickness = 3,
-        };
-        control.Paint = new LoupePaint
+        control.Appearance = new LoupeAppearance
         {
             CrossColor = DrawingColor.Green,
             PasteboardColor = DrawingColor.Green,
             BorderColor = DrawingColor.Green,
+            BorderThickness = 3,
         };
 
-        Assert.Equal(3, control.Options.BorderThickness);
-        Assert.Equal(DrawingColor.Green, control.Paint.CrossColor);
-        Assert.Equal(DrawingColor.Green, control.Paint.PasteboardColor);
-        Assert.Equal(DrawingColor.Green, control.Paint.BorderColor);
+        Assert.Equal(3, control.Appearance.BorderThickness);
+        Assert.Equal(DrawingColor.Green, control.Appearance.CrossColor);
+        Assert.Equal(DrawingColor.Green, control.Appearance.PasteboardColor);
+        Assert.Equal(DrawingColor.Green, control.Appearance.BorderColor);
     }
 
     [AvaloniaFact]
@@ -440,12 +437,12 @@ public class LoupeControlTests
         Assert.Equal(1.0, control.DipToDeviceScaling);
 
         // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
-        Assert.Equal(2, control.Options.BorderThickness);
+        Assert.Equal(2, control.Appearance.BorderThickness);
         // 色の既定値は描画の設定が単一所有する
-        Assert.Equal(LoupePaint.Default, control.Paint);
-        Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), control.Paint.CrossColor);
-        Assert.Equal(DrawingColor.FromArgb(255, 0x53, 0x53, 0x53), control.Paint.PasteboardColor);
-        Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), control.Paint.BorderColor);
+        Assert.Equal(LoupeAppearance.Default, control.Appearance);
+        Assert.Equal(DrawingColor.FromArgb(102, 255, 0, 0), control.Appearance.CrossColor);
+        Assert.Equal(DrawingColor.FromArgb(255, 0x53, 0x53, 0x53), control.Appearance.PasteboardColor);
+        Assert.Equal(DrawingColor.FromArgb(255, 0xD3, 0xD3, 0xD3), control.Appearance.BorderColor);
     }
 
     // ====================================================================
@@ -458,17 +455,17 @@ public class LoupeControlTests
         var control = new LoupeControl();
 
         // ルーペ座標ラベルは既定で表示（設定画面の現在値）。色は描画の設定（白 / 黒 60% = #99000000）
-        Assert.True(control.Options.ShowCoordLabel);
-        Assert.Equal(DrawingColor.White, control.Paint.CoordLabelColor);
-        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), control.Paint.CoordLabelBackgroundColor);
-        Assert.Equal(12.0, control.Paint.CoordLabelFontSize);
+        Assert.True(control.Appearance.ShowCoordLabel);
+        Assert.Equal(DrawingColor.White, control.Appearance.CoordLabelColor);
+        Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), control.Appearance.CoordLabelBackgroundColor);
+        Assert.Equal(12.0, control.Appearance.CoordLabelFontSize);
     }
 
     [AvaloniaFact]
     public void 座標ラベルを有効化してCenterPointを設定するとラベル要素が表示される()
     {
         var control = CreateControl();
-        control.Options = control.Options with { ShowCoordLabel = true };
+        control.Appearance = control.Appearance with { ShowCoordLabel = true };
         control.CenterPoint = new Point(123, 456);
 
         Layout(control);
@@ -481,7 +478,7 @@ public class LoupeControlTests
     public void 座標ラベル無効時はCenterPointがあっても要素を表示しない()
     {
         var control = CreateControl();
-        control.Options = control.Options with { ShowCoordLabel = false };
+        control.Appearance = control.Appearance with { ShowCoordLabel = false };
         control.CenterPoint = new Point(123, 456);
 
         Layout(control);
@@ -502,7 +499,7 @@ public class LoupeControlTests
         // 背景の大きさはコアが「実測幅 + 内側余白」で決める（本コントロールは自 UI の API で実測して渡す）
         var text = new FormattedText(
             "(12, 34)", CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-            Typeface.Default, control.Paint.CoordLabelFontSize, Brushes.White);
+            Typeface.Default, control.Appearance.CoordLabelFontSize, Brushes.White);
         Assert.True(label.Width > text.Width);
 
         // 上端中央（左右の余白が等しい）: コアの中央寄せ規則が要素へ反映される
@@ -517,12 +514,9 @@ public class LoupeControlTests
     {
         var control = CreateControl();
         var background = DrawingColor.FromArgb(179, 0, 0, 139); // 暗青 70%
-        control.Options = control.Options with
+        control.Appearance = control.Appearance with
         {
             ShowCoordLabel = true,
-        };
-        control.Paint = control.Paint with
-        {
             CoordLabelColor = DrawingColor.Yellow,
             CoordLabelBackgroundColor = background,
             CoordLabelFontSize = 16,
@@ -826,9 +820,9 @@ public class LoupeControlTests
     {
         var control = new LoupeControl();
 
-        control.Paint = control.Paint with { CoordLabelFontSize = double.NaN };
+        control.Appearance = control.Appearance with { CoordLabelFontSize = double.NaN };
 
-        Assert.Equal(12.0, control.Paint.CoordLabelFontSize);
+        Assert.Equal(12.0, control.Appearance.CoordLabelFontSize);
     }
 
     [AvaloniaFact]

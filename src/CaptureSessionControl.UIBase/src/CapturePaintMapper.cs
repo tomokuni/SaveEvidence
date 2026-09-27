@@ -5,7 +5,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.UIBase;
 
 /// <summary>キャプチャ設定（<see cref="CaptureSettings"/>）から描画の設定（色）を組み立てる。</summary>
 /// <remarks>
-/// <b>なぜ本層が持つか</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c> / <c>LoupePaint</c>）が<br/>
+/// <b>なぜ本層が持つか</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c> / <c>LoupeAppearance</c>）が<br/>
 /// 単一所有する。コアの設定マッパー（<c>FadeMaskDragRectOptionsMapper</c>）は <c>CaptureSessionControl.Core</c> にあり<br/>
 /// 描画の設定を参照できない（Core → UIBase の逆流になる）ため、色の写像は本層が担う。<br/>
 /// <br/>
@@ -47,26 +47,30 @@ internal static class CapturePaintMapper
         };
     }
 
-    /// <summary>キャプチャ設定からルーペの色を組み立てる。</summary>
+    /// <summary>キャプチャ設定からルーペの外観を組み立てる。</summary>
     /// <param name="settings">キャプチャ設定（全メンバー non-null。<c>ToNonNull</c> 済みを渡す）。</param>
-    /// <returns>ルーペの描画に使う色。</returns>
+    /// <returns>ルーペの描画に使う外観。</returns>
     /// <remarks>
     /// 画像外（ペーストボード）の色は設定（<see cref="CaptureSettings.LoupePasteboardColor"/>）が単一所有する<br/>
     /// （描画層は本色で描画面全体を塗ってから拡大画像を重ねるため、画像の無い部分が本色の無地になる）。<br/>
-    /// 透過させたい場合はアルファ付きの色を設定する（既定は不透明の中性グレー）。
+    /// 透過させたい場合はアルファ付きの色を設定する（既定は不透明の中性グレー）。<br/>
+    /// <b>枠線の太さとラベルの表示可否も本写像が担う</b>: これらは描画にだけ必要な設定であり、<br/>
+    /// コアの設定（<c>LoupeOptions</c>）に含めないため、描画の設定（外観）へここで写像する。
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="settings"/> が null の場合。</exception>
-    public static LoupePaint ToLoupePaint(CaptureSettings settings)
+    public static LoupeAppearance ToLoupeAppearance(CaptureSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        return new LoupePaint
+        return new LoupeAppearance
         {
             PasteboardColor = settings.LoupePasteboardColor!.Value,
             BorderColor = settings.LoupeFrameColor!.Value,
             CrossColor = settings.LoupeCrossColor!.Value,
             CoordLabelColor = settings.LoupeCoordLabelColor!.Value,
             CoordLabelBackgroundColor = settings.LoupeCoordLabelBackgroundColor!.Value,
+            BorderThickness = settings.LoupeFrameThickness!.Value,
+            ShowCoordLabel = settings.LoupeShowCoordLabel!.Value,
         };
     }
 }

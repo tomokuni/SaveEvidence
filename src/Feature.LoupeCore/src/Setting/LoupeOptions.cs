@@ -1,18 +1,20 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.LoupeCore.Decoration;
 using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 
 namespace EsUtil.Feature.LoupeCore.Setting;
 
-/// <summary>ルーペの設定（表示サイズ・拡大率・外観）をまとめた不変の値オブジェクト。</summary>
+/// <summary>ルーペの設定（計算に必要な値。表示サイズ・拡大率）をまとめた不変の値オブジェクト。</summary>
 /// <remarks>
 /// 個別の依存関係プロパティとして公開していた設定を 1 つの値にまとめ、UI 層の公開 API を 1 プロパティへ縮小する。<br/>
 /// 設定の既定値も本型が単一所有する（各 UI 実装は既定値を持たず、本型を UI のプロパティ型へ橋渡しするだけ）。<br/>
 /// <br/>
-/// <b>設定とデータの区別</b>: ホストが稀に変更する値（表示サイズ・拡大率・外観）だけを本型へ含める。<br/>
+/// <b>設定とデータの区別</b>: ホストが稀に変更する値（表示サイズ・拡大率）だけを本型へ含める。<br/>
 /// マウス移動ごとに変わるデータ（拡大元画像・拡大中心）は UI の個別プロパティのままとする<br/>
-/// （1 つの値へまとめると、中心の更新のたびに外観を含む値全体を組み立て直すことになる）。<br/>
+/// （1 つの値へまとめると、中心の更新のたびに値全体を組み立て直すことになる）。<br/>
 /// DPI スケーリング係数（環境値）と表示位置のオフセット（ホスト結線）も含めない。<br/>
+/// <br/>
+/// <b>描画にだけ必要な設定は含めない</b>: 色・フォントサイズ・角丸・枠線の太さ・表示可否は<br/>
+/// コアの計算・判断に入らないため、描画層（<c>LoupeControl.UIBase</c> の <c>LoupeAppearance</c>）が単一所有する。<br/>
 /// <br/>
 /// <b>既定値</b>: 既定値を持つのは <see cref="Default"/> と <see cref="LoupeOptions()"/> のみである。<br/>
 /// <see cref="Default"/> を基点に部分変更する（<c>LoupeOptions.Default with { ZoomLevel = 8 }</c>）と、<br/>
@@ -51,47 +53,11 @@ public sealed record LoupeOptions
     /// <value>拡大率（偶数推奨）。既定は 4。設定時は 1〜64 へ補正される。</value>
     /// <remarks>
     /// 拡大率は切り出し領域の一辺（物理ピクセルサイズ ÷ 本値の切り上げ）と、拡大画像の描画先の大きさに使う<br/>
-    /// （切り上げの規則は <c>LoupeDivMath.CeilDiv</c>、矩形の導出は <see cref="LoupeDecoGeometry"/> が単一所有する）。
+    /// （切り上げの規則は <c>LoupeDivMath.CeilDiv</c> が単一所有する）。
     /// </remarks>
     public int ZoomLevel
     {
         get => field;
         init => field = CoerceZoomLevel(value);
     } = ZoomLevelDefault;
-
-    /// <summary>枠線の太さ（DIP）を取得する。</summary>
-    /// <value>枠線の太さ（DIP）。既定は 2。設定時は 1〜64 へ補正される。</value>
-    /// <remarks>安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。</remarks>
-    public int BorderThickness
-    {
-        get => field;
-        init => field = CoerceBorderThickness(value);
-    } = BorderThicknessDefault;
-
-    // ----------------------------------------------------------------
-    // 表示可否（描画するかどうか）
-    // ----------------------------------------------------------------
-
-    /// <summary>中心座標ラベルを表示するかどうかを取得する。</summary>
-    /// <value>true の場合はルーペ上端中央へ中心座標を表示する。既定は true。</value>
-    public bool ShowCoordLabel { get; init; } = true;
-
-    /// <summary>十字線を表示するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合は切り出し領域の中央へ十字線を描く。false の場合は描かない。</value>
-    /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
-    public bool ShowCrosshair { get; init; } = true;
-
-    /// <summary>枠線を表示するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合はルーペの四辺へ枠線を描く。false の場合は描かない。</value>
-    /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
-    public bool ShowBorder { get; init; } = true;
-
-    /// <summary>中心座標ラベルを描画するかどうかを判定する。</summary>
-    /// <param name="hasCenterPoint">拡大中心が設定されているかどうか。</param>
-    /// <returns>描画する場合は true。</returns>
-    /// <remarks>
-    /// ラベルの文言は中心座標から決まるため、中心が未設定のときは描画しない。<br/>
-    /// 表示可否の判断（設定値と中心の有無の組合せ）を本メソッドが単一所有し、UI 層は判定結果で描画するだけにする。
-    /// </remarks>
-    public bool ShouldShowCoordLabel(bool hasCenterPoint) => ShowCoordLabel && hasCenterPoint;
 }

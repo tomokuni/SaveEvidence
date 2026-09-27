@@ -24,7 +24,7 @@ public class LoupeLogMessageTests
         InvokeAll(logger);
 
         Assert.True(logger.IsEnabled(LogLevel.Trace));
-        Assert.Equal(6, logger.Messages.Count);
+        Assert.Equal(4, logger.Messages.Count);
     }
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
@@ -44,9 +44,8 @@ public class LoupeLogMessageTests
 
         Assert.Equal("[Feature.LoupeCore] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
         Assert.Equal("[Feature.LoupeCore] Setting: RequestedSize 160 → 240", logger.Messages[1]);
-        Assert.Equal("[Feature.LoupeCore] Setting: BorderThickness 2 → 8", logger.Messages[2]);
-        Assert.Equal("[Feature.LoupeCore] Setting: ShowBorder True → False", logger.Messages[3]);
-        Assert.Equal("[Feature.LoupeCore] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[4]);
+        Assert.Equal("[Feature.LoupeCore] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[2]);
+        Assert.Equal("[Feature.LoupeCore] Setting: ZoomLevel 4 → 8", logger.Messages[3]);
     }
 
     /// <summary>拡大中心のログが両 UI 共通の書式（括弧付き座標）で出力されることを検証する。</summary>
@@ -136,17 +135,17 @@ public class LoupeLogMessageTests
         var logger = new RecordingLogger();
         var oldValue = new LoupeOptions();
 
-        logger.LogOptionsChanged(oldValue, oldValue with { RequestedSize = 240, ShowCrosshair = false });
+        logger.LogOptionsChanged(oldValue, oldValue with { RequestedSize = 240, ZoomLevel = 8 });
 
         Assert.Equal(
             [
                 "[Feature.LoupeCore] Setting: RequestedSize 160 → 240",
-                "[Feature.LoupeCore] Setting: ShowCrosshair True → False",
+                "[Feature.LoupeCore] Setting: ZoomLevel 4 → 8",
             ],
             logger.Messages);
     }
 
-    /// <summary>設定の変更ログが寸法・表示可否を含む全項目を対象にすることを検証する。</summary>
+    /// <summary>設定の変更ログが全項目を対象にすることを検証する。</summary>
     /// <remarks>
     /// 各項目のログが同値判定を行うため、全項目を対象にしても変化した項目しか出力されない<br/>
     /// （対象外の項目を設けると、その項目の変更だけがログから漏れる）。
@@ -160,10 +159,6 @@ public class LoupeLogMessageTests
         {
             RequestedSize = 240,
             ZoomLevel = 8,
-            BorderThickness = 8,
-            ShowCoordLabel = false,
-            ShowCrosshair = false,
-            ShowBorder = false,
         };
 
         logger.LogOptionsChanged(oldValue, newValue);
@@ -172,10 +167,6 @@ public class LoupeLogMessageTests
             [
                 "[Feature.LoupeCore] Setting: RequestedSize 160 → 240",
                 "[Feature.LoupeCore] Setting: ZoomLevel 4 → 8",
-                "[Feature.LoupeCore] Setting: BorderThickness 2 → 8",
-                "[Feature.LoupeCore] Setting: ShowCoordLabel True → False",
-                "[Feature.LoupeCore] Setting: ShowCrosshair True → False",
-                "[Feature.LoupeCore] Setting: ShowBorder True → False",
             ],
             logger.Messages);
     }
@@ -187,9 +178,7 @@ public class LoupeLogMessageTests
     {
         logger.LogSettingChanged("ZoomLevel", "4", "8");                             // 1
         logger.LogSettingChanged("RequestedSize", 160, 240);                          // 2
-        logger.LogSettingChanged("BorderThickness", 2.0, 8.0);                       // 3
-        logger.LogSettingChanged("ShowBorder", true, false);                         // 4
-        logger.LogCenterPointChanged(new EsPoint(1.5, 2.5), null);                    // 5
-        logger.LogOptionsChanged(new LoupeOptions(), new LoupeOptions { ZoomLevel = 8 });  // 6
+        logger.LogCenterPointChanged(new EsPoint(1.5, 2.5), null);                    // 3
+        logger.LogOptionsChanged(new LoupeOptions(), new LoupeOptions { ZoomLevel = 8 });  // 4
     }
 }

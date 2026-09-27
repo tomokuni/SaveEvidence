@@ -51,7 +51,7 @@
 - 確定・キャンセル・ズーム要求のホスト通知
 - モード別の描画モード・可視性・全面暗転の一括切替
 - 設定の一括適用（コアの `FadeMaskDragRectOptions`。値の解決は UIBase の `FadeMaskDragRectChildValues`）
-- 色の一括適用（描画層（UIBase）の `MarqueePaint` / `LoupePaint`）
+- 色の一括適用（描画層（UIBase）の `MarqueePaint` / `LoupeAppearance`）
 - 付加情報ラベル（操作・情報）の描画（描画層（UIBase）の `FadeMaskHostLabelRenderer`。文言はホストが生成する）
 - 座標変換ポートの一括分配
 
@@ -70,7 +70,7 @@ using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize / EsVector（コア提供）
 using EsUtil.SaveEvidence.Marquee.UIBase; // MarqueePaint（描画にだけ必要な色）
-using EsUtil.SaveEvidence.Loupe.UIBase;   // LoupePaint（描画にだけ必要な色）
+using EsUtil.SaveEvidence.Loupe.UIBase;   // LoupeAppearance（描画にだけ必要な色）
 ```
 
 公開 API は内包コントロール（MarqueeControl / LoupeControl）の型を参照しないため、
@@ -81,7 +81,7 @@ using EsUtil.SaveEvidence.Loupe.UIBase;   // LoupePaint（描画にだけ必要�
 1. AXAML（またはコード）で `FadeMaskDragRectControl` を配置します。
 2. `Mode` を設定します（キャプチャ種別に応じた描画モード・可視性の切替）。
 3. `Options` で設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）を一括適用します（コアの設定値を 1 つ渡す。**色は含まれません**）。
-4. `MarqueePaint` / `LoupePaint` で色（描画にだけ必要な設定）を適用します。
+4. `MarqueePaint` / `LoupeAppearance` で色（描画にだけ必要な設定）を適用します。
 5. `SetCoordinateTransform(ICoordTransform?)` でドメイン ↔ DIP 変換を注入します。
 6. イベント（`ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested`）を購読します。
 7. ルーペソース（`Loupe.Source`）を設定します。
@@ -97,7 +97,7 @@ var overlay = new FadeMaskDragRectControl
 overlay.Options = captureSettings.ToFadeMaskDragRectOptions();
 // 色（描画にだけ必要な設定）は描画層の色の単一値で与える（Core → UIBase の逆流を作らない）
 overlay.MarqueePaint = MarqueePaint.Default with { OverlayColor = System.Drawing.Color.FromArgb(128, 0, 0, 0) };
-overlay.LoupePaint = LoupePaint.Default with { BackgroundColor = System.Drawing.Color.White };
+overlay.LoupeAppearance = LoupeAppearance.Default with { BackgroundColor = System.Drawing.Color.White };
 // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
 overlay.DomainToDipScaling = 1.0;
 overlay.SetCoordinateTransform(CoordTransform.Compose(
@@ -123,7 +123,7 @@ parentPanel.Children.Add(overlay);
 | `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
 | `LoupeDipToDeviceScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（設定（`Options`）の対象外・DPI から自動取得。`LoupeControl.DipToDeviceScaling` へ委譲） |
 | `MarqueePaint` | `MarqueePaint`（描画層） | 選択矩形コントロールの描画に使う色（描画にだけ必要な設定）の単一値。既定は `MarqueePaint.Default`。内包する選択矩形コントロールへ委譲する |
-| `LoupePaint` | `LoupePaint`（描画層） | ルーペの描画に使う色（描画にだけ必要な設定）の単一値。既定は `LoupePaint.Default`。内包するルーペコントロールへ委譲する |
+| `LoupeAppearance` | `LoupeAppearance`（描画層） | ルーペの描画に使う色（描画にだけ必要な設定）の単一値。既定は `LoupeAppearance.Default`。内包するルーペコントロールへ委譲する |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言を描画時に評価するプロバイダ（文言はホストが与える。`WindowTitle` は廃止し `InfoTextProvider` へ統合） |
 | `ShowFullOverlay` | `bool` | 全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効。読み取り専用） |
 | `LoupeCenterPoint` | `Point?` | ルーペ中心（ドメイン座標。未設定時は null） |
@@ -188,14 +188,14 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `EsUtil.SaveE
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Loupe` | `LoupeOptions`（コア） | ルーペの設定（拡大率・表示サイズ・寸法・ラベル表示の可否。**色は含まない**。色は描画層の `LoupePaint` が単一所有する） |
+| `Loupe` | `LoupeOptions`（コア） | ルーペの設定（拡大率・表示サイズ・寸法・ラベル表示の可否。**色は含まない**。色は描画層の `LoupeAppearance` が単一所有する） |
 | `SelectionRectColorA` | `System.Drawing.Color` | ルーペ画像上の選択矩形破線の色 A（描画開始色） |
 | `SelectionRectColorB` | `System.Drawing.Color` | 選択矩形破線の色 B（色 A と交互に使用） |
 | `LoupeOffset` | `double` | ルーペのカーソル中心からの右下オフセット（DIP） |
 | `Default` | `FadeMaskDragRectOptions` | 既定値（各内包コントロールの既定値） |
 
 - 部分変更は `with` 式（`control.Options = control.Options with { Loupe = ... with { RequestedSize = 240 } }`）で行います。
-- 枠線の太さ（`BorderThickness`）は**暗転マスクの外観（`Deco.OuterAppearance`）が単一所有**します。選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なって描画されるため、太さが異なると見た目が崩れます。破線の色（`SelectionRectColorA` / `SelectionRectColorB`）以外の色はコアの設定値に含まれず、描画層の `MarqueePaint` / `LoupePaint` が単一所有します。
+- 枠線の太さ（`BorderThickness`）は**暗転マスクの外観（`Deco.OuterAppearance`）が単一所有**します。選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なって描画されるため、太さが異なると見た目が崩れます。破線の色（`SelectionRectColorA` / `SelectionRectColorB`）以外の色はコアの設定値に含まれず、描画層の `MarqueePaint` / `LoupeAppearance` が単一所有します。
 - 設定値の検証（範囲・非数）は各コア型の生成時に行われるため、本コントロールは補正を持ちません。
 - ホストの設定型（`CaptureSettings` 等）からの変換はコアのマッパー（`FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions`）が単一所有します（両 UI で同じ変換を使う）。
 

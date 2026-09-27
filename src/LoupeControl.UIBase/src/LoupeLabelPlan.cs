@@ -1,15 +1,14 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.LoupeCore.Drawing;
 
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase;
 
 /// <summary>ルーペの中心座標ラベルの配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>
-/// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。コア（<see cref="EsUtil.Feature.LoupeCore.Loupe.ResolveContent"/>）は<br/>
+/// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。描画層（<see cref="LoupePresenter"/>）は<br/>
 /// 文言・基準点・アラインを決めるが、実際の配置矩形はテキストの実寸に依存するため、<br/>
 /// 実寸測定（描画 API 依存）を UI 層から受け取って要素の矩形へ変換する。<br/>
-/// 体裁（内側余白・フォントサイズ・色・角丸）は描画の設定（<see cref="LoupePaint"/>）が単一所有する（コアは値を持たない）。<br/>
+/// 体裁（内側余白・フォントサイズ・色・角丸）は外観（<see cref="LoupeAppearance"/>）が単一所有する。<br/>
 /// <br/>
 /// <b>中心座標ラベルは常に最上位</b>である（UI の要素は親より後に描かれるため構造で成立する）。<br/>
 /// UI フレームワークに依存しない（測定関数をデリゲートで受け取る）ため、UI 初期化なしの <c>[Fact]</c> で検証できる。
@@ -25,24 +24,24 @@ public static class LoupeLabelPlan
     private const double PaddingY = 1.0;
 
     /// <summary>中心座標ラベルの配置指示を解決する。</summary>
-    /// <param name="coordLabel">コアが解決したテキスト配置。表示しない場合は null。</param>
-    /// <param name="paint">描画に使う設定（色・フォントサイズ・角丸。本層が単一所有する）。null 不可。</param>
+    /// <param name="coordLabel">描画層が解決したテキスト配置。表示しない場合は null。</param>
+    /// <param name="appearance">外観（色・フォントサイズ・角丸。本層が単一所有する）。null 不可。</param>
     /// <param name="measureText">テキストの実寸を測る関数（描画 API 依存のため UI 層が与える）。null 不可。</param>
     /// <returns>配置するラベル要素（1 要素）。表示しない場合は空。</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="paint"/> または <paramref name="measureText"/> が null の場合。</exception>
-    /// <remarks>文言・位置はコアが、色・フォントサイズ・角丸は描画の設定が単一所有する（本クラスは実寸の反映のみ）。</remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="appearance"/> または <paramref name="measureText"/> が null の場合。</exception>
+    /// <remarks>文言・位置は描画層が、色・フォントサイズ・角丸は外観が単一所有する（本クラスは実寸の反映のみ）。</remarks>
     public static IReadOnlyList<LoupeLabelPlacement> Resolve(
-        LoupeTextPlacement? coordLabel, LoupePaint paint, Func<string, double, EsSize> measureText)
+        LoupeTextPlacement? coordLabel, LoupeAppearance appearance, Func<string, double, EsSize> measureText)
     {
-        ArgumentNullException.ThrowIfNull(paint);
+        ArgumentNullException.ThrowIfNull(appearance);
         ArgumentNullException.ThrowIfNull(measureText);
 
-        return coordLabel is { } label ? [ResolveElement(label, paint, measureText)] : [];
+        return coordLabel is { } label ? [ResolveElement(label, appearance, measureText)] : [];
     }
 
     /// <summary>テキスト配置と体裁から、要素の配置指示を組み立てる。</summary>
-    /// <param name="placement">コアが決めた文言と基準点（アラインを含む）。</param>
-    /// <param name="paint">描画に使う設定（色・フォントサイズ・角丸）。</param>
+    /// <param name="placement">描画層が決めた文言と基準点（アラインを含む）。</param>
+    /// <param name="appearance">外観（色・フォントサイズ・角丸）。</param>
     /// <param name="measureText">テキストの実寸を測る関数。</param>
     /// <returns>要素の配置指示。</returns>
     /// <remarks>
@@ -52,9 +51,9 @@ public static class LoupeLabelPlan
     /// 上下の余白はルーペ固有の値であり本クラスが単一所有する。
     /// </remarks>
     private static LoupeLabelPlacement ResolveElement(
-        in LoupeTextPlacement placement, LoupePaint paint, Func<string, double, EsSize> measureText)
+        in LoupeTextPlacement placement, LoupeAppearance appearance, Func<string, double, EsSize> measureText)
     {
-        var fontSize = paint.CoordLabelFontSize;
+        var fontSize = appearance.CoordLabelFontSize;
         var textSize = measureText(placement.Text, fontSize);
         var width = textSize.Width + PaddingX * 2;
         var height = textSize.Height + PaddingY * 2;
@@ -81,6 +80,6 @@ public static class LoupeLabelPlan
 
         return new LoupeLabelPlacement(
             bounds, PaddingX, PaddingY, placement.Text, fontSize,
-            paint.CoordLabelColor, paint.CoordLabelBackgroundColor, paint.CoordLabelCornerRadius);
+            appearance.CoordLabelColor, appearance.CoordLabelBackgroundColor, appearance.CoordLabelCornerRadius);
     }
 }

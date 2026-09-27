@@ -222,10 +222,10 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 
 **設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。DPI スケーリング係数（`DipToDeviceScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
 
-**描画の差し替え**: `Renderer`（`ILoupeRenderer`。既定は自 UI の `LoupeRendererAvaloniaUI`（色は `Paint` の値で生成）。null 不可）で描画の実装を差し替えられます（描画先は `AvaloniaCanvas` が担うため、描画手順だけを交換できます）。設定すると再生成とラベル要素の再配置を要求します。
+**描画の差し替え**: `Renderer`（`LoupePresenter`。既定は自 UI の `LoupeContextPainter`（色は `Paint` の値で生成）。null 不可）で描画の実装を差し替えられます（描画先は `DrawingContext` が担うため、描画手順だけを交換できます）。設定すると再生成とラベル要素の再配置を要求します。
 
 ```csharp
-loupe.Renderer = MyLoupeRenderer.Instance;   // 描画手順の差し替え
+loupe.Renderer = MyLoupePresenter.Instance;   // 描画手順の差し替え
 ```
 
 #### 5.1.4 DipToDeviceScaling
@@ -247,12 +247,12 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 #### 5.1.5 寸法と Paint（色）
 
-ルーペの寸法（枠線の太さ）とラベル表示の可否は **コアの `LoupeOptions`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Paint` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
+ルーペの寸法（枠線の太さ）とラベル表示の可否は **コアの `LoupeOptions`（`EsUtil.Feature.LoupeCore.Setting`）が単一所有**し、`Options` の一部（`Options`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `LoupeControl.UIBase` の `LoupeAppearance`（`EsUtil.SaveEvidence.Loupe.UIBase`）が単一所有し、本コントロールの `Appearance` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `LoupeOptions` | コアの既定値 | ルーペの寸法とラベル表示の可否。`with` 式で部分変更する。数値項目はコアの `LoupeOptions` が生成時に安全域へ補正する |
-| `Paint` | `LoupePaint`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupePaint.Default` | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）とラベルのフォントサイズ・角丸。`LoupePaint.Default with { ... }` で部分変更する |
+| `Paint` | `LoupeAppearance`（`EsUtil.SaveEvidence.Loupe.UIBase`） | `LoupeAppearance.Default` | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）とラベルのフォントサイズ・角丸。`LoupeAppearance.Default with { ... }` で部分変更する |
 
 `Options`（コアの `LoupeOptions`）の項目（詳細は `Feature.LoupeCore` の `SPEC_ExtFunc.md` を参照）:
 
@@ -262,7 +262,7 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 | `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
 | `ShowCrosshair` / `ShowBorder` | `bool` | `true` | 十字線・枠線の表示有無（透明色を「描かない」の代用にしない） |
 
-`Paint`（`LoupePaint`。詳細は `LoupeControl.UIBase` の `SPEC_ExtFunc.md` を参照）の項目:
+`Appearance`（`LoupeAppearance`。詳細は `LoupeControl.UIBase` の `SPEC_ExtFunc.md` を参照）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -274,9 +274,9 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（DIP。6〜48 に補正。非数は既定値へ補正） |
 | `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。0〜64 に補正。0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Paint`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
+座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`LoupeControl.UIBase` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Appearance`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
-寸法項目（`BorderThickness`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeRenderRequest.BorderThicknessPixels`）（`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
+寸法項目（`BorderThickness`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeGeometry.BorderThicknessPixels`）（`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 
@@ -410,7 +410,7 @@ loupe.Rendered += (_, e) =>
 ### 5.5 型
 
 公開型は `LoupeControl` と `LoupeRenderedEventArgs` です。
-描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase` の `LoupeRenderer` / `LoupePaint` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順と色は描画層が単一所有し、本プロジェクトは描画ポート（`AvaloniaCanvas`）とラベル要素の配置を担います。
+描画・画像処理の実装は internal（非公開）です。UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase` の `LoupePresenter` / `LoupeAppearance` / `LoupeLabelPlan`）の型は public です（外部が UI アダプタを実装できるようにするため）。描画の手順と色は描画層が単一所有し、本プロジェクトは描画（`DrawingContext`）とラベル要素の配置を担います。
 UI 固有のログ（`LoupeRenderLog`）は本プロジェクトの internal です。
 
 #### 5.5.1 LoupeControl
@@ -474,7 +474,7 @@ private readonly LoupeControl _loupe = new()
 {
     IsHitTestVisible = false,
     // 設定はコアの値を 1 つ設定する（with 式で部分変更する）
-    // 寸法はコアの Options、色は Paint（LoupePaint）へ指定する
+    // 寸法はコアの Options、色は Paint（LoupeAppearance）へ指定する
     Options = LoupeOptions.Default with
     {
         RequestedSize = 240,
@@ -482,7 +482,7 @@ private readonly LoupeControl _loupe = new()
         BorderThickness = 2,
         BorderThickness = 2,
     },
-    Paint = LoupePaint.Default with
+    Paint = LoupeAppearance.Default with
     {
         CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
         PasteboardColor = DrawingColor.FromArgb(255, 0x53, 0x53, 0x53),
@@ -517,7 +517,7 @@ private void RefreshLoupe()
 - `RenderTargetBitmap` と `DrawingContext` の合成はUIスレッドで実行します。
 - 高頻度更新では、利用側でポインター更新頻度を制限することを推奨します。
 - `Source` に設定した画像は利用側が有効期間を管理してください。
-- 色（`Paint`）・寸法（`Options`）の連続変更は、同一Dispatcher待機中である場合に1回へ集約されます。
+- 色（`Appearance`）・寸法（`Options`）の連続変更は、同一Dispatcher待機中である場合に1回へ集約されます。
 - `RequestRender()` は完了待機APIではありません。完了は `Rendered` イベントで通知されます。
 - 外部 `DrawingContext` へルーペを描画するAPIは提供しません。必要な場合も `LoupeControl` をVisual Treeへ配置してください。
 
@@ -535,6 +535,6 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 - `CenterPoint` のマウス追従
 - 画像端から外れた部分の画像外の色（無地）
 - `Options`（`ZoomLevel` / `RequestedSize` / `BorderThickness`）と `Paint`（色）・`DipToDeviceScaling`
-- 十字線・枠線の色変更（`Paint`）
+- 十字線・枠線の色変更（`Appearance`）
 - `IsVisible`、`Clear()`、`RequestRender()`
 - `Log`（描画エラーの通知先 ILogger 設定例）

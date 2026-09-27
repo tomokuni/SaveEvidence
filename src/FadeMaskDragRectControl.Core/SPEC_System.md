@@ -39,7 +39,7 @@ graph LR
 - 本プロジェクトは UI フレームワークへ依存しません。
 - 依存の向きは **Core → Platform.Core / Feature.*Core** の一方向です（本プロジェクトを参照する側は UI 実装とホストで、逆向きの参照はありません）。
 - 設定の構成要素（`MarqueeOptions` / `MarqueeDecoOptions` / `LoupeOptions`）を再利用するため、Marquee / Loupe のコアを参照します。
-- **色は本プロジェクトが持ちません**（`MarqueePaint` / `LoupePaint` が描画層で単一所有する）。例外はルーペ画像へピクセルで書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）です。これは描画 API ではなく `EsBitmap` への直接書き込みに使うため、本プロジェクトが所有します。
+- **色は本プロジェクトが持ちません**（`MarqueePaint` / `LoupeAppearance` が描画層で単一所有する）。例外はルーペ画像へピクセルで書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）です。これは描画 API ではなく `EsBitmap` への直接書き込みに使うため、本プロジェクトが所有します。
 
 ## コンポーネント構成
 
@@ -182,7 +182,7 @@ flowchart TD
 | 選択として成立するサイズの条件（幅 > 0 かつ 高さ > 0） | `FadeMaskDragRectSelection.IsUsable` |
 | 選択矩形の破線の幾何（位置・長さ・色順・最小倍率） | `FadeMaskDragRectOverlay.EnumerateDashes` |
 | 枠線の太さ（選択枠線と暗転マスクの穴あけ枠で共通） | `MarqueeDecoOptions.OuterAppearance`（`Deco` 経由） |
-| コントロールの外観色 | 描画層の `MarqueePaint` / `LoupePaint`（本プロジェクトは持たない） |
+| コントロールの外観色 | 描画層の `MarqueePaint` / `LoupeAppearance`（本プロジェクトは持たない） |
 | 操作・情報ラベルの文言 | ホスト（本プロジェクトは外観のみ持つ） |
 
 ## 例外処理ポリシー

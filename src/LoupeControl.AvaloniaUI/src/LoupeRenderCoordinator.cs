@@ -1,4 +1,4 @@
-namespace EsUtil.SaveEvidence.Loupe.UIBase;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 
 /// <summary>ルーペの再描画要求を実行キューへのポストでバッチ化する（1 フレームに 1 回）。</summary>
 /// <remarks>
@@ -6,8 +6,7 @@ namespace EsUtil.SaveEvidence.Loupe.UIBase;
 /// （実行キューへのポスト・表示状態・ビットマップ解放・描画開始）から分離する。<br/>
 /// ポスト・表示状態・ビットマップ解放・描画開始はすべてコールバックで受け取るため、UI コントロールに依存しない<br/>
 /// （UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる）。<br/>
-/// 位置付け: コントロール化（ビューポートへの組み込み）にだけ必要になる処理であるため、<br/>
-/// コア（<c>Feature.LoupeCore</c>）には置かない。<br/>
+/// 位置付け: 中間ビットマップを生成する UI（Avalonia）にだけ必要になる処理である（同期描画の MewUI は不要）。<br/>
 /// <b>描画の開始はコールバック</b>である: 中間ビットマップを生成するか画面のキャンバスへ直接描くかは UI ごとに異なる。
 /// </remarks>
 public sealed class LoupeRenderCoordinator

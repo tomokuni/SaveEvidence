@@ -50,7 +50,7 @@
 | `LoupeOffset` | `double` | `20.0` | ルーペのカーソル中心からの右下オフセット（DIP） |
 | `Default`（static） | `FadeMaskDragRectOptions` | — | 部分変更の基点（`Default with { ... }`） |
 
-**色は描画にだけ必要な設定のため本値に含みません**（`MarqueePaint` / `LoupePaint` が単一所有し、ホストがコントロールへ設定します）。例外はルーペ画像へ直接書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）で、これは描画 API ではなくピクセル書き込みに使うため本値が持ちます。
+**色は描画にだけ必要な設定のため本値に含みません**（`MarqueePaint` / `LoupeAppearance` が単一所有し、ホストがコントロールへ設定します）。例外はルーペ画像へ直接書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）で、これは描画 API ではなくピクセル書き込みに使うため本値が持ちます。
 
 **実行時状態**（選択矩形・ハイライト矩形・ルーペ中心・拡大元画像）と**環境値**（DPI スケーリング）は本値に含みません。
 

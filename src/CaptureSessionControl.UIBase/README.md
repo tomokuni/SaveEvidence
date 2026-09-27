@@ -6,7 +6,7 @@
 ## 目的
 
 - **設定から描画の設定（色）への写像を 1 箇所へ集約**する。色は描画にだけ必要な設定であり、描画層（UIBase）の
-  `MarqueePaint` / `LoupePaint` が単一所有するため、写像も 1 つでなければならない（写像漏れはビルドが通り、
+  `MarqueePaint` / `LoupeAppearance` が単一所有するため、写像も 1 つでなければならない（写像漏れはビルドが通り、
   色が無言で効かなくなる）。
 - **製品の設定型を再利用ライブラリへ持ち込まない**。写像元がセッションの設定型（`CaptureSettings`）であるため、
   本層は `CaptureSessionControl` 側の共有層として置く。
@@ -32,7 +32,7 @@ MarqueeControl.UIBase / LoupeControl.UIBase ─┐（描画の設定＝色）
 
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
-| `CapturePaintMapper` | `internal static` | `CaptureSettings` → `MarqueePaint` / `LoupePaint` の写像 |
+| `CapturePaintMapper` | `internal static` | `CaptureSettings` → `MarqueePaint` / `LoupeAppearance` の写像 |
 
 ## 依存関係
 
@@ -40,7 +40,7 @@ MarqueeControl.UIBase / LoupeControl.UIBase ─┐（描画の設定＝色）
 CaptureSessionControl.UIBase
     ├── CaptureSessionControl.Core（CaptureSettings）
     ├── MarqueeControl.UIBase（MarqueePaint）
-    └── LoupeControl.UIBase（LoupePaint）
+    └── LoupeControl.UIBase（LoupeAppearance）
 ```
 
 UI フレームワークへ依存しません。外部パッケージへの直接依存もありません。
@@ -52,7 +52,7 @@ UI フレームワークへ依存しません。外部パッケージへの直�
 
 ```csharp
 MarqueePaint marquee = CapturePaintMapper.ToMarqueePaint(settings);           // 設定 → 選択矩形の色（9 項目）
-LoupePaint loupe = CapturePaintMapper.ToLoupePaint(settings, background);     // 設定 → ルーペの色（7 項目）
+LoupeAppearance loupe = CapturePaintMapper.ToLoupeAppearance(settings, background);     // 設定 → ルーペの色（7 項目）
 ```
 
 画像外（ペーストボード）の色は**設定（`LoupePasteboardColor`）が単一所有**します（描画層は本色で描画面全体を塗ってから拡大画像を重ねるため、画像の無い部分が本色の無地になります）。

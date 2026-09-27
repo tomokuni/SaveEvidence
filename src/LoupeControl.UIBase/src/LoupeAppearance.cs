@@ -1,27 +1,28 @@
 using DrawingColor = System.Drawing.Color;
+using static EsUtil.Feature.LoupeCore.Loupe.Limits;
 
 
 namespace EsUtil.SaveEvidence.Loupe.UIBase;
 
-/// <summary>ルーペの色（ペーストボード・枠線・十字線・中心座標ラベル）とラベルの体裁をまとめた不変の設定値。</summary>
+/// <summary>ルーペの外観（色・フォント・角丸・枠線の太さ・表示可否）をまとめた不変の設定値。</summary>
 /// <remarks>
-/// <b>なぜ本層（UIBase）が持つか</b>: 色は<b>描画にだけ必要な設定</b>であり、コアの計算・判定には一切入らないため、<br/>
-/// コア（<c>Feature.LoupeCore</c>）には置かない。<br/>
-/// コアは表示可否と寸法（<c>LoupeOptions</c>）を持ち、色と描画の体裁は本型が単一所有する。<br/>
+/// <b>なぜ本層（UIBase）が持つか</b>: 色・フォントサイズ・角丸・寸法（枠線の太さ）・表示可否は<b>描画にだけ必要な設定</b>であり、<br/>
+/// コアの計算・判定には一切入らないため、コア（<c>Feature.LoupeCore</c>）には置かない。<br/>
+/// コアは計算に必要な値（表示サイズ・拡大率）と幾何だけを持ち、外観は本型が単一所有する。<br/>
 /// <b>ラベルのフォントサイズ・角丸も同じ理由で本型が持つ</b>: ラベルをどの体裁（文字要素 / 画像）で描くかは UI 層の判断であり、<br/>
-/// コアは文言と位置だけを渡す（<c>LoupeTextPlacement</c>）。<br/>
+/// 描画層は文言と位置だけを渡す（<c>LoupeTextPlacement</c>）。<br/>
 /// <br/>
-/// <b>描画の可否</b>: 描くかどうかはコアの設定（<c>LoupeOptions</c> の <c>ShowCrosshair</c> / <c>ShowBorder</c>）が単一所有する<br/>
-/// （コアが非表示の項目を空の描画内容として返すため、描画実装は分岐を持たない）。<br/>
+/// <b>描画の可否</b>: 描くかどうかは本型の明示フラグ（<see cref="ShowCrosshair"/> / <see cref="ShowBorder"/>）が単一所有する<br/>
+/// （非表示の項目は描画層が空の矩形として返すため、描画実装は分岐を持たない）。<br/>
 /// <br/>
 /// <b>ペーストボード（画像外の色）</b>: 拡大画像の範囲外（画像端の透明パディングと切り上げの余りを含む）の見た目を与える。<br/>
 /// 描画層は本色で描画面全体を塗ってから拡大画像を重ねるため、画像の無い部分は本色の無地になる。<br/>
 /// 既定は不透明の中性グレー（画像外を無地として見せる）。<br/>
 /// <br/>
-/// <b>色の型</b>: UI 非依存の <see cref="DrawingColor"/> を使用し、各 UI の色型への変換は境界（描画ポートのアダプタ）で行う。<br/>
-/// 既定値は部分変更の基点（<c>LoupePaint.Default with { ... }</c>）として使う。
+/// <b>色の型</b>: UI 非依存の <see cref="DrawingColor"/> を使用し、各 UI の色型への変換は境界（描画）で行う。<br/>
+/// 既定値は部分変更の基点（<c>LoupeAppearance.Default with { ... }</c>）として使う。
 /// </remarks>
-public sealed record LoupePaint
+public sealed record LoupeAppearance
 {
     /// <summary>中心座標ラベルの文字色の既定値（白）。</summary>
     /// <value>アルファを含む色。既定は白（不透明）。</value>
@@ -34,7 +35,7 @@ public sealed record LoupePaint
 
     /// <summary>すべての色を既定値にした設定。</summary>
     /// <value>既定の色（部分変更の基点として使用する）。</value>
-    public static LoupePaint Default { get; } = new();
+    public static LoupeAppearance Default { get; } = new();
 
     /// <summary>画像外（ペーストボード）の色を取得する。</summary>
     /// <value>アルファを含む色。既定は不透明の中性グレー（<c>#FF535353</c>）。</value>
@@ -99,6 +100,43 @@ public sealed record LoupePaint
 
     /// <summary>中心座標ラベルの角丸半径の既定値（DIP）。</summary>
     public const int CoordLabelCornerRadiusDefault = 2;
+
+    // ----------------------------------------------------------------
+    // 表示可否と寸法（描画にだけ必要。コアの計算・判断には入らない）
+    // ----------------------------------------------------------------
+
+    /// <summary>十字線を表示するかどうかを取得する。</summary>
+    /// <value>true（既定）の場合は切り出し領域の中央へ十字線を描く。false の場合は描かない。</value>
+    /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
+    public bool ShowCrosshair { get; init; } = true;
+
+    /// <summary>枠線を表示するかどうかを取得する。</summary>
+    /// <value>true（既定）の場合はルーペの四辺へ枠線を描く。false の場合は描かない。</value>
+    /// <remarks>描画の可否を本値が単一所有する（色のアルファを「描くかどうか」の代用にしない）。</remarks>
+    public bool ShowBorder { get; init; } = true;
+
+    /// <summary>枠線の太さ（DIP）を取得する。</summary>
+    /// <value>枠線の太さ（DIP）。既定は 2。設定時は 1〜64 へ補正される。</value>
+    /// <remarks>
+    /// 安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。<br/>
+    /// 数値スキーマ（ <c>Loupe.Limits</c>）はコアが単一所有し、本型が参照する。<br/>
+    /// 物理ピクセルへの換算は <see cref="LoupeMetricsScaler"/> が行う（描画計画の解決時）。
+    /// </remarks>
+    public int BorderThickness
+    {
+        get => field;
+        init => field = CoerceBorderThickness(value);
+    } = BorderThicknessDefault;
+
+    /// <summary>中心座標ラベルを表示するかどうかを取得する。</summary>
+    /// <value>true（既定）の場合は中心座標を表示する。false の場合は表示しない。</value>
+    public bool ShowCoordLabel { get; init; } = true;
+
+    /// <summary>中心座標ラベルを描画するかどうかを判定する。</summary>
+    /// <param name="hasCenterPoint">拡大中心が設定されているかどうか。</param>
+    /// <returns>描画する場合は true。</returns>
+    /// <remarks>ラベルの文言は中心座標から決まるため、中心が未設定のときは描画しない。</remarks>
+    public bool ShouldShowCoordLabel(bool hasCenterPoint) => ShowCoordLabel && hasCenterPoint;
 
     /// <summary>中心座標ラベルのフォントサイズを安全域（6〜48）へ補正する。</summary>
     /// <param name="value">補正する値（DIP）。</param>

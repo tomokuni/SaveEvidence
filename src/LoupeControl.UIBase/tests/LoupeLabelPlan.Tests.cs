@@ -25,7 +25,7 @@ public class LoupeLabelPlanTests
 
     /// <summary>テスト用の描画に使う設定を生成する。</summary>
     /// <returns>描画に使う設定。</returns>
-    private static LoupePaint CreatePaint()
+    private static LoupeAppearance CreatePaint()
         => new()
         {
             CoordLabelColor = DrawingColor.White,

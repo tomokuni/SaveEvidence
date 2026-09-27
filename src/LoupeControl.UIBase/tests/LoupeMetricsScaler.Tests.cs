@@ -1,14 +1,13 @@
-using EsUtil.Feature.LoupeCore.Drawing;
 using Xunit;
 
-namespace EsUtil.Feature.LoupeCore.Tests.Drawing;
+namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
 
 /// <summary><see cref="LoupeMetricsScaler"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 寸法値（DIP）の物理ピクセル換算のみを検証するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
 /// 両 UI（Avalonia / MewUI）は本換算結果を使う（UI ごとに換算すると DPI で見た目がずれる）。<br/>
 /// 中心座標ラベルは DIP のまま UI 要素として配置するため、本クラスの対象外である。<br/>
-/// 安全域への補正は設定型（<c>Setting.LoupeOptions</c>）が生成時に適用済みであり、本クラスは換算だけを行う。
+/// 安全域への補正は外観（<c>LoupeAppearance</c>）が生成時に適用済みであり、本クラスは換算だけを行う。
 /// </remarks>
 public class LoupeMetricsScalerTests
 {

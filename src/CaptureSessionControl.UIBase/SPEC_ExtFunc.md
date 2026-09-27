@@ -9,7 +9,7 @@
 | 機能 | 提供元 | 内容 |
 | --- | --- | --- |
 | 選択矩形の色の写像 | `CapturePaintMapper.ToMarqueePaint` | `CaptureSettings` から `MarqueePaint`（9 項目）を組み立てる |
-| ルーペの色の写像 | `CapturePaintMapper.ToLoupePaint` | `CaptureSettings` から `LoupePaint`（5 項目）を組み立てる |
+| ルーペの色の写像 | `CapturePaintMapper.ToLoupeAppearance` | `CaptureSettings` から `LoupeAppearance`（5 項目）を組み立てる |
 
 **本層は公開 API を持ちません。** 写像は両 UI のホストが使う内部処理であり、公開面を増やさないため
 `internal` としています。
@@ -42,9 +42,9 @@
 **写像しない項目**: 内側の塗り（`InnerFillColor`）と内側の枠線（`InnerBorderColor`）。描画の可否は
 `MarqueeDecoOptions` の明示フラグが単一所有するため、色は既定の透明を保ちます。
 
-### `ToLoupePaint(CaptureSettings settings)`
+### `ToLoupeAppearance(CaptureSettings settings)`
 
-| 写像先（`LoupePaint`） | 写像元 | 内容 |
+| 写像先（`LoupeAppearance`） | 写像元 | 内容 |
 | --- | --- | --- |
 | `PasteboardColor` | `LoupePasteboardColor` | 画像外（ペーストボード）の色 |
 | `BorderColor` | `LoupeFrameColor` | 枠線の色 |
@@ -67,7 +67,7 @@
 | --- | --- |
 | `CaptureSessionControl.Core`（`EsUtil.SaveEvidence.CaptureSession`） | 写像元の設定型（`CaptureSettings`） |
 | `MarqueeControl.UIBase`（`EsUtil.SaveEvidence.Marquee.UIBase`） | 写像先の描画の設定（`MarqueePaint`） |
-| `LoupeControl.UIBase`（`EsUtil.SaveEvidence.Loupe.UIBase`） | 写像先の描画の設定（`LoupePaint`） |
+| `LoupeControl.UIBase`（`EsUtil.SaveEvidence.Loupe.UIBase`） | 写像先の描画の設定（`LoupeAppearance`） |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。外部パッケージへの直接依存もありません。
 

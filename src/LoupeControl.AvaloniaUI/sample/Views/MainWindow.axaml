@@ -150,7 +150,7 @@
                                     Source="{Binding SourceImage}"
                                     CenterPoint="{Binding CenterPoint}"
                                     Options="{Binding Options}"
-                                    Paint="{Binding Paint}"
+                                    Appearance="{Binding Appearance}"
                                     DipToDeviceScaling="{Binding DipToDeviceScaling}"/>
 
             </Canvas>

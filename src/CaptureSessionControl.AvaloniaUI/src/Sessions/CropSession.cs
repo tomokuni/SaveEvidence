@@ -199,7 +199,7 @@ internal sealed class CropSession(
         // 色は描画にだけ必要な設定のため、コアの設定ではなく描画の設定として与える
         // （プレビューの切り出しは背後の要素を透かすため、ルーペの下地は透明にする）
         cropView.SelectionOverlayMarqueePaint = CapturePaintMapper.ToMarqueePaint(s);
-        cropView.SelectionOverlayLoupePaint = CapturePaintMapper.ToLoupePaint(s);
+        cropView.SelectionOverlayLoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
         // プレビュー内 Crop はドメイン = 論理座標（元画像ピクセル）のため DIP と 1:1（基準値）にする。
         cropView.DomainToDipScaling = DpiScaler.StandardScaling;

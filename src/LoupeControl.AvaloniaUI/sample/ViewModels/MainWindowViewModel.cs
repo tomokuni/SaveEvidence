@@ -76,7 +76,7 @@ public sealed class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(ZoomText));
                 OnPropertyChanged(nameof(CoordinateText));
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Paint));
+                OnPropertyChanged(nameof(Appearance));
             }
         }
     }
@@ -94,7 +94,7 @@ public sealed class MainWindowViewModel : ObservableObject
                 OnPropertyChanged(nameof(RequestedSizeText));
                 OnPropertyChanged(nameof(CoordinateText));
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Paint));
+                OnPropertyChanged(nameof(Appearance));
             }
         }
     }
@@ -198,7 +198,7 @@ public sealed class MainWindowViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(BorderThicknessText));
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Paint));
+                OnPropertyChanged(nameof(Appearance));
             }
         }
     }
@@ -233,7 +233,7 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _crossColorOption, value))
             {
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Paint));
+                OnPropertyChanged(nameof(Appearance));
             }
         }
     }
@@ -249,7 +249,7 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _pasteboardColorOption, value))
             {
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Paint));
+                OnPropertyChanged(nameof(Appearance));
             }
         }
     }
@@ -265,33 +265,33 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _borderColorOption, value))
             {
                 OnPropertyChanged(nameof(Options));
-                OnPropertyChanged(nameof(Paint));
+                OnPropertyChanged(nameof(Appearance));
             }
         }
     }
 
-    /// <summary>ルーペの色（描画にだけ必要な設定）。</summary>
-    /// <value>選択中の色から組み立てた色。依存する選択肢の変更で再評価される。</value>
-    /// <remarks>色の既定値・型は描画の設定（<c>LoupePaint</c>）が単一所有する（コアは色を持たない）。</remarks>
-    public LoupePaint Paint => new()
+    /// <summary>ルーペの外観（色・枠線の太さ。描画にだけ必要な設定）。</summary>
+    /// <value>選択中の色と枠線の太さから組み立てた外観。依存する選択肢の変更で再評価される。</value>
+    /// <remarks>外観の既定値・型は描画の設定（<c>LoupeAppearance</c>）が単一所有する（コアは外観を持たない）。</remarks>
+    public LoupeAppearance Appearance => new()
     {
         CrossColor = ToDrawingColor(CrossColorOption),
         PasteboardColor = ToDrawingColor(PasteboardColorOption),
         BorderColor = ToDrawingColor(BorderColorOption),
+        BorderThickness = BorderThickness,
     };
 
-    /// <summary>ルーペの設定（表示サイズ・拡大率・寸法。コアの <see cref="LoupeOptions"/> が単一所有する）。</summary>
+    /// <summary>ルーペの設定（計算に必要な値。コアの <see cref="LoupeOptions"/> が単一所有する）。</summary>
     /// <value>現在の設定（コントロールの <c>Options</c> へ一括でバインドする）。</value>
     /// <remarks>
     /// 設定を 1 つの値にまとめて公開する（コントロール側の公開プロパティも 1 つである）。<br/>
-    /// 依存する値（拡大率・サイズ・外観の項目）の変更は各 setter が <c>Options</c> の変更を通知する。<br/>
-    /// 色はコアの設定に含めない（描画にだけ必要な設定のため、コントロールの <c>Paint</c> へ与える）。
+    /// 依存する値（拡大率・サイズ）の変更は各 setter が <c>Options</c> の変更を通知する。<br/>
+    /// 色と枠線の太さはコアの設定に含めない（描画にだけ必要な設定のため、コントロールの <c>Appearance</c> へ与える）。
     /// </remarks>
     public LoupeOptions Options => new()
     {
         RequestedSize = RequestedSize,
         ZoomLevel = ZoomLevel,
-        BorderThickness = BorderThickness,
     };
 
     /// <summary>色選択肢をコアの色型へ変換する（「なし」はアルファ 0 = 描画しない）。</summary>

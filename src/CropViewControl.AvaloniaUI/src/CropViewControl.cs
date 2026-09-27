@@ -155,13 +155,13 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.MarqueePaint = value;
     }
 
-    /// <summary>領域選択オーバーレイのルーペが使う色。<see cref="FadeMaskDragRectControl.LoupePaint"/> へ委譲する。</summary>
-    /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
+    /// <summary>領域選択オーバーレイのルーペが使う色。<see cref="FadeMaskDragRectControl.LoupeAppearance"/> へ委譲する。</summary>
+    /// <value>色の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>色は描画にだけ必要な設定のため、コアの設定ではない（セッションが設定する）。</remarks>
-    public LoupePaint SelectionOverlayLoupePaint
+    public LoupeAppearance SelectionOverlayLoupeAppearance
     {
-        get => _selectionOverlay.LoupePaint;
-        set => _selectionOverlay.LoupePaint = value;
+        get => _selectionOverlay.LoupeAppearance;
+        set => _selectionOverlay.LoupeAppearance = value;
     }
 
     /// <summary>表示する画像を設定する（ZoomViewControl とルーペへ伝搬する）。</summary>

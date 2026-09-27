@@ -457,15 +457,15 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>ルーペの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
-    /// <value>色の単一値。既定は <see cref="LoupePaint.Default"/>。</value>
+    /// <value>色の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>
     /// 色はコアの計算に入らない（描画にだけ必要）ため、設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
     /// 内包するルーペコントロールへそのまま転送する（下地色もここで与える。ホストが背後の要素を透かすかを決める）。
     /// </remarks>
-    public LoupePaint LoupePaint
+    public LoupeAppearance LoupeAppearance
     {
-        get => _loupeControl.Paint;
-        set => _loupeControl.Paint = value;
+        get => _loupeControl.Appearance;
+        set => _loupeControl.Appearance = value;
     }
 
     // ====================================================================

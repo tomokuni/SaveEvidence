@@ -171,24 +171,24 @@ public class FadeMaskDragRectControlTests
             {
                 RequestedSize = 150,
                 ZoomLevel = 3,
-                BorderThickness = 4,
-                ShowCoordLabel = true,
             },
             LoupeOffset = 30.0,
         };
 
         control.Options = options;
         // 色は描画にだけ必要な設定のため、描画の設定として与える
-        control.LoupePaint = new LoupePaint
+        control.LoupeAppearance = new LoupeAppearance
         {
             CrossColor = Color.FromAColor(204, Colors.Red).ToDrawingColor(), // 赤 80%
             PasteboardColor = Colors.Black.ToDrawingColor(),
             BorderColor = Colors.Gray.ToDrawingColor(),
+            BorderThickness = 4,
+            ShowCoordLabel = true,
         };
 
         // ラベルの体裁（フォントサイズ）も描画の設定であり、コアの設定には含まない
         control.MarqueePaint = MarqueePaint.Default with { CoordLabelFontSize = 14.0 };
-        control.LoupePaint = control.LoupePaint with { CoordLabelFontSize = 13.0 };
+        control.LoupeAppearance = control.LoupeAppearance with { CoordLabelFontSize = 13.0 };
 
         // ルーペ描画スケールは設定（Options）の対象外（環境値。個別プロパティで設定）
         control.LoupeDipToDeviceScaling = 2.0;
@@ -196,17 +196,17 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(150, control.Loupe.Options.RequestedSize);
         Assert.Equal(3, control.Loupe.Options.ZoomLevel);
         Assert.Equal(2.0, control.Loupe.DipToDeviceScaling);
-        Assert.Equal(4, control.Loupe.Options.BorderThickness);
-        Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Paint.CrossColor.ToAvaloniaColor());
+        Assert.Equal(4, control.Loupe.Appearance.BorderThickness);
+        Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Appearance.CrossColor.ToAvaloniaColor());
         // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため、ルーペのプロパティへ渡される
         Assert.Equal(30.0, control.Loupe.PositionOffset);
         // 座標ラベル（Marquee / Loupe）
         var applied = control.Marquee.Options;
         Assert.True(applied.ShowCoordLabel);
-        Assert.True(control.Loupe.Options.ShowCoordLabel);
+        Assert.True(control.Loupe.Appearance.ShowCoordLabel);
         // フォントサイズは描画の設定（描画の契約が公開する）
         Assert.Equal(14.0, control.MarqueePaint.CoordLabelFontSize);
-        Assert.Equal(13.0, control.LoupePaint.CoordLabelFontSize);
+        Assert.Equal(13.0, control.LoupeAppearance.CoordLabelFontSize);
     }
 
     [AvaloniaFact]
@@ -543,9 +543,9 @@ public class FadeMaskDragRectControlTests
             rendered = 0;
 
             // 破線色のみの変更（ルーペ自身の外観・サイズ・ズームは不変 → ルーペのプロパティ通知は発生しない）
-            var borderThickness = control.Loupe.Options.BorderThickness;
+            var borderThickness = control.Loupe.Appearance.BorderThickness;
             control.Options = control.Options with { SelectionRectColorA = Colors.Lime.ToDrawingColor() };
-            Assert.Equal(borderThickness, control.Loupe.Options.BorderThickness);
+            Assert.Equal(borderThickness, control.Loupe.Appearance.BorderThickness);
             Assert.Equal(200, control.Loupe.Options.RequestedSize);
 
             await PumpUntilAsync(() => rendered > 0);
@@ -687,14 +687,24 @@ public class FadeMaskDragRectControlTests
     /// <returns>設定されている座標変換ポート。未設定の場合は null。</returns>
     /// <remarks>
     /// ポートはコアのファサード（<c>Marquee</c> / <c>Loupe</c>）が単一所有し、コントロールはファサードへ委譲するだけである。<br/>
-    /// 検証ではコントロールが保持するファサード（<c>_marquee</c> / <c>_loupe</c>）の内部フィールドをリフレクションで辿る。
+    /// 検証では選択矩形コントロールが保持するコアのファサード（<c>_marquee</c>）、またはルーペコントロールが保持する<br/>
+    /// 提示層（<c>_presenter</c>）の内部のコアのファサード（<c>_core</c>）の内部フィールドをリフレクションで辿る。
     /// </remarks>
     private static ICoordTransform? GetCoordinatePort(Control control)
     {
         var anyInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
         var type = control.GetType();
-        var facade = (type.GetField("_marquee", anyInstance) ?? type.GetField("_loupe", anyInstance))!.GetValue(control)!;
-        return (ICoordTransform?)facade.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(facade);
+
+        // 選択矩形コントロールはコアのファサードを直接保持する
+        if (type.GetField("_marquee", anyInstance)?.GetValue(control) is { } marquee)
+        {
+            return (ICoordTransform?)marquee.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(marquee);
+        }
+
+        // ルーペコントロールは提示層（LoupePresenter）を保持し、その内部にコアのファサード（Loupe）を持つ
+        var presenter = type.GetField("_presenter", anyInstance)!.GetValue(control)!;
+        var core = presenter.GetType().GetField("_core", anyInstance)!.GetValue(presenter)!;
+        return (ICoordTransform?)core.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(core);
     }
 
     // ====================================================================

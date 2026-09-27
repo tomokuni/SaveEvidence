@@ -353,4 +353,4 @@ UI が発明してはいけない運用方針値を単一所有します。
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `ToFadeMaskDragRectOptions` | `FadeMaskDragRectOptions ToFadeMaskDragRectOptions(this CaptureSettings settings)` | 設定（全メンバー non-null）から複合コントロールの設定（**寸法・表示可否**）を組み立てる。暗転・枠線の描画可否は設定の色の可視性から明示フラグ（`Deco.ShowOverlay` / `Deco.ShowOuterBorder`）へ写像する。**色は写像しない**（描画にだけ必要な設定のため、UI 層のホストが描画層の `MarqueePaint` / `LoupePaint` を組み立てる） |
+| `ToFadeMaskDragRectOptions` | `FadeMaskDragRectOptions ToFadeMaskDragRectOptions(this CaptureSettings settings)` | 設定（全メンバー non-null）から複合コントロールの設定（**寸法・表示可否**）を組み立てる。暗転・枠線の描画可否は設定の色の可視性から明示フラグ（`Deco.ShowOverlay` / `Deco.ShowOuterBorder`）へ写像する。**色は写像しない**（描画にだけ必要な設定のため、UI 層のホストが描画層の `MarqueePaint` / `LoupeAppearance` を組み立てる） |

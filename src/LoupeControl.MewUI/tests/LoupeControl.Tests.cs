@@ -32,10 +32,10 @@ public class LoupeControlTests
         Assert.Equal(DipToDeviceScalingDefault, control.DipToDeviceScaling);
 
         // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
-        Assert.Equal(BorderThicknessDefault, control.Options.BorderThickness);
-        Assert.True(control.Options.ShowCoordLabel);
+        Assert.Equal(BorderThicknessDefault, control.Appearance.BorderThickness);
+        Assert.True(control.Appearance.ShowCoordLabel);
         // 色の既定値は描画の設定が単一所有する
-        Assert.Equal(LoupePaint.Default, control.Paint);
+        Assert.Equal(LoupeAppearance.Default, control.Appearance);
     }
 
     /// <summary>数値プロパティがコアの安全域へ補正されることを検証する。</summary>
@@ -83,11 +83,11 @@ public class LoupeControlTests
     [Fact]
     public void 座標ラベルのフォントサイズが安全域へ補正される()
     {
-        var control = new LoupeControl { Paint = LoupePaint.Default with { CoordLabelFontSize = 0 } };
-        Assert.Equal(6.0, control.Paint.CoordLabelFontSize);
+        var control = new LoupeControl { Appearance = LoupeAppearance.Default with { CoordLabelFontSize = 0 } };
+        Assert.Equal(6.0, control.Appearance.CoordLabelFontSize);
 
-        control.Paint = control.Paint with { CoordLabelFontSize = double.NaN };
-        Assert.Equal(LoupePaint.CoordLabelFontSizeDefault, control.Paint.CoordLabelFontSize);
+        control.Appearance = control.Appearance with { CoordLabelFontSize = double.NaN };
+        Assert.Equal(LoupeAppearance.CoordLabelFontSizeDefault, control.Appearance.CoordLabelFontSize);
     }
 
     /// <summary>枠線の太さが安全域へ補正されることを検証する。</summary>
@@ -96,14 +96,14 @@ public class LoupeControlTests
     {
         var control = new LoupeControl
         {
-            Options = LoupeOptions.Default with { BorderThickness = 0 },
+            Appearance = LoupeAppearance.Default with { BorderThickness = 0 },
         };
 
-        Assert.Equal(BorderThicknessMin, control.Options.BorderThickness);
+        Assert.Equal(BorderThicknessMin, control.Appearance.BorderThickness);
 
-        control.Options = control.Options with { BorderThickness = 1000 };
+        control.Appearance = control.Appearance with { BorderThickness = 1000 };
 
-        Assert.Equal(BorderThicknessMax, control.Options.BorderThickness);
+        Assert.Equal(BorderThicknessMax, control.Appearance.BorderThickness);
     }
 
     /// <summary>要求サイズが <see cref="LoupeOptions.RequestedSize"/> の正方形になることを検証する。</summary>
@@ -174,7 +174,7 @@ public class LoupeControlTests
         Assert.Equal("(12, 34)", LabelText(control));
 
         // 幅は実測値（本コントロールが Skia で測ってコアへ渡す）と内側余白から決まる
-        var measured = SkiaText.Measure("(12, 34)", control.Paint.CoordLabelFontSize);
+        var measured = SkiaText.Measure("(12, 34)", control.Appearance.CoordLabelFontSize);
         Assert.True(LabelElement(control).Bounds.Width > measured.Width);
     }
 
@@ -184,7 +184,7 @@ public class LoupeControlTests
     {
         var control = new LoupeControl
         {
-            Options = LoupeOptions.Default with
+            Appearance = LoupeAppearance.Default with
             {
                 ShowCoordLabel = false,
             },
@@ -221,11 +221,10 @@ public class LoupeControlTests
         var control = new LoupeControl
         {
             CenterPoint = new EsPoint(10, 20),
-            Options = LoupeOptions.Default with
+            Appearance = LoupeAppearance.Default with
             {
                 ShowCoordLabel = false,
-            },
-            Paint = new LoupePaint
+            } with
             {
                 CrossColor = DrawingColor.FromArgb(255, 255, 0, 0),
                 PasteboardColor = DrawingColor.FromArgb(255, 0, 0, 0),
@@ -236,11 +235,10 @@ public class LoupeControlTests
         };
 
         Assert.Equal(new EsPoint(10, 20), control.CenterPoint);
-        Assert.Equal(DrawingColor.FromArgb(255, 255, 0, 0), control.Paint.CrossColor);
-        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), control.Paint.PasteboardColor);
-        Assert.False(control.Options.ShowCoordLabel);
-        // 色は描画実装へ反映される（描画実装が単一所有する）
-        Assert.NotNull(control.Renderer);
+        Assert.Equal(DrawingColor.FromArgb(255, 255, 0, 0), control.Appearance.CrossColor);
+        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), control.Appearance.PasteboardColor);
+        Assert.False(control.Appearance.ShowCoordLabel);
+
     }
 
     /// <summary>ソース画像を設定できることを検証する。</summary>

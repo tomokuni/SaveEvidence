@@ -21,9 +21,9 @@
 | `Source` | `EsBitmap?` | `null` | — | 拡大元の 100% 画像。null の場合は画像外の色のみ |
 | `CenterPoint` | `EsPoint?` | `null` | — | 拡大中心（元画像ピクセル座標）。null の場合は画像外の色のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 下表のとおり | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する |
-| `Paint` | `LoupePaint` | `LoupePaint.Default` | — | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）。`with` 式で部分変更する。色はコアの計算に入らない |
+| `Paint` | `LoupeAppearance` | `LoupeAppearance.Default` | — | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）。`with` 式で部分変更する。色はコアの計算に入らない |
 | `DipToDeviceScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。設定には含めない） |
-| `Renderer` | `ILoupeRenderer` | `Paint` の色を保持する `LoupeRendererMewUI` | — | 描画の実装（**描画の差し替え**。null 不可）。設定すると再生成とラベル要素の再配置を要求する |
+| `Renderer` | `LoupePresenter` | `Paint` の色を保持する `LoupeSkiaPainter` | — | 描画の実装（**描画の差し替え**。null 不可）。設定すると再生成とラベル要素の再配置を要求する |
 
 `Options`（コアの `LoupeOptions`。UI 非依存の値）の項目:
 
@@ -36,7 +36,7 @@
 | `ShowCrosshair` | `bool` | `true` | — | 十字線の表示可否 |
 | `ShowBorder` | `bool` | `true` | — | 枠線の表示可否 |
 
-`Paint`（`LoupePaint`。色は UI 非依存の `System.Drawing.Color`）の項目:
+`Appearance`（`LoupeAppearance`。色は UI 非依存の `System.Drawing.Color`）の項目:
 
 | 項目 | 型 | 既定値 | 安全域（範囲外は自動補正） | 説明 |
 | --- | --- | --- | --- | --- |
@@ -94,7 +94,7 @@
 | `Source` が `null` | 画像外の色のみを描画する（例外にしない） |
 | `CenterPoint` が `null` | 画像外の色のみを描画する（例外にしない） |
 | `Source` が破棄済み | 画像外の色のみを描画する（例外にしない） |
-| 色のアルファが 0 | 描画の可否には使わない（描画の可否はコアの明示フラグ（`LoupeOptions.Show*`）が単一所有し、非表示の項目は空の描画内容として渡る）。アルファ 0 の色は描画結果として見えなくなるだけである |
+| 色のアルファが 0 | 描画の可否には使わない（描画の可否はコアの明示フラグ（`LoupeOptions.Show*`）が単一所有し、非表示の項目は空の描画計画として渡る）。アルファ 0 の色は描画結果として見えなくなるだけである |
 | 安全域外の数値 | 安全域へ補正する（例外にしない） |
 
 ## 描画完了イベント
@@ -110,7 +110,7 @@
 | `CaptureTopLeft` | `EsPoint?` | 切り出し領域の左上（ドメイン座標）。中心未設定時は null（オーバーレイを描画できない） |
 | `Scale` | `double` | ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。DPI スケーリングの影響を受けない） |
 
-描画入力（`LoupeRenderRequest`）の組み立てはコアのファサード（`Loupe.CreateRequest`）が単一所有し、コントロールは現在の状態を渡すだけです。
+描画入力（`LoupeGeometry`）の組み立てはコアのファサード（`Loupe.ResolveGeometry`）が単一所有し、コントロールは現在の状態を渡すだけです。
 
 オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求めます（切り出し領域と倍率の計算は Avalonia 版と同じコアの計算を共有します）。
 

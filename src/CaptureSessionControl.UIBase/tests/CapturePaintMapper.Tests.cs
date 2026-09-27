@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.UIBase.Tests;
 
 /// <summary><see cref="CapturePaintMapper"/> の単体テスト（設定項目と描画の色の対応）。</summary>
 /// <remarks>
-/// 色は描画にだけ必要な設定であり、描画層（UIBase）の <c>MarqueePaint</c> / <c>LoupePaint</c> が単一所有する。<br/>
+/// 色は描画にだけ必要な設定であり、描画層（UIBase）の <c>MarqueePaint</c> / <c>LoupeAppearance</c> が単一所有する。<br/>
 /// 本テストは「どの設定がどの色になるか」の写像を網羅する（写像漏れはビルドが通り、色が無言で効かなくなるため）。<br/>
 /// UI 初期化が不要なため、<c>[Fact]</c> で並列検証できる。
 /// </remarks>
@@ -79,7 +79,7 @@ public class CapturePaintMapperTests
             LoupeCoordLabelBackgroundColor = DrawingColor.FromArgb(11, 22, 33),
         };
 
-        var paint = CapturePaintMapper.ToLoupePaint(settings);
+        var paint = CapturePaintMapper.ToLoupeAppearance(settings);
 
         Assert.Equal(DrawingColor.Red, paint.PasteboardColor);
         Assert.Equal(DrawingColor.Blue, paint.BorderColor);
@@ -95,13 +95,13 @@ public class CapturePaintMapperTests
     {
         var settings = CreateSettings() with { LoupePasteboardColor = DrawingColor.FromArgb(255, 12, 34, 56) };
 
-        Assert.Equal(DrawingColor.FromArgb(255, 12, 34, 56), CapturePaintMapper.ToLoupePaint(settings).PasteboardColor);
+        Assert.Equal(DrawingColor.FromArgb(255, 12, 34, 56), CapturePaintMapper.ToLoupeAppearance(settings).PasteboardColor);
     }
 
     [Fact]
     public void 変換_設定がnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToMarqueePaint(null!));
-        Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToLoupePaint(null!));
+        Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToLoupeAppearance(null!));
     }
 }

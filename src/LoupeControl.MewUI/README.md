@@ -1,11 +1,11 @@
 # LoupeControl.MewUI
 
-`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase`）** を使い、描画ポートの適合（`SkiaEsCanvas`）と入力の受付のみを **MewUI** で実装したルーペ（拡大鏡）コントロールです。
+`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`Feature.LoupeCore`）と描画層（`LoupeControl.UIBase`）** を使い、描画（`SKCanvas`）と入力の受付のみを **MewUI** で実装したルーペ（拡大鏡）コントロールです。
 
 ## 目的
 
-ルーペのロジック（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は `Feature.LoupeCore` が単一所有し、描画の手順と色は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupeRenderer` / `LoupePaint`）が単一所有します。
-本プロジェクトはその計算結果を描画ポート `SkiaEsCanvas`（Platform.Core）経由で **Skia のキャンバスへ描画させるだけ** の層です。
+ルーペのロジック（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は `Feature.LoupeCore` が単一所有し、描画の手順と色は UI 非依存の描画層（`LoupeControl.UIBase` の `LoupePresenter` / `LoupeAppearance`）が単一所有します。
+本プロジェクトはその計算結果を`SKCanvas`（Platform.Core）経由で **Skia のキャンバスへ描画させるだけ** の層です。
 そのため Avalonia 版と**同じ設定・同じ見た目**になり、設定ファイル（`%LOCALAPPDATA%\SaveEvidence\settings.json`）も両 UI で共用できます。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ## 特徴
@@ -48,8 +48,8 @@ var loupe = new LoupeControl
         ZoomLevel = 4,                       // 拡大率
         BorderThickness = 2,                 // 枠線の太さ（DIP）
     },
-    // 色は描画の設定（LoupePaint）で指定する
-    Paint = LoupePaint.Default with
+    // 色は描画の設定（LoupeAppearance）で指定する
+    Paint = LoupeAppearance.Default with
     {
         CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
         PasteboardColor = DrawingColor.FromArgb(255, 53, 53, 53),
@@ -78,7 +78,7 @@ if (layout.Position is { } position)
 | `Source` | `EsBitmap?` | `null` | 拡大元の 100% 画像。null の場合は画像外の色のみ |
 | `CenterPoint` | `EsPoint?` | `null` | 拡大中心（元画像ピクセル座標）。null の場合は画像外の色のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する。数値項目はコアの型が生成時に安全域へ補正する |
-| `Paint` | `LoupePaint` | `LoupePaint.Default` | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）。`with` 式で部分変更する。色はコアの計算に入らない |
+| `Paint` | `LoupeAppearance` | `LoupeAppearance.Default` | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）。`with` 式で部分変更する。色はコアの計算に入らない |
 | `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。0.1〜8.0 に補正（非有限は既定値）。DPI 変更で自動更新 |
 | `Log` | `ILogger` | `NullLogger` | 設定変更ログと描画例外の出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
 
@@ -93,7 +93,7 @@ if (layout.Position is { } position)
 | `ShowCrosshair` | `bool` | `true` | 十字線の表示可否 |
 | `ShowBorder` | `bool` | `true` | 枠線の表示可否 |
 
-`Paint`（`LoupePaint`。`EsUtil.SaveEvidence.Loupe.UIBase`）の項目:
+`Appearance`（`LoupeAppearance`。`EsUtil.SaveEvidence.Loupe.UIBase`）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |

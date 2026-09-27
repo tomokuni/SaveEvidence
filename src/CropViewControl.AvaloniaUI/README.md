@@ -36,7 +36,7 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 - **複合構造（Facade / Composite）**: `ZoomViewControl` + `FadeMaskDragRectControl` + 矩形オーバーレイを内包
 - **画像表示**: 拡大（`ZoomIn` / `ZoomOut`）/ 原寸 / Fit 表示（`ZoomFit`）/ パン（マウスドラッグ・ホイール）
 - **領域選択**: ドラッグ選択・暗転マスク・ルーペ（`FadeMaskDragRectControl` へ委譲）
-  - 設定は `SelectionOverlayOptions`（コアの寸法・表示可否）、色は `SelectionOverlayMarqueePaint` / `SelectionOverlayLoupePaint`（描画にだけ必要な設定）で与える。
+  - 設定は `SelectionOverlayOptions`（コアの寸法・表示可否）、色は `SelectionOverlayMarqueePaint` / `SelectionOverlayLoupeAppearance`（描画にだけ必要な設定）で与える。
   - オーバーレイの可視性・ヒットテストは `SetSelectionOverlayVisible` で制御（Crop セッションの開始・終了時にホストが切替）。初期状態（画像なし）は非表示・ヒットテスト不可。
 - **外部提供矩形**: `Rects`（`IReadOnlyList<OverlayRect>`）を View（ビューポート）とルーペの両方へ描画
   - 矩形情報（`OverlayRect`）: 矩形・破線種類・前景色・背景色・線幅
@@ -68,7 +68,7 @@ using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;   // FadeMaskDragRectMode
 using EsUtil.SaveEvidence.CropView;                      // OverlayRect / OverlayLineStyle
 using EsUtil.SaveEvidence.Marquee.UIBase;                // MarqueePaint（描画にだけ必要な色）
-using EsUtil.SaveEvidence.Loupe.UIBase;                  // LoupePaint（描画にだけ必要な色）
+using EsUtil.SaveEvidence.Loupe.UIBase;                  // LoupeAppearance（描画にだけ必要な色）
 using EsUtil.Platform.Core.Geometry;         // EsRect
 using Avalonia;                              // Point / Rect
 using DrawingColor = System.Drawing.Color;   // コアの色型（Avalonia.Media.Color と衝突するため別名）

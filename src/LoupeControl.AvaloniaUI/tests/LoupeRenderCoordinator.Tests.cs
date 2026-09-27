@@ -1,6 +1,7 @@
+using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using Xunit;
 
-namespace EsUtil.SaveEvidence.Loupe.UIBase.Tests;
+namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI.Tests;
 
 /// <summary><see cref="LoupeRenderCoordinator"/> の単体テスト（再描画バッチ化・世代番号管理）。</summary>
 /// <remarks>

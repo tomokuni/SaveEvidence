@@ -6,7 +6,6 @@ using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Loupe.UIBase;
-using EsUtil.Feature.LoupeCore.Drawing;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 
@@ -24,10 +23,8 @@ internal static class LoupeRenderPipeline
     private static readonly Vector s_dpi = new(DpiScaler.StandardDpi, DpiScaler.StandardDpi);
 
     /// <summary>画像抽出を非同期に実行し、Avaloniaの描画オブジェクトをUIスレッドで合成する。</summary>
-    /// <param name="renderer">描画の実装（UI が保持する。層の順序に従った描画手順は UIBase の基底が単一所有する）。null 不可。</param>
     /// <param name="source">ルーペのソース画像。</param>
-    /// <param name="request">描画入力（コアと UI の契約。UI が公開プロパティから組み立てる）。</param>
-    /// <param name="content">コアが解決した描画内容（層の順序・矩形・拡大画像の幾何を持つ）。</param>
+    /// <param name="plan">描画層が解決した描画計画（層の順序・矩形・拡大画像の幾何を持つ）。</param>
     /// <returns>生成したルーペ画像（<see cref="EsBitmap"/>）。</returns>
     /// <exception cref="NotSupportedException">
     /// <paramref name="source"/> が <see cref="Bitmap"/> / <see cref="EsBitmapAvaloniaImage"/> 以外の場合。
@@ -35,11 +32,10 @@ internal static class LoupeRenderPipeline
     /// <remarks>
     /// 1. 未対応型の判定（<see cref="LoupeSourceResolver.IsSourceSupported"/>）を行い、未対応型は例外にする。<br/>
     /// 2. 切り出し元の <see cref="EsBitmap"/> を解決する（<see cref="Bitmap"/> は複製、<see cref="EsBitmapAvaloniaImage"/> は共有参照）。<br/>
-    /// 3. 描画（切り出し・拡大・十字線・市松・枠線）は UI 非依存のレンダラへ委譲し、UI スレッドで行う<br/>
+    /// 3. 描画（切り出し・拡大・十字線・枠線）は <see cref="LoupeContextPainter"/> へ委譲し、UI スレッドで行う<br/>
     /// （切り出しの可否と破棄済みソースの扱いは描画層が単一所有する）。
     /// </remarks>
-    public static async Task<EsBitmap> RenderAsync(
-        ILoupeRenderer renderer, IImage? source, LoupeRenderRequest request, LoupeDrawContent content)
+    public static async Task<EsBitmap> RenderAsync(IImage? source, LoupeDrawPlan plan)
     {
         // 未対応型の判定は LoupeSourceResolver（単一所有）へ委譲する。
         if (!LoupeSourceResolver.IsSourceSupported(source))
@@ -57,7 +53,7 @@ internal static class LoupeRenderPipeline
             // Task.Run によるバックグラウンド抽出は、マウス移動中の連続再描画でスレッドプールが競合し、
             // 抽出結果が UI スレッドへ戻る前に次の再描画が要求されてルーペ画像が移動停止まで更新されない問題を生む。
             return await Dispatcher.UIThread.InvokeAsync(
-                () => Rasterize(renderer, sourceBitmap, request, content),
+                () => Rasterize(sourceBitmap, in plan),
                 DispatcherPriority.Render);
         }
         finally
@@ -70,33 +66,21 @@ internal static class LoupeRenderPipeline
         }
     }
 
-    /// <summary>描画の手順を描画実装へ委譲し、結果を <see cref="EsBitmap"/> として返す。</summary>
-    /// <param name="renderer">描画の実装（UI が保持する）。</param>
+    /// <summary>描画計画を描画実装へ渡し、結果を <see cref="EsBitmap"/> として返す。</summary>
     /// <param name="source">拡大元の画像。</param>
-    /// <param name="request">描画入力（描画面の物理ピクセルサイズ）。</param>
-    /// <param name="content">コアが解決した描画内容（層の順序・矩形・拡大画像の幾何を持つ）。</param>
+    /// <param name="plan">描画層が解決した描画計画（層の順序・矩形・拡大画像の幾何を持つ）。</param>
     /// <returns>描画結果（ホストがピクセルへオーバーレイを描画できる）。</returns>
     /// <remarks>
     /// オフスクリーン ビットマップは UI 固有の機構（Avalonia の <see cref="RenderTargetBitmap"/>）であるため本層が生成し、<br/>
-    /// 描画面の適合（<see cref="AvaloniaCanvas"/>）を介して描画の手順（層の順序・写し方）を描画実装へ委譲する。
+    /// 描画の手順（層の順序・写し方）は <see cref="LoupeContextPainter"/> へ委譲する。
     /// </remarks>
-    private static EsBitmap Rasterize(
-        ILoupeRenderer renderer, EsBitmap? source, in LoupeRenderRequest request, in LoupeDrawContent content)
+    private static EsBitmap Rasterize(EsBitmap? source, in LoupeDrawPlan plan)
     {
-        var bitmap = new RenderTargetBitmap(new PixelSize(request.PixelSize, request.PixelSize), s_dpi);
+        var bitmap = new RenderTargetBitmap(new PixelSize(plan.PixelSize, plan.PixelSize), s_dpi);
 
         using (var context = bitmap.CreateDrawingContext())
         {
-            // 本 UI の描画実装なら描画面を適合させて描く（層の順序は UIBase の基底が単一所有する）
-            if (renderer is LoupeRendererAvaloniaUI uiRenderer)
-            {
-                uiRenderer.Draw(context, source, in content);
-            }
-            else
-            {
-                // 差し替えられた描画実装は描画ポート（自 UI の描画面を適合させたもの）経由で描く
-                renderer.DrawShapes(new AvaloniaCanvas(context), source, in content);
-            }
+            LoupeContextPainter.Paint(context, source, in plan);
         }
 
         return bitmap.ToEsBitmap();

@@ -25,15 +25,15 @@ public static class FadeMaskDragRectOptionsMapper
     /// 2. 装飾の設定（<see cref="MarqueeDecoOptions"/>）を組み立てる。枠線の太さ（<see cref="CaptureSettings.BorderThickness"/>）は<br/>
     ///    装飾の外枠（暗転マスクの穴あけ枠）が単一所有する。描画の可否は明示フラグで与える<br/>
     ///    （従来の「アルファ 0 = 描かない」をフラグで表す）。<br/>
-    /// 3. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる（寸法のみ）。<br/>
+    /// 3. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる（計算に必要な値のみ）。<br/>
     /// 4. 選択矩形破線の色とルーペのオフセットを設定する（オフセットは <see cref="CaptureSettings.LoupeOffset"/> を使う）。<br/>
     /// 5. ホスト固有の付加情報（操作・情報ラベル）の外観（<see cref="FadeMaskDragRectLabelOptions"/>）を組み立てる。<br/>
     ///    文言の生成と描画はホストが行い、本変換は外観のみを写像する（表示可否はホストが判定する）。<br/>
     /// <br/>
     /// <b>色は写像しない</b>: 色は描画にだけ必要な設定であり、描画の設定（UI 層のホストが組み立てる色の値）が単一所有する。<br/>
     /// 本変換はコアの設定（表示可否・寸法）だけを組み立てる（Core → UIBase の逆流を作らないため）。<br/>
-    /// <b>ラベルのフォントサイズも写像しない</b>: ラベルをどの体裁で描くかは描画の設定であり、<br/>
-    /// 描画の設定（<c>MarqueePaint</c> / <c>LoupePaint</c>）が単一所有する。
+    /// <b>描画にだけ必要な設定（色・フォント・枠線の太さ・表示可否）も写像しない</b>:<br/>
+    /// これらは描画の設定（<c>MarqueeAppearance</c> / <c>LoupeAppearance</c>）が単一所有する。
     /// </remarks>
     public static FadeMaskDragRectOptions ToFadeMaskDragRectOptions(this CaptureSettings settings)
     {
@@ -69,9 +69,6 @@ public static class FadeMaskDragRectOptionsMapper
             {
                 RequestedSize = settings.LoupeSize!.Value,
                 ZoomLevel = settings.LoupeZoomLevel!.Value,
-                // 寸法とラベル表示の可否のみを写像する（色は描画にだけ必要な設定のため、描画側（UI 層のホスト）が設定する）
-                BorderThickness = settings.LoupeFrameThickness!.Value,
-                ShowCoordLabel = settings.LoupeShowCoordLabel!.Value,
             },
             SelectionRectColorA = settings.LoupeSelectionRectColorA!.Value,
             SelectionRectColorB = settings.LoupeSelectionRectColorB!.Value,

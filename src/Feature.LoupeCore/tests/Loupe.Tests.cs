@@ -169,11 +169,11 @@ public class LoupeTests
     }
 
     // ====================================================================
-    // 描画入力
+    // 描画の幾何
     // ====================================================================
 
     [Fact]
-    public void CreateRequest_表示サイズと設定から描画入力を組み立てる()
+    public void ResolveGeometry_表示サイズと設定から幾何を組み立てる()
     {
         var options = LoupeOptions.Default with { RequestedSize = 160, ZoomLevel = 4 };
         var loupe = new Loupe(options)
@@ -182,73 +182,72 @@ public class LoupeTests
             DipToDeviceScaling = 1.5,
         };
 
-        var request = loupe.CreateRequest(160);
+        var geometry = loupe.ResolveGeometry(160);
 
-        Assert.Equal(new EsPoint(10, 20), request.Center);
-        Assert.Equal(240, request.PixelSize);
-        Assert.Equal(4, request.ZoomLevel);
-        Assert.Equal(1.5, request.DipToDeviceScaling);
-        Assert.Equal(options, request.Options);
+        Assert.Equal(new EsPoint(10, 20), geometry.Center);
+        Assert.Equal(240, geometry.PixelSize);
+        Assert.Equal(4, geometry.ZoomLevel);
+        Assert.Equal(1.5, geometry.DipToDeviceScaling);
     }
 
     [Fact]
-    public void CreateRequest_描画先の領域へクランプする()
+    public void ResolveGeometry_描画先の領域へクランプする()
     {
         var loupe = new Loupe(new LoupeOptions { RequestedSize = 300 });
 
-        var request = loupe.CreateRequest(300, new EsSize(200, 150));
+        var geometry = loupe.ResolveGeometry(300, new EsSize(200, 150));
 
-        Assert.Equal(150, request.PixelSize);
+        Assert.Equal(150, geometry.PixelSize);
     }
 
     [Fact]
-    public void CreateRequest_レイアウトのクランプ結果を物理ピクセルへ換算する()
+    public void ResolveGeometry_レイアウトのクランプ結果を物理ピクセルへ換算する()
     {
         var loupe = new Loupe(new LoupeOptions { RequestedSize = 300 });
 
         var layout = loupe.ResolveLayout(new EsSize(120, 400));
-        var request = loupe.CreateRequest(layout.DisplaySize);
+        var geometry = loupe.ResolveGeometry(layout.DisplaySize);
 
         // 表示サイズ（DIP）が親領域の最小辺へクランプされ、その値が物理ピクセルへ換算される
-        Assert.Equal(120, request.PixelSize);
+        Assert.Equal(120, geometry.PixelSize);
     }
 
     [Fact]
-    public void CreateRequest_中心未設定でも組み立てられる()
+    public void ResolveGeometry_中心未設定でも組み立てられる()
     {
         var loupe = new Loupe();
 
-        var request = loupe.CreateRequest(160);
+        var geometry = loupe.ResolveGeometry(160);
 
-        Assert.Null(request.Center);
+        Assert.Null(geometry.Center);
     }
 
     // ====================================================================
-    // 描画入力（切り出し領域・拡大率）
+    // 描画の幾何（切り出し領域・拡大率）
     // ====================================================================
 
     [Fact]
-    public void CreateRequest_切り出しの左上と拡大率を解決する()
+    public void ResolveGeometry_切り出しの左上と拡大率を解決する()
     {
         var loupe = new Loupe(new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 })
         {
             CenterPoint = new EsPoint(50, 60),
         };
-        var request = loupe.CreateRequest(160);
+        var geometry = loupe.ResolveGeometry(160);
 
         // 切り出し一辺 = 160 / 4 = 40 のため、左上は中心から 20 引いた位置になる
-        Assert.Equal(new EsPoint(30, 40), request.CaptureTopLeft);
-        Assert.Equal(4, request.ZoomLevel);
+        Assert.Equal(new EsPoint(30, 40), geometry.CaptureTopLeft);
+        Assert.Equal(4, geometry.ZoomLevel);
     }
 
     [Fact]
-    public void CreateRequest_中心未設定なら切り出し領域を返さない()
+    public void ResolveGeometry_中心未設定なら切り出し領域を返さない()
     {
         var loupe = new Loupe();
-        var request = loupe.CreateRequest(160);
+        var geometry = loupe.ResolveGeometry(160);
 
-        Assert.Null(request.CaptureTopLeft);
-        Assert.Equal(4, request.ZoomLevel);
+        Assert.Null(geometry.CaptureTopLeft);
+        Assert.Equal(4, geometry.ZoomLevel);
     }
 
     /// <summary>拡大率が切り出しサイズの切り上げ（描画先によるクランプを含む）に影響されないことを検証する。</summary>
@@ -261,11 +260,11 @@ public class LoupeTests
     [InlineData(160)]
     [InlineData(150)]
     [InlineData(200)]
-    public void CreateRequest_拡大率は切り出しサイズの切り上げに影響されない(int pixelSize)
+    public void ResolveGeometry_拡大率は切り出しサイズの切り上げに影響されない(int pixelSize)
     {
         var loupe = new Loupe(new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
 
-        Assert.Equal(4, loupe.CreateRequest(pixelSize).ZoomLevel);
+        Assert.Equal(4, loupe.ResolveGeometry(pixelSize).ZoomLevel);
     }
 
     /// <summary>拡大率が DPI スケーリング係数に依存しないことを検証する。</summary>
@@ -278,21 +277,21 @@ public class LoupeTests
     [InlineData(1.0)]
     [InlineData(1.25)]
     [InlineData(2.0)]
-    public void CreateRequest_拡大率はDPIスケーリングに依存しない(double dipToDeviceScaling)
+    public void ResolveGeometry_拡大率はDPIスケーリングに依存しない(double dipToDeviceScaling)
     {
         var loupe = new Loupe(new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
         var pixelSize = DpiScaler.ScaleToPixel(160, dipToDeviceScaling);
 
-        Assert.Equal(4, loupe.CreateRequest(pixelSize).ZoomLevel);
+        Assert.Equal(4, loupe.ResolveGeometry(pixelSize).ZoomLevel);
     }
 
-    /// <summary>表示レイアウト・描画入力・通知の解決がヒープを確保しないことを検証する。</summary>
+    /// <summary>表示レイアウト・描画の幾何の解決がヒープを確保しないことを検証する。</summary>
     /// <remarks>
-    /// 描画のたび（マウス移動・スクロール）に呼ばれるため、層の一覧を共有し値型だけで組み立てる。<br/>
+    /// 描画のたび（マウス移動・スクロール）に呼ばれるため、値型だけで組み立てる。<br/>
     /// 計測は <see cref="GC.GetAllocatedBytesForCurrentThread"/> で行う。
     /// </remarks>
     [Fact]
-    public void レイアウトと描画入力の解決はヒープを確保しない()
+    public void レイアウトと描画の幾何の解決はヒープを確保しない()
     {
         var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
         loupe.SetCoordinateTransform(CreateDoublingPort());
@@ -300,7 +299,7 @@ public class LoupeTests
         for (var i = 0; i < 100; i++)
         {
             loupe.ResolveLayout(ParentSize);
-            loupe.CreateRequest(160);
+            loupe.ResolveGeometry(160);
         }
 
         GC.Collect();
@@ -308,11 +307,11 @@ public class LoupeTests
         for (var i = 0; i < 1000; i++)
         {
             loupe.ResolveLayout(ParentSize);
-            loupe.CreateRequest(160);
+            loupe.ResolveGeometry(160);
         }
 
         var perCall = (GC.GetAllocatedBytesForCurrentThread() - before) / 1000.0;
-        Assert.True(perCall <= 16, $"レイアウトと描画入力 1 回の確保が {perCall} バイト（16 バイト以下を期待）");
+        Assert.True(perCall <= 16, $"レイアウトと描画の幾何 1 回の確保が {perCall} バイト（16 バイト以下を期待）");
     }
 
     // ====================================================================

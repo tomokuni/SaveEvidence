@@ -46,7 +46,7 @@ public sealed record FadeMaskDragRectOptions
 
     /// <summary>ルーペの設定を取得する（拡大率・表示サイズ・外観）。</summary>
     /// <value>ルーペの設定。既定は <see cref="LoupeOptions.Default"/>。</value>
-    /// <remarks>市松模様の下地色は描画にだけ必要な設定のため本値には含めず、描画の設定（<c>LoupePaint</c>）へホストが与える（背後の要素を透かすかどうかもホストが決める）。</remarks>
+    /// <remarks>市松模様の下地色は描画にだけ必要な設定のため本値には含めず、描画の設定（<c>LoupeAppearance</c>）へホストが与える（背後の要素を透かすかどうかもホストが決める）。</remarks>
     public LoupeOptions Loupe { get; init; } = LoupeOptions.Default;
 
     /// <summary>ルーペ画像上の選択矩形破線の色 A（描画開始色）を取得する。</summary>

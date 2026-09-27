@@ -17,19 +17,18 @@ namespace EsUtil.Feature.LoupeCore;
 /// <b>適用パターン</b>: Facade（表示レイアウトの解決・描画入力の生成・通知内容の解決・設定を 1 つの窓口へ集約する）。<br/>
 /// <br/>
 /// <b>責務</b>: ルーペの「状態（設定・環境値・拡大中心・表示位置のオフセット）」を保持し、<br/>
-/// 「表示レイアウトの解決」「描画 1 フレーム分の入力の生成」「描画完了通知の内容の解決」を提供する。<br/>
+/// 「表示レイアウトの解決」「描画 1 フレーム分の幾何の解決」を提供する。<br/>
 /// UI 層とホストは本クラスだけを参照する（コアの計算クラスを個別に呼び出さない）。<br/>
 /// <br/>
 /// <b>本クラスが単一所有するもの</b>:<br/>
 /// - 表示サイズの決定（要求サイズを親領域の最小辺へクランプする規則と、その唯一の書き込み元）<br/>
 /// - 表示位置の決定（拡大中心 ＋ オフセット ＋ 親領域内へのクランプ）<br/>
-/// - 描画入力（<see cref="LoupeRenderRequest"/>）の組み立て（DIP → 物理ピクセルの換算と描画先へのクランプ）<br/>
-/// - 描画完了通知の内容（切り出し領域・スケール）の解決<br/>
+/// - 描画の幾何（<see cref="LoupeGeometry"/>）の解決（DIP → 物理ピクセルの換算と描画先へのクランプ）<br/>
 /// <br/>
 /// <b>描画は本コアの関心事ではない</b>: 本コアは描画 API も描画面も知らない<br/>
-/// （<see cref="LoupeDrawContent"/> とその <see cref="LoupeDrawContent.Layers"/> というデータを返すだけである）。<br/>
-/// 描画は UI 層が行い、層の順序に従った描画手順は UI 側の共有層（<c>LoupeControl.UIBase</c> の <c>LoupeRendererBase</c>）が単一所有する。<br/>
-/// <br/>
+/// （<see cref="LoupeGeometry"/> という幾何のデータを返すだけである）。<br/>
+/// 装飾（十字線・枠線）・文言・表示可否・描画順は描画層（<c>LoupeControl.UIBase</c> の <c>LoupePresenter</c>）が解決し、<br/>
+/// 描画は UI 層が行う（描画 API の抽象化はしない）。<br/>/// <br/>
 /// <b>UI 層の責務</b>: 拡大元画像の解決（UI ごとに型が異なる）、描画の実行（ビットマップ合成・キャンバス描画）、<br/>
 /// 再描画のバッチ化（UI のディスパッチャー）、公開プロパティ・公開イベントへの写像。<br/>
 /// <br/>
@@ -185,56 +184,28 @@ public sealed partial class Loupe
     }
 
     // ====================================================================
-    // 描画内容（1 フレーム分）
+    // 描画の幾何（1 フレーム分）
     // ====================================================================
 
-    /// <summary>現在の状態から描画 1 フレーム分の入力を生成する。</summary>
+    /// <summary>現在の状態から描画 1 フレーム分の幾何を解決する。</summary>
     /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP。通常は <see cref="ResolveLayout"/> の結果）。</param>
     /// <param name="availableSize">描画先の領域サイズ（物理ピクセル）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
-    /// <returns>描画入力（物理ピクセルサイズ・拡大率・外観・スケーリングを解決済み）。</returns>
+    /// <returns>描画の幾何（描画面・拡大画像の切り出しと描画の矩形・切り出し領域の一辺を解決済み）。</returns>
     /// <remarks>
     /// 表示サイズは呼び出し側が決めて渡す（親領域へのクランプは <see cref="ResolveLayout"/> が、<br/>
     /// 実際の描画面からの導出は描画先を知る UI 層が担う）。本クラスは親領域のサイズを保持しない<br/>
     /// （保持すると「クランプの基準」が暗黙の状態になり、値をいつ解決したかに依存する）。<br/>
-    /// DIP → 物理ピクセルの換算と描画先の領域へのクランプは <see cref="LoupeRenderRequest.Create"/> が単一所有する。<br/>
-    /// 描画と描画完了通知が同じ値を使うため、UI 層は本メソッドの結果を両方へ渡す。
+    /// <b>本メソッドがコアの公開する描画の唯一の入口である</b>: 装飾（十字線・枠線）・文言・表示可否・描画順は<br/>
+    /// 描画の都合として描画層（<c>LoupeControl.UIBase</c>）が解決するため、コアは幾何だけを返す。<br/>
+    /// DIP → 物理ピクセルの換算と描画先の領域へのクランプは本メソッドが単一所有する。
     /// </remarks>
-    public LoupeRenderRequest CreateRequest(double displaySize, EsSize? availableSize = null)
-        => LoupeRenderRequest.Create(CenterPoint, displaySize, DipToDeviceScaling, Options, availableSize);
-
-    /// <summary>描画入力から 1 フレーム分の描画内容を解決する。</summary>
-    /// <param name="request">描画入力（描画のたびに決まる値。物理ピクセルサイズ・寸法の換算結果を含む）。</param>
-    /// <returns>描画内容（描画面・矩形・拡大画像の幾何・テキスト配置・層の順序）。</returns>
-    /// <remarks>
-    /// 処理フロー:<br/>
-    /// 1. 描画面の全体を物理ピクセルサイズから決める。<br/>
-    /// 2. 十字線と枠線の矩形を、物理ピクセルサイズと換算済みの太さから導出する。<br/>
-    /// 3. 拡大画像の切り出しと描画の矩形を解決する（`LoupeRenderRequest` の `MagnifiedImage`）。<br/>
-    /// 4. テキスト（中心座標ラベルの文言と基準点）を解決する。<br/>
-    /// 5. 描く層の一覧（テキストの有無で末尾が変わる）を添えて描画内容を返す。<br/>
-    /// <br/>
-    /// <b>画像外は描画層が単一所有する</b>: 画像の範囲外（切り出しの透明パディングを含む）の見た目は、<br/>
-    /// 描画層が描画面全体を塗るペーストボード層（<see cref="LoupeDrawLayer.Pasteboard"/>）が与える（本コアは寸法と矩形だけを返す）。<br/>
-    /// 色はコアが持たないため本メソッドは扱わない（描くかどうかは設定の明示フラグが決め、<br/>
-    /// 非表示の項目は空の描画内容として返す）。<br/>
-    /// 拡大画像は切り出しと描画の矩形（<see cref="LoupeMagnifiedImage"/>）として本値に含める<br/>
-    /// （切り出し元の画像そのものは型が UI に依存するため、描画の起動時に引数で受け取る）。
-    /// </remarks>
-    public LoupeDrawContent ResolveContent(in LoupeRenderRequest request)
+    public LoupeGeometry ResolveGeometry(double displaySize, EsSize? availableSize = null)
     {
-        var surface = request.SurfaceBounds;
-        var magnifiedImage = request.MagnifiedImage;
-        var crosshairRects = ResolveCrosshairRects(request);
-        var borderRects = ResolveBorderRects(request);
-        var coordLabelText = ResolveCoordLabelText(request);
+        var zoomLevel = Options.ZoomLevel;
+        var pixelSize = (int)availableSize.GetValueOrDefault().ClampToArea(DpiScaler.ScaleToPixel(displaySize, DipToDeviceScaling));
 
-        return new LoupeDrawContent(
-            surface,
-            magnifiedImage,
-            crosshairRects,
-            borderRects,
-            coordLabelText,
-            ResolveLayers(magnifiedImage, crosshairRects, borderRects, coordLabelText));
+        return new LoupeGeometry(
+            CenterPoint, displaySize, pixelSize, DipToDeviceScaling, zoomLevel, LoupeDivMath.CeilDiv(pixelSize, zoomLevel));
     }
 
     // ====================================================================

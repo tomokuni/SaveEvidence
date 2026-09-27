@@ -31,7 +31,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 - **配線の内包**: `SelectionChanged` → 暗転マスク同期、`LoupePositionMoved` → ルーペ中心更新、確定・キャンセル・ズーム要求のホスト通知を内部で完結
 - **モード切替**: `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` で描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替
 - **設定の一括適用**: `Options` プロパティ（1 つの設定値）で選択矩形 / 暗転マスク / ルーペ / 選択矩形破線を 1 回で適用（既定値・項目の対応・枠線の太さの共用規則はコアが単一所有）
-- **色の一括適用**: `MarqueePaint` / `LoupePaint` プロパティ（描画にだけ必要な色の単一値）で内包する選択矩形・ルーペの色を適用（コアの設定値は色を持たない）
+- **色の一括適用**: `MarqueePaint` / `LoupeAppearance` プロパティ（描画にだけ必要な色の単一値）で内包する選択矩形・ルーペの色を適用（コアの設定値は色を持たない）
 - **座標変換ポートの一括分配**: `SetCoordinateTransform(ICoordTransform?)` で 2 コントロールへ同一ポートを分配
 - **ビューポート変化の追従**: `NotifyViewportChanged()` でパン・ズーム等のビューポート変化を通知（Marquee の再描画 + ルーペ位置再計算。ScrollViewer 連携のスクロールも同じ経路で処理）
 - **選択状態の外部設定**: `SetSelection` / `ClearSelection` で選択矩形を設定（選択状態の単一のソースは `MarqueeControl` のセッションであり、本コントロールはその読み取りと委譲のみを行う。ルーペの選択矩形破線は `LoupeRendered` イベント経由で描画）
@@ -103,7 +103,7 @@ SelectionOverlay.MarqueePaint = MarqueePaint.Default with
 {
     OverlayColor = System.Drawing.Color.FromArgb(77, 0, 0, 0), // 黒 30%
 };
-SelectionOverlay.LoupePaint = LoupePaint.Default with { BorderColor = System.Drawing.Color.Red };
+SelectionOverlay.LoupeAppearance = LoupeAppearance.Default with { BorderColor = System.Drawing.Color.Red };
 
 // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
 SelectionOverlay.DomainToDipScaling = 1.0;
