@@ -288,12 +288,12 @@ public partial class MainWindow : Window
     /// <remarks>
     /// サイズラベルとカーソル座標ラベルはコントロールがテキスト要素として配置するため、本ハンドラは何もしない。<br/>
     /// ホスト固有の付加情報（操作ラベル等）を描く場合は本ハンドラで <see cref="MarqueeRenderedEventArgs.Content"/> の<br/>
-    /// <see cref="MarqueeDrawPlan.HoleRect"/> を基準に描く。
+    /// <see cref="MarqueeDrawPlan.HoleRect"/> を基準に描く。<br/>
+    /// ログは描画パスの外（ディスパッチャー）へ投げる: 本ハンドラは描画中に呼ばれるため、<br/>
+    /// ここで表示中の要素（ログの一覧）を変更すると Avalonia が描画中の視覚ツリー変更として例外にする。
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
-    {
-        _vm.AddLog($"[Event] Rendered: HasText={e.Content.HasText}, Layers={e.Content.Layers.Count}");
-    }
+        => Dispatcher.UIThread.Post(() => _vm.AddLog($"[Event] Rendered: HasText={e.Content.HasText}, Layers={e.Content.Layers.Count}"));
 
     /// <summary>選択面の押下時に MarqueeControl へフォーカスを渡す。</summary>
     /// <param name="sender">イベント送信元。</param>

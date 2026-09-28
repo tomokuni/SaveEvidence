@@ -116,7 +116,7 @@ public sealed class MainViewModel
 
     public bool IsLoupeVisible { get; set; } = true;
 
-    // 設定（表示サイズ・拡大率・寸法）はコアの値 1 つで公開する（色は Paint プロパティ）
+    // 設定（基本サイズ・拡大率）はコアの値 1 つで公開する（外観は Appearance プロパティ）
     public LoupeOptions Options { get; set; } =
         LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 };
 
@@ -213,7 +213,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 
 ## 12. プロジェクト構成
 
-本コントロールは、UI フレームワーク非依存のロジックと寸法を `Feature.Loupe.Core` へ、描画の手順と色を `Feature.Loupe.Presenter` へ分離しています（マルチ UI 対応）。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
+本コントロールは、UI フレームワーク非依存のロジックと設定を `Feature.Loupe.Core` へ、描画計画と外観を `Feature.Loupe.Presenter` へ分離しています（マルチ UI 対応）。層構成（Core / Presenter / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 LoupeControl.AvaloniaUI/
@@ -230,7 +230,7 @@ LoupeControl.AvaloniaUI/
 └── SPEC_System.md          # システム仕様書
 
 ../Feature.Loupe.Core/       # UI フレームワーク非依存の設定・計算・寸法・判断・ログ定義（設定の単一値 / 寸法 / 数値補正 / 表示位置・サイズ / 切り出し領域と可否 / ラベル配置 / 区画数の切り上げ / 描画完了時の表示情報）
-../Feature.Loupe.Presenter/     # 描画入力 → 描画面の写像（LoupePresenter / LoupeAppearance（色）/ LoupeLabelPlan）と再描画のスケジューリング（LoupeRenderCoordinator）
+../Feature.Loupe.Presenter/     # 描画計画と外観の単一所有（LoupePresenter / LoupeAppearance / LoupeDrawPlan / LoupeLabelPlan）
 ```
 
 ## 13. ライセンス

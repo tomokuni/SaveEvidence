@@ -1,12 +1,12 @@
 # LoupeControl.MewUI
 
-`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`Feature.Loupe.Core`）と描画層（`Feature.Loupe.Presenter`）** を使い、描画（`SKCanvas`）と入力の受付のみを **MewUI** で実装したルーペ（拡大鏡）コントロールです。
+`LoupeControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`Feature.Loupe.Core`）と提示層（`Feature.Loupe.Presenter`）** を使い、描画（`SKCanvas`）と入力の受付のみを **MewUI** で実装したルーペ（拡大鏡）コントロールです。
 
 ## 目的
 
-ルーペのロジック（数値の安全域補正・切り出し領域の計算・装飾矩形の計算）は `Feature.Loupe.Core` が単一所有し、描画の手順と色は UI 非依存の描画層（`Feature.Loupe.Presenter` の `LoupePresenter` / `LoupeAppearance`）が単一所有します。
-本プロジェクトはその計算結果を`SKCanvas`（Platform.Core）経由で **Skia のキャンバスへ描画させるだけ** の層です。
-そのため Avalonia 版と**同じ設定・同じ見た目**になり、設定ファイル（`%LOCALAPPDATA%\SaveEvidence\settings.json`）も両 UI で共用できます。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
+ルーペのロジック（数値の安全域補正・切り出し領域の計算・表示レイアウト）は `Feature.Loupe.Core` が単一所有し、描画計画（層の順序・装飾の矩形・ラベルの文言と配置）と外観（色・枠線の太さ・表示可否）は UI 非依存の提示層（`Feature.Loupe.Presenter` の `LoupePresenter` / `LoupeAppearance`）が単一所有します。
+本プロジェクトはその計画を `SKCanvas` へ **Skia のキャンバスへ描画させるだけ** の層です。
+そのため Avalonia 版と**同じ設定・同じ見た目**になり、設定ファイル（`%LOCALAPPDATA%\SaveEvidence\settings.json`）も両 UI で共用できます。層構成（Core / Presenter / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ## 特徴
 
@@ -41,19 +41,19 @@ var loupe = new LoupeControl
 {
     Source = esBitmap,                       // 拡大元の 100% 画像（コアの EsBitmap）
     CenterPoint = new EsPoint(320, 240),     // 拡大中心（元画像ピクセル座標）
-    // 寸法はコアの Options（with 式で部分変更する）
+    // 寸法（基本サイズ・拡大率）はコアの Options（with 式で部分変更する）
     Options = LoupeOptions.Default with
     {
         RequestedSize = 160,                 // 一辺のサイズ（DIP）
         ZoomLevel = 4,                       // 拡大率
-        BorderThickness = 2,                 // 枠線の太さ（DIP）
     },
-    // 色は描画の設定（LoupeAppearance）で指定する
-    Paint = LoupeAppearance.Default with
+    // 外観（色・枠線の太さ・表示可否）は提示層の Appearance で指定する
+    Appearance = LoupeAppearance.Default with
     {
+        BorderThickness = 2,                 // 枠線の太さ（DIP）
         CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
         PasteboardColor = DrawingColor.FromArgb(255, 53, 53, 53),
-                BorderColor = DrawingColor.FromArgb(255, 0, 0, 0),
+        BorderColor = DrawingColor.FromArgb(255, 0, 0, 0),
     },
 };
 ```
@@ -77,8 +77,8 @@ if (layout.Position is { } position)
 | --- | --- | --- | --- |
 | `Source` | `EsBitmap?` | `null` | 拡大元の 100% 画像。null の場合は画像外の色のみ |
 | `CenterPoint` | `EsPoint?` | `null` | 拡大中心（元画像ピクセル座標）。null の場合は画像外の色のみ |
-| `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する。数値項目はコアの型が生成時に安全域へ補正する |
-| `Paint` | `LoupeAppearance` | `LoupeAppearance.Default` | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）。`with` 式で部分変更する。色はコアの計算に入らない |
+| `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（基本サイズ・拡大率）。`with` 式で部分変更する。数値項目はコアの型が生成時に安全域へ補正する |
+| `Appearance` | `LoupeAppearance` | `LoupeAppearance.Default` | 外観（枠線の太さ・表示可否（十字線・枠線・ラベル））と描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）・ラベルの体裁。`with` 式で部分変更する。外観はコアの計算に入らない |
 | `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。0.1〜8.0 に補正（非有限は既定値）。DPI 変更で自動更新 |
 | `Log` | `ILogger` | `NullLogger` | 設定変更ログと描画例外の出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
 
@@ -88,15 +88,14 @@ if (layout.Position is { } position)
 | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。1〜4096 に補正 |
 | `ZoomLevel` | `int` | 4 | 拡大率。1〜64 に補正 |
-| `BorderThickness` | `int` | 2 | 枠線の太さ（DIP）。1〜64 に補正 |
-| `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
-| `ShowCrosshair` | `bool` | `true` | 十字線の表示可否 |
-| `ShowBorder` | `bool` | `true` | 枠線の表示可否 |
 
 `Appearance`（`LoupeAppearance`。`EsUtil.Feature.Loupe.Presenter`）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
+| `BorderThickness` | `int` | 2 | 枠線の太さ（DIP）。1〜64 に補正 |
+| `ShowCrosshair` / `ShowBorder` | `bool` | `true` | 十字線・枠線の表示可否（透明色を「描かない」の代用にしない） |
+| `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
 | `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色 |
 | `BorderColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 枠線の色 |
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |
@@ -106,7 +105,7 @@ if (layout.Position is { } position)
 
 `Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
 
-数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、設定値の変更ログはコアの `LoupeLogMessage` が単一所有し、拡大元画像の変更と描画の例外のログは `Feature.Loupe.Presenter` の `LoupeUiLogMessage` が単一所有します）。設定（`Options`）と寸法（`Options`）の数値項目はコアの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `DipToDeviceScaling` のみ `coerce` を登録します）。
+数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、設定値の変更ログはコアの `LoupeLogMessage` が単一所有し、拡大元画像の変更と描画の例外のログは `Feature.Loupe.Presenter` の `LoupeUiLogMessage` が単一所有します）。設定（`Options`）と外観（`Appearance`）の数値項目はそれぞれの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `DipToDeviceScaling` のみ `coerce` を登録します）。
 
 ## イベント
 
@@ -136,8 +135,9 @@ src/LoupeControl.MewUI/
 ├── SPEC_System.md           # システム仕様書
 ├── src/
 │   ├── LoupeControl.MewUI.csproj   # net10.0 / MewUI 0.21.1 固定
-│   ├── LoupeControl.cs             # Panel 派生のコントロール（子の図形キャンバスとラベル要素を配置する。描画は描画層へ委譲）
+│   ├── LoupeControl.cs             # Panel 派生のコントロール（描画は LoupeSkiaPainter へ委譲する）
 │   ├── LoupeRenderedEventArgs.cs   # 描画完了の通知（キャンバスと表示情報）
+│   ├── LoupeSkiaPainter.cs         # 描画計画（LoupeDrawPlan）を SKCanvas へ写す描画実装
 └── tests/
     ├── LoupeControl.MewUI.Tests.csproj
     ├── TestHelper.cs                   # テスト共通（描画先・画像生成）

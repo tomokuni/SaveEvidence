@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loupe="clr-namespace:EsUtil.SaveEvidence.Loupe.AvaloniaUI;assembly=LoupeControl.AvaloniaUI"
+        xmlns:sample="clr-namespace:EsUtil.SaveEvidence.Loupe.Sample.Presentation"
         xmlns:vm="clr-namespace:EsUtil.SaveEvidence.Loupe.Sample.ViewModels"
         x:Class="EsUtil.SaveEvidence.Loupe.Sample.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -18,6 +19,18 @@
 
                     <TextBlock Text="LoupeControl サンプル" FontSize="16" FontWeight="Bold"/>
                     <TextBlock Text="テスト画像上をマウスで移動すると拡大表示されます。" FontSize="12" TextWrapping="Wrap"/>
+
+                    <Separator/>
+
+                    <!-- 拡張例: 既定の提示層（LoupePresenter）を派生して外観と装飾を差し替える。
+                         コントロールを通さず、公開 API だけで提示層と描画実装を組み合わせられることを示す -->
+                    <TextBlock Text="拡張例（派生 Presenter）" FontWeight="Bold"/>
+                    <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap"
+                               Text="GridLoupePresenter が解決した描画計画（中心の格子線 + 四隅の鉤）を LoupeContextPainter で描いた見本です。Core の公開 API だけで作れます。"/>
+                    <Border BorderBrush="#CCCCCC" BorderThickness="1" Background="#202020"
+                            Height="150" HorizontalAlignment="Left">
+                        <sample:GridLoupePreview/>
+                    </Border>
 
                     <Separator/>
 

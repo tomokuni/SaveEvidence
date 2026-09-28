@@ -102,10 +102,10 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `SizeLabelVisible` / `SizeLabelColor` / `TextBackgroundColor` / `SizeLabelFontSize` | サイズラベル（表示可否・フォントサイズ・色は提示層の `MarqueeAppearance` へ反映。**文言はホストが単一所有する**） |
 | `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル。`FadeMaskDragRectLabelOptions`（ホストが描く付加情報ラベルの外観）へ反映） |
 | `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | 操作ラベル（サブライン。`FadeMaskDragRectLabelOptions` へ反映） |
-| `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` / `LoupeCrossColor` / `LoupeFrameColor` / `LoupeFrameThickness` | ルーペ（サイズ・倍率・オフセットは `LoupeOptions`、枠線の太さは `LoupeOptions.BorderThickness`、色は描画層の `LoupePaint` へ反映） |
-| `LoupePasteboardColor` | ルーペの画像外（ペーストボード）の色（描画層の `LoupePaint.PasteboardColor` へ反映） |
+| `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` / `LoupeCrossColor` / `LoupeFrameColor` / `LoupeFrameThickness` | ルーペ（サイズ・倍率・オフセットは `LoupeOptions`、枠線の太さは `LoupeAppearance.BorderThickness`、色は外観 `LoupeAppearance` へ反映） |
+| `LoupePasteboardColor` | ルーペの画像外（ペーストボード）の色（外観 `LoupeAppearance.PasteboardColor` へ反映） |
 | `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | ルーペ画像上の選択矩形破線（選択矩形破線の色（`FadeMaskDragRectOptions`）へ反映） |
-| `LoupeShowCoordLabel` / `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | ルーペの中心座標ラベル（表示可否は `LoupeOptions`、フォントサイズと色は描画層の `LoupePaint` へ反映） |
+| `LoupeShowCoordLabel` / `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | ルーペの中心座標ラベル（表示可否・フォントサイズ・色は外観 `LoupeAppearance` へ反映） |
 
 ### 4.1 適用先
 

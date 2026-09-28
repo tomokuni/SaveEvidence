@@ -180,12 +180,12 @@ flowchart TB
 
 - **分類**: ファサードクラス（`public sealed class`・コア提供。適用パターン: Facade）
 - **責務**: Marquee の**操作の唯一の窓口**。UI 層とホストは本型だけを参照する
-  - 操作の提供: `Press` / `Move` / `Release` / `KeyDown` / `EndNudge` / `SetSelection` / `ResetSelection` / `RequestConfirm` / `RequestCancel` / `ResolveContent`
+  - 操作の提供: `Press` / `Move` / `Release` / `KeyDown` / `EndNudge` / `SetSelection` / `ResetSelection` / `RequestConfirm` / `RequestCancel` / `ResolveDrawPlan`
   - 設定・環境値の保持: `Options` / `Appearance` / `DomainToDipScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` / `Log` / `SetCoordinateTransform`
   - 効果の適用: `IMarqueeEffects`（UI が実装）へフォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換を要求する（適用順の単一所有）
   - ホイールの解釈（`MarqueeWheelInterpreter.Handle`）: Ctrl = ズーム要求 / それ以外 = スクロール（連携先があれば適用、無ければ `ScrollRequested`）とログを組み込みの層へ委ね、要求を公開イベントへ転送する
   - 通知: `Notified`（状態機械の通知をそのまま転送する）
-- **内部実装**: 状態機械 `MarqueeSession`（`internal`）を保持・利用する（描画内容の解決は同じ型の `Marquee.DrawContent.cs`（partial）の公開メソッド `CreateRequest` / `ResolveContent` として実装する）
+- **内部実装**: 状態機械 `MarqueeSession`（`internal`）を保持・利用する（幾何の解決は同じ型の `Marquee.Geometry.cs`（partial）の公開メソッド `CreateRequest` / `ResolveGeometry` として実装する）
 - **可視性**: public（ファサードのみ。内部の状態機械は `internal` で隠す）
 - **備考**: 設定・効果の適用・通知の転送・描画内容の解決を 1 型に集約したため、UI 層は自 UI の公開プロパティ・公開イベント・描画 API へつなぐだけになる（ホイールの解釈は組み込みの層（`Feature.Marquee.Presenter`）が単一所有する）
 

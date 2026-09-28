@@ -20,10 +20,9 @@
 | --- | --- | --- | --- | --- |
 | `Source` | `EsBitmap?` | `null` | — | 拡大元の 100% 画像。null の場合は画像外の色のみ |
 | `CenterPoint` | `EsPoint?` | `null` | — | 拡大中心（元画像ピクセル座標）。null の場合は画像外の色のみ |
-| `Options` | `LoupeOptions` | `LoupeOptions.Default` | 下表のとおり | 設定（表示サイズ・拡大率・寸法）。`with` 式で部分変更する |
-| `Paint` | `LoupeAppearance` | `LoupeAppearance.Default` | — | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）。`with` 式で部分変更する。色はコアの計算に入らない |
+| `Options` | `LoupeOptions` | `LoupeOptions.Default` | 下表のとおり | 設定（基本サイズ・拡大率）。`with` 式で部分変更する |
+| `Appearance` | `LoupeAppearance` | `LoupeAppearance.Default` | 下表のとおり | 外観（枠線の太さ・表示可否）と描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）・ラベルの体裁。`with` 式で部分変更する。外観はコアの計算に入らない |
 | `DipToDeviceScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。設定には含めない） |
-| `Renderer` | `LoupePresenter` | `Paint` の色を保持する `LoupeSkiaPainter` | — | 描画の実装（**描画の差し替え**。null 不可）。設定すると再生成とラベル要素の再配置を要求する |
 
 `Options`（コアの `LoupeOptions`。UI 非依存の値）の項目:
 
@@ -31,15 +30,14 @@
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | 160 | 1〜4096 | 一辺のサイズ（DIP） |
 | `ZoomLevel` | `int` | 4 | 1〜64 | 拡大率（偶数推奨） |
-| `BorderThickness` | `int` | 2 | 1〜64 | 枠線の太さ（DIP） |
-| `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
-| `ShowCrosshair` | `bool` | `true` | — | 十字線の表示可否 |
-| `ShowBorder` | `bool` | `true` | — | 枠線の表示可否 |
 
 `Appearance`（`LoupeAppearance`。色は UI 非依存の `System.Drawing.Color`）の項目:
 
 | 項目 | 型 | 既定値 | 安全域（範囲外は自動補正） | 説明 |
 | --- | --- | --- | --- | --- |
+| `BorderThickness` | `int` | 2 | 1〜64 | 枠線の太さ（DIP） |
+| `ShowCrosshair` / `ShowBorder` | `bool` | `true` | — | 十字線・枠線の表示可否（透明色を「描かない」の代用にしない） |
+| `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
 | `PasteboardColor` | `DrawingColor` | 中性グレー（`#FF535353`） | — | 画像外（ペーストボード）の色。拡大画像より先に表面全体へ塗るため、画像の無い部分が本色の無地になる |
 | `CrossColor` | `DrawingColor` | 赤 40%（`#66FF0000`） | — | 十字線の色（不透明度はアルファ） |
 | `BorderColor` | `DrawingColor` | LightGray | — | 枠線の色 |
@@ -48,19 +46,19 @@
 | `CoordLabelFontSize` | `double` | 12.0 | 6〜48（非有限は既定値） | 座標ラベルのフォントサイズ（DIP） |
 | `CoordLabelCornerRadius` | `int` | 2 | 0〜64 | 座標ラベルの背景の角丸半径（DIP。0 は角丸なし） |
 
-`Color` は `Aprillz.MewUI.Color`、`DrawingColor` は `System.Drawing.Color`（`Paint` の色）です。
+`Color` は `Aprillz.MewUI.Color`、`DrawingColor` は `System.Drawing.Color`（`Appearance` の色）です。
 
 ## 描画仕様
 
-**描く層とその順序はコアが単一所有します**（`LoupeDrawLayer`）。コアが返す層の順序は次のとおりです（後から描いたものが上に重なります）。
+**描く層とその順序は提示層が単一所有します**（`LoupeDrawLayer`）。描画計画（`LoupeDrawPlan`）が層の順序を解決し、描画実装（`LoupeSkiaPainter`）はその順に写すだけです。層の順序は次のとおりです（後から描いたものが上に重なります）。
 
 | 順序 | 要素 | 備考 |
 | --- | --- | --- |
 | 1 | 拡大画像 | `Source` と `CenterPoint` がある場合のみ。切り出し領域の外は透明（画像外の色が見える） |
 | 4 | 十字線 | 中央の縦横 2 本（幅は拡大率と同じ物理ピクセル） |
-| 5 | 枠線 | 四辺（`Options.BorderThickness` の太さ） |
+| 5 | 枠線 | 四辺（`Appearance.BorderThickness` の太さ） |
 
-中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（上記の後ろに重なります。文言・表示可否・配置はコア、実寸測定は `SkiaText.Measure`、描画順はコアの `LoupeDrawLayer` が単一所有します）。子要素は親より後に描かれるため、ラベルは常に最上位になります。
+中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（上記の後ろに重なります。文言は提示層の `LoupeLabelTexts`、配置は同層の `LoupeLabelPlan`、体裁は外観（`LoupeAppearance`）、実寸測定は `SkiaText.Measure` が単一所有します）。子要素は親より後に描かれるため、ラベルは常に最上位になります。
 
 ### サイズの決定
 
@@ -73,7 +71,7 @@
 
 ### 座標ラベルの表示条件
 
-`ShowCoordLabel` が `true` かつ `CenterPoint` が設定済みの場合のみ表示します（判断はコアの `LoupeOptions.ShouldShowCoordLabel` が単一所有する）。ラベルの色は `Paint`（`CoordLabelColor` / `CoordLabelBackgroundColor`）が単一所有します。
+`Appearance.ShowCoordLabel` が `true` かつ `CenterPoint` が設定済みの場合のみ表示します（判断は外観の `LoupeAppearance.ShouldShowCoordLabel` が単一所有する）。ラベルの色は外観（`Appearance` の `CoordLabelColor` / `CoordLabelBackgroundColor`）が単一所有します。
 
 ## レイアウト
 
@@ -94,14 +92,14 @@
 | `Source` が `null` | 画像外の色のみを描画する（例外にしない） |
 | `CenterPoint` が `null` | 画像外の色のみを描画する（例外にしない） |
 | `Source` が破棄済み | 画像外の色のみを描画する（例外にしない） |
-| 色のアルファが 0 | 描画の可否には使わない（描画の可否はコアの明示フラグ（`LoupeOptions.Show*`）が単一所有し、非表示の項目は空の描画計画として渡る）。アルファ 0 の色は描画結果として見えなくなるだけである |
+| 色のアルファが 0 | 描画の可否には使わない（表示可否は外観（`LoupeAppearance`）の明示フラグが単一所有し、非表示の項目は空の描画計画として渡る）。アルファ 0 の色は描画結果として見えなくなるだけである |
 | 安全域外の数値 | 安全域へ補正する（例外にしない） |
 
 ## 描画完了イベント
 
 `Rendered` イベントは、ルーペを描画した直後（同一フレーム内）に引数 `LoupeRenderedEventArgs` で通知します。ホストはハンドラ内で描画先キャンバスへ追加描画（選択矩形の破線等のオーバーレイ）を行えます。
 
-中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言・寸法・表示可否はコア（`LoupeTextPlacement`）が、実寸からの配置は描画層（`Feature.Loupe.Presenter` の `LoupeLabelPlan`）が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
+中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言は提示層の `LoupeLabelTexts`、表示可否と体裁は外観（`LoupeAppearance`）、実寸からの配置は同層の `LoupeLabelPlan` が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |

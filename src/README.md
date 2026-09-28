@@ -95,7 +95,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 | `FadeMaskDragRectControl` | あり | あり（値の解決 ＋ 付加情報ラベルの配置。内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI |
 | `ColorPickerControl` | なし（UI のみ） | なし | AvaloniaUI |
 
-`LoupeControl` の組み込み規則（`LoupeRenderCoordinator`）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。同じ必要が生じた時点で注入できます。
+`LoupeControl` の組み込み規則（`LoupeRenderCoordinator`。Avalonia 版が所有する）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。同じ必要が生じた時点で注入できます。
 
 `CaptureSessionControl.UIBase` は**描画手順を持たない例外的な Presenter** です（設定 → 色の写像だけを持ちます）。写像元がセッションの設定型（`CaptureSettings`）、写像先が外観（`MarqueeAppearance` / `LoupeAppearance`）という**2 つの層にまたがる**ため、コアにも（Core → Presenter の逆流になる）再利用ライブラリにも置けません。両 UI のホストが同じ写像を使うことを保証するために本層を置いています（詳細は [`CaptureSessionControl.UIBase`](CaptureSessionControl.UIBase/README.md)）。
 

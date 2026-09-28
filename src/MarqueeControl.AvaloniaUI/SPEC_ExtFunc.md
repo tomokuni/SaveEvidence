@@ -259,6 +259,8 @@ control.ResetSelection();           // 状態と nudge の初期化
 marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.White.ToDrawingColor() };   // 外観の差し替え
 ```
 
+**見た目の拡張**: 外観（色・枠線の太さ・表示可否）で足りない場合は、提示層（`EsUtil.Feature.Marquee.Presenter.MarqueePresenter`。`sealed` ではなく `ResolveDrawPlan` が `virtual`）を派生して描画計画（`MarqueeDrawPlan`）を差し替えられます。差し替えは値の置き換えだけで完結するため、描画実装（本 UI の `MarqueeContextPainter`）は変更不要です（例は `sample/Presentation/` の `GuideMarqueePresenter`）。
+
 ### 5.2 メソッド
 
 | メソッド | 説明 |

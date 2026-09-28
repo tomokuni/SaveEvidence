@@ -19,7 +19,6 @@
     - [5.3 ColorExtensions（C# 14 静的拡張メンバー）](#53-colorextensionsc-14-静的拡張メンバー)
     - [5.4 EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache](#54-esbitmapavaloniaextensions--esbitmapavaloniaimage--capacitylimitedcache)
     - [5.5 型一覧](#55-型一覧)
-    - [5.6 型一覧](#56-型一覧)
   - [6. 座標系](#6-座標系)
   - [7. 制約事項](#7-制約事項)
 

@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:marquee="clr-namespace:EsUtil.SaveEvidence.Marquee.AvaloniaUI;assembly=MarqueeControl.AvaloniaUI"
+        xmlns:sample="clr-namespace:EsUtil.SaveEvidence.Marquee.Sample.Presentation"
         xmlns:vm="clr-namespace:EsUtil.SaveEvidence.Marquee.Sample.ViewModels"
         x:Class="EsUtil.SaveEvidence.Marquee.Sample.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -30,6 +31,17 @@
                 BorderBrush="#DDDDDD" BorderThickness="0,0,1,0" Background="#FAFAFA">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Spacing="8">
+
+                    <!-- 拡張例: 既定の提示層（MarqueePresenter）を派生して外観と装飾を差し替える。
+                         コントロールを通さず、公開 API だけで提示層と描画実装を組み合わせられることを示す -->
+                    <TextBlock Text="拡張例（派生 Presenter）" FontSize="13" FontWeight="Bold"/>
+                    <TextBlock FontSize="10" Foreground="Gray" TextWrapping="Wrap"
+                               Text="GuideMarqueePresenter が解決した描画計画（破線枠 + 三分割ガイド）を MarqueeContextPainter で描いた見本です。Core の公開 API だけで作れます。"/>
+                    <Border BorderBrush="#CCCCCC" BorderThickness="1" Background="#202020" Height="170">
+                        <sample:GuideMarqueePreview/>
+                    </Border>
+
+                    <Separator/>
 
                     <TextBlock Text="コントロール設定" FontSize="13" FontWeight="Bold"/>
 

@@ -39,6 +39,8 @@ Avalonia 版と同一の挙動になります。
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。操作・情報ラベルの文言も同様にホストが与える。設定すると保持している描画内容を破棄して再描画を要求する |
 | `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新） |
 
+**見た目の拡張**: 外観（色・枠線の太さ・表示可否）で足りない場合は、提示層（`EsUtil.Feature.Marquee.Presenter.MarqueePresenter`。`sealed` ではなく `ResolveDrawPlan` が `virtual`）を派生して描画計画（`MarqueeDrawPlan`）を差し替えられます。差し替えは値の置き換えだけで完結するため、描画実装（本 UI の `MarqueeSkiaPainter`）は変更不要です（例は Avalonia 版サンプルの `sample/Presentation/GuideMarqueePresenter`）。
+
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と一致）:
 
 | 項目 | 型 | 既定値 | 説明 |

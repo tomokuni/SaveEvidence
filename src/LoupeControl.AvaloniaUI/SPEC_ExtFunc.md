@@ -20,7 +20,7 @@
       - [5.1.2 CenterPoint](#512-centerpoint)
       - [5.1.3 Options（設定の単一値）](#513-options設定の単一値)
       - [5.1.4 DipToDeviceScaling](#514-diptodevicescaling)
-      - [5.1.5 寸法と Paint（色）](#515-寸法と-paint色)
+      - [5.1.5 寸法と外観（Appearance）](#515-寸法と外観appearance)
       - [5.1.6 IsVisible](#516-isvisible)
       - [5.1.7 Log](#517-log)
     - [5.2 メソッド](#52-メソッド)
@@ -213,20 +213,15 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | --- | --- | --- | --- | --- |
 | `RequestedSize` | `int` | `160` | `1`〜`4096` | ルーペの基本サイズ（DIP・一辺） |
 | `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
-| `BorderThickness` | `int` | `2` | `1`〜`64` | 枠線の太さ（DIP） |
-| `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
-| `ShowCrosshair` | `bool` | `true` | — | 十字線の表示可否 |
-| `ShowBorder` | `bool` | `true` | — | 枠線の表示可否 |
 
 **表示サイズ（`RequestedSize`）のクランプはコア（ファサード）が内包**します: 表示サイズはコアが本値（基本サイズ）を親領域サイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
 **設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。DPI スケーリング係数（`DipToDeviceScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
 
-**描画の差し替え**: `Renderer`（`LoupePresenter`。既定は自 UI の `LoupeContextPainter`（色は `Paint` の値で生成）。null 不可）で描画の実装を差し替えられます（描画先は `DrawingContext` が担うため、描画手順だけを交換できます）。設定すると再生成とラベル要素の再配置を要求します。
-
-```csharp
-loupe.Renderer = MyLoupePresenter.Instance;   // 描画手順の差し替え
-```
+**描画の差し替え**: 描画は本コントロールの `LoupeContextPainter.Paint`（描画計画を描画 API へ写すだけの実装）が担います。<br/>
+見た目を変える場合は 2 つの入口を使います。<br/>
+- 色・枠線の太さ・表示可否: `Appearance`（`LoupeAppearance`）を差し替える（`LoupeAppearance.Default with { ... }`）
+- 描画計画（装飾の矩形・ラベルの文言と配置）: `LoupePresenter` を派生して `ResolveDrawPlan` を上書きしたものを提示層として使う（提示層は `sealed` ではなく `ResolveDrawPlan` が `virtual`）
 
 #### 5.1.4 DipToDeviceScaling
 
@@ -245,27 +240,29 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 環境値（DPI）のためコアの `LoupeOptions` には含めず、補正（`coerce`）はプロパティが担います（安全域の定義はコアの `Loupe.Limits` が単一所有します）。
 
-#### 5.1.5 寸法と Paint（色）
+#### 5.1.5 寸法と外観（Appearance）
 
-ルーペの寸法（枠線の太さ）とラベル表示の可否は **コアの `LoupeOptions`（`EsUtil.Feature.Loupe.Core.Setting`）が単一所有**し、`Options` の一部（`Options`）として指定します（両 UI で既定値・意味が一致します）。**色と、ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、描画層 `Feature.Loupe.Presenter` の `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter`）が単一所有し、本コントロールの `Appearance` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
+ルーペの基本サイズと拡大率は **コアの `LoupeOptions`（`EsUtil.Feature.Loupe.Core.Setting`）が単一所有**し、`Options` として指定します（両 UI で既定値・意味が一致します）。**枠線の太さ・十字線と枠線とラベルの表示可否・色・ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、提示層 `Feature.Loupe.Presenter` の `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter`）が単一所有し、本コントロールの `Appearance` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `LoupeOptions` | コアの既定値 | ルーペの寸法とラベル表示の可否。`with` 式で部分変更する。数値項目はコアの `LoupeOptions` が生成時に安全域へ補正する |
-| `Paint` | `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter`） | `LoupeAppearance.Default` | 描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）とラベルのフォントサイズ・角丸。`LoupeAppearance.Default with { ... }` で部分変更する |
+| `Options` | `LoupeOptions` | コアの既定値 | ルーペの基本サイズと拡大率。`with` 式で部分変更する。数値項目はコアの `LoupeOptions` が生成時に安全域へ補正する |
+| `Appearance` | `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter`） | `LoupeAppearance.Default` | 枠線の太さ・表示可否（十字線・枠線・ラベル）と描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）・ラベルのフォントサイズ・角丸。`LoupeAppearance.Default with { ... }` で部分変更する |
 
 `Options`（コアの `LoupeOptions`）の項目（詳細は `Feature.Loupe.Core` の `SPEC_ExtFunc.md` を参照）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `BorderThickness` | `int` | `2` | 枠線の太さ（DIP。1〜64 に補正） |
-| `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
-| `ShowCrosshair` / `ShowBorder` | `bool` | `true` | 十字線・枠線の表示有無（透明色を「描かない」の代用にしない） |
+| `RequestedSize` | `int` | `160` | ルーペの基本サイズ（DIP。1〜4096 に補正） |
+| `ZoomLevel` | `int` | `4` | 拡大率（1〜64 に補正） |
 
 `Appearance`（`LoupeAppearance`。詳細は `Feature.Loupe.Presenter` の `SPEC_ExtFunc.md` を参照）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
+| `BorderThickness` | `int` | `2` | 枠線の太さ（DIP。1〜64 に補正） |
+| `ShowCrosshair` / `ShowBorder` | `bool` | `true` | 十字線・枠線の表示有無（透明色を「描かない」の代用にしない） |
+| `ShowCoordLabel` | `bool` | `true` | 中心座標ラベルの表示有無（中心が未設定のときは描画しない） |
 | `PasteboardColor` | `System.Drawing.Color` | 中性グレー（`#FF535353`） | 画像外（ペーストボード）の色。拡大画像より先に全面へ塗るため、画像の無い部分が本色の無地になる |
 | `BorderColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 枠線の色 |
 | `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色 |
@@ -276,7 +273,7 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`Feature.Loupe.Presenter` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Appearance`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
-寸法項目（`BorderThickness`）は DIP の値であり、描画時に**コアが物理ピクセルへ換算済み**です（`LoupeGeometry.BorderThicknessPixels`）（`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
+寸法項目（`Appearance.BorderThickness`）は DIP の値であり、描画計画の解決時に**物理ピクセルへ換算されます**（`Feature.Loupe.Presenter` の `LoupeMetricsScaler`。`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 
@@ -426,7 +423,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 - `CenterPoint` の変更
 - `Source` の変更
-- `Options`（設定・寸法）または `Paint`（色）の変更
+- `Options`（設定・寸法）または `Appearance`（外観）の変更
 - `IsVisible = false`
 - `RequestRender()` の実行
 
@@ -473,17 +470,12 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 private readonly LoupeControl _loupe = new()
 {
     IsHitTestVisible = false,
-    // 設定はコアの値を 1 つ設定する（with 式で部分変更する）
-    // 寸法はコアの Options、色は Paint（LoupeAppearance）へ指定する
-    Options = LoupeOptions.Default with
+    // 設定（基本サイズ・拡大率）はコアの値を 1 つ設定する（with 式で部分変更する）
+    Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 },
+    // 外観（色・枠線の太さ・表示可否）は提示層の外観を 1 つ設定する
+    Appearance = LoupeAppearance.Default with
     {
-        RequestedSize = 240,
-        ZoomLevel = 4,
         BorderThickness = 2,
-        BorderThickness = 2,
-    },
-    Paint = LoupeAppearance.Default with
-    {
         CrossColor = DrawingColor.FromArgb(102, 255, 0, 0),
         PasteboardColor = DrawingColor.FromArgb(255, 0x53, 0x53, 0x53),
         BorderColor = DrawingColor.LightGray,
@@ -534,7 +526,8 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 - `Source` のBinding
 - `CenterPoint` のマウス追従
 - 画像端から外れた部分の画像外の色（無地）
-- `Options`（`ZoomLevel` / `RequestedSize` / `BorderThickness`）と `Paint`（色）・`DipToDeviceScaling`
+- `Options`（`ZoomLevel` / `RequestedSize`）と `Appearance`（色・枠線の太さ・表示可否）・`DipToDeviceScaling`
 - 十字線・枠線の色変更（`Appearance`）
+- 派生提示層による見た目の差し替え（`sample/Presentation/`。破線枠と三分割ガイドの例）
 - `IsVisible`、`Clear()`、`RequestRender()`
 - `Log`（描画エラーの通知先 ILogger 設定例）
