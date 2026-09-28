@@ -82,7 +82,7 @@ graph LR
 | 座標・寸法 | `Avalonia.Point` / `Size` / `Vector` → `EsPoint` / `EsSize` / `EsVector` へ統一し、UI 境界で 1 行変換する |
 | 色 | `System.Drawing.Color`（共有フレームワーク同梱でクロスプラットフォーム。`System.Drawing.Common` ではない）を使い、UI の色型への変換は境界で行う |
 | Skia の描画プリミティブ | SkiaSharp は外部パッケージであるため、Skia に依存する型（描画ポートの適合・ビットマップの相互変換・テキスト測定）は `Platform.Skia` が単一所有する（本プロジェクトは SkiaSharp を参照しない） |
-| ラベル体裁・描画ポート | ソリューション固有の共有契約は `Common` が単一所有する（本プロジェクトは参照される側であり、`Common` を参照しない） |
+| 描画の契約 | 各コントロールの提示層（`Feature.*.Presenter`）が単一所有する（本プロジェクトは参照される側であり、それらを参照しない） |
 | ロガー未設定 | `LoggerFallback.OrNullLogger()` が単一所有し、各所の `?? NullLogger.Instance` を排除する |
 
 ### コア型の命名

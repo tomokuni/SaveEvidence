@@ -20,7 +20,7 @@
 | ルート名前空間 | `EsUtil.Feature.Marquee.Presenter`（フォルダ分割なし。1 ファイル 1 型） |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
 | テスト | xUnit v3（UI 初期化不要。`InternalsVisibleTo` で `internal` を検証する） |
-| 依存 | UI フレームワークを一切参照しない。直接依存は `Feature.Marquee.Core`・`Platform.Core`・`Common`（`IEsCanvas`。`MarqueeHostLabelRenderer` のみが使う）・`Microsoft.Extensions.Logging.Abstractions` |
+| 依存 | UI フレームワークを一切参照しない。直接依存は `Feature.Marquee.Core`・`Platform.Core`・`Microsoft.Extensions.Logging.Abstractions` |
 
 ## 3. アーキテクチャ
 
@@ -39,7 +39,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 - 本層は UI フレームワークを参照しません（Avalonia / MewUI の型を持たない）。
 - **描画 API の抽象を持ちません**。UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれない（WinUI3 / WinForms 等へ展開する場合に抽象が肥大する）ため、本層は描画計画というデータを返し、描画は各 UI が自 UI の API で行います。
-- `Common`（`IEsCanvas`）を参照するのは `MarqueeHostLabelRenderer` のみです（ホストが描く付加情報ラベルの体裁を UI 非依存のまま適用するため）。**コア（`Feature.Marquee.Core`）は `Common` を参照しません**。
+- **描画 API の抽象を持ちません**: 本層は描画計画というデータを返し、描画は各 UI が自 UI の API で行います。
 
 ### 3.2 データフロー（入力 → 描画）
 
@@ -176,7 +176,7 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 | 色の型 | UI 非依存の `System.Drawing.Color` とし、各 UI の色型への変換は各 UI の描画境界で行う |
 | 描画 API の抽象を持たない | UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれない（WinUI3 / WinForms 等へ展開する場合に抽象が肥大する）。本層は描画計画を返し、描画は各 UI が自 UI の API で行う |
 | 実寸測定 | 描画 API 依存のため `Func<string, double, EsSize>` を UI 層から受け取る（本層は測定 API を持たない） |
-| 付加情報ラベルの描画 | UI 非依存の描画ポート（`Common` の `IEsCanvas`）を使う `MarqueeHostLabelRenderer` のみが `Common` を参照する（体裁の規則を UI をまたいで共有するため） |
+| 付加情報ラベルの配置 | `MarqueeHostLabelRenderer`（文言と基準点はホストが与える） |
 | 組み込み規則の分離 | ホイールの解釈とビューポート変化の再通知は「組み込み先が存在して初めて意味を持つ」ため、コアに置かず本層が単一所有する |
 | 外観の拡張点 | `MarqueePresenter` を `sealed` にしない（`Appearance` の差し替えと `ResolveDrawPlan` の上書きで独自の見た目を提供できることが役割） |
 

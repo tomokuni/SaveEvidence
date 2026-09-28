@@ -18,13 +18,14 @@
     - [6.2 Marquee（公開ファサード・コア）](#62-marquee公開ファサードコア)
     - [6.3 MarqueeState](#63-marqueestate)
     - [6.4 MarqueeSelectionGeometry](#64-marqueeselectiongeometry)
-    - [6.5 MarqueeRenderer（Feature.Marquee.Presenter）](#65-marqueerendererfeaturemarqueepresenter)
-    - [6.6 MarqueeOuterRenderer（Feature.Marquee.Presenter）](#66-marqueeouterrendererfeaturemarqueepresenter)
-    - [6.6.1 ラベルの要素配置（文字の表示）](#661-ラベルの要素配置文字の表示)
-    - [6.7 MarqueeInnerRenderer（Feature.Marquee.Presenter）](#67-marqueeinnerrendererfeaturemarqueepresenter)
-    - [6.8 Marquee（コアの描画内容解決）](#68-marqueeコアの描画内容解決)
-    - [6.9 MarqueeHitTarget](#69-marqueehittarget)
-    - [6.10 公開イベント引数](#610-公開イベント引数)
+    - [6.5 MarqueePresenter（Feature.Marquee.Presenter）](#65-marqueepresenterfeaturemarqueepresenter)
+    - [6.6 MarqueeAppearance（Feature.Marquee.Presenter）](#66-marqueeappearancefeaturemarqueepresenter)
+    - [6.7 MarqueeLabelPlan（Feature.Marquee.Presenter）](#67-marqueelabelplanfeaturemarqueepresenter)
+    - [6.8 ラベル要素の配置（本コントロールの内部実装）](#68-ラベル要素の配置本コントロールの内部実装)
+    - [6.9 MarqueeContextPainter（本プロジェクト）](#69-marqueecontextpainter本プロジェクト)
+    - [6.10 Marquee（コアの幾何解決）](#610-marqueeコアの幾何解決)
+    - [6.11 MarqueeHitTarget](#611-marqueehittarget)
+    - [6.12 公開イベント引数](#612-公開イベント引数)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
     - [8.1 状態の初期化と破棄（所有権）](#81-状態の初期化と破棄所有権)
@@ -53,31 +54,31 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | Feature.Marquee.Core（公開ファサード・描画内容）/ Feature.Marquee.Presenter（描画の手順・色・ラベル計画）/ Platform.AvaloniaUI（ScreenConverter・`AvaloniaCanvas`）/ Platform.Native（ICursorService）/ Platform.Core（ICoordTransform / CoordTransform） |
+| **依存プロジェクト** | Feature.Marquee.Core（公開ファサード・幾何）/ Feature.Marquee.Presenter（描画計画・外観・ラベル計画・組み込み規則）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Native（ICursorService）/ Platform.Core（ICoordTransform / CoordTransform） |
 
 ## 3. アーキテクチャ
 
 ### 3.1 レイヤー構造
 
 ```text
-公開コントロール（MarqueeControl）… 入力の受付 / 効果の適用 / 通知の転送 / 描画の起動
+公開コントロール（MarqueeControl）… 入力の受付 / 効果の適用 / 通知の転送 / 描画（自 UI の API）
   → 状態管理クラス（MarqueeSession）… 入力の解釈と状態遷移の判断
     → 状態（MarqueeState）… 状態保持と更新ロジック
       → コア内部の純粋幾何（MarqueeSelectionGeometry）+ Platform.AvaloniaUI
-  → 描画内容の解決（コアの Marquee.CreateRequest → Marquee.ResolveContent）… 選択の状態 + 設定 → 描画内容 1 値（MarqueeDrawContent）
-  → 装飾の解決（Core 内の `Decoration` 名前空間）… 暗転・穴あけ枠・ハイライトの判断
-  → 描画の手順（Feature.Marquee.Presenter）… `MarqueeRenderer` が色（`MarqueePaint`）を使い、描画ポート `IEsCanvas` へ層の順に写す
-  → ラベルの配置（UI 層）… `MarqueeLabelPlan`（描画層）が返す配置矩形へ `Border` + `TextBlock` を置く（ラベルは常に最上位）
+  → 幾何の解決（コアの Marquee.CreateRequest → Marquee.ResolveGeometry）… 選択の状態 + 設定 → 幾何 1 値（MarqueeGeometry）
+  → 描画計画の解決（Feature.Marquee.Presenter の MarqueePresenter.ResolveDrawPlan）… 幾何 + 外観 → 描画計画（MarqueeDrawPlan）
+  → 描画（本コントロール）… 描画計画の Layers の順に自 UI の描画 API（DrawingContext）で描く
+  → ラベルの配置（本コントロール）… 描画計画の Labels（配置指示）へ `Border` + `TextBlock` を置く（ラベルは常に最上位）
 ```
 
 ### 3.2 依存方向
 
-- 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（これらはコア内部）/ Platform.AvaloniaUI / Platform.Native / Platform.Core。描画は MarqueeControl → MarqueeRenderer（Feature.Marquee.Presenter）→ IEsCanvas（Platform.Core））。
+- 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（これらはコア内部）/ Platform.AvaloniaUI / Platform.Native / Platform.Core。描画計画は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core））。
 - MarqueeControl は上位 AP に依存しない（再利用可能）。
 - **判断はコア（`Marquee`）・反映は UI**: nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルはコアが決め、コントロールは `IMarqueeEffects` を実装して要求された効果を適用するだけにする。
-- 描画の手順は描画層（`Feature.Marquee.Presenter` の `MarqueeRendererBase` と `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）が単一所有する。色（描画にだけ必要な設定）は同層の `MarqueePaint` が単一所有し、本コントロールは `Paint` プロパティで与える。本コントロールは `Marquee.ResolveContent` が返す描画内容を `AvaloniaCanvas`（`IEsCanvas` の Avalonia 実装）経由で渡すだけであり、装飾の**判断**は持たない（状態（選択矩形・nudge）はコア（`MarqueeState`）に集約する）。
-- **装飾（暗転・穴あけ枠・ハイライト）は選択矩形コントロール単体の概念ではない**ため、Core 内の別フォルダ（`Decoration` 名前空間）が単一所有する。本コントロールは `DecoOptions` で設定し、描画内容（`MarqueeOuterDecoFrame` / `MarqueeInnerDecoFrame`）をコアの `ResolveContent` から受け取る。
-- **文字（サイズラベル・座標ラベル）は本コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**。配置するラベルの一覧と順序は描画層（`Feature.Marquee.Presenter` の `MarqueeLabelPlan`）が単一所有し（ラベルの色は描画実装が `MarqueePaint` から写す）、本コントロールは自 UI の API（`FormattedText`）で測った実寸を渡して返された配置を要素へ反映する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
+- **描画計画と外観は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeLabelPlan`）が単一所有**し、本コントロールは `Appearance` プロパティで外観を与え、`ResolveDrawPlan` が返す描画計画を自 UI の描画 API（`DrawingContext`）で写すだけです（**描画 API の抽象は持ちません**）。装飾の**判断**も持ちません（状態（選択矩形・nudge）はコア（`MarqueeState`）に集約する）。
+- **装飾（暗転・穴あけ枠・ハイライト・内側の塗り）は選択矩形コントロール単体の概念ではない**（組み込み先の表示である）ため、提示層が単一所有します。本コントロールは `Appearance` で外観（表示可否・太さ・色）を設定し、描画計画の装飾矩形を描きます。
+- **文字（サイズラベル・座標ラベル）は本コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**。配置するラベルの一覧と順序は提示層（`Feature.Marquee.Presenter` の `MarqueeLabelPlan`）が単一所有し（ラベルの色とフォントサイズは外観 `MarqueeAppearance` から写す）、本コントロールは自 UI の API（`FormattedText`）で測った実寸を渡して返された配置を要素へ反映する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
 - 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 
@@ -113,38 +114,37 @@ flowchart TB
         Hdl["MarqueeHitTarget<br/>public enum"]
         Hdl2["MarqueeInteractionState<br/>public enum"]
         Hdl3["MarqueeSnapshot<br/>public record<br/>（EsRect / EsPoint）"]
-        Frm["Marquee（partial）<br/>public の CreateRequest / ResolveContent<br/>Marquee.DrawContent.cs<br/>（1 フレーム分の描画内容の解決）"]
+        Frm["Marquee（partial）<br/>public の CreateRequest / ResolveGeometry<br/>Marquee.Geometry.cs<br/>（1 フレーム分の幾何の解決）"]
     end
     subgraph DRC2["MarqueeControl プロジェクト (MarqueeControl)"]
         direction TB
-        Ctl["MarqueeControl<br/>public sealed<br/>: Panel<br/>MarqueeControl.cs（公開 API ＋ 入力 ＋ 描画の起動 ＋ ラベル要素の配置）"]
-        Cvs["AvaloniaCanvas<br/>public sealed<br/>Platform.AvaloniaUI<br/>（DrawingContext の IEsCanvas アダプタ）"]
-        Lbl["ラベル要素の配置<br/>UI 層<br/>ArrangeOverride<br/>（MarqueeLabelPlan の配置矩形へ Border + TextBlock を置く）"]
+        Ctl["MarqueeControl<br/>public sealed<br/>: Panel<br/>MarqueeControl.cs（公開 API ＋ 入力 ＋ 描画 ＋ ラベル要素の配置）"]
+        Painter["MarqueeContextPainter<br/>public static<br/>（描画計画を DrawingContext へ写す）"]
+        Lbl["ラベル要素の配置<br/>UI 層<br/>ArrangeOverride<br/>（MarqueeDrawPlan.Labels へ Border + TextBlock を置く）"]
         Evt["SelectionRectEventArgs<br/>MarqueePointEventArgs<br/>MarqueeRenderedEventArgs"]
     end
-    subgraph Rnd2["Feature.Marquee.Presenter プロジェクト（UI 非依存の描画層）"]
+    subgraph Rnd2["Feature.Marquee.Presenter プロジェクト（UI 非依存の提示層）"]
         direction TB
-        Drw["MarqueeRenderer<br/>public sealed<br/>（MarqueeRendererBase の派生。色は MarqueePaint）"]
-        Pnt["MarqueePaint<br/>public sealed record<br/>（ハンドル・マーカー・ラベル・装飾の色）"]
-        Odr["MarqueeOuterRenderer<br/>public static<br/>（外側の装飾の描画）"]
-        Idr["MarqueeInnerRenderer<br/>public static<br/>（内側の装飾の描画）"]
+        Prs["MarqueePresenter<br/>public class<br/>（設定・入力の転送。外観の保持。描画計画の解決）"]
+        Plan["MarqueeDrawPlan<br/>public readonly record struct<br/>（UI が見る唯一の描画値）"]
+        Apx["MarqueeAppearance<br/>public sealed record<br/>（色・体裁・枠線の太さ・表示可否）"]
         Pln["MarqueeLabelPlan<br/>public static<br/>（実寸 → ラベル要素の配置）"]
     end
 
     AP -->|等イベント購読 / SetCoordinateTransform / RequestConfirm / RequestCancel| Ctl
     AP -->|Rendered（付加情報の描画）| Lbl
-    Ctl -->|操作（Press / Move / Release / KeyDown / Wheel / SetSelection / ResolveContent）| Fac
+    Ctl -->|操作（Press / Move / Release / KeyDown / SetSelection）| Prs
     Ctl -.->|効果の適用| Eff
-    Ctl -->|描画の起動（AvaloniaCanvas 経由）| Drw
-    Ctl -.->|Paint（色の設定）| Pnt
-    Pnt -.->|色| Drw
-    Drw -.->|委譲| Odr
-    Drw -.->|委譲| Idr
-    Ctl -.->|配置指示| Pln
-    Ctl --- Cvs
+    Ctl -->|描画計画の解決| Prs
+    Ctl -->|描画| Painter
+    Ctl -.->|Appearance（外観の設定）| Prs
+    Prs -.->|保持| Apx
+    Prs -.->|構築| Plan
+    Prs -.->|配置指示| Pln
+    Prs -->|幾何の解決| Fac
     Fac --> Ses
     Fac -->|効果の適用（IMarqueeEffects 経由）| Eff
-    Fac -->|描画内容の解決| Frm
+    Fac -->|幾何の解決| Frm
     Ctl --> Evt
     Ses --> Ntc
     Ses -->|効果（適用はファサード）| Fbk
@@ -164,24 +164,24 @@ flowchart TB
   - キーイベント（矢印キー・Escape / Enter）を `EsKey` へ変換してコアへ通知する。購読は **TopLevel の 1 経路のみ**（フォーカス非依存）
   - コアが要求する効果（カーソル操作・フォーカス・カーソル形状・再描画）を `IMarqueeEffects` 実装で受けて適用する（効果の選択と適用順はコアが単一所有）
   - コアからの通知を公開イベントへ転送する（判断はしない）
-  - 描画（`Render`）を起動し、`Marquee.ResolveContent` が返した描画内容（`MarqueeDrawContent`）のうち**図形の項目**（外側/内側の装飾・ハンドル・マーカー）を描画層（`Feature.Marquee.Presenter`）の各レンダラへ渡し（色は `Paint` の `MarqueePaint`）、**サイズ・座標ラベルはテキスト要素として配置する**（子の末尾に置かれ常に最上位）。描画のたびに `Rendered`（描画内容全体）を発火してホストへ渡す（ホストは付加情報を描ける）
+  - 描画（`Render`）を起動し、提示層（`Feature.Marquee.Presenter` の `MarqueePresenter.ResolveDrawPlan`）が返した描画計画（`MarqueeDrawPlan`）を**自 UI の描画 API（`DrawingContext`）で写す**（`MarqueeContextPainter`）。**サイズ・座標ラベルはテキスト要素として配置する**（子の末尾に置かれ常に最上位）。描画のたびに `Rendered`（描画計画全体）を発火してホストへ渡す（ホストは付加情報を描ける）
   - ホイール操作を組み込みの層（`Feature.Marquee.Presenter` の `MarqueeWheelInterpreter`）へ通知し、要求（ズーム / スクロール）を受け取る（Ctrl の判定・連携先への適用・ログは同層が単一所有する）
   - 祖先 ScrollViewer の ScrollChanged 購読（`ViewportChanged` の発行はコントロール化の層の `MarqueeViewportNotifier` へ委譲）
   - 設定（寸法・表示可否・対話パラメータ・色）・環境値（倍率）・文言プロバイダの保持とファサード（色は描画実装）への伝搬
 - **公開API**:
 - イベント 11 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ScrollRequested` / `ConfirmRequested` / `CancelRequested` / `Rendered`（描画完了。描画コンテキストと描画内容を渡し、ホストは付加情報（操作・情報ラベル）を描ける。サイズ・座標ラベルはコントロールがテキスト要素として表示する）。**生のポインター入力（Mouse 系）は公開しない**（ホストは自 UI の入力イベントを使う。押下状態は `CurrentSnapshot.IsMouseDown`）
-  - StyledProperty 5 種: `Options`（不変の設定値 `MarqueeOptions`。寸法・表示可否・対話パラメータを内包） / `DecoOptions`（装飾の表示可否と寸法） / `Paint`（色の単一値 `MarqueePaint`） / `DomainToDipScaling` / `DisplayScaleScaling`（環境値。XAML のバインディング・スタイルで設定できるよう依存関係プロパティとして公開する）。設定はコア（ファサード）または描画実装（`Paint`）へ委譲する（MewUI 版と同じ形）
+  - StyledProperty 4 種: `Options`（不変の設定値 `MarqueeOptions`。寸法・対話パラメータを内包） / `Appearance`（外観の単一値 `MarqueeAppearance`） / `DomainToDipScaling` / `DisplayScaleScaling`（環境値。XAML のバインディング・スタイルで設定できるよう依存関係プロパティとして公開する）。設定はコア（ファサード）または提示層（外観）へ委譲する（MewUI 版と同じ形）
   - プロパティ: `Log`（保持・`NullLogger` へのフォールバックはコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。デリゲートのため設定値に含めない） / `HasSelection` / `SelectionRect`
   - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `AttachScrollViewer`
 - **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画の起動のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・装飾の描画内容）と描画の手順はコアと描画層へ委譲する
-- **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeDrawContent （Feature.Marquee.Core）/ MarqueePaint / MarqueeRenderer / MarqueeOuterRenderer / MarqueeInnerRenderer / MarqueeLabelPlan（Feature.Marquee.Presenter）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ AvaloniaCanvas・ScreenConverter（Platform.AvaloniaUI）
+- **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeGeometry（Feature.Marquee.Core）/ MarqueePresenter / MarqueeAppearance / MarqueeDrawPlan / MarqueeLabelPlan（Feature.Marquee.Presenter）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ ScreenConverter（Platform.AvaloniaUI）
 
 ### 6.2 Marquee（公開ファサード・コア）
 
 - **分類**: ファサードクラス（`public sealed class`・コア提供。適用パターン: Facade）
 - **責務**: Marquee の**操作の唯一の窓口**。UI 層とホストは本型だけを参照する
   - 操作の提供: `Press` / `Move` / `Release` / `KeyDown` / `EndNudge` / `SetSelection` / `ResetSelection` / `RequestConfirm` / `RequestCancel` / `ResolveContent`
-  - 設定・環境値の保持: `Options` / `DecoOptions` / `DomainToDipScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` / `Log` / `SetCoordinateTransform`
+  - 設定・環境値の保持: `Options` / `Appearance` / `DomainToDipScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` / `Log` / `SetCoordinateTransform`
   - 効果の適用: `IMarqueeEffects`（UI が実装）へフォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換を要求する（適用順の単一所有）
   - ホイールの解釈（`MarqueeWheelInterpreter.Handle`）: Ctrl = ズーム要求 / それ以外 = スクロール（連携先があれば適用、無ければ `ScrollRequested`）とログを組み込みの層へ委ね、要求を公開イベントへ転送する
   - 通知: `Notified`（状態機械の通知をそのまま転送する）
@@ -208,66 +208,74 @@ flowchart TB
 - **可視性**: internal（コア内部。本プロジェクトは参照しない）
 - **依存**: UI 非依存（`Feature.Marquee.Core` の `EsPoint` / `EsRect`）
 
-### 6.5 MarqueeRenderer（Feature.Marquee.Presenter）
+### 6.5 MarqueePresenter（Feature.Marquee.Presenter）
 
-- **分類**: 公開 sealed クラス（`public sealed class`。`MarqueeRendererBase`（abstract）を継承する。所属は UI 非依存の描画層 `Feature.Marquee.Presenter`）
-- **責務**: 描画内容（`MarqueeDrawContent`）を描画ポート `IEsCanvas` へ写す（**描画手順は基底の `MarqueeRendererBase` が単一所有**し、本クラスは色を与える）
+- **分類**: 公開クラス（`public class`。`sealed` にしない。所属は UI 非依存の提示層 `Feature.Marquee.Presenter`）
+- **責務**: コアのファサードを内部に保持し、設定・環境値・入力の転送と、外観（`MarqueeAppearance`）の保持、描画計画（`MarqueeDrawPlan`）の解決（`ResolveDrawPlan`）を行う
 - **可視性**: public（UI 実装・独自コントロールの作者が参照する）
-- **特徴**: 描画の設定（`MarqueePaint`）を必須引数で受け取り、`DrawShapes`（図形のみ。**テキストは描かない**）を実装する。フォントサイズ（`SizeLabelFontSize` / `CoordLabelFontSize`）は描画の設定の値への入口として公開する（**描画の契約には含めない**）
-- **依存**: Platform.Core（`IEsCanvas`）/ Feature.Marquee.Core（`MarqueeDrawContent`）/ `MarqueePaint`（同層）
+- **特徴**: **描画は行わない**（描画計画というデータを返す）。継承して `ResolveDrawPlan` を上書きすることで独自の見た目を提供できる（`sealed` にしない理由）
+- **依存**: Feature.Marquee.Core（幾何・判断）/ Platform.Core（`Es*` 値型）
 
-### 6.6 MarqueeOuterRenderer（Feature.Marquee.Presenter）
+### 6.6 MarqueeAppearance（Feature.Marquee.Presenter）
 
-- **分類**: 公開静的クラス（`public static class`。所属は UI 非依存の描画層 `Feature.Marquee.Presenter`）
-- **責務**: 選択矩形の外側に描く装飾のうち**非文字の項目**（暗転マスク・穴あけ枠）の描画
-- **可視性**: public（UI 実装・独自コントロールの作者が参照する）
-- **特徴**: 装飾（`Feature.Marquee.Core` の `Decoration` 名前空間）の `MarqueeOuterDecoFrame` の各項目を描画ポート `IEsCanvas` へ写すだけで、判断を持たない（どの矩形を暗転するか・枠線を描くかは装飾層が単一所有する）。色は引数の `MarqueePaint`（`OverlayColor` / `OuterBorderColor`）から引く。**文字（サイズ・座標ラベル）は描かない**（コントロールがテキスト要素として表示する）
-- **依存**: Platform.Core（`IEsCanvas`）/ Feature.Marquee.Core（`EsUtil.Feature.Marquee.Core.Decoration` の `MarqueeOuterDecoFrame`）/ `MarqueePaint`（同層）
+- **分類**: 公開 sealed record（所属は UI 非依存の提示層）
+- **責務**: 描画に使う色・ラベルの体裁（フォントサイズ・内側余白）・枠線の太さ・表示可否の単一所有者
+- **可視性**: public（UI 実装・ホストが参照する）
+- **特徴**: 枠線の太さの安全域への補正はコアの `Marquee.Limits.CoerceBorderThickness` へ委譲する。表示可否の述語（`ShouldShowSizeLabel` / `ShouldShowCoordLabel` / `ShouldDrawOverlay`）を持つ
+- **依存**: Feature.Marquee.Core（`Marquee.Limits`）/ Platform.Core（`EsRect`）
 
-### 6.6.1 ラベルの要素配置（文字の表示）
+### 6.7 MarqueeLabelPlan（Feature.Marquee.Presenter）
+
+- **分類**: 公開静的クラス（所属は UI 非依存の提示層）
+- **責務**: 実寸（描画 API の測定値）からラベル要素の配置指示（`MarqueeLabelPlacement`）を解決する（一覧と順序を単一所有する）
+- **可視性**: public（UI 実装が参照する）
+- **特徴**: 文言と基準点は提示層（`MarqueeLabelTexts` / `MarqueePresenter`）が単一所有し、体裁（フォントサイズ・色・内側余白）は `MarqueeAppearance` から写す。**要素として置くか canvas へ描くかは UI 層が決める**
+- **依存**: Platform.Core（`Es*` 値型）/ `MarqueeLabelPlacement` / `MarqueeAppearance`（同層）
+
+### 6.8 ラベル要素の配置（本コントロールの内部実装）
 
 - **分類**: `MarqueeControl` の内部実装（`ArrangeOverride` と `SyncLabels` / `Apply` / `MeasureText`。独立した型ではない）
-- **責務**: コアの描画内容のうち**ラベル**（サイズ・カーソル座標）をテキスト要素（`Border` + `TextBlock`）として配置する
-- **可視性**: 非公開（ホストは `Rendered` の `Content` を参照できる）
-- **特徴**: 文言・位置はコアが、体裁（フォントサイズ・色・内側余白）は描画層の `MarqueePaint` が単一所有し、実寸からの配置矩形（一覧と順序）は描画層（`Feature.Marquee.Presenter` の `MarqueeLabelPlan`）が単一所有する。本実装は実寸測定（`FormattedText`）と要素への反映（`Border` の余白・大きさ・位置、`TextBlock` の文言・文字サイズ・色）を持つ。色 → ブラシは `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）が単一所有する
-- **依存**: Avalonia（`FormattedText` / テキスト要素）/ Feature.Marquee.Presenter（`MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueePaint`）/ Feature.Marquee.Core（装飾の描画契約と、テキストの文言・基準点）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
+- **責務**: 描画計画のラベル（サイズ・カーソル座標）をテキスト要素（`Border` + `TextBlock`）として配置する
+- **可視性**: 非公開（ホストは `Rendered` の `Content`（描画計画）を参照できる）
+- **特徴**: 文言と基準点は提示層の `MarqueeLabelTexts` が、体裁は `MarqueeAppearance` が単一所有し、実寸からの配置矩形は `MarqueeLabelPlan` が単一所有する。本実装は実寸測定（`FormattedText`）と要素への反映（`Border` の余白・大きさ・位置、`TextBlock` の文言・文字サイズ・色）を持つ。色 → ブラシは `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）が単一所有する
+- **依存**: Avalonia（`FormattedText` / テキスト要素）/ Feature.Marquee.Presenter（`MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueeAppearance`）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
 
-### 6.7 MarqueeInnerRenderer（Feature.Marquee.Presenter）
+### 6.9 MarqueeContextPainter（本プロジェクト）
 
-- **分類**: 公開静的クラス（`public static class`。所属は UI 非依存の描画層 `Feature.Marquee.Presenter`）
-- **責務**: 穴あけ矩形（選択矩形 / ハイライト矩形）の内側に描く装飾（塗り・内枠）の描画
-- **可視性**: public（UI 実装・独自コントロールの作者が参照する）
-- **特徴**: 装飾（`Feature.Marquee.Core` の `Decoration` 名前空間）の `MarqueeInnerDecoFrame` の各項目を描画ポート `IEsCanvas` へ写すだけで、判断を持たない（塗るか・枠線を描くかは装飾層が単一所有する）。色は引数の `MarqueePaint`（`InnerFillColor` / `InnerBorderColor`）から引く
-- **依存**: Platform.Core（`IEsCanvas`）/ Feature.Marquee.Core（`EsUtil.Feature.Marquee.Core.Decoration` の `MarqueeInnerDecoFrame`）/ `MarqueePaint`（同層）
+- **分類**: 公開静的クラス（`public static class`。本プロジェクトが所有する）
+- **責務**: 描画計画（`MarqueeDrawPlan`）を Avalonia の `DrawingContext` へ写す（層の順に描く）
+- **可視性**: public（独自コントロールの作者が参照する）
+- **特徴**: 描画計画の項目はすべて解決済みであるため、本クラスは図形の描画 API を呼ぶだけであり、判断も計算も持たない。色 → ブラシ・ペンは容量制限付きのキャッシュ（`Platform.AvaloniaUI.Imaging`）が単一所有する
+- **依存**: Avalonia（`DrawingContext`）/ Feature.Marquee.Presenter（`MarqueeDrawPlan`）/ Platform.AvaloniaUI（色変換・キャッシュ）
 
-### 6.8 Marquee（コアの描画内容解決）
+### 6.10 Marquee（コアの幾何解決）
 
-- **分類**: 公開ファサード（`public sealed partial class`）の**描画内容解決の部分**（`Marquee.DrawContent.cs`。コア提供）
-- **責務**: 1 フレーム分の描画内容（外側の装飾・内側の装飾・穴あけ矩形・ハンドル・始点マーカー・サイズラベル・カーソル座標ラベル・層の順序）を解決する（`MarqueeRenderRequest` → `MarqueeDrawContent`）
-- **可視性**: `ResolveContent` / `CreateRequest` は public（UI 層・ホストが使う窓口）。内部手順（ハンドル・マーカー・ラベル・層の解決）は private
-- **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。描くかどうかの判断（非表示の設定・選択なし・nudge 中・表示可否フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder`）・穴あけ矩形なし）はすべて本部分が持つ
+- **分類**: 公開ファサード（`public sealed partial class`）の**幾何解決の部分**（`Marquee.Geometry.cs`。コア提供）
+- **責務**: 1 フレーム分の幾何（穴あけ矩形・ハンドル・始点マーカー・マウス位置）を解決する（`MarqueeRenderRequest` → `MarqueeGeometry`）
+- **可視性**: `ResolveGeometry` / `CreateRequest` は public（写し・ホストが使う窓口）。内部手順（ハンドル・マーカー）は private
+- **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。**描く値の無い項目は null / 空で返す**（穴あけ矩形なし・選択なし・nudge 中でない）。**表示可否は本コアの責務ではなく、提示層の外観（`MarqueeAppearance`）が単一所有する**
 
-### 6.9 MarqueeHitTarget
+### 6.11 MarqueeHitTarget
 
 - **分類**: 公開 enum
 - **責務**: ドラッグハンドルの種別（ヒットテスト・矩形変形・nudge・描画で共通利用）
 - **可視性**: public（上位 AP がカーソル形状のマッピングに使用するため）
 
-### 6.10 公開イベント引数
+### 6.12 公開イベント引数
 
 - `MarqueeInteractionState` enum（public）: NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging
 - `MarqueeSnapshot` readonly record struct（public）: State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。座標は UI 非依存の `EsRect` / `EsPoint`（各 UI の境界で自前の型へ変換する）。値型のため通知のたびにヒープを確保しない
 - `SelectionRectEventArgs`（public）: Rect（Avalonia）+ Snapshot
 - `MarqueePointEventArgs`（public）: Point（Avalonia）+ Snapshot
-- `MarqueeRenderedEventArgs`（public）: Context（`DrawingContext`。描画中のみ有効）+ Content（`MarqueeDrawContent`。図形と文字の描画契約）
+- `MarqueeRenderedEventArgs`（public）: Context（`DrawingContext`。描画中のみ有効）+ Content（`MarqueeDrawPlan`。描画計画）
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。コア内部は MarqueeControl → Marquee（ファサード） → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（幾何計算はコア内部に閉じる）、描画は MarqueeControl → MarqueeRenderer（Feature.Marquee.Presenter）→ IEsCanvas（Platform.Core）、組み込みの規則は MarqueeControl → MarqueeWheelInterpreter / MarqueeViewportNotifier（Feature.Marquee.Presenter）。
+- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。コア内部は MarqueeControl → Marquee（ファサード） → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（幾何計算はコア内部に閉じる）、提示層は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core）、組み込みの規則は MarqueeControl → MarqueeWheelInterpreter / MarqueeViewportNotifier（Feature.Marquee.Presenter）。
 - MarqueeControl は上位 AP に**依存しない**（再利用可能）。
 - 判断（状態遷移・確定/キャンセル・スナップ・クリック検出）はコアの `Marquee`（内部の `MarqueeSession`）に集約し、UI 層は効果（`IMarqueeEffects`）を適用するだけにする。
-- 描画の手順は描画層（`Feature.Marquee.Presenter` の `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer`）が単一所有し、UI はアダプタ（`AvaloniaCanvas`）とラベル要素の配置を担う。状態（選択矩形・nudge）は MarqueeState に集約し、装飾の**判断**は持たない（`Marquee.ResolveContent` が返す描画内容を渡すだけ）。
-- **サイズ・カーソル座標ラベルはコントロールがテキスト要素として配置する**（配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueeLabelPlan` が実寸から求める）。操作・情報ラベルはホストが `Rendered` のハンドラで描く。`Rendered` の契約は描画内容全体であるため、ホストは付加情報以外の上書きもできる。
+- 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否）は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan`）が単一所有し、**描画は本コントロールが自 UI の API（`DrawingContext`）で行う**（`MarqueeContextPainter`。描画 API の抽象は持たない）。状態（選択矩形・nudge）は MarqueeState に集約し、装飾の**判断**は持たない。
+- **サイズ・カーソル座標ラベルはコントロールがテキスト要素として配置する**（配置矩形は提示層 `Feature.Marquee.Presenter` の `MarqueeLabelPlan` が実寸から求める）。操作・情報ラベルはホストが `Rendered` のハンドラで描く。`Rendered` の契約は描画計画全体であるため、ホストは付加情報以外の参照もできる。
 - 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
 - **キーイベントは 1 経路で受ける**（TopLevel のトンネル購読）。コントロール自身のキーハンドラを持たないため、同一キーの二重処理を防ぐ仕組み（フラグ等）が不要になる。トンネルはルートから下降するため、祖先のバブリングハンドラより先に処理済みにできる。

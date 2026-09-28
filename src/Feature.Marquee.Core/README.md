@@ -75,7 +75,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     ├──> Feature.Marquee.Presenter   どう描くか（描画計画の解決と自 UI の描画面への写し）
     └──> Feature.Marquee.Core ← 本プロジェクト   何を計算するか（状態・判断・幾何）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
-※ Core は Presenter を参照しない（Presenter がコアの幾何を使う向きだけ）。Core は Common も参照しない。
+※ Core は Presenter を参照しない（Presenter がコアの幾何を使う向きだけ）。
 ```
 
 本プロジェクトが UI フレームワークへ依存することはありません。**直接参照するものは UI 非依存のコア型と抽象（`Platform.Core` の `Es*` 幾何型 / `EsKey` / `ICoordTransform` / `ICursorService`）と、`Microsoft.Extensions.Logging.Abstractions`（`LoggerMessage` ソース生成）だけ**です。**カーソル操作は `ICursorService` 抽象にのみ依存**し、未指定（`null`）の場合は何もしません（既定実装（Win32）の解決は UI 側の責務です）。

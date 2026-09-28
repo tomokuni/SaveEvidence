@@ -62,7 +62,7 @@ Platform.AvaloniaUI（Avalonia アダプタ）/ Platform.Native（OS 実装）
 | --- | --- |
 | **外部 PackageReference なし** | `.NET 標準ライブラリ`（`System.*`）と **Microsoft 公式パッケージ**（`Microsoft.*`）は許容する。それ以外の外部パッケージは**参照しない**（違反は `.work/check-packages.ps1` が検出する） |
 | **UI フレームワーク非依存** | Avalonia / MewUI / WinUI / WinForms を参照しない |
-| **ソリューション固有の概念を持たない** | 特定のアプリ・コントロールに固有の型は置かない（そのような型は `Common` または各コントロールの層へ置く） |
+| **ソリューション固有の概念を持たない** | 特定のアプリ・コントロールに固有の型は置かない（そのような型は各コントロールの層へ置く） |
 | **OS 依存なし** | Win32 P/Invoke を含まない（`Platform.Native` の責務） |
 
 **Skia は「外部パッケージ」に該当するため、本プロジェクトは SkiaSharp に依存しません**（Skia への依存は [`Platform.Skia`](../Platform.Skia/README.md) が単一所有します）。`System.Drawing.Common`（Windows 専用）を使う画像変換は `Platform.Native` が持ちます（`System.Drawing.Bitmap` を受け取る拡張のため）。

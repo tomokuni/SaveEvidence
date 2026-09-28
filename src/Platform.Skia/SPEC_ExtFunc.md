@@ -6,23 +6,9 @@
 
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
-| `SkiaEsCanvas` | `public` | 任意（`SKCanvas` を描画ポートへ適合させるアダプタ） |
 | `EsBitmapSkiaExtensions` | `public` | 任意（コアのビットマップと Skia の相互変換） |
-| `SkiaFill` / `SkiaLabel` / `SkiaText` | `public` | 任意（描画の部品。`SkiaEsCanvas` が使うが、利用者が直接使うこともできる） |
+| `SkiaFill` / `SkiaLabel` / `SkiaText` | `public` | 任意（描画の部品。描画の呼び出しは利用者が行う） |
 | `SkiaColorInterop` / `SkiaGeometryInterop` | `public` | 任意（色・幾何の相互変換） |
-
-## `SkiaEsCanvas`（描画ポートの実装）
-
-| メンバー | 内容 |
-| --- | --- |
-| `SkiaEsCanvas(SKCanvas canvas)` | 描画先のキャンバスを指定して生成する（null 不可） |
-| `Clear(EsRect surface, DrawingColor color)` | 指定矩形を単色で塗る |
-| `FillRect` / `FillRects` / `FillRoundRect` | 矩形・角丸矩形の塗り（`SkiaFill` へ委譲する） |
-| `StrokeRect(EsRect rect, DrawingColor color, double thickness)` | 矩形の枠線（線の中心が矩形の辺の上に来る） |
-| `DrawLine(EsPoint from, EsPoint to, DrawingColor color, double thickness)` | 線分 |
-| `DrawLabel(...)` | 背景を塗ってから文字を描く（順序を保証する） |
-| `DrawImage(EsBitmap image, EsRect source, EsRect destination)` | ビットマップを切り出して描く（`ToSKBitmap` の非所有ビューを使う） |
-| `MeasureText(string text, double fontSize)` | テキストの実寸（`SkiaText.Measure` へ委譲する） |
 
 ## `EsBitmapSkiaExtensions`（相互変換）
 
@@ -44,7 +30,6 @@
 | --- | --- |
 | `Rect(SKCanvas, EsRect, DrawingColor)` | 矩形を塗る |
 | `Rects(SKCanvas, IReadOnlyList<EsRect>, DrawingColor)` | 複数矩形を同じ色で塗る |
-| `Rects<TWalker>(SKCanvas, TWalker, DrawingColor)` | 列挙子をそのまま受け取る版（タイル数が多い場合のリスト確保を避ける） |
 | `RoundRect(SKCanvas, EsRect, double cornerRadius, DrawingColor)` | 角丸矩形を塗る |
 
 ## `SkiaLabel` / `SkiaText`
@@ -70,7 +55,6 @@
 | 依存 | 用途 |
 | --- | --- |
 | `SkiaSharp`（外部パッケージ） | `SKCanvas` / `SKBitmap` / `SKColor` / `SKRect` / 書体の解決 |
-| `Common`（`EsUtil.SaveEvidence.Common.Imaging`） | 描画ポート（`IEsCanvas`） |
 | `Platform.Core`（`EsUtil.Platform.Core.*`） | ビットマップ（`EsBitmap`）と幾何値型 |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。

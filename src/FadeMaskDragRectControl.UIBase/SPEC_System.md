@@ -35,7 +35,7 @@ graph LR
 ```
 
 依存の向きは **UI → UIBase → Core / 各コア**の一方向です。`Feature.Marquee.Presenter` は UI フレームワークを参照しない
-（描画ポート `IEsCanvas` 経由で描く）ため、本層から参照しても UI 非依存性は損なわれません。
+（提示層の `MarqueeAppearance` と `MarqueeHostLabelRenderer` を使う）ため、本層から参照しても UI 非依存性は損なわれません。
 
 ## コンポーネント構成
 

@@ -61,7 +61,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
     ├──> Feature.Loupe.Presenter   提示（LoupePresenter）＋外観（LoupeAppearance）＋組み込み先がある場合にだけ必要な規則
     └──> Feature.Loupe.Core ← 本プロジェクト   計算（状態・値・純粋計算・描画の幾何）
            └──> Platform.Core（Es* 値型・ICoordTransform）
-※ Core は UIBase を参照しない（UIBase がコアの幾何を使う向きだけ）。Core は Common も参照しない。
+※ Core は提示層（Presenter）を参照しない（提示層がコアの幾何を使う向きだけ）。
 ```
 
 本プロジェクトが UI フレームワークへ依存することはありません。**直接参照する外部パッケージは `Microsoft.Extensions.Logging.Abstractions`（`LoggerMessage` ソース生成）だけ**です（SkiaSharp は参照しません）。

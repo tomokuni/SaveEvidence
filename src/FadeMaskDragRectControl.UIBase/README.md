@@ -52,16 +52,16 @@ UI フレームワークへ依存しません。外部パッケージへの直�
 
 ```csharp
 // 設定とモードから子コントロールへ適用する値を解決する（代入は UI 層が行う）
-var values = FadeMaskDragRectChildValues.Resolve(options, mode, highlightRect);
+var values = FadeMaskDragRectChildValues.Resolve(options, mode, marqueeAppearance);
 marquee.Options = values.Marquee;
-marquee.DecoOptions = values.Deco;
+marquee.Appearance = values.MarqueeAppearance;
 marquee.IsHitTestVisible = values.IsHitTestVisible;
 loupe.Options = values.Loupe;
 loupe.PositionOffset = values.LoupeOffset;
 
-// 付加情報ラベルを描く（文言の生成はホスト、描画は本層）
-FadeMaskHostLabelRenderer.Draw(
-    new AvaloniaCanvas(context), e.Content, options.Labels, operationText, infoText);
+// 付加情報ラベルの配置指示を解決する（文言の生成はホスト、描画は各 UI）
+var placements = FadeMaskHostLabelRenderer.Resolve(
+    plan, options.Labels, marqueeAppearance, operationText, infoText, measureText);
 ```
 
 ## 設計上の約束

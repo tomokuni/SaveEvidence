@@ -4,9 +4,10 @@
 
 `Platform.Skia` は、**SkiaSharp への依存を 1 箇所へ閉じ込める**プラットフォーム層です。
 
-1. **描画ポートの適合**（`SkiaEsCanvas`）— コアの `IEsCanvas` を `SKCanvas` へ写す
-2. **ビットマップの相互変換**（`EsBitmapSkiaExtensions`）— コアの `EsBitmap` と `SKBitmap` を変換する（非所有ビュー／複製）
-3. **描画の部品**（`SkiaFill` / `SkiaLabel` / `SkiaText`）と**変換**（`SkiaColorInterop` / `SkiaGeometryInterop`）
+1. **ビットマップの相互変換**（`EsBitmapSkiaExtensions`）— コアの `EsBitmap` と `SKBitmap` を変換する（非所有ビュー／複製）
+2. **描画の部品**（`SkiaFill` / `SkiaLabel` / `SkiaText`）と**変換**（`SkiaColorInterop` / `SkiaGeometryInterop`）
+
+**描画 API の抽象は持ちません**（UI フレームワークごとの描画モデルの差は抽象では吸収しきれないため）。描画の呼び出し（層の順序）は各 UI が行います。
 
 外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
 
@@ -29,24 +30,21 @@ graph LR
   MEWUI["Platform.MewUI / *Control.MewUI / ZoomViewControl.MewUI / app.MewUI"]
   S[Platform.Skia]
   SK[SkiaSharp]
-  C[Common]
   PC[Platform.Core]
 
   MEWUI --> S
   S --> SK
-  S --> C
   S --> PC
 ```
 
-- 依存の向きは **MewUI 系 → Platform.Skia →（SkiaSharp / Common / Platform.Core）** です。
-- **`Platform.Core` と `Common` は SkiaSharp を参照しません**（Skia 依存は本層で止まる）。
-- `SkiaEsCanvas` は `Common` の `IEsCanvas` を実装し、`EsBitmapSkiaExtensions` は `Platform.Core` の `EsBitmap` を拡張します。
+- 依存の向きは **MewUI 系 → Platform.Skia →（SkiaSharp / Platform.Core）** です。
+- **`Platform.Core` は SkiaSharp を参照しません**（Skia 依存は本層で止まる）。
+- `EsBitmapSkiaExtensions` は `Platform.Core` の `EsBitmap` を拡張します。
 
 ## コンポーネント構成
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `SkiaEsCanvas.cs` | `public sealed class` | `IEsCanvas` の実装。`SkiaFill` / `SkiaText` / `SkiaLabel` と `EsBitmapSkiaExtensions` を使う |
 | `EsBitmapSkiaExtensions.cs` | `public static class` | `ToSKBitmap`（非所有ビュー）/ `ToEsBitmap`（複製） |
 | `SkiaFill.cs` | `public static class` | 矩形・角丸矩形の塗り |
 | `SkiaLabel.cs` | `public static class` | ラベル 1 件（背景 + 文字）の描画順 |
@@ -58,18 +56,6 @@ graph LR
 
 ```mermaid
 classDiagram
-  class IEsCanvas {
-    <<interface / Common>>
-  }
-  class SkiaEsCanvas {
-    <<Platform.Skia>>
-    +SkiaEsCanvas(canvas)
-    +Clear(surface, color)
-    +FillRect / FillRects / FillRoundRect
-    +StrokeRect / DrawLine
-    +DrawLabel / DrawImage
-    +MeasureText(text, fontSize) EsSize
-  }
   class EsBitmapSkiaExtensions {
     <<static>>
     +ToSKBitmap(bitmap)$ SKBitmap
@@ -108,11 +94,6 @@ classDiagram
     <<SkiaSharp>>
   }
 
-  SkiaEsCanvas ..|> IEsCanvas : 実装
-  SkiaEsCanvas ..> SkiaFill : 塗り
-  SkiaEsCanvas ..> SkiaText : 測定・描画
-  SkiaEsCanvas ..> SkiaLabel : ラベル
-  SkiaEsCanvas ..> EsBitmapSkiaExtensions : 画像の変換
   EsBitmapSkiaExtensions ..> EsBitmap : 参照（非所有ビュー / 複製元）
   EsBitmapSkiaExtensions ..> SKBitmap : 生成・複製
 ```
@@ -122,17 +103,12 @@ classDiagram
 ```mermaid
 sequenceDiagram
   participant UI as MewUI のコントロール
-  participant C as Common（IEsCanvas）
-  participant S as SkiaEsCanvas
   participant E as EsBitmapSkiaExtensions
   participant SK as SKCanvas
 
-  UI->>S: new SkiaEsCanvas(skCanvas)
-  UI->>C: DrawImage(EsBitmap, source, destination)
-  C->>S: DrawImage(...)
-  S->>E: image.ToSKBitmap()（非所有ビュー）
-  E-->>S: コアのバッファを指す SKBitmap
-  S->>SK: DrawBitmap(view, sourceRect, destRect)
+  UI->>E: image.ToSKBitmap()（非所有ビュー）
+  E-->>UI: コアのバッファを指す SKBitmap
+  UI->>SK: DrawBitmap(view, sourceRect, destRect)
   Note over E,SK: ビューはコピーしない（EsBitmap の生存中のみ有効）
 ```
 
@@ -158,7 +134,6 @@ sequenceDiagram
 | 内容 | 所有者 |
 | --- | --- |
 | SkiaSharp への依存 | `Platform.Skia`（本プロジェクトだけが参照する） |
-| `SKCanvas` → 描画ポートの適合 | `SkiaEsCanvas` |
 | `EsBitmap` ⇔ `SKBitmap` の変換（所有権・寿命） | `EsBitmapSkiaExtensions` |
 | 矩形・角丸矩形の塗り | `SkiaFill` |
 | テキストの実寸測定・書体の解決 | `SkiaText` |
@@ -176,7 +151,6 @@ sequenceDiagram
 | ビューの作成に失敗（形式・寸法が不正） | `InvalidOperationException`（作成した `SKBitmap` は破棄してから投げる） |
 | `ToEsBitmap` の引数が null | `ArgumentNullException` |
 | `ToEsBitmap` のピクセルポインタが null | 複製せずに空のビットマップを返す（描画可能な状態を保つ） |
-| `SkiaEsCanvas` のコンストラクタ引数が null | `ArgumentNullException` |
 
 ## 可視性ポリシー
 
@@ -191,7 +165,6 @@ tests/
 ├── Platform.Skia.Tests.csproj
 ├── EsBitmapSkiaExtensions.Tests.cs
 ├── SkiaColorInterop.Tests.cs
-├── SkiaEsCanvas.Tests.cs
 ├── SkiaFill.Tests.cs
 ├── SkiaGeometryInterop.Tests.cs
 ├── SkiaLabel.Tests.cs
@@ -202,8 +175,7 @@ tests/
 | --- | --- |
 | `EsBitmapSkiaExtensions`（非所有ビュー・ピクセル共有・ビュー破棄後の安全性・破棄済みの例外・複製・アルファ保持・往復） | 8 |
 | `SkiaColorInterop`（往復・成分の対応・アルファ） | 8 |
-| `SkiaEsCanvas`（各描画メソッドの画素検証・引数の検証） | 12 |
-| `SkiaFill`（矩形・複数矩形・列挙子版・角丸） | 9 |
+| `SkiaFill`（矩形・複数矩形・角丸） | 9 |
 | `SkiaGeometryInterop`（矩形・サイズの変換） | 5 |
 | `SkiaLabel`（背景 → 文字の順序） | 5 |
 | `SkiaText`（実寸測定・書体の解決・描画） | 10 |

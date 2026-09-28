@@ -8,17 +8,16 @@
 
 本プロジェクトは Skia に依存する処理を単一所有し、UI 非依存層が SkiaSharp を参照しない状態を保ちます。
 
-- コアの描画ポート（`IEsCanvas`）を `SKCanvas` へ適合させる。
 - コアのビットマップ（`EsBitmap`）と `SKBitmap` の相互変換を提供する。
 - 色・幾何の相互変換（`DrawingColor` ⇔ `SKColor`、`EsRect` ⇔ `SKRect`）を単一所有する。
+- **描画の部品**（`SkiaFill` / `SkiaText` / `SkiaLabel`）を提供する。描画の呼び出し（層の順序）は各 UI が行う（**描画 API の抽象は持たない**。UI フレームワークごとの描画モデルの差は抽象では吸収しきれないため）。
 
 ## 収録する型
 
 | 型 | 内容 |
 | --- | --- |
-| `SkiaEsCanvas` | `SKCanvas` を `IEsCanvas`（描画ポート）へ適合させるアダプタ。描画ポートの実装はこれと `Platform.AvaloniaUI` の `AvaloniaCanvas` の 2 つ |
 | `EsBitmapSkiaExtensions` | `EsBitmap` ⇔ `SKBitmap` の相互変換（**本プロジェクトの中心**。`ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製） |
-| `SkiaFill` | 矩形・角丸矩形の塗り（`SkiaEsCanvas` から使う） |
+| `SkiaFill` | 矩形・角丸矩形の塗り |
 | `SkiaLabel` | ラベル 1 件（背景 + 文字）の描画順を単一所有する |
 | `SkiaText` | テキストの実寸測定・描画と、日本語フォントの解決 |
 | `SkiaColorInterop` | `System.Drawing.Color` ⇔ `SKColor` の変換 |
@@ -31,30 +30,31 @@ MarqueeControl.MewUI / LoupeControl.MewUI / FadeMaskDragRectControl.MewUI / Zoom
 Platform.MewUI
   └──> Platform.Skia（本プロジェクト）
          ├──> SkiaSharp（外部パッケージ。本層だけが参照する）
-         ├──> Common（IEsCanvas）
          └──> Platform.Core（EsBitmap / 幾何値型）
 ```
 
-**本プロジェクトが SkiaSharp を参照する唯一の場所です。** `Platform.Core` と `Common` は SkiaSharp を参照しません。
+**本プロジェクトが SkiaSharp を参照する唯一の場所です。**
 
 ## 主な API
 
 ```csharp
-// 描画ポート（コアの描画手順は IEsCanvas だけを呼ぶ）
-IEsCanvas canvas = new SkiaEsCanvas(skCanvas);
-
 // EsBitmap ⇔ SKBitmap（所有権はコア側に残る）
 using var view = bitmap.ToSKBitmap();       // 非所有ビュー（EsBitmap の生存中のみ有効）
 canvas.DrawBitmap(view, destination);
 
 using var copied = skBitmap.ToEsBitmap();   // 複製（引数の所有権は呼び出し側に残る）
+
+// 描画の部品（描画順は呼び出し側が決める）
+SkiaFill.Rect(canvas, rect, color);
+SkiaLabel.Draw(canvas, background, bgColor, text, origin, fontSize, textColor, cornerRadius: 0);
 ```
 
 | メソッド | 用途 |
 | --- | --- |
 | `EsBitmapSkiaExtensions.ToSKBitmap(this EsBitmap)` | コアのバッファを指す**非所有ビュー**を返す（描画 API へ渡すため） |
 | `EsBitmapSkiaExtensions.ToEsBitmap(this SKBitmap)` | Skia のビットマップを**複製**してコアのビットマップを生成する |
-| `SkiaEsCanvas`（`IEsCanvas` の実装） | `SKCanvas` へ図形・文字・画像を描く |
+| `SkiaFill.Rect` / `Rects` / `RoundRect` | 矩形の塗り |
+| `SkiaLabel.Draw(...)` | ラベル 1 件（背景 → 文字の順）を描く |
 | `SkiaText.Measure(text, fontSize)` | テキストの実寸（コアの配置計算へ渡す） |
 | `SkiaText.ResolveTypeface(text)` | 日本語を含む文字列に適した書体を解決する（フォントのフォールバック） |
 | `SkiaColorInterop.ToSKColor` / `ToDrawingColor` | 色の相互変換 |
@@ -75,7 +75,6 @@ tests/
 ├── Platform.Skia.Tests.csproj
 ├── EsBitmapSkiaExtensions.Tests.cs    # 非所有ビュー・複製・所有権・ストライドの一致（8 件）
 ├── SkiaColorInterop.Tests.cs          # 色の相互変換（8 件）
-├── SkiaEsCanvas.Tests.cs              # 描画ポートの画素検証（12 件）
 ├── SkiaFill.Tests.cs                  # 矩形・角丸矩形の塗り（9 件）
 ├── SkiaGeometryInterop.Tests.cs       # 幾何の相互変換（5 件）
 ├── SkiaLabel.Tests.cs                 # ラベル 1 件の描画順（5 件）

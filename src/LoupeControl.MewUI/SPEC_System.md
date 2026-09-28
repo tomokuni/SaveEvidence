@@ -34,7 +34,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
     ├──> Feature.Loupe.Presenter   どう描くか（UIBase の LoupePresenter を実装する）
     ├──> Feature.Loupe.Presenter   組み込み先がある場合にだけ必要な規則
     └──> Feature.Loupe.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（描画 API）
+           ├──> Platform.Core（描画の部品は Platform.Skia）
            └──> Platform.Core（Es* 値型・ICoordTransform）
 ※ Core は UIBase を参照しない（本層の描画実装がコアの契約を実装する向きだけ）。
 ```

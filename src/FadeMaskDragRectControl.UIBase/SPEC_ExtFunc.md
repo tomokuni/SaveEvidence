@@ -50,7 +50,7 @@
 
 ## `FadeMaskHostLabelRenderer`（付加情報ラベルの描画）
 
-### `Draw(IEsCanvas canvas, in MarqueeDrawContent content, FadeMaskDragRectLabelOptions labels, string? operationText, string? infoText)`
+### `Resolve(in MarqueeDrawPlan plan, FadeMaskDragRectLabelOptions labels, MarqueeAppearance appearance, string? operationText, string? infoText, Func<string, double, EsSize> measureText)`
 
 | 引数 | 制約 |
 | --- | --- |
@@ -79,7 +79,7 @@
 | `FadeMaskDragRectControl.Core`（`EsUtil.SaveEvidence.FadeMaskDragRect`） | 設定・動作モード・モードから導出する状態の解決 |
 | `Feature.Marquee.Core` / `Feature.Loupe.Core` | 内包コントロールの設定型（`MarqueeOptions` / `MarqueeDecoOptions` / `LoupeOptions` / `MarqueeDrawContent`） |
 | `Feature.Marquee.Presenter` | 付加情報ラベルの体裁（`MarqueeHostLabelRenderer`） |
-| Common | 描画ポート（IEsCanvas） |
+| Feature.Marquee.Presenter | 共通の体裁（`MarqueeHostLabelRenderer` / `MarqueeLabelPlacement` / `MarqueeAppearance`） |
 | Platform.Core | コア幾何型・値型 |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。外部パッケージへの直接依存もありません。

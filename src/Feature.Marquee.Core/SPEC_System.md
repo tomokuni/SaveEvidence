@@ -35,7 +35,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     │       ＋ 組み込み先がある場合にだけ必要な規則（ホイール・ビューポート）
     └──> Feature.Marquee.Core ← 本プロジェクト   何を計算するか（状態・判断・幾何）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
-※ Core は Presenter を参照しない（Presenter がコアの幾何を使う向きだけ）。Core は Common も Platform.* の UI アダプタも参照しない。
+※ Core は Presenter を参照しない（Presenter がコアの幾何を使う向きだけ）。Core は Platform.* の UI アダプタも参照しない。
 ```
 
 - 上位層は下位層のみを参照します（逆参照なし）。

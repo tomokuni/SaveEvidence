@@ -139,7 +139,7 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `Draw(IEsCanvas canvas, EsPoint anchor, string text, double fontSize, DrawingColor textColor, DrawingColor backgroundColor, double padding)` | 基準点（背景の左上に置く座標）へ 1 行のラベルを描く。`canvas` または `text` が null なら `ArgumentNullException` |
+| `Resolve(EsPoint anchor, string text, double fontSize, DrawingColor textColor, DrawingColor backgroundColor, double padding, Func<string, double, EsSize> measureText)` | 基準点（背景の左上に置く座標）へ置く 1 行のラベルの配置指示を返す。**描画は各 UI が行う**（本層は描画 API を持たない）。`text` または `measureText` が null なら `ArgumentNullException` |
 
 ### `EsUtil.Feature.Marquee.Presenter`（組み込み規則）
 
@@ -252,7 +252,7 @@ viewport.Notify();   // 変化を検知したら呼ぶ
 | --- | --- |
 | 図形（装飾・ハンドル・始点マーカー） | `MarqueeDrawPlan.Layers` の順に自 UI の描画 API を呼ぶ（`MarqueeContextPainter.Paint` / `MarqueeSkiaPainter.Paint`） |
 | テキスト（サイズ・カーソル座標） | `MarqueeDrawPlan.Labels`（`MarqueeLabelPlacement`。実寸を反映済み）を要素へ写す、または自 UI の描画 API で文字として描く |
-| 付加情報ラベル（操作・情報） | `MarqueeHostLabelRenderer.Draw`（文言と基準点はホストが決める） |
+| 付加情報ラベルの配置 | `MarqueeHostLabelRenderer.Resolve`（文言と基準点はホストが決める） |
 
 ### ラベル要素（`MarqueeLabelPlacement`）
 
