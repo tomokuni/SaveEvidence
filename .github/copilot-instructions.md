@@ -234,7 +234,7 @@
 - コントロールの層は **Core（何を描くか・判断）/ UIBase（コントロール化に必要な処理＋どう描くか）/ UI（フレームワーク固有）** の 3 層で、依存は `UI → UIBase → Core → Platform.Core` の一方向（コアは UIBase を参照しない）。層の正典は `src/README.md`。
 - プラットフォーム層は `EsUtil.Platform.*` をルート名前空間とし、`Platform.AvaloniaUI` / `Platform.MewUI` が各 UI のアダプタ、`Platform.Core` が UI 非依存の抽象・値型、`Platform.Native` が Win32 / NoOp 実装と既定実装ファクトリ（`PlatformFactory` クラス）を担う。
 - `app.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
-- `MarqueeControl` は選択矩形に加えて「選択矩形の外側に描く装飾」（暗転マスク・穴あけ枠・ハイライト・内側の塗り）を描画する。外観と表示ポリシーは `Feature.Marquee.Core` の `Decoration` 名前空間の `MarqueeDecoOptions` が単一所有し、描画内容の判断は `Marquee.ResolveContent` が持つ（装飾は Core 内のサブ概念であり、別プロジェクトを持たない）。
+- `MarqueeControl` は選択矩形に加えて「選択矩形の外側に描く装飾」（暗転マスク・穴あけ枠・ハイライト・内側の塗り）を描画する。外観と表示ポリシーは提示層（`Feature.Marquee.Presenter`）の `MarqueeAppearance` が単一所有し、装飾の矩形と描画順の判断は同層の `MarqueePresenter` が持つ（コアは穴あけ矩形という幾何だけを返す）。
 - **ラベルは Core が文言と描画順を決め、UI 層がテキスト要素を配置する**（サイズラベル・カーソル座標ラベル・Loupe 中心座標ラベル）。UIBase（`Feature.Marquee.Presenter` の `MarqueeLabelPlan` / `Feature.Loupe.Presenter` の `LoupeLabelPlan`）が「実寸 → 要素の配置矩形」の写像を単一所有し、UI は `Border` + `TextBlock` を子として置く。**ラベルは常に最上位**（`*DrawLayer` の最後の層であり、子要素は親の描画より後に描かれる）。
 - **操作・情報ラベル（確定方法・ウィンドウタイトル等）はアプリ固有の付加情報**であり選択コントロールの概念ではない。Core は関知せず、ホストが文言生成（`CaptureLabelTexts`）と描画を行う。
 - `Decoration` 系の型はコントロールではなく装飾のコアである（暗転オーバーレイの独立コントロールは `MarqueeControl` へ統合済み。別プロジェクトは持たず、`Feature.Marquee.Core` に同居する）。

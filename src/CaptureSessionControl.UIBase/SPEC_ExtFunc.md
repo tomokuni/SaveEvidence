@@ -8,7 +8,7 @@
 
 | 機能 | 提供元 | 内容 |
 | --- | --- | --- |
-| 選択矩形の色の写像 | `CapturePaintMapper.ToMarqueePaint` | `CaptureSettings` から `MarqueePaint`（9 項目）を組み立てる |
+| 選択矩形の外観の写像 | `CapturePaintMapper.ToMarqueeAppearance` | `CaptureSettings` から `MarqueeAppearance`（色・枠線の太さ・表示可否）を組み立てる |
 | ルーペの色の写像 | `CapturePaintMapper.ToLoupeAppearance` | `CaptureSettings` から `LoupeAppearance`（5 項目）を組み立てる |
 
 **本層は公開 API を持ちません。** 写像は両 UI のホストが使う内部処理であり、公開面を増やさないため
@@ -25,9 +25,9 @@
 
 ## `CapturePaintMapper`（内部・設定から色への写像）
 
-### `ToMarqueePaint(CaptureSettings settings)`
+### `ToMarqueeAppearance(CaptureSettings settings)`
 
-| 写像先（`MarqueePaint`） | 写像元（`CaptureSettings`） | 内容 |
+| 写像先（`MarqueeAppearance`） | 写像元（`CaptureSettings`） | 内容 |
 | --- | --- | --- |
 | `HandleColor` | `HandleColor` | ドラッグハンドルの塗り色 |
 | `HandleBorderColor` | `BorderColor` | ハンドルの枠線色（**選択枠線と共通**） |
@@ -40,7 +40,7 @@
 | `OuterBorderColor` | `BorderColor` | 穴あけ枠の色（**ハンドルの枠線と共通**） |
 
 **写像しない項目**: 内側の塗り（`InnerFillColor`）と内側の枠線（`InnerBorderColor`）。描画の可否は
-`MarqueeDecoOptions` の明示フラグが単一所有するため、色は既定の透明を保ちます。
+`MarqueeAppearance` の明示フラグが単一所有するため、色は既定の透明を保ちます。
 
 ### `ToLoupeAppearance(CaptureSettings settings)`
 
@@ -66,7 +66,7 @@
 | 依存 | 用途 |
 | --- | --- |
 | `CaptureSessionControl.Core`（`EsUtil.SaveEvidence.CaptureSession`） | 写像元の設定型（`CaptureSettings`） |
-| `Feature.Marquee.Presenter`（`EsUtil.Feature.Marquee.Presenter`） | 写像先の描画の設定（`MarqueePaint`） |
+| `Feature.Marquee.Presenter`（`EsUtil.Feature.Marquee.Presenter`） | 写像先の外観（`MarqueeAppearance`） |
 | `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Presenter`） | 写像先の描画の設定（`LoupeAppearance`） |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。外部パッケージへの直接依存もありません。

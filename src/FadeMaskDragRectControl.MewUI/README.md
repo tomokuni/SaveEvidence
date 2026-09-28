@@ -13,7 +13,7 @@
 - **ルーペの自動配置**: 中心（ドメイン座標）+ オフセットから表示位置を計算し、親領域内へクランプします
   （計算はコアの公開ファサード `Loupe.ResolveLayout` が単一所有）。
 - **コア型のイベント引数**: イベントの座標は UI 非依存のコア型（`EsPoint` / `EsRect`）で公開します。
-- **色は描画層が単一所有**: 描画にだけ必要な色は UIBase の `MarqueePaint` / `LoupeAppearance` を `MarqueePaint` / `LoupeAppearance` プロパティで与えます（コアの設定値には色を含めません）。
+- **外観は提示層が単一所有**: 描画にだけ必要な外観は `MarqueeAppearance` / `LoupeAppearance` を `MarqueeAppearance` / `LoupeAppearance` プロパティで与えます（コアの設定値には色・表示可否を含めません）。
 
 ## 使い方
 
@@ -22,7 +22,7 @@ using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Presenter; // MarqueePaint（描画にだけ必要な色）
+using EsUtil.Feature.Marquee.Presenter; // MarqueeAppearance（描画にだけ必要な外観）
 using EsUtil.Feature.Loupe.Presenter;   // LoupeAppearance（描画にだけ必要な色）
 
 var selection = new FadeMaskDragRectControl
@@ -33,7 +33,7 @@ var selection = new FadeMaskDragRectControl
 };
 
 // 色は描画にだけ必要な設定として別の値で与える（コアの設定値には含めない）
-selection.MarqueePaint = MarqueePaint.Default with { OverlayColor = System.Drawing.Color.FromArgb(128, 0, 0, 0) };
+selection.MarqueeAppearance = MarqueeAppearance.Default with { OverlayColor = System.Drawing.Color.FromArgb(128, 0, 0, 0) };
 selection.LoupeAppearance = LoupeAppearance.Default with { BackgroundColor = System.Drawing.Color.White };
 
 // ドメイン ↔ ローカル DIP の変換ポートを設定する（暗転マスク・選択矩形・ルーペで共用）
@@ -72,7 +72,7 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | --- | --- |
 | `Mode` | 動作モード（既定は `AreaSelect`） |
 | `Options` | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。コアの `FadeMaskDragRectOptions`。**色は含まない**） |
-| `MarqueePaint` / `LoupeAppearance` | 描画にだけ必要な色の単一値（UIBase の `MarqueePaint` / `LoupeAppearance`。内包コントロールへ委譲） |
+| `MarqueeAppearance` / `LoupeAppearance` | 描画にだけ必要な外観の単一値（提示層の `MarqueeAppearance` / `LoupeAppearance`。内包コントロールへ委譲） |
 | `HasSelection` / `SelectionRect` | 現在の選択状態（ドメイン座標） |
 | `LogicalHighlightRect` | ハイライト（`ScreenSelect` / `WindowSelect` の穴あけ矩形。null はハイライトなし） |
 | `ShowFullOverlay` | 全面暗転の有無（モードから導出） |
@@ -96,7 +96,7 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | 項目 | Avalonia 版 | MewUI 版 |
 | --- | --- | --- |
 | イベント引数の座標 | Avalonia の `Point` / `Rect` | **コア型の `EsPoint` / `EsRect`** |
-| 外観設定 | コアの `FadeMaskDragRectOptions` を 1 プロパティとして公開する（既定値・分配規則はコアが単一所有）。色は `MarqueePaint` / `LoupeAppearance` プロパティで与える | 同じコアの設定値を 1 プロパティとして公開する（同一の型・同一の既定値）。色のプロパティも同じである |
+| 外観設定 | コアの `FadeMaskDragRectOptions` を 1 プロパティとして公開する（既定値・分配規則はコアが単一所有）。外観は `MarqueeAppearance` / `LoupeAppearance` プロパティで与える | 同じコアの設定値を 1 プロパティとして公開する（同一の型・同一の既定値）。外観のプロパティも同じである |
 | ルーペの位置決め | ルーペコントロール自身が座標変換ポートから算出 | **本コントロールが `ResolveLayout`（コアのファサード）で配置**（MewUI のルーペは位置を持たない） |
 | サイズラベル・操作ラベル・情報ラベル | サイズラベルはコントロールがテキスト要素として表示し、操作・情報ラベルはホスト（`FadeMaskDragRectControl`）が `Options.Labels` の外観で描く（文言は `CaptureLabelTexts` が与える） | 同左（コアの同じ設定値を使うため見た目も一致する） |
 | ルーペ画像上の選択矩形破線 | 描画完了イベント経由で描画 | 同じコアの破線幾何を使い、ルーペの `Rendered` で同一のキャンバスへ描画する（見た目は一致） |

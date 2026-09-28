@@ -42,7 +42,7 @@
 | メンバー | 型 | 既定値 | 内容 |
 | --- | --- | --- | --- |
 | `Marquee` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の設定（選択の判断に使う項目のみ。色は含まない） |
-| `Deco` | `MarqueeDecoOptions` | `MarqueeDecoOptions.Default` | 装飾（暗転マスク・穴あけ枠・ラベル）の設定。外側の装飾の**枠線の太さ**は `Deco.OuterAppearance` が単一所有する |
+（装飾の設定は持たない。表示可否・太さ・色は外観（提示層の `MarqueeAppearance`）が、ハイライト矩形は `MarqueePresenter.HighlightRect` が単一所有する）
 | `Labels` | `FadeMaskDragRectLabelOptions` | 既定値 | ホストが描く操作・情報ラベルの外観 |
 | `Loupe` | `LoupeOptions` | `LoupeOptions.Default` | ルーペの設定（拡大率・表示サイズ・寸法） |
 | `SelectionRectColorA` | `System.Drawing.Color` | 白 | ルーペ画像上の選択矩形破線の色 A（描画開始色） |
@@ -50,7 +50,7 @@
 | `LoupeOffset` | `double` | `20.0` | ルーペのカーソル中心からの右下オフセット（DIP） |
 | `Default`（static） | `FadeMaskDragRectOptions` | — | 部分変更の基点（`Default with { ... }`） |
 
-**色は描画にだけ必要な設定のため本値に含みません**（`MarqueePaint` / `LoupeAppearance` が単一所有し、ホストがコントロールへ設定します）。例外はルーペ画像へ直接書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）で、これは描画 API ではなくピクセル書き込みに使うため本値が持ちます。
+**色は描画にだけ必要な設定のため本値に含みません**（提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有し、ホストがコントロールへ設定します）。例外はルーペ画像へ直接書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）で、これは描画 API ではなくピクセル書き込みに使うため本値が持ちます。
 
 **実行時状態**（選択矩形・ハイライト矩形・ルーペ中心・拡大元画像）と**環境値**（DPI スケーリング）は本値に含みません。
 
@@ -125,7 +125,7 @@ FadeMaskDragRectOptions options = FadeMaskDragRectOptions.Default with
 | 依存 | 用途 |
 | --- | --- |
 | `Platform.Core`（`EsUtil.Platform.Core.*`） | コア幾何型（`EsRect` / `EsPoint`）・`EsBitmap`（描画先） |
-| `Feature.Marquee.Core`（`EsUtil.Feature.Marquee.Core.Setting` / `.Decoration`） | `MarqueeOptions` / `MarqueeDecoOptions`（設定の構成要素） |
+| `Feature.Marquee.Core`（`EsUtil.Feature.Marquee.Core.Setting`） | `MarqueeOptions`（設定の構成要素） |
 | `Feature.Loupe.Core`（`EsUtil.Feature.Loupe.Core.Setting`） | `LoupeOptions`（設定の構成要素） |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。外部パッケージへの直接依存もありません。

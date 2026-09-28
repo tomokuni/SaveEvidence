@@ -51,7 +51,7 @@ classDiagram
   class FadeMaskDragRectChildValues {
     <<readonly record struct>>
     +MarqueeOptions Marquee
-    +MarqueeDecoOptions Deco
+    +MarqueeAppearance MarqueeAppearance
     +LoupeOptions Loupe
     +double LoupeOffset
     +bool IsHitTestVisible
@@ -93,7 +93,7 @@ sequenceDiagram
   UB->>Core: Resolve(mode)
   Core-->>UB: State（UsesSelection / ShowFullOverlay）
   UB-->>UI: ChildValues（設定＋モードの反映済み）
-  UI->>Child: Options / DecoOptions / PositionOffset / IsHitTestVisible を代入
+  UI->>Child: Options / Appearance / PositionOffset / IsHitTestVisible を代入
   Note over UI,Child: 代入には UI 固有型が必要なため UI が行う（値の決定は UIBase）
 ```
 
@@ -145,7 +145,7 @@ flowchart TD
 | ハイライト矩形（実行時状態） | ホスト（本層は引数で受けるだけ） |
 | 付加情報ラベルの積み上げ位置と表示可否 | `FadeMaskHostLabelRenderer`（本層） |
 | ラベルの体裁（背景 = 実寸 + 内側余白） | `MarqueeHostLabelRenderer`（Feature.Marquee.Presenter） |
-| 内側余白（体裁の値）と行送り | `MarqueePaint`（Feature.Marquee.Presenter） |
+| 内側余白（体裁の値）と行送り | `MarqueeAppearance`（Feature.Marquee.Presenter） |
 | 付加情報ラベルの文言 | ホスト |
 | 選択矩形の破線の幾何 | `FadeMaskDragRectOverlay`（コア） |
 

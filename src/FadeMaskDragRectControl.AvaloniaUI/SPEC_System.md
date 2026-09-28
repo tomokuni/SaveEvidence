@@ -45,7 +45,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
 | **依存プロジェクト** | MarqueeControl / LoupeControl / Platform.AvaloniaUI |
 
-色（描画にだけ必要な設定）の型は内包コントロールの UIBase 層（`Feature.Marquee.Presenter` の `MarqueePaint` / `Feature.Loupe.Presenter` の `LoupeAppearance`）が単一所有します。
+外観（描画にだけ必要な設定）の型は内包コントロールの提示層（`Feature.Marquee.Presenter` の `MarqueeAppearance` / `Feature.Loupe.Presenter` の `LoupeAppearance`）が単一所有します。
 
 ## 3. アーキテクチャ
 
@@ -126,7 +126,7 @@ flowchart TB
 | 可視性 | public sealed |
 | 責務 | 内包コントロール（Marquee / Loupe）の生成・配置・配線・状態同期と、ホストへの統一インターフェース提供 |
 | 内部アクセサ（internal） | `Loupe` / `Marquee`（自身の Tests のみアクセス可。公開型のカプセル化のため internal 化） |
-| 公開プロパティ（色） | `MarqueePaint` / `LoupeAppearance`（描画にだけ必要な色の単一値。内包コントロールへそのまま委譲する） |
+| 公開プロパティ（外観） | `MarqueeAppearance` / `LoupeAppearance`（描画にだけ必要な外観の単一値。内包コントロールへそのまま委譲する） |
 | 内部フィールド | `_marquee`（MarqueeControl）/ `_loupeControl`（LoupeControl） |
 
 ### 6.2 FadeMaskDragRectMode
@@ -162,7 +162,7 @@ flowchart TB
 | `FadeMaskDragRectPointEventArgs` | 本プロジェクト | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
 | `FadeMaskDragRectMode` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 動作モード（描画モード・可視性・全面暗転の切替） |
 | `FadeMaskDragRectOptions` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。**色は含まない**） |
-| `MarqueePaint` / `LoupeAppearance` | EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter（描画層） | 描画にだけ必要な色の単一値（内包コントロールへ委譲する） |
+| `MarqueeAppearance` / `LoupeAppearance` | EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter（提示層） | 描画にだけ必要な外観の単一値（内包コントロールへ委譲する） |
 | `FadeMaskDragRectChildValues` / `FadeMaskHostLabelRenderer` | EsUtil.SaveEvidence.FadeMaskDragRect.UIBase（UI 間の共有層） | 設定とモードから子コントロールへ適用する値の解決と、付加情報ラベルの描画 |
 | `ICoordTransform` / `CoordTransform` | Platform.Core | ドメイン ↔ DIP の座標変換ポート |
 
@@ -170,7 +170,7 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- `FadeMaskDragRectControl` → `FadeMaskDragRectControl.UIBase` / `MarqueeControl` / `LoupeControl` / `Platform.AvaloniaUI` の**一方向依存**（逆依存なし）。値の解決は `FadeMaskDragRectChildValues`（UIBase）が、付加情報ラベルの描画は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは代入と描画ポートの用意を行う。描画にだけ必要な色（`MarqueePaint` / `LoupeAppearance`）は内包コントロールの UIBase 層が単一所有し、本コントロールは `Paint` プロパティで転送するだけである（コアの設定値には色を含めない）。
+- `FadeMaskDragRectControl` → `FadeMaskDragRectControl.UIBase` / `MarqueeControl` / `LoupeControl` / `Platform.AvaloniaUI` の**一方向依存**（逆依存なし）。値の解決は `FadeMaskDragRectChildValues`（UIBase）が、付加情報ラベルの描画は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは代入と描画を行う。描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）は内包コントロールの提示層が単一所有し、本コントロールはプロパティで転送するだけである（コアの設定値には色・表示可否を含めない）。
 - 内包コントロールは上位 AP の設定型（CaptureSettings 等）に依存しない（コアの `FadeMaskDragRectOptions` が変換先の境界）。
 - ホスト（上位 AP）は `FadeMaskDragRectControl` の公開 API のみを使用する（内包コントロールへの直接アクセスは internal 化され、外部からは不可能）。
 
@@ -186,7 +186,7 @@ sequenceDiagram
 
     H->>C: Mode 設定
     H->>C: Options = settings（コアのマッパーで変換した設定値。色は含まない）
-    H->>C: MarqueePaint / LoupeAppearance（描画にだけ必要な色の単一値）
+    H->>C: MarqueeAppearance / LoupeAppearance（描画にだけ必要な外観の単一値）
     H->>C: SetCoordinateTransform(port)
     H->>C: SetLoupeSource(bitmap)
     H->>C: Visual Tree へ配置

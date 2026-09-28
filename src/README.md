@@ -127,5 +127,5 @@ UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [
 **コントロール系の名前空間は、フォルダ名から `Control` を除いた短縮名を使います**（例: `MarqueeControl.AvaloniaUI` → `EsUtil.SaveEvidence.Marquee.AvaloniaUI`）。これは好みではなく制約です。
 
 - 名前空間のセグメントと型名が一致すると **CS0118**（名前空間を種類として使用）になります。C# の名前解決は「外側の名前空間のメンバー（名前空間を含む）」を、`namespace` 宣言より前に書いた `using` より優先するためです。実測では `MarqueeControl` / `LoupeControl` / `ZoomViewControl` / `CropViewControl` / `ColorPickerControl` / `FadeMaskDragRectControl` / `CaptureSessionControl` の 7 型が該当します（フォルダ名をそのまま使うと、他の名前空間からこれらの型を単純名で参照できません）。
-- 短縮名にしても `Marquee` / `Loupe`（コアのファサード型）だけはセグメントと一致するため、UI 層は**別名 `using`** で参照します（例: `using MarqueeFacade = EsUtil.Feature.Marquee.Core.Marquee;`）。
+- 短縮名にしても `Marquee` / `Loupe`（コアのファサード型）だけはセグメントと一致するため、UI 層は**別名 `using`** で参照します（例: `using MarqueeFacade = EsUtil.Feature.Marquee.Core.Marquee;`。提示層を介する場合は提示層を参照するため不要です）。
 - コアと提示層は可搬性の単位（`EsUtil.Feature.*`）、UI 層は製品側（`EsUtil.SaveEvidence.*`）に置きます。`EsUtil.Platform.*` は外部パッケージに依存しない値型・抽象です。

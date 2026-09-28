@@ -6,7 +6,7 @@
 ## 目的
 
 - **設定から描画の設定（色）への写像を 1 箇所へ集約**する。色は描画にだけ必要な設定であり、描画層（UIBase）の
-  `MarqueePaint` / `LoupeAppearance` が単一所有するため、写像も 1 つでなければならない（写像漏れはビルドが通り、
+  `MarqueeAppearance` / `LoupeAppearance` が単一所有するため、写像も 1 つでなければならない（写像漏れはビルドが通り、
   色が無言で効かなくなる）。
 - **製品の設定型を再利用ライブラリへ持ち込まない**。写像元がセッションの設定型（`CaptureSettings`）であるため、
   本層は `CaptureSessionControl` 側の共有層として置く。
@@ -32,14 +32,14 @@ Feature.Marquee.Presenter / Feature.Loupe.Presenter ─┐（描画の設定＝�
 
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
-| `CapturePaintMapper` | `internal static` | `CaptureSettings` → `MarqueePaint` / `LoupeAppearance` の写像 |
+| `CapturePaintMapper` | `internal static` | `CaptureSettings` → `MarqueeAppearance` / `LoupeAppearance` の写像 |
 
 ## 依存関係
 
 ```text
 CaptureSessionControl.UIBase
     ├── CaptureSessionControl.Core（CaptureSettings）
-    ├── Feature.Marquee.Presenter（MarqueePaint）
+    ├── Feature.Marquee.Presenter（MarqueeAppearance）
     └── Feature.Loupe.Presenter（LoupeAppearance）
 ```
 
@@ -51,7 +51,7 @@ UI フレームワークへ依存しません。外部パッケージへの直�
 ## 主な API
 
 ```csharp
-MarqueePaint marquee = CapturePaintMapper.ToMarqueePaint(settings);           // 設定 → 選択矩形の色（9 項目）
+MarqueeAppearance marquee = CapturePaintMapper.ToMarqueeAppearance(settings);  // 設定 → 選択矩形の外観
 LoupeAppearance loupe = CapturePaintMapper.ToLoupeAppearance(settings, background);     // 設定 → ルーペの色（7 項目）
 ```
 
@@ -63,7 +63,7 @@ LoupeAppearance loupe = CapturePaintMapper.ToLoupeAppearance(settings, backgroun
 1. **色だけを写像する**。寸法・表示可否はコアの設定マッパーが単一所有する。
 2. **枠線の色は 1 つ**: 選択枠線（ハンドルの枠線）と暗転マスクの穴あけ枠は同じ矩形に重なるため、同じ設定値
    （`BorderColor`）を両方へ割り当てる。
-3. **内側の塗り・内側の枠線は写像しない**（描画の可否は `MarqueeDecoOptions` のフラグが単一所有する）。
+3. **内側の塗り・内側の枠線は写像しない**（描画の可否は `MarqueeAppearance` のフラグが単一所有する）。
 4. **画像外の色は設定**（`LoupePasteboardColor`。ホストは色を引数で渡さない）。
 5. 引数の `settings` は `ToNonNull` 済みを前提とする（null は例外）。
 

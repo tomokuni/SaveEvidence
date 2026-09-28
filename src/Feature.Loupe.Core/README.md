@@ -111,7 +111,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 | 描画の幾何の生成の形 | `ResolveGeometry(double displaySize, EsSize? availableSize = null)`（一辺の表示サイズ＝親パネルのクランプ結果と、描画面＝ビットマップの領域が別） | `ResolveGeometry(in MarqueeRenderRequest)`（描画領域＝座標空間。表示サイズと同じ） | 本コアは正方形のルーペを自前の描画面へ描く（任意矩形の描画領域へ直接描く Marquee とは座標系の対応が違う） |
 | 入力の通知と効果ポート | 持たない（状態はホストが設定するだけ。設定は表示のみ。変換の設定は再描画を要求せず、表示位置の再計算は UI が行う。ロガーはファサード自身が保持） | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）／設定に対話パラメータ（`MinSelectionSize` / `HandleHitRadius` / `ClampToDomainBounds`）／ラベル文言プロバイダ（`SizeLabelOverrideProvider` 等）／座標変換の設定で**コアが再描画を要求**（`RequestRedraw`）／ロガーはセッションが保持 | ルーペは入力の解釈も効果ポートも持たない（ホストが状態を設定するだけであり、再描画の要求先が無い） |
 | 寸法の型 | `int`（物理ピクセルへ換算。矩形の塗りで描く） | `double`（DIP のまま。線で描く） | 描画プリミティブが違う（塗り / 線） |
-| 設定型の数とログ定義 | 1 型（`LoupeOptions`）。ログは `LogOptionsChanged` のみ | 2 型（`MarqueeOptions` + `MarqueeDecoOptions`）。ログは `LogOptionsChanged` + `LogDecoOptionsChanged`（入れ子のキー） | Marquee の装飾は撮影オーバーレイ等へ組み込むときだけ必要なサブ概念 |
+| 設定型の数とログ定義 | 1 型（`LoupeOptions`）。ログは `LogOptionsChanged` のみ | 1 型（`MarqueeOptions`）。ログは `LogOptionsChanged` のみ | 装飾の設定はコアから提示層（外観）へ移したため、両コアとも 1 型 |
 | 描画データの粒度 | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker` / `MarqueeOuterDecoFrame`） | 描画プリミティブが違う（塗る矩形の列 / 線の座標） |
 | 描画の幾何の座標変換ポート | 幾何に持たない（ポートは `ResolveLayout` の表示位置解決だけに使う） | 幾何が保持する（`Port` ＋ 未指定時の `DomainToDipScaling`。`ResolvedPort` / `ToDipRect` が自分で解決する） | 本コアは自身の物理ピクセル面で描画が完結する（Marquee は選択矩形をドメイン → DIP へ変換して描き、その DIP はホストの座標系で決まる） |
 | 下地の層 | `LoupeDrawLayer.Pasteboard`（画像外の色）で描画面全体を塗る | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | ルーペは描画先のビットマップを自分で置き換える（Marquee は自身の表面へ直接描き、消去はフレームワークが行う） |

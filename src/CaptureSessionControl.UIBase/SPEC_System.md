@@ -4,7 +4,7 @@
 
 `CaptureSessionControl.UIBase` は、撮影・切り出しのセッションを実装する両 UI が共有する**設定写像**を提供します。対象は次の 1 つです。
 
-- **キャプチャ設定（`CaptureSettings`）→ 描画の設定（`MarqueePaint` / `LoupeAppearance`）の写像**
+- **キャプチャ設定（`CaptureSettings`）→ 外観（`MarqueeAppearance` / `LoupeAppearance`）の写像**
 
 寸法・表示可否はコアの設定マッパー（`FadeMaskDragRectOptionsMapper`）が単一所有するため、本層は色だけを扱います。
 
@@ -39,7 +39,7 @@ graph LR
 
 | 置き場所の候補 | 可否 | 理由 |
 | --- | --- | --- |
-| `CaptureSessionControl.Core` | 不可 | 写像先が描画層の型（`MarqueePaint` / `LoupeAppearance`）のため、Core → UIBase の逆流になる |
+| `CaptureSessionControl.Core` | 不可 | 写像先が提示層の型（`MarqueeAppearance` / `LoupeAppearance`）のため、Core → UIBase の逆流になる |
 | `FadeMaskDragRectControl.UIBase` | 不可 | 写像元が製品の設定型（`CaptureSettings`）のため、再利用ライブラリが製品設定へ依存する |
 | `CaptureSessionControl.UIBase`（本層） | 採用 | セッションの設定と両 UI の中間にあり、両 UI のホストが同じ写像を共有できる |
 
@@ -47,7 +47,7 @@ graph LR
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `CapturePaintMapper.cs` | `internal static class` | `CaptureSettings` → `MarqueePaint` / `LoupeAppearance` の写像 |
+| `CapturePaintMapper.cs` | `internal static class` | `CaptureSettings` → `MarqueeAppearance` / `LoupeAppearance` の写像 |
 
 ## クラス図
 
@@ -55,13 +55,13 @@ graph LR
 classDiagram
   class CapturePaintMapper {
     <<internal static>>
-    +ToMarqueePaint(settings)$ MarqueePaint
+    +ToMarqueeAppearance(settings)$ MarqueeAppearance
     +ToLoupeAppearance(settings, background)$ LoupeAppearance
   }
   class CaptureSettings {
     <<record / CaptureSessionControl.Core>>
   }
-  class MarqueePaint {
+  class MarqueeAppearance {
     <<record / Feature.Marquee.Presenter>>
   }
   class LoupeAppearance {
@@ -69,7 +69,7 @@ classDiagram
   }
 
   CapturePaintMapper ..> CaptureSettings : 読み取る
-  CapturePaintMapper ..> MarqueePaint : 生成
+  CapturePaintMapper ..> MarqueeAppearance : 生成
   CapturePaintMapper ..> LoupeAppearance : 生成
 ```
 
@@ -84,8 +84,8 @@ sequenceDiagram
 
   Host->>Core: settings.ToFadeMaskDragRectOptions()
   Core-->>Host: FadeMaskDragRectOptions（寸法・表示可否）
-  Host->>Mapper: ToMarqueePaint(settings) / ToLoupeAppearance(settings, background)
-  Mapper-->>Host: MarqueePaint / LoupeAppearance（色）
+  Host->>Mapper: ToMarqueeAppearance(settings) / ToLoupeAppearance(settings, background)
+  Mapper-->>Host: MarqueeAppearance / LoupeAppearance（外観）
   Host->>UI: Options = ...（寸法・表示可否）
   Host->>UI: Paint = ...（色）
   Note over Host,UI: 寸法と色は別の経路で渡る（所有者が違うため）
@@ -97,8 +97,8 @@ sequenceDiagram
 | --- | --- |
 | 設定から**寸法・表示可否**への写像 | `FadeMaskDragRectOptionsMapper`（`CaptureSessionControl.Core`） |
 | 設定から**色**への写像 | `CapturePaintMapper`（本層） |
-| 色の値と既定値 | `MarqueePaint` / `LoupeAppearance`（各 UIBase） |
-| 描画の可否 | `MarqueeDecoOptions` の明示フラグ（コア） |
+| 色の値と既定値 | `MarqueeAppearance` / `LoupeAppearance`（各提示層） |
+| 描画の可否 | `MarqueeAppearance` の明示フラグ（提示層） |
 | 枠線の色（選択枠線と穴あけ枠で共通） | 設定の `BorderColor` 1 項目 |
 
 **写像漏れの防止**: 写像は 1 箇所（`CapturePaintMapper`）に集約されており、以前は両 UI に同じ写像が 2 コピー

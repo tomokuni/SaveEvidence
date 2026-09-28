@@ -31,7 +31,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 - **配線の内包**: `SelectionChanged` → 暗転マスク同期、`LoupePositionMoved` → ルーペ中心更新、確定・キャンセル・ズーム要求のホスト通知を内部で完結
 - **モード切替**: `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` で描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替
 - **設定の一括適用**: `Options` プロパティ（1 つの設定値）で選択矩形 / 暗転マスク / ルーペ / 選択矩形破線を 1 回で適用（既定値・項目の対応・枠線の太さの共用規則はコアが単一所有）
-- **色の一括適用**: `MarqueePaint` / `LoupeAppearance` プロパティ（描画にだけ必要な色の単一値）で内包する選択矩形・ルーペの色を適用（コアの設定値は色を持たない）
+- **外観の一括適用**: `MarqueeAppearance` / `LoupeAppearance` プロパティ（描画にだけ必要な外観の単一値）で内包する選択矩形・ルーペの外観を適用（コアの設定値は色・表示可否を持たない）
 - **座標変換ポートの一括分配**: `SetCoordinateTransform(ICoordTransform?)` で 2 コントロールへ同一ポートを分配
 - **ビューポート変化の追従**: `NotifyViewportChanged()` でパン・ズーム等のビューポート変化を通知（Marquee の再描画 + ルーペ位置再計算。ScrollViewer 連携のスクロールも同じ経路で処理）
 - **選択状態の外部設定**: `SetSelection` / `ClearSelection` で選択矩形を設定（選択状態の単一のソースは `MarqueeControl` のセッションであり、本コントロールはその読み取りと委譲のみを行う。ルーペの選択矩形破線は `LoupeRendered` イベント経由で描画）
@@ -90,18 +90,15 @@ SelectionOverlay.Options = captureSettings.ToFadeMaskDragRectOptions();
 // 一部の項目だけを変える場合はコアの既定値から with 式で組み立てる
 SelectionOverlay.Options = FadeMaskDragRectOptions.Default with
 {
-    // 装飾（暗転マスク・穴あけ枠）は寸法と表示可否だけを持ち、色は描画層（UIBase）が単一所有する
-    Deco = MarqueeDecoOptions.Default with
-    {
-        OuterAppearance = new MarqueeOuterDecoAppearance { BorderThickness = 3.0 },
-    },
+    Marquee = MarqueeOptions.Default with { HandleSize = 12.0 },
     Loupe = LoupeOptions.Default with { RequestedSize = 200, ZoomLevel = 2 },
 };
 
-// 色（描画にだけ必要な設定）は描画層の色の単一値を Paint プロパティへ設定する
-SelectionOverlay.MarqueePaint = MarqueePaint.Default with
+// 外観（色・枠線の太さ・表示可否）は外観の単一値をプロパティへ設定する
+SelectionOverlay.MarqueeAppearance = MarqueeAppearance.Default with
 {
     OverlayColor = System.Drawing.Color.FromArgb(77, 0, 0, 0), // 黒 30%
+    OuterBorderThickness = 3.0,
 };
 SelectionOverlay.LoupeAppearance = LoupeAppearance.Default with { BorderColor = System.Drawing.Color.Red };
 
@@ -189,7 +186,7 @@ FadeMaskDragRectControl.UIBase/
 ```
 
 本コントロールは、解決された値を子コントロールへ代入し、描画ポートを用意して文言を渡すだけです
-（ラベルの体裁と行送りは `Feature.Marquee.Presenter` の `MarqueeHostLabelRenderer` / `MarqueePaint` が
+（ラベルの体裁と行送りは `Feature.Marquee.Presenter` の `MarqueeHostLabelRenderer` / `MarqueeAppearance` が
 単一所有します）。
 
 ## 10. ライセンス

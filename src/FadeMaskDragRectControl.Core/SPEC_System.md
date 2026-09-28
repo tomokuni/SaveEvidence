@@ -38,15 +38,15 @@ graph LR
 
 - 本プロジェクトは UI フレームワークへ依存しません。
 - 依存の向きは **Core → Platform.Core / Feature.*Core** の一方向です（本プロジェクトを参照する側は UI 実装とホストで、逆向きの参照はありません）。
-- 設定の構成要素（`MarqueeOptions` / `MarqueeDecoOptions` / `LoupeOptions`）を再利用するため、Marquee / Loupe のコアを参照します。
-- **色は本プロジェクトが持ちません**（`MarqueePaint` / `LoupeAppearance` が描画層で単一所有する）。例外はルーペ画像へピクセルで書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）です。これは描画 API ではなく `EsBitmap` への直接書き込みに使うため、本プロジェクトが所有します。
+- 設定の構成要素（`MarqueeOptions` / `LoupeOptions`）を再利用するため、Marquee / Loupe のコアを参照します。
+- **色は本プロジェクトが持ちません**（`MarqueeAppearance` / `LoupeAppearance` が提示層で単一所有する）。例外はルーペ画像へピクセルで書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）です。これは描画 API ではなく `EsBitmap` への直接書き込みに使うため、本プロジェクトが所有します。
 
 ## コンポーネント構成
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
 | `FadeMaskDragRectMode.cs` | `public enum` | 動作モード（`Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect`） |
-| `FadeMaskDragRectOptions.cs` | `public sealed record` | 設定の単一値（`Marquee` / `Deco` / `Labels` / `Loupe` / 破線の色 2 / `LoupeOffset`） |
+| `FadeMaskDragRectOptions.cs` | `public sealed record` | 設定の単一値（`Marquee` / `Labels` / `Loupe` / 破線の色 2 / `LoupeOffset`） |
 | `FadeMaskDragRectLabelOptions.cs` | `public sealed record` | 操作ラベル・情報ラベルの外観（表示可否・寸法・色） |
 | `FadeMaskDragRectModes.cs` | `internal static class` | モード → 状態の解決 |
 | `FadeMaskDragRectState.cs` | `internal readonly record struct` | モードから導出する表示可否 |
@@ -67,7 +67,7 @@ classDiagram
   class FadeMaskDragRectOptions {
     <<record>>
     +MarqueeOptions Marquee
-    +MarqueeDecoOptions Deco
+    
     +FadeMaskDragRectLabelOptions Labels
     +LoupeOptions Loupe
     +Color SelectionRectColorA
@@ -134,7 +134,7 @@ sequenceDiagram
   Host->>UI: Mode = FadeMaskDragRectMode
   UI->>Core: FadeMaskDragRectModes.Resolve(Mode)
   Core-->>UI: FadeMaskDragRectState（UsesSelection / ShowFullOverlay / ShowSelectionOverlay）
-  UI->>Child: Options.Marquee / Options.Deco / Options.Loupe / Options.LoupeOffset を代入
+  UI->>Child: Options.Marquee / Options.Loupe / Options.LoupeOffset と外観（MarqueeAppearance）を代入
   UI->>Child: IsHitTestVisible = state.UsesSelection
   UI->>UI: UpdateLoupeVisibility（state.IsLoupeVisible を問い合わせる）
   Note over UI,Child: 代入そのものは UI 固有型を要求するため UI が行う（判断はコア）
@@ -181,8 +181,8 @@ flowchart TD
 | モードと表示可否の対応 | `FadeMaskDragRectModes` / `FadeMaskDragRectState` |
 | 選択として成立するサイズの条件（幅 > 0 かつ 高さ > 0） | `FadeMaskDragRectSelection.IsUsable` |
 | 選択矩形の破線の幾何（位置・長さ・色順・最小倍率） | `FadeMaskDragRectOverlay.EnumerateDashes` |
-| 枠線の太さ（選択枠線と暗転マスクの穴あけ枠で共通） | `MarqueeDecoOptions.OuterAppearance`（`Deco` 経由） |
-| コントロールの外観色 | 描画層の `MarqueePaint` / `LoupeAppearance`（本プロジェクトは持たない） |
+| 枠線の太さ（選択枠線と暗転マスクの穴あけ枠で共通） | `MarqueeAppearance.OuterBorderThickness`（提示層） |
+| コントロールの外観色 | 提示層の `MarqueeAppearance` / `LoupeAppearance`（本プロジェクトは持たない） |
 | 操作・情報ラベルの文言 | ホスト（本プロジェクトは外観のみ持つ） |
 
 ## 例外処理ポリシー

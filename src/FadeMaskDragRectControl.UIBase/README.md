@@ -9,7 +9,7 @@
   「設定の写し → モードから導出する項目の上書き」という 2 段の分配をそれぞれ持っており、片方だけ規則が
   変わる余地があった。
 - **付加情報ラベル（操作・情報）の積み上げを 1 箇所へ集約**する。体裁は既に
-  `MarqueeHostLabelRenderer` と `MarqueePaint`（`Feature.Marquee.Presenter`）が単一所有しているが、
+  `MarqueeHostLabelRenderer` と `MarqueeAppearance`（`Feature.Marquee.Presenter`）が単一所有しているが、
   「どの文言をどの位置へ積むか」は両 UI が別々に書いていた。
 
 ## 層の位置付け

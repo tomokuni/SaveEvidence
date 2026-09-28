@@ -16,7 +16,7 @@
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `FadeMaskDragRectMode` | public | 動作モード（Crop / AreaSelect / ScreenSelect / WindowSelect） |
-| `FadeMaskDragRectOptions` | public | 設定の単一値（`Marquee` / `Deco`（装飾） / `Loupe` / `Labels`（操作・情報ラベルの外観） / 選択矩形破線の色 / ルーペオフセット）。**外側の装飾の寸法は `Deco.OuterAppearance` が単一所有する**（枠線の太さを 2 箇所に持たない。色は描画層（UIBase）の `MarqueePaint` / `LoupeAppearance` が単一所有する） |
+| `FadeMaskDragRectOptions` | public | 設定の単一値（`Marquee` / `Loupe` / `Labels`（操作・情報ラベルの外観） / 選択矩形破線の色 / ルーペオフセット）。**計算に必要な値だけを持ち**、色・フォント・枠線の太さ・表示可否は外観（提示層の `MarqueeAppearance` / `LoupeAppearance`）が単一所有する |
 | `FadeMaskDragRectLabelOptions` | public | ホスト固有の付加情報（操作ラベル・情報ラベル）の外観（表示可否・寸法・色）。文言の生成と描画はホストが行う |
 | `FadeMaskDragRectState` | internal | モードから導出する状態（選択矩形・破線・全面暗転の可否とルーペの表示可否） |
 | `FadeMaskDragRectModes` | internal | モード → 状態の解決（`Resolve`） |
@@ -45,7 +45,7 @@ FadeMaskDragRectOptions options = FadeMaskDragRectOptions.Default with
     Loupe = LoupeOptions.Default with { RequestedSize = 240 },
 };
 // 選択矩形の設定は外側の装飾（暗転マスク・穴あけ枠）の寸法と表示可否も含むため、そのまま 1 回で分配できる
-// （色は描画層（UIBase）の MarqueePaint / LoupeAppearance が単一所有し、ホストがコントロールの Paint へ設定する）
+// （色・枠線の太さ・表示可否は外観（提示層の MarqueeAppearance / LoupeAppearance）が単一所有し、ホストがコントロールの Appearance へ設定する）
 MarqueeOptions marquee = options.Marquee;
 
 // モード → 状態（表示可否）の解決（両 UI が同じ判断を使う）
@@ -74,9 +74,9 @@ FadeMaskDragRectOverlay.DrawSelectionRect(
 2. **モードの単一所有**: `FadeMaskDragRectMode` は本プロジェクトのみが定義する。各 UI は `Mode` プロパティの型として参照する。
 3. **モード解釈の単一所有**: モードと状態（表示可否）の対応は `FadeMaskDragRectModes` / `FadeMaskDragRectState` のみが持つ。UI 側に `switch` を書かない。
 4. **選択矩形の可否も本プロジェクトが持つ**（UI 側に「幅 > 0」の判定を書かない）。
-5. **枠線の太さは装飾の設定が単一所有する**: 選択枠線は暗転マスクの穴あけ枠と重なるため、`Deco.OuterAppearance` の 1 値だけが太さを持つ（写し替える導出処理を持たない）。
+5. **枠線の太さは外観が単一所有する**: 選択枠線は暗転マスクの穴あけ枠と重なるため、`MarqueeAppearance.OuterBorderThickness` の 1 値だけが太さを持つ（写し替える導出処理を持たない）。
 6. **描画は `EsBitmap` へ直接書く**: UI の描画 API を使わないため、両 UI で共有できる。
-7. **座標はコア型**: `EsRect` / `EsPoint` を使用する（変換は各 UI の境界で 1 行）。色を持つのはルーペ画像上の破線（`SelectionRectColorA` / `SelectionRectColorB`）だけで、コントロールの外観色は持たない（描画層（UIBase）の `MarqueePaint` / `LoupeAppearance` が単一所有する）。
+7. **座標はコア型**: `EsRect` / `EsPoint` を使用する（変換は各 UI の境界で 1 行）。色を持つのはルーペ画像上の破線（`SelectionRectColorA` / `SelectionRectColorB`）だけで、コントロールの外観色は持たない（外観（提示層の `MarqueeAppearance` / `LoupeAppearance`）が単一所有する）。
 
 ## テスト
 

@@ -18,7 +18,7 @@ Avalonia 版と同一の解釈になります。
 | `FadeMaskDragRectControl.UIBase` | 設定とモードから子コントロールへ適用する値の解決（`FadeMaskDragRectChildValues`）と、付加情報ラベルの描画（`FadeMaskHostLabelRenderer`） |
 | `MarqueeControl.MewUI` / `Feature.Marquee.Core` | 選択矩形の入力と状態機械 |
 | `Feature.Marquee.Presenter` | ホイール要求（`WheelZoomRequest` / `WheelScrollRequest`）の中継で型を参照する（解釈は内包コントロールが組み込みの層へ委ねる） |
-| `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | 描画にだけ必要な色（`MarqueePaint` / `LoupeAppearance`）の型 |
+| `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | 描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）の型 |
 | `Feature.Marquee.Core`（`Decoration` 名前空間） | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の設定・外観・幾何・描画内容の解決（名前空間 `EsUtil.Feature.Marquee.Core.Decoration`。描画は `MarqueeControl` が行う） |
 | `LoupeControl.MewUI` / `Feature.Loupe.Core` | 拡大鏡の描画と表示位置計算 |
 | `Platform.Core` | コア幾何型・座標変換ポート・画像コンテナ |
@@ -55,7 +55,7 @@ Avalonia 版と同一の解釈になります。
 | `ShowFullOverlay` | `bool`（取得のみ） | `true` | 全面暗転の有無（モードから導出） |
 | `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（ドメイン座標） |
 | `Options` | `FadeMaskDragRectOptions`（コア） | `FadeMaskDragRectOptions.Default` | 設定の単一値（下記）。同じ値の再設定はスキップされる |
-| `MarqueePaint` / `LoupeAppearance` | `MarqueePaint` / `LoupeAppearance`（描画層） | 各 `Default` | 描画にだけ必要な色の単一値（コアの設定値には含まれない） |
+| `MarqueeAppearance` / `LoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 各 `Default` | 描画にだけ必要な外観の単一値（コアの設定値には含まれない） |
 | `DomainToDipScaling` | `double` | `1.0` | ドメイン → DIP 変換の基準倍率（設定には含めない環境値） |
 | `DisplayScaleScaling` | `double` | `0`（`DomainToDipScaling` と同値） | サイズラベルの DisplayScale 補正（環境値） |
 | `LoupeDipToDeviceScaling` | `double` | `1.0` | ルーペの DIP → 物理ピクセル倍率（環境値） |
@@ -76,9 +76,9 @@ Avalonia 版と同一の解釈になります。
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | ラベル文言を描画時に評価するデリゲート（null または空文字を返す場合は描画しない。文言はホストが与える） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包するドラッグ選択コントロールとルーペへ伝搬する。null は `NullLogger` へフォールバック。暗転マスクは選択のたびにログを出すため対象外） |
 
-内包コントロールへの直接アクセス（`Marquee` / `Loupe`）は internal（自身のテストのみ）。ホストは `Options` / `Mode` / `MarqueePaint` / `LoupeAppearance` / 文言プロパティの公開 API を使います。
+内包コントロールへの直接アクセス（`Marquee` / `Loupe`）は internal（自身のテストのみ）。ホストは `Options` / `Mode` / `MarqueeAppearance` / `LoupeAppearance` / 文言プロパティの公開 API を使います。
 
-色（描画にだけ必要な設定）はコアの設定値（`Options`）に含まれず、`MarqueePaint` / `LoupeAppearance` プロパティ（描画層（UIBase）の値）で与えます。既定値（`MarqueePaint.Default` / `LoupeAppearance.Default`）を `with` 式で部分変更します。
+外観（描画にだけ必要な設定）はコアの設定値（`Options`）に含まれず、`MarqueeAppearance` / `LoupeAppearance` プロパティ（提示層の値）で与えます。既定値（`MarqueeAppearance.Default` / `LoupeAppearance.Default`）を `with` 式で部分変更します。
 
 ## 6. メソッド
 
@@ -132,7 +132,7 @@ Avalonia 版と同一の解釈になります。
 | 項目 | 差異 |
 | --- | --- |
 | イベント引数の座標 | コア型（`EsPoint` / `EsRect`）で公開する |
-| 外観設定 | コアの `FadeMaskDragRectOptions` を 1 プロパティ（`Options`）として公開する（Avalonia 版と同じ設定値を使う）。色は `MarqueePaint` / `LoupeAppearance` プロパティで与える |
+| 外観設定 | コアの `FadeMaskDragRectOptions` を 1 プロパティ（`Options`）として公開する（Avalonia 版と同じ設定値を使う）。外観は `MarqueeAppearance` / `LoupeAppearance` プロパティで与える |
 | ルーペの位置決め | 本コントロールがコアの計算で配置する（Avalonia 版はルーペ自身が算出する） |
 | ルーペの描画スケール | 自動追従（Avalonia 版は `LoupeDipToDeviceScaling` の手動設定が必要） |
 | サイズラベル・操作ラベル・情報ラベル | サイズラベルはコントロールが表示し、操作・情報ラベルはホストが `Options.Labels` の外観で描く |

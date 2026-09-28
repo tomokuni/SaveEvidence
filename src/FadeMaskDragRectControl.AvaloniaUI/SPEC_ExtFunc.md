@@ -51,7 +51,7 @@
 - 確定・キャンセル・ズーム要求のホスト通知
 - モード別の描画モード・可視性・全面暗転の一括切替
 - 設定の一括適用（コアの `FadeMaskDragRectOptions`。値の解決は UIBase の `FadeMaskDragRectChildValues`）
-- 色の一括適用（描画層（UIBase）の `MarqueePaint` / `LoupeAppearance`）
+- 外観の一括適用（提示層の `MarqueeAppearance` / `LoupeAppearance`）
 - 付加情報ラベル（操作・情報）の描画（描画層（UIBase）の `FadeMaskHostLabelRenderer`。文言はホストが生成する）
 - 座標変換ポートの一括分配
 
@@ -69,7 +69,7 @@
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize / EsVector（コア提供）
-using EsUtil.Feature.Marquee.Presenter; // MarqueePaint（描画にだけ必要な色）
+using EsUtil.Feature.Marquee.Presenter; // MarqueeAppearance（描画にだけ必要な外観）
 using EsUtil.Feature.Loupe.Presenter;   // LoupeAppearance（描画にだけ必要な色）
 ```
 
@@ -81,7 +81,7 @@ using EsUtil.Feature.Loupe.Presenter;   // LoupeAppearance（描画にだけ必�
 1. AXAML（またはコード）で `FadeMaskDragRectControl` を配置します。
 2. `Mode` を設定します（キャプチャ種別に応じた描画モード・可視性の切替）。
 3. `Options` で設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）を一括適用します（コアの設定値を 1 つ渡す。**色は含まれません**）。
-4. `MarqueePaint` / `LoupeAppearance` で色（描画にだけ必要な設定）を適用します。
+4. `MarqueeAppearance` / `LoupeAppearance` で外観（描画にだけ必要な設定）を適用します。
 5. `SetCoordinateTransform(ICoordTransform?)` でドメイン ↔ DIP 変換を注入します。
 6. イベント（`ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested`）を購読します。
 7. ルーペソース（`Loupe.Source`）を設定します。
@@ -96,7 +96,7 @@ var overlay = new FadeMaskDragRectControl
 // ホストの設定型からコアの設定値へ変換する（変換はコアのマッパーが単一所有する）
 overlay.Options = captureSettings.ToFadeMaskDragRectOptions();
 // 色（描画にだけ必要な設定）は描画層の色の単一値で与える（Core → UIBase の逆流を作らない）
-overlay.MarqueePaint = MarqueePaint.Default with { OverlayColor = System.Drawing.Color.FromArgb(128, 0, 0, 0) };
+overlay.MarqueeAppearance = MarqueeAppearance.Default with { OverlayColor = System.Drawing.Color.FromArgb(128, 0, 0, 0) };
 overlay.LoupeAppearance = LoupeAppearance.Default with { BackgroundColor = System.Drawing.Color.White };
 // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
 overlay.DomainToDipScaling = 1.0;
@@ -122,7 +122,7 @@ parentPanel.Children.Add(overlay);
 | `DomainToDipScaling` | `double` | DPI スケーリング係数（設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
 | `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
 | `LoupeDipToDeviceScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（設定（`Options`）の対象外・DPI から自動取得。`LoupeControl.DipToDeviceScaling` へ委譲） |
-| `MarqueePaint` | `MarqueePaint`（描画層） | 選択矩形コントロールの描画に使う色（描画にだけ必要な設定）の単一値。既定は `MarqueePaint.Default`。内包する選択矩形コントロールへ委譲する |
+| `MarqueeAppearance` | `MarqueeAppearance`（提示層） | 選択矩形コントロールの外観（描画にだけ必要な色・枠線の太さ・表示可否）の単一値。既定は `MarqueeAppearance.Default`。内包する選択矩形コントロールへ委譲する |
 | `LoupeAppearance` | `LoupeAppearance`（描画層） | ルーペの描画に使う色（描画にだけ必要な設定）の単一値。既定は `LoupeAppearance.Default`。内包するルーペコントロールへ委譲する |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言を描画時に評価するプロバイダ（文言はホストが与える。`WindowTitle` は廃止し `InfoTextProvider` へ統合） |
 | `ShowFullOverlay` | `bool` | 全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効。読み取り専用） |
@@ -195,7 +195,7 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `EsUtil.SaveE
 | `Default` | `FadeMaskDragRectOptions` | 既定値（各内包コントロールの既定値） |
 
 - 部分変更は `with` 式（`control.Options = control.Options with { Loupe = ... with { RequestedSize = 240 } }`）で行います。
-- 枠線の太さ（`BorderThickness`）は**暗転マスクの外観（`Deco.OuterAppearance`）が単一所有**します。選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なって描画されるため、太さが異なると見た目が崩れます。破線の色（`SelectionRectColorA` / `SelectionRectColorB`）以外の色はコアの設定値に含まれず、描画層の `MarqueePaint` / `LoupeAppearance` が単一所有します。
+- 枠線の太さ（`BorderThickness`）は**外観（`MarqueeAppearance.OuterBorderThickness`）が単一所有**します。選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なって描画されるため、太さが異なると見た目が崩れます。破線の色（`SelectionRectColorA` / `SelectionRectColorB`）以外の色はコアの設定値に含まれず、提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有します。
 - 設定値の検証（範囲・非数）は各コア型の生成時に行われるため、本コントロールは補正を持ちません。
 - ホストの設定型（`CaptureSettings` 等）からの変換はコアのマッパー（`FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions`）が単一所有します（両 UI で同じ変換を使う）。
 
@@ -208,7 +208,7 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `EsUtil.SaveE
 
 ## 7. モード
 
-| モード | Marquee | Loupe | 全面暗転（`Options.Deco.OuterShowFullOverlay`） | 用途 |
+| モード | Marquee | Loupe | 全面暗転（`MarqueeAppearance.ShowFullOverlay`） | 用途 |
 | --- | --- | --- | --- | --- |
 | `Crop` | 有効 | 有効（LoupePositionMoved で表示開始） | 有効 | プレビュー内の切出し |
 | `AreaSelect` | 有効 | 有効（LoupePositionMoved で表示開始） | 有効 | 全画面オーバーレイの範囲選択 |
@@ -228,7 +228,7 @@ graph TD
 
     DR -->|"LoupePositionMoved"| SC
     DR -->|"ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested"| SC
-    SC -->|"Options（Deco）/ Paint / IsHitTestVisible 適用 + 再描画"| DR
+    SC -->|"Options / Appearance / IsHitTestVisible 適用 + 再描画"| DR
     SC -->|"CenterPoint 更新 + 表示開始"| LC["LoupeControl"]
     SC -->|"イベント中継"| HOST["ホスト（CropSession / OverlayWindow）"]
 ```

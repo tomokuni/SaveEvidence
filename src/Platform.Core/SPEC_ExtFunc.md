@@ -108,7 +108,7 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
 ```
 
-描画の可否は**コアの明示フラグ**（マーキーの `MarqueeDecoOptions` / ルーペの `LoupeOptions`）が単一所有します。本メソッドは「ホストの色設定（省略可能な色）をフラグへ写す」場面で使います（`color.A > 0` を各所に書くと、同じ意味の判定が散らばる）。
+描画の可否は**提示層の外観の明示フラグ**（マーキーの `MarqueeAppearance` / ルーペの `LoupeAppearance`）が単一所有します。本メソッドは「ホストの色設定（省略可能な色）をフラグへ写す」場面で使います（`color.A > 0` を各所に書くと、同じ意味の判定が散らばる）。
 
 ### `Imaging.ImageDrawMode`（enum）
 

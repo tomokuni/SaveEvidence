@@ -93,7 +93,7 @@ src/
 
 本プロジェクトは UI 操作（描画・入力・ウィンドウ）のみを持ち、共通規則は `CaptureSessionControl.Core` のテストで検証します（本プロジェクトにテストプロジェクトは置きません）。
 
-設定から描画にだけ必要な色（`MarqueePaint` / `LoupePaint`）への写像は、両 UI が共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。
+設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。
 
 ## 7. ライセンス
 
