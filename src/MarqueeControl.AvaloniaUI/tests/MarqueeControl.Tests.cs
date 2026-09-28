@@ -1490,4 +1490,30 @@ public class MarqueeControlTests
         Assert.Equal(1, resolves);
         window.Close();
     }
+
+    /// <summary>ウィンドウ経由（実ヒットテスト）の入力で選択矩形が作成されることを検証する。</summary>
+    /// <remarks>
+    /// 他のテストは <c>RaiseEvent</c> でハンドラを直接呼ぶため、<b>ヒットテストの欠落を検出できない</b><br/>
+    /// （背景を持たない <see cref="Panel"/> は描画内容が無く、押下を受け取れない）。<br/>
+    /// 本テストは実入力の経路（ウィンドウ → ヒットテスト → コントロール）でドラッグする。
+    /// </remarks>
+    [AvaloniaFact]
+    public void ウィンドウ経由のドラッグで選択矩形が作成される()
+    {
+        var control = CreateControl();
+        var window = new Window { Width = 400, Height = 400, Content = control };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // 押下はコントロール内（中央寄せのため 100〜300 の範囲）で行う
+        window.MouseMove(new Point(120, 120));
+        window.MouseDown(new Point(120, 120), MouseButton.Left);
+        window.MouseMove(new Point(280, 280));
+        window.MouseUp(new Point(280, 280), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(control.HasSelection, "ウィンドウ経由のドラッグが MarqueeControl へ届いていない（ヒットテストの欠落）");
+        Assert.Equal(new EsRect(20, 20, 160, 160), control.SelectionRect);
+        window.Close();
+    }
 }

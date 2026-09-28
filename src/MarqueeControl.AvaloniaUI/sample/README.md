@@ -26,7 +26,7 @@
 - マウスドラッグによる新規選択、選択矩形の移動・リサイズ（8方向ハンドル）を確認できます。
 - 矢印キーによる nudge（ドメイン 1Pixel 移動）を確認できます。
 - ダブルクリック検出（選択内=確定 / 外=キャンセル）を確認できます。
-- 公開イベント（`SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ConfirmRequested` / `CancelRequested` / `ViewportChanged`）の購読パターンを示します。
+- 公開イベント（`SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ConfirmRequested` / `CancelRequested`）の購読パターンを示します。
 - `SetSelection` / `ResetSelection` / `RequestConfirm` / `RequestCancel` の API 呼び出しをボタンで確認できます。
 - `MarqueeControl.Log` に `ILogger` を設定し、コントロール内部の操作ログを選択面の下のログ表示領域で確認できます。
 - 左側の設定パネルで、コントロールの外観・動作プロパティ（枠線・ハンドル・判定半径・最小サイズ）をリアルタイムに変更できます。
@@ -120,7 +120,7 @@ Marquee.Log = new InMemoryLogger(line => Dispatcher.UIThread.Post(() => _vm.AddL
 
 ログには時分秒ミリ秒（`HH:mm:ss.fff`）が付与されます。
 
-コントロールからのイベント（`SelectionChanged` / `SelectionStarted` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ConfirmRequested` / `CancelRequested` / `ViewportChanged`）を受信した場合も、コードビハインドでログへ出力します。
+コントロールからのイベント（`SelectionChanged` / `SelectionStarted` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ConfirmRequested` / `CancelRequested`）を受信した場合も、コードビハインドでログへ出力します。
 
 実アプリでは `ILogger` を NLog 等へ注入することで、同じログをファイルやコンソールへ出力できます。
 

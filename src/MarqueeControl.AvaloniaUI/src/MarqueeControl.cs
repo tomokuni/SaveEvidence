@@ -114,6 +114,11 @@ public sealed partial class MarqueeControl : Panel
     public MarqueeControl(ICursorService? cursorService)
     {
         Focusable = true;
+        // ヒットテストは「描画された内容」に対して行われるため、背景を持たない Panel は押下を一切受け取れない
+        // （図形は ShapeLayer が描くが、当たるのは親ではなく ShapeLayer 自身になる。ShapeLayer は入力を受けないため
+        // イベントは本コントロールまで届かない）。透明の背景で全面を当たり判定の対象にする
+        // （透明は描画結果を変えないため見た目には影響しない）。
+        Background = Brushes.Transparent;
         _cursor = cursorService ?? PlatformFactory.CreateCursorService();
         _effects = new Effects(this);
         _marquee = new MarqueePresenter(_effects, _cursor, Options);

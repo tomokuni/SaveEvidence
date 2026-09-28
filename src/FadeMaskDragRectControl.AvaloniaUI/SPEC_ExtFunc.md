@@ -83,8 +83,12 @@ using EsUtil.Feature.Loupe.Presenter;   // LoupeAppearance（描画にだけ必�
 3. `Options` で設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）を一括適用します（コアの設定値を 1 つ渡す。**色は含まれません**）。
 4. `MarqueeAppearance` / `LoupeAppearance` で外観（描画にだけ必要な設定）を適用します。
 5. `SetCoordinateTransform(ICoordTransform?)` でドメイン ↔ DIP 変換を注入します。
-6. イベント（`ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested`）を購読します。
+6. イベント（`ConfirmRequested` / `CancelRequested`）を購読します。
 7. ルーペソース（`Loupe.Source`）を設定します。
+
+ホイール操作（ズーム・パン）は本コントロールの対象外です。選択オーバーレイはポインター入力を占有するため、
+ホイールはホストが受け取り、ビューポート（`ZoomViewControl` 等）へ転送します。
+表示（パン・ズーム）の変化への追従はホストが検知して `RefreshOverlay()` を呼びます。
 
 ```csharp
 // Crop モードの例（プレビュー内の切出し）
@@ -222,19 +226,22 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `EsUtil.SaveE
 
 ```mermaid
 graph TD
-    DR["MarqueeControl（外側の装飾を含む）"] -->|"SelectionChanged / ViewportChanged"| SC["FadeMaskDragRectControl"]
+    DR["MarqueeControl（外側の装飾を含む）"] -->|"SelectionChanged"| SC["FadeMaskDragRectControl"]
 
     DR -->|"LoupePositionMoved"| SC
-    DR -->|"ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested"| SC
+    DR -->|"ConfirmRequested / CancelRequested"| SC
     SC -->|"Options / Appearance / IsHitTestVisible 適用 + 再描画"| DR
     SC -->|"CenterPoint 更新 + 表示開始"| LC["LoupeControl"]
     SC -->|"イベント中継"| HOST["ホスト（CropSession / OverlayWindow）"]
 ```
 
-- `SelectionChanged` / `ViewportChanged`: 選択矩形の変更をルーペの再描画要求として伝える（選択矩形の描画と外側の装飾は `MarqueeControl` がセッションから直接読んで描画する）。ルーペの選択矩形破線は `Rendered` イベント経由で描画する（破線は Bitmap へ焼き込まれるため、選択矩形の変更で `LoupeControl.RequestRender()` を要求する）。
+- `SelectionChanged`: 選択矩形の変更をルーペの再描画要求として伝える（選択矩形の描画と外側の装飾は `MarqueeControl` がセッションから直接読んで描画する）。ルーペの選択矩形破線は `Rendered` イベント経由で描画する（破線は Bitmap へ焼き込まれるため、選択矩形の変更で `LoupeControl.RequestRender()` を要求する）。
 
 - `LoupePositionMoved`: ルーペの `CenterPoint` を更新して表示開始（表示位置は座標変換ポートから自己計算）。
-- `ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested`: ホストへ中継。
+- `ConfirmRequested` / `CancelRequested`: ホストへ中継。
+
+**ホイール操作と表示の変化の追従は本クラスの配線ではありません**（コントロール化を前提とした処理）。
+ホイールはホストが受け取ってビューポートへ転送し、表示の変化はホストが検知して `RefreshOverlay()` を呼びます。
 
 ## 9. ライフサイクルと所有権
 

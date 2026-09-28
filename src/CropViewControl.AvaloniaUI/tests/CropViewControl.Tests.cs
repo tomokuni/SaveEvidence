@@ -1,9 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
@@ -335,6 +337,36 @@ public class CropViewTests
         // 1 ノッチ（48 DIP）ぶん表示位置が上へ移動する
         var after = view.ImageRectViewport();
         Assert.Equal(before.Y - 48.0, after.Y);
+        window.Close();
+    }
+
+    /// <summary>ウィンドウ経由（実ヒットテスト）のドラッグで切り出しの選択矩形が作成されることを検証する。</summary>
+    /// <remarks>
+    /// 他のテストは <c>RaiseEvent</c> でハンドラを直接呼ぶため、<b>ヒットテストの欠落を検出できない</b><br/>
+    /// （背景を持たない <see cref="Panel"/> は描画内容が無く、押下を受け取れない）。<br/>
+    /// 切り出しの選択は可視化したオーバーレイが入力を受けて成立するため、実入力の経路で検証する。
+    /// </remarks>
+    [AvaloniaFact]
+    public void ウィンドウ経由のドラッグで切り出しの選択矩形が作成される()
+    {
+        var view = new CropViewControl
+        {
+            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(400, 200, Colors.Blue),
+        };
+        var window = new Window { Content = view };
+        window.Show();
+        view.Measure(new Size(400, 200));
+        view.Arrange(new Rect(0, 0, 400, 200));
+        view.SetSelectionOverlayVisible(true);
+        Dispatcher.UIThread.RunJobs();
+
+        window.MouseMove(new Point(40, 40));
+        window.MouseDown(new Point(40, 40), MouseButton.Left);
+        window.MouseMove(new Point(240, 140));
+        window.MouseUp(new Point(240, 140), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(view.HasSelection, "切り出しのドラッグが選択オーバーレイへ届いていない（ヒットテストの欠落）");
         window.Close();
     }
 }

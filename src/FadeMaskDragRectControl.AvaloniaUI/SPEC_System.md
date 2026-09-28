@@ -105,7 +105,7 @@ flowchart TB
     end
 
     AP -->|"Mode / Options / SetCoordinateTransform / イベント購読"| Ctl
-    Ctl -->|"ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested"| AP
+    Ctl -->|"ConfirmRequested / CancelRequested"| AP
     Ctl --> DR
 
     Ctl --> LC
@@ -215,4 +215,6 @@ sequenceDiagram
 | `LoupePositionMoved` | `CenterPoint` 更新 + 表示可否の再判定 | Loupe + ホスト通知（`LoupePositionMoved`） |
 | `ConfirmRequested` | ホストへ中継 | ホスト |
 | `CancelRequested` | ホストへ中継 | ホスト |
-| `ZoomRequested` / `ScrollRequested` | ホストへ中継 | ホスト |
+
+**ホイール操作と表示の変化の追従は本クラスの配線ではありません**（コントロール化を前提とした処理）。
+ホイールはホストが受け取ってビューポート（ズーム・パン）へ転送し、表示の変化はホストが検知して `RefreshOverlay()` を呼びます。

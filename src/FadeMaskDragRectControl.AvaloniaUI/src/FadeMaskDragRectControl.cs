@@ -45,7 +45,7 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 /// <b>配線（本クラス内で完結）</b>:<br/>
 /// - SelectionChanged → ルーペの再生成（選択矩形の破線を描き直すため）。<br/>
 /// - LoupePositionMoved → Loupe の CenterPoint を更新 + 表示開始。<br/>
-/// - ConfirmRequested / CancelRequested / ZoomRequested / ScrollRequested → ホストへ中継（独自イベント引数形式）。<br/>
+/// - ConfirmRequested / CancelRequested → ホストへ中継（独自イベント引数形式）。<br/>
 /// <br/>
 /// <b>モード（<see cref="Mode"/>）</b>:<br/>
 /// - <see cref="FadeMaskDragRectMode.Crop"/>: Marquee + Loupe を有効化（プレビュー内切出し・全面暗転）。<br/>

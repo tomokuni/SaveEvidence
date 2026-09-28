@@ -109,11 +109,14 @@ SelectionOverlay.LoupeDipToDeviceScaling = 1.0;
 // 座標変換ポート（ドメイン = 仮想スクリーンピクセル。Marquee / Loupe へ一括分配）
 SelectionOverlay.SetCoordinateTransform(CoordTransform.DomainScale(() => scaling));
 
-// イベント（配線は内部で完結。確定・キャンセル・ズーム要求のみ購読）
+// イベント（配線は内部で完結。確定・キャンセルのみ購読）
 SelectionOverlay.ConfirmRequested += (_, e) => OnConfirm(e.Rect);
 SelectionOverlay.CancelRequested += (_, _) => OnCancel();
-SelectionOverlay.ZoomRequested += (_, request) => OnZoom(request.ZoomIn, request.Position);
-SelectionOverlay.ScrollRequested += (_, request) => OnScroll(request.DeltaX, request.DeltaY, request.Shift);
+
+// ホイール操作（ズーム・パン）はホストが扱う
+// 選択オーバーレイはポインター入力を占有するため、ホイールは本コントロール（またはその親）で受けて
+// ビューポート（ZoomViewControl 等）へ転送する（解釈と換算はビューポートが単一所有する）。
+SelectionOverlay.PointerWheelChanged += (_, e) => ForwardWheelToViewport(e);
 
 // ルーペソース（元画像 / 仮想スクリーン Bitmap）
 SelectionOverlay.Loupe.Source = bitmap;

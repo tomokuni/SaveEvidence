@@ -1,6 +1,7 @@
 using BindingFlags = System.Reflection.BindingFlags;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -690,51 +691,33 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionRect);
     }
 
+    /// <summary>ウィンドウ経由（実ヒットテスト）のドラッグでキャプチャ用の選択が成立することを検証する。</summary>
+    /// <remarks>
+    /// 他のテストは <c>RaiseEvent</c> でハンドラを直接呼ぶため、ヒットテストの欠落を検出できない<br/>
+    /// （AreaSelect / Crop の選択は内包する Marquee が入力を受けて成立するため、実経路で検証する必要がある）。
+    /// </remarks>
     [AvaloniaFact]
-    public void ViewportChanged_イベントで選択状態を維持したまま再描画が要求される()
+    public void ウィンドウ経由のドラッグでキャプチャの選択矩形が作成される()
     {
-        var control = new FadeMaskDragRectControl();
-        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
-
-        // Marquee の ViewportChanged を発火（ScrollViewer 連携の ScrollChanged → ViewportChanged の模擬）。
-        // 配線は RefreshOverlay に統合されている（選択状態の再同期は行わず、再描画のみ要求）
-        var field = typeof(MarqueeControl).GetField(
-            "ViewportChanged", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
-        eventDelegate?.DynamicInvoke(control.Marquee,
-            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.Marquee.CurrentSnapshot));
-
-        // 選択状態は維持される（再描画要求のみ）
-        Assert.True(control.HasSelection);
-        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionRect);
-    }
-
-    [AvaloniaFact]
-    public void ViewportChanged_イベントでルーペ位置が再計算される()
-    {
-        var control = new FadeMaskDragRectControl();
-        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
-
-        // ルーペの表示位置計算（UpdatePosition）は親 Panel 接続 + IsVisible が条件のため、
-        // ウィンドウに配置してツリーへ接続し、AXAML 既定（IsVisible=False）を明示的に表示へ切り替えてから中心を設定する
-        var window = new Window { Content = control };
+        var control = new FadeMaskDragRectControl
+        {
+            Width = 400,
+            Height = 400,
+            Mode = FadeMaskDragRectMode.AreaSelect,
+        };
+        var window = new Window { Width = 400, Height = 400, Content = control };
         window.Show();
-        control.Loupe.IsVisible = true;
-        control.Loupe.CenterPoint = new Point(50, 50);
-        var before = control.Loupe.RenderTransform;
-        Assert.NotNull(before); // 接続後に CenterPoint 設定の位置計算で RenderTransform が生成される
+        Dispatcher.UIThread.RunJobs();
 
-        // Marquee の ViewportChanged を発火（ScrollViewer 連携のスクロール変化の模擬）
-        var field = typeof(MarqueeControl).GetField(
-            "ViewportChanged", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
-        eventDelegate?.DynamicInvoke(control.Marquee,
-            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.Marquee.CurrentSnapshot));
+        // 押下はコントロール内で行う（内包する Marquee は複合コントロール全面を占めるため、座標はそのまま一致する）
+        window.MouseMove(new Point(120, 120));
+        window.MouseDown(new Point(120, 120), MouseButton.Left);
+        window.MouseMove(new Point(280, 280));
+        window.MouseUp(new Point(280, 280), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
 
-        // ルーペ表示位置が再計算される（RefreshOverlay → Loupe.RefreshPosition 経由で RenderTransform が更新される。
-        // TranslateTransform は同一インスタンスの値更新のため Same で検証）
-        Assert.NotNull(control.Loupe.RenderTransform);
-        Assert.Same(before, control.Loupe.RenderTransform);
+        Assert.True(control.HasSelection, "キャプチャ（AreaSelect）のドラッグが内包する Marquee へ届いていない");
+        Assert.Equal(new Rect(120, 120, 160, 160), control.SelectionRect);
         window.Close();
     }
 

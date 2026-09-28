@@ -43,11 +43,14 @@ selection.SetCoordinateTransform(new CoordTransform(dip => dip, domain => domain
 selection.SetLoupeSource(bitmap);
 selection.SetLoupePosition(new EsPoint(120, 340));
 
-// 確定・キャンセル・ズーム要求を購読する
+// 確定・キャンセルを購読する
 selection.ConfirmRequested += (_, e) => Capture(e.SelectionRect);
 selection.CancelRequested += (_, _) => Cancel();
-selection.ZoomRequested += (_, request) => Zoom(request.ZoomIn, request.Position);
-selection.ScrollRequested += (_, request) => Scroll(request.DeltaX, request.DeltaY, request.Shift);
+
+// ホイール操作（ズーム・パン）はホストが扱う
+// 選択オーバーレイはポインター入力を占有するため、ホイールは本コントロール（またはその親）で受けて
+// ビューポート（ZoomViewControl 等）へ転送する（解釈と換算はビューポートが単一所有する）。
+selection.MouseWheel += (e) => ForwardWheelToViewport(e);
 ```
 
 画像の上へ重ねる場合は、親の `Grid` へ追加します（本コントロールが選択の入力を受け取ります）。
@@ -89,7 +92,10 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 
 ## イベント
 
-`ConfirmRequested` / `CancelRequested` / `ZoomRequested` / `ScrollRequested` / `LoupePositionMoved`
+`ConfirmRequested` / `CancelRequested` / `LoupePositionMoved`
+
+ホイール操作（ズーム・パン）と表示の変化の追従は本コントロールの配線ではありません（コントロール化を前提とした処理）。
+ホイールはホストが受け取ってビューポートへ転送し、表示の変化はホストが検知して `RefreshOverlay()` を呼びます。
 
 ## Avalonia 版との違い
 
