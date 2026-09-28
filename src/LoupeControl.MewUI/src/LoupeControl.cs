@@ -40,7 +40,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// ルーペがその位置を拡大表示する（描画はプロパティ変更で自動的に無効化される）。<br/>
 /// <b>座標ラベル</b>: 表示可否は <see cref="LoupeAppearance.ShouldShowCoordLabel"/>（描画層）が判断し、<br/>
 /// 文言・基準点は <see cref="LoupeTextPlacement"/>（描画層）が、配置は <see cref="LoupeLabelPlan"/>（描画層）が<br/>
-/// 実寸（<see cref="SkiaText.Measure"/>）から単一所有する（本コントロールは要素を置くだけである）。
+/// 実寸（<see cref="MewUITextMeasure"/>）から単一所有する（本コントロールは要素を置くだけである）。
 /// </remarks>
 public sealed class LoupeControl : Panel
 {
@@ -317,7 +317,8 @@ public sealed class LoupeControl : Panel
 
         // テキストは描画層が文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
         // （表示サイズは要素の大きさ（ホストが描画層のレイアウト結果で配置したサイズ）である）
-        var plan = _presenter.ResolveDrawPlan(bounds.Size.Width, null, SkiaText.Measure);
+        // 実寸は配置（本ルート）と描画（OnPaintSurface）の両方で同じ値を使う必要があるため、同じ測定関数を渡す
+        var plan = _presenter.ResolveDrawPlan(bounds.Size.Width, null, MewUITextMeasure.Measure);
         SyncLabels(plan.Labels, bounds);
     }
 
@@ -389,6 +390,32 @@ public sealed class LoupeControl : Panel
         DipToDeviceScaling = DpiScaler.ToScaling(newDpi);
     }
 
+    /// <summary>描画先の表面サイズから描画に使う実効倍率を解決し、保持値へも反映する。</summary>
+    /// <param name="info">描画先の情報（物理ピクセルの大きさ）。</param>
+    /// <returns>描画に使うスケーリング係数（保持値へ反映済みの値）。</returns>
+    /// <remarks>
+    /// <b>なぜ描画面から求めるか</b>: DPI の変更通知（<see cref="OnDpiChanged"/>）は<b>追加直後のコントロールへ届かない</b><br/>
+    /// （実測: ウィンドウ表示後に追加したコントロールは登録時の既定値 1.0 のままになる）。<br/>
+    /// その状態で保持値だけを使うと、拡大画像がルーペ領域（描画面）より小さい倍率で描かれる<br/>
+    /// （実測: 125% の環境で 1/1.25 の大きさになり、右と下にペーストボードの帯が残る）。<br/>
+    /// 描画面（物理ピクセル）と割り当て領域（DIP）の比は実際に描くときの倍率そのものであるため、こちらを保持値とする<br/>
+    /// （保持値の変更はファサードへ伝搬されるため、拡大画像の物理ピクセルサイズの算出元は 1 つに保たれる）。
+    /// </remarks>
+    internal double ApplySurfaceScaling(SKImageInfo info)
+    {
+        var resolved = SkiaSurfaceScale.Resolve(info.Width, Bounds.Size.Width, DipToDeviceScaling);
+
+        if (resolved == DipToDeviceScaling)
+        {
+            return DipToDeviceScaling;
+        }
+
+        DipToDeviceScaling = resolved;
+
+        // 保持値の補正（範囲外は安全域へ）を通した値を返す（計算に使う値と保持値を一致させる）
+        return DipToDeviceScaling;
+    }
+
     /// <summary>ルーペを描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
     /// <param name="info">描画先の情報（幅・高さ）。</param>
@@ -396,19 +423,21 @@ public sealed class LoupeControl : Panel
     /// 描画計画（描画層が解決した幾何・外観・層の順序）を自 UI の公開プロパティから組み立てて描画層へ渡す<br/>
     /// （DIP → 物理ピクセルの換算と描画先へのクランプは描画層が単一所有する）。<br/>
     /// <b>描く層とその順序は描画層が単一所有する</b>（<see cref="LoupeDrawPlan.Layers"/> の順に処理する）。<br/>
+    /// <b>キャンバスを拡大せず 1:1 で描く</b>: 描画計画の矩形（描画面・拡大画像の描画先・枠線の太さ）は<b>物理ピクセル</b>で<br/>
+    /// 解決されるため、拡大すると設定した拡大率より大きい画像をルーペ領域へ描くことになり、切り取られてずれる。<br/>
     /// 中心座標ラベルはテキストの実寸測定が必要なため本キャンバスでは描かず、<br/>
-    /// 親パネルのラベル要素（<c>Border</c> + <c>TextBlock</c>）が表示する。
+    /// 親パネルのラベル要素（<c>Border</c> + <c>TextBlock</c>）が表示する（要素は DIP で配置する）。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
         // 描画先の表面サイズ（物理ピクセル）から表示サイズ（DIP）を導いて描画計画を組み立てる
         // （表面は要素の大きさそのものであるため、要素の大きさと描画サイズが一致する）。
-        // 導出は DpiScaler が単一所有する（丸め規則を両 UI で揃える）。
-        // 倍率は描画面（物理ピクセル）と割り当て領域（DIP）の比から求める
-        // （DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いてしまう）
-        var scaling = SkiaSurfaceScale.Resolve(info.Width, Bounds.Size.Width, DipToDeviceScaling);
+        // 倍率は描画面と割り当て領域（DIP）の比から求め、保持値とファサードへも反映する
+        // （反映しないと、拡大画像がルーペ領域より小さい倍率で描かれる）。
+        var scaling = ApplySurfaceScaling(info);
         var surfaceSize = info.Size.ToEsSize();
-        var plan = _presenter.ResolveDrawPlan(DpiScaler.ToDip(surfaceSize, scaling).Width, surfaceSize, SkiaText.Measure);
+        var plan = _presenter.ResolveDrawPlan(
+            DpiScaler.ToDip(surfaceSize, scaling).Width, surfaceSize, MewUITextMeasure.Measure);
 
         try
         {

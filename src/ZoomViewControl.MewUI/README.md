@@ -66,7 +66,7 @@ zoomView.ZoomChanged += (_, e) =>
 | `Source` | `EsBitmap?` | `null` | ズーム対象の画像。設定すると Fit 表示へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
 | `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数（DPI 変更で自動更新される環境値） |
-| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし・スクロールバー表示 | **外観の単一値**（下地色・市松模様（サイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）。コアが単一所有する） |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし・スクロールバー表示 | **外観の単一値**（下地色・市松模様（サイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）。コアが単一所有する）。市松模様は画像の透明部分の背景であり、描く範囲は画像の表示矩形の内側だけである（画像の外は下地色の単色になる） |
 | `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。0 より大きい値のみ設定でき、範囲へクランプされる |
 | `IsFit` | `bool` | `true` | Fit 表示中かどうか（`ZoomPercent` は 0 にならないため Fit 判定はこちら） |
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |

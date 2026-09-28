@@ -1516,4 +1516,37 @@ public class MarqueeControlTests
         Assert.Equal(new EsRect(20, 20, 160, 160), control.SelectionRect);
         window.Close();
     }
+
+    /// <summary>サイズラベルの要素が選択矩形の枠線を避けた位置へ置かれることを検証する。</summary>
+    /// <remarks>
+    /// ラベルの背景が選択矩形の枠線に重なると文字が読みにくいため、基準点を「矩形の線幅 + 1 DIP」だけ内側へ寄せる<br/>
+    /// （寄せ幅の算出は提示層の <c>MarqueeLabelTexts</c> が単一所有し、本コントロールは配置指示を要素へ写すだけである）。<br/>
+    /// 枠線は矩形の内側へ描かれるため、線幅ぶんを寄せないとラベルが線の下に潜る。
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task サイズラベルの要素は枠線の幅だけ内側へ置かれる()
+    {
+        const double thickness = 6.0;
+        var control = new MarqueeControl
+        {
+            Width = 300,
+            Height = 300,
+            Options = TestOptions,
+            Appearance = MarqueeAppearance.Default with
+            {
+                OuterBorderThickness = thickness,
+                ShowCoordLabel = false,
+            },
+        };
+        var window = Show(control);
+        control.SetSelection(new Rect(40, 60, 100, 80));
+        await PumpLayoutAsync(control);
+
+        var border = Assert.Single(control.Children.OfType<Border>());
+
+        // 穴あけ矩形の左上（40, 60）から「線幅 6 + 余白 1」内側へ置かれる
+        Assert.Equal(40 + thickness + 1, border.Margin.Left);
+        Assert.Equal(60 + thickness + 1, border.Margin.Top);
+        window.Close();
+    }
 }

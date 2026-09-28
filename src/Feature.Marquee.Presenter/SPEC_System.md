@@ -121,6 +121,7 @@ flowchart TD
 | 枠線 4 辺の矩形（太さは辺ごとの式で導出） | `MarqueeDecorationGeometry.ComputeBorderRects` |
 | 暗転領域（描画面から穴あけ矩形を除いた 4 領域） | `MarqueeDecorationGeometry.ComputeOverlayRegions` |
 | サイズラベルの文言（書式・表示スケール） | `MarqueeLabelTexts.ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
+| 矩形に基づくラベルの基準点（穴あけ矩形の左上から「矩形の線幅 + 1 DIP」内側） | `MarqueeLabelTexts.ResolveLabelAnchor`（`MarqueeDrawPlan.LabelAnchor` としても公開する） |
 | カーソル座標ラベルの文言と基準点（カーソル + 8.0 DIP） | `MarqueeLabelTexts.ResolveCoordLabelText` |
 | ラベルの体裁（背景 = 実寸 + 内側余白 × 2・アラインの適用・クランプ・並び順） | `MarqueeLabelPlan` |
 | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） | `MarqueePresenterLogMessage` |

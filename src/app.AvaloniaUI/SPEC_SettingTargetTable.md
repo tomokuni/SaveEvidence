@@ -37,7 +37,7 @@ FadeMaskDragRectControl（_selectionOverlay）
 
 - **`CaptureSessionControl.AvaloniaUI` は `CropViewControl` を内包しません**。`StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。
 - **切り出しの対象画像は `CropViewControl.Source`（app が設定するプレビュー画像）から解決**します（画像を引数で渡さない。確定時の範囲は現在の画像へクランプするため、実行中の差し替えにも追従する）。
-- **`CropViewControl` のインスタンスは `app.AvaloniaUI` が所有**します（`CapturePage.axaml` の `crop:CropViewControl x:Name="CropView"`）。プレビュー表示（`Source` / `CenterAlign` / `ViewportBackground`）は app の責務です。
+- **`CropViewControl` のインスタンスは `app.AvaloniaUI` が所有**します（`CapturePage.axaml` の `crop:CropViewControl x:Name="CropView"`）。プレビュー表示（`Source` / `CenterAlign` / `Appearance`）は app の責務です。
 - `FadeMaskDragRectControl` は**2 つの場所**で再利用されます（資源分離・再利用）：
   1. `OverlayWindow.SelectionOverlay`：画面キャプチャ（領域選択）用
   2. `CropViewControl._selectionOverlay`：プレビュー Crop（切出し）用
@@ -52,8 +52,8 @@ FadeMaskDragRectControl（_selectionOverlay）
 | --- | --- | --- |
 | `app.AvaloniaUI` | — | `CaptureSessionControl.AvaloniaUI` の `AppearanceSettings`（`CaptureSettings`）へ `CaptureSettingsMapper` で変換して渡す |
 | `CaptureSessionControl.AvaloniaUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。実行中の Crop セッションへ即時反映 |
-| `CropViewControl` | `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `DomainToDipScaling` / `LoupeDipToDeviceScaling` / `ViewportBackground` / `CenterAlign` | 設定は `FadeMaskDragRectControl` へ委譲。DPI スケーリングは個別プロパティ（コードから動的設定） |
-| `ZoomViewControl` | `Background` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観 |
+| `CropViewControl` | `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `DomainToDipScaling` / `LoupeDipToDeviceScaling` / `Appearance` / `CenterAlign` | 設定は `FadeMaskDragRectControl` へ委譲。DPI スケーリング・プレビューの市松模様は個別プロパティ（コードから動的設定） |
+| `ZoomViewControl` | `Appearance` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観（市松模様のサイズと 2 色・スクロールバー） |
 | `FadeMaskDragRectControl` | `Options`（`FadeMaskDragRectOptions`）/ `MarqueeAppearance`（外観）/ `LoupeAppearance`（`LoupeAppearance`）/ `DomainToDipScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` / `Mode` / `ShowFullOverlay` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | 下位（Marquee（選択の設定） / 装飾 / Loupe）の設定を一括公開（コアの設定値 1 つ）+ 外観（提示層の単一値 2 つ: `MarqueeAppearance` / `LoupeAppearance`）+ DPI スケーリングとラベル文言プロバイダを個別公開 |
 | `MarqueeControl` | `Options`（`MarqueeOptions`。ハンドル寸法・マーカー寸法・対話パラメータ）/ `Appearance`（`MarqueeAppearance`。色・枠線の太さ・表示可否）/ `DomainToDipScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` | `FadeMaskDragRectOptions.Marquee`（選択の設定）と外観（`MarqueeAppearance`）からそれぞれ設定（枠線の太さと色は `MarqueeAppearance` が単一所有する）。**操作・情報ラベルは本コントロールの概念ではない**ため、ホスト（`FadeMaskDragRectControl`）が `Options.Labels` で描く |
 | `LoupeControl` | `Options`（`LoupeOptions`。基本サイズ・拡大率）/ `Appearance`（`LoupeAppearance`。色・枠線の太さ・表示可否）/ `DipToDeviceScaling`（DPI 自動取得）/ `PositionOffset` | `FadeMaskDragRectOptions.Loupe` から設定（`DipToDeviceScaling` と外観を除く） |
@@ -173,7 +173,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 ### 3.5 CropViewControl の公開外観プロパティと CaptureSessionControl.AvaloniaUI での公開有無
 
-`CropViewControl` は自身の公開設定として `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）、`DomainToDipScaling` / `LoupeDipToDeviceScaling`、`ViewportBackground`、`CenterAlign` 等を公開する。
+`CropViewControl` は自身の公開設定として `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）、`DomainToDipScaling` / `LoupeDipToDeviceScaling`、`Appearance`、`CenterAlign` 等を公開する。
 `CaptureSessionControl.AvaloniaUI` は**`CaptureSettings`（`CaptureSessionControl.AppearanceSettings`）**を公開しており、Crop セッション開始時に `CaptureSettings` → `FadeMaskDragRectOptions`（`ToFadeMaskDragRectOptions`。コアのマッパー。**寸法・表示可否のみ**）と `MarqueeAppearance` / `LoupeAppearance`（`CaptureSessionControl.UIBase` の `CapturePaintMapper`。**外観（色・枠線の太さ・表示可否）**）へ変換して `CropViewControl.SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` へ設定する。
 DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は `CaptureSettings` に含まれず、セッションが個別プロパティ （`cropView.DomainToDipScaling` 等）で設定する。
 
@@ -183,14 +183,14 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 | `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` （`MarqueeAppearance` / `LoupeAppearance`） | ✅ `CaptureSettings`（`CaptureSessionControl.UIBase` の `CapturePaintMapper` で組み立て） | ✅ | **色・枠線の太さ・表示可否はコアのマッパーでは写像しない**（Core → UIBase の逆流を作らないため、外観は UI 層のホストが組み立てる） |
 | `DomainToDipScaling` | ✅ `cropView.DomainToDipScaling`（セッションが設定） | —（コードから動的設定） | DPI スケーリング（Crop は 1.0 固 定） |
 | `LoupeDipToDeviceScaling` | ✅ `cropView.LoupeDipToDeviceScaling`（セッションが設定） | —（DPI から自動取得） | ルーペ描画スケール（`CaptureSettings.LoupeDipToDeviceScaling` 由来） |
-| `ViewportBackground` | — | ✅（`Settings.PreviewCheckerColorA/B` / `PreviewCheckerSize`） | プレビュー背景（市松模様）。`app.AvaloniaUI` 側（`CapturePage`）で直接設定 |
+| `Appearance`（`ZoomViewAppearance`） | — | ✅（`Settings.PreviewCheckerColorA/B` / `PreviewCheckerSize`） | プレビューの市松模様（画像の透明部分の背景）。`app.AvaloniaUI` 側（`CapturePage`）で直接設定する。描く範囲は画像の表示矩形の内側だけであり、画像の外（ペーストボード）は背景の単色になる |
 | `CenterAlign` | — | ✅（`Settings.CenterAlign`） | `app.AvaloniaUI` 側（`CapturePage`）で直接設定 |
 | `SelectionMode`（`FadeMaskDragRectMode`） | — | — | 選択モード。`CaptureSettings` に含まれず、`CropViewControl` の既定（`Crop`）を使う（`CropSession` は読み取りのみ）。 `fadeMaskDragRect` 以外の値（自動切り出しの矩形は `Rects` で描く）へ切り替えるホストは無い |
 
 - `app.AvaloniaUI` の `Settings` → `CaptureSettingsMapper.From` → `CaptureSessionControl.AppearanceSettings`（`CaptureSettings`）が設定される。
 - Capture セッション開始時に、`CaptureSettings` → `ToFadeMaskDragRectOptions` → `CropViewControl.SelectionOverlayOptions`（`FadeMaskDragRectOptions`）と、`CapturePaintMapper` → `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance`（外観）へ**変換**して設定する（`CaptureSettings` は 1 つの型だが、 反映先はコアの設定値と外観の 2 つに分かれる）。
 - `DomainToDipScaling` / `LoupeDipToDeviceScaling` は `CaptureSettings` に含まれず、セッション（`CropSession`）が個別プロパティで設定する（コードから動的設定）。
-- `ViewportBackground` / `CenterAlign` / `SelectionMode` は `CaptureSettings` に含まれず、`app.AvaloniaUI`（`CapturePage`）が直接制御する。
+- `Appearance`（`ZoomViewAppearance`） / `CenterAlign` / `SelectionMode` は `CaptureSettings` に含まれず、`app.AvaloniaUI`（`CapturePage`）が直接制御する。
 
 ## 4. 外観設定
 
@@ -226,12 +226,12 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
 | スクロール不要時は中央に配置 | `CenterAlign` | `CropView.CenterAlign`（画像配置） |
-| 市松模様 A（色） | `PreviewCheckerColorA` | `CropView.ViewportBackground`（プレビュー） |
-| 市松模様 B（色） | `PreviewCheckerColorB` | `CropView.ViewportBackground`（プレビュー） |
-| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.ViewportBackground`（プレビュー）。実効値は `ZoomViewAppearance.ResolveCheckerTileSize` が決める（0 以下 = 描かない / 1 は下限 2 へ切り上げ） |
+| 市松模様 A（色） | `PreviewCheckerColorA` | `CropView.Appearance.CheckerColorA`（プレビューの市松模様） |
+| 市松模様 B（色） | `PreviewCheckerColorB` | `CropView.Appearance.CheckerColorB`（プレビューの市松模様） |
+| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.Appearance.CheckerSize`（プレビュー）。実効値は `ZoomViewAppearance.ResolveCheckerTileSize` が決める（0 以下 = 描かない / 1 は下限 2 へ切り上げ） |
 | ルーペの画像外の色 | `LoupePasteboardColor` | `LoupeControl.Appearance.PasteboardColor`（ルーペの画像外は無地） |
 
-- 市松模様は「画像設定」の詳細設定で管理し、**プレビュー背景（画像の透明部分とレターボックス）に適用**する（ルーペは市松模様を使わず、画像外を無地の色で示す）。
+- 市松模様は「画像設定」の詳細設定で管理し、**プレビューの画像の透明部分（画像の表示矩形の内側）に適用**する（画像のレターボックス＝ペーストボードは背景の単色のまま。ルーペは市松模様を使わず、画像外を無地の色で示す）。
 
 ## 7. キャプチャ設定
 

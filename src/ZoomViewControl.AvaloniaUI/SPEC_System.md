@@ -16,7 +16,8 @@
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 ZoomViewControl](#61-zoomviewcontrol)
     - [6.2 ZoomableView](#62-zoomableview)
-    - [6.3 ZoomViewControl.Core の型（UI 非依存）](#63-zoomviewcontrolcore-の型ui-非依存)
+    - [6.3 CheckerboardView](#63-checkerboardview)
+    - [6.4 ZoomViewControl.Core の型（UI 非依存）](#64-zoomviewcontrolcore-の型ui-非依存)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ログ](#8-ログ)
     - [8.1 ログ定義一覧](#81-ログ定義一覧)
@@ -51,7 +52,8 @@
   ↓
 ZoomViewControl（本ライブラリ）
   ├── ZoomViewControl（複合コントロール: 内部ビューポートの生成・公開 API の委譲・通知の転送）
-  └── ZoomableView（内部ビューポート: 入力ブリッジ・画像配置/RenderTransform/スクロールバーの適用）
+  ├── ZoomableView（内部ビューポート: 入力ブリッジ・画像配置/RenderTransform/スクロールバーの適用）
+  └── CheckerboardView（画像の透明部分の背景: 画像の表示矩形の内側に市松模様を描く子要素）
   ↓
 ZoomViewControl.Core（UI 非依存）
   ├── ZoomViewSession（**状態と判断**を単一所有。Fit の表現・実効ズーム率・可否・キャッシュ・遷移適用・パン・スクロールバー）
@@ -101,8 +103,10 @@ flowchart TB
 
     AP -->|Source 設定 / ZoomChanged 購読| ZVW
     ZVW --> ZV
+    ZVW --> CB
     ZVW --> SES
     ZV --> SES
+    CB --> SES
     SES --> CFG
     SES --> TR
 ```
@@ -113,7 +117,7 @@ flowchart TB
 
 - **分類**: 公開コントロール（`public sealed class : Panel`。自己完結型複合コントロール）
 - **責務**: 内部ビューポート（`ZoomableView`）を生成し、公開 API をセッション（`ZoomViewSession`）へ委譲する。セッションの通知（`ZoomChanged` / `ViewportChanged`）を自 UI の公開イベントへ転送し、ホストが内部ビューポートへ到達する必要をなくす
-- **非公開メンバー**: `Session`（内部ビューポートが所有するセッションへの参照。公開 API の実体） / `ZoomableView`（内包するビューポート） / `OnSessionNotified`（通知の転送）
+- **非公開メンバー**: `Session`（内部ビューポートが所有するセッションへの参照。公開 API の実体） / `ZoomableView`（内包するビューポート） / `CheckerboardView`（画像の透明部分の背景を描く子要素） / `OnSessionNotified`（通知の転送）
 - **公開 API の詳細**: `SPEC_ExtFunc.md` の 8.1 を参照
 - **依存**: `EsUtil.SaveEvidence.ZoomView`（`ZoomViewSession` / `ZoomConfig` / `ZoomNotice` / `ZoomState`） / Platform.Core（`EsVector` / `EsPoint`）と Platform.AvaloniaUI（相互変換）
 - **状態と判断の所有者**: `ZoomViewSession`（コア）。本コントロールは値の委譲と通知の転送のみを行う
@@ -128,7 +132,18 @@ flowchart TB
   - 見た目（スクロールバーの太さ 10 DIP）は標準 `ScrollBar` 固有であり、コアの外観（`ZoomViewAppearance`）は参照しない
 - **依存**: `EsUtil.SaveEvidence.ZoomView`（`ZoomViewSession` / `ZoomFeedback` / `ZoomNotice`） / Platform.AvaloniaUI（相互変換）
 
-### 6.3 ZoomViewControl.Core の型（UI 非依存）
+### 6.3 CheckerboardView
+
+- **分類**: 内部コントロール（`internal sealed class : Control`。`ZoomViewControl` の内部実装）
+- **責務**: 画像の透明部分の背景（市松模様）を描く。子の順序で画像より先に描かれるようにし、描く範囲（画像の表示矩形の内側）とタイルの位置はコア（`ZoomViewAppearance.ComputeCheckerArea` / `ComputeLightTileRects`）に問い合わせるだけである
+- **内部実装の詳細**:
+  - Avalonia の `Panel` は `Render` をシールしているため、コントロールの背景では「画像の下にだけ描く」層を作れない（子要素として持つことが必要）
+  - 画像の外（ペーストボード）は透明のままにし、親の背景をそのまま見せる（市松模様は画像の透明部分の背景であるため）
+  - 入力は受けない（`IsHitTestVisible` を false にする）
+  - 表示矩形の変化（パン・ズーム）と外観の変更で `InvalidateVisual` される
+- **依存**: `EsUtil.SaveEvidence.ZoomView`（`ZoomViewSession` / `ZoomViewAppearance`） / Platform.AvaloniaUI.Imaging（ブラシのキャッシュ）
+
+### 6.4 ZoomViewControl.Core の型（UI 非依存）
 
 すべて UI 非依存プロジェクト（名前空間 `EsUtil.SaveEvidence.ZoomView`）が提供する。
 
@@ -139,7 +154,7 @@ flowchart TB
 | `ZoomState` | 公開 readonly record struct | 通知する 4 値（実効ズーム率・Fit 状態・可否） |
 | `ZoomFeedback` | 公開 readonly record struct | UI が適用する効果（再描画・ポインタキャプチャ）。適用順を単一所有する |
 | `ZoomNotice` / `ZoomNoticeKind` | 公開 enum / sealed record | セッションから UI への通知（種別と通知時点の値） |
-| `ZoomViewAppearance` | 公開 sealed record | 外観（下地・市松模様・スクロールバー）の単一値。描画可否と市松のタイル矩形も持つ |
+| `ZoomViewAppearance` | 公開 sealed record | 外観（下地・市松模様・スクロールバー）の単一値。描画可否と市松模様を描く範囲（画像の表示矩形の内側）・タイル矩形も持つ |
 | `ZoomScrollBar` / `ZoomScrollBarMetrics` | 公開 record struct | スクロールバーの矩形、および標準スクロールバー部品へ写す同期値 |
 | `ZoomLogMessage` / `ZoomLogFormat` | 公開静的クラス | ログ定義（両 UI 共通の書式）と値の文字列化・丸め |
 | `ZoomMath` | 内部静的クラス | ズーム中心維持・Fit 実効倍率・座標変換（オフセット基準 / 画像表示矩形原点基準）・オフセットクランプ・% ↔ 倍率の換算（座標は `EsPoint` / `EsVector` / `EsSize`） |

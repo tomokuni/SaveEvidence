@@ -237,6 +237,46 @@ public class MarqueePresenterTests
         Assert.Equal("(30, 40)", plan.Labels[1].Text);
     }
 
+    /// <summary>ラベルの基準点が「矩形の線幅 + 1」だけ穴あけ矩形の内側へ寄ることを検証する。</summary>
+    /// <remarks>
+    /// 枠線は穴あけ矩形の内側へ <c>OuterBorderThickness</c> の幅で描かれるため、ラベルをその幅の分だけ内側へ寄せる<br/>
+    /// （重なると背景の上に線が乗り、文字が読みにくくなる）。<br/>
+    /// ホストの付加情報ラベルが使う基準点（<see cref="MarqueeDrawPlan.LabelAnchor"/>）も同じ値である
+    /// （サイズラベルと付加情報ラベルで寄せ幅が異なると縦積みがずれる）。
+    /// </remarks>
+    [Fact]
+    public void ResolveDrawPlan_ラベルの基準点は枠線の幅だけ内側へ寄る()
+    {
+        const double thickness = 5.0;
+        var presenter = CreatePresenter(
+            out _,
+            appearance: MarqueeAppearance.Default with { OuterBorderThickness = thickness });
+        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+
+        var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
+
+        // 穴あけ矩形の左上 (10, 20) から「線幅 5 + 余白 1」内側が基準点になる
+        var anchor = new EsPoint(10 + thickness + 1, 20 + thickness + 1);
+        Assert.Equal(anchor, plan.LabelAnchor);
+        Assert.Equal(anchor, plan.Labels[0].Bounds.TopLeft);
+    }
+
+    /// <summary>枠線を描かない設定では余白（1 DIP）だけが残ることを検証する。</summary>
+    /// <remarks>線が無いのに線幅ぶんを足すと、ラベルが理由なく矩形の内側へずれる。</remarks>
+    [Fact]
+    public void ResolveDrawPlan_枠線を描かない設定では余白だけ内側へ寄る()
+    {
+        var presenter = CreatePresenter(
+            out _,
+            appearance: MarqueeAppearance.Default with { ShowOuterBorder = false, OuterBorderThickness = 5.0 });
+        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+
+        var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
+
+        // 線幅は 5 だが線を描かないため、基準点は余白の 1 DIP だけ内側になる
+        Assert.Equal(new EsPoint(11, 21), plan.LabelAnchor);
+    }
+
     /// <summary>装飾（暗転・穴あけ枠）が外観の表示可否に従って解決されることを検証する。</summary>
     [Fact]
     public void ResolveDrawPlan_装飾は外観の表示可否に従う()

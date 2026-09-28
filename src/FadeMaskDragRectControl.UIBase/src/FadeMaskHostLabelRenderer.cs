@@ -29,9 +29,9 @@ public static class FadeMaskHostLabelRenderer
     /// <exception cref="ArgumentNullException"><paramref name="appearance"/> または <paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>
     /// 1. 穴あけ矩形（選択またはハイライトの領域）が無い場合は空を返す（積み上げる基準が無い）。<br/>
-    /// 2. 積み上げの開始位置は穴あけ矩形の左上であり、サイズラベルが描かれている場合はその下から始める<br/>
-    ///    （重なりを避ける。行送りの行の高さは外観のフォントサイズを使う）。<br/>
-    /// 3. 操作ラベル → 情報ラベルの順に、表示可否を満たす行だけを返す（左端は穴あけ矩形の左端に揃える）。<br/>
+    /// 2. 積み上げの開始位置は穴あけ矩形の内側へ寄せた左上（<see cref="MarqueeDrawPlan.LabelAnchor"/>）であり、<br/>
+    ///    サイズラベルが描かれている場合はその下から始める（重なりを避ける。行送りの行の高さは外観のフォントサイズを使う）。<br/>
+    /// 3. 操作ラベル → 情報ラベルの順に、表示可否を満たす行だけを返す（左端は基準点の左端に揃える）。<br/>
     /// 4. 描画のたびに評価される（ホストの文言プロバイダは最新の状態から文言を生成できる）。
     /// </remarks>
     public static IReadOnlyList<MarqueeLabelPlacement> Resolve(
@@ -45,13 +45,13 @@ public static class FadeMaskHostLabelRenderer
         ArgumentNullException.ThrowIfNull(appearance);
         ArgumentNullException.ThrowIfNull(measureText);
 
-        // 付加情報を重ねる基準は穴あけ矩形（選択またはハイライトの領域）の左上である
-        if (plan.HoleRect is not { } hole)
+        // 付加情報を重ねる基準は穴あけ矩形の内側へ寄せた左上である（背景が枠線に重ならない位置）
+        if (plan.LabelAnchor is not { } anchor)
         {
             return [];
         }
 
-        var y = hole.Y;
+        var y = anchor.Y;
         var padding = appearance.LabelPadding;
 
         // サイズラベルが描かれている場合はその下へ積む（重なりを避ける）
@@ -66,7 +66,7 @@ public static class FadeMaskHostLabelRenderer
         if (labels.ShowOperationLabel && operationText is { Length: > 0 })
         {
             placements.Add(MarqueeHostLabelRenderer.Resolve(
-                new EsPoint(hole.X, y),
+                new EsPoint(anchor.X, y),
                 operationText,
                 labels.OperationFontSize,
                 labels.OperationColor,
@@ -79,7 +79,7 @@ public static class FadeMaskHostLabelRenderer
         if (labels.ShowInfoLabel && infoText is { Length: > 0 })
         {
             placements.Add(MarqueeHostLabelRenderer.Resolve(
-                new EsPoint(hole.X, y),
+                new EsPoint(anchor.X, y),
                 infoText,
                 labels.InfoFontSize,
                 labels.InfoColor,

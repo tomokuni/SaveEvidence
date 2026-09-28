@@ -17,7 +17,7 @@
 | `ZoomState` | `public` | 通知する 4 値（実効ズーム率・Fit 状態・ズーム可否）の値オブジェクト |
 | `ZoomFeedback` | `public` | セッションから UI へ返す効果（再描画・ポインタキャプチャ）。適用順を単一所有する |
 | `ZoomNotice` / `ZoomNoticeKind` | `public` | セッションから UI への通知（種別と通知時点の値） |
-| `ZoomViewAppearance` | `public` | 外観（下地・市松模様・スクロールバー）の単一値。描画可否と市松のタイル矩形、タイルサイズの実効値（`ResolveCheckerTileSize`）も持つ |
+| `ZoomViewAppearance` | `public` | 外観（下地・市松模様・スクロールバー）の単一値。描画可否と、市松模様を描く範囲（`ComputeCheckerArea`）・明色タイルの矩形（`ComputeLightTileRects`）、タイルサイズの実効値（`ResolveCheckerTileSize`）も持つ |
 | `ZoomScrollBar` / `ZoomScrollBarMetrics` | `public` | スクロールバーの矩形、および標準スクロールバー部品へ写す同期値 |
 | `ZoomLogMessage` / `ZoomLogFormat` | `public` | ログ定義（両 UI で同一の書式）と値の文字列化・丸め |
 | `ZoomTransition` | `internal` | ⊖⊕ ボタンの 23 段階遷移・Ctrl+ホイールの ×1.1 遷移・ズーム可否の判定（`ZoomConfig` を引数で受け取る純粋関数） |

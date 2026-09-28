@@ -55,7 +55,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `CanZoomIn` | `bool` | 現在のズーム状態でズームインが可能か。 |
 | `CanZoomOut` | `bool` | 現在のズーム状態でズームアウトが可能か。 |
 | `CenterAlign` | `bool` | 画像の中央寄せ / 左上寄せ（その軸で画像がビューポートより小さい場合に有効）。 |
-| `ViewportBackground` | `IBrush?` | ズーム・パンビューポートの背景（市松模様等。レターボックス領域の描画）。 |
+| `Appearance` | `ZoomViewAppearance`（コア） | ズームビューの外観（下地色・市松模様（サイズと 2 色）・スクロールバー）。市松模様は画像の透明部分の背景であり、描く範囲は画像の表示矩形の内側だけである（画像の外＝ペーストボードは背景の単色になる）。 |
 | `HasSelection` | `bool` | 現在の選択状態（選択矩形の有無）。 |
 | `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標）。未選択時は 0x0。 |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | サイズラベルを描画時に評価するプロバイダ（FadeMaskDragRectControl へ委譲）。 |

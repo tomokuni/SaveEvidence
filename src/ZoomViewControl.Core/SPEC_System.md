@@ -34,7 +34,7 @@ graph LR
 | `ZoomState.cs` | `public readonly record struct` | 通知する 4 値（実効ズーム率・Fit 状態・可否） |
 | `ZoomFeedback.cs` | `public readonly record struct` | UI が適用する効果（再描画・ポインタキャプチャ）。適用順を単一所有する |
 | `ZoomNotice.cs` | `public enum` / `public sealed record` | 通知の種別と通知時点の値 |
-| `ZoomViewAppearance.cs` | `public sealed record` | 下地・市松模様・スクロールバーの外観。描画可否と市松のタイル矩形を単一所有する |
+| `ZoomViewAppearance.cs` | `public sealed record` | 下地・市松模様・スクロールバーの外観。描画可否と市松模様を描く範囲（画像の表示矩形の内側）・タイル矩形を単一所有する |
 | `ZoomScrollBarMetrics.cs` | `public readonly record struct` | 標準スクロールバー部品へ写す同期値（最大オフセット・表示範囲・可否） |
 | `ZoomLogMessage.cs` / `ZoomLogFormat.cs` | `public static partial class` / `public static class` | ログ定義（両 UI 共通の書式）と値の文字列化・丸め |
 | `ZoomTransition.cs` | `internal static class` | ⊖⊕ 段階遷移・Ctrl+ホイール ×1.1 遷移・ズーム可否判定（純粋関数） |

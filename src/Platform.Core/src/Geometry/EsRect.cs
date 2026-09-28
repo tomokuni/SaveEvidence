@@ -93,4 +93,20 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
         var bottom = Math.Clamp(Bottom, 0, area.Height);
         return new EsRect(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
     }
+
+    /// <summary>本矩形と別の矩形の交差（重なり合う部分）を求める。</summary>
+    /// <param name="other">交差を求める相手の矩形。</param>
+    /// <returns>2 つの矩形の重なり部分。重なりが無い場合は空の矩形。</returns>
+    /// <remarks>
+    /// 「重なりが無い場合は空」を単一所有するため、呼び出し側は <see cref="IsEmpty"/> で判定できる<br/>
+    /// （<c>Math.Max(0, ...)</c> による幅・高さの切り下げを各所へ書かせない）。
+    /// </remarks>
+    public EsRect Intersect(EsRect other)
+    {
+        var left = Math.Max(X, other.X);
+        var top = Math.Max(Y, other.Y);
+        var right = Math.Min(Right, other.Right);
+        var bottom = Math.Min(Bottom, other.Bottom);
+        return new EsRect(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
+    }
 }

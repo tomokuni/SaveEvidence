@@ -156,7 +156,7 @@ marquee.Rendered += (_, e) =>
 | 表示の変化への追従 | ホストが `RefreshOverlay()` を呼ぶ（自己完結する UI 層の処理） |
 | nudge のキー入力 | フォーカス依存（Avalonia 版は `TopLevel` を購読してフォーカス非依存） |
 | ログ | `Log` プロパティで `ILogger` を注入して出力する（書式・レベルは Avalonia 版と同一） |
-| 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言と基準点は提示層の `MarqueeLabelTexts`、色とフォントサイズは `MarqueeAppearance`、実寸測定は `SkiaText.Measure`、配置は提示層の `MarqueeLabelPlan`） |
+| 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言と基準点は提示層の `MarqueeLabelTexts`、色とフォントサイズは `MarqueeAppearance`、実寸測定は **MewUI のテキスト エンジン**（`MewUITextMeasure.Measure`）、配置は提示層の `MarqueeLabelPlan`） |
 
 ## 9.5 ログ
 

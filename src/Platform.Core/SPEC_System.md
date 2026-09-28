@@ -48,7 +48,7 @@ graph LR
 | `Geometry/EsPoint.cs` | UI フレームワーク非依存の 2 次元座標（`readonly record struct`）。座標ラベルの文言（`Format`）を単一所有する |
 | `Geometry/EsSize.cs` | UI フレームワーク非依存の 2 次元サイズ（`readonly record struct`。領域の確定判定 `HasArea` とクランプ `ClampToArea` / `ClampOffset`） |
 | `Geometry/EsVector.cs` | UI フレームワーク非依存の 2 次元ベクター（`readonly record struct`） |
-| `Geometry/EsRect.cs` | UI フレームワーク非依存の矩形（`readonly record struct`。枠線の内側 4 辺 `ComputeInnerEdges` と領域内クランプ `ClampToArea`） |
+| `Geometry/EsRect.cs` | UI フレームワーク非依存の矩形（`readonly record struct`。枠線の内側 4 辺 `ComputeInnerEdges`・領域内クランプ `ClampToArea`・重なり部分 `Intersect`） |
 | `Geometry/EsPointInt.cs` | UI フレームワーク非依存の整数座標（`EsPoint` の整数版） |
 | `Geometry/EsSizeInt.cs` | UI フレームワーク非依存の整数サイズ（`EsSize` の整数版。`IsEmpty`） |
 | `Geometry/EsRectInt.cs` | UI フレームワーク非依存の整数矩形（`EsRect` の整数版。`Contains` / `Union` / `Center`） |

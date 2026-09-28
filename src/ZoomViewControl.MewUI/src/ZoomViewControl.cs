@@ -417,12 +417,15 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <param name="viewport">ビューポートのサイズ（DIP）。</param>
     /// <param name="appearance">外観（市松模様の有無・タイルサイズ・色）。</param>
     /// <remarks>
-    /// 描画の重ね順は「暗色（B）で全面を塗る → 明色（A）のタイルを市松位置へ重ねる」。<br/>
+    /// <b>描くのは画像の表示矩形の内側だけ</b>である（範囲は <see cref="ZoomViewAppearance.ComputeCheckerArea"/> が単一所有する）。<br/>
+    /// 矩形の外（ペーストボード）は描画の最初に塗った下地色（<see cref="ZoomViewAppearance.BackgroundColor"/>）の単色になる。<br/>
+    /// 描画の重ね順は「暗色（B）で範囲を塗る → 明色（A）のタイルを市松位置へ重ねる」。<br/>
     /// 明色タイルの位置はコア（<see cref="ZoomViewAppearance.ComputeLightTileRects"/>）が単一所有する（UI 層に明暗判定を置かない）。
     /// </remarks>
-    private static void DrawCheckerboard(SKCanvas canvas, EsSize viewport, ZoomViewAppearance appearance)
+    private void DrawCheckerboard(SKCanvas canvas, EsSize viewport, ZoomViewAppearance appearance)
     {
-        if (!appearance.HasCheckerboard)
+        var area = appearance.ComputeCheckerArea(_session.ImageRect, viewport);
+        if (area.IsEmpty)
         {
             return;
         }
@@ -430,15 +433,20 @@ public sealed class ZoomViewControl : SkiaCanvasView
         using var light = new SKPaint { IsAntialias = false, Color = appearance.CheckerColorA.ToSKColor() };
         using var dark = new SKPaint { IsAntialias = false, Color = appearance.CheckerColorB.ToSKColor() };
 
-        // 暗色で全面を塗る（明色タイルの下地）
-        canvas.DrawRect(new SKRect(0, 0, (float)viewport.Width, (float)viewport.Height), dark);
+        // 暗色で範囲を塗る（明色タイルの下地）
+        canvas.DrawRect(ToSkRect(area), dark);
 
-        foreach (var tile in appearance.ComputeLightTileRects(viewport))
+        foreach (var tile in appearance.ComputeLightTileRects(area))
         {
-            canvas.DrawRect(
-                new SKRect((float)tile.X, (float)tile.Y, (float)tile.Right, (float)tile.Bottom), light);
+            canvas.DrawRect(ToSkRect(tile), light);
         }
     }
+
+    /// <summary>矩形を Skia の矩形へ変換する。</summary>
+    /// <param name="rect">変換する矩形（DIP）。</param>
+    /// <returns>Skia の矩形。</returns>
+    private static SKRect ToSkRect(EsRect rect)
+        => new((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
 
     /// <summary>オーバーレイスクロールバーを描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>

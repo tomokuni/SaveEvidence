@@ -79,7 +79,7 @@ if (layout.Position is { } position)
 | `CenterPoint` | `EsPoint?` | `null` | 拡大中心（元画像ピクセル座標）。null の場合は画像外の色のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（基本サイズ・拡大率）。`with` 式で部分変更する。数値項目はコアの型が生成時に安全域へ補正する |
 | `Appearance` | `LoupeAppearance` | `LoupeAppearance.Default` | 外観（枠線の太さ・表示可否（十字線・枠線・ラベル））と描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）・ラベルの体裁。`with` 式で部分変更する。外観はコアの計算に入らない |
-| `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。0.1〜8.0 に補正（非有限は既定値）。DPI 変更で自動更新 |
+| `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。0.1〜8.0 に補正（非有限は既定値）。**描画のたびに描画面（物理ピクセル）と割り当て領域（DIP）の比へ合わせる**（DPI の変更通知は追加直後のコントロールへ届かないため、保持値だけに頼るとルーペ領域より小さい画像を描く） |
 | `Log` | `ILogger` | `NullLogger` | 設定変更ログと描画例外の出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
 
 `Options`（コアの `LoupeOptions`）の項目:

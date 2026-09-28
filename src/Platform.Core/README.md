@@ -27,7 +27,7 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `Coordinate.ScrollMath` | スクロール範囲・ビューポートサイズの純粋計算（`MaxOffset` / `ViewportSize`）とホイール 1 段のスクロール量（`WheelScrollUnit`） |
 | `Coordinate.DpiScaler` | DIP 値をスケーリング係数で物理ピクセルへ変換（`ScaleToPixel`。切り上げ・最低 1）と、その逆変換（`ToDip`（数値 / `EsSize`）。丸めなし）。DPI の基準値（`StandardDpi`）・DPI → スケーリングの換算（`ToScaling`）・係数の有効判定（`IsValidScaling`。**非数も無効**）と正規化（`NormalizeScaling`）も単一所有する |
 | `Coordinate.CoordTransformExtensions` | 座標変換ポート未設定（null）を等価変換として解決する（`OrIdentity`）。各コントロール・コアのジオメトリは本規則を自前で書かない |
-| `Geometry.EsPoint` / `EsSize` / `EsVector` / `EsRect` | UI フレームワーク非依存の DIP 相当の幾何値型（`readonly record struct`）。**座標ラベルの文言は `EsPoint.Format`**（`(x, y)` 形式。小数点以下の桁数を指定できる）、**領域の判定とクランプは `EsSize`**（`HasArea` / `ClampToArea` / `ClampOffset`）、**枠線の内側 4 辺と領域内クランプは `EsRect`**（`ComputeInnerEdges` / `ClampToArea`）が単一所有する（コントロールを問わず同じ式を使う。選択矩形の枠線とルーペの外枠、選択のドメイン境界とルーペの位置クランプ） |
+| `Geometry.EsPoint` / `EsSize` / `EsVector` / `EsRect` | UI フレームワーク非依存の DIP 相当の幾何値型（`readonly record struct`）。**座標ラベルの文言は `EsPoint.Format`**（`(x, y)` 形式。小数点以下の桁数を指定できる）、**領域の判定とクランプは `EsSize`**（`HasArea` / `ClampToArea` / `ClampOffset`）、**枠線の内側 4 辺・領域内クランプ・重なり部分は `EsRect`**（`ComputeInnerEdges` / `ClampToArea` / `Intersect`）が単一所有する（コントロールを問わず同じ式を使う。選択矩形の枠線とルーペの外枠、選択のドメイン境界とルーペの位置クランプ、画像の表示矩形とビューポートの交差） |
 | `Geometry.EsPointInt` / `EsSizeInt` / `EsRectInt` | UI フレームワーク非依存の**整数版**の幾何値型（`EsPoint` / `EsSize` / `EsRect` の整数版。画面物理ピクセル座標・画像ピクセル座標・矩形に使う） |
 | `Geometry.EsAxis` | レイアウト計算で扱う軸（`X` / `Y`）。軸を `bool` で指定しないための列挙型 |
 | `Geometry.EsHorizontalAlign` / `EsVerticalAlign` | 対象（矩形・画像・テキスト等）を基準点の水平/垂直方向のどこへ合わせるか（`Left` / `Center` / `Right` と `Top` / `Middle` / `Bottom`）。幅・高さが対象の実寸に依存する場面で、基準点がどこを指すかを知らずに指定するための列挙型 |

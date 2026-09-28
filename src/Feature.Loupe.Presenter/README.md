@@ -62,7 +62,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | --- | --- |
 | `LoupePresenterLogMessage` | 本層が単一所有する設定（外観）の変更ログ（`LoggerMessage` ソース生成）。**変化した項目だけ**を出力する |
 
-コアが出力する定義（設定値・拡大中心・環境値の変更）は `Feature.Loupe.Core` の `LoupeLogMessage`（internal）が単一所有します。<br/>
+コアが出力する定義（設定値・拡大中心・環境値の変更）は `Feature.Loupe.Core` の `LoupeLogMessage`（internal）が単一所有します。  
 UI が出力する定義（拡大元画像の変更・描画の例外・UI 固有の処理）は各 UI プロジェクトが所有します（**値を所有する主体が記録する**）。
 
 ## 描画の単位

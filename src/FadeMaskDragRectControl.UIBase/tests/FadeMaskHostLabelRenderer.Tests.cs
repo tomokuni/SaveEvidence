@@ -49,12 +49,18 @@ public class FadeMaskHostLabelRendererTests
 
     /// <summary>テスト用の描画計画を生成する。</summary>
     /// <param name="holeRect">穴あけ矩形（null の場合は穴あけなし）。</param>
+    /// <param name="labelAnchor">ラベルの基準点。null の場合は穴あけ矩形の左上を使う。</param>
     /// <returns>描画計画（装飾・ハンドル・マーカー・ラベルは本テストの対象外のため空）。</returns>
-    private static MarqueeDrawPlan CreateContent(EsRect? holeRect)
+    /// <remarks>
+    /// 基準点は既定で穴あけ矩形の左上にする（積み上げの規則だけを検証するため）。<br/>
+    /// 内側へ寄せた基準点を使う場合は <paramref name="labelAnchor"/> を指定する。
+    /// </remarks>
+    private static MarqueeDrawPlan CreateContent(EsRect? holeRect, EsPoint? labelAnchor = null)
         => new(
             MarqueeAppearance.Default,
             default,
             holeRect,
+            labelAnchor ?? holeRect?.TopLeft,
             [],
             [],
             null,
@@ -172,6 +178,25 @@ public class FadeMaskHostLabelRendererTests
         {
             Assert.Empty(placements);
         }
+    }
+
+    /// <summary>基準点が穴あけ矩形の左上と異なる場合は基準点から積むことを検証する。</summary>
+    /// <remarks>基準点は背景が選択矩形の枠線に重ならないよう内側へ寄せた値であり、積み上げはその値を基準にする。</remarks>
+    [Fact]
+    public void 解決_基準点から積む()
+    {
+        var hole = new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80);
+        var anchor = new EsPoint(HoleTopLeft.X + 2, HoleTopLeft.Y + 2);
+
+        var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(hole, anchor),
+            CreateLabels(showInfo: false),
+            CreateAppearance(),
+            "確定: Enter",
+            null,
+            Measure));
+
+        Assert.Equal(anchor, placement.Bounds.TopLeft);
     }
 
     /// <summary>文言が空の行を返さないことを検証する。</summary>

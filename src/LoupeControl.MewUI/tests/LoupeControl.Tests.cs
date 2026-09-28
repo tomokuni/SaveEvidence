@@ -157,6 +157,63 @@ public class LoupeControlTests
     /// <returns>表示されている文言。</returns>
     private static string LabelText(LoupeControl control) => ((TextBlock)LabelElement(control).Child!).Text!;
 
+    // ====================================================================
+    // 描画面の倍率（拡大画像の物理ピクセルサイズの算出元）
+    // ====================================================================
+
+    /// <summary>描画面の比から実効倍率を解決し、保持値へも反映することを検証する。</summary>
+    /// <remarks>
+    /// DPI の変更通知は追加直後のコントロールへ届かないため、保持値は登録時の 1.0 のままになりうる（実測）。<br/>
+    /// その値で拡大画像の物理ピクセルサイズを決めると、画像がルーペ領域より小さい倍率で描かれ、右と下に<br/>
+    /// ペーストボードの帯が残る（125% の環境で 1/1.25 になる不具合として発生した）。<br/>
+    /// 描画面（物理ピクセル）と割り当て領域（DIP）の比を唯一の算出元にする。
+    /// </remarks>
+    [Fact]
+    public void ApplySurfaceScaling_描画面の比を実効倍率として保持する()
+    {
+        // 125% の環境: 240 DIP の要素の描画面は 300 物理ピクセルになる
+        var control = new LoupeControl { Options = LoupeOptions.Default with { RequestedSize = 240 } };
+        Layout(control, 240);
+        Assert.Equal(DipToDeviceScalingDefault, control.DipToDeviceScaling);
+
+        var scaling = control.ApplySurfaceScaling(new SKImageInfo(300, 300));
+
+        Assert.Equal(1.25, scaling, 3);
+        Assert.Equal(1.25, control.DipToDeviceScaling, 3);
+    }
+
+    /// <summary>描画面の比が保持値と一致する場合はそのまま返すことを検証する。</summary>
+    [Fact]
+    public void ApplySurfaceScaling_一致する場合は保持値をそのまま返す()
+    {
+        // 等倍（96 DPI）の環境: 240 DIP の要素の描画面は 240 物理ピクセルになる
+        var control = new LoupeControl { Options = LoupeOptions.Default with { RequestedSize = 240 } };
+        Layout(control, 240);
+
+        var scaling = control.ApplySurfaceScaling(new SKImageInfo(240, 240));
+
+        Assert.Equal(DipToDeviceScalingDefault, scaling, 3);
+        Assert.Equal(DipToDeviceScalingDefault, control.DipToDeviceScaling, 3);
+    }
+
+    /// <summary>ハイライト矩形を除いた実効倍率がルーペの描画面と一致することを検証する。</summary>
+    /// <remarks>
+    /// 実効倍率 × 割り当て領域（DIP）= 描画面（物理ピクセル）であり、この倍率でコアが拡大画像の<br/>
+    /// 物理ピクセルサイズを決めるため、ルーペ領域（描画面）と拡大画像の大きさが一致する。
+    /// </remarks>
+    [Fact]
+    public void ApplySurfaceScaling_倍率とDIPの積が描画面と一致する()
+    {
+        var control = new LoupeControl { Options = LoupeOptions.Default with { RequestedSize = 180 } };
+        Layout(control, 180);
+
+        // 180 DIP × 1.25 = 225 物理ピクセル（切り上げなしで一致する値を使う）
+        var info = new SKImageInfo(225, 225);
+        var scaling = control.ApplySurfaceScaling(info);
+
+        Assert.Equal(info.Width, scaling * control.Bounds.Size.Width, 3);
+    }
+
     /// <summary>中心座標を設定するとラベル要素が表示されることを検証する（中心未設定では表示しない）。</summary>
     [Fact]
     public void 中心座標を設定するとラベル要素が表示される()

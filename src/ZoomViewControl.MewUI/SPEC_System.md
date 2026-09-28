@@ -197,7 +197,7 @@ sequenceDiagram
 
     MW->>Z: PaintSurface(canvas, info)
     Z->>S: SetViewport（サイズ変化時のみ）
-    Z->>SK: canvas.Clear(外観の下地色) + canvas.Scale(DPI) + 市松模様
+    Z->>SK: canvas.Clear(外観の下地色) + canvas.Scale(DPI) + 市松模様（画像の表示矩形の内側だけ）
     Z->>R: Render(canvas, Source, Session)
     R->>S: ImageRect（実効倍率・表示サイズ・原点はコアが確定済み）
     S-->>R: 表示矩形

@@ -166,6 +166,7 @@ UI フレームワーク非依存のサイズ・ベクター・矩形。相互�
 | --- | --- | --- |
 | `ComputeInnerEdges` | `IReadOnlyList<EsRect> ComputeInnerEdges(double thickness)` | 上・下・左・右の順の辺の矩形（4 個）。左右の高さは負にならず 0 にクランプする。太さの下限正規化は行わない（用途で異なるため呼び出し側が行う） |
 | `ClampToArea` | `EsRect ClampToArea(EsSize area)` | 四隅を領域（左上を原点・指定サイズ）内へ個別にクランプし、その包絡矩形を返す（負の辺は 0） |
+| `Intersect` | `EsRect Intersect(EsRect other)` | 2 つの矩形の重なり部分を返す（重なりが無い場合は空。幅・高さは負にならない） |
 
 ```csharp
 // 選択矩形の枠線（マーキー）とルーペの外枠（Loupe）が同じ式を共用する

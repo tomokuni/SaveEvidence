@@ -85,6 +85,19 @@ Win32 の HWND に相当するため、`IWindowService` / `ICursorOverrideGuard`
 その状態で保持値だけで描画すると図形が 100% で描かれ、DPI を反映済みの画像と重ねたときにずれます。
 描画面から求めた倍率を使えば、通知の有無によらず画像と同じ倍率で描けます。
 
+### `Imaging.MewUITextMeasure`（static class）
+
+MewUI のテキスト エンジンで文字列の実寸を測ります（ラベルの配置の唯一の入口）。
+
+| メンバー | 内容 |
+| --- | --- |
+| `Measure(string text, double fontSize)` → `EsSize` | 文字列の実寸（DIP。送り幅と行高）を返す |
+| `Measure`（内部） | ツリー外の `TextBlock` へ文字列とフォントサイズを写して `Measure` し、`DesiredSize` を返す。DPI はアプリケーションから解決されるため、要素と同じ丸めで測れる |
+
+**描画に使うエンジンで測る必要があります**: MewUI のテキスト エンジン（DirectWrite の GDI 互換レイアウト）は文字の送りを物理ピクセルの格子へ丸めるため、Skia の実測より数 % 広い値を返します（実測: 14 DIP のラベルで 363.8 DIP に対し 378.4 DIP）。ラベルを `TextBlock` 要素として置く UI が背景を Skia の実測で作ると、**文字が背景からはみ出して切れます**。
+
+グラフィックス バックエンドが登録されていない環境（ウィンドウを生成しない単体テスト）では測定できないため、Skia の実測で代用します（実アプリでは常にエンジンで測ります）。
+
 ### `Imaging.SkiaImageView`（class : `SkiaCanvasView`）
 
 `EsBitmap` を親が割り当てた領域へ描画する表示ビュー。撮影画像のオーバーレイ（領域全体へ引き伸ばす）や

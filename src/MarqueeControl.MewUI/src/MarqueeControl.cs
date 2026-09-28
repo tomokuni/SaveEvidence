@@ -418,15 +418,16 @@ public sealed class MarqueeControl : Panel
     /// <remarks>
     /// 図形の描画（<c>OnPaintSurface</c>）とラベルの配置（<c>ArrangeContent</c>）が同じ描画計画を使う。<br/>
     /// 解決を 2 回行うと、選択矩形・装飾・ラベル文言の解決と確保が 1 フレームで重複する。<br/>
-    /// 実寸の測定は描画 API に依存するため、本層が <c>SkiaText.Measure</c> を渡す<br/>
+    /// 実寸の測定は描画 API に依存するため、本層が <see cref="MewUITextMeasure"/>（MewUI のテキスト エンジン）を渡す<br/>
     /// （配置の計算（アライン・クランプ）は提示層が単一所有する）。<br/>
+    /// ラベルはテキスト要素として置くため、要素を描くエンジンで測らないと背景から文字がはみ出して切れる。<br/>
     /// 状態が変わると <see cref="InvalidateFrame"/> が破棄し、次の解決で最新の状態を反映する。
     /// </remarks>
     private MarqueeDrawPlan ResolveFrame(EsSize clientSize)
     {
         if (_frame is not { } cached || _frameSize != clientSize)
         {
-            cached = _marquee.ResolveDrawPlan(clientSize, SkiaText.Measure);
+            cached = _marquee.ResolveDrawPlan(clientSize, MewUITextMeasure.Measure);
             _frame = cached;
             _frameSize = clientSize;
         }

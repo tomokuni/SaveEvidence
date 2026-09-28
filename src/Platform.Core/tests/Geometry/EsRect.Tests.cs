@@ -137,4 +137,54 @@ public class EsRectTests
         Assert.Equal(0, clamped.Width);
         Assert.Equal(0, clamped.Height);
     }
+
+    // ====================================================================
+    // Intersect（重なり部分）
+    // ====================================================================
+
+    [Fact]
+    public void Intersect_重なる部分を返す()
+    {
+        var intersection = new EsRect(0, 0, 100, 100).Intersect(new EsRect(50, 60, 100, 100));
+
+        Assert.Equal(new EsRect(50, 60, 50, 40), intersection);
+    }
+
+    [Fact]
+    public void Intersect_包含関係では小さい方を返す()
+    {
+        var outer = new EsRect(0, 0, 100, 100);
+        var inner = new EsRect(10, 20, 30, 40);
+
+        Assert.Equal(inner, outer.Intersect(inner));
+        Assert.Equal(inner, inner.Intersect(outer));
+    }
+
+    [Theory]
+    [InlineData(200, 0)]
+    [InlineData(0, 200)]
+    [InlineData(-100, -100)]
+    public void Intersect_重なりが無ければ空になる(double x, double y)
+    {
+        var intersection = new EsRect(0, 0, 100, 100).Intersect(new EsRect(x, y, 50, 50));
+
+        Assert.True(intersection.IsEmpty);
+    }
+
+    [Fact]
+    public void Intersect_接するだけの矩形は空になる()
+    {
+        // 辺が重なる（幅 0 の重なり）場合も空として扱う（描画できる面積が無いため）
+        var intersection = new EsRect(0, 0, 100, 100).Intersect(new EsRect(100, 0, 50, 50));
+
+        Assert.True(intersection.IsEmpty);
+    }
+
+    [Fact]
+    public void Intersect_自分自身とは同じ矩形になる()
+    {
+        var rect = new EsRect(10, 20, 30, 40);
+
+        Assert.Equal(rect, rect.Intersect(rect));
+    }
 }

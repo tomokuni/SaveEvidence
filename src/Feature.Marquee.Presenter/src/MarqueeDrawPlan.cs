@@ -7,6 +7,7 @@ namespace EsUtil.Feature.Marquee.Presenter;
 /// <param name="Appearance">外観（色・ラベルの体裁・枠線の太さ・表示可否）。</param>
 /// <param name="SurfaceBounds">描画面の全体（左上を原点とする矩形・DIP）。</param>
 /// <param name="HoleRect">穴あけ矩形（DIP。閉区間は解決済み）。選択もハイライトも無い場合は null。</param>
+/// <param name="LabelAnchor">ラベルの基準点（穴あけ矩形の内側へ寄せた左上・DIP）。穴あけ矩形が無い場合は null。</param>
 /// <param name="OverlayRegions">暗転して塗る領域（DIP）。暗転を描かない設定の場合は空。</param>
 /// <param name="OuterBorderRects">穴あけ枠の矩形（DIP の 4 辺）。枠線を描かない設定または穴あけ矩形が無い場合は空。</param>
 /// <param name="InnerFillRect">穴あけ矩形の内側の塗り（DIP）。塗らない設定または穴あけ矩形が無い場合は null。</param>
@@ -27,6 +28,7 @@ public readonly record struct MarqueeDrawPlan(
     MarqueeAppearance Appearance,
     EsRect SurfaceBounds,
     EsRect? HoleRect,
+    EsPoint? LabelAnchor,
     IReadOnlyList<EsRect> OverlayRegions,
     IReadOnlyList<EsRect> OuterBorderRects,
     EsRect? InnerFillRect,

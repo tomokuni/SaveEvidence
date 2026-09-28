@@ -48,7 +48,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `MarqueeDrawLayer` | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。描画順を単一所有する |
 | `MarqueeDecorationGeometry` | 装飾の矩形の計算（枠線 4 辺・暗転領域＝描画面から穴あけ矩形を除いた 4 領域）（純粋関数） |
 | `MarqueeTextPlacement` | 描画層が UI 層へ渡すテキスト（文言・基準点・アライン・クランプ領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
-| `MarqueeLabelTexts` | サイズラベル（位置と寸法の書式・表示スケール）・カーソル座標ラベルの文言と基準点の生成 |
+| `MarqueeLabelTexts` | サイズラベル（位置と寸法の書式・表示スケール）・カーソル座標ラベルの文言と基準点の生成。**矩形に基づく基準点は「穴あけ矩形の左上から枠線の幅 + 1 DIP 内側」**（枠線と背景の重なりを無くす） |
 | `MarqueeLabelPlacement` | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
 | `MarqueeLabelPlan` | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する（実寸 → 配置の写像。体裁は `MarqueeAppearance` から受け取る） |
 
@@ -64,7 +64,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | --- | --- |
 | `MarqueePresenterLogMessage` | 本層が単一所有する設定（外観と表示スケーリング係数）の変更ログ（`LoggerMessage` ソース生成）。**変化した項目だけ**を出力する |
 
-コアが出力する定義（状態・対話パラメータ・倍率・ハイライト矩形の変更と操作ログ）は `Feature.Marquee.Core` の `MarqueeLogMessage` が単一所有します。<br/>
+コアが出力する定義（状態・対話パラメータ・倍率・ハイライト矩形の変更と操作ログ）は `Feature.Marquee.Core` の `MarqueeLogMessage` が単一所有します。  
 UI が出力する定義（拡大元画像の変更・描画の例外など）は各 UI プロジェクトが所有します（**値を所有する主体が記録する**）。
 
 ## 描画の単位

@@ -38,6 +38,7 @@
 - **ホイール操作の公開 API**: `PanByWheel` / `ZoomByWheel`（ホストが他のコントロールで受けたホイールを転送する。換算とズーム率の決定は本コントロールが単一所有）
 - **Fit 表示**: ビューポートに収まる Uniform スケール（自動）と実効倍率の表示
 - **座標変換**: ビューポート ↔ コンテンツ（元画像ピクセル）の双方向変換。オフセット基準に加え、画像表示矩形の原点基準（Fit 中央寄せ補正込み）も提供
+- **市松模様**: 画像の透明部分の背景を `Appearance`（`ZoomViewAppearance`）で指定します。**描くのは画像の表示矩形の内側だけ**であり、画像の外（ペーストボード）は背景の単色になります
 - **スクロールバー**: オーバーレイ表示（コンテンツがビューポートより大きい場合のみ）
 - **イベント**: `ZoomChanged`（実効ズーム率・Fit 状態・可否の通知）/ `ViewportChanged`（表示状態の変化通知）。Ctrl+ホイールのズーム要求は内部で自己完結するため、ホストは購読不要
 - **ログ**: `ZoomViewControl.Log` への `ILogger` 注入（未設定時は `NullLogger`）
@@ -146,6 +147,7 @@ ZoomViewControl.AvaloniaUI/
 ├── src/          # ライブラリ本体（Avalonia 実装）
 │   ├── ZoomViewControl.cs      # 自己完結型複合コントロール（公開 API の委譲・通知の転送）
 │   ├── ZoomableView.cs         # ScrollViewer 不使用のパン・ズームビューポート（入力ブリッジ・描画の適用）
+│   ├── CheckerboardView.cs     # 画像の透明部分の背景（市松模様）を描く内部ビュー（画像より先に描く）
 │   └── ZoomChangedEventArgs.cs # ズーム変更イベント引数（コアの ZoomState を保持する薄い型）
 ├── tests/        # 単体テスト（ZoomViewControl.AvaloniaUI.Tests）
 │   ├── ZoomViewControl.Tests.cs  # 公開 API・Fit 移行・実効ズーム率

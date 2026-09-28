@@ -19,15 +19,51 @@ internal static class MarqueeLabelTexts
     /// <remarks>ラベルがカーソルに重ならないための余白である。</remarks>
     private const double CoordLabelOffset = 8.0;
 
+    /// <summary>ラベルを矩形の枠線から離す余白（DIP）。</summary>
+    /// <remarks>
+    /// 基準点は穴あけ矩形の左上であり、そのまま置くとラベルの背景が矩形の枠線に重なって文字が読みにくくなる。<br/>
+    /// 枠線は矩形の内側へ <see cref="MarqueeAppearance.OuterBorderThickness"/> の幅で描かれるため、その幅に本値を足した分だけ内側へ寄せる<br/>
+    /// （線幅ちょうどでは背景が線に接する。本値は背景と線の間に残す見た目の余白である）。
+    /// </remarks>
+    private const double LabelInsetMargin = 1.0;
+
+    /// <summary>穴あけ矩形からラベルの基準点（矩形の枠線を避けた左上）を求める。</summary>
+    /// <param name="holeRect">穴あけ矩形（選択またはハイライトの領域）。</param>
+    /// <param name="appearance">外観（枠線の太さと表示可否を持つ）。null 不可。</param>
+    /// <returns>ラベルの基準点（DIP）。</returns>
+    /// <remarks>
+    /// 内側への寄せ幅は「矩形の線幅 + <see cref="LabelInsetMargin"/>」であり、本メソッドが単一所有する<br/>
+    /// （サイズラベルとホストの付加情報ラベルで寄せ幅が異なると縦積みがずれる）。<br/>
+    /// 付加情報ラベルは描画層を経由しないため、基準点は <see cref="MarqueeDrawPlan.LabelAnchor"/> としても公開する。
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="appearance"/> が null の場合。</exception>
+    internal static EsPoint ResolveLabelAnchor(EsRect holeRect, MarqueeAppearance appearance)
+    {
+        ArgumentNullException.ThrowIfNull(appearance);
+
+        var inset = ResolveLabelInset(appearance);
+        return new EsPoint(holeRect.X + inset, holeRect.Y + inset);
+    }
+
+    /// <summary>ラベルを矩形の線から離す距離（DIP）を求める。</summary>
+    /// <param name="appearance">外観（枠線の太さと表示可否を持つ）。</param>
+    /// <returns>矩形の左上からラベルまでの距離（DIP）。</returns>
+    /// <remarks>
+    /// 線を描く設定では「線幅 + <see cref="LabelInsetMargin"/>」、描かない設定では <see cref="LabelInsetMargin"/> だけである<br/>
+    /// （線が無いのに線幅ぶんを足すと、ラベルが理由なく矩形の内側へずれる）。
+    /// </remarks>
+    private static double ResolveLabelInset(MarqueeAppearance appearance)
+        => (appearance.ShowOuterBorder ? appearance.OuterBorderThickness : 0.0) + LabelInsetMargin;
+
     /// <summary>サイズラベルの文言と基準点を解決する。</summary>
     /// <param name="geometry">描画の幾何（穴あけ矩形を持つ）。</param>
-    /// <param name="appearance">外観（表示可否を持つ）。</param>
+    /// <param name="appearance">外観（表示可否と枠線の太さを持つ）。</param>
     /// <param name="displayScaleScaling">座標・サイズを物理ピクセルへ換算する係数（0 以下は倍率として扱う）。</param>
     /// <param name="overrideProvider">文言プロバイダ。null または空文字を返す場合は自動生成する。</param>
     /// <param name="displayScalingProvider">表示スケールを矩形ごとに解決するプロバイダ。null の場合は <paramref name="displayScaleScaling"/> を使う。</param>
     /// <returns>サイズラベルのテキスト配置。表示しない場合は null。</returns>
     /// <remarks>
-    /// 基準点は穴あけ矩形の左上であり、アラインは左端・上端である（装飾と同じ規則で決まる）。<br/>
+    /// 基準点は穴あけ矩形の左上から枠線の幅（+ 余白）だけ内側へ寄せた点であり、アラインは左端・上端である。<br/>
     /// 座標の換算は <paramref name="displayScaleScaling"/> を使い、DisplayScale の百分率だけを<br/>
     /// <paramref name="displayScalingProvider"/> で矩形ごとに差し替えられる。
     /// </remarks>
@@ -53,7 +89,7 @@ internal static class MarqueeLabelTexts
             : overrideText;
 
         return new MarqueeTextPlacement(
-            text, holeRect.TopLeft, EsHorizontalAlign.Left, EsVerticalAlign.Top, default);
+            text, ResolveLabelAnchor(holeRect, appearance), EsHorizontalAlign.Left, EsVerticalAlign.Top, default);
     }
 
     /// <summary>カーソル座標ラベルの文言と基準点を解決する。</summary>

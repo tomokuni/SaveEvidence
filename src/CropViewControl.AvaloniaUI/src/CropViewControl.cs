@@ -11,6 +11,7 @@ using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
@@ -290,15 +291,16 @@ public sealed partial class CropViewControl : Panel
     /// <summary>画像の表示矩形（ビューポート座標）を取得する（<see cref="ZoomViewControl.ImageRectViewport"/> へ委譲）。</summary>
     public Rect ImageRectViewport() => _zoomView.ImageRectViewport();
 
-    /// <summary>ズーム・パンビューポートの背景（市松模様等。レターボックス領域の描画）。<see cref="ZoomViewControl.Background"/> へ委譲する。</summary>
+    /// <summary>ズームビューの外観（下地・市松模様・スクロールバーの色）を取得または設定する（<see cref="ZoomViewControl.Appearance"/> へ委譲）。</summary>
+    /// <value>外観の単一値。既定は <see cref="ZoomViewAppearance.Default"/>。</value>
     /// <remarks>
-    /// 本コントロール自体の背景（<see cref="Panel.Background"/>）とは独立し、内包するビューポートの背景を設定する。<br/>
-    /// 画像のレターボックス領域（画像がビューポートより小さい場合の余白）に市松模様等を表示するために使用する。
+    /// 市松模様は画像の透明部分の背景であり、描く範囲（画像の表示矩形の内側）はコアが単一所有する<br/>
+    /// （画像の外＝ペーストボードは下地色の単色になる）。設定は <c>PreviewChecker*</c> をホストが写像する。
     /// </remarks>
-    public IBrush? ViewportBackground
+    public ZoomViewAppearance Appearance
     {
-        get => _zoomView.Background;
-        set => _zoomView.Background = value;
+        get => _zoomView.Appearance;
+        set => _zoomView.Appearance = value;
     }
 
     // ====================================================================

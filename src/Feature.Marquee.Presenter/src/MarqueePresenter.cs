@@ -281,6 +281,7 @@ public class MarqueePresenter
             appearance,
             surface,
             hole,
+            hole is { } anchorHole ? MarqueeLabelTexts.ResolveLabelAnchor(anchorHole, appearance) : null,
             overlayRegions,
             outerBorders,
             innerFill,

@@ -72,10 +72,11 @@ public sealed partial class CapturePage : UserControl
     // アプリケーションロガー
     private static readonly ILogger _logger = AppLog.CreateLogger("CapturePage");
 
-    /// <summary>市松模様背景（DrawingBrush）キャッシュの最大保持数。</summary>
-    private const int CheckerBrushCacheCapacity = 16;
+    /// <summary>市松模様の明色（色 A）の既定色（設定の色文字列が不正な場合に使う）。</summary>
+    private static readonly System.Drawing.Color s_defaultCheckerColorA = System.Drawing.Color.FromArgb(255, 255, 255, 255);
 
-    private static readonly ConcurrentDictionary<(Color Light, Color Dark, int Size), DrawingBrush> s_checkerBrushCache = new();
+    /// <summary>市松模様の暗色（色 B）の既定色（設定の色文字列が不正な場合に使う）。</summary>
+    private static readonly System.Drawing.Color s_defaultCheckerColorB = System.Drawing.Color.FromArgb(255, 204, 204, 204);
 
     // ====================================================================
     // 構築
@@ -166,7 +167,7 @@ public sealed partial class CapturePage : UserControl
         };
 
         // 初期の市松模様背景を設定
-        UpdateCheckerboardBackground();
+        ApplyCheckerboard();
 
         // 切出しボタンの初期ツールチップ・ラベルを設定する（AXAML の既定値ではなく UpdateCropButtonText の値を反映）
         UpdateCropButtonText();
@@ -529,7 +530,7 @@ public sealed partial class CapturePage : UserControl
             or nameof(Settings.PreviewCheckerColorA)
             or nameof(Settings.PreviewCheckerColorB))
         {
-            UpdateCheckerboardBackground();
+            ApplyCheckerboard();
         }
     }
 
@@ -548,71 +549,45 @@ public sealed partial class CapturePage : UserControl
         };
     }
 
-    private void UpdateCheckerboardBackground()
+    /// <summary>プレビューの市松模様（画像の透明部分の背景）を設定する。</summary>
+    /// <remarks>
+    /// 描く範囲（画像の表示矩形の内側）とタイルサイズの規則（0 以下 = 描かない / 1 は下限へ切り上げ）はコアが単一所有する。<br/>
+    /// 画像の外（ペーストボード）は本コントロールの背景（テーマのブラシ）のままであり、市松模様は描かない。<br/>
+    /// 色の文字列が不正な場合は既定色を使う（描画を止めない）。
+    /// </remarks>
+    private void ApplyCheckerboard()
     {
-        try
+        var settings = _viewModel.Settings;
+        CropView.Appearance = ZoomViewAppearance.Default with
         {
-            var settings = _viewModel.Settings;
-
-            // 市松模様のタイルサイズ規則（0 以下 = 描かない / 1 は下限へ切り上げ）はコアが単一所有する
-            // （旧実装は本メソッドが 0 を 2 へ読み替えており、MewUI の「0 = 描かない」と意味が食い違っていた）
-            var checkerSize = ZoomViewAppearance.ResolveCheckerTileSize(settings.PreviewCheckerSize);
-            if (checkerSize <= 0)
-            {
-                CropView.ViewportBackground = null;
-                return;
-            }
-
-            // 市松模様の色は画像設定（PreviewCheckerColorA / B）から取得する（ルーペと共通）
-            var lightColor = Color.Parse(settings.PreviewCheckerColorA);
-            var darkerColor = Color.Parse(settings.PreviewCheckerColorB);
-            (Color Light, Color Dark, int Size) key = (lightColor, darkerColor, checkerSize);
-
-            var brush = CapacityLimitedCache.GetOrAdd(
-                s_checkerBrushCache, CheckerBrushCacheCapacity, key,
-                static k => BuildCheckerBrush(k.Light, k.Dark, k.Size));
-
-            CropView.ViewportBackground = brush;
-        }
-        catch
-        {
-            // 市松模様の描画リソース構築失敗（不正な色コード等）時は背景を更新しない
-        }
+            CheckerSize = settings.PreviewCheckerSize,
+            CheckerColorA = ParseColor(settings.PreviewCheckerColorA, s_defaultCheckerColorA),
+            CheckerColorB = ParseColor(settings.PreviewCheckerColorB, s_defaultCheckerColorB),
+        };
     }
 
-    /// <summary>市松模様のタイル描画ブラシを構築する。</summary>
-    /// <param name="light">明色（色 A）。</param>
-    /// <param name="dark">暗色（色 B）。</param>
-    /// <param name="size">1 タイルのサイズ（ピクセル）。</param>
-    /// <returns>タイル表示の <see cref="DrawingBrush"/>。</returns>
-    private static DrawingBrush BuildCheckerBrush(Color light, Color dark, int size)
+    /// <summary>設定の色文字列（<c>#AARRGGBB</c>）をコアの色型へ変換する。</summary>
+    /// <param name="value">色文字列。null・空・不正な場合は <paramref name="fallback"/> を返す。</param>
+    /// <param name="fallback">解析できない場合の色。</param>
+    /// <returns>解析した色。</returns>
+    private static System.Drawing.Color ParseColor(string? value, System.Drawing.Color fallback)
     {
-        var lightBrush = new SolidColorBrush(light);
-        var darkerBrush = new SolidColorBrush(dark);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return fallback;
+        }
 
-        var drawingGroup = new DrawingGroup();
-        drawingGroup.Children.Add(new GeometryDrawing
+        var text = value.TrimStart('#');
+        if (!uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, null, out var argb))
         {
-            Brush = darkerBrush,
-            Geometry = new RectangleGeometry(new Rect(0, 0, size * 2, size * 2))
-        });
-        drawingGroup.Children.Add(new GeometryDrawing
-        {
-            Brush = lightBrush,
-            Geometry = new RectangleGeometry(new Rect(0, 0, size, size))
-        });
-        drawingGroup.Children.Add(new GeometryDrawing
-        {
-            Brush = lightBrush,
-            Geometry = new RectangleGeometry(new Rect(size, size, size, size))
-        });
+            return fallback;
+        }
 
-        return new DrawingBrush
-        {
-            Drawing = drawingGroup,
-            TileMode = TileMode.Tile,
-            DestinationRect = new RelativeRect(0, 0, size * 2, size * 2, RelativeUnit.Absolute)
-        };
+        return System.Drawing.Color.FromArgb(
+            (byte)((argb >> 24) & 0xFF),
+            (byte)((argb >> 16) & 0xFF),
+            (byte)((argb >> 8) & 0xFF),
+            (byte)(argb & 0xFF));
     }
 
     /// <summary>現在の画像をUndoスタックに保存する。</summary>

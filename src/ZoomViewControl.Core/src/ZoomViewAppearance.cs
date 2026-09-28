@@ -8,6 +8,8 @@ namespace EsUtil.SaveEvidence.ZoomView;
 /// UI 実装が描画に使う外観値を 1 つの値として所有する（UI 層に色・サイズのリテラルを置かない）。<br/>
 /// 描画の可否（市松を描くか・トラックを描くか）も本型が判定し、UI 層は <c>Has*</c> を問い合わせるだけでよい<br/>
 /// （両 UI で判定がずれない）。<br/>
+/// <b>市松模様は画像の透明部分の背景である</b>ため、描く範囲は画像の表示矩形の内側に限る<br/>
+/// （範囲の解決は <see cref="ComputeCheckerArea"/> が単一所有する。矩形の外＝ペーストボードは下地色の単色になる）。<br/>
 /// 色は UI 非依存の <see cref="DrawingColor"/> を使用し、各 UI の色型への変換は境界（UI 層）で 1 行行う。<br/>
 /// スクロールバーの太さ・余白は UI ごとに見た目が異なってよい値であり、ホストが本値で与える<br/>
 /// （Avalonia 版は標準 <c>ScrollBar</c> を使うため本値の幾何は参照しない）。
@@ -39,7 +41,8 @@ public sealed record ZoomViewAppearance
     /// <value>1 タイルの一辺（DIP）。既定は 0（市松模様を描かない）。</value>
     /// <remarks>
     /// 0 以下は「描かない」を意味する（下地色の単色背景になる）。ホストが用途に応じて指定する。<br/>
-    /// 1 は 1 ピクセルの隙間が見えないため、実効値は 2 になる（<see cref="ResolveCheckerTileSize"/> が単一所有する）。
+    /// 1 は 1 ピクセルの隙間が見えないため、実効値は 2 になる（<see cref="ResolveCheckerTileSize"/> が単一所有する）。<br/>
+    /// 本値はタイルの大きさだけを決める（描く範囲は <see cref="ComputeCheckerArea"/> が単一所有する）。
     /// </remarks>
     public int CheckerSize { get; init; }
 
@@ -96,34 +99,55 @@ public sealed record ZoomViewAppearance
     /// <value>トラック色のアルファが 0 より大きい場合は true。</value>
     public bool HasScrollBarTrack => ScrollBarTrackColor.A > 0;
 
-    /// <summary>市松模様の明色タイル（色 A）の矩形を列挙する。</summary>
-    /// <param name="viewport">ビューポートのサイズ（DIP）。</param>
-    /// <returns>明色タイルの矩形の一覧。市松模様を描かない場合は空。</returns>
+    /// <summary>市松模様を描く領域（画像の表示矩形のうちビューポート内の部分）を求める。</summary>
+    /// <param name="imageRect">画像の表示矩形（ビューポート座標・DIP）。</param>
+    /// <param name="viewportSize">ビューポートのサイズ（DIP）。</param>
+    /// <returns>市松模様を描く領域（DIP）。市松模様を描かない場合・可視部分が無い場合は空。</returns>
     /// <remarks>
-    /// 描画手順は「暗色（<see cref="CheckerColorB"/>）で全面を塗る → 明色（<see cref="CheckerColorA"/>）のタイルを重ねる」。<br/>
+    /// 市松模様は<b>画像の透明部分の背景</b>であるため、画像の表示矩形の外（ペーストボード）へは描かない<br/>
+    /// （外側は下地色 <see cref="BackgroundColor"/> の単色になる）。<br/>
+    /// 画像の一部がビューポートの外へはみ出す場合は、可視部分（交差）だけを返す。
+    /// </remarks>
+    public EsRect ComputeCheckerArea(EsRect imageRect, EsSize viewportSize)
+        => HasCheckerboard ? imageRect.ClampToArea(viewportSize) : default;
+
+    /// <summary>市松模様の明色タイル（色 A）の矩形を列挙する。</summary>
+    /// <param name="area">市松模様を描く領域（ビューポート座標・DIP。例: <see cref="ComputeCheckerArea"/> の結果）。</param>
+    /// <returns>明色タイルの矩形の一覧。市松模様を描かない場合・領域が空の場合は空。</returns>
+    /// <remarks>
+    /// 描画手順は「暗色（<see cref="CheckerColorB"/>）で領域を塗る → 明色（<see cref="CheckerColorA"/>）のタイルを重ねる」。<br/>
     /// 本メソッドが返すのは手順の後半（明色タイル）であり、タイルの配置規則（<c>(列 + 行)</c> が偶数）を単一所有する。<br/>
-    /// UI 層は返された矩形を自 UI の描画 API へ渡すだけで、明暗の判定を持たない。<br/>
+    /// <b>タイルの格子はビューポートの原点 (0, 0) を基準にする</b>：画像をパンしても模様が這わないためである。<br/>
+    /// 領域の外へはみ出すタイルは領域で切り取って返す（呼び出し側は描画先をクリップする必要がない）。<br/>
     /// タイルサイズは <see cref="ResolveCheckerTileSize"/> が解決した実効値を使う。
     /// </remarks>
-    public IReadOnlyList<EsRect> ComputeLightTileRects(EsSize viewport)
+    public IReadOnlyList<EsRect> ComputeLightTileRects(EsRect area)
     {
         var tile = ResolveCheckerTileSize(CheckerSize);
-        if (tile <= 0 || viewport.Width <= 0 || viewport.Height <= 0)
+        if (tile <= 0 || area.IsEmpty)
         {
             return [];
         }
 
-        var columns = (int)Math.Ceiling(viewport.Width / tile);
-        var rows = (int)Math.Ceiling(viewport.Height / tile);
-        var rects = new List<EsRect>((columns * rows + 1) / 2);
+        var firstColumn = (int)Math.Floor(area.X / tile);
+        var lastColumn = (int)Math.Ceiling(area.Right / tile) - 1;
+        var firstRow = (int)Math.Floor(area.Y / tile);
+        var lastRow = (int)Math.Ceiling(area.Bottom / tile) - 1;
+        var rects = new List<EsRect>(((lastColumn - firstColumn + 1) * (lastRow - firstRow + 1) + 1) / 2);
 
-        for (var row = 0; row < rows; row++)
+        for (var row = firstRow; row <= lastRow; row++)
         {
-            for (var column = 0; column < columns; column++)
+            for (var column = firstColumn; column <= lastColumn; column++)
             {
-                if ((row + column) % 2 == 0)
+                if ((row + column) % 2 != 0)
                 {
-                    rects.Add(new EsRect(column * tile, row * tile, tile, tile));
+                    continue;
+                }
+
+                var clipped = new EsRect(column * tile, row * tile, tile, tile).Intersect(area);
+                if (!clipped.IsEmpty)
+                {
+                    rects.Add(clipped);
                 }
             }
         }

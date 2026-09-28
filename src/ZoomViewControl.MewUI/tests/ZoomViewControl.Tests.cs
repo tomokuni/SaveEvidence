@@ -303,11 +303,15 @@ public class ZoomViewControlTests
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 10 };
 
-        var tiles = appearance.ComputeLightTileRects(new EsSize(25, 25));
+        var tiles = appearance.ComputeLightTileRects(new EsRect(0, 0, 25, 25));
 
-        // 3x3 のタイルのうち明色は (0,0)(0,2)(1,1)(2,0)(2,2) の 5 枚
+        // 3x3 のタイルのうち明色は (0,0)(0,2)(1,1)(2,0)(2,2) の 5 枚（端は領域で切り取られる）
         Assert.Equal(5, tiles.Count);
-        Assert.All(tiles, tile => Assert.Equal(10.0, tile.Width, 6));
+        Assert.All(tiles, tile =>
+        {
+            Assert.True(tile.Right <= 25 && tile.Bottom <= 25, $"領域外: {tile}");
+            Assert.True(tile.Width is 10 or 5, $"切り取り幅が不正: {tile}");
+        });
     }
 
     /// <summary>市松模様を無効にすると明色タイルが空になることを検証する。</summary>
@@ -316,7 +320,7 @@ public class ZoomViewControlTests
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 0 };
 
-        Assert.Empty(appearance.ComputeLightTileRects(new EsSize(100, 100)));
+        Assert.Empty(appearance.ComputeLightTileRects(new EsRect(0, 0, 100, 100)));
     }
 
     // ====================================================================
