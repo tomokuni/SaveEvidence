@@ -31,8 +31,4 @@
     <InternalsVisibleTo Include="Feature.Marquee.Presenter.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\src\Common.csproj" />
-  </ItemGroup>
-
 </Project>

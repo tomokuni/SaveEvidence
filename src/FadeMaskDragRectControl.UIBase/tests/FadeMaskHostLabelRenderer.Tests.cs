@@ -1,24 +1,21 @@
 using EsUtil.Platform.Core.Geometry;
-using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee.Core.Drawing;
 using EsUtil.Feature.Marquee.Presenter;
-
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
 
-/// <summary><see cref="FadeMaskHostLabelRenderer"/> の描画テスト（描画ポートの画素を検証する）。</summary>
+/// <summary><see cref="FadeMaskHostLabelRenderer"/> の単体テスト（付加情報ラベルの配置指示の解決）。</summary>
 /// <remarks>
-/// 描画の実行は UI 非依存の描画ポート（Skia）で行うため、UI 初期化とウィンドウなしで検証できる。<br/>
-/// 本テストが「付加情報ラベルの積み上げ」の唯一の検証点である（各 UI はアダプタのみを持つため、UI ごとの描画テストは不要）。
+/// 積み上げの位置と表示可否の判断は本クラスが単一所有する（両 UI が同じ組み立てを書かないことを値で固定する）。<br/>
+/// 描画は各 UI が行う（本層は描画 API を持たない）ため、本テストは画素ではなく値を検証する。
 /// </remarks>
 public class FadeMaskHostLabelRendererTests
 {
-    /// <summary>検証用の背景色（不透明。文字の描かれない余白で判定する）。</summary>
+    /// <summary>操作ラベルの背景色（不透明）。</summary>
     private static readonly DrawingColor s_operationBackground = DrawingColor.FromArgb(255, 10, 20, 30);
 
-    /// <summary>検証用の情報ラベルの背景色（不透明）。</summary>
+    /// <summary>情報ラベルの背景色（不透明）。</summary>
     private static readonly DrawingColor s_infoBackground = DrawingColor.FromArgb(255, 40, 50, 60);
 
     /// <summary>操作ラベルのフォントサイズ（DIP）。</summary>
@@ -29,6 +26,9 @@ public class FadeMaskHostLabelRendererTests
 
     /// <summary>穴あけ矩形の左上（DIP）。</summary>
     private static readonly EsPoint HoleTopLeft = new(20, 30);
+
+    /// <summary>測定に使う固定の実寸（テキストの実測値を模した値）。</summary>
+    private static readonly EsSize MeasuredSize = new(40.0, 14.0);
 
     /// <summary>検証用の付加情報ラベルの外観を生成する（既定を検証用の色・寸法に差し替える）。</summary>
     /// <param name="showOperation">操作ラベルを表示するか。</param>
@@ -64,141 +64,159 @@ public class FadeMaskHostLabelRendererTests
             [],
             []);
 
-    /// <summary>テスト用の選択矩形コントロールの外観を生成する（サイズラベルを描かない基準）。</summary>
+    /// <summary>テスト用の外観を生成する（サイズラベルを描かない基準）。</summary>
     /// <returns>外観。</returns>
     /// <remarks>
     /// サイズラベルを描く設定の場合、付加情報はその下へ積まれる（行送りの検証は別のテストが担う）ため、<br/>
     /// 本ヘルパーは「サイズラベルを描かない」を基準にする。
     /// </remarks>
-    private static MarqueeAppearance CreatePaint() => MarqueeAppearance.Default with { ShowSizeLabel = false };
+    private static MarqueeAppearance CreateAppearance() => MarqueeAppearance.Default with { ShowSizeLabel = false };
 
-    /// <summary>穴あけ矩形の左上から次の行の上端を求める（行送り = 行の高さ + 内側余白 × 2）。</summary>
-    /// <param name="top">現在の上端。</param>
+    /// <summary>実寸を固定で返す測定関数。</summary>
+    /// <param name="text">測定する文言。</param>
     /// <param name="fontSize">フォントサイズ。</param>
-    /// <returns>次の行の上端。</returns>
-    private static double NextTop(double top, double fontSize)
-        => top + fontSize + CreatePaint().LabelPadding * 2;
+    /// <returns>固定の実寸。</returns>
+    private static EsSize Measure(string text, double fontSize) => MeasuredSize;
 
     [Fact]
-    public void 描画_穴あけ矩形が無ければ何も描かない()
+    public void 解決_穴あけ矩形が無ければ空を返す()
     {
-        using var target = TestHelper.CreateTarget(160, 120);
+        var placements = FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(null), CreateLabels(), CreateAppearance(), "確定: Enter", "メモ帳", Measure);
 
-        FadeMaskHostLabelRenderer.Draw(target.Canvas, CreateContent(null), CreateLabels(), CreatePaint(), "確定: Enter", "メモ帳");
-
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel((int)HoleTopLeft.X, (int)HoleTopLeft.Y));
+        Assert.Empty(placements);
     }
 
     [Fact]
-    public void 描画_操作ラベルと情報ラベルを縦に積む()
+    public void 解決_操作ラベルと情報ラベルを縦に積む()
     {
-        using var target = TestHelper.CreateTarget(200, 160);
-        var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80));
+        var placements = FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateLabels(),
+            CreateAppearance(),
+            "確定: Enter",
+            "メモ帳",
+            Measure);
 
-        FadeMaskHostLabelRenderer.Draw(target.Canvas, content, CreateLabels(), CreatePaint(), "確定: Enter", "メモ帳");
-
-        // 操作ラベルは穴あけ矩形の左上に置かれる（背景の余白部分を判定する）
-        Assert.Equal(new SKColor(10, 20, 30), target.GetPixel((int)HoleTopLeft.X + 1, (int)HoleTopLeft.Y + 1));
-
-        // 情報ラベルは操作ラベルの下（行送りはコアが単一所有する）に置かれる
-        var infoTop = (int)NextTop(HoleTopLeft.Y, OperationFontSize);
-        Assert.Equal(new SKColor(40, 50, 60), target.GetPixel((int)HoleTopLeft.X + 1, infoTop + 1));
+        Assert.Equal(2, placements.Count);
+        // 操作ラベルは穴あけ矩形の左上に置かれる（左端は穴あけ矩形の左端に揃える）
+        Assert.Equal(HoleTopLeft, placements[0].Bounds.TopLeft);
+        Assert.Equal("確定: Enter", placements[0].Text);
+        // 情報ラベルは操作ラベルの下（行送り = 行の高さ + 内側余白 × 2）
+        var infoTop = HoleTopLeft.Y + OperationFontSize + CreateAppearance().LabelPadding * 2;
+        Assert.Equal(infoTop, placements[1].Bounds.Y);
+        Assert.Equal(HoleTopLeft.X, placements[1].Bounds.X);
+        Assert.Equal("メモ帳", placements[1].Text);
     }
 
     [Fact]
-    public void 描画_サイズラベルがある場合はその下へ積む()
+    public void 解決_サイズラベルを描く設定ではその下へ積む()
     {
-        using var target = TestHelper.CreateTarget(200, 160);
-        var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80));
-        var appearance = CreatePaint() with { ShowSizeLabel = true };
+        var appearance = CreateAppearance() with { ShowSizeLabel = true };
 
-        FadeMaskHostLabelRenderer.Draw(
-            target.Canvas, content, CreateLabels(showInfo: false), appearance, "確定: Enter", null);
+        var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateLabels(showInfo: false),
+            appearance,
+            "確定: Enter",
+            null,
+            Measure));
 
-        // サイズラベルを表示する設定では、その行送り分だけ下へずれる（行の高さは外観のフォントサイズを使う）
-        var expectedTop = (int)NextTop(HoleTopLeft.Y, appearance.SizeLabelFontSize);
-        Assert.Equal(new SKColor(10, 20, 30), target.GetPixel((int)HoleTopLeft.X + 1, expectedTop + 1));
-        // サイズラベル自身の位置には付加情報を描かない
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel((int)HoleTopLeft.X + 1, (int)HoleTopLeft.Y + 1));
+        // サイズラベルの行送り分だけ下へずれる（行の高さは外観のフォントサイズを使う）
+        var expectedTop = HoleTopLeft.Y + appearance.SizeLabelFontSize + appearance.LabelPadding * 2;
+        Assert.Equal(expectedTop, placement.Bounds.Y);
     }
 
     /// <summary>サイズラベルを描かない設定では付加情報が先頭へ繰り上がることを検証する。</summary>
     [Fact]
-    public void 描画_サイズラベルを描かない設定なら先頭へ繰り上がる()
+    public void 解決_サイズラベルを描かない設定なら先頭へ繰り上がる()
     {
-        using var target = TestHelper.CreateTarget(200, 160);
-        var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80));
+        var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateLabels(showInfo: false),
+            CreateAppearance(),
+            "確定: Enter",
+            null,
+            Measure));
 
-        FadeMaskHostLabelRenderer.Draw(
-            target.Canvas, content, CreateLabels(showInfo: false), CreatePaint(), "確定: Enter", null);
-
-        // サイズラベルを描かないため、操作ラベルが穴あけ矩形の左上に置かれる
-        Assert.Equal(new SKColor(10, 20, 30), target.GetPixel((int)HoleTopLeft.X + 1, (int)HoleTopLeft.Y + 1));
+        Assert.Equal(HoleTopLeft.Y, placement.Bounds.Y);
     }
 
     [Theory]
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(false, false)]
-    public void 描画_表示スイッチが無効ならその行を描かない(bool showOperation, bool showInfo)
+    public void 解決_表示スイッチが無効ならその行を返さない(bool showOperation, bool showInfo)
     {
-        using var target = TestHelper.CreateTarget(200, 160);
-        var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80));
+        var placements = FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateLabels(showOperation, showInfo),
+            CreateAppearance(),
+            "確定: Enter",
+            "メモ帳",
+            Measure);
 
-        FadeMaskHostLabelRenderer.Draw(target.Canvas, content, CreateLabels(showOperation, showInfo), CreatePaint(), "確定: Enter", "メモ帳");
-
-        // 操作ラベルの位置には（表示する場合を除き）何も描かれない
-        var atOperation = target.GetPixel((int)HoleTopLeft.X + 1, (int)HoleTopLeft.Y + 1);
         if (showOperation)
         {
-            Assert.Equal(new SKColor(10, 20, 30), atOperation);
+            // 操作ラベルが先頭（穴あけ矩形の左上）に置かれる
+            Assert.Equal("確定: Enter", placements[0].Text);
+            Assert.Equal(HoleTopLeft, placements[0].Bounds.TopLeft);
         }
         else if (showInfo)
         {
             // 操作ラベルを描かない場合は情報ラベルが先頭（穴あけ矩形の左上）へ繰り上がる
-            Assert.Equal(new SKColor(40, 50, 60), atOperation);
+            Assert.Equal("メモ帳", Assert.Single(placements).Text);
+            Assert.Equal(HoleTopLeft, placements[0].Bounds.TopLeft);
         }
         else
         {
-            Assert.Equal(new SKColor(0, 0, 0, 0), atOperation);
+            Assert.Empty(placements);
         }
     }
 
-    /// <summary>文言が空の行を描かないことを検証する。</summary>
+    /// <summary>文言が空の行を返さないことを検証する。</summary>
     /// <remarks>
     /// 空文字は「描かない」を意味する（ホストの付加情報が対象外のモード等で発生する）。<br/>
     /// 描かない行の分だけ後続の行が繰り上がる（穴あけ矩形の左上から積み直す）。
     /// </remarks>
     [Fact]
-    public void 描画_文言が空ならその行を描かない()
+    public void 解決_文言が空ならその行を返さない()
     {
-        using var target = TestHelper.CreateTarget(200, 160);
-        var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80));
+        var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateLabels(),
+            CreateAppearance(),
+            string.Empty,
+            "メモ帳",
+            Measure));
 
-        FadeMaskHostLabelRenderer.Draw(target.Canvas, content, CreateLabels(), CreatePaint(), string.Empty, "メモ帳");
-
-        // 操作ラベルは空文字のため描かれず、情報ラベルが先頭（穴あけ矩形の左上）へ繰り上がる
-        Assert.Equal(new SKColor(40, 50, 60), target.GetPixel((int)HoleTopLeft.X + 1, (int)HoleTopLeft.Y + 1));
+        Assert.Equal("メモ帳", placement.Text);
+        Assert.Equal(HoleTopLeft, placement.Bounds.TopLeft);
     }
 
     /// <summary>空白のみの文言を空として扱わないことを検証する。</summary>
     /// <remarks>「空」の判定は文字数 0 である（空白文字を描くかどうかはホストの文言生成の責務）。</remarks>
     [Fact]
-    public void 描画_空白のみの文言は描く()
+    public void 解決_空白のみの文言は返す()
     {
-        using var target = TestHelper.CreateTarget(200, 160);
-        var content = CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80));
+        var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateLabels(showInfo: false),
+            CreateAppearance(),
+            "   ",
+            null,
+            Measure));
 
-        FadeMaskHostLabelRenderer.Draw(target.Canvas, content, CreateLabels(showInfo: false), CreatePaint(), "   ", null);
-
-        // 背景は文字の実寸へ内側余白を加えた大きさで描かれる（文字が空白でも行は描かれる）
-        Assert.Equal(new SKColor(10, 20, 30), target.GetPixel((int)HoleTopLeft.X + 1, (int)HoleTopLeft.Y + 1));
+        Assert.Equal("   ", placement.Text);
     }
 
     [Fact]
-    public void 描画_描画ポートがnullなら例外()
-    {
-        Assert.Throws<ArgumentNullException>(
-            () => FadeMaskHostLabelRenderer.Draw(null!, CreateContent(new EsRect(0, 0, 10, 10)), CreateLabels(), CreatePaint(), "操作", "情報"));
-    }
+    public void 解決_外観がnullなら例外()
+        => Assert.Throws<ArgumentNullException>(() => FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(new EsRect(0, 0, 10, 10)), CreateLabels(), null!, "操作", "情報", Measure));
+
+    [Fact]
+    public void 解決_測定関数がnullなら例外()
+        => Assert.Throws<ArgumentNullException>(() => FadeMaskHostLabelRenderer.Resolve(
+            CreateContent(new EsRect(0, 0, 10, 10)), CreateLabels(), CreateAppearance(), "操作", "情報", null!));
 }

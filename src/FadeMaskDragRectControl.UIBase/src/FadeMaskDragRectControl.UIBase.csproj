@@ -30,8 +30,4 @@
     <None Remove="..\tests\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\src\Common.csproj" />
-  </ItemGroup>
-
 </Project>

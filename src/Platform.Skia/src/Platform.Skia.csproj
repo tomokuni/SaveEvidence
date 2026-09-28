@@ -19,8 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 描画ポート（IEsCanvas）とラベル契約は Common、幾何値型とビットマップ（EsBitmap）は Platform.Core -->
-    <ProjectReference Include="..\..\Common\src\Common.csproj" />
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
   </ItemGroup>
 

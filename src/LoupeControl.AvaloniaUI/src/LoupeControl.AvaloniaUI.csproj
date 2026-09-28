@@ -46,8 +46,4 @@
     <InternalsVisibleTo Include="LoupeControl.AvaloniaUI.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\src\Common.csproj" />
-  </ItemGroup>
-
 </Project>

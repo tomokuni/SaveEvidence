@@ -12,6 +12,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
@@ -61,6 +62,9 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 /// </remarks>
 public sealed class FadeMaskDragRectControl : Panel
 {
+    /// <summary>テキストの実寸測定に使うブラシ（測定には色が影響しないため固定で共有する。外観値ではない）。</summary>
+    private static readonly SolidColorBrush s_measureBrush = new(Colors.White);
+
     /// <summary>ドラッグ選択コントロール（選択矩形・ハンドル・nudge と、外側の装飾（暗転マスク・枠・ラベル）の描画）。</summary>
     private readonly MarqueeControl _marquee = new() { IsHitTestVisible = true, ZIndex = 60, ClipToBounds = true };
 
@@ -530,18 +534,57 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。<br/>
     /// <b>操作ラベル・情報ラベルは選択コントロールの概念ではない</b>（アプリ固有の付加情報）ため、<br/>
-    /// 本クラス（ホスト）が文言の生成を、<see cref="FadeMaskHostLabelRenderer"/>（本層）が描画を行う。<br/>
-    /// 積み上げの位置と表示可否の判断は描画層が単一所有する（本クラスは描画ポートを用意して文言を渡すだけである）。<br/>
+    /// 本クラス（ホスト）が文言の生成を行い、<see cref="FadeMaskHostLabelRenderer"/>（本層）が配置指示（積み上げの位置と表示可否）を単一所有する。<br/>
+    /// <b>描画は本クラスが行う</b>（描画 API は UI フレームワーク固有のため、提示層は配置指示までを返す）。<br/>
     /// 本ハンドラはコントロールの子要素（ラベル）より後に呼ばれるため、付加情報はラベルより前面に置かれる。
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
-        => FadeMaskHostLabelRenderer.Draw(
-            new AvaloniaCanvas(e.Context),
+    {
+        var placements = FadeMaskHostLabelRenderer.Resolve(
             e.Content,
             _options.Labels,
             MarqueeAppearance,
             OperationTextProvider?.Invoke(),
-            InfoTextProvider?.Invoke());
+            InfoTextProvider?.Invoke(),
+            MeasureText);
+
+        foreach (var placement in placements)
+        {
+            DrawLabel(e.Context, in placement);
+        }
+    }
+
+    /// <summary>テキストの実寸を測定する（描画 API でしか測れない値）。</summary>
+    /// <param name="text">測定するテキスト。</param>
+    /// <param name="fontSize">フォントサイズ（DIP）。</param>
+    /// <returns>テキストの実寸（DIP）。</returns>
+    /// <remarks><see cref="FormattedText"/> は実寸を 2 つの double でしか公開しないため、コアのサイズ型へは本境界で組み立てる。</remarks>
+    private static EsSize MeasureText(string text, double fontSize)
+    {
+        var formatted = new FormattedText(
+            text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, fontSize, s_measureBrush);
+        return new EsSize(formatted.Width, formatted.Height);
+    }
+
+    /// <summary>付加情報ラベル 1 件を描画コンテキストへ描く（背景を塗ってから文字を描く）。</summary>
+    /// <param name="context">描画コンテキスト（描画中のみ有効）。</param>
+    /// <param name="placement">配置指示（寸法は実寸を反映済み）。</param>
+    /// <remarks>文字は配置指示の色で描き、ブラシは色ごとのキャッシュから得る。</remarks>
+    private static void DrawLabel(DrawingContext context, in MarqueeLabelPlacement placement)
+    {
+        var bounds = placement.Bounds;
+        context.FillRectangle(SolidColorBrushCache.GetOrCreate(placement.BackgroundColor), bounds.ToAvaloniaRect());
+
+        var formatted = new FormattedText(
+            placement.Text,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            Typeface.Default,
+            placement.FontSize,
+            SolidColorBrushCache.GetOrCreate(placement.TextColor));
+        var origin = new Point(bounds.X + placement.PaddingX, bounds.Y + placement.PaddingY);
+        context.DrawText(formatted, origin);
+    }
 
     /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを描画済み Bitmap へ描く。</summary>
     /// <param name="sender">イベント送信元（LoupeControl）。</param>

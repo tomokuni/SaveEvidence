@@ -32,7 +32,7 @@ public sealed class MarqueeRenderedEventArgs : EventArgs
 
     /// <summary>描画完了イベント引数を初期化する。</summary>
     /// <param name="context">描画コンテキスト（<c>Render</c> の実行中のみ有効）。</param>
-    /// <param name="content">1 フレーム分の描画内容。</param>
+    /// <param name="content">1 フレーム分の描画計画。</param>
     public MarqueeRenderedEventArgs(DrawingContext context, MarqueeDrawPlan content)
     {
         Context = context;

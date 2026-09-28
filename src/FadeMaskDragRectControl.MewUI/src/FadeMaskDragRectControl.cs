@@ -492,18 +492,37 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。<br/>
     /// <b>操作ラベル・情報ラベルは選択コントロールの概念ではない</b>（アプリ固有の付加情報）ため、<br/>
-    /// 本クラス（ホスト）が文言の生成を、<see cref="FadeMaskHostLabelRenderer"/>（本層）が描画を行う。<br/>
-    /// 積み上げの位置と表示可否の判断は描画層が単一所有する（本クラスは描画ポートを用意して文言を渡すだけである）。<br/>
+    /// 本クラス（ホスト）が文言の生成と描画を行い、<see cref="FadeMaskHostLabelRenderer"/>（本層）が配置指示（積み上げの位置と表示可否）を単一所有する。<br/>
+    /// <b>描画は本クラスが行う</b>（描画 API は UI フレームワーク固有のため、提示層は配置指示までを返す）。<br/>
     /// 本ハンドラはコントロールの子要素（ラベル）より後に呼ばれるため、付加情報はラベルより前面に置かれる。
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
-        => FadeMaskHostLabelRenderer.Draw(
-            new SkiaEsCanvas(e.Canvas),
+    {
+        var placements = FadeMaskHostLabelRenderer.Resolve(
             e.Content,
             _options.Labels,
             MarqueeAppearance,
             OperationTextProvider?.Invoke(),
-            InfoTextProvider?.Invoke());
+            InfoTextProvider?.Invoke(),
+            SkiaText.Measure);
+
+        foreach (var placement in placements)
+        {
+            DrawLabel(e.Canvas, in placement);
+        }
+    }
+
+    /// <summary>付加情報ラベル 1 件を canvas へ描く（背景を塗ってから文字を描く）。</summary>
+    /// <param name="canvas">描画先の canvas。</param>
+    /// <param name="placement">配置指示（寸法は実寸を反映済み）。</param>
+    private static void DrawLabel(SKCanvas canvas, in MarqueeLabelPlacement placement)
+    {
+        var bounds = placement.Bounds;
+        var textOrigin = new EsPoint(bounds.X + placement.PaddingX, bounds.Y + placement.PaddingY);
+        SkiaLabel.Draw(
+            canvas, bounds, placement.BackgroundColor, placement.Text, textOrigin,
+            placement.FontSize, placement.TextColor, cornerRadius: 0);
+    }
 
     /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを同一のキャンバスへ描画する。</summary>
     /// <param name="sender">イベント送信元（ルーペコントロール）。</param>
