@@ -19,6 +19,7 @@ using Xunit;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.Loupe.Core.Setting;
+using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 
@@ -72,6 +73,44 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(expectedMarqueeInteractive, control.Marquee.IsHitTestVisible);
         Assert.True(control.Marquee.IsVisible);
         Assert.Equal(expectedShowFullOverlay, control.ShowFullOverlay);
+    }
+
+    /// <summary>外観（色）を代入してもモードから導出する表示可否が保たれることを検証する。</summary>
+    /// <remarks>
+    /// 外観はホストが与える素材であり、モードから導出する表示可否（ハンドル・全面暗転）は本層が上書きする。<br/>
+    /// 代入の順序（設定 → 外観）でモードの判断が失われると、<b>選択前は全面暗転が描かれず何も見えない</b><br/>
+    /// （実際にキャプチャと切り出しで表示されない不具合として発生した）。
+    /// </remarks>
+    [AvaloniaFact]
+    public void MarqueeAppearance_代入後もモード由来の表示可否が保たれる()
+    {
+        var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.Crop };
+
+        // ホストは色だけを与える（表示可否は指定しない）
+        control.Options = FadeMaskDragRectOptions.Default;
+        control.MarqueeAppearance = MarqueeAppearance.Default with
+        {
+            OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+        };
+
+        // 色は与えた値のまま、モード由来の表示可否（選択を使うモード = 全面暗転 + ハンドル）になる
+        var appearance = control.Marquee.Appearance;
+        Assert.Equal(90, appearance.OverlayColor.A);
+        Assert.Equal((1, 2, 3), (appearance.OverlayColor.R, appearance.OverlayColor.G, appearance.OverlayColor.B));
+        Assert.True(appearance.ShowFullOverlay);
+        Assert.True(appearance.ShowHandles);
+        Assert.True(control.ShowFullOverlay);
+
+        // 選択を使わないモードへ変えた後に外観を代入しても、モードの判断（全面暗転なし）が残る
+        control.Mode = FadeMaskDragRectMode.WindowSelect;
+        control.MarqueeAppearance = MarqueeAppearance.Default with
+        {
+            OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+        };
+
+        Assert.False(control.Marquee.Appearance.ShowFullOverlay);
+        Assert.False(control.Marquee.Appearance.ShowHandles);
+        Assert.False(control.ShowFullOverlay);
     }
 
     // ====================================================================

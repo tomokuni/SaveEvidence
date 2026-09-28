@@ -6,6 +6,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.MewUI;
+using EsUtil.Platform.MewUI.Imaging;
 using EsUtil.Platform.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -56,7 +57,7 @@ public sealed class MarqueeControl : Panel
             changed: static (owner, _, newValue) =>
             {
                 owner._marquee.Options = newValue;
-                owner.InvalidateFrame();
+                owner.InvalidateRender();
             });
 
     /// <summary><see cref="Appearance"/> プロパティ（外観。描画にだけ必要な設定）。</summary>
@@ -70,7 +71,7 @@ public sealed class MarqueeControl : Panel
             changed: static (owner, _, newValue) =>
             {
                 owner._marquee.Appearance = newValue;
-                owner.InvalidateFrame();
+                owner.InvalidateRender();
             });
 
     /// <summary><see cref="HighlightRect"/> プロパティ（ハイライトする矩形）。</summary>
@@ -83,7 +84,7 @@ public sealed class MarqueeControl : Panel
             changed: static (owner, _, newValue) =>
             {
                 owner._marquee.HighlightRect = newValue;
-                owner.InvalidateFrame();
+                owner.InvalidateRender();
             });
 
     /// <summary><see cref="DipToDeviceScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
@@ -101,7 +102,7 @@ public sealed class MarqueeControl : Panel
             changed: static (owner, _, newValue) =>
             {
                 owner._marquee.DomainToDipScaling = newValue;
-                owner.InvalidateFrame();
+                owner.InvalidateRender();
             });
 
     /// <summary>コントロール化の提示層（設定・入力の解釈・描画計画の窓口）。</summary>
@@ -277,8 +278,7 @@ public sealed class MarqueeControl : Panel
         set
         {
             _marquee.DisplayScaleScaling = value;
-            InvalidateFrame();
-            InvalidateVisual();
+            InvalidateRender();
         }
     }
 
@@ -295,8 +295,7 @@ public sealed class MarqueeControl : Panel
         set
         {
             _marquee.SizeLabelOverrideProvider = value;
-            InvalidateFrame();
-            InvalidateVisual();
+            InvalidateRender();
         }
     }
 
@@ -313,8 +312,7 @@ public sealed class MarqueeControl : Panel
         set
         {
             _marquee.SizeLabelDisplayScalingProvider = value;
-            InvalidateFrame();
-            InvalidateVisual();
+            InvalidateRender();
         }
     }
 
@@ -448,18 +446,36 @@ public sealed class MarqueeControl : Panel
     /// <summary>保持している描画計画を破棄する（次の解決で最新の状態を反映する）。</summary>
     private void InvalidateFrame() => _frame = null;
 
+    /// <summary>描画内容の再解決と、図形・ラベルの再描画を要求する（描画に関わる変更の唯一の入口）。</summary>
+    /// <remarks>
+    /// 図形は子（<see cref="ShapeCanvas"/> = <c>SkiaCanvasView</c>）が描くため、親の <c>InvalidateVisual</c> だけでは再描画されない<br/>
+    /// （子のサーフェスは自ら再描画を要求されたときだけ描き直し、初期描画の内容が残る）。<br/>
+    /// ラベルは子要素の配置フェーズで内容と位置が変わるため、配置の無効化も併せて要求する。<br/>
+    /// 保持している描画計画を破棄し、次の解決で最新の状態を反映する。
+    /// </remarks>
+    public void InvalidateRender()
+    {
+        InvalidateFrame();
+        InvalidateVisual();
+        _shapes.InvalidateVisual();
+        InvalidateArrange();
+    }
+
     /// <summary>子（図形のキャンバス・ラベル要素）を配置する。</summary>
     /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
     /// <remarks>
     /// <b>位置はコアが決める</b>: ラベルの配置は <see cref="MarqueeLabelPlan"/>（描画層）が<br/>
     /// 実寸から求めた矩形をそのまま使い、本クラスは要素を <c>Arrange</c> するだけである。<br/>
     /// MewUI は <c>Margin</c> による絶対配置が反映されないため、配置フェーズで明示的に位置を確定させる。<br/>
-    /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。
+    /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。<br/>
+    /// <b>図形の描画もここで要求する</b>: 図形を描くキャンバスは自分の描画内容を保持し、<br/>
+    /// 親の無効化や再配置では描き直されない（追加直後の初回描画とレイアウト変更の反映を確実にする）。
     /// </remarks>
     protected override void ArrangeContent(Rect bounds)
     {
         // 図形のキャンバスは親領域全体を埋める
         _shapes.Arrange(bounds);
+        _shapes.InvalidateVisual();
 
         // 描画計画は本フェーズで 1 回だけ解決し、図形の描画（OnPaintSurface）と共有する
         // ラベルは描画計画が持つ配置指示（実寸を反映済み）をそのまま反映する
@@ -630,15 +646,9 @@ public sealed class MarqueeControl : Panel
 
         /// <summary>再描画を要求する。</summary>
         /// <remarks>
-        /// ラベル（サイズ・カーソル座標）はテキスト要素であり、配置は配置フェーズで書き換えるため、再描画と併せて配置も無効化する。<br/>
-        /// 保持している描画内容も破棄する（状態の変化を次の解決へ反映させる）。
+        /// 図形は子（<c>ShapeCanvas</c>）が描くため子も無効化する（要求の集約は <see cref="MarqueeControl.InvalidateRender"/> が単一所有する）。
         /// </remarks>
-        public override void RequestRedraw()
-        {
-            owner.InvalidateFrame();
-            owner.InvalidateVisual();
-            owner.InvalidateArrange();
-        }
+        public override void RequestRedraw() => owner.InvalidateRender();
 
         /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
         /// <param name="kind">カーソル形状の種別（コア提供）。</param>
@@ -762,7 +772,9 @@ public sealed class MarqueeControl : Panel
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
-        var scaling = DpiScaler.NormalizeScaling(DipToDeviceScaling);
+        // 倍率は描画面（物理ピクセル）と割り当て領域（DIP）の比から求める
+        // （DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いてしまう）
+        var scaling = SkiaSurfaceScale.Resolve(info.Width, Bounds.Size.Width, DipToDeviceScaling);
 
         canvas.Save();
         canvas.Scale((float)scaling);

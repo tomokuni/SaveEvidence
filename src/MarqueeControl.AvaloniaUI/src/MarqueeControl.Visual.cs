@@ -135,6 +135,10 @@ public sealed partial class MarqueeControl
         // ラベルは描画計画が持つ配置指示（実寸を反映済み）をそのまま反映する。
         SyncLabels(ResolveFrame(finalSize.ToEsSize()).Labels);
 
+        // 図形を描く子も併せて無効化する（子は自分の描画リストを持ち、親の配置だけでは描き直されない）。
+        // これにより、サイズ変更や追加直後の初回描画でも図形が最新の状態で描かれる。
+        _shapes.InvalidateVisual();
+
         return base.ArrangeOverride(finalSize);
     }
 
@@ -187,13 +191,13 @@ public sealed partial class MarqueeControl
         }
     }
 
-    /// <summary>テキストの実寸を測定する（<see cref="TextBlock"/> 自身に測らせるため 0 を返す）。</summary>
-    /// <param name="text">測定するテキスト（使用しない）。</param>
-    /// <param name="fontSize">フォントサイズ（使用しない）。</param>
-    /// <returns>常に 0 サイズ。</returns>
+    /// <summary>テキストの実寸を測定する（描画 API でしか測れない値）。</summary>
+    /// <param name="text">測定するテキスト。</param>
+    /// <param name="fontSize">フォントサイズ（DIP）。</param>
+    /// <returns>テキストの実寸（DIP）。</returns>
     /// <remarks>
-    /// 要素が自身の実寸で背景を描くため、コアの配置計算に実寸を渡す必要がない<br/>
-    /// （座標ラベルのクランプだけは実寸に依存するが、要素は描画領域の内側へ自動的に収まる）。
+    /// 配置矩形は実寸から決まるため、実寸を返さないと背景が内側余白だけの大きさになり文字が切り落とされる<br/>
+    /// （測定の実装は <see cref="AvaloniaTextMeasure"/> が単一所有する）。
     /// </remarks>
-    private static EsSize MeasureText(string text, double fontSize) => default;
+    private static EsSize MeasureText(string text, double fontSize) => AvaloniaTextMeasure.Measure(text, fontSize);
 }

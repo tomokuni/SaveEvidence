@@ -134,8 +134,16 @@ public sealed partial class MarqueeControl : Panel
         // 図形（装飾・ハンドル・始点マーカー）は専用の子コントロールが描く。
         // Panel は Render をシールするため自前で描けず、また子として持つことでラベル要素（後から追加する子）が
         // 必ず図形より後に描かれ「ラベルは常に最上位」というコアの描画順契約が構造で保証される。
-        Children.Add(new ShapeLayer(this));
+        _shapes = new ShapeLayer(this);
+        Children.Add(_shapes);
     }
+
+    /// <summary>図形（装飾・ハンドル・始点マーカー）を描く子コントロール（自コントロールの描画先）。</summary>
+    /// <remarks>
+    /// 子は<b>自分の描画リスト</b>を持つため、親の再描画（<see cref="Avalonia.Visual.InvalidateVisual"/>）では再描画されない。<br/>
+    /// 図形の内容が変わるたびに本インスタンスも無効化する必要がある（<see cref="InvalidateRender"/> が単一所有する）。
+    /// </remarks>
+    private readonly ShapeLayer _shapes;
 
     /// <summary>図形（装飾・ハンドル・始点マーカー）だけを描画する子コントロール。</summary>
     /// <remarks>
@@ -161,6 +169,7 @@ public sealed partial class MarqueeControl : Panel
         public override void Render(DrawingContext context) => _owner.RenderShapes(context);
     }
 
+
     /// <summary>静的コンストラクタ。設定（<see cref="Options"/>）の変更を再描画とファサードへ同期する。</summary>
     /// <remarks>
     /// 外観の変更は <see cref="Visual.AffectsRender{T}"/> により再描画を要求する。<br/>
@@ -176,7 +185,7 @@ public sealed partial class MarqueeControl : Panel
             static (c, e) =>
             {
                 c._marquee.Appearance = e.GetNewValue<MarqueeAppearance>();
-                c.InvalidateFrame();
+                c.InvalidateRender();
             });
 
         // ハイライト矩形（ホストが与える実行時状態）を提示層へ伝搬する（選択矩形より優先される）
@@ -184,7 +193,7 @@ public sealed partial class MarqueeControl : Panel
             static (c, e) =>
             {
                 c._marquee.HighlightRect = e.GetNewValue<EsRect?>();
-                c.InvalidateFrame();
+                c.InvalidateRender();
             });
 
         // 対話パラメータを提示層へ伝搬し、保持している描画計画を破棄する（設定の変更を次の解決へ反映する）
@@ -192,7 +201,7 @@ public sealed partial class MarqueeControl : Panel
             static (c, e) =>
             {
                 c._marquee.Options = e.GetNewValue<MarqueeOptions>();
-                c.InvalidateFrame();
+                c.InvalidateRender();
             });
 
         // 環境値（倍率）をファサードへ伝搬する（ポート未指定時の倍率の使い方・表示倍率の解決はコアが単一所有する）
@@ -200,14 +209,29 @@ public sealed partial class MarqueeControl : Panel
             static (c, e) =>
             {
                 c._marquee.DomainToDipScaling = e.GetNewValue<double>();
-                c.InvalidateFrame();
+                c.InvalidateRender();
             });
         DisplayScaleScalingProperty.Changed.AddClassHandler<MarqueeControl>(
             static (c, e) =>
             {
                 c._marquee.DisplayScaleScaling = e.GetNewValue<double>();
-                c.InvalidateFrame();
+                c.InvalidateRender();
             });
+    }
+
+    /// <summary>描画内容の再解決と、図形・ラベルの再描画を要求する（描画に関わる変更の唯一の入口）。</summary>
+    /// <remarks>
+    /// 図形は子（<see cref="ShapeLayer"/>）が描くため、親の <see cref="Avalonia.Visual.InvalidateVisual"/> だけでは再描画されない<br/>
+    /// （子は自分の描画リストを持ち、親の無効化は子の描画内容を無効にしない）。<br/>
+    /// ラベルは子要素の配置フェーズで内容と位置が変わるため、配置の無効化も併せて要求する。<br/>
+    /// 保持している描画計画を破棄し、次の解決で最新の状態を反映する。
+    /// </remarks>
+    public void InvalidateRender()
+    {
+        InvalidateFrame();
+        InvalidateVisual();
+        _shapes.InvalidateVisual();
+        InvalidateArrange();
     }
 
     // ====================================================================
@@ -444,8 +468,7 @@ public sealed partial class MarqueeControl : Panel
         set
         {
             _marquee.SizeLabelOverrideProvider = value;
-            InvalidateFrame();
-            InvalidateVisual();
+            InvalidateRender();
         }
     }
 
@@ -462,8 +485,7 @@ public sealed partial class MarqueeControl : Panel
         set
         {
             _marquee.SizeLabelDisplayScalingProvider = value;
-            InvalidateFrame();
-            InvalidateVisual();
+            InvalidateRender();
         }
     }
 
@@ -547,15 +569,9 @@ public sealed partial class MarqueeControl : Panel
 
         /// <summary>再描画を要求する。</summary>
         /// <remarks>
-        /// ラベル（サイズ・カーソル座標）はテキスト要素であり、配置は配置フェーズで書き換えるため、再描画と併せて配置も無効化する。<br/>
-        /// 保持している描画内容も破棄する（状態の変化を次の解決へ反映させる）。
+        /// 図形は子（<c>ShapeLayer</c>）が描くため子も無効化する（要求の集約は <see cref="MarqueeControl.InvalidateRender"/> が単一所有する）。
         /// </remarks>
-        public override void RequestRedraw()
-        {
-            owner.InvalidateFrame();
-            owner.InvalidateVisual();
-            owner.InvalidateArrange();
-        }
+        public override void RequestRedraw() => owner.InvalidateRender();
 
         /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
         /// <param name="kind">カーソル形状の種別（コア提供）。</param>

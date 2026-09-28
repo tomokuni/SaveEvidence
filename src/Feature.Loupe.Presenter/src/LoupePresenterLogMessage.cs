@@ -61,9 +61,13 @@ internal static partial class LoupePresenterLogMessage
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の色。</param>
     /// <param name="newValue">変更後の色。</param>
+    /// <remarks>
+    /// 同値の判定は成分（<see cref="DrawingColor.ToArgb"/>）で行う。色の <c>==</c> は生成経路（名前付き色か<br/>
+    /// ARGB 生成か）の違いでも不一致になるため、同じ色に「変更なし」のログが出てしまうのを防ぐ。
+    /// </remarks>
     internal static void LogSettingChanged(this ILogger logger, string name, DrawingColor oldValue, DrawingColor newValue)
     {
-        if (oldValue == newValue)
+        if (oldValue.ToArgb() == newValue.ToArgb())
         {
             return;
         }

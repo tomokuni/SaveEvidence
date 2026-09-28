@@ -168,12 +168,13 @@ flowchart TB
   - ホイール操作は**扱わない**（コントロール化を前提とした処理のためホストが行う。本コントロールはイベントを素通しし、`e.Handled` を立てない）
   - **全面を当たり判定の対象にする**（透明の背景（`Background`）を設定する。図形は子の `ShapeLayer` が描き、当たるのは `ShapeLayer` 自身になるため、背景が無いと本コントロールは押下を受け取れない。透明は描画結果を変えない）
   - 表示の変化（パン・ズーム）への追従（`RefreshOverlay()`：再描画とルーペ位置の再計算）
+  - **図形の再描画は子の描画層（`ShapeLayer`）へも要求する**（`InvalidateRender()` が単一所有する）。子は自分の描画リストを持つため、親の `InvalidateVisual` だけでは図形が更新されない（実際に選択矩形が表示されない不具合として発生した）
   - 設定（寸法・表示可否・対話パラメータ・色）・環境値（倍率）・文言プロバイダの保持とファサード（色は描画実装）への伝搬
 - **公開API**:
 - イベント 8 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ConfirmRequested` / `CancelRequested` / `Rendered`（描画完了。描画コンテキストと描画内容を渡し、ホストは付加情報（操作・情報ラベル）を描ける。サイズ・座標ラベルはコントロールがテキスト要素として表示する）。**生のポインター入力（Mouse 系）は公開しない**（ホストは自 UI の入力イベントを使う。押下状態は `CurrentSnapshot.IsMouseDown`）
   - StyledProperty 4 種: `Options`（不変の設定値 `MarqueeOptions`。寸法・対話パラメータを内包） / `Appearance`（外観の単一値 `MarqueeAppearance`） / `DomainToDipScaling` / `DisplayScaleScaling`（環境値。XAML のバインディング・スタイルで設定できるよう依存関係プロパティとして公開する）。設定はコア（ファサード）または提示層（外観）へ委譲する（MewUI 版と同じ形）
   - プロパティ: `Log`（保持・`NullLogger` へのフォールバックはコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。デリゲートのため設定値に含めない） / `HasSelection` / `SelectionRect`
-  - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `RefreshOverlay`
+  - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `RefreshOverlay` / **`InvalidateRender()`**（描画に関わる変更の唯一の入口。図形の層・ラベル・配置をまとめて無効化する）
 - **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画の起動のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・装飾の描画内容）と描画の手順はコアと描画層へ委譲する
 - **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeGeometry（Feature.Marquee.Core）/ MarqueePresenter / MarqueeAppearance / MarqueeDrawPlan / MarqueeLabelPlan（Feature.Marquee.Presenter）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ ScreenConverter（Platform.AvaloniaUI）
 
@@ -235,10 +236,10 @@ flowchart TB
 
 ### 6.8 ラベル要素の配置（本コントロールの内部実装）
 
-- **分類**: `MarqueeControl` の内部実装（`ArrangeOverride` と `SyncLabels` / `Apply` / `MeasureText`。独立した型ではない）
+- **分類**: `MarqueeControl` の内部実装（`ArrangeOverride` と `SyncLabels` / `Apply` / `MeasureText`。独立し た型ではない）
 - **責務**: 描画計画のラベル（サイズ・カーソル座標）をテキスト要素（`Border` + `TextBlock`）として配置する
 - **可視性**: 非公開（ホストは `Rendered` の `Content`（描画計画）を参照できる）
-- **特徴**: 文言と基準点は提示層の `MarqueeLabelTexts` が、体裁は `MarqueeAppearance` が単一所有し、実寸からの配置矩形は `MarqueeLabelPlan` が単一所有する。本実装は実寸測定（`FormattedText`）と要素への反映（`Border` の余白・大きさ・位置、`TextBlock` の文言・文字サイズ・色）を持つ。色 → ブラシは `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）が単一所有する
+- **特徴**: 文言と基準点は提示層の `MarqueeLabelTexts` が、体裁は `MarqueeAppearance` が単一所有し、実寸からの配置矩形は `MarqueeLabelPlan` が単一所有する。本実装は実寸測定（**`Platform.AvaloniaUI.Imaging` の `AvaloniaTextMeasure` へ委譲する**。実寸を返さないと背景が内側余白だけの大きさになり文字が切り落とされる）と要素への反映（`Border` の余白・大きさ・位置、`TextBlock` の文言・文字サイズ ・色）を持つ。色 → ブラシは `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）が単一所有する
 - **依存**: Avalonia（`FormattedText` / テキスト要素）/ Feature.Marquee.Presenter（`MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueeAppearance`）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
 
 ### 6.9 MarqueeContextPainter（本プロジェクト）

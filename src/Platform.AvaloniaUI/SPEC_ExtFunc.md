@@ -66,7 +66,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 
 ```csharp
 using EsUtil.Platform.AvaloniaUI;          // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
-using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache
+using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache / AvaloniaTextMeasure
 using EsUtil.Platform.Core;                     // サービス抽象 / コア値型
 using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
@@ -177,6 +177,7 @@ ICoordTransform dipPort = ScreenConverter.CreateVisualDipPort(control);
 | --- | --- |
 | `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ。`Draw` は Skia 直描画（`WriteableBitmap`` を生成しない）。`Dispose` で内包を解放 |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。スレッド安全。値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
+| `AvaloniaTextMeasure` | テキストの実寸を測る（`Measure(text, fontSize)`。ラベルの配置矩形の計算に使う。測定に色は影響しないためブラシは固定で共有する） |
 
 ```csharp
 // 色 → ブラシの共有（描画のたびに生成しない）

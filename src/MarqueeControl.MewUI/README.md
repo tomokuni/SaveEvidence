@@ -106,7 +106,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた設定（コアの `EsUtil.Feature.Marquee.Core.Setting.MarqueeOptions`。**色は含まない**） |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の**計算に必要な設定**（寸法・対話パラメータ）。変更すると再描画され、対話パラメータはコアへ伝搬する（**色・表示可否は含まない**） |
 | `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（`EsUtil.Feature.Marquee.Presenter.MarqueeAppearance`）。変更すると次の描画で提示層が新しい外観で描画計画を解決する |
-| `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新） |
+| `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新）。描画は描画面と表示領域の比を使うため、追加直後で未更新でも画像と同じ倍率になる |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と同一）:
 
@@ -144,6 +144,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
 | `RequestConfirm()` / `RequestCancel()` | Enter / Escape と同じ条件で確定・キャンセルを要求する |
 | `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画と配置の再評価を要求。選択の状態は変更しない） |
+| `InvalidateRender()` | 描画に関わる変更の唯一の入口（図形の Skia キャンバス・ラベル・配置をまとめて無効化する） |
 | `CurrentSnapshot` | 現在の状態のスナップショット（`MarqueeSnapshot`） |
 
 ## イベント

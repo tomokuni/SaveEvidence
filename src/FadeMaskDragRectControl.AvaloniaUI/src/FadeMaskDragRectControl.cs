@@ -62,8 +62,6 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 /// </remarks>
 public sealed class FadeMaskDragRectControl : Panel
 {
-    /// <summary>テキストの実寸測定に使うブラシ（測定には色が影響しないため固定で共有する。外観値ではない）。</summary>
-    private static readonly SolidColorBrush s_measureBrush = new(Colors.White);
 
     /// <summary>ドラッグ選択コントロール（選択矩形・ハンドル・nudge と、外側の装飾（暗転マスク・枠・ラベル）の描画）。</summary>
     private readonly MarqueeControl _marquee = new() { IsHitTestVisible = true, ZIndex = 60, ClipToBounds = true };
@@ -236,7 +234,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     public void RefreshOverlay()
     {
-        _marquee.InvalidateVisual();
+        _marquee.InvalidateRender();
         _loupeControl.RefreshPosition();
     }
 
@@ -371,7 +369,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>選択オーバーレイ（暗転マスク・ハイライト・選択矩形）の再描画を要求する。</summary>
     /// <remarks>ハイライト等の状態を変更した後に呼び出す。</remarks>
-    public void InvalidateOverlay() => _marquee.InvalidateVisual();
+    public void InvalidateOverlay() => _marquee.InvalidateRender();
 
     /// <summary>ルーペの拡大元画像（Source）を設定する。</summary>
     /// <param name="source">拡大元画像。null で解除。</param>
@@ -438,12 +436,17 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// 色・ラベル体裁・表示可否・枠線の太さはコアの計算に入らない（描画にだけ必要）ため、<br/>
     /// 設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
-    /// 内包する選択矩形コントロールへそのまま転送する。
+    /// 内包する選択矩形コントロールへそのまま転送し、<b>モードから導出する表示可否（ハンドル・全面暗転）を上書きし直す</b><br/>
+    /// （外観は評価値ではなくホストが与える素材であり、代入の順序でモードの判断が失われないようにする）。
     /// </remarks>
     public MarqueeAppearance MarqueeAppearance
     {
         get => _marquee.Appearance;
-        set => _marquee.Appearance = value;
+        set
+        {
+            _marquee.Appearance = value;
+            ApplyOptions();
+        }
     }
 
     /// <summary>ルーペの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
@@ -488,7 +491,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
         UpdateLoupeVisibility();
 
-        _marquee.InvalidateVisual();
+        _marquee.InvalidateRender();
         // 破線の表示可否はルーペのプロパティに現れないため、既存の Bitmap から破線を消す（または描く）ために再生成を要求する
         _loupeControl.RequestRender();
     }
@@ -533,13 +536,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="text">測定するテキスト。</param>
     /// <param name="fontSize">フォントサイズ（DIP）。</param>
     /// <returns>テキストの実寸（DIP）。</returns>
-    /// <remarks><see cref="FormattedText"/> は実寸を 2 つの double でしか公開しないため、コアのサイズ型へは本境界で組み立てる。</remarks>
-    private static EsSize MeasureText(string text, double fontSize)
-    {
-        var formatted = new FormattedText(
-            text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, fontSize, s_measureBrush);
-        return new EsSize(formatted.Width, formatted.Height);
-    }
+    /// <remarks>測定の実装は <see cref="AvaloniaTextMeasure"/> が単一所有する（UI ごとの実寸の食い違いを防ぐ）。</remarks>
+    private static EsSize MeasureText(string text, double fontSize) => AvaloniaTextMeasure.Measure(text, fontSize);
 
     /// <summary>付加情報ラベル 1 件を描画コンテキストへ描く（背景を塗ってから文字を描く）。</summary>
     /// <param name="context">描画コンテキスト（描画中のみ有効）。</param>

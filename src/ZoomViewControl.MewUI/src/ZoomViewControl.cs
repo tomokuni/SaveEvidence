@@ -5,6 +5,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
+using EsUtil.Platform.MewUI.Imaging;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using EsUtil.Platform.Skia;
@@ -387,8 +388,9 @@ public sealed class ZoomViewControl : SkiaCanvasView
         var appearance = _session.Appearance;
         canvas.Clear(appearance.BackgroundColor.ToSKColor());
 
-        // スケーリング係数の正規化（0 以下は基準値）は DpiScaler が単一所有する
-        var scaling = DpiScaler.NormalizeScaling(DipToDeviceScaling);
+        // スケーリングは描画面（物理ピクセル）と割り当て領域（DIP）の比から求める
+        // （DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いてしまう）
+        var scaling = SkiaSurfaceScale.Resolve(info.Width, Bounds.Size.Width, DipToDeviceScaling);
 
         // レイアウト前は Bounds が 0 のため、キャンバスサイズからビューポートを求める
         var viewport = CurrentViewport();

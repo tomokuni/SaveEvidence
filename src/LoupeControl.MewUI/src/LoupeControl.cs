@@ -7,6 +7,7 @@ using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
+using EsUtil.Platform.MewUI.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
@@ -403,7 +404,9 @@ public sealed class LoupeControl : Panel
         // 描画先の表面サイズ（物理ピクセル）から表示サイズ（DIP）を導いて描画計画を組み立てる
         // （表面は要素の大きさそのものであるため、要素の大きさと描画サイズが一致する）。
         // 導出は DpiScaler が単一所有する（丸め規則を両 UI で揃える）。
-        var scaling = DpiScaler.NormalizeScaling(DipToDeviceScaling);
+        // 倍率は描画面（物理ピクセル）と割り当て領域（DIP）の比から求める
+        // （DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いてしまう）
+        var scaling = SkiaSurfaceScale.Resolve(info.Width, Bounds.Size.Width, DipToDeviceScaling);
         var surfaceSize = info.Size.ToEsSize();
         var plan = _presenter.ResolveDrawPlan(DpiScaler.ToDip(surfaceSize, scaling).Width, surfaceSize, SkiaText.Measure);
 

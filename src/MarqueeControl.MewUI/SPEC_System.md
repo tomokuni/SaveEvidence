@@ -359,7 +359,7 @@ stateDiagram-v2
 
 ```text
 OnPaintSurface(canvas, info)
-  ├─ canvas.Scale(DipToDeviceScaling)                     … DPI の適用（境界 1 箇所）
+  ├─ 実効倍率の解決（描画面 ÷ 表示領域）             … DPI の適用（境界 1 箇所）
   ├─ canvas.Clear(透明)                              … 前フレームの描画を残さない
   ├─ MarqueePresenter.ResolveDrawPlan(clientSize, SkiaText.Measure)  … 描画計画 1 値（幾何はコア、外観と層の順序は提示層）
   └─ MarqueeSkiaPainter.Paint(canvas, plan)          … Layers の順に描く

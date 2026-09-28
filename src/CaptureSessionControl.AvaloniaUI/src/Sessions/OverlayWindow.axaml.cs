@@ -5,6 +5,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.CaptureSession.UIBase;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using Microsoft.Extensions.Logging;
 using EsUtil.Platform.AvaloniaUI.Interop;
@@ -174,6 +175,10 @@ internal sealed partial class OverlayWindow : Window
         // 設定を複合コントロールの設定値（1 値）へ変換して一括適用する（変換はコアのマッパーが単一所有する）。
         // ルーペの市松模様の下地色は塗らない（Avalonia 版は背後に固定背景画像を置くため透明で透かす）
         SelectionOverlay.Options = s.ToFadeMaskDragRectOptions();
+        // 描画に使う色（暗転・枠線・ハンドル・ラベル・ルーペ）は設定から写像する
+        // （設定を反映しないと、切り出し（Crop）とキャプチャで見た目が食い違う）
+        SelectionOverlay.MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(s);
+        SelectionOverlay.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
         // ドメインはウィンドウローカル物理ピクセル（= ローカル DIP × スケーリング）のため、ウィンドウのスケーリング（_scaling）を設定する。
         SelectionOverlay.DomainToDipScaling = _scaling;

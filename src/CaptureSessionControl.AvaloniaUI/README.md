@@ -169,6 +169,8 @@ CaptureSessionControl.AvaloniaUI/
 
 設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。利用側は `using EsUtil.SaveEvidence.CaptureSession.UIBase;` を追加してください。
 
+**撮影オーバーレイ（`StartCaptureAsync`）も同じ写像で外観（色）を適用します**（切り出しと同じ見た目になる。適用しないと設定した色が反映されない）。
+
 ## 10. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

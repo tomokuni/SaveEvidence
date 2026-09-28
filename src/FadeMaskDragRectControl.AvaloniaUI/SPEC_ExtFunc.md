@@ -126,7 +126,7 @@ parentPanel.Children.Add(overlay);
 | `DomainToDipScaling` | `double` | DPI スケーリング係数（設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
 | `DisplayScaleScaling` | `double` | サイズラベル用表示スケール（マルチスクリーン補正。設定（`Options`）の対象外・環境値。選択矩形コントロールへ委譲） |
 | `LoupeDipToDeviceScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（設定（`Options`）の対象外・DPI から自動取得。`LoupeControl.DipToDeviceScaling` へ委譲） |
-| `MarqueeAppearance` | `MarqueeAppearance`（提示層） | 選択矩形コントロールの外観（描画にだけ必要な色・枠線の太さ・表示可否）の単一値。既定は `MarqueeAppearance.Default`。内包する選択矩形コントロールへ委譲する |
+| `MarqueeAppearance` | `MarqueeAppearance`（提示層） | 選択矩形コントロールの外観（描画にだけ必要な色・枠線の太さ・表示可否）の単一値。既定は `MarqueeAppearance.Default`。内包する選択矩形コントロールへ委譲する。**設定時はモードから導出する表示可否（ハンドル・全面暗転）を上書きし直す**（外観は評価値ではなくホストが与える素材。代入の順序でモードの判断が失われない） |
 | `LoupeAppearance` | `LoupeAppearance`（描画層） | ルーペの描画に使う色（描画にだけ必要な設定）の単一値。既定は `LoupeAppearance.Default`。内包するルーペコントロールへ委譲する |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言を描画時に評価するプロバイダ（文言はホストが与える。`WindowTitle` は廃止し `InfoTextProvider` へ統合） |
 | `ShowFullOverlay` | `bool` | 全面暗転（穴あけなし）を表示するかどうか（Crop / AreaSelect で有効。読み取り専用） |

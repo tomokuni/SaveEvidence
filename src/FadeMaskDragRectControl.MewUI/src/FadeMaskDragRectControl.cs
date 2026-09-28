@@ -189,7 +189,13 @@ public sealed class FadeMaskDragRectControl : Panel
     public MarqueeAppearance MarqueeAppearance
     {
         get => _marquee.Appearance;
-        set => _marquee.Appearance = value;
+        set
+        {
+            _marquee.Appearance = value;
+            // モードから導出する表示可否（ハンドル・全面暗転）を上書きし直す
+            // （外観は評価値ではなくホストが与える素材であり、代入の順序でモードの判断が失われないようにする）
+            ApplyOptions();
+        }
     }
 
     /// <summary>ルーペの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
@@ -389,7 +395,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>選択オーバーレイ（暗転マスク・ハイライト・選択矩形）の再描画を要求する。</summary>
     /// <remarks>ハイライト等の状態を変更した後に呼び出す。</remarks>
-    public void InvalidateOverlay() => _marquee.InvalidateVisual();
+    public void InvalidateOverlay() => _marquee.InvalidateRender();
 
     /// <summary>表示の変化（パン・ズーム・表示サイズ）へ内包コントロールを追従させる。</summary>
     /// <remarks>
@@ -398,7 +404,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     public void RefreshOverlay()
     {
-        _marquee.InvalidateVisual();
+        _marquee.InvalidateRender();
         InvalidateArrange();
     }
 
@@ -460,7 +466,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
         UpdateLoupeVisibility();
 
-        _marquee.InvalidateVisual();
+        _marquee.InvalidateRender();
         // ルーペは描画のたびに選択矩形の破線を組み立てるため、破線色の変更は再描画で反映される
         _loupe.InvalidateVisual();
         InvalidateArrange();

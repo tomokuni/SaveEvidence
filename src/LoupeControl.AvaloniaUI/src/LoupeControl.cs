@@ -11,7 +11,6 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using System.Globalization;
 using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.Loupe.Core.Setting;
@@ -120,9 +119,6 @@ public sealed class LoupeControl : Panel
 
     /// <summary>配置中のラベル要素（背景 + テキスト）。子の末尾側へ置くため常に最上位になる。</summary>
     private readonly List<Border> _labels = [];
-
-    /// <summary>テキストの実寸測定に使うブラシ（測定には色が影響しないため固定で共有する。外観値ではない）。</summary>
-    private static readonly SolidColorBrush s_measureBrush = new(Colors.White);
 
     /// <summary>再描画のバッチ化コーディネーター（Dispatcher へのポストで 1 フレームに 1 回に結合）。</summary>
     private LoupeRenderCoordinator _renderCoordinator;
@@ -281,13 +277,8 @@ public sealed class LoupeControl : Panel
     /// <param name="text">測定するテキスト。</param>
     /// <param name="fontSize">フォントサイズ（DIP）。</param>
     /// <returns>テキストの実寸（DIP）。</returns>
-    /// <remarks><see cref="FormattedText"/> は実寸を 2 つの double でしか公開しないため、コアのサイズ型へは本境界で組み立てる。</remarks>
-    private static EsSize MeasureText(string text, double fontSize)
-    {
-        var formatted = new FormattedText(
-            text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, fontSize, s_measureBrush);
-        return new EsSize(formatted.Width, formatted.Height);
-    }
+    /// <remarks>測定の実装は <see cref="AvaloniaTextMeasure"/> が単一所有する（UI ごとの実寸の食い違いを防ぐ）。</remarks>
+    private static EsSize MeasureText(string text, double fontSize) => AvaloniaTextMeasure.Measure(text, fontSize);
 
     /// <summary>入力（Source / CenterPoint / 設定）の変更で再描画を要求する。</summary>
     /// <remarks>

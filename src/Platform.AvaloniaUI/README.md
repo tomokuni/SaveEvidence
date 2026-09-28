@@ -38,6 +38,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 - **画像ユーティリティ**: `EsBitmap`（`Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
 - **画像アダプタ**（`EsBitmapAvaloniaImage`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
 - **ブラシキャッシュ**: `SolidColorBrushCache`（`System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有する。描画アダプタとラベル要素の配置が共用する）
+- **テキスト実寸の測定**: `AvaloniaTextMeasure`（ラベル要素の配置矩形を実寸から決めるための唯一の入口。UI ごとに測定を書くと片方だけ実寸 0 になり、文字が切り落とされる）
 - **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
 
 ## 3. システム要件
@@ -61,7 +62,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 
 ```csharp
 using EsUtil.Platform.AvaloniaUI;          // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
-using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache
+using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache / AvaloniaTextMeasure
 using EsUtil.Platform.Core;                     // サービス抽象 / コア値型
 using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
@@ -167,7 +168,7 @@ Platform.AvaloniaUI/
 │   └── Platform/
 │       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
 │       ├── Coordinate/             # ScreenConverter（Avalonia の TopLevel に依存するため本プロジェクトに残す）
-│       ├── Imaging/                # 画像アダプタ（EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache）
+│       ├── Imaging/                # 画像アダプタ（EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache / AvaloniaTextMeasure）
 │       └── Interop/                # コア型との相互変換（EsKeyAvaloniaInterop / EsWindowStateAvaloniaInterop / EsGeometryAvaloniaInterop / EsPlatformHandleAvaloniaInterop / ColorAvaloniaInterop / CursorOverrideGuardAvaloniaExtensions）
 └── tests/                          # 単体テスト
 ```
