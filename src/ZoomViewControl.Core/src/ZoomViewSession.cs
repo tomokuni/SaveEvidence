@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.ZoomView;
 /// 2. Fit 実効倍率の算出・キャッシュと無効化（コンテンツ・ビューポートの変更時のみ）。<br/>
 /// 3. ズーム可否（<see cref="CanZoomIn"/> / <see cref="CanZoomOut"/>）と通知値 <see cref="ZoomState"/> の確定。<br/>
 /// 4. ズーム遷移の適用（<see cref="ZoomTransition"/> の呼び出しとログ）と、ズーム中心を維持したオフセット再計算。<br/>
-/// 5. パンの適用（grab 方式）・スクロール範囲へのクランプ・ホイール回転量からの換算（<see cref="ZoomMath.WheelScrollUnit"/>）。<br/>
+/// 5. パンの適用（grab 方式）・スクロール範囲へのクランプ・ホイール回転量からの換算（<see cref="ScrollMath.WheelScrollUnit"/>）。<br/>
 /// 6. 画像変更時の Fit 復帰、ビューポート変更時のキャッシュ無効化。<br/>
 /// 7. スクロールバーのドラッグ（サムのヒット判定・トラック押下のサム移動・サム位置からのオフセット逆算）。<br/>
 /// <br/>
@@ -396,8 +396,8 @@ public sealed class ZoomViewSession
     /// </remarks>
     public ZoomFeedback PanByWheel(EsVector delta, bool shift)
     {
-        var dx = shift ? delta.Y * ZoomMath.WheelScrollUnit : delta.X * ZoomMath.WheelScrollUnit;
-        var dy = shift ? 0 : delta.Y * ZoomMath.WheelScrollUnit;
+        var dx = shift ? delta.Y * ScrollMath.WheelScrollUnit : delta.X * ScrollMath.WheelScrollUnit;
+        var dy = shift ? 0 : delta.Y * ScrollMath.WheelScrollUnit;
         var scale = EffectiveScale;
         return PanBy(new EsVector(dx / scale, dy / scale));
     }

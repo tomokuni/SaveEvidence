@@ -55,6 +55,17 @@ public class MarqueePresenter
     /// <summary>内部に保持するコアのファサード（状態機械・入力の解釈・幾何の解決）。</summary>
     private readonly MarqueeFacade _core;
 
+    /// <summary>外観（描画にだけ必要な設定の単一値）の保持先。</summary>
+    /// <remarks>
+    /// <c>field</c> キーワードは <c>ref</c> 引数へ渡せないため明示的なフィールドを持つ<br/>
+    /// （<see cref="SetIfChanged"/> が変更検出を行う）。
+    /// </remarks>
+    private MarqueeAppearance _appearance = MarqueeAppearance.Default;
+
+    /// <summary>サイズラベルの表示スケーリング係数の保持先（未設定は 0）。</summary>
+    /// <remarks>0 以下を倍率と同値として扱う解決は <c>Marquee.Limits.ResolveDisplayScale</c> が単一所有する。</remarks>
+    private double _displayScaleScaling;
+
     /// <summary>選択矩形コントロールの提示層を初期化する。</summary>
     /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。null 不可。</param>
     /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
@@ -67,17 +78,38 @@ public class MarqueePresenter
     /// <value>外観の単一値。既定は <see cref="MarqueeAppearance.Default"/>。</value>
     /// <remarks>
     /// 外観はコアの計算・判断に入らないため本クラスが保持する。<br/>
-    /// 一部の項目だけを変える場合は <c>MarqueeAppearance.Default with { ... }</c> の形で指定する。
+    /// 一部の項目だけを変える場合は <c>MarqueeAppearance.Default with { ... }</c> の形で指定する。<br/>
+    /// 変更の検出（変化した項目だけの出力）は <c>MarqueePresenterLogMessage.LogAppearanceChanged</c> が単一所有する<br/>
+    /// （ホストは値を設定するだけで、同値判定・差分検出を持たない）。
     /// </remarks>
-    public MarqueeAppearance Appearance { get; set; } = MarqueeAppearance.Default;
+    public MarqueeAppearance Appearance
+    {
+        get => _appearance;
+        set
+        {
+            if (SetIfChanged(ref _appearance, value, out var previous))
+            {
+                Log.LogAppearanceChanged(previous, value);
+            }
+        }
+    }
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
     /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
-    /// <remarks>0 以下を倍率と同値として扱う規則は <c>Marquee.Limits.ResolveDisplayScale</c> が単一所有する。</remarks>
+    /// <remarks>
+    /// 0 以下を倍率と同値として扱う規則は <c>Marquee.Limits.ResolveDisplayScale</c> が単一所有する。<br/>
+    /// 変更は本クラスが検出して出力する（UI 層に同値判定を置かない）。
+    /// </remarks>
     public double DisplayScaleScaling
     {
-        get => MarqueeFacade.Limits.ResolveDisplayScale(field, _core.DomainToDipScaling);
-        set => field = value;
+        get => MarqueeFacade.Limits.ResolveDisplayScale(_displayScaleScaling, _core.DomainToDipScaling);
+        set
+        {
+            if (SetIfChanged(ref _displayScaleScaling, value, out var previous))
+            {
+                Log.LogSettingChanged(nameof(DisplayScaleScaling), previous, value);
+            }
+        }
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するプロバイダを取得または設定する。</summary>
@@ -323,5 +355,28 @@ public class MarqueePresenter
         }
 
         return table;
+    }
+
+    /// <summary>新しい値を保持する（同値なら何もしない）。</summary>
+    /// <typeparam name="T">値の型。</typeparam>
+    /// <param name="field">保持先のフィールド。</param>
+    /// <param name="value">設定する値。</param>
+    /// <param name="previous">変更前の値（同値の場合は現在値）。</param>
+    /// <returns>値を変更した場合は true（同値だった場合は false）。</returns>
+    /// <remarks>
+    /// 「同値なら何もしない」という規則を単一所有する<br/>
+    /// （各プロパティが同じ数行を書くと、片方だけ同値判定が抜けて無駄なログ・再評価が溢れる）。<br/>
+    /// 変更前の値も返すため、変更を検出した側（外観の変更ログ）が前後を比較できる。
+    /// </remarks>
+    private static bool SetIfChanged<T>(ref T field, T value, out T previous)
+    {
+        previous = field;
+        if (EqualityComparer<T>.Default.Equals(previous, value))
+        {
+            return false;
+        }
+
+        field = value;
+        return true;
     }
 }

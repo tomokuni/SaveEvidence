@@ -1,7 +1,7 @@
 # MarqueeControl.MewUI
 
 `MarqueeControl`（リサイズ可能なドラッグ矩形）の **MewUI 版**です。Avalonia 版と同一の UI 非依存コア（`Feature.Marquee.Core`）と描画層（`Feature.Marquee.Presenter`）を使い、
-入力の受付と効果の適用・カーソル制御・描画ポートの適合のみを MewUI で実装しています。層構成（Core / UIBase / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
+入力の受付と効果の適用・カーソル制御・描画ポートの適合のみを MewUI で実装しています。層構成（Core / Presenter / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ## 特徴
 
@@ -92,7 +92,8 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | --- | --- | --- |
 | イベント引数の座標 | Avalonia の `Point` / `Rect` | **コア型の `EsPoint` / `EsRect`** |
 | マウスダウン・アップのイベント | `MouseDown` / `MouseUp` | **持たない**（生のポインター入力はホストが自 UI のイベントで観測するため） |
-| ビューポート変化 | `AttachScrollViewer` で `ScrollViewer` を自動購読 | **`NotifyViewportChanged()` をホストが呼ぶ** |
+| ホイール操作 | **扱わない**（ホストが `PointerWheelChanged` を購読） | **扱わない**（ホストが `MouseWheel` を購読） |
+| 表示の変化への追従 | ホストが `RefreshOverlay()` を呼ぶ（`ZoomViewControl.ViewportChanged` 等を購読） | 同左（ホストが変化を検知して呼ぶ） |
 | nudge のキー入力 | フォーカス非依存（`TopLevel` を購読） | フォーカス依存（本コントロールにフォーカスがある場合のみ） |
 | ログ | `ILogger` を注入して出力 | `Log` プロパティで同様に出力する（書式・レベルは同一） |
 | 描画 | 中間ビットマップ経由（自 UI の描画 API） | キャンバスへ直接描画（自 UI の描画 API） |
@@ -142,7 +143,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `SetSelection(EsRect)` | 選択矩形を復元する（`Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
 | `RequestConfirm()` / `RequestCancel()` | Enter / Escape と同じ条件で確定・キャンセルを要求する |
-| `NotifyViewportChanged()` | ビューポートの変化を通知する（現在の状態の再通知と再描画を要求。通知の組み立てはコントロール化の層の `MarqueeViewportNotifier` が担う） |
+| `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画と配置の再評価を要求。選択の状態は変更しない） |
 | `CurrentSnapshot` | 現在の状態のスナップショット（`MarqueeSnapshot`） |
 
 ## イベント
@@ -182,7 +183,7 @@ dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 
 ## 未対応
 
-- `ScrollViewer` の自動連携（ホストが `NotifyViewportChanged()` を呼ぶ）。
+- `ScrollViewer` の自動連携を行わない（ホストが変化を検知して `RefreshOverlay()` を呼ぶ）。
 - フォーカス非依存の矢印キー nudge。
   - 文字（ラベル・座標ラベル）の要素配置（UI 層の責務。配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueeLabelPlan` が求める）。
 

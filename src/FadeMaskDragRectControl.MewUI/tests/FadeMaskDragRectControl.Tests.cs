@@ -643,13 +643,13 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void NotifyViewportChanged_例外なく完了する()
+    public void RefreshOverlay_例外なく完了する()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordinateTransform(CreatePort());
         control.SetSelection(new EsRect(10, 20, 100, 80));
 
-        control.NotifyViewportChanged();
+        control.RefreshOverlay();
 
         // 選択状態は維持される（ビューポート変化では再同期しない）
         Assert.True(control.HasSelection);

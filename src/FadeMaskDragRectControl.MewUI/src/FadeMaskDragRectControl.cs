@@ -87,12 +87,9 @@ public sealed class FadeMaskDragRectControl : Panel
         // 選択矩形の変更は、ルーペ画像上の破線を描き直すためにルーペの再描画を要求する
         // （選択矩形の描画自体と外側の装飾はドラッグ選択コントロールがセッションから直接読んで描画する）。
         _marquee.SelectionChanged += (_, _) => _loupe.InvalidateVisual();
-        _marquee.ViewportChanged += (_, _) => NotifyViewportChanged();
         _marquee.LoupePositionMoved += (_, e) => OnLoupePositionMoved(e.Point);
         _marquee.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect);
         _marquee.CancelRequested += (_, _) => RaiseCancelRequested();
-        _marquee.ZoomRequested += (_, request) => RaiseZoomRequested(request);
-        _marquee.ScrollRequested += (_, request) => RaiseScrollRequested(request);
         // サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。
         // 操作ラベル・情報ラベルはアプリ固有の付加情報のため、本クラス（ホスト）が描画完了時に描く。
         _marquee.Rendered += OnMarqueeRendered;
@@ -108,13 +105,6 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>Escape キーまたは <see cref="RequestCancel"/> によるキャンセル要求イベント。</summary>
     public event EventHandler? CancelRequested;
-
-    /// <summary>Ctrl+ホイールによるズーム要求イベント（方向と発生位置）。</summary>
-    public event EventHandler<WheelZoomRequest>? ZoomRequested;
-
-    /// <summary>通常ホイール（Ctrl なし）によるスクロール要求イベント（生の回転量・修飾キー・発生位置）。</summary>
-    /// <remarks>スクロール先（ズームビューポートのパン等）の決定はホストが実施する。</remarks>
-    public event EventHandler<WheelScrollRequest>? ScrollRequested;
 
     /// <summary>ルーペ中心の更新イベント（ドメイン座標。ホストの追加制御用フック）。</summary>
     public event EventHandler<FadeMaskDragRectPointEventArgs>? LoupePositionMoved;
@@ -401,12 +391,12 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>ハイライト等の状態を変更した後に呼び出す。</remarks>
     public void InvalidateOverlay() => _marquee.InvalidateVisual();
 
-    /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を内包コントロールへ通知する。</summary>
+    /// <summary>表示の変化（パン・ズーム・表示サイズ）へ内包コントロールを追従させる。</summary>
     /// <remarks>
-    /// 本コントロールは <c>ScrollViewer</c> の自動連携を行わないため、ホストがビューポートの変化を検知した際に呼ぶ。<br/>
-    /// 選択矩形（ドメイン座標）はビューポート変化で不変のため再同期は行わず、再描画とルーペ表示位置の再計算のみを要求する。
+    /// 本コントロールは <c>ScrollViewer</c> の自動連携を行わないため、ホストが表示の変化を検知した際に呼ぶ。<br/>
+    /// 選択矩形（ドメイン座標）は表示の変化で不変のため再同期は行わず、再描画（と配置の再評価）のみを要求する。
     /// </remarks>
-    public void NotifyViewportChanged()
+    public void RefreshOverlay()
     {
         _marquee.InvalidateVisual();
         InvalidateArrange();
@@ -594,16 +584,6 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>キャンセル要求イベントを発火する。</summary>
     private void RaiseCancelRequested()
         => CancelRequested?.Invoke(this, EventArgs.Empty);
-
-    /// <summary>ズーム要求イベントを発火する。</summary>
-    /// <param name="request">ズーム要求（方向と発生位置）。</param>
-    private void RaiseZoomRequested(WheelZoomRequest request)
-        => ZoomRequested?.Invoke(this, request);
-
-    /// <summary>スクロール要求イベントを発火する。</summary>
-    /// <param name="request">スクロール要求（生の回転量と修飾キー）。</param>
-    private void RaiseScrollRequested(WheelScrollRequest request)
-        => ScrollRequested?.Invoke(this, request);
 
     /// <summary>ルーペ中心更新イベントを発火する。</summary>
     /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>

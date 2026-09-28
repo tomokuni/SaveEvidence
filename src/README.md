@@ -19,12 +19,12 @@ flowchart TB
 
 ## 2. コントロール層の 3 層
 
-**Core（何を描くか・判断・計算） / Presenter（提示＝描画計画と外観＋組み込み規則） / UI（フレームワーク固有の描画と配線）** の 3 層です。UI 層が Presenter と Core の両方を参照し、**Presenter はコアの計算結果を使って描画計画を組み立てる**向きに依存します（コアは Presenter を参照しません）。
+**Core（何を描くか・判断・計算） / Presenter（提示＝描画計画と外観） / UI（フレームワーク固有の描画と配線）** の 3 層です。UI 層が Presenter と Core の両方を参照し、**Presenter はコアの計算結果を使って描画計画を組み立てる**向きに依存します（コアは Presenter を参照しません）。
 
 ```mermaid
 flowchart TB
     UI["UI 層<br/>XxxControl.AvaloniaUI / .MewUI<br/>入力の受付・描画（自 UI の API）・ラベル要素の配置・ホスト結線"]
-    UB["Presenter<br/>提示（XxxPresenter：幾何＋外観 → 描画計画）<br/>＋ 外観（XxxAppearance）・組み込み規則"]
+    UB["Presenter<br/>提示（XxxPresenter：幾何＋外観 → 描画計画）<br/>＋ 外観（XxxAppearance）"]
     CORE["Core<br/>何を描くか（幾何）+ 計算<br/>（状態・値・純粋計算）"]
     UI --> UB
     UI --> CORE
@@ -33,20 +33,14 @@ flowchart TB
     UB --> PC
 ```
 
-**Core は Presenter を参照しません**（描画 API も描画の抽象も知らない）。
+**Core は Presenter を参照しません**（描画 API も描画の抽象も知りません）。
+**Presenter はコントロール化を前提としません**（ホイール操作・ビューポート連携・再描画のスケジューリングなど、組み込み先があるときにだけ必要な規則を持ちません）。
 
 | 層 | 置くもの | 置かないもの | 依存先 | Loupe の例 |
 | --- | --- | --- | --- | --- |
-| **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・**描画の幾何（切り出し領域・描画面）**・**コアが出力するログ定義** | 色・フォントサイズ・表示可否・UI フレームワークの型・組み込み先の概念・**描画 API と描画の抽象**・UI が出力するログ定義 | `Platform.Core` | `Loupe`（`ResolveLayout` / `ResolveGeometry`）/ `LoupeGeometry` / `LoupeOptions` / `LoupeLayout` |
-| **Presenter** | **提示（`XxxPresenter`：幾何＋外観 → 描画計画（層の順序・装飾矩形・文言・配置））**・**外観（`XxxAppearance`：色・フォント・角丸・枠線の太さ・表示可否）**・**テキストを要素に写す配置計算（`XxxLabelPlan`）**・組み込み規則（再描画のバッチ化等）・**UI が出力するログ定義とログの値の書式** | コア単体でも成立する計算（選択・表示レイアウト）・UI フレームワークの型・**描画 API の抽象** | `Core` / `Platform.Core` | `LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeDecorationGeometry` / `LoupeMetricsScaler` / `LoupeLabelPlan` |
-| **UI** | 入力イベントの受付とコア型への変換・効果の適用・通知の公開イベントへの転送・**描画（自 UI の描画 API で描画計画を描く）**・ラベル要素の配置 | 判断・計算・既定値（コアが単一所有する）・層の順序（Presenter がデータとして単一所有する）・複数 UI で共有できる処理 | `Core` / `Presenter` / `Platform.*` | `LoupeControl` / `LoupeContextPainter` / `LoupeSkiaPainter` |
-
-**Presenter の中の 2 つの関心事**: 実装上は同じアセンブリに置きますが、帰属の基準は別です。
-
-| 関心事 | 内容 | 判定 |
-| --- | --- | --- |
-| **組み込み規則** | 組み込み先（ビューポート等）がある場合にだけ必要な規則（ホイール解釈・再描画のスケジューリング） | 単体でそのコントロールを使っても存在する概念か |
-| **提示と外観** | 幾何（コア）と外観から描画計画を解決する手順と、色・フォント・枠線の太さ・表示可否の保持 | 描画にだけ必要か（コアの計算・判断に入るか） |
+| **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・**描画の幾何（切り出し領域・描画面）**・**コアが出力するログ定義** | 色・フォントサイズ・表示可否・UI フレームワークの型・**描画 API と描画の抽象**・コントロール化を前提とした処理（組み込み先の概念） | `Platform.Core` | `Loupe`（`ResolveLayout` / `ResolveGeometry`）/ `LoupeGeometry` / `LoupeOptions` / `LoupeLayout` |
+| **Presenter** | **提示（`XxxPresenter`：幾何＋外観 → 描画計画（層の順序・装飾矩形・文言・配置））**・**外観（`XxxAppearance`：色・フォント・角丸・枠線の太さ・表示可否）**・**テキストを要素に写す配置計算（`XxxLabelPlan`）**・**本層が所有する設定の変更ログ** | コア単体でも成立する計算（選択・表示レイアウト）・UI フレームワークの型・**描画 API の抽象**・**コントロール化を前提とした処理**（入力の解釈・ビューポート連携・組み込み先の概念） | `Core` / `Platform.Core` | `LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeDecorationGeometry` / `LoupeLabelPlan` |
+| **UI** | 入力イベントの受付とコア型への変換・効果の適用・通知の公開イベントへの転送・**描画（自 UI の描画 API で描画計画を描く）**・ラベル要素の配置・**コントロール化を前提とした処理（ホイール操作・ビューポート連携）**・**本 UI が出力するログ定義** | 判断・計算・既定値（コアが単一所有する）・層の順序（Presenter がデータとして単一所有する） | `Core` / `Presenter` / `Platform.*` | `LoupeControl` / `LoupeContextPainter` / `LoupeSkiaPainter` |
 
 ## 3. どこに置くかを決める 3 つの問い
 
@@ -54,9 +48,10 @@ flowchart TB
 2. **描画にだけ必要で、コアの計算・判断に入らないか** — そうなら **Presenter**（色・フォント・枠線の太さ・表示可否と、それを使って描画計画を組み立てる手順）。
 3. **フレームワーク固有の機構か** — そうなら **UI**（入力の受付・描画 API の呼び出し・要素の配置・UI 型への写像）。例: `DrawingContext` / `SKCanvas` の確保、`Border` + `TextBlock` の配置、カーソル型の写像。
 
-> **「1 が成立するなら 1 が優先」**（Core に置けるものは Core に置く。組み込み規則と描画の都合だけが Presenter に残る）。
+> **「1 が成立するなら 1 が優先」**（Core に置けるものは Core に置く。描画にだけ必要な設定と描画計画の解決だけが Presenter に残る）。
+> **コントロール化を前提とした処理は UI へ置く**（ホイール操作・ビューポートの変化の追従・入力の解釈は、コントロールを何かへ組み込んで初めて必要になる）。
 
-UI 層に残すのは「フレームワーク固有の型を使うもの」だけです（入力の受付・効果の適用・通知の転送・描画・要素の配置・境界の 1 行変換）。
+UI 層に残すのは「フレームワーク固有の型を使うもの」と「コントロール化を前提とした処理」です（入力の受付・効果の適用・通知の転送・描画・要素の配置・境界の 1 行変換・ホイール操作）。
 
 ## 4. 「何を描くか（幾何）は Core・どう見せるか（描画計画と外観）は Presenter・どう描くかは UI」
 
@@ -75,7 +70,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 | 描画面の確保（`DrawingContext` / `SKCanvas` / 中間ビットマップ） | **UI** | フレームワーク固有の機構（中間ビットマップの有無・描画コールバック）である |
 | 注入・配線 | **UI** | コントロールの公開プロパティ（`Options` / `Appearance`）と入力イベントの配線はフレームワーク固有である |
 
-**帰属の規則**: **計算（幾何・判断・状態）は Core、描画計画と外観（色・フォント・枠線の太さ・表示可否）は Presenter、描画 API の呼び出しと配線は UI** です。色とフォントをコアの設定値へ入れないのは、「何を描くか」の判断に使われないためです（描画の可否は色のアルファではなく外観の明示フラグが決めます）。
+**帰属の規則**: **計算（幾何・判断・状態）は Core、描画計画と外観（色・フォント・枠線の太さ・表示可否）は Presenter、描画 API の呼び出しと配線（コントロール化を前提とした処理を含む）は UI** です。色とフォントをコアの設定値へ入れないのは、「何を描くか」の判断に使われないためです（描画の可否は色のアルファではなく外観の明示フラグが決めます）。
 
 **描画計画のまとめ型**: 描画計画（`XxxDrawPlan`）は「フレーム 1 枚分」のまとめ型であり、Presenter から UI へ渡す唯一の描画契約です。項目が複数の値を 1 つの概念としてまとめる場合にだけ専用型を作ります（単一のコレクションで足りる項目に型を作りません）。
 
@@ -87,15 +82,16 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」だ�
 
 | コントロール | Core | Presenter | UI |
 | --- | --- | --- | --- |
-| `MarqueeControl` | あり | あり（提示 + 外観 + 組み込み規則） | AvaloniaUI / MewUI |
-| `LoupeControl` | あり | あり（提示 + 外観。組み込み規則は AvaloniaUI のみが使う） | AvaloniaUI / MewUI |
+| `MarqueeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI |
+| `LoupeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI |
 | `ZoomViewControl` | あり | なし（UI 層が描く） | AvaloniaUI / MewUI |
 | `CropViewControl` | あり | なし | AvaloniaUI / MewUI |
 | `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。描画手順は持たない） | AvaloniaUI / MewUI |
-| `FadeMaskDragRectControl` | あり | あり（値の解決 ＋ 付加情報ラベルの配置。内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI |
+| `FadeMaskDragRectControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI |
 | `ColorPickerControl` | なし（UI のみ） | なし | AvaloniaUI |
 
-`LoupeControl` の組み込み規則（`LoupeRenderCoordinator`。Avalonia 版が所有する）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。同じ必要が生じた時点で注入できます。
+**コントロール化を前提とした処理は UI が持ちます**: ホイール操作（どの入力がズーム・パンかを決める）・ビューポートの変化の追従・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるためです。
+`LoupeControl` の中間ビットマップの再描画スケジューリング（`LoupeRenderCoordinator`。Avalonia 版が所有する）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。同じ必要が生じた時点で実装できます。
 
 `CaptureSessionControl.UIBase` は**描画手順を持たない例外的な Presenter** です（設定 → 色の写像だけを持ちます）。写像元がセッションの設定型（`CaptureSettings`）、写像先が外観（`MarqueeAppearance` / `LoupeAppearance`）という**2 つの層にまたがる**ため、コアにも（Core → Presenter の逆流になる）再利用ライブラリにも置けません。両 UI のホストが同じ写像を使うことを保証するために本層を置いています（詳細は [`CaptureSessionControl.UIBase`](CaptureSessionControl.UIBase/README.md)）。
 

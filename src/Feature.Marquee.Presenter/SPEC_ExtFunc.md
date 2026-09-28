@@ -1,14 +1,15 @@
 # Feature.Marquee.Presenter 外部機能仕様書
 
-`Feature.Marquee.Presenter`（`MarqueeControl` をコントロールとして成り立たせる UI 非依存層）が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト・独自コントロールの作者）から見える情報のみを記載し、内部実装の詳細は記載しません。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
+`Feature.Marquee.Presenter`（`MarqueeControl` の見た目を定めるコントロール化を前提としない UI 非依存層）が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト・独自コントロールの作者）から見える情報のみを記載し、内部実装の詳細は記載しません。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
 
-本層の機能は 3 つに分かれます。
+本層の機能は 2 つに分かれます。
 
 | 区分 | 機能 |
 | --- | --- |
 | **提示（Presenter）** | 描画計画の解決（幾何 + 外観から層の順序・装飾矩形・文言・ラベル配置を導出） |
 | **外観** | 色・フォントサイズ・枠線の太さ・表示可否の単一値 |
-| **組み込み規則** | ホイール入力の解釈と通知・連携先へのスクロール適用・ビューポート変化の再通知 |
+
+**本層はコントロール化を前提とした処理を提供しません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるため UI 層が持ちます）。
 
 ## 1. 提供機能
 
@@ -20,7 +21,6 @@
 | 装飾矩形の計算 | `MarqueeDecorationGeometry` | 枠線 4 辺の矩形と、暗転領域（描画面から穴あけ矩形を除いた 4 領域）を求める純粋関数 |
 | ラベルの文言と基準点 | `MarqueeLabelTexts` | サイズラベル（位置と寸法の書式・表示スケール）とカーソル座標ラベルの文言・基準点を生成する |
 | ラベル要素の配置 | `MarqueeLabelPlan.Resolve` | 実寸（描画 API の測定値）からラベル要素の配置指示（`MarqueeLabelPlacement`）を解決する。**要素として置くか画像として描くかは UI 層が決める** |
-| ホスト付加情報ラベルの描画 | `MarqueeHostLabelRenderer.Draw` | ホストが与えた文言を、サイズラベルと同じ体裁（内側余白・背景 → 文字の順序）で描く |
 
 #### 1.1.1 前提条件
 
@@ -28,20 +28,7 @@
 - 描画計画の座標は**ローカル DIP**です（原点 (0, 0)・サイズは描画領域）。ドメイン → DIP の変換はコアが済ませています。
 - 実寸測定（`measureText`）は描画 API 依存のため UI 層が関数として渡します。
 - 本層は外観（`MarqueeAppearance`）を単一所有します（描画にだけ必要な設定のため）。寸法・対話パラメータはコア（`MarqueeOptions`）が単一所有します。
-
-### 1.2 組み込み規則
-
-| 機能 | 提供元 | 説明 |
-| --- | --- | --- |
-| ホイール入力の解釈と通知 | `MarqueeWheelInterpreter` | Ctrl 併用はズーム要求、それ以外はスクロール（連携先があれば本層が適用し、無ければ要求として通知する） |
-| 連携先へのスクロール適用 | `MarqueeWheelInterpreter.AttachScrollTarget` + `IWheelScrollTarget` | 回転量を移動量（DIP）へ換算し、UI 層が適合させた適用先へ渡す（1 ノッチ = 48 DIP・Shift で横） |
-| ビューポート変化の再通知 | `MarqueeViewportNotifier` | 現在の状態スナップショットの通知と再描画の要求（選択の状態は変更しない） |
-
-#### 1.2.1 前提条件
-
-- ホイールの解釈は修飾キーの真偽と回転量だけを受け取ります（UI 型に依存しない）。
-- ズーム率の決定・表示の適用・スクロール先の決定は**受け手（ホスト）**が行います（本層はビューの状態を保持しません）。
-- スクロールの適用先を持つ UI だけが `IWheelScrollTarget` を実装します（持たない UI はスクロール要求として受け取ります）。
+- **本層が単一所有する設定（外観・表示スケーリング係数）の変更は本層が記録します**（`MarqueePresenterLogMessage`。値を所有する主体が記録する）。
 
 ## 2. 公開 API 一覧
 
@@ -56,9 +43,9 @@
 | `MarqueeTextPlacement` | readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・アライン・クランプ領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
 | `MarqueeLabelPlacement` | readonly record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
 | `MarqueeLabelPlan` | static class | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する |
-| `MarqueeHostLabelRenderer` | static class | ホスト付加情報ラベルの描画（体裁の適用） |
 | `MarqueeDecorationGeometry` | internal static class | 装飾矩形の計算（本層の内部手順。UI 層は解決済みの矩形を `MarqueeDrawPlan` から受け取る） |
 | `MarqueeLabelTexts` | internal static class | ラベルの文言と基準点の生成（本層の内部手順。UI 層は `MarqueeDrawPlan.Labels` を受け取る） |
+| `MarqueePresenterLogMessage` | internal static partial class | 本層が単一所有する設定の変更ログ（内部手順。ホストはロガーを設定するだけ） |
 
 ### `MarqueePresenter` のメンバー
 
@@ -135,114 +122,15 @@
 | --- | --- |
 | `Resolve(MarqueeTextPlacement? sizeLabel, MarqueeTextPlacement? coordLabel, MarqueeAppearance appearance, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`MarqueeLabelPlacement`）の一覧を**順序どおり**（サイズラベル → カーソル座標ラベル）で返す。どちらも無い場合は空（一覧を生成しない）。体裁（フォントサイズ・色・内側余白）は `appearance`（外観の単一値）から写す。`appearance` または `measureText` が null なら `ArgumentNullException` |
 
-### `MarqueeHostLabelRenderer` のメンバー
+### `MarqueePresenterLogMessage`（`internal static partial class`）
 
 | メンバー | 説明 |
 | --- | --- |
-| `Resolve(EsPoint anchor, string text, double fontSize, DrawingColor textColor, DrawingColor backgroundColor, double padding, Func<string, double, EsSize> measureText)` | 基準点（背景の左上に置く座標）へ置く 1 行のラベルの配置指示を返す。**描画は各 UI が行う**（本層は描画 API を持たない）。`text` または `measureText` が null なら `ArgumentNullException` |
+| `LogAppearanceChanged(this ILogger, MarqueeAppearance oldValue, MarqueeAppearance newValue)` | 外観の変更を記録する（**変化した項目だけ**）。LogLevel: Debug、書式 `[Feature.Marquee.Presenter] Setting: {Name} {OldValue} → {NewValue}` |
 
-### `EsUtil.Feature.Marquee.Presenter`（組み込み規則）
-
-| 型 | 可視性 | 用途 |
-| --- | --- | --- |
-| `MarqueeWheelInterpreter` | `public` | ホイール入力の解釈と、ズーム要求の通知・連携先へのスクロール適用・スクロール要求の通知 |
-| `IWheelScrollTarget` | `public` | スクロールの適用先（UI 層が適合させる抽象） |
-| `WheelScrollDelta` | `internal` | 回転量 → 移動量（DIP）の換算（適用先は換算済みの移動量を受け取るため外部に公開しない） |
-| `WheelZoomRequest` | `public` | Ctrl+ホイールによるズーム要求（方向・発生位置） |
-| `WheelScrollRequest` | `public` | 通常ホイールによるスクロール要求（回転量・Shift・発生位置・ベクター変換） |
-| `MarqueeWheelLogMessage` | `internal` | ズーム要求のログ定義（`ILogger` 拡張メソッド。ホストは定義名を参照しない） |
-| `MarqueeViewportNotifier` | `public` | ビューポート変化の再通知（現在の状態スナップショット）と再描画の要求 |
-
-### `MarqueeWheelInterpreter`（`public sealed class`）
-
-| メンバー | 説明 |
-| --- | --- |
-| `MarqueeWheelInterpreter(MarqueePresenter marquee)` | 提示層（コアのファサードを内包する）へ接続する（ロガーは `Marquee.Log` を共用する）。null は `ArgumentNullException` |
-| `ZoomRequested` | `EventHandler<WheelZoomRequest>`。Ctrl 併用時に発火する |
-| `ScrollRequested` | `EventHandler<WheelScrollRequest>`。Ctrl なしで連携先が無い場合に発火する |
-| `AttachScrollTarget(IWheelScrollTarget? target)` | スクロールの適用先を設定する（null で解除。解除後は `ScrollRequested` を発火する） |
-| `Handle(bool controlKey, bool shiftKey, double deltaX, double deltaY, EsPoint position)` | ホイール入力を解釈して通知または適用する |
-
-**解釈の規則**:
-
-| 入力 | 動作 | 内容 |
-| --- | --- | --- |
-| Ctrl 併用 | `ZoomRequested` | `ZoomIn` = `deltaY > 0`（上方向 = ズームイン）。`Position` はズーム中心（カーソル位置）として使える。連携先があってもズームが優先される |
-| Ctrl なし + 連携先あり | 本クラスが適用 | `WheelScrollDelta.Offset` で移動量へ換算し、`IWheelScrollTarget.ScrollBy` を呼ぶ（通知しない） |
-| Ctrl なし + 連携先なし | `ScrollRequested` | `DeltaX` / `DeltaY` / `Shift` / `Position` をそのまま渡す（回転量が 0 でも通知する） |
-
-- **ログ**: ズーム要求のみ Debug で記録する（スクロールの実処理は受け手・連携先が担うため記録しない）。
-- **実処理は受け手（ホスト）**: ズーム率の決定・表示の適用は本クラスが行わない（ビューの状態を保持しない）。
-- **選択状態を変更しない**: コアのセッション（選択の判断）には関与しない。
-
-```csharp
-var wheel = new MarqueeWheelInterpreter(presenter);
-wheel.ZoomRequested += (_, request) => ZoomRequested?.Invoke(this, request);
-wheel.ScrollRequested += (_, request) => ScrollRequested?.Invoke(this, request);
-wheel.AttachScrollTarget(new ScrollViewerTarget(scrollViewer));   // 連携先（自 UI のスクロール機構）
-
-wheel.Handle(controlKey: true, shiftKey: false, deltaX: 0, deltaY: 1, new EsPoint(30, 40));
-```
-
-### `IWheelScrollTarget`（`public interface`）
-
-| メンバー | 説明 |
-| --- | --- |
-| `ScrollBy(EsVector delta)` | 移動量（DIP）だけスクロールする |
-
-回転量 → 移動量の換算は `WheelScrollDelta` が済ませているため、実装は受け取った移動量を自身のスクロール位置へ加算するだけで済みます。
-
-### `WheelScrollDelta`（`internal static class`）
-
-| メンバー | 説明 |
-| --- | --- |
-| `Offset(double deltaX, double deltaY, bool shift)` | 回転量と修飾キーから移動量（DIP）を求める。1 ノッチ = `ScrollMath.WheelScrollUnit`（48 DIP）。Shift 併用時は縦の回転量を横の移動量として扱う |
-
-### `WheelZoomRequest`（`public readonly record struct`）
-
-| メンバー | 型 | 説明 |
-| --- | --- | --- |
-| `ZoomIn` | `bool` | true = ズームイン / false = ズームアウト |
-| `Position` | `EsPoint` | ホイール操作の発生位置（コントロールローカル DIP）。ズーム中心に使える |
-
-### `WheelScrollRequest`（`public readonly record struct`）
-
-| メンバー | 型 | 説明 |
-| --- | --- | --- |
-| `DeltaX` | `double` | 横方向の回転量（1 ノッチ = 1.0） |
-| `DeltaY` | `double` | 縦方向の回転量（1 ノッチ = 1.0。正 = 上方向） |
-| `Shift` | `bool` | Shift 併用かどうか（横スクロールの意図） |
-| `Position` | `EsPoint` | ホイール操作の発生位置（コントロールローカル DIP） |
-| `Delta` | `EsVector` | 回転量を 1 つのベクターで取得する（回転量をベクターで受け取る API へそのまま渡せる） |
-
-`Delta` は**コアの型同士の変換を本契約が単一所有する**ためのメンバーです（UI が `new EsVector(...)` を書くと、同じ変換が UI ごとに散ります）。
-
-### `MarqueeViewportNotifier`（`public sealed class`）
-
-| メンバー | 説明 |
-| --- | --- |
-| `MarqueeViewportNotifier(MarqueePresenter marquee, IMarqueeEffects effects)` | 提示層（状態の取得元）と再描画の要求先（UI 層の効果）へ接続する。null は `ArgumentNullException` |
-| `ViewportChanged` | `EventHandler<MarqueeSnapshot>`。ビューポート変化の通知（現在の状態スナップショットを運ぶ） |
-| `Notify()` | 現在の状態スナップショットを通知し、再描画を要求する（**状態は変更しない**） |
-
-- **UI 層の責務**: UI の公開イベントへ転送する（コアの通知を経由しないため、スナップショットからイベント引数を組み立てる）。
-- **ホストの責務**: 通知を受けてビューポート座標で再描画する（暗転マスク・選択枠の追従等）。
-
-```csharp
-var viewport = new MarqueeViewportNotifier(presenter, effects);
-viewport.ViewportChanged += (_, snapshot) => ViewportChanged?.Invoke(this, new SelectionRectEventArgs(snapshot.SelectionRect, snapshot));
-viewport.Notify();   // 変化を検知したら呼ぶ
-```
-
-両クラスは提示層（`MarqueePresenter`）を受け取ります（コアのファサードを UI 層が直接扱わないため）。
-
-### `MarqueeWheelLogMessage`（`internal static partial class`）
-
-| メンバー | 説明 |
-| --- | --- |
-| `LogZoomRequested(this ILogger, bool zoomIn)` | Ctrl+ホイールによるズーム要求のログ。LogLevel: Debug、書式 `[Feature.Marquee.Presenter] ZoomRequested: zoomIn={ZoomIn}` |
-
-書式とレベルは両 UI で共通です（UI 実装ごとに持つと書式がずれ、片方だけ修正されます）。
+- 書式はコアの設定変更ログ（`[Feature.Marquee.Core]`）と本文を揃え、接頭辞だけを本プロジェクトにします（どの層まで値が伝搬したかをログから追えます）。
+- 色は `#AARRGGBB`（`DrawingColorExtensions.ToHexText`）、数値はカルチャに依存しない表記です。
+- 外部公開しません（呼び出すのは値を所有する本層だけであり、ホストはロガーを設定するだけです）。
 
 ## 3. 契約（利用者が守る・受け取る値）
 
@@ -252,7 +140,7 @@ viewport.Notify();   // 変化を検知したら呼ぶ
 | --- | --- |
 | 図形（装飾・ハンドル・始点マーカー） | `MarqueeDrawPlan.Layers` の順に自 UI の描画 API を呼ぶ（`MarqueeContextPainter.Paint` / `MarqueeSkiaPainter.Paint`） |
 | テキスト（サイズ・カーソル座標） | `MarqueeDrawPlan.Labels`（`MarqueeLabelPlacement`。実寸を反映済み）を要素へ写す、または自 UI の描画 API で文字として描く |
-| 付加情報ラベルの配置 | `MarqueeHostLabelRenderer.Resolve`（文言と基準点はホストが決める） |
+| 付加情報ラベルの配置 | `FadeMaskDragRectControl.UIBase` の `MarqueeHostLabelRenderer.Resolve`（文言と基準点はホストが決める） |
 
 ### ラベル要素（`MarqueeLabelPlacement`）
 
@@ -270,17 +158,19 @@ viewport.Notify();   // 変化を検知したら呼ぶ
 - 縦積みの行送りは「行の高さ + 内側余白 × 2」です（背景の下端と次の行の上端が一致します）。
 - 文言・表示可否はホストが判断します（本層は文言を生成しません）。
 
-### ホイール要求の受け取り
+### 設定変更ログの出力
 
-- `ZoomRequested` / `ScrollRequested` は購読者がいなければ何も起きません（例外になりません）。
-- 連携先が未設定（または解除後）の場合、スクロールは破棄せず `ScrollRequested` として通知されます。
+- 本層が単一所有する設定（外観・表示スケーリング係数）の変更は、本層が記録します（`MarqueePresenterLogMessage`）。
+- 出力先は `MarqueePresenter.Log`（コアのファサードが保持するロガー）です（ホストは 1 回設定するだけで、コアと本層のログが同じ基盤へ出ます）。
+- **変化した項目だけ**を出力します（外観の再適用でログが溢れないため）。
+- コアが所有する設定（`MarqueeOptions`・倍率・ハイライト矩形）はコアが記録します（本層は重複して記録しません）。
 
 ## 4. 制限事項
 
 - 描画そのものは提供しません（描画計画というデータまでを返し、描画は各 UI が自 UI の API で行う）。
 - 文字の折り返し・複数行・文字揃えは扱いません（1 行の左揃えのみ。カーソル座標ラベルは左端・上端、サイズラベルは穴あけ矩形の左上）。
 - 破線・クリップ・不透明度の指定は扱いません（描画計画は矩形と色までの情報を持つ）。
-- ホイールの解釈は「Ctrl = ズーム」の 1 規則のみです（修飾キーの組み合わせを増やす場合は `Handle` の契約が変わります）。
+- ホイール操作（どの入力がズーム・パンか）は提供しません（コントロール化を前提とした処理のため UI 層が持ちます）。
 
 ## 5. ライセンス
 

@@ -120,7 +120,7 @@ public sealed record LoupeAppearance
     /// <remarks>
     /// 安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。<br/>
     /// 数値スキーマ（ <c>Loupe.Limits</c>）はコアが単一所有し、本型が参照する。<br/>
-    /// 物理ピクセルへの換算は <see cref="LoupeMetricsScaler"/> が行う（描画計画の解決時）。
+    /// 物理ピクセルへの換算は <see cref="LoupePresenter.ResolveDrawPlan"/> が <c>DpiScaler.ScaleToPixel</c> へ委譲する。
     /// </remarks>
     public int BorderThickness
     {

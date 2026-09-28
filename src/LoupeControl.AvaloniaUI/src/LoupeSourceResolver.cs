@@ -3,7 +3,6 @@ using Avalonia.Media.Imaging;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Native.Imaging;
-using EsUtil.Feature.Loupe.Presenter;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 
@@ -19,33 +18,6 @@ internal static class LoupeSourceResolver
     /// <param name="Bitmap">切り出し元の EsBitmap。未対応・破棄済み・null の場合は null。</param>
     /// <param name="IsSourceBitmap">ソースが <see cref="Bitmap"/> 由来か（複製破棄が必要か）。false の場合は共有参照（破棄しない）。</param>
     public readonly record struct Result(EsBitmap? Bitmap, bool IsSourceBitmap);
-
-    /// <summary>ソースの寸法をログ用の文字列（<c>Width×Height</c>）へ整形する。</summary>
-    /// <param name="source">対象のソース画像。null は「画像なし」。</param>
-    /// <returns><c>Width×Height</c> 形式の文字列。null・寸法取得不能（破棄済み）は <c>null</c>。</returns>
-    /// <remarks>
-    /// 書式はコア（<see cref="LoupeLogFormat"/>）が単一所有する（両 UI で同じ書式にするため）。<br/>
-    /// <see cref="IImage.Size"/> の参照は破棄済みビットマップで例外になるため、<br/>
-    /// 例外時は型名を返す（ログ出力で例外を発生させない）。
-    /// </remarks>
-    public static string Describe(IImage? source)
-    {
-        if (source is null)
-        {
-            return LoupeLogFormat.Null;
-        }
-
-        try
-        {
-            var size = source.Size;
-            return LoupeLogFormat.DescribeImage((int)size.Width, (int)size.Height);
-        }
-        catch (ObjectDisposedException)
-        {
-            // 破棄済みビットマップ: 寸法を取得できないため型名で代用する（ログは継続する）
-            return source.GetType().Name;
-        }
-    }
 
     /// <summary>ソース画像がルーペで対応可能な型（<see cref="Bitmap"/> / <see cref="EsBitmapAvaloniaImage"/>）かどうかを判定する。</summary>
     /// <param name="source">判定するソース画像。</param>

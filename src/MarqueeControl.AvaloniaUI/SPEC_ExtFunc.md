@@ -136,7 +136,7 @@ marquee.CancelRequested += (_, _) => CancelSelection();
 
 #### 4.2.1 ラベル（文字）の表示
 
-サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueeLabelTexts` が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueeLabelPlan` が単一所有**します。コントロールは `Border` + `TextBlock` を子要素として置き（自 UI の API で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のためホストが `Rendered` のハンドラで自前で描きます（配置指示は提示層の `FadeMaskHostLabelRenderer` が単一所有する）。
+サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueeLabelTexts` が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueeLabelPlan` が単一所有**します。コントロールは `Border` + `TextBlock` を子要素として置き（自 UI の API で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のためホストが `Rendered` のハンドラで自前で描きます（配置指示は `FadeMaskDragRectControl.UIBase` の `FadeMaskHostLabelRenderer` が単一所有する）。
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます（引数の `Content` に装飾・穴あけ矩形・ハンドル・マーカー・サイズラベル・座標ラベル・層の順序が含まれます）。
 
 ```csharp
@@ -268,7 +268,7 @@ marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.
 | `SetSelection(Rect)` | 選択矩形をドメイン座標で復元する（`SelectionChanged` で通知。`Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
 | `SetCoordinateTransform(ICoordTransform?)` | ドメイン↔DIP 座標変換ポートを設定する（null = 等価変換） |
-| `AttachScrollViewer(ScrollViewer?)` | 連携する ScrollViewer を明示的に設定する（スクロール・ズーム検知 + ホイール操作。null で解除。祖先探索は行わない） |
+| `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画とルーペ位置の再計算を要求。選択の状態は変更しない） |
 | `RequestCancel()` | キャンセル要求を処理する（Escape キーと同じ条件。選択破棄後に `CancelRequested` を発火） |
 | `RequestConfirm()` | 確定要求を処理する（Enter キーと同じ条件。ドラッグ中は無視し `ConfirmRequested` を発火。確定後に選択状態をクリアして再選択・再確定を防ぐ） |
 
@@ -279,14 +279,11 @@ marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.
 | イベント | 引数 | 説明 |
 | --- | --- | --- |
 | `SelectionChanged` | `SelectionRectEventArgs` | 選択矩形が変更された（`Rect` はドメイン座標） |
-| `ViewportChanged` | `SelectionRectEventArgs` | ビューポート（ズーム・スクロール・表示サイズ）の変化。ScrollViewer 連携の `ScrollChanged` を検知して現在の状態を再通知する（通知の組み立てはコントロール化の層 `MarqueeViewportNotifier` が担う） |
 | `SelectionStarted` | `MarqueePointEventArgs` | 新規選択のドラッグ開始（始点） |
 | `SelectionCompleted` | `SelectionRectEventArgs` | 選択矩形が確定した |
 | `SelectionCancelled` | `EventArgs` | 領域がキャンセルされた |
 | `LoupePositionMoved` | `MarqueePointEventArgs` | ルーペが表示する中心座標（ドメイン座標） |
 | `LoupePositionMoved` | `MarqueePointEventArgs` | ドラッグ・nudge 中のルーペ中心位置（ドメイン座標。リサイズ: アクティブハンドル点 / 移動: 掴んだマウス位置 / 新規選択・nudge: 終点） |
-| `ZoomRequested` | `EventHandler<WheelZoomRequest>` | Ctrl+ホイールによるズーム要求（方向と発生位置。ズームの実処理は上位 AP） |
-| `ScrollRequested` | `EventHandler<WheelScrollRequest>` | 通常ホイールによるスクロール要求（生の回転量・Shift・発生位置。連携 ScrollViewer がある場合は発火せず本コントロールがスクロールする） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | Enter キーによる確定要求 |
 | `CancelRequested` | `EventArgs` | Escape キーによるキャンセル要求 |
 | `Rendered` | `MarqueeRenderedEventArgs` | 描画完了の通知（描画のたびに発火）。`Context`（`DrawingContext`）と描画計画（`Content` = `MarqueeDrawPlan`）を渡す。**サイズ・カーソル座標ラベルは本コントロールがテキスト要素として表示する**ため、ホストは付加情報（操作・情報ラベル）の描画に使う |
@@ -299,7 +296,7 @@ marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.
 `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.Marquee.Core`、名前空間 `EsUtil.Feature.Marquee.Core.Interaction`）が単一所有し、各 UI 実装で共有します。
 コア（`Feature.Marquee.Core`）の公開型は 2 層です（内部契約（状態機械・描画入力の組み立て・幾何）は internal）。
 
-- **ホスト設定**: `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `WheelScrollRequest` / `WheelZoomRequest`
+- **ホスト設定**: `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`
 - **公開ファサード（操作の唯一の窓口）**: `Marquee`（操作・設定・効果の適用・描画内容の解決）/ `IMarqueeEffects`（効果の適用先）/ `MarqueeEffectsBase`（効果の既定実装。必要な効果だけを override できる）
 - **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeGeometry` / `MarqueeHandles` / `MarqueeMarker`
 
@@ -448,12 +445,7 @@ nudge 中は OS カーソルを非表示にし、十字マーカーを追従位�
 - 左ボタン移動: ドラッグ中の選択矩形更新
 - 左ボタン解放: 選択確定（最小サイズ未満はキャンセル）
 - ダブルクリック（矩形内）: `ConfirmRequested` を発火し、確定後に選択状態をクリア（`ResetSelection`。確定後も選択矩形が残るのを防ぐ）
-- マウスホイール（祖先 ScrollViewer が存在する場合・Crop モード）:
-  - **Ctrl + ホイール**: `ZoomRequested` を発火（方向と発生位置。ズームの実処理は上位 AP が実施）
-  - **通常ホイール**: 連携 ScrollViewer があればそれをスクロール、なければ `ScrollRequested` を発火（回転量のみ通知。単位の解釈は上位 AP）
-  - **通常ホイール**: 祖先 `ScrollViewer` をスクロール（Shift 併用で横スクロール。48DIP/段）
-  - ScrollViewer が存在しない場合（AreaSelect の OverlayWindow 等）は無効（既定動作に委譲）
-- ホイールの解釈（Ctrl = ズーム要求 / それ以外 = スクロール）・連携先への適用・ログは組み込みの層（`Feature.Marquee.Presenter` の `MarqueeWheelInterpreter`）が単一所有する（連携 ScrollViewer をスクロール適用先へ適合させる処理のみ本コントロールが担う）
+- マウスホイール: **本コントロールは扱いません**（`e.Handled` を立てずに素通しし、上位の Canvas や祖先 `ScrollViewer` へ届きます）。ズーム・パンの解釈と実処理は**ホスト**が行います（例: ホストが `PointerWheelChanged` を購読し、Ctrl 併用は `ZoomViewControl.ZoomByWheel`、それ以外は `PanByWheel` を呼ぶ）
 
 ## 9. 制約事項
 

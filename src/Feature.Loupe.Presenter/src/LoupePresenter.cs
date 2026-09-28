@@ -34,6 +34,13 @@ public class LoupePresenter
     /// <summary>内部に保持するコアのファサード（設定・表示レイアウト・幾何の解決）。</summary>
     private readonly LoupeFacade _core = new();
 
+    /// <summary>外観（描画にだけ必要な設定の単一値）の保持先。</summary>
+    /// <remarks>
+    /// <c>field</c> キーワードは <c>ref</c> 引数へ渡せないため明示的なフィールドを持つ<br/>
+    /// （<see cref="SetIfChanged"/> が変更検出を行う）。
+    /// </remarks>
+    private LoupeAppearance _appearance = LoupeAppearance.Default;
+
     /// <summary>描く層の組合せのうち、拡大画像の有無を表すビット。</summary>
     private const int ImageBit = 1;
 
@@ -98,9 +105,21 @@ public class LoupePresenter
     /// <value>外観の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>
     /// 外観はコアの計算・判断に入らないため本クラスが保持する。<br/>
-    /// 一部の項目だけを変える場合は <c>LoupeAppearance.Default with { ... }</c> の形で指定する。
+    /// 一部の項目だけを変える場合は <c>LoupeAppearance.Default with { ... }</c> の形で指定する。<br/>
+    /// 変更の検出（変化した項目だけの出力）は <c>LoupePresenterLogMessage.LogAppearanceChanged</c> が単一所有する<br/>
+    /// （ホストは値を設定するだけで、同値判定・差分検出を持たない）。
     /// </remarks>
-    public LoupeAppearance Appearance { get; set; } = LoupeAppearance.Default;
+    public LoupeAppearance Appearance
+    {
+        get => _appearance;
+        set
+        {
+            if (SetIfChanged(ref _appearance, value, out var previous))
+            {
+                Log.LogAppearanceChanged(previous, value);
+            }
+        }
+    }
 
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。null の場合は等価変換。</param>
@@ -142,7 +161,7 @@ public class LoupePresenter
             : [];
         IReadOnlyList<EsRect> border = appearance.ShowBorder
             ? LoupeDecorationGeometry.ComputeBorderRects(
-                surface, LoupeMetricsScaler.ScaleBorderThickness(appearance.BorderThickness, geometry.DipToDeviceScaling))
+                surface, DpiScaler.ScaleToPixel(appearance.BorderThickness, geometry.DipToDeviceScaling))
             : [];
 
         var labelText = LoupeLabelTexts.ResolveCoordLabelText(in geometry, appearance);
@@ -219,5 +238,28 @@ public class LoupePresenter
         }
 
         return table;
+    }
+
+    /// <summary>新しい値を保持する（同値なら何もしない）。</summary>
+    /// <typeparam name="T">値の型。</typeparam>
+    /// <param name="field">保持先のフィールド。</param>
+    /// <param name="value">設定する値。</param>
+    /// <param name="previous">変更前の値（同値の場合は現在値）。</param>
+    /// <returns>値を変更した場合は true（同値だった場合は false）。</returns>
+    /// <remarks>
+    /// 「同値なら何もしない」という規則を単一所有する<br/>
+    /// （各プロパティが同じ数行を書くと、片方だけ同値判定が抜けて無駄なログ・再評価が溢れる）。<br/>
+    /// 変更前の値も返すため、変更を検出した側（外観の変更ログ）が前後を比較できる。
+    /// </remarks>
+    private static bool SetIfChanged<T>(ref T field, T value, out T previous)
+    {
+        previous = field;
+        if (EqualityComparer<T>.Default.Equals(previous, value))
+        {
+            return false;
+        }
+
+        field = value;
+        return true;
     }
 }

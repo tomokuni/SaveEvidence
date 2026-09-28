@@ -104,6 +104,40 @@ public class EsBitmapTests
     }
 
     // ====================================================================
+    // 寸法の文字列化
+    // ====================================================================
+
+    [Fact]
+    public void ToSizeText_幅x高さ形式で返す()
+    {
+        using var bmp = Create(1920, 1080);
+
+        Assert.Equal("1920x1080", bmp.ToSizeText());
+    }
+
+    [Fact]
+    public void ToSizeText_0サイズでも形式は保つ()
+    {
+        using var bmp = Create(0, 0);
+
+        Assert.Equal("0x0", bmp.ToSizeText());
+    }
+
+    [Fact]
+    public void ToSizeText_未設定はnullを表す文字列を返す()
+    {
+        Assert.Equal("null", EsBitmap.ToSizeText(null));
+    }
+
+    [Fact]
+    public void ToSizeText_設定済みは寸法を返す()
+    {
+        using var bmp = Create(640, 480);
+
+        Assert.Equal("640x480", EsBitmap.ToSizeText(bmp));
+    }
+
+    // ====================================================================
     // ピクセル操作
     // ====================================================================
 

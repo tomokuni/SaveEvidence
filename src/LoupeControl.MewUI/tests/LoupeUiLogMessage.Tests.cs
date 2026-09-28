@@ -1,17 +1,15 @@
+using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-using EsUtil.Platform.Core.Imaging;
-using EsUtil.Feature.Loupe.Presenter;
-
-namespace EsUtil.Feature.Loupe.Presenter.Tests;
+namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
 
 /// <summary><see cref="LoupeUiLogMessage"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>
-/// ログ定義は UI が出力するものだけを本層が持つ（コアが出力する定義はコアが持つ）。<br/>
-/// <see cref="RecordingLogger"/>（IsEnabled=true）と <see cref="NullLogger"/>（IsEnabled=false）の両方で<br/>
-/// 全メソッドを直接呼び、LoggerMessage 生成コードの state 走査と IsEnabled 分岐の両パスを網羅する。
+/// 拡大元画像（<see cref="LoupeControl.Source"/>）はコントロール固有の概念であり、その変更と描画の例外は<br/>
+/// 画像を所有する本 UI が記録する（<see cref="RecordingLogger"/>（IsEnabled=true）と<br/>
+/// <see cref="NullLogger"/>（IsEnabled=false）の両方で全メソッドを呼び、生成コードの両パスを網羅する）。
 /// </remarks>
 public class LoupeUiLogMessageTests
 {
@@ -34,15 +32,15 @@ public class LoupeUiLogMessageTests
         InvokeAll(NullLogger.Instance);
     }
 
-    /// <summary>出力書式が両 UI で共通の書式と一致することを検証する。</summary>
+    /// <summary>出力書式が期待どおりであることを検証する。</summary>
     [Fact]
     public void 出力書式が期待どおりである()
     {
         var logger = new RecordingLogger();
         InvokeAll(logger);
 
-        Assert.Equal("[Feature.Loupe.Presenter] Setting: Source 8x6 → null", logger.Messages[0]);
-        Assert.Equal("[Feature.Loupe.Presenter] Update exception", logger.Messages[1]);
+        Assert.Equal("[LoupeControl.MewUI] Setting: Source 8x6 → null", logger.Messages[0]);
+        Assert.Equal("[LoupeControl.MewUI] Update exception", logger.Messages[1]);
     }
 
     /// <summary>拡大元画像のログが同一インスタンスの再設定では出力されないことを検証する。</summary>
@@ -70,20 +68,8 @@ public class LoupeUiLogMessageTests
         logger.LogSourceChanged(oldBitmap, null);
 
         Assert.Equal(2, logger.Messages.Count);
-        Assert.Equal("[Feature.Loupe.Presenter] Setting: Source 8x6 → 8x6", logger.Messages[0]);
-        Assert.Equal("[Feature.Loupe.Presenter] Setting: Source 8x6 → null", logger.Messages[1]);
-    }
-
-    /// <summary>画像の寸法を各 UI が整形して渡す経路のログが出力されることを検証する。</summary>
-    [Fact]
-    public void 寸法を整形して渡す経路のログを出力する()
-    {
-        var logger = new RecordingLogger();
-
-        logger.LogSourceChanged(LoupeLogFormat.DescribeImage(1920, 1080), LoupeLogFormat.Null);
-
-        Assert.Single(logger.Messages);
-        Assert.Equal("[Feature.Loupe.Presenter] Setting: Source 1920x1080 → null", logger.Messages[0]);
+        Assert.Equal("[LoupeControl.MewUI] Setting: Source 8x6 → 8x6", logger.Messages[0]);
+        Assert.Equal("[LoupeControl.MewUI] Setting: Source 8x6 → null", logger.Messages[1]);
     }
 
     /// <summary>例外ログに例外が渡されることを検証する。</summary>
@@ -91,20 +77,20 @@ public class LoupeUiLogMessageTests
     public void 例外ログは例外を受け取る()
     {
         var logger = new RecordingLogger();
-        var exception = new InvalidOperationException("失敗");
 
-        logger.LogUpdateError(exception);
+        logger.LogUpdateError(new InvalidOperationException("失敗"));
 
-        Assert.Single(logger.Messages);
         // メッセージ本体は例外本文を含まない（例外は構造化ログのフィールドとして渡す）
-        Assert.Equal("[Feature.Loupe.Presenter] Update exception", logger.Messages[0]);
+        Assert.Equal("[LoupeControl.MewUI] Update exception", Assert.Single(logger.Messages));
     }
 
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>
     /// <param name="logger">ロガー。</param>
     private static void InvokeAll(ILogger logger)
     {
-        logger.LogSourceChanged("8x6", "null");
+        using var bitmap = EsBitmap.Create(8, 6);
+
+        logger.LogSourceChanged(bitmap, null);
         logger.LogUpdateError(new InvalidOperationException("test"));
     }
 }

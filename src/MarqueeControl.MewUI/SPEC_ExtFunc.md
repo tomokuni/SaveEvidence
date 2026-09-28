@@ -79,7 +79,7 @@ Avalonia 版と同一の挙動になります。
 | `ResetSelection()` | - | 選択状態と nudge 状態を初期化する（nudge 中だった場合はカーソルを再表示する） |
 | `RequestConfirm()` | - | 確定要求を処理する（Enter と同じ条件）。ドラッグ中・未選択では何もしない |
 | `RequestCancel()` | - | キャンセル要求を処理する（Escape と同じ条件）。選択を破棄した後にイベントを発火する |
-| `NotifyViewportChanged()` | - | ビューポートの変化を通知する（現在の状態の再通知と再描画。通知の組み立てはコントロール化の層の `MarqueeViewportNotifier` が担う） |
+| `RefreshOverlay()` | - | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画と配置の再評価。選択の状態は変更しない） |
 
 ## 6. プロパティ（取得のみ）
 
@@ -97,9 +97,6 @@ Avalonia 版と同一の挙動になります。
 | `SelectionCancelled` | `EventArgs` | 小さすぎる矩形での終了 |
 | `LoupePositionMoved` | `MarqueePointEventArgs` | ルーペが表示する中心座標 |
 | `LoupePositionMoved` | `MarqueePointEventArgs` | ルーペが表示する中心座標（通常追従はポインタ位置、ドラッグ・nudge 中は動いている側のハンドル位置） |
-| `ViewportChanged` | `SelectionRectEventArgs` | `NotifyViewportChanged()` の呼び出し |
-| `ZoomRequested` | `WheelZoomRequest` | Ctrl+ホイール（方向と発生位置。解釈は組み込みの層が単一所有する） |
-| `ScrollRequested` | `WheelScrollRequest` | 通常ホイール（回転量・Shift・発生位置。解釈は組み込みの層が単一所有する） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | 矩形内ダブルクリック・Enter |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel()` |
 | `Rendered` | `MarqueeRenderedEventArgs` | 描画完了の通知（描画のたびに発火）。`Canvas`（DPI スケーリング済み・描画中のみ有効）と描画計画（`Content` = `MarqueeDrawPlan`）を渡す。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**ため、ホストは付加情報（操作・情報ラベル）の描画に使う |
@@ -108,7 +105,7 @@ Avalonia 版と同一の挙動になります。
 
 ### 7.1 ラベル（文字）の表示
 
-サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueeLabelTexts` が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueeLabelPlan` が単一所有**します。コントロールは `Border` + `TextBlock` を子要素として置き（`SkiaText.Measure` で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Rendered` のハンドラで `Options.Labels` の外観に従って描きます（配置指示は提示層の `FadeMaskHostLabelRenderer` が単一所有する）。
+サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueeLabelTexts` が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueeLabelPlan` が単一所有**します。コントロールは `Border` + `TextBlock` を子要素として置き（`SkiaText.Measure` で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Rendered` のハンドラで `Options.Labels` の外観に従って描きます（配置指示は `FadeMaskDragRectControl.UIBase` の `FadeMaskHostLabelRenderer` が単一所有する）。
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます。
 
 ```csharp
@@ -137,9 +134,8 @@ marquee.Rendered += (_, e) =>
 | 矢印キー | nudge（1 ドメインピクセル単位）。未選択時は始点、選択確定後・ドラッグ中は終点、ハンドル選択中はそのハンドルを動かす |
 | Enter | `ConfirmRequested` を発火して選択をクリアする（ドラッグ中・未選択では何もしない） |
 | Escape | `CancelRequested` を発火する（選択があれば破棄する） |
-| Ctrl + ホイール | `ZoomRequested` を発火する（方向と発生位置。ズームの実処理はホスト） |
-| ホイール（Ctrl なし） | `ScrollRequested` を発火する（回転量・Shift・発生位置。スクロール先とスクロール量の解釈はホスト） |
-| （解釈の所有者） | Ctrl の判定とログは組み込みの層（`Feature.Marquee.Presenter` の `MarqueeWheelInterpreter`）が単一所有し、本コントロールは要求を公開イベントへ転送するだけ |
+| ホイール（Ctrl 併用・なしとも） | **本コントロールは扱わない**（素通しする。ズーム・パンの解釈と実処理はホストが行う） |
+| （解釈の所有者） | ホイール操作はコントロール化を前提とした処理であり、**ホスト**（UI 層）がビューポートへ転送する |
 
 ### 制限
 
@@ -156,7 +152,7 @@ marquee.Rendered += (_, e) =>
 | --- | --- |
 | イベント引数の座標 | コア型（`EsPoint` / `EsRect`）で公開する（Avalonia 版は Avalonia の `Point` / `Rect`） |
 | マウスダウン・アップのイベント | 持たない（基底 `UIElement` の同名メンバーが同じ情報を提供するため、本コントロールでは公開しない） |
-| ビューポート変化 | ホストが `NotifyViewportChanged()` を呼ぶ（Avalonia 版は `AttachScrollViewer` で `ScrollViewer` を購読） |
+| 表示の変化への追従 | ホストが `RefreshOverlay()` を呼ぶ（自己完結する UI 層の処理） |
 | nudge のキー入力 | フォーカス依存（Avalonia 版は `TopLevel` を購読してフォーカス非依存） |
 | ログ | `Log` プロパティで `ILogger` を注入して出力する（書式・レベルは Avalonia 版と同一） |
 | 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言と基準点は提示層の `MarqueeLabelTexts`、色とフォントサイズは `MarqueeAppearance`、実寸測定は `SkiaText.Measure`、配置は提示層の `MarqueeLabelPlan`） |

@@ -147,6 +147,21 @@ public sealed class EsBitmap : IDisposable
     public bool IsDisposed => _disposed;
 
     // ====================================================================
+    // 寸法の文字列化
+    // ====================================================================
+
+    /// <summary>画像の寸法を「幅x高さ」形式の文字列で取得する。</summary>
+    /// <returns>寸法の文字列（例: <c>1920x1080</c>）。</returns>
+    /// <remarks>ログへ画像の寸法を出す用途に使う（UI ごとに同じ書式で整形するための唯一の入口）。</remarks>
+    public string ToSizeText() => $"{Width}x{Height}";
+
+    /// <summary>画像の寸法を「幅x高さ」形式の文字列へ整形する。</summary>
+    /// <param name="bitmap">対象のビットマップ。null 可。</param>
+    /// <returns>寸法の文字列（例: <c>1920x1080</c>）。<paramref name="bitmap"/> が null の場合は <c>null</c>。</returns>
+    /// <remarks>未設定を表す文字列を 1 か所に集約する（呼び出し側が <c>"null"</c> を書かないため）。</remarks>
+    public static string ToSizeText(EsBitmap? bitmap) => bitmap is null ? "null" : bitmap.ToSizeText();
+
+    // ====================================================================
     // ピクセル操作
     // ====================================================================
 

@@ -33,7 +33,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 - **設定の一括適用**: `Options` プロパティ（1 つの設定値）で選択矩形 / 暗転マスク / ルーペ / 選択矩形破線を 1 回で適用（既定値・項目の対応・枠線の太さの共用規則はコアが単一所有）
 - **外観の一括適用**: `MarqueeAppearance` / `LoupeAppearance` プロパティ（描画にだけ必要な外観の単一値）で内包する選択矩形・ルーペの外観を適用（コアの設定値は色・表示可否を持たない）
 - **座標変換ポートの一括分配**: `SetCoordinateTransform(ICoordTransform?)` で 2 コントロールへ同一ポートを分配
-- **ビューポート変化の追従**: `NotifyViewportChanged()` でパン・ズーム等のビューポート変化を通知（Marquee の再描画 + ルーペ位置再計算。ScrollViewer 連携のスクロールも同じ経路で処理）
+- **表示の変化への追従**: `RefreshOverlay()` でパン・ズーム等の表示変化を通知（Marquee の再描画 + ルーペ位置再計算）。ホイール操作はホストが本コントロールの `PointerWheelChanged` を購読してビューポートへ転送する
 - **選択状態の外部設定**: `SetSelection` / `ClearSelection` で選択矩形を設定（選択状態の単一のソースは `MarqueeControl` のセッションであり、本コントロールはその読み取りと委譲のみを行う。ルーペの選択矩形破線は `LoupeRendered` イベント経由で描画）
 - **ルーペ描画完了の通知**: `LoupeRendered` イベントで描画済み Bitmap と切り出し左上・スケールを通知（ホストが外部提供矩形を Bitmap へ直接描画できる）
 - **ログの伝搬**: `Log` プロパティ（`ILogger`）で内包するドラッグ選択コントロールとルーペの操作ログをホストのログ基盤へ転送
@@ -186,8 +186,8 @@ FadeMaskDragRectControl.UIBase/
 ```
 
 本コントロールは、解決された値を子コントロールへ代入し、描画ポートを用意して文言を渡すだけです
-（ラベルの体裁と行送りは `Feature.Marquee.Presenter` の `MarqueeHostLabelRenderer` / `MarqueeAppearance` が
-単一所有します）。
+（ラベルの体裁と行送りは `FadeMaskDragRectControl.UIBase` の `MarqueeHostLabelRenderer` と
+`Feature.Marquee.Presenter` の `MarqueeAppearance` が単一所有します）。
 
 ## 10. ライセンス
 

@@ -1,6 +1,6 @@
 # Feature.Loupe.Presenter システム仕様書
 
-`LoupeControl`（拡大鏡）をコントロールとして成り立たせる **UI 非依存の共有層**の構造・依存・例外処理・設計判断を記載します。外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
+`LoupeControl`（拡大鏡）の見た目を定める **コントロール化を前提としない UI 非依存層**の構造・依存・例外処理・設計判断を記載します。外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
 
 ## 1. システム概要
 
@@ -67,9 +67,7 @@ sequenceDiagram
 | `src/LoupeLabelPlan.cs` | `LoupeLabelPlan` | public | 実寸 → 配置指示の写像（アラインの適用とクランプの単一所有） |
 | `src/LoupeLabelTexts.cs` | `LoupeLabelTexts` | internal | 文言（`EsPoint.Format`）と基準点（上端中央）の生成 |
 | `src/LoupeDecorationGeometry.cs` | `LoupeDecorationGeometry` | internal | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算 |
-| `src/LoupeMetricsScaler.cs` | `LoupeMetricsScaler` | internal | 枠線の太さの物理ピクセル換算 |
-| `src/LoupeUiLogMessage.cs` | `LoupeUiLogMessage` | public | UI が出力するログ定義（ソース生成） |
-| `src/LoupeLogFormat.cs` | `LoupeLogFormat` | public | UI が出すログの書式 |
+| `src/LoupePresenterLogMessage.cs` | `LoupePresenterLogMessage` | internal | 本層が単一所有する設定（外観）の変更ログ |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
 
@@ -80,11 +78,11 @@ sequenceDiagram
 | 描画層とその順序 | `LoupeDrawPlan.Layers`（組合せ表は `LoupePresenter` が事前生成する） |
 | 描く層の選択（描く値がある層だけを含める） | `LoupePresenter.ResolveLayers` |
 | 十字線・枠線の矩形 | `LoupeDecorationGeometry` |
-| 枠線の太さの物理ピクセル換算 | `LoupeMetricsScaler` |
+| 枠線の太さの物理ピクセル換算 | `LoupePresenter.ResolveDrawPlan`（換算の式は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
 | 中心座標ラベルの文言と基準点 | `LoupeLabelTexts` |
 | ラベルの背景矩形・文字原点（実寸 + 余白、アライン、クランプ） | `LoupeLabelPlan` |
 | 描画完了通知の組み立てに使う値の選択 | `LoupeDrawPlan`（コアの幾何から写す） |
-| UI が出力するログの書式・レベル | `LoupeUiLogMessage` / `LoupeLogFormat` |
+| 本層が単一所有する設定（外観）の変更ログ | `LoupePresenterLogMessage` |
 
 ## 6. 例外処理ポリシー
 
@@ -92,8 +90,8 @@ sequenceDiagram
 
 ## 7. 可視性ポリシー
 
-- UI が参照する型（`LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeLabelPlacement` / `LoupeLabelPlan` / `LoupeUiLogMessage` / `LoupeLogFormat`）は `public` とします。
-- 本層とテストだけが使う内部ヘルパー（`LoupeDecorationGeometry` / `LoupeMetricsScaler` / `LoupeLabelTexts`）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.Loupe.Presenter.Tests`）で公開します。
+- UI が参照する型（`LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeLabelPlacement` / `LoupeLabelPlan`）は `public` とします。
+- 本層とテストだけが使う内部ヘルパー（`LoupeDecorationGeometry` / `LoupeLabelTexts` / `LoupePresenterLogMessage`）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.Loupe.Presenter.Tests`）で公開します。
 
 ## 8. テスト方針
 

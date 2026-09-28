@@ -25,4 +25,20 @@ public class DrawingColorExtensionsTests
     [Fact]
     public void IsVisible_既定値の色は不可視とする()
         => Assert.False(default(DrawingColor).IsVisible());
+
+    // ====================================================================
+    // 文字列化（#AARRGGBB）
+    // ====================================================================
+
+    [Fact]
+    public void ToHexText_アルファを先頭に置く()
+        => Assert.Equal("#80FF0000", DrawingColor.FromArgb(128, 255, 0, 0).ToHexText());
+
+    [Fact]
+    public void ToHexText_各成分を2桁で埋める()
+        => Assert.Equal("#00010203", DrawingColor.FromArgb(0, 1, 2, 3).ToHexText());
+
+    [Fact]
+    public void ToHexText_不透明の白を表す()
+        => Assert.Equal("#FFFFFFFF", DrawingColor.FromArgb(255, 255, 255, 255).ToHexText());
 }

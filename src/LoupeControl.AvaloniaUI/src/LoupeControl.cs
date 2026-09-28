@@ -300,7 +300,7 @@ public sealed class LoupeControl : Panel
     {
         SourceProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
-            o.Log.LogSourceChanged(LoupeSourceResolver.Describe(e.OldValue as IImage), LoupeSourceResolver.Describe(e.NewValue as IImage));
+            o.Log.LogSourceChanged(e.OldValue as IImage, e.NewValue as IImage);
             o.RequestRender();
         });
         // CenterPoint 変更時は再描画に加えて表示位置（RenderTransform）も更新する（コアが座標変換ポートと親パネルサイズから算出する）

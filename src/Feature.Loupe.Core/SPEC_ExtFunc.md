@@ -178,7 +178,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 | 描画層と順序（`LoupeDrawLayer`）・十字線 / 枠線の矩形 | `LoupePresenter` / `LoupeDecorationGeometry` |
 | 中心座標ラベルの文言・基準点 | `LoupeLabelTexts` |
 | 実寸 → ラベル要素の配置 | `LoupeLabelPlan` |
-| 枠線の太さの物理ピクセル換算 | `LoupeMetricsScaler` |
+| 枠線の太さの物理ピクセル換算 | `Platform.Core` の `DpiScaler`（呼び出すのは `LoupePresenter.ResolveDrawPlan`） |
 
 ## 4. 座標系
 

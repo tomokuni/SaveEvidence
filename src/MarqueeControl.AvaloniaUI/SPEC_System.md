@@ -165,14 +165,14 @@ flowchart TB
   - コアが要求する効果（カーソル操作・フォーカス・カーソル形状・再描画）を `IMarqueeEffects` 実装で受けて適用する（効果の選択と適用順はコアが単一所有）
   - コアからの通知を公開イベントへ転送する（判断はしない）
   - 描画（`Render`）を起動し、提示層（`Feature.Marquee.Presenter` の `MarqueePresenter.ResolveDrawPlan`）が返した描画計画（`MarqueeDrawPlan`）を**自 UI の描画 API（`DrawingContext`）で写す**（`MarqueeContextPainter`）。**サイズ・座標ラベルはテキスト要素として配置する**（子の末尾に置かれ常に最上位）。描画のたびに `Rendered`（描画計画全体）を発火してホストへ渡す（ホストは付加情報を描ける）
-  - ホイール操作を組み込みの層（`Feature.Marquee.Presenter` の `MarqueeWheelInterpreter`）へ通知し、要求（ズーム / スクロール）を受け取る（Ctrl の判定・連携先への適用・ログは同層が単一所有する）
-  - 祖先 ScrollViewer の ScrollChanged 購読（`ViewportChanged` の発行はコントロール化の層の `MarqueeViewportNotifier` へ委譲）
+  - ホイール操作は**扱わない**（コントロール化を前提とした処理のためホストが行う。本コントロールはイベントを素通しし、`e.Handled` を立てない）
+  - 表示の変化（パン・ズーム）への追従（`RefreshOverlay()`：再描画とルーペ位置の再計算）
   - 設定（寸法・表示可否・対話パラメータ・色）・環境値（倍率）・文言プロバイダの保持とファサード（色は描画実装）への伝搬
 - **公開API**:
-- イベント 11 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ScrollRequested` / `ConfirmRequested` / `CancelRequested` / `Rendered`（描画完了。描画コンテキストと描画内容を渡し、ホストは付加情報（操作・情報ラベル）を描ける。サイズ・座標ラベルはコントロールがテキスト要素として表示する）。**生のポインター入力（Mouse 系）は公開しない**（ホストは自 UI の入力イベントを使う。押下状態は `CurrentSnapshot.IsMouseDown`）
+- イベント 8 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ConfirmRequested` / `CancelRequested` / `Rendered`（描画完了。描画コンテキストと描画内容を渡し、ホストは付加情報（操作・情報ラベル）を描ける。サイズ・座標ラベルはコントロールがテキスト要素として表示する）。**生のポインター入力（Mouse 系）は公開しない**（ホストは自 UI の入力イベントを使う。押下状態は `CurrentSnapshot.IsMouseDown`）
   - StyledProperty 4 種: `Options`（不変の設定値 `MarqueeOptions`。寸法・対話パラメータを内包） / `Appearance`（外観の単一値 `MarqueeAppearance`） / `DomainToDipScaling` / `DisplayScaleScaling`（環境値。XAML のバインディング・スタイルで設定できるよう依存関係プロパティとして公開する）。設定はコア（ファサード）または提示層（外観）へ委譲する（MewUI 版と同じ形）
   - プロパティ: `Log`（保持・`NullLogger` へのフォールバックはコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。デリゲートのため設定値に含めない） / `HasSelection` / `SelectionRect`
-  - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `AttachScrollViewer`
+  - メソッド: `SetCoordinateTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `RefreshOverlay`
 - **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画の起動のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・装飾の描画内容）と描画の手順はコアと描画層へ委譲する
 - **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeGeometry（Feature.Marquee.Core）/ MarqueePresenter / MarqueeAppearance / MarqueeDrawPlan / MarqueeLabelPlan（Feature.Marquee.Presenter）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ ScreenConverter（Platform.AvaloniaUI）
 
@@ -183,7 +183,7 @@ flowchart TB
   - 操作の提供: `Press` / `Move` / `Release` / `KeyDown` / `EndNudge` / `SetSelection` / `ResetSelection` / `RequestConfirm` / `RequestCancel` / `ResolveDrawPlan`
   - 設定・環境値の保持: `Options` / `Appearance` / `DomainToDipScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` / `Log` / `SetCoordinateTransform`
   - 効果の適用: `IMarqueeEffects`（UI が実装）へフォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換を要求する（適用順の単一所有）
-  - ホイールの解釈（`MarqueeWheelInterpreter.Handle`）: Ctrl = ズーム要求 / それ以外 = スクロール（連携先があれば適用、無ければ `ScrollRequested`）とログを組み込みの層へ委ね、要求を公開イベントへ転送する
+  - ホイール操作はホストが行う（本コントロールは通知も要求も持たない。コントロール化を前提とした処理は UI 層の責務である）
   - 通知: `Notified`（状態機械の通知をそのまま転送する）
 - **内部実装**: 状態機械 `MarqueeSession`（`internal`）を保持・利用する（幾何の解決は同じ型の `Marquee.Geometry.cs`（partial）の公開メソッド `CreateRequest` / `ResolveGeometry` として実装する）
 - **可視性**: public（ファサードのみ。内部の状態機械は `internal` で隠す）
@@ -271,7 +271,7 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。コア内部は MarqueeControl → Marquee（ファサード） → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（幾何計算はコア内部に閉じる）、提示層は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core）、組み込みの規則は MarqueeControl → MarqueeWheelInterpreter / MarqueeViewportNotifier（Feature.Marquee.Presenter）。
+- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。コア内部は MarqueeControl → Marquee（ファサード） → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（幾何計算はコア内部に閉じる）、提示層は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core）。
 - MarqueeControl は上位 AP に**依存しない**（再利用可能）。
 - 判断（状態遷移・確定/キャンセル・スナップ・クリック検出）はコアの `Marquee`（内部の `MarqueeSession`）に集約し、UI 層は効果（`IMarqueeEffects`）を適用するだけにする。
 - 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否）は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan`）が単一所有し、**描画は本コントロールが自 UI の API（`DrawingContext`）で行う**（`MarqueeContextPainter`。描画 API の抽象は持たない）。状態（選択矩形・nudge）は MarqueeState に集約し、装飾の**判断**は持たない。

@@ -387,59 +387,6 @@ public class FadeMaskDragRectControlTests
         Assert.True(true);
     }
 
-    [AvaloniaFact]
-    public void ZoomRequested_ズーム要求が中継される()
-    {
-        var control = new FadeMaskDragRectControl();
-        WheelZoomRequest? received = null;
-        control.ZoomRequested += (_, request) => received = request;
-
-        // Marquee の ZoomRequested は通常の .NET イベント（Ctrl+ホイールで発火）のため、
-        // リフレクションでバッキングフィールドを取得して直接発火する（中継の検証用）。
-        var field = typeof(MarqueeControl).GetField(
-            "ZoomRequested", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
-        eventDelegate?.DynamicInvoke(control.Marquee, new WheelZoomRequest(true, new EsPoint(10, 20)));
-
-        Assert.NotNull(received);
-        Assert.True(received!.Value.ZoomIn);
-        Assert.Equal(new EsPoint(10, 20), received.Value.Position);
-    }
-
-    [AvaloniaFact]
-    public void ScrollRequested_スクロール要求が中継される()
-    {
-        var control = new FadeMaskDragRectControl();
-        WheelScrollRequest? received = null;
-        control.ScrollRequested += (_, request) => received = request;
-
-        // Marquee の ScrollRequested をリフレクションで直接発火する（中継の検証用）。
-        var field = typeof(MarqueeControl).GetField(
-            "ScrollRequested", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
-        eventDelegate?.DynamicInvoke(control.Marquee, new WheelScrollRequest(0, 1, true, new EsPoint(30, 40)));
-
-        Assert.NotNull(received);
-        Assert.Equal(1.0, received!.Value.DeltaY);
-        Assert.True(received.Value.Shift);
-        Assert.Equal(new EsPoint(30, 40), received.Value.Position);
-    }
-
-    [AvaloniaFact]
-    public void ZoomRequested_購読者がいない場合は中継されない()
-    {
-        var control = new FadeMaskDragRectControl();
-
-        // リフレクションで ZoomRequested を直接発火する（購読者なし → ?.Invoke の null 分岐）
-        var field = typeof(MarqueeControl).GetField(
-            "ZoomRequested", BindingFlags.Instance | BindingFlags.NonPublic);
-        var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
-        eventDelegate?.DynamicInvoke(control.Marquee, new WheelZoomRequest(true, new EsPoint(0, 0)));
-
-        // 例外なく完了する
-        Assert.True(true);
-    }
-
     // ====================================================================
     // SetLoupePosition（ルーペ中心の設定）
     // ====================================================================
@@ -689,7 +636,7 @@ public class FadeMaskDragRectControlTests
     }
 
     // ====================================================================
-    // HasSelection / SelectionRect / AttachScrollViewer / InvalidateOverlay
+    // HasSelection / SelectionRect / InvalidateOverlay / RefreshOverlay
     // ====================================================================
 
     [AvaloniaFact]
@@ -721,17 +668,6 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void AttachScrollViewer_Marqueeへ明示注入される()
-    {
-        var control = new FadeMaskDragRectControl();
-        var scrollViewer = new ScrollViewer();
-
-        // 例外なく設定できる（Marquee.AttachScrollViewer へ委譲）
-        control.AttachScrollViewer(scrollViewer);
-        control.AttachScrollViewer(null);
-    }
-
-    [AvaloniaFact]
     public void InvalidateOverlay_オーバーレイの再描画を要求する()
     {
         var control = new FadeMaskDragRectControl();
@@ -741,13 +677,13 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void NotifyViewportChanged_選択状態を維持したまま再描画を要求する()
+    public void RefreshOverlay_選択状態を維持したまま再描画を要求する()
     {
         var control = new FadeMaskDragRectControl();
         control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
 
-        // ビューポート（パン・ズーム）変化の通知 → 例外なく再描画・再計算できる
-        control.NotifyViewportChanged();
+        // 表示（パン・ズーム）の変化の通知 → 例外なく再描画・再計算できる
+        control.RefreshOverlay();
 
         // 選択状態は維持される（再描画要求のみ）
         Assert.True(control.HasSelection);
@@ -761,7 +697,7 @@ public class FadeMaskDragRectControlTests
         control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
 
         // Marquee の ViewportChanged を発火（ScrollViewer 連携の ScrollChanged → ViewportChanged の模擬）。
-        // 配線は NotifyViewportChanged に統合されている（選択状態の再同期は行わず、再描画のみ要求）
+        // 配線は RefreshOverlay に統合されている（選択状態の再同期は行わず、再描画のみ要求）
         var field = typeof(MarqueeControl).GetField(
             "ViewportChanged", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
@@ -795,7 +731,7 @@ public class FadeMaskDragRectControlTests
         eventDelegate?.DynamicInvoke(control.Marquee,
             new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.Marquee.CurrentSnapshot));
 
-        // ルーペ表示位置が再計算される（NotifyViewportChanged → Loupe.RefreshPosition 経由で RenderTransform が更新される。
+        // ルーペ表示位置が再計算される（RefreshOverlay → Loupe.RefreshPosition 経由で RenderTransform が更新される。
         // TranslateTransform は同一インスタンスの値更新のため Same で検証）
         Assert.NotNull(control.Loupe.RenderTransform);
         Assert.Same(before, control.Loupe.RenderTransform);

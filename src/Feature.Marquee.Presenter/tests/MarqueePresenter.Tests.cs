@@ -83,6 +83,36 @@ public class MarqueePresenterTests
         Assert.Equal(appearance, presenter.Appearance);
     }
 
+    /// <summary>外観の変更が変化した項目として記録されることを検証する。</summary>
+    /// <remarks>
+    /// 「値を所有する主体が記録する」規則により、提示層が保持する外観の変更は提示層が記録する<br/>
+    /// （ホストは前後の値を渡さず、同値判定・差分検出を持たない）。
+    /// </remarks>
+    [Fact]
+    public void 外観_変更した項目だけを記録する()
+    {
+        var presenter = CreatePresenter(out _);
+        var logger = new RecordingLogger();
+        presenter.Log = logger;
+
+        presenter.Appearance = MarqueeAppearance.Default with { ShowHandles = false };
+
+        Assert.Equal("[Feature.Marquee.Presenter] Setting: ShowHandles True → False", Assert.Single(logger.Messages));
+    }
+
+    /// <summary>表示スケーリングの変更が記録されることを検証する。</summary>
+    [Fact]
+    public void DisplayScaleScaling_変更を記録する()
+    {
+        var presenter = CreatePresenter(out _);
+        var logger = new RecordingLogger();
+        presenter.Log = logger;
+
+        presenter.DisplayScaleScaling = 1.25;
+
+        Assert.Equal("[Feature.Marquee.Presenter] Setting: DisplayScaleScaling 0 → 1.25", Assert.Single(logger.Messages));
+    }
+
     /// <summary>ハイライト矩形がコアへ委譲され、穴あけ矩形として優先されることを検証する。</summary>
     [Fact]
     public void HighlightRect_コアへ委譲しハイライトを優先する()

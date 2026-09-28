@@ -274,142 +274,27 @@ public class MarqueeControlTests
     }
 
     [AvaloniaFact]
-    public void AttachScrollViewer_購読と解除が正しく動作する()
-    {
-        var control = CreateControl();
-        var window = Show(control);
-        var scrollViewer = new ScrollViewer();
-        window.Content = scrollViewer;
-
-        // Attach 前は未購読
-        var field = typeof(MarqueeControl).GetField("_attachedScrollViewer", BindingFlags.NonPublic | BindingFlags.Instance);
-        Assert.Null(field!.GetValue(control));
-
-        // Attach すると購読される（フィールドに設定される）
-        control.AttachScrollViewer(scrollViewer);
-        Assert.Same(scrollViewer, field.GetValue(control));
-
-        // 同じ ScrollViewer を再設定しても変化しない（冪等）
-        control.AttachScrollViewer(scrollViewer);
-        Assert.Same(scrollViewer, field.GetValue(control));
-
-        // null で解除される
-        control.AttachScrollViewer(null);
-        Assert.Null(field.GetValue(control));
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void ScrollViewerのスクロールでViewportChangedが発火する()
-    {
-        var control = CreateControl();
-        var window = Show(control);
-        var scrollViewer = new ScrollViewer();
-        window.Content = scrollViewer;
-        control.AttachScrollViewer(scrollViewer);
-        control.SetSelection(new Rect(10, 10, 50, 40));
-
-        var raised = false;
-        control.ViewportChanged += (_, _) => raised = true;
-
-        // ScrollChanged を発火（スクロール・ズーム検知 → ViewportChanged）
-        scrollViewer.RaiseEvent(new ScrollChangedEventArgs(new Vector(10, 0), new Vector(10, 0), new Vector(0, 0)));
-
-        Assert.True(raised);
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void CtrlホイールでZoomRequestedが発火する()
-    {
-        var control = CreateControl();
-        var window = Show(control);
-        // ScrollViewer は明示注入（control はウィンドウに直接配置）
-        var scrollViewer = new ScrollViewer();
-        control.AttachScrollViewer(scrollViewer);
-        var zoomIn = false;
-        var zoomOut = false;
-        WheelZoomRequest last = default;
-        control.ZoomRequested += (_, request) =>
-        {
-            last = request;
-            if (request.ZoomIn) { zoomIn = true; } else { zoomOut = true; }
-        };
-
-        // Ctrl + ホイール上（ズームイン）: PointerWheelEventArgs を直接発火
-        control.RaiseEvent(new PointerWheelEventArgs(control, CreatePointer(), window,
-            ToScreenPoint(control, new Point(50, 50)), 0UL,
-            new PointerPointProperties(RawInputModifiers.Control, PointerUpdateKind.Other),
-            KeyModifiers.Control, new Vector(0, 1)));
-        // Ctrl + ホイール下（ズームアウト）
-        control.RaiseEvent(new PointerWheelEventArgs(control, CreatePointer(), window,
-            ToScreenPoint(control, new Point(50, 50)), 0UL,
-            new PointerPointProperties(RawInputModifiers.Control, PointerUpdateKind.Other),
-            KeyModifiers.Control, new Vector(0, -1)));
-
-        Assert.True(zoomIn);
-        Assert.True(zoomOut);
-        // 発生位置（ズーム中心に使える）はコントロールローカル DIP で通知される
-        Assert.Equal(new EsPoint(50, 50), last.Position);
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void ScrollViewer未設定の通常ホイールはScrollRequestedを発火する()
-    {
-        var control = CreateControl();
-        var window = Show(control);
-        WheelScrollRequest? received = null;
-        control.ScrollRequested += (_, request) => received = request;
-
-        // ScrollViewer 未設定 → 回転量と発生位置を上位APへ通知する（スクロール先の決定は上位）
-        control.RaiseEvent(new PointerWheelEventArgs(control, CreatePointer(), window,
-            ToScreenPoint(control, new Point(30, 40)), 0UL,
-            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.Other),
-            KeyModifiers.None, new Vector(0, 1)));
-
-        Assert.NotNull(received);
-        Assert.Equal(1.0, received!.Value.DeltaY);
-        Assert.Equal(0.0, received.Value.DeltaX);
-        Assert.False(received.Value.Shift);
-        Assert.Equal(new EsPoint(30, 40), received.Value.Position);
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void ScrollViewer未設定のホイールは上位移譲のフォールバックを呼ぶ()
+    public void ホイールは処理しない_ホストが扱う()
     {
         var control = CreateControl();
         var window = Show(control);
 
-        // ScrollViewer 未設定 → 既定動作に委ねず、ScrollRequested で上位 AP へ通知する（e.Handled = true）
-        var e = new PointerWheelEventArgs(control, CreatePointer(), window,
+        // ホイール（ズーム・スクロール）はホストが扱うため、本コントロールは処理済みにしない
+        // （上位の Canvas や祖先 ScrollViewer へ素通しし、ビューの状態を決めるのはホスト 1 か所にする）
+        var plain = new PointerWheelEventArgs(control, CreatePointer(), window,
             ToScreenPoint(control, new Point(50, 50)), 0UL,
             new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.Other),
             KeyModifiers.None, new Vector(0, 1));
-        control.RaiseEvent(e);
+        control.RaiseEvent(plain);
 
-        Assert.True(e.Handled);
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void 通常ホイールでScrollViewerがスクロールされる()
-    {
-        var control = CreateControl();
-        var window = Show(control);
-        var scrollViewer = new ScrollViewer();
-        control.AttachScrollViewer(scrollViewer);
-
-        // 通常ホイール（Ctrl なし）→ 祖先 ScrollViewer をスクロール（e.Handled = true）
-        var e = new PointerWheelEventArgs(control, CreatePointer(), window,
+        var controlKey = new PointerWheelEventArgs(control, CreatePointer(), window,
             ToScreenPoint(control, new Point(50, 50)), 0UL,
-            new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.Other),
-            KeyModifiers.None, new Vector(0, 1));
-        control.RaiseEvent(e);
+            new PointerPointProperties(RawInputModifiers.Control, PointerUpdateKind.Other),
+            KeyModifiers.Control, new Vector(0, 1));
+        control.RaiseEvent(controlKey);
 
-        Assert.True(e.Handled);
+        Assert.False(plain.Handled);
+        Assert.False(controlKey.Handled);
         window.Close();
     }
 

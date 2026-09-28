@@ -63,8 +63,8 @@ public partial class MainWindow : Window
         // コントロール内部の操作ログを画面のログ表示領域へ出力する
         Marquee.Log = new InMemoryLogger(line => Dispatcher.UIThread.Post(() => _vm.AddLog(line)));
 
-        // 連携 ScrollViewer を明示注入する（スクロール・ズーム検知 + ホイール操作。Marquee は Canvas 内にあるため祖先探索は不可）
-        Marquee.AttachScrollViewer(ImageScroll);
+        // 連携 ScrollViewer のスクロール・ズーム変化を購読する（選択面は ScrollViewer 内にあり、祖先探索は行わない）
+        ImageScroll.ScrollChanged += OnImageScrollChanged;
 
         // ズーム倍率に応じたサイズ・座標ポートを適用する
         ApplyZoom(null, 1.0);
@@ -75,10 +75,9 @@ public partial class MainWindow : Window
         Marquee.SelectionCompleted += OnSelectionCompleted;
         Marquee.SelectionCancelled += OnSelectionCancelled;
         Marquee.LoupePositionMoved += OnLoupePositionMoved;
-        // Escape / Enter の自己処理（確定・キャンセル要求）とズーム・スクロール検知も購読する
+        // Escape / Enter の自己処理（確定・キャンセル要求）を購読する
         Marquee.ConfirmRequested += OnConfirmRequested;
         Marquee.CancelRequested += OnCancelRequested;
-        Marquee.ViewportChanged += OnViewportChanged;
 
         // 文字（サイズラベル・座標ラベル）はコントロールが描かないため、描画完了イベントでホストが描く
         Marquee.Rendered += OnMarqueeRendered;
@@ -276,11 +275,18 @@ public partial class MainWindow : Window
         _vm.AddLog("[Event] CancelRequested");
     }
 
-    /// <summary>ズーム・スクロール（ScrollViewer の ScrollChanged）検知時の処理。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">選択矩形イベント引数（現在の選択矩形 + Snapshot）。</param>
-    private void OnViewportChanged(object? sender, SelectionRectEventArgs e)
-        => _vm.AddLog($"[Event] ViewportChanged: X={e.Rect.X:F0}, Y={e.Rect.Y:F0}, W={e.Rect.Width:F0}, H={e.Rect.Height:F0}");
+    /// <summary>連携 ScrollViewer のスクロール・ズーム変化を検知したときの処理。</summary>
+    /// <param name="sender">イベント送信元（ScrollViewer）。</param>
+    /// <param name="e">スクロール変化イベント。</param>
+    /// <remarks>
+    /// 選択矩形（ドメイン座標）は表示の変化で不変であるため、再描画のみを要求する<br/>
+    /// （選択面は座標変換ポートを都度評価するため、再描画だけで追従する）。
+    /// </remarks>
+    private void OnImageScrollChanged(object? sender, ScrollChangedEventArgs e)
+    {
+        Marquee.InvalidateVisual();
+        _vm.AddLog($"[Event] ScrollChanged: X={ImageScroll.Offset.X:F0}, Y={ImageScroll.Offset.Y:F0}");
+    }
 
     /// <summary>描画完了時にホスト固有の付加情報を描画する。</summary>
     /// <param name="sender">イベント送信元（MarqueeControl）。</param>

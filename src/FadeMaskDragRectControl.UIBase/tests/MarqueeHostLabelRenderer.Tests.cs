@@ -1,12 +1,13 @@
+using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Feature.Marquee.Presenter.Tests;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
 
 /// <summary><see cref="MarqueeHostLabelRenderer"/> の単体テスト（体裁の適用 = 配置指示の解決）。</summary>
 /// <remarks>
-/// 付加情報ラベルはアプリ固有の情報だが、体裁（背景 = 文字の実寸 + 内側余白 × 2）はサイズラベルと同じ規則であり、<br/>
+/// 付加情報ラベルは本コントロール固有の情報だが、体裁（背景 = 文字の実寸 + 内側余白 × 2）はサイズラベルと同じ規則であり、<br/>
 /// 体裁の値（<see cref="MarqueeAppearance"/>）と組み立て（<see cref="MarqueeHostLabelRenderer"/>）が単一所有する。<br/>
 /// 両 UI のホストが同じ組み立てを書かないことを、配置指示の値で固定する。<br/>
 /// 描画は各 UI が行う（本層は描画 API を持たない）ため、本テストは画素ではなく値を検証する。

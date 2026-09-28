@@ -143,8 +143,7 @@ parentPanel.Children.Add(overlay);
 | `InvalidateOverlay` | `void InvalidateOverlay()` | 選択オーバーレイ（暗転マスク・ハイライト・選択矩形）の再描画を要求 |
 | `RequestConfirm` | `void RequestConfirm()` | 選択確定要求を Marquee へ委譲（Enter キー相当。選択確定後のみ発火） |
 | `RequestCancel` | `void RequestCancel()` | キャンセル要求を Marquee へ委譲（Escape キー相当） |
-| `AttachScrollViewer` | `void AttachScrollViewer(ScrollViewer? scrollViewer)` | 祖先 ScrollViewer を Marquee へ明示注入（スクロール・ズーム検知 + ホイール操作。Crop 用） |
-| `NotifyViewportChanged` | `void NotifyViewportChanged()` | ビューポート（パン・ズーム・表示サイズ）の変化を内包コントロールへ通知。ビューポート実装に依存せずホストが中継する（Marquee の再描画 + ルーペ表示位置の再計算を要求。ScrollViewer 連携の `ViewportChanged` も本メソッドへ統合） |
+| `RefreshOverlay` | `void RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化を内包コントロールへ通知する。表示の実装に依存せずホストが中継する（Marquee の再描画 + ルーペ表示位置の再計算を要求） |
 
 ### 5.3 イベント
 
@@ -152,8 +151,7 @@ parentPanel.Children.Add(overlay);
 | --- | --- | --- |
 | `ConfirmRequested` | `EventHandler<FadeMaskDragRectSelectionEventArgs>` | 確定要求（Marquee の Enter / ダブルクリック / `RequestConfirm`。選択確定後のみ発火） |
 | `CancelRequested` | `EventHandler` | キャンセル要求（Marquee の Escape / `RequestCancel`） |
-| `ZoomRequested` | `EventHandler<WheelZoomRequest>` | Ctrl+ホイールによるズーム要求（方向と発生位置。Crop 用） |
-| `ScrollRequested` | `EventHandler<WheelScrollRequest>` | 通常ホイールによるスクロール要求（生の回転量・Shift・発生位置。Crop 用） |
+| `LoupePositionMoved` | `EventHandler<FadeMaskDragRectPointEventArgs>` | ルーペ中心の更新（ドメイン座標。ホストの追加制御用フック） |
 | `LoupePositionMoved` | `EventHandler<FadeMaskDragRectPointEventArgs>` | ルーペ中心の更新通知（ドメイン座標。ホストの追加制御用フック） |
 | `LoupeRendered` | `EventHandler<LoupeRenderedEventArgs>` | ルーペ描画完了の通知（描画済み Bitmap と切り出し左上・スケール。ホストが Bitmap へ外部提供矩形（破線等）を直接描く用。`LoupeControl.Rendered` を中継する） |
 

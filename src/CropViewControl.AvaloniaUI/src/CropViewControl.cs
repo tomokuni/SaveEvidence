@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using EsUtil.Feature.Marquee.Presenter;
@@ -79,24 +80,44 @@ public sealed partial class CropViewControl : Panel
         // ビューポート変化（パン・ズーム）を領域選択オーバーレイと矩形オーバーレイへ中継する
         _zoomView.ViewportChanged += (_, _) =>
         {
-            _selectionOverlay.NotifyViewportChanged();
+            _selectionOverlay.RefreshOverlay();
             UpdateRectOverlay();
         };
 
         // 領域選択オーバーレイ上のホイールをビューポートへ転送する。
         // オーバーレイは Crop 中に画像の上を覆って入力を占有するため、ホイールはオーバーレイだけが受け取る
-        // （ビューポートは兄弟要素のため、オーバーレイが処理済みにしたイベントは届かない）。
+        // （ビューポートは兄弟要素のため、オーバーレイ側で処理済みにしたイベントは届かない）。
         // 回転量から移動量への換算とズーム率の決定はビューポート（ZoomViewControl）が単一所有する。
-        _selectionOverlay.ScrollRequested += (_, request) =>
-            _zoomView.PanByWheel(request.Delta.ToAvaloniaVector(), request.Shift);
-        _selectionOverlay.ZoomRequested += (_, request) =>
-            _zoomView.ZoomByWheel(request.ZoomIn, ToViewportPosition(request.Position));
+        _selectionOverlay.PointerWheelChanged += OnSelectionOverlayWheelChanged;
 
         // ルーペ描画完了時に、外部提供矩形をルーペ Bitmap へ描画する
         _selectionOverlay.LoupeRendered += OnLoupeRendered;
 
         // 既定は Crop（プレビュー内の切出し）。ホストが SelectionMode で変更できる
         _selectionOverlay.Mode = FadeMaskDragRectMode.Crop;
+    }
+
+    /// <summary>領域選択オーバーレイのホイールをビューポート（ズーム・パン）へ転送する。</summary>
+    /// <param name="sender">イベント送信元（領域選択オーバーレイ）。</param>
+    /// <param name="e">ホイールイベント。</param>
+    /// <remarks>
+    /// Ctrl 併用はズーム（発生位置をズーム中心にする）、それ以外はパンとする。<br/>
+    /// 解釈（どちらを選ぶか）と回転量 → 移動量の換算はビューポート（<c>ZoomViewControl</c>）が単一所有する<br/>
+    /// （オーバーレイは入力を受けるだけであり、ビューの状態を変更しない）。
+    /// </remarks>
+    private void OnSelectionOverlayWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        if ((e.KeyModifiers & KeyModifiers.Control) != 0)
+        {
+            _zoomView.ZoomByWheel(e.Delta.Y > 0, ToViewportPosition(e.GetPosition(_selectionOverlay).ToEsPoint()));
+        }
+        else
+        {
+            _zoomView.PanByWheel(
+                new EsVector(e.Delta.X, e.Delta.Y).ToAvaloniaVector(), (e.KeyModifiers & KeyModifiers.Shift) != 0);
+        }
+
+        e.Handled = true;
     }
 
     /// <summary>領域選択オーバーレイのローカル座標をビューポート（ズームビュー）のローカル座標へ変換する。</summary>
@@ -358,8 +379,8 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知する。</summary>
-    /// <remarks><see cref="FadeMaskDragRectControl.NotifyViewportChanged"/> へ委譲する（暗転マスク・選択枠・ルーペの追従）。</remarks>
-    public void NotifyViewportChanged() => _selectionOverlay.NotifyViewportChanged();
+    /// <remarks><see cref="FadeMaskDragRectControl.RefreshOverlay"/> へ委譲する（暗転マスク・選択枠・ルーペの追従）。</remarks>
+    public void NotifyViewportChanged() => _selectionOverlay.RefreshOverlay();
 
     /// <summary>選択確定要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Enter キー相当）。</summary>
     public void RequestConfirm() => _selectionOverlay.RequestConfirm();

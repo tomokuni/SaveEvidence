@@ -1,6 +1,6 @@
 # Feature.Loupe.Presenter 外部機能仕様書
 
-`LoupeControl`（拡大鏡）をコントロールとして成り立たせる **UI 非依存の共有層**が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト）から見える情報のみを記載します。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
+`LoupeControl`（拡大鏡）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト）から見える情報のみを記載します。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
 
 ## 1. 提供機能
 
@@ -10,15 +10,16 @@
 | 表示レイアウトの解決 | `LoupePresenter.ResolveLayout` | 親領域サイズから表示サイズ・位置を解決する（コアへ委譲する） |
 | 外観 | `LoupeAppearance` | 色・フォント・角丸・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） |
 | 装飾矩形の計算 | `LoupeDecorationGeometry` | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算（純粋関数） |
-| 寸法の換算 | `LoupeMetricsScaler` | 枠線の太さ（DIP）の物理ピクセル換算（切り上げ・最低 1） |
 | ラベル計画 | `LoupeLabelTexts` / `LoupeLabelPlan` | 文言と基準点の生成（`EsPoint.Format`・上端中央）と、実寸 → 配置指示（`LoupeLabelPlacement`）の写像 |
-| ログ定義 | `LoupeUiLogMessage` / `LoupeLogFormat` | UI が出力するログ（拡大元画像の変更・描画の例外）の定義と書式 |
+| ログ定義 | `LoupePresenterLogMessage` | 本層が単一所有する設定（外観）の変更ログ |
+
+**本層はコントロール化を前提とした処理を提供しません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は、コントロール固有の値や UI の機構であるため UI 層が持ちます）。
 
 ### 前提条件
 
 - 本層は UI フレームワークに依存しません（依存は `Feature.Loupe.Core` と `Platform.Core` のみ）。**描画 API の抽象も持ちません**（描画計画というデータを返し、描画は各 UI が自 UI の API で行います）。
 - 座標は `EsPoint` / `EsSize` / `EsRect`（`EsUtil.Platform.Core`）、色は UI 非依存の `System.Drawing.Color` で扱います。
-- 描画の単位は**物理ピクセル**です（`LoupeGeometry.PixelSize` が作る正方形が描画面）。DIP → 物理ピクセルの換算は本層とコアが済ませているため、UI 層は換算しません。
+- 描画の単位は**物理ピクセル**です（`LoupeGeometry.PixelSize` が作る正方形が描画面）。DIP → 物理ピクセルの換算（表示サイズと枠線の太さ）は本層とコアが済ませているため、UI 層は換算しません。
 - 中心座標ラベルは **DIP** で配置します（文言・基準点は本層が、実寸測定と要素の配置は UI 層が担います）。
 
 ## 2. 公開 API 一覧
@@ -34,10 +35,9 @@
 | `LoupeTextPlacement` | record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・アライン・描画領域） |
 | `LoupeLabelPlacement` | record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
 | `LoupeLabelPlan` | static class | 実寸 → `LoupeLabelPlacement` の写像 |
-| `LoupeUiLogMessage` | static class | UI が出力するログ定義（`LoggerMessage` ソース生成） |
-| `LoupeLogFormat` | static class | UI が出すログの書式 |
+| `LoupePresenterLogMessage` | static partial class | 本層が単一所有する設定の変更ログ（内部手順。ホストは参照しない） |
 
-`LoupeDecorationGeometry` / `LoupeMetricsScaler` / `LoupeLabelTexts` は `internal`（本層とテストのみが使う）。
+`LoupeDecorationGeometry` / `LoupeLabelTexts` / `LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）。
 
 ### `LoupePresenter` のメンバー
 
@@ -96,13 +96,13 @@
 | --- | --- |
 | `Resolve(LoupeTextPlacement? coordLabel, LoupeAppearance appearance, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`LoupeLabelPlacement`）を 1 件返す（テキストが無い場合は空）。`appearance` または `measureText` が null なら `ArgumentNullException` |
 
-### `LoupeUiLogMessage` / `LoupeLogFormat` のメンバー
+### `LoupePresenterLogMessage` のメンバー
 
 | メンバー | 説明 |
 | --- | --- |
-| `LogSourceChanged(EsBitmap?, EsBitmap?)` / `LogSourceChanged(string, string)` | 拡大元画像の変更ログ（同値の再設定では出力しない） |
-| `LogUpdateError(Exception)` | 描画の例外ログ（Error） |
-| `DescribeImage(int?, int?)` / `Null` | 画像寸法の書式 / 未設定の表記 |
+| `LogAppearanceChanged(LoupeAppearance, LoupeAppearance)` | 外観の変更ログ（**変化した項目だけ**。LogLevel: Debug、書式 `[Feature.Loupe.Presenter] Setting: {Name} {OldValue} → {NewValue}`） |
+
+**拡大元画像（`Source`）と描画の例外のログは各 UI が所有します**（コントロール固有の値であるため。接頭辞だけを揃える）。
 
 ## 3. 契約（利用者が守る・受け取る値）
 

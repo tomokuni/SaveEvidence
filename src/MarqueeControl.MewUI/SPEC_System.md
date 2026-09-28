@@ -57,7 +57,8 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | イベント引数をコア型（`EsPoint` / `EsRect`）で公開する | コアの状態機械と同一の型になり境界変換が不要になる。MewUI の `Rect` は負のサイズを 0 にクランプするため、`EsRect` のほうが安全 |
 | カーソルサービスの既定実装の解決を UI 層で行う | コアは `Platform.Native` を参照できない（循環参照）。コアは抽象と `null` のみを扱う |
 | `SkiaCanvasView`（`Control` 系）を基底にする | 画像の上へ重ねるオーバーレイであり、子要素を持たない。背景を塗らないため下の画像が透ける |
-| `ScrollViewer` を自動購読しない | MewUI 版の画面構成（`Grid` 重ね合わせ）では祖先探索の前提が異なる。ビューポート変化はホストが `NotifyViewportChanged()` で通知する |
+| `ScrollViewer` を自動購読しない | MewUI 版の画面構成（`Grid` 重ね合わせ）では祖先探索の前提が異なる。表示の変化はホストが検知して `RefreshOverlay()` で再描画を要求する |
+| ホイール操作を扱わない | コントロール化を前提とした処理であり、ホストが `MouseWheel` を購読してビューポートへ転送する（本コントロールは素通しする） |
 | マウスダウン・アップのイベントを公開しない | `UIElement` が同名メンバー（＝同じ情報を提供するイベント）を持つため、本コントロールでは公開しない（重複を避ける） |
 | ログの出力先を持つ | 入力を持つコントロールは操作ログが必要（上位 AP はドラッグ・nudge 用のキー・マウスイベントを直接検出しないため）。既定は `NullLogger` で、ホストが `Log` プロパティで注入する（保持・フォールバック・ファサードへの伝搬はコアが単一所有する） |
 
@@ -112,7 +113,7 @@ classDiagram
         +ResetSelection() void
         +RequestConfirm() void
         +RequestCancel() void
-        +NotifyViewportChanged() void
+        +RefreshOverlay() void
         -OnPaintSurface(canvas, info) void
         -OnNotified(sender, notice) void
         -ToScreen(domainPos) EsPointInt
@@ -399,7 +400,7 @@ OnPaintSurface(canvas, info)
 
 | 項目 | 状況 |
 | --- | --- |
-| `ScrollViewer` の自動連携 | ホストが `NotifyViewportChanged()` を呼ぶ方式で代替 |
+| `ScrollViewer` の自動連携 | ホストが変化を検知して `RefreshOverlay()` を呼ぶ方式で代替 |
 | フォーカス非依存の矢印キー nudge | フォーカス依存で実装（`TopLevel` のキー購読は行わない） |
 | 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）が所有し、ズーム要求のログは組み込みの層（`EsUtil.Feature.Marquee.Presenter.MarqueeWheelLogMessage`）が所有する。書式・レベルとも Avalonia 版と同一） |
 | 実ウィンドウへの組み込み | `FadeMaskDragRectControl.MewUI` を経由して配線済み（撮影・切り出しの両方） |

@@ -1,3 +1,4 @@
+using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.SaveEvidence.CaptureSession.UIBase;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
@@ -7,6 +8,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coordinate;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 
@@ -130,10 +132,28 @@ internal sealed class CropSession
         // 選択オーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する。
         // オーバーレイは切り出し中にプレビューを覆って入力を占有するため、ホイールはオーバーレイだけが受け取る。
         // 回転量から移動量への換算とズーム率の決定は、ズームビューポートが単一所有する。
-        _selector.ScrollRequested += (_, request) =>
-            _view.PanByWheel(request.Delta, request.Shift);
-        _selector.ZoomRequested += (_, request) =>
-            _view.ZoomByWheel(request.ZoomIn, ToViewportPosition(request.Position));
+        _selector.MouseWheel += OnSelectorWheel;
+    }
+
+    /// <summary>選択オーバーレイのホイールをビューポート（ズーム・パン）へ転送する。</summary>
+    /// <param name="e">ホイールの情報。</param>
+    /// <remarks>
+    /// Ctrl 併用はズーム（発生位置をズーム中心にする）、それ以外はパンとする。<br/>
+    /// 解釈（どちらを選ぶか）と回転量 → 移動量の換算はビューポート（<c>ZoomViewControl</c>）が単一所有する<br/>
+    /// （オーバーレイは入力を受けるだけであり、ビューの状態を変更しない）。
+    /// </remarks>
+    private void OnSelectorWheel(MouseWheelEventArgs e)
+    {
+        if (e.ControlKey)
+        {
+            _view.ZoomByWheel(e.Delta.Y > 0, ToViewportPosition(e.GetPosition(_selector).ToEsPoint()));
+        }
+        else
+        {
+            _view.PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), e.ShiftKey);
+        }
+
+        e.Handled = true;
     }
 
     /// <summary>切り出しセッションの終了を通知する（Facade が排他の受付を解放する）。</summary>
@@ -232,7 +252,7 @@ internal sealed class CropSession
 
         // 非表示の間に描画済みのキャンバスは再描画されないため、表示後に明示的に無効化する
         _selector.InvalidateOverlay();
-        _selector.NotifyViewportChanged();
+        _selector.RefreshOverlay();
 
         // 矢印キーの微調整と Escape を受け取れるよう、選択コントロールへフォーカスを移す
         _selector.FocusMarquee();

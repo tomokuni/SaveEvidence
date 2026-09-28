@@ -1,6 +1,6 @@
 # Feature.Loupe.Presenter
 
-`LoupeControl`（拡大鏡＝カーソル位置の周囲を拡大表示するコントロール）を**コントロールとして成り立たせる UI 非依存の層**です。Avalonia 版と MewUI 版が同じ処理を共有します。
+`LoupeControl`（拡大鏡＝カーソル位置の周囲を拡大表示するコントロール）の見た目を定める**コントロール化を前提としない UI 非依存の層**です。Avalonia 版と MewUI 版が同じ処理を共有します。
 
 本層は 2 つの関心事を持ちます。どちらも「単体で使う `Loupe` だけでは決まらない」ため、コア（`Feature.Loupe.Core`）には置きません。
 
@@ -8,7 +8,8 @@
 | --- | --- | --- |
 | **提示（Presenter）** | 描画の幾何（`LoupeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `LoupePresenter` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeDecorationGeometry` / `LoupeLabelTexts` / `LoupeLabelPlan` |
 | **外観** | 色・フォント・角丸・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `LoupeAppearance` |
-| **組み込み規則** | 「他のコントロールへ組み込むときにだけ必要な規則」（寸法の物理ピクセル換算） | `LoupeMetricsScaler` |
+
+**本層はコントロール化を前提とした処理を持ちません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は、コントロール固有の値や UI の機構であるため UI 層（または各 UI）が持ちます）。
 
 ## 目的
 
@@ -17,15 +18,16 @@
 - **UI 実装を薄くする**。UI 層は描画計画の取得と描画、ラベル要素の配置、入力の転送だけを行い、装飾矩形・文言・配置の計算を持たない。
 - **UI 初期化なしで検証できる**。描画計画の値（矩形・層・配置）は UI 型を持たないため `[Fact]` で検証でき、画素の検証は MewUI（Skia）のテストが担う。
 - UI フレームワークへ依存しない（参照は `Feature.Loupe.Core` と `Platform.Core` のみ）。
+- 外観の変更（本層が単一所有する設定）は本層が記録する（`LoupePresenterLogMessage`。**値を所有する主体が記録する**）。
 
 ## 依存方向
 
-層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
+層の全体像（Core / Presenter / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
-  入力の受付・描画（自 UI の API）・ラベル要素の配置・ホスト結線
-    ├──> Feature.Loupe.Presenter ← 本プロジェクト   提示（描画計画の解決）＋ 外観 ＋ 組み込み先があるときだけ必要な規則
+  入力の受付・描画（自 UI の API）・ラベル要素の配置・ホスト結線・拡大元画像の所有
+    ├──> Feature.Loupe.Presenter ← 本プロジェクト   提示（描画計画の解決）＋ 外観
     └──> Feature.Loupe.Core   何を描くか（幾何）+ 計算（状態・値・純粋計算）
            └──> Platform.Core（Es* 値型・ICoordTransform）
 ※ コアは本層を参照しない（本層がコアの幾何（`LoupeGeometry`）を使う向きだけ）。
@@ -54,24 +56,18 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | --- | --- |
 | `LoupeAppearance` | 描画に使う色（ペーストボード・枠線・十字線・中心座標ラベルの 5 色）・ラベルのフォントサイズと角丸・**枠線の太さ**・**表示可否**（十字線・枠線・中心座標ラベル）の単一所有者。`Default` を基点に `with` 式で部分変更する。枠線の太さの安全域への補正は `Loupe.Limits.CoerceBorderThickness` へ委譲する |
 
-### 組み込み規則
+### 本層が出力するログ
 
 | 型 | 責務 |
 | --- | --- |
-| `LoupeMetricsScaler` | 枠線の太さ（DIP）の物理ピクセル換算（切り上げ・最低 1）。描画計画の解決時に適用する |
+| `LoupePresenterLogMessage` | 本層が単一所有する設定（外観）の変更ログ（`LoggerMessage` ソース生成）。**変化した項目だけ**を出力する |
 
-### UI が出力するログ
-
-| 型 | 責務 |
-| --- | --- |
-| `LoupeUiLogMessage` | UI が出力するログ定義（`LoggerMessage` ソース生成。拡大元画像の変更 `LogSourceChanged` / 描画の例外 `LogUpdateError`）。**書式・レベルを UI 間で揃えるため本層が単一所有する** |
-| `LoupeLogFormat` | UI がログへ出す値の書式（未設定の表記 `Null` / 画像の寸法 `DescribeImage`） |
-
-コアが出力する定義（設定値・拡大中心の変更）は `Feature.Loupe.Core` の `LoupeLogMessage`（internal）が単一所有します。**UI 固有の処理に対応するログ**（中間ビットマップを生成する描画パイプライン固有のログ等）は各 UI プロジェクトが所有します。
+コアが出力する定義（設定値・拡大中心・環境値の変更）は `Feature.Loupe.Core` の `LoupeLogMessage`（internal）が単一所有します。<br/>
+UI が出力する定義（拡大元画像の変更・描画の例外・UI 固有の処理）は各 UI プロジェクトが所有します（**値を所有する主体が記録する**）。
 
 ## 描画の単位
 
-**物理ピクセル**です。`LoupeGeometry.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `Loupe.ResolveGeometry`、寸法は `LoupeMetricsScaler`）は**コアと本層が済ませている**ため、UI は換算しません。中心座標ラベルだけは DIP で配置します（`LoupeLabelTexts` が基準点を、`LoupeLabelPlan` が配置矩形を決める）。
+**物理ピクセル**です。`LoupeGeometry.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `Loupe.ResolveGeometry`、枠線の太さは `DpiScaler.ScaleToPixel`）は**コアと本層が済ませている**ため、UI は換算しません。中心座標ラベルだけは DIP で配置します（`LoupeLabelTexts` が基準点を、`LoupeLabelPlan` が配置矩形を決める）。
 
 ## ラベルは UI の要素が描く / UI が描く
 
@@ -95,6 +91,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | --- | --- | --- |
 | 表示レイアウト・描画の幾何（切り出し領域・描画面）の解決 | `Feature.Loupe.Core` | 単体で使っても同じ結果になる（独立した部品の本体） |
 | 描画計画（層の順序・装飾矩形・文言・配置）と外観 | 本層 | 「どう見せるか」は描画の都合であり、コアの計算・判断に入らない（コアに置くと色・フォントをコアへ持ち込むことになる） |
+| 本層が単一所有する設定（外観）の変更ログ | 本層（`LoupePresenterLogMessage`） | 値を所有する主体が記録する（コアの設定はコア、UI の値は UI が記録し、層の接頭辞から伝搬を追える） |
+| 拡大元画像（`Source`）とその変更ログ・描画の例外ログ | UI 層（各 UI） | 画像はコントロール固有の値である（コアのファサードは画像を保持せず、描画のたびに引数で受け取る） |
 | 中間ビットマップの非同期生成と世代番号管理 | `LoupeControl.AvaloniaUI` | **非同期の再描画をいつ何回行うか**は、中間ビットマップを持つ UI にだけ必要な処理である（同期描画の MewUI には概念が無い） |
 | 実際の描画（描画 API の呼び出し・ラベル要素の配置） | UI 層 | 描画 API はフレームワーク固有である |
 
@@ -102,8 +100,9 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 | 型 | AvaloniaUI | MewUI | 補足 |
 | --- | --- | --- | --- |
-| `LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDecorationGeometry` / `LoupeLabelTexts` / `LoupeLabelPlan` / `LoupeMetricsScaler` | 使う | 使う | 描画計画と外観は両 UI で共通 |
+| `LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDecorationGeometry` / `LoupeLabelTexts` / `LoupeLabelPlan` | 使う | 使う | 描画計画と外観は両 UI で共通 |
 | 描画実装（`LoupeContextPainter` / `LoupeSkiaPainter`） | `LoupeContextPainter` | `LoupeSkiaPainter` | UI フレームワーク固有のため各 UI が所有する |
+| 拡大元画像の変更・描画の例外のログ（`LoupeUiLogMessage`） | `LoupeControl.AvaloniaUI` が所有 | `LoupeControl.MewUI` が所有 | UI の値を所有する各 UI が記録する（接頭辞だけを揃える） |
 | 再描画のバッチ化（`LoupeRenderCoordinator`） | 使う（中間ビットマップを非同期生成し `Image.Source` へ反映） | **使わない** | MewUI は `OnPaintSurface` の中で同期描画するため、要求の合流と世代番号管理が不要（`LoupeControl.AvaloniaUI` が所有する） |
 
 **UI フレームワークによって未使用になる型が存在します**（`LoupeRenderCoordinator` は中間ビットマップを持つ UI だけが使う）。これは「必要とする UI だけが実装・利用する」設計の帰結であり、コア（`Feature.Loupe.Core`）の公開面には影響しません。
@@ -151,18 +150,17 @@ Feature.Loupe.Presenter
 
 ## テスト
 
-`tests/` が本プロジェクトのテストを持ちます。描画計画の値（矩形・層・配置）は UI 型を持たないため、**UI 初期化なしで検証**できます（合計 49 件）。画素の検証は `LoupeControl.MewUI.Tests`（Skia）が担います。
+`tests/` が本プロジェクトのテストを持ちます。描画計画の値（矩形・層・配置）は UI 型を持たないため、**UI 初期化なしで検証**できます（合計 43 件）。画素の検証は `LoupeControl.MewUI.Tests`（Skia）が担います。
 
 ```text
 tests/
-├── LoupeDrawPlan.Tests.cs              # 描画計画の値（描画面・層の順序・表示可否・切替）（10 件）
-├── LoupeAppearance.Tests.cs            # 色・体裁・枠線の太さ・表示可否の既定値と補正（11 件）
-├── LoupeDecorationGeometry.Tests.cs    # 十字線 / 枠線の矩形の計算（5 件）
-├── LoupeMetricsScaler.Tests.cs         # 枠線の太さの物理ピクセル換算（4 件）
-├── LoupeLabelPlan.Tests.cs             # 実寸 → ラベル要素の写像（7 件）
-├── LoupeLogFormat.Tests.cs             # ログの書式（画像寸法）（5 件）
-├── LoupeUiLogMessage.Tests.cs          # UI が出力するログ定義（7 件）
-└── TestHelper.cs                       # テスト用のユーティリティ
+├── LoupeDrawPlan.Tests.cs                # 描画計画の値（描画面・層の順序・表示可否・切替）（10 件）
+├── LoupeAppearance.Tests.cs              # 色・体裁・枠線の太さ・表示可否の既定値と補正（11 件）
+├── LoupeDecorationGeometry.Tests.cs      # 十字線 / 枠線の矩形の計算（5 件）
+├── LoupeLabelPlan.Tests.cs               # 実寸 → ラベル要素の写像（7 件）
+├── LoupePresenter.Tests.cs               # 外観の保持と変更ログ・コアの設定変更ログへの委譲（4 件）
+├── LoupePresenterLogMessage.Tests.cs     # 外観の変更ログ（変化した項目だけ・色の表記・定義名）（6 件）
+└── RecordingLogger.cs                    # ログ出力を収集するテスト用 ILogger
 ```
 
 ```powershell

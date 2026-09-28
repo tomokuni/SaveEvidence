@@ -53,7 +53,7 @@
 
 ## 依存方向
 
-層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
+層の全体像（Core / Presenter / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
@@ -73,10 +73,10 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | 層 | 責務 |
 | --- | --- |
 | Core（本プロジェクト） | 設定とその既定値・補正、状態の判断、表示レイアウトの計算、描画の幾何（切り出し領域・描画面）の解決、公開ファサード（`Loupe` = 操作の唯一の窓口）、ログ定義 |
-| UIBase（`Feature.Loupe.Presenter`） | 提示（`LoupePresenter`：描画計画（層の順序・装飾矩形・文言）の解決）、外観（`LoupeAppearance`：色・フォント・角丸・枠線の太さ・表示可否）、実寸 → ラベル要素の写像（`LoupeLabelPlan`）、装飾矩形と寸法換算（`LoupeDecorationGeometry` / `LoupeMetricsScaler`） |
-| UI 層（`LoupeControl.*`） | 状態（拡大元画像・拡大中心）の保持と設定（`Options`・`Appearance`）の保持、**提示層への委譲**（表示レイアウト・描画計画）、描画計画の描画（`LoupeContextPainter` / `LoupeSkiaPainter`）とラベル要素の配置、ホスト結線 |
+| 提示層（`Feature.Loupe.Presenter`） | 提示（`LoupePresenter`：描画計画（層の順序・装飾矩形・文言）の解決）、外観（`LoupeAppearance`：色・フォント・角丸・枠線の太さ・表示可否）、実寸 → ラベル要素の写像（`LoupeLabelPlan`）、装飾矩形の計算（`LoupeDecorationGeometry`） |
+| UI 層（`LoupeControl.*`） | 状態（拡大元画像・拡大中心）の保持と設定（`Options`・`Appearance`）の保持、**提示層への委譲**（表示レイアウト・描画計画）、描画計画の描画（`LoupeContextPainter` / `LoupeSkiaPainter`）とラベル要素の配置、ホスト結線、拡大元画像のログ |
 
-UI 層に残してよい分岐は 4 種のみです（それ以外の判断はコア・UIBase へ移します）。
+UI 層に残してよい分岐は 4 種のみです（それ以外の判断はコア・提示層へ移します）。
 
 1. 提示の可否（拡大元画像・拡大中心が揃っていない、大きさ 0、親が未接続、非表示）
 2. 空のコレクションをスキップする性能ガード（描画結果を変えない）
@@ -87,7 +87,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 
 **描画の可否は外観（`LoupeAppearance`）の明示フラグが単一所有します**（`ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`）。これらはコアの計算・判断に入らない（描画にだけ必要な）設定であるため、コアの設定（`LoupeOptions`）には含めず、表示可否から描画計画を組み立てる `LoupePresenter` が扱います。透明色を「描かない」の代用にしません。
 
-**寸法値の物理ピクセル換算は UIBase が描画計画の解決時に行います**（`LoupeMetricsScaler`）。UI 層が `BorderThickness * scaling` のような式を自前で書くと、片方の UI だけ換算が抜けて DPI ≠ 100% で見た目がずれます（実例あり）。
+**寸法値の物理ピクセル換算は提示層が描画計画の解決時に行います**（`Platform.Core` の `DpiScaler.ScaleToPixel`。呼び出すのは `LoupePresenter.ResolveDrawPlan`）。UI 層が `BorderThickness * scaling` のような式を自前で書くと、片方の UI だけ換算が抜けて DPI ≠ 100% で見た目がずれます（実例あり）。
 
 **「変化したときだけログ出力する」判定はコアが単一所有します**（`Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter が変化を検出し、`LogOptionsChanged` などの定義で出力します）。UI 層は変更通知で値を転送するだけで、同値判定も前後の値の保持も持ちません（設定（`LoupeOptions`）の変更は `LogOptionsChanged` が**変化した項目だけ**を出力します）。ログの出力先は `Log` プロパティで受け取ります（UI の `Log` 設定がコアへ伝搬します）。
 
@@ -103,7 +103,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 
 ## 機能差に由来する非対称（もう一方のコアとの違い）
 
-本コアと `Feature.Marquee.Core` は同じ規約（`UI → UIBase → Core → Platform.Core` の一方向依存、層の順序は UIBase が所有、色は外観が所有）で作られています。揃えない（揃えると害になる）違いは機能差に由来するもので、以下に列挙します。
+本コアと `Feature.Marquee.Core` は同じ規約（`UI → Presenter → Core → Platform.Core` の一方向依存、層の順序は提示層が所有、色は外観が所有）で作られています。揃えない（揃えると害になる）違いは機能差に由来するもので、以下に列挙します。
 
 | 非対称 | Loupe | Marquee | 理由 |
 | --- | --- | --- | --- |
@@ -169,7 +169,7 @@ UI 側（`LoupeControl`）が公開する入口:
 ## 設計上の約束
 
 1. **判断はコア・反映は UI**: 「どうするか」（表示サイズ・位置・切り出し領域）はコアが決め、UIBase が描画計画（層の有無・矩形・文言・配置）を解決し、UI は描画計画を写すだけにする。
-2. **単一所有**: 表示位置は `LoupePlacementGeometry`、区画数の切り上げは `LoupeDivMath`、切り出し領域は `LoupeGeometry` のみが持つ（装飾矩形の計算は UIBase の `LoupeDecorationGeometry`、寸法の換算は UIBase の `LoupeMetricsScaler`）。
+2. **単一所有**: 表示位置は `LoupePlacementGeometry`、区画数の切り上げは `LoupeDivMath`、切り出し領域は `LoupeGeometry` のみが持つ（装飾矩形の計算は提示層の `LoupeDecorationGeometry`、寸法の換算は `Platform.Core` の `DpiScaler`）。
 3. **座標系の 3 区分**: ドメイン座標（元画像 px）→ 親領域 DIP（`ICoordTransform`）→ 物理ピクセル（`DipToDeviceScaling`）のうち、① ドメイン → DIP は `Loupe`、② DIP → 物理ピクセルは `LoupeGeometry` が担う（UIBase は換算しない）。
 4. **設定は 1 値・補正は生成時**: 計算に必要な設定は `LoupeOptions` の 1 値にまとめ、数値項目の安全域への補正は型の生成時（`init` アクセサ）に適用する（UI 側に補正の登録を要求しない）。
 5. **表示サイズの決定はファサードが単一所有**: 要求サイズを親領域の最小辺へクランプする規則は `Loupe.ResolveLayout` の 1 箇所である（親領域のサイズを引数で受けるため、クランプの基準をコアが保持しない）。
@@ -195,7 +195,7 @@ UI 実装側は、境界（サービス呼び出し・イベント引数の生�
 dotnet build src/Feature.Loupe.Core/src/Feature.Loupe.Core.csproj
 ```
 
-ルーペ系の 4 プロジェクト（Core / UIBase / AvaloniaUI / MewUI）は `GenerateDocumentationFile` を有効にし、**存在しないメンバーへの `<see cref>` をビルド警告（CS1574）で検出**します（メンバー改名・削除でドキュメントが腐るのを防ぐ）。XML は検証にのみ使い、配布物（`bin` / `publish`）へは出しません（`CopyDocumentationFileToOutputDirectory=false`）。公開メンバーの未記載（CS1591）は対象外です。
+ルーペ系の 4 プロジェクト（Core / Presenter / AvaloniaUI / MewUI）は `GenerateDocumentationFile` を有効にし、**存在しないメンバーへの `<see cref>` をビルド警告（CS1574）で検出**します（メンバー改名・削除でドキュメントが腐るのを防ぐ）。XML は検証にのみ使い、配布物（`bin` / `publish`）へは出しません（`CopyDocumentationFileToOutputDirectory=false`）。公開メンバーの未記載（CS1591）は対象外です。
 
 ## テスト
 

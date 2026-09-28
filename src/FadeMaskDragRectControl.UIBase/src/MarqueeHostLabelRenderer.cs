@@ -1,13 +1,15 @@
+using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Feature.Marquee.Presenter;
+namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 
-/// <summary>ホストが描く付加情報ラベル（操作ラベル・情報ラベル）の配置指示を解決する。</summary>
+/// <summary>複合コントロールが描く付加情報ラベル（操作ラベル・情報ラベル）の配置指示を解決する。</summary>
 /// <remarks>
-/// <b>位置付け</b>: 付加情報ラベルは選択矩形コントロールの概念ではない（アプリ固有の付加情報）ため、<br/>
-/// 文言の生成と表示可否の判断はホストが担う。ただし<b>体裁（背景 = 文字の実寸 + 内側余白 × 2）は<br/>
-/// サイズラベルと同じ規則</b>であり、体裁の値は外観（<see cref="MarqueeAppearance"/>）が単一所有する。<br/>
+/// <b>位置付け</b>: 付加情報ラベルは選択矩形コントロール（<c>MarqueeControl</c>）の概念ではない<br/>
+/// （本コントロール固有の付加情報）ため、文言の生成と表示可否の判断はホスト（本層を利用する複合コントロール）が担う。<br/>
+/// ただし<b>体裁（背景 = 文字の実寸 + 内側余白 × 2）はサイズラベルと同じ規則</b>であり、<br/>
+/// 体裁の値は提示層の外観（<see cref="MarqueeAppearance"/>）が単一所有する。<br/>
 /// 両 UI のホストが同じ組み立てを書かないよう、本クラスが体裁の適用を単一所有する。<br/>
 /// <br/>
 /// <b>本クラスは描画しません</b>: UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、<br/>

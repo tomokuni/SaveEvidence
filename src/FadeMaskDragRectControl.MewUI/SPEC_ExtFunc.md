@@ -15,10 +15,9 @@ Avalonia 版と同一の解釈になります。
 | 参照 | 用途 |
 | --- | --- |
 | `FadeMaskDragRectControl.Core` | 動作モード（`FadeMaskDragRectMode`）と、モードから子コントロールの有効・無効（選択矩形を使うか）への写像 |
-| `FadeMaskDragRectControl.UIBase` | 設定とモードから子コントロールへ適用する値の解決（`FadeMaskDragRectChildValues`）と、付加情報ラベルの描画（`FadeMaskHostLabelRenderer`） |
+| `FadeMaskDragRectControl.UIBase` | 設定とモードから子コントロールへ適用する値の解決（`FadeMaskDragRectChildValues`）、付加情報ラベルの縦積みの配置指示（`FadeMaskHostLabelRenderer`）、ラベル 1 行の体裁（`MarqueeHostLabelRenderer`） |
 | `MarqueeControl.MewUI` / `Feature.Marquee.Core` | 選択矩形の入力と状態機械 |
-| `Feature.Marquee.Presenter` | ホイール要求（`WheelZoomRequest` / `WheelScrollRequest`）の中継で型を参照する（解釈は内包コントロールが組み込みの層へ委ねる） |
-| `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | 描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）の型 |
+| `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | 描画にだけ必要な提示層の型（描画計画・外観（`MarqueeAppearance` / `LoupeAppearance`）・ラベル配置） |
 | `Feature.Marquee.Core`（`Decoration` 名前空間） | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の設定・外観・幾何・描画内容の解決（名前空間 `EsUtil.Feature.Marquee.Core.Decoration`。描画は `MarqueeControl` が行う） |
 | `LoupeControl.MewUI` / `Feature.Loupe.Core` | 拡大鏡の描画と表示位置計算 |
 | `Platform.Core` | コア幾何型・座標変換ポート・画像コンテナ |
@@ -93,7 +92,7 @@ Avalonia 版と同一の解釈になります。
 | `RequestConfirm()` | 確定要求を処理する（Enter キー相当） |
 | `RequestCancel()` | キャンセル要求を処理する（Escape キー相当） |
 | `FocusMarquee()` | Marquee 選択へフォーカスを設定する（矢印キー nudge の受付開始） |
-| `NotifyViewportChanged()` | ビューポートの変化を通知する（再描画とルーペ位置の再計算を要求） |
+| `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画と配置の再評価を要求） |
 | `InvalidateOverlay()` | 暗転マスクの再描画を要求する |
 
 ## 7. イベント
@@ -102,8 +101,7 @@ Avalonia 版と同一の解釈になります。
 | --- | --- | --- |
 | `ConfirmRequested` | `FadeMaskDragRectSelectionEventArgs` | 矩形内ダブルクリック・Enter・`RequestConfirm`（選択確定後のみ） |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel` |
-| `ZoomRequested` | `WheelZoomRequest` | Ctrl+ホイール（方向と発生位置） |
-| `ScrollRequested` | `WheelScrollRequest` | 通常ホイール（生の回転量・Shift・発生位置。スクロール先はホストが決める） |
+| `LoupePositionMoved` | `FadeMaskDragRectPointEventArgs` | ルーペ中心の更新（ドメイン座標） |
 | `LoupePositionMoved` | `FadeMaskDragRectPointEventArgs` | ドラッグ選択からのルーペ中心の更新（マウス移動・ドラッグ・nudge） |
 
 座標はすべてドメイン座標です。
@@ -138,7 +136,7 @@ Avalonia 版と同一の解釈になります。
 | サイズラベル・操作ラベル・情報ラベル | サイズラベルはコントロールが表示し、操作・情報ラベルはホストが `Options.Labels` の外観で描く |
 | ルーペ画像上の選択矩形破線 | 描画する（同じコアの破線幾何を使う。描画先はキャンバスと `EsBitmap` の違い） |
 | ルーペ描画完了の通知 | 本コントロールが内部で受けて破線を描くため、ホストへは中継しない（Avalonia 版は `LoupeRendered` で中継し、ホストがルーペ画像へ直接描く） |
-| `ScrollViewer` の自動連携 | ホストが `NotifyViewportChanged()` を呼ぶ |
+| ホイール操作 | ホストが `MouseWheel` を購読してビューポートへ転送する |
 | ログ | `Log` プロパティで同様に伝搬する（書式は Avalonia 版と同一） |
 
 ## 10. エラー・例外

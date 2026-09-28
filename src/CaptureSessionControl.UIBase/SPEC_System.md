@@ -33,7 +33,7 @@ graph LR
   U --> L[Feature.Loupe.Presenter]
 ```
 
-依存の向きは **UI → UIBase → Core / 各描画の設定**の一方向です。逆向きの参照はありません。
+依存の向きは **UI → UIBase（本層）→ Core / 各提示層の設定**の一方向です。逆向きの参照はありません。
 
 ### 本層を置く理由
 

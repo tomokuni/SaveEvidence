@@ -19,8 +19,7 @@
     - [6.3 描画責務分割](#63-描画責務分割)
     - [6.4 画像入力とピクセル抽出](#64-画像入力とピクセル抽出)
     - [6.5 切り出し領域の幾何（`Feature.Loupe.Core`）](#65-切り出し領域の幾何featureloupecore)
-    - [6.6 LoupeLogMessage / LoupeUiLogMessage / LoupeRenderLog](#66-loupelogmessage--loupeuilogmessage--louperenderlog)
-    - [6.7 上位AP（消費側）](#67-上位ap消費側)
+    - [6.6 LoupeLogMessage / LoupeUiLogMessage / LoupeRenderLog](#66-loupelogmessage--loupeuilogmessage--louperenderlog)    - [6.7 上位AP（消費側）](#67-上位ap消費側)
     - [6.8 UI 固有の機構（コアへ移さない）](#68-ui-固有の機構コアへ移さない)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
@@ -78,7 +77,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成で出力する（コアが出力する定義は `Feature.Loupe.Core` の `LoupeLogMessage`、本 UI が出力する定義は `Feature.Loupe.Presenter` の `LoupeUiLogMessage`、本 UI 固有の定義は `LoupeRenderLog`）。設定変更・画像変更は Debug、再描画・位置更新は Trace、例外は Error で記録する。
+- ログは LoggerMessage ソース生成で出力する（コアが出力する定義は `Feature.Loupe.Core` の `LoupeLogMessage`、本 UI が出力する定義は本プロジェクトの `LoupeUiLogMessage`、本 UI 固有の定義は `LoupeRenderLog`）。設定変更・画像変更は Debug、再描画・位置更新は Trace、例外は Error で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -160,10 +159,10 @@ flowchart TB
     - 再描画のバッチ化: `Dispatcher.UIThread.Post` で複数プロパティ変更を1フレーム1回の再描画に結合
     - 非同期生成: 切り出しと合成（`RenderTargetBitmap` / `DrawingContext`）は UI スレッドで行い（バックグラウンド抽出（`Task.Run`）は使わない。連続再描画時にスレッドプールが競合し、移動中の追従が止まるため）、古い世代の結果は採用せず破棄する
     - 表示サイズ・位置: `UpdatePosition` がコアのファサード `Loupe.ResolveLayout` を呼び、返された `LoupeLayout`（表示サイズと表示位置）を要素（`Width` / `Height`）と `RenderTransform` へ写すだけである（クランプ・オフセット・親領域へのクランプはコアが単一所有し、`UpdatePosition` は表示サイズの唯一の反映元になる）
-    - 座標単位: `Options.RequestedSize` は DIP、描画計画へ渡す表示サイズと枠線の太さも DIP（物理ピクセルへの換算は提示層の `LoupeMetricsScaler` が行う）
+    - 座標単位: `Options.RequestedSize` は DIP、描画計画へ渡す表示サイズと枠線の太さも DIP（物理ピクセルへの換算は提示層が `DpiScaler.ScaleToPixel` へ委譲する）
   - 値の補正: コアの設定値（`LoupeOptions`）は型の生成時に補正される（UI は関与しない）。環境値の `DipToDeviceScaling` のみ `coerce` コールバックで矯正する
 - **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する基本サイズ・拡大率。UI は設定値を保持しない）/ 外観（`Appearance`（`LoupeAppearance`。`System.Drawing.Color` で受け取り描画時にブラシへ変換する）））/ 環境（`DipToDeviceScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
-- **依存**: LoupePresenter / LoupeAppearance / LoupeLabelPlan / LoupeLabelTexts / LoupeUiLogMessage / LoupeLogFormat（`Feature.Loupe.Presenter`） / LoupeContextPainter / LoupeRenderCoordinator / LoupeRenderPipeline / LoupeSourceResolver（本プロジェクト） / LoupeOptions / Loupe（`Feature.Loupe.Core`） / DrawingContext（Platform.AvaloniaUI） / Avalonia / ILogger
+- **依存**: LoupePresenter / LoupeAppearance / LoupeLabelPlan / LoupeLabelTexts（`Feature.Loupe.Presenter`） / LoupeUiLogMessage（本プロジェクト） / LoupeContextPainter / LoupeRenderCoordinator / LoupeRenderPipeline / LoupeSourceResolver（本プロジェクト） / LoupeOptions / Loupe（`Feature.Loupe.Core`） / DrawingContext（Platform.AvaloniaUI） / Avalonia / ILogger
 
 ### 6.2 LoupeContextPainter（描画実装）
 
@@ -207,7 +206,7 @@ flowchart TB
 
 - **分類**: ログ定義（`LoggerMessage` source generator。`public static partial class`）
 - **責務**: ログの書式・レベルを UI 間で揃え、定義の所有者を出力の主体ごとに分ける
-- **本 UI が呼ぶ定義**: **`Feature.Loupe.Presenter` の `LoupeUiLogMessage`** が単一所有する（`LogSourceChanged`（Debug。設定名はその層が付与）/ `LogUpdateError`（Error））。値の文字列化は同じ層の `LoupeLogFormat` が行う（`Null` / `DescribeImage`）
+- **本 UI が呼ぶ定義**: **本プロジェクトの `LoupeUiLogMessage`** が単一所有する（`LogSourceChanged`（Debug。設定名は本 UI が付与）/ `LogUpdateError`（Error））。拡大元画像はコントロール固有の値であり（コアのファサードは画像を保持しない）、画像の寸法の文字列化は画像型（`EsBitmap.ToSizeText`）または本 UI が行う
 - **コアが出力する定義**: `Feature.Loupe.Core` の `LoupeLogMessage`（internal）が持つ（設定値・拡大中心の変更。**設定名はコアが付与**し、UI 層は値だけを渡す）
 - **本 UI 固有のログ**: 中間ビットマップを生成する描画パイプライン固有の `LogRenderCore` / `LogGenerateAsyncDone` は **本プロジェクトの `LoupeRenderLog`**（`Logging/LoupeRenderLog.cs`・`internal static partial class`）が所有する
 - **依存**: Microsoft.Extensions.Logging

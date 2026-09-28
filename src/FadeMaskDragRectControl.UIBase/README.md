@@ -9,7 +9,7 @@
   「設定の写し → モードから導出する項目の上書き」という 2 段の分配をそれぞれ持っており、片方だけ規則が
   変わる余地があった。
 - **付加情報ラベル（操作・情報）の積み上げを 1 箇所へ集約**する。体裁は既に
-  `MarqueeHostLabelRenderer` と `MarqueeAppearance`（`Feature.Marquee.Presenter`）が単一所有しているが、
+  本層の `MarqueeHostLabelRenderer` と `MarqueeAppearance`（`Feature.Marquee.Presenter`）が単一所有しているが、
   「どの文言をどの位置へ積むか」は両 UI が別々に書いていた。
 
 ## 層の位置付け
@@ -31,7 +31,8 @@ FadeMaskDragRectControl.AvaloniaUI / .MewUI（子コントロールへの代入�
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `FadeMaskDragRectChildValues` | `public readonly record struct` | 設定とモードから内包コントロールへ適用する値を解決する |
-| `FadeMaskHostLabelRenderer` | `public static class` | 付加情報ラベル（操作・情報）の積み上げを描画ポートへ写す |
+| `FadeMaskHostLabelRenderer` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示を解決する |
+| `MarqueeHostLabelRenderer` | `public static class` | ラベル 1 行の体裁（背景 = 文字の実寸 + 内側余白 × 2）の配置指示を解決する |
 
 ## 依存関係
 
@@ -39,8 +40,8 @@ FadeMaskDragRectControl.AvaloniaUI / .MewUI（子コントロールへの代入�
 FadeMaskDragRectControl.UIBase
     ├── FadeMaskDragRectControl.Core（設定・モード・状態の解決）
     ├── Feature.Marquee.Core / Feature.Loupe.Core（内包コントロールの設定型）
-    ├── Feature.Marquee.Presenter（付加情報ラベルの体裁）
-    └── Platform.Core（コア幾何型・描画ポート・ラベル配置）
+    ├── Feature.Marquee.Presenter（外観・描画計画・ラベル配置）
+    └── Platform.Core（コア幾何型・値型・描画ポート）
 ```
 
 UI フレームワークへ依存しません。外部パッケージへの直接依存もありません。
@@ -77,10 +78,11 @@ var placements = FadeMaskHostLabelRenderer.Resolve(
 ```text
 tests/
 ├── FadeMaskDragRectChildValues.Tests.cs   # 値の解決（モード・ハイライト・設定の写し）
-└── FadeMaskHostLabelRenderer.Tests.cs     # ラベルの積み上げ（描画ポートの画素検証）
+├── FadeMaskHostLabelRenderer.Tests.cs     # ラベルの縦積み（配置指示の検証）
+└── MarqueeHostLabelRenderer.Tests.cs      # ラベル 1 行の体裁（背景の寸法の検証）
 ```
 
-合計 17 件（`[Theory]` は展開後のケース数）。UI 初期化が不要なため、すべて `[Fact]` / `[Theory]` で並列実行されます。
+合計 26 件（`[Theory]` は展開後のケース数）。UI 初期化が不要なため、すべて `[Fact]` / `[Theory]` で並列実行されます。
 
 ```powershell
 dotnet test src/FadeMaskDragRectControl.UIBase/tests/FadeMaskDragRectControl.UIBase.Tests.csproj

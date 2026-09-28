@@ -77,7 +77,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `void FocusMarquee()` | 内包 Marquee へフォーカスを設定（矢印キー nudge の受付開始）。 |
 | `void SetLoupeSource(IImage? source)` | ルーペの拡大元画像を設定（null でルーペをクリア）。 |
 | `void ClearLoupe()` | ルーペのソースをクリア（FadeMaskDragRectControl へ委譲）。 |
-| `void NotifyViewportChanged()` | ビューポート（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知。 |
+| `void NotifyViewportChanged()` | 表示（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知。 |
 | `Rect ImageRectViewport()` | 画像の表示矩形（ビューポート座標）を取得。 |
 | `Point ContentToViewport(Point contentPos)` | ドメイン座標 → ビューポート座標へ変換。 |
 | `Point ViewportToContent(Point viewportPos)` | ビューポート座標 → ドメイン座標へ変換。 |

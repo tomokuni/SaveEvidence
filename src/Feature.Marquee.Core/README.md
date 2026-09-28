@@ -164,7 +164,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | --- | --- | --- |
 | `DragHandle`（`None` / `Move` + 8 方向） | `HitTarget` → `MarqueeHitTarget` | ハンドル以外（`None` / `Move`）も含むためヒット対象を表す名前にし、公開型の接頭辞（自コア名）を付ける |
 | `MarqueeSnapshot.ActiveHandle` / `MarqueeState.ActiveHandle` | `ActiveTarget` | 同上 |
-| `DragRectZoomRequest` / `DragRectScrollRequest` | `WheelZoomRequest` / `WheelScrollRequest` | コントロール固有の接頭辞を外し、ホイール操作の要求であることを表す |
+| `DragRectZoomRequest` / `DragRectScrollRequest` | 削除 | コントロール化を前提とした処理（ホイール操作）のため、要求型は提示層に置かなくなった |
 
 ## 選択矩形の幾何はコアが持つ（装飾は持たない）
 
@@ -197,14 +197,14 @@ marquee.Press(new EsPoint(100, 100), clickCount: 1);          // 押下（新規
 marquee.Move(new EsPoint(400, 300));                          // 移動（ドラッグ・ホバー）
 marquee.Release(new EsPoint(400, 300));                       // 解放（確定・キャンセル・クリック）
 var handled = marquee.KeyDown(EsKey.Right, cursorPosition: null); // キー（nudge・Escape・Enter。処理済みの真偽を返す）
-// ホイールは選択の判断ではないため本コアには無い（組み込み時に Feature.Marquee.Presenter の MarqueeWheelInterpreter が解釈する ）
+// ホイールは選択の判断ではないため本コアには無い（コントロール化を前提とした処理であり、ホスト（UI 層）がビューポートへ転送する）
 
 // 外部（ホスト）からの操作
 marquee.Options = options;                                    // 設定の反映（寸法・対話パラメータ）
 marquee.HighlightRect = highlightRect;                        // ハイライト矩形（ホストが与える実行時状態。選択矩形より優先される）
 marquee.SetSelection(rect);                                   // 選択の復元
 // UI 層が対話を終了する場合の後片付けも ResetSelection（対話状態の初期化）を使う
-// ビューポートの変化の通知はコントロール化の層（Feature.Marquee.Presenter の MarqueeViewportNotifier）が担う
+// 表示（パン・ズーム）の変化への追従もコントロール化を前提とした処理であり、ホストが再描画を要求する
 
 // 幾何（1 フレーム分。コアは穴あけ矩形・ハンドル・マーカーまでを返す）
 // 幾何の入力の組み立て（セッションの状態の写し）はコアが単一所有する（UI は描画領域のサイズを渡すだけ）

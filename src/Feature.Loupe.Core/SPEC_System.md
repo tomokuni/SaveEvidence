@@ -9,7 +9,7 @@
 | 目的 | ルーペの表示レイアウトと描画の幾何の解決を 1 箇所に集約し、UI ごとの実装差から切り離す |
 | 提供形態 | クラスライブラリ（`Feature.Loupe.Core.dll`） |
 | 想定利用者 | UI 実装（`LoupeControl.AvaloniaUI` / `LoupeControl.MewUI`）・それらを組み込むホストアプリケーション |
-| 汎用性 | 特定のアプリ・UI に依存しない。SaveEvidence のマルチ UI 対応における「コントロールの Core / UIBase / UI 分割」のパイロット実装であり、そのまま別プロジェクトへ独立できる |
+| 汎用性 | 特定のアプリ・UI に依存しない。SaveEvidence のマルチ UI 対応における「コントロールの Core / Presenter / UI 分割」のパイロット実装であり、そのまま別プロジェクトへ独立できる |
 
 ## 2. 技術スタック
 
@@ -34,7 +34,7 @@ graph LR
   B --> D[Platform.Core]
 ```
 
-層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
+層の全体像（Core / Presenter / UI）は [`src/README.md`](../README.md) を参照してください。
 
 - `Feature.Loupe.Core` は UI フレームワークへ依存しません。依存は `Platform.Core` のみです。
 - **提示（描画計画の解決）と外観は UI 側の共有層（`Feature.Loupe.Presenter` の `LoupePresenter` / `LoupeAppearance`）が単一所有します**（本プロジェクトは描画 API も描画の抽象も色も持ちません）。**描画は各 UI が自 UI の描画 API で行います**（`LoupeContextPainter` / `LoupeSkiaPainter`）。
@@ -119,7 +119,7 @@ sequenceDiagram
 | ラベルの余白・背景矩形・文字原点 | 描画層 `Feature.Loupe.Presenter` の `LoupeLabelPlan` |
 | 描画層と順序（`LoupeDrawLayer`） | 描画層 `Feature.Loupe.Presenter` の `LoupePresenter.ResolveDrawPlan` |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
-| 寸法値の物理ピクセル換算（枠線の太さ） | 描画層 `Feature.Loupe.Presenter` の `LoupeMetricsScaler`（描画計画の解決時に適用する） |
+| 寸法値の物理ピクセル換算（枠線の太さ） | 提示層 `Feature.Loupe.Presenter` の `LoupePresenter.ResolveDrawPlan`（換算の式は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
 | 区画数の切り上げ（切り出し領域の一辺） | `Drawing.LoupeDivMath.CeilDiv` |
 | 設定・環境値・拡大中心・位置オフセットの変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter） |
 | ログの書式とレベル、変化判定（同値なら出力しない） | `LoupeLogMessage`（コアが出力する定義。UI が出力する定義と書式は `Feature.Loupe.Presenter` が単一所有する） |

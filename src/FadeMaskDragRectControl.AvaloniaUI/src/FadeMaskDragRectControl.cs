@@ -107,12 +107,9 @@ public sealed class FadeMaskDragRectControl : Panel
         // 選択矩形の変更は、ルーペ画像上の破線を描き直すためにルーペの再生成を要求する
         // （選択矩形の描画自体と外側の装飾は選択矩形コントロールがセッションから直接読んで描画する）。
         _marquee.SelectionChanged += OnSelectionChanged;
-        _marquee.ViewportChanged += OnViewportChanged;
         _marquee.LoupePositionMoved += OnLoupePositionMoved;
         _marquee.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect);
         _marquee.CancelRequested += (_, _) => RaiseCancelRequested();
-        _marquee.ZoomRequested += (_, request) => RaiseZoomRequested(request);
-        _marquee.ScrollRequested += (_, request) => RaiseScrollRequested(request);
 
         // サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。
         // 操作ラベル・情報ラベルはアプリ固有の付加情報のため、本クラス（ホスト）が描画完了時に描く。
@@ -186,13 +183,6 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>Escape キーまたは RequestCancel によるキャンセル要求イベント。</summary>
     public event EventHandler? CancelRequested;
 
-    /// <summary>Ctrl+ホイールによるズーム要求イベント（方向と発生位置）。Crop 用。</summary>
-    public event EventHandler<WheelZoomRequest>? ZoomRequested;
-
-    /// <summary>通常ホイール（Ctrl なし）によるスクロール要求イベント（生の回転量・修飾キー・発生位置）。Crop 用。</summary>
-    /// <remarks>スクロール先（接続先 ScrollViewer・ズームビューポートのパン等）の決定はホストが実施する。</remarks>
-    public event EventHandler<WheelScrollRequest>? ScrollRequested;
-
     /// <summary>ルーペ中心の更新イベント（ドメイン座標。ホストの追加制御用フック）。</summary>
     public event EventHandler<FadeMaskDragRectPointEventArgs>? LoupePositionMoved;
 
@@ -237,19 +227,14 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>Marquee はフォーカス時に自身の OnKeyDown で矢印キーを処理するため、セッション開始時に呼び出す。</remarks>
     public void FocusMarquee() => _marquee.Focus();
 
-    /// <summary>祖先 ScrollViewer を Marquee へ明示注入する（スクロール・ズーム検知 + ホイール操作。Crop 用）。</summary>
-    /// <param name="scrollViewer">連携する ScrollViewer。null で連携解除。</param>
-    public void AttachScrollViewer(ScrollViewer? scrollViewer) => _marquee.AttachScrollViewer(scrollViewer);
-
-    /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を内包コントロールへ通知する。</summary>
+    /// <summary>表示の変化（パン・ズーム・表示サイズ）へ内包コントロールを追従させる。</summary>
     /// <remarks>
     /// ビューポート実装（ScrollViewer / RenderTransform ベース等）に依存せず、ホスト（上位 AP）が<br/>
-    /// ビューポート変化を検知した際に本メソッドで中継する（ScrollViewer 連携の <c>ScrollChanged</c> 経由の<br/>
-    /// <see cref="MarqueeControl.ViewportChanged"/> も本メソッドへ統合される）。<br/>
-    /// Marquee（選択矩形と外側の装飾）の再描画と、ルーペ表示位置の再計算を要求する。<br/>
-    /// 座標変換ポートは呼び出し毎に最新の表示状態を評価するため、再描画だけで追従する。
+    /// 表示の変化を検知した際に本メソッドで中継する。<br/>
+    /// 選択矩形（ドメイン座標）は表示の変化で不変のため、再描画とルーペ表示位置の再計算のみを要求する<br/>
+    /// （座標変換ポートは呼び出し毎に最新の表示状態を評価するため、再描画だけで追従する）。
     /// </remarks>
-    public void NotifyViewportChanged()
+    public void RefreshOverlay()
     {
         _marquee.InvalidateVisual();
         _loupeControl.RefreshPosition();
@@ -518,16 +503,6 @@ public sealed class FadeMaskDragRectControl : Panel
     private void OnSelectionChanged(object? sender, SelectionRectEventArgs e)
         => _loupeControl.RequestRender();
 
-    /// <summary>ビューポート変化（Marquee の ViewportChanged = ScrollViewer 連携）を内包コントロールへ反映する。</summary>
-    /// <param name="sender">イベント送信元（MarqueeControl）。</param>
-    /// <param name="e">選択矩形イベント（Rect はドメイン座標）。</param>
-    /// <remarks>
-    /// <see cref="NotifyViewportChanged"/> と同じ処理を実行する（ScrollViewer 連携とホスト通知を単一経路に統合）。<br/>
-    /// 選択矩形（ドメイン座標）はビューポート変化で不変のため、選択状態の再同期は行わず、<br/>
-    /// 再描画とルーペ表示位置の再計算のみを要求する。
-    /// </remarks>
-    private void OnViewportChanged(object? sender, SelectionRectEventArgs e) => NotifyViewportChanged();
-
     /// <summary>描画完了時にホスト固有の付加情報（操作ラベル・情報ラベル）を描画する。</summary>
     /// <param name="sender">イベント送信元（選択矩形コントロール）。</param>
     /// <param name="e">描画コンテキストと描画内容。</param>
@@ -650,16 +625,6 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>キャンセル要求イベントを発火する。</summary>
     private void RaiseCancelRequested()
         => CancelRequested?.Invoke(this, EventArgs.Empty);
-
-    /// <summary>ズーム要求イベントを発火する。</summary>
-    /// <param name="request">ズーム要求（方向と発生位置）。</param>
-    private void RaiseZoomRequested(WheelZoomRequest request)
-        => ZoomRequested?.Invoke(this, request);
-
-    /// <summary><see cref="ScrollRequested"/> を発火する。</summary>
-    /// <param name="request">スクロール要求（生の回転量と修飾キー）。</param>
-    private void RaiseScrollRequested(WheelScrollRequest request)
-        => ScrollRequested?.Invoke(this, request);
 
     /// <summary>ルーペ中心更新イベントを発火する。</summary>
     /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>

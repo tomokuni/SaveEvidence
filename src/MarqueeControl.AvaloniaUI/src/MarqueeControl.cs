@@ -62,21 +62,6 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>コアが要求する効果（フォーカス・再描画・カーソル形状・座標変換）の適用先。</summary>
     private readonly IMarqueeEffects _effects;
 
-    /// <summary>ホイール入力を解釈してビューポート操作の要求（ズーム / スクロール）を出す補助。</summary>
-    /// <remarks>
-    /// 本クラスはファサードへ接続し、ホイールの解釈（Ctrl = ズーム・連携先への適用）は<br/>
-    /// <c>Feature.Marquee.Presenter</c> が単一所有する<br/>
-    /// （本層は修飾キーの真偽と回転量を渡し、要求を公開イベントへ転送するだけ）。
-    /// </remarks>
-    private readonly MarqueeWheelInterpreter _wheel;
-
-    /// <summary>ビューポート（パン・ズーム）の変化を再通知する補助。</summary>
-    /// <remarks>
-    /// 「ビューポートの変化 = 現状態の再通知 + 再描画」というビューポート連携の規則は<br/>
-    /// <c>Feature.Marquee.Presenter</c> が単一所有する（本層は自 UI の公開イベントへ転送するだけ）。
-    /// </remarks>
-    private readonly MarqueeViewportNotifier _viewport;
-
     /// <summary>カーソルサービス（nudge 時のカーソル移動・表示切替。既定実装の解決は UI 側で行う）。</summary>
     private readonly ICursorService _cursor;
 
@@ -85,9 +70,6 @@ public sealed partial class MarqueeControl : Panel
 
     /// <summary>nudge 終了（ウィンドウ非アクティブ化）用に購読したウィンドウ。解除時に使用する。</summary>
     private WindowBase? _attachedWindow;
-
-    /// <summary>ズーム・スクロール検知用に購読した祖先 ScrollViewer。解除時に使用する。</summary>
-    private ScrollViewer? _attachedScrollViewer;
 
     // 標準カーソルは Lazy で遅延生成する（呼び出し時に ICursorFactory を解決する）。
     // static readonly フィールドとして型初期化時に new Cursor(...) すると、Avalonia ヘッドレス初期化前に
@@ -143,13 +125,6 @@ public sealed partial class MarqueeControl : Panel
         _marquee.Appearance = GetValue(AppearanceProperty);
         _marquee.HighlightRect = GetValue(HighlightRectProperty);
         _marquee.DisplayScaleScaling = GetValue(DisplayScaleScalingProperty);
-        // ホイール要求（ズーム / スクロール）の解釈はコントロール化の層が単一所有する（本層は自 UI の公開イベントへ転送するだけ）
-        _wheel = new MarqueeWheelInterpreter(_marquee);
-        _wheel.ZoomRequested += (_, request) => ZoomRequested?.Invoke(this, request);
-        _wheel.ScrollRequested += (_, request) => ScrollRequested?.Invoke(this, request);
-        // ビューポート変化の通知（再通知 + 再描画）もコントロール化の層が単一所有する
-        _viewport = new MarqueeViewportNotifier(_marquee, _effects);
-        _viewport.ViewportChanged += (_, snapshot) => ViewportChanged?.Invoke(this, ToRectArgs(snapshot));
 
         // 図形（装飾・ハンドル・始点マーカー）は専用の子コントロールが描く。
         // Panel は Render をシールするため自前で描けず、また子として持つことでラベル要素（後から追加する子）が
@@ -312,34 +287,6 @@ public sealed partial class MarqueeControl : Panel
     /// 上位（ホスト）は nudge 中かどうかを判断せず、この座標でルーペを更新するだけである。
     /// </remarks>
     public event EventHandler<MarqueePointEventArgs>? LoupePositionMoved;
-
-    /// <summary>ビューポート（ズーム・スクロール）が変化したときに発生するイベント。</summary>
-    /// <remarks>
-    /// 本コントロールが属する <see cref="ScrollViewer"/> の <c>ScrollChanged</c>（スクロール・ズーム・
-    /// 画像サイズ変更による Extent/Viewport 変化）を検知して発行する。<br/>
-    /// 選択矩形（ドメイン座標）はズーム・スクロールで不変だが、上位（暗転マスクの描画等）は<br/>
-    /// ビューポート座標で再描画する必要があるため、現在の選択矩形 + Snapshot を再通知する。<br/>
-    /// </remarks>
-    public event EventHandler<SelectionRectEventArgs>? ViewportChanged;
-
-    /// <summary>Ctrl+ホイールによるズーム要求イベント（方向と発生位置）。</summary>
-    /// <remarks>
-    /// <see cref="OnPointerWheelChanged"/> から発火する（転送先の有無に関わらず常に通知する）。<br/>
-    /// ズームの実処理（ズーム率管理・表示の変更）は上位 AP が実施する（本コントロールは要求のみ通知）。<br/>
-    /// 「Ctrl+ホイール = ズーム」という解釈はコントロール化の層（<c>Feature.Marquee.Presenter</c>）が単一所有する<br/>
-    /// （選択コントロールをビューポートへ組み込むときにだけ必要な規則のため）。<br/>
-    /// <see cref="WheelZoomRequest.Position"/> はズーム中心（カーソル位置）として使用できる。
-    /// </remarks>
-    public event EventHandler<WheelZoomRequest>? ZoomRequested;
-
-    /// <summary>通常ホイール（Ctrl なし）によるスクロール要求イベント（生の回転量・修飾キー・発生位置）。</summary>
-    /// <remarks>
-    /// <see cref="OnPointerWheelChanged"/> から発火する（<see cref="AttachScrollViewer"/> で連携 ScrollViewer を<br/>
-    /// 設定している場合はそちらをスクロールするため本イベントは発火しない）。<br/>
-    /// スクロール先（祖先 ScrollViewer・ズームビューポートのパン等）の決定は上位 AP が実施する。<br/>
-    /// 選択矩形はドメイン座標で不変のため、本操作は選択状態を変更しない（ビューの操作）。
-    /// </remarks>
-    public event EventHandler<WheelScrollRequest>? ScrollRequested;
 
     /// <summary>Enter キーによる確定要求イベント（選択確定後のみ発火。ドラッグ中は発火しない）。</summary>
     /// <remarks>

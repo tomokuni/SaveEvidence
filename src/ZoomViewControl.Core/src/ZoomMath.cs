@@ -18,13 +18,6 @@ namespace EsUtil.SaveEvidence.ZoomView;
 /// </remarks>
 internal static class ZoomMath
 {
-    /// <summary>ホイール 1 ノッチあたりの移動量（DIP）。</summary>
-    /// <remarks>
-    /// ホイール回転量からパン量への換算は両 UI で同じ値でなければならないため、本クラスが単一所有する。<br/>
-    /// UI 層は回転量（ノッチ数）に本値を乗じてから実効倍率で除し、コンテンツ座標の移動量を得る。
-    /// </remarks>
-    internal const double WheelScrollUnit = 48.0;
-
     /// <summary>画像未設定・ビューポート未確定時の Fit 実効倍率（%）のフォールバック。</summary>
     /// <remarks>
     /// Fit 実効倍率が確定できない場合でも表示・通知に使える値が必要なため、本値が単一所有する（従来 100%）。<br/>

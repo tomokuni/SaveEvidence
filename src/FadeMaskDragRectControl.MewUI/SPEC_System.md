@@ -124,7 +124,7 @@ classDiagram
         +ClearLoupe() void
         +RequestConfirm() void
         +RequestCancel() void
-        +NotifyViewportChanged() void
+        +RefreshOverlay() void
         -ApplyOptions() void
         -OnLoupePositionMoved(pos) void
     }

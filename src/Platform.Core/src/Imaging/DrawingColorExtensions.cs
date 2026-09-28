@@ -16,4 +16,14 @@ public static class DrawingColorExtensions
     /// <returns>アルファが 0 より大きい場合は true。アルファ 0（完全な透明）の場合は false。</returns>
     /// <remarks>判定に使うのはアルファのみである（RGB は描画に現れないため見ない）。</remarks>
     public static bool IsVisible(this DrawingColor color) => color.A > 0;
+
+    /// <summary>色を <c>#AARRGGBB</c> 形式の文字列へ整形する。</summary>
+    /// <param name="color">対象の色。</param>
+    /// <returns><c>#AARRGGBB</c> 形式の文字列（例: <c>#80FF0000</c>）。</returns>
+    /// <remarks>
+    /// ログへ色を出す用途に使う（外観の変更ログの書式を 1 か所に集約する）。<br/>
+    /// 標準の <c>ToString</c>（<c>Color [A=…, R=…, G=…, B=…]</c>）より短く、アルファを先頭に置くため<br/>
+    /// 「描くかどうか（アルファ 0 か）」の判別も同じ表記でできる。
+    /// </remarks>
+    public static string ToHexText(this DrawingColor color) => $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
 }

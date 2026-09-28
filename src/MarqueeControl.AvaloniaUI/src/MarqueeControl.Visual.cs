@@ -1,28 +1,27 @@
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Platform.Core.Geometry;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 
 /// <summary>
-/// MarqueeControl のビジュアルツリー接続・ScrollViewer 連携・描画処理（partial 分割）。
+/// MarqueeControl のビジュアルツリー接続と描画処理（partial 分割）。
 /// </summary>
 /// <remarks>
 /// ビジュアルツリー接続時に TopLevel のキーイベントを購読し、切断時に解除する。<br/>
-/// 連携 ScrollViewer（スクロール・ズーム検知）は明示注入のみで設定する（暗黙の祖先探索は行わない）。<br/>
-/// 描画は提示層が解決した描画計画（<see cref="MarqueeDrawPlan"/>）を自 UI の描画面へ写し、座標変換（ドメイン → DIP）はファサードの座標変換ポートに問い合わせる
-/// （描画はコアが解決した描画内容と <see cref="Options"/> を読むだけで、判断を持たない）。
+/// 描画は提示層が解決した描画計画（<see cref="MarqueeDrawPlan"/>）を自 UI の描画面へ写し、座標変換（ドメイン → DIP）は座標変換ポートに問い合わせる
+/// （描画は提示層が解決した計画を読むだけで、判断を持たない）。
 /// </remarks>
 public sealed partial class MarqueeControl
 {
     // ====================================================================
-    // ビジュアルツリー接続・切断（ScrollViewer 購読）
+    // ビジュアルツリー接続・切断
     // ====================================================================
 
     /// <summary>ビジュアルツリー接続時に、属する TopLevel のキーイベントを購読する。</summary>
@@ -35,8 +34,6 @@ public sealed partial class MarqueeControl
     /// トンネルはルートから下降するため、祖先より先に受け取って処理済みにできる。
     /// これにより「コントロール自身のハンドラ（フォーカス時）と TopLevel 購読（フォーカス非依存）」の
     /// 2 経路を持たずに済み、同一キーの二重処理を防ぐ仕組みが不要になる（配送は 1 経路）。<br/>
-    /// 連携 ScrollViewer（スクロール・ズーム検知）は <see cref="AttachScrollViewer"/> による明示注入のみで設定する<br/>
-    /// （暗黙の祖先探索は行わない。ホストが連携対象を明示的に指定する）。
     /// </remarks>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -59,7 +56,7 @@ public sealed partial class MarqueeControl
         }
     }
 
-    /// <summary>ビジュアルツリー切断時に TopLevel のキーイベントと ScrollViewer のスクロール購読を解除する。</summary>
+    /// <summary>ビジュアルツリー切断時に TopLevel のキーイベントの購読を解除する。</summary>
     /// <param name="e">ビジュアルツリー切断イベント。</param>
     /// <remarks>
     /// ウィンドウクローズ・Crop 終了等でビジュアルツリーから外れる際に、キーイベント購読を解除し、<br/>
@@ -78,75 +75,10 @@ public sealed partial class MarqueeControl
             window.Deactivated -= OnWindowDeactivated;
             _attachedWindow = null;
         }
-        if (_attachedScrollViewer is { } scrollViewer)
-        {
-            scrollViewer.ScrollChanged -= OnScrollViewerChanged;
-            _attachedScrollViewer = null;
-        }
         // ビジュアルツリーからの切断は UI のライフサイクルであるため、コアへは「対話状態の初期化」だけを要求する
         // （選択の破棄と、nudge 中だった場合のカーソル再表示はセッションが単一所有する）。
         _marquee.ResetSelection();
     }
-
-    /// <summary>連携する ScrollViewer を明示的に設定する（スクロール・ズーム検知 + ホイール操作）。</summary>
-    /// <param name="scrollViewer">連携する ScrollViewer。null で解除。</param>
-    /// <remarks>
-    /// ホスト（上位 AP）が Crop モード等でプレビューの ScrollViewer を明示的に注入する。<br/>
-    /// - <c>ScrollChanged</c>（スクロール・ズーム・画像サイズ変更）を購読し、<see cref="ViewportChanged"/> を発行する<br/>
-    ///   （上位の暗転マスク等がビューポート座標で再描画するため・イベント駆動・ポーリングなし）。<br/>
-    /// - 本コントロール上のマウスホイールによるスクロールの適用先として登録する<br/>
-    ///   （回転量 → 移動量の換算と適用はコントロール化の層が単一所有する）。<br/>
-    /// 祖先探索は行わない（明示注入が唯一の連携方式・暗黙の依存を排除）。
-    /// </remarks>
-    public void AttachScrollViewer(ScrollViewer? scrollViewer)
-    {
-        if (ReferenceEquals(_attachedScrollViewer, scrollViewer)) return;
-        if (_attachedScrollViewer is { } old)
-        {
-            old.ScrollChanged -= OnScrollViewerChanged;
-        }
-        _attachedScrollViewer = scrollViewer;
-        // ホイールのスクロール適用先も同じ連携で切り替える（null で解除）
-        _wheel.AttachScrollTarget(scrollViewer is null ? null : new ScrollViewerTarget(scrollViewer));
-        if (scrollViewer is not null)
-        {
-            scrollViewer.ScrollChanged += OnScrollViewerChanged;
-        }
-    }
-
-    /// <summary>連携 ScrollViewer をスクロールの適用先（<see cref="IWheelScrollTarget"/>）へ適合させる。</summary>
-    /// <remarks>UI 固有の型（<see cref="ScrollViewer"/>）をここで吸収し、コア層へは抽象だけを渡す。</remarks>
-    private sealed class ScrollViewerTarget(ScrollViewer scrollViewer) : IWheelScrollTarget
-    {
-        /// <summary>移動量（DIP）だけスクロール位置を更新する。</summary>
-        /// <param name="delta">移動量（横・縦。回転量からの換算はコアの規則が済ませている）。</param>
-        public void ScrollBy(EsVector delta)
-            => scrollViewer.Offset += delta.ToAvaloniaVector();
-    }
-
-    /// <summary>マウスホイールでズーム・スクロールを操作する（解釈はコントロール化の層が単一所有する）。</summary>
-    /// <param name="e">ホイールイベント。</param>
-    /// <remarks>
-    /// - Ctrl + ホイール: <see cref="ZoomRequested"/> を発火する（転送先の有無に関わらず常に通知する）。<br/>
-    /// - 通常ホイール: 連携 ScrollViewer（<see cref="AttachScrollViewer"/>）があればそれをスクロールし、<br/>
-    ///   無ければ <see cref="ScrollRequested"/> で上位 AP へ回転量を通知する（ズームビューポートのパン等）。<br/>
-    /// どちらの振り分けも <see cref="MarqueeWheelInterpreter.Handle"/> が単一所有する（本層は修飾キーと回転量を渡すだけ）。
-    /// </remarks>
-    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
-    {
-        _wheel.Handle(
-            (e.KeyModifiers & KeyModifiers.Control) != 0,
-            (e.KeyModifiers & KeyModifiers.Shift) != 0,
-            e.Delta.X, e.Delta.Y, e.GetPosition(this).ToEsPoint());
-        e.Handled = true;
-    }
-
-    /// <summary>祖先 ScrollViewer のスクロール・ズーム変化を検知し、再描画と <see cref="ViewportChanged"/> を発行する。</summary>
-    /// <param name="sender">イベント送信元（ScrollViewer）。</param>
-    /// <param name="e">スクロール変化イベント。</param>
-    /// <remarks>ビューポートの変化は選択矩形（ドメイン座標）を変えないため、再通知と再描画のみを要求する。</remarks>
-    private void OnScrollViewerChanged(object? sender, ScrollChangedEventArgs e)
-        => _viewport.Notify();
 
     /// <summary>ウィンドウが非アクティブ化されたときに nudge を終了する。</summary>
     /// <param name="sender">イベント送信元（ウィンドウ）。</param>

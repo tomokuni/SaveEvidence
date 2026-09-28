@@ -310,37 +310,6 @@ public class MarqueeControlTests
     }
 
     // ====================================================================
-    // NotifyViewportChanged
-    // ====================================================================
-
-    [Fact]
-    public void NotifyViewportChanged_選択矩形とスナップショットを通知する()
-    {
-        var control = CreateControl(new CursorServiceSpy());
-        SelectionRectEventArgs? raised = null;
-        control.ViewportChanged += (_, e) => raised = e;
-
-        control.SetSelection(new EsRect(10, 10, 50, 40));
-        control.NotifyViewportChanged();
-
-        Assert.NotNull(raised);
-        Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Rect);
-        Assert.Equal(MarqueeInteractionState.Selected, raised.Snapshot.State);
-    }
-
-    [Fact]
-    public void NotifyViewportChanged_選択なしでも通知する()
-    {
-        var control = CreateControl(new CursorServiceSpy());
-        var raised = false;
-        control.ViewportChanged += (_, _) => raised = true;
-
-        control.NotifyViewportChanged();
-
-        Assert.True(raised);
-    }
-
-    // ====================================================================
     // ログ
     // ====================================================================
 
@@ -390,14 +359,29 @@ public class MarqueeControlTests
     }
 
     [Fact]
-    public void Log_外観のみの変更では設定変更ログを出力しない()
+    public void Log_外観の変更は変化した項目だけを出力する()
     {
         var control = CreateControl(new CursorServiceSpy());
         var logger = new RecordingLogger();
         control.Log = logger;
 
-        // 外観（色・サイズ）の変更は対話パラメータを変えないため、設定変更ログは流れない
+        // 外観を保持するのは提示層であり、変更の記録も提示層が行う（コアは外観を知らない）。
+        // 変化した項目だけを出力する（外観の再適用でログが溢れない）。
         control.Appearance = control.Appearance with { HandleBorderColor = DrawingColor.Red };
+
+        Assert.Equal(
+            "[Feature.Marquee.Presenter] Setting: HandleBorderColor #FFA9A9A9 → #FFFF0000",
+            Assert.Single(logger.Messages));
+    }
+
+    [Fact]
+    public void Log_外観の同値再設定では出力しない()
+    {
+        var control = CreateControl(new CursorServiceSpy());
+        var logger = new RecordingLogger();
+        control.Log = logger;
+
+        control.Appearance = control.Appearance with { };
 
         Assert.Empty(logger.Messages);
     }

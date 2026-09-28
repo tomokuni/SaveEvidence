@@ -85,7 +85,7 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | `SetSelection` / `ClearSelection` | 選択状態の外部設定・クリア |
 | `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe` | ルーペの制御 |
 | `RequestConfirm` / `RequestCancel` | Enter / Escape 相当の確定・キャンセル要求 |
-| `NotifyViewportChanged` / `InvalidateOverlay` | ビューポート変化の通知・暗転マスクの再描画要求 |
+| `RefreshOverlay` / `InvalidateOverlay` | 表示の変化の通知・暗転マスクの再描画要求 |
 
 ## イベント
 
@@ -100,7 +100,7 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | ルーペの位置決め | ルーペコントロール自身が座標変換ポートから算出 | **本コントロールが `ResolveLayout`（コアのファサード）で配置**（MewUI のルーペは位置を持たない） |
 | サイズラベル・操作ラベル・情報ラベル | サイズラベルはコントロールがテキスト要素として表示し、操作・情報ラベルはホスト（`FadeMaskDragRectControl`）が `Options.Labels` の外観で描く（文言は `CaptureLabelTexts` が与える） | 同左（コアの同じ設定値を使うため見た目も一致する） |
 | ルーペ画像上の選択矩形破線 | 描画完了イベント経由で描画 | 同じコアの破線幾何を使い、ルーペの `Rendered` で同一のキャンバスへ描画する（見た目は一致） |
-| `ScrollViewer` の自動連携 | `AttachScrollViewer` で購読 | ホストが `NotifyViewportChanged()` を呼ぶ |
+| ホイール操作 | **扱わない**（ホストが購読） | **扱わない**（ホストが `MouseWheel` を購読） |
 | ログ | `ILogger` を注入して内包コントロールへ伝搬 | `Log` プロパティで同様に伝搬する（書式は同一） |
 
 ## テスト

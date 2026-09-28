@@ -273,7 +273,7 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペ上端中央に表示します。実寸 → 配置矩形の写像（内側余白 4 / 1 DIP・上端中央の中央寄せ）は描画層（`Feature.Loupe.Presenter` の `LoupeLabelPlan`）が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Appearance`）が単一所有します。**表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
-寸法項目（`Appearance.BorderThickness`）は DIP の値であり、描画計画の解決時に**物理ピクセルへ換算されます**（`Feature.Loupe.Presenter` の `LoupeMetricsScaler`。`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
+寸法項目（`Appearance.BorderThickness`）は DIP の値であり、描画計画の解決時に**物理ピクセルへ換算されます**（`Platform.Core` の `DpiScaler.ScaleToPixel`。呼び出すのは `Feature.Loupe.Presenter` の `LoupePresenter`。`DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 

@@ -1,15 +1,16 @@
 # Feature.Marquee.Presenter システム仕様書
 
-`Feature.Marquee.Presenter`（`MarqueeControl` をコントロールとして成り立たせる UI 非依存層）の構造・依存・例外処理・コンポーネント構成を記載します。外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
+`Feature.Marquee.Presenter`（`MarqueeControl` の見た目を定めるコントロール化を前提としない UI 非依存層）の構造・依存・例外処理・コンポーネント構成を記載します。外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
 
 ## 1. システム概要
 
 | 項目 | 内容 |
 | --- | --- |
-| 目的 | 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否）を 1 箇所に集約し、組込み先がある場合にだけ必要な規則（ホイール・ビューポート）を UI をまたいで共有する |
+| 目的 | 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否）を 1 箇所に集約する |
 | 提供形態 | クラスライブラリ（`Feature.Marquee.Presenter.dll`） |
 | 想定利用者 | UI 実装（`MarqueeControl.AvaloniaUI` / `MarqueeControl.MewUI`）・それらを組み込むホストアプリケーション・独自コントロールの作者 |
-| 汎用性 | 特定のアプリ・UI に依存しない。寸法・対話パラメータはコアが、外観と描画計画は本層が単一所有する |
+| 汎用性 | 特定のアプリ・UI・コントロールに依存しない。寸法・対話パラメータはコアが、外観と描画計画は本層が単一所有する |
+| 前提としないもの | **コントロール化**（ホイール操作・ビューポート連携・組み込み先の概念は UI 層が持つ） |
 
 ## 2. 技術スタック
 
@@ -31,7 +32,8 @@
 ```text
 UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画（自 UI の API）・ラベル要素の配置・ホスト結線
-    ├──> Feature.Marquee.Presenter ← 本プロジェクト   提示（描画計画の解決）＋ 外観 ＋ 組み込み規則
+  ホイール操作とビューポートの変化の追従（コントロール化を前提とした処理）
+    ├──> Feature.Marquee.Presenter ← 本プロジェクト   提示（描画計画の解決）＋ 外観
     └──> Feature.Marquee.Core   何を計算するか（状態・判断・幾何）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ コアは本層を参照しない（本層がコアの幾何（`MarqueeGeometry`）を使う向きだけ）。
@@ -105,13 +107,7 @@ flowchart TD
 | `src/MarqueeLabelPlan.cs` | `MarqueeLabelPlan` | public static | 実寸 → ラベル要素の配置指示の写像 |
 | `src/MarqueeLabelPlacement.cs` | `MarqueeLabelPlacement` | public readonly record struct | ラベル要素の配置指示 |
 | `src/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・アライン・クランプ領域） |
-| `src/MarqueeHostLabelRenderer.cs` | `MarqueeHostLabelRenderer` | public static | ホスト付加情報ラベルの体裁の適用（背景 → 文字の順序・内側余白） |
-| `src/MarqueeWheelInterpreter.cs` | `MarqueeWheelInterpreter` | public sealed | ホイール入力の解釈（Ctrl = ズーム / 通常 = スクロール）・連携先への適用・要求の通知 |
-| `src/WheelRequest.cs` | `WheelZoomRequest` / `WheelScrollRequest` | public readonly record struct | 要求の値（方向・回転量・修飾キー・発生位置） |
-| `src/WheelRequest.cs` | `IWheelScrollTarget` | public interface | スクロールの適用先 |
-| `src/WheelRequest.cs` | `WheelScrollDelta` | internal static | 回転量 → 移動量（DIP）の換算 |
-| `src/MarqueeWheelLogMessage.cs` | `MarqueeWheelLogMessage` | internal static partial | ズーム要求のログ定義（書式を UI 間で揃える） |
-| `src/MarqueeViewportNotifier.cs` | `MarqueeViewportNotifier` | public sealed | ビューポート変化の再通知（スナップショット + 再描画） |
+| `src/MarqueePresenterLogMessage.cs` | `MarqueePresenterLogMessage` | internal static partial | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
 
@@ -127,11 +123,7 @@ flowchart TD
 | サイズラベルの文言（書式・表示スケール） | `MarqueeLabelTexts.ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
 | カーソル座標ラベルの文言と基準点（カーソル + 8.0 DIP） | `MarqueeLabelTexts.ResolveCoordLabelText` |
 | ラベルの体裁（背景 = 実寸 + 内側余白 × 2・アラインの適用・クランプ・並び順） | `MarqueeLabelPlan` |
-| 付加情報ラベルの体裁（背景 → 文字の順序・内側余白） | `MarqueeHostLabelRenderer` |
-| ホイールの解釈（Ctrl = ズーム・それ以外 = スクロール） | `MarqueeWheelInterpreter.Handle` |
-| 回転量 → 移動量の換算（1 ノッチ = 48 DIP・Shift で横） | `WheelScrollDelta.Offset` |
-| ズーム要求のログの書式とレベル | `MarqueeWheelLogMessage` |
-| ビューポート変化の再通知（スナップショット + 再描画） | `MarqueeViewportNotifier.Notify` |
+| 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） | `MarqueePresenterLogMessage` |
 
 ## 6. 例外処理ポリシー
 
@@ -139,16 +131,13 @@ flowchart TD
 | --- | --- |
 | `ResolveDrawPlan` の `measureText` が null | `ArgumentNullException`（呼び出し側の実装誤り） |
 | `MarqueeLabelPlan.Resolve` の `appearance` / `measureText` が null | `ArgumentNullException` |
-| `MarqueeHostLabelRenderer.Draw` の `canvas` / `text` が null | `ArgumentNullException` |
-| `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` のコンストラクタ引数が null | `ArgumentNullException` |
 | 表示可否が無効な項目 | 空のコレクション / null として返す（例外にしない。UI 層は層を見るだけでよい） |
 | サイズラベルの文言プロバイダが null または空文字を返す | 自動生成へフォールバックする（例外にしない） |
-| ホイール要求の購読者がいない | 何も起きない（例外にしない） |
 
 ## 7. 可視性ポリシー
 
-- UI 層とホストが使う面（`MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueeTextPlacement` / `MarqueeHostLabelRenderer` / ホイール関連の公開型）は `public` とします。
-- **本層の内部手順は `internal`** とします（`MarqueeDecorationGeometry` / `MarqueeLabelTexts` / `WheelScrollDelta` / `MarqueeWheelLogMessage`）。UI 層は解決済みの値（`MarqueeDrawPlan` の矩形・`Labels`）を受け取るため、これらを参照する必要がありません。単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Presenter.Tests`）で公開します。
+- UI 層とホストが使う面（`MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueeTextPlacement`）は `public` とします。
+- **本層の内部手順は `internal`** とします（`MarqueeDecorationGeometry` / `MarqueeLabelTexts` / `MarqueePresenterLogMessage`）。UI 層は解決済みの値（`MarqueeDrawPlan` の矩形・`Labels`）を受け取るため、これらを参照する必要がありません。単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Presenter.Tests`）で公開します。
 - **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
 - `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。
 
@@ -158,7 +147,7 @@ flowchart TD
 | --- | --- |
 | UI 初期化不要 | 描画計画の値（矩形・層・配置・文言）は UI 型を持たないため `[Fact]` / `[Theory]` で並列実行する |
 | 画素の検証 | MewUI（Skia）のテストが担う（`MarqueeControl.MewUI.Tests`）。本層は描画 API を持たないため画素テストを持たない |
-| 単位 | 描画計画の値・外観・装飾矩形の計算・ラベルの写像・付加情報ラベルの体裁・ホイールの解釈・ビューポート通知 |
+| 単位 | 描画計画の値・外観・装飾矩形の計算・ラベルの写像・外観の変更ログ |
 | 配置 | `tests/`（フォルダ分割なし。ファイル名は対象型 + `.Tests.cs`） |
 | 件数 | `dotnet test <csproj> --list-tests` のクラス別集計で確認する（出力は行が折り返され、並列実行では行が混ざるため、行単位で対応付けてはいけない） |
 
@@ -176,8 +165,9 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 | 色の型 | UI 非依存の `System.Drawing.Color` とし、各 UI の色型への変換は各 UI の描画境界で行う |
 | 描画 API の抽象を持たない | UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれない（WinUI3 / WinForms 等へ展開する場合に抽象が肥大する）。本層は描画計画を返し、描画は各 UI が自 UI の API で行う |
 | 実寸測定 | 描画 API 依存のため `Func<string, double, EsSize>` を UI 層から受け取る（本層は測定 API を持たない） |
-| 付加情報ラベルの配置 | `MarqueeHostLabelRenderer`（文言と基準点はホストが与える） |
-| 組み込み規則の分離 | ホイールの解釈とビューポート変化の再通知は「組み込み先が存在して初めて意味を持つ」ため、コアに置かず本層が単一所有する |
+| 付加情報ラベルの配置 | コントロール固有の概念であるため本層に置かない（複合コントロールの `FadeMaskDragRectControl.UIBase` が持つ） |
+| 組み込み規則を置かない | ホイールの解釈・ビューポート連携は「組み込み先が存在して初めて意味を持つ」（コントロール化を前提とした処理）ため、本層に置かず UI 層（ホスト）が持つ |
+| 設定変更ログの所有者 | 値を所有する主体が記録する（コアの設定はコア、本層の外観は本層、UI の値は各 UI）。接頭辞から伝搬を追える |
 | 外観の拡張点 | `MarqueePresenter` を `sealed` にしない（`Appearance` の差し替えと `ResolveDrawPlan` の上書きで独自の見た目を提供できることが役割） |
 
 ## 10. ライセンス

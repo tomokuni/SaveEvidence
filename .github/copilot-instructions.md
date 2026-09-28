@@ -230,13 +230,15 @@
 ## このワークスペース/ソリューションに固有の指示
 
 ### プロジェクト構成
-- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / MarqueeControl / LoupeControl / CaptureSessionControl.AvaloniaUI / LineDetection）と、コントロール化に必要な処理と描画手順を単一所有する UI 非依存層（Feature.Marquee.Presenter / Feature.Loupe.Presenter）、プラットフォーム層（Platform.AvaloniaUI / Platform.Core / Platform.MewUI / Platform.Native）、アプリ本体（`app.AvaloniaUI` / `app.MewUI` / `app.Core`）から構成される。
-- コントロールの層は **Core（何を描くか・判断）/ UIBase（コントロール化に必要な処理＋どう描くか）/ UI（フレームワーク固有）** の 3 層で、依存は `UI → UIBase → Core → Platform.Core` の一方向（コアは UIBase を参照しない）。層の正典は `src/README.md`。
+- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / MarqueeControl / LoupeControl / CaptureSessionControl.AvaloniaUI / LineDetection）と、見た目（描画計画と外観）を単一所有する**コントロール化を前提としない UI 非依存層**（Feature.Marquee.Presenter / Feature.Loupe.Presenter）、プラットフォーム層（Platform.AvaloniaUI / Platform.Core / Platform.MewUI / Platform.Native）、アプリ本体（`app.AvaloniaUI` / `app.MewUI` / `app.Core`）から構成される。
+- コントロールの層は **Core（何を描くか・判断）/ Presenter（提示＝描画計画と外観）/ UI（フレームワーク固有の描画と配線）** の 3 層で、依存は `UI → Presenter → Core → Platform.Core` の一方向（コアは Presenter を参照しない）。層の正典は `src/README.md`。
+- **コントロール化を前提とした処理（ホイール操作・ビューポートの変化の追従・組み込み先の概念）は UI 層が持ちます**（提示層とコアはコントロールに依存しません）。
 - プラットフォーム層は `EsUtil.Platform.*` をルート名前空間とし、`Platform.AvaloniaUI` / `Platform.MewUI` が各 UI のアダプタ、`Platform.Core` が UI 非依存の抽象・値型、`Platform.Native` が Win32 / NoOp 実装と既定実装ファクトリ（`PlatformFactory` クラス）を担う。
 - `app.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
 - `MarqueeControl` は選択矩形に加えて「選択矩形の外側に描く装飾」（暗転マスク・穴あけ枠・ハイライト・内側の塗り）を描画する。外観と表示ポリシーは提示層（`Feature.Marquee.Presenter`）の `MarqueeAppearance` が単一所有し、装飾の矩形と描画順の判断は同層の `MarqueePresenter` が持つ（コアは穴あけ矩形という幾何だけを返す）。
-- **ラベルは Core が文言と描画順を決め、UI 層がテキスト要素を配置する**（サイズラベル・カーソル座標ラベル・Loupe 中心座標ラベル）。UIBase（`Feature.Marquee.Presenter` の `MarqueeLabelPlan` / `Feature.Loupe.Presenter` の `LoupeLabelPlan`）が「実寸 → 要素の配置矩形」の写像を単一所有し、UI は `Border` + `TextBlock` を子として置く。**ラベルは常に最上位**（`*DrawLayer` の最後の層であり、子要素は親の描画より後に描かれる）。
-- **操作・情報ラベル（確定方法・ウィンドウタイトル等）はアプリ固有の付加情報**であり選択コントロールの概念ではない。Core は関知せず、ホストが文言生成（`CaptureLabelTexts`）と描画を行う。
+- **ラベルは提示層が文言と描画順を決め、UI 層がテキスト要素を配置する**（サイズラベル・カーソル座標ラベル・Loupe 中心座標ラベル）。提示層（`Feature.Marquee.Presenter` の `MarqueeLabelPlan` / `Feature.Loupe.Presenter` の `LoupeLabelPlan`）が「実寸 → 要素の配置矩形」の写像を単一所有し、UI は `Border` + `TextBlock` を子として置く。**ラベルは常に最上位**（`*DrawLayer` の最後の層であり、子要素は親の描画より後に描かれる）。
+- **付加情報ラベル（操作・情報ラベル）はコントロール固有の付加情報**であり選択コントロールの概念ではない。Core は関知せず、ホストが文言生成（`CaptureLabelTexts`）と描画を行う（体裁は `FadeMaskDragRectControl.UIBase` の `MarqueeHostLabelRenderer` が単一所有する）。
+- **ログは値を所有する主体が記録する**（コアの設定はコア、提示層の外観は提示層、拡大元画像など UI の値は各 UI）。接頭辞（`[Feature.Marquee.Core]` / `[Feature.Marquee.Presenter]` / `[LoupeControl.AvaloniaUI]`）から伝搬を追える。
 - `Decoration` 系の型はコントロールではなく装飾のコアである（暗転オーバーレイの独立コントロールは `MarqueeControl` へ統合済み。別プロジェクトは持たず、`Feature.Marquee.Core` に同居する）。
 
 ### ドキュメント規約
