@@ -71,11 +71,6 @@ public class MarqueePresenter
     /// </remarks>
     public MarqueeAppearance Appearance { get; set; } = MarqueeAppearance.Default;
 
-    /// <summary>コアのファサードを取得する（本層と同じアセンブリからのみ参照する）。</summary>
-    /// <value>内部に保持するコアのファサード。</value>
-    /// <remarks>入力の転送を本層が行うための参照である（UI 層へは公開しない）。</remarks>
-    internal MarqueeFacade Core => _core;
-
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
     /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
     /// <remarks>0 以下を倍率と同値として扱う規則は <c>Marquee.Limits.ResolveDisplayScale</c> が単一所有する。</remarks>

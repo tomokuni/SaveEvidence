@@ -6,17 +6,10 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| 目的 | 「どう描くか（描画 API の呼び出し手順）」と「他のコントロールへ組み込むときにだけ必要な規則」を 1 箇所へ集約し、UI の追加・描画方式の変更を描画ポートの実装だけで済ませる |
+| 目的 | 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否）を 1 箇所に集約し、組込み先がある場合にだけ必要な規則（ホイール・ビューポート）を UI をまたいで共有する |
 | 提供形態 | クラスライブラリ（`Feature.Marquee.Presenter.dll`） |
-| 想定利用者 | UI 実装（`MarqueeControl.AvaloniaUI` / `MarqueeControl.MewUI`）・独自コントロールの実装者 |
-| 汎用性 | 特定のアプリ・UI に依存しない。寸法・表示可否・文言はコアの契約が、色は本層の `MarqueePaint` が単一所有する |
-
-本層は 2 つの関心事を持ちます。どちらも「単体で使う `Marquee` だけでは決まらない」ため、コア（`Feature.Marquee.Core`）には置きません。
-
-| 関心事 | 内容 | 代表型 |
-| --- | --- | --- |
-| **描画手順** | 色（描画にだけ必要な設定）と、層の順序に従って描画ポート（`IEsCanvas`）を呼ぶ手順、実寸 → ラベル要素の写像 | `MarqueePaint` / `MarqueeRenderer` / `MarqueeOuterRenderer` / `MarqueeInnerRenderer` / `MarqueeLabelPlan` / `MarqueeHostLabelRenderer`（写し方の基底は本層の `MarqueeRendererBase`） |
-| **組み込み規則** | ホイール入力の解釈・連携先へのスクロール適用・ビューポート変化の再通知 | `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` / `WheelZoomRequest` / `WheelScrollRequest` / `IWheelScrollTarget` |
+| 想定利用者 | UI 実装（`MarqueeControl.AvaloniaUI` / `MarqueeControl.MewUI`）・それらを組み込むホストアプリケーション・独自コントロールの作者 |
+| 汎用性 | 特定のアプリ・UI に依存しない。寸法・対話パラメータはコアが、外観と描画計画は本層が単一所有する |
 
 ## 2. 技術スタック
 
@@ -24,236 +17,168 @@
 | --- | --- |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `EsUtil.Feature.Marquee.Presenter` |
-| ログ | `Microsoft.Extensions.Logging.Abstractions`（LoggerMessage ソース生成・`ILogger` 拡張メソッド） |
+| ルート名前空間 | `EsUtil.Feature.Marquee.Presenter`（フォルダ分割なし。1 ファイル 1 型） |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
-| テスト | xUnit v3（UI 初期化不要。描画は Skia のビットマップ上で画素検証する） |
+| テスト | xUnit v3（UI 初期化不要。`InternalsVisibleTo` で `internal` を検証する） |
+| 依存 | UI フレームワークを一切参照しない。直接依存は `Feature.Marquee.Core`・`Platform.Core`・`Common`（`IEsCanvas`。`MarqueeHostLabelRenderer` のみが使う）・`Microsoft.Extensions.Logging.Abstractions` |
 
 ## 3. アーキテクチャ
 
 ### 3.1 依存方向
 
-層の全体像（Core / UIBase / UI）は [`src/README.md`](../README.md) を参照してください。
+層の全体像（Core / Presenter / UI）は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
-  入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
-    ├──> Feature.Marquee.Presenter ← 本プロジェクト   どう描くか（色・描画手順）＋ 組み込み先がある場合にだけ必要な規則
-    └──> Feature.Marquee.Core   何を描くか + 判断（状態・値・純粋計算・コア⇔UI の契約）
-           ├──> Common（IEsCanvas）
-           └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService・ScrollMath）
-※ コアは本層を参照しない（本層がコアの描画内容（`MarqueeDrawContent`）を使う向きだけ）。
+  入力の受付・効果の適用・通知の転送・描画（自 UI の API）・ラベル要素の配置・ホスト結線
+    ├──> Feature.Marquee.Presenter ← 本プロジェクト   提示（描画計画の解決）＋ 外観 ＋ 組み込み規則
+    └──> Feature.Marquee.Core   何を計算するか（状態・判断・幾何）
+           └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
+※ コアは本層を参照しない（本層がコアの幾何（`MarqueeGeometry`）を使う向きだけ）。
 ```
 
-- 上位層は下位層のみを参照します（逆参照なし）。
-- 本層は UI フレームワークを参照しません（描画 API は `IEsCanvas` 経由。ホイールは修飾キーの真偽と回転量だけを受け取る）。
-- コアは本層を参照しません（**コアは「何を描くか」、本層は「どう描くか」**）。
+- 本層は UI フレームワークを参照しません（Avalonia / MewUI の型を持たない）。
+- **描画 API の抽象を持ちません**。UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれない（WinUI3 / WinForms 等へ展開する場合に抽象が肥大する）ため、本層は描画計画というデータを返し、描画は各 UI が自 UI の API で行います。
+- `Common`（`IEsCanvas`）を参照するのは `MarqueeHostLabelRenderer` のみです（ホストが描く付加情報ラベルの体裁を UI 非依存のまま適用するため）。**コア（`Feature.Marquee.Core`）は `Common` を参照しません**。
 
-### 3.2 描画のデータフロー（どこから描画されるか）
+### 3.2 データフロー（入力 → 描画）
 
 ```mermaid
 sequenceDiagram
-    participant UI as UI アダプタ（コントロール）
-    participant M as Marquee（コアのファサード）
-    participant R as MarqueeRenderer（本層）
-    participant C as IEsCanvas（描画ポート）
+    participant UI as UI 層（コントロール）
+    participant P as MarqueePresenter（本層）
+    participant M as Marquee（コア）
+    participant D as MarqueeDrawPlan（本層）
     participant H as ホスト
 
-    UI->>M: CreateRequest(描画領域のサイズ) / ResolveContent(request)
-    M-->>UI: MarqueeDrawContent（データ＋層の順序）
-    UI->>R: DrawShapes(canvas, content)
-    R->>R: Layers の順に装飾・ハンドル・マーカーを選択
-    R->>C: FillRect / FillRects / StrokeRect / DrawLine（色は Paint から引く）
-    R-->>UI: （ラベルは描かない）
-    UI->>UI: MarqueeLabelPlan.Resolve → ラベル要素を配置
-    UI->>H: Rendered（描画内容を渡す。ホストが付加情報を描く）
+    UI->>P: Press / Move / Release / KeyDown（ドメイン座標）
+    P->>M: 入力の転送
+    M-->>P: 効果（IMarqueeEffects 経由）・通知
+    P-->>UI: Notified を転送
+    UI->>H: 公開イベント
+    UI->>P: ResolveDrawPlan(描画領域のサイズ, 実寸測定)
+    P->>M: CreateRequest(描画領域のサイズ)
+    M-->>P: MarqueeRenderRequest
+    P->>M: ResolveGeometry(request)
+    M-->>P: MarqueeGeometry（穴あけ矩形・ハンドル・マーカー・マウス位置）
+    P->>P: 装飾矩形の導出・ラベルの文言と配置・層の順序・外観の解決
+    P-->>D: 構築
+    P-->>UI: MarqueeDrawPlan
+    UI->>UI: Layers の順に自 UI の描画 API を呼ぶ
+    UI->>H: Rendered（描画計画を渡す）
 ```
 
-### 3.3 描画の分岐
+### 3.3 描画計画の解決フロー
 
 ```mermaid
-flowchart LR
-    A[MarqueeDrawContent.Layers] --> B{層}
-    B -->|Decoration| C[MarqueeOuterRenderer + MarqueeInnerRenderer]
-    B -->|Handles| D[本層の MarqueeRendererBase.DrawHandles<br/>8 方向を列挙]
-    B -->|Marker| E[本層の MarqueeRendererBase.DrawStartMarker<br/>十字線 2 本]
-    B -->|SizeLabel / CoordLabel| F[スキップ<br/>UI の要素が描く]
+flowchart TD
+    A[ResolveDrawPlan] --> B[幾何の解決<br/>Marquee.ResolveGeometry]
+    B --> C{外観の表示可否}
+    C -->|ShowOverlay かつ穴あり| D[暗転領域 = 描画面 − 穴あけ矩形<br/>4 領域]
+    C -->|ShowOuterBorder かつ穴あり| E[穴あけ枠 = 4 辺]
+    C -->|ShowInnerFill / ShowInnerBorder かつ穴あり| F[内側の塗り・内枠]
+    C -->|ShowHandles かつ選択あり| G[ハンドル]
+    B --> H[マーカーはコアが nudge 中のみ返す]
+    D --> I[ラベルの文言と配置<br/>MarqueeLabelTexts → MarqueeLabelPlan]
+    E --> I
+    F --> I
+    G --> I
+    H --> I
+    I --> J[層の順序<br/>Decoration → Handles → Marker → Label]
+    J --> K[MarqueeDrawPlan]
 ```
 
-### 3.4 ホイール入力のデータフロー
-
-```mermaid
-sequenceDiagram
-    participant UI as UI 層（コントロール）
-    participant W as MarqueeWheelInterpreter（本層）
-    participant Fac as Marquee（コアのファサード）
-    participant Tgt as IWheelScrollTarget（連携先）
-    participant Host as ホスト（ズームビューポート等）
-
-    Note over UI: ホイールイベント（修飾キー + 回転量 + 位置）
-    UI->>W: Handle(controlKey, shiftKey, deltaX, deltaY, position)
-    alt Ctrl 併用
-        W->>Fac: Log（LogZoomRequested）
-        W-->>UI: ZoomRequested（ZoomIn / Position）
-        UI->>Host: ZoomRequested（公開イベント）
-        Host->>Host: ズーム率の決定と表示の適用
-    else Ctrl なし + 連携先あり
-        W->>W: WheelScrollDelta.Offset（回転量 → 移動量）
-        W->>Tgt: ScrollBy（移動量）
-    else Ctrl なし + 連携先なし
-        W-->>UI: ScrollRequested（DeltaX / DeltaY / Shift / Position）
-        UI->>Host: ScrollRequested（公開イベント）
-        Host->>Host: スクロール量の解釈と適用
-    end
-```
-
-### 3.5 ビューポート変化のデータフロー
-
-```mermaid
-sequenceDiagram
-    participant UI as UI 層（コントロール）
-    participant V as MarqueeViewportNotifier（本層）
-    participant Fac as Marquee（コアのファサード）
-    participant Host as ホスト
-
-    Note over UI: 変化の検知（連携 ScrollViewer の ScrollChanged・ホストからの通知）
-    UI->>V: Notify()
-    V->>Fac: CreateSnapshot()
-    Fac-->>V: MarqueeSnapshot（現在の状態）
-    V-->>UI: ViewportChanged(スナップショット)
-    UI->>Host: ViewportChanged（公開イベント。UI 型のイベント引数へ写す）
-    V->>Fac: （効果の窓口経由で再描画を要求する）
-    Note over V: 選択の状態は変更しない
-```
+- **層は描く値がある場合だけ含めます**（層の有無 = 描く値の有無）。UI 層は層ごとの可否を判定しません。
+- **テキストの層は必ず末尾**です（UI 要素として置く場合も子要素は親より後に描かれるため、常に最上位になります）。
+- 穴あけ矩形は 1 回だけ解決し、暗転領域・枠線・内側・サイズラベルのすべてに同じ値を渡します（各所が個別に変換すると矩形がずれます）。
 
 ## 4. コンポーネント構成
 
-```text
-src/Feature.Marquee.Presenter/
-├── src/
-│   ├── MarqueePaint.cs              色の単一所有（ハンドル・十字マーカー・ラベル・装飾）
-│   ├── MarqueeRenderer.cs           描画内容を層の順に写す（IMarqueeRenderer の既定実装。色を保持）
-│   ├── MarqueeOuterRenderer.cs      外側の装飾（暗転マスク・穴あけ枠）の描画
-│   ├── MarqueeInnerRenderer.cs      内側の装飾（塗り・内枠）の描画
-│   ├── MarqueeLabelPlan.cs          実寸 → ラベル要素の配置指示の写像
-│   ├── MarqueeHostLabelRenderer.cs  ホスト付加情報ラベルの体裁適用
-│   ├── MarqueeWheelInterpreter.cs   ホイールの解釈・通知・連携先への適用
-│   │                                （同ファイル内: `IWheelScrollTarget` / `WheelScrollDelta`（internal））
-│   ├── MarqueeViewportNotifier.cs   ビューポート変化の再通知（スナップショット + 再描画）
-│   ├── WheelRequest.cs              要求の値型（WheelZoomRequest / WheelScrollRequest）
-│   └── MarqueeWheelLogMessage.cs    ズーム要求のログ定義（LoggerMessage ソース生成。internal）
-└── tests/
-    ├── TestHelper.cs                テスト用の描画先（Skia）
-    ├── RecordingLogger.cs           ログ出力を収集するテスト用 ILogger
-    ├── StubMarqueeRenderer.cs       描画しない描画実装（コアのファサード生成用）
-    ├── MarqueePaint.Tests.cs       色の既定値・未指定のハンドル塗り色の解決の検証
-    ├── MarqueeRenderer.Tests.cs     図形の描画の検証
-    ├── MarqueeLabelPlan.Tests.cs    実寸 → ラベル要素の写像の検証
-    ├── MarqueeHostLabelRenderer.Tests.cs 付加情報ラベルの体裁の検証
-    ├── MarqueeWheelInterpreter.Tests.cs  解釈・通知・適用・ログの検証
-    ├── WheelRequest.Tests.cs        要求の値の検証
-    └── MarqueeViewportNotifier.Tests.cs  ビューポート変化の通知の検証
-```
+| ファイル | 型 | 可視性 | 責務 |
+| --- | --- | --- | --- |
+| `src/MarqueePresenter.cs` | `MarqueePresenter` | public（`sealed` でない） | 提示のファサード。コアの保持、設定・環境値・入力の転送、外観の保持、描画計画の解決（`ResolveDrawPlan`） |
+| `src/MarqueeAppearance.cs` | `MarqueeAppearance` | public sealed record | 外観の単一所有者（色・ラベルの体裁・枠線の太さ・表示可否・述語） |
+| `src/MarqueeDrawPlan.cs` | `MarqueeDrawPlan` | public readonly record struct | 描画計画（UI が見る唯一の描画値） |
+| `src/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public enum | 描画層の順序 |
+| `src/MarqueeDecorationGeometry.cs` | `MarqueeDecorationGeometry` | internal static | 枠線 4 辺・暗転領域の矩形の計算 |
+| `src/MarqueeLabelTexts.cs` | `MarqueeLabelTexts` | internal static | サイズラベル・カーソル座標ラベルの文言と基準点 |
+| `src/MarqueeLabelPlan.cs` | `MarqueeLabelPlan` | public static | 実寸 → ラベル要素の配置指示の写像 |
+| `src/MarqueeLabelPlacement.cs` | `MarqueeLabelPlacement` | public readonly record struct | ラベル要素の配置指示 |
+| `src/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・アライン・クランプ領域） |
+| `src/MarqueeHostLabelRenderer.cs` | `MarqueeHostLabelRenderer` | public static | ホスト付加情報ラベルの体裁の適用（背景 → 文字の順序・内側余白） |
+| `src/MarqueeWheelInterpreter.cs` | `MarqueeWheelInterpreter` | public sealed | ホイール入力の解釈（Ctrl = ズーム / 通常 = スクロール）・連携先への適用・要求の通知 |
+| `src/WheelRequest.cs` | `WheelZoomRequest` / `WheelScrollRequest` | public readonly record struct | 要求の値（方向・回転量・修飾キー・発生位置） |
+| `src/WheelRequest.cs` | `IWheelScrollTarget` | public interface | スクロールの適用先 |
+| `src/WheelRequest.cs` | `WheelScrollDelta` | internal static | 回転量 → 移動量（DIP）の換算 |
+| `src/MarqueeWheelLogMessage.cs` | `MarqueeWheelLogMessage` | internal static partial | ズーム要求のログ定義（書式を UI 間で揃える） |
+| `src/MarqueeViewportNotifier.cs` | `MarqueeViewportNotifier` | public sealed | ビューポート変化の再通知（スナップショット + 再描画） |
 
-### 描画手順
-
-| コンポーネント | 責務 |
-| --- | --- |
-| `MarqueePaint` | 色の単一所有者（ハンドル・十字マーカー・ラベル・装飾） |
-| `MarqueeRenderer` | 本層の `MarqueeRendererBase` の既定実装（sealed）。色を必須引数で受け取り、描画内容の解決結果を層の順に描画ポートへ写す。図形の層を描き、テキストのフック（`DrawLabel`）は基底の既定（何もしない）を引き継ぐ |
-| `MarqueeOuterRenderer` | `MarqueeOuterDecoFrame`（暗転領域・枠線）を `paint.OverlayColor` / `paint.OuterBorderColor` で描く |
-| `MarqueeInnerRenderer` | `MarqueeInnerDecoFrame`（塗り・内枠）を `paint.InnerFillColor` / `paint.InnerBorderColor` で描く |
-| `MarqueeLabelPlan` | 描画内容と実寸からラベル要素の配置指示を解決する |
-| `MarqueeHostLabelRenderer` | ホスト付加情報ラベルへコアの体裁を適用して描く |
-
-### 組み込み規則
-
-| コンポーネント | 責務 |
-| --- | --- |
-| `MarqueeWheelInterpreter` | 解釈（Ctrl の判定・方向の決定）・通知（`ZoomRequested` / `ScrollRequested`）・適用（連携先への `ScrollBy`）・ログ。ビューの状態を保持しない |
-| `IWheelScrollTarget` | スクロールの適用先（UI 層が適合させる抽象） |
-| `WheelScrollDelta` | 回転量 → 移動量の換算（1 ノッチ = 48 DIP・Shift で横） |
-| `WheelZoomRequest` / `WheelScrollRequest` | 要求の値（方向・回転量・修飾キー・発生位置）。`WheelScrollRequest.Delta` がコア型同士の変換を単一所有する |
-| `MarqueeWheelLogMessage` | ズーム要求のログ定義（書式・レベル） |
-| `MarqueeViewportNotifier` | ビューポート変化の再通知（現在の状態スナップショット）と再描画の要求。選択の状態は変更しない |
-
-## 5. 責務の分担と設計判断
-
-| 層 | 責務 |
-| --- | --- |
-| `Feature.Marquee.Core` | 選択の判断（ドラッグ・nudge・確定/キャンセル・スナップ・最小サイズ）・状態・描画内容の解決（層と順序）・ログ定義（選択の判断に伴うもの） |
-| **本プロジェクト** | **色の単一所有（`MarqueePaint`）**・**描画 API の呼び出し手順**・実寸 → ラベル要素の写像・**ホイール入力の解釈（Ctrl = ズーム / それ以外 = スクロール）**・要求の通知・**連携先へのスクロール適用（回転量 → 移動量の換算を含む）**・ズーム要求のログ定義・**ビューポート変化の再通知（スナップショット + 再描画）** |
-| `MarqueeControl.*UI` | フレームワークの入力イベントから修飾キーと回転量を取り出して `Handle` を呼ぶ、要求を公開イベントへ転送する、**自 UI のスクロール機構を `IWheelScrollTarget` へ適合させて注入する**、描画先（`IEsCanvas`）の用意、ラベル要素の配置 |
-| ホスト | 要求の実処理（ズーム率の決定・表示の適用・スクロール先の決定）・付加情報ラベルの文言 |
-
-| 判断 | 理由 |
-| --- | --- |
-| 描画手順を本層に置く（コアに置かない） | コアは「何を描くか（判断・データ）」だけを決める。描画 API の呼び出しは UI フレームワーク差を `IEsCanvas` へ閉じ込めた本層の責務である |
-| 色を本層に置く（コアに置かない） | 色は描画にだけ必要な設定であり、コアの計算・判断には使わない（描くかどうかは `MarqueeDecoOptions` の明示フラグが決める）。コアの描画契約へ色を戻すと、色の設定経路がコア → 本層の逆参照になる |
-| ホイール要求を Core ではなく本層に置く | 「Ctrl+ホイール = ズーム」は選択の判断ではなく、選択コントロールをビューポートへ組み込むときの規則である。単体で使う Marquee にはズームもスクロールも存在しないため、コアをそのまま独立できるよう本層へ分離する |
-| 要求イベントを本層が持ち、UI 層は転送のみ行う | UI 層に「どちらの要求を出すか」の分岐を残さない（両 UI で解釈が同じになり、片方だけ修正される事故を防ぐ） |
-| ログ定義を本層が持つ | ズーム要求のログは両 UI で同一の書式・レベルにする必要がある。ロガーはコアのファサード（`Marquee.Log`）を共用し、ホストのログ基盤へ出力する |
-| 要求の値型を本層が持つ | 要求の型は解釈の結果そのものであり、コア（選択）から見ると存在しない概念である（コアの公開面に残さない） |
-| 連携スクロールの適用を本層が持つ（適用先は抽象） | 「1 ノッチ = 48 DIP」「Shift で横」は UI をまたいで同じ規則であり、*回転量から移動量への換算と適用の順序* を UI ごとに書かせない。UI 固有の型は `IWheelScrollTarget` へ適合させて吸収する |
-| 連携先が無い場合は要求として通知する | スクロール先（ズームビューポートのパン等）が UI 側に無い場合、勝手に捨てずホストへ委ねる（振る舞いを後方互換に保つ） |
-| ビューポート変化の通知を Core ではなく本層に置く | ビューポートは組み込み先に存在する概念であり、単体で使う Marquee には存在しない。コアに置くと、コアが「他のコントロール（ビューポート）の語彙」を持つことになる |
-
-## 6. 単一所有（同じ真実を 2 箇所に持たない）
+## 5. 単一所有（同じ真実を 2 箇所に持たない）
 
 | 対象 | 所有者 |
 | --- | --- |
-| 描画する層とその順序 | `Marquee.ResolveLayers`（コア。本層は順に写すだけ） |
-| 描くかどうかの判断（非表示・選択なし・nudge・表示可否フラグ・穴あけ矩形な し） | コア（`Marquee.ResolveContent`。本層は判断を持たない） |
-| ハンドルの矩形（8 方向の位置と大きさ） | コア（`Marquee.ResolveContent` が解決済み。本層は矩形を渡すだけ） |
-| ラベルの文言と基準点 | コア（`MarqueeTextPlacement`） |
-| ラベルの体裁（フォントサイズ・内側余白・色） | 本層（`MarqueePaint`） |
-| 描画に使う色（ハンドル・十字マーカー・ラベル・装飾） | 本層（`MarqueePaint`） |
-| ラベル要素の写像（順序・実寸の反映・アライン・領域クランプ） | 本層（`MarqueeLabelPlan`） |
-| 描画 API の呼び出し（背景 → 文字の順序） | `Platform.Core`（`SkiaLabel` / `IEsCanvas.DrawLabel`） |
-| ブラシ・ペンの共有 | 描画ポートの実装（`AvaloniaCanvas` / `SkiaEsCanvas`） |
-| ホイール入力の解釈（Ctrl = ズーム、方向 = 回転量の符号） | `MarqueeWheelInterpreter.Handle` |
-| 連携先への適用（ズーム以外はスクロールとして適用し、通知を抑止する） | `MarqueeWheelInterpreter.Handle` |
-| 回転量 → 移動量の換算（1 ノッチ・Shift の横変換） | `WheelScrollDelta.Offset` |
-| 要求の値（方向・回転量・修飾キー・発生位置） | `WheelZoomRequest` / `WheelScrollRequest` |
-| 回転量のベクター変換（`EsVector`） | `WheelScrollRequest.Delta` |
-| ズーム要求のログ書式・レベル | `MarqueeWheelLogMessage.LogZoomRequested` |
-| ロガーの保持と null の吸収 | コアのファサード（`Marquee.Log`） |
-| 1 ノッチあたりの移動量（48 DIP） | `Platform.Core` の `ScrollMath.WheelScrollUnit` |
-| ズーム率の決定と表示の適用 | 受け手（ホスト。ズームビューポート） |
-| テキストの実寸測定 | UI 層（ホスト。Avalonia は `FormattedText`、MewUI は `SkiaText.Measure`） |
+| 色（ハンドル・十字マーカー・ラベル・装飾） | `MarqueeAppearance` |
+| ラベルのフォントサイズ・内側余白と、その安全域（6〜48） | `MarqueeAppearance`（枠線の太さの安全域はコアの `Marquee.Limits` を参照する） |
+| 表示可否（ハンドル・サイズラベル・座標ラベル・暗転・穴あけ枠・全面暗転・内側の塗りと枠線）とその述語 | `MarqueeAppearance` |
+| 枠線の太さ（外側・内側）と補正 | `MarqueeAppearance`（補正の式はコアの `Marquee.Limits.CoerceBorderThickness` へ委譲する） |
+| 描画する層とその順序（層にある ⇔ 描く値がある） | `MarqueePresenter.ResolveLayers`（`MarqueeDrawPlan.Layers`） |
+| 枠線 4 辺の矩形（太さは辺ごとの式で導出） | `MarqueeDecorationGeometry.ComputeBorderRects` |
+| 暗転領域（描画面から穴あけ矩形を除いた 4 領域） | `MarqueeDecorationGeometry.ComputeOverlayRegions` |
+| サイズラベルの文言（書式・表示スケール） | `MarqueeLabelTexts.ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
+| カーソル座標ラベルの文言と基準点（カーソル + 8.0 DIP） | `MarqueeLabelTexts.ResolveCoordLabelText` |
+| ラベルの体裁（背景 = 実寸 + 内側余白 × 2・アラインの適用・クランプ・並び順） | `MarqueeLabelPlan` |
+| 付加情報ラベルの体裁（背景 → 文字の順序・内側余白） | `MarqueeHostLabelRenderer` |
+| ホイールの解釈（Ctrl = ズーム・それ以外 = スクロール） | `MarqueeWheelInterpreter.Handle` |
+| 回転量 → 移動量の換算（1 ノッチ = 48 DIP・Shift で横） | `WheelScrollDelta.Offset` |
+| ズーム要求のログの書式とレベル | `MarqueeWheelLogMessage` |
+| ビューポート変化の再通知（スナップショット + 再描画） | `MarqueeViewportNotifier.Notify` |
 
-## 7. 例外処理ポリシー
+## 6. 例外処理ポリシー
 
 | 状況 | 扱い |
 | --- | --- |
-| `canvas` が null | `ArgumentNullException`（呼び出し側の実装誤り） |
-| `layers` / `frame` が空・null 項目 | 何もしない（描くものが無い状態は例外ではない） |
-| `measureText` が null | `ArgumentNullException` |
-| 描画の設定（`paint`）が null | `ArgumentNullException` |
-| `MarqueeHostLabelRenderer.Draw` の `text` が null | `ArgumentNullException` |
-| 基準点が描画面の外 | 例外にせず描画先のクリップに任せる |
-| `MarqueeWheelInterpreter` の生成でコアのファサードが null | `ArgumentNullException` を送出する（配線の誤りを早期に検出する） |
-| ロガーが未設定（`Marquee.Log` に null） | コアのファサードが `NullLogger` へ吸収する（本層は判断しない） |
-| 要求の購読者がおらず連携先も無い | 何もしない（通知は null 条件付きで発火する） |
-| 連携先が null（未連携・解除後） | スクロールを要求として通知する（黙って捨てない） |
+| `ResolveDrawPlan` の `measureText` が null | `ArgumentNullException`（呼び出し側の実装誤り） |
+| `MarqueeLabelPlan.Resolve` の `appearance` / `measureText` が null | `ArgumentNullException` |
+| `MarqueeHostLabelRenderer.Draw` の `canvas` / `text` が null | `ArgumentNullException` |
+| `MarqueeWheelInterpreter` / `MarqueeViewportNotifier` のコンストラクタ引数が null | `ArgumentNullException` |
+| 表示可否が無効な項目 | 空のコレクション / null として返す（例外にしない。UI 層は層を見るだけでよい） |
+| サイズラベルの文言プロバイダが null または空文字を返す | 自動生成へフォールバックする（例外にしない） |
+| ホイール要求の購読者がいない | 何も起きない（例外にしない） |
 
-## 8. 可視性ポリシー
+## 7. 可視性ポリシー
 
-- 描画手順はすべて `public` です（UI 実装・独自コントロールの作者が参照する API のみで構成されるため、internal にする対象がない）。
-- 組み込み規則は、UI 層が使う型のみ `public`、本層の内部手順（`WheelScrollDelta` / `MarqueeWheelLogMessage`）は `internal` とし、単体テストにのみ `InternalsVisibleTo` で公開します。
-- `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらないため）。
+- UI 層とホストが使う面（`MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueeTextPlacement` / `MarqueeHostLabelRenderer` / ホイール関連の公開型）は `public` とします。
+- **本層の内部手順は `internal`** とします（`MarqueeDecorationGeometry` / `MarqueeLabelTexts` / `WheelScrollDelta` / `MarqueeWheelLogMessage`）。UI 層は解決済みの値（`MarqueeDrawPlan` の矩形・`Labels`）を受け取るため、これらを参照する必要がありません。単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Presenter.Tests`）で公開します。
+- **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
+- `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。
 
-## 9. テスト方針
+## 8. テスト方針
 
 | 方針 | 内容 |
 | --- | --- |
-| UI 初期化不要 | 描画は `SkiaEsCanvas`（UI 非依存）で行い、ビットマップの画素を検証する。ホイールの解釈は UI 型を持たないため `[Fact]` で検証する |
-| 検証点 | 描画手順の唯一の検証点である（UI 側はアダプタのみを持つため、UI ごとの描画テストは不要） |
-| 合計 | 59 件（描画 36 / 組み込み規則 23） |
+| UI 初期化不要 | 描画計画の値（矩形・層・配置・文言）は UI 型を持たないため `[Fact]` / `[Theory]` で並列実行する |
+| 画素の検証 | MewUI（Skia）のテストが担う（`MarqueeControl.MewUI.Tests`）。本層は描画 API を持たないため画素テストを持たない |
+| 単位 | 描画計画の値・外観・装飾矩形の計算・ラベルの写像・付加情報ラベルの体裁・ホイールの解釈・ビューポート通知 |
+| 配置 | `tests/`（フォルダ分割なし。ファイル名は対象型 + `.Tests.cs`） |
+| 件数 | `dotnet test <csproj> --list-tests` のクラス別集計で確認する（出力は行が折り返され、並列実行では行が混ざるため、行単位で対応付けてはいけない） |
 
 ```powershell
 dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.csproj
 ```
+
+## 9. 設計判断（UI 非依存の境界）
+
+本プロジェクトの型は、UI フレームワークの型をシグネチャに持たないことを境界の条件としています。
+
+| 判断 | 内容 |
+| --- | --- |
+| 座標・寸法の型 | コア（`EsUtil.Platform.Core.Geometry`）の `EsPoint` / `EsRect` / `EsSize` を使う |
+| 色の型 | UI 非依存の `System.Drawing.Color` とし、各 UI の色型への変換は各 UI の描画境界で行う |
+| 描画 API の抽象を持たない | UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれない（WinUI3 / WinForms 等へ展開する場合に抽象が肥大する）。本層は描画計画を返し、描画は各 UI が自 UI の API で行う |
+| 実寸測定 | 描画 API 依存のため `Func<string, double, EsSize>` を UI 層から受け取る（本層は測定 API を持たない） |
+| 付加情報ラベルの描画 | UI 非依存の描画ポート（`Common` の `IEsCanvas`）を使う `MarqueeHostLabelRenderer` のみが `Common` を参照する（体裁の規則を UI をまたいで共有するため） |
+| 組み込み規則の分離 | ホイールの解釈とビューポート変化の再通知は「組み込み先が存在して初めて意味を持つ」ため、コアに置かず本層が単一所有する |
+| 外観の拡張点 | `MarqueePresenter` を `sealed` にしない（`Appearance` の差し替えと `ResolveDrawPlan` の上書きで独自の見た目を提供できることが役割） |
 
 ## 10. ライセンス
 
