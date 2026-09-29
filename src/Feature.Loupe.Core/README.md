@@ -72,7 +72,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | 層 | 責務 |
 | --- | --- |
 | Core（本プロジェクト） | 設定とその既定値・補正、状態の判断、表示レイアウトの計算、描画の幾何（切り出し領域・描画面）の解決、公開ファサード（`Loupe` = 操作の唯一の窓口）、ログ定義 |
-| 提示層（`Feature.Loupe.Presenter`） | 提示（`LoupePresenter`：描画計画（層の順序・装飾矩形・文言）の解決）、外観（`LoupeAppearance`：色・フォント・角丸・枠線の太さ・表示可否）、実寸 → ラベル要素の写像（`LoupeLabelPlan`）、装飾矩形の計算（`LoupeDecorationGeometry`） |
+| 提示層（`Feature.Loupe.Presenter`） | 提示（`LoupePresenter`：描画計画（層の順序・装飾矩形・文言）の解決）、外観（`LoupeAppearance`：色・フォント・角丸・枠線の太さ・表示可否）、実寸 → ラベル要素の写像（`LoupeLabelPlan`）、装飾矩形の計算（`LoupePresenter`（`DrawPlan` partial）） |
 | UI 層（`LoupeControl.*`） | 状態（拡大元画像・拡大中心）の保持と設定（`Options`・`Appearance`）の保持、**提示層への委譲**（表示レイアウト・描画計画）、描画計画の描画（`LoupeContextPainter` / `LoupeSkiaPainter`）とラベル要素の配置、ホスト結線、拡大元画像のログ |
 
 UI 層に残してよい分岐は 4 種のみです（それ以外の判断はコア・提示層へ移します）。
@@ -168,7 +168,7 @@ UI 側（`LoupeControl`）が公開する入口:
 ## 設計上の約束
 
 1. **判断はコア・反映は UI**: 「どうするか」（表示サイズ・位置・切り出し領域）はコアが決め、UIBase が描画計画（層の有無・矩形・文言・配置）を解決し、UI は描画計画を写すだけにする。
-2. **単一所有**: 表示位置は `Loupe.ResolveLayout`（内部手順は `Loupe.Geometry.cs` の private static）、切り出し領域（一辺の切り上げを含む）は `LoupeGeometry` のみが持つ（装飾矩形の計算は提示層の `LoupeDecorationGeometry`、寸法の換算は `Platform.Core` の `DpiScaler`）。
+2. **単一所有**: 表示位置は `Loupe.ResolveLayout`（内部手順は `Loupe.Geometry.cs` の private static）、切り出し領域（一辺の切り上げを含む）は `LoupeGeometry` のみが持つ（装飾矩形の計算は提示層の `LoupePresenter`（`DrawPlan` partial）、寸法の換算は `Platform.Core` の `DpiScaler`）。
 3. **座標系の 3 区分**: ドメイン座標（元画像 px）→ 親領域 DIP（`ICoordTransform`）→ 物理ピクセル（`DipToDeviceScaling`）のうち、① ドメイン → DIP は `Loupe`、② DIP → 物理ピクセルは `LoupeGeometry` が担う（UIBase は換算しない）。
 4. **設定は 1 値・補正は生成時**: 計算に必要な設定は `LoupeOptions` の 1 値にまとめ、数値項目の安全域への補正は型の生成時（`init` アクセサ）に適用する（UI 側に補正の登録を要求しない）。
 5. **表示サイズの決定はファサードが単一所有**: 要求サイズを親領域の最小辺へクランプする規則は `Loupe.ResolveLayout` の 1 箇所である（親領域のサイズを引数で受けるため、クランプの基準をコアが保持しない）。

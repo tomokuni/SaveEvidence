@@ -114,7 +114,7 @@ sequenceDiagram
 | 描画完了通知の内容（切り出し左上・拡大率） | `LoupeGeometry.CaptureTopLeft` / `ZoomLevel`（描画の幾何が単一所有する。専用の通知型を持たない） |
 | 中心座標ラベルの文言・基準点 | 描画層 `Feature.Loupe.Presenter` の `LoupeLabelTexts` |
 | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0） | 描画層 `Feature.Loupe.Presenter` の `LoupeAppearance` |
-| 十字線・枠線の矩形 | 描画層 `Feature.Loupe.Presenter` の `LoupeDecorationGeometry` |
+| 十字線・枠線の矩形 | 描画層 `Feature.Loupe.Presenter` の `LoupePresenter`（`DrawPlan` partial） |
 | ラベルの余白・背景矩形・文字原点 | 描画層 `Feature.Loupe.Presenter` の `LoupeLabelPlan` |
 | 描画層と順序（`LoupeDrawLayer`） | 描画層 `Feature.Loupe.Presenter` の `LoupePresenter.ResolveDrawPlan` |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |

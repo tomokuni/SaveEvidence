@@ -33,7 +33,7 @@ namespace EsUtil.Feature.Loupe.Presenter;
 /// 派生クラスで <see cref="Appearance"/> を差し替えるか <see cref="ResolveDrawPlan"/> を上書きすることで、独自の見た目を提供できる<br/>
 /// （このため本クラスは <c>sealed</c> にしない。拡張点を持つことが役割である）。
 /// </remarks>
-public class LoupePresenter
+public partial class LoupePresenter
 {
     /// <summary>内部に保持するコアのファサード（設定・表示レイアウト・幾何の解決）。</summary>
     private readonly LoupeFacade _core = new();
@@ -161,10 +161,10 @@ public class LoupePresenter
         var surface = geometry.SurfaceBounds;
 
         IReadOnlyList<EsRect> crosshair = appearance.ShowCrosshair
-            ? LoupeDecorationGeometry.ComputeCrosshairRects(surface, geometry.ZoomLevel, geometry.CaptureSize)
+            ? ComputeCrosshairRects(surface, geometry.ZoomLevel, geometry.CaptureSize)
             : [];
         IReadOnlyList<EsRect> border = appearance.ShowBorder
-            ? LoupeDecorationGeometry.ComputeBorderRects(
+            ? ComputeBorderRects(
                 surface, DpiScaler.ScaleToPixel(appearance.BorderThickness, geometry.DipToDeviceScaling))
             : [];
 

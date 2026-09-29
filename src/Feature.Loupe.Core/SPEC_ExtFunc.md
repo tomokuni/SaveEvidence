@@ -175,7 +175,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 | --- | --- |
 | 表示可否（`ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`） | `LoupeAppearance`（外観） |
 | 色・フォントサイズ・角丸・枠線の太さ | `LoupeAppearance`（外観） |
-| 描画層と順序（`LoupeDrawLayer`）・十字線 / 枠線の矩形 | `LoupePresenter` / `LoupeDecorationGeometry` |
+| 描画層と順序（`LoupeDrawLayer`）・十字線 / 枠線の矩形 | `LoupePresenter` / `LoupePresenter`（`DrawPlan` partial） |
 | 中心座標ラベルの文言・基準点 | `LoupeLabelTexts` |
 | 実寸 → ラベル要素の配置 | `LoupeLabelPlan` |
 | 枠線の太さの物理ピクセル換算 | `Platform.Core` の `DpiScaler`（呼び出すのは `LoupePresenter.ResolveDrawPlan`） |

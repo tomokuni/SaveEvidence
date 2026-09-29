@@ -197,7 +197,7 @@ Feature.Marquee.Core/
 
 ### 9.2 装飾（提示層が単一所有する）
 
-選択矩形の**外側・内側に描く装飾**（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は、選択矩形コントロール単体の概念ではない（撮影オーバーレイ等へ組み込むときの表示である）ため、提示層（`Feature.Marquee.Presenter`）が単一所有します。装飾の矩形は `MarqueeDecorationGeometry` が計算し、表示可否と太さと色は外観（`MarqueeAppearance`）が持ち、描画順は `MarqueePresenter` が決めます（詳細は同プロジェクトの `README.md`）。
+選択矩形の**外側・内側に描く装飾**（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は、選択矩形コントロール単体の概念ではない（撮影オーバーレイ等へ組み込むときの表示である）ため、提示層（`Feature.Marquee.Presenter`）が単一所有します。装飾の矩形は `MarqueePresenter`（`DrawPlan` partial） が計算し、表示可否と太さと色は外観（`MarqueeAppearance`）が持ち、描画順は `MarqueePresenter` が決めます（詳細は同プロジェクトの `README.md`）。
 
 ## 10. ライセンス
 

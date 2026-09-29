@@ -1,17 +1,21 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.Marquee.Presenter.Drawing;
+namespace EsUtil.Feature.Marquee.Presenter;
 
-/// <summary>選択矩形の外側・内側に描く装飾（暗転マスク・枠線・内側の塗り）の矩形計算ロジック（純粋関数）。</summary>
+/// <summary>選択矩形の描画計画のうち、装飾（暗転マスク・枠線）の矩形の導出を担う部分。</summary>
 /// <remarks>
-/// 暗転領域（穴あけ矩形を除いた 4 帯）と枠線の 4 矩形の計算を単一所有する。<br/>
+/// コアが返す幾何（描画面・穴あけ矩形）と外観（表示可否・枠線の太さ）から、描く矩形を導出する。<br/>
 /// 穴あけ矩形（DIP・閉区間解決済み）はコアが単一所有するため、本クラスは「与えられた矩形から何を描くか」だけを計算する。<br/>
-/// 「枠線はどの 4 矩形か」「どの太さを下限とするか」の規則が 2 箇所へ分かれない。<br/>
-/// 太さの補正は外観（<c>MarqueeAppearance</c>）の生成時に適用される。<br/>
-/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
+/// 導出は本クラスが単一所有し、描画実装は返された矩形を自身の描画 API へ渡すだけにする（二重所有を防ぐ）。<br/>
+/// <b>可視性</b>: 内部手順であるため private static とし、公開面（描画計画）だけを UI へ渡す。<br/>
+/// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で検証できる。
 /// </remarks>
-internal static class MarqueeDecorationGeometry
+public partial class MarqueePresenter
 {
+    // ====================================================================
+    // 装飾（枠線・暗転領域）の矩形
+    // ====================================================================
+
     /// <summary>矩形の四辺に描く枠線の矩形を計算する。</summary>
     /// <param name="rect">対象の矩形（DIP 座標）。</param>
     /// <param name="thickness">枠線の太さ（DIP）。補正済みの値を渡す（安全域は <c>Marquee.Limits</c> が単一所有する）。</param>
@@ -52,10 +56,10 @@ internal static class MarqueeDecorationGeometry
         }
 
         var regions = new List<EsRect>(4);
-        AddRegion(regions, new EsRect(surface.X, surface.Y, surface.Width, top - surface.Y));                       // 上
-        AddRegion(regions, new EsRect(surface.X, bottom, surface.Width, surface.Bottom - bottom));                   // 下
-        AddRegion(regions, new EsRect(surface.X, top, left - surface.X, bottom - top));                             // 左
-        AddRegion(regions, new EsRect(right, top, surface.Right - right, bottom - top));                            // 右
+        AddRegion(regions, new EsRect(surface.X, surface.Y, surface.Width, top - surface.Y));       // 上
+        AddRegion(regions, new EsRect(surface.X, bottom, surface.Width, surface.Bottom - bottom));  // 下
+        AddRegion(regions, new EsRect(surface.X, top, left - surface.X, bottom - top));             // 左
+        AddRegion(regions, new EsRect(right, top, surface.Right - right, bottom - top));            // 右
         return regions;
     }
 

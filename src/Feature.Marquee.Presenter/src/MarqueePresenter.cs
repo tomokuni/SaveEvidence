@@ -35,7 +35,7 @@ namespace EsUtil.Feature.Marquee.Presenter;
 /// 派生クラスで <see cref="Appearance"/> を差し替えるか <see cref="ResolveDrawPlan"/> を上書きすることで、独自の見た目を提供できる<br/>
 /// （このため本クラスは <c>sealed</c> にしない。拡張点を持つことが役割である）。
 /// </remarks>
-public class MarqueePresenter
+public partial class MarqueePresenter
 {
     /// <summary>描画層の組合せのうち、装飾の有無を表すビット。</summary>
     private const int DecorationBit = 1;
@@ -266,14 +266,14 @@ public class MarqueePresenter
         var hole = geometry.HoleRect;
 
         var overlayRegions = appearance.ShowOverlay && appearance.ShouldDrawOverlay(hole is not null)
-            ? MarqueeDecorationGeometry.ComputeOverlayRegions(surface, hole)
+            ? ComputeOverlayRegions(surface, hole)
             : [];
         var outerBorders = hole is { } outerHole && appearance.ShowOuterBorder
-            ? MarqueeDecorationGeometry.ComputeBorderRects(outerHole, appearance.OuterBorderThickness)
+            ? ComputeBorderRects(outerHole, appearance.OuterBorderThickness)
             : [];
         var innerFill = hole is { } fillHole && appearance.ShowInnerFill ? fillHole : (EsRect?)null;
         var innerBorders = hole is { } innerHole && appearance.ShowInnerBorder
-            ? MarqueeDecorationGeometry.ComputeBorderRects(innerHole, appearance.InnerBorderThickness)
+            ? ComputeBorderRects(innerHole, appearance.InnerBorderThickness)
             : [];
 
         var sizeLabel = MarqueeLabelTexts.ResolveSizeLabelText(

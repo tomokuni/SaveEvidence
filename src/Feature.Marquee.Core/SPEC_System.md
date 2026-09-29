@@ -141,7 +141,7 @@ stateDiagram-v2
 | ラベルの既定色・フォントサイズ・枠線の太さ・内側余白 | 提示層の `MarqueeAppearance` |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 提示層の `MarqueeAppearance`（本コアは色を持つ型を公開しない） |
 | 描画する層とその順序（層にある ⇔ 描く値がある） | 提示層の `MarqueePresenter.ResolveLayers`（`MarqueeDrawPlan.Layers`） |
-| 装飾の矩形（暗転領域・枠線・塗り）と枠線 4 辺の式 | 提示層の `MarqueeDecorationGeometry`（辺の式は `EsRect.ComputeInnerEdges` が単一所有する） |
+| 装飾の矩形（暗転領域・枠線・塗り）と枠線 4 辺の式 | 提示層の `MarqueePresenter`（`DrawPlan` partial）（辺の式は `EsRect.ComputeInnerEdges` が単一所有する） |
 | 描画 API の呼び出し（層の順序と写し方、色の参照） | 各 UI の描画クラス（`MarqueeContextPainter` / `MarqueeSkiaPainter`）。提示層は描画計画をデータとして渡すだけである |
 
 ## 6. 例外処理ポリシー
