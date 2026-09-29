@@ -10,8 +10,7 @@ namespace EsUtil.Platform.Core.Tests.Imaging;
 /// <remarks>
 /// <see cref="EsBitmap"/> は静的共有状態を持たないため、本テストは UI フレームワークの初期化に依存しない
 /// （コレクションに属さない <c>[Fact]</c> として並列実行される）。<br/>
-/// Avalonia 固有の拡張（<c>Size()</c> / <c>Clear(AvaloniaColor)</c> / <c>ToAvaloniaWriteableBitmap</c> 等）は
-/// 別テスト（<c>EsBitmapAvaloniaExtensions.Tests</c> / <c>EsBitmapAvalonia.Tests</c>）で検証する。
+/// UI 固有の相互変換は各 UI 層のテストが検証する（本テストはピクセル操作のみを対象とする）。
 /// </remarks>
 public class EsBitmapTests
 {

@@ -1,7 +1,7 @@
 # Platform.Core システム仕様書
 
-`Platform.AvaloniaUI`（Avalonia UI 実装）と `Platform.MewUI`（MewUI 実装）が共有する、UI フレームワーク非依存の型を提供するライブラリです。
-SaveEvidence のマルチ UI 対応（Avalonia UI / MewUI）における、共有基盤（Core）分割の第一段階として作成されました。
+UI フレームワーク非依存の共通基盤の型を提供するライブラリです。
+複数の UI 実装が同じ型と計算結果を共有できるようにするための共有基盤です。
 
 公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
 
@@ -16,13 +16,11 @@ SaveEvidence のマルチ UI 対応（Avalonia UI / MewUI）における、共�
 
 ```mermaid
 graph LR
-  A[Platform.AvaloniaUI<br/>Avalonia 実装] --> C[Platform.Core]
-  B[Platform.MewUI<br/>MewUI 実装] --> C
-  H["app.AvaloniaUI / app.MewUI<br/>MarqueeControl.* / CaptureSessionControl.*<br/>（ホスト：既定実装を生成して注入）"] --> C
+  H["上位（UI 実装・アプリ・コントロール）<br/>既定実装を生成して注入する"] --> C[Platform.Core<br/>本プロジェクト]
 ```
 
 - `Platform.Core` は他プロジェクトへ依存しない末端の共有ライブラリです。
-- 各 UI 実装は、コア型と自身の型（例: `Avalonia.Input.Key` / `Avalonia.Point` / `IPlatformHandle`）を相互変換する Interop 層を個別に用意します（例: `Platform.AvaloniaUI` プロジェクトの `EsKeyAvaloniaInterop` / `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop`）。
+- 各 UI 実装は、コア型と自身の型（例: `Avalonia.Input.Key` / `Avalonia.Point` / `IPlatformHandle`）を相互変換する Interop 層を個別に用意します（本プロジェクトは UI 型を参照しません）。
 - サービス抽象（`ICaptureService` 等）とその Windows 実装（Win32）は、本プロジェクトの `Native/` 配下が提供します。**実行時のプラットフォーム分岐（ファクトリ）を持たず、ホストが `Native/Win` の具象を生成して抽象型として注入します**。テストは抽象を実装したモックを注入するため、Win32 実行環境を必要としません。
 
 ## コンポーネント構成
@@ -94,7 +92,7 @@ graph LR
 | キーとウィンドウ状態 | `Avalonia.Input.Key` / `Avalonia.Controls.WindowState` と**メンバー名を一致**させ、名前ベースの変換で相互変換する（既存の設定ファイルをそのまま読み込める） |
 | 座標・寸法 | `Avalonia.Point` / `Size` / `Vector` → `EsPoint` / `EsSize` / `EsVector` へ統一し、UI 境界で 1 行変換する |
 | 色 | `System.Drawing.Color`（共有フレームワーク同梱でクロスプラットフォーム。`System.Drawing.Common` ではない）を使い、UI の色型への変換は境界で行う |
-| Skia の描画プリミティブ | SkiaSharp は外部パッケージであるため、Skia に依存する型（描画ポートの適合・ビットマップの相互変換・テキスト測定）は `Platform.Skia` が単一所有する（本プロジェクトは SkiaSharp を参照しない） |
+| Skia の描画プリミティブ | SkiaSharp は外部パッケージであるため、Skia に依存する型（描画ポートの適合・ビットマップの相互変換・テキスト測定）は Skia を使用する上位層が単一所有する（本プロジェクトは SkiaSharp を参照しない） |
 | 描画の契約 | 各コントロールの提示層（`Feature.*.Presenter`）が単一所有する（本プロジェクトは参照される側であり、それらを参照しない） |
 | ロガー未設定 | `LoggerFallback.OrNullLogger()` が単一所有し、各所の `?? NullLogger.Instance` を排除する |
 
@@ -120,4 +118,4 @@ graph LR
 
 **`Native/` 配下は上記の「可搬性」の基準から除外します**（Windows 限定の実装を、抽象と同じ場所で保守するための例外です）。Win32 P/Invoke と `System.Drawing.Common`（`System.Drawing.Bitmap` を扱う `Native.Imaging`）は `Native/` 配下だけが持ちます。
 
-**Skia は「外部パッケージ」に該当するため、本プロジェクトは SkiaSharp に依存しません**（Skia への依存は `Platform.Skia` が単一所有します）。
+**Skia は「外部パッケージ」に該当するため、本プロジェクトは SkiaSharp に依存しません**（Skia への依存は Skia を使用する上位層が単一所有します）。

@@ -38,7 +38,7 @@ UI フレームワーク非依存のウィンドウ表示状態。`Avalonia.Cont
 | `WindowSelect` | ウィンドウ選択（カーソル位置の最前面ウィンドウを対象） |
 | `AreaSelect` | 範囲選択（ドラッグで任意矩形） |
 
-UI 実装のキャプチャ UI ライブラリ（`CaptureSessionControl.AvaloniaUI` 等）とホストが共有します。ホストではグローバルホットキーのアクション識別子（`IGlobalHotKeyService<CaptureType>`）としても使用します。
+UI フレームワーク非依存のキャプチャ種別。上位のライブラリとホストが共有します。ホストではグローバルホットキーのアクション識別子（`IGlobalHotKeyService<CaptureType>`）としても使用します。
 
 ### `HotKeyModifiers`（`[Flags]` enum）
 
@@ -68,7 +68,7 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 
 - `MaxOffset(double contentSize, double viewportSize, double scale)`: スクロール範囲の最大オフセットを返す。
 - `ViewportSize(double viewportSize, double scale)`: コンテンツ座標での表示範囲を返す。
-- `ZoomViewControl` のスクロールバー計算で共用する。
+- スクロールバー計算で共用する（スクロール位置の上限を 1 箇所へ集約するため）。
 
 ### `Coord.DpiScaler`（static class）
 
@@ -80,7 +80,7 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 - `ScaleToPixel(int/double dipValue, double scaling)`: DIP 値を物理ピクセルへ変換（切り上げ・最低 1。浮動小数誤差を吸収）。
 - `ToDip(int/double physical, double scaling)`: 物理ピクセルを DIP へ変換（`ScaleToPixel` の逆変換。**丸め・最低値の規則は適用しない**）。ウィンドウの位置・サイズを物理ピクセルから DIP へ戻す場面（全モニタの包含矩形をウィンドウへ適用する等）で共用する。
 - `ToDip(EsSize physicalSize, double scaling)`: 物理ピクセルのサイズを DIP のサイズへ変換する（成分ごとの換算を上記 `ToDip` へ委譲する）。コア型同士の換算を UI 側で組み立てないための入口。
-- `LoupeControl` の表示サイズ計算と、両 UI のウィンドウ配置・サイズ換算で共用する。
+- 表示サイズ・市松模様のサイズ・外枠の太さの物理ピクセル換算と、ウィンドウの位置・サイズの換算で共用する。
 
 ### `Geometry.EsAxis`（enum）
 
@@ -117,7 +117,7 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
 ```
 
-描画の可否は**提示層の外観の明示フラグ**（マーキーの `MarqueeAppearance` / ルーペの `LoupeAppearance`）が単一所有します。本メソッドは「ホストの色設定（省略可能な色）をフラグへ写す」場面で使います（`color.A > 0` を各所に書くと、同じ意味の判定が散らばる）。
+描画の可否は**描画にだけ必要な設定を所有する上位層の外観の明示フラグ**が単一所有します。本メソッドは「ホストの色設定（省略可能な色）をフラグへ写す」場面で使います（`color.A > 0` を各所に書くと、同じ意味の判定が散らばる）。
 
 ### `Imaging.ImageDrawMode`（enum）
 
@@ -141,7 +141,7 @@ ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
 var dest = ImageDrawMath.ComputeDestination(image.Width, image.Height, 800, 600, ImageDrawMode.Fill);
 ```
 
-画像を描く側は UI ごとに異なるため本クラスは計算だけを担い、実際の描画は各 UI の描画層（MewUI 版は `SkiaImageRenderer`）が行います。
+画像を描く側は UI ごとに異なるため本クラスは計算だけを担い、実際の描画は各 UI の描画層（Skia を使う UI は独自の描画実装）が行います。
 
 ### `Geometry.EsPoint`（readonly record struct）
 
@@ -149,7 +149,7 @@ var dest = ImageDrawMath.ComputeDestination(image.Width, image.Height, 800, 600,
 public readonly record struct EsPoint(double X, double Y);
 ```
 
-UI フレームワーク非依存の 2 次元座標。Avalonia 版の相互変換は `Platform.AvaloniaUI` の `EsGeometryAvaloniaInterop` が提供します。
+UI フレームワーク非依存の 2 次元座標。各 UI 実装は、自身の座標型との相互変換を Interop 層で提供します。
 
 座標ラベルの文言は `Format(int decimals = 0)` が単一所有します（`(x, y)` 形式。`decimals` で小数点以下の桁数を 0〜15 から指定し、既定は 0 = 整数へ丸め）。`ToString()` はレコードの診断表現のままです（デバッガー・ログ・テストの失敗表示から小数を消さないため）。
 
@@ -183,7 +183,7 @@ public readonly record struct EsVector(double X, double Y);
 public readonly record struct EsRect(double X, double Y, double Width, double Height);
 ```
 
-UI フレームワーク非依存のサイズ・ベクター・矩形。相互変換は `EsGeometryAvaloniaInterop` が提供します。
+UI フレームワーク非依存のサイズ・ベクター・矩形。各 UI 実装は、自身のサイズ型・ベクター型・矩形型との相互変換を Interop 層で提供します。
 
 `EsRect` は `Right`（`X + Width`）・`Bottom`（`Y + Height`）・`IsEmpty`（幅または高さが 0 以下）に加え、コントロールに依存しない 2 つの規則を単一所有します（各コアが個別に書くと同じ意味の式が散らばり、片方だけ端の扱いを変えると同じ矩形から違う結果になる）。
 
@@ -456,7 +456,7 @@ public readonly record struct ElementFinderResults(
 
 > `CreateUninitialized` は全行を書く相互変換（System.Drawing / Avalonia / Skia）が使うために公開しています。書かない領域が残る用途では `Create` を使います。
 
-**Skia との相互変換**（`ToSKBitmap` / `ToEsBitmap`）は SkiaSharp へ依存するため [`Platform.Skia`](../../Platform.Skia/README.md) の `EsBitmapSkiaExtensions` が提供します（`ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製。所有権はコア側に残ります）。
+**Skia との相互変換**（`ToSKBitmap` / `ToEsBitmap`）は SkiaSharp へ依存するため、Skia を使用する層の拡張メソッドが提供します（`ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製。所有権はコア側に残ります）。
 
 **プロパティ・ピクセル操作・その他**:
 
@@ -481,7 +481,7 @@ public readonly record struct ElementFinderResults(
 
 > `Stride` は常に `幅 × 4`（パディングなし）です。`Clear(byte,byte,byte,byte)` は与えられた BGRA 成分をそのまま書き込みます（乗算済みへの変換はしません）。
 
-`System.Drawing.Color`（`System.Drawing.Primitives`）のみに依存するため、**外部パッケージなしで Windows 以外でも動作します**。Skia との変換は `Platform.Skia`、System.Drawing.Bitmap との変換を含む Windows 専用の拡張は `Native.Imaging.EsBitmapDrawingExtensions` が提供します。
+`System.Drawing.Color`（`System.Drawing.Primitives`）のみに依存するため、**外部パッケージなしで Windows 以外でも動作します**。Skia との変換は Skia を使用する層、System.Drawing.Bitmap との変換を含む Windows 専用の拡張は `Native.Imaging.EsBitmapDrawingExtensions` が提供します。
 
 ## 3. 使用例
 
@@ -501,7 +501,7 @@ var port = CoordTransform.ImageLayout(() => new EsSize(800, 600), new EsSize(192
 var dip = port.Forward(new EsPoint(100, 100));
 ```
 
-### 3.2 OS サービスの注入（ホスト）
+### 3.2 OS サービスの注入（上位のアプリ）
 
 ```csharp
 // 実行時のプラットフォーム分岐を持たないため、ホストが具象を生成して抽象型として注入する
@@ -524,7 +524,7 @@ using var region = bitmap.Crop(new EsRectInt(10, 20, 800, 600));
 
 ## 4. 制限事項
 
-- 本プロジェクトは UI フレームワークへ依存しません。UI 型との相互変換は、各 UI 実装の Interop 層（例: `Platform.AvaloniaUI` の `EsGeometryAvaloniaInterop`）を用意して境界で行います。
+- 本プロジェクトは UI フレームワークへ依存しません。UI 型との相互変換は、各 UI 実装の Interop 層を用意して境界で行います。
 - 実行時のプラットフォーム分岐（ファクトリ）を持ちません。OS サービスの既定実装はホストが生成して抽象型として注入します（テストはモックを注入できます）。
 - `Native/` 配下（Win32 P/Invoke・`System.Drawing.Common`）は Windows 専用です。
 - 描画は本プロジェクトの対象外です（`EsBitmap` と配置計算だけを提供し、描画 API は各 UI が呼びます）。

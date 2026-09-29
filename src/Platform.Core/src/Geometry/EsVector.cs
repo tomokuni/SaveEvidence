@@ -5,7 +5,7 @@ namespace EsUtil.Platform.Core.Geometry;
 /// <summary>UI フレームワーク非依存の 2 次元ベクター（オフセット）を表す値オブジェクト。</summary>
 /// <remarks>
 /// コアロジックは本型を使用し、UI 境界でのみ各 UI フレームワークのベクター型へ変換する（一方向依存）。<br/>
-/// Avalonia のベクター型との変換は <c>EsGeometryAvaloniaInterop</c>、MewUI は <c>EsGeometryMewUIInterop</c> が提供する。<br/>
+/// 各 UI 実装は、自身のベクター型との相互変換を Interop 層で提供する。<br/>
 /// <br/>
 /// <b>各フレームワークの対応</b>: <see cref="LengthSquared"/> / <see cref="Length"/> / <see cref="Normalize"/> /<br/>
 /// <see cref="Dot"/> は .NET 標準（<c>System.Numerics.Vector2</c>）・Avalonia・MewUI に対応する<br/>

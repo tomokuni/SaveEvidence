@@ -1,10 +1,10 @@
 # Platform.Core
 
-`Platform.AvaloniaUI` / `Platform.MewUI` が共有する **UI フレームワーク非依存の型**（キーと入力・幾何・座標変換・画像・OS サービス抽象）を提供するライブラリです。
+UI フレームワーク非依存の **共通基盤の型**（キーと入力・幾何・座標変換・画像・OS サービス抽象）を提供するライブラリです。
 
 ## 概要
 
-UI フレームワークに依存していた型を本プロジェクトへ切り出すことで、アプリ（`app.Core`）と各コントロールのコア・提示層から、UI フレームワーク非依存のまま利用できます。
+UI フレームワークに依存していた型を本プロジェクトへ切り出すことで、上位のアプリ・コントロールから、UI フレームワーク非依存のまま利用できます。
 
 **実行時のプラットフォーム分岐を持ちません**。OS サービスの Windows 実装（`Native/Win`）はホストが生成して抽象型として注入します。テストはモックを注入できるため、Win32 実行環境を必要としません。
 
@@ -41,13 +41,13 @@ services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKe
 | Windows 実装 | `Native.Win.*`（Win32 P/Invoke。ホストが生成して注入する） |
 | 補助 | `EsPlatformHandle` / `LoggerFallback` / `DrawingColorExtensions` |
 
-各 UI 実装は、自身の型とコア型を相互変換する Interop 層（例: `Platform.AvaloniaUI` の `EsGeometryAvaloniaInterop` / `EsKeyAvaloniaInterop`）を個別に提供します。
+各 UI 実装は、自身の型とコア型を相互変換する Interop 層を個別に提供します（本プロジェクトは UI 型を参照しないため、変換は利用側が持ちます）。
 
 ## 依存
 
 - 外部パッケージは Microsoft 公式のみです（`Microsoft.Extensions.Logging.Abstractions`、`Native/Imaging` の `System.Drawing.Common`）。
-- UI フレームワーク（Avalonia / MewUI / WinUI / WinForms）と SkiaSharp を参照しません（Skia への依存は [`Platform.Skia`](../Platform.Skia/README.md) が単一所有する）。
-- 依存方向は `Platform.AvaloniaUI` / `Platform.MewUI` → 本プロジェクトの一方向です。
+- UI フレームワーク（Avalonia / MewUI / WinUI / WinForms）と SkiaSharp を参照しません（Skia への依存は Skia を使用する層が単一所有する）。
+- 他のプロジェクトは本プロジェクトへ依存します（本プロジェクトは他のプロジェクトを参照しません）。
 
 判定基準と設計判断は [`docs/SPEC_System.md`](docs/SPEC_System.md) を参照してください。
 
@@ -56,7 +56,7 @@ services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKe
 | 差し替えたいもの | 方法 |
 | --- | --- |
 | OS サービスの実装 | `Native.*` の抽象を実装し、ホストで注入する（Windows 以外・テスト用のモック） |
-| 各 UI の型との相互変換 | Interop 層を自作する（`Platform.AvaloniaUI` の `Es*Interop` が実装例） |
+| 各 UI の型との相互変換 | Interop 層を自作する（UI 型とコア型の変換は利用側が持ちます） |
 | 画像の描画 | 描画は各 UI が行う（本プロジェクトは `EsBitmap` と配置計算だけを提供する） |
 
 ## ビルド

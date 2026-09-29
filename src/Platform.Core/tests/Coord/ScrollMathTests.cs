@@ -10,7 +10,7 @@ namespace EsUtil.Platform.Core.Tests.Coord;
 /// スクロールバーの範囲・ビューポートサイズの計算を検証する。<br/>
 /// <c>double</c> のみに依存し UI フレームワーク非依存のため <c>[Fact]</c> で並列実行する。<br/>
 /// バグ修正（スクロールバーが表示されない・範囲が正しくない）の回帰防止を目的とする。<br/>
-/// <c>ZoomViewControl</c> で共用する。
+/// スクロールバーの計算で共用する。
 /// </remarks>
 public class ScrollMathTests
 {

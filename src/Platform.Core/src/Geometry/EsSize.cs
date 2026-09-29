@@ -5,7 +5,7 @@ namespace EsUtil.Platform.Core.Geometry;
 /// <summary>UI フレームワーク非依存の 2 次元サイズを表す値オブジェクト。</summary>
 /// <remarks>
 /// コアロジックは本型を使用し、UI 境界でのみ各 UI フレームワークのサイズ型へ変換する（一方向依存）。<br/>
-/// Avalonia のサイズ型との変換は <c>EsGeometryAvaloniaInterop</c>、MewUI は <c>EsGeometryMewUIInterop</c> が提供する。<br/>
+/// 各 UI 実装は、自身のサイズ型との相互変換を Interop 層で提供する。<br/>
 /// 「レイアウト前の領域（幅・高さが 0）ではクランプしない」という領域の規則は本型が単一所有する。<br/>
 /// <br/>
 /// <b>各フレームワークの対応</b>: <see cref="HasArea"/>（幅・高さとも正）は本型独自の判定であり、<br/>

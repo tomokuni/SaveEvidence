@@ -8,8 +8,7 @@ namespace EsUtil.Platform.Core.Imaging;
 /// <remarks>
 /// <b>設計</b>: 本型は自前のピクセルバッファ（アンマネージド）だけを所有し、ビットマップ種別に依存しない
 /// ピクセル操作のみを提供する。外部パッケージへ依存しない（UI 非依存・可搬の判定基準を満たす）。<br/>
-/// UI ごとの生成・変換（Avalonia / System.Drawing / Skia）は各プラットフォーム層の拡張が担う
-/// （Skia は <c>Platform.Skia</c> の <c>EsBitmapSkiaExtensions</c>）。<br/>
+/// UI ごとの生成・変換（System.Drawing / Avalonia / Skia）は各プラットフォーム層の拡張が担う。<br/>
 /// <br/>
 /// <b>メモリ確保</b>: <see cref="NativeMemory.AlignedAlloc"/> で 64 バイト整列して確保し、確保直後に全領域を 0 で初期化する
 /// （透明 = 全成分 0 が「描かれていない」の表現であるため）。全領域を直後に書く手順（複製・色付き生成・切り出し）は
