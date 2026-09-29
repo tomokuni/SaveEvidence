@@ -29,7 +29,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// 描画層のみを <see cref="SkiaCanvasView"/> で実装する（同じ設定・同じ見た目になる）。<br/>
 /// <br/>
 /// <b>入力</b>: <see cref="Source"/>（拡大元の 100% 画像）と <see cref="CenterPoint"/>（元画像ピクセル座標）。<br/>
-/// <b>設定</b>: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有する表示サイズ・拡大率・外観）。<br/>
+/// <b>設定</b>: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有する表示サイズ・拡大率）。<br/>
 /// <b>環境</b>: <see cref="DipToDeviceScaling"/>（DPI 追従）。<br/>
 /// <b>描画</b>: 中間ビットマップを生成せず、子の図形キャンバス（<see cref="ShapeCanvas"/>）が画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
 /// 数値の安全域への補正は <see cref="LoupeOptions"/>（コア）が、描画サイズの決定は<br/>
@@ -67,9 +67,9 @@ public sealed class LoupeControl : Panel
                 o.InvalidateArrange();
             });
 
-    /// <summary><see cref="Options"/> プロパティ（表示サイズ・拡大率・外観。コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
+    /// <summary><see cref="Options"/> プロパティ（表示サイズ・拡大率。コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
     /// <remarks>
-    /// 個別に公開していた設定（表示サイズ・拡大率・外観）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
+    /// 個別に公開していた設定（表示サイズ・拡大率）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
     /// <see cref="MeasureContent"/> が要求サイズを返すため、変更はレイアウトにも影響する（<c>AffectsLayout</c>）。<br/>
     /// 変更ログはコアのログ定義が単一所有する（変化した項目の判定（差分検出）もコアが行う）。<br/>
     /// 設定値の既定値と数値項目の安全域への補正はコアの <see cref="LoupeOptions"/> が単一所有するため、<br/>
@@ -155,7 +155,7 @@ public sealed class LoupeControl : Panel
         set => SetValue(CenterPointProperty, value);
     }
 
-    /// <summary>ルーペの設定（表示サイズ・拡大率・外観）を取得または設定する。</summary>
+    /// <summary>ルーペの設定（表示サイズ・拡大率）を取得または設定する。</summary>
     /// <value>設定の単一値。既定はコアの既定値（<see cref="LoupeOptions.Default"/>）。</value>
     /// <remarks>
     /// 一部の項目だけを変える場合は <c>LoupeOptions.Default with { ZoomLevel = 8 }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>

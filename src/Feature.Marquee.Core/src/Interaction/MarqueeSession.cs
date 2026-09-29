@@ -67,7 +67,7 @@ internal sealed class MarqueeSession
         set => _log = value;
     }
 
-    /// <summary>現在の設定（外観・対話パラメータ）。</summary>
+    /// <summary>現在の設定（寸法・対話パラメータ）。</summary>
     /// <value>反映済みの設定。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>本クラスは対話パラメータのみを使用する（外観は UI 層が描画時に読む）。</remarks>
     internal MarqueeOptions Options { get; private set; } = MarqueeOptions.Default;

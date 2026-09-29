@@ -77,7 +77,7 @@ public sealed partial class Loupe
     // 設定・環境値（設定・DPI・拡大中心・表示位置のオフセット）
     // ====================================================================
 
-    /// <summary>ルーペの設定（表示サイズ・拡大率・外観）。</summary>
+    /// <summary>ルーペの設定（表示サイズ・拡大率）。</summary>
     /// <value>設定の単一値。既定は <see cref="LoupeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定の値・既定値・数値項目の安全域への補正は <see cref="LoupeOptions"/> が単一所有する。<br/>

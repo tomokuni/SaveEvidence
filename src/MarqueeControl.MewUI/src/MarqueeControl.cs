@@ -48,7 +48,7 @@ namespace EsUtil.SaveEvidence.Marquee.MewUI;
 /// </remarks>
 public sealed class MarqueeControl : Panel
 {
-    /// <summary><see cref="Options"/> プロパティ（外観・対話パラメータをまとめた設定）。</summary>
+    /// <summary><see cref="Options"/> プロパティ（寸法・対話パラメータをまとめた設定）。</summary>
     /// <remarks>
     /// 個別に公開していた設定（外観 10 項目・対話パラメータ 3 項目）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
     /// 設定値は不変（<see cref="MarqueeOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。<br/>
@@ -221,7 +221,7 @@ public sealed class MarqueeControl : Panel
     /// </remarks>
     public event EventHandler<MarqueeRenderedEventArgs>? Rendered;
 
-    /// <summary>外観・対話パラメータをまとめた設定を取得または設定する。</summary>
+    /// <summary>寸法・対話パラメータをまとめた設定を取得または設定する。</summary>
     /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はファサードへ伝搬する。<br/>

@@ -132,7 +132,7 @@
                             <Image x:Name="BackdropImage" Stretch="Fill" IsHitTestVisible="False"/>
 
                             <!-- MarqueeControl（選択面。ズーム倍率に応じてサイズと座標ポートを更新）
-                                 外観・対話パラメータは Options（1 つの設定値）で指定するため、
+                                 寸法・対話パラメータは Options（1 つの設定値）で指定するため、
                                  コードビハインド（ApplyControlSettings）で ViewModel から一括設定する -->
                             <marquee:MarqueeControl x:Name="Marquee"/>
                         </Canvas>

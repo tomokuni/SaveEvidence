@@ -54,7 +54,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// <br/>
 /// **公開 API 一覧**:<br/>
 /// - 入力: <see cref="Source"/> / <see cref="CenterPoint"/><br/>
-/// - 設定: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有。表示サイズ・拡大率・外観）<br/>
+/// - 設定: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有。表示サイズ・拡大率）<br/>
 /// - 環境: <see cref="DipToDeviceScaling"/>（DPI スケーリング係数）<br/>
 /// - 位置: <see cref="SetCoordTransform"/> / <see cref="PositionOffset"/> / <see cref="RefreshPosition"/><br/>
 /// - ログ: <see cref="Log"/><br/>
@@ -306,7 +306,7 @@ public sealed class LoupeControl : Panel
             // 中心座標ラベルの文言は中心に依存するため、ラベル要素を配置し直す
             o.InvalidateArrange();
         });
-        // 設定（LoupeOptions）は表示サイズ・拡大率・外観をまとめて持つため、要素サイズと描画へ波及する
+        // 設定（LoupeOptions）は表示サイズ・拡大率をまとめて持つため、要素サイズと描画へ波及する
         OptionsProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
             o._presenter.Options = e.GetNewValue<LoupeOptions>();
@@ -355,9 +355,9 @@ public sealed class LoupeControl : Panel
         AvaloniaProperty.Register<LoupeControl, double>(
             nameof(DipToDeviceScaling), defaultValue: DipToDeviceScalingDefault, coerce: static (_, value) => CoerceDipToDeviceScaling(value));
 
-    /// <summary><see cref="Options"/> 依存関係プロパティ（表示サイズ・拡大率・外観。コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
+    /// <summary><see cref="Options"/> 依存関係プロパティ（表示サイズ・拡大率。コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
     /// <remarks>
-    /// 個別に公開していた設定（表示サイズ・拡大率・外観）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
+    /// 個別に公開していた設定（表示サイズ・拡大率）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
     /// 設定値の既定値と数値項目の安全域への補正はコアの <see cref="LoupeOptions"/> が単一所有するため、<br/>
     /// 本コントロールは既定値を持たず、補正の登録も行わない（どの設定経路でも範囲内の値だけが保持される）。
     /// </remarks>
@@ -399,7 +399,7 @@ public sealed class LoupeControl : Panel
     /// <remarks>親のサイズが確定しているかの判定とクランプはコア（<see cref="LoupePresenter.ResolveLayout"/>）が単一所有する。</remarks>
     private EsSize ParentAreaSize => (Parent as Panel)?.Bounds.Size.ToEsSize() ?? default;
 
-    /// <summary>ルーペの設定（表示サイズ・拡大率・外観）を取得または設定する。</summary>
+    /// <summary>ルーペの設定（表示サイズ・拡大率）を取得または設定する。</summary>
     /// <value>設定の単一値。既定はコアの既定値（<see cref="LoupeOptions.Default"/>）。</value>
     /// <remarks>
     /// 設定の値・既定値・数値項目の安全域への補正はコアの <see cref="LoupeOptions"/> が単一所有する（本コントロールは保持しない）。<br/>

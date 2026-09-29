@@ -42,7 +42,7 @@ namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 /// <see cref="SelectionCompleted"/>（終点決定）/ <see cref="SelectionCancelled"/>（領域キャンセル）/
 /// <see cref="ConfirmRequested"/> / <see cref="CancelRequested"/> イベントを購読して利用する。<br/>
 /// <br/>
-/// 外観・対話パラメータの設定は 1 つの依存関係プロパティ（<see cref="Options"/>）で公開し、外部バインディングで制御できる<br/>
+/// 寸法・対話パラメータの設定は 1 つの依存関係プロパティ（<see cref="Options"/>）で公開し、外部バインディングで制御できる<br/>
 /// （色の不透明度は色のアルファに統合。設定値の既定値と範囲補正はコアの <see cref="MarqueeOptions"/> が単一所有する）。<br/>
 /// 対話パラメータ（最小選択サイズ・境界外選択の禁止・ハンドルのヒットテスト半径）はファサードへ伝搬し、判断はコアが行う。<br/>
 /// ログは <see cref="Log"/> プロパティで注入する（デフォルトは <see cref="NullLogger"/>）。<br/>
@@ -348,7 +348,7 @@ public sealed partial class MarqueeControl : Panel
     // 外観・動作設定（StyledProperty）
     // ====================================================================
 
-    /// <summary><see cref="Options"/> 依存関係プロパティ（外観・対話パラメータをまとめた設定）。</summary>
+    /// <summary><see cref="Options"/> 依存関係プロパティ（寸法・対話パラメータをまとめた設定）。</summary>
     /// <remarks>
     /// 個別に公開していた設定（外観 10 項目・対話パラメータ 3 項目）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
     /// 設定値は不変（<see cref="MarqueeOptions"/>）であるため、同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。
@@ -364,7 +364,7 @@ public sealed partial class MarqueeControl : Panel
     public static readonly StyledProperty<MarqueeAppearance> AppearanceProperty =
         AvaloniaProperty.Register<MarqueeControl, MarqueeAppearance>(nameof(Appearance), defaultValue: MarqueeAppearance.Default);
 
-    /// <summary>外観・対話パラメータをまとめた設定を取得または設定する。</summary>
+    /// <summary>寸法・対話パラメータをまとめた設定を取得または設定する。</summary>
     /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はファサードへ伝搬する。<br/>

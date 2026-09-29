@@ -21,7 +21,7 @@ public sealed record FadeMaskDragRectOptions
     public static FadeMaskDragRectOptions Default { get; } = new();
 
     /// <summary>選択矩形の設定を取得する（選択の判断に使う項目のみ）。</summary>
-    /// <value>選択矩形の外観・対話パラメータ。既定は <see cref="MarqueeOptions.Default"/>。</value>
+    /// <value>選択矩形の寸法・対話パラメータ。既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>設定は 1 回の代入で子コントロールへ分配される（項目ごとの写し替えを行わない）。</remarks>
     public MarqueeOptions Marquee { get; init; } = MarqueeOptions.Default;
 

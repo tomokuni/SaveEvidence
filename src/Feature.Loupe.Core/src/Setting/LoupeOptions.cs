@@ -29,7 +29,7 @@ namespace EsUtil.Feature.Loupe.Core.Setting;
 public sealed record LoupeOptions
 {
     /// <summary>すべての項目を既定値にした設定。</summary>
-    /// <value>既定の表示サイズ・拡大率・外観（各 UI のプロパティの初期値）。</value>
+    /// <value>既定の表示サイズ・拡大率（各 UI のプロパティの初期値）。</value>
     /// <remarks>部分変更の基点として使用する（<c>Default with { ... }</c>）。</remarks>
     public static LoupeOptions Default { get; } = new();
 
