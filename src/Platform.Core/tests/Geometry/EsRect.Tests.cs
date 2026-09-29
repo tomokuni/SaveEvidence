@@ -187,4 +187,270 @@ public class EsRectTests
 
         Assert.Equal(rect, rect.Intersect(rect));
     }
+
+    // ====================================================================
+    // Empty / Size / 生成
+    // ====================================================================
+
+    [Fact]
+    public void Empty_は全て0()
+    {
+        Assert.Equal(new EsRect(0, 0, 0, 0), EsRect.Empty);
+    }
+
+    [Fact]
+    public void Size_幅と高さを返す()
+    {
+        Assert.Equal(new EsSize(30, 40), new EsRect(10, 20, 30, 40).Size);
+    }
+
+    [Fact]
+    public void FromLTRB_四辺から幅と高さを求める()
+    {
+        Assert.Equal(new EsRect(10, 20, 30, 40), EsRect.FromLTRB(10, 20, 40, 60));
+    }
+
+    [Fact]
+    public void FromLTRB_右が左より小さければ負の幅になる()
+    {
+        var rect = EsRect.FromLTRB(50, 60, 10, 20);
+
+        Assert.Equal(-40, rect.Width);
+        Assert.Equal(-40, rect.Height);
+    }
+
+    [Fact]
+    public void FromPoints_二点を対角とする矩形を返す()
+    {
+        Assert.Equal(new EsRect(10, 20, 30, 40), EsRect.FromPoints(new EsPoint(10, 20), new EsPoint(40, 60)));
+    }
+
+    [Fact]
+    public void FromRectInt_成分をそのまま引き継ぐ()
+    {
+        Assert.Equal(new EsRect(10, 20, 30, 40), EsRect.FromRectInt(new EsRectInt(10, 20, 30, 40)));
+    }
+
+    // ====================================================================
+    // With系
+    // ====================================================================
+
+    [Fact]
+    public void With系_指定した成分だけを差し替える()
+    {
+        var rect = new EsRect(1, 2, 3, 4);
+
+        Assert.Equal(new EsRect(9, 2, 3, 4), rect.WithX(9));
+        Assert.Equal(new EsRect(1, 9, 3, 4), rect.WithY(9));
+        Assert.Equal(new EsRect(1, 2, 9, 4), rect.WithWidth(9));
+        Assert.Equal(new EsRect(1, 2, 3, 9), rect.WithHeight(9));
+        Assert.Equal(new EsRect(8, 9, 3, 4), rect.WithPosition(new EsPoint(8, 9)));
+        Assert.Equal(new EsRect(1, 2, 8, 9), rect.WithSize(new EsSize(8, 9)));
+    }
+
+    // ====================================================================
+    // Offset / Inflate / Deflate
+    // ====================================================================
+
+    [Fact]
+    public void Offset_位置だけを平行移動する()
+    {
+        Assert.Equal(new EsRect(11, 22, 3, 4), new EsRect(1, 2, 3, 4).Offset(10, 20));
+    }
+
+    [Fact]
+    public void Inflate_四辺を広げる()
+    {
+        Assert.Equal(new EsRect(-2, -3, 9, 14), new EsRect(1, 2, 3, 4).Inflate(3, 5));
+    }
+
+    [Fact]
+    public void Inflate_厚さで四辺を広げる()
+    {
+        Assert.Equal(new EsRect(-3, -5, 16, 30), new EsRect(0, 0, 10, 20).Inflate(new EsThickness(3, 5, 3, 5)));
+    }
+
+    [Fact]
+    public void Deflate_厚さで四辺を狭める()
+    {
+        Assert.Equal(new EsRect(3, 5, 7, 14), new EsRect(0, 0, 10, 20).Deflate(new EsThickness(3, 5, 0, 1)));
+    }
+
+    [Fact]
+    public void Deflate_負のサイズはそのまま返す()
+    {
+        // クランプしない（必要な箇所は Normalize を使う）
+        Assert.Equal(-5, new EsRect(0, 0, 10, 20).Deflate(new EsThickness(10, 0, 5, 0)).Width);
+    }
+
+    // ====================================================================
+    // Normalize
+    // ====================================================================
+
+    [Fact]
+    public void Normalize_負の幅と高さを正にする()
+    {
+        Assert.Equal(new EsRect(10, 20, 30, 40), new EsRect(40, 60, -30, -40).Normalize());
+    }
+
+    [Fact]
+    public void Normalize_既に正なら同じ値()
+    {
+        var rect = new EsRect(1, 2, 3, 4);
+
+        Assert.Equal(rect, rect.Normalize());
+    }
+
+    [Theory]
+    [InlineData(double.NaN, 0, 10, 10)]
+    [InlineData(0, double.NaN, 10, 10)]
+    [InlineData(0, 0, double.NaN, 10)]
+    public void Normalize_非数を含むなら空になる(double x, double y, double width, double height)
+    {
+        Assert.Equal(EsRect.Empty, new EsRect(x, y, width, height).Normalize());
+    }
+
+    // ====================================================================
+    // ContainsExclusive / Contains(Rect) / Intersects
+    // ====================================================================
+
+    [Fact]
+    public void ContainsExclusive_右端と下端を含まない()
+    {
+        var rect = new EsRect(0, 0, 100, 100);
+
+        Assert.True(rect.ContainsExclusive(new EsPoint(99, 99)));
+        Assert.False(rect.ContainsExclusive(new EsPoint(100, 50)));
+        Assert.False(rect.ContainsExclusive(new EsPoint(50, 100)));
+    }
+
+    [Fact]
+    public void Contains_矩形を完全に含むかを判定する()
+    {
+        var rect = new EsRect(0, 0, 100, 100);
+
+        Assert.True(rect.Contains(new EsRect(10, 10, 20, 20)));
+        Assert.False(rect.Contains(new EsRect(90, 90, 20, 20)));
+    }
+
+    [Theory]
+    [InlineData(50, 50, 100, 100, true)]
+    [InlineData(100, 0, 50, 50, false)]
+    [InlineData(200, 0, 50, 50, false)]
+    public void Intersects_接触のみは偽(double x, double y, double w, double h, bool expected)
+    {
+        Assert.Equal(expected, new EsRect(0, 0, 100, 100).Intersects(new EsRect(x, y, w, h)));
+    }
+
+    // ====================================================================
+    // Union
+    // ====================================================================
+
+    [Fact]
+    public void Union_両者を包含する最小の矩形を返す()
+    {
+        Assert.Equal(new EsRect(0, 0, 300, 150), new EsRect(0, 0, 100, 100).Union(new EsRect(200, 50, 100, 100)));
+    }
+
+    [Fact]
+    public void Union_空の矩形なら相手を返す()
+    {
+        var empty = new EsRect(10, 10, 0, 0);
+        var other = new EsRect(0, 0, 100, 100);
+
+        Assert.Equal(other, empty.Union(other));
+        Assert.Equal(other, other.Union(empty));
+    }
+
+    [Fact]
+    public void Union_点を含む矩形を返す()
+    {
+        Assert.Equal(new EsRect(0, 0, 150, 150), new EsRect(0, 0, 100, 100).Union(new EsPoint(150, 150)));
+    }
+
+    [Fact]
+    public void Union_空の矩形と点は面積0の矩形を返す()
+    {
+        Assert.Equal(new EsRect(5, 6, 0, 0), EsRect.Empty.Union(new EsPoint(5, 6)));
+    }
+
+    // ====================================================================
+    // CenterRect
+    // ====================================================================
+
+    [Fact]
+    public void CenterRect_指定した矩形を中央へ配置する()
+    {
+        Assert.Equal(new EsRect(45, 40, 10, 20), new EsRect(0, 0, 100, 100).CenterRect(new EsRect(0, 0, 10, 20)));
+    }
+
+    // ====================================================================
+    // ResolveInnerEdges / ComputeInnerEdges
+    // ====================================================================
+
+    [Fact]
+    public void ResolveInnerEdges_四辺を上_下_左_右の順に返す()
+    {
+        var edges = new EsRect(10, 20, 100, 80).ResolveInnerEdges(thickness: 2);
+
+        Assert.Equal(new EsRect(10, 20, 100, 2), edges[0]);
+        Assert.Equal(new EsRect(10, 98, 100, 2), edges[1]);
+        Assert.Equal(new EsRect(10, 22, 2, 76), edges[2]);
+        Assert.Equal(new EsRect(108, 22, 2, 76), edges[3]);
+    }
+
+    [Fact]
+    public void ResolveInnerEdges_ComputeInnerEdgesと一致する()
+    {
+        var rect = new EsRect(10, 20, 100, 80);
+
+        Assert.Equal(rect.ComputeInnerEdges(2), rect.ResolveInnerEdges(2).ToArray());
+    }
+
+    [Fact]
+    public void ResolveInnerEdges_範囲外のインデクサは例外()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new EsRect(0, 0, 10, 10).ResolveInnerEdges(1)[4]);
+    }
+
+    // ====================================================================
+    // NearlyEquals / ToEsRectInt / タプル
+    // ====================================================================
+
+    [Fact]
+    public void NearlyEquals_許容誤差内なら真()
+    {
+        Assert.True(new EsRect(1, 2, 3, 4).NearlyEquals(new EsRect(1 + 1e-12, 2, 3, 4)));
+        Assert.False(new EsRect(1, 2, 3, 4).NearlyEquals(new EsRect(1.001, 2, 3, 4)));
+    }
+
+    [Fact]
+    public void ToEsRectInt_既定は四捨五入で成分ごとに丸める()
+    {
+        Assert.Equal(new EsRectInt(2, 3, 4, 5), new EsRect(1.5, 2.5, 3.5, 4.5).ToEsRectInt());
+    }
+
+    [Fact]
+    public void ToEsRectInt_丸め方法を指定できる()
+    {
+        Assert.Equal(new EsRectInt(1, 1, 1, 1), new EsRect(1.9, 1.9, 1.9, 1.9).ToEsRectInt(EsRounding.Truncate));
+    }
+
+    [Fact]
+    public void FromTuple_ToTuple_タプルと往復する()
+    {
+        Assert.Equal(new EsRect(1, 2, 3, 4), EsRect.FromTuple((1, 2, 3, 4)));
+        Assert.Equal((1, 2, 3, 4), new EsRect(1, 2, 3, 4).ToTuple());
+    }
+
+    [Fact]
+    public void Deconstruct_タプルへ分解できる()
+    {
+        var (x, y, width, height) = new EsRect(1, 2, 3, 4);
+
+        Assert.Equal(1, x);
+        Assert.Equal(2, y);
+        Assert.Equal(3, width);
+        Assert.Equal(4, height);
+    }
 }
