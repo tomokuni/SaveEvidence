@@ -4,7 +4,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Native.Imaging;
+using EsUtil.Platform.Core.Native.Imaging;
 using Xunit;
 using Avalonia.Headless.XUnit;
 

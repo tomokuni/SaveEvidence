@@ -3,7 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using EsUtil.SaveEvidence.CaptureSession.UIBase;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -40,7 +41,7 @@ internal sealed class CropSession(
     private readonly ILogger _log = logger.OrNullLogger();
 
     /// <summary>カーソル上書き抑止（Crop 中の十字カーソル維持）。</summary>
-    private readonly ICursorOverrideGuard _cursorGuard = PlatformFactory.CreateCursorOverrideGuard();
+    private readonly ICursorOverrideGuard _cursorGuard = new WinCursorOverrideGuard();
 
     /// <summary>座標変換ポート（ビューポートDIP ↔ 元画像ピクセル）。</summary>
     /// <remarks>

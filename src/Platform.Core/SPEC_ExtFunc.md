@@ -188,16 +188,16 @@ public readonly record struct EsPlatformHandle(nint Handle, string? Descriptor =
 
 ネイティブウィンドウ識別子（Win32: HWND 等）。`IsValid`（ハンドル値が 0 以外か）を提供します。座標・寸法ではないためルート名前空間（`EsUtil.Platform.Core`）にあります。
 
-### `ICaptureService`（interface）
+### `Native.ICaptureService`（interface）
 
-画面領域のキャプチャを抽象化します。公開 API は UI フレームワーク非依存の型のみを使用します。
+画面領域のキャプチャを抽象化します。公開 API は UI フレームワーク非依存の型のみを使用します。**ネイティブ実装を指す抽象は `EsUtil.Platform.Core.Native` 名前空間（`Native/`）に置きます**（値型・幾何はルート〜`Geometry` / `Imaging` / `Coord`）。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
 | `CaptureArea` | `EsBitmap? CaptureArea(EsRectInt bounds)` | 指定画面領域（画面物理座標）をキャプチャ。失敗時は null |
 | `CaptureVirtualScreen` | `EsBitmap? CaptureVirtualScreen(out EsPointInt origin)` | 仮想スクリーン全体を 1 回でキャプチャ |
 
-### `ICursorService`（interface）
+### `Native.ICursorService`（interface）
 
 OS 依存のカーソル操作を抽象化します（UI フレームワーク標準で代替可能な機能は含めません）。
 
@@ -207,7 +207,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `SetCursorScreenPoint` | `void SetCursorScreenPoint(EsPointInt point)` | カーソルを画面物理座標へ移動 |
 | `ShowCursor` | `void ShowCursor(bool show)` | マウスポインターの表示/非表示を切替 |
 
-### `IWindowService`（interface）
+### `Native.IWindowService`（interface）
 
 ネイティブウィンドウ操作を抽象化します。ウィンドウは `EsPlatformHandle` で識別します。
 
@@ -218,7 +218,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `SetBounds` | `bool SetBounds(EsPlatformHandle handle, EsRectInt bounds)` | 位置・サイズを画面物理ピクセルで指定（未対応環境は false。全モニターを跨ぐ配置に使う） |
 | `EvacuateWindow` | `void EvacuateWindow(EsPlatformHandle handle)` | 最前面解除・非表示・クローズ（UI ハング時の退避） |
 
-### `IElementFinder`（interface）
+### `Native.IElementFinder`（interface）
 
 指定位置の要素（ウィンドウ・スクリーン）検出を抽象化します。
 
@@ -229,7 +229,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `ListScreens` | `IReadOnlyList<ElementFinderResults> ListScreens()` | 全スクリーン一覧 |
 | `ListWindows` | `IReadOnlyList<ElementFinderResults> ListWindows()` | 全ウィンドウ一覧 |
 
-### `ICursorOverrideGuard`（interface : IDisposable）
+### `Native.ICursorOverrideGuard`（interface : IDisposable）
 
 選択操作中のカーソル上書き抑止を抽象化します。
 
@@ -239,7 +239,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `Attach` | `void Attach(EsPlatformHandle handle)` | 指定ウィンドウに抑止をアタッチ |
 | `Dispose` | `void Dispose()` | 抑止を解除 |
 
-### `IGlobalHotKeyService<T>`（interface : IDisposable）
+### `Native.IGlobalHotKeyService<T>`（interface : IDisposable）
 
 グローバルホットキーの登録・解除・アクション配信を抽象化します。
 
@@ -250,7 +250,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `UnregisterAll` | `void UnregisterAll()` | 全ホットキーを解除 |
 | `HotKeyPressed` | `event Action<T>? HotKeyPressed` | ホットキー押下時にアクションを配信 |
 
-### `ElementFinderResults`（readonly record struct）
+### `Native.ElementFinderResults`（readonly record struct）
 
 ```csharp
 public readonly record struct ElementFinderResults(
@@ -262,6 +262,30 @@ public readonly record struct ElementFinderResults(
 ```
 
 要素検出の結果。座標は入力と同じ画面物理座標で統一されます。
+
+### `Native.Win.*`（Windows 実装）
+
+上記抽象の Windows 実装です（`EsUtil.Platform.Core.Native.Win`）。**実行時のプラットフォーム分岐（ファクトリ）は持たず、ホストが生成して抽象型として注入します**。テストは同じ抽象を実装したモックを注入するため、Win32 環境を必要としません。
+
+| クラス | 実装する抽象 |
+| --- | --- |
+| `WinCaptureService` | `ICaptureService`（`ILogger?` を省略可） |
+| `WinCursorService` | `ICursorService` |
+| `WinWindowService` | `IWindowService`（`ILogger?` を省略可） |
+| `WinElementFinder` | `IElementFinder` |
+| `WinCursorOverrideGuard` | `ICursorOverrideGuard` |
+| `WinGlobalHotKeyService<T>` | `IGlobalHotKeyService<T>`（`T : notnull`） |
+
+`Native.Win.WinNative`（internal）が Win32 P/Invoke の宣言を集約し、`Native.PlatformLog`（internal）が本層のログ定義を担います。
+
+### `Native.Imaging.EsBitmapDrawingExtensions`（static class）
+
+`System.Drawing.Bitmap` と `EsBitmap` の相互変換です（`EsUtil.Platform.Core.Native.Imaging`。`System.Drawing.Common` を使う Windows 専用）。
+
+| メンバー | シグネチャ | 説明 |
+| --- | --- | --- |
+| `ToEsBitmap` | `static EsBitmap ToEsBitmap(this DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から `EsBitmap` を作る（複製。元の Bitmap は変更しない） |
+| `ToDrawingBitmap` | `static DrawingBitmap ToDrawingBitmap(this EsBitmap bitmap)` | `EsBitmap` から `System.Drawing.Bitmap`（`Format32bppPArgb`）を作る（複製） |
 
 ### `Coord.ICoordTransform`（interface）
 
@@ -325,7 +349,7 @@ public readonly record struct ElementFinderResults(
 
 > `Stride` は常に `幅 × 4`（パディングなし）です。`Clear(byte,byte,byte,byte)` は与えられた BGRA 成分をそのまま書き込みます（乗算済みへの変換はしません）。
 
-`System.Drawing.Color`（`System.Drawing.Primitives`）のみに依存するため、**外部パッケージなしで Windows 以外でも動作します**。Skia との変換は `Platform.Skia`、System.Drawing.Bitmap との変換を含む Windows 専用の拡張は `Platform.Native` が提供します。
+`System.Drawing.Color`（`System.Drawing.Primitives`）のみに依存するため、**外部パッケージなしで Windows 以外でも動作します**。Skia との変換は `Platform.Skia`、System.Drawing.Bitmap との変換を含む Windows 専用の拡張は `Native.Imaging.EsBitmapDrawingExtensions` が提供します。
 
 ## 利用側の注意
 

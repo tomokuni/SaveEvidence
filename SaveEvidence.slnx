@@ -124,10 +124,6 @@
     <Project Path="src/Platform.MewUI/tests/Platform.MewUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Platform.MewUI/src/" />
-  <Folder Name="/src/Platform.Native/">
-    <Project Path="src/Platform.Native/src/Platform.Native.csproj" />
-    <Project Path="src/Platform.Native/tests/Platform.Native.Tests.csproj" />
-  </Folder>
   <Folder Name="/src/Feature.Marquee.Presenter/src/" />
   <Folder Name="/src/Platform.AvaloniaUI/">
     <Project Path="src/Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj" />

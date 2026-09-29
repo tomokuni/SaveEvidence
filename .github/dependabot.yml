@@ -82,8 +82,6 @@ updates:
       - "/src/Platform.AvaloniaUI/tests"
       - "/src/Platform.Core/src"
       - "/src/Platform.Core/tests"
-      - "/src/Platform.Native/src"
-      - "/src/Platform.Native/tests"
       - "/src/Platform.MewUI/src"
       - "/src/Platform.MewUI/tests"
       # ── 画像処理・撮影フロー ──

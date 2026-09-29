@@ -10,7 +10,8 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.MewUI.Imaging;
-using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
@@ -150,7 +151,7 @@ public sealed class MarqueeControl : Panel
     public MarqueeControl(ICursorService? cursorService)
     {
         Focusable = true;
-        _cursor = cursorService ?? PlatformFactory.CreateCursorService();
+        _cursor = cursorService ?? new WinCursorService();
         _effects = new Effects(this);
         _marquee = new MarqueePresenter(_effects, _cursor, Options);
         // 現在の環境値（倍率）を提示層へ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）

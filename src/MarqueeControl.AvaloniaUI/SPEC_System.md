@@ -20,7 +20,7 @@
     - [6.4 MarqueeSelection](#64-marqueeselection)
     - [6.5 MarqueePresenter（Feature.Marquee.Presenter）](#65-marqueepresenterfeaturemarqueepresenter)
     - [6.6 MarqueeAppearance（Feature.Marquee.Presenter）](#66-marqueeappearancefeaturemarqueepresenter)
-    - [6.7 MarqueePresenter.LabelPlan（Feature.Marquee.Presenter）](#67-marquepresenterlabelplanfeaturemarqueepresenter)
+    - [6.7 MarqueePresenter.LabelPlan（Feature.Marquee.Presenter）](#67-marqueepresenterlabelplanfeaturemarqueepresenter)
     - [6.8 ラベル要素の配置（本コントロールの内部実装）](#68-ラベル要素の配置本コントロールの内部実装)
     - [6.9 MarqueeContextPainter（本プロジェクト）](#69-marqueecontextpainter本プロジェクト)
     - [6.10 Marquee（コアの幾何解決）](#610-marqueeコアの幾何解決)
@@ -54,7 +54,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | Feature.Marquee.Core（公開ファサード・幾何）/ Feature.Marquee.Presenter（描画計画・外観・ラベル計画・組み込み規則）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Native（ICursorService）/ Platform.Core（ICoordTransform / CoordTransform） |
+| **依存プロジェクト** | Feature.Marquee.Core（公開ファサード・幾何）/ Feature.Marquee.Presenter（描画計画・外観・ラベル計画・組み込み規則）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（`Native.ICursorService` / ICoordTransform / CoordTransform） |
 
 ## 3. アーキテクチャ
 
@@ -73,7 +73,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ### 3.2 依存方向
 
-- 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelection（これらの幾何計算はコア内部の値の振る舞い）/ Platform.AvaloniaUI / Platform.Native / Platform.Core。描画計画は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core））。
+- 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelection（これらの幾何計算はコア内部の値の振る舞い）/ Platform.AvaloniaUI / Platform.Core（`Native` を含む）。描画計画は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core））。
 - MarqueeControl は上位 AP に依存しない（再利用可能）。
 - **判断はコア（`Marquee`）・反映は UI**: nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルはコアが決め、コントロールは `IMarqueeEffects` を実装して要求された効果を適用するだけにする。
 - **描画計画と外観は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueePresenter`（`LabelPlan` partial））が単一所有**し、本コントロールは `Appearance` プロパティで外観を与え、`ResolveDrawPlan` が返す描画計画を自 UI の描画 API（`DrawingContext`）で写すだけです（**描画 API の抽象は持ちません**）。装飾の**判断**も持ちません（状態（選択矩形・nudge）はコア（`MarqueeState`）に集約する）。
@@ -176,7 +176,7 @@ flowchart TB
   - プロパティ: `Log`（保持・`NullLogger` へのフォールバックはコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。デリゲートのため設定値に含めない） / `HasSelection` / `SelectionRect`
   - メソッド: `SetCoordTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `RefreshOverlay` / **`InvalidateRender()`**（描画に関わる変更の唯一の入口。図形の層・ラベル・配置をまとめて無効化する）
 - **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画の起動のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・装飾の描画内容）と描画の手順はコアと描画層へ委譲する
-- **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeGeometry（Feature.Marquee.Core）/ MarqueePresenter（描画計画と配置の写像）/ MarqueeAppearance / MarqueeDrawPlan（Feature.Marquee.Presenter）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）/ ScreenConverter（Platform.AvaloniaUI）
+- **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeGeometry（Feature.Marquee.Core）/ MarqueePresenter（描画計画と配置の写像）/ MarqueeAppearance / MarqueeDrawPlan（Feature.Marquee.Presenter）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Core の `Native`）/ ScreenConverter（Platform.AvaloniaUI）
 
 ### 6.2 Marquee（公開ファサード・コア）
 
@@ -201,7 +201,7 @@ flowchart TB
   - カーソル操作（`ICursorService`）
   - nudge 終了の共通化（`EndNudge`。`Reset` / `SetSelection` / `MarqueeSession` から共用し、カーソル再表示を委譲）
 - **可視性**: internal（本コントロールはコアの公開ファサード（`Marquee`）と公開型（`MarqueeSnapshot`）のみを使う。`MarqueeState` / `MarqueeSession` はコアの内部実装であり参照しない）
-- **依存**: MarqueeSelection / MarqueeHitTarget / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）
+- **依存**: MarqueeSelection / MarqueeHitTarget / ICoordTransform（Platform.Core）/ ICursorService（Platform.Core の `Native`）
 
 ### 6.4 MarqueeSelection
 

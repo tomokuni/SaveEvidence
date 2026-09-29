@@ -45,7 +45,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | FadeMaskDragRect（複合コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Native（プラットフォームサービス） |
+| **依存プロジェクト** | FadeMaskDragRect（複合コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
 
 CaptureSessionControl.AvaloniaUI は内包コントロール（MarqueeControl / LoupeControl）を直接参照しない（公開型のカプセル化。窓口は FadeMaskDragRectControl のみ。推移的依存として各プロジェクトを利用）。
 
@@ -144,7 +144,7 @@ flowchart TB
   - キャプチャ / Crop の開始・キャンセル・確定の公開 API を提供（単一の窓口）
   - セッションの生成とライフサイクル管理（再入禁止・Dispose ガード）
   - 設定（`CaptureSettings`）の保持・部分更新・検証
-  - プラットフォームサービスの注入（`Platform.Native` 経由）
+  - プラットフォームサービスの注入（`Platform.Core` の `Native.Win` 経由）
 - **公開メンバー**:
   - コンストラクタ: `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)`
   - プロパティ: `AppearanceSettings`（`CaptureSettings`。getter は全メンバー non-null / setter は部分更新 + 検証）/ `IsCropping`（切り出し中かどうか）
@@ -175,7 +175,7 @@ flowchart TB
   - 確定 → 論理 Rect（`CropBoundsMath.ComputeCropBounds` で閉区間化） / キャンセル → 0x0 の空矩形を返却（いずれもコア型 `EsRectInt`）
   - サイズラベルの文言生成（`CropLabelTexts` に委譲）
 - **可視性**: internal
-- **依存**: CropViewControl / FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectOptions）/ Platform.Native（ICursorOverrideGuard）/ Platform.Core（ICoordTransform / CoordTransform）/ CropBoundsMath / CropLabelTexts
+- **依存**: CropViewControl / FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectOptions）/ Platform.Core（`Native.ICursorOverrideGuard` / ICoordTransform / CoordTransform）/ CropBoundsMath / CropLabelTexts
 
 ### 6.4 OverlayWindow
 
@@ -212,7 +212,7 @@ flowchart TB
   - クリック確定 → キャプチャ実行 → 結果コールバック
   - 非アクティブ化 / Close → キャンセル
 - **可視性**: internal（クラス。コンストラクタ等のシグネチャは public）
-- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Native（ICaptureService / IWindowService / IElementFinder）/ CaptureTypeTraits / CaptureClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CaptureLogMessage / CaptureResult
+- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CaptureClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CaptureLogMessage / CaptureResult
 
 ### 6.5 公開データ型
 

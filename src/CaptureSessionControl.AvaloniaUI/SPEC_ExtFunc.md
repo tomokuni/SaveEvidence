@@ -319,7 +319,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 ### 7.1 StartCaptureAsync
 
 1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出（`owner.Screens`。0 以下は 1.0 へ正規化）
-2. `SelectionCaptureSession` を生成（`IWindowService` / `ICaptureService` / `IElementFinder` を `Platform.Native` から注入）
+2. `SelectionCaptureSession` を生成（`IWindowService` / `ICaptureService` / `IElementFinder` を `Platform.Core` の `Native`（既定実装は `Native.Win`）から注入）
 3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`。オーバーレイの写り込み防止）→ 画面外へ退避（`HideOwnerWindow` が true の場合）
 4. **仮想スクリーン全体をバックグラウンド + 5 秒タイムアウトでキャプチャ（全モード共通。切り出し元）**
 5. `OverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示）

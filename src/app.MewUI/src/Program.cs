@@ -1,7 +1,8 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Interop;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Models;
 using EsUtil.SaveEvidence.Services;
@@ -78,7 +79,7 @@ internal static class Program
         var window = MainWindow.Create(services);
 
         // グローバルホットキーはウィンドウハンドルとメッセージフックを必要とするため、初回描画後に登録する
-        var hotKeys = PlatformFactory.CreateGlobalHotKeyService<CaptureType>();
+        var hotKeys = new WinGlobalHotKeyService<CaptureType>();
         window.Closed += hotKeys.Dispose;
         window.FirstFrameRendered += () => RegisterHotKeys(hotKeys, window, settings, services);
 

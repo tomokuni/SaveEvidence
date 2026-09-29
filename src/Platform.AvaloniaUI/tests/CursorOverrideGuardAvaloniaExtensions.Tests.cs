@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Native;
 using Xunit;
 using Avalonia.Headless.XUnit;
 using EsUtil.Platform.AvaloniaUI.Interop;
@@ -12,7 +13,7 @@ namespace EsUtil.Platform.AvaloniaUI.Tests;
 /// <remarks>
 /// <see cref="TopLevel"/> を生成するため、Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）で直列実行する。<br/>
 /// コア側の <see cref="ICursorOverrideGuard.Attach(EsPlatformHandle)"/> のテストは
-/// <c>Platform.Native.Tests</c> が担う。
+/// <c>Platform.Core.Tests</c> が担う。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class CursorOverrideGuardAvaloniaExtensionsTests

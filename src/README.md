@@ -9,7 +9,7 @@
 flowchart TB
     APP["アプリ層<br/>app.AvaloniaUI / app.MewUI（+ app.Core の ViewModel・Model）<br/>CaptureSessionControl.*（撮影セッション）"]
     CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI<br/>（ZoomView / CropView は Core と UI のみ）"]
-    PLAT["プラットフォーム層<br/>Platform.Core（このソリューション以外でも使える値型・抽象）<br/>Platform.Skia（Skia 依存を閉じ込める）<br/>Platform.AvaloniaUI / Platform.MewUI（UI アダプタ）<br/>Platform.Native（Win32 / NoOp 実装）"]
+    PLAT["プラットフォーム層<br/>Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>Platform.Skia（Skia 依存を閉じ込める）<br/>Platform.AvaloniaUI / Platform.MewUI（UI アダプタ）"]
     APP --> CTRL
     APP --> PLAT
     CTRL --> PLAT
@@ -109,13 +109,13 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) / [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md)）。
 
 UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [`MarqueeControl.MewUI`](MarqueeControl.MewUI/README.md) / [`LoupeControl.AvaloniaUI`](LoupeControl.AvaloniaUI/README.md) / [`LoupeControl.MewUI`](LoupeControl.MewUI/README.md)、
-プラットフォーム層は [`Platform.Core`](Platform.Core/README.md) / [`Platform.Skia`](Platform.Skia/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) / [`Platform.Native`](Platform.Native/README.md) を参照してください。
+プラットフォーム層は [`Platform.Core`](Platform.Core/README.md) / [`Platform.Skia`](Platform.Skia/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) を参照してください。
 
 ## 7. 名前空間とフォルダの対応
 
 | 種別 | フォルダ | 名前空間 |
 | --- | --- | --- |
-| プラットフォーム層 | `Platform.Core` / `.Native` / `.Skia` / `.AvaloniaUI` / `.MewUI` | `EsUtil.Platform.Core` / `.Native` / `.Skia` / `.AvaloniaUI` / `.MewUI` |
+| プラットフォーム層 | `Platform.Core`（`Native/` を含む） / `Platform.Skia` / `Platform.AvaloniaUI` / `Platform.MewUI` | `EsUtil.Platform.Core`（`.Native` / `.Native.Win` / `.Native.Imaging` を含む） / `EsUtil.Platform.Skia` / `EsUtil.Platform.AvaloniaUI` / `EsUtil.Platform.MewUI` |
 | 可搬コア（機能単位） | `Feature.Marquee.Core` / `Feature.Loupe.Core` | `EsUtil.Feature.Marquee.Core`（`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Selection`） / `EsUtil.Feature.Loupe.Core`（`.Drawing` / `.Setting` / `.Logging` / `.Placement`） |
 | 可搬な提示層（機能単位） | `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | `EsUtil.Feature.Marquee.Presenter`（`.Setting` / `.Drawing` / `.Label` / `.Logging`） / `EsUtil.Feature.Loupe.Presenter`（同左） |
 | 製品側のコントロール | `MarqueeControl.AvaloniaUI` 等 | `EsUtil.SaveEvidence.Marquee.AvaloniaUI` 等 |

@@ -7,7 +7,8 @@ using EsUtil.SaveEvidence.Views;
 using Avalonia;
 using Avalonia.Threading;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -117,9 +118,9 @@ internal static class Program
         // 公開プロパティが削除され、保存時に設定が空（{}）になる（実測。AOT 配布で設定が全損した）。
         services.AddSingleton<ISettingsService>(_ => new SettingsService(SettingsJsonContext.Default));
 
-        // OS依存サービスの登録（実装は PlatformFactory が実行時プラットフォームに応じて生成。アクション識別子は CaptureType）
+        // OS 依存サービスの登録（実装はホストが直接生成する。アクション識別子は CaptureType）
         services.AddSingleton<IGlobalHotKeyService<CaptureType>>(
-            _ => PlatformFactory.CreateGlobalHotKeyService<CaptureType>());
+            _ => new WinGlobalHotKeyService<CaptureType>());
 
         // 画像の書き込み（UI 依存の実装。MainViewModel（app.Core）へ注入する）
         services.AddSingleton<IImageWriter, AvaloniaImageWriter>();

@@ -1,6 +1,6 @@
 using Avalonia.Media.Imaging;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Native.Imaging;
+using EsUtil.Platform.Core.Native.Imaging;
 using System.Text.Json;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;

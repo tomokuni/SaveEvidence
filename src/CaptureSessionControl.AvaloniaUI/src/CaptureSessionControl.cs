@@ -2,7 +2,8 @@ using Avalonia.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
@@ -15,7 +16,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 /// IDisposable を実装する。Dispose 後は全ての公開操作が ObjectDisposedException を投げる。<br/>
 /// StartCaptureAsync / StartCropAsync 実行中に同一インスタンスへ再呼び出しされた場合は無視する（既存のセッションを継続）。<br/>
 /// <br/>
-    /// <b>薄い統括者</b>: 状態は MarqueeControl / LoupeControl / PlatformFactory が保持し、<br/>
+    /// <b>薄い統括者</b>: 状態は MarqueeControl / LoupeControl が保持し、<br/>
 /// 本クラスは「組み立て・配線・ライフサイクル」のみを担う。<br/>
 /// - プレビュー状態（CropPreviewState）は持たない（スクロールは Marquee イベント / TranslatePoint から取得）。<br/>
 /// - 座標変換は EsUtil.Platform.Core.Coord の <see cref="ICoordTransform"/>（<see cref="CoordTransform"/> ファクトリ:
@@ -61,7 +62,7 @@ public sealed class CaptureSessionControl : IDisposable
         // 入力なし（null）は既定値で埋める（規則はコアが単一所有する）
         _currentSettings = CaptureSettingsMerge.Merge(initialSettings);
         _log = logger.OrNullLogger();
-        _windowService = PlatformFactory.CreateWindowService(_log);
+        _windowService = new WinWindowService(_log);
     }
 
     /// <summary>現在の外観・動作設定を取得する（getter は現在有効な値、すなわち全メンバー non-null の CaptureSettings を返す）。</summary>
@@ -109,8 +110,8 @@ public sealed class CaptureSessionControl : IDisposable
 
         var session = new SelectionCaptureSession(
             _windowService,
-            PlatformFactory.CreateCaptureService(_log),
-            PlatformFactory.CreateElementFinder(),
+            new WinCaptureService(_log),
+            new WinElementFinder(),
             type, _currentSettings, scaling,
             // キャプチャ完了イベントを公開イベントへ中継する（同期実行 → ホストの画像変更後に再表示）
             onCaptured: result => CaptureCompleted?.Invoke(result),

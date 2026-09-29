@@ -39,8 +39,7 @@
 ## 2. 目的
 
 本プロジェクトは **Avalonia UI 固有のアダプタのみ**を提供します。
-UI フレームワーク非依存の抽象・値型・純粋ロジックは `Platform.Core`、
-ネイティブ（OS）実装と実行時プラットフォームの既定実装ファクトリは `Platform.Native` が担います。
+UI フレームワーク非依存の抽象・値型・純粋ロジックと、ネイティブ（OS）の Win32 実装は `Platform.Core`（後者は `Native/` 配下） が担います。
 
 | 機能 | 提供元 |
 | --- | --- |
@@ -48,7 +47,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 | コア値型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` / `EsPlatformHandle` 等） | `Platform.Core` |
 | 座標変換ポート（`ICoordTransform` / `CoordTransform`）・`ScrollMath` / `DpiScaler` | `Platform.Core` |
 | 画像コンテナ（`EsBitmap`） | `Platform.Core` |
-| 既定実装のファクトリ（`PlatformFactory.CreateXxx()`）・Win32 / NoOp 実装・System.Drawing 変換 | `Platform.Native`（本プロジェクトから参照される） |
+| 既定実装（Win32）・サービス抽象・System.Drawing 変換 | `Platform.Core`（`Native/` ・`Native/Win/`・`Native/Imaging/`） |
 | **画面座標変換（`ScreenConverter`）・相互変換（Interop）・画像／幾何アダプタ** | **本プロジェクト** |
 
 ## 3. 外部利用条件
@@ -59,19 +58,21 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 <ProjectReference Include="..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
 ```
 
-本プロジェクトは `Platform.Core` と `Platform.Native` を参照しているため、
-本プロジェクトを参照すればそれらの公開型も利用できます。
+本プロジェクトは `Platform.Core` を参照しているため、
+本プロジェクトを参照すればその公開型も利用できます。
 
 ### 3.2 必要な名前空間
 
 ```csharp
-using EsUtil.Platform.AvaloniaUI;          // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
-using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache / AvaloniaTextMeasure
-using EsUtil.Platform.Core;                     // サービス抽象 / コア値型
-using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
-using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
-using EsUtil.Platform.Core.Coord;          // ICoordTransform / CoordTransform
-using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt / EsPlatformHandle
+using EsUtil.Platform.AvaloniaUI;               // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
+using EsUtil.Platform.AvaloniaUI.Imaging;       // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache / AvaloniaTextMeasure
+using EsUtil.Platform.Core;                     // EsKey / EsWindowState / EsPlatformHandle 等
+using EsUtil.Platform.Core.Native;              // サービス抽象（ICaptureService 等）
+using EsUtil.Platform.Core.Native.Win;          // 既定実装を直接生成する場合のみ（ホスト）
+using EsUtil.Platform.Core.Native.Imaging;      // EsBitmapDrawingExtensions（Windows 専用）
+using EsUtil.Platform.Core.Imaging;             // EsBitmap
+using EsUtil.Platform.Core.Coord;               // ICoordTransform / CoordTransform
+using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt
 ```
 
 ## 4. 基本的な使用方法
@@ -110,7 +111,7 @@ EsKey esKey2 = key.ToEsKey();
 Avalonia の `TopLevel` からハンドルを取得する拡張メソッドを提供します。
 
 ```csharp
-var guard = PlatformFactory.CreateCursorOverrideGuard();
+var guard = new WinCursorOverrideGuard();
 
 // TopLevel を渡せる（内部で EsPlatformHandle へ変換して Attach する）
 guard.Attach(window);
@@ -195,8 +196,7 @@ var brush = s_cache.GetOrCreate(color);
 `ColorExtensions` / `EsBitmapAvaloniaImage` / `EsBitmapAvaloniaExtensions` /
 `CapacityLimitedCache<TKey, TValue>` / `SolidColorBrushCache` です。
 
-インターフェース・コア値型・`CoordTransform`・`EsBitmap` は `Platform.Core`、
-`PlatformFactory.CreateXxx()` と Win32 / NoOp 実装・`EsBitmapDrawingExtensions` は `Platform.Native` が提供します。
+インターフェース・コア値型・`CoordTransform`・`EsBitmap` と、その Win32 実装（`Native.Win`） ・`EsBitmapDrawingExtensions`（`Native.Imaging`）は `Platform.Core` が提供します。
 
 ## 6. 座標系
 

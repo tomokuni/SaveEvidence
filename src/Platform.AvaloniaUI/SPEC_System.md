@@ -27,8 +27,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
 本プロジェクト（`Platform.AvaloniaUI`）は、そのうち **Avalonia UI 固有のアダプタ**を担います。
-UI フレームワーク非依存の抽象・値型・純粋ロジックは `Platform.Core`、
-ネイティブ（OS）実装と既定実装のファクトリは `Platform.Native` が提供します。
+UI フレームワーク非依存の抽象・値型・純粋ロジックと、ネイティブ（OS）の Win32 実装は `Platform.Core`（後者は `Native/` 配下） が提供します。
 
 ## 2. 技術スタック
 
@@ -41,7 +40,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 | **ターゲットフレームワーク** | net10.0 |
 | **参照パッケージ** | Avalonia / Avalonia.Skia |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | `Platform.Core` / `Platform.Native` |
+| **依存プロジェクト** | `Platform.Core`（`Native/` の Win32 実装を含む） |
 
 ## 3. アーキテクチャ
 
@@ -50,15 +49,15 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 | プロジェクト | 責務 | UI 依存 |
 | --- | --- | --- |
 | `Platform.Core` | 抽象（サービス 6 種）・コア値型・座標変換ポート・`EsBitmap` | なし |
-| `Platform.Native` | Win32 / NoOp 実装・既定実装のファクトリ・System.Drawing 変換 | なし |
+| `Platform.Core`（`Native/`） | サービス抽象と Win32 実装（`Native.Win`）・System.Drawing 変換（`Native.Imaging`） | なし |
 | `Platform.AvaloniaUI`（本プロジェクト） | `ScreenConverter`・相互変換・画像アダプタ | Avalonia |
 
 ### 3.2 依存方向
 
-- 依存は**一方向の階層構造**（本プロジェクト → Native → Core）。
+- 依存は**一方向の階層構造**（本プロジェクト → `Platform.Core`（`Native/` を含む））。
 - 上位 AP（`MarqueeControl` / `CaptureSessionControl.AvaloniaUI` / `app.AvaloniaUI`）は本プロジェクトを参照すれば、
-  サービス抽象・コア値型・既定実装・Avalonia アダプタをすべて利用できる。
-- 本プロジェクトは「Avalonia の型に依存するもの」だけを置く。UI 非依存の型は Core / Native 側に置く。
+  サービス抽象・コア値型・Win32 実装・Avalonia アダプタをすべて利用できる。
+- 本プロジェクトは「Avalonia の型に依存するもの」だけを置く。UI 非依存の型は `Platform.Core` 側に置く。
 
 ## 4. 例外処理ポリシー
 
@@ -73,15 +72,14 @@ flowchart TB
     subgraph Host["上位AP（消費側）"]
         DR["MarqueeControl<br/>ICursorService / ScreenConverter"]
         SC["CaptureSessionControl.AvaloniaUI<br/>ICaptureService / IWindowService / IElementFinder"]
-        AP["app 等<br/>PlatformFactory.CreateXxx / EsBitmap"]
-    end
-    subgraph Native["Platform.Native（UI 非依存）"]
-          Fac["PlatformFactory<br/>Factory Method パターン"]
-        WInp["Win 実装群（Win32 API・P/Invoke）<br/>NoOp 実装群（シングルトン）"]
+        AP["app 等<br/>WinXxx を生成して注入 / EsBitmap"]
     end
     subgraph PF["Platform.AvaloniaUI（本プロジェクト・Avalonia）"]
         Conv["ScreenConverter"]
         Interop["Interop（Es* ⇔ Avalonia）<br/>画像アダプタ"]
+    end
+    subgraph Native["Platform.Core.Native（UI 非依存）"]
+        WInp["Win 実装群（Win32 API・P/Invoke）"]
     end
     subgraph Core["Platform.Core（UI 非依存）"]
         Intf["サービス抽象 / コア値型<br/>ICoordTransform / EsBitmap"]
@@ -93,11 +91,9 @@ flowchart TB
     DR --> Native
     SC --> Native
     AP --> Native
-    PF --> Native
-    Native --> Core
     PF --> Core
+    Native --> Core
     WInp --> Core
-    Fac --> Core
 ```
 
 ## 6. コンポーネント一覧
@@ -139,9 +135,9 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**（本プロジェクト → `Platform.Native` → `Platform.Core`）。
-- 上位 AP は本プロジェクトのみを参照すればよい（推移的に Native / Core を利用できる）。
-- 本プロジェクトに UI 非依存の型を置かない（置き場所は Core / Native）。
+- 依存方向は**一方向の階層構造**（本プロジェクト → `Platform.Core`（`Native/` を含む））。
+- 上位 AP は本プロジェクトのみを参照すればよい（推移的に `Native` / コアを利用できる）。
+- 本プロジェクトに UI 非依存の型を置かない（置き場所は `Platform.Core`）。
 
 ## 8. ライフサイクル
 
@@ -153,4 +149,4 @@ flowchart TB
 ## 9. ログ
 
 本プロジェクトはログを出力しません。
-ログ定義（`PlatformLog`）は `Platform.Native` が所有し、Win 実装が使用します。
+ログ定義（`PlatformLog`）は `Platform.Core`（`Native/`）が所有し、Win 実装が使用します。

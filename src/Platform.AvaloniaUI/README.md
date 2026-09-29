@@ -26,13 +26,13 @@
 ## 1. 概要
 
 Avalonia UI 固有のアダプタ（画面座標変換・コア型との相互変換・画像／幾何アダプタ）を提供するライブラリです。
-UI フレームワーク非依存の抽象・値型・純粋ロジックは `Platform.Core`、ネイティブ（OS）実装とファクトリは `Platform.Native` が担います。
+UI フレームワーク非依存の抽象・値型・純粋ロジックと、ネイティブ（OS）の Win32 実装は `Platform.Core`（後者は `Native/` 配下） が担います。
 
 ## 2. 機能一覧
 
 - **画面座標変換**: `ScreenConverter`（コントロールローカル DIP ↔ 画面物理。Avalonia の `TopLevel` に依存するため本プロジェクトに残す）
 - **座標変換ポート**: `ICoordTransform` / `CoordTransform` は UI フレームワーク非依存のコア型として `Platform.Core` が提供
-- **ネイティブ実装とファクトリ**: `PlatformFactory.CreateXxx()` と Win32 / NoOp 実装は `Platform.Native` が提供
+- **ネイティブ実装**: Win32 実装（`EsUtil.Platform.Core.Native.Win`）は `Platform.Core` が提供（**実行時のプラットフォーム分岐は持たず、ホストが生成して抽象型として注入する**）
 - **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPointInt`・`EsRectInt`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
 - **カーソル抑止の仲介**: `CursorOverrideGuardAvaloniaExtensions.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲）
 - **画像ユーティリティ**: `EsBitmap`（`Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
@@ -55,19 +55,21 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックは `Pla
 <ProjectReference Include="..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
 ```
 
-本プロジェクトは `Platform.Core` と `Platform.Native` を参照しているため、
+本プロジェクトは `Platform.Core` を参照しているため、
 本プロジェクトを参照すればそれらの型も利用できます。
 
 必要な名前空間:
 
 ```csharp
-using EsUtil.Platform.AvaloniaUI;          // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
-using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache / AvaloniaTextMeasure
-using EsUtil.Platform.Core;                     // サービス抽象 / コア値型
-using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
-using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
-using EsUtil.Platform.Core.Coord;          // ICoordTransform / CoordTransform
-using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt / EsPlatformHandle
+using EsUtil.Platform.AvaloniaUI;               // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
+using EsUtil.Platform.AvaloniaUI.Imaging;       // EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache / AvaloniaTextMeasure
+using EsUtil.Platform.Core;                     // EsKey / EsWindowState / EsPlatformHandle 等
+using EsUtil.Platform.Core.Native;              // サービス抽象（ICaptureService 等）
+using EsUtil.Platform.Core.Native.Win;          // 既定実装を直接生成する場合のみ（ホスト）
+using EsUtil.Platform.Core.Native.Imaging;      // EsBitmapDrawingExtensions（Windows 専用）
+using EsUtil.Platform.Core.Imaging;             // EsBitmap
+using EsUtil.Platform.Core.Coord;               // ICoordTransform / CoordTransform
+using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt
 ```
 
 ## 5. クイックスタート
@@ -94,7 +96,7 @@ PixelRect back = rect.ToAvaloniaPixelRect();
 `ICursorOverrideGuard.Attach` は UI 非依存のハンドルを受け取るため、Avalonia の `TopLevel` からハンドルを取得する拡張メソッドを提供します。
 
 ```csharp
-var guard = PlatformFactory.CreateCursorOverrideGuard();
+var guard = new WinCursorOverrideGuard();
 guard.Attach(window);   // TopLevel → EsPlatformHandle の変換を仲介する
 ```
 
@@ -137,18 +139,17 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt);
 
 | プロジェクト | 責務 |
 | --- | --- |
-| `Platform.Core` | UI 非依存の抽象・値型・純粋ロジック |
-| `Platform.Native` | Win32 / NoOp 実装とファクトリ（UI 非依存） |
+| `Platform.Core` | UI 非依存の抽象・値型・純粋ロジック（`Native/` 配下は Win32 実装） |
 | 本プロジェクト | Avalonia 固有のアダプタ（`TopLevel` / Avalonia 型に依存するもの）のみ |
 
 ### 公開 API の最小化
 
-Win32 / NoOp 実装は `Platform.Native` が唯一の生成経路となるため internal です。
+Win32 実装（`Native.Win`）はホストが生成して抽象型として注入する（実行時の分岐を持たない）。
 本プロジェクトの公開 API は Avalonia 固有のアダプタ（`ScreenConverter` / 相互変換 / 画像・幾何アダプタ）のみで構成されます。
 
 ### 依存方向
 
-`Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Native` → `Platform.Core` の一方向の階層構造です。上位 AP（MarqueeControl / CaptureSessionControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
+`Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Core`（`Native/` の Win32 実装を含む） の一方向の階層構造です。上位 AP（MarqueeControl / CaptureSessionControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
 
 ## 7. サンプル
 
@@ -173,8 +174,7 @@ Platform.AvaloniaUI/
 └── tests/                          # 単体テスト
 ```
 
-ファクトリと Win32 / NoOp 実装は [`Platform.Native`](../Platform.Native/README.md)、
-抽象・値型・純粋ロジックは [`Platform.Core`](../Platform.Core/README.md) を参照してください。
+抽象・値型・純粋ロジックと Win32 実装の全体は [`Platform.Core`](../Platform.Core/README.md) を参照してください（Win32 実装は `Native/` 配下）。
 
 ## 10. ライセンス
 

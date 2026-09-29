@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Tests;
 /// <remarks>
 /// 対象: <see cref="CaptureSessionControl"/> のコンストラクタ・<see cref="CaptureSessionControl.AppearanceSettings"/>・<br/>
 /// <see cref="CaptureSessionControl.Dispose"/>・<see cref="CaptureSessionControl.Confirm"/> / <see cref="CaptureSessionControl.Cancel"/>（セッションなし）。<br/>
-/// <see cref="CaptureSessionControl"/> のコンストラクタは <c>PlatformFactory.CreateWindowService</c>（ロガー設定のみ・P/Invoke を実行しない）を<br/>
+/// <see cref="CaptureSessionControl"/> のコンストラクタは <c>WinWindowService</c>（ロガー設定のみ・P/Invoke を実行しない）を<br/>
 /// 生成するため、<c>[AvaloniaFact]</c>（ヘッドレス）を必要とせず <c>[Fact]</c> で並列実行できる。<br/>
 /// ヘッドレス必須のテスト（ウィンドウ生成・セッション実行）は <see cref="CaptureSessionControlTests"/> が直列コレクションで検証する。<br/>
 /// 切り出し範囲の計算（閉区間化・クランプ・丸め・最小サイズ）は UI 非依存の純粋関数

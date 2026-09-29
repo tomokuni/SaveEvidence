@@ -1,9 +1,10 @@
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Native.Imaging;
+using EsUtil.Platform.Core.Native.Imaging;
 using EsUtil.SaveEvidence.Enum;
 using EsUtil.SaveEvidence.Icons;
 using EsUtil.SaveEvidence.Logging;

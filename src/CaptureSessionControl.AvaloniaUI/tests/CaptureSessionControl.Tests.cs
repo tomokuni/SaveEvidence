@@ -4,6 +4,7 @@ using Rect = Avalonia.Rect;
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging.Abstractions;

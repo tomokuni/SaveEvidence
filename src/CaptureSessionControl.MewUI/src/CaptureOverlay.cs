@@ -5,6 +5,7 @@ using EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.MewUI.Imaging;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;

@@ -24,4 +24,9 @@
     <ProjectReference Include="..\src\Platform.Core.csproj" />
   </ItemGroup>
 
+  <!-- xUnit 並列化設定（Win32 API を扱うテストを直列化する） -->
+  <ItemGroup>
+    <None Include="Native\xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

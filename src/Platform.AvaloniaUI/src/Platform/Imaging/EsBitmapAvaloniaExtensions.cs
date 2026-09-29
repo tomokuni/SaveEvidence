@@ -4,7 +4,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Native.Imaging;
+using EsUtil.Platform.Core.Native.Imaging;
 using SkiaSharp;
 using Color = System.Drawing.Color;
 using AvaloniaColor = Avalonia.Media.Color;

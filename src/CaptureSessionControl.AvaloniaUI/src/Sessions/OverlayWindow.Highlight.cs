@@ -1,5 +1,5 @@
 using Avalonia.Input;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Platform.AvaloniaUI.Coord;
@@ -19,7 +19,7 @@ internal sealed partial class OverlayWindow
     /// <summary>クリック確定型のマウス移動時のハイライト更新。</summary>
     private void OnClickMoved(object? sender, PointerEventArgs e)
     {
-        // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
+        // 画面物理座標への変換は ScreenConverter（OS 依存変換の集約）に委譲する
         var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPointInt();
         // 検出関数の呼び分けはコアが単一所有する
         var detection = CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint);
@@ -88,7 +88,7 @@ internal sealed partial class OverlayWindow
     private void OnClickPressed(object? sender, PointerPressedEventArgs e)
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
-        // 画面物理座標への変換は ScreenConverter（PlatformFactory の OS 依存変換集約）に委譲する
+        // 画面物理座標への変換は ScreenConverter（OS 依存変換の集約）に委譲する
         var screenPoint = ScreenConverter.LocalDipToScreen(this, e.GetPosition(this)).ToEsPointInt();
         // 検出関数の呼び分けはコアが単一所有する
         _clickSelection.Fix(CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint).Bounds);

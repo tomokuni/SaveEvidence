@@ -1,7 +1,7 @@
 # app.MewUI（MewUI 版アプリ本体）
 
-SaveEvidence の **MewUI 版ホストアプリ**です。UI 非依存のコア（`app.Core` / `Platform.Core` /
-`Platform.Native` / `LineDetection`）をそのまま使い、UI 層だけを MewUI で実装します。
+SaveEvidence の **MewUI 版ホストアプリ**です。UI 非依存のコア（`app.Core` / `Platform.Core`（Win32 実装を含む） /
+`LineDetection`）をそのまま使い、UI 層だけを MewUI で実装します。
 
 > **現状: 全ページ実装済み**。キャプチャ / フォルダビュー / Undo 一覧 / 設定の 4 ページと、
 > 撮影（スクリーン / ウィンドウ / 範囲）・プレビューの切り出し・履歴の移動・設定の永続化・Native AOT 配布が動作します。
@@ -78,7 +78,7 @@ src/app.MewUI/
 app.MewUI ──> app.Core ──> Platform.Core / LineDetection
     │                              │
     ├──> Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
-    ├──> Platform.Native（キャプチャ等。UI 非依存）
+    ├──> Platform.Core の Win32 実装（キャプチャ等。Native.Win）
     ├──> LoupeControl.MewUI ──> Feature.Loupe.Core（UI 非依存のルーペロジック）
     └──> CropViewControl.MewUI ──> ZoomViewControl.MewUI / CropViewControl.Core（画像表示と矩形オーバーレイ）
 ```

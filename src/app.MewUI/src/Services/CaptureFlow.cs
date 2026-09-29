@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using EsUtil.SaveEvidence.CaptureSession.MewUI;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.MewUI.Logging;
 
 namespace EsUtil.SaveEvidence.MewUI.Services;
@@ -55,9 +55,9 @@ internal static class CaptureFlow
             // 設定は Facade（CaptureSessionControl）が単一所有するため、ここでは組み立てない。
             // ログはアプリのログ基盤（AppLog）のロガーを渡し、撮影の開始・確定・キャンセルを同じファイルへ記録する。
             var overlayServices = new CaptureOverlayServices(
-                PlatformFactory.CreateCaptureService(),
-                PlatformFactory.CreateElementFinder(),
-                PlatformFactory.CreateWindowService(),
+                new WinCaptureService(),
+                new WinElementFinder(),
+                new WinWindowService(),
                 AppLog.CreateLogger(nameof(CaptureSessionControl)));
 
             var image = captureSession.Capture(owner, type, overlayServices);

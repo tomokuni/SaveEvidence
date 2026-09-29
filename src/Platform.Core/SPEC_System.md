@@ -9,6 +9,7 @@ SaveEvidence のマルチ UI 対応（Avalonia UI / MewUI）における、共�
 
 - .NET 10 / C# 14
 - Microsoft.Extensions.Logging.Abstractions（`LoggerFallback` のロガー抽象のみ。Microsoft 公式パッケージ）
+- System.Drawing.Common（`Native/Imaging` の `System.Drawing.Bitmap` 変換のみ。Microsoft 公式パッケージ。Windows 専用）
 - UI フレームワークは一切参照しない
 
 ## アーキテクチャ
@@ -16,12 +17,13 @@ SaveEvidence のマルチ UI 対応（Avalonia UI / MewUI）における、共�
 ```mermaid
 graph LR
   A[Platform.AvaloniaUI<br/>Avalonia 実装] --> C[Platform.Core]
-  B["app.MewUI（将来）"] --> C
+  B[Platform.MewUI<br/>MewUI 実装] --> C
+  H["app.AvaloniaUI / app.MewUI<br/>MarqueeControl.* / CaptureSessionControl.*<br/>（ホスト：既定実装を生成して注入）"] --> C
 ```
 
 - `Platform.Core` は他プロジェクトへ依存しない末端の共有ライブラリです。
 - 各 UI 実装は、コア型と自身の型（例: `Avalonia.Input.Key` / `Avalonia.Point` / `IPlatformHandle`）を相互変換する Interop 層を個別に用意します（例: `Platform.AvaloniaUI` プロジェクトの `EsKeyAvaloniaInterop` / `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop`）。
-- サービス抽象（`ICaptureService` 等）の具象実装（Win32 / NoOp）と `PlatformFactory.CreateXxx()` のファクトリは、UI 非依存の `Platform.Native` が提供します。
+- サービス抽象（`ICaptureService` 等）とその Windows 実装（Win32）は、本プロジェクトの `Native/` 配下が提供します。**実行時のプラットフォーム分岐（ファクトリ）を持たず、ホストが `Native/Win` の具象を生成して抽象型として注入します**。テストは抽象を実装したモックを注入するため、Win32 実行環境を必要としません。
 
 ## コンポーネント構成
 
@@ -31,13 +33,22 @@ graph LR
 | `EsWindowState.cs` | UI フレームワーク非依存のウィンドウ表示状態（列挙型）。`Avalonia.Controls.WindowState` と同名のメンバーを持つ |
 | `HotKeyModifiers.cs` | ホットキー修飾キーのフラグ列挙型 |
 | `HotKeySetting.cs` | ホットキー設定の値オブジェクト（record） |
-| `ICaptureService.cs` | 画面領域キャプチャの抽象 |
-| `ICursorService.cs` | OS カーソル操作の抽象 |
-| `IWindowService.cs` | ネイティブウィンドウ操作の抽象 |
-| `IElementFinder.cs` | 要素（ウィンドウ・スクリーン）検出の抽象 |
-| `ICursorOverrideGuard.cs` | カーソル上書き抑止の抽象 |
-| `IGlobalHotKeyService.cs` | グローバルホットキー管理の抽象 |
-| `ElementFinderResults.cs` | 要素検出の結果（`readonly record struct`） |
+| `Native/ICaptureService.cs` | 画面領域キャプチャの抽象 |
+| `Native/ICursorService.cs` | OS カーソル操作の抽象 |
+| `Native/IWindowService.cs` | ネイティブウィンドウ操作の抽象 |
+| `Native/IElementFinder.cs` | 要素（ウィンドウ・スクリーン）検出の抽象 |
+| `Native/ICursorOverrideGuard.cs` | カーソル上書き抑止の抽象 |
+| `Native/IGlobalHotKeyService.cs` | グローバルホットキー管理の抽象 |
+| `Native/ElementFinderResults.cs` | 要素検出の結果（`readonly record struct`） |
+| `Native/PlatformLog.cs` | Win 実装が出力するログ定義（internal） |
+| `Native/Win/WinNative.cs` | Win32 P/Invoke の宣言集約（internal） |
+| `Native/Win/WinCaptureService.cs` | `ICaptureService` の Windows 実装 |
+| `Native/Win/WinCursorService.cs` | `ICursorService` の Windows 実装 |
+| `Native/Win/WinWindowService.cs` | `IWindowService` の Windows 実装 |
+| `Native/Win/WinElementFinder.cs` | `IElementFinder` の Windows 実装 |
+| `Native/Win/WinCursorOverrideGuard.cs` | `ICursorOverrideGuard` の Windows 実装 |
+| `Native/Win/WinGlobalHotKeyService.cs` | `IGlobalHotKeyService<T>` の Windows 実装 |
+| `Native/Imaging/EsBitmapDrawingExtensions.cs` | `System.Drawing.Bitmap` ⇔ `EsBitmap` の相互変換（Windows 専用） |
 | `LoggerFallback.cs` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（拡張メソッド `OrNullLogger`） |
 | `Coord/ScrollMath.cs` | スクロール範囲・ビューポートサイズの純粋計算とホイール 1 段のスクロール量（`WheelScrollUnit`） |
 | `Coord/DpiScaler.cs` | DIP 値を物理ピクセルへ変換する純粋計算（DPI 基準値と DPI → スケーリング換算を含む） |
@@ -55,7 +66,7 @@ graph LR
 | `EsPlatformHandle.cs` | UI フレームワーク非依存のネイティブウィンドウ識別子（座標・寸法ではないため `Geometry` に置かない） |
 | `Imaging/EsBitmap.cs` | 自前のピクセルバッファを所有するピクセルコンテナ（BGRA8888・Premul。外部パッケージに依存しない） |
 | `Imaging/ImageDrawMode.cs` | 画像を描画先の領域へ配置する方法（`Uniform` / `Fill`） |
-| `Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（純粋関数。Skia の `SKRect` を返す） |
+| `Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（純粋関数。`EsRect` を返す） |
 | `Imaging/DrawingColorExtensions.cs` | 描画色の可視判定（アルファが 0 より大きいか）の単一所有 |
 
 ### ラベル体裁を本プロジェクトが所有する理由

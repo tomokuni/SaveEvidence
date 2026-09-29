@@ -21,7 +21,7 @@ nudge セッション・ダブルクリックの確定/キャンセル・ハン�
 | 描画 | SkiaSharp（本プロジェクトが自 UI の描画 API で描画計画を写す。描画の部品は `Platform.Skia`） |
 | 基底コントロール | `Aprillz.MewUI.Skia.Controls.SkiaCanvasView` |
 | プロパティシステム | `MewProperty<T>`（`MewPropertyOptions.AffectsRender`） |
-| カーソル操作 | `ICursorService`（`Platform.Native` の Win32 実装） |
+| カーソル操作 | `ICursorService`（`Platform.Core` の `Native`。既定実装は `Native.Win`） |
 
 ## アーキテクチャ
 
@@ -36,7 +36,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
     └──> Feature.Marquee.Core   何を計算するか + 判断（状態・値・純粋計算・コア⇔UI の契約）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ Core は提示層を参照しない（提示層がコアの幾何を使う向きだけ）。
-※ 本コントロール（UI 層）は Platform.Native（Win32 実装）・Platform.MewUI・Platform.Skia も参照する。
+※ 本コントロール（UI 層）は Platform.Core（Win32 実装は `Native.Win`）・Platform.MewUI・Platform.Skia も参照する。
 ```
 
 ### 責務の分担
@@ -55,7 +55,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 状態機械（`MarqueeState`）と入力の判断（`MarqueeSession`）をコアに置き、UI 側は入力の変換と効果の適用のみを行う | 本コントロールの本体は「状態遷移 + 幾何 + 入力の解釈」であり、UI に残すと MewUI 版で丸ごと書き直しになる |
 | コアの操作を公開ファサード `Marquee` に一本化し、状態機械とフレーム解決を `internal` にする | 操作の入口が 1 つになり、UI 層がコアの内部契約へ踏み込む余地がなくなる（両 UI で同じ窓口を使う） |
 | イベント引数をコア型（`EsPoint` / `EsRect`）で公開する | コアの状態機械と同一の型になり境界変換が不要になる。MewUI の `Rect` は負のサイズを 0 にクランプするため、`EsRect` のほうが安全 |
-| カーソルサービスの既定実装の解決を UI 層で行う | コアは `Platform.Native` を参照できない（循環参照）。コアは抽象と `null` のみを扱う |
+| カーソルサービスの既定実装の解決を UI 層で行う | コアは既定実装（`Native.Win`）を知らず、抽象と `null` のみを扱う（既定実装の選択は組み込み先＝UI 層の責務） |
 | `SkiaCanvasView`（`Control` 系）を基底にする | 画像の上へ重ねるオーバーレイであり、子要素を持たない。背景を塗らないため下の画像が透ける |
 | `ScrollViewer` を自動購読しない | MewUI 版の画面構成（`Grid` 重ね合わせ）では祖先探索の前提が異なる。表示の変化はホストが検知して `RefreshOverlay()` で再描画を要求する |
 | ホイール操作を扱わない | コントロール化を前提とした処理であり、ホストが `MouseWheel` を購読してビューポートへ転送する（本コントロールは素通しする） |
@@ -376,7 +376,7 @@ OnPaintSurface(canvas, info)
 
 | 条件 | 動作 |
 | --- | --- |
-| カーソルサービスが null | `PlatformFactory.CreateCursorService()` の既定実装を使用する |
+| カーソルサービスが null | `new WinCursorService()` の既定実装を使用する |
 | ウィンドウを特定できない（未レイアウト・未表示） | マウスキャプチャとカーソル移動を行わない（例外にしない） |
 | `Appearance.CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する |
 | 破棄済みの画像を描画しようとした | 本コントロールは画像を扱わない（対象外） |

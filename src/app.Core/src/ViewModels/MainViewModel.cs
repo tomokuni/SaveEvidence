@@ -437,7 +437,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>ピクセル編集（切出し等）を適用する（BeforeEditAction → 変換 → 画像差し替え）。</summary>
     /// <param name="edit">EsBitmap を受け取り、編集後の EsBitmap を返す処理。</param>
-    /// <remarks>ピクセル操作は PlatformFactory の共通基盤（<see cref="EsBitmap"/>）に委譲する。</remarks>
+    /// <remarks>ピクセル操作は共通基盤（<see cref="EsBitmap"/>）に委譲する。</remarks>
     private void ApplyPixelEdit(Func<EsBitmap, EsBitmap?> edit)
     {
         if (PreviewImage is null)

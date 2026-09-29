@@ -31,14 +31,14 @@
 
 - **3 種のキャプチャモード**: `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）
 - **切出し（Crop）**: プレビュー画像上の選択矩形で元画像から切り出し範囲を取得
-- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（Marquee（外側の装飾を含む）+ Loupe を内包）と Platform.AvaloniaUI / Platform.Native が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
+- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（Marquee（外側の装飾を含む）+ Loupe を内包）と Platform.AvaloniaUI / Platform.Core（`Native` の Win32 実装を含む）が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
 - **Task ベース API**: 結果は `Task` で返却（`await` で直感的に利用）
 - **キャプチャ完了イベント**: `CaptureCompleted`（同期型）で画像変更 → オーナー再表示の順序を保証
 - **イベント駆動**: 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）
 - **再入禁止ガード**: 実行中の再呼び出しは `null` を返す（既存セッションを継続）
 - **部分更新設定**: `CaptureSettings` は全メンバー nullable（null = デフォルト値 or 現在値維持）で部分更新が可能
 - **共通規則の単一所有**: 設定のマージ・実行の排他・モニタ倍率・切り出し範囲・ハイライト状態・キー操作・クリック確定・画像の保持と取得の待ち方・ログ定義は `CaptureSessionControl.Core` が所有し、本 UI は委譲する
-- **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は Platform.Native 経由で注入（テスト可能・プラットフォーム非依存）
+- **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は Platform.Core の `Native`（抽象）と `Native.Win`（Windows 実装）を介して注入（テスト可能・プラットフォーム非依存）
 
 ## 3. システム要件
 
@@ -139,7 +139,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 | プロジェクト | 利用機能 |
 | --- | --- |
-| `Platform.AvaloniaUI` | `Platform.AvaloniaUI`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` は `Platform.Native`、`ICoordTransform` / `CoordTransform` は `Platform.Core`、`ScreenConverter` は `Platform.AvaloniaUI` |
+| `Platform.AvaloniaUI` | `Platform.AvaloniaUI`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` は `Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `Platform.Core`、`ScreenConverter` は `Platform.AvaloniaUI` |
 | `CropViewControl.AvaloniaUI` | `CropViewControl`（ズーム + 領域選択 + ルーペを内包する高レベル複合コントロール。切り出しの対象） |
 | `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（Marquee + Loupe を内包する複合コントロール。公開 API は本コントロールのみ） |
 | `CaptureSessionControl.Core` | `CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / ログ定義（両 UI 共通の規則。UI 非依存） |

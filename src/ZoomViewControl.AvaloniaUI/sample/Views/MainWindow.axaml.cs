@@ -5,7 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Native.Imaging;
+using EsUtil.Platform.Core.Native.Imaging;
 using EsUtil.SaveEvidence.ZoomView.Sample.Imaging;
 using EsUtil.SaveEvidence.ZoomView.Sample.ViewModels;
 

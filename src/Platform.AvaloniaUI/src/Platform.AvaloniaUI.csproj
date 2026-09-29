@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
-    <ProjectReference Include="..\..\Platform.Native\src\Platform.Native.csproj" />
   </ItemGroup>
 
   <ItemGroup>

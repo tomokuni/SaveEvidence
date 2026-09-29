@@ -32,7 +32,7 @@ app
 FadeMaskDragRectControl（_selectionOverlay）
   ├─ MarqueeControl
   ├─ LoupeControl
-  └─ Platform.AvaloniaUI（Avalonia アダプタ）／Platform.Native（サービス実装）／Platform.Core（抽象・値型）
+  └─ Platform.AvaloniaUI（Avalonia アダプタ）／Platform.Core（抽象・値型。Win32 実装は Native 配下）
 ```
 
 - **`CaptureSessionControl.AvaloniaUI` は `CropViewControl` を内包しません**。`StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。

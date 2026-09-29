@@ -34,8 +34,6 @@
     <ProjectReference Include="..\..\CaptureSessionControl.MewUI\src\CaptureSessionControl.MewUI.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型） -->
     <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
-    <!-- ネイティブサービス（キャプチャ・ホットキー等。UI 非依存） -->
-    <ProjectReference Include="..\..\Platform.Native\src\Platform.Native.csproj" />
     <!-- MewUI 版コントロール（コアロジックを共有する） -->
     <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
     <ProjectReference Include="..\..\ZoomViewControl.MewUI\src\ZoomViewControl.MewUI.csproj" />

@@ -6,7 +6,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
@@ -98,7 +99,7 @@ public sealed partial class MarqueeControl : Panel
 
     /// <summary><see cref="MarqueeControl"/> の新しいインスタンスを初期化します（AXAML および既定構成向け）。</summary>
     /// <remarks>
-    /// カーソル操作はデフォルトの Win32 実装（<c>WinCursorService</c>。生成は <see cref="PlatformFactory.CreateCursorService"/>）で動作する。<br/>
+    /// カーソル操作は既定の Win32 実装（<see cref="WinCursorService"/>）で動作する。<br/>
     /// nudge 後の再描画要求は本コントロール自身の <see cref="Avalonia.Visual.InvalidateVisual"/> に配線し、<br/>
     /// 矢印キーを受け取れるようフォーカス可能にする（自己完結・ホスト依存なし）。<br/>
     /// </remarks>
@@ -121,7 +122,7 @@ public sealed partial class MarqueeControl : Panel
         // イベントは本コントロールまで届かない）。透明の背景で全面を当たり判定の対象にする
         // （透明は描画結果を変えないため見た目には影響しない）。
         Background = Brushes.Transparent;
-        _cursor = cursorService ?? PlatformFactory.CreateCursorService();
+        _cursor = cursorService ?? new WinCursorService();
         _effects = new Effects(this);
         _marquee = new MarqueePresenter(_effects, _cursor, Options);
         // 現在の環境値（倍率）を提示層へ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）

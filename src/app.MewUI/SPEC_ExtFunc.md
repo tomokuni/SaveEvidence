@@ -260,9 +260,8 @@
 | アセンブリ | 仕様書 |
 | --- | --- |
 | `app.Core` | `../app/SPEC_ExtFunc.md`（アプリ共通のコア仕様） |
-| `Platform.Core` | `../Platform.Core/SPEC_ExtFunc.md` |
+| `Platform.Core` | `../Platform.Core/SPEC_ExtFunc.md`（`Native` / `Native.Win` / `Native.Imaging` を含む） |
 | `Platform.MewUI` | `../Platform.MewUI/SPEC_ExtFunc.md` |
-| `Platform.Native` | `../Platform.Native/SPEC_ExtFunc.md` |
 | `LoupeControl.MewUI` | `../LoupeControl.MewUI/SPEC_ExtFunc.md` |
 | `ZoomViewControl.MewUI` | `../ZoomViewControl.MewUI/SPEC_ExtFunc.md` |
 | `CropViewControl.MewUI` | `../CropViewControl.MewUI/SPEC_ExtFunc.md` |

@@ -3,7 +3,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Native.Imaging;
+using EsUtil.Platform.Core.Native.Imaging;
 using System.Collections.ObjectModel;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;

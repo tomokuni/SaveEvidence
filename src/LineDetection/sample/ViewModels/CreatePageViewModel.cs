@@ -2,7 +2,8 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using EsUtil.Platform.Native;
+using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.LineDetection.Sample.Models;
 using System.Collections.ObjectModel;
@@ -78,7 +79,7 @@ public sealed partial class CreatePageViewModel : ObservableObject
         CaptureBounds = bounds;
         WindowInfos.Clear();
 
-        var finder = PlatformFactory.CreateElementFinder();
+        var finder = new WinElementFinder();
         foreach (var window in finder.ListWindows())
         {
             // 検出結果の矩形は UI 非依存のコア型のため、表示境界で Avalonia 型へ変換する
