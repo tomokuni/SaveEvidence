@@ -56,7 +56,7 @@ sequenceDiagram
 
 ## 4. コンポーネント構成
 
-ルート（`src/`）に置くのは**ファサード本体**（`LoupePresenter.cs`）だけです。これ以外は用途別のフォルダへまとめます。
+ルート（`src/`）に置くのは**ファサード本体**（`LoupePresenter.cs`）とその partial（`LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelPlan.cs` / `LoupePresenter.LabelTexts.cs`）です。描画計画の値・外観・ラベル要素の配置指示は用途別のフォルダへまとめます。
 **1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Loupe.Presenter`。`Setting` / `Drawing` / `Label` / `Logging` は `EsUtil.Feature.Loupe.Presenter.<フォルダ名>`）。コア（`Feature.Loupe.Core`）と同じ規約です。
 
 | ファイル | 型 | 可視性 | 責務 |
@@ -68,7 +68,7 @@ sequenceDiagram
 | `src/Drawing/LoupeTextPlacement.cs` | `LoupeTextPlacement` | public | 文言・基準点・描画領域 |
 | `src/LoupePresenter.DrawPlan.cs` | `LoupePresenter`（`DrawPlan` partial） | internal | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算 |
 | `src/Label/LoupeLabelPlacement.cs` | `LoupeLabelPlacement` | public | ラベル要素の配置指示 |
-| `src/LoupePresenter.LabelPlan.cs` | `LoupePresenter`（`LabelPlan` partial） | public | 実寸 → 配置指示の写像（クランプの単一所有） |
+| `src/LoupePresenter.LabelPlan.cs` | `LoupePresenter`（`LabelPlan` partial） | internal | 実寸 → 配置指示の写像（クランプの単一所有） |
 | `src/LoupePresenter.LabelTexts.cs` | `LoupePresenter`（`LabelTexts` partial） | internal | 文言（`EsPoint.Format`）と基準点（左上の内側）の生成 |
 | `src/Logging/LoupePresenterLogMessage.cs` | `LoupePresenterLogMessage` | internal | 本層が単一所有する設定（外観）の変更ログ |
 

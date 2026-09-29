@@ -96,7 +96,7 @@ flowchart TD
 
 ## 4. コンポーネント構成
 
-ルート（`src/`）に置くのは**ファサード本体**（`MarqueePresenter.cs`）だけです。これ以外は用途別のフォルダへまとめます。
+ルート（`src/`）に置くのは**ファサード本体**（`MarqueePresenter.cs`）とその partial（`MarqueePresenter.DrawPlan.cs` / `MarqueePresenter.LabelPlan.cs` / `MarqueePresenter.LabelTexts.cs`）です。描画計画の値・外観・ラベル要素の配置指示は用途別のフォルダへまとめます。
 **1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Marquee.Presenter`。`Setting` / `Drawing` / `Label` / `Logging` は `EsUtil.Feature.Marquee.Presenter.<フォルダ名>`）。コア（`Feature.Marquee.Core`）と同じ規約です。
 
 | ファイル | 型 | 可視性 | 責務 |
@@ -105,10 +105,10 @@ flowchart TD
 | `src/Setting/MarqueeAppearance.cs` | `MarqueeAppearance` | public sealed record | 外観の単一所有者（色・ラベルの体裁・枠線の太さ・表示可否・述語） |
 | `src/Drawing/MarqueeDrawPlan.cs` | `MarqueeDrawPlan` | public readonly record struct | 描画計画（UI が見る唯一の描画値） |
 | `src/Drawing/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public enum | 描画層の順序 |
-| `src/MarqueePresenter.DrawPlan.cs` | `MarqueePresenter`（`DrawPlan` partial） | internal static | 枠線 4 辺・暗転領域の矩形の計算 |
+| `src/MarqueePresenter.DrawPlan.cs` | `MarqueePresenter`（`DrawPlan` partial） | internal | 枠線 4 辺・暗転領域の矩形の計算 |
 | `src/Drawing/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域） |
-| `src/MarqueePresenter.LabelTexts.cs` | `MarqueePresenter`（`LabelTexts` partial） | internal static | サイズラベル・カーソル座標ラベルの文言と基準点 |
-| `src/MarqueePresenter.LabelPlan.cs` | `MarqueePresenter`（`LabelPlan` partial） | public static | 実寸 → ラベル要素の配置指示の写像 |
+| `src/MarqueePresenter.LabelTexts.cs` | `MarqueePresenter`（`LabelTexts` partial） | internal | サイズラベル・カーソル座標ラベルの文言と基準点 |
+| `src/MarqueePresenter.LabelPlan.cs` | `MarqueePresenter`（`LabelPlan` partial） | internal | 実寸 → ラベル要素の配置指示の写像 |
 | `src/Label/MarqueeLabelPlacement.cs` | `MarqueeLabelPlacement` | public readonly record struct | ラベル要素の配置指示 |
 | `src/Logging/MarqueePresenterLogMessage.cs` | `MarqueePresenterLogMessage` | internal static partial | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） |
 

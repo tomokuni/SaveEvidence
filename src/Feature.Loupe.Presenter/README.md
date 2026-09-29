@@ -37,7 +37,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 ## 収録する型
 
-**フォルダ構成はコアと同じ規約です**（ルートにはファサード（`LoupePresenter`）だけを置き、外観は `Setting/`、描画計画と装飾の計算は `Drawing/`、ラベル計画は `Label/`、ログ定義は `Logging/`。名前空間はフォルダに追従します）。
+**フォルダ構成はコアと同じ規約です**（ルートにはファサード（`LoupePresenter`）とその partial（`DrawPlan` / `LabelPlan` / `LabelTexts`）を置き、外観は `Setting/`、描画計画の値と装飾の計算結果は `Drawing/`、ラベル要素の配置指示は `Label/`、ログ定義は `Logging/`。名前空間はフォルダに追従します）。
 
 ### 提示（Presenter）
 
