@@ -1,28 +1,16 @@
-# Feature.Loupe.Presenter 外部機能仕様書
+# Feature.Loupe.Presenter API リファレンス
 
-`LoupeControl`（拡大鏡）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト）から見える情報のみを記載します。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
+`LoupeControl`（拡大鏡）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
-## 1. 提供機能
-
-| 機能 | 提供元 | 説明 |
-| --- | --- | --- |
-| 描画計画の解決 | `LoupePresenter.ResolveDrawPlan` | コアの幾何（`LoupeGeometry`）と外観から、1 フレーム分の描画計画（`LoupeDrawPlan`：描画面・拡大画像の幾何・十字線 / 枠線の矩形・層の順序・ラベル配置）を組み立てる。**描画は行わない** |
-| 表示レイアウトの解決 | `LoupePresenter.ResolveLayout` | 親領域サイズから表示サイズ・位置を解決する（コアへ委譲する） |
-| 外観 | `LoupeAppearance` | 色・フォント・角丸・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） |
-| 装飾矩形の計算 | `LoupePresenter`（`DrawPlan` partial） | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算（純粋関数） |
-| ラベル計画 | `LoupePresenter`（`LabelTexts` partial） / `LoupePresenter`（`LabelPlan` partial） | 文言と基準点の生成（`EsPoint.Format`・左上の内側）と、実寸 → 配置指示（`LoupeLabelPlacement`）の写像 |
-| ログ定義 | `LoupePresenterLogMessage` | 本層が単一所有する設定（外観）の変更ログ |
-
-**本層はコントロール化を前提とした処理を提供しません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は、コントロール固有の値や UI の機構であるため UI 層が持ちます）。
-
-### 前提条件
+## 1. 前提条件
 
 - 本層は UI フレームワークに依存しません（依存は `Feature.Loupe.Core` と `Platform.Core` のみ）。**描画 API の抽象も持ちません**（描画計画というデータを返し、描画は各 UI が自 UI の API で行います）。
+- **本層はコントロール化を前提とした処理を提供しません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は、コントロール固有の値や UI の機構であるため UI 層が持ちます）。
 - 座標は `EsPoint` / `EsSize` / `EsRect`（`EsUtil.Platform.Core`）、色は UI 非依存の `System.Drawing.Color` で扱います。
 - 描画の単位は**物理ピクセル**です（`LoupeGeometry.PixelSize` が作る正方形が描画面）。DIP → 物理ピクセルの換算（表示サイズと枠線の太さ）は本層とコアが済ませているため、UI 層は換算しません。
 - 中心座標ラベルは **DIP** で配置します（文言・基準点は本層が、実寸測定と要素の配置は UI 層が担います）。
 
-## 2. 公開 API 一覧
+## 2. 公開 API
 
 ### `EsUtil.Feature.Loupe.Presenter`（提示・外観）
 
@@ -121,23 +109,43 @@
 
 `LoupeDrawLayer` の順序（`Pasteboard` → `Image` → `Crosshair` → `Border` → `Label`）は `LoupeDrawPlan.Layers` が単一所有します。UI は順序を判断しません。
 
-## 4. 座標系
+## 4. 使用例
+
+```csharp
+using EsUtil.Feature.Loupe.Core;
+using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Loupe.Presenter.Setting;
+
+// 外観（色・フォント・枠線の太さ・表示可否）を差し替える
+var appearance = LoupeAppearance.Default with
+{
+    BorderColor = Color.FromArgb(0xFF, 0x33, 0x99, 0xFF),
+    ShowCrosshair = false,
+};
+
+var presenter = new LoupePresenter(new Loupe(new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 }))
+{
+    Appearance = appearance,
+    CenterPoint = new EsPoint(1920, 1080),
+};
+
+// 描画計画（UI が見る唯一の描画値）を解決する
+var plan = presenter.ResolveDrawPlan(displaySize: 160, availableSize: null, measureText: MeasureText);
+
+// UI は Layers の順に自 UI の描画 API を呼び、Labels を要素として配置する
+foreach (var layer in plan.Layers) { /* Pasteboard → Image → Crosshair → Border → Label */ }
+```
+
+## 5. 座標系
 
 | 座標系 | 用途 |
 | --- | --- |
 | 物理ピクセル | 描画面・矩形（`LoupeDrawPlan` の矩形） |
 | DIP | ラベル（`LoupeLabelPlacement.Bounds` / `PaddingX` / `PaddingY`） |
 
-## 5. 制限事項
+## 6. 制限事項
 
 - **描画は行いません**（描画計画というデータを返すだけです。描画は各 UI が自 UI の API で行います）。
 - 描画 API の抽象（キャンバスの抽象）は持ちません（UI フレームワークごとの描画モデルの差を吸収しきれないため）。
 - 中間ビットマップの非同期生成と世代番号管理（`LoupeRenderCoordinator`）は `LoupeControl.AvaloniaUI` が所有します（中間ビットマップを持つ UI にだけ必要な処理です）。
 
-## 6. ログ
-
-UI が出力するログ（拡大元画像の変更・描画の例外）の定義と書式は本層が単一所有します（`[Feature.Loupe.Presenter]` の接頭辞）。**UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
-
-## 7. ライセンス
-
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -1,6 +1,6 @@
 # Feature.Loupe.Presenter システム仕様書
 
-`LoupeControl`（拡大鏡）の見た目を定める **コントロール化を前提としない UI 非依存層**の構造・依存・例外処理・設計判断を記載します。外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
+`LoupeControl`（拡大鏡）の見た目を定める **コントロール化を前提としない UI 非依存層**の構造・依存・例外処理・設計判断を記載します。公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
 
 ## 1. システム概要
 
@@ -120,6 +120,14 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 | 中間ビットマップの非同期生成 | UI のディスパッチャーに依存し、中間ビットマップを持つ UI にだけ必要なため、`LoupeRenderCoordinator` は `LoupeControl.AvaloniaUI` が所有する |
 | 継承による差し替え | `LoupePresenter` は `sealed` にしない（外観の差し替え・`ResolveDrawPlan` の上書きで独自の見た目を提供することを役割とする） |
 
-## 10. ライセンス
+## 10. ログ
 
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。
+UI が出力するログ（拡大元画像の変更・描画の例外）の定義と書式は本層が単一所有します（`[Feature.Loupe.Presenter]` の接頭辞）。
+
+**UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。コアが出力するログ（設定・拡大中心・環境値の変更）は `Feature.Loupe.Core` の `LoupeLogMessage` が単一所有します。
+
+| 契機 | 出力 |
+| --- | --- |
+| `Appearance` の set | 変化した項目だけ（`LogAppearanceChanged`。LogLevel: Debug、書式 `[Feature.Loupe.Presenter] Setting: {Name} {OldValue} → {NewValue}`） |
+| 拡大元画像の変更・描画の例外 | 各 UI が所有する定義 |
+
