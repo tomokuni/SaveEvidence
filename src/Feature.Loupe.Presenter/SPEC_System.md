@@ -62,10 +62,10 @@ sequenceDiagram
 | `src/LoupeAppearance.cs` | `LoupeAppearance` | public | 外観（色・フォント・角丸・枠線の太さ・表示可否）の単一所有と補正 |
 | `src/LoupeDrawPlan.cs` | `LoupeDrawPlan` | public | 描画計画の値（UI が見る唯一の描画値） |
 | `src/LoupeDrawLayer.cs` | `LoupeDrawLayer` | public | 描画層と順序の単一所有 |
-| `src/LoupeTextPlacement.cs` | `LoupeTextPlacement` | public | 文言・基準点・アライン・描画領域 |
+| `src/LoupeTextPlacement.cs` | `LoupeTextPlacement` | public | 文言・基準点・描画領域 |
 | `src/LoupeLabelPlacement.cs` | `LoupeLabelPlacement` | public | ラベル要素の配置指示 |
-| `src/LoupeLabelPlan.cs` | `LoupeLabelPlan` | public | 実寸 → 配置指示の写像（アラインの適用とクランプの単一所有） |
-| `src/LoupeLabelTexts.cs` | `LoupeLabelTexts` | internal | 文言（`EsPoint.Format`）と基準点（上端中央）の生成 |
+| `src/LoupeLabelPlan.cs` | `LoupeLabelPlan` | public | 実寸 → 配置指示の写像（クランプの単一所有） |
+| `src/LoupeLabelTexts.cs` | `LoupeLabelTexts` | internal | 文言（`EsPoint.Format`）と基準点（左上の内側）の生成 |
 | `src/LoupeDecorationGeometry.cs` | `LoupeDecorationGeometry` | internal | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算 |
 | `src/LoupePresenterLogMessage.cs` | `LoupePresenterLogMessage` | internal | 本層が単一所有する設定（外観）の変更ログ |
 
@@ -80,7 +80,7 @@ sequenceDiagram
 | 十字線・枠線の矩形 | `LoupeDecorationGeometry` |
 | 枠線の太さの物理ピクセル換算 | `LoupePresenter.ResolveDrawPlan`（換算の式は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
 | 中心座標ラベルの文言と基準点 | `LoupeLabelTexts` |
-| ラベルの背景矩形・文字原点（実寸 + 余白、アライン、クランプ） | `LoupeLabelPlan` |
+| ラベルの背景矩形・文字原点（実寸 + 余白、クランプ） | `LoupeLabelPlan` |
 | 描画完了通知の組み立てに使う値の選択 | `LoupeDrawPlan`（コアの幾何から写す） |
 | 本層が単一所有する設定（外観）の変更ログ | `LoupePresenterLogMessage` |
 
@@ -113,7 +113,7 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 | 描画計画を本層に置く（コアに置かない） | コアは「何を描くか（幾何・判断）」だけを決める。装飾矩形・文言・表示可否・描画順は描画の都合であり、コアに置くと色・フォントをコアへ持ち込むことになる |
 | **描画 API の抽象を持たない** | UI フレームワークごとの描画モデルは異なり、抽象に集約すると対象 UI（WinUI3 / WinForms 等）が増えるたびに抽象が肥大して差異を吸収しきれなくなる。本層は描画計画というデータを返し、描画は各 UI が自前で行う |
 | 色の型 | UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画の境界で行う |
-| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「アラインの適用」「クランプ」は描画にだけ必要な規則のため、本層の `LoupeLabelPlan` が単一所有する |
+| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「クランプ」は描画にだけ必要な規則のため、本層の `LoupeLabelPlan` が単一所有する |
 | 中間ビットマップの非同期生成 | UI のディスパッチャーに依存し、中間ビットマップを持つ UI にだけ必要なため、`LoupeRenderCoordinator` は `LoupeControl.AvaloniaUI` が所有する |
 | 継承による差し替え | `LoupePresenter` は `sealed` にしない（外観の差し替え・`ResolveDrawPlan` の上書きで独自の見た目を提供することを役割とする） |
 

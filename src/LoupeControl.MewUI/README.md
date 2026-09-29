@@ -95,7 +95,7 @@ if (layout.Position is { } position)
 | --- | --- | --- | --- |
 | `BorderThickness` | `int` | 2 | 枠線の太さ（DIP）。1〜64 に補正 |
 | `ShowCrosshair` / `ShowBorder` | `bool` | `true` | 十字線・枠線の表示可否（透明色を「描かない」の代用にしない） |
-| `ShowCoordLabel` | `bool` | `true` | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
+| `ShowCoordLabel` | `bool` | `true` | 左上の座標ラベルの表示可否（中心未設定時は描画しない） |
 | `CrossColor` | `System.Drawing.Color` | 赤 40%（`#66FF0000`） | 十字線の色 |
 | `BorderColor` | `System.Drawing.Color` | LightGray（`#FFD3D3D3`） | 枠線の色 |
 | `CoordLabelColor` | `System.Drawing.Color` | 白 | 座標ラベルの文字色 |

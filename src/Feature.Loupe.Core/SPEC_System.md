@@ -161,7 +161,7 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 | 再描画のバッチ化 | UI のディスパッチャーに依存するため `LoupeControl.AvaloniaUI` が単一所有する（コアは同期計算のみ） |
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、外観 `Feature.Loupe.Presenter` の `LoupeAppearance` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画の境界で行う |
 | 切り出し領域の左上 | 切り出し（描画実装）と描画完了通知の 2 経路で重複する計算を `LoupeGeometry.CaptureTopLeft` が単一所有する（切り出しと通知が同じ値を使う） |
-| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「アラインの適用」「行送り」は描画にだけ必要な規則のため、描画層（`Feature.Loupe.Presenter`）が単一所有する（コアは値を渡さない） |
+| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」は描画にだけ必要な規則のため、描画層（`Feature.Loupe.Presenter`）が単一所有する（コアは値を渡さない） |
 | 設定では変更しない固定値 | **公開しません**。描画層内だけで使う値（中心座標ラベルの上端余白）は `LoupeLabelTexts` の private 定数とし、UI 層は解決済みの値（`LoupeLabelPlacement`）を受け取る |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は外観（`LoupeAppearance`）が単一所有する |
 

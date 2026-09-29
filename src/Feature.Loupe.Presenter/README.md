@@ -45,8 +45,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | `LoupeDrawPlan` | 1 フレーム分の描画計画（描画面・拡大画像の幾何・十字線 / 枠線の矩形・層の順序・ラベル配置・通知用の値）。**UI が見る唯一の描画値** |
 | `LoupeDrawLayer` | 描画層（`Pasteboard` / `Image` / `Crosshair` / `Border` / `Label`）。描画順を単一所有する |
 | `LoupeDecorationGeometry` | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算（純粋関数） |
-| `LoupeTextPlacement` | 描画層が UI 層へ渡すテキスト（文言・基準点・アライン・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
-| `LoupeLabelTexts` | 中心座標ラベルの文言（`EsPoint.Format`）と基準点（上端中央）の生成 |
+| `LoupeTextPlacement` | 描画層が UI 層へ渡すテキスト（文言・基準点・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
+| `LoupeLabelTexts` | 中心座標ラベルの文言（`EsPoint.Format`）と基準点（左上の内側）の生成 |
 | `LoupeLabelPlacement` | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
 | `LoupeLabelPlan` | `LoupeTextPlacement` から `LoupeLabelPlacement` を解決する（体裁は `LoupeAppearance` から受け取る） |
 

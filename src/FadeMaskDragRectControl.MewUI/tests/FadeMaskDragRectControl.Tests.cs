@@ -576,7 +576,7 @@ public class FadeMaskDragRectControlTests
 
         // 文言はコアの EsPoint.Format が単一所有する
         Assert.Equal("(50, 60)", text.Text);
-        // ルーペの内側（上端中央）へ配置され、大きさを持つ（子の座標は絶対座標のため相対へ戻して判定する）
+        // ルーペの内側（左上）へ配置され、大きさを持つ（子の座標は絶対座標のため相対へ戻して判定する）
         Assert.True(label.Bounds.Width > 0);
         Assert.True(label.Bounds.Height > 0);
         var relativeX = label.Bounds.X - control.Loupe.Bounds.X;

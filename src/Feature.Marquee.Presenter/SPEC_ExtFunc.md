@@ -40,7 +40,7 @@
 | `MarqueeDrawPlan` | readonly record struct | 1 フレーム分の描画計画（外観・描画面・穴あけ矩形・暗転領域・枠線矩形・内側の塗りと枠線・ハンドル・マーカー・層の順序・ラベル配置）。**UI が見る唯一の描画値** |
 | `MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。**層にある ⇔ 描く値がある** |
 | `MarqueeAppearance` | sealed record | **外観の単一所有者**（色・ラベルの体裁・枠線の太さ・表示可否）。`Default` を基点に `with` 式で部分変更する |
-| `MarqueeTextPlacement` | readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・アライン・クランプ領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
+| `MarqueeTextPlacement` | readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
 | `MarqueeLabelPlacement` | readonly record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
 | `MarqueeLabelPlan` | static class | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する |
 | `MarqueeDecorationGeometry` | internal static class | 装飾矩形の計算（本層の内部手順。UI 層は解決済みの矩形を `MarqueeDrawPlan` から受け取る） |
@@ -147,7 +147,7 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| `Bounds` | 要素を置く矩形（背景の大きさ = 文字の実寸 + 内側余白 × 2。アラインと領域クランプ適用済み） |
+| `Bounds` | 要素を置く矩形（背景の大きさ = 文字の実寸 + 内側余白 × 2。領域クランプ適用済み） |
 | `PaddingX` / `PaddingY` | 要素の内側余白（外観の値。要素の `Padding` にそのまま写す） |
 | `Text` / `FontSize` / `TextColor` / `BackgroundColor` | 文言・フォントサイズ・色は外観（`MarqueeAppearance`）と `MarqueeLabelTexts` が与える（UI は判断しない） |
 | 角丸 | 持たない（選択矩形のラベルは矩形である） |

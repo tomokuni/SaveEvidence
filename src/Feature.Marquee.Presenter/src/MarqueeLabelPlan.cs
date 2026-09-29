@@ -7,7 +7,7 @@ namespace EsUtil.Feature.Marquee.Presenter;
 /// <summary>描画層のテキスト配置から、ラベル要素の配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>
 /// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。描画層（<see cref="MarqueePresenter"/>）は<br/>
-/// 文言・基準点・アライン・領域を決めるが、実際の配置矩形はテキストの実寸に依存するため、<br/>
+/// 文言・基準点・領域を決めるが、実際の配置矩形はテキストの実寸に依存するため、<br/>
 /// 実寸測定（描画 API 依存）を UI 層から受け取って要素の矩形へ変換する。<br/>
 /// 体裁（内側余白・フォントサイズ・色）は外観（<see cref="MarqueeAppearance"/>）が単一所有する。<br/>
 /// <br/>
@@ -60,7 +60,7 @@ public static class MarqueeLabelPlan
     }
 
     /// <summary>テキスト配置と体裁から、要素の配置指示を組み立てる。</summary>
-    /// <param name="placement">描画層が決めた文言と基準点（アライン・クランプ領域を含む）。</param>
+    /// <param name="placement">描画層が決めた文言と基準点（クランプ領域を含む）。</param>
     /// <param name="fontSize">フォントサイズ（DIP。外観が所有する）。</param>
     /// <param name="textColor">文字色（外観が所有する）。</param>
     /// <param name="backgroundColor">背景色（外観が所有する）。</param>
@@ -68,8 +68,7 @@ public static class MarqueeLabelPlan
     /// <param name="measureText">テキストの実寸を測る関数。</param>
     /// <returns>要素の配置指示。</returns>
     /// <remarks>
-    /// 背景矩形は「文字の実寸 + 内側余白 × 2」であり、基準点をアライン（<see cref="EsHorizontalAlign"/> /<br/>
-    /// <see cref="EsVerticalAlign"/>）の位置へ合わせる。描画領域をはみ出す場合は領域内へクランプする<br/>
+    /// 背景矩形は「文字の実寸 + 内側余白 × 2」であり、基準点を左上として置く。描画領域をはみ出す場合は領域内へクランプする<br/>
     /// （クランプは <see cref="EsSize.ClampOffset"/> が単一所有する。領域が未確定の軸はクランプしない）。<br/>
     /// 内側余白はサイズラベルとホストの付加情報ラベルで共通の値を共有する（積み上げの間隔を揃えるため）。
     /// </remarks>
@@ -86,23 +85,10 @@ public static class MarqueeLabelPlan
         var width = textSize.Width + padding * 2;
         var height = textSize.Height + padding * 2;
 
-        var x = placement.Horizontal switch
-        {
-            EsHorizontalAlign.Center => placement.Point.X - width / 2,
-            EsHorizontalAlign.Right => placement.Point.X - width,
-            _ => placement.Point.X,
-        };
-
-        var y = placement.Vertical switch
-        {
-            EsVerticalAlign.Middle => placement.Point.Y - height / 2,
-            EsVerticalAlign.Bottom => placement.Point.Y - height,
-            _ => placement.Point.Y,
-        };
-
+        // 基準点は文字の左上である（水平・垂直の揃えは持たない）
         var bounds = new EsRect(
-            placement.ClampArea.ClampOffset(x, width, EsAxis.X),
-            placement.ClampArea.ClampOffset(y, height, EsAxis.Y),
+            placement.ClampArea.ClampOffset(placement.Point.X, width, EsAxis.X),
+            placement.ClampArea.ClampOffset(placement.Point.Y, height, EsAxis.Y),
             width,
             height);
 

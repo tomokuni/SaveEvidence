@@ -17,11 +17,11 @@ public class LoupeLabelPlanTests
     /// <summary>測定に使う固定の実寸（テキストの実測値を模した値）。</summary>
     private static readonly EsSize MeasuredSize = new(36.0, 14.0);
 
-    /// <summary>テスト用の中心座標ラベルのテキスト配置を生成する（ルーペ上端の中央）。</summary>
+    /// <summary>テスト用の中心座標ラベルのテキスト配置を生成する（基準点はルーペ左上の内側）。</summary>
     /// <param name="text">文言。</param>
     /// <returns>テキスト配置。</returns>
     private static LoupeTextPlacement CreateCoordLabel(string text = "(50, 60)")
-        => new(text, new EsPoint(80, 2), EsHorizontalAlign.Center, EsVerticalAlign.Top, default);
+        => new(text, new EsPoint(2, 2), default);
 
     /// <summary>テスト用の描画に使う設定を生成する。</summary>
     /// <returns>描画に使う設定。</returns>
@@ -60,14 +60,14 @@ public class LoupeLabelPlanTests
     }
 
     [Fact]
-    public void Resolve_基準点を水平中央へ合わせる()
+    public void Resolve_基準点が背景の左上になる()
     {
         var element = Assert.Single(LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), Measure));
 
-        // 基準点 (80, 2) がアライン（水平中央・上端）どおり背景の位置になる
-        var width = MeasuredSize.Width + element.PaddingX * 2;
-        Assert.Equal(80 - width / 2, element.Bounds.X);
+        // 基準点 (2, 2) がそのまま背景の左上になり、幅は実寸 + 内側余白で決まる
+        Assert.Equal(2, element.Bounds.X);
         Assert.Equal(2, element.Bounds.Y);
+        Assert.Equal(MeasuredSize.Width + element.PaddingX * 2, element.Bounds.Width);
     }
 
     [Fact]

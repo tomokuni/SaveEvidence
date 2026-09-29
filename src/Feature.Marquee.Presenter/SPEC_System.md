@@ -106,7 +106,7 @@ flowchart TD
 | `src/MarqueeLabelTexts.cs` | `MarqueeLabelTexts` | internal static | サイズラベル・カーソル座標ラベルの文言と基準点 |
 | `src/MarqueeLabelPlan.cs` | `MarqueeLabelPlan` | public static | 実寸 → ラベル要素の配置指示の写像 |
 | `src/MarqueeLabelPlacement.cs` | `MarqueeLabelPlacement` | public readonly record struct | ラベル要素の配置指示 |
-| `src/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・アライン・クランプ領域） |
+| `src/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域） |
 | `src/MarqueePresenterLogMessage.cs` | `MarqueePresenterLogMessage` | internal static partial | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
@@ -123,7 +123,7 @@ flowchart TD
 | サイズラベルの文言（書式・表示スケール） | `MarqueeLabelTexts.ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
 | 矩形に基づくラベルの基準点（穴あけ矩形の左上から「矩形の線幅 + 1 DIP」内側） | `MarqueeLabelTexts.ResolveLabelAnchor`（`MarqueeDrawPlan.LabelAnchor` としても公開する） |
 | カーソル座標ラベルの文言と基準点（カーソル + 8.0 DIP） | `MarqueeLabelTexts.ResolveCoordLabelText` |
-| ラベルの体裁（背景 = 実寸 + 内側余白 × 2・アラインの適用・クランプ・並び順） | `MarqueeLabelPlan` |
+| ラベルの体裁（背景 = 実寸 + 内側余白 × 2・クランプ・並び順） | `MarqueeLabelPlan` |
 | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） | `MarqueePresenterLogMessage` |
 
 ## 6. 例外処理ポリシー

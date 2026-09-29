@@ -6,16 +6,15 @@ namespace EsUtil.Feature.Loupe.Presenter;
 /// <summary>ルーペのラベルの文言と基準点を生成する（描画層が単一所有する）。</summary>
 /// <remarks>
 /// <b>文言の書式は描画層が単一所有する</b>: コアは幾何（拡大中心・表示サイズ）だけを返し、文言と基準点は描画の都合として本クラスが作る。<br/>
-/// 基準点はルーペ上端の中央であり、アラインは水平中央・上端である<br/>
-/// （水平位置は基準点の中央寄せで決まるため、ラベルの幅を知らずに指定できる）。<br/>
+/// 基準点はルーペの左上から <see cref="CoordLabelMargin"/> だけ内側の点である（ラベルは左上起点で置く。中央寄せは持たない）。<br/>
 /// フォントサイズ・角丸・色は <see cref="LoupeAppearance"/> が単一所有する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 internal static class LoupeLabelTexts
 {
-    /// <summary>ルーペ上端から中心座標ラベルの基準点までの距離（DIP）。</summary>
-    /// <remarks>ラベルを上端の帯へ収めるための距離である（ラベルの体裁（余白・角丸）は外観が単一所有する）。</remarks>
-    private const double CoordLabelTopMargin = 2.0;
+    /// <summary>ルーペの左上から中心座標ラベルの基準点までの距離（DIP）。</summary>
+    /// <remarks>ラベルをルーペの縁から離す距離である（左右・上下で同じ値を使う）。</remarks>
+    private const double CoordLabelMargin = 2.0;
 
     /// <summary>中心座標ラベルの文言と基準点を解決する。</summary>
     /// <param name="geometry">描画の幾何（拡大中心・表示サイズを持つ）。</param>
@@ -34,9 +33,7 @@ internal static class LoupeLabelTexts
 
         return new LoupeTextPlacement(
             center.Format(),
-            new EsPoint(geometry.DisplaySize / 2, CoordLabelTopMargin),
-            EsHorizontalAlign.Center,
-            EsVerticalAlign.Top,
+            new EsPoint(CoordLabelMargin, CoordLabelMargin),
             default);
     }
 }

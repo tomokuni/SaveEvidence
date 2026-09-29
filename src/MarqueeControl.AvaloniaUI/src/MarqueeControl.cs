@@ -251,7 +251,7 @@ public sealed partial class MarqueeControl : Panel
     /// 図形の描画（<c>RenderShapes</c>）とラベルの配置（<c>ArrangeOverride</c>）が同じ描画計画を使う。<br/>
     /// 解決を 2 回行うと、選択矩形・装飾・ラベル文言の解決と確保が 1 フレームで重複する。<br/>
     /// 実寸の測定は描画 API に依存するため、本層が <c>MeasureText</c> を渡す<br/>
-    /// （配置の計算（アライン・クランプ）は提示層が単一所有する）。<br/>
+    /// （配置の計算（クランプ）は提示層が単一所有する）。<br/>
     /// 状態が変わると <see cref="InvalidateFrame"/> が破棄し、次の解決で最新の状態を反映する。
     /// </remarks>
     private MarqueeDrawPlan ResolveFrame(EsSize clientSize)

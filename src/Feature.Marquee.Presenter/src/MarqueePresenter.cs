@@ -249,7 +249,7 @@ public class MarqueePresenter
     /// 4. 描く層だけを順序どおりに並べる（テキストは最後 = 最上位）。<br/>
     /// <br/>
     /// 実寸の測定は描画 API に依存するため、UI 層が関数として渡す<br/>
-    /// （配置の計算（アライン・クランプ）は <see cref="MarqueeLabelPlan"/> が単一所有する）。
+    /// （配置の計算（クランプ）は <see cref="MarqueeLabelPlan"/> が単一所有する）。
     /// </remarks>
     public virtual MarqueeDrawPlan ResolveDrawPlan(EsSize clientSize, Func<string, double, EsSize> measureText)
     {

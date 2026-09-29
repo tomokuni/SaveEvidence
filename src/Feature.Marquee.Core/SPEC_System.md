@@ -187,12 +187,12 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | キー入力の型 | コアの `EsKey` を使い、UI のキー型は境界で変換する |
 | カーソル操作 | `ICursorService` 抽象にのみ依存する（未指定はカーソル操作を行わない）。UI のカーソル型への写像は効果（`IMarqueeEffects.SetCursorShape`）を受けた UI が行う |
 | 効果の適用 | UI 固有の操作（フォーカス・再描画・ポインターキャプチャ・画面座標変換）は `IMarqueeEffects` を唯一の境界とし、コアは UI 型を知らない（不要なメンバーの空実装は `MarqueeEffectsBase` で省略できる） |
-| 文字の描画 | コアはマウス位置という素材だけを返し、文言・基準点・アライン・実寸 → 配置矩形の写像は提示層（`MarqueeLabelTexts` / `MarqueeLabelPlan`）が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため）。色は提示層の `MarqueeAppearance` が与える |
+| 文字の描画 | コアはマウス位置という素材だけを返し、文言・基準点・実寸 → 配置矩形の写像は提示層（`MarqueeLabelTexts` / `MarqueeLabelPlan`）が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため）。色は提示層の `MarqueeAppearance` が与える |
 | 装飾 | コアは穴あけ矩形（幾何）だけを返し、装飾の矩形・表示可否・色は提示層が単一所有する（装飾は組み込み先の表示であり、選択コントロール単体の概念ではない） |
 | 再描画のバッチ化 | UI のディスパッチャーに依存するため UI 層が単一所有する（コアは同期計算のみ） |
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、提示層の `MarqueeAppearance` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は各 UI の描画境界で行う |
 | 選択矩形の閉区間 | 「終点を含む」規則（DIP への変換時の +1）はコア（`MarqueeRenderRequest.ToDipRect` の `closedInterval` と、その指定を導出する `MarqueeHoleRect`）が単一所有する（UI ごとに +1 すると片方だけずれる） |
-| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「アラインの適用」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、提示層が単一所有する（コアは素材（マウス位置・穴あけ矩形）だけを渡す） |
+| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、提示層が単一所有する（コアは素材（マウス位置・穴あけ矩形）だけを渡す） |
 | 設定では変更しない固定値 | **公開しません**。コア内だけで使う値（ハンドル枠の太さ・始点マーカーの太さ）は幾何の解決（`Marquee.Geometry.cs`）の private 定数とし、UI 層は解決済みの値（`MarqueeHandles.BorderThickness` 等）を受け取る |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は提示層の `MarqueeAppearance` が単一所有する |
 | ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.Bounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |

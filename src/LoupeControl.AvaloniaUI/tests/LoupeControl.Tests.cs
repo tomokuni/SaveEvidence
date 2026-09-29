@@ -487,7 +487,7 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
-    public void 座標ラベルはルーペ上端の中央に実測幅で配置される()
+    public void 座標ラベルはルーペ左上の内側に実測幅で配置される()
     {
         var control = CreateControl();
         control.CenterPoint = new Point(12, 34);
@@ -502,11 +502,9 @@ public class LoupeControlTests
             Typeface.Default, control.Appearance.CoordLabelFontSize, Brushes.White);
         Assert.True(label.Width > text.Width);
 
-        // 上端中央（左右の余白が等しい）: コアの中央寄せ規則が要素へ反映される
-        Assert.Equal(control.Bounds.Width / 2, label.Margin.Left + label.Width / 2, 1);
-
-        // 上端（ルーペの表示領域の内側）
-        Assert.True(label.Margin.Top >= 0);
+        // 左上（基準点はルーペの左上から 2 DIP。描画層が配置を単一所有する）
+        Assert.Equal(2.0, label.Margin.Left, 1);
+        Assert.Equal(2.0, label.Margin.Top, 1);
     }
 
     [AvaloniaFact]

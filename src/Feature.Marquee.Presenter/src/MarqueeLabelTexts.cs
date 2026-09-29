@@ -63,7 +63,7 @@ internal static class MarqueeLabelTexts
     /// <param name="displayScalingProvider">表示スケールを矩形ごとに解決するプロバイダ。null の場合は <paramref name="displayScaleScaling"/> を使う。</param>
     /// <returns>サイズラベルのテキスト配置。表示しない場合は null。</returns>
     /// <remarks>
-    /// 基準点は穴あけ矩形の左上から枠線の幅（+ 余白）だけ内側へ寄せた点であり、アラインは左端・上端である。<br/>
+    /// 基準点は穴あけ矩形の左上から枠線の幅（+ 余白）だけ内側へ寄せた点である（ラベルは左上起点で置く）。<br/>
     /// 座標の換算は <paramref name="displayScaleScaling"/> を使い、DisplayScale の百分率だけを<br/>
     /// <paramref name="displayScalingProvider"/> で矩形ごとに差し替えられる。
     /// </remarks>
@@ -88,8 +88,7 @@ internal static class MarqueeLabelTexts
             ? FormatSizeLabel(holeRect, displayScaleScaling, rectDisplayScale)
             : overrideText;
 
-        return new MarqueeTextPlacement(
-            text, ResolveLabelAnchor(holeRect, appearance), EsHorizontalAlign.Left, EsVerticalAlign.Top, default);
+        return new MarqueeTextPlacement(text, ResolveLabelAnchor(holeRect, appearance), default);
     }
 
     /// <summary>カーソル座標ラベルの文言と基準点を解決する。</summary>
@@ -99,7 +98,7 @@ internal static class MarqueeLabelTexts
     /// <returns>座標ラベルのテキスト配置。表示しない場合は null。</returns>
     /// <remarks>
     /// 文言は <see cref="EsPoint.Format(int)"/> が文字列化する。<br/>
-    /// 基準点は「カーソル + <see cref="CoordLabelOffset"/>」であり、アラインは左端・上端である。
+    /// 基準点は「カーソル + <see cref="CoordLabelOffset"/>」である（ラベルは左上起点で置く）。
     /// </remarks>
     internal static MarqueeTextPlacement? ResolveCoordLabelText(
         in MarqueeGeometry geometry, MarqueeAppearance appearance, ICoordTransform port)
@@ -114,8 +113,6 @@ internal static class MarqueeLabelTexts
         return new MarqueeTextPlacement(
             geometry.MousePosition.Format(),
             new EsPoint(cursor.X + CoordLabelOffset, cursor.Y + CoordLabelOffset),
-            EsHorizontalAlign.Left,
-            EsVerticalAlign.Top,
             geometry.ClientSize);
     }
 

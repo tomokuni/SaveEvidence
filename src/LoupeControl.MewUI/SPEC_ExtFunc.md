@@ -37,7 +37,7 @@
 | --- | --- | --- | --- | --- |
 | `BorderThickness` | `int` | 2 | 1〜64 | 枠線の太さ（DIP） |
 | `ShowCrosshair` / `ShowBorder` | `bool` | `true` | — | 十字線・枠線の表示可否（透明色を「描かない」の代用にしない） |
-| `ShowCoordLabel` | `bool` | `true` | — | 上端中央の座標ラベルの表示可否（中心未設定時は描画しない） |
+| `ShowCoordLabel` | `bool` | `true` | — | 左上の座標ラベルの表示可否（中心未設定時は描画しない） |
 | `PasteboardColor` | `DrawingColor` | 中性グレー（`#FF535353`） | — | 画像外（ペーストボード）の色。拡大画像より先に表面全体へ塗るため、画像の無い部分が本色の無地になる |
 | `CrossColor` | `DrawingColor` | 赤 40%（`#66FF0000`） | — | 十字線の色（不透明度はアルファ） |
 | `BorderColor` | `DrawingColor` | LightGray | — | 枠線の色 |

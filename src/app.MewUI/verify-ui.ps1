@@ -30,7 +30,7 @@ public static class W {
 [void][W]::SetProcessDpiAwarenessContext([IntPtr](-4))
 
 $repo = 'D:\Dev\Repos\GitHub\SaveEvidence'
-$exe = Join-Path $repo 'src\app.MewUI\src\bin\Debug\net10.0-windows\EsUtil.SaveEvidence.MewUI.exe'
+$exe = Join-Path $repo 'src\app.MewUI\src\bin\Debug\net10.0-windows\SaveEvidence.MewUI.exe'
 # 検証の出力は .work へ置く（リポジトリの作業ツリーを汚さない。.work は .gitignore 済み）
 $outDir = Join-Path $repo '.work\mewui-verify'
 if (-not (Test-Path $outDir)) { [void](New-Item -ItemType Directory -Path $outDir -Force) }
@@ -132,9 +132,9 @@ function Get-LoupeStats([System.Drawing.Bitmap]$bitmap, [System.Drawing.Color]$f
     return [ordered]@{ frame = $frame; white = $white; left = $left; top = $top; right = $right; bottom = $bottom }
 }
 
-# ルーペの上端中央帯で中心座標ラベルの画素を数える（背景の暗色 + 文字色）。
-# ラベルはルーペ上端から 2 DIP の位置に中央寄せで置かれる（コアが配置を単一所有する）ため、
-# 枠の外接矩形から上端 25%・左右中央 80% の帯を走査する。
+# ルーペの左上の帯で中心座標ラベルの画素を数える（背景の暗色 + 文字色）。
+# ラベルはルーペの左上（余白 2 DIP）に置かれる（コアが配置を単一所有する）ため、
+# 枠の外接矩形から上端 25%・左端側 60% の帯を走査する。
 # 文字色（既定は白）と背景色（既定は黒 60%。市松模様の上に重なるため純黒にはならない）は
 # 設定に依存するため、文字色は呼び出し側が実設定から解決して渡す。
 function Get-LoupeLabelStats([System.Drawing.Bitmap]$bitmap, $loupe, [System.Drawing.Color]$textColor) {
@@ -142,8 +142,8 @@ function Get-LoupeLabelStats([System.Drawing.Bitmap]$bitmap, $loupe, [System.Dra
     $height = $loupe.bottom - $loupe.top
     if ($width -le 0 -or $height -le 0) { return [ordered]@{ text = 0; dark = 0 } }
 
-    $x0 = [int]($loupe.left + $width * 0.10)
-    $x1 = [int]($loupe.left + $width * 0.90)
+    $x0 = [int]($loupe.left + $width * 0.00)
+    $x1 = [int]($loupe.left + $width * 0.60)
     $y0 = $loupe.top
     $y1 = [int]($loupe.top + $height * 0.25)
     $text = 0; $dark = 0
@@ -277,7 +277,7 @@ if ($hwnd -ne [IntPtr]::Zero) {
         $checks["${label}_loupeHidden"] = ($loupe.frame -lt 200)
     }
 
-    # ルーペ表示時の判定: ルーペが現れ、その上端中央に中心座標ラベル（暗色背景 + 文字色）が現れること。
+    # ルーペ表示時の判定: ルーペが現れ、その左上に中心座標ラベル（暗色背景 + 文字色）が現れること。
     # 通常画面（CapturePage）はルーペを使わないため、本判定は -VerifyLoupe 指定時のみ実行される。
     if ($VerifyLoupe) {
         $loupeShown = Get-LoupeStats $script:images['loupeShown'] $loupeFrameColor

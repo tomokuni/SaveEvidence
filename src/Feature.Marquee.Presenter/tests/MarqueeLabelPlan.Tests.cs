@@ -21,13 +21,13 @@ public class MarqueeLabelPlanTests
     /// <param name="text">文言。</param>
     /// <returns>テキスト配置。</returns>
     private static MarqueeTextPlacement CreateSizeLabel(string text = "(10, 20) - (30, 40),  (20×20)")
-        => new(text, new EsPoint(10, 20), EsHorizontalAlign.Left, EsVerticalAlign.Top, default);
+        => new(text, new EsPoint(10, 20), default);
 
     /// <summary>テスト用のカーソル座標ラベルのテキスト配置を生成する（カーソル + オフセットへ置き、領域内へクランプする）。</summary>
     /// <param name="text">文言。</param>
     /// <returns>テキスト配置。</returns>
     private static MarqueeTextPlacement CreateCoordLabel(string text = "(50, 60)")
-        => new(text, new EsPoint(58, 68), EsHorizontalAlign.Left, EsVerticalAlign.Top, new EsSize(200, 200));
+        => new(text, new EsPoint(58, 68), new EsSize(200, 200));
 
     /// <summary>実寸を固定で返す測定関数。</summary>
     /// <param name="text">測定する文言。</param>
@@ -94,7 +94,7 @@ public class MarqueeLabelPlanTests
         var element = Assert.Single(
             MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, CreateAppearance(), Measure));
 
-        // 基準点 (10, 20) がアライン（左端・上端）どおり背景の左上になる
+        // 基準点 (10, 20) がそのまま背景の左上になる
         Assert.Equal(new EsPoint(10, 20), element.Bounds.TopLeft);
         Assert.Equal(MeasuredSize.Width + MarqueeAppearance.LabelPaddingDefault * 2, element.Bounds.Width);
         Assert.Equal(MeasuredSize.Height + MarqueeAppearance.LabelPaddingDefault * 2, element.Bounds.Height);
@@ -104,8 +104,7 @@ public class MarqueeLabelPlanTests
     public void Resolve_領域をはみ出す場合はクランプする()
     {
         // クランプ領域 (200, 200) へ収まらない位置を指定する
-        var label = new MarqueeTextPlacement(
-            "(50, 60)", new EsPoint(190, 195), EsHorizontalAlign.Left, EsVerticalAlign.Top, new EsSize(200, 200));
+        var label = new MarqueeTextPlacement("(50, 60)", new EsPoint(190, 195), new EsSize(200, 200));
 
         var element = Assert.Single(MarqueeLabelPlan.Resolve(null, label, CreateAppearance(), Measure));
 

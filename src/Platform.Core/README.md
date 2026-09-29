@@ -30,7 +30,6 @@ UI フレームワークに依存していた型（ホットキー設定・座�
 | `Geometry.EsPoint` / `EsSize` / `EsVector` / `EsRect` | UI フレームワーク非依存の DIP 相当の幾何値型（`readonly record struct`）。**座標ラベルの文言は `EsPoint.Format`**（`(x, y)` 形式。小数点以下の桁数を指定できる）、**領域の判定とクランプは `EsSize`**（`HasArea` / `ClampToArea` / `ClampOffset`）、**枠線の内側 4 辺・領域内クランプ・重なり部分は `EsRect`**（`ComputeInnerEdges` / `ClampToArea` / `Intersect`）が単一所有する（コントロールを問わず同じ式を使う。選択矩形の枠線とルーペの外枠、選択のドメイン境界とルーペの位置クランプ、画像の表示矩形とビューポートの交差） |
 | `Geometry.EsPointInt` / `EsSizeInt` / `EsRectInt` | UI フレームワーク非依存の**整数版**の幾何値型（`EsPoint` / `EsSize` / `EsRect` の整数版。画面物理ピクセル座標・画像ピクセル座標・矩形に使う） |
 | `Geometry.EsAxis` | レイアウト計算で扱う軸（`X` / `Y`）。軸を `bool` で指定しないための列挙型 |
-| `Geometry.EsHorizontalAlign` / `EsVerticalAlign` | 対象（矩形・画像・テキスト等）を基準点の水平/垂直方向のどこへ合わせるか（`Left` / `Center` / `Right` と `Top` / `Middle` / `Bottom`）。幅・高さが対象の実寸に依存する場面で、基準点がどこを指すかを知らずに指定するための列挙型 |
 | `EsPlatformHandle` | UI フレームワーク非依存のネイティブウィンドウ識別子（座標・寸法ではないため `Geometry` ではなくルート直下） |
 | `Imaging.EsBitmap` | 複数のビットマップ種別を横断する軽量なユニバーサルビットマップラッパー（BGRA8888・Premul）。**自前のピクセルバッファ（`NativeMemory.AlignedAlloc` の 64 バイト整列）を所有**し、外部パッケージに依存しない（Skia との相互変換は [`Platform.Skia`](../Platform.Skia/README.md) が担う） |
 | `Imaging.ImageDrawMode` | 画像を描画先の領域へ配置する方法（縦横比を保つ `Uniform` / 領域全体へ引き伸ばす `Fill`） |

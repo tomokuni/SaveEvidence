@@ -6,7 +6,7 @@ namespace EsUtil.Feature.Loupe.Presenter;
 /// <summary>ルーペの中心座標ラベルの配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>
 /// <b>位置付け</b>: 「文字を UI 要素として配置する」UI のための変換である。描画層（<see cref="LoupePresenter"/>）は<br/>
-/// 文言・基準点・アラインを決めるが、実際の配置矩形はテキストの実寸に依存するため、<br/>
+/// 文言・基準点を決めるが、実際の配置矩形はテキストの実寸に依存するため、<br/>
 /// 実寸測定（描画 API 依存）を UI 層から受け取って要素の矩形へ変換する。<br/>
 /// 体裁（内側余白・フォントサイズ・色・角丸）は外観（<see cref="LoupeAppearance"/>）が単一所有する。<br/>
 /// <br/>
@@ -40,13 +40,12 @@ public static class LoupeLabelPlan
     }
 
     /// <summary>テキスト配置と体裁から、要素の配置指示を組み立てる。</summary>
-    /// <param name="placement">描画層が決めた文言と基準点（アラインを含む）。</param>
+    /// <param name="placement">描画層が決めた文言と基準点。</param>
     /// <param name="appearance">外観（色・フォントサイズ・角丸）。</param>
     /// <param name="measureText">テキストの実寸を測る関数。</param>
     /// <returns>要素の配置指示。</returns>
     /// <remarks>
-    /// 背景矩形は「文字の実寸 + 内側余白 × 2」であり、基準点をアライン（<see cref="EsHorizontalAlign"/> /<br/>
-    /// <see cref="EsVerticalAlign"/>）の位置へ合わせる。描画領域をはみ出す場合は領域内へクランプする<br/>
+    /// 背景矩形は「文字の実寸 + 内側余白 × 2」であり、基準点を左上として置く。描画領域をはみ出す場合は領域内へクランプする<br/>
     /// （クランプは <see cref="EsSize.ClampOffset"/> が単一所有する。領域が未確定の軸はクランプしない）。<br/>
     /// 上下の余白はルーペ固有の値であり本クラスが単一所有する。
     /// </remarks>
@@ -58,23 +57,10 @@ public static class LoupeLabelPlan
         var width = textSize.Width + PaddingX * 2;
         var height = textSize.Height + PaddingY * 2;
 
-        var x = placement.Horizontal switch
-        {
-            EsHorizontalAlign.Center => placement.Point.X - width / 2,
-            EsHorizontalAlign.Right => placement.Point.X - width,
-            _ => placement.Point.X,
-        };
-
-        var y = placement.Vertical switch
-        {
-            EsVerticalAlign.Middle => placement.Point.Y - height / 2,
-            EsVerticalAlign.Bottom => placement.Point.Y - height,
-            _ => placement.Point.Y,
-        };
-
+        // 基準点は文字の左上である（水平・垂直の揃えは持たない）
         var bounds = new EsRect(
-            placement.ClampArea.ClampOffset(x, width, EsAxis.X),
-            placement.ClampArea.ClampOffset(y, height, EsAxis.Y),
+            placement.ClampArea.ClampOffset(placement.Point.X, width, EsAxis.X),
+            placement.ClampArea.ClampOffset(placement.Point.Y, height, EsAxis.Y),
             width,
             height);
 

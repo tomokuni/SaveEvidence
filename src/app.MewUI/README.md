@@ -387,7 +387,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File src/app.MewUI/verify-ui.ps1 
 ```
 
 - 判定項目: `loupeShown_loupeVisible`（設定の枠色の画素数）と `loupeShown_labelVisible`
-  （ルーペ上端中央帯の文字色と暗色背景の画素数。文字色は実設定の `LoupeCoordLabelColor` から解決する）。
+  （ルーペ左上の帯の文字色と暗色背景の画素数。文字色は実設定の `LoupeCoordLabelColor` から解決する）。
 - 実測例: 一辺 160 DIP のルーペで枠 1264 px・ラベル文字 127 px・背景 815 px。
 - 終了時は `Esc` で切り出しをキャンセルしてからプロセスを終了します。
 

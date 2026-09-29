@@ -111,7 +111,7 @@
                                        Value="{Binding SelectionRectHeight, Mode=TwoWay}" Width="110"/>
                     </StackPanel>
 
-                    <TextBlock Text="※ 中心座標ラベルはルーペコントロールが上端中央に表示します。"
+                    <TextBlock Text="※ 中心座標ラベルはルーペコントロールが左上に表示します。"
                                FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
 
                     <Separator/>
