@@ -250,14 +250,14 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 | `Options` | `LoupeOptions` | コアの既定値 | ルーペの基本サイズと拡大率。`with` 式で部分変更する。数値項目はコアの `LoupeOptions` が生成時に安全域へ補正する |
 | `Appearance` | `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter.Setting`） | `LoupeAppearance.Default` | 枠線の太さ・表示可否（十字線・枠線・ラベル）と描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）・ラベルのフォントサイズ・角丸。`LoupeAppearance.Default with { ... }` で部分変更する |
 
-`Options`（コアの `LoupeOptions`）の項目（詳細は `Feature.Loupe.Core` の `SPEC_ExtFunc.md` を参照）:
+`Options`（コアの `LoupeOptions`）の項目（詳細は `Feature.Loupe.Core` の `docs/SPEC_API.md` を参照）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `RequestedSize` | `int` | `160` | ルーペの基本サイズ（DIP。1〜4096 に補正） |
 | `ZoomLevel` | `int` | `4` | 拡大率（1〜64 に補正） |
 
-`Appearance`（`LoupeAppearance`。詳細は `Feature.Loupe.Presenter` の `SPEC_ExtFunc.md` を参照）の項目:
+`Appearance`（`LoupeAppearance`。詳細は `Feature.Loupe.Presenter` の `docs/SPEC_API.md` を参照）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |

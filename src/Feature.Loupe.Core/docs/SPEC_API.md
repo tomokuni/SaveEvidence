@@ -1,21 +1,8 @@
-# Feature.Loupe.Core 外部機能仕様書
+# Feature.Loupe.Core API リファレンス
 
-`LoupeControl`（選択範囲を拡大表示するコントロール）の **UI 非依存のコア**が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト）から見える情報のみを記載し、内部実装の詳細は記載しません。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
+`LoupeControl`（選択範囲を拡大表示するコントロール）の **UI 非依存のコア**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
-## 1. 提供機能
-
-| 機能 | 提供元 | 説明 |
-| --- | --- | --- |
-| 表示レイアウトの解決 | `Loupe.ResolveLayout` | 親領域のサイズを渡すと、表示サイズ（要求サイズを親領域の最小辺へクランプ）と表示位置（拡大中心 ＋ オフセットの親領域内へのクランプ）を返す（拡大中心が未設定の場合は位置が null）。**状態を変更しない** |
-| 描画の幾何の解決 | `Loupe.ResolveGeometry` | 描画 1 フレーム分の幾何（`LoupeGeometry`）を解決する。DIP → 物理ピクセルの換算・描画先へのクランプ・切り出し領域の算出はコアが行う |
-| 提示（描画計画の解決） | 描画層 `Feature.Loupe.Presenter` の `LoupePresenter` | 幾何（`LoupeGeometry`）と外観から描画計画（`LoupeDrawPlan`：層の順序・装飾矩形・文言・配置）を組み立てる（本コアは描画の幾何だけを返す） |
-| 描画（本コアの対象外） | 各 UI（`LoupeContextPainter` / `LoupeSkiaPainter`） | 描画計画を自 UI の描画 API へ写す。**描画 API の抽象は持たない**（UI フレームワークごとの描画モデルの差を吸収しきれないため） |
-| 拡大中心の管理 | `Loupe` | 拡大中心（ドメイン座標）と表示位置のオフセットを保持する（マウス移動ごとの更新は UI 層が通知する） |
-| 設定 | `LoupeOptions` / `Loupe.Limits` | 計算に必要な設定の単一値（表示サイズ・拡大率）と、既定値・安全域への補正 |
-| ログ | `Loupe.Log` | 設定・環境値・拡大中心・位置オフセットの変更を検出して出力する（変化したときだけ） |
-| 幾何計算 | `Loupe.ResolveLayout` / `Loupe.ResolveGeometry` | 表示位置と描画の幾何（内部手順は `Loupe.Geometry.cs` の private static。ファサードが吸収する） |
-
-### 前提条件
+## 1. 前提条件
 
 - 本コアは UI フレームワークに依存しません（依存は `Platform.Core` と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成）のみ）。UI 固有の型は利用者（UI 実装）が境界で変換します。
 - 座標は `EsPoint` / `EsSize` / `EsRect`（`EsUtil.Platform.Core`）、拡大元画像は `EsBitmap` で扱います。
@@ -24,9 +11,9 @@
 - コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.AvaloniaUI` が所有します。
 - ラベルの**文言・基準点**は描画層（`LoupePresenter`（`LabelTexts` partial））が単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。
 
-## 2. 公開 API 一覧
+## 2. 公開 API
 
-可視性は public のみを記載します（`internal` は [SPEC_System](SPEC_System.md) の可視性ポリシーを参照）。
+可視性は public のみを記載します（`internal` は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照）。型名の接頭辞は名前空間を表します（`Drawing.` / `Setting.` / `Placement.` を省略した型はルート名前空間）。
 
 ### `EsUtil.Feature.Loupe.Core`
 
@@ -180,7 +167,34 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 | 実寸 → ラベル要素の配置 | `LoupePresenter`（`LabelPlan` partial） |
 | 枠線の太さの物理ピクセル換算 | `Platform.Core` の `DpiScaler`（呼び出すのは `LoupePresenter.ResolveDrawPlan`） |
 
-## 4. 座標系
+## 4. 使用例
+
+```csharp
+using EsUtil.Feature.Loupe.Core.Setting;
+
+// 設定（計算に必要な値のみ。色・フォント・表示可否は外観（Feature.Loupe.Presenter）が持つ）
+var options = new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 };
+using var loupe = new Loupe(options);
+
+// 拡大中心（ドメイン座標 = 元画像ピクセル座標）と表示位置のオフセット
+loupe.CenterPoint = new EsPoint(1920, 1080);
+loupe.PositionOffset = new EsPoint(16, 16);
+
+// 表示レイアウト（親領域のサイズを渡す。拡大中心が未設定の場合は位置が null）
+var layout = loupe.ResolveLayout(parentSize: new EsSize(800, 600));
+
+// 描画の幾何（1 フレーム分。UI 層は本値を組み立てず、提示層へ渡す）
+var geometry = loupe.ResolveGeometry(displaySize: 160, availableSize: new EsSize(800, 600));
+var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描画先
+```
+
+```csharp
+// 描画計画の解決は提示層（Feature.Loupe.Presenter）が行う
+var presenter = new LoupePresenter(new Loupe(options));
+var plan = presenter.ResolveDrawPlan(displaySize: 160, availableSize: null, measureText: MeasureText);
+```
+
+## 5. 座標系
 
 | 座標系 | 用途 |
 | --- | --- |
@@ -191,7 +205,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 - 拡大中心は `ICoordTransform` を通して親領域 DIP へ変換し、`PositionOffset` を加えてから親領域内へクランプします。
 - 切り出し領域の一辺は物理ピクセルサイズを拡大率で割った切り上げです。
 
-## 5. 制限事項
+## 6. 制限事項
 
 - 描画 API は提供しません（描画計画の解決は描画層 `Feature.Loupe.Presenter` が単一所有し、描画は各 UI が自 UI の描画 API で行います。描画 API の抽象は持ちません）。
 - 色（ペーストボード・十字線・枠線・ラベル）は本コアに含みません（描画にだけ必要な設定であるため、外観 `LoupeAppearance` が単一所有します）。
@@ -199,26 +213,3 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 - 表示可否（十字線・枠線・中心座標ラベル）は本コアに含みません（描画にだけ必要な設定であるため、外観 `LoupeAppearance` が単一所有します）。
 - 拡大元画像の取得・切り出しの実行は本コアに含みません（UI ごとに型が異なるため、UI 層が担います）。
 - 再描画のバッチ化・世代番号管理は本コアに含みません（コントロール化にだけ必要な処理のため、`LoupeControl.AvaloniaUI` が所有します）。
-
-## 6. ログ
-
-ロガーは `Loupe.Log` で受け取り、**設定の変更**（`[Feature.Loupe.Core] Setting: {名前} {前} → {後}`。Debug）を出力します。ロガー未設定（null）は出力なしです。
-
-**メッセージの接頭辞は、そのログを定義しているプロジェクト名（コアは `[Feature.Loupe.Core]`、UI 側の共有層は `[Feature.Loupe.Presenter]`、UI 実装は `[LoupeControl.AvaloniaUI]` 等）とします**（接頭辞で出力元の層を読み分けられるようにする。全層が同じ接頭辞だと、ログを見てもどのアセンブリの定義が出力したかを特定できない）。
-
-| 契機 | 出力 |
-| --- | --- |
-| `Options` の set | 変化した項目だけ（`RequestedSize` / `ZoomLevel`） |
-| `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の set | 変化したときだけ |
-
-**差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。枠線の太さ・表示可否（外観）の変更ログは `Feature.Loupe.Presenter` が出力します。ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。
-
-設定値の変更は `LogSettingChanged(名前, 前, 後)`（整数 / 実数 / 真偽）で出力し、**設定名は `nameof` をコアが付与します**（UI 層に設定名の文字列を持たせません）。拡大中心は座標の整形（`(X, Y)`）を伴うため専用の定義（`LogCenterPointChanged`）を持ちます。設定の変更ログの所要項目は `LoupeOptions` の項目（表示サイズ・拡大率）に一致します。
-
-**UI が出力するログ（拡大元画像の変更・描画の例外）とその書式は `Feature.Loupe.Presenter` が単一所有します**（コアは UI が呼ぶ定義を持ちません）。**UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
-
-## 7. ライセンス
-
-もう一方のコア（`Feature.Marquee.Core`）との機能差に由来する非対称は、README の「機能差に由来する非対称（もう一方のコアとの違い）」を参照してください。
-
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

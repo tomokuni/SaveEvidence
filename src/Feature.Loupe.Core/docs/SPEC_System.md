@@ -1,6 +1,6 @@
 # Feature.Loupe.Core システム仕様書
 
-`LoupeControl`（選択範囲を拡大表示するコントロール）の **UI 非依存のコア**の構造・依存・例外処理・設計判断・コンポーネント構成を記載します。外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
+`LoupeControl`（選択範囲を拡大表示するコントロール）の **UI 非依存のコア**の構造・依存・例外処理・設計判断・コンポーネント構成を記載します。公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
 
 ## 1. システム概要
 
@@ -164,8 +164,40 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 | 設定では変更しない固定値 | **公開しません**。描画層内だけで使う値（中心座標ラベルの上端余白）は `LoupePresenter`（`LabelTexts` partial） の private 定数とし、UI 層は解決済みの値（`LoupeLabelPlacement`）を受け取る |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は外観（`LoupeAppearance`）が単一所有する |
 
-## 10. ライセンス
+## 10. ログ
 
-もう一方のコア（`Feature.Marquee.Core`）との機能差に由来する非対称は、README の「機能差に由来する非対称（もう一方のコアとの違い）」を参照してください。
+ロガーは `Loupe.Log` で受け取り、**設定の変更**（`[Feature.Loupe.Core] Setting: {名前} {前} → {後}`。Debug）を出力します。ロガー未設定（null）は出力なしです。
 
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。
+**メッセージの接頭辞は、そのログを定義しているプロジェクト名（コアは `[Feature.Loupe.Core]`、UI 側の共有層は `[Feature.Loupe.Presenter]`、UI 実装は `[LoupeControl.AvaloniaUI]` 等）とします**（接頭辞で出力元の層を読み分けられるようにする。全層が同じ接頭辞だと、ログを見てもどのアセンブリの定義が出力したかを特定できない）。
+
+| 契機 | 出力 |
+| --- | --- |
+| `Options` の set | 変化した項目だけ（`RequestedSize` / `ZoomLevel`） |
+| `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の set | 変化したときだけ |
+
+**差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。枠線の太さ・表示可否（外観）の変更ログは `Feature.Loupe.Presenter` が出力します。ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。
+
+設定値の変更は `LogSettingChanged(名前, 前, 後)`（整数 / 実数 / 真偽）で出力し、**設定名は `nameof` をコアが付与します**（UI 層に設定名の文字列を持たせません）。拡大中心は座標の整形（`(X, Y)`）を伴うため専用の定義（`LogCenterPointChanged`）を持ちます。設定の変更ログの所要項目は `LoupeOptions` の項目（表示サイズ・拡大率）に一致します。
+
+**UI が出力するログ（拡大元画像の変更・描画の例外）とその書式は `Feature.Loupe.Presenter` が単一所有します**（コアは UI が呼ぶ定義を持ちません）。**UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。
+
+## 11. 機能差に由来する非対称（もう一方のコアとの違い）
+
+本コアと `Feature.Marquee.Core` は同じ規約（`UI → Presenter → Core → Platform.Core` の一方向依存、層の順序は提示層が所有、色は外観が所有）で作られています。揃えない（揃えると害になる）違いは機能差に由来するもので、以下に列挙します。
+
+| 非対称 | Loupe | Marquee | 理由 |
+| --- | --- | --- | --- |
+| 描画パイプラインの段数 | 3 段（`ResolveLayout` → `ResolveGeometry` → 描画計画の解決） | 2 段（`ResolveGeometry` → 描画計画の解決） | Marquee は親セル全面へ重ねるため配置の余地がない（`LoupeLayout` 相当を持たない）。配置先はホストの親セル全面であり、位置を決める入力がコアに無い |
+| 描画の幾何の生成の形 | `ResolveGeometry(double displaySize, EsSize? availableSize = null)`（一辺の表示サイズ＝親パネルのクランプ結果と、描画面＝ビットマップの領域が別） | `ResolveGeometry(in MarqueeRenderRequest)`（描画領域＝座標空間。表示サイズと同じ） | 本コアは正方形のルーペを自前の描画面へ描く（任意矩形の描画領域へ直接描く Marquee とは座標系の対応が違う） |
+| 入力の通知と効果ポート | 持たない（状態はホストが設定するだけ。設定は表示のみ。変換の設定は再描画を要求せず、表示位置の再計算は UI が行う。ロガーはファサード自身が保持） | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）／設定に対話パラメータ（`MinSelectionSize` / `HandleHitRadius` / `ClampToDomainBounds`）／ラベル文言プロバイダ（`SizeLabelOverrideProvider` 等）／座標変換の設定で**コアが再描画を要求**（`RequestRedraw`）／ロガーはセッションが保持 | ルーペは入力の解釈も効果ポートも持たない（ホストが状態を設定するだけであり、再描画の要求先が無い） |
+| 寸法の型 | `int`（物理ピクセルへ換算。矩形の塗りで描く） | `double`（DIP のまま。線で描く） | 描画プリミティブが違う（塗り / 線） |
+| 設定型の数とログ定義 | 1 型（`LoupeOptions`）。ログは `LogOptionsChanged` のみ | 1 型（`MarqueeOptions`）。ログは `LogOptionsChanged` のみ | 装飾の設定はコアから提示層（外観）へ移したため、両コアとも 1 型 |
+| 描画データの粒度 | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker`） | 描画プリミティブが違う（塗る矩形の列 / 線の座標） |
+| 描画の幾何の座標変換ポート | 幾何に持たない（ポートは `ResolveLayout` の表示位置解決だけに使う） | 幾何が保持する（`Port` ＋ 未指定時の `DomainToDipScaling`。`ResolvedPort` / `ToDipRect` が自分で解決する） | 本コアは自身の物理ピクセル面で描画が完結する（Marquee は選択矩形をドメイン → DIP へ変換して描き、その DIP はホストの座標系で決まる） |
+| 下地の層 | `LoupeDrawLayer.Pasteboard`（画像外の色）で描画面全体を塗る | 持たない（`MarqueeDrawLayer` の先頭は `Decoration`） | ルーペは描画先のビットマップを自分で置き換える（Marquee は自身の表面へ直接描き、消去はフレームワークが行う） |
+| 描画完了の通知の内容 | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | `MarqueeRenderedEventArgs`（`MarqueeDrawPlan`: 層・文言の有無） | ホストが重ね描きするために必要な情報が違う（切り出し領域と倍率 / 選択矩形の所在） |
+| 表示可否の述語の引数 | `LoupeAppearance.ShouldShowCoordLabel(bool)` | `MarqueeAppearance.ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` | ルーペの座標ラベルは拡大中心が未設定になりうる（Marquee の座標ラベルは入力に常にある） |
+| `Limits` の追加役割 | 安全域と補正のみ | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`） | ラベルの表示スケールは Marquee 固有の概念 |
+| 区画数の計算 | `LoupeGeometry.CaptureSize`（導出プロパティ）が持つ | 持たない | 切り出し領域の一辺が「余りを 1 区画として数える」規則を使う |
+| 選択の幾何 | 持たない | `Selection/`（`MarqueeSelection`）を持つ | ルーペは選択操作を持たない |
+| テスト補助（スパイ） | `RecordingLogger` のみ | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
