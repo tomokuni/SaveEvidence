@@ -85,7 +85,8 @@ public static class EsBitmapAvaloniaExtensions
     {
         var w = bitmap.PixelSize.Width;
         var h = bitmap.PixelSize.Height;
-        var result = EsBitmap.Create(w, h);
+        // CopyPixels は矩形の全行を埋めるため、0 埋めは行わない
+        var result = EsBitmap.CreateUninitialized(w, h);
         var dstStride = result.Stride;
         var dst = (byte*)result.Address;
 

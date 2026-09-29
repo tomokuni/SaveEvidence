@@ -122,9 +122,9 @@ sequenceDiagram
   participant SK as SKBitmap
 
   UI->>E: skBitmap.ToEsBitmap()
-  E->>Core: Create(width, height)（NativeMemory.AlignedAlloc + 0 初期化）
+  E->>Core: CreateUninitialized(width, height)（全行をコピーする場合は 0 初期化を省く）
   E->>SK: GetPixels()
-  E->>Core: 行単位で Buffer.MemoryCopy（コピー）
+  E->>Core: 行単位で NativeMemory.Copy（コピー）
   E-->>UI: EsBitmap（所有権は呼び出し側）
   Note over SK: 引数の所有権は呼び出し側に残る（破棄しない）
 ```

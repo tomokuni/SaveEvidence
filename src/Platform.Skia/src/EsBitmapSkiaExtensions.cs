@@ -1,4 +1,5 @@
 using SkiaSharp;
+using System.Runtime.InteropServices;
 using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.Platform.Skia;
@@ -54,18 +55,23 @@ public static class EsBitmapSkiaExtensions
     /// <remarks>
     /// 引数の所有権は呼び出し側に残る（本メソッドは引数を破棄しない）。不要になった時点で呼び出し側が破棄する。<br/>
     /// 元のビットマップが BGRA8888・アルファ乗算済みでない場合は、Skia が変換せずにバイト列を写すため<br/>
-    /// 成分順が一致しない（呼び出し側で形式を保証する）。
+    /// 成分順が一致しない（呼び出し側で形式を保証する）。<br/>
+    /// 全行をコピーできる場合は 0 埋めを省く（大きな画像の書き込み量を減らす）。
     /// </remarks>
     public static EsBitmap ToEsBitmap(this SKBitmap bitmap)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
 
-        var result = EsBitmap.Create(bitmap.Width, bitmap.Height);
+        var srcStride = bitmap.RowBytes;
+        var dstStride = bitmap.Width * EsBitmap.BytesPerPixel;
+
+        // コピー元のストライドがデスティネーション以上なら全行が覆われるため、0 埋めを省く
+        var result = srcStride >= dstStride
+            ? EsBitmap.CreateUninitialized(bitmap.Width, bitmap.Height)
+            : EsBitmap.Create(bitmap.Width, bitmap.Height);
 
         unsafe
         {
-            var srcStride = bitmap.RowBytes;
-            var dstStride = result.Stride;
             var rowBytes = Math.Min(srcStride, dstStride);
 
             var src = (byte*)bitmap.GetPixels();
@@ -73,12 +79,14 @@ public static class EsBitmapSkiaExtensions
 
             if (src is null)
             {
+                // ピクセルを持たないビットマップ（表像なし）は透明で埋める（未初期化の場合は不定値が残るため）
+                new Span<uint>((void*)dst, result.Width * result.Height).Fill(0);
                 return result;
             }
 
             for (var y = 0; y < bitmap.Height; y++)
             {
-                Buffer.MemoryCopy(src + y * srcStride, dst + y * dstStride, dstStride, rowBytes);
+                NativeMemory.Copy(src + y * srcStride, dst + y * result.Stride, (nuint)rowBytes);
             }
         }
 

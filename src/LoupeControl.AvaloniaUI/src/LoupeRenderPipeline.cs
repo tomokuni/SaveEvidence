@@ -49,7 +49,7 @@ internal static class LoupeRenderPipeline
 
         try
         {
-            // 切り出し（EsBitmap.Crop = Buffer.MemoryCopy のみで軽量）と合成（RenderTargetBitmap / DrawingContext）は UI スレッドで行う。
+            // 切り出し（EsBitmap.Crop = 行コピーとパディングの透明化のみで軽量）と合成（RenderTargetBitmap / DrawingContext）は UI スレッドで行う。
             // Task.Run によるバックグラウンド抽出は、マウス移動中の連続再描画でスレッドプールが競合し、
             // 抽出結果が UI スレッドへ戻る前に次の再描画が要求されてルーペ画像が移動停止まで更新されない問題を生む。
             return await Dispatcher.UIThread.InvokeAsync(

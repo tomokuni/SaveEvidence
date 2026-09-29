@@ -102,6 +102,18 @@ public class EsBitmapSkiaExtensionsTests
         Assert.Equal((byte)128, px.A);
     }
 
+    /// <summary>画素を持たない（未確保の）ビットマップを変換しても例外にならず、透明を返すことを検証する。</summary>
+    [Fact]
+    public void ToEsBitmap_画素を持たないビットマップは透明を返す()
+    {
+        using var sk = new SKBitmap();
+
+        using var bmp = sk.ToEsBitmap();
+
+        Assert.True(bmp.Size.IsEmpty);
+        Assert.Equal(0, bmp.Address);
+    }
+
     /// <summary>コアと Skia の間で往復してもピクセルが保たれることを検証する。</summary>
     /// <remarks>Avalonia ヘッドレス初期化に依存せず、アルファ付きピクセルが往復できることを固定する。</remarks>
     [Fact]

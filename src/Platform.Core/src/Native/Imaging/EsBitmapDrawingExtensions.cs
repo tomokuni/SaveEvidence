@@ -22,19 +22,25 @@ public static class EsBitmapDrawingExtensions
     /// <summary>System.Drawing.Bitmap からラッパーを生成する（複製するため元は変更されない）。</summary>
     /// <param name="bitmap">変換元の System.Drawing.Bitmap。</param>
     /// <returns>生成されたビットマップ。</returns>
-    /// <remarks>System.Drawing は Windows 専用のため、本メソッドは Windows でのみ利用可能。</remarks>
+    /// <remarks>
+    /// System.Drawing は Windows 専用のため、本メソッドは Windows でのみ利用可能。<br/>
+    /// 全行をコピーする場合は生成時の 0 埋めを省く（大きなキャプチャ画像の書き込み量を減らす）。
+    /// </remarks>
     [SupportedOSPlatform("windows")]
     public static EsBitmap ToEsBitmap(this DrawingBitmap bitmap)
     {
         var w = bitmap.Width;
         var h = bitmap.Height;
-        // コアのビットマップを直接確保する（Skia を経由しない。ストライドは幅×4 で固定）
-        var buffer = EsBitmap.Create(w, h);
         var data = bitmap.LockBits(new DrawingRect(0, 0, w, h), DrawingImageLockMode.ReadOnly, DrawingPixelFormat.Format32bppPArgb);
         try
         {
-            var dstStride = buffer.Stride;
             var srcStride = data.Stride;
+            // コピー元のストライドがデスティネーション（幅×4）以上なら全行が覆われるため、0 埋めを省く
+            var buffer = srcStride >= w * EsBitmap.BytesPerPixel
+                ? EsBitmap.CreateUninitialized(w, h)
+                : EsBitmap.Create(w, h);
+
+            var dstStride = buffer.Stride;
             var rowBytes = Math.Min(dstStride, srcStride);
             var totalBytes = rowBytes * h;
             unsafe

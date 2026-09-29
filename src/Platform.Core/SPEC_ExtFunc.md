@@ -425,7 +425,9 @@ public readonly record struct ElementFinderResults(
 
 ### `Imaging.EsBitmap`（sealed class : IDisposable）
 
-**自前のピクセルバッファ**（BGRA8888・アルファ乗算済み）を所有するピクセルコンテナ。`NativeMemory.AlignedAlloc` で 64 バイト整列して確保し、確保直後に全領域を 0（透明）で初期化する。**外部パッケージへ依存しない**。
+**自前のピクセルバッファ**（BGRA8888・アルファ乗算済み）を所有するピクセルコンテナ。`NativeMemory.AlignedAlloc` で 64 バイト整列して確保し、**確保直後に全領域を 0（透明）で初期化します**（透明 = 全成分 0 が「描かれていない」の表現であるため）。**外部パッケージへ依存しない**。
+
+**書き込み量の最適化**: 直後に全領域を書く手順（`Create(w, h, color)` / `Clone` / `Crop` / 相互変換）は 0 初期化を省きます（画像サイズ分の書き込みを丸ごと削減する）。`Crop` はコピーされないパディングだけを透明にし、`CreateUninitialized` は「全領域を書く」責任を呼び出し側が持つ前提で未初期化のまま確保します。
 
 **生成・変換**:
 
@@ -433,7 +435,10 @@ public readonly record struct ElementFinderResults(
 | --- | --- | --- | --- |
 | 生成 | `Create` | `static EsBitmap Create(int width, int height)` | 指定サイズの空ビットマップ（BGRA8888・Premul）を生成 |
 | 生成 | `Create` | `static EsBitmap Create(EsSizeInt size)` | 指定サイズの空ビットマップを生成 |
-| 生成 | `Create` | `static EsBitmap Create(int width, int height, Color color)` / `static EsBitmap Create(EsSizeInt size, Color color)` | 指定サイズのビットマップを全ピクセル指定色で生成 |
+| 生成 | `Create` | `static EsBitmap Create(int width, int height, Color color)` / `static EsBitmap Create(EsSizeInt size, Color color)` | 指定サイズのビットマップを全ピクセル指定色で生成（0 初期化を省く） |
+| 生成 | `CreateUninitialized` | `static EsBitmap CreateUninitialized(int width, int height)` / `static EsBitmap CreateUninitialized(EsSizeInt size)` | 直後に全領域を書く前提で確保（ピクセルは不定値。**書かなければ不定値が見える**） |
+
+> `CreateUninitialized` は全行を書く相互変換（System.Drawing / Avalonia / Skia）が使うために公開しています。書かない領域が残る用途では `Create` を使います。
 
 **Skia との相互変換**（`ToSKBitmap` / `ToEsBitmap`）は SkiaSharp へ依存するため [`Platform.Skia`](../Platform.Skia/README.md) の `EsBitmapSkiaExtensions` が提供します（`ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製。所有権はコア側に残ります）。
 
@@ -444,6 +449,7 @@ public readonly record struct ElementFinderResults(
 | プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（ピクセル） |
 | プロパティ | `Size` | `EsSizeInt` | 幅・高さ（ピクセル。コアの整数サイズ型） |
 | プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（**常に 幅 × 4**。パディングなし） |
+| プロパティ | `BytesPerPixel` | `const int` | 1 ピクセルあたりのバイト数（4。ストライドを計算する相互変換が共用する） |
 | プロパティ | `Address` | `nint` | ピクセルデータ先頭アドレス（BGRA8888） |
 | プロパティ | `IsDisposed` | `bool` | 破棄済みか |
 | ピクセル | `GetPixel` | `(byte B, byte G, byte R, byte A) GetPixel(int x, int y)` | 指定座標の BGRA（アルファ乗算済み）を取得。範囲外は `IndexOutOfRangeException` |
@@ -453,7 +459,7 @@ public readonly record struct ElementFinderResults(
 | ピクセル | `TrySetPixel` | `bool TrySetPixel(int x, int y, Color color)` | 指定座標へ色を設定（範囲外は `false`） |
 | ピクセル | `Clear` | `void Clear(byte b, byte g, byte r, byte a)` / `void Clear(Color color)` | 全ピクセルを指定色で塗りつぶし |
 | その他 | `Clone` | `EsBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
-| その他 | `Crop` | `EsBitmap Crop(EsRectInt rect)` / `EsBitmap Crop(int x, int y, int width, int height)` | 指定矩形領域を切り出す（ソース範囲外は透明パディング。位置関係は保たれる） |
+| その他 | `Crop` | `EsBitmap Crop(EsRectInt rect)` / `EsBitmap Crop(int x, int y, int width, int height)` | 指定矩形領域を切り出す（ソース範囲外は透明パディング。位置関係は保たれる。0 初期化は行わず、コピーされないパディングだけを透明にする） |
 | その他 | `Dispose` | `void Dispose()` | ピクセルバッファを解放（二重呼び出しは無害） |
 | その他 | `ThrowIfDisposed` | `void ThrowIfDisposed()` | 破棄済みなら `ObjectDisposedException` を送出 |
 

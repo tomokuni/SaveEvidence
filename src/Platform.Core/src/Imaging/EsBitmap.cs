@@ -12,7 +12,8 @@ namespace EsUtil.Platform.Core.Imaging;
 /// （Skia は <c>Platform.Skia</c> の <c>EsBitmapSkiaExtensions</c>）。<br/>
 /// <br/>
 /// <b>メモリ確保</b>: <see cref="NativeMemory.AlignedAlloc"/> で 64 バイト整列して確保し、確保直後に全領域を 0 で初期化する
-/// （透明 = 全成分 0 が「描かれていない」の表現であるため）。整列は<b>確保の基底アドレスのみ</b>に適用し、
+/// （透明 = 全成分 0 が「描かれていない」の表現であるため）。全領域を直後に書く手順（複製・色付き生成・切り出し）は
+/// 0 初期化を省き、切り出しでは書かれない領域（パディング）だけを透明にする。整列は<b>確保の基底アドレスのみ</b>に適用し、
 /// <see cref="Stride"/> は <c>幅 × 4</c>（パディングなし）とする（行も整列させるとストライドが変わり、
 /// ピクセル形式を共有する他の実装の期待値を壊す）。<br/>
 /// <br/>
@@ -25,7 +26,9 @@ namespace EsUtil.Platform.Core.Imaging;
 public sealed class EsBitmap : IDisposable
 {
     /// <summary>1 ピクセルあたりのバイト数（BGRA8888）。</summary>
-    private const int BytesPerPixel = 4;
+    /// <value>4。ストライドは常に <c>幅 × 本値</c> である。</value>
+    /// <remarks>相互変換（System.Drawing / Avalonia / Skia）がストライドを計算するために使う（同じ 4 を各所へ書かない）。</remarks>
+    public const int BytesPerPixel = 4;
 
     /// <summary>確保するバッファの整列バイト数（SIMD・GPU 転送の要件を満たす）。</summary>
     private const int AlignmentBytes = 64;
@@ -35,14 +38,16 @@ public sealed class EsBitmap : IDisposable
 
     private bool _disposed;
 
-    /// <summary>指定サイズのピクセルバッファを確保して初期化する（全ピクセル透明）。</summary>
+    /// <summary>指定サイズのピクセルバッファを確保する。</summary>
     /// <param name="width">幅（ピクセル）。0 以上。</param>
     /// <param name="height">高さ（ピクセル）。0 以上。</param>
+    /// <param name="clear">true の場合は全領域を 0（透明）で初期化する。直後に全領域を書く場合は false にして 0 埋めを省く。</param>
     /// <remarks>
     /// ストライドは <c>幅 × 4</c>（パディングなし）である。ストライドを本来の値に固定することで、<br/>
-    /// ピクセル形式を共有する他の実装（Skia の <c>RowBytes</c> も <c>幅 × 4</c>）とコピー手順が一致する。
+    /// ピクセル形式を共有する他の実装（Skia の <c>RowBytes</c> も <c>幅 × 4</c>）とコピー手順が一致する。<br/>
+    /// <b><paramref name="clear"/> = false は全領域を直後に書く場合だけ使う</b>（書かない領域は不定値のまま残る）。
     /// </remarks>
-    private unsafe EsBitmap(int width, int height)
+    private unsafe EsBitmap(int width, int height, bool clear = true)
     {
         Width = width;
         Height = height;
@@ -52,14 +57,15 @@ public sealed class EsBitmap : IDisposable
         var byteCount = (long)Stride * height;
         if (byteCount == 0)
         {
-            Address = 0;
             return;
         }
 
         _buffer = (nint)NativeMemory.AlignedAlloc((nuint)byteCount, AlignmentBytes);
-        // 透明（全成分 0）で初期化する（未描画領域を「描かれていない」として扱うため）
-        NativeMemory.Clear((void*)_buffer, (nuint)byteCount);
-        Address = _buffer;
+        if (clear)
+        {
+            // 透明（全成分 0）で初期化する（未描画領域を「描かれていない」として扱うため）
+            NativeMemory.Clear((void*)_buffer, (nuint)byteCount);
+        }
     }
 
     // ====================================================================
@@ -112,7 +118,8 @@ public sealed class EsBitmap : IDisposable
     /// </remarks>
     public static EsBitmap Create(int width, int height, Color color)
     {
-        var bitmap = Create(width, height);
+        // 直後に全領域を塗るため、生成時の 0 埋めは行わない
+        var bitmap = new EsBitmap(width, height, clear: false);
         bitmap.Clear(color);
         return bitmap;
     }
@@ -123,6 +130,23 @@ public sealed class EsBitmap : IDisposable
     /// <returns>生成されたビットマップ（全ピクセルが指定色）。</returns>
     public static EsBitmap Create(EsSizeInt size, Color color)
         => Create(size.Width, size.Height, color);
+
+    /// <summary>直後に全領域を書き込む前提でピクセルバッファを確保する（0 埋めをしない）。</summary>
+    /// <param name="width">幅（ピクセル）。0 以上。</param>
+    /// <param name="height">高さ（ピクセル）。0 以上。</param>
+    /// <returns>生成されたビットマップ（ピクセルは不定値）。</returns>
+    /// <remarks>
+    /// 全領域を必ず書く手順（全行のコピー・全ピクセルの塗りつぶし）から使う（大きな画像の 0 埋めを丸ごと省ける）。<br/>
+    /// 相互変換（System.Drawing / Avalonia / Skia）は全行を書くため本メソッドを使う。<br/>
+    /// <b>書かない領域が残る場合は <see cref="Create(int, int)"/> を使うこと</b>（不定値が描画へ回り、
+    /// 透明ではないピクセルが見える）。<b>書く責任は呼び出し側が持つ</b>。
+    /// </remarks>
+    public static EsBitmap CreateUninitialized(int width, int height) => new(width, height, clear: false);
+
+    /// <summary>直後に全領域を書き込む前提でピクセルバッファを確保する（0 埋めをしない）。</summary>
+    /// <param name="size">サイズ（幅・高さを使用）。</param>
+    /// <returns>生成されたビットマップ（ピクセルは不定値）。</returns>
+    public static EsBitmap CreateUninitialized(EsSizeInt size) => new(size.Width, size.Height, clear: false);
 
     // ====================================================================
     // 基本プロパティ
@@ -138,7 +162,8 @@ public sealed class EsBitmap : IDisposable
     public EsSizeInt Size { get; init; }
 
     /// <summary>ピクセルデータ先頭アドレス（BGRA8888）。ピクセルを持たない場合は 0。</summary>
-    public nint Address { get; init; }
+    /// <value>確保したバッファの先頭アドレス（バッファは <see cref="Dispose"/> で解放する）。</value>
+    public nint Address => _buffer;
 
     /// <summary>1 ラインあたりのバイト数（パディングなし。常に <c>幅 × 4</c>）。</summary>
     public int Stride { get; init; }
@@ -246,8 +271,8 @@ public sealed class EsBitmap : IDisposable
 
         // BGRA の並びをそのまま uint として書き込む（成分の入れ替えをしない）
         var pattern = (uint)(b | (g << 8) | (r << 16) | (a << 24));
-        var span = new Span<uint>((void*)_buffer, Stride * Height / BytesPerPixel);
-        span.Fill(pattern);
+        // 要素数は幅×高さ（ストライドは幅×4 のため、ストライド経由で数えると桁が大きくなるだけ）
+        new Span<uint>((void*)_buffer, Width * Height).Fill(pattern);
     }
 
     /// <summary>全ピクセルを指定色で塗りつぶす。</summary>
@@ -261,10 +286,12 @@ public sealed class EsBitmap : IDisposable
     {
         ThrowIfDisposed();
 
-        var result = Create(Width, Height);
-        if (_buffer != 0)
+        // 全領域を 1 回のコピーで覆うため、生成時の 0 埋めは行わない
+        var result = new EsBitmap(Width, Height, clear: false);
+        var byteCount = (long)Stride * Height;
+        if (byteCount > 0)
         {
-            Buffer.MemoryCopy((void*)_buffer, (void*)result.Address, result.Stride * result.Height, Stride * Height);
+            NativeMemory.Copy((void*)_buffer, (void*)result.Address, (nuint)byteCount);
         }
 
         return result;
@@ -278,11 +305,12 @@ public sealed class EsBitmap : IDisposable
     /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="width"/> / <paramref name="height"/> が0以下。</exception>
     /// <remarks>
-    /// デスティネーションは生成時に 0 で初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
+    /// デスティネーションのコピーで覆われない領域は透明にするため、ソース範囲外は透明パディングとなる。<br/>
     /// 左上がソースの外（負）の場合も、要求矩形とソースの位置関係を保ってコピーする<br/>
     /// （内容を左上へ詰めない。画像外の領域が透明のまま残る）。<br/>
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
-    /// 内部ではピクセルバッファ（<see cref="Address"/>）へ直接アクセスし、行単位で <c>Buffer.MemoryCopy</c> によりコピーする。<br/>
+    /// 内部ではピクセルバッファ（<see cref="Address"/>）へ直接アクセスし、行単位でコピーする<br/>
+    /// （0 埋めは行わず、コピーされないパディングだけを透明にする）。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>
     public unsafe EsBitmap Crop(int x, int y, int width, int height)
@@ -311,29 +339,61 @@ public sealed class EsBitmap : IDisposable
         var cropW = Math.Min(width - dstOffsetX, srcW - cropX);
         var cropH = Math.Min(height - dstOffsetY, srcH - cropY);
 
-        var result = Create(width, height);
-
-        // ソースと交差しない場合はゼロ初期化のまま（全ピクセル透明）返す
+        // ソースと交差しない場合はゼロ初期化された全ピクセル透明を返す
         if (cropW <= 0 || cropH <= 0)
         {
-            return result;
+            return new EsBitmap(width, height);
         }
 
-        var dstStride = result.Stride;
+        var result = new EsBitmap(width, height, clear: false);
         var srcStride = Stride;
-
-        // コピーする 1 行のバイト数（BGRA8888 は 4 バイト/ピクセル。デスティネーションの残り幅とストライドの短い方）
-        var rowBytes = Math.Min(cropW * BytesPerPixel, dstStride - dstOffsetX * BytesPerPixel);
-
-        var src = (byte*)Address;
+        var dstStride = result.Stride;
         var dst = (byte*)result.Address;
+
+        // コピーする 1 行のバイト数（cropW は「デスティネーションの幅 − 左パディング」以下にクランプ済み）
+        var copyBytes = cropW * BytesPerPixel;
+
+        // 上端・下端のパディング行は連続しているため、行ごとではなく 1 回で消す
+        var bottomRows = height - dstOffsetY - cropH;
+        if (dstOffsetY > 0)
+        {
+            NativeMemory.Clear(dst, (nuint)(dstStride * dstOffsetY));
+        }
+
+        if (bottomRows > 0)
+        {
+            NativeMemory.Clear(dst + dstStride * (dstOffsetY + cropH), (nuint)(dstStride * bottomRows));
+        }
+
+        // 中間行の左右のパディングを消す（左右の幅は行ごとに同じ）
+        var leftBytes = dstOffsetX * BytesPerPixel;
+        var rightBytes = (width - dstOffsetX - cropW) * BytesPerPixel;
+        if (leftBytes > 0 || rightBytes > 0)
+        {
+            for (var row = 0; row < cropH; row++)
+            {
+                var pRow = dst + dstStride * (dstOffsetY + row);
+                if (leftBytes > 0)
+                {
+                    NativeMemory.Clear(pRow, (nuint)leftBytes);
+                }
+
+                if (rightBytes > 0)
+                {
+                    NativeMemory.Clear(pRow + leftBytes + copyBytes, (nuint)rightBytes);
+                }
+            }
+        }
+
+        // 行単位でコピーする（ポインタを進めるだけで、行ごとの乗算を行わない）
+        var pSrc = (byte*)Address + srcStride * cropY + cropX * BytesPerPixel;
+        var pDst = dst + dstStride * dstOffsetY + dstOffsetX * BytesPerPixel;
 
         for (var row = 0; row < cropH; row++)
         {
-            // ソースの切り出し開始行へ移動し、行単位で memcpy（デスティネーションは透明パディング分だけずらす）
-            var pSrc = src + (cropY + row) * srcStride + cropX * BytesPerPixel;
-            var pDst = dst + (dstOffsetY + row) * dstStride + dstOffsetX * BytesPerPixel;
-            Buffer.MemoryCopy(pSrc, pDst, dstStride - dstOffsetX * BytesPerPixel, rowBytes);
+            NativeMemory.Copy(pSrc, pDst, (nuint)copyBytes);
+            pSrc += srcStride;
+            pDst += dstStride;
         }
 
         return result;
@@ -344,7 +404,7 @@ public sealed class EsBitmap : IDisposable
     /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="rect"/> の幅・高さが0以下。</exception>
     /// <remarks>
-    /// デスティネーションは生成時に 0 で初期化（透明）されるため、ソース範囲外は透明パディングとなる。<br/>
+    /// デスティネーションのコピーで覆われない領域は透明にするため、ソース範囲外は透明パディングとなる。<br/>
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
     /// 呼び出し側で戻り値を破棄すること。
     /// </remarks>

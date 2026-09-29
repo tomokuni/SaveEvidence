@@ -82,6 +82,36 @@ public class EsBitmapTests
         Assert.Equal((byte)255, px.A);
     }
 
+    /// <summary>未初期化確保はサイズとバッファを用意する（ピクセルの値は保証しない）ことを検証する。</summary>
+    [Fact]
+    public void CreateUninitialized_サイズとバッファを用意する()
+    {
+        using var bmp = EsBitmap.CreateUninitialized(6, 8);
+
+        Assert.Equal(6, bmp.Size.Width);
+        Assert.Equal(8, bmp.Size.Height);
+        Assert.Equal(6 * 4, bmp.Stride);
+        Assert.NotEqual(0, bmp.Address);
+        Assert.False(bmp.IsDisposed);
+    }
+
+    [Fact]
+    public void CreateUninitialized_サイズ指定のオーバーロードは寸法をそのまま使う()
+    {
+        using var bmp = EsBitmap.CreateUninitialized(new EsSizeInt(3, 5));
+
+        Assert.Equal(new EsSizeInt(3, 5), bmp.Size);
+    }
+
+    [Fact]
+    public void CreateUninitialized_空のサイズなら例外にならない()
+    {
+        using var bmp = EsBitmap.CreateUninitialized(0, 0);
+
+        Assert.True(bmp.Size.IsEmpty);
+        Assert.Equal(0, bmp.Address);
+    }
+
     /// <summary>0 サイズ（空）で生成しても例外にならず、ピクセルを持たないことを検証する。</summary>
     [Fact]
     public void Create_空のサイズなら例外にならない()
@@ -366,5 +396,62 @@ public class EsBitmapTests
         src.Dispose();
 
         Assert.Throws<ObjectDisposedException>(() => src.Crop(new EsRectInt(0, 0, 4, 4)));
+    }
+
+    [Fact]
+    public void Crop_全面を切り出す場合はパディングを持たない()
+    {
+        // パディングが無い場合は透明化を行わないため、全ピクセルがコピー元の色で埋まることを固定する
+        using var src = Create(4, 4);
+        src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
+
+        using var result = src.Crop(new EsRectInt(0, 0, 4, 4));
+
+        Assert.Equal((byte)255, result.GetPixel(0, 0).R);
+        Assert.Equal((byte)255, result.GetPixel(3, 3).R);
+        Assert.Equal((byte)255, result.GetPixel(3, 3).A);
+    }
+
+    [Fact]
+    public void Crop_パディングは上端と下端と中間行の左右をすべて透明にする()
+    {
+        using var src = Create(4, 4);
+        src.Clear(b: 0, g: 0, r: 255, a: 255); // 赤
+
+        // 上下左右すべてにパディングが出る矩形（左上負・サイズ超過）
+        using var result = src.Crop(new EsRectInt(-1, -2, 10, 10));
+
+        // 上端のパディング行（2 行）
+        Assert.Equal((byte)0, result.GetPixel(5, 0).A);
+        Assert.Equal((byte)0, result.GetPixel(5, 1).A);
+        // 中間行の左パディング（1 列）と右パディング（5 列）
+        Assert.Equal((byte)0, result.GetPixel(0, 2).A);
+        Assert.Equal((byte)0, result.GetPixel(5, 2).A);
+        // 下端のパディング行（4 行。高さ 10 のうち上端 2 + コピー 4）
+        Assert.Equal((byte)0, result.GetPixel(5, 9).A);
+        // コピーされた領域は赤のまま
+        Assert.Equal((byte)255, result.GetPixel(1, 2).R);
+        Assert.Equal((byte)255, result.GetPixel(4, 5).R);
+    }
+
+    [Fact]
+    public void Crop_切り出し元が空なら透明を返す()
+    {
+        using var src = Create(0, 0);
+
+        using var result = src.Crop(new EsRectInt(0, 0, 4, 4));
+
+        Assert.Equal(4, result.Size.Width);
+        Assert.Equal(0, result.GetPixel(0, 0).A);
+    }
+
+    [Fact]
+    public void Clone_空のサイズでも例外にならない()
+    {
+        using var bmp = Create(0, 0);
+        using var clone = bmp.Clone();
+
+        Assert.True(clone.Size.IsEmpty);
+        Assert.Equal(0, clone.Address);
     }
 }
