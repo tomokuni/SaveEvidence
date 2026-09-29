@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Loupe.Presenter.Label;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 
 
@@ -14,7 +13,7 @@ namespace EsUtil.Feature.Loupe.Presenter.Drawing;
 /// ラベルを<b>テキスト要素（<c>TextBlock</c> 等）として置くか、画像として描くかは UI 層が決める</b>。<br/>
 /// そのためフォントサイズ・色・背景・内側余白は本値に含まない（描画の設定が単一所有する）。<br/>
 /// 背景矩形と文字の原点はテキストの実寸に依存するため、UI 層が実寸を測って解決する<br/>
-/// （体裁の計算は描画層（<see cref="LoupeAppearance"/> / <see cref="LoupeLabelPlan"/>）が単一所有する）。<br/>
+/// （体裁の計算は描画層（<see cref="LoupeAppearance"/> / <see cref="LoupePresenter.ResolveLabelPlacements"/>）が単一所有する）。<br/>
 /// <br/>
 /// <b>単位は DIP</b>である（描画領域・ルーペの表示サイズと同じ座標系。物理ピクセルへの換算は描画時に行う）。
 /// </remarks>

@@ -8,14 +8,14 @@ using EsUtil.Feature.Loupe.Presenter.Label;
 
 namespace EsUtil.Feature.Loupe.Presenter.Tests;
 
-/// <summary><see cref="LoupeLabelPlan"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
+/// <summary><see cref="LoupePresenter.ResolveLabelPlacements"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
 /// <remarks>
 /// 文言・位置はコアが、色・フォントサイズ・角丸・内側余白は描画の設定が単一所有するため、<br/>
 /// 本テストは「実寸の反映」と「配置指示への写像」だけを検証する。
 /// <br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-public class LoupeLabelPlanTests
+public class LoupePresenterLabelPlanTests
 {
     /// <summary>測定に使う固定の実寸（テキストの実測値を模した値）。</summary>
     private static readonly EsSize MeasuredSize = new(36.0, 14.0);
@@ -46,7 +46,7 @@ public class LoupeLabelPlanTests
     [Fact]
     public void Resolve_ラベルが無ければ空を返す()
     {
-        var elements = LoupeLabelPlan.Resolve(null, CreatePaint(), Measure);
+        var elements = LoupePresenter.ResolveLabelPlacements(null, CreatePaint(), Measure);
 
         Assert.Empty(elements);
     }
@@ -54,7 +54,7 @@ public class LoupeLabelPlanTests
     [Fact]
     public void Resolve_ラベルがあれば1件を返す()
     {
-        var element = Assert.Single(LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), Measure));
+        var element = Assert.Single(LoupePresenter.ResolveLabelPlacements(CreateCoordLabel(), CreatePaint(), Measure));
 
         Assert.Equal("(50, 60)", element.Text);
         Assert.Equal(12.0, element.FontSize);
@@ -65,7 +65,7 @@ public class LoupeLabelPlanTests
     [Fact]
     public void Resolve_基準点が背景の左上になる()
     {
-        var element = Assert.Single(LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), Measure));
+        var element = Assert.Single(LoupePresenter.ResolveLabelPlacements(CreateCoordLabel(), CreatePaint(), Measure));
 
         // 基準点 (2, 2) がそのまま背景の左上になり、幅は実寸 + 内側余白で決まる
         Assert.Equal(2, element.Bounds.X);
@@ -76,7 +76,7 @@ public class LoupeLabelPlanTests
     [Fact]
     public void Resolve_上下の内側余白は左右より狭い()
     {
-        var element = Assert.Single(LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), Measure));
+        var element = Assert.Single(LoupePresenter.ResolveLabelPlacements(CreateCoordLabel(), CreatePaint(), Measure));
 
         // ルーペ上端の帯へ収めるため、上下の余白は左右（共通の体裁値）より狭い
         Assert.True(element.PaddingY < element.PaddingX);
@@ -88,7 +88,7 @@ public class LoupeLabelPlanTests
     {
         var calls = new List<(string Text, double FontSize)>();
 
-        LoupeLabelPlan.Resolve(
+        LoupePresenter.ResolveLabelPlacements(
             CreateCoordLabel("(7, 8)"),
             CreatePaint(),
             (text, fontSize) =>
@@ -103,12 +103,12 @@ public class LoupeLabelPlanTests
     [Fact]
     public void Resolve_測定関数がnullなら例外()
     {
-        Assert.Throws<ArgumentNullException>(() => LoupeLabelPlan.Resolve(CreateCoordLabel(), CreatePaint(), null!));
+        Assert.Throws<ArgumentNullException>(() => LoupePresenter.ResolveLabelPlacements(CreateCoordLabel(), CreatePaint(), null!));
     }
 
     [Fact]
     public void Resolve_色がnullなら例外()
     {
-        Assert.Throws<ArgumentNullException>(() => LoupeLabelPlan.Resolve(CreateCoordLabel(), null!, Measure));
+        Assert.Throws<ArgumentNullException>(() => LoupePresenter.ResolveLabelPlacements(CreateCoordLabel(), null!, Measure));
     }
 }

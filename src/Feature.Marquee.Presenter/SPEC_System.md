@@ -81,7 +81,7 @@ flowchart TD
     C -->|ShowInnerFill / ShowInnerBorder かつ穴あり| F[内側の塗り・内枠]
     C -->|ShowHandles かつ選択あり| G[ハンドル]
     B --> H[マーカーはコアが nudge 中のみ返す]
-    D --> I[ラベルの文言と配置<br/>MarqueePresenter → MarqueeLabelPlan]
+    D --> I[ラベルの文言と配置<br/>MarqueePresenter]
     E --> I
     F --> I
     G --> I
@@ -108,7 +108,7 @@ flowchart TD
 | `src/MarqueePresenter.DrawPlan.cs` | `MarqueePresenter`（`DrawPlan` partial） | internal static | 枠線 4 辺・暗転領域の矩形の計算 |
 | `src/Drawing/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域） |
 | `src/MarqueePresenter.LabelTexts.cs` | `MarqueePresenter`（`LabelTexts` partial） | internal static | サイズラベル・カーソル座標ラベルの文言と基準点 |
-| `src/Label/MarqueeLabelPlan.cs` | `MarqueeLabelPlan` | public static | 実寸 → ラベル要素の配置指示の写像 |
+| `src/MarqueePresenter.LabelPlan.cs` | `MarqueePresenter`（`LabelPlan` partial） | public static | 実寸 → ラベル要素の配置指示の写像 |
 | `src/Label/MarqueeLabelPlacement.cs` | `MarqueeLabelPlacement` | public readonly record struct | ラベル要素の配置指示 |
 | `src/Logging/MarqueePresenterLogMessage.cs` | `MarqueePresenterLogMessage` | internal static partial | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） |
 
@@ -126,7 +126,7 @@ flowchart TD
 | サイズラベルの文言（書式・表示スケール） | `MarqueePresenter.ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
 | 矩形に基づくラベルの基準点（穴あけ矩形の左上から「矩形の線幅 + 1 DIP」内側） | `MarqueePresenter.ResolveLabelAnchor`（`MarqueeDrawPlan.LabelAnchor` としても公開する） |
 | カーソル座標ラベルの文言と基準点（カーソル + 8.0 DIP） | `MarqueePresenter.ResolveCoordLabelText` |
-| ラベルの体裁（背景 = 実寸 + 内側余白 × 2・クランプ・並び順） | `MarqueeLabelPlan` |
+| ラベルの体裁（背景 = 実寸 + 内側余白 × 2・クランプ・並び順） | `MarqueePresenter`（`LabelPlan` partial） |
 | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） | `MarqueePresenterLogMessage` |
 
 ## 6. 例外処理ポリシー
@@ -134,13 +134,13 @@ flowchart TD
 | 状況 | 扱い |
 | --- | --- |
 | `ResolveDrawPlan` の `measureText` が null | `ArgumentNullException`（呼び出し側の実装誤り） |
-| `MarqueeLabelPlan.Resolve` の `appearance` / `measureText` が null | `ArgumentNullException` |
+| `MarqueePresenter.ResolveLabelPlacements` の `appearance` / `measureText` が null | `ArgumentNullException` |
 | 表示可否が無効な項目 | 空のコレクション / null として返す（例外にしない。UI 層は層を見るだけでよい） |
 | サイズラベルの文言プロバイダが null または空文字を返す | 自動生成へフォールバックする（例外にしない） |
 
 ## 7. 可視性ポリシー
 
-- UI 層とホストが使う面（`MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueeTextPlacement`）は `public` とします。
+- UI 層とホストが使う面（`MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueePresenter`（`LabelPlan` partial） / `MarqueeLabelPlacement` / `MarqueeTextPlacement`）は `public` とします。
 - **本層の内部手順は `internal`** とします（`MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenterLogMessage`）。UI 層は解決済みの値（`MarqueeDrawPlan` の矩形・`Labels`）を受け取るため、これらを参照する必要がありません。単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Presenter.Tests`）で公開します。
 - **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
 - `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。

@@ -125,7 +125,7 @@ public class LoupeDrawPlanTests
     /// <param name="appearance">外観。</param>
     /// <param name="center">拡大中心。</param>
     /// <returns>描画計画。</returns>
-    /// <remarks>実寸測定はダミーを渡す（配置の写像は <see cref="LoupeLabelPlan"/> のテストが担う）。</remarks>
+    /// <remarks>実寸測定はダミーを渡す（配置の写像は `LoupePresenter.ResolveLabelPlacements` のテストが担う）。</remarks>
     private static LoupeDrawPlan ResolvePlan(LoupeAppearance appearance, EsPoint? center)
     {
         var presenter = new LoupePresenter

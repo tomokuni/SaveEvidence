@@ -115,7 +115,7 @@ sequenceDiagram
 | 中心座標ラベルの文言・基準点 | 描画層 `Feature.Loupe.Presenter` の `LoupePresenter`（`LabelTexts` partial） |
 | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0） | 描画層 `Feature.Loupe.Presenter` の `LoupeAppearance` |
 | 十字線・枠線の矩形 | 描画層 `Feature.Loupe.Presenter` の `LoupePresenter`（`DrawPlan` partial） |
-| ラベルの余白・背景矩形・文字原点 | 描画層 `Feature.Loupe.Presenter` の `LoupeLabelPlan` |
+| ラベルの余白・背景矩形・文字原点 | 描画層 `Feature.Loupe.Presenter` の `LoupePresenter`（`LabelPlan` partial） |
 | 描画層と順序（`LoupeDrawLayer`） | 描画層 `Feature.Loupe.Presenter` の `LoupePresenter.ResolveDrawPlan` |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
 | 寸法値の物理ピクセル換算（枠線の太さ） | 提示層 `Feature.Loupe.Presenter` の `LoupePresenter.ResolveDrawPlan`（換算の式は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
@@ -156,7 +156,7 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 | --- | --- |
 | 座標・寸法の型 | コア（`EsUtil.Platform.Core.Geometry`）の `EsPoint` / `EsSize` / `EsRect` を使い、UI 型は境界で 1 行変換する |
 | 画像の型 | 拡大元画像は UI ごとに型が異なるため契約（`LoupeGeometry`）に含めず、描画実装が解決した `EsBitmap` を別引数で受け取る |
-| 文字の描画 | コアは文言・基準点・配置の基準も持たない（描画層 `Feature.Loupe.Presenter` の `LoupePresenter`（`LabelTexts` partial） が文言と基準点を、`LoupeLabelPlan` が実寸 → 配置矩形の写像を、UI 層が実寸測定と要素の配置を担う。色は外観 `LoupeAppearance` が与える） |
+| 文字の描画 | コアは文言・基準点・配置の基準も持たない（描画層 `Feature.Loupe.Presenter` の `LoupePresenter`（`LabelTexts` partial） が文言と基準点を、`LoupePresenter`（`LabelPlan` partial） が実寸 → 配置矩形の写像を、UI 層が実寸測定と要素の配置を担う。色は外観 `LoupeAppearance` が与える） |
 | 再描画のバッチ化 | UI のディスパッチャーに依存するため `LoupeControl.AvaloniaUI` が単一所有する（コアは同期計算のみ） |
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、外観 `Feature.Loupe.Presenter` の `LoupeAppearance` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画の境界で行う |
 | 切り出し領域の左上 | 切り出し（描画実装）と描画完了通知の 2 経路で重複する計算を `LoupeGeometry.CaptureTopLeft` が単一所有する（切り出しと通知が同じ値を使う） |

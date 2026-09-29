@@ -212,7 +212,7 @@ public sealed class LoupeControl : Panel
     /// <param name="finalSize">本コントロールへ割り当てられたサイズ（DIP）。</param>
     /// <returns>割り当てサイズ。</returns>
     /// <remarks>
-    /// <b>位置はコアと描画層が決める</b>: コアのテキスト配置から <see cref="LoupeLabelPlan"/> が求めた配置指示に従って<br/>
+    /// <b>位置はコアと描画層が決める</b>: コアのテキスト配置から <c>LoupePresenter</c> が求めた配置指示に従って<br/>
     /// ラベル要素を配置するだけであり、本クラスは位置の計算を持たない。要素は <see cref="Panel.Children"/> の末尾へ<br/>
     /// 置かれるため常に最上位になる。実寸は自 UI の描画 API（<see cref="FormattedText"/>）で測って渡す。
     /// </remarks>

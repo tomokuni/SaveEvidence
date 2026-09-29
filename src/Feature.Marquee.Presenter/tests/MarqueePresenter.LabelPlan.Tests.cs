@@ -8,14 +8,14 @@ using EsUtil.Feature.Marquee.Presenter.Label;
 
 namespace EsUtil.Feature.Marquee.Presenter.Tests;
 
-/// <summary><see cref="MarqueeLabelPlan"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
+/// <summary><see cref="MarqueePresenter.ResolveLabelPlacements"/> の単体テスト（実寸からラベル要素の配置を解決する）。</summary>
 /// <remarks>
 /// 文言・位置は提示層（<see cref="MarqueePresenter"/>）が、色・フォントサイズ・内側余白は外観（<see cref="MarqueeAppearance"/>）が<br/>
 /// 単一所有するため、本テストは「実寸の反映」と「配置指示への写像」だけを検証する。<br/>
 /// <br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-public class MarqueeLabelPlanTests
+public class MarqueePresenterLabelPlanTests
 {
     /// <summary>測定に使う固定の実寸（テキストの実測値を模した値）。</summary>
     private static readonly EsSize MeasuredSize = new(42.0, 14.0);
@@ -54,7 +54,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_ラベルが無ければ空を返す()
     {
-        var elements = MarqueeLabelPlan.Resolve(null, null, CreateAppearance(), Measure);
+        var elements = MarqueePresenter.ResolveLabelPlacements(null, null, CreateAppearance(), Measure);
 
         Assert.Empty(elements);
     }
@@ -62,7 +62,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_サイズラベルのみなら1件を返す()
     {
-        var elements = MarqueeLabelPlan.Resolve(CreateSizeLabel("サイズ"), null, CreateAppearance(), Measure);
+        var elements = MarqueePresenter.ResolveLabelPlacements(CreateSizeLabel("サイズ"), null, CreateAppearance(), Measure);
 
         var element = Assert.Single(elements);
         Assert.Equal("サイズ", element.Text);
@@ -72,7 +72,7 @@ public class MarqueeLabelPlanTests
     [Fact]
     public void Resolve_カーソル座標ラベルのみなら1件を返す()
     {
-        var elements = MarqueeLabelPlan.Resolve(null, CreateCoordLabel("(1, 2)"), CreateAppearance(), Measure);
+        var elements = MarqueePresenter.ResolveLabelPlacements(null, CreateCoordLabel("(1, 2)"), CreateAppearance(), Measure);
 
         var element = Assert.Single(elements);
         Assert.Equal("(1, 2)", element.Text);
@@ -83,7 +83,7 @@ public class MarqueeLabelPlanTests
     public void Resolve_両方ある場合はサイズラベルが先で座標ラベルが後になる()
     {
         // 順序は本クラスが単一所有する（座標ラベルが手前 = 最後）
-        var elements = MarqueeLabelPlan.Resolve(
+        var elements = MarqueePresenter.ResolveLabelPlacements(
             CreateSizeLabel("サイズ"), CreateCoordLabel(), CreateAppearance(), Measure);
 
         Assert.Equal(2, elements.Count);
@@ -95,7 +95,7 @@ public class MarqueeLabelPlanTests
     public void Resolve_基準点を背景の左上に置く()
     {
         var element = Assert.Single(
-            MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, CreateAppearance(), Measure));
+            MarqueePresenter.ResolveLabelPlacements(CreateSizeLabel(), null, CreateAppearance(), Measure));
 
         // 基準点 (10, 20) がそのまま背景の左上になる
         Assert.Equal(new EsPoint(10, 20), element.Bounds.TopLeft);
@@ -109,7 +109,7 @@ public class MarqueeLabelPlanTests
         // クランプ領域 (200, 200) へ収まらない位置を指定する
         var label = new MarqueeTextPlacement("(50, 60)", new EsPoint(190, 195), new EsSize(200, 200));
 
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(null, label, CreateAppearance(), Measure));
+        var element = Assert.Single(MarqueePresenter.ResolveLabelPlacements(null, label, CreateAppearance(), Measure));
 
         Assert.Equal(200 - (MeasuredSize.Width + MarqueeAppearance.LabelPaddingDefault * 2), element.Bounds.X);
         Assert.Equal(200 - (MeasuredSize.Height + MarqueeAppearance.LabelPaddingDefault * 2), element.Bounds.Y);
@@ -119,7 +119,7 @@ public class MarqueeLabelPlanTests
     public void Resolve_内側余白は体裁の値になる()
     {
         var element = Assert.Single(
-            MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, CreateAppearance(), Measure));
+            MarqueePresenter.ResolveLabelPlacements(CreateSizeLabel(), null, CreateAppearance(), Measure));
 
         Assert.Equal(MarqueeAppearance.LabelPaddingDefault, element.PaddingX);
         Assert.Equal(MarqueeAppearance.LabelPaddingDefault, element.PaddingY);
@@ -130,7 +130,7 @@ public class MarqueeLabelPlanTests
     {
         var appearance = CreateAppearance() with { LabelPadding = 7.0 };
 
-        var element = Assert.Single(MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, appearance, Measure));
+        var element = Assert.Single(MarqueePresenter.ResolveLabelPlacements(CreateSizeLabel(), null, appearance, Measure));
 
         Assert.Equal(7.0, element.PaddingX);
         Assert.Equal(MeasuredSize.Width + 14.0, element.Bounds.Width);
@@ -141,7 +141,7 @@ public class MarqueeLabelPlanTests
     {
         var calls = new List<(string Text, double FontSize)>();
 
-        MarqueeLabelPlan.Resolve(
+        MarqueePresenter.ResolveLabelPlacements(
             CreateSizeLabel("サイズ"),
             CreateCoordLabel("(7, 8)"),
             CreateAppearance(),
@@ -158,7 +158,7 @@ public class MarqueeLabelPlanTests
     public void Resolve_色を要素へ写す()
     {
         var element = Assert.Single(
-            MarqueeLabelPlan.Resolve(null, CreateCoordLabel(), CreateAppearance(), Measure));
+            MarqueePresenter.ResolveLabelPlacements(null, CreateCoordLabel(), CreateAppearance(), Measure));
 
         // 色は外観（本層が単一所有する）から写す
         Assert.Equal(DrawingColor.Yellow, element.TextColor);
@@ -169,13 +169,13 @@ public class MarqueeLabelPlanTests
     public void Resolve_測定関数がnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(
-            () => MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, CreateAppearance(), null!));
+            () => MarqueePresenter.ResolveLabelPlacements(CreateSizeLabel(), null, CreateAppearance(), null!));
     }
 
     [Fact]
     public void Resolve_外観がnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(
-            () => MarqueeLabelPlan.Resolve(CreateSizeLabel(), null, null!, Measure));
+            () => MarqueePresenter.ResolveLabelPlacements(CreateSizeLabel(), null, null!, Measure));
     }
 }

@@ -136,7 +136,7 @@ stateDiagram-v2
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。デリゲートを生成しない） |
 | 入力の判断に伴うログと設定変更のログ | `MarqueeLogMessage` |
 | 設定変更の差分検出（変化した項目だけを出力） | `MarqueeLogMessage.LogOptionsChanged`（出力の契機は `Marquee.Options` / `DomainToDipScaling` / `HighlightRect` の setter） |
-| ラベルの文言と自動生成（書式を含む）・配置の写像 | 提示層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial） / `MarqueeLabelPlan` |
+| ラベルの文言と自動生成（書式を含む）・配置の写像 | 提示層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`（`LabelPlan` partial） |
 | ラベルの表示可否（設定値と穴あけ矩形の有無） | 提示層の `MarqueeAppearance.ShouldShowSizeLabel` / `ShouldShowCoordLabel` / `ShouldDrawOverlay` |
 | ラベルの既定色・フォントサイズ・枠線の太さ・内側余白 | 提示層の `MarqueeAppearance` |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 提示層の `MarqueeAppearance`（本コアは色を持つ型を公開しない） |
@@ -186,7 +186,7 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | キー入力の型 | コアの `EsKey` を使い、UI のキー型は境界で変換する |
 | カーソル操作 | `ICursorService` 抽象にのみ依存する（未指定はカーソル操作を行わない）。UI のカーソル型への写像は効果（`IMarqueeEffects.SetCursorShape`）を受けた UI が行う |
 | 効果の適用 | UI 固有の操作（フォーカス・再描画・ポインターキャプチャ・画面座標変換）は `IMarqueeEffects` を唯一の境界とし、コアは UI 型を知らない（不要なメンバーの空実装は `MarqueeEffectsBase` で省略できる） |
-| 文字の描画 | コアはマウス位置という素材だけを返し、文言・基準点・実寸 → 配置矩形の写像は提示層（`MarqueePresenter`（`LabelTexts` partial） / `MarqueeLabelPlan`）が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため）。色は提示層の `MarqueeAppearance` が与える |
+| 文字の描画 | コアはマウス位置という素材だけを返し、文言・基準点・実寸 → 配置矩形の写像は提示層（`MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`（`LabelPlan` partial））が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため）。色は提示層の `MarqueeAppearance` が与える |
 | 装飾 | コアは穴あけ矩形（幾何）だけを返し、装飾の矩形・表示可否・色は提示層が単一所有する（装飾は組み込み先の表示であり、選択コントロール単体の概念ではない） |
 | 再描画のバッチ化 | UI のディスパッチャーに依存するため UI 層が単一所有する（コアは同期計算のみ） |
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、提示層の `MarqueeAppearance` が単一所有する）。色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は各 UI の描画境界で行う |

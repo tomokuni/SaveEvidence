@@ -89,7 +89,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 契約（幾何） | 本コア | `MarqueeGeometry`（穴あけ矩形・ハンドル・始点マーカー・マウス位置）・`Marquee.CreateRequest` / `Marquee.ResolveGeometry`（公開のエンドポイント。`MarqueeSession` は内部契約） |
 | 描画計画（外観・文言・描画順・装飾の矩形） | 提示層（`Feature.Marquee.Presenter`） | 幾何と外観（`MarqueeAppearance`）から `MarqueeDrawPlan` を組み立てる。**本コアは描画計画を知らない** |
 | 描画（図形） | UI（各 UI の描画クラス） | 描画計画の各項目を自 UI の描画 API へ写す（`MarqueeContextPainter` / `MarqueeSkiaPainter`）。本コアは描画 API を持たず、**幾何をデータとして渡すだけ**である |
-| 描画（文字） | UI（コントロール・ホスト） | サイズラベル・座標ラベルは **UI 層がテキスト要素を配置**する（提示層の `MarqueeLabelPlan` が実寸から配置矩形を求める。色は `MarqueeAppearance` から渡す）。操作・情報ラベルは**ホストが自前で描く** |
+| 描画（文字） | UI（コントロール・ホスト） | サイズラベル・座標ラベルは **UI 層がテキスト要素を配置**する（提示層の `MarqueePresenter`（`LabelPlan` partial） が実寸から配置矩形を求める。色は `MarqueeAppearance` から渡す）。操作・情報ラベルは**ホストが自前で描く** |
 | ホスト結線 | UI | プロパティ機構・DPI 追従・キャンバスのスケーリング・ブラシキャッシュ・テキストの実寸測定とフォント解決・要素の配置 |
 
 本コアが返す幾何は「描く値の無い項目は null / 空」であり、**描くかどうかの判断は本コア（穴あけ矩形の有無・選択の有無・nudge 中か）と外観（表示可否のフラグ）が分担**します。UI 層に残る分岐は次の 4 種のみで、いずれも本コアへ移せません。
@@ -99,7 +99,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 3. **フレームワーク固有の値の解決**（DPI の 0 以下フォールバック・色型変換）
 4. **描画方式の差**（直接描画 / 中間バッファ・ブラシキャッシュ）
 
-**文字（サイズラベル・カーソル座標ラベル）は UI 層がテキスト要素を配置**します（`Border` + `TextBlock`。ラベルは常に最上位）。文言・基準点・並び順は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`）が単一所有し、フォントサイズと色は外観（`MarqueeAppearance`）、実寸から配置矩形を求める写像は `MarqueeLabelPlan` が単一所有します。
+**文字（サイズラベル・カーソル座標ラベル）は UI 層がテキスト要素を配置**します（`Border` + `TextBlock`。ラベルは常に最上位）。文言・基準点・並び順は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`）が単一所有し、フォントサイズと色は外観（`MarqueeAppearance`）、実寸から配置矩形を求める写像は `MarqueePresenter`（`LabelPlan` partial） が単一所有します。
 
 ## 機能差に由来する非対称（もう一方のコアとの違い）
 

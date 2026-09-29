@@ -12,7 +12,7 @@ namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 /// ラベルを<b>テキスト要素（<c>TextBlock</c> 等）として置くか、画像として描くかは UI 層が決める</b>。<br/>
 /// そのためフォントサイズ・色・背景・内側余白は本値に含まない（外観が単一所有する）。<br/>
 /// 背景矩形と文字の原点はテキストの実寸に依存するため、UI 層が実寸を測って解決する<br/>
-/// （体裁の計算は描画層（<c>MarqueeAppearance</c> / <c>MarqueeLabelPlan</c>）が単一所有する）。<br/>
+/// （体裁の計算は描画層（<c>MarqueeAppearance</c> / <c>MarqueePresenter</c>）が単一所有する）。<br/>
 /// <br/>
 /// <b>サイズラベルとカーソル座標ラベルは同じ型を使う</b>: 差は「基準点・領域」だけであり、<br/>
 /// 位置の算出（穴あけ矩形の左上 / カーソル + オフセット）は描画層が単一所有する。<br/>

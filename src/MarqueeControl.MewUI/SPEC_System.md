@@ -84,7 +84,7 @@ src/MarqueeControl.MewUI/
 | `MarqueePresenter`（提示層） | 幾何（コア）と外観から描画計画（`MarqueeDrawPlan`）を解決する。継承して `ResolveDrawPlan` を上書きすることで独自の見た目を提供できる |
 | `MarqueeAppearance`（提示層） | 色・ラベルの体裁・枠線の太さ・表示可否の単一所有者 |
 | `MarqueeSkiaPainter`（本プロジェクト） | 描画計画を層の順に Skia のキャンバスへ写す。**選択枠線は描かない**（装飾の穴あけ枠が同じ矩形を描くため）。**サイズ・座標ラベルも描かない**（コントロールがテキスト要素として表示する） |
-| UI 層のラベル要素 | 親パネルの子要素（`Border` + `TextBlock`）としてサイズ・座標ラベルを配置する。文言と基準点は提示層が、色とフォントサイズは `MarqueeAppearance` が単一所有し、実寸から配置矩形を求める写像は `MarqueeLabelPlan`（提示層）が単一所有する |
+| UI 層のラベル要素 | 親パネルの子要素（`Border` + `TextBlock`）としてサイズ・座標ラベルを配置する。文言と基準点は提示層が、色とフォントサイズは `MarqueeAppearance` が単一所有し、実寸から配置矩形を求める写像は `MarqueePresenter`（`LabelPlan` partial）（提示層）が単一所有する |
 | `MarqueePointEventArgs` / `SelectionRectEventArgs` / `MarqueeRenderedEventArgs` | 通知時点の座標（矩形）とスナップショットの組・描画完了（描画先と描画内容の契約） |
 
 ## クラス図
@@ -370,7 +370,7 @@ OnPaintSurface(canvas, info)
   └─ Rendered（ホスト）                         … ホストは付加情報（操作・情報ラベル）を描ける
 ```
 
-背景は塗りません（透明のままにして下の画像を透かします）。**選択枠線は装飾の穴あけ枠が描きます**（別々に描くと線幅が二重になるため）。**サイズ・座標ラベルはコントロールがテキスト要素として表示します**（実寸測定は描画 API 依存のためコントロールが行い、配置指示は `MarqueeLabelPlan`（提示層）が単一所有する）。
+背景は塗りません（透明のままにして下の画像を透かします）。**選択枠線は装飾の穴あけ枠が描きます**（別々に描くと線幅が二重になるため）。**サイズ・座標ラベルはコントロールがテキスト要素として表示します**（実寸測定は描画 API 依存のためコントロールが行い、配置指示は `MarqueePresenter`（`LabelPlan` partial）（提示層）が単一所有する）。
 
 ## エラー処理ポリシー
 

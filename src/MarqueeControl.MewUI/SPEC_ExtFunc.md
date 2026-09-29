@@ -15,7 +15,7 @@ Avalonia 版と同一の挙動になります。
 | 参照 | 用途 |
 | --- | --- |
 | `Feature.Marquee.Core` | **公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `MarqueeRenderRequest`）。状態管理クラス（`MarqueeSession`）・状態機械（`MarqueeState`）・選択幾何（`MarqueeSelection`）は internal（ファサードの内部実装） |
-| `Feature.Marquee.Presenter` | 提示層（描画計画の解決・外観・ラベル計画・組み込み規則）: `MarqueePresenter`（描画計画の解決） / `MarqueeAppearance`（色・体裁・枠線の太さ・表示可否） / `MarqueeDrawPlan`（UI が見る唯一の描画値） / `MarqueeLabelPlan`（実寸 → 配置指示）。**描画は本 UI が自 UI の描画 API（Skia）で行う**（`MarqueeSkiaPainter`） |
+| `Feature.Marquee.Presenter` | 提示層（描画計画の解決・外観・ラベル計画・組み込み規則）: `MarqueePresenter`（描画計画の解決） / `MarqueeAppearance`（色・体裁・枠線の太さ・表示可否） / `MarqueeDrawPlan`（UI が見る唯一の描画値） / `MarqueePresenter`（`LabelPlan` partial）（実寸 → 配置指示）。**描画は本 UI が自 UI の描画 API（Skia）で行う**（`MarqueeSkiaPainter`） |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Native` | カーソルサービスの既定実装（Win32 / NoOp） |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `SkiaCanvasView`・`MewProperty`・SkiaSharp 描画 |
@@ -106,7 +106,7 @@ Avalonia 版と同一の挙動になります。
 
 ### 7.1 ラベル（文字）の表示
 
-サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueePresenter`（`LabelTexts` partial） が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueeLabelPlan` が単一所有**します。コントロールは `Border` + `TextBlock` を子要素として置き（`SkiaText.Measure` で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Rendered` のハンドラで `Options.Labels` の外観に従って描きます（配置指示は `FadeMaskDragRectControl.UIBase` の `FadeMaskHostLabelRenderer` が単一所有する）。
+サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueePresenter`（`LabelTexts` partial） が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueePresenter`（`LabelPlan` partial） が単一所有**します。コントロールは `Border` + `TextBlock` を子要素として置き（`SkiaText.Measure` で実寸を測って渡す）、**ラベルは常に最上位**に表示されます。操作・情報ラベルはアプリ固有の付加情報のため、ホストが `Rendered` のハンドラで `Options.Labels` の外観に従って描きます（配置指示は `FadeMaskDragRectControl.UIBase` の `FadeMaskHostLabelRenderer` が単一所有する）。
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます。
 
 ```csharp
@@ -156,7 +156,7 @@ marquee.Rendered += (_, e) =>
 | 表示の変化への追従 | ホストが `RefreshOverlay()` を呼ぶ（自己完結する UI 層の処理） |
 | nudge のキー入力 | フォーカス依存（Avalonia 版は `TopLevel` を購読してフォーカス非依存） |
 | ログ | `Log` プロパティで `ILogger` を注入して出力する（書式・レベルは Avalonia 版と同一） |
-| 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言と基準点は提示層の `MarqueePresenter`（`LabelTexts` partial）、色とフォントサイズは `MarqueeAppearance`、実寸測定は **MewUI のテキスト エンジン**（`MewUITextMeasure.Measure`）、配置は提示層の `MarqueeLabelPlan`） |
+| 文字（サイズラベル・座標ラベル）の表示 | **コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**（文言と基準点は提示層の `MarqueePresenter`（`LabelTexts` partial）、色とフォントサイズは `MarqueeAppearance`、実寸測定は **MewUI のテキスト エンジン**（`MewUITextMeasure.Measure`）、配置は提示層の `MarqueePresenter`（`LabelPlan` partial）） |
 
 ## 9.5 ログ
 

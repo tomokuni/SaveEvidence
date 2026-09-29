@@ -177,7 +177,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 | 色・フォントサイズ・角丸・枠線の太さ | `LoupeAppearance`（外観） |
 | 描画層と順序（`LoupeDrawLayer`）・十字線 / 枠線の矩形 | `LoupePresenter` / `LoupePresenter`（`DrawPlan` partial） |
 | 中心座標ラベルの文言・基準点 | `LoupePresenter`（`LabelTexts` partial） |
-| 実寸 → ラベル要素の配置 | `LoupeLabelPlan` |
+| 実寸 → ラベル要素の配置 | `LoupePresenter`（`LabelPlan` partial） |
 | 枠線の太さの物理ピクセル換算 | `Platform.Core` の `DpiScaler`（呼び出すのは `LoupePresenter.ResolveDrawPlan`） |
 
 ## 4. 座標系
@@ -195,7 +195,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 
 - 描画 API は提供しません（描画計画の解決は描画層 `Feature.Loupe.Presenter` が単一所有し、描画は各 UI が自 UI の描画 API で行います。描画 API の抽象は持ちません）。
 - 色（ペーストボード・十字線・枠線・ラベル）は本コアに含みません（描画にだけ必要な設定であるため、外観 `LoupeAppearance` が単一所有します）。
-- フォントサイズ・角丸・内側余白は本コアに含みません（外観 `LoupeAppearance` / `LoupeLabelPlan` が単一所有します）。
+- フォントサイズ・角丸・内側余白は本コアに含みません（外観 `LoupeAppearance` / `LoupePresenter`（`LabelPlan` partial） が単一所有します）。
 - 表示可否（十字線・枠線・中心座標ラベル）は本コアに含みません（描画にだけ必要な設定であるため、外観 `LoupeAppearance` が単一所有します）。
 - 拡大元画像の取得・切り出しの実行は本コアに含みません（UI ごとに型が異なるため、UI 層が担います）。
 - 再描画のバッチ化・世代番号管理は本コアに含みません（コントロール化にだけ必要な処理のため、`LoupeControl.AvaloniaUI` が所有します）。

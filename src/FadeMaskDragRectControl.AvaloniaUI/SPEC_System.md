@@ -207,7 +207,7 @@ sequenceDiagram
 | 内包イベント | 複合コントロールの処理 | 同期先 |
 | --- | --- | --- |
 | `SelectionChanged` | ルーペの再描画を要求（`RequestRender`） | 選択矩形と外側の装飾は `MarqueeControl` がセッションから直接読んで描画する（本クラスは同期しない）。ルーペの選択矩形破線は Rendered イベント経由で描画し、描画の可否はコアの `ShowSelectionOverlay` が単一所有する（UI は派生値を保持しない） |
-| `Rendered`（選択矩形コントロール） | 付加情報（操作・情報ラベル）を描く | 描画内容全体（`Content`）を受け取り、付加情報を描く。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**（文言はコアが、配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueeLabelPlan` が単一所有する）。付加情報の積み上げ（位置・表示可否）は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは描画ポートを用意して文言を渡すだけである |
+| `Rendered`（選択矩形コントロール） | 付加情報（操作・情報ラベル）を描く | 描画内容全体（`Content`）を受け取り、付加情報を描く。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**（文言はコアが、配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial） が単一所有する）。付加情報の積み上げ（位置・表示可否）は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは描画ポートを用意して文言を渡すだけである |
 | `Rendered`（ルーペ） | 破線を描く（中心座標ラベルはコントロールが表示する） | 選択矩形の破線。ラベルの寸法・配置はコアが単一所有する |
 | 表示の変化（ホスト通知） | `RefreshOverlay()`（再描画 + ルーペ位置再計算） | Marquee 再描画 + Loupe（RefreshPosition）。選択矩形は表示の変化で不変のため再同期しない |
 | `SelectionStarted` | （購読しない） | セッションが自身の選択を初期化するため同期不要（外側の装飾はセッションの状態をそのまま読む） |

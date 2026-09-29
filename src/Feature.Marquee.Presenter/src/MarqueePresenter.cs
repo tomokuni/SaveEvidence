@@ -6,7 +6,6 @@ using EsUtil.Feature.Marquee.Core.Drawing;
 using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Marquee.Presenter.Drawing;
-using EsUtil.Feature.Marquee.Presenter.Label;
 using EsUtil.Feature.Marquee.Presenter.Logging;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using Microsoft.Extensions.Logging;
@@ -253,7 +252,7 @@ public partial class MarqueePresenter
     /// 4. 描く層だけを順序どおりに並べる（テキストは最後 = 最上位）。<br/>
     /// <br/>
     /// 実寸の測定は描画 API に依存するため、UI 層が関数として渡す<br/>
-    /// （配置の計算（クランプ）は <see cref="MarqueeLabelPlan"/> が単一所有する）。
+    /// （配置の計算（クランプ）は <see cref="ResolveLabelPlacements"/> が単一所有する）。
     /// </remarks>
     public virtual MarqueeDrawPlan ResolveDrawPlan(EsSize clientSize, Func<string, double, EsSize> measureText)
     {
@@ -293,7 +292,7 @@ public partial class MarqueePresenter
             handles,
             geometry.Marker,
             ResolveLayers(overlayRegions, outerBorders, innerFill, innerBorders, handles, geometry.Marker, sizeLabel, coordLabel),
-            MarqueeLabelPlan.Resolve(sizeLabel, coordLabel, appearance, measureText));
+            ResolveLabelPlacements(sizeLabel, coordLabel, appearance, measureText));
     }
 
     /// <summary>描く層だけを描画順に並べる。</summary>

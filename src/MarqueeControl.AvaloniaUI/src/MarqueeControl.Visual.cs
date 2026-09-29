@@ -126,7 +126,7 @@ public sealed partial class MarqueeControl
     /// <param name="finalSize">本コントロールへ割り当てられたサイズ（DIP）。</param>
     /// <returns>割り当てサイズ。</returns>
     /// <remarks>
-    /// <b>位置はコアと描画層が決める</b>: コアのテキスト配置から <see cref="MarqueeLabelPlan"/> が求めた配置指示に従って<br/>
+    /// <b>位置はコアと描画層が決める</b>: コアのテキスト配置から <c>MarqueePresenter</c> が求めた配置指示に従って<br/>
     /// ラベル要素を配置するだけであり、本クラスは位置の計算を持たない。<br/>
     /// 要素は <see cref="Panel.Children"/> の末尾へ置く（子は親より後に描かれるため、ラベルは常に最上位になる）。
     /// </remarks>

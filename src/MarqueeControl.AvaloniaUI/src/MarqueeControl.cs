@@ -1,5 +1,4 @@
 using EsUtil.Feature.Marquee.Presenter;
-using EsUtil.Feature.Marquee.Presenter.Label;
 using EsUtil.Feature.Marquee.Presenter.Drawing;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using Avalonia;
@@ -337,7 +336,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント。</summary>
     /// <remarks>
     /// 本コントロールは文字（ラベル・座標ラベル）を描かない。テキストの実寸測定は描画 API に依存するため、<br/>
-    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<see cref="MarqueeLabelPlan"/>）。<br/>
+    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<c>MarqueePresenter</c>）。<br/>
     /// 契約は文字に限定せず**描画内容全体**（<see cref="MarqueeRenderedEventArgs.Content"/>）を渡すため、ホストは文字以外の上書きもできる。<br/>
     /// <b>描画中に発火する</b>ため、ハンドラ内で描画を完了させること（コンテキストを保持しない）。<br/>
     /// 描画のたびに発火する（文字の有無は <c>Content.HasText</c> で判定できる）。

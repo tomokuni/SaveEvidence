@@ -6,7 +6,7 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **提示（Presenter）** | 描画の幾何（`LoupeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `LoupePresenter` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupePresenter`（`DrawPlan` partial） / `LoupePresenter`（`LabelTexts` partial） / `LoupeLabelPlan` |
+| **提示（Presenter）** | 描画の幾何（`LoupeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `LoupePresenter` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupePresenter`（`DrawPlan` partial） / `LoupePresenter`（`LabelTexts` partial） / `LoupePresenter`（`LabelPlan` partial） |
 | **外観** | 色・フォント・角丸・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `LoupeAppearance` |
 
 **本層はコントロール化を前提とした処理を持ちません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は、コントロール固有の値や UI の機構であるため UI 層（または各 UI）が持ちます）。
@@ -50,7 +50,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | `LoupeTextPlacement` | 描画層が UI 層へ渡すテキスト（文言・基準点・描画領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
 | `LoupePresenter`（`LabelTexts` partial） | 中心座標ラベルの文言（`EsPoint.Format`）と基準点（左上の内側）の生成 |
 | `LoupeLabelPlacement` | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
-| `LoupeLabelPlan` | `LoupeTextPlacement` から `LoupeLabelPlacement` を解決する（体裁は `LoupeAppearance` から受け取る） |
+| `LoupePresenter`（`LabelPlan` partial） | `LoupeTextPlacement` から `LoupeLabelPlacement` を解決する（体裁は `LoupeAppearance` から受け取る） |
 
 ### 外観
 
@@ -69,14 +69,14 @@ UI が出力する定義（拡大元画像の変更・描画の例外・UI 固�
 
 ## 描画の単位
 
-**物理ピクセル**です。`LoupeGeometry.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `Loupe.ResolveGeometry`、枠線の太さは `DpiScaler.ScaleToPixel`）は**コアと本層が済ませている**ため、UI は換算しません。中心座標ラベルだけは DIP で配置します（`LoupePresenter`（`LabelTexts` partial） が基準点を、`LoupeLabelPlan` が配置矩形を決める）。
+**物理ピクセル**です。`LoupeGeometry.PixelSize` が作る正方形が描画面になります。DIP → 物理ピクセルの換算（表示サイズは `Loupe.ResolveGeometry`、枠線の太さは `DpiScaler.ScaleToPixel`）は**コアと本層が済ませている**ため、UI は換算しません。中心座標ラベルだけは DIP で配置します（`LoupePresenter`（`LabelTexts` partial） が基準点を、`LoupePresenter`（`LabelPlan` partial） が配置矩形を決める）。
 
 ## ラベルは UI の要素が描く / UI が描く
 
 | 対象 | 誰が描くか | 呼ぶ API |
 | --- | --- | --- |
 | 図形（ペーストボード（画像外の色）・拡大画像・十字線・枠線） | UI 層（自 UI の描画 API） | `LoupeDrawPlan.Layers` の順に自 UI の API を呼ぶ（`LoupeContextPainter` / `LoupeSkiaPainter`） |
-| テキスト（中心座標） | UI 層（要素として置くか画像として描くか） | 要素として置く場合は `LoupeLabelPlan.Resolve`（配置指示）の結果を要素へ写す（子要素は親より後に描かれるため**常に最上位**）。canvas へ描く場合は `LoupeDrawPlan.Labels` を自 UI の描画 API で文字として描く |
+| テキスト（中心座標） | UI 層（要素として置くか画像として描くか） | 要素として置く場合は `LoupePresenter.ResolveLabelPlacements`（配置指示）の結果を要素へ写す（子要素は親より後に描かれるため**常に最上位**）。canvas へ描く場合は `LoupeDrawPlan.Labels` を自 UI の描画 API で文字として描く |
 
 ## 見た目・描画の差し替え
 
@@ -102,7 +102,7 @@ UI が出力する定義（拡大元画像の変更・描画の例外・UI 固�
 
 | 型 | AvaloniaUI | MewUI | 補足 |
 | --- | --- | --- | --- |
-| `LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupePresenter`（`DrawPlan` partial） / `LoupePresenter`（`LabelTexts` partial） / `LoupeLabelPlan` | 使う | 使う | 描画計画と外観は両 UI で共通 |
+| `LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupePresenter`（`DrawPlan` partial） / `LoupePresenter`（`LabelTexts` partial） / `LoupePresenter`（`LabelPlan` partial） | 使う | 使う | 描画計画と外観は両 UI で共通 |
 | 描画実装（`LoupeContextPainter` / `LoupeSkiaPainter`） | `LoupeContextPainter` | `LoupeSkiaPainter` | UI フレームワーク固有のため各 UI が所有する |
 | 拡大元画像の変更・描画の例外のログ（`LoupeUiLogMessage`） | `LoupeControl.AvaloniaUI` が所有 | `LoupeControl.MewUI` が所有 | UI の値を所有する各 UI が記録する（接頭辞だけを揃える） |
 | 再描画のバッチ化（`LoupeRenderCoordinator`） | 使う（中間ビットマップを非同期生成し `Image.Source` へ反映） | **使わない** | MewUI は `OnPaintSurface` の中で同期描画するため、要求の合流と世代番号管理が不要（`LoupeControl.AvaloniaUI` が所有する） |
@@ -159,7 +159,7 @@ tests/
 ├── LoupeDrawPlan.Tests.cs                # 描画計画の値（描画面・層の順序・表示可否・切替）（10 件）
 ├── LoupeAppearance.Tests.cs              # 色・体裁・枠線の太さ・表示可否の既定値と補正（11 件）
 ├── LoupePresenter.DrawPlan.Tests.cs      # 十字線 / 枠線の矩形の計算（5 件）
-├── LoupeLabelPlan.Tests.cs               # 実寸 → ラベル要素の写像（7 件）
+├── LoupePresenter.LabelPlan.Tests.cs               # 実寸 → ラベル要素の写像（7 件）
 ├── LoupePresenter.Tests.cs               # 外観の保持と変更ログ・コアの設定変更ログへの委譲（4 件）
 ├── LoupePresenterLogMessage.Tests.cs     # 外観の変更ログ（変化した項目だけ・色の表記・定義名）（6 件）
 └── RecordingLogger.cs                    # ログ出力を収集するテスト用 ILogger

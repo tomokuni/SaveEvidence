@@ -42,7 +42,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 /// <b>ホスト側の操作</b>: <see cref="Source"/> を設定して <see cref="CenterPoint"/> を現在位置へ更新すると、<br/>
 /// ルーペがその位置を拡大表示する（描画はプロパティ変更で自動的に無効化される）。<br/>
 /// <b>座標ラベル</b>: 表示可否は <see cref="LoupeAppearance.ShouldShowCoordLabel"/>（描画層）が判断し、<br/>
-/// 文言・基準点は <see cref="LoupeTextPlacement"/>（描画層）が、配置は <see cref="LoupeLabelPlan"/>（描画層）が<br/>
+/// 文言・基準点は <see cref="LoupeTextPlacement"/>（描画層）が、配置は <c>LoupePresenter</c>（描画層）が<br/>
 /// 実寸（<see cref="MewUITextMeasure"/>）から単一所有する（本コントロールは要素を置くだけである）。
 /// </remarks>
 public sealed class LoupeControl : Panel
@@ -309,7 +309,7 @@ public sealed class LoupeControl : Panel
     /// <summary>子（図形キャンバス・ラベル要素）を配置する。</summary>
     /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
     /// <remarks>
-    /// <b>位置はコアが決める</b>: ラベルの配置は <see cref="LoupeLabelPlan"/>（描画層）が<br/>
+    /// <b>位置はコアが決める</b>: ラベルの配置は <c>LoupePresenter</c>（描画層）が<br/>
     /// 実寸から求めた矩形をそのまま使い、本クラスは要素を <c>Arrange</c> するだけである。<br/>
     /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。
     /// </remarks>

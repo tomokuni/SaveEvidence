@@ -4,7 +4,6 @@ using EsUtil.Feature.Loupe.Core.Drawing;
 using EsUtil.Feature.Loupe.Core.Placement;
 using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.Feature.Loupe.Presenter.Drawing;
-using EsUtil.Feature.Loupe.Presenter.Label;
 using EsUtil.Feature.Loupe.Presenter.Logging;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 using Microsoft.Extensions.Logging;
@@ -149,7 +148,7 @@ public partial class LoupePresenter
     /// 4. 描く層だけを順序どおりに並べる（テキストは最後 = 最上位）。<br/>
     /// <br/>
     /// 実寸の測定は描画 API に依存するため、UI 層が関数として渡す<br/>
-    /// （配置の計算（クランプ）は <see cref="LoupeLabelPlan"/> が単一所有する）。
+    /// （配置の計算（クランプ）は <see cref="ResolveLabelPlacements"/> が単一所有する）。
     /// </remarks>
     public virtual LoupeDrawPlan ResolveDrawPlan(
         double displaySize, EsSize? availableSize, Func<string, double, EsSize> measureText)
@@ -177,7 +176,7 @@ public partial class LoupePresenter
             crosshair,
             border,
             ResolveLayers(geometry.MagnifiedImage, crosshair, border, labelText),
-            LoupeLabelPlan.Resolve(labelText, appearance, measureText),
+            ResolveLabelPlacements(labelText, appearance, measureText),
             geometry.CaptureTopLeft,
             geometry.ZoomLevel,
             geometry.PixelSize);

@@ -1,9 +1,10 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.Loupe.Presenter.Label;
 using EsUtil.Feature.Loupe.Presenter.Drawing;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 
 
-namespace EsUtil.Feature.Loupe.Presenter.Label;
+namespace EsUtil.Feature.Loupe.Presenter;
 
 /// <summary>ルーペの中心座標ラベルの配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>
@@ -15,7 +16,7 @@ namespace EsUtil.Feature.Loupe.Presenter.Label;
 /// <b>中心座標ラベルは常に最上位</b>である（UI の要素は親より後に描かれるため構造で成立する）。<br/>
 /// UI フレームワークに依存しない（測定関数をデリゲートで受け取る）ため、UI 初期化なしの <c>[Fact]</c> で検証できる。
 /// </remarks>
-public static class LoupeLabelPlan
+public partial class LoupePresenter
 {
     /// <summary>中心座標ラベル背景の左右の内側余白（DIP）。</summary>
     /// <remarks>上下（<see cref="PaddingY"/>）より広くする（文字の左右に余白を確保するため）。</remarks>
@@ -32,7 +33,7 @@ public static class LoupeLabelPlan
     /// <returns>配置するラベル要素（1 要素）。表示しない場合は空。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="appearance"/> または <paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>文言・位置は描画層が、色・フォントサイズ・角丸は外観が単一所有する（本クラスは実寸の反映のみ）。</remarks>
-    public static IReadOnlyList<LoupeLabelPlacement> Resolve(
+    internal static IReadOnlyList<LoupeLabelPlacement> ResolveLabelPlacements(
         LoupeTextPlacement? coordLabel, LoupeAppearance appearance, Func<string, double, EsSize> measureText)
     {
         ArgumentNullException.ThrowIfNull(appearance);

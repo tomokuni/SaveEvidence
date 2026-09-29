@@ -13,7 +13,7 @@
 | 通知 | `Marquee.Notified` | 選択の開始/変更/確定/キャンセル・追従位置の移動・確定/キャンセル要求を `MarqueeNotice` で通知する |
 | 外部からの状態操作 | `Marquee` | 選択の復元・対話状態の初期化・確定/キャンセルの要求・ハイライト矩形の設定を API から実行できる |
 | 座標変換 | `Marquee` / `ICoordTransform` | ドメイン座標（利用者が定める座標系）とローカル DIP の相互変換と、ドメイン境界の指定 |
-| ラベルの文言と基準点 | 提示層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial） / `MarqueeLabelPlan` | サイズラベルの書式と表示スケール、カーソル座標ラベルの文言と基準点、実寸から配置矩形への写像（本コアはマウス位置という素材だけを返す） |
+| ラベルの文言と基準点 | 提示層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`（`LabelPlan` partial） | サイズラベルの書式と表示スケール、カーソル座標ラベルの文言と基準点、実寸から配置矩形への写像（本コアはマウス位置という素材だけを返す） |
 
 ### 前提条件
 

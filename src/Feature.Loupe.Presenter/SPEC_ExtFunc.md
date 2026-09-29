@@ -10,7 +10,7 @@
 | 表示レイアウトの解決 | `LoupePresenter.ResolveLayout` | 親領域サイズから表示サイズ・位置を解決する（コアへ委譲する） |
 | 外観 | `LoupeAppearance` | 色・フォント・角丸・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） |
 | 装飾矩形の計算 | `LoupePresenter`（`DrawPlan` partial） | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算（純粋関数） |
-| ラベル計画 | `LoupePresenter`（`LabelTexts` partial） / `LoupeLabelPlan` | 文言と基準点の生成（`EsPoint.Format`・左上の内側）と、実寸 → 配置指示（`LoupeLabelPlacement`）の写像 |
+| ラベル計画 | `LoupePresenter`（`LabelTexts` partial） / `LoupePresenter`（`LabelPlan` partial） | 文言と基準点の生成（`EsPoint.Format`・左上の内側）と、実寸 → 配置指示（`LoupeLabelPlacement`）の写像 |
 | ログ定義 | `LoupePresenterLogMessage` | 本層が単一所有する設定（外観）の変更ログ |
 
 **本層はコントロール化を前提とした処理を提供しません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は、コントロール固有の値や UI の機構であるため UI 層が持ちます）。
@@ -36,7 +36,7 @@
 | `Drawing.LoupeDrawLayer` | enum | 描画層（`Pasteboard` / `Image` / `Crosshair` / `Border` / `Label`） |
 | `Drawing.LoupeTextPlacement` | record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・描画領域） |
 | `Label.LoupeLabelPlacement` | record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
-| `Label.LoupeLabelPlan` | static class | 実寸 → `LoupeLabelPlacement` の写像 |
+| `LoupePresenter.LabelPlan.cs` | static class | 実寸 → `LoupeLabelPlacement` の写像 |
 | `Logging.LoupePresenterLogMessage` | static partial class | 本層が単一所有する設定の変更ログ（内部手順。ホストは参照しない） |
 
 `LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelTexts.cs` / `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）。
@@ -92,7 +92,7 @@
 | `Crosshair` / `Border` | 十字線 / 枠線（表示可否が有効な場合のみ） |
 | `Label` | 中心座標ラベル（ラベルがある場合のみ。常に最上位） |
 
-### `LoupeLabelPlan` のメンバー
+### `LoupePresenter`（`LabelPlan` partial） のメンバー
 
 | メンバー | 説明 |
 | --- | --- |
@@ -112,9 +112,9 @@
 
 描画計画は**UI が見る唯一の描画値**です。UI は `Layers` の順に自 UI の描画 API を呼び、`Labels` を要素として置くか文字として描くかを決めます。**描く値はすべて解決済み**であり、UI は幾何計算（矩形の導出・寸法の換算）を行いません。
 
-### ラベル（`LoupeLabelPlan` → `LoupeLabelPlacement`）
+### ラベル（`LoupePresenter`（`LabelPlan` partial） → `LoupeLabelPlacement`）
 
-- `Labels` の各要素は**配置矩形・内側余白・文言・フォントサイズ・色・角丸**を持ちます（背景の大きさは「実寸 + 内側余白 × 2」。クランプは `LoupeLabelPlan` が単一所有する）。
+- `Labels` の各要素は**配置矩形・内側余白・文言・フォントサイズ・色・角丸**を持ちます（背景の大きさは「実寸 + 内側余白 × 2」。クランプは `LoupePresenter`（`LabelPlan` partial） が単一所有する）。
 - **要素として置くか canvas へ描くかは UI 層が決めます**（要素は親より後に描かれるため常に最上位になる）。
 
 ### 描画の順序

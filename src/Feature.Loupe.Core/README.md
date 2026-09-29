@@ -72,7 +72,7 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 | 層 | 責務 |
 | --- | --- |
 | Core（本プロジェクト） | 設定とその既定値・補正、状態の判断、表示レイアウトの計算、描画の幾何（切り出し領域・描画面）の解決、公開ファサード（`Loupe` = 操作の唯一の窓口）、ログ定義 |
-| 提示層（`Feature.Loupe.Presenter`） | 提示（`LoupePresenter`：描画計画（層の順序・装飾矩形・文言）の解決）、外観（`LoupeAppearance`：色・フォント・角丸・枠線の太さ・表示可否）、実寸 → ラベル要素の写像（`LoupeLabelPlan`）、装飾矩形の計算（`LoupePresenter`（`DrawPlan` partial）） |
+| 提示層（`Feature.Loupe.Presenter`） | 提示（`LoupePresenter`：描画計画（層の順序・装飾矩形・文言）の解決）、外観（`LoupeAppearance`：色・フォント・角丸・枠線の太さ・表示可否）、実寸 → ラベル要素の写像（`LoupePresenter`（`LabelPlan` partial））、装飾矩形の計算（`LoupePresenter`（`DrawPlan` partial）） |
 | UI 層（`LoupeControl.*`） | 状態（拡大元画像・拡大中心）の保持と設定（`Options`・`Appearance`）の保持、**提示層への委譲**（表示レイアウト・描画計画）、描画計画の描画（`LoupeContextPainter` / `LoupeSkiaPainter`）とラベル要素の配置、ホスト結線、拡大元画像のログ |
 
 UI 層に残してよい分岐は 4 種のみです（それ以外の判断はコア・提示層へ移します）。
@@ -174,7 +174,7 @@ UI 側（`LoupeControl`）が公開する入口:
 5. **表示サイズの決定はファサードが単一所有**: 要求サイズを親領域の最小辺へクランプする規則は `Loupe.ResolveLayout` の 1 箇所である（親領域のサイズを引数で受けるため、クランプの基準をコアが保持しない）。
 6. **描画順は UIBase が単一所有する**: `LoupeDrawLayer`（`Pasteboard` → `Image` → `Crosshair` → `Border` → `Label`）で層と順序を指示し、UI 層はその順に処理するだけにする。**層は「描く値がある場合だけ」含める**（層の有無 = 描く値の有無。`LoupeDrawPlan.HasText` が層の有無と一致する）。**テキストの層を必ず最後に置く**ため、テキストは常に最上位に表示される。
 7. **描画は本コアの関心事ではない**: 本コアは描画 API も描画の抽象も持たず、描画の幾何（`LoupeGeometry`）というデータを返すだけである。装飾・文言・層の順序は UIBase の `LoupePresenter` が解決し、描画は各 UI が行う（描画 API の抽象を持つと UI フレームワークごとの描画モデルの差を吸収しきれない）。
-8. **文字は UIBase が文言と基準点を決め、UI 層が要素を配置する**: 中心座標ラベルの文言は `EsPoint.Format`、基準点はルーペの左上の内側（`LoupePresenter`（`LabelTexts` partial） が解決済み）であり、実寸の測定と要素への配置は UI 層が担う（実寸は描画 API でしか測れないため）。体裁は外観（`LoupeAppearance`）と `LoupeLabelPlan` が単一所有する。
+8. **文字は UIBase が文言と基準点を決め、UI 層が要素を配置する**: 中心座標ラベルの文言は `EsPoint.Format`、基準点はルーペの左上の内側（`LoupePresenter`（`LabelTexts` partial） が解決済み）であり、実寸の測定と要素への配置は UI 層が担う（実寸は描画 API でしか測れないため）。体裁は外観（`LoupeAppearance`）と `LoupePresenter`（`LabelPlan` partial） が単一所有する。
 9. **色は本コアが持たない**: ペーストボード（画像外）・枠線・十字線・ラベルの色は描画にだけ必要な設定であるため、外観（`Feature.Loupe.Presenter` の `LoupeAppearance`）が単一所有する。
 10. **描画の可否は外観の明示フラグが単一所有**: 描くかどうかは `LoupeAppearance` の `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` が決める（透明色を「描かない」の代用にしない）。非表示の項目は空の矩形として解決される。
 11. **変化したときだけログ出力する判断もコア**: `Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter が変化を検出し、変化した項目だけを出力する（UI 層は変更通知で値を転送するだけで、同値判定も前後の値の保持も持たない）。

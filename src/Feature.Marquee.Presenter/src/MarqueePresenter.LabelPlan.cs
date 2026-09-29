@@ -1,10 +1,11 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.Marquee.Presenter.Label;
 using EsUtil.Feature.Marquee.Presenter.Drawing;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using DrawingColor = System.Drawing.Color;
 
 
-namespace EsUtil.Feature.Marquee.Presenter.Label;
+namespace EsUtil.Feature.Marquee.Presenter;
 
 /// <summary>描画層のテキスト配置から、ラベル要素の配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>
@@ -17,7 +18,7 @@ namespace EsUtil.Feature.Marquee.Presenter.Label;
 /// （文字を要素として置く場合、要素は親より後に描かれるため常に最上位になる）。<br/>
 /// UI フレームワークに依存しない（測定関数をデリゲートで受け取る）ため、UI 初期化なしの <c>[Fact]</c> で検証できる。
 /// </remarks>
-public static class MarqueeLabelPlan
+public partial class MarqueePresenter
 {
     /// <summary>ラベル要素の配置指示を解決する（描画順に並ぶ）。</summary>
     /// <param name="sizeLabel">サイズラベルのテキスト配置。表示しない場合は null。</param>
@@ -27,7 +28,7 @@ public static class MarqueeLabelPlan
     /// <returns>配置するラベル要素の一覧（サイズラベル → カーソル座標ラベルの順）。どちらも無い場合は空。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="appearance"/> または <paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>文言・位置は描画層が、色・フォントサイズ・内側余白は外観が単一所有する（本クラスは実寸の反映のみ）。</remarks>
-    public static IReadOnlyList<MarqueeLabelPlacement> Resolve(
+    internal static IReadOnlyList<MarqueeLabelPlacement> ResolveLabelPlacements(
         MarqueeTextPlacement? sizeLabel,
         MarqueeTextPlacement? coordLabel,
         MarqueeAppearance appearance,

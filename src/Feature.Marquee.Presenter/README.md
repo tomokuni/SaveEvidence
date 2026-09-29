@@ -6,7 +6,7 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **提示（Presenter）** | 描画の幾何（`MarqueeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `MarqueePresenter` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueeLabelPlan` |
+| **提示（Presenter）** | 描画の幾何（`MarqueeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `MarqueePresenter` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`（`LabelPlan` partial） |
 | **外観** | 色・フォント・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `MarqueeAppearance` |
 
 **本層はコントロール化を前提とした処理を持ちません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるため UI 層が持ちます）。
@@ -52,7 +52,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `MarqueeTextPlacement` | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
 | `MarqueePresenter`（`LabelTexts` partial） | サイズラベル（位置と寸法の書式・表示スケール）・カーソル座標ラベルの文言と基準点の生成。**矩形に基づく基準点は「穴あけ矩形の左上から枠線の幅 + 1 DIP 内側」**（枠線と背景の重なりを無くす） |
 | `MarqueeLabelPlacement` | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
-| `MarqueeLabelPlan` | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する（実寸 → 配置の写像。体裁は `MarqueeAppearance` から受け取る） |
+| `MarqueePresenter`（`LabelPlan` partial） | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する（実寸 → 配置の写像。体裁は `MarqueeAppearance` から受け取る） |
 
 ### 外観
 
@@ -80,7 +80,7 @@ MewUI 版はキャンバス自体を DPI スケーリングしてから DIP 座�
 | 対象 | 誰が描くか | 呼ぶ API |
 | --- | --- | --- |
 | 図形（装飾・ハンドル・始点マーカー） | UI 層（自 UI の描画 API） | `MarqueeDrawPlan.Layers` の順に自 UI の API を呼ぶ（`MarqueeContextPainter` / `MarqueeSkiaPainter`） |
-| テキスト（サイズラベル・カーソル座標ラベル） | UI 層（要素として置くか画像として描くか） | 要素として置く場合は `MarqueeLabelPlan.Resolve`（配置指示）の結果を要素へ写す（子要素は親より後に描かれるため**常に最上位**）。canvas へ描く場合は `MarqueeDrawPlan.Labels` を自 UI の描画 API で文字として描く |
+| テキスト（サイズラベル・カーソル座標ラベル） | UI 層（要素として置くか画像として描くか） | 要素として置く場合は `MarqueePresenter.ResolveLabelPlacements`（配置指示）の結果を要素へ写す（子要素は親より後に描かれるため**常に最上位**）。canvas へ描く場合は `MarqueeDrawPlan.Labels` を自 UI の描画 API で文字として描く |
 | 付加情報ラベル（操作・情報。コントロール固有） | ホスト（複合コントロール） | 別のコントロールへ組み込むときに必要になる付加情報であり、`FadeMaskDragRectControl.UIBase` の `MarqueeHostLabelRenderer` が体裁を揃えて描く（文言・積み上げ位置はホストが決める） |
 
 **コアは幾何（穴あけ矩形・ハンドル・マーカー・マウス位置）だけを返します**。**文言（サイズの書式・座標）・体裁（フォントサイズ・色・内側余白）・表示可否は本層が単一所有**します。
@@ -100,7 +100,7 @@ MewUI 版はキャンバス自体を DPI スケーリングしてから DIP 座�
 | --- | --- | --- |
 | 選択の判断（ドラッグ・nudge・確定/キャンセル・スナップ・最小サイズ）と幾何（穴あけ矩形・ハンドル・マーカー） | `Feature.Marquee.Core` | コントロールが何であっても変わらない（独立した部品の本体） |
 | 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否） | 本層 | 「どう見せるか」は描画の都合であり、コアの計算・判断に入らない（コアに置くと色・フォントをコアへ持ち込むことになる） |
-| 描画するラベルの一覧と順序（サイズラベル → カーソル座標ラベル）と実寸 → 配置矩形の写像 | 本層（`MarqueeLabelPlan`） | 文字を UI 要素として置くコントロールに必要な手順であり、描画計画と同じ層が単一所有する。実寸測定は描画 API 依存のため UI 層が与える（ラベルは常に最上位） |
+| 描画するラベルの一覧と順序（サイズラベル → カーソル座標ラベル）と実寸 → 配置矩形の写像 | 本層（`MarqueePresenter`（`LabelPlan` partial）） | 文字を UI 要素として置くコントロールに必要な手順であり、描画計画と同じ層が単一所有する。実寸測定は描画 API 依存のため UI 層が与える（ラベルは常に最上位） |
 | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ | 本層（`MarqueePresenterLogMessage`） | 値を所有する主体が記録する（コアの設定はコア、UI の値は UI が記録し、層の接頭辞から伝搬を追える） |
 | 装飾（暗転マスク・穴あけ枠・内側の塗り）の概念 | 本層 | 選択矩形コントロール単体の概念ではないが、選択矩形コントロール自身が描く表示である（外側を暗くして選択領域を際立たせる） |
 | ホイール操作（どの入力がズーム・パンか）とそのログ | UI 層（ホスト） | 組み込み先（ビューポート）が存在して初めて意味を持つ |
@@ -114,7 +114,7 @@ MewUI 版はキャンバス自体を DPI スケーリングしてから DIP 座�
 
 | 型 | AvaloniaUI | MewUI | 補足 |
 | --- | --- | --- | --- |
-| `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueeLabelPlan` | 使う | 使う | 描画計画と外観は両 UI で共通 |
+| `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`（`LabelPlan` partial） | 使う | 使う | 描画計画と外観は両 UI で共通 |
 | 描画実装（`MarqueeContextPainter` / `MarqueeSkiaPainter`） | `MarqueeContextPainter` | `MarqueeSkiaPainter` | UI フレームワーク固有のため各 UI が所有する |
 | ホイール操作（`PointerWheelChanged` / `MouseWheel` の購読と `ZoomViewSession.PanByWheel` / `ZoomByWheel` の呼び出し） | `CropViewControl` が購読（ホスト） | `CropSession` が購読（ホスト） | コントロール化を前提とした処理のため UI（ホスト）が持つ |
 | 表示の変化の追従（`RefreshOverlay` の呼び出し） | ホスト（`ZoomViewControl.ViewportChanged` を購読） | ホスト（`ScrollViewer` の変化を検知して呼ぶ） | 契機は UI ごとに異なる |
@@ -178,7 +178,7 @@ Feature.Marquee.Presenter
 ├── MarqueePresenter.Tests.cs            # 描画計画の解決（幾何・外観・層・配置・文言プロバイダ）・外観の保持と変更ログ・表示スケーリング・入力の転送（18 件）
 ├── MarqueeAppearance.Tests.cs           # 色・体裁・枠線の太さ・表示可否の既定値と補正（28 件）
 ├── MarqueePresenter.DrawPlan.Tests.cs   # 枠線 4 辺・暗転領域の矩形の計算（9 件）
-├── MarqueeLabelPlan.Tests.cs            # 実寸 → ラベル要素の写像（順序・配置・クランプ・色）（12 件）
+├── MarqueePresenter.LabelPlan.Tests.cs            # 実寸 → ラベル要素の写像（順序・配置・クランプ・色）（12 件）
 ├── MarqueePresenterLogMessage.Tests.cs  # 外観の変更ログ（変化した項目だけ・色の表記・定義名）（5 件）
 ├── EffectsSpy.cs                        # 効果（フォーカス・再描画等）のテスト用スパイ
 └── RecordingLogger.cs                   # ログ出力を収集するテスト用 ILogger

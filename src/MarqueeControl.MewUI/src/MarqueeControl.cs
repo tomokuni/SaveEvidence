@@ -214,7 +214,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント。</summary>
     /// <remarks>
     /// 本コントロールは文字（ラベル・座標ラベル）を描かない。テキストの実寸測定は描画 API に依存するため、<br/>
-    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<see cref="MarqueeLabelPlan"/>）。<br/>
+    /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<c>MarqueePresenter</c>）。<br/>
     /// 契約は文字に限定せず**描画内容全体**（<see cref="MarqueeRenderedEventArgs.Content"/>）を渡すため、ホストは文字以外の上書きもできる。<br/>
     /// <b>描画中に発火する</b>ため、ハンドラ内で描画を完了させること（キャンバスを保持しない）。<br/>
     /// 描画のたびに発火する（文字の有無は <c>Content.HasText</c> で判定できる）。
@@ -468,7 +468,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>子（図形のキャンバス・ラベル要素）を配置する。</summary>
     /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
     /// <remarks>
-    /// <b>位置はコアが決める</b>: ラベルの配置は <see cref="MarqueeLabelPlan"/>（描画層）が<br/>
+    /// <b>位置はコアが決める</b>: ラベルの配置は <c>MarqueePresenter</c>（描画層）が<br/>
     /// 実寸から求めた矩形をそのまま使い、本クラスは要素を <c>Arrange</c> するだけである。<br/>
     /// MewUI は <c>Margin</c> による絶対配置が反映されないため、配置フェーズで明示的に位置を確定させる。<br/>
     /// 子の座標はウィンドウ絶対座標のため、親の絶対座標（<paramref name="bounds"/> の左上）を加算する。<br/>
