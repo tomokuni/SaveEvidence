@@ -1,6 +1,6 @@
 # Feature.Loupe.Presenter システム仕様書
 
-`LoupeControl`（拡大鏡）の見た目を定める **コントロール化を前提としない UI 非依存層**の構造・依存・例外処理・設計判断を記載します。公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
+ルーペ（拡大鍵）の見た目を定める **コントロール化を前提としない UI 非依存層**の構造・依存・例外処理・設計判断を記載します。公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
 
 ## 1. システム概要
 
@@ -8,7 +8,7 @@
 | --- | --- |
 | 目的 | 「どう見せるか」（描画計画と外観）を 1 箇所に集約し、UI ごとの実装差から切り離す |
 | 提供形態 | クラスライブラリ（`Feature.Loupe.Presenter.dll`） |
-| 想定利用者 | UI 実装（`LoupeControl.AvaloniaUI` / `LoupeControl.MewUI`） |
+| 想定利用者 | UI 実装と、それらを組み込むホストアプリケーション |
 | 汎用性 | 特定のアプリに依存しない（描画 API の抽象も持たないため、UI フレームワーク非依存） |
 
 ## 2. 技術スタック
@@ -28,7 +28,7 @@
 
 ```mermaid
 graph LR
-  UI[LoupeControl.AvaloniaUI / LoupeControl.MewUI] --> R[Feature.Loupe.Presenter]
+  UI["UI 実装"] --> R[Feature.Loupe.Presenter]
   R --> B[Feature.Loupe.Core]
   B --> D[Platform.Core]
 ```
@@ -40,7 +40,7 @@ graph LR
 
 ```mermaid
 sequenceDiagram
-  participant UI as LoupeControl（UI 実装）
+  participant UI as UI 実装
   participant P as LoupePresenter（本層）
   participant L as Loupe（コア）
   participant Painter as 描画実装（UI）
@@ -89,7 +89,7 @@ sequenceDiagram
 
 ## 6. 例外処理ポリシー
 
-`LoupePresenter.ResolveDrawPlan` / `LoupePresenter.ResolveLabelPlacements` は引数（`measureText` / `appearance`）が null なら `ArgumentNullException` を送出します。描画中にソースが破棄された場合（`ObjectDisposedException`）の吸収は描画実装（各 UI の painter）の責務です。
+`LoupePresenter.ResolveDrawPlan` / `LoupePresenter.ResolveLabelPlacements` は引数（`measureText` / `appearance`）が null なら `ArgumentNullException` を送出します。描画中にソースが破棄された場合（`ObjectDisposedException`）の吸収は描画実装（各 UI）の責務です。
 
 ## 7. 可視性ポリシー
 
@@ -102,7 +102,7 @@ sequenceDiagram
 | --- | --- |
 | UI 初期化不要 | 描画計画の値は UI 型を持たないため `[Fact]` / `[Theory]` で並列実行する |
 | 単位 | 描画計画の値・外観・装飾矩形・寸法換算・ラベル写像・ログ定義 |
-| 画素の検証 | `LoupeControl.MewUI.Tests`（Skia）が担う（本層は描画 API を持たないため） |
+| 画素の検証 | 描画 API を持つ UI 側のテストが担う（本層は描画 API を持たないため） |
 | 合計 | 49 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
@@ -117,14 +117,14 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 | **描画 API の抽象を持たない** | UI フレームワークごとの描画モデルは異なり、抽象に集約すると対象 UI（WinUI3 / WinForms 等）が増えるたびに抽象が肥大して差異を吸収しきれなくなる。本層は描画計画というデータを返し、描画は各 UI が自前で行う |
 | 色の型 | UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画の境界で行う |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「クランプ」は描画にだけ必要な規則のため、本層の `LoupePresenter`（`LabelPlan` partial） が単一所有する |
-| 中間ビットマップの非同期生成 | UI のディスパッチャーに依存し、中間ビットマップを持つ UI にだけ必要なため、`LoupeRenderCoordinator` は `LoupeControl.AvaloniaUI` が所有する |
+| 中間ビットマップの非同期生成 | UI のディスパッチャーに依存し、中間ビットマップを持つ UI にだけ必要なため、その UI 実装が所有する |
 | 継承による差し替え | `LoupePresenter` は `sealed` にしない（外観の差し替え・`ResolveDrawPlan` の上書きで独自の見た目を提供することを役割とする） |
 
 ## 10. ログ
 
 UI が出力するログ（拡大元画像の変更・描画の例外）の定義と書式は本層が単一所有します（`[Feature.Loupe.Presenter]` の接頭辞）。
 
-**UI 固有の処理に対応するログは各 UI プロジェクトが所有します**（中間ビットマップを生成する描画パイプライン固有のログ等は `LoupeControl.AvaloniaUI` にあります）。コアが出力するログ（設定・拡大中心・環境値の変更）は `Feature.Loupe.Core` の `LoupeLogMessage` が単一所有します。
+**UI 固有の処理に対応するログは各 UI 実装が所有します**（中間ビットマップを生成する描画パイプライン固有のログ等）。コアが出力するログ（設定・拡大中心・環境値の変更）は `Feature.Loupe.Core` の `LoupeLogMessage` が単一所有します。
 
 | 契機 | 出力 |
 | --- | --- |

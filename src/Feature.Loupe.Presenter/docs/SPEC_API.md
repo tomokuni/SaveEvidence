@@ -1,6 +1,6 @@
 # Feature.Loupe.Presenter API リファレンス
 
-`LoupeControl`（拡大鏡）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
+ルーペ（拡大鍵）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
 ## 1. 前提条件
 
@@ -147,5 +147,5 @@ foreach (var layer in plan.Layers) { /* Pasteboard → Image → Crosshair → B
 
 - **描画は行いません**（描画計画というデータを返すだけです。描画は各 UI が自 UI の API で行います）。
 - 描画 API の抽象（キャンバスの抽象）は持ちません（UI フレームワークごとの描画モデルの差を吸収しきれないため）。
-- 中間ビットマップの非同期生成と世代番号管理（`LoupeRenderCoordinator`）は `LoupeControl.AvaloniaUI` が所有します（中間ビットマップを持つ UI にだけ必要な処理です）。
+- 中間ビットマップの非同期生成と世代番号管理は、中間ビットマップを持つ UI にだけ必要な処理のため、その UI 実装が所有します。
 
