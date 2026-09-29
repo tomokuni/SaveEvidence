@@ -1,84 +1,63 @@
 # Platform.Core
 
-`Platform.AvaloniaUI`（Avalonia UI 実装）および将来の MewUI 実装が共有する、**UI フレームワーク非依存の型**を提供するプロジェクトです。
+`Platform.AvaloniaUI` / `Platform.MewUI` が共有する **UI フレームワーク非依存の型**（キーと入力・幾何・座標変換・画像・OS サービス抽象）を提供するライブラリです。
 
-## 目的
+## 概要
 
-UI フレームワークに依存していた型（ホットキー設定・座標変換・画像コンテナ・サービス抽象）を本プロジェクトへ切り出すことで、`app.Core`（設定モデル・ViewModel）や各コントロールのコアロジック、将来の MewUI 実装からも UI フレームワーク非依存のまま利用できます。
+UI フレームワークに依存していた型を本プロジェクトへ切り出すことで、アプリ（`app.Core`）と各コントロールのコア・提示層から、UI フレームワーク非依存のまま利用できます。
 
-## 収録する型
+**実行時のプラットフォーム分岐を持ちません**。OS サービスの Windows 実装（`Native/Win`）はホストが生成して抽象型として注入します。テストはモックを注入できるため、Win32 実行環境を必要としません。
 
-| 型 | 責務 |
-| --- | --- |
-| `EsKey` | UI フレームワーク非依存のキー識別子（列挙型）。メンバー名は `Avalonia.Input.Key` と同一にし、文字列表現・シリアライズの互換性を保つ |
-| `CaptureType` | キャプチャ種別（全画面 / ウィンドウ選択 / 範囲選択）。UI 実装のキャプチャ UI ライブラリとホストが共有する。ホストではグローバルホットキーのアクション識別子（`IGlobalHotKeyService<CaptureType>`）としても使用する |
-| `EsWindowState` | UI フレームワーク非依存のウィンドウ表示状態（列挙型）。メンバー名は `Avalonia.Controls.WindowState` と同一にし、設定ファイルのシリアライズ互換性を保つ |
-| `HotKeyModifiers` | ホットキーの修飾キー（Alt / Control / Shift / Windows）を表すフラグ列挙型 |
-| `HotKeySetting` | 修飾キーとキーの組合せを表す値オブジェクト（record）。`ToString()` で "Ctrl + Shift + Q" 形式を返す |
-| `Native.ICaptureService` | 画面領域のキャプチャ（画像は `EsBitmap`、座標は `EsRectInt`） |
-| `Native.ICursorService` | OS カーソルの位置取得・移動・表示切替（座標は `EsPointInt`） |
-| `Native.IWindowService` | ネイティブウィンドウ操作（タスクスイッチャー非表示・キャプチャ除外・退避。識別子は `EsPlatformHandle`） |
-| `Native.IElementFinder` | 指定位置のウィンドウ / スクリーン検出と一覧取得 |
-| `Native.ICursorOverrideGuard` | 選択操作中のカーソル上書き抑止 |
-| `Native.IGlobalHotKeyService<T>` | グローバルホットキーの登録・解除・アクション配信 |
-| `Native.ElementFinderResults` | 要素検出の結果（矩形・表示名・識別子・クラス名） |
-| `Native.PlatformLog` | Win 実装が出力するログ定義（`[LoggerMessage]` ソース生成。internal） |
-| `Native.Win.WinCaptureService` / `WinWindowService` / `WinElementFinder` / `WinCursorService` / `WinCursorOverrideGuard` / `WinGlobalHotKeyService<T>` | 上記抽象の Windows 実装（Win32 P/Invoke）。**既定実装の選択はホストが行い、抽象型として注入する**（具象を直接参照するのはホストとテストのみ） |
-| `Native.Imaging.EsBitmapDrawingExtensions` | `System.Drawing.Bitmap` ⇔ `EsBitmap` の相互変換（`System.Drawing.Common` を使う Windows 専用の拡張） |
-| `Coord.ICoordTransform` | 2 つの座標系間の変換ポート（順変換・逆変換・境界）。座標は `EsPoint` / `EsSize` |
-| `Coord.CoordTransform` | 変換ポートの具象実装（`Func` 委譲）。`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale`（境界付きオーバーロードあり） / `ImageLayout` / `ImageLayoutScaleX`。**画像レイアウト（レターボックス・スケール）と平行移動・スケーリングの純粋計算も本型が単一所有する**（各ファクトリが使う単一実装であり、独立したヘルパー型を持たない） |
-| `Coord.ScrollMath` | スクロール範囲・ビューポートサイズの純粋計算（`MaxOffset` / `ViewportSize`）とホイール 1 段のスクロール量（`WheelScrollUnit`） |
-| `Coord.DpiScaler` | DIP 値をスケーリング係数で物理ピクセルへ変換（`ScaleToPixel`。切り上げ・最低 1）と、その逆変換（`ToDip`（数値 / `EsSize`）。丸めなし）。DPI の基準値（`StandardDpi`）・DPI → スケーリングの換算（`ToScaling`）・係数の有効判定（`IsValidScaling`。**非数も無効**）と正規化（`NormalizeScaling`）も単一所有する |
-| `Coord.CoordTransformExtensions` | 座標変換ポート未設定（null）を等価変換として解決する（`OrIdentity`）。各コントロール・コアのジオメトリは本規則を自前で書かない |
-| `Geometry.EsPoint` / `EsSize` / `EsVector` / `EsRect` | UI フレームワーク非依存の DIP 相当の幾何値型（`readonly record struct`）。**座標ラベルの文言は `EsPoint.Format`**（`(x, y)` 形式。小数点以下の桁数を指定できる）、**領域の判定とクランプは `EsSize`**（`HasArea` / `ClampToArea` / `ClampOffset`）、**枠線の内側 4 辺・領域内クランプ・重なり部分は `EsRect`**（`ResolveInnerEdges` / `ClampToArea` / `Intersect`）が単一所有する（コントロールを問わず同じ式を使う。選択矩形の枠線とルーペの外枠、選択のドメイン境界とルーペの位置クランプ、画像の表示矩形とビューポートの交差）。**各フレームワークの操作**（タプル・`WithX` 系・`Offset`・`Inflate` / `Deflate`・`Union`・`Intersects`・`NearlyEquals`・`Length` / `Dot` / `Cross` 等）を写して提供する（§ 外部機能仕様の対照表） |
-| `Geometry.EsPointInt` / `EsSizeInt` / `EsRectInt` | UI フレームワーク非依存の**整数版**の幾何値型（`EsPoint` / `EsSize` / `EsRect` の整数版。画面物理ピクセル座標・画像ピクセル座標・矩形に使う）。小数との相互変換（`FromEsXxx` / `ToEsXxx`）を持ち、丸め規則は `EsRounding` を渡す 1 本のメソッドに集約する |
-| `Geometry.EsAxis` | レイアウト計算で扱う軸（`X` / `Y`）。軸を `bool` で指定しないための列挙型 |
-| `Geometry.EsRounding` | 小数を整数へ丸める方法（`Truncate` / `Round` / `Ceiling`）。丸め規則を整数型の変換へ集約するための列挙型 |
-| `Geometry.EsThickness` | UI フレームワーク非依存の 4 辺の厚さ（Avalonia / MewUI の `Thickness` に対応）。`EsSize` / `EsRect` の `Inflate` / `Deflate` の引数 |
-| `Geometry.EsRectEdges` | 矩形の 4 辺（上・下・左・右）の矩形を保持する固定長コンテナ（128 バイト）。`EsRect.ResolveInnerEdges` の戻り値であり、毎フレームの描画計画の解決で配列確保を避けるために使う |
-| `EsPlatformHandle` | UI フレームワーク非依存のネイティブウィンドウ識別子（座標・寸法ではないため `Geometry` ではなくルート直下） |
-| `Imaging.EsBitmap` | 複数のビットマップ種別を横断する軽量なユニバーサルビットマップラッパー（BGRA8888・Premul）。**自前のピクセルバッファ（`NativeMemory.AlignedAlloc` の 64 バイト整列）を所有**し、外部パッケージに依存しない（Skia との相互変換は [`Platform.Skia`](../Platform.Skia/README.md) が担う） |
-| `Imaging.ImageDrawMode` | 画像を描画先の領域へ配置する方法（縦横比を保つ `Uniform` / 領域全体へ引き伸ばす `Fill`） |
-| `Imaging.ImageDrawMath` | 画像を描画先の領域へ配置する矩形の計算（純粋関数）。UI ごとに異なる描画側は本クラスの結果を使う |
-| `Imaging.DrawingColorExtensions` | 描画色の判定（`IsVisible`＝アルファが 0 より大きいか）。「アルファ 0 は描かない」の判定を単一所有する |
-| `LoggerFallback` | ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー（`logger.OrNullLogger()`）。「ロガー未設定（null）は出力なし」の規則を単一所有し、各コントロール・サービスの `?? NullLogger.Instance` を排除する |
-
-各 UI 実装は、自身の型とコア型を相互変換する Interop 層（例: Avalonia 版の `EsKeyAvaloniaInterop` / `EsWindowStateAvaloniaInterop` / `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop` / `ColorAvaloniaInterop`）を個別に提供します。
-
-**色の表現**: コアの色型は `System.Drawing.Color`（`System.Drawing.Primitives`。共有フレームワーク同梱でクロスプラットフォーム）です。`EsBitmap` のピクセル API もこの型を使用します。Skia の描画 API へ渡す場合の変換（`ToSKColor`）は [`Platform.Skia`](../Platform.Skia/README.md) が単一所有します。
-
-サービス抽象（`Native/`）とその **Windows 実装（`Native/Win/`）** を同一プロジェクトに置きます。**実行時のプラットフォーム分岐（ファクトリ）を持たず**、ホスト（アプリ・コントロール）が `WinXxx` を生成して抽象型として注入します。
+## 使い方
 
 ```csharp
-// ホスト（Windows 前提）が既定実装を生成して注入する
+using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Geometry;
+
+// 幾何（DIP 相当の値型。UI の座標型は境界で 1 行変換する）
+var rect = EsRect.FromLTRB(10, 20, 110, 120);
+var center = rect.Center;                             // EsPoint
+var inside = rect.ClampToArea(new EsSize(200, 100));  // 領域内へクランプ
+
+// 座標系の変換ポート（画像レイアウト・スクロール・スケーリング）
+var port = CoordTransform.ImageLayout(() => new EsSize(800, 600), new EsSize(1920, 1080));
+var dip = port.Forward(new EsPoint(100, 100));
+```
+
+```csharp
+// ホスト（Windows 前提）が OS サービスの既定実装を生成して注入する
 services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKeyService<CaptureType>());
 ```
 
-テストは同じ抽象を実装したモックを注入できるため、Win32 環境を必要としません。
+## 含まれるもの
 
-## 依存方向
-
-```text
-Platform.AvaloniaUI / Platform.MewUI（UI アダプタ）
-  └──> Platform.Core（本プロジェクト。Native/ 配下が Win32 実装を担う）
-```
-
-本プロジェクトが UI フレームワークへ依存することはありません。
-
-### 依存の判定基準（本プロジェクトの存在理由）
-
-本プロジェクトは**「このソリューション以外でもそのまま使える型」**だけを置きます（`Native/` 配下だけが例外です）。判定は依存で機械的に行います。
-
-| 基準 | 内容 |
+| グループ | 型 |
 | --- | --- |
-| **外部 PackageReference なし** | `.NET 標準ライブラリ`（`System.*`）と **Microsoft 公式パッケージ**（`Microsoft.*`）は許容する。それ以外の外部パッケージは**参照しない**（違反は `.work/check-packages.ps1` が検出する） |
-| **UI フレームワーク非依存** | Avalonia / MewUI / WinUI / WinForms を参照しない |
-| **ソリューション固有の概念を持たない** | 特定のアプリ・コントロールに固有の型は置かない（そのような型は各コントロールの層へ置く） |
-| **OS 依存なし** | Win32 P/Invoke を含まない（`Native/` 配下の責務） |
+| キーと入力 | `EsKey` / `EsWindowState` / `HotKeyModifiers` / `HotKeySetting` / `CaptureType` |
+| 幾何 | `EsPoint` / `EsSize` / `EsVector` / `EsRect` とその整数版、`EsThickness` / `EsRounding` / `EsAxis` |
+| 座標変換 | `ICoordTransform` / `CoordTransform` / `ScrollMath` / `DpiScaler` |
+| 画像 | `EsBitmap`（自前のピクセルバッファ） / `ImageDrawMath` / `ImageDrawMode` |
+| OS サービス抽象 | `ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>` |
+| Windows 実装 | `Native.Win.*`（Win32 P/Invoke。ホストが生成して注入する） |
+| 補助 | `EsPlatformHandle` / `LoggerFallback` / `DrawingColorExtensions` |
 
-**`Native/` 配下は上記の「可搬性」の基準から除外します**（Windows 限定の実装を、抽象と同じ場所で保守するための例外です）。Win32 P/Invoke と `System.Drawing.Common`（`System.Drawing.Bitmap` を扱う `Native.Imaging`）は `Native/` 配下だけが持ちます。
+各 UI 実装は、自身の型とコア型を相互変換する Interop 層（例: `Platform.AvaloniaUI` の `EsGeometryAvaloniaInterop` / `EsKeyAvaloniaInterop`）を個別に提供します。
 
-**Skia は「外部パッケージ」に該当するため、本プロジェクトは SkiaSharp に依存しません**（Skia への依存は [`Platform.Skia`](../Platform.Skia/README.md) が単一所有します）。
+## 依存
+
+- 外部パッケージは Microsoft 公式のみです（`Microsoft.Extensions.Logging.Abstractions`、`Native/Imaging` の `System.Drawing.Common`）。
+- UI フレームワーク（Avalonia / MewUI / WinUI / WinForms）と SkiaSharp を参照しません（Skia への依存は [`Platform.Skia`](../Platform.Skia/README.md) が単一所有する）。
+- 依存方向は `Platform.AvaloniaUI` / `Platform.MewUI` → 本プロジェクトの一方向です。
+
+判定基準と設計判断は [`docs/SPEC_System.md`](docs/SPEC_System.md) を参照してください。
+
+## カスタマイズ
+
+| 差し替えたいもの | 方法 |
+| --- | --- |
+| OS サービスの実装 | `Native.*` の抽象を実装し、ホストで注入する（Windows 以外・テスト用のモック） |
+| 各 UI の型との相互変換 | Interop 層を自作する（`Platform.AvaloniaUI` の `Es*Interop` が実装例） |
+| 画像の描画 | 描画は各 UI が行う（本プロジェクトは `EsBitmap` と配置計算だけを提供する） |
 
 ## ビルド
 
@@ -88,10 +67,16 @@ dotnet build src/Platform.Core/src/Platform.Core.csproj
 
 ## テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。
-
 ```powershell
 dotnet test src/Platform.Core/tests/Platform.Core.Tests.csproj
 ```
 
-詳細な設計は `SPEC_System.md`、公開 API は `SPEC_ExtFunc.md` を参照してください。
+## ドキュメント
+
+- [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
+- [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・依存の判定基準・設計判断
+- [`../README.md`](../README.md) — リポジトリ全体の層構成
+
+## ライセンス
+
+MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）

@@ -1,9 +1,9 @@
 # Platform.Core システム仕様書
 
-## 概要
-
-`Platform.AvaloniaUI`（Avalonia UI 実装）と将来の MewUI 実装が共有する、UI フレームワーク非依存の型を提供するライブラリです。
+`Platform.AvaloniaUI`（Avalonia UI 実装）と `Platform.MewUI`（MewUI 実装）が共有する、UI フレームワーク非依存の型を提供するライブラリです。
 SaveEvidence のマルチ UI 対応（Avalonia UI / MewUI）における、共有基盤（Core）分割の第一段階として作成されました。
+
+公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
 
 ## 技術スタック
 
@@ -107,6 +107,17 @@ graph LR
 `EsRectInt`）。整数であることは「画面物理ピクセル」を意味しない（画像ピクセルも整数である）ため、単位が読む側に
 必要な箇所はドキュメントに明記します。
 
-## ライセンス
+## 依存の判定基準（本プロジェクトの存在理由）
 
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）
+本プロジェクトは**「このソリューション以外でもそのまま使える型」**だけを置きます（`Native/` 配下だけが例外です）。判定は依存で機械的に行います。
+
+| 基準 | 内容 |
+| --- | --- |
+| **外部 PackageReference なし** | `.NET 標準ライブラリ`（`System.*`）と **Microsoft 公式パッケージ**（`Microsoft.*`）は許容する。それ以外の外部パッケージは**参照しない**（`.NET` 以外は Microsoft 公式のみ） |
+| **UI フレームワーク非依存** | Avalonia / MewUI / WinUI / WinForms を参照しない |
+| **ソリューション固有の概念を持たない** | 特定のアプリ・コントロールに固有の型は置かない（そのような型は各コントロールの層へ置く） |
+| **OS 依存なし** | Win32 P/Invoke を含まない（`Native/` 配下の責務） |
+
+**`Native/` 配下は上記の「可搬性」の基準から除外します**（Windows 限定の実装を、抽象と同じ場所で保守するための例外です）。Win32 P/Invoke と `System.Drawing.Common`（`System.Drawing.Bitmap` を扱う `Native.Imaging`）は `Native/` 配下だけが持ちます。
+
+**Skia は「外部パッケージ」に該当するため、本プロジェクトは SkiaSharp に依存しません**（Skia への依存は `Platform.Skia` が単一所有します）。

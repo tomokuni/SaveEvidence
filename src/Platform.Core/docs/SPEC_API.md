@@ -1,8 +1,24 @@
-# Platform.Core 外部機能仕様書
+# Platform.Core API リファレンス
 
-UI フレームワーク非依存の共有ライブラリとして、以下の公開 API を提供します。
+UI フレームワーク非依存の共有ライブラリが提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
-## 公開型
+## 1. 名前空間と型
+
+| 名前空間 | 型 | 用途 |
+| --- | --- | --- |
+| `EsUtil.Platform.Core` | `EsKey` / `EsWindowState` / `HotKeyModifiers` / `HotKeySetting` / `CaptureType` / `EsPlatformHandle` / `LoggerFallback` | キーと入力・ウィンドウ状態・ホットキー・ロガーの補助 |
+| `.Geometry` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` とその整数版、`EsThickness` / `EsRounding` / `EsAxis` | DIP 相当の幾何値型と領域の規則 |
+| `.Coord` | `ICoordTransform` / `CoordTransform` / `ScrollMath` / `DpiScaler` / `CoordTransformExtensions` | 座標系の変換ポートとスクロール・DPI の純粋計算 |
+| `.Imaging` | `EsBitmap` / `ImageDrawMode` / `ImageDrawMath` / `DrawingColorExtensions` | ピクセルコンテナと画像配置の計算 |
+| `.Native` | `ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>` / `ElementFinderResults` | OS サービスの抽象（UI 非依存） |
+| `.Native.Win` | `WinCaptureService` / `WinCursorService` / `WinWindowService` / `WinElementFinder` / `WinCursorOverrideGuard` / `WinGlobalHotKeyService<T>` | 上記抽象の Windows 実装（ホストが生成して注入する） |
+| `.Native.Imaging` | `EsBitmapDrawingExtensions` | `System.Drawing.Bitmap` との相互変換（Windows 専用） |
+
+可視性は public のみを記載します（`internal` は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照）。
+
+## 2. 公開 API
+
+公開型を 1 型 1 節で記載します。型名の接頭辞は名前空間を表します（`Coord.` / `Geometry.` / `Imaging.` / `Native.` を省略した型はルート名前空間）。
 
 ### `EsKey`（enum）
 
@@ -440,7 +456,7 @@ public readonly record struct ElementFinderResults(
 
 > `CreateUninitialized` は全行を書く相互変換（System.Drawing / Avalonia / Skia）が使うために公開しています。書かない領域が残る用途では `Create` を使います。
 
-**Skia との相互変換**（`ToSKBitmap` / `ToEsBitmap`）は SkiaSharp へ依存するため [`Platform.Skia`](../Platform.Skia/README.md) の `EsBitmapSkiaExtensions` が提供します（`ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製。所有権はコア側に残ります）。
+**Skia との相互変換**（`ToSKBitmap` / `ToEsBitmap`）は SkiaSharp へ依存するため [`Platform.Skia`](../../Platform.Skia/README.md) の `EsBitmapSkiaExtensions` が提供します（`ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製。所有権はコア側に残ります）。
 
 **プロパティ・ピクセル操作・その他**:
 
@@ -467,6 +483,48 @@ public readonly record struct ElementFinderResults(
 
 `System.Drawing.Color`（`System.Drawing.Primitives`）のみに依存するため、**外部パッケージなしで Windows 以外でも動作します**。Skia との変換は `Platform.Skia`、System.Drawing.Bitmap との変換を含む Windows 専用の拡張は `Native.Imaging.EsBitmapDrawingExtensions` が提供します。
 
-## 利用側の注意
+## 3. 使用例
 
-本プロジェクトは UI フレームワークへの依存を一切持ちません。Avalonia 等の UI 実装側で `EsKey` と自身のキー型を相互変換する Interop 層（例: `Platform.AvaloniaUI` プロジェクトの `EsKeyAvaloniaInterop`）を用意して利用してください。
+### 3.1 幾何と座標変換
+
+```csharp
+using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Geometry;
+
+// 幾何（DIP 相当の値型。UI の座標型は境界で 1 行変換する）
+var rect = EsRect.FromLTRB(10, 20, 110, 120);
+var center = rect.Center;                             // EsPoint
+var clamped = rect.ClampToArea(new EsSize(200, 100)); // 領域内へクランプ
+
+// 座標系の変換ポート（画像レイアウト・スクロール・スケーリング）
+var port = CoordTransform.ImageLayout(() => new EsSize(800, 600), new EsSize(1920, 1080));
+var dip = port.Forward(new EsPoint(100, 100));
+```
+
+### 3.2 OS サービスの注入（ホスト）
+
+```csharp
+// 実行時のプラットフォーム分岐を持たないため、ホストが具象を生成して抽象型として注入する
+services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKeyService<CaptureType>());
+```
+
+### 3.3 ロガーの null 吸収
+
+```csharp
+private readonly ILogger _log = logger.OrNullLogger();   // logger が null でも安全
+```
+
+### 3.4 ピクセルコンテナ
+
+```csharp
+using var bitmap = EsBitmap.Create(1920, 1080);          // 全ピクセル透明
+bitmap.Clear(b: 0, g: 0, r: 255, a: 255);                 // 赤で塗りつぶし
+using var region = bitmap.Crop(new EsRectInt(10, 20, 800, 600));
+```
+
+## 4. 制限事項
+
+- 本プロジェクトは UI フレームワークへ依存しません。UI 型との相互変換は、各 UI 実装の Interop 層（例: `Platform.AvaloniaUI` の `EsGeometryAvaloniaInterop`）を用意して境界で行います。
+- 実行時のプラットフォーム分岐（ファクトリ）を持ちません。OS サービスの既定実装はホストが生成して抽象型として注入します（テストはモックを注入できます）。
+- `Native/` 配下（Win32 P/Invoke・`System.Drawing.Common`）は Windows 専用です。
+- 描画は本プロジェクトの対象外です（`EsBitmap` と配置計算だけを提供し、描画 API は各 UI が呼びます）。
