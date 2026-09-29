@@ -1,6 +1,6 @@
 # Feature.Marquee.Core システム仕様書
 
-`MarqueeControl`（ドラッグで矩形を選び、移動・リサイズできるコントロール）の **UI 非依存の計算層**の構造・依存・例外処理・コンポーネント構成を記載します。外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
+`MarqueeControl`（ドラッグで矩形を選び、移動・リサイズできるコントロール）の **UI 非依存の計算層**の構造・依存・例外処理・コンポーネント構成を記載します。公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
 
 ## 1. システム概要
 
@@ -197,8 +197,43 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.Bounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
 | 描画面の原点 | コアは原点が常に (0, 0) である前提で幾何を返す（親の座標を混ぜるとハンドルがずれるため、描画領域は原点を持たない `EsSize` で受ける） |
 
-## 10. ライセンス
+## 10. ログ
 
-もう一方のコア（`Feature.Loupe.Core`）との機能差に由来する非対称は、README の「機能差に由来する非対称（もう一方のコアとの違い）」を参照してください。
+ロガーは `Marquee.Log` で受け取り、**入力の判断**（`[Feature.Marquee.Core] MouseDown` / `MouseUp` / `DoubleClick` / `DragStart` / `KeyDown` / `ConfirmRequested` / `CancelRequested` 等。Debug。位置の記録は Trace）と**設定の変更**（`[Feature.Marquee.Core] Setting: {名前} {前} → {後}`。Debug）を出力します。ロガー未設定（null）は出力なしです。
 
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。
+| 契機 | 出力 |
+| --- | --- |
+| `Options` の change | 変化した項目だけ（`HandleSize` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`） |
+| `HighlightRect` の set | 有無が変化したときだけ（`False → True` / `True → False`） |
+| `DomainToDipScaling` の set | 変化したときだけ |
+
+**差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。**描画にだけ必要な設定（外観・表示スケーリング係数）の変更ログは提示層が所有します**（`Feature.Marquee.Presenter` の `MarqueePresenterLogMessage`）。
+
+**メッセージの接頭辞は、そのログを定義しているプロジェクト名（コアは `[Feature.Marquee.Core]`、提示層は `[Feature.Marquee.Presenter]`）とします**（接頭辞で出力元の層を読み分けられるようにする。全層が同じ接頭辞だと、ログを見てもどのアセンブリの定義が出力したかを特定できない）。
+
+## 11. 機能差に由来する非対称（もう一方のコアとの違い）
+
+本コアと `Feature.Loupe.Core` は同じ規約（`UI → Presenter → Core → Platform.Core` の一方向依存、幾何はコアが・外観と描画計画は提示層が所有）で作られています。揃えない（揃えると害になる）違いは機能差に由来するもので、以下に列挙します。
+
+| 非対称 | Marquee | Loupe | 理由 |
+| --- | --- | --- | --- |
+| 描画パイプラインの段数 | 2 段（`CreateRequest` → `ResolveGeometry`） | 3 段（`ResolveLayout` → `ResolveGeometry`） | 本コアは親セル全面へ重ねるため配置の余地がない（`LoupeLayout` 相当を持たない）。配置先はホストの親セル全面であり、位置を決める入力がコアに無い |
+| 幾何の解決の入力 | `CreateRequest(EsSize clientSize)`（描画領域＝座標空間。表示サイズと同じ） | `ResolveGeometry(double displaySize, EsSize? availableSize)`（一辺の表示サイズ＝親パネルのクランプ結果と、描画面＝ビットマップの領域が別） | 本コアは任意矩形の描画領域へ直接描く（正方形の表示サイズと描画面の区別が無い） |
+| 入力の通知と効果ポート | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）／設定に対話パラメータ（`MinSelectionSize` / `HandleHitRadius` / `ClampToDomainBounds`）／**コアが再描画を要求**（`RequestRedraw`）／ロガーはセッションが保持 | 持たない（状態はホストが設定するだけ。設定は表示のみ。変換の設定は再描画を要求せず、表示位置の再計算は UI が行う。ロガーはファサード自身が保持） | ルーペは入力の解釈も効果ポートも持たない（ホストが状態を設定するだけであり、再描画の要求先が無い） |
+| ラベル文言プロバイダ | 提示層が持つ（`MarqueePresenter.SizeLabelOverrideProvider` / `SizeLabelDisplayScalingProvider`） | 持たない（文言は提示層の `LoupePresenter`（`LabelTexts` partial） が常に生成する） | 本コアのサイズラベルはホストが文言を差し替えたくなる（自動切り出しの候補サイズ等） |
+| 寸法の型 | `double`（DIP のまま。線を描く） | `int`（物理ピクセルへ換算。塗る） | 描画プリミティブが違う（線 / 塗り） |
+| 設定型の数 | 1 型（`MarqueeOptions`） | 1 型（`LoupeOptions`） | 装飾の設定をコアから提示層（外観）へ移したため、両コアとも 1 型 |
+| 幾何の粒度 | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker`） | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 描画プリミティブが違う（線の座標 / 塗る矩形の列） |
+| 幾何の解決の入力の座標変換ポート | 入力が保持する（`Port` ＋ 未指定時の `DomainToDipScaling`。`ResolvedPort` / `ToDipRect` が自分で解決する） | 入力に持たない（ポートは表示位置の解決だけに使う） | 本コアは選択矩形をドメイン → DIP へ変換して描き、その DIP はホストの座標系で決まる（ルーペは自身の物理ピクセル面で完結する） |
+| 下地の層 | 持たない | 提示層が描画面全体をペーストボード色で塗る | 本コアは自身の表面へ直接描き、消去はフレームワークが行う（ルーペは描画先のビットマップを自分で置き換える） |
+| 描画完了の通知の内容 | `MarqueeRenderedEventArgs`（描画計画: 層・穴あけ矩形・文言） | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | ホストが重ね描きするために必要な情報が違う（選択矩形の所在 / 切り出し領域と倍率） |
+| `Limits` の追加役割 | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`。public） | 安全域と補正のみ | ラベルの表示スケールは本コア固有の概念 |
+| 区画数の計算 | 持たない | `LoupeGeometry.CaptureSize`（導出プロパティ）が持つ | 切り出し領域の一辺と十字線の交点が「余りを 1 区画として数える」規則を共用する |
+| 選択の幾何 | `Selection/`（`MarqueeSelection`）を持つ | 持たない | ルーペは選択操作を持たない |
+| テスト補助（スパイ） | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | `RecordingLogger` のみ | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
+
+## 12. 名称（Marquee の由来）
+
+`Marquee` は**マーキー選択**（ドラッグで矩形の範囲を指定する操作）の標準語に由来する名前です（Photoshop の矩形マーキー、Qt の `QRubberBand`、Windows Explorer のラバーバンド選択が同じ操作）。
+
+本コアの型は WinForms / WinUI3 / Avalonia / MewUI / .NET 10 BCL のいずれとも型名が衝突しません（実測）。UI を追加するときに注意するのは型名ではなく、色型とコントロール基底の境界変換です。

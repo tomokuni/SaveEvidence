@@ -1,30 +1,18 @@
-# Feature.Marquee.Core 外部機能仕様書
+# Feature.Marquee.Core API リファレンス
 
-`MarqueeControl`（ドラッグで矩形を選び、移動・リサイズできるコントロール）の **UI 非依存の計算層**が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト）から見える情報のみを記載し、内部実装の詳細は記載しません。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
+`MarqueeControl`（ドラッグで矩形を選び、移動・リサイズできるコントロール）の **UI 非依存の計算層**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
-## 1. 提供機能
-
-| 機能 | 提供元 | 説明 |
-| --- | --- | --- |
-| 選択操作の状態機械 | `Marquee` | 押下・移動・解放・キー入力を通知すると、状態遷移の判断（nudge の開始/終了・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセル・エコー移動の抑制）を行い、効果と通知を返す |
-| 幾何の解決 | `Marquee.ResolveGeometry` | 描画領域のサイズを渡すと、1 フレーム分の幾何（穴あけ矩形・ハンドル・始点マーカー・マウス位置）を返す。**穴あけ矩形の優先順（ハイライト → 選択）と閉区間の扱いはコアが単一所有する** |
-| 描画計画の解決（本コアの対象外） | 提示層 `Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` | 幾何に外観（色・フォント・枠線の太さ・表示可否）を重ねた描画計画（`MarqueeDrawPlan`）は提示層が単一所有する（本コアは描画 API も描画ポートも色も持たない） |
-| 効果の適用 | `IMarqueeEffects` | フォーカス・再描画・カーソル操作・カーソル形状・ポインターキャプチャ・画面座標変換の要求を UI 実装が受ける（不要なメンバーの空実装は `MarqueeEffectsBase` を継承すれば省略できる） |
-| 通知 | `Marquee.Notified` | 選択の開始/変更/確定/キャンセル・追従位置の移動・確定/キャンセル要求を `MarqueeNotice` で通知する |
-| 外部からの状態操作 | `Marquee` | 選択の復元・対話状態の初期化・確定/キャンセルの要求・ハイライト矩形の設定を API から実行できる |
-| 座標変換 | `Marquee` / `ICoordTransform` | ドメイン座標（利用者が定める座標系）とローカル DIP の相互変換と、ドメイン境界の指定 |
-| ラベルの文言と基準点 | 提示層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`（`LabelPlan` partial） | サイズラベルの書式と表示スケール、カーソル座標ラベルの文言と基準点、実寸から配置矩形への写像（本コアはマウス位置という素材だけを返す） |
-
-### 前提条件
+## 1. 前提条件
 
 - 本コアは UI フレームワークに依存しません。UI 固有の型は利用者（UI 実装）が境界で変換します。
 - 座標は `EsPoint` / `EsRect` / `EsSize` / `EsKey`（`EsUtil.Platform.Core`）で扱います。
 - カーソル操作は `ICursorService` 抽象にのみ依存します（`null` の場合は何もしません）。
 - **本コアが返すのは幾何だけです**。文言・表示可否・描画順・色は提示層（`Feature.Marquee.Presenter`）が単一所有します。**描画と実寸測定**は利用者（UI 実装）が行います（実寸は描画 API でしか測れないため）。
+- **装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。装飾は選択矩形コントロール単体の概念ではなく、組み込み先の表示であるため、提示層が単一所有します。
 
-## 2. 公開 API 一覧
+## 2. 公開 API
 
-可視性は public のみを記載します（`internal` は [SPEC_System](SPEC_System.md) の可視性ポリシーを参照）。
+可視性は public のみを記載します（`internal` は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照）。型名の接頭辞は名前空間を表します（`Contract.` / `Drawing.` / `Interaction.` / `Setting.` を省略した型はルート名前空間）。
 
 ### `EsUtil.Feature.Marquee.Core`
 
@@ -173,7 +161,33 @@
 | `KeyDown` の矢印キー | 選択済みかつマウス非押下の場合は nudge しない（領域作成後の nudge はドラッグ中のみ） |
 | `Release` | 最小サイズ未満の矩形はキャンセル扱い |
 
-## 4. 座標系
+## 4. 使用例
+
+```csharp
+using EsUtil.Feature.Marquee.Core;
+using EsUtil.Feature.Marquee.Core.Setting;
+
+var marquee = new Marquee(effects, cursorService, new MarqueeOptions { HandleSize = 8 });
+marquee.Log = logger;                                          // null は NullLogger へ吸収される
+marquee.SetCoordTransform(CoordTransform.Identity);            // ドメイン境界（画像サイズ等）
+
+// 入力の通知（効果の適用までファサードが行う）
+marquee.Press(new EsPoint(100, 100), clickCount: 1);
+marquee.Move(new EsPoint(400, 300));
+var handled = marquee.KeyDown(EsKey.Right, cursorPosition: null);   // nudge・Escape・Enter
+marquee.Release(new EsPoint(400, 300));
+
+// 1 フレーム分の幾何（描画領域のサイズを渡す。穴あけ矩形・ハンドル・マーカー）
+var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(800, 600)));
+```
+
+```csharp
+// 描画計画（装飾・文言・層の順序）の解決は提示層（Feature.Marquee.Presenter）が行う
+var presenter = new MarqueePresenter(new Marquee(effects));
+var plan = presenter.ResolveDrawPlan(new EsSize(800, 600), MeasureText);
+```
+
+## 5. 座標系
 
 | 座標系 | 用途 |
 | --- | --- |
@@ -184,7 +198,7 @@
 - ドメイン境界（`ICoordTransform.Bounds`）は `ClampToDomainBounds` が有効な場合のクリップ範囲です。
 - **コアは描画面の原点が常に (0, 0) である前提**で幾何を返します（親の座標を混ぜるとハンドルがずれるため、描画領域は原点を持たない `EsSize` で受けます）。
 
-## 5. 制限事項
+## 6. 制限事項
 
 - ホイール操作（Ctrl+ズーム / スクロール）は本コアに含みません（組み込み先が存在して初めて意味を持つ処理であるため、UI 層（ホスト）がビューポートへ転送します）。
 - ビューポートの変化の通知は本コアに含みません（同じ理由で UI 層（ホスト）が持ち、変化を検知したら `RefreshOverlay()` を呼びます）。
@@ -194,22 +208,3 @@
 - 文言（サイズラベルの書式・カーソル座標ラベルの文字列）は本コアに含みません（提示層の `MarqueePresenter`（`LabelTexts` partial） が単一所有します。本コアはマウス位置という素材だけを返します）。
 - 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。ホストが文言の生成と描画を行います。
 
-## 6. ログ
-
-ロガーは `Marquee.Log` で受け取り、**入力の判断**（`[Feature.Marquee.Core] MouseDown` / `MouseUp` / `DoubleClick` / `DragStart` / `KeyDown` / `ConfirmRequested` / `CancelRequested` 等。Debug。位置の記録は Trace）と**設定の変更**（`[Feature.Marquee.Core] Setting: {名前} {前} → {後}`。Debug）を出力します。ロガー未設定（null）は出力なしです。
-
-| 契機 | 出力 |
-| --- | --- |
-| `Options` の change | 変化した項目だけ（`HandleSize` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`） |
-| `HighlightRect` の set | 有無が変化したときだけ（`False → True` / `True → False`） |
-| `DomainToDipScaling` の set | 変化したときだけ |
-
-**差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。**描画にだけ必要な設定（外観・表示スケーリング係数）の変更ログは提示層が所有します**（`Feature.Marquee.Presenter` の `MarqueePresenterLogMessage`）。**本コアは外観を持たないため、外観の変更ログも持ちません**（外観はコアの計算・判断に入らない）。
-
-**メッセージの接頭辞は、そのログを定義しているプロジェクト名（コアは `[Feature.Marquee.Core]`、提示層は `[Feature.Marquee.Presenter]`）とします**（接頭辞で出力元の層を読み分けられるようにする。全層が同じ接頭辞だと、ログを見てもどのアセンブリの定義が出力したかを特定できない）。
-
-## 7. ライセンス
-
-もう一方のコア（`Feature.Loupe.Core`）との機能差に由来する非対称は、README の「機能差に由来する非対称（もう一方のコアとの違い）」を参照してください。
-
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。
