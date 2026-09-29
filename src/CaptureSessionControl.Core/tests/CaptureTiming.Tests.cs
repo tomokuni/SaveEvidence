@@ -13,11 +13,11 @@ public class CaptureTimingTests
     }
 
     [Fact]
-    public void OwnerOffScreenCoordinate_は画面外の負座標である()
+    public void OwnerOffScreenCoord_は画面外の負座標である()
     {
         // ヒットテスト・要素検出の対象外になる画面外配置
-        Assert.Equal(-32000, CaptureTiming.OwnerOffScreenCoordinate);
-        Assert.True(CaptureTiming.OwnerOffScreenCoordinate < 0);
+        Assert.Equal(-32000, CaptureTiming.OwnerOffScreenCoord);
+        Assert.True(CaptureTiming.OwnerOffScreenCoord < 0);
     }
 
     [Fact]

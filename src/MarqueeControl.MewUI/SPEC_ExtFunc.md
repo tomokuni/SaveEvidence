@@ -74,7 +74,7 @@ Avalonia 版と同一の挙動になります。
 
 | メソッド | 戻り値 | 説明 |
 | --- | --- | --- |
-| `SetCoordinateTransform(ICoordTransform?)` | - | ドメイン ↔ ローカル DIP の変換ポートを設定する。null の場合は等価変換（1 ドメインピクセル = 1 DIP・境界なし） |
+| `SetCoordTransform(ICoordTransform?)` | - | ドメイン ↔ ローカル DIP の変換ポートを設定する。null の場合は等価変換（1 ドメインピクセル = 1 DIP・境界なし） |
 | `SetSelection(EsRect)` | - | 選択矩形を外部状態から復元する。`Options.ClampToDomainBounds` が有効な場合は境界内へクリップしてから設定する |
 | `ResetSelection()` | - | 選択状態と nudge 状態を初期化する（nudge 中だった場合はカーソルを再表示する） |
 | `RequestConfirm()` | - | 確定要求を処理する（Enter と同じ条件）。ドラッグ中・未選択では何もしない |
@@ -192,7 +192,7 @@ var marquee = new MarqueeControl
 };
 
 // ドメイン境界（画像座標）を設定する
-marquee.SetCoordinateTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(width, height)));
+marquee.SetCoordTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(width, height)));
 
 // 確定した矩形を取得する
 marquee.SelectionCompleted += (_, e) => OnCaptured(e.Rect);
@@ -203,6 +203,6 @@ marquee.SelectionCompleted += (_, e) => OnCaptured(e.Rect);
 | 条件 | 動作 |
 | --- | --- |
 | カーソルサービスが null | Windows 既定実装（Win32）を使用する |
-| `SetCoordinateTransform(null)` | 等価変換（境界なし）を適用する |
+| `SetCoordTransform(null)` | 等価変換（境界なし）を適用する |
 | `Paint.CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する（例外は発生しない） |
 | `SetSelection` に境界外の矩形 | `Options.ClampToDomainBounds` が有効なら境界内へクリップする（例外は発生しない） |

@@ -1,4 +1,4 @@
-namespace EsUtil.Platform.Core.Coordinate;
+namespace EsUtil.Platform.Core.Coord;
 
 /// <summary>
 /// スクロールバーの範囲・ビューポートサイズの計算（純粋関数）。

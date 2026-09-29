@@ -339,7 +339,7 @@ UI が発明してはいけない運用方針値を単一所有します。
 | メンバー | 型 | 内容 |
 | --- | --- | --- |
 | `ScreenCaptureTimeout` | `TimeSpan` | 仮想スクリーン全体の取得のタイムアウト（既定 5 秒）。DWM 応答不能時に取得を待ち続けないための上限 |
-| `OwnerOffScreenCoordinate` | `int` | オーナーウィンドウを退避させる画面外の座標（`-32000`）。ヒットテスト・要素検出の対象外になる |
+| `OwnerOffScreenCoord` | `int` | オーナーウィンドウを退避させる画面外の座標（`-32000`）。ヒットテスト・要素検出の対象外になる |
 
 ### 7.17 CropBoundsMath.RoundToPixel
 

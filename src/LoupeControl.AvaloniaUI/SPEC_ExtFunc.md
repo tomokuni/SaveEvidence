@@ -26,7 +26,7 @@
     - [5.2 メソッド](#52-メソッド)
       - [5.2.1 RequestRender](#521-requestrender)
       - [5.2.2 Clear](#522-clear)
-      - [5.2.3 SetCoordinateTransform](#523-setcoordinatetransform)
+      - [5.2.3 SetCoordTransform](#523-setcoordtransform)
       - [5.2.4 RefreshPosition](#524-refreshposition)
     - [5.3 表示位置・サイズの自己計算（座標変換ポート方式）](#53-表示位置サイズの自己計算座標変換ポート方式)
       - [5.3.1 PositionOffset](#531-positionoffset)
@@ -326,10 +326,10 @@ void Clear()
 loupe.Clear();
 ```
 
-#### 5.2.3 SetCoordinateTransform
+#### 5.2.3 SetCoordTransform
 
 ```csharp
-void SetCoordinateTransform(ICoordTransform? port)
+void SetCoordTransform(ICoordTransform? port)
 ```
 
 論理座標（ドメイン）↔ 親パネル DIP の座標変換ポートを設定します（null = 等価変換。MarqueeControl と同方式）。
@@ -348,14 +348,14 @@ void RefreshPosition()
 
 ### 5.3 表示位置・サイズの自己計算（座標変換ポート方式）
 
-`CenterPoint`（ドメイン座標）と `SetCoordinateTransform` で設定したポートから、ルーペの表示位置と表示サイズを自己計算します。
+`CenterPoint`（ドメイン座標）と `SetCoordTransform` で設定したポートから、ルーペの表示位置と表示サイズを自己計算します。
 
 | 項目 | 計算方法 |
 | --- | --- |
 | 表示サイズ | 基本サイズ（`Options.RequestedSize`）を親パネルサイズにクランプ（親より大きい場合は縮小） |
 | 表示位置 | 中心 →（ポート）→ 親パネル DIP → カーソル右下 + `PositionOffset` → 親パネル内にクランプ（`RenderTransform` で反映） |
 
-再評価タイミング: `CenterPoint` 変更 / ポート設定（`SetCoordinateTransform`）/ `PositionOffset` 変更 / `Options` 変更 / `IsVisible` 変更 / レイアウト時（`ArrangeCore` オーバーライド）/ 外部要求（`RefreshPosition`）。
+再評価タイミング: `CenterPoint` 変更 / ポート設定（`SetCoordTransform`）/ `PositionOffset` 変更 / `Options` 変更 / `IsVisible` 変更 / レイアウト時（`ArrangeCore` オーバーライド）/ 外部要求（`RefreshPosition`）。
 
 #### 5.3.1 PositionOffset
 
@@ -454,7 +454,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 `LoupeControl` は画像生成と内部Image表示に加え、**表示位置・表示サイズを自己計算**します
 （座標変換ポート方式。Marquee と同様）。
 
-- 表示位置: `CenterPoint`（ドメイン座標）を `SetCoordinateTransform` で設定したポートで親パネル DIP へ変換し、カーソル右下 + `PositionOffset` + クランプした位置を `RenderTransform` で反映します。
+- 表示位置: `CenterPoint`（ドメイン座標）を `SetCoordTransform` で設定したポートで親パネル DIP へ変換し、カーソル右下 + `PositionOffset` + クランプした位置を `RenderTransform` で反映します。
 - 表示サイズ: `Options.RequestedSize`（基本サイズ）を親パネルサイズにクランプして内部管理します（ホストは基本サイズを設定するだけ）。
 - 再評価タイミング: `CenterPoint` 変更 / ポート設定 / `PositionOffset` 変更 / `Options` 変更 / レイアウト時（`ArrangeCore`）/ 外部要求（`RefreshPosition`）。
 
@@ -462,7 +462,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 - ポインター座標の取得
 - 元画像座標への変換
-- `SetCoordinateTransform` / `PositionOffset` の設定
+- `SetCoordTransform` / `PositionOffset` の設定
 - `LoupeControl` のVisual Treeへの追加・削除
 
 ## 9. 推奨使用パターン

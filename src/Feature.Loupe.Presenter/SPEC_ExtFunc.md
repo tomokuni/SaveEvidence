@@ -49,7 +49,7 @@
 | `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` | property | コアの環境値・拡大中心・オフセットを転送する |
 | `Log` | property | コアのロガーを転送する |
 | `Appearance` | property | 外観（本層が単一所有する） |
-| `SetCoordinateTransform(ICoordTransform?)` | method | コアへ委譲する |
+| `SetCoordTransform(ICoordTransform?)` | method | コアへ委譲する |
 | `ResolveLayout(EsSize)` | method | コアへ委譲する（表示サイズ + 位置） |
 | `ResolveDrawPlan(double displaySize, EsSize? availableSize, Func<string, double, EsSize> measureText)` | method（`virtual`） | 描画計画（`LoupeDrawPlan`）を解決する。`measureText` が null なら `ArgumentNullException` |
 

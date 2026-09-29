@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -109,7 +109,7 @@ public class MarqueeGeometryResolutionTests
     {
         var marquee = CreateMarquee();
         // Inverse（ドメイン → DIP）は 2 倍
-        marquee.SetCoordinateTransform(new CoordTransform(
+        marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
         marquee.SetSelection(new EsRect(10, 20, 100, 50));
 

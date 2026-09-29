@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.AvaloniaUI.Interop;
 
-namespace EsUtil.Platform.AvaloniaUI.Coordinate;
+namespace EsUtil.Platform.AvaloniaUI.Coord;
 
 /// <summary>コントロールローカル DIP と画面物理座標の変換を提供するヘルパー。</summary>
 /// <remarks>

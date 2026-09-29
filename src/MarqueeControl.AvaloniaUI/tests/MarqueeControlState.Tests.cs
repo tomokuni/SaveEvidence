@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Rect = Avalonia.Rect;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -205,7 +205,7 @@ public class MarqueeControlStateTests
     {
         var control = CreateControl();
         control.Options = control.Options with { ClampToDomainBounds = true };
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
+        control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         SelectionRectEventArgs? raised = null;
         control.SelectionChanged += (_, e) => raised = e;
 
@@ -220,7 +220,7 @@ public class MarqueeControlStateTests
     public void ClampToDomainBounds_ON切替時に既存の選択矩形がクリップされる()
     {
         var control = CreateControl();
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
+        control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
@@ -241,7 +241,7 @@ public class MarqueeControlStateTests
     public void ClampToDomainBounds_ON切替時に境界内の矩形は変更されない()
     {
         var control = CreateControl();
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
+        control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 

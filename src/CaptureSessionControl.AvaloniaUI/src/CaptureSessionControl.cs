@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Native;
 using EsUtil.Platform.Core.Imaging;
@@ -18,7 +18,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
     /// <b>薄い統括者</b>: 状態は MarqueeControl / LoupeControl / PlatformFactory が保持し、<br/>
 /// 本クラスは「組み立て・配線・ライフサイクル」のみを担う。<br/>
 /// - プレビュー状態（CropPreviewState）は持たない（スクロールは Marquee イベント / TranslatePoint から取得）。<br/>
-/// - 座標変換は EsUtil.Platform.Core.Coordinate の <see cref="ICoordTransform"/>（<see cref="CoordTransform"/> ファクトリ:
+/// - 座標変換は EsUtil.Platform.Core.Coord の <see cref="ICoordTransform"/>（<see cref="CoordTransform"/> ファクトリ:
 ///   <c>ImageLayout</c> / <c>ScrollOffset</c> / <c>Compose</c> 等）に委譲する。<br/>
 /// <br/>
 /// ログ: コンストラクタで注入された <see cref="ILogger"/> へ内部ログを転送する。<br/>

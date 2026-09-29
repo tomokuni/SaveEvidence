@@ -12,7 +12,7 @@ using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.SaveEvidence.ZoomView;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using EsUtil.Platform.AvaloniaUI.Interop;
@@ -346,7 +346,7 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>座標変換ポートを設定する（内包コントロールへ分配）。</summary>
     /// <param name="port">座標変換ポート。null で等価変換。</param>
-    public void SetCoordinateTransform(ICoordTransform? port) => _selectionOverlay.SetCoordinateTransform(port);
+    public void SetCoordTransform(ICoordTransform? port) => _selectionOverlay.SetCoordTransform(port);
 
     /// <summary>内包 Marquee へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
     /// <remarks><see cref="FadeMaskDragRectControl.FocusMarquee"/> へ委譲する。</remarks>

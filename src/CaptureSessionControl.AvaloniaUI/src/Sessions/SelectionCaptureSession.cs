@@ -128,7 +128,7 @@ internal sealed class SelectionCaptureSession(
             // 透明化してから画面外（仮想スクリーンの外）へ退避する
             window.Opacity = 0;
             window.Position = new PixelPoint(
-                CaptureTiming.OwnerOffScreenCoordinate, CaptureTiming.OwnerOffScreenCoordinate);
+                CaptureTiming.OwnerOffScreenCoord, CaptureTiming.OwnerOffScreenCoord);
         }
 
         /// <inheritdoc/>

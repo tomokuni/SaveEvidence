@@ -2,7 +2,7 @@ using BindingFlags = System.Reflection.BindingFlags;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Avalonia;
 using Avalonia.Controls;
@@ -17,7 +17,7 @@ using Xunit;
 using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Platform.AvaloniaUI.Interop;
-using EsUtil.Platform.AvaloniaUI.Coordinate;
+using EsUtil.Platform.AvaloniaUI.Coord;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI.Tests;
 
@@ -203,7 +203,7 @@ public class MarqueeControlTests
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
         control.Options = control.Options with { ClampToDomainBounds = true };
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
+        control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
@@ -226,7 +226,7 @@ public class MarqueeControlTests
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
         control.Options = control.Options with { ClampToDomainBounds = true };
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
+        control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
@@ -387,15 +387,15 @@ public class MarqueeControlTests
     }
 
     // ====================================================================
-    // 座標変換（SetCoordinateTransform）
+    // 座標変換（SetCoordTransform）
     // ====================================================================
 
     [AvaloniaFact]
-    public void SetCoordinateTransform_カスタム変換でドメイン座標が変わる()
+    public void SetCoordTransform_カスタム変換でドメイン座標が変わる()
     {
         var control = CreateControl();
         // ドメイン = DIP × 2（拡大）
-        control.SetCoordinateTransform(new CoordTransform(
+        control.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X * 2, p.Y * 2),
             p => new EsPoint(p.X / 2, p.Y / 2),
             () => null));
@@ -415,11 +415,11 @@ public class MarqueeControlTests
     }
 
     [AvaloniaFact]
-    public void SetCoordinateTransform_nullで等価変換にフォールバックする()
+    public void SetCoordTransform_nullで等価変換にフォールバックする()
     {
         var control = CreateControl();
 
-        control.SetCoordinateTransform(null);
+        control.SetCoordTransform(null);
 
         // 等価変換でもドラッグが動作する（例外なし）
         var window = Show(control);
@@ -440,7 +440,7 @@ public class MarqueeControlTests
     {
         var control = CreateControl();
         // Forward が常に (0,0) を返す変換（スケール 0）→ ToDomainRadius は HandleHitRadius にフォールバック
-        control.SetCoordinateTransform(new CoordTransform(_ => new EsPoint(0, 0), p => p, () => null));
+        control.SetCoordTransform(new CoordTransform(_ => new EsPoint(0, 0), p => p, () => null));
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
@@ -691,7 +691,7 @@ public class MarqueeControlTests
     {
         var control = CreateControl();
         control.Options = control.Options with { ClampToDomainBounds = true };
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
+        control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var window = Show(control);
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
@@ -1228,7 +1228,7 @@ public class MarqueeControlTests
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）。マウス位置と矩形の角がずれる状況を作る
         control.Options = control.Options with { ClampToDomainBounds = true };
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
+        control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         control.SetSelection(new Rect(20, 20, 60, 60));
         var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);

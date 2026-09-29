@@ -6,7 +6,7 @@ using EsUtil.SaveEvidence.Loupe.AvaloniaUI.Logging;
 using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
@@ -53,7 +53,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// - 入力: <see cref="Source"/> / <see cref="CenterPoint"/><br/>
 /// - 設定: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有。表示サイズ・拡大率・外観）<br/>
 /// - 環境: <see cref="DipToDeviceScaling"/>（DPI スケーリング係数）<br/>
-/// - 位置: <see cref="SetCoordinateTransform"/> / <see cref="PositionOffset"/> / <see cref="RefreshPosition"/><br/>
+/// - 位置: <see cref="SetCoordTransform"/> / <see cref="PositionOffset"/> / <see cref="RefreshPosition"/><br/>
 /// - ログ: <see cref="Log"/><br/>
 /// - イベント: <see cref="Rendered"/>（描画完了時に描画済み Bitmap と表示情報を通知。ホストが Bitmap に直接オーバーレイを描画できる）<br/>
 /// - 操作: <see cref="Clear()"/>（非表示にしてビットマップを解放） / <see cref="RequestRender()"/>（プロパティ変更を伴わない再生成要求）<br/>
@@ -149,9 +149,9 @@ public sealed class LoupeControl : Panel
     /// レイアウト変化に追従できる（イベント時の DIP キャッシュは使わない）。<br/>
     /// ポートの保持と、未設定（null）を等価変換として扱う規則はコア（ファサード）が単一所有する。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordTransform? port)
+    public void SetCoordTransform(ICoordTransform? port)
     {
-        _presenter.SetCoordinateTransform(port);
+        _presenter.SetCoordTransform(port);
         UpdatePosition();
     }
 

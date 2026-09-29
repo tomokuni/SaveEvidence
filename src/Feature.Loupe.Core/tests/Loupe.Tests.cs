@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -149,7 +149,7 @@ public class LoupeTests
     public void ResolveLayout_座標変換ポートを適用する()
     {
         var loupe = new Loupe() { CenterPoint = new EsPoint(10, 20) };
-        loupe.SetCoordinateTransform(CreateDoublingPort());
+        loupe.SetCoordTransform(CreateDoublingPort());
 
         var layout = loupe.ResolveLayout(ParentSize);
 
@@ -161,7 +161,7 @@ public class LoupeTests
     {
         var loupe = new Loupe() { CenterPoint = new EsPoint(10, 20) };
 
-        loupe.SetCoordinateTransform(null);
+        loupe.SetCoordTransform(null);
 
         var layout = loupe.ResolveLayout(ParentSize);
 
@@ -294,7 +294,7 @@ public class LoupeTests
     public void レイアウトと描画の幾何の解決はヒープを確保しない()
     {
         var loupe = new Loupe() { CenterPoint = new EsPoint(50, 60) };
-        loupe.SetCoordinateTransform(CreateDoublingPort());
+        loupe.SetCoordTransform(CreateDoublingPort());
 
         for (var i = 0; i < 100; i++)
         {

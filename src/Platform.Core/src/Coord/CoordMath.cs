@@ -1,4 +1,4 @@
-namespace EsUtil.Platform.Core.Coordinate;
+namespace EsUtil.Platform.Core.Coord;
 
 /// <summary>座標変換の純粋計算ヘルパー（プラットフォーム共通・単一実装・非公開）。</summary>
 /// <remarks>

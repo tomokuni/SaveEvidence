@@ -1,5 +1,5 @@
 using EsUtil.SaveEvidence.Marquee.MewUI;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
@@ -116,7 +116,7 @@ public class FadeMaskDragRectControlTests
     public void モード切替_ルーペの表示可否を切り替える(FadeMaskDragRectMode mode, bool expected)
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
         using var source = CreateSource();
         control.SetLoupeSource(source);
         control.SetLoupePosition(new EsPoint(5, 6));
@@ -427,27 +427,27 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void SetCoordinateTransform_選択矩形コントロールへ伝搬する()
+    public void SetCoordTransform_選択矩形コントロールへ伝搬する()
     {
         var control = new FadeMaskDragRectControl();
         var port = CreatePort();
 
-        control.SetCoordinateTransform(port);
+        control.SetCoordTransform(port);
 
         // 選択矩形コントロール（内包コントロール）が同じポートを受け取る
-        Assert.Same(port, GetCoordinatePort(control.Marquee));
+        Assert.Same(port, GetCoordPort(control.Marquee));
     }
 
     [Fact]
-    public void SetCoordinateTransform_nullは未設定として渡される()
+    public void SetCoordTransform_nullは未設定として渡される()
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
 
-        control.SetCoordinateTransform(null);
+        control.SetCoordTransform(null);
 
         // null（未設定）を倍率から解決する規則はコアが単一所有するため、本クラスは置換せずそのまま渡す
-        Assert.Null(GetCoordinatePort(control.Marquee));
+        Assert.Null(GetCoordPort(control.Marquee));
     }
 
     /// <summary>座標変換ポート（コアのファサードが内部保持）をリフレクションで取得する。</summary>
@@ -458,12 +458,12 @@ public class FadeMaskDragRectControlTests
     /// 提示層（Presenter）がコアを内包するため、提示層の内部フィールドを経由してコアまで辿る。<br/>
     /// 検証は Avalonia 版の複合コントロールテストと同じくリフレクションで行う。
     /// </remarks>
-    private static ICoordTransform? GetCoordinatePort(MarqueeControl control)
+    private static ICoordTransform? GetCoordPort(MarqueeControl control)
     {
         var anyInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
         var presenter = typeof(MarqueeControl).GetField("_marquee", anyInstance)!.GetValue(control)!;
         var core = presenter.GetType().GetField("_core", anyInstance)!.GetValue(presenter)!;
-        return (ICoordTransform?)core.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(core);
+        return (ICoordTransform?)core.GetType().GetField("_coordPort", anyInstance)!.GetValue(core);
     }
 
     // ====================================================================
@@ -474,7 +474,7 @@ public class FadeMaskDragRectControlTests
     public void ルーペ_画像未設定では表示しない()
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
 
         control.SetLoupePosition(new EsPoint(50, 60));
 
@@ -486,7 +486,7 @@ public class FadeMaskDragRectControlTests
     public void ルーペ_画像設定後は表示する()
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
 
         using var source = CreateSource();
         control.SetLoupeSource(source);
@@ -501,7 +501,7 @@ public class FadeMaskDragRectControlTests
     public void SetLoupeSource_解除すると非表示になる()
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
         using var source = CreateSource();
         control.SetLoupeSource(source);
         control.SetLoupePosition(new EsPoint(50, 60));
@@ -517,7 +517,7 @@ public class FadeMaskDragRectControlTests
     public void ClearLoupe_画像と中心を破棄する()
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
         using var source = CreateSource();
         control.SetLoupeSource(source);
         control.SetLoupePosition(new EsPoint(50, 60));
@@ -533,7 +533,7 @@ public class FadeMaskDragRectControlTests
     public void ルーペ_中心とオフセットの位置へ配置する()
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
         control.Options = control.Options with
         {
             Loupe = control.Options.Loupe with { RequestedSize = 100 },
@@ -560,7 +560,7 @@ public class FadeMaskDragRectControlTests
     public void ルーペ_中心座標ラベルの要素を配置する()
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
         control.Options = control.Options with { Loupe = control.Options.Loupe with { RequestedSize = 100 } };
 
         using var source = CreateSource();
@@ -589,7 +589,7 @@ public class FadeMaskDragRectControlTests
     public void ルーペ_親領域の右端を超える場合は内側へクランプする()
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
         control.Options = control.Options with
         {
             Loupe = control.Options.Loupe with { RequestedSize = 100 },
@@ -684,7 +684,7 @@ public class FadeMaskDragRectControlTests
     public void RefreshOverlay_例外なく完了する()
     {
         var control = new FadeMaskDragRectControl();
-        control.SetCoordinateTransform(CreatePort());
+        control.SetCoordTransform(CreatePort());
         control.SetSelection(new EsRect(10, 20, 100, 80));
 
         control.RefreshOverlay();

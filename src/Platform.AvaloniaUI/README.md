@@ -66,7 +66,7 @@ using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBit
 using EsUtil.Platform.Core;                     // サービス抽象 / コア値型
 using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
-using EsUtil.Platform.Core.Coordinate;          // ICoordTransform / CoordTransform
+using EsUtil.Platform.Core.Coord;          // ICoordTransform / CoordTransform
 using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt / EsPlatformHandle
 ```
 
@@ -100,7 +100,7 @@ guard.Attach(window);   // TopLevel → EsPlatformHandle の変換を仲介す�
 
 ### 座標変換ポート
 
-座標変換ポートは UI フレームワーク非依存のコア型として `Platform.Core`（`EsUtil.Platform.Core.Coordinate` 名前空間）が提供します。座標はコア幾何型（`EsPoint` / `EsSize` / `EsVector`）で扱います。
+座標変換ポートは UI フレームワーク非依存のコア型として `Platform.Core`（`EsUtil.Platform.Core.Coord` 名前空間）が提供します。座標はコア幾何型（`EsPoint` / `EsSize` / `EsVector`）で扱います。
 
 ```csharp
 // 等価変換（1 ドメイン = 1 DIP・無制限）
@@ -167,7 +167,7 @@ Platform.AvaloniaUI/
 │   ├── Platform.AvaloniaUI.csproj      # ライブラリプロジェクト（Avalonia / Avalonia.Skia）
 │   └── Platform/
 │       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
-│       ├── Coordinate/             # ScreenConverter（Avalonia の TopLevel に依存するため本プロジェクトに残す）
+│       ├── Coord/             # ScreenConverter（Avalonia の TopLevel に依存するため本プロジェクトに残す）
 │       ├── Imaging/                # 画像アダプタ（EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache / AvaloniaTextMeasure）
 │       └── Interop/                # コア型との相互変換（EsKeyAvaloniaInterop / EsWindowStateAvaloniaInterop / EsGeometryAvaloniaInterop / EsPlatformHandleAvaloniaInterop / ColorAvaloniaInterop / CursorOverrideGuardAvaloniaExtensions）
 └── tests/                          # 単体テスト

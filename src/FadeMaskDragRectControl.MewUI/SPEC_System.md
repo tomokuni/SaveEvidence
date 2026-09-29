@@ -116,7 +116,7 @@ classDiagram
         +Func~string?~? InfoTextProvider
         +Func~string?~? SizeLabelOverrideProvider
         +ILogger Log
-        +SetCoordinateTransform(port) void
+        +SetCoordTransform(port) void
         +SetSelection(rect) void
         +ClearSelection() void
         +SetLoupeSource(source) void
@@ -130,7 +130,7 @@ classDiagram
     }
     class MarqueeControl {
         <<MarqueeControl.MewUI>>
-        +SetCoordinateTransform(port) void
+        +SetCoordTransform(port) void
         +SetSelection(rect) void
         +ConfirmRequested
         +SelectionChanged
@@ -178,8 +178,8 @@ sequenceDiagram
 
     Host->>Facade: Mode = Crop
     Facade->>Drag: ShowFullOverlay = true / ShowHandles = true
-    Host->>Facade: SetCoordinateTransform(port)
-    Facade->>Drag: SetCoordinateTransform(port)
+    Host->>Facade: SetCoordTransform(port)
+    Facade->>Drag: SetCoordTransform(port)
     Note over Drag: 左ドラッグ（新規選択）
     Drag->>Facade: SelectionStarted
     Drag->>Facade: SelectionChanged(rect)

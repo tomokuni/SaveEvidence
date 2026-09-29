@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Core.Contract;
 using EsUtil.Feature.Marquee.Core.Drawing;
@@ -185,7 +185,7 @@ public class MarqueePresenter
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート。null の場合は等価変換。</param>
-    public void SetCoordinateTransform(ICoordTransform? port) => _core.SetCoordinateTransform(port);
+    public void SetCoordTransform(ICoordTransform? port) => _core.SetCoordTransform(port);
 
     /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
     /// <param name="localDip">ローカル DIP 座標。</param>

@@ -20,7 +20,7 @@
 ```csharp
 using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Presenter; // MarqueeAppearance（描画にだけ必要な外観）
 using EsUtil.Feature.Loupe.Presenter;   // LoupeAppearance（描画にだけ必要な色）
@@ -37,7 +37,7 @@ selection.MarqueeAppearance = MarqueeAppearance.Default with { OverlayColor = Sy
 selection.LoupeAppearance = LoupeAppearance.Default with { BackgroundColor = System.Drawing.Color.White };
 
 // ドメイン ↔ ローカル DIP の変換ポートを設定する（暗転マスク・選択矩形・ルーペで共用）
-selection.SetCoordinateTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(width, height)));
+selection.SetCoordTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(width, height)));
 
 // ルーペの拡大元画像を設定してから、中心を指定して表示する
 selection.SetLoupeSource(bitmap);
@@ -84,7 +84,7 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | `SizeLabelOverrideProvider` | サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
 | `DomainToDipScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` | DPI スケーリング（設定には含めない環境値。コードから動的設定） |
 | `Log` | 操作ログの出力先（null は `NullLogger`。内包するドラッグ選択コントロールとルーペへ伝搬する） |
-| `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定（ドラッグ選択・暗転マスクへ分配。null の場合は倍率からコアが解決する） |
+| `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを一括設定（ドラッグ選択・暗転マスクへ分配。null の場合は倍率からコアが解決する） |
 | `SetSelection` / `ClearSelection` | 選択状態の外部設定・クリア |
 | `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe` | ルーペの制御 |
 | `RequestConfirm` / `RequestCancel` | Enter / Escape 相当の確定・キャンセル要求 |

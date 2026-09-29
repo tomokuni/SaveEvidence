@@ -1,4 +1,4 @@
-namespace EsUtil.Platform.Core.Coordinate;
+namespace EsUtil.Platform.Core.Coord;
 
 /// <summary>座標変換ポート（<see cref="ICoordTransform"/>）の既定解決の共通ヘルパー。</summary>
 /// <remarks>

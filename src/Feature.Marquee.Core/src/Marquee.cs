@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using EsUtil.Feature.Marquee.Core.Contract;
@@ -56,7 +56,7 @@ public sealed partial class Marquee
     /// セッションは null を等価変換に置換して保持するため、<b>指定の有無（null かどうか）は本フィールドだけが保持する</b>。<br/>
     /// この区別が必要なのは、ポート未指定時に倍率（<see cref="DomainToDipScaling"/>）を使う規則をコアが単一所有するためである。
     /// </remarks>
-    private ICoordTransform? _coordinatePort;
+    private ICoordTransform? _coordPort;
 
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
     private double _domainToDipScaling = DomainToDipScalingDefault;
@@ -112,7 +112,7 @@ public sealed partial class Marquee
     /// <value>ドメイン → DIP の倍率。既定は 1.0。設定時は 0.1〜8.0 へ補正される（0 以下・等倍は等価変換として扱う）。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
-    /// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が設定されている場合は使われない（ポート優先。規則はコアが単一所有する）。<br/>
+    /// 座標変換ポート（<see cref="SetCoordTransform"/>）が設定されている場合は使われない（ポート優先。規則はコアが単一所有する）。<br/>
     /// 選択矩形と十字マーカーの描画はセッションのポートのみを使うため本値の影響を受けない<br/>
     /// （本値が影響するのはサイズラベル・座標ラベルの位置と寸法）。
     /// </remarks>
@@ -172,9 +172,9 @@ public sealed partial class Marquee
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
     /// 設定すると描画（選択矩形・ハンドル・十字線・外側の装飾）へ即時反映するため再描画を要求する。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordTransform? port)
+    public void SetCoordTransform(ICoordTransform? port)
     {
-        _coordinatePort = port;
+        _coordPort = port;
         _session.SetPort(port);
         _effects.RequestRedraw();
     }
@@ -282,7 +282,7 @@ public sealed partial class Marquee
             _session.NudgeActive,
             _session.MarkerPosition,
             _session.LastMousePosition,
-            _coordinatePort,
+            _coordPort,
             _domainToDipScaling,
             HighlightRect);
 

@@ -3,7 +3,7 @@ using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
 using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
@@ -207,9 +207,9 @@ public sealed class LoupeControl : Panel
     /// 保持と、未設定（null）を等価変換として扱う規則はコア（ファサード）が単一所有する。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化に追従する（設定時は再配置を要求する）。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordTransform? port)
+    public void SetCoordTransform(ICoordTransform? port)
     {
-        _presenter.SetCoordinateTransform(port);
+        _presenter.SetCoordTransform(port);
         InvalidateArrange();
     }
 

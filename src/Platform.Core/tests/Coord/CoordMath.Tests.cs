@@ -1,10 +1,10 @@
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests.Coordinate;
+namespace EsUtil.Platform.Core.Tests.Coord;
 
 /// <summary><see cref="CoordMath"/> の単体テスト（座標変換の純粋計算）。</summary>
-public class CoordinateMathTests
+public class CoordMathTests
 {
     // ====================================================================
     // CalculateUniformLayout（レターボックス計算の純粋ロジック）

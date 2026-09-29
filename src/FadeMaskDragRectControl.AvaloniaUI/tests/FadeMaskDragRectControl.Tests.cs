@@ -13,7 +13,7 @@ using EsUtil.Platform.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Loupe.Presenter;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using EsUtil.Feature.Marquee.Core.Setting;
@@ -25,7 +25,7 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 
 /// <summary><see cref="FadeMaskDragRectControl"/> の単体テスト（公開 API・配線・状態同期）。</summary>
 /// <remarks>
-/// 対象: <c>FadeMaskDragRectControl.cs</c>（公開 API: Mode / Options / SetCoordinateTransform /<br/>
+/// 対象: <c>FadeMaskDragRectControl.cs</c>（公開 API: Mode / Options / SetCoordTransform /<br/>
 /// SetSelection / ClearSelection / SetLoupePosition / イベント中継 / テスト用アクセサ）。<br/>
 /// パブリック API 経由で内包コントロール（Marquee / Loupe）への設定・状態同期・イベント中継を検証する。
 /// </remarks>
@@ -299,19 +299,19 @@ public class FadeMaskDragRectControlTests
     }
 
     // ====================================================================
-    // SetCoordinateTransform（ポートの一括分配）
+    // SetCoordTransform（ポートの一括分配）
     // ====================================================================
 
     [AvaloniaFact]
-    public void SetCoordinateTransform_内包コントロールへ同一ポートが分配される()
+    public void SetCoordTransform_内包コントロールへ同一ポートが分配される()
     {
         var control = new FadeMaskDragRectControl();
         var port = CoordTransform.Identity;
 
-        control.SetCoordinateTransform(port);
+        control.SetCoordTransform(port);
 
-        Assert.Same(port, GetCoordinatePort(control.Marquee));
-        Assert.Same(port, GetCoordinatePort(control.Loupe));
+        Assert.Same(port, GetCoordPort(control.Marquee));
+        Assert.Same(port, GetCoordPort(control.Loupe));
     }
 
     // ====================================================================
@@ -662,7 +662,7 @@ public class FadeMaskDragRectControlTests
     /// 選択矩形コントロールもルーペコントロールも提示層（Presenter）を保持し、その内部にコアのファサード（<c>_core</c>）を持つため、<br/>
     /// 検証では提示層の内部フィールドを経由してコアまで辿る。
     /// </remarks>
-    private static ICoordTransform? GetCoordinatePort(Control control)
+    private static ICoordTransform? GetCoordPort(Control control)
     {
         var anyInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
         var type = control.GetType();
@@ -672,7 +672,7 @@ public class FadeMaskDragRectControlTests
             ?? type.GetField("_presenter", anyInstance)!.GetValue(control)!;
         var core = presenter.GetType().GetField("_core", anyInstance)!.GetValue(presenter)!;
 
-        return (ICoordTransform?)core.GetType().GetField("_coordinatePort", anyInstance)!.GetValue(core);
+        return (ICoordTransform?)core.GetType().GetField("_coordPort", anyInstance)!.GetValue(core);
     }
 
     // ====================================================================

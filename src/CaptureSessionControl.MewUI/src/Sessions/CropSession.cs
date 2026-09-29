@@ -5,7 +5,7 @@ using EsUtil.SaveEvidence.FadeMaskDragRect;
 using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
@@ -290,7 +290,7 @@ internal sealed class CropSession
     {
         var image = _target.CurrentImage;
 
-        _selector.SetCoordinateTransform(new CoordTransform(
+        _selector.SetCoordTransform(new CoordTransform(
             forward: _view.ViewportToContent,
             inverse: _view.ContentToViewport,
             bounds: () => image is null ? null : CaptureClipMath.ImageSize(image)));

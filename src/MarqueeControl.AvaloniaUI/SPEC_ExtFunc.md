@@ -67,7 +67,7 @@ using EsUtil.Feature.Marquee.Presenter;    // MarqueeAppearance / MarqueePresent
 座標ポート（`ICoordTransform`）を使用する場合は、`Platform.Core` の名前空間も必要です。
 
 ```csharp
-using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform
+using EsUtil.Platform.Core.Coord; // ICoordTransform / CoordTransform
 using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize
 ```
 
@@ -156,14 +156,14 @@ marquee.Rendered += (_, e) =>
 
 ### 4.3 座標ポートの設定
 
-選択状態と nudge はドメイン座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。両者を変換する座標ポート（`ICoordTransform`）をホストが設定します。ポートの生成は `Platform.Core`（`EsUtil.Platform.Core.Coordinate`）の `CoordTransform` ファクトリ（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`）やホスト固有の実装で行います。座標はコア幾何型（`EsPoint` / `EsSize`）で扱うため、Avalonia 型を渡す場合は相互変換（`.ToEsSize()` 等）します。
+選択状態と nudge はドメイン座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。両者を変換する座標ポート（`ICoordTransform`）をホストが設定します。ポートの生成は `Platform.Core`（`EsUtil.Platform.Core.Coord`）の `CoordTransform` ファクトリ（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`）やホスト固有の実装で行います。座標はコア幾何型（`EsPoint` / `EsSize`）で扱うため、Avalonia 型を渡す場合は相互変換（`.ToEsSize()` 等）します。
 
 ```csharp
 // AreaSelect 例: ドメイン = 仮想スクリーンピクセル（= DIP × scaling・動的評価）
-control.SetCoordinateTransform(CoordTransform.DomainScale(() => scaling));
+control.SetCoordTransform(CoordTransform.DomainScale(() => scaling));
 
 // 等価変換（1 ドメイン = 1 DIP）
-control.SetCoordinateTransform(null);
+control.SetCoordTransform(null);
 ```
 
 未設定時は等価変換（1 ドメイン = 1 DIP）が使用されます。
@@ -267,7 +267,7 @@ marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.
 | --- | --- |
 | `SetSelection(Rect)` | 選択矩形をドメイン座標で復元する（`SelectionChanged` で通知。`Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
-| `SetCoordinateTransform(ICoordTransform?)` | ドメイン↔DIP 座標変換ポートを設定する（null = 等価変換） |
+| `SetCoordTransform(ICoordTransform?)` | ドメイン↔DIP 座標変換ポートを設定する（null = 等価変換） |
 | `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画とルーペ位置の再計算を要求。選択の状態は変更しない） |
 | `InvalidateRender()` | 描画内容の再解決と、図形・ラベルの再描画を要求する（**描画に関わる変更の唯一の入口**。図形は子の描画層が描くため、親の無効化だけでは更新されない） |
 | `RequestCancel()` | キャンセル要求を処理する（Escape キーと同じ条件。選択破棄後に `CancelRequested` を発火） |
@@ -362,7 +362,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 | 領域選択（ハンドル変形） | 固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限 |
 | 領域移動（Move ドラッグ・nudge） | 矩形全体が境界内に収まるようにシフト（サイズは維持） |
 
-クリップ範囲は `SetCoordinateTransform` のポート `Bounds`（`ICoordTransform.Bounds`）で指定します（null = 無制限の場合はクリップされません）。
+クリップ範囲は `SetCoordTransform` のポート `Bounds`（`ICoordTransform.Bounds`）で指定します（null = 無制限の場合はクリップされません）。
 
 ## 7. Nudge（キーボード微調整）
 

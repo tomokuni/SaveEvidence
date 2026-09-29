@@ -67,7 +67,7 @@
 
 ```csharp
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
-using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
+using EsUtil.Platform.Core.Coord; // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize / EsVector（コア提供）
 using EsUtil.Feature.Marquee.Presenter; // MarqueeAppearance（描画にだけ必要な外観）
 using EsUtil.Feature.Loupe.Presenter;   // LoupeAppearance（描画にだけ必要な色）
@@ -82,7 +82,7 @@ using EsUtil.Feature.Loupe.Presenter;   // LoupeAppearance（描画にだけ必�
 2. `Mode` を設定します（キャプチャ種別に応じた描画モード・可視性の切替）。
 3. `Options` で設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）を一括適用します（コアの設定値を 1 つ渡す。**色は含まれません**）。
 4. `MarqueeAppearance` / `LoupeAppearance` で外観（描画にだけ必要な設定）を適用します。
-5. `SetCoordinateTransform(ICoordTransform?)` でドメイン ↔ DIP 変換を注入します。
+5. `SetCoordTransform(ICoordTransform?)` でドメイン ↔ DIP 変換を注入します。
 6. イベント（`ConfirmRequested` / `CancelRequested`）を購読します。
 7. ルーペソース（`Loupe.Source`）を設定します。
 
@@ -104,7 +104,7 @@ overlay.MarqueeAppearance = MarqueeAppearance.Default with { OverlayColor = Syst
 overlay.LoupeAppearance = LoupeAppearance.Default with { BackgroundColor = System.Drawing.Color.White };
 // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
 overlay.DomainToDipScaling = 1.0;
-overlay.SetCoordinateTransform(CoordTransform.Compose(
+overlay.SetCoordTransform(CoordTransform.Compose(
     CoordTransform.ImageLayout(() => preview.Bounds.Size.ToEsSize(), imageSize.ToEsSize(), () => true),
     CoordTransform.ScrollOffset(() => new EsVector(origin.X, origin.Y))));
 overlay.Loupe.Source = sourceImage;
@@ -137,7 +137,7 @@ parentPanel.Children.Add(overlay);
 
 | 名前 | シグネチャ | 説明 |
 | --- | --- | --- |
-| `SetCoordinateTransform` | `void SetCoordinateTransform(ICoordTransform? port)` | 座標変換ポートを Marquee / Loupe へ一括分配（null で倍率からコアが解決） |
+| `SetCoordTransform` | `void SetCoordTransform(ICoordTransform? port)` | 座標変換ポートを Marquee / Loupe へ一括分配（null で倍率からコアが解決） |
 | `SetSelection` | `void SetSelection(Rect rect)` | 選択矩形（ドメイン座標）を暗転マスクとルーペへ反映。サイズ 0 以下は選択なし（判定はコアが単一所有） |
 | `ClearSelection` | `void ClearSelection()` | 選択状態をクリアして全面暗転（穴あけなし）に戻す |
 | `SetLoupePosition` | `void SetLoupePosition(Point domainPos)` | ルーペ中心（ドメイン座標）を設定して表示開始（Parent 未接続は無視） |
@@ -204,7 +204,7 @@ UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `EsUtil.SaveE
 ## 6. 座標系
 
 - **ドメイン座標**: ホストが定義する論理座標（Crop: 元画像ピクセル / AreaSelect: 仮想スクリーンピクセル）。
-- **DIP 座標**: コントロールローカル DIP。`SetCoordinateTransform` で注入した `ICoordTransform` が変換します。
+- **DIP 座標**: コントロールローカル DIP。`SetCoordTransform` で注入した `ICoordTransform` が変換します。
 - **追従性**: ズーム・スクロール・ウィンドウサイズ変更などのレイアウト変化に、座標変換が常に追従します。
 - **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します（コアの `MarqueeRenderRequest.ToDipRect` が終点に +1）。
 
@@ -246,7 +246,7 @@ graph TD
 ## 9. ライフサイクルと所有権
 
 - 内包コントロール（Marquee / Loupe）はコンストラクタで生成・配置され、本コントロールの子として保持されます（ホストは配置・破棄を管理しません）。
-- ルーペソース（`Loupe.Source`）と座標変換ポート（`SetCoordinateTransform`）はホストが設定します。
+- ルーペソース（`Loupe.Source`）と座標変換ポート（`SetCoordTransform`）はホストが設定します。
 - ホストが本コントロールを破棄する場合は、Visual Tree から取り除くだけで後片付けが完了します（子コントロールも同時に破棄されます）。
 
 ## 10. 制約事項

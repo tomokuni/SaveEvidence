@@ -108,7 +108,7 @@ classDiagram
         +MarqueeAppearance Appearance
         +double DipToDeviceScaling
         +MarqueeSnapshot CurrentSnapshot
-        +SetCoordinateTransform(port) void
+        +SetCoordTransform(port) void
         +SetSelection(rect) void
         +ResetSelection() void
         +RequestConfirm() void
@@ -128,7 +128,7 @@ classDiagram
         +EndNudge() void
         +SetSelection(rect) void
         +RequestConfirm() / RequestCancel() void
-        +SetCoordinateTransform(port) void
+        +SetCoordTransform(port) void
         +ResolveGeometry(request) MarqueeGeometry
         +Notified
     }
@@ -269,8 +269,8 @@ sequenceDiagram
     participant St as MarqueeState
     participant Cur as ICursorService
 
-    Host->>Ctl: SetCoordinateTransform(port)
-    Ctl->>Fac: SetCoordinateTransform(port)
+    Host->>Ctl: SetCoordTransform(port)
+    Ctl->>Fac: SetCoordTransform(port)
     Fac->>Ses: SetPort(port)
     Note over Ctl: 左ボタン押下
     Ctl->>Ctl: ToDomain(e.GetPosition)

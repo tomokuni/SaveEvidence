@@ -48,13 +48,13 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 - `ToString()`: "Ctrl + Shift + Q" のようなユーザー可読な文字列を返す。数字キー（`D0`〜`D9`）・記号キー（`OemMinus` 等）は対応する記号で表示する。
 - レコード型のため、`Modifiers` と `Key` が一致すれば等価。
 
-### `Coordinate.ScrollMath`（static class）
+### `Coord.ScrollMath`（static class）
 
 - `MaxOffset(double contentSize, double viewportSize, double scale)`: スクロール範囲の最大オフセットを返す。
 - `ViewportSize(double viewportSize, double scale)`: コンテンツ座標での表示範囲を返す。
 - `ZoomViewControl` のスクロールバー計算で共用する。
 
-### `Coordinate.DpiScaler`（static class）
+### `Coord.DpiScaler`（static class）
 
 - `StandardDpi`: DIP（デバイス非依存ピクセル）の基準 DPI（`96.0` = 1 ピクセル = 1 DIP）。スケーリング係数の算出と、DIP を 1:1 で描く描画先の DPI が共用する。
 - `StandardScaling`: スケーリング係数の基準値（`1.0` = DIP と物理ピクセルが 1:1）。係数が未確定のときに使う値。
@@ -274,7 +274,7 @@ public readonly record struct ElementFinderResults(
 
 要素検出の結果。座標は入力と同じ画面物理座標で統一されます。
 
-### `Coordinate.ICoordTransform`（interface）
+### `Coord.ICoordTransform`（interface）
 
 2 つの座標系間の変換ポート。座標はコア幾何型で扱います。
 
@@ -284,7 +284,7 @@ public readonly record struct ElementFinderResults(
 | `Inverse` | `EsPoint Inverse(EsPoint p)` | 逆変換（座標系 B → 座標系 A） |
 | `Bounds` | `EsSize? Bounds { get; }` | 座標系 B の境界（null = 無制限） |
 
-### `Coordinate.CoordTransform`（sealed class : ICoordTransform）
+### `Coord.CoordTransform`（sealed class : ICoordTransform）
 
 `Func` 委譲による変換ポートと、用途別ファクトリを提供します。
 

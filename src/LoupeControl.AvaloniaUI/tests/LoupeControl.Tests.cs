@@ -8,7 +8,7 @@ using Point = Avalonia.Point;
 using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
 using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using System.Globalization;
@@ -586,7 +586,7 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
-    public void SetCoordinateTransformを設定すると表示位置が更新される()
+    public void SetCoordTransformを設定すると表示位置が更新される()
     {
         var control = CreateControl();
         var panel = new Panel { Width = 300, Height = 300 };
@@ -596,7 +596,7 @@ public class LoupeControlTests
         control.CenterPoint = new Point(100, 100);
 
         // ドメイン = DIP × 2（拡大）→ 中心 (100,100) は DIP (50,50) に変換される
-        control.SetCoordinateTransform(new CoordTransform(
+        control.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X * 2, p.Y * 2),
             p => new EsPoint(p.X / 2, p.Y / 2),
             () => new EsSize(300, 300)));
@@ -606,7 +606,7 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
-    public void SetCoordinateTransform_nullで等価変換にフォールバックする()
+    public void SetCoordTransform_nullで等価変換にフォールバックする()
     {
         var control = CreateControl();
         var panel = new Panel { Width = 300, Height = 300 };
@@ -616,7 +616,7 @@ public class LoupeControlTests
         control.CenterPoint = new Point(50, 50);
 
         // null 設定 → 等価変換にフォールバック（例外なく表示位置が計算される）
-        control.SetCoordinateTransform(null);
+        control.SetCoordTransform(null);
 
         Assert.NotNull(control.RenderTransform);
         window.Close();
@@ -693,7 +693,7 @@ public class LoupeControlTests
 
         // 変換係数を後から変更できるよう、可変な係数を使う（パン・ズーム等の動的変化の模擬）
         var factor = 2.0;
-        control.SetCoordinateTransform(new CoordTransform(
+        control.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X * factor, p.Y * factor),
             p => new EsPoint(p.X / factor, p.Y / factor),
             () => new EsSize(300, 300)));

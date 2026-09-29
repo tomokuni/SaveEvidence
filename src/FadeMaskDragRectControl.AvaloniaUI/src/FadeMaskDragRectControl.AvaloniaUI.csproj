@@ -26,7 +26,7 @@
     <ProjectReference Include="..\..\Feature.Marquee.Presenter\src\Feature.Marquee.Presenter.csproj" />
     <!-- 設定の分配（子コントロールの値の決定）と付加情報ラベルの描画を共有する -->
     <ProjectReference Include="..\..\FadeMaskDragRectControl.UIBase\src\FadeMaskDragRectControl.UIBase.csproj" />
-    <!-- 座標変換ポート（ICoordinatePort / CoordinatePort） -->
+    <!-- 座標変換ポート（ICoordTransform / CoordTransform） -->
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
     <!-- UI 非依存の動作モード・選択矩形オーバーレイ描画 -->
     <ProjectReference Include="..\..\FadeMaskDragRectControl.Core\src\FadeMaskDragRectControl.Core.csproj" />

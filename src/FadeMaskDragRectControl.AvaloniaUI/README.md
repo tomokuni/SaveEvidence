@@ -32,7 +32,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 - **モード切替**: `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` で描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替
 - **設定の一括適用**: `Options` プロパティ（1 つの設定値）で選択矩形 / 暗転マスク / ルーペ / 選択矩形破線を 1 回で適用（既定値・項目の対応・枠線の太さの共用規則はコアが単一所有）
 - **外観の一括適用**: `MarqueeAppearance` / `LoupeAppearance` プロパティ（描画にだけ必要な外観の単一値）で内包する選択矩形・ルーペの外観を適用（コアの設定値は色・表示可否を持たない）
-- **座標変換ポートの一括分配**: `SetCoordinateTransform(ICoordTransform?)` で 2 コントロールへ同一ポートを分配
+- **座標変換ポートの一括分配**: `SetCoordTransform(ICoordTransform?)` で 2 コントロールへ同一ポートを分配
 - **表示の変化への追従**: `RefreshOverlay()` でパン・ズーム等の表示変化を通知（Marquee の再描画 + ルーペ位置再計算）。ホイール操作はホストが本コントロールの `PointerWheelChanged` を購読してビューポートへ転送する
 - **選択状態の外部設定**: `SetSelection` / `ClearSelection` で選択矩形を設定（選択状態の単一のソースは `MarqueeControl` のセッションであり、本コントロールはその読み取りと委譲のみを行う。ルーペの選択矩形破線は `LoupeRendered` イベント経由で描画）
 - **ルーペ描画完了の通知**: `LoupeRendered` イベントで描画済み Bitmap と切り出し左上・スケールを通知（ホストが外部提供矩形を Bitmap へ直接描画できる）
@@ -60,7 +60,7 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 
 ```csharp
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
-using EsUtil.Platform.Core.Coordinate; // ICoordTransform / CoordTransform（コア提供）
+using EsUtil.Platform.Core.Coord; // ICoordTransform / CoordTransform（コア提供）
 ```
 
 ## 5. クイックスタート
@@ -107,7 +107,7 @@ SelectionOverlay.DomainToDipScaling = 1.0;
 SelectionOverlay.LoupeDipToDeviceScaling = 1.0;
 
 // 座標変換ポート（ドメイン = 仮想スクリーンピクセル。Marquee / Loupe へ一括分配）
-SelectionOverlay.SetCoordinateTransform(CoordTransform.DomainScale(() => scaling));
+SelectionOverlay.SetCoordTransform(CoordTransform.DomainScale(() => scaling));
 
 // イベント（配線は内部で完結。確定・キャンセルのみ購読）
 SelectionOverlay.ConfirmRequested += (_, e) => OnConfirm(e.Rect);
@@ -125,7 +125,7 @@ SelectionOverlay.Loupe.Source = bitmap;
 ## 6. 座標系
 
 - **ドメイン座標**: 元画像ピクセル（Crop）または仮想スクリーンピクセル（AreaSelect）など、ホストが定義する論理座標。
-- **DIP 座標**: コントロールローカル DIP。`SetCoordinateTransform` で注入した `ICoordTransform` がドメイン ↔ DIP を双方向変換します（描画時に毎回評価され、ズーム・スクロール・ウィンドウサイズ変更に追従）。
+- **DIP 座標**: コントロールローカル DIP。`SetCoordTransform` で注入した `ICoordTransform` がドメイン ↔ DIP を双方向変換します（描画時に毎回評価され、ズーム・スクロール・ウィンドウサイズ変更に追従）。
 - **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠（`LoupeRendered` イベント経由でホスト側が描画）が一致します。
 
 ## 7. サンプル

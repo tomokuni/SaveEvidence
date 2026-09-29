@@ -195,7 +195,7 @@ classDiagram
     }
     class CaptureTiming {
         +TimeSpan ScreenCaptureTimeout
-        +int OwnerOffScreenCoordinate
+        +int OwnerOffScreenCoord
     }
     class CaptureSettings {
         +bool? HideOwnerWindow

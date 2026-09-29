@@ -23,5 +23,5 @@ public static class CaptureTiming
     /// Windows で標準的に使われる画面外配置であり、ヒットテスト・要素検出の対象外になる。<br/>
     /// 非表示（<c>Hide</c>）ではなく位置の変更にするのは、復帰時にウィンドウが再作成されてちらつくのを避けるためである。
     /// </remarks>
-    public const int OwnerOffScreenCoordinate = -32000;
+    public const int OwnerOffScreenCoord = -32000;
 }

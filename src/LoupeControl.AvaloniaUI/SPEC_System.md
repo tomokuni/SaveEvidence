@@ -123,7 +123,7 @@ flowchart TB
         CLog["LoupeLogMessage<br/>internal static partial class"]
     end
 
-    AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>Options / Appearance / DipToDeviceScaling /<br/>RequestRender / Clear / SetCoordinateTransform / PositionOffset"| Ctl
+    AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>Options / Appearance / DipToDeviceScaling /<br/>RequestRender / Clear / SetCoordTransform / PositionOffset"| Ctl
     Ctl -->|"RequestRender / CancelAndRelease / ShouldApply"| Coh
     Ctl -->|"RenderAsync(source, plan)"| Pip
     Ctl -->|"ResolveDrawPlan（実寸測定関数を渡す）/ Appearance"| Pnt
@@ -162,7 +162,7 @@ flowchart TB
     - 表示サイズ・位置: `UpdatePosition` がコアのファサード `Loupe.ResolveLayout` を呼び、返された `LoupeLayout`（表示サイズと表示位置）を要素（`Width` / `Height`）と `RenderTransform` へ写すだけである（クランプ・オフセット・親領域へのクランプはコアが単一所有し、`UpdatePosition` は表示サイズの唯一の反映元になる）
     - 座標単位: `Options.RequestedSize` は DIP、描画計画へ渡す表示サイズと枠線の太さも DIP（物理ピクセルへの換算は提示層が `DpiScaler.ScaleToPixel` へ委譲する）
   - 値の補正: コアの設定値（`LoupeOptions`）は型の生成時に補正される（UI は関与しない）。環境値の `DipToDeviceScaling` のみ `coerce` コールバックで矯正する
-- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する基本サイズ・拡大率。UI は設定値を保持しない）/ 外観（`Appearance`（`LoupeAppearance`。`System.Drawing.Color` で受け取り描画時にブラシへ変換する）））/ 環境（`DipToDeviceScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordinateTransform` / `PositionOffset` / `RefreshPosition`）
+- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する基本サイズ・拡大率。UI は設定値を保持しない）/ 外観（`Appearance`（`LoupeAppearance`。`System.Drawing.Color` で受け取り描画時にブラシへ変換する）））/ 環境（`DipToDeviceScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordTransform` / `PositionOffset` / `RefreshPosition`）
 - **依存**: LoupePresenter / LoupeAppearance / LoupeLabelPlan / LoupeLabelTexts（`Feature.Loupe.Presenter`） / LoupeUiLogMessage（本プロジェクト） / LoupeContextPainter / LoupeRenderCoordinator / LoupeRenderPipeline / LoupeSourceResolver（本プロジェクト） / LoupeOptions / Loupe（`Feature.Loupe.Core`） / DrawingContext（Platform.AvaloniaUI） / Avalonia / ILogger
 
 ### 6.2 LoupeContextPainter（描画実装）

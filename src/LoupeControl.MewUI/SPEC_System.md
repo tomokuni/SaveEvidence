@@ -87,7 +87,7 @@ classDiagram
         +LoupeAppearance Appearance
         +double DipToDeviceScaling
         +LoupeLayout ResolveLayout(parentSize)
-        +SetCoordinateTransform(port) void
+        +SetCoordTransform(port) void
         +OnDpiChanged(oldDpi, newDpi) void
         +MeasureContent(size) Size
         +ArrangeContent(bounds) void
@@ -156,7 +156,7 @@ classDiagram
     class Loupe {
         <<Feature.Loupe.Core / 公開ファサード>>
         +Options / DipToDeviceScaling / CenterPoint / PositionOffset
-        +SetCoordinateTransform(port) void
+        +SetCoordTransform(port) void
         +ResolveLayout(parentSize) LoupeLayout
         +ResolveGeometry(displaySize, availableSize) LoupeGeometry
     }
@@ -249,7 +249,7 @@ sequenceDiagram
 
 | 項目 | 内容 |
 | --- | --- |
-| 座標変換ポート | 実装済み（`SetCoordinateTransform`。ホストが設定し、コントロールはファサードへ転送する。Avalonia 版と同じ API） |
+| 座標変換ポート | 実装済み（`SetCoordTransform`。ホストが設定し、コントロールはファサードへ転送する。Avalonia 版と同じ API） |
 | 再生成の要求メソッド | `Clear` / `RequestRender` 相当（現在はプロパティ変更で自動再描画） |
 | 座標ラベル以外の文字描画 | 日本語のフォントフォールバック（ラベルは `MarqueeControl.MewUI`（選択矩形の外側の装飾）側で対応済み。本コントロールの座標ラベルは数値のみのため未適用） |
 

@@ -129,7 +129,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 1. 切り出しの対象画像は `CropViewControl` が表示している画像（`CropViewControl.Source`）から解決する（画像を引数で受け取らない）。画像が未設定・表示アダプタ（`EsBitmapAvaloniaImage`）以外の場合は開始しない（結果 null）→ 開始できた場合は `CropSession` を生成 → `RunAsync`
 2. **FadeMaskDragRectControl**（Marquee + Loupe の配線を内包する複合コントロール。暗転マスクは Marquee の外側の装飾）を `CropViewControl.Rects` へ配置する
-3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordinateTransform` で内包コントロール（Marquee / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
+3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordTransform` で内包コントロール（Marquee / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
 4. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する
 5. **ビューポート変化の通知**: ホストがプレビューのパン・ズームを検知したら `NotifyCropViewportChanged()` を呼ぶ（暗転マスク・選択枠・ルーペが追従。ScrollViewer 連携のスクロールも同じ経路で処理）
 6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `EsRectInt`（コア型）で返却 / キャンセル → 0x0 の空矩形

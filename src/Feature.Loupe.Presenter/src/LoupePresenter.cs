@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Loupe.Core.Drawing;
 using EsUtil.Feature.Loupe.Core.Placement;
@@ -123,7 +123,7 @@ public class LoupePresenter
 
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。null の場合は等価変換。</param>
-    public void SetCoordinateTransform(ICoordTransform? port) => _core.SetCoordinateTransform(port);
+    public void SetCoordTransform(ICoordTransform? port) => _core.SetCoordTransform(port);
 
     /// <summary>親領域のサイズを通知して表示レイアウト（表示サイズ・表示位置）を解決する。</summary>
     /// <param name="parentSize">親領域のサイズ（DIP）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>

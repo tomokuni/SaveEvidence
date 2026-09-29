@@ -83,7 +83,7 @@ Avalonia 版と同一の解釈になります。
 
 | メソッド | 説明 |
 | --- | --- |
-| `SetCoordinateTransform(ICoordTransform?)` | 座標変換ポートを一括設定する（ドラッグ選択とルーペへ分配）。null の場合は倍率からコアが解決する |
+| `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを一括設定する（ドラッグ選択とルーペへ分配）。null の場合は倍率からコアが解決する |
 | `SetSelection(EsRect)` | 選択状態を外部から設定する（幅・高さのいずれかが 0 以下の場合は選択なし） |
 | `ClearSelection()` | 選択状態をクリアして全面暗転へ戻す |
 | `SetLoupeSource(EsBitmap?)` | ルーペの拡大元画像を設定する（設定だけでは表示しない） |
@@ -143,7 +143,7 @@ Avalonia 版と同一の解釈になります。
 
 | 条件 | 動作 |
 | --- | --- |
-| `SetCoordinateTransform(null)` | 倍率からコアが座標変換を解決する（倍率 1.0 なら等価変換・境界なし） |
+| `SetCoordTransform(null)` | 倍率からコアが座標変換を解決する（倍率 1.0 なら等価変換・境界なし） |
 | `SetSelection` にサイズ 0 以下の矩形 | 選択なしとして扱う（例外は発生しない） |
 | ルーペ画像が未設定の状態で `SetLoupePosition` | 中心のみ記録し、表示しない（例外は発生しない） |
 | 未定義の `Mode` を設定 | `WindowSelect` と同じ扱いになる（例外は発生しない） |

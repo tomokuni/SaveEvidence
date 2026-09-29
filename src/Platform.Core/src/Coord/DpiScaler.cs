@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Platform.Core.Coordinate;
+namespace EsUtil.Platform.Core.Coord;
 
 /// <summary>DIP 値をスケーリング係数で物理ピクセルへ変換する計算ロジック（純粋関数）。</summary>
 /// <remarks>

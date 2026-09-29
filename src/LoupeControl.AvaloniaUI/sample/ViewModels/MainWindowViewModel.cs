@@ -54,7 +54,7 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (SetProperty(ref _centerPoint, value))
             {
-                OnPropertyChanged(nameof(CoordinateText));
+                OnPropertyChanged(nameof(CoordText));
             }
         }
     }
@@ -74,7 +74,7 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _zoomLevel, value))
             {
                 OnPropertyChanged(nameof(ZoomText));
-                OnPropertyChanged(nameof(CoordinateText));
+                OnPropertyChanged(nameof(CoordText));
                 OnPropertyChanged(nameof(Options));
                 OnPropertyChanged(nameof(Appearance));
             }
@@ -92,7 +92,7 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _requestedSize, value))
             {
                 OnPropertyChanged(nameof(RequestedSizeText));
-                OnPropertyChanged(nameof(CoordinateText));
+                OnPropertyChanged(nameof(CoordText));
                 OnPropertyChanged(nameof(Options));
                 OnPropertyChanged(nameof(Appearance));
             }
@@ -318,7 +318,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     /// <summary>中心座標の表示文字列。</summary>
     /// <remarks>選択矩形の破線オーバーレイの表示状態（SelectionRectVisible）も付加する。</remarks>
-    public string CoordinateText => CenterPoint is { } p
+    public string CoordText => CenterPoint is { } p
         ? $"中心座標: ({p.X:F0}, {p.Y:F0})  拡大率: {ZoomLevel}x  サイズ: {RequestedSize} DIP"
         + (SelectionRectVisible ? $"  選択矩形: ({SelectionRectX:F0}, {SelectionRectY:F0}) {SelectionRectWidth:F0}x{SelectionRectHeight:F0}" : "")
         : "画像の外です（画像外の色のみ表示）";

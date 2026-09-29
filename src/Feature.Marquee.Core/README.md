@@ -190,7 +190,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 // （本コアの MarqueeOptions は計算に必要な寸法・対話パラメータだけを持つ）
 var marquee = new Marquee(effects, cursorService, options);  // effects は IMarqueeEffects（UI 層の実装）/ cursorService・options は null 可
 marquee.Log = logger;                                        // null は NullLogger へ吸収される
-marquee.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(1920, 1080))); // ドメイン境界
+marquee.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(1920, 1080))); // ドメイン境界
 
 // 入力の通知（UI 層から呼ぶ。効果の適用までファサードが行う）
 marquee.Press(new EsPoint(100, 100), clickCount: 1);          // 押下（新規選択・ハンドル・確定/キャンセル）
@@ -224,7 +224,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 | `SetSelection` / `ResetSelection` / `RequestConfirm` / `RequestCancel` | ホスト・プロパティ変更からの操作（`ResetSelection` は UI 層が対話を終了する際の後片付けにも使う） |
 | `Options`（設定） | 設定（`MarqueeOptions`）の反映。対話パラメータを更新し、**変化した項目をログ出力**し、境界外選択の禁止が変化したときに即時クリップを行う（プロパティの代入で指定する）。環境値（`DomainToDipScaling`）も変更した項目をログ出力する |
 | `HighlightRect` | ハイライト矩形（ホストが与える実行時状態）。変更は**有無の変化だけ**をログ出力する（操作中に高頻度で変化しうるため） |
-| `ToDomain` / `ToDip` / `SetCoordinateTransform` | 座標変換（ドメイン ⇔ ローカル DIP。選択矩形は閉区間として変換） |
+| `ToDomain` / `ToDip` / `SetCoordTransform` | 座標変換（ドメイン ⇔ ローカル DIP。選択矩形は閉区間として変換） |
 | `CreateRequest` / `ResolveGeometry` | 1 フレーム分の幾何の解決（描画領域のサイズを渡す。原点は常に 0 であり、親座標を混ぜるとハンドルがずれるため型で受ける）。**本コアは幾何だけを返し、装飾・文言・層の順序は返さない** |
 | `Options` / `DomainToDipScaling` / `Log` | 設定・環境値の読み書き（`Log` は null を `NullLogger` へ吸収する） |
 | `Limits.DomainToDipScalingDefault` | ポート未指定時に適用する倍率の既定値（`1.0`）。両 UI の依存関係プロパティの既定値も本値を参照する |

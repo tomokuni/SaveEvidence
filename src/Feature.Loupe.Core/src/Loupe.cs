@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
@@ -39,7 +39,7 @@ namespace EsUtil.Feature.Loupe.Core;
 public sealed partial class Loupe
 {
     /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は等価変換として扱う）。</summary>
-    private ICoordTransform? _coordinatePort;
+    private ICoordTransform? _coordPort;
 
     /// <summary>ルーペの設定（既定は <see cref="LoupeOptions.Default"/>）。</summary>
     private LoupeOptions _options = LoupeOptions.Default;
@@ -154,7 +154,7 @@ public sealed partial class Loupe
     /// 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等のレイアウト変化に追従できる<br/>
     /// （イベント時の DIP キャッシュは使わない）。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordTransform? port) => _coordinatePort = port;
+    public void SetCoordTransform(ICoordTransform? port) => _coordPort = port;
 
     // ====================================================================
     // 表示レイアウト（表示サイズ・表示位置）
@@ -179,7 +179,7 @@ public sealed partial class Loupe
             return new LoupeLayout(size, null);
         }
 
-        var centerDip = _coordinatePort.OrIdentity().Inverse(center);
+        var centerDip = _coordPort.OrIdentity().Inverse(center);
         return new LoupeLayout(size, LoupePlacementGeometry.ComputePosition(size, parentSize, centerDip, PositionOffset));
     }
 

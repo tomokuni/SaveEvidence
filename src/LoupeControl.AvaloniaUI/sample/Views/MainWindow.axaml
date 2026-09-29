@@ -171,7 +171,7 @@
             <!-- 座標情報 -->
             <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10" Padding="8"
                     Background="#DDFFFFFF" CornerRadius="3">
-                <TextBlock FontSize="12" Text="{Binding CoordinateText}"/>
+                <TextBlock FontSize="12" Text="{Binding CoordText}"/>
             </Border>
 
         </Grid>

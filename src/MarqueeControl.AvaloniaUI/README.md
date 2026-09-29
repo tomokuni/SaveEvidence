@@ -67,7 +67,7 @@ using Avalonia.Media;                        // Colors
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions
 using EsUtil.Feature.Marquee.Presenter;    // MarqueeAppearance / MarqueePresenter
-using EsUtil.Platform.Core.Coordinate;       // ICoordTransform / CoordTransform（コア提供）
+using EsUtil.Platform.Core.Coord;       // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;         // EsPoint / EsSize（コア提供）
 ```
 
@@ -125,7 +125,7 @@ marquee.Rendered += (_, e) =>
 };
 
 // 座標ポートを設定（ドメイン = 画像ピクセル等）。ポート生成は Platform.AvaloniaUI の CoordTransform ファクトリを使用する。
-marquee.SetCoordinateTransform(CoordTransform.DomainScale(() => 2.0)); // 例: DPI 200%（Forward = DIP→ドメイン × 2）
+marquee.SetCoordTransform(CoordTransform.DomainScale(() => 2.0)); // 例: DPI 200%（Forward = DIP→ドメイン × 2）
 // 複雑な変換は Compose / ScrollOffset / ImageLayout 等で組み立てる
 
 panel.Children.Add(marquee);
@@ -141,7 +141,7 @@ MarqueeControl は 3 つの座標系を使い分けます。
 | コントロールローカル DIP | マウス入力・描画 |
 | 画面物理 Pixel | カーソル操作・画面変換 |
 
-ドメイン ↔ DIP の変換は `SetCoordinateTransform(ICoordTransform?)` で注入します（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。
+ドメイン ↔ DIP の変換は `SetCoordTransform(ICoordTransform?)` で注入します（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。
 
 ## 7. サンプル
 

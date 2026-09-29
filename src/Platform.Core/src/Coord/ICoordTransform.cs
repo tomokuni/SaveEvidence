@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Platform.Core.Coordinate;
+namespace EsUtil.Platform.Core.Coord;
 
 /// <summary>2 つの座標系間の変換ポート（順変換・逆変換・境界）。</summary>
 /// <remarks>

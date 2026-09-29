@@ -104,7 +104,7 @@ flowchart TB
         LC["LoupeControl<br/>EsUtil.SaveEvidence.Loupe.AvaloniaUI"]
     end
 
-    AP -->|"Mode / Options / SetCoordinateTransform / イベント購読"| Ctl
+    AP -->|"Mode / Options / SetCoordTransform / イベント購読"| Ctl
     Ctl -->|"ConfirmRequested / CancelRequested"| AP
     Ctl --> DR
 
@@ -187,7 +187,7 @@ sequenceDiagram
     H->>C: Mode 設定
     H->>C: Options = settings（コアのマッパーで変換した設定値。色は含まない）
     H->>C: MarqueeAppearance / LoupeAppearance（描画にだけ必要な外観の単一値）
-    H->>C: SetCoordinateTransform(port)
+    H->>C: SetCoordTransform(port)
     H->>C: SetLoupeSource(bitmap)
     H->>C: Visual Tree へ配置
     C-->>LC: RequestRender（破線の色・表示可否は Loupe のプロパティに現れないため再生成を要求）

@@ -340,7 +340,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
      （プレビュー表示時は非表示のため。Crop セッション中のみ暗転マスクを表示）
    - セッション終了時（確定・キャンセル）に `cropView.SetSelectionOverlayVisible(false)` で非表示 + 選択クリアに戻す
      （キャプチャ完了後・切出し後に Crop モード（暗転）が残るのを防ぐ）
-3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、**複合コントロールの `SetCoordinateTransform` で Marquee / Loupe の全コントロールに一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
+3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、**複合コントロールの `SetCoordTransform` で Marquee / Loupe の全コントロールに一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
    - プレビュー状態（ScrollOffset / ZoomPercent）は保持しない（スクロール・ズームは内包する `CropViewControl`（`ZoomViewControl`）が所有）
    - ルーペの表示位置・サイズは LoupeControl が自己計算（カーソル右下 + オフセット + クランプ）
    - ビューポート変化の通知は `NotifyCropViewportChanged` に一本化（ScrollViewer 連携の `ScrollChanged` も、ScrollViewer 以外のビューポート実装（RenderTransform ベースのパン・ズーム等）のホスト通知も、同じ経路で再描画・ルーペ位置再計算を行う）

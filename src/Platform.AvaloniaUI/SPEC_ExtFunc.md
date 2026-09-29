@@ -30,7 +30,7 @@
 | --- | --- |
 | 対象 | `Platform.AvaloniaUI` |
 | プロジェクト | `Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj` |
-| 名前空間 | `EsUtil.Platform.AvaloniaUI`（画像アダプタは `.Imaging`、相互変換は `.Interop`、ラベル要素は `.Labels`、座標変換は `.Coordinate`） |
+| 名前空間 | `EsUtil.Platform.AvaloniaUI`（画像アダプタは `.Imaging`、相互変換は `.Interop`、ラベル要素は `.Labels`、座標変換は `.Coord`） |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要設計パターン | Adapter（コア型 ⇔ Avalonia 型の適合）/ 拡張メソッドによる Interop |
@@ -70,7 +70,7 @@ using EsUtil.Platform.AvaloniaUI.Imaging;  // EsBitmapAvaloniaExtensions / EsBit
 using EsUtil.Platform.Core;                     // サービス抽象 / コア値型
 using EsUtil.Platform.Native;                   // PlatformFactory（既定実装のファクトリ）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap / EsBitmapDrawingExtensions
-using EsUtil.Platform.Core.Coordinate;          // ICoordTransform / CoordTransform
+using EsUtil.Platform.Core.Coord;          // ICoordTransform / CoordTransform
 using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt / EsPlatformHandle
 ```
 

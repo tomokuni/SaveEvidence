@@ -91,7 +91,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ Marque
 ```csharp
 // 座標ポート: ドメイン = 画像ピクセル（800x500）、DIP = 表示座標（ズーム倍率で変換）
 // Forward = DIP→ドメイン（_zoom で除算）、Inverse = ドメイン→DIP（_zoom で乗算）
-Marquee.SetCoordinateTransform(new CoordinatePort(
+Marquee.SetCoordTransform(new CoordTransform(
     p => new Point(p.X / _zoom, p.Y / _zoom),
     p => new Point(p.X * _zoom, p.Y * _zoom),
     () => new Size(ImageWidth, ImageHeight)));
@@ -142,7 +142,7 @@ Marquee.Log = new InMemoryLogger(line => Dispatcher.UIThread.Post(() => _vm.AddL
 ```csharp
 // 座標ポート: ドメイン = 画像ピクセル（1200x800）、DIP = 表示座標（ズーム倍率で変換）
 // Forward = DIP→ドメイン（_zoom で除算 = 画像ピクセルへ）、Inverse = ドメイン→DIP（_zoom で乗算）
-Marquee.SetCoordinateTransform(new CoordinatePort(
+Marquee.SetCoordTransform(new CoordTransform(
     p => new Point(p.X / _zoom, p.Y / _zoom),
     p => new Point(p.X * _zoom, p.Y * _zoom),
     () => new Size(ImageWidth, ImageHeight)));

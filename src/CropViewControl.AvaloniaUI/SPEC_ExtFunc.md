@@ -71,7 +71,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | `void SetSelection(Rect rect)` | 選択状態を外部から設定（FadeMaskDragRectControl へ委譲）。 |
 | `void ClearSelection()` | 選択状態をクリア（FadeMaskDragRectControl へ委譲）。 |
 | `void SetSelectionOverlayVisible(bool visible)` | 領域選択オーバーレイの可視性とヒットテストを設定（Crop セッションの開始・終了時に制御）。`false` で選択もクリア。 |
-| `void SetCoordinateTransform(ICoordTransform? port)` | 座標変換ポートを設定（内包コントロールへ分配）。 |
+| `void SetCoordTransform(ICoordTransform? port)` | 座標変換ポートを設定（内包コントロールへ分配）。 |
 | `void RequestConfirm()` | 選択確定要求（FadeMaskDragRectControl へ委譲）。 |
 | `void RequestCancel()` | 選択キャンセル要求（FadeMaskDragRectControl へ委譲）。 |
 | `void FocusMarquee()` | 内包 Marquee へフォーカスを設定（矢印キー nudge の受付開始）。 |

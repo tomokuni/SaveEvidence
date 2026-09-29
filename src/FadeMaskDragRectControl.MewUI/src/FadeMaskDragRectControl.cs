@@ -6,7 +6,7 @@ using EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.SaveEvidence.Loupe.MewUI;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
@@ -50,7 +50,7 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 ///   入力を受けない（クリック確定フローはホストが担う）。<br/>
 /// <br/>
 /// <b>座標系</b>: 選択矩形・ルーペ中心はドメイン座標で扱う。ドメイン ↔ ローカル DIP の変換は<br/>
-/// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が担い、ルーペへも同じポートを適用する。<br/>
+/// 座標変換ポート（<see cref="SetCoordTransform"/>）が担い、ルーペへも同じポートを適用する。<br/>
 /// <br/>
 /// <b>描画先の選択（フレームワーク差）</b>: ルーペ画像上の選択矩形の破線は、描画完了イベントで通知されたキャンバスへ<br/>
 /// 本クラスが直接描く（Avalonia 版は描画完了イベントをホストへ中継し、ホストがルーペ画像へ描く）。<br/>
@@ -256,7 +256,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <value>スケーリング係数。ドメイン座標がローカル DIP と一致する場合は 1.0。</value>
     /// <remarks>
     /// 環境値（ユーザー設定ではない）のため設定（<see cref="Options"/>）には含めず、ホストが与える。<br/>
-    /// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が設定されている場合はそちらが優先される。
+    /// 座標変換ポート（<see cref="SetCoordTransform"/>）が設定されている場合はそちらが優先される。
     /// </remarks>
     public double DomainToDipScaling
     {
@@ -290,10 +290,10 @@ public sealed class FadeMaskDragRectControl : Panel
     /// null はそのまま渡す（未設定を倍率で解決する規則はコアが単一所有する）。ルーペの表示位置計算のみ本クラスが行うため、<br/>
     /// その用途では等価変換で代替する。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordTransform? port)
+    public void SetCoordTransform(ICoordTransform? port)
     {
-        _marquee.SetCoordinateTransform(port);
-        _loupe.SetCoordinateTransform(port);
+        _marquee.SetCoordTransform(port);
+        _loupe.SetCoordTransform(port);
         InvalidateArrange();
     }
 
@@ -347,7 +347,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ルーペの中心位置（ドメイン座標）を設定して表示を開始する。</summary>
     /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>
     /// <remarks>
-    /// 表示位置・サイズは座標変換ポート（<see cref="SetCoordinateTransform"/>）とコアの計算から求める。<br/>
+    /// 表示位置・サイズは座標変換ポート（<see cref="SetCoordTransform"/>）とコアの計算から求める。<br/>
     /// <b>拡大元画像が未設定の間は表示しない</b>（未設定の市松模様を防ぐ。<see cref="SetLoupeSource"/> の後に呼び出す）。
     /// </remarks>
     public void SetLoupePosition(EsPoint domainPos) => UpdateLoupePosition(domainPos);
@@ -356,7 +356,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>
     /// <remarks>
     /// <see cref="SetLoupePosition"/> と <see cref="OnLoupePositionMoved"/> で共用する（重複排除）。<br/>
-    /// 表示位置・サイズは座標変換ポート（<see cref="SetCoordinateTransform"/>）とコアの計算から求める。<br/>
+    /// 表示位置・サイズは座標変換ポート（<see cref="SetCoordTransform"/>）とコアの計算から求める。<br/>
     /// 表示可否の判断はコアの <c>FadeMaskDragRectState.IsLoupeVisible</c> が単一所有する。
     /// </remarks>
     private void UpdateLoupePosition(EsPoint domainPos)

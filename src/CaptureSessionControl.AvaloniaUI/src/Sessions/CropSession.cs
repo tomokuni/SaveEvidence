@@ -4,7 +4,7 @@ using Avalonia.Input;
 using EsUtil.SaveEvidence.CaptureSession.UIBase;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Native;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
@@ -47,7 +47,7 @@ internal sealed class CropSession(
     /// 境界（元画像の範囲）は現在の画像から都度評価するため、生成は 1 度で足りる<br/>
     /// （ズーム・パン・画像の差し替えのいずれにも追従する）。
     /// </remarks>
-    private readonly ICoordTransform _coordinatePort = CreateCoordinatePort(cropView);
+    private readonly ICoordTransform _coordPort = CreateCoordPort(cropView);
 
     /// <summary>設定（全メンバー non-null）。実行中に <see cref="ApplySettings"/> で更新できる。</summary>
     private CaptureSettings _settings = settings.ToNonNull();
@@ -75,7 +75,7 @@ internal sealed class CropSession(
     /// 原点補正を全て内包ビューポートが単一所有し、ホストが変換を重複実装する必要がない（DRY 原則）。<br/>
     /// 境界は表示中の画像から都度評価する（切り出しのドメインは <see cref="CropViewImage"/> が単一所有する）。
     /// </remarks>
-    private static ICoordTransform CreateCoordinatePort(CropViewControl cropView)
+    private static ICoordTransform CreateCoordPort(CropViewControl cropView)
         => new CoordTransform(
             forward: dip => cropView.ViewportToContent(dip.ToAvaloniaPoint()).ToEsPoint(),
             inverse: logical => cropView.ContentToViewport(logical.ToAvaloniaPoint()).ToEsPoint(),
@@ -214,7 +214,7 @@ internal sealed class CropSession(
         cropView.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(cropView.SelectionMode, null);
         // 座標変換ポート: ドメイン = 論理座標（元画像ピクセル）。ズーム・パン・Fit・中央寄せの原点補正は
         // 内包する ZoomViewControl が単一所有する（座標変換ポートはそれを委譲）。
-        cropView.SetCoordinateTransform(_coordinatePort);
+        cropView.SetCoordTransform(_coordPort);
         // ルーペのソースは表示中の画像（切り出しの対象と同じ画像。画像の差し替えに追従する）。
         // 終了時にルーペを解除するため、開始と設定変更のたびに表示中の画像へ結び直す。
         cropView.SetLoupeSource(cropView.Source);

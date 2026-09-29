@@ -29,7 +29,7 @@ using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Marquee.Core.Decoration;
 using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.Feature.Marquee.Presenter;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 
 // 1. 生成（カーソルサービスは省略すると Windows 既定実装になる）
@@ -43,7 +43,7 @@ var marquee = new MarqueeControl
 };
 
 // 2. 座標変換ポートを設定する（Forward = ローカル DIP → ドメイン / Bounds = ドメイン境界）
-marquee.SetCoordinateTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(1920, 1080)));
+marquee.SetCoordTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(1920, 1080)));
 
 // 3. イベントを購読する
 marquee.SelectionChanged += (_, e) => Console.WriteLine($"選択: {e.Rect}");
@@ -139,7 +139,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 
 | メソッド | 説明 |
 | --- | --- |
-| `SetCoordinateTransform(ICoordTransform?)` | ドメイン ↔ ローカル DIP の変換ポートを設定する（null は等価変換） |
+| `SetCoordTransform(ICoordTransform?)` | ドメイン ↔ ローカル DIP の変換ポートを設定する（null は等価変換） |
 | `SetSelection(EsRect)` | 選択矩形を復元する（`Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
 | `RequestConfirm()` / `RequestCancel()` | Enter / Escape と同じ条件で確定・キャンセルを要求する |

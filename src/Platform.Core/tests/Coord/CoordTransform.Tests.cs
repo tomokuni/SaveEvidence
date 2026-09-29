@@ -1,8 +1,8 @@
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace EsUtil.Platform.Core.Tests.Coordinate;
+namespace EsUtil.Platform.Core.Tests.Coord;
 
 /// <summary><see cref="CoordTransform"/> の合成・スクロール・ファクトリの単体テスト。</summary>
 /// <remarks>

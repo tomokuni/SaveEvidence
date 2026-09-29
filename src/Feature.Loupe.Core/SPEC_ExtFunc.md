@@ -66,7 +66,7 @@
 | `DipToDeviceScaling` | property | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。補正は `Loupe.Limits` が単一所有する）。**変化したときだけ**変更ログを出力する |
 | `CenterPoint` | property | 拡大中心（ドメイン座標）。未設定（null）は拡大画像を描かず（画像外の色のみ）、配置も行わない。**変化したときだけ**変更ログを出力する |
 | `PositionOffset` | property | 拡大中心からの右下オフセット（DIP。既定は 0）。**変化したときだけ**変更ログを出力する |
-| `SetCoordinateTransform(ICoordTransform?)` | method | ドメイン ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換） |
+| `SetCoordTransform(ICoordTransform?)` | method | ドメイン ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換） |
 | `ResolveLayout(EsSize)` | method | 親領域サイズから表示レイアウト（`LoupeLayout` = 表示サイズ + 位置）を解決する（拡大中心未設定時は位置が null） |
 | `ResolveGeometry(double displaySize, EsSize? availableSize = null)` | method | 描画 1 フレーム分の幾何（`LoupeGeometry`）の解決（DIP → 物理ピクセルの換算・描画先へのクランプ・切り出し領域の算出を含む） |
 
@@ -119,7 +119,7 @@
 
 ```csharp
 var loupe = new Loupe(options) { CenterPoint = cursorDomain, DipToDeviceScaling = 1.25 };
-loupe.SetCoordinateTransform(port);
+loupe.SetCoordTransform(port);
 
 var layout = loupe.ResolveLayout(parentSize);          // 表示サイズ + 表示位置（配置しない場合は Position が null）
 var geometry = loupe.ResolveGeometry(layout.DisplaySize, canvasSize); // 幾何（物理ピクセル・切り出し領域を解決済み）

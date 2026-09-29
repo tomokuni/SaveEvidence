@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 
 namespace EsUtil.Platform.MewUI.Imaging;
 

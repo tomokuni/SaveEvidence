@@ -3,7 +3,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.Loupe.Presenter;
 

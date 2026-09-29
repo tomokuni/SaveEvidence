@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -196,7 +196,7 @@ public class MarqueePresenterTests
     {
         var presenter = CreatePresenter(out _);
         // Inverse（ドメイン → DIP）は 2 倍
-        presenter.SetCoordinateTransform(new CoordTransform(
+        presenter.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
         presenter.SetSelection(new EsRect(10, 20, 100, 50));
 

@@ -76,7 +76,7 @@
 | `HighlightRect` | property | ハイライト矩形（ドメイン座標）。null が「ハイライトしない」。**変更は有無の変化だけをログ出力する**（操作中に高頻度で変化しうるため） |
 | `HasSelection` / `SelectionRect` | property | 選択の有無と選択矩形（ドメイン座標） |
 | `CreateSnapshot(EsPoint?)` | method | 状態スナップショットの生成 |
-| `SetCoordinateTransform(ICoordTransform?)` | method | 座標変換ポートの設定（null は等価変換） |
+| `SetCoordTransform(ICoordTransform?)` | method | 座標変換ポートの設定（null は等価変換） |
 | `ToDomain(EsPoint)` / `ToDip(EsPoint)` | method | 座標変換 |
 | `Press(EsPoint, int)` / `Move(EsPoint)` / `Release(EsPoint)` | method | ポインター入力の通知（ドメイン座標） |
 | `KeyDown(EsKey, EsPoint?)` | method | キー入力の通知。処理済みの真偽を返す（`Escape` / `Enter`（`Return` 含む）/ 矢印キー） |

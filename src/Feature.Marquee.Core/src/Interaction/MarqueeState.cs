@@ -1,5 +1,5 @@
 using EsUtil.Feature.Marquee.Core.Selection;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Feature.Marquee.Core.Interaction;

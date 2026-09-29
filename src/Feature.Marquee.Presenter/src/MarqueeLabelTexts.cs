@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Core.Drawing;
 using static EsUtil.Feature.Marquee.Core.Marquee.Limits;

@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
@@ -62,7 +62,7 @@ public class MarqueeControlTests
     private static MarqueeControl CreateBounded(CursorServiceSpy cursor)
     {
         var control = CreateControl(cursor);
-        control.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
+        control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         return control;
     }
 

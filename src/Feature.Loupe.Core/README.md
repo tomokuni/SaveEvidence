@@ -20,7 +20,7 @@
 
 | フォルダ | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
-| ルート | `Loupe` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、**描画の幾何の解決（`ResolveGeometry`）**、座標変換ポートの設定（`SetCoordinateTransform`） |
+| ルート | `Loupe` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、**描画の幾何の解決（`ResolveGeometry`）**、座標変換ポートの設定（`SetCoordTransform`） |
 | ルート | `Loupe.Limits`（`Loupe` の入れ子） | public | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値の補正。**UI がプロパティの既定値と coerce を登録するときに参照する**ためファサードの入れ子として公開する（枠線の太さの安全域は外観（`LoupeAppearance`）が参照する） |
 | （本コアには置かない） | `LoupePresenter` / `LoupeAppearance` | — | 提示（外観と描画計画の解決）は **UI 側の共有層（`Feature.Loupe.Presenter`）が所有します**（本コアは描画 API も描画の抽象も持たない） |
 | `Drawing/` | `LoupeGeometry` | public | **1 フレーム分の描画の幾何**（コア⇔UI の契約）。UI 層は自分で組み立てず、ファサードの `Loupe.ResolveGeometry` が返した値を受け取る（DIP → 物理ピクセルの換算とクランプを UI 層が持たない） |
@@ -131,7 +131,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 var appearance = LoupeAppearance.Default with { PasteboardColor = Color.White };  // 色は System.Drawing.Color（UI 非依存）
 var loupe = new Loupe(options);                                // options は null 可（null は LoupeOptions.Default）
 loupe.Log = logger;                                            // null は NullLogger へ吸収される
-loupe.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => null)); // ドメイン ⇔ 親領域 DIP
+loupe.SetCoordTransform(new CoordTransform(p => p, p => p, () => null)); // ドメイン ⇔ 親領域 DIP
 
 // 状態（ホストが更新する。設定はコア、拡大元画像と拡大中心は UI 層が保持する）
 loupe.DipToDeviceScaling = 1.25;                               // 環境値（DPI 追従。範囲外は補正される）
@@ -151,7 +151,7 @@ var geometry = loupe.ResolveGeometry(layout.DisplaySize, canvasSize); // 幾何�
 | `Loupe(LoupeOptions?)` | 生成（設定を省略した場合は `LoupeOptions.Default`。描画実装は受け取らない） |
 | `ResolveLayout` | 親領域サイズから表示レイアウト（表示サイズ + 表示位置）を解決する。**状態を変更しない**（親領域のサイズを保持しない） |
 | `ResolveGeometry` | 描画 1 フレーム分の幾何（`LoupeGeometry`）の解決（DIP → 物理ピクセルの換算と描画先へのクランプを含む） |
-| `SetCoordinateTransform` | 座標変換ポートの設定（null は等価変換。変換関数は呼び出し毎に評価されるためレイアウト変化に追従する） |
+| `SetCoordTransform` | 座標変換ポートの設定（null は等価変換。変換関数は呼び出し毎に評価されるためレイアウト変化に追従する） |
 | `Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` / `Log` | 設定・環境値・拡大中心・オフセットの読み書き（変更は**変化したときだけ**ログ出力。`Log` は null を `NullLogger` へ吸収する） |
 | `Limits.*` | 数値パラメータの既定値・安全域と補正。UI が依存関係プロパティの既定値と coerce に使う |
 | `LoupeOptions.Default` | 設定の既定値（部分変更の基点。`LoupeOptions.Default with { ZoomLevel = 8 }`） |
@@ -164,7 +164,7 @@ UI 側（`LoupeControl`）が公開する入口:
 | `Options` / `Appearance` | 設定（`LoupeOptions`）と外観（`LoupeAppearance`）。同値の再設定では再描画されない |
 | `DipToDeviceScaling` | 環境値（DPI 追従）。モニター間の移動でも UI が自動更新する |
 | `Rendered` | 描画完了の通知（ホストが描画済み画像へ選択矩形の破線等を追加描画するための入口） |
-| `SetCoordinateTransform` / `RefreshPosition` | 座標変換ポートの設定と、表示位置の再計算要求（パン・ズームなどレイアウト非変更の変化に追従する） |
+| `SetCoordTransform` / `RefreshPosition` | 座標変換ポートの設定と、表示位置の再計算要求（パン・ズームなどレイアウト非変更の変化に追従する） |
 
 ## 設計上の約束
 

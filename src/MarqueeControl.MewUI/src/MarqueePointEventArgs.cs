@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.Marquee.MewUI;
 /// <remarks>
 /// 座標（<see cref="EsPoint"/>）に加え、通知時点のスナップショット（<see cref="MarqueeSnapshot"/>）を含む。<br/>
 /// 座標は UI 非依存のコア型で公開する（コアの状態機械と同一の型のため、境界変換が不要になる）。<br/>
-/// 座標変換はイベント引数では行わず、座標変換ポート（<see cref="EsUtil.Platform.Core.Coordinate.ICoordTransform"/>）方式が担う。
+/// 座標変換はイベント引数では行わず、座標変換ポート（<see cref="EsUtil.Platform.Core.Coord.ICoordTransform"/>）方式が担う。
 /// </remarks>
 /// <param name="point">通知対象の座標（ドメイン座標）。</param>
 /// <param name="snapshot">通知時点のスナップショット。</param>

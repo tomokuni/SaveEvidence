@@ -5,7 +5,7 @@ using EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.MewUI.Imaging;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
@@ -221,7 +221,7 @@ internal sealed class CaptureOverlay
             // 画面外（仮想スクリーン座標の外）へ退避する。負の大きな座標は Windows で
             // 標準的に使われる「画面外配置」であり、ヒットテスト・検出の対象外になる。
             // 値（画面外座標）はコアが単一所有する（Avalonia 版と同じ値を使う）
-            var offScreen = CaptureTiming.OwnerOffScreenCoordinate;
+            var offScreen = CaptureTiming.OwnerOffScreenCoord;
             window.MoveTo(offScreen, offScreen);
         }
 
@@ -375,7 +375,7 @@ internal sealed class CaptureOverlay
             if (DpiScaler.IsValidScaling(scale))
             {
                 _scale = scale;
-                _selector.SetCoordinateTransform(CreatePort());
+                _selector.SetCoordTransform(CreatePort());
             }
         };
 

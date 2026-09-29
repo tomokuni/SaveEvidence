@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -218,7 +218,7 @@ public class MarqueeTests
     public void Options_境界外選択の禁止を既存の選択矩形へ即時適用する()
     {
         var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ClampToDomainBounds = false });
-        marquee.SetCoordinateTransform(new CoordTransform(p => p, p => p, () => new EsSize(100, 100)));
+        marquee.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(100, 100)));
         marquee.SetSelection(new EsRect(50, 50, 200, 200));
 
         // 設定を ON へ切り替えると既存の選択矩形が境界内へクリップされる
@@ -257,24 +257,24 @@ public class MarqueeTests
     // ====================================================================
 
     [Fact]
-    public void SetCoordinateTransform_未設定は等価変換になる()
+    public void SetCoordTransform_未設定は等価変換になる()
     {
         var marquee = CreateMarquee(null, out _);
 
-        marquee.SetCoordinateTransform(null);
+        marquee.SetCoordTransform(null);
 
         Assert.Equal(new EsPoint(3, 4), marquee.ToDomain(new EsPoint(3, 4)));
         Assert.Equal(new EsPoint(3, 4), marquee.ToDip(new EsPoint(3, 4)));
     }
 
     [Fact]
-    public void SetCoordinateTransform_設定したポートで変換する()
+    public void SetCoordTransform_設定したポートで変換する()
     {
         var marquee = CreateMarquee(null, out var effects);
         effects.Calls.Clear();
 
         // Forward（DIP → ドメイン）は 1/2 倍、Inverse（ドメイン → DIP）は 2 倍
-        marquee.SetCoordinateTransform(new CoordTransform(
+        marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
 
         Assert.Equal(new EsPoint(5, 10), marquee.ToDomain(new EsPoint(10, 20)));

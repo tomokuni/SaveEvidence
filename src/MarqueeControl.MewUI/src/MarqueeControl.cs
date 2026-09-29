@@ -3,7 +3,7 @@ using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.MewUI;
 using EsUtil.Platform.MewUI.Imaging;
@@ -93,7 +93,7 @@ public sealed class MarqueeControl : Panel
 
     /// <summary><see cref="DomainToDipScaling"/> プロパティ（座標変換ポートへ適用する倍率）。</summary>
     /// <remarks>
-    /// <see cref="SetCoordinateTransform"/> でポートを設定した場合は使用しない（等倍スケール専用の簡易指定）。<br/>
+    /// <see cref="SetCoordTransform"/> でポートを設定した場合は使用しない（等倍スケール専用の簡易指定）。<br/>
     /// 既定値はコアの <see cref="DomainToDipScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。
     /// </remarks>
     public static readonly MewProperty<double> DomainToDipScalingProperty =
@@ -259,7 +259,7 @@ public sealed class MarqueeControl : Panel
     /// <value>ドメイン → DIP の倍率。既定は 1.0。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
-    /// <see cref="SetCoordinateTransform"/> が未設定の場合のみ使われる（ポート優先）。<br/>
+    /// <see cref="SetCoordTransform"/> が未設定の場合のみ使われる（ポート優先）。<br/>
     /// 選択矩形と十字マーカーの描画はファサードの座標変換ポートのみを使うため本値の影響を受けない<br/>
     /// （本値が影響するのは外側の装飾のサイズラベル・ラベル位置）。
     /// </remarks>
@@ -357,7 +357,7 @@ public sealed class MarqueeControl : Panel
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
     /// 保持と、ポート未指定時に倍率（<see cref="DomainToDipScaling"/>）を使う規則はコアが単一所有する（本層は委譲するだけ）。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordTransform? port) => _marquee.SetCoordinateTransform(port);
+    public void SetCoordTransform(ICoordTransform? port) => _marquee.SetCoordTransform(port);
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>

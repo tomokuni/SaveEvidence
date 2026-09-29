@@ -397,7 +397,7 @@ sequenceDiagram
     PS->>PS: CaptureSessionSlot.TryBeginCrop（排他の受付。撮影中は開始しない）
     PS->>CS: 生成 + Start(image)（オーバーレイを表示ツリーへ加える）
     CS->>CV: ViewportToContent / ContentToViewport（座標変換ポート）
-    CS->>FM: SetCoordinateTransform（ローカル DIP ⇔ 画像ピクセル）
+    CS->>FM: SetCoordTransform（ローカル DIP ⇔ 画像ピクセル）
     CS->>FM: SetLoupeSource(PreviewImage)
     Note over FM: ドラッグで選択（座標ラベル・ハンドル・ルーペはコントロールが描画）
     BTN->>PS: ToggleCrop()（選択があれば確定）

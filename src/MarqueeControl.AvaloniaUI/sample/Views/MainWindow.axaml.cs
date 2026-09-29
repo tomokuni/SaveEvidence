@@ -10,7 +10,7 @@ using EsUtil.SaveEvidence.Marquee.Sample.Logging;
 using EsUtil.SaveEvidence.Marquee.Sample.ViewModels;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using System.Collections.Specialized;
@@ -123,9 +123,9 @@ public partial class MainWindow : Window
         Marquee.Height = ImageHeight * _zoom;
 
         // 座標ポート: ドメイン = 画像ピクセル（800x500）、DIP = 表示座標（ズーム倍率で変換）
-        // SetCoordinateTransform は内部で InvalidateVisual を呼び、ズーム時のちらつきを防ぐ
+        // SetCoordTransform は内部で InvalidateVisual を呼び、ズーム時のちらつきを防ぐ
         // Forward = DIP→ドメイン（_zoom で除算 = 画像ピクセルへ）、Inverse = ドメイン→DIP（_zoom で乗算）
-        Marquee.SetCoordinateTransform(new CoordTransform(
+        Marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / _zoom, p.Y / _zoom),
             p => new EsPoint(p.X * _zoom, p.Y * _zoom),
             () => new EsSize(ImageWidth, ImageHeight)));

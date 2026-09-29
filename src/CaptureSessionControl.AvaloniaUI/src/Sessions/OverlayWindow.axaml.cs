@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.CaptureSession.UIBase;
@@ -195,7 +195,7 @@ internal sealed partial class OverlayWindow : Window
         // 選択矩形・ハイライトはドメイン座標（ウィンドウローカル物理ピクセル）で設定し、描画時に DIP へ変換する（Marquee と同方式）
         // DomainScale: Forward = DIP→ドメイン（× scaling）/ Inverse = ドメイン→DIP（÷ scaling）
         // Marquee / Loupe の 2 コントロールへ同一ポートを一括分配する。
-        SelectionOverlay.SetCoordinateTransform(CoordTransform.DomainScale(() => _scaling));
+        SelectionOverlay.SetCoordTransform(CoordTransform.DomainScale(() => _scaling));
     }
 
     /// <summary>選択オーバーレイ（SelectionOverlay）の再描画を要求する。</summary>

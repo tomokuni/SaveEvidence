@@ -9,7 +9,7 @@ using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
@@ -248,10 +248,10 @@ public sealed class FadeMaskDragRectControl : Panel
     /// Marquee / Loupe の 2 コントロールへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。
     /// </remarks>
-    public void SetCoordinateTransform(ICoordTransform? port)
+    public void SetCoordTransform(ICoordTransform? port)
     {
-        _marquee.SetCoordinateTransform(port);
-        _loupeControl.SetCoordinateTransform(port);
+        _marquee.SetCoordTransform(port);
+        _loupeControl.SetCoordTransform(port);
     }
 
     /// <summary>サイズラベルを描画時に評価するプロバイダを取得または設定する。</summary>
@@ -284,7 +284,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <value>スケーリング係数。ドメイン座標がローカル DIP と一致する場合は 1.0。</value>
     /// <remarks>
     /// 環境値（ユーザー設定ではない）のため設定（<see cref="Options"/>）には含めず、ホスト（セッション）が与える。<br/>
-    /// 座標変換ポート（<see cref="SetCoordinateTransform"/>）が設定されている場合はそちらが優先される。
+    /// 座標変換ポート（<see cref="SetCoordTransform"/>）が設定されている場合はそちらが優先される。
     /// </remarks>
     public double DomainToDipScaling
     {
@@ -335,7 +335,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ルーペの中心位置（ドメイン座標）を設定して表示を開始する。</summary>
     /// <param name="domainPos">ルーペ中心（ドメイン = 元画像ピクセル / 仮想スクリーンピクセル）。</param>
     /// <remarks>
-    /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordinateTransform"/>）から自己計算する<br/>
+    /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordTransform"/>）から自己計算する<br/>
     /// （カーソル右下 + オフセット + クランプ）。配置前（Parent 未接続）の呼び出しは無視される。<br/>
     /// <b>拡大元画像が未設定の間は表示しない</b>（未設定の市松模様を防ぐ。Source 設定後に呼び出し直すことで表示される）。
     /// </remarks>
@@ -349,7 +349,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="domainPos">ルーペ中心（ドメイン座標）。</param>
     /// <remarks>
     /// <see cref="SetLoupePosition"/> と <see cref="OnLoupePositionMoved"/> で共用する（重複排除）。<br/>
-    /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordinateTransform"/>）から自己計算する。<br/>
+    /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordTransform"/>）から自己計算する。<br/>
     /// 表示可否の判断（選択矩形を使うモードでのみ表示する・拡大元画像が未設定なら表示しない）は<br/>
     /// コアの <c>FadeMaskDragRectState.IsLoupeVisible</c> が単一所有する。
     /// </remarks>

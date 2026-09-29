@@ -147,7 +147,7 @@ protected override void Render(DrawingContext context)
 
 - 外観を変える場合は `_presenter.Appearance = MarqueeAppearance.Default with { ... }` を設定する（UI のプロパティ機構へ委譲してもよい）。
 - ラベルを要素として配置する UI は 4 の後、`plan.Labels`（`MarqueeLabelPlacement`。実寸を反映済み）を要素へ写す。
-- 座標変換（ドメイン ⇔ DIP）は `MarqueePresenter.SetCoordinateTransform` へ注入する（未指定は等倍）。
+- 座標変換（ドメイン ⇔ DIP）は `MarqueePresenter.SetCoordTransform` へ注入する（未指定は等倍）。
 
 **ホイール操作（ズーム・パン）はコントロール化を前提とした処理であるため、本層ではなくホスト（UI 層）が扱います**。オーバーレイ上のホイールはビューポート（`ZoomViewControl`）へ転送し、Ctrl 併用は `ZoomByWheel`、それ以外は `PanByWheel` を呼びます（例: `CropViewControl.OnSelectionOverlayWheelChanged`）。ビューの状態（ズーム率・スクロール位置）を持つのはビューポートだけです。
 

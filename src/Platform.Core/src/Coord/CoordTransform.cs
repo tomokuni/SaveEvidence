@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Platform.Core.Coordinate;
+namespace EsUtil.Platform.Core.Coord;
 
 /// <summary><see cref="ICoordTransform"/> の具象実装（Func 委譲）。</summary>
 /// <remarks>

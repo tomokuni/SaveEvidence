@@ -23,7 +23,7 @@ namespace EsUtil.SaveEvidence.CropView.AvaloniaUI.Tests;
 /// <remarks>
 /// 対象: <c>CropViewControl.cs</c>（画像表示 + 領域選択 + 外部提供矩形の統合コントロール）。<br/>
 /// 公開 API: Source / Rects / SelectionMode / ZoomPercent / ZoomIn / ZoomOut / Fit /
-/// SetSelection / ClearSelection / SetCoordinateTransform / 座標変換（ContentToViewport / ViewportToContent）。<br/>
+/// SetSelection / ClearSelection / SetCoordTransform / 座標変換（ContentToViewport / ViewportToContent）。<br/>
 /// パブリック API 経由で内包コントロール（ZoomViewControl / FadeMaskDragRect）との連携を検証する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]

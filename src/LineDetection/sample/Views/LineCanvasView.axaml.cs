@@ -5,7 +5,7 @@ using Avalonia.Media;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Core.Coordinate;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 using System.ComponentModel;
@@ -56,7 +56,7 @@ public partial class LineCanvasView : UserControl
         _ctx = ctx;
 
         // ルーペの表示位置・サイズを自己計算させる（画像ピクセル座標 → ImageHost ローカル座標のスケーリングポート）
-        Loupe.SetCoordinateTransform(CoordTransform.Scale(ImageDisplayScale));
+        Loupe.SetCoordTransform(CoordTransform.Scale(ImageDisplayScale));
         Loupe.PositionOffset = LoupePositionOffset;
 
         // 設定はコアの単一値（Options）で指定する（計算に必要な値）
@@ -86,7 +86,7 @@ public partial class LineCanvasView : UserControl
 
     /// <summary>画像ホストのサイズ変更時（Viewbox スケール変化）にルーペの座標変換ポートを更新する。</summary>
     private void OnImageHostSizeChanged()
-        => Loupe.SetCoordinateTransform(CoordTransform.Scale(ImageDisplayScale));
+        => Loupe.SetCoordTransform(CoordTransform.Scale(ImageDisplayScale));
 
     /// <summary>画像の表示スケール（画像ピクセル座標 → ImageHost ローカル座標）を計算する。</summary>
     /// <remarks>
