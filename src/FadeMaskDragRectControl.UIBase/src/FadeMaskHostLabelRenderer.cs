@@ -1,5 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Label;
+using EsUtil.Feature.Marquee.Presenter.Setting;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 

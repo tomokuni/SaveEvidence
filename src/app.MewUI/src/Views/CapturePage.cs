@@ -5,6 +5,7 @@ using EsUtil.SaveEvidence.CaptureSession.MewUI;
 using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.ZoomView.MewUI;
 using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core;

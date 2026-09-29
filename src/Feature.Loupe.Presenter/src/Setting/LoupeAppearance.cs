@@ -2,7 +2,7 @@ using DrawingColor = System.Drawing.Color;
 using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
 
 
-namespace EsUtil.Feature.Loupe.Presenter;
+namespace EsUtil.Feature.Loupe.Presenter.Setting;
 
 /// <summary>ルーペの外観（色・フォント・角丸・枠線の太さ・表示可否）をまとめた不変の設定値。</summary>
 /// <remarks>

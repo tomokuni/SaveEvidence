@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
 
 
 namespace EsUtil.Feature.Marquee.Presenter.Tests;

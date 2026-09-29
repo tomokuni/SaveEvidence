@@ -1,4 +1,7 @@
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Label;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;

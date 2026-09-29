@@ -7,6 +7,8 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Loupe.Presenter;
+using EsUtil.Feature.Loupe.Presenter.Setting;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.SaveEvidence.ZoomView.AvaloniaUI;

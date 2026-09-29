@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.Feature.Loupe.Presenter;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Imaging;

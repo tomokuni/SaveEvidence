@@ -1,5 +1,6 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
 
 namespace EsUtil.Feature.Marquee.Presenter.Tests;

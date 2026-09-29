@@ -5,7 +5,7 @@ using Avalonia.Threading;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Feature.Loupe.Presenter;
+using EsUtil.Feature.Loupe.Presenter.Drawing;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 

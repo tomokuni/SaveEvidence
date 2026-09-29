@@ -1,4 +1,3 @@
-using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Platform.Core.Geometry;
@@ -7,6 +6,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Label;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 

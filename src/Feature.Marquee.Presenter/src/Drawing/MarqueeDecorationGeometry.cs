@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.Marquee.Presenter;
+namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 
 /// <summary>選択矩形の外側・内側に描く装飾（暗転マスク・枠線・内側の塗り）の矩形計算ロジック（純粋関数）。</summary>
 /// <remarks>

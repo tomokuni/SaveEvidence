@@ -1,4 +1,4 @@
-namespace EsUtil.Feature.Loupe.Presenter;
+namespace EsUtil.Feature.Loupe.Presenter.Drawing;
 
 /// <summary>ルーペの UI 層が描く層（描画順の契約）。</summary>
 /// <remarks>

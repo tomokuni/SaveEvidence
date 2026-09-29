@@ -1,7 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Loupe.Core.Drawing;
+using EsUtil.Feature.Loupe.Presenter.Drawing;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 
-namespace EsUtil.Feature.Loupe.Presenter;
+namespace EsUtil.Feature.Loupe.Presenter.Label;
 
 /// <summary>ルーペのラベルの文言と基準点を生成する（描画層が単一所有する）。</summary>
 /// <remarks>

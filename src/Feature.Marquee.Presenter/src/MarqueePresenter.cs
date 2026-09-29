@@ -5,6 +5,10 @@ using EsUtil.Feature.Marquee.Core.Contract;
 using EsUtil.Feature.Marquee.Core.Drawing;
 using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Label;
+using EsUtil.Feature.Marquee.Presenter.Logging;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using Microsoft.Extensions.Logging;
 using MarqueeFacade = EsUtil.Feature.Marquee.Core.Marquee;
 

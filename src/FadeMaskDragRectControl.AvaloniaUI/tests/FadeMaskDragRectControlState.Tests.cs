@@ -3,6 +3,7 @@ using Avalonia.Media;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
 

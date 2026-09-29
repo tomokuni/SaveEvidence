@@ -61,7 +61,8 @@ using Avalonia;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions
 using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions
-using EsUtil.Feature.Marquee.Presenter;    // MarqueeAppearance / MarqueePresenter
+using EsUtil.Feature.Marquee.Presenter;          // MarqueePresenter（提示のファサード）
+using EsUtil.Feature.Marquee.Presenter.Setting;  // MarqueeAppearance（描画にだけ必要な外観）
 ```
 
 座標ポート（`ICoordTransform`）を使用する場合は、`Platform.Core` の名前空間も必要です。
@@ -188,7 +189,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 #### 5.1.1 設定（`Options`）
 
-寸法・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `EsUtil.Feature.Marquee.Core.Setting.MarqueeOptions`）に、外観（色・フォントサイズ・枠線の太さ・表示可否）は不変の外観値 `MarqueeAppearance`（提示層の `EsUtil.Feature.Marquee.Presenter.MarqueeAppearance`）にまとめて公開し、`Options` / `Appearance` プロパティで設定します。
+寸法・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `EsUtil.Feature.Marquee.Core.Setting.MarqueeOptions`）に、外観（色・フォントサイズ・枠線の太さ・表示可否）は不変の外観値 `MarqueeAppearance`（提示層の `EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）にまとめて公開し、`Options` / `Appearance` プロパティで設定します。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |

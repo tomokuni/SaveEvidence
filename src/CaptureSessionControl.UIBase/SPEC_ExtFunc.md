@@ -66,8 +66,8 @@
 | 依存 | 用途 |
 | --- | --- |
 | `CaptureSessionControl.Core`（`EsUtil.SaveEvidence.CaptureSession`） | 写像元の設定型（`CaptureSettings`） |
-| `Feature.Marquee.Presenter`（`EsUtil.Feature.Marquee.Presenter`） | 写像先の外観（`MarqueeAppearance`） |
-| `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Presenter`） | 写像先の描画の設定（`LoupeAppearance`） |
+| `Feature.Marquee.Presenter`（`EsUtil.Feature.Marquee.Presenter.Setting`） | 写像先の外観（`MarqueeAppearance`） |
+| `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Presenter.Setting`） | 写像先の描画の設定（`LoupeAppearance`） |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。外部パッケージへの直接依存もありません。
 

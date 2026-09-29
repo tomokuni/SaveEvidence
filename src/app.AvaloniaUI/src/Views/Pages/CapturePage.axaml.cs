@@ -22,6 +22,7 @@ using Avalonia.Media;
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.SaveEvidence.CropView;
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.DependencyInjection;

@@ -89,7 +89,7 @@ if (layout.Position is { } position)
 | `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。1〜4096 に補正 |
 | `ZoomLevel` | `int` | 4 | 拡大率。1〜64 に補正 |
 
-`Appearance`（`LoupeAppearance`。`EsUtil.Feature.Loupe.Presenter`）の項目:
+`Appearance`（`LoupeAppearance`。`EsUtil.Feature.Loupe.Presenter.Setting`）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |

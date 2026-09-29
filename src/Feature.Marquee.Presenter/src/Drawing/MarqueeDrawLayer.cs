@@ -1,4 +1,4 @@
-namespace EsUtil.Feature.Marquee.Presenter;
+namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 
 /// <summary>選択矩形の UI 層が描く層（描画順の契約）。</summary>
 /// <remarks>

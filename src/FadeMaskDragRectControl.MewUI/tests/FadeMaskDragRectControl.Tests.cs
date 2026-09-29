@@ -9,6 +9,7 @@ using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI.Tests;
 

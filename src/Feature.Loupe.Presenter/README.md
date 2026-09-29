@@ -37,6 +37,8 @@ UI 層（LoupeControl.AvaloniaUI / LoupeControl.MewUI）
 
 ## 収録する型
 
+**フォルダ構成はコアと同じ規約です**（ルートにはファサード（`LoupePresenter`）だけを置き、外観は `Setting/`、描画計画と装飾の計算は `Drawing/`、ラベル計画は `Label/`、ログ定義は `Logging/`。名前空間はフォルダに追従します）。
+
 ### 提示（Presenter）
 
 | 型 | 責務 |
@@ -146,7 +148,7 @@ Feature.Loupe.Presenter
 
 **UI フレームワークへ依存しません**（描画 API の抽象も持ちません）。
 
-名前空間は `EsUtil.Feature.Loupe.Presenter`。アセンブリ名は `Feature.Loupe.Presenter`。
+名前空間は `EsUtil.Feature.Loupe.Presenter`（配下はフォルダに追従し `.Setting` / `.Drawing` / `.Label` / `.Logging`）。アセンブリ名は `Feature.Loupe.Presenter`。
 
 ## テスト
 

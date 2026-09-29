@@ -162,7 +162,7 @@ flowchart TB
 | `FadeMaskDragRectPointEventArgs` | 本プロジェクト | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
 | `FadeMaskDragRectMode` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 動作モード（描画モード・可視性・全面暗転の切替） |
 | `FadeMaskDragRectOptions` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。**色は含まない**） |
-| `MarqueeAppearance` / `LoupeAppearance` | EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter（提示層） | 描画にだけ必要な外観の単一値（内包コントロールへ委譲する） |
+| `MarqueeAppearance` / `LoupeAppearance` | EsUtil.Feature.Marquee.Presenter.Setting / EsUtil.Feature.Loupe.Presenter.Setting（提示層） | 描画にだけ必要な外観の単一値（内包コントロールへ委譲する） |
 | `FadeMaskDragRectChildValues` / `FadeMaskHostLabelRenderer` | EsUtil.SaveEvidence.FadeMaskDragRect.UIBase（UI 間の共有層） | 設定とモードから子コントロールへ適用する値の解決と、付加情報ラベルの描画 |
 | `ICoordTransform` / `CoordTransform` | Platform.Core | ドメイン ↔ DIP の座標変換ポート |
 

@@ -34,18 +34,20 @@
 
 ### `EsUtil.Feature.Marquee.Presenter`（提示・外観）
 
+ルート直下（`EsUtil.Feature.Marquee.Presenter`）に置くのはファサード（`MarqueePresenter`）だけです。以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
+
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `MarqueePresenter` | class（`sealed` でない） | 提示のファサード。コアを内部に保持し、設定・環境値・入力の転送と、外観の保持、描画計画の解決を行う。**継承して `ResolveDrawPlan` を上書きできることが役割**（独自の見た目を提供する） |
-| `MarqueeDrawPlan` | readonly record struct | 1 フレーム分の描画計画（外観・描画面・穴あけ矩形・暗転領域・枠線矩形・内側の塗りと枠線・ハンドル・マーカー・層の順序・ラベル配置）。**UI が見る唯一の描画値** |
-| `MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。**層にある ⇔ 描く値がある** |
-| `MarqueeAppearance` | sealed record | **外観の単一所有者**（色・ラベルの体裁・枠線の太さ・表示可否）。`Default` を基点に `with` 式で部分変更する |
-| `MarqueeTextPlacement` | readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
-| `MarqueeLabelPlacement` | readonly record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
-| `MarqueeLabelPlan` | static class | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する |
-| `MarqueeDecorationGeometry` | internal static class | 装飾矩形の計算（本層の内部手順。UI 層は解決済みの矩形を `MarqueeDrawPlan` から受け取る） |
-| `MarqueeLabelTexts` | internal static class | ラベルの文言と基準点の生成（本層の内部手順。UI 層は `MarqueeDrawPlan.Labels` を受け取る） |
-| `MarqueePresenterLogMessage` | internal static partial class | 本層が単一所有する設定の変更ログ（内部手順。ホストはロガーを設定するだけ） |
+| `Drawing.MarqueeDrawPlan` | readonly record struct | 1 フレーム分の描画計画（外観・描画面・穴あけ矩形・暗転領域・枠線矩形・内側の塗りと枠線・ハンドル・マーカー・層の順序・ラベル配置）。**UI が見る唯一の描画値** |
+| `Drawing.MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。**層にある ⇔ 描く値がある** |
+| `Setting.MarqueeAppearance` | sealed record | **外観の単一所有者**（色・ラベルの体裁・枠線の太さ・表示可否）。`Default` を基点に `with` 式で部分変更する |
+| `Drawing.MarqueeTextPlacement` | readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
+| `Label.MarqueeLabelPlacement` | readonly record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
+| `Label.MarqueeLabelPlan` | static class | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する |
+| `Drawing.MarqueeDecorationGeometry` | internal static class | 装飾矩形の計算（本層の内部手順。UI 層は解決済みの矩形を `MarqueeDrawPlan` から受け取る） |
+| `Label.MarqueeLabelTexts` | internal static class | ラベルの文言と基準点の生成（本層の内部手順。UI 層は `MarqueeDrawPlan.Labels` を受け取る） |
+| `Logging.MarqueePresenterLogMessage` | internal static partial class | 本層が単一所有する設定の変更ログ（内部手順。ホストはロガーを設定するだけ） |
 
 ### `MarqueePresenter` のメンバー
 

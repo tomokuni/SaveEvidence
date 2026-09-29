@@ -1,6 +1,7 @@
 using BindingFlags = System.Reflection.BindingFlags;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;

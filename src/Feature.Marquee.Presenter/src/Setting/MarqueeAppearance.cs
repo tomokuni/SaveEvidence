@@ -1,7 +1,7 @@
 using DrawingColor = System.Drawing.Color;
 using static EsUtil.Feature.Marquee.Core.Marquee.Limits;
 
-namespace EsUtil.Feature.Marquee.Presenter;
+namespace EsUtil.Feature.Marquee.Presenter.Setting;
 
 /// <summary>選択矩形コントロールの外観（色・ラベルの体裁・枠線の太さ・表示可否）をまとめた不変の設定値。</summary>
 /// <remarks>

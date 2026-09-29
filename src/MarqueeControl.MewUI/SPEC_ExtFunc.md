@@ -35,7 +35,7 @@ Avalonia 版と同一の挙動になります。
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の**計算に必要な設定**（寸法・対話パラメータ。コアの `EsUtil.Feature.Marquee.Core.Setting.MarqueeOptions`。**色・表示可否は含まない**） |
-| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（提示層の `EsUtil.Feature.Marquee.Presenter.MarqueeAppearance`）。設定すると次の描画で提示層が新しい外観で描画計画を解決する |
+| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（提示層の `EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）。設定すると次の描画で提示層が新しい外観で描画計画を解決する |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。**文言はホストが与える**（コアは特定の文言を持たない。文言の生成はホストの `CaptureLabelTexts` 等が担う）。操作・情報ラベルの文言も同様にホストが与える。設定すると保持している描画内容を破棄して再描画を要求する |
 | `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新）。**描画では描画面と表示領域の比（`SkiaSurfaceScale`）を使う**ため、追加直後でこの値が未更新でも図形は画像と同じ倍率で描かれる |
 

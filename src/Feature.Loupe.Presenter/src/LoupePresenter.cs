@@ -3,6 +3,10 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Loupe.Core.Drawing;
 using EsUtil.Feature.Loupe.Core.Placement;
 using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Loupe.Presenter.Drawing;
+using EsUtil.Feature.Loupe.Presenter.Label;
+using EsUtil.Feature.Loupe.Presenter.Logging;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 using Microsoft.Extensions.Logging;
 using LoupeFacade = EsUtil.Feature.Loupe.Core.Loupe;
 

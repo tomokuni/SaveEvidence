@@ -5,6 +5,8 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
 namespace EsUtil.Feature.Marquee.Presenter.Tests;
 

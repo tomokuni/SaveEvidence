@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Feature.Loupe.Core.Setting;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;

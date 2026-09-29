@@ -2,6 +2,9 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Core.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Setting;
+using EsUtil.Feature.Marquee.Presenter.Label;
 
 namespace EsUtil.Feature.Marquee.Presenter.Tests;
 

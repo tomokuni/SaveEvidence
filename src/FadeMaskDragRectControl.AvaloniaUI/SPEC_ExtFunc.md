@@ -69,8 +69,8 @@
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.Platform.Core.Coord; // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize / EsVector（コア提供）
-using EsUtil.Feature.Marquee.Presenter; // MarqueeAppearance（描画にだけ必要な外観）
-using EsUtil.Feature.Loupe.Presenter;   // LoupeAppearance（描画にだけ必要な色）
+using EsUtil.Feature.Marquee.Presenter.Setting; // MarqueeAppearance（描画にだけ必要な外観）
+using EsUtil.Feature.Loupe.Presenter.Setting;   // LoupeAppearance（描画にだけ必要な色）
 ```
 
 公開 API は内包コントロール（MarqueeControl / LoupeControl）の型を参照しないため、

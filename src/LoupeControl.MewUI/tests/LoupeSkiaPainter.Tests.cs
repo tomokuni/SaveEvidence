@@ -3,6 +3,8 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Skia;
 using EsUtil.Feature.Loupe.Presenter;
+using EsUtil.Feature.Loupe.Presenter.Drawing;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;

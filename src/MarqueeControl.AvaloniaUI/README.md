@@ -66,7 +66,8 @@ using Avalonia;
 using Avalonia.Media;                        // Colors
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions
-using EsUtil.Feature.Marquee.Presenter;    // MarqueeAppearance / MarqueePresenter
+using EsUtil.Feature.Marquee.Presenter;          // MarqueePresenter（提示のファサード）
+using EsUtil.Feature.Marquee.Presenter.Setting;  // MarqueeAppearance（描画にだけ必要な外観）
 using EsUtil.Platform.Core.Coord;       // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;         // EsPoint / EsSize（コア提供）
 ```

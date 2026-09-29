@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.Loupe.Presenter;
+namespace EsUtil.Feature.Loupe.Presenter.Drawing;
 
 /// <summary>ルーペの装飾（十字線・枠線）の矩形計算ロジック（純粋関数）。</summary>
 /// <remarks>

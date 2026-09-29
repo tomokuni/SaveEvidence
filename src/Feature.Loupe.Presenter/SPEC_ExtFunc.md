@@ -24,20 +24,22 @@
 
 ## 2. 公開 API 一覧
 
-### `EsUtil.Feature.Loupe.Presenter`
+### `EsUtil.Feature.Loupe.Presenter`（提示・外観）
+
+ルート直下（`EsUtil.Feature.Loupe.Presenter`）に置くのはファサード（`LoupePresenter`）だけです。以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupePresenter` | class | 提示のファサード（コアのラップ・外観の保持・描画計画の解決）。`sealed` ではない（派生で見た目を差し替えられる） |
-| `LoupeAppearance` | record | 外観（色・フォント・角丸・枠線の太さ・表示可否） |
-| `LoupeDrawPlan` | record struct | 1 フレーム分の描画計画（描画面・矩形・層の順序・ラベル配置・通知用の値） |
-| `LoupeDrawLayer` | enum | 描画層（`Pasteboard` / `Image` / `Crosshair` / `Border` / `Label`） |
-| `LoupeTextPlacement` | record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・描画領域） |
-| `LoupeLabelPlacement` | record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
-| `LoupeLabelPlan` | static class | 実寸 → `LoupeLabelPlacement` の写像 |
-| `LoupePresenterLogMessage` | static partial class | 本層が単一所有する設定の変更ログ（内部手順。ホストは参照しない） |
+| `Setting.LoupeAppearance` | record | 外観（色・フォント・角丸・枠線の太さ・表示可否） |
+| `Drawing.LoupeDrawPlan` | record struct | 1 フレーム分の描画計画（描画面・矩形・層の順序・ラベル配置・通知用の値） |
+| `Drawing.LoupeDrawLayer` | enum | 描画層（`Pasteboard` / `Image` / `Crosshair` / `Border` / `Label`） |
+| `Drawing.LoupeTextPlacement` | record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・描画領域） |
+| `Label.LoupeLabelPlacement` | record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
+| `Label.LoupeLabelPlan` | static class | 実寸 → `LoupeLabelPlacement` の写像 |
+| `Logging.LoupePresenterLogMessage` | static partial class | 本層が単一所有する設定の変更ログ（内部手順。ホストは参照しない） |
 
-`LoupeDecorationGeometry` / `LoupeLabelTexts` / `LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）。
+`Drawing.LoupeDecorationGeometry` / `Label.LoupeLabelTexts` / `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）。
 
 ### `LoupePresenter` のメンバー
 

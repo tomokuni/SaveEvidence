@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.Feature.Loupe.Presenter;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.SaveEvidence.Loupe.Sample.Imaging;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Loupe.Core.Setting;

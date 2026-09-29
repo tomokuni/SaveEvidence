@@ -1,9 +1,10 @@
 using System.Globalization;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Feature.Loupe.Presenter;
+namespace EsUtil.Feature.Loupe.Presenter.Logging;
 
 /// <summary>ルーペの提示層が出力する LoggerMessage 定義（ソース生成ログ）。</summary>
 /// <remarks>

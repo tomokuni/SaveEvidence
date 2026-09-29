@@ -1,7 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Core.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Label;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
-namespace EsUtil.Feature.Marquee.Presenter;
+namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 
 /// <summary>選択矩形コントロールの描画 1 フレーム分の計画（描画層が解決した値を UI 層へ渡す唯一の契約）。</summary>
 /// <param name="Appearance">外観（色・ラベルの体裁・枠線の太さ・表示可否）。</param>

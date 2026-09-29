@@ -1,9 +1,11 @@
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Core.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using static EsUtil.Feature.Marquee.Core.Marquee.Limits;
 
-namespace EsUtil.Feature.Marquee.Presenter;
+namespace EsUtil.Feature.Marquee.Presenter.Label;
 
 /// <summary>選択矩形コントロールのラベルの文言と基準点を生成する（描画層が単一所有する）。</summary>
 /// <remarks>

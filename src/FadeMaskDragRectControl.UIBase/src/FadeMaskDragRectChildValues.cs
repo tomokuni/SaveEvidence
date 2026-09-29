@@ -1,6 +1,6 @@
 using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 

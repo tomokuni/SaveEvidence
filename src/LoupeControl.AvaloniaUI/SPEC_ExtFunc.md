@@ -243,12 +243,12 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 #### 5.1.5 寸法と外観（Appearance）
 
-ルーペの基本サイズと拡大率は **コアの `LoupeOptions`（`EsUtil.Feature.Loupe.Core.Setting`）が単一所有**し、`Options` として指定します（両 UI で既定値・意味が一致します）。**枠線の太さ・十字線と枠線とラベルの表示可否・色・ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、提示層 `Feature.Loupe.Presenter` の `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter`）が単一所有し、本コントロールの `Appearance` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
+ルーペの基本サイズと拡大率は **コアの `LoupeOptions`（`EsUtil.Feature.Loupe.Core.Setting`）が単一所有**し、`Options` として指定します（両 UI で既定値・意味が一致します）。**枠線の太さ・十字線と枠線とラベルの表示可否・色・ラベルのフォントサイズ・角丸は描画にだけ必要な設定**であり、提示層 `Feature.Loupe.Presenter` の `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter.Setting`）が単一所有し、本コントロールの `Appearance` プロパティとして指定します（コアはこれらの値を決定せず、描画可否の判定にも使いません）。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `LoupeOptions` | コアの既定値 | ルーペの基本サイズと拡大率。`with` 式で部分変更する。数値項目はコアの `LoupeOptions` が生成時に安全域へ補正する |
-| `Appearance` | `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter`） | `LoupeAppearance.Default` | 枠線の太さ・表示可否（十字線・枠線・ラベル）と描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）・ラベルのフォントサイズ・角丸。`LoupeAppearance.Default with { ... }` で部分変更する |
+| `Appearance` | `LoupeAppearance`（`EsUtil.Feature.Loupe.Presenter.Setting`） | `LoupeAppearance.Default` | 枠線の太さ・表示可否（十字線・枠線・ラベル）と描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）・ラベルのフォントサイズ・角丸。`LoupeAppearance.Default with { ... }` で部分変更する |
 
 `Options`（コアの `LoupeOptions`）の項目（詳細は `Feature.Loupe.Core` の `SPEC_ExtFunc.md` を参照）:
 

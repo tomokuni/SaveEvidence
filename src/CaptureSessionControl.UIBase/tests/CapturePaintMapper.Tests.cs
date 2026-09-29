@@ -1,4 +1,5 @@
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 

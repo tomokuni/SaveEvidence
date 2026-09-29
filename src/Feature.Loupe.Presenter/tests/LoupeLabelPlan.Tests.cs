@@ -2,6 +2,9 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Loupe.Core.Drawing;
+using EsUtil.Feature.Loupe.Presenter.Drawing;
+using EsUtil.Feature.Loupe.Presenter.Setting;
+using EsUtil.Feature.Loupe.Presenter.Label;
 
 namespace EsUtil.Feature.Loupe.Presenter.Tests;
 

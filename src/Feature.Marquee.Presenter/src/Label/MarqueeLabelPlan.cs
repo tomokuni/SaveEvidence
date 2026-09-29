@@ -1,8 +1,10 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using DrawingColor = System.Drawing.Color;
 
 
-namespace EsUtil.Feature.Marquee.Presenter;
+namespace EsUtil.Feature.Marquee.Presenter.Label;
 
 /// <summary>描画層のテキスト配置から、ラベル要素の配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>

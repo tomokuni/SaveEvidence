@@ -2,6 +2,8 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
 

@@ -2,6 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
 using EsUtil.Feature.Loupe.Presenter;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;

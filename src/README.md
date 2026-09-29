@@ -117,7 +117,7 @@ UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [
 | --- | --- | --- |
 | プラットフォーム層 | `Platform.Core` / `.Native` / `.Skia` / `.AvaloniaUI` / `.MewUI` | `EsUtil.Platform.Core` / `.Native` / `.Skia` / `.AvaloniaUI` / `.MewUI` |
 | 可搬コア（機能単位） | `Feature.Marquee.Core` / `Feature.Loupe.Core` | `EsUtil.Feature.Marquee.Core`（`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Selection`） / `EsUtil.Feature.Loupe.Core`（`.Drawing` / `.Setting` / `.Logging` / `.Placement`） |
-| 可搬な提示層（機能単位） | `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | `EsUtil.Feature.Marquee.Presenter` / `EsUtil.Feature.Loupe.Presenter` |
+| 可搬な提示層（機能単位） | `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | `EsUtil.Feature.Marquee.Presenter`（`.Setting` / `.Drawing` / `.Label` / `.Logging`） / `EsUtil.Feature.Loupe.Presenter`（同左） |
 | 製品側のコントロール | `MarqueeControl.AvaloniaUI` 等 | `EsUtil.SaveEvidence.Marquee.AvaloniaUI` 等 |
 | アプリ | `app.Core` / `app.AvaloniaUI` / `app.MewUI` | `EsUtil.SaveEvidence`（Core と AvaloniaUI が共有） / `EsUtil.SaveEvidence.MewUI` |
 

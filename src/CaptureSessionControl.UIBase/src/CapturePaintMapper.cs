@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Feature.Loupe.Presenter;
-using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Setting;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 
 namespace EsUtil.SaveEvidence.CaptureSession.UIBase;
 

@@ -1,7 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Feature.Loupe.Presenter.Drawing;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 
 
-namespace EsUtil.Feature.Loupe.Presenter;
+namespace EsUtil.Feature.Loupe.Presenter.Label;
 
 /// <summary>ルーペの中心座標ラベルの配置指示を解決する（実寸 → 配置矩形の写像）。</summary>
 /// <remarks>

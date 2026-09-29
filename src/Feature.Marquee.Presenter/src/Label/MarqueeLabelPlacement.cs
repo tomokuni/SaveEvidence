@@ -1,8 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
 
-namespace EsUtil.Feature.Marquee.Presenter;
+namespace EsUtil.Feature.Marquee.Presenter.Label;
 
 /// <summary>選択矩形コントロールのラベル 1 件を、UI のテキスト要素として配置するための指示。</summary>
 /// <param name="Bounds">要素を置く矩形（DIP。呼び出し側の座標系に従う）。</param>

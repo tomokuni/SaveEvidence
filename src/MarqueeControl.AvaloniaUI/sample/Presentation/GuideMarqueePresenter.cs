@@ -1,6 +1,8 @@
 using EsUtil.Feature.Marquee.Core.Contract;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Marquee.Presenter;
+using EsUtil.Feature.Marquee.Presenter.Setting;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;

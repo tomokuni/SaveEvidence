@@ -1,7 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Loupe.Core.Drawing;
+using EsUtil.Feature.Loupe.Presenter.Label;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 
-namespace EsUtil.Feature.Loupe.Presenter;
+namespace EsUtil.Feature.Loupe.Presenter.Drawing;
 
 /// <summary>ルーペの描画 1 フレーム分の計画（描画層が解決した値を UI 層へ渡す唯一の契約）。</summary>
 /// <param name="Appearance">外観（色・フォント・角丸・枠線の太さ・表示可否）。</param>

@@ -1,4 +1,6 @@
 using EsUtil.Feature.Loupe.Presenter;
+using EsUtil.Feature.Loupe.Presenter.Setting;
+using EsUtil.Feature.Loupe.Presenter.Drawing;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 

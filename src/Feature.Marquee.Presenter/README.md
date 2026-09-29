@@ -39,6 +39,8 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 
 ## 収録する型
 
+**フォルダ構成はコアと同じ規約です**（ルートにはファサード（`MarqueePresenter`）だけを置き、外観は `Setting/`、描画計画と装飾の計算は `Drawing/`、ラベル計画は `Label/`、ログ定義は `Logging/`。名前空間はフォルダに追従します）。
+
 ### 提示（Presenter）
 
 | 型 | 責務 |
@@ -164,7 +166,7 @@ Feature.Marquee.Presenter
 
 **UI フレームワークへ依存しません**（Avalonia / MewUI の型を参照せず、描画 API の抽象も持ちません）。
 
-名前空間は `EsUtil.Feature.Marquee.Presenter`。アセンブリ名は `Feature.Marquee.Presenter`。
+名前空間は `EsUtil.Feature.Marquee.Presenter`（配下はフォルダに追従し `.Setting` / `.Drawing` / `.Label` / `.Logging`）。アセンブリ名は `Feature.Marquee.Presenter`。
 
 ## テスト
 

@@ -1,8 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 
 
-namespace EsUtil.Feature.Loupe.Presenter;
+namespace EsUtil.Feature.Loupe.Presenter.Label;
 
 /// <summary>ルーペの中心座標ラベルを、UI のテキスト要素として配置するための指示。</summary>
 /// <param name="Bounds">要素を置く矩形（DIP。呼び出し側の座標系に従う）。</param>
