@@ -1,36 +1,17 @@
-# Feature.Marquee.Presenter 外部機能仕様書
+# Feature.Marquee.Presenter API リファレンス
 
-`Feature.Marquee.Presenter`（`MarqueeControl` の見た目を定めるコントロール化を前提としない UI 非依存層）が提供する外部機能と公開 API の仕様です。利用者（UI 実装・ホスト・独自コントロールの作者）から見える情報のみを記載し、内部実装の詳細は記載しません。設計の意図は [README](README.md)、構造と依存は [SPEC_System](SPEC_System.md) を参照してください。
+`MarqueeControl`（マーキー選択）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
-本層の機能は 2 つに分かれます。
-
-| 区分 | 機能 |
-| --- | --- |
-| **提示（Presenter）** | 描画計画の解決（幾何 + 外観から層の順序・装飾矩形・文言・ラベル配置を導出） |
-| **外観** | 色・フォントサイズ・枠線の太さ・表示可否の単一値 |
-
-**本層はコントロール化を前提とした処理を提供しません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるため UI 層が持ちます）。
-
-## 1. 提供機能
-
-### 1.1 提示（Presenter）
-
-| 機能 | 提供元 | 説明 |
-| --- | --- | --- |
-| 描画計画の解決 | `MarqueePresenter.ResolveDrawPlan` | 幾何（コア）と外観から、層の順序・装飾矩形・ラベル配置を解決した 1 値（`MarqueeDrawPlan`）を返す。**UI が見る唯一の描画値**である |
-| 装飾矩形の計算 | `MarqueePresenter`（`DrawPlan` partial） | 枠線 4 辺の矩形と、暗転領域（描画面から穴あけ矩形を除いた 4 領域）を求める純粋関数 |
-| ラベルの文言と基準点 | `MarqueePresenter`（`LabelTexts` partial） | サイズラベル（位置と寸法の書式・表示スケール）とカーソル座標ラベルの文言・基準点を生成する |
-| ラベル要素の配置 | `MarqueePresenter.ResolveLabelPlacements` | 実寸（描画 API の測定値）からラベル要素の配置指示（`MarqueeLabelPlacement`）を解決する。**要素として置くか画像として描くかは UI 層が決める** |
-
-#### 1.1.1 前提条件
+## 1. 前提条件
 
 - **描画は本層が行いません**。本層は描画計画というデータを返し、描画は各 UI（`MarqueeContextPainter` / `MarqueeSkiaPainter`）が自 UI の API で行います（UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、抽象を持ちません）。
+- **本層はコントロール化を前提とした処理を提供しません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるため UI 層が持ちます）。
 - 描画計画の座標は**ローカル DIP**です（原点 (0, 0)・サイズは描画領域）。ドメイン → DIP の変換はコアが済ませています。
 - 実寸測定（`measureText`）は描画 API 依存のため UI 層が関数として渡します。
 - 本層は外観（`MarqueeAppearance`）を単一所有します（描画にだけ必要な設定のため）。寸法・対話パラメータはコア（`MarqueeOptions`）が単一所有します。
 - **本層が単一所有する設定（外観・表示スケーリング係数）の変更は本層が記録します**（`MarqueePresenterLogMessage`。値を所有する主体が記録する）。
 
-## 2. 公開 API 一覧
+## 2. 公開 API
 
 ### `EsUtil.Feature.Marquee.Presenter`（提示・外観）
 
@@ -161,20 +142,35 @@
 - 縦積みの行送りは「行の高さ + 内側余白 × 2」です（背景の下端と次の行の上端が一致します）。
 - 文言・表示可否はホストが判断します（本層は文言を生成しません）。
 
-### 設定変更ログの出力
+## 4. 使用例
 
-- 本層が単一所有する設定（外観・表示スケーリング係数）の変更は、本層が記録します（`MarqueePresenterLogMessage`）。
-- 出力先は `MarqueePresenter.Log`（コアのファサードが保持するロガー）です（ホストは 1 回設定するだけで、コアと本層のログが同じ基盤へ出ます）。
-- **変化した項目だけ**を出力します（外観の再適用でログが溢れないため）。
-- コアが所有する設定（`MarqueeOptions`・倍率・ハイライト矩形）はコアが記録します（本層は重複して記録しません）。
+```csharp
+using EsUtil.Feature.Marquee.Core;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
-## 4. 制限事項
+// 外観（色・フォント・枠線の太さ・表示可否）を差し替える
+var appearance = MarqueeAppearance.Default with
+{
+    OuterBorderColor = Color.FromArgb(0xFF, 0x33, 0x99, 0xFF),
+    ShowOverlay = false,
+};
+
+var presenter = new MarqueePresenter(new Marquee(effects))
+{
+    Appearance = appearance,
+    DisplayScaleScaling = 1.0,
+};
+
+// 描画計画（UI が見る唯一の描画値）を解決する
+var plan = presenter.ResolveDrawPlan(new EsSize(800, 600), MeasureText);
+
+// UI は Layers の順に自 UI の描画 API を呼び、Labels を要素として配置する
+foreach (var layer in plan.Layers) { /* Decoration → Handles → Marker → Label */ }
+```
+
+## 5. 制限事項
 
 - 描画そのものは提供しません（描画計画というデータまでを返し、描画は各 UI が自 UI の API で行う）。
 - 文字の折り返し・複数行・文字揃えは扱いません（1 行の左揃えのみ。カーソル座標ラベルは左端・上端、サイズラベルは穴あけ矩形の左上から枠線の幅（+ 1 DIP）だけ内側へ寄せた点）。
 - 破線・クリップ・不透明度の指定は扱いません（描画計画は矩形と色までの情報を持つ）。
 - ホイール操作（どの入力がズーム・パンか）は提供しません（コントロール化を前提とした処理のため UI 層が持ちます）。
-
-## 5. ライセンス
-
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

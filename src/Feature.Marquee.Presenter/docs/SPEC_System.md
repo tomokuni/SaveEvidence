@@ -1,6 +1,6 @@
 # Feature.Marquee.Presenter システム仕様書
 
-`Feature.Marquee.Presenter`（`MarqueeControl` の見た目を定めるコントロール化を前提としない UI 非依存層）の構造・依存・例外処理・コンポーネント構成を記載します。外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
+`Feature.Marquee.Presenter`（`MarqueeControl` の見た目を定めるコントロール化を前提としない UI 非依存層）の構造・依存・例外処理・コンポーネント構成を記載します。公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
 
 ## 1. システム概要
 
@@ -174,6 +174,11 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 | 設定変更ログの所有者 | 値を所有する主体が記録する（コアの設定はコア、本層の外観は本層、UI の値は各 UI）。接頭辞から伝搬を追える |
 | 外観の拡張点 | `MarqueePresenter` を `sealed` にしない（`Appearance` の差し替えと `ResolveDrawPlan` の上書きで独自の見た目を提供できることが役割） |
 
-## 10. ライセンス
+## 10. ログ
 
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。
+- 本層が単一所有する設定（外観・表示スケーリング係数）の変更は、本層が記録します（`MarqueePresenterLogMessage`）。
+- 出力先は `MarqueePresenter.Log`（コアのファサードが保持するロガー）です（ホストは 1 回設定するだけで、コアと本層のログが同じ基盤へ出ます）。
+- **変化した項目だけ**を出力します（外観の再適用でログが溢れないため）。
+- コアが所有する設定（`MarqueeOptions`・倍率・ハイライト矩形）はコアが記録します（本層は重複して記録しません）。
+- 付加情報ラベル（操作・情報ラベル）はホストが所有します（文言の生成と描画。本層は文言を生成しません）。
+
