@@ -22,11 +22,14 @@ namespace EsUtil.Feature.Marquee.Core.Interaction;
 /// </remarks>
 internal sealed class MarqueeState
 {
+    /// <summary>選択矩形（ドメイン座標）。未選択は幅・高さが 0。</summary>
+    private MarqueeSelection _selection;
+
     /// <summary>選択矩形（ドメイン座標）。未選択時は 0x0。</summary>
-    internal EsRect SelectionRect { get; private set; }
+    internal EsRect SelectionRect => _selection.Rect;
 
     /// <summary>選択矩形が有効かどうか（幅・高さが 0 より大きい）。</summary>
-    internal bool HasSelection => SelectionRect.Width > 0 && SelectionRect.Height > 0;
+    internal bool HasSelection => !SelectionRect.IsEmpty;
 
     /// <summary>ドラッグの始点（ドメイン座標）。未選択時の nudge の基点にもなる。</summary>
     internal EsPoint StartPoint { get; private set; }
@@ -108,7 +111,7 @@ internal sealed class MarqueeState
     internal void Reset()
     {
         EndNudge();
-        SelectionRect = default;
+        _selection = default;
         StartPoint = default;
         LastMousePosition = default;
         IsDragging = false;
@@ -125,7 +128,7 @@ internal sealed class MarqueeState
     internal void SetSelection(EsRect rect)
     {
         EndNudge();
-        SelectionRect = rect;
+        _selection = new MarqueeSelection(rect);
         IsDragging = false;
         ActiveTarget = MarqueeHitTarget.None;
     }
@@ -179,7 +182,7 @@ internal sealed class MarqueeState
     /// <remarks>抑制は 1 回で解除する（以降の移動イベントは通常どおり適用する）。</remarks>
     internal bool ConsumeSuppressedEcho(EsPoint position, double hitRadius)
     {
-        if (_suppressEchoAt is not { } echoPosition || !MarqueeSelectionGeometry.IsNear(position, echoPosition, hitRadius))
+        if (_suppressEchoAt is not { } echoPosition || !IsNear(position, echoPosition, hitRadius))
         {
             return false;
         }
@@ -188,29 +191,48 @@ internal sealed class MarqueeState
         return true;
     }
 
+    /// <summary>2 点が指定半径以内か判定する（各軸独立の距離 = 矩形の近傍判定）。</summary>
+    /// <param name="a">1 点目（ドメイン座標）。</param>
+    /// <param name="b">2 点目（ドメイン座標）。</param>
+    /// <param name="radius">判定半径（ドメイン座標）。0 以上。</param>
+    /// <returns>半径以内の場合は true。</returns>
+    /// <remarks>ヒットテストと nudge 終了直後のエコー抑制が同じ判定を使う（判定規則の単一所有）。</remarks>
+    internal static bool IsNear(EsPoint a, EsPoint b, double radius)
+        => Math.Abs(a.X - b.X) <= radius && Math.Abs(a.Y - b.Y) <= radius;
+
+    /// <summary>点を境界内にクリップする。</summary>
+    /// <param name="point">クリップする点（ドメイン座標）。</param>
+    /// <param name="bounds">クリップ範囲（ドメイン座標）。</param>
+    /// <returns>境界内に収めた点。</returns>
+    /// <remarks>新規選択の始点・終点を画像外へ出さないために使う（開始点が画像外でもはみ出さない）。</remarks>
+    internal static EsPoint ClampPointToBounds(EsPoint point, EsRect bounds)
+        => new(
+            Math.Clamp(point.X, bounds.X, bounds.Right),
+            Math.Clamp(point.Y, bounds.Y, bounds.Bottom));
+
     /// <summary>指定座標がどのドラッグハンドルに当たるかを判定する。</summary>
     /// <param name="pos">判定する座標（ドメイン座標）。</param>
     /// <param name="hitRadius">ヒットテスト半径（ドメイン座標）。</param>
     /// <returns>ヒットしたハンドル種別。選択矩形が空の場合は常に <see cref="MarqueeHitTarget.None"/>。</returns>
     /// <remarks>
-    /// ハンドル位置は <see cref="MarqueeSelectionGeometry.GetHandlePosition"/> から取得し、各ハンドルへの距離判定でヒットを確定する（ハンドル位置計算の DRY）。<br/>
+    /// ハンドル位置は <see cref="MarqueeSelection.Handle"/> から取得し、各ハンドルへの距離判定でヒットを確定する（ハンドル位置計算の DRY）。<br/>
     /// 判定順は「角（4 方向）→ 辺（4 方向）→ 矩形内（Move）」で、角が辺より優先される。
     /// </remarks>
     internal MarqueeHitTarget HitTest(EsPoint pos, double hitRadius)
     {
-        var r = SelectionRect;
         if (!HasSelection) return MarqueeHitTarget.None;
 
         // 8 方向のハンドル位置を列挙してヒット判定する（角優先 → 辺 → Move の順）
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.TopLeft), hitRadius)) return MarqueeHitTarget.TopLeft;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.TopRight), hitRadius)) return MarqueeHitTarget.TopRight;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.BottomLeft), hitRadius)) return MarqueeHitTarget.BottomLeft;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.BottomRight), hitRadius)) return MarqueeHitTarget.BottomRight;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.TopCenter), hitRadius)) return MarqueeHitTarget.TopCenter;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.BottomCenter), hitRadius)) return MarqueeHitTarget.BottomCenter;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.MiddleLeft), hitRadius)) return MarqueeHitTarget.MiddleLeft;
-        if (MarqueeSelectionGeometry.IsNear(pos, MarqueeSelectionGeometry.GetHandlePosition(r, MarqueeHitTarget.MiddleRight), hitRadius)) return MarqueeHitTarget.MiddleRight;
-        if (r.Contains(pos)) return MarqueeHitTarget.Move;
+        var selection = _selection;
+        if (IsNear(pos, selection.Handle(MarqueeHitTarget.TopLeft), hitRadius)) return MarqueeHitTarget.TopLeft;
+        if (IsNear(pos, selection.Handle(MarqueeHitTarget.TopRight), hitRadius)) return MarqueeHitTarget.TopRight;
+        if (IsNear(pos, selection.Handle(MarqueeHitTarget.BottomLeft), hitRadius)) return MarqueeHitTarget.BottomLeft;
+        if (IsNear(pos, selection.Handle(MarqueeHitTarget.BottomRight), hitRadius)) return MarqueeHitTarget.BottomRight;
+        if (IsNear(pos, selection.Handle(MarqueeHitTarget.TopCenter), hitRadius)) return MarqueeHitTarget.TopCenter;
+        if (IsNear(pos, selection.Handle(MarqueeHitTarget.BottomCenter), hitRadius)) return MarqueeHitTarget.BottomCenter;
+        if (IsNear(pos, selection.Handle(MarqueeHitTarget.MiddleLeft), hitRadius)) return MarqueeHitTarget.MiddleLeft;
+        if (IsNear(pos, selection.Handle(MarqueeHitTarget.MiddleRight), hitRadius)) return MarqueeHitTarget.MiddleRight;
+        if (selection.Rect.Contains(pos)) return MarqueeHitTarget.Move;
         return MarqueeHitTarget.None;
     }
 
@@ -219,7 +241,7 @@ internal sealed class MarqueeState
     internal void StartNewSelection(EsPoint startPos)
     {
         StartPoint = startPos;
-        SelectionRect = new EsRect(startPos.X, startPos.Y, 0, 0);
+        _selection = new MarqueeSelection(new EsRect(startPos.X, startPos.Y, 0, 0));
         IsDragging = true;
         ActiveTarget = MarqueeHitTarget.None;
         _dragStartPoint = startPos;
@@ -268,19 +290,19 @@ internal sealed class MarqueeState
 
         if (ActiveTarget != MarqueeHitTarget.None)
         {
-            // ハンドルによるリサイズ/移動（変形・クリップは MarqueeSelectionGeometry へ委譲・単一所有）
+            // ハンドルによるリサイズ/移動（変形・クリップは MarqueeSelection へ委譲・単一所有）
             double dx = currentPos.X - _dragStartPoint.X;
             double dy = currentPos.Y - _dragStartPoint.Y;
-            var rect = MarqueeSelectionGeometry.ComputeDragRect(_dragStartRect, dx, dy, ActiveTarget, minSize);
-            SelectionRect = bounds is { } b ? MarqueeSelectionGeometry.ClampRectToBounds(rect, b, ActiveTarget) : rect;
+            var dragged = new MarqueeSelection(_dragStartRect).Drag(dx, dy, ActiveTarget, minSize);
+            _selection = bounds is { } b ? dragged.ClampToBounds(b, ActiveTarget) : dragged;
         }
         else if (IsDragging)
         {
             // 新規選択（始点→終点）: 始点・終点の両方を境界内にクリップしてから矩形を作成する
             // （始点が画像外（レターボックス等）で押下された場合でも、矩形が画像外にはみ出さないようにする）
-            var start = bounds is { } b ? MarqueeSelectionGeometry.ClampPointToBounds(StartPoint, b) : StartPoint;
-            var end = bounds is { } b2 ? MarqueeSelectionGeometry.ClampPointToBounds(currentPos, b2) : currentPos;
-            SelectionRect = MarqueeSelectionGeometry.CreateFromPoints(start, end);
+            var start = bounds is { } b ? ClampPointToBounds(StartPoint, b) : StartPoint;
+            var end = bounds is { } b2 ? ClampPointToBounds(currentPos, b2) : currentPos;
+            _selection = MarqueeSelection.FromPoints(start, end);
         }
         LastMousePosition = currentPos;
     }
@@ -317,24 +339,24 @@ internal sealed class MarqueeState
 
         if (ActiveTarget != MarqueeHitTarget.None)
         {
-            // ハンドルドラッグ中 → ハンドル方向にリサイズ（変形・クリップは MarqueeSelectionGeometry へ委譲・単一所有）
-            var rect = MarqueeSelectionGeometry.ComputeDragRect(SelectionRect, dx, dy, ActiveTarget, minSize);
-            SelectionRect = bounds is { } b ? MarqueeSelectionGeometry.ClampRectToBounds(rect, b, ActiveTarget) : rect;
+            // ハンドルドラッグ中 → ハンドル方向にリサイズ（変形・クリップは MarqueeSelection へ委譲・単一所有）
+            var dragged = _selection.Drag(dx, dy, ActiveTarget, minSize);
+            _selection = bounds is { } b ? dragged.ClampToBounds(b, ActiveTarget) : dragged;
             // ドラッグ基準を nudge 後の状態に合わせる（次の UpdateDrag で nudge が失われるのを防ぐ）
             _dragStartRect = SelectionRect;
-            _dragStartPoint = MarqueeSelectionGeometry.GetHandlePosition(SelectionRect, ActiveTarget);
+            _dragStartPoint = _selection.Handle(ActiveTarget);
             LastMousePosition = _dragStartPoint;
         }
         else if (IsDragging || HasSelection)
         {
             // 新規選択ドラッグ中 / 選択確定後 → 終点を微調整
-            var end = MarqueeSelectionGeometry.GetOppositeCorner(SelectionRect, StartPoint);
+            var end = _selection.OppositeCorner(StartPoint);
             end = new EsPoint(end.X + dx, end.Y + dy);
-            end = bounds is { } b ? MarqueeSelectionGeometry.ClampPointToBounds(end, b) : end;
+            end = bounds is { } b ? ClampPointToBounds(end, b) : end;
             // 始点も境界内にクリップしてから矩形を作成する（画像外の始点によるはみ出し防止）
-            var start = bounds is { } b2 ? MarqueeSelectionGeometry.ClampPointToBounds(StartPoint, b2) : StartPoint;
+            var start = bounds is { } b2 ? ClampPointToBounds(StartPoint, b2) : StartPoint;
             LastMousePosition = end;
-            SelectionRect = MarqueeSelectionGeometry.CreateFromPoints(start, end);
+            _selection = MarqueeSelection.FromPoints(start, end);
         }
         else
         {
@@ -361,13 +383,13 @@ internal sealed class MarqueeState
         {
             return ActiveTarget == MarqueeHitTarget.Move
                 ? LastMousePosition
-                : MarqueeSelectionGeometry.GetHandlePosition(SelectionRect, ActiveTarget);
+                : _selection.Handle(ActiveTarget);
         }
 
         // 新規選択ドラッグ中・nudge: 終点（クリップ後の矩形の角。nudge で追従）
         if (IsDragging)
         {
-            return MarqueeSelectionGeometry.GetOppositeCorner(SelectionRect, StartPoint);
+            return _selection.OppositeCorner(StartPoint);
         }
 
         // 未選択（始点決め nudge）: 始点
@@ -385,7 +407,7 @@ internal sealed class MarqueeState
         if (!HasSelection) return false;
         var clipped = ClipRectToBounds(SelectionRect);
         if (clipped == SelectionRect) return false;
-        SelectionRect = clipped;
+        _selection = new MarqueeSelection(clipped);
         return true;
     }
 
@@ -395,10 +417,8 @@ internal sealed class MarqueeState
     /// <remarks>
     /// 矩形の四隅を境界内にクリップし、その包絡矩形（bounding box）を返す。<br/>
     /// 矩形全体を境界内に収める（<see cref="SetSelection"/> 等の外部復元・設定変更時の即時適用用）。<br/>
-    /// クリップ計算は <see cref="MarqueeSelectionGeometry.ClampRectToDomainBounds"/> へ委譲する（単一所有・DRY）。
+    /// 包絡矩形の計算は <see cref="EsRect.ClampToArea(EsSize)"/> が単一所有する（ルーペの位置と同じ規則）。
     /// </remarks>
     internal EsRect ClipRectToBounds(EsRect rect)
-        => Port.Bounds is { } size
-            ? MarqueeSelectionGeometry.ClampRectToDomainBounds(rect, size)
-            : rect;
+        => Port.Bounds is { } size ? rect.ClampToArea(size) : rect;
 }

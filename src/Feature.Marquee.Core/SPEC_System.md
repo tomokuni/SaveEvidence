@@ -115,7 +115,7 @@ stateDiagram-v2
 | `src/Interaction/MarqueeCursorKind.cs` | `MarqueeCursorKind` | public | カーソル形状の種別 |
 | `src/Interaction/MarqueeInteractionState.cs` | `MarqueeInteractionState` | public | 対話状態 |
 | `src/Logging/MarqueeLogMessage.cs` | `MarqueeLogMessage` | internal | LoggerMessage 定義（入力の判断・設定変更） |
-| `src/Selection/MarqueeSelectionGeometry.cs` | `MarqueeSelectionGeometry` | internal | 純粋幾何計算（ハンドル一覧とハンドル位置を幾何の解決が使い、ヒットテスト・ドラッグ変形・境界クランプは状態機械の内部手順であるため internal） |
+| `src/Selection/MarqueeSelection.cs` | `MarqueeSelection` | internal readonly record struct | 選択矩形の値と、その値だけから決まる純粋な幾何計算（正規化・ハンドル位置・対角・境界クリップ・ドラッグ変形。状態機械と幾何の解決が使うため internal） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
 
@@ -123,11 +123,11 @@ stateDiagram-v2
 | --- | --- |
 | 選択の状態遷移の判断 | `MarqueeSession` |
 | 選択矩形・ドラッグ・nudge の状態（遷移は操作メソッドでのみ変更できる） | `MarqueeState` |
-| 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `MarqueeSelectionGeometry` |
+| 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `MarqueeSelection`（値の振る舞い） |
 | 穴あけ矩形の優先順（ハイライト → 選択） | `MarqueeRenderRequest.ResolveHoleRect`（静的メソッドが規則を持ち、`Hole` が呼ぶ） |
 | 選択矩形の閉区間（DIP 変換時の終点 +1）とハイライト矩形の +0 | `MarqueeRenderRequest.ToDipRect` / `ResolveHoleRect`（規則を導出する `MarqueeHoleRect` が指定を持つ） |
 | 座標変換ポートの決定（ポート優先・倍率の等価変換） | `MarqueeRenderRequest.ResolvePort`（`ResolvedPort` が呼ぶ） |
-| ハンドルの位置（8 方向）と大きさの適用 | `Marquee.Geometry.cs`（`Marquee.ResolveHandles`。位置の式は `MarqueeSelectionGeometry.GetHandlePosition`） |
+| ハンドルの位置（8 方向）と大きさの適用 | `Marquee.Geometry.cs`（`Marquee.ResolveHandles`。位置の式は `MarqueeSelection.Handle`） |
 | 始点マーカーの太さ（2.0。設定で変更しない固定値） | `Marquee.Geometry.cs` の private 定数 |
 | ハンドル枠の太さ（1.5。設定で変更しない固定値） | `Marquee.Geometry.cs` の private 定数（`MarqueeHandles.BorderThickness` として解決済みで渡す） |
 | 設定の既定値・範囲補正 | `Marquee.Limits`（`MarqueeOptions` の生成時の `init` アクセサが参照する） |
@@ -168,7 +168,7 @@ stateDiagram-v2
 | 方針 | 内容 |
 | --- | --- |
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]` で並列実行する |
-| 単位 | 純粋計算（`MarqueeSelectionGeometry`）・状態機械・ファサード・幾何の解決・`MarqueeRenderRequest` |
+| 単位 | 純粋計算（`MarqueeSelection`）・状態機械・ファサード・幾何の解決・`MarqueeRenderRequest` |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Contract` / `tests/Drawing` / `tests/Interaction` / `tests/Logging` / `tests/Selection` / `tests/Setting`。ファサードの partial のテストはルート） |
 | 件数 | `dotnet test <csproj> --list-tests` のクラス別集計で確認する（`dotnet test` の出力は行が折り返され、並列実行では行が混ざるため、行単位で対応付けてはいけない） |
 

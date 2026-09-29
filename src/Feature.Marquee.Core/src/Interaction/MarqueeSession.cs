@@ -172,7 +172,7 @@ internal sealed class MarqueeSession
             // 移動（Move）は掴んだ位置を維持するのが自然なためスナップしない。
             if (handle != MarqueeHitTarget.Move)
             {
-                var handlePosition = MarqueeSelectionGeometry.GetHandlePosition(_state.SelectionRect, handle);
+                var handlePosition = new MarqueeSelection(_state.SelectionRect).Handle(handle);
                 _state.SnapToHandle(handlePosition);
                 feedback = feedback with
                 {
@@ -212,14 +212,14 @@ internal sealed class MarqueeSession
             return new MarqueeFeedback
             {
                 UpdateCursorShape = true,
-                CursorKind = MarqueeSelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
+                CursorKind = ToCursorKind(_state.HitTest(position, hitRadius)),
             };
         }
 
         var cursor = new MarqueeFeedback
         {
             UpdateCursorShape = true,
-            CursorKind = MarqueeSelectionGeometry.ToCursorKind(_state.HitTest(position, hitRadius)),
+            CursorKind = ToCursorKind(_state.HitTest(position, hitRadius)),
         };
 
         // nudge 中はエコー移動で選択矩形・マウス位置を上書きしない（解放時の追従位置が実マウス位置へ飛ぶのを防ぐ）
@@ -299,7 +299,7 @@ internal sealed class MarqueeSession
                 Cursor = feedback.Cursor | MarqueeCursorAction.MoveTo,
                 CursorDomainPosition = nudgePosition,
                 UpdateCursorShape = true,
-                CursorKind = MarqueeSelectionGeometry.ToCursorKind(_state.HitTest(nudgePosition, ToDomainRadius())),
+                CursorKind = ToCursorKind(_state.HitTest(nudgePosition, ToDomainRadius())),
             };
         }
 
@@ -571,6 +571,23 @@ internal sealed class MarqueeSession
         var radius = Math.Abs(offset.X - origin.X);
         return radius < 0.001 ? Options.HandleHitRadius : radius;
     }
+
+    /// <summary>ハンドル種別をカーソル形状の種別へ変換する。</summary>
+    /// <param name="handle">ハンドル種別。</param>
+    /// <returns>カーソル形状の種別。ハンドル外（<see cref="MarqueeHitTarget.None"/>）の場合は <see cref="MarqueeCursorKind.Default"/>。</returns>
+    /// <remarks>
+    /// 「どのハンドルが同じカーソル形状になるか」を単一所有する（UI 層は自 UI のカーソル型へ写像するだけ）。<br/>
+    /// 左上と右下、右上と左下は同じ斜めカーソルになる（対角のハンドルは同じ向きの図形で表す）。
+    /// </remarks>
+    internal static MarqueeCursorKind ToCursorKind(MarqueeHitTarget handle) => handle switch
+    {
+        MarqueeHitTarget.TopLeft or MarqueeHitTarget.BottomRight => MarqueeCursorKind.DiagonalNWSE,
+        MarqueeHitTarget.TopRight or MarqueeHitTarget.BottomLeft => MarqueeCursorKind.DiagonalNESW,
+        MarqueeHitTarget.TopCenter or MarqueeHitTarget.BottomCenter => MarqueeCursorKind.Vertical,
+        MarqueeHitTarget.MiddleLeft or MarqueeHitTarget.MiddleRight => MarqueeCursorKind.Horizontal,
+        MarqueeHitTarget.Move => MarqueeCursorKind.Move,
+        _ => MarqueeCursorKind.Default,
+    };
 
     /// <summary>点座標付きの通知を発火する（スナップショットのマウス位置も指定座標とする）。</summary>
     /// <param name="kind">通知の種別。</param>

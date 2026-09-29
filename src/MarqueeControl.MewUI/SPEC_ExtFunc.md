@@ -14,7 +14,7 @@ Avalonia 版と同一の挙動になります。
 
 | 参照 | 用途 |
 | --- | --- |
-| `Feature.Marquee.Core` | **公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `MarqueeRenderRequest`）。状態管理クラス（`MarqueeSession`）・状態機械（`MarqueeState`）・選択幾何（`MarqueeSelectionGeometry`）は internal（ファサードの内部実装） |
+| `Feature.Marquee.Core` | **公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `MarqueeRenderRequest`）。状態管理クラス（`MarqueeSession`）・状態機械（`MarqueeState`）・選択幾何（`MarqueeSelection`）は internal（ファサードの内部実装） |
 | `Feature.Marquee.Presenter` | 提示層（描画計画の解決・外観・ラベル計画・組み込み規則）: `MarqueePresenter`（描画計画の解決） / `MarqueeAppearance`（色・体裁・枠線の太さ・表示可否） / `MarqueeDrawPlan`（UI が見る唯一の描画値） / `MarqueeLabelPlan`（実寸 → 配置指示）。**描画は本 UI が自 UI の描画 API（Skia）で行う**（`MarqueeSkiaPainter`） |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Native` | カーソルサービスの既定実装（Win32 / NoOp） |

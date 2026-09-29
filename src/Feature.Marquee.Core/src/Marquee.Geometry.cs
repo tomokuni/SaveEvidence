@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Core.Drawing;
+using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Selection;
 
 namespace EsUtil.Feature.Marquee.Core;
@@ -22,6 +23,14 @@ public sealed partial class Marquee
     /// <summary>ドラッグハンドルの枠線の太さ（DIP）。</summary>
     /// <remarks>塗りの中に隠れない細さでありながら、拡大表示でも輪郭が判別できる太さである。</remarks>
     private const double HandleBorderThickness = 1.5;
+
+    /// <summary>描画対象の 8 方向ハンドル（<see cref="MarqueeHitTarget.None"/> / <see cref="MarqueeHitTarget.Move"/> を除く）。</summary>
+    /// <remarks>
+    /// 列挙順は <see cref="MarqueeHitTarget"/> の宣言順。描画の幾何の解決が本一覧を走査してハンドルの矩形を作る（一覧の単一所有）。<br/>
+    /// 読み取り専用の一覧として共有する（呼び出し側が書き換えない）。
+    /// </remarks>
+    private static readonly IReadOnlyList<MarqueeHitTarget> s_directionalHandles =
+        [.. Enum.GetValues<MarqueeHitTarget>().Where(static h => h is not (MarqueeHitTarget.None or MarqueeHitTarget.Move))];
 
     /// <summary>描画 1 フレーム分の幾何（選択矩形・穴あけ矩形・ハンドル・マーカー）を解決する。</summary>
     /// <param name="request">描画の入力（設定・状態と描画時に決まる値）。</param>
@@ -68,10 +77,11 @@ public sealed partial class Marquee
         var options = request.Options;
         var dip = request.ToDipRect(rect, port);
         var half = options.HandleSize / 2;
-        var rects = new List<EsRect>(MarqueeSelectionGeometry.DirectionalHandles.Count);
-        foreach (var handle in MarqueeSelectionGeometry.DirectionalHandles)
+        var selection = new MarqueeSelection(dip);
+        var rects = new List<EsRect>(s_directionalHandles.Count);
+        foreach (var handle in s_directionalHandles)
         {
-            var center = MarqueeSelectionGeometry.GetHandlePosition(dip, handle);
+            var center = selection.Handle(handle);
             rects.Add(new EsRect(center.X - half, center.Y - half, options.HandleSize, options.HandleSize));
         }
 

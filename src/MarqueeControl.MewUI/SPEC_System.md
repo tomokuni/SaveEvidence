@@ -228,7 +228,7 @@ classDiagram
         +GetMarkerPosition() EsPoint
         +ClampSelectionToBounds() bool
     }
-    class MarqueeSelectionGeometry {
+    class MarqueeSelection {
         <<Feature.Marquee.Core>>
         +GetHandlePosition(rect, handle)$ EsPoint
         +IsNear(p1, p2, radius)$ bool
@@ -255,7 +255,7 @@ classDiagram
     MarqueePresenter ..> MarqueeAppearance : 保持
     MarqueeSession *-- MarqueeState : 状態機械
     MarqueeSession ..> ICursorService : カーソル操作
-    MarqueeState ..> MarqueeSelectionGeometry : 幾何計算
+    MarqueeState ..> MarqueeSelection : 幾何計算
 ```
 
 ## シーケンス図（新規選択のドラッグ）

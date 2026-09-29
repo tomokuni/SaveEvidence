@@ -822,4 +822,46 @@ public class MarqueeSessionTests
         var miss = session.Press(new EsPoint(150 + 20, 130 + 20), clickCount: 1);
         Assert.False(miss.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
     }
-}
+    // ====================================================================
+    // ToCursorKind（ハンドル → カーソル形状の種別）
+    // ====================================================================
+
+    /// <summary>ハンドル種別がカーソル形状の種別へ解決することを検証する。</summary>
+    [Fact]
+    public void ToCursorKind_対角と辺のハンドルが同じ種別へ解決する()
+    {
+        // 対角のハンドルは同じ向きのカーソル（左上 = 右下 / 右上 = 左下）
+        Assert.Equal(MarqueeCursorKind.DiagonalNWSE, MarqueeSession.ToCursorKind(MarqueeHitTarget.TopLeft));
+        Assert.Equal(MarqueeCursorKind.DiagonalNWSE, MarqueeSession.ToCursorKind(MarqueeHitTarget.BottomRight));
+        Assert.Equal(MarqueeCursorKind.DiagonalNESW, MarqueeSession.ToCursorKind(MarqueeHitTarget.TopRight));
+        Assert.Equal(MarqueeCursorKind.DiagonalNESW, MarqueeSession.ToCursorKind(MarqueeHitTarget.BottomLeft));
+
+        // 辺のハンドルは向きごとのカーソル
+        Assert.Equal(MarqueeCursorKind.Vertical, MarqueeSession.ToCursorKind(MarqueeHitTarget.TopCenter));
+        Assert.Equal(MarqueeCursorKind.Vertical, MarqueeSession.ToCursorKind(MarqueeHitTarget.BottomCenter));
+        Assert.Equal(MarqueeCursorKind.Horizontal, MarqueeSession.ToCursorKind(MarqueeHitTarget.MiddleLeft));
+        Assert.Equal(MarqueeCursorKind.Horizontal, MarqueeSession.ToCursorKind(MarqueeHitTarget.MiddleRight));
+
+        // 矩形内は移動
+        Assert.Equal(MarqueeCursorKind.Move, MarqueeSession.ToCursorKind(MarqueeHitTarget.Move));
+    }
+
+    /// <summary>ハンドル外は既定の種別になることを検証する。</summary>
+    [Fact]
+    public void ToCursorKind_ハンドル外は既定の種別を返す()
+        => Assert.Equal(MarqueeCursorKind.Default, MarqueeSession.ToCursorKind(MarqueeHitTarget.None));
+
+    /// <summary>すべての有効なハンドルが既定以外の種別へ解決することを検証する。</summary>
+    [Fact]
+    public void ToCursorKind_全ハンドルが既定以外の種別へ解決する()
+    {
+        foreach (var handle in Enum.GetValues<MarqueeHitTarget>())
+        {
+            if (handle == MarqueeHitTarget.None)
+            {
+                continue;
+            }
+
+            Assert.NotEqual(MarqueeCursorKind.Default, MarqueeSession.ToCursorKind(handle));
+        }
+    }}

@@ -33,7 +33,7 @@
 | `Drawing/` | `MarqueeMarker` | public | 始点マーカー（十字線）の幾何（中心・太さ・半幅） |
 | `Drawing/` | `MarqueeRenderRequest` | public | 1 フレーム分の幾何を解決する入力（設定・状態と、描画時に決まる値）。UI 層は自分で組み立てず、コアの `Marquee.CreateRequest` が返した値を受け取る（内部状態の組み立て順を UI が持たない）。**本値から導出する値（座標変換ポートの決定・穴あけ矩形の決定・DIP 変換）は本値のインスタンスメンバーが単一所有する**（`ResolvedPort` / `Hole` / `ResolveHoleRectDip` / `ToDipRect` / `ToDomainRect`）。ハイライト矩形はホストが与える実行時状態として本値が持つ |
 | `Drawing/` | `MarqueeHoleRect` | public | 穴あけ矩形と**閉区間かどうか**の組（選択矩形は閉区間（終点 +1）、ハイライト矩形はホストが全ピクセルを含む閉区間として与えるため +1 しない） |
-| `Selection/` | `MarqueeSelectionGeometry` | internal | 純粋な幾何計算（正規化・ハンドル位置・近傍判定・対角・境界クリップ・ドラッグ変形）・描画対象ハンドル一覧・カーソル種別変換。利用者はコアの内部（幾何の解決・状態機械）だけであり、UI 層へは解決済みの矩形が渡る |
+| `Selection/` | `MarqueeSelection` | internal | 選択矩形の値（`readonly record struct`）と、その値だけから決まる純粋な幾何計算（正規化・ハンドル位置・対角・境界クリップ・ドラッグ変形）。利用者はコアの内部（幾何の解決・状態機械）だけであり、UI 層へは解決済みの矩形が渡る |
 | `Interaction/` | `MarqueeSession` | internal | **状態管理クラス**。入力の通知を受けて状態を更新し、効果（`MarqueeFeedback`）と通知（`MarqueeNotice`）を返す。公開ファサード `Marquee` の内部実装 |
 | `Interaction/` | `MarqueeNotice` | public | コアから UI 層への通知（種別・通知座標・スナップショット。値型）。**生のポインター入力（押下・解放・クリック・移動）は通知しない**（入力は UI が受け取りホストも自 UI で観測できるため、通知すると往復になる。押下状態は `MarqueeSnapshot.IsMouseDown` で取得できる） |
 | `Interaction/` | `MarqueeNoticeKind` | public | 通知の種別（選択の開始・変更・確定・キャンセル・追従位置・確定/キャンセル要求） |
@@ -52,7 +52,7 @@
 | --- | --- | --- |
 | **1. ホスト設定** | アプリ・ホスト | `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` |
 | **2. 公開ファサードと UI アダプタ契約** | UI 実装（入力層） | `Marquee`（操作の唯一の窓口。既定値は `Limits.DomainToDipScalingDefault`） / `IMarqueeEffects` / `MarqueeEffectsBase` / `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeNoticeKind` / `MarqueeGeometry` / `MarqueeHandles` / `MarqueeMarker` / `MarqueeHoleRect` / `MarqueeRenderRequest` |
-| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeCaptureAction` / `MarqueeLogMessage`（適用とログ出力はファサード・状態機械が行う）/ `MarqueeSession` / `MarqueeSelectionGeometry` / `Marquee.Geometry.cs`（「1 フレーム分の幾何の解決」は `Marquee.ResolveGeometry` が提供する）/ `MarqueeState` |
+| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `MarqueeFeedback` / `MarqueeCursorAction` / `MarqueeCaptureAction` / `MarqueeLogMessage`（適用とログ出力はファサード・状態機械が行う）/ `MarqueeSession` / `MarqueeSelection` / `Marquee.Geometry.cs`（「1 フレーム分の幾何の解決」は `Marquee.ResolveGeometry` が提供する）/ `MarqueeState` |
 
 - **操作はファサード経由に一本化**しています（状態機械と幾何の解決は `internal` のため、UI 層はファサード以外の入口を持ちません）。
 - **層 3 は外部参照 0 件**を実測して絞り込んだ結果です。「幾何の解決（`Marquee.ResolveGeometry`）と幾何に必要な値」だけが公開面です。
@@ -120,7 +120,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 表示可否の述語の所在 | 提示層の外観（`MarqueeAppearance.ShouldShowSizeLabel(bool)` / `ShouldDrawOverlay(bool)`） | 提示層の外観（`LoupeAppearance.ShouldShowCoordLabel(bool)`） | 表示可否は描画にだけ必要な設定であり、両コアとも外観が単一所有する |
 | `Limits` の追加役割 | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`。public） | 安全域と補正のみ | ラベルの表示スケールは本コア固有の概念 |
 | 区画数の計算 | 持たない | `LoupeGeometry.CaptureSize`（導出プロパティ）が持つ | 切り出し領域の一辺と十字線の交点が「余りを 1 区画として数える」規則を共用する |
-| 選択の幾何 | `Selection/`（`MarqueeSelectionGeometry`）を持つ | 持たない | ルーペは選択操作を持たない |
+| 選択の幾何 | `Selection/`（`MarqueeSelection`）を持つ | 持たない | ルーペは選択操作を持たない |
 | テスト補助（スパイ） | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | `RecordingLogger` のみ | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
 | ドキュメントの追加の節 | 2 節（README「名前の由来と一般的な呼称」「選択矩形の幾何はコアが持つ」、SPEC_System「状態遷移」） | 追加の節なし | 改名の経緯・幾何の所在・状態遷移はルーペに対応する概念が無い（共通の節は両コアで同一順） |
 
@@ -250,7 +250,7 @@ UI 層が使う共有値・計算:
 ## 設計上の約束
 
 1. **判断はコア・反映は UI**: 「どうするか」（nudge の開始/終了・確定/キャンセル・スナップの有無・キャンセル可否・カーソル種別・穴あけ矩形の優先順）はコアが決め、UI は効果を適用するだけにする。
-2. **単一所有**: 幾何計算は `MarqueeSelectionGeometry` のみ、状態は `MarqueeState` のみ、入力の解釈は `MarqueeSession` のみが持つ。
+2. **単一所有**: 選択矩形の幾何計算は `MarqueeSelection`（値の振る舞い）のみ、状態は `MarqueeState` のみ、入力の解釈は `MarqueeSession` のみが持つ。
 3. **座標系**: `EsRect` / `EsPoint` は常にドメイン座標。UI 論理座標（DIP）との変換は `ICoordTransform`（`Port`）が担う。
 4. **境界 1 行変換**: 各 UI のイベント引数は自前の型（例: Avalonia の `Rect`）で公開し、境界で 1 行変換する。キーは `EsKey` を介して通知する。
 5. **カーソル操作の分離**: カーソル操作（非表示・再表示・移動）は**効果**として UI 層へ要求し、公開ファサードだけが `ICursorService` 抽象に依存する（プラットフォーム既定実装を生成しない）。状態機械はカーソル API を知らない。カーソル種別は `MarqueeHitTarget` として返し、UI が自 UI のカーソル型へ写像する。

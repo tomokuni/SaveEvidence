@@ -462,4 +462,39 @@ public class MarqueeStateTests
 
         Assert.Equal(rect, state.ClipRectToBounds(rect));
     }
+
+    // ====================================================================
+    // IsNear（2 点の近傍判定）
+    // ====================================================================
+
+    /// <summary>2 点が半径以内にあることを検証する。</summary>
+    [Fact]
+    public void IsNear_半径以内はtrueを返す()
+        => Assert.True(MarqueeState.IsNear(new EsPoint(10, 10), new EsPoint(15, 12), 5.0));
+
+    /// <summary>いずれかの軸が半径を超えると false になることを検証する。</summary>
+    [Fact]
+    public void IsNear_半径を超えるとfalseを返す()
+    {
+        Assert.False(MarqueeState.IsNear(new EsPoint(10, 10), new EsPoint(16, 12), 5.0));
+        // X は範囲内・Y が範囲外
+        Assert.False(MarqueeState.IsNear(new EsPoint(10, 10), new EsPoint(12, 16), 5.0));
+    }
+
+    // ====================================================================
+    // ClampPointToBounds（点の境界内クリップ）
+    // ====================================================================
+
+    /// <summary>点が境界の内外で期待どおりにクリップされることを検証する。</summary>
+    [Fact]
+    public void ClampPointToBounds_境界内へクリップする()
+    {
+        var bounds = new EsRect(0, 0, 200, 100);
+
+        Assert.Equal(new EsPoint(10, 10), MarqueeState.ClampPointToBounds(new EsPoint(10, 10), bounds));
+        // 左端・上端を超える → 0 にクランプ
+        Assert.Equal(new EsPoint(0, 0), MarqueeState.ClampPointToBounds(new EsPoint(-5, -5), bounds));
+        // 右端・下端を超える → 境界へクランプ
+        Assert.Equal(new EsPoint(200, 100), MarqueeState.ClampPointToBounds(new EsPoint(250, 120), bounds));
+    }
 }

@@ -17,7 +17,7 @@
     - [6.1 MarqueeControl](#61-marqueecontrol)
     - [6.2 Marquee（公開ファサード・コア）](#62-marquee公開ファサードコア)
     - [6.3 MarqueeState](#63-marqueestate)
-    - [6.4 MarqueeSelectionGeometry](#64-marqueeselectiongeometry)
+    - [6.4 MarqueeSelection](#64-marqueeselection)
     - [6.5 MarqueePresenter（Feature.Marquee.Presenter）](#65-marqueepresenterfeaturemarqueepresenter)
     - [6.6 MarqueeAppearance（Feature.Marquee.Presenter）](#66-marqueeappearancefeaturemarqueepresenter)
     - [6.7 MarqueeLabelPlan（Feature.Marquee.Presenter）](#67-marqueelabelplanfeaturemarqueepresenter)
@@ -64,7 +64,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 公開コントロール（MarqueeControl）… 入力の受付 / 効果の適用 / 通知の転送 / 描画（自 UI の API）
   → 状態管理クラス（MarqueeSession）… 入力の解釈と状態遷移の判断
     → 状態（MarqueeState）… 状態保持と更新ロジック
-      → コア内部の純粋幾何（MarqueeSelectionGeometry）+ Platform.AvaloniaUI
+      → コア内部の純粋幾何（MarqueeSelection）+ Platform.AvaloniaUI
   → 幾何の解決（コアの Marquee.CreateRequest → Marquee.ResolveGeometry）… 選択の状態 + 設定 → 幾何 1 値（MarqueeGeometry）
   → 描画計画の解決（Feature.Marquee.Presenter の MarqueePresenter.ResolveDrawPlan）… 幾何 + 外観 → 描画計画（MarqueeDrawPlan）
   → 描画（本コントロール）… 描画計画の Layers の順に自 UI の描画 API（DrawingContext）で描く
@@ -73,7 +73,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ### 3.2 依存方向
 
-- 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（これらはコア内部）/ Platform.AvaloniaUI / Platform.Native / Platform.Core。描画計画は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core））。
+- 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelection（これらの幾何計算はコア内部の値の振る舞い）/ Platform.AvaloniaUI / Platform.Native / Platform.Core。描画計画は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core））。
 - MarqueeControl は上位 AP に依存しない（再利用可能）。
 - **判断はコア（`Marquee`）・反映は UI**: nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルはコアが決め、コントロールは `IMarqueeEffects` を実装して要求された効果を適用するだけにする。
 - **描画計画と外観は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeLabelPlan`）が単一所有**し、本コントロールは `Appearance` プロパティで外観を与え、`ResolveDrawPlan` が返す描画計画を自 UI の描画 API（`DrawingContext`）で写すだけです（**描画 API の抽象は持ちません**）。装飾の**判断**も持ちません（状態（選択矩形・nudge）はコア（`MarqueeState`）に集約する）。
@@ -110,7 +110,7 @@ flowchart TB
         Ntc["MarqueeNotice<br/>public<br/>（コア → UI の通知）"]
         Fbk["MarqueeFeedback<br/>internal<br/>（コア → UI の効果。適用はファサード）"]
         Stt["MarqueeState<br/>internal sealed<br/>MarqueeState.cs<br/>（状態保持 ＋ 更新ロジック）"]
-        Geo["MarqueeSelectionGeometry<br/>internal static<br/>Selection/MarqueeSelectionGeometry.cs"]
+        Geo["MarqueeSelection<br/>internal readonly record struct<br/>Selection/MarqueeSelection.cs"]
         Hdl["MarqueeHitTarget<br/>public enum"]
         Hdl2["MarqueeInteractionState<br/>public enum"]
         Hdl3["MarqueeSnapshot<br/>public record<br/>（EsRect / EsPoint）"]
@@ -196,14 +196,14 @@ flowchart TB
 - **分類**: 内部状態クラス（`internal sealed class`・コンポジション。コア提供）
 - **責務**:
   - 選択矩形・ドラッグ状態・アクティブハンドル・nudge 状態（基点＋累積オフセット）の保持
-  - 純粋ロジック: `HitTest` / `StartNewSelection` / `StartDrag` / `UpdateDrag` / `EndDrag` / `Nudge` / `GetInteractionState` / `CreateSnapshot`（幾何計算は `MarqueeSelectionGeometry` へ委譲する）
+  - 純粋ロジック: `HitTest` / `StartNewSelection` / `StartDrag` / `UpdateDrag` / `EndDrag` / `Nudge` / `GetInteractionState` / `CreateSnapshot`（幾何計算は `MarqueeSelection` へ委譲する）
   - クリップ（`MarqueeOptions.ClampToDomainBounds` + `Port.Bounds` による境界内制限。境界 Rect 生成は `GetBoundsRect` に一元化）
   - カーソル操作（`ICursorService`）
   - nudge 終了の共通化（`EndNudge`。`Reset` / `SetSelection` / `MarqueeSession` から共用し、カーソル再表示を委譲）
 - **可視性**: internal（本コントロールはコアの公開ファサード（`Marquee`）と公開型（`MarqueeSnapshot`）のみを使う。`MarqueeState` / `MarqueeSession` はコアの内部実装であり参照しない）
-- **依存**: MarqueeSelectionGeometry / MarqueeHitTarget / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）
+- **依存**: MarqueeSelection / MarqueeHitTarget / ICoordTransform（Platform.Core）/ ICursorService（Platform.Native）
 
-### 6.4 MarqueeSelectionGeometry
+### 6.4 MarqueeSelection
 
 - **分類**: 静的クラス（`internal static class`・コア内部。本プロジェクトは参照しない）
 - **責務**: 選択矩形の純粋な幾何計算（正規化・ハンドル位置・ヒットテスト・対角計算）。ハンドル位置を使うのはコアの状態機械と描画内容の解決であり、**UI 層へは解決済みの矩形が渡る**
@@ -273,7 +273,7 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。コア内部は MarqueeControl → Marquee（ファサード） → MarqueeSession → MarqueeState → MarqueeSelectionGeometry（幾何計算はコア内部に閉じる）、提示層は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core）。
+- 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。コア内部は MarqueeControl → Marquee（ファサード） → MarqueeSession → MarqueeState → MarqueeSelection（幾何計算はコア内部の値の振る舞いに閉じる）、提示層は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core）。
 - MarqueeControl は上位 AP に**依存しない**（再利用可能）。
 - 判断（状態遷移・確定/キャンセル・スナップ・クリック検出）はコアの `Marquee`（内部の `MarqueeSession`）に集約し、UI 層は効果（`IMarqueeEffects`）を適用するだけにする。
 - 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否）は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan`）が単一所有し、**描画は本コントロールが自 UI の API（`DrawingContext`）で行う**（`MarqueeContextPainter`。描画 API の抽象は持たない）。状態（選択矩形・nudge）は MarqueeState に集約し、装飾の**判断**は持たない。
