@@ -6,7 +6,11 @@ namespace EsUtil.Platform.Core.Coord;
 /// <remarks>
 /// ホスト（上位 AP）が変換関数と境界を提供して生成する。<br/>
 /// 等価変換（座標系 A = 座標系 B・無制限）の既定実装は <see cref="Identity"/> で提供する。<br/>
-/// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。
+/// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
+/// <br/>
+/// <b>座標の純粋計算も本クラスが単一所有する</b>: 画像レイアウト（レターボックス・スケール）と
+/// 平行移動・スケーリングの計算は各ファクトリが使う単一実装であり、独立したヘルパー型を持たない<br/>
+/// （利用者が本クラスだけになるため、入口を分けると同じ計算が 2 箇所に現れる）。
 /// </remarks>
 public sealed class CoordTransform : ICoordTransform
 {
@@ -39,8 +43,8 @@ public sealed class CoordTransform : ICoordTransform
     /// </remarks>
     public static ICoordTransform ScrollOffset(Func<EsVector> offsetProvider)
         => new CoordTransform(
-            p => { var (x, y) = CoordMath.OffsetPoint(p.X, p.Y, offsetProvider().X, offsetProvider().Y); return new EsPoint(x, y); },
-            p => { var (x, y) = CoordMath.InverseOffsetPoint(p.X, p.Y, offsetProvider().X, offsetProvider().Y); return new EsPoint(x, y); },
+            p => { var (x, y) = OffsetPoint(p.X, p.Y, offsetProvider().X, offsetProvider().Y); return new EsPoint(x, y); },
+            p => { var (x, y) = InverseOffsetPoint(p.X, p.Y, offsetProvider().X, offsetProvider().Y); return new EsPoint(x, y); },
             () => null);
 
     /// <summary>原点基準の等方スケーリングポートを生成する（座標系 A ↔ 座標系 B = 座標系 A × 倍率）。</summary>
@@ -54,8 +58,8 @@ public sealed class CoordTransform : ICoordTransform
     {
         double s = factor > 0 ? factor : 1.0;
         return new CoordTransform(
-            p => { var (x, y) = CoordMath.ScalePoint(p.X, p.Y, s); return new EsPoint(x, y); },
-            p => { var (x, y) = CoordMath.InverseScalePoint(p.X, p.Y, s); return new EsPoint(x, y); },
+            p => { var (x, y) = ScalePoint(p.X, p.Y, s); return new EsPoint(x, y); },
+            p => { var (x, y) = InverseScalePoint(p.X, p.Y, s); return new EsPoint(x, y); },
             () => null);
     }
 
@@ -72,8 +76,8 @@ public sealed class CoordTransform : ICoordTransform
         static double Scale(double factor) => factor > 0 ? factor : 1.0;
 
         return new CoordTransform(
-            p => { double s = Scale(factorProvider()); var (x, y) = CoordMath.ScalePoint(p.X, p.Y, 1.0 / s); return new EsPoint(x, y); },
-            p => { double s = Scale(factorProvider()); var (x, y) = CoordMath.ScalePoint(p.X, p.Y, s); return new EsPoint(x, y); },
+            p => { double s = Scale(factorProvider()); var (x, y) = ScalePoint(p.X, p.Y, 1.0 / s); return new EsPoint(x, y); },
+            p => { double s = Scale(factorProvider()); var (x, y) = ScalePoint(p.X, p.Y, s); return new EsPoint(x, y); },
             () => null);
     }
 
@@ -90,8 +94,8 @@ public sealed class CoordTransform : ICoordTransform
         static double Scale(double factor) => factor > 0 ? factor : 1.0;
 
         return new CoordTransform(
-            p => { double s = Scale(factorProvider()); var (x, y) = CoordMath.ScalePoint(p.X, p.Y, 1.0 / s); return new EsPoint(x, y); },
-            p => { double s = Scale(factorProvider()); var (x, y) = CoordMath.ScalePoint(p.X, p.Y, s); return new EsPoint(x, y); },
+            p => { double s = Scale(factorProvider()); var (x, y) = ScalePoint(p.X, p.Y, 1.0 / s); return new EsPoint(x, y); },
+            p => { double s = Scale(factorProvider()); var (x, y) = ScalePoint(p.X, p.Y, s); return new EsPoint(x, y); },
             boundsProvider);
     }
 
@@ -101,7 +105,7 @@ public sealed class CoordTransform : ICoordTransform
     /// <param name="uniformProvider">Stretch.Uniform 相当かどうかを提供する関数（呼び出し毎に評価。null の場合は true）。</param>
     /// <returns>Forward = DIP→論理、Inverse = 論理→DIP、Bounds = 元画像サイズのポート。</returns>
     /// <remarks>
-    /// レイアウト計算（レターボックス・スケール）は <see cref="CoordMath.ComputeImageRenderInfo"/> に委譲し、
+    /// レイアウト計算（レターボックス・スケール）は <see cref="ComputeImageRenderInfo"/> に委譲し、
     /// 呼び出し毎に再評価する（ズーム・サイズ変更に追従する動的ポート）。<br/>
     /// 表示領域が 0 以下の場合は等価変換（<see cref="Identity"/>）を使用する。<br/>
     /// 多段変換（例: 親パネルDIP → プレビュー内部DIP → 論理）は <see cref="Compose"/> で合成する。<br/>
@@ -136,7 +140,7 @@ public sealed class CoordTransform : ICoordTransform
     /// <param name="uniformProvider">Stretch.Uniform 相当かどうかを提供する関数（呼び出し毎に評価。null の場合は true）。</param>
     /// <returns>X スケール（元画像ピクセル / DIP）。表示領域・元画像サイズが 0 以下の場合は 1.0。</returns>
     /// <remarks>
-    /// <see cref="ImageLayout"/> と同じレイアウト計算（<see cref="CoordMath.ComputeImageRenderInfo"/>）から
+    /// <see cref="ImageLayout"/> と同じレイアウト計算（<see cref="ComputeImageRenderInfo"/>）から
     /// X スケールのみを導出する（サイズラベルのズーム率表示等に使用・単一実装・DRY 原則）。
     /// </remarks>
     public static double ImageLayoutScaleX(
@@ -156,17 +160,110 @@ public sealed class CoordTransform : ICoordTransform
     /// <param name="uniform">Stretch.Uniform 相当かどうか。</param>
     /// <returns>オフセット X（DIP）、オフセット Y（DIP）、スケール X、スケール Y。</returns>
     /// <remarks>
-    /// <see cref="CoordMath.ComputeImageRenderInfo"/> に委譲し、<c>Forward/Inverse</c> の除算安全域
+    /// <see cref="ComputeImageRenderInfo"/> に委譲し、<c>Forward/Inverse</c> の除算安全域
     /// （0.01 未満を 0.01 に補正）を適用する。<br/>
     /// <see cref="ImageLayout"/> / <see cref="ImageLayoutScaleX"/> で共通利用する（単一実装・DRY 原則）。
     /// </remarks>
     private static (double OffsetX, double OffsetY, double ScaleX, double ScaleY) ComputeImageLayout(
         EsSize viewport, EsSize source, bool uniform)
     {
-        var (_, _, ox, oy, sx, sy) = CoordMath.ComputeImageRenderInfo(
+        var (_, _, ox, oy, sx, sy) = ComputeImageRenderInfo(
             viewport.Width, viewport.Height, source.Width, source.Height, uniform);
         return (ox, oy, Math.Max(sx, 0.01), Math.Max(sy, 0.01));
     }
+
+    // ====================================================================
+    // 座標の純粋計算（画像レイアウト・平行移動・スケーリング）
+    // ====================================================================
+
+    /// <summary>Stretch.Uniform での表示サイズとレターボックスオフセットを算出する。</summary>
+    /// <param name="viewportWidth">表示領域の幅（DIP）。</param>
+    /// <param name="viewportHeight">表示領域の高さ（DIP）。</param>
+    /// <param name="sourceWidth">元画像の幅（ピクセル）。</param>
+    /// <param name="sourceHeight">元画像の高さ（ピクセル）。</param>
+    /// <returns>表示幅（DIP）、表示高さ（DIP）、オフセット X（DIP）、オフセット Y（DIP）。</returns>
+    /// <remarks>
+    /// アスペクト比を維持して表示領域に収まるサイズと、余白（レターボックス）のオフセットを算出する。<br/>
+    /// 純粋演算であり UI 要素に依存しない（<see cref="ComputeImageRenderInfo"/> が使う単一実装である）。
+    /// </remarks>
+    internal static (double Width, double Height, double OffsetX, double OffsetY) CalculateUniformLayout(
+        double viewportWidth, double viewportHeight, double sourceWidth, double sourceHeight)
+    {
+        double a = sourceWidth / sourceHeight, da = viewportWidth / viewportHeight;
+        if (da > a)
+        {
+            // 表示領域が横長 → 高さでフィット
+            double rh = viewportHeight;
+            double rw = viewportHeight * a;
+            return (rw, rh, (viewportWidth - rw) / 2.0, 0.0);
+        }
+        else
+        {
+            // 表示領域が縦長または同一 → 幅でフィット
+            double rw = viewportWidth;
+            double rh = viewportWidth / a;
+            return (rw, rh, 0.0, (viewportHeight - rh) / 2.0);
+        }
+    }
+
+    /// <summary>画像表示領域の描画情報（表示サイズ・レターボックスオフセット・スケール）を算出する。</summary>
+    /// <param name="viewportWidth">表示領域の幅（DIP）。</param>
+    /// <param name="viewportHeight">表示領域の高さ（DIP）。</param>
+    /// <param name="sourceWidth">元画像の幅（ピクセル）。</param>
+    /// <param name="sourceHeight">元画像の高さ（ピクセル）。</param>
+    /// <param name="uniform">Stretch.Uniform 相当（true = アスペクト比維持、false = Fill 相当）。</param>
+    /// <returns>表示幅（DIP）、表示高さ（DIP）、オフセット X（DIP）、オフセット Y（DIP）、スケール X（元画像ピクセル/DIP）、スケール Y。</returns>
+    /// <remarks>
+    /// <see cref="CalculateUniformLayout"/> にスケール係数（元画像ピクセル ÷ 表示 DIP）の導出を加えた<br/>
+    /// レイアウト計算の一元化 API である（<see cref="ComputeImageLayout"/> から利用する）。<br/>
+    /// 表示領域・元画像サイズのいずれかが 0 以下の場合は等倍（sx = sy = 1.0）を返す。<br/>
+    /// 表示状態（Bounds / Stretch）の取得は呼び出し側の責務であり、本メソッドは純粋演算のみを提供する。
+    /// </remarks>
+    internal static (double Width, double Height, double OffsetX, double OffsetY, double ScaleX, double ScaleY) ComputeImageRenderInfo(
+        double viewportWidth, double viewportHeight, double sourceWidth, double sourceHeight, bool uniform = true)
+    {
+        double dw = viewportWidth, dh = viewportHeight, sw = sourceWidth, sh = sourceHeight;
+        if (dw <= 0 || dh <= 0 || sw <= 0 || sh <= 0) return (dw, dh, 0.0, 0.0, 1.0, 1.0);
+
+        var (rw, rh, ox, oy) = uniform
+            ? CalculateUniformLayout(dw, dh, sw, sh)
+            : (dw, dh, 0.0, 0.0);
+        return (rw, rh, ox, oy, sw / Math.Max(rw, 1), sh / Math.Max(rh, 1));
+    }
+
+    /// <summary>指定点をスクロールオフセット分平行移動する（純粋関数）。</summary>
+    /// <param name="x">X 座標。</param>
+    /// <param name="y">Y 座標。</param>
+    /// <param name="offsetX">X オフセット。</param>
+    /// <param name="offsetY">Y オフセット。</param>
+    /// <returns>オフセット加算（移動）後の座標。</returns>
+    internal static (double X, double Y) OffsetPoint(double x, double y, double offsetX, double offsetY)
+        => (x - offsetX, y - offsetY);
+
+    /// <summary>指定点を逆方向にスクロールオフセット分平行移動する（純粋関数）。</summary>
+    /// <param name="x">X 座標。</param>
+    /// <param name="y">Y 座標。</param>
+    /// <param name="offsetX">X オフセット。</param>
+    /// <param name="offsetY">Y オフセット。</param>
+    /// <returns>オフセット減算（逆移動）後の座標。</returns>
+    internal static (double X, double Y) InverseOffsetPoint(double x, double y, double offsetX, double offsetY)
+        => (x + offsetX, y + offsetY);
+
+    /// <summary>指定点を等方スケーリングする（純粋関数・原点基準）。</summary>
+    /// <param name="x">X 座標。</param>
+    /// <param name="y">Y 座標。</param>
+    /// <param name="factor">スケール倍率（Forward = 除算 / Inverse = 乗算）。</param>
+    /// <returns>スケーリング後の座標。</returns>
+    internal static (double X, double Y) ScalePoint(double x, double y, double factor)
+        => (x / factor, y / factor);
+
+    /// <summary>指定点を逆方向に等方スケーリングする（純粋関数・原点基準）。</summary>
+    /// <param name="x">X 座標。</param>
+    /// <param name="y">Y 座標。</param>
+    /// <param name="factor">スケール倍率。</param>
+    /// <returns>スケーリング後の座標。</returns>
+    internal static (double X, double Y) InverseScalePoint(double x, double y, double factor)
+        => (x * factor, y * factor);
 
     private readonly Func<EsPoint, EsPoint> _forward;
     private readonly Func<EsPoint, EsPoint> _inverse;
