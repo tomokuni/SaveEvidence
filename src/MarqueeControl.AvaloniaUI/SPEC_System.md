@@ -32,7 +32,7 @@
   - [9. ログ](#9-ログ)
     - [9.1 ログ定義一覧](#91-ログ定義一覧)
       - [コア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）](#コアesutilfeaturemarqueecoreloggingmarqueelogmessage)
-      - [組み込みの層（`EsUtil.Feature.Marquee.Presenter.MarqueeWheelLogMessage`）](#組み込みの層esutilfeaturemarqueepresentermarqueewheellogmessage)
+      - [提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）](#提示層esutilfeaturemarqueepresenterloggingmarqueepresenterlogmessage)
 
 ---
 
@@ -88,7 +88,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成で出力する。操作イベントは Debug、Down 直前 / Up 直後の位置・ホイールは Trace で記録する。選択の判断に伴うログ定義はコア（名前空間 `EsUtil.Feature.Marquee.Core` の `MarqueeLogMessage`）が、ズーム要求のログ定義は組み込みの層（`Feature.Marquee.Presenter` の `MarqueeWheelLogMessage`）が単一所有し、本プロジェクトはログ定義を持たない
+- ログは LoggerMessage ソース生成で出力する。操作イベントは Debug、Down 直前 / Up 直後の位置は Trace で記録する。入力判断のログ定義はコア（名前空間 `EsUtil.Feature.Marquee.Core` の `MarqueeLogMessage`）が、提示層が単一所有する設定（外観・表示スケーリング係数）の変更ログは提示層（`Feature.Marquee.Presenter` の `MarqueePresenterLogMessage`）が単一所有し、本プロジェクトはログ定義を持たない
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -189,7 +189,7 @@ flowchart TB
   - 通知: `Notified`（状態機械の通知をそのまま転送する）
 - **内部実装**: 状態機械 `MarqueeSession`（`internal`）を保持・利用する（幾何の解決は同じ型の `Marquee.Geometry.cs`（partial）の公開メソッド `CreateRequest` / `ResolveGeometry` として実装する）
 - **可視性**: public（ファサードのみ。内部の状態機械は `internal` で隠す）
-- **備考**: 設定・効果の適用・通知の転送・描画内容の解決を 1 型に集約したため、UI 層は自 UI の公開プロパティ・公開イベント・描画 API へつなぐだけになる（ホイールの解釈は組み込みの層（`Feature.Marquee.Presenter`）が単一所有する）
+- **備考**: 設定・効果の適用・通知の転送・描画内容の解決を 1 型に集約したため、UI 層は自 UI の公開プロパティ・公開イベント・描画 API へつなぐだけになる（ホイールは本コントロールも提示層も扱わず、ホスト（UI 層）がビューポートへ転送する）
 
 ### 6.3 MarqueeState
 
@@ -317,10 +317,7 @@ sequenceDiagram
     Ses->>Stt: EndDrag（確定 or キャンセル判定）
     Ctl-->>AP: SelectionCompleted / SelectionCancelled
 
-    AP->>Ctl: マウスホイール（PointerWheelChanged）
-    Ctl->>Fac: Wheel(controlKey, shiftKey, 回転量, 位置)
-    Fac-->>Ctl: ZoomRequested / ScrollRequested
-    Ctl-->>AP: ZoomRequested / ScrollRequested
+    Note over Ctl,AP: マウスホイールは本コントロールが扱わない（ホストがビューポートへ転送する）
 
     AP->>Ctl: 矢印キー（KeyDown）
     Ctl->>Fac: KeyDown(EsKey, カーソル位置)
@@ -337,9 +334,9 @@ sequenceDiagram
 
 ## 9. ログ
 
-ログ定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`、`Feature.Marquee.Core/src/Logging/MarqueeLogMessage.cs`）と、組み込みの層（`EsUtil.Feature.Marquee.Presenter.MarqueeWheelLogMessage`）が単一所有する
+ログ定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`、`Feature.Marquee.Core/src/Logging/MarqueeLogMessage.cs`）と、提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が単一所有する
 （入力の判断に伴うログは UI から出せず、後から出すと行の順序が変わるため）。UI 層に固有のログ定義は持たない
-（通常ホイールのスクロールログは、スクロールの実行を連携 `ScrollViewer` または `ScrollRequested` 通知へ委ねる形になり、
+（通常ホイールのスクロールログは、スクロールの実行をホスト（連携 `ScrollViewer` 等）へ委ねる形になり、
 本コントロール内に記録すべき判断が無くなったため削除した）。
 各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する。未設定（null）の場合は `NullLogger` で無出力。
 出力先・レベル制御はホストアプリケーションが所有する（定義のみ）。マウス移動の高頻度ログは行わない（Down 直前・Up 直後の位置のみ `Trace` で記録）。
@@ -361,8 +358,9 @@ sequenceDiagram
 | `Trace` | `MarqueeLogMessage.LogPositionAfterUp` | Up 直後のマウス位置 |
 | `Debug` | `MarqueeLogMessage.LogSettingChanged` | 設定値変更（変更前後） |
 
-#### 組み込みの層（`EsUtil.Feature.Marquee.Presenter.MarqueeWheelLogMessage`）
+#### 提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Debug` | `MarqueeWheelLogMessage.LogZoomRequested` | Ctrl+ホイールによるズーム要求（拡大/縮小） |
+| `Debug` | `MarqueePresenterLogMessage.LogSettingChanged` | 本層が所有する設定（表示スケーリング係数）の変更（変更前後） |
+| `Debug` | `MarqueePresenterLogMessage.LogAppearanceChanged` | 外観（色・フォントサイズ・枠線の太さ・表示可否）の変更（変化した項目だけ） |

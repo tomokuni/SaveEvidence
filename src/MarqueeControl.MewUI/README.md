@@ -35,10 +35,10 @@ using EsUtil.Platform.Core.Geometry;
 // 1. 生成（カーソルサービスは省略すると Windows 既定実装になる）
 var marquee = new MarqueeControl
 {
-    // 寸法・表示可否・対話パラメータは 1 つの設定値で渡す（同値の再設定では再描画されない）
-    Options = MarqueeOptions.Default with { ShowCoordLabel = true },
+    // 寸法・対話パラメータは 1 つの設定値で渡す（同値の再設定では再描画されない）
+    Options = MarqueeOptions.Default with { HandleSize = 12.0 },
 
-    // 色は描画の設定値が単一所有する（部分変更は with 式で行う）
+    // 色と表示可否は描画の設定値（外観）が単一所有する（部分変更は with 式で行う）
     Appearance = MarqueeAppearance.Default with { OuterBorderColor = System.Drawing.Color.White },
 };
 
@@ -81,8 +81,6 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | 矢印キー | nudge（1 ドメインピクセル単位の微調整。カーソルを非表示にして十字マーカーを表示） |
 | Enter | 確定要求（`ConfirmRequested`） |
 | Escape | キャンセル要求（`CancelRequested`） |
-| Ctrl + ホイール | ズーム要求（`ZoomRequested`。方向と発生位置）。解釈は組み込みの層（`Feature.Marquee.Presenter`）が単一所有する |
-| ホイール（Ctrl なし） | スクロール要求（`ScrollRequested`。回転量・Shift・発生位置。スクロール先はホストが決める） |
 
 矢印キーの nudge は本コントロールにフォーカスがある場合のみ動作します（マウス押下時に自動でフォーカスを取得します）。
 
@@ -103,7 +101,6 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の寸法・表示可否・対話パラメータをまとめた設定（コアの `EsUtil.Feature.Marquee.Core.Setting.MarqueeOptions`。**色は含まない**） |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の**計算に必要な設定**（寸法・対話パラメータ）。変更すると再描画され、対話パラメータはコアへ伝搬する（**色・表示可否は含まない**） |
 | `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（`EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）。変更すると次の描画で提示層が新しい外観で描画計画を解決する |
 | `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新）。描画は描画面と表示領域の比を使うため、追加直後で未更新でも画像と同じ倍率になる |
@@ -112,15 +109,13 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `ShowHandles` | `bool` | `true` | ドラッグハンドルの表示可否 |
 | `HandleSize` | `double` | `10.0` | ハンドルの一辺サイズ（DIP） |
 | `HandleHitRadius` | `double` | `12.0` | ハンドルのヒットテスト半径（DIP。0.0〜256.0 に補正） |
 | `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
 | `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP） |
-| `ShowCoordLabel` | `bool` | `true` | カーソル座標ラベルの表示 |
 
-色とラベルの体裁（フォントサイズ・内側余白）は外観の単一値 `MarqueeAppearance`（`EsUtil.Feature.Marquee.Presenter.Setting`）が単一所有します。
+色とラベルの体裁（フォントサイズ・内側余白）に加え、**表示可否（ハンドル・ラベル・暗転・穴あけ枠・内側の塗りと枠線）も外観の単一値 `MarqueeAppearance`（`EsUtil.Feature.Marquee.Presenter.Setting`）が単一所有します**。
 
 `MarqueeAppearance` の項目（既定値は本型が単一所有する）:
 
@@ -132,6 +127,9 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `CoordLabelColor` / `CoordLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | ラベルの文字色と背景色 |
 | `OverlayColor` / `OuterBorderColor` | `System.Drawing.Color` | 黒 50% / `#FFA9A9A9` | 暗転マスクと穴あけ枠の色 |
 | `InnerFillColor` / `InnerBorderColor` | `System.Drawing.Color` | 透明 / 透明 | 穴あけ矩形の内側の塗り色と枠線色 |
+| `ShowHandles` / `ShowSizeLabel` / `ShowCoordLabel` | `bool` | `true` | ハンドル・サイズラベル・カーソル座標ラベルの表示可否 |
+| `ShowOverlay` / `ShowOuterBorder` | `bool` | `true` | 暗転マスクと穴あけ枠の表示可否 |
+| `ShowFullOverlay` / `ShowInnerFill` / `ShowInnerBorder` | `bool` | `false` | 全面暗転・内側の塗り・内側の枠線の表示可否 |
 
 色は UI 非依存の `System.Drawing.Color` で指定します。設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueeAppearance.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
 
@@ -150,7 +148,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 ## イベント
 
 `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` /
-`LoupePositionMoved` / `ViewportChanged` / `ZoomRequested` / `ScrollRequested` /
+`LoupePositionMoved` /
 `ConfirmRequested` / `CancelRequested` / `Rendered`
 
 **生のポインター入力（Mouse 系）の公開イベントは持ちません**（ホストは自 UI の入力イベントを使います。押下状態は `CurrentSnapshot.IsMouseDown`）。
@@ -165,22 +163,22 @@ dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 
 - 描画（ハンドル・十字マーカー・外側/内側の装飾）の画素検証は UI 非依存の描画層（`Feature.Marquee.Presenter`）のテストが担うため、本プロジェクトは描画のテストを持たない。
 - ラベル要素の配置（実寸 → 配置矩形）の検証は描画層の `MarqueeLabelPlan.Tests.cs` が担う。UI 層の要素配置は `MarqueeControl.Tests.cs` が検証する。
-- `MarqueeControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、ビューポート通知、`Log` のフォールバックと設定変更ログ。
-- ログの定義（操作ログ・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います（ズーム要求のログは組み込みの層の `MarqueeWheelLogMessage` が所有し、`Feature.Marquee.Presenter.Tests` が検証します）。
+- `MarqueeControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、`Log` のフォールバックと設定変更ログ。
+- ログの定義（操作ログ・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います（設定（外観・表示スケーリング係数）の変更ログは提示層の `MarqueePresenterLogMessage` が所有し、`Feature.Marquee.Presenter.Tests` が検証します）。
 
 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアが担うため、その検証は `Feature.Marquee.Core.Tests` が行います。
 
 ## 操作ログ
 
 `Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。  
-ログはコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と組み込みの層（`EsUtil.Feature.Marquee.Presenter.MarqueeWheelLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。本プロジェクトはログ定義を持ちません。
+ログはコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。本プロジェクトはログ定義を持ちません。
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / ZoomRequested / 設定変更 |
+| Debug | MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / 設定変更（コア）/ 外観・表示スケーリングの変更（提示層） |
 | Trace | MouseDown 直前の位置 / MouseUp 直後の位置 |
 
-定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と組み込みの層（`EsUtil.Feature.Marquee.Presenter.MarqueeWheelLogMessage`）が持ち、本プロジェクトは定義を持ちません。
+定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が持ち、本プロジェクトは定義を持ちません。
 
 ## 未対応
 

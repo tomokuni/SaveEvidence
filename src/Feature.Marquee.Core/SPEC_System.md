@@ -32,7 +32,6 @@
 UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
   入力の受付・効果の適用・通知の転送・描画先の用意・ラベル要素の配置
     ├──> Feature.Marquee.Presenter   どう描くか（描画計画の解決と自 UI の描画面への写し）
-    │       ＋ 組み込み先がある場合にだけ必要な規則（ホイール・ビューポート）
     └──> Feature.Marquee.Core ← 本プロジェクト   何を計算するか（状態・判断・幾何）
            └──> Platform.Core（Es* 値型・ICoordTransform・ICursorService）
 ※ Core は Presenter を参照しない（Presenter がコアの幾何を使う向きだけ）。Core は Platform.* の UI アダプタも参照しない。

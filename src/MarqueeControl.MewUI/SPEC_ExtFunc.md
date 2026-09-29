@@ -164,7 +164,7 @@ marquee.Rendered += (_, e) =>
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | `MouseDown`（位置・クリック数・選択有無）/ `MouseUp`（位置・ドラッグ有無・選択有無）/ `DoubleClick`（矩形内か）/ `DragStart`（ハンドル・位置）/ `KeyDown`（キー・処理有無）/ `ConfirmRequested`（矩形）/ `CancelRequested` / `ZoomRequested` / `Setting`（`Options.ClampToDomainBounds` の変更前後） |
+| Debug | `MouseDown`（位置・クリック数・選択有無）/ `MouseUp`（位置・ドラッグ有無・選択有無）/ `DoubleClick`（矩形内か）/ `DragStart`（ハンドル・位置）/ `KeyDown`（キー・処理有無）/ `ConfirmRequested`（矩形）/ `CancelRequested` / `Setting`（`Options.ClampToDomainBounds` の変更前後）/ 外観・表示スケーリングの変更（提示層の `MarqueePresenterLogMessage`） |
 | Trace | `MouseDown 直前の位置` / `MouseUp 直後の位置` |
 
 マウス移動の高頻度ログは出力しません（押下直前・解放直後の位置のみ記録します）。

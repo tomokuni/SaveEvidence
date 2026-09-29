@@ -21,12 +21,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- ホイール要求のログ定義（LoggerMessage ソース生成）を本層が所有する -->
+    <!-- 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（LoggerMessage ソース生成）を持つ -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 内部型（ホイールの回転量換算・ズーム要求のログ定義）は本層の内部手順であり、
+    <!-- 内部型（本層が単一所有する設定の変更ログ定義）は本層の内部手順であり、
          単体テストにのみ公開する（UI 実装・ホストは参照しない）。 -->
     <InternalsVisibleTo Include="Feature.Marquee.Presenter.Tests" />
   </ItemGroup>

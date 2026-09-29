@@ -164,7 +164,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | --- | --- | --- |
 | `DragHandle`（`None` / `Move` + 8 方向） | `HitTarget` → `MarqueeHitTarget` | ハンドル以外（`None` / `Move`）も含むためヒット対象を表す名前にし、公開型の接頭辞（自コア名）を付ける |
 | `MarqueeSnapshot.ActiveHandle` / `MarqueeState.ActiveHandle` | `ActiveTarget` | 同上 |
-| `DragRectZoomRequest` / `DragRectScrollRequest` | 削除 | コントロール化を前提とした処理（ホイール操作）のため、要求型は提示層に置かなくなった |
+| `DragRectZoomRequest` / `DragRectScrollRequest` | 削除 | コントロール化を前提とした処理（ホイール操作）のため要求型を持たなくなった（ホイールはホスト（UI 層）がビューポートへ転送する） |
 
 ## 選択矩形の幾何はコアが持つ（装飾は持たない）
 
@@ -263,7 +263,7 @@ UI 層が使う共有値・計算:
 12. **選択の状態はセッションが単一のソース**: 選択矩形と選択の有無は設定値ではなくセッションの状態から `Marquee.ResolveGeometry` が導出し、提示層も同じ値を参照する（同じデータを 2 箇所に持たない）。
 13. **色・体裁・表示可否・描画順は本コアが持たない**: これらは**描画にだけ必要な設定**であるため、提示層（`Feature.Marquee.Presenter` の `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueePresenter`）が単一所有する。本コアは幾何と判断だけを返し、**装飾の概念（名前空間・型）を持たない**。
 14. **操作の入口はファサードのみ**: UI 層とホストは `Marquee` だけを参照し、状態機械（`MarqueeSession`）には触れない（`internal` で強制する）。設定の伝搬・効果の適用・通知の転送・幾何の解決も本型が単一所有し、UI 層は自 UI の公開プロパティ・公開イベント・描画 API へつなぐだけになる。
-15. **選択の判断ではない規則はコアに置かない**: 「Ctrl+ホイール = ズーム」・「ビューポートの変化の再通知」のようなビューポート連携の規則は、単体で使う Marquee には存在しない概念であるため `Feature.Marquee.Presenter` が単一所有する（コアは将来そのまま別プロジェクトへ独立できる）。
+15. **選択の判断ではない規則はコアに置かない**: 「Ctrl+ホイール = ズーム」・「ビューポートの変化の再通知」のようなビューポート連携の規則は、単体で使う Marquee には存在しない概念であるため UI 層（ホスト）が持ちます（コアは将来そのまま別プロジェクトへ独立できる）。
 16. **他のコントロールの語彙を持たない**: コアは Marquee 単体の概念だけを持ち、別のコントロール（ルーペ等）との連携名を持ち込まない。追従位置は汎用名（`MarqueeNoticeKind.MarkerPositionMoved`）で通知し、ルーペ中心への写像は UI 層の公開イベントが担う（コアは将来そのまま別プロジェクトへ独立できる）。
 
 > **Note**: 本 README は**利用仕様書**（使い方と設計の意図）です。公開 API の仕様は [SPEC_ExtFunc.md](SPEC_ExtFunc.md)、構造・依存・例外処理・単一所有の一覧は [SPEC_System.md](SPEC_System.md) を参照してください。
