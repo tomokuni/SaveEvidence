@@ -231,7 +231,7 @@ flowchart TB
 - **分類**: 公開静的クラス（所属は UI 非依存の提示層）
 - **責務**: 実寸（描画 API の測定値）からラベル要素の配置指示（`MarqueeLabelPlacement`）を解決する（一覧と順序を単一所有する）
 - **可視性**: public（UI 実装が参照する）
-- **特徴**: 文言と基準点は提示層（`MarqueeLabelTexts` / `MarqueePresenter`）が単一所有し、体裁（フォントサイズ・色・内側余白）は `MarqueeAppearance` から写す。**要素として置くか canvas へ描くかは UI 層が決める**
+- **特徴**: 文言と基準点は提示層（`MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`）が単一所有し、体裁（フォントサイズ・色・内側余白）は `MarqueeAppearance` から写す。**要素として置くか canvas へ描くかは UI 層が決める**
 - **依存**: Platform.Core（`Es*` 値型）/ `MarqueeLabelPlacement` / `MarqueeAppearance`（同層）
 
 ### 6.8 ラベル要素の配置（本コントロールの内部実装）
@@ -239,7 +239,7 @@ flowchart TB
 - **分類**: `MarqueeControl` の内部実装（`ArrangeOverride` と `SyncLabels` / `Apply` / `MeasureText`。独立し た型ではない）
 - **責務**: 描画計画のラベル（サイズ・カーソル座標）をテキスト要素（`Border` + `TextBlock`）として配置する
 - **可視性**: 非公開（ホストは `Rendered` の `Content`（描画計画）を参照できる）
-- **特徴**: 文言と基準点は提示層の `MarqueeLabelTexts` が、体裁は `MarqueeAppearance` が単一所有し、実寸からの配置矩形は `MarqueeLabelPlan` が単一所有する。本実装は実寸測定（**`Platform.AvaloniaUI.Imaging` の `AvaloniaTextMeasure` へ委譲する**。実寸を返さないと背景が内側余白だけの大きさになり文字が切り落とされる）と要素への反映（`Border` の余白・大きさ・位置、`TextBlock` の文言・文字サイズ ・色）を持つ。色 → ブラシは `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）が単一所有する
+- **特徴**: 文言と基準点は提示層の `MarqueePresenter`（`LabelTexts` partial） が、体裁は `MarqueeAppearance` が単一所有し、実寸からの配置矩形は `MarqueeLabelPlan` が単一所有する。本実装は実寸測定（**`Platform.AvaloniaUI.Imaging` の `AvaloniaTextMeasure` へ委譲する**。実寸を返さないと背景が内側余白だけの大きさになり文字が切り落とされる）と要素への反映（`Border` の余白・大きさ・位置、`TextBlock` の文言・文字サイズ ・色）を持つ。色 → ブラシは `SolidColorBrushCache`（`Platform.AvaloniaUI.Imaging`）が単一所有する
 - **依存**: Avalonia（`FormattedText` / テキスト要素）/ Feature.Marquee.Presenter（`MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueeAppearance`）/ Platform.AvaloniaUI（色変換・ブラシキャッシュ）
 
 ### 6.9 MarqueeContextPainter（本プロジェクト）

@@ -58,7 +58,7 @@
 | 4 | 十字線 | 中央の縦横 2 本（幅は拡大率と同じ物理ピクセル） |
 | 5 | 枠線 | 四辺（`Appearance.BorderThickness` の太さ） |
 
-中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（上記の後ろに重なります。文言は提示層の `LoupeLabelTexts`、配置は同層の `LoupeLabelPlan`、体裁は外観（`LoupeAppearance`）、実寸測定は **MewUI のテキスト エンジン**（`MewUITextMeasure.Measure`）が単一所有します）。子要素は親より後に描かれるため、ラベルは常に最上位になります。
+中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（上記の後ろに重なります。文言は提示層の `LoupePresenter`（`LabelTexts` partial）、配置は同層の `LoupeLabelPlan`、体裁は外観（`LoupeAppearance`）、実寸測定は **MewUI のテキスト エンジン**（`MewUITextMeasure.Measure`）が単一所有します）。子要素は親より後に描かれるため、ラベルは常に最上位になります。
 
 ### サイズの決定
 
@@ -102,7 +102,7 @@
 
 `Rendered` イベントは、ルーペを描画した直後（同一フレーム内）に引数 `LoupeRenderedEventArgs` で通知します。ホストはハンドラ内で描画先キャンバスへ追加描画（選択矩形の破線等のオーバーレイ）を行えます。
 
-中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言は提示層の `LoupeLabelTexts`、表示可否と体裁は外観（`LoupeAppearance`）、実寸からの配置は同層の `LoupeLabelPlan` が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
+中心座標ラベルは**コントロールが子要素として表示します**（`Border` + `TextBlock`）。文言は提示層の `LoupePresenter`（`LabelTexts` partial）、表示可否と体裁は外観（`LoupeAppearance`）、実寸からの配置は同層の `LoupeLabelPlan` が単一所有するため、コントロールは自 UI の API（`SkiaText.Measure`）で測った実寸を渡し、返された配置を要素へ反映するだけです。
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |

@@ -99,7 +99,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 3. **フレームワーク固有の値の解決**（DPI の 0 以下フォールバック・色型変換）
 4. **描画方式の差**（直接描画 / 中間バッファ・ブラシキャッシュ）
 
-**文字（サイズラベル・カーソル座標ラベル）は UI 層がテキスト要素を配置**します（`Border` + `TextBlock`。ラベルは常に最上位）。文言・基準点・並び順は提示層（`Feature.Marquee.Presenter` の `MarqueeLabelTexts` / `MarqueePresenter`）が単一所有し、フォントサイズと色は外観（`MarqueeAppearance`）、実寸から配置矩形を求める写像は `MarqueeLabelPlan` が単一所有します。
+**文字（サイズラベル・カーソル座標ラベル）は UI 層がテキスト要素を配置**します（`Border` + `TextBlock`。ラベルは常に最上位）。文言・基準点・並び順は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenter`）が単一所有し、フォントサイズと色は外観（`MarqueeAppearance`）、実寸から配置矩形を求める写像は `MarqueeLabelPlan` が単一所有します。
 
 ## 機能差に由来する非対称（もう一方のコアとの違い）
 
@@ -110,7 +110,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 描画パイプラインの段数 | 2 段（`CreateRequest` → `ResolveGeometry`） | 3 段（`ResolveLayout` → `ResolveGeometry`） | 本コアは親セル全面へ重ねるため配置の余地がない（`LoupeLayout` 相当を持たない）。配置先はホストの親セル全面であり、位置を決める入力がコアに無い |
 | 幾何の解決の入力 | `CreateRequest(EsSize clientSize)`（描画領域＝座標空間。表示サイズと同じ） | `ResolveGeometry(double displaySize, EsSize? availableSize)`（一辺の表示サイズ＝親パネルのクランプ結果と、描画面＝ビットマップの領域が別） | 本コアは任意矩形の描画領域へ直接描く（正方形の表示サイズと描画面の区別が無い） |
 | 入力の通知と効果ポート | 対話モジュール（`Interaction/` + `Contract/` + `Press` / `Move` / `Release` / `KeyDown` + `Notified`）／設定に対話パラメータ（`MinSelectionSize` / `HandleHitRadius` / `ClampToDomainBounds`）／**コアが再描画を要求**（`RequestRedraw`）／ロガーはセッションが保持 | 持たない（状態はホストが設定するだけ。設定は表示のみ。変換の設定は再描画を要求せず、表示位置の再計算は UI が行う。ロガーはファサード自身が保持） | ルーペは入力の解釈も効果ポートも持たない（ホストが状態を設定するだけであり、再描画の要求先が無い） |
-| ラベル文言プロバイダ | 提示層が持つ（`MarqueePresenter.SizeLabelOverrideProvider` / `SizeLabelDisplayScalingProvider`） | 持たない（文言は提示層の `LoupeLabelTexts` が常に生成する） | 本コアのサイズラベルはホストが文言を差し替えたくなる（自動切り出しの候補サイズ等） |
+| ラベル文言プロバイダ | 提示層が持つ（`MarqueePresenter.SizeLabelOverrideProvider` / `SizeLabelDisplayScalingProvider`） | 持たない（文言は提示層の `LoupePresenter`（`LabelTexts` partial） が常に生成する） | 本コアのサイズラベルはホストが文言を差し替えたくなる（自動切り出しの候補サイズ等） |
 | 寸法の型 | `double`（DIP のまま。線を描く） | `int`（物理ピクセルへ換算。塗る） | 描画プリミティブが違う（線 / 塗り） |
 | 設定型の数 | 1 型（`MarqueeOptions`） | 1 型（`LoupeOptions`） | 装飾の設定をコアから提示層（外観）へ移したため、両コアとも 1 型 |
 | 幾何の粒度 | 層ごとに専用型（`MarqueeHandles` / `MarqueeMarker`） | 層ごとに素の矩形（`BorderRects` / `CrosshairRects`） | 描画プリミティブが違う（線の座標 / 塗る矩形の列） |

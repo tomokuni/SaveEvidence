@@ -3,16 +3,16 @@ using EsUtil.Feature.Loupe.Core.Drawing;
 using EsUtil.Feature.Loupe.Presenter.Drawing;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 
-namespace EsUtil.Feature.Loupe.Presenter.Label;
+namespace EsUtil.Feature.Loupe.Presenter;
 
-/// <summary>ルーペのラベルの文言と基準点を生成する（描画層が単一所有する）。</summary>
+/// <summary>ルーペのラベルの文言と基準点の導出を担う部分。</summary>
 /// <remarks>
 /// <b>文言の書式は描画層が単一所有する</b>: コアは幾何（拡大中心・表示サイズ）だけを返し、文言と基準点は描画の都合として本クラスが作る。<br/>
 /// 基準点はルーペの左上から <see cref="CoordLabelMargin"/> だけ内側の点である（ラベルは左上起点で置く。中央寄せは持たない）。<br/>
 /// フォントサイズ・角丸・色は <see cref="LoupeAppearance"/> が単一所有する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class LoupeLabelTexts
+public partial class LoupePresenter
 {
     /// <summary>ルーペの左上から中心座標ラベルの基準点までの距離（DIP）。</summary>
     /// <remarks>ラベルをルーペの縁から離す距離である（左右・上下で同じ値を使う）。</remarks>

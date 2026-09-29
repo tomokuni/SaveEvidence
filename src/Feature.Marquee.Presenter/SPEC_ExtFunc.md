@@ -19,7 +19,7 @@
 | --- | --- | --- |
 | 描画計画の解決 | `MarqueePresenter.ResolveDrawPlan` | 幾何（コア）と外観から、層の順序・装飾矩形・ラベル配置を解決した 1 値（`MarqueeDrawPlan`）を返す。**UI が見る唯一の描画値**である |
 | 装飾矩形の計算 | `MarqueePresenter`（`DrawPlan` partial） | 枠線 4 辺の矩形と、暗転領域（描画面から穴あけ矩形を除いた 4 領域）を求める純粋関数 |
-| ラベルの文言と基準点 | `MarqueeLabelTexts` | サイズラベル（位置と寸法の書式・表示スケール）とカーソル座標ラベルの文言・基準点を生成する |
+| ラベルの文言と基準点 | `MarqueePresenter`（`LabelTexts` partial） | サイズラベル（位置と寸法の書式・表示スケール）とカーソル座標ラベルの文言・基準点を生成する |
 | ラベル要素の配置 | `MarqueeLabelPlan.Resolve` | 実寸（描画 API の測定値）からラベル要素の配置指示（`MarqueeLabelPlacement`）を解決する。**要素として置くか画像として描くかは UI 層が決める** |
 
 #### 1.1.1 前提条件
@@ -46,7 +46,7 @@
 | `Label.MarqueeLabelPlacement` | readonly record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
 | `Label.MarqueeLabelPlan` | static class | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する |
 | `MarqueePresenter.DrawPlan.cs` | internal static class | 装飾矩形の計算（本層の内部手順。UI 層は解決済みの矩形を `MarqueeDrawPlan` から受け取る） |
-| `Label.MarqueeLabelTexts` | internal static class | ラベルの文言と基準点の生成（本層の内部手順。UI 層は `MarqueeDrawPlan.Labels` を受け取る） |
+| `MarqueePresenter.LabelTexts.cs` | internal static class | ラベルの文言と基準点の生成（本層の内部手順。UI 層は `MarqueeDrawPlan.Labels` を受け取る） |
 | `Logging.MarqueePresenterLogMessage` | internal static partial class | 本層が単一所有する設定の変更ログ（内部手順。ホストはロガーを設定するだけ） |
 
 ### `MarqueePresenter` のメンバー
@@ -151,7 +151,7 @@
 | --- | --- |
 | `Bounds` | 要素を置く矩形（背景の大きさ = 文字の実寸 + 内側余白 × 2。領域クランプ適用済み） |
 | `PaddingX` / `PaddingY` | 要素の内側余白（外観の値。要素の `Padding` にそのまま写す） |
-| `Text` / `FontSize` / `TextColor` / `BackgroundColor` | 文言・フォントサイズ・色は外観（`MarqueeAppearance`）と `MarqueeLabelTexts` が与える（UI は判断しない） |
+| `Text` / `FontSize` / `TextColor` / `BackgroundColor` | 文言・フォントサイズ・色は外観（`MarqueeAppearance`）と `MarqueePresenter`（`LabelTexts` partial） が与える（UI は判断しない） |
 | 角丸 | 持たない（選択矩形のラベルは矩形である） |
 
 ### 付加情報ラベルの体裁

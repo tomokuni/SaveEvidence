@@ -10,7 +10,7 @@
 | 表示レイアウトの解決 | `LoupePresenter.ResolveLayout` | 親領域サイズから表示サイズ・位置を解決する（コアへ委譲する） |
 | 外観 | `LoupeAppearance` | 色・フォント・角丸・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） |
 | 装飾矩形の計算 | `LoupePresenter`（`DrawPlan` partial） | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算（純粋関数） |
-| ラベル計画 | `LoupeLabelTexts` / `LoupeLabelPlan` | 文言と基準点の生成（`EsPoint.Format`・左上の内側）と、実寸 → 配置指示（`LoupeLabelPlacement`）の写像 |
+| ラベル計画 | `LoupePresenter`（`LabelTexts` partial） / `LoupeLabelPlan` | 文言と基準点の生成（`EsPoint.Format`・左上の内側）と、実寸 → 配置指示（`LoupeLabelPlacement`）の写像 |
 | ログ定義 | `LoupePresenterLogMessage` | 本層が単一所有する設定（外観）の変更ログ |
 
 **本層はコントロール化を前提とした処理を提供しません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は、コントロール固有の値や UI の機構であるため UI 層が持ちます）。
@@ -39,7 +39,7 @@
 | `Label.LoupeLabelPlan` | static class | 実寸 → `LoupeLabelPlacement` の写像 |
 | `Logging.LoupePresenterLogMessage` | static partial class | 本層が単一所有する設定の変更ログ（内部手順。ホストは参照しない） |
 
-`LoupePresenter.DrawPlan.cs` / `Label.LoupeLabelTexts` / `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）。
+`LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelTexts.cs` / `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）。
 
 ### `LoupePresenter` のメンバー
 

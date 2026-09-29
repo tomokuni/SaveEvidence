@@ -5,9 +5,9 @@ using EsUtil.Feature.Marquee.Presenter.Drawing;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using static EsUtil.Feature.Marquee.Core.Marquee.Limits;
 
-namespace EsUtil.Feature.Marquee.Presenter.Label;
+namespace EsUtil.Feature.Marquee.Presenter;
 
-/// <summary>選択矩形コントロールのラベルの文言と基準点を生成する（描画層が単一所有する）。</summary>
+/// <summary>選択矩形コントロールのラベルの文言と基準点の導出を担う部分。</summary>
 /// <remarks>
 /// <b>文言の書式は描画層が単一所有する</b>: コアは幾何（穴あけ矩形・カーソル位置）だけを返し、文言と基準点は描画の都合として本クラスが作る。<br/>
 /// サイズラベルは「ホストのプロバイダ優先 → 未指定・空文字なら自動生成」であり、表示スケールは矩形ごとに解決できる<br/>
@@ -15,7 +15,7 @@ namespace EsUtil.Feature.Marquee.Presenter.Label;
 /// フォントサイズ・色は <see cref="MarqueeAppearance"/> が単一所有する。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-internal static class MarqueeLabelTexts
+public partial class MarqueePresenter
 {
     /// <summary>カーソル座標ラベルをカーソルから離すオフセット（DIP）。</summary>
     /// <remarks>ラベルがカーソルに重ならないための余白である。</remarks>

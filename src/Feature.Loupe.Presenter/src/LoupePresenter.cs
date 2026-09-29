@@ -168,7 +168,7 @@ public partial class LoupePresenter
                 surface, DpiScaler.ScaleToPixel(appearance.BorderThickness, geometry.DipToDeviceScaling))
             : [];
 
-        var labelText = LoupeLabelTexts.ResolveCoordLabelText(in geometry, appearance);
+        var labelText = ResolveCoordLabelText(in geometry, appearance);
 
         return new LoupeDrawPlan(
             appearance,

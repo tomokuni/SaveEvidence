@@ -153,7 +153,7 @@ flowchart TB
 - **分類**: 公開コントロール（`public sealed class LoupeControl : Panel`。AXAML を持たずコードのみで子要素を構成する）
 - **責務**:
   - 状態管理: 5 個の StyledProperty（`Source: IImage?` / `CenterPoint` / 設定 `Options` / 外観 `Appearance` / 環境値 `DipToDeviceScaling`）
-  - 座標ラベル: **コントロールがテキスト要素（`Border` + `TextBlock`）として表示する**。文言・基準点は提示層（`Feature.Loupe.Presenter` の `LoupeLabelTexts`）が、表示可否と体裁（フォントサイズ・色・角丸）は外観（`LoupeAppearance`）が、実寸 → 配置矩形の写像は同層の `LoupeLabelPlan` が単一所有する。コントロールは配置フェーズ（`ArrangeOverride`）で要素を追加・更新する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
+  - 座標ラベル: **コントロールがテキスト要素（`Border` + `TextBlock`）として表示する**。文言・基準点は提示層（`Feature.Loupe.Presenter` の `LoupePresenter`（`LabelTexts` partial））が、表示可否と体裁（フォントサイズ・色・角丸）は外観（`LoupeAppearance`）が、実寸 → 配置矩形の写像は同層の `LoupeLabelPlan` が単一所有する。コントロールは配置フェーズ（`ArrangeOverride`）で要素を追加・更新する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
     - **実寸測定は UI が行う理由**: テキストの実寸は描画 API（`FormattedText`）でしか測れないため、UI が測って `LoupeLabelPlan`（描画層 `Feature.Loupe.Presenter`）へ渡し、返された配置を要素へ反映する
     - ライフサイクル: 世代管理付き非同期ビットマップ生成と解放（`ReleaseBitmap`）
   - 表示制御: 標準プロパティ `IsVisible` で表示・非表示を指示（表示時=再生成要求（非同期・1 フレームに 1 回の生成へ結合）、非表示時=未実行要求の破棄と解放）
@@ -163,7 +163,7 @@ flowchart TB
     - 座標単位: `Options.RequestedSize` は DIP、描画計画へ渡す表示サイズと枠線の太さも DIP（物理ピクセルへの換算は提示層が `DpiScaler.ScaleToPixel` へ委譲する）
   - 値の補正: コアの設定値（`LoupeOptions`）は型の生成時に補正される（UI は関与しない）。環境値の `DipToDeviceScaling` のみ `coerce` コールバックで矯正する
 - **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する基本サイズ・拡大率。UI は設定値を保持しない）/ 外観（`Appearance`（`LoupeAppearance`。`System.Drawing.Color` で受け取り描画時にブラシへ変換する）））/ 環境（`DipToDeviceScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordTransform` / `PositionOffset` / `RefreshPosition`）
-- **依存**: LoupePresenter / LoupeAppearance / LoupeLabelPlan / LoupeLabelTexts（`Feature.Loupe.Presenter`） / LoupeUiLogMessage（本プロジェクト） / LoupeContextPainter / LoupeRenderCoordinator / LoupeRenderPipeline / LoupeSourceResolver（本プロジェクト） / LoupeOptions / Loupe（`Feature.Loupe.Core`） / DrawingContext（Platform.AvaloniaUI） / Avalonia / ILogger
+- **依存**: LoupePresenter / LoupeAppearance / LoupeLabelPlan（`Feature.Loupe.Presenter`） / LoupeUiLogMessage（本プロジェクト） / LoupeContextPainter / LoupeRenderCoordinator / LoupeRenderPipeline / LoupeSourceResolver（本プロジェクト） / LoupeOptions / Loupe（`Feature.Loupe.Core`） / DrawingContext（Platform.AvaloniaUI） / Avalonia / ILogger
 
 ### 6.2 LoupeContextPainter（描画実装）
 

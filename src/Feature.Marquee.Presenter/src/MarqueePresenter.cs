@@ -276,16 +276,16 @@ public partial class MarqueePresenter
             ? ComputeBorderRects(innerHole, appearance.InnerBorderThickness)
             : [];
 
-        var sizeLabel = MarqueeLabelTexts.ResolveSizeLabelText(
+        var sizeLabel = ResolveSizeLabelText(
             in geometry, appearance, DisplayScaleScaling, SizeLabelOverrideProvider, SizeLabelDisplayScalingProvider);
-        var coordLabel = MarqueeLabelTexts.ResolveCoordLabelText(in geometry, appearance, request.ResolvedPort);
+        var coordLabel = ResolveCoordLabelText(in geometry, appearance, request.ResolvedPort);
         var handles = appearance.ShowHandles ? geometry.Handles : null;
 
         return new MarqueeDrawPlan(
             appearance,
             surface,
             hole,
-            hole is { } anchorHole ? MarqueeLabelTexts.ResolveLabelAnchor(anchorHole, appearance) : null,
+            hole is { } anchorHole ? ResolveLabelAnchor(anchorHole, appearance) : null,
             overlayRegions,
             outerBorders,
             innerFill,

@@ -6,7 +6,7 @@
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
-| **提示（Presenter）** | 描画の幾何（`MarqueeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `MarqueePresenter` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueePresenter`（`DrawPlan` partial） / `MarqueeLabelTexts` / `MarqueeLabelPlan` |
+| **提示（Presenter）** | 描画の幾何（`MarqueeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `MarqueePresenter` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueeLabelPlan` |
 | **外観** | 色・フォント・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `MarqueeAppearance` |
 
 **本層はコントロール化を前提とした処理を持ちません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるため UI 層が持ちます）。
@@ -50,7 +50,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | `MarqueeDrawLayer` | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。描画順を単一所有する |
 | `MarqueePresenter`（`DrawPlan` partial） | 装飾の矩形の計算（枠線 4 辺・暗転領域＝描画面から穴あけ矩形を除いた 4 領域）（純粋関数） |
 | `MarqueeTextPlacement` | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域）。**要素として置くか canvas へ描くかは UI 層が決める** |
-| `MarqueeLabelTexts` | サイズラベル（位置と寸法の書式・表示スケール）・カーソル座標ラベルの文言と基準点の生成。**矩形に基づく基準点は「穴あけ矩形の左上から枠線の幅 + 1 DIP 内側」**（枠線と背景の重なりを無くす） |
+| `MarqueePresenter`（`LabelTexts` partial） | サイズラベル（位置と寸法の書式・表示スケール）・カーソル座標ラベルの文言と基準点の生成。**矩形に基づく基準点は「穴あけ矩形の左上から枠線の幅 + 1 DIP 内側」**（枠線と背景の重なりを無くす） |
 | `MarqueeLabelPlacement` | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
 | `MarqueeLabelPlan` | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する（実寸 → 配置の写像。体裁は `MarqueeAppearance` から受け取る） |
 
@@ -114,7 +114,7 @@ MewUI 版はキャンバス自体を DPI スケーリングしてから DIP 座�
 
 | 型 | AvaloniaUI | MewUI | 補足 |
 | --- | --- | --- | --- |
-| `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueePresenter`（`DrawPlan` partial） / `MarqueeLabelTexts` / `MarqueeLabelPlan` | 使う | 使う | 描画計画と外観は両 UI で共通 |
+| `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueeLabelPlan` | 使う | 使う | 描画計画と外観は両 UI で共通 |
 | 描画実装（`MarqueeContextPainter` / `MarqueeSkiaPainter`） | `MarqueeContextPainter` | `MarqueeSkiaPainter` | UI フレームワーク固有のため各 UI が所有する |
 | ホイール操作（`PointerWheelChanged` / `MouseWheel` の購読と `ZoomViewSession.PanByWheel` / `ZoomByWheel` の呼び出し） | `CropViewControl` が購読（ホスト） | `CropSession` が購読（ホスト） | コントロール化を前提とした処理のため UI（ホスト）が持つ |
 | 表示の変化の追従（`RefreshOverlay` の呼び出し） | ホスト（`ZoomViewControl.ViewportChanged` を購読） | ホスト（`ScrollViewer` の変化を検知して呼ぶ） | 契機は UI ごとに異なる |

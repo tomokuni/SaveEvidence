@@ -81,7 +81,7 @@ flowchart TD
     C -->|ShowInnerFill / ShowInnerBorder かつ穴あり| F[内側の塗り・内枠]
     C -->|ShowHandles かつ選択あり| G[ハンドル]
     B --> H[マーカーはコアが nudge 中のみ返す]
-    D --> I[ラベルの文言と配置<br/>MarqueeLabelTexts → MarqueeLabelPlan]
+    D --> I[ラベルの文言と配置<br/>MarqueePresenter → MarqueeLabelPlan]
     E --> I
     F --> I
     G --> I
@@ -107,7 +107,7 @@ flowchart TD
 | `src/Drawing/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public enum | 描画層の順序 |
 | `src/MarqueePresenter.DrawPlan.cs` | `MarqueePresenter`（`DrawPlan` partial） | internal static | 枠線 4 辺・暗転領域の矩形の計算 |
 | `src/Drawing/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域） |
-| `src/Label/MarqueeLabelTexts.cs` | `MarqueeLabelTexts` | internal static | サイズラベル・カーソル座標ラベルの文言と基準点 |
+| `src/MarqueePresenter.LabelTexts.cs` | `MarqueePresenter`（`LabelTexts` partial） | internal static | サイズラベル・カーソル座標ラベルの文言と基準点 |
 | `src/Label/MarqueeLabelPlan.cs` | `MarqueeLabelPlan` | public static | 実寸 → ラベル要素の配置指示の写像 |
 | `src/Label/MarqueeLabelPlacement.cs` | `MarqueeLabelPlacement` | public readonly record struct | ラベル要素の配置指示 |
 | `src/Logging/MarqueePresenterLogMessage.cs` | `MarqueePresenterLogMessage` | internal static partial | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） |
@@ -123,9 +123,9 @@ flowchart TD
 | 描画する層とその順序（層にある ⇔ 描く値がある） | `MarqueePresenter.ResolveLayers`（`MarqueeDrawPlan.Layers`） |
 | 枠線 4 辺の矩形（太さは辺ごとの式で導出） | `MarqueePresenter.ComputeBorderRects` |
 | 暗転領域（描画面から穴あけ矩形を除いた 4 領域） | `MarqueePresenter.ComputeOverlayRegions` |
-| サイズラベルの文言（書式・表示スケール） | `MarqueeLabelTexts.ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
-| 矩形に基づくラベルの基準点（穴あけ矩形の左上から「矩形の線幅 + 1 DIP」内側） | `MarqueeLabelTexts.ResolveLabelAnchor`（`MarqueeDrawPlan.LabelAnchor` としても公開する） |
-| カーソル座標ラベルの文言と基準点（カーソル + 8.0 DIP） | `MarqueeLabelTexts.ResolveCoordLabelText` |
+| サイズラベルの文言（書式・表示スケール） | `MarqueePresenter.ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
+| 矩形に基づくラベルの基準点（穴あけ矩形の左上から「矩形の線幅 + 1 DIP」内側） | `MarqueePresenter.ResolveLabelAnchor`（`MarqueeDrawPlan.LabelAnchor` としても公開する） |
+| カーソル座標ラベルの文言と基準点（カーソル + 8.0 DIP） | `MarqueePresenter.ResolveCoordLabelText` |
 | ラベルの体裁（背景 = 実寸 + 内側余白 × 2・クランプ・並び順） | `MarqueeLabelPlan` |
 | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） | `MarqueePresenterLogMessage` |
 
@@ -141,7 +141,7 @@ flowchart TD
 ## 7. 可視性ポリシー
 
 - UI 層とホストが使う面（`MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueeLabelPlan` / `MarqueeLabelPlacement` / `MarqueeTextPlacement`）は `public` とします。
-- **本層の内部手順は `internal`** とします（`MarqueePresenter`（`DrawPlan` partial） / `MarqueeLabelTexts` / `MarqueePresenterLogMessage`）。UI 層は解決済みの値（`MarqueeDrawPlan` の矩形・`Labels`）を受け取るため、これらを参照する必要がありません。単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Presenter.Tests`）で公開します。
+- **本層の内部手順は `internal`** とします（`MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenterLogMessage`）。UI 層は解決済みの値（`MarqueeDrawPlan` の矩形・`Labels`）を受け取るため、これらを参照する必要がありません。単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Presenter.Tests`）で公開します。
 - **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
 - `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。
 

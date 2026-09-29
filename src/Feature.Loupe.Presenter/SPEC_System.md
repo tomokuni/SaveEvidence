@@ -69,7 +69,7 @@ sequenceDiagram
 | `src/LoupePresenter.DrawPlan.cs` | `LoupePresenter`（`DrawPlan` partial） | internal | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算 |
 | `src/Label/LoupeLabelPlacement.cs` | `LoupeLabelPlacement` | public | ラベル要素の配置指示 |
 | `src/Label/LoupeLabelPlan.cs` | `LoupeLabelPlan` | public | 実寸 → 配置指示の写像（クランプの単一所有） |
-| `src/Label/LoupeLabelTexts.cs` | `LoupeLabelTexts` | internal | 文言（`EsPoint.Format`）と基準点（左上の内側）の生成 |
+| `src/LoupePresenter.LabelTexts.cs` | `LoupePresenter`（`LabelTexts` partial） | internal | 文言（`EsPoint.Format`）と基準点（左上の内側）の生成 |
 | `src/Logging/LoupePresenterLogMessage.cs` | `LoupePresenterLogMessage` | internal | 本層が単一所有する設定（外観）の変更ログ |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
@@ -82,7 +82,7 @@ sequenceDiagram
 | 描く層の選択（描く値がある層だけを含める） | `LoupePresenter.ResolveLayers` |
 | 十字線・枠線の矩形 | `LoupePresenter`（`DrawPlan` partial） |
 | 枠線の太さの物理ピクセル換算 | `LoupePresenter.ResolveDrawPlan`（換算の式は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
-| 中心座標ラベルの文言と基準点 | `LoupeLabelTexts` |
+| 中心座標ラベルの文言と基準点 | `LoupePresenter`（`LabelTexts` partial） |
 | ラベルの背景矩形・文字原点（実寸 + 余白、クランプ） | `LoupeLabelPlan` |
 | 描画完了通知の組み立てに使う値の選択 | `LoupeDrawPlan`（コアの幾何から写す） |
 | 本層が単一所有する設定（外観）の変更ログ | `LoupePresenterLogMessage` |
@@ -94,7 +94,7 @@ sequenceDiagram
 ## 7. 可視性ポリシー
 
 - UI が参照する型（`LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeLabelPlacement` / `LoupeLabelPlan`）は `public` とします。
-- 本層とテストだけが使う内部ヘルパー（`LoupePresenter`（`DrawPlan` partial） / `LoupeLabelTexts` / `LoupePresenterLogMessage`）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.Loupe.Presenter.Tests`）で公開します。
+- 本層とテストだけが使う内部ヘルパー（`LoupePresenter`（`DrawPlan` partial） / `LoupePresenter`（`LabelTexts` partial） / `LoupePresenterLogMessage`）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.Loupe.Presenter.Tests`）で公開します。
 
 ## 8. テスト方針
 

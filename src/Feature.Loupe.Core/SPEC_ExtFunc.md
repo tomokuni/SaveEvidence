@@ -22,7 +22,7 @@
 - 描画の可否は**外観（`Feature.Loupe.Presenter` の `LoupeAppearance`）の明示フラグ**（`ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`）が単一所有します（描画にだけ必要な設定のため、コアの設定には含めません）。
 - 描画の順序（ペーストボード（画像外の色）→ 拡大画像 → 十字線 → 枠線 → テキスト）と色（`LoupeAppearance`）は描画層 `Feature.Loupe.Presenter` が単一所有します。
 - コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.AvaloniaUI` が所有します。
-- ラベルの**文言・基準点**は描画層（`LoupeLabelTexts`）が単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。
+- ラベルの**文言・基準点**は描画層（`LoupePresenter`（`LabelTexts` partial））が単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。
 
 ## 2. 公開 API 一覧
 
@@ -176,7 +176,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 | 表示可否（`ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`） | `LoupeAppearance`（外観） |
 | 色・フォントサイズ・角丸・枠線の太さ | `LoupeAppearance`（外観） |
 | 描画層と順序（`LoupeDrawLayer`）・十字線 / 枠線の矩形 | `LoupePresenter` / `LoupePresenter`（`DrawPlan` partial） |
-| 中心座標ラベルの文言・基準点 | `LoupeLabelTexts` |
+| 中心座標ラベルの文言・基準点 | `LoupePresenter`（`LabelTexts` partial） |
 | 実寸 → ラベル要素の配置 | `LoupeLabelPlan` |
 | 枠線の太さの物理ピクセル換算 | `Platform.Core` の `DpiScaler`（呼び出すのは `LoupePresenter.ResolveDrawPlan`） |
 
