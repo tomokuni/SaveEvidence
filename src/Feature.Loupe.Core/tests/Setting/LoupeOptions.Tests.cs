@@ -7,7 +7,7 @@ namespace EsUtil.Feature.Loupe.Core.Tests.Setting;
 /// <summary><see cref="LoupeOptions"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 設定の既定値・安全域への補正・部分変更・等価性を検証する。<br/>
-/// 色・フォント・枠線の太さ・表示可否は描画にだけ必要な設定であり本型は持たない（<c>LoupeAppearance</c> のテストが担う）。<br/>
+/// 色・フォント・枠線の太さ・表示可否は描画にだけ必要な設定であり本型は持たない（上位層のテストが担う）。<br/>
 /// UI のプロパティ経由（バインディング等）の反映は各 UI のコントロールテストが担う。
 /// </remarks>
 public class LoupeOptionsTests

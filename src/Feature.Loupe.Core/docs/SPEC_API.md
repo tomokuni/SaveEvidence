@@ -1,15 +1,15 @@
 # Feature.Loupe.Core API リファレンス
 
-`LoupeControl`（選択範囲を拡大表示するコントロール）の **UI 非依存のコア**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
+UI 非依存のコア（選択範囲を拡大表示するルーペの計算）が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
 ## 1. 前提条件
 
 - 本コアは UI フレームワークに依存しません（依存は `Platform.Core` と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成）のみ）。UI 固有の型は利用者（UI 実装）が境界で変換します。
 - 座標は `EsPoint` / `EsSize` / `EsRect`（`EsUtil.Platform.Core`）、拡大元画像は `EsBitmap` で扱います。
-- 描画の可否は**外観（`Feature.Loupe.Presenter` の `LoupeAppearance`）の明示フラグ**（`ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`）が単一所有します（描画にだけ必要な設定のため、コアの設定には含めません）。
-- 描画の順序（ペーストボード（画像外の色）→ 拡大画像 → 十字線 → 枠線 → テキスト）と色（`LoupeAppearance`）は描画層 `Feature.Loupe.Presenter` が単一所有します。
-- コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は `LoupeControl.AvaloniaUI` が所有します。
-- ラベルの**文言・基準点**は描画層（`LoupePresenter`（`LabelTexts` partial））が単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。
+- 描画の可否は**外観（描画にだけ必要な設定を所有する上位層）の明示フラグ**（`ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`）が単一所有します（描画にだけ必要な設定のため、コアの設定には含めません）。
+- 描画の順序（ペーストボード（画像外の色）→ 拡大画像 → 十字線 → 枠線 → テキスト）と色は描画層（本コアを参照する上位の層）の外観が単一所有します。
+- コントロール化にだけ必要な処理（再描画要求のバッチ化・世代番号管理）は上位のコントロール実装が所有します。
+- ラベルの**文言・基準点**は描画層（本コアを参照する上位の層）が単一所有しますが、**描画と実寸測定**は利用者が行います（実寸は描画 API でしか測れないため）。
 
 ## 2. 公開 API
 
@@ -33,7 +33,7 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeOptions` | record | 計算に必要な設定（表示サイズ・拡大率）と既定値・補正。**色・フォント・枠線の太さ・表示可否は持たない**（外観（`LoupeAppearance`）が単一所有する） |
+| `LoupeOptions` | record | 計算に必要な設定（表示サイズ・拡大率）と既定値・補正。**色・フォント・枠線の太さ・表示可否は持たない**（上位層の外観が単一所有する） |
 
 ### `EsUtil.Feature.Loupe.Core.Placement`
 
@@ -76,33 +76,33 @@
 | --- | --- |
 | `Default` | すべての項目を既定値にした設定（部分変更の基点: `LoupeOptions.Default with { ZoomLevel = 8 }`） |
 
-数値項目（`RequestedSize` / `ZoomLevel`）は **`init` アクセサで補正**します（規則は `Loupe.Limits` が単一所有する）。したがってオブジェクト初期化子・`with` 式・逆シリアル化などの **どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録（Avalonia の `coerce` / MewUI の `coerce`）を要求しません。
+数値項目（`RequestedSize` / `ZoomLevel`）は **`init` アクセサで補正**します（規則は `Loupe.Limits` が単一所有する）。したがってオブジェクト初期化子・`with` 式・逆シリアル化などの **どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録を要求しません。
 
-**色・フォント・枠線の太さ・表示可否は本型に含みません**（描画にだけ必要な設定のため、外観 `Feature.Loupe.Presenter` の `LoupeAppearance` が単一所有します。枠線の太さの補正は `LoupeAppearance` が `Loupe.Limits.CoerceBorderThickness` へ委譲します）。ホストは UI の `Appearance` プロパティへ `LoupeAppearance` を指定します。
+**色・フォント・枠線の太さ・表示可否は本型に含みません**（描画にだけ必要な設定のため、上位層の外観が単一所有します。枠線の太さの補正はその外観が `Loupe.Limits.CoerceBorderThickness` へ委譲します）。ホストは UI の `Appearance` プロパティへ外観を指定します。
 
 **含めない値**: 拡大元画像・拡大中心（マウス移動ごとに変わるデータ）、DPI スケーリング係数（環境値）、表示位置のオフセット（UI 固有のホスト結線）。これらは UI の個別プロパティとして公開します。
 
 ### `Loupe.Limits` のメンバー
 
-ルーペの数値パラメータの既定値と安全域を単一所有し、範囲外の値を補正します（非有限は既定値）。**枠線の太さの安全域は外観（`LoupeAppearance`）が参照します**。
+ルーペの数値パラメータの既定値と安全域を単一所有し、範囲外の値を補正します（非有限は既定値）。**枠線の太さの安全域は上位層の外観が参照します**。
 
 | 定数 | 値 | 説明 |
 | --- | --- | --- |
 | `RequestedSizeMin` / `RequestedSizeMax` / `RequestedSizeDefault` | `1` / `4096` / `160` | 表示サイズ要求値（DIP） |
 | `ZoomLevelMin` / `ZoomLevelMax` / `ZoomLevelDefault` | `1` / `64` / `4` | 拡大率 |
-| `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `1` / `64` / `2` | 枠線の太さ（ピクセル。外観（`LoupeAppearance`）が参照する） |
+| `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `1` / `64` / `2` | 枠線の太さ（ピクセル。上位層の外観が参照する） |
 | `DipToDeviceScalingMin` / `DipToDeviceScalingMax` / `DipToDeviceScalingDefault` | `0.1` / `8.0` / `1.0` | スケーリング係数（環境値。他の数値より後に置く） |
 
 | メソッド | 説明 |
 | --- | --- |
 | `CoerceRequestedSize(int)` | 表示サイズ要求値を 1〜4096 へ補正 |
 | `CoerceZoomLevel(int)` | 拡大率を 1〜64 へ補正 |
-| `CoerceBorderThickness(int)` | 枠線の太さを 1〜64 へ補正（外観（`LoupeAppearance`）が呼ぶ） |
+| `CoerceBorderThickness(int)` | 枠線の太さを 1〜64 へ補正（上位層の外観が呼ぶ） |
 | `CoerceDipToDeviceScaling(double)` | スケーリング係数を 0.1〜8.0 へ補正。非有限値は `DipToDeviceScalingDefault` |
 
 ### 描画の契約（本コアには置かない）
 
-描画の契約は本コアにありません（**本コアは描画 API も描画の抽象も持ちません**）。描画計画の解決は `Feature.Loupe.Presenter` の `LoupePresenter.ResolveDrawPlan` が、描画は各 UI の描画実装（`LoupeContextPainter` / `LoupeSkiaPainter`）が担います。層の順序は `LoupeDrawLayer` として描画層が単一所有し、UI はその順に写すだけです。
+描画の契約は本コアにありません（**本コアは描画 API も描画の抽象も持ちません**）。描画計画の解決は描画層（本コアを参照する上位の層）が、描画は各 UI の描画実装が担います。層の順序は描画層が単一所有し、UI はその順に写すだけです。
 
 ```csharp
 var loupe = new Loupe(options) { CenterPoint = cursorDomain, DipToDeviceScaling = 1.25 };
@@ -120,7 +120,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 
 ### 描画の幾何（`LoupeGeometry`）
 
-1 フレーム分の描画の幾何（**コア⇔UI の契約**）です。**UI 層は本値を自分で組み立てません**（設定・環境値から描画に必要な形へ写す組み立て順は `Loupe.ResolveGeometry` が単一所有します）。UI 層は本値を提示層（`LoupePresenter`）へ渡すだけで、描画に必要な値の単位と換算（DIP → 物理ピクセル）を持ちません。
+1 フレーム分の描画の幾何（**コア⇔UI の契約**）です。**UI 層は本値を自分で組み立てません**（設定・環境値から描画に必要な形へ写す組み立て順は `Loupe.ResolveGeometry` が単一所有します）。UI 層は本値を描画層（上位の層）へ渡すだけで、描画に必要な値の単位と換算（DIP → 物理ピクセル）を持ちません。
 
 **役割の分担**: ホストが設定する入力（設定値・環境値）は UI の公開プロパティ（`Options` / `DipToDeviceScaling`）が持ち、本値はそれらから**描画 1 フレーム分に必要な形へ解決したスナップショット**です（提示層は公開プロパティを読まない）。
 
@@ -140,7 +140,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 | --- | --- |
 | （なし） | ファサードの `Loupe.ResolveGeometry` が唯一の生成元である（UI 層は本値を組み立てない） |
 
-拡大元画像は UI ごとに型が異なる（Avalonia は `IImage`、MewUI は `EsBitmap`）ため本値に含めず、描画実装が解決した `EsBitmap` を別引数として渡します（両 UI が同じ手順で本値を受け取ります）。
+拡大元画像は UI ごとに型が異なるため本値に含めず、描画実装が解決した `EsBitmap` を別引数として渡します（複数の UI が同じ手順で本値を受け取ります）。
 
 ### 切り出し領域の導出（`LoupeGeometry` のメンバー）
 
@@ -156,23 +156,23 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 
 ### 表示可否・装飾・文言（描画層が単一所有）
 
-以下はコアには含みません（描画にだけ必要な設定のため、描画層 `Feature.Loupe.Presenter` が単一所有します）。詳細は `Feature.Loupe.Presenter` の SPEC を参照してください。
+以下はコアには含みません（描画にだけ必要な設定のため、描画層（本コアを参照する上位の層）が単一所有します）。
 
 | 項目 | 所有者 |
 | --- | --- |
-| 表示可否（`ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`） | `LoupeAppearance`（外観） |
-| 色・フォントサイズ・角丸・枠線の太さ | `LoupeAppearance`（外観） |
-| 描画層と順序（`LoupeDrawLayer`）・十字線 / 枠線の矩形 | `LoupePresenter` / `LoupePresenter`（`DrawPlan` partial） |
-| 中心座標ラベルの文言・基準点 | `LoupePresenter`（`LabelTexts` partial） |
-| 実寸 → ラベル要素の配置 | `LoupePresenter`（`LabelPlan` partial） |
-| 枠線の太さの物理ピクセル換算 | `Platform.Core` の `DpiScaler`（呼び出すのは `LoupePresenter.ResolveDrawPlan`） |
+| 表示可否（`ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`） | 上位層の外観 |
+| 色・フォントサイズ・角丸・枠線の太さ | 上位層の外観 |
+| 描画層と順序・十字線 / 枠線の矩形 | 描画層（本コアを参照する上位の層） |
+| 中心座標ラベルの文言・基準点 | 描画層（同上） |
+| 実寸 → ラベル要素の配置 | 描画層（同上） |
+| 枠線の太さの物理ピクセル換算 | `Platform.Core` の `DpiScaler`（呼び出すのは描画層） |
 
 ## 4. 使用例
 
 ```csharp
 using EsUtil.Feature.Loupe.Core.Setting;
 
-// 設定（計算に必要な値のみ。色・フォント・表示可否は外観（Feature.Loupe.Presenter）が持つ）
+// 設定（計算に必要な値のみ。色・フォント・表示可否は外観（上位層）が持つ）
 var options = new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 };
 using var loupe = new Loupe(options);
 
@@ -183,16 +183,12 @@ loupe.PositionOffset = new EsPoint(16, 16);
 // 表示レイアウト（親領域のサイズを渡す。拡大中心が未設定の場合は位置が null）
 var layout = loupe.ResolveLayout(parentSize: new EsSize(800, 600));
 
-// 描画の幾何（1 フレーム分。UI 層は本値を組み立てず、提示層へ渡す）
+// 描画の幾何（1 フレーム分。UI 層は本値を組み立てず、描画層へ渡す）
 var geometry = loupe.ResolveGeometry(displaySize: 160, availableSize: new EsSize(800, 600));
 var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描画先
 ```
 
-```csharp
-// 描画計画の解決は提示層（Feature.Loupe.Presenter）が行う
-var presenter = new LoupePresenter(new Loupe(options));
-var plan = presenter.ResolveDrawPlan(displaySize: 160, availableSize: null, measureText: MeasureText);
-```
+<!-- 描画計画（層の順序・装飾矩形・文言・配置）の解決は描画層（本コアを参照する上位の層）が行う。本コアは幾何と表示レイアウトだけを提供する。 -->
 
 ## 5. 座標系
 
@@ -207,9 +203,9 @@ var plan = presenter.ResolveDrawPlan(displaySize: 160, availableSize: null, meas
 
 ## 6. 制限事項
 
-- 描画 API は提供しません（描画計画の解決は描画層 `Feature.Loupe.Presenter` が単一所有し、描画は各 UI が自 UI の描画 API で行います。描画 API の抽象は持ちません）。
-- 色（ペーストボード・十字線・枠線・ラベル）は本コアに含みません（描画にだけ必要な設定であるため、外観 `LoupeAppearance` が単一所有します）。
-- フォントサイズ・角丸・内側余白は本コアに含みません（外観 `LoupeAppearance` / `LoupePresenter`（`LabelPlan` partial） が単一所有します）。
-- 表示可否（十字線・枠線・中心座標ラベル）は本コアに含みません（描画にだけ必要な設定であるため、外観 `LoupeAppearance` が単一所有します）。
+- 描画 API は提供しません（描画計画の解決は描画層が単一所有し、描画は各 UI が自 UI の描画 API で行います。描画 API の抽象は持ちません）。
+- 色（ペーストボード・十字線・枠線・ラベル）は本コアに含みません（描画にだけ必要な設定であるため、上位層の外観が単一所有します）。
+- フォントサイズ・角丸・内側余白は本コアに含みません（上位層の外観が単一所有します）。
+- 表示可否（十字線・枠線・中心座標ラベル）は本コアに含みません（描画にだけ必要な設定であるため、上位層の外観が単一所有します）。
 - 拡大元画像の取得・切り出しの実行は本コアに含みません（UI ごとに型が異なるため、UI 層が担います）。
-- 再描画のバッチ化・世代番号管理は本コアに含みません（コントロール化にだけ必要な処理のため、`LoupeControl.AvaloniaUI` が所有します）。
+- 再描画のバッチ化・世代番号管理は本コアに含みません（コントロール化にだけ必要な処理のため、上位のコントロール実装が所有します）。

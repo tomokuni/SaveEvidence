@@ -8,7 +8,7 @@ namespace EsUtil.Feature.Loupe.Core;
 /// <summary>ルーペの幾何（表示レイアウトと描画 1 フレーム分）の解決を担う部分。</summary>
 /// <remarks>
 /// <b>本コアの公開する幾何の入口は <see cref="ResolveLayout"/> と <see cref="ResolveGeometry"/> である</b>:<br/>
-/// 装飾（十字線・枠線）・文言・表示可否・描画順は描画の都合として描画層（<c>Feature.Loupe.Presenter</c> の <c>LoupePresenter</c>）が解決するため、<br/>
+/// 装飾（十字線・枠線）・文言・表示可否・描画順は描画の都合として描画層（本コアを参照する上位の層）が解決するため、<br/>
 /// コアは値を決定した幾何だけを返す（描画 API も色も持たない）。<br/>
 /// <b>本クラスは親領域のサイズを保持しない</b>: 保持すると「クランプの基準」が暗黙の状態になり、値をいつ解決したかに依存する<br/>
 /// （基準は毎回引数で受け取る）。<br/>
@@ -56,7 +56,7 @@ public sealed partial class Loupe
     /// 実際の描画面からの導出は描画先を知る UI 層が担う）。本クラスは親領域のサイズを保持しない<br/>
     /// （保持すると「クランプの基準」が暗黙の状態になり、値をいつ解決したかに依存する）。<br/>
     /// <b>本メソッドがコアの公開する描画の唯一の入口である</b>: 装飾（十字線・枠線）・文言・表示可否・描画順は<br/>
-    /// 描画の都合として描画層（<c>Feature.Loupe.Presenter</c>）が解決するため、コアは幾何だけを返す。<br/>
+    /// 描画の都合として描画層（本コアを参照する上位の層）が解決するため、コアは幾何だけを返す。<br/>
     /// DIP → 物理ピクセルの換算と描画先の領域へのクランプは本メソッドが単一所有する。
     /// </remarks>
     public LoupeGeometry ResolveGeometry(double displaySize, EsSize? availableSize = null)
