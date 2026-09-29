@@ -1,10 +1,10 @@
 # Feature.Marquee.Presenter API リファレンス
 
-`MarqueeControl`（マーキー選択）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
+マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
 ## 1. 前提条件
 
-- **描画は本層が行いません**。本層は描画計画というデータを返し、描画は各 UI（`MarqueeContextPainter` / `MarqueeSkiaPainter`）が自 UI の API で行います（UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、抽象を持ちません）。
+- **描画は本層が行いません**。本層は描画計画というデータを返し、描画は各 UI の描画実装が自 UI の API で行います（UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、抽象を持ちません）。
 - **本層はコントロール化を前提とした処理を提供しません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるため UI 層が持ちます）。
 - 描画計画の座標は**ローカル DIP**です（原点 (0, 0)・サイズは描画領域）。ドメイン → DIP の変換はコアが済ませています。
 - 実寸測定（`measureText`）は描画 API 依存のため UI 層が関数として渡します。
@@ -122,9 +122,9 @@
 
 | 描く対象 | 呼ぶ API |
 | --- | --- |
-| 図形（装飾・ハンドル・始点マーカー） | `MarqueeDrawPlan.Layers` の順に自 UI の描画 API を呼ぶ（`MarqueeContextPainter.Paint` / `MarqueeSkiaPainter.Paint`） |
+| 図形（装飾・ハンドル・始点マーカー） | `MarqueeDrawPlan.Layers` の順に自 UI の描画 API を呼ぶ |
 | テキスト（サイズ・カーソル座標） | `MarqueeDrawPlan.Labels`（`MarqueeLabelPlacement`。実寸を反映済み）を要素へ写す、または自 UI の描画 API で文字として描く |
-| 付加情報ラベルの配置 | `FadeMaskDragRectControl.UIBase` の `MarqueeHostLabelRenderer.Resolve`（文言と基準点はホストが決める） |
+| 付加情報ラベル（操作・情報）の配置 | コントロール固有の付加情報であるため本層は関知しない（組み込み先のホストが文言と基準点を決める） |
 
 ### ラベル要素（`MarqueeLabelPlacement`）
 

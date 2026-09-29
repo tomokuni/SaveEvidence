@@ -14,7 +14,7 @@ using MarqueeFacade = EsUtil.Feature.Marquee.Core.Marquee;
 
 namespace EsUtil.Feature.Marquee.Presenter;
 
-/// <summary>選択矩形コントロールの提示（外観と描画計画）を UI 層へ提供するファサード（UIBase の既定実装）。</summary>
+/// <summary>選択矩形の提示（外観と描画計画）を UI 層へ提供するファサード（本層の既定実装）。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: Facade（コアの設定・入力・描画計画の解決を 1 つの窓口へ集約する）と<br/>
 /// Presenter（受動的な UI 層へ「何をどの順に描くか」を解決した計画を渡す）。<br/>

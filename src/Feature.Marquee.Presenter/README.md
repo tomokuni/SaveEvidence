@@ -1,6 +1,6 @@
 # Feature.Marquee.Presenter
 
-`MarqueeControl`（マーキー選択＝ドラッグで矩形を選び、移動・リサイズできるコントロール）の見た目を定める **コントロール化を前提としない UI 非依存の層**です。Avalonia 版と MewUI 版が同じ処理を共有します。
+マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の見た目を定める **コントロール化を前提としない UI 非依存の層**です。UI 実装が変わっても同じ処理を共有します。
 
 ## 概要
 
@@ -11,7 +11,7 @@
 | **提示（Presenter）** | 描画の幾何（`MarqueeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `MarqueePresenter` / `MarqueeDrawPlan` / `MarqueeDrawLayer` |
 | **外観** | 色・フォント・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `MarqueeAppearance` |
 
-**描画は行いません**。UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、本層は**描画計画というデータ**を返し、描画は各 UI（`MarqueeContextPainter` / `MarqueeSkiaPainter`）が自 UI の API で行います。
+**描画は行いません**。UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、本層は**描画計画というデータ**を返し、描画は各 UI の描画実装が自 UI の API で行います。
 
 **本層はコントロール化を前提とした処理を持ちません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は UI 層が持ちます）。
 
@@ -37,7 +37,7 @@ protected override void OnPointerPressed(PointerPressedEventArgs e)
 protected override void Render(DrawingContext context)
 {
     var plan = _presenter.ResolveDrawPlan(Bounds.Size.ToEsSize(), MeasureText);  // 幾何 + 外観 + 層 + 配置を解決済み
-    MarqueeContextPainter.Paint(context, in plan);                              // 層の順に描く
+    PaintByOwnApi(context, in plan);                                            // 自 UI の型へ写して層の順に描く
     // ラベルを要素として置く場合は plan.Labels（配置指示）を要素へ写す
 }
 ```
@@ -61,7 +61,7 @@ protected override void Render(DrawingContext context)
 - **UI フレームワークへ依存しません**（描画 API の抽象も持ちません）。
 - 依存方向は UI 層 → 本層 → `Feature.Marquee.Core` → `Platform.Core` の一方向です（コアは本層を参照しません）。
 
-層の全体像は [`../README.md`](../README.md) を参照してください。
+層の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ## カスタマイズ
 
@@ -69,9 +69,9 @@ protected override void Render(DrawingContext context)
 | --- | --- |
 | 見た目（色・フォント・枠線の太さ・表示可否） | `MarqueeAppearance` を変える（UI の `Appearance` プロパティへ設定する） |
 | 描画計画の構成（層・装飾・文言の独自化） | `MarqueePresenter` を継承し `ResolveDrawPlan` を上書きする、または `MarqueePresenterXxx` を作る |
-| 描画そのもの | UI 層の描画実装（`MarqueeContextPainter` / `MarqueeSkiaPainter`）を差し替える |
+| 描画そのもの | UI 層の描画実装を差し替える |
 | 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `MarkerLength` / `HitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）を変える（コアが単一所有する） |
-| 付加情報ラベル（操作・情報）の体裁 | ホスト（`FadeMaskDragRectControl.UIBase` の `MarqueeHostLabelRenderer`）が文言と描画を持つ |
+| 付加情報ラベル（操作・情報）の体裁 | コントロール固有の付加情報であるため本層に置かない（組み込み先のホストが文言と描画を持つ） |
 
 ## ビルド
 
@@ -85,13 +85,13 @@ dotnet build src/Feature.Marquee.Presenter/src/Feature.Marquee.Presenter.csproj
 dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.csproj
 ```
 
-`tests/` が単体テストを持ちます。描画計画の値（矩形・層・配置・文言）は UI 型を持たないため **UI 初期化なしで検証**でき、画素の検証は `MarqueeControl.MewUI.Tests`（Skia）が担います。
+`tests/` が単体テストを持ちます。描画計画の値（矩形・層・配置・文言）は UI 型を持たないため **UI 初期化なしで検証**でき、画素の検証は描画 API を持つ UI 側のテストが担います。
 
 ## ドキュメント
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・単一所有・設計判断・ログ
-- [`../README.md`](../README.md) — リポジトリ全体の層構成
+- [`src/README.md`](../README.md) — リポジトリ全体の層構成
 
 ## ライセンス
 

@@ -9,7 +9,7 @@ namespace EsUtil.Feature.Marquee.Presenter.Tests;
 /// <remarks>
 /// 色・ラベルの体裁・表示可否・枠線の太さは<b>描画にだけ必要な設定</b>であり、本層が単一所有する<br/>
 /// （コアの寸法・対話パラメータは <c>MarqueeOptions</c> が持つ）。既定値と未指定の塗り色の解決を検証する。<br/>
-/// 実際の描画結果は <see cref="MarqueeSkiaPainter"/> 相当のテストが画素で検証する。
+/// 実際の描画結果は描画 API を持つ UI 側のテストが画素で検証する。
 /// </remarks>
 public class MarqueeAppearanceTests
 {
