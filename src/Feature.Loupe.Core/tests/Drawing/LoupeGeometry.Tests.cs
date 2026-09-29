@@ -206,5 +206,6 @@ public class LoupeGeometryTests
     /// <param name="zoomLevel">拡大率。</param>
     /// <returns>描画の幾何。</returns>
     private static LoupeGeometry Geometry(EsPoint? center, int pixelSize, int zoomLevel)
-        => new(center, pixelSize, pixelSize, 1.0, zoomLevel, LoupeDivMath.CeilDiv(pixelSize, zoomLevel));
+        // 切り出し領域の一辺は LoupeGeometry が導出する（PixelSize >= 1 のため 1 以上になる）
+        => new(center, pixelSize, pixelSize, 1.0, zoomLevel);
 }

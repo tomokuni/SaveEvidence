@@ -119,7 +119,7 @@ UI 層（MarqueeControl.AvaloniaUI / MarqueeControl.MewUI）
 | 描画完了の通知の内容 | `MarqueeRenderedEventArgs`（描画計画: 層・穴あけ矩形・文言） | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | ホストが重ね描きするために必要な情報が違う（選択矩形の所在 / 切り出し領域と倍率） |
 | 表示可否の述語の所在 | 提示層の外観（`MarqueeAppearance.ShouldShowSizeLabel(bool)` / `ShouldDrawOverlay(bool)`） | 提示層の外観（`LoupeAppearance.ShouldShowCoordLabel(bool)`） | 表示可否は描画にだけ必要な設定であり、両コアとも外観が単一所有する |
 | `Limits` の追加役割 | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`。public） | 安全域と補正のみ | ラベルの表示スケールは本コア固有の概念 |
-| 区画数の計算 | 持たない | `Drawing/`（`LoupeDivMath`）を持つ | 切り出し領域の一辺と十字線の交点が「余りを 1 区画として数える」規則を共用する |
+| 区画数の計算 | 持たない | `LoupeGeometry.CaptureSize`（導出プロパティ）が持つ | 切り出し領域の一辺と十字線の交点が「余りを 1 区画として数える」規則を共用する |
 | 選択の幾何 | `Selection/`（`MarqueeSelectionGeometry`）を持つ | 持たない | ルーペは選択操作を持たない |
 | テスト補助（スパイ） | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | `RecordingLogger` のみ | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
 | ドキュメントの追加の節 | 2 節（README「名前の由来と一般的な呼称」「選択矩形の幾何はコアが持つ」、SPEC_System「状態遷移」） | 追加の節なし | 改名の経緯・幾何の所在・状態遷移はルーペに対応する概念が無い（共通の節は両コアで同一順） |

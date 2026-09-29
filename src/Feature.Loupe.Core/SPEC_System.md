@@ -89,7 +89,6 @@ sequenceDiagram
 | `src/Placement/LoupeLayout.cs` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズ + 表示位置。配置しない場合は位置が null） |
 | （本プロジェクトには置かない） | `LoupePresenter` / `LoupeAppearance` | — | 提示（描画計画の解決）と外観は **UI 側の共有層（`Feature.Loupe.Presenter`）が所有します**（本コアは描画 API も描画の抽象も持たない） |
 | `src/Logging/LoupeLogMessage.cs` | `LoupeLogMessage` | internal | コアが出力するログ定義（`LoggerMessage` ソース生成）の単一所有（**UI が出力する定義と書式は `Feature.Loupe.Presenter` が単一所有する**） |
-| `src/Drawing/LoupeDivMath.cs` | `LoupeDivMath` | internal | 区画数の切り上げ除算（`CeilDiv`。「余りを 1 区画として数える」規則の単一所有。切り出し領域の一辺が使う） |
 | `src/Placement/LoupePlacementGeometry.cs` | `LoupePlacementGeometry` | internal | 表示位置（左上）の計算（中心 + オフセットと親領域内へのクランプ。親サイズ未確定の判定も本クラスが扱う） |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
@@ -105,7 +104,7 @@ sequenceDiagram
 | 数値パラメータ（スカラー）の安全域への補正 | `Loupe.Limits` |
 | 描画の可否（十字線・枠線・中心座標ラベルの表示可否） | `LoupeAppearance.ShowCrosshair` / `ShowBorder` / `ShowCoordLabel`（明示フラグ。透明色を代用にしない） |
 | ラベル表示の可否（設定と中心の有無） | `LoupeAppearance.ShouldShowCoordLabel` |
-| 切り出し領域の一辺（ドメインピクセル） | `LoupeGeometry.CaptureSize`（切り上げは `LoupeDivMath.CeilDiv`） |
+| 切り出し領域の一辺（ドメインピクセル） | `LoupeGeometry.CaptureSize`（導出プロパティ。切り上げの規則も本値が単一所有する） |
 | 切り出し領域の左上（中心 → 左上の変換） | `LoupeGeometry.CaptureTopLeft`（中心未設定は null。描画完了通知のためにも使う） |
 | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） | `LoupeGeometry.MagnifiedImage`（切り出しの実行は描画実装） |
 | 描画先の全領域（ペーストボードを塗る矩形） | `LoupeGeometry.SurfaceBounds` |
@@ -120,7 +119,7 @@ sequenceDiagram
 | 描画層と順序（`LoupeDrawLayer`） | 描画層 `Feature.Loupe.Presenter` の `LoupePresenter.ResolveDrawPlan` |
 | DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
 | 寸法値の物理ピクセル換算（枠線の太さ） | 提示層 `Feature.Loupe.Presenter` の `LoupePresenter.ResolveDrawPlan`（換算の式は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
-| 区画数の切り上げ（切り出し領域の一辺） | `Drawing.LoupeDivMath.CeilDiv` |
+| 区画数の切り上げ（切り出し領域の一辺） | `LoupeGeometry.CaptureSize`（導出プロパティ） |
 | 設定・環境値・拡大中心・位置オフセットの変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter） |
 | ログの書式とレベル、変化判定（同値なら出力しない） | `LoupeLogMessage`（コアが出力する定義。UI が出力する定義と書式は `Feature.Loupe.Presenter` が単一所有する） |
 
@@ -140,10 +139,10 @@ sequenceDiagram
 | 方針 | 内容 |
 | --- | --- |
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]`（`AvaloniaFact` ではない）で並列実行する |
-| 単位 | 純粋計算（`LoupeDivMath` / `LoupePlacementGeometry`）・ファサード・描画の幾何の解決 |
+| 単位 | 純粋計算（`LoupePlacementGeometry`）・ファサード・描画の幾何の解決 |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Drawing` / `tests/Logging` / `tests/Placement` / `tests/Setting`。ファサードの partial のテストはルート） |
 | UI 依存の検証 | `LoupeControl.AvaloniaUI.Tests`（Avalonia ヘッドレス・直列）が担う（コントロール生成・描画・`StyledProperty` の coerce 経由の反映・イベント発火）。**描画の画素検証は `LoupeControl.MewUI.Tests`**（Skia）が担う（Avalonia ヘッドレスでは `RenderTargetBitmap` の画素を読めないため） |
-| 合計 | 106 件（`[Theory]` は展開後のケース数） |
+| 合計 | 98 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj

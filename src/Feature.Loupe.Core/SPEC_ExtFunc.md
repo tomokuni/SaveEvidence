@@ -13,7 +13,7 @@
 | 拡大中心の管理 | `Loupe` | 拡大中心（ドメイン座標）と表示位置のオフセットを保持する（マウス移動ごとの更新は UI 層が通知する） |
 | 設定 | `LoupeOptions` / `Loupe.Limits` | 計算に必要な設定の単一値（表示サイズ・拡大率）と、既定値・安全域への補正 |
 | ログ | `Loupe.Log` | 設定・環境値・拡大中心・位置オフセットの変更を検出して出力する（変化したときだけ） |
-| 幾何計算 | `LoupePlacementGeometry` / `LoupeDivMath` | 表示位置、区画数の切り上げ（internal。ファサードが吸収する） |
+| 幾何計算 | `LoupePlacementGeometry` | 表示位置（internal。ファサードが吸収する） |
 
 ### 前提条件
 
@@ -144,7 +144,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 | `PixelSize` | `int` | ルーペの一辺のサイズ（物理ピクセル。表示サイズ × `DipToDeviceScaling` を描画先でクランプ済み） |
 | `DipToDeviceScaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数（描画計画の解決（枠線の太さの換算）にも使う） |
 | `ZoomLevel` | `int` | 拡大率（1〜64。設定 `Options.ZoomLevel` の値。描画完了通知のスケールにも使う） |
-| `CaptureSize` | `int` | 切り出し領域の一辺（ドメインピクセル）。物理ピクセルサイズを拡大率で割った切り上げ（切り上げの規則は `LoupeDivMath.CeilDiv` が単一所有する） |
+| `CaptureSize` | `int`（導出） | 切り出し領域の一辺（ドメインピクセル）。物理ピクセルサイズを拡大率で割った切り上げ。位置パラメータではなく `PixelSize` / `ZoomLevel` からの導出であり、切り上げの規則も本値が単一所有する |
 | `SurfaceBounds` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。ペーストボード（画像外の色）を全面へ塗るために本値が導出する（UI 層は矩形を組み立てない） |
 | `CaptureTopLeft` | `EsPoint?` | 拡大中心から切り出し領域の左上（ドメイン座標）。中心未設定の場合は null（描画しない） |
 | `MagnifiedImage` | `LoupeMagnifiedImage?` | 拡大画像の切り出し・描画元・描画先の矩形。中心未設定の場合は null |

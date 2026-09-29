@@ -53,7 +53,7 @@ public sealed record LoupeOptions
     /// <value>拡大率（偶数推奨）。既定は 4。設定時は 1〜64 へ補正される。</value>
     /// <remarks>
     /// 拡大率は切り出し領域の一辺（物理ピクセルサイズ ÷ 本値の切り上げ）と、拡大画像の描画先の大きさに使う<br/>
-    /// （切り上げの規則は <c>LoupeDivMath.CeilDiv</c> が単一所有する）。
+    /// （切り上げの規則は <c>LoupeGeometry.CaptureSize</c> が単一所有する）。
     /// </remarks>
     public int ZoomLevel
     {

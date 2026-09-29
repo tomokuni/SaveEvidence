@@ -28,10 +28,9 @@
 | `Setting/` | `LoupeOptions` | public | ルーペの設定（**計算に必要な値**である表示サイズ・拡大率）を 1 つの値として所有。既定値・生成時の補正を持つ（設定経路によらず範囲内の値だけが保持される）。**色・フォント・枠線の太さ・表示可否は持たない**（描画にだけ必要な設定のため、外観（`Feature.Loupe.Presenter` の `LoupeAppearance`）が単一所有する） |
 | `Placement/` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズと表示位置。配置しない場合は位置が null）。`ResolveLayout` の結果であり、UI 層の要素配置へ渡す |
 | `Logging/` | `LoupeLogMessage` | internal | コアが出力するログ定義・変化判定（設定値・拡大中心の変更）。**UI が出力する定義（拡大元画像の変更・描画の例外）と書式は `Feature.Loupe.Presenter` が単一所有する** |
-| `Drawing/` | `LoupeDivMath` | internal | 区画数の切り上げ除算（切り出し領域の一辺が使う規則） |
 | `Placement/` | `LoupePlacementGeometry` | internal | 表示位置（左上）の計算（中心 + オフセットと親領域内へのクランプ）。親サイズ未確定の判定も本クラスが扱う |
 
-切り出し領域の幾何（一辺・左上・拡大画像の矩形）は `LoupeGeometry` の**メンバー**（`CaptureSize` / `CaptureTopLeft` / `MagnifiedImage` / `SurfaceBounds`）が単一所有します（`PixelSize` と `ZoomLevel` から導出するため、独立したクラスを持ちません）。
+切り出し領域の幾何（一辺・左上・拡大画像の矩形）は `LoupeGeometry` の**メンバー**（`CaptureSize` / `CaptureTopLeft` / `MagnifiedImage` / `SurfaceBounds`）が単一所有します（`PixelSize` と `ZoomLevel` から導出するため、独立したクラスを持ちません）。**一辺の切り上げ（余りを 1 区画として数える）も `CaptureSize` が導出します**（導出元を位置パラメータにも持つと 2 つの値が食い違いうるため）。
 
 ## 公開面の階層
 
@@ -41,7 +40,7 @@
 | --- | --- | --- |
 | **1. ホスト設定** | アプリ・ホスト | `LoupeOptions` / `LoupeLayout` |
 | **2. 公開ファサードと描画の幾何** | UI 実装（描画層） | `Loupe`（操作の唯一の窓口。既定値は `Limits.*Default`） / `LoupeGeometry` / `LoupeMagnifiedImage` |
-| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `LoupeDivMath`（`Drawing/`） / `LoupePlacementGeometry`（`Placement/`） / `LoupeLogMessage`（`Logging/`） |
+| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `LoupePlacementGeometry`（`Placement/`） / `LoupeLogMessage`（`Logging/`） |
 
 - **操作はファサード経由に一本化**しています（計算クラスと内部手順は `internal` のため、UI 層はファサード以外の入口を持ちません）。
 - **層 3 は外部参照 0 件**を実測して絞り込んだ結果です。「描画の幾何の解決（`Loupe.ResolveGeometry`）と描画に必要な値」だけが公開面です。
@@ -118,7 +117,7 @@ UI 層に残してよい分岐は 4 種のみです（それ以外の判断は�
 | 描画完了の通知の内容 | `LoupeRenderedEventArgs`（`CaptureTopLeft` / `ZoomLevel`） | `MarqueeRenderedEventArgs`（`MarqueeDrawPlan`: 層・文言の有無） | ホストが重ね描きするために必要な情報が違う（切り出し領域と倍率 / 選択矩形の所在） |
 | 表示可否の述語の引数 | `LoupeAppearance.ShouldShowCoordLabel(bool)` | `MarqueeAppearance.ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` | ルーペの座標ラベルは拡大中心が未設定になりうる（Marquee の座標ラベルは入力に常にある） |
 | `Limits` の追加役割 | 安全域と補正のみ | 未設定（0 以下）の解決規則も持つ（`ResolveDisplayScale`） | ラベルの表示スケールは Marquee 固有の概念 |
-| 区画数の計算 | `Drawing/`（`LoupeDivMath`）を持つ | 持たない | 切り出し領域の一辺が「余りを 1 区画として数える」規則を使う |
+| 区画数の計算 | `LoupeGeometry.CaptureSize`（導出プロパティ）が持つ | 持たない | 切り出し領域の一辺が「余りを 1 区画として数える」規則を使う |
 | 選択の幾何 | 持たない | `Selection/`（`MarqueeSelectionGeometry`）を持つ | ルーペは選択操作を持たない |
 | テスト補助（スパイ） | `RecordingLogger` のみ | `EffectsSpy` / `CursorServiceSpy` / `RecordingLogger` | ルーペは効果ポートもカーソルサービスも持たないため差し替える対象が無い（ログの検証だけが共通） |
 | ドキュメントの追加の節 | 追加の節なし | 3 節（README「名前の由来と一般的な呼称」「選択矩形の外側に描く装飾」、SPEC_System「3.3 状態遷移」） | 改名の経緯・装飾・状態遷移はルーペに対応する概念が無い（共通の節は両コアで同一順） |
@@ -169,7 +168,7 @@ UI 側（`LoupeControl`）が公開する入口:
 ## 設計上の約束
 
 1. **判断はコア・反映は UI**: 「どうするか」（表示サイズ・位置・切り出し領域）はコアが決め、UIBase が描画計画（層の有無・矩形・文言・配置）を解決し、UI は描画計画を写すだけにする。
-2. **単一所有**: 表示位置は `LoupePlacementGeometry`、区画数の切り上げは `LoupeDivMath`、切り出し領域は `LoupeGeometry` のみが持つ（装飾矩形の計算は提示層の `LoupeDecorationGeometry`、寸法の換算は `Platform.Core` の `DpiScaler`）。
+2. **単一所有**: 表示位置は `LoupePlacementGeometry`、切り出し領域（一辺の切り上げを含む）は `LoupeGeometry` のみが持つ（装飾矩形の計算は提示層の `LoupeDecorationGeometry`、寸法の換算は `Platform.Core` の `DpiScaler`）。
 3. **座標系の 3 区分**: ドメイン座標（元画像 px）→ 親領域 DIP（`ICoordTransform`）→ 物理ピクセル（`DipToDeviceScaling`）のうち、① ドメイン → DIP は `Loupe`、② DIP → 物理ピクセルは `LoupeGeometry` が担う（UIBase は換算しない）。
 4. **設定は 1 値・補正は生成時**: 計算に必要な設定は `LoupeOptions` の 1 値にまとめ、数値項目の安全域への補正は型の生成時（`init` アクセサ）に適用する（UI 側に補正の登録を要求しない）。
 5. **表示サイズの決定はファサードが単一所有**: 要求サイズを親領域の最小辺へクランプする規則は `Loupe.ResolveLayout` の 1 箇所である（親領域のサイズを引数で受けるため、クランプの基準をコアが保持しない）。

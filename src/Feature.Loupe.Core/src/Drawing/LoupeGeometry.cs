@@ -8,12 +8,11 @@ namespace EsUtil.Feature.Loupe.Core.Drawing;
 /// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。切り上げ・最低 1。描画先が指定された場合はクランプ済み）。</param>
 /// <param name="DipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数（環境値）。</param>
 /// <param name="ZoomLevel">拡大率（設定の補正済みの値）。</param>
-/// <param name="CaptureSize">切り出し領域の一辺（ドメインピクセル。<see cref="PixelSize"/> を <see cref="ZoomLevel"/> で割った切り上げ）。</param>
 /// <remarks>
 /// <b>本値がコアの公開する描画の入口である</b>: コアは拡大画像と描画面の幾何だけを返し、<br/>
 /// 装飾（十字線・枠線）・文言・表示可否・描画順は描画の都合として描画層（<c>Feature.Loupe.Presenter</c> の <c>LoupePresenter</c>）が解決する。<br/>
-/// <b>導出値も本値が単一所有する</b>: 描画面の矩形・切り出し領域の左上・拡大画像の切り出しと描画の矩形は本値のメンバーが持つ<br/>
-/// （描画層が矩形を組み立てると原点の取り違えが生じる）。<br/>
+/// <b>導出値も本値が単一所有する</b>: 切り出し領域の一辺・描画面の矩形・切り出し領域の左上・拡大画像の切り出しと描画の矩形は本値のメンバーが持つ<br/>
+/// （描画層が切り上げや矩形を組み立てると、切り出しの実行と十字線の交点とで規則が分かれる）。<br/>
 /// <b>寸法は換算済みの値を保持する</b>: DIP の表示サイズを物理ピクセルへ換算する手順はコアが単一所有する<br/>
 /// （描画層は <see cref="PixelSize"/> をそのまま使う）。<br/>
 /// 拡大元画像（<c>EsBitmap</c>）は含めない（型が UI に依存するため、描画の起動時に引数で受け取る）。<br/>
@@ -24,9 +23,17 @@ public readonly record struct LoupeGeometry(
     double DisplaySize,
     int PixelSize,
     double DipToDeviceScaling,
-    int ZoomLevel,
-    int CaptureSize)
+    int ZoomLevel)
 {
+    /// <summary>切り出し領域の一辺（ドメインピクセル）を取得する。</summary>
+    /// <value>物理ピクセルサイズを拡大率で割った切り上げ（余りを 1 区画として数える）。<see cref="PixelSize"/> は 1 以上のため 1 以上になる。</value>
+    /// <remarks>
+    /// 切り出しの実行（<c>EsBitmap.Crop</c>）と十字線の交点（切り出した領域を等倍で並べたときの中央のブロック）が同じ値を共有する。<br/>
+    /// 切り捨てると端の区画が失われ、切り出し領域の右端・下端が埋まらない。<br/>
+    /// 導出元（物理ピクセルサイズと拡大率）を位置パラメータにも持つと 2 つの値が食い違いうるため、本値が導出する。
+    /// </remarks>
+    public int CaptureSize => CeilDiv(PixelSize, ZoomLevel);
+
     /// <summary>描画先の全領域（ルーペの一辺が作る正方形）を取得する。</summary>
     /// <value>左上を原点（0, 0）とし、幅・高さが <see cref="PixelSize"/> の矩形（物理ピクセル）。</value>
     /// <remarks>描画先の原点は常に 0 である（描画層が矩形を組み立てると原点の取り違えが生じるため、本値が導出する）。</remarks>
@@ -56,4 +63,11 @@ public readonly record struct LoupeGeometry(
             new EsRectInt((int)topLeft.X, (int)topLeft.Y, CaptureSize, CaptureSize),
             new EsRect(0, 0, CaptureSize, CaptureSize),
             new EsRect(0, 0, CaptureSize * ZoomLevel, CaptureSize * ZoomLevel));
+
+    /// <summary>整数の切り上げ除算を行う（余りを 1 区画として数える）。</summary>
+    /// <param name="value">割られる値（物理ピクセルサイズ）。1 以上。</param>
+    /// <param name="divisor">割る値（1 区画の長さ = 拡大率）。1 以上。</param>
+    /// <returns>切り上げた商（区画数）。</returns>
+    /// <remarks>切り捨てると端の区画が失われる（除数は 1 以上を前提とする。0 を渡すと <see cref="double"/> の除算が無限大になる）。</remarks>
+    private static int CeilDiv(int value, int divisor) => (int)Math.Ceiling((double)value / divisor);
 }

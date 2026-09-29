@@ -205,7 +205,7 @@ public sealed partial class Loupe
         var pixelSize = (int)availableSize.GetValueOrDefault().ClampToArea(DpiScaler.ScaleToPixel(displaySize, DipToDeviceScaling));
 
         return new LoupeGeometry(
-            CenterPoint, displaySize, pixelSize, DipToDeviceScaling, zoomLevel, LoupeDivMath.CeilDiv(pixelSize, zoomLevel));
+            CenterPoint, displaySize, pixelSize, DipToDeviceScaling, zoomLevel);
     }
 
     // ====================================================================
