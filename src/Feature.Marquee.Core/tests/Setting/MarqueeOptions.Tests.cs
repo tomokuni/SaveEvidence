@@ -17,7 +17,7 @@ public class MarqueeOptionsTests
         var options = MarqueeOptions.Default;
 
         // 色・表示可否・フォントサイズは描画にだけ必要な設定のため本型は持たない
-        // （提示層の MarqueeAppearance が単一所有する）
+        // （描画層の外観が単一所有する）
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(16.0, options.MarkerLength);
         Assert.Equal(12.0, options.HandleHitRadius);

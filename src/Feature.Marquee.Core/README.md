@@ -1,6 +1,6 @@
 # Feature.Marquee.Core
 
-`MarqueeControl`（マーキー選択＝ドラッグで矩形を選び、移動・リサイズできるコントロール）の **UI 非依存の計算層**です。Avalonia 版と MewUI 版が同じ状態管理・判断・幾何を共有します。
+マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の **UI 非依存の計算層**です。UI 実装が変わっても同じ状態管理・判断・幾何を共有します。
 
 ## 概要
 
@@ -8,9 +8,9 @@
 
 **操作の唯一の窓口は公開ファサード `Marquee`** です。UI 層とホストは本型だけを参照します（状態機械と幾何の導出は内部実装です）。
 
-**描画は本コアの関心事ではありません**。描画 API も描画ポートも持たず、返すのは幾何（穴あけ矩形・ハンドル・始点マーカー）だけです。色・フォント・枠線の太さ・表示可否・文言・描画順は提示層（`Feature.Marquee.Presenter`）が単一所有します。
+**描画は本コアの関心事ではありません**。描画 API も描画ポートも持たず、返すのは幾何（穴あけ矩形・ハンドル・始点マーカー）だけです。色・フォント・枠線の太さ・表示可否・文言・描画順は描画層（本コアを参照する上位の層）が単一所有します。
 
-**装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。装飾は選択矩形コントロール単体の概念ではなく、組み込み先の表示だからです（提示層が単一所有します）。
+**装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。装飾は選択矩形単体の概念ではなく、組み込み先の表示だからです（描画層が単一所有します）。
 
 UI 非依存のためヘッドレス実行が不要で、`[Fact]` で並列実行できます。
 
@@ -55,9 +55,9 @@ marquee.Notified += (_, notice) => Raise(notice);
 - 直接参照するのは UI 非依存のコア型（`Platform.Core` の `Es*` 幾何型 / `EsKey` / `ICoordTransform` / `ICursorService`）と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成）のみです。
 - **カーソル操作は `ICursorService` 抽象にのみ依存**し、未指定（`null`）の場合は何もしません（既定実装の解決は UI 側の責務です）。
 - UI フレームワークを参照しません。
-- 依存方向は UI 層 → `Feature.Marquee.Presenter` → 本プロジェクト → `Platform.Core` の一方向です（コアは提示層を参照しません）。
+- 依存方向は UI 実装 → 描画層（上位の層） → 本プロジェクト → `Platform.Core` の一方向です（コアは上位の層を参照しません）。
 
-層の全体像は [`../README.md`](../README.md) を参照してください。
+層の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ## カスタマイズ
 
@@ -65,7 +65,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 | --- | --- |
 | 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `MarkerLength` / `HitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）を変える |
 | UI への効果の適用 | `IMarqueeEffects` を実装する（不要なメンバーは `MarqueeEffectsBase` を継承して省略できる） |
-| 見た目（色・フォント・枠線の太さ・表示可否）と文言 | `Feature.Marquee.Presenter` の `MarqueeAppearance` / `MarqueePresenter` を変える（本コアは色も文言も持たない） |
+| 見た目（色・フォント・枠線の太さ・表示可否）と文言 | 描画層の外観・描画計画（上位の層）を変える（本コアは色も文言も持たない） |
 | ドメイン境界 | `SetCoordTransform` に `ICoordTransform`（`Bounds` 付き）を設定し、`ClampToDomainBounds` でクリップを有効にする |
 
 ## 座標型
@@ -90,7 +90,7 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・単一所有・設計判断・ログ・名称の由来
-- [`../README.md`](../README.md) — リポジトリ全体の層構成
+- [`src/README.md`](../README.md) — リポジトリ全体の層構成
 
 ## ライセンス
 

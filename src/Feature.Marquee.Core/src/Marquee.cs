@@ -31,7 +31,7 @@ namespace EsUtil.Feature.Marquee.Core;
 /// <br/>
 /// <b>描画は本コアの関心事ではない</b>: 本コアは描画 API も描画面も知らない（幾何の値（<c>MarqueeGeometry</c>）と<br/>
 /// その描画順を表す層のデータを返すだけである）。描画は UI 層が行い、<br/>
-/// 層の順序に従った描画手順は UI 側の共有層（<c>Feature.Marquee.Presenter</c> の <c>MarqueeRendererBase</c>）が単一所有する。<br/>
+/// 層の順序に従った描画手順は描画層（本コアを参照する上位の層）が単一所有する。<br/>
 /// <br/>
 /// <b>UI 層の責務</b>: 入力イベントの受付と座標変換（<see cref="ToDomain"/> / <see cref="ToDip"/>）、<br/>
 /// <see cref="IMarqueeEffects"/> の実装、通知（<see cref="Notified"/>）の公開イベントへの転送、<br/>

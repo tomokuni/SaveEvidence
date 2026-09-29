@@ -11,7 +11,7 @@ namespace EsUtil.Feature.Marquee.Core.Tests;
 /// <summary><see cref="Marquee.ResolveGeometry"/>（1 フレーム分の幾何の解決）の単体テスト。</summary>
 /// <remarks>
 /// コアが返すのは幾何（穴あけ矩形・ハンドル・始点マーカー・マウス位置）だけである。<br/>
-/// 装飾の矩形・文言・表示可否・描画順は提示層（<c>Feature.Marquee.Presenter</c>）が単一所有するため、本テストでは扱わない。<br/>
+/// 装飾の矩形・文言・表示可否・描画順は描画層（本コアを参照する上位の層）が単一所有するため、本テストでは扱わない。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public class MarqueeGeometryResolutionTests
@@ -71,7 +71,7 @@ public class MarqueeGeometryResolutionTests
     }
 
     /// <summary>ハンドルを隠す設定でもコアは幾何を返すことを検証する。</summary>
-    /// <remarks>表示可否の判断は描画にだけ必要な設定であり、提示層の外観が単一所有する。</remarks>
+    /// <remarks>表示可否の判断は描画にだけ必要な設定であり、描画層の外観が単一所有する。</remarks>
     [Fact]
     public void ResolveGeometry_ハンドルの幾何は表示可否に依存しない()
     {
@@ -133,7 +133,7 @@ public class MarqueeGeometryResolutionTests
     }
 
     /// <summary>マウス位置が入力のまま幾何へ引き継がれることを検証する。</summary>
-    /// <remarks>カーソル座標ラベルの基準は本値であり、文言の生成は提示層が担う。</remarks>
+    /// <remarks>カーソル座標ラベルの基準は本値であり、文言の生成は描画層が担う。</remarks>
     [Fact]
     public void ResolveGeometry_マウス位置をそのまま返す()
     {

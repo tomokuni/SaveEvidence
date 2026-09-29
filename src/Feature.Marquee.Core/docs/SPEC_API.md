@@ -1,14 +1,14 @@
 # Feature.Marquee.Core API リファレンス
 
-`MarqueeControl`（ドラッグで矩形を選び、移動・リサイズできるコントロール）の **UI 非依存の計算層**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
+マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の **UI 非依存の計算層**が提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
 ## 1. 前提条件
 
 - 本コアは UI フレームワークに依存しません。UI 固有の型は利用者（UI 実装）が境界で変換します。
 - 座標は `EsPoint` / `EsRect` / `EsSize` / `EsKey`（`EsUtil.Platform.Core`）で扱います。
 - カーソル操作は `ICursorService` 抽象にのみ依存します（`null` の場合は何もしません）。
-- **本コアが返すのは幾何だけです**。文言・表示可否・描画順・色は提示層（`Feature.Marquee.Presenter`）が単一所有します。**描画と実寸測定**は利用者（UI 実装）が行います（実寸は描画 API でしか測れないため）。
-- **装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。装飾は選択矩形コントロール単体の概念ではなく、組み込み先の表示であるため、提示層が単一所有します。
+- **本コアが返すのは幾何だけです**。文言・表示可否・描画順・色は描画層（本コアを参照する上位の層）が単一所有します。**描画と実寸測定**は利用者（UI 実装）が行います（実寸は描画 API でしか測れないため）。
+- **装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。装飾は選択矩形単体の概念ではなく、組み込み先の表示であるため、描画層が単一所有します。
 
 ## 2. 公開 API
 
@@ -50,7 +50,7 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `MarqueeOptions` | record | 設定（**計算に必要な値のみ**＝寸法・対話パラメータ）と既定値・補正。**色・フォントサイズ・枠線の太さ・表示可否は持たない**（提示層の `MarqueeAppearance` が単一所有する） |
+| `MarqueeOptions` | record | 設定（**計算に必要な値のみ**＝寸法・対話パラメータ）と既定値・補正。**色・フォントサイズ・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
 
 ### `Marquee`（ファサード）のメンバー
 
@@ -74,7 +74,7 @@
 | `CreateRequest(EsSize)` | method | 幾何 1 フレーム分の入力（`MarqueeRenderRequest`）の生成（設定・状態と、描画時に決まる値） |
 | `ResolveGeometry(MarqueeRenderRequest)` | method | 1 フレーム分の幾何（`MarqueeGeometry`）の解決 |
 
-**設定では変更しない固定値（ハンドル枠の太さ 1.5・始点マーカーの太さ 2.0・カーソル座標ラベルのオフセット 8.0）は公開しません**。参照するのはコアの幾何の解決と提示層の文言生成だけであり、UI 層は解決済みの値（`MarqueeHandles.BorderThickness` 等）や提示層が返す配置指示を受け取って使うためです（公開面へ出す必然性がない）。
+**設定では変更しない固定値（ハンドル枠の太さ 1.5・始点マーカーの太さ 2.0・カーソル座標ラベルのオフセット 8.0）は公開しません**。参照するのはコアの幾何の解決と描画層の文言生成だけであり、UI 層は解決済みの値（`MarqueeHandles.BorderThickness` 等）や描画層が返す配置指示を受け取って使うためです（公開面へ出す必然性がない）。
 
 ### `MarqueeOptions` のメンバー
 
@@ -88,9 +88,9 @@
 
 数値項目の補正は**本型の生成時に適用**します（`init` アクセサ。安全域は `Marquee.Limits` が単一所有する）。設定の経路（オブジェクト初期化子・`with` 式・逆シリアル化）によらず範囲内の値だけが保持されます。
 
-**本型は表示可否を持ちません**。ハンドル・サイズラベル・カーソル座標ラベル・装飾を描くかどうかは、**描画の外観（提示層の `MarqueeAppearance`）の明示フラグ**が単一所有します（述語は `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` / `ShouldDrawOverlay(bool)`）。
+**本型は表示可否を持ちません**。ハンドル・サイズラベル・カーソル座標ラベル・装飾を描くかどうかは、**描画の外観（描画層が単一所有する）の明示フラグ**が単一所有します（述語は `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` / `ShouldDrawOverlay(bool)`）。
 
-**本型は色もラベルのフォントサイズも持ちません**。これらは描画にだけ必要な設定であるため、提示層 `Feature.Marquee.Presenter` の `MarqueeAppearance` が単一所有します（部分変更の基点は `MarqueeAppearance.Default`。ハンドル枠と穴あけ枠の既定は共通の `MarqueeAppearance.DefaultBorderColor` = `#FFA9A9A9`、フォントサイズは `SizeLabelFontSizeDefault` = 14.0 / `CoordLabelFontSizeDefault` = 12.0、枠線の太さは `OuterBorderThickness` / `InnerBorderThickness`（既定 2.0）、内側余白は `LabelPadding`（既定 4.0））。ラベルの文字色・背景色の既定値（白 / 黒 60%）も `MarqueeAppearance` が単一所有するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
+**本型は色もラベルのフォントサイズも持ちません**。これらは描画にだけ必要な設定であるため、描画層の外観が単一所有します（部分変更の基点は外観の `Default`。ハンドル枠と穴あけ枠の既定は外観が単一所有する共通の既定枠線色 = `#FFA9A9A9`、フォントサイズはサイズラベル 14.0 / カーソル座標ラベル 12.0、枠線の太さは外枠 / 内枠（既定 2.0）、内側余白は `LabelPadding`（既定 4.0））。ラベルの文字色・背景色の既定値（白 / 黒 60%）も外観が単一所有するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
 
 ### `Marquee.Limits` のメンバー
 
@@ -102,15 +102,15 @@
 | `MarkerLengthMin` / `MarkerLengthMax` / `MarkerLengthDefault` | `2.0` / `4096.0` / `16.0` | 十字マーカーの全長（DIP） |
 | `HandleHitRadiusMin` / `HandleHitRadiusMax` / `HandleHitRadiusDefault` | `0.0` / `256.0` / `12.0` | ハンドルのヒットテスト半径（DIP） |
 | `MinSelectionSizeMin` / `MinSelectionSizeMax` / `MinSelectionSizeDefault` | `1.0` / `4096.0` / `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
-| `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `0.5` / `64.0` / `2.0` | 枠線の太さ（DIP。提示層の外観の既定値も本値を参照する） |
+| `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `0.5` / `64.0` / `2.0` | 枠線の太さ（DIP。描画層の外観の既定値も本値を参照する） |
 | `DomainToDipScalingMin` / `DomainToDipScalingMax` / `DomainToDipScalingDefault` | `0.1` / `8.0` / `1.0` | ポート未指定時に適用する倍率（環境値。他の数値より後に置く） |
 
 | メソッド | 説明 |
 | --- | --- |
 | `CoerceHandleSize(double)` / `CoerceMarkerLength(double)` / `CoerceHandleHitRadius(double)` / `CoerceMinSelectionSize(double)` | 各寸法を安全域へ補正（非有限は既定値） |
-| `CoerceBorderThickness(double)` | 枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する。提示層の外観が使う） |
+| `CoerceBorderThickness(double)` | 枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する。描画層の外観が使う） |
 | `CoerceDomainToDipScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
-| `ResolveDisplayScale(double, double)` | 表示スケールの解決（**public**。未設定（0 以下）は倍率を使う。提示層のサイズラベル書式が使う） |
+| `ResolveDisplayScale(double, double)` | 表示スケールの解決（**public**。未設定（0 以下）は倍率を使う。描画層のサイズラベル書式が使う） |
 
 ### `IMarqueeEffects` のメンバー
 
@@ -149,7 +149,7 @@
 | `Marker` | 始点マーカーの幾何（`Center` / `Thickness` / `Size`＝半幅）。nudge 中でない場合は null |
 | `MousePosition` | 直近のマウス位置（ドメイン座標）。カーソル座標ラベルの基準 |
 
-**幾何は「描く値の無い項目は null / 空」で返します**（穴あけ矩形なし・選択なし・nudge 中でない）。**表示可否（ハンドル・ラベルを描くかどうか）は本コアの責務ではありません**（提示層の外観が単一所有します）。
+**幾何は「描く値の無い項目は null / 空」で返します**（穴あけ矩形なし・選択なし・nudge 中でない）。**表示可否（ハンドル・ラベルを描くかどうか）は本コアの責務ではありません**（描画層の外観が単一所有します）。
 
 ### 操作の受理条件
 
@@ -182,9 +182,8 @@ var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(800, 600
 ```
 
 ```csharp
-// 描画計画（装飾・文言・層の順序）の解決は提示層（Feature.Marquee.Presenter）が行う
-var presenter = new MarqueePresenter(new Marquee(effects));
-var plan = presenter.ResolveDrawPlan(new EsSize(800, 600), MeasureText);
+// 描画計画（装飾・文言・層の順序）の解決は描画層（本コアを参照する上位の層）が行う
+var plan = ResolveDrawPlanByHost(new EsSize(800, 600), MeasureText);
 ```
 
 ## 5. 座標系
@@ -202,9 +201,9 @@ var plan = presenter.ResolveDrawPlan(new EsSize(800, 600), MeasureText);
 
 - ホイール操作（Ctrl+ズーム / スクロール）は本コアに含みません（組み込み先が存在して初めて意味を持つ処理であるため、UI 層（ホスト）がビューポートへ転送します）。
 - ビューポートの変化の通知は本コアに含みません（同じ理由で UI 層（ホスト）が持ち、変化を検知したら `RefreshOverlay()` を呼びます）。
-- 描画 API は提供しません。描画計画（外観・文言・層の順序）は提示層（`Feature.Marquee.Presenter`）が単一所有し、描画は各 UI が行います。
-- **装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。装飾は選択矩形コントロール単体の概念ではなく、組み込み先の表示であるため、提示層が単一所有します（本コアは穴あけ矩形という幾何だけを返します）。
-- 色（ハンドル・始点マーカー・ラベル・装飾）は本コアに含みません（描画にだけ必要な設定であるため、提示層の `MarqueeAppearance` が単一所有します）。
-- 文言（サイズラベルの書式・カーソル座標ラベルの文字列）は本コアに含みません（提示層の `MarqueePresenter`（`LabelTexts` partial） が単一所有します。本コアはマウス位置という素材だけを返します）。
+- 描画 API は提供しません。描画計画（外観・文言・層の順序）は描画層（本コアを参照する上位の層）が単一所有し、描画は各 UI が行います。
+- **装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。装飾は選択矩形単体の概念ではなく、組み込み先の表示であるため、描画層が単一所有します（本コアは穴あけ矩形という幾何だけを返します）。
+- 色（ハンドル・始点マーカー・ラベル・装飾）は本コアに含みません（描画にだけ必要な設定であるため、描画層の外観が単一所有します）。
+- 文言（サイズラベルの書式・カーソル座標ラベルの文字列）は本コアに含みません（描画層が単一所有します。本コアはマウス位置という素材だけを返します）。
 - 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。ホストが文言の生成と描画を行います。
 

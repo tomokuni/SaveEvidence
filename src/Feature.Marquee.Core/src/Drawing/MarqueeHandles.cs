@@ -8,7 +8,7 @@ namespace EsUtil.Feature.Marquee.Core.Drawing;
 /// <remarks>
 /// ハンドルの中心位置（8 方向）と一辺サイズの適用は <see cref="Marquee.ResolveGeometry"/> が単一所有するため、<br/>
 /// 描画側は本値を渡して描くだけとする（位置を描画層が計算すると、ハンドルのヒットテストと同じ式が 2 箇所になる）。<br/>
-/// <b>色は含まない</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c>）が単一所有する。
+/// <b>色は含まない</b>: 色は描画にだけ必要な設定であり、描画層の外観が単一所有する。
 /// </remarks>
 public readonly record struct MarqueeHandles(
     IReadOnlyList<EsRect> Rects,

@@ -17,7 +17,7 @@ public sealed partial class Marquee
     /// （UI 側に補正の登録を要求すると、登録を忘れた UI だけ安全域外の値を保持する）。<br/>
     /// <b>規則の所在</b>: 倍率が未設定（0 以下・等倍）の場合に等価変換とする規則は <see cref="MarqueeRenderRequest.ResolvePort"/> が、<br/>
     /// 表示スケールが未設定（0 以下）の場合に倍率を使う規則は <see cref="ResolveDisplayScale"/> が単一所有する。<br/>
-    /// ラベルのフォントサイズの安全域は、他のコントロールと共通の規則のため描画層（<c>Feature.Marquee.Presenter</c> の <c>MarqueePaint</c>）が単一所有する。<br/>
+    /// ラベルのフォントサイズの安全域は、他のコントロールと共通の規則のため描画層の外観が単一所有する。<br/>
     /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
     /// </remarks>
     public static class Limits
