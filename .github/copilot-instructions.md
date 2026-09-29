@@ -253,6 +253,19 @@
 - README.md / docs/SPEC_API.md / docs/SPEC_System.md は、コード変更と同時に更新する（仕様と実装の乖離・反映漏れを防ぐ）。
 - `app.AvaloniaUI`（ホスト）は ZoomViewControl の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する。
 
+### 層ごとの記載範囲（外部プロジェクトを記載しない）
+- ドキュメント（README.md / docs/SPEC_*.md）とコードコメント（ドキュメントコメント・コードコメント）には、**そのプロジェクトの依存先として許可されたプロジェクト以外を記載しない**。
+  - `Platform.Core` … 外部プロジェクトを一切記載しない。
+  - `Feature.Loupe.Core` … `Platform.Core` 以外を記載しない。
+  - `Feature.Loupe.Presenter` … `Feature.Loupe.Core` と `Platform.Core` 以外を記載しない。
+  - `Feature.Marquee.Core` … `Platform.Core` 以外を記載しない。
+  - `Feature.Marquee.Presenter` … `Feature.Marquee.Core` と `Platform.Core` 以外を記載しない。
+- 外部プロジェクトが所有する型名も記載しない（相互変換の Interop 層・描画実装・調整役・テスト等）。
+- 外部の層への言及は、プロジェクト名ではなく層の概念（「上位のアプリ・コントロール」「描画層（本コアを参照する上位の層）」「提示層」）で書く（設計の理由は残す）。
+- フレームワーク名（Avalonia / MewUI / WinUI3 / WinForms / Skia / .NET 標準の型）は「外部プロジェクト」に含めない（同名メンバーによる互換性など、事実として必要な場合のみ記載する）。
+- 対象は README.md / docs/SPEC_*.md / `src/**/*.cs` / `tests/**/*.cs` とする。
+
+
 ### テスト規約
 - 使用するテストフレームワークは xUnit v3 系。
 - パブリック API 経由で網羅率 100%・カバレッジ 100% を目指す。
