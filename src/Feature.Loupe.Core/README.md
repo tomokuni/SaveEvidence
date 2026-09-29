@@ -14,7 +14,7 @@
 
 ## 収録する型
 
-ルート（`src/`）に置くのは**ファサード本体とその partial**（`Loupe.cs` / `Loupe.Limits.cs`）だけです。それ以外は用途別のフォルダへまとめます。
+ルート（`src/`）に置くのは**ファサード本体とその partial**（`Loupe.cs` / `Loupe.Geometry.cs` / `Loupe.Limits.cs`）だけです。それ以外は用途別のフォルダへまとめます。
 **1 ファイル 1 型**とします（複数の型を 1 ファイルへ含めない。`partial` による分割は可）。
 **名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Loupe.Core`。`Drawing` / `Setting` / `Logging` / `Placement` は `EsUtil.Feature.Loupe.Core.<フォルダ名>`）。公開面も複数のフォルダに分かれるため、利用者は用途に応じて `using` を追加します。
 
@@ -22,13 +22,13 @@
 | --- | --- | --- | --- |
 | ルート | `Loupe` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、**描画の幾何の解決（`ResolveGeometry`）**、座標変換ポートの設定（`SetCoordTransform`） |
 | ルート | `Loupe.Limits`（`Loupe` の入れ子） | public | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値の補正。**UI がプロパティの既定値と coerce を登録するときに参照する**ためファサードの入れ子として公開する（枠線の太さの安全域は外観（`LoupeAppearance`）が参照する） |
+| ルート | `Loupe.Geometry.cs`（`Loupe` の **partial**） | public | 幾何の**入口**（`ResolveLayout` / `ResolveGeometry`）とその**内部手順**（表示位置のオフセット加算と親領域内へのクランプ）。公開の入口は本 partial が持ち、内部手順は `private static` に閉じる |
 | （本コアには置かない） | `LoupePresenter` / `LoupeAppearance` | — | 提示（外観と描画計画の解決）は **UI 側の共有層（`Feature.Loupe.Presenter`）が所有します**（本コアは描画 API も描画の抽象も持たない） |
 | `Drawing/` | `LoupeGeometry` | public | **1 フレーム分の描画の幾何**（コア⇔UI の契約）。UI 層は自分で組み立てず、ファサードの `Loupe.ResolveGeometry` が返した値を受け取る（DIP → 物理ピクセルの換算とクランプを UI 層が持たない） |
 | `Drawing/` | `LoupeMagnifiedImage` | public | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。`LoupeGeometry` の導出値 |
 | `Setting/` | `LoupeOptions` | public | ルーペの設定（**計算に必要な値**である表示サイズ・拡大率）を 1 つの値として所有。既定値・生成時の補正を持つ（設定経路によらず範囲内の値だけが保持される）。**色・フォント・枠線の太さ・表示可否は持たない**（描画にだけ必要な設定のため、外観（`Feature.Loupe.Presenter` の `LoupeAppearance`）が単一所有する） |
 | `Placement/` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズと表示位置。配置しない場合は位置が null）。`ResolveLayout` の結果であり、UI 層の要素配置へ渡す |
 | `Logging/` | `LoupeLogMessage` | internal | コアが出力するログ定義・変化判定（設定値・拡大中心の変更）。**UI が出力する定義（拡大元画像の変更・描画の例外）と書式は `Feature.Loupe.Presenter` が単一所有する** |
-| `Placement/` | `LoupePlacementGeometry` | internal | 表示位置（左上）の計算（中心 + オフセットと親領域内へのクランプ）。親サイズ未確定の判定も本クラスが扱う |
 
 切り出し領域の幾何（一辺・左上・拡大画像の矩形）は `LoupeGeometry` の**メンバー**（`CaptureSize` / `CaptureTopLeft` / `MagnifiedImage` / `SurfaceBounds`）が単一所有します（`PixelSize` と `ZoomLevel` から導出するため、独立したクラスを持ちません）。**一辺の切り上げ（余りを 1 区画として数える）も `CaptureSize` が導出します**（導出元を位置パラメータにも持つと 2 つの値が食い違いうるため）。
 
@@ -40,7 +40,7 @@
 | --- | --- | --- |
 | **1. ホスト設定** | アプリ・ホスト | `LoupeOptions` / `LoupeLayout` |
 | **2. 公開ファサードと描画の幾何** | UI 実装（描画層） | `Loupe`（操作の唯一の窓口。既定値は `Limits.*Default`） / `LoupeGeometry` / `LoupeMagnifiedImage` |
-| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `LoupePlacementGeometry`（`Placement/`） / `LoupeLogMessage`（`Logging/`） |
+| **3. 内部ヘルパー** | 本コアのみ（テストのみ IVT） | `LoupeLogMessage`（`Logging/`） |
 
 - **操作はファサード経由に一本化**しています（計算クラスと内部手順は `internal` のため、UI 層はファサード以外の入口を持ちません）。
 - **層 3 は外部参照 0 件**を実測して絞り込んだ結果です。「描画の幾何の解決（`Loupe.ResolveGeometry`）と描画に必要な値」だけが公開面です。
@@ -168,7 +168,7 @@ UI 側（`LoupeControl`）が公開する入口:
 ## 設計上の約束
 
 1. **判断はコア・反映は UI**: 「どうするか」（表示サイズ・位置・切り出し領域）はコアが決め、UIBase が描画計画（層の有無・矩形・文言・配置）を解決し、UI は描画計画を写すだけにする。
-2. **単一所有**: 表示位置は `LoupePlacementGeometry`、切り出し領域（一辺の切り上げを含む）は `LoupeGeometry` のみが持つ（装飾矩形の計算は提示層の `LoupeDecorationGeometry`、寸法の換算は `Platform.Core` の `DpiScaler`）。
+2. **単一所有**: 表示位置は `Loupe.ResolveLayout`（内部手順は `Loupe.Geometry.cs` の private static）、切り出し領域（一辺の切り上げを含む）は `LoupeGeometry` のみが持つ（装飾矩形の計算は提示層の `LoupeDecorationGeometry`、寸法の換算は `Platform.Core` の `DpiScaler`）。
 3. **座標系の 3 区分**: ドメイン座標（元画像 px）→ 親領域 DIP（`ICoordTransform`）→ 物理ピクセル（`DipToDeviceScaling`）のうち、① ドメイン → DIP は `Loupe`、② DIP → 物理ピクセルは `LoupeGeometry` が担う（UIBase は換算しない）。
 4. **設定は 1 値・補正は生成時**: 計算に必要な設定は `LoupeOptions` の 1 値にまとめ、数値項目の安全域への補正は型の生成時（`init` アクセサ）に適用する（UI 側に補正の登録を要求しない）。
 5. **表示サイズの決定はファサードが単一所有**: 要求サイズを親領域の最小辺へクランプする規則は `Loupe.ResolveLayout` の 1 箇所である（親領域のサイズを引数で受けるため、クランプの基準をコアが保持しない）。

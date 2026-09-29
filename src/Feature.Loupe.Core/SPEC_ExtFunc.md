@@ -13,7 +13,7 @@
 | 拡大中心の管理 | `Loupe` | 拡大中心（ドメイン座標）と表示位置のオフセットを保持する（マウス移動ごとの更新は UI 層が通知する） |
 | 設定 | `LoupeOptions` / `Loupe.Limits` | 計算に必要な設定の単一値（表示サイズ・拡大率）と、既定値・安全域への補正 |
 | ログ | `Loupe.Log` | 設定・環境値・拡大中心・位置オフセットの変更を検出して出力する（変化したときだけ） |
-| 幾何計算 | `LoupePlacementGeometry` | 表示位置（internal。ファサードが吸収する） |
+| 幾何計算 | `Loupe.ResolveLayout` / `Loupe.ResolveGeometry` | 表示位置と描画の幾何（内部手順は `Loupe.Geometry.cs` の private static。ファサードが吸収する） |
 
 ### 前提条件
 

@@ -10,9 +10,7 @@ namespace EsUtil.Feature.Loupe.Core.Tests;
 /// <summary><see cref="Loupe"/>（公開ファサード）の単体テスト（表示レイアウト・描画入力・設定）。</summary>
 /// <remarks>
 /// UI 層とホストが使う唯一の窓口であるファサードの振る舞いを、UI フレームワークなしで検証する。<br/>
-/// 位置計算そのもの（純粋計算）は <see cref="Placement.LoupePlacementGeometryTests"/> のテストが検証するため、<br/>
-/// 本テストは「設定からの解決」「ポートとオフセットの適用」「描画入力の組み立て」に焦点を当てる。<br/>
-/// 描画内容（層の一覧と順序・テキストの有無）は <see cref="LoupeDrawContentTests"/> のテストが検証する。
+/// 本テストは「設定からの解決」「ポートとオフセットの適用」「描画入力の組み立て」に焦点を当てる。
 /// </remarks>
 public class LoupeTests
 {
@@ -166,6 +164,34 @@ public class LoupeTests
         var layout = loupe.ResolveLayout(ParentSize);
 
         Assert.Equal(new EsPoint(10, 20), layout.Position);
+    }
+
+    /// <summary>中心 + オフセットが負の位置になる場合は 0 へクランプされることを検証する。</summary>
+    [Fact]
+    public void ResolveLayout_負の位置は0にクランプする()
+    {
+        var loupe = new Loupe() { CenterPoint = new EsPoint(0, 0), PositionOffset = -50 };
+
+        var layout = loupe.ResolveLayout(ParentSize);
+
+        Assert.Equal(new EsPoint(0, 0), layout.Position);
+    }
+
+    /// <summary>表示サイズが親領域より大きくても負の位置にならないことを検証する。</summary>
+    [Fact]
+    public void ResolveLayout_表示サイズが親領域より大きくても負の位置にしない()
+    {
+        // 表示サイズは親領域の最小辺（100）へクランプされるため、可動域は 0 になる
+        var loupe = new Loupe(LoupeOptions.Default with { RequestedSize = 300 })
+        {
+            CenterPoint = new EsPoint(0, 0),
+            PositionOffset = -50,
+        };
+
+        var layout = loupe.ResolveLayout(new EsSize(100, 100));
+
+        Assert.Equal(100, layout.DisplaySize);
+        Assert.Equal(new EsPoint(0, 0), layout.Position);
     }
 
     // ====================================================================

@@ -58,7 +58,7 @@ sequenceDiagram
   Fac->>Core: parentSize.ClampToArea(requestedSize)
   Core-->>Fac: 表示サイズ（DIP。要素サイズ・描画サイズ・位置クランプで同じ値を使う）
   Fac->>PC: ICoordTransform.Inverse(center) → EsPoint（親領域 DIP）
-  Fac->>Core: LoupePlacementGeometry.ComputePosition(表示サイズ, parentSize, centerDip, offset)
+  Fac->>Core: ComputePosition(表示サイズ, parentSize, centerDip, offset)
   Core-->>Fac: EsPoint（表示位置）
   Fac-->>UI: LoupeLayout（表示サイズ + 表示位置）
   UI->>UI: 要素サイズ（Width / Height）と RenderTransform / Arrange へ反映する
@@ -81,7 +81,7 @@ sequenceDiagram
 
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
-| `src/Loupe.cs`（ルート） | `Loupe` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、表示レイアウトの解決（`ResolveLayout`）、**描画の幾何の解決（`ResolveGeometry`）**、設定変更の検出とログ出力（`Log`） |
+| `src/Loupe.cs`（ルート） | `Loupe` | public | **公開ファサード（操作の唯一の窓口）**。設定・環境値・拡大中心・位置オフセットの保持、設定変更の検出とログ出力（`Log`）、座標変換ポートの設定（`SetCoordTransform`） |
 | `src/Loupe.Limits.cs`（ルート） | `Loupe.Limits`（`Loupe` の入れ子） | public | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値の補正。**UI がプロパティ登録に使う**（枠線の太さの安全域は外観（`LoupeAppearance`）が参照する） |
 | `src/Setting/LoupeOptions.cs` | `LoupeOptions` | public | 計算に必要な設定の値オブジェクト（表示サイズ・拡大率）。既定値・生成時の補正（`init` アクセサ。設定経路によらず範囲内の値だけを保持する）・`Default`。**色・フォント・枠線の太さ・表示可否は持たない**（外観 `Feature.Loupe.Presenter` の `LoupeAppearance` が単一所有する） |
 | `src/Drawing/LoupeGeometry.cs` | `LoupeGeometry` | public | 1 フレーム分の描画の幾何（コア⇔UI の契約）。値の組は `Loupe.ResolveGeometry` が 1 箇所に閉じる（UI 層は自分で組み立てない）。切り出し領域の幾何を導出する（`CaptureSize` / `CaptureTopLeft` / `MagnifiedImage` / `SurfaceBounds`） |
@@ -89,7 +89,7 @@ sequenceDiagram
 | `src/Placement/LoupeLayout.cs` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズ + 表示位置。配置しない場合は位置が null） |
 | （本プロジェクトには置かない） | `LoupePresenter` / `LoupeAppearance` | — | 提示（描画計画の解決）と外観は **UI 側の共有層（`Feature.Loupe.Presenter`）が所有します**（本コアは描画 API も描画の抽象も持たない） |
 | `src/Logging/LoupeLogMessage.cs` | `LoupeLogMessage` | internal | コアが出力するログ定義（`LoggerMessage` ソース生成）の単一所有（**UI が出力する定義と書式は `Feature.Loupe.Presenter` が単一所有する**） |
-| `src/Placement/LoupePlacementGeometry.cs` | `LoupePlacementGeometry` | internal | 表示位置（左上）の計算（中心 + オフセットと親領域内へのクランプ。親サイズ未確定の判定も本クラスが扱う） |
+| `src/Loupe.Geometry.cs`（ルート） | `Loupe` の partial | public | 幾何の入口（`ResolveLayout` / `ResolveGeometry`）と内部手順（表示位置のオフセット加算と親領域内へのクランプ。親サイズ未確定の判定も扱う）。内部手順は `private static` に閉じる |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
 
@@ -109,7 +109,7 @@ sequenceDiagram
 | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） | `LoupeGeometry.MagnifiedImage`（切り出しの実行は描画実装） |
 | 描画先の全領域（ペーストボードを塗る矩形） | `LoupeGeometry.SurfaceBounds` |
 | 表示サイズの親領域へのクランプと表示サイズの決定 | `Loupe.ResolveLayout`（規則は `Platform.Core` の `EsSize.ClampToArea`。状態を保持しないため、親領域のサイズを引数で受ける） |
-| 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（規則は internal の `Placement.LoupePlacementGeometry.ComputePosition`。親サイズ未確定の判定は `EsSize.HasArea`） |
+| 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（内部手順は `Loupe.Geometry.cs` の private static `ComputePosition`。親サイズ未確定の判定は `EsSize.HasArea`） |
 | 描画の幾何（物理ピクセルサイズ）の組み立てと描画先へのクランプ | `Loupe.ResolveGeometry`（規則は `Platform.Core` の `DpiScaler.ScaleToPixel` と `EsSize.ClampToArea`） |
 | 描画完了通知の内容（切り出し左上・拡大率） | `LoupeGeometry.CaptureTopLeft` / `ZoomLevel`（描画の幾何が単一所有する。専用の通知型を持たない） |
 | 中心座標ラベルの文言・基準点 | 描画層 `Feature.Loupe.Presenter` の `LoupeLabelTexts` |
@@ -139,10 +139,10 @@ sequenceDiagram
 | 方針 | 内容 |
 | --- | --- |
 | UI 初期化不要 | ヘッドレス実行を必要としないため `[Fact]` / `[Theory]`（`AvaloniaFact` ではない）で並列実行する |
-| 単位 | 純粋計算（`LoupePlacementGeometry`）・ファサード・描画の幾何の解決 |
+| 単位 | ファサード（表示レイアウト・描画の幾何・設定・ログ） |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Drawing` / `tests/Logging` / `tests/Placement` / `tests/Setting`。ファサードの partial のテストはルート） |
 | UI 依存の検証 | `LoupeControl.AvaloniaUI.Tests`（Avalonia ヘッドレス・直列）が担う（コントロール生成・描画・`StyledProperty` の coerce 経由の反映・イベント発火）。**描画の画素検証は `LoupeControl.MewUI.Tests`**（Skia）が担う（Avalonia ヘッドレスでは `RenderTargetBitmap` の画素を読めないため） |
-| 合計 | 98 件（`[Theory]` は展開後のケース数） |
+| 合計 | 95 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
