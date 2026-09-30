@@ -44,7 +44,7 @@ public class MarqueeRenderRequestTests
     {
         var options = MarqueeOptions.Default with { HandleSize = 14.0 };
         var highlight = new EsRect(1, 2, 3, 4);
-        var port = CoordTransform.Scale(2.0);
+        var port = CoordTransform.DipToDomain(() => 2.0);
 
         var request = MarqueeRenderRequest.Create(
             options,
@@ -97,19 +97,16 @@ public class MarqueeRenderRequestTests
         Assert.Equal(new EsRect(10, 20, 31, 41), result);
     }
 
-    /// <summary>スケール 2 倍のポートで座標が拡大されることを検証する。</summary>
+    /// <summary>ドメインが DIP の 2 倍のポートでは、ドメインが DIP へ半分に換算されることを検証する。</summary>
     [Fact]
-    public void ToDipRect_スケール2倍のポートで座標が拡大される()
+    public void ToDipRect_ドメインがDIPの2倍のポートでDIPへ換算される()
     {
-        var logical = new EsRect(10, 20, 30, 40, EsRectInterval.Closed);
+        var logical = new EsRect(20, 40, 40, 80);
 
-        var result = CreateRequest().ToDipRect(logical, CoordTransform.Scale(2.0));
+        var result = CreateRequest().ToDipRect(logical, CoordTransform.DipToDomain(() => 2.0));
 
-        // 左上 (10,20) → (20,40)、右下 (41,61) → (82,122)
-        Assert.Equal(20, result.X);
-        Assert.Equal(40, result.Y);
-        Assert.Equal(62, result.Width);
-        Assert.Equal(82, result.Height);
+        // ToDip = ドメイン ÷ 2（左上 (20,40) → (10,20)、右下 (60,120) → (30,60)）
+        Assert.Equal(new EsRect(10, 20, 20, 40), result);
     }
 
     /// <summary>半開区間の矩形は終点を加算しないことを検証する（ハイライト矩形・検出結果）。</summary>
@@ -153,18 +150,16 @@ public class MarqueeRenderRequestTests
         Assert.Equal(dip, result);
     }
 
-    /// <summary>スケール 2 倍のポートで座標が縮小されることを検証する。</summary>
+    /// <summary>ドメインが DIP の 2 倍のポートでは、DIP がドメインへ 2 倍に換算されることを検証する。</summary>
     [Fact]
-    public void ToDomainRect_スケール2倍のポートで座標が縮小される()
+    public void ToDomainRect_ドメインがDIPの2倍のポートでドメインへ換算される()
     {
-        var dip = new EsRect(20, 40, 60, 80);
+        var dip = new EsRect(10, 20, 30, 40);
 
-        var result = CreateRequest().ToDomainRect(dip, CoordTransform.Scale(2.0));
+        var result = CreateRequest().ToDomainRect(dip, CoordTransform.DipToDomain(() => 2.0));
 
-        Assert.Equal(10, result.X);
-        Assert.Equal(20, result.Y);
-        Assert.Equal(30, result.Width);
-        Assert.Equal(40, result.Height);
+        // ToDomain = DIP × 2（左上 (10,20) → (20,40)、右下 (40,60) → (80,120)）
+        Assert.Equal(new EsRect(20, 40, 60, 80), result);
     }
 
     /// <summary>ハイライト矩形があればハイライト矩形を優先することを検証する。</summary>
@@ -239,20 +234,21 @@ public class MarqueeRenderRequestTests
     [Fact]
     public void ResolvePort_ポート指定時はポートを返す()
     {
-        var port = CoordTransform.Scale(2.0);
+        var port = CoordTransform.DipToDomain(() => 2.0);
 
         var result = MarqueeRenderRequest.ResolvePort(port, domainToDipScaling: 3.0);
 
         Assert.Same(port, result);
     }
 
-    /// <summary>ポート未指定の場合は倍率から等倍スケールを生成することを検証する。</summary>
+    /// <summary>ポート未指定の場合は倍率からポートを生成することを検証する。</summary>
     [Fact]
     public void ResolvePort_ポート未指定なら倍率を適用する()
     {
         var result = MarqueeRenderRequest.ResolvePort(null, domainToDipScaling: 2.0);
 
-        Assert.Equal(new EsPoint(20, 40), result.Inverse(new EsPoint(10, 20)));
+        // 倍率はドメイン座標 / ローカル DIP（ドメイン (10,20) → DIP (5,10)）
+        Assert.Equal(new EsPoint(5, 10), result.ToDip(new EsPoint(10, 20)));
     }
 
     /// <summary>ポート未指定で倍率が 0 以下・等倍の場合は等価変換になることを検証する。</summary>
@@ -273,7 +269,7 @@ public class MarqueeRenderRequestTests
     [Fact]
     public void ResolvedPort_ポート指定時はそのポートを返す()
     {
-        var port = CoordTransform.Scale(3.0);
+        var port = CoordTransform.DipToDomain(() => 3.0);
 
         var request = CreateRequest(port: port, scaling: 2.0);
 
@@ -286,6 +282,6 @@ public class MarqueeRenderRequestTests
     {
         var request = CreateRequest(scaling: 2.0);
 
-        Assert.Equal(new EsPoint(20, 40), request.ResolvedPort.Inverse(new EsPoint(10, 20)));
+        Assert.Equal(new EsPoint(5, 10), request.ResolvedPort.ToDip(new EsPoint(10, 20)));
     }
 }

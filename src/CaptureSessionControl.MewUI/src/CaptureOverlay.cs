@@ -586,11 +586,11 @@ internal sealed class CaptureOverlay
     /// <returns>ローカル DIP ⇔ 画像ピクセルを変換するポート。</returns>
     /// <remarks>
     /// 画像はウィンドウのクライアント領域全体へ等倍で描画するため、変換は倍率の乗除算だけになる。<br/>
-    /// 倍率の適用方向（Forward = DIP → 画像ピクセル）は Platform.Core の <see cref="CoordTransform.DomainScale(Func{double}, Func{EsSize?})"/> が<br/>
+    /// 倍率の適用方向（ToDomain = DIP → 画像ピクセル）は Platform.Core の <see cref="CoordTransform.DipToDomain(Func{double}, Func{EsSize?})} が<br/>
     /// 単一所有する（UI が倍率式を書かない）。 境界は画像サイズで、選択を画像外へ出さないためのクランプに使われる。
     /// </remarks>
     private ICoordTransform CreatePort()
-        => CoordTransform.DomainScale(
+        => CoordTransform.DipToDomain(
             () => _scale,
             () => CaptureClipMath.ImageSize(Screen));
 

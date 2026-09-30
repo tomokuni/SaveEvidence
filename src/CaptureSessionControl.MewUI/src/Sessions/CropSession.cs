@@ -291,9 +291,9 @@ internal sealed class CropSession
         var image = _target.CurrentImage;
 
         _selector.SetCoordTransform(new CoordTransform(
-            forward: _view.ViewportToContent,
-            inverse: _view.ContentToViewport,
-            bounds: () => image is null ? null : CaptureClipMath.ImageSize(image)));
+            toDomain: _view.ViewportToContent,
+            toDip: _view.ContentToViewport,
+            domainBounds: () => image is null ? null : CaptureClipMath.ImageSize(image)));
     }
 
     /// <summary>設定を選択コントロールへ反映する。</summary>

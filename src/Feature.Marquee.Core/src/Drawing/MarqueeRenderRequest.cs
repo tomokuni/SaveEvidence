@@ -11,8 +11,8 @@ namespace EsUtil.Feature.Marquee.Core.Drawing;
 /// <param name="MarkerActive">始点マーカー（十字線）を描くかどうか（nudge 中かつ十字線が可視の場合に true）。</param>
 /// <param name="MarkerPosition">始点マーカーの中心（ドメイン座標）。</param>
 /// <param name="MousePosition">直近のマウス位置（ドメイン座標。 カーソル座標ラベルの基準）。</param>
-/// <param name="Port">論理座標 → DIP の座標変換ポート。 null の場合は <paramref name="DomainToDipScaling"/> を等倍スケールとして適用する。</param>
-/// <param name="DomainToDipScaling">ポート未指定の場合に適用する倍率（0 以下・等倍は等価変換）。</param>
+/// <param name="Port">ドメイン座標 ↔ ローカル DIP の座標変換ポート。 null の場合は <paramref name="DomainToDipScaling"/> を倍率として適用する。</param>
+/// <param name="DomainToDipScaling">ポート未指定の場合に適用する倍率（ドメイン座標 / ローカル DIP。 0 以下・等倍は等価変換）。</param>
 /// <remarks>
 /// 設定と状態の単一値（<see cref="Options"/>）に、描画時にしか決まらない値（描画領域のサイズ・座標変換ポート・倍率）を加えたものである。<br/>
 /// <b>UI 層は本値を自分で組み立てない</b>: セッションの状態を写す組み立て順は <see cref="Marquee.CreateRequest"/> が単一所有する。<br/>
@@ -31,7 +31,7 @@ public readonly record struct MarqueeRenderRequest(
     ICoordTransform? Port,
     double DomainToDipScaling)
 {
-    /// <summary>使用する座標変換ポートを取得する（ポート優先・未指定なら倍率による等倍スケール）。</summary>
+    /// <summary>使用する座標変換ポートを取得する（ポート優先・未指定なら倍率から生成）。</summary>
     /// <value>使用する座標変換ポート。</value>
     /// <remarks>解決の規則は <see cref="ResolvePort"/> が単一所有する。</remarks>
     public ICoordTransform ResolvedPort => ResolvePort(Port, DomainToDipScaling);
@@ -72,8 +72,8 @@ public readonly record struct MarqueeRenderRequest(
     /// <param name="markerActive">始点マーカー（十字線）を描くかどうか。</param>
     /// <param name="markerPosition">始点マーカーの中心（ドメイン座標）。</param>
     /// <param name="mousePosition">直近のマウス位置（ドメイン座標）。</param>
-    /// <param name="port">論理座標 → DIP の座標変換ポート。 null の場合は倍率を使う。</param>
-    /// <param name="domainToDipScaling">ポート未指定の場合に適用する倍率。</param>
+    /// <param name="port">ドメイン座標 ↔ ローカル DIP の座標変換ポート。 null の場合は倍率を使う。</param>
+    /// <param name="domainToDipScaling">ポート未指定の場合に適用する倍率（ドメイン座標 / ローカル DIP）。</param>
     /// <param name="highlightDomainRect">ハイライト矩形（ドメイン座標）。 null はハイライトなし。</param>
     /// <returns>描画の入力。</returns>
     /// <remarks>
@@ -95,9 +95,9 @@ public readonly record struct MarqueeRenderRequest(
             HighlightDomainRect = highlightDomainRect,
         };
 
-    /// <summary>座標変換ポートを決定する（ポート優先・未指定なら倍率による等倍スケール）。</summary>
+    /// <summary>座標変換ポートを決定する（ポート優先・未指定なら倍率から等価スケールを生成）。</summary>
     /// <param name="port">座標変換ポート。 指定されている場合はそれをそのまま使う。</param>
-    /// <param name="domainToDipScaling">倍率。 ポート未指定の場合に等倍スケールとして適用する。</param>
+    /// <param name="domainToDipScaling">倍率（ドメイン座標 / ローカル DIP）。 ポート未指定の場合に適用する。</param>
     /// <returns>使用する座標変換ポート。</returns>
     /// <remarks>
     /// 「ポートがあればそれを使い、無ければ倍率（0 以下・等倍は等価変換）を使う」という規則を単一所有する。<br/>
@@ -111,12 +111,12 @@ public readonly record struct MarqueeRenderRequest(
         }
 
         return DpiScaler.IsValidScaling(domainToDipScaling) && domainToDipScaling != 1.0
-            ? CoordTransform.Scale(domainToDipScaling)
+            ? CoordTransform.DipToDomain(() => domainToDipScaling)
             : CoordTransform.Identity;
     }
 
-    /// <summary>論理座標の矩形をポート経由で DIP 矩形へ変換する。</summary>
-    /// <param name="logical">論理座標（ドメイン）の矩形。</param>
+    /// <summary>ドメイン座標の矩形をポート経由で DIP 矩形へ変換する。</summary>
+    /// <param name="logical">ドメイン座標の矩形。</param>
     /// <param name="port">解決済みの座標変換ポート（1 フレームに 1 回だけ解決した値を渡す）。</param>
     /// <returns>DIP 座標の矩形。</returns>
     /// <remarks>
@@ -128,23 +128,23 @@ public readonly record struct MarqueeRenderRequest(
     /// </remarks>
     internal EsRect ToDipRect(EsRect logical, ICoordTransform port)
     {
-        var topLeft = port.Inverse(new EsPoint(logical.X, logical.Y));
-        var bottomRight = port.Inverse(logical.IsClosedInterval
+        var topLeft = port.ToDip(new EsPoint(logical.X, logical.Y));
+        var bottomRight = port.ToDip(logical.IsClosedInterval
             ? new EsPoint(logical.Right + 1, logical.Bottom + 1)
             : new EsPoint(logical.Right, logical.Bottom));
 
         return new EsRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 
-    /// <summary>DIP 矩形をドメイン座標の矩形へ逆換算する（左上と右下の順変換から組む）。</summary>
+    /// <summary>DIP 矩形をドメイン座標の矩形へ逆換算する（左上と右下の変換から組む）。</summary>
     /// <param name="dipRect">DIP 座標の矩形。</param>
-    /// <param name="port">解決済みの座標変換ポート（順変換 = DIP → ドメイン）。</param>
+    /// <param name="port">解決済みの座標変換ポート（<see cref="ICoordTransform.ToDomain"/> = DIP → ドメイン）。</param>
     /// <returns>ドメイン座標の矩形。</returns>
     /// <remarks>ホストが「矩形から表示スケールを解決する」ために使う（コアはモニタを知らない）。</remarks>
     internal EsRect ToDomainRect(EsRect dipRect, ICoordTransform port)
     {
-        var topLeft = port.Forward(dipRect.TopLeft);
-        var bottomRight = port.Forward(dipRect.BottomRight);
+        var topLeft = port.ToDomain(dipRect.TopLeft);
+        var bottomRight = port.ToDomain(dipRect.BottomRight);
 
         return new EsRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }

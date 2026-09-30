@@ -106,7 +106,7 @@ public partial class MarqueePresenter
             return null;
         }
 
-        var cursor = port.Inverse(geometry.MousePosition);
+        var cursor = port.ToDip(geometry.MousePosition);
         var offset = appearance.CoordLabelOffset;
 
         return new MarqueeTextPlacement(

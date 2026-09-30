@@ -99,7 +99,7 @@ public sealed partial class Marquee
         }
 
         return new MarqueeMarker(
-            port.Inverse(request.MarkerPosition),
+            port.ToDip(request.MarkerPosition),
             request.Options.MarkerLength / 2);
     }
 }

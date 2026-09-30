@@ -1,7 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using EsUtil.Platform.Core.Coord;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.Platform.AvaloniaUI.Coord;
@@ -12,10 +10,9 @@ namespace EsUtil.Platform.AvaloniaUI.Coord;
 /// <see cref="TopLevel"/> は境界でのみ解決し、コントロール本体は本ヘルパーへ委譲する。<br/>
 /// ビジュアルツリー未接続時は等価変換（画面座標をそのまま使用）する。<br/>
 /// <br/>
-/// OS 依存の画面物理変換（<see cref="TopLevel"/> の RenderScaling / 画面上位置 / PointToScreen / PointToClient）を
-/// 集約する唯一の場所である。<br/>
-/// ローカル DIP ↔ 画面物理の双方向変換は <see cref="CreateDipPort"/> / <see cref="CreateVisualDipPort"/> で
-/// <see cref="ICoordTransform"/>（<see cref="CoordTransform"/>）として提供する。
+/// OS 依存の画面物理変換（<see cref="TopLevel"/> の画面上位置 / PointToScreen / PointToClient）を集約する唯一の場所である。<br/>
+/// <b>座標変換ポートは提供しない</b>: ポートの軸は「ローカル DIP ↔ ドメイン座標」であり、画面物理はその軸に含まれない（別の軸）。<br/>
+/// 向きが名前で分かる <see cref="LocalDipToScreen"/> / <see cref="ScreenToLocalDip"/> だけを提供する。
 /// </remarks>
 public static class ScreenConverter
 {
@@ -48,40 +45,4 @@ public static class ScreenConverter
         var origin = VisualExtensions.TranslatePoint(source, default, topLevel) ?? default;
         return clientDip - origin;
     }
-
-    /// <summary>ローカル DIP ↔ 画面物理ピクセル変換ポートを生成する。</summary>
-    /// <param name="origin">ローカル座標系の原点の画面物理座標（例: 親パネルの画面上位置・ウィンドウ位置）。</param>
-    /// <param name="renderScaling">DIP → 物理のスケーリング（<see cref="TopLevel.RenderScaling"/>）。</param>
-    /// <returns>Forward = 物理→DIP、Inverse = DIP→物理のポート。</returns>
-    /// <remarks>
-    /// <c>Forward(p) = (p - origin) / renderScaling</c>、<c>Inverse(p) = p × renderScaling + origin</c> を提供する。<br/>
-    /// <see cref="TopLevel"/> 由来のスケーリングと原点を持つ座標変換を <see cref="ICoordTransform"/> として集約する。<br/>
-    /// 無効なスケーリング（0 以下・非数）は基準値へ正規化する（規則は <see cref="DpiScaler.NormalizeScaling"/> が単一所有する）。
-    /// </remarks>
-    internal static ICoordTransform CreateDipPort(PixelPoint origin, double renderScaling)
-    {
-        double s = DpiScaler.NormalizeScaling(renderScaling);
-        return new CoordTransform(
-            p => new EsPoint((p.X - origin.X) / s, (p.Y - origin.Y) / s),
-            p => new EsPoint(p.X * s + origin.X, p.Y * s + origin.Y),
-            () => null);
-    }
-
-    /// <summary>コントロールローカル DIP ↔ 画面物理ピクセル変換ポートを生成する。</summary>
-    /// <param name="source">変換元のコントロール。</param>
-    /// <returns>Forward = 画面物理→コントロールローカル DIP、Inverse = コントロールローカル DIP→画面物理のポート。</returns>
-    /// <remarks>
-    /// <see cref="TopLevel"/> を呼び出し毎に解決するため、ウィンドウ移動・スクロールの動的変化を反映できる。<br/>
-    /// ビジュアルツリー未接続時は等価変換（画面座標 = ローカル DIP）する。
-    /// </remarks>
-    public static ICoordTransform CreateVisualDipPort(Visual source)
-        => new CoordTransform(
-            p => ScreenToLocalDip(source, new PixelPoint((int)p.X, (int)p.Y)).ToEsPoint(),
-            p =>
-            {
-                // 同一スコープの同値計算は一度だけ実行して共有する（TopLevel 解決コストを繰り返さない）
-                var screen = LocalDipToScreen(source, p.ToAvaloniaPoint());
-                return new EsPoint(screen.X, screen.Y);
-            },
-            () => null);
 }

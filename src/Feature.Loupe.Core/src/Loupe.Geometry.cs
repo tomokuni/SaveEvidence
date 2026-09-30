@@ -42,7 +42,7 @@ public sealed partial class Loupe
             return new LoupeLayout(size, null);
         }
 
-        var centerDip = _coordPort.OrIdentity().Inverse(center);
+        var centerDip = _coordPort.OrIdentity().ToDip(center);
         return new LoupeLayout(size, ComputePosition(size, parentSize, centerDip, PositionOffset));
     }
 

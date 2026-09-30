@@ -108,12 +108,12 @@ internal sealed class MarqueeSession
     /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
     /// <param name="localDip">ローカル DIP 座標。</param>
     /// <returns>ドメイン座標。</returns>
-    internal EsPoint ToDomain(EsPoint localDip) => _state.Port.Forward(localDip);
+    internal EsPoint ToDomain(EsPoint localDip) => _state.Port.ToDomain(localDip);
 
     /// <summary>ドメイン座標をローカル DIP 座標へ変換する。</summary>
     /// <param name="domain">ドメイン座標。</param>
     /// <returns>ローカル DIP 座標。</returns>
-    internal EsPoint ToDip(EsPoint domain) => _state.Port.Inverse(domain);
+    internal EsPoint ToDip(EsPoint domain) => _state.Port.ToDip(domain);
 
     // ====================================================================
     // 入力の通知（UI 層 → コア）
@@ -560,14 +560,14 @@ internal sealed class MarqueeSession
     /// <summary>DIP 半径をドメイン半径へ変換する（ヒットテスト用）。</summary>
     /// <returns>ドメイン座標系でのヒットテスト半径。</returns>
     /// <remarks>
-    /// Forward の差を取ることでオフセット（レターボックス等）をキャンセルし、スケールのみを得る。<br/>
+    /// <see cref="ICoordTransform.ToDomain"/> の差を取ることでオフセット（レターボックス等）をキャンセルし、スケールのみを得る。<br/>
     /// スケールがほぼ 0（等価変換）の場合は DIP 半径をそのまま使用する。
     /// </remarks>
     private double ToDomainRadius()
     {
         var port = _state.Port;
-        var origin = port.Forward(default);
-        var offset = port.Forward(new EsPoint(Options.HandleHitRadius, 0));
+        var origin = port.ToDomain(default);
+        var offset = port.ToDomain(new EsPoint(Options.HandleHitRadius, 0));
         var radius = Math.Abs(offset.X - origin.X);
         return radius < 0.001 ? Options.HandleHitRadius : radius;
     }

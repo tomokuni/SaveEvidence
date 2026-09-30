@@ -22,7 +22,7 @@ namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 /// このため ImageHost ローカル座標（縮小座標）と画像ピクセル座標は一致しない。<br/>
 /// ポインタ位置は <see cref="ImageDisplayScale"/> で除算して画像ピクセル座標へ変換してから<br/>
 /// ホバー判定（<see cref="DetectionContext.UpdateHover"/>）とルーペ中心（<see cref="DetectionContext.LoupeCenter"/>）に渡す。<br/>
-/// ルーペは画像ピクセル座標 → ImageHost ローカル座標のスケーリングポート（<see cref="CoordTransform.Scale"/>）で配置し、<br/>
+/// ルーペは画像ピクセル座標 → ImageHost ローカル座標のスケーリングポート（<see cref="CoordTransform.DipToDomain"/>）で配置し、<br/>
 /// マウス位置（= ルーペ中心）の右下に表示する。<br/>
 /// ルーペ内の線分オーバーレイ（選択中/ホバー中の線分の破線）は、LoupeControl の <see cref="LoupeControl.Rendered"/> イベントの<br/>
 /// 引数で受け取った Bitmap（WriteableBitmap）に直接破線を描画する（LoupeControl の内部計算を複製しない）。<br/>
@@ -56,8 +56,8 @@ public partial class LineCanvasView : UserControl
 
         _ctx = ctx;
 
-        // ルーペの表示位置・サイズを自己計算させる（画像ピクセル座標 → ImageHost ローカル座標のスケーリングポート）
-        Loupe.SetCoordTransform(CoordTransform.Scale(ImageDisplayScale));
+        // ルーペの表示位置・サイズを自己計算させる（ImageHost ローカル DIP → 画像ピクセル座標の倍率ポート）
+        Loupe.SetCoordTransform(CoordTransform.DipToDomain(() => 1.0 / ImageDisplayScale));
         Loupe.PositionOffset = LoupePositionOffset;
 
         // 設定はコアの単一値（Options）で指定する（計算に必要な値）
@@ -87,12 +87,12 @@ public partial class LineCanvasView : UserControl
 
     /// <summary>画像ホストのサイズ変更時（Viewbox スケール変化）にルーペの座標変換ポートを更新する。</summary>
     private void OnImageHostSizeChanged()
-        => Loupe.SetCoordTransform(CoordTransform.Scale(ImageDisplayScale));
+        => Loupe.SetCoordTransform(CoordTransform.DipToDomain(() => 1.0 / ImageDisplayScale));
 
     /// <summary>画像の表示スケール（画像ピクセル座標 → ImageHost ローカル座標）を計算する。</summary>
     /// <remarks>
     /// Viewbox が画像を縮小表示する場合、ImageHost ローカル座標は画像ピクセル座標と一致しない。<br/>
-    /// ポインタ位置の画像ピクセル座標への変換と、ルーペの座標変換ポート（<see cref="CoordTransform.Scale"/>）に使用する。<br/>
+    /// ポインタ位置の画像ピクセル座標への変換と、ルーペの座標変換ポート（<see cref="CoordTransform.DipToDomain"/>）に使用する。<br/>
     /// 画像未設定・サイズ 0 の場合は 1.0（等価）を返す。
     /// </remarks>
     private double ImageDisplayScale

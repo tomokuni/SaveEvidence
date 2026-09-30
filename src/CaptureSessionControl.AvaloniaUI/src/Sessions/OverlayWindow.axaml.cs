@@ -194,9 +194,9 @@ internal sealed partial class OverlayWindow : Window
         SelectionOverlay.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(SelectionOverlay.Mode);
         SelectionOverlay.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(SelectionOverlay.Mode, _highlight.Title);
         // 選択矩形・ハイライトはドメイン座標（ウィンドウローカル物理ピクセル）で設定し、描画時に DIP へ変換する（Marquee と同方式）
-        // DomainScale: Forward = DIP→ドメイン（× scaling）/ Inverse = ドメイン→DIP（÷ scaling）
+        // DipToDomain: ToDomain = DIP→ドメイン（× scaling）/ ToDip = ドメイン→DIP（÷ scaling）
         // Marquee / Loupe の 2 コントロールへ同一ポートを一括分配する。
-        SelectionOverlay.SetCoordTransform(CoordTransform.DomainScale(() => _scaling));
+        SelectionOverlay.SetCoordTransform(CoordTransform.DipToDomain(() => _scaling));
     }
 
     /// <summary>選択オーバーレイ（SelectionOverlay）の再描画を要求する。</summary>

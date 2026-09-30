@@ -15,7 +15,7 @@ public class CoordTransformExtensionsTests
     [Fact]
     public void OrIdentity_ポート指定時はそのポートを返す()
     {
-        var port = CoordTransform.Scale(2.0);
+        var port = CoordTransform.DipToDomain(() => 2.0);
 
         Assert.Same(port, port.OrIdentity());
     }
@@ -35,7 +35,7 @@ public class CoordTransformExtensionsTests
     {
         ICoordTransform? port = null;
 
-        var point = port.OrIdentity().Inverse(new EsPoint(10, 20));
+        var point = port.OrIdentity().ToDip(new EsPoint(10, 20));
 
         Assert.Equal(new EsPoint(10, 20), point);
     }

@@ -792,7 +792,7 @@ public class MarqueeSessionTests
     {
         var session = CreateSession(out _);
         // 表示スケール 2.0（1 DIP = 0.5 ドメイン）のポート
-        session.SetPort(CoordTransform.Scale(2.0));
+        session.SetPort(CoordTransform.DipToDomain(() => 0.5));
 
         Assert.Equal(new EsPoint(5, 10), session.ToDomain(new EsPoint(10, 20)));
         Assert.Equal(new EsPoint(20, 40), session.ToDip(new EsPoint(10, 20)));
@@ -811,7 +811,7 @@ public class MarqueeSessionTests
     {
         var session = CreateSession(out _);
         // 表示スケール 2.0（1 DIP = 0.5 ドメイン）にヒット半径 12 DIP を設定する（ドメイン半径 6）
-        session.SetPort(CoordTransform.Scale(2.0));
+        session.SetPort(CoordTransform.DipToDomain(() => 0.5));
         session.ApplyOptions(session.Options with { HandleHitRadius = 12.0 });
         session.SetSelection(new EsRect(50, 50, 100, 80));
 

@@ -312,7 +312,7 @@ internal sealed class MarqueeState
     /// <returns>ドメイン境界の矩形。 クリップ無効または境界未設定（null）の場合は null。</returns>
     /// <remarks><see cref="UpdateDrag"/> / <see cref="Nudge"/> で共通利用する（境界 Rect 生成の重複排除）。</remarks>
     private EsRect? GetBoundsRect(bool clampToBounds)
-        => clampToBounds && Port.Bounds is { } size ? new EsRect(0, 0, size.Width, size.Height) : null;
+        => clampToBounds && Port.DomainBounds is { } size ? new EsRect(0, 0, size.Width, size.Height) : null;
 
     /// <summary>ドラッグを終了する。</summary>
     internal void EndDrag()
@@ -411,7 +411,7 @@ internal sealed class MarqueeState
         return true;
     }
 
-    /// <summary>指定した矩形をドメイン境界（<see cref="Port"/> の Bounds）内にクリップする。</summary>
+    /// <summary>指定した矩形をドメイン境界（<see cref="Port"/> の <see cref="ICoordTransform.DomainBounds"/>）内にクリップする。</summary>
     /// <param name="rect">クリップする矩形（ドメイン座標）。</param>
     /// <returns>境界内に収めた矩形。 境界が未設定（null）の場合は元の矩形。</returns>
     /// <remarks>
@@ -420,5 +420,5 @@ internal sealed class MarqueeState
     /// 包絡矩形の計算は <see cref="EsRect.ClampToArea(EsSize)"/> が単一所有する（四隅を個別にクランプし、その包絡を返す規則）。
     /// </remarks>
     internal EsRect ClipRectToBounds(EsRect rect)
-        => Port.Bounds is { } size ? rect.ClampToArea(size) : rect;
+        => Port.DomainBounds is { } size ? rect.ClampToArea(size) : rect;
 }

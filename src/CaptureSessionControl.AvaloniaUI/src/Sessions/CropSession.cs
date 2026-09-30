@@ -70,7 +70,7 @@ internal sealed class CropSession(
 
     /// <summary>ビューポートDIP ↔ 元画像ピクセルの座標変換ポートを生成する。</summary>
     /// <param name="cropView">変換の基準となる複合コントロール。</param>
-    /// <returns>Forward = ビューポートDIP → 元画像ピクセル、Inverse = 元画像ピクセル → ビューポートDIP、Bounds = 現在の画像のサイズのポート。</returns>
+    /// <returns>ToDomain = ビューポートDIP → 元画像ピクセル、ToDip = 元画像ピクセル → ビューポートDIP、DomainBounds = 現在の画像のサイズのポート。</returns>
     /// <remarks>
     /// 内包する <see cref="ZoomViewControl"/> の座標変換（<see cref="ZoomViewControl.ViewportToContentImage"/> /
     /// <see cref="ZoomViewControl.ContentToViewportImage"/>）を委譲する。 これにより、ズーム・パン・Fit・中央寄せの<br/>
@@ -79,9 +79,9 @@ internal sealed class CropSession(
     /// </remarks>
     private static ICoordTransform CreateCoordPort(CropViewControl cropView)
         => new CoordTransform(
-            forward: dip => cropView.ViewportToContent(dip.ToAvaloniaPoint()).ToEsPoint(),
-            inverse: logical => cropView.ContentToViewport(logical.ToAvaloniaPoint()).ToEsPoint(),
-            bounds: () => cropView.CurrentImage() is { } image ? CaptureClipMath.ImageSize(image) : null);
+            toDomain: dip => cropView.ViewportToContent(dip.ToAvaloniaPoint()).ToEsPoint(),
+            toDip: logical => cropView.ContentToViewport(logical.ToAvaloniaPoint()).ToEsPoint(),
+            domainBounds: () => cropView.CurrentImage() is { } image ? CaptureClipMath.ImageSize(image) : null);
 
     /// <summary>切出しセッションを実行する（確定待機 → 結果返却）。 UI スレッドから呼び出すこと。</summary>
     /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う。 呼び出し側が表示中の画像から解決して渡す）。</param>

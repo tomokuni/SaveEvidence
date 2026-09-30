@@ -66,7 +66,7 @@ public sealed partial class MarqueeControl
         }
 
         var screenPoint = _cursor.GetCursorScreenPoint();
-        var localDip = ScreenConverter.CreateVisualDipPort(this).Forward(screenPoint.ToEsPoint());
+        var localDip = ScreenConverter.ScreenToLocalDip(this, screenPoint.ToAvaloniaPixelPoint()).ToEsPoint();
         return _marquee.ToDomain(localDip);
     }
 }
