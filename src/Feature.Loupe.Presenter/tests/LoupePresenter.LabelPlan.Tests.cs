@@ -68,9 +68,9 @@ public class LoupePresenterLabelPlanTests
         var element = Assert.Single(LoupePresenter.ResolveLabelPlacements(CreateCoordLabel(), CreatePaint(), Measure));
 
         // 基準点 (2, 2) がそのまま背景の左上になり、幅は実寸 + 内側余白で決まる
-        Assert.Equal(2, element.Bounds.X);
-        Assert.Equal(2, element.Bounds.Y);
-        Assert.Equal(MeasuredSize.Width + element.PaddingX * 2, element.Bounds.Width);
+        Assert.Equal(2, element.DipRect.X);
+        Assert.Equal(2, element.DipRect.Y);
+        Assert.Equal(MeasuredSize.Width + element.PaddingX * 2, element.DipRect.Width);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class LoupePresenterLabelPlanTests
 
         // ルーペ上端の帯へ収めるため、上下の余白は左右（共通の体裁値）より狭い
         Assert.True(element.PaddingY < element.PaddingX);
-        Assert.Equal(MeasuredSize.Height + element.PaddingY * 2, element.Bounds.Height);
+        Assert.Equal(MeasuredSize.Height + element.PaddingY * 2, element.DipRect.Height);
     }
 
     [Fact]

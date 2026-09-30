@@ -151,7 +151,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 | `DipToDeviceScaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数（描画計画の解決（枠線の太さの換算）にも使う） |
 | `ZoomLevel` | `int` | 拡大率（1〜64。 設定 `Options.ZoomLevel` の値。 描画完了通知のスケールにも使う） |
 | `CaptureSize` | `int`（導出） | 切り出し領域の一辺（ドメインピクセル）。 物理ピクセルサイズを拡大率で割った切り上げ。 位置パラメータではなく `PixelSize` / `ZoomLevel` からの導出であり、切り上げの規則も本値が単一所有する |
-| `SurfaceBounds` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。 描画層がこの矩形へ下地を塗る（UI 層は矩形を組み立てない） |
+| `SurfacePixelRect` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `PixelSize` の正方形・物理ピクセル）。 描画層がこの矩形へ下地を塗る（UI 層は矩形を組み立てない） |
 | `CaptureTopLeft` | `EsPoint?` | 拡大中心から切り出し領域の左上（ドメイン座標）。 中心未設定の場合は null（描画しない） |
 | `MagnifiedImage` | `LoupeMagnifiedImage?` | 拡大画像の切り出し・描画元・描画先の矩形。 中心未設定の場合は null |
 

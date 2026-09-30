@@ -44,7 +44,7 @@ public static class LoupeContextPainter
             {
                 case LoupeDrawLayer.Pasteboard:
                     context.DrawRectangle(
-                        SolidColorBrushCache.GetOrCreate(appearance.PasteboardColor), null, plan.SurfaceBounds.ToAvaloniaRect());
+                        SolidColorBrushCache.GetOrCreate(appearance.PasteboardColor), null, plan.SurfacePixelRect.ToAvaloniaRect());
                     break;
 
                 case LoupeDrawLayer.Image:
@@ -52,11 +52,11 @@ public static class LoupeContextPainter
                     break;
 
                 case LoupeDrawLayer.Crosshair:
-                    FillRects(context, plan.CrosshairRects, appearance.CrossColor);
+                    FillRects(context, plan.CrosshairPixelRects, appearance.CrossColor);
                     break;
 
                 case LoupeDrawLayer.Border:
-                    FillRects(context, plan.BorderRects, appearance.BorderColor);
+                    FillRects(context, plan.BorderPixelRects, appearance.BorderColor);
                     break;
 
                 case LoupeDrawLayer.Label:
@@ -104,9 +104,9 @@ public static class LoupeContextPainter
 
         try
         {
-            using var region = source.Crop(image.Crop);
+            using var region = source.Crop(image.CropPixelRect);
             using var avalonia = region.ToAvaloniaBitmap();
-            context.DrawImage(avalonia, image.Source.ToAvaloniaRect(), image.Destination.ToAvaloniaRect());
+            context.DrawImage(avalonia, image.SourcePixelRect.ToAvaloniaRect(), image.DestinationPixelRect.ToAvaloniaRect());
         }
         catch (ObjectDisposedException)
         {

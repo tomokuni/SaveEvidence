@@ -41,7 +41,7 @@ public readonly record struct LoupeGeometry(
     /// <remarks>描画先の原点は常に 0 である（描画層が矩形を組み立てると原点の取り違えが生じるため、本値が導出する）。<br/>
     /// 描画層は本矩形へ下地を塗る（本コアは塗りも色も持たない）。
     /// </remarks>
-    public EsRect SurfaceBounds => new(0, 0, PixelSize, PixelSize);
+    public EsRect SurfacePixelRect => new(0, 0, PixelSize, PixelSize);
 
     /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）を取得する。</summary>
     /// <value>切り出し領域の左上（ドメイン座標）。<see cref="Center"/> が未設定の場合は null（切り出し領域を持たない）。</value>

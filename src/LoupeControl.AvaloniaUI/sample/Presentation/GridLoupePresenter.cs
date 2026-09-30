@@ -61,13 +61,13 @@ internal sealed class GridLoupePresenter : LoupePresenter
         double displaySize, Func<string, double, EsSize> measureText)
     {
         var plan = base.ResolveDrawPlan(displaySize, measureText);
-        var surface = plan.SurfaceBounds;
+        var surface = plan.SurfacePixelRect;
         var scaling = DipToDeviceScaling;
 
         return plan with
         {
-            CrosshairRects = CreateCenterGrid(surface, GridThickness * scaling),
-            BorderRects = CreateCornerBrackets(surface, BracketArm * scaling, BracketThickness * scaling),
+            CrosshairPixelRects = CreateCenterGrid(surface, GridThickness * scaling),
+            BorderPixelRects = CreateCornerBrackets(surface, BracketArm * scaling, BracketThickness * scaling),
         };
     }
 

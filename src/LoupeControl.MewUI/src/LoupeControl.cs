@@ -355,8 +355,8 @@ public sealed class LoupeControl : Panel
 
             Apply(border, placement);
             border.Arrange(new Rect(
-                bounds.X + placement.Bounds.X, bounds.Y + placement.Bounds.Y,
-                placement.Bounds.Width, placement.Bounds.Height));
+                bounds.X + placement.DipRect.X, bounds.Y + placement.DipRect.Y,
+                placement.DipRect.Width, placement.DipRect.Height));
         }
     }
 

@@ -47,11 +47,11 @@ public static class LoupeSkiaPainter
                     break;
 
                 case LoupeDrawLayer.Crosshair:
-                    SkiaFill.Rects(canvas, plan.CrosshairRects, appearance.CrossColor);
+                    SkiaFill.Rects(canvas, plan.CrosshairPixelRects, appearance.CrossColor);
                     break;
 
                 case LoupeDrawLayer.Border:
-                    SkiaFill.Rects(canvas, plan.BorderRects, appearance.BorderColor);
+                    SkiaFill.Rects(canvas, plan.BorderPixelRects, appearance.BorderColor);
                     break;
 
                 case LoupeDrawLayer.Label:
@@ -80,8 +80,8 @@ public static class LoupeSkiaPainter
 
         try
         {
-            using var region = source.Crop(image.Crop);
-            canvas.DrawBitmap(region.ToSKBitmap(), image.Source.ToSKRect(), image.Destination.ToSKRect());
+            using var region = source.Crop(image.CropPixelRect);
+            canvas.DrawBitmap(region.ToSKBitmap(), image.SourcePixelRect.ToSKRect(), image.DestinationPixelRect.ToSKRect());
         }
         catch (ObjectDisposedException)
         {

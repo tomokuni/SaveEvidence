@@ -68,9 +68,9 @@
 | メンバー | 説明 |
 | --- | --- |
 | `Appearance` | 外観（描画時に色・フォントを使うため保持する） |
-| `SurfaceBounds` | 描画面の全体（物理ピクセルの正方形） |
+| `SurfacePixelRect` | 描画面の全体（物理ピクセルの正方形） |
 | `MagnifiedImage` | 拡大画像の切り出しと描画の矩形（`LoupeMagnifiedImage`。 中心未設定は null） |
-| `CrosshairRects` / `BorderRects` | 十字線（縦横 2 本）/ 枠線（4 辺）の矩形 |
+| `CrosshairPixelRects` / `BorderPixelRects` | 十字線（縦横 2 本）/ 枠線（4 辺）の矩形 |
 | `Layers` | 描く層とその順序（先頭から処理する） |
 | `Labels` | ラベルの配置指示（`LoupeLabelPlacement` の一覧。 空は表示なし） |
 | `CaptureTopLeft` / `ZoomLevel` / `PixelSize` | 描画完了通知（`Rendered`）の組み立てに使う値 |
@@ -145,7 +145,7 @@ foreach (var layer in plan.Layers) { /* Pasteboard → Image → Crosshair → B
 | 座標系 | 用途 |
 | --- | --- |
 | 物理ピクセル | 描画面・矩形（`LoupeDrawPlan` の矩形） |
-| DIP | ラベル（`LoupeLabelPlacement.Bounds` / `PaddingX` / `PaddingY`） |
+| DIP | ラベル（`LoupeLabelPlacement.DipRect` / `PaddingX` / `PaddingY`） |
 
 ## 6. 制限事項
 

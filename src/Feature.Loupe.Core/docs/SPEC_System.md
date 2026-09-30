@@ -82,7 +82,7 @@ sequenceDiagram
 | `src/Loupe.cs`（ルート） | `Loupe` | public | **公開ファサード（操作の唯一の窓口）**。 設定・環境値・拡大中心・位置オフセットの保持、設定変更の検出とログ出力（`Log`）、座標変換ポートの設定（`SetCoordTransform`） |
 | `src/Loupe.Limits.cs`（ルート） | `Loupe.Limits`（`Loupe` の入れ子） | public | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値の補正。 **UI がプロパティ登録に使う**（枠線の太さの安全域は描画層の外観が参照する） |
 | `src/Setting/LoupeOptions.cs` | `LoupeOptions` | public | 計算に必要な設定の値オブジェクト（表示サイズ・拡大率）。 既定値・生成時の補正（`init` アクセサ。 設定経路によらず範囲内の値だけを保持する）・`Default`。 **色・フォント・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
-| `src/Drawing/LoupeGeometry.cs` | `LoupeGeometry` | public | 1 フレーム分の描画の幾何（コア⇔UI の契約）。 値の組は `Loupe.ResolveGeometry` が 1 箇所に閉じる（UI 層は自分で組み立てない）。 切り出し領域の幾何を導出する（`CaptureSize` / `CaptureTopLeft` / `MagnifiedImage` / `SurfaceBounds`） |
+| `src/Drawing/LoupeGeometry.cs` | `LoupeGeometry` | public | 1 フレーム分の描画の幾何（コア⇔UI の契約）。 値の組は `Loupe.ResolveGeometry` が 1 箇所に閉じる（UI 層は自分で組み立てない）。 切り出し領域の幾何を導出する（`CaptureSize` / `CaptureTopLeft` / `MagnifiedImage` / `SurfacePixelRect`） |
 | `src/Drawing/LoupeMagnifiedImage.cs` | `LoupeMagnifiedImage` | public | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） |
 | `src/Placement/LoupeLayout.cs` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズ + 表示位置。 配置しない場合は位置が null） |
 | （本プロジェクトには置かない） | 描画計画と外観 | — | 提示（描画計画の解決）と外観は **描画層（本コアを参照する上位の層）が所有します**（本コアは描画 API も描画の抽象も持たない） |
@@ -104,7 +104,7 @@ sequenceDiagram
 | 切り出し領域の一辺（ドメインピクセル） | `LoupeGeometry.CaptureSize`（導出プロパティ。 切り上げの規則も本値が単一所有する） |
 | 切り出し領域の左上（中心 → 左上の変換） | `LoupeGeometry.CaptureTopLeft`（中心未設定は null。 描画完了通知のためにも使う） |
 | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） | `LoupeGeometry.MagnifiedImage`（切り出しの実行は描画実装） |
-| 描画先の全領域（描画層が下地を塗る矩形） | `LoupeGeometry.SurfaceBounds` |
+| 描画先の全領域（描画層が下地を塗る矩形） | `LoupeGeometry.SurfacePixelRect` |
 | 表示サイズの決定と、領域が正方形を収められるかの判定 | `Loupe.ResolveLayout`（要求サイズをそのまま表示サイズにする。 状態を保持しないため、親領域のサイズを引数で受ける） |
 | 表示位置（中心 + オフセットと親領域内への補正） | `Loupe.ResolveLayout`（内部手順は `Loupe.Geometry.cs` の private static `ComputePosition`。 親サイズ未確定の判定は `EsSize.HasArea`） |
 | 描画の幾何（物理ピクセルサイズ）の組み立て | `Loupe.ResolveGeometry`（規則は `Platform.Core` の `DpiScaler.ScaleToPixel`） |

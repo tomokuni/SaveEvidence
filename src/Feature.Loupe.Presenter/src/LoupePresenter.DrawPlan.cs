@@ -25,7 +25,7 @@ public partial class LoupePresenter
     /// 切り出し領域の一辺は切り上げのため、<b>拡大率が偶数でない場合は交点が表面の中央から最大 1 ブロックずれる</b><br/>
     /// （切り捨てをやめると、奇数倍率で交点が画素境界から外れて十字線がぼやける）。
     /// </remarks>
-    internal static IReadOnlyList<EsRect> ComputeCrosshairRects(EsRect surface, int zoomLevel, int captureSize)
+    internal static IReadOnlyList<EsRect> ComputeCrosshairPixelRects(EsRect surface, int zoomLevel, int captureSize)
     {
         var pixelSize = (int)surface.Width;
         var start = captureSize / 2 * zoomLevel;

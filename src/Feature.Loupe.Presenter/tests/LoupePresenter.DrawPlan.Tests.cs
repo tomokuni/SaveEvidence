@@ -4,7 +4,7 @@ using EsUtil.Feature.Loupe.Presenter.Drawing;
 
 namespace EsUtil.Feature.Loupe.Presenter.Tests;
 
-/// <summary><see cref="LoupePresenter.ComputeCrosshairRects"/> のテスト（UI 非依存・並列実行）。</summary>
+/// <summary><see cref="LoupePresenter.ComputeCrosshairPixelRects"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 十字線・枠線の描画矩形の計算のみを検証するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
 /// 各 UI（Avalonia / MewUI）の描画は <see cref="EsRect"/> を自身の描画 API へ渡すだけであり、<br/>
@@ -14,10 +14,10 @@ public class LoupePresenterDrawPlanTests
 {
     /// <summary>十字線が縦横 2 本の矩形で返ることを検証する。</summary>
     [Fact]
-    public void ComputeCrosshairRects_十字線の縦横2本の矩形を返す()
+    public void ComputeCrosshairPixelRects_十字線の縦横2本の矩形を返す()
     {
         // 一辺 100, zoomLevel=4, 切り出し一辺 25 → start = 25/2*4 = 48
-        var rects = LoupePresenter.ComputeCrosshairRects(new EsRect(0, 0, 100, 100), 4, 25);
+        var rects = LoupePresenter.ComputeCrosshairPixelRects(new EsRect(0, 0, 100, 100), 4, 25);
 
         Assert.Equal(2, rects.Count);
         Assert.Equal(new EsRect(48, 0, 4, 100), rects[0]); // 縦
@@ -26,10 +26,10 @@ public class LoupePresenterDrawPlanTests
 
     /// <summary>拡大率 1 の場合は中央を 1 ピクセルで描画することを検証する。</summary>
     [Fact]
-    public void ComputeCrosshairRects_zoomLevel1では中央を1ピクセルで描画する()
+    public void ComputeCrosshairPixelRects_zoomLevel1では中央を1ピクセルで描画する()
     {
         // 一辺 100, zoomLevel=1, 切り出し一辺 100 → start = 100/2*1 = 50
-        var rects = LoupePresenter.ComputeCrosshairRects(new EsRect(0, 0, 100, 100), 1, 100);
+        var rects = LoupePresenter.ComputeCrosshairPixelRects(new EsRect(0, 0, 100, 100), 1, 100);
 
         Assert.Equal(new EsRect(50, 0, 1, 100), rects[0]);
         Assert.Equal(new EsRect(0, 50, 100, 1), rects[1]);
@@ -37,9 +37,9 @@ public class LoupePresenterDrawPlanTests
 
     /// <summary>描画面の原点が 0 でない場合もその座標系で矩形が返ることを検証する。</summary>
     [Fact]
-    public void ComputeCrosshairRects_描画面の原点を基準に計算する()
+    public void ComputeCrosshairPixelRects_描画面の原点を基準に計算する()
     {
-        var rects = LoupePresenter.ComputeCrosshairRects(new EsRect(10, 20, 100, 100), 1, 100);
+        var rects = LoupePresenter.ComputeCrosshairPixelRects(new EsRect(10, 20, 100, 100), 1, 100);
 
         Assert.Equal(new EsRect(60, 20, 1, 100), rects[0]);
         Assert.Equal(new EsRect(10, 70, 100, 1), rects[1]);

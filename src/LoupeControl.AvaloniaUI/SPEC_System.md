@@ -253,7 +253,7 @@ sequenceDiagram
     Pl->>Sr: IsSourceSupported(source)（未対応型は例外）/ Resolve(source)
     Sr-->>Pl: 切り出し元 EsBitmap（Bitmap は複製・共有参照はそのまま）
     Pl->>Rdr: LoupeContextPainter.Paint(DrawingContext, source, plan)（UI スレッド。描画の順序は計画が単一所有）
-    Rdr->>Ext: EsBitmap.Crop(content.MagnifiedImage.Crop)（描画実装が実行する）
+    Rdr->>Ext: EsBitmap.Crop(content.MagnifiedImage.CropPixelRect)（描画実装が実行する）
     Ext-->>Rdr: 切り出し画像（範囲外は透明パディング）
     Rdr-->>Pl: 合成 Bitmap
     Pl-->>Ctl: 生成 Bitmap

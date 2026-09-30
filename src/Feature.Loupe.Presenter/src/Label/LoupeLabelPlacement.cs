@@ -6,7 +6,7 @@ using EsUtil.Feature.Loupe.Presenter.Setting;
 namespace EsUtil.Feature.Loupe.Presenter.Label;
 
 /// <summary>ルーペの中心座標ラベルを、UI のテキスト要素として配置するための指示。</summary>
-/// <param name="Bounds">要素を置く矩形（DIP。 呼び出し側の座標系に従う）。</param>
+/// <param name="DipRect">要素を置く矩形（DIP。 呼び出し側の座標系に従う）。</param>
 /// <param name="PaddingX">要素の左右の内側余白（DIP）。 0 以上。</param>
 /// <param name="PaddingY">要素の上下の内側余白（DIP）。 0 以上。</param>
 /// <param name="Text">表示する文言。</param>
@@ -25,7 +25,7 @@ namespace EsUtil.Feature.Loupe.Presenter.Label;
 /// <b>色は UI 非依存の <see cref="DrawingColor"/></b> であり、UI 境界で自 UI の色型へ変換する。
 /// </remarks>
 public readonly record struct LoupeLabelPlacement(
-    EsRect Bounds,
+    EsRect DipRect,
     double PaddingX,
     double PaddingY,
     string Text,

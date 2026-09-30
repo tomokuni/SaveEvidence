@@ -298,9 +298,9 @@ public partial class MarqueePresenter
 
     /// <summary>描く層だけを描画順に並べる。</summary>
     /// <param name="overlayRegions">暗転領域。</param>
-    /// <param name="outerBorderRects">外枠の矩形。</param>
+    /// <param name="outerBorderDipRects">外枠の矩形。</param>
     /// <param name="innerFillRect">内側の塗り。</param>
-    /// <param name="innerBorderRects">内側の枠線。</param>
+    /// <param name="innerBorderDipRects">内側の枠線。</param>
     /// <param name="handles">ドラッグハンドル。 null の場合は層を含めない。</param>
     /// <param name="marker">始点マーカー。 null の場合は層を含めない。</param>
     /// <param name="sizeLabel">サイズラベル。 null の場合は数えない。</param>
@@ -312,15 +312,15 @@ public partial class MarqueePresenter
     /// </remarks>
     private static IReadOnlyList<MarqueeDrawLayer> ResolveLayers(
         IReadOnlyList<EsRect> overlayRegions,
-        IReadOnlyList<EsRect> outerBorderRects,
+        IReadOnlyList<EsRect> outerBorderDipRects,
         EsRect? innerFillRect,
-        IReadOnlyList<EsRect> innerBorderRects,
+        IReadOnlyList<EsRect> innerBorderDipRects,
         MarqueeHandles? handles,
         MarqueeMarker? marker,
         MarqueeTextPlacement? sizeLabel,
         MarqueeTextPlacement? coordLabel)
         => s_layers[
-            (overlayRegions.Count > 0 || outerBorderRects.Count > 0 || innerFillRect is not null || innerBorderRects.Count > 0 ? DecorationBit : 0)
+            (overlayRegions.Count > 0 || outerBorderDipRects.Count > 0 || innerFillRect is not null || innerBorderDipRects.Count > 0 ? DecorationBit : 0)
             | (handles is not null ? HandlesBit : 0)
             | (marker is not null ? MarkerBit : 0)
             | (sizeLabel is not null || coordLabel is not null ? TextBit : 0)];

@@ -133,13 +133,13 @@ classDiagram
     }
     class LoupeDrawPlan {
         <<Feature.Loupe.Presenter>>
-        +EsRect SurfaceBounds
-                +CrosshairRects / BorderRects
+        +EsRect SurfacePixelRect
+                +CrosshairPixelRects / BorderPixelRects
         +Layers
     }
     class LoupeGeometry {
         <<Feature.Loupe.Core>>
-        +EsRect SurfaceBounds
+        +EsRect SurfacePixelRect
         +int CaptureSize
         +EsPoint? CaptureTopLeft
         +LoupeMagnifiedImage? MagnifiedImage
@@ -198,13 +198,13 @@ sequenceDiagram
     LC->>R: LoupeSkiaPainter.Paint(SKCanvas, Source, plan)（層の順に写す）
     R->>SK: 画像外の色（plan.Appearance.PasteboardColor）を表面全体へ塗る
     alt Source と切り出し領域が揃っている
-        R->>R: EsBitmap.Crop(plan.MagnifiedImage.Crop)（描画実装が実行する）
+        R->>R: EsBitmap.Crop(plan.MagnifiedImage.CropPixelRect)（描画実装が実行する）
         R->>SK: DrawImage(cropped, Source, Destination)（最近傍で拡大）
     else 未設定または破棄済み
         R-->>R: 画像外の色のみを残す
     end
-    R->>SK: 十字線（plan.CrosshairRects）を描画
-    R->>SK: 枠線（plan.BorderRects）を描画
+    R->>SK: 十字線（plan.CrosshairPixelRects）を描画
+    R->>SK: 枠線（plan.BorderPixelRects）を描画
     alt plan.Labels が空でない
         R-->>R: 座標ラベル層は描画しない（コントロールがテキスト要素として表示する）
     else 表示しない

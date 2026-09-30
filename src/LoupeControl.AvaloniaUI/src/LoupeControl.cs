@@ -262,9 +262,9 @@ public sealed class LoupeControl : Panel
         border.Background = SolidColorBrushCache.GetOrCreate(placement.BackgroundColor);
         border.CornerRadius = new CornerRadius(placement.CornerRadius);
         border.Padding = new Thickness(placement.PaddingX, placement.PaddingY);
-        border.Width = placement.Bounds.Width;
-        border.Height = placement.Bounds.Height;
-        border.Margin = new Thickness(placement.Bounds.X, placement.Bounds.Y, 0, 0);
+        border.Width = placement.DipRect.Width;
+        border.Height = placement.DipRect.Height;
+        border.Margin = new Thickness(placement.DipRect.X, placement.DipRect.Y, 0, 0);
         border.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
         border.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
 

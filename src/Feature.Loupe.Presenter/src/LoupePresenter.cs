@@ -217,10 +217,10 @@ public partial class LoupePresenter
 
         var appearance = Appearance;
         var geometry = _core.ResolveGeometry(displaySize);
-        var surface = geometry.SurfaceBounds;
+        var surface = geometry.SurfacePixelRect;
 
         IReadOnlyList<EsRect> crosshair = appearance.ShowCrosshair
-            ? ComputeCrosshairRects(surface, geometry.ZoomLevel, geometry.CaptureSize)
+            ? ComputeCrosshairPixelRects(surface, geometry.ZoomLevel, geometry.CaptureSize)
             : [];
         IReadOnlyList<EsRect> border = appearance.ShowBorder
             ? ComputeBorderPixelRects(

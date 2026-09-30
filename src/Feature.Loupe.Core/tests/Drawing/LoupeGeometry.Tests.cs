@@ -56,13 +56,13 @@ public class LoupeGeometryTests
 
     /// <summary>描画先の全領域が原点 0 の正方形になることを検証する。</summary>
     [Fact]
-    public void SurfaceBounds_物理ピクセルサイズの正方形を原点0で返す()
+    public void SurfacePixelRect_物理ピクセルサイズの正方形を原点0で返す()
     {
         var geometry = Resolve(100, 1.25);
 
         // 描画層が下地を全面へ塗るための矩形である（UI 側で組み立てない）
         Assert.Equal(125, geometry.PixelSize);
-        Assert.Equal(new EsRect(0, 0, 125, 125), geometry.SurfaceBounds);
+        Assert.Equal(new EsRect(0, 0, 125, 125), geometry.SurfacePixelRect);
     }
 
     /// <summary>中心・拡大率・スケーリングがそのまま保持されることを検証する。</summary>
@@ -143,9 +143,9 @@ public class LoupeGeometryTests
     {
         var image = Assert.NotNull(Geometry(new EsPoint(10, 10), 16, 4).MagnifiedImage);
 
-        Assert.Equal(new EsRectInt(8, 8, 4, 4), image.Crop);
-        Assert.Equal(new EsRect(0, 0, 4, 4), image.Source);
-        Assert.Equal(new EsRect(0, 0, 16, 16), image.Destination);
+        Assert.Equal(new EsRectInt(8, 8, 4, 4), image.CropPixelRect);
+        Assert.Equal(new EsRect(0, 0, 4, 4), image.SourcePixelRect);
+        Assert.Equal(new EsRect(0, 0, 16, 16), image.DestinationPixelRect);
     }
 
     /// <summary>画像端では切り出し領域が負の左上になることを検証する（透明パディングは切り出し側が担う）。</summary>
@@ -154,7 +154,7 @@ public class LoupeGeometryTests
     {
         var image = Assert.NotNull(Geometry(new EsPoint(0, 0), 16, 4).MagnifiedImage);
 
-        Assert.Equal(new EsRectInt(-2, -2, 4, 4), image.Crop);
+        Assert.Equal(new EsRectInt(-2, -2, 4, 4), image.CropPixelRect);
     }
 
     /// <summary>描画先が切り出しサイズ × 拡大率になることを検証する（切り上げ分だけ表面より大きくなりうる）。</summary>
@@ -170,7 +170,7 @@ public class LoupeGeometryTests
     {
         var image = Assert.NotNull(Geometry(new EsPoint(100, 100), pixelSize, zoomLevel).MagnifiedImage);
 
-        Assert.Equal(new EsRect(0, 0, expectedDestination, expectedDestination), image.Destination);
+        Assert.Equal(new EsRect(0, 0, expectedDestination, expectedDestination), image.DestinationPixelRect);
     }
 
     // ====================================================================

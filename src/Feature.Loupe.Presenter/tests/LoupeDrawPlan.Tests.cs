@@ -32,7 +32,7 @@ public class LoupeDrawPlanTests
     {
         var plan = ResolvePlan(LoupeAppearance.Default, new EsPoint(16, 16));
 
-        Assert.Equal(new EsRect(0, 0, LoupeSize, LoupeSize), plan.SurfaceBounds);
+        Assert.Equal(new EsRect(0, 0, LoupeSize, LoupeSize), plan.SurfacePixelRect);
         Assert.Equal(LoupeSize, plan.PixelSize);
         Assert.Equal(4, plan.ZoomLevel);
         // 拡大率 4・一辺 32 → 切り出し一辺 8、左上は中心から 4 引いた位置
@@ -98,7 +98,7 @@ public class LoupeDrawPlanTests
     {
         var plan = ResolvePlan(LoupeAppearance.Default with { ShowCrosshair = false }, new EsPoint(16, 16));
 
-        Assert.Empty(plan.CrosshairRects);
+        Assert.Empty(plan.CrosshairPixelRects);
         Assert.DoesNotContain(LoupeDrawLayer.Crosshair, plan.Layers);
     }
 
@@ -107,7 +107,7 @@ public class LoupeDrawPlanTests
     {
         var plan = ResolvePlan(LoupeAppearance.Default with { ShowBorder = false }, new EsPoint(16, 16));
 
-        Assert.Empty(plan.BorderRects);
+        Assert.Empty(plan.BorderPixelRects);
         Assert.DoesNotContain(LoupeDrawLayer.Border, plan.Layers);
     }
 
@@ -117,8 +117,8 @@ public class LoupeDrawPlanTests
         var plan = ResolvePlan(LoupeAppearance.Default with { BorderThickness = 2 }, new EsPoint(16, 16));
 
         // 十字線は縦横 2 本、枠線は 4 辺
-        Assert.Equal(2, plan.CrosshairRects.Count);
-        Assert.Equal(4, plan.BorderRects.Count);
+        Assert.Equal(2, plan.CrosshairPixelRects.Count);
+        Assert.Equal(4, plan.BorderPixelRects.Count);
     }
 
     /// <summary>テスト用の描画計画を解決する。</summary>
