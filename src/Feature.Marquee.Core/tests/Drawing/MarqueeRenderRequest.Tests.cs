@@ -31,7 +31,7 @@ public class MarqueeRenderRequestTests
             selection,
             MarkerActive: false,
             MarkerPosition: default,
-            MousePosition: default,
+            MouseDomainPosition: default,
             port,
             scaling)
         {
@@ -62,7 +62,7 @@ public class MarqueeRenderRequestTests
         Assert.Equal(new EsRect(10, 20, 30, 40), request.SelectionDomainRect);
         Assert.True(request.MarkerActive);
         Assert.Equal(new EsPoint(50, 60), request.MarkerPosition);
-        Assert.Equal(new EsPoint(70, 80), request.MousePosition);
+        Assert.Equal(new EsPoint(70, 80), request.MouseDomainPosition);
         Assert.Same(port, request.Port);
         Assert.Equal(1.25, request.DipToDomainScaling);
         Assert.Equal(highlight, request.HighlightDomainRect);

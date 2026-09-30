@@ -29,9 +29,10 @@ public sealed partial class Marquee
     /// <returns>描画の幾何（注目矩形は DIP で終点の加算も解決済み、ハンドルとマーカーは DIP）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
-    /// 1. 座標変換ポートを 1 回だけ解決する（未指定時は倍率から等倍スケールを生成する）。<br/>
+    /// 1. 座標変換ポートを 1 回だけ解決する（未指定時は倍率から生成する）。<br/>
     /// 2. 注目矩形（ハイライト優先 → 選択）を 1 回だけ解決し、DIP へ変換する（終点の加算は矩形の <see cref="EsRect.Interval"/> が決める）。<br/>
     /// 3. ハンドル（選択がある場合のみ）とマーカー（nudge 中のみ）を解決する。<br/>
+    /// 4. マウス位置の DIP 変換も済ませて返す（描画層が座標変換ポートを持たないようにする）。<br/>
     /// <br/>
     /// 寸法（ハンドルの一辺と枠線の太さ・マーカーの長さ）は設定から読む（本コアは固定値を持たない）。<br/>
     /// 表示可否（ハンドル・ラベルを描くか）は描画層（外観）が判断するため、本メソッドは常に値があれば幾何を返す。
@@ -48,7 +49,8 @@ public sealed partial class Marquee
             focus,
             ResolveHandles(request, port),
             ResolveMarker(request, port),
-            request.MousePosition);
+            request.MouseDomainPosition,
+            port.ToDip(request.MouseDomainPosition));
     }
 
     /// <summary>ドラッグハンドルの幾何を解決する。</summary>

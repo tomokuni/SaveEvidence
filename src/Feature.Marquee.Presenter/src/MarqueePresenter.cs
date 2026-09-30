@@ -336,7 +336,7 @@ public partial class MarqueePresenter
 
         var sizeLabel = ResolveSizeLabelText(
             in geometry, appearance, DisplayScaleScaling, SizeLabelOverrideProvider, SizeLabelDisplayScalingProvider);
-        var coordLabel = ResolveCoordLabelText(in geometry, appearance, request.ResolvedPort);
+        var coordLabel = ResolveCoordLabelText(in geometry, appearance);
         var handles = appearance.ShowHandles ? geometry.Handles : null;
 
         return new MarqueeDrawPlan(

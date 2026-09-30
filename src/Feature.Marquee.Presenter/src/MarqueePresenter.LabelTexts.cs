@@ -90,27 +90,27 @@ public partial class MarqueePresenter
     }
 
     /// <summary>カーソル座標ラベルの文言と基準点を解決する。</summary>
-    /// <param name="geometry">描画の幾何（カーソル位置とクライアントサイズを持つ）。</param>
+    /// <param name="geometry">描画の幾何（マウス位置（ドメイン座標と DIP）とクライアントサイズを持つ）。</param>
     /// <param name="appearance">外観（表示可否を持つ）。</param>
-    /// <param name="port">解決済みの座標変換ポート（ドメイン座標 → DIP）。</param>
     /// <returns>座標ラベルのテキスト配置。 表示しない場合は null。</returns>
     /// <remarks>
-    /// 文言は <see cref="EsPoint.Format(int)"/> が文字列化する。<br/>
-    /// 基準点は「カーソル + <see cref="MarqueeAppearance.CoordLabelOffset"/>」である（ラベルは左上起点で置く）。
+    /// 文言はドメイン座標（<see cref="MarqueeGeometry.MouseDomainPosition"/>）を <see cref="EsPoint.Format(int)"/> が文字列化する。<br/>
+    /// 基準点は DIP 座標（<see cref="MarqueeGeometry.MouseDipPosition"/>）+ <see cref="MarqueeAppearance.CoordLabelOffset"/> である<br/>
+    /// （ラベルは左上起点で置く）。 座標変換はコアが済ませているため、本層は座標変換ポートを持たない。
     /// </remarks>
     internal static MarqueeTextPlacement? ResolveCoordLabelText(
-        in MarqueeGeometry geometry, MarqueeAppearance appearance, ICoordTransform port)
+        in MarqueeGeometry geometry, MarqueeAppearance appearance)
     {
         if (!appearance.ShouldShowCoordLabel())
         {
             return null;
         }
 
-        var cursor = port.ToDip(geometry.MousePosition);
+        var cursor = geometry.MouseDipPosition;
         var offset = appearance.CoordLabelOffset;
 
         return new MarqueeTextPlacement(
-            geometry.MousePosition.Format(),
+            geometry.MouseDomainPosition.Format(),
             new EsPoint(cursor.X + offset, cursor.Y + offset),
             geometry.ClientSize);
     }

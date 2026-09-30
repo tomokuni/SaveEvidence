@@ -132,16 +132,27 @@ public class MarqueeGeometryResolutionTests
         Assert.Equal(new EsRect(0, 0, 320, 240), geometry.SurfaceDipRect);
     }
 
-    /// <summary>マウス位置が入力のまま幾何へ引き継がれることを検証する。</summary>
-    /// <remarks>カーソル座標ラベルの基準は本値であり、文言の生成は描画層が担う。</remarks>
+    /// <summary>マウス位置がドメイン座標と DIP の両方で幾何へ引き継がれることを検証する。</summary>
+    /// <remarks>
+    /// カーソル座標ラベルは文言がドメイン座標・配置が DIP を必要とするため、コアが変換を 1 回だけ行って両方を返す<br/>
+    /// （描画層が座標変換ポートを持たないようにする）。
+    /// </remarks>
     [Fact]
-    public void ResolveGeometry_マウス位置をそのまま返す()
+    public void ResolveGeometry_マウス位置をドメイン座標とDIPで返す()
     {
         var marquee = CreateMarquee();
         marquee.Move(new EsPoint(30, 40));
 
-        var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
+        // 等価変換では両者が一致する
+        var identity = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
+        Assert.Equal(new EsPoint(30, 40), identity.MouseDomainPosition);
+        Assert.Equal(new EsPoint(30, 40), identity.MouseDipPosition);
 
-        Assert.Equal(new EsPoint(30, 40), geometry.MousePosition);
+        // ToDip（ドメイン → DIP）が半分になるポートでは DIP だけが変わる
+        marquee.SetCoordTransform(new CoordTransform(
+            p => new EsPoint(p.X * 2, p.Y * 2), p => new EsPoint(p.X / 2, p.Y / 2), () => null));
+        var scaled = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
+        Assert.Equal(new EsPoint(30, 40), scaled.MouseDomainPosition);
+        Assert.Equal(new EsPoint(15, 20), scaled.MouseDipPosition);
     }
 }

@@ -10,7 +10,7 @@ namespace EsUtil.Feature.Marquee.Core.Drawing;
 /// <param name="SelectionDomainRect">選択矩形（ドメイン座標）。 選択なしの場合は null（<b>null が「選択なし」を意味する</b>）。 区間の流儀は作成元が決める（ドラッグ由来は <see cref="EsRectInterval.Closed"/>）。</param>
 /// <param name="MarkerActive">始点マーカー（十字線）を描くかどうか（nudge 中かつ十字線が可視の場合に true）。</param>
 /// <param name="MarkerPosition">始点マーカーの中心（ドメイン座標）。</param>
-/// <param name="MousePosition">直近のマウス位置（ドメイン座標。 カーソル座標ラベルの基準）。</param>
+/// <param name="MouseDomainPosition">直近のマウス位置（ドメイン座標。 カーソル座標ラベルの文言の基準）。</param>
 /// <param name="Port">ドメイン座標 ↔ ローカル DIP の座標変換ポート。 null の場合は <paramref name="DipToDomainScaling"/> を倍率として適用する。</param>
 /// <param name="DipToDomainScaling">ポート未指定の場合に適用する倍率（ドメイン座標 / ローカル DIP。 0 以下・等倍は等価変換）。</param>
 /// <remarks>
@@ -27,7 +27,7 @@ public readonly record struct MarqueeRenderRequest(
     EsRect? SelectionDomainRect,
     bool MarkerActive,
     EsPoint MarkerPosition,
-    EsPoint MousePosition,
+    EsPoint MouseDomainPosition,
     ICoordTransform? Port,
     double DipToDomainScaling)
 {
@@ -71,7 +71,7 @@ public readonly record struct MarqueeRenderRequest(
     /// <param name="selectionDomainRect">選択矩形（ドメイン座標）。 選択なしの場合は null。</param>
     /// <param name="markerActive">始点マーカー（十字線）を描くかどうか。</param>
     /// <param name="markerPosition">始点マーカーの中心（ドメイン座標）。</param>
-    /// <param name="mousePosition">直近のマウス位置（ドメイン座標）。</param>
+    /// <param name="mouseDomainPosition">直近のマウス位置（ドメイン座標）。</param>
     /// <param name="port">ドメイン座標 ↔ ローカル DIP の座標変換ポート。 null の場合は倍率を使う。</param>
     /// <param name="dipToDomainScaling">ポート未指定の場合に適用する倍率（ドメイン座標 / ローカル DIP）。</param>
     /// <param name="highlightDomainRect">ハイライト矩形（ドメイン座標）。 null はハイライトなし。</param>
@@ -86,11 +86,11 @@ public readonly record struct MarqueeRenderRequest(
         EsRect? selectionDomainRect,
         bool markerActive,
         EsPoint markerPosition,
-        EsPoint mousePosition,
+        EsPoint mouseDomainPosition,
         ICoordTransform? port,
         double dipToDomainScaling,
         EsRect? highlightDomainRect = null)
-        => new(options, clientSize, selectionDomainRect, markerActive, markerPosition, mousePosition, port, dipToDomainScaling)
+        => new(options, clientSize, selectionDomainRect, markerActive, markerPosition, mouseDomainPosition, port, dipToDomainScaling)
         {
             HighlightDomainRect = highlightDomainRect,
         };
