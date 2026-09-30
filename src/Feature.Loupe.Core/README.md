@@ -22,7 +22,7 @@ using EsUtil.Platform.Core.Geometry;
 
 // 設定（計算に必要な値のみ。色・フォント・表示可否は描画層の外観が持つ）
 var options = new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 };
-using var loupe = new Loupe(options);
+using var loupe = new Loupe(options, logger);   // ロガーはコンストラクターでも後からでも注入できる
 
 // 拡大中心（ドメイン座標 = 元画像ピクセル座標）と表示位置のオフセット（DIP）
 loupe.CenterPoint = new EsPoint(1920, 1080);
@@ -36,6 +36,10 @@ var layout = loupe.ResolveLayout(parentSize: new EsSize(800, 600));
 var geometry = loupe.ResolveGeometry(layout.DisplaySize);
 var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描画先
 ```
+
+### ログの注入
+
+ロガーは**コンストラクター（`new Loupe(options, logger)`）と `Log` プロパティのどちらでも注入**できます。 ロガーが確定した時点（コンストラクター注入時、または `Log` の初回設定時）で**生成の記録を 1 度だけ**出力します（それ以降は設定の変更だけが出力されます）。
 
 ### 2 つの解決メソッドの使い分け
 

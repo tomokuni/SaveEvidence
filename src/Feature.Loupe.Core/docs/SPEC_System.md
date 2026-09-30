@@ -177,7 +177,7 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 
 | 操作 | 頻度 | レベル | 出力 |
 | --- | --- | --- | --- |
-| 生成（`Log` の初回設定時） | 1 回 | Information | 生成時の設定（`RequestedSize` / `ZoomLevel`） |
+| 生成（コンストラクター注入時、または `Log` の初回設定時） | 1 回 | Information | 生成時の設定（`RequestedSize` / `ZoomLevel`） |
 | `Log` の set | 低頻度（ホストの結線時） | Debug | 出力を開始した契機 |
 | `Options` の set | 低頻度（設定変更時） | Debug | 変化した項目だけ（`RequestedSize` / `ZoomLevel`） |
 | `DipToDeviceScaling` の set | 低頻度（DPI 変更時） | Debug | 変化したときだけ |
@@ -186,7 +186,7 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 | `CenterPoint` の set | 高頻度（マウス移動ごと） | **Trace** | 変化したときだけ |
 | `ResolveLayout` / `ResolveGeometry` | 高頻度（毎フレーム） | — | 出力しない |
 
-**生成の記録はコンストラクターではなく `Log` の初回設定時に行います**（構築時点では出力先が未設定であり、その場で出力しても記録が残らないため。 ホストがロガーを設定した時点で生成時の設定を 1 度だけ記録する）。
+**生成の記録は、ロガーが注入された時点（コンストラクターまたは初回の `Log` 設定）に行います**（初期値はフィールドへ直接保持するため、構築時点では出力先が未設定であり、その場で出力しても記録が残らない。 どちらの経路でも生成時の設定を 1 度だけ記録する）。
 
 **差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。 描画にだけ必要な設定（枠線の太さ・表示可否）の変更ログは描画層が出力します。 ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。
 

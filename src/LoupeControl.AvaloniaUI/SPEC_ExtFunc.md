@@ -352,7 +352,7 @@ void RefreshPosition()
 
 | 項目 | 計算方法 |
 | --- | --- |
-| 表示サイズ | 基本サイズ（`Options.RequestedSize`）をそのまま使う（親パネルが收められない場合は配置しない） |
+| 表示サイズ | 基本サイズ（`Options.RequestedSize`）をそのまま使う（親パネルが収められない場合は配置しない） |
 | 表示位置 | 中心 →（ポート）→ 親パネル DIP → カーソル右下 + `PositionOffset` → 親パネル内へ補正（`RenderTransform` で反映） |
 
 再評価タイミング: `CenterPoint` 変更 / ポート設定（`SetCoordTransform`）/ `PositionOffset` 変更 / `Options` 変更 / `IsVisible` 変更 / レイアウト時（`ArrangeCore` オーバーライド）/ 外部要求（`RefreshPosition`）。

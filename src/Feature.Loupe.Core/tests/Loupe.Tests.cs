@@ -360,8 +360,8 @@ public class LoupeTests
         Assert.Same(NullLogger.Instance, loupe.Log);
     }
 
-    /// <summary>生成の記録がロガーの設定時に 1 度だけ出力されることを検証する。</summary>
-    /// <remarks>構築時は出力先が未設定のため、ロガーが設定された時点で生成時の設定を記録する。</remarks>
+    /// <summary>生成の記録がロガーの設定時に 1 度だけ出力されることを検証する（注入しない場合）。</summary>
+    /// <remarks>構築時に出力先が未設定のため、ロガーが設定された時点で生成時の設定を記録する。</remarks>
     [Fact]
     public void Log_生成の記録はロガーの設定時に一度だけ出力する()
     {
@@ -378,6 +378,50 @@ public class LoupeTests
                 "[Feature.Loupe.Core] Logger attached",
             ],
             logger.Messages);
+    }
+
+    /// <summary>コンストラクターでロガーを注入すると、その場で生成の記録が出力されることを検証する。</summary>
+    /// <remarks>
+    /// 注入時は出力先が確定しているため、コンストラクター呼び出しの記録（生成時の設定）をその場で出力する。<br/>
+    /// コンストラクター由来の注入は 1 度だけであり、後からの再設定と同様に生成の記録は繰り返さない。
+    /// </remarks>
+    [Fact]
+    public void 生成_コンストラクターでロガーを注入すると生成を記録する()
+    {
+        var logger = new RecordingLogger();
+
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 200, ZoomLevel = 8 }, logger);
+
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Core] Facade created: RequestedSize=200, ZoomLevel=8",
+                "[Feature.Loupe.Core] Logger attached",
+            ],
+            logger.Messages);
+
+        // 注入後に同じロガーを設定し直しても生成の記録は繰り返さない
+        loupe.Log = logger;
+
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Core] Facade created: RequestedSize=200, ZoomLevel=8",
+                "[Feature.Loupe.Core] Logger attached",
+                "[Feature.Loupe.Core] Logger attached",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>コンストラクターでロガーを注入した場合も、設定の変更が記録されることを検証する。</summary>
+    [Fact]
+    public void 生成_コンストラクター注入後も設定変更を記録する()
+    {
+        var logger = new RecordingLogger();
+        var loupe = new Loupe(new LoupeOptions(), logger);
+        logger.Messages.Clear();
+
+        loupe.PositionOffset = 20;
+
+        Assert.Equal("[Feature.Loupe.Core] Setting: PositionOffset 0 → 20", Assert.Single(logger.Messages));
     }
 
     /// <summary>座標変換ポートの設定が変化したときだけ記録されることを検証する。</summary>

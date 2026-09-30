@@ -33,8 +33,9 @@ internal static partial class LoupeLogMessage
     /// <remarks>
     /// LogLevel: Information<br/>
     /// 出力書式: <c>[Feature.Loupe.Core] Facade created: RequestedSize={RequestedSize}, ZoomLevel={ZoomLevel}</c><br/>
-    /// 生成時点では出力先（<see cref="Loupe.Log"/>）が未設定のため、<b>ロガーが設定された時点で 1 度だけ</b>生成時の設定を記録する<br/>
-    /// （どの設定で生成されたファサードからのログかを追えるようにする）。
+    /// <b>コンストラクタでロガーが注入された場合はその時点で出力し</b>、注入されなかった場合はロガーが初めて<br/>
+    /// 設定された時点で 1 度だけ出力する（生成時点では出力先が未設定のため、その場では記録できない。
+    /// どちらの経路でも生成時の設定を 1 度だけ記録し、どの設定で生成されたファサードからのログかを追えるようにする）。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="requestedSize">生成時の要求サイズ（DIP）。</param>
